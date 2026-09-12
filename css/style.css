@@ -899,9 +899,8 @@ section { padding: 5rem 0; }
 @keyframes marquee-label-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
 @keyframes marquee-label-glow {
   0%, 100% { background: var(--blanc); box-shadow: 0 0 0 rgba(255,255,255,0); }
-  50% { background: #fff7f8; box-shadow: 0 0 14px 2px rgba(255,255,255,0.85); }
+  50% { background: #ffe9ec; box-shadow: 0 0 22px 6px rgba(255,255,255,0.95); }
 }
-@media (prefers-reduced-motion: reduce) { .marquee-label { animation: none; } }
 
 .marquee-viewport {
   flex: 1;
