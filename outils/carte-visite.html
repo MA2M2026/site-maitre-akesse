@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<title>Carte de visite — Maître Akesse Model Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin:0; padding:0; }
+  body { background:#e9e9e7; font-family:'Montserrat', sans-serif; display:flex; flex-wrap:wrap; gap:2rem; justify-content:center; padding:3rem 1rem; }
+  .instructions { width:100%; text-align:center; color:#333; margin-bottom:1rem; font-size:0.95rem; }
+  .carte {
+    width: 89mm; height: 51mm;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  }
+  /* RECTO */
+  #recto { background:#0a0a0a; color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  #recto img.logo { width:62%; }
+  #recto .slogan { font-size:2.6mm; letter-spacing:0.05em; color:#c8a15f; margin-top:2mm; text-align:center; padding:0 6mm; }
+
+  /* VERSO */
+  #verso { background:#f4f3f1; color:#0a0a0a; padding:5mm 6mm; display:flex; align-items:center; justify-content:space-between; }
+  #verso .infos { flex:1; }
+  #verso .nom { font-family:'Cinzel', serif; font-weight:700; font-size:4mm; letter-spacing:0.04em; }
+  #verso .role { font-size:2.3mm; color:#e10600; letter-spacing:0.08em; text-transform:uppercase; margin-top:0.6mm; margin-bottom:3mm; }
+  #verso .ligne { font-size:2.5mm; margin-top:1.4mm; display:flex; align-items:center; gap:1.2mm; }
+  #verso .ligne .puce { width:1.6mm; height:1.6mm; background:#c8a15f; display:inline-block; }
+  #verso .qr-zone { text-align:center; margin-left:4mm; }
+  #verso .qr-zone canvas { width:19mm !important; height:19mm !important; }
+  #verso .qr-zone .label { font-size:1.7mm; letter-spacing:0.1em; text-transform:uppercase; color:#666; margin-top:1mm; }
+
+  @media print {
+    body { background:#fff; padding:0; }
+    .instructions { display:none; }
+    .carte { box-shadow:none; page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+  <div class="instructions">Carte recto (gauche) et verso (droite) — pour imprimer : Ctrl/Cmd + P → « Enregistrer en PDF » ou envoyer directement à l'imprimeur.</div>
+
+  <div class="carte" id="recto">
+    <img class="logo" src="assets/logo-dark-bg.png" alt="Maître Akesse Model Management">
+    <div class="slogan">Révéler le potentiel. Construire l'image.<br>Créer des opportunités.</div>
+  </div>
+
+  <div class="carte" id="verso">
+    <div class="infos">
+      <div class="nom">Maître Akesse</div>
+      <div class="role">Model Management</div>
+      <div class="ligne"><span class="puce"></span>00 225 05 45 65 66 87</div>
+      <div class="ligne"><span class="puce"></span>infos.ma2m@gmail.com</div>
+      <div class="ligne"><span class="puce"></span>@maitreakessemodelmanagement</div>
+      <div class="ligne"><span class="puce"></span>www.maitreakessemodelmanagement.com</div>
+    </div>
+    <div class="qr-zone">
+      <img id="qr-carte" src="" alt="QR code" style="width:19mm; height:19mm; display:block;">
+      <div class="label">Scannez-moi</div>
+    </div>
+  </div>
+
+  <script>
+    // QR code généré via une image directe (fiable même sur réseaux qui bloquent certains CDN)
+    var lienQr = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&ecc=M&margin=2&color=0a0a0a&bgcolor=f4f3f1&data=' + encodeURIComponent('https://www.maitreakessemodelmanagement.com');
+    document.getElementById('qr-carte').src = lienQr;
+  </script>
+</body>
+</html>

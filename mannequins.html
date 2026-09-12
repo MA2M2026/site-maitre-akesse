@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nos mannequins — Maître Akesse Model Management</title>
+<meta name="description" content="Découvrez les mannequins de l'agence Maître Akesse Model Management : books, mensurations et vidéos de podium.">
+<link rel="canonical" href="https://www.maitreakessemodelmanagement.com/mannequins.html">
+<meta property="og:title" content="Nos mannequins — Maître Akesse Model Management">
+<meta property="og:type" content="website">
+<meta property="og:description" content="Découvrez les mannequins de l'agence Maître Akesse Model Management : books, mensurations et vidéos de podium.">
+<meta property="og:image" content="https://www.maitreakessemodelmanagement.com/assets/logo-dark-bg.png">
+<meta property="og:url" content="https://www.maitreakessemodelmanagement.com/mannequins.html">
+<meta property="og:locale" content="fr_FR">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="css/style.css">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1e1d1c">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+</head>
+<body>
+
+<header class="site-header-v2">
+  <div class="container header-v2-inner">
+    <a href="index.html" class="logo-img-header"><img src="assets/logo-header.png" alt="Maître Akesse Model Management"></a>
+    <button class="menu-trigger" id="menuBtn">
+      <span>Menu</span>
+      <span class="dots"><span></span><span></span><span></span></span>
+    </button>
+  </div>
+</header>
+
+<div class="menu-overlay" id="menuOverlay">
+  <button class="close-menu" id="closeMenuBtn">Fermer ✕</button>
+  <ul class="nav-links">
+    <li><a href="index.html" class="">Accueil</a></li>
+    <li><a href="services.html" class="">Services</a></li>
+    <li><a href="mannequins.html" class="actif">The Book</a></li>
+    <li><a href="actualites.html">Actualités</a></li>
+    <li><a href="partenaires.html">Nos partenaires</a></li>
+    <li><a href="candidature.html" class="">Candidature</a></li>
+    <li><a href="inscription-mannequin.html">Inscription</a></li>
+    <li><a href="contact.html" class="">Contact</a></li>
+    <li class="item-cta"><a href="espace-mannequin.html">Espace mannequin</a></li>
+  </ul>
+</div>
+
+<section style="padding-bottom:1rem;">
+  <div class="container">
+    <div class="eyebrow reveal">L'agence</div>
+    <h1 class="reveal reveal-delay-1">The Book<span class="oeil">.</span></h1>
+    <p style="margin-top:1.2rem;" class="reveal reveal-delay-2">Sélectionnez les profils qui vous intéressent pour une demande de casting groupée.</p>
+  </div>
+</section>
+
+<section style="padding-top:1rem;">
+  <div class="container">
+    <div class="filtres reveal">
+      <button class="filtre-btn actif" data-cat="tous">Tous</button>
+      <button class="filtre-btn" data-cat="femme">Femmes</button>
+      <button class="filtre-btn" data-cat="homme">Hommes</button>
+      <button class="filtre-btn" data-cat="new-faces">New Faces</button>
+    </div>
+
+    <div class="filtres-avances reveal">
+      <div class="form-champ" style="grid-column: 1 / -1;">
+        <label for="f-recherche">Rechercher un mannequin par nom</label>
+        <input type="text" id="f-recherche" placeholder="ex: Bolli">
+      </div>
+      <div class="form-champ">
+        <label for="f-taille-min">Taille min (cm)</label>
+        <input type="number" id="f-taille-min" placeholder="ex: 170">
+      </div>
+      <div class="form-champ">
+        <label for="f-taille-max">Taille max (cm)</label>
+        <input type="number" id="f-taille-max" placeholder="ex: 185">
+      </div>
+      <div class="form-champ">
+        <label for="f-carnation">Carnation</label>
+        <select id="f-carnation">
+          <option value="">Toutes</option>
+          <option value="Claire">Claire</option>
+          <option value="Métisse claire">Métisse claire</option>
+          <option value="Métisse foncée">Métisse foncée</option>
+          <option value="Foncée">Foncée</option>
+          <option value="Très foncée">Très foncée</option>
+        </select>
+      </div>
+      <div class="form-champ">
+        <label for="f-vetements">Taille vêtements</label>
+        <input type="text" id="f-vetements" placeholder="ex: M, 40">
+      </div>
+      <div class="form-champ">
+        <label for="f-disponibilite">Disponibilité</label>
+        <select id="f-disponibilite">
+          <option value="">Toutes</option>
+          <option value="immediate">Disponible immédiatement</option>
+          <option value="rdv">Sur rendez-vous</option>
+          <option value="mobile">Mobile pour déplacements</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="grille" class="medaillon-grille"></div>
+    <p id="vide" class="mannequins-vide" style="display:none;">Aucun profil ne correspond à ces critères.</p>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grille">
+      <div>
+        <h4>Maître Akesse Model Management</h4>
+        <p>Révéler le potentiel. Construire l'image. Créer des opportunités.</p>
+      </div>
+      <div>
+        <h4>Navigation</h4>
+        <a href="index.html">Accueil</a>
+        <a href="services.html">Services</a>
+        <a href="mannequins.html">The Book</a>
+        <a href="actualites.html">Actualités</a>
+        <a href="partenaires.html">Nos partenaires</a>
+        <a href="candidature.html">Candidature</a>
+        <a href="inscription-mannequin.html">Inscription</a>
+      </div>
+      <div>
+        <h4>Contact</h4>
+        <a href="tel:+2250545656687">00 225 05 45 65 66 87</a>
+        <a href="mailto:infos.ma2m@gmail.com">infos.ma2m@gmail.com</a>
+        <div class="footer-reseaux">
+          <a href="https://www.instagram.com/maitreakessemodelmanagement" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram"><svg viewBox="0 0 24 24"><defs><linearGradient id="ig-grad-1" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="#FFC107"/><stop offset="50%" stop-color="#F44336"/><stop offset="100%" stop-color="#9C27B0"/></linearGradient></defs><path fill="url(#ig-grad-1)" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98C.014 8.333 0 8.741 0 12s.014 3.667.072 4.948c.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24s3.667-.014 4.948-.072c4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.667.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
+          <a href="https://www.tiktok.com/@agencemaitreakessemodel" target="_blank" rel="noopener" aria-label="TikTok" title="TikTok"><svg viewBox="0 0 24 24"><path fill="#25F4EE" transform="translate(-0.9,-0.9)" d="M16.6 5.82c-1.36-1.57-3.24-1.48-3.24-1.48h-3.09v12.4a2.592 2.592 0 01-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 004.3 1.38V7.3s-1.88.09-3.24-1.48z"/><path fill="#FE2C55" transform="translate(0.9,0.9)" d="M16.6 5.82c-1.36-1.57-3.24-1.48-3.24-1.48h-3.09v12.4a2.592 2.592 0 01-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 004.3 1.38V7.3s-1.88.09-3.24-1.48z"/><path fill="#000000" d="M16.6 5.82c-1.36-1.57-3.24-1.48-3.24-1.48h-3.09v12.4a2.592 2.592 0 01-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 004.3 1.38V7.3s-1.88.09-3.24-1.48z"/></svg></a>
+          <a href="https://www.facebook.com/share/1BzPN69rhE/" target="_blank" rel="noopener" aria-label="Facebook" title="Facebook" style="color:#1877F2;"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12.06C22 6.505 17.523 2 12 2S2 6.505 2 12.06c0 5.022 3.657 9.184 8.438 9.94v-7.03H7.898v-2.91h2.54V9.845c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.459h-1.26c-1.243 0-1.63.771-1.63 1.562v1.875h2.773l-.443 2.91h-2.33V22c4.78-.756 8.437-4.918 8.437-9.94z"/></svg></a>
+          <a href="https://youtube.com/@maitreakessemodelmanagement" target="_blank" rel="noopener" aria-label="YouTube" title="YouTube" style="color:#FF0000;"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a2.994 2.994 0 00-2.107-2.12C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.391.521A2.994 2.994 0 00.502 6.186 31.25 31.25 0 000 12a31.25 31.25 0 00.502 5.814 2.994 2.994 0 002.107 2.12c1.886.521 9.391.521 9.391.521s7.505 0 9.391-.521a2.994 2.994 0 002.107-2.12A31.25 31.25 0 0024 12a31.25 31.25 0 00-.502-5.814zM9.6 15.6V8.4l6.4 3.6-6.4 3.6z"/></svg></a>
+          <a href="https://wa.me/message/HJAMXGXHCL46I1" target="_blank" rel="noopener" aria-label="WhatsApp" title="WhatsApp" style="color:#25D366;"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.472-.148-.67.15-.198.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0a12 12 0 00-10.288 18.06L0 24l6.084-1.688A12 12 0 1012 0zm0 21.938a9.917 9.917 0 01-5.052-1.383l-.362-.215-3.752 1.041 1.004-3.665-.235-.375A9.938 9.938 0 1112 21.938z"/></svg></a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bas">
+      <span>© <span id="an"></span> Maître Akesse Model Management</span>
+      <span>Abidjan, Côte d'Ivoire</span>
+    </div>
+  </div>
+</footer>
+
+<script>document.getElementById('an').textContent = new Date().getFullYear();</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/menu.js"></script>
+<script src="js/selection.js"></script>
+<script>
+let tousLesProfils = [];
+let categorieActive = 'tous';
+
+async function chargerMannequins() {
+  const vide = document.getElementById('vide');
+
+  const { data: profils, error } = await sb
+    .from('model_profiles')
+    .select('id, full_name, city, category, height_cm, carnation, clothing_size, availability')
+    .eq('published', true)
+    .order('created_at', { ascending: false });
+
+  if (error || !profils || profils.length === 0) {
+    vide.style.display = 'block';
+    return;
+  }
+
+  for (const profil of profils) {
+    const { data: photos } = await sb
+      .from('model_photos')
+      .select('url')
+      .eq('model_id', profil.id)
+      .order('created_at', { ascending: true })
+      .limit(1);
+
+    profil.photoUrl = (photos && photos[0]) ? photos[0].url : 'assets/logo-dark-bg.png';
+  }
+
+  tousLesProfils = profils;
+  appliquerFiltres();
+}
+
+function appliquerFiltres() {
+  const grille = document.getElementById('grille');
+  const vide = document.getElementById('vide');
+  grille.innerHTML = '';
+
+  const tailleMin = parseInt(document.getElementById('f-taille-min').value) || 0;
+  const tailleMax = parseInt(document.getElementById('f-taille-max').value) || 9999;
+  const carnation = document.getElementById('f-carnation').value;
+  const vetements = document.getElementById('f-vetements').value.trim().toLowerCase();
+  const disponibilite = document.getElementById('f-disponibilite').value;
+  const recherche = document.getElementById('f-recherche').value.trim().toLowerCase();
+
+  const resultats = tousLesProfils.filter(p => {
+    if (categorieActive !== 'tous' && (p.category || 'new-faces') !== categorieActive) return false;
+    if (p.height_cm && (p.height_cm < tailleMin || p.height_cm > tailleMax)) return false;
+    if (carnation && p.carnation !== carnation) return false;
+    if (vetements && !(p.clothing_size || '').toLowerCase().includes(vetements)) return false;
+    if (disponibilite && p.availability !== disponibilite) return false;
+    if (recherche && !(p.full_name || '').toLowerCase().includes(recherche)) return false;
+    return true;
+  });
+
+  if (resultats.length === 0) {
+    vide.style.display = 'block';
+    return;
+  }
+  vide.style.display = 'none';
+
+  resultats.forEach(profil => {
+    const carte = document.createElement('div');
+    carte.className = 'medaillon-carte reveal';
+    const dejaSelectionne = estDansSelection(profil.id);
+    carte.innerHTML = `
+      <button class="btn-selection" data-id="${profil.id}" style="background:${dejaSelectionne ? 'var(--bordeaux-noir)' : 'var(--blanc)'}; color:${dejaSelectionne ? 'var(--blanc)' : 'var(--noir)'};">
+        ${dejaSelectionne ? '✓' : '+'}
+      </button>
+      <a href="mannequin.html?id=${profil.id}" style="display:flex; flex-direction:column; align-items:center;">
+        <div class="medaillon-photo"><img src="${echapperHtml(profil.photoUrl)}" alt="${echapperHtml(profil.full_name || 'Mannequin')}" loading="lazy"></div>
+        <div class="medaillon-nom">${echapperHtml(profil.full_name || 'Mannequin')}</div>
+        <div class="medaillon-info">${echapperHtml(profil.city || '')}${profil.height_cm ? ' · ' + profil.height_cm + ' cm' : ''}</div>
+      </a>
+    `;
+    grille.appendChild(carte);
+
+    carte.querySelector('.btn-selection').addEventListener('click', (e) => {
+      e.preventDefault();
+      if (estDansSelection(profil.id)) {
+        retirerSelection(profil.id);
+      } else {
+        ajouterSelection({ id: profil.id, full_name: profil.full_name, height_cm: profil.height_cm, photoUrl: profil.photoUrl });
+      }
+      appliquerFiltres();
+    });
+  });
+}
+
+document.querySelectorAll('.filtre-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filtre-btn').forEach(b => b.classList.remove('actif'));
+    btn.classList.add('actif');
+    categorieActive = btn.dataset.cat;
+    appliquerFiltres();
+  });
+});
+
+['f-taille-min', 'f-taille-max', 'f-carnation', 'f-vetements', 'f-disponibilite', 'f-recherche'].forEach(id => {
+  document.getElementById(id).addEventListener('input', appliquerFiltres);
+});
+
+chargerMannequins();
+</script>
+</body>
+</html>

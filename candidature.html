@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Candidature Casting — Maître Akesse Model Management</title>
+<meta name="description" content="Déposez votre candidature pour rejoindre Maître Akesse Model Management : photos, mensurations et présentation.">
+<link rel="canonical" href="https://www.maitreakessemodelmanagement.com/candidature.html">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Candidature Casting — Maître Akesse Model Management">
+<meta property="og:description" content="Déposez votre candidature pour rejoindre Maître Akesse Model Management : photos, mensurations et présentation.">
+<meta property="og:image" content="https://www.maitreakessemodelmanagement.com/assets/logo-dark-bg.png">
+<meta property="og:url" content="https://www.maitreakessemodelmanagement.com/candidature.html">
+<meta property="og:locale" content="fr_FR">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="css/style.css">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1e1d1c">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+</head>
+<body>
+
+<header class="site-header-v2">
+  <div class="container header-v2-inner">
+    <a href="index.html" class="logo-img-header"><img src="assets/logo-header.png" alt="Maître Akesse Model Management"></a>
+    <button class="menu-trigger" id="menuBtn">
+      <span>Menu</span>
+      <span class="dots"><span></span><span></span><span></span></span>
+    </button>
+  </div>
+</header>
+
+<div class="menu-overlay" id="menuOverlay">
+  <button class="close-menu" id="closeMenuBtn">Fermer ✕</button>
+  <ul class="nav-links">
+    <li><a href="index.html" class="">Accueil</a></li>
+    <li><a href="services.html" class="">Services</a></li>
+    <li><a href="mannequins.html" class="">The Book</a></li>
+    <li><a href="actualites.html">Actualités</a></li>
+    <li><a href="partenaires.html">Nos partenaires</a></li>
+    <li><a href="candidature.html" class="actif">Candidature</a></li>
+    <li><a href="inscription-mannequin.html">Inscription</a></li>
+    <li><a href="contact.html" class="">Contact</a></li>
+    <li class="item-cta"><a href="espace-mannequin.html">Espace mannequin</a></li>
+  </ul>
+</div>
+
+<section style="padding-bottom:1rem;">
+  <div class="container">
+    <div class="eyebrow reveal">Rejoignez l'agence</div>
+    <h1 class="reveal reveal-delay-1">Candidature Casting<span class="oeil">.</span></h1>
+    <p style="margin-top:1.2rem; max-width:60ch;" class="reveal reveal-delay-2">Vous souhaitez rejoindre Maître Akesse Model Management ? Remplissez ce formulaire avec vos informations, vos mensurations et trois photos (portrait, plein pied, sans maquillage). Notre équipe étudie chaque candidature.</p>
+  </div>
+</section>
+
+<section style="padding-top:1rem;">
+  <div class="container" style="max-width:640px;">
+    <form id="form-casting">
+      <div class="form-grille">
+        <div class="form-champ">
+          <label for="ca-nom">Nom complet</label>
+          <input type="text" id="ca-nom" required>
+        </div>
+        <div class="form-champ">
+          <label for="ca-email">E-mail</label>
+          <input type="email" id="ca-email" required>
+        </div>
+        <div class="form-champ">
+          <label for="ca-telephone">Téléphone</label>
+          <input type="tel" id="ca-telephone">
+        </div>
+        <div class="form-champ">
+          <label for="ca-ville">Ville</label>
+          <input type="text" id="ca-ville">
+        </div>
+      </div>
+
+      <div class="form-grille">
+        <div class="form-champ">
+          <label for="ca-genre">Genre *</label>
+          <select id="ca-genre" required>
+            <option value="">Sélectionner</option>
+            <option value="femme">Femme</option>
+            <option value="homme">Homme</option>
+          </select>
+        </div>
+        <div class="form-champ">
+          <label for="ca-taille">Taille (cm) *</label>
+          <input type="number" id="ca-taille" required>
+          <span id="ca-taille-indication" style="font-size:0.78rem; color:var(--gris);"></span>
+        </div>
+        <div class="form-champ">
+          <label for="ca-pointure">Pointure</label>
+          <input type="text" id="ca-pointure">
+        </div>
+        <div class="form-champ">
+          <label for="ca-poitrine">Poitrine (cm)</label>
+          <input type="number" id="ca-poitrine">
+        </div>
+        <div class="form-champ">
+          <label for="ca-tourtaille">Tour de taille (cm)</label>
+          <input type="number" id="ca-tourtaille">
+        </div>
+        <div class="form-champ">
+          <label for="ca-hanches">Hanches (cm)</label>
+          <input type="number" id="ca-hanches">
+        </div>
+      </div>
+
+      <div class="form-champ">
+        <label for="ca-message">Message (facultatif)</label>
+        <textarea id="ca-message" placeholder="Parlez-nous de vous, votre expérience, vos disponibilités..."></textarea>
+      </div>
+
+      <div class="form-champ">
+        <label>Photo portrait (visage)</label>
+        <input type="file" id="ca-photo1" accept="image/*" required>
+      </div>
+      <div class="form-champ">
+        <label>Photo plein pied</label>
+        <input type="file" id="ca-photo2" accept="image/*" required>
+      </div>
+      <div class="form-champ">
+        <label>Photo sans maquillage</label>
+        <input type="file" id="ca-photo3" accept="image/*">
+      </div>
+
+      <button type="submit" class="btn btn--principal" id="btn-envoyer">Envoyer ma candidature</button>
+      <div id="ca-msg" class="form-msg"></div>
+    </form>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grille">
+      <div>
+        <h4>Maître Akesse Model Management</h4>
+        <p>Révéler le potentiel. Construire l'image. Créer des opportunités.</p>
+      </div>
+      <div>
+        <h4>Navigation</h4>
+        <a href="index.html">Accueil</a>
+        <a href="services.html">Services</a>
+        <a href="mannequins.html">The Book</a>
+        <a href="actualites.html">Actualités</a>
+        <a href="partenaires.html">Nos partenaires</a>
+        <a href="candidature.html">Candidature</a>
+        <a href="inscription-mannequin.html">Inscription</a>
+      </div>
+      <div>
+        <h4>Contact</h4>
+        <a href="tel:+2250545656687">00 225 05 45 65 66 87</a>
+        <a href="mailto:infos.ma2m@gmail.com">infos.ma2m@gmail.com</a>
+        <div class="footer-reseaux">
+          <a href="https://www.instagram.com/maitreakessemodelmanagement" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram"><svg viewBox="0 0 24 24"><defs><linearGradient id="ig-grad-10" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="#FFC107"/><stop offset="50%" stop-color="#F44336"/><stop offset="100%" stop-color="#9C27B0"/></linearGradient></defs><path fill="url(#ig-grad-10)" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98C.014 8.333 0 8.741 0 12s.014 3.667.072 4.948c.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24s3.667-.014 4.948-.072c4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.667.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
+          <a href="https://www.tiktok.com/@agencemaitreakessemodel" target="_blank" rel="noopener" aria-label="TikTok" title="TikTok"><svg viewBox="0 0 24 24"><path fill="#25F4EE" transform="translate(-0.9,-0.9)" d="M16.6 5.82c-1.36-1.57-3.24-1.48-3.24-1.48h-3.09v12.4a2.592 2.592 0 01-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 004.3 1.38V7.3s-1.88.09-3.24-1.48z"/><path fill="#FE2C55" transform="translate(0.9,0.9)" d="M16.6 5.82c-1.36-1.57-3.24-1.48-3.24-1.48h-3.09v12.4a2.592 2.592 0 01-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 004.3 1.38V7.3s-1.88.09-3.24-1.48z"/><path fill="#000000" d="M16.6 5.82c-1.36-1.57-3.24-1.48-3.24-1.48h-3.09v12.4a2.592 2.592 0 01-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 004.3 1.38V7.3s-1.88.09-3.24-1.48z"/></svg></a>
+          <a href="https://www.facebook.com/share/1BzPN69rhE/" target="_blank" rel="noopener" aria-label="Facebook" title="Facebook" style="color:#1877F2;"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12.06C22 6.505 17.523 2 12 2S2 6.505 2 12.06c0 5.022 3.657 9.184 8.438 9.94v-7.03H7.898v-2.91h2.54V9.845c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.459h-1.26c-1.243 0-1.63.771-1.63 1.562v1.875h2.773l-.443 2.91h-2.33V22c4.78-.756 8.437-4.918 8.437-9.94z"/></svg></a>
+          <a href="https://youtube.com/@maitreakessemodelmanagement" target="_blank" rel="noopener" aria-label="YouTube" title="YouTube" style="color:#FF0000;"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a2.994 2.994 0 00-2.107-2.12C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.391.521A2.994 2.994 0 00.502 6.186 31.25 31.25 0 000 12a31.25 31.25 0 00.502 5.814 2.994 2.994 0 002.107 2.12c1.886.521 9.391.521 9.391.521s7.505 0 9.391-.521a2.994 2.994 0 002.107-2.12A31.25 31.25 0 0024 12a31.25 31.25 0 00-.502-5.814zM9.6 15.6V8.4l6.4 3.6-6.4 3.6z"/></svg></a>
+          <a href="https://wa.me/message/HJAMXGXHCL46I1" target="_blank" rel="noopener" aria-label="WhatsApp" title="WhatsApp" style="color:#25D366;"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.472-.148-.67.15-.198.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0a12 12 0 00-10.288 18.06L0 24l6.084-1.688A12 12 0 1012 0zm0 21.938a9.917 9.917 0 01-5.052-1.383l-.362-.215-3.752 1.041 1.004-3.665-.235-.375A9.938 9.938 0 1112 21.938z"/></svg></a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bas">
+      <span>© <span id="an"></span> Maître Akesse Model Management</span>
+      <span>Abidjan, Côte d'Ivoire</span>
+    </div>
+  </div>
+</footer>
+
+<script>document.getElementById('an').textContent = new Date().getFullYear();</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"></script>
+<script src="js/supabase-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<script src="js/emailjs-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+<script src="js/app.js"></script>
+<script src="js/menu.js"></script>
+<script>
+async function convertirSiHeic(fichier) {
+  const estHeic = /image\/hei(c|f)/i.test(fichier.type) || /\.(heic|heif)$/i.test(fichier.name);
+  if (!estHeic || typeof heic2any === 'undefined') return fichier;
+  try {
+    const resultat = await heic2any({ blob: fichier, toType: 'image/jpeg', quality: 0.85 });
+    const blobFinal = Array.isArray(resultat) ? resultat[0] : resultat;
+    return new File([blobFinal], fichier.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' });
+  } catch (e) {
+    console.error('Conversion HEIC échouée, envoi du fichier original :', e);
+    return fichier;
+  }
+}
+
+function afficherMsg(el, texte, type) {
+  el.className = 'form-msg ' + type;
+  el.textContent = texte;
+}
+
+function majIndicationTaille() {
+  const genre = document.getElementById('ca-genre').value;
+  const indication = document.getElementById('ca-taille-indication');
+  const champTaille = document.getElementById('ca-taille');
+  if (genre === 'homme') { indication.textContent = 'Taille minimale requise : 185 cm'; champTaille.min = 185; }
+  else if (genre === 'femme') { indication.textContent = 'Taille minimale requise : 175 cm'; champTaille.min = 175; }
+  else { indication.textContent = ''; champTaille.removeAttribute('min'); }
+}
+document.getElementById('ca-genre').addEventListener('change', majIndicationTaille);
+
+document.getElementById('form-casting').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = document.getElementById('ca-msg');
+
+  const genre = document.getElementById('ca-genre').value;
+  const taille = parseInt(document.getElementById('ca-taille').value) || 0;
+  const tailleMin = genre === 'homme' ? 185 : 175;
+
+  if (taille < tailleMin) {
+    afficherMsg(msg, `Désolé, la taille minimale requise pour postuler est de ${tailleMin} cm (${genre === 'homme' ? 'hommes' : 'femmes'}). Ta candidature ne peut pas être soumise avec cette taille.`, 'err');
+    return;
+  }
+
+  const btn = document.getElementById('btn-envoyer');
+  btn.disabled = true;
+  afficherMsg(msg, 'Envoi en cours…', 'ok');
+
+  const candidature = {
+    full_name: document.getElementById('ca-nom').value.trim(),
+    email: document.getElementById('ca-email').value.trim(),
+    phone: document.getElementById('ca-telephone').value.trim(),
+    city: document.getElementById('ca-ville').value.trim(),
+    genre: genre,
+    height_cm: taille,
+    shoe_size: document.getElementById('ca-pointure').value.trim(),
+    chest_cm: parseInt(document.getElementById('ca-poitrine').value) || null,
+    waist_cm: parseInt(document.getElementById('ca-tourtaille').value) || null,
+    hips_cm: parseInt(document.getElementById('ca-hanches').value) || null,
+    message: document.getElementById('ca-message').value.trim()
+  };
+
+  candidature.id = crypto.randomUUID();
+
+  const { error: erreurInsert } = await sb
+    .from('casting_applications')
+    .insert(candidature);
+
+  if (erreurInsert) {
+    afficherMsg(msg, "Erreur lors de l'envoi. Réessayez ou contactez-nous directement.", 'err');
+    btn.disabled = false;
+    return;
+  }
+
+  const fichiers = [
+    document.getElementById('ca-photo1').files[0],
+    document.getElementById('ca-photo2').files[0],
+    document.getElementById('ca-photo3').files[0]
+  ].filter(Boolean);
+
+  for (const fichierOriginal of fichiers) {
+    const fichier = await convertirSiHeic(fichierOriginal);
+    const chemin = `${candidature.id}/${Date.now()}-${nomFichierSur(fichier.name)}`;
+    const { error: erreurUpload } = await sb.storage.from('casting-applications').upload(chemin, fichier);
+    if (!erreurUpload) {
+      const { data: urlPublique } = sb.storage.from('casting-applications').getPublicUrl(chemin);
+      await sb.from('casting_photos').insert({ application_id: candidature.id, url: urlPublique.publicUrl, chemin });
+    }
+  }
+
+  envoyerNotificationEmail({
+    name: candidature.full_name,
+    telephone: candidature.phone,
+    email: candidature.email,
+    message: `Nouvelle candidature casting.\nVille : ${candidature.city || '-'}\nTaille : ${candidature.height_cm || '-'} cm\nMessage : ${candidature.message || '-'}`
+  });
+
+  afficherMsg(msg, 'Merci ! Votre candidature a bien été envoyée. Notre équipe vous recontactera si votre profil est retenu.', 'ok');
+  document.getElementById('form-casting').reset();
+  btn.disabled = false;
+});
+</script>
+</body>
+</html>

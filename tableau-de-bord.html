@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tableau de bord — Maître Akesse Model Management</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .stats-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }
+  .stat-carte { background: var(--anthracite, var(--noir)); color: var(--blanc); padding: 1.6rem; border-top: 2px solid var(--or); }
+  .stat-carte .chiffre { font-family: var(--display); font-size: 2.4rem; }
+  .stat-carte .label { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: #bbb; margin-top: 0.4rem; }
+  .liste-recente { margin-top: 3rem; }
+  .liste-recente table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .liste-recente th, .liste-recente td { text-align: left; padding: 0.7rem 0.6rem; border-bottom: 1px solid var(--gris-clair); }
+  .liste-recente th { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--gris); }
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1e1d1c">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+</head>
+<body class="zone-admin">
+
+<header class="site-header-v2">
+  <div class="container header-v2-inner">
+    <a href="index.html" class="logo-img-header"><img src="assets/logo-header.png" alt="Maître Akesse Model Management"></a>
+    <button class="menu-trigger" id="menuBtn">
+      <span>Menu</span>
+      <span class="dots"><span></span><span></span><span></span></span>
+    </button>
+  </div>
+</header>
+
+<div class="menu-overlay" id="menuOverlay">
+  <button class="close-menu" id="closeMenuBtn">Fermer ✕</button>
+  <ul class="nav-links">
+    <li><a href="index.html">Accueil</a></li>
+    <li><a href="mannequins.html">The Book</a></li>
+    <li><a href="actualites.html">Actualités</a></li>
+    <li><a href="partenaires.html">Nos partenaires</a></li>
+    <li><a href="tableau-de-bord.html" class="actif">Tableau de bord</a></li>
+    <li class="item-cta"><a href="espace-mannequin.html">Espace mannequin</a></li>
+  </ul>
+</div>
+
+<section style="padding-bottom:1rem;">
+  <div class="container">
+    <div class="eyebrow reveal">Administration</div>
+    <div class="badge-page-admin">📍 Vous êtes sur : Tableau de bord</div><br>
+    <h1 class="reveal reveal-delay-1">Tableau de bord<span class="oeil">.</span></h1>
+  </div>
+</section>
+
+<section id="bloc-login" style="padding-top:1rem;">
+  <div class="container" style="max-width:420px;">
+    <div class="form-champ"><label>E-mail admin</label><input type="email" id="tb-email"></div>
+    <div class="form-champ"><label>Mot de passe</label><input type="password" id="tb-password"></div>
+    <button class="btn btn--principal" id="tb-login-btn">Se connecter</button>
+    <div id="tb-msg" class="form-msg"></div>
+  </div>
+</section>
+
+<section id="bloc-tableau" style="display:none; padding-top:0;">
+  <div class="container">
+    <div class="stats-grille" id="stats-grille">Chargement des statistiques…</div>
+
+    <div class="liste-recente">
+      <h2 style="margin-bottom:1rem;">Dernières candidatures</h2>
+      <table id="table-candidatures"><thead><tr><th>Nom</th><th>Ville</th><th>Taille</th><th>Date</th></tr></thead><tbody></tbody></table>
+    </div>
+
+    <div class="liste-recente">
+      <h2 style="margin-bottom:1rem;">Dernières demandes recruteurs</h2>
+      <table id="table-recruteurs"><thead><tr><th>Entreprise</th><th>Contact</th><th>Projet</th><th>Date</th></tr></thead><tbody></tbody></table>
+    </div>
+
+    <div class="liste-recente">
+      <h2 style="margin-bottom:1rem;">Dernières inscriptions mannequins</h2>
+      <table id="table-inscriptions"><thead><tr><th>Nom</th><th>Statut</th><th>Date</th></tr></thead><tbody></tbody></table>
+    </div>
+
+    <div class="liste-recente">
+      <h2 style="margin-bottom:1rem;">Derniers messages de contact</h2>
+      <table id="table-contacts"><thead><tr><th>Nom</th><th>Type</th><th>Téléphone</th><th>Date</th></tr></thead><tbody></tbody></table>
+    </div>
+
+    <div class="liste-recente">
+      <h2 style="margin-bottom:0.3rem;">Classement des mannequins — visites réelles</h2>
+      <p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Personnes distinctes ayant consulté chaque fiche sur les <strong>7 derniers jours</strong> (pas les rechargements de page). Top 10 affiché.</p>
+      <div id="classement-mannequins" style="display:flex; flex-direction:column; gap:0.5rem;"></div>
+    </div>
+
+    <div class="liste-recente">
+      <h2 style="margin-bottom:1rem;">Mannequin à la une</h2>
+      <p style="color:var(--gris); font-size:0.85rem; margin-top:-0.6rem; margin-bottom:1rem;">Ce mannequin sera mis en avant sur la page d'accueil du site. Sans sélection, une photo aléatoire s'affiche à la place.</p>
+      <div style="display:flex; gap:0.8rem; flex-wrap:wrap; align-items:center;">
+        <select id="tb-select-vedette" style="max-width:320px;"><option value="">Chargement…</option></select>
+        <button class="btn" id="tb-definir-vedette-btn">Définir comme mannequin à la une</button>
+        <button class="btn" id="tb-retirer-vedette-btn" style="color:var(--gris); border-color:var(--gris-clair);">Retirer la mise en avant</button>
+      </div>
+      <div id="tb-vedette-actuelle" style="margin-top:0.8rem; font-size:0.85rem; color:var(--gris);"></div>
+      <div id="tb-vedette-msg" class="form-msg"></div>
+    </div>
+
+    <div class="liste-recente">
+      <h2 style="margin-bottom:0.3rem;">Bandeau d'information (bande défilante de l'accueil)</h2>
+      <p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Remplace le texte par défaut de la bande sous le hero de l'accueil par un message important (casting ouvert, événement, annonce...). Désactive-le pour revenir automatiquement au texte par défaut.</p>
+
+      <div class="form-champ"><label for="bandeau-texte">Message à afficher</label><input type="text" id="bandeau-texte" placeholder="ex : Casting ouvert jusqu'au 30 juin — postulez maintenant"></div>
+      <div style="display:flex; gap:0.8rem; flex-wrap:wrap; align-items:center;">
+        <button class="btn btn--principal" id="bandeau-enregistrer-btn">Enregistrer le message</button>
+        <button class="btn" id="bandeau-actif-btn" data-actif="0">Activer</button>
+      </div>
+      <div id="bandeau-etat" style="margin-top:0.8rem; font-size:0.85rem; color:var(--gris);"></div>
+      <div id="bandeau-msg" class="form-msg"></div>
+    </div>
+
+    <div style="margin:2.5rem 0;">
+      <a href="actualites.html" class="btn btn--principal" style="margin-right:0.8rem;">Publier une actualité</a>
+      <button class="btn" id="tb-logout-btn">Se déconnecter</button>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-bas">
+      <span>© <span id="an"></span> Maître Akesse Model Management</span>
+      <span>Abidjan, Côte d'Ivoire</span>
+    </div>
+  </div>
+</footer>
+
+<script>document.getElementById('an').textContent = new Date().getFullYear();</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/menu.js"></script>
+<script>
+async function verifierAdminTableau() {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return false;
+  const { data } = await sb.from('admins').select('user_id').eq('user_id', user.id).single();
+  return !!data;
+}
+
+document.getElementById('tb-login-btn').addEventListener('click', async () => {
+  const email = document.getElementById('tb-email').value.trim();
+  const password = document.getElementById('tb-password').value;
+  const msg = document.getElementById('tb-msg');
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) { msg.className = 'form-msg err'; msg.textContent = 'Connexion refusée.'; msg.style.display = 'block'; return; }
+  const estAdmin = await verifierAdminTableau();
+  if (!estAdmin) { msg.className = 'form-msg err'; msg.textContent = "Ce compte n'a pas accès au tableau de bord."; msg.style.display = 'block'; return; }
+  document.getElementById('bloc-login').style.display = 'none';
+  document.getElementById('bloc-tableau').style.display = 'block';
+  chargerStatistiques();
+});
+
+document.getElementById('tb-logout-btn').addEventListener('click', async () => {
+  await sb.auth.signOut();
+  document.getElementById('bloc-tableau').style.display = 'none';
+  document.getElementById('bloc-login').style.display = 'block';
+});
+
+// --- Classement des visites réelles par mannequin (compact, top 10) ---
+// Période "7 derniers jours" par défaut — un vrai classement qui bouge dans le temps,
+// pas un simple total qui ne fait que grossir indéfiniment.
+async function chargerClassementMannequins() {
+  const conteneur = document.getElementById('classement-mannequins');
+  const depuis7j = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const { data: classement, error } = await sb.rpc('stats_classement_mannequins', { depuis: depuis7j });
+
+  if (error || !classement || !classement.length) {
+    conteneur.innerHTML = '<p style="color:var(--gris); font-size:0.85rem;">Pas encore assez de visites enregistrées sur les 7 derniers jours.</p>';
+    return;
+  }
+
+  const top10 = classement.slice(0, 10);
+  const ids = top10.map(c => c.model_id);
+  const { data: profils } = await sb.from('model_profiles').select('id, full_name').in('id', ids);
+  const nomParId = {};
+  (profils || []).forEach(p => { nomParId[p.id] = p.full_name; });
+
+  const maxVisites = top10[0].nb_visites || 1;
+
+  conteneur.innerHTML = top10.map((c, i) => `
+    <div style="display:flex; align-items:center; gap:0.9rem; padding:0.55rem 0.8rem; background:var(--gris-clair);">
+      <span style="font-family:var(--display); font-size:1rem; color:var(--gris); width:1.4rem; flex-shrink:0;">${i + 1}</span>
+      <span style="flex:1; font-size:0.9rem; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${echapperHtml(nomParId[c.model_id] || 'Mannequin')}</span>
+      <div style="flex:2; background:rgba(0,0,0,0.06); height:6px; border-radius:3px; overflow:hidden; max-width:180px;">
+        <div style="width:${Math.max(4, (c.nb_visites / maxVisites) * 100)}%; height:100%; background:var(--bordeaux-noir);"></div>
+      </div>
+      <span style="font-weight:600; font-size:0.88rem; flex-shrink:0; width:2.5rem; text-align:right;">${c.nb_visites}</span>
+    </div>
+  `).join('');
+
+  if (classement.length > 10) {
+    conteneur.innerHTML += `<p style="color:var(--gris); font-size:0.78rem; margin-top:0.4rem;">+ ${classement.length - 10} autre(s) mannequin(s) avec des visites enregistrées.</p>`;
+  }
+}
+
+async function compter(table) {
+  const { count } = await sb.from(table).select('id', { count: 'exact', head: true });
+  return count || 0;
+}
+
+async function chargerStatistiques() {
+  const debutAujourdhui = new Date(); debutAujourdhui.setHours(0, 0, 0, 0);
+  const depuis7j = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+  const [mannequins, candidatures, inscriptions, recruteurs, actus, photos, visites, contacts, visitesAujourdhui, visites7j, visitesTotal] = await Promise.all([
+    (async () => { const { count } = await sb.from('model_profiles').select('id', { count: 'exact', head: true }).eq('published', true); return count || 0; })(),
+    compter('casting_applications'),
+    compter('inscriptions_mannequins'),
+    compter('recruiter_requests'),
+    compter('actualites'),
+    compter('model_photos'),
+    compter('page_views'),
+    compter('messages_contact'),
+    (async () => { const { data } = await sb.rpc('stats_visites_reelles_site', { depuis: debutAujourdhui.toISOString() }); return data || 0; })(),
+    (async () => { const { data } = await sb.rpc('stats_visites_reelles_site', { depuis: depuis7j }); return data || 0; })(),
+    (async () => { const { data } = await sb.rpc('stats_visites_reelles_site'); return data || 0; })()
+  ]);
+
+  document.getElementById('stats-grille').innerHTML = `
+    <div class="stat-carte"><div class="chiffre">${mannequins}</div><div class="label">Mannequins publiés</div></div>
+    <div class="stat-carte"><div class="chiffre">${candidatures}</div><div class="label">Candidatures reçues</div></div>
+    <div class="stat-carte"><div class="chiffre">${inscriptions}</div><div class="label">Inscriptions mannequin</div></div>
+    <div class="stat-carte"><div class="chiffre">${recruteurs}</div><div class="label">Demandes recruteurs</div></div>
+    <div class="stat-carte"><div class="chiffre">${contacts}</div><div class="label">Messages de contact</div></div>
+    <div class="stat-carte"><div class="chiffre">${actus}</div><div class="label">Actualités publiées</div></div>
+    <div class="stat-carte"><div class="chiffre">${photos}</div><div class="label">Photos envoyées (book)</div></div>
+    <div class="stat-carte"><div class="chiffre">${visitesAujourdhui}</div><div class="label">Visites réelles — aujourd'hui</div></div>
+    <div class="stat-carte"><div class="chiffre">${visites7j}</div><div class="label">Visites réelles — 7 derniers jours</div></div>
+    <div class="stat-carte"><div class="chiffre">${visitesTotal}</div><div class="label">Visites réelles — total</div></div>
+  `;
+
+  chargerClassementMannequins();
+
+  const { data: dernieresCandidatures } = await sb.from('casting_applications').select('full_name, city, height_cm, created_at').order('created_at', { ascending: false }).limit(10);
+  document.querySelector('#table-candidatures tbody').innerHTML = (dernieresCandidatures || []).map(c => `
+    <tr><td>${echapperHtml(c.full_name || '-')}</td><td>${echapperHtml(c.city || '-')}</td><td>${c.height_cm || '-'} cm</td><td>${new Date(c.created_at).toLocaleDateString('fr-FR')}</td></tr>
+  `).join('') || '<tr><td colspan="4">Aucune candidature.</td></tr>';
+
+  const { data: derniersRecruteurs } = await sb.from('recruiter_requests').select('company, contact_name, project_type, created_at').order('created_at', { ascending: false }).limit(10);
+  document.querySelector('#table-recruteurs tbody').innerHTML = (derniersRecruteurs || []).map(r => `
+    <tr><td>${echapperHtml(r.company || '-')}</td><td>${echapperHtml(r.contact_name || '-')}</td><td>${echapperHtml(r.project_type || '-')}</td><td>${new Date(r.created_at).toLocaleDateString('fr-FR')}</td></tr>
+  `).join('') || '<tr><td colspan="4">Aucune demande.</td></tr>';
+
+  const { data: dernieresInscriptions } = await sb.from('inscriptions_mannequins').select('full_name, statut, created_at').order('created_at', { ascending: false }).limit(10);
+  document.querySelector('#table-inscriptions tbody').innerHTML = (dernieresInscriptions || []).map(i => `
+    <tr><td>${echapperHtml(i.full_name || '-')}</td><td>${echapperHtml(i.statut || '-')}</td><td>${new Date(i.created_at).toLocaleDateString('fr-FR')}</td></tr>
+  `).join('') || '<tr><td colspan="3">Aucune inscription.</td></tr>';
+
+  const { data: derniersContacts } = await sb.from('messages_contact').select('nom, type_contact, telephone, created_at').order('created_at', { ascending: false }).limit(10);
+  document.querySelector('#table-contacts tbody').innerHTML = (derniersContacts || []).map(c => `
+    <tr><td>${echapperHtml(c.nom || '-')}</td><td>${echapperHtml(c.type_contact || '-')}</td><td>${echapperHtml(c.telephone || '-')}</td><td>${new Date(c.created_at).toLocaleDateString('fr-FR')}</td></tr>
+  `).join('') || '<tr><td colspan="4">Aucun message.</td></tr>';
+
+  chargerVedette();
+  chargerBandeau();
+}
+
+// --- Mannequin à la une (page d'accueil) ---
+async function chargerVedette() {
+  const { data: profils } = await sb.from('model_profiles').select('id, full_name, featured').eq('published', true).order('full_name', { ascending: true });
+  const select = document.getElementById('tb-select-vedette');
+  const actuel = document.getElementById('tb-vedette-actuelle');
+
+  if (!profils || !profils.length) {
+    select.innerHTML = '<option value="">Aucun mannequin publié pour le moment</option>';
+    return;
+  }
+
+  select.innerHTML = profils.map(p => `<option value="${p.id}">${echapperHtml(p.full_name || 'Sans nom')}</option>`).join('');
+
+  const vedette = profils.find(p => p.featured);
+  if (vedette) {
+    select.value = vedette.id;
+    actuel.textContent = `Actuellement en avant : ${vedette.full_name}`;
+  } else {
+    actuel.textContent = 'Aucun mannequin mis en avant actuellement (une photo aléatoire s\'affiche sur la page d\'accueil).';
+  }
+}
+
+document.getElementById('tb-definir-vedette-btn').addEventListener('click', async () => {
+  const id = document.getElementById('tb-select-vedette').value;
+  const msg = document.getElementById('tb-vedette-msg');
+  if (!id) return;
+  msg.className = 'form-msg ok'; msg.textContent = 'Enregistrement…'; msg.style.display = 'block';
+
+  await sb.from('model_profiles').update({ featured: false }).eq('featured', true);
+  const { error } = await sb.from('model_profiles').update({ featured: true }).eq('id', id);
+
+  if (error) { msg.className = 'form-msg err'; msg.textContent = "Erreur lors de l'enregistrement."; return; }
+  msg.className = 'form-msg ok'; msg.textContent = 'Mannequin à la une mis à jour !';
+  chargerVedette();
+});
+
+document.getElementById('tb-retirer-vedette-btn').addEventListener('click', async () => {
+  const msg = document.getElementById('tb-vedette-msg');
+  await sb.from('model_profiles').update({ featured: false }).eq('featured', true);
+  msg.className = 'form-msg ok'; msg.textContent = 'Mise en avant retirée.'; msg.style.display = 'block';
+  chargerVedette();
+});
+
+// --- Bandeau d'information (bande défilante de l'accueil) ---
+async function chargerBandeau() {
+  const { data } = await sb.from('bandeau_annonce').select('*').eq('id', 'principal').maybeSingle();
+  const actif = !!(data && data.actif);
+  document.getElementById('bandeau-texte').value = (data && data.texte) || '';
+  const btnActif = document.getElementById('bandeau-actif-btn');
+  btnActif.textContent = actif ? 'Désactiver' : 'Activer';
+  btnActif.dataset.actif = actif ? '1' : '0';
+  document.getElementById('bandeau-etat').textContent = actif
+    ? 'Actuellement affiché sur le site, à la place du texte par défaut.'
+    : 'Actuellement masqué — le texte par défaut de la bande s\'affiche sur le site.';
+}
+
+document.getElementById('bandeau-enregistrer-btn').addEventListener('click', async () => {
+  const msg = document.getElementById('bandeau-msg');
+  const texte = document.getElementById('bandeau-texte').value.trim();
+  msg.className = 'form-msg ok'; msg.textContent = 'Enregistrement…'; msg.style.display = 'block';
+  const { error } = await sb.from('bandeau_annonce').update({ texte, updated_at: new Date().toISOString() }).eq('id', 'principal');
+  if (error) { msg.className = 'form-msg err'; msg.textContent = "Erreur lors de l'enregistrement."; return; }
+  msg.className = 'form-msg ok'; msg.textContent = 'Message enregistré !';
+  chargerBandeau();
+});
+
+document.getElementById('bandeau-actif-btn').addEventListener('click', async () => {
+  const actif = document.getElementById('bandeau-actif-btn').dataset.actif === '1';
+  await sb.from('bandeau_annonce').update({ actif: !actif }).eq('id', 'principal');
+  chargerBandeau();
+});
+
+(async () => {
+  const estAdmin = await verifierAdminTableau();
+  if (estAdmin) {
+    document.getElementById('bloc-login').style.display = 'none';
+    document.getElementById('bloc-tableau').style.display = 'block';
+    chargerStatistiques();
+  }
+})();
+</script>
+</body>
+</html>

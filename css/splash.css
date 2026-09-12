@@ -1,0 +1,57 @@
+/* ===== Intro cinématographique — accueil uniquement ===== */
+
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--noir);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+.splash-logo-wrap {
+  width: 78%;
+  max-width: 520px;
+  text-align: center;
+  opacity: 0;
+  transform: scale(0.95);
+  animation: splash-fondu 5.5s cubic-bezier(.2,.7,.2,1) forwards;
+}
+
+.splash-logo-wrap img { width: 100%; height: auto; }
+
+@keyframes splash-fondu {
+  0%   { opacity: 0; transform: scale(0.95); }
+  15%  { opacity: 1; transform: scale(1); }
+  82%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.03); }
+}
+
+.splash-passer {
+  position: absolute;
+  bottom: 2.6rem;
+  right: 2.6rem;
+  background: none;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #aaa;
+  padding: 0.75rem 1.7rem;
+  font-family: var(--texte);
+  font-size: 0.66rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.35s ease;
+}
+
+.splash-passer:hover { border-color: #fff; color: #fff; background: rgba(255,255,255,0.05); }
+
+body.splash-active { overflow: hidden; }
+
+@media (max-width: 700px) {
+  .splash-passer { bottom: 1.8rem; right: 1.8rem; padding: 0.65rem 1.3rem; font-size: 0.6rem; }
+}
+
+

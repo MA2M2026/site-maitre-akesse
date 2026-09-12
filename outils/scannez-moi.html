@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<title>Scannez-moi — Maître Akesse Model Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:#333; display:flex; flex-direction:column; align-items:center; padding:2rem 1rem; font-family:'Montserrat', sans-serif; }
+  .instructions { color:#eee; margin-bottom:1.5rem; text-align:center; font-size:0.95rem; }
+  #visuel {
+    width: 1080px; height: 1080px;
+    background: radial-gradient(circle at 50% 20%, #1a1a1a 0%, #0a0a0a 70%);
+    color: #fff;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+  #visuel::before, #visuel::after {
+    content:''; position:absolute; width:1px; height:100%; background: rgba(200,161,95,0.15);
+  }
+  #visuel::before { left: 60px; }
+  #visuel::after { right: 60px; }
+
+  .eyebrow { font-size:20px; letter-spacing:0.35em; text-transform:uppercase; color:#c8a15f; margin-bottom:20px; }
+  .titre { font-family:'Cinzel', serif; font-weight:700; font-size:88px; letter-spacing:0.06em; text-align:center; line-height:1.05; }
+  .titre .point { color:#e10600; }
+
+  .qr-carte { background:#f4f3f1; padding:34px; margin:50px 0 34px; box-shadow:0 20px 60px rgba(0,0,0,0.5); position:relative; }
+  .qr-carte img.qr-img { display:block; width:380px; height:380px; }
+  .qr-carte .logo-overlay {
+    position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);
+    width:22%; aspect-ratio:1/1; background:#f4f3f1; padding:10px; display:flex; align-items:center; justify-content:center;
+  }
+  .qr-carte .logo-overlay img { width:100%; height:100%; object-fit:contain; }
+
+  .logo-bas { width: 340px; margin-top: 10px; }
+  .url { font-size: 26px; letter-spacing: 0.08em; color: #ccc; margin-top: 22px; }
+
+  @media print {
+    body { background:#fff; padding:0; }
+    .instructions { display:none; }
+  }
+</style>
+</head>
+<body>
+  <div class="instructions">Visuel 1080×1080 (format carré, idéal pour Instagram, story, affiche) — clic droit → « Enregistrer l'image » une fois chargé, ou capture d'écran.</div>
+
+  <div id="visuel">
+    <div class="eyebrow">Maître Akesse · Model Management</div>
+    <div class="titre">Scannez-moi<span class="point">.</span></div>
+    <div class="qr-carte">
+      <img class="qr-img" id="qr-visuel" src="" alt="QR code">
+      <div class="logo-overlay"><img src="assets/logo-light-bg.jpg" alt=""></div>
+    </div>
+    <img class="logo-bas" src="assets/logo-dark-bg.png" alt="Maître Akesse Model Management">
+    <div class="url">www.maitreakessemodelmanagement.com</div>
+  </div>
+
+  <script>
+    // QR code généré via une image directe (fiable même sur réseaux qui bloquent certains CDN)
+    var lienQr = 'https://api.qrserver.com/v1/create-qr-code/?size=760x760&ecc=H&margin=6&color=0a0a0a&bgcolor=f4f3f1&data=' + encodeURIComponent('https://www.maitreakessemodelmanagement.com');
+    document.getElementById('qr-visuel').src = lienQr;
+  </script>
+</body>
+</html>

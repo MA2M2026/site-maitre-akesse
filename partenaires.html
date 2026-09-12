@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nos partenaires — Maître Akesse Model Management</title>
+<meta name="description" content="Les partenaires, promoteurs et collaborateurs qui ont fait confiance à l'agence Maître Akesse Model Management.">
+<link rel="canonical" href="https://www.maitreakessemodelmanagement.com/partenaires.html">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Nos partenaires — Maître Akesse Model Management">
+<meta property="og:description" content="Les partenaires, promoteurs et collaborateurs qui ont fait confiance à l'agence Maître Akesse Model Management.">
+<meta property="og:image" content="https://www.maitreakessemodelmanagement.com/assets/logo-dark-bg.png">
+<meta property="og:url" content="https://www.maitreakessemodelmanagement.com/partenaires.html">
+<meta property="og:locale" content="fr_FR">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="css/style.css">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1e1d1c">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+</head>
+<body>
+
+<header class="site-header-v2">
+  <div class="container header-v2-inner">
+    <a href="index.html" class="logo-img-header"><img src="assets/logo-header.png" alt="Maître Akesse Model Management"></a>
+    <button class="menu-trigger" id="menuBtn">
+      <span>Menu</span>
+      <span class="dots"><span></span><span></span><span></span></span>
+    </button>
+  </div>
+</header>
+
+<div class="menu-overlay" id="menuOverlay">
+  <button class="close-menu" id="closeMenuBtn">Fermer ✕</button>
+  <ul class="nav-links">
+    <li><a href="index.html">Accueil</a></li>
+    <li><a href="services.html">Services</a></li>
+    <li><a href="mannequins.html">The Book</a></li>
+    <li><a href="actualites.html">Actualités</a></li>
+    <li><a href="partenaires.html" class="actif">Nos partenaires</a></li>
+    <li><a href="candidature.html">Candidature</a></li>
+    <li><a href="inscription-mannequin.html">Inscription</a></li>
+    <li><a href="contact.html">Contact</a></li>
+    <li class="item-cta"><a href="espace-mannequin.html">Espace mannequin</a></li>
+  </ul>
+</div>
+
+<section style="padding-bottom:1rem;">
+  <div class="container">
+    <div class="eyebrow reveal">Ils nous ont fait confiance</div>
+    <h1 class="reveal reveal-delay-1">Nos partenaires<span class="oeil">.</span></h1>
+    <p style="margin-top:1.2rem; max-width:60ch;" class="reveal reveal-delay-2">Institutions, promoteurs, directeurs artistiques et collaborateurs qui ont travaillé avec l'agence.</p>
+  </div>
+</section>
+
+<section style="padding-top:1rem;">
+  <div class="container">
+    <div id="partenaires-grille" class="news-grille"></div>
+    <p id="partenaires-vide" style="display:none; color:var(--gris);">Aucun partenaire publié pour le moment.</p>
+  </div>
+</section>
+
+<div class="news-modal" id="part-modal">
+  <div class="news-modal-contenu">
+    <button class="news-modal-fermer" id="part-modal-fermer">✕</button>
+    <div id="part-modal-media" style="padding:2.5rem 2.5rem 0; text-align:center;">
+      <img id="part-modal-logo" src="" alt="" style="max-width:220px; max-height:160px; object-fit:contain; cursor:pointer;">
+    </div>
+    <div class="news-modal-corps">
+      <div class="news-date" id="part-modal-role"></div>
+      <h2 id="part-modal-nom" style="margin-top:0.6rem;"></h2>
+      <p id="part-modal-structure" style="margin-top:0.3rem; color:var(--or); font-weight:600;"></p>
+      <p id="part-modal-evenement" style="margin-top:0.5rem; color:var(--bordeaux); font-size:0.9rem;"></p>
+      <p id="part-modal-description" style="margin-top:1rem; color:#4a4a4a;"></p>
+
+      <div id="part-modal-admin-actions" style="display:none; margin-top:1.2rem; padding-top:1rem; border-top:1px solid var(--gris-clair);">
+        <button id="part-modal-modifier-btn" class="btn-mini-admin">✎ Modifier</button>
+        <button id="part-modal-supprimer-btn" class="btn-mini-admin" style="margin-left:0.6rem;">🗑 Supprimer</button>
+      </div>
+
+      <div id="part-modal-edition" style="display:none; margin-top:1.2rem; padding-top:1rem; border-top:1px solid var(--gris-clair);">
+        <div class="form-champ"><label>Nom (personne ou institution) *</label><input type="text" id="edit-p-nom"></div>
+        <div class="form-champ"><label>Structure représentée</label><input type="text" id="edit-p-structure"></div>
+        <div class="form-champ"><label>Événement associé</label><input type="text" id="edit-p-evenement"></div>
+        <div class="form-champ">
+          <label>Rôle</label>
+          <select id="edit-p-role">
+            <option value="">—</option>
+            <option value="DA">DA (Directeur artistique)</option>
+            <option value="Styliste">Styliste</option>
+            <option value="Directeur de casting">Directeur de casting</option>
+            <option value="Promoteur">Promoteur</option>
+            <option value="Organisateur">Organisateur</option>
+            <option value="Régisseur">Régisseur</option>
+            <option value="Autre">Autre</option>
+          </select>
+        </div>
+        <div class="form-champ"><label>Description / notes</label><textarea id="edit-p-description"></textarea></div>
+        <div class="form-champ"><label>Remplacer le logo (facultatif)</label><input type="file" id="edit-p-logo" accept="image/*"></div>
+        <button class="btn btn--principal" id="edit-p-enregistrer-btn">Enregistrer</button>
+        <button class="btn" id="edit-p-annuler-btn" style="margin-left:0.5rem;">Annuler</button>
+        <div id="edit-p-msg" class="form-msg"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Panneau d'administration : entièrement invisible pour un visiteur.
+     Ne s'affiche que si une session admin déjà connectée (via tableau-de-bord.html)
+     est détectée par verifierAdmin() — aucune trace pour le public. -->
+<section id="admin-bloc" class="fond-anthracite" style="display:none; padding-top:3rem;">
+  <div class="container" style="max-width:520px;">
+    <div id="admin-publier">
+      <div class="badge-page-admin">📍 Vous êtes sur : Nos partenaires (Administration)</div>
+      <p style="color:var(--texte-doux); font-size:0.8rem; margin-bottom:1.5rem;">Pour modifier ou supprimer un partenaire déjà publié, ouvre simplement sa fiche en cliquant dessus dans la page.</p>
+
+      <h3 style="margin-bottom:1rem;">Ajouter un partenaire</h3>
+      <div class="form-champ"><label>Nom (personne ou institution) *</label><input type="text" id="p-nom" placeholder="ex: Gilles Touré"></div>
+      <div class="form-champ"><label>Structure représentée</label><input type="text" id="p-structure" placeholder="ex: Conseil du Café-Cacao"></div>
+      <div class="form-champ"><label>Événement associé</label><input type="text" id="p-evenement" placeholder="ex: Cacao Fashion Show — JNCC 2026"></div>
+      <div class="form-champ">
+        <label>Rôle</label>
+        <select id="p-role">
+          <option value="">—</option>
+          <option value="DA">DA (Directeur artistique)</option>
+          <option value="Styliste">Styliste</option>
+          <option value="Directeur de casting">Directeur de casting</option>
+          <option value="Promoteur">Promoteur</option>
+          <option value="Organisateur">Organisateur</option>
+          <option value="Régisseur">Régisseur</option>
+          <option value="Autre">Autre</option>
+        </select>
+      </div>
+      <div class="form-champ"><label>Description / notes (facultatif)</label><textarea id="p-description"></textarea></div>
+      <div class="form-champ"><label>Logo ou affiche (grand format, bonne résolution)</label><input type="file" id="p-logo" accept="image/*"></div>
+
+      <button class="btn btn--principal" id="p-publier-btn" style="margin-top:1.2rem;">Ajouter ce partenaire</button>
+      <button class="btn" id="admin-logout-btn" style="margin-left:0.5rem;">Déconnexion</button>
+      <a href="tableau-de-bord.html" style="display:inline-block; margin-left:0.5rem; color:var(--or); font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase;">Voir le tableau de bord →</a>
+      <div id="p-msg" class="form-msg"></div>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grille">
+      <div>
+        <h4>Maître Akesse Model Management</h4>
+        <p>Révéler le potentiel. Construire l'image. Créer des opportunités.</p>
+      </div>
+      <div>
+        <h4>Navigation</h4>
+        <a href="index.html">Accueil</a>
+        <a href="services.html">Services</a>
+        <a href="mannequins.html">The Book</a>
+        <a href="actualites.html">Actualités</a>
+        <a href="partenaires.html">Nos partenaires</a>
+        <a href="candidature.html">Candidature</a>
+        <a href="inscription-mannequin.html">Inscription</a>
+      </div>
+      <div>
+        <h4>Contact</h4>
+        <a href="tel:+2250545656687">00 225 05 45 65 66 87</a>
+        <a href="mailto:infos.ma2m@gmail.com">infos.ma2m@gmail.com</a>
+        <div class="footer-reseaux">
+          <a href="https://www.instagram.com/maitreakessemodelmanagement" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram"><svg viewBox="0 0 24 24"><defs><linearGradient id="ig-grad-12" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="#FFC107"/><stop offset="50%" stop-color="#F44336"/><stop offset="100%" stop-color="#9C27B0"/></linearGradient></defs><path fill="url(#ig-grad-12)" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98C.014 8.333 0 8.741 0 12s.014 3.667.072 4.948c.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24s3.667-.014 4.948-.072c4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.667.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
+          <a href="https://www.tiktok.com/@agencemaitreakessemodel" target="_blank" rel="noopener" aria-label="TikTok" title="TikTok"><svg viewBox="0 0 24 24"><path fill="#25F4EE" transform="translate(-0.9,-0.9)" d="M16.6 5.82c-1.36-1.57-3.24-1.48-3.24-1.48h-3.09v12.4a2.592 2.592 0 01-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 004.3 1.38V7.3s-1.88.09-3.24-1.48z"/><path fill="#FE2C55" transform="translate(0.9,0.9)" d="M16.6 5.82c-1.36-1.57-3.24-1.48-3.24-1.48h-3.09v12.4a2.592 2.592 0 01-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 004.3 1.38V7.3s-1.88.09-3.24-1.48z"/><path fill="#000000" d="M16.6 5.82c-1.36-1.57-3.24-1.48-3.24-1.48h-3.09v12.4a2.592 2.592 0 01-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 004.3 1.38V7.3s-1.88.09-3.24-1.48z"/></svg></a>
+          <a href="https://www.facebook.com/share/1BzPN69rhE/" target="_blank" rel="noopener" aria-label="Facebook" title="Facebook" style="color:#1877F2;"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12.06C22 6.505 17.523 2 12 2S2 6.505 2 12.06c0 5.022 3.657 9.184 8.438 9.94v-7.03H7.898v-2.91h2.54V9.845c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.459h-1.26c-1.243 0-1.63.771-1.63 1.562v1.875h2.773l-.443 2.91h-2.33V22c4.78-.756 8.437-4.918 8.437-9.94z"/></svg></a>
+          <a href="https://youtube.com/@maitreakessemodelmanagement" target="_blank" rel="noopener" aria-label="YouTube" title="YouTube" style="color:#FF0000;"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a2.994 2.994 0 00-2.107-2.12C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.391.521A2.994 2.994 0 00.502 6.186 31.25 31.25 0 000 12a31.25 31.25 0 00.502 5.814 2.994 2.994 0 002.107 2.12c1.886.521 9.391.521 9.391.521s7.505 0 9.391-.521a2.994 2.994 0 002.107-2.12A31.25 31.25 0 0024 12a31.25 31.25 0 00-.502-5.814zM9.6 15.6V8.4l6.4 3.6-6.4 3.6z"/></svg></a>
+          <a href="https://wa.me/message/HJAMXGXHCL46I1" target="_blank" rel="noopener" aria-label="WhatsApp" title="WhatsApp" style="color:#25D366;"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.472-.148-.67.15-.198.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0a12 12 0 00-10.288 18.06L0 24l6.084-1.688A12 12 0 1012 0zm0 21.938a9.917 9.917 0 01-5.052-1.383l-.362-.215-3.752 1.041 1.004-3.665-.235-.375A9.938 9.938 0 1112 21.938z"/></svg></a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bas">
+      <span>© <span id="an"></span> Maître Akesse Model Management</span>
+      <span>Abidjan, Côte d'Ivoire</span>
+    </div>
+  </div>
+</footer>
+
+<script>document.getElementById('an').textContent = new Date().getFullYear();</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"></script>
+<script src="js/supabase-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+<script src="js/app.js"></script>
+<script src="js/menu.js"></script>
+<script>
+async function convertirSiHeic(fichier) {
+  const estHeic = /image\/hei(c|f)/i.test(fichier.type) || /\.(heic|heif)$/i.test(fichier.name);
+  if (!estHeic || typeof heic2any === 'undefined') return fichier;
+  try {
+    const resultat = await heic2any({ blob: fichier, toType: 'image/jpeg', quality: 0.9 });
+    const blobFinal = Array.isArray(resultat) ? resultat[0] : resultat;
+    return new File([blobFinal], fichier.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' });
+  } catch (e) { return fichier; }
+}
+
+window.partenairesData = [];
+
+async function chargerPartenaires() {
+  const { data, error } = await sb.from('partenaires').select('*').order('created_at', { ascending: false });
+  const grille = document.getElementById('partenaires-grille');
+  const vide = document.getElementById('partenaires-vide');
+
+  if (error || !data || !data.length) {
+    grille.innerHTML = '';
+    vide.style.display = 'block';
+    return;
+  }
+  vide.style.display = 'none';
+  window.partenairesData = data;
+
+  grille.innerHTML = data.map((p, i) => `
+    <div class="news-carte reveal" data-index="${i}">
+      <div class="news-img" style="background:var(--blanc); display:flex; align-items:center; justify-content:center;">
+        ${p.logo_url
+          ? `<img src="${echapperHtml(p.logo_url)}" loading="lazy" alt="${echapperHtml(p.nom)}" style="object-fit:contain; width:80%; height:80%;">`
+          : `<span style="font-family:var(--display); font-size:1.4rem; color:var(--gris);">${echapperHtml((p.nom || '?').charAt(0))}</span>`}
+      </div>
+      <div class="news-corps">
+        <div class="news-date">${echapperHtml(p.role || '')}</div>
+        <h3>${echapperHtml(p.nom || '')}</h3>
+        <span class="news-lire">Voir la fiche →</span>
+      </div>
+    </div>
+  `).join('');
+
+  grille.querySelectorAll('.news-carte').forEach(carte => {
+    carte.addEventListener('click', () => ouvrirPartModal(parseInt(carte.dataset.index)));
+  });
+
+  const idDepuisUrl = new URLSearchParams(window.location.search).get('partenaire');
+  if (idDepuisUrl) {
+    const index = data.findIndex(p => p.id === idDepuisUrl);
+    if (index > -1) ouvrirPartModal(index);
+  }
+}
+chargerPartenaires();
+
+function ouvrirPartModal(index) {
+  const p = window.partenairesData[index];
+  if (!p) return;
+  window.partenaireModalCourant = p.id;
+
+  document.getElementById('part-modal-logo').src = p.logo_url || 'assets/logo-dark-bg.png';
+  document.getElementById('part-modal-logo').onclick = () => {
+    if (p.logo_url) ouvrirGalerieLightbox([p.logo_url], 0);
+  };
+  document.getElementById('part-modal-role').textContent = p.role || '';
+  document.getElementById('part-modal-nom').textContent = p.nom || '';
+  document.getElementById('part-modal-structure').textContent = p.structure || '';
+  document.getElementById('part-modal-evenement').textContent = p.evenement || '';
+  document.getElementById('part-modal-description').textContent = p.description || '';
+
+  document.getElementById('part-modal-nom').style.display = 'block';
+  document.getElementById('part-modal-structure').style.display = 'block';
+  document.getElementById('part-modal-evenement').style.display = 'block';
+  document.getElementById('part-modal-description').style.display = 'block';
+  document.getElementById('part-modal-edition').style.display = 'none';
+  document.getElementById('part-modal-admin-actions').style.display = window.estAdminConnecte ? 'block' : 'none';
+
+  document.getElementById('part-modal').classList.add('active');
+}
+document.getElementById('part-modal-fermer').addEventListener('click', () => document.getElementById('part-modal').classList.remove('active'));
+
+// --- Modification / suppression directement depuis la fiche ouverte (admin) ---
+document.getElementById('part-modal-modifier-btn').addEventListener('click', () => {
+  const p = window.partenairesData.find(x => x.id === window.partenaireModalCourant);
+  if (!p) return;
+  document.getElementById('edit-p-nom').value = p.nom || '';
+  document.getElementById('edit-p-structure').value = p.structure || '';
+  document.getElementById('edit-p-evenement').value = p.evenement || '';
+  document.getElementById('edit-p-role').value = p.role || '';
+  document.getElementById('edit-p-description').value = p.description || '';
+  document.getElementById('edit-p-logo').value = '';
+  document.getElementById('edit-p-msg').style.display = 'none';
+
+  document.getElementById('part-modal-nom').style.display = 'none';
+  document.getElementById('part-modal-structure').style.display = 'none';
+  document.getElementById('part-modal-evenement').style.display = 'none';
+  document.getElementById('part-modal-description').style.display = 'none';
+  document.getElementById('part-modal-admin-actions').style.display = 'none';
+  document.getElementById('part-modal-edition').style.display = 'block';
+});
+
+document.getElementById('edit-p-annuler-btn').addEventListener('click', () => {
+  document.getElementById('part-modal-edition').style.display = 'none';
+  document.getElementById('part-modal-nom').style.display = 'block';
+  document.getElementById('part-modal-structure').style.display = 'block';
+  document.getElementById('part-modal-evenement').style.display = 'block';
+  document.getElementById('part-modal-description').style.display = 'block';
+  document.getElementById('part-modal-admin-actions').style.display = 'block';
+});
+
+document.getElementById('edit-p-enregistrer-btn').addEventListener('click', async () => {
+  const id = window.partenaireModalCourant;
+  const msg = document.getElementById('edit-p-msg');
+  const nom = document.getElementById('edit-p-nom').value.trim();
+  if (!nom) { msg.className = 'form-msg err'; msg.textContent = 'Le nom est obligatoire.'; msg.style.display = 'block'; return; }
+
+  msg.className = 'form-msg ok'; msg.textContent = 'Enregistrement…'; msg.style.display = 'block';
+
+  const maj = {
+    nom,
+    structure: document.getElementById('edit-p-structure').value.trim(),
+    evenement: document.getElementById('edit-p-evenement').value.trim(),
+    role: document.getElementById('edit-p-role').value,
+    description: document.getElementById('edit-p-description').value.trim()
+  };
+
+  const logoInput = document.getElementById('edit-p-logo');
+  if (logoInput.files[0]) {
+    const fichier = await convertirSiHeic(logoInput.files[0]);
+    const chemin = `${id}/${Date.now()}-${nomFichierSur(fichier.name)}`;
+    const { error: erreurLogo } = await sb.storage.from('partenaires-logos').upload(chemin, fichier);
+    if (!erreurLogo) {
+      const { data: urlLogo } = sb.storage.from('partenaires-logos').getPublicUrl(chemin);
+      maj.logo_url = urlLogo.publicUrl;
+      maj.logo_chemin = chemin;
+    }
+  }
+
+  const { error } = await sb.from('partenaires').update(maj).eq('id', id);
+  if (error) { msg.className = 'form-msg err'; msg.textContent = "Erreur lors de la modification."; return; }
+
+  msg.className = 'form-msg ok'; msg.textContent = 'Partenaire modifié !';
+  await chargerPartenaires();
+  const index = window.partenairesData.findIndex(x => x.id === id);
+  if (index > -1) ouvrirPartModal(index);
+});
+
+document.getElementById('part-modal-supprimer-btn').addEventListener('click', async () => {
+  const id = window.partenaireModalCourant;
+  if (!confirm('Supprimer définitivement ce partenaire ?')) return;
+  const p = window.partenairesData.find(x => x.id === id);
+  if (p && p.logo_chemin) await sb.storage.from('partenaires-logos').remove([p.logo_chemin]);
+  await sb.from('partenaires').delete().eq('id', id);
+  document.getElementById('part-modal').classList.remove('active');
+  chargerPartenaires();
+});
+
+// --- Ajout d'un nouveau partenaire ---
+document.getElementById('p-publier-btn').addEventListener('click', async () => {
+  const msg = document.getElementById('p-msg');
+  const nom = document.getElementById('p-nom').value.trim();
+  if (!nom) { msg.className = 'form-msg err'; msg.textContent = 'Le nom est obligatoire.'; msg.style.display = 'block'; return; }
+
+  msg.className = 'form-msg ok'; msg.textContent = 'Enregistrement…'; msg.style.display = 'block';
+
+  const idPartenaire = crypto.randomUUID();
+  let logo_url = null, logo_chemin = null;
+  const logoInput = document.getElementById('p-logo');
+  if (logoInput.files[0]) {
+    const fichier = await convertirSiHeic(logoInput.files[0]);
+    const chemin = `${idPartenaire}/${Date.now()}-${nomFichierSur(fichier.name)}`;
+    const { error: erreurLogo } = await sb.storage.from('partenaires-logos').upload(chemin, fichier);
+    if (!erreurLogo) {
+      const { data: urlLogo } = sb.storage.from('partenaires-logos').getPublicUrl(chemin);
+      logo_url = urlLogo.publicUrl;
+      logo_chemin = chemin;
+    }
+  }
+
+  const { error } = await sb.from('partenaires').insert({
+    id: idPartenaire, nom,
+    structure: document.getElementById('p-structure').value.trim(),
+    evenement: document.getElementById('p-evenement').value.trim(),
+    role: document.getElementById('p-role').value,
+    description: document.getElementById('p-description').value.trim(),
+    logo_url, logo_chemin
+  });
+
+  if (error) { msg.className = 'form-msg err'; msg.textContent = "Erreur d'enregistrement."; return; }
+
+  msg.className = 'form-msg ok'; msg.textContent = 'Partenaire ajouté !';
+  document.getElementById('p-nom').value = '';
+  document.getElementById('p-structure').value = '';
+  document.getElementById('p-evenement').value = '';
+  document.getElementById('p-role').value = '';
+  document.getElementById('p-description').value = '';
+  logoInput.value = '';
+  chargerPartenaires();
+});
+
+// Aucune interface de connexion sur cette page publique : un admin se connecte
+// depuis tableau-de-bord.html, puis sa session est simplement détectée ici pour
+// révéler le panneau d'ajout de partenaire — sans aucune trace visible pour un visiteur.
+document.getElementById('admin-logout-btn').addEventListener('click', async () => {
+  await sb.auth.signOut();
+  window.location.reload();
+});
+
+async function verifierAdmin() {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return;
+  const { data } = await sb.from('admins').select('user_id').eq('user_id', user.id).single();
+  if (data) {
+    window.estAdminConnecte = true;
+    document.getElementById('admin-bloc').style.display = 'block';
+  }
+}
+verifierAdmin();
+</script>
+</body>
+</html>

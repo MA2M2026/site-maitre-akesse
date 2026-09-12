@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<title>Générateur QR Code — Maître Akesse Model Management</title>
+<style>
+  body { font-family: sans-serif; background:#f4f3f1; display:flex; flex-direction:column; align-items:center; padding:3rem 1rem; }
+  h1 { font-size:1.3rem; margin-bottom:0.3rem; text-align:center; }
+  p { color:#555; margin-top:0; text-align:center; }
+  #conteneur { position:relative; background:#fff; padding:1.5rem; box-shadow:0 8px 24px rgba(0,0,0,0.1); margin-top:1.5rem; width:500px; max-width:80vw; aspect-ratio:1/1; }
+  #conteneur img#qr-img { width:100%; height:100%; display:block; }
+  #logo-overlay {
+    position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);
+    width:22%; aspect-ratio:1/1; background:#fff; padding:6px; display:flex; align-items:center; justify-content:center;
+  }
+  #logo-overlay img { width:100%; height:100%; object-fit:contain; }
+  a.telecharger { margin-top:1.5rem; padding:0.8rem 1.6rem; background:#0a0a0a; color:#fff; border:none; font-size:0.9rem; cursor:pointer; text-decoration:none; }
+  a.telecharger:hover { background:#e10600; }
+</style>
+</head>
+<body>
+  <h1>QR Code — www.maitreakessemodelmanagement.com</h1>
+  <p>Le code se génère automatiquement ci-dessous, avec ton logo au centre.</p>
+  <div id="conteneur">
+    <img id="qr-img" alt="QR code vers www.maitreakessemodelmanagement.com">
+    <div id="logo-overlay"><img src="assets/logo-light-bg.jpg" alt=""></div>
+  </div>
+  <a class="telecharger" id="telecharger" download="qr-code-maitreakessemodelmanagement.png">Télécharger le QR code (PNG)</a>
+
+  <script>
+    // Génère le QR code via une image directe (pas de bibliothèque JS à charger) :
+    // beaucoup plus fiable sur les réseaux qui bloquent certains CDN.
+    const url = 'https://www.maitreakessemodelmanagement.com';
+    const taille = 900;
+    const lienQr = 'https://api.qrserver.com/v1/create-qr-code/?size=' + taille + 'x' + taille
+      + '&ecc=H&margin=10&color=0a0a0a&bgcolor=ffffff&data=' + encodeURIComponent(url);
+
+    document.getElementById('qr-img').src = lienQr;
+    document.getElementById('telecharger').href = lienQr;
+  </script>
+</body>
+</html>
