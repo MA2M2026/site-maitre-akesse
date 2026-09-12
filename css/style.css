@@ -1,5 +1,5 @@
-/* ===== Maître Akesse Model Management — Design tokens =====
-   Couleurs : noir profond + bordeaux signature (accent principal), touche d'or mineure héritée du logo
+/* ===== MaÃ®tre Akesse Model Management â€” Design tokens =====
+   Couleurs : noir profond + bordeaux signature (accent principal), touche d'or mineure hÃ©ritÃ©e du logo
    Typo : Cormorant Garamond (titres, display) + Jost (texte courant)
 */
 
@@ -7,22 +7,22 @@
 
 :root {
   --noir: #060504;           /* fond dominant, noir profond */
-  --noir-doux: #0e0b0a;      /* variation légèrement plus claire (cartes, séparation) */
-  --anthracite: #170f11;     /* variation teintée bordeaux, pour distinguer une section sombre */
+  --noir-doux: #0e0b0a;      /* variation lÃ©gÃ¨rement plus claire (cartes, sÃ©paration) */
+  --anthracite: #170f11;     /* variation teintÃ©e bordeaux, pour distinguer une section sombre */
   --blanc: #ffffff;
-  --creme: #f4f0ea;          /* réservé aux rares cartes claires (fiche mensurations, modales) */
+  --creme: #f4f0ea;          /* rÃ©servÃ© aux rares cartes claires (fiche mensurations, modales) */
 
   --texte-corps: #cdc5be;    /* texte courant clair sur fond noir */
-  --texte-doux: #948c85;     /* texte secondaire, atténué */
+  --texte-doux: #948c85;     /* texte secondaire, attÃ©nuÃ© */
   --titre-clair: #f5efe7;    /* titres sur fond sombre */
 
-  --bordeaux: #7a1220;       /* bordeaux profond — remplissages pleins, boutons */
-  --bordeaux-noir: #2b0a0e;  /* bordeaux tendant vers le noir — ombres, profondeur */
-  --bordeaux-vif: #9c1c2c;   /* état de survol */
-  --bordeaux-clair: #cf3b52; /* bordeaux lumineux — texte/labels sur fond noir (meilleur contraste) */
+  --bordeaux: #7a1220;       /* bordeaux profond â€” remplissages pleins, boutons */
+  --bordeaux-noir: #2b0a0e;  /* bordeaux tendant vers le noir â€” ombres, profondeur */
+  --bordeaux-vif: #9c1c2c;   /* Ã©tat de survol */
+  --bordeaux-clair: #cf3b52; /* bordeaux lumineux â€” texte/labels sur fond noir (meilleur contraste) */
 
-  --or: #c9a24b;             /* touche discrète héritée du logo, usage mineur */
-  --rouge: var(--bordeaux-clair); /* alias conservé pour compatibilité (.oeil, anciens usages) */
+  --or: #c9a24b;             /* touche discrÃ¨te hÃ©ritÃ©e du logo, usage mineur */
+  --rouge: var(--bordeaux-clair); /* alias conservÃ© pour compatibilitÃ© (.oeil, anciens usages) */
 
   --gris: #8a837d;
   --gris-clair: rgba(255,255,255,0.16); /* fines bordures / aplats discrets sur fond noir */
@@ -65,8 +65,8 @@ body {
 
 img, video { max-width: 100%; display: block; }
 
-/* Protection des images : décourage l'enregistrement/glisser-déposer/appui long.
-   Le tableau de bord admin annule cette règle (voir plus bas) pour pouvoir télécharger. */
+/* Protection des images : dÃ©courage l'enregistrement/glisser-dÃ©poser/appui long.
+   Le tableau de bord admin annule cette rÃ¨gle (voir plus bas) pour pouvoir tÃ©lÃ©charger. */
 body:not(.zone-admin) img {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -146,7 +146,7 @@ p { max-width: 62ch; color: var(--texte-corps); }
 .fil-ariane a:hover { color: var(--bordeaux-clair); }
 .fil-ariane span { margin: 0 0.5rem; opacity: 0.6; }
 
-/* ---------- Header (ancienne version, conservée pour compatibilité) ---------- */
+/* ---------- Header (ancienne version, conservÃ©e pour compatibilitÃ©) ---------- */
 
 .site-header {
   position: sticky;
@@ -229,7 +229,7 @@ p { max-width: 62ch; color: var(--texte-corps); }
 .btn--blanc { border-color: rgba(255,255,255,0.35); color: #fff; background: transparent; }
 .btn--blanc:hover { background: rgba(255,255,255,0.08); border-color: #fff; }
 
-/* ---------- Hero (ancienne mise en page, conservée pour compatibilité) ---------- */
+/* ---------- Hero (ancienne mise en page, conservÃ©e pour compatibilitÃ©) ---------- */
 
 .hero { background: var(--noir); color: var(--blanc); padding: 5.5rem 0 6rem; position: relative; overflow: hidden; }
 
@@ -257,7 +257,7 @@ p { max-width: 62ch; color: var(--texte-corps); }
 .reveal-delay-2.visible { transition-delay: 0.2s; }
 .reveal-delay-3.visible { transition-delay: 0.3s; }
 
-/* ---------- Sections génériques ---------- */
+/* ---------- Sections gÃ©nÃ©riques ---------- */
 
 section { padding: 5rem 0; }
 
@@ -270,7 +270,7 @@ section { padding: 5rem 0; }
 .fond-noir p, .fond-anthracite p { color: var(--texte-corps); }
 .fond-noir .section-tete p, .fond-anthracite .section-tete p { color: var(--texte-corps); }
 
-/* ---------- Services : mise en page asymétrique ---------- */
+/* ---------- Services : mise en page asymÃ©trique ---------- */
 
 .services-liste { display: grid; grid-template-columns: repeat(12, 1fr); gap: 0; border-top: 1px solid var(--gris-clair); }
 
@@ -354,7 +354,7 @@ section { padding: 5rem 0; }
 
 @media (max-width: 780px) { .compsheet-tete { grid-template-columns: 1fr; } }
 
-/* ---------- Événements / Runway ---------- */
+/* ---------- Ã‰vÃ©nements / Runway ---------- */
 
 .evenements-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2.2rem; }
 .evenement-carte { border-top: 2px solid var(--bordeaux); padding-top: 1.2rem; transition: border-color 0.3s ease; }
@@ -363,7 +363,7 @@ section { padding: 5rem 0; }
 .evenement-carte h3 { margin-top: 0.5rem; }
 .evenement-carte p { margin-top: 0.5rem; font-size: 0.92rem; color: var(--texte-doux); }
 
-/* ---------- Bande de statistiques (chiffres réels, page d'accueil) ---------- */
+/* ---------- Bande de statistiques (chiffres rÃ©els, page d'accueil) ---------- */
 .stats-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1.6rem; text-align: center; }
 .stat-item { padding: 1.2rem 1rem; border-left: 1px solid var(--gris-clair); }
 .stat-item:first-child { border-left: none; }
@@ -515,7 +515,7 @@ section { padding: 5rem 0; }
 
 @media (max-width: 720px) { .footer-grille { grid-template-columns: 1fr; } }
 
-/* ---------- Panier de sélection recruteur ---------- */
+/* ---------- Panier de sÃ©lection recruteur ---------- */
 
 .panier-widget {
   display: none;
@@ -574,7 +574,7 @@ section { padding: 5rem 0; }
 .filtres-avances input:focus, .filtres-avances select:focus { outline: none; border-color: var(--bordeaux-clair); box-shadow: none; background: transparent; }
 
 
-/* ---------- Header épuré + Menu plein écran (style grande maison) ---------- */
+/* ---------- Header Ã©purÃ© + Menu plein Ã©cran (style grande maison) ---------- */
 
 .site-header-v2 {
   position: sticky;
@@ -627,7 +627,7 @@ section { padding: 5rem 0; }
 .menu-trigger .dots { display: flex; flex-direction: column; gap: 3px; }
 .menu-trigger .dots span { width: 4px; height: 4px; background: currentColor; border-radius: 50%; display: block; }
 
-/* ---------- Menu — overlay plein écran ---------- */
+/* ---------- Menu â€” overlay plein Ã©cran ---------- */
 
 .menu-overlay {
   position: fixed;
@@ -764,7 +764,7 @@ section { padding: 5rem 0; }
   .menu-overlay .nav-links a { font-size: 1.3rem; padding: 0.5rem 1rem; }
 }
 
-/* ---------- Hero plein écran cinématographique ---------- */
+/* ---------- Hero plein Ã©cran cinÃ©matographique ---------- */
 
 .hero-v2 {
   height: 100vh;
@@ -865,7 +865,7 @@ section { padding: 5rem 0; }
 }
 .hero-dots span.actif { background: var(--bordeaux-clair); transform: scale(1.3); box-shadow: 0 0 10px rgba(207,59,82,0.6); }
 
-/* ---------- Bandeau défilant (marquee) ---------- */
+/* ---------- Bandeau dÃ©filant (marquee) ---------- */
 
 .marquee-bande {
   display: flex;
@@ -876,7 +876,7 @@ section { padding: 5rem 0; }
   z-index: 2;
 }
 
-/* Étiquette fixe à gauche — masquée par défaut, visible uniquement quand une
+/* Ã‰tiquette fixe Ã  gauche â€” masquÃ©e par dÃ©faut, visible uniquement quand une
    annonce est active (voir chargerBandeauAnnonce() sur la page d'accueil). */
 .marquee-label {
   flex-shrink: 0;
@@ -888,14 +888,20 @@ section { padding: 5rem 0; }
   font-family: var(--texte); font-size: 0.66rem; font-weight: 600;
   letter-spacing: 0.16em; text-transform: uppercase;
   white-space: nowrap;
+  animation: marquee-label-glow 1.4s ease-in-out infinite;
 }
 .marquee-label::before {
-  content: '●';
+  content: 'â—';
   font-size: 0.55rem;
   color: var(--bordeaux);
   animation: marquee-label-pulse 1.6s ease-in-out infinite;
 }
 @keyframes marquee-label-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+@keyframes marquee-label-glow {
+  0%, 100% { background: var(--blanc); box-shadow: 0 0 0 rgba(255,255,255,0); }
+  50% { background: #fff7f8; box-shadow: 0 0 14px 2px rgba(255,255,255,0.85); }
+}
+@media (prefers-reduced-motion: reduce) { .marquee-label { animation: none; } }
 
 .marquee-viewport {
   flex: 1;
@@ -918,7 +924,7 @@ section { padding: 5rem 0; }
   .marquee-label { font-size: 0.58rem; padding: 0 0.9rem; }
 }
 
-/* ---------- Bord irrégulier "papier déchiré" (transition image → bloc noir) ---------- */
+/* ---------- Bord irrÃ©gulier "papier dÃ©chirÃ©" (transition image â†’ bloc noir) ---------- */
 
 .bord-dechire-bas { position: relative; }
 .bord-dechire-bas::after {
@@ -932,7 +938,7 @@ section { padding: 5rem 0; }
   pointer-events: none; z-index: 2;
 }
 
-/* ---------- Lightbox plein écran lumineux (réutilisable sur tout le site) ---------- */
+/* ---------- Lightbox plein Ã©cran lumineux (rÃ©utilisable sur tout le site) ---------- */
 
 .lightbox-global {
   position: fixed; inset: 0; z-index: 2000;
@@ -978,7 +984,7 @@ section { padding: 5rem 0; }
   .lightbox-global .lightbox-suivant { right: 0.5rem; }
 }
 
-/* ---------- Ancien lightbox local (conservé pour compatibilité, non utilisé) ---------- */
+/* ---------- Ancien lightbox local (conservÃ© pour compatibilitÃ©, non utilisÃ©) ---------- */
 
 .lightbox {
   position: fixed; inset: 0; z-index: 900;
@@ -1024,7 +1030,7 @@ section { padding: 5rem 0; }
   .lightbox-suivant { right: 0.6rem; }
 }
 
-/* ---------- Médaillons mannequins (page listing) ---------- */
+/* ---------- MÃ©daillons mannequins (page listing) ---------- */
 
 .medaillon-grille {
   display: grid;
@@ -1081,7 +1087,7 @@ section { padding: 5rem 0; }
   .medaillon-photo { width: 140px; height: 140px; }
 }
 
-/* ---------- Porte d'entrée (hero verrouillé) ---------- */
+/* ---------- Porte d'entrÃ©e (hero verrouillÃ©) ---------- */
 
 body.porte-verrouillee { overflow: hidden; height: 100vh; }
 
@@ -1113,7 +1119,7 @@ body.porte-verrouillee { overflow: hidden; height: 100vh; }
   50% { transform: translateY(6px); }
 }
 
-/* ---------- Actualités & Activités ---------- */
+/* ---------- ActualitÃ©s & ActivitÃ©s ---------- */
 
 .filtres-categories { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 2.6rem; }
 .filtre-categorie {
@@ -1203,10 +1209,10 @@ body.porte-verrouillee { overflow: hidden; height: 100vh; }
 .news-modal-corps .form-champ select option { background: #fff; color: #1a1512; }
 .news-modal-fermer { position: absolute; top: 1.2rem; right: 1.4rem; background: rgba(0,0,0,0.6); color: #fff; border: none; width: 32px; height: 32px; cursor: pointer; font-size: 1rem; z-index: 2; }
 
-/* ---------- Verrouillage complet pendant la porte d'entrée ---------- */
+/* ---------- Verrouillage complet pendant la porte d'entrÃ©e ---------- */
 body.porte-verrouillee .site-header-v2 { display: none; }
 
-/* ---------- Indicateur vidéo sur les cartes actualités ---------- */
+/* ---------- Indicateur vidÃ©o sur les cartes actualitÃ©s ---------- */
 .news-play {
   position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
   width: 38px; height: 38px; border-radius: 50%; background: rgba(0,0,0,0.55);
@@ -1227,7 +1233,7 @@ body.porte-verrouillee .site-header-v2 { display: none; }
 @media (max-width: 700px) { .whatsapp-flottant { width: 50px; height: 50px; bottom: 1rem; left: 1rem; } }
 body.porte-verrouillee .whatsapp-flottant { display: none; }
 
-/* ---------- Galerie multi-photos dans la modale actualité (revue de presse) ---------- */
+/* ---------- Galerie multi-photos dans la modale actualitÃ© (revue de presse) ---------- */
 .news-modal-galerie {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -1244,7 +1250,7 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
   pointer-events: none;
 }
 
-/* ---------- Badge indiquant la page admin active (visible uniquement une fois connecté en admin) ---------- */
+/* ---------- Badge indiquant la page admin active (visible uniquement une fois connectÃ© en admin) ---------- */
 .badge-page-admin {
   display: inline-block; margin-bottom: 0.8rem;
   padding: 0.3rem 0.8rem; background: var(--bordeaux); color: #fff;
@@ -1287,7 +1293,7 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
   font-size: 1.1rem; cursor: pointer; color: #6b6560;
 }
 
-/* ---------- Mannequin à la une (accueil) — traitement plein écran, façon couverture ---------- */
+/* ---------- Mannequin Ã  la une (accueil) â€” traitement plein Ã©cran, faÃ§on couverture ---------- */
 .vedette-fullbleed {
   display: block; position: relative; width: 100%; height: 86vh; min-height: 520px; max-height: 820px;
   overflow: hidden; text-decoration: none; color: var(--blanc);
@@ -1343,7 +1349,7 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
   .confiance-carte { width: 104px; height: 74px; }
 }
 
-/* ---------- Équipe / partenaires créatifs (cartes rectangulaires) ---------- */
+/* ---------- Ã‰quipe / partenaires crÃ©atifs (cartes rectangulaires) ---------- */
 .equipe-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 1.8rem; }
 .equipe-carte { position: relative; border-radius: 6px; overflow: hidden; background: var(--noir-doux); }
 .equipe-carte-photo { position: relative; aspect-ratio: 3/4; overflow: hidden; }
