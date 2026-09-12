@@ -380,12 +380,18 @@ async function chargerPhotosHero() {
   // Dans tous les cas, on va chercher une liste fraîche pour cette visite (si besoin) et la suivante.
   const { data } = await sb
     .from('model_photos')
-    .select('url, model_profiles!inner(published)')
+    .select('url, model_id, model_profiles!inner(published)')
     .eq('model_profiles.published', true)
     .order('created_at', { ascending: false })
-    .limit(30);
+    .limit(120);
 
-  const urls = (data || []).map(p => p.url);
+  // Une photo au hasard par mannequin distinct, pour que la vitrine ne mette jamais
+  // en avant un seul profil au détriment des autres.
+  const parMannequin = new Map();
+  melanger(data || []).forEach(p => {
+    if (!parMannequin.has(p.model_id)) parMannequin.set(p.model_id, p.url);
+  });
+  const urls = melanger(Array.from(parMannequin.values()));
   if (urls.length) {
     try { localStorage.setItem(CLE_CACHE, JSON.stringify(urls)); } catch (e) {}
     if (!cache.length) melanger(urls).slice(0, imagesHero.length).forEach((url, i) => afficher(imagesHero[i], url));
