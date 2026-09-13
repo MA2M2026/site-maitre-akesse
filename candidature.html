@@ -126,6 +126,14 @@
         <input type="file" id="ca-photo3" accept="image/*">
       </div>
 
+      <div class="form-champ" style="display:flex; align-items:flex-start; gap:0.6rem;">
+        <input type="checkbox" id="ca-consentement" required style="width:auto; margin-top:0.3rem;">
+        <label for="ca-consentement" style="font-weight:400; font-size:0.85rem;">
+          J'ai pris connaissance de la <a href="politique-confidentialite.html" target="_blank" style="color:var(--rouge);">politique de confidentialité</a>.
+          Si je suis mineur(e), je certifie candidater avec l'accord d'un parent ou tuteur légal. *
+        </label>
+      </div>
+
       <button type="submit" class="btn btn--principal" id="btn-envoyer">Envoyer ma candidature</button>
       <div id="ca-msg" class="form-msg"></div>
     </form>
@@ -165,6 +173,7 @@
     <div class="footer-bas">
       <span>© <span id="an"></span> Maître Akesse Model Management</span>
       <span>Abidjan, Côte d'Ivoire</span>
+      <span><a href="mentions-legales.html">Mentions légales</a> · <a href="politique-confidentialite.html">Confidentialité</a></span>
     </div>
   </div>
 </footer>

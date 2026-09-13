@@ -46,12 +46,12 @@
 
 <section>
   <div class="container">
-    <a href="mannequins.html" style="color:var(--or); font-size:0.8rem; letter-spacing:0.08em; text-transform:uppercase;">← Nos mannequins</a>
+    <a href="mannequins.html" class="no-print" style="color:var(--or); font-size:0.8rem; letter-spacing:0.08em; text-transform:uppercase;">← Nos mannequins</a>
     <div id="contenu" style="margin-top:2rem;">Chargement…</div>
   </div>
 </section>
 
-<section style="padding-top:0;">
+<section style="padding-top:0;" class="no-print">
   <div class="container">
     <h2 style="margin-bottom:1.5rem;">Book</h2>
     <div id="galerie" class="mannequins-grille"></div>
@@ -91,6 +91,7 @@
     <div class="footer-bas">
       <span>© <span id="an"></span> Maître Akesse Model Management</span>
       <span>Abidjan, Côte d'Ivoire</span>
+      <span><a href="mentions-legales.html">Mentions légales</a> · <a href="politique-confidentialite.html">Confidentialité</a></span>
     </div>
   </div>
 </footer>
@@ -107,6 +108,27 @@ function libelleTypeModele(t) {
   return libelles[t] || t;
 }
 
+// Convertit un lien YouTube/Vimeo classique en URL de lecteur intégrable (iframe).
+// Renvoie null si le lien n'est pas reconnu — dans ce cas on affiche un simple lien.
+function urlEmbedVideo(url) {
+  if (!url) return null;
+  try {
+    const u = new URL(url);
+    if (u.hostname.includes('youtube.com')) {
+      const idVideo = u.searchParams.get('v');
+      return idVideo ? `https://www.youtube.com/embed/${idVideo}` : null;
+    }
+    if (u.hostname === 'youtu.be') {
+      return `https://www.youtube.com/embed/${u.pathname.slice(1)}`;
+    }
+    if (u.hostname.includes('vimeo.com')) {
+      const idVideo = u.pathname.split('/').filter(Boolean)[0];
+      return idVideo ? `https://player.vimeo.com/video/${idVideo}` : null;
+    }
+  } catch (e) { return null; }
+  return null;
+}
+
 async function chargerProfil() {
   const params = new URLSearchParams(window.location.search);
   const id = params.get('id');
@@ -117,7 +139,7 @@ async function chargerProfil() {
 
   const { data: profil, error } = await sb
     .from('model_profiles')
-    .select('id, full_name, city, category, date_naissance, height_cm, chest_cm, waist_cm, hips_cm, inseam_cm, shoe_size, carnation, clothing_size, eye_color, hair_color, bio, years_experience, model_types, languages, availability')
+    .select('id, full_name, city, category, date_naissance, height_cm, chest_cm, waist_cm, hips_cm, inseam_cm, shoe_size, carnation, clothing_size, eye_color, hair_color, bio, years_experience, model_types, languages, availability, video_url')
     .eq('id', id)
     .eq('published', true)
     .single();
@@ -186,6 +208,15 @@ async function chargerProfil() {
         </div>` : ''}
     </div>` : '';
 
+  const urlVideo = urlEmbedVideo(profil.video_url);
+  const blocVideo = profil.video_url ? `
+    <div style="margin-top:1.8rem;">
+      <h3 style="font-size:1rem; text-transform:uppercase; letter-spacing:0.06em;">Vidéo</h3>
+      ${urlVideo
+        ? `<div class="video-embed-wrap"><iframe src="${echapperHtml(urlVideo)}" title="Vidéo de présentation" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`
+        : `<a href="${echapperHtml(profil.video_url)}" target="_blank" rel="noopener" style="color:var(--rouge); font-weight:600;">▶ Voir la vidéo de présentation</a>`}
+    </div>` : '';
+
   const blocProfil = (profil.years_experience || (profil.model_types && profil.model_types.length) || profil.languages || profil.availability) ? `
     <div style="margin-top:1.8rem;">
       ${profil.years_experience ? `<div class="mensuration-item" style="display:inline-block; margin-right:1.5rem;"><span class="label">Expérience</span><span class="valeur">${profil.years_experience} an${profil.years_experience > 1 ? 's' : ''}</span></div>` : ''}
@@ -225,6 +256,8 @@ async function chargerProfil() {
 
         ${profil.bio ? `<p style="margin-top:1.2rem;">${echapperHtml(profil.bio)}</p>` : ''}
 
+        ${blocVideo}
+
         <div style="margin-top:1.5rem; padding:1rem; background:var(--gris-clair);">
           <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--gris); margin-bottom:0.6rem;">🔒 Contact officiel MA2M</div>
           <div style="margin-top:0.4rem;"><a href="tel:+2252722231176" style="font-weight:600; color:var(--noir);">📞 +225 27 22 23 11 76</a></div>
@@ -233,10 +266,16 @@ async function chargerProfil() {
           <a href="https://www.instagram.com/maitreakessemodelmanagement" target="_blank" rel="noopener" style="display:inline-block; margin-top:0.6rem; font-weight:600; color:var(--rouge);">@maitreakessemodelmanagement</a>
         </div>
 
-        <button id="btn-select-fiche" class="btn btn--principal" style="margin-top:1.8rem;"></button>
+        <div style="display:flex; gap:0.8rem; flex-wrap:wrap; margin-top:1.8rem;">
+          <button id="btn-select-fiche" class="btn btn--principal"></button>
+          <button id="btn-imprimer-fiche" class="btn no-print">🖨️ Télécharger la fiche (PDF)</button>
+        </div>
       </div>
     </div>
   `;
+
+  const btnImprimer = document.getElementById('btn-imprimer-fiche');
+  if (btnImprimer) btnImprimer.addEventListener('click', () => window.print());
 
   const btnVoirTous = document.getElementById('btn-voir-tous-projets');
   if (btnVoirTous) {

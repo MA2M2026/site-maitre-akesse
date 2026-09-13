@@ -148,6 +148,18 @@
     </div>
 
     <div class="liste-recente">
+      <h2 style="margin-bottom:0.3rem;">Codes d'inscription</h2>
+      <p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Chaque code ne peut servir qu'une seule fois. Générez-en un et transmettez-le (WhatsApp, SMS...) à la personne que vous invitez à s'inscrire.</p>
+      <button class="btn btn--principal" id="generer-code-btn">+ Générer un nouveau code</button>
+      <div id="nouveau-code-affiche" style="display:none; margin-top:1rem; padding:1rem; background:var(--anthracite, var(--noir)); display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+        <span style="font-family:var(--display); font-size:1.4rem; color:var(--titre-clair, #fff); letter-spacing:0.08em;" id="nouveau-code-texte"></span>
+        <button class="btn" id="copier-code-btn">Copier</button>
+      </div>
+      <div id="codes-msg" class="form-msg"></div>
+      <div class="dossier-liste" id="liste-codes" style="margin-top:1.5rem;"></div>
+    </div>
+
+    <div class="liste-recente">
       <div class="dossiers-entete">
         <h2 style="margin:0;">Inscriptions mannequins</h2>
         <span class="dossiers-compteur" id="inscriptions-compteur"></span>
@@ -332,6 +344,7 @@ async function chargerStatistiques() {
   `;
 
   chargerClassementMannequins();
+  chargerCodes();
   chargerCandidatures();
   chargerInscriptions();
   chargerRecruteurs();
@@ -481,7 +494,8 @@ const CHAMPS_CASTING = [
 ];
 const CHAMPS_INSCRIPTION = [
   ['phone', 'Téléphone'], ['email', 'E-mail'], ['instagram', 'Instagram'], ['date_naissance', 'Date de naissance'],
-  ['height_cm', 'Taille', 'cm'], ['clothing_size', 'Taille vêtements'], ['code_utilise', "Code d'accès utilisé"]
+  ['height_cm', 'Taille', 'cm'], ['clothing_size', 'Taille vêtements'], ['code_utilise', "Code d'accès utilisé"],
+  ['reference_paiement', 'Référence de paiement Wave']
 ];
 const CHAMPS_RECRUTEUR = [
   ['company', 'Entreprise / marque'], ['email', 'E-mail'], ['phone', 'Téléphone'], ['whatsapp', 'WhatsApp'],
@@ -593,6 +607,64 @@ document.getElementById('mf-statut-select').addEventListener('change', async (e)
   await sb.from(conf.table).update({ [conf.statutChamp]: e.target.value }).eq('id', ficheOuverte.id);
   afficherDossiers(ficheOuverte.source);
 });
+
+// --- Codes d'inscription (usage unique) ---
+function genererCode() {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // sans O/0 ni I/1, pour éviter la confusion
+  let code = '';
+  for (let i = 0; i < 6; i++) code += alphabet[Math.floor(Math.random() * alphabet.length)];
+  return 'MA2M-' + code;
+}
+
+document.getElementById('generer-code-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('generer-code-btn');
+  const msg = document.getElementById('codes-msg');
+  btn.disabled = true;
+
+  let code = genererCode();
+  // Sécurité négligeable mais gratuite : on s'assure que le code n'existe pas déjà.
+  let { data: existant } = await sb.from('codes_inscription').select('code').eq('code', code).maybeSingle();
+  while (existant) {
+    code = genererCode();
+    ({ data: existant } = await sb.from('codes_inscription').select('code').eq('code', code).maybeSingle());
+  }
+
+  const { error } = await sb.from('codes_inscription').insert({ code });
+  btn.disabled = false;
+
+  if (error) {
+    msg.className = 'form-msg err'; msg.textContent = 'Erreur lors de la génération du code.'; msg.style.display = 'block';
+    return;
+  }
+
+  document.getElementById('nouveau-code-texte').textContent = code;
+  document.getElementById('nouveau-code-affiche').style.display = 'flex';
+  msg.style.display = 'none';
+  chargerCodes();
+});
+
+document.getElementById('copier-code-btn').addEventListener('click', () => {
+  const code = document.getElementById('nouveau-code-texte').textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    const btn = document.getElementById('copier-code-btn');
+    const texteOriginal = btn.textContent;
+    btn.textContent = 'Copié !';
+    setTimeout(() => { btn.textContent = texteOriginal; }, 1500);
+  });
+});
+
+async function chargerCodes() {
+  const { data: codes } = await sb.from('codes_inscription').select('code, utilise, utilise_le, created_at').order('created_at', { ascending: false }).limit(30);
+  const conteneur = document.getElementById('liste-codes');
+
+  conteneur.innerHTML = (codes || []).map(c => `
+    <div class="dossier-carte" style="cursor:default;">
+      <div class="dc-nom" style="font-family:var(--texte); font-weight:600; letter-spacing:0.04em;">${echapperHtml(c.code)}</div>
+      <div class="dc-meta">Créé le ${new Date(c.created_at).toLocaleDateString('fr-FR')}${c.utilise_le ? ' · Utilisé le ' + new Date(c.utilise_le).toLocaleDateString('fr-FR') : ''}</div>
+      <span class="statut-pill ${c.utilise ? 'statut-refusee' : 'statut-retenue'}">${c.utilise ? 'Utilisé' : 'Disponible'}</span>
+    </div>
+  `).join('') || '<div class="dossiers-vide">Aucun code généré pour le moment.</div>';
+}
 
 // --- Mannequin à la une (page d'accueil) ---
 async function chargerVedette() {

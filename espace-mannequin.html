@@ -282,6 +282,10 @@
         <label for="pr-bio">Présentation / expérience *</label>
         <textarea id="pr-bio" required></textarea>
       </div>
+      <div class="form-champ">
+        <label for="pr-video">Vidéo de présentation (lien YouTube ou Vimeo, facultatif)</label>
+        <input type="url" id="pr-video" placeholder="https://www.youtube.com/watch?v=...">
+      </div>
       <div class="form-champ" style="background:var(--gris-clair); padding:1rem; border:1px solid var(--gris-clair);">
         <label style="color:var(--noir);">🔒 Contact affiché sur votre fiche publique</label>
         <p style="margin:0.3rem 0 0; font-size:0.88rem; color:#4a4a4a;">
@@ -349,6 +353,7 @@
     <div class="footer-bas">
       <span>© <span id="an"></span> Maître Akesse Model Management</span>
       <span>Abidjan, Côte d'Ivoire</span>
+      <span><a href="mentions-legales.html">Mentions légales</a> · <a href="politique-confidentialite.html">Confidentialité</a></span>
     </div>
   </div>
 </footer>
@@ -510,6 +515,7 @@ async function chargerProfil() {
   document.getElementById('pr-cheveux').value = profil.hair_color || '';
   document.getElementById('pr-tailleveternents').value = profil.clothing_size || '';
   document.getElementById('pr-bio').value = profil.bio || '';
+  document.getElementById('pr-video').value = profil.video_url || '';
   document.getElementById('pr-publie').checked = !!profil.published;
   document.getElementById('pr-experience').value = profil.years_experience ?? '';
   document.getElementById('pr-langues').value = profil.languages || '';
@@ -564,7 +570,7 @@ document.getElementById('form-profil').addEventListener('submit', async (e) => {
     clothing_size: document.getElementById('pr-tailleveternents').value.trim(),
     eye_color: document.getElementById('pr-yeux').value.trim(),
     hair_color: document.getElementById('pr-cheveux').value.trim(),
-    video_url: null,
+    video_url: document.getElementById('pr-video').value.trim() || null,
     bio: document.getElementById('pr-bio').value.trim(),
     published: document.getElementById('pr-publie').checked,
     years_experience: document.getElementById('pr-experience').value !== '' ? parseInt(document.getElementById('pr-experience').value) : null,

@@ -125,14 +125,17 @@
 
       <label style="display:flex; align-items:flex-start; gap:0.7rem; margin:1.5rem 0; font-size:0.9rem;">
         <input type="checkbox" id="ins-conditions" required style="width:auto; margin-top:0.2rem;">
-        <span>J'ai lu et j'approuve les conditions d'inscription de l'agence.</span>
+        <span>J'ai lu et j'approuve les conditions d'inscription de l'agence ainsi que la <a href="politique-confidentialite.html" target="_blank" style="color:var(--rouge);">politique de confidentialité</a>. Si je suis mineur(e), je certifie m'inscrire avec l'accord d'un parent ou tuteur légal.</span>
       </label>
 
       <div id="bloc-paiement" style="display:none; margin-top:1rem; padding:1.4rem; border:1px solid var(--gris-clair); text-align:center;">
         <h3>Droits d'inscription — 45 000 FCFA</h3>
         <p style="margin:0.8rem 0;">Réglez vos droits d'inscription via Wave, puis cliquez sur "Envoyer mon dossier" — l'agence vérifiera et validera votre paiement.</p>
         <a href="https://pay.wave.com/m/M_ci_5eXs19LXWW_D/c/ci/?amount=45000" target="_blank" rel="noopener" class="btn btn--principal" style="margin-bottom:0.8rem;">Payer avec Wave</a>
-        <br>
+        <div class="form-champ" style="text-align:left; margin-top:1rem;">
+          <label for="ins-reference-paiement">Référence de la transaction Wave (reçue après le paiement) *</label>
+          <input type="text" id="ins-reference-paiement" placeholder="ex : TXN123456789" required>
+        </div>
         <button type="submit" class="btn">Envoyer mon dossier (j'ai réglé les droits)</button>
       </div>
       <div id="inscription-msg" class="form-msg"></div>
@@ -141,7 +144,18 @@
     <div id="bloc-succes" style="display:none; text-align:center; padding:3rem 0;">
       <h2>Dossier envoyé<span class="oeil">.</span></h2>
       <p style="margin:1rem auto; max-width:50ch;">Merci ! Ton dossier d'inscription et tes photos sont bien reçus par l'agence. Dès que ton paiement Wave est confirmé, ton compte sera validé.</p>
-      <div style="max-width:50ch; margin:2rem auto 0; padding:1.4rem; border:1px solid var(--gris-clair); text-align:left;">
+
+      <div id="recu-inscription" style="max-width:50ch; margin:2rem auto 0; padding:1.4rem; border:1px solid var(--gris-clair); text-align:left;">
+        <h3 style="margin-top:0;">Reçu d'inscription</h3>
+        <p style="margin:0.5rem 0; font-size:0.9rem;"><span style="display:block; font-size:0.64rem; text-transform:uppercase; letter-spacing:0.07em; color:var(--gris);">Nom</span><span id="recu-nom"></span></p>
+        <p style="margin:0.5rem 0; font-size:0.9rem;"><span style="display:block; font-size:0.64rem; text-transform:uppercase; letter-spacing:0.07em; color:var(--gris);">Date</span><span id="recu-date"></span></p>
+        <p style="margin:0.5rem 0; font-size:0.9rem;"><span style="display:block; font-size:0.64rem; text-transform:uppercase; letter-spacing:0.07em; color:var(--gris);">Montant des droits d'inscription</span><span>45 000 FCFA</span></p>
+        <p style="margin:0.5rem 0; font-size:0.9rem;"><span style="display:block; font-size:0.64rem; text-transform:uppercase; letter-spacing:0.07em; color:var(--gris);">Référence de paiement Wave</span><span id="recu-reference"></span></p>
+        <p style="margin:0.5rem 0; font-size:0.9rem;"><span style="display:block; font-size:0.64rem; text-transform:uppercase; letter-spacing:0.07em; color:var(--gris);">Statut</span><span>En attente de vérification par l'agence</span></p>
+        <button id="btn-imprimer-recu" class="btn no-print" style="margin-top:1.2rem;">🖨️ Télécharger mon reçu (PDF)</button>
+      </div>
+
+      <div class="no-print" style="max-width:50ch; margin:2rem auto 0; padding:1.4rem; border:1px solid var(--gris-clair); text-align:left;">
         <h3 style="margin-top:0;">Prochaine étape : rejoins The Book</h3>
         <p style="margin:0.6rem 0;">Dès validation, l'agence t'enverra un code d'invitation par message. Avec ce code, connecte-toi sur <strong>l'Espace mannequin</strong> pour compléter ton profil complet (mensurations, expérience, projets déjà réalisés) et ajouter tes photos — c'est ce qui apparaîtra dans The Book et sera vu par les recruteurs.</p>
         <a href="espace-mannequin.html" class="btn btn--principal" style="margin-top:0.8rem;">Aller vers l'Espace mannequin</a>
@@ -183,6 +197,7 @@
     <div class="footer-bas">
       <span>© <span id="an"></span> Maître Akesse Model Management</span>
       <span>Abidjan, Côte d'Ivoire</span>
+      <span><a href="mentions-legales.html">Mentions légales</a> · <a href="politique-confidentialite.html">Confidentialité</a></span>
     </div>
   </div>
 </footer>
@@ -231,6 +246,21 @@ document.getElementById('ins-conditions').addEventListener('change', (e) => {
 document.getElementById('form-inscription').addEventListener('submit', async (e) => {
   e.preventDefault();
   const msg = document.getElementById('inscription-msg');
+  const boutonEnvoyer = e.target.querySelector('button[type="submit"]');
+  boutonEnvoyer.disabled = true;
+
+  // Consommation du code : atomique côté base de données, pour qu'un même code
+  // ne puisse jamais servir deux fois, même si deux personnes l'utilisent au
+  // même moment.
+  const { data: codeEncoreValide } = await sb.rpc('utiliser_code_inscription', { code_input: codeValide });
+  if (!codeEncoreValide) {
+    boutonEnvoyer.disabled = false;
+    msg.className = 'form-msg err';
+    msg.textContent = "Ce code vient d'être utilisé (peut-être par une autre personne à l'instant). Contacte l'agence pour obtenir un nouveau code.";
+    msg.style.display = 'block';
+    return;
+  }
+
   const idInscription = crypto.randomUUID();
 
   const dossier = {
@@ -240,13 +270,15 @@ document.getElementById('form-inscription').addEventListener('submit', async (e)
     height_cm: parseInt(document.getElementById('ins-taille').value) || null,
     clothing_size: document.getElementById('ins-tailleveternents').value.trim(),
     phone: document.getElementById('ins-telephone').value.trim(),
-    code_utilise: codeValide
+    code_utilise: codeValide,
+    reference_paiement: document.getElementById('ins-reference-paiement').value.trim()
   };
 
   const { error } = await sb.from('inscriptions_mannequins').insert(dossier);
   if (error) {
+    boutonEnvoyer.disabled = false;
     msg.className = 'form-msg err';
-    msg.textContent = "Erreur lors de l'envoi. Réessaie ou contacte l'agence directement.";
+    msg.textContent = "Erreur lors de l'envoi. Réessaie — si le code est refusé au prochain essai, contacte directement l'agence, il a déjà été validé.";
     msg.style.display = 'block';
     return;
   }
@@ -255,7 +287,7 @@ document.getElementById('form-inscription').addEventListener('submit', async (e)
     name: dossier.full_name,
     telephone: dossier.phone,
     email: '',
-    message: `Nouvelle inscription mannequin (statut : en attente de paiement).\nDate de naissance : ${dossier.date_naissance || '-'}\nTaille : ${dossier.height_cm || '-'} cm\nTaille vêtements : ${dossier.clothing_size || '-'}\nCode utilisé : ${dossier.code_utilise}`
+    message: `Nouvelle inscription mannequin (statut : en attente de paiement).\nDate de naissance : ${dossier.date_naissance || '-'}\nTaille : ${dossier.height_cm || '-'} cm\nTaille vêtements : ${dossier.clothing_size || '-'}\nCode utilisé : ${dossier.code_utilise}\nRéférence de paiement Wave : ${dossier.reference_paiement || '-'}`
   });
 
   const fichiers = [
@@ -279,9 +311,15 @@ document.getElementById('form-inscription').addEventListener('submit', async (e)
   msg.textContent = 'Dossier envoyé avec succès !';
   msg.style.display = 'block';
 
+  document.getElementById('recu-nom').textContent = dossier.full_name || '-';
+  document.getElementById('recu-date').textContent = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  document.getElementById('recu-reference').textContent = dossier.reference_paiement || '-';
+
   document.getElementById('form-inscription').style.display = 'none';
   document.getElementById('bloc-succes').style.display = 'block';
 });
+
+document.getElementById('btn-imprimer-recu').addEventListener('click', () => window.print());
 </script>
 </body>
 </html>
