@@ -144,10 +144,9 @@ let ficheData = null;
 
 // --- Génération de la fiche PDF (comp card professionnel) ---
 
-// Charge une image (même origine ou distante avec CORS) et la renvoie en
-// grande résolution avec un filigrane répété en diagonale, pour qu'elle
-// reste identifiable comme propriété de l'agence même téléchargée en PDF.
-function chargerImageAvecFiligrane(url, largeurMax) {
+// Charge une image (même origine ou distante avec CORS) en grande résolution,
+// sous forme de canvas (pratique pour le recadrage "cover" ensuite).
+function chargerImageHauteRes(url, largeurMax) {
   return new Promise((resolve) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -157,34 +156,7 @@ function chargerImageAvecFiligrane(url, largeurMax) {
         const canvas = document.createElement('canvas');
         canvas.width = Math.round(img.width * ratio);
         canvas.height = Math.round(img.height * ratio);
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-        ctx.save();
-        ctx.globalAlpha = 0.20;
-        ctx.fillStyle = '#ffffff';
-        ctx.strokeStyle = 'rgba(0,0,0,0.35)';
-        ctx.lineWidth = Math.max(1, canvas.width / 600);
-        ctx.font = 'bold ' + Math.round(canvas.width / 16) + 'px Arial, sans-serif';
-        ctx.textBaseline = 'middle';
-        ctx.translate(canvas.width / 2, canvas.height / 2);
-        ctx.rotate(-Math.PI / 6);
-        const texte = 'MAÎTRE AKESSE MODEL MANAGEMENT';
-        const pasX = ctx.measureText(texte).width + canvas.width * 0.12;
-        const pasY = canvas.width / 8;
-        const portee = canvas.width + canvas.height;
-        for (let y = -portee; y < portee; y += pasY) {
-          for (let x = -portee; x < portee; x += pasX) {
-            ctx.strokeText(texte, x, y);
-            ctx.fillText(texte, x, y);
-          }
-        }
-        ctx.restore();
-
-        // On garde le canvas lui-même (pas juste une image PNG/JPEG figée) :
-        // ça permet de le recadrer ensuite par un simple drawImage() canvas-à-canvas,
-        // toujours instantané — contrairement à redécoder une dataURL en <img>,
-        // qui se fait de façon asynchrone et casserait le recadrage.
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
         resolve({ canvas, largeur: canvas.width, hauteur: canvas.height });
       } catch (e) {
         resolve(null); // image protégée par CORS : on continue sans elle
@@ -204,164 +176,193 @@ function chargerImageLocale(url) {
       canvas.width = img.width;
       canvas.height = img.height;
       canvas.getContext('2d').drawImage(img, 0, 0);
-      resolve({ dataUrl: canvas.toDataURL('image/png'), largeur: canvas.width, hauteur: canvas.height });
+      resolve({ canvas, largeur: canvas.width, hauteur: canvas.height });
     };
     img.onerror = () => resolve(null);
     img.src = url;
   });
 }
 
-// Dessine une image (déjà chargée sous forme de canvas) dans un cadre donné
-// en mode "cover" (remplit tout le cadre, recadre l'excédent) plutôt que de
-// la déformer.
-function dessinerImageCouvrante(doc, image, x, y, largeurCadre, hauteurCadre) {
-  if (!image) return;
-  const ratioImage = image.largeur / image.hauteur;
-  const ratioCadre = largeurCadre / hauteurCadre;
-  let sx = 0, sy = 0, sLargeur = image.largeur, sHauteur = image.hauteur;
-  if (ratioImage > ratioCadre) {
-    sLargeur = image.hauteur * ratioCadre;
-    sx = (image.largeur - sLargeur) / 2;
-  } else {
-    sHauteur = image.largeur / ratioCadre;
-    sy = (image.hauteur - sHauteur) / 2;
+// Construit la fiche Compcard sur un grand canvas (haute résolution, ~300 dpi
+// sur une page A4) — sert de base commune à l'export PDF et à l'export JPEG,
+// pour ne jamais avoir à maintenir deux mises en page séparées.
+async function construireCanvasCompcard() {
+  const { profil, photos, projets, age } = ficheData;
+  const BORDEAUX = '#7a1220', NOIR = '#0f0d0c', GRIS = '#78726c', BLANC = '#ffffff';
+  const LARGEUR_MM = 210, HAUTEUR_MM = 297;
+  const ESCALE = 2480 / LARGEUR_MM; // px par mm (~300 dpi), net même sur grand écran
+  const px = mm => mm * ESCALE;
+  const fpx = pt => pt * 0.3528 * ESCALE; // pt (comme sur une page imprimée) → px canvas
+
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(LARGEUR_MM * ESCALE);
+  canvas.height = Math.round(HAUTEUR_MM * ESCALE);
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = BLANC;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Photos choisies par le mannequin pour sa fiche (Compcard) ; à défaut, les
+  // 5 meilleures par défaut (photo de profil en premier).
+  const photosChoisies = photos.filter(p => p.compcard_ordre).sort((a, b) => a.compcard_ordre - b.compcard_ordre);
+  const urlsPhotos = (photosChoisies.length ? photosChoisies : photos.slice(0, 5)).map(p => p.url);
+
+  const [logo, ...imagesPhotos] = await Promise.all([
+    chargerImageLocale('assets/logo-dark-bg.png'),
+    ...urlsPhotos.map(u => chargerImageHauteRes(u, 2400))
+  ]);
+
+  function dessinerCouvrant(image, xMm, yMm, lMm, hMm) {
+    if (!image) return;
+    const ratioImage = image.largeur / image.hauteur;
+    const ratioCadre = lMm / hMm;
+    let sx = 0, sy = 0, sL = image.largeur, sH = image.hauteur;
+    if (ratioImage > ratioCadre) { sL = image.hauteur * ratioCadre; sx = (image.largeur - sL) / 2; }
+    else { sH = image.largeur / ratioCadre; sy = (image.hauteur - sH) / 2; }
+    ctx.drawImage(image.canvas, sx, sy, sL, sH, px(xMm), px(yMm), px(lMm), px(hMm));
   }
-  const PX_PAR_MM = 12; // ≈ 300 DPI — net même agrandi sur un grand écran ou imprimé
-  const canvasRecadre = document.createElement('canvas');
-  canvasRecadre.width = Math.round(largeurCadre * PX_PAR_MM);
-  canvasRecadre.height = Math.round(hauteurCadre * PX_PAR_MM);
-  const ctx = canvasRecadre.getContext('2d');
-  ctx.drawImage(image.canvas, sx, sy, sLargeur, sHauteur, 0, 0, canvasRecadre.width, canvasRecadre.height);
-  doc.addImage(canvasRecadre.toDataURL('image/jpeg', 0.95), 'JPEG', x, y, largeurCadre, hauteurCadre);
+
+  // --- En-tête : logo + grand titre "COMPCARD" ---
+  const hEntete = 30;
+  ctx.fillStyle = BORDEAUX;
+  ctx.fillRect(0, 0, canvas.width, px(hEntete));
+  if (logo) {
+    const hLogoMm = 19;
+    const wLogoMm = hLogoMm * (logo.largeur / logo.hauteur);
+    ctx.drawImage(logo.canvas, px(15), px(6), px(wLogoMm), px(hLogoMm));
+  }
+  ctx.fillStyle = BLANC;
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'alphabetic';
+  ctx.font = `bold ${fpx(30)}px Arial, sans-serif`;
+  ctx.fillText('COMPCARD', px(195), px(20));
+
+  // --- Photos : 1 grande + grille de 4 ---
+  const yPhotos = hEntete + 4, hPhotos = 148;
+  dessinerCouvrant(imagesPhotos[0], 15, yPhotos, 92, hPhotos);
+
+  const cellulesX = [112, 155.5];
+  const cellulesY = [yPhotos, yPhotos + 76];
+  const lCellule = 39.5, hCellule = 73;
+  let idxGrille = 1;
+  for (const y of cellulesY) {
+    for (const x of cellulesX) {
+      dessinerCouvrant(imagesPhotos[idxGrille], x, y, lCellule, hCellule);
+      idxGrille++;
+    }
+  }
+
+  // --- Logo au centre, entre les photos : ne cache jamais rien d'important
+  // et reste visible même si la fiche est rognée physiquement (les bords
+  // partent en premier, jamais le centre).
+  if (logo) {
+    const hBadgeMm = 20;
+    const wBadgeMm = hBadgeMm * (logo.largeur / logo.hauteur);
+    const centreXmm = (15 + 195) / 2;
+    const centreYmm = yPhotos + hPhotos / 2;
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.6)';
+    ctx.shadowBlur = px(2.5);
+    ctx.drawImage(logo.canvas, px(centreXmm - wBadgeMm / 2), px(centreYmm - hBadgeMm / 2), px(wBadgeMm), px(hBadgeMm));
+    ctx.restore();
+  }
+
+  // --- Nom et catégorie ---
+  let y = yPhotos + hPhotos + 12;
+  ctx.textAlign = 'left';
+  ctx.fillStyle = NOIR;
+  ctx.font = `bold ${fpx(27)}px Arial, sans-serif`;
+  ctx.fillText(profil.full_name || 'Mannequin', px(15), px(y));
+  y += 8.5;
+  const libelleCat = profil.category === 'homme' ? 'Homme' : profil.category === 'femme' ? 'Femme' : 'New Face';
+  ctx.fillStyle = BORDEAUX;
+  ctx.font = `${fpx(13)}px Arial, sans-serif`;
+  ctx.fillText([libelleCat, profil.city].filter(Boolean).join('  ·  '), px(15), px(y));
+
+  // --- Mensurations (grille 3 colonnes) ---
+  y += 11;
+  const champs = [
+    ['Âge', age ? age + ' ans' : null],
+    ['Taille', profil.height_cm ? profil.height_cm + ' cm' : null],
+    ['Poitrine', profil.chest_cm ? profil.chest_cm + ' cm' : null],
+    ['Tour de taille', profil.waist_cm ? profil.waist_cm + ' cm' : null],
+    [profil.category === 'homme' ? 'Entrejambe' : 'Hanches', profil.category === 'homme' ? (profil.inseam_cm ? profil.inseam_cm + ' cm' : null) : (profil.hips_cm ? profil.hips_cm + ' cm' : null)],
+    ['Pointure', profil.shoe_size || null],
+    ['Carnation', profil.carnation || null],
+    ['Taille vêtements', profil.clothing_size || null],
+    ['Yeux', profil.eye_color || null],
+    ['Cheveux', profil.hair_color || null]
+  ].filter(([, v]) => v);
+
+  champs.forEach(([label, valeur], i) => {
+    const col = i % 3, ligne = Math.floor(i / 3);
+    const xMm = 15 + col * 60, yy = y + ligne * 13.5;
+    ctx.fillStyle = GRIS;
+    ctx.font = `${fpx(9.5)}px Arial, sans-serif`;
+    ctx.fillText(label.toUpperCase(), px(xMm), px(yy));
+    ctx.fillStyle = NOIR;
+    ctx.font = `bold ${fpx(13.5)}px Arial, sans-serif`;
+    ctx.fillText(String(valeur), px(xMm), px(yy + 6));
+  });
+
+  // --- Résumé du parcours ---
+  const yParcours = y + Math.ceil(champs.length / 3) * 13.5 + 5;
+  if (projets && projets.length) {
+    ctx.fillStyle = GRIS;
+    ctx.font = `italic ${fpx(9.5)}px Arial, sans-serif`;
+    ctx.fillText(`${projets.length} projet${projets.length > 1 ? 's' : ''} réalisé${projets.length > 1 ? 's' : ''} — book complet sur maitreakessemodelmanagement.com`, px(15), px(yParcours));
+  }
+
+  // --- Pied de page agrandi : occupe tout l'espace restant jusqu'en bas de
+  // la page (plus de blanc inutile), contacts remontés et en plus grand.
+  const yPiedPage = Math.max(yParcours + 8, 250);
+  const hPiedPage = HAUTEUR_MM - yPiedPage;
+  ctx.fillStyle = BORDEAUX;
+  ctx.fillRect(0, px(yPiedPage), canvas.width, px(hPiedPage));
+  ctx.fillStyle = BLANC;
+  ctx.font = `bold ${fpx(12)}px Arial, sans-serif`;
+  ctx.fillText('CONTACT OFFICIEL MA2M', px(15), px(yPiedPage + 10));
+  ctx.font = `${fpx(11)}px Arial, sans-serif`;
+  ctx.fillText('+225 27 22 23 11 76   ·   +225 05 45 65 66 87', px(15), px(yPiedPage + 18));
+  ctx.fillText('scoutmodel.ma2m@gmail.com   ·   @maitreakessemodelmanagement', px(15), px(yPiedPage + 25));
+  ctx.font = `italic ${fpx(8.5)}px Arial, sans-serif`;
+  ctx.fillText(`Document officiel généré le ${new Date().toLocaleDateString('fr-FR')} depuis maitreakessemodelmanagement.com — toute demande de booking passe exclusivement par l'agence.`, px(15), px(yPiedPage + hPiedPage - 6));
+
+  return canvas;
 }
 
-async function genererFichePDF() {
+async function genererFiche(format) {
   if (!ficheData || !ficheData.profil) return;
-  const { profil, photos, projets, age } = ficheData;
-  const btn = document.getElementById('btn-imprimer-fiche');
-  const texteOriginal = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = 'Génération en cours…';
+  const btnPdf = document.getElementById('btn-telecharger-pdf');
+  const btnJpeg = document.getElementById('btn-telecharger-jpeg');
+  const btnActif = format === 'jpeg' ? btnJpeg : btnPdf;
+  const texteOriginal = btnActif ? btnActif.textContent : '';
+  if (btnPdf) btnPdf.disabled = true;
+  if (btnJpeg) btnJpeg.disabled = true;
+  if (btnActif) btnActif.textContent = 'Génération…';
 
   try {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-    const BORDEAUX = [122, 18, 32];
-    const NOIR = [15, 13, 12];
-    const GRIS = [120, 114, 108];
+    const canvas = await construireCanvasCompcard();
+    const nomFichier = 'fiche-' + (ficheData.profil.full_name || 'mannequin').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase();
 
-    // Chargement en parallèle : logo + jusqu'à 5 photos en haute résolution
-    const urlsPhotos = photos.slice(0, 5).map(p => p.url);
-    const [logo, ...imagesPhotos] = await Promise.all([
-      chargerImageLocale('assets/logo-dark-bg.png'),
-      ...urlsPhotos.map(u => chargerImageAvecFiligrane(u, 2400))
-    ]);
-
-    // --- En-tête ---
-    doc.setFillColor(...BORDEAUX);
-    doc.rect(0, 0, 210, 24, 'F');
-    if (logo) {
-      const hLogo = 17;
-      const wLogo = hLogo * (logo.largeur / logo.hauteur);
-      doc.addImage(logo.dataUrl, 'PNG', 15, 3.5, wLogo, hLogo);
+    if (format === 'jpeg') {
+      const lien = document.createElement('a');
+      lien.href = canvas.toDataURL('image/jpeg', 0.95);
+      lien.download = nomFichier + '.jpg';
+      document.body.appendChild(lien);
+      lien.click();
+      lien.remove();
+    } else {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+      doc.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 210, 297);
+      doc.save(nomFichier + '.pdf');
     }
-    doc.setTextColor(255, 255, 255);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9.5);
-    doc.text("Agence de mannequinat — Abidjan, Côte d'Ivoire", 195, 13, { align: 'right' });
-    doc.setFontSize(8);
-    doc.text('COMPOSITE CARD', 195, 18, { align: 'right' });
-
-    // --- Photos : 1 grande + grille de 4 ---
-    const yPhotos = 28, hPhotos = 156;
-    dessinerImageCouvrante(doc, imagesPhotos[0], 15, yPhotos, 92, hPhotos);
-
-    const cellulesX = [112, 155.5];
-    const cellulesY = [yPhotos, yPhotos + 79.5];
-    const largeurCellule = 39.5, hauteurCellule = 76.5;
-    let idxGrille = 1;
-    for (const y of cellulesY) {
-      for (const x of cellulesX) {
-        if (imagesPhotos[idxGrille]) {
-          dessinerImageCouvrante(doc, imagesPhotos[idxGrille], x, y, largeurCellule, hauteurCellule);
-        }
-        idxGrille++;
-      }
-    }
-
-    // --- Nom et catégorie ---
-    let y = yPhotos + hPhotos + 10;
-    doc.setTextColor(...NOIR);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(20);
-    doc.text(profil.full_name || 'Mannequin', 15, y);
-    y += 7;
-    const libelleCat = profil.category === 'homme' ? 'Homme' : profil.category === 'femme' ? 'Femme' : 'New Face';
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(11);
-    doc.setTextColor(...BORDEAUX);
-    doc.text([libelleCat, profil.city].filter(Boolean).join('  ·  '), 15, y);
-
-    // --- Mensurations (grille 3 colonnes) ---
-    y += 9;
-    const champs = [
-      ['Âge', age ? age + ' ans' : null],
-      ['Taille', profil.height_cm ? profil.height_cm + ' cm' : null],
-      ['Poitrine', profil.chest_cm ? profil.chest_cm + ' cm' : null],
-      ['Tour de taille', profil.waist_cm ? profil.waist_cm + ' cm' : null],
-      [profil.category === 'homme' ? 'Entrejambe' : 'Hanches', profil.category === 'homme' ? (profil.inseam_cm ? profil.inseam_cm + ' cm' : null) : (profil.hips_cm ? profil.hips_cm + ' cm' : null)],
-      ['Pointure', profil.shoe_size || null],
-      ['Carnation', profil.carnation || null],
-      ['Taille vêtements', profil.clothing_size || null],
-      ['Yeux', profil.eye_color || null],
-      ['Cheveux', profil.hair_color || null]
-    ].filter(([, v]) => v);
-
-    doc.setFontSize(9);
-    champs.forEach(([label, valeur], i) => {
-      const col = i % 3;
-      const ligne = Math.floor(i / 3);
-      const x = 15 + col * 60;
-      const yy = y + ligne * 11;
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...GRIS);
-      doc.text(label.toUpperCase(), x, yy);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(10.5);
-      doc.setTextColor(...NOIR);
-      doc.text(String(valeur), x, yy + 5);
-      doc.setFontSize(9);
-    });
-
-    // --- Résumé du parcours ---
-    const yParcours = y + Math.ceil(champs.length / 3) * 11 + 4;
-    if (projets && projets.length) {
-      doc.setFont('helvetica', 'italic');
-      doc.setFontSize(8.5);
-      doc.setTextColor(...GRIS);
-      doc.text(`${projets.length} projet${projets.length > 1 ? 's' : ''} réalisé${projets.length > 1 ? 's' : ''} — book complet sur maitreakessemodelmanagement.com`, 15, yParcours);
-    }
-
-    // --- Pied de page : contact officiel + signature ---
-    doc.setFillColor(...BORDEAUX);
-    doc.rect(0, 273, 210, 24, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9);
-    doc.text('CONTACT OFFICIEL MA2M', 15, 280);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8.5);
-    doc.text('+225 27 22 23 11 76   ·   +225 05 45 65 66 87   ·   scoutmodel.ma2m@gmail.com   ·   @maitreakessemodelmanagement', 15, 285.5);
-    doc.setFontSize(7.3);
-    doc.text(`Document officiel généré le ${new Date().toLocaleDateString('fr-FR')} depuis maitreakessemodelmanagement.com — toute demande de booking passe exclusivement par l'agence.`, 15, 292);
-
-    const nomFichier = 'fiche-' + (profil.full_name || 'mannequin').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase() + '.pdf';
-    doc.save(nomFichier);
   } catch (e) {
-    alert('Une erreur est survenue pendant la génération du PDF. Réessayez.');
+    alert('Une erreur est survenue pendant la génération du fichier. Réessayez.');
   } finally {
-    btn.disabled = false;
-    btn.textContent = texteOriginal;
+    if (btnPdf) btnPdf.disabled = false;
+    if (btnJpeg) btnJpeg.disabled = false;
+    if (btnActif) btnActif.textContent = texteOriginal;
   }
 }
 
@@ -399,7 +400,7 @@ async function chargerProfil() {
 
   const { data: photos } = await sb
     .from('model_photos')
-    .select('url')
+    .select('url, compcard_ordre')
     .eq('model_id', id)
     .order('principale', { ascending: false })
     .order('created_at', { ascending: true });
@@ -510,14 +511,17 @@ async function chargerProfil() {
 
         <div style="display:flex; gap:0.8rem; flex-wrap:wrap; margin-top:1.8rem;">
           <button id="btn-select-fiche" class="btn btn--principal"></button>
-          <button id="btn-imprimer-fiche" class="btn no-print">🖨️ Télécharger la fiche (PDF)</button>
+          <button id="btn-telecharger-pdf" class="btn no-print">🖨️ Fiche en PDF</button>
+          <button id="btn-telecharger-jpeg" class="btn no-print">🖼️ Fiche en JPEG</button>
         </div>
       </div>
     </div>
   `;
 
-  const btnImprimer = document.getElementById('btn-imprimer-fiche');
-  if (btnImprimer) btnImprimer.addEventListener('click', () => genererFichePDF());
+  const btnPdf = document.getElementById('btn-telecharger-pdf');
+  if (btnPdf) btnPdf.addEventListener('click', () => genererFiche('pdf'));
+  const btnJpeg = document.getElementById('btn-telecharger-jpeg');
+  if (btnJpeg) btnJpeg.addEventListener('click', () => genererFiche('jpeg'));
 
   const btnVoirTous = document.getElementById('btn-voir-tous-projets');
   if (btnVoirTous) {

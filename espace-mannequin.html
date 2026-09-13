@@ -317,6 +317,7 @@
       </div>
     </div>
     <p style="color:var(--gris); font-size:0.85rem; margin:0.8rem 0 0;">Cliquez sur l'étoile ☆ d'une photo pour en faire votre photo de profil — c'est celle qui s'affiche en premier sur votre fiche publique et dans The Book.</p>
+    <p style="color:var(--gris); font-size:0.85rem; margin:0.4rem 0 0;">Cliquez sur "+ Compcard" pour choisir jusqu'à 5 photos qui apparaîtront sur votre fiche téléchargeable (PDF/JPEG) envoyée aux recruteurs. Sans sélection, l'agence choisit automatiquement pour vous.</p>
     <div id="photos-grille" class="photos-grille"></div>
   </div>
 </section>
@@ -641,6 +642,7 @@ async function chargerPhotos() {
   const grille = document.getElementById('photos-grille');
   grille.innerHTML = '';
   const urlsPhotos = (photos || []).map(p => p.url);
+  const nbCompcard = (photos || []).filter(p => p.compcard_ordre).length;
   (photos || []).forEach((photo, index) => {
     const item = document.createElement('div');
     item.className = 'photo-item' + (photo.principale ? ' est-principale' : '');
@@ -648,6 +650,7 @@ async function chargerPhotos() {
       <img src="${echapperHtml(photo.url)}" alt="Photo du book" style="cursor:pointer;">
       <button class="btn-principale" data-id="${photo.id}" title="Définir comme photo de profil">${photo.principale ? '★' : '☆'}</button>
       <button class="btn-supprimer" data-id="${photo.id}" data-chemin="${echapperHtml(photo.chemin || '')}" title="Supprimer">✕</button>
+      <button class="btn-compcard" data-id="${photo.id}" title="Choisir pour la fiche Compcard">${photo.compcard_ordre ? photo.compcard_ordre : '+ Compcard'}</button>
       ${photo.principale ? '<span class="badge-principale">Photo de profil</span>' : ''}
     `;
     item.querySelector('img').addEventListener('click', () => ouvrirGalerieLightbox(urlsPhotos, index));
@@ -669,6 +672,32 @@ async function chargerPhotos() {
       const { data: { user } } = await sb.auth.getUser();
       await sb.from('model_photos').update({ principale: false }).eq('model_id', user.id);
       await sb.from('model_photos').update({ principale: true }).eq('id', btn.dataset.id);
+      chargerPhotos();
+    });
+  });
+
+  // Sélection des 5 photos de la fiche Compcard (PDF/JPEG) : un clic ajoute la
+  // photo au prochain numéro disponible (1 à 5), un second clic la retire et
+  // referme les numéros des autres pour ne jamais laisser de trou (1,3 → 1,2).
+  grille.querySelectorAll('.btn-compcard').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const { data: { user } } = await sb.auth.getUser();
+      const id = btn.dataset.id;
+      const dejaChoisie = !!(photos.find(p => p.id === id) || {}).compcard_ordre;
+
+      if (dejaChoisie) {
+        await sb.from('model_photos').update({ compcard_ordre: null }).eq('id', id);
+        const { data: restantes } = await sb.from('model_photos').select('id, compcard_ordre')
+          .eq('model_id', user.id).not('compcard_ordre', 'is', null).order('compcard_ordre', { ascending: true });
+        for (let i = 0; i < (restantes || []).length; i++) {
+          if (restantes[i].compcard_ordre !== i + 1) {
+            await sb.from('model_photos').update({ compcard_ordre: i + 1 }).eq('id', restantes[i].id);
+          }
+        }
+      } else {
+        if (nbCompcard >= 5) { alert('5 photos sont déjà sélectionnées pour la fiche Compcard. Désélectionnez-en une avant d\'en ajouter une nouvelle.'); return; }
+        await sb.from('model_photos').update({ compcard_ordre: nbCompcard + 1 }).eq('id', id);
+      }
       chargerPhotos();
     });
   });
