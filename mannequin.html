@@ -108,6 +108,16 @@ function libelleTypeModele(t) {
   return libelles[t] || t;
 }
 
+// Sécurité : n'autorise un lien cliquable que s'il s'agit bien d'une vraie adresse web
+// (http/https) — bloque les liens piégés du type "javascript:..." ou "data:...".
+function urlHttpSure(url) {
+  if (!url) return null;
+  try {
+    const u = new URL(url, window.location.href);
+    return (u.protocol === 'http:' || u.protocol === 'https:') ? u.href : null;
+  } catch (e) { return null; }
+}
+
 // Convertit un lien YouTube/Vimeo classique en URL de lecteur intégrable (iframe).
 // Renvoie null si le lien n'est pas reconnu — dans ce cas on affiche un simple lien.
 function urlEmbedVideo(url) {
@@ -209,12 +219,13 @@ async function chargerProfil() {
     </div>` : '';
 
   const urlVideo = urlEmbedVideo(profil.video_url);
-  const blocVideo = profil.video_url ? `
+  const urlVideoSure = urlHttpSure(profil.video_url);
+  const blocVideo = (urlVideo || urlVideoSure) ? `
     <div style="margin-top:1.8rem;">
       <h3 style="font-size:1rem; text-transform:uppercase; letter-spacing:0.06em;">Vidéo</h3>
       ${urlVideo
         ? `<div class="video-embed-wrap"><iframe src="${echapperHtml(urlVideo)}" title="Vidéo de présentation" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`
-        : `<a href="${echapperHtml(profil.video_url)}" target="_blank" rel="noopener" style="color:var(--rouge); font-weight:600;">▶ Voir la vidéo de présentation</a>`}
+        : `<a href="${echapperHtml(urlVideoSure)}" target="_blank" rel="noopener" style="color:var(--rouge); font-weight:600;">▶ Voir la vidéo de présentation</a>`}
     </div>` : '';
 
   const blocProfil = (profil.years_experience || (profil.model_types && profil.model_types.length) || profil.languages || profil.availability) ? `
