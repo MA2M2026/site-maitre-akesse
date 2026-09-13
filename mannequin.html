@@ -144,19 +144,19 @@ let ficheData = null;
 
 // --- Génération de la fiche PDF (comp card professionnel) ---
 
-// Charge une image (même origine ou distante avec CORS) en grande résolution,
-// sous forme de canvas (pratique pour le recadrage "cover" ensuite).
-function chargerImageHauteRes(url, largeurMax) {
+// Charge une photo à sa pleine résolution d'origine (jamais réduite ici) :
+// la netteté finale dépend uniquement de la qualité de la photo importée par
+// le mannequin, jamais d'une compression ajoutée par le générateur de fiche.
+function chargerImageHauteRes(url) {
   return new Promise((resolve) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => {
       try {
-        const ratio = img.width > largeurMax ? largeurMax / img.width : 1;
         const canvas = document.createElement('canvas');
-        canvas.width = Math.round(img.width * ratio);
-        canvas.height = Math.round(img.height * ratio);
-        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.width = img.width;
+        canvas.height = img.height;
+        canvas.getContext('2d').drawImage(img, 0, 0);
         resolve({ canvas, largeur: canvas.width, hauteur: canvas.height });
       } catch (e) {
         resolve(null); // image protégée par CORS : on continue sans elle
@@ -183,14 +183,135 @@ function chargerImageLocale(url) {
   });
 }
 
-// Construit la fiche Compcard sur un grand canvas (haute résolution, ~300 dpi
-// sur une page A4) — sert de base commune à l'export PDF et à l'export JPEG,
-// pour ne jamais avoir à maintenir deux mises en page séparées.
+// Texte avec espacement des lettres (tracking), aligné gauche/centre/droite —
+// le canvas ne supporte pas nativement le "letter-spacing" du CSS.
+function texteTrace(ctx, texte, x, y, espacement, align) {
+  const caracteres = [...String(texte)];
+  const largeurs = caracteres.map(c => ctx.measureText(c).width);
+  const largeurTotale = largeurs.reduce((a, b) => a + b, 0) + espacement * Math.max(0, caracteres.length - 1);
+  let cx = x;
+  if (align === 'center') cx = x - largeurTotale / 2;
+  else if (align === 'right') cx = x - largeurTotale;
+  const ancienAlign = ctx.textAlign;
+  ctx.textAlign = 'left';
+  caracteres.forEach((c, i) => { ctx.fillText(c, cx, y); cx += largeurs[i] + espacement; });
+  ctx.textAlign = ancienAlign;
+}
+
+// Icônes filles remplies (style "fiche mode"), 100% vectorielles — toujours
+// nettes en haute résolution, aucune image externe nécessaire.
+function dessinerIcone(ctx, cle, cx, cy, taille, couleur) {
+  ctx.save();
+  ctx.fillStyle = couleur;
+  ctx.strokeStyle = couleur;
+  ctx.lineWidth = Math.max(1, taille * 0.075);
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  const r = taille / 2;
+  switch (cle) {
+    case 'age':
+      ctx.beginPath();
+      ctx.moveTo(cx - r * 0.55, cy - r); ctx.lineTo(cx + r * 0.55, cy - r);
+      ctx.lineTo(cx + r * 0.15, cy); ctx.lineTo(cx + r * 0.55, cy + r); ctx.lineTo(cx - r * 0.55, cy + r);
+      ctx.lineTo(cx - r * 0.15, cy); ctx.closePath(); ctx.fill();
+      break;
+    case 'taille': // silhouette debout
+      ctx.beginPath(); ctx.arc(cx, cy - r * 0.72, r * 0.24, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(cx - r * 0.22, cy - r * 0.42);
+      ctx.quadraticCurveTo(cx - r * 0.32, cy + r * 0.1, cx - r * 0.16, cy + r * 0.45);
+      ctx.lineTo(cx - r * 0.05, cy + r);
+      ctx.lineTo(cx + r * 0.05, cy + r);
+      ctx.lineTo(cx + r * 0.1, cy + r * 0.45);
+      ctx.lineTo(cx + r * 0.16, cy + r * 0.45);
+      ctx.quadraticCurveTo(cx + r * 0.32, cy + r * 0.1, cx + r * 0.22, cy - r * 0.42);
+      ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(cx - r * 0.85, cy - r * 0.9); ctx.lineTo(cx + r * 0.85, cy - r * 0.9); ctx.lineWidth = taille * 0.06; ctx.stroke();
+      break;
+    case 'poitrine': // bustier
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - r * 0.05);
+      ctx.bezierCurveTo(cx - r * 0.15, cy - r * 0.75, cx - r * 0.95, cy - r * 0.65, cx - r * 0.85, cy + r * 0.05);
+      ctx.bezierCurveTo(cx - r * 0.75, cy + r * 0.6, cx - r * 0.15, cy + r * 0.55, cx, cy + r * 0.1);
+      ctx.bezierCurveTo(cx + r * 0.15, cy + r * 0.55, cx + r * 0.75, cy + r * 0.6, cx + r * 0.85, cy + r * 0.05);
+      ctx.bezierCurveTo(cx + r * 0.95, cy - r * 0.65, cx + r * 0.15, cy - r * 0.75, cx, cy - r * 0.05);
+      ctx.closePath(); ctx.fill();
+      break;
+    case 'taille_tour': // torse cintré (taille)
+      ctx.beginPath();
+      ctx.moveTo(cx - r * 0.6, cy - r);
+      ctx.quadraticCurveTo(cx - r * 0.75, cy - r * 0.3, cx - r * 0.25, cy);
+      ctx.quadraticCurveTo(cx - r * 0.75, cy + r * 0.3, cx - r * 0.6, cy + r);
+      ctx.lineTo(cx + r * 0.6, cy + r);
+      ctx.quadraticCurveTo(cx + r * 0.75, cy + r * 0.3, cx + r * 0.25, cy);
+      ctx.quadraticCurveTo(cx + r * 0.75, cy - r * 0.3, cx + r * 0.6, cy - r);
+      ctx.closePath(); ctx.fill();
+      break;
+    case 'hanches': // torse évasé (hanches)
+      ctx.beginPath();
+      ctx.moveTo(cx - r * 0.45, cy - r);
+      ctx.quadraticCurveTo(cx - r * 0.55, cy - r * 0.25, cx - r * 0.2, cy - r * 0.05);
+      ctx.quadraticCurveTo(cx - r * 0.85, cy + r * 0.15, cx - r * 0.75, cy + r);
+      ctx.lineTo(cx + r * 0.75, cy + r);
+      ctx.quadraticCurveTo(cx + r * 0.85, cy + r * 0.15, cx + r * 0.2, cy - r * 0.05);
+      ctx.quadraticCurveTo(cx + r * 0.55, cy - r * 0.25, cx + r * 0.45, cy - r);
+      ctx.closePath(); ctx.fill();
+      break;
+    case 'pointure': // escarpin
+      ctx.beginPath();
+      ctx.moveTo(cx - r * 0.55, cy + r);
+      ctx.lineTo(cx - r * 0.62, cy + r * 0.2);
+      ctx.lineTo(cx - r * 0.4, cy - r * 0.15);
+      ctx.quadraticCurveTo(cx, cy - r * 0.85, cx + r * 0.7, cy - r * 0.55);
+      ctx.quadraticCurveTo(cx + r * 0.9, cy - r * 0.3, cx + r * 0.5, cy - r * 0.05);
+      ctx.lineTo(cx + r * 0.15, cy + r);
+      ctx.closePath(); ctx.fill();
+      break;
+    case 'carnation':
+      ctx.beginPath(); ctx.arc(cx, cy, r * 0.85, 0.15 * Math.PI, 1.95 * Math.PI); ctx.lineWidth = taille * 0.09; ctx.stroke();
+      [[-0.3, -0.4], [0.3, -0.5], [0.5, 0.1], [-0.15, 0.5]].forEach(([dx, dy]) => {
+        ctx.beginPath(); ctx.arc(cx + dx * r, cy + dy * r, r * 0.14, 0, Math.PI * 2); ctx.fill();
+      });
+      break;
+    case 'vetements':
+      ctx.lineWidth = taille * 0.09;
+      ctx.beginPath(); ctx.arc(cx, cy - r * 0.72, r * 0.16, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - r * 0.52); ctx.lineTo(cx - r * 0.8, cy + r * 0.4); ctx.lineTo(cx + r * 0.8, cy + r * 0.4);
+      ctx.closePath(); ctx.stroke();
+      break;
+    case 'yeux':
+      ctx.lineWidth = taille * 0.09;
+      ctx.beginPath();
+      ctx.moveTo(cx - r * 0.9, cy);
+      ctx.quadraticCurveTo(cx, cy - r * 0.68, cx + r * 0.9, cy);
+      ctx.quadraticCurveTo(cx, cy + r * 0.68, cx - r * 0.9, cy);
+      ctx.closePath(); ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx, cy, r * 0.28, 0, Math.PI * 2); ctx.fill();
+      break;
+    case 'cheveux': // profil + chignon
+      ctx.beginPath();
+      ctx.moveTo(cx - r * 0.5, cy + r);
+      ctx.quadraticCurveTo(cx - r * 0.75, cy + r * 0.3, cx - r * 0.55, cy - r * 0.35);
+      ctx.quadraticCurveTo(cx - r * 0.4, cy - r * 0.95, cx + r * 0.05, cy - r * 0.85);
+      ctx.quadraticCurveTo(cx + r * 0.15, cy - r * 0.65, cx - r * 0.02, cy - r * 0.55);
+      ctx.quadraticCurveTo(cx + r * 0.35, cy - r * 0.5, cx + r * 0.35, cy - r * 0.1);
+      ctx.quadraticCurveTo(cx + r * 0.15, cy + r * 0.15, cx + r * 0.05, cy + r * 0.5);
+      ctx.lineTo(cx - r * 0.1, cy + r);
+      ctx.closePath(); ctx.fill();
+      break;
+  }
+  ctx.restore();
+}
+
+// Construit la fiche Compcard sur un grand canvas (qualité impression
+// professionnelle, 400 dpi sur une page A4 — net même de très près sur un
+// écran géant) — sert de base commune à l'export PDF et à l'export JPEG.
 async function construireCanvasCompcard() {
   const { profil, photos, projets, age } = ficheData;
-  const BORDEAUX = '#7a1220', NOIR = '#0f0d0c', GRIS = '#78726c', BLANC = '#ffffff';
+  const OR = '#c9a24b', NOIR = '#0e0c0a', CREME = '#f4efe8', BLANC = '#ffffff';
   const LARGEUR_MM = 210, HAUTEUR_MM = 297;
-  const ESCALE = 2480 / LARGEUR_MM; // px par mm (~300 dpi), net même sur grand écran
+  const DPI = 400;
+  const ESCALE = DPI / 25.4; // px par mm
   const px = mm => mm * ESCALE;
   const fpx = pt => pt * 0.3528 * ESCALE; // pt (comme sur une page imprimée) → px canvas
 
@@ -198,134 +319,239 @@ async function construireCanvasCompcard() {
   canvas.width = Math.round(LARGEUR_MM * ESCALE);
   canvas.height = Math.round(HAUTEUR_MM * ESCALE);
   const ctx = canvas.getContext('2d');
-  ctx.fillStyle = BLANC;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // S'assure que les polices de marque (Cormorant Garamond / Jost, déjà
+  // chargées par css/style.css) sont prêtes avant de dessiner du texte —
+  // sinon le canvas peut silencieusement retomber sur une police par défaut.
+  await Promise.all([
+    document.fonts.load('700 100px "Cormorant Garamond"'),
+    document.fonts.load('600 100px "Cormorant Garamond"'),
+    document.fonts.load('italic 500 100px "Cormorant Garamond"'),
+    document.fonts.load('300 100px "Jost"'),
+    document.fonts.load('500 100px "Jost"'),
+    document.fonts.load('600 100px "Jost"')
+  ]);
+  if (document.fonts.ready) await document.fonts.ready;
 
   // Photos choisies par le mannequin pour sa fiche (Compcard) ; à défaut, les
   // 5 meilleures par défaut (photo de profil en premier).
   const photosChoisies = photos.filter(p => p.compcard_ordre).sort((a, b) => a.compcard_ordre - b.compcard_ordre);
   const urlsPhotos = (photosChoisies.length ? photosChoisies : photos.slice(0, 5)).map(p => p.url);
-
-  const [logo, ...imagesPhotos] = await Promise.all([
+  const [logoSurNoir, ...imagesPhotos] = await Promise.all([
     chargerImageLocale('assets/logo-dark-bg.png'),
-    ...urlsPhotos.map(u => chargerImageHauteRes(u, 2400))
+    ...urlsPhotos.map(u => chargerImageHauteRes(u))
   ]);
 
-  function dessinerCouvrant(image, xMm, yMm, lMm, hMm) {
+  function dessinerCouvrant(image, xMm, yMm, lMm, hMm, ancrage) {
     if (!image) return;
     const ratioImage = image.largeur / image.hauteur;
     const ratioCadre = lMm / hMm;
     let sx = 0, sy = 0, sL = image.largeur, sH = image.hauteur;
     if (ratioImage > ratioCadre) { sL = image.hauteur * ratioCadre; sx = (image.largeur - sL) / 2; }
-    else { sH = image.largeur / ratioCadre; sy = (image.hauteur - sH) / 2; }
+    else { sH = image.largeur / ratioCadre; sy = ancrage === 'haut' ? 0 : (image.hauteur - sH) / 2; }
     ctx.drawImage(image.canvas, sx, sy, sL, sH, px(xMm), px(yMm), px(lMm), px(hMm));
   }
 
-  // --- En-tête : logo + grand titre "COMPCARD" ---
-  const hEntete = 30;
-  ctx.fillStyle = BORDEAUX;
-  ctx.fillRect(0, 0, canvas.width, px(hEntete));
-  if (logo) {
-    const hLogoMm = 19;
-    const wLogoMm = hLogoMm * (logo.largeur / logo.hauteur);
-    ctx.drawImage(logo.canvas, px(15), px(6), px(wLogoMm), px(hLogoMm));
-  }
-  ctx.fillStyle = BLANC;
-  ctx.textAlign = 'right';
-  ctx.textBaseline = 'alphabetic';
-  ctx.font = `bold ${fpx(30)}px Arial, sans-serif`;
-  ctx.fillText('COMPCARD', px(195), px(20));
+  ctx.fillStyle = NOIR;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // --- Photos : 1 grande + grille de 4 ---
-  const yPhotos = hEntete + 4, hPhotos = 148;
-  dessinerCouvrant(imagesPhotos[0], 15, yPhotos, 92, hPhotos);
+  // --- Proportions générales (deux tiers photo / un tiers bandeau infos) ---
+  const yTopFin = 180, yPhotosFin = 233; // bas de la section haute / bas de la rangée de photos
+  const xSide = 137.5; // frontière colonne photo / bandeau infos
 
-  const cellulesX = [112, 155.5];
-  const cellulesY = [yPhotos, yPhotos + 76];
-  const lCellule = 39.5, hCellule = 73;
-  let idxGrille = 1;
-  for (const y of cellulesY) {
-    for (const x of cellulesX) {
-      dessinerCouvrant(imagesPhotos[idxGrille], x, y, lCellule, hCellule);
-      idxGrille++;
-    }
-  }
+  // --- Colonne photo (fond crème, cadrée en priorité sur le visage) ---
+  ctx.fillStyle = CREME;
+  ctx.fillRect(0, 0, px(xSide), px(yTopFin));
+  const yPhotoDebut = 25;
+  dessinerCouvrant(imagesPhotos[0], 0, yPhotoDebut, xSide, yTopFin - yPhotoDebut, 'haut');
 
-  // --- Logo au centre, entre les photos : ne cache jamais rien d'important
-  // et reste visible même si la fiche est rognée physiquement (les bords
-  // partent en premier, jamais le centre).
-  if (logo) {
-    const hBadgeMm = 20;
-    const wBadgeMm = hBadgeMm * (logo.largeur / logo.hauteur);
-    const centreXmm = (15 + 195) / 2;
-    const centreYmm = yPhotos + hPhotos / 2;
+  // Logo (marque) en haut à gauche — fondu "multiply" pour effacer le fond
+  // blanc du fichier sans avoir besoin d'un second export transparent.
+  const logoClair = await chargerImageLocale('assets/logo-light-bg.jpg');
+  if (logoClair) {
+    const hLogoMm = 15;
+    const wLogoMm = hLogoMm * (logoClair.largeur / logoClair.hauteur);
     ctx.save();
-    ctx.shadowColor = 'rgba(0,0,0,0.6)';
-    ctx.shadowBlur = px(2.5);
-    ctx.drawImage(logo.canvas, px(centreXmm - wBadgeMm / 2), px(centreYmm - hBadgeMm / 2), px(wBadgeMm), px(hBadgeMm));
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.drawImage(logoClair.canvas, px(8), px(6), px(wLogoMm), px(hLogoMm));
     ctx.restore();
   }
-
-  // --- Nom et catégorie ---
-  let y = yPhotos + hPhotos + 12;
-  ctx.textAlign = 'left';
+  // Accroche italique, légèrement inclinée, en haut à droite de la colonne photo
+  ctx.save();
+  ctx.translate(px(xSide - 10), px(14));
+  ctx.rotate(-4 * Math.PI / 180);
+  ctx.textAlign = 'right';
   ctx.fillStyle = NOIR;
-  ctx.font = `bold ${fpx(27)}px Arial, sans-serif`;
-  ctx.fillText(profil.full_name || 'Mannequin', px(15), px(y));
-  y += 8.5;
-  const libelleCat = profil.category === 'homme' ? 'Homme' : profil.category === 'femme' ? 'Femme' : 'New Face';
-  ctx.fillStyle = BORDEAUX;
-  ctx.font = `${fpx(13)}px Arial, sans-serif`;
-  ctx.fillText([libelleCat, profil.city].filter(Boolean).join('  ·  '), px(15), px(y));
+  ctx.font = `italic 500 ${fpx(11)}px "Cormorant Garamond", serif`;
+  ctx.fillText('Plus qu’une apparence,', 0, 0);
+  ctx.fillText('un talent', 0, px(6.5));
+  ctx.strokeStyle = OR;
+  ctx.lineWidth = px(0.35);
+  ctx.beginPath(); ctx.moveTo(-px(24), px(9)); ctx.quadraticCurveTo(-px(12), px(11.5), 0, px(9)); ctx.stroke();
+  ctx.restore();
 
-  // --- Mensurations (grille 3 colonnes) ---
-  y += 11;
-  const champs = [
-    ['Âge', age ? age + ' ans' : null],
-    ['Taille', profil.height_cm ? profil.height_cm + ' cm' : null],
-    ['Poitrine', profil.chest_cm ? profil.chest_cm + ' cm' : null],
-    ['Tour de taille', profil.waist_cm ? profil.waist_cm + ' cm' : null],
-    [profil.category === 'homme' ? 'Entrejambe' : 'Hanches', profil.category === 'homme' ? (profil.inseam_cm ? profil.inseam_cm + ' cm' : null) : (profil.hips_cm ? profil.hips_cm + ' cm' : null)],
-    ['Pointure', profil.shoe_size || null],
-    ['Carnation', profil.carnation || null],
-    ['Taille vêtements', profil.clothing_size || null],
-    ['Yeux', profil.eye_color || null],
-    ['Cheveux', profil.hair_color || null]
-  ].filter(([, v]) => v);
+  // Voile bas de la photo héro pour la lisibilité du nom
+  const yVoile = yTopFin - 40;
+  const degrade = ctx.createLinearGradient(0, px(yVoile), 0, px(yTopFin));
+  degrade.addColorStop(0, 'rgba(8,6,5,0)');
+  degrade.addColorStop(1, 'rgba(8,6,5,0.8)');
+  ctx.fillStyle = degrade;
+  ctx.fillRect(0, px(yVoile), px(xSide), px(yTopFin - yVoile));
 
-  champs.forEach(([label, valeur], i) => {
-    const col = i % 3, ligne = Math.floor(i / 3);
-    const xMm = 15 + col * 60, yy = y + ligne * 13.5;
-    ctx.fillStyle = GRIS;
-    ctx.font = `${fpx(9.5)}px Arial, sans-serif`;
-    ctx.fillText(label.toUpperCase(), px(xMm), px(yy));
-    ctx.fillStyle = NOIR;
-    ctx.font = `bold ${fpx(13.5)}px Arial, sans-serif`;
-    ctx.fillText(String(valeur), px(xMm), px(yy + 6));
+  ctx.textAlign = 'center';
+  const centreHero = px(xSide / 2);
+  ctx.fillStyle = BLANC;
+  ctx.font = `700 ${fpx(34)}px "Cormorant Garamond", serif`;
+  const prenom = (profil.full_name || 'Mannequin').trim().split(/\s+/)[0];
+  const nomReste = (profil.full_name || '').trim().split(/\s+/).slice(1).join(' ');
+  ctx.fillText(prenom, centreHero, px(yTopFin - 22));
+  if (nomReste) {
+    ctx.font = `600 ${fpx(13)}px Jost, sans-serif`;
+    texteTrace(ctx, nomReste.toUpperCase(), centreHero, px(yTopFin - 14), fpx(2), 'center');
+  }
+  ctx.font = `500 ${fpx(8)}px Jost, sans-serif`;
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  texteTrace(ctx, 'MANNEQUIN', centreHero, px(yTopFin - 6.5), fpx(2.8), 'center');
+
+  // --- Bandeau latéral noir : titre, nom, mensurations ---
+  // (toutes les coordonnées ci-dessous restent en mm ; ligneOr()/centreSideMm
+  // ne sont converties en pixels canvas qu'au moment exact du tracé, via px())
+  const xL = xSide + 8, xR = LARGEUR_MM - 8, centreSideMm = (xL + xR) / 2, wSide = xR - xL;
+  ctx.strokeStyle = OR; ctx.lineWidth = px(0.3);
+  function ligneOr(y, largeur) {
+    ctx.beginPath(); ctx.moveTo(px(centreSideMm - largeur / 2), px(y)); ctx.lineTo(px(centreSideMm + largeur / 2), px(y)); ctx.stroke();
+  }
+  ligneOr(8, wSide);
+  ctx.textAlign = 'center'; ctx.fillStyle = BLANC;
+  ctx.font = `500 ${fpx(9)}px Jost, sans-serif`;
+  texteTrace(ctx, 'COMP CARD', px(centreSideMm), px(14.5), fpx(3), 'center');
+  ligneOr(19, wSide);
+
+  ctx.fillStyle = BLANC;
+  ctx.font = `700 ${fpx(30)}px "Cormorant Garamond", serif`;
+  ctx.fillText(prenom, px(centreSideMm), px(35));
+  ctx.fillStyle = OR;
+  ctx.font = `600 ${fpx(14)}px Jost, sans-serif`;
+  if (nomReste) texteTrace(ctx, nomReste.toUpperCase(), px(centreSideMm), px(43.5), fpx(2.2), 'center');
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.font = `500 ${fpx(8)}px Jost, sans-serif`;
+  texteTrace(ctx, 'MANNEQUIN', px(centreSideMm), px(50), fpx(2.8), 'center');
+  ligneOr(56, wSide);
+
+  // --- Liste des mensurations (une colonne, icône + libellé + valeur) ---
+  const groupeA = [
+    ['age', 'Âge', age ? age + ' ans' : null],
+    ['taille', 'Taille', profil.height_cm ? (profil.height_cm / 100).toFixed(2).replace('.', ',') + ' m' : null],
+    ['poitrine', 'Poitrine', profil.chest_cm ? profil.chest_cm + ' cm' : null],
+    ['taille_tour', 'Taille', profil.waist_cm ? profil.waist_cm + ' cm' : null],
+    ['hanches', profil.category === 'homme' ? 'Entrej.' : 'Hanches', profil.category === 'homme' ? (profil.inseam_cm ? profil.inseam_cm + ' cm' : null) : (profil.hips_cm ? profil.hips_cm + ' cm' : null)],
+    ['pointure', 'Pointure', profil.shoe_size || null]
+  ].filter(([, , v]) => v);
+  const groupeB = [
+    ['carnation', 'Carnation', profil.carnation || null],
+    ['vetements', 'Taille vêt.', profil.clothing_size || null],
+    ['yeux', 'Yeux', profil.eye_color || null],
+    ['cheveux', 'Cheveux', profil.hair_color || null]
+  ].filter(([, , v]) => v);
+
+  const yListeDebut = 58, yListeFin = yTopFin - 4;
+  const aDeuxGroupes = groupeA.length && groupeB.length;
+  const espaceDivider = aDeuxGroupes ? 7 : 0;
+  const nbLignes = groupeA.length + groupeB.length || 1;
+  const disponible = yListeFin - yListeDebut;
+  let pitch = (disponible - espaceDivider) / nbLignes;
+  pitch = Math.min(pitch, 15);
+  // S'il reste de la place (peu de champs renseignés), on centre le bloc au
+  // lieu de le laisser collé en haut avec un grand vide en dessous.
+  const hauteurContenu = nbLignes * pitch + espaceDivider;
+  const yListeDebutReel = yListeDebut + Math.max(0, (disponible - hauteurContenu) / 2);
+
+  let yCourant = yListeDebutReel + pitch / 2;
+  function dessinerLigne([cle, label, valeur]) {
+    dessinerIcone(ctx, cle, px(xL + 4), px(yCourant), px(7), OR);
+    ctx.textAlign = 'left';
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.font = `500 ${fpx(7)}px Jost, sans-serif`;
+    texteTrace(ctx, label.toUpperCase(), px(xL + 11), px(yCourant + 1.5), fpx(0.4), 'left');
+    ctx.fillStyle = OR;
+    ctx.font = `500 ${fpx(9)}px Jost, sans-serif`;
+    ctx.fillText('|', px(xR - 22), px(yCourant + 1.5));
+    ctx.fillStyle = BLANC;
+    ctx.font = `600 ${fpx(11.5)}px Jost, sans-serif`;
+    ctx.fillText(String(valeur), px(xR - 17), px(yCourant + 2));
+    yCourant += pitch;
+  }
+  groupeA.forEach(dessinerLigne);
+  if (aDeuxGroupes) { ligneOr(yCourant - pitch / 2 + espaceDivider / 2, wSide); yCourant += espaceDivider; }
+  groupeB.forEach(dessinerLigne);
+
+  // --- Rangée de 4 photos, pleine largeur, sans marge ---
+  const hLigne = yPhotosFin - yTopFin;
+  const lCase = LARGEUR_MM / 4;
+  [0, 1, 2, 3].forEach(i => {
+    dessinerCouvrant(imagesPhotos[i + 1], i * lCase, yTopFin, lCase, hLigne);
   });
 
-  // --- Résumé du parcours ---
-  const yParcours = y + Math.ceil(champs.length / 3) * 13.5 + 5;
-  if (projets && projets.length) {
-    ctx.fillStyle = GRIS;
-    ctx.font = `italic ${fpx(9.5)}px Arial, sans-serif`;
-    ctx.fillText(`${projets.length} projet${projets.length > 1 ? 's' : ''} réalisé${projets.length > 1 ? 's' : ''} — book complet sur maitreakessemodelmanagement.com`, px(15), px(yParcours));
+  // --- Pied de page : contact | logo | web + réseaux ---
+  ctx.fillStyle = NOIR;
+  ctx.fillRect(0, px(yPhotosFin), canvas.width, px(HAUTEUR_MM - yPhotosFin));
+  const yFooterMid = yPhotosFin + (HAUTEUR_MM - yPhotosFin) / 2;
+  const xDiv1 = 68, xDiv2 = 142;
+  ctx.strokeStyle = 'rgba(201,162,75,0.5)'; ctx.lineWidth = px(0.25);
+  [xDiv1, xDiv2].forEach(x => {
+    ctx.beginPath(); ctx.moveTo(px(x), px(yPhotosFin + 10)); ctx.lineTo(px(x), px(HAUTEUR_MM - 10)); ctx.stroke();
+  });
+
+  // Colonne contact (gauche)
+  ctx.textAlign = 'left'; ctx.fillStyle = OR;
+  const xIconFooter = 12, xTexteFooter = 20;
+  const lignesContact = [
+    ['☎', '+225 27 22 23 11 76'],
+    ['✉', 'scoutmodel.ma2m@gmail.com'],
+    ['⌖', 'Abidjan, Côte d’Ivoire']
+  ];
+  let yC = yFooterMid - 9;
+  lignesContact.forEach(([icone, texte]) => {
+    ctx.fillStyle = OR;
+    ctx.font = `${fpx(9)}px Arial, sans-serif`;
+    ctx.fillText(icone, px(xIconFooter), px(yC));
+    ctx.fillStyle = BLANC;
+    ctx.font = `500 ${fpx(8.5)}px Jost, sans-serif`;
+    ctx.fillText(texte, px(xTexteFooter), px(yC));
+    yC += 9;
+  });
+
+  // Colonne logo (centre)
+  if (logoSurNoir) {
+    const wLogoMm = 46;
+    const hLogoMm = wLogoMm * (logoSurNoir.hauteur / logoSurNoir.largeur);
+    ctx.drawImage(logoSurNoir.canvas, px((xDiv1 + xDiv2) / 2 - wLogoMm / 2), px(yFooterMid - hLogoMm / 2), px(wLogoMm), px(hLogoMm));
   }
 
-  // --- Pied de page agrandi : occupe tout l'espace restant jusqu'en bas de
-  // la page (plus de blanc inutile), contacts remontés et en plus grand.
-  const yPiedPage = Math.max(yParcours + 8, 250);
-  const hPiedPage = HAUTEUR_MM - yPiedPage;
-  ctx.fillStyle = BORDEAUX;
-  ctx.fillRect(0, px(yPiedPage), canvas.width, px(hPiedPage));
+  // Colonne web + réseaux (droite)
+  const centreDroite = (xDiv2 + (LARGEUR_MM - 8)) / 2;
+  ctx.textAlign = 'center';
   ctx.fillStyle = BLANC;
-  ctx.font = `bold ${fpx(12)}px Arial, sans-serif`;
-  ctx.fillText('CONTACT OFFICIEL MA2M', px(15), px(yPiedPage + 10));
-  ctx.font = `${fpx(11)}px Arial, sans-serif`;
-  ctx.fillText('+225 27 22 23 11 76   ·   +225 05 45 65 66 87', px(15), px(yPiedPage + 18));
-  ctx.fillText('scoutmodel.ma2m@gmail.com   ·   @maitreakessemodelmanagement', px(15), px(yPiedPage + 25));
-  ctx.font = `italic ${fpx(8.5)}px Arial, sans-serif`;
-  ctx.fillText(`Document officiel généré le ${new Date().toLocaleDateString('fr-FR')} depuis maitreakessemodelmanagement.com — toute demande de booking passe exclusivement par l'agence.`, px(15), px(yPiedPage + hPiedPage - 6));
+  ctx.font = `500 ${fpx(8.5)}px Jost, sans-serif`;
+  ctx.fillText('maitreakessemodelmanagement.com', px(centreDroite), px(yFooterMid - 12));
+  const icones = ['📷', '👥', '♪', '▶'];
+  const largeurTotaleIcones = 9 * (icones.length - 1) + icones.length * 6;
+  let xIcone = centreDroite - largeurTotaleIcones / 2 + 3;
+  icones.forEach(ic => {
+    ctx.fillStyle = OR;
+    ctx.beginPath(); ctx.arc(px(xIcone), px(yFooterMid - 1), px(3.2), 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = NOIR;
+    ctx.font = `${fpx(4.2)}px Arial, sans-serif`;
+    ctx.fillText(ic, px(xIcone), px(yFooterMid));
+    xIcone += 9;
+  });
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.font = `500 ${fpx(7.5)}px Jost, sans-serif`;
+  ctx.fillText('@maitreakessemodelmanagement', px(centreDroite), px(yFooterMid + 10));
+
+  // Filet or tout en bas de page
+  ctx.strokeStyle = OR; ctx.lineWidth = px(0.35);
+  ctx.beginPath(); ctx.moveTo(px(8), px(HAUTEUR_MM - 5)); ctx.lineTo(px(LARGEUR_MM - 8), px(HAUTEUR_MM - 5)); ctx.stroke();
 
   return canvas;
 }
@@ -346,7 +572,7 @@ async function genererFiche(format) {
 
     if (format === 'jpeg') {
       const lien = document.createElement('a');
-      lien.href = canvas.toDataURL('image/jpeg', 0.95);
+      lien.href = canvas.toDataURL('image/jpeg', 0.98);
       lien.download = nomFichier + '.jpg';
       document.body.appendChild(lien);
       lien.click();
@@ -354,7 +580,7 @@ async function genererFiche(format) {
     } else {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-      doc.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 210, 297);
+      doc.addImage(canvas.toDataURL('image/jpeg', 0.98), 'JPEG', 0, 0, 210, 297);
       doc.save(nomFichier + '.pdf');
     }
   } catch (e) {
