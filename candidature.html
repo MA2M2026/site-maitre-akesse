@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Candidature Casting — Maître Akesse Model Management</title>
-<meta name="description" content="Déposez votre candidature pour rejoindre Maître Akesse Model Management : photos, mensurations et présentation.">
+<title>Postuler à un casting — Maître Akesse Model Management</title>
+<meta name="description" content="Postulez pour rejoindre Maître Akesse Model Management ou pour un projet/casting précis de l'agence : photos, mensurations et présentation.">
 <link rel="canonical" href="https://www.maitreakessemodelmanagement.com/candidature.html">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Candidature Casting — Maître Akesse Model Management">
-<meta property="og:description" content="Déposez votre candidature pour rejoindre Maître Akesse Model Management : photos, mensurations et présentation.">
+<meta property="og:title" content="Postuler à un casting — Maître Akesse Model Management">
+<meta property="og:description" content="Postulez pour rejoindre Maître Akesse Model Management ou pour un projet/casting précis de l'agence : photos, mensurations et présentation.">
 <meta property="og:image" content="https://www.maitreakessemodelmanagement.com/assets/logo-dark-bg.png">
 <meta property="og:url" content="https://www.maitreakessemodelmanagement.com/candidature.html">
 <meta property="og:locale" content="fr_FR">
@@ -39,7 +39,7 @@
     <li><a href="mannequins.html" class="">The Book</a></li>
     <li><a href="actualites.html">Actualités</a></li>
     <li><a href="partenaires.html">Nos partenaires</a></li>
-    <li><a href="candidature.html" class="actif">Candidature</a></li>
+    <li><a href="candidature.html" class="actif">Postuler à un casting</a></li>
     <li><a href="inscription-mannequin.html">Inscription</a></li>
     <li><a href="contact.html" class="">Contact</a></li>
     <li class="item-cta"><a href="espace-mannequin.html">Espace mannequin</a></li>
@@ -48,15 +48,37 @@
 
 <section style="padding-bottom:1rem;">
   <div class="container">
-    <div class="eyebrow reveal">Rejoignez l'agence</div>
-    <h1 class="reveal reveal-delay-1">Candidature Casting<span class="oeil">.</span></h1>
-    <p style="margin-top:1.2rem; max-width:60ch;" class="reveal reveal-delay-2">Vous souhaitez rejoindre Maître Akesse Model Management ? Remplissez ce formulaire avec vos informations, vos mensurations et trois photos (portrait, plein pied, sans maquillage). Notre équipe étudie chaque candidature.</p>
+    <div class="eyebrow reveal">Rejoignez l'agence ou un casting</div>
+    <h1 class="reveal reveal-delay-1">Postuler à un casting<span class="oeil">.</span></h1>
+    <p style="margin-top:1.2rem; max-width:60ch;" class="reveal reveal-delay-2">Vous souhaitez rejoindre Maître Akesse Model Management, ou postuler à un projet/casting précis lancé par l'agence ? Remplissez ce formulaire avec vos informations, vos mensurations et quatre photos minimum. Notre équipe étudie chaque candidature.</p>
   </div>
 </section>
 
 <section style="padding-top:1rem;">
   <div class="container" style="max-width:640px;">
     <form id="form-casting">
+      <div class="form-champ">
+        <label for="ca-type">Vous postulez pour *</label>
+        <select id="ca-type" required>
+          <option value="">Sélectionner</option>
+          <option value="agence">Intégrer l'agence</option>
+          <option value="projet">Un projet / casting précis de l'agence</option>
+        </select>
+      </div>
+      <div id="ca-bloc-projet" style="display:none;">
+        <div class="form-champ">
+          <label for="ca-projet">Projet / casting concerné *</label>
+          <select id="ca-projet">
+            <option value="">Sélectionner</option>
+            <option value="__autre__">Autre (précisez)</option>
+          </select>
+        </div>
+        <div class="form-champ" id="ca-bloc-projet-autre" style="display:none;">
+          <label for="ca-projet-autre">Nom du projet / casting *</label>
+          <input type="text" id="ca-projet-autre" placeholder="Précisez le nom du casting ou de l'événement">
+        </div>
+      </div>
+
       <div class="form-grille">
         <div class="form-champ">
           <label for="ca-nom">Nom complet</label>
@@ -133,23 +155,16 @@
       </div>
 
       <div class="form-champ">
-        <label>Photo portrait (visage)</label>
-        <input type="file" id="ca-photo1" accept="image/*" required>
-      </div>
-      <div class="form-champ">
-        <label>Photo plein pied</label>
-        <input type="file" id="ca-photo2" accept="image/*" required>
-      </div>
-      <div class="form-champ">
-        <label>Photo sans maquillage</label>
-        <input type="file" id="ca-photo3" accept="image/*">
+        <label for="ca-photos">Photos (4 minimum : portrait, plein pied, sans maquillage, autre...) *</label>
+        <input type="file" id="ca-photos" accept="image/*" multiple required>
+        <span id="ca-photos-compteur" style="font-size:0.78rem; color:var(--gris); display:block; margin-top:0.3rem;"></span>
+        <div id="ca-photos-apercu" style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.6rem;"></div>
       </div>
 
       <div class="form-champ" style="display:flex; align-items:flex-start; gap:0.6rem;">
         <input type="checkbox" id="ca-consentement" required style="width:auto; margin-top:0.3rem;">
-        <label for="ca-consentement" style="font-weight:400; font-size:0.85rem;">
-          J'ai pris connaissance de la <a href="politique-confidentialite.html" target="_blank" style="color:var(--rouge);">politique de confidentialité</a>.
-          Si je suis mineur(e), je certifie candidater avec l'accord d'un parent ou tuteur légal. *
+        <label for="ca-consentement" id="ca-consentement-label" style="font-weight:400; font-size:0.85rem;">
+          J'ai pris connaissance de la <a href="politique-confidentialite.html" target="_blank" style="color:var(--rouge);">politique de confidentialité</a>. *
         </label>
       </div>
 
@@ -173,7 +188,7 @@
         <a href="mannequins.html">The Book</a>
         <a href="actualites.html">Actualités</a>
         <a href="partenaires.html">Nos partenaires</a>
-        <a href="candidature.html">Candidature</a>
+        <a href="candidature.html">Postuler à un casting</a>
         <a href="inscription-mannequin.html">Inscription</a>
       </div>
       <div>
@@ -224,6 +239,50 @@ function afficherMsg(el, texte, type) {
   el.textContent = texte;
 }
 
+// --- Type de candidature : intégrer l'agence, ou un projet/casting précis ---
+async function chargerProjetsActifs() {
+  const selectProjet = document.getElementById('ca-projet');
+  const { data: projets } = await sb.from('casting_projets').select('id, nom').eq('actif', true).order('nom');
+  selectProjet.innerHTML = '<option value="">Sélectionner</option>'
+    + (projets || []).map(p => `<option value="${echapperHtml(p.nom)}">${echapperHtml(p.nom)}</option>`).join('')
+    + '<option value="__autre__">Autre (précisez)</option>';
+}
+chargerProjetsActifs();
+
+document.getElementById('ca-type').addEventListener('change', (e) => {
+  const estProjet = e.target.value === 'projet';
+  document.getElementById('ca-bloc-projet').style.display = estProjet ? 'block' : 'none';
+  document.getElementById('ca-projet').required = estProjet;
+  if (!estProjet) {
+    document.getElementById('ca-projet').value = '';
+    document.getElementById('ca-bloc-projet-autre').style.display = 'none';
+    document.getElementById('ca-projet-autre').required = false;
+  }
+});
+document.getElementById('ca-projet').addEventListener('change', (e) => {
+  const estAutre = e.target.value === '__autre__';
+  document.getElementById('ca-bloc-projet-autre').style.display = estAutre ? 'block' : 'none';
+  document.getElementById('ca-projet-autre').required = estAutre;
+});
+
+// --- Photos : 4 minimum, avec aperçu et compteur en direct ---
+document.getElementById('ca-photos').addEventListener('change', (e) => {
+  const fichiers = Array.from(e.target.files || []);
+  const compteur = document.getElementById('ca-photos-compteur');
+  const apercu = document.getElementById('ca-photos-apercu');
+  compteur.textContent = fichiers.length >= 4
+    ? `${fichiers.length} photo${fichiers.length > 1 ? 's' : ''} sélectionnée${fichiers.length > 1 ? 's' : ''}.`
+    : `${fichiers.length} photo${fichiers.length > 1 ? 's' : ''} sélectionnée${fichiers.length > 1 ? 's' : ''} — 4 minimum requises.`;
+  compteur.style.color = fichiers.length >= 4 ? 'var(--gris)' : 'var(--rouge)';
+  apercu.innerHTML = '';
+  fichiers.forEach(f => {
+    const img = document.createElement('img');
+    img.src = URL.createObjectURL(f);
+    img.style.cssText = 'width:64px; height:64px; object-fit:cover; border-radius:4px;';
+    apercu.appendChild(img);
+  });
+});
+
 function majIndicationTaille() {
   const genre = document.getElementById('ca-genre').value;
   const indication = document.getElementById('ca-taille-indication');
@@ -257,7 +316,37 @@ document.getElementById('ca-naissance').addEventListener('change', () => {
   document.getElementById('ca-parent-nom').required = mineur;
   document.getElementById('ca-parent-telephone').required = mineur;
   majIndicationTaille();
+  majConsentement();
 });
+
+// Le consentement générique ne suffit pas à prouver qu'un parent a bien
+// donné son accord (rien n'empêche un mineur de cocher la case lui-même) —
+// on rend donc la case à cocher indisponible tant que le nom du parent/
+// tuteur n'a pas été renseigné, et on reformule le texte comme une véritable
+// attestation nominative ("je soussigné(e) [nom du parent]...").
+function majConsentement() {
+  const label = document.getElementById('ca-consentement-label');
+  const checkbox = document.getElementById('ca-consentement');
+  const lienPolitique = '<a href="politique-confidentialite.html" target="_blank" style="color:var(--rouge);">politique de confidentialité</a>';
+  const mineur = estMineur();
+  if (!mineur) {
+    label.innerHTML = `J'ai pris connaissance de la ${lienPolitique}. *`;
+    checkbox.disabled = false;
+    return;
+  }
+  const parentNom = document.getElementById('ca-parent-nom').value.trim();
+  const nomCandidat = document.getElementById('ca-nom').value.trim();
+  if (!parentNom) {
+    label.innerHTML = `Merci de renseigner ci-dessus le nom du parent ou tuteur légal pour activer ce consentement. *`;
+    checkbox.checked = false;
+    checkbox.disabled = true;
+    return;
+  }
+  checkbox.disabled = false;
+  label.innerHTML = `Je soussigné(e) <strong>${echapperHtml(parentNom)}</strong>, parent ou tuteur légal${nomCandidat ? ` de <strong>${echapperHtml(nomCandidat)}</strong>` : ''}, certifie autoriser cette candidature et avoir pris connaissance de la ${lienPolitique}. *`;
+}
+document.getElementById('ca-parent-nom').addEventListener('input', majConsentement);
+document.getElementById('ca-nom').addEventListener('input', majConsentement);
 
 document.getElementById('form-casting').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -270,6 +359,23 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
 
   if (!mineur && taille < tailleMin) {
     afficherMsg(msg, `Désolé, la taille minimale requise pour postuler est de ${tailleMin} cm (${genre === 'homme' ? 'hommes' : 'femmes'}). Ta candidature ne peut pas être soumise avec cette taille.`, 'err');
+    return;
+  }
+
+  const typeCandidature = document.getElementById('ca-type').value;
+  const projetSelect = document.getElementById('ca-projet').value;
+  let projetNom = null;
+  if (typeCandidature === 'projet') {
+    projetNom = projetSelect === '__autre__' ? document.getElementById('ca-projet-autre').value.trim() : projetSelect;
+    if (!projetNom) {
+      afficherMsg(msg, 'Merci de préciser le projet ou casting concerné.', 'err');
+      return;
+    }
+  }
+
+  const fichiersPhotos = Array.from(document.getElementById('ca-photos').files || []);
+  if (fichiersPhotos.length < 4) {
+    afficherMsg(msg, `Merci d'ajouter au moins 4 photos (${fichiersPhotos.length} sélectionnée${fichiersPhotos.length > 1 ? 's' : ''} pour l'instant).`, 'err');
     return;
   }
 
@@ -291,7 +397,9 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
     hips_cm: parseInt(document.getElementById('ca-hanches').value) || null,
     message: document.getElementById('ca-message').value.trim(),
     parent_nom: mineur ? document.getElementById('ca-parent-nom').value.trim() : null,
-    parent_telephone: mineur ? document.getElementById('ca-parent-telephone').value.trim() : null
+    parent_telephone: mineur ? document.getElementById('ca-parent-telephone').value.trim() : null,
+    type_candidature: typeCandidature,
+    projet_nom: projetNom
   };
 
   candidature.id = crypto.randomUUID();
@@ -306,13 +414,7 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
     return;
   }
 
-  const fichiers = [
-    document.getElementById('ca-photo1').files[0],
-    document.getElementById('ca-photo2').files[0],
-    document.getElementById('ca-photo3').files[0]
-  ].filter(Boolean);
-
-  for (const fichierOriginal of fichiers) {
+  for (const fichierOriginal of fichiersPhotos) {
     const fichier = await convertirSiHeic(fichierOriginal);
     const chemin = `${candidature.id}/${Date.now()}-${nomFichierSur(fichier.name)}`;
     const { error: erreurUpload } = await sb.storage.from('casting-applications').upload(chemin, fichier);
@@ -322,15 +424,23 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
     }
   }
 
+  const libelleType = typeCandidature === 'projet' ? `Projet/casting : ${projetNom}` : `Intégrer l'agence`;
   envoyerNotificationEmail({
     name: candidature.full_name,
     telephone: candidature.phone,
     email: candidature.email,
-    message: `Nouvelle candidature casting.\nVille : ${candidature.city || '-'}\nTaille : ${candidature.height_cm || '-'} cm\nMessage : ${candidature.message || '-'}${mineur ? `\n⚠️ MINEUR — Parent/tuteur : ${candidature.parent_nom || '-'} — ${candidature.parent_telephone || '-'}` : ''}`
+    message: `Nouvelle candidature casting.\nPostule pour : ${libelleType}\nVille : ${candidature.city || '-'}\nTaille : ${candidature.height_cm || '-'} cm\nMessage : ${candidature.message || '-'}${mineur ? `\n⚠️ MINEUR — Parent/tuteur : ${candidature.parent_nom || '-'} — ${candidature.parent_telephone || '-'}` : ''}`
   });
 
   afficherMsg(msg, 'Merci ! Votre candidature a bien été envoyée. Notre équipe vous recontactera si votre profil est retenu.', 'ok');
   document.getElementById('form-casting').reset();
+  document.getElementById('ca-bloc-parent').style.display = 'none';
+  document.getElementById('ca-bloc-projet').style.display = 'none';
+  document.getElementById('ca-bloc-projet-autre').style.display = 'none';
+  document.getElementById('ca-photos-compteur').textContent = '';
+  document.getElementById('ca-photos-apercu').innerHTML = '';
+  document.getElementById('ca-consentement').disabled = false;
+  majConsentement();
   btn.disabled = false;
 });
 </script>

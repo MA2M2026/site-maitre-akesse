@@ -132,9 +132,22 @@
 
     <div class="liste-recente">
       <div class="dossiers-entete">
+        <h2 style="margin:0;">Projets & castings</h2>
+      </div>
+      <p style="font-size:0.85rem; color:var(--gris); margin:0.3rem 0 1rem;">Ajoutez ici les projets/castings précis pour lesquels les candidats peuvent postuler (proposés dans le formulaire "Postuler à un casting"). Désactivez un projet une fois terminé pour qu'il disparaisse du formulaire — les candidatures déjà reçues restent intactes.</p>
+      <form id="form-nouveau-projet" style="display:flex; gap:0.6rem; margin-bottom:1rem; flex-wrap:wrap;">
+        <input type="text" id="nouveau-projet-nom" placeholder="Nom du projet ou casting" required style="flex:1; min-width:200px;">
+        <button type="submit" class="btn">+ Ajouter</button>
+      </form>
+      <div id="liste-projets"></div>
+    </div>
+
+    <div class="liste-recente">
+      <div class="dossiers-entete">
         <h2 style="margin:0;">Candidatures</h2>
         <span class="dossiers-compteur" id="candidatures-compteur"></span>
       </div>
+      <div id="resume-candidatures" style="font-size:0.85rem; color:var(--gris); margin-bottom:0.8rem;"></div>
       <div class="filtre-pills" id="filtres-candidatures"></div>
       <div class="dossier-liste" id="liste-candidatures"></div>
       <button class="btn dossiers-plus" id="candidatures-plus-btn" style="display:none;">Voir plus</button>
@@ -354,6 +367,8 @@ async function chargerStatistiques() {
 
   chargerClassementMannequins();
   chargerCodes();
+  chargerProjets();
+  chargerResumeCandidatures();
   chargerCandidatures();
   chargerInscriptions();
   chargerRecruteurs();
@@ -430,8 +445,14 @@ function sousLigneAffichee(source, d) {
   if (source === 'recruteur') return d.company || d.email || '';
   return d.email || d.phone || '';
 }
+function libelleTypeCandidature(d) {
+  if (d.type_candidature === 'projet') return d.projet_nom || 'Projet';
+  if (d.type_candidature === 'agence') return "Intégrer l'agence";
+  return null;
+}
 function metaAffichee(source, d) {
   if (source === 'recruteur') return [d.project_type, new Date(d.created_at).toLocaleDateString('fr-FR')].filter(Boolean).join(' · ');
+  if (source === 'casting') return [libelleTypeCandidature(d), d.city, new Date(d.created_at).toLocaleDateString('fr-FR')].filter(Boolean).join(' · ');
   return [d.city, new Date(d.created_at).toLocaleDateString('fr-FR')].filter(Boolean).join(' · ');
 }
 
@@ -543,7 +564,8 @@ async function ouvrirFicheDossier(source, id) {
   const age = (source === 'inscription' || source === 'casting') ? calculerAge(d.date_naissance) : null;
   const estMineur = age !== null && age < 18;
   document.getElementById('mf-titre').innerHTML = `${echapperHtml(nomAffiche(source, d))} ${estMineur ? '<span class="badge-mineur">Mineur' + (age !== null ? ' — ' + age + ' ans' : '') + '</span>' : ''}`;
-  document.getElementById('mf-sous-titre').textContent = `${TITRE_SOURCE[source]} reçue le ${new Date(d.created_at).toLocaleDateString('fr-FR')}`;
+  const typeCandidatureTxt = source === 'casting' ? libelleTypeCandidature(d) : null;
+  document.getElementById('mf-sous-titre').textContent = `${TITRE_SOURCE[source]} reçue le ${new Date(d.created_at).toLocaleDateString('fr-FR')}` + (typeCandidatureTxt ? ` · Postule pour : ${typeCandidatureTxt}` : '');
 
   document.getElementById('mf-champs').innerHTML = champs.map(([cle, label, unite]) => {
     const valeur = d[cle];
@@ -739,6 +761,57 @@ async function chargerCodes() {
       <span class="statut-pill ${c.utilise ? 'statut-refusee' : 'statut-retenue'}">${c.utilise ? 'Utilisé' : 'Disponible'}</span>
     </div>
   `).join('') || '<div class="dossiers-vide">Aucun code généré pour le moment.</div>';
+}
+
+// --- Projets & castings (liste proposée aux candidats dans "Postuler à un casting") ---
+document.getElementById('form-nouveau-projet').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const champ = document.getElementById('nouveau-projet-nom');
+  const nom = champ.value.trim();
+  if (!nom) return;
+  const { error } = await sb.from('casting_projets').insert({ nom });
+  if (!error) { champ.value = ''; chargerProjets(); }
+});
+
+async function chargerProjets() {
+  const { data: projets } = await sb.from('casting_projets').select('id, nom, actif, created_at').order('created_at', { ascending: false });
+  const conteneur = document.getElementById('liste-projets');
+  conteneur.innerHTML = (projets || []).map(p => `
+    <div class="dossier-carte" style="cursor:default;">
+      <div class="dc-nom">${echapperHtml(p.nom)}</div>
+      <div class="dc-meta">Ajouté le ${new Date(p.created_at).toLocaleDateString('fr-FR')}</div>
+      <span class="statut-pill ${p.actif ? 'statut-retenue' : 'statut-refusee'}">${p.actif ? 'Actif' : 'Désactivé'}</span>
+      <button class="btn" style="padding:0.3rem 0.7rem; font-size:0.75rem;" data-projet-toggle="${p.id}" data-actif="${p.actif}">${p.actif ? 'Désactiver' : 'Réactiver'}</button>
+      <button class="btn" style="padding:0.3rem 0.7rem; font-size:0.75rem; color:var(--rouge);" data-projet-supprimer="${p.id}">Supprimer</button>
+    </div>
+  `).join('') || '<div class="dossiers-vide">Aucun projet/casting ajouté pour le moment — le formulaire ne proposera que "Intégrer l\'agence".</div>';
+}
+
+document.getElementById('liste-projets').addEventListener('click', async (e) => {
+  const btnToggle = e.target.closest('[data-projet-toggle]');
+  if (btnToggle) {
+    const actifActuel = btnToggle.dataset.actif === 'true';
+    await sb.from('casting_projets').update({ actif: !actifActuel }).eq('id', btnToggle.dataset.projetToggle);
+    chargerProjets();
+    return;
+  }
+  const btnSupprimer = e.target.closest('[data-projet-supprimer]');
+  if (btnSupprimer) {
+    if (!confirm('Supprimer définitivement ce projet ? Les candidatures déjà reçues pour lui resteront intactes (le nom du projet a été enregistré directement sur chaque candidature).')) return;
+    await sb.from('casting_projets').delete().eq('id', btnSupprimer.dataset.projetSupprimer);
+    chargerProjets();
+  }
+});
+
+// --- Résumé des candidatures par projet/casting ---
+async function chargerResumeCandidatures() {
+  const { data: resume } = await sb.rpc('resume_candidatures_par_projet');
+  const conteneur = document.getElementById('resume-candidatures');
+  if (!resume || !resume.length) { conteneur.textContent = ''; return; }
+  conteneur.innerHTML = resume.map(r => {
+    const libelle = r.type_candidature === 'projet' ? (r.projet_nom || 'Projet sans nom') : "Intégrer l'agence";
+    return `<span style="display:inline-block; margin:0 1rem 0.4rem 0;"><strong style="color:var(--titre-clair);">${r.total}</strong> — ${echapperHtml(libelle)}</span>`;
+  }).join('');
 }
 
 // --- Mannequin à la une (page d'accueil) ---
