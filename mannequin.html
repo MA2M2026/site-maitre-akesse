@@ -183,6 +183,62 @@ function chargerImageLocale(url) {
   });
 }
 
+// Icônes de réseaux sociaux, dessinées en vectoriel (jamais en emoji, dont le
+// rendu est flou et incohérent d'un système à l'autre une fois agrandi).
+function dessinerIconeReseau(ctx, cle, cx, cy, taille, couleurGlyphe) {
+  ctx.save();
+  ctx.strokeStyle = couleurGlyphe;
+  ctx.fillStyle = couleurGlyphe;
+  ctx.lineWidth = Math.max(1, taille * 0.09);
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  const r = taille / 2;
+  switch (cle) {
+    case 'instagram': {
+      const c = r * 1.55;
+      const rr = c * 0.32;
+      ctx.beginPath();
+      ctx.moveTo(cx - c / 2 + rr, cy - c / 2);
+      ctx.lineTo(cx + c / 2 - rr, cy - c / 2);
+      ctx.quadraticCurveTo(cx + c / 2, cy - c / 2, cx + c / 2, cy - c / 2 + rr);
+      ctx.lineTo(cx + c / 2, cy + c / 2 - rr);
+      ctx.quadraticCurveTo(cx + c / 2, cy + c / 2, cx + c / 2 - rr, cy + c / 2);
+      ctx.lineTo(cx - c / 2 + rr, cy + c / 2);
+      ctx.quadraticCurveTo(cx - c / 2, cy + c / 2, cx - c / 2, cy + c / 2 - rr);
+      ctx.lineTo(cx - c / 2, cy - c / 2 + rr);
+      ctx.quadraticCurveTo(cx - c / 2, cy - c / 2, cx - c / 2 + rr, cy - c / 2);
+      ctx.closePath(); ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx, cy, r * 0.42, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx + c * 0.28, cy - c * 0.28, r * 0.09, 0, Math.PI * 2); ctx.fill();
+      break;
+    }
+    case 'facebook':
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = `900 ${taille * 1.55}px Arial, Helvetica, sans-serif`;
+      ctx.fillText('f', cx + taille * 0.02, cy + taille * 0.08);
+      break;
+    case 'tiktok':
+      ctx.beginPath();
+      ctx.arc(cx - r * 0.2, cy + r * 0.4, r * 0.46, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(cx + r * 0.24, cy + r * 0.4);
+      ctx.lineTo(cx + r * 0.24, cy - r * 0.8);
+      ctx.quadraticCurveTo(cx + r * 0.5, cy - r * 0.32, cx + r * 0.8, cy - r * 0.3);
+      ctx.lineTo(cx + r * 0.8, cy + r * 0.12);
+      ctx.quadraticCurveTo(cx + r * 0.52, cy + r * 0.08, cx + r * 0.36, cy - r * 0.14);
+      ctx.lineTo(cx + r * 0.36, cy + r * 0.4);
+      ctx.closePath(); ctx.fill();
+      break;
+    case 'youtube':
+      ctx.beginPath();
+      ctx.moveTo(cx - r * 0.42, cy - r * 0.55);
+      ctx.lineTo(cx + r * 0.6, cy);
+      ctx.lineTo(cx - r * 0.42, cy + r * 0.55);
+      ctx.closePath(); ctx.fill();
+      break;
+  }
+  ctx.restore();
+}
+
 // Construit la fiche Compcard sur un grand canvas (qualité impression
 // professionnelle, 400 dpi sur une page A4 — net même de très près sur un
 // écran géant) — sert de base commune à l'export PDF et à l'export JPEG.
@@ -231,8 +287,17 @@ async function construireCanvasCompcard() {
     ctx.drawImage(image.canvas, sx, sy, sL, sH, px(xMm), px(yMm), px(lMm), px(hMm));
   }
 
-  // --- Fond noir "brillant" (couleur de marque du site) ---
-  ctx.fillStyle = NOIR;
+  // --- Fond noir "brillant", effet laqué/miroir : un dégradé diagonal avec
+  // un reflet clair traversant le noir profond, plutôt qu'un aplat plat.
+  const degradeNoir = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+  degradeNoir.addColorStop(0, '#0c0a08');
+  degradeNoir.addColorStop(0.22, '#020202');
+  degradeNoir.addColorStop(0.46, '#241f1a');
+  degradeNoir.addColorStop(0.5, '#2e2822');
+  degradeNoir.addColorStop(0.54, '#241f1a');
+  degradeNoir.addColorStop(0.78, '#020202');
+  degradeNoir.addColorStop(1, '#0c0a08');
+  ctx.fillStyle = degradeNoir;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   // --- En-tête bordeaux : logo + "COMPCARD" ---
@@ -329,17 +394,29 @@ async function construireCanvasCompcard() {
   }
 
   // --- Pied de page bordeaux : toujours à une hauteur sûre (jamais chevauché
-  // ni coupé), contacts bien visibles quel que soit le nombre d'informations.
-  const yPiedPage = Math.min(Math.max(yFinGrille + 8, 250), 260);
+  // ni coupé), contacts et réseaux sociaux bien visibles quel que soit le
+  // nombre d'informations renseignées sur le profil.
+  const yPiedPage = Math.min(Math.max(yFinGrille + 8, 250), 253);
   const hPiedPage = HAUTEUR_MM - yPiedPage;
   ctx.fillStyle = BORDEAUX;
   ctx.fillRect(0, px(yPiedPage), canvas.width, px(hPiedPage));
   ctx.fillStyle = BLANC;
   ctx.font = `bold ${fpx(12)}px Arial, sans-serif`;
-  ctx.fillText('CONTACT OFFICIEL MA2M', px(15), px(yPiedPage + 10));
+  ctx.fillText('CONTACT OFFICIEL MA2M', px(15), px(yPiedPage + 9));
   ctx.font = `${fpx(11)}px Arial, sans-serif`;
-  ctx.fillText('+225 27 22 23 11 76   ·   +225 05 45 65 66 87', px(15), px(yPiedPage + 18));
-  ctx.fillText('scoutmodel.ma2m@gmail.com   ·   @maitreakessemodelmanagement', px(15), px(yPiedPage + 25));
+  ctx.fillText('+225 27 22 23 11 76   ·   +225 05 45 65 66 87', px(15), px(yPiedPage + 16.5));
+  ctx.fillText('scoutmodel.ma2m@gmail.com', px(15), px(yPiedPage + 23.5));
+
+  // Réseaux sociaux : icônes vectorielles blanches + le pseudo, sur la même ligne.
+  const reseaux = ['instagram', 'facebook', 'tiktok', 'youtube'];
+  let xIcone = 15;
+  reseaux.forEach(cle => {
+    dessinerIconeReseau(ctx, cle, px(xIcone + 2.2), px(yPiedPage + 29), px(4.4), BLANC);
+    xIcone += 7.5;
+  });
+  ctx.font = `${fpx(10.5)}px Arial, sans-serif`;
+  ctx.fillText('@maitreakessemodelmanagement', px(xIcone + 3), px(yPiedPage + 30.5));
+
   ctx.font = `italic ${fpx(7)}px Arial, sans-serif`;
   ctx.fillText(`Document officiel généré le ${new Date().toLocaleDateString('fr-FR')} depuis maitreakessemodelmanagement.com — toute demande de booking passe exclusivement par l'agence.`, px(15), px(yPiedPage + hPiedPage - 6));
 
