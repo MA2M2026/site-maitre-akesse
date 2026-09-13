@@ -60,8 +60,17 @@
   .mf-champ .mf-valeur { font-size:0.92rem; }
   .mf-message { font-size:0.9rem; line-height:1.5; padding:0.9rem; background:rgba(0,0,0,0.04); margin-bottom:1.4rem; white-space:pre-wrap; }
   .mf-photos { display:flex; gap:0.6rem; flex-wrap:wrap; margin-bottom:1.4rem; }
-  .mf-photos img { width:90px; height:90px; object-fit:cover; cursor:pointer; }
+  .mf-photo-vignette { position:relative; width:90px; height:90px; }
+  .mf-photo-vignette img { width:100%; height:100%; object-fit:cover; cursor:pointer; display:block; }
+  .mf-photo-suppr {
+    position:absolute; top:-7px; right:-7px; width:22px; height:22px; border-radius:50%;
+    background:var(--bordeaux); color:#fff; border:2px solid var(--creme); font-size:0.75rem; line-height:1;
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
   .mf-photos .mf-photos-msg { font-size:0.8rem; color:var(--gris); }
+  #mf-mannequins { margin-bottom:1.4rem; display:flex; flex-direction:column; gap:0.5rem; }
+  .mf-mannequin-item { display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0.8rem; background:rgba(0,0,0,0.04); font-size:0.88rem; }
+  .mf-mannequin-item a { color:var(--bordeaux); font-weight:600; }
   .mf-statut-ligne { display:flex; align-items:center; gap:0.8rem; flex-wrap:wrap; padding-top:1rem; border-top:1px solid rgba(0,0,0,0.1); }
   @media (max-width:480px) {
     .dossier-carte { flex-wrap:wrap; }
@@ -129,8 +138,13 @@
     </div>
 
     <div class="liste-recente">
-      <h2 style="margin-bottom:1rem;">Dernières demandes recruteurs</h2>
-      <table id="table-recruteurs"><thead><tr><th>Entreprise</th><th>Contact</th><th>Projet</th><th>Date</th></tr></thead><tbody></tbody></table>
+      <div class="dossiers-entete">
+        <h2 style="margin:0;">Demandes recruteurs</h2>
+        <span class="dossiers-compteur" id="recruteurs-compteur"></span>
+      </div>
+      <div class="filtre-pills" id="filtres-recruteurs"></div>
+      <div class="dossier-liste" id="liste-recruteurs"></div>
+      <button class="btn dossiers-plus" id="recruteurs-plus-btn" style="display:none;">Voir plus</button>
     </div>
 
     <div class="liste-recente">
@@ -186,7 +200,7 @@
   </div>
 </section>
 
-<!-- Fiche détaillée d'un dossier (candidature ou inscription), partagée entre les deux listes -->
+<!-- Fiche détaillée d'un dossier (candidature, inscription ou demande recruteur), partagée entre les trois listes -->
 <div class="modal-overlay" id="modal-dossier">
   <div class="modal-fiche">
     <button class="modal-fermer" id="modal-dossier-fermer" aria-label="Fermer">✕</button>
@@ -195,6 +209,7 @@
     <div class="mf-champs" id="mf-champs"></div>
     <div class="mf-message" id="mf-message" style="display:none;"></div>
     <div class="mf-photos" id="mf-photos"></div>
+    <div id="mf-mannequins" style="display:none;"></div>
     <div class="mf-statut-ligne">
       <label for="mf-statut-select" style="font-size:0.8rem; color:var(--gris);">Statut :</label>
       <select id="mf-statut-select"></select>
@@ -319,11 +334,7 @@ async function chargerStatistiques() {
   chargerClassementMannequins();
   chargerCandidatures();
   chargerInscriptions();
-
-  const { data: derniersRecruteurs } = await sb.from('recruiter_requests').select('company, contact_name, project_type, created_at').order('created_at', { ascending: false }).limit(10);
-  document.querySelector('#table-recruteurs tbody').innerHTML = (derniersRecruteurs || []).map(r => `
-    <tr><td>${echapperHtml(r.company || '-')}</td><td>${echapperHtml(r.contact_name || '-')}</td><td>${echapperHtml(r.project_type || '-')}</td><td>${new Date(r.created_at).toLocaleDateString('fr-FR')}</td></tr>
-  `).join('') || '<tr><td colspan="4">Aucune demande.</td></tr>';
+  chargerRecruteurs();
 
   const { data: derniersContacts } = await sb.from('messages_contact').select('nom, type_contact, telephone, created_at').order('created_at', { ascending: false }).limit(10);
   document.querySelector('#table-contacts tbody').innerHTML = (derniersContacts || []).map(c => `
@@ -353,11 +364,20 @@ const DOSSIERS = {
     filtreParDefaut: 'en attente de paiement',
     listeId: 'liste-inscriptions', filtresId: 'filtres-inscriptions', compteurId: 'inscriptions-compteur', plusBtnId: 'inscriptions-plus-btn',
     titrePluriel: 'inscription(s)'
+  },
+  recruteur: {
+    table: 'recruiter_requests', photosTable: null, photosColonne: null, bucket: null,
+    statutChamp: 'status', statuts: ['nouvelle', 'vue', 'traitée'],
+    libellesStatut: { nouvelle: 'Nouvelle', vue: 'Vue', 'traitée': 'Traitée' },
+    filtreParDefaut: 'nouvelle',
+    listeId: 'liste-recruteurs', filtresId: 'filtres-recruteurs', compteurId: 'recruteurs-compteur', plusBtnId: 'recruteurs-plus-btn',
+    titrePluriel: 'demande(s)'
   }
 };
 const ETAT_DOSSIERS = {
   casting: { filtre: DOSSIERS.casting.filtreParDefaut, page: 0 },
-  inscription: { filtre: DOSSIERS.inscription.filtreParDefaut, page: 0 }
+  inscription: { filtre: DOSSIERS.inscription.filtreParDefaut, page: 0 },
+  recruteur: { filtre: DOSSIERS.recruteur.filtreParDefaut, page: 0 }
 };
 const PAR_PAGE = 12;
 
@@ -378,6 +398,20 @@ async function chargerCompteurs(source) {
 
 async function chargerCandidatures() { await afficherDossiers('casting'); }
 async function chargerInscriptions() { await afficherDossiers('inscription'); }
+async function chargerRecruteurs() { await afficherDossiers('recruteur'); }
+
+function nomAffiche(source, d) {
+  if (source === 'recruteur') return d.contact_name || d.company || 'Sans nom';
+  return d.full_name || 'Sans nom';
+}
+function sousLigneAffichee(source, d) {
+  if (source === 'recruteur') return d.company || d.email || '';
+  return d.email || d.phone || '';
+}
+function metaAffichee(source, d) {
+  if (source === 'recruteur') return [d.project_type, new Date(d.created_at).toLocaleDateString('fr-FR')].filter(Boolean).join(' · ');
+  return [d.city, new Date(d.created_at).toLocaleDateString('fr-FR')].filter(Boolean).join(' · ');
+}
 
 async function afficherDossiers(source, ajouter) {
   const conf = DOSSIERS[source];
@@ -403,8 +437,8 @@ async function afficherDossiers(source, ajouter) {
 
   const html = (dossiers || []).map(d => `
     <div class="dossier-carte" data-source="${source}" data-id="${d.id}">
-      <div class="dc-nom">${echapperHtml(d.full_name || 'Sans nom')}<span>${echapperHtml(d.email || d.phone || '')}</span></div>
-      <div class="dc-meta">${echapperHtml(d.city || '')}${d.city ? ' · ' : ''}${new Date(d.created_at).toLocaleDateString('fr-FR')}</div>
+      <div class="dc-nom">${echapperHtml(nomAffiche(source, d))}<span>${echapperHtml(sousLigneAffichee(source, d))}</span></div>
+      <div class="dc-meta">${echapperHtml(metaAffichee(source, d))}</div>
       <span class="statut-pill ${classeStatut(d[conf.statutChamp])}">${conf.libellesStatut[d[conf.statutChamp]] || d[conf.statutChamp]}</span>
       <span class="dc-fleche">→</span>
     </div>
@@ -428,7 +462,7 @@ document.addEventListener('click', (e) => {
   }
   const plusBtn = e.target.closest('.dossiers-plus');
   if (plusBtn) {
-    const source = plusBtn.id.startsWith('candidatures') ? 'casting' : 'inscription';
+    const source = plusBtn.id.startsWith('candidatures') ? 'casting' : (plusBtn.id.startsWith('inscriptions') ? 'inscription' : 'recruteur');
     ETAT_DOSSIERS[source].page += 1;
     afficherDossiers(source, true);
     return;
@@ -449,6 +483,11 @@ const CHAMPS_INSCRIPTION = [
   ['phone', 'Téléphone'], ['email', 'E-mail'], ['instagram', 'Instagram'], ['date_naissance', 'Date de naissance'],
   ['height_cm', 'Taille', 'cm'], ['clothing_size', 'Taille vêtements'], ['code_utilise', "Code d'accès utilisé"]
 ];
+const CHAMPS_RECRUTEUR = [
+  ['company', 'Entreprise / marque'], ['email', 'E-mail'], ['phone', 'Téléphone'], ['whatsapp', 'WhatsApp'],
+  ['city', 'Ville'], ['project_type', 'Type de projet'], ['event_date', 'Date souhaitée']
+];
+const TITRE_SOURCE = { casting: 'Candidature', inscription: 'Inscription', recruteur: 'Demande recruteur' };
 
 let ficheOuverte = null;
 
@@ -458,10 +497,10 @@ async function ouvrirFicheDossier(source, id) {
   if (!d) return;
 
   ficheOuverte = { source, id };
-  const champs = source === 'casting' ? CHAMPS_CASTING : CHAMPS_INSCRIPTION;
+  const champs = source === 'casting' ? CHAMPS_CASTING : (source === 'inscription' ? CHAMPS_INSCRIPTION : CHAMPS_RECRUTEUR);
 
-  document.getElementById('mf-titre').textContent = d.full_name || 'Sans nom';
-  document.getElementById('mf-sous-titre').textContent = `${source === 'casting' ? 'Candidature' : 'Inscription'} reçue le ${new Date(d.created_at).toLocaleDateString('fr-FR')}`;
+  document.getElementById('mf-titre').textContent = nomAffiche(source, d);
+  document.getElementById('mf-sous-titre').textContent = `${TITRE_SOURCE[source]} reçue le ${new Date(d.created_at).toLocaleDateString('fr-FR')}`;
 
   document.getElementById('mf-champs').innerHTML = champs.map(([cle, label, unite]) => {
     const valeur = d[cle];
@@ -477,20 +516,68 @@ async function ouvrirFicheDossier(source, id) {
   statutSelect.innerHTML = conf.statuts.map(s => `<option value="${s}" ${d[conf.statutChamp] === s ? 'selected' : ''}>${conf.libellesStatut[s]}</option>`).join('');
 
   const photosEl = document.getElementById('mf-photos');
-  photosEl.innerHTML = '<span class="mf-photos-msg">Chargement des photos…</span>';
-
+  const mannequinsEl = document.getElementById('mf-mannequins');
   document.getElementById('modal-dossier').classList.add('ouvert');
 
-  const { data: photos } = await sb.from(conf.photosTable).select('chemin').eq(conf.photosColonne, id);
-  const chemins = (photos || []).map(p => p.chemin).filter(Boolean);
-  if (!chemins.length) { photosEl.innerHTML = '<span class="mf-photos-msg">Aucune photo jointe.</span>'; return; }
+  if (source === 'recruteur') {
+    photosEl.style.display = 'none';
+    mannequinsEl.style.display = 'block';
+    mannequinsEl.innerHTML = 'Chargement des mannequins sélectionnés…';
+    const { data: choisis } = await sb.from('recruiter_request_models').select('model_id, model_name_snapshot, model_height_snapshot').eq('request_id', id);
+    mannequinsEl.innerHTML = (choisis && choisis.length)
+      ? choisis.map(m => `
+          <div class="mf-mannequin-item">
+            <span>${echapperHtml(m.model_name_snapshot || 'Mannequin')}${m.model_height_snapshot ? ' — ' + m.model_height_snapshot + ' cm' : ''}</span>
+            ${m.model_id ? `<a href="mannequin.html?id=${m.model_id}" target="_blank">Voir la fiche →</a>` : ''}
+          </div>`).join('')
+      : '<div class="mf-mannequin-item">Aucun mannequin dans cette sélection.</div>';
+    return;
+  }
 
+  mannequinsEl.style.display = 'none';
+  photosEl.style.display = 'flex';
+  photosEl.innerHTML = '<span class="mf-photos-msg">Chargement des photos…</span>';
+
+  const { data: photos } = await sb.from(conf.photosTable).select('id, chemin').eq(conf.photosColonne, id);
+  if (!photos || !photos.length) { photosEl.innerHTML = '<span class="mf-photos-msg">Aucune photo jointe.</span>'; return; }
+
+  const chemins = photos.map(p => p.chemin).filter(Boolean);
   const { data: signees } = await sb.storage.from(conf.bucket).createSignedUrls(chemins, 300);
   const urls = (signees || []).map(s => s.signedUrl).filter(Boolean);
-  photosEl.innerHTML = urls.map((u, i) => `<img src="${u}" data-index="${i}" alt="Photo">`).join('');
+
+  photosEl.innerHTML = photos.map((p, i) => `
+    <div class="mf-photo-vignette">
+      <img src="${urls[i] || ''}" data-index="${i}" alt="Photo">
+      <button class="mf-photo-suppr" data-photo-id="${p.id}" data-chemin="${echapperHtml(p.chemin || '')}" title="Supprimer cette photo">✕</button>
+    </div>
+  `).join('');
   photosEl.querySelectorAll('img').forEach(img => {
     img.addEventListener('click', () => ouvrirGalerieLightbox(urls, Number(img.dataset.index)));
   });
+  photosEl.querySelectorAll('.mf-photo-suppr').forEach(btn => {
+    btn.addEventListener('click', () => supprimerPhotoDossier(btn));
+  });
+}
+
+// Suppression définitive d'une photo : le fichier dans le stockage Supabase ET la
+// ligne en base. Irréversible, d'où la confirmation.
+async function supprimerPhotoDossier(bouton) {
+  if (!ficheOuverte) return;
+  if (!confirm('Supprimer définitivement cette photo ? Cette action est irréversible.')) return;
+
+  const conf = DOSSIERS[ficheOuverte.source];
+  const photoId = bouton.dataset.photoId;
+  const chemin = bouton.dataset.chemin;
+
+  bouton.disabled = true;
+  if (chemin) await sb.storage.from(conf.bucket).remove([chemin]);
+  const { error } = await sb.from(conf.photosTable).delete().eq('id', photoId);
+
+  if (error) { alert('Erreur lors de la suppression.'); bouton.disabled = false; return; }
+  bouton.closest('.mf-photo-vignette').remove();
+  if (!document.getElementById('mf-photos').children.length) {
+    document.getElementById('mf-photos').innerHTML = '<span class="mf-photos-msg">Aucune photo jointe.</span>';
+  }
 }
 
 document.getElementById('modal-dossier-fermer').addEventListener('click', () => {
