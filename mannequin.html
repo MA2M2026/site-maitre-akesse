@@ -333,19 +333,19 @@ function dessinerIconeReseau(ctx, cle, cx, cy, taille, couleurGlyphe) {
     }
     case 'facebook':
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.font = `700 ${taille * 1.5}px Georgia, serif`;
-      ctx.fillText('f', cx, cy + taille * 0.05);
+      ctx.font = `900 ${taille * 1.55}px Arial, Helvetica, sans-serif`;
+      ctx.fillText('f', cx + taille * 0.02, cy + taille * 0.08);
       break;
     case 'tiktok':
       ctx.beginPath();
-      ctx.arc(cx - r * 0.15, cy + r * 0.35, r * 0.42, 0, Math.PI * 2); ctx.fill();
+      ctx.arc(cx - r * 0.2, cy + r * 0.4, r * 0.46, 0, Math.PI * 2); ctx.fill();
       ctx.beginPath();
-      ctx.moveTo(cx + r * 0.27, cy + r * 0.35);
-      ctx.lineTo(cx + r * 0.27, cy - r * 0.75);
-      ctx.quadraticCurveTo(cx + r * 0.55, cy - r * 0.25, cx + r * 0.85, cy - r * 0.22);
-      ctx.lineTo(cx + r * 0.85, cy + r * 0.18);
-      ctx.quadraticCurveTo(cx + r * 0.55, cy + r * 0.12, cx + r * 0.4, cy - r * 0.1);
-      ctx.lineTo(cx + r * 0.4, cy + r * 0.35);
+      ctx.moveTo(cx + r * 0.24, cy + r * 0.4);
+      ctx.lineTo(cx + r * 0.24, cy - r * 0.8);
+      ctx.quadraticCurveTo(cx + r * 0.5, cy - r * 0.32, cx + r * 0.8, cy - r * 0.3);
+      ctx.lineTo(cx + r * 0.8, cy + r * 0.12);
+      ctx.quadraticCurveTo(cx + r * 0.52, cy + r * 0.08, cx + r * 0.36, cy - r * 0.14);
+      ctx.lineTo(cx + r * 0.36, cy + r * 0.4);
       ctx.closePath(); ctx.fill();
       break;
     case 'youtube':
@@ -354,6 +354,37 @@ function dessinerIconeReseau(ctx, cle, cx, cy, taille, couleurGlyphe) {
       ctx.lineTo(cx + r * 0.6, cy);
       ctx.lineTo(cx - r * 0.42, cy + r * 0.55);
       ctx.closePath(); ctx.fill();
+      break;
+    case 'telephone':
+      ctx.beginPath();
+      ctx.moveTo(cx - r * 0.7, cy - r * 0.85);
+      ctx.quadraticCurveTo(cx - r * 0.95, cy - r * 0.6, cx - r * 0.55, cy - r * 0.1);
+      ctx.quadraticCurveTo(cx - r * 0.1, cy + r * 0.4, cx + r * 0.35, cy + r * 0.6);
+      ctx.quadraticCurveTo(cx + r * 0.75, cy + r * 0.8, cx + r * 0.85, cy + r * 0.35);
+      ctx.quadraticCurveTo(cx + r * 0.9, cy + r * 0.1, cx + r * 0.6, cy - r * 0.05);
+      ctx.quadraticCurveTo(cx + r * 0.35, cy - r * 0.15, cx + r * 0.25, cy - r * 0.35);
+      ctx.quadraticCurveTo(cx + r * 0.15, cy - r * 0.55, cx + r * 0.3, cy - r * 0.75);
+      ctx.quadraticCurveTo(cx + r * 0.05, cy - r * 0.95, cx - r * 0.7, cy - r * 0.85);
+      ctx.closePath(); ctx.fill();
+      break;
+    case 'email':
+      ctx.lineWidth = Math.max(1, taille * 0.1);
+      ctx.strokeRect(cx - r * 0.9, cy - r * 0.62, r * 1.8, r * 1.24);
+      ctx.beginPath();
+      ctx.moveTo(cx - r * 0.82, cy - r * 0.52);
+      ctx.lineTo(cx, cy + r * 0.08);
+      ctx.lineTo(cx + r * 0.82, cy - r * 0.52);
+      ctx.stroke();
+      break;
+    case 'lieu':
+      ctx.beginPath();
+      ctx.moveTo(cx, cy + r);
+      ctx.quadraticCurveTo(cx - r * 0.9, cy + r * 0.1, cx - r * 0.9, cy - r * 0.15);
+      ctx.arc(cx, cy - r * 0.15, r * 0.9, Math.PI, 0);
+      ctx.quadraticCurveTo(cx + r * 0.9, cy + r * 0.1, cx, cy + r);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#0e0c0a';
+      ctx.beginPath(); ctx.arc(cx, cy - r * 0.15, r * 0.32, 0, Math.PI * 2); ctx.fill();
       break;
   }
   ctx.restore();
@@ -364,7 +395,7 @@ function dessinerIconeReseau(ctx, cle, cx, cy, taille, couleurGlyphe) {
 // écran géant) — sert de base commune à l'export PDF et à l'export JPEG.
 async function construireCanvasCompcard() {
   const { profil, photos, projets, age } = ficheData;
-  const OR = '#c9a24b', NOIR = '#0e0c0a', CREME = '#f4efe8', BLANC = '#ffffff';
+  const ROUGE = '#cf3b52', NOIR = '#060504', CREME = '#f4efe8', BLANC = '#ffffff';
   const LARGEUR_MM = 210, HAUTEUR_MM = 297;
   const DPI = 400;
   const ESCALE = DPI / 25.4; // px par mm
@@ -404,7 +435,18 @@ async function construireCanvasCompcard() {
     const ratioCadre = lMm / hMm;
     let sx = 0, sy = 0, sL = image.largeur, sH = image.hauteur;
     if (ratioImage > ratioCadre) { sL = image.hauteur * ratioCadre; sx = (image.largeur - sL) / 2; }
-    else { sH = image.largeur / ratioCadre; sy = ancrage === 'haut' ? 0 : (image.hauteur - sH) / 2; }
+    else { sH = image.largeur / ratioCadre; sy = (image.hauteur - sH) / 2; }
+    if (ancrage === 'haut') {
+      // Recadre en zoomant légèrement et en retirant l'essentiel du vide
+      // au-dessus du sujet (au lieu d'un simple ancrage brut en haut, qui
+      // laissait apparaître le fond vide quand la photo a du champ libre
+      // au-dessus de la tête) : le mannequin remplit ainsi tout le cadre.
+      const zoom = 0.88;
+      const nSL = sL * zoom, nSH = sH * zoom;
+      sx = sx + (sL - nSL) / 2;
+      sy = sy + (sH - nSH) * 0.82;
+      sL = nSL; sH = nSH;
+    }
     ctx.drawImage(image.canvas, sx, sy, sL, sH, px(xMm), px(yMm), px(lMm), px(hMm));
   }
 
@@ -441,7 +483,7 @@ async function construireCanvasCompcard() {
   ctx.font = `italic 500 ${fpx(11)}px "Cormorant Garamond", serif`;
   ctx.fillText('Plus qu’une apparence,', 0, 0);
   ctx.fillText('un talent', 0, px(6.5));
-  ctx.strokeStyle = OR;
+  ctx.strokeStyle = ROUGE;
   ctx.lineWidth = px(0.35);
   ctx.beginPath(); ctx.moveTo(-px(24), px(9)); ctx.quadraticCurveTo(-px(12), px(11.5), 0, px(9)); ctx.stroke();
   ctx.restore();
@@ -473,7 +515,7 @@ async function construireCanvasCompcard() {
   // (toutes les coordonnées ci-dessous restent en mm ; ligneOr()/centreSideMm
   // ne sont converties en pixels canvas qu'au moment exact du tracé, via px())
   const xL = xSide + 8, xR = LARGEUR_MM - 8, centreSideMm = (xL + xR) / 2, wSide = xR - xL;
-  ctx.strokeStyle = OR; ctx.lineWidth = px(0.3);
+  ctx.strokeStyle = ROUGE; ctx.lineWidth = px(0.3);
   function ligneOr(y, largeur) {
     ctx.beginPath(); ctx.moveTo(px(centreSideMm - largeur / 2), px(y)); ctx.lineTo(px(centreSideMm + largeur / 2), px(y)); ctx.stroke();
   }
@@ -486,7 +528,7 @@ async function construireCanvasCompcard() {
   ctx.fillStyle = BLANC;
   ctx.font = `700 ${fpx(30)}px "Cormorant Garamond", serif`;
   ctx.fillText(prenom, px(centreSideMm), px(35));
-  ctx.fillStyle = OR;
+  ctx.fillStyle = ROUGE;
   ctx.font = `600 ${fpx(14)}px Jost, sans-serif`;
   if (nomReste) texteTrace(ctx, nomReste.toUpperCase(), px(centreSideMm), px(43.5), fpx(2.2), 'center');
   ctx.fillStyle = 'rgba(255,255,255,0.85)';
@@ -524,12 +566,12 @@ async function construireCanvasCompcard() {
 
   let yCourant = yListeDebutReel + pitch / 2;
   function dessinerLigne([cle, label, valeur]) {
-    dessinerIcone(ctx, cle, px(xL + 4), px(yCourant), px(7), OR);
+    dessinerIcone(ctx, cle, px(xL + 4), px(yCourant), px(7), ROUGE);
     ctx.textAlign = 'left';
     ctx.fillStyle = 'rgba(255,255,255,0.9)';
     ctx.font = `500 ${fpx(7)}px Jost, sans-serif`;
     texteTrace(ctx, label.toUpperCase(), px(xL + 11), px(yCourant + 1.5), fpx(0.4), 'left');
-    ctx.fillStyle = OR;
+    ctx.fillStyle = ROUGE;
     ctx.font = `500 ${fpx(9)}px Jost, sans-serif`;
     ctx.fillText('|', px(xR - 22), px(yCourant + 1.5));
     ctx.fillStyle = BLANC;
@@ -553,28 +595,27 @@ async function construireCanvasCompcard() {
   ctx.fillRect(0, px(yPhotosFin), canvas.width, px(HAUTEUR_MM - yPhotosFin));
   const yFooterMid = yPhotosFin + (HAUTEUR_MM - yPhotosFin) / 2;
   const xDiv1 = 68, xDiv2 = 142;
-  ctx.strokeStyle = 'rgba(201,162,75,0.5)'; ctx.lineWidth = px(0.25);
+  ctx.strokeStyle = 'rgba(207,59,82,0.5)'; ctx.lineWidth = px(0.25);
   [xDiv1, xDiv2].forEach(x => {
     ctx.beginPath(); ctx.moveTo(px(x), px(yPhotosFin + 10)); ctx.lineTo(px(x), px(HAUTEUR_MM - 10)); ctx.stroke();
   });
 
   // Colonne contact (gauche)
-  ctx.textAlign = 'left'; ctx.fillStyle = OR;
+  ctx.textAlign = 'left'; ctx.fillStyle = ROUGE;
   const xIconFooter = 12, xTexteFooter = 20;
   const lignesContact = [
-    ['☎', '+225 27 22 23 11 76'],
-    ['✉', 'scoutmodel.ma2m@gmail.com'],
-    ['⌖', 'Abidjan, Côte d’Ivoire']
+    ['telephone', '(+225) 0545656687'],
+    ['email', 'scoutmodel.ma2m@gmail.com'],
+    ['lieu', 'Abidjan/Côte d’Ivoire']
   ];
-  let yC = yFooterMid - 9;
+  let yC = yFooterMid - 7;
   lignesContact.forEach(([icone, texte]) => {
-    ctx.fillStyle = OR;
-    ctx.font = `${fpx(9)}px Arial, sans-serif`;
-    ctx.fillText(icone, px(xIconFooter), px(yC));
+    dessinerIconeReseau(ctx, icone, px(xIconFooter), px(yC - 2.2), px(4.2), ROUGE);
+    ctx.textAlign = 'left';
     ctx.fillStyle = BLANC;
     ctx.font = `500 ${fpx(8.5)}px Jost, sans-serif`;
     ctx.fillText(texte, px(xTexteFooter), px(yC));
-    yC += 9;
+    yC += 7;
   });
 
   // Colonne logo (centre)
@@ -589,22 +630,22 @@ async function construireCanvasCompcard() {
   ctx.textAlign = 'center';
   ctx.fillStyle = BLANC;
   ctx.font = `500 ${fpx(7.5)}px Jost, sans-serif`;
-  ctx.fillText('www.maitreakessemodelmanagement.com', px(centreDroite), px(yFooterMid - 12));
+  ctx.fillText('www.maitreakessemodelmanagement.com', px(centreDroite), px(yFooterMid - 8));
   const reseaux = ['instagram', 'facebook', 'tiktok', 'youtube'];
-  const largeurTotaleIcones = 9 * (reseaux.length - 1) + reseaux.length * 6;
+  const largeurTotaleIcones = 8 * (reseaux.length - 1) + reseaux.length * 6;
   let xIcone = centreDroite - largeurTotaleIcones / 2 + 3;
   reseaux.forEach(cle => {
-    ctx.fillStyle = OR;
-    ctx.beginPath(); ctx.arc(px(xIcone), px(yFooterMid - 1), px(3.2), 0, Math.PI * 2); ctx.fill();
-    dessinerIconeReseau(ctx, cle, px(xIcone), px(yFooterMid - 1), px(3.4), NOIR);
-    xIcone += 9;
+    ctx.fillStyle = ROUGE;
+    ctx.beginPath(); ctx.arc(px(xIcone), px(yFooterMid + 1), px(3.2), 0, Math.PI * 2); ctx.fill();
+    dessinerIconeReseau(ctx, cle, px(xIcone), px(yFooterMid + 1), px(3.4), BLANC);
+    xIcone += 8;
   });
   ctx.fillStyle = 'rgba(255,255,255,0.85)';
   ctx.font = `500 ${fpx(7.5)}px Jost, sans-serif`;
-  ctx.fillText('@maitreakessemodelmanagement', px(centreDroite), px(yFooterMid + 10));
+  ctx.fillText('@maitreakessemodelmanagement', px(centreDroite), px(yFooterMid + 9));
 
   // Filet or tout en bas de page
-  ctx.strokeStyle = OR; ctx.lineWidth = px(0.35);
+  ctx.strokeStyle = ROUGE; ctx.lineWidth = px(0.35);
   ctx.beginPath(); ctx.moveTo(px(8), px(HAUTEUR_MM - 5)); ctx.lineTo(px(LARGEUR_MM - 8), px(HAUTEUR_MM - 5)); ctx.stroke();
 
   return canvas;
