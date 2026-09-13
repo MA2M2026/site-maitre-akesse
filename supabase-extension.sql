@@ -707,8 +707,8 @@ language sql stable
 as $$
   select count(distinct ip_hash) from page_views where ip_hash is not null;
 $$;
-revoke all on function stats_visites_reelles_site from public;
-grant execute on function stats_visites_reelles_site to authenticated;
+revoke all on function stats_visites_reelles_site() from public;
+grant execute on function stats_visites_reelles_site() to authenticated;
 
 create or replace function stats_classement_mannequins()
 returns table(model_id uuid, nb_visites bigint)
@@ -720,8 +720,8 @@ as $$
   group by model_id
   order by nb_visites desc;
 $$;
-revoke all on function stats_classement_mannequins from public;
-grant execute on function stats_classement_mannequins to authenticated;
+revoke all on function stats_classement_mannequins() from public;
+grant execute on function stats_classement_mannequins() to authenticated;
 
 NOTIFY pgrst, 'reload schema';
 
@@ -1117,8 +1117,8 @@ begin
   return nouvel_id;
 end;
 $$;
-revoke all on function soumettre_inscription_mannequin from public;
-grant execute on function soumettre_inscription_mannequin to anon, authenticated;
+revoke all on function soumettre_inscription_mannequin(text, text, date, int, text, text, text) from public;
+grant execute on function soumettre_inscription_mannequin(text, text, date, int, text, text, text) to anon, authenticated;
 
 -- Défense en profondeur : même un compte admin compromis ne peut plus écrire
 -- un statut arbitraire (ex. contenant du code HTML) dans ces colonnes.
@@ -1230,7 +1230,162 @@ begin
   return nouvel_id;
 end;
 $$;
-revoke all on function soumettre_inscription_mannequin from public;
-grant execute on function soumettre_inscription_mannequin to anon, authenticated;
+revoke all on function soumettre_inscription_mannequin(text, text, date, int, text, text, text, text, text) from public;
+grant execute on function soumettre_inscription_mannequin(text, text, date, int, text, text, text, text, text) to anon, authenticated;
+
+NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 36 : le mannequin choisit lui-même les 5 photos qui apparaîtront
+-- sur sa fiche Compcard (PDF/JPEG). Sans sélection, le système retombe
+-- automatiquement sur les 5 meilleures par défaut (photo de profil en
+-- premier, puis les plus anciennes) — rien ne casse pour les profils
+-- existants qui n'utilisent pas encore cette option.
+-- ===================================================================
+alter table model_photos add column if not exists compcard_ordre int;
+
+NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 37 : passage à l'échelle de "The Book" pour un grand nombre de
+-- mannequins. La correction précédente (une seule requête pour toutes les
+-- photos de couverture, au lieu d'une par mannequin) reste limitée par le
+-- plafond par défaut de Supabase (1000 lignes par requête) : avec, par
+-- exemple, 100 mannequins ayant chacun 20 photos dans leur book, la requête
+-- pourrait dépasser cette limite et "perdre" silencieusement la couverture
+-- des derniers mannequins de la liste. Cette fonction ne renvoie qu'UNE
+-- SEULE ligne par mannequin (sa photo de couverture), quel que soit le
+-- nombre total de photos existantes — le volume ne grossit plus jamais avec
+-- la taille du book de chaque mannequin, seulement avec le nombre de
+-- mannequins affichés.
+-- ===================================================================
+create or replace function photos_couverture_mannequins(ids uuid[])
+returns table(model_id uuid, url text)
+language sql
+stable
+as $$
+  select distinct on (model_id) model_id, url
+  from model_photos
+  where model_id = any(ids)
+  order by model_id, principale desc, created_at asc;
+$$;
+grant execute on function photos_couverture_mannequins to anon, authenticated;
+
+NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 38 : type de candidature (rejoindre l'agence VS un projet ou
+-- événement précis lancé par l'agence). Le menu "Candidature" devient
+-- "Postuler à un casting" côté site ; ce candidat doit maintenant préciser
+-- pour quoi il postule. La liste des projets/événements est gérée depuis le
+-- tableau de bord (table casting_projets) ; le candidat peut aussi taper un
+-- nom libre si son casting n'y figure pas encore ("Autre").
+-- ===================================================================
+create table if not exists casting_projets (
+  id uuid primary key default gen_random_uuid(),
+  nom text not null,
+  actif boolean not null default true,
+  created_at timestamptz not null default now()
+);
+alter table casting_projets enable row level security;
+
+drop policy if exists "Tout le monde voit les projets actifs" on casting_projets;
+create policy "Tout le monde voit les projets actifs"
+  on casting_projets for select
+  using (actif = true);
+
+drop policy if exists "Les admins voient tous les projets" on casting_projets;
+create policy "Les admins voient tous les projets"
+  on casting_projets for select
+  using (exists (select 1 from admins where user_id = auth.uid()));
+
+drop policy if exists "Les admins créent des projets" on casting_projets;
+create policy "Les admins créent des projets"
+  on casting_projets for insert
+  with check (exists (select 1 from admins where user_id = auth.uid()));
+
+drop policy if exists "Les admins modifient un projet" on casting_projets;
+create policy "Les admins modifient un projet"
+  on casting_projets for update
+  using (exists (select 1 from admins where user_id = auth.uid()));
+
+drop policy if exists "Les admins suppriment un projet" on casting_projets;
+create policy "Les admins suppriment un projet"
+  on casting_projets for delete
+  using (exists (select 1 from admins where user_id = auth.uid()));
+
+alter table casting_applications add column if not exists type_candidature text not null default 'agence';
+alter table casting_applications add column if not exists projet_nom text;
+alter table casting_applications drop constraint if exists casting_applications_type_check;
+alter table casting_applications add constraint casting_applications_type_check
+  check (type_candidature in ('agence', 'projet'));
+
+-- Résumé pour le tableau de bord : combien de candidatures pour rejoindre
+-- l'agence, et combien pour chaque projet/événement précis — la RLS de
+-- casting_applications (admins uniquement) s'applique aussi ici, donc un
+-- appel par un compte non-admin ne renvoie simplement aucune ligne.
+create or replace function resume_candidatures_par_projet()
+returns table(type_candidature text, projet_nom text, total bigint)
+language sql
+stable
+as $$
+  select type_candidature, projet_nom, count(*) as total
+  from casting_applications
+  group by type_candidature, projet_nom
+  order by total desc;
+$$;
+grant execute on function resume_candidatures_par_projet to authenticated;
+
+NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 39 : correctif — deux versions de soumettre_inscription_mannequin
+-- (l'ancienne à 7 paramètres et la nouvelle à 9, avec parent/tuteur) se sont
+-- retrouvées présentes en même temps dans la base, rendant toute référence
+-- "nue" à son nom ambiguë ("function name ... is not unique"). On supprime
+-- explicitement les deux signatures possibles avant de recréer proprement la
+-- seule version à jour (9 paramètres).
+-- ===================================================================
+drop function if exists soumettre_inscription_mannequin(text, text, date, int, text, text, text);
+drop function if exists soumettre_inscription_mannequin(text, text, date, int, text, text, text, text, text);
+
+create or replace function soumettre_inscription_mannequin(
+  p_code text,
+  p_full_name text,
+  p_date_naissance date,
+  p_height_cm int,
+  p_clothing_size text,
+  p_phone text,
+  p_reference_paiement text,
+  p_parent_nom text default null,
+  p_parent_telephone text default null
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  nb_lignes int;
+  nouvel_id uuid;
+begin
+  update codes_inscription set utilise = true, utilise_le = now()
+  where code = p_code and utilise = false;
+  get diagnostics nb_lignes = row_count;
+  if nb_lignes = 0 then
+    raise exception 'code_invalide_ou_deja_utilise';
+  end if;
+
+  insert into inscriptions_mannequins
+    (full_name, date_naissance, height_cm, clothing_size, phone, code_utilise, reference_paiement, parent_nom, parent_telephone)
+  values
+    (p_full_name, p_date_naissance, p_height_cm, p_clothing_size, p_phone, p_code, nullif(p_reference_paiement, ''), p_parent_nom, p_parent_telephone)
+  returning id into nouvel_id;
+
+  return nouvel_id;
+end;
+$$;
+revoke all on function soumettre_inscription_mannequin(text, text, date, int, text, text, text, text, text) from public;
+grant execute on function soumettre_inscription_mannequin(text, text, date, int, text, text, text, text, text) to anon, authenticated;
 
 NOTIFY pgrst, 'reload schema';

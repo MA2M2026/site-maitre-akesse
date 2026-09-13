@@ -139,6 +139,7 @@
         <input type="text" id="nouveau-projet-nom" placeholder="Nom du projet ou casting" required style="flex:1; min-width:200px;">
         <button type="submit" class="btn">+ Ajouter</button>
       </form>
+      <div id="projets-msg" class="form-msg"></div>
       <div id="liste-projets"></div>
     </div>
 
@@ -767,15 +768,30 @@ async function chargerCodes() {
 document.getElementById('form-nouveau-projet').addEventListener('submit', async (e) => {
   e.preventDefault();
   const champ = document.getElementById('nouveau-projet-nom');
+  const msg = document.getElementById('projets-msg');
   const nom = champ.value.trim();
   if (!nom) return;
+  msg.style.display = 'none';
   const { error } = await sb.from('casting_projets').insert({ nom });
-  if (!error) { champ.value = ''; chargerProjets(); }
+  if (!error) {
+    champ.value = '';
+    chargerProjets();
+  } else {
+    msg.className = 'form-msg err';
+    msg.style.display = 'block';
+    msg.textContent = "Erreur lors de l'ajout (" + error.message + "). Vérifiez que le SQL \"Extension 38\" a bien été exécuté (table casting_projets).";
+    console.error('Erreur insertion casting_projets :', error);
+  }
 });
 
 async function chargerProjets() {
-  const { data: projets } = await sb.from('casting_projets').select('id, nom, actif, created_at').order('created_at', { ascending: false });
+  const { data: projets, error } = await sb.from('casting_projets').select('id, nom, actif, created_at').order('created_at', { ascending: false });
   const conteneur = document.getElementById('liste-projets');
+  if (error) {
+    conteneur.innerHTML = `<div class="dossiers-vide">Impossible de charger les projets (${echapperHtml(error.message)}). Vérifiez que le SQL "Extension 38" a bien été exécuté.</div>`;
+    console.error('Erreur chargement casting_projets :', error);
+    return;
+  }
   conteneur.innerHTML = (projets || []).map(p => `
     <div class="dossier-carte" style="cursor:default;">
       <div class="dc-nom">${echapperHtml(p.nom)}</div>
