@@ -15,6 +15,58 @@
   .liste-recente table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
   .liste-recente th, .liste-recente td { text-align: left; padding: 0.7rem 0.6rem; border-bottom: 1px solid var(--gris-clair); }
   .liste-recente th { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--gris); }
+
+  /* --- Dossiers (candidatures / inscriptions) : liste compacte + filtres + fiche détaillée --- */
+  .dossiers-entete { display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:0.6rem; margin-bottom:1rem; }
+  .dossiers-compteur { font-size:0.8rem; color:var(--gris); }
+  .filtre-pills { display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1.2rem; }
+  .filtre-pill {
+    font-family: var(--texte); font-size:0.68rem; font-weight:600; text-transform:uppercase; letter-spacing:0.06em;
+    padding:0.45rem 0.9rem; border:1px solid var(--gris-clair); background:transparent; color:var(--texte-doux, var(--gris));
+    cursor:pointer; border-radius:2px; transition:all 0.2s ease; white-space:nowrap;
+  }
+  .filtre-pill.actif { background:var(--bordeaux); border-color:var(--bordeaux); color:#fff; }
+  .filtre-pill .compte { opacity:0.75; margin-left:0.3rem; }
+
+  .dossier-liste { display:flex; flex-direction:column; gap:0.6rem; }
+  .dossier-carte {
+    display:flex; align-items:center; gap:1rem; padding:0.9rem 1rem; background:var(--anthracite, var(--noir));
+    border-left:3px solid var(--gris-clair); cursor:pointer; transition:border-color 0.2s ease;
+  }
+  .dossier-carte:hover { border-left-color:var(--bordeaux-clair); }
+  .dossier-carte .dc-nom { font-family:var(--display); font-size:1.05rem; color:var(--titre-clair, #fff); flex:2; min-width:0; }
+  .dossier-carte .dc-nom span { display:block; font-family:var(--texte); font-size:0.72rem; color:var(--gris); margin-top:0.15rem; }
+  .dossier-carte .dc-meta { flex:1; font-size:0.8rem; color:var(--texte-doux, var(--gris)); }
+  .dossier-carte .dc-fleche { color:var(--gris); flex-shrink:0; }
+
+  .statut-pill { font-size:0.66rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; padding:0.3rem 0.7rem; border-radius:20px; white-space:nowrap; }
+  .statut-nouvelle, .statut-en-attente-de-paiement { background:rgba(207,59,82,0.18); color:var(--bordeaux-clair); }
+  .statut-vue { background:rgba(255,255,255,0.1); color:var(--texte-doux, #ccc); }
+  .statut-retenue, .statut-payee { background:rgba(90,180,120,0.18); color:#7fd8a3; }
+  .statut-refusee, .statut-annulee { background:rgba(255,255,255,0.06); color:var(--gris); text-decoration:line-through; }
+
+  .dossiers-vide { padding:2rem 1rem; text-align:center; color:var(--gris); font-size:0.85rem; background:var(--anthracite, var(--noir)); }
+  .dossiers-plus { display:block; margin:1rem auto 0; }
+
+  /* Fiche détaillée (modale) */
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.72); z-index:500; display:none; align-items:flex-start; justify-content:center; overflow-y:auto; padding:5vh 1rem; }
+  .modal-overlay.ouvert { display:flex; }
+  .modal-fiche { background:var(--creme); color:var(--noir); max-width:640px; width:100%; padding:2rem; position:relative; margin-bottom:5vh; }
+  .modal-fermer { position:absolute; top:1rem; right:1rem; background:none; border:none; font-size:1.4rem; line-height:1; cursor:pointer; color:var(--noir); }
+  .modal-fiche h3 { font-family:var(--display); font-size:1.6rem; margin-bottom:0.2rem; }
+  .modal-fiche .mf-sous-titre { font-size:0.8rem; color:var(--gris); margin-bottom:1.4rem; }
+  .mf-champs { display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:0.9rem 1.2rem; margin-bottom:1.4rem; }
+  .mf-champ .mf-label { font-size:0.64rem; text-transform:uppercase; letter-spacing:0.07em; color:var(--gris); margin-bottom:0.15rem; }
+  .mf-champ .mf-valeur { font-size:0.92rem; }
+  .mf-message { font-size:0.9rem; line-height:1.5; padding:0.9rem; background:rgba(0,0,0,0.04); margin-bottom:1.4rem; white-space:pre-wrap; }
+  .mf-photos { display:flex; gap:0.6rem; flex-wrap:wrap; margin-bottom:1.4rem; }
+  .mf-photos img { width:90px; height:90px; object-fit:cover; cursor:pointer; }
+  .mf-photos .mf-photos-msg { font-size:0.8rem; color:var(--gris); }
+  .mf-statut-ligne { display:flex; align-items:center; gap:0.8rem; flex-wrap:wrap; padding-top:1rem; border-top:1px solid rgba(0,0,0,0.1); }
+  @media (max-width:480px) {
+    .dossier-carte { flex-wrap:wrap; }
+    .dossier-carte .dc-meta { order:3; flex-basis:100%; }
+  }
 </style>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1e1d1c">
@@ -67,8 +119,13 @@
     <div class="stats-grille" id="stats-grille">Chargement des statistiques…</div>
 
     <div class="liste-recente">
-      <h2 style="margin-bottom:1rem;">Dernières candidatures</h2>
-      <table id="table-candidatures"><thead><tr><th>Nom</th><th>Ville</th><th>Taille</th><th>Date</th></tr></thead><tbody></tbody></table>
+      <div class="dossiers-entete">
+        <h2 style="margin:0;">Candidatures</h2>
+        <span class="dossiers-compteur" id="candidatures-compteur"></span>
+      </div>
+      <div class="filtre-pills" id="filtres-candidatures"></div>
+      <div class="dossier-liste" id="liste-candidatures"></div>
+      <button class="btn dossiers-plus" id="candidatures-plus-btn" style="display:none;">Voir plus</button>
     </div>
 
     <div class="liste-recente">
@@ -77,8 +134,13 @@
     </div>
 
     <div class="liste-recente">
-      <h2 style="margin-bottom:1rem;">Dernières inscriptions mannequins</h2>
-      <table id="table-inscriptions"><thead><tr><th>Nom</th><th>Statut</th><th>Date</th></tr></thead><tbody></tbody></table>
+      <div class="dossiers-entete">
+        <h2 style="margin:0;">Inscriptions mannequins</h2>
+        <span class="dossiers-compteur" id="inscriptions-compteur"></span>
+      </div>
+      <div class="filtre-pills" id="filtres-inscriptions"></div>
+      <div class="dossier-liste" id="liste-inscriptions"></div>
+      <button class="btn dossiers-plus" id="inscriptions-plus-btn" style="display:none;">Voir plus</button>
     </div>
 
     <div class="liste-recente">
@@ -123,6 +185,22 @@
     </div>
   </div>
 </section>
+
+<!-- Fiche détaillée d'un dossier (candidature ou inscription), partagée entre les deux listes -->
+<div class="modal-overlay" id="modal-dossier">
+  <div class="modal-fiche">
+    <button class="modal-fermer" id="modal-dossier-fermer" aria-label="Fermer">✕</button>
+    <h3 id="mf-titre">—</h3>
+    <div class="mf-sous-titre" id="mf-sous-titre"></div>
+    <div class="mf-champs" id="mf-champs"></div>
+    <div class="mf-message" id="mf-message" style="display:none;"></div>
+    <div class="mf-photos" id="mf-photos"></div>
+    <div class="mf-statut-ligne">
+      <label for="mf-statut-select" style="font-size:0.8rem; color:var(--gris);">Statut :</label>
+      <select id="mf-statut-select"></select>
+    </div>
+  </div>
+</div>
 
 <footer class="site-footer">
   <div class="container">
@@ -239,21 +317,13 @@ async function chargerStatistiques() {
   `;
 
   chargerClassementMannequins();
-
-  const { data: dernieresCandidatures } = await sb.from('casting_applications').select('full_name, city, height_cm, created_at').order('created_at', { ascending: false }).limit(10);
-  document.querySelector('#table-candidatures tbody').innerHTML = (dernieresCandidatures || []).map(c => `
-    <tr><td>${echapperHtml(c.full_name || '-')}</td><td>${echapperHtml(c.city || '-')}</td><td>${c.height_cm || '-'} cm</td><td>${new Date(c.created_at).toLocaleDateString('fr-FR')}</td></tr>
-  `).join('') || '<tr><td colspan="4">Aucune candidature.</td></tr>';
+  chargerCandidatures();
+  chargerInscriptions();
 
   const { data: derniersRecruteurs } = await sb.from('recruiter_requests').select('company, contact_name, project_type, created_at').order('created_at', { ascending: false }).limit(10);
   document.querySelector('#table-recruteurs tbody').innerHTML = (derniersRecruteurs || []).map(r => `
     <tr><td>${echapperHtml(r.company || '-')}</td><td>${echapperHtml(r.contact_name || '-')}</td><td>${echapperHtml(r.project_type || '-')}</td><td>${new Date(r.created_at).toLocaleDateString('fr-FR')}</td></tr>
   `).join('') || '<tr><td colspan="4">Aucune demande.</td></tr>';
-
-  const { data: dernieresInscriptions } = await sb.from('inscriptions_mannequins').select('full_name, statut, created_at').order('created_at', { ascending: false }).limit(10);
-  document.querySelector('#table-inscriptions tbody').innerHTML = (dernieresInscriptions || []).map(i => `
-    <tr><td>${echapperHtml(i.full_name || '-')}</td><td>${echapperHtml(i.statut || '-')}</td><td>${new Date(i.created_at).toLocaleDateString('fr-FR')}</td></tr>
-  `).join('') || '<tr><td colspan="3">Aucune inscription.</td></tr>';
 
   const { data: derniersContacts } = await sb.from('messages_contact').select('nom, type_contact, telephone, created_at').order('created_at', { ascending: false }).limit(10);
   document.querySelector('#table-contacts tbody').innerHTML = (derniersContacts || []).map(c => `
@@ -263,6 +333,179 @@ async function chargerStatistiques() {
   chargerVedette();
   chargerBandeau();
 }
+
+// --- Candidatures & inscriptions : listes filtrées par statut + fiche détaillée ---
+// Les buckets photo sont privés : impossible d'utiliser l'URL publique enregistrée à
+// l'envoi, il faut générer une URL signée temporaire à la demande (réservée à l'admin).
+const DOSSIERS = {
+  casting: {
+    table: 'casting_applications', photosTable: 'casting_photos', photosColonne: 'application_id', bucket: 'casting-applications',
+    statutChamp: 'status', statuts: ['nouvelle', 'vue', 'retenue', 'refusée'],
+    libellesStatut: { nouvelle: 'Nouvelle', vue: 'Vue', retenue: 'Retenue', 'refusée': 'Refusée' },
+    filtreParDefaut: 'nouvelle',
+    listeId: 'liste-candidatures', filtresId: 'filtres-candidatures', compteurId: 'candidatures-compteur', plusBtnId: 'candidatures-plus-btn',
+    titrePluriel: 'candidature(s)'
+  },
+  inscription: {
+    table: 'inscriptions_mannequins', photosTable: 'inscriptions_photos', photosColonne: 'inscription_id', bucket: 'inscriptions-photos',
+    statutChamp: 'statut', statuts: ['en attente de paiement', 'payée', 'annulée'],
+    libellesStatut: { 'en attente de paiement': 'En attente', 'payée': 'Payée', 'annulée': 'Annulée' },
+    filtreParDefaut: 'en attente de paiement',
+    listeId: 'liste-inscriptions', filtresId: 'filtres-inscriptions', compteurId: 'inscriptions-compteur', plusBtnId: 'inscriptions-plus-btn',
+    titrePluriel: 'inscription(s)'
+  }
+};
+const ETAT_DOSSIERS = {
+  casting: { filtre: DOSSIERS.casting.filtreParDefaut, page: 0 },
+  inscription: { filtre: DOSSIERS.inscription.filtreParDefaut, page: 0 }
+};
+const PAR_PAGE = 12;
+
+function classeStatut(valeur) {
+  return 'statut-' + valeur.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+}
+
+async function chargerCompteurs(source) {
+  const conf = DOSSIERS[source];
+  const total = await new Promise(r => sb.from(conf.table).select('id', { count: 'exact', head: true }).then(({ count }) => r(count || 0)));
+  const parStatut = {};
+  await Promise.all(conf.statuts.map(async (s) => {
+    const { count } = await sb.from(conf.table).select('id', { count: 'exact', head: true }).eq(conf.statutChamp, s);
+    parStatut[s] = count || 0;
+  }));
+  return { total, parStatut };
+}
+
+async function chargerCandidatures() { await afficherDossiers('casting'); }
+async function chargerInscriptions() { await afficherDossiers('inscription'); }
+
+async function afficherDossiers(source, ajouter) {
+  const conf = DOSSIERS[source];
+  const etat = ETAT_DOSSIERS[source];
+  const conteneur = document.getElementById(conf.listeId);
+  const plusBtn = document.getElementById(conf.plusBtnId);
+
+  const { total, parStatut } = await chargerCompteurs(source);
+  document.getElementById(conf.compteurId).textContent = `${total} au total`;
+
+  const filtresHtml = ['toutes', ...conf.statuts].map(s => {
+    const label = s === 'toutes' ? 'Toutes' : conf.libellesStatut[s];
+    const compte = s === 'toutes' ? total : (parStatut[s] || 0);
+    return `<button class="filtre-pill ${etat.filtre === s ? 'actif' : ''}" data-source="${source}" data-filtre="${s}">${label} <span class="compte">${compte}</span></button>`;
+  }).join('');
+  document.getElementById(conf.filtresId).innerHTML = filtresHtml;
+
+  let requete = sb.from(conf.table).select('*', { count: 'exact' }).order('created_at', { ascending: false });
+  if (etat.filtre !== 'toutes') requete = requete.eq(conf.statutChamp, etat.filtre);
+  requete = requete.range(etat.page * PAR_PAGE, etat.page * PAR_PAGE + PAR_PAGE - 1);
+
+  const { data: dossiers, count } = await requete;
+
+  const html = (dossiers || []).map(d => `
+    <div class="dossier-carte" data-source="${source}" data-id="${d.id}">
+      <div class="dc-nom">${echapperHtml(d.full_name || 'Sans nom')}<span>${echapperHtml(d.email || d.phone || '')}</span></div>
+      <div class="dc-meta">${echapperHtml(d.city || '')}${d.city ? ' · ' : ''}${new Date(d.created_at).toLocaleDateString('fr-FR')}</div>
+      <span class="statut-pill ${classeStatut(d[conf.statutChamp])}">${conf.libellesStatut[d[conf.statutChamp]] || d[conf.statutChamp]}</span>
+      <span class="dc-fleche">→</span>
+    </div>
+  `).join('');
+
+  if (ajouter) conteneur.insertAdjacentHTML('beforeend', html);
+  else conteneur.innerHTML = html || `<div class="dossiers-vide">Aucun dossier dans "${etat.filtre === 'toutes' ? 'toutes' : conf.libellesStatut[etat.filtre]}" pour le moment.</div>`;
+
+  const dejaAffiches = (etat.page + 1) * PAR_PAGE;
+  plusBtn.style.display = (count && count > dejaAffiches) ? 'block' : 'none';
+}
+
+document.addEventListener('click', (e) => {
+  const pill = e.target.closest('.filtre-pill');
+  if (pill) {
+    const source = pill.dataset.source;
+    ETAT_DOSSIERS[source].filtre = pill.dataset.filtre;
+    ETAT_DOSSIERS[source].page = 0;
+    afficherDossiers(source);
+    return;
+  }
+  const plusBtn = e.target.closest('.dossiers-plus');
+  if (plusBtn) {
+    const source = plusBtn.id.startsWith('candidatures') ? 'casting' : 'inscription';
+    ETAT_DOSSIERS[source].page += 1;
+    afficherDossiers(source, true);
+    return;
+  }
+  const carte = e.target.closest('.dossier-carte');
+  if (carte) {
+    ouvrirFicheDossier(carte.dataset.source, carte.dataset.id);
+  }
+});
+
+// --- Fiche détaillée (modale) : toutes les informations + photos + changement de statut ---
+const CHAMPS_CASTING = [
+  ['email', 'E-mail'], ['phone', 'Téléphone'], ['genre', 'Genre'], ['city', 'Ville'],
+  ['height_cm', 'Taille', 'cm'], ['chest_cm', 'Poitrine', 'cm'], ['waist_cm', 'Taille (tour)', 'cm'],
+  ['hips_cm', 'Hanches', 'cm'], ['shoe_size', 'Pointure']
+];
+const CHAMPS_INSCRIPTION = [
+  ['phone', 'Téléphone'], ['email', 'E-mail'], ['instagram', 'Instagram'], ['date_naissance', 'Date de naissance'],
+  ['height_cm', 'Taille', 'cm'], ['clothing_size', 'Taille vêtements'], ['code_utilise', "Code d'accès utilisé"]
+];
+
+let ficheOuverte = null;
+
+async function ouvrirFicheDossier(source, id) {
+  const conf = DOSSIERS[source];
+  const { data: d } = await sb.from(conf.table).select('*').eq('id', id).single();
+  if (!d) return;
+
+  ficheOuverte = { source, id };
+  const champs = source === 'casting' ? CHAMPS_CASTING : CHAMPS_INSCRIPTION;
+
+  document.getElementById('mf-titre').textContent = d.full_name || 'Sans nom';
+  document.getElementById('mf-sous-titre').textContent = `${source === 'casting' ? 'Candidature' : 'Inscription'} reçue le ${new Date(d.created_at).toLocaleDateString('fr-FR')}`;
+
+  document.getElementById('mf-champs').innerHTML = champs.map(([cle, label, unite]) => {
+    const valeur = d[cle];
+    if (!valeur) return '';
+    return `<div class="mf-champ"><div class="mf-label">${label}</div><div class="mf-valeur">${echapperHtml(String(valeur))}${unite ? ' ' + unite : ''}</div></div>`;
+  }).join('');
+
+  const messageEl = document.getElementById('mf-message');
+  if (d.message) { messageEl.style.display = 'block'; messageEl.textContent = d.message; }
+  else { messageEl.style.display = 'none'; }
+
+  const statutSelect = document.getElementById('mf-statut-select');
+  statutSelect.innerHTML = conf.statuts.map(s => `<option value="${s}" ${d[conf.statutChamp] === s ? 'selected' : ''}>${conf.libellesStatut[s]}</option>`).join('');
+
+  const photosEl = document.getElementById('mf-photos');
+  photosEl.innerHTML = '<span class="mf-photos-msg">Chargement des photos…</span>';
+
+  document.getElementById('modal-dossier').classList.add('ouvert');
+
+  const { data: photos } = await sb.from(conf.photosTable).select('chemin').eq(conf.photosColonne, id);
+  const chemins = (photos || []).map(p => p.chemin).filter(Boolean);
+  if (!chemins.length) { photosEl.innerHTML = '<span class="mf-photos-msg">Aucune photo jointe.</span>'; return; }
+
+  const { data: signees } = await sb.storage.from(conf.bucket).createSignedUrls(chemins, 300);
+  const urls = (signees || []).map(s => s.signedUrl).filter(Boolean);
+  photosEl.innerHTML = urls.map((u, i) => `<img src="${u}" data-index="${i}" alt="Photo">`).join('');
+  photosEl.querySelectorAll('img').forEach(img => {
+    img.addEventListener('click', () => ouvrirGalerieLightbox(urls, Number(img.dataset.index)));
+  });
+}
+
+document.getElementById('modal-dossier-fermer').addEventListener('click', () => {
+  document.getElementById('modal-dossier').classList.remove('ouvert');
+});
+document.getElementById('modal-dossier').addEventListener('click', (e) => {
+  if (e.target.id === 'modal-dossier') document.getElementById('modal-dossier').classList.remove('ouvert');
+});
+
+document.getElementById('mf-statut-select').addEventListener('change', async (e) => {
+  if (!ficheOuverte) return;
+  const conf = DOSSIERS[ficheOuverte.source];
+  await sb.from(conf.table).update({ [conf.statutChamp]: e.target.value }).eq('id', ficheOuverte.id);
+  afficherDossiers(ficheOuverte.source);
+});
 
 // --- Mannequin à la une (page d'accueil) ---
 async function chargerVedette() {
