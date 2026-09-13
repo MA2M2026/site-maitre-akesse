@@ -305,7 +305,7 @@ function dessinerIcone(ctx, cle, cx, cy, taille, couleur) {
 
 // Icônes de réseaux sociaux, dessinées en vectoriel (jamais en emoji, dont le
 // rendu est flou et incohérent d'un système à l'autre une fois agrandi).
-function dessinerIconeReseau(ctx, cle, cx, cy, taille, couleurGlyphe) {
+function dessinerIconeReseau(ctx, cle, cx, cy, taille, couleurGlyphe, couleurTrou) {
   ctx.save();
   ctx.strokeStyle = couleurGlyphe;
   ctx.fillStyle = couleurGlyphe;
@@ -383,7 +383,7 @@ function dessinerIconeReseau(ctx, cle, cx, cy, taille, couleurGlyphe) {
       ctx.arc(cx, cy - r * 0.15, r * 0.9, Math.PI, 0);
       ctx.quadraticCurveTo(cx + r * 0.9, cy + r * 0.1, cx, cy + r);
       ctx.closePath(); ctx.fill();
-      ctx.fillStyle = '#0e0c0a';
+      ctx.fillStyle = couleurTrou || '#ffffff';
       ctx.beginPath(); ctx.arc(cx, cy - r * 0.15, r * 0.32, 0, Math.PI * 2); ctx.fill();
       break;
   }
@@ -395,12 +395,13 @@ function dessinerIconeReseau(ctx, cle, cx, cy, taille, couleurGlyphe) {
 // écran géant) — sert de base commune à l'export PDF et à l'export JPEG.
 async function construireCanvasCompcard() {
   const { profil, photos, projets, age } = ficheData;
-  const ROUGE = '#cf3b52', NOIR = '#060504', CREME = '#f4efe8', BLANC = '#ffffff';
+  const NOIR = '#141210', ROUGE = '#cf3b52', BLANC = '#ffffff', GRIS = '#6b6660', MAT = '#eae6e0';
   const LARGEUR_MM = 210, HAUTEUR_MM = 297;
   const DPI = 400;
   const ESCALE = DPI / 25.4; // px par mm
   const px = mm => mm * ESCALE;
   const fpx = pt => pt * 0.3528 * ESCALE; // pt (comme sur une page imprimée) → px canvas
+  const MARGE = 15;
 
   const canvas = document.createElement('canvas');
   canvas.width = Math.round(LARGEUR_MM * ESCALE);
@@ -413,7 +414,6 @@ async function construireCanvasCompcard() {
   await Promise.all([
     document.fonts.load('700 100px "Cormorant Garamond"'),
     document.fonts.load('600 100px "Cormorant Garamond"'),
-    document.fonts.load('italic 500 100px "Cormorant Garamond"'),
     document.fonts.load('300 100px "Jost"'),
     document.fonts.load('500 100px "Jost"'),
     document.fonts.load('600 100px "Jost"')
@@ -424,185 +424,121 @@ async function construireCanvasCompcard() {
   // 5 meilleures par défaut (photo de profil en premier).
   const photosChoisies = photos.filter(p => p.compcard_ordre).sort((a, b) => a.compcard_ordre - b.compcard_ordre);
   const urlsPhotos = (photosChoisies.length ? photosChoisies : photos.slice(0, 5)).map(p => p.url);
-  const [logoSurNoir, ...imagesPhotos] = await Promise.all([
-    chargerImageLocale('assets/logo-dark-bg.png'),
+  const [logo, ...imagesPhotos] = await Promise.all([
+    chargerImageLocale('assets/logo-light-bg.jpg'),
     ...urlsPhotos.map(u => chargerImageHauteRes(u))
   ]);
 
-  function dessinerCouvrant(image, xMm, yMm, lMm, hMm, ancrage) {
+  // "Contain" : la photo entière est toujours visible, jamais rognée — les
+  // mannequins envoient des photos très différentes (portrait studio, plein
+  // pied, podium...) qu'on ne peut pas deviner à l'avance ni recadrer sans
+  // risque. Un fond neutre comble l'espace autour si les proportions ne
+  // correspondent pas exactement au cadre.
+  function dessinerContenu(image, xMm, yMm, lMm, hMm) {
+    ctx.fillStyle = MAT;
+    ctx.fillRect(px(xMm), px(yMm), px(lMm), px(hMm));
     if (!image) return;
     const ratioImage = image.largeur / image.hauteur;
     const ratioCadre = lMm / hMm;
-    let sx = 0, sy = 0, sL = image.largeur, sH = image.hauteur;
-    if (ratioImage > ratioCadre) { sL = image.hauteur * ratioCadre; sx = (image.largeur - sL) / 2; }
-    else { sH = image.largeur / ratioCadre; sy = (image.hauteur - sH) / 2; }
-    if (ancrage === 'haut') {
-      // Recadre en zoomant légèrement et en retirant l'essentiel du vide
-      // au-dessus du sujet (au lieu d'un simple ancrage brut en haut, qui
-      // laissait apparaître le fond vide quand la photo a du champ libre
-      // au-dessus de la tête) : le mannequin remplit ainsi tout le cadre.
-      const zoom = 0.88;
-      const nSL = sL * zoom, nSH = sH * zoom;
-      sx = sx + (sL - nSL) / 2;
-      sy = sy + (sH - nSH) * 0.82;
-      sL = nSL; sH = nSH;
-    }
-    ctx.drawImage(image.canvas, sx, sy, sL, sH, px(xMm), px(yMm), px(lMm), px(hMm));
+    let dw, dh;
+    if (ratioImage > ratioCadre) { dw = lMm; dh = lMm / ratioImage; }
+    else { dh = hMm; dw = hMm * ratioImage; }
+    const dx = xMm + (lMm - dw) / 2, dy = yMm + (hMm - dh) / 2;
+    ctx.drawImage(image.canvas, px(dx), px(dy), px(dw), px(dh));
   }
 
-  ctx.fillStyle = NOIR;
+  ctx.fillStyle = BLANC;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // --- Proportions générales (deux tiers photo / un tiers bandeau infos) ---
-  const yTopFin = 180, yPhotosFin = 233; // bas de la section haute / bas de la rangée de photos
-  const xSide = 137.5; // frontière colonne photo / bandeau infos
-
-  // --- Colonne photo (fond crème, cadrée en priorité sur le visage) ---
-  ctx.fillStyle = CREME;
-  ctx.fillRect(0, 0, px(xSide), px(yTopFin));
-  const yPhotoDebut = 25;
-  dessinerCouvrant(imagesPhotos[0], 0, yPhotoDebut, xSide, yTopFin - yPhotoDebut, 'haut');
-
-  // Logo (marque) en haut à gauche — fondu "multiply" pour effacer le fond
-  // blanc du fichier sans avoir besoin d'un second export transparent.
-  const logoClair = await chargerImageLocale('assets/logo-light-bg.jpg');
-  if (logoClair) {
-    const hLogoMm = 15;
-    const wLogoMm = hLogoMm * (logoClair.largeur / logoClair.hauteur);
-    ctx.save();
-    ctx.globalCompositeOperation = 'multiply';
-    ctx.drawImage(logoClair.canvas, px(8), px(6), px(wLogoMm), px(hLogoMm));
-    ctx.restore();
-  }
-  // Accroche italique, légèrement inclinée, en haut à droite de la colonne photo
+  // --- En-tête : logo + titre ---
   ctx.save();
-  ctx.translate(px(xSide - 10), px(14));
-  ctx.rotate(-4 * Math.PI / 180);
-  ctx.textAlign = 'right';
-  ctx.fillStyle = NOIR;
-  ctx.font = `italic 500 ${fpx(11)}px "Cormorant Garamond", serif`;
-  ctx.fillText('Plus qu’une apparence,', 0, 0);
-  ctx.fillText('un talent', 0, px(6.5));
-  ctx.strokeStyle = ROUGE;
-  ctx.lineWidth = px(0.35);
-  ctx.beginPath(); ctx.moveTo(-px(24), px(9)); ctx.quadraticCurveTo(-px(12), px(11.5), 0, px(9)); ctx.stroke();
+  ctx.globalCompositeOperation = 'multiply';
+  if (logo) {
+    const hLogoMm = 10;
+    const wLogoMm = hLogoMm * (logo.largeur / logo.hauteur);
+    ctx.drawImage(logo.canvas, px(MARGE), px(6), px(wLogoMm), px(hLogoMm));
+  }
   ctx.restore();
+  ctx.fillStyle = NOIR;
+  ctx.font = `500 ${fpx(10)}px Jost, sans-serif`;
+  texteTrace(ctx, 'COMP CARD', px(LARGEUR_MM - MARGE), px(12), fpx(3.5), 'right');
+  ctx.strokeStyle = ROUGE; ctx.lineWidth = px(0.4);
+  ctx.beginPath(); ctx.moveTo(px(MARGE), px(19)); ctx.lineTo(px(LARGEUR_MM - MARGE), px(19)); ctx.stroke();
 
-  // Voile bas de la photo héro pour la lisibilité du nom
-  const yVoile = yTopFin - 40;
-  const degrade = ctx.createLinearGradient(0, px(yVoile), 0, px(yTopFin));
-  degrade.addColorStop(0, 'rgba(8,6,5,0)');
-  degrade.addColorStop(1, 'rgba(8,6,5,0.8)');
-  ctx.fillStyle = degrade;
-  ctx.fillRect(0, px(yVoile), px(xSide), px(yTopFin - yVoile));
-
-  ctx.textAlign = 'center';
-  const centreHero = px(xSide / 2);
-  ctx.fillStyle = BLANC;
-  ctx.font = `700 ${fpx(34)}px "Cormorant Garamond", serif`;
+  // --- Bloc nom, toujours sur fond blanc : lisible quelle que soit la photo ---
+  const centreX = px(LARGEUR_MM / 2);
   const prenom = (profil.full_name || 'Mannequin').trim().split(/\s+/)[0];
   const nomReste = (profil.full_name || '').trim().split(/\s+/).slice(1).join(' ');
-  ctx.fillText(prenom, centreHero, px(yTopFin - 22));
+  ctx.textAlign = 'center';
+  ctx.fillStyle = NOIR;
+  ctx.font = `700 ${fpx(32)}px "Cormorant Garamond", serif`;
+  ctx.fillText(prenom, centreX, px(35));
   if (nomReste) {
-    ctx.font = `600 ${fpx(13)}px Jost, sans-serif`;
-    texteTrace(ctx, nomReste.toUpperCase(), centreHero, px(yTopFin - 14), fpx(2), 'center');
+    ctx.fillStyle = ROUGE;
+    ctx.font = `600 ${fpx(15)}px Jost, sans-serif`;
+    texteTrace(ctx, nomReste.toUpperCase(), centreX, px(42), fpx(2.5), 'center');
   }
+  const libelleCat = profil.category === 'homme' ? 'HOMME' : profil.category === 'femme' ? 'FEMME' : 'NEW FACE';
+  ctx.fillStyle = GRIS;
   ctx.font = `500 ${fpx(8)}px Jost, sans-serif`;
-  ctx.fillStyle = 'rgba(255,255,255,0.85)';
-  texteTrace(ctx, 'MANNEQUIN', centreHero, px(yTopFin - 6.5), fpx(2.8), 'center');
+  texteTrace(ctx, [libelleCat, (profil.city || '').toUpperCase(), 'MANNEQUIN'].filter(Boolean).join('   ·   '), centreX, px(48.5), fpx(2), 'center');
 
-  // --- Bandeau latéral noir : titre, nom, mensurations ---
-  // (toutes les coordonnées ci-dessous restent en mm ; ligneOr()/centreSideMm
-  // ne sont converties en pixels canvas qu'au moment exact du tracé, via px())
-  const xL = xSide + 8, xR = LARGEUR_MM - 8, centreSideMm = (xL + xR) / 2, wSide = xR - xL;
-  ctx.strokeStyle = ROUGE; ctx.lineWidth = px(0.3);
-  function ligneOr(y, largeur) {
-    ctx.beginPath(); ctx.moveTo(px(centreSideMm - largeur / 2), px(y)); ctx.lineTo(px(centreSideMm + largeur / 2), px(y)); ctx.stroke();
-  }
-  ligneOr(8, wSide);
-  ctx.textAlign = 'center'; ctx.fillStyle = BLANC;
-  ctx.font = `500 ${fpx(9)}px Jost, sans-serif`;
-  texteTrace(ctx, 'COMP CARD', px(centreSideMm), px(14.5), fpx(3), 'center');
-  ligneOr(19, wSide);
+  // --- Photo principale (entière, jamais rognée) ---
+  const yPhotoPrincipale = 51, hPhotoPrincipale = 98;
+  dessinerContenu(imagesPhotos[0], MARGE, yPhotoPrincipale, LARGEUR_MM - MARGE * 2, hPhotoPrincipale);
 
-  ctx.fillStyle = BLANC;
-  ctx.font = `700 ${fpx(30)}px "Cormorant Garamond", serif`;
-  ctx.fillText(prenom, px(centreSideMm), px(35));
-  ctx.fillStyle = ROUGE;
-  ctx.font = `600 ${fpx(14)}px Jost, sans-serif`;
-  if (nomReste) texteTrace(ctx, nomReste.toUpperCase(), px(centreSideMm), px(43.5), fpx(2.2), 'center');
-  ctx.fillStyle = 'rgba(255,255,255,0.85)';
-  ctx.font = `500 ${fpx(8)}px Jost, sans-serif`;
-  texteTrace(ctx, 'MANNEQUIN', px(centreSideMm), px(50), fpx(2.8), 'center');
-  ligneOr(56, wSide);
+  // --- Rangée de 4 photos secondaires (entières elles aussi) ---
+  const yLigne = yPhotoPrincipale + hPhotoPrincipale + 4, hLigne = 38;
+  const gouttiere = 2;
+  const lCase = (LARGEUR_MM - MARGE * 2 - gouttiere * 3) / 4;
+  [0, 1, 2, 3].forEach(i => {
+    dessinerContenu(imagesPhotos[i + 1], MARGE + i * (lCase + gouttiere), yLigne, lCase, hLigne);
+  });
 
-  // --- Liste des mensurations (une colonne, icône + libellé + valeur) ---
-  const groupeA = [
-    ['age', 'Âge', age ? age + ' ans' : null],
-    ['taille', 'Taille', profil.height_cm ? (profil.height_cm / 100).toFixed(2).replace('.', ',') + ' m' : null],
+  // --- Mensurations : grille à icônes, 3 colonnes, libellés sans ambiguïté ---
+  const champs = [
+    ['taille', 'Taille', profil.height_cm ? profil.height_cm + ' cm' : null],
     ['poitrine', 'Poitrine', profil.chest_cm ? profil.chest_cm + ' cm' : null],
     ['taille_tour', 'Tour de taille', profil.waist_cm ? profil.waist_cm + ' cm' : null],
-    ['hanches', profil.category === 'homme' ? 'Entrej.' : 'Hanches', profil.category === 'homme' ? (profil.inseam_cm ? profil.inseam_cm + ' cm' : null) : (profil.hips_cm ? profil.hips_cm + ' cm' : null)],
-    ['pointure', 'Pointure', profil.shoe_size || null]
-  ].filter(([, , v]) => v);
-  const groupeB = [
+    ['hanches', profil.category === 'homme' ? 'Entrejambe' : 'Hanches', profil.category === 'homme' ? (profil.inseam_cm ? profil.inseam_cm + ' cm' : null) : (profil.hips_cm ? profil.hips_cm + ' cm' : null)],
+    ['pointure', 'Pointure', profil.shoe_size || null],
     ['carnation', 'Carnation', profil.carnation || null],
     ['vetements', 'Taille vêt.', profil.clothing_size || null],
     ['yeux', 'Yeux', profil.eye_color || null],
     ['cheveux', 'Cheveux', profil.hair_color || null]
   ].filter(([, , v]) => v);
 
-  const yListeDebut = 58, yListeFin = yTopFin - 4;
-  const aDeuxGroupes = groupeA.length && groupeB.length;
-  const espaceDivider = aDeuxGroupes ? 7 : 0;
-  const nbLignes = groupeA.length + groupeB.length || 1;
-  const disponible = yListeFin - yListeDebut;
-  let pitch = (disponible - espaceDivider) / nbLignes;
-  pitch = Math.min(pitch, 15);
-  // S'il reste de la place (peu de champs renseignés), on centre le bloc au
-  // lieu de le laisser collé en haut avec un grand vide en dessous.
-  const hauteurContenu = nbLignes * pitch + espaceDivider;
-  const yListeDebutReel = yListeDebut + Math.max(0, (disponible - hauteurContenu) / 2);
-
-  let yCourant = yListeDebutReel + pitch / 2;
-  function dessinerLigne([cle, label, valeur]) {
-    dessinerIcone(ctx, cle, px(xL + 4), px(yCourant), px(7), ROUGE);
+  const yGrilleDebut = yLigne + hLigne + 10;
+  const largeurCol = (LARGEUR_MM - MARGE * 2) / 3;
+  const PITCH = 12;
+  champs.forEach(([cle, label, valeur], i) => {
+    const col = i % 3, ligne = Math.floor(i / 3);
+    const xCol = MARGE + col * largeurCol, yy = yGrilleDebut + ligne * PITCH;
+    dessinerIcone(ctx, cle, px(xCol + 4), px(yy), px(7.5), ROUGE);
     ctx.textAlign = 'left';
-    ctx.fillStyle = 'rgba(255,255,255,0.9)';
-    ctx.font = `500 ${fpx(7)}px Jost, sans-serif`;
-    texteTrace(ctx, label.toUpperCase(), px(xL + 11), px(yCourant + 1.5), fpx(0.4), 'left');
-    ctx.fillStyle = ROUGE;
-    ctx.font = `500 ${fpx(9)}px Jost, sans-serif`;
-    ctx.fillText('|', px(xR - 22), px(yCourant + 1.5));
-    ctx.fillStyle = BLANC;
-    ctx.font = `600 ${fpx(11.5)}px Jost, sans-serif`;
-    ctx.fillText(String(valeur), px(xR - 17), px(yCourant + 2));
-    yCourant += pitch;
-  }
-  groupeA.forEach(dessinerLigne);
-  if (aDeuxGroupes) { ligneOr(yCourant - pitch / 2 + espaceDivider / 2, wSide); yCourant += espaceDivider; }
-  groupeB.forEach(dessinerLigne);
-
-  // --- Rangée de 4 photos, pleine largeur, sans marge ---
-  const hLigne = yPhotosFin - yTopFin;
-  const lCase = LARGEUR_MM / 4;
-  [0, 1, 2, 3].forEach(i => {
-    dessinerCouvrant(imagesPhotos[i + 1], i * lCase, yTopFin, lCase, hLigne, 'haut');
+    ctx.fillStyle = GRIS;
+    ctx.font = `500 ${fpx(7.5)}px Jost, sans-serif`;
+    texteTrace(ctx, label.toUpperCase(), px(xCol + 11), px(yy - 1.8), fpx(0.5), 'left');
+    ctx.fillStyle = NOIR;
+    ctx.font = `600 ${fpx(12.5)}px "Cormorant Garamond", serif`;
+    ctx.fillText(String(valeur), px(xCol + 11), px(yy + 5));
   });
+  const yFinGrille = yGrilleDebut + Math.ceil(champs.length / 3) * PITCH;
 
-  // --- Pied de page : contact | logo | web + réseaux ---
-  ctx.fillStyle = NOIR;
-  ctx.fillRect(0, px(yPhotosFin), canvas.width, px(HAUTEUR_MM - yPhotosFin));
-  const yFooterMid = yPhotosFin + (HAUTEUR_MM - yPhotosFin) / 2;
-  const xDiv1 = 68, xDiv2 = 142;
-  ctx.strokeStyle = 'rgba(207,59,82,0.5)'; ctx.lineWidth = px(0.25);
+  // --- Pied de page : toujours à une position sûre, jamais chevauché ---
+  const yPiedPage = Math.min(Math.max(yFinGrille + 8, 230), 257);
+  ctx.strokeStyle = ROUGE; ctx.lineWidth = px(0.35);
+  ctx.beginPath(); ctx.moveTo(px(MARGE), px(yPiedPage)); ctx.lineTo(px(LARGEUR_MM - MARGE), px(yPiedPage)); ctx.stroke();
+
+  const xDiv1 = MARGE + (LARGEUR_MM - MARGE * 2) * 0.32, xDiv2 = MARGE + (LARGEUR_MM - MARGE * 2) * 0.66;
+  ctx.strokeStyle = 'rgba(20,18,16,0.15)'; ctx.lineWidth = px(0.25);
   [xDiv1, xDiv2].forEach(x => {
-    ctx.beginPath(); ctx.moveTo(px(x), px(yPhotosFin + 10)); ctx.lineTo(px(x), px(HAUTEUR_MM - 10)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px(x), px(yPiedPage + 6)); ctx.lineTo(px(x), px(HAUTEUR_MM - 8)); ctx.stroke();
   });
 
-  // Colonne contact (gauche)
-  ctx.textAlign = 'left'; ctx.fillStyle = ROUGE;
-  const xIconFooter = 12, xTexteFooter = 20;
+  const yFooterMid = yPiedPage + (HAUTEUR_MM - 6 - yPiedPage) / 2 + 4;
+
+  ctx.textAlign = 'left';
   const lignesContact = [
     ['telephone', '(+225) 0545656687'],
     ['email', 'scoutmodel.ma2m@gmail.com'],
@@ -610,43 +546,43 @@ async function construireCanvasCompcard() {
   ];
   let yC = yFooterMid - 7;
   lignesContact.forEach(([icone, texte]) => {
-    dessinerIconeReseau(ctx, icone, px(xIconFooter), px(yC - 2.2), px(4.2), ROUGE);
-    ctx.textAlign = 'left';
-    ctx.fillStyle = BLANC;
-    ctx.font = `500 ${fpx(8.5)}px Jost, sans-serif`;
-    ctx.fillText(texte, px(xTexteFooter), px(yC));
-    yC += 7;
+    dessinerIconeReseau(ctx, icone, px(MARGE + 3), px(yC - 2), px(3.6), ROUGE);
+    ctx.fillStyle = NOIR;
+    ctx.font = `500 ${fpx(7)}px Jost, sans-serif`;
+    ctx.fillText(texte, px(MARGE + 9), px(yC));
+    yC += 6.5;
   });
 
-  // Colonne logo (centre)
-  if (logoSurNoir) {
-    const wLogoMm = 46;
-    const hLogoMm = wLogoMm * (logoSurNoir.hauteur / logoSurNoir.largeur);
-    ctx.drawImage(logoSurNoir.canvas, px((xDiv1 + xDiv2) / 2 - wLogoMm / 2), px(yFooterMid - hLogoMm / 2), px(wLogoMm), px(hLogoMm));
+  if (logo) {
+    const wLogoMm = 34;
+    const hLogoMm = wLogoMm * (logo.hauteur / logo.largeur);
+    ctx.save();
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.drawImage(logo.canvas, px((xDiv1 + xDiv2) / 2 - wLogoMm / 2), px(yFooterMid - hLogoMm / 2), px(wLogoMm), px(hLogoMm));
+    ctx.restore();
   }
 
-  // Colonne web + réseaux (droite)
-  const centreDroite = (xDiv2 + (LARGEUR_MM - 8)) / 2;
+  const centreDroite = (xDiv2 + (LARGEUR_MM - MARGE)) / 2;
   ctx.textAlign = 'center';
-  ctx.fillStyle = BLANC;
-  ctx.font = `500 ${fpx(7.5)}px Jost, sans-serif`;
-  ctx.fillText('www.maitreakessemodelmanagement.com', px(centreDroite), px(yFooterMid - 8));
+  ctx.fillStyle = NOIR;
+  ctx.font = `500 ${fpx(6.5)}px Jost, sans-serif`;
+  ctx.fillText('www.maitreakessemodelmanagement.com', px(centreDroite), px(yFooterMid - 9));
   const reseaux = ['instagram', 'facebook', 'tiktok', 'youtube'];
-  const largeurTotaleIcones = 8 * (reseaux.length - 1) + reseaux.length * 6;
-  let xIcone = centreDroite - largeurTotaleIcones / 2 + 3;
+  const largeurTotaleIcones = 7 * (reseaux.length - 1) + reseaux.length * 5.5;
+  let xIcone = centreDroite - largeurTotaleIcones / 2 + 2.75;
   reseaux.forEach(cle => {
     ctx.fillStyle = ROUGE;
-    ctx.beginPath(); ctx.arc(px(xIcone), px(yFooterMid + 1), px(3.2), 0, Math.PI * 2); ctx.fill();
-    dessinerIconeReseau(ctx, cle, px(xIcone), px(yFooterMid + 1), px(3.4), BLANC);
-    xIcone += 8;
+    ctx.beginPath(); ctx.arc(px(xIcone), px(yFooterMid - 1), px(2.9), 0, Math.PI * 2); ctx.fill();
+    dessinerIconeReseau(ctx, cle, px(xIcone), px(yFooterMid - 1), px(3), BLANC);
+    xIcone += 7;
   });
-  ctx.fillStyle = 'rgba(255,255,255,0.85)';
-  ctx.font = `500 ${fpx(7.5)}px Jost, sans-serif`;
-  ctx.fillText('@maitreakessemodelmanagement', px(centreDroite), px(yFooterMid + 9));
+  ctx.fillStyle = GRIS;
+  ctx.font = `500 ${fpx(6.5)}px Jost, sans-serif`;
+  ctx.fillText('@maitreakessemodelmanagement', px(centreDroite), px(yFooterMid + 8));
 
-  // Filet or tout en bas de page
-  ctx.strokeStyle = ROUGE; ctx.lineWidth = px(0.35);
-  ctx.beginPath(); ctx.moveTo(px(8), px(HAUTEUR_MM - 5)); ctx.lineTo(px(LARGEUR_MM - 8), px(HAUTEUR_MM - 5)); ctx.stroke();
+  ctx.font = `300 italic ${fpx(6)}px Jost, sans-serif`;
+  ctx.fillStyle = GRIS;
+  ctx.fillText(`Document officiel généré le ${new Date().toLocaleDateString('fr-FR')} — maitreakessemodelmanagement.com`, centreX, px(HAUTEUR_MM - 6));
 
   return canvas;
 }
