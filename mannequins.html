@@ -169,17 +169,23 @@ async function chargerMannequins() {
     return;
   }
 
-  for (const profil of profils) {
-    const { data: photos } = await sb
-      .from('model_photos')
-      .select('url')
-      .eq('model_id', profil.id)
-      .order('principale', { ascending: false })
-      .order('created_at', { ascending: true })
-      .limit(1);
+  // Une seule requête pour toutes les photos de couverture (au lieu d'une
+  // requête par mannequin, l'une après l'autre) — c'est ce qui ralentissait
+  // fortement le chargement de la page. On passe par une fonction dédiée qui
+  // ne renvoie qu'UNE photo par mannequin : le volume ne grossit jamais avec
+  // le nombre de photos de chacun, seulement avec le nombre de mannequins —
+  // ça tient donc même à 100+ mannequins.
+  const ids = profils.map(p => p.id);
+  const { data: photos } = await sb.rpc('photos_couverture_mannequins', { ids });
 
-    profil.photoUrl = (photos && photos[0]) ? photos[0].url : 'assets/logo-dark-bg.png';
-  }
+  const photoParMannequin = {};
+  (photos || []).forEach(p => {
+    photoParMannequin[p.model_id] = p.url;
+  });
+
+  profils.forEach(profil => {
+    profil.photoUrl = photoParMannequin[profil.id] || 'assets/logo-dark-bg.png';
+  });
 
   tousLesProfils = profils;
   appliquerFiltres();
