@@ -150,6 +150,10 @@
           <input type="number" id="pr-taille" required>
         </div>
         <div class="form-champ">
+          <label for="pr-poids">Poids (kg)</label>
+          <input type="number" id="pr-poids">
+        </div>
+        <div class="form-champ">
           <label for="pr-poitrine">Poitrine (cm) *</label>
           <input type="number" id="pr-poitrine" required>
         </div>
@@ -484,7 +488,7 @@ async function chargerProfil() {
   // authenticated pour empêcher tout autre compte connecté de les lire via l'API) :
   // on les récupère séparément via une fonction réservée au propriétaire de la fiche.
   const { data: profil } = await sb.from('model_profiles')
-    .select('id, full_name, bio, height_cm, city, instagram, published, created_at, category, video_url, chest_cm, waist_cm, hips_cm, shoe_size, carnation, clothing_size, date_naissance, eye_color, hair_color, years_experience, model_types, languages, availability, inseam_cm, featured')
+    .select('id, full_name, bio, height_cm, weight_kg, city, instagram, published, created_at, category, video_url, chest_cm, waist_cm, hips_cm, shoe_size, carnation, clothing_size, date_naissance, eye_color, hair_color, years_experience, model_types, languages, availability, inseam_cm, featured')
     .eq('id', user.id).single();
   if (!profil) return;
 
@@ -508,6 +512,7 @@ async function chargerProfil() {
   document.getElementById('pr-entrejambe').value = profil.inseam_cm ?? '';
   appliquerChampsGenre();
   document.getElementById('pr-taille').value = profil.height_cm || '';
+  document.getElementById('pr-poids').value = profil.weight_kg || '';
   document.getElementById('pr-poitrine').value = profil.chest_cm || '';
   document.getElementById('pr-tourtaille').value = profil.waist_cm || '';
   document.getElementById('pr-pointure').value = profil.shoe_size || '';
@@ -563,6 +568,7 @@ document.getElementById('form-profil').addEventListener('submit', async (e) => {
     category: document.getElementById('pr-categorie').value,
     date_naissance: document.getElementById('pr-naissance').value || null,
     height_cm: parseInt(document.getElementById('pr-taille').value) || null,
+    weight_kg: parseInt(document.getElementById('pr-poids').value) || null,
     chest_cm: parseInt(document.getElementById('pr-poitrine').value) || null,
     waist_cm: parseInt(document.getElementById('pr-tourtaille').value) || null,
     hips_cm: parseInt(document.getElementById('pr-hanches').value) || null,

@@ -227,6 +227,12 @@ function dessinerIcone(ctx, cle, cx, cy, taille, couleur) {
       ctx.closePath(); ctx.fill();
       ctx.beginPath(); ctx.moveTo(cx - r * 0.85, cy - r * 0.9); ctx.lineTo(cx + r * 0.85, cy - r * 0.9); ctx.lineWidth = taille * 0.06; ctx.stroke();
       break;
+    case 'poids': // haltère
+      ctx.lineWidth = taille * 0.16;
+      ctx.beginPath(); ctx.moveTo(cx - r * 0.5, cy); ctx.lineTo(cx + r * 0.5, cy); ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx - r * 0.68, cy, r * 0.35, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + r * 0.68, cy, r * 0.35, 0, Math.PI * 2); ctx.fill();
+      break;
     case 'poitrine': // bustier
       ctx.beginPath();
       ctx.moveTo(cx, cy - r * 0.05);
@@ -498,6 +504,7 @@ async function construireCanvasCompcard() {
   // --- Mensurations : grille à icônes, 3 colonnes, libellés sans ambiguïté ---
   const champs = [
     ['taille', 'Taille', profil.height_cm ? profil.height_cm + ' cm' : null],
+    ['poids', 'Poids', profil.weight_kg ? profil.weight_kg + ' kg' : null],
     ['poitrine', 'Poitrine', profil.chest_cm ? profil.chest_cm + ' cm' : null],
     ['taille_tour', 'Tour de taille', profil.waist_cm ? profil.waist_cm + ' cm' : null],
     ['hanches', profil.category === 'homme' ? 'Entrejambe' : 'Hanches', profil.category === 'homme' ? (profil.inseam_cm ? profil.inseam_cm + ' cm' : null) : (profil.hips_cm ? profil.hips_cm + ' cm' : null)],
@@ -633,7 +640,7 @@ async function chargerProfil() {
 
   const { data: profil, error } = await sb
     .from('model_profiles')
-    .select('id, full_name, city, category, date_naissance, height_cm, chest_cm, waist_cm, hips_cm, inseam_cm, shoe_size, carnation, clothing_size, eye_color, hair_color, bio, years_experience, model_types, languages, availability, video_url')
+    .select('id, full_name, city, category, date_naissance, height_cm, weight_kg, chest_cm, waist_cm, hips_cm, inseam_cm, shoe_size, carnation, clothing_size, eye_color, hair_color, bio, years_experience, model_types, languages, availability, video_url')
     .eq('id', id)
     .eq('published', true)
     .single();
@@ -739,6 +746,7 @@ async function chargerProfil() {
         <div class="mensurations">
           ${age ? `<div class="mensuration-item"><span class="label">Âge</span><span class="valeur">${age} ans</span></div>` : ''}
           ${profil.height_cm ? `<div class="mensuration-item"><span class="label">Taille</span><span class="valeur">${profil.height_cm} cm</span></div>` : ''}
+          ${profil.weight_kg ? `<div class="mensuration-item"><span class="label">Poids</span><span class="valeur">${profil.weight_kg} kg</span></div>` : ''}
           ${profil.chest_cm ? `<div class="mensuration-item"><span class="label">Poitrine</span><span class="valeur">${profil.chest_cm} cm</span></div>` : ''}
           ${profil.waist_cm ? `<div class="mensuration-item"><span class="label">Taille (tour)</span><span class="valeur">${profil.waist_cm} cm</span></div>` : ''}
           ${profil.hips_cm ? `<div class="mensuration-item"><span class="label">Hanches</span><span class="valeur">${profil.hips_cm} cm</span></div>` : ''}

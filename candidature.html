@@ -132,6 +132,10 @@
           <span id="ca-taille-indication" style="font-size:0.78rem; color:var(--gris);"></span>
         </div>
         <div class="form-champ">
+          <label for="ca-poids">Poids (kg)</label>
+          <input type="number" id="ca-poids">
+        </div>
+        <div class="form-champ">
           <label for="ca-pointure">Pointure</label>
           <input type="text" id="ca-pointure">
         </div>
@@ -392,6 +396,7 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
     genre: genre,
     height_cm: taille,
     shoe_size: document.getElementById('ca-pointure').value.trim(),
+    weight_kg: parseInt(document.getElementById('ca-poids').value) || null,
     chest_cm: parseInt(document.getElementById('ca-poitrine').value) || null,
     waist_cm: parseInt(document.getElementById('ca-tourtaille').value) || null,
     hips_cm: parseInt(document.getElementById('ca-hanches').value) || null,
