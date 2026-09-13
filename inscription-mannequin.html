@@ -276,9 +276,14 @@ document.getElementById('form-inscription').addEventListener('submit', async (e)
 
   const { error } = await sb.from('inscriptions_mannequins').insert(dossier);
   if (error) {
+    // L'envoi du dossier a échoué après consommation du code : on le relibère
+    // pour que la personne puisse corriger son erreur sans nouveau code.
+    await sb.rpc('liberer_code_inscription', { code_input: codeValide });
     boutonEnvoyer.disabled = false;
     msg.className = 'form-msg err';
-    msg.textContent = "Erreur lors de l'envoi. Réessaie — si le code est refusé au prochain essai, contacte directement l'agence, il a déjà été validé.";
+    msg.textContent = (error.code === '23505')
+      ? "Cette référence de paiement Wave a déjà été utilisée pour une autre inscription. Vérifie que tu as bien copié TA propre référence, puis réessaie."
+      : "Erreur lors de l'envoi. Réessaie, ou contacte directement l'agence.";
     msg.style.display = 'block';
     return;
   }
