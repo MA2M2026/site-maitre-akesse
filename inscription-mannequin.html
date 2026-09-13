@@ -249,22 +249,7 @@ document.getElementById('form-inscription').addEventListener('submit', async (e)
   const boutonEnvoyer = e.target.querySelector('button[type="submit"]');
   boutonEnvoyer.disabled = true;
 
-  // Consommation du code : atomique côté base de données, pour qu'un même code
-  // ne puisse jamais servir deux fois, même si deux personnes l'utilisent au
-  // même moment.
-  const { data: codeEncoreValide } = await sb.rpc('utiliser_code_inscription', { code_input: codeValide });
-  if (!codeEncoreValide) {
-    boutonEnvoyer.disabled = false;
-    msg.className = 'form-msg err';
-    msg.textContent = "Ce code vient d'être utilisé (peut-être par une autre personne à l'instant). Contacte l'agence pour obtenir un nouveau code.";
-    msg.style.display = 'block';
-    return;
-  }
-
-  const idInscription = crypto.randomUUID();
-
   const dossier = {
-    id: idInscription,
     full_name: document.getElementById('ins-nom').value.trim(),
     date_naissance: document.getElementById('ins-naissance').value || null,
     height_cm: parseInt(document.getElementById('ins-taille').value) || null,
@@ -274,16 +259,32 @@ document.getElementById('form-inscription').addEventListener('submit', async (e)
     reference_paiement: document.getElementById('ins-reference-paiement').value.trim()
   };
 
-  const { error } = await sb.from('inscriptions_mannequins').insert(dossier);
+  // Consommation du code ET création du dossier en une seule opération atomique
+  // côté base de données : si l'une des deux étapes échoue (code déjà pris,
+  // référence de paiement en double...), tout est annulé automatiquement —
+  // le code reste donc intact et réessayable, sans exposer de fonction séparée
+  // pour le "libérer" (une telle fonction serait exploitable pour réutiliser
+  // n'importe quel code déjà utilisé).
+  const { data: idInscription, error } = await sb.rpc('soumettre_inscription_mannequin', {
+    p_code: dossier.code_utilise,
+    p_full_name: dossier.full_name,
+    p_date_naissance: dossier.date_naissance,
+    p_height_cm: dossier.height_cm,
+    p_clothing_size: dossier.clothing_size,
+    p_phone: dossier.phone,
+    p_reference_paiement: dossier.reference_paiement
+  });
+
   if (error) {
-    // L'envoi du dossier a échoué après consommation du code : on le relibère
-    // pour que la personne puisse corriger son erreur sans nouveau code.
-    await sb.rpc('liberer_code_inscription', { code_input: codeValide });
     boutonEnvoyer.disabled = false;
     msg.className = 'form-msg err';
-    msg.textContent = (error.code === '23505')
-      ? "Cette référence de paiement Wave a déjà été utilisée pour une autre inscription. Vérifie que tu as bien copié TA propre référence, puis réessaie."
-      : "Erreur lors de l'envoi. Réessaie, ou contacte directement l'agence.";
+    if (error.message && error.message.includes('code_invalide_ou_deja_utilise')) {
+      msg.textContent = "Ce code n'est plus valable (peut-être déjà utilisé par une autre personne). Contacte l'agence pour obtenir un nouveau code.";
+    } else if (error.code === '23505') {
+      msg.textContent = "Cette référence de paiement Wave a déjà été utilisée pour une autre inscription. Vérifie que tu as bien copié TA propre référence, puis réessaie.";
+    } else {
+      msg.textContent = "Erreur lors de l'envoi. Réessaie, ou contacte directement l'agence.";
+    }
     msg.style.display = 'block';
     return;
   }
