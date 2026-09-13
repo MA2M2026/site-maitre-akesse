@@ -303,6 +303,62 @@ function dessinerIcone(ctx, cle, cx, cy, taille, couleur) {
   ctx.restore();
 }
 
+// Icônes de réseaux sociaux, dessinées en vectoriel (jamais en emoji, dont le
+// rendu est flou et incohérent d'un système à l'autre une fois agrandi).
+function dessinerIconeReseau(ctx, cle, cx, cy, taille, couleurGlyphe) {
+  ctx.save();
+  ctx.strokeStyle = couleurGlyphe;
+  ctx.fillStyle = couleurGlyphe;
+  ctx.lineWidth = Math.max(1, taille * 0.09);
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  const r = taille / 2;
+  switch (cle) {
+    case 'instagram': {
+      const c = r * 1.55;
+      const rr = c * 0.32;
+      ctx.beginPath();
+      ctx.moveTo(cx - c / 2 + rr, cy - c / 2);
+      ctx.lineTo(cx + c / 2 - rr, cy - c / 2);
+      ctx.quadraticCurveTo(cx + c / 2, cy - c / 2, cx + c / 2, cy - c / 2 + rr);
+      ctx.lineTo(cx + c / 2, cy + c / 2 - rr);
+      ctx.quadraticCurveTo(cx + c / 2, cy + c / 2, cx + c / 2 - rr, cy + c / 2);
+      ctx.lineTo(cx - c / 2 + rr, cy + c / 2);
+      ctx.quadraticCurveTo(cx - c / 2, cy + c / 2, cx - c / 2, cy + c / 2 - rr);
+      ctx.lineTo(cx - c / 2, cy - c / 2 + rr);
+      ctx.quadraticCurveTo(cx - c / 2, cy - c / 2, cx - c / 2 + rr, cy - c / 2);
+      ctx.closePath(); ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx, cy, r * 0.42, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx + c * 0.28, cy - c * 0.28, r * 0.09, 0, Math.PI * 2); ctx.fill();
+      break;
+    }
+    case 'facebook':
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = `700 ${taille * 1.5}px Georgia, serif`;
+      ctx.fillText('f', cx, cy + taille * 0.05);
+      break;
+    case 'tiktok':
+      ctx.beginPath();
+      ctx.arc(cx - r * 0.15, cy + r * 0.35, r * 0.42, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(cx + r * 0.27, cy + r * 0.35);
+      ctx.lineTo(cx + r * 0.27, cy - r * 0.75);
+      ctx.quadraticCurveTo(cx + r * 0.55, cy - r * 0.25, cx + r * 0.85, cy - r * 0.22);
+      ctx.lineTo(cx + r * 0.85, cy + r * 0.18);
+      ctx.quadraticCurveTo(cx + r * 0.55, cy + r * 0.12, cx + r * 0.4, cy - r * 0.1);
+      ctx.lineTo(cx + r * 0.4, cy + r * 0.35);
+      ctx.closePath(); ctx.fill();
+      break;
+    case 'youtube':
+      ctx.beginPath();
+      ctx.moveTo(cx - r * 0.42, cy - r * 0.55);
+      ctx.lineTo(cx + r * 0.6, cy);
+      ctx.lineTo(cx - r * 0.42, cy + r * 0.55);
+      ctx.closePath(); ctx.fill();
+      break;
+  }
+  ctx.restore();
+}
+
 // Construit la fiche Compcard sur un grand canvas (qualité impression
 // professionnelle, 400 dpi sur une page A4 — net même de très près sur un
 // écran géant) — sert de base commune à l'export PDF et à l'export JPEG.
@@ -489,7 +545,7 @@ async function construireCanvasCompcard() {
   const hLigne = yPhotosFin - yTopFin;
   const lCase = LARGEUR_MM / 4;
   [0, 1, 2, 3].forEach(i => {
-    dessinerCouvrant(imagesPhotos[i + 1], i * lCase, yTopFin, lCase, hLigne);
+    dessinerCouvrant(imagesPhotos[i + 1], i * lCase, yTopFin, lCase, hLigne, 'haut');
   });
 
   // --- Pied de page : contact | logo | web + réseaux ---
@@ -532,17 +588,15 @@ async function construireCanvasCompcard() {
   const centreDroite = (xDiv2 + (LARGEUR_MM - 8)) / 2;
   ctx.textAlign = 'center';
   ctx.fillStyle = BLANC;
-  ctx.font = `500 ${fpx(8.5)}px Jost, sans-serif`;
-  ctx.fillText('maitreakessemodelmanagement.com', px(centreDroite), px(yFooterMid - 12));
-  const icones = ['📷', '👥', '♪', '▶'];
-  const largeurTotaleIcones = 9 * (icones.length - 1) + icones.length * 6;
+  ctx.font = `500 ${fpx(7.5)}px Jost, sans-serif`;
+  ctx.fillText('www.maitreakessemodelmanagement.com', px(centreDroite), px(yFooterMid - 12));
+  const reseaux = ['instagram', 'facebook', 'tiktok', 'youtube'];
+  const largeurTotaleIcones = 9 * (reseaux.length - 1) + reseaux.length * 6;
   let xIcone = centreDroite - largeurTotaleIcones / 2 + 3;
-  icones.forEach(ic => {
+  reseaux.forEach(cle => {
     ctx.fillStyle = OR;
     ctx.beginPath(); ctx.arc(px(xIcone), px(yFooterMid - 1), px(3.2), 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = NOIR;
-    ctx.font = `${fpx(4.2)}px Arial, sans-serif`;
-    ctx.fillText(ic, px(xIcone), px(yFooterMid));
+    dessinerIconeReseau(ctx, cle, px(xIcone), px(yFooterMid - 1), px(3.4), NOIR);
     xIcone += 9;
   });
   ctx.fillStyle = 'rgba(255,255,255,0.85)';
