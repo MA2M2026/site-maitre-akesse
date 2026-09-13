@@ -863,3 +863,374 @@ revoke all on function mon_contact_prive from public;
 grant execute on function mon_contact_prive to authenticated;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 27 : consultation des photos de candidature/inscription +
+-- mise à jour du statut depuis le tableau de bord. Jusqu'ici, aucune
+-- politique RLS ne permettait à l'admin de lire les tables casting_photos
+-- et inscriptions_photos, ni de modifier le statut d'une candidature ou
+-- d'une inscription : les photos envoyées par les candidats étaient
+-- invisibles nulle part sur le site, même pour l'agence.
+-- ===================================================================
+drop policy if exists "Les admins consultent les photos de candidature" on casting_photos;
+create policy "Les admins consultent les photos de candidature"
+  on casting_photos for select
+  using (exists (select 1 from admins where user_id = auth.uid()));
+
+drop policy if exists "Les admins consultent les photos d'inscription" on inscriptions_photos;
+create policy "Les admins consultent les photos d'inscription"
+  on inscriptions_photos for select
+  using (exists (select 1 from admins where user_id = auth.uid()));
+
+drop policy if exists "Les admins modifient le statut d'une candidature" on casting_applications;
+create policy "Les admins modifient le statut d'une candidature"
+  on casting_applications for update
+  using (exists (select 1 from admins where user_id = auth.uid()))
+  with check (exists (select 1 from admins where user_id = auth.uid()));
+
+drop policy if exists "Les admins modifient le statut d'une inscription" on inscriptions_mannequins;
+create policy "Les admins modifient le statut d'une inscription"
+  on inscriptions_mannequins for update
+  using (exists (select 1 from admins where user_id = auth.uid()))
+  with check (exists (select 1 from admins where user_id = auth.uid()));
+
+-- Les deux buckets de stockage sont privés (public = false) : sans règle de
+-- lecture, même un admin ne peut pas afficher les fichiers, la ligne en base
+-- ne suffit pas.
+drop policy if exists "Admins consultent les fichiers de candidature" on storage.objects;
+create policy "Admins consultent les fichiers de candidature"
+  on storage.objects for select
+  using (bucket_id = 'casting-applications' and exists (select 1 from admins where user_id = auth.uid()));
+
+drop policy if exists "Admins consultent les fichiers d'inscription" on storage.objects;
+create policy "Admins consultent les fichiers d'inscription"
+  on storage.objects for select
+  using (bucket_id = 'inscriptions-photos' and exists (select 1 from admins where user_id = auth.uid()));
+
+NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 28 : demandes recruteurs visibles dans le tableau de bord (avec
+-- le détail des mannequins sélectionnés) + suppression d'une photo de
+-- candidature/inscription directement depuis le tableau de bord (fichier de
+-- stockage ET ligne en base supprimés ensemble).
+-- ===================================================================
+drop policy if exists "Les admins consultent les mannequins d'une demande" on recruiter_request_models;
+create policy "Les admins consultent les mannequins d'une demande"
+  on recruiter_request_models for select
+  using (exists (select 1 from admins where user_id = auth.uid()));
+
+drop policy if exists "Les admins modifient le statut d'une demande recruteur" on recruiter_requests;
+create policy "Les admins modifient le statut d'une demande recruteur"
+  on recruiter_requests for update
+  using (exists (select 1 from admins where user_id = auth.uid()))
+  with check (exists (select 1 from admins where user_id = auth.uid()));
+
+drop policy if exists "Les admins suppriment une photo de candidature" on casting_photos;
+create policy "Les admins suppriment une photo de candidature"
+  on casting_photos for delete
+  using (exists (select 1 from admins where user_id = auth.uid()));
+
+drop policy if exists "Les admins suppriment une photo d'inscription" on inscriptions_photos;
+create policy "Les admins suppriment une photo d'inscription"
+  on inscriptions_photos for delete
+  using (exists (select 1 from admins where user_id = auth.uid()));
+
+drop policy if exists "Admins suppriment les fichiers de candidature" on storage.objects;
+create policy "Admins suppriment les fichiers de candidature"
+  on storage.objects for delete
+  using (bucket_id = 'casting-applications' and exists (select 1 from admins where user_id = auth.uid()));
+
+drop policy if exists "Admins suppriment les fichiers d'inscription" on storage.objects;
+create policy "Admins suppriment les fichiers d'inscription"
+  on storage.objects for delete
+  using (bucket_id = 'inscriptions-photos' and exists (select 1 from admins where user_id = auth.uid()));
+
+NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 29 : référence de transaction Wave sur une inscription mannequin.
+-- Permet de vérifier facilement un paiement (recherche de la référence dans
+-- l'application Wave) au lieu de deviner par nom/montant/heure. Ce n'est pas
+-- un encaissement automatique (Wave ne confirme rien de son côté) — juste
+-- une preuve fournie par la personne, à vérifier manuellement par l'agence.
+-- ===================================================================
+alter table inscriptions_mannequins add column if not exists reference_paiement text;
+
+NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 30 : codes d'inscription à usage unique. Jusqu'ici,
+-- verifier_code_inscription() ne faisait que VÉRIFIER qu'un code existait —
+-- rien ne l'invalidait jamais après usage. Un même code pouvait donc être
+-- utilisé par plusieurs personnes, y compris exactement en même temps
+-- ("simultanément"). On ajoute une consommation atomique du code au moment
+-- de l'envoi du dossier : si deux personnes soumettent le même code au même
+-- instant, la base de données garantit qu'une seule des deux réussit.
+-- ===================================================================
+alter table codes_inscription add column if not exists utilise boolean not null default false;
+alter table codes_inscription add column if not exists utilise_le timestamptz;
+
+create or replace function verifier_code_inscription(code_input text)
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+  select exists (select 1 from codes_inscription where code = code_input and utilise = false);
+$$;
+
+create or replace function utiliser_code_inscription(code_input text)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  nb_lignes int;
+begin
+  update codes_inscription set utilise = true, utilise_le = now()
+  where code = code_input and utilise = false;
+  get diagnostics nb_lignes = row_count;
+  return nb_lignes > 0;
+end;
+$$;
+revoke all on function utiliser_code_inscription from public;
+grant execute on function utiliser_code_inscription to anon, authenticated;
+
+-- Sécurité rétroactive : les codes déjà utilisés par une inscription passée
+-- sont marqués "utilisé" dès maintenant, pour ne pas pouvoir resservir.
+update codes_inscription c set utilise = true, utilise_le = now()
+where utilise = false
+  and exists (select 1 from inscriptions_mannequins i where i.code_utilise = c.code);
+
+NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 31 : gestion des codes d'inscription depuis le tableau de bord.
+-- Jusqu'ici, un code ne pouvait être ajouté que manuellement en SQL — aucune
+-- interface n'existait pour l'admin. On ajoute la lecture et la création de
+-- codes, réservées aux admins.
+-- ===================================================================
+drop policy if exists "Les admins consultent les codes d'inscription" on codes_inscription;
+create policy "Les admins consultent les codes d'inscription"
+  on codes_inscription for select
+  using (exists (select 1 from admins where user_id = auth.uid()));
+
+drop policy if exists "Les admins créent des codes d'inscription" on codes_inscription;
+create policy "Les admins créent des codes d'inscription"
+  on codes_inscription for insert
+  with check (exists (select 1 from admins where user_id = auth.uid()));
+
+drop policy if exists "Les admins suppriment un code d'inscription" on codes_inscription;
+create policy "Les admins suppriment un code d'inscription"
+  on codes_inscription for delete
+  using (exists (select 1 from admins where user_id = auth.uid()));
+
+NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 32 : une référence de paiement Wave ne peut plus servir deux
+-- fois. Jusqu'ici, rien n'empêchait de recopier une ancienne référence
+-- (même déjà utilisée sur un autre dossier) — le formulaire l'acceptait
+-- sans broncher. Une vraie référence Wave étant unique par transaction, on
+-- interdit désormais tout doublon au niveau de la base de données : la
+-- deuxième tentative avec la même référence est rejetée automatiquement.
+-- Attention : ceci ne prouve toujours pas qu'une référence est authentique
+-- (ça, seule une vérification manuelle dans l'appli Wave le peut) — ça
+-- empêche seulement la RÉUTILISATION d'une référence déjà vue par le site.
+-- ===================================================================
+create unique index if not exists inscriptions_reference_paiement_unique
+  on inscriptions_mannequins (reference_paiement)
+  where reference_paiement is not null and reference_paiement <> '';
+
+-- Si l'envoi du dossier échoue après que le code a été consommé (référence en
+-- doublon, coupure réseau...), on relibère le code pour que la personne
+-- puisse corriger son erreur et renvoyer son dossier sans avoir besoin d'un
+-- nouveau code auprès de l'agence.
+create or replace function liberer_code_inscription(code_input text)
+returns void
+language sql
+security definer
+set search_path = public
+as $$
+  update codes_inscription set utilise = false, utilise_le = null where code = code_input;
+$$;
+revoke all on function liberer_code_inscription from public;
+grant execute on function liberer_code_inscription to anon, authenticated;
+
+NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 33 : AUDIT DE SÉCURITÉ #3 — correction d'une faille critique
+-- introduite par l'Extension 32. liberer_code_inscription() ne vérifiait
+-- absolument rien avant de réactiver un code : n'importe qui connaissant un
+-- code déjà utilisé (donc n'importe quel mannequin déjà inscrit, puisqu'il
+-- a lui-même tapé son code) pouvait l'appeler directement depuis la console
+-- du navigateur pour réactiver CE code à volonté et recommencer une
+-- inscription indéfiniment — annulant complètement la protection "usage
+-- unique" de l'Extension 30.
+--
+-- Correction en profondeur : au lieu de "consommer le code" puis "insérer
+-- le dossier" en deux étapes séparées (avec une fonction de rattrapage
+-- exploitable entre les deux), tout se fait maintenant en une seule
+-- transaction atomique. Si l'insertion échoue pour n'importe quelle raison
+-- (référence de paiement en double, etc.), la consommation du code est
+-- automatiquement annulée par la base de données elle-même — pas besoin
+-- d'une fonction de "libération" séparée, donc plus aucune surface
+-- exploitable.
+-- ===================================================================
+drop function if exists liberer_code_inscription(text);
+revoke all on function utiliser_code_inscription(text) from anon, authenticated;
+
+create or replace function soumettre_inscription_mannequin(
+  p_code text,
+  p_full_name text,
+  p_date_naissance date,
+  p_height_cm int,
+  p_clothing_size text,
+  p_phone text,
+  p_reference_paiement text
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  nb_lignes int;
+  nouvel_id uuid;
+begin
+  update codes_inscription set utilise = true, utilise_le = now()
+  where code = p_code and utilise = false;
+  get diagnostics nb_lignes = row_count;
+  if nb_lignes = 0 then
+    raise exception 'code_invalide_ou_deja_utilise';
+  end if;
+
+  insert into inscriptions_mannequins
+    (full_name, date_naissance, height_cm, clothing_size, phone, code_utilise, reference_paiement)
+  values
+    (p_full_name, p_date_naissance, p_height_cm, p_clothing_size, p_phone, p_code, nullif(p_reference_paiement, ''))
+  returning id into nouvel_id;
+
+  return nouvel_id;
+end;
+$$;
+revoke all on function soumettre_inscription_mannequin from public;
+grant execute on function soumettre_inscription_mannequin to anon, authenticated;
+
+-- Défense en profondeur : même un compte admin compromis ne peut plus écrire
+-- un statut arbitraire (ex. contenant du code HTML) dans ces colonnes.
+alter table casting_applications drop constraint if exists casting_applications_status_check;
+alter table casting_applications add constraint casting_applications_status_check
+  check (status in ('nouvelle', 'vue', 'retenue', 'refusée'));
+
+alter table inscriptions_mannequins drop constraint if exists inscriptions_mannequins_statut_check;
+alter table inscriptions_mannequins add constraint inscriptions_mannequins_statut_check
+  check (statut in ('en attente de paiement', 'payée', 'annulée'));
+
+alter table recruiter_requests drop constraint if exists recruiter_requests_status_check;
+alter table recruiter_requests add constraint recruiter_requests_status_check
+  check (status in ('nouvelle', 'vue', 'traitée'));
+
+-- page_views.ip_hash doit toujours être soit vide, soit une vraie empreinte
+-- SHA-256 (64 caractères hexadécimaux) — bloque au moins l'insertion de
+-- valeurs de complaisance grossières visant à fausser le classement des
+-- mannequins les plus consultés.
+alter table page_views drop constraint if exists page_views_ip_hash_format;
+alter table page_views add constraint page_views_ip_hash_format
+  check (ip_hash is null or ip_hash ~ '^[0-9a-f]{64}$');
+
+NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 34 : photo de profil choisie par le mannequin (au lieu de
+-- toujours prendre la plus ancienne photo envoyée), et suppression complète
+-- d'un dossier (candidature / inscription / demande recruteur) depuis le
+-- tableau de bord.
+-- ===================================================================
+alter table model_photos add column if not exists principale boolean not null default false;
+
+drop policy if exists "Les admins suppriment une candidature" on casting_applications;
+create policy "Les admins suppriment une candidature"
+  on casting_applications for delete
+  using (exists (select 1 from admins where user_id = auth.uid()));
+
+drop policy if exists "Les admins suppriment une inscription" on inscriptions_mannequins;
+create policy "Les admins suppriment une inscription"
+  on inscriptions_mannequins for delete
+  using (exists (select 1 from admins where user_id = auth.uid()));
+
+drop policy if exists "Les admins suppriment une demande recruteur" on recruiter_requests;
+create policy "Les admins suppriment une demande recruteur"
+  on recruiter_requests for delete
+  using (exists (select 1 from admins where user_id = auth.uid()));
+
+NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 35 : l'agence fait aussi du mannequinat pour enfants — les
+-- candidatures/inscriptions de mineurs doivent pouvoir renseigner un
+-- contact parent/tuteur pour validation. On ajoute aussi la possibilité de
+-- retirer UN SEUL mannequin d'une sélection recruteur (sans supprimer toute
+-- la demande), demandée pour affiner la suppression dans le tableau de bord.
+-- ===================================================================
+alter table casting_applications add column if not exists date_naissance date;
+alter table casting_applications add column if not exists parent_nom text;
+alter table casting_applications add column if not exists parent_telephone text;
+
+alter table inscriptions_mannequins add column if not exists parent_nom text;
+alter table inscriptions_mannequins add column if not exists parent_telephone text;
+
+drop policy if exists "Les admins suppriment un mannequin d'une sélection" on recruiter_request_models;
+create policy "Les admins suppriment un mannequin d'une sélection"
+  on recruiter_request_models for delete
+  using (exists (select 1 from admins where user_id = auth.uid()));
+
+-- La fonction d'inscription doit maintenant accepter les coordonnées du
+-- parent/tuteur (facultatives — remplies seulement si le mannequin est
+-- mineur). On supprime l'ancienne version (signature différente) avant de
+-- recréer, Postgres distinguant les fonctions par leur liste de paramètres.
+drop function if exists soumettre_inscription_mannequin(text, text, date, int, text, text, text);
+
+create or replace function soumettre_inscription_mannequin(
+  p_code text,
+  p_full_name text,
+  p_date_naissance date,
+  p_height_cm int,
+  p_clothing_size text,
+  p_phone text,
+  p_reference_paiement text,
+  p_parent_nom text default null,
+  p_parent_telephone text default null
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  nb_lignes int;
+  nouvel_id uuid;
+begin
+  update codes_inscription set utilise = true, utilise_le = now()
+  where code = p_code and utilise = false;
+  get diagnostics nb_lignes = row_count;
+  if nb_lignes = 0 then
+    raise exception 'code_invalide_ou_deja_utilise';
+  end if;
+
+  insert into inscriptions_mannequins
+    (full_name, date_naissance, height_cm, clothing_size, phone, code_utilise, reference_paiement, parent_nom, parent_telephone)
+  values
+    (p_full_name, p_date_naissance, p_height_cm, p_clothing_size, p_phone, p_code, nullif(p_reference_paiement, ''), p_parent_nom, p_parent_telephone)
+  returning id into nouvel_id;
+
+  return nouvel_id;
+end;
+$$;
+revoke all on function soumettre_inscription_mannequin from public;
+grant execute on function soumettre_inscription_mannequin to anon, authenticated;
+
+NOTIFY pgrst, 'reload schema';

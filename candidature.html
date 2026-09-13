@@ -74,6 +74,25 @@
           <label for="ca-ville">Ville</label>
           <input type="text" id="ca-ville">
         </div>
+        <div class="form-champ">
+          <label for="ca-naissance">Date de naissance *</label>
+          <input type="date" id="ca-naissance" required>
+        </div>
+      </div>
+
+      <div id="ca-bloc-parent" style="display:none; margin:1rem 0; padding:1.2rem; border:1px solid var(--gris-clair);">
+        <h3 style="margin-top:0; font-size:0.95rem;">Informations du parent ou tuteur légal</h3>
+        <p style="font-size:0.85rem; color:var(--gris); margin:0.3rem 0 1rem;">L'agence accepte les candidatures de mineurs sous validation d'un parent ou tuteur légal — merci de renseigner son contact, il sera joint avant toute suite donnée.</p>
+        <div class="form-grille">
+          <div class="form-champ">
+            <label for="ca-parent-nom">Nom du parent / tuteur</label>
+            <input type="text" id="ca-parent-nom">
+          </div>
+          <div class="form-champ">
+            <label for="ca-parent-telephone">Téléphone du parent / tuteur</label>
+            <input type="tel" id="ca-parent-telephone">
+          </div>
+        </div>
       </div>
 
       <div class="form-grille">
@@ -209,11 +228,36 @@ function majIndicationTaille() {
   const genre = document.getElementById('ca-genre').value;
   const indication = document.getElementById('ca-taille-indication');
   const champTaille = document.getElementById('ca-taille');
+  const mineur = estMineur();
+  if (mineur) { indication.textContent = 'Pas de taille minimale pour les candidatures de mineurs.'; champTaille.removeAttribute('min'); return; }
   if (genre === 'homme') { indication.textContent = 'Taille minimale requise : 185 cm'; champTaille.min = 185; }
   else if (genre === 'femme') { indication.textContent = 'Taille minimale requise : 175 cm'; champTaille.min = 175; }
   else { indication.textContent = ''; champTaille.removeAttribute('min'); }
 }
 document.getElementById('ca-genre').addEventListener('change', majIndicationTaille);
+
+// --- Gestion mineur / parent-tuteur ---
+function calculerAgeCandidature() {
+  const valeur = document.getElementById('ca-naissance').value;
+  if (!valeur) return null;
+  const naissance = new Date(valeur);
+  const aujourdhui = new Date();
+  let age = aujourdhui.getFullYear() - naissance.getFullYear();
+  if (aujourdhui < new Date(aujourdhui.getFullYear(), naissance.getMonth(), naissance.getDate())) age -= 1;
+  return age;
+}
+function estMineur() {
+  const age = calculerAgeCandidature();
+  return age !== null && age < 18;
+}
+document.getElementById('ca-naissance').addEventListener('change', () => {
+  const blocParent = document.getElementById('ca-bloc-parent');
+  const mineur = estMineur();
+  blocParent.style.display = mineur ? 'block' : 'none';
+  document.getElementById('ca-parent-nom').required = mineur;
+  document.getElementById('ca-parent-telephone').required = mineur;
+  majIndicationTaille();
+});
 
 document.getElementById('form-casting').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -222,8 +266,9 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
   const genre = document.getElementById('ca-genre').value;
   const taille = parseInt(document.getElementById('ca-taille').value) || 0;
   const tailleMin = genre === 'homme' ? 185 : 175;
+  const mineur = estMineur();
 
-  if (taille < tailleMin) {
+  if (!mineur && taille < tailleMin) {
     afficherMsg(msg, `Désolé, la taille minimale requise pour postuler est de ${tailleMin} cm (${genre === 'homme' ? 'hommes' : 'femmes'}). Ta candidature ne peut pas être soumise avec cette taille.`, 'err');
     return;
   }
@@ -237,13 +282,16 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
     email: document.getElementById('ca-email').value.trim(),
     phone: document.getElementById('ca-telephone').value.trim(),
     city: document.getElementById('ca-ville').value.trim(),
+    date_naissance: document.getElementById('ca-naissance').value || null,
     genre: genre,
     height_cm: taille,
     shoe_size: document.getElementById('ca-pointure').value.trim(),
     chest_cm: parseInt(document.getElementById('ca-poitrine').value) || null,
     waist_cm: parseInt(document.getElementById('ca-tourtaille').value) || null,
     hips_cm: parseInt(document.getElementById('ca-hanches').value) || null,
-    message: document.getElementById('ca-message').value.trim()
+    message: document.getElementById('ca-message').value.trim(),
+    parent_nom: mineur ? document.getElementById('ca-parent-nom').value.trim() : null,
+    parent_telephone: mineur ? document.getElementById('ca-parent-telephone').value.trim() : null
   };
 
   candidature.id = crypto.randomUUID();
@@ -278,7 +326,7 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
     name: candidature.full_name,
     telephone: candidature.phone,
     email: candidature.email,
-    message: `Nouvelle candidature casting.\nVille : ${candidature.city || '-'}\nTaille : ${candidature.height_cm || '-'} cm\nMessage : ${candidature.message || '-'}`
+    message: `Nouvelle candidature casting.\nVille : ${candidature.city || '-'}\nTaille : ${candidature.height_cm || '-'} cm\nMessage : ${candidature.message || '-'}${mineur ? `\n⚠️ MINEUR — Parent/tuteur : ${candidature.parent_nom || '-'} — ${candidature.parent_telephone || '-'}` : ''}`
   });
 
   afficherMsg(msg, 'Merci ! Votre candidature a bien été envoyée. Notre équipe vous recontactera si votre profil est retenu.', 'ok');

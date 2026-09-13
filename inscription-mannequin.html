@@ -95,6 +95,21 @@
         <input type="tel" id="ins-telephone" placeholder="+225 07 00 00 00 00" required>
       </div>
 
+      <div id="ins-bloc-parent" style="display:none; margin:1rem 0; padding:1.2rem; border:1px solid var(--gris-clair);">
+        <h3 style="margin-top:0; font-size:0.95rem;">Informations du parent ou tuteur légal</h3>
+        <p style="font-size:0.85rem; color:var(--gris); margin:0.3rem 0 1rem;">L'agence accepte les inscriptions de mineurs sous validation d'un parent ou tuteur légal — merci de renseigner son contact, il sera joint avant toute suite donnée.</p>
+        <div class="form-grille">
+          <div class="form-champ">
+            <label for="ins-parent-nom">Nom du parent / tuteur</label>
+            <input type="text" id="ins-parent-nom">
+          </div>
+          <div class="form-champ">
+            <label for="ins-parent-telephone">Téléphone du parent / tuteur</label>
+            <input type="tel" id="ins-parent-telephone">
+          </div>
+        </div>
+      </div>
+
       <div class="form-champ">
         <label>Photo 1 — Portrait *</label>
         <input type="file" id="ins-photo1" accept="image/*" required>
@@ -223,6 +238,27 @@ async function convertirSiHeic(fichier) {
 
 let codeValide = '';
 
+// --- Gestion mineur / parent-tuteur ---
+function calculerAgeInscription() {
+  const valeur = document.getElementById('ins-naissance').value;
+  if (!valeur) return null;
+  const naissance = new Date(valeur);
+  const aujourdhui = new Date();
+  let age = aujourdhui.getFullYear() - naissance.getFullYear();
+  if (aujourdhui < new Date(aujourdhui.getFullYear(), naissance.getMonth(), naissance.getDate())) age -= 1;
+  return age;
+}
+function estMineurInscription() {
+  const age = calculerAgeInscription();
+  return age !== null && age < 18;
+}
+document.getElementById('ins-naissance').addEventListener('change', () => {
+  const mineur = estMineurInscription();
+  document.getElementById('ins-bloc-parent').style.display = mineur ? 'block' : 'none';
+  document.getElementById('ins-parent-nom').required = mineur;
+  document.getElementById('ins-parent-telephone').required = mineur;
+});
+
 document.getElementById('valider-code-btn').addEventListener('click', async () => {
   const code = document.getElementById('code-inscription').value.trim();
   const msg = document.getElementById('code-msg');
@@ -249,6 +285,8 @@ document.getElementById('form-inscription').addEventListener('submit', async (e)
   const boutonEnvoyer = e.target.querySelector('button[type="submit"]');
   boutonEnvoyer.disabled = true;
 
+  const mineur = estMineurInscription();
+
   const dossier = {
     full_name: document.getElementById('ins-nom').value.trim(),
     date_naissance: document.getElementById('ins-naissance').value || null,
@@ -256,7 +294,9 @@ document.getElementById('form-inscription').addEventListener('submit', async (e)
     clothing_size: document.getElementById('ins-tailleveternents').value.trim(),
     phone: document.getElementById('ins-telephone').value.trim(),
     code_utilise: codeValide,
-    reference_paiement: document.getElementById('ins-reference-paiement').value.trim()
+    reference_paiement: document.getElementById('ins-reference-paiement').value.trim(),
+    parent_nom: mineur ? document.getElementById('ins-parent-nom').value.trim() : null,
+    parent_telephone: mineur ? document.getElementById('ins-parent-telephone').value.trim() : null
   };
 
   // Consommation du code ET création du dossier en une seule opération atomique
@@ -272,7 +312,9 @@ document.getElementById('form-inscription').addEventListener('submit', async (e)
     p_height_cm: dossier.height_cm,
     p_clothing_size: dossier.clothing_size,
     p_phone: dossier.phone,
-    p_reference_paiement: dossier.reference_paiement
+    p_reference_paiement: dossier.reference_paiement,
+    p_parent_nom: dossier.parent_nom,
+    p_parent_telephone: dossier.parent_telephone
   });
 
   if (error) {
@@ -293,7 +335,7 @@ document.getElementById('form-inscription').addEventListener('submit', async (e)
     name: dossier.full_name,
     telephone: dossier.phone,
     email: '',
-    message: `Nouvelle inscription mannequin (statut : en attente de paiement).\nDate de naissance : ${dossier.date_naissance || '-'}\nTaille : ${dossier.height_cm || '-'} cm\nTaille vêtements : ${dossier.clothing_size || '-'}\nCode utilisé : ${dossier.code_utilise}\nRéférence de paiement Wave : ${dossier.reference_paiement || '-'}`
+    message: `Nouvelle inscription mannequin (statut : en attente de paiement).\nDate de naissance : ${dossier.date_naissance || '-'}\nTaille : ${dossier.height_cm || '-'} cm\nTaille vêtements : ${dossier.clothing_size || '-'}\nCode utilisé : ${dossier.code_utilise}\nRéférence de paiement Wave : ${dossier.reference_paiement || '-'}${mineur ? `\n⚠️ MINEUR — Parent/tuteur : ${dossier.parent_nom || '-'} — ${dossier.parent_telephone || '-'}` : ''}`
   });
 
   const fichiers = [

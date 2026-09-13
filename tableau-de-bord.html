@@ -36,6 +36,7 @@
   .dossier-carte:hover { border-left-color:var(--bordeaux-clair); }
   .dossier-carte .dc-nom { font-family:var(--display); font-size:1.05rem; color:var(--titre-clair, #fff); flex:2; min-width:0; }
   .dossier-carte .dc-nom span { display:block; font-family:var(--texte); font-size:0.72rem; color:var(--gris); margin-top:0.15rem; }
+  .badge-mineur { display:inline-block; font-family:var(--texte); font-size:0.6rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; padding:0.15rem 0.5rem; border-radius:3px; background:var(--bordeaux); color:#fff; vertical-align:middle; }
   .dossier-carte .dc-meta { flex:1; font-size:0.8rem; color:var(--texte-doux, var(--gris)); }
   .dossier-carte .dc-fleche { color:var(--gris); flex-shrink:0; }
 
@@ -71,6 +72,8 @@
   #mf-mannequins { margin-bottom:1.4rem; display:flex; flex-direction:column; gap:0.5rem; }
   .mf-mannequin-item { display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0.8rem; background:rgba(0,0,0,0.04); font-size:0.88rem; }
   .mf-mannequin-item a { color:var(--bordeaux); font-weight:600; }
+  .mf-retirer-mannequin { width:24px; height:24px; border-radius:4px; border:1px solid rgba(0,0,0,0.15); background:transparent; color:var(--gris); cursor:pointer; font-size:0.8rem; flex-shrink:0; }
+  .mf-retirer-mannequin:hover { background:var(--bordeaux); border-color:var(--bordeaux); color:#fff; }
   .mf-statut-ligne { display:flex; align-items:center; gap:0.8rem; flex-wrap:wrap; padding-top:1rem; border-top:1px solid rgba(0,0,0,0.1); }
   @media (max-width:480px) {
     .dossier-carte { flex-wrap:wrap; }
@@ -230,6 +233,7 @@
     <div class="mf-statut-ligne">
       <label for="mf-statut-select" style="font-size:0.8rem; color:var(--gris);">Statut :</label>
       <select id="mf-statut-select"></select>
+      <button id="mf-supprimer-dossier-btn" class="btn" style="margin-left:auto; color:var(--bordeaux); border-color:var(--bordeaux);">🗑 Supprimer ce dossier</button>
     </div>
   </div>
 </div>
@@ -431,6 +435,18 @@ function metaAffichee(source, d) {
   return [d.city, new Date(d.created_at).toLocaleDateString('fr-FR')].filter(Boolean).join(' · ');
 }
 
+// Calcule l'âge à partir d'une date de naissance (format "AAAA-MM-JJ").
+function calculerAge(dateNaissance) {
+  if (!dateNaissance) return null;
+  const naissance = new Date(dateNaissance);
+  if (isNaN(naissance)) return null;
+  const aujourdhui = new Date();
+  let age = aujourdhui.getFullYear() - naissance.getFullYear();
+  const pasEncoreAnniversaire = aujourdhui < new Date(aujourdhui.getFullYear(), naissance.getMonth(), naissance.getDate());
+  if (pasEncoreAnniversaire) age -= 1;
+  return age;
+}
+
 async function afficherDossiers(source, ajouter) {
   const conf = DOSSIERS[source];
   const etat = ETAT_DOSSIERS[source];
@@ -453,14 +469,18 @@ async function afficherDossiers(source, ajouter) {
 
   const { data: dossiers, count } = await requete;
 
-  const html = (dossiers || []).map(d => `
+  const html = (dossiers || []).map(d => {
+    const age = (source === 'inscription' || source === 'casting') ? calculerAge(d.date_naissance) : null;
+    const estMineur = age !== null && age < 18;
+    return `
     <div class="dossier-carte" data-source="${source}" data-id="${d.id}">
-      <div class="dc-nom">${echapperHtml(nomAffiche(source, d))}<span>${echapperHtml(sousLigneAffichee(source, d))}</span></div>
+      <div class="dc-nom">${echapperHtml(nomAffiche(source, d))} ${estMineur ? '<span class="badge-mineur">Mineur</span>' : ''}<span>${echapperHtml(sousLigneAffichee(source, d))}</span></div>
       <div class="dc-meta">${echapperHtml(metaAffichee(source, d))}</div>
       <span class="statut-pill ${classeStatut(d[conf.statutChamp])}">${echapperHtml(conf.libellesStatut[d[conf.statutChamp]] || d[conf.statutChamp] || '')}</span>
       <span class="dc-fleche">→</span>
     </div>
-  `).join('');
+  `;
+  }).join('');
 
   if (ajouter) conteneur.insertAdjacentHTML('beforeend', html);
   else conteneur.innerHTML = html || `<div class="dossiers-vide">Aucun dossier dans "${etat.filtre === 'toutes' ? 'toutes' : conf.libellesStatut[etat.filtre]}" pour le moment.</div>`;
@@ -493,14 +513,16 @@ document.addEventListener('click', (e) => {
 
 // --- Fiche détaillée (modale) : toutes les informations + photos + changement de statut ---
 const CHAMPS_CASTING = [
-  ['email', 'E-mail'], ['phone', 'Téléphone'], ['genre', 'Genre'], ['city', 'Ville'],
+  ['email', 'E-mail'], ['phone', 'Téléphone'], ['genre', 'Genre'], ['city', 'Ville'], ['date_naissance', 'Date de naissance'],
   ['height_cm', 'Taille', 'cm'], ['chest_cm', 'Poitrine', 'cm'], ['waist_cm', 'Taille (tour)', 'cm'],
-  ['hips_cm', 'Hanches', 'cm'], ['shoe_size', 'Pointure']
+  ['hips_cm', 'Hanches', 'cm'], ['shoe_size', 'Pointure'],
+  ['parent_nom', 'Nom du parent/tuteur'], ['parent_telephone', 'Téléphone du parent/tuteur']
 ];
 const CHAMPS_INSCRIPTION = [
   ['phone', 'Téléphone'], ['email', 'E-mail'], ['instagram', 'Instagram'], ['date_naissance', 'Date de naissance'],
   ['height_cm', 'Taille', 'cm'], ['clothing_size', 'Taille vêtements'], ['code_utilise', "Code d'accès utilisé"],
-  ['reference_paiement', 'Référence de paiement Wave']
+  ['reference_paiement', 'Référence de paiement Wave'],
+  ['parent_nom', 'Nom du parent/tuteur'], ['parent_telephone', 'Téléphone du parent/tuteur']
 ];
 const CHAMPS_RECRUTEUR = [
   ['company', 'Entreprise / marque'], ['email', 'E-mail'], ['phone', 'Téléphone'], ['whatsapp', 'WhatsApp'],
@@ -518,7 +540,9 @@ async function ouvrirFicheDossier(source, id) {
   ficheOuverte = { source, id };
   const champs = source === 'casting' ? CHAMPS_CASTING : (source === 'inscription' ? CHAMPS_INSCRIPTION : CHAMPS_RECRUTEUR);
 
-  document.getElementById('mf-titre').textContent = nomAffiche(source, d);
+  const age = (source === 'inscription' || source === 'casting') ? calculerAge(d.date_naissance) : null;
+  const estMineur = age !== null && age < 18;
+  document.getElementById('mf-titre').innerHTML = `${echapperHtml(nomAffiche(source, d))} ${estMineur ? '<span class="badge-mineur">Mineur' + (age !== null ? ' — ' + age + ' ans' : '') + '</span>' : ''}`;
   document.getElementById('mf-sous-titre').textContent = `${TITRE_SOURCE[source]} reçue le ${new Date(d.created_at).toLocaleDateString('fr-FR')}`;
 
   document.getElementById('mf-champs').innerHTML = champs.map(([cle, label, unite]) => {
@@ -541,18 +565,11 @@ async function ouvrirFicheDossier(source, id) {
   if (source === 'recruteur') {
     photosEl.style.display = 'none';
     mannequinsEl.style.display = 'block';
-    mannequinsEl.innerHTML = 'Chargement des mannequins sélectionnés…';
-    const { data: choisis } = await sb.from('recruiter_request_models').select('model_id, model_name_snapshot, model_height_snapshot').eq('request_id', id);
-    mannequinsEl.innerHTML = (choisis && choisis.length)
-      ? choisis.map(m => `
-          <div class="mf-mannequin-item">
-            <span>${echapperHtml(m.model_name_snapshot || 'Mannequin')}${m.model_height_snapshot ? ' — ' + m.model_height_snapshot + ' cm' : ''}</span>
-            ${m.model_id ? `<a href="mannequin.html?id=${m.model_id}" target="_blank">Voir la fiche →</a>` : ''}
-          </div>`).join('')
-      : '<div class="mf-mannequin-item">Aucun mannequin dans cette sélection.</div>';
+    await chargerMannequinsSelection(id);
     return;
   }
 
+  mannequinsEl.innerHTML = '';
   mannequinsEl.style.display = 'none';
   photosEl.style.display = 'flex';
   photosEl.innerHTML = '<span class="mf-photos-msg">Chargement des photos…</span>';
@@ -575,6 +592,32 @@ async function ouvrirFicheDossier(source, id) {
   });
   photosEl.querySelectorAll('.mf-photo-suppr').forEach(btn => {
     btn.addEventListener('click', () => supprimerPhotoDossier(btn));
+  });
+}
+
+// Liste des mannequins d'une sélection recruteur, avec possibilité de retirer
+// UN SEUL mannequin de la sélection sans toucher au reste de la demande.
+async function chargerMannequinsSelection(requestId) {
+  const mannequinsEl = document.getElementById('mf-mannequins');
+  mannequinsEl.innerHTML = 'Chargement des mannequins sélectionnés…';
+  const { data: choisis } = await sb.from('recruiter_request_models').select('id, model_id, model_name_snapshot, model_height_snapshot').eq('request_id', requestId);
+  mannequinsEl.innerHTML = (choisis && choisis.length)
+    ? choisis.map(m => `
+        <div class="mf-mannequin-item">
+          <span>${echapperHtml(m.model_name_snapshot || 'Mannequin')}${m.model_height_snapshot ? ' — ' + m.model_height_snapshot + ' cm' : ''}</span>
+          <span style="display:flex; align-items:center; gap:0.8rem;">
+            ${m.model_id ? `<a href="mannequin.html?id=${m.model_id}" target="_blank">Voir la fiche →</a>` : ''}
+            <button class="mf-retirer-mannequin" data-selection-id="${m.id}" title="Retirer ce mannequin de la sélection">✕</button>
+          </span>
+        </div>`).join('')
+    : '<div class="mf-mannequin-item">Aucun mannequin dans cette sélection.</div>';
+
+  mannequinsEl.querySelectorAll('.mf-retirer-mannequin').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Retirer ce mannequin de la sélection de ce recruteur ?')) return;
+      await sb.from('recruiter_request_models').delete().eq('id', btn.dataset.selectionId);
+      chargerMannequinsSelection(requestId);
+    });
   });
 }
 
@@ -610,6 +653,33 @@ document.getElementById('mf-statut-select').addEventListener('change', async (e)
   if (!ficheOuverte) return;
   const conf = DOSSIERS[ficheOuverte.source];
   await sb.from(conf.table).update({ [conf.statutChamp]: e.target.value }).eq('id', ficheOuverte.id);
+  afficherDossiers(ficheOuverte.source);
+});
+
+// Suppression complète d'un dossier (candidature, inscription ou demande
+// recruteur) : les fichiers photo sont d'abord retirés du stockage, puis la
+// ligne est supprimée — les photos/mannequins liés en base disparaissent
+// automatiquement avec elle. Irréversible.
+document.getElementById('mf-supprimer-dossier-btn').addEventListener('click', async () => {
+  if (!ficheOuverte) return;
+  const conf = DOSSIERS[ficheOuverte.source];
+  if (!confirm('Supprimer définitivement ce dossier et toutes ses photos ? Cette action est irréversible.')) return;
+
+  const btn = document.getElementById('mf-supprimer-dossier-btn');
+  btn.disabled = true;
+
+  if (conf.photosTable) {
+    const { data: photos } = await sb.from(conf.photosTable).select('chemin').eq(conf.photosColonne, ficheOuverte.id);
+    const chemins = (photos || []).map(p => p.chemin).filter(Boolean);
+    if (chemins.length) await sb.storage.from(conf.bucket).remove(chemins);
+  }
+
+  const { error } = await sb.from(conf.table).delete().eq('id', ficheOuverte.id);
+  btn.disabled = false;
+
+  if (error) { alert('Erreur lors de la suppression du dossier.'); return; }
+
+  document.getElementById('modal-dossier').classList.remove('ouvert');
   afficherDossiers(ficheOuverte.source);
 });
 

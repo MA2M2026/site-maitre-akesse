@@ -1,5 +1,5 @@
-/* ===== MaÃ®tre Akesse Model Management â€” Design tokens =====
-   Couleurs : noir profond + bordeaux signature (accent principal), touche d'or mineure hÃ©ritÃ©e du logo
+/* ===== Maître Akesse Model Management — Design tokens =====
+   Couleurs : noir profond + bordeaux signature (accent principal), touche d'or mineure héritée du logo
    Typo : Cormorant Garamond (titres, display) + Jost (texte courant)
 */
 
@@ -7,22 +7,22 @@
 
 :root {
   --noir: #060504;           /* fond dominant, noir profond */
-  --noir-doux: #0e0b0a;      /* variation lÃ©gÃ¨rement plus claire (cartes, sÃ©paration) */
-  --anthracite: #170f11;     /* variation teintÃ©e bordeaux, pour distinguer une section sombre */
+  --noir-doux: #0e0b0a;      /* variation légèrement plus claire (cartes, séparation) */
+  --anthracite: #170f11;     /* variation teintée bordeaux, pour distinguer une section sombre */
   --blanc: #ffffff;
-  --creme: #f4f0ea;          /* rÃ©servÃ© aux rares cartes claires (fiche mensurations, modales) */
+  --creme: #f4f0ea;          /* réservé aux rares cartes claires (fiche mensurations, modales) */
 
   --texte-corps: #cdc5be;    /* texte courant clair sur fond noir */
-  --texte-doux: #948c85;     /* texte secondaire, attÃ©nuÃ© */
+  --texte-doux: #948c85;     /* texte secondaire, atténué */
   --titre-clair: #f5efe7;    /* titres sur fond sombre */
 
-  --bordeaux: #7a1220;       /* bordeaux profond â€” remplissages pleins, boutons */
-  --bordeaux-noir: #2b0a0e;  /* bordeaux tendant vers le noir â€” ombres, profondeur */
-  --bordeaux-vif: #9c1c2c;   /* Ã©tat de survol */
-  --bordeaux-clair: #cf3b52; /* bordeaux lumineux â€” texte/labels sur fond noir (meilleur contraste) */
+  --bordeaux: #7a1220;       /* bordeaux profond — remplissages pleins, boutons */
+  --bordeaux-noir: #2b0a0e;  /* bordeaux tendant vers le noir — ombres, profondeur */
+  --bordeaux-vif: #9c1c2c;   /* état de survol */
+  --bordeaux-clair: #cf3b52; /* bordeaux lumineux — texte/labels sur fond noir (meilleur contraste) */
 
-  --or: #c9a24b;             /* touche discrÃ¨te hÃ©ritÃ©e du logo, usage mineur */
-  --rouge: var(--bordeaux-clair); /* alias conservÃ© pour compatibilitÃ© (.oeil, anciens usages) */
+  --or: #c9a24b;             /* touche discrète héritée du logo, usage mineur */
+  --rouge: var(--bordeaux-clair); /* alias conservé pour compatibilité (.oeil, anciens usages) */
 
   --gris: #8a837d;
   --gris-clair: rgba(255,255,255,0.16); /* fines bordures / aplats discrets sur fond noir */
@@ -65,8 +65,8 @@ body {
 
 img, video { max-width: 100%; display: block; }
 
-/* Protection des images : dÃ©courage l'enregistrement/glisser-dÃ©poser/appui long.
-   Le tableau de bord admin annule cette rÃ¨gle (voir plus bas) pour pouvoir tÃ©lÃ©charger. */
+/* Protection des images : décourage l'enregistrement/glisser-déposer/appui long.
+   Le tableau de bord admin annule cette règle (voir plus bas) pour pouvoir télécharger. */
 body:not(.zone-admin) img {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -146,7 +146,7 @@ p { max-width: 62ch; color: var(--texte-corps); }
 .fil-ariane a:hover { color: var(--bordeaux-clair); }
 .fil-ariane span { margin: 0 0.5rem; opacity: 0.6; }
 
-/* ---------- Header (ancienne version, conservÃ©e pour compatibilitÃ©) ---------- */
+/* ---------- Header (ancienne version, conservée pour compatibilité) ---------- */
 
 .site-header {
   position: sticky;
@@ -229,7 +229,7 @@ p { max-width: 62ch; color: var(--texte-corps); }
 .btn--blanc { border-color: rgba(255,255,255,0.35); color: #fff; background: transparent; }
 .btn--blanc:hover { background: rgba(255,255,255,0.08); border-color: #fff; }
 
-/* ---------- Hero (ancienne mise en page, conservÃ©e pour compatibilitÃ©) ---------- */
+/* ---------- Hero (ancienne mise en page, conservée pour compatibilité) ---------- */
 
 .hero { background: var(--noir); color: var(--blanc); padding: 5.5rem 0 6rem; position: relative; overflow: hidden; }
 
@@ -257,7 +257,7 @@ p { max-width: 62ch; color: var(--texte-corps); }
 .reveal-delay-2.visible { transition-delay: 0.2s; }
 .reveal-delay-3.visible { transition-delay: 0.3s; }
 
-/* ---------- Sections gÃ©nÃ©riques ---------- */
+/* ---------- Sections génériques ---------- */
 
 section { padding: 5rem 0; }
 
@@ -270,7 +270,7 @@ section { padding: 5rem 0; }
 .fond-noir p, .fond-anthracite p { color: var(--texte-corps); }
 .fond-noir .section-tete p, .fond-anthracite .section-tete p { color: var(--texte-corps); }
 
-/* ---------- Services : mise en page asymÃ©trique ---------- */
+/* ---------- Services : mise en page asymétrique ---------- */
 
 .services-liste { display: grid; grid-template-columns: repeat(12, 1fr); gap: 0; border-top: 1px solid var(--gris-clair); }
 
@@ -354,7 +354,7 @@ section { padding: 5rem 0; }
 
 @media (max-width: 780px) { .compsheet-tete { grid-template-columns: 1fr; } }
 
-/* ---------- Ã‰vÃ©nements / Runway ---------- */
+/* ---------- Événements / Runway ---------- */
 
 .evenements-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2.2rem; }
 .evenement-carte { border-top: 2px solid var(--bordeaux); padding-top: 1.2rem; transition: border-color 0.3s ease; }
@@ -363,7 +363,7 @@ section { padding: 5rem 0; }
 .evenement-carte h3 { margin-top: 0.5rem; }
 .evenement-carte p { margin-top: 0.5rem; font-size: 0.92rem; color: var(--texte-doux); }
 
-/* ---------- Bande de statistiques (chiffres rÃ©els, page d'accueil) ---------- */
+/* ---------- Bande de statistiques (chiffres réels, page d'accueil) ---------- */
 .stats-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1.6rem; text-align: center; }
 .stat-item { padding: 1.2rem 1rem; border-left: 1px solid var(--gris-clair); }
 .stat-item:first-child { border-left: none; }
@@ -438,6 +438,16 @@ section { padding: 5rem 0; }
   transition: background 0.2s ease, border-color 0.2s ease;
 }
 .photo-item button:hover { background: var(--bordeaux); border-color: var(--bordeaux); }
+.photo-item .btn-principale {
+  position: absolute; top: 6px; left: 6px; right: auto; background: rgba(0,0,0,0.55); color: #fff;
+  border: 1px solid var(--gris-clair); border-radius: 4px; width: 28px; height: 28px; cursor: pointer; font-size: 0.85rem;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+.photo-item .btn-principale:hover, .photo-item.est-principale .btn-principale { background: var(--or); border-color: var(--or); color: #000; }
+.photo-item .badge-principale {
+  position: absolute; bottom: 0; left: 0; right: 0; padding: 0.3rem 0.5rem; text-align: center;
+  background: rgba(0,0,0,0.6); color: var(--or); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.06em;
+}
 
 .upload-zone { border: 2px dashed var(--gris-clair); padding: 2rem; text-align: center; color: var(--texte-doux); margin-top: 1.5rem; transition: border-color 0.25s ease; }
 .upload-zone:hover { border-color: var(--bordeaux-clair); }
@@ -510,12 +520,14 @@ section { padding: 5rem 0; }
 
 .footer-bas {
   border-top: 1px solid var(--gris-clair); padding-top: 1.5rem; font-size: 0.78rem; color: var(--texte-doux);
-  display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.6rem;
+  display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.6rem 1.5rem;
 }
+.footer-bas a { color: inherit; }
+.footer-bas a:hover { color: var(--bordeaux-clair); }
 
 @media (max-width: 720px) { .footer-grille { grid-template-columns: 1fr; } }
 
-/* ---------- Panier de sÃ©lection recruteur ---------- */
+/* ---------- Panier de sélection recruteur ---------- */
 
 .panier-widget {
   display: none;
@@ -574,7 +586,7 @@ section { padding: 5rem 0; }
 .filtres-avances input:focus, .filtres-avances select:focus { outline: none; border-color: var(--bordeaux-clair); box-shadow: none; background: transparent; }
 
 
-/* ---------- Header Ã©purÃ© + Menu plein Ã©cran (style grande maison) ---------- */
+/* ---------- Header épuré + Menu plein écran (style grande maison) ---------- */
 
 .site-header-v2 {
   position: sticky;
@@ -627,7 +639,7 @@ section { padding: 5rem 0; }
 .menu-trigger .dots { display: flex; flex-direction: column; gap: 3px; }
 .menu-trigger .dots span { width: 4px; height: 4px; background: currentColor; border-radius: 50%; display: block; }
 
-/* ---------- Menu â€” overlay plein Ã©cran ---------- */
+/* ---------- Menu — overlay plein écran ---------- */
 
 .menu-overlay {
   position: fixed;
@@ -764,7 +776,7 @@ section { padding: 5rem 0; }
   .menu-overlay .nav-links a { font-size: 1.3rem; padding: 0.5rem 1rem; }
 }
 
-/* ---------- Hero plein Ã©cran cinÃ©matographique ---------- */
+/* ---------- Hero plein écran cinématographique ---------- */
 
 .hero-v2 {
   height: 100vh;
@@ -865,7 +877,7 @@ section { padding: 5rem 0; }
 }
 .hero-dots span.actif { background: var(--bordeaux-clair); transform: scale(1.3); box-shadow: 0 0 10px rgba(207,59,82,0.6); }
 
-/* ---------- Bandeau dÃ©filant (marquee) ---------- */
+/* ---------- Bandeau défilant (marquee) ---------- */
 
 .marquee-bande {
   display: flex;
@@ -876,7 +888,7 @@ section { padding: 5rem 0; }
   z-index: 2;
 }
 
-/* Ã‰tiquette fixe Ã  gauche â€” masquÃ©e par dÃ©faut, visible uniquement quand une
+/* Étiquette fixe à gauche — masquée par défaut, visible uniquement quand une
    annonce est active (voir chargerBandeauAnnonce() sur la page d'accueil). */
 .marquee-label {
   flex-shrink: 0;
@@ -891,7 +903,7 @@ section { padding: 5rem 0; }
   animation: marquee-label-glow 1.4s ease-in-out infinite;
 }
 .marquee-label::before {
-  content: 'â—';
+  content: '●';
   font-size: 0.55rem;
   color: var(--bordeaux);
   animation: marquee-label-pulse 1.6s ease-in-out infinite;
@@ -923,7 +935,7 @@ section { padding: 5rem 0; }
   .marquee-label { font-size: 0.58rem; padding: 0 0.9rem; }
 }
 
-/* ---------- Bord irrÃ©gulier "papier dÃ©chirÃ©" (transition image â†’ bloc noir) ---------- */
+/* ---------- Bord irrégulier "papier déchiré" (transition image → bloc noir) ---------- */
 
 .bord-dechire-bas { position: relative; }
 .bord-dechire-bas::after {
@@ -937,7 +949,7 @@ section { padding: 5rem 0; }
   pointer-events: none; z-index: 2;
 }
 
-/* ---------- Lightbox plein Ã©cran lumineux (rÃ©utilisable sur tout le site) ---------- */
+/* ---------- Lightbox plein écran lumineux (réutilisable sur tout le site) ---------- */
 
 .lightbox-global {
   position: fixed; inset: 0; z-index: 2000;
@@ -983,7 +995,7 @@ section { padding: 5rem 0; }
   .lightbox-global .lightbox-suivant { right: 0.5rem; }
 }
 
-/* ---------- Ancien lightbox local (conservÃ© pour compatibilitÃ©, non utilisÃ©) ---------- */
+/* ---------- Ancien lightbox local (conservé pour compatibilité, non utilisé) ---------- */
 
 .lightbox {
   position: fixed; inset: 0; z-index: 900;
@@ -1029,7 +1041,7 @@ section { padding: 5rem 0; }
   .lightbox-suivant { right: 0.6rem; }
 }
 
-/* ---------- MÃ©daillons mannequins (page listing) ---------- */
+/* ---------- Médaillons mannequins (page listing) ---------- */
 
 .medaillon-grille {
   display: grid;
@@ -1086,7 +1098,7 @@ section { padding: 5rem 0; }
   .medaillon-photo { width: 140px; height: 140px; }
 }
 
-/* ---------- Porte d'entrÃ©e (hero verrouillÃ©) ---------- */
+/* ---------- Porte d'entrée (hero verrouillé) ---------- */
 
 body.porte-verrouillee { overflow: hidden; height: 100vh; }
 
@@ -1118,7 +1130,7 @@ body.porte-verrouillee { overflow: hidden; height: 100vh; }
   50% { transform: translateY(6px); }
 }
 
-/* ---------- ActualitÃ©s & ActivitÃ©s ---------- */
+/* ---------- Actualités & Activités ---------- */
 
 .filtres-categories { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 2.6rem; }
 .filtre-categorie {
@@ -1208,10 +1220,10 @@ body.porte-verrouillee { overflow: hidden; height: 100vh; }
 .news-modal-corps .form-champ select option { background: #fff; color: #1a1512; }
 .news-modal-fermer { position: absolute; top: 1.2rem; right: 1.4rem; background: rgba(0,0,0,0.6); color: #fff; border: none; width: 32px; height: 32px; cursor: pointer; font-size: 1rem; z-index: 2; }
 
-/* ---------- Verrouillage complet pendant la porte d'entrÃ©e ---------- */
+/* ---------- Verrouillage complet pendant la porte d'entrée ---------- */
 body.porte-verrouillee .site-header-v2 { display: none; }
 
-/* ---------- Indicateur vidÃ©o sur les cartes actualitÃ©s ---------- */
+/* ---------- Indicateur vidéo sur les cartes actualités ---------- */
 .news-play {
   position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
   width: 38px; height: 38px; border-radius: 50%; background: rgba(0,0,0,0.55);
@@ -1232,7 +1244,7 @@ body.porte-verrouillee .site-header-v2 { display: none; }
 @media (max-width: 700px) { .whatsapp-flottant { width: 50px; height: 50px; bottom: 1rem; left: 1rem; } }
 body.porte-verrouillee .whatsapp-flottant { display: none; }
 
-/* ---------- Galerie multi-photos dans la modale actualitÃ© (revue de presse) ---------- */
+/* ---------- Galerie multi-photos dans la modale actualité (revue de presse) ---------- */
 .news-modal-galerie {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -1249,7 +1261,7 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
   pointer-events: none;
 }
 
-/* ---------- Badge indiquant la page admin active (visible uniquement une fois connectÃ© en admin) ---------- */
+/* ---------- Badge indiquant la page admin active (visible uniquement une fois connecté en admin) ---------- */
 .badge-page-admin {
   display: inline-block; margin-bottom: 0.8rem;
   padding: 0.3rem 0.8rem; background: var(--bordeaux); color: #fff;
@@ -1292,7 +1304,7 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
   font-size: 1.1rem; cursor: pointer; color: #6b6560;
 }
 
-/* ---------- Mannequin Ã  la une (accueil) â€” traitement plein Ã©cran, faÃ§on couverture ---------- */
+/* ---------- Mannequin à la une (accueil) — traitement plein écran, façon couverture ---------- */
 .vedette-fullbleed {
   display: block; position: relative; width: 100%; height: 86vh; min-height: 520px; max-height: 820px;
   overflow: hidden; text-decoration: none; color: var(--blanc);
@@ -1348,7 +1360,7 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
   .confiance-carte { width: 104px; height: 74px; }
 }
 
-/* ---------- Ã‰quipe / partenaires crÃ©atifs (cartes rectangulaires) ---------- */
+/* ---------- Équipe / partenaires créatifs (cartes rectangulaires) ---------- */
 .equipe-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 1.8rem; }
 .equipe-carte { position: relative; border-radius: 6px; overflow: hidden; background: var(--noir-doux); }
 .equipe-carte-photo { position: relative; aspect-ratio: 3/4; overflow: hidden; }
@@ -1362,3 +1374,17 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
 .equipe-carte-corps { padding: 1rem 1.1rem 1.3rem; text-align: left; }
 .equipe-carte-corps .nom { font-family: var(--display); font-size: 1.15rem; color: var(--titre-clair); }
 .equipe-carte-corps .fonction { font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--bordeaux-clair); margin-top: 0.3rem; }
+
+/* ---------- Vidéo de présentation (fiche mannequin) ---------- */
+.video-embed-wrap { position: relative; width: 100%; max-width: 480px; aspect-ratio: 16/9; margin-top: 0.6rem; background: #000; }
+.video-embed-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+
+/* ---------- Impression / export PDF (fiche mannequin, ou toute page) ----------
+   Masque le chrome du site (menu, footer, book complet) pour ne garder que le
+   contenu utile sur une page imprimée ou "Enregistrer en PDF" du navigateur. */
+@media print {
+  .site-header-v2, .menu-overlay, .site-footer, .no-print { display: none !important; }
+  body { background: #fff !important; color: #000 !important; }
+  .compsheet-tete { color: #000; }
+  .compsheet-tete a { color: #000 !important; }
+}

@@ -175,6 +175,7 @@ async function chargerProfil() {
     .from('model_photos')
     .select('url')
     .eq('model_id', id)
+    .order('principale', { ascending: false })
     .order('created_at', { ascending: true });
 
   const { data: projets } = await sb
