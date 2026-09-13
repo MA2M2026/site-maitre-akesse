@@ -457,7 +457,7 @@ async function afficherDossiers(source, ajouter) {
     <div class="dossier-carte" data-source="${source}" data-id="${d.id}">
       <div class="dc-nom">${echapperHtml(nomAffiche(source, d))}<span>${echapperHtml(sousLigneAffichee(source, d))}</span></div>
       <div class="dc-meta">${echapperHtml(metaAffichee(source, d))}</div>
-      <span class="statut-pill ${classeStatut(d[conf.statutChamp])}">${conf.libellesStatut[d[conf.statutChamp]] || d[conf.statutChamp]}</span>
+      <span class="statut-pill ${classeStatut(d[conf.statutChamp])}">${echapperHtml(conf.libellesStatut[d[conf.statutChamp]] || d[conf.statutChamp] || '')}</span>
       <span class="dc-fleche">→</span>
     </div>
   `).join('');
