@@ -541,7 +541,7 @@ async function construireCanvasCompcard() {
     ['age', 'Âge', age ? age + ' ans' : null],
     ['taille', 'Taille', profil.height_cm ? (profil.height_cm / 100).toFixed(2).replace('.', ',') + ' m' : null],
     ['poitrine', 'Poitrine', profil.chest_cm ? profil.chest_cm + ' cm' : null],
-    ['taille_tour', 'Taille', profil.waist_cm ? profil.waist_cm + ' cm' : null],
+    ['taille_tour', 'Tour de taille', profil.waist_cm ? profil.waist_cm + ' cm' : null],
     ['hanches', profil.category === 'homme' ? 'Entrej.' : 'Hanches', profil.category === 'homme' ? (profil.inseam_cm ? profil.inseam_cm + ' cm' : null) : (profil.hips_cm ? profil.hips_cm + ' cm' : null)],
     ['pointure', 'Pointure', profil.shoe_size || null]
   ].filter(([, , v]) => v);
