@@ -430,7 +430,7 @@ async function genererMiniatureDepuisUrl(url, coteMax = 500, qualite = 0.75) {
     return { blob: null, erreur: "impossible de télécharger la photo d'origine (réseau) : " + e.message };
   }
   if (!reponse.ok) {
-    return { blob: null, erreur: "la photo d'origine a répondu avec une erreur (code " + reponse.status + ")" };
+    return { blob: null, erreur: "la photo d'origine a répondu avec une erreur (code " + reponse.status + ") — adresse : " + url };
   }
   const blobOriginal = await reponse.blob();
   const urlLocale = URL.createObjectURL(blobOriginal);
