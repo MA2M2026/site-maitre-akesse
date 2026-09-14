@@ -552,7 +552,7 @@ async function chargerProfilInterne() {
 
   const { data: photos } = await sb
     .from('model_photos')
-    .select('url, compcard_ordre')
+    .select('url, url_miniature, compcard_ordre')
     .eq('model_id', id)
     .order('principale', { ascending: false })
     .order('created_at', { ascending: true });
@@ -712,7 +712,7 @@ async function chargerProfilInterne() {
   (photos || []).forEach((p, index) => {
     const div = document.createElement('div');
     div.className = 'mannequin-carte cliquable';
-    div.innerHTML = `<img src="${echapperHtml(p.url)}" loading="lazy" alt="Photo du book">`;
+    div.innerHTML = `<img src="${echapperHtml(p.url_miniature || p.url)}" loading="lazy" alt="Photo du book">`;
     div.addEventListener('click', () => ouvrirLightbox(index));
     galerie.appendChild(div);
   });

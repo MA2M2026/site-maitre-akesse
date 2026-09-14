@@ -1089,7 +1089,7 @@ async function chargerPhotos() {
     item.innerHTML = `
       <img src="${echapperHtml(photo.url)}" alt="Photo du book" style="cursor:pointer;">
       <button class="btn-principale" data-id="${photo.id}" title="Définir comme photo de profil">${photo.principale ? '★ Profil' : '☆ Profil'}</button>
-      <button class="btn-supprimer" data-id="${photo.id}" data-chemin="${echapperHtml(photo.chemin || '')}" title="Supprimer">✕</button>
+      <button class="btn-supprimer" data-id="${photo.id}" data-chemin="${echapperHtml(photo.chemin || '')}" data-chemin-miniature="${echapperHtml(photo.chemin_miniature || '')}" title="Supprimer">✕</button>
       <button class="btn-compcard" data-id="${photo.id}" title="Choisir pour la fiche Compcard">${photo.compcard_ordre ? photo.compcard_ordre : '+ Compcard'}</button>
       ${photo.principale ? '<span class="badge-principale">Photo de profil</span>' : ''}
     `;
@@ -1101,7 +1101,9 @@ async function chargerPhotos() {
     btn.addEventListener('click', async () => {
       const id = btn.dataset.id;
       const chemin = btn.dataset.chemin;
+      const cheminMiniature = btn.dataset.cheminMiniature;
       if (chemin) await sb.storage.from('model-photos').remove([chemin]);
+      if (cheminMiniature) await sb.storage.from('model-photos').remove([cheminMiniature]);
       await sb.from('model_photos').delete().eq('id', id);
       chargerPhotos();
     });
@@ -1154,6 +1156,37 @@ async function convertirSiHeic(fichier) {
     console.error('Conversion HEIC échouée, envoi du fichier original :', e);
     return fichier;
   }
+}
+
+// Génère une version réduite de la photo, utilisée uniquement pour l'affichage
+// en grille (Book public, galerie de la fiche) — la photo d'origine envoyée à
+// côté reste, elle, intacte et en pleine résolution pour le Compcard et le
+// téléchargement. Réduit fortement la consommation de bande passante Supabase
+// sans jamais toucher à la qualité de la photo réellement utilisée à l'impression.
+function genererMiniature(fichier, coteMax = 500, qualite = 0.75) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const coteActuel = Math.max(img.width, img.height);
+        const ratio = coteActuel > coteMax ? coteMax / coteActuel : 1;
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * ratio);
+        canvas.height = Math.round(img.height * ratio);
+        const ctx = canvas.getContext('2d');
+        // Fond blanc avant de dessiner : évite un fond noir si la photo d'origine
+        // a de la transparence (PNG) et qu'on la convertit en JPEG (sans alpha).
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => resolve(blob || null), 'image/jpeg', qualite);
+      } catch (e) {
+        resolve(null);
+      }
+    };
+    img.onerror = () => resolve(null);
+    img.src = URL.createObjectURL(fichier);
+  });
 }
 
 document.getElementById('input-photo').addEventListener('change', async (e) => {
@@ -1213,10 +1246,28 @@ document.getElementById('input-photo').addEventListener('change', async (e) => {
         continue;
       }
       const { data: urlPublique } = sb.storage.from('model-photos').getPublicUrl(chemin);
+
+      // Miniature envoyée à côté de l'originale — un échec ici n'empêche jamais
+      // l'ajout de la photo : la fiche retombe simplement sur la pleine résolution
+      // en attendant un rattrapage (voir le tableau de bord).
+      let cheminMiniature = null, urlMiniature = null;
+      const blobMiniature = await genererMiniature(fichier);
+      if (blobMiniature) {
+        cheminMiniature = `${user.id}/miniatures/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+        const { error: erreurMiniature } = await sb.storage.from('model-photos').upload(cheminMiniature, blobMiniature);
+        if (!erreurMiniature) {
+          urlMiniature = sb.storage.from('model-photos').getPublicUrl(cheminMiniature).data.publicUrl;
+        } else {
+          cheminMiniature = null;
+        }
+      }
+
       const { error: erreurFiche } = await sb.from('model_photos').insert({
         model_id: user.id,
         url: urlPublique.publicUrl,
-        chemin
+        chemin,
+        url_miniature: urlMiniature,
+        chemin_miniature: cheminMiniature
       });
       if (erreurFiche) {
         statut.textContent = '❌ Échec : ' + erreurFiche.message;
