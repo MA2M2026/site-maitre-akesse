@@ -382,13 +382,18 @@ section { padding: 5rem 0; }
 
 /* ---------- Formulaires ---------- */
 
-.form-champ { margin-bottom: 1.3rem; display: flex; flex-direction: column; gap: 0.5rem; }
+/* min-width: 0 est nécessaire : par défaut, un élément dans une grille/un flex
+   ne peut jamais devenir plus étroit que son contenu (ex. le plus long nom de
+   pays de la liste "Pays"), ce qui forçait toute la grille du formulaire à
+   déborder de l'écran sur mobile sans cette règle. */
+.form-champ { margin-bottom: 1.3rem; display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; }
 .form-champ label { font-size: 0.68rem; font-weight: 500; color: var(--texte-doux); text-transform: uppercase; letter-spacing: 0.12em; }
 
 .form-champ input, .form-champ textarea, .form-champ select {
   font-family: var(--texte); font-size: 1rem; padding: 0.85rem 1rem;
   border: 1px solid var(--gris-clair); background: rgba(255,255,255,0.03); color: var(--texte-corps);
   border-radius: 2px; transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+  min-width: 0; width: 100%;
 }
 .form-champ input:focus, .form-champ textarea:focus, .form-champ select:focus {
   outline: none; border-color: var(--bordeaux-clair); background: rgba(255,255,255,0.05);
@@ -405,13 +410,27 @@ section { padding: 5rem 0; }
 .bloc-section h3 { margin-top: 0; }
 .bloc-section > p.bloc-section-intro { margin-top: -0.6rem; color: var(--gris); font-size: 0.9rem; }
 
-.flash-succes {
-  position: fixed; top: -120px; left: 50%; transform: translateX(-50%);
-  background: #1e5b25; color: #fff; padding: 1rem 1.8rem; border-radius: 6px;
-  font-weight: 600; font-size: 0.95rem; box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-  z-index: 999; transition: top 0.5s ease; max-width: 90vw; text-align: center;
+.flash-succes-fond {
+  position: fixed; inset: 0; background: rgba(0,0,0,0); pointer-events: none;
+  z-index: 998; transition: background 0.35s ease;
 }
-.flash-succes.actif { top: 20px; }
+.flash-succes-fond.actif { background: rgba(0,0,0,0.6); pointer-events: auto; }
+
+.flash-succes {
+  position: fixed; top: 50%; left: 50%;
+  transform: translate(-50%, -50%) scale(0.85);
+  background: #1e5b25; color: #fff; padding: 2.4rem 2rem; border-radius: 16px;
+  font-weight: 700; font-size: 1.3rem; line-height: 1.5;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  z-index: 999; opacity: 0; visibility: hidden;
+  transition: opacity 0.35s ease, transform 0.35s ease, visibility 0s linear 0.35s;
+  max-width: min(90vw, 420px); text-align: center;
+}
+.flash-succes.actif {
+  opacity: 1; visibility: visible; transform: translate(-50%, -50%) scale(1);
+  transition: opacity 0.35s ease, transform 0.35s ease, visibility 0s;
+}
+.flash-succes-icone { display: block; font-size: 3.2rem; margin-bottom: 0.7rem; }
 
 .form-msg { font-size: 0.9rem; padding: 0.8rem 1rem; margin-top: 1rem; display: none; border-radius: 2px; }
 .form-msg.ok { display: block; background: rgba(30,91,37,0.16); color: #8fd39a; border: 1px solid rgba(30,91,37,0.4); }
