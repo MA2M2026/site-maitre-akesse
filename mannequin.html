@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-1BX5MPZ6WE');
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Profil mannequin — Maître Akesse Model Management</title>
@@ -394,17 +403,22 @@ async function construireCanvasCompcard() {
   });
   const yFinGrille = yGrilleDebut + Math.ceil(champs.length / 3) * PITCH;
 
-  // --- Résumé du parcours ---
-  if (projets && projets.length) {
-    ctx.fillStyle = GRIS;
-    ctx.font = `italic ${fpx(9.5)}px Arial, sans-serif`;
-    ctx.fillText(`${projets.length} projet${projets.length > 1 ? 's' : ''} réalisé${projets.length > 1 ? 's' : ''} — book complet sur maitreakessemodelmanagement.com`, px(15), px(yFinGrille + 3));
-  }
-
   // --- Pied de page bordeaux : toujours à une hauteur sûre (jamais chevauché
   // ni coupé), contacts et réseaux sociaux bien visibles quel que soit le
   // nombre d'informations renseignées sur le profil.
   const yPiedPage = Math.min(Math.max(yFinGrille + 8, 250), 253);
+
+  // --- Résumé du parcours : seulement si la place restante avant le pied de
+  // page bordeaux est suffisante. Avec un profil ayant les 10 mensurations
+  // remplies ET des projets, cette ligne peut finir à moins de 1mm du pied de
+  // page (qui est alors plafonné à 253mm) — un simple écart de rendu de
+  // police selon l'appareil du visiteur suffirait à les faire se chevaucher.
+  // On préfère omettre cette ligne facultative plutôt que risquer ce chevauchement.
+  if (projets && projets.length && yFinGrille + 3 + 5 < yPiedPage) {
+    ctx.fillStyle = GRIS;
+    ctx.font = `italic ${fpx(9.5)}px Arial, sans-serif`;
+    ctx.fillText(`${projets.length} projet${projets.length > 1 ? 's' : ''} réalisé${projets.length > 1 ? 's' : ''} — book complet sur maitreakessemodelmanagement.com`, px(15), px(yFinGrille + 3));
+  }
   const hPiedPage = HAUTEUR_MM - yPiedPage;
   ctx.fillStyle = BORDEAUX;
   ctx.fillRect(0, px(yPiedPage), canvas.width, px(hPiedPage));

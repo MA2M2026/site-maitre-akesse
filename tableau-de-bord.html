@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-1BX5MPZ6WE');
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tableau de bord — Maître Akesse Model Management</title>
@@ -602,12 +611,18 @@ async function ouvrirFicheDossier(source, id) {
   if (!photos || !photos.length) { photosEl.innerHTML = '<span class="mf-photos-msg">Aucune photo jointe.</span>'; return; }
 
   const chemins = photos.map(p => p.chemin).filter(Boolean);
-  const { data: signees } = await sb.storage.from(conf.bucket).createSignedUrls(chemins, 300);
-  const urls = (signees || []).map(s => s.signedUrl).filter(Boolean);
+  const { data: signees } = chemins.length ? await sb.storage.from(conf.bucket).createSignedUrls(chemins, 300) : { data: [] };
+  // Association par chemin (pas par position dans le tableau) : si une photo n'a
+  // pas de chemin, ou si sa signature échoue individuellement, un simple filtre
+  // par position aurait décalé toutes les URLs suivantes — chaque photo aurait
+  // alors affiché l'aperçu et le bouton "supprimer" d'une AUTRE photo.
+  const urlParChemin = {};
+  (signees || []).forEach(s => { if (s.path && s.signedUrl) urlParChemin[s.path] = s.signedUrl; });
+  const urls = photos.map(p => urlParChemin[p.chemin] || '');
 
   photosEl.innerHTML = photos.map((p, i) => `
     <div class="mf-photo-vignette">
-      <img src="${urls[i] || ''}" data-index="${i}" alt="Photo">
+      <img src="${echapperHtml(urls[i])}" data-index="${i}" alt="Photo">
       <button class="mf-photo-suppr" data-photo-id="${p.id}" data-chemin="${echapperHtml(p.chemin || '')}" title="Supprimer cette photo">✕</button>
     </div>
   `).join('');
