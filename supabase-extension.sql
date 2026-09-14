@@ -1573,3 +1573,47 @@ as $$
 $$;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 46 : recompression des photos ORIGINALES déjà en ligne (pas
+-- seulement leur miniature). Les nouveaux envois compressent désormais
+-- l'originale elle-même (voir `compresserPhotoOrigine()` dans
+-- espace-mannequin.html) ; ce rattrapage applique la même chose aux photos
+-- déjà publiées avant ce changement.
+--
+-- Contrairement à l'ancien outil retiré en Extension 42 (qui écrasait les
+-- fichiers en place et avait été jugé trop risqué), le remplacement se fait
+-- ici en 3 temps sûrs, gérés côté JS dans tableau-de-bord.html : 1) la
+-- version compressée est envoyée à un NOUVEL emplacement, 2) la fiche
+-- model_photos n'est mise à jour vers ce nouvel emplacement qu'une fois cet
+-- envoi confirmé réussi, 3) l'ancien fichier n'est supprimé qu'après cette
+-- mise à jour. À aucun moment une photo ne peut se retrouver manquante ou
+-- corrompue si une étape échoue en cours de route.
+-- ===================================================================
+alter table model_photos add column if not exists originale_optimisee boolean not null default false;
+-- Empêche de retélécharger et retraiter (donc de reconsommer de la bande
+-- passante pour rien) une photo déjà passée par la compression — que ce
+-- soit au moment de l'envoi initial ou via ce rattrapage.
+
+-- Remplace la policy de dépôt de miniatures (Extension 45), désormais trop
+-- étroite : un admin doit pouvoir déposer n'importe où dans ce bucket (pas
+-- seulement dans un sous-dossier "miniatures") pour y placer une originale
+-- recompressée.
+drop policy if exists "Les admins generent les miniatures manquantes" on storage.objects;
+drop policy if exists "Les admins deposent une photo optimisee" on storage.objects;
+create policy "Les admins deposent une photo optimisee"
+  on storage.objects for insert
+  with check (
+    bucket_id = 'model-photos'
+    and exists (select 1 from admins where user_id = auth.uid())
+  );
+
+drop policy if exists "Les admins suppriment une ancienne version de photo" on storage.objects;
+create policy "Les admins suppriment une ancienne version de photo"
+  on storage.objects for delete
+  using (
+    bucket_id = 'model-photos'
+    and exists (select 1 from admins where user_id = auth.uid())
+  );
+
+NOTIFY pgrst, 'reload schema';

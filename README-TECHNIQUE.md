@@ -205,18 +205,33 @@ public (`mannequins.html`) et la galerie de chaque fiche (`mannequin.html`)
 affichaient jusqu'ici les photos en pleine résolution même en petite
 vignette, ce qui a fait dépasser cette limite (222% constaté un mois).
 
-Solution mise en place (Extension 45) : chaque photo uploadée génère
-désormais, à côté de l'originale (jamais touchée), une miniature légère
-(`model_photos.url_miniature` / `chemin_miniature`, ~500px, JPEG qualité
-0.75) stockée dans un sous-dossier `miniatures/` du même dossier
-utilisateur. Utilisée uniquement pour l'affichage en grille — la pleine
-résolution reste utilisée pour le Compcard et le téléchargement, jamais
-dégradée. Un outil admin dans `tableau-de-bord.html`
-("🖼️ Miniatures des photos") permet de rattraper les photos déjà en ligne
-qui n'ont pas encore de miniature ; ce rattrapage peut lui-même échouer si
-le quota mensuel est déjà dépassé (télécharger l'originale pour la réduire
-consomme de la bande passante) — dans ce cas, attendre le renouvellement du
-cycle (visible dans Supabase → Usage) avant de relancer l'outil.
+Solution mise en place en deux temps :
+
+1. **Extension 45** : chaque photo uploadée génère désormais, à côté de
+   l'originale, une miniature légère (`model_photos.url_miniature` /
+   `chemin_miniature`, ~500px, JPEG qualité 0.75) stockée dans un
+   sous-dossier `miniatures/` du même dossier utilisateur. Utilisée
+   uniquement pour l'affichage en grille (book public, galerie de la fiche).
+   Un outil admin dans `tableau-de-bord.html` ("🖼️ Miniatures des photos")
+   permet de rattraper les photos déjà en ligne qui n'ont pas encore de
+   miniature ; ce rattrapage peut lui-même échouer si le quota mensuel est
+   déjà dépassé (télécharger l'originale pour la réduire consomme de la
+   bande passante) — dans ce cas, attendre le renouvellement du cycle
+   (visible dans Supabase → Usage) avant de relancer l'outil.
+
+2. **`compresserPhotoOrigine()`** (`espace-mannequin.html`) : contrairement
+   à ce qui avait été décidé initialement (photos du book jamais
+   compressées, pour préserver la qualité Compcard), l'originale elle-même
+   est désormais compressée modérément à l'envoi — 3000px de côté maximum,
+   JPEG qualité 0.90, uniquement si le fichier dépasse 900 Ko. Ces réglages
+   restent largement supérieurs à ce qu'il faut pour imprimer net à 400 DPI
+   sur la plus grande case du Compcard (~2050px), donc aucune perte visible
+   attendue, tout en réduisant nettement le poids de chaque photo (stockage
+   ET bande passante). Ne s'applique qu'aux nouveaux envois — les photos
+   déjà en ligne avant ce changement restent à leur poids d'origine (aucun
+   rattrapage automatique prévu sur les originales, contrairement aux
+   miniatures : modifier une originale déjà publiée est plus risqué qu'en
+   ajouter une copie réduite à côté).
 
 ## Surveillance des erreurs réelles (alternative aux audits manuels)
 
