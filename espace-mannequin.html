@@ -149,19 +149,7 @@
       <div class="form-grille">
         <div class="form-champ">
           <label for="pr-ville">Ville *</label>
-          <select id="pr-ville" required>
-            <option value="">—</option>
-            <option value="Abidjan">Abidjan</option>
-            <option value="Yamoussoukro">Yamoussoukro</option>
-            <option value="Bouaké">Bouaké</option>
-            <option value="San-Pédro">San-Pédro</option>
-            <option value="Korhogo">Korhogo</option>
-            <option value="Daloa">Daloa</option>
-            <option value="Man">Man</option>
-            <option value="Gagnoa">Gagnoa</option>
-            <option value="Divo">Divo</option>
-            <option value="Autre">Autre</option>
-          </select>
+          <select id="pr-ville" required></select>
           <input type="text" id="pr-ville-autre" placeholder="Précisez la ville" style="display:none; margin-top:0.5rem;">
         </div>
         <div class="form-champ">
@@ -170,11 +158,11 @@
         </div>
       </div>
       <div class="form-champ">
-        <label for="pr-categorie">Catégorie *</label>
+        <label for="pr-categorie">Sexe *</label>
         <select id="pr-categorie" required>
+          <option value="">—</option>
           <option value="femme">Femme</option>
           <option value="homme">Homme</option>
-          <option value="new-faces">New Face</option>
         </select>
       </div>
       <div class="form-grille">
@@ -298,22 +286,13 @@
           </div>
           <div class="form-champ">
             <label for="pj-pays">Pays</label>
-            <select id="pj-pays">
-              <option value="">—</option>
-              <option value="Côte d'Ivoire">Côte d'Ivoire</option>
-              <option value="Sénégal">Sénégal</option>
-              <option value="Mali">Mali</option>
-              <option value="Ghana">Ghana</option>
-              <option value="Nigeria">Nigeria</option>
-              <option value="Burkina Faso">Burkina Faso</option>
-              <option value="France">France</option>
-              <option value="Autre">Autre</option>
-            </select>
+            <select id="pj-pays"></select>
             <input type="text" id="pj-pays-autre" placeholder="Précisez le pays" style="display:none; margin-top:0.5rem;">
           </div>
           <div class="form-champ">
             <label for="pj-ville">Ville</label>
-            <input type="text" id="pj-ville" placeholder="ex: Abidjan">
+            <select id="pj-ville"></select>
+            <input type="text" id="pj-ville-autre" placeholder="Précisez la ville" style="display:none; margin-top:0.5rem;">
           </div>
           <div class="form-champ">
             <label for="pj-promoteur">Promoteur / organisateur</label>
@@ -544,7 +523,66 @@ function definirSelectOuAutre(idSelect, idAutre, valeur) {
     if (autre) { autre.style.display = 'none'; autre.value = ''; }
   }
 }
-['pr-ville', 'pr-tailleveternents', 'pr-yeux', 'pr-cheveux', 'pj-pays'].forEach(id => configurerSelectAvecAutre(id, id + '-autre'));
+function remplirSelectListe(id, liste) {
+  const champ = document.getElementById(id);
+  if (!champ) return;
+  champ.appendChild(new Option('—', ''));
+  liste.forEach(v => champ.appendChild(new Option(v, v)));
+  champ.appendChild(new Option('Autre', 'Autre'));
+}
+
+// Villes de Côte d'Ivoire (chefs-lieux de région/département les plus connus) —
+// Abidjan en tête car c'est de loin la ville la plus fréquente pour nos mannequins.
+// Réutilisée pour la ville du mannequin ET pour la ville d'un projet.
+const VILLES_CI = [
+  'Abidjan', 'Abengourou', 'Aboisso', 'Adiaké', 'Adzopé', 'Affery', 'Agboville', 'Agnibilékrou',
+  'Akoupé', 'Alépé', 'Anyama', 'Arrah', 'Attiégouakro', 'Bangolo', 'Bettié', 'Biankouma',
+  'Bingerville', 'Bloléquin', 'Bocanda', 'Bondoukou', 'Bongouanou', 'Bouaflé', 'Bouaké', 'Bouna',
+  'Boundiali', 'Dabakala', 'Dabou', 'Daloa', 'Danané', 'Daoukro', 'Dimbokro', 'Divo', 'Duékoué',
+  'Facobly', 'Ferkessédougou', 'Fresco', 'Gagnoa', 'Grand-Bassam', 'Grand-Lahou', 'Guiglo',
+  'Guitry', 'Issia', 'Jacqueville', 'Kani', 'Katiola', 'Kong', 'Korhogo', 'Kouibly', 'Lakota',
+  'Man', 'Mankono', "M'Bahiakro", 'Minignan', 'Nassian', 'Odienné', 'Oumé', 'Ouangolodougou',
+  'Ouragahio', 'Prikro', 'Sakassou', 'San-Pédro', 'Sassandra', 'Séguéla', 'Sikensi', 'Sinfra',
+  'Soubré', 'Tabou', 'Tanda', 'Tengréla', 'Tiassalé', 'Tiébissou', 'Toulepleu', 'Toumodi',
+  'Touba', 'Vavoua', 'Yamoussoukro', 'Zouan-Hounien', 'Zuénoula'
+];
+remplirSelectListe('pr-ville', VILLES_CI);
+remplirSelectListe('pj-ville', VILLES_CI);
+
+// Pays du monde (pour le pays d'un projet, qui peut se dérouler n'importe où) —
+// Côte d'Ivoire en tête pour la même raison.
+remplirSelectListe('pj-pays', [
+  "Côte d'Ivoire", 'Afghanistan', 'Afrique du Sud', 'Albanie', 'Algérie', 'Allemagne', 'Andorre',
+  'Angola', 'Antigua-et-Barbuda', 'Arabie saoudite', 'Argentine', 'Arménie', 'Australie',
+  'Autriche', 'Azerbaïdjan', 'Bahamas', 'Bahreïn', 'Bangladesh', 'Barbade', 'Belgique', 'Belize',
+  'Bénin', 'Bhoutan', 'Biélorussie', 'Birmanie (Myanmar)', 'Bolivie', 'Bosnie-Herzégovine',
+  'Botswana', 'Brésil', 'Brunei', 'Bulgarie', 'Burkina Faso', 'Burundi', 'Cambodge', 'Cameroun',
+  'Canada', 'Cap-Vert', 'République centrafricaine', 'Chili', 'Chine', 'Chypre', 'Colombie',
+  'Comores', 'Congo-Brazzaville', 'République démocratique du Congo', 'Corée du Nord',
+  'Corée du Sud', 'Costa Rica', 'Croatie', 'Cuba', 'Danemark', 'Djibouti', 'Dominique', 'Égypte',
+  'Émirats arabes unis', 'Équateur', 'Érythrée', 'Espagne', 'Estonie', 'Eswatini', 'États-Unis',
+  'Éthiopie', 'Fidji', 'Finlande', 'France', 'Gabon', 'Gambie', 'Géorgie', 'Ghana', 'Grèce',
+  'Grenade', 'Guatemala', 'Guinée', 'Guinée-Bissau', 'Guinée équatoriale', 'Guyana', 'Haïti',
+  'Honduras', 'Hongrie', 'Îles Marshall', 'Îles Salomon', 'Inde', 'Indonésie', 'Irak', 'Iran',
+  'Irlande', 'Islande', 'Israël', 'Italie', 'Jamaïque', 'Japon', 'Jordanie', 'Kazakhstan',
+  'Kenya', 'Kirghizistan', 'Kiribati', 'Kosovo', 'Koweït', 'Laos', 'Lesotho', 'Lettonie', 'Liban',
+  'Libéria', 'Libye', 'Liechtenstein', 'Lituanie', 'Luxembourg', 'Macédoine du Nord',
+  'Madagascar', 'Malaisie', 'Malawi', 'Maldives', 'Mali', 'Malte', 'Maroc', 'Maurice',
+  'Mauritanie', 'Mexique', 'Micronésie', 'Moldavie', 'Monaco', 'Mongolie', 'Monténégro',
+  'Mozambique', 'Namibie', 'Nauru', 'Népal', 'Nicaragua', 'Niger', 'Nigeria', 'Norvège',
+  'Nouvelle-Zélande', 'Oman', 'Ouganda', 'Ouzbékistan', 'Pakistan', 'Palaos', 'Palestine',
+  'Panama', 'Papouasie-Nouvelle-Guinée', 'Paraguay', 'Pays-Bas', 'Pérou', 'Philippines',
+  'Pologne', 'Portugal', 'Qatar', 'Roumanie', 'Royaume-Uni', 'Russie', 'Rwanda',
+  'Saint-Christophe-et-Niévès', 'Saint-Marin', 'Saint-Vincent-et-les-Grenadines', 'Sainte-Lucie',
+  'Salvador', 'Samoa', 'São Tomé-et-Principe', 'Sénégal', 'Serbie', 'Seychelles',
+  'Sierra Leone', 'Singapour', 'Slovaquie', 'Slovénie', 'Somalie', 'Soudan', 'Soudan du Sud',
+  'Sri Lanka', 'Suède', 'Suisse', 'Suriname', 'Syrie', 'Tadjikistan', 'Tanzanie', 'Tchad',
+  'Tchéquie', 'Thaïlande', 'Timor oriental', 'Togo', 'Tonga', 'Trinité-et-Tobago', 'Tunisie',
+  'Turkménistan', 'Turquie', 'Tuvalu', 'Ukraine', 'Uruguay', 'Vanuatu', 'Vatican', 'Venezuela',
+  'Viêt Nam', 'Yémen', 'Zambie', 'Zimbabwe'
+]);
+
+['pr-ville', 'pr-tailleveternents', 'pr-yeux', 'pr-cheveux', 'pj-pays', 'pj-ville'].forEach(id => configurerSelectAvecAutre(id, id + '-autre'));
 
 // La "Période" d'un projet passe d'un texte libre à des sélecteurs adaptés à ce
 // dont la personne se souvient réellement : juste l'année, le mois et l'année, ou
@@ -789,7 +827,7 @@ async function chargerProfil() {
   document.getElementById('pr-telephone').value = profil.phone || '';
   document.getElementById('pr-email-perso').value = profil.contact_email || '';
   definirSelectOuAutre('pr-ville', 'pr-ville-autre', profil.city || '');
-  document.getElementById('pr-categorie').value = profil.category || 'new-faces';
+  document.getElementById('pr-categorie').value = profil.category || '';
   document.getElementById('pr-hanches').value = profil.hips_cm ?? '';
   document.getElementById('pr-entrejambe').value = profil.inseam_cm ?? '';
   appliquerChampsGenre();
@@ -964,11 +1002,12 @@ document.getElementById('form-publication').addEventListener('submit', async (e)
     }
     const manquants = Object.entries(champsObligatoires).filter(([, v]) => !v).map(([nom]) => nom);
 
+    // Pas d'exigence "au moins un projet" : un nouveau mannequin qui n'a encore
+    // jamais fait de défilé, shooting, publicité ou casting n'aurait sinon aucun
+    // moyen de publier son profil. "Mes réalisations" reste facultatif et pourra
+    // toujours être complété plus tard, dès son premier projet réel.
     const { count: nbPhotos } = await sb.from('model_photos').select('id', { count: 'exact', head: true }).eq('model_id', user.id);
     if (!nbPhotos) manquants.push('Au moins une photo');
-
-    const { count: nbProjets } = await sb.from('model_projects').select('id', { count: 'exact', head: true }).eq('model_id', user.id);
-    if (!nbProjets) manquants.push('Au moins un projet réalisé');
 
     if (manquants.length) {
       maj.published = false;
@@ -1212,7 +1251,7 @@ async function chargerProjets() {
       document.getElementById('pj-titre').value = p.titre || '';
       definirPeriode(p.periode || '');
       definirSelectOuAutre('pj-pays', 'pj-pays-autre', p.pays || '');
-      document.getElementById('pj-ville').value = p.ville || '';
+      definirSelectOuAutre('pj-ville', 'pj-ville-autre', p.ville || '');
       document.getElementById('pj-promoteur').value = p.promoteur || '';
       document.getElementById('pj-ajouter').textContent = 'Enregistrer les modifications';
       document.getElementById('pj-annuler').style.display = 'inline-block';
@@ -1237,6 +1276,7 @@ function annulerEditionProjet() {
   projetEnEdition = null;
   document.getElementById('form-projet').querySelectorAll('input, select').forEach(el => { el.value = ''; });
   document.getElementById('pj-pays-autre').style.display = 'none';
+  document.getElementById('pj-ville-autre').style.display = 'none';
   reinitialiserPeriode();
   document.getElementById('pj-ajouter').textContent = 'Ajouter ce projet';
   document.getElementById('pj-annuler').style.display = 'none';
@@ -1263,7 +1303,7 @@ document.getElementById('pj-ajouter').addEventListener('click', async () => {
     titre: document.getElementById('pj-titre').value.trim(),
     periode: valeurPeriode(),
     pays: valeurSelectOuAutre('pj-pays', 'pj-pays-autre'),
-    ville: document.getElementById('pj-ville').value.trim(),
+    ville: valeurSelectOuAutre('pj-ville', 'pj-ville-autre'),
     promoteur: document.getElementById('pj-promoteur').value.trim()
   };
 
@@ -1292,6 +1332,7 @@ document.getElementById('pj-ajouter').addEventListener('click', async () => {
   }
   document.getElementById('form-projet').querySelectorAll('input, select').forEach(el => { el.value = ''; });
   document.getElementById('pj-pays-autre').style.display = 'none';
+  document.getElementById('pj-ville-autre').style.display = 'none';
   reinitialiserPeriode();
   afficherMsg(msg, '✅ Projet ajouté avec succès ! Il apparaît ci-dessus, dans « Mes réalisations ».', 'ok');
   await chargerProjets();
