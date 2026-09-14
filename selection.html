@@ -89,7 +89,8 @@
           </div>
           <div class="form-champ">
             <label for="re-ville">Ville</label>
-            <input type="text" id="re-ville">
+            <select id="re-ville"></select>
+            <input type="text" id="re-ville-autre" placeholder="Précisez la ville" style="display:none; margin-top:0.5rem;">
           </div>
           <div class="form-champ">
             <label for="re-type">Type de projet</label>
@@ -158,6 +159,45 @@
 <script src="js/menu.js"></script>
 <script src="js/selection.js"></script>
 <script>
+// --- Ville en liste déroulante (avec "Autre" en secours) plutôt qu'en saisie
+// libre : évite les fautes/variantes d'orthographe. ---
+function remplirSelectListe(id, liste) {
+  const champ = document.getElementById(id);
+  if (!champ) return;
+  champ.appendChild(new Option('—', ''));
+  liste.forEach(v => champ.appendChild(new Option(v, v)));
+  champ.appendChild(new Option('Autre', 'Autre'));
+}
+function configurerSelectAvecAutre(idSelect, idAutre) {
+  const select = document.getElementById(idSelect);
+  const autre = document.getElementById(idAutre);
+  if (!select || !autre) return;
+  select.addEventListener('change', () => {
+    autre.style.display = select.value === 'Autre' ? 'block' : 'none';
+    if (select.value !== 'Autre') autre.value = '';
+  });
+}
+function valeurSelectOuAutre(idSelect, idAutre) {
+  const select = document.getElementById(idSelect);
+  const autre = document.getElementById(idAutre);
+  if (select.value === 'Autre') return (autre.value || '').trim();
+  return select.value;
+}
+const VILLES_CI = [
+  'Abidjan', 'Abengourou', 'Aboisso', 'Adiaké', 'Adzopé', 'Affery', 'Agboville', 'Agnibilékrou',
+  'Akoupé', 'Alépé', 'Anyama', 'Arrah', 'Attiégouakro', 'Bangolo', 'Bettié', 'Biankouma',
+  'Bingerville', 'Bloléquin', 'Bocanda', 'Bondoukou', 'Bongouanou', 'Bouaflé', 'Bouaké', 'Bouna',
+  'Boundiali', 'Dabakala', 'Dabou', 'Daloa', 'Danané', 'Daoukro', 'Dimbokro', 'Divo', 'Duékoué',
+  'Facobly', 'Ferkessédougou', 'Fresco', 'Gagnoa', 'Grand-Bassam', 'Grand-Lahou', 'Guiglo',
+  'Guitry', 'Issia', 'Jacqueville', 'Kani', 'Katiola', 'Kong', 'Korhogo', 'Kouibly', 'Lakota',
+  'Man', 'Mankono', "M'Bahiakro", 'Minignan', 'Nassian', 'Odienné', 'Oumé', 'Ouangolodougou',
+  'Ouragahio', 'Prikro', 'Sakassou', 'San-Pédro', 'Sassandra', 'Séguéla', 'Sikensi', 'Sinfra',
+  'Soubré', 'Tabou', 'Tanda', 'Tengréla', 'Tiassalé', 'Tiébissou', 'Toulepleu', 'Toumodi',
+  'Touba', 'Vavoua', 'Yamoussoukro', 'Zouan-Hounien', 'Zuénoula'
+];
+remplirSelectListe('re-ville', VILLES_CI);
+configurerSelectAvecAutre('re-ville', 're-ville-autre');
+
 function afficher() {
   const liste = obtenirSelection();
   const blocVide = document.getElementById('liste-vide');
@@ -218,7 +258,7 @@ document.getElementById('form-recruteur').addEventListener('submit', async (e) =
     email: document.getElementById('re-email').value.trim(),
     phone: document.getElementById('re-telephone').value.trim(),
     whatsapp: document.getElementById('re-whatsapp').value.trim(),
-    city: document.getElementById('re-ville').value.trim(),
+    city: valeurSelectOuAutre('re-ville', 're-ville-autre'),
     project_type: document.getElementById('re-type').value.trim(),
     event_date: document.getElementById('re-date').value || null,
     message: document.getElementById('re-message').value.trim()

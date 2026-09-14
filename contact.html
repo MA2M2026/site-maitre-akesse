@@ -122,7 +122,8 @@
             </div>
             <div class="form-champ">
               <label for="ville">Ville (facultatif)</label>
-              <input type="text" id="ville">
+              <select id="ville"></select>
+              <input type="text" id="ville-autre" placeholder="Précisez la ville" style="display:none; margin-top:0.5rem;">
             </div>
           </div>
           <div class="form-champ">
@@ -183,6 +184,45 @@
 <script src="js/app.js"></script>
 <script src="js/menu.js"></script>
 <script>
+// --- Ville en liste déroulante (avec "Autre" en secours) plutôt qu'en saisie
+// libre : évite les fautes/variantes d'orthographe. ---
+function remplirSelectListe(id, liste) {
+  const champ = document.getElementById(id);
+  if (!champ) return;
+  champ.appendChild(new Option('—', ''));
+  liste.forEach(v => champ.appendChild(new Option(v, v)));
+  champ.appendChild(new Option('Autre', 'Autre'));
+}
+function configurerSelectAvecAutre(idSelect, idAutre) {
+  const select = document.getElementById(idSelect);
+  const autre = document.getElementById(idAutre);
+  if (!select || !autre) return;
+  select.addEventListener('change', () => {
+    autre.style.display = select.value === 'Autre' ? 'block' : 'none';
+    if (select.value !== 'Autre') autre.value = '';
+  });
+}
+function valeurSelectOuAutre(idSelect, idAutre) {
+  const select = document.getElementById(idSelect);
+  const autre = document.getElementById(idAutre);
+  if (select.value === 'Autre') return (autre.value || '').trim();
+  return select.value;
+}
+const VILLES_CI = [
+  'Abidjan', 'Abengourou', 'Aboisso', 'Adiaké', 'Adzopé', 'Affery', 'Agboville', 'Agnibilékrou',
+  'Akoupé', 'Alépé', 'Anyama', 'Arrah', 'Attiégouakro', 'Bangolo', 'Bettié', 'Biankouma',
+  'Bingerville', 'Bloléquin', 'Bocanda', 'Bondoukou', 'Bongouanou', 'Bouaflé', 'Bouaké', 'Bouna',
+  'Boundiali', 'Dabakala', 'Dabou', 'Daloa', 'Danané', 'Daoukro', 'Dimbokro', 'Divo', 'Duékoué',
+  'Facobly', 'Ferkessédougou', 'Fresco', 'Gagnoa', 'Grand-Bassam', 'Grand-Lahou', 'Guiglo',
+  'Guitry', 'Issia', 'Jacqueville', 'Kani', 'Katiola', 'Kong', 'Korhogo', 'Kouibly', 'Lakota',
+  'Man', 'Mankono', "M'Bahiakro", 'Minignan', 'Nassian', 'Odienné', 'Oumé', 'Ouangolodougou',
+  'Ouragahio', 'Prikro', 'Sakassou', 'San-Pédro', 'Sassandra', 'Séguéla', 'Sikensi', 'Sinfra',
+  'Soubré', 'Tabou', 'Tanda', 'Tengréla', 'Tiassalé', 'Tiébissou', 'Toulepleu', 'Toumodi',
+  'Touba', 'Vavoua', 'Yamoussoukro', 'Zouan-Hounien', 'Zuénoula'
+];
+remplirSelectListe('ville', VILLES_CI);
+configurerSelectAvecAutre('ville', 'ville-autre');
+
 document.getElementById('form-contact').addEventListener('submit', async function(e){
   e.preventDefault();
   const nom = document.getElementById('nom').value.trim();
@@ -190,7 +230,7 @@ document.getElementById('form-contact').addEventListener('submit', async functio
   const email = document.getElementById('email').value.trim();
   const typeContact = document.getElementById('type-contact').value;
   const structure = document.getElementById('structure').value.trim();
-  const ville = document.getElementById('ville').value.trim();
+  const ville = valeurSelectOuAutre('ville', 'ville-autre');
   const message = document.getElementById('message').value.trim();
   const msg = document.getElementById('msg');
   const boutonEnvoyer = e.target.querySelector('button[type="submit"]');

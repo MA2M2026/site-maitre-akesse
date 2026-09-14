@@ -103,7 +103,8 @@
         </div>
         <div class="form-champ">
           <label for="ca-ville">Ville</label>
-          <input type="text" id="ca-ville">
+          <select id="ca-ville"></select>
+          <input type="text" id="ca-ville-autre" placeholder="Précisez la ville" style="display:none; margin-top:0.5rem;">
         </div>
         <div class="form-champ">
           <label for="ca-naissance">Date de naissance *</label>
@@ -256,12 +257,50 @@ function remplirSelectNombres(id, min, max, pas, suffixe) {
     champ.appendChild(new Option(v + (suffixe || ''), v));
   }
 }
-remplirSelectNombres('ca-taille', 140, 210, 1, ' cm');
 remplirSelectNombres('ca-poids', 35, 130, 1, ' kg');
 remplirSelectNombres('ca-poitrine', 70, 130, 1, ' cm');
 remplirSelectNombres('ca-tourtaille', 55, 110, 1, ' cm');
 remplirSelectNombres('ca-hanches', 70, 130, 1, ' cm');
 remplirSelectNombres('ca-pointure', 34, 46, 1, '');
+
+// --- Ville en liste déroulante (avec "Autre" en secours) plutôt qu'en saisie
+// libre : évite les fautes/variantes d'orthographe (Man/Mann, Yakro/Yamoussoukro...). ---
+function remplirSelectListe(id, liste) {
+  const champ = document.getElementById(id);
+  if (!champ) return;
+  champ.appendChild(new Option('—', ''));
+  liste.forEach(v => champ.appendChild(new Option(v, v)));
+  champ.appendChild(new Option('Autre', 'Autre'));
+}
+function configurerSelectAvecAutre(idSelect, idAutre) {
+  const select = document.getElementById(idSelect);
+  const autre = document.getElementById(idAutre);
+  if (!select || !autre) return;
+  select.addEventListener('change', () => {
+    autre.style.display = select.value === 'Autre' ? 'block' : 'none';
+    if (select.value !== 'Autre') autre.value = '';
+  });
+}
+function valeurSelectOuAutre(idSelect, idAutre) {
+  const select = document.getElementById(idSelect);
+  const autre = document.getElementById(idAutre);
+  if (select.value === 'Autre') return (autre.value || '').trim();
+  return select.value;
+}
+const VILLES_CI = [
+  'Abidjan', 'Abengourou', 'Aboisso', 'Adiaké', 'Adzopé', 'Affery', 'Agboville', 'Agnibilékrou',
+  'Akoupé', 'Alépé', 'Anyama', 'Arrah', 'Attiégouakro', 'Bangolo', 'Bettié', 'Biankouma',
+  'Bingerville', 'Bloléquin', 'Bocanda', 'Bondoukou', 'Bongouanou', 'Bouaflé', 'Bouaké', 'Bouna',
+  'Boundiali', 'Dabakala', 'Dabou', 'Daloa', 'Danané', 'Daoukro', 'Dimbokro', 'Divo', 'Duékoué',
+  'Facobly', 'Ferkessédougou', 'Fresco', 'Gagnoa', 'Grand-Bassam', 'Grand-Lahou', 'Guiglo',
+  'Guitry', 'Issia', 'Jacqueville', 'Kani', 'Katiola', 'Kong', 'Korhogo', 'Kouibly', 'Lakota',
+  'Man', 'Mankono', "M'Bahiakro", 'Minignan', 'Nassian', 'Odienné', 'Oumé', 'Ouangolodougou',
+  'Ouragahio', 'Prikro', 'Sakassou', 'San-Pédro', 'Sassandra', 'Séguéla', 'Sikensi', 'Sinfra',
+  'Soubré', 'Tabou', 'Tanda', 'Tengréla', 'Tiassalé', 'Tiébissou', 'Toulepleu', 'Toumodi',
+  'Touba', 'Vavoua', 'Yamoussoukro', 'Zouan-Hounien', 'Zuénoula'
+];
+remplirSelectListe('ca-ville', VILLES_CI);
+configurerSelectAvecAutre('ca-ville', 'ca-ville-autre');
 
 function redimensionnerImage(fichier, coteMax = 2800, qualite = 0.88) {
   return new Promise((resolve) => {
@@ -353,18 +392,30 @@ document.getElementById('ca-photos').addEventListener('change', (e) => {
   });
 });
 
-function majIndicationTaille() {
+// --- La liste "Taille" elle-même commence à la taille minimale requise selon le
+// genre (175 cm femmes, 185 cm hommes) — impossible de choisir en dessous, donc
+// plus besoin de bloquer/refuser une candidature après coup. Mineurs exemptés :
+// liste complète (140 cm et plus) tant que la date de naissance l'indique. ---
+function remplirTailleSelonGenre() {
   const genre = document.getElementById('ca-genre').value;
   const indication = document.getElementById('ca-taille-indication');
   const mineur = estMineur();
-  // La liste déroulante ne bloque pas les tailles trop basses elle-même — c'est la
-  // vérification au moment de l'envoi (plus bas) qui refuse la candidature si besoin.
-  if (mineur) { indication.textContent = 'Pas de taille minimale pour les candidatures de mineurs.'; return; }
-  if (genre === 'homme') { indication.textContent = 'Taille minimale requise : 185 cm'; }
+  const champ = document.getElementById('ca-taille');
+  const valeurActuelle = champ.value;
+  const min = mineur ? 140 : (genre === 'homme' ? 185 : (genre === 'femme' ? 175 : 140));
+
+  champ.innerHTML = '';
+  champ.appendChild(new Option('—', ''));
+  for (let v = min; v <= 210; v++) champ.appendChild(new Option(v + ' cm', v));
+  if ([...champ.options].some(o => o.value === valeurActuelle)) champ.value = valeurActuelle;
+
+  if (mineur) { indication.textContent = 'Pas de taille minimale pour les candidatures de mineurs.'; }
+  else if (genre === 'homme') { indication.textContent = 'Taille minimale requise : 185 cm'; }
   else if (genre === 'femme') { indication.textContent = 'Taille minimale requise : 175 cm'; }
   else { indication.textContent = ''; }
 }
-document.getElementById('ca-genre').addEventListener('change', majIndicationTaille);
+document.getElementById('ca-genre').addEventListener('change', remplirTailleSelonGenre);
+remplirTailleSelonGenre();
 
 // --- Gestion mineur / parent-tuteur ---
 function calculerAgeCandidature() {
@@ -386,7 +437,7 @@ document.getElementById('ca-naissance').addEventListener('change', () => {
   blocParent.style.display = mineur ? 'block' : 'none';
   document.getElementById('ca-parent-nom').required = mineur;
   document.getElementById('ca-parent-telephone').required = mineur;
-  majIndicationTaille();
+  remplirTailleSelonGenre();
   majConsentement();
 });
 
@@ -425,13 +476,7 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
 
   const genre = document.getElementById('ca-genre').value;
   const taille = parseInt(document.getElementById('ca-taille').value) || 0;
-  const tailleMin = genre === 'homme' ? 185 : 175;
   const mineur = estMineur();
-
-  if (!mineur && taille < tailleMin) {
-    afficherMsg(msg, `Désolé, la taille minimale requise pour postuler est de ${tailleMin} cm (${genre === 'homme' ? 'hommes' : 'femmes'}). Ta candidature ne peut pas être soumise avec cette taille.`, 'err');
-    return;
-  }
 
   const typeCandidature = document.getElementById('ca-type').value;
   const projetSelect = document.getElementById('ca-projet').value;
@@ -458,7 +503,7 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
     full_name: document.getElementById('ca-nom').value.trim(),
     email: document.getElementById('ca-email').value.trim(),
     phone: document.getElementById('ca-telephone').value.trim(),
-    city: document.getElementById('ca-ville').value.trim(),
+    city: valeurSelectOuAutre('ca-ville', 'ca-ville-autre'),
     date_naissance: document.getElementById('ca-naissance').value || null,
     genre: genre,
     height_cm: taille,
