@@ -226,6 +226,35 @@
 <script src="js/app.js"></script>
 <script src="js/menu.js"></script>
 <script>
+// Redimensionne une photo côté navigateur avant l'envoi, pour ne pas
+// stocker/transférer inutilement des fichiers de plusieurs Mo.
+function redimensionnerImage(fichier, coteMax = 2800, qualite = 0.88) {
+  return new Promise((resolve) => {
+    // On ne retouche que les JPEG : un PNG/GIF/WebP peut avoir de la transparence,
+    // qui deviendrait un fond noir en le convertissant en JPEG (pas de canal alpha).
+    if (fichier.type !== 'image/jpeg' || fichier.size < 900 * 1024) { resolve(fichier); return; }
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const coteActuel = Math.max(img.width, img.height);
+        const ratio = coteActuel > coteMax ? coteMax / coteActuel : 1;
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * ratio);
+        canvas.height = Math.round(img.height * ratio);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+          if (!blob || blob.size >= fichier.size) { resolve(fichier); return; }
+          resolve(new File([blob], fichier.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' }));
+        }, 'image/jpeg', qualite);
+      } catch (e) {
+        resolve(fichier);
+      }
+    };
+    img.onerror = () => resolve(fichier);
+    img.src = URL.createObjectURL(fichier);
+  });
+}
+
 async function convertirSiHeic(fichier) {
   const estHeic = /image\/hei(c|f)/i.test(fichier.type) || /\.(heic|heif)$/i.test(fichier.name);
   if (!estHeic || typeof heic2any === 'undefined') return fichier;
@@ -345,18 +374,30 @@ document.getElementById('form-inscription').addEventListener('submit', async (e)
     document.getElementById('ins-photo4').files[0]
   ].filter(Boolean);
 
+  // Le dossier est déjà enregistré côté base de données à ce stade (l'appel RPC
+  // ci-dessus a réussi) — un souci sur une ou plusieurs photos (coupure réseau,
+  // erreur ponctuelle) ne doit donc jamais laisser la personne bloquée sans
+  // retour : chaque photo est isolée dans son propre try/catch, et l'écran de
+  // succès s'affiche dans tous les cas, avec un message adapté si besoin.
+  let nbPhotosEchouees = 0;
   for (const fichierOriginal of fichiers) {
-    const fichier = await convertirSiHeic(fichierOriginal);
-    const chemin = `${idInscription}/${Date.now()}-${nomFichierSur(fichier.name)}`;
-    const { error: erreurUpload } = await sb.storage.from('inscriptions-photos').upload(chemin, fichier);
-    if (!erreurUpload) {
+    try {
+      const fichierConverti = await convertirSiHeic(fichierOriginal);
+      const fichier = await redimensionnerImage(fichierConverti);
+      const chemin = `${idInscription}/${Date.now()}-${nomFichierSur(fichier.name)}`;
+      const { error: erreurUpload } = await sb.storage.from('inscriptions-photos').upload(chemin, fichier);
+      if (erreurUpload) { nbPhotosEchouees++; continue; }
       const { data: urlPublique } = sb.storage.from('inscriptions-photos').getPublicUrl(chemin);
       await sb.from('inscriptions_photos').insert({ inscription_id: idInscription, url: urlPublique.publicUrl, chemin });
+    } catch (e) {
+      nbPhotosEchouees++;
     }
   }
 
   msg.className = 'form-msg ok';
-  msg.textContent = 'Dossier envoyé avec succès !';
+  msg.textContent = nbPhotosEchouees
+    ? `Dossier envoyé avec succès ! (${nbPhotosEchouees} photo${nbPhotosEchouees > 1 ? 's n\'ont' : ' n\'a'} pas pu être envoyée${nbPhotosEchouees > 1 ? 's' : ''} — contacte l'agence pour les transmettre autrement.)`
+    : 'Dossier envoyé avec succès !';
   msg.style.display = 'block';
 
   document.getElementById('recu-nom').textContent = dossier.full_name || '-';
