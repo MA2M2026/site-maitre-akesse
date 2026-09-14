@@ -141,6 +141,16 @@
 
     <div class="liste-recente">
       <div class="dossiers-entete">
+        <h2 style="margin:0;">🔴 Erreurs réelles du site (7 derniers jours)</h2>
+        <span class="dossiers-compteur" id="erreurs-compteur"></span>
+      </div>
+      <p style="font-size:0.85rem; color:var(--gris); margin:0.3rem 0 1rem;">Chaque erreur JavaScript survenue chez un vrai visiteur (pas une relecture de code) est enregistrée ici automatiquement. Une liste vide est bon signe.</p>
+      <div id="liste-erreurs"></div>
+      <button class="btn" id="erreurs-tout-effacer-btn" style="margin-top:0.8rem; display:none; color:var(--gris); border-color:var(--gris-clair);">Tout marquer comme vu (effacer le journal)</button>
+    </div>
+
+    <div class="liste-recente">
+      <div class="dossiers-entete">
         <h2 style="margin:0;">Projets & castings</h2>
       </div>
       <p style="font-size:0.85rem; color:var(--gris); margin:0.3rem 0 1rem;">Ajoutez ici les projets/castings précis pour lesquels les candidats peuvent postuler (proposés dans le formulaire "Postuler à un casting"). Désactivez un projet une fois terminé pour qu'il disparaisse du formulaire — les candidatures déjà reçues restent intactes.</p>
@@ -303,6 +313,59 @@ document.getElementById('tb-logout-btn').addEventListener('click', async () => {
   document.getElementById('bloc-login').style.display = 'block';
 });
 
+// --- Journal des erreurs réelles du site (7 derniers jours) ---
+// Regroupe les erreurs identiques (même message + même page) pour ne pas noyer
+// une vraie panne sous des dizaines de lignes répétées — une erreur qui touche
+// beaucoup de visiteurs remonte comme UNE entrée avec un compteur, pas comme
+// une liste interminable.
+async function chargerErreurs() {
+  const liste = document.getElementById('liste-erreurs');
+  const compteurEl = document.getElementById('erreurs-compteur');
+  const btnEffacer = document.getElementById('erreurs-tout-effacer-btn');
+  const depuis7j = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+  const { data: erreurs } = await sb.from('journal_erreurs')
+    .select('id, message, page, pile, user_agent, created_at')
+    .gte('created_at', depuis7j)
+    .order('created_at', { ascending: false })
+    .limit(500);
+
+  if (!erreurs || !erreurs.length) {
+    compteurEl.textContent = '0 erreur';
+    liste.innerHTML = '<div class="dossiers-vide">✅ Aucune erreur détectée cette semaine.</div>';
+    btnEffacer.style.display = 'none';
+    return;
+  }
+
+  const groupes = {};
+  erreurs.forEach(e => {
+    const cle = (e.message || '') + '|' + (e.page || '');
+    if (!groupes[cle]) groupes[cle] = { ...e, occurrences: 0, ids: [] };
+    groupes[cle].occurrences++;
+    groupes[cle].ids.push(e.id);
+  });
+  const groupesTries = Object.values(groupes).sort((a, b) => b.occurrences - a.occurrences);
+
+  compteurEl.textContent = `${erreurs.length} erreur${erreurs.length > 1 ? 's' : ''} (${groupesTries.length} distincte${groupesTries.length > 1 ? 's' : ''})`;
+  btnEffacer.style.display = 'block';
+
+  liste.innerHTML = groupesTries.map(g => `
+    <div class="dossier-carte" style="border-left-color:var(--bordeaux-clair); cursor:default;">
+      <div class="dc-nom" style="flex:3;">
+        ${echapperHtml(g.message)}
+        <span>${echapperHtml(g.page || '?')} · ${g.occurrences} fois · dernière : ${new Date(g.created_at).toLocaleString('fr-FR')}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+document.getElementById('erreurs-tout-effacer-btn').addEventListener('click', async () => {
+  if (!confirm("Marquer toutes les erreurs actuelles comme vues ? Elles seront supprimées du journal (de nouvelles erreurs réapparaîtront normalement si elles se reproduisent).")) return;
+  const depuis7j = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  await sb.from('journal_erreurs').delete().gte('created_at', depuis7j);
+  chargerErreurs();
+});
+
 // --- Classement des visites réelles par mannequin (compact, top 10) ---
 // Période "7 derniers jours" par défaut — un vrai classement qui bouge dans le temps,
 // pas un simple total qui ne fait que grossir indéfiniment.
@@ -376,6 +439,7 @@ async function chargerStatistiques() {
     <div class="stat-carte"><div class="chiffre">${visitesTotal}</div><div class="label">Visites réelles — total</div></div>
   `;
 
+  chargerErreurs();
   chargerClassementMannequins();
   chargerCodes();
   chargerProjets();
