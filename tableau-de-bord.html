@@ -696,7 +696,7 @@ document.addEventListener('click', (e) => {
     return;
   }
   const carte = e.target.closest('.dossier-carte');
-  if (carte) {
+  if (carte && carte.dataset.source) {
     ouvrirFicheDossier(carte.dataset.source, carte.dataset.id);
   }
 });
