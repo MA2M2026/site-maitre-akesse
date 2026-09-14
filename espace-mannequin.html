@@ -374,6 +374,18 @@
 const blocAuth = document.getElementById('bloc-auth');
 const dashboard = document.getElementById('dashboard');
 
+// Sans bornes min/max, le calendrier natif du champ "date de naissance" laisse
+// défiler des années totalement absurdes (ex. 2090) et impose souvent de faire
+// défiler très loin pour atteindre un âge plausible — d'où l'impression que la
+// sélection "ne marche pas" alors qu'il faut juste taper la date à la main.
+(function limiterDateNaissance() {
+  const champ = document.getElementById('pr-naissance');
+  if (!champ) return;
+  const aujourdhui = new Date();
+  champ.max = aujourdhui.toISOString().slice(0, 10);
+  champ.min = new Date(aujourdhui.getFullYear() - 100, aujourdhui.getMonth(), aujourdhui.getDate()).toISOString().slice(0, 10);
+})();
+
 // --- Onglets connexion / inscription ---
 document.querySelectorAll('.onglet').forEach(btn => {
   btn.addEventListener('click', () => {

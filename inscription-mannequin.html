@@ -226,8 +226,18 @@
 <script src="js/app.js"></script>
 <script src="js/menu.js"></script>
 <script>
-// Redimensionne une photo côté navigateur avant l'envoi, pour ne pas
-// stocker/transférer inutilement des fichiers de plusieurs Mo.
+// Sans bornes min/max, le calendrier natif du champ "date de naissance" laisse
+// défiler des années totalement absurdes (ex. 2090) et impose souvent de faire
+// défiler très loin pour atteindre un âge plausible — d'où l'impression que la
+// sélection "ne marche pas" alors qu'il faut juste taper la date à la main.
+(function limiterDateNaissance() {
+  const champ = document.getElementById('ins-naissance');
+  if (!champ) return;
+  const aujourdhui = new Date();
+  champ.max = aujourdhui.toISOString().slice(0, 10);
+  champ.min = new Date(aujourdhui.getFullYear() - 100, aujourdhui.getMonth(), aujourdhui.getDate()).toISOString().slice(0, 10);
+})();
+
 function redimensionnerImage(fichier, coteMax = 2800, qualite = 0.88) {
   return new Promise((resolve) => {
     // On ne retouche que les JPEG : un PNG/GIF/WebP peut avoir de la transparence,
