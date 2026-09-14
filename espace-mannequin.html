@@ -149,7 +149,20 @@
       <div class="form-grille">
         <div class="form-champ">
           <label for="pr-ville">Ville *</label>
-          <input type="text" id="pr-ville" required>
+          <select id="pr-ville" required>
+            <option value="">—</option>
+            <option value="Abidjan">Abidjan</option>
+            <option value="Yamoussoukro">Yamoussoukro</option>
+            <option value="Bouaké">Bouaké</option>
+            <option value="San-Pédro">San-Pédro</option>
+            <option value="Korhogo">Korhogo</option>
+            <option value="Daloa">Daloa</option>
+            <option value="Man">Man</option>
+            <option value="Gagnoa">Gagnoa</option>
+            <option value="Divo">Divo</option>
+            <option value="Autre">Autre</option>
+          </select>
+          <input type="text" id="pr-ville-autre" placeholder="Précisez la ville" style="display:none; margin-top:0.5rem;">
         </div>
         <div class="form-champ">
           <label for="pr-naissance">Date de naissance *</label>
@@ -167,31 +180,31 @@
       <div class="form-grille">
         <div class="form-champ">
           <label for="pr-taille">Taille (cm) *</label>
-          <input type="number" id="pr-taille" required>
+          <select id="pr-taille" required></select>
         </div>
         <div class="form-champ">
           <label for="pr-poids">Poids (kg)</label>
-          <input type="number" id="pr-poids">
+          <select id="pr-poids"></select>
         </div>
         <div class="form-champ">
           <label for="pr-poitrine">Poitrine (cm) *</label>
-          <input type="number" id="pr-poitrine" required>
+          <select id="pr-poitrine" required></select>
         </div>
         <div class="form-champ">
           <label for="pr-tourtaille">Tour de taille (cm) *</label>
-          <input type="number" id="pr-tourtaille" required>
+          <select id="pr-tourtaille" required></select>
         </div>
         <div class="form-champ" id="champ-hanches">
           <label for="pr-hanches">Hanches (cm) *</label>
-          <input type="number" id="pr-hanches">
+          <select id="pr-hanches"></select>
         </div>
         <div class="form-champ" id="champ-entrejambe" style="display:none;">
           <label for="pr-entrejambe">Entrejambe (cm) *</label>
-          <input type="number" id="pr-entrejambe">
+          <select id="pr-entrejambe"></select>
         </div>
         <div class="form-champ">
           <label for="pr-pointure">Pointure *</label>
-          <input type="text" id="pr-pointure" required>
+          <select id="pr-pointure" required></select>
         </div>
         <div class="form-champ">
           <label for="pr-carnation">Carnation / teint *</label>
@@ -206,15 +219,45 @@
         </div>
         <div class="form-champ">
           <label for="pr-tailleveternents">Taille de vêtements *</label>
-          <input type="text" id="pr-tailleveternents" placeholder="ex: S, M, L, 40" required>
+          <select id="pr-tailleveternents" required>
+            <option value="">—</option>
+            <option value="XS">XS</option>
+            <option value="S">S</option>
+            <option value="M">M</option>
+            <option value="L">L</option>
+            <option value="XL">XL</option>
+            <option value="XXL">XXL</option>
+            <option value="Autre">Autre</option>
+          </select>
+          <input type="text" id="pr-tailleveternents-autre" placeholder="Précisez la taille" style="display:none; margin-top:0.5rem;">
         </div>
         <div class="form-champ">
           <label for="pr-yeux">Couleur des yeux</label>
-          <input type="text" id="pr-yeux" placeholder="ex: Marron">
+          <select id="pr-yeux">
+            <option value="">—</option>
+            <option value="Marron">Marron</option>
+            <option value="Noir">Noir</option>
+            <option value="Vert">Vert</option>
+            <option value="Bleu">Bleu</option>
+            <option value="Gris">Gris</option>
+            <option value="Noisette">Noisette</option>
+            <option value="Autre">Autre</option>
+          </select>
+          <input type="text" id="pr-yeux-autre" placeholder="Précisez la couleur" style="display:none; margin-top:0.5rem;">
         </div>
         <div class="form-champ">
           <label for="pr-cheveux">Couleur des cheveux</label>
-          <input type="text" id="pr-cheveux" placeholder="ex: Noir">
+          <select id="pr-cheveux">
+            <option value="">—</option>
+            <option value="Noir">Noir</option>
+            <option value="Brun">Brun</option>
+            <option value="Châtain">Châtain</option>
+            <option value="Blond">Blond</option>
+            <option value="Roux">Roux</option>
+            <option value="Gris / Blanc">Gris / Blanc</option>
+            <option value="Autre">Autre</option>
+          </select>
+          <input type="text" id="pr-cheveux-autre" placeholder="Précisez la couleur" style="display:none; margin-top:0.5rem;">
         </div>
       </div>
       <button type="submit" id="btn-enregistrer-infos" class="btn btn--principal" style="display:none;" disabled>Enregistrer mes informations</button>
@@ -242,12 +285,31 @@
             <input type="text" id="pj-titre" placeholder="ex: Cacao Fashion Show">
           </div>
           <div class="form-champ">
-            <label for="pj-periode">Période</label>
-            <input type="text" id="pj-periode" placeholder="ex: Septembre 2026">
+            <label for="pj-periode-precision">Période</label>
+            <select id="pj-periode-precision">
+              <option value="">—</option>
+              <option value="annee">Je me souviens juste de l'année</option>
+              <option value="mois">Je me souviens du mois et de l'année</option>
+              <option value="jour">Je me souviens de la date exacte</option>
+            </select>
+            <select id="pj-periode-annee" style="display:none; margin-top:0.5rem;"></select>
+            <input type="month" id="pj-periode-mois" style="display:none; margin-top:0.5rem;">
+            <input type="date" id="pj-periode-jour" style="display:none; margin-top:0.5rem;">
           </div>
           <div class="form-champ">
             <label for="pj-pays">Pays</label>
-            <input type="text" id="pj-pays" placeholder="ex: Côte d'Ivoire">
+            <select id="pj-pays">
+              <option value="">—</option>
+              <option value="Côte d'Ivoire">Côte d'Ivoire</option>
+              <option value="Sénégal">Sénégal</option>
+              <option value="Mali">Mali</option>
+              <option value="Ghana">Ghana</option>
+              <option value="Nigeria">Nigeria</option>
+              <option value="Burkina Faso">Burkina Faso</option>
+              <option value="France">France</option>
+              <option value="Autre">Autre</option>
+            </select>
+            <input type="text" id="pj-pays-autre" placeholder="Précisez le pays" style="display:none; margin-top:0.5rem;">
           </div>
           <div class="form-champ">
             <label for="pj-ville">Ville</label>
@@ -281,7 +343,7 @@
       <div class="form-grille">
         <div class="form-champ">
           <label for="pr-experience">Années d'expérience</label>
-          <input type="number" id="pr-experience" min="0" placeholder="ex: 3">
+          <select id="pr-experience"></select>
         </div>
       </div>
       <div class="form-champ">
@@ -296,8 +358,13 @@
       </div>
       <div class="form-grille">
         <div class="form-champ">
-          <label for="pr-langues">Langues parlées</label>
-          <input type="text" id="pr-langues" placeholder="ex: Français, Anglais">
+          <label>Langues parlées</label>
+          <div style="display:flex; flex-wrap:wrap; gap:1.2rem; margin-top:0.4rem;">
+            <label style="display:flex; align-items:center; gap:0.5rem; font-weight:400;"><input type="checkbox" class="pr-langue" value="Français" style="width:auto;"> Français</label>
+            <label style="display:flex; align-items:center; gap:0.5rem; font-weight:400;"><input type="checkbox" class="pr-langue" value="Anglais" style="width:auto;"> Anglais</label>
+            <label style="display:flex; align-items:center; gap:0.5rem; font-weight:400;"><input type="checkbox" class="pr-langue" value="Espagnol" style="width:auto;"> Espagnol</label>
+            <label style="display:flex; align-items:center; gap:0.5rem; font-weight:400;"><input type="checkbox" class="pr-langue" value="Autre" style="width:auto;"> Autre</label>
+          </div>
         </div>
         <div class="form-champ">
           <label for="pr-disponibilite">Disponibilité</label>
@@ -424,6 +491,130 @@ const dashboard = document.getElementById('dashboard');
   champ.min = new Date(aujourdhui.getFullYear() - 100, aujourdhui.getMonth(), aujourdhui.getDate()).toISOString().slice(0, 10);
 })();
 
+// --- Mensurations en listes déroulantes plutôt qu'en saisie libre : évite les
+// fautes de frappe (ex. "17O" au lieu de "170") et les valeurs invraisemblables. ---
+function remplirSelectNombres(id, min, max, pas, suffixe) {
+  const champ = document.getElementById(id);
+  if (!champ) return;
+  champ.appendChild(new Option('—', ''));
+  for (let v = min; v <= max; v += pas) {
+    champ.appendChild(new Option(v + (suffixe || ''), v));
+  }
+}
+remplirSelectNombres('pr-taille', 140, 210, 1, ' cm');
+remplirSelectNombres('pr-poids', 35, 130, 1, ' kg');
+remplirSelectNombres('pr-poitrine', 70, 130, 1, ' cm');
+remplirSelectNombres('pr-tourtaille', 55, 110, 1, ' cm');
+remplirSelectNombres('pr-hanches', 70, 130, 1, ' cm');
+remplirSelectNombres('pr-entrejambe', 60, 100, 1, ' cm');
+remplirSelectNombres('pr-pointure', 34, 46, 1, '');
+remplirSelectNombres('pr-experience', 0, 20, 1, ' an(s)');
+document.getElementById('pr-experience').appendChild(new Option('Plus de 20 ans', 21));
+
+// --- Listes déroulantes avec option "Autre" : garde la souplesse d'un champ libre
+// pour les cas non prévus dans la liste, sans forcer une saisie 100% manuelle. ---
+function configurerSelectAvecAutre(idSelect, idAutre) {
+  const select = document.getElementById(idSelect);
+  const autre = document.getElementById(idAutre);
+  if (!select || !autre) return;
+  select.addEventListener('change', () => {
+    autre.style.display = select.value === 'Autre' ? 'block' : 'none';
+    if (select.value !== 'Autre') autre.value = '';
+  });
+}
+function valeurSelectOuAutre(idSelect, idAutre) {
+  const select = document.getElementById(idSelect);
+  const autre = document.getElementById(idAutre);
+  if (select.value === 'Autre') return (autre.value || '').trim();
+  return select.value;
+}
+function definirSelectOuAutre(idSelect, idAutre, valeur) {
+  const select = document.getElementById(idSelect);
+  const autre = document.getElementById(idAutre);
+  if (!select) return;
+  const options = Array.from(select.options).map(o => o.value);
+  if (valeur && options.includes(valeur)) {
+    select.value = valeur;
+    if (autre) { autre.style.display = 'none'; autre.value = ''; }
+  } else if (valeur) {
+    select.value = 'Autre';
+    if (autre) { autre.style.display = 'block'; autre.value = valeur; }
+  } else {
+    select.value = '';
+    if (autre) { autre.style.display = 'none'; autre.value = ''; }
+  }
+}
+['pr-ville', 'pr-tailleveternents', 'pr-yeux', 'pr-cheveux', 'pj-pays'].forEach(id => configurerSelectAvecAutre(id, id + '-autre'));
+
+// La "Période" d'un projet passe d'un texte libre à des sélecteurs adaptés à ce
+// dont la personne se souvient réellement : juste l'année, le mois et l'année, ou
+// la date exacte. On ne rajoute pas de colonne en base : le format du texte stocké
+// suffit à retrouver la précision ("2026" / "2026-09" / "2026-09-14"), et les
+// anciennes valeurs en texte libre restent affichées telles quelles.
+const MOIS_FR = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+function formaterPeriode(valeur) {
+  if (!valeur) return '';
+  const mJour = /^(\d{4})-(\d{2})-(\d{2})$/.exec(valeur);
+  if (mJour) {
+    const mois = MOIS_FR[parseInt(mJour[2], 10) - 1];
+    return mois ? (parseInt(mJour[3], 10) + ' ' + mois + ' ' + mJour[1]) : valeur;
+  }
+  const mMois = /^(\d{4})-(\d{2})$/.exec(valeur);
+  if (mMois) {
+    const mois = MOIS_FR[parseInt(mMois[2], 10) - 1];
+    return mois ? (mois.charAt(0).toUpperCase() + mois.slice(1) + ' ' + mMois[1]) : valeur;
+  }
+  return valeur; // année seule ("2026"), ou ancienne saisie en texte libre
+}
+
+const anneeCourante = new Date().getFullYear();
+(function remplirAnneesPeriode() {
+  const select = document.getElementById('pj-periode-annee');
+  select.appendChild(new Option('—', ''));
+  for (let a = anneeCourante + 1; a >= anneeCourante - 60; a--) {
+    select.appendChild(new Option(a, a));
+  }
+})();
+
+function afficherChampPeriode(precision) {
+  document.getElementById('pj-periode-annee').style.display = precision === 'annee' ? 'block' : 'none';
+  document.getElementById('pj-periode-mois').style.display = precision === 'mois' ? 'block' : 'none';
+  document.getElementById('pj-periode-jour').style.display = precision === 'jour' ? 'block' : 'none';
+}
+document.getElementById('pj-periode-precision').addEventListener('change', (e) => afficherChampPeriode(e.target.value));
+
+function valeurPeriode() {
+  const precision = document.getElementById('pj-periode-precision').value;
+  if (precision === 'annee') return document.getElementById('pj-periode-annee').value;
+  if (precision === 'mois') return document.getElementById('pj-periode-mois').value;
+  if (precision === 'jour') return document.getElementById('pj-periode-jour').value;
+  return '';
+}
+
+function definirPeriode(valeur) {
+  const precisionSelect = document.getElementById('pj-periode-precision');
+  if (/^\d{4}-\d{2}-\d{2}$/.test(valeur || '')) {
+    precisionSelect.value = 'jour';
+    document.getElementById('pj-periode-jour').value = valeur;
+  } else if (/^\d{4}-\d{2}$/.test(valeur || '')) {
+    precisionSelect.value = 'mois';
+    document.getElementById('pj-periode-mois').value = valeur;
+  } else if (/^\d{4}$/.test(valeur || '')) {
+    precisionSelect.value = 'annee';
+    document.getElementById('pj-periode-annee').value = valeur;
+  } else {
+    precisionSelect.value = '';
+  }
+  afficherChampPeriode(precisionSelect.value);
+}
+function reinitialiserPeriode() {
+  document.getElementById('pj-periode-precision').value = '';
+  document.getElementById('pj-periode-annee').value = '';
+  document.getElementById('pj-periode-mois').value = '';
+  document.getElementById('pj-periode-jour').value = '';
+  afficherChampPeriode('');
+}
+
 // --- Onglets connexion / inscription ---
 document.querySelectorAll('.onglet').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -512,7 +703,22 @@ document.getElementById('form-inscription').addEventListener('submit', async (e)
     return;
   }
 
-  await sb.from('model_profiles').insert({ id: signUpData.user.id, full_name: nom, published: false });
+  // Le compte d'authentification existe désormais (signUp a réussi) : s'il manque
+  // encore la fiche model_profiles derrière, tout le reste du tableau de bord casse
+  // en silence (ajout de projet, envoi de photo... échouent avec une erreur de clé
+  // étrangère incompréhensible, faute de fiche à laquelle se rattacher). On retente
+  // avant d'annoncer un succès, pour ne jamais laisser quelqu'un dans cet état.
+  let erreurProfil = null;
+  for (let essai = 0; essai < 3; essai++) {
+    const { error } = await sb.from('model_profiles').upsert({ id: signUpData.user.id, full_name: nom, published: false });
+    erreurProfil = error;
+    if (!error) break;
+    await new Promise(r => setTimeout(r, 1000));
+  }
+  if (erreurProfil) {
+    afficherMsg(msg, "Compte créé, mais la fiche profil n'a pas pu être créée (" + erreurProfil.message + "). Déconnectez-vous et reconnectez-vous pour réessayer, ou contactez l'agence.", 'err');
+    return;
+  }
 
   afficherMsg(msg, 'Compte créé avec succès !', 'ok');
   ouvrirDashboard();
@@ -582,7 +788,7 @@ async function chargerProfil() {
   document.getElementById('pr-nom').value = profil.full_name || '';
   document.getElementById('pr-telephone').value = profil.phone || '';
   document.getElementById('pr-email-perso').value = profil.contact_email || '';
-  document.getElementById('pr-ville').value = profil.city || '';
+  definirSelectOuAutre('pr-ville', 'pr-ville-autre', profil.city || '');
   document.getElementById('pr-categorie').value = profil.category || 'new-faces';
   document.getElementById('pr-hanches').value = profil.hips_cm ?? '';
   document.getElementById('pr-entrejambe').value = profil.inseam_cm ?? '';
@@ -594,14 +800,15 @@ async function chargerProfil() {
   document.getElementById('pr-pointure').value = profil.shoe_size || '';
   document.getElementById('pr-carnation').value = profil.carnation || '';
   document.getElementById('pr-naissance').value = profil.date_naissance || '';
-  document.getElementById('pr-yeux').value = profil.eye_color || '';
-  document.getElementById('pr-cheveux').value = profil.hair_color || '';
-  document.getElementById('pr-tailleveternents').value = profil.clothing_size || '';
+  definirSelectOuAutre('pr-yeux', 'pr-yeux-autre', profil.eye_color || '');
+  definirSelectOuAutre('pr-cheveux', 'pr-cheveux-autre', profil.hair_color || '');
+  definirSelectOuAutre('pr-tailleveternents', 'pr-tailleveternents-autre', profil.clothing_size || '');
   document.getElementById('pr-bio').value = profil.bio || '';
   document.getElementById('pr-video').value = profil.video_url || '';
   document.getElementById('pr-publie').checked = !!profil.published;
   document.getElementById('pr-experience').value = profil.years_experience ?? '';
-  document.getElementById('pr-langues').value = profil.languages || '';
+  const languesCochees = (profil.languages || '').split(',').map(l => l.trim()).filter(Boolean);
+  document.querySelectorAll('.pr-langue').forEach(c => { c.checked = languesCochees.includes(c.value); });
   document.getElementById('pr-disponibilite').value = profil.availability || '';
   const typesCoches = profil.model_types || [];
   document.querySelectorAll('.pr-type').forEach(c => { c.checked = typesCoches.includes(c.value); });
@@ -642,7 +849,7 @@ document.getElementById('form-infos').addEventListener('submit', async (e) => {
     full_name: document.getElementById('pr-nom').value.trim(),
     phone: document.getElementById('pr-telephone').value.trim(),
     contact_email: document.getElementById('pr-email-perso').value.trim(),
-    city: document.getElementById('pr-ville').value.trim(),
+    city: valeurSelectOuAutre('pr-ville', 'pr-ville-autre'),
     category: document.getElementById('pr-categorie').value,
     date_naissance: document.getElementById('pr-naissance').value || null,
     height_cm: parseInt(document.getElementById('pr-taille').value) || null,
@@ -653,9 +860,9 @@ document.getElementById('form-infos').addEventListener('submit', async (e) => {
     inseam_cm: parseInt(document.getElementById('pr-entrejambe').value) || null,
     shoe_size: document.getElementById('pr-pointure').value.trim(),
     carnation: document.getElementById('pr-carnation').value,
-    clothing_size: document.getElementById('pr-tailleveternents').value.trim(),
-    eye_color: document.getElementById('pr-yeux').value.trim(),
-    hair_color: document.getElementById('pr-cheveux').value.trim()
+    clothing_size: valeurSelectOuAutre('pr-tailleveternents', 'pr-tailleveternents-autre'),
+    eye_color: valeurSelectOuAutre('pr-yeux', 'pr-yeux-autre'),
+    hair_color: valeurSelectOuAutre('pr-cheveux', 'pr-cheveux-autre')
   };
 
   const { error } = await sb.from('model_profiles').upsert(maj);
@@ -678,7 +885,7 @@ document.getElementById('form-experience').addEventListener('submit', async (e) 
     id: user.id,
     years_experience: document.getElementById('pr-experience').value !== '' ? parseInt(document.getElementById('pr-experience').value) : null,
     model_types: Array.from(document.querySelectorAll('.pr-type:checked')).map(c => c.value),
-    languages: document.getElementById('pr-langues').value.trim(),
+    languages: Array.from(document.querySelectorAll('.pr-langue:checked')).map(c => c.value).join(', '),
     availability: document.getElementById('pr-disponibilite').value,
     bio: document.getElementById('pr-bio').value.trim(),
     video_url: document.getElementById('pr-video').value.trim() || null
@@ -708,7 +915,7 @@ document.getElementById('form-publication').addEventListener('submit', async (e)
     full_name: document.getElementById('pr-nom').value.trim(),
     phone: document.getElementById('pr-telephone').value.trim(),
     contact_email: document.getElementById('pr-email-perso').value.trim(),
-    city: document.getElementById('pr-ville').value.trim(),
+    city: valeurSelectOuAutre('pr-ville', 'pr-ville-autre'),
     category: document.getElementById('pr-categorie').value,
     date_naissance: document.getElementById('pr-naissance').value || null,
     height_cm: parseInt(document.getElementById('pr-taille').value) || null,
@@ -719,15 +926,15 @@ document.getElementById('form-publication').addEventListener('submit', async (e)
     inseam_cm: parseInt(document.getElementById('pr-entrejambe').value) || null,
     shoe_size: document.getElementById('pr-pointure').value.trim(),
     carnation: document.getElementById('pr-carnation').value,
-    clothing_size: document.getElementById('pr-tailleveternents').value.trim(),
-    eye_color: document.getElementById('pr-yeux').value.trim(),
-    hair_color: document.getElementById('pr-cheveux').value.trim(),
+    clothing_size: valeurSelectOuAutre('pr-tailleveternents', 'pr-tailleveternents-autre'),
+    eye_color: valeurSelectOuAutre('pr-yeux', 'pr-yeux-autre'),
+    hair_color: valeurSelectOuAutre('pr-cheveux', 'pr-cheveux-autre'),
     video_url: document.getElementById('pr-video').value.trim() || null,
     bio: document.getElementById('pr-bio').value.trim(),
     published: document.getElementById('pr-publie').checked,
     years_experience: document.getElementById('pr-experience').value !== '' ? parseInt(document.getElementById('pr-experience').value) : null,
     model_types: Array.from(document.querySelectorAll('.pr-type:checked')).map(c => c.value),
-    languages: document.getElementById('pr-langues').value.trim(),
+    languages: Array.from(document.querySelectorAll('.pr-langue:checked')).map(c => c.value).join(', '),
     availability: document.getElementById('pr-disponibilite').value
   };
 
@@ -890,6 +1097,12 @@ document.getElementById('input-photo').addEventListener('change', async (e) => {
   const { data: { user } } = await sb.auth.getUser();
   if (!user) return;
 
+  // Filet de sécurité : si la fiche model_profiles de cette personne n'existe pas
+  // encore (ex. échec silencieux au moment de l'inscription, avant le correctif),
+  // la photo se téléverserait dans le stockage mais sa fiche en base échouerait
+  // en silence (clé étrangère), et la photo n'apparaîtrait jamais dans la grille.
+  await sb.from('model_profiles').upsert({ id: user.id }, { ignoreDuplicates: true });
+
   const apercu = document.getElementById('apercu-upload');
   const liste = document.getElementById('apercu-liste');
   apercu.style.display = 'block';
@@ -934,11 +1147,16 @@ document.getElementById('input-photo').addEventListener('change', async (e) => {
         continue;
       }
       const { data: urlPublique } = sb.storage.from('model-photos').getPublicUrl(chemin);
-      await sb.from('model_photos').insert({
+      const { error: erreurFiche } = await sb.from('model_photos').insert({
         model_id: user.id,
         url: urlPublique.publicUrl,
         chemin
       });
+      if (erreurFiche) {
+        statut.textContent = '❌ Échec : ' + erreurFiche.message;
+        statut.style.color = 'var(--rouge)';
+        continue;
+      }
 
       statut.textContent = '✅ Envoyée avec succès';
       statut.style.color = '#1e5b25';
@@ -974,7 +1192,7 @@ async function chargerProjets() {
       <div>
         <strong>${echapperHtml(p.type_projet)}</strong>${p.titre ? ' — ' + echapperHtml(p.titre) : ''}
         <div style="font-size:0.85rem; color:var(--gris); margin-top:0.2rem;">
-          ${[p.periode, lieu, p.promoteur].filter(Boolean).map(echapperHtml).join(' · ')}
+          ${[formaterPeriode(p.periode), lieu, p.promoteur].filter(Boolean).map(echapperHtml).join(' · ')}
         </div>
       </div>
       <div style="display:flex; gap:0.5rem; flex-shrink:0;">
@@ -992,8 +1210,8 @@ async function chargerProjets() {
       projetEnEdition = p.id;
       document.getElementById('pj-type').value = p.type_projet || '';
       document.getElementById('pj-titre').value = p.titre || '';
-      document.getElementById('pj-periode').value = p.periode || '';
-      document.getElementById('pj-pays').value = p.pays || '';
+      definirPeriode(p.periode || '');
+      definirSelectOuAutre('pj-pays', 'pj-pays-autre', p.pays || '');
       document.getElementById('pj-ville').value = p.ville || '';
       document.getElementById('pj-promoteur').value = p.promoteur || '';
       document.getElementById('pj-ajouter').textContent = 'Enregistrer les modifications';
@@ -1018,6 +1236,8 @@ let projetEnEdition = null;
 function annulerEditionProjet() {
   projetEnEdition = null;
   document.getElementById('form-projet').querySelectorAll('input, select').forEach(el => { el.value = ''; });
+  document.getElementById('pj-pays-autre').style.display = 'none';
+  reinitialiserPeriode();
   document.getElementById('pj-ajouter').textContent = 'Ajouter ce projet';
   document.getElementById('pj-annuler').style.display = 'none';
 }
@@ -1041,8 +1261,8 @@ document.getElementById('pj-ajouter').addEventListener('click', async () => {
   const donneesProjet = {
     type_projet: champType.value,
     titre: document.getElementById('pj-titre').value.trim(),
-    periode: document.getElementById('pj-periode').value.trim(),
-    pays: document.getElementById('pj-pays').value.trim(),
+    periode: valeurPeriode(),
+    pays: valeurSelectOuAutre('pj-pays', 'pj-pays-autre'),
     ville: document.getElementById('pj-ville').value.trim(),
     promoteur: document.getElementById('pj-promoteur').value.trim()
   };
@@ -1050,7 +1270,7 @@ document.getElementById('pj-ajouter').addEventListener('click', async () => {
   if (projetEnEdition) {
     const { error } = await sb.from('model_projects').update(donneesProjet).eq('id', projetEnEdition);
     if (error) {
-      afficherMsg(msg, "Erreur lors de la modification du projet.", 'err');
+      afficherMsg(msg, "Erreur lors de la modification du projet : " + error.message, 'err');
       return;
     }
     afficherMsg(msg, 'Projet modifié.', 'ok');
@@ -1059,12 +1279,20 @@ document.getElementById('pj-ajouter').addEventListener('click', async () => {
     return;
   }
 
+  // Filet de sécurité : si la fiche model_profiles de cette personne n'existe pas
+  // encore (ex. échec silencieux au moment de l'inscription, avant le correctif),
+  // l'ajout d'un projet échouerait avec une erreur de clé étrangère incompréhensible.
+  // On s'assure d'abord que la fiche existe (sans écraser des données existantes).
+  await sb.from('model_profiles').upsert({ id: user.id }, { ignoreDuplicates: true });
+
   const { error } = await sb.from('model_projects').insert({ model_id: user.id, ...donneesProjet });
   if (error) {
-    afficherMsg(msg, "Erreur lors de l'ajout du projet.", 'err');
+    afficherMsg(msg, "Erreur lors de l'ajout du projet : " + error.message, 'err');
     return;
   }
   document.getElementById('form-projet').querySelectorAll('input, select').forEach(el => { el.value = ''; });
+  document.getElementById('pj-pays-autre').style.display = 'none';
+  reinitialiserPeriode();
   afficherMsg(msg, '✅ Projet ajouté avec succès ! Il apparaît ci-dessus, dans « Mes réalisations ».', 'ok');
   await chargerProjets();
   // Le formulaire d'ajout est en bas de la liste des projets déjà enregistrés —
