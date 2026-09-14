@@ -437,8 +437,15 @@ function afficherMsg(el, texte, type) {
 // première publication réussie, ces boutons réapparaissent définitivement.
 function appliquerModeGuide(profil) {
   const enModeGuide = !profil.premiere_publication_faite;
-  document.getElementById('btn-enregistrer-infos').style.display = enModeGuide ? 'none' : '';
-  document.getElementById('btn-enregistrer-experience').style.display = enModeGuide ? 'none' : '';
+  // "disabled" en plus de "display:none" : sans ça, la touche Entrée dans un
+  // champ texte du bloc peut quand même déclencher un bouton submit caché
+  // (un bouton masqué par CSS reste normalement actionnable par le navigateur).
+  const btnInfos = document.getElementById('btn-enregistrer-infos');
+  const btnExperience = document.getElementById('btn-enregistrer-experience');
+  btnInfos.style.display = enModeGuide ? 'none' : '';
+  btnInfos.disabled = enModeGuide;
+  btnExperience.style.display = enModeGuide ? 'none' : '';
+  btnExperience.disabled = enModeGuide;
   document.getElementById('guide-premiere-fois').style.display = enModeGuide ? 'block' : 'none';
 }
 
