@@ -1168,8 +1168,7 @@ async function chargerPhotos() {
       <img src="${echapperHtml(photo.url)}" alt="Photo du book" style="cursor:pointer;">
       <button class="btn-principale" data-id="${photo.id}" title="Définir comme photo de profil">${photo.principale ? '★ Profil' : '☆ Profil'}</button>
       <button class="btn-supprimer" data-id="${photo.id}" data-chemin="${echapperHtml(photo.chemin || '')}" data-chemin-miniature="${echapperHtml(photo.chemin_miniature || '')}" title="Supprimer">✕</button>
-      <button class="btn-compcard" data-id="${photo.id}" title="Choisir pour la fiche Compcard">${photo.compcard_ordre ? photo.compcard_ordre : '+ Compcard'}</button>
-      ${photo.principale ? '<span class="badge-principale">Photo de profil</span>' : ''}
+      <button class="btn-compcard" data-id="${photo.id}" title="Choisir pour la fiche Compcard">${photo.compcard_ordre ? `Compcard n°${photo.compcard_ordre}` : '+ Compcard'}</button>
     `;
     item.querySelector('img').addEventListener('click', () => ouvrirGalerieLightbox(urlsPhotos, index));
     grille.appendChild(item);
