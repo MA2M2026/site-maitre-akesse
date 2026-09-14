@@ -132,6 +132,26 @@
     <div class="form-champ"><label>Mot de passe</label><input type="password" id="tb-password"></div>
     <button class="btn btn--principal" id="tb-login-btn">Se connecter</button>
     <div id="tb-msg" class="form-msg"></div>
+    <p style="margin-top:1rem;"><a href="#" id="tb-mdp-oublie-lien" style="font-size:0.85rem; color:var(--gris);">Mot de passe oublié ?</a></p>
+  </div>
+</section>
+
+<section id="bloc-mdp-oublie" style="display:none; padding-top:1rem;">
+  <div class="container" style="max-width:420px;">
+    <p style="font-size:0.9rem; color:var(--gris); margin-bottom:1rem;">Indiquez votre e-mail admin : si un compte y est associé, un lien de réinitialisation vous sera envoyé par e-mail.</p>
+    <div class="form-champ"><label>E-mail admin</label><input type="email" id="tb-mdp-oublie-email"></div>
+    <button class="btn btn--principal" id="tb-mdp-oublie-envoyer">Envoyer le lien de réinitialisation</button>
+    <div id="tb-mdp-oublie-msg" class="form-msg"></div>
+    <p style="margin-top:1rem;"><a href="#" id="tb-mdp-oublie-retour" style="font-size:0.85rem; color:var(--gris);">← Retour à la connexion</a></p>
+  </div>
+</section>
+
+<section id="bloc-nouveau-mdp" style="display:none; padding-top:1rem;">
+  <div class="container" style="max-width:420px;">
+    <p style="font-size:0.9rem; color:var(--gris); margin-bottom:1rem;">Choisissez votre nouveau mot de passe (au moins 8 caractères).</p>
+    <div class="form-champ"><label>Nouveau mot de passe</label><input type="password" id="tb-nouveau-mdp"></div>
+    <button class="btn btn--principal" id="tb-nouveau-mdp-valider">Valider le nouveau mot de passe</button>
+    <div id="tb-nouveau-mdp-msg" class="form-msg"></div>
   </div>
 </section>
 
@@ -311,6 +331,80 @@ document.getElementById('tb-logout-btn').addEventListener('click', async () => {
   await sb.auth.signOut();
   document.getElementById('bloc-tableau').style.display = 'none';
   document.getElementById('bloc-login').style.display = 'block';
+});
+
+// --- Mot de passe oublié ---
+// Ce drapeau évite une course avec la reconnexion automatique tout en bas de ce
+// script : si le lien reçu par e-mail établit une session de récupération, il ne
+// faut jamais atterrir directement sur le tableau de bord sans passer par l'étape
+// "nouveau mot de passe", même si la vérification admin se termine après coup.
+let recuperationMdpEnCours = false;
+document.getElementById('tb-mdp-oublie-lien').addEventListener('click', (e) => {
+  e.preventDefault();
+  document.getElementById('tb-mdp-oublie-email').value = document.getElementById('tb-email').value.trim();
+  document.getElementById('bloc-login').style.display = 'none';
+  document.getElementById('bloc-mdp-oublie').style.display = 'block';
+});
+document.getElementById('tb-mdp-oublie-retour').addEventListener('click', (e) => {
+  e.preventDefault();
+  document.getElementById('bloc-mdp-oublie').style.display = 'none';
+  document.getElementById('bloc-login').style.display = 'block';
+});
+document.getElementById('tb-mdp-oublie-envoyer').addEventListener('click', async () => {
+  if (!sb) return;
+  const email = document.getElementById('tb-mdp-oublie-email').value.trim();
+  const msg = document.getElementById('tb-mdp-oublie-msg');
+  if (!email) return;
+  // Toujours le même message, que l'e-mail existe ou non côté Supabase — pour ne
+  // jamais révéler à un visiteur si une adresse donnée a un compte admin ou pas.
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + window.location.pathname
+  });
+  msg.className = 'form-msg ' + (error ? 'err' : 'ok');
+  msg.textContent = error
+    ? "Erreur lors de l'envoi : " + error.message
+    : "Si cet e-mail est associé à un compte admin, un lien de réinitialisation vient d'être envoyé. Vérifiez votre boîte mail (et vos spams).";
+  msg.style.display = 'block';
+});
+
+// --- Réception du lien de réinitialisation : Supabase détecte automatiquement le
+// jeton dans l'adresse et déclenche cet événement, sur cette même page. ---
+sb && sb.auth.onAuthStateChange((event) => {
+  if (event !== 'PASSWORD_RECOVERY') return;
+  recuperationMdpEnCours = true;
+  document.getElementById('bloc-login').style.display = 'none';
+  document.getElementById('bloc-mdp-oublie').style.display = 'none';
+  document.getElementById('bloc-tableau').style.display = 'none';
+  document.getElementById('bloc-nouveau-mdp').style.display = 'block';
+});
+
+document.getElementById('tb-nouveau-mdp-valider').addEventListener('click', async () => {
+  const nouveauMdp = document.getElementById('tb-nouveau-mdp').value;
+  const msg = document.getElementById('tb-nouveau-mdp-msg');
+  if (nouveauMdp.length < 8) {
+    msg.className = 'form-msg err';
+    msg.textContent = 'Le mot de passe doit contenir au moins 8 caractères.';
+    msg.style.display = 'block';
+    return;
+  }
+  if (!sb) return;
+  const { error } = await sb.auth.updateUser({ password: nouveauMdp });
+  if (error) {
+    msg.className = 'form-msg err';
+    msg.textContent = "Erreur : " + error.message;
+    msg.style.display = 'block';
+    return;
+  }
+  recuperationMdpEnCours = false;
+  const estAdmin = await verifierAdminTableau();
+  document.getElementById('bloc-nouveau-mdp').style.display = 'none';
+  if (estAdmin) {
+    document.getElementById('bloc-tableau').style.display = 'block';
+    chargerStatistiques();
+  } else {
+    await sb.auth.signOut();
+    document.getElementById('bloc-login').style.display = 'block';
+  }
 });
 
 // --- Journal des erreurs réelles du site (7 derniers jours) ---
@@ -994,7 +1088,7 @@ document.getElementById('bandeau-actif-btn').addEventListener('click', async () 
 (async () => {
   try {
     const estAdmin = await verifierAdminTableau();
-    if (estAdmin) {
+    if (estAdmin && !recuperationMdpEnCours) {
       document.getElementById('bloc-login').style.display = 'none';
       document.getElementById('bloc-tableau').style.display = 'block';
       chargerStatistiques();
