@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
+<script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
@@ -111,7 +111,7 @@
      attente d'un autre avant de s'exécuter ajoutait des secondes de blocage, y
      compris pour le simple bouton "Menu"). jsPDF n'est plus chargé ici du tout : il
      ne sert qu'au bouton "Fiche en PDF", donc il est chargé à la demande, au clic. -->
-<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"></script>
+<script defer crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"></script>
 <script defer src="js/supabase-config.js"></script>
 <script defer src="js/app.js"></script>
 <script defer src="js/menu.js"></script>
@@ -477,6 +477,7 @@ function chargerJsPdf() {
   if (promesseJsPdf) return promesseJsPdf;
   promesseJsPdf = new Promise((resolve, reject) => {
     const script = document.createElement('script');
+    script.crossOrigin = 'anonymous';
     script.src = 'https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js';
     script.onload = () => resolve();
     script.onerror = () => reject(new Error('jsPDF n\'a pas pu être chargé'));
