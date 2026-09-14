@@ -417,11 +417,26 @@ document.getElementById('tb-nouveau-mdp-valider').addEventListener('click', asyn
 });
 
 // --- Miniatures des photos : génère les manquantes, sans jamais toucher aux
-// photos d'origine (utilisées pour le Compcard et le téléchargement). ---
-function genererMiniatureDepuisUrl(url, coteMax = 500, qualite = 0.75) {
+// photos d'origine (utilisées pour le Compcard et le téléchargement). On
+// télécharge d'abord la photo nous-mêmes (fetch) puis on la relit depuis une
+// URL locale (blob:) plutôt que de charger l'image directement depuis le nom
+// de domaine de Supabase — évite les soucis de sécurité inter-domaines (CORS)
+// qui empêcheraient sinon le navigateur de lire l'image pour la réduire.
+async function genererMiniatureDepuisUrl(url, coteMax = 500, qualite = 0.75) {
+  let reponse;
+  try {
+    reponse = await fetch(url);
+  } catch (e) {
+    return { blob: null, erreur: "impossible de télécharger la photo d'origine (réseau) : " + e.message };
+  }
+  if (!reponse.ok) {
+    return { blob: null, erreur: "la photo d'origine a répondu avec une erreur (code " + reponse.status + ")" };
+  }
+  const blobOriginal = await reponse.blob();
+  const urlLocale = URL.createObjectURL(blobOriginal);
+
   return new Promise((resolve) => {
     const img = new Image();
-    img.crossOrigin = 'anonymous';
     img.onload = () => {
       try {
         const coteActuel = Math.max(img.width, img.height);
@@ -433,13 +448,21 @@ function genererMiniatureDepuisUrl(url, coteMax = 500, qualite = 0.75) {
         ctx.fillStyle = '#fff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob((blob) => resolve(blob || null), 'image/jpeg', qualite);
+        canvas.toBlob((blob) => {
+          URL.revokeObjectURL(urlLocale);
+          if (blob) resolve({ blob, erreur: null });
+          else resolve({ blob: null, erreur: "le navigateur n'a pas réussi à générer l'image réduite" });
+        }, 'image/jpeg', qualite);
       } catch (e) {
-        resolve(null);
+        URL.revokeObjectURL(urlLocale);
+        resolve({ blob: null, erreur: 'erreur lors de la réduction : ' + e.message });
       }
     };
-    img.onerror = () => resolve(null);
-    img.src = url;
+    img.onerror = () => {
+      URL.revokeObjectURL(urlLocale);
+      resolve({ blob: null, erreur: "la photo téléchargée n'a pas pu être lue comme une image" });
+    };
+    img.src = urlLocale;
   });
 }
 
@@ -467,31 +490,32 @@ document.getElementById('miniatures-generer-btn').addEventListener('click', asyn
     return;
   }
 
-  let reussies = 0, echouees = 0;
+  let reussies = 0, echouees = 0, premiereErreur = null;
   for (let i = 0; i < photos.length; i++) {
     const photo = photos[i];
     msg.className = 'form-msg ok';
     msg.textContent = `Génération en cours… ${i + 1} / ${photos.length}`;
     msg.style.display = 'block';
     try {
-      const blob = await genererMiniatureDepuisUrl(photo.url);
-      if (!blob) { echouees++; continue; }
+      const { blob, erreur } = await genererMiniatureDepuisUrl(photo.url);
+      if (!blob) { echouees++; if (!premiereErreur) premiereErreur = erreur; continue; }
       const cheminMiniature = `${photo.model_id}/miniatures/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
       const { error: erreurUpload } = await sb.storage.from('model-photos').upload(cheminMiniature, blob);
-      if (erreurUpload) { echouees++; continue; }
+      if (erreurUpload) { echouees++; if (!premiereErreur) premiereErreur = "envoi refusé : " + erreurUpload.message; continue; }
       const urlMiniature = sb.storage.from('model-photos').getPublicUrl(cheminMiniature).data.publicUrl;
       const { error: erreurMaj } = await sb.from('model_photos')
         .update({ url_miniature: urlMiniature, chemin_miniature: cheminMiniature })
         .eq('id', photo.id);
-      if (erreurMaj) { echouees++; continue; }
+      if (erreurMaj) { echouees++; if (!premiereErreur) premiereErreur = "mise à jour de la fiche refusée : " + erreurMaj.message; continue; }
       reussies++;
     } catch (e) {
       echouees++;
+      if (!premiereErreur) premiereErreur = e.message;
     }
   }
 
   msg.className = echouees ? 'form-msg err' : 'form-msg ok';
-  msg.textContent = `Terminé : ${reussies} miniature(s) générée(s)` + (echouees ? `, ${echouees} échec(s) (photo à l'origine peut-être inaccessible — réessayez plus tard).` : '.');
+  msg.textContent = `Terminé : ${reussies} miniature(s) générée(s)` + (echouees ? `, ${echouees} échec(s). Raison probable : ${premiereErreur}` : '.');
   msg.style.display = 'block';
   btn.disabled = false;
 });
