@@ -82,6 +82,22 @@
         <button type="submit" class="btn btn--principal">Se connecter</button>
         <div id="co-msg" class="form-msg"></div>
       </form>
+      <p style="margin-top:1rem;"><a href="#" id="co-mdp-oublie-lien" style="font-size:0.85rem; color:var(--gris);">Mot de passe oublié ?</a></p>
+    </div>
+
+    <div id="panneau-mdp-oublie" class="panneau">
+      <p style="font-size:0.9rem; color:var(--gris); margin-bottom:1rem;">Indiquez l'e-mail utilisé pour votre inscription : si un compte y est associé, un lien de réinitialisation vous sera envoyé par e-mail.</p>
+      <div class="form-champ"><label for="co-mdp-oublie-email">E-mail</label><input type="email" id="co-mdp-oublie-email"></div>
+      <button class="btn btn--principal" id="co-mdp-oublie-envoyer">Envoyer le lien de réinitialisation</button>
+      <div id="co-mdp-oublie-msg" class="form-msg"></div>
+      <p style="margin-top:1rem;"><a href="#" id="co-mdp-oublie-retour" style="font-size:0.85rem; color:var(--gris);">← Retour à la connexion</a></p>
+    </div>
+
+    <div id="panneau-nouveau-mdp" class="panneau">
+      <p style="font-size:0.9rem; color:var(--gris); margin-bottom:1rem;">Choisissez votre nouveau mot de passe (au moins 8 caractères).</p>
+      <div class="form-champ"><label for="co-nouveau-mdp">Nouveau mot de passe</label><input type="password" id="co-nouveau-mdp"></div>
+      <button class="btn btn--principal" id="co-nouveau-mdp-valider">Valider le nouveau mot de passe</button>
+      <div id="co-nouveau-mdp-msg" class="form-msg"></div>
     </div>
 
     <div id="panneau-inscription" class="panneau">
@@ -795,6 +811,68 @@ document.getElementById('form-connexion').addEventListener('submit', async (e) =
   ouvrirDashboard();
 });
 
+// --- Mot de passe oublié ---
+// Même principe que côté admin : ce drapeau évite qu'une reconnexion
+// automatique (session déjà active) n'ouvre le tableau de bord directement
+// pendant qu'un lien de réinitialisation est en train d'être traité.
+let recuperationMdpEnCoursMannequin = false;
+function afficherPanneau(idPanneau) {
+  document.querySelectorAll('#bloc-auth .panneau').forEach(p => p.classList.remove('actif'));
+  document.getElementById(idPanneau).classList.add('actif');
+}
+document.getElementById('co-mdp-oublie-lien').addEventListener('click', (e) => {
+  e.preventDefault();
+  document.getElementById('co-mdp-oublie-email').value = document.getElementById('co-email').value.trim();
+  afficherPanneau('panneau-mdp-oublie');
+});
+document.getElementById('co-mdp-oublie-retour').addEventListener('click', (e) => {
+  e.preventDefault();
+  afficherPanneau('panneau-connexion');
+});
+document.getElementById('co-mdp-oublie-envoyer').addEventListener('click', async () => {
+  if (!sb) return;
+  const email = document.getElementById('co-mdp-oublie-email').value.trim();
+  const msg = document.getElementById('co-mdp-oublie-msg');
+  if (!email) return;
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + window.location.pathname
+  });
+  msg.className = 'form-msg ' + (error ? 'err' : 'ok');
+  msg.textContent = error
+    ? "Erreur lors de l'envoi : " + error.message
+    : "Si cet e-mail est associé à un compte, un lien de réinitialisation vient d'être envoyé. Vérifiez votre boîte mail (et vos spams).";
+  msg.style.display = 'block';
+});
+
+sb && sb.auth.onAuthStateChange((event) => {
+  if (event !== 'PASSWORD_RECOVERY') return;
+  recuperationMdpEnCoursMannequin = true;
+  dashboard.classList.remove('actif');
+  blocAuth.style.display = '';
+  afficherPanneau('panneau-nouveau-mdp');
+});
+
+document.getElementById('co-nouveau-mdp-valider').addEventListener('click', async () => {
+  const nouveauMdp = document.getElementById('co-nouveau-mdp').value;
+  const msg = document.getElementById('co-nouveau-mdp-msg');
+  if (nouveauMdp.length < 8) {
+    msg.className = 'form-msg err';
+    msg.textContent = 'Le mot de passe doit contenir au moins 8 caractères.';
+    msg.style.display = 'block';
+    return;
+  }
+  if (!sb) return;
+  const { error } = await sb.auth.updateUser({ password: nouveauMdp });
+  if (error) {
+    msg.className = 'form-msg err';
+    msg.textContent = 'Erreur : ' + error.message;
+    msg.style.display = 'block';
+    return;
+  }
+  recuperationMdpEnCoursMannequin = false;
+  ouvrirDashboard();
+});
+
 // --- Déconnexion ---
 document.getElementById('btn-deconnexion').addEventListener('click', async () => {
   await sb.auth.signOut();
@@ -1439,7 +1517,7 @@ document.getElementById('pj-ajouter').addEventListener('click', async () => {
   try {
     if (!sb) return;
     const { data: { session } } = await sb.auth.getSession();
-    if (session) ouvrirDashboard();
+    if (session && !recuperationMdpEnCoursMannequin) ouvrirDashboard();
   } catch (e) {}
 })();
 </script>
