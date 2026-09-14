@@ -709,6 +709,41 @@ async function chargerPhotos() {
   });
 }
 
+// Redimensionne une photo côté navigateur avant l'envoi. Les mannequins
+// envoient souvent des fichiers de plusieurs Mo directement depuis leur
+// téléphone/appareil photo — sans cette étape, ce même fichier énorme est
+// ensuite retéléchargé TEL QUEL par chaque visiteur du book (juste pour
+// afficher une petite vignette), ce qui rend la navigation très lente.
+// Une seule version est conservée (pas de doublon en stockage) : on limite
+// le plus grand côté à 2800px, ce qui reste largement suffisant pour la
+// fiche Compcard imprimée (qui n'a besoin que d'environ 1450×2050px pour sa
+// plus grande photo, à 400 DPI) tout en réduisant fortement le poids des
+// fichiers bruts de smartphone (souvent 3000-4000px et plusieurs Mo).
+function redimensionnerImage(fichier, coteMax = 2800, qualite = 0.88) {
+  return new Promise((resolve) => {
+    if (fichier.size < 900 * 1024) { resolve(fichier); return; } // déjà raisonnable, inutile de retoucher
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const coteActuel = Math.max(img.width, img.height);
+        const ratio = coteActuel > coteMax ? coteMax / coteActuel : 1;
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * ratio);
+        canvas.height = Math.round(img.height * ratio);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+          if (!blob || blob.size >= fichier.size) { resolve(fichier); return; } // pas de gain : on garde l'original
+          resolve(new File([blob], fichier.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' }));
+        }, 'image/jpeg', qualite);
+      } catch (e) {
+        resolve(fichier); // image protégée ou illisible : on envoie l'original plutôt que d'échouer
+      }
+    };
+    img.onerror = () => resolve(fichier);
+    img.src = URL.createObjectURL(fichier);
+  });
+}
+
 async function convertirSiHeic(fichier) {
   const estHeic = /image\/hei(c|f)/i.test(fichier.type) || /\.(heic|heif)$/i.test(fichier.name);
   if (!estHeic || typeof heic2any === 'undefined') return fichier;
@@ -761,7 +796,9 @@ document.getElementById('input-photo').addEventListener('change', async (e) => {
   for (const { fichierOriginal, img, statut } of lignes) {
     statut.textContent = '⏳ Préparation...';
     try {
-      const fichier = await convertirSiHeic(fichierOriginal);
+      const fichierConverti = await convertirSiHeic(fichierOriginal);
+      statut.textContent = '⏳ Optimisation...';
+      const fichier = await redimensionnerImage(fichierConverti);
       try { img.src = URL.createObjectURL(fichier); } catch (err) {}
       statut.textContent = '⏳ Envoi en cours...';
 
@@ -772,9 +809,12 @@ document.getElementById('input-photo').addEventListener('change', async (e) => {
         statut.style.color = 'var(--rouge)';
         continue;
       }
-
       const { data: urlPublique } = sb.storage.from('model-photos').getPublicUrl(chemin);
-      await sb.from('model_photos').insert({ model_id: user.id, url: urlPublique.publicUrl, chemin: chemin });
+      await sb.from('model_photos').insert({
+        model_id: user.id,
+        url: urlPublique.publicUrl,
+        chemin
+      });
 
       statut.textContent = '✅ Envoyée avec succès';
       statut.style.color = '#1e5b25';
