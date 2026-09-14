@@ -266,7 +266,11 @@
               <option value="Shoot photo">Shoot photo</option>
               <option value="Publicité">Publicité</option>
               <option value="Casting">Casting</option>
+              <option value="New Face">New Face (nouveau mannequin, aucune expérience pour l'instant)</option>
+              <option value="Autre">Autre</option>
             </select>
+            <input type="text" id="pj-type-autre" placeholder="Précisez le type de projet" style="display:none; margin-top:0.5rem;">
+            <p id="pj-type-newface-note" style="display:none; font-size:0.82rem; color:var(--gris); margin-top:0.4rem;">Cette mention s'affichera simplement comme « New Face » sur votre fiche — elle indique que vous débutez. Vous pourrez ajouter vos vrais projets dès que vous en aurez réalisé un.</p>
           </div>
           <div class="form-champ">
             <label for="pj-titre">Nom du projet</label>
@@ -582,7 +586,10 @@ remplirSelectListe('pj-pays', [
   'Viêt Nam', 'Yémen', 'Zambie', 'Zimbabwe'
 ]);
 
-['pr-ville', 'pr-tailleveternents', 'pr-yeux', 'pr-cheveux', 'pj-pays', 'pj-ville'].forEach(id => configurerSelectAvecAutre(id, id + '-autre'));
+['pr-ville', 'pr-tailleveternents', 'pr-yeux', 'pr-cheveux', 'pj-pays', 'pj-ville', 'pj-type'].forEach(id => configurerSelectAvecAutre(id, id + '-autre'));
+document.getElementById('pj-type').addEventListener('change', (e) => {
+  document.getElementById('pj-type-newface-note').style.display = e.target.value === 'New Face' ? 'block' : 'none';
+});
 
 // La "Période" d'un projet passe d'un texte libre à des sélecteurs adaptés à ce
 // dont la personne se souvient réellement : juste l'année, le mois et l'année, ou
@@ -1002,12 +1009,14 @@ document.getElementById('form-publication').addEventListener('submit', async (e)
     }
     const manquants = Object.entries(champsObligatoires).filter(([, v]) => !v).map(([nom]) => nom);
 
-    // Pas d'exigence "au moins un projet" : un nouveau mannequin qui n'a encore
-    // jamais fait de défilé, shooting, publicité ou casting n'aurait sinon aucun
-    // moyen de publier son profil. "Mes réalisations" reste facultatif et pourra
-    // toujours être complété plus tard, dès son premier projet réel.
     const { count: nbPhotos } = await sb.from('model_photos').select('id', { count: 'exact', head: true }).eq('model_id', user.id);
     if (!nbPhotos) manquants.push('Au moins une photo');
+
+    // Redevenu obligatoire maintenant que "Type de projet" propose "New Face" :
+    // un mannequin qui débute sans aucune expérience a désormais toujours un moyen
+    // de remplir cette exigence (voir plus haut dans ce fichier).
+    const { count: nbProjets } = await sb.from('model_projects').select('id', { count: 'exact', head: true }).eq('model_id', user.id);
+    if (!nbProjets) manquants.push('Au moins un projet réalisé (ou "New Face" si vous débutez)');
 
     if (manquants.length) {
       maj.published = false;
@@ -1247,7 +1256,8 @@ async function chargerProjets() {
       const p = projets.find(x => x.id === btn.dataset.id);
       if (!p) return;
       projetEnEdition = p.id;
-      document.getElementById('pj-type').value = p.type_projet || '';
+      definirSelectOuAutre('pj-type', 'pj-type-autre', p.type_projet || '');
+      document.getElementById('pj-type-newface-note').style.display = p.type_projet === 'New Face' ? 'block' : 'none';
       document.getElementById('pj-titre').value = p.titre || '';
       definirPeriode(p.periode || '');
       definirSelectOuAutre('pj-pays', 'pj-pays-autre', p.pays || '');
@@ -1277,6 +1287,8 @@ function annulerEditionProjet() {
   document.getElementById('form-projet').querySelectorAll('input, select').forEach(el => { el.value = ''; });
   document.getElementById('pj-pays-autre').style.display = 'none';
   document.getElementById('pj-ville-autre').style.display = 'none';
+  document.getElementById('pj-type-autre').style.display = 'none';
+  document.getElementById('pj-type-newface-note').style.display = 'none';
   reinitialiserPeriode();
   document.getElementById('pj-ajouter').textContent = 'Ajouter ce projet';
   document.getElementById('pj-annuler').style.display = 'none';
@@ -1297,9 +1309,14 @@ document.getElementById('pj-ajouter').addEventListener('click', async () => {
     afficherMsg(msg, 'Choisissez un type de projet ci-dessus avant de l\'ajouter.', 'err');
     return;
   }
+  if (champType.value === 'Autre' && !document.getElementById('pj-type-autre').value.trim()) {
+    document.getElementById('pj-type-autre').focus();
+    afficherMsg(msg, 'Précisez le type de projet avant de l\'ajouter.', 'err');
+    return;
+  }
 
   const donneesProjet = {
-    type_projet: champType.value,
+    type_projet: valeurSelectOuAutre('pj-type', 'pj-type-autre'),
     titre: document.getElementById('pj-titre').value.trim(),
     periode: valeurPeriode(),
     pays: valeurSelectOuAutre('pj-pays', 'pj-pays-autre'),
@@ -1333,6 +1350,8 @@ document.getElementById('pj-ajouter').addEventListener('click', async () => {
   document.getElementById('form-projet').querySelectorAll('input, select').forEach(el => { el.value = ''; });
   document.getElementById('pj-pays-autre').style.display = 'none';
   document.getElementById('pj-ville-autre').style.display = 'none';
+  document.getElementById('pj-type-autre').style.display = 'none';
+  document.getElementById('pj-type-newface-note').style.display = 'none';
   reinitialiserPeriode();
   afficherMsg(msg, '✅ Projet ajouté avec succès ! Il apparaît ci-dessus, dans « Mes réalisations ».', 'ok');
   await chargerProjets();
