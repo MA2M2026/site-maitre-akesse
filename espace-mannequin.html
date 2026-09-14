@@ -22,8 +22,10 @@
 </head>
 <body>
 
+<div id="flash-succes-fond" class="flash-succes-fond"></div>
 <div id="flash-succes" class="flash-succes">
-  🎉 Félicitations, votre profil est maintenant visible sur Le Book !
+  <span class="flash-succes-icone">🎉</span>
+  Félicitations, votre profil est maintenant visible sur Le Book !
 </div>
 
 <header class="site-header-v2">
@@ -272,35 +274,37 @@
             <input type="text" id="pj-type-autre" placeholder="Précisez le type de projet" style="display:none; margin-top:0.5rem;">
             <p id="pj-type-newface-note" style="display:none; font-size:0.82rem; color:var(--gris); margin-top:0.4rem;">Cette mention s'affichera simplement comme « New Face » sur votre fiche — elle indique que vous débutez. Vous pourrez ajouter vos vrais projets dès que vous en aurez réalisé un.</p>
           </div>
-          <div class="form-champ">
-            <label for="pj-titre">Nom du projet</label>
-            <input type="text" id="pj-titre" placeholder="ex: Cacao Fashion Show">
-          </div>
-          <div class="form-champ">
-            <label for="pj-periode-precision">Période</label>
-            <select id="pj-periode-precision">
-              <option value="">—</option>
-              <option value="annee">Je me souviens juste de l'année</option>
-              <option value="mois">Je me souviens du mois et de l'année</option>
-              <option value="jour">Je me souviens de la date exacte</option>
-            </select>
-            <select id="pj-periode-annee" style="display:none; margin-top:0.5rem;"></select>
-            <input type="month" id="pj-periode-mois" style="display:none; margin-top:0.5rem;">
-            <input type="date" id="pj-periode-jour" style="display:none; margin-top:0.5rem;">
-          </div>
-          <div class="form-champ">
-            <label for="pj-pays">Pays</label>
-            <select id="pj-pays"></select>
-            <input type="text" id="pj-pays-autre" placeholder="Précisez le pays" style="display:none; margin-top:0.5rem;">
-          </div>
-          <div class="form-champ">
-            <label for="pj-ville">Ville</label>
-            <select id="pj-ville"></select>
-            <input type="text" id="pj-ville-autre" placeholder="Précisez la ville" style="display:none; margin-top:0.5rem;">
-          </div>
-          <div class="form-champ">
-            <label for="pj-promoteur">Promoteur / organisateur</label>
-            <input type="text" id="pj-promoteur" placeholder="ex: JNCC">
+          <div id="pj-details-autres-champs" style="display:contents;">
+            <div class="form-champ">
+              <label for="pj-titre">Nom du projet</label>
+              <input type="text" id="pj-titre" placeholder="ex: Cacao Fashion Show">
+            </div>
+            <div class="form-champ">
+              <label for="pj-periode-precision">Période</label>
+              <select id="pj-periode-precision">
+                <option value="">—</option>
+                <option value="annee">Je me souviens juste de l'année</option>
+                <option value="mois">Je me souviens du mois et de l'année</option>
+                <option value="jour">Je me souviens de la date exacte</option>
+              </select>
+              <select id="pj-periode-annee" style="display:none; margin-top:0.5rem;"></select>
+              <input type="month" id="pj-periode-mois" style="display:none; margin-top:0.5rem;">
+              <input type="date" id="pj-periode-jour" style="display:none; margin-top:0.5rem;">
+            </div>
+            <div class="form-champ">
+              <label for="pj-pays">Pays</label>
+              <select id="pj-pays"></select>
+              <input type="text" id="pj-pays-autre" placeholder="Précisez le pays" style="display:none; margin-top:0.5rem;">
+            </div>
+            <div class="form-champ">
+              <label for="pj-ville">Ville</label>
+              <select id="pj-ville"></select>
+              <input type="text" id="pj-ville-autre" placeholder="Précisez la ville" style="display:none; margin-top:0.5rem;">
+            </div>
+            <div class="form-champ">
+              <label for="pj-promoteur">Promoteur / organisateur</label>
+              <input type="text" id="pj-promoteur" placeholder="ex: JNCC">
+            </div>
           </div>
         </div>
         <button type="button" id="pj-ajouter" class="btn">Ajouter ce projet</button>
@@ -587,9 +591,16 @@ remplirSelectListe('pj-pays', [
 ]);
 
 ['pr-ville', 'pr-tailleveternents', 'pr-yeux', 'pr-cheveux', 'pj-pays', 'pj-ville', 'pj-type'].forEach(id => configurerSelectAvecAutre(id, id + '-autre'));
-document.getElementById('pj-type').addEventListener('change', (e) => {
-  document.getElementById('pj-type-newface-note').style.display = e.target.value === 'New Face' ? 'block' : 'none';
-});
+
+// "New Face" n'est pas un vrai projet avec un nom, un lieu, une date... : cacher
+// ces champs évite qu'une personne débutante se sente obligée de les remplir
+// alors qu'elle n'a justement rien à y mettre.
+function appliquerVisibiliteTypeProjet(valeur) {
+  const estNewFace = valeur === 'New Face';
+  document.getElementById('pj-type-newface-note').style.display = estNewFace ? 'block' : 'none';
+  document.getElementById('pj-details-autres-champs').style.display = estNewFace ? 'none' : 'contents';
+}
+document.getElementById('pj-type').addEventListener('change', (e) => appliquerVisibiliteTypeProjet(e.target.value));
 
 // La "Période" d'un projet passe d'un texte libre à des sélecteurs adaptés à ce
 // dont la personne se souvient réellement : juste l'année, le mois et l'année, ou
@@ -1047,11 +1058,18 @@ document.getElementById('form-publication').addEventListener('submit', async (e)
 });
 
 // --- Message flash de félicitations à la toute première publication réussie ---
+// Bien visible, au centre de l'écran, pour que la personne comprenne sans
+// aucun doute que son profil est désormais en ligne (pas juste un petit
+// bandeau discret en haut de page).
 function afficherFlashSucces() {
   const flash = document.getElementById('flash-succes');
-  if (!flash) return;
+  const fond = document.getElementById('flash-succes-fond');
+  if (!flash || !fond) return;
+  const fermer = () => { flash.classList.remove('actif'); fond.classList.remove('actif'); };
   flash.classList.add('actif');
-  setTimeout(() => flash.classList.remove('actif'), 6000);
+  fond.classList.add('actif');
+  fond.addEventListener('click', fermer, { once: true });
+  setTimeout(fermer, 6000);
 }
 
 // --- Photos ---
@@ -1257,7 +1275,7 @@ async function chargerProjets() {
       if (!p) return;
       projetEnEdition = p.id;
       definirSelectOuAutre('pj-type', 'pj-type-autre', p.type_projet || '');
-      document.getElementById('pj-type-newface-note').style.display = p.type_projet === 'New Face' ? 'block' : 'none';
+      appliquerVisibiliteTypeProjet(p.type_projet || '');
       document.getElementById('pj-titre').value = p.titre || '';
       definirPeriode(p.periode || '');
       definirSelectOuAutre('pj-pays', 'pj-pays-autre', p.pays || '');
@@ -1288,7 +1306,7 @@ function annulerEditionProjet() {
   document.getElementById('pj-pays-autre').style.display = 'none';
   document.getElementById('pj-ville-autre').style.display = 'none';
   document.getElementById('pj-type-autre').style.display = 'none';
-  document.getElementById('pj-type-newface-note').style.display = 'none';
+  appliquerVisibiliteTypeProjet('');
   reinitialiserPeriode();
   document.getElementById('pj-ajouter').textContent = 'Ajouter ce projet';
   document.getElementById('pj-annuler').style.display = 'none';
@@ -1351,7 +1369,7 @@ document.getElementById('pj-ajouter').addEventListener('click', async () => {
   document.getElementById('pj-pays-autre').style.display = 'none';
   document.getElementById('pj-ville-autre').style.display = 'none';
   document.getElementById('pj-type-autre').style.display = 'none';
-  document.getElementById('pj-type-newface-note').style.display = 'none';
+  appliquerVisibiliteTypeProjet('');
   reinitialiserPeriode();
   afficherMsg(msg, '✅ Projet ajouté avec succès ! Il apparaît ci-dessus, dans « Mes réalisations ».', 'ok');
   await chargerProjets();
