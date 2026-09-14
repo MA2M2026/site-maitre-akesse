@@ -382,13 +382,18 @@ section { padding: 5rem 0; }
 
 /* ---------- Formulaires ---------- */
 
-.form-champ { margin-bottom: 1.3rem; display: flex; flex-direction: column; gap: 0.5rem; }
+/* min-width: 0 est nécessaire : par défaut, un élément dans une grille/un flex
+   ne peut jamais devenir plus étroit que son contenu (ex. le plus long nom de
+   pays de la liste "Pays"), ce qui forçait toute la grille du formulaire à
+   déborder de l'écran sur mobile sans cette règle. */
+.form-champ { margin-bottom: 1.3rem; display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; }
 .form-champ label { font-size: 0.68rem; font-weight: 500; color: var(--texte-doux); text-transform: uppercase; letter-spacing: 0.12em; }
 
 .form-champ input, .form-champ textarea, .form-champ select {
   font-family: var(--texte); font-size: 1rem; padding: 0.85rem 1rem;
   border: 1px solid var(--gris-clair); background: rgba(255,255,255,0.03); color: var(--texte-corps);
   border-radius: 2px; transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+  min-width: 0; width: 100%;
 }
 .form-champ input:focus, .form-champ textarea:focus, .form-champ select:focus {
   outline: none; border-color: var(--bordeaux-clair); background: rgba(255,255,255,0.05);
