@@ -1617,3 +1617,21 @@ create policy "Les admins suppriment une ancienne version de photo"
   );
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 47 : retrait des outils "Miniatures des photos" et
+-- "Recompresser les photos originales existantes" du tableau de bord
+-- (demande explicite du propriétaire du site — nettoyage après plusieurs
+-- soucis d'affichage/erreurs rencontrés en les utilisant). Cette extension
+-- révoque uniquement les autorisations admin qui n'étaient utiles qu'à ces
+-- deux outils, aujourd'hui retirés de tableau-de-bord.html — sans toucher
+-- aux colonnes model_photos.url_miniature / chemin_miniature /
+-- originale_optimisee, toujours utilisées par les NOUVEAUX envois de photo
+-- (espace-mannequin.html, qui génère sa propre miniature et compresse
+-- l'originale à l'envoi, indépendamment de ces outils admin).
+-- ===================================================================
+drop policy if exists "Les admins deposent une photo optimisee" on storage.objects;
+drop policy if exists "Les admins suppriment une ancienne version de photo" on storage.objects;
+drop policy if exists "Les admins renseignent les miniatures" on model_photos;
+
+NOTIFY pgrst, 'reload schema';
