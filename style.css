@@ -405,6 +405,14 @@ section { padding: 5rem 0; }
 .bloc-section h3 { margin-top: 0; }
 .bloc-section > p.bloc-section-intro { margin-top: -0.6rem; color: var(--gris); font-size: 0.9rem; }
 
+.flash-succes {
+  position: fixed; top: -120px; left: 50%; transform: translateX(-50%);
+  background: #1e5b25; color: #fff; padding: 1rem 1.8rem; border-radius: 6px;
+  font-weight: 600; font-size: 0.95rem; box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  z-index: 999; transition: top 0.5s ease; max-width: 90vw; text-align: center;
+}
+.flash-succes.actif { top: 20px; }
+
 .form-msg { font-size: 0.9rem; padding: 0.8rem 1rem; margin-top: 1rem; display: none; border-radius: 2px; }
 .form-msg.ok { display: block; background: rgba(30,91,37,0.16); color: #8fd39a; border: 1px solid rgba(30,91,37,0.4); }
 .form-msg.err { display: block; background: rgba(154,28,44,0.16); color: #f0a1ac; border: 1px solid rgba(154,28,44,0.4); }
