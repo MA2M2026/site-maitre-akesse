@@ -91,11 +91,21 @@
       <div class="form-grille">
         <div class="form-champ">
           <label for="ins-taille">Taille (cm) *</label>
-          <input type="number" id="ins-taille" required>
+          <select id="ins-taille" required></select>
         </div>
         <div class="form-champ">
           <label for="ins-tailleveternents">Taille de vêtements *</label>
-          <input type="text" id="ins-tailleveternents" placeholder="ex: S, M, L, 40" required>
+          <select id="ins-tailleveternents" required>
+            <option value="">—</option>
+            <option value="XS">XS</option>
+            <option value="S">S</option>
+            <option value="M">M</option>
+            <option value="L">L</option>
+            <option value="XL">XL</option>
+            <option value="XXL">XXL</option>
+            <option value="Autre">Autre</option>
+          </select>
+          <input type="text" id="ins-tailleveternents-autre" placeholder="Précisez la taille" style="display:none; margin-top:0.5rem;">
         </div>
       </div>
 
@@ -247,6 +257,33 @@
   champ.min = new Date(aujourdhui.getFullYear() - 100, aujourdhui.getMonth(), aujourdhui.getDate()).toISOString().slice(0, 10);
 })();
 
+// --- Taille en liste déroulante plutôt qu'en saisie libre : évite les fautes de
+// frappe (ex. "17O" au lieu de "170") et les valeurs invraisemblables. ---
+function remplirSelectNombres(id, min, max, pas, suffixe) {
+  const champ = document.getElementById(id);
+  if (!champ) return;
+  champ.appendChild(new Option('—', ''));
+  for (let v = min; v <= max; v += pas) {
+    champ.appendChild(new Option(v + (suffixe || ''), v));
+  }
+}
+remplirSelectNombres('ins-taille', 140, 210, 1, ' cm');
+
+// --- Liste déroulante avec option "Autre" : garde la souplesse d'un champ libre
+// pour les cas non prévus dans la liste, sans forcer une saisie 100% manuelle. ---
+document.getElementById('ins-tailleveternents').addEventListener('change', () => {
+  const select = document.getElementById('ins-tailleveternents');
+  const autre = document.getElementById('ins-tailleveternents-autre');
+  autre.style.display = select.value === 'Autre' ? 'block' : 'none';
+  if (select.value !== 'Autre') autre.value = '';
+});
+function valeurTailleVetements() {
+  const select = document.getElementById('ins-tailleveternents');
+  const autre = document.getElementById('ins-tailleveternents-autre');
+  if (select.value === 'Autre') return (autre.value || '').trim();
+  return select.value;
+}
+
 function redimensionnerImage(fichier, coteMax = 2800, qualite = 0.88) {
   return new Promise((resolve) => {
     // On ne retouche que les JPEG : un PNG/GIF/WebP peut avoir de la transparence,
@@ -339,7 +376,7 @@ document.getElementById('form-inscription').addEventListener('submit', async (e)
     full_name: document.getElementById('ins-nom').value.trim(),
     date_naissance: document.getElementById('ins-naissance').value || null,
     height_cm: parseInt(document.getElementById('ins-taille').value) || null,
-    clothing_size: document.getElementById('ins-tailleveternents').value.trim(),
+    clothing_size: valeurTailleVetements(),
     phone: document.getElementById('ins-telephone').value.trim(),
     code_utilise: codeValide,
     reference_paiement: document.getElementById('ins-reference-paiement').value.trim(),
