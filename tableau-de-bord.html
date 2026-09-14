@@ -131,21 +131,6 @@
     <div class="stats-grille" id="stats-grille">Chargement des statistiques…</div>
 
     <div class="liste-recente">
-      <h2 style="margin-bottom:0.3rem;">Optimiser les photos existantes</h2>
-      <p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">
-        Les photos envoyées avant la mise en place du redimensionnement automatique sont restées à leur poids d'origine
-        (parfois plusieurs Mo), ce qui ralentit fortement le book sur téléphone. Ce bouton repasse sur toutes les photos
-        du site : celles qui sont déjà légères ne sont pas touchées, les plus lourdes sont réduites (2800px de long
-        côté maximum, qualité 88%) — largement suffisant pour la fiche Compcard imprimée. Les liens déjà utilisés ne
-        changent pas. L'opération peut prendre plusieurs minutes selon le nombre de photos ; tu peux fermer et revenir
-        plus tard, il suffit de relancer pour continuer sur les photos restantes.
-      </p>
-      <button class="btn btn--principal" id="optimiser-photos-btn">Lancer l'optimisation</button>
-      <div id="optimiser-photos-progression" style="margin-top:0.8rem; font-size:0.85rem; color:var(--gris);"></div>
-      <div id="optimiser-photos-log" style="margin-top:0.6rem; max-height:220px; overflow-y:auto; font-size:0.78rem; color:var(--gris); display:none;"></div>
-    </div>
-
-    <div class="liste-recente">
       <div class="dossiers-entete">
         <h2 style="margin:0;">Projets & castings</h2>
       </div>
@@ -306,86 +291,6 @@ document.getElementById('tb-logout-btn').addEventListener('click', async () => {
   await sb.auth.signOut();
   document.getElementById('bloc-tableau').style.display = 'none';
   document.getElementById('bloc-login').style.display = 'block';
-});
-
-// --- Optimisation des photos déjà en ligne (poids d'origine, envoyées avant
-// la mise en place du redimensionnement automatique à l'envoi) ---
-function redimensionnerBlobPourOptim(blob, coteMax = 2800, qualite = 0.88) {
-  return new Promise((resolve) => {
-    // On ne retouche que les JPEG : un PNG/GIF/WebP peut avoir de la transparence,
-    // qui deviendrait un fond noir en le convertissant en JPEG (pas de canal alpha).
-    // Ces formats sont rares pour une photo de book et souvent volontaires.
-    if (blob.type !== 'image/jpeg' || blob.size < 900 * 1024) { resolve(null); return; }
-    const img = new Image();
-    img.onload = () => {
-      try {
-        const coteActuel = Math.max(img.width, img.height);
-        if (coteActuel <= coteMax && blob.size < 2.5 * 1024 * 1024) { resolve(null); return; }
-        const ratio = coteActuel > coteMax ? coteMax / coteActuel : 1;
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.round(img.width * ratio);
-        canvas.height = Math.round(img.height * ratio);
-        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob((resultat) => {
-          if (!resultat || resultat.size >= blob.size) { resolve(null); return; }
-          resolve(resultat);
-        }, 'image/jpeg', qualite);
-      } catch (e) { resolve(null); }
-    };
-    img.onerror = () => resolve(null);
-    img.src = URL.createObjectURL(blob);
-  });
-}
-
-document.getElementById('optimiser-photos-btn').addEventListener('click', async () => {
-  const btn = document.getElementById('optimiser-photos-btn');
-  const progression = document.getElementById('optimiser-photos-progression');
-  const log = document.getElementById('optimiser-photos-log');
-  btn.disabled = true;
-  log.style.display = 'block';
-  log.innerHTML = '';
-  progression.textContent = 'Chargement de la liste des photos…';
-
-  const { data: photos, error } = await sb.from('model_photos').select('id, url, chemin');
-  if (error || !photos) {
-    progression.textContent = 'Erreur lors du chargement des photos.';
-    btn.disabled = false;
-    return;
-  }
-
-  let nbAllegees = 0, nbDejaLegeres = 0, nbEchecs = 0, i = 0;
-  for (const photo of photos) {
-    i++;
-    progression.textContent = `Photo ${i} / ${photos.length}…`;
-    if (!photo.chemin) { nbEchecs++; continue; }
-    try {
-      const reponse = await fetch(photo.url);
-      if (!reponse.ok) throw new Error('téléchargement échoué');
-      const blobOriginal = await reponse.blob();
-      const blobAllege = await redimensionnerBlobPourOptim(blobOriginal);
-      if (!blobAllege) { nbDejaLegeres++; continue; }
-
-      const { error: erreurUpload } = await sb.storage.from('model-photos')
-        .upload(photo.chemin, blobAllege, { upsert: true, contentType: 'image/jpeg' });
-      if (erreurUpload) throw erreurUpload;
-
-      nbAllegees++;
-      const ligne = document.createElement('div');
-      ligne.textContent = `✅ ${photo.chemin} — ${Math.round(blobOriginal.size / 1024)} Ko → ${Math.round(blobAllege.size / 1024)} Ko`;
-      log.appendChild(ligne);
-      log.scrollTop = log.scrollHeight;
-    } catch (e) {
-      nbEchecs++;
-      const ligne = document.createElement('div');
-      ligne.style.color = 'var(--bordeaux-clair)';
-      ligne.textContent = `❌ ${photo.chemin || photo.id} — ${e.message || e}`;
-      log.appendChild(ligne);
-      log.scrollTop = log.scrollHeight;
-    }
-  }
-
-  progression.textContent = `Terminé : ${nbAllegees} photo(s) allégée(s), ${nbDejaLegeres} déjà légère(s), ${nbEchecs} échec(s) sur ${photos.length} au total.`;
-  btn.disabled = false;
 });
 
 // --- Classement des visites réelles par mannequin (compact, top 10) ---
