@@ -111,205 +111,221 @@
     </div>
 
     <form id="form-profil">
-      <div class="form-champ">
-        <label for="pr-nom">Nom complet *</label>
-        <input type="text" id="pr-nom" required>
-      </div>
-      <div class="form-grille">
+
+      <div class="bloc-section">
+        <h3>1. Informations personnelles</h3>
         <div class="form-champ">
-          <label for="pr-telephone">Votre téléphone (usage interne agence uniquement)</label>
-          <input type="tel" id="pr-telephone" placeholder="+225 07 00 00 00 00">
+          <label for="pr-nom">Nom complet *</label>
+          <input type="text" id="pr-nom" required>
         </div>
-        <div class="form-champ">
-          <label for="pr-email-perso">Votre e-mail (usage interne agence uniquement)</label>
-          <input type="email" id="pr-email-perso">
+        <div class="form-grille">
+          <div class="form-champ">
+            <label for="pr-telephone">Votre téléphone (usage interne agence uniquement)</label>
+            <input type="tel" id="pr-telephone" placeholder="+225 07 00 00 00 00">
+          </div>
+          <div class="form-champ">
+            <label for="pr-email-perso">Votre e-mail (usage interne agence uniquement)</label>
+            <input type="email" id="pr-email-perso">
+          </div>
         </div>
-      </div>
-      <p style="font-size:0.8rem; color:var(--gris); margin-top:-0.6rem;">🔒 Ces coordonnées ne sont jamais affichées publiquement — seul le contact officiel de l'agence apparaît sur votre fiche.</p>
-      <div class="form-grille">
-        <div class="form-champ">
-          <label for="pr-ville">Ville *</label>
-          <input type="text" id="pr-ville" required>
-        </div>
-        <div class="form-champ">
-          <label for="pr-naissance">Date de naissance *</label>
-          <input type="date" id="pr-naissance" required>
-        </div>
-      </div>
-      <div class="form-champ">
-        <label for="pr-categorie">Catégorie *</label>
-        <select id="pr-categorie" required>
-          <option value="femme">Femme</option>
-          <option value="homme">Homme</option>
-          <option value="new-faces">New Face</option>
-        </select>
-      </div>
-      <div class="form-grille">
-        <div class="form-champ">
-          <label for="pr-taille">Taille (cm) *</label>
-          <input type="number" id="pr-taille" required>
+        <p style="font-size:0.8rem; color:var(--gris); margin-top:-0.6rem;">🔒 Ces coordonnées ne sont jamais affichées publiquement — seul le contact officiel de l'agence apparaît sur votre fiche.</p>
+        <div class="form-grille">
+          <div class="form-champ">
+            <label for="pr-ville">Ville *</label>
+            <input type="text" id="pr-ville" required>
+          </div>
+          <div class="form-champ">
+            <label for="pr-naissance">Date de naissance *</label>
+            <input type="date" id="pr-naissance" required>
+          </div>
         </div>
         <div class="form-champ">
-          <label for="pr-poids">Poids (kg)</label>
-          <input type="number" id="pr-poids">
-        </div>
-        <div class="form-champ">
-          <label for="pr-poitrine">Poitrine (cm) *</label>
-          <input type="number" id="pr-poitrine" required>
-        </div>
-        <div class="form-champ">
-          <label for="pr-tourtaille">Tour de taille (cm) *</label>
-          <input type="number" id="pr-tourtaille" required>
-        </div>
-        <div class="form-champ" id="champ-hanches">
-          <label for="pr-hanches">Hanches (cm) *</label>
-          <input type="number" id="pr-hanches">
-        </div>
-        <div class="form-champ" id="champ-entrejambe" style="display:none;">
-          <label for="pr-entrejambe">Entrejambe (cm) *</label>
-          <input type="number" id="pr-entrejambe">
-        </div>
-        <div class="form-champ">
-          <label for="pr-pointure">Pointure *</label>
-          <input type="text" id="pr-pointure" required>
-        </div>
-        <div class="form-champ">
-          <label for="pr-carnation">Carnation / teint *</label>
-          <select id="pr-carnation" required>
-            <option value="">—</option>
-            <option value="Claire">Claire</option>
-            <option value="Métisse claire">Métisse claire</option>
-            <option value="Métisse foncée">Métisse foncée</option>
-            <option value="Foncée">Foncée</option>
-            <option value="Très foncée">Très foncée</option>
+          <label for="pr-categorie">Catégorie *</label>
+          <select id="pr-categorie" required>
+            <option value="femme">Femme</option>
+            <option value="homme">Homme</option>
+            <option value="new-faces">New Face</option>
           </select>
-        </div>
-        <div class="form-champ">
-          <label for="pr-tailleveternents">Taille de vêtements *</label>
-          <input type="text" id="pr-tailleveternents" placeholder="ex: S, M, L, 40" required>
-        </div>
-        <div class="form-champ">
-          <label for="pr-yeux">Couleur des yeux</label>
-          <input type="text" id="pr-yeux" placeholder="ex: Marron">
-        </div>
-        <div class="form-champ">
-          <label for="pr-cheveux">Couleur des cheveux</label>
-          <input type="text" id="pr-cheveux" placeholder="ex: Noir">
         </div>
       </div>
 
-      <h3 style="margin-top:2.5rem;">Mes réalisations</h3>
-      <p style="margin-top:-0.6rem; color:var(--gris); font-size:0.9rem;">Défilés, shootings, publicités, castings… Ajoutez chaque projet un par un, ils s'affichent tous sur votre fiche publique.</p>
-      <div id="projets-liste" class="projets-liste"></div>
-      <div id="form-projet" style="margin-top:1.2rem; padding:1.2rem; border:1px solid var(--gris-clair);">
+      <div class="bloc-section">
+        <h3>2. Mensurations</h3>
         <div class="form-grille">
           <div class="form-champ">
-            <label for="pj-type">Type de projet *</label>
-            <select id="pj-type" required>
+            <label for="pr-taille">Taille (cm) *</label>
+            <input type="number" id="pr-taille" required>
+          </div>
+          <div class="form-champ">
+            <label for="pr-poids">Poids (kg)</label>
+            <input type="number" id="pr-poids">
+          </div>
+          <div class="form-champ">
+            <label for="pr-poitrine">Poitrine (cm) *</label>
+            <input type="number" id="pr-poitrine" required>
+          </div>
+          <div class="form-champ">
+            <label for="pr-tourtaille">Tour de taille (cm) *</label>
+            <input type="number" id="pr-tourtaille" required>
+          </div>
+          <div class="form-champ" id="champ-hanches">
+            <label for="pr-hanches">Hanches (cm) *</label>
+            <input type="number" id="pr-hanches">
+          </div>
+          <div class="form-champ" id="champ-entrejambe" style="display:none;">
+            <label for="pr-entrejambe">Entrejambe (cm) *</label>
+            <input type="number" id="pr-entrejambe">
+          </div>
+          <div class="form-champ">
+            <label for="pr-pointure">Pointure *</label>
+            <input type="text" id="pr-pointure" required>
+          </div>
+          <div class="form-champ">
+            <label for="pr-carnation">Carnation / teint *</label>
+            <select id="pr-carnation" required>
               <option value="">—</option>
-              <option value="Défilé">Défilé</option>
-              <option value="Shoot photo">Shoot photo</option>
-              <option value="Publicité">Publicité</option>
-              <option value="Casting">Casting</option>
+              <option value="Claire">Claire</option>
+              <option value="Métisse claire">Métisse claire</option>
+              <option value="Métisse foncée">Métisse foncée</option>
+              <option value="Foncée">Foncée</option>
+              <option value="Très foncée">Très foncée</option>
             </select>
           </div>
           <div class="form-champ">
-            <label for="pj-titre">Nom du projet</label>
-            <input type="text" id="pj-titre" placeholder="ex: Cacao Fashion Show">
+            <label for="pr-tailleveternents">Taille de vêtements *</label>
+            <input type="text" id="pr-tailleveternents" placeholder="ex: S, M, L, 40" required>
           </div>
           <div class="form-champ">
-            <label for="pj-periode">Période</label>
-            <input type="text" id="pj-periode" placeholder="ex: Septembre 2026">
+            <label for="pr-yeux">Couleur des yeux</label>
+            <input type="text" id="pr-yeux" placeholder="ex: Marron">
           </div>
           <div class="form-champ">
-            <label for="pj-pays">Pays</label>
-            <input type="text" id="pj-pays" placeholder="ex: Côte d'Ivoire">
-          </div>
-          <div class="form-champ">
-            <label for="pj-ville">Ville</label>
-            <input type="text" id="pj-ville" placeholder="ex: Abidjan">
-          </div>
-          <div class="form-champ">
-            <label for="pj-promoteur">Promoteur / organisateur</label>
-            <input type="text" id="pj-promoteur" placeholder="ex: JNCC">
+            <label for="pr-cheveux">Couleur des cheveux</label>
+            <input type="text" id="pr-cheveux" placeholder="ex: Noir">
           </div>
         </div>
-        <button type="button" id="pj-ajouter" class="btn">Ajouter ce projet</button>
-        <button type="button" id="pj-annuler" class="btn" style="display:none; margin-left:0.5rem; color:var(--gris); border-color:var(--gris-clair);">Annuler la modification</button>
-        <div id="pj-msg" class="form-msg"></div>
       </div>
-      <script>
-        // Empêche la touche Entrée dans un champ "projet" de déclencher l'enregistrement
-        // du profil entier (le bloc projet est visuellement à l'intérieur du grand formulaire) :
-        // Entrée y déclenche "Ajouter ce projet" à la place.
-        document.getElementById('form-projet').addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
-            e.preventDefault();
-            document.getElementById('pj-ajouter').click();
-          }
-        });
-      </script>
 
-      <h3 style="margin-top:2.5rem;">Expérience</h3>
-      <div class="form-grille">
-        <div class="form-champ">
-          <label for="pr-experience">Années d'expérience</label>
-          <input type="number" id="pr-experience" min="0" placeholder="ex: 3">
-        </div>
-      </div>
-      <div class="form-champ">
-        <label>Type de modèle (cochez tout ce qui s'applique)</label>
-        <div style="display:flex; flex-wrap:wrap; gap:1.2rem; margin-top:0.4rem;">
-          <label style="display:flex; align-items:center; gap:0.5rem; font-weight:400;"><input type="checkbox" class="pr-type" value="catwalk" style="width:auto;"> Défilé / Catwalk</label>
-          <label style="display:flex; align-items:center; gap:0.5rem; font-weight:400;"><input type="checkbox" class="pr-type" value="photo" style="width:auto;"> Photo</label>
-          <label style="display:flex; align-items:center; gap:0.5rem; font-weight:400;"><input type="checkbox" class="pr-type" value="publicite" style="width:auto;"> Publicité</label>
-          <label style="display:flex; align-items:center; gap:0.5rem; font-weight:400;"><input type="checkbox" class="pr-type" value="commercial" style="width:auto;"> Commercial</label>
-          <label style="display:flex; align-items:center; gap:0.5rem; font-weight:400;"><input type="checkbox" class="pr-type" value="autre" style="width:auto;"> Autre</label>
-        </div>
-      </div>
-      <div class="form-grille">
-        <div class="form-champ">
-          <label for="pr-langues">Langues parlées</label>
-          <input type="text" id="pr-langues" placeholder="ex: Français, Anglais">
+      <div class="bloc-section">
+        <h3>3. Expérience &amp; profil</h3>
+        <div class="form-grille">
+          <div class="form-champ">
+            <label for="pr-experience">Années d'expérience</label>
+            <input type="number" id="pr-experience" min="0" placeholder="ex: 3">
+          </div>
         </div>
         <div class="form-champ">
-          <label for="pr-disponibilite">Disponibilité</label>
-          <select id="pr-disponibilite">
-            <option value="">—</option>
-            <option value="immediate">Disponible immédiatement</option>
-            <option value="rdv">Sur rendez-vous</option>
-            <option value="mobile">Mobile pour déplacements</option>
-          </select>
+          <label>Type de modèle (cochez tout ce qui s'applique)</label>
+          <div style="display:flex; flex-wrap:wrap; gap:1.2rem; margin-top:0.4rem;">
+            <label style="display:flex; align-items:center; gap:0.5rem; font-weight:400;"><input type="checkbox" class="pr-type" value="catwalk" style="width:auto;"> Défilé / Catwalk</label>
+            <label style="display:flex; align-items:center; gap:0.5rem; font-weight:400;"><input type="checkbox" class="pr-type" value="photo" style="width:auto;"> Photo</label>
+            <label style="display:flex; align-items:center; gap:0.5rem; font-weight:400;"><input type="checkbox" class="pr-type" value="publicite" style="width:auto;"> Publicité</label>
+            <label style="display:flex; align-items:center; gap:0.5rem; font-weight:400;"><input type="checkbox" class="pr-type" value="commercial" style="width:auto;"> Commercial</label>
+            <label style="display:flex; align-items:center; gap:0.5rem; font-weight:400;"><input type="checkbox" class="pr-type" value="autre" style="width:auto;"> Autre</label>
+          </div>
+        </div>
+        <div class="form-grille">
+          <div class="form-champ">
+            <label for="pr-langues">Langues parlées</label>
+            <input type="text" id="pr-langues" placeholder="ex: Français, Anglais">
+          </div>
+          <div class="form-champ">
+            <label for="pr-disponibilite">Disponibilité</label>
+            <select id="pr-disponibilite">
+              <option value="">—</option>
+              <option value="immediate">Disponible immédiatement</option>
+              <option value="rdv">Sur rendez-vous</option>
+              <option value="mobile">Mobile pour déplacements</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-champ">
+          <label for="pr-bio">Présentation / expérience *</label>
+          <textarea id="pr-bio" required></textarea>
+        </div>
+        <div class="form-champ">
+          <label for="pr-video">Vidéo de présentation (lien YouTube ou Vimeo, facultatif)</label>
+          <input type="url" id="pr-video" placeholder="https://www.youtube.com/watch?v=...">
         </div>
       </div>
-      <div class="form-champ">
-        <label for="pr-bio">Présentation / expérience *</label>
-        <textarea id="pr-bio" required></textarea>
-      </div>
-      <div class="form-champ">
-        <label for="pr-video">Vidéo de présentation (lien YouTube ou Vimeo, facultatif)</label>
-        <input type="url" id="pr-video" placeholder="https://www.youtube.com/watch?v=...">
-      </div>
-      <div class="form-champ" style="background:var(--gris-clair); padding:1rem; border:1px solid var(--gris-clair);">
-        <label style="color:var(--noir);">🔒 Contact affiché sur votre fiche publique</label>
-        <p style="margin:0.3rem 0 0; font-size:0.88rem; color:#4a4a4a;">
-          Pour votre sécurité, c'est le contact officiel de l'agence qui apparaît sur votre profil public, jamais votre numéro ou compte personnel :
-        </p>
-        <div style="margin-top:0.6rem; font-size:0.88rem;">
-          <div style="margin-top:0.3rem;"><a href="tel:+2252722231176" style="font-weight:600; color:var(--noir);">📞 +225 27 22 23 11 76</a></div>
-          <div style="margin-top:0.3rem;"><a href="tel:+2250545656687" style="font-weight:600; color:var(--noir);">📱 +225 05 45 65 66 87</a></div>
-          <div style="margin-top:0.3rem;"><a href="mailto:scoutmodel.ma2m@gmail.com" style="font-weight:600; color:var(--noir);">✉️ scoutmodel.ma2m@gmail.com</a></div>
-          <div style="margin-top:0.3rem;"><strong>Instagram :</strong> @maitreakessemodelmanagement</div>
+
+      <div class="bloc-section">
+        <h3>4. Mes réalisations</h3>
+        <p class="bloc-section-intro">Défilés, shootings, publicités, castings… Ajoutez chaque projet un par un, ils s'affichent tous sur votre fiche publique. Un seul projet suffit pour publier votre profil — vous pourrez toujours en ajouter d'autres plus tard.</p>
+        <div id="projets-liste" class="projets-liste"></div>
+        <div id="form-projet" style="margin-top:1.2rem; padding:1.2rem; border:1px solid var(--gris-clair);">
+          <div class="form-grille">
+            <div class="form-champ">
+              <label for="pj-type">Type de projet *</label>
+              <select id="pj-type" required>
+                <option value="">—</option>
+                <option value="Défilé">Défilé</option>
+                <option value="Shoot photo">Shoot photo</option>
+                <option value="Publicité">Publicité</option>
+                <option value="Casting">Casting</option>
+              </select>
+            </div>
+            <div class="form-champ">
+              <label for="pj-titre">Nom du projet</label>
+              <input type="text" id="pj-titre" placeholder="ex: Cacao Fashion Show">
+            </div>
+            <div class="form-champ">
+              <label for="pj-periode">Période</label>
+              <input type="text" id="pj-periode" placeholder="ex: Septembre 2026">
+            </div>
+            <div class="form-champ">
+              <label for="pj-pays">Pays</label>
+              <input type="text" id="pj-pays" placeholder="ex: Côte d'Ivoire">
+            </div>
+            <div class="form-champ">
+              <label for="pj-ville">Ville</label>
+              <input type="text" id="pj-ville" placeholder="ex: Abidjan">
+            </div>
+            <div class="form-champ">
+              <label for="pj-promoteur">Promoteur / organisateur</label>
+              <input type="text" id="pj-promoteur" placeholder="ex: JNCC">
+            </div>
+          </div>
+          <button type="button" id="pj-ajouter" class="btn">Ajouter ce projet</button>
+          <button type="button" id="pj-annuler" class="btn" style="display:none; margin-left:0.5rem; color:var(--gris); border-color:var(--gris-clair);">Annuler la modification</button>
+          <div id="pj-msg" class="form-msg"></div>
         </div>
-        <p style="margin-top:0.6rem; font-size:0.8rem; color:var(--gris);">Géré par MA2M — non modifiable.</p>
+        <script>
+          // Empêche la touche Entrée dans un champ "projet" de déclencher l'enregistrement
+          // du profil entier (le bloc projet est visuellement à l'intérieur du grand formulaire) :
+          // Entrée y déclenche "Ajouter ce projet" à la place.
+          document.getElementById('form-projet').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+              e.preventDefault();
+              document.getElementById('pj-ajouter').click();
+            }
+          });
+        </script>
       </div>
-      <p style="font-size:0.85rem; color:var(--gris); margin-top:-0.5rem;">* Champs obligatoires pour rendre votre profil visible publiquement. Vous pouvez enregistrer un brouillon incomplet, il ne sera simplement pas publié.</p>
-      <label style="display:flex; align-items:center; gap:0.6rem; font-weight:600; margin-bottom:1.5rem;">
-        <input type="checkbox" id="pr-publie" style="width:auto;">
-        Rendre mon profil visible publiquement sur le site
-      </label>
-      <button type="submit" class="btn btn--principal">Enregistrer mon profil</button>
-      <div id="pr-msg" class="form-msg"></div>
+
+      <div class="bloc-section">
+        <h3>5. Contact &amp; publication</h3>
+        <div class="form-champ" style="background:var(--gris-clair); padding:1rem; border:1px solid var(--gris-clair);">
+          <label style="color:var(--noir);">🔒 Contact affiché sur votre fiche publique</label>
+          <p style="margin:0.3rem 0 0; font-size:0.88rem; color:#4a4a4a;">
+            Pour votre sécurité, c'est le contact officiel de l'agence qui apparaît sur votre profil public, jamais votre numéro ou compte personnel :
+          </p>
+          <div style="margin-top:0.6rem; font-size:0.88rem;">
+            <div style="margin-top:0.3rem;"><a href="tel:+2252722231176" style="font-weight:600; color:var(--noir);">📞 +225 27 22 23 11 76</a></div>
+            <div style="margin-top:0.3rem;"><a href="tel:+2250545656687" style="font-weight:600; color:var(--noir);">📱 +225 05 45 65 66 87</a></div>
+            <div style="margin-top:0.3rem;"><a href="mailto:scoutmodel.ma2m@gmail.com" style="font-weight:600; color:var(--noir);">✉️ scoutmodel.ma2m@gmail.com</a></div>
+            <div style="margin-top:0.3rem;"><strong>Instagram :</strong> @maitreakessemodelmanagement</div>
+          </div>
+          <p style="margin-top:0.6rem; font-size:0.8rem; color:var(--gris);">Géré par MA2M — non modifiable.</p>
+        </div>
+        <p style="font-size:0.85rem; color:var(--gris); margin-top:1rem;">* Champs obligatoires pour rendre votre profil visible publiquement. Vous pouvez enregistrer un brouillon incomplet, il ne sera simplement pas publié.</p>
+        <label style="display:flex; align-items:center; gap:0.6rem; font-weight:600; margin-bottom:1.5rem;">
+          <input type="checkbox" id="pr-publie" style="width:auto;">
+          Rendre mon profil visible publiquement sur le site
+        </label>
+        <button type="submit" class="btn btn--principal">Enregistrer mon profil</button>
+        <div id="pr-msg" class="form-msg"></div>
+      </div>
     </form>
 
     <h2 style="margin-top:3.5rem;">Mes photos</h2>
@@ -666,7 +682,7 @@ async function chargerPhotos() {
     item.className = 'photo-item' + (photo.principale ? ' est-principale' : '');
     item.innerHTML = `
       <img src="${echapperHtml(photo.url)}" alt="Photo du book" style="cursor:pointer;">
-      <button class="btn-principale" data-id="${photo.id}" title="Définir comme photo de profil">${photo.principale ? '★' : '☆'}</button>
+      <button class="btn-principale" data-id="${photo.id}" title="Définir comme photo de profil">${photo.principale ? '★ Profil' : '☆ Profil'}</button>
       <button class="btn-supprimer" data-id="${photo.id}" data-chemin="${echapperHtml(photo.chemin || '')}" title="Supprimer">✕</button>
       <button class="btn-compcard" data-id="${photo.id}" title="Choisir pour la fiche Compcard">${photo.compcard_ordre ? photo.compcard_ordre : '+ Compcard'}</button>
       ${photo.principale ? '<span class="badge-principale">Photo de profil</span>' : ''}
@@ -881,7 +897,11 @@ document.getElementById('pj-ajouter').addEventListener('click', async () => {
 
   const champType = document.getElementById('pj-type');
   if (!champType.value) {
-    afficherMsg(msg, 'Choisissez un type de projet.', 'err');
+    // reportValidity() affiche la bulle native du navigateur DIRECTEMENT sur le
+    // champ concerné (avec un focus dessus) — bien plus visible qu'un simple
+    // message texte que l'on peut facilement rater au milieu du formulaire.
+    champType.reportValidity();
+    afficherMsg(msg, 'Choisissez un type de projet ci-dessus avant de l\'ajouter.', 'err');
     return;
   }
 
@@ -912,8 +932,12 @@ document.getElementById('pj-ajouter').addEventListener('click', async () => {
     return;
   }
   document.getElementById('form-projet').querySelectorAll('input, select').forEach(el => { el.value = ''; });
-  afficherMsg(msg, 'Projet ajouté.', 'ok');
-  chargerProjets();
+  afficherMsg(msg, '✅ Projet ajouté avec succès ! Il apparaît ci-dessus, dans « Mes réalisations ».', 'ok');
+  await chargerProjets();
+  // Le formulaire d'ajout est en bas de la liste des projets déjà enregistrés —
+  // sans ça, après un ajout, la personne ne voit que le formulaire vidé et peut
+  // croire que rien ne s'est passé alors que le projet est bien ajouté au-dessus.
+  document.getElementById('projets-liste').scrollIntoView({ behavior: 'smooth', block: 'center' });
 });
 
 // --- Vérifier si déjà connecté au chargement de la page ---
