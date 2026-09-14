@@ -285,6 +285,7 @@ function afficherMsg(el, texte, type) {
 // --- Type de candidature : intégrer l'agence, ou un projet/casting précis ---
 async function chargerProjetsActifs() {
   const selectProjet = document.getElementById('ca-projet');
+  if (!sb) return;
   const { data: projets } = await sb.from('casting_projets').select('id, nom').eq('actif', true).order('nom');
   selectProjet.innerHTML = '<option value="">Sélectionner</option>'
     + (projets || []).map(p => `<option value="${echapperHtml(p.nom)}">${echapperHtml(p.nom)}</option>`).join('')

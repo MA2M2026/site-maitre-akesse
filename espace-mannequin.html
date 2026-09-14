@@ -208,7 +208,7 @@
           <input type="text" id="pr-cheveux" placeholder="ex: Noir">
         </div>
       </div>
-      <button type="submit" id="btn-enregistrer-infos" class="btn btn--principal">Enregistrer mes informations</button>
+      <button type="submit" id="btn-enregistrer-infos" class="btn btn--principal" style="display:none;" disabled>Enregistrer mes informations</button>
       <div id="infos-msg" class="form-msg"></div>
     </form>
 
@@ -308,7 +308,7 @@
         <label for="pr-video">Vidéo de présentation (lien YouTube ou Vimeo, facultatif)</label>
         <input type="url" id="pr-video" placeholder="https://www.youtube.com/watch?v=...">
       </div>
-      <button type="submit" id="btn-enregistrer-experience" class="btn btn--principal">Enregistrer mon expérience</button>
+      <button type="submit" id="btn-enregistrer-experience" class="btn btn--principal" style="display:none;" disabled>Enregistrer mon expérience</button>
       <div id="exp-msg" class="form-msg"></div>
     </form>
 
@@ -1065,9 +1065,16 @@ document.getElementById('pj-ajouter').addEventListener('click', async () => {
 });
 
 // --- Vérifier si déjà connecté au chargement de la page ---
+// Sur une connexion instable, la bibliothèque Supabase (chargée depuis un CDN)
+// peut échouer à se charger — sans ce filet, "sb" vaut alors null et cette
+// vérification plante toute la page au chargement (page blanche/figée) au
+// lieu de simplement retomber sur l'écran de connexion normal.
 (async () => {
-  const { data: { session } } = await sb.auth.getSession();
-  if (session) ouvrirDashboard();
+  try {
+    if (!sb) return;
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) ouvrirDashboard();
+  } catch (e) {}
 })();
 </script>
 </body>

@@ -379,6 +379,9 @@ async function chargerPhotosHero() {
   }
 
   // Dans tous les cas, on va chercher une liste fraîche pour cette visite (si besoin) et la suivante.
+  // Si "sb" n'a pas pu se charger (connexion instable), on garde simplement les
+  // photos déjà affichées ci-dessus (fixes ou depuis le cache) plutôt que de planter.
+  if (!sb) return;
   const { data } = await sb
     .from('model_photos')
     .select('url, model_id, model_profiles!inner(published)')
@@ -449,6 +452,7 @@ chargerBandeauAnnonce();
 
 // --- Médaillons d'accueil : quelques mannequins publiés en aperçu ---
 async function chargerMedaillonsAccueil() {
+  if (!sb) return;
   const conteneur = document.getElementById('medaillons-accueil');
   const { data: profils } = await sb.from('model_profiles').select('id, full_name, city, height_cm').eq('published', true).order('created_at', { ascending: false }).limit(6);
   if (!profils || !profils.length) { conteneur.innerHTML = '<p style="color:var(--gris);">Profils bientôt disponibles.</p>'; return; }
@@ -471,6 +475,7 @@ chargerMedaillonsAccueil();
 
 // --- Mannequin à la une : mis en avant par l'agence, ou à défaut le plus récent publié ---
 async function chargerMannequinVedette() {
+  if (!sb) return;
   let { data: profil } = await sb.from('model_profiles')
     .select('id, full_name, city, category, height_cm')
     .eq('published', true).eq('featured', true).limit(1).maybeSingle();
@@ -498,6 +503,7 @@ chargerMannequinVedette();
 
 // --- Bandeau "Ils nous ont fait confiance" : promoteurs des projets déjà réalisés par nos mannequins ---
 async function chargerBandeauConfiance() {
+  if (!sb) return;
   const { data } = await sb.from('partenaires').select('id, nom, logo_url').order('created_at', { ascending: false }).limit(14);
   if (!data || !data.length) return;
 
@@ -515,6 +521,7 @@ chargerBandeauConfiance();
 
 // --- Bande de statistiques : de vrais chiffres, calculés en direct depuis la base ---
 async function chargerStatsAccueil() {
+  if (!sb) return;
   const [{ count: nbMannequins }, { count: nbProjets }, { count: nbPartenaires }, { count: nbActualites }] = await Promise.all([
     sb.from('model_profiles').select('id', { count: 'exact', head: true }).eq('published', true),
     sb.from('model_projects').select('id', { count: 'exact', head: true }),

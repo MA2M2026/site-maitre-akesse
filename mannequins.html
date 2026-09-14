@@ -157,6 +157,14 @@ let categorieActive = 'tous';
 
 async function chargerMannequins() {
   const vide = document.getElementById('vide');
+  if (!sb) {
+    // "sb" peut valoir null sur une connexion instable (échec de chargement de
+    // la bibliothèque Supabase, servie depuis un CDN) — message clair plutôt
+    // que de laisser croire qu'aucun profil ne correspond aux critères.
+    vide.textContent = 'Le chargement du Book a échoué (connexion instable ?). Rechargez la page.';
+    vide.style.display = 'block';
+    return;
+  }
 
   const { data: profils, error } = await sb
     .from('model_profiles')

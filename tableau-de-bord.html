@@ -268,6 +268,7 @@
 <script src="js/menu.js"></script>
 <script>
 async function verifierAdminTableau() {
+  if (!sb) return false;
   const { data: { user } } = await sb.auth.getUser();
   if (!user) return false;
   const { data } = await sb.from('admins').select('user_id').eq('user_id', user.id).single();
@@ -709,8 +710,13 @@ document.getElementById('mf-supprimer-dossier-btn').addEventListener('click', as
 // --- Codes d'inscription (usage unique) ---
 function genererCode() {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // sans O/0 ni I/1, pour éviter la confusion
+  // crypto.getRandomValues plutôt que Math.random() : ce code donne accès à la
+  // création d'un compte mannequin, autant utiliser un vrai générateur
+  // aléatoire cryptographique plutôt qu'un générateur prévisible en théorie.
+  const octets = new Uint32Array(6);
+  crypto.getRandomValues(octets);
   let code = '';
-  for (let i = 0; i < 6; i++) code += alphabet[Math.floor(Math.random() * alphabet.length)];
+  for (let i = 0; i < 6; i++) code += alphabet[octets[i] % alphabet.length];
   return 'MA2M-' + code;
 }
 
@@ -902,13 +908,19 @@ document.getElementById('bandeau-actif-btn').addEventListener('click', async () 
   chargerBandeau();
 });
 
+// Sur une connexion instable, la bibliothèque Supabase (chargée depuis un CDN)
+// peut échouer à se charger — sans ce filet, "sb" vaut alors null et cette
+// vérification plante toute la page au chargement (page blanche/figée) au
+// lieu de simplement retomber sur l'écran de connexion normal.
 (async () => {
-  const estAdmin = await verifierAdminTableau();
-  if (estAdmin) {
-    document.getElementById('bloc-login').style.display = 'none';
-    document.getElementById('bloc-tableau').style.display = 'block';
-    chargerStatistiques();
-  }
+  try {
+    const estAdmin = await verifierAdminTableau();
+    if (estAdmin) {
+      document.getElementById('bloc-login').style.display = 'none';
+      document.getElementById('bloc-tableau').style.display = 'block';
+      chargerStatistiques();
+    }
+  } catch (e) {}
 })();
 </script>
 </body>

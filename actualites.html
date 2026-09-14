@@ -266,6 +266,14 @@ async function chargerActualites() {
   const grille = document.getElementById('actus-grille');
   const uneZone = document.getElementById('actus-une');
   const vide = document.getElementById('actus-vide');
+  if (!sb) {
+    // "sb" peut valoir null sur une connexion instable (échec de chargement de
+    // la bibliothèque Supabase, servie depuis un CDN) — on l'affiche clairement
+    // plutôt que de laisser croire qu'il n'y a simplement aucune actualité.
+    vide.textContent = 'Le chargement des actualités a échoué (connexion instable ?). Rechargez la page.';
+    vide.style.display = 'block';
+    return;
+  }
   const { data, error } = await sb.from('actualites').select('*').order('created_at', { ascending: false });
   if (error || !data || !data.length) { vide.style.display = 'block'; return; }
   window.actualitesData = data;
@@ -379,13 +387,20 @@ document.getElementById('news-modal').addEventListener('click', (e) => { if (e.t
 // depuis tableau-de-bord.html, puis sa session est simplement détectée ici pour
 // révéler le panneau de publication — sans aucune trace visible pour un visiteur.
 async function verifierAdmin() {
-  const { data: { user } } = await sb.auth.getUser();
-  if (!user) return;
-  const { data } = await sb.from('admins').select('user_id').eq('user_id', user.id).single();
-  if (data) {
-    window.estAdminConnecte = true;
-    document.getElementById('admin-bloc').style.display = 'block';
-  }
+  // Sur une connexion instable, la bibliothèque Supabase (chargée depuis un
+  // CDN) peut échouer à se charger — sans ce filet, "sb" vaut alors null et
+  // cette vérification silencieuse plante toute la page au chargement pour
+  // un simple visiteur, pour une fonctionnalité qui ne concerne que l'admin.
+  try {
+    if (!sb) return;
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return;
+    const { data } = await sb.from('admins').select('user_id').eq('user_id', user.id).single();
+    if (data) {
+      window.estAdminConnecte = true;
+      document.getElementById('admin-bloc').style.display = 'block';
+    }
+  } catch (e) {}
 }
 verifierAdmin();
 

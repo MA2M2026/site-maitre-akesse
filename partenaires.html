@@ -201,9 +201,17 @@ async function convertirSiHeic(fichier) {
 window.partenairesData = [];
 
 async function chargerPartenaires() {
-  const { data, error } = await sb.from('partenaires').select('*').order('created_at', { ascending: false });
   const grille = document.getElementById('partenaires-grille');
   const vide = document.getElementById('partenaires-vide');
+  if (!sb) {
+    // "sb" peut valoir null sur une connexion instable (échec de chargement de
+    // la bibliothèque Supabase, servie depuis un CDN) — message clair plutôt
+    // que de laisser croire qu'il n'y a simplement aucun partenaire.
+    vide.textContent = 'Le chargement des partenaires a échoué (connexion instable ?). Rechargez la page.';
+    vide.style.display = 'block';
+    return;
+  }
+  const { data, error } = await sb.from('partenaires').select('*').order('created_at', { ascending: false });
 
   if (error || !data || !data.length) {
     grille.innerHTML = '';
@@ -394,13 +402,20 @@ document.getElementById('admin-logout-btn').addEventListener('click', async () =
 });
 
 async function verifierAdmin() {
-  const { data: { user } } = await sb.auth.getUser();
-  if (!user) return;
-  const { data } = await sb.from('admins').select('user_id').eq('user_id', user.id).single();
-  if (data) {
-    window.estAdminConnecte = true;
-    document.getElementById('admin-bloc').style.display = 'block';
-  }
+  // Sur une connexion instable, la bibliothèque Supabase (chargée depuis un
+  // CDN) peut échouer à se charger — sans ce filet, "sb" vaut alors null et
+  // cette vérification silencieuse plante toute la page au chargement pour
+  // un simple visiteur, pour une fonctionnalité qui ne concerne que l'admin.
+  try {
+    if (!sb) return;
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return;
+    const { data } = await sb.from('admins').select('user_id').eq('user_id', user.id).single();
+    if (data) {
+      window.estAdminConnecte = true;
+      document.getElementById('admin-bloc').style.display = 'block';
+    }
+  } catch (e) {}
 }
 verifierAdmin();
 </script>
