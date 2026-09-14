@@ -90,9 +90,20 @@
       </div>
       <div class="form-grille">
         <div class="form-champ">
+          <label for="ins-genre">Genre *</label>
+          <select id="ins-genre" required>
+            <option value="">Sélectionner</option>
+            <option value="femme">Femme</option>
+            <option value="homme">Homme</option>
+          </select>
+        </div>
+        <div class="form-champ">
           <label for="ins-taille">Taille (cm) *</label>
           <select id="ins-taille" required></select>
+          <span id="ins-taille-indication" style="font-size:0.78rem; color:var(--gris);"></span>
         </div>
+      </div>
+      <div class="form-grille">
         <div class="form-champ">
           <label for="ins-tailleveternents">Taille de vêtements *</label>
           <select id="ins-tailleveternents" required>
@@ -269,6 +280,21 @@ function remplirSelectNombres(id, min, max, pas, suffixe) {
 }
 remplirSelectNombres('ins-taille', 140, 210, 1, ' cm');
 
+// --- Taille minimale selon le genre (même règle que "Postuler à un casting") :
+// indication à l'écran + blocage réel au moment de l'envoi plus bas. Les mineurs
+// ne sont pas soumis à cette taille minimale. ---
+function majIndicationTailleInscription() {
+  const genre = document.getElementById('ins-genre').value;
+  const indication = document.getElementById('ins-taille-indication');
+  const mineur = estMineurInscription();
+  if (mineur) { indication.textContent = 'Pas de taille minimale pour les inscriptions de mineurs.'; return; }
+  if (genre === 'homme') { indication.textContent = 'Taille minimale requise : 185 cm'; }
+  else if (genre === 'femme') { indication.textContent = 'Taille minimale requise : 175 cm'; }
+  else { indication.textContent = ''; }
+}
+document.getElementById('ins-genre').addEventListener('change', majIndicationTailleInscription);
+document.getElementById('ins-naissance').addEventListener('change', majIndicationTailleInscription);
+
 // --- Liste déroulante avec option "Autre" : garde la souplesse d'un champ libre
 // pour les cas non prévus dans la liste, sans forcer une saisie 100% manuelle. ---
 document.getElementById('ins-tailleveternents').addEventListener('change', () => {
@@ -371,11 +397,22 @@ document.getElementById('form-inscription').addEventListener('submit', async (e)
   boutonEnvoyer.disabled = true;
 
   const mineur = estMineurInscription();
+  const genre = document.getElementById('ins-genre').value;
+  const taille = parseInt(document.getElementById('ins-taille').value) || 0;
+  const tailleMin = genre === 'homme' ? 185 : 175;
+
+  if (!mineur && taille < tailleMin) {
+    msg.className = 'form-msg err';
+    msg.textContent = `Désolé, la taille minimale requise est de ${tailleMin} cm (${genre === 'homme' ? 'hommes' : 'femmes'}). L'inscription ne peut pas être soumise avec cette taille.`;
+    boutonEnvoyer.disabled = false;
+    return;
+  }
 
   const dossier = {
     full_name: document.getElementById('ins-nom').value.trim(),
     date_naissance: document.getElementById('ins-naissance').value || null,
-    height_cm: parseInt(document.getElementById('ins-taille').value) || null,
+    genre: genre,
+    height_cm: taille || null,
     clothing_size: valeurTailleVetements(),
     phone: document.getElementById('ins-telephone').value.trim(),
     code_utilise: codeValide,
@@ -394,6 +431,7 @@ document.getElementById('form-inscription').addEventListener('submit', async (e)
     p_code: dossier.code_utilise,
     p_full_name: dossier.full_name,
     p_date_naissance: dossier.date_naissance,
+    p_genre: dossier.genre,
     p_height_cm: dossier.height_cm,
     p_clothing_size: dossier.clothing_size,
     p_phone: dossier.phone,
