@@ -1,3 +1,40 @@
+// ================== Surveillance des erreurs réelles du site ==================
+// Capte toute erreur JavaScript qui se produit VRAIMENT dans le navigateur d'un
+// visiteur (pas une relecture de code) et l'enregistre pour l'agence, consultable
+// depuis le tableau de bord — plutôt que de découvrir un bug par hasard, des mois
+// plus tard, si quelqu'un pense à le signaler. Enregistré tout en haut du fichier,
+// avant tout le reste, pour capter les erreurs le plus tôt possible.
+(function surveillanceErreurs() {
+  function envoyerErreur(message, pile) {
+    if (typeof sb === 'undefined' || !sb || !message) return;
+    // Anti-spam : au plus un envoi de cette erreur précise par navigateur, par jour —
+    // évite qu'une même erreur répétée (ex. survenant à chaque clic) ne remplisse le
+    // journal ou ne fasse gonfler artificiellement son importance.
+    const texte = String(message).slice(0, 500);
+    try {
+      const cle = 'ma2m_err_' + texte.length + '_' + texte.slice(0, 40);
+      const derniereFois = sessionStorage.getItem(cle);
+      if (derniereFois) return;
+      sessionStorage.setItem(cle, '1');
+    } catch (e) {}
+
+    sb.from('journal_erreurs').insert({
+      message: texte,
+      page: window.location.pathname,
+      pile: pile ? String(pile).slice(0, 1000) : null,
+      user_agent: navigator.userAgent.slice(0, 300)
+    }).then(() => {}).catch(() => {});
+  }
+
+  window.addEventListener('error', (e) => {
+    envoyerErreur(e.message, e.error && e.error.stack);
+  });
+  window.addEventListener('unhandledrejection', (e) => {
+    const raison = e.reason;
+    envoyerErreur(raison && raison.message ? raison.message : String(raison), raison && raison.stack);
+  });
+})();
+
 // Menu mobile
 document.addEventListener('DOMContentLoaded', () => {
   const toggle = document.querySelector('.menu-toggle');

@@ -401,6 +401,32 @@ section { padding: 5rem 0; }
 .form-grille { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1.5rem; }
 @media (max-width: 640px) { .form-grille { grid-template-columns: 1fr; } }
 
+.bloc-section { border: 1px solid var(--gris-clair); padding: 1.5rem; margin-bottom: 2rem; }
+.bloc-section h3 { margin-top: 0; }
+.bloc-section > p.bloc-section-intro { margin-top: -0.6rem; color: var(--gris); font-size: 0.9rem; }
+
+.flash-succes-fond {
+  position: fixed; inset: 0; background: rgba(0,0,0,0); pointer-events: none;
+  z-index: 998; transition: background 0.35s ease;
+}
+.flash-succes-fond.actif { background: rgba(0,0,0,0.6); pointer-events: auto; }
+
+.flash-succes {
+  position: fixed; top: 50%; left: 50%;
+  transform: translate(-50%, -50%) scale(0.85);
+  background: #1e5b25; color: #fff; padding: 2.4rem 2rem; border-radius: 16px;
+  font-weight: 700; font-size: 1.3rem; line-height: 1.5;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  z-index: 999; opacity: 0; visibility: hidden;
+  transition: opacity 0.35s ease, transform 0.35s ease, visibility 0s linear 0.35s;
+  max-width: min(90vw, 420px); text-align: center;
+}
+.flash-succes.actif {
+  opacity: 1; visibility: visible; transform: translate(-50%, -50%) scale(1);
+  transition: opacity 0.35s ease, transform 0.35s ease, visibility 0s;
+}
+.flash-succes-icone { display: block; font-size: 3.2rem; margin-bottom: 0.7rem; }
+
 .form-msg { font-size: 0.9rem; padding: 0.8rem 1rem; margin-top: 1rem; display: none; border-radius: 2px; }
 .form-msg.ok { display: block; background: rgba(30,91,37,0.16); color: #8fd39a; border: 1px solid rgba(30,91,37,0.4); }
 .form-msg.err { display: block; background: rgba(154,28,44,0.16); color: #f0a1ac; border: 1px solid rgba(154,28,44,0.4); }
@@ -439,8 +465,9 @@ section { padding: 5rem 0; }
 }
 .photo-item button:hover { background: var(--bordeaux); border-color: var(--bordeaux); }
 .photo-item .btn-principale {
-  position: absolute; top: 6px; left: 6px; right: auto; background: rgba(0,0,0,0.55); color: #fff;
-  border: 1px solid var(--gris-clair); border-radius: 4px; width: 28px; height: 28px; cursor: pointer; font-size: 0.85rem;
+  position: absolute; top: 6px; left: 6px; right: auto; background: rgba(0,0,0,0.7); color: #fff;
+  border: 1px solid var(--gris-clair); border-radius: 4px; height: 26px; padding: 0 0.5rem; cursor: pointer;
+  font-size: 0.62rem; font-weight: 600; letter-spacing: 0.02em; white-space: nowrap;
   transition: background 0.2s ease, border-color 0.2s ease;
 }
 .photo-item .btn-principale:hover, .photo-item.est-principale .btn-principale { background: var(--or); border-color: var(--or); color: #000; }

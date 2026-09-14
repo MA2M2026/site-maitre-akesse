@@ -1389,3 +1389,187 @@ revoke all on function soumettre_inscription_mannequin(text, text, date, int, te
 grant execute on function soumettre_inscription_mannequin(text, text, date, int, text, text, text, text, text) to anon, authenticated;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 40 : le poids est l'une des mensurations les plus demandées par
+-- les recruteurs (mode commerciale, catalogue, e-commerce) et manquait
+-- jusqu'ici. Ajouté sur le profil mannequin (rempli par le mannequin lui-même
+-- depuis son espace) et sur les candidatures "Postuler à un casting" —
+-- volontairement PAS sur inscriptions_mannequins, qui ne collecte déjà que
+-- taille/vêtements à l'inscription (le reste se complète ensuite dans
+-- l'espace mannequin), pour ne pas toucher à soumettre_inscription_mannequin
+-- une nouvelle fois.
+-- ===================================================================
+alter table model_profiles add column if not exists weight_kg int;
+alter table casting_applications add column if not exists weight_kg int;
+
+NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 41 : outil admin pour alléger les photos déjà en ligne. Les
+-- photos envoyées AVANT la mise en place du redimensionnement automatique
+-- sont restées à leur poids d'origine (plusieurs Mo), ce qui rend le book
+-- très lent à charger sur téléphone — au point de bloquer le site le temps
+-- que les images arrivent. Un outil dans le tableau de bord va remplacer
+-- chaque photo trop lourde par une version allégée, AU MÊME EMPLACEMENT
+-- (donc sans rien changer aux liens déjà enregistrés). Cela demande de
+-- donner aux admins le droit d'écrire dans le dossier de n'importe quel
+-- mannequin dans le bucket "model-photos" (jusqu'ici réservé au mannequin
+-- propriétaire du dossier).
+-- ===================================================================
+drop policy if exists "Les admins remplacent une photo (optimisation)" on storage.objects;
+create policy "Les admins remplacent une photo (optimisation)"
+  on storage.objects for update
+  using (bucket_id = 'model-photos' and exists (select 1 from admins where user_id = auth.uid()))
+  with check (bucket_id = 'model-photos' and exists (select 1 from admins where user_id = auth.uid()));
+
+drop policy if exists "Les admins déposent une photo (optimisation)" on storage.objects;
+create policy "Les admins déposent une photo (optimisation)"
+  on storage.objects for insert
+  with check (bucket_id = 'model-photos' and exists (select 1 from admins where user_id = auth.uid()));
+
+NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 42 : annule l'Extension 41. Décision prise : les photos du book
+-- des mannequins (bucket "model-photos") doivent rester intactes à 100%,
+-- sans aucun outil de compression — l'outil d'optimisation du tableau de
+-- bord a donc été retiré du site. Les deux policies qui lui donnaient le
+-- droit d'écrire dans le dossier de n'importe quel mannequin n'ont plus de
+-- raison d'exister : les retirer réduit la surface d'attaque (un compte
+-- admin compromis ne pourrait plus écraser les photos des mannequins) et
+-- évite tout risque qu'un futur clic accidentel ne relance une compression
+-- que l'on a explicitement décidé de ne plus jamais faire sur ce bucket.
+-- ===================================================================
+drop policy if exists "Les admins remplacent une photo (optimisation)" on storage.objects;
+drop policy if exists "Les admins déposent une photo (optimisation)" on storage.objects;
+
+NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 43 : distingue la toute première inscription (où chaque bloc du
+-- formulaire espace-mannequin doit être rempli avant de pouvoir publier, avec
+-- un seul bouton de validation final) de toutes les connexions suivantes (où
+-- chaque bloc redevient autonome, avec son propre bouton "Enregistrer").
+-- Cette colonne passe à "true" une fois pour toutes dès la première
+-- publication réussie, et ne repasse jamais à "false" ensuite (même si le
+-- mannequin dépublie son profil plus tard) : une fois qu'on a appris à se
+-- servir de l'espace mannequin, plus besoin de repasser par le mode guidé.
+-- ===================================================================
+alter table model_profiles add column if not exists premiere_publication_faite boolean not null default false;
+
+-- Sans ce rattrapage, TOUS les mannequins déjà inscrits avant ce jour (y compris
+-- ceux déjà publiés et actifs depuis longtemps) se retrouveraient soudainement
+-- en "mode guidé" (boutons de blocs cachés) à leur prochaine connexion, puisque
+-- la nouvelle colonne démarre à "false" pour tout le monde. On marque donc comme
+-- déjà formés : les profils actuellement publiés, ET ceux qui ont manifestement
+-- déjà été remplis sérieusement (nom + au moins une photo + au moins un projet)
+-- même s'ils sont dépubliés au moment de cette migration.
+update model_profiles p
+set premiere_publication_faite = true
+where p.published = true
+   or (
+     p.full_name is not null
+     and exists (select 1 from model_photos where model_id = p.id)
+     and exists (select 1 from model_projects where model_id = p.id)
+   );
+
+NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 44 : surveillance des erreurs réelles du site. Jusqu'ici, un
+-- bug en production n'était découvert que si quelqu'un le signalait par
+-- hasard, ou lors d'une relecture manuelle du code — jamais en temps réel.
+-- Chaque page capte désormais silencieusement toute erreur JavaScript qui
+-- se produit réellement dans le navigateur d'un visiteur (pas une relecture
+-- de code : une vraie erreur survenue en conditions réelles) et l'enregistre
+-- ici, consultable depuis le tableau de bord. Écriture ouverte à tous (comme
+-- page_views) car n'importe quel visiteur anonyme peut déclencher une
+-- erreur ; lecture réservée aux admins.
+-- ===================================================================
+create table if not exists journal_erreurs (
+  id uuid primary key default gen_random_uuid(),
+  message text not null,
+  page text,
+  pile text,
+  user_agent text,
+  created_at timestamptz not null default now()
+);
+
+alter table journal_erreurs enable row level security;
+
+drop policy if exists "Tout le monde peut logger une erreur" on journal_erreurs;
+create policy "Tout le monde peut logger une erreur"
+  on journal_erreurs for insert
+  with check (
+    char_length(message) <= 500
+    and (page is null or char_length(page) <= 200)
+    and (pile is null or char_length(pile) <= 1000)
+    and (user_agent is null or char_length(user_agent) <= 300)
+  );
+
+drop policy if exists "Les admins consultent le journal d'erreurs" on journal_erreurs;
+create policy "Les admins consultent le journal d'erreurs"
+  on journal_erreurs for select
+  using (exists (select 1 from admins where user_id = auth.uid()));
+
+drop policy if exists "Les admins suppriment une entree du journal" on journal_erreurs;
+create policy "Les admins suppriment une entree du journal"
+  on journal_erreurs for delete
+  using (exists (select 1 from admins where user_id = auth.uid()));
+
+create index if not exists idx_journal_erreurs_created on journal_erreurs(created_at desc);
+
+NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 45 : miniatures des photos, pour réduire la consommation de
+-- bande passante Supabase ("Cached Egress" — dépassé : 11+ Go/mois utilisés
+-- sur 5 Go inclus dans le plan gratuit). Les photos du book restent 100%
+-- intactes et en pleine qualité (jamais compressées, jamais modifiées) pour
+-- l'usage Compcard/téléchargement : on ajoute simplement, À CÔTÉ, une
+-- version réduite utilisée uniquement pour l'affichage en grille (Book
+-- public, galerie de la fiche mannequin), là où la pleine résolution
+-- n'apporte rien de visible mais coûte beaucoup de données à chaque visite.
+-- ===================================================================
+alter table model_photos add column if not exists url_miniature text;
+alter table model_photos add column if not exists chemin_miniature text;
+
+-- Un admin doit pouvoir générer les miniatures manquantes des photos déjà
+-- en ligne (rattrapage ponctuel depuis le tableau de bord), pour tous les
+-- mannequins — jamais utilisé pour autre chose que ces deux colonnes.
+drop policy if exists "Les admins renseignent les miniatures" on model_photos;
+create policy "Les admins renseignent les miniatures"
+  on model_photos for update
+  using (exists (select 1 from admins where user_id = auth.uid()))
+  with check (exists (select 1 from admins where user_id = auth.uid()));
+
+-- Autorise l'admin à déposer une miniature dans le dossier de N'IMPORTE QUEL
+-- mannequin, mais UNIQUEMENT dans un sous-dossier "miniatures" — impossible
+-- avec cette policy de créer ou d'écraser un fichier à l'emplacement d'une
+-- photo originale (qui n'a qu'un seul niveau de dossier : {id-mannequin}/...).
+drop policy if exists "Les admins generent les miniatures manquantes" on storage.objects;
+create policy "Les admins generent les miniatures manquantes"
+  on storage.objects for insert
+  with check (
+    bucket_id = 'model-photos'
+    and (storage.foldername(name))[2] = 'miniatures'
+    and exists (select 1 from admins where user_id = auth.uid())
+  );
+
+-- La photo de couverture utilisée sur "The Book" (page publique qui liste
+-- tous les mannequins) sert désormais la miniature quand elle existe, sinon
+-- la photo d'origine (pour ne rien casser tant que le rattrapage n'est pas
+-- fait sur les anciennes photos).
+create or replace function photos_couverture_mannequins(ids uuid[])
+returns table(model_id uuid, url text)
+language sql
+stable
+as $$
+  select distinct on (model_id) model_id, coalesce(url_miniature, url) as url
+  from model_photos
+  where model_id = any(ids)
+  order by model_id, principale desc, created_at asc;
+$$;
+
+NOTIFY pgrst, 'reload schema';

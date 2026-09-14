@@ -86,11 +86,14 @@ répétée dans une policy RLS côté base de données.
 
 ## Codes d'inscription mannequin
 
-Les codes sont **volontairement réutilisables** par plusieurs mannequins
-(décision du propriétaire de l'agence, pas une faille) : l'agence
-distribue un même code à plusieurs personnes et vérifie manuellement
-chaque inscription avant validation. Ne pas transformer ce système en
-codes à usage unique sans demande explicite.
+Les codes sont **à usage unique**, consommés de façon atomique (`update
+... where code = ... and used = false`, dans la fonction
+`consume_invite_code` de `supabase-setup.sql`) pour éviter qu'une même
+personne ne puisse l'utiliser deux fois via une requête concurrente. Une
+fois un code utilisé, il ne peut plus resservir : l'agence doit en générer
+un nouveau par mannequin (voir le générateur de code dans
+`tableau-de-bord.html`, corrigé pour utiliser `crypto.getRandomValues()`
+plutôt que `Math.random()`, non prévisible).
 
 ## Limites connues (honnêteté totale)
 
