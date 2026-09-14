@@ -278,10 +278,14 @@ async function construireCanvasCompcard() {
     if (ratioImage > ratioCadre) { sL = image.hauteur * ratioCadre; sx = (image.largeur - sL) / 2; }
     else { sH = image.largeur / ratioCadre; sy = (image.hauteur - sH) / 2; }
     if (ancrage === 'haut') {
-      const zoom = 0.88;
+      // Marge de sécurité volontaire : on laisse un peu de champ au-dessus du
+      // sujet plutôt que de coller pile sur le haut de la tête, pour ne
+      // jamais risquer de rogner cheveux/coiffure sur les photos où le sujet
+      // est déjà proche du bord.
+      const zoom = 0.93;
       const nSL = sL * zoom, nSH = sH * zoom;
       sx = sx + (sL - nSL) / 2;
-      sy = sy + (sH - nSH) * 0.82;
+      sy = sy + (sH - nSH) * 0.6;
       sL = nSL; sH = nSH;
     }
     ctx.drawImage(image.canvas, sx, sy, sL, sH, px(xMm), px(yMm), px(lMm), px(hMm));
