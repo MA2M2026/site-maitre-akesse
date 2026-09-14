@@ -171,11 +171,14 @@
 
     <div class="liste-recente">
       <div class="dossiers-entete">
-        <h2 style="margin:0;">🖼️ Miniatures des photos</h2>
+        <h2 style="margin:0;">🖼️ Optimisation des photos</h2>
       </div>
       <p style="font-size:0.85rem; color:var(--gris); margin:0.3rem 0 1rem;">Réduit la consommation de bande passante Supabase ("Cached Egress") en générant une version allégée de chaque photo déjà en ligne, utilisée uniquement pour l'affichage en grille (Book public, galerie de la fiche mannequin). Les photos d'origine ne sont jamais modifiées — la pleine qualité reste utilisée pour le Compcard et le téléchargement. À relancer de temps en temps : ne retraite que les photos qui n'ont pas encore de miniature.</p>
       <button class="btn" id="miniatures-generer-btn">Générer les miniatures manquantes</button>
       <div id="miniatures-msg" class="form-msg"></div>
+      <p style="font-size:0.85rem; color:var(--gris); margin:1.4rem 0 1rem;">Recompresse cette fois les photos ORIGINALES déjà en ligne (envoyées avant qu'on active la compression automatique) — jusqu'à moitié moins lourdes, sans perte visible même à l'impression du Compcard. Remplacement fait en toute sécurité : la nouvelle version doit être envoyée avec succès avant que l'ancienne soit supprimée.</p>
+      <button class="btn" id="originales-optimiser-btn">Recompresser les photos originales existantes</button>
+      <div id="originales-msg" class="form-msg"></div>
     </div>
 
     <div class="liste-recente">
@@ -312,6 +315,7 @@
 <script>document.getElementById('an').textContent = new Date().getFullYear();</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
 <script src="js/app.js"></script>
 <script src="js/menu.js"></script>
 <script>
@@ -432,7 +436,22 @@ async function genererMiniatureDepuisUrl(url, coteMax = 500, qualite = 0.75) {
   if (!reponse.ok) {
     return { blob: null, erreur: "la photo d'origine a répondu avec une erreur (code " + reponse.status + ") — adresse : " + url };
   }
-  const blobOriginal = await reponse.blob();
+  let blobOriginal = await reponse.blob();
+
+  // Chrome/Firefox ne savent pas afficher le format HEIC (photos iPhone) dans
+  // une balise <img> — sans cette conversion, toute photo restée en HEIC
+  // (conversion échouée ou absente au moment de l'envoi initial) échoue ici
+  // systématiquement. On la convertit d'abord en JPEG, comme côté mannequin.
+  const estHeic = /image\/hei(c|f)/i.test(blobOriginal.type) || /\.(heic|heif)(\?|$)/i.test(url);
+  if (estHeic && typeof heic2any !== 'undefined') {
+    try {
+      const resultat = await heic2any({ blob: blobOriginal, toType: 'image/jpeg', quality: 0.9 });
+      blobOriginal = Array.isArray(resultat) ? resultat[0] : resultat;
+    } catch (e) {
+      return { blob: null, erreur: "la conversion depuis le format HEIC a échoué : " + e.message + " — adresse : " + url };
+    }
+  }
+
   const urlLocale = URL.createObjectURL(blobOriginal);
 
   return new Promise((resolve) => {
@@ -450,7 +469,7 @@ async function genererMiniatureDepuisUrl(url, coteMax = 500, qualite = 0.75) {
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         canvas.toBlob((blob) => {
           URL.revokeObjectURL(urlLocale);
-          if (blob) resolve({ blob, erreur: null });
+          if (blob) resolve({ blob, erreur: null, tailleOriginale: blobOriginal.size });
           else resolve({ blob: null, erreur: "le navigateur n'a pas réussi à générer l'image réduite" });
         }, 'image/jpeg', qualite);
       } catch (e) {
@@ -460,7 +479,7 @@ async function genererMiniatureDepuisUrl(url, coteMax = 500, qualite = 0.75) {
     };
     img.onerror = () => {
       URL.revokeObjectURL(urlLocale);
-      resolve({ blob: null, erreur: "la photo téléchargée n'a pas pu être lue comme une image" });
+      resolve({ blob: null, erreur: "la photo téléchargée n'a pas pu être lue comme une image (type : " + (blobOriginal.type || 'inconnu') + ") — adresse : " + url });
     };
     img.src = urlLocale;
   });
@@ -516,6 +535,86 @@ document.getElementById('miniatures-generer-btn').addEventListener('click', asyn
 
   msg.className = echouees ? 'form-msg err' : 'form-msg ok';
   msg.textContent = `Terminé : ${reussies} miniature(s) générée(s)` + (echouees ? `, ${echouees} échec(s). Raison probable : ${premiereErreur}` : '.');
+  msg.style.display = 'block';
+  btn.disabled = false;
+});
+
+// --- Recompression des photos ORIGINALES déjà en ligne (pas leur miniature).
+// Remplacement en 3 temps sûrs : 1) la version compressée est envoyée à un
+// NOUVEL emplacement, 2) la fiche n'est mise à jour vers ce nouvel
+// emplacement qu'une fois cet envoi confirmé réussi, 3) l'ancien fichier
+// n'est supprimé qu'après cette mise à jour — jamais de remplacement "à
+// l'aveugle" qui pourrait laisser une photo manquante en cas de problème.
+document.getElementById('originales-optimiser-btn').addEventListener('click', async () => {
+  if (!sb) return;
+  const btn = document.getElementById('originales-optimiser-btn');
+  const msg = document.getElementById('originales-msg');
+  btn.disabled = true;
+
+  const { data: photos, error: erreurLecture } = await sb.from('model_photos')
+    .select('id, model_id, url, chemin')
+    .eq('originale_optimisee', false);
+  if (erreurLecture) {
+    msg.className = 'form-msg err';
+    msg.textContent = 'Erreur : ' + erreurLecture.message;
+    msg.style.display = 'block';
+    btn.disabled = false;
+    return;
+  }
+  if (!photos || !photos.length) {
+    msg.className = 'form-msg ok';
+    msg.textContent = 'Rien à faire : toutes les photos originales sont déjà optimisées.';
+    msg.style.display = 'block';
+    btn.disabled = false;
+    return;
+  }
+
+  let reussies = 0, echouees = 0, inchangees = 0, premiereErreur = null;
+  for (let i = 0; i < photos.length; i++) {
+    const photo = photos[i];
+    msg.className = 'form-msg ok';
+    msg.textContent = `Optimisation en cours… ${i + 1} / ${photos.length}`;
+    msg.style.display = 'block';
+    try {
+      const { blob, erreur, tailleOriginale } = await genererMiniatureDepuisUrl(photo.url, 3000, 0.90);
+      if (!blob) { echouees++; if (!premiereErreur) premiereErreur = erreur; continue; }
+
+      // La compression n'apporte rien (photo déjà petite/déjà compressée) :
+      // pas la peine de remplacer, on marque juste comme traitée.
+      if (blob.size >= tailleOriginale) {
+        await sb.from('model_photos').update({ originale_optimisee: true }).eq('id', photo.id);
+        inchangees++;
+        continue;
+      }
+
+      const nouveauChemin = `${photo.model_id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-optimisee.jpg`;
+      const { error: erreurUpload } = await sb.storage.from('model-photos').upload(nouveauChemin, blob);
+      if (erreurUpload) { echouees++; if (!premiereErreur) premiereErreur = "envoi refusé : " + erreurUpload.message; continue; }
+      const nouvelleUrl = sb.storage.from('model-photos').getPublicUrl(nouveauChemin).data.publicUrl;
+
+      const { error: erreurMaj } = await sb.from('model_photos')
+        .update({ url: nouvelleUrl, chemin: nouveauChemin, originale_optimisee: true })
+        .eq('id', photo.id);
+      if (erreurMaj) {
+        // La mise à jour de la fiche a échoué : on retire la copie qu'on
+        // venait d'envoyer plutôt que de laisser un fichier orphelin.
+        await sb.storage.from('model-photos').remove([nouveauChemin]);
+        echouees++; if (!premiereErreur) premiereErreur = "mise à jour de la fiche refusée : " + erreurMaj.message;
+        continue;
+      }
+
+      // La fiche pointe désormais vers la nouvelle version : l'ancienne peut
+      // être supprimée en toute sécurité.
+      if (photo.chemin) await sb.storage.from('model-photos').remove([photo.chemin]);
+      reussies++;
+    } catch (e) {
+      echouees++;
+      if (!premiereErreur) premiereErreur = e.message;
+    }
+  }
+
+  msg.className = echouees ? 'form-msg err' : 'form-msg ok';
+  msg.textContent = `Terminé : ${reussies} photo(s) recompressée(s), ${inchangees} déjà optimale(s)` + (echouees ? `, ${echouees} échec(s). Raison probable : ${premiereErreur}` : '.');
   msg.style.display = 'block';
   btn.disabled = false;
 });

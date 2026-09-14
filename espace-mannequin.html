@@ -1236,6 +1236,38 @@ async function convertirSiHeic(fichier) {
   }
 }
 
+// Compression modérée de la photo d'origine avant envoi : réduit nettement le
+// poids du fichier (donc le stockage ET la bande passante consommée à chaque
+// visite) sans perte visible, y compris pour l'impression du Compcard. 3000px
+// de côté maximum et qualité 0.90 restent largement au-dessus de ce qu'il faut
+// pour imprimer net à 400 DPI sur la plus grande case du Compcard (~130mm de
+// haut, soit environ 2050px à cette résolution) — aucune raison de conserver
+// des fichiers de 8-12 Mo tels quels. Ne touche pas au PNG (transparence).
+function compresserPhotoOrigine(fichier, coteMax = 3000, qualite = 0.90) {
+  return new Promise((resolve) => {
+    if (fichier.type !== 'image/jpeg' || fichier.size < 900 * 1024) { resolve(fichier); return; }
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const coteActuel = Math.max(img.width, img.height);
+        const ratio = coteActuel > coteMax ? coteMax / coteActuel : 1;
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * ratio);
+        canvas.height = Math.round(img.height * ratio);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+          if (!blob || blob.size >= fichier.size) { resolve(fichier); return; }
+          resolve(new File([blob], fichier.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' }));
+        }, 'image/jpeg', qualite);
+      } catch (e) {
+        resolve(fichier);
+      }
+    };
+    img.onerror = () => resolve(fichier);
+    img.src = URL.createObjectURL(fichier);
+  });
+}
+
 // Génère une version réduite de la photo, utilisée uniquement pour l'affichage
 // en grille (Book public, galerie de la fiche) — la photo d'origine envoyée à
 // côté reste, elle, intacte et en pleine résolution pour le Compcard et le
@@ -1312,7 +1344,8 @@ document.getElementById('input-photo').addEventListener('change', async (e) => {
   for (const { fichierOriginal, img, statut } of lignes) {
     statut.textContent = '⏳ Préparation...';
     try {
-      const fichier = await convertirSiHeic(fichierOriginal);
+      const fichierConverti = await convertirSiHeic(fichierOriginal);
+      const fichier = await compresserPhotoOrigine(fichierConverti);
       try { img.src = URL.createObjectURL(fichier); } catch (err) {}
       statut.textContent = '⏳ Envoi en cours...';
 
@@ -1345,7 +1378,8 @@ document.getElementById('input-photo').addEventListener('change', async (e) => {
         url: urlPublique.publicUrl,
         chemin,
         url_miniature: urlMiniature,
-        chemin_miniature: cheminMiniature
+        chemin_miniature: cheminMiniature,
+        originale_optimisee: true
       });
       if (erreurFiche) {
         statut.textContent = '❌ Échec : ' + erreurFiche.message;
