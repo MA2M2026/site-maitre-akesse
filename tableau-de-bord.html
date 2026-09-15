@@ -1257,6 +1257,35 @@ async function chargerMotResponsableTableau() {
   }
 }
 
+// Redimensionne/compresse une photo trop lourde (courant sur Android haut de gamme :
+// 8-15 Mo en pleine résolution) avant envoi — le bucket refuse tout fichier de plus
+// de 10 Mo. 2400px de côté et qualité 0.88 restent largement suffisants pour une
+// photo affichée sur le site (ni impression, ni Compcard ici).
+function redimensionnerPhotoResponsable(fichier, coteMax = 2400, qualite = 0.88) {
+  return new Promise((resolve) => {
+    if (!/^image\/(jpeg|png|webp)$/.test(fichier.type) || fichier.size < 1.5 * 1024 * 1024) { resolve(fichier); return; }
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const coteActuel = Math.max(img.width, img.height);
+        const ratio = coteActuel > coteMax ? coteMax / coteActuel : 1;
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * ratio);
+        canvas.height = Math.round(img.height * ratio);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+          if (!blob || blob.size >= fichier.size) { resolve(fichier); return; }
+          resolve(new File([blob], fichier.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' }));
+        }, 'image/jpeg', qualite);
+      } catch (e) {
+        resolve(fichier);
+      }
+    };
+    img.onerror = () => resolve(fichier);
+    img.src = URL.createObjectURL(fichier);
+  });
+}
+
 document.getElementById('mr-photo-btn').addEventListener('click', async () => {
   const input = document.getElementById('mr-photo-input');
   const msg = document.getElementById('mr-msg');
@@ -1277,7 +1306,15 @@ document.getElementById('mr-photo-btn').addEventListener('click', async () => {
       return;
     }
   }
-  const chemin = `responsable/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${fichier.name}`;
+  // Photos Android trop lourdes (fréquent sur les capteurs haute résolution) : on
+  // réduit avant envoi plutôt que de laisser le bucket rejeter silencieusement.
+  fichier = await redimensionnerPhotoResponsable(fichier);
+  if (fichier.size > 10 * 1024 * 1024) {
+    msg.className = 'form-msg err';
+    msg.textContent = 'Cette photo est trop lourde (plus de 10 Mo) même après compression — essayez une autre photo.';
+    return;
+  }
+  const chemin = `responsable/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${nomFichierSur(fichier.name)}`;
   const { error: erreurUpload } = await sb.storage.from('partenaires-logos').upload(chemin, fichier);
   if (erreurUpload) { msg.className = 'form-msg err'; msg.textContent = 'Erreur : ' + erreurUpload.message; return; }
 

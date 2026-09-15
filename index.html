@@ -361,7 +361,11 @@
 <script src="js/menu.js"></script>
 <script>
 // --- Flèche "Entrer" : simple repère visuel, fait défiler d'un écran (ne bloque jamais le scroll normal) ---
-document.getElementById('entrer-btn').addEventListener('click', () => {
+// Attend la fin du chargement du mannequin à la une (promesseVedette, définie plus bas)
+// avant de décider où défiler : sans ça, un clic rapide arrive avant la réponse
+// Supabase et retombe par erreur sur la bande d'annonce au lieu du mannequin à la une.
+document.getElementById('entrer-btn').addEventListener('click', async () => {
+  if (window.promesseVedette) { try { await window.promesseVedette; } catch (e) {} }
   const vedette = document.getElementById('mannequin-vedette');
   const cible = (vedette && getComputedStyle(vedette).display !== 'none') ? vedette : document.getElementById('marqueeBande');
   if (cible) cible.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -549,7 +553,7 @@ async function chargerMannequinVedette() {
   document.getElementById('vedette-lien').href = 'mannequin.html?id=' + profil.id;
   document.getElementById('mannequin-vedette').style.display = 'block';
 }
-chargerMannequinVedette();
+window.promesseVedette = chargerMannequinVedette();
 
 // --- Mot du fondateur : photo et message modifiables depuis le tableau de bord ---
 async function chargerMotResponsable() {
@@ -563,6 +567,7 @@ async function chargerMotResponsable() {
 
   if (data.photo_url) {
     const photo = document.getElementById('mot-resp-photo');
+    photo.onerror = () => { photo.style.display = 'none'; };
     photo.src = data.photo_url;
     photo.alt = data.nom || 'Maître Akesse';
     photo.style.display = 'block';
