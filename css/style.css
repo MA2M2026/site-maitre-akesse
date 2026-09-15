@@ -1473,7 +1473,7 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
    l'appareil ou l'orientation. Le texte est en flux normal à côté/en dessous,
    jamais en surimpression sur la photo : rien à assombrir, rien à recadrer. */
 .mot-responsable-bloc {
-  display: grid; grid-template-columns: minmax(240px, 340px) 1fr; gap: clamp(2rem, 5vw, 4rem); align-items: center;
+  display: grid; grid-template-columns: minmax(300px, 1.7fr) 1fr; gap: clamp(2rem, 5vw, 4rem); align-items: center;
   background: var(--anthracite);
   padding: clamp(2.5rem, 6vw, 4.5rem) var(--marge);
 }
@@ -1494,7 +1494,7 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
 }
 @media (max-width: 720px) {
   .mot-responsable-bloc { grid-template-columns: 1fr; }
-  .mot-responsable-photo-wrap { max-width: 300px; margin: 0 auto; }
+  .mot-responsable-photo-wrap { max-width: 480px; margin: 0 auto; }
   .mot-responsable-bloc .mot-responsable-texte { text-align: center; }
 }
 
