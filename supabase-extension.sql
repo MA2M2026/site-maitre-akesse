@@ -2185,3 +2185,29 @@ create policy "Tout le monde peut joindre des photos d'inscription"
   );
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 60 : même famille de faille que l'Extension 58, cette fois sur
+-- les photos de candidature (casting_photos). La policy d'insertion était
+-- with check (true) sans aucune condition — n'importe qui pouvait, via un
+-- appel direct à l'API, joindre un nombre illimité de photos à N'IMPORTE
+-- QUELLE candidature existante (même une ancienne déjà traitée), ce qui
+-- pèse sur le stockage et pourrait polluer le dossier d'un vrai candidat.
+--
+-- candidature.html n'envoie les photos qu'immédiatement après avoir créé
+-- la candidature (statut encore 'nouvelle' à ce moment) : ce durcissement
+-- n'a donc aucun impact sur le fonctionnement réel. Plafond de 12 photos
+-- par candidature (le formulaire en demande 4 minimum).
+-- ===================================================================
+drop policy if exists "Tout le monde peut joindre des photos de candidature" on casting_photos;
+create policy "Tout le monde peut joindre des photos de candidature"
+  on casting_photos for insert
+  with check (
+    exists (
+      select 1 from casting_applications a
+      where a.id = application_id and a.status = 'nouvelle'
+    )
+    and (select count(*) from casting_photos p where p.application_id = application_id) < 12
+  );
+
+NOTIFY pgrst, 'reload schema';

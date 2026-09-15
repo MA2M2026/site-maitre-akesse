@@ -494,6 +494,10 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
     afficherMsg(msg, `Merci d'ajouter au moins 4 photos (${fichiersPhotos.length} sélectionnée${fichiersPhotos.length > 1 ? 's' : ''} pour l'instant).`, 'err');
     return;
   }
+  if (fichiersPhotos.length > 12) {
+    afficherMsg(msg, `12 photos maximum par candidature (${fichiersPhotos.length} sélectionnées). Retirez-en quelques-unes.`, 'err');
+    return;
+  }
 
   const btn = document.getElementById('btn-envoyer');
   btn.disabled = true;
