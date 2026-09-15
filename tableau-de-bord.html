@@ -19,10 +19,32 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap">
 <link rel="stylesheet" href="css/style.css">
 <style>
-  .stats-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }
-  .stat-carte { background: var(--anthracite, var(--noir)); color: var(--blanc); padding: 1.6rem; border-top: 2px solid var(--or); }
-  .stat-carte .chiffre { font-family: var(--display); font-size: 2.4rem; }
-  .stat-carte .label { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: #bbb; margin-top: 0.4rem; }
+  .stats-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.9rem; }
+  .stat-carte { background: var(--anthracite, var(--noir)); color: var(--blanc); padding: 1rem 1.1rem; border-top: 2px solid var(--or); }
+  .stat-carte .chiffre { font-family: var(--display); font-size: 1.9rem; line-height: 1; }
+  .stat-carte .label { font-size: 0.64rem; letter-spacing: 0.08em; text-transform: uppercase; color: #bbb; margin-top: 0.35rem; }
+
+  /* Deux colonnes : à gauche, la gestion courante (validations, candidatures,
+     inscriptions, contenu du site...) ; à droite, les codes d'accès mannequin
+     (inscription + permanent), regroupés ensemble puisqu'ils forment une
+     famille à part. Empilées en une seule colonne sur mobile/tablette. */
+  .tableau-colonnes { display: grid; grid-template-columns: 1fr 360px; align-items: start; gap: 2.5rem; }
+  .colonne-droite .liste-recente { background: var(--anthracite, var(--noir)); padding: 1.4rem; border-top: 2px solid var(--or); }
+  @media (max-width: 900px) {
+    .tableau-colonnes { grid-template-columns: 1fr; gap: 0; }
+  }
+  /* Voir le commentaire au-dessus de "zone-listes-longues" dans le HTML pour la
+     convention de rangement (outil compact vs liste qui peut s'allonger). */
+  .zone-listes-longues { margin-top: 1rem; }
+
+  /* Statistiques de fréquentation : moins consultées au quotidien que les
+     stats principales ci-dessus, donc reléguées tout en bas de la page,
+     dans un format compact plutôt qu'en grandes cartes. */
+  .stats-secondaires-bloc { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--gris-clair); }
+  .stats-secondaires-titre { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--gris); margin-bottom: 0.9rem; }
+  .stats-secondaires { display: flex; flex-wrap: wrap; gap: 1.6rem 2.6rem; }
+  .stat-secondaire .chiffre { font-family: var(--display); font-size: 1.3rem; color: var(--texte-doux, #ccc); }
+  .stat-secondaire .label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gris); margin-top: 0.15rem; }
   .liste-recente { margin-top: 3rem; }
   .liste-recente table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
   .liste-recente th, .liste-recente td { text-align: left; padding: 0.7rem 0.6rem; border-bottom: 1px solid var(--gris-clair); }
@@ -184,32 +206,14 @@ setTimeout(() => {
   <div class="container">
     <div class="stats-grille" id="stats-grille">Chargement des statistiques…</div>
 
-    <div class="liste-recente">
-      <details id="validation-details">
-        <summary class="dossiers-entete" style="cursor:pointer; list-style:none;">
-          <h2 style="margin:0;">✅ Validations en attente</h2>
-          <span class="dossiers-compteur" id="validation-compteur"></span>
-        </summary>
-        <p style="font-size:0.85rem; color:var(--gris); margin:0.6rem 0 1rem;">Chaque fiche (mineur ou majeur) doit être validée ici avant sa toute première publication sur Le Book — vérifiez la qualité des photos et la cohérence des informations avant d'approuver. Une fois validée, le mannequin gère ensuite sa fiche en autonomie.</p>
-        <div id="liste-validations">Ouvrez cette section pour charger les fiches en attente.</div>
-      </details>
-    </div>
+    <div class="tableau-colonnes">
+    <div class="colonne-gauche">
 
     <div class="liste-recente">
       <h2 style="margin-bottom:0.3rem;">🖼️ Miniatures des photos</h2>
       <p style="font-size:0.85rem; color:var(--gris); margin-top:0; margin-bottom:1rem;">Les photos envoyées depuis l'espace mannequin génèrent automatiquement leur propre miniature légère. Cet outil rattrape uniquement les photos déjà en ligne AVANT la mise en place de ce système, pour réduire la bande passante consommée par Le Book (visible dans Supabase → Usage → Cached Egress).</p>
       <button class="btn btn--principal" id="miniatures-generer-btn" type="button">Générer les miniatures manquantes</button>
       <div id="miniatures-msg" class="form-msg"></div>
-    </div>
-
-    <div class="liste-recente">
-      <div class="dossiers-entete">
-        <h2 style="margin:0;">🔴 Erreurs réelles du site (7 derniers jours)</h2>
-        <span class="dossiers-compteur" id="erreurs-compteur"></span>
-      </div>
-      <p style="font-size:0.85rem; color:var(--gris); margin:0.3rem 0 1rem;">Chaque erreur JavaScript survenue chez un vrai visiteur (pas une relecture de code) est enregistrée ici automatiquement. Une liste vide est bon signe.</p>
-      <div id="liste-erreurs"></div>
-      <button class="btn" id="erreurs-tout-effacer-btn" style="margin-top:0.8rem; display:none; color:var(--gris); border-color:var(--gris-clair);">Tout marquer comme vu (effacer le journal)</button>
     </div>
 
     <div class="liste-recente">
@@ -223,50 +227,6 @@ setTimeout(() => {
       </form>
       <div id="projets-msg" class="form-msg"></div>
       <div id="liste-projets"></div>
-    </div>
-
-    <div class="liste-recente">
-      <div class="dossiers-entete">
-        <h2 style="margin:0;">Candidatures</h2>
-        <span class="dossiers-compteur" id="candidatures-compteur"></span>
-      </div>
-      <div id="resume-candidatures" style="font-size:0.85rem; color:var(--gris); margin-bottom:0.8rem;"></div>
-      <div class="filtre-pills" id="filtres-candidatures"></div>
-      <div class="dossier-liste" id="liste-candidatures"></div>
-      <button class="btn dossiers-plus" id="candidatures-plus-btn" style="display:none;">Voir plus</button>
-    </div>
-
-    <div class="liste-recente">
-      <div class="dossiers-entete">
-        <h2 style="margin:0;">Demandes recruteurs</h2>
-        <span class="dossiers-compteur" id="recruteurs-compteur"></span>
-      </div>
-      <div class="filtre-pills" id="filtres-recruteurs"></div>
-      <div class="dossier-liste" id="liste-recruteurs"></div>
-      <button class="btn dossiers-plus" id="recruteurs-plus-btn" style="display:none;">Voir plus</button>
-    </div>
-
-    <div class="liste-recente">
-      <h2 style="margin-bottom:0.3rem;">Codes d'inscription</h2>
-      <p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Chaque code ne peut servir qu'une seule fois. Générez-en un et transmettez-le (WhatsApp, SMS...) à la personne que vous invitez à s'inscrire.</p>
-      <button class="btn btn--principal" id="generer-code-btn">+ Générer un nouveau code</button>
-      <div id="nouveau-code-affiche" style="display:none; margin-top:1rem; padding:1rem; background:var(--anthracite, var(--noir)); display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
-        <span style="font-family:var(--display); font-size:1.4rem; color:var(--titre-clair, #fff); letter-spacing:0.08em;" id="nouveau-code-texte"></span>
-        <button class="btn" id="copier-code-btn">Copier</button>
-      </div>
-      <div id="codes-msg" class="form-msg"></div>
-      <div class="dossier-liste" id="liste-codes" style="margin-top:1.5rem;"></div>
-    </div>
-
-    <div class="liste-recente">
-      <h2 style="margin-bottom:0.3rem;">Code permanent — "Créer mon compte" (espace mannequin)</h2>
-      <p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Contrairement aux codes d'inscription ci-dessus, celui-ci est unique et permanent : le même code sert à tous les mannequins qui créent leur compte dans l'espace mannequin, jusqu'à ce que vous le changiez ici. Il n'est jamais stocké en clair — en cas de doute qu'il ait trop circulé, changez-le simplement.</p>
-      <div style="display:flex; gap:0.7rem; flex-wrap:wrap; align-items:center;">
-        <input type="text" id="portail-nouveau-code" placeholder="Nouveau code (6 caractères minimum)" style="flex:1; min-width:220px; padding:0.7rem 0.9rem; background:var(--anthracite, var(--noir)); border:1px solid var(--gris-clair, #444); color:#fff;">
-        <button class="btn" id="portail-generer-btn" type="button">Générer aléatoirement</button>
-        <button class="btn btn--principal" id="portail-definir-btn" type="button">Définir ce code</button>
-      </div>
-      <div id="portail-code-msg" class="form-msg"></div>
     </div>
 
     <div class="liste-recente">
@@ -286,32 +246,6 @@ setTimeout(() => {
         <button class="btn" id="instagram-rafraichir-btn" type="button">Rafraîchir les publications</button>
       </div>
       <div id="instagram-msg" class="form-msg"></div>
-    </div>
-
-    <div class="liste-recente">
-      <div class="dossiers-entete">
-        <h2 style="margin:0;">Inscriptions mannequins</h2>
-        <span class="dossiers-compteur" id="inscriptions-compteur"></span>
-      </div>
-      <p style="background:rgba(207,59,82,0.12); border-left:3px solid var(--bordeaux-clair); padding:0.7rem 1rem; font-size:0.82rem; margin:0 0 1rem;">
-        ⚠️ La référence de paiement affichée est fournie par la personne — le site ne peut pas vérifier auprès de Wave qu'elle est authentique.
-        Une même référence ne peut plus être réutilisée deux fois, mais <strong>avant de passer un dossier en "Payée"</strong>, recherchez toujours
-        cette référence dans votre application Wave pour confirmer le montant et la date.
-      </p>
-      <div class="filtre-pills" id="filtres-inscriptions"></div>
-      <div class="dossier-liste" id="liste-inscriptions"></div>
-      <button class="btn dossiers-plus" id="inscriptions-plus-btn" style="display:none;">Voir plus</button>
-    </div>
-
-    <div class="liste-recente">
-      <h2 style="margin-bottom:1rem;">Derniers messages de contact</h2>
-      <table id="table-contacts"><thead><tr><th>Nom</th><th>Type</th><th>Téléphone</th><th>Date</th></tr></thead><tbody></tbody></table>
-    </div>
-
-    <div class="liste-recente">
-      <h2 style="margin-bottom:0.3rem;">Classement des mannequins — visites réelles</h2>
-      <p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Personnes distinctes ayant consulté chaque fiche sur les <strong>7 derniers jours</strong> (pas les rechargements de page). Top 10 affiché.</p>
-      <div id="classement-mannequins" style="display:flex; flex-direction:column; gap:0.5rem;"></div>
     </div>
 
     <div class="liste-recente">
@@ -357,6 +291,118 @@ setTimeout(() => {
       <div class="form-champ"><label for="mr-message">Message</label><textarea id="mr-message" rows="6"></textarea></div>
       <button class="btn btn--principal" id="mr-enregistrer-btn">Enregistrer le mot du fondateur</button>
       <div id="mr-msg" class="form-msg"></div>
+    </div>
+
+    </div><!-- /colonne-gauche -->
+
+    <div class="colonne-droite">
+
+    <div class="liste-recente">
+      <h2 style="margin-bottom:0.3rem;">🔑 Codes d'inscription</h2>
+      <p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Chaque code ne peut servir qu'une seule fois. Générez-en un et transmettez-le (WhatsApp, SMS...) à la personne que vous invitez à s'inscrire.</p>
+      <button class="btn btn--principal" id="generer-code-btn">+ Générer un nouveau code</button>
+      <div id="nouveau-code-affiche" style="display:none; margin-top:1rem; padding:1rem; background:var(--anthracite, var(--noir)); display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+        <span style="font-family:var(--display); font-size:1.4rem; color:var(--titre-clair, #fff); letter-spacing:0.08em;" id="nouveau-code-texte"></span>
+        <button class="btn" id="copier-code-btn">Copier</button>
+      </div>
+      <div id="codes-msg" class="form-msg"></div>
+      <div class="dossier-liste" id="liste-codes" style="margin-top:1.5rem;"></div>
+    </div>
+
+    <div class="liste-recente">
+      <h2 style="margin-bottom:0.3rem;">🔑 Code permanent — "Créer mon compte" (espace mannequin)</h2>
+      <p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Contrairement aux codes d'inscription ci-dessus, celui-ci est unique et permanent : le même code sert à tous les mannequins qui créent leur compte dans l'espace mannequin, jusqu'à ce que vous le changiez ici. Il n'est jamais stocké en clair — en cas de doute qu'il ait trop circulé, changez-le simplement.</p>
+      <div style="display:flex; gap:0.7rem; flex-wrap:wrap; align-items:center;">
+        <input type="text" id="portail-nouveau-code" placeholder="Nouveau code (6 caractères minimum)" style="flex:1; min-width:220px; padding:0.7rem 0.9rem; background:var(--anthracite, var(--noir)); border:1px solid var(--gris-clair, #444); color:#fff;">
+        <button class="btn" id="portail-generer-btn" type="button">Générer aléatoirement</button>
+        <button class="btn btn--principal" id="portail-definir-btn" type="button">Définir ce code</button>
+      </div>
+      <div id="portail-code-msg" class="form-msg"></div>
+    </div>
+
+    </div><!-- /colonne-droite -->
+    </div><!-- /tableau-colonnes -->
+
+    <!-- Listes longues (candidatures, inscriptions, historiques...) : sur toute la
+         largeur plutôt que coincées dans une colonne étroite, puisqu'elles peuvent
+         contenir beaucoup d'entrées. Convention pour toute nouvelle section future :
+         un outil/formulaire compact → colonne-gauche ou colonne-droite ci-dessus ;
+         une liste/historique qui peut s'allonger avec le temps → ici, zone-listes-longues. -->
+    <div class="zone-listes-longues">
+
+    <div class="liste-recente">
+      <details id="validation-details">
+        <summary class="dossiers-entete" style="cursor:pointer; list-style:none;">
+          <h2 style="margin:0;">✅ Validations en attente</h2>
+          <span class="dossiers-compteur" id="validation-compteur"></span>
+        </summary>
+        <p style="font-size:0.85rem; color:var(--gris); margin:0.6rem 0 1rem;">Chaque fiche (mineur ou majeur) doit être validée ici avant sa toute première publication sur Le Book — vérifiez la qualité des photos et la cohérence des informations avant d'approuver. Une fois validée, le mannequin gère ensuite sa fiche en autonomie.</p>
+        <div id="liste-validations">Ouvrez cette section pour charger les fiches en attente.</div>
+      </details>
+    </div>
+
+    <div class="liste-recente">
+      <div class="dossiers-entete">
+        <h2 style="margin:0;">🔴 Erreurs réelles du site (7 derniers jours)</h2>
+        <span class="dossiers-compteur" id="erreurs-compteur"></span>
+      </div>
+      <p style="font-size:0.85rem; color:var(--gris); margin:0.3rem 0 1rem;">Chaque erreur JavaScript survenue chez un vrai visiteur (pas une relecture de code) est enregistrée ici automatiquement. Une liste vide est bon signe.</p>
+      <div id="liste-erreurs"></div>
+      <button class="btn" id="erreurs-tout-effacer-btn" style="margin-top:0.8rem; display:none; color:var(--gris); border-color:var(--gris-clair);">Tout marquer comme vu (effacer le journal)</button>
+    </div>
+
+    <div class="liste-recente">
+      <div class="dossiers-entete">
+        <h2 style="margin:0;">Candidatures</h2>
+        <span class="dossiers-compteur" id="candidatures-compteur"></span>
+      </div>
+      <div id="resume-candidatures" style="font-size:0.85rem; color:var(--gris); margin-bottom:0.8rem;"></div>
+      <div class="filtre-pills" id="filtres-candidatures"></div>
+      <div class="dossier-liste" id="liste-candidatures"></div>
+      <button class="btn dossiers-plus" id="candidatures-plus-btn" style="display:none;">Voir plus</button>
+    </div>
+
+    <div class="liste-recente">
+      <div class="dossiers-entete">
+        <h2 style="margin:0;">Demandes recruteurs</h2>
+        <span class="dossiers-compteur" id="recruteurs-compteur"></span>
+      </div>
+      <div class="filtre-pills" id="filtres-recruteurs"></div>
+      <div class="dossier-liste" id="liste-recruteurs"></div>
+      <button class="btn dossiers-plus" id="recruteurs-plus-btn" style="display:none;">Voir plus</button>
+    </div>
+
+    <div class="liste-recente">
+      <div class="dossiers-entete">
+        <h2 style="margin:0;">Inscriptions mannequins</h2>
+        <span class="dossiers-compteur" id="inscriptions-compteur"></span>
+      </div>
+      <p style="background:rgba(207,59,82,0.12); border-left:3px solid var(--bordeaux-clair); padding:0.7rem 1rem; font-size:0.82rem; margin:0 0 1rem;">
+        ⚠️ La référence de paiement affichée est fournie par la personne — le site ne peut pas vérifier auprès de Wave qu'elle est authentique.
+        Une même référence ne peut plus être réutilisée deux fois, mais <strong>avant de passer un dossier en "Payée"</strong>, recherchez toujours
+        cette référence dans votre application Wave pour confirmer le montant et la date.
+      </p>
+      <div class="filtre-pills" id="filtres-inscriptions"></div>
+      <div class="dossier-liste" id="liste-inscriptions"></div>
+      <button class="btn dossiers-plus" id="inscriptions-plus-btn" style="display:none;">Voir plus</button>
+    </div>
+
+    <div class="liste-recente">
+      <h2 style="margin-bottom:1rem;">Derniers messages de contact</h2>
+      <table id="table-contacts"><thead><tr><th>Nom</th><th>Type</th><th>Téléphone</th><th>Date</th></tr></thead><tbody></tbody></table>
+    </div>
+
+    <div class="liste-recente">
+      <h2 style="margin-bottom:0.3rem;">Classement des mannequins — visites réelles</h2>
+      <p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Personnes distinctes ayant consulté chaque fiche sur les <strong>7 derniers jours</strong> (pas les rechargements de page). Top 10 affiché.</p>
+      <div id="classement-mannequins" style="display:flex; flex-direction:column; gap:0.5rem;"></div>
+    </div>
+
+    </div><!-- /zone-listes-longues -->
+
+    <div class="stats-secondaires-bloc">
+      <div class="stats-secondaires-titre">📊 Fréquentation du site</div>
+      <div class="stats-secondaires" id="stats-secondaires">Chargement…</div>
     </div>
 
     <div style="margin:2.5rem 0;">
@@ -709,10 +755,13 @@ async function chargerStatistiques() {
     <div class="stat-carte"><div class="chiffre">${recruteurs}</div><div class="label">Demandes recruteurs</div></div>
     <div class="stat-carte"><div class="chiffre">${contacts}</div><div class="label">Messages de contact</div></div>
     <div class="stat-carte"><div class="chiffre">${actus}</div><div class="label">Actualités publiées</div></div>
-    <div class="stat-carte"><div class="chiffre">${photos}</div><div class="label">Photos envoyées (book)</div></div>
-    <div class="stat-carte"><div class="chiffre">${visitesAujourdhui}</div><div class="label">Visites réelles — aujourd'hui</div></div>
-    <div class="stat-carte"><div class="chiffre">${visites7j}</div><div class="label">Visites réelles — 7 derniers jours</div></div>
-    <div class="stat-carte"><div class="chiffre">${visitesTotal}</div><div class="label">Visites réelles — total</div></div>
+  `;
+
+  document.getElementById('stats-secondaires').innerHTML = `
+    <div class="stat-secondaire"><div class="chiffre">${photos}</div><div class="label">Photos envoyées (book)</div></div>
+    <div class="stat-secondaire"><div class="chiffre">${visitesAujourdhui}</div><div class="label">Visites réelles — aujourd'hui</div></div>
+    <div class="stat-secondaire"><div class="chiffre">${visites7j}</div><div class="label">Visites réelles — 7 derniers jours</div></div>
+    <div class="stat-secondaire"><div class="chiffre">${visitesTotal}</div><div class="label">Visites réelles — total</div></div>
   `;
 
   chargerErreurs();
