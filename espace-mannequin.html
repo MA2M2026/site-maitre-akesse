@@ -1330,6 +1330,17 @@ document.getElementById('input-photo').addEventListener('change', async (e) => {
   // en silence (clé étrangère), et la photo n'apparaîtrait jamais dans la grille.
   await sb.from('model_profiles').upsert({ id: user.id }, { ignoreDuplicates: true });
 
+  // Vérifié aussi côté serveur (trigger sur model_photos) — ce contrôle ici évite
+  // simplement de téléverser inutilement des fichiers qui seraient de toute façon
+  // refusés une fois la limite atteinte.
+  const LIMITE_PHOTOS = 30;
+  const { count: nbPhotosActuelles } = await sb.from('model_photos').select('id', { count: 'exact', head: true }).eq('model_id', user.id);
+  if ((nbPhotosActuelles || 0) + fichiers.length > LIMITE_PHOTOS) {
+    alert(`Limite de ${LIMITE_PHOTOS} photos par book atteinte (${nbPhotosActuelles || 0} déjà envoyées). Supprimez d'anciennes photos avant d'en ajouter de nouvelles.`);
+    e.target.value = '';
+    return;
+  }
+
   const apercu = document.getElementById('apercu-upload');
   const liste = document.getElementById('apercu-liste');
   apercu.style.display = 'block';

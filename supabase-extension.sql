@@ -2076,3 +2076,46 @@ create trigger trg_bloquer_publication_mineur
   for each row execute function bloquer_publication_mineur();
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 57 : limite réelle (côté serveur) du nombre de photos par
+-- mannequin. Jusqu'ici, seuls le type de fichier et la taille étaient
+-- vérifiés côté serveur (allowed_mime_types / file_size_limit sur le
+-- bucket model-photos) — rien n'empêchait un compte de téléverser un
+-- nombre illimité de photos, ce qui pèse directement sur le quota de
+-- stockage/bande passante Supabase (déjà sous tension cette session,
+-- cf. nettoyage des photos orphelines). Un mannequin peut avoir jusqu'à
+-- 30 photos dans son book — largement suffisant pour un portfolio pro.
+-- Les admins restent exemptés (rattrapage, gestion depuis le tableau de
+-- bord). Un contrôle côté JavaScript existe aussi (espace-mannequin.html)
+-- pour éviter un téléversement inutile, mais celui-ci est la vraie
+-- barrière : il s'applique même à un appel direct de l'API.
+-- ===================================================================
+create or replace function limiter_nombre_photos()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  nb_photos int;
+  est_admin boolean;
+begin
+  select exists(select 1 from admins where user_id = auth.uid()) into est_admin;
+  if est_admin then
+    return NEW;
+  end if;
+  select count(*) into nb_photos from model_photos where model_id = NEW.model_id;
+  if nb_photos >= 30 then
+    raise exception 'Limite de 30 photos atteinte pour ce book. Supprimez une photo avant d''en ajouter une nouvelle.';
+  end if;
+  return NEW;
+end;
+$$;
+
+drop trigger if exists trg_limiter_nombre_photos on model_photos;
+create trigger trg_limiter_nombre_photos
+  before insert on model_photos
+  for each row execute function limiter_nombre_photos();
+
+NOTIFY pgrst, 'reload schema';
