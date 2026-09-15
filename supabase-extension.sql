@@ -2381,6 +2381,80 @@ insert into mot_responsable (id, nom, titre, message, photo_url) values (
 
 NOTIFY pgrst, 'reload schema';
 
+-- Extension 64 : file d'attente de validation admin — avant, seuls les
+-- profils de mineurs étaient bloqués (Extension 56), et même pour eux il
+-- n'existait aucun outil dans le tableau de bord pour les retrouver (le
+-- commentaire de l'Extension 56 le disait déjà : "le temps qu'un outil
+-- dédié existe"). Cette extension généralise le principe : TOUTE fiche
+-- (mineur ou non) doit être validée manuellement par l'agence avant sa
+-- toute première publication, pour éviter qu'une photo de mauvaise
+-- qualité dégrade l'image du Book dès le départ. Une fois cette première
+-- validation faite, le mannequin redevient autonome pour ses mises à jour
+-- suivantes — même principe que premiere_publication_faite déjà en place
+-- pour le mode guidé.
+--
+-- Remplace le déclencheur de l'Extension 56 (logique des mineurs
+-- réintégrée ici, avec le même comportement : eux restent bloqués à
+-- CHAQUE tentative de publication, pas seulement la première, en plus
+-- d'apparaître maintenant dans la file d'attente comme tout le monde).
+-- ===================================================================
+alter table model_profiles add column if not exists en_attente_validation boolean not null default false;
+alter table model_profiles add column if not exists raison_refus text;
+
+drop trigger if exists trg_bloquer_publication_mineur on model_profiles;
+
+create or replace function gerer_validation_publication()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  est_admin boolean;
+  age_ans int;
+  est_mineur boolean := false;
+begin
+  select exists(select 1 from admins where user_id = auth.uid()) into est_admin;
+
+  if NEW.date_naissance is not null then
+    age_ans := extract(year from age(NEW.date_naissance));
+    est_mineur := age_ans < 18;
+  end if;
+
+  if NEW.published is true then
+    if est_admin then
+      -- Publication par un admin = validation manuelle : la fiche entre
+      -- en ligne, la file d'attente est levée, et la première publication
+      -- est marquée comme faite (mode guidé → boutons autonomes ensuite).
+      NEW.en_attente_validation := false;
+      NEW.premiere_publication_faite := true;
+    elsif est_mineur or not coalesce(OLD.premiere_publication_faite, false) then
+      -- Un mannequin (mineur, ou en première publication) ne peut jamais
+      -- se publier lui-même : basculé en attente de validation.
+      NEW.published := false;
+      NEW.en_attente_validation := true;
+    end if;
+  end if;
+
+  return NEW;
+end;
+$$;
+
+drop trigger if exists trg_gerer_validation_publication on model_profiles;
+create trigger trg_gerer_validation_publication
+  before insert or update on model_profiles
+  for each row execute function gerer_validation_publication();
+
+-- Lecture de la file d'attente réservée aux admins (le mannequin voit
+-- déjà son propre en_attente_validation/raison_refus via sa policy de
+-- lecture existante sur sa propre fiche, sans besoin d'ajout ici).
+drop policy if exists "Les admins gerent la file de validation" on model_profiles;
+create policy "Les admins gerent la file de validation"
+  on model_profiles for select
+  using (exists (select 1 from admins where user_id = auth.uid()));
+
+NOTIFY pgrst, 'reload schema';
+
 -- ===================================================================
 -- Extension 65 : flux Instagram automatique sur le site (accueil).
 --
