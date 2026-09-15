@@ -1943,11 +1943,13 @@ NOTIFY pgrst, 'reload schema';
 -- du mannequin concerné. Ciblage par URL exacte (aucune autre photo
 -- touchée) — vérifié avant suppression : les 2 premières renvoient bien un
 -- 404 côté stockage, la 3e une image invalide.
+--
+-- (Suppression du fichier de stockage correspondant à la 3e photo non
+-- incluse ici : Supabase interdit la suppression directe de storage.objects
+-- par SQL, "Use the Storage API instead". Le fichier corrompu restera seul
+-- dans le stockage, sans aucune fiche pour y faire référence — quelques Ko
+-- perdus, sans aucun impact réel.)
 -- ===================================================================
-delete from storage.objects
-where bucket_id = 'model-photos'
-  and name = 'c402a4a3-a090-421f-bdcc-b94fece2da4f/1789056565393-temp_image_C5E6109C-E03D-46E3-AD56-1B680D35918D.webp';
-
 delete from model_photos
 where url in (
   'https://dfhghgmwmxiguhtxtsle.supabase.co/storage/v1/object/public/model-photos/c402a4a3-a090-421f-bdcc-b94fece2da4f/1789055934200-Capture%20One%20Catalog%201828.jpeg',
