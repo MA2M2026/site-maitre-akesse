@@ -12,6 +12,13 @@
   --noir: #060504;           /* fond dominant, noir profond */
   --noir-doux: #0e0b0a;      /* variation légèrement plus claire (cartes, séparation) */
   --anthracite: #170f11;     /* variation teintée bordeaux, pour distinguer une section sombre */
+
+  /* Versions semi-transparentes des deux fonds ci-dessus — utilisées uniquement sur
+     les grandes sections de page (jamais sur les cartes/boutons/formulaires, qui
+     restent pleins pour la lisibilité) afin de laisser deviner la photo de fond
+     fixe du site à travers le contenu. */
+  --noir-transparent: rgba(6,5,4,0.86);
+  --anthracite-transparent: rgba(23,15,17,0.86);
   --blanc: #ffffff;
   --creme: #f4f0ea;          /* réservé aux rares cartes claires (fiche mensurations, modales) */
 
@@ -276,7 +283,7 @@ section { padding: 5rem 0; }
 
 @media (max-width: 800px) { .section-tete { grid-template-columns: 1fr; } }
 
-.fond-noir, .fond-anthracite { background: var(--anthracite); color: var(--texte-corps); }
+.fond-noir, .fond-anthracite { background: var(--anthracite-transparent); color: var(--texte-corps); }
 .fond-noir p, .fond-anthracite p { color: var(--texte-corps); }
 .fond-noir .section-tete p, .fond-anthracite .section-tete p { color: var(--texte-corps); }
 
@@ -629,7 +636,7 @@ section { padding: 5rem 0; }
 
 /* ---------- Footer ---------- */
 
-.site-footer { background: var(--noir); color: var(--texte-corps); padding: 3.5rem 0 2rem; border-top: 1px solid var(--gris-clair); }
+.site-footer { background: var(--noir-transparent); color: var(--texte-corps); padding: 3.5rem 0 2rem; border-top: 1px solid var(--gris-clair); }
 
 .footer-grille { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 2rem; margin-bottom: 2rem; }
 .footer-grille h4 { color: var(--titre-clair); font-family: var(--texte); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.16em; margin-bottom: 1.1rem; font-weight: 500; }
@@ -919,7 +926,7 @@ section { padding: 5rem 0; }
   position: relative;
   text-align: center;
   overflow: hidden;
-  background: var(--noir);
+  background: var(--noir-transparent);
 }
 
 .hero-carousel { position: relative; width: 100%; height: 100%; }
@@ -1537,7 +1544,7 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
    jamais en surimpression sur la photo : rien à assombrir, rien à recadrer. */
 .mot-responsable-bloc {
   display: grid; grid-template-columns: minmax(320px, 3.2fr) 1fr; gap: clamp(2rem, 5vw, 4rem); align-items: center;
-  background: var(--anthracite);
+  background: var(--anthracite-transparent);
   padding: clamp(2.5rem, 6vw, 4.5rem) clamp(1rem, 5vw, 4rem);
 }
 .mot-responsable-photo-wrap {
