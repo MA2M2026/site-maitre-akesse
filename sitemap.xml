@@ -46,6 +46,11 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://www.maitreakessemodelmanagement.com/en/candidature.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://www.maitreakessemodelmanagement.com/inscription-mannequin.html</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
