@@ -1689,3 +1689,57 @@ revoke all on function soumettre_inscription_mannequin(text, text, date, text, i
 grant execute on function soumettre_inscription_mannequin(text, text, date, text, int, text, text, text, text, text) to anon, authenticated;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 49 : PHASE DE CONSOLIDATION / SÉCURISATION — ralentissement
+-- anti-brute-force sur verifier_code_inscription().
+--
+-- (Les limites de taille/type de fichier par bucket existent déjà depuis
+-- plus tôt dans ce fichier ["Restreint les buckets de photos aux formats
+-- image réels..."] — pas besoin d'y retoucher, elles fonctionnent déjà.)
+--
+-- Jusqu'ici, rien n'empêchait un script d'appeler verifier_code_inscription()
+-- (ouverte à "anon") des milliers de fois par minute pour deviner un code
+-- par essais successifs. On journalise chaque tentative dans une table sans
+-- aucune policy (donc illisible/inmodifiable depuis le site — seule la
+-- fonction, en security definer, peut y écrire) et on ralentit
+-- volontairement (pg_sleep) la réponse dès qu'un volume anormal de
+-- tentatives est détecté sur la dernière minute. Ça ne bloque jamais un
+-- usage normal (une poignée de tentatives), mais rend un balayage
+-- automatisé de codes beaucoup trop lent pour être rentable.
+-- ===================================================================
+
+create table if not exists tentatives_verification_code (
+  id bigint generated always as identity primary key,
+  cree_le timestamptz not null default now()
+);
+alter table tentatives_verification_code enable row level security;
+-- Aucune policy créée volontairement : ni lecture ni écriture directe
+-- possible depuis le site, y compris par un compte authentifié — seule la
+-- fonction verifier_code_inscription() (security definer) peut y toucher.
+
+create or replace function verifier_code_inscription(code_input text)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  nb_recentes int;
+begin
+  insert into tentatives_verification_code default values;
+  -- Nettoyage au passage : pas besoin d'un job séparé pour purger la table.
+  delete from tentatives_verification_code where cree_le < now() - interval '10 minutes';
+
+  select count(*) into nb_recentes from tentatives_verification_code
+  where cree_le > now() - interval '1 minute';
+
+  if nb_recentes > 20 then
+    perform pg_sleep(3);
+  end if;
+
+  return exists (select 1 from codes_inscription where code = code_input and utilise = false);
+end;
+$$;
+
+NOTIFY pgrst, 'reload schema';
