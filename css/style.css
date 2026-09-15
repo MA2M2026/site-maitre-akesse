@@ -1493,7 +1493,11 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
    d'écran et affaiblissait le contraste du texte sur grand écran). */
 #mot-responsable.a-une-photo .mot-responsable-bloc {
   position: relative;
-  min-height: 90vh;
+  /* Basé sur la largeur (vw) et non la hauteur (vh) de l'écran : les unités vh
+     ont un bug bien connu sur Safari iOS (iPhone/iPad) — la barre d'outils du
+     navigateur qui apparaît/disparaît peut laisser une valeur de vh obsolète
+     après une rotation d'écran, créant un grand vide noir avant la photo. */
+  min-height: clamp(420px, 60vw, 860px);
   display: flex; flex-direction: column; justify-content: flex-end;
   padding: 0;
   background: var(--noir);
@@ -1521,9 +1525,6 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
   color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.95), 0 2px 18px rgba(0,0,0,0.8);
 }
 
-@media (max-width: 720px) {
-  #mot-responsable.a-une-photo .mot-responsable-bloc { min-height: 78vh; }
-}
 
 /* ---------- Bandeau "Ils nous ont fait confiance" ---------- */
 .confiance-bande { display: flex; flex-direction: column; align-items: center; gap: 1.2rem; padding: 1.4rem 0; }
