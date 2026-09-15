@@ -173,13 +173,12 @@
 </section>
 
 <!-- Mot du fondateur -->
-<section id="mot-responsable" style="display:none;">
-  <div class="mot-responsable-bloc reveal">
-    <div class="mot-responsable-photo-wrap">
-      <img id="mot-resp-photo" src="" alt="" style="display:none;">
-      <div class="mot-responsable-scrim"></div>
-    </div>
-    <div class="container">
+<section id="mot-responsable" class="fond-anthracite" style="display:none;">
+  <div class="container">
+    <div class="mot-responsable-bloc reveal">
+      <div class="mot-responsable-photo-wrap">
+        <img id="mot-resp-photo" src="" alt="" style="display:none;">
+      </div>
       <div class="mot-responsable-texte">
         <div class="eyebrow">Mot de Maître Akesse</div>
         <h2 id="mot-resp-nom">Maître Akesse</h2>
@@ -571,11 +570,7 @@ async function chargerMotResponsable() {
 
   if (data.photo_url) {
     const photo = document.getElementById('mot-resp-photo');
-    photo.onerror = () => {
-      photo.style.display = 'none';
-      document.getElementById('mot-responsable').classList.remove('a-une-photo');
-    };
-    photo.onload = () => { document.getElementById('mot-responsable').classList.add('a-une-photo'); };
+    photo.onerror = () => { photo.style.display = 'none'; };
     photo.src = data.photo_url;
     photo.alt = data.nom || 'Maître Akesse';
     photo.style.display = 'block';
