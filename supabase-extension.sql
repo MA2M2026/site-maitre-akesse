@@ -1956,3 +1956,14 @@ where url in (
   'https://dfhghgmwmxiguhtxtsle.supabase.co/storage/v1/object/public/model-photos/c402a4a3-a090-421f-bdcc-b94fece2da4f/1789055984263-Capture%20One%20Catalog%201833.jpeg',
   'https://dfhghgmwmxiguhtxtsle.supabase.co/storage/v1/object/public/model-photos/c402a4a3-a090-421f-bdcc-b94fece2da4f/1789056565393-temp_image_C5E6109C-E03D-46E3-AD56-1B680D35918D.webp'
 );
+
+-- ===================================================================
+-- Extension 54 : les 2 photos restantes de l'Extension 53 n'ont pas été
+-- supprimées — leur URL en base diffère probablement légèrement de la
+-- copie affichée à l'écran (encodage des espaces). Ciblage cette fois par
+-- le préfixe numérique (l'horodatage du nom de fichier), unique et sans
+-- ambiguïté d'encodage, plutôt que l'URL complète.
+-- ===================================================================
+delete from model_photos
+where url like '%1789055934200-Capture%'
+   or url like '%1789055984263-Capture%';
