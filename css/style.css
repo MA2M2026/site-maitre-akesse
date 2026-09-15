@@ -1478,11 +1478,20 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
   padding: clamp(2.5rem, 6vw, 4.5rem) clamp(1rem, 5vw, 4rem);
 }
 .mot-responsable-photo-wrap {
+  position: relative;
   width: 100%; aspect-ratio: 3 / 4; border-radius: 20px; overflow: hidden;
   /* Coins arrondis + léger liseré clair : effet "vitre" plutôt qu'une image
      plaquée aux bords bruts. */
   box-shadow: 0 22px 48px -14px rgba(0,0,0,0.8), 0 0 30px -8px rgba(207,59,82,0.22), inset 0 0 0 1px rgba(255,255,255,0.1);
   background: var(--noir);
+}
+/* Assombrit très doucement le pourtour de la photo (jamais le centre, où se
+   trouve le visage) — une ombre interne large et floue, pas un dégradé
+   qu'on remarque consciemment. */
+.mot-responsable-photo-wrap::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  box-shadow: inset 0 0 70px 4px rgba(0,0,0,0.32);
+  pointer-events: none;
 }
 .mot-responsable-photo-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .mot-responsable-texte h2 { margin-top: 0.6rem; font-size: clamp(1.8rem, 4vw, 2.6rem); }
