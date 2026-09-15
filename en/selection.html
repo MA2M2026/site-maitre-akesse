@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
@@ -12,36 +12,34 @@
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ma sélection — Maître Akesse Model Management</title>
+<title>My Selection — Maître Akesse Model Management</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="css/style.css">
-<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#1e1d1c">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
 </head>
 <body>
 <script>
-// Filet de sécurité : sur une connexion instable, un script externe (Supabase, EmailJS,
-// heic2any...) peut être très lent ou échouer à charger — dans ce cas js/app.js ne
-// s'exécute jamais et les éléments ".reveal" (animation d'apparition au scroll) restent
-// invisibles indéfiniment, alors que le reste de la page (formulaires, boutons) fonctionne
-// normalement. Ce filet les révèle de force après 2,5s si l'animation normale n'a pas eu
-// lieu, pour qu'aucun contenu ne reste caché à cause d'un simple souci réseau.
+// Safety net: on an unstable connection, a third-party script (Supabase, EmailJS,
+// heic2any...) can be very slow or fail to load — in that case js/app.js never runs and
+// ".reveal" elements (scroll-in animation) stay invisible forever, even though the rest
+// of the page (forms, buttons) works normally. This net force-reveals them after 2.5s if
+// the normal animation hasn't happened, so content never stays hidden over a network hiccup.
 setTimeout(() => {
   document.querySelectorAll('.reveal:not(.visible)').forEach(el => el.classList.add('visible'));
 }, 2500);
 </script>
 
-
 <header class="site-header-v2">
   <div class="container header-v2-inner">
-    <a href="index.html" class="logo-img-header"><img src="assets/logo-header.png" alt="Maître Akesse Model Management"></a>
+    <a href="index.html" class="logo-img-header"><img src="../assets/logo-header.png" alt="Maître Akesse Model Management"></a>
     <div class="header-v2-droite">
-      <a href="en/selection.html" class="lang-switch" aria-label="Switch to English">EN</a>
+      <a href="../selection.html" class="lang-switch" aria-label="Switch to French">FR</a>
       <button class="menu-trigger" id="menuBtn">
         <span>Menu</span>
         <span class="dots"><span></span><span></span><span></span></span>
@@ -51,54 +49,54 @@ setTimeout(() => {
 </header>
 
 <div class="menu-overlay" id="menuOverlay">
-  <button class="close-menu" id="closeMenuBtn">Fermer ✕</button>
+  <button class="close-menu" id="closeMenuBtn">Close ✕</button>
   <ul class="nav-links">
-    <li><a href="index.html" class="">Accueil</a></li>
+    <li><a href="index.html" class="">Home</a></li>
     <li><a href="services.html" class="">Services</a></li>
     <li><a href="mannequins.html" class="">The Book</a></li>
-    <li><a href="actualites.html">Actualités</a></li>
-    <li><a href="partenaires.html">Nos partenaires</a></li>
-    <li><a href="candidature.html" class="">Postuler à un casting</a></li>
-    <li><a href="inscription-mannequin.html">Inscription</a></li>
+    <li><a href="actualites.html">News</a></li>
+    <li><a href="partenaires.html">Our Partners</a></li>
+    <li><a href="candidature.html" class="">Apply for a Casting</a></li>
+    <li><a href="inscription-mannequin.html">Registration</a></li>
     <li><a href="contact.html" class="">Contact</a></li>
-    <li class="item-cta"><a href="espace-mannequin.html">Espace mannequin</a></li>
+    <li class="item-cta"><a href="../espace-mannequin.html">Model Space</a></li>
   </ul>
 </div>
 
 <section style="padding-bottom:1rem;">
   <div class="container">
-    <div class="eyebrow reveal">Demande de casting</div>
-    <h1 class="reveal reveal-delay-1">Ma sélection<span class="oeil">.</span></h1>
-    <p style="margin-top:1rem;">Vérifiez les profils choisis, puis envoyez votre demande. L'agence vous recontacte directement — vos futurs échanges avec les mannequins passeront toujours par MA2M.</p>
+    <div class="eyebrow reveal">Casting Request</div>
+    <h1 class="reveal reveal-delay-1">My Selection<span class="oeil">.</span></h1>
+    <p style="margin-top:1rem;">Review the profiles you've chosen, then send your request. The agency will contact you directly — your future exchanges with the models will always go through MA2M.</p>
   </div>
 </section>
 
 <section style="padding-top:1rem;">
   <div class="container" style="max-width:760px;">
     <div id="liste-vide" style="display:none; padding:2rem 0; color:var(--gris);">
-      Aucun mannequin sélectionné pour l'instant. <a href="mannequins.html" style="color:var(--rouge); font-weight:600;">Parcourir les profils →</a>
+      No models selected yet. <a href="mannequins.html" style="color:var(--rouge); font-weight:600;">Browse Profiles →</a>
     </div>
 
     <div id="bloc-selection">
       <div id="selection-liste" class="selection-liste"></div>
 
-      <h2 style="margin:2.5rem 0 1.5rem;">Vos coordonnées</h2>
+      <h2 style="margin:2.5rem 0 1.5rem;">Your Details</h2>
       <form id="form-recruteur">
         <div class="form-grille">
           <div class="form-champ">
-            <label for="re-entreprise">Entreprise / marque</label>
+            <label for="re-entreprise">Company / Brand</label>
             <input type="text" id="re-entreprise">
           </div>
           <div class="form-champ">
-            <label for="re-nom">Votre nom *</label>
+            <label for="re-nom">Your Name *</label>
             <input type="text" id="re-nom" required>
           </div>
           <div class="form-champ">
-            <label for="re-email">E-mail *</label>
+            <label for="re-email">Email *</label>
             <input type="email" id="re-email" required>
           </div>
           <div class="form-champ">
-            <label for="re-telephone">Téléphone</label>
+            <label for="re-telephone">Phone</label>
             <input type="tel" id="re-telephone">
           </div>
           <div class="form-champ">
@@ -106,24 +104,24 @@ setTimeout(() => {
             <input type="tel" id="re-whatsapp">
           </div>
           <div class="form-champ">
-            <label for="re-ville">Ville</label>
+            <label for="re-ville">City</label>
             <select id="re-ville"></select>
-            <input type="text" id="re-ville-autre" placeholder="Précisez la ville" style="display:none; margin-top:0.5rem;">
+            <input type="text" id="re-ville-autre" placeholder="Specify the city" style="display:none; margin-top:0.5rem;">
           </div>
           <div class="form-champ">
-            <label for="re-type">Type de projet</label>
-            <input type="text" id="re-type" placeholder="Shooting, défilé, publicité...">
+            <label for="re-type">Project Type</label>
+            <input type="text" id="re-type" placeholder="Shoot, runway show, advertising...">
           </div>
           <div class="form-champ">
-            <label for="re-date">Date souhaitée</label>
+            <label for="re-date">Desired Date</label>
             <input type="date" id="re-date">
           </div>
         </div>
         <div class="form-champ">
-          <label for="re-message">Informations complémentaires</label>
+          <label for="re-message">Additional Information</label>
           <textarea id="re-message"></textarea>
         </div>
-        <button type="submit" class="btn btn--principal" id="btn-envoyer-recruteur">Envoyer ma sélection</button>
+        <button type="submit" class="btn btn--principal" id="btn-envoyer-recruteur">Send My Selection</button>
         <div id="re-msg" class="form-msg"></div>
       </form>
     </div>
@@ -135,17 +133,17 @@ setTimeout(() => {
     <div class="footer-grille">
       <div>
         <h4>Maître Akesse Model Management</h4>
-        <p>Chaque grand parcours commence par un rêve. Le nôtre commence à Abidjan.</p>
+        <p>Every great journey begins with a dream. Ours begins in Abidjan.</p>
       </div>
       <div>
         <h4>Navigation</h4>
-        <a href="index.html">Accueil</a>
+        <a href="index.html">Home</a>
         <a href="services.html">Services</a>
         <a href="mannequins.html">The Book</a>
-        <a href="actualites.html">Actualités</a>
-        <a href="partenaires.html">Nos partenaires</a>
-        <a href="candidature.html">Postuler à un casting</a>
-        <a href="inscription-mannequin.html">Inscription</a>
+        <a href="actualites.html">News</a>
+        <a href="partenaires.html">Our Partners</a>
+        <a href="candidature.html">Apply for a Casting</a>
+        <a href="inscription-mannequin.html">Registration</a>
       </div>
       <div>
         <h4>Contact</h4>
@@ -164,28 +162,26 @@ setTimeout(() => {
     <div class="footer-bas">
       <span>© <span id="an"></span> Maître Akesse Model Management</span>
       <span>Abidjan, Côte d'Ivoire</span>
-      <span><a href="mentions-legales.html">Mentions légales</a> · <a href="politique-confidentialite.html">Confidentialité</a></span>
+      <span><a href="mentions-legales.html">Legal Notice</a> · <a href="politique-confidentialite.html">Privacy</a></span>
     </div>
   </div>
 </footer>
 
 <script>document.getElementById('an').textContent = new Date().getFullYear();</script>
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"></script>
-<script src="js/supabase-config.js"></script>
+<script src="../js/supabase-config.js"></script>
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-<script src="js/emailjs-config.js"></script>
-<script src="js/app.js"></script>
-<script src="js/menu.js"></script>
-<script src="js/selection.js"></script>
+<script src="../js/emailjs-config.js"></script>
+<script src="../js/app.js"></script>
+<script src="../js/menu.js"></script>
+<script src="../js/selection.js"></script>
 <script>
-// --- Ville en liste déroulante (avec "Autre" en secours) plutôt qu'en saisie
-// libre : évite les fautes/variantes d'orthographe. ---
 function remplirSelectListe(id, liste) {
   const champ = document.getElementById(id);
   if (!champ) return;
   champ.appendChild(new Option('—', ''));
   liste.forEach(v => champ.appendChild(new Option(v, v)));
-  champ.appendChild(new Option('Autre', 'Autre'));
+  champ.appendChild(new Option('Other', 'Autre'));
 }
 function configurerSelectAvecAutre(idSelect, idAutre) {
   const select = document.getElementById(idSelect);
@@ -238,10 +234,10 @@ function afficher() {
     item.innerHTML = `
       <img src="${echapperHtml(m.photoUrl)}" alt="${echapperHtml(m.full_name)}" style="cursor:pointer;">
       <div>
-        <div class="nom">${echapperHtml(m.full_name || 'Mannequin')}</div>
+        <div class="nom">${echapperHtml(m.full_name || 'Model')}</div>
         <div class="info">${m.height_cm ? m.height_cm + ' cm' : ''}</div>
       </div>
-      <button data-id="${m.id}">Retirer</button>
+      <button data-id="${m.id}">Remove</button>
     `;
     conteneur.appendChild(item);
     item.querySelector('img').addEventListener('click', () => ouvrirGalerieLightbox([m.photoUrl], 0));
@@ -260,14 +256,14 @@ document.getElementById('form-recruteur').addEventListener('submit', async (e) =
 
   if (liste.length === 0) {
     msg.className = 'form-msg err';
-    msg.textContent = 'Votre sélection est vide.';
+    msg.textContent = 'Your selection is empty.';
     return;
   }
 
   btn.disabled = true;
   msg.className = 'form-msg ok';
   msg.style.display = 'block';
-  msg.textContent = 'Envoi en cours…';
+  msg.textContent = 'Sending…';
 
   const idDemande = crypto.randomUUID();
   const demande = {
@@ -287,7 +283,7 @@ document.getElementById('form-recruteur').addEventListener('submit', async (e) =
 
   if (error) {
     msg.className = 'form-msg err';
-    msg.textContent = "Erreur lors de l'envoi. Réessayez ou contactez-nous directement.";
+    msg.textContent = "Error sending your request. Please try again or contact us directly.";
     btn.disabled = false;
     return;
   }
@@ -305,15 +301,15 @@ document.getElementById('form-recruteur').addEventListener('submit', async (e) =
     name: demande.contact_name,
     telephone: demande.phone,
     email: demande.email,
-    message: `Nouvelle demande de casting recruteur.\nEntreprise : ${demande.company || '-'}\nType de projet : ${demande.project_type || '-'}\nVille : ${demande.city || '-'}\nDate souhaitée : ${demande.event_date || '-'}\nMannequins sélectionnés : ${nomsMannequins || '-'}\nMessage : ${demande.message || '-'}`
+    message: `New recruiter casting request.\nCompany: ${demande.company || '-'}\nProject type: ${demande.project_type || '-'}\nCity: ${demande.city || '-'}\nDesired date: ${demande.event_date || '-'}\nSelected models: ${nomsMannequins || '-'}\nMessage: ${demande.message || '-'}`
   });
 
   localStorage.removeItem('ma2m_selection');
   document.getElementById('bloc-selection').innerHTML = `
     <div style="padding:3rem 0; text-align:center;">
-      <h2>Merci !</h2>
-      <p style="margin:1rem auto;">Votre demande a bien été envoyée avec ${liste.length} mannequin(s) sélectionné(s). L'agence vous recontacte rapidement.</p>
-      <a href="mannequins.html" class="btn">Retour aux mannequins</a>
+      <h2>Thank You!</h2>
+      <p style="margin:1rem auto;">Your request has been sent with ${liste.length} model(s) selected. The agency will get back to you shortly.</p>
+      <a href="mannequins.html" class="btn">Back to Models</a>
     </div>
   `;
 });
