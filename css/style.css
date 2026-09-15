@@ -22,7 +22,7 @@
   --bordeaux: #7a1220;       /* bordeaux profond — remplissages pleins, boutons */
   --bordeaux-noir: #2b0a0e;  /* bordeaux tendant vers le noir — ombres, profondeur */
   --bordeaux-vif: #9c1c2c;   /* état de survol */
-  --bordeaux-clair: #cf3b52; /* bordeaux lumineux — texte/labels sur fond noir (meilleur contraste) */
+  --bordeaux-clair: #d55468; /* bordeaux lumineux — texte/labels sur fond noir (contraste AA vérifié : 5.1:1 sur --noir, WCAG demande 4.5:1 pour du texte normal) */
 
   --or: #c9a24b;             /* touche discrète héritée du logo, usage mineur */
   --rouge: var(--bordeaux-clair); /* alias conservé pour compatibilité (.oeil, anciens usages) */
