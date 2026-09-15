@@ -532,8 +532,14 @@ section { padding: 5rem 0; }
   .apercu-fiche-carte { grid-template-columns: 84px 1fr; gap: 1rem; padding: 1.1rem; }
 }
 
-.photos-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
-.photo-item { position: relative; aspect-ratio: 3/4; background: var(--noir-doux); overflow: hidden; }
+.photos-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1.1rem; margin-top: 1.5rem; }
+.photo-item {
+  position: relative; aspect-ratio: 3/4; background: var(--noir-doux); overflow: hidden;
+  border-radius: 6px; box-shadow: 0 14px 30px -16px rgba(0,0,0,0.75);
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+.photo-item:hover { box-shadow: 0 18px 36px -14px rgba(0,0,0,0.85), 0 0 0 1px rgba(207,59,82,0.3); transform: translateY(-2px); }
+.photo-item.est-principale { box-shadow: 0 0 0 2px var(--or), 0 14px 30px -16px rgba(0,0,0,0.75); }
 .photo-item img { width: 100%; height: 100%; object-fit: cover; }
 .photo-item button {
   position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.55); color: #fff;
@@ -564,14 +570,14 @@ section { padding: 5rem 0; }
 }
 .photo-item .btn-compcard:hover { background: var(--bordeaux); border-top-color: var(--bordeaux); }
 
-.upload-zone { border: 2px dashed var(--gris-clair); padding: 2rem; text-align: center; color: var(--texte-doux); margin-top: 1.5rem; transition: border-color 0.25s ease; }
+.upload-zone { border: 2px dashed var(--gris-clair); border-radius: 6px; padding: 2rem; text-align: center; color: var(--texte-doux); margin-top: 1.5rem; transition: border-color 0.25s ease; }
 .upload-zone:hover { border-color: var(--bordeaux-clair); }
 .upload-zone input { margin-top: 0.8rem; }
 
 .projets-liste { margin-top: 1rem; display: flex; flex-direction: column; gap: 0.7rem; }
 .projet-item {
   display: flex; align-items: center; justify-content: space-between; gap: 1rem;
-  padding: 0.9rem 1.1rem; background: rgba(255,255,255,0.04); border: 1px solid var(--gris-clair);
+  padding: 0.9rem 1.1rem; background: rgba(255,255,255,0.04); border: 1px solid var(--gris-clair); border-radius: 6px;
 }
 .projet-item button {
   flex-shrink: 0; background: transparent; border: 1px solid var(--gris-clair); border-radius: 4px;
