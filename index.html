@@ -383,22 +383,8 @@
 // Au clic, on attend la fin du chargement du mannequin à la une (promesseVedette, définie
 // plus bas) pour tomber directement dessus — avec un délai maximum de 4s en filet de
 // sécurité : même si le réseau est très lent ou en panne, le clic déverrouille toujours
-// le site (jamais un visiteur ne doit rester bloqué).
-//
-// Piège réel rencontré en production : au clic sur "retour" du navigateur (ou en
-// revenant sur l'accueil après avoir visité une autre page), le verrou se réapplique
-// systématiquement ci-dessous — mais le navigateur essaie, lui, de restaurer la
-// position de défilement précédente (potentiellement tout en bas de la page, si
-// c'est là qu'on se trouvait avant de partir). Avec le verrou actif (overflow
-// bloqué), la page se retrouve alors bloquée au milieu du contenu, bouton "Entrer"
-// hors champ en haut et donc inatteignable — blocage total nécessitant de fermer
-// l'onglet. scrollRestoration: 'manual' désactive cette restauration automatique du
-// navigateur ; le window.scrollTo(0,0) ci-dessous garantit en plus que le bouton
-// "Entrer" est toujours visible dès que le verrou est actif, quelle que soit la
-// façon dont on est arrivé sur la page. ---
-try { if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; } catch (e) {}
+// le site (jamais un visiteur ne doit rester bloqué). ---
 document.body.classList.add('porte-verrouillee');
-window.scrollTo(0, 0);
 document.getElementById('entrer-btn').addEventListener('click', async () => {
   if (window.promesseVedette) {
     try { await Promise.race([window.promesseVedette, new Promise((r) => setTimeout(r, 4000))]); } catch (e) {}
