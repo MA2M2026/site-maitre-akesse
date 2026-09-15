@@ -573,7 +573,8 @@ section { padding: 5rem 0; }
 
 .footer-grille { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 2rem; margin-bottom: 2rem; }
 .footer-grille h4 { color: var(--titre-clair); font-family: var(--texte); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.16em; margin-bottom: 1.1rem; font-weight: 500; }
-.footer-grille a, .footer-grille p { font-size: 0.9rem; color: var(--texte-corps); display: block; margin-bottom: 0.6rem; }
+.footer-grille a { font-size: 0.9rem; color: var(--texte-corps); display: block; margin-bottom: 0.6rem; }
+.footer-grille p { font-family: var(--display); font-style: italic; font-size: 1rem; line-height: 1.5; color: var(--texte-corps); display: block; margin-bottom: 0.6rem; }
 .footer-grille a:hover { color: var(--bordeaux-clair); }
 
 .footer-reseaux { display: flex; gap: 0.6rem; margin-top: 0.8rem; flex-wrap: wrap; }
@@ -924,12 +925,15 @@ section { padding: 5rem 0; }
 }
 
 .hero-v2-subtitle {
-  font-family: var(--texte);
-  font-size: 0.85rem;
+  font-family: var(--display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(1rem, 2vw, 1.2rem);
   color: var(--texte-corps);
-  text-transform: uppercase;
-  letter-spacing: 0.24em;
-  margin: 1rem auto 0;
+  text-transform: none;
+  letter-spacing: 0.01em;
+  line-height: 1.5;
+  margin: 1.1rem auto 0;
   max-width: 46ch;
 }
 
@@ -1186,6 +1190,26 @@ section { padding: 5rem 0; }
 }
 .medaillon-carte .btn-selection:hover { background: var(--bordeaux); color: #fff; }
 
+/* Aperçu "Nos visages" de l'accueil uniquement : médaillons ronds, plus grands
+   que l'ancienne version (220px) et resserrés — The Book (mannequins.html)
+   garde lui les grands portraits rectangulaires. */
+#medaillons-accueil.medaillon-grille {
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 1.8rem 1.3rem;
+  justify-items: center;
+}
+#medaillons-accueil .medaillon-photo {
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  max-width: 260px;
+  border-radius: 50%;
+}
+
+@media (max-width: 640px) {
+  #medaillons-accueil.medaillon-grille { grid-template-columns: repeat(2, 1fr); gap: 1.6rem 1rem; }
+  #medaillons-accueil .medaillon-photo { max-width: 100%; }
+}
+
 @media (max-width: 640px) {
   .medaillon-grille { grid-template-columns: repeat(2, 1fr); gap: 2rem 0.9rem; }
   .medaillon-nom { font-size: 0.92rem; margin-top: 0.7rem; }
@@ -1319,9 +1343,6 @@ body.porte-verrouillee { overflow: hidden; height: 100vh; }
 .news-modal-corps .form-champ select option { background: #fff; color: #1a1512; }
 .news-modal-fermer { position: absolute; top: 1.2rem; right: 1.4rem; background: rgba(0,0,0,0.6); color: #fff; border: none; width: 32px; height: 32px; cursor: pointer; font-size: 1rem; z-index: 2; }
 
-/* ---------- Verrouillage complet pendant la porte d'entrée ---------- */
-body.porte-verrouillee .site-header-v2 { display: none; }
-
 /* ---------- Indicateur vidéo sur les cartes actualités ---------- */
 .news-play {
   position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -1341,7 +1362,6 @@ body.porte-verrouillee .site-header-v2 { display: none; }
 .whatsapp-flottant:hover { transform: scale(1.08); box-shadow: 0 0 0 1px var(--bordeaux-clair), 0 0 30px rgba(207,59,82,0.6), 0 6px 18px rgba(0,0,0,0.35); }
 .whatsapp-flottant svg { width: 28px; height: 28px; }
 @media (max-width: 700px) { .whatsapp-flottant { width: 50px; height: 50px; bottom: 1rem; left: 1rem; } }
-body.porte-verrouillee .whatsapp-flottant { display: none; }
 
 /* ---------- Galerie multi-photos dans la modale actualité (revue de presse) ---------- */
 .news-modal-galerie {
@@ -1440,6 +1460,30 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
 .vedette-fullbleed:hover .vedette-cta { border-color: #fff; letter-spacing: 0.18em; }
 @media (max-width: 640px) {
   .vedette-fullbleed { height: 78vh; min-height: 460px; }
+}
+
+/* ---------- Mot du fondateur ---------- */
+.mot-responsable-bloc {
+  display: grid; grid-template-columns: 260px 1fr; gap: clamp(2rem, 5vw, 4rem); align-items: center;
+}
+.mot-responsable-photo-wrap {
+  width: 100%; aspect-ratio: 3 / 4; border-radius: 2px; overflow: hidden;
+  box-shadow: 0 22px 48px -14px rgba(0,0,0,0.8), 0 0 30px -8px rgba(207,59,82,0.22);
+}
+.mot-responsable-photo-wrap img { width: 100%; height: 100%; object-fit: cover; }
+.mot-responsable-texte h2 { margin-top: 0.6rem; font-size: clamp(1.8rem, 4vw, 2.6rem); }
+.mot-resp-titre {
+  color: var(--bordeaux-clair); font-family: var(--texte); font-size: 0.78rem;
+  letter-spacing: 0.12em; text-transform: uppercase; margin-top: 0.3rem;
+}
+.mot-resp-message {
+  color: var(--texte-corps); margin-top: 1.2rem; font-size: 1.05rem; line-height: 1.75;
+  font-family: var(--display); font-style: italic;
+}
+@media (max-width: 720px) {
+  .mot-responsable-bloc { grid-template-columns: 1fr; }
+  .mot-responsable-photo-wrap { max-width: 220px; margin: 0 auto; }
+  .mot-responsable-bloc .mot-responsable-texte { text-align: center; }
 }
 
 /* ---------- Bandeau "Ils nous ont fait confiance" ---------- */

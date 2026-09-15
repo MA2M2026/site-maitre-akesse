@@ -287,6 +287,25 @@
       <div id="bandeau-msg" class="form-msg"></div>
     </div>
 
+    <div class="liste-recente">
+      <h2 style="margin-bottom:0.3rem;">Mot du fondateur (page d'accueil)</h2>
+      <p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Photo et message affichés sur l'accueil, juste après la section « Direction artistique ».</p>
+
+      <div style="display:flex; gap:1.2rem; flex-wrap:wrap; align-items:flex-start; margin-bottom:1.2rem;">
+        <img id="mr-photo-apercu" src="" alt="" style="display:none; width:110px; height:146px; object-fit:cover; border-radius:2px;">
+        <div>
+          <input type="file" id="mr-photo-input" accept="image/*" style="display:block; margin-bottom:0.6rem;">
+          <button class="btn" id="mr-photo-btn">Changer la photo</button>
+        </div>
+      </div>
+
+      <div class="form-champ"><label for="mr-nom">Nom affiché</label><input type="text" id="mr-nom" placeholder="Maître Akesse"></div>
+      <div class="form-champ"><label for="mr-titre">Fonction affichée</label><input type="text" id="mr-titre" placeholder="ex : Fondateur"></div>
+      <div class="form-champ"><label for="mr-message">Message</label><textarea id="mr-message" rows="6"></textarea></div>
+      <button class="btn btn--principal" id="mr-enregistrer-btn">Enregistrer le mot du fondateur</button>
+      <div id="mr-msg" class="form-msg"></div>
+    </div>
+
     <div style="margin:2.5rem 0;">
       <a href="actualites.html" class="btn btn--principal" style="margin-right:0.8rem;">Publier une actualité</a>
       <button class="btn" id="tb-logout-btn">Se déconnecter</button>
@@ -658,6 +677,7 @@ async function chargerStatistiques() {
 
   chargerVedette();
   chargerBandeau();
+  chargerMotResponsableTableau();
 }
 
 // --- Candidatures & inscriptions : listes filtrées par statut + fiche détaillée ---
@@ -1216,6 +1236,58 @@ document.getElementById('bandeau-actif-btn').addEventListener('click', async () 
   const actif = document.getElementById('bandeau-actif-btn').dataset.actif === '1';
   await sb.from('bandeau_annonce').update({ actif: !actif }).eq('id', 'principal');
   chargerBandeau();
+});
+
+// --- Mot du fondateur (photo + message de l'accueil) ---
+let mrPhotoUrlActuelle = null;
+
+async function chargerMotResponsableTableau() {
+  const { data } = await sb.from('mot_responsable').select('*').eq('id', 'principal').maybeSingle();
+  document.getElementById('mr-nom').value = (data && data.nom) || '';
+  document.getElementById('mr-titre').value = (data && data.titre) || '';
+  document.getElementById('mr-message').value = (data && data.message) || '';
+  mrPhotoUrlActuelle = (data && data.photo_url) || null;
+  const apercu = document.getElementById('mr-photo-apercu');
+  if (mrPhotoUrlActuelle) {
+    apercu.src = mrPhotoUrlActuelle;
+    apercu.style.display = 'block';
+  } else {
+    apercu.style.display = 'none';
+  }
+}
+
+document.getElementById('mr-photo-btn').addEventListener('click', async () => {
+  const input = document.getElementById('mr-photo-input');
+  const msg = document.getElementById('mr-msg');
+  const fichier = input.files && input.files[0];
+  if (!fichier) { msg.className = 'form-msg err'; msg.textContent = 'Choisissez une photo d\'abord.'; msg.style.display = 'block'; return; }
+
+  msg.className = 'form-msg ok'; msg.textContent = 'Envoi de la photo…'; msg.style.display = 'block';
+  const chemin = `responsable/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${fichier.name}`;
+  const { error: erreurUpload } = await sb.storage.from('partenaires-logos').upload(chemin, fichier);
+  if (erreurUpload) { msg.className = 'form-msg err'; msg.textContent = 'Erreur : ' + erreurUpload.message; return; }
+
+  const urlPublique = sb.storage.from('partenaires-logos').getPublicUrl(chemin).data.publicUrl;
+  const { error: erreurMaj } = await sb.from('mot_responsable')
+    .update({ photo_url: urlPublique, updated_at: new Date().toISOString() }).eq('id', 'principal');
+  if (erreurMaj) { msg.className = 'form-msg err'; msg.textContent = 'Erreur : ' + erreurMaj.message; return; }
+
+  msg.className = 'form-msg ok'; msg.textContent = 'Photo mise à jour !';
+  input.value = '';
+  chargerMotResponsableTableau();
+});
+
+document.getElementById('mr-enregistrer-btn').addEventListener('click', async () => {
+  const msg = document.getElementById('mr-msg');
+  const nom = document.getElementById('mr-nom').value.trim();
+  const titre = document.getElementById('mr-titre').value.trim();
+  const message = document.getElementById('mr-message').value.trim();
+  msg.className = 'form-msg ok'; msg.textContent = 'Enregistrement…'; msg.style.display = 'block';
+  const { error } = await sb.from('mot_responsable')
+    .update({ nom, titre, message, updated_at: new Date().toISOString() }).eq('id', 'principal');
+  if (error) { msg.className = 'form-msg err'; msg.textContent = "Erreur lors de l'enregistrement."; return; }
+  msg.className = 'form-msg ok'; msg.textContent = 'Mot du fondateur enregistré !';
+  chargerMotResponsableTableau();
 });
 
 // Sur une connexion instable, la bibliothèque Supabase (chargée depuis un CDN)

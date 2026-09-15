@@ -2341,4 +2341,42 @@ create policy "Restriction lecture photos (IDOR)"
     or exists (select 1 from model_profiles p where p.id = model_photos.model_id and p.published = true)
   );
 
+-- ===================================================================
+-- Extension 63 : "Mot du fondateur" sur la page d'accueil — photo et
+-- message modifiables par l'admin depuis le tableau de bord, sans
+-- toucher au code. Même schéma en ligne unique que bandeau_annonce.
+--
+-- La photo est stockée dans le bucket "partenaires-logos" (déjà
+-- accessible en écriture aux admins, cf. plus haut dans ce fichier) —
+-- pas besoin d'un nouveau bucket ni d'une nouvelle policy de stockage.
+-- ===================================================================
+create table if not exists mot_responsable (
+  id text primary key default 'principal',
+  nom text,
+  titre text,
+  message text,
+  photo_url text,
+  updated_at timestamptz default now()
+);
+
+alter table mot_responsable enable row level security;
+
+drop policy if exists "Mot du fondateur visible de tous" on mot_responsable;
+create policy "Mot du fondateur visible de tous"
+  on mot_responsable for select using (true);
+
+drop policy if exists "Seuls les admins modifient le mot du fondateur" on mot_responsable;
+create policy "Seuls les admins modifient le mot du fondateur"
+  on mot_responsable for update
+  using (exists (select 1 from admins where user_id = auth.uid()))
+  with check (exists (select 1 from admins where user_id = auth.uid()));
+
+insert into mot_responsable (id, nom, titre, message, photo_url) values (
+  'principal',
+  'Maître Akesse',
+  'Fondateur',
+  'Chaque grand parcours commence par un rêve. Le nôtre a commencé ici, à Abidjan, porté par une conviction simple : le mannequinat ivoirien mérite un accompagnement sérieux, exigeant et humain. J''ai fondé Maître Akesse Model Management pour donner à chaque talent les moyens de construire une vraie carrière, pas à pas, avec rigueur et bienveillance. Cette agence, je la vois comme une famille où chaque profil est préparé, protégé et poussé vers le meilleur de lui-même. Merci de faire partie de cette aventure, ou de vous apprêter à la rejoindre.',
+  null
+) on conflict (id) do nothing;
+
 NOTIFY pgrst, 'reload schema';

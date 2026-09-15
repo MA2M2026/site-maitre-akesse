@@ -147,18 +147,7 @@
   </div>
 </div>
 
-<!-- 02 — La vision -->
-<section>
-  <div class="container">
-    <div class="section-tete reveal">
-      <div class="eyebrow reveal">02 — La vision</div>
-      <h2>Direction artistique</h2>
-      <p>Management de talents, formation, casting, booking, direction artistique et organisation de défilés — une agence structurée pour accompagner chaque mannequin, du premier shooting aux scènes internationales. Maître Akesse Model Management est né d'une conviction simple : le mannequinat ivoirien mérite un accompagnement à la hauteur de son potentiel. Chaque profil est travaillé comme une image de marque — cohérente, préparée, prête pour les castings les plus exigeants.</p>
-    </div>
-  </div>
-</section>
-
-<!-- 03 — Les talents -->
+<!-- Mannequin à la une -->
 <section id="mannequin-vedette" style="display:none;">
   <a href="#" id="vedette-lien" class="vedette-fullbleed reveal">
     <img id="vedette-img" src="" alt="">
@@ -170,6 +159,34 @@
       <span class="vedette-cta">Voir le profil complet →</span>
     </div>
   </a>
+</section>
+
+<!-- 02 — La vision -->
+<section>
+  <div class="container">
+    <div class="section-tete reveal">
+      <div class="eyebrow reveal">02 — La vision</div>
+      <h2>Direction artistique</h2>
+      <p>Management de talents, formation, casting, booking, direction artistique et organisation de défilés — une agence structurée pour accompagner chaque mannequin, du premier shooting aux scènes internationales. Maître Akesse Model Management est né d'une conviction simple : le mannequinat ivoirien mérite un accompagnement à la hauteur de son potentiel. Chaque profil est travaillé comme une image de marque — cohérente, préparée, prête pour les castings les plus exigeants.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Mot du fondateur -->
+<section id="mot-responsable" class="fond-anthracite" style="display:none;">
+  <div class="container">
+    <div class="mot-responsable-bloc reveal">
+      <div class="mot-responsable-photo-wrap">
+        <img id="mot-resp-photo" src="" alt="" style="display:none;">
+      </div>
+      <div class="mot-responsable-texte">
+        <div class="eyebrow">Le mot du fondateur</div>
+        <h2 id="mot-resp-nom">Maître Akesse</h2>
+        <p class="mot-resp-titre" id="mot-resp-titre"></p>
+        <p id="mot-resp-message" class="mot-resp-message"></p>
+      </div>
+    </div>
+  </div>
 </section>
 
 <section id="stat-strip" style="padding-top:2.5rem; padding-bottom:2.5rem;">
@@ -261,14 +278,14 @@
         <p>Coordination de podiums et de séances photo pour des marques et créateurs locaux.</p>
       </div>
       <div class="evenement-carte reveal reveal-delay-1">
-        <div class="evenement-date">À venir</div>
-        <h3>Prochains castings</h3>
-        <p>De nouveaux appels à candidatures sont ouverts régulièrement — consultez la page Candidature.</p>
-      </div>
-      <div class="evenement-carte reveal reveal-delay-2">
         <div class="evenement-date">Portfolio</div>
         <h3>Nos mannequins en scène</h3>
         <p>Découvrez les books et vidéos de podium de nos talents sur leurs fiches individuelles.</p>
+      </div>
+      <div class="evenement-carte reveal reveal-delay-2" id="carte-a-venir">
+        <div class="evenement-date">À venir</div>
+        <h3>Prochains castings</h3>
+        <p id="carte-a-venir-texte">De nouveaux appels à candidatures sont ouverts régulièrement — consultez la page Candidature.</p>
       </div>
     </div>
   </div>
@@ -343,12 +360,9 @@
 <script src="js/app.js"></script>
 <script src="js/menu.js"></script>
 <script>
-// --- Porte d'entrée : verrouille le défilement tant qu'on n'a pas cliqué "Entrer" ---
-document.body.classList.add('porte-verrouillee');
+// --- Flèche "Entrer" : simple repère visuel, fait défiler d'un écran (ne bloque jamais le scroll normal) ---
 document.getElementById('entrer-btn').addEventListener('click', () => {
-  document.body.classList.remove('porte-verrouillee');
-  document.getElementById('porte-entree').style.display = 'none';
-  window.scrollTo(0, 0);
+  window.scrollBy({ top: window.innerHeight * 0.9, behavior: 'smooth' });
 });
 
 // --- Intro : logo animé (5,8s ou "Passer l'intro"), avant la porte d'entrée ---
@@ -443,6 +457,9 @@ async function chargerBandeauAnnonce() {
     document.querySelectorAll('#marqueePiste span').forEach(span => { span.textContent = texte; });
     document.getElementById('marqueeLabel').style.display = 'flex';
     document.getElementById('marqueeBande').classList.add('marquee-annonce-active');
+    // La carte "À venir" de la section Événements reprend la même annonce,
+    // pour ne jamais afficher une info différente de la bande déroulante du haut.
+    document.getElementById('carte-a-venir-texte').textContent = data.texte.trim();
   }
 }
 chargerBandeauAnnonce();
@@ -530,6 +547,26 @@ async function chargerMannequinVedette() {
   document.getElementById('mannequin-vedette').style.display = 'block';
 }
 chargerMannequinVedette();
+
+// --- Mot du fondateur : photo et message modifiables depuis le tableau de bord ---
+async function chargerMotResponsable() {
+  if (!sb) return;
+  const { data } = await sb.from('mot_responsable').select('*').eq('id', 'principal').maybeSingle();
+  if (!data || !data.message) return;
+
+  document.getElementById('mot-resp-nom').textContent = data.nom || 'Maître Akesse';
+  document.getElementById('mot-resp-titre').textContent = data.titre || '';
+  document.getElementById('mot-resp-message').textContent = data.message;
+
+  if (data.photo_url) {
+    const photo = document.getElementById('mot-resp-photo');
+    photo.src = data.photo_url;
+    photo.alt = data.nom || 'Maître Akesse';
+    photo.style.display = 'block';
+  }
+  document.getElementById('mot-responsable').style.display = 'block';
+}
+chargerMotResponsable();
 
 // --- Bandeau "Ils nous ont fait confiance" : promoteurs des projets déjà réalisés par nos mannequins ---
 async function chargerBandeauConfiance() {
