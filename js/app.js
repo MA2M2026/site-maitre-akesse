@@ -119,7 +119,10 @@ document.addEventListener('DOMContentLoaded', () => {
 // uniquement à distinguer une vraie visite d'un simple rechargement de page.
 async function empreinteVisiteur() {
   try {
-    const reponse = await fetch('https://api.ipify.org?format=json');
+    const controleur = new AbortController();
+    const delaiMax = setTimeout(() => controleur.abort(), 2500);
+    const reponse = await fetch('https://api.ipify.org?format=json', { signal: controleur.signal });
+    clearTimeout(delaiMax);
     const { ip } = await reponse.json();
     const donnees = new TextEncoder().encode(ip);
     const hachage = await crypto.subtle.digest('SHA-256', donnees);
