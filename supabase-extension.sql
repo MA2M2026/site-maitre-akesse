@@ -1967,3 +1967,63 @@ where url in (
 delete from model_photos
 where url like '%1789055934200-Capture%'
    or url like '%1789055984263-Capture%';
+
+-- ===================================================================
+-- Extension 55 : protection anti-spam/automatisation sur les formulaires
+-- publics (candidature, demande recruteur, contact) — jusqu'ici ouverts à
+-- un envoi en nombre illimité, sans aucune limite. Un script pouvait
+-- soumettre des centaines de fausses candidatures/messages par minute.
+--
+-- Fonctionnement : chaque formulaire est limité à un nombre raisonnable de
+-- soumissions par minute (largement au-dessus d'un usage normal, même en
+-- cas d'afflux réel après une annonce de casting) ; au-delà, l'envoi est
+-- refusé côté serveur (pas juste ralenti comme pour les codes — ici on
+-- bloque net, un formulaire n'a pas besoin d'être retenté immédiatement).
+-- N'affecte jamais un visiteur normal, seulement un envoi massif automatisé.
+-- ===================================================================
+create table if not exists soumissions_formulaires_publics (
+  id bigint generated always as identity primary key,
+  formulaire text not null,
+  cree_le timestamptz not null default now()
+);
+alter table soumissions_formulaires_publics enable row level security;
+-- Aucune policy : illisible/inmodifiable directement, seule la fonction ci-dessous y touche.
+
+create or replace function limiter_soumissions_publiques(p_formulaire text, p_max_par_minute int default 10)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  nb_recentes int;
+begin
+  delete from soumissions_formulaires_publics where cree_le < now() - interval '10 minutes';
+  select count(*) into nb_recentes from soumissions_formulaires_publics
+    where formulaire = p_formulaire and cree_le > now() - interval '1 minute';
+  if nb_recentes >= p_max_par_minute then
+    return false;
+  end if;
+  insert into soumissions_formulaires_publics (formulaire) values (p_formulaire);
+  return true;
+end;
+$$;
+revoke all on function limiter_soumissions_publiques(text, int) from public;
+grant execute on function limiter_soumissions_publiques(text, int) to anon, authenticated;
+
+drop policy if exists "Tout le monde peut candidater" on casting_applications;
+create policy "Tout le monde peut candidater"
+  on casting_applications for insert
+  with check (limiter_soumissions_publiques('candidature'));
+
+drop policy if exists "Tout le monde peut envoyer une demande de casting" on recruiter_requests;
+create policy "Tout le monde peut envoyer une demande de casting"
+  on recruiter_requests for insert
+  with check (limiter_soumissions_publiques('recruteur'));
+
+drop policy if exists "Tout le monde peut envoyer un message de contact" on messages_contact;
+create policy "Tout le monde peut envoyer un message de contact"
+  on messages_contact for insert
+  with check (limiter_soumissions_publiques('contact'));
+
+NOTIFY pgrst, 'reload schema';
