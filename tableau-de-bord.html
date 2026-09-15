@@ -578,6 +578,7 @@ document.getElementById('miniatures-generer-btn').addEventListener('click', asyn
   }
 
   let reussies = 0, echouees = 0;
+  const erreursDetail = [];
   for (let i = 0; i < photos.length; i++) {
     const photo = photos[i];
     msg.textContent = `Traitement ${i + 1}/${photos.length}… (${reussies} réussie(s), ${echouees} échec(s))`;
@@ -594,12 +595,16 @@ document.getElementById('miniatures-generer-btn').addEventListener('click', asyn
       reussies++;
     } catch (e) {
       echouees++;
+      const texteErreur = (e && (e.message || e.error_description || e.statusText)) || String(e);
+      erreursDetail.push(`Photo ${photo.id.slice(0, 8)}… : ${texteErreur}`);
       console.error('Miniature échouée pour la photo', photo.id, e);
     }
   }
 
   msg.className = echouees === 0 ? 'form-msg ok' : 'form-msg err';
-  msg.textContent = `Terminé : ${reussies} miniature(s) générée(s), ${echouees} échec(s).`;
+  msg.style.whiteSpace = 'pre-line';
+  msg.textContent = `Terminé : ${reussies} miniature(s) générée(s), ${echouees} échec(s).`
+    + (erreursDetail.length ? '\n\n' + erreursDetail.join('\n') : '');
   btn.disabled = false;
 });
 
