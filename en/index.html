@@ -379,13 +379,18 @@
 <script src="../js/app.js"></script>
 <script src="../js/menu.js"></script>
 <script>
-// --- Entry door: scrolling stays locked until "Enter" is clicked.
-// scrollRestoration is disabled and scroll is forced to top to avoid the browser
-// back-navigation freeze (same fix as the French homepage — see its comments
-// for the full explanation of the bug this prevents). ---
-try { if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; } catch (e) {}
-document.body.classList.add('porte-verrouillee');
-window.scrollTo(0, 0);
+// --- Entry door: scrolling stays locked until "Enter" is clicked. Once the door has been
+// opened, it stays open for the rest of the session (refreshing the page or coming back via
+// the "Home" menu link should not lock the visitor out again). ---
+let porteDejaOuverte = false;
+try { porteDejaOuverte = sessionStorage.getItem('ma2m_porte_ouverte'); } catch (e) {}
+
+if (porteDejaOuverte) {
+  document.getElementById('porte-entree').style.display = 'none';
+} else {
+  document.body.classList.add('porte-verrouillee');
+}
+
 document.getElementById('entrer-btn').addEventListener('click', async () => {
   if (window.promesseVedette) {
     try { await Promise.race([window.promesseVedette, new Promise((r) => setTimeout(r, 4000))]); } catch (e) {}
@@ -393,6 +398,7 @@ document.getElementById('entrer-btn').addEventListener('click', async () => {
   document.body.classList.remove('porte-verrouillee');
   document.getElementById('porte-entree').style.display = 'none';
   window.scrollTo(0, 0);
+  try { sessionStorage.setItem('ma2m_porte_ouverte', '1'); } catch (e) {}
 });
 
 // --- Intro: animated logo (5.8s or "Skip Intro"), before the entry door ---
