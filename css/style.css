@@ -750,6 +750,14 @@ section { padding: 5rem 0; }
   .logo-img-header img { height: 28px; }
 }
 
+.header-v2-droite { display: flex; align-items: center; gap: 1.4rem; }
+.lang-switch {
+  font-family: var(--texte); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em;
+  color: var(--texte-corps); border: 1px solid var(--gris-clair); border-radius: 999px;
+  padding: 0.3rem 0.7rem; transition: border-color 0.2s ease, color 0.2s ease;
+}
+.lang-switch:hover { color: var(--bordeaux-clair); border-color: var(--bordeaux-clair); }
+
 .menu-trigger {
   display: flex;
   align-items: center;
