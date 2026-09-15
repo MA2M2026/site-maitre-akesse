@@ -1865,3 +1865,40 @@ revoke all on function consume_invite_code(text) from public;
 grant execute on function consume_invite_code(text) to anon, authenticated;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 51 : verrouillage colonne par colonne de model_profiles pour
+-- le rôle "anon" (visiteurs non connectés — c'est eux qui consultent The
+-- Book et les fiches publiques). Jusqu'ici, la protection en place ne
+-- portait que sur les LIGNES (RLS : seuls les profils "published = true"
+-- sont visibles) — pas sur les COLONNES. Or PostgREST/Supabase autorisent
+-- par défaut la lecture de N'IMPORTE QUELLE colonne d'une ligne visible,
+-- pas seulement celles que le site affiche à l'écran : n'importe qui
+-- connaissant l'URL Supabase et la clé publique (déjà visibles dans le
+-- code source du site) pouvait interroger directement l'API et demander
+-- par exemple le téléphone ou l'e-mail d'un mannequin publié — même si le
+-- site lui-même ne les affiche jamais.
+--
+-- Correction : on retire l'accès en lecture "table entière" pour "anon"
+-- et on ne lui rend explicitement que les colonnes réellement utilisées
+-- par les pages publiques (accueil, The Book, fiche mannequin), vérifiées
+-- une par une dans le code de ces trois pages. Téléphone, e-mail et tout
+-- champ non listé ci-dessous restent donc désormais strictement
+-- impossibles à lire pour un visiteur non connecté, quelle que soit la
+-- requête envoyée.
+--
+-- Rappel : le rôle "authenticated" (mannequin connecté à son propre
+-- espace) n'est PAS touché ici — sa restriction sur téléphone/e-mail avait
+-- déjà été faite séparément (voir commentaire dans espace-mannequin.html,
+-- fonction mon_contact_prive()).
+-- ===================================================================
+revoke select on model_profiles from anon;
+grant select (
+  id, full_name, city, category, height_cm, carnation, clothing_size,
+  availability, published, created_at, featured, date_naissance,
+  weight_kg, chest_cm, waist_cm, hips_cm, inseam_cm, shoe_size,
+  eye_color, hair_color, bio, years_experience, model_types,
+  languages, video_url
+) on model_profiles to anon;
+
+NOTIFY pgrst, 'reload schema';
