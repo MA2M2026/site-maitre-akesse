@@ -36,11 +36,18 @@ function majWidgetSelection() {
 
 function injecterWidgetPanier() {
   if (document.getElementById('ma2m-panier-widget')) return;
+  // Ce script est partagé entre les pages françaises et anglaises (dossier en/) :
+  // le lien et le texte s'adaptent selon la langue de la page. Tant que
+  // selection.html lui-même n'a pas d'équivalent anglais, la version EN
+  // renvoie vers la version française plutôt qu'un lien mort.
+  const estAnglais = document.documentElement.lang === 'en';
   const widget = document.createElement('a');
   widget.id = 'ma2m-panier-widget';
-  widget.href = 'selection.html';
+  widget.href = estAnglais ? '../selection.html' : 'selection.html';
   widget.className = 'panier-widget';
-  widget.innerHTML = `Ma sélection <span id="ma2m-panier-compte">0</span>`;
+  widget.innerHTML = estAnglais
+    ? `My Selection <span id="ma2m-panier-compte">0</span>`
+    : `Ma sélection <span id="ma2m-panier-compte">0</span>`;
   document.body.appendChild(widget);
   majWidgetSelection();
 }
