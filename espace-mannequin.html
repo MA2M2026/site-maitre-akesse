@@ -24,6 +24,18 @@
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 </head>
 <body>
+<script>
+// Filet de sécurité : sur une connexion instable, un script externe (Supabase, EmailJS,
+// heic2any...) peut être très lent ou échouer à charger — dans ce cas js/app.js ne
+// s'exécute jamais et les éléments ".reveal" (animation d'apparition au scroll) restent
+// invisibles indéfiniment, alors que le reste de la page (formulaires, boutons) fonctionne
+// normalement. Ce filet les révèle de force après 2,5s si l'animation normale n'a pas eu
+// lieu, pour qu'aucun contenu ne reste caché à cause d'un simple souci réseau.
+setTimeout(() => {
+  document.querySelectorAll('.reveal:not(.visible)').forEach(el => el.classList.add('visible'));
+}, 2500);
+</script>
+
 
 <div id="flash-succes-fond" class="flash-succes-fond"></div>
 <div id="flash-succes" class="flash-succes">

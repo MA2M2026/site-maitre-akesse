@@ -36,7 +36,17 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://www.maitreakessemodelmanagement.com/en/actualites.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://www.maitreakessemodelmanagement.com/partenaires.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.maitreakessemodelmanagement.com/en/partenaires.html</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -52,6 +62,11 @@
   </url>
   <url>
     <loc>https://www.maitreakessemodelmanagement.com/inscription-mannequin.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://www.maitreakessemodelmanagement.com/en/inscription-mannequin.html</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>

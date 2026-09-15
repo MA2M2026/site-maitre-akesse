@@ -28,6 +28,17 @@
 <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
 </head>
 <body>
+<script>
+// Safety net: on an unstable connection, a third-party script (Supabase, EmailJS,
+// heic2any...) can be very slow or fail to load — in that case js/app.js never runs and
+// ".reveal" elements (scroll-in animation) stay invisible forever, even though the rest
+// of the page (forms, buttons) works normally. This net force-reveals them after 2.5s if
+// the normal animation hasn't happened, so content never stays hidden over a network hiccup.
+setTimeout(() => {
+  document.querySelectorAll('.reveal:not(.visible)').forEach(el => el.classList.add('visible'));
+}, 2500);
+</script>
+
 
 <header class="site-header-v2">
   <div class="container header-v2-inner">
@@ -48,10 +59,10 @@
     <li><a href="index.html">Home</a></li>
     <li><a href="services.html">Services</a></li>
     <li><a href="mannequins.html">The Book</a></li>
-    <li><a href="../actualites.html">News</a></li>
-    <li><a href="../partenaires.html">Our Partners</a></li>
+    <li><a href="actualites.html">News</a></li>
+    <li><a href="partenaires.html">Our Partners</a></li>
     <li><a href="candidature.html">Apply for a Casting</a></li>
-    <li><a href="../inscription-mannequin.html">Registration</a></li>
+    <li><a href="inscription-mannequin.html">Registration</a></li>
     <li><a href="contact.html">Contact</a></li>
     <li class="item-cta"><a href="../espace-mannequin.html">Model Space</a></li>
   </ul>
@@ -149,10 +160,10 @@
         <a href="index.html">Home</a>
         <a href="services.html">Services</a>
         <a href="mannequins.html">The Book</a>
-        <a href="../actualites.html">News</a>
-        <a href="../partenaires.html">Our Partners</a>
+        <a href="actualites.html">News</a>
+        <a href="partenaires.html">Our Partners</a>
         <a href="candidature.html">Apply for a Casting</a>
-        <a href="../inscription-mannequin.html">Registration</a>
+        <a href="inscription-mannequin.html">Registration</a>
       </div>
       <div>
         <h4>Contact</h4>

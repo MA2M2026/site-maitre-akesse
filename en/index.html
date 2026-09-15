@@ -62,6 +62,17 @@
 <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
 </head>
 <body>
+<script>
+// Safety net: on an unstable connection, a third-party script (Supabase, EmailJS,
+// heic2any...) can be very slow or fail to load — in that case js/app.js never runs and
+// ".reveal" elements (scroll-in animation) stay invisible forever, even though the rest
+// of the page (forms, buttons) works normally. This net force-reveals them after 2.5s if
+// the normal animation hasn't happened, so content never stays hidden over a network hiccup.
+setTimeout(() => {
+  document.querySelectorAll('.reveal:not(.visible)').forEach(el => el.classList.add('visible'));
+}, 2500);
+</script>
+
 
 <header class="site-header-v2">
   <div class="container header-v2-inner">
@@ -82,10 +93,10 @@
     <li><a href="index.html" class="actif">Home</a></li>
     <li><a href="services.html" class="">Services</a></li>
     <li><a href="mannequins.html" class="">The Book</a></li>
-    <li><a href="../actualites.html">News</a></li>
-    <li><a href="../partenaires.html">Our Partners</a></li>
+    <li><a href="actualites.html">News</a></li>
+    <li><a href="partenaires.html">Our Partners</a></li>
     <li><a href="candidature.html" class="">Apply for a Casting</a></li>
-    <li><a href="../inscription-mannequin.html">Registration</a></li>
+    <li><a href="inscription-mannequin.html">Registration</a></li>
     <li><a href="contact.html" class="">Contact</a></li>
     <li class="item-cta"><a href="../espace-mannequin.html">Model Space</a></li>
   </ul>
@@ -346,10 +357,10 @@
         <a href="index.html">Home</a>
         <a href="services.html">Services</a>
         <a href="mannequins.html">The Book</a>
-        <a href="../actualites.html">News</a>
-        <a href="../partenaires.html">Our Partners</a>
+        <a href="actualites.html">News</a>
+        <a href="partenaires.html">Our Partners</a>
         <a href="candidature.html">Apply for a Casting</a>
-        <a href="../inscription-mannequin.html">Registration</a>
+        <a href="inscription-mannequin.html">Registration</a>
       </div>
       <div>
         <h4>Contact</h4>
@@ -549,7 +560,7 @@ async function chargerMedaillonsAccueil() {
     const { data: photos } = await sb.from('model_photos').select('url').eq('model_id', profil.id).order('created_at', { ascending: true }).limit(1);
     const photoUrl = (photos && photos[0]) ? photos[0].url : '../assets/logo-dark-bg.png';
     const carte = document.createElement('a');
-    carte.href = '../mannequin.html?id=' + profil.id;
+    carte.href = 'mannequin.html?id=' + profil.id;
     carte.className = 'medaillon-carte reveal';
     carte.innerHTML = `
       <div class="medaillon-photo"><img src="${echapperHtml(photoUrl)}" alt="${echapperHtml(profil.full_name || '')}" loading="lazy"></div>
@@ -584,7 +595,7 @@ async function chargerMannequinVedette() {
   document.getElementById('vedette-img').alt = echapperHtml(profil.full_name || '');
   document.getElementById('vedette-nom').textContent = profil.full_name || 'Model';
   document.getElementById('vedette-info').textContent = [libelleCategorie, profil.city, profil.height_cm ? profil.height_cm + ' cm' : null].filter(Boolean).join(' · ');
-  document.getElementById('vedette-lien').href = '../mannequin.html?id=' + profil.id;
+  document.getElementById('vedette-lien').href = 'mannequin.html?id=' + profil.id;
   document.getElementById('mannequin-vedette').style.display = 'block';
 }
 window.promesseVedette = chargerMannequinVedette();
@@ -620,7 +631,7 @@ async function chargerBandeauConfiance() {
   if (!avecLogo.length) return;
 
   document.getElementById('confiance-liste').innerHTML = avecLogo.map(p => `
-    <a href="../partenaires.html?partenaire=${p.id}" class="confiance-carte" title="${echapperHtml(p.nom || '')}">
+    <a href="partenaires.html?partenaire=${p.id}" class="confiance-carte" title="${echapperHtml(p.nom || '')}">
       <img src="${echapperHtml(p.logo_url)}" alt="${echapperHtml(p.nom || '')}" loading="lazy">
     </a>
   `).join('');
