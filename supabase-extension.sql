@@ -2265,3 +2265,80 @@ create trigger trg_proteger_proprietaire_profil
   for each row execute function proteger_proprietaire_profil();
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 62 : même trou que l'Extension 61, mais sur model_photos —
+-- et plus large cette fois (lecture, modification ET suppression).
+--
+-- En auditant le code, aucune policy RLS pour model_photos n'apparaît
+-- dans ce fichier pour : l'insertion d'une photo, la modification d'une
+-- photo (photo principale, ordre compcard), la suppression d'une photo,
+-- ni la lecture de ses propres photos dans l'Espace mannequin. Ces
+-- actions fonctionnent pourtant toutes sur le site — les policies qui
+-- les autorisent existent donc déjà en base, mais d'avant le suivi SQL
+-- ici, comme pour model_profiles (Extension 61).
+--
+-- Risque concret trouvé : espace-mannequin.html supprime/modifie une
+-- photo uniquement par son id (sb.from('model_photos').update/delete()
+-- .eq('id', ...)) SANS jamais vérifier côté client que cette photo lui
+-- appartient. Seule la policy RLS invisible protège ça aujourd'hui.
+-- (Risque réel limité en pratique : cet id n'est jamais exposé nulle
+-- part publiquement — vérifié dans index.html, mannequin.html — donc
+-- pas devinable, mais le trou reste réel si cette policy est trop
+-- permissive.)
+--
+-- Deux corrections indépendantes de cette policy invisible :
+-- 1. Un déclencheur qui vérifie lui-même la propriété sur insert/update/
+--    delete (comme l'Extension 61), admins exemptés.
+-- 2. Une policy RESTRICTIVE en lecture (elle s'ajoute en ET, pas en OU,
+--    à toute policy permissive existante — donc elle RESTREINT
+--    vraiment l'accès quelle que soit la policy déjà en place) :
+--    une photo n'est visible que par son propriétaire, par un admin, ou
+--    publiquement si le profil du mannequin est publié.
+-- ===================================================================
+create or replace function proteger_proprietaire_photo()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  est_admin boolean;
+begin
+  select exists(select 1 from admins where user_id = auth.uid()) into est_admin;
+  if est_admin then
+    return coalesce(NEW, OLD);
+  end if;
+
+  if TG_OP = 'DELETE' then
+    if auth.uid() is null or OLD.model_id is distinct from auth.uid() then
+      raise exception 'Action refusée : cette photo ne vous appartient pas.';
+    end if;
+    return OLD;
+  end if;
+
+  if auth.uid() is null or NEW.model_id is distinct from auth.uid() then
+    raise exception 'Action refusée : cette photo ne vous appartient pas.';
+  end if;
+  if TG_OP = 'UPDATE' and OLD.model_id is distinct from auth.uid() then
+    raise exception 'Action refusée : cette photo ne vous appartient pas.';
+  end if;
+  return NEW;
+end;
+$$;
+
+drop trigger if exists trg_proteger_proprietaire_photo on model_photos;
+create trigger trg_proteger_proprietaire_photo
+  before insert or update or delete on model_photos
+  for each row execute function proteger_proprietaire_photo();
+
+drop policy if exists "Restriction lecture photos (IDOR)" on model_photos;
+create policy "Restriction lecture photos (IDOR)"
+  on model_photos as restrictive for select
+  using (
+    model_id = auth.uid()
+    or exists (select 1 from admins where user_id = auth.uid())
+    or exists (select 1 from model_profiles p where p.id = model_photos.model_id and p.published = true)
+  );
+
+NOTIFY pgrst, 'reload schema';
