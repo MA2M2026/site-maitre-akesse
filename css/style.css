@@ -1186,6 +1186,16 @@ section { padding: 5rem 0; }
   position: relative;
   display: flex; flex-direction: column; align-items: center;
   text-align: center;
+  /* Le Book (mannequins.html) peut afficher des dizaines de cartes d'un coup,
+     chacune avec une animation perpétuelle sur sa photo (ma2m-flotter) — sans
+     ça, le navigateur continue de faire tourner toutes ces animations même
+     hors de l'écran, ce qui ralentit sensiblement le défilement sur mobile.
+     content-visibility: auto met en pause le rendu (et les animations) des
+     cartes hors viewport ; contain-intrinsic-size évite un saut de la barre
+     de défilement avant leur premier rendu. Reste compatible avec l'animation
+     d'apparition au scroll ci-dessous (IntersectionObserver). */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 380px;
 }
 
 .medaillon-photo {
