@@ -362,7 +362,10 @@
 <script>
 // --- Flèche "Entrer" : simple repère visuel, fait défiler d'un écran (ne bloque jamais le scroll normal) ---
 document.getElementById('entrer-btn').addEventListener('click', () => {
-  window.scrollBy({ top: window.innerHeight * 0.9, behavior: 'smooth' });
+  const vedette = document.getElementById('mannequin-vedette');
+  const cible = (vedette && getComputedStyle(vedette).display !== 'none') ? vedette : document.getElementById('marqueeBande');
+  if (cible) cible.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  else window.scrollBy({ top: window.innerHeight * 0.9, behavior: 'smooth' });
 });
 
 // --- Intro : logo animé (5,8s ou "Passer l'intro"), avant la porte d'entrée ---
