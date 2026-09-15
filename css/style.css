@@ -1,9 +1,12 @@
 /* ===== Maître Akesse Model Management — Design tokens =====
    Couleurs : noir profond + bordeaux signature (accent principal), touche d'or mineure héritée du logo
    Typo : Cormorant Garamond (titres, display) + Jost (texte courant)
+   Polices chargées via <link> dans le <head> de chaque page (avec preconnect),
+   pas via @import ici — un @import CSS bloque le rendu en créant une dépendance
+   en série (attendre style.css, puis découvrir l'import, puis le télécharger),
+   alors qu'un <link> dans le HTML est détecté et lancé immédiatement par le
+   navigateur, en parallèle du reste.
 */
-
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap');
 
 :root {
   --noir: #060504;           /* fond dominant, noir profond */
