@@ -1190,6 +1190,16 @@ section { padding: 5rem 0; }
   gap: 3.2rem 1.8rem;
 }
 
+.instagram-grille {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.6rem;
+  margin-top: 2.5rem;
+}
+.instagram-vignette { position: relative; aspect-ratio: 1 / 1; overflow: hidden; border-radius: 4px; display: block; }
+.instagram-vignette img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s var(--transition-douce); }
+.instagram-vignette:hover img { transform: scale(1.06); }
+
 .medaillon-carte {
   position: relative;
   display: flex; flex-direction: column; align-items: center;

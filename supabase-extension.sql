@@ -2381,7 +2381,6 @@ insert into mot_responsable (id, nom, titre, message, photo_url) values (
 
 NOTIFY pgrst, 'reload schema';
 
--- ===================================================================
 -- Extension 64 : file d'attente de validation admin — avant, seuls les
 -- profils de mineurs étaient bloqués (Extension 56), et même pour eux il
 -- n'existait aucun outil dans le tableau de bord pour les retrouver (le
@@ -2453,5 +2452,67 @@ drop policy if exists "Les admins gerent la file de validation" on model_profile
 create policy "Les admins gerent la file de validation"
   on model_profiles for select
   using (exists (select 1 from admins where user_id = auth.uid()));
+
+NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 65 : flux Instagram automatique sur le site (accueil).
+--
+-- Deux tables séparées, volontairement, pour ne jamais risquer d'exposer
+-- le jeton d'accès Instagram publiquement :
+-- - instagram_config : réservée aux admins (lecture ET écriture), stocke
+--   le jeton d'accès de longue durée et sa date d'expiration.
+-- - instagram_posts_cache : lecture publique (comme les autres tables
+--   d'affichage du site), écriture réservée aux admins. Contient
+--   uniquement les publications déjà récupérées (image, légende, lien),
+--   jamais le jeton lui-même — c'est cette table que les pages publiques
+--   du site interrogent.
+--
+-- Le rafraîchissement (appel réel à l'API Instagram Graph) se fait
+-- depuis le tableau de bord admin (bouton dédié), jamais automatiquement
+-- en arrière-plan — ce site n'a pas de tâche planifiée serveur, et ça
+-- évite aussi de multiplier les appels à l'API pour rien.
+-- ===================================================================
+create table if not exists instagram_config (
+  id text primary key default 'principal',
+  access_token text,
+  ig_user_id text, -- identifiant du compte professionnel Instagram (Meta Graph API Explorer)
+  token_expire_le timestamptz,
+  updated_at timestamptz default now()
+);
+
+alter table instagram_config enable row level security;
+
+drop policy if exists "Seuls les admins lisent la config Instagram" on instagram_config;
+create policy "Seuls les admins lisent la config Instagram"
+  on instagram_config for select
+  using (exists (select 1 from admins where user_id = auth.uid()));
+
+drop policy if exists "Seuls les admins modifient la config Instagram" on instagram_config;
+create policy "Seuls les admins modifient la config Instagram"
+  on instagram_config for all
+  using (exists (select 1 from admins where user_id = auth.uid()))
+  with check (exists (select 1 from admins where user_id = auth.uid()));
+
+create table if not exists instagram_posts_cache (
+  id text primary key default 'principal',
+  posts jsonb not null default '[]'::jsonb,
+  updated_at timestamptz default now()
+);
+
+alter table instagram_posts_cache enable row level security;
+
+drop policy if exists "Le flux Instagram en cache est visible de tous" on instagram_posts_cache;
+create policy "Le flux Instagram en cache est visible de tous"
+  on instagram_posts_cache for select using (true);
+
+drop policy if exists "Seuls les admins mettent a jour le cache Instagram" on instagram_posts_cache;
+create policy "Seuls les admins mettent a jour le cache Instagram"
+  on instagram_posts_cache for all
+  using (exists (select 1 from admins where user_id = auth.uid()))
+  with check (exists (select 1 from admins where user_id = auth.uid()));
+
+insert into instagram_config (id) values ('principal') on conflict (id) do nothing;
+insert into instagram_posts_cache (id) values ('principal') on conflict (id) do nothing;
 
 NOTIFY pgrst, 'reload schema';
