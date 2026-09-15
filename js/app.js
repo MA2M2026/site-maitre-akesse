@@ -330,3 +330,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('lightbox-global').classList.add('active');
   };
 })();
+
+// ---------- Atmosphère MA2M : léger effet de parallaxe au mouvement de la souris ----------
+// N'agit que sur desktop (pointeur précis) et respecte prefers-reduced-motion.
+(function () {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (!window.matchMedia('(pointer: fine)').matches) return;
+
+  let cibleX = 0, cibleY = 0, brut = null;
+
+  function appliquer() {
+    document.documentElement.style.setProperty('--ma2m-mx', cibleX.toFixed(2));
+    document.documentElement.style.setProperty('--ma2m-my', cibleY.toFixed(2));
+    brut = null;
+  }
+
+  window.addEventListener('mousemove', function (e) {
+    cibleX = (e.clientX / window.innerWidth - 0.5) * 16;
+    cibleY = (e.clientY / window.innerHeight - 0.5) * 16;
+    if (!brut) brut = requestAnimationFrame(appliquer);
+  }, { passive: true });
+})();

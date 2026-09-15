@@ -63,6 +63,84 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* ============================================
+   SYSTÈME D'ATMOSPHÈRE MA2M — décor vivant global
+   Deux calques fixes derrière tout le contenu : de fines lignes
+   lumineuses (bordeaux) qui dérivent très lentement + un reflet
+   diagonal qui glisse sur la surface. Pur CSS, transforms GPU,
+   pas d'impact sur le contenu (z-index négatif, pointer-events: none).
+   Intensité réglable par page via [data-atmosphere] sur <body>.
+   ============================================ */
+:root { --atmosphere-intensite: 1; }
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: -12%;
+  z-index: -1;
+  pointer-events: none;
+  will-change: transform, background-position;
+  transform: translate3d(0, 0, 0);
+}
+
+body::before {
+  background-image:
+    repeating-linear-gradient(115deg,
+      transparent 0px, transparent 240px,
+      color-mix(in srgb, var(--bordeaux-clair) 9%, transparent) 241px,
+      color-mix(in srgb, var(--bordeaux-clair) 9%, transparent) 242px,
+      transparent 243px, transparent 480px),
+    linear-gradient(115deg, transparent 42%, color-mix(in srgb, var(--blanc) 3%, transparent) 49%, transparent 56%);
+  background-size: auto, 220% 220%;
+  background-position: 0 0, 0% 0%;
+  opacity: var(--atmosphere-intensite);
+  animation: ma2m-derive-avant 95s linear infinite alternate;
+  transform: translate3d(calc(var(--ma2m-mx, 0) * 1px), calc(var(--ma2m-my, 0) * 1px), 0);
+}
+
+body::after {
+  background-image:
+    repeating-linear-gradient(-68deg,
+      transparent 0px, transparent 360px,
+      color-mix(in srgb, var(--bordeaux) 14%, transparent) 361px,
+      color-mix(in srgb, var(--bordeaux) 14%, transparent) 362px,
+      transparent 363px, transparent 640px);
+  opacity: calc(var(--atmosphere-intensite) * 0.65);
+  animation: ma2m-derive-arriere 140s linear infinite alternate;
+  transform: translate3d(calc(var(--ma2m-mx, 0) * -0.6px), calc(var(--ma2m-my, 0) * -0.6px), 0);
+}
+
+@keyframes ma2m-derive-avant {
+  from { background-position: 0 0, 12% 6%; }
+  to   { background-position: 120px 70px, 42% 34%; }
+}
+
+@keyframes ma2m-derive-arriere {
+  from { background-position: 0 0; }
+  to   { background-position: -160px 110px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::before, body::after { animation: none; transform: none; }
+}
+
+@media (max-width: 720px) {
+  body::before, body::after { opacity: calc(var(--atmosphere-intensite) * 0.5); }
+}
+
+/* Variations d'atmosphère par page (section plus sombre/calme pour Book, profils, Espace mannequin) */
+body[data-atmosphere="accueil"]  { --atmosphere-intensite: 1.15; }
+body[data-atmosphere="casting"]  { --atmosphere-intensite: 1.05; }
+body[data-atmosphere="agence"]   { --atmosphere-intensite: 0.85; }
+body[data-atmosphere="services"] { --atmosphere-intensite: 0.85; }
+body[data-atmosphere="book"]     { --atmosphere-intensite: 0.55; }
+body[data-atmosphere="profil"]   { --atmosphere-intensite: 0.5; }
+body[data-atmosphere="espace"]   { --atmosphere-intensite: 0.45; }
+body[data-atmosphere="actualites"]  { --atmosphere-intensite: 0.75; }
+body[data-atmosphere="partenaires"] { --atmosphere-intensite: 0.7; }
+body[data-atmosphere="contact"]     { --atmosphere-intensite: 0.6; }
+
 img, video { max-width: 100%; display: block; }
 
 /* Protection des images : décourage l'enregistrement/glisser-déposer/appui long.
