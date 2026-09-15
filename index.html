@@ -383,8 +383,18 @@
 // Au clic, on attend la fin du chargement du mannequin à la une (promesseVedette, définie
 // plus bas) pour tomber directement dessus — avec un délai maximum de 4s en filet de
 // sécurité : même si le réseau est très lent ou en panne, le clic déverrouille toujours
-// le site (jamais un visiteur ne doit rester bloqué). ---
-document.body.classList.add('porte-verrouillee');
+// le site (jamais un visiteur ne doit rester bloqué). Une fois la porte ouverte, elle reste
+// ouverte pour le reste de la session (rafraîchir la page ou revenir via le menu "Accueil"
+// ne doit pas rebloquer le visiteur qui est déjà entré). ---
+let porteDejaOuverte = false;
+try { porteDejaOuverte = sessionStorage.getItem('ma2m_porte_ouverte'); } catch (e) {}
+
+if (porteDejaOuverte) {
+  document.getElementById('porte-entree').style.display = 'none';
+} else {
+  document.body.classList.add('porte-verrouillee');
+}
+
 document.getElementById('entrer-btn').addEventListener('click', async () => {
   if (window.promesseVedette) {
     try { await Promise.race([window.promesseVedette, new Promise((r) => setTimeout(r, 4000))]); } catch (e) {}
@@ -392,6 +402,7 @@ document.getElementById('entrer-btn').addEventListener('click', async () => {
   document.body.classList.remove('porte-verrouillee');
   document.getElementById('porte-entree').style.display = 'none';
   window.scrollTo(0, 0);
+  try { sessionStorage.setItem('ma2m_porte_ouverte', '1'); } catch (e) {}
 });
 
 // --- Intro : logo animé (5,8s ou "Passer l'intro"), avant la porte d'entrée ---
