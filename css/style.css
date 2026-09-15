@@ -1499,7 +1499,12 @@ body.porte-verrouillee { overflow: hidden; height: 100vh; }
 }
 #mot-responsable.a-une-photo .mot-responsable-scrim {
   display: block; position: absolute; inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.5) 42%, rgba(0,0,0,0.12) 68%, rgba(0,0,0,0) 88%);
+  /* Vignette sur les 4 côtés (la photo se fond dans le noir plutôt que de
+     ressembler à un carré plaqué) + assombrissement renforcé en bas pour
+     que le texte reste lisible. */
+  background:
+    radial-gradient(ellipse 78% 72% at center, rgba(0,0,0,0) 38%, rgba(0,0,0,0.6) 76%, rgba(0,0,0,0.95) 100%),
+    linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 36%, rgba(0,0,0,0.15) 60%, rgba(0,0,0,0) 80%);
 }
 #mot-responsable.a-une-photo .mot-responsable-bloc .container {
   position: relative; z-index: 1; max-width: 1200px; margin: 0 auto;
