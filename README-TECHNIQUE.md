@@ -258,3 +258,62 @@ Voir la section "Limites connues" de `SECURITY.md` — notamment l'absence
 de vérification approfondie du contenu réel des fichiers uploadés (au-delà
 du type déclaré), qui demanderait une fonction serveur supplémentaire non
 mise en place à ce jour.
+
+## Porte d'entrée / verrou de scroll (accueil)
+
+`index.html` bloque le scroll (`body.porte-verrouillee { overflow:hidden;
+height:100dvh; }`) tant que le bouton "Entrer" n'a pas été cliqué, pour
+forcer l'utilisateur à voir l'écran d'accueil avant de naviguer. **Règle de
+sécurité impérative** : ce verrou doit TOUJOURS pouvoir se libérer tout
+seul, même si Supabase ne répond jamais (connexion coupée, quota dépassé,
+etc.) — sans ça, le site entier se bloque pour le visiteur. C'est exactement
+ce qui s'est produit une fois en production avant qu'un filet de sécurité
+ne soit ajouté : le clic sur "Entrer" attend au maximum 4 secondes
+(`Promise.race` avec un `setTimeout`) le chargement du mannequin à la une,
+puis débloque la page dans tous les cas. Ne jamais retirer ce filet de
+sécurité, même en modifiant le reste de ce système.
+
+## `100vh` à bannir — toujours utiliser `100dvh`
+
+Plusieurs bugs de ce projet (bandeau d'annonce qui dépassait de l'écran
+verrouillé, grand vide noir après rotation d'écran sur tablette/mobile,
+piste probable d'un blocage au scroll signalé par le client) viennent tous
+de la même cause : `100vh` ne suit pas la barre d'outils dynamique des
+navigateurs mobiles (elle apparaît/disparaît pendant le scroll), donc la
+hauteur réelle visible change sans que `100vh` se mette à jour. **Toujours
+utiliser `100dvh`** (avec un repli `100vh` juste avant, pour les très
+vieux navigateurs) pour toute hauteur pleine page — jamais `100vh` seul,
+et jamais de solution en JavaScript (`--vh` recalculé sur un listener
+`resize`), qui peut elle-même provoquer une boucle resize↔scroll sur
+mobile. `100dvh` est natif, se recalcule sans JS, donc sans ce risque.
+
+## Fond de page en photo — tenté puis abandonné (ne pas refaire à l'identique)
+
+Une tentative d'utiliser une photo comme fond de page globale (au lieu du
+dégradé + texture bruit actuel) a été testée puis annulée à la demande du
+client. Deux causes techniques ont empêché que ça fonctionne, à connaître
+avant de retenter l'expérience :
+
+1. **Les sections de contenu recouvrent le fond du `body`.** La quasi-
+   totalité des sections (`.fond-noir`/`.fond-anthracite`, la porte
+   d'entrée, le pied de page...) ont leur propre fond opaque — le fond du
+   `body` n'est donc jamais visible derrière, sauf dans de rares zones sans
+   fond propre. Rendre ces fonds semi-transparents (`rgba(...)` à ~86%
+   d'opacité) résout ce point sans nuire à la lisibilité du texte.
+2. **`background-size: cover` sur `body` se calcule sur la page entière,
+   pas sur l'écran, dès que `background-attachment` n'est pas `fixed`.**
+   Sur mobile, `background-attachment: fixed` a volontairement été
+   désactivé (coûteux au scroll sur Safari iOS), ce qui repasse en
+   `scroll` — et dans ce mode, `cover` dimensionne l'image sur la hauteur
+   totale du document (potentiellement plusieurs milliers de pixels), pas
+   sur le viewport. Résultat : l'image apparaît écrasée/quasi invisible
+   sur mobile, même après avoir réglé le point 1.
+
+   La bonne approche pour une prochaine tentative n'est **pas**
+   `background-image` sur `body`, mais un pseudo-élément dédié :
+   `body::before { position: fixed; inset: 0; z-index: -1;
+   background-image: url(...); background-size: cover; }` — un élément
+   `position: fixed` se dimensionne nativement sur le viewport (jamais sur
+   le document), et les navigateurs mobiles le composent bien plus
+   efficacement qu'un `background-attachment: fixed` classique, donc pas
+   besoin non plus de désactiver quoi que ce soit sur mobile.
