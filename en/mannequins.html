@@ -246,7 +246,7 @@ function appliquerFiltres() {
       <button class="btn-selection" data-id="${profil.id}" style="background:${dejaSelectionne ? 'var(--bordeaux-noir)' : 'var(--blanc)'}; color:${dejaSelectionne ? 'var(--blanc)' : 'var(--noir)'};">
         ${dejaSelectionne ? '✓' : '+'}
       </button>
-      <a href="../mannequin.html?id=${profil.id}" style="display:flex; flex-direction:column; align-items:center;">
+      <a href="mannequin.html?id=${profil.id}" style="display:flex; flex-direction:column; align-items:center;">
         <div class="medaillon-photo"><img src="${echapperHtml(profil.photoUrl)}" alt="${echapperHtml(profil.full_name || 'Model')}" loading="lazy"></div>
         <div class="medaillon-nom">${echapperHtml(profil.full_name || 'Model')}</div>
         <div class="medaillon-info">${echapperHtml(profil.city || '')}${profil.height_cm ? ' · ' + profil.height_cm + ' cm' : ''}</div>
