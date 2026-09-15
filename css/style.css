@@ -1485,12 +1485,14 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
   box-shadow: 0 22px 48px -14px rgba(0,0,0,0.8), 0 0 30px -8px rgba(207,59,82,0.22), inset 0 0 0 1px rgba(255,255,255,0.1);
   background: var(--noir);
 }
-/* Assombrit très doucement le pourtour de la photo (jamais le centre, où se
-   trouve le visage) — une ombre interne large et floue, pas un dégradé
-   qu'on remarque consciemment. */
+/* Assombrit le pourtour de la photo (jamais le centre, où se trouve le
+   visage) — un dégradé bien visible mais progressif, sans ligne nette,
+   pour retrouver l'effet "photo qui se fond dans le noir" apprécié sur
+   l'ancienne version, cette fois sans risque puisque le cadre a une taille
+   fixe (aspect-ratio), pas basée sur l'écran. */
 .mot-responsable-photo-wrap::after {
   content: ''; position: absolute; inset: 0; border-radius: inherit;
-  box-shadow: inset 0 0 70px 4px rgba(0,0,0,0.32);
+  box-shadow: inset 0 0 110px 30px rgba(0,0,0,0.6);
   pointer-events: none;
 }
 .mot-responsable-photo-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
