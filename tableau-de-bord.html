@@ -19,10 +19,19 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap">
 <link rel="stylesheet" href="css/style.css">
 <style>
-  .stats-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }
-  .stat-carte { background: var(--anthracite, var(--noir)); color: var(--blanc); padding: 1.6rem; border-top: 2px solid var(--or); }
-  .stat-carte .chiffre { font-family: var(--display); font-size: 2.4rem; }
-  .stat-carte .label { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: #bbb; margin-top: 0.4rem; }
+  .stats-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.9rem; }
+  .stat-carte { background: var(--anthracite, var(--noir)); color: var(--blanc); padding: 1rem 1.1rem; border-top: 2px solid var(--or); }
+  .stat-carte .chiffre { font-family: var(--display); font-size: 1.9rem; line-height: 1; }
+  .stat-carte .label { font-size: 0.64rem; letter-spacing: 0.08em; text-transform: uppercase; color: #bbb; margin-top: 0.35rem; }
+
+  /* Statistiques de fréquentation : moins consultées au quotidien que les
+     stats principales ci-dessus, donc reléguées tout en bas de la page,
+     dans un format compact plutôt qu'en grandes cartes. */
+  .stats-secondaires-bloc { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--gris-clair); }
+  .stats-secondaires-titre { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--gris); margin-bottom: 0.9rem; }
+  .stats-secondaires { display: flex; flex-wrap: wrap; gap: 1.6rem 2.6rem; }
+  .stat-secondaire .chiffre { font-family: var(--display); font-size: 1.3rem; color: var(--texte-doux, #ccc); }
+  .stat-secondaire .label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gris); margin-top: 0.15rem; }
   .liste-recente { margin-top: 3rem; }
   .liste-recente table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
   .liste-recente th, .liste-recente td { text-align: left; padding: 0.7rem 0.6rem; border-bottom: 1px solid var(--gris-clair); }
@@ -357,6 +366,11 @@ setTimeout(() => {
       <div class="form-champ"><label for="mr-message">Message</label><textarea id="mr-message" rows="6"></textarea></div>
       <button class="btn btn--principal" id="mr-enregistrer-btn">Enregistrer le mot du fondateur</button>
       <div id="mr-msg" class="form-msg"></div>
+    </div>
+
+    <div class="stats-secondaires-bloc">
+      <div class="stats-secondaires-titre">📊 Fréquentation du site</div>
+      <div class="stats-secondaires" id="stats-secondaires">Chargement…</div>
     </div>
 
     <div style="margin:2.5rem 0;">
@@ -709,10 +723,13 @@ async function chargerStatistiques() {
     <div class="stat-carte"><div class="chiffre">${recruteurs}</div><div class="label">Demandes recruteurs</div></div>
     <div class="stat-carte"><div class="chiffre">${contacts}</div><div class="label">Messages de contact</div></div>
     <div class="stat-carte"><div class="chiffre">${actus}</div><div class="label">Actualités publiées</div></div>
-    <div class="stat-carte"><div class="chiffre">${photos}</div><div class="label">Photos envoyées (book)</div></div>
-    <div class="stat-carte"><div class="chiffre">${visitesAujourdhui}</div><div class="label">Visites réelles — aujourd'hui</div></div>
-    <div class="stat-carte"><div class="chiffre">${visites7j}</div><div class="label">Visites réelles — 7 derniers jours</div></div>
-    <div class="stat-carte"><div class="chiffre">${visitesTotal}</div><div class="label">Visites réelles — total</div></div>
+  `;
+
+  document.getElementById('stats-secondaires').innerHTML = `
+    <div class="stat-secondaire"><div class="chiffre">${photos}</div><div class="label">Photos envoyées (book)</div></div>
+    <div class="stat-secondaire"><div class="chiffre">${visitesAujourdhui}</div><div class="label">Visites réelles — aujourd'hui</div></div>
+    <div class="stat-secondaire"><div class="chiffre">${visites7j}</div><div class="label">Visites réelles — 7 derniers jours</div></div>
+    <div class="stat-secondaire"><div class="chiffre">${visitesTotal}</div><div class="label">Visites réelles — total</div></div>
   `;
 
   chargerErreurs();
