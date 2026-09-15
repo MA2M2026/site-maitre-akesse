@@ -1933,3 +1933,24 @@ create policy "Les admins renseignent les miniatures"
   with check (exists (select 1 from admins where user_id = auth.uid()));
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 53 : nettoyage ponctuel de 3 photos "fantômes" repérées via
+-- l'outil de rattrapage des miniatures — leur fichier réel est introuvable
+-- (404 "Object not found") ou corrompu, alors que leur fiche existait
+-- toujours dans model_photos (probablement un envoi resté incomplet, il y
+-- a longtemps). Elles s'affichaient en image cassée sur la fiche publique
+-- du mannequin concerné. Ciblage par URL exacte (aucune autre photo
+-- touchée) — vérifié avant suppression : les 2 premières renvoient bien un
+-- 404 côté stockage, la 3e une image invalide.
+-- ===================================================================
+delete from storage.objects
+where bucket_id = 'model-photos'
+  and name = 'c402a4a3-a090-421f-bdcc-b94fece2da4f/1789056565393-temp_image_C5E6109C-E03D-46E3-AD56-1B680D35918D.webp';
+
+delete from model_photos
+where url in (
+  'https://dfhghgmwmxiguhtxtsle.supabase.co/storage/v1/object/public/model-photos/c402a4a3-a090-421f-bdcc-b94fece2da4f/1789055934200-Capture%20One%20Catalog%201828.jpeg',
+  'https://dfhghgmwmxiguhtxtsle.supabase.co/storage/v1/object/public/model-photos/c402a4a3-a090-421f-bdcc-b94fece2da4f/1789055984263-Capture%20One%20Catalog%201833.jpeg',
+  'https://dfhghgmwmxiguhtxtsle.supabase.co/storage/v1/object/public/model-photos/c402a4a3-a090-421f-bdcc-b94fece2da4f/1789056565393-temp_image_C5E6109C-E03D-46E3-AD56-1B680D35918D.webp'
+);
