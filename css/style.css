@@ -1492,9 +1492,9 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
    pas de vignette élaborée (qui déformait la photo différemment selon la largeur
    d'écran et affaiblissait le contraste du texte sur grand écran). */
 #mot-responsable.a-une-photo .mot-responsable-bloc {
-  position: relative; overflow: hidden;
+  position: relative;
   min-height: 90vh;
-  display: flex; align-items: flex-end;
+  display: flex; flex-direction: column; justify-content: flex-end;
   padding: 0;
   background: var(--noir);
 }
