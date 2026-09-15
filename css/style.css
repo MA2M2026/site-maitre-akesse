@@ -347,14 +347,21 @@ section { padding: 5rem 0; }
 .compsheet-photo.cliquable { cursor: pointer; }
 .compsheet-photo.cliquable:hover img { transform: scale(1.05); }
 
-.mensurations { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: rgba(255,255,255,0.08); margin: 1.6rem 0; }
-/* Fond noir laqué/miroir : même dégradé diagonal (reflet clair traversant le noir
-   profond) déjà utilisé sur la fiche Compcard générée en PDF/JPEG — on reprend
-   ici le même langage visuel plutôt que les blocs clairs d'origine. */
+.mensurations { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.7rem; margin: 1.6rem 0; }
+/* Chaque case = une "touche de clavier" : fond noir laqué/miroir (même dégradé
+   que la fiche Compcard PDF/JPEG), légèrement surélevée par son ombre, qui
+   s'enfonce visuellement au survol/appui comme une vraie touche mécanique. */
 .mensuration-item {
   background: linear-gradient(135deg, #0c0a08 0%, #020202 22%, #241f1a 46%, #2e2822 50%, #241f1a 54%, #020202 78%, #0c0a08 100%);
   color: var(--texte-corps); padding: 1rem;
   display: flex; align-items: flex-start; gap: 0.7rem;
+  border-radius: 7px;
+  box-shadow: 0 3px 0 #000, 0 7px 16px -4px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.14);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.mensuration-item:hover, .mensuration-item:active {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 #000, 0 2px 6px -2px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
 }
 .mensuration-item .icone-stat { flex-shrink: 0; width: 18px; height: 18px; margin-top: 0.15rem; color: var(--bordeaux-clair); }
 .mensuration-item .icone-stat svg { width: 100%; height: 100%; }
@@ -1118,8 +1125,9 @@ section { padding: 5rem 0; }
 .medaillon-photo {
   width: 100%; aspect-ratio: 3 / 4; border-radius: 2px; overflow: hidden;
   /* Pas de bordure : la photo doit sembler émerger du noir plutôt que d'être
-     encadrée — seule une ombre très douce la détache légèrement du fond. */
-  box-shadow: 0 18px 40px -12px rgba(0,0,0,0.7);
+     encadrée — une ombre profonde + un très léger halo bordeaux en permanence
+     la détachent nettement du fond, même sans interaction. */
+  box-shadow: 0 22px 48px -14px rgba(0,0,0,0.8), 0 0 30px -8px rgba(207,59,82,0.22);
   transition: box-shadow 0.35s ease;
   animation: ma2m-flotter 6.5s ease-in-out infinite;
 }
@@ -1140,9 +1148,22 @@ section { padding: 5rem 0; }
 }
 
 .medaillon-carte:hover .medaillon-photo, .medaillon-carte:focus-within .medaillon-photo {
-  box-shadow: 0 0 0 1px var(--bordeaux-clair), 0 0 34px rgba(207,59,82,0.4), 0 18px 40px -12px rgba(0,0,0,0.7);
+  box-shadow: 0 0 0 1px var(--bordeaux-clair), 0 0 40px rgba(207,59,82,0.5), 0 22px 48px -14px rgba(0,0,0,0.8);
 }
 .medaillon-carte:hover img, .medaillon-carte:focus-within img { transform: scale(1.06); }
+
+/* Apparition au défilement façon "éclosion" : la photo s'ouvre en s'agrandissant
+   légèrement depuis un état plus resserré, au lieu du simple glissement vertical
+   utilisé ailleurs sur le site — remplace .reveal uniquement pour ces cartes. */
+.medaillon-carte.reveal {
+  opacity: 0;
+  transform: translateY(16px) scale(0.86);
+  transition: opacity 1.1s ease, transform 1.1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.medaillon-carte.reveal.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
 
 .medaillon-nom { font-family: var(--display); font-size: 1.2rem; letter-spacing: 0.05em; text-transform: uppercase; margin-top: 1.1rem; color: var(--titre-clair); }
 .medaillon-info { font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--texte-doux); margin-top: 0.3rem; }
