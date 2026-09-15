@@ -120,6 +120,23 @@
 <script defer src="js/menu.js"></script>
 <script defer src="js/selection.js"></script>
 <script>
+// Petites icônes ligne (SVG, currentColor) affichées à côté de chaque mensuration
+// sur la fiche — purement décoratif, aucune donnée, pas besoin d'échappement.
+const ICONES_MENSURATIONS = {
+  age: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="3" y="4" width="14" height="13" rx="1"/><line x1="3" y1="8" x2="17" y2="8"/><line x1="7" y1="2.5" x2="7" y2="5.5"/><line x1="13" y1="2.5" x2="13" y2="5.5"/></svg>',
+  taille: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3"><line x1="10" y1="2" x2="10" y2="18"/><polyline points="6,6 10,2 14,6"/><polyline points="6,14 10,18 14,14"/></svg>',
+  poids: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l3 2"/></svg>',
+  ruban: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="2.5" y="7" width="15" height="6" rx="1"/><line x1="5.5" y1="7" x2="5.5" y2="9.5"/><line x1="8.5" y1="7" x2="8.5" y2="9.5"/><line x1="11.5" y1="7" x2="11.5" y2="9.5"/><line x1="14.5" y1="7" x2="14.5" y2="9.5"/></svg>',
+  pointure: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2.5 14.5c0-3 1.5-5 3-6.5.8-.8 1.3-1.8 1.5-3 2 0 3.5 1.2 4.2 2.6.5 1 1.4 1.7 2.5 1.9 1.7.3 3.3 1.4 3.3 3v2H2.5z"/></svg>',
+  carnation: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M10 2.5c3 4 5 6.8 5 9.5a5 5 0 01-10 0c0-2.7 2-5.5 5-9.5z"/></svg>',
+  vetements: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M10.5 2.5H17v6.5L9 17l-6.5-6.5 8-8z"/><circle cx="13.2" cy="6" r="1.1" fill="currentColor" stroke="none"/></svg>',
+  yeux: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2 10s3-5.5 8-5.5 8 5.5 8 5.5-3 5.5-8 5.5-8-5.5-8-5.5z"/><circle cx="10" cy="10" r="2.3"/></svg>',
+  cheveux: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M4 5c2-2 4-2 6 0s4 2 6 0"/><path d="M4 10c2-2 4-2 6 0s4 2 6 0"/><path d="M4 15c2-2 4-2 6 0s4 2 6 0"/></svg>'
+};
+function iconeMensuration(cle) {
+  return `<span class="icone-stat" aria-hidden="true">${ICONES_MENSURATIONS[cle] || ''}</span>`;
+}
+
 function libelleTypeModele(t) {
   const libelles = { catwalk: 'Défilé / Catwalk', photo: 'Photo', publicite: 'Publicité', commercial: 'Commercial', autre: 'Autre' };
   return libelles[t] || t;
@@ -658,18 +675,18 @@ async function chargerProfilInterne() {
         <p style="color:var(--or); margin-top:0.4rem;">${echapperHtml(profil.city || '')}</p>
 
         <div class="mensurations">
-          ${age ? `<div class="mensuration-item"><span class="label">Âge</span><span class="valeur">${age} ans</span></div>` : ''}
-          ${profil.height_cm ? `<div class="mensuration-item"><span class="label">Taille</span><span class="valeur">${profil.height_cm} cm</span></div>` : ''}
-          ${profil.weight_kg ? `<div class="mensuration-item"><span class="label">Poids</span><span class="valeur">${profil.weight_kg} kg</span></div>` : ''}
-          ${profil.chest_cm ? `<div class="mensuration-item"><span class="label">Poitrine</span><span class="valeur">${profil.chest_cm} cm</span></div>` : ''}
-          ${profil.waist_cm ? `<div class="mensuration-item"><span class="label">Taille (tour)</span><span class="valeur">${profil.waist_cm} cm</span></div>` : ''}
-          ${profil.hips_cm ? `<div class="mensuration-item"><span class="label">Hanches</span><span class="valeur">${profil.hips_cm} cm</span></div>` : ''}
-          ${profil.inseam_cm ? `<div class="mensuration-item"><span class="label">Entrejambe</span><span class="valeur">${profil.inseam_cm} cm</span></div>` : ''}
-          ${profil.shoe_size ? `<div class="mensuration-item"><span class="label">Pointure</span><span class="valeur">${echapperHtml(profil.shoe_size)}</span></div>` : ''}
-          ${profil.carnation ? `<div class="mensuration-item"><span class="label">Carnation</span><span class="valeur" style="font-size:1rem;">${echapperHtml(profil.carnation)}</span></div>` : ''}
-          ${profil.clothing_size ? `<div class="mensuration-item"><span class="label">Taille vêtements</span><span class="valeur" style="font-size:1rem;">${echapperHtml(profil.clothing_size)}</span></div>` : ''}
-          ${profil.eye_color ? `<div class="mensuration-item"><span class="label">Yeux</span><span class="valeur" style="font-size:1rem;">${echapperHtml(profil.eye_color)}</span></div>` : ''}
-          ${profil.hair_color ? `<div class="mensuration-item"><span class="label">Cheveux</span><span class="valeur" style="font-size:1rem;">${echapperHtml(profil.hair_color)}</span></div>` : ''}
+          ${age ? `<div class="mensuration-item">${iconeMensuration('age')}<div><span class="label">Âge</span><span class="valeur">${age} ans</span></div></div>` : ''}
+          ${profil.height_cm ? `<div class="mensuration-item">${iconeMensuration('taille')}<div><span class="label">Taille</span><span class="valeur">${profil.height_cm} cm</span></div></div>` : ''}
+          ${profil.weight_kg ? `<div class="mensuration-item">${iconeMensuration('poids')}<div><span class="label">Poids</span><span class="valeur">${profil.weight_kg} kg</span></div></div>` : ''}
+          ${profil.chest_cm ? `<div class="mensuration-item">${iconeMensuration('ruban')}<div><span class="label">Poitrine</span><span class="valeur">${profil.chest_cm} cm</span></div></div>` : ''}
+          ${profil.waist_cm ? `<div class="mensuration-item">${iconeMensuration('ruban')}<div><span class="label">Taille (tour)</span><span class="valeur">${profil.waist_cm} cm</span></div></div>` : ''}
+          ${profil.hips_cm ? `<div class="mensuration-item">${iconeMensuration('ruban')}<div><span class="label">Hanches</span><span class="valeur">${profil.hips_cm} cm</span></div></div>` : ''}
+          ${profil.inseam_cm ? `<div class="mensuration-item">${iconeMensuration('ruban')}<div><span class="label">Entrejambe</span><span class="valeur">${profil.inseam_cm} cm</span></div></div>` : ''}
+          ${profil.shoe_size ? `<div class="mensuration-item">${iconeMensuration('pointure')}<div><span class="label">Pointure</span><span class="valeur">${echapperHtml(profil.shoe_size)}</span></div></div>` : ''}
+          ${profil.carnation ? `<div class="mensuration-item">${iconeMensuration('carnation')}<div><span class="label">Carnation</span><span class="valeur" style="font-size:1rem;">${echapperHtml(profil.carnation)}</span></div></div>` : ''}
+          ${profil.clothing_size ? `<div class="mensuration-item">${iconeMensuration('vetements')}<div><span class="label">Taille vêtements</span><span class="valeur" style="font-size:1rem;">${echapperHtml(profil.clothing_size)}</span></div></div>` : ''}
+          ${profil.eye_color ? `<div class="mensuration-item">${iconeMensuration('yeux')}<div><span class="label">Yeux</span><span class="valeur" style="font-size:1rem;">${echapperHtml(profil.eye_color)}</span></div></div>` : ''}
+          ${profil.hair_color ? `<div class="mensuration-item">${iconeMensuration('cheveux')}<div><span class="label">Cheveux</span><span class="valeur" style="font-size:1rem;">${echapperHtml(profil.hair_color)}</span></div></div>` : ''}
         </div>
 
         ${blocProjets}

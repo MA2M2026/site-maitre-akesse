@@ -347,10 +347,19 @@ section { padding: 5rem 0; }
 .compsheet-photo.cliquable { cursor: pointer; }
 .compsheet-photo.cliquable:hover img { transform: scale(1.05); }
 
-.mensurations { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--gris-clair); margin: 1.6rem 0; }
-.mensuration-item { background: var(--creme); color: #1a1512; padding: 1rem; }
-.mensuration-item .label { font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: #6b6560; display: block; margin-bottom: 0.3rem; }
-.mensuration-item .valeur { font-family: var(--display); font-size: 1.2rem; color: var(--bordeaux); }
+.mensurations { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: rgba(255,255,255,0.08); margin: 1.6rem 0; }
+/* Fond noir laqué/miroir : même dégradé diagonal (reflet clair traversant le noir
+   profond) déjà utilisé sur la fiche Compcard générée en PDF/JPEG — on reprend
+   ici le même langage visuel plutôt que les blocs clairs d'origine. */
+.mensuration-item {
+  background: linear-gradient(135deg, #0c0a08 0%, #020202 22%, #241f1a 46%, #2e2822 50%, #241f1a 54%, #020202 78%, #0c0a08 100%);
+  color: var(--texte-corps); padding: 1rem;
+  display: flex; align-items: flex-start; gap: 0.7rem;
+}
+.mensuration-item .icone-stat { flex-shrink: 0; width: 18px; height: 18px; margin-top: 0.15rem; color: var(--bordeaux-clair); }
+.mensuration-item .icone-stat svg { width: 100%; height: 100%; }
+.mensuration-item .label { font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--texte-doux); display: block; margin-bottom: 0.3rem; }
+.mensuration-item .valeur { font-family: var(--display); font-size: 1.2rem; color: var(--titre-clair); }
 
 .video-runway { aspect-ratio: 16/9; background: var(--noir-doux); margin-top: 1rem; }
 .video-runway iframe { width: 100%; height: 100%; border: none; }
@@ -1108,8 +1117,10 @@ section { padding: 5rem 0; }
 
 .medaillon-photo {
   width: 100%; aspect-ratio: 3 / 4; border-radius: 2px; overflow: hidden;
-  border: 1px solid var(--gris-clair);
-  transition: border-color 0.35s ease, box-shadow 0.35s ease;
+  /* Pas de bordure : la photo doit sembler émerger du noir plutôt que d'être
+     encadrée — seule une ombre très douce la détache légèrement du fond. */
+  box-shadow: 0 18px 40px -12px rgba(0,0,0,0.7);
+  transition: box-shadow 0.35s ease;
   animation: ma2m-flotter 6.5s ease-in-out infinite;
 }
 /* Décalages de durée/délai par carte pour que le mouvement ne soit jamais synchronisé */
@@ -1125,15 +1136,13 @@ section { padding: 5rem 0; }
 
 .medaillon-carte img {
   width: 100%; height: 100%; object-fit: cover;
-  filter: grayscale(85%) contrast(105%);
-  transition: transform 0.6s var(--transition-douce), filter 0.5s ease;
+  transition: transform 0.6s var(--transition-douce);
 }
 
 .medaillon-carte:hover .medaillon-photo, .medaillon-carte:focus-within .medaillon-photo {
-  border-color: var(--bordeaux-clair);
-  box-shadow: 0 0 0 1px var(--bordeaux-clair), 0 0 34px rgba(207,59,82,0.32);
+  box-shadow: 0 0 0 1px var(--bordeaux-clair), 0 0 34px rgba(207,59,82,0.4), 0 18px 40px -12px rgba(0,0,0,0.7);
 }
-.medaillon-carte:hover img, .medaillon-carte:focus-within img { filter: grayscale(0%) contrast(100%); transform: scale(1.06); }
+.medaillon-carte:hover img, .medaillon-carte:focus-within img { transform: scale(1.06); }
 
 .medaillon-nom { font-family: var(--display); font-size: 1.2rem; letter-spacing: 0.05em; text-transform: uppercase; margin-top: 1.1rem; color: var(--titre-clair); }
 .medaillon-info { font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--texte-doux); margin-top: 0.3rem; }
@@ -1447,4 +1456,11 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
   body { background: #fff !important; color: #000 !important; }
   .compsheet-tete { color: #000; }
   .compsheet-tete a { color: #000 !important; }
+  /* Le fond "miroir" des mensurations est pensé pour l'écran ; à l'impression
+     (fonds désactivés par défaut dans la plupart des navigateurs), le texte
+     clair deviendrait invisible sur une page blanche sans ce filet de sécurité. */
+  .mensuration-item { background: #f4f0ea !important; color: #1a1512 !important; }
+  .mensuration-item .label { color: #6b6560 !important; }
+  .mensuration-item .valeur { color: #7a1220 !important; }
+  .mensuration-item .icone-stat { color: #7a1220 !important; }
 }
