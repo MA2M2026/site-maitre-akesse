@@ -343,6 +343,7 @@
 <script>document.getElementById('an').textContent = new Date().getFullYear();</script>
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
+<script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
 <script src="js/app.js"></script>
 <script src="js/menu.js"></script>
 <script>
@@ -1259,10 +1260,23 @@ async function chargerMotResponsableTableau() {
 document.getElementById('mr-photo-btn').addEventListener('click', async () => {
   const input = document.getElementById('mr-photo-input');
   const msg = document.getElementById('mr-msg');
-  const fichier = input.files && input.files[0];
+  let fichier = input.files && input.files[0];
   if (!fichier) { msg.className = 'form-msg err'; msg.textContent = 'Choisissez une photo d\'abord.'; msg.style.display = 'block'; return; }
 
   msg.className = 'form-msg ok'; msg.textContent = 'Envoi de la photo…'; msg.style.display = 'block';
+  // Les photos iPhone sont souvent au format HEIC, non accepté par le bucket de stockage
+  // (seuls jpeg/png/webp/gif sont autorisés) — on les convertit d'abord en JPEG.
+  const estHeic = /image\/hei(c|f)/i.test(fichier.type) || /\.(heic|heif)$/i.test(fichier.name);
+  if (estHeic && typeof heic2any !== 'undefined') {
+    try {
+      const resultat = await heic2any({ blob: fichier, toType: 'image/jpeg', quality: 0.9 });
+      const blobFinal = Array.isArray(resultat) ? resultat[0] : resultat;
+      fichier = new File([blobFinal], fichier.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' });
+    } catch (e) {
+      msg.className = 'form-msg err'; msg.textContent = 'Erreur : conversion de la photo (format HEIC) impossible.';
+      return;
+    }
+  }
   const chemin = `responsable/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${fichier.name}`;
   const { error: erreurUpload } = await sb.storage.from('partenaires-logos').upload(chemin, fichier);
   if (erreurUpload) { msg.className = 'form-msg err'; msg.textContent = 'Erreur : ' + erreurUpload.message; return; }
