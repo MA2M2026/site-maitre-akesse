@@ -2211,3 +2211,57 @@ create policy "Tout le monde peut joindre des photos de candidature"
   );
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 61 : verrou IDOR indépendant sur model_profiles (une fois pour
+-- toutes, sans dépendre d'une policy RLS qu'on ne voit pas).
+--
+-- La policy RLS qui autorise un mannequin à modifier SA PROPRE fiche
+-- (model_profiles) n'a jamais été créée via ce fichier — elle existe déjà
+-- en base, d'avant le début du suivi SQL versionné ici, et son contenu
+-- exact n'est donc pas vérifiable depuis ce dépôt. Le code du site
+-- (espace-mannequin.html) envoie toujours id: user.id (jamais une valeur
+-- venant d'un formulaire ou d'une URL), donc AUCUNE fonctionnalité du
+-- site ne peut aujourd'hui provoquer le problème — mais si cette policy
+-- RLS invisible est plus permissive que prévu, un appel direct à l'API
+-- pourrait modifier la fiche de N'IMPORTE QUEL AUTRE mannequin.
+--
+-- Ce déclencheur agit indépendamment de cette policy (comme pour les
+-- mineurs, Extension 56) : il vérifie lui-même, à chaque insert/update,
+-- que la fiche modifiée appartient bien à la personne connectée — sauf
+-- pour les admins, qui doivent pouvoir mettre en avant un profil
+-- (featured, déjà protégé séparément) ou intervenir en gestion.
+--
+-- ⚠️ Fiche à tester après exécution : modifier son propre profil doit
+-- toujours fonctionner normalement (rien ne devrait changer, mais cette
+-- fiche est centrale — un test réel après coup est indispensable).
+-- ===================================================================
+create or replace function proteger_proprietaire_profil()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  est_admin boolean;
+begin
+  select exists(select 1 from admins where user_id = auth.uid()) into est_admin;
+  if est_admin then
+    return NEW;
+  end if;
+  if auth.uid() is null or NEW.id is distinct from auth.uid() then
+    raise exception 'Modification refusée : ce profil ne vous appartient pas.';
+  end if;
+  if TG_OP = 'UPDATE' and OLD.id is distinct from NEW.id then
+    raise exception 'Modification refusée : identifiant du profil non modifiable.';
+  end if;
+  return NEW;
+end;
+$$;
+
+drop trigger if exists trg_proteger_proprietaire_profil on model_profiles;
+create trigger trg_proteger_proprietaire_profil
+  before insert or update on model_profiles
+  for each row execute function proteger_proprietaire_profil();
+
+NOTIFY pgrst, 'reload schema';
