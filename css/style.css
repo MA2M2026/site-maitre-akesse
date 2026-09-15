@@ -1481,13 +1481,16 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
   letter-spacing: 0.12em; text-transform: uppercase; margin-top: 0.3rem;
 }
 .mot-resp-message {
-  color: var(--texte-corps); margin-top: 1.2rem; font-size: 1.05rem; line-height: 1.75;
-  font-family: var(--display); font-style: italic;
+  color: var(--texte-corps); margin-top: 1.2rem; font-size: 1.05rem; line-height: 1.7;
+  font-family: var(--texte); font-style: normal;
 }
 
 /* Dès qu'une photo est enregistrée : elle devient le fond plein écran de toute la
    section, même traitement éditorial que "Mannequin à la une" (vedette-fullbleed),
-   pour rester cohérent avec le reste du site. */
+   pour rester cohérent avec le reste du site. Traitement volontairement simple :
+   la photo reste nette, seul un voile uni en bas assure la lisibilité du texte —
+   pas de vignette élaborée (qui déformait la photo différemment selon la largeur
+   d'écran et affaiblissait le contraste du texte sur grand écran). */
 #mot-responsable.a-une-photo .mot-responsable-bloc {
   position: relative; overflow: hidden;
   min-height: 90vh;
@@ -1503,17 +1506,7 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
 }
 #mot-responsable.a-une-photo .mot-responsable-scrim {
   display: block; position: absolute; inset: 0;
-  /* Vignette limitée aux bords : le centre (où se trouve le visage, quelle que
-     soit la photo publiée) reste totalement net sur une large zone — seul le
-     pourtour extérieur se fond dans le noir. Le haut a son propre dégradé,
-     très étalé et progressif (pas symétrique avec le bas), pour qu'on ne
-     perçoive jamais où s'arrête la photo — comme si elle avait été détourée
-     directement dans le fond du site. Le bas reste plus marqué, pour la
-     lisibilité du texte. */
-  background:
-    linear-gradient(to bottom, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.5) 9%, rgba(0,0,0,0.22) 20%, rgba(0,0,0,0.07) 34%, rgba(0,0,0,0) 50%),
-    linear-gradient(to top, rgba(0,0,0,0.97) 0%, rgba(0,0,0,0.9) 22%, rgba(0,0,0,0.6) 42%, rgba(0,0,0,0.22) 58%, rgba(0,0,0,0) 72%),
-    radial-gradient(ellipse farthest-corner at center, rgba(0,0,0,0) 48%, rgba(0,0,0,0.4) 78%, rgba(0,0,0,0.9) 100%);
+  background: linear-gradient(to top, rgba(0,0,0,0.94) 0%, rgba(0,0,0,0.88) 26%, rgba(0,0,0,0.55) 48%, rgba(0,0,0,0.18) 68%, rgba(0,0,0,0) 84%);
 }
 #mot-responsable.a-une-photo .mot-responsable-bloc .container {
   position: relative; z-index: 1; max-width: 1200px; margin: 0 auto;
@@ -1525,7 +1518,7 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
 }
 #mot-responsable.a-une-photo .mot-resp-titre { text-shadow: 0 1px 3px rgba(0,0,0,0.9), 0 2px 14px rgba(0,0,0,0.7); }
 #mot-responsable.a-une-photo .mot-resp-message {
-  color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.9), 0 2px 18px rgba(0,0,0,0.7);
+  color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.95), 0 2px 18px rgba(0,0,0,0.8);
 }
 
 @media (max-width: 720px) {
