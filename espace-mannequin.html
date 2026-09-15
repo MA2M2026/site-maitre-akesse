@@ -139,6 +139,19 @@
       <button id="btn-deconnexion" class="btn">Se déconnecter</button>
     </div>
 
+    <div class="apercu-fiche-carte reveal">
+      <div class="apercu-fiche-photo">
+        <img id="ap-photo" src="" alt="" style="display:none;">
+        <span id="ap-photo-placeholder" class="apercu-fiche-photo-vide">Photo</span>
+      </div>
+      <div class="apercu-fiche-infos">
+        <span class="apercu-fiche-label">Aperçu de votre fiche publique</span>
+        <h3 id="ap-nom">Votre nom</h3>
+        <p id="ap-souscategorie">Complétez vos informations ci-dessous</p>
+        <div class="mensurations" id="ap-mensurations"></div>
+      </div>
+    </div>
+
     <div id="notice-nouveaux-champs" style="display:none; background:#fdecea; border:1px solid #e0433d; color:#7a1712; padding:1.1rem 1.3rem; margin-bottom:1.8rem; font-size:0.92rem;">
       <strong>🔴 Nouveau — merci de compléter votre fiche :</strong>
       Vos réalisations (défilés, shootings, publicités, castings…), vos années d'expérience, votre type de modèle, vos langues parlées, votre disponibilité et votre mensuration complète (Hanches pour les femmes, Entrejambe pour les hommes) sont maintenant demandés pour que les recruteurs vous connaissent mieux. Faites défiler jusqu'à « Mes réalisations » ci-dessous pour les renseigner.
@@ -743,6 +756,73 @@ function appliquerChampsGenre() {
 }
 document.getElementById('pr-categorie').addEventListener('change', appliquerChampsGenre);
 
+// --- Aperçu en direct de la fiche publique : se met à jour au fur et à
+// mesure que le mannequin remplit ses informations, mêmes icônes que la
+// fiche publique (mannequin.html) pour rester cohérent. ---
+const ICONES_MENSURATIONS_APERCU = {
+  age: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="3" y="4" width="14" height="13" rx="1"/><line x1="3" y1="8" x2="17" y2="8"/><line x1="7" y1="2.5" x2="7" y2="5.5"/><line x1="13" y1="2.5" x2="13" y2="5.5"/></svg>',
+  taille: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3"><line x1="10" y1="2" x2="10" y2="18"/><polyline points="6,6 10,2 14,6"/><polyline points="6,14 10,18 14,14"/></svg>',
+  poids: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l3 2"/></svg>',
+  ruban: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="2.5" y="7" width="15" height="6" rx="1"/><line x1="5.5" y1="7" x2="5.5" y2="9.5"/><line x1="8.5" y1="7" x2="8.5" y2="9.5"/><line x1="11.5" y1="7" x2="11.5" y2="9.5"/><line x1="14.5" y1="7" x2="14.5" y2="9.5"/></svg>',
+  pointure: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2.5 14.5c0-3 1.5-5 3-6.5.8-.8 1.3-1.8 1.5-3 2 0 3.5 1.2 4.2 2.6.5 1 1.4 1.7 2.5 1.9 1.7.3 3.3 1.4 3.3 3v2H2.5z"/></svg>',
+  carnation: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M10 2.5c3 4 5 6.8 5 9.5a5 5 0 01-10 0c0-2.7 2-5.5 5-9.5z"/></svg>',
+};
+function iconeMensurationApercu(cle) {
+  return `<span class="icone-stat" aria-hidden="true">${ICONES_MENSURATIONS_APERCU[cle] || ''}</span>`;
+}
+function calculerAgeApercu(dateNaissance) {
+  if (!dateNaissance) return null;
+  const naissance = new Date(dateNaissance);
+  if (isNaN(naissance.getTime())) return null;
+  const age = Math.floor((Date.now() - naissance.getTime()) / (365.25 * 24 * 3600 * 1000));
+  return age > 0 && age < 100 ? age : null;
+}
+function valeurChampOuAutre(idSelect, idAutre) {
+  const champAutre = document.getElementById(idAutre);
+  if (champAutre && champAutre.style.display !== 'none') return champAutre.value.trim();
+  return document.getElementById(idSelect).value.trim();
+}
+function mettreAJourApercu() {
+  const nom = document.getElementById('pr-nom').value.trim();
+  document.getElementById('ap-nom').textContent = nom || 'Votre nom';
+
+  const ville = valeurChampOuAutre('pr-ville', 'pr-ville-autre');
+  const categorie = document.getElementById('pr-categorie').value;
+  const libelleCategorie = categorie === 'homme' ? 'Homme' : categorie === 'femme' ? 'Femme' : categorie ? 'New Face' : '';
+  document.getElementById('ap-souscategorie').textContent = [libelleCategorie, ville].filter(Boolean).join(' · ') || 'Complétez vos informations ci-dessous';
+
+  const age = calculerAgeApercu(document.getElementById('pr-naissance').value);
+  const items = [];
+  if (age) items.push(['age', 'Âge', age + ' ans']);
+  const taille = document.getElementById('pr-taille').value;
+  if (taille) items.push(['taille', 'Taille', taille + ' cm']);
+  const poids = document.getElementById('pr-poids').value;
+  if (poids) items.push(['poids', 'Poids', poids + ' kg']);
+  const poitrine = document.getElementById('pr-poitrine').value;
+  if (poitrine) items.push(['ruban', 'Poitrine', poitrine + ' cm']);
+  const tourTaille = document.getElementById('pr-tourtaille').value;
+  if (tourTaille) items.push(['ruban', 'Tour de taille', tourTaille + ' cm']);
+  const hanches = document.getElementById('pr-hanches').value;
+  if (hanches && champHanchesVisible()) items.push(['ruban', 'Hanches', hanches + ' cm']);
+  const entrejambe = document.getElementById('pr-entrejambe').value;
+  if (entrejambe && champEntrejambeVisible()) items.push(['ruban', 'Entrejambe', entrejambe + ' cm']);
+  const pointure = document.getElementById('pr-pointure').value;
+  if (pointure) items.push(['pointure', 'Pointure', pointure]);
+  const carnation = document.getElementById('pr-carnation').value;
+  if (carnation) items.push(['carnation', 'Carnation', carnation]);
+
+  document.getElementById('ap-mensurations').innerHTML = items.length
+    ? items.map(([icone, label, valeur]) => `<div class="mensuration-item">${iconeMensurationApercu(icone)}<div><span class="label">${label}</span><span class="valeur">${echapperHtml(valeur)}</span></div></div>`).join('')
+    : '<p style="color:var(--gris); font-size:0.85rem; grid-column:1/-1;">Vos mensurations apparaîtront ici au fur et à mesure que vous les renseignez.</p>';
+}
+function champHanchesVisible() { return document.getElementById('champ-hanches').style.display !== 'none'; }
+function champEntrejambeVisible() { return document.getElementById('champ-entrejambe').style.display !== 'none'; }
+
+['pr-nom', 'pr-ville', 'pr-ville-autre', 'pr-categorie', 'pr-naissance', 'pr-taille', 'pr-poids', 'pr-poitrine', 'pr-tourtaille', 'pr-hanches', 'pr-entrejambe', 'pr-pointure', 'pr-carnation'].forEach((id) => {
+  const champ = document.getElementById(id);
+  if (champ) { champ.addEventListener('input', mettreAJourApercu); champ.addEventListener('change', mettreAJourApercu); }
+});
+
 // --- Inscription avec code d'invitation ---
 document.getElementById('form-inscription').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -959,6 +1039,7 @@ async function chargerProfil() {
     || mensurationGenreManquante;
   notice.dataset.profilIncomplet = incomplet ? '1' : '0';
   await majNoticeNouveauxChamps();
+  mettreAJourApercu();
 }
 
 async function majNoticeNouveauxChamps() {
@@ -1183,6 +1264,17 @@ async function chargerPhotos() {
   grille.innerHTML = '';
   const urlsPhotos = (photos || []).map(p => p.url);
   const nbCompcard = (photos || []).filter(p => p.compcard_ordre).length;
+
+  const apPhoto = document.getElementById('ap-photo');
+  const apPhotoVide = document.getElementById('ap-photo-placeholder');
+  if (urlsPhotos[0]) {
+    apPhoto.src = urlsPhotos[0];
+    apPhoto.style.display = 'block';
+    apPhotoVide.style.display = 'none';
+  } else {
+    apPhoto.style.display = 'none';
+    apPhotoVide.style.display = 'block';
+  }
   (photos || []).forEach((photo, index) => {
     const item = document.createElement('div');
     item.className = 'photo-item' + (photo.principale ? ' est-principale' : '');
