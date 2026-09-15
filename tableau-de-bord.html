@@ -216,6 +216,17 @@
     </div>
 
     <div class="liste-recente">
+      <h2 style="margin-bottom:0.3rem;">Code permanent — "Créer mon compte" (espace mannequin)</h2>
+      <p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Contrairement aux codes d'inscription ci-dessus, celui-ci est unique et permanent : le même code sert à tous les mannequins qui créent leur compte dans l'espace mannequin, jusqu'à ce que vous le changiez ici. Il n'est jamais stocké en clair — en cas de doute qu'il ait trop circulé, changez-le simplement.</p>
+      <div style="display:flex; gap:0.7rem; flex-wrap:wrap; align-items:center;">
+        <input type="text" id="portail-nouveau-code" placeholder="Nouveau code (6 caractères minimum)" style="flex:1; min-width:220px; padding:0.7rem 0.9rem; background:var(--anthracite, var(--noir)); border:1px solid var(--gris-clair, #444); color:#fff;">
+        <button class="btn" id="portail-generer-btn" type="button">Générer aléatoirement</button>
+        <button class="btn btn--principal" id="portail-definir-btn" type="button">Définir ce code</button>
+      </div>
+      <div id="portail-code-msg" class="form-msg"></div>
+    </div>
+
+    <div class="liste-recente">
       <div class="dossiers-entete">
         <h2 style="margin:0;">Inscriptions mannequins</h2>
         <span class="dossiers-compteur" id="inscriptions-compteur"></span>
@@ -928,6 +939,34 @@ document.getElementById('copier-code-btn').addEventListener('click', () => {
     btn.textContent = 'Copié !';
     setTimeout(() => { btn.textContent = texteOriginal; }, 1500);
   });
+});
+
+// --- Code permanent du portail "Créer mon compte" (espace mannequin) ---
+document.getElementById('portail-generer-btn').addEventListener('click', () => {
+  document.getElementById('portail-nouveau-code').value = genererCode();
+});
+document.getElementById('portail-definir-btn').addEventListener('click', async () => {
+  const champ = document.getElementById('portail-nouveau-code');
+  const msg = document.getElementById('portail-code-msg');
+  const btn = document.getElementById('portail-definir-btn');
+  const nouveauCode = champ.value.trim();
+
+  if (nouveauCode.length < 6) {
+    msg.className = 'form-msg err'; msg.textContent = 'Le code doit faire au moins 6 caractères.'; msg.style.display = 'block';
+    return;
+  }
+  if (!confirm(`Remplacer le code permanent actuel par "${nouveauCode}" ? L'ancien code ne fonctionnera plus immédiatement après.`)) return;
+
+  btn.disabled = true;
+  const { error } = await sb.rpc('definir_code_portail', { nouveau_code: nouveauCode });
+  btn.disabled = false;
+
+  if (error) {
+    msg.className = 'form-msg err'; msg.textContent = "Erreur : " + error.message; msg.style.display = 'block';
+    return;
+  }
+  msg.className = 'form-msg ok'; msg.textContent = 'Code permanent mis à jour avec succès.'; msg.style.display = 'block';
+  champ.value = '';
 });
 
 async function chargerCodes() {

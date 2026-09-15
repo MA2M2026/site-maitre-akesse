@@ -1743,3 +1743,125 @@ end;
 $$;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 50 : CODE PERMANENT pour le portail "Créer mon compte" de
+-- l'espace mannequin (fonctions check_invite_code / consume_invite_code,
+-- appelées par espace-mannequin.html — leur définition d'origine n'était
+-- présente nulle part dans ce fichier suivi, seulement en direct dans
+-- Supabase : elles sont recréées ici proprement, versionnées, et rendues
+-- PERMANENTES sur demande explicite de l'agence).
+--
+-- Différence avec codes_inscription (inscription-mannequin.html), qui reste
+-- INCHANGÉ : ici un seul code, le même pour tout le monde, ne devient
+-- JAMAIS invalide après usage — l'agence le communique à chaque nouveau
+-- mannequin pour qu'il crée son compte, et peut le changer à tout moment
+-- (ex. si le code a trop circulé) sans casser l'inscription des suivants.
+--
+-- Sécurité appliquée :
+-- - Le code n'est JAMAIS stocké ni renvoyé en clair : seul son hash
+--   (bcrypt, via pgcrypto) est conservé en base. Même en lisant
+--   directement la table depuis Supabase, le code réel reste illisible.
+-- - Aucune policy de lecture sur la table : ni le site ni un compte
+--   authentifié ne peuvent la consulter, seules les fonctions
+--   security definer y touchent.
+-- - Ralentissement anti-brute-force (même principe qu'Extension 49) sur
+--   check_invite_code(), qui reste la seule fonction ouverte à "anon".
+-- - consume_invite_code() ne "consomme" plus rien (le code est permanent)
+--   mais revérifie quand même sa validité avant de laisser la création de
+--   compte se terminer — conservé uniquement pour ne rien changer côté
+--   JavaScript (espace-mannequin.html appelle déjà cette fonction).
+-- - Seul un admin peut définir/changer le code (definir_code_portail()),
+--   jamais un mannequin ni un visiteur.
+-- ===================================================================
+create extension if not exists pgcrypto;
+
+create table if not exists code_portail_mannequin (
+  id boolean primary key default true,
+  code_hash text,
+  modifie_le timestamptz not null default now(),
+  modifie_par uuid,
+  constraint code_portail_mannequin_singleton check (id)
+);
+alter table code_portail_mannequin enable row level security;
+-- Aucune policy : ni lecture ni écriture directe, même authentifié — tout
+-- passe obligatoirement par les fonctions ci-dessous.
+
+create table if not exists tentatives_verification_code_portail (
+  id bigint generated always as identity primary key,
+  cree_le timestamptz not null default now()
+);
+alter table tentatives_verification_code_portail enable row level security;
+
+-- Admin uniquement : définit ou change le code permanent.
+create or replace function definir_code_portail(nouveau_code text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not exists (select 1 from admins where user_id = auth.uid()) then
+    raise exception 'non_autorise';
+  end if;
+  if nouveau_code is null or length(trim(nouveau_code)) < 6 then
+    raise exception 'code_trop_court';
+  end if;
+  insert into code_portail_mannequin (id, code_hash, modifie_le, modifie_par)
+  values (true, crypt(trim(nouveau_code), gen_salt('bf')), now(), auth.uid())
+  on conflict (id) do update
+    set code_hash = excluded.code_hash, modifie_le = excluded.modifie_le, modifie_par = excluded.modifie_par;
+end;
+$$;
+revoke all on function definir_code_portail(text) from public;
+grant execute on function definir_code_portail(text) to authenticated;
+
+-- Ouvert à "anon" (appelé avant la création du compte) : vérifie le code,
+-- ralenti volontairement au-delà d'un volume anormal de tentatives.
+create or replace function check_invite_code(code_input text)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  nb_recentes int;
+  hash_stocke text;
+begin
+  insert into tentatives_verification_code_portail default values;
+  delete from tentatives_verification_code_portail where cree_le < now() - interval '10 minutes';
+  select count(*) into nb_recentes from tentatives_verification_code_portail
+  where cree_le > now() - interval '1 minute';
+  if nb_recentes > 20 then
+    perform pg_sleep(3);
+  end if;
+
+  select code_hash into hash_stocke from code_portail_mannequin where id = true;
+  if hash_stocke is null or code_input is null then return false; end if;
+  return hash_stocke = crypt(code_input, hash_stocke);
+end;
+$$;
+revoke all on function check_invite_code(text) from public;
+grant execute on function check_invite_code(text) to anon, authenticated;
+
+-- Revérifie le code (le code étant permanent, rien n'est jamais "consommé"
+-- ni invalidé) — gardé pour compatibilité avec l'appel déjà fait par
+-- espace-mannequin.html juste après la création du compte.
+create or replace function consume_invite_code(code_input text)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  hash_stocke text;
+begin
+  select code_hash into hash_stocke from code_portail_mannequin where id = true;
+  if hash_stocke is null or code_input is null then return false; end if;
+  return hash_stocke = crypt(code_input, hash_stocke);
+end;
+$$;
+revoke all on function consume_invite_code(text) from public;
+grant execute on function consume_invite_code(text) to anon, authenticated;
+
+NOTIFY pgrst, 'reload schema';
