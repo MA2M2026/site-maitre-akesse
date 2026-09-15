@@ -237,6 +237,25 @@
     </div>
 
     <div class="liste-recente">
+      <h2 style="margin-bottom:0.3rem;">📷 Flux Instagram (accueil)</h2>
+      <p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">
+        Affiche vos dernières publications Instagram sur le site. Configuration en une fois : jeton d'accès et identifiant du compte professionnel, obtenus via
+        <a href="https://developers.facebook.com/tools/explorer/" target="_blank" rel="noopener">Meta Graph API Explorer</a>
+        (compte Instagram déjà relié à une Page Facebook, requis par Meta). Le jeton expire tous les 60 jours environ — une alerte apparaît ici avant l'échéance.
+      </p>
+      <div id="instagram-statut" style="font-size:0.85rem; margin-bottom:1rem;"></div>
+      <div style="display:flex; gap:0.7rem; flex-wrap:wrap; align-items:center; margin-bottom:0.8rem;">
+        <input type="text" id="instagram-ig-user-id" placeholder="Identifiant du compte professionnel (ig-user-id)" style="flex:1; min-width:220px; padding:0.7rem 0.9rem; background:var(--anthracite, var(--noir)); border:1px solid var(--gris-clair, #444); color:#fff;">
+      </div>
+      <div style="display:flex; gap:0.7rem; flex-wrap:wrap; align-items:center;">
+        <input type="text" id="instagram-token" placeholder="Jeton d'accès (access token)" style="flex:1; min-width:220px; padding:0.7rem 0.9rem; background:var(--anthracite, var(--noir)); border:1px solid var(--gris-clair, #444); color:#fff;">
+        <button class="btn btn--principal" id="instagram-enregistrer-btn" type="button">Enregistrer</button>
+        <button class="btn" id="instagram-rafraichir-btn" type="button">Rafraîchir les publications</button>
+      </div>
+      <div id="instagram-msg" class="form-msg"></div>
+    </div>
+
+    <div class="liste-recente">
       <div class="dossiers-entete">
         <h2 style="margin:0;">Inscriptions mannequins</h2>
         <span class="dossiers-compteur" id="inscriptions-compteur"></span>
@@ -680,7 +699,93 @@ async function chargerStatistiques() {
   chargerVedette();
   chargerBandeau();
   chargerMotResponsableTableau();
+  chargerConfigInstagram();
 }
+
+// --- Flux Instagram (accueil) : configuration + rafraîchissement manuel ---
+async function chargerConfigInstagram() {
+  const { data: config } = await sb.from('instagram_config').select('access_token, ig_user_id, token_expire_le').eq('id', 'principal').maybeSingle();
+  const statutDiv = document.getElementById('instagram-statut');
+
+  if (config && config.ig_user_id) document.getElementById('instagram-ig-user-id').value = config.ig_user_id;
+
+  if (!config || !config.access_token) {
+    statutDiv.innerHTML = '<span style="color:var(--gris);">Aucun jeton configuré — le flux ne s\'affiche pas encore sur le site.</span>';
+    return;
+  }
+
+  let messageExpiration = '';
+  if (config.token_expire_le) {
+    const expireLe = new Date(config.token_expire_le);
+    const joursRestants = Math.round((expireLe - new Date()) / (1000 * 60 * 60 * 24));
+    if (joursRestants < 0) {
+      messageExpiration = ` — <strong style="color:var(--bordeaux-clair);">jeton expiré, générez-en un nouveau et enregistrez-le</strong>`;
+    } else if (joursRestants <= 10) {
+      messageExpiration = ` — <strong style="color:var(--or);">expire dans ${joursRestants} jour(s), pensez à le renouveler</strong>`;
+    } else {
+      messageExpiration = ` — expire dans ${joursRestants} jours`;
+    }
+  }
+  statutDiv.innerHTML = `<span style="color:var(--bordeaux-clair);">Jeton configuré</span>${messageExpiration}`;
+}
+
+document.getElementById('instagram-enregistrer-btn').addEventListener('click', async () => {
+  const token = document.getElementById('instagram-token').value.trim();
+  const igUserId = document.getElementById('instagram-ig-user-id').value.trim();
+  const msg = document.getElementById('instagram-msg');
+  if (!token || !igUserId) {
+    msg.className = 'form-msg err'; msg.textContent = "L'identifiant du compte et le jeton sont tous les deux nécessaires."; msg.style.display = 'block';
+    return;
+  }
+  // Un jeton de longue durée Instagram Graph API est valable ~60 jours.
+  const expireLe = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString();
+  const { error } = await sb.from('instagram_config').upsert({ id: 'principal', access_token: token, ig_user_id: igUserId, token_expire_le: expireLe, updated_at: new Date().toISOString() });
+  msg.className = 'form-msg ' + (error ? 'err' : 'ok');
+  msg.textContent = error ? "Erreur lors de l'enregistrement : " + error.message : 'Jeton enregistré. Cliquez sur "Rafraîchir les publications" pour les récupérer.';
+  msg.style.display = 'block';
+  document.getElementById('instagram-token').value = '';
+  if (!error) chargerConfigInstagram();
+});
+
+document.getElementById('instagram-rafraichir-btn').addEventListener('click', async () => {
+  const msg = document.getElementById('instagram-msg');
+  const bouton = document.getElementById('instagram-rafraichir-btn');
+  bouton.disabled = true;
+  msg.className = 'form-msg'; msg.textContent = 'Récupération des publications…'; msg.style.display = 'block';
+
+  const { data: config } = await sb.from('instagram_config').select('access_token, ig_user_id').eq('id', 'principal').maybeSingle();
+  if (!config || !config.access_token || !config.ig_user_id) {
+    msg.className = 'form-msg err'; msg.textContent = "Enregistrez d'abord un identifiant de compte et un jeton.";
+    bouton.disabled = false;
+    return;
+  }
+
+  try {
+    const champs = 'id,caption,media_type,media_url,thumbnail_url,permalink,timestamp';
+    const reponse = await fetch(`https://graph.facebook.com/v21.0/${encodeURIComponent(config.ig_user_id)}/media?fields=${champs}&access_token=${encodeURIComponent(config.access_token)}&limit=8`);
+    const resultat = await reponse.json();
+    if (resultat.error) throw new Error(resultat.error.message || 'Erreur inconnue de l\'API Instagram.');
+
+    const posts = (resultat.data || [])
+      .filter(p => p.media_type !== 'VIDEO' || p.thumbnail_url) // évite les vidéos sans image de couverture
+      .map(p => ({
+        id: p.id,
+        image: p.media_type === 'VIDEO' ? p.thumbnail_url : p.media_url,
+        lien: p.permalink,
+        legende: (p.caption || '').slice(0, 140),
+      }));
+
+    const { error: erreurCache } = await sb.from('instagram_posts_cache').upsert({ id: 'principal', posts, updated_at: new Date().toISOString() });
+    if (erreurCache) throw new Error(erreurCache.message);
+
+    msg.className = 'form-msg ok';
+    msg.textContent = `${posts.length} publication(s) récupérée(s) et mise(s) à jour sur le site.`;
+  } catch (e) {
+    msg.className = 'form-msg err';
+    msg.textContent = 'Erreur : ' + e.message + ' — vérifiez que le jeton est valide et que le compte est bien un compte professionnel relié à une Page Facebook.';
+  }
+  bouton.disabled = false;
+});
 
 // --- Candidatures & inscriptions : listes filtrées par statut + fiche détaillée ---
 // Les buckets photo sont privés : impossible d'utiliser l'URL publique enregistrée à

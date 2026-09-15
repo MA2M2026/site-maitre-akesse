@@ -301,6 +301,18 @@
   </div>
 </section>
 
+<!-- Flux Instagram : n'apparaît que si des publications ont été récupérées
+     depuis le tableau de bord (voir chargerFluxInstagram plus bas). -->
+<section id="flux-instagram" style="display:none;">
+  <div class="container">
+    <div class="section-tete reveal" style="text-align:center; max-width:60ch; margin:0 auto;">
+      <div class="eyebrow reveal" style="justify-content:center;">Sur Instagram</div>
+      <h2>@maitreakessemodelmanagement</h2>
+    </div>
+    <div class="instagram-grille reveal" id="instagram-grille"></div>
+  </div>
+</section>
+
 <!-- 08 — Contact -->
 <section>
   <div class="container">
@@ -474,6 +486,25 @@ async function chargerBandeauAnnonce() {
   }
 }
 chargerBandeauAnnonce();
+
+// --- Flux Instagram : affiche les publications mises en cache depuis le
+// tableau de bord (jamais d'appel direct à l'API Instagram depuis le site
+// public — seul le jeton d'accès, jamais exposé côté client, y donne accès). ---
+async function chargerFluxInstagram() {
+  if (!sb) return;
+  const { data } = await sb.from('instagram_posts_cache').select('posts').eq('id', 'principal').maybeSingle();
+  const posts = data && Array.isArray(data.posts) ? data.posts : [];
+  if (!posts.length) return;
+
+  const grille = document.getElementById('instagram-grille');
+  grille.innerHTML = posts.slice(0, 8).map(p => `
+    <a href="${echapperHtml(p.lien)}" target="_blank" rel="noopener" class="instagram-vignette" title="${echapperHtml(p.legende || '')}">
+      <img src="${echapperHtml(p.image)}" alt="${echapperHtml(p.legende || 'Publication Instagram')}" loading="lazy">
+    </a>
+  `).join('');
+  document.getElementById('flux-instagram').style.display = 'block';
+}
+chargerFluxInstagram();
 
 // --- Carrousel du hero : défilement automatique entre les slides (fondu), avec indicateurs ---
 (function initCarrouselHero() {
