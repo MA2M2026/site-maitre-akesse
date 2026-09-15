@@ -2516,3 +2516,73 @@ insert into instagram_config (id) values ('principal') on conflict (id) do nothi
 insert into instagram_posts_cache (id) values ('principal') on conflict (id) do nothing;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 66 : corrige "function gen_salt(unknown) does not exist" sur
+-- definir_code_portail() (Extension 50) — sur Supabase, l'extension
+-- pgcrypto s'installe dans le schéma "extensions", pas "public". Les
+-- fonctions fixaient `set search_path = public` (sans "extensions"), donc
+-- gen_salt()/crypt() restaient introuvables même après `create extension
+-- pgcrypto` réussi. On ajoute "extensions" au search_path des 3 fonctions
+-- concernées — comportement inchangé sinon, simple correction de chemin.
+-- ===================================================================
+create or replace function definir_code_portail(nouveau_code text)
+returns void
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+begin
+  if not exists (select 1 from admins where user_id = auth.uid()) then
+    raise exception 'non_autorise';
+  end if;
+  if nouveau_code is null or length(trim(nouveau_code)) < 6 then
+    raise exception 'code_trop_court';
+  end if;
+  insert into code_portail_mannequin (id, code_hash, modifie_le, modifie_par)
+  values (true, crypt(trim(nouveau_code), gen_salt('bf')), now(), auth.uid())
+  on conflict (id) do update
+    set code_hash = excluded.code_hash, modifie_le = excluded.modifie_le, modifie_par = excluded.modifie_par;
+end;
+$$;
+
+create or replace function check_invite_code(code_input text)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  nb_recentes int;
+  hash_stocke text;
+begin
+  insert into tentatives_verification_code_portail default values;
+  delete from tentatives_verification_code_portail where cree_le < now() - interval '10 minutes';
+  select count(*) into nb_recentes from tentatives_verification_code_portail
+  where cree_le > now() - interval '1 minute';
+  if nb_recentes > 20 then
+    perform pg_sleep(3);
+  end if;
+
+  select code_hash into hash_stocke from code_portail_mannequin where id = true;
+  if hash_stocke is null or code_input is null then return false; end if;
+  return hash_stocke = crypt(code_input, hash_stocke);
+end;
+$$;
+
+create or replace function consume_invite_code(code_input text)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  hash_stocke text;
+begin
+  select code_hash into hash_stocke from code_portail_mannequin where id = true;
+  if hash_stocke is null or code_input is null then return false; end if;
+  return hash_stocke = crypt(code_input, hash_stocke);
+end;
+$$;
+
+NOTIFY pgrst, 'reload schema';
