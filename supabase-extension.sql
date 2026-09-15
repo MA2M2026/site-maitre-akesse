@@ -1902,3 +1902,34 @@ grant select (
 ) on model_profiles to anon;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 52 : RÉTABLIT l'outil de rattrapage des miniatures manquantes
+-- (retiré en Extension 47, à tort — sa vraie cause de panne était le bug
+-- CSP "blob:" dans vercel.json, corrigé la même nuit, AVANT le retrait).
+-- Cause très probable du dépassement de quota constaté (253% en 9 jours) :
+-- toute photo envoyée avant l'ajout des miniatures (Extension 45) n'en a
+-- toujours pas, et continue donc d'être servie en pleine résolution sur
+-- Le Book à chaque visite.
+--
+-- Policy volontairement plus étroite que la version d'origine : limitée au
+-- dépôt d'un fichier miniature (jamais un remplacement de l'originale),
+-- et seulement dans le sous-dossier "miniatures/" de chaque mannequin —
+-- un admin ne peut toujours pas écrire ailleurs dans le bucket.
+-- ===================================================================
+drop policy if exists "Les admins deposent une miniature manquante" on storage.objects;
+create policy "Les admins deposent une miniature manquante"
+  on storage.objects for insert
+  with check (
+    bucket_id = 'model-photos'
+    and (storage.foldername(name))[2] = 'miniatures'
+    and exists (select 1 from admins where user_id = auth.uid())
+  );
+
+drop policy if exists "Les admins renseignent les miniatures" on model_photos;
+create policy "Les admins renseignent les miniatures"
+  on model_photos for update
+  using (exists (select 1 from admins where user_id = auth.uid()))
+  with check (exists (select 1 from admins where user_id = auth.uid()));
+
+NOTIFY pgrst, 'reload schema';
