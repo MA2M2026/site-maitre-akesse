@@ -2027,3 +2027,52 @@ create policy "Tout le monde peut envoyer un message de contact"
   with check (limiter_soumissions_publiques('contact'));
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 56 : empêche réellement (pas seulement côté JavaScript) la
+-- publication automatique d'un profil de mineur sur Le Book. Un mannequin
+-- authentifié pourrait techniquement appeler l'API Supabase directement
+-- (contournant le formulaire) pour forcer published=true malgré son âge —
+-- ce déclencheur l'en empêche indépendamment de toute policy RLS déjà en
+-- place, quelle qu'en soit la définition exacte (jamais vue dans ce
+-- fichier — encore un morceau du schéma de base non versionné).
+--
+-- Les admins restent libres de publier un profil de mineur manuellement
+-- (depuis Supabase directement, après validation — contact du parent/
+-- tuteur, etc.), le temps qu'un outil dédié existe dans le tableau de bord.
+-- ===================================================================
+create or replace function bloquer_publication_mineur()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  age_ans int;
+  est_admin boolean;
+begin
+  if NEW.published is distinct from true then
+    return NEW;
+  end if;
+  if NEW.date_naissance is null then
+    return NEW;
+  end if;
+  age_ans := extract(year from age(NEW.date_naissance));
+  if age_ans >= 18 then
+    return NEW;
+  end if;
+  select exists(select 1 from admins where user_id = auth.uid()) into est_admin;
+  if est_admin then
+    return NEW;
+  end if;
+  NEW.published := false;
+  return NEW;
+end;
+$$;
+
+drop trigger if exists trg_bloquer_publication_mineur on model_profiles;
+create trigger trg_bloquer_publication_mineur
+  before insert or update on model_profiles
+  for each row execute function bloquer_publication_mineur();
+
+NOTIFY pgrst, 'reload schema';

@@ -1107,6 +1107,25 @@ document.getElementById('form-publication').addEventListener('submit', async (e)
     const { count: nbProjets } = await sb.from('model_projects').select('id', { count: 'exact', head: true }).eq('model_id', user.id);
     if (!nbProjets) manquants.push('Au moins un projet réalisé (ou "New Face" si vous débutez)');
 
+    // Un profil de mineur ne se publie jamais tout seul : l'agence doit valider
+    // manuellement avant mise en ligne (contact du parent/tuteur, etc.). Contrôle
+    // client ici pour un message clair ; la base l'impose aussi de son côté
+    // (un contournement direct de l'API serait silencieusement ignoré).
+    if (maj.date_naissance) {
+      const naissance = new Date(maj.date_naissance);
+      const aujourdhui = new Date();
+      let age = aujourdhui.getFullYear() - naissance.getFullYear();
+      if (aujourdhui < new Date(aujourdhui.getFullYear(), naissance.getMonth(), naissance.getDate())) age -= 1;
+      if (age < 18) {
+        maj.published = false;
+        document.getElementById('pr-publie').checked = false;
+        afficherMsg(msg, "Fiche enregistrée en brouillon — les profils de mineurs sont validés manuellement par l'agence avant publication. Contactez-nous pour finaliser.", 'err');
+        await sb.from('model_profiles').upsert(maj);
+        chargerProfil();
+        return;
+      }
+    }
+
     if (manquants.length) {
       maj.published = false;
       document.getElementById('pr-publie').checked = false;
