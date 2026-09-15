@@ -62,8 +62,8 @@
 
 <section style="padding-top:0;" class="no-print">
   <div class="container">
-    <h2 style="margin-bottom:1.5rem;">Book</h2>
-    <div id="galerie" class="mannequins-grille"></div>
+    <h2 class="reveal" style="margin-bottom:1.5rem;">Book</h2>
+    <div id="galerie" class="mannequins-grille reveal reveal-delay-1"></div>
   </div>
 </section>
 
@@ -647,7 +647,7 @@ async function chargerProfilInterne() {
     </div>` : '';
 
   contenu.innerHTML = `
-    <div class="compsheet-tete">
+    <div class="compsheet-tete reveal">
       <div class="compsheet-photo cliquable" id="compsheet-photo-clic"><img src="${echapperHtml(premierePhoto)}" alt="${echapperHtml(profil.full_name || '')}"></div>
       <div>
         <div class="eyebrow">${profil.category === 'homme' ? 'Homme' : profil.category === 'femme' ? 'Femme' : 'New Face'}</div>
