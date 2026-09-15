@@ -1343,6 +1343,9 @@ body.porte-verrouillee { overflow: hidden; height: 100vh; }
 .news-modal-corps .form-champ select option { background: #fff; color: #1a1512; }
 .news-modal-fermer { position: absolute; top: 1.2rem; right: 1.4rem; background: rgba(0,0,0,0.6); color: #fff; border: none; width: 32px; height: 32px; cursor: pointer; font-size: 1rem; z-index: 2; }
 
+/* ---------- Verrouillage complet pendant la porte d'entrée ---------- */
+body.porte-verrouillee .site-header-v2 { display: none; }
+
 /* ---------- Indicateur vidéo sur les cartes actualités ---------- */
 .news-play {
   position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -1362,6 +1365,7 @@ body.porte-verrouillee { overflow: hidden; height: 100vh; }
 .whatsapp-flottant:hover { transform: scale(1.08); box-shadow: 0 0 0 1px var(--bordeaux-clair), 0 0 30px rgba(207,59,82,0.6), 0 6px 18px rgba(0,0,0,0.35); }
 .whatsapp-flottant svg { width: 28px; height: 28px; }
 @media (max-width: 700px) { .whatsapp-flottant { width: 50px; height: 50px; bottom: 1rem; left: 1rem; } }
+body.porte-verrouillee .whatsapp-flottant { display: none; }
 
 /* ---------- Galerie multi-photos dans la modale actualité (revue de presse) ---------- */
 .news-modal-galerie {

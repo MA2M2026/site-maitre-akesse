@@ -361,16 +361,19 @@
 <script src="js/app.js"></script>
 <script src="js/menu.js"></script>
 <script>
-// --- Flèche "Entrer" : simple repère visuel, fait défiler d'un écran (ne bloque jamais le scroll normal) ---
-// Attend la fin du chargement du mannequin à la une (promesseVedette, définie plus bas)
-// avant de décider où défiler : sans ça, un clic rapide arrive avant la réponse
-// Supabase et retombe par erreur sur la bande d'annonce au lieu du mannequin à la une.
+// --- Porte d'entrée : le défilement reste verrouillé tant qu'on n'a pas cliqué "Entrer".
+// Au clic, on attend la fin du chargement du mannequin à la une (promesseVedette, définie
+// plus bas) pour tomber directement dessus — avec un délai maximum de 4s en filet de
+// sécurité : même si le réseau est très lent ou en panne, le clic déverrouille toujours
+// le site (jamais un visiteur ne doit rester bloqué). ---
+document.body.classList.add('porte-verrouillee');
 document.getElementById('entrer-btn').addEventListener('click', async () => {
-  if (window.promesseVedette) { try { await window.promesseVedette; } catch (e) {} }
-  const vedette = document.getElementById('mannequin-vedette');
-  const cible = (vedette && getComputedStyle(vedette).display !== 'none') ? vedette : document.getElementById('marqueeBande');
-  if (cible) cible.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  else window.scrollBy({ top: window.innerHeight * 0.9, behavior: 'smooth' });
+  if (window.promesseVedette) {
+    try { await Promise.race([window.promesseVedette, new Promise((r) => setTimeout(r, 4000))]); } catch (e) {}
+  }
+  document.body.classList.remove('porte-verrouillee');
+  document.getElementById('porte-entree').style.display = 'none';
+  window.scrollTo(0, 0);
 });
 
 // --- Intro : logo animé (5,8s ou "Passer l'intro"), avant la porte d'entrée ---
