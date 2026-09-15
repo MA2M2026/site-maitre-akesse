@@ -352,17 +352,23 @@ section { padding: 5rem 0; }
    que la fiche Compcard PDF/JPEG), légèrement surélevée par son ombre, qui
    s'enfonce visuellement au survol/appui comme une vraie touche mécanique. */
 .mensuration-item {
-  background: linear-gradient(135deg, #0c0a08 0%, #020202 22%, #241f1a 46%, #2e2822 50%, #241f1a 54%, #020202 78%, #0c0a08 100%);
+  background: transparent;
   color: var(--texte-corps); padding: 1rem;
   display: flex; align-items: flex-start; gap: 0.7rem;
   border-radius: 7px;
-  box-shadow: 0 3px 0 #000, 0 7px 16px -4px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.14);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: none;
+  transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.12s ease;
 }
+/* Aucune touche visible au repos — seule l'information (icône + texte) est
+   affichée directement sur le noir. Le bloc "touche de clavier" n'apparaît
+   que lorsqu'on interagit (survol/appui), pour donner l'impression d'avoir
+   réellement actionné quelque chose — purement décoratif, sans fonction. */
 .mensuration-item:hover, .mensuration-item:active {
-  transform: translateY(3px);
-  box-shadow: 0 0 0 #000, 0 2px 6px -2px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+  background: linear-gradient(135deg, #0c0a08 0%, #020202 22%, #241f1a 46%, #2e2822 50%, #241f1a 54%, #020202 78%, #0c0a08 100%);
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.75), inset 0 -1px 0 rgba(255,255,255,0.06), 0 0 0 1px rgba(255,255,255,0.06);
+  transform: translateY(1px);
 }
+.mensuration-item:active { transform: translateY(2px); }
 .mensuration-item .icone-stat { flex-shrink: 0; width: 18px; height: 18px; margin-top: 0.15rem; color: var(--bordeaux-clair); }
 .mensuration-item .icone-stat svg { width: 100%; height: 100%; }
 .mensuration-item .label { font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--texte-doux); display: block; margin-bottom: 0.3rem; }
@@ -1147,10 +1153,13 @@ section { padding: 5rem 0; }
   transition: transform 0.6s var(--transition-douce);
 }
 
+/* Effet "on enfonce la photo" plutôt que l'inverse : l'ombre se resserre
+   (moins d'élévation, comme si elle s'enfonçait dans le noir) et l'image se
+   réduit très légèrement — jamais un agrandissement qui la ferait ressortir. */
 .medaillon-carte:hover .medaillon-photo, .medaillon-carte:focus-within .medaillon-photo {
-  box-shadow: 0 0 0 1px var(--bordeaux-clair), 0 0 40px rgba(207,59,82,0.5), 0 22px 48px -14px rgba(0,0,0,0.8);
+  box-shadow: 0 0 0 1px var(--bordeaux-clair), 0 0 24px rgba(207,59,82,0.45), 0 4px 12px -6px rgba(0,0,0,0.6);
 }
-.medaillon-carte:hover img, .medaillon-carte:focus-within img { transform: scale(1.06); }
+.medaillon-carte:hover img, .medaillon-carte:focus-within img { transform: scale(0.96); }
 
 /* Apparition au défilement façon "éclosion" : la photo s'ouvre en s'agrandissant
    légèrement depuis un état plus resserré, au lieu du simple glissement vertical
