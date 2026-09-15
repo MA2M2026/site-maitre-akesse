@@ -179,7 +179,8 @@ async function chargerMannequins() {
     .from('model_profiles')
     .select('id, full_name, city, category, height_cm, carnation, clothing_size, availability')
     .eq('published', true)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(300);
 
   if (error || !profils || profils.length === 0) {
     vide.style.display = 'block';
