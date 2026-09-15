@@ -498,6 +498,14 @@ section { padding: 5rem 0; }
 }
 .statut-pastille::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .statut-pastille.publie { border-color: var(--bordeaux-clair); color: var(--bordeaux-clair); box-shadow: var(--glow-bordeaux); }
+.statut-pastille.en-attente { border-color: var(--or); color: var(--or); box-shadow: 0 0 18px rgba(201,162,75,0.3); }
+
+.bandeau-refus {
+  margin-top: 1rem; padding: 0.9rem 1.1rem; border-radius: 6px;
+  background: rgba(122,18,32,0.12); border: 1px solid var(--bordeaux);
+  color: var(--texte-corps); font-size: 0.85rem; line-height: 1.5;
+}
+.bandeau-refus strong { color: var(--bordeaux-clair); }
 
 /* Chaque bloc numéroté du dossier ("01 — Informations", etc.) */
 .section-tete-dossier { display: flex; align-items: baseline; gap: 1rem; margin-bottom: 1.6rem; }

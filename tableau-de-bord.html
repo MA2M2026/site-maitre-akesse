@@ -31,6 +31,16 @@
   /* --- Dossiers (candidatures / inscriptions) : liste compacte + filtres + fiche détaillée --- */
   .dossiers-entete { display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:0.6rem; margin-bottom:1rem; }
   .dossiers-compteur { font-size:0.8rem; color:var(--gris); }
+  summary.dossiers-entete::-webkit-details-marker { display:none; }
+  summary.dossiers-entete::before { content:'▸'; color:var(--gris); margin-right:0.5rem; transition:transform 0.2s ease; display:inline-block; }
+  details[open] summary.dossiers-entete::before { transform:rotate(90deg); }
+  .dossiers-compteur.a-traiter { color:var(--or); font-weight:600; }
+  .validation-carte { display:flex; gap:1rem; align-items:flex-start; padding:1rem; border-left:2px solid var(--or); background:var(--noir-doux); border-radius:4px; margin-bottom:0.8rem; flex-wrap:wrap; }
+  .validation-photos { display:flex; gap:0.4rem; flex-wrap:wrap; }
+  .validation-photos img { width:64px; height:64px; object-fit:cover; border-radius:4px; }
+  .validation-infos { flex:1; min-width:200px; }
+  .validation-actions { display:flex; gap:0.6rem; flex-wrap:wrap; }
+  .validation-actions .btn-refuser { border-color:var(--gris-clair); color:var(--texte-doux, var(--gris)); }
   .filtre-pills { display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1.2rem; }
   .filtre-pill {
     font-family: var(--texte); font-size:0.68rem; font-weight:600; text-transform:uppercase; letter-spacing:0.06em;
@@ -161,6 +171,17 @@
 <section id="bloc-tableau" style="display:none; padding-top:0;">
   <div class="container">
     <div class="stats-grille" id="stats-grille">Chargement des statistiques…</div>
+
+    <div class="liste-recente">
+      <details id="validation-details">
+        <summary class="dossiers-entete" style="cursor:pointer; list-style:none;">
+          <h2 style="margin:0;">✅ Validations en attente</h2>
+          <span class="dossiers-compteur" id="validation-compteur"></span>
+        </summary>
+        <p style="font-size:0.85rem; color:var(--gris); margin:0.6rem 0 1rem;">Chaque fiche (mineur ou majeur) doit être validée ici avant sa toute première publication sur Le Book — vérifiez la qualité des photos et la cohérence des informations avant d'approuver. Une fois validée, le mannequin gère ensuite sa fiche en autonomie.</p>
+        <div id="liste-validations">Ouvrez cette section pour charger les fiches en attente.</div>
+      </details>
+    </div>
 
     <div class="liste-recente">
       <h2 style="margin-bottom:0.3rem;">🖼️ Miniatures des photos</h2>
@@ -680,7 +701,93 @@ async function chargerStatistiques() {
   chargerVedette();
   chargerBandeau();
   chargerMotResponsableTableau();
+  chargerCompteurValidations();
 }
+
+// --- Validations en attente (première publication d'une fiche mannequin) ---
+// Chargé en deux temps pour ne pas alourdir l'ouverture du tableau de bord :
+// seul le compteur (requête légère, count uniquement) se charge au démarrage ;
+// la liste complète (avec photos) n'est interrogée qu'à l'ouverture du menu
+// déroulant, et une seule fois (mise en cache tant que la page n'est pas
+// rechargée — un bouton permet de forcer un nouveau chargement après action).
+let validationsChargees = false;
+
+async function chargerCompteurValidations() {
+  const { count } = await sb.from('model_profiles').select('id', { count: 'exact', head: true }).eq('en_attente_validation', true);
+  const badge = document.getElementById('validation-compteur');
+  badge.textContent = count ? `${count} en attente` : 'Aucune';
+  badge.classList.toggle('a-traiter', !!count);
+}
+
+document.getElementById('validation-details').addEventListener('toggle', (e) => {
+  if (e.target.open && !validationsChargees) chargerListeValidations();
+});
+
+async function chargerListeValidations() {
+  validationsChargees = true;
+  const conteneur = document.getElementById('liste-validations');
+  conteneur.textContent = 'Chargement…';
+
+  const { data: profils } = await sb.from('model_profiles')
+    .select('id, full_name, date_naissance, city, category')
+    .eq('en_attente_validation', true)
+    .order('created_at', { ascending: true });
+
+  if (!profils || !profils.length) {
+    conteneur.innerHTML = '<div class="dossiers-vide">Aucune fiche en attente de validation pour le moment.</div>';
+    return;
+  }
+
+  const { data: photos } = await sb.from('model_photos').select('model_id, url_miniature, url, created_at').in('model_id', profils.map(p => p.id)).order('created_at', { ascending: true });
+  const photosParMannequin = {};
+  (photos || []).forEach(p => {
+    (photosParMannequin[p.model_id] = photosParMannequin[p.model_id] || []).push(p.url_miniature || p.url);
+  });
+
+  conteneur.innerHTML = profils.map(p => {
+    const age = calculerAge(p.date_naissance);
+    const estMineur = age !== null && age < 18;
+    const mesPhotos = (photosParMannequin[p.id] || []).slice(0, 4);
+    return `
+    <div class="validation-carte" data-id="${p.id}">
+      <div class="validation-photos">
+        ${mesPhotos.length ? mesPhotos.map(url => `<img src="${echapperHtml(url)}" alt="">`).join('') : '<span style="color:var(--gris); font-size:0.8rem;">Aucune photo</span>'}
+      </div>
+      <div class="validation-infos">
+        <div class="dc-nom">${echapperHtml(p.full_name || 'Sans nom')} ${estMineur ? '<span class="badge-mineur">Mineur' + (age !== null ? ' — ' + age + ' ans' : '') + '</span>' : ''}</div>
+        <div class="dc-meta">${echapperHtml(p.city || '')}${p.category ? ' · ' + echapperHtml(p.category) : ''}</div>
+      </div>
+      <div class="validation-actions">
+        <button class="btn btn--principal btn-valider" data-id="${p.id}">Valider et publier</button>
+        <button class="btn btn-refuser" data-id="${p.id}">Refuser</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+document.getElementById('liste-validations').addEventListener('click', async (e) => {
+  const idValider = e.target.closest('.btn-valider')?.dataset.id;
+  const idRefuser = e.target.closest('.btn-refuser')?.dataset.id;
+
+  if (idValider) {
+    e.target.disabled = true;
+    const { error } = await sb.from('model_profiles').update({ published: true }).eq('id', idValider);
+    if (error) { alert("Erreur lors de la validation : " + error.message); e.target.disabled = false; return; }
+    validationsChargees = false;
+    chargerListeValidations();
+    chargerCompteurValidations();
+  }
+
+  if (idRefuser) {
+    const raison = prompt("Raison du refus (visible par le mannequin, pour qu'il puisse corriger) :");
+    if (raison === null) return;
+    const { error } = await sb.from('model_profiles').update({ en_attente_validation: false, raison_refus: raison.trim() || null }).eq('id', idRefuser);
+    if (error) { alert("Erreur : " + error.message); return; }
+    validationsChargees = false;
+    chargerListeValidations();
+    chargerCompteurValidations();
+  }
+});
 
 // --- Candidatures & inscriptions : listes filtrées par statut + fiche détaillée ---
 // Les buckets photo sont privés : impossible d'utiliser l'URL publique enregistrée à
