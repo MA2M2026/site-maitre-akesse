@@ -2029,6 +2029,32 @@ create policy "Tout le monde peut envoyer un message de contact"
 NOTIFY pgrst, 'reload schema';
 
 -- ===================================================================
+-- Extension 59 : même famille de faille que l'Extension 58, sur les
+-- candidatures et demandes recruteurs — moins grave (le statut ne
+-- déverrouille aucun accès, contrairement au paiement) mais tout aussi
+-- réel : les policies d'insertion ci-dessus ne vérifient que le
+-- rate-limit, jamais la valeur envoyée pour "status". Un appel direct à
+-- l'API aurait pu créer une candidature ou une demande recruteur déjà
+-- marquée 'retenue' / 'traitée', ce qui aurait pu la faire ignorer par
+-- l'agence lors du tri des dossiers.
+--
+-- candidature.html et selection.html n'envoient jamais "status" à
+-- l'insertion (ils comptent sur sa valeur par défaut 'nouvelle') : ce
+-- durcissement n'a donc aucun impact sur le fonctionnement réel du site.
+-- ===================================================================
+drop policy if exists "Tout le monde peut candidater" on casting_applications;
+create policy "Tout le monde peut candidater"
+  on casting_applications for insert
+  with check (limiter_soumissions_publiques('candidature') and status = 'nouvelle');
+
+drop policy if exists "Tout le monde peut envoyer une demande de casting" on recruiter_requests;
+create policy "Tout le monde peut envoyer une demande de casting"
+  on recruiter_requests for insert
+  with check (limiter_soumissions_publiques('recruteur') and status = 'nouvelle');
+
+NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
 -- Extension 56 : empêche réellement (pas seulement côté JavaScript) la
 -- publication automatique d'un profil de mineur sur Le Book. Un mannequin
 -- authentifié pourrait techniquement appeler l'API Supabase directement
