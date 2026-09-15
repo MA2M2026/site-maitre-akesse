@@ -901,7 +901,10 @@ section { padding: 5rem 0; }
 /* ---------- Hero plein écran cinématographique ---------- */
 
 .hero-v2 {
-  height: 100vh;
+  height: 100vh; /* repli pour les navigateurs sans support de dvh */
+  height: 100dvh; /* hauteur réelle du viewport visible : se met à jour proprement
+                      quand la barre d'outils du navigateur mobile apparaît/disparaît
+                      au lieu de provoquer un saut de mise en page pendant le scroll */
   min-height: 560px;
   display: flex;
   align-items: center;
@@ -1276,7 +1279,7 @@ section { padding: 5rem 0; }
 
 /* ---------- Porte d'entrée (hero verrouillé) ---------- */
 
-body.porte-verrouillee { overflow: hidden; height: 100vh; }
+body.porte-verrouillee { overflow: hidden; height: 100vh; height: 100dvh; }
 
 .hero-v2::before {
   content: '';
