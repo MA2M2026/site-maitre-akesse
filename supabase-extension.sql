@@ -2119,3 +2119,43 @@ create trigger trg_limiter_nombre_photos
   for each row execute function limiter_nombre_photos();
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 58 : FAILLE RÉELLE trouvée et corrigée — le statut de paiement
+-- d'une inscription pouvait être falsifié directement via l'API.
+--
+-- La policy RLS "Tout le monde peut s'inscrire" (Extension 1) autorisait
+-- n'importe quel insert anonyme sur inscriptions_mannequins avec
+-- with check (true) — sans passer par soumettre_inscription_mannequin().
+-- Or la colonne "statut" accepte la valeur 'payée' (contrainte de la
+-- ligne ~1130), et rien n'empêchait un appel direct à l'API REST
+-- Supabase (POST /rest/v1/inscriptions_mannequins avec la clé anon,
+-- publique dans js/supabase-config.js) de créer une inscription avec
+-- statut='payée' d'emblée — sans code valide, sans paiement réel, sans
+-- validation de l'agence.
+--
+-- La fonction soumettre_inscription_mannequin() est SECURITY DEFINER :
+-- elle continue de fonctionner normalement sans cette policy (elle
+-- s'exécute avec les droits du propriétaire, qui contourne RLS). Cette
+-- policy n'était donc utile à aucune fonctionnalité réelle du site —
+-- seule une requête directe malveillante pouvait s'en servir.
+-- ===================================================================
+drop policy if exists "Tout le monde peut s'inscrire" on inscriptions_mannequins;
+
+-- Durcissement secondaire : l'ajout de photos d'inscription (inscriptions_photos)
+-- passe lui par un vrai insert client (pas de RPC), donc la policy doit rester
+-- permissive pour ne pas casser la fonctionnalité — mais on réduit la surface :
+-- on n'autorise plus l'ajout de photo que sur une inscription encore "en attente
+-- de paiement" (pas sur une inscription déjà traitée/annulée, ancienne ou
+-- appartenant à quelqu'un d'autre dont le dossier est déjà clos).
+drop policy if exists "Tout le monde peut joindre des photos d'inscription" on inscriptions_photos;
+create policy "Tout le monde peut joindre des photos d'inscription"
+  on inscriptions_photos for insert
+  with check (
+    exists (
+      select 1 from inscriptions_mannequins m
+      where m.id = inscription_id and m.statut = 'en attente de paiement'
+    )
+  );
+
+NOTIFY pgrst, 'reload schema';
