@@ -1110,6 +1110,17 @@ section { padding: 5rem 0; }
   width: 100%; aspect-ratio: 3 / 4; border-radius: 2px; overflow: hidden;
   border: 1px solid var(--gris-clair);
   transition: border-color 0.35s ease, box-shadow 0.35s ease;
+  animation: ma2m-flotter 6.5s ease-in-out infinite;
+}
+/* Décalages de durée/délai par carte pour que le mouvement ne soit jamais synchronisé */
+.medaillon-carte:nth-child(2n) .medaillon-photo { animation-duration: 7.5s; animation-delay: -1.6s; }
+.medaillon-carte:nth-child(3n) .medaillon-photo { animation-duration: 5.8s; animation-delay: -3.4s; }
+.medaillon-carte:nth-child(4n) .medaillon-photo { animation-duration: 6.9s; animation-delay: -2.3s; }
+.medaillon-carte:nth-child(5n) .medaillon-photo { animation-duration: 7.1s; animation-delay: -0.8s; }
+
+@keyframes ma2m-flotter {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
 }
 
 .medaillon-carte img {
@@ -1145,7 +1156,6 @@ section { padding: 5rem 0; }
 
 @media (max-width: 400px) {
   .medaillon-grille { grid-template-columns: repeat(2, 1fr); gap: 1.8rem 0.8rem; }
-  .medaillon-photo { width: 140px; height: 140px; }
 }
 
 /* ---------- Porte d'entrée (hero verrouillé) ---------- */
