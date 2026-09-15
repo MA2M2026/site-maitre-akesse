@@ -24,6 +24,16 @@
   .stat-carte .chiffre { font-family: var(--display); font-size: 1.9rem; line-height: 1; }
   .stat-carte .label { font-size: 0.64rem; letter-spacing: 0.08em; text-transform: uppercase; color: #bbb; margin-top: 0.35rem; }
 
+  /* Deux colonnes : à gauche, la gestion courante (validations, candidatures,
+     inscriptions, contenu du site...) ; à droite, les codes d'accès mannequin
+     (inscription + permanent), regroupés ensemble puisqu'ils forment une
+     famille à part. Empilées en une seule colonne sur mobile/tablette. */
+  .tableau-colonnes { display: grid; grid-template-columns: 1fr 360px; align-items: start; gap: 2.5rem; }
+  .colonne-droite .liste-recente { background: var(--anthracite, var(--noir)); padding: 1.4rem; border-top: 2px solid var(--or); }
+  @media (max-width: 900px) {
+    .tableau-colonnes { grid-template-columns: 1fr; gap: 0; }
+  }
+
   /* Statistiques de fréquentation : moins consultées au quotidien que les
      stats principales ci-dessus, donc reléguées tout en bas de la page,
      dans un format compact plutôt qu'en grandes cartes. */
@@ -193,6 +203,9 @@ setTimeout(() => {
   <div class="container">
     <div class="stats-grille" id="stats-grille">Chargement des statistiques…</div>
 
+    <div class="tableau-colonnes">
+    <div class="colonne-gauche">
+
     <div class="liste-recente">
       <details id="validation-details">
         <summary class="dossiers-entete" style="cursor:pointer; list-style:none;">
@@ -253,29 +266,6 @@ setTimeout(() => {
       <div class="filtre-pills" id="filtres-recruteurs"></div>
       <div class="dossier-liste" id="liste-recruteurs"></div>
       <button class="btn dossiers-plus" id="recruteurs-plus-btn" style="display:none;">Voir plus</button>
-    </div>
-
-    <div class="liste-recente">
-      <h2 style="margin-bottom:0.3rem;">Codes d'inscription</h2>
-      <p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Chaque code ne peut servir qu'une seule fois. Générez-en un et transmettez-le (WhatsApp, SMS...) à la personne que vous invitez à s'inscrire.</p>
-      <button class="btn btn--principal" id="generer-code-btn">+ Générer un nouveau code</button>
-      <div id="nouveau-code-affiche" style="display:none; margin-top:1rem; padding:1rem; background:var(--anthracite, var(--noir)); display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
-        <span style="font-family:var(--display); font-size:1.4rem; color:var(--titre-clair, #fff); letter-spacing:0.08em;" id="nouveau-code-texte"></span>
-        <button class="btn" id="copier-code-btn">Copier</button>
-      </div>
-      <div id="codes-msg" class="form-msg"></div>
-      <div class="dossier-liste" id="liste-codes" style="margin-top:1.5rem;"></div>
-    </div>
-
-    <div class="liste-recente">
-      <h2 style="margin-bottom:0.3rem;">Code permanent — "Créer mon compte" (espace mannequin)</h2>
-      <p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Contrairement aux codes d'inscription ci-dessus, celui-ci est unique et permanent : le même code sert à tous les mannequins qui créent leur compte dans l'espace mannequin, jusqu'à ce que vous le changiez ici. Il n'est jamais stocké en clair — en cas de doute qu'il ait trop circulé, changez-le simplement.</p>
-      <div style="display:flex; gap:0.7rem; flex-wrap:wrap; align-items:center;">
-        <input type="text" id="portail-nouveau-code" placeholder="Nouveau code (6 caractères minimum)" style="flex:1; min-width:220px; padding:0.7rem 0.9rem; background:var(--anthracite, var(--noir)); border:1px solid var(--gris-clair, #444); color:#fff;">
-        <button class="btn" id="portail-generer-btn" type="button">Générer aléatoirement</button>
-        <button class="btn btn--principal" id="portail-definir-btn" type="button">Définir ce code</button>
-      </div>
-      <div id="portail-code-msg" class="form-msg"></div>
     </div>
 
     <div class="liste-recente">
@@ -367,6 +357,36 @@ setTimeout(() => {
       <button class="btn btn--principal" id="mr-enregistrer-btn">Enregistrer le mot du fondateur</button>
       <div id="mr-msg" class="form-msg"></div>
     </div>
+
+    </div><!-- /colonne-gauche -->
+
+    <div class="colonne-droite">
+
+    <div class="liste-recente">
+      <h2 style="margin-bottom:0.3rem;">🔑 Codes d'inscription</h2>
+      <p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Chaque code ne peut servir qu'une seule fois. Générez-en un et transmettez-le (WhatsApp, SMS...) à la personne que vous invitez à s'inscrire.</p>
+      <button class="btn btn--principal" id="generer-code-btn">+ Générer un nouveau code</button>
+      <div id="nouveau-code-affiche" style="display:none; margin-top:1rem; padding:1rem; background:var(--anthracite, var(--noir)); display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+        <span style="font-family:var(--display); font-size:1.4rem; color:var(--titre-clair, #fff); letter-spacing:0.08em;" id="nouveau-code-texte"></span>
+        <button class="btn" id="copier-code-btn">Copier</button>
+      </div>
+      <div id="codes-msg" class="form-msg"></div>
+      <div class="dossier-liste" id="liste-codes" style="margin-top:1.5rem;"></div>
+    </div>
+
+    <div class="liste-recente">
+      <h2 style="margin-bottom:0.3rem;">🔑 Code permanent — "Créer mon compte" (espace mannequin)</h2>
+      <p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Contrairement aux codes d'inscription ci-dessus, celui-ci est unique et permanent : le même code sert à tous les mannequins qui créent leur compte dans l'espace mannequin, jusqu'à ce que vous le changiez ici. Il n'est jamais stocké en clair — en cas de doute qu'il ait trop circulé, changez-le simplement.</p>
+      <div style="display:flex; gap:0.7rem; flex-wrap:wrap; align-items:center;">
+        <input type="text" id="portail-nouveau-code" placeholder="Nouveau code (6 caractères minimum)" style="flex:1; min-width:220px; padding:0.7rem 0.9rem; background:var(--anthracite, var(--noir)); border:1px solid var(--gris-clair, #444); color:#fff;">
+        <button class="btn" id="portail-generer-btn" type="button">Générer aléatoirement</button>
+        <button class="btn btn--principal" id="portail-definir-btn" type="button">Définir ce code</button>
+      </div>
+      <div id="portail-code-msg" class="form-msg"></div>
+    </div>
+
+    </div><!-- /colonne-droite -->
+    </div><!-- /tableau-colonnes -->
 
     <div class="stats-secondaires-bloc">
       <div class="stats-secondaires-titre">📊 Fréquentation du site</div>
