@@ -596,7 +596,7 @@ document.getElementById('miniatures-generer-btn').addEventListener('click', asyn
     } catch (e) {
       echouees++;
       const texteErreur = (e && (e.message || e.error_description || e.statusText)) || String(e);
-      erreursDetail.push(`Photo ${photo.id.slice(0, 8)}… : ${texteErreur}`);
+      erreursDetail.push(`Photo ${photo.id.slice(0, 8)}… : ${texteErreur}\n  URL : ${photo.url}`);
       console.error('Miniature échouée pour la photo', photo.id, e);
     }
   }
