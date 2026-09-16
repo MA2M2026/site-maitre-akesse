@@ -132,8 +132,8 @@ setTimeout(() => {
           <input type="email" id="ca-email" required>
         </div>
         <div class="form-champ">
-          <label for="ca-telephone">Téléphone / WhatsApp</label>
-          <input type="tel" id="ca-telephone" placeholder="+225 07 00 00 00 00">
+          <label for="ca-telephone">Téléphone / WhatsApp *</label>
+          <input type="tel" id="ca-telephone" placeholder="+225 07 00 00 00 00" required pattern="\+\d[\d ]{7,17}" title="Merci d'indiquer l'indicatif du pays (ex : +225 07 00 00 00 00).">
         </div>
         <div class="form-champ">
           <label for="ca-ville">Ville</label>

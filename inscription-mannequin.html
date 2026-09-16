@@ -143,7 +143,7 @@ setTimeout(() => {
 
       <div class="form-champ">
         <label for="ins-telephone">Votre numéro de téléphone *</label>
-        <input type="tel" id="ins-telephone" placeholder="+225 07 00 00 00 00" required>
+        <input type="tel" id="ins-telephone" placeholder="+225 07 00 00 00 00" required pattern="\+\d[\d ]{7,17}" title="Merci d'indiquer l'indicatif du pays (ex : +225 07 00 00 00 00).">
       </div>
 
       <div id="ins-bloc-parent" style="display:none; margin:1rem 0; padding:1.2rem; border:1px solid var(--gris-clair);">
