@@ -185,8 +185,9 @@ setTimeout(() => {
       </div>
       <div class="form-grille">
         <div class="form-champ">
-          <label for="pr-telephone">Votre téléphone (usage interne agence uniquement)</label>
-          <input type="tel" id="pr-telephone" placeholder="+225 07 00 00 00 00">
+          <label for="pr-indicatif">Votre téléphone (usage interne agence uniquement)</label>
+          <select id="pr-indicatif" style="margin-bottom:0.5rem;"></select>
+          <input type="tel" id="pr-telephone-numero" placeholder="07 00 00 00 00" pattern="[0-9 ]{6,14}">
         </div>
         <div class="form-champ">
           <label for="pr-email-perso">Votre e-mail (usage interne agence uniquement)</label>
@@ -506,6 +507,7 @@ setTimeout(() => {
 <script>document.getElementById('an').textContent = new Date().getFullYear();</script>
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
+<script src="js/indicatifs-pays.js"></script>
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
 <script src="js/app.js"></script>
 <script src="js/menu.js"></script>
@@ -556,6 +558,8 @@ function configurerSelectAvecAutre(idSelect, idAutre) {
     if (select.value !== 'Autre') autre.value = '';
   });
 }
+remplirIndicatifs(document.getElementById('pr-indicatif'));
+
 function valeurSelectOuAutre(idSelect, idAutre) {
   const select = document.getElementById(idSelect);
   const autre = document.getElementById(idAutre);
@@ -1033,7 +1037,7 @@ async function chargerProfil() {
   }
 
   document.getElementById('pr-nom').value = profil.full_name || '';
-  document.getElementById('pr-telephone').value = profil.phone || '';
+  preRemplirTelephone(profil.phone, document.getElementById('pr-indicatif'), document.getElementById('pr-telephone-numero'));
   document.getElementById('pr-email-perso').value = profil.contact_email || '';
   definirSelectOuAutre('pr-ville', 'pr-ville-autre', profil.city || '');
   document.getElementById('pr-categorie').value = profil.category || '';
@@ -1095,7 +1099,7 @@ document.getElementById('form-infos').addEventListener('submit', async (e) => {
   const maj = {
     id: user.id,
     full_name: document.getElementById('pr-nom').value.trim(),
-    phone: document.getElementById('pr-telephone').value.trim(),
+    phone: composerTelephone(document.getElementById('pr-indicatif'), document.getElementById('pr-telephone-numero')),
     contact_email: document.getElementById('pr-email-perso').value.trim(),
     city: valeurSelectOuAutre('pr-ville', 'pr-ville-autre'),
     category: document.getElementById('pr-categorie').value,
@@ -1161,7 +1165,7 @@ document.getElementById('form-publication').addEventListener('submit', async (e)
   const maj = {
     id: user.id,
     full_name: document.getElementById('pr-nom').value.trim(),
-    phone: document.getElementById('pr-telephone').value.trim(),
+    phone: composerTelephone(document.getElementById('pr-indicatif'), document.getElementById('pr-telephone-numero')),
     contact_email: document.getElementById('pr-email-perso').value.trim(),
     city: valeurSelectOuAutre('pr-ville', 'pr-ville-autre'),
     category: document.getElementById('pr-categorie').value,

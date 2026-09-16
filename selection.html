@@ -98,12 +98,14 @@ setTimeout(() => {
             <input type="email" id="re-email" required>
           </div>
           <div class="form-champ">
-            <label for="re-telephone">Téléphone</label>
-            <input type="tel" id="re-telephone">
+            <label for="re-indicatif">Téléphone</label>
+            <select id="re-indicatif" style="margin-bottom:0.5rem;"></select>
+            <input type="tel" id="re-telephone-numero" placeholder="07 00 00 00 00" pattern="[0-9 ]{6,14}">
           </div>
           <div class="form-champ">
-            <label for="re-whatsapp">WhatsApp</label>
-            <input type="tel" id="re-whatsapp">
+            <label for="re-indicatif-whatsapp">WhatsApp</label>
+            <select id="re-indicatif-whatsapp" style="margin-bottom:0.5rem;"></select>
+            <input type="tel" id="re-whatsapp-numero" placeholder="07 00 00 00 00" pattern="[0-9 ]{6,14}">
           </div>
           <div class="form-champ">
             <label for="re-ville">Ville</label>
@@ -172,6 +174,7 @@ setTimeout(() => {
 <script>document.getElementById('an').textContent = new Date().getFullYear();</script>
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
+<script src="js/indicatifs-pays.js"></script>
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 <script src="js/emailjs-config.js"></script>
 <script src="js/app.js"></script>
@@ -216,6 +219,9 @@ const VILLES_CI = [
 ];
 remplirSelectListe('re-ville', VILLES_CI);
 configurerSelectAvecAutre('re-ville', 're-ville-autre');
+
+remplirIndicatifs(document.getElementById('re-indicatif'));
+remplirIndicatifs(document.getElementById('re-indicatif-whatsapp'));
 
 function afficher() {
   const liste = obtenirSelection();
@@ -275,8 +281,8 @@ document.getElementById('form-recruteur').addEventListener('submit', async (e) =
     company: document.getElementById('re-entreprise').value.trim(),
     contact_name: document.getElementById('re-nom').value.trim(),
     email: document.getElementById('re-email').value.trim(),
-    phone: document.getElementById('re-telephone').value.trim(),
-    whatsapp: document.getElementById('re-whatsapp').value.trim(),
+    phone: composerTelephone(document.getElementById('re-indicatif'), document.getElementById('re-telephone-numero')),
+    whatsapp: composerTelephone(document.getElementById('re-indicatif-whatsapp'), document.getElementById('re-whatsapp-numero')),
     city: valeurSelectOuAutre('re-ville', 're-ville-autre'),
     project_type: document.getElementById('re-type').value.trim(),
     event_date: document.getElementById('re-date').value || null,
