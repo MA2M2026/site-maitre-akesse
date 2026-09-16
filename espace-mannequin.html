@@ -185,12 +185,9 @@ setTimeout(() => {
       </div>
       <div class="form-grille">
         <div class="form-champ">
-          <label for="pr-telephone-numero">Votre téléphone (usage interne agence uniquement)</label>
-          <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-            <select id="pr-indicatif" style="flex:0 0 auto; width:auto; min-width:100px;"></select>
-            <input type="tel" id="pr-telephone-numero" placeholder="07 00 00 00 00" pattern="[0-9 ]{6,14}" style="flex:1; min-width:140px;">
-          </div>
-          <input type="text" id="pr-indicatif-autre" placeholder="Indicatif du pays (ex : +971)" pattern="\+[0-9]{1,4}" style="display:none; margin-top:0.5rem;">
+          <label for="pr-indicatif">Votre téléphone (usage interne agence uniquement)</label>
+          <select id="pr-indicatif" style="margin-bottom:0.5rem;"></select>
+          <input type="tel" id="pr-telephone-numero" placeholder="07 00 00 00 00" pattern="[0-9 ]{6,14}">
         </div>
         <div class="form-champ">
           <label for="pr-email-perso">Votre e-mail (usage interne agence uniquement)</label>
@@ -510,6 +507,7 @@ setTimeout(() => {
 <script>document.getElementById('an').textContent = new Date().getFullYear();</script>
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
+<script src="js/indicatifs-pays.js"></script>
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
 <script src="js/app.js"></script>
 <script src="js/menu.js"></script>
@@ -560,67 +558,7 @@ function configurerSelectAvecAutre(idSelect, idAutre) {
     if (select.value !== 'Autre') autre.value = '';
   });
 }
-// --- Indicatif pays (téléphone) : liste courte des pays les plus fréquents
-// pour l'agence, + option "Autre" en secours pour ne bloquer aucun profil,
-// quel que soit son pays. ---
-const INDICATIFS_PAYS = [
-  ['+225', '🇨🇮 +225', "Côte d'Ivoire"],
-  ['+226', '🇧🇫 +226', 'Burkina Faso'],
-  ['+223', '🇲🇱 +223', 'Mali'],
-  ['+221', '🇸🇳 +221', 'Sénégal'],
-  ['+224', '🇬🇳 +224', 'Guinée'],
-  ['+228', '🇹🇬 +228', 'Togo'],
-  ['+229', '🇧🇯 +229', 'Bénin'],
-  ['+233', '🇬🇭 +233', 'Ghana'],
-  ['+234', '🇳🇬 +234', 'Nigeria'],
-  ['+237', '🇨🇲 +237', 'Cameroun'],
-  ['+212', '🇲🇦 +212', 'Maroc'],
-  ['+33', '🇫🇷 +33', 'France'],
-  ['+32', '🇧🇪 +32', 'Belgique'],
-  ['+44', '🇬🇧 +44', 'Royaume-Uni'],
-  ['+1', '🇺🇸 +1', 'États-Unis / Canada'],
-  ['__autre__', 'Autre…', 'Autre pays']
-];
-function remplirIndicatifs(selectEl) {
-  selectEl.innerHTML = INDICATIFS_PAYS.map(([valeur, libelle, nomComplet]) => `<option value="${valeur}" title="${nomComplet}">${libelle}</option>`).join('');
-}
-function brancherIndicatifAutre(selectEl, champAutreEl) {
-  selectEl.addEventListener('change', () => {
-    const estAutre = selectEl.value === '__autre__';
-    champAutreEl.style.display = estAutre ? 'block' : 'none';
-    champAutreEl.required = estAutre;
-  });
-}
-function composerTelephone(selectEl, champAutreEl, champNumeroEl) {
-  const indicatif = selectEl.value === '__autre__' ? champAutreEl.value.trim() : selectEl.value;
-  const numero = champNumeroEl.value.trim();
-  return numero ? `${indicatif} ${numero}` : '';
-}
-// Reconstitue le menu déroulant + le numéro local à partir d'un numéro déjà
-// enregistré (ex : "+225 0700000000") — nécessaire ici car ce formulaire
-// modifie un profil existant, contrairement aux formulaires d'inscription.
-function preRemplirTelephone(valeur, selectEl, champAutreEl, champNumeroEl) {
-  const texte = (valeur || '').trim();
-  if (!texte) { selectEl.value = INDICATIFS_PAYS[0][0]; champNumeroEl.value = ''; champAutreEl.style.display = 'none'; return; }
-  const correspondance = INDICATIFS_PAYS
-    .filter(([code]) => code !== '__autre__')
-    .sort((a, b) => b[0].length - a[0].length)
-    .find(([code]) => texte.startsWith(code));
-  if (correspondance) {
-    selectEl.value = correspondance[0];
-    champAutreEl.style.display = 'none';
-    champAutreEl.required = false;
-    champNumeroEl.value = texte.slice(correspondance[0].length).trim();
-  } else {
-    const correspondancePrefixe = texte.match(/^(\+\d{1,4})\s*(.*)$/);
-    selectEl.value = '__autre__';
-    champAutreEl.style.display = 'block';
-    champAutreEl.value = correspondancePrefixe ? correspondancePrefixe[1] : '';
-    champNumeroEl.value = correspondancePrefixe ? correspondancePrefixe[2] : texte;
-  }
-}
 remplirIndicatifs(document.getElementById('pr-indicatif'));
-brancherIndicatifAutre(document.getElementById('pr-indicatif'), document.getElementById('pr-indicatif-autre'));
 
 function valeurSelectOuAutre(idSelect, idAutre) {
   const select = document.getElementById(idSelect);
@@ -1099,7 +1037,7 @@ async function chargerProfil() {
   }
 
   document.getElementById('pr-nom').value = profil.full_name || '';
-  preRemplirTelephone(profil.phone, document.getElementById('pr-indicatif'), document.getElementById('pr-indicatif-autre'), document.getElementById('pr-telephone-numero'));
+  preRemplirTelephone(profil.phone, document.getElementById('pr-indicatif'), document.getElementById('pr-telephone-numero'));
   document.getElementById('pr-email-perso').value = profil.contact_email || '';
   definirSelectOuAutre('pr-ville', 'pr-ville-autre', profil.city || '');
   document.getElementById('pr-categorie').value = profil.category || '';
@@ -1161,7 +1099,7 @@ document.getElementById('form-infos').addEventListener('submit', async (e) => {
   const maj = {
     id: user.id,
     full_name: document.getElementById('pr-nom').value.trim(),
-    phone: composerTelephone(document.getElementById('pr-indicatif'), document.getElementById('pr-indicatif-autre'), document.getElementById('pr-telephone-numero')),
+    phone: composerTelephone(document.getElementById('pr-indicatif'), document.getElementById('pr-telephone-numero')),
     contact_email: document.getElementById('pr-email-perso').value.trim(),
     city: valeurSelectOuAutre('pr-ville', 'pr-ville-autre'),
     category: document.getElementById('pr-categorie').value,
@@ -1227,7 +1165,7 @@ document.getElementById('form-publication').addEventListener('submit', async (e)
   const maj = {
     id: user.id,
     full_name: document.getElementById('pr-nom').value.trim(),
-    phone: composerTelephone(document.getElementById('pr-indicatif'), document.getElementById('pr-indicatif-autre'), document.getElementById('pr-telephone-numero')),
+    phone: composerTelephone(document.getElementById('pr-indicatif'), document.getElementById('pr-telephone-numero')),
     contact_email: document.getElementById('pr-email-perso').value.trim(),
     city: valeurSelectOuAutre('pr-ville', 'pr-ville-autre'),
     category: document.getElementById('pr-categorie').value,
