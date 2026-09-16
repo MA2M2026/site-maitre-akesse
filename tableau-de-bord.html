@@ -1209,9 +1209,12 @@ async function ouvrirFicheDossier(source, id) {
   photosEl.style.display = 'flex';
   photosEl.innerHTML = '<span class="mf-photos-msg">Chargement des photos…</span>';
 
-  const { data: photos } = await sb.from(conf.photosTable).select('id, chemin').eq(conf.photosColonne, id);
+  const { data: photos } = await sb.from(conf.photosTable).select('id, chemin, url').eq(conf.photosColonne, id);
   if (!photos || !photos.length) { photosEl.innerHTML = '<span class="mf-photos-msg">Aucune photo jointe.</span>'; return; }
 
+  // Les candidatures castings envoient désormais leurs photos vers Google Drive
+  // (pas de "chemin" Supabase Storage) : dans ce cas, "url" contient déjà un lien
+  // affichable directement, pas besoin de signer quoi que ce soit.
   const chemins = photos.map(p => p.chemin).filter(Boolean);
   const { data: signees } = chemins.length ? await sb.storage.from(conf.bucket).createSignedUrls(chemins, 300) : { data: [] };
   // Association par chemin (pas par position dans le tableau) : si une photo n'a
@@ -1220,7 +1223,7 @@ async function ouvrirFicheDossier(source, id) {
   // alors affiché l'aperçu et le bouton "supprimer" d'une AUTRE photo.
   const urlParChemin = {};
   (signees || []).forEach(s => { if (s.path && s.signedUrl) urlParChemin[s.path] = s.signedUrl; });
-  const urls = photos.map(p => urlParChemin[p.chemin] || '');
+  const urls = photos.map(p => p.chemin ? (urlParChemin[p.chemin] || '') : (p.url || ''));
 
   photosEl.innerHTML = photos.map((p, i) => `
     <div class="mf-photo-vignette">
