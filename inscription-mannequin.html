@@ -143,9 +143,9 @@ setTimeout(() => {
 
       <div class="form-champ">
         <label for="ins-telephone-numero">Votre numéro de téléphone *</label>
-        <div style="display:flex; gap:0.5rem;">
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
           <select id="ins-indicatif" required style="flex:0 0 auto; width:auto; min-width:100px;"></select>
-          <input type="tel" id="ins-telephone-numero" placeholder="07 00 00 00 00" required pattern="[0-9 ]{6,14}" style="flex:1;">
+          <input type="tel" id="ins-telephone-numero" placeholder="07 00 00 00 00" required pattern="[0-9 ]{6,14}" style="flex:1; min-width:140px;">
         </div>
         <input type="text" id="ins-indicatif-autre" placeholder="Indicatif du pays (ex : +971)" pattern="\+[0-9]{1,4}" style="display:none; margin-top:0.5rem;">
       </div>
@@ -159,8 +159,12 @@ setTimeout(() => {
             <input type="text" id="ins-parent-nom">
           </div>
           <div class="form-champ">
-            <label for="ins-parent-telephone">Téléphone du parent / tuteur</label>
-            <input type="tel" id="ins-parent-telephone">
+            <label for="ins-parent-telephone-numero">Téléphone du parent / tuteur</label>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+              <select id="ins-parent-indicatif" style="flex:0 0 auto; width:auto; min-width:100px;"></select>
+              <input type="tel" id="ins-parent-telephone-numero" placeholder="07 00 00 00 00" pattern="[0-9 ]{6,14}" style="flex:1; min-width:140px;">
+            </div>
+            <input type="text" id="ins-parent-indicatif-autre" placeholder="Indicatif du pays (ex : +971)" pattern="\+[0-9]{1,4}" style="display:none; margin-top:0.5rem;">
           </div>
         </div>
       </div>
@@ -402,7 +406,7 @@ document.getElementById('ins-naissance').addEventListener('change', () => {
   const mineur = estMineurInscription();
   document.getElementById('ins-bloc-parent').style.display = mineur ? 'block' : 'none';
   document.getElementById('ins-parent-nom').required = mineur;
-  document.getElementById('ins-parent-telephone').required = mineur;
+  document.getElementById('ins-parent-telephone-numero').required = mineur;
 });
 
 // --- Indicatif pays (téléphone/WhatsApp) : liste courte des pays les plus
@@ -443,6 +447,8 @@ function composerTelephone(selectEl, champAutreEl, champNumeroEl) {
 }
 remplirIndicatifs(document.getElementById('ins-indicatif'));
 brancherIndicatifAutre(document.getElementById('ins-indicatif'), document.getElementById('ins-indicatif-autre'));
+remplirIndicatifs(document.getElementById('ins-parent-indicatif'));
+brancherIndicatifAutre(document.getElementById('ins-parent-indicatif'), document.getElementById('ins-parent-indicatif-autre'));
 
 document.getElementById('valider-code-btn').addEventListener('click', async () => {
   const code = document.getElementById('code-inscription').value.trim();
@@ -484,7 +490,7 @@ document.getElementById('form-inscription').addEventListener('submit', async (e)
     code_utilise: codeValide,
     reference_paiement: document.getElementById('ins-reference-paiement').value.trim(),
     parent_nom: mineur ? document.getElementById('ins-parent-nom').value.trim() : null,
-    parent_telephone: mineur ? document.getElementById('ins-parent-telephone').value.trim() : null
+    parent_telephone: mineur ? composerTelephone(document.getElementById('ins-parent-indicatif'), document.getElementById('ins-parent-indicatif-autre'), document.getElementById('ins-parent-telephone-numero')) : null
   };
 
   // Consommation du code ET création du dossier en une seule opération atomique

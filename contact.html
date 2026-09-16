@@ -117,8 +117,12 @@ setTimeout(() => {
           </div>
           <div class="form-grille">
             <div class="form-champ">
-              <label for="telephone">Téléphone / WhatsApp</label>
-              <input type="tel" id="telephone" placeholder="+225 07 00 00 00 00">
+              <label for="telephone-numero">Téléphone / WhatsApp</label>
+              <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                <select id="indicatif" style="flex:0 0 auto; width:auto; min-width:100px;"></select>
+                <input type="tel" id="telephone-numero" placeholder="07 00 00 00 00" pattern="[0-9 ]{6,14}" style="flex:1; min-width:140px;">
+              </div>
+              <input type="text" id="indicatif-autre" placeholder="Indicatif du pays (ex : +971)" pattern="\+[0-9]{1,4}" style="display:none; margin-top:0.5rem;">
             </div>
             <div class="form-champ">
               <label for="email">E-mail</label>
@@ -245,10 +249,49 @@ const VILLES_CI = [
 remplirSelectListe('ville', VILLES_CI);
 configurerSelectAvecAutre('ville', 'ville-autre');
 
+// --- Indicatif pays (téléphone/WhatsApp) : liste courte des pays les plus
+// fréquents pour l'agence, + option "Autre" en secours pour ne bloquer
+// aucun visiteur, quel que soit son pays. ---
+const INDICATIFS_PAYS = [
+  ['+225', "🇨🇮 Côte d'Ivoire (+225)"],
+  ['+226', '🇧🇫 Burkina Faso (+226)'],
+  ['+223', '🇲🇱 Mali (+223)'],
+  ['+221', '🇸🇳 Sénégal (+221)'],
+  ['+224', '🇬🇳 Guinée (+224)'],
+  ['+228', '🇹🇬 Togo (+228)'],
+  ['+229', '🇧🇯 Bénin (+229)'],
+  ['+233', '🇬🇭 Ghana (+233)'],
+  ['+234', '🇳🇬 Nigeria (+234)'],
+  ['+237', '🇨🇲 Cameroun (+237)'],
+  ['+212', '🇲🇦 Maroc (+212)'],
+  ['+33', '🇫🇷 France (+33)'],
+  ['+32', '🇧🇪 Belgique (+32)'],
+  ['+44', '🇬🇧 Royaume-Uni (+44)'],
+  ['+1', '🇺🇸 États-Unis / Canada (+1)'],
+  ['__autre__', 'Autre pays…']
+];
+function remplirIndicatifs(selectEl) {
+  selectEl.innerHTML = INDICATIFS_PAYS.map(([valeur, libelle]) => `<option value="${valeur}">${libelle}</option>`).join('');
+}
+function brancherIndicatifAutre(selectEl, champAutreEl) {
+  selectEl.addEventListener('change', () => {
+    const estAutre = selectEl.value === '__autre__';
+    champAutreEl.style.display = estAutre ? 'block' : 'none';
+    champAutreEl.required = estAutre;
+  });
+}
+function composerTelephone(selectEl, champAutreEl, champNumeroEl) {
+  const indicatif = selectEl.value === '__autre__' ? champAutreEl.value.trim() : selectEl.value;
+  const numero = champNumeroEl.value.trim();
+  return numero ? `${indicatif} ${numero}` : '';
+}
+remplirIndicatifs(document.getElementById('indicatif'));
+brancherIndicatifAutre(document.getElementById('indicatif'), document.getElementById('indicatif-autre'));
+
 document.getElementById('form-contact').addEventListener('submit', async function(e){
   e.preventDefault();
   const nom = document.getElementById('nom').value.trim();
-  const telephone = document.getElementById('telephone').value.trim();
+  const telephone = composerTelephone(document.getElementById('indicatif'), document.getElementById('indicatif-autre'), document.getElementById('telephone-numero'));
   const email = document.getElementById('email').value.trim();
   const typeContact = document.getElementById('type-contact').value;
   const structure = document.getElementById('structure').value.trim();
