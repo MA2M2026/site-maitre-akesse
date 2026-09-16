@@ -118,8 +118,9 @@ setTimeout(() => {
           <input type="email" id="ca-email" required>
         </div>
         <div class="form-champ">
-          <label for="ca-telephone">Phone</label>
-          <input type="tel" id="ca-telephone">
+          <label for="ca-indicatif">Phone / WhatsApp</label>
+          <select id="ca-indicatif" style="margin-bottom:0.5rem;"></select>
+          <input type="tel" id="ca-telephone-numero" placeholder="07 00 00 00 00">
         </div>
         <div class="form-champ">
           <label for="ca-ville">City</label>
@@ -141,8 +142,9 @@ setTimeout(() => {
             <input type="text" id="ca-parent-nom">
           </div>
           <div class="form-champ">
-            <label for="ca-parent-telephone">Parent / guardian phone</label>
-            <input type="tel" id="ca-parent-telephone">
+            <label for="ca-parent-indicatif">Parent / guardian phone</label>
+            <select id="ca-parent-indicatif" style="margin-bottom:0.5rem;"></select>
+            <input type="tel" id="ca-parent-telephone-numero" placeholder="07 00 00 00 00">
           </div>
         </div>
       </div>
@@ -250,6 +252,7 @@ setTimeout(() => {
 <script>document.getElementById('an').textContent = new Date().getFullYear();</script>
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"></script>
 <script src="../js/supabase-config.js"></script>
+<script src="../js/indicatifs-pays.js"></script>
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 <script src="../js/emailjs-config.js"></script>
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
@@ -368,6 +371,9 @@ async function chargerProjetsActifs() {
 }
 chargerProjetsActifs();
 
+remplirIndicatifs(document.getElementById('ca-indicatif'));
+remplirIndicatifs(document.getElementById('ca-parent-indicatif'));
+
 document.getElementById('ca-type').addEventListener('change', (e) => {
   const estProjet = e.target.value === 'projet';
   document.getElementById('ca-bloc-projet').style.display = estProjet ? 'block' : 'none';
@@ -440,7 +446,7 @@ document.getElementById('ca-naissance').addEventListener('change', () => {
   const mineur = estMineur();
   blocParent.style.display = mineur ? 'block' : 'none';
   document.getElementById('ca-parent-nom').required = mineur;
-  document.getElementById('ca-parent-telephone').required = mineur;
+  document.getElementById('ca-parent-telephone-numero').required = mineur;
   remplirTailleSelonGenre();
   majConsentement();
 });
@@ -505,7 +511,7 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
   const candidature = {
     full_name: document.getElementById('ca-nom').value.trim(),
     email: document.getElementById('ca-email').value.trim(),
-    phone: document.getElementById('ca-telephone').value.trim(),
+    phone: composerTelephone(document.getElementById('ca-indicatif'), document.getElementById('ca-telephone-numero')),
     city: valeurSelectOuAutre('ca-ville', 'ca-ville-autre'),
     date_naissance: document.getElementById('ca-naissance').value || null,
     genre: genre,
@@ -517,7 +523,7 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
     hips_cm: parseInt(document.getElementById('ca-hanches').value) || null,
     message: document.getElementById('ca-message').value.trim(),
     parent_nom: mineur ? document.getElementById('ca-parent-nom').value.trim() : null,
-    parent_telephone: mineur ? document.getElementById('ca-parent-telephone').value.trim() : null,
+    parent_telephone: mineur ? composerTelephone(document.getElementById('ca-parent-indicatif'), document.getElementById('ca-parent-telephone-numero')) : null,
     type_candidature: typeCandidature,
     projet_nom: projetNom
   };

@@ -116,8 +116,9 @@ setTimeout(() => {
           </div>
           <div class="form-grille">
             <div class="form-champ">
-              <label for="telephone">Phone / WhatsApp</label>
-              <input type="tel" id="telephone" placeholder="+225 07 00 00 00 00">
+              <label for="indicatif">Phone / WhatsApp</label>
+              <select id="indicatif" style="margin-bottom:0.5rem;"></select>
+              <input type="tel" id="telephone-numero" placeholder="07 00 00 00 00">
             </div>
             <div class="form-champ">
               <label for="email">Email</label>
@@ -200,6 +201,7 @@ setTimeout(() => {
 <script>document.getElementById('an').textContent = new Date().getFullYear();</script>
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"></script>
 <script src="../js/supabase-config.js"></script>
+<script src="../js/indicatifs-pays.js"></script>
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 <script src="../js/emailjs-config.js"></script>
 <script src="../js/app.js"></script>
@@ -243,10 +245,12 @@ const VILLES_CI = [
 remplirSelectListe('ville', VILLES_CI);
 configurerSelectAvecAutre('ville', 'ville-autre');
 
+remplirIndicatifs(document.getElementById('indicatif'));
+
 document.getElementById('form-contact').addEventListener('submit', async function(e){
   e.preventDefault();
   const nom = document.getElementById('nom').value.trim();
-  const telephone = document.getElementById('telephone').value.trim();
+  const telephone = composerTelephone(document.getElementById('indicatif'), document.getElementById('telephone-numero'));
   const email = document.getElementById('email').value.trim();
   const typeContact = document.getElementById('type-contact').value;
   const structure = document.getElementById('structure').value.trim();

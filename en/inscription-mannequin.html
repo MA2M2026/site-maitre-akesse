@@ -141,8 +141,9 @@ setTimeout(() => {
       </div>
 
       <div class="form-champ">
-        <label for="ins-telephone">Your Phone Number *</label>
-        <input type="tel" id="ins-telephone" placeholder="+225 07 00 00 00 00" required>
+        <label for="ins-indicatif">Your Phone Number *</label>
+        <select id="ins-indicatif" required style="margin-bottom:0.5rem;"></select>
+        <input type="tel" id="ins-telephone-numero" placeholder="07 00 00 00 00" required>
       </div>
 
       <div id="ins-bloc-parent" style="display:none; margin:1rem 0; padding:1.2rem; border:1px solid var(--gris-clair);">
@@ -154,8 +155,9 @@ setTimeout(() => {
             <input type="text" id="ins-parent-nom">
           </div>
           <div class="form-champ">
-            <label for="ins-parent-telephone">Parent / Guardian Phone Number</label>
-            <input type="tel" id="ins-parent-telephone">
+            <label for="ins-parent-indicatif">Parent / Guardian Phone Number</label>
+            <select id="ins-parent-indicatif" style="margin-bottom:0.5rem;"></select>
+            <input type="tel" id="ins-parent-telephone-numero">
           </div>
         </div>
       </div>
@@ -271,6 +273,7 @@ setTimeout(() => {
 <script>document.getElementById('an').textContent = new Date().getFullYear();</script>
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"></script>
 <script src="../js/supabase-config.js"></script>
+<script src="../js/indicatifs-pays.js"></script>
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 <script src="../js/emailjs-config.js"></script>
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
@@ -397,8 +400,11 @@ document.getElementById('ins-naissance').addEventListener('change', () => {
   const mineur = estMineurInscription();
   document.getElementById('ins-bloc-parent').style.display = mineur ? 'block' : 'none';
   document.getElementById('ins-parent-nom').required = mineur;
-  document.getElementById('ins-parent-telephone').required = mineur;
+  document.getElementById('ins-parent-telephone-numero').required = mineur;
 });
+
+remplirIndicatifs(document.getElementById('ins-indicatif'));
+remplirIndicatifs(document.getElementById('ins-parent-indicatif'));
 
 document.getElementById('valider-code-btn').addEventListener('click', async () => {
   const code = document.getElementById('code-inscription').value.trim();
@@ -436,11 +442,11 @@ document.getElementById('form-inscription').addEventListener('submit', async (e)
     genre: genre,
     height_cm: taille || null,
     clothing_size: valeurTailleVetements(),
-    phone: document.getElementById('ins-telephone').value.trim(),
+    phone: composerTelephone(document.getElementById('ins-indicatif'), document.getElementById('ins-telephone-numero')),
     code_utilise: codeValide,
     reference_paiement: document.getElementById('ins-reference-paiement').value.trim(),
     parent_nom: mineur ? document.getElementById('ins-parent-nom').value.trim() : null,
-    parent_telephone: mineur ? document.getElementById('ins-parent-telephone').value.trim() : null
+    parent_telephone: mineur ? composerTelephone(document.getElementById('ins-parent-indicatif'), document.getElementById('ins-parent-telephone-numero')) : null
   };
 
   // Consuming the code AND creating the record happen in a single atomic
