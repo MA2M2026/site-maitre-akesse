@@ -185,6 +185,13 @@ setTimeout(() => {
     <div class="stats-grille" id="stats-grille">Chargement des statistiques…</div>
 
     <div class="liste-recente">
+      <h2 style="margin-bottom:0.3rem;">📊 Répartition par catégorie</h2>
+      <p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Candidatures et inscriptions confondues. Cliquez sur une catégorie pour voir les personnes concernées et les contacter directement sur WhatsApp.</p>
+      <div id="categorie-chart"></div>
+      <div id="categorie-details" style="margin-top:1rem;"></div>
+    </div>
+
+    <div class="liste-recente">
       <details id="validation-details">
         <summary class="dossiers-entete" style="cursor:pointer; list-style:none;">
           <h2 style="margin:0;">✅ Validations en attente</h2>
@@ -219,6 +226,7 @@ setTimeout(() => {
       <p style="font-size:0.85rem; color:var(--gris); margin:0.3rem 0 1rem;">Ajoutez ici les projets/castings précis pour lesquels les candidats peuvent postuler (proposés dans le formulaire "Postuler à un casting"). Désactivez un projet une fois terminé pour qu'il disparaisse du formulaire — les candidatures déjà reçues restent intactes.</p>
       <form id="form-nouveau-projet" style="display:flex; gap:0.6rem; margin-bottom:1rem; flex-wrap:wrap;">
         <input type="text" id="nouveau-projet-nom" placeholder="Nom du projet ou casting" required style="flex:1; min-width:200px;">
+        <input type="text" id="nouveau-projet-description" placeholder="Brève description (facultatif, visible par les candidats)" style="flex:2; min-width:240px;">
         <button type="submit" class="btn">+ Ajouter</button>
       </form>
       <div id="projets-msg" class="form-msg"></div>
@@ -256,6 +264,10 @@ setTimeout(() => {
       </div>
       <div id="codes-msg" class="form-msg"></div>
       <div class="dossier-liste" id="liste-codes" style="margin-top:1.5rem;"></div>
+      <details style="margin-top:1rem;">
+        <summary style="cursor:pointer; font-size:0.85rem; color:var(--gris);">Anciens codes déjà utilisés (<span id="anciens-codes-compteur">0</span>)</summary>
+        <div class="dossier-liste" id="liste-anciens-codes" style="margin-top:1rem;"></div>
+      </details>
     </div>
 
     <div class="liste-recente">
@@ -723,6 +735,7 @@ async function chargerStatistiques() {
   chargerCandidatures();
   chargerInscriptions();
   chargerRecruteurs();
+  chargerRepartitionCategories();
 
   const { data: derniersContacts } = await sb.from('messages_contact').select('nom, type_contact, telephone, created_at').order('created_at', { ascending: false }).limit(10);
   document.querySelector('#table-contacts tbody').innerHTML = (derniersContacts || []).map(c => `
@@ -993,6 +1006,77 @@ function calculerAge(dateNaissance) {
   return age;
 }
 
+// Construit un lien wa.me à partir d'un numéro tel quel (garde uniquement les
+// chiffres) — fiable si le numéro a été saisi avec son indicatif pays.
+function lienWhatsApp(numero) {
+  const chiffres = String(numero || '').replace(/[^\d]/g, '');
+  return chiffres ? `https://wa.me/${chiffres}` : null;
+}
+
+// --- Répartition par catégorie (hommes / femmes / enfants mineurs), toutes
+// candidatures et inscriptions confondues, avec accès direct à la fiche et
+// au WhatsApp de chaque personne depuis le détail d'une catégorie. ---
+let CATEGORIES_DONNEES = { hommes: [], femmes: [], enfants: [] };
+async function chargerRepartitionCategories() {
+  const [{ data: candidatures }, { data: inscriptions }] = await Promise.all([
+    sb.from('casting_applications').select('id, full_name, genre, date_naissance, phone').limit(5000),
+    sb.from('inscriptions_mannequins').select('id, full_name, genre, date_naissance, phone').limit(5000)
+  ]);
+
+  CATEGORIES_DONNEES = { hommes: [], femmes: [], enfants: [] };
+  const tous = [
+    ...(candidatures || []).map(d => ({ ...d, source: 'casting' })),
+    ...(inscriptions || []).map(d => ({ ...d, source: 'inscription' }))
+  ];
+  tous.forEach(d => {
+    const age = calculerAge(d.date_naissance);
+    const entree = { ...d, age };
+    if (age !== null && age < 18) CATEGORIES_DONNEES.enfants.push(entree);
+    else if (d.genre === 'homme') CATEGORIES_DONNEES.hommes.push(entree);
+    else if (d.genre === 'femme') CATEGORIES_DONNEES.femmes.push(entree);
+  });
+
+  const libelles = { hommes: '👨🏿 Hommes', femmes: '👩🏿 Femmes', enfants: '🧒 Enfants (mineurs)' };
+  const max = Math.max(CATEGORIES_DONNEES.hommes.length, CATEGORIES_DONNEES.femmes.length, CATEGORIES_DONNEES.enfants.length, 1);
+
+  document.getElementById('categorie-chart').innerHTML = Object.keys(CATEGORIES_DONNEES).map(cle => {
+    const n = CATEGORIES_DONNEES[cle].length;
+    const largeur = Math.round((n / max) * 100);
+    return `
+      <button type="button" class="categorie-barre" data-categorie="${cle}" style="display:block; width:100%; text-align:left; background:none; border:none; cursor:pointer; padding:0.5rem 0; color:inherit; font:inherit;">
+        <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:0.3rem;"><span>${libelles[cle]}</span><span>${n}</span></div>
+        <div style="background:var(--anthracite, var(--noir)); height:10px; border-radius:5px; overflow:hidden;">
+          <div style="background:var(--bordeaux-clair); height:100%; width:${largeur}%;"></div>
+        </div>
+      </button>`;
+  }).join('');
+
+  document.getElementById('categorie-chart').querySelectorAll('[data-categorie]').forEach(btn => {
+    btn.addEventListener('click', () => afficherDetailCategorie(btn.dataset.categorie));
+  });
+  document.getElementById('categorie-details').innerHTML = '';
+}
+
+function afficherDetailCategorie(cle) {
+  const liste = CATEGORIES_DONNEES[cle] || [];
+  const conteneur = document.getElementById('categorie-details');
+  if (!liste.length) { conteneur.innerHTML = '<div class="dossiers-vide">Personne dans cette catégorie pour le moment.</div>'; return; }
+
+  conteneur.innerHTML = liste.map(d => {
+    const lien = lienWhatsApp(d.phone);
+    return `
+      <div class="dossier-carte">
+        <div class="dc-nom" data-source="${d.source}" data-id="${d.id}" style="cursor:pointer;">${echapperHtml(d.full_name || 'Sans nom')}${d.age !== null ? ' — ' + d.age + ' ans' : ''}</div>
+        <div class="dc-meta">${d.source === 'casting' ? 'Candidature' : 'Inscription'}</div>
+        ${lien ? `<a href="${lien}" target="_blank" rel="noopener" class="btn" style="padding:0.3rem 0.7rem; font-size:0.75rem;">WhatsApp ↗</a>` : ''}
+      </div>`;
+  }).join('');
+
+  conteneur.querySelectorAll('[data-source]').forEach(el => {
+    el.addEventListener('click', () => ouvrirFicheDossier(el.dataset.source, el.dataset.id));
+  });
+}
+
 async function afficherDossiers(source, ajouter) {
   const conf = DOSSIERS[source];
   const etat = ETAT_DOSSIERS[source];
@@ -1095,7 +1179,11 @@ async function ouvrirFicheDossier(source, id) {
   document.getElementById('mf-champs').innerHTML = champs.map(([cle, label, unite]) => {
     const valeur = d[cle];
     if (!valeur) return '';
-    return `<div class="mf-champ"><div class="mf-label">${label}</div><div class="mf-valeur">${echapperHtml(String(valeur))}${unite ? ' ' + unite : ''}</div></div>`;
+    const lienWa = (cle === 'phone' || cle === 'whatsapp') ? lienWhatsApp(valeur) : null;
+    const affichage = lienWa
+      ? `<a href="${lienWa}" target="_blank" rel="noopener" style="color:var(--bordeaux-clair);">${echapperHtml(String(valeur))} ↗ WhatsApp</a>`
+      : `${echapperHtml(String(valeur))}${unite ? ' ' + unite : ''}`;
+    return `<div class="mf-champ"><div class="mf-label">${label}</div><div class="mf-valeur">${affichage}</div></div>`;
   }).join('');
 
   const messageEl = document.getElementById('mf-message');
@@ -1314,30 +1402,37 @@ document.getElementById('portail-definir-btn').addEventListener('click', async (
   champ.value = '';
 });
 
-async function chargerCodes() {
-  const { data: codes } = await sb.from('codes_inscription').select('code, utilise, utilise_le, created_at').order('created_at', { ascending: false }).limit(30);
-  const conteneur = document.getElementById('liste-codes');
-
-  conteneur.innerHTML = (codes || []).map(c => `
+function carteCode(c) {
+  return `
     <div class="dossier-carte" style="cursor:default;">
       <div class="dc-nom" style="font-family:var(--texte); font-weight:600; letter-spacing:0.04em;">${echapperHtml(c.code)}</div>
       <div class="dc-meta">Créé le ${new Date(c.created_at).toLocaleDateString('fr-FR')}${c.utilise_le ? ' · Utilisé le ' + new Date(c.utilise_le).toLocaleDateString('fr-FR') : ''}</div>
       <span class="statut-pill ${c.utilise ? 'statut-refusee' : 'statut-retenue'}">${c.utilise ? 'Utilisé' : 'Disponible'}</span>
-    </div>
-  `).join('') || '<div class="dossiers-vide">Aucun code généré pour le moment.</div>';
+    </div>`;
+}
+async function chargerCodes() {
+  const { data: codes } = await sb.from('codes_inscription').select('code, utilise, utilise_le, created_at').order('created_at', { ascending: false }).limit(200);
+  const disponibles = (codes || []).filter(c => !c.utilise);
+  const utilises = (codes || []).filter(c => c.utilise);
+
+  document.getElementById('liste-codes').innerHTML = disponibles.map(carteCode).join('') || '<div class="dossiers-vide">Aucun code disponible pour le moment.</div>';
+  document.getElementById('liste-anciens-codes').innerHTML = utilises.map(carteCode).join('') || '<div class="dossiers-vide">Aucun code déjà utilisé.</div>';
+  document.getElementById('anciens-codes-compteur').textContent = utilises.length;
 }
 
 // --- Projets & castings (liste proposée aux candidats dans "Postuler à un casting") ---
 document.getElementById('form-nouveau-projet').addEventListener('submit', async (e) => {
   e.preventDefault();
   const champ = document.getElementById('nouveau-projet-nom');
+  const champDescription = document.getElementById('nouveau-projet-description');
   const msg = document.getElementById('projets-msg');
   const nom = champ.value.trim();
   if (!nom) return;
   msg.style.display = 'none';
-  const { error } = await sb.from('casting_projets').insert({ nom });
+  const { error } = await sb.from('casting_projets').insert({ nom, description: champDescription.value.trim() || null });
   if (!error) {
     champ.value = '';
+    champDescription.value = '';
     chargerProjets();
   } else {
     msg.className = 'form-msg err';
@@ -1348,7 +1443,7 @@ document.getElementById('form-nouveau-projet').addEventListener('submit', async 
 });
 
 async function chargerProjets() {
-  const { data: projets, error } = await sb.from('casting_projets').select('id, nom, actif, created_at').order('created_at', { ascending: false });
+  const { data: projets, error } = await sb.from('casting_projets').select('id, nom, description, actif, created_at').order('created_at', { ascending: false });
   const conteneur = document.getElementById('liste-projets');
   if (error) {
     conteneur.innerHTML = `<div class="dossiers-vide">Impossible de charger les projets (${echapperHtml(error.message)}). Vérifiez que le SQL "Extension 38" a bien été exécuté.</div>`;
@@ -1358,9 +1453,11 @@ async function chargerProjets() {
   conteneur.innerHTML = (projets || []).map(p => `
     <div class="dossier-carte" style="cursor:default;">
       <div class="dc-nom">${echapperHtml(p.nom)}</div>
+      ${p.description ? `<div class="dc-meta">${echapperHtml(p.description)}</div>` : ''}
       <div class="dc-meta">Ajouté le ${new Date(p.created_at).toLocaleDateString('fr-FR')}</div>
       <span class="statut-pill ${p.actif ? 'statut-retenue' : 'statut-refusee'}">${p.actif ? 'Actif' : 'Désactivé'}</span>
       <button class="btn" style="padding:0.3rem 0.7rem; font-size:0.75rem;" data-projet-toggle="${p.id}" data-actif="${p.actif}">${p.actif ? 'Désactiver' : 'Réactiver'}</button>
+      <button class="btn" style="padding:0.3rem 0.7rem; font-size:0.75rem;" data-projet-description="${p.id}" data-description-actuelle="${echapperHtml(p.description || '')}">✏️ Description</button>
       <button class="btn" style="padding:0.3rem 0.7rem; font-size:0.75rem; color:var(--rouge);" data-projet-supprimer="${p.id}">Supprimer</button>
     </div>
   `).join('') || '<div class="dossiers-vide">Aucun projet/casting ajouté pour le moment — le formulaire ne proposera que "Intégrer l\'agence".</div>';
@@ -1378,6 +1475,14 @@ document.getElementById('liste-projets').addEventListener('click', async (e) => 
   if (btnSupprimer) {
     if (!confirm('Supprimer définitivement ce projet ? Les candidatures déjà reçues pour lui resteront intactes (le nom du projet a été enregistré directement sur chaque candidature).')) return;
     await sb.from('casting_projets').delete().eq('id', btnSupprimer.dataset.projetSupprimer);
+    chargerProjets();
+    return;
+  }
+  const btnDescription = e.target.closest('[data-projet-description]');
+  if (btnDescription) {
+    const nouvelleDescription = prompt('Description du projet (courte, visible par les candidats) :', btnDescription.dataset.descriptionActuelle || '');
+    if (nouvelleDescription === null) return;
+    await sb.from('casting_projets').update({ description: nouvelleDescription.trim() || null }).eq('id', btnDescription.dataset.projetDescription);
     chargerProjets();
   }
 });

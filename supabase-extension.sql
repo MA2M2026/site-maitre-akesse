@@ -2586,3 +2586,12 @@ end;
 $$;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 67 : brève description par projet/casting (table
+-- casting_projets), affichée au candidat sur "Postuler à un casting"
+-- une fois son projet sélectionné dans le formulaire.
+-- ===================================================================
+alter table casting_projets add column if not exists description text;
+
+NOTIFY pgrst, 'reload schema';
