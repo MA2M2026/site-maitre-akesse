@@ -253,25 +253,25 @@ configurerSelectAvecAutre('ville', 'ville-autre');
 // fréquents pour l'agence, + option "Autre" en secours pour ne bloquer
 // aucun visiteur, quel que soit son pays. ---
 const INDICATIFS_PAYS = [
-  ['+225', "🇨🇮 Côte d'Ivoire (+225)"],
-  ['+226', '🇧🇫 Burkina Faso (+226)'],
-  ['+223', '🇲🇱 Mali (+223)'],
-  ['+221', '🇸🇳 Sénégal (+221)'],
-  ['+224', '🇬🇳 Guinée (+224)'],
-  ['+228', '🇹🇬 Togo (+228)'],
-  ['+229', '🇧🇯 Bénin (+229)'],
-  ['+233', '🇬🇭 Ghana (+233)'],
-  ['+234', '🇳🇬 Nigeria (+234)'],
-  ['+237', '🇨🇲 Cameroun (+237)'],
-  ['+212', '🇲🇦 Maroc (+212)'],
-  ['+33', '🇫🇷 France (+33)'],
-  ['+32', '🇧🇪 Belgique (+32)'],
-  ['+44', '🇬🇧 Royaume-Uni (+44)'],
-  ['+1', '🇺🇸 États-Unis / Canada (+1)'],
-  ['__autre__', 'Autre pays…']
+  ['+225', '🇨🇮 +225', "Côte d'Ivoire"],
+  ['+226', '🇧🇫 +226', 'Burkina Faso'],
+  ['+223', '🇲🇱 +223', 'Mali'],
+  ['+221', '🇸🇳 +221', 'Sénégal'],
+  ['+224', '🇬🇳 +224', 'Guinée'],
+  ['+228', '🇹🇬 +228', 'Togo'],
+  ['+229', '🇧🇯 +229', 'Bénin'],
+  ['+233', '🇬🇭 +233', 'Ghana'],
+  ['+234', '🇳🇬 +234', 'Nigeria'],
+  ['+237', '🇨🇲 +237', 'Cameroun'],
+  ['+212', '🇲🇦 +212', 'Maroc'],
+  ['+33', '🇫🇷 +33', 'France'],
+  ['+32', '🇧🇪 +32', 'Belgique'],
+  ['+44', '🇬🇧 +44', 'Royaume-Uni'],
+  ['+1', '🇺🇸 +1', 'États-Unis / Canada'],
+  ['__autre__', 'Autre…', 'Autre pays']
 ];
 function remplirIndicatifs(selectEl) {
-  selectEl.innerHTML = INDICATIFS_PAYS.map(([valeur, libelle]) => `<option value="${valeur}">${libelle}</option>`).join('');
+  selectEl.innerHTML = INDICATIFS_PAYS.map(([valeur, libelle, nomComplet]) => `<option value="${valeur}" title="${nomComplet}">${libelle}</option>`).join('');
 }
 function brancherIndicatifAutre(selectEl, champAutreEl) {
   selectEl.addEventListener('change', () => {
