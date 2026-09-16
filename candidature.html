@@ -95,6 +95,16 @@ setTimeout(() => {
           <option value="projet">Un projet / casting précis de l'agence</option>
         </select>
       </div>
+
+      <div id="ca-bloc-agence-info" style="display:none; margin:0 0 1.2rem; padding:1.2rem 1.4rem; background:var(--anthracite, var(--noir)); border-left:3px solid var(--bordeaux-clair, var(--rouge)); font-size:0.88rem; line-height:1.65;">
+        <p style="margin:0 0 0.8rem;">Bienvenue chez <strong>Maître Akesse Model Management</strong>, votre agence de mannequins.</p>
+        <p style="margin:0 0 0.8rem;">Vous avez sélectionné « Intégrer l'agence ». Pour cela, c'est tout simple : vous serez soumis(e) à 2 castings — le premier via ce formulaire, le second en présentiel après validation du premier.</p>
+        <p style="margin:0 0 0.4rem;">🌟 <strong>Conditions du 1er casting (en ligne)</strong></p>
+        <p style="margin:0 0 0.8rem;">🎯 Nos critères :<br>1️⃣ Femmes : 1m75 min | 16–25 ans<br>2️⃣ Hommes : 1m85 min | 16–26 ans<br><em>(Inutile de postuler si vous ne remplissez pas ces critères)</em></p>
+        <p style="margin:0 0 0.8rem;">📤 Si vous remplissez ces conditions, complétez simplement le formulaire ci-dessous.</p>
+        <p style="margin:0;">🚫 NB : un message vous sera envoyé via WhatsApp ou e-mail, avec la date et le dress code, si votre candidature est validée — afin de vous préparer pour le casting en présentiel. 😎</p>
+      </div>
+
       <div id="ca-bloc-projet" style="display:none;">
         <div class="form-champ">
           <label for="ca-projet">Projet / casting concerné *</label>
@@ -103,11 +113,14 @@ setTimeout(() => {
             <option value="__autre__">Autre (précisez)</option>
           </select>
         </div>
+        <p id="ca-projet-description" style="display:none; margin:-0.4rem 0 1rem; padding:0.8rem 1rem; background:var(--anthracite, var(--noir)); border-left:3px solid var(--bordeaux-clair, var(--rouge)); font-size:0.85rem; line-height:1.5;"></p>
         <div class="form-champ" id="ca-bloc-projet-autre" style="display:none;">
           <label for="ca-projet-autre">Nom du projet / casting *</label>
           <input type="text" id="ca-projet-autre" placeholder="Précisez le nom du casting ou de l'événement">
         </div>
       </div>
+
+      <p style="font-size:0.82rem; color:var(--gris); margin:0 0 1rem;">Merci d'indiquer un e-mail et un numéro WhatsApp valides et actifs ci-dessous : c'est par là que l'agence vous recontactera si votre candidature est retenue.</p>
 
       <div class="form-grille">
         <div class="form-champ">
@@ -119,8 +132,8 @@ setTimeout(() => {
           <input type="email" id="ca-email" required>
         </div>
         <div class="form-champ">
-          <label for="ca-telephone">Téléphone</label>
-          <input type="tel" id="ca-telephone">
+          <label for="ca-telephone">Téléphone / WhatsApp</label>
+          <input type="tel" id="ca-telephone" placeholder="+225 07 00 00 00 00">
         </div>
         <div class="form-champ">
           <label for="ca-ville">Ville</label>
@@ -370,10 +383,13 @@ function afficherMsg(el, texte, type) {
 }
 
 // --- Type de candidature : intégrer l'agence, ou un projet/casting précis ---
+let DESCRIPTIONS_PROJETS = {};
 async function chargerProjetsActifs() {
   const selectProjet = document.getElementById('ca-projet');
   if (!sb) return;
-  const { data: projets } = await sb.from('casting_projets').select('id, nom').eq('actif', true).order('nom');
+  const { data: projets } = await sb.from('casting_projets').select('id, nom, description').eq('actif', true).order('nom');
+  DESCRIPTIONS_PROJETS = {};
+  (projets || []).forEach(p => { if (p.description) DESCRIPTIONS_PROJETS[p.nom] = p.description; });
   selectProjet.innerHTML = '<option value="">Sélectionner</option>'
     + (projets || []).map(p => `<option value="${echapperHtml(p.nom)}">${echapperHtml(p.nom)}</option>`).join('')
     + '<option value="__autre__">Autre (précisez)</option>';
@@ -382,18 +398,26 @@ chargerProjetsActifs();
 
 document.getElementById('ca-type').addEventListener('change', (e) => {
   const estProjet = e.target.value === 'projet';
+  const estAgence = e.target.value === 'agence';
+  document.getElementById('ca-bloc-agence-info').style.display = estAgence ? 'block' : 'none';
   document.getElementById('ca-bloc-projet').style.display = estProjet ? 'block' : 'none';
   document.getElementById('ca-projet').required = estProjet;
   if (!estProjet) {
     document.getElementById('ca-projet').value = '';
     document.getElementById('ca-bloc-projet-autre').style.display = 'none';
     document.getElementById('ca-projet-autre').required = false;
+    document.getElementById('ca-projet-description').style.display = 'none';
   }
 });
 document.getElementById('ca-projet').addEventListener('change', (e) => {
   const estAutre = e.target.value === '__autre__';
   document.getElementById('ca-bloc-projet-autre').style.display = estAutre ? 'block' : 'none';
   document.getElementById('ca-projet-autre').required = estAutre;
+
+  const descriptionEl = document.getElementById('ca-projet-description');
+  const description = DESCRIPTIONS_PROJETS[e.target.value];
+  if (description) { descriptionEl.textContent = description; descriptionEl.style.display = 'block'; }
+  else { descriptionEl.style.display = 'none'; }
 });
 
 // --- Photos : 4 minimum, avec aperçu et compteur en direct ---
