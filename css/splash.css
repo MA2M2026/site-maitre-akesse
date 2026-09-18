@@ -1,57 +1,453 @@
-/* ===== Intro cinématographique — accueil uniquement ===== */
+/* =========================================================
+   INTRO LOGO — MAÎTRE AKESSE MODEL MANAGEMENT
+   Animation plein écran — noir / bordeaux
+   ========================================================= */
 
 .splash {
   position: fixed;
   inset: 0;
-  z-index: 9999;
-  background: var(--noir);
+  z-index: 99999;
+  width: 100%;
+  height: 100dvh;
+  min-height: 100vh;
+  overflow: hidden;
+
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  transition: opacity 0.4s ease, visibility 0.4s ease;
+  flex-direction: column;
+
+  background:
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(95, 12, 28, 0.30) 0%,
+      rgba(35, 3, 10, 0.20) 28%,
+      rgba(0, 0, 0, 0.96) 72%
+    ),
+    #000;
+
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+
+  transition:
+    opacity 0.9s ease,
+    visibility 0.9s ease;
 }
+
+/* Légère atmosphère bordeaux */
+.splash::before {
+  content: "";
+  position: absolute;
+  inset: -20%;
+
+  background:
+    radial-gradient(
+      ellipse at center,
+      rgba(110, 13, 32, 0.20),
+      transparent 55%
+    );
+
+  animation: splash-atmosphere 4.8s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+/* Vignette noire */
+.splash::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  background:
+    radial-gradient(
+      ellipse at center,
+      transparent 35%,
+      rgba(0, 0, 0, 0.72) 100%
+    );
+
+  pointer-events: none;
+}
+
+/* =========================================================
+   LOGO
+   ========================================================= */
 
 .splash-logo-wrap {
-  width: 78%;
+  position: relative;
+  z-index: 3;
+
+  width: min(76vw, 520px);
   max-width: 520px;
-  text-align: center;
+
   opacity: 0;
-  transform: scale(0.95);
-  animation: splash-fondu 5.5s cubic-bezier(.2,.7,.2,1) forwards;
+  transform: scale(0.72);
+
+  animation:
+    splash-logo-arrive 1.8s cubic-bezier(.16,.8,.24,1) forwards,
+    splash-logo-final 2.8s ease-in-out 1.7s infinite alternate;
 }
 
-.splash-logo-wrap img { width: 100%; height: auto; }
+.splash-logo-wrap img {
+  display: block;
 
-@keyframes splash-fondu {
-  0%   { opacity: 0; transform: scale(0.95); }
-  15%  { opacity: 1; transform: scale(1); }
-  82%  { opacity: 1; transform: scale(1); }
-  100% { opacity: 0; transform: scale(1.03); }
+  width: 100%;
+  height: auto;
+
+  user-select: none;
+  -webkit-user-drag: none;
+
+  filter:
+    drop-shadow(0 0 12px rgba(105, 10, 30, 0.28))
+    drop-shadow(0 0 40px rgba(80, 5, 20, 0.20));
+
+  animation: splash-logo-breathe 3.2s ease-in-out 1.5s infinite alternate;
 }
+
+/* =========================================================
+   FRAGMENTS / RECONSTRUCTION
+   ========================================================= */
+
+.splash-logo-wrap::before,
+.splash-logo-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  background-image: url("../assets/logo-dark-bg.png");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+
+  pointer-events: none;
+}
+
+/* Fragment gauche */
+.splash-logo-wrap::before {
+  opacity: 0.75;
+
+  clip-path: polygon(
+    0 0,
+    48% 0,
+    43% 18%,
+    50% 36%,
+    40% 55%,
+    48% 72%,
+    38% 100%,
+    0 100%
+  );
+
+  transform: translateX(-75px) rotate(-3deg);
+  animation: splash-fragment-left 1.45s cubic-bezier(.15,.85,.25,1) forwards;
+}
+
+/* Fragment droite */
+.splash-logo-wrap::after {
+  opacity: 0.65;
+
+  clip-path: polygon(
+    52% 0,
+    100% 0,
+    100% 100%,
+    61% 100%,
+    53% 78%,
+    61% 58%,
+    52% 39%,
+    59% 19%
+  );
+
+  transform: translateX(75px) rotate(3deg);
+  animation: splash-fragment-right 1.45s cubic-bezier(.15,.85,.25,1) forwards;
+}
+
+/* =========================================================
+   LIGNE DE SCAN
+   ========================================================= */
+
+.splash-scan {
+  position: absolute;
+  left: -5%;
+  top: 0;
+
+  width: 110%;
+  height: 2px;
+
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(125, 18, 40, 0.05),
+    rgba(160, 30, 55, 0.85),
+    rgba(125, 18, 40, 0.05),
+    transparent
+  );
+
+  box-shadow:
+    0 0 12px rgba(130, 15, 40, 0.55),
+    0 0 28px rgba(100, 10, 30, 0.35);
+
+  opacity: 0;
+
+  animation: splash-scan 2.7s ease-in-out 0.7s forwards;
+}
+
+/* =========================================================
+   SIGNATURE
+   ========================================================= */
+
+.splash-signature {
+  position: absolute;
+  z-index: 4;
+
+  bottom: 13%;
+
+  font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
+
+  font-size: 10px;
+  letter-spacing: 0.30em;
+  text-transform: uppercase;
+
+  color: rgba(255, 255, 255, 0.60);
+
+  opacity: 0;
+  transform: translateY(12px);
+
+  animation:
+    splash-signature-in 1.2s ease 2.1s forwards;
+}
+
+/* =========================================================
+   BOUTON PASSER
+   ========================================================= */
 
 .splash-passer {
   position: absolute;
-  bottom: 2.6rem;
-  right: 2.6rem;
-  background: none;
-  border: 1px solid rgba(255,255,255,0.2);
-  color: #aaa;
-  padding: 0.75rem 1.7rem;
-  font-family: var(--texte);
-  font-size: 0.66rem;
-  letter-spacing: 0.28em;
+  z-index: 5;
+
+  right: 24px;
+  bottom: 22px;
+
+  padding: 8px 14px;
+
+  border: 1px solid rgba(255, 255, 255, 0.20);
+  border-radius: 30px;
+
+  background: rgba(0, 0, 0, 0.35);
+
+  color: rgba(255, 255, 255, 0.72);
+
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
+
   cursor: pointer;
-  transition: all 0.35s ease;
+
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+
+  transition:
+    background 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease;
 }
 
-.splash-passer:hover { border-color: #fff; color: #fff; background: rgba(255,255,255,0.05); }
-
-body.splash-active { overflow: hidden; }
-
-@media (max-width: 700px) {
-  .splash-passer { bottom: 1.8rem; right: 1.8rem; padding: 0.65rem 1.3rem; font-size: 0.6rem; }
+.splash-passer:hover {
+  background: rgba(100, 10, 30, 0.30);
+  border-color: rgba(160, 30, 55, 0.60);
+  color: #fff;
 }
 
+/* =========================================================
+   FERMETURE
+   ========================================================= */
 
+.splash.splash-closing {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* =========================================================
+   ANIMATIONS
+   ========================================================= */
+
+@keyframes splash-logo-arrive {
+  0% {
+    opacity: 0;
+    transform: scale(0.72);
+  }
+
+  45% {
+    opacity: 0.45;
+  }
+
+  75% {
+    opacity: 0.85;
+    transform: scale(1.035);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes splash-logo-final {
+  from {
+    filter:
+      drop-shadow(0 0 12px rgba(105, 10, 30, 0.25))
+      drop-shadow(0 0 35px rgba(80, 5, 20, 0.15));
+  }
+
+  to {
+    filter:
+      drop-shadow(0 0 18px rgba(130, 15, 40, 0.38))
+      drop-shadow(0 0 50px rgba(80, 5, 20, 0.20));
+  }
+}
+
+@keyframes splash-logo-breathe {
+  from {
+    transform: scale(1);
+  }
+
+  to {
+    transform: scale(1.018);
+  }
+}
+
+@keyframes splash-fragment-left {
+  0% {
+    opacity: 0;
+    transform: translateX(-100px) rotate(-7deg);
+  }
+
+  55% {
+    opacity: 0.75;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateX(0) rotate(0);
+  }
+}
+
+@keyframes splash-fragment-right {
+  0% {
+    opacity: 0;
+    transform: translateX(100px) rotate(7deg);
+  }
+
+  55% {
+    opacity: 0.65;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateX(0) rotate(0);
+  }
+}
+
+@keyframes splash-scan {
+  0% {
+    top: 15%;
+    opacity: 0;
+  }
+
+  15% {
+    opacity: 1;
+  }
+
+  85% {
+    opacity: 0.7;
+  }
+
+  100% {
+    top: 88%;
+    opacity: 0;
+  }
+}
+
+@keyframes splash-signature-in {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes splash-atmosphere {
+  from {
+    transform: scale(0.95);
+    opacity: 0.55;
+  }
+
+  to {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+}
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+  .splash-logo-wrap {
+    width: min(82vw, 390px);
+  }
+
+  .splash-signature {
+    bottom: 15%;
+    width: 90%;
+    text-align: center;
+
+    font-size: 8px;
+    letter-spacing: 0.22em;
+  }
+
+  .splash-passer {
+    right: 16px;
+    bottom: 16px;
+
+    padding: 7px 11px;
+    font-size: 9px;
+  }
+}
+
+/* =========================================================
+   TABLETTES
+   ========================================================= */
+
+@media (min-width: 601px) and (max-width: 1100px) {
+
+  .splash-logo-wrap {
+    width: min(70vw, 500px);
+  }
+}
+
+/* =========================================================
+   ACCESSIBILITÉ
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .splash *,
+  .splash::before,
+  .splash::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .splash-logo-wrap {
+    opacity: 1;
+    transform: none;
+  }
+
+  .splash-signature {
+    opacity: 1;
+    transform: none;
+  }
+}
