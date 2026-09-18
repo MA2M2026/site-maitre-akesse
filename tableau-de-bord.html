@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="fr">
 <head>
 <!-- Google tag (gtag.js) -->
-<script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
+<script async="" crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
@@ -10,14 +11,14 @@
 
   gtag('config', 'G-1BX5MPZ6WE');
 </script>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Tableau de bord — Maître Akesse Model Management</title>
-<meta name="robots" content="noindex, nofollow">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="css/style.css">
+<meta content="noindex, nofollow" name="robots"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&amp;family=Jost:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="css/style.css" rel="stylesheet"/>
 <style>
   .stats-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }
   .stat-carte { background: var(--anthracite, var(--noir)); color: var(--blanc); padding: 1.6rem; border-top: 2px solid var(--or); }
@@ -550,11 +551,113 @@ body.zone-admin::selection{background:var(--ma2m-burgundy-2);color:#fff}
 }
 
 
+/* =====================================================================
+   MA2M DASHBOARD — V2 / RENDU DE RÉFÉRENCE
+   Composition visuelle reconstruite à partir de la maquette approuvée.
+   Les identifiants métier, les appels Supabase et les handlers existants
+   restent en place. Cette couche se concentre sur le rendu et la hiérarchie.
+   ===================================================================== */
+:root{
+  --ref-bg:#030405;
+  --ref-bg2:#07090b;
+  --ref-panel:#0a0d10;
+  --ref-panel2:#0d1115;
+  --ref-burg:#690d27;
+  --ref-burg2:#8e1536;
+  --ref-red:#c81f4e;
+  --ref-gold:#d5ad62;
+  --ref-gold2:#f0d49a;
+  --ref-text:#f4f0eb;
+  --ref-muted:#8e9298;
+  --ref-line:rgba(255,255,255,.095);
+  --ref-line2:rgba(213,173,98,.18);
+}
+html{background:var(--ref-bg)}
+body.zone-admin{background:var(--ref-bg);color:var(--ref-text)}
+body.zone-admin #bloc-tableau{background:
+  radial-gradient(900px 420px at 56% 0%,rgba(105,13,39,.15),transparent 66%),
+  radial-gradient(500px 600px at 100% 30%,rgba(142,21,54,.07),transparent 72%),
+  var(--ref-bg)}
+body.zone-admin .db-shell{min-height:100vh;background:transparent}
+/* Sidebar: plus proche d'un véritable centre de contrôle de maison de mode. */
+.db-sidebar{width:255px;padding:0 11px 15px;background:
+  linear-gradient(180deg,rgba(105,13,39,.20),transparent 18%),
+  linear-gradient(180deg,#050608,#07090b 70%,#030405);border-right:1px solid var(--ref-line2);box-shadow:18px 0 55px rgba(0,0,0,.28);position:relative;overflow:hidden}
+.db-sidebar:after{content:"";position:absolute;left:-65px;right:-65px;bottom:-30px;height:310px;opacity:.18;pointer-events:none;background:radial-gradient(ellipse at 50% 50%,rgba(213,173,98,.16),transparent 64%)}
+.db-sidebar-logo{height:96px;min-height:96px;margin:0 -11px 14px;padding:0 24px;border-bottom:1px solid var(--ref-line2);background:linear-gradient(90deg,rgba(105,13,39,.24),transparent 78%);position:relative;z-index:2}
+.db-sidebar-logo img{height:43px;max-width:188px;filter:drop-shadow(0 8px 22px rgba(200,31,78,.12))}
+.db-nav{gap:3px;position:relative;z-index:2}
+.db-nav-item{height:43px;min-height:43px;padding:0 13px;border:1px solid transparent;border-radius:7px;color:#d6d9dd;font-size:.78rem;letter-spacing:.01em;transition:all .22s ease;display:flex;align-items:center;justify-content:space-between}
+.db-nav-item .db-nav-icone{width:28px;margin-right:6px;font-size:0;display:inline-flex;align-items:center;justify-content:center;opacity:.9}
+.db-nav-item .db-nav-icone:before{font-size:15px;color:#b8bec5;line-height:1}
+.db-nav-item:nth-child(1) .db-nav-icone:before{content:"⌂"}.db-nav-item:nth-child(2) .db-nav-icone:before{content:"◉"}.db-nav-item:nth-child(3) .db-nav-icone:before{content:"♙"}.db-nav-item:nth-child(4) .db-nav-icone:before{content:"▤"}.db-nav-item:nth-child(5) .db-nav-icone:before{content:"◈"}.db-nav-item:nth-child(6) .db-nav-icone:before{content:"⌂"}.db-nav-item:nth-child(7) .db-nav-icone:before{content:"✉"}.db-nav-item:nth-child(8) .db-nav-icone:before{content:"▦"}.db-nav-item:nth-child(9) .db-nav-icone:before{content:"⌁"}.db-nav-item:nth-child(10) .db-nav-icone:before{content:"▧"}.db-nav-item:nth-child(11) .db-nav-icone:before{content:"⚙"}.db-nav-item:nth-child(12) .db-nav-icone:before{content:"◉"}
+.db-nav-item:hover{background:rgba(255,255,255,.028);border-color:rgba(255,255,255,.055);transform:none;color:#fff}
+.db-nav-item.actif{background:linear-gradient(90deg,#7e1031,#4c091d);border-color:rgba(200,31,78,.62);box-shadow:inset 3px 0 0 var(--ref-red),0 10px 30px rgba(0,0,0,.28);color:#fff}
+.db-nav-item.actif .db-nav-icone:before{color:#fff}
+.db-nav-badge{min-width:19px;height:19px;display:inline-flex;align-items:center;justify-content:center;background:var(--ref-red);border-radius:50%;font-size:.58rem;color:#fff;box-shadow:0 0 0 3px rgba(200,31,78,.08)}
+.db-sidebar-bas{position:absolute;left:18px;right:18px;bottom:18px;padding-top:14px;border-top:1px solid var(--ref-line2);z-index:2}
+.db-sidebar-bas:before{content:"MAÎTRE AKESSE";display:block;font-family:var(--display);font-size:1.05rem;letter-spacing:.18em;color:#eee8e1;text-align:center;margin-bottom:3px}
+.db-sidebar-bas:after{content:"MODEL MANAGEMENT  •  ABIDJAN";display:block;font-size:.48rem;letter-spacing:.19em;color:#777d84;text-align:center;margin-bottom:13px}
+.db-sidebar-bas .btn{height:35px;border-color:rgba(255,255,255,.10);background:rgba(255,255,255,.025);color:#aeb3b9;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase}
+/* Main canvas */
+.db-main{padding:0 27px 60px;max-width:1450px;margin:0 auto;width:100%;box-sizing:border-box}
+.db-topbar{min-height:78px;margin:0 -27px 20px;padding:0 27px;border-bottom:1px solid var(--ref-line);background:linear-gradient(90deg,rgba(105,13,39,.12),rgba(3,4,5,.5) 52%,rgba(105,13,39,.08));align-items:center;position:relative}
+.db-topbar:after{content:"DÉTECTER   |   FORMER   |   PROPULSER";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:.55rem;letter-spacing:.30em;color:#72777d;white-space:nowrap;pointer-events:none}
+.db-greeting{font-family:var(--display);font-style:normal;font-size:1.5rem;color:#f5f0ea;letter-spacing:.015em}
+.db-topbar .db-sous-titre{font-size:.67rem!important;color:#777e85!important;letter-spacing:.035em!important}
+.db-topbar-droite{gap:12px;z-index:2}
+.db-statut-site{font-size:.56rem;letter-spacing:.12em;color:#858b91}.db-statut-site .point{width:6px;height:6px}
+.db-cloche{width:38px;height:38px;background:rgba(255,255,255,.025);border:1px solid var(--ref-line);border-radius:50%;font-size:.9rem}
+.db-cloche-badge{background:var(--ref-red)}
+.db-profil{padding-left:12px;border-left:1px solid var(--ref-line);gap:9px}.db-profil img,.db-profil-avatar-vide{width:38px;height:38px;border-color:rgba(213,173,98,.48);background:linear-gradient(145deg,#35101b,#0b0c0e)}
+.db-profil .nom{font-size:.7rem;color:#eee9e3}.db-profil .role{font-size:.55rem;color:#777d83}
+/* Reference hero: image left, editorial text right. */
+.ref-hero-row{width:100%;margin-bottom:14px}
+.db-hero{min-height:210px;width:100%;border:1px solid var(--ref-line);border-radius:4px;background:#07090b;box-shadow:0 22px 50px rgba(0,0,0,.34);overflow:hidden;position:relative}
+.db-hero img{position:absolute!important;left:0;top:0;width:47%!important;height:100%!important;object-fit:cover;object-position:center 20%;filter:saturate(.90) contrast(1.05)}
+.db-hero:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(3,4,5,0) 25%,rgba(3,4,5,.25) 40%,#07090b 62%,#07090b 100%);z-index:0}
+.db-hero:before{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(130deg,transparent 45%,rgba(200,31,78,.12) 65%,transparent 82%),radial-gradient(350px 150px at 80% 50%,rgba(213,173,98,.05),transparent 70%)}
+.db-hero-contenu{position:absolute!important;z-index:2;left:51%;right:4%;top:50%;transform:translateY(-50%);padding:0!important;max-width:none!important}
+.db-hero-eyebrow{font-size:.52rem;letter-spacing:.24em;color:var(--ref-red);font-weight:600}.db-hero-eyebrow span{display:inline-block;width:32px;height:1px;background:var(--ref-gold);vertical-align:middle;margin-left:8px;opacity:.7}
+.db-hero-nom{font-family:var(--display);font-size:2.35rem;line-height:1;color:#f4eee8;margin-top:9px;text-shadow:0 5px 25px rgba(0,0,0,.4)}
+.db-hero-note{font-size:.66rem;color:#9da1a6;margin-top:9px;text-transform:uppercase;letter-spacing:.08em}
+.db-hero-signature{font-family:var(--display);font-style:italic;font-size:1.05rem;color:#c9c1ba;margin-top:16px}
+.db-hero-footer{display:flex;align-items:center;gap:9px;margin-top:18px;font-size:.46rem;letter-spacing:.17em;color:#6f757b}.db-hero-footer i{display:block;width:54px;height:1px;background:linear-gradient(90deg,var(--ref-red),transparent)}
+.db-hero-vide{padding:35px;color:#7f858b}
+/* Stats — exactly six visual anchors like the reference. */
+.stats-grille{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin:0 0 6px}
+.stat-carte{min-height:118px;padding:15px 14px;border:1px solid rgba(255,255,255,.10);border-radius:6px;background:linear-gradient(145deg,#11161b,#090c0f 72%);box-shadow:0 12px 28px rgba(0,0,0,.18);position:relative;overflow:hidden;text-align:left}
+.stat-carte:after{content:"";position:absolute;width:90px;height:90px;right:-40px;top:-45px;border-radius:50%;background:rgba(200,31,78,.10);filter:blur(1px)}
+.stat-carte.accent{background:linear-gradient(145deg,#8b1034,#56091f 72%);border-color:#bd1d49;box-shadow:0 14px 35px rgba(100,8,37,.30)}
+.stat-icone{font-size:.82rem;color:#aeb5bb;margin-bottom:9px}.accent .stat-icone{color:#fff}
+.stat-carte .chiffre{font-family:var(--display);font-size:2rem;line-height:1;color:#f8f3ee}.stat-carte .label{font-size:.60rem;letter-spacing:.08em;text-transform:uppercase;color:#c0c4c8;margin-top:7px}.stat-carte .micro{font-size:.50rem;color:#70777e;margin-top:4px}.accent .label,.accent .micro{color:#f1cbd6}
+.stats-secondaires{grid-column:1/-1;display:flex;gap:10px;flex-wrap:wrap;padding:7px 2px 1px;color:#6f767d;font-size:.52rem;letter-spacing:.05em}.stats-secondaires span{padding-right:13px;border-right:1px solid rgba(255,255,255,.08)}.stats-secondaires span:last-child{border-right:0}.stats-secondaires b{color:#c8cdd1;font-size:.66rem;margin-right:4px}
+/* 3-column editorial control area */
+.ref-core-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(280px,.78fr) minmax(220px,.72fr);gap:10px;margin-top:14px}
+.ref-core-grid > div{min-width:0}
+.ref-core-grid .liste-recente{margin:0}
+.ref-core-graph .activite-carte,.ref-core-activity,.ref-core-pending .a-traiter-bloc{height:100%;box-sizing:border-box}
+.activite-carte,.timeline-liste,.a-traiter-bloc{border:1px solid var(--ref-line);border-radius:6px;background:linear-gradient(145deg,#0c1014,#07090b);box-shadow:0 16px 34px rgba(0,0,0,.20)}
+.activite-carte{padding:15px}.activite-carte h3{font-size:.63rem;letter-spacing:.12em;text-transform:uppercase;color:#e1ded9}.activite-souslabel{font-size:.51rem;color:#696f75}.activite-svg-wrap{min-height:142px;margin-top:6px}.activite-svg-wrap svg{width:100%;height:100%;overflow:visible}.activite-repart-barre span{background:linear-gradient(90deg,var(--ref-burg2),var(--ref-red))}
+.ref-core-activity{padding:0}.ref-core-activity > div{height:100%}.ref-core-activity h2,.ref-core-pending h2{font-size:.66rem!important;letter-spacing:.11em;text-transform:uppercase}.timeline-liste{padding:11px}.timeline-item{display:flex;gap:9px;padding:9px 4px;border-bottom:1px solid rgba(255,255,255,.055)}.timeline-point{width:6px;height:6px;margin-top:5px;border-radius:50%;background:var(--ref-red);box-shadow:0 0 12px rgba(200,31,78,.6);flex:none}.timeline-texte{font-size:.61rem;color:#d5d8db}.timeline-date{font-size:.49rem;color:#6f757b;margin-top:3px}
+.a-traiter-bloc{padding:14px;border-left:2px solid var(--ref-red)}.a-traiter-titre{display:flex;align-items:center;justify-content:space-between}.a-traiter-item{min-height:40px;padding:7px 3px;border-bottom:1px solid rgba(255,255,255,.055)}.a-traiter-item .at-label{font-size:.60rem}.a-traiter-item .at-compte{font-size:.95rem;color:var(--ref-gold)}
+/* Quick actions — compact tiles, not plain buttons. */
+.ref-quick-row{margin-top:10px}.db-actions-rapides{border:1px solid var(--ref-line);border-radius:6px;padding:12px;background:linear-gradient(180deg,#0b0e11,#07090b)}.db-actions-rapides h3{font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;color:#aeb4ba;margin:0 0 9px}.db-actions-liste{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.db-action-btn{min-height:64px;padding:10px 8px;border:1px solid rgba(255,255,255,.08);border-radius:5px;background:linear-gradient(145deg,#11161a,#090c0f);color:#dfe2e5;font-size:.58rem;display:flex;align-items:center;justify-content:center;text-align:center;transition:all .2s ease}.db-action-btn:hover{border-color:rgba(213,173,98,.42);background:linear-gradient(145deg,#171116,#0a0c0f);transform:translateY(-2px);box-shadow:0 10px 25px rgba(0,0,0,.25)}
+/* Lower cards */
+.ref-lower-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(300px,.75fr);gap:10px;margin-top:10px}.ref-card{border:1px solid var(--ref-line);border-radius:6px;background:linear-gradient(145deg,#0b0f12,#07090b);padding:15px;box-sizing:border-box}.ref-card h2{font-size:.72rem!important;letter-spacing:.10em}.ref-card .liste-recente{margin-top:0}.ref-card .dossier-carte{background:rgba(255,255,255,.015)}.ref-projects .dossier-carte{padding:8px}.ref-contacts{margin-top:10px}.ref-contacts table{font-size:.60rem}.ref-contacts th,.ref-contacts td{padding:.55rem .45rem;border-bottom-color:rgba(255,255,255,.055)}
+/* All remaining management sections inherit the same premium language. */
+.liste-recente{margin-top:16px}.liste-recente > h2,.liste-recente .dossiers-entete h2{font-family:var(--display);font-weight:500;color:#e9e4de}.liste-recente > p{color:#747a81!important;font-size:.67rem!important;line-height:1.65}.liste-recente:not(.ref-card){border-top:1px solid rgba(255,255,255,.035);padding-top:14px}.validation-carte,.dossier-carte,.drive-carte{border-color:rgba(255,255,255,.07);background:linear-gradient(145deg,#0d1114,#090b0e)}.drive-carte{border-top-color:rgba(213,173,98,.38)}
+.db-main input,.db-main textarea,.db-main select{background:#080b0e!important;border:1px solid rgba(255,255,255,.10)!important;color:#ece8e3!important;border-radius:4px!important}.db-main input:focus,.db-main textarea:focus,.db-main select:focus{border-color:rgba(213,173,98,.55)!important;box-shadow:0 0 0 3px rgba(213,173,98,.06)!important}.btn{border-color:rgba(255,255,255,.12);background:#0b0e11;color:#d8dce0}.btn--principal{background:linear-gradient(90deg,#6c0c27,#94163a);border-color:rgba(213,173,98,.28);color:#fff}.modal-overlay{background:rgba(0,0,0,.88);backdrop-filter:blur(9px)}
+@media(max-width:1180px){.stats-grille{grid-template-columns:repeat(3,1fr)}.ref-core-grid{grid-template-columns:1fr 1fr}.ref-core-pending{grid-column:1/-1}.db-topbar:after{display:none}.db-actions-liste{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:900px){.db-sidebar{width:250px}.db-main{padding:0 16px 45px}.db-topbar{margin:0 -16px 16px;padding:0 16px}.ref-hero-row .db-hero{min-height:250px}.db-hero img{width:48%!important}.db-hero-contenu{left:50%;right:5%}.ref-core-grid{grid-template-columns:1fr}.ref-core-pending{grid-column:auto}.ref-lower-grid{grid-template-columns:1fr}}
+@media(max-width:680px){.db-main{padding:0 11px 35px}.db-topbar{margin:0 -11px 12px;padding:0 11px;min-height:70px}.db-greeting{font-size:1.15rem}.db-topbar-droite{gap:5px}.db-profil .nom,.db-profil .role{display:none}.db-profil{padding-left:7px}.db-hero{min-height:330px!important}.db-hero img{width:100%!important;height:58%!important;object-position:center 18%}.db-hero:after{background:linear-gradient(180deg,rgba(3,4,5,0) 25%,rgba(3,4,5,.45) 48%,#07090b 67%,#07090b 100%)}.db-hero-contenu{left:0;right:0;top:auto;bottom:23px;transform:none;padding:0 18px!important}.db-hero-nom{font-size:1.8rem}.db-hero-signature{font-size:.9rem;margin-top:10px}.stats-grille{grid-template-columns:repeat(2,1fr);gap:7px}.stat-carte{min-height:105px;padding:12px}.stat-carte .chiffre{font-size:1.65rem}.stats-secondaires{gap:6px;line-height:1.6}.stats-secondaires span{padding-right:8px}.db-actions-liste{grid-template-columns:repeat(2,1fr)}.db-action-btn{min-height:58px}.db-sidebar{width:250px}}
+@media(prefers-reduced-motion:reduce){.db-nav-item,.db-action-btn{transition:none!important;transform:none!important}}
+
 </style>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1e1d1c">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link href="manifest.json" rel="manifest"/>
+<meta content="#1e1d1c" name="theme-color"/>
+<link href="icons/apple-touch-icon.png" rel="apple-touch-icon"/>
+<link href="icons/favicon-32.png" rel="icon" sizes="32x32" type="image/png"/>
 </head>
 <body class="zone-admin">
 <script>
@@ -562,394 +665,337 @@ setTimeout(() => {
   document.querySelectorAll('.reveal:not(.visible)').forEach(el => el.classList.add('visible'));
 }, 2500);
 </script>
-
-
 <header class="site-header-v2 db-chrome-public" id="db-chrome-header">
-  <div class="container header-v2-inner">
-    <a href="index.html" class="logo-img-header"><img src="assets/logo-header.png" alt="Maître Akesse Model Management"></a>
-    <button class="menu-trigger" id="menuBtn">
-      <span>Menu</span>
-      <span class="dots"><span></span><span></span><span></span></span>
-    </button>
-  </div>
-</header>
-
-<div class="menu-overlay" id="menuOverlay">
-  <button class="close-menu" id="closeMenuBtn">Fermer ✕</button>
-  <ul class="nav-links">
-    <li><a href="index.html">Accueil</a></li>
-    <li><a href="mannequins.html">The Book</a></li>
-    <li><a href="actualites.html">Actualités</a></li>
-    <li><a href="partenaires.html">Nos partenaires</a></li>
-    <li><a href="tableau-de-bord.html" class="actif">Tableau de bord</a></li>
-    <li class="item-cta"><a href="espace-mannequin.html">Espace mannequin</a></li>
-  </ul>
+<div class="container header-v2-inner">
+<a class="logo-img-header" href="index.html"><img alt="Maître Akesse Model Management" src="assets/logo-header.png"/></a>
+<button class="menu-trigger" id="menuBtn">
+<span>Menu</span>
+<span class="dots"><span></span><span></span><span></span></span>
+</button>
 </div>
-
-<section style="padding-bottom:1rem;" class="db-chrome-public" id="db-chrome-titre">
-  <div class="container">
-    <div class="eyebrow reveal">Administration</div>
-    <div class="badge-page-admin">📍 Vous êtes sur : Tableau de bord</div><br>
-    <h1 class="reveal reveal-delay-1">Tableau de bord<span class="oeil">.</span></h1>
-  </div>
+</header>
+<div class="menu-overlay" id="menuOverlay">
+<button class="close-menu" id="closeMenuBtn">Fermer ✕</button>
+<ul class="nav-links">
+<li><a href="index.html">Accueil</a></li>
+<li><a href="mannequins.html">The Book</a></li>
+<li><a href="actualites.html">Actualités</a></li>
+<li><a href="partenaires.html">Nos partenaires</a></li>
+<li><a class="actif" href="tableau-de-bord.html">Tableau de bord</a></li>
+<li class="item-cta"><a href="espace-mannequin.html">Espace mannequin</a></li>
+</ul>
+</div>
+<section class="db-chrome-public" id="db-chrome-titre" style="padding-bottom:1rem;">
+<div class="container">
+<div class="eyebrow reveal">Administration</div>
+<div class="badge-page-admin">📍 Vous êtes sur : Tableau de bord</div><br/>
+<h1 class="reveal reveal-delay-1">Tableau de bord<span class="oeil">.</span></h1>
+</div>
 </section>
-
 <section id="bloc-login" style="padding-top:1rem;">
-  <div class="container" style="max-width:420px;">
-    <div class="form-champ"><label>E-mail admin</label><input type="email" id="tb-email"></div>
-    <div class="form-champ"><label>Mot de passe</label><input type="password" id="tb-password"></div>
-    <button class="btn btn--principal" id="tb-login-btn">Se connecter</button>
-    <div id="tb-msg" class="form-msg"></div>
-    <p style="margin-top:1rem;"><a href="#" id="tb-mdp-oublie-lien" style="font-size:0.85rem; color:var(--gris);">Mot de passe oublié ?</a></p>
-  </div>
+<div class="container" style="max-width:420px;">
+<div class="form-champ"><label>E-mail admin</label><input id="tb-email" type="email"/></div>
+<div class="form-champ"><label>Mot de passe</label><input id="tb-password" type="password"/></div>
+<button class="btn btn--principal" id="tb-login-btn">Se connecter</button>
+<div class="form-msg" id="tb-msg"></div>
+<p style="margin-top:1rem;"><a href="#" id="tb-mdp-oublie-lien" style="font-size:0.85rem; color:var(--gris);">Mot de passe oublié ?</a></p>
+</div>
 </section>
-
 <section id="bloc-mdp-oublie" style="display:none; padding-top:1rem;">
-  <div class="container" style="max-width:420px;">
-    <p style="font-size:0.9rem; color:var(--gris); margin-bottom:1rem;">Indiquez votre e-mail admin : si un compte y est associé, un lien de réinitialisation vous sera envoyé par e-mail.</p>
-    <div class="form-champ"><label>E-mail admin</label><input type="email" id="tb-mdp-oublie-email"></div>
-    <button class="btn btn--principal" id="tb-mdp-oublie-envoyer">Envoyer le lien de réinitialisation</button>
-    <div id="tb-mdp-oublie-msg" class="form-msg"></div>
-    <p style="margin-top:1rem;"><a href="#" id="tb-mdp-oublie-retour" style="font-size:0.85rem; color:var(--gris);">← Retour à la connexion</a></p>
-  </div>
+<div class="container" style="max-width:420px;">
+<p style="font-size:0.9rem; color:var(--gris); margin-bottom:1rem;">Indiquez votre e-mail admin : si un compte y est associé, un lien de réinitialisation vous sera envoyé par e-mail.</p>
+<div class="form-champ"><label>E-mail admin</label><input id="tb-mdp-oublie-email" type="email"/></div>
+<button class="btn btn--principal" id="tb-mdp-oublie-envoyer">Envoyer le lien de réinitialisation</button>
+<div class="form-msg" id="tb-mdp-oublie-msg"></div>
+<p style="margin-top:1rem;"><a href="#" id="tb-mdp-oublie-retour" style="font-size:0.85rem; color:var(--gris);">← Retour à la connexion</a></p>
+</div>
 </section>
-
 <section id="bloc-nouveau-mdp" style="display:none; padding-top:1rem;">
-  <div class="container" style="max-width:420px;">
-    <p style="font-size:0.9rem; color:var(--gris); margin-bottom:1rem;">Choisissez votre nouveau mot de passe (au moins 8 caractères).</p>
-    <div class="form-champ"><label>Nouveau mot de passe</label><input type="password" id="tb-nouveau-mdp"></div>
-    <button class="btn btn--principal" id="tb-nouveau-mdp-valider">Valider le nouveau mot de passe</button>
-    <div id="tb-nouveau-mdp-msg" class="form-msg"></div>
-  </div>
+<div class="container" style="max-width:420px;">
+<p style="font-size:0.9rem; color:var(--gris); margin-bottom:1rem;">Choisissez votre nouveau mot de passe (au moins 8 caractères).</p>
+<div class="form-champ"><label>Nouveau mot de passe</label><input id="tb-nouveau-mdp" type="password"/></div>
+<button class="btn btn--principal" id="tb-nouveau-mdp-valider">Valider le nouveau mot de passe</button>
+<div class="form-msg" id="tb-nouveau-mdp-msg"></div>
+</div>
 </section>
-
 <section id="bloc-tableau" style="display:none; padding-top:0;">
-  <div class="db-shell">
+<div class="db-shell">
+<!-- ===== AJOUT Étape 12 : sidebar de navigation du centre de contrôle ===== -->
+<aside class="db-sidebar" id="db-sidebar">
+<div class="db-sidebar-logo">
+<img alt="" src="assets/logo-header.png"/>
+<span class="logo-text-header" style="font-size:0.72rem;">MAÎTRE AKESSE</span>
+</div>
+<nav class="db-nav" id="db-nav">
+<button class="db-nav-item actif" data-scroll="stats-grille"><span><span class="db-nav-icone">🏠</span>Tableau de bord</span></button>
+<button class="db-nav-item" data-scroll="a-traiter-liste"><span><span class="db-nav-icone">🔔</span>À traiter</span><span class="db-nav-badge" id="nav-badge-a-traiter" style="display:none;"></span></button>
+<button class="db-nav-item" data-scroll="validation-details"><span><span class="db-nav-icone">👥</span>Mannequins / The Book</span></button>
+<button class="db-nav-item" data-scroll="liste-inscriptions"><span><span class="db-nav-icone">📋</span>Inscriptions</span></button>
+<button class="db-nav-item" data-scroll="liste-candidatures"><span><span class="db-nav-icone">🗂️</span>Candidatures / Castings</span></button>
+<button class="db-nav-item" data-scroll="liste-recruteurs"><span><span class="db-nav-icone">💼</span>Demandes recruteurs</span></button>
+<button class="db-nav-item" data-scroll="table-contacts"><span><span class="db-nav-icone">✉️</span>Messages</span></button>
+<button class="db-nav-item" data-scroll="tb-vedette-actuelle"><span><span class="db-nav-icone">📰</span>Actualités</span></button>
+<button class="db-nav-item" data-scroll="activite-barres"><span><span class="db-nav-icone">📈</span>Analytics</span></button>
+<button class="db-nav-item" data-scroll="mr-nom"><span><span class="db-nav-icone">🗄️</span>Contenu du site</span></button>
+<button class="db-nav-item" data-scroll="instagram-statut"><span><span class="db-nav-icone">⚙️</span>Configuration</span></button>
+<button class="db-nav-item" data-scroll="liste-erreurs"><span><span class="db-nav-icone">🛡️</span>Sécurité &amp; Surveillance</span></button>
+</nav>
+<div class="db-sidebar-bas">
+<button class="btn" id="tb-logout-btn-sidebar" style="width:100%;">Se déconnecter</button>
+</div>
+</aside>
+<div class="db-main">
+<!-- ===== AJOUT Étape 13 : en-tête avec salutation + statut + cloche + profil ===== -->
+<div class="db-topbar">
+<div>
+<div class="db-greeting">Bonjour Maître Akesse<span class="oeil">.</span></div>
+<div class="db-sous-titre" style="color:var(--gris); font-size:0.88rem; margin-top:0.3rem;">Voici l'activité de votre agence aujourd'hui.</div>
+</div>
+<div class="db-topbar-droite">
+<div class="db-statut-site"><span class="point"></span> Site en ligne</div>
+<button class="db-cloche" id="db-cloche-btn" title="Voir les éléments à traiter">🔔<span class="db-cloche-badge" id="db-cloche-badge" style="display:none;"></span></button>
+<div class="db-profil" id="db-profil">
+<div class="db-profil-avatar-vide" id="db-profil-avatar">MA</div>
+<div>
+<div class="nom">Maître Akesse</div>
+<div class="role">Administrateur</div>
+</div>
+</div>
+</div>
+</div>
+<!-- ===== AJOUT : bannière "mannequin à la une" + actions rapides ===== -->
 
-    <!-- ===== AJOUT Étape 12 : sidebar de navigation du centre de contrôle ===== -->
-    <aside class="db-sidebar" id="db-sidebar">
-      <div class="db-sidebar-logo">
-        <img src="assets/logo-header.png" alt="">
-        <span class="logo-text-header" style="font-size:0.72rem;">MAÎTRE AKESSE</span>
-      </div>
-      <nav class="db-nav" id="db-nav">
-        <button class="db-nav-item actif" data-scroll="stats-grille"><span><span class="db-nav-icone">🏠</span>Tableau de bord</span></button>
-        <button class="db-nav-item" data-scroll="a-traiter-liste"><span><span class="db-nav-icone">🔔</span>À traiter</span><span class="db-nav-badge" id="nav-badge-a-traiter" style="display:none;"></span></button>
-        <button class="db-nav-item" data-scroll="validation-details"><span><span class="db-nav-icone">👥</span>Mannequins / The Book</span></button>
-        <button class="db-nav-item" data-scroll="liste-inscriptions"><span><span class="db-nav-icone">📋</span>Inscriptions</span></button>
-        <button class="db-nav-item" data-scroll="liste-candidatures"><span><span class="db-nav-icone">🗂️</span>Candidatures / Castings</span></button>
-        <button class="db-nav-item" data-scroll="liste-recruteurs"><span><span class="db-nav-icone">💼</span>Demandes recruteurs</span></button>
-        <button class="db-nav-item" data-scroll="table-contacts"><span><span class="db-nav-icone">✉️</span>Messages</span></button>
-        <button class="db-nav-item" data-scroll="tb-vedette-actuelle"><span><span class="db-nav-icone">📰</span>Actualités</span></button>
-        <button class="db-nav-item" data-scroll="activite-barres"><span><span class="db-nav-icone">📈</span>Analytics</span></button>
-        <button class="db-nav-item" data-scroll="mr-nom"><span><span class="db-nav-icone">🗄️</span>Contenu du site</span></button>
-        <button class="db-nav-item" data-scroll="instagram-statut"><span><span class="db-nav-icone">⚙️</span>Configuration</span></button>
-        <button class="db-nav-item" data-scroll="liste-erreurs"><span><span class="db-nav-icone">🛡️</span>Sécurité & Surveillance</span></button>
-      </nav>
-      <div class="db-sidebar-bas">
-        <button class="btn" id="tb-logout-btn-sidebar" style="width:100%;">Se déconnecter</button>
-      </div>
-    </aside>
-
-    <div class="db-main">
-
-      <!-- ===== AJOUT Étape 13 : en-tête avec salutation + statut + cloche + profil ===== -->
-      <div class="db-topbar">
-        <div>
-          <div class="db-greeting">Bonjour Maître Akesse<span class="oeil">.</span></div>
-          <div class="db-sous-titre" style="color:var(--gris); font-size:0.88rem; margin-top:0.3rem;">Voici l'activité de votre agence aujourd'hui.</div>
-        </div>
-        <div class="db-topbar-droite">
-          <div class="db-statut-site"><span class="point"></span> Site en ligne</div>
-          <button class="db-cloche" id="db-cloche-btn" title="Voir les éléments à traiter">🔔<span class="db-cloche-badge" id="db-cloche-badge" style="display:none;"></span></button>
-          <div class="db-profil" id="db-profil">
-            <div class="db-profil-avatar-vide" id="db-profil-avatar">MA</div>
-            <div>
-              <div class="nom">Maître Akesse</div>
-              <div class="role">Administrateur</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ===== AJOUT : bannière "mannequin à la une" + actions rapides ===== -->
-      <div class="db-hero-grille">
-        <div class="db-hero" id="db-hero"><div class="db-hero-vide">Chargement…</div></div>
-        <div class="db-actions-rapides">
-          <h3>Actions rapides</h3>
-          <div class="db-actions-liste">
-            <button type="button" class="db-action-btn" data-scroll="portail-nouveau-code">+ Ajouter un mannequin</button>
-            <button type="button" class="db-action-btn" data-scroll="nouveau-projet-nom">+ Créer un casting</button>
-            <a class="db-action-btn" href="actualites.html">+ Publier une actualité</a>
-            <button type="button" class="db-action-btn" data-scroll="table-contacts">Voir les messages</button>
-            <button type="button" class="db-action-btn pleine-largeur" data-scroll="instagram-statut">Paramètres</button>
-          </div>
-        </div>
-      </div>
-
-      <h2 style="margin-bottom:1rem;">Vue d'ensemble</h2>
-      <div class="stats-grille" id="stats-grille">Chargement des statistiques…</div>
-
-      <!-- ===== AJOUT Étape 14 + 16 : "À traiter" et activité côte à côte ===== -->
-      <div class="liste-recente">
-        <div class="db-2col">
-          <div class="a-traiter-bloc" style="margin-bottom:0;">
-            <div class="a-traiter-titre">
-              <h2>🔔 À traiter</h2>
-              <span class="dossiers-compteur a-traiter" id="a-traiter-total"></span>
-            </div>
-            <div class="a-traiter-liste" id="a-traiter-liste">Chargement…</div>
-          </div>
-          <div class="activite-carte">
-            <h3>📈 Activité — 7 derniers jours</h3>
-            <div class="activite-souslabel">Visites réelles, une personne distincte par page.</div>
-            <div class="activite-svg-wrap" id="activite-barres">Chargement…</div>
-            <div class="activite-souscartes" id="activite-souscartes"></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="liste-recente">
-        <div class="db-2col">
-          <div>
-            <h2 style="margin-bottom:0.8rem;">Répartition par catégorie</h2>
-            <p style="font-size:0.82rem; color:var(--gris); margin-top:0; margin-bottom:1rem;">Candidatures et inscriptions confondues. Cliquez pour voir le détail et contacter directement sur WhatsApp.</p>
-            <div class="activite-repartition" id="categorie-chart"></div>
-            <div id="categorie-details" style="margin-top:1rem;"></div>
-          </div>
-          <div>
-            <h2 style="margin-bottom:0.8rem;">🕐 Dernières activités</h2>
-            <div class="timeline-liste" id="dernieres-activites">Chargement…</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="liste-recente">
-      <details id="validation-details">
-        <summary class="dossiers-entete" style="cursor:pointer; list-style:none;">
-          <h2 style="margin:0;">✅ Validations en attente</h2>
-          <span class="dossiers-compteur" id="validation-compteur"></span>
-        </summary>
-        <p style="font-size:0.85rem; color:var(--gris); margin:0.6rem 0 1rem;">Chaque fiche (mineur ou majeur) doit être validée ici avant sa toute première publication sur Le Book — vérifiez la qualité des photos et la cohérence des informations avant d'approuver. Une fois validée, le mannequin gère ensuite sa fiche en autonomie.</p>
-        <div id="liste-validations">Ouvrez cette section pour charger les fiches en attente.</div>
-      </details>
-    </div>
-
-    <!-- ===== AJOUT Étape 20 : Drive / transferts — structure honnête, en attente du fichier d'intégration Drive ===== -->
-    <div class="liste-recente">
-      <h2 style="margin-bottom:0.3rem;">📁 Drive / transferts</h2>
-      <p style="font-size:0.85rem; color:var(--gris); margin-top:0; margin-bottom:1rem;">Suivi des photos envoyées. Le détail par photo (transférée / en attente / erreur) nécessite le fichier d'intégration Google Drive — non fourni pour le moment, voir l'avertissement ci-dessous.</p>
-      <div class="drive-grille" id="drive-grille">Chargement…</div>
-      <div class="drive-avertissement">
-        ⚠️ Ce bloc affiche pour l'instant uniquement le nombre de photos déjà enregistrées côté Supabase (mannequins publiés dans THE BOOK). Le suivi détaillé des photos de candidatures/inscriptions envoyées vers Google Drive (transfert réussi / en attente / erreur, comme demandé à l'Étape 20 du cahier des charges) ne peut pas être branché tant que le fichier gérant l'envoi vers Drive n'a pas été fourni — aucune donnée n'est inventée ici en attendant.
-      </div>
-    </div>
-
-    <div class="liste-recente">
-      <h2 style="margin-bottom:0.3rem;">🖼️ Miniatures des photos</h2>
-      <p style="font-size:0.85rem; color:var(--gris); margin-top:0; margin-bottom:1rem;">Les photos envoyées depuis l'espace mannequin génèrent automatiquement leur propre miniature légère. Cet outil rattrape uniquement les photos déjà en ligne AVANT la mise en place de ce système, pour réduire la bande passante consommée par Le Book (visible dans Supabase → Usage → Cached Egress).</p>
-      <button class="btn btn--principal" id="miniatures-generer-btn" type="button">Générer les miniatures manquantes</button>
-      <div id="miniatures-msg" class="form-msg"></div>
-    </div>
-
-    <div class="liste-recente">
-      <div class="dossiers-entete">
-        <h2 style="margin:0;">🔴 Erreurs réelles du site (7 derniers jours)</h2>
-        <span class="dossiers-compteur" id="erreurs-compteur"></span>
-      </div>
-      <p style="font-size:0.85rem; color:var(--gris); margin:0.3rem 0 1rem;">Chaque erreur JavaScript survenue chez un vrai visiteur (pas une relecture de code) est enregistrée ici automatiquement. Une liste vide est bon signe.</p>
-      <div id="liste-erreurs"></div>
-      <button class="btn" id="erreurs-tout-effacer-btn" style="margin-top:0.8rem; display:none; color:var(--gris); border-color:var(--gris-clair);">Tout marquer comme vu (effacer le journal)</button>
-    </div>
-
-    <div class="liste-recente">
-      <div class="dossiers-entete">
-        <h2 style="margin:0;">Projets & castings</h2>
-      </div>
-      <p style="font-size:0.85rem; color:var(--gris); margin:0.3rem 0 1rem;">Ajoutez ici les projets/castings précis pour lesquels les candidats peuvent postuler (proposés dans le formulaire "Postuler à un casting"). Désactivez un projet une fois terminé pour qu'il disparaisse du formulaire — les candidatures déjà reçues restent intactes.</p>
-      <form id="form-nouveau-projet" style="display:flex; gap:0.6rem; margin-bottom:1rem; flex-wrap:wrap;">
-        <input type="text" id="nouveau-projet-nom" placeholder="Nom du projet ou casting" required style="flex:1; min-width:200px;">
-        <input type="text" id="nouveau-projet-description" placeholder="Brève description (facultatif, visible par les candidats)" style="flex:2; min-width:240px;">
-        <button type="submit" class="btn">+ Ajouter</button>
-      </form>
-      <div id="projets-msg" class="form-msg"></div>
-      <div id="liste-projets"></div>
-    </div>
-
-    <div class="liste-recente">
-      <div class="dossiers-entete">
-        <h2 style="margin:0;">Candidatures</h2>
-        <span class="dossiers-compteur" id="candidatures-compteur"></span>
-      </div>
-      <div id="resume-candidatures" style="font-size:0.85rem; color:var(--gris); margin-bottom:0.8rem;"></div>
-      <div class="filtre-pills" id="filtres-candidatures"></div>
-      <div class="dossier-liste" id="liste-candidatures"></div>
-      <button class="btn dossiers-plus" id="candidatures-plus-btn" style="display:none;">Voir plus</button>
-    </div>
-
-    <div class="liste-recente">
-      <div class="dossiers-entete">
-        <h2 style="margin:0;">Demandes recruteurs</h2>
-        <span class="dossiers-compteur" id="recruteurs-compteur"></span>
-      </div>
-      <div class="filtre-pills" id="filtres-recruteurs"></div>
-      <div class="dossier-liste" id="liste-recruteurs"></div>
-      <button class="btn dossiers-plus" id="recruteurs-plus-btn" style="display:none;">Voir plus</button>
-    </div>
-
-    <div class="liste-recente">
-      <h2 style="margin-bottom:0.3rem;">Codes d'inscription</h2>
-      <p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Chaque code ne peut servir qu'une seule fois. Générez-en un et transmettez-le (WhatsApp, SMS...) à la personne que vous invitez à s'inscrire.</p>
-      <button class="btn btn--principal" id="generer-code-btn">+ Générer un nouveau code</button>
-      <div id="nouveau-code-affiche" style="display:none; margin-top:1rem; padding:1rem; background:var(--anthracite, var(--noir)); display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
-        <span style="font-family:var(--display); font-size:1.4rem; color:var(--titre-clair, #fff); letter-spacing:0.08em;" id="nouveau-code-texte"></span>
-        <button class="btn" id="copier-code-btn">Copier</button>
-      </div>
-      <div id="codes-msg" class="form-msg"></div>
-      <div class="dossier-liste" id="liste-codes" style="margin-top:1.5rem;"></div>
-      <details style="margin-top:1rem;">
-        <summary style="cursor:pointer; font-size:0.85rem; color:var(--gris);">Anciens codes déjà utilisés (<span id="anciens-codes-compteur">0</span>)</summary>
-        <div class="dossier-liste" id="liste-anciens-codes" style="margin-top:1rem;"></div>
-      </details>
-    </div>
-
-    <div class="liste-recente">
-      <h2 style="margin-bottom:0.3rem;">Code permanent — "Créer mon compte" (espace mannequin)</h2>
-      <p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Contrairement aux codes d'inscription ci-dessus, celui-ci est unique et permanent : le même code sert à tous les mannequins qui créent leur compte dans l'espace mannequin, jusqu'à ce que vous le changiez ici. Il n'est jamais stocké en clair — en cas de doute qu'il ait trop circulé, changez-le simplement.</p>
-      <div style="display:flex; gap:0.7rem; flex-wrap:wrap; align-items:center;">
-        <input type="text" id="portail-nouveau-code" placeholder="Nouveau code (6 caractères minimum)" style="flex:1; min-width:220px; padding:0.7rem 0.9rem; background:var(--anthracite, var(--noir)); border:1px solid var(--gris-clair, #444); color:#fff;">
-        <button class="btn" id="portail-generer-btn" type="button">Générer aléatoirement</button>
-        <button class="btn btn--principal" id="portail-definir-btn" type="button">Définir ce code</button>
-      </div>
-      <div id="portail-code-msg" class="form-msg"></div>
-    </div>
-
-    <div class="liste-recente">
-      <h2 style="margin-bottom:0.3rem;">📷 Flux Instagram (accueil)</h2>
-      <p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">
-        Affiche vos dernières publications Instagram sur le site. Configuration en une fois : jeton d'accès et identifiant du compte professionnel, obtenus via
-        <a href="https://developers.facebook.com/tools/explorer/" target="_blank" rel="noopener">Meta Graph API Explorer</a>
-        (compte Instagram déjà relié à une Page Facebook, requis par Meta). Le jeton expire tous les 60 jours environ — une alerte apparaît ici avant l'échéance.
-      </p>
-      <div id="instagram-statut" style="font-size:0.85rem; margin-bottom:1rem;"></div>
-      <div style="display:flex; gap:0.7rem; flex-wrap:wrap; align-items:center; margin-bottom:0.8rem;">
-        <input type="text" id="instagram-ig-user-id" placeholder="Identifiant du compte professionnel (ig-user-id)" style="flex:1; min-width:220px; padding:0.7rem 0.9rem; background:var(--anthracite, var(--noir)); border:1px solid var(--gris-clair, #444); color:#fff;">
-      </div>
-      <div style="display:flex; gap:0.7rem; flex-wrap:wrap; align-items:center;">
-        <input type="text" id="instagram-token" placeholder="Jeton d'accès (access token)" style="flex:1; min-width:220px; padding:0.7rem 0.9rem; background:var(--anthracite, var(--noir)); border:1px solid var(--gris-clair, #444); color:#fff;">
-        <button class="btn btn--principal" id="instagram-enregistrer-btn" type="button">Enregistrer</button>
-        <button class="btn" id="instagram-rafraichir-btn" type="button">Rafraîchir les publications</button>
-      </div>
-      <div id="instagram-msg" class="form-msg"></div>
-    </div>
-
-    <div class="liste-recente">
-      <div class="dossiers-entete">
-        <h2 style="margin:0;">Inscriptions mannequins</h2>
-        <span class="dossiers-compteur" id="inscriptions-compteur"></span>
-      </div>
-      <p style="background:rgba(207,59,82,0.12); border-left:3px solid var(--bordeaux-clair); padding:0.7rem 1rem; font-size:0.82rem; margin:0 0 1rem;">
+<h2 style="margin-bottom:1rem;">Vue d'ensemble</h2>
+<div class="stats-grille" id="stats-grille">Chargement des statistiques…</div><div class="ref-hero-row"><div class="db-hero" id="db-hero"><div class="db-hero-vide">Chargement…</div></div></div><div class="ref-core-grid"><div class="ref-core-graph"><div class="activite-carte">
+<h3>📈 Activité — 7 derniers jours</h3>
+<div class="activite-souslabel">Visites réelles, une personne distincte par page.</div>
+<div class="activite-svg-wrap" id="activite-barres">Chargement…</div>
+<div class="activite-souscartes" id="activite-souscartes"></div>
+</div></div><div class="ref-core-activity"><div>
+<h2 style="margin-bottom:0.8rem;">🕐 Dernières activités</h2>
+<div class="timeline-liste" id="dernieres-activites">Chargement…</div>
+</div></div><div class="ref-core-pending"><div class="a-traiter-bloc" style="margin-bottom:0;">
+<div class="a-traiter-titre">
+<h2>🔔 À traiter</h2>
+<span class="dossiers-compteur a-traiter" id="a-traiter-total"></span>
+</div>
+<div class="a-traiter-liste" id="a-traiter-liste">Chargement…</div>
+</div></div></div><div class="ref-quick-row"><div class="db-actions-rapides">
+<h3>Actions rapides</h3>
+<div class="db-actions-liste">
+<button class="db-action-btn" data-scroll="portail-nouveau-code" type="button">+ Ajouter un mannequin</button>
+<button class="db-action-btn" data-scroll="nouveau-projet-nom" type="button">+ Créer un casting</button>
+<a class="db-action-btn" href="actualites.html">+ Publier une actualité</a>
+<button class="db-action-btn" data-scroll="table-contacts" type="button">Voir les messages</button>
+<button class="db-action-btn pleine-largeur" data-scroll="instagram-statut" type="button">Paramètres</button>
+</div>
+</div></div><div class="ref-lower-grid"><div class="ref-card ref-registrations">
+<div class="dossiers-entete">
+<h2 style="margin:0;">Inscriptions mannequins</h2>
+<span class="dossiers-compteur" id="inscriptions-compteur"></span>
+</div>
+<p style="background:rgba(207,59,82,0.12); border-left:3px solid var(--bordeaux-clair); padding:0.7rem 1rem; font-size:0.82rem; margin:0 0 1rem;">
         ⚠️ La référence de paiement affichée est fournie par la personne — le site ne peut pas vérifier auprès de Wave qu'elle est authentique.
         Une même référence ne peut plus être réutilisée deux fois, mais <strong>avant de passer un dossier en "Payée"</strong>, recherchez toujours
         cette référence dans votre application Wave pour confirmer le montant et la date.
       </p>
-      <div class="filtre-pills" id="filtres-inscriptions"></div>
-      <div class="dossier-liste" id="liste-inscriptions"></div>
-      <button class="btn dossiers-plus" id="inscriptions-plus-btn" style="display:none;">Voir plus</button>
-    </div>
+<div class="filtre-pills" id="filtres-inscriptions"></div>
+<div class="dossier-liste" id="liste-inscriptions"></div>
+<button class="btn dossiers-plus" id="inscriptions-plus-btn" style="display:none;">Voir plus</button>
+</div><div class="ref-card ref-projects">
+<div class="dossiers-entete">
+<h2 style="margin:0;">Projets &amp; castings</h2>
+</div>
+<p style="font-size:0.85rem; color:var(--gris); margin:0.3rem 0 1rem;">Ajoutez ici les projets/castings précis pour lesquels les candidats peuvent postuler (proposés dans le formulaire "Postuler à un casting"). Désactivez un projet une fois terminé pour qu'il disparaisse du formulaire — les candidatures déjà reçues restent intactes.</p>
+<form id="form-nouveau-projet" style="display:flex; gap:0.6rem; margin-bottom:1rem; flex-wrap:wrap;">
+<input id="nouveau-projet-nom" placeholder="Nom du projet ou casting" required="" style="flex:1; min-width:200px;" type="text"/>
+<input id="nouveau-projet-description" placeholder="Brève description (facultatif, visible par les candidats)" style="flex:2; min-width:240px;" type="text"/>
+<button class="btn" type="submit">+ Ajouter</button>
+</form>
+<div class="form-msg" id="projets-msg"></div>
+<div id="liste-projets"></div>
+</div></div><div class="ref-card ref-contacts">
+<h2 style="margin-bottom:1rem;">Derniers messages de contact</h2>
+<table id="table-contacts"><thead><tr><th>Nom</th><th>Type</th><th>Téléphone</th><th>Date</th></tr></thead><tbody></tbody></table>
+</div>
+<!-- ===== AJOUT Étape 14 + 16 : "À traiter" et activité côte à côte ===== -->
 
-    <div class="liste-recente">
-      <h2 style="margin-bottom:1rem;">Derniers messages de contact</h2>
-      <table id="table-contacts"><thead><tr><th>Nom</th><th>Type</th><th>Téléphone</th><th>Date</th></tr></thead><tbody></tbody></table>
-    </div>
 
-    <div class="liste-recente">
-      <h2 style="margin-bottom:0.3rem;">Classement des mannequins — visites réelles</h2>
-      <p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Personnes distinctes ayant consulté chaque fiche sur les <strong>7 derniers jours</strong> (pas les rechargements de page). Top 10 affiché.</p>
-      <div id="classement-mannequins" style="display:flex; flex-direction:column; gap:0.5rem;"></div>
-    </div>
-
-    <div class="liste-recente">
-      <h2 style="margin-bottom:1rem;">Mannequin à la une</h2>
-      <p style="color:var(--gris); font-size:0.85rem; margin-top:-0.6rem; margin-bottom:1rem;">Ce mannequin sera mis en avant sur la page d'accueil du site. Sans sélection, une photo aléatoire s'affiche à la place.</p>
-      <div style="display:flex; gap:0.8rem; flex-wrap:wrap; align-items:center;">
-        <select id="tb-select-vedette" style="max-width:320px;"><option value="">Chargement…</option></select>
-        <button class="btn" id="tb-definir-vedette-btn">Définir comme mannequin à la une</button>
-        <button class="btn" id="tb-retirer-vedette-btn" style="color:var(--gris); border-color:var(--gris-clair);">Retirer la mise en avant</button>
+<div class="liste-recente">
+<details id="validation-details">
+<summary class="dossiers-entete" style="cursor:pointer; list-style:none;">
+<h2 style="margin:0;">✅ Validations en attente</h2>
+<span class="dossiers-compteur" id="validation-compteur"></span>
+</summary>
+<p style="font-size:0.85rem; color:var(--gris); margin:0.6rem 0 1rem;">Chaque fiche (mineur ou majeur) doit être validée ici avant sa toute première publication sur Le Book — vérifiez la qualité des photos et la cohérence des informations avant d'approuver. Une fois validée, le mannequin gère ensuite sa fiche en autonomie.</p>
+<div id="liste-validations">Ouvrez cette section pour charger les fiches en attente.</div>
+</details>
+</div>
+<!-- ===== AJOUT Étape 20 : Drive / transferts — structure honnête, en attente du fichier d'intégration Drive ===== -->
+<div class="liste-recente">
+<h2 style="margin-bottom:0.3rem;">📁 Drive / transferts</h2>
+<p style="font-size:0.85rem; color:var(--gris); margin-top:0; margin-bottom:1rem;">Suivi des photos envoyées. Le détail par photo (transférée / en attente / erreur) nécessite le fichier d'intégration Google Drive — non fourni pour le moment, voir l'avertissement ci-dessous.</p>
+<div class="drive-grille" id="drive-grille">Chargement…</div>
+<div class="drive-avertissement">
+        ⚠️ Ce bloc affiche pour l'instant uniquement le nombre de photos déjà enregistrées côté Supabase (mannequins publiés dans THE BOOK). Le suivi détaillé des photos de candidatures/inscriptions envoyées vers Google Drive (transfert réussi / en attente / erreur, comme demandé à l'Étape 20 du cahier des charges) ne peut pas être branché tant que le fichier gérant l'envoi vers Drive n'a pas été fourni — aucune donnée n'est inventée ici en attendant.
       </div>
-      <div id="tb-vedette-actuelle" style="margin-top:0.8rem; font-size:0.85rem; color:var(--gris);"></div>
-      <div id="tb-vedette-msg" class="form-msg"></div>
-    </div>
-
-    <div class="liste-recente">
-      <h2 style="margin-bottom:0.3rem;">Bandeau d'information (bande défilante de l'accueil)</h2>
-      <p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Remplace le texte par défaut de la bande sous le hero de l'accueil par un message important (casting ouvert, événement, annonce...). Désactive-le pour revenir automatiquement au texte par défaut.</p>
-
-      <div class="form-champ"><label for="bandeau-texte">Message à afficher</label><input type="text" id="bandeau-texte" placeholder="ex : Casting ouvert jusqu'au 30 juin — postulez maintenant"></div>
-      <div style="display:flex; gap:0.8rem; flex-wrap:wrap; align-items:center;">
-        <button class="btn btn--principal" id="bandeau-enregistrer-btn">Enregistrer le message</button>
-        <button class="btn" id="bandeau-actif-btn" data-actif="0">Activer</button>
-      </div>
-      <div id="bandeau-etat" style="margin-top:0.8rem; font-size:0.85rem; color:var(--gris);"></div>
-      <div id="bandeau-msg" class="form-msg"></div>
-    </div>
-
-    <div class="liste-recente">
-      <h2 style="margin-bottom:0.3rem;">Mot du fondateur (page d'accueil)</h2>
-      <p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Photo et message affichés sur l'accueil, juste après la section « Direction artistique ».</p>
-
-      <div style="display:flex; gap:1.2rem; flex-wrap:wrap; align-items:flex-start; margin-bottom:1.2rem;">
-        <img id="mr-photo-apercu" src="" alt="" style="display:none; width:110px; height:146px; object-fit:cover; border-radius:2px;">
-        <div>
-          <p style="color:var(--gris); font-size:0.8rem; margin:0 0 0.5rem;">1. Choisissez une photo &nbsp;→&nbsp; 2. Cliquez sur « Enregistrer la photo » ci-dessous.</p>
-          <input type="file" id="mr-photo-input" accept="image/*" style="display:block; margin-bottom:0.6rem;">
-          <button class="btn btn--principal" id="mr-photo-btn">Enregistrer la photo</button>
-        </div>
-      </div>
-
-      <div class="form-champ"><label for="mr-nom">Nom affiché</label><input type="text" id="mr-nom" placeholder="Maître Akesse"></div>
-      <div class="form-champ"><label for="mr-titre">Fonction affichée</label><input type="text" id="mr-titre" placeholder="ex : Fondateur"></div>
-      <div class="form-champ"><label for="mr-message">Message</label><textarea id="mr-message" rows="6"></textarea></div>
-      <button class="btn btn--principal" id="mr-enregistrer-btn">Enregistrer le mot du fondateur</button>
-      <div id="mr-msg" class="form-msg"></div>
-    </div>
-
-    <div style="margin:2.5rem 0;">
-      <a href="actualites.html" class="btn btn--principal" style="margin-right:0.8rem;">Publier une actualité</a>
-      <button class="btn" id="tb-logout-btn">Se déconnecter</button>
-    </div>
-
-    </div> <!-- /.db-main -->
-  </div> <!-- /.db-shell -->
-</section>
-
-<!-- Fiche détaillée d'un dossier (candidature, inscription ou demande recruteur), partagée entre les trois listes -->
-<div class="modal-overlay" id="modal-dossier">
-  <div class="modal-fiche">
-    <button class="modal-fermer" id="modal-dossier-fermer" aria-label="Fermer">✕</button>
-    <h3 id="mf-titre">—</h3>
-    <div class="mf-sous-titre" id="mf-sous-titre"></div>
-    <div class="mf-champs" id="mf-champs"></div>
-    <div class="mf-message" id="mf-message" style="display:none;"></div>
-    <div class="mf-photos" id="mf-photos"></div>
-    <div id="mf-mannequins" style="display:none;"></div>
-    <div class="mf-statut-ligne">
-      <label for="mf-statut-select" style="font-size:0.8rem; color:var(--gris);">Statut :</label>
-      <select id="mf-statut-select"></select>
-      <button id="mf-supprimer-dossier-btn" class="btn" style="margin-left:auto; color:var(--bordeaux); border-color:var(--bordeaux);">🗑 Supprimer ce dossier</button>
-    </div>
-  </div>
+</div>
+<div class="liste-recente">
+<h2 style="margin-bottom:0.3rem;">🖼️ Miniatures des photos</h2>
+<p style="font-size:0.85rem; color:var(--gris); margin-top:0; margin-bottom:1rem;">Les photos envoyées depuis l'espace mannequin génèrent automatiquement leur propre miniature légère. Cet outil rattrape uniquement les photos déjà en ligne AVANT la mise en place de ce système, pour réduire la bande passante consommée par Le Book (visible dans Supabase → Usage → Cached Egress).</p>
+<button class="btn btn--principal" id="miniatures-generer-btn" type="button">Générer les miniatures manquantes</button>
+<div class="form-msg" id="miniatures-msg"></div>
+</div>
+<div class="liste-recente">
+<div class="dossiers-entete">
+<h2 style="margin:0;">🔴 Erreurs réelles du site (7 derniers jours)</h2>
+<span class="dossiers-compteur" id="erreurs-compteur"></span>
+</div>
+<p style="font-size:0.85rem; color:var(--gris); margin:0.3rem 0 1rem;">Chaque erreur JavaScript survenue chez un vrai visiteur (pas une relecture de code) est enregistrée ici automatiquement. Une liste vide est bon signe.</p>
+<div id="liste-erreurs"></div>
+<button class="btn" id="erreurs-tout-effacer-btn" style="margin-top:0.8rem; display:none; color:var(--gris); border-color:var(--gris-clair);">Tout marquer comme vu (effacer le journal)</button>
 </div>
 
-<footer class="site-footer">
-  <div class="container">
-    <div class="footer-bas">
-      <span>© <span id="an"></span> Maître Akesse Model Management</span>
-      <span>Abidjan, Côte d'Ivoire</span>
-    </div>
-  </div>
-</footer>
+<div class="liste-recente">
+<div class="dossiers-entete">
+<h2 style="margin:0;">Candidatures</h2>
+<span class="dossiers-compteur" id="candidatures-compteur"></span>
+</div>
+<div id="resume-candidatures" style="font-size:0.85rem; color:var(--gris); margin-bottom:0.8rem;"></div>
+<div class="filtre-pills" id="filtres-candidatures"></div>
+<div class="dossier-liste" id="liste-candidatures"></div>
+<button class="btn dossiers-plus" id="candidatures-plus-btn" style="display:none;">Voir plus</button>
+</div>
+<div class="liste-recente">
+<div class="dossiers-entete">
+<h2 style="margin:0;">Demandes recruteurs</h2>
+<span class="dossiers-compteur" id="recruteurs-compteur"></span>
+</div>
+<div class="filtre-pills" id="filtres-recruteurs"></div>
+<div class="dossier-liste" id="liste-recruteurs"></div>
+<button class="btn dossiers-plus" id="recruteurs-plus-btn" style="display:none;">Voir plus</button>
+</div>
+<div class="liste-recente">
+<h2 style="margin-bottom:0.3rem;">Codes d'inscription</h2>
+<p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Chaque code ne peut servir qu'une seule fois. Générez-en un et transmettez-le (WhatsApp, SMS...) à la personne que vous invitez à s'inscrire.</p>
+<button class="btn btn--principal" id="generer-code-btn">+ Générer un nouveau code</button>
+<div id="nouveau-code-affiche" style="display:none; margin-top:1rem; padding:1rem; background:var(--anthracite, var(--noir)); display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+<span id="nouveau-code-texte" style="font-family:var(--display); font-size:1.4rem; color:var(--titre-clair, #fff); letter-spacing:0.08em;"></span>
+<button class="btn" id="copier-code-btn">Copier</button>
+</div>
+<div class="form-msg" id="codes-msg"></div>
+<div class="dossier-liste" id="liste-codes" style="margin-top:1.5rem;"></div>
+<details style="margin-top:1rem;">
+<summary style="cursor:pointer; font-size:0.85rem; color:var(--gris);">Anciens codes déjà utilisés (<span id="anciens-codes-compteur">0</span>)</summary>
+<div class="dossier-liste" id="liste-anciens-codes" style="margin-top:1rem;"></div>
+</details>
+</div>
+<div class="liste-recente">
+<h2 style="margin-bottom:0.3rem;">Code permanent — "Créer mon compte" (espace mannequin)</h2>
+<p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Contrairement aux codes d'inscription ci-dessus, celui-ci est unique et permanent : le même code sert à tous les mannequins qui créent leur compte dans l'espace mannequin, jusqu'à ce que vous le changiez ici. Il n'est jamais stocké en clair — en cas de doute qu'il ait trop circulé, changez-le simplement.</p>
+<div style="display:flex; gap:0.7rem; flex-wrap:wrap; align-items:center;">
+<input id="portail-nouveau-code" placeholder="Nouveau code (6 caractères minimum)" style="flex:1; min-width:220px; padding:0.7rem 0.9rem; background:var(--anthracite, var(--noir)); border:1px solid var(--gris-clair, #444); color:#fff;" type="text"/>
+<button class="btn" id="portail-generer-btn" type="button">Générer aléatoirement</button>
+<button class="btn btn--principal" id="portail-definir-btn" type="button">Définir ce code</button>
+</div>
+<div class="form-msg" id="portail-code-msg"></div>
+</div>
+<div class="liste-recente">
+<h2 style="margin-bottom:0.3rem;">📷 Flux Instagram (accueil)</h2>
+<p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">
+        Affiche vos dernières publications Instagram sur le site. Configuration en une fois : jeton d'accès et identifiant du compte professionnel, obtenus via
+        <a href="https://developers.facebook.com/tools/explorer/" rel="noopener" target="_blank">Meta Graph API Explorer</a>
+        (compte Instagram déjà relié à une Page Facebook, requis par Meta). Le jeton expire tous les 60 jours environ — une alerte apparaît ici avant l'échéance.
+      </p>
+<div id="instagram-statut" style="font-size:0.85rem; margin-bottom:1rem;"></div>
+<div style="display:flex; gap:0.7rem; flex-wrap:wrap; align-items:center; margin-bottom:0.8rem;">
+<input id="instagram-ig-user-id" placeholder="Identifiant du compte professionnel (ig-user-id)" style="flex:1; min-width:220px; padding:0.7rem 0.9rem; background:var(--anthracite, var(--noir)); border:1px solid var(--gris-clair, #444); color:#fff;" type="text"/>
+</div>
+<div style="display:flex; gap:0.7rem; flex-wrap:wrap; align-items:center;">
+<input id="instagram-token" placeholder="Jeton d'accès (access token)" style="flex:1; min-width:220px; padding:0.7rem 0.9rem; background:var(--anthracite, var(--noir)); border:1px solid var(--gris-clair, #444); color:#fff;" type="text"/>
+<button class="btn btn--principal" id="instagram-enregistrer-btn" type="button">Enregistrer</button>
+<button class="btn" id="instagram-rafraichir-btn" type="button">Rafraîchir les publications</button>
+</div>
+<div class="form-msg" id="instagram-msg"></div>
+</div>
 
+
+<div class="liste-recente">
+<h2 style="margin-bottom:0.3rem;">Classement des mannequins — visites réelles</h2>
+<p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Personnes distinctes ayant consulté chaque fiche sur les <strong>7 derniers jours</strong> (pas les rechargements de page). Top 10 affiché.</p>
+<div id="classement-mannequins" style="display:flex; flex-direction:column; gap:0.5rem;"></div>
+</div>
+<div class="liste-recente">
+<h2 style="margin-bottom:1rem;">Mannequin à la une</h2>
+<p style="color:var(--gris); font-size:0.85rem; margin-top:-0.6rem; margin-bottom:1rem;">Ce mannequin sera mis en avant sur la page d'accueil du site. Sans sélection, une photo aléatoire s'affiche à la place.</p>
+<div style="display:flex; gap:0.8rem; flex-wrap:wrap; align-items:center;">
+<select id="tb-select-vedette" style="max-width:320px;"><option value="">Chargement…</option></select>
+<button class="btn" id="tb-definir-vedette-btn">Définir comme mannequin à la une</button>
+<button class="btn" id="tb-retirer-vedette-btn" style="color:var(--gris); border-color:var(--gris-clair);">Retirer la mise en avant</button>
+</div>
+<div id="tb-vedette-actuelle" style="margin-top:0.8rem; font-size:0.85rem; color:var(--gris);"></div>
+<div class="form-msg" id="tb-vedette-msg"></div>
+</div>
+<div class="liste-recente">
+<h2 style="margin-bottom:0.3rem;">Bandeau d'information (bande défilante de l'accueil)</h2>
+<p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Remplace le texte par défaut de la bande sous le hero de l'accueil par un message important (casting ouvert, événement, annonce...). Désactive-le pour revenir automatiquement au texte par défaut.</p>
+<div class="form-champ"><label for="bandeau-texte">Message à afficher</label><input id="bandeau-texte" placeholder="ex : Casting ouvert jusqu'au 30 juin — postulez maintenant" type="text"/></div>
+<div style="display:flex; gap:0.8rem; flex-wrap:wrap; align-items:center;">
+<button class="btn btn--principal" id="bandeau-enregistrer-btn">Enregistrer le message</button>
+<button class="btn" data-actif="0" id="bandeau-actif-btn">Activer</button>
+</div>
+<div id="bandeau-etat" style="margin-top:0.8rem; font-size:0.85rem; color:var(--gris);"></div>
+<div class="form-msg" id="bandeau-msg"></div>
+</div>
+<div class="liste-recente">
+<h2 style="margin-bottom:0.3rem;">Mot du fondateur (page d'accueil)</h2>
+<p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Photo et message affichés sur l'accueil, juste après la section « Direction artistique ».</p>
+<div style="display:flex; gap:1.2rem; flex-wrap:wrap; align-items:flex-start; margin-bottom:1.2rem;">
+<img alt="" id="mr-photo-apercu" src="" style="display:none; width:110px; height:146px; object-fit:cover; border-radius:2px;"/>
+<div>
+<p style="color:var(--gris); font-size:0.8rem; margin:0 0 0.5rem;">1. Choisissez une photo  →  2. Cliquez sur « Enregistrer la photo » ci-dessous.</p>
+<input accept="image/*" id="mr-photo-input" style="display:block; margin-bottom:0.6rem;" type="file"/>
+<button class="btn btn--principal" id="mr-photo-btn">Enregistrer la photo</button>
+</div>
+</div>
+<div class="form-champ"><label for="mr-nom">Nom affiché</label><input id="mr-nom" placeholder="Maître Akesse" type="text"/></div>
+<div class="form-champ"><label for="mr-titre">Fonction affichée</label><input id="mr-titre" placeholder="ex : Fondateur" type="text"/></div>
+<div class="form-champ"><label for="mr-message">Message</label><textarea id="mr-message" rows="6"></textarea></div>
+<button class="btn btn--principal" id="mr-enregistrer-btn">Enregistrer le mot du fondateur</button>
+<div class="form-msg" id="mr-msg"></div>
+</div>
+<div style="margin:2.5rem 0;">
+<a class="btn btn--principal" href="actualites.html" style="margin-right:0.8rem;">Publier une actualité</a>
+<button class="btn" id="tb-logout-btn">Se déconnecter</button>
+</div>
+</div> <!-- /.db-main -->
+</div> <!-- /.db-shell -->
+</section>
+<!-- Fiche détaillée d'un dossier (candidature, inscription ou demande recruteur), partagée entre les trois listes -->
+<div class="modal-overlay" id="modal-dossier">
+<div class="modal-fiche">
+<button aria-label="Fermer" class="modal-fermer" id="modal-dossier-fermer">✕</button>
+<h3 id="mf-titre">—</h3>
+<div class="mf-sous-titre" id="mf-sous-titre"></div>
+<div class="mf-champs" id="mf-champs"></div>
+<div class="mf-message" id="mf-message" style="display:none;"></div>
+<div class="mf-photos" id="mf-photos"></div>
+<div id="mf-mannequins" style="display:none;"></div>
+<div class="mf-statut-ligne">
+<label for="mf-statut-select" style="font-size:0.8rem; color:var(--gris);">Statut :</label>
+<select id="mf-statut-select"></select>
+<button class="btn" id="mf-supprimer-dossier-btn" style="margin-left:auto; color:var(--bordeaux); border-color:var(--bordeaux);">🗑 Supprimer ce dossier</button>
+</div>
+</div>
+</div>
+<footer class="site-footer">
+<div class="container">
+<div class="footer-bas">
+<span>© <span id="an"></span> Maître Akesse Model Management</span>
+<span>Abidjan, Côte d'Ivoire</span>
+</div>
+</div>
+</footer>
 <script>document.getElementById('an').textContent = new Date().getFullYear();</script>
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
@@ -1411,11 +1457,13 @@ async function chargerHeroVedette() {
   const urlPhoto = photo ? (photo.url_miniature || photo.url) : '';
 
   conteneur.innerHTML = `
-    ${urlPhoto ? `<img src="${echapperHtml(urlPhoto)}" alt="${echapperHtml(vedette.full_name || '')}">` : ''}
+    ${urlPhoto ? `<img src="${echapperHtml(urlPhoto)}" alt="${echapperHtml(vedette.full_name || '')}" loading="eager">` : ''}
     <div class="db-hero-contenu">
-      <div class="db-hero-eyebrow">Mannequin à la une</div>
+      <div class="db-hero-eyebrow">MANNEQUIN À LA UNE <span></span></div>
       <div class="db-hero-nom">${echapperHtml(vedette.full_name || 'Mannequin')}</div>
-      <div class="db-hero-note">${echapperHtml(vedette.city || '')} · Actuellement affichée sur la page d'accueil du site.</div>
+      <div class="db-hero-note">${echapperHtml(vedette.city || '')}</div>
+      <div class="db-hero-signature">Une présence. Une image. Une identité.</div>
+      <div class="db-hero-footer"><span>ACTUELLEMENT MIS EN AVANT SUR L'ACCUEIL</span><i></i></div>
     </div>
   `;
 }
@@ -1476,16 +1524,15 @@ async function chargerStatistiques() {
   ]);
 
   document.getElementById('stats-grille').innerHTML = `
-    <div class="stat-carte"><div class="chiffre">${mannequins}</div><div class="label">Mannequins publiés</div></div>
-    <div class="stat-carte"><div class="chiffre">${candidatures}</div><div class="label">Candidatures reçues</div></div>
-    <div class="stat-carte"><div class="chiffre">${inscriptions}</div><div class="label">Inscriptions mannequin</div></div>
-    <div class="stat-carte"><div class="chiffre">${recruteurs}</div><div class="label">Demandes recruteurs</div></div>
-    <div class="stat-carte"><div class="chiffre">${contacts}</div><div class="label">Messages de contact</div></div>
-    <div class="stat-carte"><div class="chiffre">${actus}</div><div class="label">Actualités publiées</div></div>
-    <div class="stat-carte"><div class="chiffre">${photos}</div><div class="label">Photos envoyées (book)</div></div>
-    <div class="stat-carte"><div class="chiffre">${visitesAujourdhui}</div><div class="label">Visites réelles — aujourd'hui</div></div>
-    <div class="stat-carte"><div class="chiffre">${visites7j}</div><div class="label">Visites réelles — 7 derniers jours</div></div>
-    <div class="stat-carte"><div class="chiffre">${visitesTotal}</div><div class="label">Visites réelles — total</div></div>
+    <div class="stat-carte stat-primaire accent"><div class="stat-icone">♙</div><div class="chiffre">${mannequins}</div><div class="label">Mannequins</div><div class="micro">dans THE BOOK</div></div>
+    <div class="stat-carte stat-primaire"><div class="stat-icone">♙</div><div class="chiffre">${inscriptions}</div><div class="label">Inscriptions</div><div class="micro">nouvelles entrées</div></div>
+    <div class="stat-carte stat-primaire"><div class="stat-icone">◈</div><div class="chiffre">${candidatures}</div><div class="label">Castings</div><div class="micro">candidatures reçues</div></div>
+    <div class="stat-carte stat-primaire"><div class="stat-icone">✉</div><div class="chiffre">${contacts}</div><div class="label">Messages</div><div class="micro">à consulter</div></div>
+    <div class="stat-carte stat-primaire"><div class="stat-icone">⌂</div><div class="chiffre">${recruteurs}</div><div class="label">Recruteurs</div><div class="micro">demandes reçues</div></div>
+    <div class="stat-carte stat-primaire"><div class="stat-icone">◷</div><div class="chiffre">${visites7j}</div><div class="label">Visites</div><div class="micro">7 derniers jours</div></div>
+    <div class="stats-secondaires">
+      <span><b>${actus}</b> actualités publiées</span><span><b>${photos}</b> photos du Book</span><span><b>${visitesAujourdhui}</b> visites aujourd'hui</span><span><b>${visitesTotal}</b> visites au total</span>
+    </div>
   `;
 
   chargerErreurs();
