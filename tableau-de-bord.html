@@ -1627,6 +1627,247 @@ body.zone-admin{background:radial-gradient(850px 500px at 65% -15%,rgba(112,13,4
 }
 </style>
 
+
+<style id="ma2m-final-reference-v3">
+/* ==========================================================
+   MA2M — V3 FINALE DE LA MAQUETTE
+   Correction ciblée : sidebar / logo / top 10 / récompenses.
+   Les données et IDs métier restent inchangés.
+   ========================================================== */
+
+/* 01 — SIDEBAR : aucune superposition, chaque zone garde sa place */
+.db-sidebar{
+  display:flex!important;
+  flex-direction:column!important;
+  height:100vh!important;
+  min-height:100vh!important;
+  overflow:hidden!important;
+  padding-bottom:12px!important;
+}
+.db-sidebar-logo{
+  flex:0 0 auto!important;
+  position:relative!important;
+  z-index:5!important;
+}
+.db-sidebar-logo img{
+  display:block!important;
+  width:auto!important;
+  max-width:100%!important;
+  object-fit:contain!important;
+}
+/* Le logo-header.png contient déjà l'identité MAÎTRE AKESSE.
+   Le span ajouté à côté créait le doublon visible dans la capture. */
+.db-sidebar-logo .logo-text-header{
+  display:none!important;
+}
+.db-nav{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  padding-right:3px!important;
+  scrollbar-width:thin!important;
+}
+.db-nav-item{
+  flex:0 0 auto!important;
+  position:relative!important;
+  z-index:3!important;
+}
+.db-sidebar-bas{
+  position:static!important;
+  left:auto!important;right:auto!important;bottom:auto!important;
+  flex:0 0 auto!important;
+  margin:8px 0 0!important;
+  padding:10px 7px 0!important;
+  border-top:1px solid rgba(213,173,98,.20)!important;
+  z-index:8!important;
+  background:#050608!important;
+}
+.db-sidebar-bas:before,
+.db-sidebar-bas:after{
+  display:block!important;
+  position:static!important;
+}
+.db-sidebar-bas .btn{
+  position:relative!important;
+  z-index:9!important;
+  pointer-events:auto!important;
+}
+
+/* 02 — TOP 10 : photo + classement + 3 récompenses */
+#classement-mannequins{
+  display:flex!important;
+  flex-direction:column!important;
+  gap:8px!important;
+}
+#classement-mannequins .top10-item{
+  display:grid!important;
+  grid-template-columns:40px 48px minmax(150px,1.25fr) minmax(110px,1fr) 44px!important;
+  align-items:center!important;
+  gap:11px!important;
+  width:100%!important;
+  min-height:64px!important;
+  padding:8px 12px 8px 9px!important;
+  position:relative!important;
+  overflow:hidden!important;
+  border-radius:8px!important;
+  background:linear-gradient(100deg,#0e1216 0%,#080a0d 100%)!important;
+  border:1px solid rgba(255,255,255,.09)!important;
+  border-left:2px solid rgba(200,31,78,.42)!important;
+}
+#classement-mannequins .top10-medal{
+  width:38px!important;height:38px!important;
+  min-width:38px!important;
+  display:grid!important;place-items:center!important;
+  border-radius:50%!important;
+  color:#eee8e1!important;
+  border:1px solid rgba(213,173,98,.38)!important;
+  background:radial-gradient(circle at 35% 25%,#33363a,#0a0c0e 74%)!important;
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.025),0 5px 14px rgba(0,0,0,.35)!important;
+}
+#classement-mannequins .top10-medal.rank-1{
+  color:#fff!important;
+  border:2px solid #d7ae63!important;
+  background:radial-gradient(circle at 35% 25%,#bd174b,#570a22 72%)!important;
+  box-shadow:0 0 0 3px rgba(213,173,98,.08),0 0 22px rgba(200,31,78,.28)!important;
+}
+#classement-mannequins .top10-medal.rank-2{
+  border:2px solid #c4c7ca!important;
+  background:radial-gradient(circle at 35% 25%,#646a70,#15181b 72%)!important;
+}
+#classement-mannequins .top10-medal.rank-3{
+  border:2px solid #b47b54!important;
+  background:radial-gradient(circle at 35% 25%,#714936,#1a100c 72%)!important;
+}
+#classement-mannequins .top10-photo{
+  width:48px!important;height:48px!important;
+  min-width:48px!important;
+  display:block!important;
+  border-radius:50%!important;
+  object-fit:cover!important;
+  object-position:center top!important;
+  border:1px solid rgba(213,173,98,.28)!important;
+  background:#15191d!important;
+}
+#classement-mannequins .top10-info{
+  min-width:0!important;
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+  gap:4px!important;
+}
+#classement-mannequins .top10-name{
+  min-width:0!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+  color:#f2eee9!important;
+  font-size:.91rem!important;
+  line-height:1.15!important;
+}
+#classement-mannequins .top10-award{
+  align-self:flex-start!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:5px!important;
+  padding:2px 8px!important;
+  border-radius:999px!important;
+  font-size:.56rem!important;
+  font-weight:700!important;
+  letter-spacing:.10em!important;
+  text-transform:uppercase!important;
+  white-space:nowrap!important;
+}
+#classement-mannequins .top10-award.award-1{
+  color:#ffe4a7!important;
+  border:1px solid rgba(213,173,98,.60)!important;
+  background:rgba(213,173,98,.10)!important;
+}
+#classement-mannequins .top10-award.award-2{
+  color:#e0e3e6!important;
+  border:1px solid rgba(196,199,202,.42)!important;
+  background:rgba(196,199,202,.08)!important;
+}
+#classement-mannequins .top10-award.award-3{
+  color:#e3b18e!important;
+  border:1px solid rgba(180,123,84,.45)!important;
+  background:rgba(180,123,84,.08)!important;
+}
+#classement-mannequins .top10-bar{
+  width:100%!important;
+  height:7px!important;
+  background:rgba(255,255,255,.075)!important;
+  border-radius:99px!important;
+  overflow:hidden!important;
+}
+#classement-mannequins .top10-bar>span{
+  display:block!important;height:100%!important;
+  background:linear-gradient(90deg,#9d1039,#e21f58)!important;
+  border-radius:99px!important;
+}
+#classement-mannequins .top10-visites{
+  color:#f5f1ec!important;
+  font-weight:700!important;
+  font-size:.90rem!important;
+  text-align:right!important;
+}
+
+/* 03 — La zone des trois récompenses est explicitement visible */
+#classement-mannequins .top10-item:nth-child(-n+3){
+  border-left-color:rgba(213,173,98,.70)!important;
+}
+#classement-mannequins .top10-item:nth-child(-n+3) .top10-photo{
+  border-color:rgba(213,173,98,.42)!important;
+}
+
+/* 04 — La zone "validations mannequins" conserve les visages */
+#validation-details,
+#validation-details .dossiers-grille,
+#validation-details .validation-card{
+  min-width:0!important;
+}
+#validation-details img{
+  display:block!important;
+  object-fit:cover!important;
+}
+
+/* 05 — mobile/tablette : le classement reste lisible et sans écrasement */
+@media(max-width:900px){
+  .db-sidebar{
+    overflow:hidden!important;
+  }
+  .db-nav{
+    overflow-y:auto!important;
+  }
+  #classement-mannequins .top10-item{
+    grid-template-columns:36px 44px minmax(0,1fr) 92px 34px!important;
+    gap:8px!important;
+    min-height:60px!important;
+  }
+  #classement-mannequins .top10-photo{
+    width:44px!important;height:44px!important;min-width:44px!important;
+  }
+}
+@media(max-width:560px){
+  #classement-mannequins .top10-item{
+    grid-template-columns:34px 42px minmax(0,1fr) 66px 30px!important;
+    gap:6px!important;
+    padding:7px!important;
+  }
+  #classement-mannequins .top10-photo{
+    width:42px!important;height:42px!important;min-width:42px!important;
+  }
+  #classement-mannequins .top10-name{font-size:.73rem!important}
+  #classement-mannequins .top10-award{
+    font-size:.48rem!important;
+    padding:2px 5px!important;
+    letter-spacing:.06em!important;
+  }
+  #classement-mannequins .top10-bar{height:6px!important}
+  #classement-mannequins .top10-visites{font-size:.76rem!important}
+}
+</style>
+
 </head>
 <body class="zone-admin">
 <script>
@@ -3654,6 +3895,98 @@ initSidebarNav();
   // On relance après initialisation si le conteneur est présent.
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>window.chargerClassementMannequins(),50));
   else setTimeout(()=>window.chargerClassementMannequins(),50);
+})();
+</script>
+
+
+<script id="ma2m-final-reference-v3-js">
+/* ===== MA2M V3 — Top 10 réel + visages + récompenses 1/2/3 ===== */
+(function(){
+  function esc(v){
+    if(window.echapperHtml) return window.echapperHtml(v);
+    return String(v ?? '').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));
+  }
+
+  async function renderTop10V3(){
+    const conteneur=document.getElementById('classement-mannequins');
+    if(!conteneur || typeof sb==='undefined') return;
+
+    const depuis7j=new Date(Date.now()-7*24*60*60*1000).toISOString();
+
+    try{
+      const {data:classement,error}=await sb.rpc('stats_classement_mannequins',{depuis:depuis7j});
+
+      if(error || !classement || !classement.length){
+        conteneur.innerHTML='<p style="color:var(--gris);font-size:.85rem;">Pas encore assez de visites enregistrées sur les 7 derniers jours.</p>';
+        return;
+      }
+
+      const top10=classement.slice(0,10);
+      const ids=top10.map(c=>c.model_id);
+
+      const [{data:profils},{data:photos}]=await Promise.all([
+        sb.from('model_profiles').select('id,full_name').in('id',ids),
+        sb.from('model_photos').select('model_id,url_miniature,url,created_at').in('model_id',ids).order('created_at',{ascending:true})
+      ]);
+
+      const noms={},photosParId={};
+      (profils||[]).forEach(p=>noms[p.id]=p.full_name);
+      (photos||[]).forEach(p=>{
+        if(!photosParId[p.model_id]) photosParId[p.model_id]=p.url_miniature||p.url||'';
+      });
+
+      const maxVisites=Number(top10[0].nb_visites)||1;
+
+      conteneur.innerHTML=top10.map((c,i)=>{
+        const rang=i+1;
+        const photo=photosParId[c.model_id]||'';
+        const nom=esc(noms[c.model_id]||'Mannequin');
+        const visites=Number(c.nb_visites)||0;
+        const largeur=Math.max(4,(visites/maxVisites)*100);
+
+        let award='';
+        if(rang===1) award='<span class="top10-award award-1">✦ 1er PRIX</span>';
+        if(rang===2) award='<span class="top10-award award-2">✦ 2e PRIX</span>';
+        if(rang===3) award='<span class="top10-award award-3">✦ 3e PRIX</span>';
+
+        const photoHtml=photo
+          ? `<img class="top10-photo" src="${esc(photo)}" alt="${nom}" loading="lazy" onerror="this.onerror=null;this.style.visibility='hidden';">`
+          : `<span class="top10-photo" aria-hidden="true" style="display:grid;place-items:center;color:#777f86;">MA</span>`;
+
+        return `
+          <div class="top10-item">
+            <span class="top10-medal rank-${rang<=3?rang:4}" aria-label="Classement ${rang}">${rang}</span>
+            ${photoHtml}
+            <span class="top10-info">
+              <span class="top10-name">${nom}</span>
+              ${award}
+            </span>
+            <span class="top10-bar" aria-hidden="true"><span style="width:${largeur}%"></span></span>
+            <span class="top10-visites">${visites}</span>
+          </div>`;
+      }).join('');
+
+      if(classement.length>10){
+        conteneur.innerHTML += `<p style="color:var(--gris);font-size:.78rem;margin-top:.4rem;">+ ${classement.length-10} autre(s) mannequin(s) avec des visites enregistrées.</p>`;
+      }
+    }catch(e){
+      console.error('Top 10 V3:',e);
+      conteneur.innerHTML='<p style="color:var(--gris);font-size:.85rem;">Classement momentanément indisponible.</p>';
+    }
+  }
+
+  function cleanSidebarLogo(){
+    const s=document.querySelector('.db-sidebar-logo .logo-text-header');
+    if(s) s.remove();
+  }
+
+  function initV3(){
+    cleanSidebarLogo();
+    setTimeout(renderTop10V3,80);
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',initV3);
+  else initV3();
 })();
 </script>
 
