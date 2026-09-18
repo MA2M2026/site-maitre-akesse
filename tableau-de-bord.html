@@ -723,6 +723,558 @@ body.zone-admin .db-shell{min-height:100vh;background:transparent}
 <meta content="#1e1d1c" name="theme-color"/>
 <link href="icons/apple-touch-icon.png" rel="apple-touch-icon"/>
 <link href="icons/favicon-32.png" rel="icon" sizes="32x32" type="image/png"/>
+
+<style id="ma2m-responsive-final-fix">
+/* ============================================================
+   MA2M — CORRECTION RESPONSIVE FINALE
+   La version premium précédente redéfinissait .db-sidebar après
+   les media queries : position:relative reprenait le dessus et
+   la sidebar restait dans le flux sur tablette/mobile.
+   Ce bloc est volontairement placé EN DERNIER.
+   ============================================================ */
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+.db-shell {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.db-main {
+  min-width: 0;
+  flex: 1 1 auto;
+  box-sizing: border-box;
+}
+.db-mobile-menu,
+.db-mobile-overlay {
+  display: none;
+}
+
+@media (max-width: 1100px) {
+  .db-shell { position: relative; }
+
+  .db-sidebar {
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    width: min(82vw, 290px) !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    z-index: 1001 !important;
+    transform: translateX(-105%) !important;
+    transition: transform .28s ease !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
+    box-shadow: 18px 0 55px rgba(0,0,0,.45) !important;
+  }
+
+  .db-sidebar.ouvert {
+    transform: translateX(0) !important;
+  }
+
+  .db-main {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding-left: clamp(14px, 3vw, 28px) !important;
+    padding-right: clamp(14px, 3vw, 28px) !important;
+  }
+
+  .db-topbar {
+    margin-left: calc(-1 * clamp(14px, 3vw, 28px)) !important;
+    margin-right: calc(-1 * clamp(14px, 3vw, 28px)) !important;
+    padding-left: clamp(14px, 3vw, 28px) !important;
+    padding-right: clamp(14px, 3vw, 28px) !important;
+  }
+
+  .db-mobile-menu {
+    display: grid !important;
+    place-items: center;
+    position: fixed;
+    left: 12px;
+    top: max(12px, env(safe-area-inset-top));
+    width: 44px;
+    height: 44px;
+    z-index: 1000;
+    border: 1px solid rgba(213,173,98,.32);
+    border-radius: 8px;
+    background: rgba(7,9,11,.94);
+    color: #f2ede7;
+    font-size: 21px;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(0,0,0,.32);
+    backdrop-filter: blur(8px);
+  }
+
+  .db-mobile-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(0,0,0,.64);
+    backdrop-filter: blur(2px);
+  }
+
+  .db-mobile-overlay.visible {
+    display: block !important;
+  }
+
+  .db-sidebar.ouvert ~ .db-main {
+    /* Aucun décalage du contenu : le menu est réellement hors-canvas. */
+  }
+}
+
+@media (max-width: 680px) {
+  .db-mobile-menu {
+    width: 42px;
+    height: 42px;
+    left: 10px;
+  }
+
+  .db-topbar {
+    min-height: 72px !important;
+  }
+
+  .db-greeting {
+    font-size: clamp(1.15rem, 5vw, 1.45rem) !important;
+  }
+
+  .db-topbar-droite {
+    gap: 7px !important;
+  }
+
+  .db-statut-site {
+    display: none !important;
+  }
+
+  .db-profil .nom,
+  .db-profil .role {
+    display: none !important;
+  }
+
+  .db-hero {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .stats-grille,
+  .ref-core-grid,
+  .ref-lower-grid,
+  .db-2col {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .stats-grille {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .db-actions-liste {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  table {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 430px) {
+  .db-main {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+
+  .db-topbar {
+    margin-left: -10px !important;
+    margin-right: -10px !important;
+    padding-left: 62px !important;
+    padding-right: 10px !important;
+  }
+
+  .db-hero {
+    min-height: 350px !important;
+  }
+
+  .stats-grille {
+    gap: 7px !important;
+  }
+
+  .stat-carte {
+    min-width: 0 !important;
+    padding: 11px !important;
+  }
+
+  .stat-carte .chiffre {
+    font-size: 1.5rem !important;
+  }
+
+  .db-action-btn {
+    min-width: 0 !important;
+    overflow: hidden;
+  }
+}
+</style>
+
+
+<style id="ma2m-final-visual-integrity">
+/* ============================================================
+   MA2M — FINAL VISUAL INTEGRITY
+   Objectif : verrouiller le rendu graphique de la maquette
+   approuvée sur desktop / tablette / mobile.
+   Ne modifie ni les IDs métier ni les requêtes Supabase.
+   ============================================================ */
+
+:root{
+  --ma2m-bg:#030405;
+  --ma2m-panel:#0a0d10;
+  --ma2m-panel2:#0e1216;
+  --ma2m-burgundy:#690d27;
+  --ma2m-burgundy2:#8e1536;
+  --ma2m-red:#c81f4e;
+  --ma2m-champagne:#d5ad62;
+  --ma2m-ivory:#f4f0eb;
+  --ma2m-muted:#858b91;
+  --ma2m-line:rgba(255,255,255,.095);
+  --ma2m-line-gold:rgba(213,173,98,.20);
+}
+
+/* --- Fond général --- */
+html,body{background:var(--ma2m-bg)!important;color:var(--ma2m-ivory)!important}
+body.zone-admin #bloc-tableau{
+  background:
+    radial-gradient(900px 430px at 55% 0%,rgba(105,13,39,.18),transparent 64%),
+    radial-gradient(600px 500px at 100% 40%,rgba(142,21,54,.08),transparent 70%),
+    var(--ma2m-bg)!important;
+}
+#bloc-tableau,.db-shell,.db-main{min-width:0!important}
+
+/* --- SIDEBAR : couleurs + symboles toujours visibles --- */
+.db-sidebar{
+  background:
+    linear-gradient(180deg,rgba(105,13,39,.24),transparent 22%),
+    linear-gradient(180deg,#050608 0%,#08090b 70%,#030405 100%)!important;
+  border-right:1px solid var(--ma2m-line-gold)!important;
+}
+.db-sidebar-logo{
+  border-bottom:1px solid var(--ma2m-line-gold)!important;
+  background:linear-gradient(90deg,rgba(105,13,39,.30),transparent 80%)!important;
+}
+.db-nav-item{
+  color:#d9dde1!important;
+  background:transparent!important;
+  border:1px solid transparent!important;
+}
+.db-nav-item:hover{
+  color:#fff!important;
+  background:rgba(255,255,255,.035)!important;
+  border-color:rgba(255,255,255,.08)!important;
+}
+.db-nav-item.actif{
+  color:#fff!important;
+  background:linear-gradient(90deg,#7e1031,#4b091c)!important;
+  border-color:rgba(200,31,78,.65)!important;
+  box-shadow:inset 3px 0 0 var(--ma2m-red),0 10px 28px rgba(0,0,0,.30)!important;
+}
+.db-nav-item .db-nav-icone{
+  width:28px!important;
+  min-width:28px!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  margin-right:7px!important;
+  font-size:0!important;
+  color:#b9c0c6!important;
+}
+.db-nav-item .db-nav-icone:before{
+  display:block!important;
+  font-family:Arial,sans-serif!important;
+  font-size:15px!important;
+  line-height:1!important;
+  color:#aeb6bd!important;
+  opacity:1!important;
+}
+.db-nav-item.actif .db-nav-icone:before{color:#fff!important}
+
+/* Symboles sobres, non-emoji, adaptés au style luxe */
+.db-nav-item:nth-child(1) .db-nav-icone:before{content:"⌂"}
+.db-nav-item:nth-child(2) .db-nav-icone:before{content:"◉"}
+.db-nav-item:nth-child(3) .db-nav-icone:before{content:"♙"}
+.db-nav-item:nth-child(4) .db-nav-icone:before{content:"▤"}
+.db-nav-item:nth-child(5) .db-nav-icone:before{content:"◈"}
+.db-nav-item:nth-child(6) .db-nav-icone:before{content:"◇"}
+.db-nav-item:nth-child(7) .db-nav-icone:before{content:"✉"}
+.db-nav-item:nth-child(8) .db-nav-icone:before{content:"▦"}
+.db-nav-item:nth-child(9) .db-nav-icone:before{content:"⌁"}
+.db-nav-item:nth-child(10) .db-nav-icone:before{content:"▧"}
+.db-nav-item:nth-child(11) .db-nav-icone:before{content:"⚙"}
+.db-nav-item:nth-child(12) .db-nav-icone:before{content:"◉"}
+
+.db-nav-badge{
+  background:var(--ma2m-red)!important;
+  color:#fff!important;
+  box-shadow:0 0 0 3px rgba(200,31,78,.10)!important;
+}
+
+/* --- EN-TÊTE --- */
+.db-topbar{
+  border-bottom:1px solid var(--ma2m-line)!important;
+  background:linear-gradient(90deg,rgba(105,13,39,.15),rgba(3,4,5,.50) 52%,rgba(105,13,39,.09))!important;
+}
+.db-greeting{color:#f5f0ea!important}
+.db-statut-site{color:#8c939a!important}
+.db-statut-site .point{
+  background:#56c98a!important;
+  box-shadow:0 0 10px rgba(86,201,138,.70)!important;
+}
+.db-cloche{
+  color:#e7e3de!important;
+  border-color:var(--ma2m-line)!important;
+  background:rgba(255,255,255,.025)!important;
+}
+.db-profil{border-left-color:var(--ma2m-line)!important}
+.db-profil-avatar-vide{
+  border:1px solid rgba(213,173,98,.48)!important;
+  background:linear-gradient(145deg,#35101b,#0b0c0e)!important;
+}
+
+/* --- HERO / MANNEQUIN À LA UNE --- */
+.db-hero{
+  border-color:var(--ma2m-line)!important;
+  background:
+    radial-gradient(500px 220px at 75% 45%,rgba(130,15,46,.22),transparent 70%),
+    linear-gradient(105deg,#090b0e,#10070b 64%,#07080a)!important;
+  box-shadow:0 22px 50px rgba(0,0,0,.36)!important;
+}
+.db-hero:after{
+  background:linear-gradient(90deg,rgba(3,4,5,.02),rgba(3,4,5,.08) 30%,rgba(3,4,5,.72) 54%,#07090b 75%)!important;
+}
+.db-hero-eyebrow{color:#d7d9dc!important}
+.db-hero-eyebrow span{background:var(--ma2m-champagne)!important}
+.db-hero-nom{color:#f4eee8!important}
+.db-hero-signature{color:#d7d0ca!important}
+.db-hero-note{color:#aeb3b8!important}
+
+/* --- MÉDAILLONS / CARTES DE STATISTIQUES --- */
+.stats-grille{
+  grid-template-columns:repeat(5,minmax(0,1fr))!important;
+  gap:10px!important;
+}
+.stat-carte{
+  min-width:0!important;
+  min-height:126px!important;
+  position:relative!important;
+  overflow:hidden!important;
+  border:1px solid rgba(255,255,255,.09)!important;
+  border-radius:7px!important;
+  background:linear-gradient(145deg,#181d22,#080a0c 78%)!important;
+  box-shadow:0 14px 32px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.025)!important;
+}
+.stat-carte:before{
+  content:""!important;
+  position:absolute!important;
+  left:0!important;
+  top:0!important;
+  width:34%!important;
+  height:2px!important;
+  background:linear-gradient(90deg,var(--ma2m-red),transparent)!important;
+}
+.stat-carte:after{
+  content:""!important;
+  position:absolute!important;
+  width:105px!important;
+  height:105px!important;
+  right:-55px!important;
+  top:-52px!important;
+  border-radius:50%!important;
+  background:rgba(200,31,78,.10)!important;
+  filter:none!important;
+}
+.stat-carte.accent{
+  background:linear-gradient(145deg,#8d0d35,#620a27 54%,#300815)!important;
+  border-color:rgba(200,31,78,.78)!important;
+}
+.stat-head,.stat-icone,.stat-live,.stat-carte .chiffre,.stat-carte .label,.stat-carte .micro,.stat-line{
+  position:relative!important;
+  z-index:2!important;
+}
+.stat-icone{
+  color:#d4d9de!important;
+  font-size:.92rem!important;
+}
+.stat-live{color:#70777e!important}
+.stat-carte .chiffre{
+  color:#f8f3ee!important;
+  font-size:2.28rem!important;
+}
+.stat-carte .label{color:#e1e3e5!important}
+.stat-carte .micro{color:#777f86!important}
+.stat-carte.accent .label,.stat-carte.accent .micro{color:#f0c5d0!important}
+
+/* Médaillons ronds autour des symboles */
+.stat-head .stat-icone{
+  width:30px!important;
+  height:30px!important;
+  display:grid!important;
+  place-items:center!important;
+  border-radius:50%!important;
+  border:1px solid rgba(213,173,98,.25)!important;
+  background:rgba(255,255,255,.025)!important;
+}
+.stat-carte.accent .stat-head .stat-icone{
+  border-color:rgba(255,255,255,.32)!important;
+  background:rgba(255,255,255,.08)!important;
+  color:#fff!important;
+}
+
+/* --- GRAPHIQUE : contraste garanti --- */
+.activite-carte,.timeline-liste,.a-traiter-bloc,.ref-card{
+  border-color:rgba(255,255,255,.09)!important;
+  background:linear-gradient(145deg,#0b0f13,#06080a)!important;
+}
+.activite-svg-wrap{
+  min-height:155px!important;
+  width:100%!important;
+  overflow:visible!important;
+}
+.activite-svg-wrap svg{
+  display:block!important;
+  width:100%!important;
+  min-height:150px!important;
+  overflow:visible!important;
+}
+.activite-svg-wrap svg polyline{
+  stroke:#c81f4e!important;
+  stroke-width:3!important;
+}
+.activite-svg-wrap svg polygon{
+  fill:rgba(200,31,78,.14)!important;
+}
+.activite-svg-wrap svg circle{fill:#d5ad62!important}
+.activite-svg-wrap svg text{fill:#8e9298!important}
+.activite-carte h3{color:#e1ded9!important}
+
+/* --- À TRAITER --- */
+.a-traiter-bloc{border-left:2px solid var(--ma2m-red)!important}
+.a-traiter-item .at-compte{color:var(--ma2m-champagne)!important}
+.a-traiter-item:hover{background:rgba(255,255,255,.02)!important}
+
+/* --- ACTIONS : médaillons visuels --- */
+.db-action-btn{
+  border-color:rgba(255,255,255,.09)!important;
+  background:linear-gradient(145deg,#11161a,#090c0f)!important;
+}
+.qa-icon{
+  width:30px!important;height:30px!important;
+  border-radius:50%!important;
+  border:1px solid rgba(213,173,98,.30)!important;
+  background:rgba(255,255,255,.025)!important;
+  color:#d8dde1!important;
+}
+
+/* --- TOP 10 : rendu éditorial + médaillons de rang --- */
+#classement-mannequins{
+  gap:7px!important;
+  margin-top:8px!important;
+}
+#classement-mannequins > div{
+  position:relative!important;
+  min-height:48px!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:12px!important;
+  padding:8px 12px 8px 8px!important;
+  background:linear-gradient(90deg,#0d1114,#080a0c)!important;
+  border:1px solid rgba(255,255,255,.07)!important;
+  border-left:2px solid rgba(200,31,78,.38)!important;
+  border-radius:5px!important;
+}
+#classement-mannequins > div > span:first-child{
+  width:32px!important;
+  height:32px!important;
+  min-width:32px!important;
+  display:grid!important;
+  place-items:center!important;
+  border-radius:50%!important;
+  background:linear-gradient(145deg,#252a2f,#0c0f12)!important;
+  border:1px solid rgba(213,173,98,.30)!important;
+  color:#eee8e1!important;
+  font-family:var(--display)!important;
+  font-size:.85rem!important;
+}
+#classement-mannequins > div:first-child > span:first-child{
+  background:linear-gradient(145deg,#8d0d35,#4f091d)!important;
+  border-color:rgba(213,173,98,.55)!important;
+  color:#fff!important;
+}
+#classement-mannequins > div > div{
+  background:rgba(255,255,255,.07)!important;
+}
+#classement-mannequins > div > div > div{
+  background:linear-gradient(90deg,#8e1536,#c81f4e)!important;
+}
+#classement-mannequins > p{
+  color:#747b82!important;
+}
+
+/* --- TABLEAUX --- */
+.liste-recente table{
+  background:transparent!important;
+  color:#dfe3e6!important;
+}
+.liste-recente th{
+  color:#858c93!important;
+  border-bottom-color:rgba(213,173,98,.18)!important;
+}
+.liste-recente td{
+  border-bottom-color:rgba(255,255,255,.055)!important;
+}
+
+/* --- RESPONSIVE FINAL --- */
+@media (max-width:1180px){
+  .stats-grille{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+}
+@media (max-width:900px){
+  .ref-core-grid,.ref-lower-grid{grid-template-columns:1fr!important}
+  .db-hero{min-height:270px!important}
+  .stats-grille{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media (max-width:680px){
+  .db-main{padding-left:12px!important;padding-right:12px!important}
+  .db-topbar{
+    margin-left:-12px!important;margin-right:-12px!important;
+    padding-left:60px!important;padding-right:12px!important;
+  }
+  .db-hero{min-height:360px!important}
+  .db-hero img{
+    width:100%!important;height:56%!important;
+    object-position:center 18%!important;
+  }
+  .db-hero-contenu{
+    left:0!important;right:0!important;
+    top:auto!important;bottom:17px!important;
+    padding:0 17px!important;
+  }
+  .db-hero-nom{font-size:1.95rem!important}
+  .stats-grille{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .stat-carte{min-height:108px!important;padding:11px!important}
+  .stat-carte .chiffre{font-size:1.65rem!important}
+  .stat-head .stat-icone{width:27px!important;height:27px!important}
+  .db-actions-liste{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .db-action-btn{min-width:0!important;min-height:64px!important}
+}
+@media (max-width:430px){
+  .stats-grille{grid-template-columns:1fr 1fr!important}
+  .stat-carte .label{font-size:.55rem!important}
+  .stat-carte .micro{font-size:.46rem!important}
+  .db-actions-liste{grid-template-columns:1fr!important}
+}
+</style>
+
 </head>
 <body class="zone-admin">
 <script>
@@ -785,6 +1337,8 @@ setTimeout(() => {
 </section>
 <section id="bloc-tableau" style="display:none; padding-top:0;">
 <div class="db-shell">
+<button class="db-mobile-menu" id="db-mobile-menu" type="button" aria-label="Ouvrir le menu" aria-controls="db-sidebar" aria-expanded="false">☰</button>
+<div class="db-mobile-overlay" id="db-mobile-overlay" aria-hidden="true"></div>
 <!-- ===== AJOUT Étape 12 : sidebar de navigation du centre de contrôle ===== -->
 <aside class="db-sidebar" id="db-sidebar">
 <div class="db-sidebar-logo">
@@ -2539,6 +3093,39 @@ document.getElementById('mr-enregistrer-btn').addEventListener('click', async ()
   chargerMotResponsableTableau();
 });
 
+// Menu mobile/tablette : la sidebar reste hors-canvas pour ne jamais
+// réduire la largeur du contenu principal.
+(function initResponsiveDashboardMenu(){
+  const menu = document.getElementById('db-mobile-menu');
+  const overlay = document.getElementById('db-mobile-overlay');
+  const sidebar = document.getElementById('db-sidebar');
+  if (!menu || !overlay || !sidebar) return;
+
+  const fermer = () => {
+    sidebar.classList.remove('ouvert');
+    overlay.classList.remove('visible');
+    menu.setAttribute('aria-expanded', 'false');
+    menu.setAttribute('aria-label', 'Ouvrir le menu');
+  };
+
+  const ouvrir = () => {
+    sidebar.classList.add('ouvert');
+    overlay.classList.add('visible');
+    menu.setAttribute('aria-expanded', 'true');
+    menu.setAttribute('aria-label', 'Fermer le menu');
+  };
+
+  menu.addEventListener('click', () => {
+    if (sidebar.classList.contains('ouvert')) fermer();
+    else ouvrir();
+  });
+  overlay.addEventListener('click', fermer);
+  sidebar.querySelectorAll('.db-nav-item').forEach(btn => btn.addEventListener('click', fermer));
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 1100) fermer();
+  });
+})();
+
 initSidebarNav();
 
 (async () => {
@@ -2553,5 +3140,29 @@ initSidebarNav();
   } catch (e) {}
 })();
 </script>
+
+<script id="ma2m-final-visual-guard">
+(function(){
+  function visualGuard(){
+    var graph=document.getElementById('activite-barres');
+    if(graph){
+      var svg=graph.querySelector('svg');
+      if(svg){
+        svg.style.display='block';
+        svg.style.width='100%';
+        svg.style.minHeight='150px';
+      }
+    }
+    var top=document.getElementById('classement-mannequins');
+    if(top){
+      top.setAttribute('aria-label','Top 10 des mannequins selon les visites réelles des 7 derniers jours');
+    }
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',visualGuard);
+  else visualGuard();
+  new MutationObserver(visualGuard).observe(document.documentElement,{subtree:true,childList:true});
+})();
+</script>
+
 </body>
 </html>
