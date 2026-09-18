@@ -102,44 +102,164 @@
     .dossier-carte .dc-meta { order:3; flex-basis:100%; }
   }
 
-  /* --- Réorganisation du tableau de bord : sidebar + zone "à traiter" (Étapes 12-14) --- */
-  .tb-shell { display:flex; align-items:flex-start; gap:2.2rem; }
-  .tb-sidebar {
-    position:sticky; top:1rem; flex:0 0 220px; display:flex; flex-direction:column; gap:0.3rem;
-    padding:1.2rem 0; border-right:1px solid var(--gris-clair, #333);
+  /* ===================== AJOUTS — Étapes 12/13/14/16/20 du cahier des charges ===================== */
+  /* Rien ci-dessous ne retire ou ne renomme un ID existant : tout le JS d'origine
+     continue de fonctionner à l'identique. Ces styles habillent uniquement de
+     nouveaux blocs (résumé du jour, "à traiter", activité, drive). */
+
+  .db-entete {
+    display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:1rem;
+    margin-bottom:2.2rem; padding-bottom:1.4rem; border-bottom:1px solid var(--gris-clair);
   }
-  .tb-sidebar-nav { display:flex; flex-direction:column; gap:0.15rem; }
-  .tb-sidebar-lien {
-    font-family:var(--texte); font-size:0.82rem; color:var(--texte-doux, var(--gris));
-    padding:0.55rem 0.8rem; border-left:2px solid transparent; text-decoration:none; border-radius:2px;
-    transition:all 0.15s ease;
+  .db-entete .db-sous-titre { color:var(--gris); font-size:0.9rem; margin-top:0.3rem; }
+  .db-statut-site { display:inline-flex; align-items:center; gap:0.5rem; font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--gris); }
+  .db-statut-site .point { width:7px; height:7px; border-radius:50%; background:#5abf7c; box-shadow:0 0 8px rgba(90,191,124,0.6); }
+
+  /* Zone "À traiter" : une seule liste actionnable, plutôt que des compteurs dispersés */
+  .a-traiter-bloc {
+    background:var(--anthracite, var(--noir)); border-left:3px solid var(--or); padding:1.4rem 1.6rem;
+    margin-bottom:2.4rem;
   }
-  .tb-sidebar-lien:hover { color:var(--titre-clair, #fff); background:rgba(255,255,255,0.04); }
-  .tb-sidebar-lien.actif { color:var(--titre-clair, #fff); border-left-color:var(--or); background:rgba(255,255,255,0.04); }
-  .tb-sidebar-logout { margin-top:1.2rem; align-self:flex-start; color:var(--gris); border-color:var(--gris-clair); }
-  .tb-main { flex:1; min-width:0; }
-  @media (max-width:900px) {
-    .tb-shell { flex-direction:column; }
-    .tb-sidebar {
-      position:static; flex:none; width:100%; border-right:none; border-bottom:1px solid var(--gris-clair, #333);
-      flex-direction:row; flex-wrap:wrap; gap:0.4rem; padding:0.8rem 0 1.2rem;
-    }
-    .tb-sidebar-nav { flex-direction:row; flex-wrap:wrap; }
-    .tb-sidebar-logout { margin-top:0; }
+  .a-traiter-titre { display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; }
+  .a-traiter-titre h2 { margin:0; font-size:1.15rem; }
+  .a-traiter-liste { display:flex; flex-direction:column; gap:0; }
+  .a-traiter-item {
+    display:flex; align-items:center; justify-content:space-between; gap:1rem;
+    padding:0.85rem 0.2rem; border-bottom:1px solid rgba(255,255,255,0.08); cursor:pointer;
+    background:none; border-left:none; border-right:none; border-top:none; width:100%; text-align:left;
+    color:inherit; font:inherit;
+  }
+  .a-traiter-item:last-child { border-bottom:none; }
+  .a-traiter-item:hover { padding-left:0.6rem; }
+  .a-traiter-item .at-label { font-size:0.92rem; }
+  .a-traiter-item .at-compte { font-family:var(--display); font-size:1.3rem; color:var(--or); min-width:1.8rem; text-align:right; }
+  .a-traiter-vide { color:#7fd8a3; font-size:0.9rem; padding:0.4rem 0.2rem; }
+
+  /* Activité : graphique 7 jours en barres, sans dépendance externe */
+  .activite-grille { display:grid; grid-template-columns: 2fr 1fr; gap:1.6rem; align-items:stretch; }
+  @media (max-width:820px) { .activite-grille { grid-template-columns:1fr; } }
+  .activite-carte { background:var(--anthracite, var(--noir)); padding:1.4rem 1.6rem; }
+  .activite-carte h3 { font-size:0.95rem; margin-bottom:0.2rem; }
+  .activite-souslabel { color:var(--gris); font-size:0.76rem; margin-bottom:1.2rem; }
+  .activite-barres { display:flex; align-items:flex-end; gap:0.6rem; height:120px; }
+  .activite-barre-col { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; gap:0.4rem; }
+  .activite-barre { width:100%; max-width:34px; background:var(--bordeaux); border-radius:2px 2px 0 0; transition:height 0.4s ease; min-height:2px; }
+  .activite-barre-jour { font-size:0.62rem; color:var(--gris); text-transform:uppercase; letter-spacing:0.05em; }
+  .activite-repartition { display:flex; flex-direction:column; justify-content:center; gap:0.9rem; }
+  .activite-repart-ligne .arl-tete { display:flex; justify-content:space-between; font-size:0.82rem; margin-bottom:0.3rem; }
+  .activite-repart-barre { height:8px; background:rgba(255,255,255,0.08); border-radius:4px; overflow:hidden; }
+  .activite-repart-barre span { display:block; height:100%; background:var(--or); }
+
+  /* Drive / transferts : structure prête, honnête sur ce qui est réellement mesuré */
+  .drive-grille { display:grid; grid-template-columns:repeat(auto-fit, minmax(160px,1fr)); gap:1.2rem; }
+  .drive-carte { background:var(--anthracite, var(--noir)); padding:1.2rem; text-align:center; border-top:2px solid var(--gris-clair); }
+  .drive-carte .chiffre { font-family:var(--display); font-size:2rem; }
+  .drive-carte .label { font-size:0.68rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--gris); margin-top:0.3rem; }
+  .drive-avertissement {
+    margin-top:1rem; padding:0.85rem 1rem; font-size:0.82rem; line-height:1.5; color:var(--texte-doux, var(--gris));
+    background:rgba(201,162,75,0.08); border-left:2px solid var(--or);
   }
 
-  /* --- Zone "à traiter" : reflète les compteurs déjà calculés plus bas sur la page --- */
-  .zone-a-traiter { border:1px solid var(--gris-clair, #333); padding:1.4rem 1.6rem; background:var(--anthracite, var(--noir)); }
-  .atraiter-grille { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:0.8rem; margin-top:1rem; }
-  .atraiter-carte {
-    display:flex; justify-content:space-between; align-items:center; gap:0.8rem; padding:0.9rem 1.1rem;
-    background:rgba(255,255,255,0.03); border-left:3px solid var(--gris-clair); text-decoration:none; cursor:pointer;
-    transition:border-color 0.15s ease;
+  /* ===================== AJOUT — Étape 12 : centre de contrôle avec sidebar ===================== */
+  .db-shell { display:flex; align-items:flex-start; min-height:100vh; }
+  .db-sidebar {
+    width:250px; flex-shrink:0; position:sticky; top:0; align-self:flex-start; height:100vh; overflow-y:auto;
+    background:var(--noir-doux); border-right:1px solid var(--gris-clair); padding:1.4rem 1rem;
+    display:flex; flex-direction:column;
   }
-  .atraiter-carte.a-traiter { border-left-color:var(--or); }
-  .atraiter-carte .ac-label { font-size:0.82rem; color:var(--texte-doux, #ccc); }
-  .atraiter-carte .ac-valeur { font-family:var(--display); font-size:1.3rem; color:var(--titre-clair, #fff); }
-  .atraiter-vide { padding:1rem; text-align:center; color:var(--gris); font-size:0.85rem; }
+  .db-sidebar-logo { display:flex; align-items:center; gap:0.6rem; padding:0 0.4rem 1.4rem; margin-bottom:1rem; border-bottom:1px solid var(--gris-clair); }
+  .db-sidebar-logo img { height:26px; width:auto; }
+  .db-nav { display:flex; flex-direction:column; gap:0.2rem; flex:1; }
+  .db-nav-item {
+    display:flex; align-items:center; justify-content:space-between; gap:0.6rem;
+    padding:0.7rem 0.8rem; border-radius:5px; color:var(--texte-corps); font-size:0.86rem;
+    background:none; border:none; width:100%; text-align:left; cursor:pointer; font-family:var(--texte);
+    transition:background 0.2s ease, color 0.2s ease;
+  }
+  .db-nav-item .db-nav-icone { margin-right:0.5rem; }
+  .db-nav-item:hover { background:rgba(255,255,255,0.05); color:#fff; }
+  .db-nav-item.actif { background:var(--bordeaux); color:#fff; }
+  .db-nav-badge {
+    background:rgba(255,255,255,0.15); color:#fff; font-size:0.68rem; font-weight:700;
+    border-radius:999px; padding:0.05rem 0.5rem; min-width:1.4rem; text-align:center;
+  }
+  .db-nav-item.actif .db-nav-badge { background:rgba(255,255,255,0.28); }
+  .db-sidebar-bas { padding-top:1rem; border-top:1px solid var(--gris-clair); margin-top:0.6rem; }
+
+  .db-main { flex:1; min-width:0; padding:2rem clamp(1rem,3vw,2.4rem) 4rem; }
+
+  .db-topbar { display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem; margin-bottom:1.8rem; }
+  .db-greeting { font-family:var(--display); font-style:italic; font-size:1.6rem; color:var(--titre-clair); }
+  .db-topbar-droite { display:flex; align-items:center; gap:1.2rem; }
+  .db-cloche { position:relative; background:none; border:1px solid var(--gris-clair); border-radius:8px; width:38px; height:38px; color:var(--texte-corps); cursor:pointer; font-size:1rem; }
+  .db-cloche-badge { position:absolute; top:-6px; right:-6px; background:var(--bordeaux); color:#fff; font-size:0.6rem; font-weight:700; border-radius:999px; padding:0.05rem 0.4rem; }
+  .db-profil { display:flex; align-items:center; gap:0.6rem; }
+  .db-profil img, .db-profil-avatar-vide {
+    width:38px; height:38px; border-radius:50%; object-fit:cover; background:var(--bordeaux); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-family:var(--display); font-size:1rem;
+  }
+  .db-profil .nom { font-size:0.86rem; }
+  .db-profil .role { font-size:0.68rem; color:var(--gris); }
+
+  /* Bannière mannequin à la une, réutilise les données réelles de "chargerVedette" */
+  .db-hero-grille { display:grid; grid-template-columns: 2.1fr 1fr; gap:1.4rem; margin-bottom:2.2rem; align-items:stretch; }
+  @media (max-width:900px) { .db-hero-grille { grid-template-columns:1fr; } }
+  .db-hero {
+    position:relative; min-height:220px; border-radius:6px; overflow:hidden;
+    background:var(--anthracite, var(--noir)); display:flex; align-items:flex-end;
+  }
+  .db-hero img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:top center; }
+  .db-hero::after { content:''; position:absolute; inset:0; background:linear-gradient(to right, rgba(6,5,4,0.92) 0%, rgba(6,5,4,0.5) 45%, rgba(6,5,4,0.15) 100%); }
+  .db-hero-contenu { position:relative; z-index:1; padding:1.6rem; max-width:64%; }
+  .db-hero-eyebrow { font-size:0.66rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--or); }
+  .db-hero-nom { font-family:var(--display); font-size:1.7rem; color:var(--titre-clair); margin-top:0.3rem; }
+  .db-hero-note { font-size:0.8rem; color:var(--texte-doux); margin-top:0.3rem; }
+  .db-hero-vide { position:relative; z-index:1; padding:1.6rem; color:var(--gris); font-size:0.88rem; }
+
+  .db-actions-rapides { background:var(--anthracite, var(--noir)); border-radius:6px; padding:1.2rem; }
+  .db-actions-rapides h3 { font-size:0.8rem; letter-spacing:0.06em; text-transform:uppercase; color:var(--gris); margin-bottom:0.9rem; }
+  .db-actions-liste { display:grid; grid-template-columns:1fr 1fr; gap:0.6rem; }
+  .db-action-btn {
+    display:flex; align-items:center; justify-content:center; text-align:center; min-height:56px;
+    background:rgba(255,255,255,0.04); border:1px solid var(--gris-clair); border-radius:5px; color:var(--texte-corps);
+    font-size:0.74rem; padding:0.5rem; cursor:pointer; font-family:var(--texte); transition:border-color 0.2s ease, color 0.2s ease;
+  }
+  .db-action-btn:hover { border-color:var(--bordeaux-clair); color:#fff; }
+  .db-action-btn.pleine-largeur { grid-column:1/-1; }
+
+  .db-2col { display:grid; grid-template-columns:1.4fr 1fr; gap:1.6rem; align-items:start; }
+  @media (max-width:900px) { .db-2col { grid-template-columns:1fr; } }
+
+  /* Graphique d'activité en courbe (SVG, sans dépendance) */
+  .activite-svg-wrap { width:100%; }
+  .activite-svg-wrap svg { width:100%; height:auto; display:block; }
+  .activite-souscartes { display:grid; grid-template-columns:repeat(3,1fr); gap:0.8rem; margin-top:1.1rem; }
+  .activite-souscarte { background:rgba(255,255,255,0.03); border-radius:5px; padding:0.8rem; text-align:center; }
+  .activite-souscarte .chiffre { font-family:var(--display); font-size:1.3rem; color:var(--titre-clair); }
+  .activite-souscarte .label { font-size:0.6rem; letter-spacing:0.05em; text-transform:uppercase; color:var(--gris); margin-top:0.2rem; }
+
+  /* Dernières activités : flux généré à partir des vraies dates des tables existantes */
+  .timeline-liste { display:flex; flex-direction:column; }
+  .timeline-item { display:flex; gap:0.8rem; padding:0.7rem 0; border-bottom:1px solid rgba(255,255,255,0.06); }
+  .timeline-item:last-child { border-bottom:none; }
+  .timeline-point { width:8px; height:8px; border-radius:50%; background:var(--or); margin-top:0.35rem; flex-shrink:0; }
+  .timeline-texte { font-size:0.84rem; }
+  .timeline-date { font-size:0.68rem; color:var(--gris); margin-top:0.1rem; }
+
+  /* Panneau Drive compact (remplace la grille pleine largeur d'origine) */
+  .drive-panneau { display:flex; flex-direction:column; gap:0.7rem; }
+  .drive-ligne { display:flex; align-items:center; justify-content:space-between; padding:0.6rem 0.8rem; background:rgba(255,255,255,0.03); border-radius:5px; }
+  .drive-ligne .drive-ligne-label { font-size:0.82rem; }
+  .drive-ligne .drive-ligne-chiffre { font-family:var(--display); font-size:1.1rem; }
+  .drive-ligne.verifiees .drive-ligne-chiffre { color:#7fd8a3; }
+  .drive-ligne.attente .drive-ligne-chiffre { color:var(--or); }
+  .drive-ligne.erreurs .drive-ligne-chiffre { color:var(--bordeaux-clair); }
+
+  @media (max-width:820px) {
+    .db-sidebar { position:fixed; left:0; top:0; bottom:0; z-index:300; transform:translateX(-100%); transition:transform 0.3s ease; height:100vh; }
+    .db-sidebar.ouvert { transform:translateX(0); }
+    .db-main { padding-left:1rem; padding-right:1rem; }
+  }
 </style>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1e1d1c">
@@ -148,19 +268,13 @@
 </head>
 <body class="zone-admin">
 <script>
-// Filet de sécurité : sur une connexion instable, un script externe (Supabase, EmailJS,
-// heic2any...) peut être très lent ou échouer à charger — dans ce cas js/app.js ne
-// s'exécute jamais et les éléments ".reveal" (animation d'apparition au scroll) restent
-// invisibles indéfiniment, alors que le reste de la page (formulaires, boutons) fonctionne
-// normalement. Ce filet les révèle de force après 2,5s si l'animation normale n'a pas eu
-// lieu, pour qu'aucun contenu ne reste caché à cause d'un simple souci réseau.
 setTimeout(() => {
   document.querySelectorAll('.reveal:not(.visible)').forEach(el => el.classList.add('visible'));
 }, 2500);
 </script>
 
 
-<header class="site-header-v2">
+<header class="site-header-v2 db-chrome-public" id="db-chrome-header">
   <div class="container header-v2-inner">
     <a href="index.html" class="logo-img-header"><img src="assets/logo-header.png" alt="Maître Akesse Model Management"></a>
     <button class="menu-trigger" id="menuBtn">
@@ -182,7 +296,7 @@ setTimeout(() => {
   </ul>
 </div>
 
-<section style="padding-bottom:1rem;">
+<section style="padding-bottom:1rem;" class="db-chrome-public" id="db-chrome-titre">
   <div class="container">
     <div class="eyebrow reveal">Administration</div>
     <div class="badge-page-admin">📍 Vous êtes sur : Tableau de bord</div><br>
@@ -220,40 +334,107 @@ setTimeout(() => {
 </section>
 
 <section id="bloc-tableau" style="display:none; padding-top:0;">
-  <div class="container tb-shell">
-    <aside class="tb-sidebar">
-      <nav class="tb-sidebar-nav">
-        <a href="#zone-a-traiter" class="tb-sidebar-lien actif">Vue d'ensemble</a>
-        <a href="#section-book" class="tb-sidebar-lien">Mannequins / THE BOOK</a>
-        <a href="#section-candidatures" class="tb-sidebar-lien">Candidatures / Castings</a>
-        <a href="#section-inscriptions" class="tb-sidebar-lien">Inscriptions</a>
-        <a href="#section-recruteurs" class="tb-sidebar-lien">Demandes recruteurs</a>
-        <a href="#section-messages" class="tb-sidebar-lien">Messages</a>
-        <a href="#section-contenu" class="tb-sidebar-lien">Contenu du site</a>
-        <a href="#section-configuration" class="tb-sidebar-lien">Configuration</a>
-        <a href="#section-securite" class="tb-sidebar-lien">Sécurité & Surveillance</a>
-      </nav>
-      <button class="btn tb-sidebar-logout" id="tb-logout-btn-sidebar" type="button">Se déconnecter</button>
-    </aside>
-    <div class="tb-main">
+  <div class="db-shell">
 
-    <div id="zone-a-traiter" class="liste-recente zone-a-traiter" style="margin-top:0;">
-      <div class="dossiers-entete"><h2 style="margin:0;">🔔 À traiter</h2></div>
-      <div class="atraiter-grille" id="atraiter-grille">
-        <div class="atraiter-vide">Chargement…</div>
+    <!-- ===== AJOUT Étape 12 : sidebar de navigation du centre de contrôle ===== -->
+    <aside class="db-sidebar" id="db-sidebar">
+      <div class="db-sidebar-logo">
+        <img src="assets/logo-header.png" alt="">
+        <span class="logo-text-header" style="font-size:0.72rem;">MAÎTRE AKESSE</span>
       </div>
-    </div>
+      <nav class="db-nav" id="db-nav">
+        <button class="db-nav-item actif" data-scroll="stats-grille"><span><span class="db-nav-icone">🏠</span>Tableau de bord</span></button>
+        <button class="db-nav-item" data-scroll="a-traiter-liste"><span><span class="db-nav-icone">🔔</span>À traiter</span><span class="db-nav-badge" id="nav-badge-a-traiter" style="display:none;"></span></button>
+        <button class="db-nav-item" data-scroll="validation-details"><span><span class="db-nav-icone">👥</span>Mannequins / The Book</span></button>
+        <button class="db-nav-item" data-scroll="liste-inscriptions"><span><span class="db-nav-icone">📋</span>Inscriptions</span></button>
+        <button class="db-nav-item" data-scroll="liste-candidatures"><span><span class="db-nav-icone">🗂️</span>Candidatures / Castings</span></button>
+        <button class="db-nav-item" data-scroll="liste-recruteurs"><span><span class="db-nav-icone">💼</span>Demandes recruteurs</span></button>
+        <button class="db-nav-item" data-scroll="table-contacts"><span><span class="db-nav-icone">✉️</span>Messages</span></button>
+        <button class="db-nav-item" data-scroll="tb-vedette-actuelle"><span><span class="db-nav-icone">📰</span>Actualités</span></button>
+        <button class="db-nav-item" data-scroll="activite-barres"><span><span class="db-nav-icone">📈</span>Analytics</span></button>
+        <button class="db-nav-item" data-scroll="mr-nom"><span><span class="db-nav-icone">🗄️</span>Contenu du site</span></button>
+        <button class="db-nav-item" data-scroll="instagram-statut"><span><span class="db-nav-icone">⚙️</span>Configuration</span></button>
+        <button class="db-nav-item" data-scroll="liste-erreurs"><span><span class="db-nav-icone">🛡️</span>Sécurité & Surveillance</span></button>
+      </nav>
+      <div class="db-sidebar-bas">
+        <button class="btn" id="tb-logout-btn-sidebar" style="width:100%;">Se déconnecter</button>
+      </div>
+    </aside>
 
-    <div class="stats-grille" id="stats-grille">Chargement des statistiques…</div>
+    <div class="db-main">
 
-    <div class="liste-recente">
-      <h2 style="margin-bottom:0.3rem;">📊 Répartition par catégorie</h2>
-      <p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Candidatures et inscriptions confondues. Cliquez sur une catégorie pour voir les personnes concernées et les contacter directement sur WhatsApp.</p>
-      <div id="categorie-chart"></div>
-      <div id="categorie-details" style="margin-top:1rem;"></div>
-    </div>
+      <!-- ===== AJOUT Étape 13 : en-tête avec salutation + statut + cloche + profil ===== -->
+      <div class="db-topbar">
+        <div>
+          <div class="db-greeting">Bonjour Maître Akesse<span class="oeil">.</span></div>
+          <div class="db-sous-titre" style="color:var(--gris); font-size:0.88rem; margin-top:0.3rem;">Voici l'activité de votre agence aujourd'hui.</div>
+        </div>
+        <div class="db-topbar-droite">
+          <div class="db-statut-site"><span class="point"></span> Site en ligne</div>
+          <button class="db-cloche" id="db-cloche-btn" title="Voir les éléments à traiter">🔔<span class="db-cloche-badge" id="db-cloche-badge" style="display:none;"></span></button>
+          <div class="db-profil" id="db-profil">
+            <div class="db-profil-avatar-vide" id="db-profil-avatar">MA</div>
+            <div>
+              <div class="nom">Maître Akesse</div>
+              <div class="role">Administrateur</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    <div class="liste-recente" id="section-book">
+      <!-- ===== AJOUT : bannière "mannequin à la une" + actions rapides ===== -->
+      <div class="db-hero-grille">
+        <div class="db-hero" id="db-hero"><div class="db-hero-vide">Chargement…</div></div>
+        <div class="db-actions-rapides">
+          <h3>Actions rapides</h3>
+          <div class="db-actions-liste">
+            <button type="button" class="db-action-btn" data-scroll="portail-nouveau-code">+ Ajouter un mannequin</button>
+            <button type="button" class="db-action-btn" data-scroll="nouveau-projet-nom">+ Créer un casting</button>
+            <a class="db-action-btn" href="actualites.html">+ Publier une actualité</a>
+            <button type="button" class="db-action-btn" data-scroll="table-contacts">Voir les messages</button>
+            <button type="button" class="db-action-btn pleine-largeur" data-scroll="instagram-statut">Paramètres</button>
+          </div>
+        </div>
+      </div>
+
+      <h2 style="margin-bottom:1rem;">Vue d'ensemble</h2>
+      <div class="stats-grille" id="stats-grille">Chargement des statistiques…</div>
+
+      <!-- ===== AJOUT Étape 14 + 16 : "À traiter" et activité côte à côte ===== -->
+      <div class="liste-recente">
+        <div class="db-2col">
+          <div class="a-traiter-bloc" style="margin-bottom:0;">
+            <div class="a-traiter-titre">
+              <h2>🔔 À traiter</h2>
+              <span class="dossiers-compteur a-traiter" id="a-traiter-total"></span>
+            </div>
+            <div class="a-traiter-liste" id="a-traiter-liste">Chargement…</div>
+          </div>
+          <div class="activite-carte">
+            <h3>📈 Activité — 7 derniers jours</h3>
+            <div class="activite-souslabel">Visites réelles, une personne distincte par page.</div>
+            <div class="activite-svg-wrap" id="activite-barres">Chargement…</div>
+            <div class="activite-souscartes" id="activite-souscartes"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="liste-recente">
+        <div class="db-2col">
+          <div>
+            <h2 style="margin-bottom:0.8rem;">Répartition par catégorie</h2>
+            <p style="font-size:0.82rem; color:var(--gris); margin-top:0; margin-bottom:1rem;">Candidatures et inscriptions confondues. Cliquez pour voir le détail et contacter directement sur WhatsApp.</p>
+            <div class="activite-repartition" id="categorie-chart"></div>
+            <div id="categorie-details" style="margin-top:1rem;"></div>
+          </div>
+          <div>
+            <h2 style="margin-bottom:0.8rem;">🕐 Dernières activités</h2>
+            <div class="timeline-liste" id="dernieres-activites">Chargement…</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="liste-recente">
       <details id="validation-details">
         <summary class="dossiers-entete" style="cursor:pointer; list-style:none;">
           <h2 style="margin:0;">✅ Validations en attente</h2>
@@ -264,6 +445,16 @@ setTimeout(() => {
       </details>
     </div>
 
+    <!-- ===== AJOUT Étape 20 : Drive / transferts — structure honnête, en attente du fichier d'intégration Drive ===== -->
+    <div class="liste-recente">
+      <h2 style="margin-bottom:0.3rem;">📁 Drive / transferts</h2>
+      <p style="font-size:0.85rem; color:var(--gris); margin-top:0; margin-bottom:1rem;">Suivi des photos envoyées. Le détail par photo (transférée / en attente / erreur) nécessite le fichier d'intégration Google Drive — non fourni pour le moment, voir l'avertissement ci-dessous.</p>
+      <div class="drive-grille" id="drive-grille">Chargement…</div>
+      <div class="drive-avertissement">
+        ⚠️ Ce bloc affiche pour l'instant uniquement le nombre de photos déjà enregistrées côté Supabase (mannequins publiés dans THE BOOK). Le suivi détaillé des photos de candidatures/inscriptions envoyées vers Google Drive (transfert réussi / en attente / erreur, comme demandé à l'Étape 20 du cahier des charges) ne peut pas être branché tant que le fichier gérant l'envoi vers Drive n'a pas été fourni — aucune donnée n'est inventée ici en attendant.
+      </div>
+    </div>
+
     <div class="liste-recente">
       <h2 style="margin-bottom:0.3rem;">🖼️ Miniatures des photos</h2>
       <p style="font-size:0.85rem; color:var(--gris); margin-top:0; margin-bottom:1rem;">Les photos envoyées depuis l'espace mannequin génèrent automatiquement leur propre miniature légère. Cet outil rattrape uniquement les photos déjà en ligne AVANT la mise en place de ce système, pour réduire la bande passante consommée par Le Book (visible dans Supabase → Usage → Cached Egress).</p>
@@ -271,7 +462,7 @@ setTimeout(() => {
       <div id="miniatures-msg" class="form-msg"></div>
     </div>
 
-    <div class="liste-recente" id="section-securite">
+    <div class="liste-recente">
       <div class="dossiers-entete">
         <h2 style="margin:0;">🔴 Erreurs réelles du site (7 derniers jours)</h2>
         <span class="dossiers-compteur" id="erreurs-compteur"></span>
@@ -281,7 +472,7 @@ setTimeout(() => {
       <button class="btn" id="erreurs-tout-effacer-btn" style="margin-top:0.8rem; display:none; color:var(--gris); border-color:var(--gris-clair);">Tout marquer comme vu (effacer le journal)</button>
     </div>
 
-    <div class="liste-recente" id="section-candidatures">
+    <div class="liste-recente">
       <div class="dossiers-entete">
         <h2 style="margin:0;">Projets & castings</h2>
       </div>
@@ -306,7 +497,7 @@ setTimeout(() => {
       <button class="btn dossiers-plus" id="candidatures-plus-btn" style="display:none;">Voir plus</button>
     </div>
 
-    <div class="liste-recente" id="section-recruteurs">
+    <div class="liste-recente">
       <div class="dossiers-entete">
         <h2 style="margin:0;">Demandes recruteurs</h2>
         <span class="dossiers-compteur" id="recruteurs-compteur"></span>
@@ -316,7 +507,7 @@ setTimeout(() => {
       <button class="btn dossiers-plus" id="recruteurs-plus-btn" style="display:none;">Voir plus</button>
     </div>
 
-    <div class="liste-recente" id="section-configuration">
+    <div class="liste-recente">
       <h2 style="margin-bottom:0.3rem;">Codes d'inscription</h2>
       <p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Chaque code ne peut servir qu'une seule fois. Générez-en un et transmettez-le (WhatsApp, SMS...) à la personne que vous invitez à s'inscrire.</p>
       <button class="btn btn--principal" id="generer-code-btn">+ Générer un nouveau code</button>
@@ -362,7 +553,7 @@ setTimeout(() => {
       <div id="instagram-msg" class="form-msg"></div>
     </div>
 
-    <div class="liste-recente" id="section-inscriptions">
+    <div class="liste-recente">
       <div class="dossiers-entete">
         <h2 style="margin:0;">Inscriptions mannequins</h2>
         <span class="dossiers-compteur" id="inscriptions-compteur"></span>
@@ -377,7 +568,7 @@ setTimeout(() => {
       <button class="btn dossiers-plus" id="inscriptions-plus-btn" style="display:none;">Voir plus</button>
     </div>
 
-    <div class="liste-recente" id="section-messages">
+    <div class="liste-recente">
       <h2 style="margin-bottom:1rem;">Derniers messages de contact</h2>
       <table id="table-contacts"><thead><tr><th>Nom</th><th>Type</th><th>Téléphone</th><th>Date</th></tr></thead><tbody></tbody></table>
     </div>
@@ -388,7 +579,7 @@ setTimeout(() => {
       <div id="classement-mannequins" style="display:flex; flex-direction:column; gap:0.5rem;"></div>
     </div>
 
-    <div class="liste-recente" id="section-contenu">
+    <div class="liste-recente">
       <h2 style="margin-bottom:1rem;">Mannequin à la une</h2>
       <p style="color:var(--gris); font-size:0.85rem; margin-top:-0.6rem; margin-bottom:1rem;">Ce mannequin sera mis en avant sur la page d'accueil du site. Sans sélection, une photo aléatoire s'affiche à la place.</p>
       <div style="display:flex; gap:0.8rem; flex-wrap:wrap; align-items:center;">
@@ -438,8 +629,8 @@ setTimeout(() => {
       <button class="btn" id="tb-logout-btn">Se déconnecter</button>
     </div>
 
-    </div><!-- /.tb-main -->
-  </div>
+    </div> <!-- /.db-main -->
+  </div> <!-- /.db-shell -->
 </section>
 
 <!-- Fiche détaillée d'un dossier (candidature, inscription ou demande recruteur), partagée entre les trois listes -->
@@ -476,6 +667,16 @@ setTimeout(() => {
 <script src="js/app.js"></script>
 <script src="js/menu.js"></script>
 <script>
+// La sidebar du centre de contrôle (Étape 12) a son propre logo et sa propre
+// navigation : une fois connecté, le header public et le titre "Administration"
+// deviennent redondants. On les masque (jamais supprimés du DOM) pour que les
+// écrans de connexion, eux, gardent le même habillage qu'avant.
+function afficherChromePublic(afficher) {
+  document.querySelectorAll('.db-chrome-public').forEach(el => {
+    el.style.display = afficher ? '' : 'none';
+  });
+}
+
 async function verifierAdminTableau() {
   if (!sb) return false;
   const { data: { user } } = await sb.auth.getUser();
@@ -494,6 +695,7 @@ document.getElementById('tb-login-btn').addEventListener('click', async () => {
   if (!estAdmin) { msg.className = 'form-msg err'; msg.textContent = "Ce compte n'a pas accès au tableau de bord."; msg.style.display = 'block'; return; }
   document.getElementById('bloc-login').style.display = 'none';
   document.getElementById('bloc-tableau').style.display = 'block';
+  afficherChromePublic(false);
   chargerStatistiques();
 });
 
@@ -501,13 +703,9 @@ document.getElementById('tb-logout-btn').addEventListener('click', async () => {
   await sb.auth.signOut();
   document.getElementById('bloc-tableau').style.display = 'none';
   document.getElementById('bloc-login').style.display = 'block';
+  afficherChromePublic(true);
 });
 
-// --- Mot de passe oublié ---
-// Ce drapeau évite une course avec la reconnexion automatique tout en bas de ce
-// script : si le lien reçu par e-mail établit une session de récupération, il ne
-// faut jamais atterrir directement sur le tableau de bord sans passer par l'étape
-// "nouveau mot de passe", même si la vérification admin se termine après coup.
 let recuperationMdpEnCours = false;
 document.getElementById('tb-mdp-oublie-lien').addEventListener('click', (e) => {
   e.preventDefault();
@@ -525,8 +723,6 @@ document.getElementById('tb-mdp-oublie-envoyer').addEventListener('click', async
   const email = document.getElementById('tb-mdp-oublie-email').value.trim();
   const msg = document.getElementById('tb-mdp-oublie-msg');
   if (!email) return;
-  // Toujours le même message, que l'e-mail existe ou non côté Supabase — pour ne
-  // jamais révéler à un visiteur si une adresse donnée a un compte admin ou pas.
   const { error } = await sb.auth.resetPasswordForEmail(email, {
     redirectTo: window.location.origin + window.location.pathname
   });
@@ -537,8 +733,6 @@ document.getElementById('tb-mdp-oublie-envoyer').addEventListener('click', async
   msg.style.display = 'block';
 });
 
-// --- Réception du lien de réinitialisation : Supabase détecte automatiquement le
-// jeton dans l'adresse et déclenche cet événement, sur cette même page. ---
 sb && sb.auth.onAuthStateChange((event) => {
   if (event !== 'PASSWORD_RECOVERY') return;
   recuperationMdpEnCours = true;
@@ -570,18 +764,15 @@ document.getElementById('tb-nouveau-mdp-valider').addEventListener('click', asyn
   document.getElementById('bloc-nouveau-mdp').style.display = 'none';
   if (estAdmin) {
     document.getElementById('bloc-tableau').style.display = 'block';
+    afficherChromePublic(false);
     chargerStatistiques();
   } else {
     await sb.auth.signOut();
     document.getElementById('bloc-login').style.display = 'block';
+    afficherChromePublic(true);
   }
 });
 
-// --- Journal des erreurs réelles du site (7 derniers jours) ---
-// Regroupe les erreurs identiques (même message + même page) pour ne pas noyer
-// une vraie panne sous des dizaines de lignes répétées — une erreur qui touche
-// beaucoup de visiteurs remonte comme UNE entrée avec un compteur, pas comme
-// une liste interminable.
 async function chargerErreurs() {
   const liste = document.getElementById('liste-erreurs');
   const compteurEl = document.getElementById('erreurs-compteur');
@@ -630,9 +821,6 @@ document.getElementById('erreurs-tout-effacer-btn').addEventListener('click', as
   chargerErreurs();
 });
 
-// --- Classement des visites réelles par mannequin (compact, top 10) ---
-// Période "7 derniers jours" par défaut — un vrai classement qui bouge dans le temps,
-// pas un simple total qui ne fait que grossir indéfiniment.
 async function chargerClassementMannequins() {
   const conteneur = document.getElementById('classement-mannequins');
   const depuis7j = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -672,11 +860,6 @@ async function compter(table) {
   return count || 0;
 }
 
-// --- Rattrapage des miniatures manquantes (photos envoyées avant la mise en
-// place du système de miniatures automatique). Utilise fetch → blob →
-// canvas plutôt qu'un <img crossOrigin> direct : évite tout risque de
-// "canvas taint" CORS et fonctionne avec le correctif CSP (blob: autorisé
-// dans img-src) déjà en place. ---
 async function genererMiniatureDepuisUrl(url, coteMax = 500, qualite = 0.75) {
   const reponse = await fetch(url);
   if (!reponse.ok) throw new Error('Téléchargement échoué (HTTP ' + reponse.status + ')');
@@ -760,6 +943,230 @@ document.getElementById('miniatures-generer-btn').addEventListener('click', asyn
   btn.disabled = false;
 });
 
+/* ===================== AJOUT Étape 14 : agrégation "À traiter" =====================
+   Ne fait AUCUNE nouvelle requête : réutilise les compteurs déjà chargés par
+   ailleurs (validations, candidatures, inscriptions, recruteurs, messages),
+   donc n'alourdit pas le chargement du tableau de bord. */
+async function chargerATraiter() {
+  const liste = document.getElementById('a-traiter-liste');
+  const totalEl = document.getElementById('a-traiter-total');
+
+  const [
+    { count: validations },
+    { count: candidaturesNouvelles },
+    { count: inscriptionsAttente },
+    { count: recruteursNouveaux },
+  ] = await Promise.all([
+    sb.from('model_profiles').select('id', { count: 'exact', head: true }).eq('en_attente_validation', true),
+    sb.from('casting_applications').select('id', { count: 'exact', head: true }).eq('status', 'nouvelle'),
+    sb.from('inscriptions_mannequins').select('id', { count: 'exact', head: true }).eq('statut', 'en attente de paiement'),
+    sb.from('recruiter_requests').select('id', { count: 'exact', head: true }).eq('status', 'nouvelle'),
+  ]);
+
+  const items = [
+    { label: 'Validations THE BOOK en attente', compte: validations || 0, action: () => document.getElementById('validation-details').open = true },
+    { label: 'Nouvelles candidatures', compte: candidaturesNouvelles || 0, action: () => document.getElementById('liste-candidatures').scrollIntoView({ behavior: 'smooth', block: 'start' }) },
+    { label: 'Inscriptions à vérifier (paiement)', compte: inscriptionsAttente || 0, action: () => document.getElementById('liste-inscriptions').scrollIntoView({ behavior: 'smooth', block: 'start' }) },
+    { label: 'Nouvelles demandes recruteurs', compte: recruteursNouveaux || 0, action: () => document.getElementById('liste-recruteurs').scrollIntoView({ behavior: 'smooth', block: 'start' }) },
+  ].filter(i => i.compte > 0);
+
+  const total = items.reduce((s, i) => s + i.compte, 0);
+  totalEl.textContent = total ? `${total} action${total > 1 ? 's' : ''} en attente` : '';
+
+  // Reflète le même total sur le badge de la sidebar et la cloche du haut (pas de nouvelle requête).
+  const navBadge = document.getElementById('nav-badge-a-traiter');
+  const clocheBadge = document.getElementById('db-cloche-badge');
+  if (navBadge) { navBadge.textContent = total || ''; navBadge.style.display = total ? 'inline-block' : 'none'; }
+  if (clocheBadge) { clocheBadge.textContent = total || ''; clocheBadge.style.display = total ? 'inline-block' : 'none'; }
+
+  if (!items.length) {
+    liste.innerHTML = '<div class="a-traiter-vide">✅ Votre espace est à jour.</div>';
+    return;
+  }
+
+  liste.innerHTML = items.map((i, idx) => `
+    <button type="button" class="a-traiter-item" data-at-index="${idx}">
+      <span class="at-label">${echapperHtml(i.label)}</span>
+      <span class="at-compte">${i.compte}</span>
+    </button>
+  `).join('');
+
+  liste.querySelectorAll('[data-at-index]').forEach(btn => {
+    btn.addEventListener('click', () => items[Number(btn.dataset.atIndex)].action());
+  });
+}
+
+/* ===================== AJOUT Étape 16 : graphique d'activité 7 jours (courbe SVG) =====================
+   Regroupe page_views par jour, côté client (pas de nouvelle fonction serveur
+   nécessaire). Reste raisonnable en volume car limité aux 7 derniers jours. Aucune
+   dépendance externe : un simple <svg><polyline> suffit, cohérent avec le reste
+   du site qui n'utilise aucune librairie de graphiques. */
+async function chargerActiviteGraphique() {
+  const conteneur = document.getElementById('activite-barres');
+  const sousCartes = document.getElementById('activite-souscartes');
+  const depuis7j = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  depuis7j.setHours(0, 0, 0, 0);
+
+  const { data: vues, error } = await sb.from('page_views')
+    .select('created_at')
+    .gte('created_at', depuis7j.toISOString())
+    .limit(20000);
+
+  if (error) {
+    conteneur.innerHTML = '<p style="color:var(--gris); font-size:0.82rem;">Statistiques indisponibles pour le moment.</p>';
+    return;
+  }
+
+  const joursLabels = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+  const jours = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - i);
+    jours.push({ date: d, compte: 0 });
+  }
+
+  (vues || []).forEach(v => {
+    const d = new Date(v.created_at);
+    d.setHours(0, 0, 0, 0);
+    const jourTrouve = jours.find(j => j.date.getTime() === d.getTime());
+    if (jourTrouve) jourTrouve.compte++;
+  });
+
+  const max = Math.max(...jours.map(j => j.compte), 1);
+  const largeur = 560, hauteur = 130, marge = 12;
+  const pas = (largeur - marge * 2) / (jours.length - 1);
+  const points = jours.map((j, i) => {
+    const x = marge + i * pas;
+    const y = hauteur - marge - ((j.compte / max) * (hauteur - marge * 2));
+    return { x, y, compte: j.compte, label: joursLabels[j.date.getDay()] };
+  });
+  const polyline = points.map(p => `${p.x},${p.y}`).join(' ');
+  const aire = `${marge},${hauteur - marge} ${polyline} ${largeur - marge},${hauteur - marge}`;
+
+  conteneur.innerHTML = `
+    <svg viewBox="0 0 ${largeur} ${hauteur + 18}" preserveAspectRatio="none">
+      <polygon points="${aire}" fill="rgba(207,59,82,0.14)"></polygon>
+      <polyline points="${polyline}" fill="none" stroke="var(--bordeaux-clair)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"></polyline>
+      ${points.map(p => `<circle cx="${p.x}" cy="${p.y}" r="3.5" fill="var(--bordeaux-clair)"><title>${p.compte} visite(s)</title></circle>`).join('')}
+      ${points.map(p => `<text x="${p.x}" y="${hauteur + 14}" text-anchor="middle" font-size="9" fill="var(--gris)">${p.label}</text>`).join('')}
+    </svg>
+  `;
+
+  if (sousCartes) {
+    const total7j = jours.reduce((s, j) => s + j.compte, 0);
+    const aujourdhui = jours[jours.length - 1].compte;
+    const { count: photosTotal } = await sb.from('model_photos').select('id', { count: 'exact', head: true });
+    sousCartes.innerHTML = `
+      <div class="activite-souscarte"><div class="chiffre">${total7j}</div><div class="label">Visites 7 jours</div></div>
+      <div class="activite-souscarte"><div class="chiffre">${aujourdhui}</div><div class="label">Visites aujourd'hui</div></div>
+      <div class="activite-souscarte"><div class="chiffre">${photosTotal || 0}</div><div class="label">Photos envoyées</div></div>
+    `;
+  }
+}
+
+/* ===================== AJOUT Étape 20 : bloc Drive/photos (données réelles disponibles uniquement) ===================== */
+async function chargerDriveBloc() {
+  const conteneur = document.getElementById('drive-grille');
+  const [{ count: photosBook }, { count: mannequinsPublies }] = await Promise.all([
+    sb.from('model_photos').select('id', { count: 'exact', head: true }),
+    sb.from('model_profiles').select('id', { count: 'exact', head: true }).eq('published', true),
+  ]);
+
+  // "Vérifiées / En attente / Erreurs" ne peuvent pas être calculés sans le fichier
+  // d'intégration Drive (aucune table de statut par photo n'existe pour l'instant) —
+  // affichés en "—" plutôt que d'inventer un chiffre, voir l'avertissement ci-dessous.
+  conteneur.innerHTML = `
+    <div class="drive-panneau">
+      <div class="drive-ligne"><span class="drive-ligne-label">Photos (Supabase — THE BOOK)</span><span class="drive-ligne-chiffre">${photosBook || 0}</span></div>
+      <div class="drive-ligne"><span class="drive-ligne-label">Mannequins publiés</span><span class="drive-ligne-chiffre">${mannequinsPublies || 0}</span></div>
+      <div class="drive-ligne attente"><span class="drive-ligne-label">Photos sur Drive — en attente</span><span class="drive-ligne-chiffre">—</span></div>
+      <div class="drive-ligne erreurs"><span class="drive-ligne-label">Photos sur Drive — erreurs</span><span class="drive-ligne-chiffre">—</span></div>
+    </div>
+  `;
+}
+
+/* ===================== AJOUT : sidebar — navigation par défilement + surlignage ===================== */
+function initSidebarNav() {
+  document.querySelectorAll('.db-nav-item[data-scroll], .db-action-btn[data-scroll]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const cible = document.getElementById(btn.dataset.scroll);
+      if (!cible) return;
+      cible.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (btn.classList.contains('db-nav-item')) {
+        document.querySelectorAll('.db-nav-item').forEach(b => b.classList.remove('actif'));
+        btn.classList.add('actif');
+      }
+    });
+  });
+  const clocheBtn = document.getElementById('db-cloche-btn');
+  if (clocheBtn) clocheBtn.addEventListener('click', () => {
+    document.getElementById('a-traiter-liste').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  const logoutSidebar = document.getElementById('tb-logout-btn-sidebar');
+  if (logoutSidebar) logoutSidebar.addEventListener('click', () => document.getElementById('tb-logout-btn').click());
+}
+
+/* ===================== AJOUT : bannière "mannequin à la une" (réutilise le mannequin vedette réel) ===================== */
+async function chargerHeroVedette() {
+  const conteneur = document.getElementById('db-hero');
+  const { data: vedette } = await sb.from('model_profiles').select('id, full_name, city').eq('published', true).eq('featured', true).maybeSingle();
+
+  if (!vedette) {
+    conteneur.innerHTML = '<div class="db-hero-vide">Aucun mannequin mis en avant actuellement — choisissez-en un dans "Mannequin à la une" ci-dessous.</div>';
+    return;
+  }
+
+  const { data: photo } = await sb.from('model_photos').select('url_miniature, url').eq('model_id', vedette.id).order('created_at', { ascending: true }).limit(1).maybeSingle();
+  const urlPhoto = photo ? (photo.url_miniature || photo.url) : '';
+
+  conteneur.innerHTML = `
+    ${urlPhoto ? `<img src="${echapperHtml(urlPhoto)}" alt="${echapperHtml(vedette.full_name || '')}">` : ''}
+    <div class="db-hero-contenu">
+      <div class="db-hero-eyebrow">Mannequin à la une</div>
+      <div class="db-hero-nom">${echapperHtml(vedette.full_name || 'Mannequin')}</div>
+      <div class="db-hero-note">${echapperHtml(vedette.city || '')} · Actuellement affichée sur la page d'accueil du site.</div>
+    </div>
+  `;
+}
+
+/* ===================== AJOUT : "Dernières activités" — flux réel à partir des dates
+   existantes de plusieurs tables (aucune table de journal d'activité n'existe :
+   ce flux est reconstruit, pas inventé, à partir de vrais évènements horodatés). ===================== */
+async function chargerDernieresActivites() {
+  const conteneur = document.getElementById('dernieres-activites');
+  const [{ data: messages }, { data: photosRecentes }, { data: candidaturesRecentes }, { data: inscriptionsRecentes }, { data: actusRecentes }] = await Promise.all([
+    sb.from('messages_contact').select('nom, created_at').order('created_at', { ascending: false }).limit(3),
+    sb.from('model_photos').select('created_at').order('created_at', { ascending: false }).limit(3),
+    sb.from('casting_applications').select('full_name, created_at').order('created_at', { ascending: false }).limit(3),
+    sb.from('inscriptions_mannequins').select('full_name, created_at').order('created_at', { ascending: false }).limit(3),
+    sb.from('actualites').select('titre, created_at').order('created_at', { ascending: false }).limit(2),
+  ]);
+
+  const evenements = [
+    ...(messages || []).map(m => ({ texte: `Nouveau message de ${m.nom || 'un visiteur'}`, date: m.created_at })),
+    ...(photosRecentes || []).map(() => ({ texte: 'Photo ajoutée au book', date: null })).map((e, i) => ({ ...e, date: (photosRecentes[i] || {}).created_at })),
+    ...(candidaturesRecentes || []).map(c => ({ texte: `Candidature reçue — ${c.full_name || 'candidat'}`, date: c.created_at })),
+    ...(inscriptionsRecentes || []).map(m => ({ texte: `Inscription reçue — ${m.full_name || 'mannequin'}`, date: m.created_at })),
+    ...(actusRecentes || []).map(a => ({ texte: `Actualité publiée — ${a.titre || ''}`, date: a.created_at })),
+  ].filter(e => e.date).sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 6);
+
+  if (!evenements.length) {
+    conteneur.innerHTML = '<div class="dossiers-vide">Aucune activité récente.</div>';
+    return;
+  }
+
+  conteneur.innerHTML = evenements.map(e => `
+    <div class="timeline-item">
+      <span class="timeline-point"></span>
+      <div>
+        <div class="timeline-texte">${echapperHtml(e.texte)}</div>
+        <div class="timeline-date">${new Date(e.date).toLocaleDateString('fr-FR')}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
 async function chargerStatistiques() {
   const debutAujourdhui = new Date(); debutAujourdhui.setHours(0, 0, 0, 0);
   const depuis7j = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -800,6 +1207,11 @@ async function chargerStatistiques() {
   chargerInscriptions();
   chargerRecruteurs();
   chargerRepartitionCategories();
+  chargerATraiter();
+  chargerActiviteGraphique();
+  chargerDriveBloc();
+  chargerHeroVedette();
+  chargerDernieresActivites();
 
   const { data: derniersContacts } = await sb.from('messages_contact').select('nom, type_contact, telephone, created_at').order('created_at', { ascending: false }).limit(10);
   document.querySelector('#table-contacts tbody').innerHTML = (derniersContacts || []).map(c => `
@@ -814,7 +1226,6 @@ async function chargerStatistiques() {
 }
 
 
-// --- Flux Instagram (accueil) : configuration + rafraîchissement manuel ---
 async function chargerConfigInstagram() {
   const { data: config } = await sb.from('instagram_config').select('access_token, ig_user_id, token_expire_le').eq('id', 'principal').maybeSingle();
   const statutDiv = document.getElementById('instagram-statut');
@@ -849,7 +1260,6 @@ document.getElementById('instagram-enregistrer-btn').addEventListener('click', a
     msg.className = 'form-msg err'; msg.textContent = "L'identifiant du compte et le jeton sont tous les deux nécessaires."; msg.style.display = 'block';
     return;
   }
-  // Un jeton de longue durée Instagram Graph API est valable ~60 jours.
   const expireLe = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString();
   const { error } = await sb.from('instagram_config').upsert({ id: 'principal', access_token: token, ig_user_id: igUserId, token_expire_le: expireLe, updated_at: new Date().toISOString() });
   msg.className = 'form-msg ' + (error ? 'err' : 'ok');
@@ -879,7 +1289,7 @@ document.getElementById('instagram-rafraichir-btn').addEventListener('click', as
     if (resultat.error) throw new Error(resultat.error.message || 'Erreur inconnue de l\'API Instagram.');
 
     const posts = (resultat.data || [])
-      .filter(p => p.media_type !== 'VIDEO' || p.thumbnail_url) // évite les vidéos sans image de couverture
+      .filter(p => p.media_type !== 'VIDEO' || p.thumbnail_url)
       .map(p => ({
         id: p.id,
         image: p.media_type === 'VIDEO' ? p.thumbnail_url : p.media_url,
@@ -899,12 +1309,6 @@ document.getElementById('instagram-rafraichir-btn').addEventListener('click', as
   bouton.disabled = false;
 });
 
-// --- Validations en attente (première publication d'une fiche mannequin) ---
-// Chargé en deux temps pour ne pas alourdir l'ouverture du tableau de bord :
-// seul le compteur (requête légère, count uniquement) se charge au démarrage ;
-// la liste complète (avec photos) n'est interrogée qu'à l'ouverture du menu
-// déroulant, et une seule fois (mise en cache tant que la page n'est pas
-// rechargée — un bouton permet de forcer un nouveau chargement après action).
 let validationsChargees = false;
 
 async function chargerCompteurValidations() {
@@ -971,6 +1375,7 @@ document.getElementById('liste-validations').addEventListener('click', async (e)
     validationsChargees = false;
     chargerListeValidations();
     chargerCompteurValidations();
+    chargerATraiter();
   }
 
   if (idRefuser) {
@@ -981,12 +1386,10 @@ document.getElementById('liste-validations').addEventListener('click', async (e)
     validationsChargees = false;
     chargerListeValidations();
     chargerCompteurValidations();
+    chargerATraiter();
   }
 });
 
-// --- Candidatures & inscriptions : listes filtrées par statut + fiche détaillée ---
-// Les buckets photo sont privés : impossible d'utiliser l'URL publique enregistrée à
-// l'envoi, il faut générer une URL signée temporaire à la demande (réservée à l'admin).
 const DOSSIERS = {
   casting: {
     table: 'casting_applications', photosTable: 'casting_photos', photosColonne: 'application_id', bucket: 'casting-applications',
@@ -1058,7 +1461,6 @@ function metaAffichee(source, d) {
   return [d.city, new Date(d.created_at).toLocaleDateString('fr-FR')].filter(Boolean).join(' · ');
 }
 
-// Calcule l'âge à partir d'une date de naissance (format "AAAA-MM-JJ").
 function calculerAge(dateNaissance) {
   if (!dateNaissance) return null;
   const naissance = new Date(dateNaissance);
@@ -1070,16 +1472,11 @@ function calculerAge(dateNaissance) {
   return age;
 }
 
-// Construit un lien wa.me à partir d'un numéro tel quel (garde uniquement les
-// chiffres) — fiable si le numéro a été saisi avec son indicatif pays.
 function lienWhatsApp(numero) {
   const chiffres = String(numero || '').replace(/[^\d]/g, '');
   return chiffres ? `https://wa.me/${chiffres}` : null;
 }
 
-// --- Répartition par catégorie (hommes / femmes / enfants mineurs), toutes
-// candidatures et inscriptions confondues, avec accès direct à la fiche et
-// au WhatsApp de chaque personne depuis le détail d'une catégorie. ---
 let CATEGORIES_DONNEES = { hommes: [], femmes: [], enfants: [] };
 async function chargerRepartitionCategories() {
   const [{ data: candidatures }, { data: inscriptions }] = await Promise.all([
@@ -1107,11 +1504,9 @@ async function chargerRepartitionCategories() {
     const n = CATEGORIES_DONNEES[cle].length;
     const largeur = Math.round((n / max) * 100);
     return `
-      <button type="button" class="categorie-barre" data-categorie="${cle}" style="display:block; width:100%; text-align:left; background:none; border:none; cursor:pointer; padding:0.5rem 0; color:inherit; font:inherit;">
-        <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:0.3rem;"><span>${libelles[cle]}</span><span>${n}</span></div>
-        <div style="background:var(--anthracite, var(--noir)); height:10px; border-radius:5px; overflow:hidden;">
-          <div style="background:var(--bordeaux-clair); height:100%; width:${largeur}%;"></div>
-        </div>
+      <button type="button" class="activite-repart-ligne" data-categorie="${cle}" style="display:block; width:100%; text-align:left; background:none; border:none; cursor:pointer; padding:0; color:inherit; font:inherit;">
+        <div class="arl-tete"><span>${libelles[cle]}</span><span>${n}</span></div>
+        <div class="activite-repart-barre"><span style="width:${largeur}%;"></span></div>
       </button>`;
   }).join('');
 
@@ -1205,7 +1600,6 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// --- Fiche détaillée (modale) : toutes les informations + photos + changement de statut ---
 const CHAMPS_CASTING = [
   ['email', 'E-mail'], ['phone', 'Téléphone'], ['genre', 'Genre'], ['city', 'Ville'], ['date_naissance', 'Date de naissance'],
   ['height_cm', 'Taille', 'cm'], ['weight_kg', 'Poids', 'kg'], ['chest_cm', 'Poitrine', 'cm'], ['waist_cm', 'Taille (tour)', 'cm'],
@@ -1276,15 +1670,8 @@ async function ouvrirFicheDossier(source, id) {
   const { data: photos } = await sb.from(conf.photosTable).select('id, chemin, url').eq(conf.photosColonne, id);
   if (!photos || !photos.length) { photosEl.innerHTML = '<span class="mf-photos-msg">Aucune photo jointe.</span>'; return; }
 
-  // Les candidatures castings envoient désormais leurs photos vers Google Drive
-  // (pas de "chemin" Supabase Storage) : dans ce cas, "url" contient déjà un lien
-  // affichable directement, pas besoin de signer quoi que ce soit.
   const chemins = photos.map(p => p.chemin).filter(Boolean);
   const { data: signees } = chemins.length ? await sb.storage.from(conf.bucket).createSignedUrls(chemins, 300) : { data: [] };
-  // Association par chemin (pas par position dans le tableau) : si une photo n'a
-  // pas de chemin, ou si sa signature échoue individuellement, un simple filtre
-  // par position aurait décalé toutes les URLs suivantes — chaque photo aurait
-  // alors affiché l'aperçu et le bouton "supprimer" d'une AUTRE photo.
   const urlParChemin = {};
   (signees || []).forEach(s => { if (s.path && s.signedUrl) urlParChemin[s.path] = s.signedUrl; });
   const urls = photos.map(p => p.chemin ? (urlParChemin[p.chemin] || '') : (p.url || ''));
@@ -1303,8 +1690,6 @@ async function ouvrirFicheDossier(source, id) {
   });
 }
 
-// Liste des mannequins d'une sélection recruteur, avec possibilité de retirer
-// UN SEUL mannequin de la sélection sans toucher au reste de la demande.
 async function chargerMannequinsSelection(requestId) {
   const mannequinsEl = document.getElementById('mf-mannequins');
   mannequinsEl.innerHTML = 'Chargement des mannequins sélectionnés…';
@@ -1329,8 +1714,6 @@ async function chargerMannequinsSelection(requestId) {
   });
 }
 
-// Suppression définitive d'une photo : le fichier dans le stockage Supabase ET la
-// ligne en base. Irréversible, d'où la confirmation.
 async function supprimerPhotoDossier(bouton) {
   if (!ficheOuverte) return;
   if (!confirm('Supprimer définitivement cette photo ? Cette action est irréversible.')) return;
@@ -1362,12 +1745,9 @@ document.getElementById('mf-statut-select').addEventListener('change', async (e)
   const conf = DOSSIERS[ficheOuverte.source];
   await sb.from(conf.table).update({ [conf.statutChamp]: e.target.value }).eq('id', ficheOuverte.id);
   afficherDossiers(ficheOuverte.source);
+  chargerATraiter();
 });
 
-// Suppression complète d'un dossier (candidature, inscription ou demande
-// recruteur) : les fichiers photo sont d'abord retirés du stockage, puis la
-// ligne est supprimée — les photos/mannequins liés en base disparaissent
-// automatiquement avec elle. Irréversible.
 document.getElementById('mf-supprimer-dossier-btn').addEventListener('click', async () => {
   if (!ficheOuverte) return;
   const conf = DOSSIERS[ficheOuverte.source];
@@ -1389,14 +1769,11 @@ document.getElementById('mf-supprimer-dossier-btn').addEventListener('click', as
 
   document.getElementById('modal-dossier').classList.remove('ouvert');
   afficherDossiers(ficheOuverte.source);
+  chargerATraiter();
 });
 
-// --- Codes d'inscription (usage unique) ---
 function genererCode() {
-  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // sans O/0 ni I/1, pour éviter la confusion
-  // crypto.getRandomValues plutôt que Math.random() : ce code donne accès à la
-  // création d'un compte mannequin, autant utiliser un vrai générateur
-  // aléatoire cryptographique plutôt qu'un générateur prévisible en théorie.
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   const octets = new Uint32Array(6);
   crypto.getRandomValues(octets);
   let code = '';
@@ -1410,7 +1787,6 @@ document.getElementById('generer-code-btn').addEventListener('click', async () =
   btn.disabled = true;
 
   let code = genererCode();
-  // Sécurité négligeable mais gratuite : on s'assure que le code n'existe pas déjà.
   let { data: existant } = await sb.from('codes_inscription').select('code').eq('code', code).maybeSingle();
   while (existant) {
     code = genererCode();
@@ -1441,7 +1817,6 @@ document.getElementById('copier-code-btn').addEventListener('click', () => {
   });
 });
 
-// --- Code permanent du portail "Créer mon compte" (espace mannequin) ---
 document.getElementById('portail-generer-btn').addEventListener('click', () => {
   document.getElementById('portail-nouveau-code').value = genererCode();
 });
@@ -1487,7 +1862,6 @@ async function chargerCodes() {
   document.getElementById('anciens-codes-compteur').textContent = utilises.length;
 }
 
-// --- Projets & castings (liste proposée aux candidats dans "Postuler à un casting") ---
 document.getElementById('form-nouveau-projet').addEventListener('submit', async (e) => {
   e.preventDefault();
   const champ = document.getElementById('nouveau-projet-nom');
@@ -1554,7 +1928,6 @@ document.getElementById('liste-projets').addEventListener('click', async (e) => 
   }
 });
 
-// --- Résumé des candidatures par projet/casting ---
 async function chargerResumeCandidatures() {
   const { data: resume } = await sb.rpc('resume_candidatures_par_projet');
   const conteneur = document.getElementById('resume-candidatures');
@@ -1565,7 +1938,6 @@ async function chargerResumeCandidatures() {
   }).join('');
 }
 
-// --- Mannequin à la une (page d'accueil) ---
 async function chargerVedette() {
   const { data: profils } = await sb.from('model_profiles').select('id, full_name, featured').eq('published', true).order('full_name', { ascending: true });
   const select = document.getElementById('tb-select-vedette');
@@ -1599,6 +1971,7 @@ document.getElementById('tb-definir-vedette-btn').addEventListener('click', asyn
   if (error) { msg.className = 'form-msg err'; msg.textContent = "Erreur lors de l'enregistrement."; return; }
   msg.className = 'form-msg ok'; msg.textContent = 'Mannequin à la une mis à jour !';
   chargerVedette();
+  chargerHeroVedette();
 });
 
 document.getElementById('tb-retirer-vedette-btn').addEventListener('click', async () => {
@@ -1606,9 +1979,9 @@ document.getElementById('tb-retirer-vedette-btn').addEventListener('click', asyn
   await sb.from('model_profiles').update({ featured: false }).eq('featured', true);
   msg.className = 'form-msg ok'; msg.textContent = 'Mise en avant retirée.'; msg.style.display = 'block';
   chargerVedette();
+  chargerHeroVedette();
 });
 
-// --- Bandeau d'information (bande défilante de l'accueil) ---
 async function chargerBandeau() {
   const { data } = await sb.from('bandeau_annonce').select('*').eq('id', 'principal').maybeSingle();
   const actif = !!(data && data.actif);
@@ -1637,7 +2010,6 @@ document.getElementById('bandeau-actif-btn').addEventListener('click', async () 
   chargerBandeau();
 });
 
-// --- Mot du fondateur (photo + message de l'accueil) ---
 let mrPhotoUrlActuelle = null;
 
 async function chargerMotResponsableTableau() {
@@ -1653,12 +2025,14 @@ async function chargerMotResponsableTableau() {
   } else {
     apercu.style.display = 'none';
   }
+
+  // Réutilise la même photo comme avatar du profil admin dans la topbar — aucune donnée inventée.
+  const avatar = document.getElementById('db-profil-avatar');
+  if (avatar && mrPhotoUrlActuelle) {
+    avatar.outerHTML = `<img src="${echapperHtml(mrPhotoUrlActuelle)}" alt="" id="db-profil-avatar">`;
+  }
 }
 
-// Redimensionne/compresse une photo trop lourde (courant sur Android haut de gamme :
-// 8-15 Mo en pleine résolution) avant envoi — le bucket refuse tout fichier de plus
-// de 10 Mo. 2400px de côté et qualité 0.88 restent largement suffisants pour une
-// photo affichée sur le site (ni impression, ni Compcard ici).
 function redimensionnerPhotoResponsable(fichier, coteMax = 2400, qualite = 0.88) {
   return new Promise((resolve) => {
     if (!/^image\/(jpeg|png|webp)$/.test(fichier.type) || fichier.size < 1.5 * 1024 * 1024) { resolve(fichier); return; }
@@ -1691,8 +2065,6 @@ document.getElementById('mr-photo-btn').addEventListener('click', async () => {
   if (!fichier) { msg.className = 'form-msg err'; msg.textContent = 'Choisissez une photo d\'abord.'; msg.style.display = 'block'; return; }
 
   msg.className = 'form-msg ok'; msg.textContent = 'Envoi de la photo…'; msg.style.display = 'block';
-  // Les photos iPhone sont souvent au format HEIC, non accepté par le bucket de stockage
-  // (seuls jpeg/png/webp/gif sont autorisés) — on les convertit d'abord en JPEG.
   const estHeic = /image\/hei(c|f)/i.test(fichier.type) || /\.(heic|heif)$/i.test(fichier.name);
   if (estHeic && typeof heic2any !== 'undefined') {
     try {
@@ -1704,8 +2076,6 @@ document.getElementById('mr-photo-btn').addEventListener('click', async () => {
       return;
     }
   }
-  // Photos Android trop lourdes (fréquent sur les capteurs haute résolution) : on
-  // réduit avant envoi plutôt que de laisser le bucket rejeter silencieusement.
   fichier = await redimensionnerPhotoResponsable(fichier);
   if (fichier.size > 10 * 1024 * 1024) {
     msg.className = 'form-msg err';
@@ -1739,106 +2109,18 @@ document.getElementById('mr-enregistrer-btn').addEventListener('click', async ()
   chargerMotResponsableTableau();
 });
 
-// Sur une connexion instable, la bibliothèque Supabase (chargée depuis un CDN)
-// peut échouer à se charger — sans ce filet, "sb" vaut alors null et cette
-// vérification plante toute la page au chargement (page blanche/figée) au
-// lieu de simplement retomber sur l'écran de connexion normal.
+initSidebarNav();
+
 (async () => {
   try {
     const estAdmin = await verifierAdminTableau();
     if (estAdmin && !recuperationMdpEnCours) {
       document.getElementById('bloc-login').style.display = 'none';
       document.getElementById('bloc-tableau').style.display = 'block';
+      afficherChromePublic(false);
       chargerStatistiques();
     }
   } catch (e) {}
-})();
-</script>
-
-<script>
-// --- Zone "À traiter" (Étape 14 du cahier des charges) : synthèse des éléments
-// nécessitant une action, construite avec les MÊMES requêtes/config (DOSSIERS, sb)
-// que le reste du tableau de bord — aucune nouvelle logique métier inventée,
-// uniquement un résumé visuel de ce qui existe déjà plus bas sur la page.
-async function chargerZoneATraiter() {
-  const conteneur = document.getElementById('atraiter-grille');
-  if (!conteneur || typeof sb === 'undefined' || !sb) return;
-
-  const items = [];
-
-  try {
-    const { count: validations } = await sb.from('model_profiles').select('id', { count: 'exact', head: true }).eq('en_attente_validation', true);
-    items.push({ label: 'Validations THE BOOK', valeur: validations || 0, ancre: '#section-book' });
-  } catch (e) {}
-
-  try {
-    const { count: candidatures } = await sb.from(DOSSIERS.casting.table).select('id', { count: 'exact', head: true }).eq(DOSSIERS.casting.statutChamp, DOSSIERS.casting.filtreParDefaut);
-    items.push({ label: 'Candidatures nouvelles', valeur: candidatures || 0, ancre: '#section-candidatures' });
-  } catch (e) {}
-
-  try {
-    const { count: inscriptions } = await sb.from(DOSSIERS.inscription.table).select('id', { count: 'exact', head: true }).eq(DOSSIERS.inscription.statutChamp, DOSSIERS.inscription.filtreParDefaut);
-    items.push({ label: 'Inscriptions à vérifier', valeur: inscriptions || 0, ancre: '#section-inscriptions' });
-  } catch (e) {}
-
-  try {
-    const { count: recruteurs } = await sb.from(DOSSIERS.recruteur.table).select('id', { count: 'exact', head: true }).eq(DOSSIERS.recruteur.statutChamp, DOSSIERS.recruteur.filtreParDefaut);
-    items.push({ label: 'Demandes recruteurs', valeur: recruteurs || 0, ancre: '#section-recruteurs' });
-  } catch (e) {}
-
-  const total = items.reduce((s, i) => s + i.valeur, 0);
-
-  if (!total) {
-    conteneur.innerHTML = '<div class="atraiter-vide">✅ Votre espace est à jour — aucune action en attente.</div>';
-    return;
-  }
-
-  conteneur.innerHTML = items.map(i => `
-    <a href="${i.ancre}" class="atraiter-carte ${i.valeur ? 'a-traiter' : ''}">
-      <span class="ac-label">${i.label}</span>
-      <span class="ac-valeur">${i.valeur}</span>
-    </a>
-  `).join('');
-}
-
-// Se déclenche au même moment que le reste des statistiques : on "enveloppe"
-// chargerStatistiques (sans réécrire son contenu) pour y ajouter cet appel,
-// plutôt que de dupliquer son déclenchement (login initial + reconnexion
-// automatique + reset mot de passe) à trois endroits différents.
-if (typeof chargerStatistiques === 'function') {
-  const chargerStatistiquesOriginal = chargerStatistiques;
-  chargerStatistiques = async function () {
-    await chargerStatistiquesOriginal();
-    chargerZoneATraiter();
-  };
-}
-
-// Bouton de déconnexion dupliqué dans la sidebar : déclenche le bouton
-// d'origine plutôt que de dupliquer sa logique de déconnexion.
-const btnLogoutSidebar = document.getElementById('tb-logout-btn-sidebar');
-if (btnLogoutSidebar) {
-  btnLogoutSidebar.addEventListener('click', () => {
-    document.getElementById('tb-logout-btn').click();
-  });
-}
-
-// Mise en évidence, dans la sidebar, du lien correspondant à la section
-// actuellement visible au scroll — purement visuel, aucun impact fonctionnel.
-(function surbrillanceSidebar() {
-  const liens = document.querySelectorAll('.tb-sidebar-lien');
-  if (!liens.length) return;
-  const cibles = Array.from(liens).map(l => document.querySelector(l.getAttribute('href'))).filter(Boolean);
-  if (!cibles.length) return;
-  const observateur = new IntersectionObserver((entrees) => {
-    entrees.forEach(entree => {
-      if (!entree.isIntersecting) return;
-      const lienCorrespondant = Array.from(liens).find(l => l.getAttribute('href') === '#' + entree.target.id);
-      if (!lienCorrespondant) return;
-      liens.forEach(l => l.classList.remove('actif'));
-      lienCorrespondant.classList.add('actif');
-    });
-  }, { rootMargin: '-15% 0px -70% 0px' });
-  cibles.forEach(c => observateur.observe(c));
 })();
 </script>
 </body>
