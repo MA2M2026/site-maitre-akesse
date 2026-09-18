@@ -653,6 +653,21 @@ body.zone-admin .db-shell{min-height:100vh;background:transparent}
 @media(max-width:680px){.db-main{padding:0 11px 35px}.db-topbar{margin:0 -11px 12px;padding:0 11px;min-height:70px}.db-greeting{font-size:1.15rem}.db-topbar-droite{gap:5px}.db-profil .nom,.db-profil .role{display:none}.db-profil{padding-left:7px}.db-hero{min-height:330px!important}.db-hero img{width:100%!important;height:58%!important;object-position:center 18%}.db-hero:after{background:linear-gradient(180deg,rgba(3,4,5,0) 25%,rgba(3,4,5,.45) 48%,#07090b 67%,#07090b 100%)}.db-hero-contenu{left:0;right:0;top:auto;bottom:23px;transform:none;padding:0 18px!important}.db-hero-nom{font-size:1.8rem}.db-hero-signature{font-size:.9rem;margin-top:10px}.stats-grille{grid-template-columns:repeat(2,1fr);gap:7px}.stat-carte{min-height:105px;padding:12px}.stat-carte .chiffre{font-size:1.65rem}.stats-secondaires{gap:6px;line-height:1.6}.stats-secondaires span{padding-right:8px}.db-actions-liste{grid-template-columns:repeat(2,1fr)}.db-action-btn{min-height:58px}.db-sidebar{width:250px}}
 @media(prefers-reduced-motion:reduce){.db-nav-item,.db-action-btn{transition:none!important;transform:none!important}}
 
+
+/* V4 — corrections graphiques finales : hero à droite, cartes éditoriales, hiérarchie référence */
+.db-hero img{left:auto!important;right:0!important;width:56%!important;height:100%!important;object-fit:cover!important;object-position:center 20%!important}
+.db-hero-contenu{left:5%!important;right:48%!important;top:50%!important;bottom:auto!important;transform:translateY(-50%)!important}
+.db-hero:after{left:0!important;right:38%!important;background:linear-gradient(90deg,rgba(3,4,5,.02),rgba(3,4,5,.38) 68%,rgba(3,4,5,.92))!important}
+.db-hero-motto{margin-top:13px;font-family:var(--display);font-size:1rem;line-height:1.02;color:#f0e9e2}.db-hero-motto em{color:#c51f4e;font-weight:500}
+.db-hero-link{display:inline-flex;align-items:center;gap:10px;margin-top:15px;padding:8px 13px;border:1px solid rgba(213,173,98,.30);border-radius:4px;color:#f1ece6;background:rgba(255,255,255,.025);font-size:.51rem;letter-spacing:.12em;text-transform:uppercase;text-decoration:none}.db-hero-link span{color:#d5ad62;font-size:.9rem}
+.db-hero-texture{position:absolute;inset:0;z-index:2;pointer-events:none;background:repeating-linear-gradient(115deg,transparent 0 44px,rgba(255,255,255,.018) 45px,transparent 46px);opacity:.35}
+.stats-grille{grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:10px!important;margin-bottom:5px!important}.stat-carte{min-height:126px!important;text-align:left!important;padding:14px 15px 12px!important;border-radius:7px!important;border:1px solid rgba(255,255,255,.10)!important;background:linear-gradient(145deg,#14191e,#090c0f 76%)!important;box-shadow:0 16px 35px rgba(0,0,0,.24),inset 0 1px rgba(255,255,255,.035)!important;position:relative!important;overflow:hidden!important}.stat-carte.accent{background:linear-gradient(145deg,#8d1036,#620a27 54%,#260710)!important;border-color:rgba(200,31,78,.82)!important}.stat-head{position:relative;z-index:3}.stat-carte .chiffre{position:relative;z-index:3;font-size:2.35rem!important;line-height:.95!important}.stat-carte .label,.stat-carte .micro{position:relative;z-index:3}.stat-line{height:1px;margin-top:11px;background:rgba(255,255,255,.10);position:relative;z-index:3}.stat-line i{display:block;width:34%;height:100%;background:linear-gradient(90deg,#c51f4e,transparent)}
+.dossier-carte{position:relative!important;display:grid!important;grid-template-columns:minmax(0,1.6fr) minmax(110px,.75fr) auto auto!important;align-items:center!important;gap:10px!important;min-height:62px!important;padding:10px 12px 10px 16px!important;border:1px solid rgba(255,255,255,.07)!important;border-left:2px solid rgba(200,31,78,.55)!important;border-radius:7px!important;background:linear-gradient(100deg,#0e1216,#090b0e)!important;box-shadow:inset 0 1px rgba(255,255,255,.02)!important;overflow:hidden!important}.dossier-carte:before{content:"";position:absolute;left:0;top:0;bottom:0;width:34%;background:linear-gradient(90deg,rgba(200,31,78,.055),transparent);pointer-events:none}.dossier-carte:hover{border-color:rgba(213,173,98,.28)!important;border-left-color:#c51f4e!important;background:linear-gradient(100deg,#151015,#090b0e)!important;transform:translateX(2px)!important}.dossier-carte .dc-nom,.dossier-carte .dc-meta,.dossier-carte .statut-pill,.dossier-carte .dc-fleche{position:relative;z-index:2}.dossier-carte .dc-nom{font-size:.88rem!important}.dossier-carte .dc-meta{font-size:.54rem!important}.dossier-carte .dc-fleche{color:#c51f4e!important}
+.validation-carte{display:grid!important;grid-template-columns:190px minmax(0,1fr) auto!important;align-items:center!important;gap:18px!important;padding:12px!important;border:1px solid rgba(255,255,255,.08)!important;border-left:2px solid #d5ad62!important;border-radius:8px!important;background:linear-gradient(110deg,#0e1216,#090b0e)!important}.validation-photos{display:grid!important;grid-template-columns:repeat(4,1fr)!important;gap:5px!important}.validation-photos img{width:100%!important;height:62px!important;border-radius:4px!important;object-fit:cover!important;border:1px solid rgba(255,255,255,.06)!important}.validation-photos img:first-child{height:80px!important;grid-row:span 2!important}
+.drive-ligne{border:1px solid rgba(255,255,255,.05)!important;border-radius:5px!important;background:linear-gradient(90deg,rgba(255,255,255,.028),rgba(255,255,255,.008))!important}
+@media(max-width:1180px){.stats-grille{grid-template-columns:repeat(3,minmax(0,1fr))!important}.validation-carte{grid-template-columns:160px minmax(0,1fr)!important}.validation-actions{grid-column:1/-1;justify-content:flex-start!important}}
+@media(max-width:900px){.db-hero{min-height:260px!important}.db-hero img{width:54%!important}.db-hero-contenu{left:5%!important;right:42%!important}.db-hero-nom{font-size:2.15rem!important}.ref-core-grid{grid-template-columns:1fr!important}.dossier-carte{grid-template-columns:minmax(0,1fr) auto!important}.dossier-carte .dc-meta{grid-column:1}.dossier-carte .dc-fleche{grid-column:2;grid-row:1/3}.validation-carte{grid-template-columns:1fr!important}.validation-actions{grid-column:auto}}
+@media(max-width:680px){.db-hero{min-height:390px!important}.db-hero img{width:100%!important;height:62%!important}.db-hero:after{inset:0!important;background:linear-gradient(180deg,rgba(3,4,5,0) 22%,rgba(3,4,5,.18) 38%,rgba(7,9,11,.90) 61%,#07090b 75%)!important}.db-hero-contenu{left:0!important;right:0!important;bottom:18px!important;top:auto!important;transform:none!important;padding:0 17px!important}.db-hero-nom{font-size:2rem!important}.db-hero-motto{font-size:.83rem!important}.db-hero-footer{display:none!important}.stats-grille{grid-template-columns:1fr 1fr!important}.stat-carte{min-height:116px!important}.db-actions-liste{grid-template-columns:1fr 1fr!important}}
 </style>
 <link href="manifest.json" rel="manifest"/>
 <meta content="#1e1d1c" name="theme-color"/>
@@ -765,12 +780,22 @@ setTimeout(() => {
 </div>
 <!-- ===== AJOUT : bannière "mannequin à la une" + actions rapides ===== -->
 
-<h2 style="margin-bottom:1rem;">Vue d'ensemble</h2>
-<div class="stats-grille" id="stats-grille">Chargement des statistiques…</div><div class="ref-hero-row"><div class="db-hero" id="db-hero"><div class="db-hero-vide">Chargement…</div></div></div><div class="ref-core-grid"><div class="ref-core-graph"><div class="activite-carte">
+<div class="db-overview-head"><div><div class="db-overview-kicker">CENTRE DE CONTRÔLE <span class="db-title-rule"></span></div><h2>Vue d’ensemble</h2><p>Une lecture claire de l’activité de Maître Akesse Model Management.</p></div><div class="db-live-chip"><span></span> DONNÉES EN DIRECT</div></div>
+<div class="ref-hero-row"><div class="db-hero" id="db-hero"><div class="db-hero-vide">Chargement…</div></div></div><div class="stats-grille" id="stats-grille">Chargement des statistiques…</div><div class="ref-core-grid"><div class="ref-core-graph"><div class="activite-carte">
 <h3>📈 Activité — 7 derniers jours</h3>
 <div class="activite-souslabel">Visites réelles, une personne distincte par page.</div>
 <div class="activite-svg-wrap" id="activite-barres">Chargement…</div>
-<div class="activite-souscartes" id="activite-souscartes"></div>
+<div class="activite-souscartes" id="activite-souscartes"></div><div class="ref-category-panel">
+  <div class="ref-category-head">
+    <div>
+      <div class="ref-kicker">RÉPARTITION</div>
+      <h4>Profils par catégorie</h4>
+    </div>
+    <span class="ref-category-note">Cliquer pour voir le détail</span>
+  </div>
+  <div class="activite-repartition" id="categorie-chart">Chargement…</div>
+  <div class="categorie-details" id="categorie-details"></div>
+</div>
 </div></div><div class="ref-core-activity"><div>
 <h2 style="margin-bottom:0.8rem;">🕐 Dernières activités</h2>
 <div class="timeline-liste" id="dernieres-activites">Chargement…</div>
@@ -1458,11 +1483,14 @@ async function chargerHeroVedette() {
 
   conteneur.innerHTML = `
     ${urlPhoto ? `<img src="${echapperHtml(urlPhoto)}" alt="${echapperHtml(vedette.full_name || '')}" loading="eager">` : ''}
+    <div class="db-hero-texture" aria-hidden="true"></div>
     <div class="db-hero-contenu">
       <div class="db-hero-eyebrow">MANNEQUIN À LA UNE <span></span></div>
       <div class="db-hero-nom">${echapperHtml(vedette.full_name || 'Mannequin')}</div>
       <div class="db-hero-note">${echapperHtml(vedette.city || '')}</div>
       <div class="db-hero-signature">Une présence. Une image. Une identité.</div>
+      <div class="db-hero-motto">Le talent<br><em>n’a pas de limites.</em></div>
+      <a class="db-hero-link" href="mannequins.html">Voir le profil <span>→</span></a>
       <div class="db-hero-footer"><span>ACTUELLEMENT MIS EN AVANT SUR L'ACCUEIL</span><i></i></div>
     </div>
   `;
@@ -1524,14 +1552,13 @@ async function chargerStatistiques() {
   ]);
 
   document.getElementById('stats-grille').innerHTML = `
-    <div class="stat-carte stat-primaire accent"><div class="stat-icone">♙</div><div class="chiffre">${mannequins}</div><div class="label">Mannequins</div><div class="micro">dans THE BOOK</div></div>
-    <div class="stat-carte stat-primaire"><div class="stat-icone">♙</div><div class="chiffre">${inscriptions}</div><div class="label">Inscriptions</div><div class="micro">nouvelles entrées</div></div>
-    <div class="stat-carte stat-primaire"><div class="stat-icone">◈</div><div class="chiffre">${candidatures}</div><div class="label">Castings</div><div class="micro">candidatures reçues</div></div>
-    <div class="stat-carte stat-primaire"><div class="stat-icone">✉</div><div class="chiffre">${contacts}</div><div class="label">Messages</div><div class="micro">à consulter</div></div>
-    <div class="stat-carte stat-primaire"><div class="stat-icone">⌂</div><div class="chiffre">${recruteurs}</div><div class="label">Recruteurs</div><div class="micro">demandes reçues</div></div>
-    <div class="stat-carte stat-primaire"><div class="stat-icone">◷</div><div class="chiffre">${visites7j}</div><div class="label">Visites</div><div class="micro">7 derniers jours</div></div>
+    <div class="stat-carte stat-primaire accent"><div class="stat-head"><div class="stat-icone">♙</div><div class="stat-live">THE BOOK</div></div><div class="chiffre">${mannequins}</div><div class="label">Mannequins</div><div class="micro">profils publiés</div><div class="stat-line"><i></i></div></div>
+    <div class="stat-carte stat-primaire"><div class="stat-head"><div class="stat-icone">♙</div><div class="stat-live">ENTRÉES</div></div><div class="chiffre">${inscriptions}</div><div class="label">Inscriptions</div><div class="micro">dossiers reçus</div><div class="stat-line"><i></i></div></div>
+    <div class="stat-carte stat-primaire"><div class="stat-head"><div class="stat-icone">◈</div><div class="stat-live">CASTING</div></div><div class="chiffre">${candidatures}</div><div class="label">Candidatures</div><div class="micro">dossiers reçus</div><div class="stat-line"><i></i></div></div>
+    <div class="stat-carte stat-primaire"><div class="stat-head"><div class="stat-icone">✉</div><div class="stat-live">CONTACT</div></div><div class="chiffre">${contacts}</div><div class="label">Messages</div><div class="micro">à consulter</div><div class="stat-line"><i></i></div></div>
+    <div class="stat-carte stat-primaire"><div class="stat-head"><div class="stat-icone">⌂</div><div class="stat-live">RECRUTEURS</div></div><div class="chiffre">${recruteurs}</div><div class="label">Demandes recruteurs</div><div class="micro">demandes reçues</div><div class="stat-line"><i></i></div></div>
     <div class="stats-secondaires">
-      <span><b>${actus}</b> actualités publiées</span><span><b>${photos}</b> photos du Book</span><span><b>${visitesAujourdhui}</b> visites aujourd'hui</span><span><b>${visitesTotal}</b> visites au total</span>
+      <span><em>ACTUALITÉS</em><b>${actus}</b></span><span><em>PHOTOS BOOK</em><b>${photos}</b></span><span><em>VISITES / JOUR</em><b>${visitesAujourdhui}</b></span><span><em>VISITES / 7 J</em><b>${visites7j}</b></span><span><em>VISITES TOTAL</em><b>${visitesTotal}</b></span>
     </div>
   `;
 
