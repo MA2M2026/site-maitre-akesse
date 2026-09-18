@@ -1540,6 +1540,93 @@ body.zone-admin{background:radial-gradient(850px 500px at 65% -15%,rgba(112,13,4
 }
 </style>
 
+
+<style id="ma2m-final-reference-v2">
+/* ===== MA2M FINAL REFERENCE V2 — corrections issues constatés sur capture ===== */
+.db-shell{display:flex!important;align-items:stretch!important;min-height:100vh!important;overflow:visible!important}
+.db-sidebar{
+  width:250px!important;min-width:250px!important;flex:0 0 250px!important;
+  height:100vh!important;max-height:100vh!important;position:sticky!important;top:0!important;
+  overflow:hidden!important;padding:0 11px 12px!important;
+  display:flex!important;flex-direction:column!important;
+  z-index:1001!important;
+}
+.db-sidebar-logo{
+  flex:0 0 76px!important;height:76px!important;min-height:76px!important;
+  margin:0 -11px 8px!important;padding:0 17px!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  overflow:hidden!important;position:relative!important;
+}
+.db-sidebar-logo img{height:42px!important;width:auto!important;max-width:190px!important;object-fit:contain!important}
+.db-sidebar-logo .logo-text-header{display:none!important}
+.db-nav{
+  flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;
+  padding:0 1px!important;scrollbar-width:thin!important;
+}
+.db-nav-item{
+  height:42px!important;min-height:42px!important;flex:0 0 42px!important;
+  overflow:visible!important;white-space:nowrap!important;
+}
+.db-nav-item>span:first-child{display:flex!important;align-items:center!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important}
+.db-nav-item .db-nav-icone{flex:0 0 28px!important;width:28px!important;min-width:28px!important}
+.db-sidebar-bas{
+  position:static!important;left:auto!important;right:auto!important;bottom:auto!important;
+  flex:0 0 auto!important;margin:8px 0 0!important;padding:10px 7px 0!important;
+  border-top:1px solid var(--ref-line2)!important;
+  z-index:2!important;background:transparent!important;
+}
+.db-sidebar-bas:before{margin-bottom:2px!important}
+.db-sidebar-bas:after{margin-bottom:8px!important}
+.db-sidebar-bas .btn{position:relative!important;z-index:3!important}
+
+/* Top 10 : photo + médaillon de rang + barre */
+#classement-mannequins .top10-item{
+  display:grid!important;grid-template-columns:38px 42px minmax(0,1fr) minmax(110px,1.1fr) 40px!important;
+  align-items:center!important;gap:10px!important;min-height:58px!important;
+  padding:7px 10px!important;border-radius:7px!important;
+  background:linear-gradient(90deg,#0d1114,#07090b)!important;
+  border:1px solid rgba(255,255,255,.08)!important;
+  border-left:2px solid rgba(200,31,78,.35)!important;
+}
+#classement-mannequins .top10-photo{
+  width:42px!important;height:42px!important;border-radius:50%!important;object-fit:cover!important;
+  border:1px solid rgba(255,255,255,.14)!important;background:#15191d!important;display:block!important;
+}
+#classement-mannequins .top10-medal{
+  width:34px!important;height:34px!important;border-radius:50%!important;display:grid!important;place-items:center!important;
+  font-family:var(--display)!important;font-size:.88rem!important;color:#eee8e1!important;
+  border:1px solid rgba(213,173,98,.34)!important;background:radial-gradient(circle at 35% 25%,#343033,#0b0d0f)!important;
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.025),0 4px 12px rgba(0,0,0,.35)!important;
+}
+#classement-mannequins .top10-medal.rank-1{
+  color:#fff!important;border-color:#d7ae63!important;
+  background:radial-gradient(circle at 35% 25%,#a11740,#4d091d 72%)!important;
+  box-shadow:inset 0 0 0 2px rgba(213,173,98,.16),0 0 18px rgba(200,31,78,.20)!important;
+}
+#classement-mannequins .top10-medal.rank-2{border-color:#b9bdc2!important;background:radial-gradient(circle at 35% 25%,#555b61,#121518 72%)!important}
+#classement-mannequins .top10-medal.rank-3{border-color:#a97954!important;background:radial-gradient(circle at 35% 25%,#654536,#17100d 72%)!important}
+#classement-mannequins .top10-name{min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;color:#f0ece8!important;font-size:.92rem!important}
+#classement-mannequins .top10-bar{height:7px!important;background:rgba(255,255,255,.075)!important;border-radius:99px!important;overflow:hidden!important}
+#classement-mannequins .top10-bar>span{display:block!important;height:100%!important;background:linear-gradient(90deg,#9d1039,#e21f58)!important;border-radius:99px!important}
+#classement-mannequins .top10-visites{font-weight:700!important;font-size:.88rem!important;text-align:right!important;color:#f4f0eb!important}
+#classement-mannequins .top10-photo.fallback{object-fit:cover!important;opacity:.85!important}
+
+@media(max-width:900px){
+ .db-sidebar{position:fixed!important;left:0!important;top:60px!important;bottom:0!important;height:calc(100dvh - 60px)!important;max-height:calc(100dvh - 60px)!important;transform:translateX(-105%)!important}
+ .db-sidebar.ouvert{transform:translateX(0)!important}
+ .db-sidebar-logo{flex-basis:72px!important;height:72px!important;min-height:72px!important}
+ #classement-mannequins .top10-item{grid-template-columns:34px 40px minmax(0,1fr) 90px 34px!important;gap:7px!important;padding:7px!important}
+ #classement-mannequins .top10-name{font-size:.78rem!important}
+}
+@media(max-width:520px){
+ #classement-mannequins .top10-item{grid-template-columns:32px 36px minmax(0,1fr) 68px 28px!important;gap:6px!important;min-height:52px!important}
+ #classement-mannequins .top10-photo{width:36px!important;height:36px!important}
+ #classement-mannequins .top10-medal{width:30px!important;height:30px!important;font-size:.76rem!important}
+ #classement-mannequins .top10-name{font-size:.72rem!important}
+ #classement-mannequins .top10-visites{font-size:.76rem!important}
+}
+</style>
+
 </head>
 <body class="zone-admin">
 <script>
@@ -3515,6 +3602,58 @@ initSidebarNav();
     makeHeader(); moveActivity(); addDistribution(); mobileMenu();
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+})();
+</script>
+
+
+<script id="ma2m-final-reference-v2-js">
+/* ===== TOP 10 V2 : conserve la requête réelle et ajoute la photo du mannequin ===== */
+(function(){
+  const original = window.chargerClassementMannequins;
+  if (typeof original !== 'function') return;
+  window.chargerClassementMannequins = async function(){
+    const conteneur=document.getElementById('classement-mannequins');
+    if(!conteneur) return;
+    const depuis7j=new Date(Date.now()-7*24*60*60*1000).toISOString();
+    try{
+      const {data:classement,error}=await sb.rpc('stats_classement_mannequins',{depuis:depuis7j});
+      if(error||!classement||!classement.length){
+        conteneur.innerHTML='<p style="color:var(--gris);font-size:.85rem;">Pas encore assez de visites enregistrées sur les 7 derniers jours.</p>';return;
+      }
+      const top10=classement.slice(0,10), ids=top10.map(c=>c.model_id);
+      const [{data:profils},{data:photos}]=await Promise.all([
+        sb.from('model_profiles').select('id,full_name').in('id',ids),
+        sb.from('model_photos').select('model_id,url_miniature,url,created_at').in('model_id',ids).order('created_at',{ascending:true})
+      ]);
+      const nomParId={}, photoParId={};
+      (profils||[]).forEach(p=>nomParId[p.id]=p.full_name);
+      (photos||[]).forEach(p=>{if(!photoParId[p.model_id]) photoParId[p.model_id]=p.url_miniature||p.url||'';});
+      const maxVisites=top10[0].nb_visites||1;
+      const safe=window.echapperHtml||((s)=>String(s??'').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m])));
+      conteneur.innerHTML=top10.map((c,i)=>{
+        const rank=i+1, photo=photoParId[c.model_id]||'';
+        const photoHtml=photo
+          ? `<img class="top10-photo" src="${safe(photo)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">`
+          : '';
+        return `<div class="top10-item">
+          <span class="top10-medal rank-${rank<=3?rank:4}" aria-label="Classement ${rank}">${rank}</span>
+          <span class="top10-photo-fallback" style="display:${photo?'none':'grid'};width:42px;height:42px;border-radius:50%;place-items:center;background:#15191d;border:1px solid rgba(255,255,255,.14);color:#777f86;font-size:.65rem">MA</span>
+          ${photoHtml}
+          <span class="top10-name">${safe(nomParId[c.model_id]||'Mannequin')}</span>
+          <span class="top10-bar"><span style="width:${Math.max(4,(c.nb_visites/maxVisites)*100)}%"></span></span>
+          <span class="top10-visites">${c.nb_visites}</span>
+        </div>`;
+      }).join('');
+      if(classement.length>10) conteneur.innerHTML+=`<p style="color:var(--gris);font-size:.78rem;margin-top:.4rem;">+ ${classement.length-10} autre(s) mannequin(s) avec des visites enregistrées.</p>`;
+    }catch(e){
+      conteneur.innerHTML='<p style="color:var(--gris);font-size:.85rem;">Classement momentanément indisponible.</p>';
+      console.error('Top 10 mannequins:',e);
+    }
+  };
+  // Le script principal peut appeler la fonction globale avant ce patch selon le navigateur.
+  // On relance après initialisation si le conteneur est présent.
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>window.chargerClassementMannequins(),50));
+  else setTimeout(()=>window.chargerClassementMannequins(),50);
 })();
 </script>
 
