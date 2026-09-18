@@ -653,6 +653,71 @@ body.zone-admin .db-shell{min-height:100vh;background:transparent}
 @media(max-width:680px){.db-main{padding:0 11px 35px}.db-topbar{margin:0 -11px 12px;padding:0 11px;min-height:70px}.db-greeting{font-size:1.15rem}.db-topbar-droite{gap:5px}.db-profil .nom,.db-profil .role{display:none}.db-profil{padding-left:7px}.db-hero{min-height:330px!important}.db-hero img{width:100%!important;height:58%!important;object-position:center 18%}.db-hero:after{background:linear-gradient(180deg,rgba(3,4,5,0) 25%,rgba(3,4,5,.45) 48%,#07090b 67%,#07090b 100%)}.db-hero-contenu{left:0;right:0;top:auto;bottom:23px;transform:none;padding:0 18px!important}.db-hero-nom{font-size:1.8rem}.db-hero-signature{font-size:.9rem;margin-top:10px}.stats-grille{grid-template-columns:repeat(2,1fr);gap:7px}.stat-carte{min-height:105px;padding:12px}.stat-carte .chiffre{font-size:1.65rem}.stats-secondaires{gap:6px;line-height:1.6}.stats-secondaires span{padding-right:8px}.db-actions-liste{grid-template-columns:repeat(2,1fr)}.db-action-btn{min-height:58px}.db-sidebar{width:250px}}
 @media(prefers-reduced-motion:reduce){.db-nav-item,.db-action-btn{transition:none!important;transform:none!important}}
 
+
+/* ============================================================
+   MA2M DASHBOARD — FINAL ART DIRECTION / V3
+   Objectif : reproduire la composition de la référence,
+   sans inventer de données ni de fonctions.
+   ============================================================ */
+.db-main{background:radial-gradient(900px 420px at 58% 0%,rgba(104,12,36,.11),transparent 62%),linear-gradient(180deg,#050607 0%,#07090b 42%,#050607 100%)}
+.db-overview-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin:4px 0 13px;padding:0 1px}
+.db-overview-kicker{font-size:.49rem;letter-spacing:.28em;color:#8d949b;text-transform:uppercase;margin-bottom:5px}
+.db-overview-head h2{margin:0!important;font-size:1.55rem!important;letter-spacing:.03em!important;line-height:1.05}
+.db-overview-head h2::after{display:none!important}
+.db-overview-head p{margin:7px 0 0;color:#70777e;font-size:.57rem;letter-spacing:.02em}
+.db-title-rule{display:inline-block;width:54px;height:1px;margin:0 0 4px 12px;background:linear-gradient(90deg,#b61e49,transparent)}
+.db-live-chip{display:flex;align-items:center;gap:7px;padding:6px 9px;border:1px solid rgba(255,255,255,.08);border-radius:99px;color:#8d959c;font-size:.48rem;letter-spacing:.15em;white-space:nowrap;background:rgba(255,255,255,.018)}
+.db-live-chip span{width:5px;height:5px;border-radius:50%;background:#56c98a;box-shadow:0 0 10px rgba(86,201,138,.7)}
+.ref-hero-row{margin:0 0 12px}
+.db-hero{min-height:226px!important;border-radius:5px!important;border:1px solid rgba(255,255,255,.095)!important;background:radial-gradient(500px 210px at 75% 45%,rgba(130,15,46,.20),transparent 70%),linear-gradient(105deg,#090b0e,#10070b 64%,#07080a)!important;box-shadow:0 20px 48px rgba(0,0,0,.34)!important}
+.db-hero:after{background:linear-gradient(90deg,rgba(3,4,5,.02) 0%,rgba(3,4,5,.08) 31%,rgba(3,4,5,.72) 54%,#07090b 75%,#07090b 100%)!important}
+.db-hero:before{background:linear-gradient(116deg,transparent 42%,rgba(194,24,67,.17) 61%,transparent 78%),radial-gradient(250px 150px at 88% 25%,rgba(214,174,98,.07),transparent 72%)!important}
+.db-hero img{width:43%!important;height:100%!important;object-position:center 18%!important;filter:saturate(.91) contrast(1.06)!important}
+.db-hero-contenu{left:47%!important;right:4%!important}
+.db-hero-eyebrow{font-size:.49rem!important;letter-spacing:.25em!important;color:#d7d9dc!important}
+.db-hero-eyebrow span{background:#d5ad62!important;width:38px!important}
+.db-hero-nom{font-size:2.55rem!important;letter-spacing:.01em;text-shadow:0 8px 30px rgba(0,0,0,.5)}
+.db-hero-note{font-size:.57rem!important;color:#aeb3b8!important;letter-spacing:.13em!important}
+.db-hero-signature{font-size:1.12rem!important;color:#d7d0ca!important}
+.db-hero-footer{margin-top:13px!important}
+.db-hero-link{display:inline-flex;align-items:center;gap:8px;margin-top:13px;padding:7px 12px;border:1px solid rgba(213,173,98,.30);border-radius:4px;color:#eee8e1;text-decoration:none;font-size:.52rem;letter-spacing:.10em;text-transform:uppercase;background:rgba(255,255,255,.025);transition:.2s ease}
+.db-hero-link span{color:#d5ad62;font-size:.85rem}
+.db-hero-link:hover{border-color:rgba(213,173,98,.7);background:rgba(124,23,48,.18);transform:translateY(-1px)}
+.db-hero-vide{padding:35px;color:#717980;font-size:.62rem}
+.stats-grille{grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:10px!important;margin:0 0 9px!important}
+.stat-carte{min-height:126px!important;padding:14px 15px 12px!important;border:1px solid rgba(255,255,255,.085)!important;border-radius:6px!important;background:linear-gradient(145deg,rgba(24,29,34,.95),rgba(8,10,12,.98) 78%)!important;box-shadow:0 13px 30px rgba(0,0,0,.20),inset 0 1px 0 rgba(255,255,255,.025)!important;text-align:left!important}
+.stat-carte:before{content:"";position:absolute;left:0;top:0;width:32%;height:1px;background:linear-gradient(90deg,#b61e49,transparent);opacity:.8}
+.stat-carte:after{width:130px!important;height:130px!important;right:-75px!important;top:-65px!important;background:rgba(180,20,62,.075)!important}
+.stat-carte.accent{background:linear-gradient(145deg,#8d0d35 0%,#620a27 54%,#300815 100%)!important;border-color:rgba(196,31,72,.78)!important;box-shadow:0 17px 38px rgba(110,7,39,.30),inset 0 1px 0 rgba(255,255,255,.07)!important}
+.stat-carte.accent:before{background:linear-gradient(90deg,#f0b6c5,transparent)}
+.stat-head{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:2}
+.stat-icone{font-size:.9rem!important;color:#d4d9de!important;margin:0!important}
+.stat-live{font-size:.42rem;letter-spacing:.15em;color:#6e767e}
+.accent .stat-live{color:#f0c5d0}
+.stat-carte .chiffre{position:relative;z-index:2;font-size:2.28rem!important;margin-top:11px!important;font-family:var(--display)!important;letter-spacing:.02em}
+.stat-carte .label{position:relative;z-index:2;font-size:.61rem!important;letter-spacing:.10em!important;color:#e1e3e5!important;margin-top:5px!important;text-transform:uppercase}
+.stat-carte .micro{position:relative;z-index:2;font-size:.50rem!important;color:#767e85!important;margin-top:4px!important}
+.accent .micro{color:#eac2cd!important}
+.stat-line{height:1px;background:rgba(255,255,255,.08);margin-top:10px;overflow:hidden}
+.stat-line i{display:block;width:36%;height:100%;background:linear-gradient(90deg,#b51b47,transparent)}
+.accent .stat-line{background:rgba(255,255,255,.16)}
+.accent .stat-line i{background:linear-gradient(90deg,#f0b0c2,transparent)}
+.stats-secondaires{grid-column:1/-1!important;display:flex!important;justify-content:flex-start;gap:0!important;padding:5px 2px 2px!important;color:#747b82!important;font-size:.48rem!important;letter-spacing:.07em!important}
+.stats-secondaires span{padding:0 13px!important;border-right:1px solid rgba(255,255,255,.07)!important}
+.stats-secondaires span:first-child{padding-left:2px!important}
+.stats-secondaires span:last-child{border-right:0!important}
+.stats-secondaires em{font-style:normal;font-size:.42rem;color:#6e747a;margin-right:6px}
+.stats-secondaires b{color:#cfd3d7!important;font-size:.61rem!important}
+.ref-core-grid{grid-template-columns:minmax(0,1.35fr) minmax(240px,.80fr) minmax(220px,.72fr)!important;gap:10px!important;margin-top:10px!important}
+.activite-carte,.timeline-liste,.a-traiter-bloc{background:linear-gradient(145deg,#0b0f13,#06080a)!important;border-color:rgba(255,255,255,.085)!important}
+.activite-carte{padding:14px 15px!important}.activite-carte h3{font-size:.62rem!important}.activite-svg-wrap{min-height:155px!important}.timeline-liste{padding:9px!important}.timeline-item{padding:10px 5px!important}.timeline-texte{font-size:.59rem!important}.a-traiter-bloc{padding:14px!important}.a-traiter-item{padding:9px 3px!important}.a-traiter-item .at-label{font-size:.58rem!important}.a-traiter-item .at-compte{font-size:.95rem!important}
+.ref-quick-row{margin-top:10px!important}.db-actions-rapides{border-radius:6px!important;padding:12px!important;background:linear-gradient(145deg,#0b0f13,#06080a)!important}.db-actions-rapides h3{font-size:.61rem!important;letter-spacing:.16em!important}.db-actions-liste{grid-template-columns:repeat(5,1fr)!important;gap:9px!important}.db-action-btn{min-height:72px!important;display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:9px!important;text-align:left!important;padding:10px!important;border-radius:5px!important}.qa-icon{width:28px;height:28px;display:grid;place-items:center;flex:none;border-radius:50%;border:1px solid rgba(213,173,98,.22);color:#d7dbe0;font-size:.8rem;background:rgba(255,255,255,.025)}.db-action-btn b{display:block;font-size:.53rem;font-weight:500;letter-spacing:.03em;color:#e4e7e9}.db-action-btn small{display:block;margin-top:4px;font-size:.43rem;color:#747b82;letter-spacing:.02em}.db-action-btn:hover .qa-icon{border-color:rgba(213,173,98,.62);color:#f0d39a}
+.ref-lower-grid{margin-top:10px!important}.ref-card{box-shadow:0 15px 34px rgba(0,0,0,.16)!important}
+@media(max-width:1180px){.stats-grille{grid-template-columns:repeat(3,minmax(0,1fr))!important}.db-actions-liste{grid-template-columns:repeat(3,1fr)!important}}
+@media(max-width:900px){.db-overview-head{align-items:flex-start}.db-live-chip{margin-top:2px}.stats-grille{grid-template-columns:repeat(2,minmax(0,1fr))!important}.db-actions-liste{grid-template-columns:repeat(2,1fr)!important}.db-hero img{width:47%!important}.db-hero-contenu{left:51%!important}}
+@media(max-width:680px){.db-overview-head{display:block}.db-live-chip{display:inline-flex;margin-top:9px}.db-overview-head h2{font-size:1.32rem!important}.db-hero{min-height:360px!important}.db-hero img{width:100%!important;height:57%!important;object-position:center 18%!important}.db-hero:after{background:linear-gradient(180deg,rgba(3,4,5,0) 22%,rgba(3,4,5,.18) 40%,rgba(7,9,11,.90) 59%,#07090b 72%,#07090b 100%)!important}.db-hero-contenu{left:0!important;right:0!important;bottom:18px!important;top:auto!important;padding:0 18px!important}.db-hero-nom{font-size:1.95rem!important}.stats-grille{grid-template-columns:1fr 1fr!important}.stats-secondaires{overflow-x:auto;white-space:nowrap;padding-bottom:5px!important}.stats-secondaires span{padding:0 10px!important}.db-actions-liste{grid-template-columns:1fr 1fr!important}.db-action-btn{min-height:64px!important}}
+@media(prefers-reduced-motion:reduce){.db-hero-link,.db-action-btn{transition:none!important;transform:none!important}}
+
 </style>
 <link href="manifest.json" rel="manifest"/>
 <meta content="#1e1d1c" name="theme-color"/>
@@ -765,22 +830,21 @@ setTimeout(() => {
 </div>
 <!-- ===== AJOUT : bannière "mannequin à la une" + actions rapides ===== -->
 
-<h2 style="margin-bottom:1rem;">Vue d'ensemble</h2>
-<div class="stats-grille" id="stats-grille">Chargement des statistiques…</div><div class="ref-hero-row"><div class="db-hero" id="db-hero"><div class="db-hero-vide">Chargement…</div></div></div><div class="ref-core-grid"><div class="ref-core-graph"><div class="activite-carte">
+<div class="db-overview-head">
+  <div>
+    <div class="db-overview-kicker">CENTRE DE CONTRÔLE · MA2M</div>
+    <h2>Vue d'ensemble<span class="db-title-rule"></span></h2>
+    <p>Les indicateurs affichés ici proviennent des données actuellement enregistrées dans votre système.</p>
+  </div>
+  <div class="db-live-chip"><span></span> DONNÉES EN DIRECT</div>
+</div>
+<div class="ref-hero-row"><div class="db-hero" id="db-hero"><div class="db-hero-vide">Chargement…</div></div></div>
+<div class="stats-grille" id="stats-grille">Chargement des statistiques…</div>
+<div class="ref-core-grid"><div class="ref-core-graph"><div class="activite-carte">
 <h3>📈 Activité — 7 derniers jours</h3>
 <div class="activite-souslabel">Visites réelles, une personne distincte par page.</div>
 <div class="activite-svg-wrap" id="activite-barres">Chargement…</div>
-<div class="activite-souscartes" id="activite-souscartes"></div><div class="ref-category-panel">
-  <div class="ref-category-head">
-    <div>
-      <div class="ref-kicker">RÉPARTITION</div>
-      <h4>Profils par catégorie</h4>
-    </div>
-    <span class="ref-category-note">Cliquer pour voir le détail</span>
-  </div>
-  <div class="activite-repartition" id="categorie-chart">Chargement…</div>
-  <div class="categorie-details" id="categorie-details"></div>
-</div>
+<div class="activite-souscartes" id="activite-souscartes"></div>
 </div></div><div class="ref-core-activity"><div>
 <h2 style="margin-bottom:0.8rem;">🕐 Dernières activités</h2>
 <div class="timeline-liste" id="dernieres-activites">Chargement…</div>
@@ -793,11 +857,11 @@ setTimeout(() => {
 </div></div></div><div class="ref-quick-row"><div class="db-actions-rapides">
 <h3>Actions rapides</h3>
 <div class="db-actions-liste">
-<button class="db-action-btn" data-scroll="portail-nouveau-code" type="button">+ Ajouter un mannequin</button>
-<button class="db-action-btn" data-scroll="nouveau-projet-nom" type="button">+ Créer un casting</button>
-<a class="db-action-btn" href="actualites.html">+ Publier une actualité</a>
-<button class="db-action-btn" data-scroll="table-contacts" type="button">Voir les messages</button>
-<button class="db-action-btn pleine-largeur" data-scroll="instagram-statut" type="button">Paramètres</button>
+<button class="db-action-btn" data-scroll="portail-nouveau-code" type="button"><span class="qa-icon">＋</span><span><b>Accès mannequin</b><small>Gérer les codes</small></span></button>
+<button class="db-action-btn" data-scroll="liste-inscriptions" type="button"><span class="qa-icon">♙</span><span><b>Vérifier les inscriptions</b><small>Ouvrir les dossiers</small></span></button>
+<button class="db-action-btn" data-scroll="nouveau-projet-nom" type="button"><span class="qa-icon">◈</span><span><b>Gérer les castings</b><small>Créer un projet</small></span></button>
+<button class="db-action-btn" data-scroll="liste-recruteurs" type="button"><span class="qa-icon">⌂</span><span><b>Demandes recruteurs</b><small>Consulter les demandes</small></span></button>
+<button class="db-action-btn" data-scroll="table-contacts" type="button"><span class="qa-icon">✉</span><span><b>Messages</b><small>Consulter les contacts</small></span></button>
 </div>
 </div></div><div class="ref-lower-grid"><div class="ref-card ref-registrations">
 <div class="dossiers-entete">
@@ -1474,6 +1538,7 @@ async function chargerHeroVedette() {
       <div class="db-hero-note">${echapperHtml(vedette.city || '')}</div>
       <div class="db-hero-signature">Une présence. Une image. Une identité.</div>
       <div class="db-hero-footer"><span>ACTUELLEMENT MIS EN AVANT SUR L'ACCUEIL</span><i></i></div>
+      <a class="db-hero-link" href="mannequin.html?id=${encodeURIComponent(vedette.id)}" target="_blank" rel="noopener">Voir la fiche <span>→</span></a>
     </div>
   `;
 }
@@ -1534,14 +1599,32 @@ async function chargerStatistiques() {
   ]);
 
   document.getElementById('stats-grille').innerHTML = `
-    <div class="stat-carte stat-primaire accent"><div class="stat-icone">♙</div><div class="chiffre">${mannequins}</div><div class="label">Mannequins</div><div class="micro">dans THE BOOK</div></div>
-    <div class="stat-carte stat-primaire"><div class="stat-icone">♙</div><div class="chiffre">${inscriptions}</div><div class="label">Inscriptions</div><div class="micro">nouvelles entrées</div></div>
-    <div class="stat-carte stat-primaire"><div class="stat-icone">◈</div><div class="chiffre">${candidatures}</div><div class="label">Castings</div><div class="micro">candidatures reçues</div></div>
-    <div class="stat-carte stat-primaire"><div class="stat-icone">✉</div><div class="chiffre">${contacts}</div><div class="label">Messages</div><div class="micro">à consulter</div></div>
-    <div class="stat-carte stat-primaire"><div class="stat-icone">⌂</div><div class="chiffre">${recruteurs}</div><div class="label">Recruteurs</div><div class="micro">demandes reçues</div></div>
-    <div class="stat-carte stat-primaire"><div class="stat-icone">◷</div><div class="chiffre">${visites7j}</div><div class="label">Visites</div><div class="micro">7 derniers jours</div></div>
+    <div class="stat-carte stat-primaire accent">
+      <div class="stat-head"><span class="stat-icone">♙</span><span class="stat-live">BOOK</span></div>
+      <div class="chiffre">${mannequins}</div><div class="label">Mannequins</div><div class="micro">profils publiés</div><div class="stat-line"><i></i></div>
+    </div>
+    <div class="stat-carte stat-primaire">
+      <div class="stat-head"><span class="stat-icone">♙</span><span class="stat-live">DOSSIERS</span></div>
+      <div class="chiffre">${inscriptions}</div><div class="label">Inscriptions</div><div class="micro">reçues dans le système</div><div class="stat-line"><i></i></div>
+    </div>
+    <div class="stat-carte stat-primaire">
+      <div class="stat-head"><span class="stat-icone">◈</span><span class="stat-live">CASTINGS</span></div>
+      <div class="chiffre">${candidatures}</div><div class="label">Candidatures</div><div class="micro">candidatures enregistrées</div><div class="stat-line"><i></i></div>
+    </div>
+    <div class="stat-carte stat-primaire">
+      <div class="stat-head"><span class="stat-icone">✉</span><span class="stat-live">CONTACT</span></div>
+      <div class="chiffre">${contacts}</div><div class="label">Messages</div><div class="micro">messages reçus</div><div class="stat-line"><i></i></div>
+    </div>
+    <div class="stat-carte stat-primaire">
+      <div class="stat-head"><span class="stat-icone">⌂</span><span class="stat-live">RECRUTEURS</span></div>
+      <div class="chiffre">${recruteurs}</div><div class="label">Demandes recruteurs</div><div class="micro">demandes enregistrées</div><div class="stat-line"><i></i></div>
+    </div>
     <div class="stats-secondaires">
-      <span><b>${actus}</b> actualités publiées</span><span><b>${photos}</b> photos du Book</span><span><b>${visitesAujourdhui}</b> visites aujourd'hui</span><span><b>${visitesTotal}</b> visites au total</span>
+      <span><em>01</em><b>${actus}</b> actualités publiées</span>
+      <span><em>02</em><b>${photos}</b> photos du Book</span>
+      <span><em>03</em><b>${visitesAujourdhui}</b> visites aujourd'hui</span>
+      <span><em>04</em><b>${visites7j}</b> visites sur 7 jours</span>
+      <span><em>05</em><b>${visitesTotal}</b> visites au total</span>
     </div>
   `;
 
