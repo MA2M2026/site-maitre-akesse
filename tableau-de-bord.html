@@ -1,5 +1,17 @@
 <!DOCTYPE html>
 
+<!-- ============================================================
+ MAÎTRE AKESSE MODEL MANAGEMENT — MASTER DASHBOARD UI HANDOFF
+ Version: MASTER-UI-2026-09-18
+ RÈGLE: cette version constitue la base visuelle et structurelle.
+ Claude Code doit REMPLIR / CONNECTER les données et traitements,
+ sans supprimer les blocs, IDs, cartes, graphiques ou parcours.
+ Photos CASTING + INSCRIPTION = GOOGLE DRIVE (pas de stockage
+ des fichiers photo dans Supabase). Supabase peut conserver
+ uniquement les MÉTADONNÉES nécessaires.
+ ============================================================ -->
+
+
 <html lang="fr">
 <head>
 <!-- Google tag (gtag.js) -->
@@ -1868,6 +1880,101 @@ body.zone-admin{background:radial-gradient(850px 500px at 65% -15%,rgba(112,13,4
 }
 </style>
 
+
+<style id="ma2m-v4-top3-photo-system">
+/* ==========================================================
+   MA2M V4 — TOP 3 DISTINCT + PHOTO RELIABILITY
+   ========================================================== */
+.ma2m-top3-card{
+  position:relative;
+  overflow:hidden;
+  border:1px solid rgba(213,173,98,.22)!important;
+  background:
+    radial-gradient(520px 180px at 50% -10%,rgba(126,13,45,.22),transparent 70%),
+    linear-gradient(145deg,#0e1115,#050607 78%)!important;
+}
+.ma2m-top3-card:before{
+  content:"";
+  position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(115deg,transparent 20%,rgba(213,173,98,.035) 50%,transparent 80%);
+}
+.ma2m-top3-head{
+  position:relative;z-index:1;
+  display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;
+}
+.ma2m-top3-head h2{margin:.15rem 0 .35rem!important}
+.ma2m-top3-head p{margin:0;color:#858c93;font-size:.78rem;max-width:620px}
+.ma2m-top3-kicker{
+  color:#d5ad62;font-size:.62rem;letter-spacing:.22em;
+  text-transform:uppercase;margin-bottom:.2rem;
+}
+.ma2m-top3-badge{
+  border:1px solid rgba(213,173,98,.42);
+  color:#e6c988;border-radius:999px;padding:.38rem .7rem;
+  font-size:.62rem;letter-spacing:.16em;white-space:nowrap;
+}
+.ma2m-top3-podium{
+  position:relative;z-index:1;
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:.75rem;margin-top:1rem;
+}
+.ma2m-podium-card{
+  min-width:0;position:relative;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:8px;padding:.8rem;
+  background:linear-gradient(145deg,#15191d,#080a0c);
+  display:grid;grid-template-columns:62px minmax(0,1fr);
+  gap:.75rem;align-items:center;
+}
+.ma2m-podium-card.rank-1{border-color:rgba(213,173,98,.55);background:linear-gradient(145deg,#25180b,#0b0b0d 72%)}
+.ma2m-podium-card.rank-2{border-color:rgba(185,189,194,.30)}
+.ma2m-podium-card.rank-3{border-color:rgba(169,121,84,.30)}
+.ma2m-podium-photo{
+  width:62px;height:78px;border-radius:6px;object-fit:cover;
+  display:block;background:linear-gradient(145deg,#25292d,#0c0f12);
+  border:1px solid rgba(255,255,255,.12);
+}
+.ma2m-podium-medal{
+  position:absolute;left:4px;top:4px;width:27px;height:27px;border-radius:50%;
+  display:grid;place-items:center;font-family:var(--display,serif);
+  font-size:.72rem;font-weight:700;color:#fff;
+  background:#111;border:1px solid rgba(213,173,98,.45);
+  box-shadow:0 4px 14px rgba(0,0,0,.45);
+}
+.rank-1 .ma2m-podium-medal{background:linear-gradient(145deg,#b8872c,#6e4210);border-color:#e4c67e}
+.rank-2 .ma2m-podium-medal{background:linear-gradient(145deg,#6b7076,#292d31);border-color:#c6cbd0}
+.rank-3 .ma2m-podium-medal{background:linear-gradient(145deg,#7c513b,#382218);border-color:#b8896d}
+.ma2m-podium-rank{font-size:.58rem;letter-spacing:.13em;text-transform:uppercase;color:#8f969d}
+.ma2m-podium-name{font-size:.92rem;font-weight:600;color:#f4f0eb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:.18rem 0}
+.ma2m-podium-award{font-size:.64rem;color:#d5ad62;letter-spacing:.08em;text-transform:uppercase}
+.ma2m-podium-visites{font-size:.72rem;color:#8f969d;margin-top:.22rem}
+.ma2m-podium-empty{color:#777f86;font-size:.82rem;padding:.8rem 0}
+.ma2m-photo-fallback{
+  display:grid!important;place-items:center!important;
+  color:#8e969d!important;font-size:.7rem!important;letter-spacing:.08em;
+}
+.top10-photo{
+  background:#0d1013!important;
+}
+.top10-photo.photo-erreur{
+  object-fit:cover!important;
+}
+.validation-photos img,.mf-photo-vignette img{
+  background:#0b0e11!important;
+}
+@media(max-width:760px){
+  .ma2m-top3-podium{grid-template-columns:1fr}
+  .ma2m-podium-card{grid-template-columns:56px minmax(0,1fr)}
+  .ma2m-podium-photo{width:56px;height:70px}
+}
+</style>
+
+
+<style id="ma2m-v4-photo-status">
+img.photo-erreur{opacity:.45!important;filter:grayscale(.4)!important}
+img.photo-erreur::after{content:"";display:block}
+</style>
+
 </head>
 <body class="zone-admin">
 <script>
@@ -2146,6 +2253,21 @@ setTimeout(() => {
 <p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Personnes distinctes ayant consulté chaque fiche sur les <strong>7 derniers jours</strong> (pas les rechargements de page). Top 10 affiché.</p>
 <div id="classement-mannequins" style="display:flex; flex-direction:column; gap:0.5rem;"></div>
 </div>
+
+<div class="liste-recente ma2m-top3-card" id="ma2m-top3-card">
+  <div class="ma2m-top3-head">
+    <div>
+      <div class="ma2m-top3-kicker">DISTINCTION MA2M</div>
+      <h2>🏆 Les 3 meilleurs mannequins</h2>
+      <p>Classement des trois profils les plus visités sur les 7 derniers jours, basé sur les visites réelles enregistrées.</p>
+    </div>
+    <span class="ma2m-top3-badge">TOP 3</span>
+  </div>
+  <div id="ma2m-top3-podium" class="ma2m-top3-podium">
+    <div class="ma2m-top3-loading">Chargement du Top 3…</div>
+  </div>
+</div>
+
 <div class="liste-recente">
 <h2 style="margin-bottom:1rem;">Mannequin à la une</h2>
 <p style="color:var(--gris); font-size:0.85rem; margin-top:-0.6rem; margin-bottom:1rem;">Ce mannequin sera mis en avant sur la page d'accueil du site. Sans sélection, une photo aléatoire s'affiche à la place.</p>
@@ -2927,7 +3049,7 @@ async function chargerListeValidations() {
     return `
     <div class="validation-carte" data-id="${p.id}">
       <div class="validation-photos">
-        ${mesPhotos.length ? mesPhotos.map(url => `<img src="${echapperHtml(url)}" alt="">`).join('') : '<span style="color:var(--gris); font-size:0.8rem;">Aucune photo</span>'}
+        ${mesPhotos.length ? mesPhotos.map(url => `<img src="${echapperHtml(url)}" data-fallback="" alt="" loading="lazy">`).join('') : '<span style="color:var(--gris); font-size:0.8rem;">Aucune photo</span>'}
       </div>
       <div class="validation-infos">
         <div class="dc-nom">${echapperHtml(p.full_name || 'Sans nom')} ${estMineur ? '<span class="badge-mineur">Mineur' + (age !== null ? ' — ' + age + ' ans' : '') + '</span>' : ''}</div>
@@ -3929,9 +4051,10 @@ initSidebarNav();
         sb.from('model_photos').select('model_id,url_miniature,url,created_at').in('model_id',ids).order('created_at',{ascending:true})
       ]);
 
-      const noms={},photosParId={};
+      const noms={},photosParId={},urlsOriginalesParId={};
       (profils||[]).forEach(p=>noms[p.id]=p.full_name);
       (photos||[]).forEach(p=>{
+        if(!urlsOriginalesParId[p.model_id]) urlsOriginalesParId[p.model_id]=p.url||'';
         if(!photosParId[p.model_id]) photosParId[p.model_id]=p.url_miniature||p.url||'';
       });
 
@@ -3949,9 +4072,10 @@ initSidebarNav();
         if(rang===2) award='<span class="top10-award award-2">✦ 2e PRIX</span>';
         if(rang===3) award='<span class="top10-award award-3">✦ 3e PRIX</span>';
 
+        const fallback=urlsOriginalesParId[c.model_id]||'';
         const photoHtml=photo
-          ? `<img class="top10-photo" src="${esc(photo)}" alt="${nom}" loading="lazy" onerror="this.onerror=null;this.style.visibility='hidden';">`
-          : `<span class="top10-photo" aria-hidden="true" style="display:grid;place-items:center;color:#777f86;">MA</span>`;
+          ? `<img class="top10-photo" src="${esc(photo)}" data-fallback="${esc(fallback)}" alt="${nom}" loading="lazy">`
+          : `<span class="top10-photo ma2m-photo-fallback" aria-hidden="true">MA2M</span>`;
 
         return `
           <div class="top10-item">
@@ -3965,6 +4089,32 @@ initSidebarNav();
             <span class="top10-visites">${visites}</span>
           </div>`;
       }).join('');
+
+      const podium=document.getElementById('ma2m-top3-podium');
+      if(podium){
+        podium.innerHTML=top10.slice(0,3).map((c,i)=>{
+          const rang=i+1;
+          const id=c.model_id;
+          const nom=esc(noms[id]||'Mannequin');
+          const mini=photosParId[id]||'';
+          const original=urlsOriginalesParId[id]||'';
+          const visites=Number(c.nb_visites)||0;
+          const award=rang===1?'1er PRIX':(rang===2?'2e PRIX':'3e PRIX');
+          const photo=mini
+            ? `<img class="ma2m-podium-photo" src="${esc(mini)}" data-fallback="${esc(original)}" alt="${nom}" loading="lazy">`
+            : `<div class="ma2m-podium-photo ma2m-photo-fallback">MA2M</div>`;
+          return `<div class="ma2m-podium-card rank-${rang}">
+            <span class="ma2m-podium-medal">${rang===1?'★':rang===2?'2':'3'}</span>
+            ${photo}
+            <div>
+              <div class="ma2m-podium-rank">TOP ${rang}</div>
+              <div class="ma2m-podium-name">${nom}</div>
+              <div class="ma2m-podium-award">${award}</div>
+              <div class="ma2m-podium-visites">${visites} visite${visites>1?'s':''} · 7 jours</div>
+            </div>
+          </div>`;
+        }).join('') || '<div class="ma2m-podium-empty">Pas encore assez de données pour établir le Top 3.</div>';
+      }
 
       if(classement.length>10){
         conteneur.innerHTML += `<p style="color:var(--gris);font-size:.78rem;margin-top:.4rem;">+ ${classement.length-10} autre(s) mannequin(s) avec des visites enregistrées.</p>`;
@@ -3988,6 +4138,101 @@ initSidebarNav();
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',initV3);
   else initV3();
 })();
+</script>
+
+
+<script id="ma2m-v4-photo-recovery">
+(function(){
+  function fallbackImage(img){
+    if(!img || img.dataset.ma2mRecovery==='1') return;
+    const fallback=img.getAttribute('data-fallback');
+    if(!fallback) return;
+    img.dataset.ma2mRecovery='1';
+    img.addEventListener('error',function(){
+      if(this.dataset.ma2mFallbackUsed==='1'){
+        this.classList.add('photo-erreur');
+        return;
+      }
+      this.dataset.ma2mFallbackUsed='1';
+      this.src=fallback;
+    },{once:true});
+  }
+
+  function scan(root){
+    (root||document).querySelectorAll('img[data-fallback]').forEach(fallbackImage);
+  }
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',()=>scan(document));
+  }else scan(document);
+
+  new MutationObserver(m=>m.forEach(x=>x.addedNodes.forEach(n=>{
+    if(n.nodeType===1) scan(n);
+  }))).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+
+
+<script id="ma2m-master-ui-handoff">
+/*
+ MA2M MASTER UI — CONTRAT DE REMPLISSAGE POUR CLAUDE CODE
+ ---------------------------------------------------------
+ Les éléments ci-dessous sont des zones fonctionnelles attendues.
+ Ne pas supprimer les IDs existants. Brancher les données réelles.
+
+ 1) dashboard-overview
+ 2) dashboard-activity-chart
+ 3) dashboard-recent-activities
+ 4) dashboard-to-process
+ 5) dashboard-quick-actions
+ 6) dashboard-registrations
+ 7) dashboard-castings
+ 8) dashboard-recruiters
+ 9) dashboard-messages
+10) dashboard-validations
+11) dashboard-drive
+12) dashboard-active-photos
+13) dashboard-top10
+14) dashboard-top3
+15) dashboard-featured-model
+16) dashboard-book
+17) dashboard-errors
+18) dashboard-inscriptions-history
+19) dashboard-castings-history
+20) dashboard-recruiters-history
+21) dashboard-notifications
+22) dashboard-content
+23) dashboard-analytics
+24) dashboard-configuration
+25) dashboard-security
+
+ ARCHITECTURE PHOTO IMPOSÉE:
+ - candidature casting -> Google Drive
+ - inscription mannequin -> Google Drive
+ - aucune photo binaire de ces deux flux dans Supabase Storage
+ - Supabase = métadonnées/statuts/IDs Drive si nécessaire
+ - dashboard = miniatures/aperçus Drive uniquement pour les dossiers ACTIFS
+ - finalisé/rejeté/validé = retiré des files actives, conservé dans l'historique
+ - THE BOOK = photos permanentes des profils validés, selon le fonctionnement existant
+
+ STATUTS:
+ - Casting: nouvelle -> vue/en étude -> retenue ou refusée
+ - Inscription: reçue/en étude -> validation en attente -> validée
+   + paiement confirmé lorsque requis
+ - THE BOOK: publication seulement après validation prévue
+
+ NOTIFICATIONS:
+ - chaque changement final de statut doit pouvoir déclencher
+   email et/ou WhatsApp via le backend, jamais par secret exposé
+   dans le navigateur.
+
+ IMPORTANT:
+ - Ne pas inventer de chiffres.
+ - Les compteurs, graphiques et classements doivent venir des données réelles.
+ - Les 3 prix du classement utilisent les 3 premiers profils réels.
+ - Une absence de photo doit afficher un état propre, pas une image cassée.
+ - Une erreur Drive doit afficher "transfert non confirmé" et non "succès".
+*/
 </script>
 
 </body>
