@@ -711,10 +711,15 @@ body.zone-admin .db-shell{min-height:100vh;background:transparent}
 .db-hero-note{font-size:.57rem!important;color:#aeb3b8!important;letter-spacing:.13em!important}
 .db-hero-signature{font-size:1.12rem!important;color:#d7d0ca!important}
 .db-hero-footer{margin-top:13px!important}
-.db-hero-link{display:inline-flex;align-items:center;gap:8px;margin-top:13px;padding:7px 12px;border:1px solid rgba(213,173,98,.30);border-radius:4px;color:#eee8e1;text-decoration:none;font-size:.52rem;letter-spacing:.10em;text-transform:uppercase;background:rgba(255,255,255,.025);transition:.2s ease}
+.db-hero-link{display:inline-flex;align-items:center;gap:8px;margin-top:13px;padding:7px 12px;border:1px solid rgba(213,173,98,.30);border-radius:4px;color:#eee8e1;text-decoration:none;font-size:.52rem;letter-spacing:.10em;text-transform:uppercase;background:rgba(255,255,255,.025);transition:.2s ease;cursor:pointer;font-family:inherit}
 .db-hero-link span{color:#d5ad62;font-size:.85rem}
 .db-hero-link:hover{border-color:rgba(213,173,98,.7);background:rgba(124,23,48,.18);transform:translateY(-1px)}
 .db-hero-vide{padding:35px;color:#717980;font-size:.62rem}
+/* ===== AJOUT : état vide du "mannequin à la une" — panneau graphique plutôt que texte plat ===== */
+.db-hero-contenu--vide{left:0!important;right:0!important;max-width:none!important;text-align:center;display:flex;flex-direction:column;align-items:center;padding:20px!important}
+.db-hero-vide-marque{width:58px;height:58px;border-radius:50%;display:grid;place-items:center;margin:14px 0;font-family:var(--display);font-size:1.1rem;letter-spacing:.05em;color:#d5ad62;border:1px solid rgba(213,173,98,.4);background:radial-gradient(circle,rgba(213,173,98,.14),transparent 72%)}
+.db-hero-contenu--vide .db-hero-nom{font-size:1.35rem!important}
+.db-hero-contenu--vide .db-hero-note{max-width:420px;margin-left:auto;margin-right:auto}
 .stats-grille{grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:10px!important;margin:0 0 9px!important}
 .stat-carte{min-height:126px!important;padding:14px 15px 12px!important;border:1px solid rgba(255,255,255,.085)!important;border-radius:6px!important;background:linear-gradient(145deg,rgba(24,29,34,.95),rgba(8,10,12,.98) 78%)!important;box-shadow:0 13px 30px rgba(0,0,0,.20),inset 0 1px 0 rgba(255,255,255,.025)!important;text-align:left!important}
 .stat-carte:before{content:"";position:absolute;left:0;top:0;width:32%;height:1px;background:linear-gradient(90deg,#b61e49,transparent);opacity:.8}
@@ -2975,7 +2980,19 @@ async function chargerHeroVedette() {
   const { data: vedette } = await sb.from('model_profiles').select('id, full_name, city').eq('published', true).eq('featured', true).maybeSingle();
 
   if (!vedette) {
-    conteneur.innerHTML = '<div class="db-hero-vide">Aucun mannequin mis en avant actuellement — choisissez-en un dans "Mannequin à la une" ci-dessous.</div>';
+    conteneur.innerHTML = `
+      <div class="db-hero-contenu db-hero-contenu--vide">
+        <div class="db-hero-eyebrow">MANNEQUIN À LA UNE <span></span></div>
+        <div class="db-hero-vide-marque">MA</div>
+        <div class="db-hero-nom">Aucun mannequin sélectionné</div>
+        <div class="db-hero-note">Le visiteur qui arrive sur l'accueil voit une photo au hasard tant qu'aucun choix n'est fait ici.</div>
+        <button class="db-hero-link" id="db-hero-choisir-vedette-btn" type="button">Choisir un mannequin à la une <span>→</span></button>
+      </div>`;
+    const btn = document.getElementById('db-hero-choisir-vedette-btn');
+    if (btn) btn.addEventListener('click', () => {
+      const select = document.getElementById('tb-select-vedette');
+      if (select) { select.scrollIntoView({ behavior: 'smooth', block: 'center' }); select.focus(); }
+    });
     return;
   }
 
