@@ -1975,6 +1975,125 @@ img.photo-erreur{opacity:.45!important;filter:grayscale(.4)!important}
 img.photo-erreur::after{content:"";display:block}
 </style>
 
+
+<style id="ma2m-top3-graphique-css">
+/* ============================================================
+   MA2M — TOP 3 GRAPHIQUE PREMIUM
+   Base visuelle à conserver. Données à connecter par Claude Code.
+   ============================================================ */
+.ma2m-top3-graphique{
+  position:relative;
+  margin:24px 0;
+  padding:22px;
+  border:1px solid rgba(194,153,72,.42);
+  border-radius:18px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(116,0,24,.22), transparent 45%),
+    linear-gradient(145deg,rgba(15,10,12,.98),rgba(4,4,5,.98));
+  box-shadow:0 18px 55px rgba(0,0,0,.45), inset 0 1px rgba(255,255,255,.04);
+  overflow:hidden;
+}
+.ma2m-top3-graphique::before{
+  content:"";
+  position:absolute; inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.035),transparent);
+  transform:translateX(-100%);
+  animation:ma2mSheen 8s ease-in-out infinite;
+  pointer-events:none;
+}
+@keyframes ma2mSheen{
+  0%,65%{transform:translateX(-100%)}
+  85%,100%{transform:translateX(100%)}
+}
+.ma2m-top3-head{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  margin-bottom:20px;position:relative;z-index:1;
+}
+.ma2m-top3-title{
+  display:flex;align-items:center;gap:12px;
+  font-size:clamp(18px,2vw,25px);font-weight:700;letter-spacing:.02em;
+}
+.ma2m-top3-title .crown{
+  font-size:28px;filter:drop-shadow(0 4px 12px rgba(230,180,65,.45));
+}
+.ma2m-top3-subtitle{
+  color:rgba(255,255,255,.58);font-size:12px;margin-top:4px;
+}
+.ma2m-top3-link{
+  color:#fff;text-decoration:none;font-size:12px;
+  border:1px solid rgba(194,153,72,.45);padding:9px 13px;border-radius:999px;
+}
+.ma2m-top3-podium{
+  display:grid;
+  grid-template-columns:1fr 1.15fr 1fr;
+  align-items:end;
+  gap:14px;
+  max-width:980px;margin:auto;
+  position:relative;z-index:1;
+}
+.ma2m-podium-card{
+  position:relative;min-height:280px;padding:18px 14px 16px;
+  border:1px solid rgba(255,255,255,.13);
+  border-radius:16px;
+  background:linear-gradient(180deg,rgba(35,20,25,.78),rgba(7,7,8,.96));
+  text-align:center;overflow:hidden;
+}
+.ma2m-podium-card.rank-1{
+  min-height:325px;
+  border-color:rgba(222,178,67,.75);
+  box-shadow:0 0 0 1px rgba(222,178,67,.12),0 0 45px rgba(155,74,16,.2);
+  transform:translateY(-8px);
+}
+.ma2m-podium-card.rank-2{border-color:rgba(194,194,194,.38)}
+.ma2m-podium-card.rank-3{border-color:rgba(184,104,52,.48)}
+.ma2m-podium-medal{
+  position:absolute;top:10px;left:50%;transform:translateX(-50%);
+  width:58px;height:58px;border-radius:50%;
+  display:grid;place-items:center;font-size:26px;font-weight:800;
+  background:radial-gradient(circle,#2a2a2a,#090909);
+  border:2px solid currentColor;
+  box-shadow:0 7px 24px rgba(0,0,0,.55);
+  z-index:3;
+}
+.rank-1 .ma2m-podium-medal{color:#e6bb52}
+.rank-2 .ma2m-podium-medal{color:#d4d4d4}
+.rank-3 .ma2m-podium-medal{color:#c57c45}
+.ma2m-podium-photo{
+  width:132px;height:132px;margin:38px auto 12px;border-radius:50%;
+  overflow:hidden;border:3px solid rgba(255,255,255,.16);
+  background:linear-gradient(145deg,#331018,#080808);
+}
+.rank-1 .ma2m-podium-photo{width:154px;height:154px;border-color:rgba(226,182,67,.7)}
+.ma2m-podium-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.ma2m-podium-name{font-size:18px;font-weight:700}
+.rank-1 .ma2m-podium-name{font-size:21px}
+.ma2m-podium-visits{margin-top:6px;color:rgba(255,255,255,.62);font-size:12px}
+.ma2m-prize{
+  display:inline-flex;align-items:center;gap:6px;margin-top:11px;
+  padding:7px 12px;border-radius:999px;font-size:11px;font-weight:800;
+  letter-spacing:.04em;
+  background:rgba(116,0,24,.25);border:1px solid rgba(194,153,72,.34);
+}
+.rank-1 .ma2m-prize{background:rgba(194,153,72,.13);color:#f1d47c;border-color:rgba(230,187,82,.55)}
+.ma2m-podium-bar{
+  height:6px;border-radius:99px;margin-top:14px;background:rgba(255,255,255,.08);overflow:hidden;
+}
+.ma2m-podium-bar span{display:block;height:100%;width:var(--score,50%);
+  background:linear-gradient(90deg,#7b0926,#d21c55,#d9ad42);
+  border-radius:inherit;
+}
+.ma2m-top3-foot{
+  margin-top:18px;text-align:center;color:rgba(255,255,255,.45);font-size:11px;
+}
+@media(max-width:760px){
+  .ma2m-top3-graphique{padding:15px;border-radius:14px}
+  .ma2m-top3-podium{grid-template-columns:1fr;max-width:420px}
+  .ma2m-podium-card,.ma2m-podium-card.rank-1{min-height:260px;transform:none}
+  .ma2m-podium-photo,.rank-1 .ma2m-podium-photo{width:118px;height:118px}
+  .ma2m-top3-head{align-items:flex-start}
+}
+</style>
+
 </head>
 <body class="zone-admin">
 <script>
@@ -4233,6 +4352,108 @@ initSidebarNav();
  - Une absence de photo doit afficher un état propre, pas une image cassée.
  - Une erreur Drive doit afficher "transfert non confirmé" et non "succès".
 */
+</script>
+
+
+<!-- ============================================================
+     MA2M — BLOC GRAPHIQUE TOP 3
+     Claude Code : remplacer uniquement les données demo par les
+     données réelles et conserver la structure/UX.
+     ============================================================ -->
+<section class="ma2m-top3-graphique" id="dashboard-top3-graphique" aria-label="Les trois meilleurs mannequins">
+  <div class="ma2m-top3-head">
+    <div>
+      <div class="ma2m-top3-title"><span class="crown">♛</span><span>Top 3 des meilleurs mannequins</span></div>
+      <div class="ma2m-top3-subtitle">Classement graphique basé sur les statistiques réelles du dashboard</div>
+    </div>
+    <a href="#dashboard-top10" class="ma2m-top3-link">Voir le classement</a>
+  </div>
+
+  <div class="ma2m-top3-podium" id="ma2mTop3Podium">
+    <article class="ma2m-podium-card rank-2" data-rank="2">
+      <div class="ma2m-podium-medal">2</div>
+      <div class="ma2m-podium-photo">
+        <img src="" alt="Photo du 2e mannequin" data-model-photo data-fallback="" loading="lazy">
+      </div>
+      <div class="ma2m-podium-name" data-model-name>—</div>
+      <div class="ma2m-podium-visits" data-model-visits>— visites</div>
+      <div class="ma2m-prize">🥈 2E PRIX</div>
+      <div class="ma2m-podium-bar"><span data-model-score style="--score:70%"></span></div>
+    </article>
+
+    <article class="ma2m-podium-card rank-1" data-rank="1">
+      <div class="ma2m-podium-medal">1</div>
+      <div class="ma2m-podium-photo">
+        <img src="" alt="Photo du 1er mannequin" data-model-photo data-fallback="" loading="eager">
+      </div>
+      <div class="ma2m-podium-name" data-model-name>—</div>
+      <div class="ma2m-podium-visits" data-model-visits>— visites</div>
+      <div class="ma2m-prize">🏆 1ER PRIX</div>
+      <div class="ma2m-podium-bar"><span data-model-score style="--score:100%"></span></div>
+    </article>
+
+    <article class="ma2m-podium-card rank-3" data-rank="3">
+      <div class="ma2m-podium-medal">3</div>
+      <div class="ma2m-podium-photo">
+        <img src="" alt="Photo du 3e mannequin" data-model-photo data-fallback="" loading="lazy">
+      </div>
+      <div class="ma2m-podium-name" data-model-name>—</div>
+      <div class="ma2m-podium-visits" data-model-visits>— visites</div>
+      <div class="ma2m-prize">🥉 3E PRIX</div>
+      <div class="ma2m-podium-bar"><span data-model-score style="--score:55%"></span></div>
+    </article>
+  </div>
+
+  <div class="ma2m-top3-foot">
+    Les valeurs, noms et photos doivent être alimentés par les données réelles — aucune donnée fictive en production.
+  </div>
+</section>
+
+
+<script id="ma2m-top3-graphique-bind">
+/*
+ * MA2M TOP 3 GRAPHIC BINDING
+ * Claude Code: connect this hook to the existing real ranking loader.
+ * It intentionally does not create fake production data.
+ */
+(function(){
+  const root = document.getElementById('ma2mTop3Podium');
+  if(!root) return;
+
+  window.ma2mRemplirTop3Graphique = function(items){
+    if(!Array.isArray(items) || items.length < 3) return;
+    const ranks = [2,1,3];
+    ranks.forEach((rank, i) => {
+      const item = items[rank - 1];
+      const card = root.querySelector('[data-rank="'+rank+'"]');
+      if(!card || !item) return;
+
+      const name = item.full_name || item.name || '—';
+      const visits = Number(item.visits ?? item.total_visits ?? item.visites ?? 0);
+      const photo = item.url_miniature || item.thumbnail_url || item.url || item.photo_url || '';
+
+      const nameEl = card.querySelector('[data-model-name]');
+      const visitsEl = card.querySelector('[data-model-visits]');
+      const img = card.querySelector('[data-model-photo]');
+      const bar = card.querySelector('[data-model-score]');
+
+      if(nameEl) nameEl.textContent = name;
+      if(visitsEl) visitsEl.textContent = Number.isFinite(visits) ? visits.toLocaleString('fr-FR')+' visites' : '— visites';
+      if(img && photo){
+        img.src = photo;
+        img.onerror = function(){
+          img.removeAttribute('src');
+          img.alt = 'Photo non disponible';
+        };
+      }
+      if(bar){
+        const max = Number(items[0]?.visits ?? items[0]?.total_visits ?? items[0]?.visites ?? visits) || visits || 1;
+        const pct = Math.max(8, Math.min(100, (visits/max)*100));
+        bar.style.setProperty('--score', pct+'%');
+      }
+    });
+  };
+})();
 </script>
 
 </body>
