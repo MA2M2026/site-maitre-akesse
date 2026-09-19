@@ -2064,6 +2064,32 @@ setTimeout(() => {
 <div class="form-msg" id="tb-nouveau-mdp-msg"></div>
 </div>
 </section>
+<!-- ===== AJOUT : code de validation (2e facteur), demandé après l'e-mail + mot de passe ===== -->
+<section id="bloc-code-validation" style="display:none; padding-top:1rem;">
+<div class="container" style="max-width:420px;">
+<p style="font-size:0.9rem; color:var(--gris); margin-bottom:1rem;">Pour finaliser la connexion, saisissez votre code de validation.</p>
+<div class="form-champ"><label>Code de validation</label><input id="tb-code-validation" type="password" autocomplete="one-time-code"/></div>
+<button class="btn btn--principal" id="tb-code-validation-valider">Valider</button>
+<div class="form-msg" id="tb-code-validation-msg"></div>
+<p style="margin-top:1rem;"><a href="#" id="tb-code-oublie-lien" style="font-size:0.85rem; color:var(--gris);">Code de validation oublié ?</a></p>
+</div>
+</section>
+<section id="bloc-code-oublie" style="display:none; padding-top:1rem;">
+<div class="container" style="max-width:420px;">
+<p style="font-size:0.9rem; color:var(--gris); margin-bottom:1rem;">Un lien de réinitialisation sera envoyé à l'e-mail de récupération enregistré. Il sera valable 30 minutes.</p>
+<button class="btn btn--principal" id="tb-code-oublie-envoyer">Envoyer le lien de réinitialisation</button>
+<div class="form-msg" id="tb-code-oublie-msg"></div>
+<p style="margin-top:1rem;"><a href="#" id="tb-code-oublie-retour" style="font-size:0.85rem; color:var(--gris);">← Retour</a></p>
+</div>
+</section>
+<section id="bloc-code-nouveau" style="display:none; padding-top:1rem;">
+<div class="container" style="max-width:420px;">
+<p style="font-size:0.9rem; color:var(--gris); margin-bottom:1rem;">Choisissez votre nouveau code de validation (au moins 4 caractères). Notez-le immédiatement en lieu sûr : il ne sera plus jamais affiché.</p>
+<div class="form-champ"><label>Nouveau code de validation</label><input id="tb-code-nouveau" type="text"/></div>
+<button class="btn btn--principal" id="tb-code-nouveau-valider">Valider le nouveau code</button>
+<div class="form-msg" id="tb-code-nouveau-msg"></div>
+</div>
+</section>
 <section id="bloc-tableau" style="display:none; padding-top:0;">
 <div class="db-shell">
 <button class="db-mobile-menu" id="db-mobile-menu" type="button" aria-label="Ouvrir le menu" aria-controls="db-sidebar" aria-expanded="false">☰</button>
@@ -2254,6 +2280,17 @@ setTimeout(() => {
 <p style="font-size:0.85rem; color:var(--gris); margin-top:0; margin-bottom:1rem;">Les photos envoyées depuis l'espace mannequin génèrent automatiquement leur propre miniature légère. Cet outil rattrape uniquement les photos déjà en ligne AVANT la mise en place de ce système, pour réduire la bande passante consommée par Le Book (visible dans Supabase → Usage → Cached Egress).</p>
 <button class="btn btn--principal" id="miniatures-generer-btn" type="button">Générer les miniatures manquantes</button>
 <div class="form-msg" id="miniatures-msg"></div>
+</div>
+<div class="liste-recente">
+<div class="dossiers-entete">
+<h2 style="margin:0;">🔐 Code de validation (2ᵉ facteur)</h2>
+<span class="dossiers-compteur" id="code-validation-statut-badge"></span>
+</div>
+<p style="font-size:0.85rem; color:var(--gris); margin:0.3rem 0 1rem;">En plus de votre e-mail et mot de passe, ce code vous sera désormais demandé à chaque nouvelle connexion. Notez-le en lieu sûr dès son enregistrement : il ne sera plus jamais réaffiché ici. L'e-mail de récupération sert uniquement si vous l'oubliez.</p>
+<div class="form-champ"><label>E-mail de récupération</label><input id="cv-email-recuperation" type="email"/></div>
+<div class="form-champ"><label>Nouveau code de validation (au moins 4 caractères)</label><input id="cv-nouveau-code" type="text"/></div>
+<button class="btn btn--principal" id="cv-definir-btn" type="button">Enregistrer</button>
+<div class="form-msg" id="cv-msg"></div>
 </div>
 <div class="liste-recente">
 <div class="dossiers-entete">
@@ -2455,6 +2492,64 @@ async function verifierAdminTableau() {
   return !!data;
 }
 
+// Jeton de réinitialisation du code de validation, reçu par e-mail sous forme
+// de lien ?reset_code=... — retiré de l'URL immédiatement pour ne pas rester
+// visible dans l'historique du navigateur.
+let tokenReinitCodeEnAttente = null;
+(function () {
+  const p = new URLSearchParams(window.location.search).get('reset_code');
+  if (p) {
+    tokenReinitCodeEnAttente = p;
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+})();
+
+// Le code de validation n'est redemandé qu'une fois par session de navigateur
+// (sessionStorage, effacé à la fermeture de l'onglet) — pas à chaque simple
+// rechargement de page, pour ne pas être redondant avec le mot de passe.
+function codeValideEnSession() {
+  try { return sessionStorage.getItem('ma2m_code_valide') === '1'; } catch (e) { return false; }
+}
+function marquerCodeValide() {
+  try { sessionStorage.setItem('ma2m_code_valide', '1'); } catch (e) {}
+}
+function effacerCodeValide() {
+  try { sessionStorage.removeItem('ma2m_code_valide'); } catch (e) {}
+}
+
+function masquerBlocsConnexion() {
+  ['bloc-login', 'bloc-mdp-oublie', 'bloc-nouveau-mdp', 'bloc-code-validation', 'bloc-code-oublie', 'bloc-code-nouveau', 'bloc-tableau']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+}
+
+function reveleTableauDeBord() {
+  masquerBlocsConnexion();
+  document.getElementById('bloc-tableau').style.display = 'block';
+  afficherChromePublic(false);
+  chargerStatistiques();
+  chargerStatutCodeValidation();
+}
+
+// Appelée après toute connexion réussie (mot de passe ou reset mdp) déjà
+// confirmée admin : décide s'il faut encore demander le code de validation.
+async function apresConnexionReussie() {
+  if (tokenReinitCodeEnAttente) {
+    masquerBlocsConnexion();
+    document.getElementById('bloc-code-nouveau').style.display = 'block';
+    return;
+  }
+  if (codeValideEnSession()) { reveleTableauDeBord(); return; }
+
+  const { data, error } = await sb.rpc('code_validation_statut');
+  const ligne = Array.isArray(data) ? data[0] : data;
+  if (!error && ligne && ligne.defini) {
+    masquerBlocsConnexion();
+    document.getElementById('bloc-code-validation').style.display = 'block';
+    return;
+  }
+  reveleTableauDeBord();
+}
+
 document.getElementById('tb-login-btn').addEventListener('click', async () => {
   const email = document.getElementById('tb-email').value.trim();
   const password = document.getElementById('tb-password').value;
@@ -2463,17 +2558,122 @@ document.getElementById('tb-login-btn').addEventListener('click', async () => {
   if (error) { msg.className = 'form-msg err'; msg.textContent = 'Connexion refusée.'; msg.style.display = 'block'; return; }
   const estAdmin = await verifierAdminTableau();
   if (!estAdmin) { msg.className = 'form-msg err'; msg.textContent = "Ce compte n'a pas accès au tableau de bord."; msg.style.display = 'block'; return; }
-  document.getElementById('bloc-login').style.display = 'none';
-  document.getElementById('bloc-tableau').style.display = 'block';
-  afficherChromePublic(false);
-  chargerStatistiques();
+  await apresConnexionReussie();
 });
 
 document.getElementById('tb-logout-btn').addEventListener('click', async () => {
   await sb.auth.signOut();
+  effacerCodeValide();
   document.getElementById('bloc-tableau').style.display = 'none';
   document.getElementById('bloc-login').style.display = 'block';
   afficherChromePublic(true);
+});
+
+document.getElementById('tb-code-validation-valider').addEventListener('click', async () => {
+  const code = document.getElementById('tb-code-validation').value;
+  const msg = document.getElementById('tb-code-validation-msg');
+  if (!code) return;
+  const { data: ok, error } = await sb.rpc('verifier_code_validation', { p_code: code });
+  if (error || !ok) {
+    msg.className = 'form-msg err'; msg.textContent = 'Code de validation incorrect.'; msg.style.display = 'block';
+    return;
+  }
+  marquerCodeValide();
+  document.getElementById('tb-code-validation').value = '';
+  msg.style.display = 'none';
+  reveleTableauDeBord();
+});
+
+document.getElementById('tb-code-oublie-lien').addEventListener('click', (e) => {
+  e.preventDefault();
+  document.getElementById('bloc-code-validation').style.display = 'none';
+  document.getElementById('bloc-code-oublie').style.display = 'block';
+});
+document.getElementById('tb-code-oublie-retour').addEventListener('click', (e) => {
+  e.preventDefault();
+  document.getElementById('bloc-code-oublie').style.display = 'none';
+  document.getElementById('bloc-code-validation').style.display = 'block';
+});
+document.getElementById('tb-code-oublie-envoyer').addEventListener('click', async () => {
+  const msg = document.getElementById('tb-code-oublie-msg');
+  msg.className = 'form-msg ok'; msg.textContent = 'Envoi en cours…'; msg.style.display = 'block';
+  const { data, error } = await sb.rpc('demander_reinitialisation_code_validation');
+  const ligne = Array.isArray(data) ? data[0] : data;
+  if (error || !ligne || !ligne.token) {
+    msg.className = 'form-msg err';
+    msg.textContent = "Impossible d'envoyer le lien (aucun e-mail de récupération enregistré ?).";
+    msg.style.display = 'block';
+    return;
+  }
+  const lien = window.location.origin + window.location.pathname + '?reset_code=' + encodeURIComponent(ligne.token);
+  try {
+    await envoyerEmailCandidat({
+      to_email: ligne.email_destination,
+      to_name: 'Maître Akesse',
+      message: "Vous avez demandé la réinitialisation de votre code de validation du tableau de bord. Cliquez sur ce lien pour définir un nouveau code (valable 30 minutes) : " + lien + "\n\nSi vous n'êtes pas à l'origine de cette demande, ignorez simplement cet e-mail."
+    });
+    msg.className = 'form-msg ok';
+    msg.textContent = 'Un lien de réinitialisation vient d\'être envoyé à ' + ligne.email_destination + '. Vérifiez votre boîte mail (et vos spams).';
+  } catch (e) {
+    msg.className = 'form-msg err';
+    msg.textContent = "Le lien a été généré mais l'e-mail n'a pas pu être envoyé.";
+  }
+  msg.style.display = 'block';
+});
+
+document.getElementById('tb-code-nouveau-valider').addEventListener('click', async () => {
+  const nouveauCode = document.getElementById('tb-code-nouveau').value.trim();
+  const msg = document.getElementById('tb-code-nouveau-msg');
+  if (nouveauCode.length < 4) {
+    msg.className = 'form-msg err'; msg.textContent = 'Le code doit contenir au moins 4 caractères.'; msg.style.display = 'block';
+    return;
+  }
+  const { error } = await sb.rpc('reinitialiser_code_validation', { p_token: tokenReinitCodeEnAttente, p_nouveau_code: nouveauCode });
+  if (error) {
+    msg.className = 'form-msg err'; msg.textContent = "Lien invalide ou expiré. Refaites une demande depuis l'écran de connexion."; msg.style.display = 'block';
+    return;
+  }
+  tokenReinitCodeEnAttente = null;
+  document.getElementById('tb-code-nouveau').value = '';
+  marquerCodeValide();
+  msg.className = 'form-msg ok'; msg.textContent = 'Nouveau code enregistré ! Ouverture du tableau de bord…'; msg.style.display = 'block';
+  setTimeout(() => reveleTableauDeBord(), 900);
+});
+
+async function chargerStatutCodeValidation() {
+  const badge = document.getElementById('code-validation-statut-badge');
+  const emailInput = document.getElementById('cv-email-recuperation');
+  if (!sb) return;
+  const { data, error } = await sb.rpc('code_validation_statut');
+  if (error) return;
+  const ligne = Array.isArray(data) ? data[0] : data;
+  if (badge) badge.textContent = ligne && ligne.defini ? 'Actif' : 'Non défini';
+  if (emailInput && ligne && ligne.email_recuperation && !emailInput.value) emailInput.value = ligne.email_recuperation;
+}
+
+document.getElementById('cv-definir-btn').addEventListener('click', async () => {
+  const code = document.getElementById('cv-nouveau-code').value.trim();
+  const email = document.getElementById('cv-email-recuperation').value.trim();
+  const msg = document.getElementById('cv-msg');
+  if (code.length < 4) {
+    msg.className = 'form-msg err'; msg.textContent = 'Le code doit contenir au moins 4 caractères.'; msg.style.display = 'block';
+    return;
+  }
+  if (!email) {
+    msg.className = 'form-msg err'; msg.textContent = "L'e-mail de récupération est obligatoire (il sert en cas d'oubli du code)."; msg.style.display = 'block';
+    return;
+  }
+  const { error } = await sb.rpc('definir_code_validation', { p_code: code, p_email_recuperation: email });
+  if (error) {
+    msg.className = 'form-msg err'; msg.textContent = 'Erreur : ' + error.message; msg.style.display = 'block';
+    return;
+  }
+  document.getElementById('cv-nouveau-code').value = '';
+  marquerCodeValide();
+  msg.className = 'form-msg ok';
+  msg.textContent = 'Code de validation enregistré ! Notez-le immédiatement en lieu sûr — il vous sera demandé à chaque prochaine connexion et ne sera plus jamais affiché ici.';
+  msg.style.display = 'block';
+  chargerStatutCodeValidation();
 });
 
 let recuperationMdpEnCours = false;
@@ -2533,9 +2733,7 @@ document.getElementById('tb-nouveau-mdp-valider').addEventListener('click', asyn
   const estAdmin = await verifierAdminTableau();
   document.getElementById('bloc-nouveau-mdp').style.display = 'none';
   if (estAdmin) {
-    document.getElementById('bloc-tableau').style.display = 'block';
-    afficherChromePublic(false);
-    chargerStatistiques();
+    await apresConnexionReussie();
   } else {
     await sb.auth.signOut();
     document.getElementById('bloc-login').style.display = 'block';
@@ -4585,14 +4783,15 @@ document.getElementById('mr-enregistrer-btn').addEventListener('click', async ()
 
 initSidebarNav();
 
+// Si le lien de réinitialisation du code est ouvert sans session active,
+// tokenReinitCodeEnAttente reste simplement en mémoire : l'écran de connexion
+// normal s'affiche, et apresConnexionReussie() le consommera juste après la
+// saisie du mot de passe (voir tb-login-btn ci-dessus).
 (async () => {
   try {
     const estAdmin = await verifierAdminTableau();
     if (estAdmin && !recuperationMdpEnCours) {
-      document.getElementById('bloc-login').style.display = 'none';
-      document.getElementById('bloc-tableau').style.display = 'block';
-      afficherChromePublic(false);
-      chargerStatistiques();
+      await apresConnexionReussie();
     }
   } catch (e) {}
 })();

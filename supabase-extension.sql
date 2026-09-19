@@ -2777,3 +2777,175 @@ select cron.schedule(
 );
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 71 : code de validation admin (2e facteur), en plus de
+-- l'e-mail + mot de passe habituels, avec récupération par e-mail en
+-- cas d'oubli. Même principe de sécurité que le code portail mannequin
+-- (Extension 50/66) : seul un hash (bcrypt, pgcrypto) est stocké, jamais
+-- le code en clair. La table n'a AUCUNE policy directe (RLS activé,
+-- zéro policy = tout accès direct refusé) : seules les fonctions
+-- security definer ci-dessous, propriétaires de la table, peuvent y
+-- toucher — comme pour code_portail_mannequin plus haut.
+-- ===================================================================
+create extension if not exists pgcrypto;
+
+create table if not exists admin_securite (
+  admin_user_id uuid primary key references auth.users(id) on delete cascade,
+  code_hash text,
+  email_recuperation text,
+  reset_token_hash text,
+  reset_token_expire_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+alter table admin_securite enable row level security;
+
+-- Anti brute-force sur la vérification du code, même principe que
+-- tentatives_verification_code_portail (Extension 50) : ralentit
+-- (pg_sleep) sans jamais bloquer un usage normal.
+create table if not exists tentatives_code_validation_admin (
+  cree_le timestamptz not null default now()
+);
+alter table tentatives_code_validation_admin enable row level security;
+
+create or replace function code_validation_statut()
+returns table(defini boolean, email_recuperation text)
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  v_hash text;
+  v_email text;
+begin
+  if not exists (select 1 from admins where user_id = auth.uid()) then
+    raise exception 'non_autorise';
+  end if;
+  select code_hash, email_recuperation into v_hash, v_email
+    from admin_securite where admin_user_id = auth.uid();
+  return query select (v_hash is not null), v_email;
+end;
+$$;
+
+create or replace function definir_code_validation(p_code text, p_email_recuperation text)
+returns void
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+begin
+  if not exists (select 1 from admins where user_id = auth.uid()) then
+    raise exception 'non_autorise';
+  end if;
+  if p_code is null or length(trim(p_code)) < 4 then
+    raise exception 'code_trop_court';
+  end if;
+  if p_email_recuperation is null or trim(p_email_recuperation) = '' then
+    raise exception 'email_recuperation_requis';
+  end if;
+  insert into admin_securite (admin_user_id, code_hash, email_recuperation, updated_at)
+  values (auth.uid(), crypt(trim(p_code), gen_salt('bf')), trim(p_email_recuperation), now())
+  on conflict (admin_user_id) do update
+    set code_hash = excluded.code_hash,
+        email_recuperation = excluded.email_recuperation,
+        reset_token_hash = null,
+        reset_token_expire_at = null,
+        updated_at = now();
+end;
+$$;
+
+create or replace function verifier_code_validation(p_code text)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  nb_recentes int;
+  hash_stocke text;
+begin
+  if not exists (select 1 from admins where user_id = auth.uid()) then
+    raise exception 'non_autorise';
+  end if;
+
+  insert into tentatives_code_validation_admin default values;
+  delete from tentatives_code_validation_admin where cree_le < now() - interval '10 minutes';
+  select count(*) into nb_recentes from tentatives_code_validation_admin
+  where cree_le > now() - interval '1 minute';
+  if nb_recentes > 20 then
+    perform pg_sleep(3);
+  end if;
+
+  select code_hash into hash_stocke from admin_securite where admin_user_id = auth.uid();
+  if hash_stocke is null or p_code is null then return false; end if;
+  return hash_stocke = crypt(p_code, hash_stocke);
+end;
+$$;
+
+-- Génère un jeton de réinitialisation (30 min) et le renvoie EN CLAIR une
+-- seule fois, pour que le tableau de bord construise le lien envoyé par
+-- e-mail (via EmailJS, côté client) ; seul son hash (sha256) est stocké.
+create or replace function demander_reinitialisation_code_validation()
+returns table(token text, email_destination text)
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  v_token text;
+  v_email text;
+begin
+  if not exists (select 1 from admins where user_id = auth.uid()) then
+    raise exception 'non_autorise';
+  end if;
+
+  select email_recuperation into v_email from admin_securite where admin_user_id = auth.uid();
+  if v_email is null or trim(v_email) = '' then
+    raise exception 'aucun_email_recuperation';
+  end if;
+
+  v_token := encode(gen_random_bytes(24), 'hex');
+  update admin_securite
+    set reset_token_hash = encode(digest(v_token, 'sha256'), 'hex'),
+        reset_token_expire_at = now() + interval '30 minutes'
+    where admin_user_id = auth.uid();
+
+  return query select v_token, v_email;
+end;
+$$;
+
+create or replace function reinitialiser_code_validation(p_token text, p_nouveau_code text)
+returns void
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  v_hash text;
+  v_expire timestamptz;
+begin
+  if not exists (select 1 from admins where user_id = auth.uid()) then
+    raise exception 'non_autorise';
+  end if;
+  if p_nouveau_code is null or length(trim(p_nouveau_code)) < 4 then
+    raise exception 'code_trop_court';
+  end if;
+
+  select reset_token_hash, reset_token_expire_at into v_hash, v_expire
+    from admin_securite where admin_user_id = auth.uid();
+
+  if v_hash is null or p_token is null or v_hash <> encode(digest(p_token, 'sha256'), 'hex') or v_expire is null or v_expire < now() then
+    raise exception 'lien_invalide_ou_expire';
+  end if;
+
+  update admin_securite
+    set code_hash = crypt(trim(p_nouveau_code), gen_salt('bf')),
+        reset_token_hash = null,
+        reset_token_expire_at = null,
+        updated_at = now()
+    where admin_user_id = auth.uid();
+end;
+$$;
+
+NOTIFY pgrst, 'reload schema';
