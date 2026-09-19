@@ -80,6 +80,15 @@
   .statut-vue { background:rgba(255,255,255,0.1); color:var(--texte-doux, #ccc); }
   .statut-retenue, .statut-payee { background:rgba(90,180,120,0.18); color:#7fd8a3; }
   .statut-refusee, .statut-annulee { background:rgba(255,255,255,0.06); color:var(--gris); text-decoration:line-through; }
+  .statut-en-etude, .statut-dossier-en-verification { background:rgba(213,173,98,0.18); color:#e3c37e; }
+  .statut-en-attente { background:rgba(120,150,220,0.18); color:#9db4e8; }
+
+  /* ===== AJOUT : panneau de notification (email + WhatsApp) au changement de statut ===== */
+  .mf-notification { margin-top:1rem; padding:1rem; background:var(--anthracite, var(--noir)); border-left:3px solid var(--bordeaux-clair); }
+  .mf-notification-titre { font-size:0.82rem; color:var(--titre-clair, #fff); margin-bottom:0.6rem; }
+  .mf-notification textarea { width:100%; box-sizing:border-box; background:var(--noir); border:1px solid var(--gris-clair); color:#eee; font-family:var(--texte); font-size:0.85rem; padding:0.7rem; resize:vertical; }
+  .mf-notification-actions { display:flex; align-items:center; gap:0.7rem; flex-wrap:wrap; margin-top:0.7rem; }
+  .mf-notification-statut { font-size:0.78rem; color:var(--gris); }
 
   .dossiers-vide { padding:2rem 1rem; text-align:center; color:var(--gris); font-size:0.85rem; background:var(--anthracite, var(--noir)); }
   .dossiers-plus { display:block; margin:1rem auto 0; }
@@ -2124,7 +2133,7 @@ setTimeout(() => {
 </div>
 <p style="background:rgba(207,59,82,0.12); border-left:3px solid var(--bordeaux-clair); padding:0.7rem 1rem; font-size:0.82rem; margin:0 0 1rem;">
         ⚠️ La référence de paiement affichée est fournie par la personne — le site ne peut pas vérifier auprès de Wave qu'elle est authentique.
-        Une même référence ne peut plus être réutilisée deux fois, mais <strong>avant de passer un dossier en "Payée"</strong>, recherchez toujours
+        Une même référence ne peut plus être réutilisée deux fois, mais <strong>avant de passer un dossier en "Inscription validée"</strong>, recherchez toujours
         cette référence dans votre application Wave pour confirmer le montant et la date.
       </p>
 <div class="filtre-pills" id="filtres-inscriptions"></div>
@@ -2329,6 +2338,15 @@ setTimeout(() => {
 <select id="mf-statut-select"></select>
 <button class="btn" id="mf-supprimer-dossier-btn" style="margin-left:auto; color:var(--bordeaux); border-color:var(--bordeaux);">🗑 Supprimer ce dossier</button>
 </div>
+<div id="mf-notification" class="mf-notification" style="display:none;">
+<div class="mf-notification-titre" id="mf-notification-titre"></div>
+<textarea id="mf-notification-texte" rows="5"></textarea>
+<div class="mf-notification-actions">
+<button class="btn btn--principal" id="mf-notification-envoyer-email" type="button">✉️ Envoyer l'e-mail</button>
+<a class="btn" id="mf-notification-whatsapp" href="#" target="_blank" rel="noopener">💬 Envoyer par WhatsApp</a>
+<span class="mf-notification-statut" id="mf-notification-statut"></span>
+</div>
+</div>
 </div>
 </div>
 <footer class="site-footer">
@@ -2342,6 +2360,8 @@ setTimeout(() => {
 <script>document.getElementById('an').textContent = new Date().getFullYear();</script>
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
+<script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<script src="js/emailjs-config.js"></script>
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
 <script src="js/app.js"></script>
 <script src="js/menu.js"></script>
@@ -3092,16 +3112,20 @@ document.getElementById('liste-validations').addEventListener('click', async (e)
 const DOSSIERS = {
   casting: {
     table: 'casting_applications', photosTable: 'casting_photos', photosColonne: 'application_id', bucket: 'casting-applications',
-    statutChamp: 'status', statuts: ['nouvelle', 'vue', 'retenue', 'refusée'],
-    libellesStatut: { nouvelle: 'Nouvelle', vue: 'Vue', retenue: 'Retenue', 'refusée': 'Refusée' },
+    statutChamp: 'status', statuts: ['nouvelle', 'vue', 'en étude', 'en attente', 'retenue', 'refusée'],
+    libellesStatut: { nouvelle: 'Nouvelle', vue: 'Vue', 'en étude': 'En étude', 'en attente': 'En attente', retenue: 'Retenue', 'refusée': 'Refusée' },
     filtreParDefaut: 'nouvelle',
     listeId: 'liste-candidatures', filtresId: 'filtres-candidatures', compteurId: 'candidatures-compteur', plusBtnId: 'candidatures-plus-btn',
     titrePluriel: 'candidature(s)'
   },
   inscription: {
     table: 'inscriptions_mannequins', photosTable: 'inscriptions_photos', photosColonne: 'inscription_id', bucket: 'inscriptions-photos',
-    statutChamp: 'statut', statuts: ['en attente de paiement', 'payée', 'annulée'],
-    libellesStatut: { 'en attente de paiement': 'En attente', 'payée': 'Payée', 'annulée': 'Annulée' },
+    statutChamp: 'statut', statuts: ['en attente de paiement', 'dossier en vérification', 'payée', 'annulée'],
+    // Libellés alignés sur le cahier des charges (PAIEMENT À VÉRIFIER / DOSSIER EN VÉRIFICATION /
+    // INSCRIPTION VALIDÉE / REFUSÉE) — les valeurs stockées en base restent inchangées pour ne pas
+    // toucher à la policy RLS de sécurité qui vérifie explicitement 'en attente de paiement'
+    // (voir Extension 58 dans supabase-extension.sql).
+    libellesStatut: { 'en attente de paiement': 'Paiement à vérifier', 'dossier en vérification': 'Dossier en vérification', 'payée': 'Inscription validée', 'annulée': 'Refusée' },
     filtreParDefaut: 'en attente de paiement',
     listeId: 'liste-inscriptions', filtresId: 'filtres-inscriptions', compteurId: 'inscriptions-compteur', plusBtnId: 'inscriptions-plus-btn',
     titrePluriel: 'inscription(s)'
@@ -3324,7 +3348,9 @@ async function ouvrirFicheDossier(source, id) {
   const { data: d } = await sb.from(conf.table).select('*').eq('id', id).single();
   if (!d) return;
 
-  ficheOuverte = { source, id };
+  ficheOuverte = { source, id, d };
+  document.getElementById('mf-notification').style.display = 'none';
+  document.getElementById('mf-notification-statut').textContent = '';
   const champs = source === 'casting' ? CHAMPS_CASTING : (source === 'inscription' ? CHAMPS_INSCRIPTION : CHAMPS_RECRUTEUR);
 
   const age = (source === 'inscription' || source === 'casting') ? calculerAge(d.date_naissance) : null;
@@ -3439,12 +3465,93 @@ document.getElementById('modal-dossier').addEventListener('click', (e) => {
   if (e.target.id === 'modal-dossier') document.getElementById('modal-dossier').classList.remove('ouvert');
 });
 
+// ===================================================================
+// Notifications aux candidats/mannequins au changement de statut (cahier
+// des charges, étapes 7-8 et 10). Modèles de messages repris mot pour mot
+// du cahier — un seul canal automatique existe réellement (e-mail, via
+// EmailJS) : aucune API WhatsApp officielle n'est branchée sur ce site,
+// donc WhatsApp reste un lien pré-rempli à envoyer soi-même en un clic
+// plutôt qu'un envoi inventé et non officiel.
+function prenomCandidat(d) {
+  return String(d.full_name || '').trim().split(/\s+/)[0] || 'candidat(e)';
+}
+function nomCastingCandidat(d) {
+  return libelleTypeCandidature(d) || 'notre casting';
+}
+const MODELES_NOTIFICATION = {
+  casting: {
+    'retenue': (d) => `Bonjour ${prenomCandidat(d)},\n\nNous avons le plaisir de vous informer que votre candidature au casting ${nomCastingCandidat(d)} a été retenue par Maître Akesse Model Management.\n\nNous reviendrons vers vous avec les prochaines informations.\n\nMerci pour votre confiance.`,
+    'refusée': (d) => `Bonjour ${prenomCandidat(d)},\n\nNous vous remercions pour votre candidature au casting ${nomCastingCandidat(d)}.\n\nAprès étude de votre dossier, votre candidature n'a pas été retenue pour cette sélection.\n\nNous vous remercions pour votre intérêt envers Maître Akesse Model Management.`,
+    'en étude': (d) => `Bonjour ${prenomCandidat(d)},\n\nVotre candidature au casting ${nomCastingCandidat(d)} est actuellement en cours d'étude par notre équipe.\n\nNous vous contacterons dès qu'une décision sera prise.`,
+    'en attente': (d) => `Bonjour ${prenomCandidat(d)},\n\nVotre candidature au casting ${nomCastingCandidat(d)} est actuellement en attente de validation.\n\nNous reviendrons vers vous dès que possible.`
+  },
+  inscription: {
+    'payée': (d) => `Bonjour ${prenomCandidat(d)},\n\nNous avons le plaisir de vous confirmer que votre inscription auprès de Maître Akesse Model Management a été validée après confirmation de votre paiement.\n\nMerci pour votre confiance.`
+  }
+};
+
+function afficherPanneauNotification(source, statut, d) {
+  const genere = MODELES_NOTIFICATION[source] && MODELES_NOTIFICATION[source][statut];
+  const panneau = document.getElementById('mf-notification');
+  if (!genere) { panneau.style.display = 'none'; return; }
+
+  const texte = genere(d);
+  document.getElementById('mf-notification-titre').textContent = `Message pour ce nouveau statut (modifiable avant envoi) :`;
+  document.getElementById('mf-notification-texte').value = texte;
+  document.getElementById('mf-notification-statut').textContent = '';
+
+  const lienWa = lienWhatsApp(d.phone);
+  const btnWa = document.getElementById('mf-notification-whatsapp');
+  if (lienWa) {
+    btnWa.href = `${lienWa}?text=${encodeURIComponent(document.getElementById('mf-notification-texte').value)}`;
+    btnWa.style.display = 'inline-flex';
+  } else {
+    btnWa.style.display = 'none';
+  }
+  btnWa.onclick = () => { btnWa.href = `${lienWa}?text=${encodeURIComponent(document.getElementById('mf-notification-texte').value)}`; };
+
+  panneau.style.display = 'block';
+}
+
+document.getElementById('mf-notification-envoyer-email').addEventListener('click', async () => {
+  if (!ficheOuverte) return;
+  const d = ficheOuverte.d;
+  const statutEl = document.getElementById('mf-notification-statut');
+  const message = document.getElementById('mf-notification-texte').value;
+  if (!d.email) { statutEl.textContent = "Aucune adresse e-mail sur ce dossier — envoyez plutôt par WhatsApp."; return; }
+  statutEl.textContent = 'Envoi en cours…';
+  try {
+    await envoyerEmailCandidat({ to_email: d.email, to_name: prenomCandidat(d), message });
+    statutEl.textContent = `E-mail envoyé à ${d.email}.`;
+  } catch (err) {
+    statutEl.textContent = "Échec de l'envoi — vérifiez que le modèle EmailJS candidat est bien configuré.";
+    console.error('Notification candidat non envoyée :', err);
+  }
+});
+
 document.getElementById('mf-statut-select').addEventListener('change', async (e) => {
   if (!ficheOuverte) return;
   const conf = DOSSIERS[ficheOuverte.source];
-  await sb.from(conf.table).update({ [conf.statutChamp]: e.target.value }).eq('id', ficheOuverte.id);
+  const nouveauStatut = e.target.value;
+  const { error } = await sb.from(conf.table).update({ [conf.statutChamp]: nouveauStatut }).eq('id', ficheOuverte.id);
+  if (error) { alert("Erreur lors du changement de statut : " + error.message); return; }
+  ficheOuverte.d[conf.statutChamp] = nouveauStatut;
   afficherDossiers(ficheOuverte.source);
   chargerATraiter();
+
+  afficherPanneauNotification(ficheOuverte.source, nouveauStatut, ficheOuverte.d);
+  const genere = MODELES_NOTIFICATION[ficheOuverte.source] && MODELES_NOTIFICATION[ficheOuverte.source][nouveauStatut];
+  if (genere && ficheOuverte.d.email) {
+    const statutEl = document.getElementById('mf-notification-statut');
+    statutEl.textContent = 'Envoi automatique de l\'e-mail en cours…';
+    try {
+      await envoyerEmailCandidat({ to_email: ficheOuverte.d.email, to_name: prenomCandidat(ficheOuverte.d), message: document.getElementById('mf-notification-texte').value });
+      statutEl.textContent = `E-mail envoyé automatiquement à ${ficheOuverte.d.email}. Vous pouvez le modifier et le renvoyer ci-dessus, ou l'envoyer aussi par WhatsApp.`;
+    } catch (err) {
+      statutEl.textContent = "L'envoi automatique de l'e-mail a échoué — vous pouvez réessayer avec le bouton ci-dessus.";
+      console.error('Notification candidat non envoyée automatiquement :', err);
+    }
+  }
 });
 
 document.getElementById('mf-supprimer-dossier-btn').addEventListener('click', async () => {
