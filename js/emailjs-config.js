@@ -14,3 +14,15 @@ function envoyerNotificationEmail({ name, telephone, email, message }) {
   emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, { name, telephone, email, message })
     .catch(err => console.error('Notification e-mail non envoyée :', err));
 }
+
+// Template distinct de celui ci-dessus : celui-ci envoie AU candidat/mannequin
+// (destinataire différent à chaque envoi), donc il doit être configuré dans EmailJS
+// avec un champ "To Email" dynamique ({{to_email}}), contrairement au template
+// EMAILJS_TEMPLATE_ID ci-dessus qui envoie toujours à l'agence.
+const EMAILJS_TEMPLATE_ID_CANDIDAT = 'template_ma2m_statut';
+
+function envoyerEmailCandidat({ to_email, to_name, message }) {
+  if (typeof emailjs === 'undefined') return Promise.reject(new Error('EmailJS non chargé'));
+  if (!to_email) return Promise.reject(new Error('Aucune adresse e-mail pour ce dossier'));
+  return emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID_CANDIDAT, { to_email, to_name, message });
+}

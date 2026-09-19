@@ -2595,3 +2595,38 @@ NOTIFY pgrst, 'reload schema';
 alter table casting_projets add column if not exists description text;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 68 : statuts manquants du cahier des charges (candidatures
+-- casting + inscriptions mannequins), pour permettre les notifications
+-- de statut (WhatsApp/e-mail) prévues aux étapes 7-8 et 10 du cahier.
+--
+-- IMPORTANT : les valeurs de statut EXISTANTES ne sont PAS renommées.
+-- On se contente d'AJOUTER les valeurs manquantes aux contraintes CHECK.
+-- Une valeur comme 'en attente de paiement' reste inchangée en base
+-- (seul son libellé affiché dans le dashboard change, côté site) car
+-- elle est vérifiée telle quelle par la policy RLS de sécurité de
+-- l'Extension 58 (protection contre la falsification du statut de
+-- paiement) — la renommer casserait cette protection sans qu'on s'en
+-- rende compte.
+--
+-- casting_applications.status : ajoute 'en étude' et 'en attente'
+-- (le cahier en demande 6 au total : nouvelle / vue / en étude /
+-- en attente / retenue / refusée — les 4 premières existaient déjà).
+--
+-- inscriptions_mannequins.statut : ajoute 'dossier en vérification'
+-- (étape intermédiaire entre la vérification du paiement et la
+-- validation finale). Les libellés affichés dans le dashboard sont
+-- désormais : "Paiement à vérifier" / "Dossier en vérification" /
+-- "Inscription validée" / "Refusée" — alignés sur le cahier, sans
+-- toucher aux valeurs stockées.
+-- ===================================================================
+alter table casting_applications drop constraint if exists casting_applications_status_check;
+alter table casting_applications add constraint casting_applications_status_check
+  check (status in ('nouvelle', 'vue', 'en étude', 'en attente', 'retenue', 'refusée'));
+
+alter table inscriptions_mannequins drop constraint if exists inscriptions_mannequins_statut_check;
+alter table inscriptions_mannequins add constraint inscriptions_mannequins_statut_check
+  check (statut in ('en attente de paiement', 'dossier en vérification', 'payée', 'annulée'));
+
+NOTIFY pgrst, 'reload schema';
