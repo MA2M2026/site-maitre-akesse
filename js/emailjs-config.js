@@ -19,7 +19,7 @@ function envoyerNotificationEmail({ name, telephone, email, message }) {
 // (destinataire différent à chaque envoi), donc il doit être configuré dans EmailJS
 // avec un champ "To Email" dynamique ({{to_email}}), contrairement au template
 // EMAILJS_TEMPLATE_ID ci-dessus qui envoie toujours à l'agence.
-const EMAILJS_TEMPLATE_ID_CANDIDAT = 'template_ma2m_statut';
+const EMAILJS_TEMPLATE_ID_CANDIDAT = 'template_q3qpg4p';
 
 function envoyerEmailCandidat({ to_email, to_name, message }) {
   if (typeof emailjs === 'undefined') return Promise.reject(new Error('EmailJS non chargé'));
