@@ -2203,7 +2203,7 @@ setTimeout(() => {
 <div id="liste-projets"></div>
 </div></div><div class="ref-card ref-contacts">
 <h2 style="margin-bottom:1rem;">Derniers messages de contact</h2>
-<table id="table-contacts"><thead><tr><th>Nom</th><th>Type</th><th>Téléphone</th><th>Date</th></tr></thead><tbody></tbody></table>
+<table id="table-contacts"><thead><tr><th>Nom</th><th>Type</th><th>Téléphone</th><th>Date</th><th></th></tr></thead><tbody></tbody></table>
 </div>
 <!-- ===== AJOUT Étape 14 + 16 : "À traiter" et activité côte à côte ===== -->
 
@@ -2226,6 +2226,12 @@ setTimeout(() => {
 <div class="drive-avertissement">
         ⚠️ Ce bloc affiche pour l'instant uniquement le nombre de photos déjà enregistrées côté Supabase (mannequins publiés dans THE BOOK). Le suivi détaillé des photos de candidatures/inscriptions envoyées vers Google Drive (transfert réussi / en attente / erreur, comme demandé à l'Étape 20 du cahier des charges) ne peut pas être branché tant que le fichier gérant l'envoi vers Drive n'a pas été fourni — aucune donnée n'est inventée ici en attendant.
       </div>
+</div>
+<div class="liste-recente">
+<h2 style="margin-bottom:0.3rem;">🧹 Nettoyage des photos traitées</h2>
+<p style="font-size:0.85rem; color:var(--gris); margin-top:0; margin-bottom:1rem;">Une fois qu'une candidature ou une inscription est définitivement traitée (Retenue/Refusée ou Inscription validée/Refusée), ses photos sont retirées du tableau de bord après 5 jours pour ne pas le surcharger — les fichiers restent dans Google Drive, seule la référence ici est nettoyée. Ce nettoyage tourne automatiquement chaque nuit ; le bouton ci-dessous permet de le lancer immédiatement pour vérifier que ça fonctionne.</p>
+<button class="btn" id="nettoyer-photos-btn" type="button">Lancer le nettoyage maintenant</button>
+<div class="form-msg" id="nettoyer-photos-msg"></div>
 </div>
 <div class="liste-recente">
 <h2 style="margin-bottom:0.3rem;">🖼️ Miniatures des photos</h2>
@@ -2616,6 +2622,28 @@ async function genererMiniatureDepuisUrl(url, coteMax = 500, qualite = 0.75) {
     URL.revokeObjectURL(urlBlob);
   }
 }
+
+document.getElementById('nettoyer-photos-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('nettoyer-photos-btn');
+  const msg = document.getElementById('nettoyer-photos-msg');
+  btn.disabled = true;
+  msg.className = 'form-msg ok';
+  msg.textContent = 'Nettoyage en cours…';
+  msg.style.display = 'block';
+
+  const { data: nbSupprimees, error } = await sb.rpc('nettoyer_photos_traitees_anciennes');
+  btn.disabled = false;
+
+  if (error) {
+    msg.className = 'form-msg err';
+    msg.textContent = "Erreur : " + error.message;
+    return;
+  }
+  msg.className = 'form-msg ok';
+  msg.textContent = nbSupprimees > 0
+    ? `${nbSupprimees} photo(s) retirée(s) du tableau de bord (dossiers traités depuis plus de 5 jours). Les fichiers restent dans Google Drive.`
+    : "Rien à nettoyer pour le moment — aucun dossier traité depuis plus de 5 jours.";
+});
 
 document.getElementById('miniatures-generer-btn').addEventListener('click', async () => {
   const btn = document.getElementById('miniatures-generer-btn');
@@ -3115,9 +3143,12 @@ async function chargerStatistiques() {
   chargerDernieresActivites();
 
   const { data: derniersContacts } = await sb.from('messages_contact').select('nom, type_contact, telephone, created_at').order('created_at', { ascending: false }).limit(10);
-  document.querySelector('#table-contacts tbody').innerHTML = (derniersContacts || []).map(c => `
-    <tr><td>${echapperHtml(c.nom || '-')}</td><td>${echapperHtml(c.type_contact || '-')}</td><td>${echapperHtml(c.telephone || '-')}</td><td>${new Date(c.created_at).toLocaleDateString('fr-FR')}</td></tr>
-  `).join('') || '<tr><td colspan="4">Aucun message.</td></tr>';
+  document.querySelector('#table-contacts tbody').innerHTML = (derniersContacts || []).map(c => {
+    const lienWa = lienWhatsApp(c.telephone);
+    return `
+    <tr><td>${echapperHtml(c.nom || '-')}</td><td>${echapperHtml(c.type_contact || '-')}</td><td>${echapperHtml(c.telephone || '-')}</td><td>${new Date(c.created_at).toLocaleDateString('fr-FR')}</td><td>${lienWa ? `<a href="${lienWa}" target="_blank" rel="noopener" class="btn" style="padding:0.3rem 0.7rem; font-size:0.75rem;">WhatsApp ↗</a>` : ''}</td></tr>
+  `;
+  }).join('') || '<tr><td colspan="5">Aucun message.</td></tr>';
 
   chargerVedette();
   chargerBandeau();
