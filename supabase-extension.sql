@@ -2676,3 +2676,104 @@ create policy "Tout le monde peut joindre des photos de candidature"
   );
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 70 : nettoyage automatique des photos de candidature/inscription
+-- une fois le dossier traité, pour ne pas surcharger le tableau de bord.
+--
+-- IMPORTANT : ceci ne supprime QUE la ligne en base qui permet d'afficher
+-- la photo dans le tableau de bord (casting_photos / inscriptions_photos).
+-- Les fichiers eux-mêmes restent dans Google Drive comme archive — ce
+-- nettoyage n'y touche pas (Postgres ne peut pas appeler l'API Drive).
+--
+-- Un dossier est considéré "traité" quand son statut est définitif
+-- (candidature : retenue/refusée — inscription : payée/annulée). Un
+-- dossier encore "nouvelle", "vue", "en étude", "en attente", "en
+-- attente de paiement" ou "dossier en vérification" n'est jamais
+-- concerné : ses photos restent visibles indéfiniment tant qu'aucune
+-- décision n'a été prise.
+--
+-- Délai : 5 jours après le dernier changement de statut (le plus généreux
+-- des deux délais demandés — 72h ou 5 jours — pour laisser une marge de
+-- sécurité). Une colonne statut_change_at (mise à jour uniquement par un
+-- trigger, jamais modifiable depuis le site) enregistre CE moment précis,
+-- distinct de la date de création du dossier.
+-- ===================================================================
+alter table casting_applications add column if not exists statut_change_at timestamptz not null default now();
+alter table inscriptions_mannequins add column if not exists statut_change_at timestamptz not null default now();
+
+create or replace function maj_statut_change_at_candidature()
+returns trigger language plpgsql as $$
+begin
+  if TG_OP = 'UPDATE' and NEW.status is distinct from OLD.status then
+    NEW.statut_change_at := now();
+  end if;
+  return NEW;
+end;
+$$;
+drop trigger if exists trg_statut_change_at_candidature on casting_applications;
+create trigger trg_statut_change_at_candidature
+  before update on casting_applications
+  for each row execute function maj_statut_change_at_candidature();
+
+create or replace function maj_statut_change_at_inscription()
+returns trigger language plpgsql as $$
+begin
+  if TG_OP = 'UPDATE' and NEW.statut is distinct from OLD.statut then
+    NEW.statut_change_at := now();
+  end if;
+  return NEW;
+end;
+$$;
+drop trigger if exists trg_statut_change_at_inscription on inscriptions_mannequins;
+create trigger trg_statut_change_at_inscription
+  before update on inscriptions_mannequins
+  for each row execute function maj_statut_change_at_inscription();
+
+-- Fonction de nettoyage — appelable manuellement (bouton du tableau de bord,
+-- utile pour tester) ET planifiée automatiquement ci-dessous. Renvoie le
+-- nombre de photos supprimées, pour un affichage honnête du résultat.
+create or replace function nettoyer_photos_traitees_anciennes()
+returns integer
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  total integer := 0;
+  n integer;
+begin
+  delete from casting_photos
+  where application_id in (
+    select id from casting_applications
+    where status in ('retenue', 'refusée')
+      and statut_change_at < now() - interval '5 days'
+  );
+  get diagnostics n = row_count;
+  total := total + n;
+
+  delete from inscriptions_photos
+  where inscription_id in (
+    select id from inscriptions_mannequins
+    where statut in ('payée', 'annulée')
+      and statut_change_at < now() - interval '5 days'
+  );
+  get diagnostics n = row_count;
+  total := total + n;
+
+  return total;
+end;
+$$;
+
+-- Planification automatique quotidienne (nécessite l'extension pg_cron,
+-- disponible sur Supabase). Si votre projet ne l'autorise pas, cette
+-- dernière instruction échouera seule — tout le reste ci-dessus reste
+-- valable, et le bouton manuel du tableau de bord fonctionnera quand même.
+create extension if not exists pg_cron;
+select cron.schedule(
+  'nettoyage-photos-traitees',
+  '0 3 * * *',
+  $$select nettoyer_photos_traitees_anciennes();$$
+);
+
+NOTIFY pgrst, 'reload schema';
