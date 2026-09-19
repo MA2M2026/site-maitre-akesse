@@ -2630,3 +2630,49 @@ alter table inscriptions_mannequins add constraint inscriptions_mannequins_statu
   check (statut in ('en attente de paiement', 'dossier en vérification', 'payée', 'annulée'));
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 69 : FAILLE/BUG RÉEL trouvé et corrigé — aucune photo de
+-- candidature n'a jamais pu s'enregistrer dans Supabase depuis la migration
+-- vers Google Drive (confirmée en production via la console du navigateur :
+-- chaque insert dans casting_photos échouait avec l'erreur Postgres 42P17
+-- "infinite recursion detected in policy for relation casting_photos").
+--
+-- Cause : la policy d'insertion posée à l'Extension 60 vérifie un plafond de
+-- 12 photos avec "(select count(*) from casting_photos p where ...)" —
+-- une sous-requête qui interroge la table casting_photos DEPUIS SA PROPRE
+-- règle de sécurité. PostgreSQL refuse ce genre d'auto-référence directe
+-- dans une policy RLS (peu importe la policy SELECT qui s'applique par
+-- ailleurs) et renvoie une erreur de récursion plutôt que d'évaluer la
+-- requête. Résultat concret : les photos arrivaient bien dans Google Drive
+-- (l'appel au script Apps Script réussit avant l'étape Supabase), mais la
+-- ligne permettant au tableau de bord de les retrouver n'était jamais
+-- enregistrée — d'où des photos invisibles malgré un envoi réussi.
+--
+-- Correctif : la vérification du plafond passe maintenant par une fonction
+-- SECURITY DEFINER, qui compte les photos en contournant RLS pour cette
+-- seule lecture interne (schéma standard et sûr pour éviter ce piège) —
+-- le plafond de 12 photos par candidature reste appliqué à l'identique,
+-- rien d'autre ne change dans les règles de sécurité.
+-- ===================================================================
+create or replace function compter_photos_candidature(p_application_id uuid)
+returns integer
+language sql
+security definer
+set search_path = public
+as $$
+  select count(*)::integer from casting_photos where application_id = p_application_id;
+$$;
+
+drop policy if exists "Tout le monde peut joindre des photos de candidature" on casting_photos;
+create policy "Tout le monde peut joindre des photos de candidature"
+  on casting_photos for insert
+  with check (
+    exists (
+      select 1 from casting_applications a
+      where a.id = application_id and a.status = 'nouvelle'
+    )
+    and compter_photos_candidature(application_id) < 12
+  );
+
+NOTIFY pgrst, 'reload schema';
