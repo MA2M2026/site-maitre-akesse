@@ -1352,6 +1352,10 @@ body.zone-admin{background:radial-gradient(850px 500px at 65% -15%,rgba(112,13,4
  display:flex;align-items:center;gap:10px;width:230px;justify-content:flex-end;
  color:#eee;font-size:12px;
 }
+.ma2m-header-profil{
+ display:flex;align-items:center;gap:10px;border:0;background:none;color:inherit;
+ font:inherit;padding:0;cursor:pointer;text-align:left;
+}
 .ma2m-header-bell{
  width:28px;height:28px;display:grid;place-items:center;border:0;background:none;color:#fff;
  font-size:17px;cursor:pointer;position:relative;
@@ -3047,6 +3051,49 @@ async function chargerDernieresActivites() {
       </div>
     </div>
   `).join('');
+
+  window.__activiteRecenteEvenements = evenements;
+  actualiserActiviteRecenteHeader();
+}
+
+// ===================================================================
+// Widget "Activité récente" affiché en haut du tableau de bord (à côté du
+// mannequin à la une) : c'est une COPIE de #dernieres-activites, construite
+// une première fois par moveActivity() avant même que les vraies données
+// soient chargées (donc figée sur "Chargement…"). Cette fonction la
+// reconstruit avec les vraies données une fois disponibles, et rend le lien
+// "Voir tout" réellement fonctionnel (affiche les évènements au-delà des 5
+// premiers, au lieu d'un bouton qui ne faisait rien).
+function actualiserActiviteRecenteHeader() {
+  const row = document.querySelector('.ref-hero-row');
+  if (!row) return;
+  let box = row.querySelector('.ref-header-activity');
+  if (!box) {
+    box = document.createElement('aside');
+    box.className = 'ref-header-activity';
+    row.appendChild(box);
+  }
+  const evenements = window.__activiteRecenteEvenements || [];
+  const tousAffiches = box.dataset.tousAffiches === '1';
+  const aAfficher = tousAffiches ? evenements : evenements.slice(0, 5);
+  const rendreItem = (e) => `
+    <div class="timeline-item">
+      <span class="timeline-point"></span>
+      <div>
+        <div class="timeline-texte">${echapperHtml(e.texte)}</div>
+        <div class="timeline-date">${new Date(e.date).toLocaleDateString('fr-FR')}</div>
+      </div>
+    </div>`;
+  const contenu = aAfficher.length
+    ? aAfficher.map(rendreItem).join('')
+    : '<div class="activity-row"><span class="dot"></span><div>Aucune activité récente</div></div>';
+  const peutBasculer = evenements.length > 5;
+  box.innerHTML = `<h3>Activité récente ${peutBasculer ? `<span class="see" id="ref-header-activity-toggle">${tousAffiches ? 'Réduire' : 'Voir tout'}</span>` : ''}</h3>${contenu}`;
+  const toggle = document.getElementById('ref-header-activity-toggle');
+  if (toggle) toggle.addEventListener('click', () => {
+    box.dataset.tousAffiches = tousAffiches ? '0' : '1';
+    actualiserActiviteRecenteHeader();
+  });
 }
 
 async function chargerStatistiques() {
@@ -4214,7 +4261,7 @@ initSidebarNav();
 
     const admin=document.createElement('div');
     admin.className='ma2m-header-admin';
-    admin.innerHTML='<button type="button" class="ma2m-header-bell" aria-label="À traiter">♧<span class="badge" style="display:none"></span></button><span class="ma2m-header-avatar">MA</span><span class="admin-label">Admin<small>Administrateur</small></span><span class="chev">⌄</span>';
+    admin.innerHTML='<button type="button" class="ma2m-header-bell" aria-label="À traiter">♧<span class="badge" style="display:none"></span></button><button type="button" class="ma2m-header-profil" title="Se déconnecter"><span class="ma2m-header-avatar">MA</span><span class="admin-label">Admin<small>Administrateur</small></span><span class="chev">⌄</span></button>';
     inner.appendChild(admin);
 
     const originalBell=document.getElementById('db-cloche-btn');
@@ -4226,24 +4273,24 @@ initSidebarNav();
       sync();
       new MutationObserver(sync).observe(badge,{attributes:true,childList:true,characterData:true});
     }
+    // Le petit chevron ⌄ à côté de "Admin" suggérait un menu déroulant sans en
+    // avoir un réellement — le bouton ouvre maintenant la déconnexion (même
+    // action que le bouton "Se déconnecter" de la barre latérale).
+    const profilBtn=admin.querySelector('.ma2m-header-profil');
+    const logoutBtn=document.getElementById('tb-logout-btn');
+    profilBtn.addEventListener('click',()=>{ if(logoutBtn) logoutBtn.click(); });
   }
 
   function moveActivity(){
     const row=document.querySelector('.ref-hero-row');
-    const old=document.querySelector('.ref-core-activity');
-    if(!row || !old || row.querySelector('.ref-header-activity')) return;
-    const timeline=old.querySelector('.timeline-liste');
-    if(!timeline) return;
+    if(!row || row.querySelector('.ref-header-activity')) return;
     const box=document.createElement('aside');
     box.className='ref-header-activity';
-    box.innerHTML='<h3>Activité récente <span class="see">Voir tout</span></h3>';
-    const source=timeline.querySelectorAll('.timeline-item, .activite-item, [class*="timeline"]');
-    if(source.length){
-      source.forEach((el,i)=>{ if(i<5) box.appendChild(el.cloneNode(true)); });
-    }else{
-      box.insertAdjacentHTML('beforeend','<div class="activity-row"><span class="dot"></span><div>Activité récente<span class="time">Données en cours de chargement</span></div></div>');
-    }
+    box.innerHTML='<h3>Activité récente</h3><div class="activity-row"><span class="dot"></span><div>Chargement de l\'activité récente…</div></div>';
     row.appendChild(box);
+    // Remplacé par les vraies données (et le lien "Voir tout" rendu fonctionnel)
+    // dès que chargerDernieresActivites() a fini de charger — voir
+    // actualiserActiviteRecenteHeader() plus haut dans le fichier.
   }
 
   function addDistribution(){
