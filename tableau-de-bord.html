@@ -2223,6 +2223,17 @@ setTimeout(() => {
 <div id="liste-validations">Ouvrez cette section pour charger les fiches en attente.</div>
 </details>
 </div>
+<!-- ===== AJOUT : gestion des photos des mannequins déjà publiés dans Le Book ===== -->
+<div class="liste-recente">
+<details id="mannequins-publies-details">
+<summary class="dossiers-entete" style="cursor:pointer; list-style:none;">
+<h2 style="margin:0;">📸 Mannequins publiés — gérer les photos</h2>
+<span class="dossiers-compteur" id="mannequins-publies-compteur"></span>
+</summary>
+<p style="font-size:0.85rem; color:var(--gris); margin:0.6rem 0 1rem;">Une fois un profil publié, seul le mannequin pouvait jusqu'ici modifier ses propres photos depuis son espace personnel. Vous pouvez maintenant intervenir directement ici si besoin (photo floue, doublon, remplacement...).</p>
+<div id="liste-mannequins-publies">Ouvrez cette section pour charger la liste.</div>
+</details>
+</div>
 <!-- ===== AJOUT Étape 20 : Drive / transferts — structure honnête, en attente du fichier d'intégration Drive ===== -->
 <div class="liste-recente">
 <h2 style="margin-bottom:0.3rem;">📁 Drive / transferts</h2>
@@ -2392,6 +2403,20 @@ setTimeout(() => {
 <a class="btn" id="mf-notification-whatsapp" href="#" target="_blank" rel="noopener">💬 Envoyer par WhatsApp</a>
 <span class="mf-notification-statut" id="mf-notification-statut"></span>
 </div>
+</div>
+</div>
+</div>
+<div class="modal-overlay" id="modal-photos-mannequin">
+<div class="modal-fiche">
+<button aria-label="Fermer" class="modal-fermer" id="modal-photos-mannequin-fermer">✕</button>
+<h3 id="mpm-titre">—</h3>
+<div class="mf-sous-titre" id="mpm-sous-titre">Photos publiées sur Le Book</div>
+<div class="mf-photos" id="mpm-photos"></div>
+<div class="mf-ajout-photo" style="margin:0.6rem 0 1rem;">
+<label class="btn" for="mpm-photo-input" style="cursor:pointer; display:inline-block;">＋ Ajouter une ou plusieurs photos</label>
+<input accept="image/*" id="mpm-photo-input" multiple="" style="display:none;" type="file"/>
+<input accept="image/*" id="mpm-photo-remplacement-input" style="display:none;" type="file"/>
+<div class="form-msg" id="mpm-photo-ajout-msg" style="display:none; margin-top:0.6rem;"></div>
 </div>
 </div>
 </div>
@@ -3331,6 +3356,251 @@ document.getElementById('liste-validations').addEventListener('click', async (e)
     chargerCompteurValidations();
     chargerATraiter();
   }
+});
+
+// ===================================================================
+// Gestion des photos des mannequins DÉJÀ PUBLIÉS dans Le Book, depuis le
+// tableau de bord (jusqu'ici possible uniquement par le mannequin lui-même
+// depuis son espace personnel). Reprend exactement le même pipeline d'envoi
+// que espace-mannequin.html (conversion HEIC, compression, miniature) pour
+// rester cohérent avec ce qui existe déjà — les photos restent sur
+// Supabase Storage (bucket model-photos), pas sur Drive : Le Book est
+// public et a besoin d'un stockage optimisé pour l'affichage, pas d'un
+// archivage comme les dossiers de candidature/inscription.
+async function convertirSiHeicAdmin(fichier) {
+  const estHeic = /image\/hei(c|f)/i.test(fichier.type) || /\.(heic|heif)$/i.test(fichier.name);
+  if (!estHeic || typeof heic2any === 'undefined') return fichier;
+  try {
+    const resultat = await heic2any({ blob: fichier, toType: 'image/jpeg', quality: 0.85 });
+    const blobFinal = Array.isArray(resultat) ? resultat[0] : resultat;
+    return new File([blobFinal], fichier.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' });
+  } catch (e) {
+    console.error('Conversion HEIC échouée, envoi du fichier original :', e);
+    return fichier;
+  }
+}
+
+function compresserPhotoOrigineAdmin(fichier, coteMax = 3000, qualite = 0.90) {
+  return new Promise((resolve) => {
+    if (fichier.type !== 'image/jpeg' || fichier.size < 900 * 1024) { resolve(fichier); return; }
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const coteActuel = Math.max(img.width, img.height);
+        const ratio = coteActuel > coteMax ? coteMax / coteActuel : 1;
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * ratio);
+        canvas.height = Math.round(img.height * ratio);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+          if (!blob || blob.size >= fichier.size) { resolve(fichier); return; }
+          resolve(new File([blob], fichier.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' }));
+        }, 'image/jpeg', qualite);
+      } catch (e) { resolve(fichier); }
+    };
+    img.onerror = () => resolve(fichier);
+    img.src = URL.createObjectURL(fichier);
+  });
+}
+
+function genererMiniatureAdmin(fichier, coteMax = 500, qualite = 0.75) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const coteActuel = Math.max(img.width, img.height);
+        const ratio = coteActuel > coteMax ? coteMax / coteActuel : 1;
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * ratio);
+        canvas.height = Math.round(img.height * ratio);
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => resolve(blob || null), 'image/jpeg', qualite);
+      } catch (e) { resolve(null); }
+    };
+    img.onerror = () => resolve(null);
+    img.src = URL.createObjectURL(fichier);
+  });
+}
+
+let mannequinsPubliesCharges = false;
+document.getElementById('mannequins-publies-details').addEventListener('toggle', (e) => {
+  if (e.target.open && !mannequinsPubliesCharges) chargerListeMannequinsPublies();
+});
+
+async function chargerListeMannequinsPublies() {
+  mannequinsPubliesCharges = true;
+  const conteneur = document.getElementById('liste-mannequins-publies');
+  conteneur.textContent = 'Chargement…';
+
+  const { data: profils } = await sb.from('model_profiles')
+    .select('id, full_name, city')
+    .eq('published', true)
+    .order('full_name', { ascending: true });
+
+  document.getElementById('mannequins-publies-compteur').textContent = profils ? `${profils.length} publié(s)` : '';
+
+  if (!profils || !profils.length) {
+    conteneur.innerHTML = '<div class="dossiers-vide">Aucun mannequin publié pour le moment.</div>';
+    return;
+  }
+
+  const { data: photos } = await sb.from('model_photos').select('model_id, url_miniature, url, principale').in('model_id', profils.map(p => p.id));
+  const photoParMannequin = {};
+  (photos || []).forEach(p => {
+    if (p.principale || !photoParMannequin[p.model_id]) photoParMannequin[p.model_id] = p.url_miniature || p.url;
+  });
+
+  conteneur.innerHTML = profils.map(p => `
+    <div class="validation-carte" data-id="${p.id}">
+      <div class="validation-photos">
+        ${photoParMannequin[p.id] ? `<img src="${echapperHtml(photoParMannequin[p.id])}" alt="" loading="lazy">` : '<span style="color:var(--gris); font-size:0.8rem;">Aucune photo</span>'}
+      </div>
+      <div class="validation-infos">
+        <div class="dc-nom">${echapperHtml(p.full_name || 'Sans nom')}</div>
+        <div class="dc-meta">${echapperHtml(p.city || '')}</div>
+      </div>
+      <div class="validation-actions">
+        <button class="btn btn--principal btn-gerer-photos" data-id="${p.id}" data-nom="${echapperHtml(p.full_name || 'Sans nom')}">📸 Gérer les photos</button>
+      </div>
+    </div>`
+  ).join('');
+
+  conteneur.querySelectorAll('.btn-gerer-photos').forEach(btn => {
+    btn.addEventListener('click', () => ouvrirPhotosMannequin(btn.dataset.id, btn.dataset.nom));
+  });
+}
+
+let mannequinPhotosOuvert = null;
+let indexPhotoMannequinARemplacer = null;
+
+async function ouvrirPhotosMannequin(modelId, nom) {
+  mannequinPhotosOuvert = modelId;
+  document.getElementById('mpm-titre').textContent = nom;
+  document.getElementById('mpm-photo-ajout-msg').style.display = 'none';
+  document.getElementById('modal-photos-mannequin').classList.add('ouvert');
+  await rafraichirPhotosMannequin();
+}
+
+async function rafraichirPhotosMannequin() {
+  if (!mannequinPhotosOuvert) return;
+  const conteneur = document.getElementById('mpm-photos');
+  conteneur.innerHTML = '<span class="mf-photos-msg">Chargement des photos…</span>';
+
+  const { data: photos } = await sb.from('model_photos').select('id, url, url_miniature, chemin, chemin_miniature, principale').eq('model_id', mannequinPhotosOuvert).order('created_at', { ascending: true });
+  if (!photos || !photos.length) { conteneur.innerHTML = '<span class="mf-photos-msg">Aucune photo pour ce mannequin.</span>'; return; }
+
+  const urls = photos.map(p => p.url_miniature || p.url);
+  conteneur.innerHTML = photos.map((p, i) => `
+    <div class="mf-photo-vignette">
+      <img src="${echapperHtml(urls[i])}" data-index="${i}" alt="Photo" title="${p.principale ? 'Photo de profil' : ''}">
+      <button class="mf-photo-remplacer" data-photo-id="${p.id}" data-chemin="${echapperHtml(p.chemin || '')}" data-chemin-miniature="${echapperHtml(p.chemin_miniature || '')}" title="Remplacer cette photo">⇄</button>
+      <button class="mf-photo-suppr" data-photo-id="${p.id}" data-chemin="${echapperHtml(p.chemin || '')}" data-chemin-miniature="${echapperHtml(p.chemin_miniature || '')}" title="Supprimer cette photo">✕</button>
+    </div>
+  `).join('');
+
+  conteneur.querySelectorAll('img').forEach(img => {
+    img.addEventListener('click', () => ouvrirGalerieLightbox(urls, Number(img.dataset.index)));
+  });
+  conteneur.querySelectorAll('.mf-photo-suppr').forEach(btn => {
+    btn.addEventListener('click', () => supprimerPhotoMannequin(btn));
+  });
+  conteneur.querySelectorAll('.mf-photo-remplacer').forEach(btn => {
+    btn.addEventListener('click', () => {
+      indexPhotoMannequinARemplacer = { id: btn.dataset.photoId, chemin: btn.dataset.chemin || null, cheminMiniature: btn.dataset.cheminMiniature || null };
+      document.getElementById('mpm-photo-remplacement-input').click();
+    });
+  });
+}
+
+async function supprimerPhotoMannequin(bouton) {
+  if (!confirm('Supprimer définitivement cette photo ? Cette action est irréversible.')) return;
+  const chemin = bouton.dataset.chemin;
+  const cheminMiniature = bouton.dataset.cheminMiniature;
+  bouton.disabled = true;
+  if (chemin) await sb.storage.from('model-photos').remove([chemin]);
+  if (cheminMiniature) await sb.storage.from('model-photos').remove([cheminMiniature]);
+  const { error } = await sb.from('model_photos').delete().eq('id', bouton.dataset.photoId);
+  if (error) { alert('Erreur lors de la suppression : ' + error.message); bouton.disabled = false; return; }
+  await rafraichirPhotosMannequin();
+  chargerListeMannequinsPublies(); mannequinsPubliesCharges = false;
+}
+
+async function envoyerPhotoMannequin(fichierOriginal) {
+  const fichierConverti = await convertirSiHeicAdmin(fichierOriginal);
+  const fichier = await compresserPhotoOrigineAdmin(fichierConverti);
+  const chemin = `${mannequinPhotosOuvert}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${nomFichierSur(fichier.name)}`;
+  const { error: erreurUpload } = await sb.storage.from('model-photos').upload(chemin, fichier);
+  if (erreurUpload) throw erreurUpload;
+  const { data: urlPublique } = sb.storage.from('model-photos').getPublicUrl(chemin);
+
+  let cheminMiniature = null, urlMiniature = null;
+  const blobMiniature = await genererMiniatureAdmin(fichier);
+  if (blobMiniature) {
+    cheminMiniature = `${mannequinPhotosOuvert}/miniatures/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+    const { error: erreurMiniature } = await sb.storage.from('model-photos').upload(cheminMiniature, blobMiniature);
+    if (!erreurMiniature) urlMiniature = sb.storage.from('model-photos').getPublicUrl(cheminMiniature).data.publicUrl;
+    else cheminMiniature = null;
+  }
+  return { chemin, url: urlPublique.publicUrl, cheminMiniature, urlMiniature };
+}
+
+document.getElementById('mpm-photo-input').addEventListener('change', async (e) => {
+  const fichiers = Array.from(e.target.files || []);
+  e.target.value = '';
+  if (!fichiers.length || !mannequinPhotosOuvert) return;
+  const msg = document.getElementById('mpm-photo-ajout-msg');
+  msg.style.display = 'block'; msg.className = 'form-msg';
+
+  let reussies = 0;
+  for (let i = 0; i < fichiers.length; i++) {
+    msg.textContent = `Envoi ${i + 1}/${fichiers.length}…`;
+    try {
+      const { chemin, url, cheminMiniature, urlMiniature } = await envoyerPhotoMannequin(fichiers[i]);
+      const { error } = await sb.from('model_photos').insert({ model_id: mannequinPhotosOuvert, url, chemin, url_miniature: urlMiniature, chemin_miniature: cheminMiniature, originale_optimisee: true });
+      if (error) throw error;
+      reussies++;
+    } catch (err) {
+      console.error('Envoi photo échoué :', err);
+    }
+  }
+  msg.className = reussies === fichiers.length ? 'form-msg ok' : 'form-msg err';
+  msg.textContent = `${reussies}/${fichiers.length} photo(s) envoyée(s).`;
+  await rafraichirPhotosMannequin();
+  mannequinsPubliesCharges = false;
+});
+
+document.getElementById('mpm-photo-remplacement-input').addEventListener('change', async (e) => {
+  const fichier = e.target.files[0];
+  e.target.value = '';
+  if (!fichier || !indexPhotoMannequinARemplacer || !mannequinPhotosOuvert) return;
+  const { id, chemin, cheminMiniature } = indexPhotoMannequinARemplacer;
+  const msg = document.getElementById('mpm-photo-ajout-msg');
+  msg.style.display = 'block'; msg.className = 'form-msg'; msg.textContent = 'Envoi de la photo de remplacement…';
+
+  try {
+    const nouvelle = await envoyerPhotoMannequin(fichier);
+    if (chemin) await sb.storage.from('model-photos').remove([chemin]);
+    if (cheminMiniature) await sb.storage.from('model-photos').remove([cheminMiniature]);
+    const { error } = await sb.from('model_photos').update({ url: nouvelle.url, chemin: nouvelle.chemin, url_miniature: nouvelle.urlMiniature, chemin_miniature: nouvelle.cheminMiniature }).eq('id', id);
+    if (error) throw error;
+    msg.className = 'form-msg ok'; msg.textContent = 'Photo remplacée.';
+    await rafraichirPhotosMannequin();
+    mannequinsPubliesCharges = false;
+  } catch (err) {
+    msg.className = 'form-msg err'; msg.textContent = "Échec du remplacement : " + err.message;
+  }
+  indexPhotoMannequinARemplacer = null;
+});
+
+document.getElementById('modal-photos-mannequin-fermer').addEventListener('click', () => {
+  document.getElementById('modal-photos-mannequin').classList.remove('ouvert');
+  mannequinPhotosOuvert = null;
+});
+document.getElementById('modal-photos-mannequin').addEventListener('click', (e) => {
+  if (e.target.id === 'modal-photos-mannequin') { document.getElementById('modal-photos-mannequin').classList.remove('ouvert'); mannequinPhotosOuvert = null; }
 });
 
 // Même script Google Apps Script que candidature.html / inscription-mannequin.html —
