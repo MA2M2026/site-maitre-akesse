@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-1BX5MPZ6WE');
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Our Events — Maître Akesse Model Management</title>
+<meta name="description" content="Events held by the agency or attended by our models, in photos: one album per event, updated with every new activity.">
+<link rel="canonical" href="https://www.maitreakessemodelmanagement.com/en/evenements.html">
+<link rel="alternate" hreflang="fr" href="https://www.maitreakessemodelmanagement.com/evenements.html">
+<link rel="alternate" hreflang="en" href="https://www.maitreakessemodelmanagement.com/en/evenements.html">
+<link rel="alternate" hreflang="x-default" href="https://www.maitreakessemodelmanagement.com/evenements.html">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Our Events — Maître Akesse Model Management">
+<meta property="og:description" content="Events held by the agency or attended by our models, in photos.">
+<meta property="og:image" content="https://www.maitreakessemodelmanagement.com/assets/logo-dark-bg.png">
+<meta property="og:url" content="https://www.maitreakessemodelmanagement.com/en/evenements.html">
+<meta property="og:locale" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.maitreakessemodelmanagement.com/en/" },
+    { "@type": "ListItem", "position": 2, "name": "Our Events", "item": "https://www.maitreakessemodelmanagement.com/en/evenements.html" }
+  ]
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="manifest" href="../manifest.json">
+<meta name="theme-color" content="#1e1d1c">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
+</head>
+<body>
+<script>
+// Safety net: on an unstable connection, a third-party script (Supabase,
+// heic2any...) can be very slow or fail to load — in that case js/app.js never runs and
+// ".reveal" elements (scroll-in animation) stay invisible forever, even though the rest
+// of the page (forms, buttons) works normally. This net force-reveals them after 2.5s if
+// the normal animation hasn't happened, so content never stays hidden over a network hiccup.
+setTimeout(() => {
+  document.querySelectorAll('.reveal:not(.visible)').forEach(el => el.classList.add('visible'));
+}, 2500);
+</script>
+
+
+<header class="site-header-v2">
+  <div class="container header-v2-inner">
+    <a href="index.html" class="logo-img-header"><img src="../assets/logo-header.png" alt="Maître Akesse Model Management"></a>
+    <div class="header-v2-droite">
+      <a href="../evenements.html" class="lang-switch" aria-label="Switch to French">FR</a>
+      <button class="menu-trigger" id="menuBtn">
+        <span>Menu</span>
+        <span class="dots"><span></span><span></span><span></span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="menu-overlay" id="menuOverlay">
+  <button class="close-menu" id="closeMenuBtn">Close ✕</button>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="services.html">Services</a></li>
+    <li><a href="mannequins.html">The Book</a></li>
+    <li><a href="actualites.html">News</a></li>
+    <li><a href="evenements.html" class="actif">Our Events</a></li>
+    <li><a href="partenaires.html">Our Partners</a></li>
+    <li><a href="candidature.html">Apply for a Casting</a></li>
+    <li><a href="inscription-mannequin.html">Registration</a></li>
+    <li><a href="contact.html">Contact</a></li>
+    <li class="item-cta"><a href="../espace-mannequin.html">Model Space</a></li>
+  </ul>
+</div>
+
+<section style="padding-bottom:1rem;">
+  <div class="container">
+    <div class="fil-ariane reveal"><a href="index.html">Home</a><span>/</span>Our Events</div>
+    <div class="eyebrow reveal">Highlights & memories</div>
+    <h1 class="reveal reveal-delay-1">Our Events<span class="oeil">.</span></h1>
+    <p style="margin-top:1.2rem; max-width:60ch;" class="reveal reveal-delay-2">Every event held by the agency, or attended by our models, in pictures — one album per event.</p>
+  </div>
+</section>
+
+<section id="evenements-liste-section" style="padding-top:1rem;">
+  <div class="container">
+    <div class="evenements-albums-grille" id="evenements-grille"></div>
+    <p id="evenements-vide" style="display:none; color:var(--texte-doux);">No event published yet.</p>
+  </div>
+</section>
+
+<section id="evenement-detail-section" style="display:none; padding-top:1rem;">
+  <div class="container">
+    <span class="evenement-retour" id="evenement-retour-btn">← Back to Our Events</span>
+
+    <div class="news-date" id="ed-date"></div>
+    <h2 id="ed-titre" style="margin-top:0.5rem;"></h2>
+    <p id="ed-lieu" style="color:var(--texte-doux); margin-top:0.3rem;"></p>
+    <p id="ed-description" style="margin-top:1rem; max-width:70ch; color:#4a4a4a;"></p>
+
+    <div id="ed-admin-actions" style="display:none; margin-top:1.4rem; padding-top:1rem; border-top:1px solid var(--gris-clair);">
+      <button id="ed-modifier-btn" class="btn-mini-admin">✎ Edit</button>
+      <button id="ed-supprimer-btn" class="btn-mini-admin" style="margin-left:0.6rem;">🗑 Delete Event</button>
+    </div>
+
+    <div id="ed-edition" style="display:none; margin-top:1.4rem; padding-top:1rem; border-top:1px solid var(--gris-clair); max-width:480px;">
+      <div class="form-champ"><label>Title</label><input type="text" id="edit-ev-titre"></div>
+      <div class="form-champ"><label>Event date</label><input type="date" id="edit-ev-date"></div>
+      <div class="form-champ"><label>Location (optional)</label><input type="text" id="edit-ev-lieu"></div>
+      <div class="form-champ"><label>Description (optional)</label><textarea id="edit-ev-description"></textarea></div>
+      <div class="form-champ"><label>Add photos (added to those already online)</label><input type="file" id="edit-ev-images" accept="image/*" multiple></div>
+      <button class="btn btn--principal" id="edit-ev-enregistrer-btn" style="margin-top:1rem;">Save</button>
+      <button class="btn" id="edit-ev-annuler-btn" style="margin-left:0.5rem;">Cancel</button>
+      <div id="edit-ev-msg" class="form-msg"></div>
+    </div>
+
+    <div class="evenement-detail-photos" id="ed-photos"></div>
+  </div>
+</section>
+
+<!-- Admin panel: entirely invisible to a visitor.
+     Only shown if an admin session already logged in (via tableau-de-bord.html)
+     is detected by verifierAdmin() — no trace for the public. -->
+<section id="admin-bloc" class="fond-anthracite" style="display:none; padding-top:3rem;">
+  <div class="container" style="max-width:520px;">
+    <div id="admin-publier">
+      <div class="badge-page-admin">📍 You are on: Our Events (Administration)</div>
+      <p style="color:var(--texte-doux); font-size:0.8rem; margin-bottom:1.5rem;">To edit, add photos to, or delete an already published event, simply open it by clicking on it in the page (like a visitor) — the options will appear directly in its detail view.</p>
+
+      <h3 style="margin-bottom:1rem;">Publish a New Event</h3>
+      <div class="form-champ"><label>Title</label><input type="text" id="ev-titre"></div>
+      <div class="form-champ"><label>Event date</label><input type="date" id="ev-date"></div>
+      <div class="form-champ"><label>Location (optional)</label><input type="text" id="ev-lieu"></div>
+      <div class="form-champ"><label>Description (optional)</label><textarea id="ev-description"></textarea></div>
+      <div class="form-champ"><label>Photos (you can select several at once)</label><input type="file" id="ev-images" accept="image/*" multiple></div>
+
+      <button class="btn btn--principal" id="ev-publier-btn" style="margin-top:1.8rem;">Publish Event</button>
+      <button class="btn" id="admin-logout-btn" style="margin-left:0.5rem;">Logout</button>
+      <a href="../tableau-de-bord.html" style="display:inline-block; margin-left:0.5rem; color:var(--or); font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase;">View Dashboard →</a>
+      <div id="ev-msg" class="form-msg"></div>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grille">
+      <div>
+        <h4>Maître Akesse Model Management</h4>
+        <p>Every great journey begins with a dream. Ours begins in Abidjan.</p>
+      </div>
+      <div>
+        <h4>Navigation</h4>
+        <a href="index.html">Home</a>
+        <a href="services.html">Services</a>
+        <a href="mannequins.html">The Book</a>
+        <a href="actualites.html">News</a>
+        <a href="evenements.html">Our Events</a>
+        <a href="partenaires.html">Our Partners</a>
+        <a href="candidature.html">Apply for a Casting</a>
+        <a href="inscription-mannequin.html">Registration</a>
+      </div>
+      <div>
+        <h4>Contact</h4>
+        <a href="tel:+2250545656887">+225 05 45 65 68 87</a>
+        <a href="tel:+2252722231176">+225 27 22 23 11 76</a>
+        <a href="mailto:infos.ma2m@gmail.com">infos.ma2m@gmail.com</a>
+        <div class="footer-reseaux">
+          <a href="https://www.instagram.com/maitreakessemodelmanagement" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram"><svg viewBox="0 0 24 24"><defs><linearGradient id="ig-grad-11" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="#FFC107"/><stop offset="50%" stop-color="#F44336"/><stop offset="100%" stop-color="#9C27B0"/></linearGradient></defs><path fill="url(#ig-grad-11)" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98C.014 8.333 0 8.741 0 12s.014 3.667.072 4.948c.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24s3.667-.014 4.948-.072c4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.667.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
+          <a href="https://www.tiktok.com/@agencemaitreakessemodel" target="_blank" rel="noopener" aria-label="TikTok" title="TikTok"><svg viewBox="0 0 24 24"><path fill="#25F4EE" transform="translate(-0.9,-0.9)" d="M16.6 5.82c-1.36-1.57-3.24-1.48-3.24-1.48h-3.09v12.4a2.592 2.592 0 01-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 004.3 1.38V7.3s-1.88.09-3.24-1.48z"/><path fill="#FE2C55" transform="translate(0.9,0.9)" d="M16.6 5.82c-1.36-1.57-3.24-1.48-3.24-1.48h-3.09v12.4a2.592 2.592 0 01-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 004.3 1.38V7.3s-1.88.09-3.24-1.48z"/><path fill="#000000" d="M16.6 5.82c-1.36-1.57-3.24-1.48-3.24-1.48h-3.09v12.4a2.592 2.592 0 01-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 004.3 1.38V7.3s-1.88.09-3.24-1.48z"/></svg></a>
+          <a href="https://www.facebook.com/share/1BzPN69rhE/" target="_blank" rel="noopener" aria-label="Facebook" title="Facebook" style="color:#1877F2;"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12.06C22 6.505 17.523 2 12 2S2 6.505 2 12.06c0 5.022 3.657 9.184 8.438 9.94v-7.03H7.898v-2.91h2.54V9.845c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.459h-1.26c-1.243 0-1.63.771-1.63 1.562v1.875h2.773l-.443 2.91h-2.33V22c4.78-.756 8.437-4.918 8.437-9.94z"/></svg></a>
+          <a href="https://youtube.com/@maitreakessemodelmanagement" target="_blank" rel="noopener" aria-label="YouTube" title="YouTube" style="color:#FF0000;"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a2.994 2.994 0 00-2.107-2.12C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.391.521A2.994 2.994 0 00.502 6.186 31.25 31.25 0 000 12a31.25 31.25 0 00.502 5.814 2.994 2.994 0 002.107 2.12c1.886.521 9.391.521 9.391.521s7.505 0 9.391-.521a2.994 2.994 0 002.107-2.12A31.25 31.25 0 0024 12a31.25 31.25 0 00-.502-5.814zM9.6 15.6V8.4l6.4 3.6-6.4 3.6z"/></svg></a>
+          <a href="https://wa.me/message/HJAMXGXHCL46I1" target="_blank" rel="noopener" aria-label="WhatsApp" title="WhatsApp" style="color:#25D366;"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.472-.148-.67.15-.198.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0a12 12 0 00-10.288 18.06L0 24l6.084-1.688A12 12 0 1012 0zm0 21.938a9.917 9.917 0 01-5.052-1.383l-.362-.215-3.752 1.041 1.004-3.665-.235-.375A9.938 9.938 0 1112 21.938z"/></svg></a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bas">
+      <span>© <span id="an"></span> Maître Akesse Model Management</span>
+      <span>Abidjan, Côte d'Ivoire</span>
+      <span><a href="mentions-legales.html">Legal Notice</a> · <a href="politique-confidentialite.html">Privacy</a></span>
+    </div>
+  </div>
+</footer>
+
+<script>document.getElementById('an').textContent = new Date().getFullYear();</script>
+<script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"></script>
+<script src="../js/supabase-config.js"></script>
+<script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+<script src="../js/app.js"></script>
+<script src="../js/menu.js"></script>
+<script>
+async function convertirSiHeic(fichier) {
+  const estHeic = /image\/hei(c|f)/i.test(fichier.type) || /\.(heic|heif)$/i.test(fichier.name);
+  if (!estHeic || typeof heic2any === 'undefined') return fichier;
+  try {
+    const resultat = await heic2any({ blob: fichier, toType: 'image/jpeg', quality: 0.85 });
+    const blobFinal = Array.isArray(resultat) ? resultat[0] : resultat;
+    return new File([blobFinal], fichier.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' });
+  } catch (e) { return fichier; }
+}
+
+function formatDateEvenement(dateStr) {
+  if (!dateStr) return '';
+  return new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+async function chargerEvenements() {
+  const grille = document.getElementById('evenements-grille');
+  const vide = document.getElementById('evenements-vide');
+  if (!sb) {
+    vide.textContent = 'Failed to load events (unstable connection?). Reload the page.';
+    vide.style.display = 'block';
+    return;
+  }
+  const { data, error } = await sb.from('evenements').select('*').order('date_evenement', { ascending: false, nullsFirst: false }).order('created_at', { ascending: false });
+  if (error || !data || !data.length) { vide.style.display = 'block'; return; }
+  window.evenementsData = data;
+
+  const { data: toutesLesPhotos } = await sb.from('evenement_photos').select('evenement_id');
+  const compteurParEvenement = {};
+  (toutesLesPhotos || []).forEach(p => { compteurParEvenement[p.evenement_id] = (compteurParEvenement[p.evenement_id] || 0) + 1; });
+
+  grille.innerHTML = data.map((e, i) => {
+    const nbPhotos = compteurParEvenement[e.id] || (e.image_url ? 1 : 0);
+    return `
+    <div class="evenement-carte reveal" data-index="${i}">
+      <div class="evenement-carte-photo">
+        <img src="${echapperHtml(e.image_url || '')}" loading="lazy" alt="${echapperHtml(e.titre || '')}">
+        ${nbPhotos > 1 ? `<span class="news-compteur-photos">${nbPhotos}</span>` : ''}
+      </div>
+      <div class="evenement-carte-corps">
+        ${e.date_evenement ? `<div class="news-date">${formatDateEvenement(e.date_evenement)}</div>` : ''}
+        <h3>${echapperHtml(e.titre || '')}</h3>
+        ${e.lieu ? `<div class="evenement-carte-lieu">📍 ${echapperHtml(e.lieu)}</div>` : ''}
+      </div>
+    </div>
+  `; }).join('');
+
+  grille.querySelectorAll('.evenement-carte').forEach(carte => {
+    carte.addEventListener('click', () => ouvrirEvenementDetail(data[parseInt(carte.dataset.index)].id));
+  });
+
+  const idDepuisUrl = new URLSearchParams(window.location.search).get('evenement');
+  if (idDepuisUrl && data.some(e => e.id === idDepuisUrl)) ouvrirEvenementDetail(idDepuisUrl);
+}
+chargerEvenements();
+
+async function ouvrirEvenementDetail(id) {
+  const e = window.evenementsData.find(x => x.id === id);
+  if (!e) return;
+  window.evenementDetailCourant = id;
+
+  const { data: photos } = await sb.from('evenement_photos').select('url').eq('evenement_id', id).order('created_at', { ascending: true });
+  const listePhotos = (photos && photos.length) ? photos : (e.image_url ? [{ url: e.image_url }] : []);
+  window.lightboxPhotosEvenement = listePhotos.map(p => p.url);
+
+  document.getElementById('ed-date').textContent = e.date_evenement ? formatDateEvenement(e.date_evenement) : '';
+  document.getElementById('ed-titre').textContent = e.titre || '';
+  document.getElementById('ed-lieu').textContent = e.lieu ? ('📍 ' + e.lieu) : '';
+  document.getElementById('ed-description').textContent = e.description || '';
+
+  const zonePhotos = document.getElementById('ed-photos');
+  zonePhotos.innerHTML = listePhotos.map(p => `<img src="${echapperHtml(p.url)}" loading="lazy" alt="">`).join('');
+  zonePhotos.querySelectorAll('img').forEach((img, i) => {
+    img.addEventListener('click', () => ouvrirGalerieLightbox(window.lightboxPhotosEvenement, i));
+  });
+
+  document.getElementById('ed-edition').style.display = 'none';
+  document.getElementById('ed-titre').style.display = 'block';
+  document.getElementById('ed-lieu').style.display = 'block';
+  document.getElementById('ed-description').style.display = 'block';
+  document.getElementById('ed-admin-actions').style.display = window.estAdminConnecte ? 'block' : 'none';
+
+  document.getElementById('evenements-liste-section').style.display = 'none';
+  document.getElementById('evenement-detail-section').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+document.getElementById('evenement-retour-btn').addEventListener('click', () => {
+  document.getElementById('evenement-detail-section').style.display = 'none';
+  document.getElementById('evenements-liste-section').style.display = 'block';
+  window.history.replaceState({}, '', window.location.pathname);
+});
+
+async function verifierAdmin() {
+  try {
+    if (!sb) return;
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return;
+    const { data } = await sb.from('admins').select('user_id').eq('user_id', user.id).single();
+    if (data) {
+      window.estAdminConnecte = true;
+      document.getElementById('admin-bloc').style.display = 'block';
+      const actionsVisibles = document.getElementById('evenement-detail-section').style.display === 'block';
+      if (actionsVisibles) document.getElementById('ed-admin-actions').style.display = 'block';
+    }
+  } catch (e) {}
+}
+verifierAdmin();
+
+document.getElementById('ed-modifier-btn').addEventListener('click', () => {
+  const e = window.evenementsData.find(x => x.id === window.evenementDetailCourant);
+  if (!e) return;
+  document.getElementById('edit-ev-titre').value = e.titre || '';
+  document.getElementById('edit-ev-date').value = e.date_evenement || '';
+  document.getElementById('edit-ev-lieu').value = e.lieu || '';
+  document.getElementById('edit-ev-description').value = e.description || '';
+  document.getElementById('edit-ev-images').value = '';
+  document.getElementById('edit-ev-msg').style.display = 'none';
+
+  document.getElementById('ed-titre').style.display = 'none';
+  document.getElementById('ed-lieu').style.display = 'none';
+  document.getElementById('ed-description').style.display = 'none';
+  document.getElementById('ed-admin-actions').style.display = 'none';
+  document.getElementById('ed-edition').style.display = 'block';
+});
+
+document.getElementById('edit-ev-annuler-btn').addEventListener('click', () => {
+  document.getElementById('ed-edition').style.display = 'none';
+  document.getElementById('ed-titre').style.display = 'block';
+  document.getElementById('ed-lieu').style.display = 'block';
+  document.getElementById('ed-description').style.display = 'block';
+  document.getElementById('ed-admin-actions').style.display = 'block';
+});
+
+document.getElementById('edit-ev-enregistrer-btn').addEventListener('click', async () => {
+  const id = window.evenementDetailCourant;
+  const msg = document.getElementById('edit-ev-msg');
+  const titre = document.getElementById('edit-ev-titre').value.trim();
+  const dateEvenement = document.getElementById('edit-ev-date').value || null;
+  const lieu = document.getElementById('edit-ev-lieu').value.trim();
+  const description = document.getElementById('edit-ev-description').value.trim();
+  const fichiers = Array.from(document.getElementById('edit-ev-images').files || []);
+
+  if (!titre) { msg.className = 'form-msg err'; msg.textContent = 'Title is required.'; msg.style.display = 'block'; return; }
+
+  msg.className = 'form-msg ok'; msg.textContent = 'Saving…'; msg.style.display = 'block';
+
+  const { error: erreurUpdate } = await sb.from('evenements').update({ titre, date_evenement: dateEvenement, lieu: lieu || null, description: description || null }).eq('id', id);
+  if (erreurUpdate) { msg.className = 'form-msg err'; msg.textContent = "Error while updating."; return; }
+
+  if (fichiers.length) {
+    msg.textContent = `Adding ${fichiers.length} new photo(s)…`;
+    let premiereNouvellePhoto = null;
+    for (const fichierOriginal of fichiers) {
+      const fichier = await convertirSiHeic(fichierOriginal);
+      const chemin = `${id}/${Date.now()}-${nomFichierSur(fichier.name)}`;
+      const { error: erreurUpload } = await sb.storage.from('evenements-images').upload(chemin, fichier);
+      if (erreurUpload) continue;
+      const { data: urlPublique } = sb.storage.from('evenements-images').getPublicUrl(chemin);
+      await sb.from('evenement_photos').insert({ evenement_id: id, url: urlPublique.publicUrl, chemin: chemin });
+      if (!premiereNouvellePhoto) premiereNouvellePhoto = urlPublique.publicUrl;
+    }
+    const { data: evenementActuel } = await sb.from('evenements').select('image_url').eq('id', id).single();
+    if (!evenementActuel.image_url && premiereNouvellePhoto) {
+      await sb.from('evenements').update({ image_url: premiereNouvellePhoto }).eq('id', id);
+    }
+  }
+
+  msg.className = 'form-msg ok'; msg.textContent = 'Changes saved!';
+  await chargerEvenements();
+  document.getElementById('ed-edition').style.display = 'none';
+  ouvrirEvenementDetail(id);
+});
+
+document.getElementById('ed-supprimer-btn').addEventListener('click', async () => {
+  const id = window.evenementDetailCourant;
+  if (!confirm("Permanently delete this event and all its photos?")) return;
+  const { data: photos } = await sb.from('evenement_photos').select('chemin').eq('evenement_id', id);
+  const chemins = (photos || []).map(p => p.chemin).filter(Boolean);
+  if (chemins.length) await sb.storage.from('evenements-images').remove(chemins);
+  await sb.from('evenements').delete().eq('id', id);
+  document.getElementById('evenement-detail-section').style.display = 'none';
+  document.getElementById('evenements-liste-section').style.display = 'block';
+  chargerEvenements();
+});
+
+document.getElementById('admin-logout-btn').addEventListener('click', async () => {
+  await sb.auth.signOut();
+  document.getElementById('admin-bloc').style.display = 'none';
+  window.estAdminConnecte = false;
+});
+
+document.getElementById('ev-publier-btn').addEventListener('click', async () => {
+  const msg = document.getElementById('ev-msg');
+  const titre = document.getElementById('ev-titre').value.trim();
+  const dateEvenement = document.getElementById('ev-date').value || null;
+  const lieu = document.getElementById('ev-lieu').value.trim();
+  const description = document.getElementById('ev-description').value.trim();
+  const fichierInput = document.getElementById('ev-images');
+  const fichiers = Array.from(fichierInput.files || []);
+
+  if (!titre) {
+    msg.className = 'form-msg err'; msg.textContent = 'Title is required.'; msg.style.display = 'block';
+    return;
+  }
+  if (!fichiers.length) {
+    msg.className = 'form-msg err'; msg.textContent = 'Choose at least one photo.'; msg.style.display = 'block';
+    return;
+  }
+
+  msg.className = 'form-msg ok'; msg.textContent = `Uploading ${fichiers.length} photo(s)…`; msg.style.display = 'block';
+
+  const idEvenement = crypto.randomUUID();
+  const urls = [];
+
+  for (const fichierOriginal of fichiers) {
+    const fichier = await convertirSiHeic(fichierOriginal);
+    const chemin = `${idEvenement}/${Date.now()}-${nomFichierSur(fichier.name)}`;
+    const { error: erreurUpload } = await sb.storage.from('evenements-images').upload(chemin, fichier);
+    if (erreurUpload) continue;
+    const { data: urlPublique } = sb.storage.from('evenements-images').getPublicUrl(chemin);
+    urls.push({ url: urlPublique.publicUrl, chemin });
+  }
+
+  const { error: erreurInsert } = await sb.from('evenements').insert({
+    id: idEvenement, titre, date_evenement: dateEvenement, lieu: lieu || null, description: description || null,
+    image_url: urls.length ? urls[0].url : null
+  });
+  if (erreurInsert) { msg.className = 'form-msg err'; msg.textContent = "Error saving."; msg.style.display = 'block'; return; }
+
+  for (const photo of urls) {
+    await sb.from('evenement_photos').insert({ evenement_id: idEvenement, url: photo.url, chemin: photo.chemin });
+  }
+
+  msg.className = 'form-msg ok'; msg.textContent = `Event published with ${urls.length} photo(s)!`; msg.style.display = 'block';
+  document.getElementById('ev-titre').value = '';
+  document.getElementById('ev-date').value = '';
+  document.getElementById('ev-lieu').value = '';
+  document.getElementById('ev-description').value = '';
+  fichierInput.value = '';
+  chargerEvenements();
+});
+</script>
+</body>
+</html>
