@@ -122,6 +122,11 @@
     background:var(--bordeaux); color:#fff; border:2px solid var(--creme); font-size:0.75rem; line-height:1;
     cursor:pointer; display:flex; align-items:center; justify-content:center;
   }
+  .mf-photo-remplacer {
+    position:absolute; bottom:-7px; left:-7px; width:22px; height:22px; border-radius:50%;
+    background:var(--anthracite, #333); color:#fff; border:2px solid var(--creme); font-size:0.75rem; line-height:1;
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
   .mf-photos .mf-photos-msg { font-size:0.8rem; color:var(--gris); }
   #mf-mannequins { margin-bottom:1.4rem; display:flex; flex-direction:column; gap:0.5rem; }
   .mf-mannequin-item { display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0.8rem; background:rgba(0,0,0,0.04); font-size:0.88rem; }
@@ -2367,6 +2372,12 @@ setTimeout(() => {
 <div class="mf-champs" id="mf-champs"></div>
 <div class="mf-message" id="mf-message" style="display:none;"></div>
 <div class="mf-photos" id="mf-photos"></div>
+<div class="mf-ajout-photo" id="mf-ajout-photo" style="display:none; margin:0.6rem 0 1rem;">
+<label class="btn" for="mf-photo-input" style="cursor:pointer; display:inline-block;">＋ Ajouter une photo</label>
+<input accept="image/*" id="mf-photo-input" style="display:none;" type="file"/>
+<input accept="image/*" id="mf-photo-remplacement-input" style="display:none;" type="file"/>
+<span class="form-msg" id="mf-photo-ajout-msg" style="display:none; margin-left:0.8rem;"></span>
+</div>
 <div id="mf-mannequins" style="display:none;"></div>
 <div class="mf-statut-ligne">
 <label for="mf-statut-select" style="font-size:0.8rem; color:var(--gris);">Statut :</label>
@@ -3322,6 +3333,10 @@ document.getElementById('liste-validations').addEventListener('click', async (e)
   }
 });
 
+// Même script Google Apps Script que candidature.html / inscription-mannequin.html —
+// réutilisé ici pour ajouter/remplacer une photo depuis la fiche d'un dossier existant.
+const URL_SCRIPT_PHOTOS_CASTING = 'https://script.google.com/macros/s/AKfycbxzPeaTLvMqZKtBvJJabLeZBh6JJ9ZaggPYUY8XAoh1-tyBq1Byi3lBm3SkhkH8rqNxxg/exec';
+
 const DOSSIERS = {
   casting: {
     table: 'casting_applications', photosTable: 'casting_photos', photosColonne: 'application_id', bucket: 'casting-applications',
@@ -3624,10 +3639,12 @@ async function ouvrirFicheDossier(source, id) {
 
   const photosEl = document.getElementById('mf-photos');
   const mannequinsEl = document.getElementById('mf-mannequins');
+  const ajoutPhotoEl = document.getElementById('mf-ajout-photo');
   document.getElementById('modal-dossier').classList.add('ouvert');
 
   if (source === 'recruteur') {
     photosEl.style.display = 'none';
+    ajoutPhotoEl.style.display = 'none';
     mannequinsEl.style.display = 'block';
     await chargerMannequinsSelection(id);
     return;
@@ -3636,9 +3653,19 @@ async function ouvrirFicheDossier(source, id) {
   mannequinsEl.innerHTML = '';
   mannequinsEl.style.display = 'none';
   photosEl.style.display = 'flex';
+  ajoutPhotoEl.style.display = 'block';
+  document.getElementById('mf-photo-ajout-msg').style.display = 'none';
   photosEl.innerHTML = '<span class="mf-photos-msg">Chargement des photos…</span>';
 
-  const { data: photos } = await sb.from(conf.photosTable).select('id, chemin, url').eq(conf.photosColonne, id);
+  await rafraichirPhotosDossier();
+}
+
+async function rafraichirPhotosDossier() {
+  if (!ficheOuverte || ficheOuverte.source === 'recruteur') return;
+  const conf = DOSSIERS[ficheOuverte.source];
+  const photosEl = document.getElementById('mf-photos');
+
+  const { data: photos } = await sb.from(conf.photosTable).select('id, chemin, url').eq(conf.photosColonne, ficheOuverte.id);
   if (!photos || !photos.length) { photosEl.innerHTML = '<span class="mf-photos-msg">Aucune photo jointe.</span>'; return; }
 
   const chemins = photos.map(p => p.chemin).filter(Boolean);
@@ -3650,6 +3677,7 @@ async function ouvrirFicheDossier(source, id) {
   photosEl.innerHTML = photos.map((p, i) => `
     <div class="mf-photo-vignette">
       <img src="${echapperHtml(urls[i])}" data-index="${i}" alt="Photo">
+      <button class="mf-photo-remplacer" data-photo-id="${p.id}" data-chemin="${echapperHtml(p.chemin || '')}" title="Remplacer cette photo">⇄</button>
       <button class="mf-photo-suppr" data-photo-id="${p.id}" data-chemin="${echapperHtml(p.chemin || '')}" title="Supprimer cette photo">✕</button>
     </div>
   `).join('');
@@ -3658,6 +3686,9 @@ async function ouvrirFicheDossier(source, id) {
   });
   photosEl.querySelectorAll('.mf-photo-suppr').forEach(btn => {
     btn.addEventListener('click', () => supprimerPhotoDossier(btn));
+  });
+  photosEl.querySelectorAll('.mf-photo-remplacer').forEach(btn => {
+    btn.addEventListener('click', () => remplacerPhotoDossier(btn));
   });
 }
 
@@ -3702,6 +3733,94 @@ async function supprimerPhotoDossier(bouton) {
   if (!document.getElementById('mf-photos').children.length) {
     document.getElementById('mf-photos').innerHTML = '<span class="mf-photos-msg">Aucune photo jointe.</span>';
   }
+}
+
+// ===================================================================
+// Ajout/remplacement d'une seule photo sur un dossier déjà existant, sans
+// obliger à renvoyer tout le dossier (cahier des charges, étape 5). Réutilise
+// le même script Google Apps Script que les formulaires publics — chaque
+// nouvelle photo part dans le même sous-dossier Drive que les photos déjà
+// envoyées pour ce dossier (organisation par catégorie déjà en place).
+//
+// Limite honnête : en cas de remplacement, l'ancien fichier reste dans
+// Google Drive (ce pipeline ne sait qu'ajouter des fichiers, pas en
+// supprimer côté Drive) — seule la référence affichée dans le tableau de
+// bord est remplacée. Le doublon Drive n'est donc pas évité à 100 %.
+function fichierEnBase64Dossier(fichier) {
+  return new Promise((resolve, reject) => {
+    const lecteur = new FileReader();
+    lecteur.onload = () => resolve(lecteur.result);
+    lecteur.onerror = reject;
+    lecteur.readAsDataURL(fichier);
+  });
+}
+
+function typeEtProjetPourFiche() {
+  const d = ficheOuverte.d;
+  if (ficheOuverte.source === 'inscription') return { type: 'inscription', projet: '' };
+  return { type: d.type_candidature || 'agence', projet: d.projet_nom || '' };
+}
+
+async function envoyerPhotoVersDrive(fichier) {
+  const { type, projet } = typeEtProjetPourFiche();
+  const base64 = await fichierEnBase64Dossier(fichier);
+  const reponse = await fetch(URL_SCRIPT_PHOTOS_CASTING, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ nom: ficheOuverte.d.full_name, email: ficheOuverte.d.email || '', phone: ficheOuverte.d.phone || '', type, projet, photos: [base64] })
+  });
+  const resultat = await reponse.json();
+  if (!resultat.ok || !Array.isArray(resultat.liens) || !resultat.liens.length) {
+    throw new Error(resultat.erreur || "Le script Google n'a renvoyé aucun lien.");
+  }
+  return resultat.liens[0];
+}
+
+document.getElementById('mf-photo-input').addEventListener('change', async (e) => {
+  const fichier = e.target.files[0];
+  e.target.value = '';
+  if (!fichier || !ficheOuverte) return;
+  const conf = DOSSIERS[ficheOuverte.source];
+  const msg = document.getElementById('mf-photo-ajout-msg');
+  msg.style.display = 'inline'; msg.className = 'form-msg'; msg.textContent = 'Envoi vers Google Drive…';
+
+  try {
+    const lien = await envoyerPhotoVersDrive(fichier);
+    const { error } = await sb.from(conf.photosTable).insert({ [conf.photosColonne]: ficheOuverte.id, url: lien, chemin: null });
+    if (error) throw error;
+    msg.className = 'form-msg ok'; msg.textContent = 'Photo ajoutée.';
+    await rafraichirPhotosDossier();
+  } catch (err) {
+    msg.className = 'form-msg err'; msg.textContent = "Échec de l'envoi : " + err.message;
+  }
+});
+
+let photoARemplacerId = null, photoARemplacerChemin = null;
+document.getElementById('mf-photo-remplacement-input').addEventListener('change', async (e) => {
+  const fichier = e.target.files[0];
+  e.target.value = '';
+  if (!fichier || !ficheOuverte || !photoARemplacerId) return;
+  const conf = DOSSIERS[ficheOuverte.source];
+  const msg = document.getElementById('mf-photo-ajout-msg');
+  msg.style.display = 'inline'; msg.className = 'form-msg'; msg.textContent = 'Envoi de la photo de remplacement…';
+
+  try {
+    const lien = await envoyerPhotoVersDrive(fichier);
+    if (photoARemplacerChemin) await sb.storage.from(conf.bucket).remove([photoARemplacerChemin]);
+    const { error } = await sb.from(conf.photosTable).update({ url: lien, chemin: null }).eq('id', photoARemplacerId);
+    if (error) throw error;
+    msg.className = 'form-msg ok'; msg.textContent = 'Photo remplacée.';
+    await rafraichirPhotosDossier();
+  } catch (err) {
+    msg.className = 'form-msg err'; msg.textContent = "Échec du remplacement : " + err.message;
+  }
+  photoARemplacerId = null; photoARemplacerChemin = null;
+});
+
+function remplacerPhotoDossier(bouton) {
+  photoARemplacerId = bouton.dataset.photoId;
+  photoARemplacerChemin = bouton.dataset.chemin || null;
+  document.getElementById('mf-photo-remplacement-input').click();
 }
 
 document.getElementById('modal-dossier-fermer').addEventListener('click', () => {
