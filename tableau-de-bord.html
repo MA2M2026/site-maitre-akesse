@@ -84,6 +84,16 @@
   .dossiers-vide { padding:2rem 1rem; text-align:center; color:var(--gris); font-size:0.85rem; background:var(--anthracite, var(--noir)); }
   .dossiers-plus { display:block; margin:1rem auto 0; }
 
+  /* ===== AJOUT : aperçu compact inscriptions / candidatures / recruteurs, rangée de photos ===== */
+  .apercu-dossiers-liste { display:flex; gap:0.8rem; overflow-x:auto; padding-bottom:0.3rem; }
+  .apercu-carte { flex:0 0 132px; display:flex; flex-direction:column; align-items:center; text-align:center; gap:0.45rem; padding:0.7rem 0.5rem; background:var(--anthracite, var(--noir)); border:1px solid var(--gris-clair); border-radius:6px; cursor:pointer; transition:border-color 0.2s ease; }
+  .apercu-carte:hover { border-color:var(--bordeaux-clair); }
+  .apercu-photo, .apercu-photo-vide { width:64px; height:64px; border-radius:50%; object-fit:cover; background:var(--gris-fonce, #1a1a1a); }
+  .apercu-photo-vide { display:grid; place-items:center; font-family:var(--display); font-size:0.9rem; color:var(--gris); border:1px solid var(--gris-clair); }
+  .apercu-nom { font-size:0.78rem; color:var(--titre-clair, #fff); line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+  .apercu-type { font-size:0.62rem; color:var(--gris); text-transform:uppercase; letter-spacing:0.05em; }
+  .apercu-dossiers-vide { color:var(--gris); font-size:0.85rem; padding:0.6rem 0; }
+
   /* Fiche détaillée (modale) */
   .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.72); z-index:500; display:none; align-items:flex-start; justify-content:center; overflow-y:auto; padding:5vh 1rem; }
   .modal-overlay.ouvert { display:flex; }
@@ -2129,7 +2139,21 @@ setTimeout(() => {
 <span class="dossiers-compteur a-traiter" id="a-traiter-total"></span>
 </div>
 <div class="a-traiter-liste" id="a-traiter-liste">Chargement…</div>
-</div></div></div><div class="ref-quick-row"><div class="db-actions-rapides">
+</div></div></div>
+
+<div class="liste-recente">
+<h2 style="margin-bottom:0.3rem;">📊 Évolution des candidatures</h2>
+<p style="font-size:0.85rem; color:var(--gris); margin-top:0; margin-bottom:1rem;">Nombre de candidatures reçues par semaine, sur les 6 dernières semaines.</p>
+<div class="activite-svg-wrap" id="evolution-candidatures">Chargement…</div>
+</div>
+
+<div class="liste-recente">
+<h2 style="margin-bottom:0.3rem;">🗂️ Derniers dossiers — inscriptions, candidatures, recruteurs</h2>
+<p style="font-size:0.85rem; color:var(--gris); margin-top:0; margin-bottom:1rem;">Aperçu des dossiers les plus récents, tous types confondus. Cliquez pour ouvrir la fiche complète.</p>
+<div class="apercu-dossiers-liste" id="apercu-dossiers-liste">Chargement…</div>
+</div>
+
+<div class="ref-quick-row"><div class="db-actions-rapides">
 <h3>Actions rapides</h3>
 <div class="db-actions-liste">
 <button class="db-action-btn" data-scroll="portail-nouveau-code" type="button"><span class="qa-icon">＋</span><span><b>Accès mannequin</b><small>Gérer les codes</small></span></button>
@@ -2765,6 +2789,145 @@ async function chargerDriveBloc() {
   `;
 }
 
+/* ===================== AJOUT : graphique "Évolution des candidatures" (6 dernières semaines, données réelles) ===================== */
+async function chargerEvolutionCandidatures() {
+  const conteneur = document.getElementById('evolution-candidatures');
+  if (!conteneur) return;
+  const depuis6sem = new Date(Date.now() - 42 * 24 * 60 * 60 * 1000);
+  depuis6sem.setHours(0, 0, 0, 0);
+
+  const { data: candidatures, error } = await sb.from('casting_applications')
+    .select('created_at')
+    .gte('created_at', depuis6sem.toISOString())
+    .limit(20000);
+
+  if (error) {
+    conteneur.innerHTML = '<p style="color:var(--gris); font-size:0.82rem;">Statistiques indisponibles pour le moment.</p>';
+    return;
+  }
+
+  const semaines = [];
+  for (let i = 5; i >= 0; i--) {
+    const debut = new Date();
+    debut.setHours(0, 0, 0, 0);
+    debut.setDate(debut.getDate() - (i * 7 + 6));
+    const fin = new Date(debut);
+    fin.setDate(fin.getDate() + 7);
+    semaines.push({ debut, fin, compte: 0 });
+  }
+
+  (candidatures || []).forEach(c => {
+    const d = new Date(c.created_at);
+    const semaine = semaines.find(s => d >= s.debut && d < s.fin);
+    if (semaine) semaine.compte++;
+  });
+
+  if (!semaines.some(s => s.compte > 0)) {
+    conteneur.innerHTML = '<p style="color:var(--gris); font-size:0.82rem;">Pas encore de candidature enregistrée sur les 6 dernières semaines.</p>';
+    return;
+  }
+
+  const max = Math.max(...semaines.map(s => s.compte), 1);
+  const largeur = 560, hauteur = 130, marge = 12;
+  const pas = (largeur - marge * 2) / (semaines.length - 1);
+  const points = semaines.map((s, i) => {
+    const x = marge + i * pas;
+    const y = hauteur - marge - ((s.compte / max) * (hauteur - marge * 2));
+    return { x, y, compte: s.compte, label: `Sem. ${i + 1}` };
+  });
+  const polyline = points.map(p => `${p.x},${p.y}`).join(' ');
+  const aire = `${marge},${hauteur - marge} ${polyline} ${largeur - marge},${hauteur - marge}`;
+
+  conteneur.innerHTML = `
+    <svg viewBox="0 0 ${largeur} ${hauteur + 18}" preserveAspectRatio="none">
+      <polygon points="${aire}" fill="rgba(207,59,82,0.14)"></polygon>
+      <polyline points="${polyline}" fill="none" stroke="var(--bordeaux-clair)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"></polyline>
+      ${points.map(p => `<circle cx="${p.x}" cy="${p.y}" r="3.5" fill="var(--bordeaux-clair)"><title>${p.compte} candidature(s)</title></circle>`).join('')}
+      ${points.map(p => `<text x="${p.x}" y="${hauteur + 14}" text-anchor="middle" font-size="9" fill="var(--gris)">${p.label}</text>`).join('')}
+    </svg>
+  `;
+}
+
+/* ===================== AJOUT : aperçu compact des derniers dossiers (inscriptions / candidatures / recruteurs) ===================== */
+function apercuPhotoErreur(img) {
+  const div = document.createElement('div');
+  div.className = 'apercu-photo-vide';
+  div.textContent = img.dataset.initiales || '?';
+  img.replaceWith(div);
+}
+
+async function chargerApercuDossiers() {
+  const conteneur = document.getElementById('apercu-dossiers-liste');
+  if (!conteneur) return;
+
+  const [{ data: candidatures }, { data: inscriptions }, { data: recruteurs }] = await Promise.all([
+    sb.from('casting_applications').select('id, full_name, status, created_at').order('created_at', { ascending: false }).limit(4),
+    sb.from('inscriptions_mannequins').select('id, full_name, statut, created_at').order('created_at', { ascending: false }).limit(4),
+    sb.from('recruiter_requests').select('id, contact_name, company, status, created_at').order('created_at', { ascending: false }).limit(4),
+  ]);
+
+  const items = [
+    ...(candidatures || []).map(d => ({ source: 'casting', id: d.id, nom: d.full_name || 'Sans nom', statut: d.status, created_at: d.created_at })),
+    ...(inscriptions || []).map(d => ({ source: 'inscription', id: d.id, nom: d.full_name || 'Sans nom', statut: d.statut, created_at: d.created_at })),
+    ...(recruteurs || []).map(d => ({ source: 'recruteur', id: d.id, nom: d.contact_name || d.company || 'Sans nom', statut: d.status, created_at: d.created_at })),
+  ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 10);
+
+  if (!items.length) {
+    conteneur.innerHTML = '<div class="apercu-dossiers-vide">Aucun dossier pour le moment.</div>';
+    return;
+  }
+
+  // Photo du premier fichier joint (candidatures/inscriptions uniquement — les demandes recruteurs n'ont pas de photo jointe)
+  const idsCasting = items.filter(i => i.source === 'casting').map(i => i.id);
+  const idsInscription = items.filter(i => i.source === 'inscription').map(i => i.id);
+  const [{ data: photosCasting }, { data: photosInscription }] = await Promise.all([
+    idsCasting.length ? sb.from('casting_photos').select('application_id, chemin, url').in('application_id', idsCasting) : Promise.resolve({ data: [] }),
+    idsInscription.length ? sb.from('inscriptions_photos').select('inscription_id, chemin, url').in('inscription_id', idsInscription) : Promise.resolve({ data: [] }),
+  ]);
+
+  const cheminsCasting = (photosCasting || []).map(p => p.chemin).filter(Boolean);
+  const cheminsInscription = (photosInscription || []).map(p => p.chemin).filter(Boolean);
+  const [{ data: signeesCasting }, { data: signeesInscription }] = await Promise.all([
+    cheminsCasting.length ? sb.storage.from('casting-applications').createSignedUrls(cheminsCasting, 300) : Promise.resolve({ data: [] }),
+    cheminsInscription.length ? sb.storage.from('inscriptions-photos').createSignedUrls(cheminsInscription, 300) : Promise.resolve({ data: [] }),
+  ]);
+  const urlParCheminCasting = {};
+  (signeesCasting || []).forEach(s => { if (s.path && s.signedUrl) urlParCheminCasting[s.path] = s.signedUrl; });
+  const urlParCheminInscription = {};
+  (signeesInscription || []).forEach(s => { if (s.path && s.signedUrl) urlParCheminInscription[s.path] = s.signedUrl; });
+
+  const photoParId = {};
+  (photosCasting || []).forEach(p => { if (!photoParId['casting-' + p.application_id]) photoParId['casting-' + p.application_id] = p.chemin ? (urlParCheminCasting[p.chemin] || '') : (p.url || ''); });
+  (photosInscription || []).forEach(p => { if (!photoParId['inscription-' + p.inscription_id]) photoParId['inscription-' + p.inscription_id] = p.chemin ? (urlParCheminInscription[p.chemin] || '') : (p.url || ''); });
+
+  const LIBELLES_SOURCE = { casting: 'Candidature', inscription: 'Inscription', recruteur: 'Recruteur' };
+  const LIBELLES_STATUT = {
+    casting: { nouvelle: 'Nouvelle', vue: 'Vue', retenue: 'Retenue', 'refusée': 'Refusée' },
+    inscription: { 'en attente de paiement': 'En attente', 'payée': 'Payée', 'annulée': 'Annulée' },
+    recruteur: { nouvelle: 'Nouvelle', vue: 'Vue', 'traitée': 'Traitée' },
+  };
+
+  conteneur.innerHTML = items.map(it => {
+    const photo = photoParId[it.source + '-' + it.id] || '';
+    const initiales = echapperHtml((it.nom || '?').trim().charAt(0).toUpperCase() || '?');
+    const photoHtml = photo
+      ? `<img class="apercu-photo" src="${echapperHtml(photo)}" data-initiales="${initiales}" alt="" loading="lazy" onerror="apercuPhotoErreur(this)">`
+      : `<div class="apercu-photo-vide">${initiales}</div>`;
+    const statutLabel = (LIBELLES_STATUT[it.source] && LIBELLES_STATUT[it.source][it.statut]) || it.statut || '';
+    return `
+      <div class="apercu-carte" data-source="${it.source}" data-id="${it.id}">
+        ${photoHtml}
+        <div class="apercu-nom">${echapperHtml(it.nom)}</div>
+        <div class="apercu-type">${LIBELLES_SOURCE[it.source]}</div>
+        <span class="statut-pill ${classeStatut(String(it.statut || 'inconnu'))}">${echapperHtml(statutLabel)}</span>
+      </div>`;
+  }).join('');
+
+  conteneur.querySelectorAll('.apercu-carte').forEach(carte => {
+    carte.addEventListener('click', () => ouvrirFicheDossier(carte.dataset.source, carte.dataset.id));
+  });
+}
+
 /* ===================== AJOUT : sidebar — navigation par défilement + surlignage ===================== */
 function initSidebarNav() {
   document.querySelectorAll('.db-nav-item[data-scroll], .db-action-btn[data-scroll]').forEach(btn => {
@@ -2908,6 +3071,8 @@ async function chargerStatistiques() {
   chargerRepartitionCategories();
   chargerATraiter();
   chargerActiviteGraphique();
+  chargerEvolutionCandidatures();
+  chargerApercuDossiers();
   chargerDriveBloc();
   chargerHeroVedette();
   chargerDernieresActivites();
