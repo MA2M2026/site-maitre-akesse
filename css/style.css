@@ -1434,6 +1434,11 @@ body.porte-verrouillee { overflow: hidden; height: 100vh; }
 
 /* ---------- Verrouillage complet pendant la porte d'entrée ---------- */
 body.porte-verrouillee .site-header-v2 { display: none; }
+/* Empêche la bande d'annonce de dépasser sous le hero tant que la porte est
+   verrouillée (100vh ne correspond pas toujours pile à l'écran visible sur
+   mobile selon l'affichage de la barre d'adresse) — solution garantie quel
+   que soit l'appareil, plutôt que de dépendre du calcul de hauteur. */
+body.porte-verrouillee #marqueeBande { display: none; }
 
 /* ---------- Indicateur vidéo sur les cartes actualités ---------- */
 .news-play {
