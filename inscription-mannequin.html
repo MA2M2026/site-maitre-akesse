@@ -180,6 +180,13 @@ setTimeout(() => {
         <input type="file" id="ins-photo4" accept="image/*" required>
       </div>
 
+      <div class="form-champ">
+        <label for="ins-photos-supp">Photos supplémentaires (facultatif)</label>
+        <input type="file" id="ins-photos-supp" accept="image/*" multiple>
+        <input type="file" id="ins-photo-supp-remplacement" accept="image/*" style="display:none;">
+        <div id="ins-photos-supp-apercu" style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.6rem;"></div>
+      </div>
+
       <div class="form-champ" style="background:var(--gris-clair); padding:1rem; border:1px solid var(--gris-clair);">
         <label style="color:var(--noir);">🔒 Contact officiel de l'agence</label>
         <div style="margin-top:0.6rem; font-size:0.88rem;">
@@ -395,6 +402,53 @@ function fichierEnBase64(fichier) {
 // Google Drive plutôt que Supabase, comme les photos de candidature casting.
 const URL_SCRIPT_PHOTOS_CASTING = 'https://script.google.com/macros/s/AKfycbxzPeaTLvMqZKtBvJJabLeZBh6JJ9ZaggPYUY8XAoh1-tyBq1Byi3lBm3SkhkH8rqNxxg/exec';
 
+// Photos supplémentaires facultatives, en plus des 4 photos obligatoires
+// (portrait/plein pied/profil/sans maquillage — déjà individuellement
+// remplaçables en re-sélectionnant leur propre champ). Gestion individuelle
+// (ajouter/supprimer/remplacer) sans reprendre toute la sélection —
+// cahier des charges, étape 5.
+let photosSupplementaires = [];
+let indexPhotoSuppARemplacer = null;
+
+function rafraichirApercuPhotosSupp() {
+  const apercu = document.getElementById('ins-photos-supp-apercu');
+  apercu.innerHTML = photosSupplementaires.map((f, i) => `
+    <div style="position:relative; width:64px; height:64px;">
+      <img src="${URL.createObjectURL(f)}" style="width:100%; height:100%; object-fit:cover; border-radius:4px; display:block;">
+      <button type="button" class="ins-photo-supp-remplacer" data-index="${i}" title="Remplacer cette photo" style="position:absolute; bottom:-6px; left:-6px; width:20px; height:20px; border-radius:50%; background:#333; color:#fff; border:2px solid #fff; font-size:0.7rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;">⇄</button>
+      <button type="button" class="ins-photo-supp-suppr" data-index="${i}" title="Supprimer cette photo" style="position:absolute; top:-6px; right:-6px; width:20px; height:20px; border-radius:50%; background:var(--bordeaux, #7c1730); color:#fff; border:2px solid #fff; font-size:0.7rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;">✕</button>
+    </div>
+  `).join('');
+
+  apercu.querySelectorAll('.ins-photo-supp-suppr').forEach(btn => {
+    btn.addEventListener('click', () => {
+      photosSupplementaires.splice(Number(btn.dataset.index), 1);
+      rafraichirApercuPhotosSupp();
+    });
+  });
+  apercu.querySelectorAll('.ins-photo-supp-remplacer').forEach(btn => {
+    btn.addEventListener('click', () => {
+      indexPhotoSuppARemplacer = Number(btn.dataset.index);
+      document.getElementById('ins-photo-supp-remplacement').click();
+    });
+  });
+}
+
+document.getElementById('ins-photos-supp').addEventListener('change', (e) => {
+  photosSupplementaires.push(...Array.from(e.target.files || []));
+  e.target.value = '';
+  rafraichirApercuPhotosSupp();
+});
+
+document.getElementById('ins-photo-supp-remplacement').addEventListener('change', (e) => {
+  const fichier = e.target.files[0];
+  e.target.value = '';
+  if (!fichier || indexPhotoSuppARemplacer === null) return;
+  photosSupplementaires[indexPhotoSuppARemplacer] = fichier;
+  indexPhotoSuppARemplacer = null;
+  rafraichirApercuPhotosSupp();
+});
+
 let codeValide = '';
 
 // --- Gestion mineur / parent-tuteur ---
@@ -508,7 +562,8 @@ document.getElementById('form-inscription').addEventListener('submit', async (e)
     document.getElementById('ins-photo1').files[0],
     document.getElementById('ins-photo2').files[0],
     document.getElementById('ins-photo3').files[0],
-    document.getElementById('ins-photo4').files[0]
+    document.getElementById('ins-photo4').files[0],
+    ...photosSupplementaires
   ].filter(Boolean);
 
   // Le dossier est déjà enregistré côté base de données à ce stade (l'appel RPC
