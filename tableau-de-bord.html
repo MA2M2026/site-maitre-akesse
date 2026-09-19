@@ -3199,20 +3199,50 @@ async function chargerRepartitionCategories() {
   const libelles = { hommes: '👨🏿 Hommes', femmes: '👩🏿 Femmes', enfants: '🧒 Enfants (mineurs)' };
   const max = Math.max(CATEGORIES_DONNEES.hommes.length, CATEGORIES_DONNEES.femmes.length, CATEGORIES_DONNEES.enfants.length, 1);
 
-  document.getElementById('categorie-chart').innerHTML = Object.keys(CATEGORIES_DONNEES).map(cle => {
-    const n = CATEGORIES_DONNEES[cle].length;
-    const largeur = Math.round((n / max) * 100);
-    return `
-      <button type="button" class="activite-repart-ligne" data-categorie="${cle}" style="display:block; width:100%; text-align:left; background:none; border:none; cursor:pointer; padding:0; color:inherit; font:inherit;">
-        <div class="arl-tete"><span>${libelles[cle]}</span><span>${n}</span></div>
-        <div class="activite-repart-barre"><span style="width:${largeur}%;"></span></div>
-      </button>`;
-  }).join('');
+  // Le graphique "Répartition des profils" (maquette la plus récente) a remplacé le bloc
+  // #categorie-chart d'origine par un widget donut créé dynamiquement (voir addDistribution())
+  // — ces deux éléments peuvent donc ne plus exister selon la version du tableau de bord.
+  const categorieChartEl = document.getElementById('categorie-chart');
+  if (categorieChartEl) {
+    categorieChartEl.innerHTML = Object.keys(CATEGORIES_DONNEES).map(cle => {
+      const n = CATEGORIES_DONNEES[cle].length;
+      const largeur = Math.round((n / max) * 100);
+      return `
+        <button type="button" class="activite-repart-ligne" data-categorie="${cle}" style="display:block; width:100%; text-align:left; background:none; border:none; cursor:pointer; padding:0; color:inherit; font:inherit;">
+          <div class="arl-tete"><span>${libelles[cle]}</span><span>${n}</span></div>
+          <div class="activite-repart-barre"><span style="width:${largeur}%;"></span></div>
+        </button>`;
+    }).join('');
+    categorieChartEl.querySelectorAll('[data-categorie]').forEach(btn => {
+      btn.addEventListener('click', () => afficherDetailCategorie(btn.dataset.categorie));
+    });
+  }
+  const categorieDetailsEl = document.getElementById('categorie-details');
+  if (categorieDetailsEl) categorieDetailsEl.innerHTML = '';
 
-  document.getElementById('categorie-chart').querySelectorAll('[data-categorie]').forEach(btn => {
-    btn.addEventListener('click', () => afficherDetailCategorie(btn.dataset.categorie));
-  });
-  document.getElementById('categorie-details').innerHTML = '';
+  // Widget donut "Répartition des profils" : remplace les pourcentages fixes posés par
+  // défaut (68 % / 22 % / 10 %) par les vrais chiffres calculés ci-dessus — aucune
+  // statistique affichée ne doit être inventée.
+  const totalCategories = CATEGORIES_DONNEES.hommes.length + CATEGORIES_DONNEES.femmes.length + CATEGORIES_DONNEES.enfants.length;
+  const pourcentage = (n) => totalCategories ? Math.round((n / totalCategories) * 100) : 0;
+  const pFemmes = pourcentage(CATEGORIES_DONNEES.femmes.length);
+  const pHommes = pourcentage(CATEGORIES_DONNEES.hommes.length);
+  const pEnfants = 100 - pFemmes - pHommes;
+  const legende = document.querySelector('.ref-distribution .ref-legend');
+  if (legende) {
+    const femmesB = legende.querySelector('.f b');
+    const hommesB = legende.querySelector('.h b');
+    const enfantsB = legende.querySelector('.e b');
+    if (femmesB) femmesB.textContent = pFemmes + '%';
+    if (hommesB) hommesB.textContent = pHommes + '%';
+    if (enfantsB) enfantsB.textContent = pEnfants + '%';
+  }
+  const donutEl = document.querySelector('.ref-distribution .ref-donut');
+  if (donutEl && totalCategories) {
+    donutEl.style.background = `conic-gradient(#d9234e 0 ${pFemmes}%, #8d7c7f ${pFemmes}% ${pFemmes + pHommes}%, #e8a83d ${pFemmes + pHommes}% 100%)`;
+  }
+  const totalProfilsEl = document.getElementById('rf-total-profils');
+  if (totalProfilsEl) totalProfilsEl.textContent = totalCategories;
 }
 
 function afficherDetailCategorie(cle) {
