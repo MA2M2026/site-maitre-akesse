@@ -2949,3 +2949,89 @@ end;
 $$;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 72 : page "Nos Événements" — un album (titre/date/lieu) par
+-- événement réalisé ou auquel nos mannequins ont participé, chacun avec
+-- sa propre galerie de photos. Même principe que Actualités (Extension
+-- 5/8/14) : table + table de photos liées, bucket public dédié, RLS
+-- lecture publique / écriture admin uniquement.
+-- ===================================================================
+create table if not exists evenements (
+  id uuid primary key default gen_random_uuid(),
+  titre text not null,
+  date_evenement date,
+  lieu text,
+  description text,
+  image_url text,
+  created_at timestamptz not null default now()
+);
+alter table evenements enable row level security;
+
+drop policy if exists "Evenements visibles de tous" on evenements;
+create policy "Evenements visibles de tous"
+  on evenements for select using (true);
+
+drop policy if exists "Seuls les admins publient des evenements" on evenements;
+create policy "Seuls les admins publient des evenements"
+  on evenements for insert
+  with check (exists (select 1 from admins where user_id = auth.uid()));
+
+drop policy if exists "Seuls les admins modifient les evenements" on evenements;
+create policy "Seuls les admins modifient les evenements"
+  on evenements for update
+  using (exists (select 1 from admins where user_id = auth.uid()));
+
+drop policy if exists "Seuls les admins suppriment les evenements" on evenements;
+create policy "Seuls les admins suppriment les evenements"
+  on evenements for delete
+  using (exists (select 1 from admins where user_id = auth.uid()));
+
+create table if not exists evenement_photos (
+  id uuid primary key default gen_random_uuid(),
+  evenement_id uuid references evenements(id) on delete cascade,
+  url text not null,
+  chemin text,
+  created_at timestamptz not null default now()
+);
+alter table evenement_photos enable row level security;
+
+drop policy if exists "Photos evenements visibles de tous" on evenement_photos;
+create policy "Photos evenements visibles de tous"
+  on evenement_photos for select using (true);
+
+drop policy if exists "Seuls les admins ajoutent des photos evenement" on evenement_photos;
+create policy "Seuls les admins ajoutent des photos evenement"
+  on evenement_photos for insert
+  with check (exists (select 1 from admins where user_id = auth.uid()));
+
+drop policy if exists "Seuls les admins modifient les photos evenement" on evenement_photos;
+create policy "Seuls les admins modifient les photos evenement"
+  on evenement_photos for update
+  using (exists (select 1 from admins where user_id = auth.uid()));
+
+drop policy if exists "Seuls les admins suppriment les photos evenement" on evenement_photos;
+create policy "Seuls les admins suppriment les photos evenement"
+  on evenement_photos for delete
+  using (exists (select 1 from admins where user_id = auth.uid()));
+
+insert into storage.buckets (id, name, public)
+values ('evenements-images', 'evenements-images', true)
+on conflict (id) do nothing;
+
+drop policy if exists "Admins uploadent evenements" on storage.objects;
+create policy "Admins uploadent evenements"
+  on storage.objects for insert
+  with check (bucket_id = 'evenements-images' and exists (select 1 from admins where user_id = auth.uid()));
+
+drop policy if exists "Evenements images visibles" on storage.objects;
+create policy "Evenements images visibles"
+  on storage.objects for select
+  using (bucket_id = 'evenements-images');
+
+drop policy if exists "Admins suppriment fichiers evenements" on storage.objects;
+create policy "Admins suppriment fichiers evenements"
+  on storage.objects for delete
+  using (bucket_id = 'evenements-images' and exists (select 1 from admins where user_id = auth.uid()));
+
+NOTIFY pgrst, 'reload schema';
