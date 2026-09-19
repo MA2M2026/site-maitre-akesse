@@ -1306,6 +1306,45 @@ section { padding: 5rem 0; }
   .medaillon-carte .btn-selection { top: 0.4rem; right: 0.4rem; padding: 0.3rem 0.6rem; font-size: 0.56rem; }
 }
 
+/* ---------- THE BOOK (mannequins.html uniquement, #grille) : galerie premium
+   façon grandes agences (IMG, Elite, Next) — grille resserrée façon planche
+   contact, portraits en niveaux de gris révélés en couleur au survol, légende
+   en incrustation sur la photo plutôt qu'en dessous. N'affecte jamais l'aperçu
+   "Nos visages" de l'accueil (médaillons ronds), qui garde son propre style. */
+#grille.medaillon-grille { gap: 3px; }
+#grille .medaillon-photo {
+  position: relative; border-radius: 0; box-shadow: none; animation: none;
+  background: var(--noir);
+}
+#grille .medaillon-carte:hover .medaillon-photo, #grille .medaillon-carte:focus-within .medaillon-photo {
+  box-shadow: none;
+}
+#grille .medaillon-carte img {
+  filter: grayscale(45%) contrast(1.03);
+  transition: transform 0.8s var(--transition-douce), filter 0.5s ease;
+}
+#grille .medaillon-carte:hover img, #grille .medaillon-carte:focus-within img {
+  filter: grayscale(0%);
+  transform: scale(1.045);
+}
+.book-carte-legende {
+  position: absolute; left: 0; right: 0; bottom: 0; text-align: left;
+  padding: 2.2rem 0.9rem 0.85rem;
+  background: linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.4) 65%, transparent 100%);
+  pointer-events: none;
+}
+#grille .medaillon-nom { margin-top: 0; color: #fff; font-size: 0.95rem; }
+#grille .medaillon-info { color: rgba(255,255,255,0.78); margin-top: 0.25rem; }
+#grille .medaillon-carte .btn-selection {
+  background: rgba(10,10,10,0.6); border-color: rgba(255,255,255,0.55); color: #fff;
+}
+#grille .medaillon-carte .btn-selection:hover { background: var(--bordeaux); border-color: var(--bordeaux); color: #fff; }
+
+@media (max-width: 640px) {
+  #grille.medaillon-grille { grid-template-columns: repeat(2, 1fr); gap: 3px; }
+  .book-carte-legende { padding: 1.4rem 0.6rem 0.6rem; }
+}
+
 @media (max-width: 400px) {
   .medaillon-grille { grid-template-columns: repeat(2, 1fr); gap: 1.8rem 0.8rem; }
 }
