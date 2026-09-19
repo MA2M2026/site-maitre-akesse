@@ -3496,11 +3496,13 @@ async function afficherDossiers(source, ajouter) {
   const html = (dossiers || []).map(d => {
     const age = (source === 'inscription' || source === 'casting') ? calculerAge(d.date_naissance) : null;
     const estMineur = age !== null && age < 18;
+    const lienWa = lienWhatsApp(source === 'recruteur' ? (d.whatsapp || d.phone) : d.phone);
     return `
     <div class="dossier-carte" data-source="${source}" data-id="${d.id}">
       <div class="dc-nom">${echapperHtml(nomAffiche(source, d))} ${estMineur ? '<span class="badge-mineur">Mineur</span>' : ''}<span>${echapperHtml(sousLigneAffichee(source, d))}</span></div>
       <div class="dc-meta">${echapperHtml(metaAffichee(source, d))}</div>
       <span class="statut-pill ${classeStatut(d[conf.statutChamp])}">${echapperHtml(conf.libellesStatut[d[conf.statutChamp]] || d[conf.statutChamp] || '')}</span>
+      ${lienWa ? `<a href="${lienWa}" target="_blank" rel="noopener" class="btn dc-whatsapp" style="padding:0.3rem 0.7rem; font-size:0.75rem;">WhatsApp ↗</a>` : ''}
       <span class="dc-fleche">→</span>
     </div>
   `;
@@ -3529,6 +3531,7 @@ document.addEventListener('click', (e) => {
     afficherDossiers(source, true);
     return;
   }
+  if (e.target.closest('.dc-whatsapp')) return;
   const carte = e.target.closest('.dossier-carte');
   if (carte && carte.dataset.source) {
     ouvrirFicheDossier(carte.dataset.source, carte.dataset.id);
