@@ -197,7 +197,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const CLE_REFUS = 'ma2m_installation_refusee';
   const dejaInstalle = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
   const refusePrecedemment = (() => { try { return localStorage.getItem(CLE_REFUS) === '1'; } catch (e) { return false; } })();
-  if (dejaInstalle || refusePrecedemment) return;
+  // Les navigateurs intégrés (Instagram, Facebook) ne peuvent pas installer une PWA sur
+  // l'écran d'accueil : les instructions "Partager > Sur l'écran d'accueil" ne s'y appliquent
+  // pas (le bouton Partager de ces apps ne propose pas cette option). Autant ne pas montrer
+  // une bannière qui promet une fonctionnalité indisponible dans ce contexte.
+  const estNavigateurIntegre = /Instagram|FBAN|FBAV|FB_IAB|MessengerForiOS/i.test(navigator.userAgent);
+  if (dejaInstalle || refusePrecedemment || estNavigateurIntegre) return;
 
   const estIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
   let evenementInstall = null;
