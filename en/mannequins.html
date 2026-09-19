@@ -260,9 +260,13 @@ function appliquerFiltres() {
         ${dejaSelectionne ? '✓' : '+'}
       </button>
       <a href="mannequin.html?id=${profil.id}" style="display:flex; flex-direction:column; align-items:center;">
-        <div class="medaillon-photo"><img src="${echapperHtml(profil.photoUrl)}" alt="${echapperHtml(profil.full_name || 'Model')}" loading="lazy"></div>
-        <div class="medaillon-nom">${echapperHtml(profil.full_name || 'Model')}</div>
-        <div class="medaillon-info">${echapperHtml(profil.city || '')}${profil.height_cm ? ' · ' + profil.height_cm + ' cm' : ''}</div>
+        <div class="medaillon-photo">
+          <img src="${echapperHtml(profil.photoUrl)}" alt="${echapperHtml(profil.full_name || 'Model')}" loading="lazy">
+          <div class="book-carte-legende">
+            <div class="medaillon-nom">${echapperHtml(profil.full_name || 'Model')}</div>
+            <div class="medaillon-info">${echapperHtml(profil.city || '')}${profil.height_cm ? ' · ' + profil.height_cm + ' cm' : ''}</div>
+          </div>
+        </div>
       </a>
     `;
     grille.appendChild(carte);
