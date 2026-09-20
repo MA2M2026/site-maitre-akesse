@@ -3356,3 +3356,52 @@ create policy "Les admins marquent une entree comme traitee"
 create index if not exists idx_photos_upload_echouees_traite on photos_upload_echouees(traite, cree_le desc);
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 79 : VRAIE cause trouvée pour "aucune photo de candidature
+-- ne s'enregistre" — confirmée par un message d'erreur exact capturé en
+-- production (journal_erreurs, code Postgres 42501 : violation RLS
+-- simple, PAS la récursion 42P17 déjà réglée à l'Extension 69).
+--
+-- La policy d'insertion de casting_photos (Extension 69) vérifie que la
+-- candidature existe et a le statut 'nouvelle' via :
+--   exists (select 1 from casting_applications a where a.id = ... )
+-- Cette sous-requête interroge casting_applications SANS passer par une
+-- fonction security definer — elle reste donc soumise aux droits RLS du
+-- rôle qui écrit, c'est-à-dire "anon" (le visiteur qui vient de
+-- soumettre sa candidature). Or la SEULE policy de lecture sur
+-- casting_applications (Extension 9) réserve la consultation aux
+-- admins. Résultat : pour un visiteur anonyme, cette sous-requête ne
+-- voit JAMAIS sa propre candidature (RLS la filtre silencieusement à
+-- zéro ligne, même si elle existe bel et bien) — la condition échoue
+-- systématiquement, quel que soit l'état réel des données.
+--
+-- Correctif : la vérification d'existence passe elle aussi par une
+-- fonction SECURITY DEFINER (même principe que compter_photos_
+-- candidature à l'Extension 69), qui contourne RLS pour cette seule
+-- lecture interne — rien d'autre ne change : le visiteur ne gagne
+-- toujours aucun accès de lecture sur casting_applications, seule
+-- cette vérification ponctuelle et précise (booléenne) le permet.
+-- ===================================================================
+
+create or replace function candidature_prete_pour_photo(p_application_id uuid)
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+  select exists(
+    select 1 from casting_applications
+    where id = p_application_id and status = 'nouvelle'
+  );
+$$;
+
+drop policy if exists "Tout le monde peut joindre des photos de candidature" on casting_photos;
+create policy "Tout le monde peut joindre des photos de candidature"
+  on casting_photos for insert
+  with check (
+    candidature_prete_pour_photo(application_id)
+    and compter_photos_candidature(application_id) < 12
+  );
+
+NOTIFY pgrst, 'reload schema';
