@@ -1245,7 +1245,7 @@ document.getElementById('form-publication').addEventListener('submit', async (e)
   // autonome des blocs, à tort.
   const etaitDejaFormee = dernierProfilCharge && !!dernierProfilCharge.premiere_publication_faite;
 
-  const { data: resultat, error } = await sb.from('model_profiles').upsert(maj).select().single();
+  const { data: resultat, error } = await sb.from('model_profiles').update(maj).eq('id', user.id).select().single();
   if (error) {
     afficherMsg(msg, "Erreur lors de l'enregistrement.", 'err');
     return;
