@@ -184,7 +184,7 @@ async function ouvrirActuModal(index) {
     lienVideo.style.display = 'none';
   }
 
-  document.getElementById('news-modal').classList.add('active');
+  ouvrirNewsModal();
 
   window.actualiteModalCourante = a.id;
   document.getElementById('news-modal-edition').style.display = 'none';
@@ -192,8 +192,19 @@ async function ouvrirActuModal(index) {
   document.getElementById('news-modal-texte').style.display = 'block';
   document.getElementById('news-modal-admin-actions').style.display = window.estAdminConnecte ? 'block' : 'none';
 }
-document.getElementById('news-modal-fermer').addEventListener('click', () => document.getElementById('news-modal').classList.remove('active'));
-document.getElementById('news-modal').addEventListener('click', (e) => { if (e.target.id === 'news-modal') document.getElementById('news-modal').classList.remove('active'); });
+// Verrouille le défilement de la page tant que la fiche est ouverte (même mécanisme,
+// compatible iPhone, que celui du menu — voir js/app.js).
+let newsModalEstOuverte = false;
+function ouvrirNewsModal() {
+  document.getElementById('news-modal').classList.add('active');
+  if (!newsModalEstOuverte) { newsModalEstOuverte = true; window.verrouillerDefilement(); }
+}
+function fermerNewsModal() {
+  document.getElementById('news-modal').classList.remove('active');
+  if (newsModalEstOuverte) { newsModalEstOuverte = false; window.deverrouillerDefilement(); }
+}
+document.getElementById('news-modal-fermer').addEventListener('click', fermerNewsModal);
+document.getElementById('news-modal').addEventListener('click', (e) => { if (e.target.id === 'news-modal') fermerNewsModal(); });
 
 // Aucune interface de connexion sur cette page publique : un admin se connecte
 // depuis tableau-de-bord.html, puis sa session est simplement détectée ici pour
@@ -289,7 +300,7 @@ document.getElementById('news-modal-supprimer-btn').addEventListener('click', as
   const chemins = (photos || []).map(p => p.chemin).filter(Boolean);
   if (chemins.length) await sb.storage.from('actualites-images').remove(chemins);
   await sb.from('actualites').delete().eq('id', id);
-  document.getElementById('news-modal').classList.remove('active');
+  fermerNewsModal();
   chargerActualites();
 });
 

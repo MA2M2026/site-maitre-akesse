@@ -6,8 +6,12 @@ let porteDejaOuverte = false;
 try { porteDejaOuverte = sessionStorage.getItem('ma2m_porte_ouverte'); } catch (e) {}
 
 if (!porteDejaOuverte) {
+  // The class also hides the header/banner/WhatsApp button while the door is shown
+  // (see css/style.css) — the actual scroll lock is handled separately by
+  // verrouillerDefilement(), the only method that reliably works on iPhone.
   document.body.classList.add('porte-verrouillee');
   document.documentElement.classList.add('porte-verrouillee');
+  window.verrouillerDefilement();
 }
 
 document.getElementById('entrer-btn').addEventListener('click', async () => {
@@ -16,6 +20,7 @@ document.getElementById('entrer-btn').addEventListener('click', async () => {
   }
   document.body.classList.remove('porte-verrouillee');
   document.documentElement.classList.remove('porte-verrouillee');
+  window.deverrouillerDefilement();
   document.getElementById('porte-entree').style.display = 'none';
   window.scrollTo(0, 0);
   try { sessionStorage.setItem('ma2m_porte_ouverte', '1'); } catch (e) {}

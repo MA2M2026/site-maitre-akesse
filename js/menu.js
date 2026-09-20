@@ -8,15 +8,21 @@ document.addEventListener('DOMContentLoaded', () => {
   // Verrouille le défilement du corps de la page tant que le menu est ouvert —
   // sinon, sur mobile, faire défiler jusqu'aux limites du menu peut faire défiler
   // la page en dessous sans que ça se voie, ce qui donne un rendu décalé à la fermeture.
+  let menuEstOuvert = false;
   function ouvrirMenu() {
     overlay.classList.add('active');
-    document.body.classList.add('menu-ouvert');
-    document.documentElement.classList.add('menu-ouvert');
+    menuEstOuvert = true;
+    window.verrouillerDefilement();
   }
   function fermerMenu() {
     overlay.classList.remove('active');
-    document.body.classList.remove('menu-ouvert');
-    document.documentElement.classList.remove('menu-ouvert');
+    // Le drapeau évite de déverrouiller un verrou qu'on n'a pas posé (ex. le filet
+    // de sécurité retour arrière ci-dessous appelle fermerMenu() systématiquement,
+    // même quand le menu n'était pas ouvert).
+    if (menuEstOuvert) {
+      menuEstOuvert = false;
+      window.deverrouillerDefilement();
+    }
   }
 
   menuBtn.addEventListener('click', ouvrirMenu);
