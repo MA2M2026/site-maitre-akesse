@@ -2091,6 +2091,115 @@ setTimeout(() => {
 <div class="form-msg" id="tb-code-nouveau-msg"></div>
 </div>
 </section>
+<!-- ===== AJOUT : navigation en 3 grands blocs + menu (remplace l'ancienne barre latérale toujours visible) ===== -->
+<style>
+/* Le fichier contient plusieurs "ères" de style empilées au fil du temps, dont
+   certaines forcent l'affichage de blocs précis via !important (ex. .ref-hero-row,
+   .stats-grille). Ces règles génériques doivent donc elles aussi utiliser
+   !important, avec une sélectivité suffisante, pour rester fiables quel que soit
+   le bloc concerné. */
+[data-section] { display: none !important; }
+[data-section].tdb-actif { display: block !important; }
+.ref-hero-row[data-section].tdb-actif { display: grid !important; }
+.stats-grille[data-section].tdb-actif { display: grid !important; }
+
+/* Remplacée par le nouveau menu ☰ MENU (3 blocs) : l'ancienne barre latérale,
+   toujours visible, reste dans le code mais n'est plus affichée. */
+#db-mobile-menu, #db-mobile-overlay, .db-sidebar { display: none !important; }
+
+.tdb-menu-toggle {
+  position: sticky; z-index: 950; top: 10px; left: 0;
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.6rem 1rem; border-radius: 30px;
+  background: var(--noir, #111); color: #fff;
+  border: 1px solid var(--gris-clair, #444);
+  font-family: var(--texte); font-size: 0.82rem; letter-spacing: 0.06em;
+  text-transform: uppercase; cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+}
+.tdb-menu-toggle:hover { border-color: var(--bordeaux, #7a1220); }
+
+.tdb-menu-overlay {
+  position: fixed; inset: 0; z-index: 960;
+  background: rgba(0,0,0,0.55);
+  opacity: 0; visibility: hidden; transition: opacity 0.25s ease, visibility 0.25s;
+}
+.tdb-menu-overlay.ouvert { opacity: 1; visibility: visible; }
+
+.tdb-menu-panel {
+  position: fixed; z-index: 970; top: 0; bottom: 0; left: 0;
+  width: min(340px, 88vw); overflow-y: auto;
+  background: var(--noir, #111);
+  border-right: 1px solid var(--gris-clair, #444);
+  padding: 1.2rem 1.1rem 2rem;
+  transform: translateX(-100%);
+  transition: transform 0.28s ease;
+}
+.tdb-menu-panel.ouvert { transform: translateX(0); }
+
+.tdb-menu-entete { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.tdb-menu-entete strong { font-family: var(--display); letter-spacing: 0.14em; color: var(--titre-clair, #fff); font-size: 0.95rem; }
+.tdb-menu-fermer { background: none; border: none; color: var(--gris, #aaa); font-size: 1rem; cursor: pointer; }
+
+.tdb-menu-accueil {
+  display: block; width: 100%; text-align: left; margin-bottom: 1rem;
+  padding: 0.7rem 0.8rem; border-radius: 6px;
+  background: rgba(255,255,255,0.05); border: 1px solid var(--gris-clair, #444);
+  color: #fff; font-size: 0.85rem; cursor: pointer;
+}
+
+.tdb-menu-bloc { border: none; border-top: 1px solid var(--gris-clair, #444); padding: 0.6rem 0; }
+.tdb-menu-bloc > summary {
+  cursor: pointer; list-style: none; font-family: var(--display);
+  font-size: 0.82rem; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--titre-clair, #fff); padding: 0.3rem 0.2rem;
+}
+.tdb-menu-bloc > summary::-webkit-details-marker { display: none; }
+.tdb-menu-bloc > summary:before { content: "▸ "; color: var(--bordeaux, #7a1220); }
+.tdb-menu-bloc[open] > summary:before { content: "▾ "; }
+
+.tdb-menu-sousbloc { margin: 0.3rem 0 0.3rem 0.6rem; border: none; }
+.tdb-menu-sousbloc > summary {
+  cursor: pointer; list-style: none; font-size: 0.74rem; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--gris, #aaa); padding: 0.35rem 0.2rem;
+}
+.tdb-menu-sousbloc > summary::-webkit-details-marker { display: none; }
+.tdb-menu-sousbloc > summary:before { content: "▸ "; }
+.tdb-menu-sousbloc[open] > summary:before { content: "▾ "; }
+
+.tdb-menu-item {
+  display: block; width: 100%; text-align: left;
+  background: none; border: none; color: #d8d8d8;
+  font-size: 0.82rem; padding: 0.55rem 0.5rem 0.55rem 1.1rem;
+  border-radius: 4px; cursor: pointer;
+}
+.tdb-menu-item:hover, .tdb-menu-item.actif { background: rgba(255,255,255,0.06); color: #fff; }
+.tdb-menu-item.actif { border-left: 2px solid var(--bordeaux, #7a1220); }
+a.tdb-menu-item { text-decoration: none; }
+
+.tdb-landing {
+  display: grid; gap: 1.2rem; grid-template-columns: repeat(3, 1fr);
+  padding: 3rem 0 2rem;
+}
+@media (max-width: 900px) { .tdb-landing { grid-template-columns: 1fr; padding: 4.5rem 0 2rem; } }
+
+.tdb-landing-carte {
+  display: block; text-align: left; width: 100%;
+  background: linear-gradient(160deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
+  border: 1px solid var(--gris-clair, #444); border-radius: 10px;
+  padding: 1.8rem 1.5rem; cursor: pointer; color: #fff;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+.tdb-landing-carte:hover { border-color: var(--bordeaux, #7a1220); transform: translateY(-2px); }
+.tdb-landing-carte .tdb-landing-num {
+  display: inline-block; font-family: var(--display); font-size: 0.72rem;
+  letter-spacing: 0.16em; color: var(--bordeaux-clair, #cf3b52); margin-bottom: 0.6rem;
+}
+.tdb-landing-carte h3 { font-family: var(--display); font-size: 1.15rem; letter-spacing: 0.02em; margin: 0 0 0.6rem; color: var(--titre-clair, #fff); }
+.tdb-landing-carte p { font-size: 0.84rem; color: var(--gris, #aaa); margin: 0; line-height: 1.5; }
+</style>
+
 <section id="bloc-tableau" style="display:none; padding-top:0;">
 <div class="db-shell">
 <button class="db-mobile-menu" id="db-mobile-menu" type="button" aria-label="Ouvrir le menu" aria-controls="db-sidebar" aria-expanded="false">☰</button>
@@ -2139,9 +2248,150 @@ setTimeout(() => {
 </div>
 </div>
 </div>
+<!-- ===== AJOUT : navigation en 3 grands blocs + menu ===== -->
+<button class="tdb-menu-toggle" id="tdb-menu-toggle" type="button">☰ MENU</button>
+<div class="tdb-menu-overlay" id="tdb-menu-overlay"></div>
+<nav class="tdb-menu-panel" id="tdb-menu-panel" aria-label="Menu du tableau de bord">
+  <div class="tdb-menu-entete">
+    <strong>MENU</strong>
+    <button class="tdb-menu-fermer" id="tdb-menu-fermer" type="button">Fermer ✕</button>
+  </div>
+  <button class="tdb-menu-accueil" id="tdb-menu-accueil" type="button">🏠 Tableau de bord — Accueil</button>
+
+  <details class="tdb-menu-bloc" id="tdb-bloc-1">
+    <summary>Bloc 1 — Pilotage, statistiques &amp; activité</summary>
+    <button class="tdb-menu-item" data-tdb-cible="b1-vedette" type="button">Mannequin à la une</button>
+    <button class="tdb-menu-item" data-tdb-cible="b1-stats" type="button">Statistiques</button>
+    <button class="tdb-menu-item" data-tdb-cible="b1-top3" type="button">Distinction MA2M — les 3 meilleurs mannequins</button>
+    <button class="tdb-menu-item" data-tdb-cible="b1-classement" type="button">Classement des mannequins — visites réelles</button>
+    <button class="tdb-menu-item" data-tdb-cible="b1-a-traiter" type="button">À traiter</button>
+    <button class="tdb-menu-item" data-tdb-cible="b1-repartition" type="button">Répartition des profils</button>
+    <button class="tdb-menu-item" data-tdb-cible="b1-evolution" type="button">Évolution des candidatures</button>
+    <button class="tdb-menu-item" data-tdb-cible="b1-derniers-dossiers" type="button">Derniers dossiers</button>
+    <button class="tdb-menu-item" data-tdb-cible="b1-actions-rapides" type="button">Actions rapides</button>
+  </details>
+
+  <details class="tdb-menu-bloc" id="tdb-bloc-2">
+    <summary>Bloc 2 — Mannequins, inscriptions, castings &amp; recruteurs</summary>
+    <button class="tdb-menu-item" data-tdb-cible="b2-inscriptions" type="button">Inscriptions mannequins</button>
+    <button class="tdb-menu-item" data-tdb-cible="b2-validations" type="button">Validations en attente</button>
+    <button class="tdb-menu-item" data-tdb-cible="b2-mannequins-publies" type="button">Mannequins publiés — gérer les photos</button>
+    <button class="tdb-menu-item" data-tdb-cible="b2-candidatures" type="button">Candidatures / Castings</button>
+    <button class="tdb-menu-item" data-tdb-cible="b2-projets" type="button">Projets &amp; Castings</button>
+    <button class="tdb-menu-item" data-tdb-cible="b2-recruteurs" type="button">Demandes recruteurs</button>
+    <button class="tdb-menu-item" data-tdb-cible="b2-contacts" type="button">Derniers messages de contact</button>
+  </details>
+
+  <details class="tdb-menu-bloc" id="tdb-bloc-3">
+    <summary>Bloc 3 — Administration du site</summary>
+
+    <details class="tdb-menu-sousbloc">
+      <summary>3A — Média, stockage &amp; maintenance</summary>
+      <button class="tdb-menu-item" data-tdb-cible="b3a-drive" type="button">Drive / Transferts</button>
+      <button class="tdb-menu-item" data-tdb-cible="b3a-nettoyage" type="button">Nettoyage des photos traitées</button>
+      <button class="tdb-menu-item" data-tdb-cible="b3a-miniatures" type="button">Miniatures des photos</button>
+      <button class="tdb-menu-item" data-tdb-cible="b3a-erreurs" type="button">Erreurs réelles du site</button>
+    </details>
+
+    <details class="tdb-menu-sousbloc">
+      <summary>3B — Sécurité &amp; accès</summary>
+      <button class="tdb-menu-item" data-tdb-cible="b3b-code-validation" type="button">Code de validation (2ᵉ facteur)</button>
+      <button class="tdb-menu-item" data-tdb-cible="b3b-codes-inscription" type="button">Codes d'inscription</button>
+      <button class="tdb-menu-item" data-tdb-cible="b3b-code-permanent" type="button">Code permanent — « Créer mon compte »</button>
+      <button class="tdb-menu-item" id="tdb-menu-deconnexion" type="button">Se déconnecter</button>
+    </details>
+
+    <details class="tdb-menu-sousbloc">
+      <summary>3C — Contenu &amp; communication du site</summary>
+      <button class="tdb-menu-item" data-tdb-cible="b3c-instagram" type="button">Flux Instagram</button>
+      <button class="tdb-menu-item" data-tdb-cible="b3c-vedette-admin" type="button">Mannequin à la une — Administration</button>
+      <button class="tdb-menu-item" data-tdb-cible="b3c-bandeau" type="button">Bandeau d'information</button>
+      <button class="tdb-menu-item" data-tdb-cible="b3c-mot-fondateur" type="button">Mot du fondateur</button>
+      <a class="tdb-menu-item" href="actualites.html">Publier une actualité</a>
+      <a class="tdb-menu-item" href="evenements.html">Publier un événement</a>
+    </details>
+  </details>
+</nav>
+
+<div class="tdb-landing" id="tdb-landing">
+  <button class="tdb-landing-carte" data-tdb-bloc="tdb-bloc-1" type="button">
+    <span class="tdb-landing-num">BLOC 1</span>
+    <h3>Pilotage, statistiques &amp; activité</h3>
+    <p>Vue d'ensemble, statistiques, classements, activité récente et actions rapides.</p>
+  </button>
+  <button class="tdb-landing-carte" data-tdb-bloc="tdb-bloc-2" type="button">
+    <span class="tdb-landing-num">BLOC 2</span>
+    <h3>Mannequins, inscriptions, castings &amp; recruteurs</h3>
+    <p>Inscriptions, validations, candidatures, projets et demandes recruteurs.</p>
+  </button>
+  <button class="tdb-landing-carte" data-tdb-bloc="tdb-bloc-3" type="button">
+    <span class="tdb-landing-num">BLOC 3</span>
+    <h3>Administration du site</h3>
+    <p>Média &amp; stockage, sécurité &amp; accès, contenu &amp; communication du site.</p>
+  </button>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  function tdbOuvrirMenu() {
+    document.getElementById('tdb-menu-panel').classList.add('ouvert');
+    document.getElementById('tdb-menu-overlay').classList.add('ouvert');
+  }
+  function tdbFermerMenu() {
+    document.getElementById('tdb-menu-panel').classList.remove('ouvert');
+    document.getElementById('tdb-menu-overlay').classList.remove('ouvert');
+  }
+  function tdbAfficherSection(cle) {
+    document.getElementById('tdb-landing').style.display = 'none';
+    document.querySelectorAll('[data-section]').forEach(function (el) {
+      el.classList.toggle('tdb-actif', el.dataset.section === cle);
+    });
+    document.querySelectorAll('.tdb-menu-item[data-tdb-cible]').forEach(function (btn) {
+      btn.classList.toggle('actif', btn.dataset.tdbCible === cle);
+    });
+    tdbFermerMenu();
+    window.scrollTo(0, 0);
+  }
+  function tdbRetourAccueil() {
+    document.querySelectorAll('[data-section]').forEach(function (el) { el.classList.remove('tdb-actif'); });
+    document.getElementById('tdb-landing').style.display = '';
+    document.querySelectorAll('.tdb-menu-item[data-tdb-cible]').forEach(function (btn) { btn.classList.remove('actif'); });
+    tdbFermerMenu();
+    window.scrollTo(0, 0);
+  }
+
+  document.getElementById('tdb-menu-toggle').addEventListener('click', tdbOuvrirMenu);
+  document.getElementById('tdb-menu-fermer').addEventListener('click', tdbFermerMenu);
+  document.getElementById('tdb-menu-overlay').addEventListener('click', tdbFermerMenu);
+  document.getElementById('tdb-menu-accueil').addEventListener('click', tdbRetourAccueil);
+
+  document.querySelectorAll('.tdb-menu-item[data-tdb-cible]').forEach(function (btn) {
+    btn.addEventListener('click', function () { tdbAfficherSection(btn.dataset.tdbCible); });
+  });
+
+  var btnDeco = document.getElementById('tdb-menu-deconnexion');
+  if (btnDeco) {
+    btnDeco.addEventListener('click', function () {
+      var vrai = document.getElementById('tb-logout-btn-sidebar') || document.getElementById('tb-logout-btn');
+      if (vrai) vrai.click();
+    });
+  }
+
+  document.querySelectorAll('.tdb-landing-carte[data-tdb-bloc]').forEach(function (carte) {
+    carte.addEventListener('click', function () {
+      tdbOuvrirMenu();
+      var bloc = document.getElementById(carte.dataset.tdbBloc);
+      if (bloc) bloc.open = true;
+    });
+  });
+
+  window.tdbRetourAccueil = tdbRetourAccueil;
+});
+</script>
+
 <!-- ===== AJOUT : bannière "mannequin à la une" + actions rapides ===== -->
 
-<div class="db-overview-head">
+<div class="db-overview-head" data-section="b1-stats">
   <div>
     <div class="db-overview-kicker">CENTRE DE CONTRÔLE · MA2M</div>
     <h2>Vue d'ensemble<span class="db-title-rule"></span></h2>
@@ -2149,10 +2399,10 @@ setTimeout(() => {
   </div>
   <div class="db-live-chip"><span></span> DONNÉES EN DIRECT</div>
 </div>
-<div class="ref-hero-row"><div class="db-hero" id="db-hero"><div class="db-hero-vide">Chargement…</div></div></div>
-<div class="stats-grille" id="stats-grille">Chargement des statistiques…</div>
+<div class="ref-hero-row" data-section="b1-vedette"><div class="db-hero" id="db-hero"><div class="db-hero-vide">Chargement…</div></div></div>
+<div class="stats-grille" data-section="b1-stats" id="stats-grille">Chargement des statistiques…</div>
 
-<div class="liste-recente ma2m-top3-card" id="ma2m-top3-card">
+<div class="liste-recente ma2m-top3-card" data-section="b1-top3" id="ma2m-top3-card">
   <div class="ma2m-top3-head">
     <div>
       <div class="ma2m-top3-kicker">DISTINCTION MA2M</div>
@@ -2166,21 +2416,21 @@ setTimeout(() => {
   </div>
 </div>
 
-<div class="liste-recente">
+<div class="liste-recente" data-section="b1-classement">
 <h2 style="margin-bottom:0.3rem;">Classement des mannequins — visites réelles</h2>
 <p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Personnes distinctes ayant consulté chaque fiche sur les <strong>7 derniers jours</strong> (pas les rechargements de page). Top 10 affiché.</p>
 <div id="classement-mannequins" style="display:flex; flex-direction:column; gap:0.5rem;"></div>
 </div>
 
-<div class="ref-core-grid"><div class="ref-core-graph"><div class="activite-carte">
+<div class="ref-core-grid"><div class="ref-core-graph" data-section="b1-stats"><div class="activite-carte">
 <h3>📈 Activité — 7 derniers jours</h3>
 <div class="activite-souslabel">Visites réelles, une personne distincte par page.</div>
 <div class="activite-svg-wrap" id="activite-barres">Chargement…</div>
 <div class="activite-souscartes" id="activite-souscartes"></div>
-</div></div><div class="ref-core-activity"><div>
+</div></div><div class="ref-core-activity" data-section="b1-stats"><div>
 <h2 style="margin-bottom:0.8rem;">🕐 Dernières activités</h2>
 <div class="timeline-liste" id="dernieres-activites">Chargement…</div>
-</div></div><div class="ref-core-pending"><div class="a-traiter-bloc" style="margin-bottom:0;">
+</div></div><div class="ref-core-pending" data-section="b1-a-traiter"><div class="a-traiter-bloc" style="margin-bottom:0;">
 <div class="a-traiter-titre">
 <h2>🔔 À traiter</h2>
 <span class="dossiers-compteur a-traiter" id="a-traiter-total"></span>
@@ -2188,19 +2438,19 @@ setTimeout(() => {
 <div class="a-traiter-liste" id="a-traiter-liste">Chargement…</div>
 </div></div></div>
 
-<div class="liste-recente">
+<div class="liste-recente" data-section="b1-evolution">
 <h2 style="margin-bottom:0.3rem;">📊 Évolution des candidatures</h2>
 <p style="font-size:0.85rem; color:var(--gris); margin-top:0; margin-bottom:1rem;">Nombre de candidatures reçues par semaine, sur les 6 dernières semaines.</p>
 <div class="activite-svg-wrap" id="evolution-candidatures">Chargement…</div>
 </div>
 
-<div class="liste-recente">
+<div class="liste-recente" data-section="b1-derniers-dossiers">
 <h2 style="margin-bottom:0.3rem;">🗂️ Derniers dossiers — inscriptions, candidatures, recruteurs</h2>
 <p style="font-size:0.85rem; color:var(--gris); margin-top:0; margin-bottom:1rem;">Aperçu des dossiers les plus récents, tous types confondus. Cliquez pour ouvrir la fiche complète.</p>
 <div class="apercu-dossiers-liste" id="apercu-dossiers-liste">Chargement…</div>
 </div>
 
-<div class="ref-quick-row"><div class="db-actions-rapides">
+<div class="ref-quick-row" data-section="b1-actions-rapides"><div class="db-actions-rapides">
 <h3>Actions rapides</h3>
 <div class="db-actions-liste">
 <button class="db-action-btn" data-scroll="portail-nouveau-code" type="button"><span class="qa-icon">＋</span><span><b>Accès mannequin</b><small>Gérer les codes</small></span></button>
@@ -2209,7 +2459,7 @@ setTimeout(() => {
 <button class="db-action-btn" data-scroll="liste-recruteurs" type="button"><span class="qa-icon">⌂</span><span><b>Demandes recruteurs</b><small>Consulter les demandes</small></span></button>
 <button class="db-action-btn" data-scroll="table-contacts" type="button"><span class="qa-icon">✉</span><span><b>Messages</b><small>Consulter les contacts</small></span></button>
 </div>
-</div></div><div class="ref-lower-grid"><div class="ref-card ref-registrations">
+</div></div><div class="ref-lower-grid"><div class="ref-card ref-registrations" data-section="b2-inscriptions">
 <div class="dossiers-entete">
 <h2 style="margin:0;">Inscriptions mannequins</h2>
 <span class="dossiers-compteur" id="inscriptions-compteur"></span>
@@ -2222,7 +2472,7 @@ setTimeout(() => {
 <div class="filtre-pills" id="filtres-inscriptions"></div>
 <div class="dossier-liste" id="liste-inscriptions"></div>
 <button class="btn dossiers-plus" id="inscriptions-plus-btn" style="display:none;">Voir plus</button>
-</div><div class="ref-card ref-projects">
+</div><div class="ref-card ref-projects" data-section="b2-projets">
 <div class="dossiers-entete">
 <h2 style="margin:0;">Projets &amp; castings</h2>
 </div>
@@ -2234,14 +2484,14 @@ setTimeout(() => {
 </form>
 <div class="form-msg" id="projets-msg"></div>
 <div id="liste-projets"></div>
-</div></div><div class="ref-card ref-contacts">
+</div></div><div class="ref-card ref-contacts" data-section="b2-contacts">
 <h2 style="margin-bottom:1rem;">Derniers messages de contact</h2>
 <table id="table-contacts"><thead><tr><th>Nom</th><th>Type</th><th>Téléphone</th><th>Date</th><th></th></tr></thead><tbody></tbody></table>
 </div>
 <!-- ===== AJOUT Étape 14 + 16 : "À traiter" et activité côte à côte ===== -->
 
 
-<div class="liste-recente">
+<div class="liste-recente" data-section="b2-validations">
 <details id="validation-details">
 <summary class="dossiers-entete" style="cursor:pointer; list-style:none;">
 <h2 style="margin:0;">✅ Validations en attente</h2>
@@ -2252,7 +2502,7 @@ setTimeout(() => {
 </details>
 </div>
 <!-- ===== AJOUT : gestion des photos des mannequins déjà publiés dans Le Book ===== -->
-<div class="liste-recente">
+<div class="liste-recente" data-section="b2-mannequins-publies">
 <details id="mannequins-publies-details">
 <summary class="dossiers-entete" style="cursor:pointer; list-style:none;">
 <h2 style="margin:0;">📸 Mannequins publiés — gérer les photos</h2>
@@ -2263,7 +2513,7 @@ setTimeout(() => {
 </details>
 </div>
 <!-- ===== AJOUT Étape 20 : Drive / transferts — structure honnête, en attente du fichier d'intégration Drive ===== -->
-<div class="liste-recente">
+<div class="liste-recente" data-section="b3a-drive">
 <h2 style="margin-bottom:0.3rem;">📁 Drive / transferts</h2>
 <p style="font-size:0.85rem; color:var(--gris); margin-top:0; margin-bottom:1rem;">Suivi des photos envoyées. Le détail par photo (transférée / en attente / erreur) nécessite le fichier d'intégration Google Drive — non fourni pour le moment, voir l'avertissement ci-dessous.</p>
 <div class="drive-grille" id="drive-grille">Chargement…</div>
@@ -2271,19 +2521,19 @@ setTimeout(() => {
         ⚠️ Ce bloc affiche pour l'instant uniquement le nombre de photos déjà enregistrées côté Supabase (mannequins publiés dans THE BOOK). Le suivi détaillé des photos de candidatures/inscriptions envoyées vers Google Drive (transfert réussi / en attente / erreur, comme demandé à l'Étape 20 du cahier des charges) ne peut pas être branché tant que le fichier gérant l'envoi vers Drive n'a pas été fourni — aucune donnée n'est inventée ici en attendant.
       </div>
 </div>
-<div class="liste-recente">
+<div class="liste-recente" data-section="b3a-nettoyage">
 <h2 style="margin-bottom:0.3rem;">🧹 Nettoyage des photos traitées</h2>
 <p style="font-size:0.85rem; color:var(--gris); margin-top:0; margin-bottom:1rem;">Une fois qu'une candidature ou une inscription est définitivement traitée (Retenue/Refusée ou Inscription validée/Refusée), ses photos sont retirées du tableau de bord après 5 jours pour ne pas le surcharger — les fichiers restent dans Google Drive, seule la référence ici est nettoyée. Ce nettoyage tourne automatiquement chaque nuit ; le bouton ci-dessous permet de le lancer immédiatement pour vérifier que ça fonctionne.</p>
 <button class="btn" id="nettoyer-photos-btn" type="button">Lancer le nettoyage maintenant</button>
 <div class="form-msg" id="nettoyer-photos-msg"></div>
 </div>
-<div class="liste-recente">
+<div class="liste-recente" data-section="b3a-miniatures">
 <h2 style="margin-bottom:0.3rem;">🖼️ Miniatures des photos</h2>
 <p style="font-size:0.85rem; color:var(--gris); margin-top:0; margin-bottom:1rem;">Les photos envoyées depuis l'espace mannequin génèrent automatiquement leur propre miniature légère. Cet outil rattrape uniquement les photos déjà en ligne AVANT la mise en place de ce système, pour réduire la bande passante consommée par Le Book (visible dans Supabase → Usage → Cached Egress).</p>
 <button class="btn btn--principal" id="miniatures-generer-btn" type="button">Générer les miniatures manquantes</button>
 <div class="form-msg" id="miniatures-msg"></div>
 </div>
-<div class="liste-recente">
+<div class="liste-recente" data-section="b3b-code-validation">
 <div class="dossiers-entete">
 <h2 style="margin:0;">🔐 Code de validation (2ᵉ facteur)</h2>
 <span class="dossiers-compteur" id="code-validation-statut-badge"></span>
@@ -2294,7 +2544,7 @@ setTimeout(() => {
 <button class="btn btn--principal" id="cv-definir-btn" type="button">Enregistrer</button>
 <div class="form-msg" id="cv-msg"></div>
 </div>
-<div class="liste-recente">
+<div class="liste-recente" data-section="b3a-erreurs">
 <div class="dossiers-entete">
 <h2 style="margin:0;">🔴 Erreurs réelles du site (7 derniers jours)</h2>
 <span class="dossiers-compteur" id="erreurs-compteur"></span>
@@ -2304,7 +2554,7 @@ setTimeout(() => {
 <button class="btn" id="erreurs-tout-effacer-btn" style="margin-top:0.8rem; display:none; color:var(--gris); border-color:var(--gris-clair);">Tout marquer comme vu (effacer le journal)</button>
 </div>
 
-<div class="liste-recente">
+<div class="liste-recente" data-section="b2-candidatures">
 <div class="dossiers-entete">
 <h2 style="margin:0;">Candidatures</h2>
 <span class="dossiers-compteur" id="candidatures-compteur"></span>
@@ -2314,7 +2564,7 @@ setTimeout(() => {
 <div class="dossier-liste" id="liste-candidatures"></div>
 <button class="btn dossiers-plus" id="candidatures-plus-btn" style="display:none;">Voir plus</button>
 </div>
-<div class="liste-recente">
+<div class="liste-recente" data-section="b2-recruteurs">
 <div class="dossiers-entete">
 <h2 style="margin:0;">Demandes recruteurs</h2>
 <span class="dossiers-compteur" id="recruteurs-compteur"></span>
@@ -2323,7 +2573,7 @@ setTimeout(() => {
 <div class="dossier-liste" id="liste-recruteurs"></div>
 <button class="btn dossiers-plus" id="recruteurs-plus-btn" style="display:none;">Voir plus</button>
 </div>
-<div class="liste-recente">
+<div class="liste-recente" data-section="b3b-codes-inscription">
 <h2 style="margin-bottom:0.3rem;">Codes d'inscription</h2>
 <p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Chaque code ne peut servir qu'une seule fois. Générez-en un et transmettez-le (WhatsApp, SMS...) à la personne que vous invitez à s'inscrire.</p>
 <button class="btn btn--principal" id="generer-code-btn">+ Générer un nouveau code</button>
@@ -2338,7 +2588,7 @@ setTimeout(() => {
 <div class="dossier-liste" id="liste-anciens-codes" style="margin-top:1rem;"></div>
 </details>
 </div>
-<div class="liste-recente">
+<div class="liste-recente" data-section="b3b-code-permanent">
 <h2 style="margin-bottom:0.3rem;">Code permanent — "Créer mon compte" (espace mannequin)</h2>
 <p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Contrairement aux codes d'inscription ci-dessus, celui-ci est unique et permanent : le même code sert à tous les mannequins qui créent leur compte dans l'espace mannequin, jusqu'à ce que vous le changiez ici. Il n'est jamais stocké en clair — en cas de doute qu'il ait trop circulé, changez-le simplement.</p>
 <div style="display:flex; gap:0.7rem; flex-wrap:wrap; align-items:center;">
@@ -2348,7 +2598,7 @@ setTimeout(() => {
 </div>
 <div class="form-msg" id="portail-code-msg"></div>
 </div>
-<div class="liste-recente">
+<div class="liste-recente" data-section="b3c-instagram">
 <h2 style="margin-bottom:0.3rem;">📷 Flux Instagram (accueil)</h2>
 <p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">
         Affiche vos dernières publications Instagram sur le site. Configuration en une fois : jeton d'accès et identifiant du compte professionnel, obtenus via
@@ -2367,7 +2617,7 @@ setTimeout(() => {
 <div class="form-msg" id="instagram-msg"></div>
 </div>
 
-<div class="liste-recente">
+<div class="liste-recente" data-section="b3c-vedette-admin">
 <h2 style="margin-bottom:1rem;">Mannequin à la une</h2>
 <p style="color:var(--gris); font-size:0.85rem; margin-top:-0.6rem; margin-bottom:1rem;">Ce mannequin sera mis en avant sur la page d'accueil du site. Sans sélection, une photo aléatoire s'affiche à la place.</p>
 <div style="display:flex; gap:0.8rem; flex-wrap:wrap; align-items:center;">
@@ -2378,7 +2628,7 @@ setTimeout(() => {
 <div id="tb-vedette-actuelle" style="margin-top:0.8rem; font-size:0.85rem; color:var(--gris);"></div>
 <div class="form-msg" id="tb-vedette-msg"></div>
 </div>
-<div class="liste-recente">
+<div class="liste-recente" data-section="b3c-bandeau">
 <h2 style="margin-bottom:0.3rem;">Bandeau d'information (bande défilante de l'accueil)</h2>
 <p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Remplace le texte par défaut de la bande sous le hero de l'accueil par un message important (casting ouvert, événement, annonce...). Désactive-le pour revenir automatiquement au texte par défaut.</p>
 <div class="form-champ"><label for="bandeau-texte">Message à afficher</label><input id="bandeau-texte" placeholder="ex : Casting ouvert jusqu'au 30 juin — postulez maintenant" type="text"/></div>
@@ -2389,7 +2639,7 @@ setTimeout(() => {
 <div id="bandeau-etat" style="margin-top:0.8rem; font-size:0.85rem; color:var(--gris);"></div>
 <div class="form-msg" id="bandeau-msg"></div>
 </div>
-<div class="liste-recente">
+<div class="liste-recente" data-section="b3c-mot-fondateur">
 <h2 style="margin-bottom:0.3rem;">Mot du fondateur (page d'accueil)</h2>
 <p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Photo et message affichés sur l'accueil, juste après la section « Direction artistique ».</p>
 <div style="display:flex; gap:1.2rem; flex-wrap:wrap; align-items:flex-start; margin-bottom:1.2rem;">
@@ -2406,7 +2656,7 @@ setTimeout(() => {
 <button class="btn btn--principal" id="mr-enregistrer-btn">Enregistrer le mot du fondateur</button>
 <div class="form-msg" id="mr-msg"></div>
 </div>
-<div style="margin:2.5rem 0;">
+<div style="margin:2.5rem 0; display:none;">
 <a class="btn btn--principal" href="actualites.html" style="margin-right:0.8rem;">Publier une actualité</a>
 <a class="btn btn--principal" href="evenements.html" style="margin-right:0.8rem;">Publier un événement</a>
 <button class="btn" id="tb-logout-btn">Se déconnecter</button>
@@ -2531,6 +2781,7 @@ function reveleTableauDeBord() {
   afficherChromePublic(false);
   chargerStatistiques();
   chargerStatutCodeValidation();
+  if (window.tdbRetourAccueil) window.tdbRetourAccueil();
 }
 
 // Appelée après toute connexion réussie (mot de passe ou reset mdp) déjà
@@ -4878,6 +5129,7 @@ initSidebarNav();
     if(!graph) return;
     const box=document.createElement('div');
     box.className='ref-distribution';
+    box.dataset.section='b1-repartition';
     box.innerHTML='<h3>Répartition des profils</h3><div class="ref-donut-wrap"><div class="ref-donut"><div class="donut-center"><strong id="rf-total-profils">0</strong>Mannequins</div></div><div class="ref-legend"><div class="f"><span><i></i>Femmes</span><b>68%</b></div><div class="h"><span><i></i>Hommes</span><b>22%</b></div><div class="e"><span><i></i>Enfants</span><b>10%</b></div></div></div>';
     grid.insertBefore(box,graph);
     const total=document.querySelector('#rf-total-profils');
