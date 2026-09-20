@@ -265,6 +265,14 @@ async function empreinteVisiteur() {
   }
 }
 
+// Doit être EXACTEMENT le même texte que celui défini côté script Google
+// Apps Script (CLE_ATTENDUE) — évite qu'un script tiers, qui aurait
+// simplement trouvé l'adresse du endpoint, puisse l'appeler directement en
+// dehors du site. Ce n'est pas un secret absolu (visible ici, comme
+// n'importe quel code de ce fichier public), mais ça arrête l'immense
+// majorité des abus automatisés qui ne visitent jamais le vrai site.
+const CLE_SCRIPT_PHOTOS_DRIVE = 'b56772fb9c5075517dc36a6b20db10734701e262274f3beb';
+
 // Envoi des photos (candidature/inscription) vers Google Drive via l'Apps
 // Script partagé — centralise ce qui était dupliqué à l'identique entre
 // candidature.html et inscription-mannequin.html (FR/EN), et ajoute une
@@ -273,12 +281,13 @@ async function empreinteVisiteur() {
 // de rattraper le coup. Un second essai automatique, après une courte
 // pause, résout la grande majorité des échecs purement transitoires.
 async function envoyerPhotosVersDrive(urlScript, payload, tentatives = 2) {
+  const payloadAvecCle = { ...payload, cle: CLE_SCRIPT_PHOTOS_DRIVE };
   for (let essai = 1; essai <= tentatives; essai++) {
     try {
       const reponse = await fetch(urlScript, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payloadAvecCle)
       });
       const resultat = await reponse.json();
       if (resultat.ok && Array.isArray(resultat.liens)) {
