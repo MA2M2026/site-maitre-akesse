@@ -3068,3 +3068,78 @@ create policy "Admins gerent le stockage model-photos"
   with check (bucket_id = 'model-photos' and exists (select 1 from admins where user_id = auth.uid()));
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 75 : limite anti-spam PAR VISITEUR sur les formulaires
+-- publics (candidature, recruteur, contact), en plus de la limite
+-- globale existante (Extension 58, limiter_soumissions_publiques).
+--
+-- Jusqu'ici, la limite était uniquement globale : 10 envois/minute pour
+-- TOUS les visiteurs confondus, par formulaire. Un seul visiteur
+-- malveillant envoyant 10 requêtes en rafale bloquait donc, pendant la
+-- minute suivante, tous les visiteurs légitimes du même formulaire —
+-- un point relevé par un audit de sécurité externe (17-20 sept. 2026).
+--
+-- Cette extension ajoute une limite plus stricte (3/minute) propre à
+-- chaque visiteur, identifié par son adresse IP transmise par Supabase
+-- via l'en-tête HTTP "x-forwarded-for". Si cette adresse n'est pas
+-- disponible pour une raison quelconque (configuration, absence de
+-- l'en-tête...), la fonction ignore silencieusement cette limite
+-- supplémentaire — la limite globale déjà en place continue de
+-- s'appliquer normalement, donc aucun risque de bloquer un envoi
+-- légitime par accident. Remplace limiter_soumissions_publiques() sans
+-- changer sa signature : les policies existantes qui l'appellent
+-- (candidature, recruteur, contact) n'ont pas besoin d'être modifiées.
+-- ===================================================================
+
+create table if not exists soumissions_formulaires_publics_ip (
+  id bigint generated always as identity primary key,
+  formulaire text not null,
+  ip text not null,
+  cree_le timestamptz not null default now()
+);
+alter table soumissions_formulaires_publics_ip enable row level security;
+-- Aucune policy : illisible/inmodifiable directement, seule la fonction ci-dessous y touche.
+
+create or replace function limiter_soumissions_publiques(p_formulaire text, p_max_par_minute int default 10)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  nb_recentes int;
+  ip_visiteur text;
+  nb_recentes_ip int;
+begin
+  delete from soumissions_formulaires_publics where cree_le < now() - interval '10 minutes';
+  select count(*) into nb_recentes from soumissions_formulaires_publics
+    where formulaire = p_formulaire and cree_le > now() - interval '1 minute';
+  if nb_recentes >= p_max_par_minute then
+    return false;
+  end if;
+
+  begin
+    ip_visiteur := nullif(trim(split_part(current_setting('request.headers', true)::json->>'x-forwarded-for', ',', 1)), '');
+  exception when others then
+    ip_visiteur := null;
+  end;
+
+  if ip_visiteur is not null then
+    delete from soumissions_formulaires_publics_ip where cree_le < now() - interval '10 minutes';
+    select count(*) into nb_recentes_ip from soumissions_formulaires_publics_ip
+      where formulaire = p_formulaire and ip = ip_visiteur and cree_le > now() - interval '1 minute';
+    if nb_recentes_ip >= 3 then
+      return false;
+    end if;
+    insert into soumissions_formulaires_publics_ip (formulaire, ip) values (p_formulaire, ip_visiteur);
+  end if;
+
+  insert into soumissions_formulaires_publics (formulaire) values (p_formulaire);
+  return true;
+end;
+$$;
+revoke all on function limiter_soumissions_publiques(text, int) from public;
+grant execute on function limiter_soumissions_publiques(text, int) to anon, authenticated;
+
+NOTIFY pgrst, 'reload schema';
