@@ -49,7 +49,7 @@
 
 * { box-sizing: border-box; }
 
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; overflow-x: hidden; }
 
 body {
   margin: 0;
@@ -1396,6 +1396,7 @@ section { padding: 5rem 0; }
 /* ---------- Porte d'entrée (hero verrouillé) ---------- */
 
 body.porte-verrouillee { overflow: hidden; height: 100vh; }
+html.porte-verrouillee { overflow: hidden; height: 100%; }
 
 .hero-v2::before {
   content: '';
