@@ -3261,22 +3261,47 @@ NOTIFY pgrst, 'reload schema';
 --    profondeur demandée par l'audit).
 -- ===================================================================
 
-revoke all on function utiliser_code_inscription(text) from public, anon, authenticated;
-revoke all on function liberer_code_inscription(text) from public, anon, authenticated;
+-- Chaque instruction ci-dessous ne s'exécute que si la fonction visée
+-- existe réellement dans la base (to_regprocedure renvoie null sinon) —
+-- évite toute erreur "function does not exist" si une fonction du
+-- fichier suivi n'a en réalité jamais été créée en base, ou a déjà été
+-- retirée par ailleurs. Sans effet sur les fonctions qui existent bel
+-- et bien : le comportement est strictement identique à des revoke/
+-- grant directs dans ce cas.
+do $$
+begin
+  if to_regprocedure('public.utiliser_code_inscription(text)') is not null then
+    revoke all on function utiliser_code_inscription(text) from public, anon, authenticated;
+  end if;
 
-revoke all on function code_validation_statut() from public;
-grant execute on function code_validation_statut() to authenticated;
+  if to_regprocedure('public.liberer_code_inscription(text)') is not null then
+    revoke all on function liberer_code_inscription(text) from public, anon, authenticated;
+  end if;
 
-revoke all on function definir_code_validation(text, text) from public;
-grant execute on function definir_code_validation(text, text) to authenticated;
+  if to_regprocedure('public.code_validation_statut()') is not null then
+    revoke all on function code_validation_statut() from public;
+    grant execute on function code_validation_statut() to authenticated;
+  end if;
 
-revoke all on function verifier_code_validation(text) from public;
-grant execute on function verifier_code_validation(text) to authenticated;
+  if to_regprocedure('public.definir_code_validation(text, text)') is not null then
+    revoke all on function definir_code_validation(text, text) from public;
+    grant execute on function definir_code_validation(text, text) to authenticated;
+  end if;
 
-revoke all on function demander_reinitialisation_code_validation() from public;
-grant execute on function demander_reinitialisation_code_validation() to authenticated;
+  if to_regprocedure('public.verifier_code_validation(text)') is not null then
+    revoke all on function verifier_code_validation(text) from public;
+    grant execute on function verifier_code_validation(text) to authenticated;
+  end if;
 
-revoke all on function reinitialiser_code_validation(text, text) from public;
-grant execute on function reinitialiser_code_validation(text, text) to authenticated;
+  if to_regprocedure('public.demander_reinitialisation_code_validation()') is not null then
+    revoke all on function demander_reinitialisation_code_validation() from public;
+    grant execute on function demander_reinitialisation_code_validation() to authenticated;
+  end if;
+
+  if to_regprocedure('public.reinitialiser_code_validation(text, text)') is not null then
+    revoke all on function reinitialiser_code_validation(text, text) from public;
+    grant execute on function reinitialiser_code_validation(text, text) to authenticated;
+  end if;
+end $$;
 
 NOTIFY pgrst, 'reload schema';
