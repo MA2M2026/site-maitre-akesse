@@ -159,10 +159,36 @@ function texteBrutDepuis(texte) {
 // superflus retirés, structure — gras/italique/titres/paragraphes — conservée).
 // Renvoie null si la bibliothèque n'a pas pu charger (CDN indisponible) plutôt que de
 // planter la page — le conteneur reste alors simplement vide.
+// Repli utilisé quand Quill ne peut pas s'afficher correctement (script indisponible,
+// ou chargé sans sa feuille de style — voir plus bas) : une simple zone de texte, pour
+// que l'admin puisse toujours écrire quelque chose plutôt que de se retrouver sans
+// aucun moyen de saisir son commentaire/sa description. Expose la même interface
+// minimale que Quill (getText/setText/root.innerHTML) pour rester compatible avec
+// lireContenuEditeur/chargerContenuDansEditeur sans les modifier.
+function creerRepliEditeur(conteneur, placeholder) {
+  conteneur.innerHTML = '';
+  const zone = document.createElement('textarea');
+  zone.rows = 8;
+  zone.placeholder = placeholder || 'Écrivez ici…';
+  conteneur.appendChild(zone);
+  return {
+    getText: () => zone.value,
+    setText: (t) => { zone.value = t || ''; },
+    root: {
+      get innerHTML() { return convertirTexteBrutEnHtml(zone.value); },
+      set innerHTML(html) {
+        const tmp = document.createElement('div');
+        tmp.innerHTML = String(html || '');
+        zone.value = tmp.textContent || tmp.innerText || '';
+      }
+    }
+  };
+}
+
 function creerEditeurRiche(idConteneur, placeholder) {
-  if (typeof Quill === 'undefined') return null;
   const conteneur = document.getElementById(idConteneur);
   if (!conteneur) return null;
+  if (typeof Quill === 'undefined') return creerRepliEditeur(conteneur, placeholder);
   const quill = new Quill(conteneur, {
     theme: 'snow',
     placeholder: placeholder || 'Écrivez ici… (vous pouvez coller un texte déjà mis en forme depuis Word)',
@@ -189,8 +215,7 @@ function creerEditeurRiche(idConteneur, placeholder) {
   const stylesAppliques = optionsMenu && getComputedStyle(optionsMenu).display === 'none';
   if (!stylesAppliques) {
     if (barreOutils) barreOutils.remove();
-    conteneur.innerHTML = '';
-    return null;
+    return creerRepliEditeur(conteneur, placeholder);
   }
   return quill;
 }
