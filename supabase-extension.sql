@@ -3035,3 +3035,36 @@ create policy "Admins suppriment fichiers evenements"
   using (bucket_id = 'evenements-images' and exists (select 1 from admins where user_id = auth.uid()));
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 73 : suppression d'une photo de mannequin déjà publié
+-- (gestion admin, tableau de bord) sans effet — le bouton affiche la
+-- confirmation, ne renvoie aucune erreur, mais la photo reste en place.
+--
+-- Cause : comme documenté à l'Extension 62, aucune policy RLS pour
+-- model_photos (ni pour le bucket de stockage model-photos) n'apparaît
+-- dans ce fichier — elles existent déjà en base, d'avant le suivi SQL
+-- ici, et leur contenu exact n'est pas vérifiable depuis ce dépôt.
+-- Le déclencheur trg_proteger_proprietaire_photo (Extension 62) exempte
+-- bien les admins, mais si la policy RLS invisible sous-jacente ne les
+-- exempte pas, elle bloque silencieusement le DELETE (0 ligne affectée,
+-- sans erreur renvoyée) — exactement le symptôme observé.
+--
+-- Ajoute des policies PERMISSIVES supplémentaires, réservées aux admins,
+-- sur la table et sur le bucket de stockage : elles s'additionnent (OU)
+-- à toute policy déjà en place, donc sans rien retirer ni casser
+-- l'existant, seulement garantir que l'admin peut toujours agir.
+-- ===================================================================
+drop policy if exists "Les admins gerent toutes les photos" on model_photos;
+create policy "Les admins gerent toutes les photos"
+  on model_photos for all
+  using (exists (select 1 from admins where user_id = auth.uid()))
+  with check (exists (select 1 from admins where user_id = auth.uid()));
+
+drop policy if exists "Admins gerent le stockage model-photos" on storage.objects;
+create policy "Admins gerent le stockage model-photos"
+  on storage.objects for all
+  using (bucket_id = 'model-photos' and exists (select 1 from admins where user_id = auth.uid()))
+  with check (bucket_id = 'model-photos' and exists (select 1 from admins where user_id = auth.uid()));
+
+NOTIFY pgrst, 'reload schema';
