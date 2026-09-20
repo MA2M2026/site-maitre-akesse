@@ -50,7 +50,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap">
 <link rel="stylesheet" href="../css/style.css">
-<link rel="stylesheet" href="../css/splash.css">
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#1e1d1c">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
@@ -98,6 +97,10 @@ setTimeout(() => {
   </ul>
 </div>
 
+<div class="intro-logo u-hidden" id="logo-splash">
+  <img src="../assets/logo-dark-bg.png" alt="Maître Akesse Model Management" draggable="false">
+</div>
+
 <section class="hero-v2 bord-dechire-bas" id="porte-entree">
   <div class="hero-carousel" id="heroCarousel">
     <div class="hero-slide active" data-slide="0">
@@ -139,6 +142,10 @@ setTimeout(() => {
     </div>
   </div>
   <div class="hero-dots" id="heroDots"></div>
+  <button id="entrer-btn" class="entrer-fleche" aria-label="Enter the site">
+    <span>Enter</span>
+    <span class="entrer-icone">↓</span>
+  </button>
 </section>
 
 <div class="marquee-bande" id="marqueeBande" aria-hidden="true">

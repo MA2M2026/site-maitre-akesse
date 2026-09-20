@@ -1,3 +1,48 @@
+// --- Porte d'entrée : le défilement reste verrouillé tant qu'on n'a pas cliqué "Entrer".
+let porteDejaOuverte = false;
+try { porteDejaOuverte = sessionStorage.getItem('ma2m_porte_ouverte'); } catch (e) {}
+
+if (porteDejaOuverte) {
+  document.getElementById('porte-entree').style.display = 'none';
+} else {
+  document.body.classList.add('porte-verrouillee');
+  document.documentElement.classList.add('porte-verrouillee');
+}
+
+document.getElementById('entrer-btn').addEventListener('click', async () => {
+  if (window.promesseVedette) {
+    try { await Promise.race([window.promesseVedette, new Promise((r) => setTimeout(r, 4000))]); } catch (e) {}
+  }
+  document.body.classList.remove('porte-verrouillee');
+  document.documentElement.classList.remove('porte-verrouillee');
+  document.getElementById('porte-entree').style.display = 'none';
+  window.scrollTo(0, 0);
+  try { sessionStorage.setItem('ma2m_porte_ouverte', '1'); } catch (e) {}
+});
+
+// --- Intro : logo statique, 3 secondes, sans animation complexe ---
+(function () {
+  let dejaVue = false;
+  try { dejaVue = sessionStorage.getItem('ma2m_intro_vue'); } catch (e) {}
+  const reduitMouvement = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (dejaVue || reduitMouvement) return;
+
+  const logoSplash = document.getElementById('logo-splash');
+  logoSplash.classList.remove('u-hidden');
+
+  let introTerminee = false;
+  function terminerIntro() {
+    if (introTerminee) return;
+    introTerminee = true;
+    logoSplash.classList.add('intro-cachee');
+    try { sessionStorage.setItem('ma2m_intro_vue', '1'); } catch (e) {}
+  }
+
+  // Un appui n'importe où sur le logo permet de passer directement au site.
+  logoSplash.addEventListener('click', terminerIntro);
+  setTimeout(terminerIntro, 3000);
+})();
+
 // --- Photo de fond de la porte d'entrée ---
 
 async function chargerPhotosHero() {
