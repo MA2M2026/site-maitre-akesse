@@ -265,6 +265,43 @@ async function empreinteVisiteur() {
   }
 }
 
+// Envoi des photos (candidature/inscription) vers Google Drive via l'Apps
+// Script partagé — centralise ce qui était dupliqué à l'identique entre
+// candidature.html et inscription-mannequin.html (FR/EN), et ajoute une
+// vraie tentative de nouvel essai : jusqu'ici, une simple coupure réseau
+// pendant l'envoi faisait perdre les photos pour de bon, sans aucun moyen
+// de rattraper le coup. Un second essai automatique, après une courte
+// pause, résout la grande majorité des échecs purement transitoires.
+async function envoyerPhotosVersDrive(urlScript, payload, tentatives = 2) {
+  for (let essai = 1; essai <= tentatives; essai++) {
+    try {
+      const reponse = await fetch(urlScript, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      });
+      const resultat = await reponse.json();
+      if (resultat.ok && Array.isArray(resultat.liens)) {
+        return { liens: resultat.liens, echec: false };
+      }
+    } catch (e) {}
+    if (essai < tentatives) await new Promise(r => setTimeout(r, 1500));
+  }
+  return { liens: [], echec: true };
+}
+
+// Journalise, côté base de données, les photos qui n'ont vraiment pas pu être
+// envoyées (même après nouvel essai) — jusqu'ici, l'agence ne pouvait
+// découvrir un dossier avec des photos manquantes qu'en l'ouvrant et en
+// comptant lui-même, sans aucune alerte. Écriture ouverte (comme
+// journal_erreurs/page_views), limitée en fréquence par visiteur.
+async function journaliserPhotosEchouees(source, dossierId, nbEchouees) {
+  if (!sb || !nbEchouees || !dossierId) return;
+  try {
+    await sb.from('photos_upload_echouees').insert({ source, dossier_id: dossierId, nb_photos_echouees: nbEchouees });
+  } catch (e) {}
+}
+
 // Comptage de visites (statistiques pour le tableau de bord admin)
 // Une seule visite comptée par page et par session de navigation, pour limiter
 // l'impact d'un rechargement en boucle (accidentel ou automatisé). L'empreinte IP

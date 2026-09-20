@@ -576,31 +576,27 @@ document.getElementById('form-inscription').addEventListener('submit', async (e)
       }
     }
 
-    const reponse = await fetch(URL_SCRIPT_PHOTOS_CASTING, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({
-        nom: dossier.full_name,
-        email: '',
-        phone: dossier.phone,
-        type: 'inscription',
-        projet: '',
-        photos: photosBase64
-      })
+    const { liens, echec } = await envoyerPhotosVersDrive(URL_SCRIPT_PHOTOS_CASTING, {
+      nom: dossier.full_name,
+      email: '',
+      phone: dossier.phone,
+      type: 'inscription',
+      projet: '',
+      photos: photosBase64
     });
-    const resultat = await reponse.json();
 
-    if (resultat.ok && Array.isArray(resultat.liens)) {
-      for (const lien of resultat.liens) {
+    if (!echec) {
+      for (const lien of liens) {
         await sb.from('inscriptions_photos').insert({ inscription_id: idInscription, url: lien, chemin: null });
       }
-      nbPhotosEchouees += photosBase64.length - resultat.liens.length;
+      nbPhotosEchouees += photosBase64.length - liens.length;
     } else {
       nbPhotosEchouees = fichiers.length;
     }
   } catch (e) {
     nbPhotosEchouees = fichiers.length;
   }
+  journaliserPhotosEchouees('inscription', idInscription, nbPhotosEchouees);
 
   msg.className = 'form-msg ok';
   msg.textContent = nbPhotosEchouees

@@ -3304,3 +3304,55 @@ begin
 end $$;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 78 : journal des photos de candidature/inscription qui
+-- n'ont pas pu être envoyées vers Google Drive, même après une
+-- nouvelle tentative automatique côté client (voir js/app.js,
+-- envoyerPhotosVersDrive / journaliserPhotosEchouees).
+--
+-- Jusqu'ici, quand l'envoi des photos échouait (coupure réseau, script
+-- Apps Script temporairement indisponible...), le dossier candidature/
+-- inscription était bien enregistré, mais rien ne signalait à l'agence
+-- qu'il manquait des photos — il fallait ouvrir chaque dossier un par
+-- un pour s'en apercevoir. Ce journal rend le problème visible,
+-- consultable par les admins uniquement.
+--
+-- Écriture ouverte à "anon" (comme journal_erreurs/page_views), car
+-- c'est le visiteur anonyme qui soumet le formulaire — protégée par la
+-- même limite anti-spam par IP que les autres tables de diagnostic
+-- (Extension 76).
+-- ===================================================================
+
+create table if not exists photos_upload_echouees (
+  id bigint generated always as identity primary key,
+  source text not null check (source in ('candidature', 'inscription')),
+  dossier_id uuid not null,
+  nb_photos_echouees int not null default 0,
+  cree_le timestamptz not null default now(),
+  traite boolean not null default false
+);
+alter table photos_upload_echouees enable row level security;
+
+drop policy if exists "Tout le monde peut signaler des photos echouees" on photos_upload_echouees;
+create policy "Tout le monde peut signaler des photos echouees"
+  on photos_upload_echouees for insert
+  with check (
+    nb_photos_echouees > 0 and nb_photos_echouees <= 20
+    and limiter_soumissions_publiques_ip('photos_upload_echouees', 30, 5)
+  );
+
+drop policy if exists "Les admins consultent le journal des photos echouees" on photos_upload_echouees;
+create policy "Les admins consultent le journal des photos echouees"
+  on photos_upload_echouees for select
+  using (exists (select 1 from admins where user_id = auth.uid()));
+
+drop policy if exists "Les admins marquent une entree comme traitee" on photos_upload_echouees;
+create policy "Les admins marquent une entree comme traitee"
+  on photos_upload_echouees for update
+  using (exists (select 1 from admins where user_id = auth.uid()))
+  with check (exists (select 1 from admins where user_id = auth.uid()));
+
+create index if not exists idx_photos_upload_echouees_traite on photos_upload_echouees(traite, cree_le desc);
+
+NOTIFY pgrst, 'reload schema';
