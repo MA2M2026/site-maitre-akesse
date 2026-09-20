@@ -184,9 +184,11 @@ function creerEditeurRiche(idConteneur, placeholder) {
   // simplement vide). "display:none" par défaut sur .ql-picker-options vient
   // uniquement de quill.snow.css — jamais de notre propre feuille — c'est donc un
   // signal fiable que la feuille de style a bien été appliquée.
-  const optionsMenu = conteneur.querySelector('.ql-picker-options');
+  const barreOutils = conteneur.previousElementSibling;
+  const optionsMenu = barreOutils ? barreOutils.querySelector('.ql-picker-options') : null;
   const stylesAppliques = optionsMenu && getComputedStyle(optionsMenu).display === 'none';
   if (!stylesAppliques) {
+    if (barreOutils) barreOutils.remove();
     conteneur.innerHTML = '';
     return null;
   }
