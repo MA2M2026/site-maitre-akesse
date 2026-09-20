@@ -1006,7 +1006,7 @@ async function chargerProfil() {
   // authenticated pour empêcher tout autre compte connecté de les lire via l'API) :
   // on les récupère séparément via une fonction réservée au propriétaire de la fiche.
   const { data: profil } = await sb.from('model_profiles')
-    .select('id, full_name, bio, height_cm, weight_kg, city, instagram, published, created_at, category, video_url, chest_cm, waist_cm, hips_cm, shoe_size, carnation, clothing_size, date_naissance, eye_color, hair_color, years_experience, model_types, languages, availability, inseam_cm, featured, premiere_publication_faite')
+    .select('id, full_name, bio, height_cm, weight_kg, city, instagram, published, created_at, category, video_url, chest_cm, waist_cm, hips_cm, shoe_size, carnation, clothing_size, date_naissance, eye_color, hair_color, years_experience, model_types, languages, availability, inseam_cm, featured, premiere_publication_faite, en_attente_validation, raison_refus')
     .eq('id', user.id).single();
   if (!profil) return;
   dernierProfilCharge = profil;
