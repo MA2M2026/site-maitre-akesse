@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-b+QrdXtiVOaEVLNTW7orZsKUFZUKusqEn6hCQdTT7lY='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-HGmhIc+tMcx0GzwZSJQLafoaRXftc9Mo7GyNQC0Wmdc=' 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-b+QrdXtiVOaEVLNTW7orZsKUFZUKusqEn6hCQdTT7lY='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net;">
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
 <script src="../js/analytics-config.js"></script>
@@ -49,6 +49,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap">
+<link rel="stylesheet" href="../css/splash.css">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#1e1d1c">
@@ -153,9 +154,9 @@ setTimeout(() => {
   </ul>
 </div>
 
-<div class="intro-logo u-hidden" id="logo-splash">
-  <img src="../assets/logo-dark-bg.png" alt="Maître Akesse Model Management" draggable="false">
-  <button type="button" class="intro-logo-passer" id="intro-passer-btn">Skip intro</button>
+<div class="splash u-hidden" id="logo-splash">
+  <div class="splash-logo-wrap"><img src="../assets/logo-dark-bg.png" alt="Maître Akesse Model Management"></div>
+  <button class="splash-passer" id="splash-passer" type="button">Skip intro</button>
 </div>
 
 <section class="hero-v2 bord-dechire-bas" id="porte-entree">
