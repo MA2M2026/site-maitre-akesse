@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const li = document.createElement('li');
     li.className = 'item-admin';
-    li.innerHTML = '<a href="tableau-de-bord.html">Tableau de bord</a>';
+    li.innerHTML = '<a href="/tableau-de-bord.html">Tableau de bord</a>';
     navLinks.appendChild(li);
   } catch (e) {}
 });
