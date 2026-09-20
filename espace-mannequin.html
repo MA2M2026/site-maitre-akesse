@@ -795,7 +795,10 @@ function calculerAgeApercu(dateNaissance) {
   if (!dateNaissance) return null;
   const naissance = new Date(dateNaissance);
   if (isNaN(naissance.getTime())) return null;
-  const age = Math.floor((Date.now() - naissance.getTime()) / (365.25 * 24 * 3600 * 1000));
+  const aujourdhui = new Date();
+  let age = aujourdhui.getFullYear() - naissance.getFullYear();
+  const pasEncoreAnniversaire = aujourdhui < new Date(aujourdhui.getFullYear(), naissance.getMonth(), naissance.getDate());
+  if (pasEncoreAnniversaire) age -= 1;
   return age > 0 && age < 100 ? age : null;
 }
 function valeurChampOuAutre(idSelect, idAutre) {

@@ -1189,16 +1189,11 @@ section { padding: 5rem 0; }
   .lightbox-global .lightbox-suivant { right: 0.5rem; }
 }
 
-/* ---------- Ancien lightbox local (conservé pour compatibilité, non utilisé) ---------- */
-
-.lightbox {
-  position: fixed; inset: 0; z-index: 900;
-  background: rgba(5,5,5,0.97);
-  display: flex; align-items: center; justify-content: center;
-  opacity: 0; visibility: hidden;
-  transition: opacity 0.3s ease, visibility 0.3s ease;
-}
-.lightbox.active { opacity: 1; visibility: visible; }
+/* ---------- Styles partagés avec la lightbox globale (.lightbox-global plus haut) ----------
+   La classe "lightbox" seule n'est plus utilisée nulle part, mais les règles ci-dessous
+   (lightbox-conteneur, lightbox-fermer, lightbox-fleche, etc.) le sont toujours : elles
+   complètent les règles ".lightbox-global .lightbox-xxx" plus haut (ex. le padding ici
+   n'est pas redéfini là-bas). Ne pas supprimer sans vérifier chaque propriété une par une. */
 
 .lightbox-conteneur { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; padding: 2.5rem; }
 
@@ -1587,7 +1582,7 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
 @media (min-width: 640px) { .evenements-albums-grille { grid-template-columns: repeat(2, 1fr); } }
 @media (min-width: 960px) { .evenements-albums-grille { grid-template-columns: repeat(3, 1fr); } }
 
-.evenement-carte {
+.evenement-album-carte {
   cursor: pointer; display: block; text-decoration: none; color: inherit;
 }
 .evenement-carte-photo {
@@ -1598,7 +1593,7 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
   width: 100%; height: 100%; object-fit: cover;
   transition: transform 0.7s var(--transition-douce), filter 0.4s ease;
 }
-.evenement-carte:hover .evenement-carte-photo img { transform: scale(1.06); }
+.evenement-album-carte:hover .evenement-carte-photo img { transform: scale(1.06); }
 .evenement-carte-corps { padding-top: 1rem; }
 .evenement-carte-corps h3 { margin-top: 0.4rem; font-size: 1.1rem; line-height: 1.3; }
 .evenement-carte-lieu { font-size: 0.8rem; color: var(--texte-corps); margin-top: 0.3rem; }

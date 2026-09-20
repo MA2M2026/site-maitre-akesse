@@ -242,7 +242,7 @@ async function chargerEvenements() {
   grille.innerHTML = data.map((e, i) => {
     const nbPhotos = compteurParEvenement[e.id] || (e.image_url ? 1 : 0);
     return `
-    <div class="evenement-carte reveal" data-index="${i}">
+    <div class="evenement-album-carte reveal" data-index="${i}">
       <div class="evenement-carte-photo">
         <img src="${echapperHtml(e.image_url || '')}" loading="lazy" alt="${echapperHtml(e.titre || '')}">
         ${nbPhotos > 1 ? `<span class="news-compteur-photos">${nbPhotos}</span>` : ''}
@@ -255,7 +255,7 @@ async function chargerEvenements() {
     </div>
   `; }).join('');
 
-  grille.querySelectorAll('.evenement-carte').forEach(carte => {
+  grille.querySelectorAll('.evenement-album-carte').forEach(carte => {
     carte.addEventListener('click', () => ouvrirEvenementDetail(data[parseInt(carte.dataset.index)].id));
   });
 
