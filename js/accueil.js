@@ -15,27 +15,29 @@ document.getElementById('entrer-btn').addEventListener('click', async () => {
   try { sessionStorage.setItem('ma2m_porte_ouverte', '1'); } catch (e) {}
 });
 
-// --- Intro : logo statique, 3 secondes, sans animation complexe ---
+// --- Intro : logo animé (5,8s ou "Passer l'intro"), avant la porte d'entrée ---
 (function () {
   let dejaVue = false;
   try { dejaVue = sessionStorage.getItem('ma2m_intro_vue'); } catch (e) {}
   const reduitMouvement = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
   if (dejaVue || reduitMouvement) return;
 
   const logoSplash = document.getElementById('logo-splash');
   logoSplash.classList.remove('u-hidden');
+  document.body.classList.add('splash-active');
 
   let introTerminee = false;
   function terminerIntro() {
     if (introTerminee) return;
     introTerminee = true;
-    logoSplash.classList.add('intro-cachee');
+    logoSplash.classList.add('u-hidden');
+    document.body.classList.remove('splash-active');
     try { sessionStorage.setItem('ma2m_intro_vue', '1'); } catch (e) {}
   }
 
-  // Un appui n'importe où sur le logo permet de passer directement au site.
-  logoSplash.addEventListener('click', terminerIntro);
-  setTimeout(terminerIntro, 3000);
+  document.getElementById('splash-passer').addEventListener('click', terminerIntro);
+  setTimeout(terminerIntro, 5800);
 })();
 
 // --- Photo de fond de la porte d'entrée ---
