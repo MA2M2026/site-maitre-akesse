@@ -57,6 +57,18 @@
 </head>
 <body>
 <script>
+// Prevents a flash of the entry door (the 3 photos) on every return to the homepage
+// once it has already been opened this session: we flag the page right away, before
+// the browser gets any chance to display the section, instead of waiting for the
+// end-of-page script (js/accueil-en.js) to hide it.
+try {
+  if (sessionStorage.getItem('ma2m_porte_ouverte')) {
+    document.documentElement.classList.add('porte-deja-vue');
+  }
+} catch (e) {}
+</script>
+
+<script>
 // Safety net: on an unstable connection, a third-party script (Supabase, EmailJS,
 // heic2any...) can be very slow or fail to load — in that case js/app.js never runs and
 // ".reveal" elements (scroll-in animation) stay invisible forever, even though the rest
@@ -99,6 +111,7 @@ setTimeout(() => {
 
 <div class="intro-logo u-hidden" id="logo-splash">
   <img src="../assets/logo-dark-bg.png" alt="Maître Akesse Model Management" draggable="false">
+  <button type="button" class="intro-logo-passer" id="intro-passer-btn">Skip intro</button>
 </div>
 
 <section class="hero-v2 bord-dechire-bas" id="porte-entree">

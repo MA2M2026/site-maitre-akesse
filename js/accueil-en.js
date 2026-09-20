@@ -1,10 +1,11 @@
 // --- Entry door: scrolling stays locked until "Enter" is clicked. ---
+// (Hiding an already-opened door happens earlier, via the class set at the very start
+// of <body> — see the comment there — so it never briefly appears before this
+// end-of-page script runs.)
 let porteDejaOuverte = false;
 try { porteDejaOuverte = sessionStorage.getItem('ma2m_porte_ouverte'); } catch (e) {}
 
-if (porteDejaOuverte) {
-  document.getElementById('porte-entree').style.display = 'none';
-} else {
+if (!porteDejaOuverte) {
   document.body.classList.add('porte-verrouillee');
   document.documentElement.classList.add('porte-verrouillee');
 }
