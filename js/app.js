@@ -163,7 +163,7 @@ function creerEditeurRiche(idConteneur, placeholder) {
   if (typeof Quill === 'undefined') return null;
   const conteneur = document.getElementById(idConteneur);
   if (!conteneur) return null;
-  return new Quill(conteneur, {
+  const quill = new Quill(conteneur, {
     theme: 'snow',
     placeholder: placeholder || 'Écrivez ici… (vous pouvez coller un texte déjà mis en forme depuis Word)',
     modules: {
@@ -176,6 +176,21 @@ function creerEditeurRiche(idConteneur, placeholder) {
       ]
     }
   });
+  // Le script Quill peut charger sans sa feuille de style associée (CDN lent ou
+  // partiellement indisponible sur le réseau du visiteur) : l'éditeur serait alors
+  // fonctionnel mais complètement non stylé — en particulier, le menu déroulant des
+  // titres (H2/H3) resterait déplié en permanence au lieu d'être masqué par défaut
+  // (symptôme observé : gros triangles superposés, bien plus déroutant qu'un champ
+  // simplement vide). "display:none" par défaut sur .ql-picker-options vient
+  // uniquement de quill.snow.css — jamais de notre propre feuille — c'est donc un
+  // signal fiable que la feuille de style a bien été appliquée.
+  const optionsMenu = conteneur.querySelector('.ql-picker-options');
+  const stylesAppliques = optionsMenu && getComputedStyle(optionsMenu).display === 'none';
+  if (!stylesAppliques) {
+    conteneur.innerHTML = '';
+    return null;
+  }
+  return quill;
 }
 
 // Charge un contenu existant (nouveau HTML ou ancien texte brut) dans un éditeur Quill —
