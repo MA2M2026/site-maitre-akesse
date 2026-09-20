@@ -463,6 +463,11 @@ section { padding: 5rem 0; }
 /* Lecture du contenu enrichi publié (article complet, fiche détail) : espacement
    généreux façon revue de presse plutôt qu'un bloc de texte compact. */
 .contenu-riche { line-height: 1.75; }
+/* La règle globale "p { color: var(--texte-corps) }" (pensée pour du texte sur fond
+   noir) prenait le dessus sur la couleur posée en style inline sur ce conteneur —
+   ici sur fond clair (actualités, partenaires), le texte redevenait presque
+   invisible (contraste ~1.5:1). On force l'héritage de la couleur du conteneur. */
+.contenu-riche p, .contenu-riche li { color: inherit; }
 .contenu-riche p { margin: 0 0 1.1em; }
 .contenu-riche p:last-child { margin-bottom: 0; }
 .contenu-riche h2, .contenu-riche h3, .contenu-riche h4 { margin: 1.5em 0 0.6em; line-height: 1.3; }
@@ -474,6 +479,10 @@ section { padding: 5rem 0; }
   font-style: italic; color: inherit; opacity: 0.85;
 }
 .contenu-riche a { color: var(--bordeaux-clair); text-decoration: underline; }
+/* Fiches à fond clair (actualités, partenaires) : --bordeaux-clair est calibré pour
+   un fond sombre et devient illisible sur --creme (contraste 3.49:1, sous les 4.5:1
+   requis) — on utilise ici --bordeaux, bien plus contrasté sur fond clair (9.56:1). */
+.news-modal-corps .contenu-riche a { color: var(--bordeaux); }
 
 .bloc-section {
   position: relative;
