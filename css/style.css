@@ -1301,23 +1301,6 @@ section { padding: 5rem 0; }
 body.porte-verrouillee { overflow: hidden; height: 100vh; height: 100dvh; }
 html.porte-verrouillee { overflow: hidden; height: 100%; }
 
-/* Même verrou que ci-dessus, appliqué pendant que le menu plein écran est ouvert —
-   évite qu'un défilement jusqu'aux limites du menu ne "chaîne" vers la page en dessous. */
-body.menu-ouvert { overflow: hidden; height: 100vh; height: 100dvh; }
-html.menu-ouvert { overflow: hidden; height: 100%; }
-
-/* Généralise ce même verrou aux autres superpositions plein écran à défilement interne
-   (fiche actualité/partenaire, galerie photo) — via :has(), pour ne pas avoir à dupliquer
-   la logique d'ouverture/fermeture dans chaque script qui pilote ces superpositions. */
-html:has(.news-modal.active),
-html:has(.lightbox-global.active) {
-  overflow: hidden; height: 100%;
-}
-html:has(.news-modal.active) body,
-html:has(.lightbox-global.active) body {
-  overflow: hidden; height: 100vh; height: 100dvh;
-}
-
 .hero-v2::before {
   content: '';
   position: absolute; inset: 0; z-index: 1;

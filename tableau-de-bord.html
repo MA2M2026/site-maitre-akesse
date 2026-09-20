@@ -106,11 +106,6 @@
   /* Fiche détaillée (modale) */
   .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.72); z-index:500; display:none; align-items:flex-start; justify-content:center; overflow-y:auto; overscroll-behavior:contain; padding:5vh 1rem; }
   .modal-overlay.ouvert { display:flex; }
-  /* Verrouille le défilement de la page pendant qu'une fiche modale ou le tiroir de
-     menu mobile est ouvert — même principe que le menu plein écran du site public,
-     généralisé ici via :has() pour couvrir les deux sans dupliquer leur JS d'ouverture. */
-  html:has(.modal-overlay.ouvert), html:has(.tdb-menu-panel.ouvert) { overflow:hidden; height:100%; }
-  html:has(.modal-overlay.ouvert) body, html:has(.tdb-menu-panel.ouvert) body { overflow:hidden; height:100vh; height:100dvh; }
   .modal-fiche { background:var(--creme); color:var(--noir); max-width:640px; width:100%; padding:2rem; position:relative; margin-bottom:5vh; }
   .modal-fermer { position:absolute; top:1rem; right:1rem; background:none; border:none; font-size:1.4rem; line-height:1; cursor:pointer; color:var(--noir); }
   .modal-fiche h3 { font-family:var(--display); font-size:1.6rem; margin-bottom:0.2rem; }
@@ -1938,13 +1933,16 @@ a.tdb-menu-item { text-decoration: none; }
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+  let tdbMenuEstOuvert = false;
   function tdbOuvrirMenu() {
     document.getElementById('tdb-menu-panel').classList.add('ouvert');
     document.getElementById('tdb-menu-overlay').classList.add('ouvert');
+    if (!tdbMenuEstOuvert) { tdbMenuEstOuvert = true; window.verrouillerDefilement(); }
   }
   function tdbFermerMenu() {
     document.getElementById('tdb-menu-panel').classList.remove('ouvert');
     document.getElementById('tdb-menu-overlay').classList.remove('ouvert');
+    if (tdbMenuEstOuvert) { tdbMenuEstOuvert = false; window.deverrouillerDefilement(); }
   }
   function tdbAfficherSection(cle) {
     document.getElementById('tdb-landing').style.display = 'none';
@@ -3532,13 +3530,19 @@ async function chargerListeMannequinsPublies() {
 
 let mannequinPhotosOuvert = null;
 let indexPhotoMannequinARemplacer = null;
+let modalPhotosEstOuverte = false;
 
 async function ouvrirPhotosMannequin(modelId, nom) {
   mannequinPhotosOuvert = modelId;
   document.getElementById('mpm-titre').textContent = nom;
   document.getElementById('mpm-photo-ajout-msg').style.display = 'none';
   document.getElementById('modal-photos-mannequin').classList.add('ouvert');
+  if (!modalPhotosEstOuverte) { modalPhotosEstOuverte = true; window.verrouillerDefilement(); }
   await rafraichirPhotosMannequin();
+}
+function fermerPhotosMannequin() {
+  document.getElementById('modal-photos-mannequin').classList.remove('ouvert');
+  if (modalPhotosEstOuverte) { modalPhotosEstOuverte = false; window.deverrouillerDefilement(); }
 }
 
 async function rafraichirPhotosMannequin() {
@@ -3653,11 +3657,11 @@ document.getElementById('mpm-photo-remplacement-input').addEventListener('change
 });
 
 document.getElementById('modal-photos-mannequin-fermer').addEventListener('click', () => {
-  document.getElementById('modal-photos-mannequin').classList.remove('ouvert');
+  fermerPhotosMannequin();
   mannequinPhotosOuvert = null;
 });
 document.getElementById('modal-photos-mannequin').addEventListener('click', (e) => {
-  if (e.target.id === 'modal-photos-mannequin') { document.getElementById('modal-photos-mannequin').classList.remove('ouvert'); mannequinPhotosOuvert = null; }
+  if (e.target.id === 'modal-photos-mannequin') { fermerPhotosMannequin(); mannequinPhotosOuvert = null; }
 });
 
 // Même script Google Apps Script que candidature.html / inscription-mannequin.html —
@@ -3886,6 +3890,7 @@ const CHAMPS_RECRUTEUR = [
 const TITRE_SOURCE = { casting: 'Candidature', inscription: 'Inscription', recruteur: 'Demande recruteur' };
 
 let ficheOuverte = null;
+let modalDossierEstOuverte = false;
 
 async function ouvrirFicheDossier(source, id) {
   const conf = DOSSIERS[source];
@@ -3924,6 +3929,7 @@ async function ouvrirFicheDossier(source, id) {
   const mannequinsEl = document.getElementById('mf-mannequins');
   const ajoutPhotoEl = document.getElementById('mf-ajout-photo');
   document.getElementById('modal-dossier').classList.add('ouvert');
+  if (!modalDossierEstOuverte) { modalDossierEstOuverte = true; window.verrouillerDefilement(); }
 
   if (source === 'recruteur') {
     photosEl.style.display = 'none';
@@ -4106,11 +4112,13 @@ function remplacerPhotoDossier(bouton) {
   document.getElementById('mf-photo-remplacement-input').click();
 }
 
-document.getElementById('modal-dossier-fermer').addEventListener('click', () => {
+function fermerFicheDossier() {
   document.getElementById('modal-dossier').classList.remove('ouvert');
-});
+  if (modalDossierEstOuverte) { modalDossierEstOuverte = false; window.deverrouillerDefilement(); }
+}
+document.getElementById('modal-dossier-fermer').addEventListener('click', fermerFicheDossier);
 document.getElementById('modal-dossier').addEventListener('click', (e) => {
-  if (e.target.id === 'modal-dossier') document.getElementById('modal-dossier').classList.remove('ouvert');
+  if (e.target.id === 'modal-dossier') fermerFicheDossier();
 });
 
 // ===================================================================
@@ -4221,7 +4229,7 @@ document.getElementById('mf-supprimer-dossier-btn').addEventListener('click', as
 
   if (error) { alert('Erreur lors de la suppression du dossier.'); return; }
 
-  document.getElementById('modal-dossier').classList.remove('ouvert');
+  fermerFicheDossier();
   afficherDossiers(ficheOuverte.source);
   chargerATraiter();
 });

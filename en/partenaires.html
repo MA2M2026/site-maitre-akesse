@@ -305,9 +305,19 @@ function ouvrirPartModal(index) {
   document.getElementById('part-modal-edition').style.display = 'none';
   document.getElementById('part-modal-admin-actions').style.display = window.estAdminConnecte ? 'block' : 'none';
 
-  document.getElementById('part-modal').classList.add('active');
+  ouvrirPartModal();
 }
-document.getElementById('part-modal-fermer').addEventListener('click', () => document.getElementById('part-modal').classList.remove('active'));
+// Locks page scrolling while the sheet is open (same mechanism, iPhone-safe, as the menu — see js/app.js).
+let partModalEstOuverte = false;
+function ouvrirPartModal() {
+  document.getElementById('part-modal').classList.add('active');
+  if (!partModalEstOuverte) { partModalEstOuverte = true; window.verrouillerDefilement(); }
+}
+function fermerPartModal() {
+  document.getElementById('part-modal').classList.remove('active');
+  if (partModalEstOuverte) { partModalEstOuverte = false; window.deverrouillerDefilement(); }
+}
+document.getElementById('part-modal-fermer').addEventListener('click', fermerPartModal);
 
 document.getElementById('part-modal-modifier-btn').addEventListener('click', () => {
   const p = window.partenairesData.find(x => x.id === window.partenaireModalCourant);
@@ -380,7 +390,7 @@ document.getElementById('part-modal-supprimer-btn').addEventListener('click', as
   const p = window.partenairesData.find(x => x.id === id);
   if (p && p.logo_chemin) await sb.storage.from('partenaires-logos').remove([p.logo_chemin]);
   await sb.from('partenaires').delete().eq('id', id);
-  document.getElementById('part-modal').classList.remove('active');
+  fermerPartModal();
   chargerPartenaires();
 });
 

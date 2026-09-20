@@ -6,8 +6,12 @@ let porteDejaOuverte = false;
 try { porteDejaOuverte = sessionStorage.getItem('ma2m_porte_ouverte'); } catch (e) {}
 
 if (!porteDejaOuverte) {
+  // La classe masque aussi l'en-tête/le bandeau/le bouton WhatsApp pendant que la
+  // porte est affichée (voir css/style.css) — le verrou de défilement lui-même est
+  // géré séparément par verrouillerDefilement(), seule méthode fiable sur iPhone.
   document.body.classList.add('porte-verrouillee');
   document.documentElement.classList.add('porte-verrouillee');
+  window.verrouillerDefilement();
 }
 
 document.getElementById('entrer-btn').addEventListener('click', async () => {
@@ -16,6 +20,7 @@ document.getElementById('entrer-btn').addEventListener('click', async () => {
   }
   document.body.classList.remove('porte-verrouillee');
   document.documentElement.classList.remove('porte-verrouillee');
+  window.deverrouillerDefilement();
   document.getElementById('porte-entree').style.display = 'none';
   window.scrollTo(0, 0);
   try { sessionStorage.setItem('ma2m_porte_ouverte', '1'); } catch (e) {}

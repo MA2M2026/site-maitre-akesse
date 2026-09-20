@@ -35,6 +35,42 @@
   });
 })();
 
+// ================== Verrou de défilement fiable, y compris sur iPhone ==================
+// `overflow: hidden` seul (utilisé auparavant) ne bloque PAS le défilement tactile sur
+// iOS Safari — limitation connue et documentée d'iOS, pas un bug ponctuel. La seule
+// méthode qui fonctionne réellement sur iPhone consiste à figer la page en
+// position:fixed à sa position de défilement exacte, puis à la restaurer à l'identique
+// une fois déverrouillée. Un compteur permet à plusieurs éléments (porte d'entrée, menu,
+// modales) de verrouiller/déverrouiller sans se marcher dessus si jamais ils se
+// chevauchent. Utilisé par la porte d'entrée, le menu et toutes les superpositions
+// plein écran du site.
+(function verrouDefilementIOS() {
+  let positionSauvegardee = 0;
+  let compteur = 0;
+
+  window.verrouillerDefilement = function () {
+    if (compteur === 0) {
+      positionSauvegardee = window.scrollY || window.pageYOffset || 0;
+      document.body.style.position = 'fixed';
+      document.body.style.top = '-' + positionSauvegardee + 'px';
+      document.body.style.left = '0';
+      document.body.style.right = '0';
+    }
+    compteur++;
+  };
+
+  window.deverrouillerDefilement = function () {
+    compteur = Math.max(0, compteur - 1);
+    if (compteur === 0) {
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.left = '';
+      document.body.style.right = '';
+      window.scrollTo(0, positionSauvegardee);
+    }
+  };
+})();
+
 // ================== Retour arrière fiable, sur toutes les pages ==================
 // Sur mobile/tablette, le bouton "retour" restaure très souvent une page depuis
 // le cache du navigateur (bfcache) exactement telle qu'elle était figée en la
@@ -451,6 +487,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 (function () {
   let urls = [];
   let index = 0;
+  let lightboxEstOuverte = false;
 
   function creerLightboxGlobal() {
     if (document.getElementById('lightbox-global')) return;
@@ -505,6 +542,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   function fermer() {
     const el = document.getElementById('lightbox-global');
     if (el) el.classList.remove('active');
+    if (lightboxEstOuverte) { lightboxEstOuverte = false; window.deverrouillerDefilement(); }
   }
 
   window.ouvrirGalerieLightbox = function (listeUrls, indexDepart) {
@@ -514,5 +552,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     index = indexDepart || 0;
     afficher();
     document.getElementById('lightbox-global').classList.add('active');
+    if (!lightboxEstOuverte) { lightboxEstOuverte = true; window.verrouillerDefilement(); }
   };
 })();
