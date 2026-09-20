@@ -1,16 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-b+QrdXtiVOaEVLNTW7orZsKUFZUKusqEn6hCQdTT7lY='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net;">
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-1BX5MPZ6WE');
-</script>
-<meta charset="UTF-8">
+<script src="../js/analytics-config.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Maître Akesse Model Management — Modeling Agency, Abidjan</title>
 <meta name="description" content="Modeling management agency based in Abidjan: training, casting, booking, artistic direction, and fashion event organization.">
@@ -103,7 +98,7 @@ setTimeout(() => {
   </ul>
 </div>
 
-<div class="splash" id="logo-splash" style="display:none;">
+<div class="splash u-hidden" id="logo-splash">
   <div class="splash-logo-wrap"><img src="../assets/logo-dark-bg.png" alt="Maître Akesse Model Management"></div>
   <button class="splash-passer" id="splash-passer" type="button">Skip Intro</button>
 </div>
@@ -113,7 +108,7 @@ setTimeout(() => {
     <div class="hero-slide active" data-slide="0">
       <img class="hero-v2-bg" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="">
       <div class="hero-v2-content">
-        <div class="eyebrow eyebrow--clair" style="justify-content:center;">Abidjan · Côte d'Ivoire</div>
+        <div class="eyebrow eyebrow--clair u-flex-center">Abidjan · Côte d'Ivoire</div>
         <h1 class="hero-v2-title hero-v2-title-texte">
           <span class="ma2m-bloc">
             <span class="ma2m-grand">M A 2 M</span>
@@ -126,7 +121,7 @@ setTimeout(() => {
     <div class="hero-slide" data-slide="1">
       <img class="hero-v2-bg" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="">
       <div class="hero-v2-content">
-        <div class="eyebrow eyebrow--clair" style="justify-content:center;">Modeling Agency · Abidjan</div>
+        <div class="eyebrow eyebrow--clair u-flex-center">Modeling Agency · Abidjan</div>
         <h1 class="hero-v2-title hero-slide-titre">Character.<br>Refinement.</h1>
         <p class="hero-v2-subtitle">Talents trained to embody every brand universe, with character and refinement.</p>
         <div class="hero-v2-cta">
@@ -138,7 +133,7 @@ setTimeout(() => {
     <div class="hero-slide" data-slide="2">
       <img class="hero-v2-bg" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="">
       <div class="hero-v2-content">
-        <div class="eyebrow eyebrow--clair" style="justify-content:center;">Management · Training · Casting</div>
+        <div class="eyebrow eyebrow--clair u-flex-center">Management · Training · Casting</div>
         <h1 class="hero-v2-title hero-slide-titre">From Casting<br>To the Runway.</h1>
         <p class="hero-v2-subtitle">From your first casting to international runways, a structured agency by your side.</p>
         <div class="hero-v2-cta">
@@ -156,7 +151,7 @@ setTimeout(() => {
 </section>
 
 <div class="marquee-bande" id="marqueeBande" aria-hidden="true">
-  <div class="marquee-label" id="marqueeLabel" style="display:none;">Today's News</div>
+  <div class="marquee-label u-hidden" id="marqueeLabel">Today's News</div>
   <div class="marquee-viewport">
     <div class="marquee-piste" id="marqueePiste">
       <span>Management · Training · Casting · Booking · Artistic Direction · Runway Shows · Photo Shoots · Events ·</span>
@@ -166,7 +161,7 @@ setTimeout(() => {
 </div>
 
 <!-- Featured model -->
-<section id="mannequin-vedette" style="display:none;">
+<section id="mannequin-vedette" class="u-hidden">
   <a href="#" id="vedette-lien" class="vedette-fullbleed reveal">
     <img id="vedette-img" src="" alt="">
     <div class="vedette-scrim"></div>
@@ -191,11 +186,11 @@ setTimeout(() => {
 </section>
 
 <!-- Founder's word -->
-<section id="mot-responsable" class="fond-anthracite" style="display:none;">
+<section id="mot-responsable" class="fond-anthracite u-hidden">
   <div class="container">
     <div class="mot-responsable-bloc reveal">
       <div class="mot-responsable-photo-wrap">
-        <img id="mot-resp-photo" src="" alt="" style="display:none;">
+        <img id="mot-resp-photo" src="" alt="" class="u-hidden">
       </div>
       <div class="mot-responsable-texte">
         <div class="eyebrow">A Word from Maître Akesse</div>
@@ -207,7 +202,7 @@ setTimeout(() => {
   </div>
 </section>
 
-<section id="stat-strip" style="padding-top:2.5rem; padding-bottom:2.5rem;">
+<section id="stat-strip" class="u-py-2-5">
   <div class="container">
     <div class="stats-grille reveal" id="stats-grille-accueil"></div>
   </div>
@@ -221,7 +216,7 @@ setTimeout(() => {
       <p>A glimpse of the talents represented by the agency.</p>
     </div>
     <div class="medaillon-grille" id="medaillons-accueil"></div>
-    <div style="margin-top:2.5rem; text-align:center;" class="reveal">
+    <div class="reveal u-mt-2-5 u-tc">
       <a href="mannequins.html" class="btn btn--principal">See All Our Models</a>
     </div>
   </div>
@@ -261,7 +256,7 @@ setTimeout(() => {
         <div class="service-tag">Events</div>
       </div>
     </div>
-    <div style="margin-top:2.5rem;" class="reveal">
+    <div class="reveal u-mt-2-5">
       <a href="services.html" class="btn">See All Services</a>
     </div>
   </div>
@@ -275,14 +270,14 @@ setTimeout(() => {
       <h2>The Book</h2>
       <p>Every model at the agency has their own space to showcase their book, updated directly by themselves.</p>
     </div>
-    <div style="margin-top:1rem;" class="reveal">
+    <div class="reveal u-mt-1">
       <a href="mannequins.html" class="btn btn--principal">Discover Profiles</a>
     </div>
   </div>
 </section>
 
 <!-- 06 — Opportunities -->
-<section class="fond-anthracite" style="border-top: 1px solid var(--gris-clair); border-bottom: 1px solid var(--gris-clair);">
+<section class="fond-anthracite u-border-y-gris">
   <div class="container">
     <div class="section-tete reveal">
       <div class="eyebrow reveal">06 — Opportunities</div>
@@ -310,7 +305,7 @@ setTimeout(() => {
 </section>
 
 <!-- 07 — The MA2M universe -->
-<section id="ils-nous-font-confiance" style="display:none; padding-top:0.5rem; padding-bottom:0.5rem;">
+<section id="ils-nous-font-confiance" class="u-hidden u-py-0-5">
   <div class="container">
     <div class="confiance-bande reveal">
       <span class="confiance-label">Trusted By</span>
@@ -321,10 +316,10 @@ setTimeout(() => {
 
 <!-- Instagram feed: only appears once publications have been fetched
      from the dashboard (see chargerFluxInstagram below). -->
-<section id="flux-instagram" style="display:none;">
+<section id="flux-instagram" class="u-hidden">
   <div class="container">
-    <div class="section-tete reveal" style="text-align:center; max-width:60ch; margin:0 auto;">
-      <div class="eyebrow reveal" style="justify-content:center;">On Instagram</div>
+    <div class="section-tete reveal u-maxw-60ch">
+      <div class="eyebrow reveal u-flex-center">On Instagram</div>
       <h2>@maitreakessemodelmanagement</h2>
     </div>
     <div class="instagram-grille reveal" id="instagram-grille"></div>
@@ -334,12 +329,12 @@ setTimeout(() => {
 <!-- 08 — Contact -->
 <section>
   <div class="container">
-    <div class="section-tete reveal" style="text-align:center; max-width:60ch; margin:0 auto;">
-      <div class="eyebrow reveal" style="justify-content:center;">08 — Contact</div>
+    <div class="section-tete reveal u-maxw-60ch">
+      <div class="eyebrow reveal u-flex-center">08 — Contact</div>
       <h2>Let's Talk About Your Project</h2>
       <p>An agency, a project, a casting to organize? Our team responds directly.</p>
     </div>
-    <div style="margin-top:1.6rem; text-align:center; display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;" class="reveal">
+    <div class="reveal u-cta-row">
       <a href="contact.html" class="btn btn--principal">Contact Us</a>
       <a href="tel:+2250545656887" class="btn">+225 05 45 65 68 87</a>
     </div>
@@ -372,9 +367,9 @@ setTimeout(() => {
         <div class="footer-reseaux">
           <a href="https://www.instagram.com/maitreakessemodelmanagement" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram"><svg viewBox="0 0 24 24"><defs><linearGradient id="ig-grad-6" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="#FFC107"/><stop offset="50%" stop-color="#F44336"/><stop offset="100%" stop-color="#9C27B0"/></linearGradient></defs><path fill="url(#ig-grad-6)" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98C.014 8.333 0 8.741 0 12s.014 3.667.072 4.948c.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24s3.667-.014 4.948-.072c4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.667.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
           <a href="https://www.tiktok.com/@agencemaitreakessemodel" target="_blank" rel="noopener" aria-label="TikTok" title="TikTok"><svg viewBox="0 0 24 24"><path fill="#25F4EE" transform="translate(-0.9,-0.9)" d="M16.6 5.82c-1.36-1.57-3.24-1.48-3.24-1.48h-3.09v12.4a2.592 2.592 0 01-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 004.3 1.38V7.3s-1.88.09-3.24-1.48z"/><path fill="#FE2C55" transform="translate(0.9,0.9)" d="M16.6 5.82c-1.36-1.57-3.24-1.48-3.24-1.48h-3.09v12.4a2.592 2.592 0 01-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 004.3 1.38V7.3s-1.88.09-3.24-1.48z"/><path fill="#000000" d="M16.6 5.82c-1.36-1.57-3.24-1.48-3.24-1.48h-3.09v12.4a2.592 2.592 0 01-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 004.3 1.38V7.3s-1.88.09-3.24-1.48z"/></svg></a>
-          <a href="https://www.facebook.com/share/1BzPN69rhE/" target="_blank" rel="noopener" aria-label="Facebook" title="Facebook" style="color:#1877F2;"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12.06C22 6.505 17.523 2 12 2S2 6.505 2 12.06c0 5.022 3.657 9.184 8.438 9.94v-7.03H7.898v-2.91h2.54V9.845c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.459h-1.26c-1.243 0-1.63.771-1.63 1.562v1.875h2.773l-.443 2.91h-2.33V22c4.78-.756 8.437-4.918 8.437-9.94z"/></svg></a>
-          <a href="https://youtube.com/@maitreakessemodelmanagement" target="_blank" rel="noopener" aria-label="YouTube" title="YouTube" style="color:#FF0000;"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a2.994 2.994 0 00-2.107-2.12C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.391.521A2.994 2.994 0 00.502 6.186 31.25 31.25 0 000 12a31.25 31.25 0 00.502 5.814 2.994 2.994 0 002.107 2.12c1.886.521 9.391.521 9.391.521s7.505 0 9.391-.521a2.994 2.994 0 002.107-2.12A31.25 31.25 0 0024 12a31.25 31.25 0 00-.502-5.814zM9.6 15.6V8.4l6.4 3.6-6.4 3.6z"/></svg></a>
-          <a href="https://wa.me/message/HJAMXGXHCL46I1" target="_blank" rel="noopener" aria-label="WhatsApp" title="WhatsApp" style="color:#25D366;"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.472-.148-.67.15-.198.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0a12 12 0 00-10.288 18.06L0 24l6.084-1.688A12 12 0 1012 0zm0 21.938a9.917 9.917 0 01-5.052-1.383l-.362-.215-3.752 1.041 1.004-3.665-.235-.375A9.938 9.938 0 1112 21.938z"/></svg></a>
+          <a href="https://www.facebook.com/share/1BzPN69rhE/" target="_blank" rel="noopener" aria-label="Facebook" title="Facebook" class="u-ic-facebook"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12.06C22 6.505 17.523 2 12 2S2 6.505 2 12.06c0 5.022 3.657 9.184 8.438 9.94v-7.03H7.898v-2.91h2.54V9.845c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.459h-1.26c-1.243 0-1.63.771-1.63 1.562v1.875h2.773l-.443 2.91h-2.33V22c4.78-.756 8.437-4.918 8.437-9.94z"/></svg></a>
+          <a href="https://youtube.com/@maitreakessemodelmanagement" target="_blank" rel="noopener" aria-label="YouTube" title="YouTube" class="u-ic-youtube"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a2.994 2.994 0 00-2.107-2.12C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.391.521A2.994 2.994 0 00.502 6.186 31.25 31.25 0 000 12a31.25 31.25 0 00.502 5.814 2.994 2.994 0 002.107 2.12c1.886.521 9.391.521 9.391.521s7.505 0 9.391-.521a2.994 2.994 0 002.107-2.12A31.25 31.25 0 0024 12a31.25 31.25 0 00-.502-5.814zM9.6 15.6V8.4l6.4 3.6-6.4 3.6z"/></svg></a>
+          <a href="https://wa.me/message/HJAMXGXHCL46I1" target="_blank" rel="noopener" aria-label="WhatsApp" title="WhatsApp" class="u-ic-whatsapp"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.472-.148-.67.15-.198.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0a12 12 0 00-10.288 18.06L0 24l6.084-1.688A12 12 0 1012 0zm0 21.938a9.917 9.917 0 01-5.052-1.383l-.362-.215-3.752 1.041 1.004-3.665-.235-.375A9.938 9.938 0 1112 21.938z"/></svg></a>
         </div>
       </div>
     </div>
@@ -386,292 +381,11 @@ setTimeout(() => {
   </div>
 </footer>
 
-<script>document.getElementById('an').textContent = new Date().getFullYear();</script>
+<script src="../js/copyright-annee.js"></script>
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"></script>
 <script src="../js/supabase-config.js"></script>
 <script src="../js/app.js"></script>
 <script src="../js/menu.js"></script>
-<script>
-// --- Entry door: scrolling stays locked until "Enter" is clicked. Once the door has been
-// opened, it stays open for the rest of the session (refreshing the page or coming back via
-// the "Home" menu link should not lock the visitor out again). ---
-let porteDejaOuverte = false;
-try { porteDejaOuverte = sessionStorage.getItem('ma2m_porte_ouverte'); } catch (e) {}
-
-if (porteDejaOuverte) {
-  document.getElementById('porte-entree').style.display = 'none';
-} else {
-  document.body.classList.add('porte-verrouillee');
-  document.documentElement.classList.add('porte-verrouillee');
-}
-
-document.getElementById('entrer-btn').addEventListener('click', async () => {
-  if (window.promesseVedette) {
-    try { await Promise.race([window.promesseVedette, new Promise((r) => setTimeout(r, 4000))]); } catch (e) {}
-  }
-  document.body.classList.remove('porte-verrouillee');
-  document.documentElement.classList.remove('porte-verrouillee');
-  document.getElementById('porte-entree').style.display = 'none';
-  window.scrollTo(0, 0);
-  try { sessionStorage.setItem('ma2m_porte_ouverte', '1'); } catch (e) {}
-});
-
-// --- Intro: animated logo (5.8s or "Skip Intro"), before the entry door ---
-(function () {
-  let dejaVue = false;
-  try { dejaVue = sessionStorage.getItem('ma2m_intro_vue'); } catch (e) {}
-  const reduitMouvement = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  if (dejaVue || reduitMouvement) return;
-
-  const logoSplash = document.getElementById('logo-splash');
-  logoSplash.style.display = 'flex';
-  document.body.classList.add('splash-active');
-
-  let introTerminee = false;
-  function terminerIntro() {
-    if (introTerminee) return;
-    introTerminee = true;
-    logoSplash.style.display = 'none';
-    document.body.classList.remove('splash-active');
-    try { sessionStorage.setItem('ma2m_intro_vue', '1'); } catch (e) {}
-  }
-
-  document.getElementById('splash-passer').addEventListener('click', terminerIntro);
-  // Safety net: if the small "Skip Intro" button isn't visible or reachable on
-  // some phones, tapping anywhere on the intro screen still skips straight to
-  // the site.
-  logoSplash.addEventListener('click', terminerIntro);
-  setTimeout(terminerIntro, 5800);
-})();
-
-// --- Entry door background photos ---
-async function chargerPhotosHero() {
-  const imagesHero = Array.from(document.querySelectorAll('.hero-slide .hero-v2-bg'));
-  const CLE_CACHE = 'ma2m_hero_photos';
-
-  const melanger = (liste) => {
-    const copie = liste.slice();
-    for (let i = copie.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [copie[i], copie[j]] = [copie[j], copie[i]];
-    }
-    return copie;
-  };
-
-  const afficher = (img, url) => {
-    if (!url) return;
-    const preload = new Image();
-    preload.onload = () => { img.src = url; };
-    preload.src = url;
-  };
-
-  let cache = [];
-  try { cache = JSON.parse(localStorage.getItem(CLE_CACHE) || '[]'); } catch (e) {}
-
-  if (cache.length) {
-    melanger(cache).slice(0, imagesHero.length).forEach((url, i) => afficher(imagesHero[i], url));
-  }
-
-  if (!sb) return;
-  const { data } = await sb
-    .from('model_photos')
-    .select('url, model_id, model_profiles!inner(published)')
-    .eq('model_profiles.published', true)
-    .order('created_at', { ascending: false })
-    .limit(120);
-
-  const parMannequin = new Map();
-  melanger(data || []).forEach(p => {
-    if (!parMannequin.has(p.model_id)) parMannequin.set(p.model_id, p.url);
-  });
-  const urls = melanger(Array.from(parMannequin.values()));
-  if (urls.length) {
-    try { localStorage.setItem(CLE_CACHE, JSON.stringify(urls)); } catch (e) {}
-    if (!cache.length) melanger(urls).slice(0, imagesHero.length).forEach((url, i) => afficher(imagesHero[i], url));
-  }
-}
-chargerPhotosHero();
-
-// --- Scrolling announcement banner ---
-async function chargerBandeauAnnonce() {
-  if (!sb) return;
-  const { data } = await sb.from('bandeau_annonce').select('texte, actif').eq('id', 'principal').maybeSingle();
-  if (data && data.actif && data.texte && data.texte.trim()) {
-    const texte = data.texte.trim() + ' · ';
-    document.querySelectorAll('#marqueePiste span').forEach(span => { span.textContent = texte; });
-    document.getElementById('marqueeLabel').style.display = 'flex';
-    document.getElementById('marqueeBande').classList.add('marquee-annonce-active');
-    document.getElementById('carte-a-venir-texte').textContent = data.texte.trim();
-  }
-}
-chargerBandeauAnnonce();
-
-// --- Instagram feed: displays publications cached from the dashboard ---
-async function chargerFluxInstagram() {
-  if (!sb) return;
-  const { data } = await sb.from('instagram_posts_cache').select('posts').eq('id', 'principal').maybeSingle();
-  const posts = data && Array.isArray(data.posts) ? data.posts : [];
-  if (!posts.length) return;
-
-  const grille = document.getElementById('instagram-grille');
-  grille.innerHTML = posts.slice(0, 8).map(p => `
-    <a href="${echapperHtml(p.lien)}" target="_blank" rel="noopener" class="instagram-vignette" title="${echapperHtml(p.legende || '')}">
-      <img src="${echapperHtml(p.image)}" alt="${echapperHtml(p.legende || 'Instagram post')}" loading="lazy">
-    </a>
-  `).join('');
-  document.getElementById('flux-instagram').style.display = 'block';
-}
-chargerFluxInstagram();
-
-// --- Hero carousel ---
-(function initCarrouselHero() {
-  const slides = Array.from(document.querySelectorAll('.hero-slide'));
-  const dotsConteneur = document.getElementById('heroDots');
-  if (!slides.length || !dotsConteneur) return;
-
-  let indexActif = 0;
-  let minuteur = null;
-  const reduitMouvement = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  slides.forEach((_, i) => {
-    const point = document.createElement('span');
-    if (i === 0) point.classList.add('actif');
-    point.addEventListener('click', () => allerAuSlide(i));
-    dotsConteneur.appendChild(point);
-  });
-  const points = Array.from(dotsConteneur.children);
-
-  function allerAuSlide(i) {
-    slides[indexActif].classList.remove('active');
-    points[indexActif].classList.remove('actif');
-    indexActif = i;
-    slides[indexActif].classList.add('active');
-    points[indexActif].classList.add('actif');
-  }
-
-  function suivant() { allerAuSlide((indexActif + 1) % slides.length); }
-
-  if (!reduitMouvement && slides.length > 1) {
-    minuteur = setInterval(suivant, 6000);
-  }
-})();
-
-// --- Homepage medallions: a few published models as a preview ---
-async function chargerMedaillonsAccueil() {
-  if (!sb) return;
-  const conteneur = document.getElementById('medaillons-accueil');
-  const { data: profils } = await sb.from('model_profiles').select('id, full_name, city, height_cm').eq('published', true).order('created_at', { ascending: false }).limit(6);
-  if (!profils || !profils.length) { conteneur.innerHTML = '<p style="color:var(--gris);">Profiles coming soon.</p>'; return; }
-
-  for (const profil of profils) {
-    const { data: photos } = await sb.from('model_photos').select('url').eq('model_id', profil.id).order('created_at', { ascending: true }).limit(1);
-    const photoUrl = (photos && photos[0]) ? photos[0].url : '../assets/logo-dark-bg.png';
-    const carte = document.createElement('a');
-    carte.href = 'mannequin.html?id=' + profil.id;
-    carte.className = 'medaillon-carte reveal';
-    carte.innerHTML = `
-      <div class="medaillon-photo"><img src="${echapperHtml(photoUrl)}" alt="${echapperHtml(profil.full_name || '')}" loading="lazy"></div>
-      <div class="medaillon-nom">${echapperHtml(profil.full_name || 'Model')}</div>
-      <div class="medaillon-info">${echapperHtml(profil.city || '')}${profil.height_cm ? ' · ' + profil.height_cm + ' cm' : ''}</div>
-    `;
-    conteneur.appendChild(carte);
-  }
-}
-chargerMedaillonsAccueil();
-
-// --- Featured model ---
-async function chargerMannequinVedette() {
-  if (!sb) return;
-  let { data: profil } = await sb.from('model_profiles')
-    .select('id, full_name, city, category, height_cm')
-    .eq('published', true).eq('featured', true).limit(1).maybeSingle();
-
-  if (!profil) {
-    const { data: recent } = await sb.from('model_profiles')
-      .select('id, full_name, city, category, height_cm')
-      .eq('published', true).order('created_at', { ascending: false }).limit(1).maybeSingle();
-    profil = recent;
-  }
-  if (!profil) return;
-
-  const { data: photos } = await sb.from('model_photos').select('url').eq('model_id', profil.id).order('created_at', { ascending: true }).limit(1);
-  const photoUrl = (photos && photos[0]) ? photos[0].url : '../assets/logo-dark-bg.png';
-  const libelleCategorie = profil.category === 'homme' ? 'Male' : profil.category === 'femme' ? 'Female' : 'New Face';
-
-  document.getElementById('vedette-img').src = photoUrl;
-  document.getElementById('vedette-img').alt = echapperHtml(profil.full_name || '');
-  document.getElementById('vedette-nom').textContent = profil.full_name || 'Model';
-  document.getElementById('vedette-info').textContent = [libelleCategorie, profil.city, profil.height_cm ? profil.height_cm + ' cm' : null].filter(Boolean).join(' · ');
-  document.getElementById('vedette-lien').href = 'mannequin.html?id=' + profil.id;
-  document.getElementById('mannequin-vedette').style.display = 'block';
-}
-window.promesseVedette = chargerMannequinVedette();
-
-// --- Founder's word: photo and message editable from the dashboard ---
-async function chargerMotResponsable() {
-  if (!sb) return;
-  const { data } = await sb.from('mot_responsable').select('*').eq('id', 'principal').maybeSingle();
-  if (!data || !data.message) return;
-
-  document.getElementById('mot-resp-nom').textContent = data.nom || 'Maître Akesse';
-  document.getElementById('mot-resp-titre').textContent = data.titre || '';
-  document.getElementById('mot-resp-message').textContent = data.message;
-
-  if (data.photo_url) {
-    const photo = document.getElementById('mot-resp-photo');
-    photo.onerror = () => { photo.style.display = 'none'; };
-    photo.src = data.photo_url;
-    photo.alt = data.nom || 'Maître Akesse';
-    photo.style.display = 'block';
-  }
-  document.getElementById('mot-responsable').style.display = 'block';
-}
-chargerMotResponsable();
-
-// --- "Trusted By" banner ---
-async function chargerBandeauConfiance() {
-  if (!sb) return;
-  const { data } = await sb.from('partenaires').select('id, nom, logo_url').order('created_at', { ascending: false }).limit(14);
-  if (!data || !data.length) return;
-
-  const avecLogo = data.filter(p => p.logo_url);
-  if (!avecLogo.length) return;
-
-  document.getElementById('confiance-liste').innerHTML = avecLogo.map(p => `
-    <a href="partenaires.html?partenaire=${p.id}" class="confiance-carte" title="${echapperHtml(p.nom || '')}">
-      <img src="${echapperHtml(p.logo_url)}" alt="${echapperHtml(p.nom || '')}" loading="lazy">
-    </a>
-  `).join('');
-  document.getElementById('ils-nous-font-confiance').style.display = 'block';
-}
-chargerBandeauConfiance();
-
-// --- Stats strip: real numbers, computed live from the database ---
-async function chargerStatsAccueil() {
-  if (!sb) return;
-  const [{ count: nbMannequins }, { count: nbProjets }, { count: nbPartenaires }, { count: nbActualites }] = await Promise.all([
-    sb.from('model_profiles').select('id', { count: 'exact', head: true }).eq('published', true),
-    sb.from('model_projects').select('id', { count: 'exact', head: true }),
-    sb.from('partenaires').select('id', { count: 'exact', head: true }),
-    sb.from('actualites').select('id', { count: 'exact', head: true })
-  ]);
-
-  const stats = [
-    { chiffre: (nbMannequins || 0) + '+', libelle: 'Models Represented' },
-    { chiffre: (nbProjets || 0) + '+', libelle: 'Completed Projects' },
-    { chiffre: (nbPartenaires || 0) + '+', libelle: 'Partners & Institutions' },
-    { chiffre: 'Abidjan', libelle: 'Based in Côte d\'Ivoire' }
-  ];
-
-  document.getElementById('stats-grille-accueil').innerHTML = stats.map(s => `
-    <div class="stat-item">
-      <span class="chiffre">${s.chiffre}</span>
-      <span class="libelle">${s.libelle}</span>
-    </div>
-  `).join('');
-}
-chargerStatsAccueil();
-</script>
+<script src="../js/accueil-en.js"></script>
 </body>
 </html>

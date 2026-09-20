@@ -435,7 +435,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         <button class="modale-ios-fermer" title="Fermer">✕</button>
         <h3>Installer l'app sur votre écran d'accueil</h3>
         <ol>
-          <li>Appuyez sur l'icône <strong>Partager</strong> <span style="font-size:1.1em;">⬆️</span> en bas de Safari</li>
+          <li>Appuyez sur l'icône <strong>Partager</strong> <span class="u-icone-partage">⬆️</span> en bas de Safari</li>
           <li>Faites défiler et choisissez <strong>« Sur l'écran d'accueil »</strong></li>
           <li>Appuyez sur <strong>« Ajouter »</strong> en haut à droite</li>
         </ol>

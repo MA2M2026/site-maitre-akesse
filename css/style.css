@@ -1743,6 +1743,8 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
 .u-maxw-60ch { text-align: center; max-width: 60ch; margin: 0 auto; }
 .u-border-y-gris { border-top: 1px solid var(--gris-clair); border-bottom: 1px solid var(--gris-clair); }
 .u-cta-row { margin-top: 1.6rem; text-align: center; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+.u-texte-gris { color: var(--gris); }
+.u-icone-partage { font-size: 1.1em; }
 .u-ic-facebook { color: #1877F2; }
 .u-ic-youtube { color: #FF0000; }
 .u-ic-whatsapp { color: #25D366; }
