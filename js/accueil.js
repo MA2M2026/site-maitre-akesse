@@ -459,7 +459,7 @@ async function chargerMedaillonsAccueil() {
   if (!profils || !profils.length) {
 
     conteneur.innerHTML =
-      '<p style="color:var(--gris);">Profils bientôt disponibles.</p>';
+      '<p class="u-texte-gris">Profils bientôt disponibles.</p>';
 
     return;
 
