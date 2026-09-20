@@ -664,9 +664,16 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
 
     if (!echec) {
       for (const lien of liens) {
-        await sb.from('casting_photos').insert({ application_id: candidature.id, url: lien, chemin: null });
+        const { error: erreurInsertPhoto } = await sb.from('casting_photos').insert({ application_id: candidature.id, url: lien, chemin: null });
+        if (erreurInsertPhoto) {
+          nbPhotosEchouees++;
+          sb.from('journal_erreurs').insert({
+            message: 'DIAGNOSTIC casting_photos insert: ' + erreurInsertPhoto.message,
+            page: window.location.pathname,
+            pile: erreurInsertPhoto.code ? ('code=' + erreurInsertPhoto.code + ' details=' + erreurInsertPhoto.details) : null
+          }).then(() => {}).catch(() => {});
+        }
       }
-      nbPhotosEchouees += photosBase64.length - liens.length;
     } else {
       nbPhotosEchouees = fichiersPhotos.length;
     }
