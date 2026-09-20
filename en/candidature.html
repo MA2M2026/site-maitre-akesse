@@ -358,6 +358,22 @@ async function convertirSiHeic(fichier) {
   }
 }
 
+// Casting application photos (potentially thousands during a big casting call) go
+// straight to Google Drive via this script, rather than Supabase — to avoid
+// loading Supabase storage (free plan) during a massive casting. Only each
+// photo's link is then stored in Supabase (casting_photos.url). Same script and
+// system as the French version, for consistency between languages.
+const URL_SCRIPT_PHOTOS_CASTING = 'https://script.google.com/macros/s/AKfycbxzPeaTLvMqZKtBvJJabLeZBh6JJ9ZaggPYUY8XAoh1-tyBq1Byi3lBm3SkhkH8rqNxxg/exec';
+
+function fichierEnBase64(fichier) {
+  return new Promise((resolve, reject) => {
+    const lecteur = new FileReader();
+    lecteur.onload = () => resolve(lecteur.result);
+    lecteur.onerror = reject;
+    lecteur.readAsDataURL(fichier);
+  });
+}
+
 function afficherMsg(el, texte, type) {
   el.className = 'form-msg ' + type;
   el.textContent = texte;
@@ -543,19 +559,39 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
   }
 
   let nbPhotosEchouees = 0;
-  for (const fichierOriginal of fichiersPhotos) {
-    try {
-      const fichierConverti = await convertirSiHeic(fichierOriginal);
-      const fichier = await redimensionnerImage(fichierConverti);
-      const chemin = `${candidature.id}/${Date.now()}-${nomFichierSur(fichier.name)}`;
-      const { error: erreurUpload } = await sb.storage.from('casting-applications').upload(chemin, fichier);
-      if (erreurUpload) { nbPhotosEchouees++; continue; }
-      const { data: urlPublique } = sb.storage.from('casting-applications').getPublicUrl(chemin);
-      await sb.from('casting_photos').insert({ application_id: candidature.id, url: urlPublique.publicUrl, chemin });
-    } catch (e) {
-      nbPhotosEchouees++;
+  try {
+    const photosBase64 = [];
+    for (const fichierOriginal of fichiersPhotos) {
+      try {
+        const fichierConverti = await convertirSiHeic(fichierOriginal);
+        const fichier = await redimensionnerImage(fichierConverti);
+        photosBase64.push(await fichierEnBase64(fichier));
+      } catch (e) {
+        nbPhotosEchouees++;
+      }
     }
+
+    const { liens, echec } = await envoyerPhotosVersDrive(URL_SCRIPT_PHOTOS_CASTING, {
+      nom: candidature.full_name,
+      email: candidature.email,
+      phone: candidature.phone,
+      type: typeCandidature,
+      projet: projetNom || '',
+      photos: photosBase64
+    });
+
+    if (!echec) {
+      for (const lien of liens) {
+        await sb.from('casting_photos').insert({ application_id: candidature.id, url: lien, chemin: null });
+      }
+      nbPhotosEchouees += photosBase64.length - liens.length;
+    } else {
+      nbPhotosEchouees = fichiersPhotos.length;
+    }
+  } catch (e) {
+    nbPhotosEchouees = fichiersPhotos.length;
   }
+  journaliserPhotosEchouees('candidature', candidature.id, nbPhotosEchouees);
 
   const libelleType = typeCandidature === 'projet' ? `Project/casting: ${projetNom}` : `Join the agency`;
   envoyerNotificationEmail({
