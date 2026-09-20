@@ -294,16 +294,6 @@ setTimeout(() => {
   champ.min = new Date(aujourdhui.getFullYear() - 100, aujourdhui.getMonth(), aujourdhui.getDate()).toISOString().slice(0, 10);
 })();
 
-// --- Height as a dropdown rather than free text: avoids typos (e.g. "17O"
-// instead of "170") and implausible values. ---
-function remplirSelectNombres(id, min, max, pas, suffixe) {
-  const champ = document.getElementById(id);
-  if (!champ) return;
-  champ.appendChild(new Option('—', ''));
-  for (let v = min; v <= max; v += pas) {
-    champ.appendChild(new Option(v + (suffixe || ''), v));
-  }
-}
 // --- The "Height" list itself starts at the minimum height required for the
 // gender (175 cm women, 185 cm men) — impossible to pick below it, so there's
 // no need to block/reject a registration afterwards. Minors are exempt: full

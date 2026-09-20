@@ -302,16 +302,6 @@ setTimeout(() => {
   champ.min = new Date(aujourdhui.getFullYear() - 100, aujourdhui.getMonth(), aujourdhui.getDate()).toISOString().slice(0, 10);
 })();
 
-// --- Taille en liste déroulante plutôt qu'en saisie libre : évite les fautes de
-// frappe (ex. "17O" au lieu de "170") et les valeurs invraisemblables. ---
-function remplirSelectNombres(id, min, max, pas, suffixe) {
-  const champ = document.getElementById(id);
-  if (!champ) return;
-  champ.appendChild(new Option('—', ''));
-  for (let v = min; v <= max; v += pas) {
-    champ.appendChild(new Option(v + (suffixe || ''), v));
-  }
-}
 // --- La liste "Taille" elle-même commence à la taille minimale requise selon le
 // genre (175 cm femmes, 185 cm hommes) — impossible de choisir en dessous, donc
 // plus besoin de bloquer/refuser une inscription après coup. Mineurs exemptés :

@@ -4170,30 +4170,6 @@ async function chargerRepartitionCategories() {
     else if (d.genre === 'femme') CATEGORIES_DONNEES.femmes.push(entree);
   });
 
-  const libelles = { hommes: '👨🏿 Hommes', femmes: '👩🏿 Femmes', enfants: '🧒 Enfants (mineurs)' };
-  const max = Math.max(CATEGORIES_DONNEES.hommes.length, CATEGORIES_DONNEES.femmes.length, CATEGORIES_DONNEES.enfants.length, 1);
-
-  // Le graphique "Répartition des profils" (maquette la plus récente) a remplacé le bloc
-  // #categorie-chart d'origine par un widget donut créé dynamiquement (voir addDistribution())
-  // — ces deux éléments peuvent donc ne plus exister selon la version du tableau de bord.
-  const categorieChartEl = document.getElementById('categorie-chart');
-  if (categorieChartEl) {
-    categorieChartEl.innerHTML = Object.keys(CATEGORIES_DONNEES).map(cle => {
-      const n = CATEGORIES_DONNEES[cle].length;
-      const largeur = Math.round((n / max) * 100);
-      return `
-        <button type="button" class="activite-repart-ligne" data-categorie="${cle}" style="display:block; width:100%; text-align:left; background:none; border:none; cursor:pointer; padding:0; color:inherit; font:inherit;">
-          <div class="arl-tete"><span>${libelles[cle]}</span><span>${n}</span></div>
-          <div class="activite-repart-barre"><span style="width:${largeur}%;"></span></div>
-        </button>`;
-    }).join('');
-    categorieChartEl.querySelectorAll('[data-categorie]').forEach(btn => {
-      btn.addEventListener('click', () => afficherDetailCategorie(btn.dataset.categorie));
-    });
-  }
-  const categorieDetailsEl = document.getElementById('categorie-details');
-  if (categorieDetailsEl) categorieDetailsEl.innerHTML = '';
-
   // Widget donut "Répartition des profils" : remplace les pourcentages fixes posés par
   // défaut (68 % / 22 % / 10 %) par les vrais chiffres calculés ci-dessus — aucune
   // statistique affichée ne doit être inventée.
@@ -4217,26 +4193,6 @@ async function chargerRepartitionCategories() {
   }
   const totalProfilsEl = document.getElementById('rf-total-profils');
   if (totalProfilsEl) totalProfilsEl.textContent = totalCategories;
-}
-
-function afficherDetailCategorie(cle) {
-  const liste = CATEGORIES_DONNEES[cle] || [];
-  const conteneur = document.getElementById('categorie-details');
-  if (!liste.length) { conteneur.innerHTML = '<div class="dossiers-vide">Personne dans cette catégorie pour le moment.</div>'; return; }
-
-  conteneur.innerHTML = liste.map(d => {
-    const lien = lienWhatsApp(d.phone);
-    return `
-      <div class="dossier-carte">
-        <div class="dc-nom" data-source="${d.source}" data-id="${d.id}" style="cursor:pointer;">${echapperHtml(d.full_name || 'Sans nom')}${d.age !== null ? ' — ' + d.age + ' ans' : ''}</div>
-        <div class="dc-meta">${d.source === 'casting' ? 'Candidature' : 'Inscription'}</div>
-        ${lien ? `<a href="${lien}" target="_blank" rel="noopener" class="btn" style="padding:0.3rem 0.7rem; font-size:0.75rem;">WhatsApp ↗</a>` : ''}
-      </div>`;
-  }).join('');
-
-  conteneur.querySelectorAll('[data-source]').forEach(el => {
-    el.addEventListener('click', () => ouvrirFicheDossier(el.dataset.source, el.dataset.id));
-  });
 }
 
 async function afficherDossiers(source, ajouter) {
