@@ -104,8 +104,13 @@
   .apercu-dossiers-vide { color:var(--gris); font-size:0.85rem; padding:0.6rem 0; }
 
   /* Fiche détaillée (modale) */
-  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.72); z-index:500; display:none; align-items:flex-start; justify-content:center; overflow-y:auto; padding:5vh 1rem; }
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.72); z-index:500; display:none; align-items:flex-start; justify-content:center; overflow-y:auto; overscroll-behavior:contain; padding:5vh 1rem; }
   .modal-overlay.ouvert { display:flex; }
+  /* Verrouille le défilement de la page pendant qu'une fiche modale ou le tiroir de
+     menu mobile est ouvert — même principe que le menu plein écran du site public,
+     généralisé ici via :has() pour couvrir les deux sans dupliquer leur JS d'ouverture. */
+  html:has(.modal-overlay.ouvert), html:has(.tdb-menu-panel.ouvert) { overflow:hidden; height:100%; }
+  html:has(.modal-overlay.ouvert) body, html:has(.tdb-menu-panel.ouvert) body { overflow:hidden; height:100vh; height:100dvh; }
   .modal-fiche { background:var(--creme); color:var(--noir); max-width:640px; width:100%; padding:2rem; position:relative; margin-bottom:5vh; }
   .modal-fermer { position:absolute; top:1rem; right:1rem; background:none; border:none; font-size:1.4rem; line-height:1; cursor:pointer; color:var(--noir); }
   .modal-fiche h3 { font-family:var(--display); font-size:1.6rem; margin-bottom:0.2rem; }
@@ -1756,7 +1761,7 @@ setTimeout(() => {
 
 .tdb-menu-panel {
   position: fixed; z-index: 970; top: 0; bottom: 0; left: 0;
-  width: min(340px, 88vw); overflow-y: auto;
+  width: min(340px, 88vw); overflow-y: auto; overscroll-behavior: contain;
   background: var(--noir, #111);
   border-right: 1px solid var(--gris-clair, #444);
   padding: 1.2rem 1.1rem 2rem;

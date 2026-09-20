@@ -597,6 +597,7 @@ section { padding: 5rem 0; }
 .projets-liste-scroll {
   max-height: 340px;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding-right: 0.4rem;
   border-top: 1px solid var(--gris-clair);
   padding-top: 1rem;
@@ -1352,6 +1353,18 @@ html.porte-verrouillee { overflow: hidden; height: 100%; }
 body.menu-ouvert { overflow: hidden; height: 100vh; height: 100dvh; }
 html.menu-ouvert { overflow: hidden; height: 100%; }
 
+/* Généralise ce même verrou aux autres superpositions plein écran à défilement interne
+   (fiche actualité/partenaire, galerie photo) — via :has(), pour ne pas avoir à dupliquer
+   la logique d'ouverture/fermeture dans chaque script qui pilote ces superpositions. */
+html:has(.news-modal.active),
+html:has(.lightbox-global.active) {
+  overflow: hidden; height: 100%;
+}
+html:has(.news-modal.active) body,
+html:has(.lightbox-global.active) body {
+  overflow: hidden; height: 100vh; height: 100dvh;
+}
+
 .hero-v2::before {
   content: '';
   position: absolute; inset: 0; z-index: 1;
@@ -1453,7 +1466,7 @@ html.menu-ouvert { overflow: hidden; height: 100%; }
   opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 .news-modal.active { opacity: 1; visibility: visible; }
-.news-modal-contenu { background: var(--creme); color: #1a1512; max-width: 720px; width: 100%; max-height: 88vh; overflow-y: auto; position: relative; }
+.news-modal-contenu { background: var(--creme); color: #1a1512; max-width: 720px; width: 100%; max-height: 88vh; overflow-y: auto; overscroll-behavior: contain; position: relative; }
 .news-modal-img { width: 100%; max-height: 60vh; object-fit: contain; background: var(--noir); }
 
 @media (max-width: 700px) {
