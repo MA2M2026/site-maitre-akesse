@@ -61,11 +61,55 @@
 // once it has already been opened this session: we flag the page right away, before
 // the browser gets any chance to display the section, instead of waiting for the
 // end-of-page script (js/accueil-en.js) to hide it.
-try {
-  if (sessionStorage.getItem('ma2m_porte_ouverte')) {
-    document.documentElement.classList.add('porte-deja-vue');
+//
+// Also locks scrolling HERE, at the very top of the page, if the door hasn't been
+// opened yet — not in js/accueil-en.js (loaded at the very bottom of the page): by the
+// time the browser loads everything else before reaching that script, a fast visitor
+// can swipe before the lock engages, and end up stuck mid-page instead of at the top.
+// Defined here (not in js/app.js) for the same reason: that external file also arrives
+// too late.
+(function () {
+  let positionSauvegardee = 0;
+  let compteur = 0;
+  const ZONES_DEFILEMENT_AUTORISE = '.menu-overlay, .news-modal-contenu, .modal-overlay, .tdb-menu-panel, .projets-liste-scroll';
+  function bloquerGesteTactile(e) {
+    if (e.target.closest(ZONES_DEFILEMENT_AUTORISE)) return;
+    e.preventDefault();
   }
-} catch (e) {}
+  window.verrouillerDefilement = function () {
+    if (compteur === 0) {
+      positionSauvegardee = window.scrollY || window.pageYOffset || 0;
+      document.body.style.position = 'fixed';
+      document.body.style.top = '-' + positionSauvegardee + 'px';
+      document.body.style.left = '0';
+      document.body.style.right = '0';
+      document.addEventListener('touchmove', bloquerGesteTactile, { passive: false });
+    }
+    compteur++;
+  };
+  window.deverrouillerDefilement = function () {
+    compteur = Math.max(0, compteur - 1);
+    if (compteur === 0) {
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.left = '';
+      document.body.style.right = '';
+      window.scrollTo(0, positionSauvegardee);
+      document.removeEventListener('touchmove', bloquerGesteTactile, { passive: false });
+    }
+  };
+})();
+
+let ma2mPorteDejaOuverte = false;
+try { ma2mPorteDejaOuverte = sessionStorage.getItem('ma2m_porte_ouverte'); } catch (e) {}
+
+if (ma2mPorteDejaOuverte) {
+  document.documentElement.classList.add('porte-deja-vue');
+} else {
+  document.body.classList.add('porte-verrouillee');
+  document.documentElement.classList.add('porte-verrouillee');
+  window.verrouillerDefilement();
+}
 </script>
 
 <script>

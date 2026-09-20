@@ -1,19 +1,8 @@
 // --- Porte d'entrée : le défilement reste verrouillé tant qu'on n'a pas cliqué "Entrer".
-// (Le masquage de la porte déjà ouverte se fait plus tôt, via la classe posée en
-// tout début de <body> — voir le commentaire à ce sujet dans le HTML — pour éviter
-// qu'elle n'apparaisse un instant avant que ce script, chargé en fin de page, ne s'exécute.)
-let porteDejaOuverte = false;
-try { porteDejaOuverte = sessionStorage.getItem('ma2m_porte_ouverte'); } catch (e) {}
-
-if (!porteDejaOuverte) {
-  // La classe masque aussi l'en-tête/le bandeau/le bouton WhatsApp pendant que la
-  // porte est affichée (voir css/style.css) — le verrou de défilement lui-même est
-  // géré séparément par verrouillerDefilement(), seule méthode fiable sur iPhone.
-  document.body.classList.add('porte-verrouillee');
-  document.documentElement.classList.add('porte-verrouillee');
-  window.verrouillerDefilement();
-}
-
+// (Le masquage de la porte déjà ouverte, ET le verrouillage du défilement lui-même,
+// se font plus tôt — tout en haut de <body>, voir le commentaire à ce sujet dans le
+// HTML — pour éviter qu'elle n'apparaisse, ou reste défilable, un instant avant que ce
+// script, chargé en fin de page, ne s'exécute.)
 document.getElementById('entrer-btn').addEventListener('click', async () => {
   if (window.promesseVedette) {
     try { await Promise.race([window.promesseVedette, new Promise((r) => setTimeout(r, 4000))]); } catch (e) {}

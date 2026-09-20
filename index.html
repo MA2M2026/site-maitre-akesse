@@ -76,11 +76,55 @@
 // une fois qu'elle a déjà été ouverte cette session : on marque la page tout de suite,
 // avant que le navigateur n'ait la moindre chance d'afficher la section, plutôt que
 // d'attendre le script de fin de page (js/accueil.js) pour la masquer.
-try {
-  if (sessionStorage.getItem('ma2m_porte_ouverte')) {
-    document.documentElement.classList.add('porte-deja-vue');
+//
+// Verrouille aussi le défilement ICI, tout en haut de la page, si la porte n'a pas
+// encore été ouverte — et non dans js/accueil.js (chargé tout en bas de la page) :
+// sinon, le temps que le navigateur charge tout le reste avant d'atteindre ce script,
+// un visiteur rapide peut faire glisser l'écran avant que le verrou ne s'active, et se
+// retrouve bloqué au milieu de la page au lieu du haut. Défini ici (et non dans
+// js/app.js) pour la même raison : ce fichier externe arrive lui aussi trop tard.
+(function () {
+  let positionSauvegardee = 0;
+  let compteur = 0;
+  const ZONES_DEFILEMENT_AUTORISE = '.menu-overlay, .news-modal-contenu, .modal-overlay, .tdb-menu-panel, .projets-liste-scroll';
+  function bloquerGesteTactile(e) {
+    if (e.target.closest(ZONES_DEFILEMENT_AUTORISE)) return;
+    e.preventDefault();
   }
-} catch (e) {}
+  window.verrouillerDefilement = function () {
+    if (compteur === 0) {
+      positionSauvegardee = window.scrollY || window.pageYOffset || 0;
+      document.body.style.position = 'fixed';
+      document.body.style.top = '-' + positionSauvegardee + 'px';
+      document.body.style.left = '0';
+      document.body.style.right = '0';
+      document.addEventListener('touchmove', bloquerGesteTactile, { passive: false });
+    }
+    compteur++;
+  };
+  window.deverrouillerDefilement = function () {
+    compteur = Math.max(0, compteur - 1);
+    if (compteur === 0) {
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.left = '';
+      document.body.style.right = '';
+      window.scrollTo(0, positionSauvegardee);
+      document.removeEventListener('touchmove', bloquerGesteTactile, { passive: false });
+    }
+  };
+})();
+
+let ma2mPorteDejaOuverte = false;
+try { ma2mPorteDejaOuverte = sessionStorage.getItem('ma2m_porte_ouverte'); } catch (e) {}
+
+if (ma2mPorteDejaOuverte) {
+  document.documentElement.classList.add('porte-deja-vue');
+} else {
+  document.body.classList.add('porte-verrouillee');
+  document.documentElement.classList.add('porte-verrouillee');
+  window.verrouillerDefilement();
+}
 </script>
 
 <script>
