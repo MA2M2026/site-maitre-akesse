@@ -42,9 +42,14 @@
 // position:fixed à sa position de défilement exacte, puis à la restaurer à l'identique
 // une fois déverrouillée. Un compteur permet à plusieurs éléments (porte d'entrée, menu,
 // modales) de verrouiller/déverrouiller sans se marcher dessus si jamais ils se
-// chevauchent. Utilisé par la porte d'entrée, le menu et toutes les superpositions
-// plein écran du site.
-(function verrouDefilementIOS() {
+// chevauchent. Utilisé par le menu et toutes les superpositions plein écran du site.
+//
+// Sur l'accueil (index.html / en/index.html), ces mêmes fonctions sont déjà définies
+// plus tôt, dans un script tout en haut de <body> (avant ce fichier, chargé en fin de
+// page) — pour verrouiller la porte d'entrée immédiatement, sans laisser le temps à un
+// visiteur rapide de faire défiler avant que le verrou ne s'active. On ne les redéfinit
+// donc ici que si elles n'existent pas déjà, pour ne jamais écraser un verrou déjà posé.
+if (!window.verrouillerDefilement) (function verrouDefilementIOS() {
   let positionSauvegardee = 0;
   let compteur = 0;
 

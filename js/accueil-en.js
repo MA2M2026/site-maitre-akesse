@@ -1,19 +1,7 @@
 // --- Entry door: scrolling stays locked until "Enter" is clicked. ---
-// (Hiding an already-opened door happens earlier, via the class set at the very start
-// of <body> — see the comment there — so it never briefly appears before this
-// end-of-page script runs.)
-let porteDejaOuverte = false;
-try { porteDejaOuverte = sessionStorage.getItem('ma2m_porte_ouverte'); } catch (e) {}
-
-if (!porteDejaOuverte) {
-  // The class also hides the header/banner/WhatsApp button while the door is shown
-  // (see css/style.css) — the actual scroll lock is handled separately by
-  // verrouillerDefilement(), the only method that reliably works on iPhone.
-  document.body.classList.add('porte-verrouillee');
-  document.documentElement.classList.add('porte-verrouillee');
-  window.verrouillerDefilement();
-}
-
+// (Hiding an already-opened door, AND locking scrolling itself, both happen earlier —
+// at the very start of <body>, see the comment there — so neither the door nor the
+// ability to scroll past it appear for a moment before this end-of-page script runs.)
 document.getElementById('entrer-btn').addEventListener('click', async () => {
   if (window.promesseVedette) {
     try { await Promise.race([window.promesseVedette, new Promise((r) => setTimeout(r, 4000))]); } catch (e) {}

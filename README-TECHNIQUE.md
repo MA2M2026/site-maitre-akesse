@@ -84,14 +84,25 @@ tableau-de-bord.html                        Admin : statistiques, listes, modér
 mentions-legales.html / politique-confidentialite.html   Pages légales
 google5acb001b6b29c80f.html                  Fichier de vérification Google Search Console — ne pas toucher
 
+evenements.html                    "Nos Événements" — albums photo par événement (+ admin)
 outils/carte-visite.html / qr-generateur.html / scannez-moi.html   Outils internes agence (cartes de visite, QR codes)
 
-css/style.css                     Toutes les feuilles de style du site
-css/splash.css                     Écran de démarrage PWA
+en/                                Version anglaise de chaque page publique (structure identique,
+                                     PAS de version EN pour tableau-de-bord.html / espace-mannequin.html)
 
-js/app.js                          Fonctions partagées (voir plus bas) + surveillance globale des erreurs
-js/menu.js                          Ouverture/fermeture du menu
+css/style.css                     Toutes les feuilles de style du site (fichier unique, ~1800 lignes)
+
+js/app.js                          Fonctions partagées (voir plus bas), surveillance globale des
+                                     erreurs, verrou de défilement (menu/modales), filet retour arrière
+js/menu.js                          Ouverture/fermeture du menu plein écran
+js/accueil.js / accueil-en.js         Logique de la page d'accueil (porte d'entrée, carrousel hero,
+                                        mannequin à la une, mot du fondateur, stats...)
+js/mannequins.js / mannequins-en.js     Logique de "The Book" (filtres, sélection recruteur)
+js/actualites.js                    Logique de la page Actualités (admin publication/édition inclus)
 js/selection.js                      Logique de la page selection.html
+js/indicatifs-pays.js                 Liste des indicatifs téléphoniques (formulaires)
+js/analytics-config.js               Initialise Google Analytics (dataLayer/gtag)
+js/copyright-annee.js                 Remplit l'année du copyright dans le pied de page
 js/supabase-config.js                 Connexion au projet Supabase (clé publique)
 js/emailjs-config.js                   Connexion EmailJS (clé publique)
 
@@ -155,6 +166,44 @@ d'ajouter un nouvel appel `sb.` en haut d'un script.
 5. Toujours préciser explicitement le nombre exact de fichiers envoyés et
    ce qu'ils remplacent : le propriétaire du site tient une comptabilité
    stricte de ce qu'il a déployé et le vérifie à chaque fois.
+
+### Méthode actuelle quand l'assistant IA a accès à git/GitHub (depuis fin
+### septembre 2026) — à préférer à la méthode manuelle ci-dessus
+
+Le propriétaire du site reste non-technique et ne passe jamais par la ligne
+de commande — mais quand l'assistant IA a lui-même accès à git et à
+l'API GitHub (`$GITHUB_TOKEN`), la méthode retenue avec lui est :
+
+1. Toujours synchroniser sur `origin/main` d'abord, puis créer **une
+   branche isolée par correctif/fonctionnalité** (jamais commiter
+   directement sur `main`, jamais empiler plusieurs sujets différents sur
+   la même branche/PR) — il tient à pouvoir tester et valider chaque
+   changement indépendamment des autres.
+2. Committer avec un message clair expliquant le POURQUOI (pas juste le
+   quoi), pousser la branche, ouvrir une Pull Request via l'API GitHub.
+3. **Vérifier le diff réel de la PR** (`GET /pulls/{n}/files`) — ne jamais
+   se fier uniquement au message de commit.
+4. Attendre/vérifier que le déploiement Vercel de la PR (preview) réussit
+   (`GET /commits/{sha}/status`), puis donner au propriétaire le lien de la
+   PR **et** le lien direct de l'aperçu Vercel (`https://<projet>-git-
+   <branche>-<org>.vercel.app`, retrouvable dans les commentaires du bot
+   Vercel sur la PR) pour qu'il teste avant de merger.
+5. **C'est lui qui merge**, depuis l'interface GitHub — l'assistant ne
+   merge jamais lui-même.
+6. Après confirmation du merge, `git fetch`/`git merge --ff-only
+   origin/main` pour resynchroniser la copie locale, et **vérifier
+   concrètement** que le fichier mergé contient bien le changement
+   (`git show origin/main:<fichier> | grep <repère>`), pas seulement se
+   fier au message de fusion GitHub.
+
+**Piège récurrent à connaître** : un lien d'aperçu Vercel de PR (`*-git-
+<branche>-*.vercel.app`) reste **figé sur le dernier commit de cette
+branche au moment du merge** — il ne se met JAMAIS à jour avec des
+correctifs mergés séparément après coup, même sur `main`. Si le
+propriétaire du site reteste sur un vieux lien d'aperçu après avoir dit
+qu'un bug persiste, vérifier d'abord si ce lien correspond bien à la
+dernière version de `main`, ou lui redonner le lien de production
+(`maitreakessemodelmanagement.com`) pour un test fiable.
 
 ## Mode guidé pour les nouveaux mannequins
 
@@ -259,19 +308,58 @@ de vérification approfondie du contenu réel des fichiers uploadés (au-delà
 du type déclaré), qui demanderait une fonction serveur supplémentaire non
 mise en place à ce jour.
 
-## Porte d'entrée / verrou de scroll (accueil)
+## Porte d'entrée / verrou de scroll (accueil et superpositions du site)
 
-`index.html` bloque le scroll (`body.porte-verrouillee { overflow:hidden;
-height:100dvh; }`) tant que le bouton "Entrer" n'a pas été cliqué, pour
-forcer l'utilisateur à voir l'écran d'accueil avant de naviguer. **Règle de
-sécurité impérative** : ce verrou doit TOUJOURS pouvoir se libérer tout
-seul, même si Supabase ne répond jamais (connexion coupée, quota dépassé,
-etc.) — sans ça, le site entier se bloque pour le visiteur. C'est exactement
-ce qui s'est produit une fois en production avant qu'un filet de sécurité
-ne soit ajouté : le clic sur "Entrer" attend au maximum 4 secondes
-(`Promise.race` avec un `setTimeout`) le chargement du mannequin à la une,
-puis débloque la page dans tous les cas. Ne jamais retirer ce filet de
-sécurité, même en modifiant le reste de ce système.
+`index.html`/`en/index.html` bloquent le scroll tant que le bouton "Entrer"
+n'a pas été cliqué, pour forcer l'utilisateur à voir l'écran d'accueil avant
+de naviguer. Le même mécanisme verrouille aussi le menu plein écran, les
+fiches actualité/partenaire, la galerie photo, et les modales/tiroir du
+tableau de bord.
+
+**⚠️ Piège déjà rencontré, ne pas répéter** : `overflow: hidden` sur
+`body`/`html` (ancienne méthode, retirée) **ne bloque PAS le défilement
+tactile sur iOS Safari** — limitation connue et documentée d'iOS, pas un bug
+ponctuel. Un visiteur pouvait faire défiler la page À TRAVERS la porte
+d'entrée sans jamais cliquer "Entrer", ce qui cassait tout le mécanisme
+(sessionStorage jamais posé, la porte revenait sans cesse). Découvert et
+corrigé fin septembre 2026 après plusieurs itérations infructueuses avec
+`overflow:hidden`.
+
+**Méthode actuelle, seule fiable sur tous les appareils** : figer la page en
+`position:fixed` à sa position de scroll exacte (`document.body.style.top =
+'-' + scrollY + 'px'`), restaurée à l'identique au déverrouillage — plus un
+blocage direct du geste tactile (`touchmove`, `preventDefault()`) en
+seconde ligne de défense pour les navigateurs/WebViews embarqués les plus
+récalcitrants. Fonctions partagées `window.verrouillerDefilement()` /
+`window.deverrouillerDefilement()` (avec compteur, pour empiler plusieurs
+verrous sans conflit) :
+
+- Définies **au tout début de `<body>`** dans `index.html`/`en/index.html`
+  (avant tout le reste de la page) — **et non dans `js/app.js`**, qui
+  charge trop tard (fin de page). Un deuxième bug a été trouvé pour cette
+  raison précise : sur une connexion lente ou avec un visiteur rapide, le
+  temps que `js/app.js` charge, l'utilisateur pouvait déjà faire défiler
+  avant que le verrou ne s'active, et se retrouvait bloqué au milieu de la
+  page au lieu du haut. Toute page avec un élément à verrouiller **dès le
+  chargement** (pas juste au clic d'un bouton) doit définir/activer le
+  verrou le plus tôt possible dans `<body>`, jamais compter sur `js/app.js`.
+- `js/app.js` ne redéfinit ces fonctions **que si elles n'existent pas déjà**
+  (`if (!window.verrouillerDefilement) (function(){...})();`) — pour toutes
+  les autres pages (qui n'ont besoin du verrou qu'au clic d'un bouton, donc
+  sans le même problème de timing). Ne jamais retirer ce garde-fou : sans
+  lui, une redéfinition écraserait un verrou déjà posé et le laisserait
+  bloqué en permanence (compteur désynchronisé).
+- Zones avec leur propre défilement interne légitime (à ne jamais bloquer) :
+  `.menu-overlay, .news-modal-contenu, .modal-overlay, .tdb-menu-panel,
+  .projets-liste-scroll` — liste vérifiée via `e.target.closest(...)` dans
+  le blocage tactile.
+
+**Règle de sécurité impérative, toujours valable** : le verrou doit
+TOUJOURS pouvoir se libérer tout seul, même si Supabase ne répond jamais
+(connexion coupée, quota dépassé, etc.). Le clic sur "Entrer" attend au
+maximum 4 secondes (`Promise.race` avec un `setTimeout`) le chargement du
+mannequin à la une, puis débloque la page dans tous les cas. Ne jamais
+retirer ce filet de sécurité.
 
 ## `100vh` à bannir — toujours utiliser `100dvh`
 
@@ -317,3 +405,89 @@ avant de retenter l'expérience :
    le document), et les navigateurs mobiles le composent bien plus
    efficacement qu'un `background-attachment: fixed` classique, donc pas
    besoin non plus de désactiver quoi que ce soit sur mobile.
+
+## Durcissement CSP page par page (chantier en cours)
+
+`vercel.json` pose un en-tête CSP global qui inclut `'unsafe-inline'` (pour
+ne casser aucune page pas encore migrée). L'objectif à terme est de retirer
+`'unsafe-inline'` **partout**, page par page, en isolé — jamais tout d'un
+coup, le propriétaire du site veut pouvoir tester/valider chaque page
+migrée indépendamment avant de passer à la suivante.
+
+**Méthode** : chaque page migrée reçoit son propre
+`<meta http-equiv="Content-Security-Policy" content="script-src 'self'
+https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-...';
+style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net;">`
+dans `<head>` — additif au header global (intersection des deux, jamais un
+remplacement), donc chaque migration reste isolée et réversible. Les scripts
+`<script>` inline restants sur une page migrée (filet de sécurité "reveal",
+JSON-LD) doivent avoir leur hash SHA-256 exact dans ce meta CSP — calculé en
+Python : `hashlib.sha256(texte_exact_du_script.encode('utf-8')).digest()`
+puis encodé en base64. Le texte à hasher est EXACTEMENT le contenu entre
+`<script>` et `</script>`, espaces/retours à la ligne compris — toute
+modification ultérieure de ce script change son hash et casse la page tant
+que le meta CSP n'est pas mis à jour en conséquence.
+
+Tous les `style=""` inline doivent être remplacés par une classe utilitaire
+(voir section suivante) avant de retirer `'unsafe-inline'` de `style-src` —
+sinon la mise en forme concernée disparaît silencieusement.
+
+**⚠️ Piège déjà rencontré** : du JS qui génère du `style=""` via
+`innerHTML`/template literal est LUI AUSSI bloqué par un CSP strict (alors
+que `element.style.propriete = valeur` en JS classique ne l'est PAS) —
+plusieurs bugs de ce type ont déjà été trouvés en migrant des pages
+(bouton de sélection sur "The Book", message "Profils bientôt disponibles",
+instructions d'installation PWA, intégration vidéo des actualités) : la
+correction a toujours été de remplacer le style calculé par une classe CSS
+togglée via `classList`.
+
+**État à ce jour (fin septembre 2026)** — déjà migrées (plus
+`'unsafe-inline'` du tout) : `index.html`, `mannequins.html`,
+`mentions-legales.html`, `politique-confidentialite.html`, `services.html`,
+`actualites.html` (FR uniquement) + leurs équivalents `en/` sauf
+`en/actualites.html`. Pas encore migrées : `candidature.html`,
+`contact.html`, `en/actualites.html`, `espace-mannequin.html`,
+`evenements.html`, `inscription-mannequin.html`, `mannequin.html`,
+`partenaires.html`, `selection.html`, `tableau-de-bord.html` + leurs
+équivalents `en/` — prévues en dernier pour `tableau-de-bord.html` et
+`espace-mannequin.html`, les plus riches en JavaScript du site.
+
+## Classes utilitaires CSS (`.u-*`)
+
+Ajoutées au fil du durcissement CSP ci-dessus, pour remplacer les
+`style=""` inline sans dupliquer de CSS : `.u-hidden`, `.u-tc`,
+`.u-flex-center`, `.u-mt-*` / `.u-mb-*` / `.u-ml-*` / `.u-pt-*` / `.u-pb-*`
+/ `.u-py-*` (espacements, suffixe = valeur en rem avec `-` pour la
+décimale, ex. `.u-mt-1-5` = `margin-top: 1.5rem`), `.u-maxw-520` /
+`.u-maxw-60ch` / `.u-maxw-60ch-texte`, `.u-texte-doux` / `.u-c-texte-doux`
+/ `.u-texte-gris`, `.u-border-y-gris`, `.u-cta-row`, `.u-icone-partage` et
+variantes `.u-ic-*`. Toutes définies en fin de `css/style.css`, section
+"Classes utilitaires". Avant d'ajouter une nouvelle classe utilitaire,
+vérifier qu'une existante ne convient pas déjà — l'objectif est d'éviter
+la prolifération de variantes quasi identiques.
+
+## Nettoyage de code mort — méthode à respecter
+
+Un audit de nettoyage (fin septembre 2026) a retiré du CSS/JS mort
+confirmé (ancien système de menu mobile, ancien header, blocs "Hero
+ancienne mise en page"/"Équipe" jamais utilisés, classes isolées jamais
+référencées). **Ne jamais supprimer un sélecteur/une fonction en le
+supposant inutilisé** — vérifier systématiquement par recherche exhaustive
+sur TOUT le repo (`.html` ET `.js`, racine + `en/` + `outils/`), y compris
+les classes ajoutées dynamiquement (`classList.add(...)`, `className =
+...`) qui n'apparaîtront jamais dans un simple grep sur le HTML statique.
+
+## Fonctionnalités majeures ajoutées récemment (repères pour s'orienter)
+
+- **`evenements.html`** — "Nos Événements", albums photo par événement,
+  admin de publication inclus (même schéma que les actualités/partenaires).
+- **Refonte visuelle premium de "The Book"** (`mannequins.html`).
+- **Éditeur de texte enrichi** (Quill) pour les champs
+  commentaire/description des actualités, événements et partenaires — voir
+  `creerEditeurRiche()`/`rendreContenuRiche()` dans `js/app.js`, qui gèrent
+  aussi la conversion des anciens textes bruts déjà enregistrés.
+- **Validation admin à deux facteurs (2FA)**, avec récupération par e-mail,
+  pour l'accès à `tableau-de-bord.html`.
+- **Refonte de la navigation du tableau de bord** en 3 blocs + menu mobile
+  dédié (`.tdb-menu-panel`/`.tdb-menu-toggle`) — voir aussi la section
+  verrou de défilement plus haut, ce tiroir en fait partie.
