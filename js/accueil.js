@@ -1,10 +1,11 @@
 // --- Porte d'entrée : le défilement reste verrouillé tant qu'on n'a pas cliqué "Entrer".
+// (Le masquage de la porte déjà ouverte se fait plus tôt, via la classe posée en
+// tout début de <body> — voir le commentaire à ce sujet dans le HTML — pour éviter
+// qu'elle n'apparaisse un instant avant que ce script, chargé en fin de page, ne s'exécute.)
 let porteDejaOuverte = false;
 try { porteDejaOuverte = sessionStorage.getItem('ma2m_porte_ouverte'); } catch (e) {}
 
-if (porteDejaOuverte) {
-  document.getElementById('porte-entree').style.display = 'none';
-} else {
+if (!porteDejaOuverte) {
   document.body.classList.add('porte-verrouillee');
   document.documentElement.classList.add('porte-verrouillee');
 }

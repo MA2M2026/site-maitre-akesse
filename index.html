@@ -72,6 +72,18 @@
 <body>
 
 <script>
+// Empêche un flash de la porte d'entrée (les 3 photos) à chaque retour sur l'accueil
+// une fois qu'elle a déjà été ouverte cette session : on marque la page tout de suite,
+// avant que le navigateur n'ait la moindre chance d'afficher la section, plutôt que
+// d'attendre le script de fin de page (js/accueil.js) pour la masquer.
+try {
+  if (sessionStorage.getItem('ma2m_porte_ouverte')) {
+    document.documentElement.classList.add('porte-deja-vue');
+  }
+} catch (e) {}
+</script>
+
+<script>
 // Filet de sécurité : sur une connexion instable, un script externe (Supabase, EmailJS,
 // heic2any...) peut être très lent ou échouer à charger — dans ce cas js/app.js ne
 // s'exécute jamais et les éléments ".reveal" (animation d'apparition au scroll) restent
@@ -130,6 +142,7 @@ setTimeout(() => {
 
 <div class="intro-logo u-hidden" id="logo-splash">
   <img src="assets/logo-dark-bg.png" alt="Maître Akesse Model Management" draggable="false">
+  <button type="button" class="intro-logo-passer" id="intro-passer-btn">Passer l'intro</button>
 </div>
 
 

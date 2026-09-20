@@ -1746,6 +1746,20 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
 .intro-logo.intro-cachee { opacity: 0; visibility: hidden; pointer-events: none; }
 .intro-logo img { width: min(60vw, 280px); height: auto; }
 
+.intro-logo-passer {
+  position: absolute; left: 50%; bottom: 8%; transform: translateX(-50%);
+  background: none; border: 1px solid rgba(255,255,255,0.35); color: rgba(255,255,255,0.85);
+  font-family: var(--texte); font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase;
+  padding: 0.55rem 1.3rem; cursor: pointer;
+  transition: border-color 0.25s ease, color 0.25s ease;
+}
+.intro-logo-passer:hover, .intro-logo-passer:focus-visible { border-color: rgba(255,255,255,0.7); color: #fff; }
+
+/* Empêche le flash de la porte d'entrée (3 photos) au retour sur l'accueil une fois
+   déjà ouverte cette session — la classe est posée avant tout affichage (voir le script
+   tout en haut de <body>), donc la section n'apparaît jamais avant d'être masquée. */
+html.porte-deja-vue #porte-entree { display: none; }
+
 /* ---------- Classes utilitaires (remplacent les attributs style="" en ligne,
    nécessaires pour retirer 'unsafe-inline' du CSP page par page) ---------- */
 .u-pb-1 { padding-bottom: 1rem; }
