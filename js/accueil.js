@@ -46,6 +46,39 @@ document.getElementById('entrer-btn').addEventListener('click', async () => {
 });
 
 
+// Filet de sécurité "retour arrière" : sur mobile/tablette, le bouton retour du
+// navigateur restaure souvent la page depuis son cache (bfcache) exactement
+// telle qu'elle était figée en la quittant, sans relancer ce script — si l'écran
+// d'intro ou le verrouillage de la porte d'entrée étaient actifs à cet instant,
+// ils restent figés à l'écran même si on les avait déjà passés avant. On revérifie
+// donc l'état réel (sessionStorage) à chaque retour sur la page pour ne jamais
+// laisser un écran figé ou déformé.
+window.addEventListener('pageshow', (evenement) => {
+
+  if (!evenement.persisted) return;
+
+  let introVue = false;
+  let porteOuverte = false;
+
+  try { introVue = sessionStorage.getItem('ma2m_intro_vue'); } catch (e) {}
+  try { porteOuverte = sessionStorage.getItem('ma2m_porte_ouverte'); } catch (e) {}
+
+  if (introVue) {
+    const logoSplash = document.getElementById('logo-splash');
+    if (logoSplash) logoSplash.style.display = 'none';
+    document.body.classList.remove('splash-active');
+  }
+
+  if (porteOuverte) {
+    document.body.classList.remove('porte-verrouillee');
+    document.documentElement.classList.remove('porte-verrouillee');
+    const porte = document.getElementById('porte-entree');
+    if (porte) porte.style.display = 'none';
+  }
+
+});
+
+
 // =========================================================
 // INTRO LOGO — 5,8s OU "PASSER L'INTRO"
 // =========================================================
