@@ -372,6 +372,20 @@ async function convertirSiHeic(fichier) {
   } catch (e) { return fichier; }
 }
 
+// Registration photos go straight to Google Drive via this script, rather than
+// Supabase — same script and system as the French version, for consistency
+// between languages.
+const URL_SCRIPT_PHOTOS_CASTING = 'https://script.google.com/macros/s/AKfycbxzPeaTLvMqZKtBvJJabLeZBh6JJ9ZaggPYUY8XAoh1-tyBq1Byi3lBm3SkhkH8rqNxxg/exec';
+
+function fichierEnBase64(fichier) {
+  return new Promise((resolve, reject) => {
+    const lecteur = new FileReader();
+    lecteur.onload = () => resolve(lecteur.result);
+    lecteur.onerror = reject;
+    lecteur.readAsDataURL(fichier);
+  });
+}
+
 let codeValide = '';
 
 // --- Minor / parent-guardian handling ---
@@ -494,19 +508,39 @@ document.getElementById('form-inscription').addEventListener('submit', async (e)
   // photo is isolated in its own try/catch, and the success screen is shown
   // in all cases, with an adapted message if needed.
   let nbPhotosEchouees = 0;
-  for (const fichierOriginal of fichiers) {
-    try {
-      const fichierConverti = await convertirSiHeic(fichierOriginal);
-      const fichier = await redimensionnerImage(fichierConverti);
-      const chemin = `${idInscription}/${Date.now()}-${nomFichierSur(fichier.name)}`;
-      const { error: erreurUpload } = await sb.storage.from('inscriptions-photos').upload(chemin, fichier);
-      if (erreurUpload) { nbPhotosEchouees++; continue; }
-      const { data: urlPublique } = sb.storage.from('inscriptions-photos').getPublicUrl(chemin);
-      await sb.from('inscriptions_photos').insert({ inscription_id: idInscription, url: urlPublique.publicUrl, chemin });
-    } catch (e) {
-      nbPhotosEchouees++;
+  try {
+    const photosBase64 = [];
+    for (const fichierOriginal of fichiers) {
+      try {
+        const fichierConverti = await convertirSiHeic(fichierOriginal);
+        const fichier = await redimensionnerImage(fichierConverti);
+        photosBase64.push(await fichierEnBase64(fichier));
+      } catch (e) {
+        nbPhotosEchouees++;
+      }
     }
+
+    const { liens, echec } = await envoyerPhotosVersDrive(URL_SCRIPT_PHOTOS_CASTING, {
+      nom: dossier.full_name,
+      email: '',
+      phone: dossier.phone,
+      type: 'inscription',
+      projet: '',
+      photos: photosBase64
+    });
+
+    if (!echec) {
+      for (const lien of liens) {
+        await sb.from('inscriptions_photos').insert({ inscription_id: idInscription, url: lien, chemin: null });
+      }
+      nbPhotosEchouees += photosBase64.length - liens.length;
+    } else {
+      nbPhotosEchouees = fichiers.length;
+    }
+  } catch (e) {
+    nbPhotosEchouees = fichiers.length;
   }
+  journaliserPhotosEchouees('inscription', idInscription, nbPhotosEchouees);
 
   msg.className = 'form-msg ok';
   msg.textContent = nbPhotosEchouees
