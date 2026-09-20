@@ -682,6 +682,9 @@ section { padding: 5rem 0; }
 .selection-liste { display: grid; gap: 1px; background: var(--gris-clair); margin-bottom: 2.5rem; }
 .selection-item { background: var(--creme); color: #1a1512; display: grid; grid-template-columns: 70px 1fr auto; gap: 1rem; align-items: center; padding: 0.8rem; }
 .selection-item img { width: 70px; height: 90px; object-fit: cover; }
+/* min-width: 0 nécessaire — voir l'explication donnée pour .form-champ plus haut :
+   sans elle, un nom trop long empêche la grille de rétrécir et déborde sur mobile. */
+.selection-item-info { min-width: 0; }
 .selection-item .nom { font-family: var(--display); font-size: 1.1rem; }
 .selection-item .info { font-size: 0.85rem; color: #6b6560; }
 .selection-item button {
@@ -1596,7 +1599,7 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
 
 /* ---------- Mannequin à la une (accueil) — traitement plein écran, façon couverture ---------- */
 .vedette-fullbleed {
-  display: block; position: relative; width: 100%; height: 86vh; min-height: 520px; max-height: 820px;
+  display: block; position: relative; width: 100%; height: 86vh; height: 86dvh; min-height: 520px; max-height: 820px;
   overflow: hidden; text-decoration: none; color: var(--blanc);
 }
 .vedette-fullbleed img {
@@ -1630,7 +1633,7 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
 }
 .vedette-fullbleed:hover .vedette-cta { border-color: #fff; letter-spacing: 0.18em; }
 @media (max-width: 640px) {
-  .vedette-fullbleed { height: 78vh; min-height: 460px; }
+  .vedette-fullbleed { height: 78vh; height: 78dvh; min-height: 460px; }
 }
 
 /* ---------- Mot du fondateur ---------- */

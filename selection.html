@@ -245,7 +245,7 @@ function afficher() {
     item.className = 'selection-item';
     item.innerHTML = `
       <img src="${echapperHtml(m.photoUrl)}" alt="${echapperHtml(m.full_name)}" style="cursor:pointer;">
-      <div>
+      <div class="selection-item-info">
         <div class="nom">${echapperHtml(m.full_name || 'Mannequin')}</div>
         <div class="info">${m.height_cm ? m.height_cm + ' cm' : ''}</div>
       </div>
