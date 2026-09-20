@@ -431,6 +431,50 @@ section { padding: 5rem 0; }
 .form-grille { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1.5rem; }
 @media (max-width: 640px) { .form-grille { grid-template-columns: 1fr; } }
 
+/* ---------- Éditeur de texte enrichi (Quill) : actualités, événements, partenaires ---------- */
+.editeur-riche { border-radius: 2px; overflow: hidden; }
+.editeur-riche .ql-toolbar.ql-snow {
+  border: 1px solid var(--gris-clair); border-bottom: none; background: rgba(255,255,255,0.03);
+}
+.editeur-riche .ql-container.ql-snow {
+  border: 1px solid var(--gris-clair); font-family: var(--texte); font-size: 1rem;
+}
+.editeur-riche .ql-editor {
+  min-height: 140px; color: var(--texte-corps); background: rgba(255,255,255,0.03);
+}
+.editeur-riche .ql-editor.ql-blank::before { color: var(--texte-doux); opacity: 0.7; font-style: normal; }
+.editeur-riche .ql-snow .ql-stroke { stroke: var(--texte-doux); }
+.editeur-riche .ql-snow .ql-fill { fill: var(--texte-doux); }
+.editeur-riche .ql-snow .ql-picker { color: var(--texte-doux); }
+.editeur-riche .ql-snow.ql-toolbar button:hover, .editeur-riche .ql-snow.ql-toolbar button.ql-active,
+.editeur-riche .ql-snow .ql-picker-label.ql-active { color: var(--bordeaux-clair); }
+.editeur-riche .ql-snow.ql-toolbar button:hover .ql-stroke, .editeur-riche .ql-snow.ql-toolbar button.ql-active .ql-stroke { stroke: var(--bordeaux-clair); }
+.editeur-riche .ql-snow.ql-toolbar button:hover .ql-fill, .editeur-riche .ql-snow.ql-toolbar button.ql-active .ql-fill { fill: var(--bordeaux-clair); }
+
+/* Variante claire : formulaire de modification, dans la fiche popup à fond clair
+   (news-modal-corps, réutilisée par Actualités et Partenaires). */
+.news-modal-corps .editeur-riche .ql-toolbar.ql-snow { background: #f3efe9; border-color: #d8d2cb; }
+.news-modal-corps .editeur-riche .ql-container.ql-snow { border-color: #d8d2cb; }
+.news-modal-corps .editeur-riche .ql-editor { background: #fff; color: #1a1512; }
+.news-modal-corps .editeur-riche .ql-snow .ql-stroke { stroke: #6b6560; }
+.news-modal-corps .editeur-riche .ql-snow .ql-fill { fill: #6b6560; }
+.news-modal-corps .editeur-riche .ql-snow .ql-picker { color: #6b6560; }
+
+/* Lecture du contenu enrichi publié (article complet, fiche détail) : espacement
+   généreux façon revue de presse plutôt qu'un bloc de texte compact. */
+.contenu-riche { line-height: 1.75; }
+.contenu-riche p { margin: 0 0 1.1em; }
+.contenu-riche p:last-child { margin-bottom: 0; }
+.contenu-riche h2, .contenu-riche h3, .contenu-riche h4 { margin: 1.5em 0 0.6em; line-height: 1.3; }
+.contenu-riche h2:first-child, .contenu-riche h3:first-child, .contenu-riche h4:first-child { margin-top: 0; }
+.contenu-riche ul, .contenu-riche ol { margin: 0 0 1.1em; padding-left: 1.4em; }
+.contenu-riche li { margin-bottom: 0.4em; }
+.contenu-riche blockquote {
+  margin: 1.2em 0; padding-left: 1.1em; border-left: 3px solid var(--bordeaux-clair);
+  font-style: italic; color: inherit; opacity: 0.85;
+}
+.contenu-riche a { color: var(--bordeaux-clair); text-decoration: underline; }
+
 .bloc-section {
   position: relative;
   background: var(--noir-doux); border: 1px solid var(--gris-clair); border-radius: 6px;

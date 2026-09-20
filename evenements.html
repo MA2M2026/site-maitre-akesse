@@ -38,6 +38,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css">
 <link rel="stylesheet" href="css/style.css">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1e1d1c">
@@ -110,7 +111,7 @@ setTimeout(() => {
     <div class="news-date" id="ed-date"></div>
     <h2 id="ed-titre" style="margin-top:0.5rem;"></h2>
     <p id="ed-lieu" style="color:var(--texte-doux); margin-top:0.3rem;"></p>
-    <p id="ed-description" style="margin-top:1rem; max-width:70ch; color:#4a4a4a;"></p>
+    <div id="ed-description" class="contenu-riche" style="margin-top:1rem; max-width:70ch;"></div>
 
     <div id="ed-admin-actions" style="display:none; margin-top:1.4rem; padding-top:1rem; border-top:1px solid var(--gris-clair);">
       <button id="ed-modifier-btn" class="btn-mini-admin">✎ Modifier</button>
@@ -121,7 +122,7 @@ setTimeout(() => {
       <div class="form-champ"><label>Titre</label><input type="text" id="edit-ev-titre"></div>
       <div class="form-champ"><label>Date de l'événement</label><input type="date" id="edit-ev-date"></div>
       <div class="form-champ"><label>Lieu (facultatif)</label><input type="text" id="edit-ev-lieu"></div>
-      <div class="form-champ"><label>Description (facultatif)</label><textarea id="edit-ev-description"></textarea></div>
+      <div class="form-champ"><label>Description (facultatif)</label><div id="edit-ev-description-editeur" class="editeur-riche"></div></div>
       <div class="form-champ"><label>Ajouter des photos (s'ajoutent à celles déjà en ligne)</label><input type="file" id="edit-ev-images" accept="image/*" multiple></div>
       <button class="btn btn--principal" id="edit-ev-enregistrer-btn" style="margin-top:1rem;">Enregistrer</button>
       <button class="btn" id="edit-ev-annuler-btn" style="margin-left:0.5rem;">Annuler</button>
@@ -145,7 +146,7 @@ setTimeout(() => {
       <div class="form-champ"><label>Titre</label><input type="text" id="ev-titre"></div>
       <div class="form-champ"><label>Date de l'événement</label><input type="date" id="ev-date"></div>
       <div class="form-champ"><label>Lieu (facultatif)</label><input type="text" id="ev-lieu"></div>
-      <div class="form-champ"><label>Description (facultatif)</label><textarea id="ev-description"></textarea></div>
+      <div class="form-champ"><label>Description (facultatif)</label><div id="ev-description-editeur" class="editeur-riche"></div></div>
       <div class="form-champ"><label>Photos (tu peux en sélectionner plusieurs à la fois)</label><input type="file" id="ev-images" accept="image/*" multiple></div>
 
       <button class="btn btn--principal" id="ev-publier-btn" style="margin-top:1.8rem;">Publier l'événement</button>
@@ -200,6 +201,8 @@ setTimeout(() => {
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+<script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+<script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
 <script src="js/app.js"></script>
 <script src="js/menu.js"></script>
 <script>
@@ -212,6 +215,9 @@ async function convertirSiHeic(fichier) {
     return new File([blobFinal], fichier.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' });
   } catch (e) { return fichier; }
 }
+
+const quillEvDescription = creerEditeurRiche('ev-description-editeur');
+const quillEditEvDescription = creerEditeurRiche('edit-ev-description-editeur');
 
 function formatDateEvenement(dateStr) {
   if (!dateStr) return '';
@@ -277,7 +283,7 @@ async function ouvrirEvenementDetail(id) {
   document.getElementById('ed-date').textContent = e.date_evenement ? formatDateEvenement(e.date_evenement) : '';
   document.getElementById('ed-titre').textContent = e.titre || '';
   document.getElementById('ed-lieu').textContent = e.lieu ? ('📍 ' + e.lieu) : '';
-  document.getElementById('ed-description').textContent = e.description || '';
+  document.getElementById('ed-description').innerHTML = rendreContenuRiche(e.description);
 
   const zonePhotos = document.getElementById('ed-photos');
   zonePhotos.innerHTML = listePhotos.map(p => `<img src="${echapperHtml(p.url)}" loading="lazy" alt="">`).join('');
@@ -328,7 +334,7 @@ document.getElementById('ed-modifier-btn').addEventListener('click', () => {
   document.getElementById('edit-ev-titre').value = e.titre || '';
   document.getElementById('edit-ev-date').value = e.date_evenement || '';
   document.getElementById('edit-ev-lieu').value = e.lieu || '';
-  document.getElementById('edit-ev-description').value = e.description || '';
+  chargerContenuDansEditeur(quillEditEvDescription, e.description);
   document.getElementById('edit-ev-images').value = '';
   document.getElementById('edit-ev-msg').style.display = 'none';
 
@@ -353,7 +359,7 @@ document.getElementById('edit-ev-enregistrer-btn').addEventListener('click', asy
   const titre = document.getElementById('edit-ev-titre').value.trim();
   const dateEvenement = document.getElementById('edit-ev-date').value || null;
   const lieu = document.getElementById('edit-ev-lieu').value.trim();
-  const description = document.getElementById('edit-ev-description').value.trim();
+  const description = lireContenuEditeur(quillEditEvDescription);
   const fichiers = Array.from(document.getElementById('edit-ev-images').files || []);
 
   if (!titre) { msg.className = 'form-msg err'; msg.textContent = 'Le titre est obligatoire.'; msg.style.display = 'block'; return; }
@@ -410,7 +416,7 @@ document.getElementById('ev-publier-btn').addEventListener('click', async () => 
   const titre = document.getElementById('ev-titre').value.trim();
   const dateEvenement = document.getElementById('ev-date').value || null;
   const lieu = document.getElementById('ev-lieu').value.trim();
-  const description = document.getElementById('ev-description').value.trim();
+  const description = lireContenuEditeur(quillEvDescription);
   const fichierInput = document.getElementById('ev-images');
   const fichiers = Array.from(fichierInput.files || []);
 
@@ -451,7 +457,7 @@ document.getElementById('ev-publier-btn').addEventListener('click', async () => 
   document.getElementById('ev-titre').value = '';
   document.getElementById('ev-date').value = '';
   document.getElementById('ev-lieu').value = '';
-  document.getElementById('ev-description').value = '';
+  if (quillEvDescription) quillEvDescription.setText('');
   fichierInput.value = '';
   chargerEvenements();
 });
