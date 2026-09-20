@@ -3068,3 +3068,95 @@ create policy "Admins gerent le stockage model-photos"
   with check (bucket_id = 'model-photos' and exists (select 1 from admins where user_id = auth.uid()));
 
 NOTIFY pgrst, 'reload schema';
+-- ===================================================================
+-- Extension 74 : réactivation de la validation admin avant publication,
+-- avec un journal de diagnostic temporaire.
+--
+-- La dernière fois que ce déclencheur a été activé, des mannequins réels
+-- (profil complet, majeurs) se retrouvaient avec published=false ET
+-- en_attente_validation=false — un résultat qu'aucune branche du code du
+-- déclencheur ne produit normalement. La cause exacte n'a jamais été
+-- trouvée par simple lecture du code.
+--
+-- Cette fois, le déclencheur enregistre dans un journal, à CHAQUE
+-- exécution, ce qu'il a reçu et ce qu'il a décidé. Si le problème revient,
+-- on aura les vraies données pour comprendre au lieu de deviner. Ce
+-- journal n'est accessible que depuis l'éditeur SQL (aucune policy RLS ne
+-- l'ouvre à l'API publique) — à supprimer une fois le mystère résolu.
+-- ===================================================================
+
+create table if not exists debug_journal_validation_publication (
+  id bigint generated always as identity primary key,
+  cree_le timestamptz not null default now(),
+  profil_id uuid,
+  operation text,
+  auth_uid uuid,
+  est_admin boolean,
+  est_mineur boolean,
+  premiere_publication_faite_avant boolean,
+  published_demande boolean,
+  published_final boolean,
+  en_attente_validation_final boolean
+);
+
+alter table debug_journal_validation_publication enable row level security;
+-- Volontairement aucune policy : inaccessible via l'API/le site, uniquement
+-- lisible par vous depuis l'éditeur SQL de Supabase.
+
+create or replace function gerer_validation_publication()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  est_admin boolean;
+  age_ans int;
+  est_mineur boolean := false;
+  published_demande boolean := NEW.published;
+begin
+  select exists(select 1 from admins where user_id = auth.uid()) into est_admin;
+
+  if NEW.date_naissance is not null then
+    age_ans := extract(year from age(NEW.date_naissance));
+    est_mineur := age_ans < 18;
+  end if;
+
+  if NEW.published is true then
+    if est_admin then
+      -- Publication par un admin = validation manuelle : la fiche entre
+      -- en ligne, la file d'attente est levée, et la première publication
+      -- est marquée comme faite (mode guidé → boutons autonomes ensuite).
+      NEW.en_attente_validation := false;
+      NEW.premiere_publication_faite := true;
+    elsif est_mineur or not coalesce(OLD.premiere_publication_faite, false) then
+      -- Un mannequin (mineur, ou en première publication) ne peut jamais
+      -- se publier lui-même : basculé en attente de validation.
+      NEW.published := false;
+      NEW.en_attente_validation := true;
+    end if;
+  end if;
+
+  insert into debug_journal_validation_publication (
+    profil_id, operation, auth_uid, est_admin, est_mineur,
+    premiere_publication_faite_avant, published_demande,
+    published_final, en_attente_validation_final
+  ) values (
+    NEW.id, TG_OP, auth.uid(), est_admin, est_mineur,
+    coalesce(OLD.premiere_publication_faite, false),
+    published_demande, NEW.published, NEW.en_attente_validation
+  );
+
+  return NEW;
+end;
+$$;
+
+drop trigger if exists trg_gerer_validation_publication on model_profiles;
+create trigger trg_gerer_validation_publication
+  before insert or update on model_profiles
+  for each row execute function gerer_validation_publication();
+
+-- Réactivation effective (elle était désactivée depuis quelques jours).
+alter table model_profiles enable trigger trg_gerer_validation_publication;
+
+NOTIFY pgrst, 'reload schema';
