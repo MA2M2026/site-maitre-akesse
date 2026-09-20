@@ -462,7 +462,7 @@ section { padding: 5rem 0; }
 
 /* Lecture du contenu enrichi publié (article complet, fiche détail) : espacement
    généreux façon revue de presse plutôt qu'un bloc de texte compact. */
-.contenu-riche { line-height: 1.75; }
+.contenu-riche { line-height: 1.75; font-family: var(--display); }
 /* La règle globale "p { color: var(--texte-corps) }" (pensée pour du texte sur fond
    noir) prenait le dessus sur la couleur posée en style inline sur ce conteneur —
    ici sur fond clair (actualités, partenaires), le texte redevenait presque
