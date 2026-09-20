@@ -1145,6 +1145,11 @@ document.getElementById('entrer-btn').addEventListener('click', async () => {
     .getElementById('splash-passer')
     .addEventListener('click', terminerIntro);
 
+  // Filet de sécurité : si le petit bouton "Passer l'intro" n'est pas visible ou
+  // pas atteignable sur certains téléphones, un appui n'importe où sur l'écran
+  // d'intro permet quand même de passer directement au site.
+  logoSplash.addEventListener('click', terminerIntro);
+
 
   setTimeout(terminerIntro, 5800);
 
