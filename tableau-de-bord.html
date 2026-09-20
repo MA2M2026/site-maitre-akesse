@@ -4478,7 +4478,11 @@ async function chargerMotResponsableTableau() {
   // Réutilise la même photo comme avatar du profil admin dans la topbar — aucune donnée inventée.
   const avatar = document.getElementById('db-profil-avatar');
   if (avatar && mrPhotoUrlActuelle) {
-    avatar.outerHTML = `<img src="${echapperHtml(mrPhotoUrlActuelle)}" alt="" id="db-profil-avatar">`;
+    const img = document.createElement('img');
+    img.id = 'db-profil-avatar';
+    img.alt = '';
+    img.src = mrPhotoUrlActuelle;
+    avatar.replaceWith(img);
   }
 }
 
