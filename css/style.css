@@ -788,6 +788,7 @@ section { padding: 5rem 0; }
   padding: 5.5rem var(--marge) 3rem;
   max-height: none;
   overflow-y: auto;
+  overflow-x: hidden;
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
