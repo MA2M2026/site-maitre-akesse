@@ -789,6 +789,7 @@ section { padding: 5rem 0; }
   max-height: none;
   overflow-y: auto;
   overflow-x: hidden;
+  overscroll-behavior: contain;
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
@@ -1345,6 +1346,11 @@ section { padding: 5rem 0; }
 
 body.porte-verrouillee { overflow: hidden; height: 100vh; height: 100dvh; }
 html.porte-verrouillee { overflow: hidden; height: 100%; }
+
+/* Même verrou que ci-dessus, appliqué pendant que le menu plein écran est ouvert —
+   évite qu'un défilement jusqu'aux limites du menu ne "chaîne" vers la page en dessous. */
+body.menu-ouvert { overflow: hidden; height: 100vh; height: 100dvh; }
+html.menu-ouvert { overflow: hidden; height: 100%; }
 
 .hero-v2::before {
   content: '';

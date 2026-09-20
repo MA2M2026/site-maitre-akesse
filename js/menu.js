@@ -5,13 +5,27 @@ document.addEventListener('DOMContentLoaded', () => {
   const overlay = document.getElementById('menuOverlay');
   if (!menuBtn || !overlay) return;
 
-  menuBtn.addEventListener('click', () => overlay.classList.add('active'));
-  if (closeBtn) closeBtn.addEventListener('click', () => overlay.classList.remove('active'));
-  overlay.querySelectorAll('a').forEach(a => a.addEventListener('click', () => overlay.classList.remove('active')));
-  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('active'); });
+  // Verrouille le défilement du corps de la page tant que le menu est ouvert —
+  // sinon, sur mobile, faire défiler jusqu'aux limites du menu peut faire défiler
+  // la page en dessous sans que ça se voie, ce qui donne un rendu décalé à la fermeture.
+  function ouvrirMenu() {
+    overlay.classList.add('active');
+    document.body.classList.add('menu-ouvert');
+    document.documentElement.classList.add('menu-ouvert');
+  }
+  function fermerMenu() {
+    overlay.classList.remove('active');
+    document.body.classList.remove('menu-ouvert');
+    document.documentElement.classList.remove('menu-ouvert');
+  }
+
+  menuBtn.addEventListener('click', ouvrirMenu);
+  if (closeBtn) closeBtn.addEventListener('click', fermerMenu);
+  overlay.querySelectorAll('a').forEach(a => a.addEventListener('click', fermerMenu));
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) fermerMenu(); });
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') overlay.classList.remove('active');
+    if (e.key === 'Escape') fermerMenu();
   });
 
   // Filet de sécurité "retour arrière" : si le navigateur restaure la page
@@ -20,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // resté ouvert ou mal positionné). On le referme systématiquement à chaque
   // retour sur la page pour repartir d'un état propre.
   window.addEventListener('pageshow', (evenement) => {
-    if (evenement.persisted) overlay.classList.remove('active');
+    if (evenement.persisted) fermerMenu();
   });
 });
 
