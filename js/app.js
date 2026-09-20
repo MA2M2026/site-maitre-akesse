@@ -35,6 +35,20 @@
   });
 })();
 
+// ================== Retour arrière fiable, sur toutes les pages ==================
+// Sur mobile/tablette, le bouton "retour" restaure très souvent une page depuis
+// le cache du navigateur (bfcache) exactement telle qu'elle était figée en la
+// quittant — sans jamais relancer les scripts. Une page peut alors rester figée
+// dans un état intermédiaire (écran superposé, menu ouvert, animation en cours)
+// et ne plus répondre aux appuis, jusqu'à un rafraîchissement manuel complet.
+// Plutôt que de rattraper chaque état possible un par un, on force ici le même
+// résultat qu'un rafraîchissement manuel — automatiquement et invisiblement —
+// à chaque fois qu'une page restaurée de cette façon est réaffichée, pour
+// garantir qu'elle reparte toujours d'un état propre.
+window.addEventListener('pageshow', (evenement) => {
+  if (evenement.persisted) window.location.reload();
+});
+
 // Menu mobile
 document.addEventListener('DOMContentLoaded', () => {
   const toggle = document.querySelector('.menu-toggle');
