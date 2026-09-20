@@ -386,7 +386,7 @@ section { padding: 5rem 0; }
 .evenement-carte:hover { border-color: var(--bordeaux-clair); }
 .evenement-date { color: var(--bordeaux-clair); font-size: 0.7rem; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; }
 .evenement-carte h3 { margin-top: 0.5rem; }
-.evenement-carte p { margin-top: 0.5rem; font-size: 0.92rem; color: var(--texte-doux); }
+.evenement-carte p { margin-top: 0.5rem; font-size: 0.92rem; color: var(--texte-corps); }
 
 /* ---------- Bande de statistiques (chiffres réels, page d'accueil) ---------- */
 .stats-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1.6rem; text-align: center; }
@@ -462,7 +462,12 @@ section { padding: 5rem 0; }
 
 /* Lecture du contenu enrichi publié (article complet, fiche détail) : espacement
    généreux façon revue de presse plutôt qu'un bloc de texte compact. */
-.contenu-riche { line-height: 1.75; }
+.contenu-riche { line-height: 1.75; font-family: var(--display); }
+/* La règle globale "p { color: var(--texte-corps) }" (pensée pour du texte sur fond
+   noir) prenait le dessus sur la couleur posée en style inline sur ce conteneur —
+   ici sur fond clair (actualités, partenaires), le texte redevenait presque
+   invisible (contraste ~1.5:1). On force l'héritage de la couleur du conteneur. */
+.contenu-riche p, .contenu-riche li { color: inherit; }
 .contenu-riche p { margin: 0 0 1.1em; }
 .contenu-riche p:last-child { margin-bottom: 0; }
 .contenu-riche h2, .contenu-riche h3, .contenu-riche h4 { margin: 1.5em 0 0.6em; line-height: 1.3; }
@@ -474,6 +479,10 @@ section { padding: 5rem 0; }
   font-style: italic; color: inherit; opacity: 0.85;
 }
 .contenu-riche a { color: var(--bordeaux-clair); text-decoration: underline; }
+/* Fiches à fond clair (actualités, partenaires) : --bordeaux-clair est calibré pour
+   un fond sombre et devient illisible sur --creme (contraste 3.49:1, sous les 4.5:1
+   requis) — on utilise ici --bordeaux, bien plus contrasté sur fond clair (9.56:1). */
+.news-modal-corps .contenu-riche a { color: var(--bordeaux); }
 
 .bloc-section {
   position: relative;
@@ -1452,7 +1461,7 @@ body.porte-verrouillee { overflow: hidden; height: 100vh; }
 }
 .news-une-corps .news-date { font-size: 0.64rem; }
 .news-une-corps h2 { margin-top: 0.8rem; font-size: clamp(1.6rem, 4vw, 2.4rem); }
-.news-une-corps p { margin-top: 1rem; color: var(--texte-doux); }
+.news-une-corps p { margin-top: 1rem; color: var(--texte-corps); }
 .news-une-corps .news-lire { margin-top: 1.4rem; font-size: 0.68rem; }
 
 .news-grille { display: grid; grid-template-columns: 1fr; gap: 0; }
@@ -1474,7 +1483,7 @@ body.porte-verrouillee { overflow: hidden; height: 100vh; }
 .news-corps { padding: 0; flex: 1; min-width: 0; }
 .news-date { font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--bordeaux-clair); font-weight: 500; }
 .news-corps h3 { margin-top: 0.4rem; font-size: 1rem; line-height: 1.3; }
-.news-corps .news-extrait { margin-top: 0.35rem; font-size: 0.84rem; color: var(--texte-doux); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.news-corps .news-extrait { margin-top: 0.35rem; font-size: 0.9rem; color: var(--texte-corps); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .news-lire { display: inline-block; margin-top: 0.6rem; font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--bordeaux-clair); font-weight: 500; border-bottom: 1px solid var(--bordeaux-clair); padding-bottom: 2px; }
 
 @media (min-width: 640px) {
@@ -1591,7 +1600,7 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
 .evenement-carte:hover .evenement-carte-photo img { transform: scale(1.06); }
 .evenement-carte-corps { padding-top: 1rem; }
 .evenement-carte-corps h3 { margin-top: 0.4rem; font-size: 1.1rem; line-height: 1.3; }
-.evenement-carte-lieu { font-size: 0.8rem; color: var(--texte-doux); margin-top: 0.3rem; }
+.evenement-carte-lieu { font-size: 0.8rem; color: var(--texte-corps); margin-top: 0.3rem; }
 
 .evenement-retour {
   display: inline-block; margin-bottom: 1.6rem; font-size: 0.68rem; letter-spacing: 0.12em;
@@ -1715,8 +1724,9 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
 }
 .mot-resp-message {
   color: var(--texte-corps); margin-top: 1.2rem; font-size: 1.05rem; line-height: 1.7;
-  font-family: var(--texte); font-style: normal;
+  font-family: var(--display); font-style: normal;
 }
+.mannequin-bio { font-family: var(--display); line-height: 1.7; }
 @media (max-width: 720px) {
   .mot-responsable-bloc { grid-template-columns: 1fr; padding-left: 0.75rem; padding-right: 0.75rem; }
   .mot-responsable-photo-wrap { max-width: 620px; margin: 0 auto; }
