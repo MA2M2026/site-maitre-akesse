@@ -13,6 +13,15 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') overlay.classList.remove('active');
   });
+
+  // Filet de sécurité "retour arrière" : si le navigateur restaure la page
+  // depuis son cache (bfcache) — courant sur mobile/tablette en appuyant sur
+  // retour — il peut la restaurer figée dans un état intermédiaire (menu
+  // resté ouvert ou mal positionné). On le referme systématiquement à chaque
+  // retour sur la page pour repartir d'un état propre.
+  window.addEventListener('pageshow', (evenement) => {
+    if (evenement.persisted) overlay.classList.remove('active');
+  });
 });
 
 // Injecte, dans le menu plein écran de chaque page, le bloc coordonnées + réseaux
