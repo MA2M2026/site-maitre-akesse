@@ -1064,6 +1064,7 @@ if (porteDejaOuverte) {
 } else {
 
   document.body.classList.add('porte-verrouillee');
+  document.documentElement.classList.add('porte-verrouillee');
 
 }
 
@@ -1084,6 +1085,7 @@ document.getElementById('entrer-btn').addEventListener('click', async () => {
   }
 
   document.body.classList.remove('porte-verrouillee');
+  document.documentElement.classList.remove('porte-verrouillee');
 
   document.getElementById('porte-entree').style.display = 'none';
 

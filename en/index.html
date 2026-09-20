@@ -402,6 +402,7 @@ if (porteDejaOuverte) {
   document.getElementById('porte-entree').style.display = 'none';
 } else {
   document.body.classList.add('porte-verrouillee');
+  document.documentElement.classList.add('porte-verrouillee');
 }
 
 document.getElementById('entrer-btn').addEventListener('click', async () => {
@@ -409,6 +410,7 @@ document.getElementById('entrer-btn').addEventListener('click', async () => {
     try { await Promise.race([window.promesseVedette, new Promise((r) => setTimeout(r, 4000))]); } catch (e) {}
   }
   document.body.classList.remove('porte-verrouillee');
+  document.documentElement.classList.remove('porte-verrouillee');
   document.getElementById('porte-entree').style.display = 'none';
   window.scrollTo(0, 0);
   try { sessionStorage.setItem('ma2m_porte_ouverte', '1'); } catch (e) {}
