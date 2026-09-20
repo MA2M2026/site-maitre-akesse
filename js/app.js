@@ -49,23 +49,7 @@ window.addEventListener('pageshow', (evenement) => {
   if (evenement.persisted) window.location.reload();
 });
 
-// Menu mobile
 document.addEventListener('DOMContentLoaded', () => {
-  const toggle = document.querySelector('.menu-toggle');
-  const nav = document.querySelector('.nav');
-  if (toggle && nav) {
-    toggle.addEventListener('click', () => nav.classList.toggle('ouvert'));
-    nav.querySelectorAll('a').forEach(a => a.addEventListener('click', () => nav.classList.remove('ouvert')));
-  }
-
-  // Effet glassmorphism renforcé au scroll sur le header
-  const header = document.querySelector('.site-header');
-  if (header) {
-    const onScroll = () => header.classList.toggle('scrolled', window.scrollY > 24);
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-  }
-
   // Animation d'apparition au scroll (fade-in + translation)
   // Observe aussi bien les éléments déjà présents au chargement que ceux
   // ajoutés dynamiquement ensuite (fiches mannequins, actualités… chargées depuis la base).
