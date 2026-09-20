@@ -438,6 +438,10 @@ document.getElementById('entrer-btn').addEventListener('click', async () => {
   }
 
   document.getElementById('splash-passer').addEventListener('click', terminerIntro);
+  // Safety net: if the small "Skip Intro" button isn't visible or reachable on
+  // some phones, tapping anywhere on the intro screen still skips straight to
+  // the site.
+  logoSplash.addEventListener('click', terminerIntro);
   setTimeout(terminerIntro, 5800);
 })();
 
