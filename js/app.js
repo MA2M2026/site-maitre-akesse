@@ -279,7 +279,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   } catch (e) {}
 
   const idMannequin = new URLSearchParams(window.location.search).get('id');
-  const modelId = (window.location.pathname.endsWith('mannequin.html') && idMannequin) ? idMannequin : null;
+  const surPageMannequin = /\/mannequin(\.html)?$/.test(window.location.pathname);
+  const modelId = (surPageMannequin && idMannequin) ? idMannequin : null;
   const ipHash = await empreinteVisiteur();
 
   sb.from('page_views').insert({ page: window.location.pathname, ip_hash: ipHash, model_id: modelId }).then(() => {}).catch(() => {});
