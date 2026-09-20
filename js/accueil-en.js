@@ -22,6 +22,34 @@ document.getElementById('entrer-btn').addEventListener('click', async () => {
   try { sessionStorage.setItem('ma2m_porte_ouverte', '1'); } catch (e) {}
 });
 
+// Safety net for the browser's back button: on mobile/tablet, going back often
+// restores the page from the browser's cache (bfcache) exactly as it was frozen
+// when leaving it, without re-running this script — if the intro screen or the
+// entry-door lock were active at that moment, they stay frozen on screen even if
+// they had already been passed before. Re-check the real state (sessionStorage)
+// every time the page is shown again, so it never gets stuck or looks broken.
+window.addEventListener('pageshow', (event) => {
+  if (!event.persisted) return;
+
+  let introSeen = false;
+  let doorOpened = false;
+  try { introSeen = sessionStorage.getItem('ma2m_intro_vue'); } catch (e) {}
+  try { doorOpened = sessionStorage.getItem('ma2m_porte_ouverte'); } catch (e) {}
+
+  if (introSeen) {
+    const logoSplash = document.getElementById('logo-splash');
+    if (logoSplash) logoSplash.style.display = 'none';
+    document.body.classList.remove('splash-active');
+  }
+
+  if (doorOpened) {
+    document.body.classList.remove('porte-verrouillee');
+    document.documentElement.classList.remove('porte-verrouillee');
+    const door = document.getElementById('porte-entree');
+    if (door) door.style.display = 'none';
+  }
+});
+
 // --- Intro: animated logo (5.8s or "Skip Intro"), before the entry door ---
 (function () {
   let dejaVue = false;
