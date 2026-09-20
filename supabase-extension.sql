@@ -3143,3 +3143,87 @@ revoke all on function limiter_soumissions_publiques(text, int) from public;
 grant execute on function limiter_soumissions_publiques(text, int) to anon, authenticated;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 76 : même limite anti-spam (globale + par IP, Extension 75)
+-- appliquée à page_views et journal_erreurs (SEC-06 / SEC-07 de l'audit
+-- de sécurité externe) — ces deux tables acceptaient jusqu'ici des
+-- écritures anonymes totalement illimitées, contrairement aux
+-- formulaires publics.
+--
+-- Seuils plus généreux que pour les formulaires, car une navigation
+-- normale génère naturellement plusieurs page_views par minute (et,
+-- plus rarement, plusieurs erreurs JS de suite sur une page cassée) :
+-- - page_views : 300/minute au total, 30/minute par visiteur.
+-- - journal_erreurs : 60/minute au total, 10/minute par visiteur.
+-- Un visiteur normal ne s'approche jamais de ces seuils ; seul un
+-- balayage automatisé les atteint.
+--
+-- Nouvelle fonction séparée (limiter_soumissions_publiques_ip), plutôt
+-- que de modifier limiter_soumissions_publiques() : cette dernière est
+-- déjà utilisée par 5 policies existantes (candidature, recruteur,
+-- contact) qui fonctionnent bien avec ses seuils actuels (10/min
+-- global, 3/min par IP) — la remplacer aurait exigé de la supprimer
+-- puis recréer ces 5 policies, un risque inutile pour ce qui doit
+-- rester une simple addition. La nouvelle fonction réutilise les mêmes
+-- tables (soumissions_formulaires_publics / _ip) que l'Extension 75,
+-- juste avec des seuils propres à p_max_par_minute / p_max_par_ip.
+-- ===================================================================
+
+create or replace function limiter_soumissions_publiques_ip(p_formulaire text, p_max_par_minute int, p_max_par_ip int)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  nb_recentes int;
+  ip_visiteur text;
+  nb_recentes_ip int;
+begin
+  delete from soumissions_formulaires_publics where cree_le < now() - interval '10 minutes';
+  select count(*) into nb_recentes from soumissions_formulaires_publics
+    where formulaire = p_formulaire and cree_le > now() - interval '1 minute';
+  if nb_recentes >= p_max_par_minute then
+    return false;
+  end if;
+
+  begin
+    ip_visiteur := nullif(trim(split_part(current_setting('request.headers', true)::json->>'x-forwarded-for', ',', 1)), '');
+  exception when others then
+    ip_visiteur := null;
+  end;
+
+  if ip_visiteur is not null then
+    delete from soumissions_formulaires_publics_ip where cree_le < now() - interval '10 minutes';
+    select count(*) into nb_recentes_ip from soumissions_formulaires_publics_ip
+      where formulaire = p_formulaire and ip = ip_visiteur and cree_le > now() - interval '1 minute';
+    if nb_recentes_ip >= p_max_par_ip then
+      return false;
+    end if;
+    insert into soumissions_formulaires_publics_ip (formulaire, ip) values (p_formulaire, ip_visiteur);
+  end if;
+
+  insert into soumissions_formulaires_publics (formulaire) values (p_formulaire);
+  return true;
+end;
+$$;
+revoke all on function limiter_soumissions_publiques_ip(text, int, int) from public;
+grant execute on function limiter_soumissions_publiques_ip(text, int, int) to anon, authenticated;
+
+drop policy if exists "Tout le monde peut logger une visite" on page_views;
+create policy "Tout le monde peut logger une visite"
+  on page_views for insert with check (limiter_soumissions_publiques_ip('page_views', 300, 30));
+
+drop policy if exists "Tout le monde peut logger une erreur" on journal_erreurs;
+create policy "Tout le monde peut logger une erreur"
+  on journal_erreurs for insert
+  with check (
+    char_length(message) <= 500
+    and (page is null or char_length(page) <= 200)
+    and (pile is null or char_length(pile) <= 1000)
+    and (user_agent is null or char_length(user_agent) <= 300)
+    and limiter_soumissions_publiques_ip('journal_erreurs', 60, 10)
+  );
+
+NOTIFY pgrst, 'reload schema';
