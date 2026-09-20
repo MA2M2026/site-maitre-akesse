@@ -38,6 +38,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css">
 <link rel="stylesheet" href="css/style.css">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1e1d1c">
@@ -111,7 +112,7 @@ setTimeout(() => {
     <div class="news-modal-corps">
       <div class="news-date" id="news-modal-date"></div>
       <h2 id="news-modal-titre" style="margin-top:0.6rem;"></h2>
-      <p id="news-modal-texte" style="margin-top:1rem; color:#4a4a4a;"></p>
+      <div id="news-modal-texte" class="contenu-riche" style="margin-top:1rem; color:#4a4a4a;"></div>
       <a id="news-modal-video-lien" href="#" target="_blank" rel="noopener" style="display:none; margin-top:1rem; font-weight:600; color:var(--rouge); text-decoration:none;">▶ Voir la vidéo</a>
 
       <div id="news-modal-admin-actions" style="display:none; margin-top:1.2rem; padding-top:1rem; border-top:1px solid var(--gris-clair);">
@@ -130,7 +131,7 @@ setTimeout(() => {
             <option value="Événements">Événements</option>
           </select>
         </div>
-        <div class="form-champ"><label>Commentaire</label><textarea id="edit-actu-commentaire"></textarea></div>
+        <div class="form-champ"><label>Commentaire</label><div id="edit-actu-commentaire-editeur" class="editeur-riche"></div></div>
         <div class="form-champ"><label>Vidéo (lien YouTube ou Vimeo, facultatif)</label><input type="text" id="edit-actu-video"></div>
         <div class="form-champ"><label>Ajouter des photos (s'ajoutent à celles déjà en ligne)</label><input type="file" id="edit-actu-images" accept="image/*" multiple></div>
 
@@ -162,7 +163,7 @@ setTimeout(() => {
           <option value="Événements">Événements</option>
         </select>
       </div>
-      <div class="form-champ"><label>Commentaire</label><textarea id="actu-commentaire"></textarea></div>
+      <div class="form-champ"><label>Commentaire</label><div id="actu-commentaire-editeur" class="editeur-riche"></div></div>
       <div class="form-champ"><label>Images (tu peux en sélectionner plusieurs à la fois)</label><input type="file" id="actu-image" accept="image/*" multiple></div>
       <div class="form-champ"><label>Vidéo (lien YouTube ou Vimeo, facultatif)</label><input type="text" id="actu-video" placeholder="https://youtube.com/watch?v=..."></div>
 
@@ -217,6 +218,8 @@ setTimeout(() => {
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+<script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+<script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
 <script src="js/app.js"></script>
 <script src="js/menu.js"></script>
 <script>
@@ -261,6 +264,9 @@ function urlHttpSure(url) {
 }
 
 const CATEGORIES_ACTUALITES = ['Casting', 'Mannequinat', 'Conseils', 'Événements'];
+
+const quillActuCommentaire = creerEditeurRiche('actu-commentaire-editeur');
+const quillEditActuCommentaire = creerEditeurRiche('edit-actu-commentaire-editeur');
 
 function formatDateActu(dateStr) {
   return new Date(dateStr).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -324,7 +330,7 @@ async function chargerActualites() {
       <div class="news-une-corps">
         <div class="news-date">${formatDateActu(une.created_at)}</div>
         ${une.titre ? `<h2>${echapperHtml(une.titre)}</h2>` : ''}
-        ${une.commentaire ? `<p>${echapperHtml(extraitTexte(une.commentaire, 180))}</p>` : ''}
+        ${une.commentaire ? `<p>${echapperHtml(extraitTexte(texteBrutDepuis(une.commentaire), 180))}</p>` : ''}
         <span class="news-lire">Lire l'article →</span>
       </div>
     </div>
@@ -345,7 +351,7 @@ async function chargerActualites() {
       <div class="news-corps">
         <div class="news-date">${formatDateActu(a.created_at)}</div>
         ${a.titre ? `<h3>${echapperHtml(a.titre)}</h3>` : ''}
-        ${a.commentaire ? `<p class="news-extrait">${echapperHtml(extraitTexte(a.commentaire, 110))}</p>` : ''}
+        ${a.commentaire ? `<p class="news-extrait">${echapperHtml(extraitTexte(texteBrutDepuis(a.commentaire), 110))}</p>` : ''}
         <span class="news-lire">Lire la suite →</span>
       </div>
     </div>
@@ -392,7 +398,7 @@ async function ouvrirActuModal(index) {
 
   document.getElementById('news-modal-date').textContent = new Date(a.created_at).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' });
   document.getElementById('news-modal-titre').textContent = a.titre || '';
-  document.getElementById('news-modal-texte').textContent = a.commentaire || '';
+  document.getElementById('news-modal-texte').innerHTML = rendreContenuRiche(a.commentaire);
 
   const lienVideo = document.getElementById('news-modal-video-lien');
   const urlVideoSure = urlHttpSure(a.video_url);
@@ -441,7 +447,7 @@ document.getElementById('news-modal-modifier-btn').addEventListener('click', () 
   if (!a) return;
   document.getElementById('edit-actu-titre').value = a.titre || '';
   document.getElementById('edit-actu-categorie').value = a.categorie || '';
-  document.getElementById('edit-actu-commentaire').value = a.commentaire || '';
+  chargerContenuDansEditeur(quillEditActuCommentaire, a.commentaire);
   document.getElementById('edit-actu-video').value = a.video_url || '';
   document.getElementById('edit-actu-images').value = '';
   document.getElementById('edit-actu-msg').style.display = 'none';
@@ -468,7 +474,7 @@ document.getElementById('edit-actu-enregistrer-btn').addEventListener('click', a
   const msg = document.getElementById('edit-actu-msg');
   const titre = document.getElementById('edit-actu-titre').value.trim();
   const categorie = document.getElementById('edit-actu-categorie').value;
-  const commentaire = document.getElementById('edit-actu-commentaire').value.trim();
+  const commentaire = lireContenuEditeur(quillEditActuCommentaire);
   const videoUrl = document.getElementById('edit-actu-video').value.trim();
   const fichiers = Array.from(document.getElementById('edit-actu-images').files || []);
 
@@ -522,7 +528,7 @@ document.getElementById('actu-publier-btn').addEventListener('click', async () =
   const msg = document.getElementById('actu-msg');
   const titre = document.getElementById('actu-titre').value.trim();
   const categorie = document.getElementById('actu-categorie').value;
-  const commentaire = document.getElementById('actu-commentaire').value.trim();
+  const commentaire = lireContenuEditeur(quillActuCommentaire);
   const videoUrl = document.getElementById('actu-video').value.trim();
   const fichierInput = document.getElementById('actu-image');
   const fichiers = Array.from(fichierInput.files || []);
@@ -559,7 +565,7 @@ document.getElementById('actu-publier-btn').addEventListener('click', async () =
   msg.className = 'form-msg ok'; msg.textContent = `Actualité publiée avec ${urls.length} photo(s) !`; msg.style.display = 'block';
   document.getElementById('actu-titre').value = '';
   document.getElementById('actu-categorie').value = '';
-  document.getElementById('actu-commentaire').value = '';
+  if (quillActuCommentaire) quillActuCommentaire.setText('');
   document.getElementById('actu-video').value = '';
   fichierInput.value = '';
   chargerActualites();

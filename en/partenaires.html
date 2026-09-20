@@ -28,6 +28,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#1e1d1c">
@@ -102,7 +103,7 @@ setTimeout(() => {
       <h2 id="part-modal-nom" style="margin-top:0.6rem;"></h2>
       <p id="part-modal-structure" style="margin-top:0.3rem; color:var(--or); font-weight:600;"></p>
       <p id="part-modal-evenement" style="margin-top:0.5rem; color:var(--bordeaux); font-size:0.9rem;"></p>
-      <p id="part-modal-description" style="margin-top:1rem; color:#4a4a4a;"></p>
+      <div id="part-modal-description" class="contenu-riche" style="margin-top:1rem; color:#4a4a4a;"></div>
 
       <div id="part-modal-admin-actions" style="display:none; margin-top:1.2rem; padding-top:1rem; border-top:1px solid var(--gris-clair);">
         <button id="part-modal-modifier-btn" class="btn-mini-admin">✎ Edit</button>
@@ -126,7 +127,7 @@ setTimeout(() => {
             <option value="Autre">Other</option>
           </select>
         </div>
-        <div class="form-champ"><label>Description / Notes</label><textarea id="edit-p-description"></textarea></div>
+        <div class="form-champ"><label>Description / Notes</label><div id="edit-p-description-editeur" class="editeur-riche"></div></div>
         <div class="form-champ"><label>Replace Logo (optional)</label><input type="file" id="edit-p-logo" accept="image/*"></div>
         <button class="btn btn--principal" id="edit-p-enregistrer-btn">Save</button>
         <button class="btn" id="edit-p-annuler-btn" style="margin-left:0.5rem;">Cancel</button>
@@ -162,7 +163,7 @@ setTimeout(() => {
           <option value="Autre">Other</option>
         </select>
       </div>
-      <div class="form-champ"><label>Description / Notes (optional)</label><textarea id="p-description"></textarea></div>
+      <div class="form-champ"><label>Description / Notes (optional)</label><div id="p-description-editeur" class="editeur-riche"></div></div>
       <div class="form-champ"><label>Logo or Poster (large size, good resolution)</label><input type="file" id="p-logo" accept="image/*"></div>
 
       <button class="btn btn--principal" id="p-publier-btn" style="margin-top:1.2rem;">Add This Partner</button>
@@ -217,6 +218,8 @@ setTimeout(() => {
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"></script>
 <script src="../js/supabase-config.js"></script>
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+<script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+<script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
 <script src="../js/app.js"></script>
 <script src="../js/menu.js"></script>
 <script>
@@ -231,6 +234,9 @@ async function convertirSiHeic(fichier) {
 }
 
 window.partenairesData = [];
+
+const quillPDescription = creerEditeurRiche('p-description-editeur', 'Write here… (you can paste text already formatted from Word)');
+const quillEditPDescription = creerEditeurRiche('edit-p-description-editeur', 'Write here… (you can paste text already formatted from Word)');
 
 async function chargerPartenaires() {
   const grille = document.getElementById('partenaires-grille');
@@ -290,7 +296,7 @@ function ouvrirPartModal(index) {
   document.getElementById('part-modal-nom').textContent = p.nom || '';
   document.getElementById('part-modal-structure').textContent = p.structure || '';
   document.getElementById('part-modal-evenement').textContent = p.evenement || '';
-  document.getElementById('part-modal-description').textContent = p.description || '';
+  document.getElementById('part-modal-description').innerHTML = rendreContenuRiche(p.description);
 
   document.getElementById('part-modal-nom').style.display = 'block';
   document.getElementById('part-modal-structure').style.display = 'block';
@@ -310,7 +316,7 @@ document.getElementById('part-modal-modifier-btn').addEventListener('click', () 
   document.getElementById('edit-p-structure').value = p.structure || '';
   document.getElementById('edit-p-evenement').value = p.evenement || '';
   document.getElementById('edit-p-role').value = p.role || '';
-  document.getElementById('edit-p-description').value = p.description || '';
+  chargerContenuDansEditeur(quillEditPDescription, p.description);
   document.getElementById('edit-p-logo').value = '';
   document.getElementById('edit-p-msg').style.display = 'none';
 
@@ -344,7 +350,7 @@ document.getElementById('edit-p-enregistrer-btn').addEventListener('click', asyn
     structure: document.getElementById('edit-p-structure').value.trim(),
     evenement: document.getElementById('edit-p-evenement').value.trim(),
     role: document.getElementById('edit-p-role').value,
-    description: document.getElementById('edit-p-description').value.trim()
+    description: lireContenuEditeur(quillEditPDescription)
   };
 
   const logoInput = document.getElementById('edit-p-logo');
@@ -404,7 +410,7 @@ document.getElementById('p-publier-btn').addEventListener('click', async () => {
     structure: document.getElementById('p-structure').value.trim(),
     evenement: document.getElementById('p-evenement').value.trim(),
     role: document.getElementById('p-role').value,
-    description: document.getElementById('p-description').value.trim(),
+    description: lireContenuEditeur(quillPDescription),
     logo_url, logo_chemin
   });
 
@@ -415,7 +421,7 @@ document.getElementById('p-publier-btn').addEventListener('click', async () => {
   document.getElementById('p-structure').value = '';
   document.getElementById('p-evenement').value = '';
   document.getElementById('p-role').value = '';
-  document.getElementById('p-description').value = '';
+  if (quillPDescription) quillPDescription.setText('');
   logoInput.value = '';
   chargerPartenaires();
 });

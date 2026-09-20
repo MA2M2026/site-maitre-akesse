@@ -102,6 +102,97 @@ function nomFichierSur(nom) {
   return nom.replace(/[^a-zA-Z0-9._-]/g, '_').slice(-80) || 'fichier';
 }
 
+// ================== Texte enrichi (actualités, événements, partenaires) ==================
+// Les champs "commentaire"/"description" étaient de simples <textarea> : un mannequin
+// pouvait coller un texte mis en forme dans Word (gras, titres, paragraphes), mais un
+// <textarea> ne peut physiquement contenir QUE du texte brut — toute la mise en forme
+// disparaissait déjà au moment du copier-coller, avant même l'enregistrement. Ces
+// champs utilisent désormais un éditeur enrichi (Quill), qui enregistre du HTML.
+// Ces fonctions permettent d'afficher correctement À LA FOIS ce nouveau contenu ET les
+// anciens textes bruts déjà enregistrés (en leur redonnant au moins leurs paragraphes et
+// retours à la ligne, la seule chose qu'un ancien <textarea> pouvait préserver).
+
+function texteEstDejaHtml(texte) {
+  return /<[a-z][\s\S]*>/i.test(String(texte || ''));
+}
+
+// Ancien texte brut → paragraphes HTML équivalents (une ligne vide = nouveau paragraphe).
+function convertirTexteBrutEnHtml(texte) {
+  const paragraphes = String(texte || '').split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
+  if (!paragraphes.length) return '';
+  return paragraphes.map(p => '<p>' + echapperHtml(p).replace(/\n/g, '<br>') + '</p>').join('');
+}
+
+// Liste blanche volontairement réduite : assez pour une "belle mise en page" (gras,
+// italique, titres, listes, citation, paragraphes) sans jamais autoriser de script ou
+// d'attribut dangereux, même si la source du texte est un admin — défense en profondeur.
+const CONTENU_RICHE_BALISES_AUTORISEES = ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'h2', 'h3', 'h4', 'ul', 'ol', 'li', 'blockquote', 'a'];
+const CONTENU_RICHE_ATTRIBUTS_AUTORISES = ['href', 'target', 'rel'];
+
+// Rend un contenu (nouveau HTML ou ancien texte brut) prêt à être injecté avec
+// .innerHTML : convertit l'ancien texte brut en paragraphes puis nettoie systématiquement
+// via DOMPurify (si la bibliothèque a pu charger ; repli sur du texte échappé sinon).
+function rendreContenuRiche(texte) {
+  const html = texteEstDejaHtml(texte) ? String(texte) : convertirTexteBrutEnHtml(texte);
+  if (!html) return '';
+  if (typeof DOMPurify === 'undefined') return echapperHtml(texte || '').replace(/\n/g, '<br>');
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: CONTENU_RICHE_BALISES_AUTORISEES,
+    ALLOWED_ATTR: CONTENU_RICHE_ATTRIBUTS_AUTORISES
+  });
+}
+
+// Version texte brut (pour les extraits de carte, tronqués à N caractères) : dépouille
+// tout le HTML éventuel pour ne garder que le texte lisible.
+function texteBrutDepuis(texte) {
+  if (!texte) return '';
+  if (!texteEstDejaHtml(texte)) return String(texte);
+  const conteneur = document.createElement('div');
+  conteneur.innerHTML = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(String(texte)) : '';
+  return conteneur.textContent || conteneur.innerText || '';
+}
+
+// Crée un éditeur de texte enrichi (Quill) dans le conteneur donné — barre d'outils
+// volontairement réduite (gras/italique/souligné, titres, listes, citation) : de quoi
+// reproduire une mise en page Word sans complexité inutile. Le collage d'un texte déjà
+// mis en forme (Word, Claude…) est automatiquement nettoyé par Quill (styles Office
+// superflus retirés, structure — gras/italique/titres/paragraphes — conservée).
+// Renvoie null si la bibliothèque n'a pas pu charger (CDN indisponible) plutôt que de
+// planter la page — le conteneur reste alors simplement vide.
+function creerEditeurRiche(idConteneur, placeholder) {
+  if (typeof Quill === 'undefined') return null;
+  const conteneur = document.getElementById(idConteneur);
+  if (!conteneur) return null;
+  return new Quill(conteneur, {
+    theme: 'snow',
+    placeholder: placeholder || 'Écrivez ici… (vous pouvez coller un texte déjà mis en forme depuis Word)',
+    modules: {
+      toolbar: [
+        ['bold', 'italic', 'underline'],
+        [{ header: [2, 3, false] }],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        ['blockquote'],
+        ['clean']
+      ]
+    }
+  });
+}
+
+// Charge un contenu existant (nouveau HTML ou ancien texte brut) dans un éditeur Quill —
+// utilisé à l'ouverture du formulaire de modification d'une fiche déjà publiée.
+function chargerContenuDansEditeur(quill, texte) {
+  if (!quill) return;
+  quill.root.innerHTML = texteEstDejaHtml(texte) ? String(texte) : convertirTexteBrutEnHtml(texte);
+}
+
+// Lit le HTML actuel d'un éditeur Quill, ou '' s'il est resté vide — Quill laisse
+// toujours au moins "<p><br></p>" même sans saisie, il faut donc le détecter via le
+// texte brut plutôt que de tester le HTML directement.
+function lireContenuEditeur(quill) {
+  if (!quill) return '';
+  return quill.getText().trim() ? quill.root.innerHTML : '';
+}
+
 // Pastille WhatsApp flottante, injectée sur toutes les pages
 document.addEventListener('DOMContentLoaded', () => {
   const bouton = document.createElement('a');
