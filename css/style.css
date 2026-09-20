@@ -1724,8 +1724,9 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
 }
 .mot-resp-message {
   color: var(--texte-corps); margin-top: 1.2rem; font-size: 1.05rem; line-height: 1.7;
-  font-family: var(--texte); font-style: normal;
+  font-family: var(--display); font-style: normal;
 }
+.mannequin-bio { font-family: var(--display); line-height: 1.7; }
 @media (max-width: 720px) {
   .mot-responsable-bloc { grid-template-columns: 1fr; padding-left: 0.75rem; padding-right: 0.75rem; }
   .mot-responsable-photo-wrap { max-width: 620px; margin: 0 auto; }
