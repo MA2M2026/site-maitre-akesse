@@ -653,25 +653,20 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
       }
     }
 
-    const reponse = await fetch(URL_SCRIPT_PHOTOS_CASTING, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({
-        nom: candidature.full_name,
-        email: candidature.email,
-        phone: candidature.phone,
-        type: typeCandidature,
-        projet: projetNom || '',
-        photos: photosBase64
-      })
+    const { liens, echec } = await envoyerPhotosVersDrive(URL_SCRIPT_PHOTOS_CASTING, {
+      nom: candidature.full_name,
+      email: candidature.email,
+      phone: candidature.phone,
+      type: typeCandidature,
+      projet: projetNom || '',
+      photos: photosBase64
     });
-    const resultat = await reponse.json();
 
-    if (resultat.ok && Array.isArray(resultat.liens)) {
-      for (const lien of resultat.liens) {
+    if (!echec) {
+      for (const lien of liens) {
         await sb.from('casting_photos').insert({ application_id: candidature.id, url: lien, chemin: null });
       }
-      nbPhotosEchouees += photosBase64.length - resultat.liens.length;
+      nbPhotosEchouees += photosBase64.length - liens.length;
     } else {
       nbPhotosEchouees = fichiersPhotos.length;
     }
@@ -680,6 +675,7 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
     // enregistré côté Supabase) — on signale juste que les photos n'ont pas pu partir.
     nbPhotosEchouees = fichiersPhotos.length;
   }
+  journaliserPhotosEchouees('candidature', candidature.id, nbPhotosEchouees);
 
   const libelleType = typeCandidature === 'projet' ? `Projet/casting : ${projetNom}` : `Intégrer l'agence`;
   envoyerNotificationEmail({
