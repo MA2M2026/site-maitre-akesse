@@ -3227,3 +3227,56 @@ create policy "Tout le monde peut logger une erreur"
   );
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 77 : relecture de toutes les fonctions SECURITY DEFINER
+-- (SEC-08 de l'audit de sécurité externe).
+--
+-- 1) Deux fonctions orphelines, ouvertes à "anon" et SANS AUCUNE
+--    protection (ni vérification d'auteur, ni limite de fréquence) :
+--    utiliser_code_inscription() et liberer_code_inscription().
+--    Vérifié par recherche exhaustive : aucune page du site actuel ne
+--    les appelle — le flux d'inscription actuel (soumettre_inscription_
+--    mannequin, Extension 33/36/59) gère la consommation du code de
+--    façon atomique en interne, sans jamais passer par ces deux
+--    fonctions. Laissées ouvertes, n'importe qui aurait pu :
+--    - utiliser_code_inscription(code) : invalider en masse les codes
+--      d'inscription de l'agence sans jamais inscrire personne (essais
+--      successifs sur des codes devinés/brute-forcés) ;
+--    - liberer_code_inscription(code) : réactiver un code déjà utilisé
+--      par un vrai mannequin, contournant tout le principe d'usage
+--      unique des codes.
+--    On retire simplement leur accès public (fonctions conservées,
+--    juste rendues inappelables depuis le site) — réversible, et sans
+--    aucun effet puisque rien ne les appelle aujourd'hui.
+--
+-- 2) Les 5 fonctions du code de validation admin (2FA : code_validation_
+--    statut, definir_code_validation, verifier_code_validation,
+--    demander_reinitialisation_code_validation, reinitialiser_code_
+--    validation) n'avaient jamais de revoke/grant explicite dans ce
+--    fichier suivi. Vérifié : chacune vérifie elle-même "auth.uid() est
+--    bien admin" en tout premier, donc pas de faille active — mais on
+--    ajoute quand même un verrou explicite au niveau des privilèges,
+--    en plus de cette vérification interne, par prudence (défense en
+--    profondeur demandée par l'audit).
+-- ===================================================================
+
+revoke all on function utiliser_code_inscription(text) from public, anon, authenticated;
+revoke all on function liberer_code_inscription(text) from public, anon, authenticated;
+
+revoke all on function code_validation_statut() from public;
+grant execute on function code_validation_statut() to authenticated;
+
+revoke all on function definir_code_validation(text, text) from public;
+grant execute on function definir_code_validation(text, text) to authenticated;
+
+revoke all on function verifier_code_validation(text) from public;
+grant execute on function verifier_code_validation(text) to authenticated;
+
+revoke all on function demander_reinitialisation_code_validation() from public;
+grant execute on function demander_reinitialisation_code_validation() to authenticated;
+
+revoke all on function reinitialiser_code_validation(text, text) from public;
+grant execute on function reinitialiser_code_validation(text, text) to authenticated;
+
+NOTIFY pgrst, 'reload schema';
