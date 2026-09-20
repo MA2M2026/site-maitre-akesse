@@ -912,6 +912,7 @@ section { padding: 5rem 0; }
 
 .hero-v2 {
   height: 100vh;
+  height: 100dvh;
   min-height: 560px;
   display: flex;
   align-items: center;
@@ -1340,7 +1341,7 @@ section { padding: 5rem 0; }
 
 /* ---------- Porte d'entrée (hero verrouillé) ---------- */
 
-body.porte-verrouillee { overflow: hidden; height: 100vh; }
+body.porte-verrouillee { overflow: hidden; height: 100vh; height: 100dvh; }
 html.porte-verrouillee { overflow: hidden; height: 100%; }
 
 .hero-v2::before {
