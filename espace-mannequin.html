@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-whF4JLhP6FXQbxpwRRcBya3dUU0S8NrziaP925L2N8Q=' 'sha256-HGvskV6vmPwq0rvpBkNbLvzd7gHM967T8GL54pCYoqU='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-k8MH4dm2mMIsyTOtNFj1F+FwymkLURiA/PbBQPEmVvs=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-whF4JLhP6FXQbxpwRRcBya3dUU0S8NrziaP925L2N8Q=' 'sha256-M82I+kOFRZdsgpWi8CPYQIUB/xVX6wTMepRuDLj0zMM='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-k8MH4dm2mMIsyTOtNFj1F+FwymkLURiA/PbBQPEmVvs=';">
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
 <script src="js/analytics-config.js"></script>
@@ -199,7 +199,7 @@ setTimeout(() => {
 
     <div id="notice-nouveaux-champs" class="em-3">
       <strong>🔴 Nouveau — merci de compléter votre fiche :</strong>
-      Vos réalisations (défilés, shootings, publicités, castings…), vos années d'expérience, votre type de modèle, vos langues parlées, votre disponibilité et votre mensuration complète (Hanches pour les femmes, Entrejambe pour les hommes) sont maintenant demandés pour que les recruteurs vous connaissent mieux. Faites défiler jusqu'à « Mes réalisations » ci-dessous pour les renseigner.
+      Vos réalisations (défilés, shootings, publicités, castings…), vos années d'expérience, votre type de modèle, vos langues parlées, votre disponibilité et votre mensuration complète (Hanches pour les femmes, Entrejambe pour les hommes) sont maintenant demandés pour que les recruteurs vous connaissent mieux. Faites défiler jusqu'à « Expérience professionnelle » ci-dessous pour les renseigner.
     </div>
 
     <!-- Chaque bloc s'enregistre lui-même, indépendamment des autres : modifier
@@ -209,10 +209,24 @@ setTimeout(() => {
          pousse à remplir chaque bloc avant de pouvoir publier. -->
 
     <form id="form-infos" class="bloc-section">
-      <div class="section-tete-dossier"><span class="eyebrow">01</span><h3>Informations &amp; mensurations</h3></div>
+      <div class="section-tete-dossier"><span class="eyebrow">01</span><h3>Profil &amp; informations physiques</h3></div>
       <div class="form-champ">
         <label for="pr-nom">Nom complet *</label>
         <input type="text" id="pr-nom" required>
+      </div>
+      <div class="form-champ">
+        <label for="pr-bio">Présentation / profil *</label>
+        <textarea id="pr-bio" required placeholder="Quelques phrases sur vous : votre parcours, votre style, ce qui vous distingue…"></textarea>
+      </div>
+      <div class="form-grille">
+        <div class="form-champ">
+          <label for="pr-instagram">Instagram (facultatif)</label>
+          <input type="text" id="pr-instagram" placeholder="@votre_compte">
+        </div>
+        <div class="form-champ">
+          <label for="pr-citation">Citation personnelle (facultatif)</label>
+          <input type="text" id="pr-citation" placeholder="Une phrase courte qui vous représente" maxlength="120">
+        </div>
       </div>
       <div class="form-grille">
         <div class="form-champ">
@@ -328,13 +342,79 @@ setTimeout(() => {
           <input type="text" id="pr-cheveux-autre" placeholder="Précisez la couleur" class="em-6">
         </div>
       </div>
+      <div class="form-champ">
+        <label for="pr-video">Vidéo de présentation (lien YouTube ou Vimeo, facultatif)</label>
+        <input type="url" id="pr-video" placeholder="https://www.youtube.com/watch?v=...">
+      </div>
       <button type="submit" id="btn-enregistrer-infos" class="btn btn--principal u-hidden" disabled>Enregistrer mes informations</button>
       <div id="infos-msg" class="form-msg"></div>
     </form>
 
+    <form id="form-formation" class="bloc-section">
+      <div class="section-tete-dossier"><span class="eyebrow">02</span><h3>Formation</h3></div>
+      <div class="form-grille">
+        <div class="form-champ">
+          <label for="pr-niveau-etude">Niveau d'étude</label>
+          <input type="text" id="pr-niveau-etude" placeholder="ex : Baccalauréat, Licence…">
+        </div>
+        <div class="form-champ">
+          <label for="pr-etablissement">Établissement</label>
+          <input type="text" id="pr-etablissement" placeholder="ex : Lycée Classique d'Abidjan">
+        </div>
+      </div>
+      <div class="form-grille">
+        <div class="form-champ">
+          <label for="pr-formation-particuliere">Formation particulière (facultatif)</label>
+          <input type="text" id="pr-formation-particuliere" placeholder="ex : Aucune, ou une spécialité">
+        </div>
+        <div class="form-champ">
+          <label for="pr-formation-mannequin">Formation mannequin (facultatif)</label>
+          <input type="text" id="pr-formation-mannequin" placeholder="ex : MA2M — Coaching &amp; Masterclass">
+        </div>
+      </div>
+      <button type="submit" id="btn-enregistrer-formation" class="btn btn--principal u-hidden" disabled>Enregistrer ma formation</button>
+      <div id="formation-msg" class="form-msg"></div>
+    </form>
+
     <div class="bloc-section">
-      <div class="section-tete-dossier"><span class="eyebrow">02</span><h3>Mes réalisations</h3></div>
-      <p class="bloc-section-intro">Défilés, shootings, publicités, castings… Ajoutez chaque projet un par un, ils s'affichent tous sur votre fiche publique. Un seul projet suffit pour publier votre profil — vous pourrez toujours en ajouter d'autres plus tard.</p>
+      <div class="section-tete-dossier"><span class="eyebrow">03</span><h3>Expérience professionnelle</h3></div>
+      <div class="form-grille">
+        <div class="form-champ">
+          <label for="pr-experience">Années d'expérience</label>
+          <select id="pr-experience"></select>
+        </div>
+        <div class="form-champ">
+          <label for="pr-disponibilite">Disponibilité</label>
+          <select id="pr-disponibilite">
+            <option value="">—</option>
+            <option value="immediate">Disponible immédiatement</option>
+            <option value="rdv">Sur rendez-vous</option>
+            <option value="mobile">Mobile pour déplacements</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-champ">
+        <label>Type de modèle (cochez tout ce qui s'applique)</label>
+        <div class="em-11">
+          <label class="em-12"><input type="checkbox" class="pr-type em-13" value="catwalk"> Défilé / Catwalk</label>
+          <label class="em-12"><input type="checkbox" class="pr-type em-13" value="photo"> Photo</label>
+          <label class="em-12"><input type="checkbox" class="pr-type em-13" value="publicite"> Publicité</label>
+          <label class="em-12"><input type="checkbox" class="pr-type em-13" value="commercial"> Commercial</label>
+          <label class="em-12"><input type="checkbox" class="pr-type em-13" value="autre"> Autre</label>
+        </div>
+      </div>
+      <div class="form-champ">
+        <label>Langues parlées</label>
+        <div class="em-11">
+          <label class="em-12"><input type="checkbox" class="pr-langue em-13" value="Français"> Français</label>
+          <label class="em-12"><input type="checkbox" class="pr-langue em-13" value="Anglais"> Anglais</label>
+          <label class="em-12"><input type="checkbox" class="pr-langue em-13" value="Espagnol"> Espagnol</label>
+          <label class="em-12"><input type="checkbox" class="pr-langue em-13" value="Autre"> Autre</label>
+        </div>
+      </div>
+      <button type="button" id="btn-enregistrer-experience" class="btn btn--principal u-hidden" disabled>Enregistrer mon profil professionnel</button>
+      <div id="exp-msg" class="form-msg"></div>
+      <p class="bloc-section-intro em-mt-1">Défilés, shootings, publicités, castings… Ajoutez chaque projet un par un, ils s'affichent tous sur votre fiche publique. Un seul projet suffit pour publier votre profil — vous pourrez toujours en ajouter d'autres plus tard.</p>
       <div id="projets-liste" class="projets-liste"></div>
       <div id="form-projet" class="em-7">
         <div class="form-grille">
@@ -403,58 +483,53 @@ setTimeout(() => {
       </script>
     </div>
 
-    <form id="form-experience" class="bloc-section">
-      <div class="section-tete-dossier"><span class="eyebrow">03</span><h3>Expérience &amp; profil</h3></div>
-      <div class="form-grille">
-        <div class="form-champ">
-          <label for="pr-experience">Années d'expérience</label>
-          <select id="pr-experience"></select>
+    <form id="form-competences" class="bloc-section">
+      <div class="section-tete-dossier"><span class="eyebrow">04</span><h3>Compétences &amp; portfolio</h3></div>
+      <p class="bloc-section-intro">Évaluez-vous honnêtement sur chaque compétence (1 à 5) — ça aide l'agence et les recruteurs à mieux vous connaître.</p>
+      <div class="competences-grille">
+        <div class="form-champ competence-champ">
+          <label for="comp-runway">Runway / Défilé</label>
+          <input type="range" id="comp-runway" min="1" max="5" value="3" data-competence="runway">
+        </div>
+        <div class="form-champ competence-champ">
+          <label for="comp-pose">Pose photographique</label>
+          <input type="range" id="comp-pose" min="1" max="5" value="3" data-competence="pose">
+        </div>
+        <div class="form-champ competence-champ">
+          <label for="comp-editorial">Editorial</label>
+          <input type="range" id="comp-editorial" min="1" max="5" value="3" data-competence="editorial">
+        </div>
+        <div class="form-champ competence-champ">
+          <label for="comp-campagne">Fashion campaign</label>
+          <input type="range" id="comp-campagne" min="1" max="5" value="3" data-competence="campagne">
+        </div>
+        <div class="form-champ competence-champ">
+          <label for="comp-fitting">Fitting</label>
+          <input type="range" id="comp-fitting" min="1" max="5" value="3" data-competence="fitting">
+        </div>
+        <div class="form-champ competence-champ">
+          <label for="comp-presentation">Présentation de collection</label>
+          <input type="range" id="comp-presentation" min="1" max="5" value="3" data-competence="presentation">
+        </div>
+        <div class="form-champ competence-champ">
+          <label for="comp-expression">Expression corporelle</label>
+          <input type="range" id="comp-expression" min="1" max="5" value="3" data-competence="expression">
+        </div>
+        <div class="form-champ competence-champ">
+          <label for="comp-equipe">Travail en équipe</label>
+          <input type="range" id="comp-equipe" min="1" max="5" value="3" data-competence="equipe">
+        </div>
+        <div class="form-champ competence-champ">
+          <label for="comp-discipline">Discipline professionnelle</label>
+          <input type="range" id="comp-discipline" min="1" max="5" value="3" data-competence="discipline">
         </div>
       </div>
-      <div class="form-champ">
-        <label>Type de modèle (cochez tout ce qui s'applique)</label>
-        <div class="em-11">
-          <label class="em-12"><input type="checkbox" class="pr-type em-13" value="catwalk"> Défilé / Catwalk</label>
-          <label class="em-12"><input type="checkbox" class="pr-type em-13" value="photo"> Photo</label>
-          <label class="em-12"><input type="checkbox" class="pr-type em-13" value="publicite"> Publicité</label>
-          <label class="em-12"><input type="checkbox" class="pr-type em-13" value="commercial"> Commercial</label>
-          <label class="em-12"><input type="checkbox" class="pr-type em-13" value="autre"> Autre</label>
-        </div>
-      </div>
-      <div class="form-grille">
-        <div class="form-champ">
-          <label>Langues parlées</label>
-          <div class="em-11">
-            <label class="em-12"><input type="checkbox" class="pr-langue em-13" value="Français"> Français</label>
-            <label class="em-12"><input type="checkbox" class="pr-langue em-13" value="Anglais"> Anglais</label>
-            <label class="em-12"><input type="checkbox" class="pr-langue em-13" value="Espagnol"> Espagnol</label>
-            <label class="em-12"><input type="checkbox" class="pr-langue em-13" value="Autre"> Autre</label>
-          </div>
-        </div>
-        <div class="form-champ">
-          <label for="pr-disponibilite">Disponibilité</label>
-          <select id="pr-disponibilite">
-            <option value="">—</option>
-            <option value="immediate">Disponible immédiatement</option>
-            <option value="rdv">Sur rendez-vous</option>
-            <option value="mobile">Mobile pour déplacements</option>
-          </select>
-        </div>
-      </div>
-      <div class="form-champ">
-        <label for="pr-bio">Présentation / expérience *</label>
-        <textarea id="pr-bio" required></textarea>
-      </div>
-      <div class="form-champ">
-        <label for="pr-video">Vidéo de présentation (lien YouTube ou Vimeo, facultatif)</label>
-        <input type="url" id="pr-video" placeholder="https://www.youtube.com/watch?v=...">
-      </div>
-      <button type="submit" id="btn-enregistrer-experience" class="btn btn--principal u-hidden" disabled>Enregistrer mon expérience</button>
-      <div id="exp-msg" class="form-msg"></div>
+      <button type="submit" id="btn-enregistrer-competences" class="btn btn--principal u-hidden" disabled>Enregistrer mes compétences</button>
+      <div id="competences-msg" class="form-msg"></div>
     </form>
 
     <div class="bloc-section">
-      <div class="section-tete-dossier"><span class="eyebrow">04</span><h3>Mes photos</h3></div>
+      <div class="section-tete-dossier"><span class="eyebrow">05</span><h3>Mes photos</h3></div>
       <div class="upload-zone">
         <p>Ajoutez vos photos (JPG, PNG ou HEIC — les photos iPhone sont converties automatiquement). Vous pouvez en sélectionner plusieurs à la fois.</p>
         <input type="file" id="input-photo" accept="image/*" multiple>
@@ -468,7 +543,7 @@ setTimeout(() => {
     </div>
 
     <form id="form-publication" class="bloc-section">
-      <div class="section-tete-dossier"><span class="eyebrow">05</span><h3>Contact &amp; publication</h3></div>
+      <div class="section-tete-dossier"><span class="eyebrow">06</span><h3>Contact &amp; publication</h3></div>
       <p id="guide-premiere-fois" class="em-18">
         👋 Première inscription : remplissez tous les blocs ci-dessus (informations, mensurations, au moins un projet réalisé, expérience, au moins une photo), puis validez tout ici en une seule fois avec le bouton "Enregistrer mon profil" ci-dessous.
       </p>
@@ -771,21 +846,34 @@ function afficherMsg(el, texte, type) {
 
 // --- Mode guidé (première inscription) vs mode libre (blocs autonomes) ---
 // Avant la toute première publication réussie, les boutons "Enregistrer" des
-// blocs 1 et 3 sont cachés : seul le bouton final "Enregistrer mon profil"
-// (bloc 5) existe, pour forcer à tout remplir en une fois. Une fois la
-// première publication réussie, ces boutons réapparaissent définitivement.
+// blocs 1 à 4 sont cachés : seuls la case "rendre visible" et le bouton final
+// "Enregistrer mon profil" (bloc 5) existent, pour forcer à tout remplir en
+// une fois. Une fois la première publication réussie, ces boutons
+// réapparaissent définitivement et, à l'inverse, la case + le bouton du
+// bloc 5 disparaissent définitivement — il n'y a volontairement aucun moyen
+// de se "dépublier" soi-même après coup depuis cet écran.
 function appliquerModeGuide(profil) {
   const enModeGuide = !profil.premiere_publication_faite;
   // "disabled" en plus de "display:none" : sans ça, la touche Entrée dans un
   // champ texte du bloc peut quand même déclencher un bouton submit caché
   // (un bouton masqué par CSS reste normalement actionnable par le navigateur).
-  const btnInfos = document.getElementById('btn-enregistrer-infos');
-  const btnExperience = document.getElementById('btn-enregistrer-experience');
-  btnInfos.style.display = enModeGuide ? 'none' : '';
-  btnInfos.disabled = enModeGuide;
-  btnExperience.style.display = enModeGuide ? 'none' : '';
-  btnExperience.disabled = enModeGuide;
+  const boutonsAutonomes = [
+    document.getElementById('btn-enregistrer-infos'),
+    document.getElementById('btn-enregistrer-formation'),
+    document.getElementById('btn-enregistrer-experience'),
+    document.getElementById('btn-enregistrer-competences')
+  ];
+  boutonsAutonomes.forEach(btn => {
+    btn.style.display = enModeGuide ? 'none' : '';
+    btn.disabled = enModeGuide;
+  });
   document.getElementById('guide-premiere-fois').style.display = enModeGuide ? 'block' : 'none';
+
+  const champPublie = document.getElementById('pr-publie').closest('label');
+  const btnPublier = document.querySelector('#form-publication button[type="submit"]');
+  champPublie.style.display = enModeGuide ? '' : 'none';
+  btnPublier.style.display = enModeGuide ? '' : 'none';
+  btnPublier.disabled = !enModeGuide;
 }
 
 // --- Mensurations adaptées au genre : Hanches pour les femmes, Entrejambe pour les hommes ---
@@ -1039,7 +1127,7 @@ async function chargerProfil() {
   // authenticated pour empêcher tout autre compte connecté de les lire via l'API) :
   // on les récupère séparément via une fonction réservée au propriétaire de la fiche.
   const { data: profil } = await sb.from('model_profiles')
-    .select('id, full_name, bio, height_cm, weight_kg, city, instagram, published, created_at, category, video_url, chest_cm, waist_cm, hips_cm, shoe_size, carnation, clothing_size, date_naissance, eye_color, hair_color, years_experience, model_types, languages, availability, inseam_cm, featured, premiere_publication_faite, en_attente_validation, raison_refus')
+    .select('id, full_name, bio, height_cm, weight_kg, city, instagram, published, created_at, category, video_url, chest_cm, waist_cm, hips_cm, shoe_size, carnation, clothing_size, date_naissance, eye_color, hair_color, years_experience, model_types, languages, availability, inseam_cm, featured, premiere_publication_faite, en_attente_validation, raison_refus, niveau_etude, etablissement, formation_particuliere, formation_mannequin, competences, citation')
     .eq('id', user.id).single();
   if (!profil) return;
   dernierProfilCharge = profil;
@@ -1091,6 +1179,16 @@ async function chargerProfil() {
   definirSelectOuAutre('pr-tailleveternents', 'pr-tailleveternents-autre', profil.clothing_size || '');
   document.getElementById('pr-bio').value = profil.bio || '';
   document.getElementById('pr-video').value = profil.video_url || '';
+  document.getElementById('pr-instagram').value = profil.instagram || '';
+  document.getElementById('pr-citation').value = profil.citation || '';
+  document.getElementById('pr-niveau-etude').value = profil.niveau_etude || '';
+  document.getElementById('pr-etablissement').value = profil.etablissement || '';
+  document.getElementById('pr-formation-particuliere').value = profil.formation_particuliere || '';
+  document.getElementById('pr-formation-mannequin').value = profil.formation_mannequin || '';
+  const competencesProfil = profil.competences || {};
+  document.querySelectorAll('#form-competences input[data-competence]').forEach(input => {
+    input.value = competencesProfil[input.dataset.competence] || 3;
+  });
   document.getElementById('pr-publie').checked = !!profil.published;
   document.getElementById('pr-experience').value = profil.years_experience ?? '';
   const languesCochees = (profil.languages || '').split(',').map(l => l.trim()).filter(Boolean);
@@ -1149,7 +1247,11 @@ document.getElementById('form-infos').addEventListener('submit', async (e) => {
     carnation: document.getElementById('pr-carnation').value,
     clothing_size: valeurSelectOuAutre('pr-tailleveternents', 'pr-tailleveternents-autre'),
     eye_color: valeurSelectOuAutre('pr-yeux', 'pr-yeux-autre'),
-    hair_color: valeurSelectOuAutre('pr-cheveux', 'pr-cheveux-autre')
+    hair_color: valeurSelectOuAutre('pr-cheveux', 'pr-cheveux-autre'),
+    bio: document.getElementById('pr-bio').value.trim(),
+    video_url: document.getElementById('pr-video').value.trim() || null,
+    instagram: document.getElementById('pr-instagram').value.trim() || null,
+    citation: document.getElementById('pr-citation').value.trim() || null
   };
 
   const { error } = await sb.from('model_profiles').upsert(maj);
@@ -1161,9 +1263,35 @@ document.getElementById('form-infos').addEventListener('submit', async (e) => {
   chargerProfil();
 });
 
-// --- Bloc 3 : Expérience & profil — enregistrement autonome, idem. ---
-document.getElementById('form-experience').addEventListener('submit', async (e) => {
+// --- Bloc 2 : Formation — enregistrement autonome. ---
+document.getElementById('form-formation').addEventListener('submit', async (e) => {
   e.preventDefault();
+  const msg = document.getElementById('formation-msg');
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return;
+
+  const maj = {
+    id: user.id,
+    niveau_etude: document.getElementById('pr-niveau-etude').value.trim() || null,
+    etablissement: document.getElementById('pr-etablissement').value.trim() || null,
+    formation_particuliere: document.getElementById('pr-formation-particuliere').value.trim() || null,
+    formation_mannequin: document.getElementById('pr-formation-mannequin').value.trim() || null
+  };
+
+  const { error } = await sb.from('model_profiles').upsert(maj);
+  if (error) {
+    afficherMsg(msg, "Erreur lors de l'enregistrement.", 'err');
+    return;
+  }
+  afficherMsg(msg, '✅ Formation enregistrée.', 'ok');
+  chargerProfil();
+});
+
+// --- Bloc 3 : Expérience professionnelle — enregistrement autonome, idem.
+// Bouton simple (pas de submit de formulaire) : les projets de ce même bloc
+// s'ajoutent instantanément un par un via leurs propres boutons, il n'y a
+// donc pas de <form> englobant à intercepter ici. ---
+document.getElementById('btn-enregistrer-experience').addEventListener('click', async () => {
   const msg = document.getElementById('exp-msg');
   const { data: { user } } = await sb.auth.getUser();
   if (!user) return;
@@ -1173,9 +1301,7 @@ document.getElementById('form-experience').addEventListener('submit', async (e) 
     years_experience: document.getElementById('pr-experience').value !== '' ? parseInt(document.getElementById('pr-experience').value) : null,
     model_types: Array.from(document.querySelectorAll('.pr-type:checked')).map(c => c.value),
     languages: Array.from(document.querySelectorAll('.pr-langue:checked')).map(c => c.value).join(', '),
-    availability: document.getElementById('pr-disponibilite').value,
-    bio: document.getElementById('pr-bio').value.trim(),
-    video_url: document.getElementById('pr-video').value.trim() || null
+    availability: document.getElementById('pr-disponibilite').value
   };
 
   const { error } = await sb.from('model_profiles').upsert(maj);
@@ -1187,15 +1313,42 @@ document.getElementById('form-experience').addEventListener('submit', async (e) 
   chargerProfil();
 });
 
+// --- Bloc 4 : Compétences — enregistrement autonome. ---
+document.getElementById('form-competences').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = document.getElementById('competences-msg');
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return;
+
+  const competences = {};
+  document.querySelectorAll('#form-competences input[data-competence]').forEach(input => {
+    competences[input.dataset.competence] = parseInt(input.value);
+  });
+
+  const { error } = await sb.from('model_profiles').upsert({ id: user.id, competences });
+  if (error) {
+    afficherMsg(msg, "Erreur lors de l'enregistrement.", 'err');
+    return;
+  }
+  afficherMsg(msg, '✅ Compétences enregistrées.', 'ok');
+  chargerProfil();
+});
+
 // --- Bloc 5 : Contact & publication — seul endroit qui exige la fiche complète.
 // Ré-enregistre TOUT (au cas où des champs auraient été modifiés sans cliquer sur
 // le bouton de leur propre bloc), donc rien n'est jamais perdu même si les blocs
-// 1/3 n'ont pas été explicitement sauvegardés juste avant. ---
+// 1/2/3/4 n'ont pas été explicitement sauvegardés juste avant — c'est essentiel
+// en mode guidé (première inscription), où ce bouton est le SEUL visible. ---
 document.getElementById('form-publication').addEventListener('submit', async (e) => {
   e.preventDefault();
   const msg = document.getElementById('pr-msg');
   const { data: { user } } = await sb.auth.getUser();
   if (!user) return;
+
+  const competences = {};
+  document.querySelectorAll('#form-competences input[data-competence]').forEach(input => {
+    competences[input.dataset.competence] = parseInt(input.value);
+  });
 
   const maj = {
     id: user.id,
@@ -1218,6 +1371,13 @@ document.getElementById('form-publication').addEventListener('submit', async (e)
     hair_color: valeurSelectOuAutre('pr-cheveux', 'pr-cheveux-autre'),
     video_url: document.getElementById('pr-video').value.trim() || null,
     bio: document.getElementById('pr-bio').value.trim(),
+    instagram: document.getElementById('pr-instagram').value.trim() || null,
+    citation: document.getElementById('pr-citation').value.trim() || null,
+    niveau_etude: document.getElementById('pr-niveau-etude').value.trim() || null,
+    etablissement: document.getElementById('pr-etablissement').value.trim() || null,
+    formation_particuliere: document.getElementById('pr-formation-particuliere').value.trim() || null,
+    formation_mannequin: document.getElementById('pr-formation-mannequin').value.trim() || null,
+    competences: competences,
     published: document.getElementById('pr-publie').checked,
     years_experience: document.getElementById('pr-experience').value !== '' ? parseInt(document.getElementById('pr-experience').value) : null,
     model_types: Array.from(document.querySelectorAll('.pr-type:checked')).map(c => c.value),
@@ -1604,6 +1764,19 @@ document.getElementById('input-photo').addEventListener('change', async (e) => {
 });
 
 // --- Projets réalisés ---
+// --- Regroupement des projets pour l'affichage, façon CV : les 4 catégories
+// reprennent le "type_projet" existant (Extension antérieure) sans y toucher —
+// Défilé -> Défilés ; Publicité -> Campagnes & Éditoriaux ; Shoot photo ->
+// Shootings ; Casting/New Face/Autre (ou un type personnalisé saisi via
+// "Autre") -> Autres expériences. ---
+function categoriserProjet(typeProjet) {
+  if (typeProjet === 'Défilé') return 'Défilés';
+  if (typeProjet === 'Publicité') return 'Campagnes & Éditoriaux';
+  if (typeProjet === 'Shoot photo') return 'Shootings';
+  return 'Autres expériences';
+}
+const ORDRE_CATEGORIES_PROJETS = ['Défilés', 'Campagnes & Éditoriaux', 'Shootings', 'Autres expériences'];
+
 async function chargerProjets() {
   const { data: { user } } = await sb.auth.getUser();
   if (!user) return;
@@ -1615,23 +1788,41 @@ async function chargerProjets() {
     liste.innerHTML = '<p class="em-30">Aucun projet ajouté pour le moment.</p>';
     return;
   }
+
+  const parCategorie = new Map();
   projets.forEach(p => {
-    const item = document.createElement('div');
-    item.className = 'projet-item';
-    const lieu = [p.ville, p.pays].filter(Boolean).join(', ');
-    item.innerHTML = `
-      <div>
-        <strong>${echapperHtml(p.type_projet)}</strong>${p.titre ? ' — ' + echapperHtml(p.titre) : ''}
-        <div class="em-31">
-          ${[formaterPeriode(p.periode), lieu, p.promoteur].filter(Boolean).map(echapperHtml).join(' · ')}
+    const cat = categoriserProjet(p.type_projet);
+    if (!parCategorie.has(cat)) parCategorie.set(cat, []);
+    parCategorie.get(cat).push(p);
+  });
+
+  ORDRE_CATEGORIES_PROJETS.forEach(cat => {
+    const projetsCat = parCategorie.get(cat);
+    if (!projetsCat || !projetsCat.length) return;
+
+    const titreGroupe = document.createElement('h4');
+    titreGroupe.className = 'projets-groupe-titre';
+    titreGroupe.textContent = cat;
+    liste.appendChild(titreGroupe);
+
+    projetsCat.forEach(p => {
+      const item = document.createElement('div');
+      item.className = 'projet-item';
+      const lieu = [p.ville, p.pays].filter(Boolean).join(', ');
+      item.innerHTML = `
+        <div>
+          <strong>${echapperHtml(p.type_projet)}</strong>${p.titre ? ' — ' + echapperHtml(p.titre) : ''}
+          <div class="em-31">
+            ${[formaterPeriode(p.periode), lieu, p.promoteur].filter(Boolean).map(echapperHtml).join(' · ')}
+          </div>
         </div>
-      </div>
-      <div class="em-32">
-        <button data-id="${p.id}" data-action="modifier" title="Modifier" class="em-33">✎</button>
-        <button data-id="${p.id}" data-action="supprimer" title="Supprimer">✕</button>
-      </div>
-    `;
-    liste.appendChild(item);
+        <div class="em-32">
+          <button data-id="${p.id}" data-action="modifier" title="Modifier" class="em-33">✎</button>
+          <button data-id="${p.id}" data-action="supprimer" title="Supprimer">✕</button>
+        </div>
+      `;
+      liste.appendChild(item);
+    });
   });
 
   liste.querySelectorAll('button[data-action="modifier"]').forEach(btn => {
@@ -1736,7 +1927,7 @@ document.getElementById('pj-ajouter').addEventListener('click', async () => {
   document.getElementById('pj-type-autre').style.display = 'none';
   appliquerVisibiliteTypeProjet('');
   reinitialiserPeriode();
-  afficherMsg(msg, '✅ Projet ajouté avec succès ! Il apparaît ci-dessus, dans « Mes réalisations ».', 'ok');
+  afficherMsg(msg, '✅ Projet ajouté avec succès ! Il apparaît ci-dessus.', 'ok');
   await chargerProjets();
   // Le formulaire d'ajout est en bas de la liste des projets déjà enregistrés —
   // sans ça, après un ajout, la personne ne voit que le formulaire vidé et peut

@@ -331,6 +331,11 @@ section { padding: 5rem 0; }
 .form-grille { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1.5rem; }
 @media (max-width: 640px) { .form-grille { grid-template-columns: 1fr; } }
 
+/* Base minimale en attendant la mise en page définitive façon CV (Phase 2) */
+.competences-grille { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem 1.5rem; }
+@media (max-width: 640px) { .competences-grille { grid-template-columns: 1fr; } }
+.competence-champ input[type="range"] { width: 100%; accent-color: var(--bordeaux); }
+
 /* ---------- Éditeur de texte enrichi (Quill) : actualités, événements, partenaires ---------- */
 .editeur-riche { border-radius: 2px; overflow: hidden; }
 .editeur-riche .ql-toolbar.ql-snow {
@@ -536,6 +541,11 @@ section { padding: 5rem 0; }
 .upload-zone input { margin-top: 0.8rem; }
 
 .projets-liste { margin-top: 1rem; display: flex; flex-direction: column; gap: 0.7rem; }
+.projets-groupe-titre {
+  margin: 1.2rem 0 -0.1rem; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--bordeaux-clair);
+}
+.projets-groupe-titre:first-child { margin-top: 0; }
 .projet-item {
   display: flex; align-items: center; justify-content: space-between; gap: 1rem;
   padding: 0.9rem 1.1rem; background: rgba(255,255,255,0.04); border: 1px solid var(--gris-clair); border-radius: 6px;
