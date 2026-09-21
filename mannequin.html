@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-Uvklme1WKiscn8kLTw7HJeGArmgI8176v6rAXvMVvds='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-7qzTX2fbWhcoN8NR8B0qP2PjgfCnkK2/b2LeciSYanY=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-WiTfrLnhFeYsntbKa/9F2hYRhzVjeTyDL78rIaxPlQ4='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-7qzTX2fbWhcoN8NR8B0qP2PjgfCnkK2/b2LeciSYanY=';">
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
 <script src="js/analytics-config.js"></script>
@@ -592,8 +592,9 @@ async function chargerProfil() {
     console.error('Échec du chargement du profil :', e);
     contenu.innerHTML = `
       <p>Le chargement de ce profil prend trop de temps ou a échoué (connexion instable ?).</p>
-      <button class="btn btn--principal" onclick="window.location.reload()">Réessayer</button>
+      <button class="btn btn--principal" id="btn-reessayer-profil">Réessayer</button>
     `;
+    document.getElementById('btn-reessayer-profil').addEventListener('click', () => window.location.reload());
   }
 }
 
