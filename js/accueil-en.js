@@ -62,14 +62,14 @@ async function chargerPhotosHero() {
   if (!sb) return;
   const { data } = await sb
     .from('model_photos')
-    .select('url, model_id, model_profiles!inner(published)')
+    .select('url, url_moyenne, model_id, model_profiles!inner(published)')
     .eq('model_profiles.published', true)
     .order('created_at', { ascending: false })
     .limit(120);
 
   const parMannequin = new Map();
   melanger(data || []).forEach(p => {
-    if (!parMannequin.has(p.model_id)) parMannequin.set(p.model_id, p.url);
+    if (!parMannequin.has(p.model_id)) parMannequin.set(p.model_id, p.url_moyenne || p.url);
   });
   const urls = melanger(Array.from(parMannequin.values()));
   if (urls.length) {
@@ -151,8 +151,8 @@ async function chargerMedaillonsAccueil() {
   if (!profils || !profils.length) { conteneur.innerHTML = '<p class="u-texte-gris">Profiles coming soon.</p>'; return; }
 
   for (const profil of profils) {
-    const { data: photos } = await sb.from('model_photos').select('url').eq('model_id', profil.id).order('created_at', { ascending: true }).limit(1);
-    const photoUrl = (photos && photos[0]) ? photos[0].url : '../assets/logo-dark-bg.png';
+    const { data: photos } = await sb.from('model_photos').select('url, url_miniature').eq('model_id', profil.id).order('created_at', { ascending: true }).limit(1);
+    const photoUrl = (photos && photos[0]) ? (photos[0].url_miniature || photos[0].url) : '../assets/logo-dark-bg.png';
     const carte = document.createElement('a');
     carte.href = 'mannequin.html?id=' + profil.id;
     carte.className = 'medaillon-carte reveal';
@@ -181,8 +181,8 @@ async function chargerMannequinVedette() {
   }
   if (!profil) return;
 
-  const { data: photos } = await sb.from('model_photos').select('url').eq('model_id', profil.id).order('created_at', { ascending: true }).limit(1);
-  const photoUrl = (photos && photos[0]) ? photos[0].url : '../assets/logo-dark-bg.png';
+  const { data: photos } = await sb.from('model_photos').select('url, url_moyenne').eq('model_id', profil.id).order('created_at', { ascending: true }).limit(1);
+  const photoUrl = (photos && photos[0]) ? (photos[0].url_moyenne || photos[0].url) : '../assets/logo-dark-bg.png';
   const libelleCategorie = profil.category === 'homme' ? 'Male' : profil.category === 'femme' ? 'Female' : 'New Face';
 
   document.getElementById('vedette-img').src = photoUrl;

@@ -3405,3 +3405,39 @@ create policy "Tout le monde peut joindre des photos de candidature"
   );
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 80 : version "moyenne" des photos (en plus de la miniature
+-- 500px de l'Extension 45), pour les 2 seules grandes images plein écran
+-- de la page d'accueil (bannière de la porte d'entrée, mannequin à la
+-- une) — là où la miniature 500px serait trop floue une fois étirée sur
+-- un grand écran, mais où la photo d'origine (souvent plusieurs Mo,
+-- format appareil photo) est inutilement lourde et fait grimper le LCP
+-- mesuré (jusqu'à ~15s sur mobile avant ce correctif). ~1600px de côté
+-- max, qualité 82% : visuellement quasi indiscernable de l'originale en
+-- plein écran, mais 3 à 5 fois plus légère. Comme pour la miniature, la
+-- photo d'origine n'est jamais touchée (Compcard/téléchargement intacts).
+-- ===================================================================
+alter table model_photos add column if not exists url_moyenne text;
+alter table model_photos add column if not exists chemin_moyenne text;
+
+-- La policy d'update "Les admins renseignent les miniatures" (Extension 45)
+-- s'applique déjà à toute la ligne (pas de restriction par colonne) : ces 2
+-- nouvelles colonnes sont donc déjà couvertes, aucune policy à modifier.
+
+-- Un mannequin peut déjà déposer n'importe quel sous-dossier dans son propre
+-- espace ("Envoi dans son propre dossier", Extension initiale) — le
+-- sous-dossier "moyennes" (comme "miniatures") en profite donc sans policy
+-- supplémentaire. Il ne reste qu'à autoriser l'admin à en déposer dans le
+-- dossier de N'IMPORTE quel mannequin (rattrapage depuis le tableau de bord,
+-- ou ajout de photo pour le compte d'un mannequin) :
+drop policy if exists "Les admins generent les versions moyennes manquantes" on storage.objects;
+create policy "Les admins generent les versions moyennes manquantes"
+  on storage.objects for insert
+  with check (
+    bucket_id = 'model-photos'
+    and (storage.foldername(name))[2] = 'moyennes'
+    and exists (select 1 from admins where user_id = auth.uid())
+  );
+
+NOTIFY pgrst, 'reload schema';

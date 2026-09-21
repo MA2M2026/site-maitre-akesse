@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-whF4JLhP6FXQbxpwRRcBya3dUU0S8NrziaP925L2N8Q=' 'sha256-kgqJFmmWJ0/rHLmQAXAsqHhRjL8JHzmvBY1+/KZntxE='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-k8MH4dm2mMIsyTOtNFj1F+FwymkLURiA/PbBQPEmVvs=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-whF4JLhP6FXQbxpwRRcBya3dUU0S8NrziaP925L2N8Q=' 'sha256-HGvskV6vmPwq0rvpBkNbLvzd7gHM967T8GL54pCYoqU='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-k8MH4dm2mMIsyTOtNFj1F+FwymkLURiA/PbBQPEmVvs=';">
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
 <script src="js/analytics-config.js"></script>
@@ -1338,9 +1338,9 @@ async function chargerPhotos() {
     const item = document.createElement('div');
     item.className = 'photo-item' + (photo.principale ? ' est-principale' : '');
     item.innerHTML = `
-      <img src="${echapperHtml(photo.url)}" alt="Photo du book" class="em-29">
+      <img src="${echapperHtml(photo.url_miniature || photo.url)}" alt="Photo du book" class="em-29">
       <button class="btn-principale" data-id="${photo.id}" title="Définir comme photo de profil">${photo.principale ? '★ Profil' : '☆ Profil'}</button>
-      <button class="btn-supprimer" data-id="${photo.id}" data-chemin="${echapperHtml(photo.chemin || '')}" data-chemin-miniature="${echapperHtml(photo.chemin_miniature || '')}" title="Supprimer">✕</button>
+      <button class="btn-supprimer" data-id="${photo.id}" data-chemin="${echapperHtml(photo.chemin || '')}" data-chemin-miniature="${echapperHtml(photo.chemin_miniature || '')}" data-chemin-moyenne="${echapperHtml(photo.chemin_moyenne || '')}" title="Supprimer">✕</button>
       <button class="btn-compcard" data-id="${photo.id}" title="Choisir pour la fiche Compcard">${photo.compcard_ordre ? `Compcard n°${photo.compcard_ordre}` : '+ Compcard'}</button>
     `;
     item.querySelector('img').addEventListener('click', () => ouvrirGalerieLightbox(urlsPhotos, index));
@@ -1352,8 +1352,10 @@ async function chargerPhotos() {
       const id = btn.dataset.id;
       const chemin = btn.dataset.chemin;
       const cheminMiniature = btn.dataset.cheminMiniature;
+      const cheminMoyenne = btn.dataset.cheminMoyenne;
       if (chemin) await sb.storage.from('model-photos').remove([chemin]);
       if (cheminMiniature) await sb.storage.from('model-photos').remove([cheminMiniature]);
+      if (cheminMoyenne) await sb.storage.from('model-photos').remove([cheminMoyenne]);
       await sb.from('model_photos').delete().eq('id', id);
       chargerPhotos();
     });
@@ -1440,11 +1442,13 @@ function compresserPhotoOrigine(fichier, coteMax = 3000, qualite = 0.90) {
   });
 }
 
-// Génère une version réduite de la photo, utilisée uniquement pour l'affichage
-// en grille (Book public, galerie de la fiche) — la photo d'origine envoyée à
-// côté reste, elle, intacte et en pleine résolution pour le Compcard et le
-// téléchargement. Réduit fortement la consommation de bande passante Supabase
-// sans jamais toucher à la qualité de la photo réellement utilisée à l'impression.
+// Génère une version réduite de la photo — utilisée à la fois pour la
+// miniature de grille (500px par défaut) et pour la version moyenne des
+// grandes photos plein écran de la page d'accueil (appelée avec coteMax=1600).
+// La photo d'origine envoyée à côté reste, elle, intacte et en pleine
+// résolution pour le Compcard et le téléchargement. Réduit fortement la
+// consommation de bande passante Supabase sans jamais toucher à la qualité
+// de la photo réellement utilisée à l'impression.
 function genererMiniature(fichier, coteMax = 500, qualite = 0.75) {
   return new Promise((resolve) => {
     const img = new Image();
@@ -1541,9 +1545,10 @@ document.getElementById('input-photo').addEventListener('change', async (e) => {
       }
       const { data: urlPublique } = sb.storage.from('model-photos').getPublicUrl(chemin);
 
-      // Miniature envoyée à côté de l'originale — un échec ici n'empêche jamais
-      // l'ajout de la photo : la fiche retombe simplement sur la pleine résolution
-      // en attendant un rattrapage (voir le tableau de bord).
+      // Miniature (grille) et version moyenne (grandes photos plein écran de la
+      // page d'accueil) envoyées à côté de l'originale — un échec ici n'empêche
+      // jamais l'ajout de la photo : la fiche retombe simplement sur la pleine
+      // résolution en attendant un rattrapage (voir le tableau de bord).
       let cheminMiniature = null, urlMiniature = null;
       const blobMiniature = await genererMiniature(fichier);
       if (blobMiniature) {
@@ -1556,12 +1561,26 @@ document.getElementById('input-photo').addEventListener('change', async (e) => {
         }
       }
 
+      let cheminMoyenne = null, urlMoyenne = null;
+      const blobMoyenne = await genererMiniature(fichier, 1600, 0.82);
+      if (blobMoyenne) {
+        cheminMoyenne = `${user.id}/moyennes/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+        const { error: erreurMoyenne } = await sb.storage.from('model-photos').upload(cheminMoyenne, blobMoyenne);
+        if (!erreurMoyenne) {
+          urlMoyenne = sb.storage.from('model-photos').getPublicUrl(cheminMoyenne).data.publicUrl;
+        } else {
+          cheminMoyenne = null;
+        }
+      }
+
       const { error: erreurFiche } = await sb.from('model_photos').insert({
         model_id: user.id,
         url: urlPublique.publicUrl,
         chemin,
         url_miniature: urlMiniature,
         chemin_miniature: cheminMiniature,
+        url_moyenne: urlMoyenne,
+        chemin_moyenne: cheminMoyenne,
         originale_optimisee: true
       });
       if (erreurFiche) {
