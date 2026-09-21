@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-whF4JLhP6FXQbxpwRRcBya3dUU0S8NrziaP925L2N8Q=' 'sha256-M82I+kOFRZdsgpWi8CPYQIUB/xVX6wTMepRuDLj0zMM='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-k8MH4dm2mMIsyTOtNFj1F+FwymkLURiA/PbBQPEmVvs=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-whF4JLhP6FXQbxpwRRcBya3dUU0S8NrziaP925L2N8Q=' 'sha256-A1Tf+lPHbdRehPQjgJOnOtzBZj6USU8YmGqlMBgrx10='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-vM+mMvLJggNq82/52RRsMwzv7sH4z3SHOMRx8Y9gKy4=';">
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
 <script src="js/analytics-config.js"></script>
@@ -51,6 +51,7 @@
 .em-31 { font-size:0.85rem; color:var(--gris); margin-top:0.2rem; }
 .em-32 { display:flex; gap:0.5rem; flex-shrink:0; }
 .em-33 { border-color:var(--gris); }
+.em-34 { font-size:0.85rem; color:var(--gris); margin-top:0.5rem; }
 </style>
 </head>
 <body>
@@ -382,6 +383,7 @@ setTimeout(() => {
         <div class="form-champ">
           <label for="pr-experience">Années d'expérience</label>
           <select id="pr-experience"></select>
+          <p class="em-34">Votre niveau (calculé automatiquement, pas besoin de le choisir) : <strong id="niveau-mannequin-valeur">New Face</strong></p>
         </div>
         <div class="form-champ">
           <label for="pr-disponibilite">Disponibilité</label>
@@ -960,6 +962,23 @@ function mettreAJourApercu() {
 function champHanchesVisible() { return document.getElementById('champ-hanches').style.display !== 'none'; }
 function champEntrejambeVisible() { return document.getElementById('champ-entrejambe').style.display !== 'none'; }
 
+// --- Niveau (New Face / Amateur / Professionnel) : jamais demandé au mannequin,
+// toujours déduit des années d'expérience déjà renseignées (mêmes catégories
+// que sur le CV) — 0 an ou champ vide : New Face ; 1-2 ans : Amateur ; 3 ans
+// et plus : Professionnel. ---
+function deriverNiveauMannequin(anneesExperience) {
+  const annees = anneesExperience === '' || anneesExperience === null || anneesExperience === undefined
+    ? NaN : parseInt(anneesExperience);
+  if (isNaN(annees) || annees === 0) return 'New Face';
+  if (annees <= 2) return 'Amateur';
+  return 'Professionnel';
+}
+function majNiveauMannequinApercu() {
+  const niveau = deriverNiveauMannequin(document.getElementById('pr-experience').value);
+  document.getElementById('niveau-mannequin-valeur').textContent = niveau;
+}
+document.getElementById('pr-experience').addEventListener('change', majNiveauMannequinApercu);
+
 ['pr-nom', 'pr-ville', 'pr-ville-autre', 'pr-categorie', 'pr-naissance', 'pr-taille', 'pr-poids', 'pr-poitrine', 'pr-tourtaille', 'pr-hanches', 'pr-entrejambe', 'pr-pointure', 'pr-carnation'].forEach((id) => {
   const champ = document.getElementById(id);
   if (champ) { champ.addEventListener('input', mettreAJourApercu); champ.addEventListener('change', mettreAJourApercu); }
@@ -1191,6 +1210,7 @@ async function chargerProfil() {
   });
   document.getElementById('pr-publie').checked = !!profil.published;
   document.getElementById('pr-experience').value = profil.years_experience ?? '';
+  majNiveauMannequinApercu();
   const languesCochees = (profil.languages || '').split(',').map(l => l.trim()).filter(Boolean);
   document.querySelectorAll('.pr-langue').forEach(c => { c.checked = languesCochees.includes(c.value); });
   document.getElementById('pr-disponibilite').value = profil.availability || '';
