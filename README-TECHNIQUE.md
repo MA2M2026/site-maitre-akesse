@@ -447,21 +447,60 @@ plusieurs bugs de ce type ont déjà été trouvés en migrant des pages
 (bouton de sélection sur "The Book", message "Profils bientôt disponibles",
 instructions d'installation PWA, intégration vidéo des actualités) : la
 correction a toujours été de remplacer le style calculé par une classe CSS
-togglée via `classList`.
+togglée via `classList`. Quand la valeur elle-même est vraiment calculée
+(largeur de barre en %, ex. le classement Top 10 du tableau de bord) : ne
+JAMAIS l'écrire dans une chaîne de gabarit `style="width:${valeur}%"`
+(bloqué) — poser un `data-*` dans le gabarit, puis juste après l'injection
+du HTML, boucler sur les éléments et faire `el.style.largeur =
+el.dataset.xxx + '%'` (assignation JS classique, autorisée).
 
-**État à ce jour (fin septembre 2026)** — déjà migrées (plus
-`'unsafe-inline'` du tout) : `index.html`, `mannequins.html`,
-`mentions-legales.html`, `politique-confidentialite.html`, `services.html`,
-`actualites.html`, `candidature.html`, `contact.html`, `evenements.html`,
-`mannequin.html`, `partenaires.html`, `selection.html`,
-`inscription-mannequin.html` + leurs équivalents `en/` (y compris
-`en/actualites.html`). Pas encore migrées : `espace-mannequin.html` et
-`tableau-de-bord.html` — volontairement laissées pour la fin, ce sont les
-deux pages les plus riches en JavaScript du site (respectivement environ
-80 et 163 `style=""` inline à l'époque de cet audit, et des blocs
-`<script>` de plusieurs dizaines de milliers de caractères), donc migrées
-séparément, une à la fois, avec des tests dédiés plus poussés plutôt que
-dans le même lot que les pages de contenu ci-dessus.
+**⚠️ Autre piège rencontré (attributs `onXxx=""`)** : un attribut
+`onclick=""`/`onerror=""`/... inline est bloqué par un `script-src` strict
+même avec les bonnes empreintes de `<script>` — le message d'erreur du
+navigateur le précise explicitement ("hashes do not apply to event
+handlers... unless the 'unsafe-hashes' keyword is present"). Trouvé sur
+`mannequin.html`/`en/mannequin.html` (bouton "Réessayer" du profil, corrigé
+en hotfix après coup) et sur `tableau-de-bord.html` (deux `onerror=""`
+d'aperçus photo). Correction : retirer l'attribut du gabarit, ajouter un
+`addEventListener` (ou une assignation `img.onerror = ...`) juste après
+l'injection du HTML dans le DOM — jamais dans le HTML lui-même. Avant de
+considérer une page comme migrée : `grep -noE '\son[a-z]+=' fichier.html`
+doit être vide (en excluant les faux positifs dans les commentaires).
+
+**⚠️ Piège rencontré sur une page à plusieurs `<style>`** : `style-src`
+exige une empreinte par bloc `<style>...</style>` PRIS SÉPARÉMENT — sur
+`tableau-de-bord.html`, qui a 11 blocs `<style>` distincts accumulés au fil
+des refontes, n'avoir haché QUE le nouveau bloc ajouté a bloqué en silence
+les 10 autres (`violatedDirective: style-src-elem` dans
+`securitypolicyviolation`, repéré uniquement par test navigateur). Un
+fichier avec plusieurs `<style>` doit avoir TOUTES leurs empreintes dans le
+meta CSP, pas seulement celle du dernier ajouté. `scripts/verifier-csp.py`
+vérifie maintenant aussi les `<style>` (pas seulement les `<script>`)
+pour détecter ce cas automatiquement.
+
+**État à ce jour (fin septembre 2026)** — **les 28 pages du site sont
+migrées** (plus `'unsafe-inline'` du tout) : toutes les pages FR
+(`index.html`, `mannequins.html`, `mentions-legales.html`,
+`politique-confidentialite.html`, `services.html`, `actualites.html`,
+`candidature.html`, `contact.html`, `evenements.html`, `mannequin.html`,
+`partenaires.html`, `selection.html`, `inscription-mannequin.html`,
+`espace-mannequin.html`, `tableau-de-bord.html`) + leurs équivalents `en/`
+existants (13 pages, `espace-mannequin.html`/`tableau-de-bord.html` n'ont
+pas de version anglaise). `espace-mannequin.html` et `tableau-de-bord.html`
+ont été migrées séparément et en dernier, une à la fois, avec des tests
+dédiés plus poussés (navigateur headless + écoute de l'événement
+`securitypolicyviolation` pour repérer précisément quel bloc pose
+problème) — ce sont les deux pages les plus riches en JavaScript du site
+(respectivement ~80 et ~163 `style=""` inline avant migration, des blocs
+`<script>` de plusieurs dizaines de milliers de caractères, et pour
+`tableau-de-bord.html` plusieurs générations de scripts "patch" empilées
+qui se recouvrent partiellement — toutes ont dû être corrigées, pas
+seulement la version qui semble "active").
+
+`vercel.json` garde son `'unsafe-inline'` global par prudence (une page qui
+serait ajoutée sans meta CSP dédié doit continuer à fonctionner), mais
+n'a plus aucun effet protecteur réel puisque toutes les pages existantes
+ont désormais leur propre CSP restrictif qui prime.
 
 Pour les pages avec un formulaire dont le JavaScript génère lui-même du
 HTML via `innerHTML`/template literal (aperçus photo, listes filtrées,

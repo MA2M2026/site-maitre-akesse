@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-Vérifie que chaque <script> inline (JSON-LD compris) d'une page dont le CSP a été
-durci (retrait de 'unsafe-inline') a bien son empreinte SHA-256 exacte dans le
-meta http-equiv="Content-Security-Policy" de cette même page.
+Vérifie que chaque <script> ET chaque <style> inline (JSON-LD compris) d'une page
+dont le CSP a été durci (retrait de 'unsafe-inline') a bien son empreinte SHA-256
+exacte dans le meta http-equiv="Content-Security-Policy" de cette même page —
+script-src pour les <script>, style-src pour les <style>.
 
 Pourquoi ce script existe (à lire avant de le supprimer ou de l'ignorer) :
 fin septembre 2026, un script inline critique (le verrou de défilement de la
@@ -14,13 +15,21 @@ qui semblaient corrects en relecture de code n'ont donc jamais réellement pris
 effet en production. Voir README-TECHNIQUE.md, section "Porte d'entrée / verrou
 de scroll", pour le récit complet.
 
+Le même piège existe pour les <style> : sur tableau-de-bord.html (page à
+plusieurs blocs <style>), seul le dernier bloc ajouté avait été haché — les 10
+autres, déjà présents dans le fichier, ont été bloqués en silence dès le retrait
+de 'unsafe-inline' de style-src, repéré uniquement grâce à un test navigateur.
+D'où la vérification des <style> ci-dessous, qui aurait détecté ce cas avant
+tout déploiement.
+
 Utilisation :
     python3 scripts/verifier-csp.py                  # vérifie tout le site
     python3 scripts/verifier-csp.py index.html ...    # vérifie des fichiers précis
 
-À exécuter après TOUTE modification d'un <script> inline sur une page qui a son
-propre meta CSP (grep 'Content-Security-Policy' sur le fichier pour le savoir).
-Code de sortie non nul si au moins une empreinte manque ou ne correspond plus.
+À exécuter après TOUTE modification d'un <script> ou d'un <style> inline sur une
+page qui a son propre meta CSP (grep 'Content-Security-Policy' sur le fichier
+pour le savoir). Code de sortie non nul si au moins une empreinte manque ou ne
+correspond plus.
 """
 
 import base64
@@ -37,6 +46,10 @@ MOTIF_CSP = re.compile(
 )
 MOTIF_SCRIPT_INLINE = re.compile(
     r'<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>',
+    re.IGNORECASE | re.DOTALL,
+)
+MOTIF_STYLE_INLINE = re.compile(
+    r'<style[^>]*>(.*?)</style>',
     re.IGNORECASE | re.DOTALL,
 )
 MOTIF_HASH_CSP = re.compile(r"'sha256-([A-Za-z0-9+/=]+)'")
@@ -69,6 +82,17 @@ def verifier_fichier(chemin: Path) -> list[str]:
                 f"  script inline #{i} (commence par : {extrait!r}) "
                 f"— empreinte absente du CSP : {empreinte}"
             )
+    for i, m in enumerate(MOTIF_STYLE_INLINE.finditer(html)):
+        contenu_style = m.group(1)
+        if not contenu_style.strip():
+            continue
+        empreinte = empreinte_sha256(contenu_style)
+        if empreinte not in hashs_autorises:
+            extrait = contenu_style.strip().splitlines()[0][:70]
+            problemes.append(
+                f"  style inline #{i} (commence par : {extrait!r}) "
+                f"— empreinte absente du CSP : {empreinte}"
+            )
     return problemes
 
 
@@ -92,8 +116,8 @@ def main() -> int:
 
     if total_problemes:
         print(
-            f"\n{total_problemes} empreinte(s) manquante(s) — ces scripts sont "
-            "bloqués en silence par le navigateur sur les pages concernées."
+            f"\n{total_problemes} empreinte(s) manquante(s) — ces scripts/styles "
+            "sont bloqués en silence par le navigateur sur les pages concernées."
         )
         return 1
 

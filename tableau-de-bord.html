@@ -14,15 +14,10 @@
 
 <html lang="fr">
 <head>
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-M+xfg592Jp8aidZCh678osE5YXJPEbYWcblBkHRfQ9k=' 'sha256-qYhAc3swlU7dS/OdXiD+981EKlWaMWMwdjXABLZiKPs=' 'sha256-MUGhiglp+VouBoDAxZenvS89iSsQCU20MBoFD6ZNAXE=' 'sha256-4soDx4UwFmS7SA1g/5fHyg/uXiR6mu8rU3AEcKfT/Eo=' 'sha256-dm83ZqTQS/vqZSW9epxwP4Ug3wMzWYZXYPr38AX4zig=' 'sha256-8imz5GyFv6/blONIwEAKV25iroy43zy3zS9ADTbZ2WM=' 'sha256-+I/RJUguqaWSbN9mqI4ix75BKwZcUoxaeUJ4ssdQaMM=' 'sha256-82f0qcfzCs/5DNHA1BwbwJPHKjW7EHSitPDOmQV0uk0=' 'sha256-BeDoC+STsgUauJfb+0RA5aL7+JoiT6VlEKvIgZYv25I='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-17bNqpivJZfafGgBNQI1HVDKDtXshihxbFAdK5gdx3Q=' 'sha256-Z+fJHtwF6iAcwu5LiyD7iTOTabGjBfhs23ke6b1SwVw=' 'sha256-+u3+0/Vo28wYzeyT+KsYe2HbHw3y/nxKM5+MqPJcRwk=' 'sha256-/dp0ixjqeszDUaLkxiTLnInPK6ZgIXF3/pYHZvRy6/E=' 'sha256-OaDZmUijdOunxkFh6SnwTEK5EqHPcU3BQgW7hEye/TI=' 'sha256-ZY7lT12YbWRRtAjPNrNHPaMjXCl+i7hU1Kna0hzZ8wI=' 'sha256-snOyKmJRQG9N3mZu/bbBi5v39gyiO0EU7U+XsjZYCMw=' 'sha256-j+aZk+nsNRFOrx/eL4XUSfoOs1q5UaH5rwqxLJw4dlA=' 'sha256-zt+Z2SrX8SO8WHNcCZwpJk6y28M6hnf80CryqKgDy/A=' 'sha256-NbpGLP646+YfeqUBNzDodWIxOqqNAkQ4IkT3aLH8XCo=' 'sha256-93f0sGdyNf4rPJnZVC/YZYeMXznTUEz4v4NQp7kljAQ=';">
 <!-- Google tag (gtag.js) -->
 <script async="" crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-1BX5MPZ6WE');
-</script>
+<script src="js/analytics-config.js"></script>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Tableau de bord — Maître Akesse Model Management</title>
@@ -1635,6 +1630,82 @@ img.photo-erreur{opacity:.45!important;filter:grayscale(.4)!important}
 img.photo-erreur::after{content:"";display:block}
 </style>
 
+<style id="ma2m-csp-durci-barres">
+/* Classes introduites en retirant les style="" dynamiques (largeur de barre calculée en JS,
+   ancien onerror="") du classement Top 10 et de la liste "classement-mannequins" — la largeur
+   réelle est posée via el.style.width en JS juste après l'injection du HTML (voir chargerClassementMannequins,
+   ma2m-final-reference-v2-js et ma2m-final-reference-v3-js), jamais dans une chaîne de gabarit. */
+.tdb-cm-ligne{display:flex;align-items:center;gap:0.9rem;padding:0.55rem 0.8rem;background:var(--gris-clair)}
+.tdb-cm-rang{font-family:var(--display);font-size:1rem;color:var(--gris);width:1.4rem;flex-shrink:0}
+.tdb-cm-nom{flex:1;font-size:0.9rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tdb-cm-piste{flex:2;background:rgba(0,0,0,0.06);height:6px;border-radius:3px;overflow:hidden;max-width:180px}
+.tdb-cm-visites{font-weight:600;font-size:0.88rem;flex-shrink:0;width:2.5rem;text-align:right}
+.tdb-barre-remplie{width:0;height:100%;background:var(--bordeaux-noir)}
+.top10-photo-fallback{display:none;width:42px;height:42px;border-radius:50%;place-items:center;background:#15191d;border:1px solid rgba(255,255,255,.14);color:#777f86;font-size:.65rem}
+.top10-photo-fallback.tdb-photo-fallback-visible{display:grid}
+</style>
+
+<style>
+.tdb-1 { max-width:420px; }
+.tdb-2 { font-size:0.9rem; color:var(--gris); margin-bottom:1rem; }
+.tdb-3 { color:var(--gris); font-size:0.88rem; margin-top:0.3rem; }
+.tdb-4 { margin-bottom:0.3rem; }
+.tdb-5 { color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem; }
+.tdb-6 { display:flex; flex-direction:column; gap:0.5rem; }
+.tdb-7 { margin-bottom:0.8rem; }
+.tdb-8 { margin-bottom:0; }
+.tdb-9 { font-size:0.85rem; color:var(--gris); margin-top:0; margin-bottom:1rem; }
+.tdb-10 { margin:0; }
+.tdb-11 { background:rgba(207,59,82,0.12); border-left:3px solid var(--bordeaux-clair); padding:0.7rem 1rem; font-size:0.82rem; margin:0 0 1rem; }
+.tdb-12 { font-size:0.85rem; color:var(--gris); margin:0.3rem 0 1rem; }
+.tdb-13 { display:flex; gap:0.6rem; margin-bottom:1rem; flex-wrap:wrap; }
+.tdb-14 { flex:1; min-width:200px; }
+.tdb-15 { flex:2; min-width:240px; }
+.tdb-16 { cursor:pointer; list-style:none; }
+.tdb-17 { font-size:0.85rem; color:var(--gris); margin:0.6rem 0 1rem; }
+.tdb-18 { margin-top:0.8rem; display:none; color:var(--gris); border-color:var(--gris-clair); }
+.tdb-19 { font-size:0.85rem; color:var(--gris); margin-bottom:0.8rem; }
+.tdb-20 { display:none; margin-top:1rem; padding:1rem; background:var(--anthracite, var(--noir)); display:flex; align-items:center; gap:1rem; flex-wrap:wrap; }
+.tdb-21 { font-family:var(--display); font-size:1.4rem; color:var(--titre-clair, #fff); letter-spacing:0.08em; }
+.tdb-22 { cursor:pointer; font-size:0.85rem; color:var(--gris); }
+.tdb-23 { display:flex; gap:0.7rem; flex-wrap:wrap; align-items:center; }
+.tdb-24 { flex:1; min-width:220px; padding:0.7rem 0.9rem; background:var(--anthracite, var(--noir)); border:1px solid var(--gris-clair, #444); color:#fff; }
+.tdb-25 { font-size:0.85rem; margin-bottom:1rem; }
+.tdb-26 { display:flex; gap:0.7rem; flex-wrap:wrap; align-items:center; margin-bottom:0.8rem; }
+.tdb-27 { color:var(--gris); font-size:0.85rem; margin-top:-0.6rem; margin-bottom:1rem; }
+.tdb-28 { display:flex; gap:0.8rem; flex-wrap:wrap; align-items:center; }
+.tdb-29 { max-width:320px; }
+.tdb-30 { color:var(--gris); border-color:var(--gris-clair); }
+.tdb-31 { margin-top:0.8rem; font-size:0.85rem; color:var(--gris); }
+.tdb-32 { display:flex; gap:1.2rem; flex-wrap:wrap; align-items:flex-start; margin-bottom:1.2rem; }
+.tdb-33 { display:none; width:110px; height:146px; object-fit:cover; border-radius:2px; }
+.tdb-34 { color:var(--gris); font-size:0.8rem; margin:0 0 0.5rem; }
+.tdb-35 { display:block; margin-bottom:0.6rem; }
+.tdb-36 { margin:2.5rem 0; display:none; }
+.tdb-37 { margin-right:0.8rem; }
+.tdb-38 { display:none; margin:0.6rem 0 1rem; }
+.tdb-39 { cursor:pointer; display:inline-block; }
+.tdb-40 { display:none; margin-left:0.8rem; }
+.tdb-41 { font-size:0.8rem; color:var(--gris); }
+.tdb-42 { margin-left:auto; color:var(--bordeaux); border-color:var(--bordeaux); }
+.tdb-43 { margin:0.6rem 0 1rem; }
+.tdb-44 { border-left-color:var(--bordeaux-clair); cursor:default; }
+.tdb-45 { flex:3; }
+.tdb-46 { color:var(--gris); font-size:0.78rem; margin-top:0.4rem; }
+.tdb-47 { color:var(--gris); font-size:0.82rem; }
+.tdb-48 { padding:0.3rem 0.7rem; font-size:0.75rem; }
+.tdb-49 { color:var(--bordeaux-clair); }
+.tdb-50 { color:var(--or); }
+.tdb-51 { color:var(--gris); font-size:0.8rem; }
+.tdb-52 { display:flex; align-items:center; gap:0.8rem; }
+.tdb-53 { cursor:default; }
+.tdb-54 { font-family:var(--texte); font-weight:600; letter-spacing:0.04em; }
+.tdb-55 { padding:0.3rem 0.7rem; font-size:0.75rem; color:var(--rouge); }
+.tdb-56 { display:inline-block; margin:0 1rem 0.4rem 0; }
+.tdb-57 { color:var(--titre-clair); }
+.tdb-58 { color:var(--gris);font-size:.85rem; }
+.tdb-59 { color:var(--gris);font-size:.78rem;margin-top:.4rem; }
+</style>
 </head>
 <body class="zone-admin">
 <script>
@@ -1663,60 +1734,60 @@ setTimeout(() => {
 <li class="item-cta"><a href="espace-mannequin.html">Espace mannequin</a></li>
 </ul>
 </div>
-<section class="db-chrome-public" id="db-chrome-titre" style="padding-bottom:1rem;">
+<section class="db-chrome-public u-pb-1" id="db-chrome-titre">
 <div class="container">
 <div class="eyebrow reveal">Administration</div>
 <div class="badge-page-admin">📍 Vous êtes sur : Tableau de bord</div><br/>
 <h1 class="reveal reveal-delay-1">Tableau de bord<span class="oeil">.</span></h1>
 </div>
 </section>
-<section id="bloc-login" style="padding-top:1rem;">
-<div class="container" style="max-width:420px;">
+<section id="bloc-login" class="u-pt-1">
+<div class="container tdb-1">
 <div class="form-champ"><label>E-mail admin</label><input id="tb-email" type="email"/></div>
 <div class="form-champ"><label>Mot de passe</label><input id="tb-password" type="password"/></div>
 <button class="btn btn--principal" id="tb-login-btn">Se connecter</button>
 <div class="form-msg" id="tb-msg"></div>
-<p style="margin-top:1rem;"><a href="#" id="tb-mdp-oublie-lien" style="font-size:0.85rem; color:var(--gris);">Mot de passe oublié ?</a></p>
+<p class="u-mt-1"><a href="#" id="tb-mdp-oublie-lien" class="u-texte-doux">Mot de passe oublié ?</a></p>
 </div>
 </section>
-<section id="bloc-mdp-oublie" style="display:none; padding-top:1rem;">
-<div class="container" style="max-width:420px;">
-<p style="font-size:0.9rem; color:var(--gris); margin-bottom:1rem;">Indiquez votre e-mail admin : si un compte y est associé, un lien de réinitialisation vous sera envoyé par e-mail.</p>
+<section id="bloc-mdp-oublie" class="u-hidden u-pt-1">
+<div class="container tdb-1">
+<p class="tdb-2">Indiquez votre e-mail admin : si un compte y est associé, un lien de réinitialisation vous sera envoyé par e-mail.</p>
 <div class="form-champ"><label>E-mail admin</label><input id="tb-mdp-oublie-email" type="email"/></div>
 <button class="btn btn--principal" id="tb-mdp-oublie-envoyer">Envoyer le lien de réinitialisation</button>
 <div class="form-msg" id="tb-mdp-oublie-msg"></div>
-<p style="margin-top:1rem;"><a href="#" id="tb-mdp-oublie-retour" style="font-size:0.85rem; color:var(--gris);">← Retour à la connexion</a></p>
+<p class="u-mt-1"><a href="#" id="tb-mdp-oublie-retour" class="u-texte-doux">← Retour à la connexion</a></p>
 </div>
 </section>
-<section id="bloc-nouveau-mdp" style="display:none; padding-top:1rem;">
-<div class="container" style="max-width:420px;">
-<p style="font-size:0.9rem; color:var(--gris); margin-bottom:1rem;">Choisissez votre nouveau mot de passe (au moins 8 caractères).</p>
+<section id="bloc-nouveau-mdp" class="u-hidden u-pt-1">
+<div class="container tdb-1">
+<p class="tdb-2">Choisissez votre nouveau mot de passe (au moins 8 caractères).</p>
 <div class="form-champ"><label>Nouveau mot de passe</label><input id="tb-nouveau-mdp" type="password"/></div>
 <button class="btn btn--principal" id="tb-nouveau-mdp-valider">Valider le nouveau mot de passe</button>
 <div class="form-msg" id="tb-nouveau-mdp-msg"></div>
 </div>
 </section>
 <!-- ===== AJOUT : code de validation (2e facteur), demandé après l'e-mail + mot de passe ===== -->
-<section id="bloc-code-validation" style="display:none; padding-top:1rem;">
-<div class="container" style="max-width:420px;">
-<p style="font-size:0.9rem; color:var(--gris); margin-bottom:1rem;">Pour finaliser la connexion, saisissez votre code de validation.</p>
+<section id="bloc-code-validation" class="u-hidden u-pt-1">
+<div class="container tdb-1">
+<p class="tdb-2">Pour finaliser la connexion, saisissez votre code de validation.</p>
 <div class="form-champ"><label>Code de validation</label><input id="tb-code-validation" type="password" autocomplete="one-time-code"/></div>
 <button class="btn btn--principal" id="tb-code-validation-valider">Valider</button>
 <div class="form-msg" id="tb-code-validation-msg"></div>
-<p style="margin-top:1rem;"><a href="#" id="tb-code-oublie-lien" style="font-size:0.85rem; color:var(--gris);">Code de validation oublié ?</a></p>
+<p class="u-mt-1"><a href="#" id="tb-code-oublie-lien" class="u-texte-doux">Code de validation oublié ?</a></p>
 </div>
 </section>
-<section id="bloc-code-oublie" style="display:none; padding-top:1rem;">
-<div class="container" style="max-width:420px;">
-<p style="font-size:0.9rem; color:var(--gris); margin-bottom:1rem;">Un lien de réinitialisation sera envoyé à l'e-mail de récupération enregistré. Il sera valable 30 minutes.</p>
+<section id="bloc-code-oublie" class="u-hidden u-pt-1">
+<div class="container tdb-1">
+<p class="tdb-2">Un lien de réinitialisation sera envoyé à l'e-mail de récupération enregistré. Il sera valable 30 minutes.</p>
 <button class="btn btn--principal" id="tb-code-oublie-envoyer">Envoyer le lien de réinitialisation</button>
 <div class="form-msg" id="tb-code-oublie-msg"></div>
-<p style="margin-top:1rem;"><a href="#" id="tb-code-oublie-retour" style="font-size:0.85rem; color:var(--gris);">← Retour</a></p>
+<p class="u-mt-1"><a href="#" id="tb-code-oublie-retour" class="u-texte-doux">← Retour</a></p>
 </div>
 </section>
-<section id="bloc-code-nouveau" style="display:none; padding-top:1rem;">
-<div class="container" style="max-width:420px;">
-<p style="font-size:0.9rem; color:var(--gris); margin-bottom:1rem;">Choisissez votre nouveau code de validation (au moins 4 caractères). Notez-le immédiatement en lieu sûr : il ne sera plus jamais affiché.</p>
+<section id="bloc-code-nouveau" class="u-hidden u-pt-1">
+<div class="container tdb-1">
+<p class="tdb-2">Choisissez votre nouveau code de validation (au moins 4 caractères). Notez-le immédiatement en lieu sûr : il ne sera plus jamais affiché.</p>
 <div class="form-champ"><label>Nouveau code de validation</label><input id="tb-code-nouveau" type="text"/></div>
 <button class="btn btn--principal" id="tb-code-nouveau-valider">Valider le nouveau code</button>
 <div class="form-msg" id="tb-code-nouveau-msg"></div>
@@ -1934,18 +2005,18 @@ a.tdb-menu-item { text-decoration: none; }
 .tdb-landing-carte p { font-size: 0.84rem; color: var(--gris, #aaa); margin: 0; line-height: 1.5; }
 </style>
 
-<section id="bloc-tableau" style="display:none; padding-top:0;">
+<section id="bloc-tableau" class="u-hidden u-pt-0">
 <div class="db-shell">
 <div class="db-main">
 <!-- ===== AJOUT Étape 13 : en-tête avec salutation + statut + cloche + profil ===== -->
 <div class="db-topbar">
 <div>
 <div class="db-greeting">Bonjour Maître Akesse<span class="oeil">.</span></div>
-<div class="db-sous-titre" style="color:var(--gris); font-size:0.88rem; margin-top:0.3rem;">Voici l'activité de votre agence aujourd'hui.</div>
+<div class="db-sous-titre tdb-3">Voici l'activité de votre agence aujourd'hui.</div>
 </div>
 <div class="db-topbar-droite">
 <div class="db-statut-site"><span class="point"></span> Site en ligne</div>
-<button class="db-cloche" id="db-cloche-btn" title="Voir les éléments à traiter">🔔<span class="db-cloche-badge" id="db-cloche-badge" style="display:none;"></span></button>
+<button class="db-cloche" id="db-cloche-btn" title="Voir les éléments à traiter">🔔<span class="db-cloche-badge u-hidden" id="db-cloche-badge"></span></button>
 <div class="db-profil" id="db-profil">
 <div class="db-profil-avatar-vide" id="db-profil-avatar">MA</div>
 <div>
@@ -2127,9 +2198,9 @@ document.addEventListener('DOMContentLoaded', function () {
 </div>
 
 <div class="liste-recente" data-section="b1-classement">
-<h2 style="margin-bottom:0.3rem;">Classement des mannequins — visites réelles</h2>
-<p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Personnes distinctes ayant consulté chaque fiche sur les <strong>7 derniers jours</strong> (pas les rechargements de page). Top 10 affiché.</p>
-<div id="classement-mannequins" style="display:flex; flex-direction:column; gap:0.5rem;"></div>
+<h2 class="tdb-4">Classement des mannequins — visites réelles</h2>
+<p class="tdb-5">Personnes distinctes ayant consulté chaque fiche sur les <strong>7 derniers jours</strong> (pas les rechargements de page). Top 10 affiché.</p>
+<div id="classement-mannequins" class="tdb-6"></div>
 </div>
 
 <div class="ref-core-grid"><div class="ref-core-graph" data-section="b1-stats"><div class="activite-carte">
@@ -2138,9 +2209,9 @@ document.addEventListener('DOMContentLoaded', function () {
 <div class="activite-svg-wrap" id="activite-barres">Chargement…</div>
 <div class="activite-souscartes" id="activite-souscartes"></div>
 </div></div><div class="ref-core-activity" data-section="b1-stats"><div>
-<h2 style="margin-bottom:0.8rem;">🕐 Dernières activités</h2>
+<h2 class="tdb-7">🕐 Dernières activités</h2>
 <div class="timeline-liste" id="dernieres-activites">Chargement…</div>
-</div></div><div class="ref-core-pending" data-section="b1-a-traiter"><div class="a-traiter-bloc" style="margin-bottom:0;">
+</div></div><div class="ref-core-pending" data-section="b1-a-traiter"><div class="a-traiter-bloc tdb-8">
 <div class="a-traiter-titre">
 <h2>🔔 À traiter</h2>
 <span class="dossiers-compteur a-traiter" id="a-traiter-total"></span>
@@ -2149,14 +2220,14 @@ document.addEventListener('DOMContentLoaded', function () {
 </div></div></div>
 
 <div class="liste-recente" data-section="b1-evolution">
-<h2 style="margin-bottom:0.3rem;">📊 Évolution des candidatures</h2>
-<p style="font-size:0.85rem; color:var(--gris); margin-top:0; margin-bottom:1rem;">Nombre de candidatures reçues par semaine, sur les 6 dernières semaines.</p>
+<h2 class="tdb-4">📊 Évolution des candidatures</h2>
+<p class="tdb-9">Nombre de candidatures reçues par semaine, sur les 6 dernières semaines.</p>
 <div class="activite-svg-wrap" id="evolution-candidatures">Chargement…</div>
 </div>
 
 <div class="liste-recente" data-section="b1-derniers-dossiers">
-<h2 style="margin-bottom:0.3rem;">🗂️ Derniers dossiers — inscriptions, candidatures, recruteurs</h2>
-<p style="font-size:0.85rem; color:var(--gris); margin-top:0; margin-bottom:1rem;">Aperçu des dossiers les plus récents, tous types confondus. Cliquez pour ouvrir la fiche complète.</p>
+<h2 class="tdb-4">🗂️ Derniers dossiers — inscriptions, candidatures, recruteurs</h2>
+<p class="tdb-9">Aperçu des dossiers les plus récents, tous types confondus. Cliquez pour ouvrir la fiche complète.</p>
 <div class="apercu-dossiers-liste" id="apercu-dossiers-liste">Chargement…</div>
 </div>
 
@@ -2171,31 +2242,31 @@ document.addEventListener('DOMContentLoaded', function () {
 </div>
 </div></div><div class="ref-lower-grid"><div class="ref-card ref-registrations" data-section="b2-inscriptions">
 <div class="dossiers-entete">
-<h2 style="margin:0;">Inscriptions mannequins</h2>
+<h2 class="tdb-10">Inscriptions mannequins</h2>
 <span class="dossiers-compteur" id="inscriptions-compteur"></span>
 </div>
-<p style="background:rgba(207,59,82,0.12); border-left:3px solid var(--bordeaux-clair); padding:0.7rem 1rem; font-size:0.82rem; margin:0 0 1rem;">
+<p class="tdb-11">
         ⚠️ La référence de paiement affichée est fournie par la personne — le site ne peut pas vérifier auprès de Wave qu'elle est authentique.
         Une même référence ne peut plus être réutilisée deux fois, mais <strong>avant de passer un dossier en "Inscription validée"</strong>, recherchez toujours
         cette référence dans votre application Wave pour confirmer le montant et la date.
       </p>
 <div class="filtre-pills" id="filtres-inscriptions"></div>
 <div class="dossier-liste" id="liste-inscriptions"></div>
-<button class="btn dossiers-plus" id="inscriptions-plus-btn" style="display:none;">Voir plus</button>
+<button class="btn dossiers-plus u-hidden" id="inscriptions-plus-btn">Voir plus</button>
 </div><div class="ref-card ref-projects" data-section="b2-projets">
 <div class="dossiers-entete">
-<h2 style="margin:0;">Projets &amp; castings</h2>
+<h2 class="tdb-10">Projets &amp; castings</h2>
 </div>
-<p style="font-size:0.85rem; color:var(--gris); margin:0.3rem 0 1rem;">Ajoutez ici les projets/castings précis pour lesquels les candidats peuvent postuler (proposés dans le formulaire "Postuler à un casting"). Désactivez un projet une fois terminé pour qu'il disparaisse du formulaire — les candidatures déjà reçues restent intactes.</p>
-<form id="form-nouveau-projet" style="display:flex; gap:0.6rem; margin-bottom:1rem; flex-wrap:wrap;">
-<input id="nouveau-projet-nom" placeholder="Nom du projet ou casting" required="" style="flex:1; min-width:200px;" type="text"/>
-<input id="nouveau-projet-description" placeholder="Brève description (facultatif, visible par les candidats)" style="flex:2; min-width:240px;" type="text"/>
+<p class="tdb-12">Ajoutez ici les projets/castings précis pour lesquels les candidats peuvent postuler (proposés dans le formulaire "Postuler à un casting"). Désactivez un projet une fois terminé pour qu'il disparaisse du formulaire — les candidatures déjà reçues restent intactes.</p>
+<form id="form-nouveau-projet" class="tdb-13">
+<input id="nouveau-projet-nom" placeholder="Nom du projet ou casting" required="" class="tdb-14" type="text"/>
+<input id="nouveau-projet-description" placeholder="Brève description (facultatif, visible par les candidats)" class="tdb-15" type="text"/>
 <button class="btn" type="submit">+ Ajouter</button>
 </form>
 <div class="form-msg" id="projets-msg"></div>
 <div id="liste-projets"></div>
 </div></div><div class="ref-card ref-contacts" data-section="b2-contacts">
-<h2 style="margin-bottom:1rem;">Derniers messages de contact</h2>
+<h2 class="u-mb-1">Derniers messages de contact</h2>
 <table id="table-contacts"><thead><tr><th>Nom</th><th>Type</th><th>Téléphone</th><th>Date</th><th></th></tr></thead><tbody></tbody></table>
 </div>
 <!-- ===== AJOUT Étape 14 + 16 : "À traiter" et activité côte à côte ===== -->
@@ -2203,52 +2274,52 @@ document.addEventListener('DOMContentLoaded', function () {
 
 <div class="liste-recente" data-section="b2-validations">
 <details id="validation-details">
-<summary class="dossiers-entete" style="cursor:pointer; list-style:none;">
-<h2 style="margin:0;">✅ Validations en attente</h2>
+<summary class="dossiers-entete tdb-16">
+<h2 class="tdb-10">✅ Validations en attente</h2>
 <span class="dossiers-compteur" id="validation-compteur"></span>
 </summary>
-<p style="font-size:0.85rem; color:var(--gris); margin:0.6rem 0 1rem;">Chaque fiche (mineur ou majeur) doit être validée ici avant sa toute première publication sur Le Book — vérifiez la qualité des photos et la cohérence des informations avant d'approuver. Une fois validée, le mannequin gère ensuite sa fiche en autonomie.</p>
+<p class="tdb-17">Chaque fiche (mineur ou majeur) doit être validée ici avant sa toute première publication sur Le Book — vérifiez la qualité des photos et la cohérence des informations avant d'approuver. Une fois validée, le mannequin gère ensuite sa fiche en autonomie.</p>
 <div id="liste-validations">Ouvrez cette section pour charger les fiches en attente.</div>
 </details>
 </div>
 <!-- ===== AJOUT : gestion des photos des mannequins déjà publiés dans Le Book ===== -->
 <div class="liste-recente" data-section="b2-mannequins-publies">
 <details id="mannequins-publies-details">
-<summary class="dossiers-entete" style="cursor:pointer; list-style:none;">
-<h2 style="margin:0;">📸 Mannequins publiés — gérer les photos</h2>
+<summary class="dossiers-entete tdb-16">
+<h2 class="tdb-10">📸 Mannequins publiés — gérer les photos</h2>
 <span class="dossiers-compteur" id="mannequins-publies-compteur"></span>
 </summary>
-<p style="font-size:0.85rem; color:var(--gris); margin:0.6rem 0 1rem;">Une fois un profil publié, seul le mannequin pouvait jusqu'ici modifier ses propres photos depuis son espace personnel. Vous pouvez maintenant intervenir directement ici si besoin (photo floue, doublon, remplacement...).</p>
+<p class="tdb-17">Une fois un profil publié, seul le mannequin pouvait jusqu'ici modifier ses propres photos depuis son espace personnel. Vous pouvez maintenant intervenir directement ici si besoin (photo floue, doublon, remplacement...).</p>
 <div id="liste-mannequins-publies">Ouvrez cette section pour charger la liste.</div>
 </details>
 </div>
 <!-- ===== AJOUT Étape 20 : Drive / transferts — structure honnête, en attente du fichier d'intégration Drive ===== -->
 <div class="liste-recente" data-section="b3a-drive">
-<h2 style="margin-bottom:0.3rem;">📁 Drive / transferts</h2>
-<p style="font-size:0.85rem; color:var(--gris); margin-top:0; margin-bottom:1rem;">Suivi des photos envoyées. Le détail par photo (transférée / en attente / erreur) nécessite le fichier d'intégration Google Drive — non fourni pour le moment, voir l'avertissement ci-dessous.</p>
+<h2 class="tdb-4">📁 Drive / transferts</h2>
+<p class="tdb-9">Suivi des photos envoyées. Le détail par photo (transférée / en attente / erreur) nécessite le fichier d'intégration Google Drive — non fourni pour le moment, voir l'avertissement ci-dessous.</p>
 <div class="drive-grille" id="drive-grille">Chargement…</div>
 <div class="drive-avertissement">
         ⚠️ Ce bloc affiche pour l'instant uniquement le nombre de photos déjà enregistrées côté Supabase (mannequins publiés dans THE BOOK). Le suivi détaillé des photos de candidatures/inscriptions envoyées vers Google Drive (transfert réussi / en attente / erreur, comme demandé à l'Étape 20 du cahier des charges) ne peut pas être branché tant que le fichier gérant l'envoi vers Drive n'a pas été fourni — aucune donnée n'est inventée ici en attendant.
       </div>
 </div>
 <div class="liste-recente" data-section="b3a-nettoyage">
-<h2 style="margin-bottom:0.3rem;">🧹 Nettoyage des photos traitées</h2>
-<p style="font-size:0.85rem; color:var(--gris); margin-top:0; margin-bottom:1rem;">Une fois qu'une candidature ou une inscription est définitivement traitée (Retenue/Refusée ou Inscription validée/Refusée), ses photos sont retirées du tableau de bord après 5 jours pour ne pas le surcharger — les fichiers restent dans Google Drive, seule la référence ici est nettoyée. Ce nettoyage tourne automatiquement chaque nuit ; le bouton ci-dessous permet de le lancer immédiatement pour vérifier que ça fonctionne.</p>
+<h2 class="tdb-4">🧹 Nettoyage des photos traitées</h2>
+<p class="tdb-9">Une fois qu'une candidature ou une inscription est définitivement traitée (Retenue/Refusée ou Inscription validée/Refusée), ses photos sont retirées du tableau de bord après 5 jours pour ne pas le surcharger — les fichiers restent dans Google Drive, seule la référence ici est nettoyée. Ce nettoyage tourne automatiquement chaque nuit ; le bouton ci-dessous permet de le lancer immédiatement pour vérifier que ça fonctionne.</p>
 <button class="btn" id="nettoyer-photos-btn" type="button">Lancer le nettoyage maintenant</button>
 <div class="form-msg" id="nettoyer-photos-msg"></div>
 </div>
 <div class="liste-recente" data-section="b3a-miniatures">
-<h2 style="margin-bottom:0.3rem;">🖼️ Miniatures des photos</h2>
-<p style="font-size:0.85rem; color:var(--gris); margin-top:0; margin-bottom:1rem;">Les photos envoyées depuis l'espace mannequin génèrent automatiquement leur propre miniature légère. Cet outil rattrape uniquement les photos déjà en ligne AVANT la mise en place de ce système, pour réduire la bande passante consommée par Le Book (visible dans Supabase → Usage → Cached Egress).</p>
+<h2 class="tdb-4">🖼️ Miniatures des photos</h2>
+<p class="tdb-9">Les photos envoyées depuis l'espace mannequin génèrent automatiquement leur propre miniature légère. Cet outil rattrape uniquement les photos déjà en ligne AVANT la mise en place de ce système, pour réduire la bande passante consommée par Le Book (visible dans Supabase → Usage → Cached Egress).</p>
 <button class="btn btn--principal" id="miniatures-generer-btn" type="button">Générer les miniatures manquantes</button>
 <div class="form-msg" id="miniatures-msg"></div>
 </div>
 <div class="liste-recente" data-section="b3b-code-validation">
 <div class="dossiers-entete">
-<h2 style="margin:0;">🔐 Code de validation (2ᵉ facteur)</h2>
+<h2 class="tdb-10">🔐 Code de validation (2ᵉ facteur)</h2>
 <span class="dossiers-compteur" id="code-validation-statut-badge"></span>
 </div>
-<p style="font-size:0.85rem; color:var(--gris); margin:0.3rem 0 1rem;">En plus de votre e-mail et mot de passe, ce code vous sera désormais demandé à chaque nouvelle connexion. Notez-le en lieu sûr dès son enregistrement : il ne sera plus jamais réaffiché ici. L'e-mail de récupération sert uniquement si vous l'oubliez.</p>
+<p class="tdb-12">En plus de votre e-mail et mot de passe, ce code vous sera désormais demandé à chaque nouvelle connexion. Notez-le en lieu sûr dès son enregistrement : il ne sera plus jamais réaffiché ici. L'e-mail de récupération sert uniquement si vous l'oubliez.</p>
 <div class="form-champ"><label>E-mail de récupération</label><input id="cv-email-recuperation" type="email"/></div>
 <div class="form-champ"><label>Nouveau code de validation (au moins 4 caractères)</label><input id="cv-nouveau-code" type="text"/></div>
 <button class="btn btn--principal" id="cv-definir-btn" type="button">Enregistrer</button>
@@ -2256,71 +2327,71 @@ document.addEventListener('DOMContentLoaded', function () {
 </div>
 <div class="liste-recente" data-section="b3a-erreurs">
 <div class="dossiers-entete">
-<h2 style="margin:0;">🔴 Erreurs réelles du site (7 derniers jours)</h2>
+<h2 class="tdb-10">🔴 Erreurs réelles du site (7 derniers jours)</h2>
 <span class="dossiers-compteur" id="erreurs-compteur"></span>
 </div>
-<p style="font-size:0.85rem; color:var(--gris); margin:0.3rem 0 1rem;">Chaque erreur JavaScript survenue chez un vrai visiteur (pas une relecture de code) est enregistrée ici automatiquement. Une liste vide est bon signe.</p>
+<p class="tdb-12">Chaque erreur JavaScript survenue chez un vrai visiteur (pas une relecture de code) est enregistrée ici automatiquement. Une liste vide est bon signe.</p>
 <div id="liste-erreurs"></div>
-<button class="btn" id="erreurs-tout-effacer-btn" style="margin-top:0.8rem; display:none; color:var(--gris); border-color:var(--gris-clair);">Tout marquer comme vu (effacer le journal)</button>
+<button class="btn tdb-18" id="erreurs-tout-effacer-btn">Tout marquer comme vu (effacer le journal)</button>
 </div>
 
 <div class="liste-recente" data-section="b2-candidatures">
 <div class="dossiers-entete">
-<h2 style="margin:0;">Candidatures</h2>
+<h2 class="tdb-10">Candidatures</h2>
 <span class="dossiers-compteur" id="candidatures-compteur"></span>
 </div>
-<div id="resume-candidatures" style="font-size:0.85rem; color:var(--gris); margin-bottom:0.8rem;"></div>
+<div id="resume-candidatures" class="tdb-19"></div>
 <div class="filtre-pills" id="filtres-candidatures"></div>
 <div class="dossier-liste" id="liste-candidatures"></div>
-<button class="btn dossiers-plus" id="candidatures-plus-btn" style="display:none;">Voir plus</button>
+<button class="btn dossiers-plus u-hidden" id="candidatures-plus-btn">Voir plus</button>
 </div>
 <div class="liste-recente" data-section="b2-recruteurs">
 <div class="dossiers-entete">
-<h2 style="margin:0;">Demandes recruteurs</h2>
+<h2 class="tdb-10">Demandes recruteurs</h2>
 <span class="dossiers-compteur" id="recruteurs-compteur"></span>
 </div>
 <div class="filtre-pills" id="filtres-recruteurs"></div>
 <div class="dossier-liste" id="liste-recruteurs"></div>
-<button class="btn dossiers-plus" id="recruteurs-plus-btn" style="display:none;">Voir plus</button>
+<button class="btn dossiers-plus u-hidden" id="recruteurs-plus-btn">Voir plus</button>
 </div>
 <div class="liste-recente" data-section="b3b-codes-inscription">
-<h2 style="margin-bottom:0.3rem;">Codes d'inscription</h2>
-<p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Chaque code ne peut servir qu'une seule fois. Générez-en un et transmettez-le (WhatsApp, SMS...) à la personne que vous invitez à s'inscrire.</p>
+<h2 class="tdb-4">Codes d'inscription</h2>
+<p class="tdb-5">Chaque code ne peut servir qu'une seule fois. Générez-en un et transmettez-le (WhatsApp, SMS...) à la personne que vous invitez à s'inscrire.</p>
 <button class="btn btn--principal" id="generer-code-btn">+ Générer un nouveau code</button>
-<div id="nouveau-code-affiche" style="display:none; margin-top:1rem; padding:1rem; background:var(--anthracite, var(--noir)); display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
-<span id="nouveau-code-texte" style="font-family:var(--display); font-size:1.4rem; color:var(--titre-clair, #fff); letter-spacing:0.08em;"></span>
+<div id="nouveau-code-affiche" class="tdb-20">
+<span id="nouveau-code-texte" class="tdb-21"></span>
 <button class="btn" id="copier-code-btn">Copier</button>
 </div>
 <div class="form-msg" id="codes-msg"></div>
-<div class="dossier-liste" id="liste-codes" style="margin-top:1.5rem;"></div>
-<details style="margin-top:1rem;">
-<summary style="cursor:pointer; font-size:0.85rem; color:var(--gris);">Anciens codes déjà utilisés (<span id="anciens-codes-compteur">0</span>)</summary>
-<div class="dossier-liste" id="liste-anciens-codes" style="margin-top:1rem;"></div>
+<div class="dossier-liste u-mt-1-5" id="liste-codes"></div>
+<details class="u-mt-1">
+<summary class="tdb-22">Anciens codes déjà utilisés (<span id="anciens-codes-compteur">0</span>)</summary>
+<div class="dossier-liste u-mt-1" id="liste-anciens-codes"></div>
 </details>
 </div>
 <div class="liste-recente" data-section="b3b-code-permanent">
-<h2 style="margin-bottom:0.3rem;">Code permanent — "Créer mon compte" (espace mannequin)</h2>
-<p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Contrairement aux codes d'inscription ci-dessus, celui-ci est unique et permanent : le même code sert à tous les mannequins qui créent leur compte dans l'espace mannequin, jusqu'à ce que vous le changiez ici. Il n'est jamais stocké en clair — en cas de doute qu'il ait trop circulé, changez-le simplement.</p>
-<div style="display:flex; gap:0.7rem; flex-wrap:wrap; align-items:center;">
-<input id="portail-nouveau-code" placeholder="Nouveau code (6 caractères minimum)" style="flex:1; min-width:220px; padding:0.7rem 0.9rem; background:var(--anthracite, var(--noir)); border:1px solid var(--gris-clair, #444); color:#fff;" type="text"/>
+<h2 class="tdb-4">Code permanent — "Créer mon compte" (espace mannequin)</h2>
+<p class="tdb-5">Contrairement aux codes d'inscription ci-dessus, celui-ci est unique et permanent : le même code sert à tous les mannequins qui créent leur compte dans l'espace mannequin, jusqu'à ce que vous le changiez ici. Il n'est jamais stocké en clair — en cas de doute qu'il ait trop circulé, changez-le simplement.</p>
+<div class="tdb-23">
+<input id="portail-nouveau-code" placeholder="Nouveau code (6 caractères minimum)" class="tdb-24" type="text"/>
 <button class="btn" id="portail-generer-btn" type="button">Générer aléatoirement</button>
 <button class="btn btn--principal" id="portail-definir-btn" type="button">Définir ce code</button>
 </div>
 <div class="form-msg" id="portail-code-msg"></div>
 </div>
 <div class="liste-recente" data-section="b3c-instagram">
-<h2 style="margin-bottom:0.3rem;">📷 Flux Instagram (accueil)</h2>
-<p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">
+<h2 class="tdb-4">📷 Flux Instagram (accueil)</h2>
+<p class="tdb-5">
         Affiche vos dernières publications Instagram sur le site. Configuration en une fois : jeton d'accès et identifiant du compte professionnel, obtenus via
         <a href="https://developers.facebook.com/tools/explorer/" rel="noopener" target="_blank">Meta Graph API Explorer</a>
         (compte Instagram déjà relié à une Page Facebook, requis par Meta). Le jeton expire tous les 60 jours environ — une alerte apparaît ici avant l'échéance.
       </p>
-<div id="instagram-statut" style="font-size:0.85rem; margin-bottom:1rem;"></div>
-<div style="display:flex; gap:0.7rem; flex-wrap:wrap; align-items:center; margin-bottom:0.8rem;">
-<input id="instagram-ig-user-id" placeholder="Identifiant du compte professionnel (ig-user-id)" style="flex:1; min-width:220px; padding:0.7rem 0.9rem; background:var(--anthracite, var(--noir)); border:1px solid var(--gris-clair, #444); color:#fff;" type="text"/>
+<div id="instagram-statut" class="tdb-25"></div>
+<div class="tdb-26">
+<input id="instagram-ig-user-id" placeholder="Identifiant du compte professionnel (ig-user-id)" class="tdb-24" type="text"/>
 </div>
-<div style="display:flex; gap:0.7rem; flex-wrap:wrap; align-items:center;">
-<input id="instagram-token" placeholder="Jeton d'accès (access token)" style="flex:1; min-width:220px; padding:0.7rem 0.9rem; background:var(--anthracite, var(--noir)); border:1px solid var(--gris-clair, #444); color:#fff;" type="text"/>
+<div class="tdb-23">
+<input id="instagram-token" placeholder="Jeton d'accès (access token)" class="tdb-24" type="text"/>
 <button class="btn btn--principal" id="instagram-enregistrer-btn" type="button">Enregistrer</button>
 <button class="btn" id="instagram-rafraichir-btn" type="button">Rafraîchir les publications</button>
 </div>
@@ -2328,35 +2399,35 @@ document.addEventListener('DOMContentLoaded', function () {
 </div>
 
 <div class="liste-recente" data-section="b3c-vedette-admin">
-<h2 style="margin-bottom:1rem;">Mannequin à la une</h2>
-<p style="color:var(--gris); font-size:0.85rem; margin-top:-0.6rem; margin-bottom:1rem;">Ce mannequin sera mis en avant sur la page d'accueil du site. Sans sélection, une photo aléatoire s'affiche à la place.</p>
-<div style="display:flex; gap:0.8rem; flex-wrap:wrap; align-items:center;">
-<select id="tb-select-vedette" style="max-width:320px;"><option value="">Chargement…</option></select>
+<h2 class="u-mb-1">Mannequin à la une</h2>
+<p class="tdb-27">Ce mannequin sera mis en avant sur la page d'accueil du site. Sans sélection, une photo aléatoire s'affiche à la place.</p>
+<div class="tdb-28">
+<select id="tb-select-vedette" class="tdb-29"><option value="">Chargement…</option></select>
 <button class="btn" id="tb-definir-vedette-btn">Définir comme mannequin à la une</button>
-<button class="btn" id="tb-retirer-vedette-btn" style="color:var(--gris); border-color:var(--gris-clair);">Retirer la mise en avant</button>
+<button class="btn tdb-30" id="tb-retirer-vedette-btn">Retirer la mise en avant</button>
 </div>
-<div id="tb-vedette-actuelle" style="margin-top:0.8rem; font-size:0.85rem; color:var(--gris);"></div>
+<div id="tb-vedette-actuelle" class="tdb-31"></div>
 <div class="form-msg" id="tb-vedette-msg"></div>
 </div>
 <div class="liste-recente" data-section="b3c-bandeau">
-<h2 style="margin-bottom:0.3rem;">Bandeau d'information (bande défilante de l'accueil)</h2>
-<p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Remplace le texte par défaut de la bande sous le hero de l'accueil par un message important (casting ouvert, événement, annonce...). Désactive-le pour revenir automatiquement au texte par défaut.</p>
+<h2 class="tdb-4">Bandeau d'information (bande défilante de l'accueil)</h2>
+<p class="tdb-5">Remplace le texte par défaut de la bande sous le hero de l'accueil par un message important (casting ouvert, événement, annonce...). Désactive-le pour revenir automatiquement au texte par défaut.</p>
 <div class="form-champ"><label for="bandeau-texte">Message à afficher</label><input id="bandeau-texte" placeholder="ex : Casting ouvert jusqu'au 30 juin — postulez maintenant" type="text"/></div>
-<div style="display:flex; gap:0.8rem; flex-wrap:wrap; align-items:center;">
+<div class="tdb-28">
 <button class="btn btn--principal" id="bandeau-enregistrer-btn">Enregistrer le message</button>
 <button class="btn" data-actif="0" id="bandeau-actif-btn">Activer</button>
 </div>
-<div id="bandeau-etat" style="margin-top:0.8rem; font-size:0.85rem; color:var(--gris);"></div>
+<div id="bandeau-etat" class="tdb-31"></div>
 <div class="form-msg" id="bandeau-msg"></div>
 </div>
 <div class="liste-recente" data-section="b3c-mot-fondateur">
-<h2 style="margin-bottom:0.3rem;">Mot du fondateur (page d'accueil)</h2>
-<p style="color:var(--gris); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Photo et message affichés sur l'accueil, juste après la section « Direction artistique ».</p>
-<div style="display:flex; gap:1.2rem; flex-wrap:wrap; align-items:flex-start; margin-bottom:1.2rem;">
-<img alt="" id="mr-photo-apercu" src="" style="display:none; width:110px; height:146px; object-fit:cover; border-radius:2px;"/>
+<h2 class="tdb-4">Mot du fondateur (page d'accueil)</h2>
+<p class="tdb-5">Photo et message affichés sur l'accueil, juste après la section « Direction artistique ».</p>
+<div class="tdb-32">
+<img alt="" id="mr-photo-apercu" src="" class="tdb-33"/>
 <div>
-<p style="color:var(--gris); font-size:0.8rem; margin:0 0 0.5rem;">1. Choisissez une photo  →  2. Cliquez sur « Enregistrer la photo » ci-dessous.</p>
-<input accept="image/*" id="mr-photo-input" style="display:block; margin-bottom:0.6rem;" type="file"/>
+<p class="tdb-34">1. Choisissez une photo  →  2. Cliquez sur « Enregistrer la photo » ci-dessous.</p>
+<input accept="image/*" id="mr-photo-input" class="tdb-35" type="file"/>
 <button class="btn btn--principal" id="mr-photo-btn">Enregistrer la photo</button>
 </div>
 </div>
@@ -2366,9 +2437,9 @@ document.addEventListener('DOMContentLoaded', function () {
 <button class="btn btn--principal" id="mr-enregistrer-btn">Enregistrer le mot du fondateur</button>
 <div class="form-msg" id="mr-msg"></div>
 </div>
-<div style="margin:2.5rem 0; display:none;">
-<a class="btn btn--principal" href="actualites.html" style="margin-right:0.8rem;">Publier une actualité</a>
-<a class="btn btn--principal" href="evenements.html" style="margin-right:0.8rem;">Publier un événement</a>
+<div class="tdb-36">
+<a class="btn btn--principal tdb-37" href="actualites.html">Publier une actualité</a>
+<a class="btn btn--principal tdb-37" href="evenements.html">Publier un événement</a>
 <button class="btn" id="tb-logout-btn">Se déconnecter</button>
 </div>
 </div> <!-- /.db-main -->
@@ -2381,21 +2452,21 @@ document.addEventListener('DOMContentLoaded', function () {
 <h3 id="mf-titre">—</h3>
 <div class="mf-sous-titre" id="mf-sous-titre"></div>
 <div class="mf-champs" id="mf-champs"></div>
-<div class="mf-message" id="mf-message" style="display:none;"></div>
+<div class="mf-message u-hidden" id="mf-message"></div>
 <div class="mf-photos" id="mf-photos"></div>
-<div class="mf-ajout-photo" id="mf-ajout-photo" style="display:none; margin:0.6rem 0 1rem;">
-<label class="btn" for="mf-photo-input" style="cursor:pointer; display:inline-block;">＋ Ajouter une photo</label>
-<input accept="image/*" id="mf-photo-input" style="display:none;" type="file"/>
-<input accept="image/*" id="mf-photo-remplacement-input" style="display:none;" type="file"/>
-<span class="form-msg" id="mf-photo-ajout-msg" style="display:none; margin-left:0.8rem;"></span>
+<div class="mf-ajout-photo tdb-38" id="mf-ajout-photo">
+<label class="btn tdb-39" for="mf-photo-input">＋ Ajouter une photo</label>
+<input accept="image/*" id="mf-photo-input" class="u-hidden" type="file"/>
+<input accept="image/*" id="mf-photo-remplacement-input" class="u-hidden" type="file"/>
+<span class="form-msg tdb-40" id="mf-photo-ajout-msg"></span>
 </div>
-<div id="mf-mannequins" style="display:none;"></div>
+<div id="mf-mannequins" class="u-hidden"></div>
 <div class="mf-statut-ligne">
-<label for="mf-statut-select" style="font-size:0.8rem; color:var(--gris);">Statut :</label>
+<label for="mf-statut-select" class="tdb-41">Statut :</label>
 <select id="mf-statut-select"></select>
-<button class="btn" id="mf-supprimer-dossier-btn" style="margin-left:auto; color:var(--bordeaux); border-color:var(--bordeaux);">🗑 Supprimer ce dossier</button>
+<button class="btn tdb-42" id="mf-supprimer-dossier-btn">🗑 Supprimer ce dossier</button>
 </div>
-<div id="mf-notification" class="mf-notification" style="display:none;">
+<div id="mf-notification" class="mf-notification u-hidden">
 <div class="mf-notification-titre" id="mf-notification-titre"></div>
 <textarea id="mf-notification-texte" rows="5"></textarea>
 <div class="mf-notification-actions">
@@ -2412,11 +2483,11 @@ document.addEventListener('DOMContentLoaded', function () {
 <h3 id="mpm-titre">—</h3>
 <div class="mf-sous-titre" id="mpm-sous-titre">Photos publiées sur Le Book</div>
 <div class="mf-photos" id="mpm-photos"></div>
-<div class="mf-ajout-photo" style="margin:0.6rem 0 1rem;">
-<label class="btn" for="mpm-photo-input" style="cursor:pointer; display:inline-block;">＋ Ajouter une ou plusieurs photos</label>
-<input accept="image/*" id="mpm-photo-input" multiple="" style="display:none;" type="file"/>
-<input accept="image/*" id="mpm-photo-remplacement-input" style="display:none;" type="file"/>
-<div class="form-msg" id="mpm-photo-ajout-msg" style="display:none; margin-top:0.6rem;"></div>
+<div class="mf-ajout-photo tdb-43">
+<label class="btn tdb-39" for="mpm-photo-input">＋ Ajouter une ou plusieurs photos</label>
+<input accept="image/*" id="mpm-photo-input" multiple="" class="u-hidden" type="file"/>
+<input accept="image/*" id="mpm-photo-remplacement-input" class="u-hidden" type="file"/>
+<div class="form-msg u-hidden u-mt-0-6" id="mpm-photo-ajout-msg"></div>
 </div>
 </div>
 </div>
@@ -2428,7 +2499,7 @@ document.addEventListener('DOMContentLoaded', function () {
 </div>
 </div>
 </footer>
-<script>document.getElementById('an').textContent = new Date().getFullYear();</script>
+<script src="js/copyright-annee.js"></script>
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
@@ -2737,8 +2808,8 @@ async function chargerErreurs() {
   btnEffacer.style.display = 'block';
 
   liste.innerHTML = groupesTries.map(g => `
-    <div class="dossier-carte" style="border-left-color:var(--bordeaux-clair); cursor:default;">
-      <div class="dc-nom" style="flex:3;">
+    <div class="dossier-carte tdb-44">
+      <div class="dc-nom tdb-45">
         ${echapperHtml(g.message)}
         <span>${echapperHtml(g.page || '?')} · ${g.occurrences} fois · dernière : ${new Date(g.created_at).toLocaleString('fr-FR')}</span>
       </div>
@@ -2759,7 +2830,7 @@ async function chargerClassementMannequins() {
   const { data: classement, error } = await sb.rpc('stats_classement_mannequins', { depuis: depuis7j });
 
   if (error || !classement || !classement.length) {
-    conteneur.innerHTML = '<p style="color:var(--gris); font-size:0.85rem;">Pas encore assez de visites enregistrées sur les 7 derniers jours.</p>';
+    conteneur.innerHTML = '<p class="u-texte-doux">Pas encore assez de visites enregistrées sur les 7 derniers jours.</p>';
     return;
   }
 
@@ -2772,18 +2843,19 @@ async function chargerClassementMannequins() {
   const maxVisites = top10[0].nb_visites || 1;
 
   conteneur.innerHTML = top10.map((c, i) => `
-    <div style="display:flex; align-items:center; gap:0.9rem; padding:0.55rem 0.8rem; background:var(--gris-clair);">
-      <span style="font-family:var(--display); font-size:1rem; color:var(--gris); width:1.4rem; flex-shrink:0;">${i + 1}</span>
-      <span style="flex:1; font-size:0.9rem; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${echapperHtml(nomParId[c.model_id] || 'Mannequin')}</span>
-      <div style="flex:2; background:rgba(0,0,0,0.06); height:6px; border-radius:3px; overflow:hidden; max-width:180px;">
-        <div style="width:${Math.max(4, (c.nb_visites / maxVisites) * 100)}%; height:100%; background:var(--bordeaux-noir);"></div>
+    <div class="tdb-cm-ligne">
+      <span class="tdb-cm-rang">${i + 1}</span>
+      <span class="tdb-cm-nom">${echapperHtml(nomParId[c.model_id] || 'Mannequin')}</span>
+      <div class="tdb-cm-piste">
+        <div class="tdb-barre-remplie" data-pct="${Math.max(4, (c.nb_visites / maxVisites) * 100)}"></div>
       </div>
-      <span style="font-weight:600; font-size:0.88rem; flex-shrink:0; width:2.5rem; text-align:right;">${c.nb_visites}</span>
+      <span class="tdb-cm-visites">${c.nb_visites}</span>
     </div>
   `).join('');
+  conteneur.querySelectorAll('.tdb-barre-remplie').forEach(el => { el.style.width = el.dataset.pct + '%'; });
 
   if (classement.length > 10) {
-    conteneur.innerHTML += `<p style="color:var(--gris); font-size:0.78rem; margin-top:0.4rem;">+ ${classement.length - 10} autre(s) mannequin(s) avec des visites enregistrées.</p>`;
+    conteneur.innerHTML += `<p class="tdb-46">+ ${classement.length - 10} autre(s) mannequin(s) avec des visites enregistrées.</p>`;
   }
 }
 
@@ -2967,7 +3039,7 @@ async function chargerActiviteGraphique() {
     .limit(20000);
 
   if (error) {
-    conteneur.innerHTML = '<p style="color:var(--gris); font-size:0.82rem;">Statistiques indisponibles pour le moment.</p>';
+    conteneur.innerHTML = '<p class="tdb-47">Statistiques indisponibles pour le moment.</p>';
     return;
   }
 
@@ -3053,7 +3125,7 @@ async function chargerEvolutionCandidatures() {
     .limit(20000);
 
   if (error) {
-    conteneur.innerHTML = '<p style="color:var(--gris); font-size:0.82rem;">Statistiques indisponibles pour le moment.</p>';
+    conteneur.innerHTML = '<p class="tdb-47">Statistiques indisponibles pour le moment.</p>';
     return;
   }
 
@@ -3074,7 +3146,7 @@ async function chargerEvolutionCandidatures() {
   });
 
   if (!semaines.some(s => s.compte > 0)) {
-    conteneur.innerHTML = '<p style="color:var(--gris); font-size:0.82rem;">Pas encore de candidature enregistrée sur les 6 dernières semaines.</p>';
+    conteneur.innerHTML = '<p class="tdb-47">Pas encore de candidature enregistrée sur les 6 dernières semaines.</p>';
     return;
   }
 
@@ -3162,7 +3234,7 @@ async function chargerApercuDossiers() {
     const photo = photoParId[it.source + '-' + it.id] || '';
     const initiales = echapperHtml((it.nom || '?').trim().charAt(0).toUpperCase() || '?');
     const photoHtml = photo
-      ? `<img class="apercu-photo" src="${echapperHtml(photo)}" data-initiales="${initiales}" alt="" loading="lazy" onerror="apercuPhotoErreur(this)">`
+      ? `<img class="apercu-photo" src="${echapperHtml(photo)}" data-initiales="${initiales}" alt="" loading="lazy">`
       : `<div class="apercu-photo-vide">${initiales}</div>`;
     const statutLabel = (LIBELLES_STATUT[it.source] && LIBELLES_STATUT[it.source][it.statut]) || it.statut || '';
     return `
@@ -3176,6 +3248,9 @@ async function chargerApercuDossiers() {
 
   conteneur.querySelectorAll('.apercu-carte').forEach(carte => {
     carte.addEventListener('click', () => ouvrirFicheDossier(carte.dataset.source, carte.dataset.id));
+  });
+  conteneur.querySelectorAll('.apercu-photo').forEach(img => {
+    img.onerror = () => apercuPhotoErreur(img);
   });
 }
 
@@ -3344,7 +3419,7 @@ async function chargerStatistiques() {
   document.querySelector('#table-contacts tbody').innerHTML = (derniersContacts || []).map(c => {
     const lienWa = lienWhatsApp(c.telephone);
     return `
-    <tr><td>${echapperHtml(c.nom || '-')}</td><td>${echapperHtml(c.type_contact || '-')}</td><td>${echapperHtml(c.telephone || '-')}</td><td>${new Date(c.created_at).toLocaleDateString('fr-FR')}</td><td>${lienWa ? `<a href="${lienWa}" target="_blank" rel="noopener" class="btn" style="padding:0.3rem 0.7rem; font-size:0.75rem;">WhatsApp ↗</a>` : ''}</td></tr>
+    <tr><td>${echapperHtml(c.nom || '-')}</td><td>${echapperHtml(c.type_contact || '-')}</td><td>${echapperHtml(c.telephone || '-')}</td><td>${new Date(c.created_at).toLocaleDateString('fr-FR')}</td><td>${lienWa ? `<a href="${lienWa}" target="_blank" rel="noopener" class="btn tdb-48">WhatsApp ↗</a>` : ''}</td></tr>
   `;
   }).join('') || '<tr><td colspan="5">Aucun message.</td></tr>';
 
@@ -3363,7 +3438,7 @@ async function chargerConfigInstagram() {
   if (config && config.ig_user_id) document.getElementById('instagram-ig-user-id').value = config.ig_user_id;
 
   if (!config || !config.access_token) {
-    statutDiv.innerHTML = '<span style="color:var(--gris);">Aucun jeton configuré — le flux ne s\'affiche pas encore sur le site.</span>';
+    statutDiv.innerHTML = '<span class="u-texte-gris">Aucun jeton configuré — le flux ne s\'affiche pas encore sur le site.</span>';
     return;
   }
 
@@ -3372,14 +3447,14 @@ async function chargerConfigInstagram() {
     const expireLe = new Date(config.token_expire_le);
     const joursRestants = Math.round((expireLe - new Date()) / (1000 * 60 * 60 * 24));
     if (joursRestants < 0) {
-      messageExpiration = ` — <strong style="color:var(--bordeaux-clair);">jeton expiré, générez-en un nouveau et enregistrez-le</strong>`;
+      messageExpiration = ` — <strong class="tdb-49">jeton expiré, générez-en un nouveau et enregistrez-le</strong>`;
     } else if (joursRestants <= 10) {
-      messageExpiration = ` — <strong style="color:var(--or);">expire dans ${joursRestants} jour(s), pensez à le renouveler</strong>`;
+      messageExpiration = ` — <strong class="tdb-50">expire dans ${joursRestants} jour(s), pensez à le renouveler</strong>`;
     } else {
       messageExpiration = ` — expire dans ${joursRestants} jours`;
     }
   }
-  statutDiv.innerHTML = `<span style="color:var(--bordeaux-clair);">Jeton configuré</span>${messageExpiration}`;
+  statutDiv.innerHTML = `<span class="tdb-49">Jeton configuré</span>${messageExpiration}`;
 }
 
 document.getElementById('instagram-enregistrer-btn').addEventListener('click', async () => {
@@ -3480,7 +3555,7 @@ async function chargerListeValidations() {
     return `
     <div class="validation-carte" data-id="${p.id}">
       <div class="validation-photos">
-        ${mesPhotos.length ? mesPhotos.map(url => `<img src="${echapperHtml(url)}" data-fallback="" alt="" loading="lazy">`).join('') : '<span style="color:var(--gris); font-size:0.8rem;">Aucune photo</span>'}
+        ${mesPhotos.length ? mesPhotos.map(url => `<img src="${echapperHtml(url)}" data-fallback="" alt="" loading="lazy">`).join('') : '<span class="tdb-51">Aucune photo</span>'}
       </div>
       <div class="validation-infos">
         <div class="dc-nom">${echapperHtml(p.full_name || 'Sans nom')} ${estMineur ? '<span class="badge-mineur">Mineur' + (age !== null ? ' — ' + age + ' ans' : '') + '</span>' : ''}</div>
@@ -3618,7 +3693,7 @@ async function chargerListeMannequinsPublies() {
   conteneur.innerHTML = profils.map(p => `
     <div class="validation-carte" data-id="${p.id}">
       <div class="validation-photos">
-        ${photoParMannequin[p.id] ? `<img src="${echapperHtml(photoParMannequin[p.id])}" alt="" loading="lazy">` : '<span style="color:var(--gris); font-size:0.8rem;">Aucune photo</span>'}
+        ${photoParMannequin[p.id] ? `<img src="${echapperHtml(photoParMannequin[p.id])}" alt="" loading="lazy">` : '<span class="tdb-51">Aucune photo</span>'}
       </div>
       <div class="validation-infos">
         <div class="dc-nom">${echapperHtml(p.full_name || 'Sans nom')}</div>
@@ -3942,7 +4017,7 @@ async function afficherDossiers(source, ajouter) {
       <div class="dc-nom">${echapperHtml(nomAffiche(source, d))} ${estMineur ? '<span class="badge-mineur">Mineur</span>' : ''}<span>${echapperHtml(sousLigneAffichee(source, d))}</span></div>
       <div class="dc-meta">${echapperHtml(metaAffichee(source, d))}</div>
       <span class="statut-pill ${classeStatut(d[conf.statutChamp])}">${echapperHtml(conf.libellesStatut[d[conf.statutChamp]] || d[conf.statutChamp] || '')}</span>
-      ${lienWa ? `<a href="${lienWa}" target="_blank" rel="noopener" class="btn dc-whatsapp" style="padding:0.3rem 0.7rem; font-size:0.75rem;">WhatsApp ↗</a>` : ''}
+      ${lienWa ? `<a href="${lienWa}" target="_blank" rel="noopener" class="btn dc-whatsapp tdb-48">WhatsApp ↗</a>` : ''}
       <span class="dc-fleche">→</span>
     </div>
   `;
@@ -4020,7 +4095,7 @@ async function ouvrirFicheDossier(source, id) {
     if (!valeur) return '';
     const lienWa = (cle === 'phone' || cle === 'whatsapp') ? lienWhatsApp(valeur) : null;
     const affichage = lienWa
-      ? `<a href="${lienWa}" target="_blank" rel="noopener" style="color:var(--bordeaux-clair);">${echapperHtml(String(valeur))} ↗ WhatsApp</a>`
+      ? `<a href="${lienWa}" target="_blank" rel="noopener" class="tdb-49">${echapperHtml(String(valeur))} ↗ WhatsApp</a>`
       : `${echapperHtml(String(valeur))}${unite ? ' ' + unite : ''}`;
     return `<div class="mf-champ"><div class="mf-label">${label}</div><div class="mf-valeur">${affichage}</div></div>`;
   }).join('');
@@ -4096,7 +4171,7 @@ async function chargerMannequinsSelection(requestId) {
     ? choisis.map(m => `
         <div class="mf-mannequin-item">
           <span>${echapperHtml(m.model_name_snapshot || 'Mannequin')}${m.model_height_snapshot ? ' — ' + m.model_height_snapshot + ' cm' : ''}</span>
-          <span style="display:flex; align-items:center; gap:0.8rem;">
+          <span class="tdb-52">
             ${m.model_id ? `<a href="mannequin.html?id=${m.model_id}" target="_blank">Voir la fiche →</a>` : ''}
             <button class="mf-retirer-mannequin" data-selection-id="${m.id}" title="Retirer ce mannequin de la sélection">✕</button>
           </span>
@@ -4415,8 +4490,8 @@ document.getElementById('portail-definir-btn').addEventListener('click', async (
 
 function carteCode(c) {
   return `
-    <div class="dossier-carte" style="cursor:default;">
-      <div class="dc-nom" style="font-family:var(--texte); font-weight:600; letter-spacing:0.04em;">${echapperHtml(c.code)}</div>
+    <div class="dossier-carte tdb-53">
+      <div class="dc-nom tdb-54">${echapperHtml(c.code)}</div>
       <div class="dc-meta">Créé le ${new Date(c.created_at).toLocaleDateString('fr-FR')}${c.utilise_le ? ' · Utilisé le ' + new Date(c.utilise_le).toLocaleDateString('fr-FR') : ''}</div>
       <span class="statut-pill ${c.utilise ? 'statut-refusee' : 'statut-retenue'}">${c.utilise ? 'Utilisé' : 'Disponible'}</span>
     </div>`;
@@ -4461,14 +4536,14 @@ async function chargerProjets() {
     return;
   }
   conteneur.innerHTML = (projets || []).map(p => `
-    <div class="dossier-carte" style="cursor:default;">
+    <div class="dossier-carte tdb-53">
       <div class="dc-nom">${echapperHtml(p.nom)}</div>
       ${p.description ? `<div class="dc-meta">${echapperHtml(p.description)}</div>` : ''}
       <div class="dc-meta">Ajouté le ${new Date(p.created_at).toLocaleDateString('fr-FR')}</div>
       <span class="statut-pill ${p.actif ? 'statut-retenue' : 'statut-refusee'}">${p.actif ? 'Actif' : 'Désactivé'}</span>
-      <button class="btn" style="padding:0.3rem 0.7rem; font-size:0.75rem;" data-projet-toggle="${p.id}" data-actif="${p.actif}">${p.actif ? 'Désactiver' : 'Réactiver'}</button>
-      <button class="btn" style="padding:0.3rem 0.7rem; font-size:0.75rem;" data-projet-description="${p.id}" data-description-actuelle="${echapperHtml(p.description || '')}">✏️ Description</button>
-      <button class="btn" style="padding:0.3rem 0.7rem; font-size:0.75rem; color:var(--rouge);" data-projet-supprimer="${p.id}">Supprimer</button>
+      <button class="btn tdb-48" data-projet-toggle="${p.id}" data-actif="${p.actif}">${p.actif ? 'Désactiver' : 'Réactiver'}</button>
+      <button class="btn tdb-48" data-projet-description="${p.id}" data-description-actuelle="${echapperHtml(p.description || '')}">✏️ Description</button>
+      <button class="btn tdb-55" data-projet-supprimer="${p.id}">Supprimer</button>
     </div>
   `).join('') || '<div class="dossiers-vide">Aucun projet/casting ajouté pour le moment — le formulaire ne proposera que "Intégrer l\'agence".</div>';
 }
@@ -4503,7 +4578,7 @@ async function chargerResumeCandidatures() {
   if (!resume || !resume.length) { conteneur.textContent = ''; return; }
   conteneur.innerHTML = resume.map(r => {
     const libelle = r.type_candidature === 'projet' ? (r.projet_nom || 'Projet sans nom') : "Intégrer l'agence";
-    return `<span style="display:inline-block; margin:0 1rem 0.4rem 0;"><strong style="color:var(--titre-clair);">${r.total}</strong> — ${echapperHtml(libelle)}</span>`;
+    return `<span class="tdb-56"><strong class="tdb-57">${r.total}</strong> — ${echapperHtml(libelle)}</span>`;
   }).join('');
 }
 
@@ -4737,7 +4812,7 @@ initSidebarNav();
 
     const admin=document.createElement('div');
     admin.className='ma2m-header-admin';
-    admin.innerHTML='<button type="button" class="ma2m-header-bell" aria-label="À traiter">♧<span class="badge" style="display:none"></span></button><span class="ma2m-header-avatar">MA</span><span class="admin-label">Admin<small>Administrateur</small></span><span class="chev">⌄</span>';
+    admin.innerHTML='<button type="button" class="ma2m-header-bell" aria-label="À traiter">♧<span class="badge u-hidden"></span></button><span class="ma2m-header-avatar">MA</span><span class="admin-label">Admin<small>Administrateur</small></span><span class="chev">⌄</span>';
     inner.appendChild(admin);
 
     const originalBell=document.getElementById('db-cloche-btn');
@@ -4804,7 +4879,7 @@ initSidebarNav();
     try{
       const {data:classement,error}=await sb.rpc('stats_classement_mannequins',{depuis:depuis7j});
       if(error||!classement||!classement.length){
-        conteneur.innerHTML='<p style="color:var(--gris);font-size:.85rem;">Pas encore assez de visites enregistrées sur les 7 derniers jours.</p>';return;
+        conteneur.innerHTML='<p class="tdb-58">Pas encore assez de visites enregistrées sur les 7 derniers jours.</p>';return;
       }
       const top10=classement.slice(0,10), ids=top10.map(c=>c.model_id);
       const [{data:profils},{data:photos}]=await Promise.all([
@@ -4819,20 +4894,27 @@ initSidebarNav();
       conteneur.innerHTML=top10.map((c,i)=>{
         const rank=i+1, photo=photoParId[c.model_id]||'';
         const photoHtml=photo
-          ? `<img class="top10-photo" src="${safe(photo)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">`
+          ? `<img class="top10-photo" src="${safe(photo)}" alt="" loading="lazy">`
           : '';
         return `<div class="top10-item">
           <span class="top10-medal rank-${rank<=3?rank:4}" aria-label="Classement ${rank}">${rank}</span>
-          <span class="top10-photo-fallback" style="display:${photo?'none':'grid'};width:42px;height:42px;border-radius:50%;place-items:center;background:#15191d;border:1px solid rgba(255,255,255,.14);color:#777f86;font-size:.65rem">MA</span>
+          <span class="top10-photo-fallback${photo?'':' tdb-photo-fallback-visible'}">MA</span>
           ${photoHtml}
           <span class="top10-name">${safe(nomParId[c.model_id]||'Mannequin')}</span>
-          <span class="top10-bar"><span style="width:${Math.max(4,(c.nb_visites/maxVisites)*100)}%"></span></span>
+          <span class="top10-bar"><span class="tdb-barre-remplie" data-pct="${Math.max(4,(c.nb_visites/maxVisites)*100)}"></span></span>
           <span class="top10-visites">${c.nb_visites}</span>
         </div>`;
       }).join('');
-      if(classement.length>10) conteneur.innerHTML+=`<p style="color:var(--gris);font-size:.78rem;margin-top:.4rem;">+ ${classement.length-10} autre(s) mannequin(s) avec des visites enregistrées.</p>`;
+      if(classement.length>10) conteneur.innerHTML+=`<p class="tdb-59">+ ${classement.length-10} autre(s) mannequin(s) avec des visites enregistrées.</p>`;
+      conteneur.querySelectorAll('.top10-photo').forEach(img=>{
+        img.addEventListener('error',function(){
+          this.style.display='none';
+          if(this.nextElementSibling) this.nextElementSibling.style.display='grid';
+        });
+      });
+      conteneur.querySelectorAll('.tdb-barre-remplie').forEach(el=>{ el.style.width=el.dataset.pct+'%'; });
     }catch(e){
-      conteneur.innerHTML='<p style="color:var(--gris);font-size:.85rem;">Classement momentanément indisponible.</p>';
+      conteneur.innerHTML='<p class="tdb-58">Classement momentanément indisponible.</p>';
       console.error('Top 10 mannequins:',e);
     }
   };
@@ -4862,7 +4944,7 @@ initSidebarNav();
       const {data:classement,error}=await sb.rpc('stats_classement_mannequins',{depuis:depuis7j});
 
       if(error || !classement || !classement.length){
-        conteneur.innerHTML='<p style="color:var(--gris);font-size:.85rem;">Pas encore assez de visites enregistrées sur les 7 derniers jours.</p>';
+        conteneur.innerHTML='<p class="tdb-58">Pas encore assez de visites enregistrées sur les 7 derniers jours.</p>';
         return;
       }
 
@@ -4908,10 +4990,11 @@ initSidebarNav();
               <span class="top10-name">${nom}</span>
               ${award}
             </span>
-            <span class="top10-bar" aria-hidden="true"><span style="width:${largeur}%"></span></span>
+            <span class="top10-bar" aria-hidden="true"><span class="tdb-barre-remplie" data-pct="${largeur}"></span></span>
             <span class="top10-visites">${visites}</span>
           </div>`;
       }).join('');
+      conteneur.querySelectorAll('.tdb-barre-remplie').forEach(el=>{ el.style.width=el.dataset.pct+'%'; });
 
       const podium=document.getElementById('ma2m-top3-podium');
       if(podium){
@@ -4940,11 +5023,11 @@ initSidebarNav();
       }
 
       if(classement.length>10){
-        conteneur.innerHTML += `<p style="color:var(--gris);font-size:.78rem;margin-top:.4rem;">+ ${classement.length-10} autre(s) mannequin(s) avec des visites enregistrées.</p>`;
+        conteneur.innerHTML += `<p class="tdb-59">+ ${classement.length-10} autre(s) mannequin(s) avec des visites enregistrées.</p>`;
       }
     }catch(e){
       console.error('Top 10 V3:',e);
-      conteneur.innerHTML='<p style="color:var(--gris);font-size:.85rem;">Classement momentanément indisponible.</p>';
+      conteneur.innerHTML='<p class="tdb-58">Classement momentanément indisponible.</p>';
     }
   }
 
