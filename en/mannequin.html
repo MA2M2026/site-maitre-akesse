@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-Aq0RTGlztzRhxYchC9Gahaqg3n6R6yKM0YqNO2GVWn8='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-jc9dnvjuvfIjkdx7T6X97leP9Bh+pl4Trt3Pgqqw1mA='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
 <script src="../js/analytics-config.js"></script>
@@ -527,8 +527,9 @@ async function chargerProfil() {
     console.error('Failed to load profile:', e);
     contenu.innerHTML = `
       <p>Loading this profile is taking too long or has failed (unstable connection?).</p>
-      <button class="btn btn--principal" onclick="window.location.reload()">Try Again</button>
+      <button class="btn btn--principal" id="btn-reessayer-profil">Try Again</button>
     `;
+    document.getElementById('btn-reessayer-profil').addEventListener('click', () => window.location.reload());
   }
 }
 
