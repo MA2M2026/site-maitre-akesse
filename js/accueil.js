@@ -102,7 +102,7 @@ async function chargerPhotosHero() {
 
   const { data } = await sb
     .from('model_photos')
-    .select('url, model_id, model_profiles!inner(published)')
+    .select('url, url_moyenne, model_id, model_profiles!inner(published)')
     .eq('model_profiles.published', true)
     .order('created_at', { ascending: false })
     .limit(120);
@@ -113,7 +113,7 @@ async function chargerPhotosHero() {
   melanger(data || []).forEach(p => {
 
     if (!parMannequin.has(p.model_id)) {
-      parMannequin.set(p.model_id, p.url);
+      parMannequin.set(p.model_id, p.url_moyenne || p.url);
     }
 
   });
@@ -400,7 +400,7 @@ async function chargerMedaillonsAccueil() {
     const { data: photos } =
       await sb
         .from('model_photos')
-        .select('url')
+        .select('url, url_miniature')
         .eq('model_id', profil.id)
         .order(
           'created_at',
@@ -411,7 +411,7 @@ async function chargerMedaillonsAccueil() {
 
     const photoUrl =
       (photos && photos[0])
-        ? photos[0].url
+        ? (photos[0].url_miniature || photos[0].url)
         : 'assets/logo-dark-bg.png';
 
 
@@ -503,7 +503,7 @@ async function chargerMannequinVedette() {
   const { data: photos } =
     await sb
       .from('model_photos')
-      .select('url')
+      .select('url, url_moyenne')
       .eq('model_id', profil.id)
       .order(
         'created_at',
@@ -514,7 +514,7 @@ async function chargerMannequinVedette() {
 
   const photoUrl =
     (photos && photos[0])
-      ? photos[0].url
+      ? (photos[0].url_moyenne || photos[0].url)
       : 'assets/logo-dark-bg.png';
 
 
