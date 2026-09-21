@@ -2,6 +2,13 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<!-- ⚠️ STRICT CSP — if you change a SINGLE CHARACTER of an inline script on this
+     page (JSON-LD included), its sha256 fingerprint below no longer matches: the
+     browser blocks that script SILENTLY, with no visible error. This is exactly what
+     left several entry-door scroll-lock fixes inert for days in late September 2026
+     (see README-TECHNIQUE.md, "Porte d'entrée / verrou de scroll" section), with no
+     error to hint at why. After any change, run:
+     python3 scripts/verifier-csp.py en/index.html -->
 <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-7bF06Z6YmZgJlGIYVmxOqwewdMVlcz/RgazquF2iLMY=' 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-b+QrdXtiVOaEVLNTW7orZsKUFZUKusqEn6hCQdTT7lY='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net;">
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
