@@ -1,0 +1,26 @@
+name: Vérification CSP (empreintes des scripts inline)
+
+# Empêche de reproduire le bug rencontré fin septembre 2026 : un script inline
+# modifié sans mettre à jour son empreinte sha256 dans le CSP est bloqué en
+# silence par le navigateur, sans aucune erreur visible. Voir
+# scripts/verifier-csp.py et README-TECHNIQUE.md ("Porte d'entrée / verrou de
+# scroll") pour le détail. Cette vérification s'exécute automatiquement sur
+# chaque Pull Request et chaque envoi sur main — une croix rouge apparaît sur
+# la PR si une empreinte ne correspond plus, avant même qu'un aperçu ne soit
+# testé.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verifier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Vérifier les empreintes CSP des scripts inline
+        run: python3 scripts/verifier-csp.py
