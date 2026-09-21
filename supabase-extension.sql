@@ -3441,3 +3441,29 @@ create policy "Les admins generent les versions moyennes manquantes"
   );
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 81 : refonte "CV premium" de l'espace mannequin — nouveaux champs
+-- Formation et Compétences, demandés pour reproduire la maquette CV validée
+-- (colonne dark identité/contact + colonne claire profil/formation/
+-- expérience/compétences + bandeau agence et 5 photos en bas, identiques
+-- à celles déjà choisies pour le compcard existant, compcard_ordre).
+--
+-- "competences" est un JSON plutôt que 8-9 colonnes séparées : ce sont des
+-- notes 1 à 5 que le mannequin s'attribue lui-même (Runway, Pose photo,
+-- Editorial, Fashion campaign, Fitting, Présentation de collection,
+-- Expression corporelle, Travail en équipe, Discipline professionnelle) —
+-- la liste peut évoluer sans nouvelle migration à chaque fois.
+--
+-- Pas de nouveau champ "Amateur/Professionnel" : ce niveau est déduit à
+-- l'affichage à partir de years_experience (déjà existant, Extension 11) —
+-- ne pas demander une seconde fois au mannequin une info déjà donnée.
+-- ===================================================================
+alter table model_profiles add column if not exists niveau_etude text;
+alter table model_profiles add column if not exists etablissement text;
+alter table model_profiles add column if not exists formation_particuliere text;
+alter table model_profiles add column if not exists formation_mannequin text;
+alter table model_profiles add column if not exists competences jsonb;
+alter table model_profiles add column if not exists citation text;
+
+NOTIFY pgrst, 'reload schema';
