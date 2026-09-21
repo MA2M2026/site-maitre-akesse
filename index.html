@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-Cb9lhVWKNoE5yXFy3bkL2pA3eCIfXTfe80Q3iYDHFZk=' 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-ScOUIlNThKPw+aEmdZLE2BPzW0k26ho2AOn39MHKPNw='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-+RNW4S0yQzaSFYeXXZixl0gUnMTjIgN0p4p+hstTzP4=' 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-ScOUIlNThKPw+aEmdZLE2BPzW0k26ho2AOn39MHKPNw='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net;">
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
 <script src="js/analytics-config.js"></script>
@@ -125,6 +125,22 @@ if (ma2mPorteDejaOuverte) {
   document.body.classList.add('porte-verrouillee');
   document.documentElement.classList.add('porte-verrouillee');
   window.verrouillerDefilement();
+}
+
+// Affiche le logo animé dès maintenant, avant même que le reste de la page (dont la
+// porte d'entrée) ne soit parsé — sinon, le temps que js/accueil.js (fin de page) ne
+// s'exécute pour l'afficher, la première diapositive de la porte d'entrée (le texte
+// "MA2M") apparaît brièvement à l'écran, non couverte. #logo-splash n'existe pas
+// encore dans le DOM à ce stade (plus bas dans la page) : on pose donc la classe sur
+// <html>, avec une règle CSS ciblant #logo-splash par id (voir css/splash.css) — pas
+// besoin d'attendre que l'élément existe pour que la règle s'applique dès son arrivée.
+let ma2mIntroDejaVue = false;
+try { ma2mIntroDejaVue = sessionStorage.getItem('ma2m_intro_vue'); } catch (e) {}
+const ma2mReduitMouvement = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+if (!ma2mIntroDejaVue && !ma2mReduitMouvement) {
+  document.documentElement.classList.add('intro-a-venir');
+  document.body.classList.add('splash-active');
 }
 </script>
 

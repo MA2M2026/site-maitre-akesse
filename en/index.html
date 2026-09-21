@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-HGmhIc+tMcx0GzwZSJQLafoaRXftc9Mo7GyNQC0Wmdc=' 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-b+QrdXtiVOaEVLNTW7orZsKUFZUKusqEn6hCQdTT7lY='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-7bF06Z6YmZgJlGIYVmxOqwewdMVlcz/RgazquF2iLMY=' 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-b+QrdXtiVOaEVLNTW7orZsKUFZUKusqEn6hCQdTT7lY='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net;">
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
 <script src="../js/analytics-config.js"></script>
@@ -110,6 +110,22 @@ if (ma2mPorteDejaOuverte) {
   document.body.classList.add('porte-verrouillee');
   document.documentElement.classList.add('porte-verrouillee');
   window.verrouillerDefilement();
+}
+
+// Shows the animated logo right now, before the rest of the page (including the entry
+// door) is even parsed — otherwise, by the time js/accueil-en.js (end of page) runs to
+// show it, the entry door's first slide (the "MA2M" text) briefly appears uncovered.
+// #logo-splash doesn't exist in the DOM yet at this point (further down the page): the
+// class goes on <html> instead, with a CSS rule targeting #logo-splash by id (see
+// css/splash.css) — no need to wait for the element to exist for the rule to apply once
+// it does.
+let ma2mIntroDejaVue = false;
+try { ma2mIntroDejaVue = sessionStorage.getItem('ma2m_intro_vue'); } catch (e) {}
+const ma2mReduitMouvement = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+if (!ma2mIntroDejaVue && !ma2mReduitMouvement) {
+  document.documentElement.classList.add('intro-a-venir');
+  document.body.classList.add('splash-active');
 }
 </script>
 

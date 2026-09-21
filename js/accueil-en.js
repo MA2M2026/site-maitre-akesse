@@ -15,22 +15,14 @@ document.getElementById('entrer-btn').addEventListener('click', async () => {
 });
 
 // --- Intro: animated logo (5.8s or "Skip intro"), before the entry door ---
+// (Showing it happens earlier — at the very start of <body>, see the comment there —
+// so a moment of the entry door (the "MA2M" text) never appears before this
+// end-of-page script runs. This block now only handles closing it.)
 (function () {
-  let dejaVue = false;
-  try { dejaVue = sessionStorage.getItem('ma2m_intro_vue'); } catch (e) {}
-  const reduitMouvement = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!document.documentElement.classList.contains('intro-a-venir')) return;
 
-  if (dejaVue || reduitMouvement) return;
-
-  const logoSplash = document.getElementById('logo-splash');
-  logoSplash.classList.remove('u-hidden');
-  document.body.classList.add('splash-active');
-
-  let introTerminee = false;
   function terminerIntro() {
-    if (introTerminee) return;
-    introTerminee = true;
-    logoSplash.classList.add('u-hidden');
+    document.documentElement.classList.remove('intro-a-venir');
     document.body.classList.remove('splash-active');
     try { sessionStorage.setItem('ma2m_intro_vue', '1'); } catch (e) {}
   }
