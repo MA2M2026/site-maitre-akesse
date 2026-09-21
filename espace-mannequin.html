@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-whF4JLhP6FXQbxpwRRcBya3dUU0S8NrziaP925L2N8Q=' 'sha256-A1Tf+lPHbdRehPQjgJOnOtzBZj6USU8YmGqlMBgrx10='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-vM+mMvLJggNq82/52RRsMwzv7sH4z3SHOMRx8Y9gKy4=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-whF4JLhP6FXQbxpwRRcBya3dUU0S8NrziaP925L2N8Q=' 'sha256-i2ZWkDYJNHek6+uLX/+dJuNn9HfJ1BzZ+sehV1QKJwI='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-MUB6FhdJ9FpDQ3biQkblrXb2hxYFp094UdlwEclzM3I=';">
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
 <script src="js/analytics-config.js"></script>
@@ -52,6 +52,7 @@
 .em-32 { display:flex; gap:0.5rem; flex-shrink:0; }
 .em-33 { border-color:var(--gris); }
 .em-34 { font-size:0.85rem; color:var(--gris); margin-top:0.5rem; }
+.em-35 { margin-bottom:1.8rem; }
 </style>
 </head>
 <body>
@@ -197,6 +198,8 @@ setTimeout(() => {
         <div class="mensurations" id="ap-mensurations"></div>
       </div>
     </div>
+
+    <button type="button" id="btn-voir-cv" class="btn em-35">🪪 Voir mon CV</button>
 
     <div id="notice-nouveaux-champs" class="em-3">
       <strong>🔴 Nouveau — merci de compléter votre fiche :</strong>
@@ -572,6 +575,75 @@ setTimeout(() => {
     </form>
   </div>
 </section>
+
+<!-- ===== Aperçu du CV — reproduit la maquette validée avec l'agence :
+     colonne sombre identité/contact + colonne claire profil/formation/
+     expérience/compétences, bandeau agence et 5 photos du compcard en bas.
+     Phase 2 (aperçu visuel) : l'export PDF viendra en Phase 3. ===== -->
+<div id="overlay-cv" class="cv-overlay u-hidden">
+  <div class="cv-overlay-scroll">
+    <button type="button" id="btn-fermer-cv" class="cv-fermer" aria-label="Fermer l'aperçu du CV">✕</button>
+    <div class="cv-document" id="cv-document">
+      <div class="cv-colonne-sombre">
+        <div class="cv-logo-agence">
+          <img src="assets/logo-dark-bg.png" alt="Maître Akesse Model Management" class="cv-logo-img">
+        </div>
+        <div class="cv-photo-portrait">
+          <img id="cv-photo" src="" alt="">
+        </div>
+        <p class="cv-baseline">FORMER — RÉVÉLER — VALORISER</p>
+        <h2 class="cv-nom" id="cv-nom">—</h2>
+        <p class="cv-souscategorie" id="cv-souscategorie">Mannequin professionnel(le)</p>
+        <div class="cv-identite-liste" id="cv-identite-liste"></div>
+        <p class="cv-categorie-label">Catégorie</p>
+        <p class="cv-categorie-valeur" id="cv-categorie-valeur">—</p>
+        <blockquote class="cv-citation" id="cv-citation"></blockquote>
+        <p class="cv-pied-agence">Maître Akesse<br>Model Management</p>
+      </div>
+      <div class="cv-colonne-claire">
+        <div class="cv-entete-doc">Model CV</div>
+
+        <section class="cv-section">
+          <h3>Profil</h3>
+          <p id="cv-profil-texte" class="cv-texte-libre"></p>
+        </section>
+
+        <section class="cv-section">
+          <h3>Informations physiques</h3>
+          <div class="cv-grille-infos" id="cv-grille-infos"></div>
+        </section>
+
+        <section class="cv-section" id="cv-section-formation">
+          <h3>Formation</h3>
+          <div class="cv-grille-infos" id="cv-grille-formation"></div>
+        </section>
+
+        <section class="cv-section">
+          <h3>Expérience professionnelle</h3>
+          <div id="cv-experience"></div>
+        </section>
+
+        <section class="cv-section cv-section-double">
+          <div>
+            <h3>Compétences mannequin</h3>
+            <div id="cv-competences"></div>
+          </div>
+          <div>
+            <h3>Portfolio</h3>
+            <div id="cv-portfolio"></div>
+          </div>
+        </section>
+      </div>
+    </div>
+    <div class="cv-bandeau-bas">
+      <div class="cv-photos-bande" id="cv-photos-bande"></div>
+      <div class="cv-agence-contact">
+        <strong>Maître Akesse Model Management</strong>
+        <p>📞 +225 27 22 23 11 76 · +225 05 45 65 68 87<br>✉️ infos.ma2m@gmail.com · 📍 Abidjan, Côte d'Ivoire</p>
+      </div>
+    </div>
+  </div>
+</div>
 
 <footer class="site-footer">
   <div class="container">
@@ -1953,6 +2025,126 @@ document.getElementById('pj-ajouter').addEventListener('click', async () => {
   // sans ça, après un ajout, la personne ne voit que le formulaire vidé et peut
   // croire que rien ne s'est passé alors que le projet est bien ajouté au-dessus.
   document.getElementById('projets-liste').scrollIntoView({ behavior: 'smooth', block: 'center' });
+});
+
+// --- Aperçu du CV (Phase 2 : design visuel, l'export PDF viendra en Phase 3) ---
+// Reconstruit à chaque ouverture à partir des données déjà en base (profil
+// mis en cache par chargerProfil(), photos et projets rechargés à la volée) :
+// aucune nouvelle saisie, le CV reflète toujours ce qui est déjà renseigné
+// dans les blocs ci-dessus, y compris pour les mannequins déjà inscrits
+// avant cette fonctionnalité.
+const LIBELLES_COMPETENCES = {
+  runway: 'Runway / Défilé', pose: 'Pose photographique', editorial: 'Editorial',
+  campagne: 'Fashion campaign', fitting: 'Fitting', presentation: 'Présentation de collection',
+  expression: 'Expression corporelle', equipe: 'Travail en équipe', discipline: 'Discipline professionnelle'
+};
+const ORDRE_COMPETENCES = ['runway', 'pose', 'editorial', 'campagne', 'fitting', 'presentation', 'expression', 'equipe', 'discipline'];
+
+function ligneIdentiteCv(label, valeurHtml) {
+  return `<div class="cv-identite-item"><span class="cv-identite-label">${echapperHtml(label)}</span><span class="cv-identite-valeur">${valeurHtml}</span></div>`;
+}
+function ligneInfoCv(label, valeur) {
+  if (!valeur) return '';
+  return `<div><span class="cv-info-label">${echapperHtml(label)}</span><span class="cv-info-valeur">${echapperHtml(String(valeur))}</span></div>`;
+}
+
+async function construireApercuCv() {
+  if (!sb) return;
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user || !dernierProfilCharge) return;
+  const profil = dernierProfilCharge;
+
+  const [{ data: photos }, { data: projets }] = await Promise.all([
+    sb.from('model_photos').select('*').eq('model_id', user.id).order('principale', { ascending: false }).order('created_at', { ascending: true }),
+    sb.from('model_projects').select('*').eq('model_id', user.id).order('created_at', { ascending: false })
+  ]);
+
+  const photoPrincipale = (photos || [])[0] || null;
+  document.getElementById('cv-photo').src = photoPrincipale ? (photoPrincipale.url_moyenne || photoPrincipale.url) : 'assets/logo-dark-bg.png';
+
+  document.getElementById('cv-nom').textContent = profil.full_name || 'Votre nom';
+  document.getElementById('cv-souscategorie').textContent = profil.category === 'homme' ? 'Mannequin professionnel' : profil.category === 'femme' ? 'Mannequin professionnelle' : 'Mannequin professionnel(le)';
+
+  let identiteHtml = '';
+  if (profil.date_naissance) identiteHtml += ligneIdentiteCv('Date de naissance', echapperHtml(formaterPeriode(profil.date_naissance)));
+  if (profil.city) identiteHtml += ligneIdentiteCv('Ville de résidence', echapperHtml(profil.city));
+  identiteHtml += ligneIdentiteCv('Contact agence', '+225 27 22 23 11 76<br>+225 05 45 65 68 87<br>infos.ma2m@gmail.com');
+  document.getElementById('cv-identite-liste').innerHTML = identiteHtml;
+
+  document.getElementById('cv-categorie-valeur').textContent = deriverNiveauMannequin(profil.years_experience);
+  document.getElementById('cv-citation').textContent = profil.citation ? '« ' + profil.citation + ' »' : '';
+  document.getElementById('cv-profil-texte').textContent = profil.bio || 'Profil à compléter.';
+
+  const taille = profil.height_cm ? (profil.height_cm / 100).toFixed(2).replace('.', ',') + ' m' : '';
+  const mensurations = [profil.chest_cm, profil.waist_cm, profil.hips_cm || profil.inseam_cm].filter(Boolean).join(' / ');
+  let infosHtml = '';
+  infosHtml += ligneInfoCv('Taille', taille);
+  infosHtml += ligneInfoCv('Poids', profil.weight_kg ? profil.weight_kg + ' kg' : '');
+  infosHtml += ligneInfoCv('Mensurations', mensurations);
+  infosHtml += ligneInfoCv('Pointure', profil.shoe_size);
+  infosHtml += ligneInfoCv('Taille vêtements', profil.clothing_size);
+  infosHtml += ligneInfoCv('Couleur des yeux', profil.eye_color);
+  infosHtml += ligneInfoCv('Couleur des cheveux', profil.hair_color);
+  infosHtml += ligneInfoCv('Carnation', profil.carnation);
+  document.getElementById('cv-grille-infos').innerHTML = infosHtml || '<p class="cv-texte-libre">Informations physiques à compléter.</p>';
+
+  let formationHtml = '';
+  formationHtml += ligneInfoCv("Niveau d'étude", profil.niveau_etude);
+  formationHtml += ligneInfoCv('Établissement', profil.etablissement);
+  formationHtml += ligneInfoCv('Formation particulière', profil.formation_particuliere);
+  formationHtml += ligneInfoCv('Formation mannequin', profil.formation_mannequin);
+  const sectionFormation = document.getElementById('cv-section-formation');
+  document.getElementById('cv-grille-formation').innerHTML = formationHtml;
+  sectionFormation.classList.toggle('u-hidden', !formationHtml);
+
+  const parCategorie = new Map();
+  (projets || []).forEach(p => {
+    const cat = categoriserProjet(p.type_projet);
+    if (!parCategorie.has(cat)) parCategorie.set(cat, []);
+    parCategorie.get(cat).push(p);
+  });
+  let expHtml = '';
+  ORDRE_CATEGORIES_PROJETS.forEach(cat => {
+    const liste = parCategorie.get(cat);
+    if (!liste || !liste.length) return;
+    const items = liste.map(p => {
+      const sousDetail = [[p.ville, p.pays].filter(Boolean).join(', '), formaterPeriode(p.periode)].filter(Boolean).join(', ');
+      return `<li>${echapperHtml(p.titre || p.type_projet)}${sousDetail ? ' — ' + echapperHtml(sousDetail) : ''}</li>`;
+    }).join('');
+    expHtml += `<div class="cv-experience-groupe"><p class="cv-experience-titre">${echapperHtml(cat)}</p><ul class="cv-experience-liste">${items}</ul></div>`;
+  });
+  document.getElementById('cv-experience').innerHTML = expHtml || '<p class="cv-texte-libre">Aucune expérience renseignée pour le moment.</p>';
+
+  const competencesData = profil.competences || {};
+  const compHtml = ORDRE_COMPETENCES.map(cle => {
+    const pourcentage = ((competencesData[cle] || 3) / 5) * 100;
+    return `<div class="cv-competence-ligne"><span>${echapperHtml(LIBELLES_COMPETENCES[cle])}</span><div class="cv-competence-barre"><div class="cv-competence-remplissage" data-pourcentage="${pourcentage}"></div></div></div>`;
+  }).join('');
+  document.getElementById('cv-competences').innerHTML = compHtml;
+  document.querySelectorAll('#cv-competences .cv-competence-remplissage').forEach(el => {
+    el.style.width = el.dataset.pourcentage + '%';
+  });
+
+  let portfolioHtml = '';
+  if (profil.instagram) {
+    portfolioHtml += `<p class="cv-portfolio-ligne">📷 @${echapperHtml(profil.instagram.replace(/^@/, ''))}</p>`;
+  }
+  const lienProfil = 'https://www.maitreakessemodelmanagement.com/mannequin.html?id=' + encodeURIComponent(user.id);
+  portfolioHtml += `<p class="cv-portfolio-ligne">🌐 Portfolio en ligne : <a href="${echapperHtml(lienProfil)}" target="_blank" rel="noopener">Voir la fiche complète</a></p>`;
+  document.getElementById('cv-portfolio').innerHTML = portfolioHtml;
+
+  const photosCompcard = (photos || []).filter(p => p.compcard_ordre).sort((a, b) => a.compcard_ordre - b.compcard_ordre);
+  document.getElementById('cv-photos-bande').innerHTML = photosCompcard.map(p => `<img src="${echapperHtml(p.url_miniature || p.url)}" alt="">`).join('');
+}
+
+document.getElementById('btn-voir-cv').addEventListener('click', async () => {
+  await construireApercuCv();
+  document.getElementById('overlay-cv').classList.remove('u-hidden');
+  document.body.style.overflow = 'hidden';
+});
+document.getElementById('btn-fermer-cv').addEventListener('click', () => {
+  document.getElementById('overlay-cv').classList.add('u-hidden');
+  document.body.style.overflow = '';
 });
 
 // --- Vérifier si déjà connecté au chargement de la page ---

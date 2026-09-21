@@ -1726,3 +1726,93 @@ html.porte-deja-vue #porte-entree { display: none; }
 .u-ic-facebook { color: #1877F2; }
 .u-ic-youtube { color: #FF0000; }
 .u-ic-whatsapp { color: #25D366; }
+
+/* ---------- Aperçu du CV mannequin (espace-mannequin.html) — reproduit la
+   maquette validée avec l'agence : colonne sombre identité/contact + colonne
+   claire profil/formation/expérience/compétences, bandeau agence et 5 photos
+   du compcard en bas. Couleur/typo réutilisent directement les tokens du
+   site (--noir/--creme/--bordeaux sont déjà exactement cette palette). ---------- */
+.cv-overlay {
+  position: fixed; inset: 0; z-index: 2100; background: rgba(6,5,4,0.92);
+  overflow-y: auto; padding: 2.5rem 1.2rem;
+}
+.cv-overlay-scroll { max-width: 980px; margin: 0 auto; position: relative; }
+.cv-fermer {
+  position: sticky; top: 0; float: right; margin-bottom: 0.6rem;
+  width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--gris-clair);
+  background: var(--noir); color: var(--titre-clair); font-size: 1.1rem; cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+.cv-fermer:hover { background: var(--bordeaux); border-color: var(--bordeaux); }
+
+.cv-document {
+  display: grid; grid-template-columns: minmax(230px, 32%) 1fr;
+  box-shadow: 0 20px 60px -20px rgba(0,0,0,0.6);
+}
+@media (max-width: 720px) { .cv-document { grid-template-columns: 1fr; } }
+
+.cv-colonne-sombre {
+  background: var(--noir); color: var(--texte-corps); padding: 2.4rem 1.6rem;
+  display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.9rem;
+}
+.cv-logo-agence { margin-bottom: 0.4rem; }
+.cv-logo-img { height: 34px; width: auto; }
+.cv-photo-portrait {
+  width: 100%; max-width: 200px; aspect-ratio: 3/4; border-radius: 4px; overflow: hidden;
+  background: var(--noir-doux); border: 1px solid var(--gris-clair);
+}
+.cv-photo-portrait img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cv-baseline { font-size: 0.66rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gris); margin: 0.2rem 0 0; }
+.cv-nom { font-family: var(--display); font-size: 1.9rem; line-height: 1.1; color: var(--titre-clair); margin: 0.3rem 0 0; }
+.cv-souscategorie { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--bordeaux-clair); margin: 0; }
+.cv-identite-liste { width: 100%; text-align: left; font-size: 0.8rem; color: var(--texte-corps); border-top: 1px solid var(--gris-clair); padding-top: 0.9rem; margin-top: 0.4rem; display: flex; flex-direction: column; gap: 0.55rem; }
+.cv-identite-item .cv-identite-label { display: block; font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gris); }
+.cv-identite-item .cv-identite-valeur { display: block; }
+.cv-categorie-label { font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gris); border-top: 1px solid var(--gris-clair); padding-top: 0.9rem; margin: 0.4rem 0 0; width: 100%; }
+.cv-categorie-valeur { font-family: var(--display); font-size: 1.15rem; color: var(--titre-clair); margin: 0.1rem 0 0; }
+.cv-citation { font-family: var(--display); font-style: italic; color: var(--texte-doux); font-size: 0.95rem; line-height: 1.4; border-top: 1px solid var(--gris-clair); padding-top: 0.9rem; margin: 0.4rem 0 0; }
+.cv-citation:empty { display: none; }
+.cv-pied-agence { margin-top: auto; padding-top: 1rem; font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gris); }
+
+.cv-colonne-claire {
+  background: var(--creme); color: #2a2622; padding: 2.2rem 2rem; position: relative;
+}
+.cv-entete-doc {
+  position: absolute; top: 1.6rem; right: 2rem; font-family: var(--display); font-size: 0.75rem;
+  letter-spacing: 0.22em; text-transform: uppercase; color: var(--bordeaux);
+}
+.cv-section { padding: 0; margin-bottom: 1.6rem; }
+.cv-section h3 {
+  font-family: var(--texte); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--bordeaux); border-bottom: 1px solid rgba(122,18,32,0.25); padding-bottom: 0.4rem; margin: 0 0 0.7rem;
+}
+.cv-texte-libre { font-size: 0.88rem; line-height: 1.6; margin: 0; }
+.cv-grille-infos { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem 1.5rem; font-size: 0.85rem; }
+.cv-grille-infos div { display: flex; justify-content: space-between; gap: 0.6rem; border-bottom: 1px dotted rgba(0,0,0,0.12); padding-bottom: 0.25rem; }
+.cv-grille-infos .cv-info-label { color: #6b6259; }
+.cv-grille-infos .cv-info-valeur { font-weight: 600; text-align: right; }
+#cv-section-formation.u-hidden { display: none; }
+
+.cv-experience-groupe { margin-bottom: 0.9rem; }
+.cv-experience-groupe:last-child { margin-bottom: 0; }
+.cv-experience-titre { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--bordeaux); margin: 0 0 0.35rem; }
+.cv-experience-liste { list-style: none; margin: 0; padding: 0; font-size: 0.84rem; line-height: 1.6; }
+.cv-experience-liste li::before { content: '— '; color: var(--bordeaux-clair); }
+
+.cv-section-double { display: grid; grid-template-columns: 1fr 1fr; gap: 1.8rem; }
+@media (max-width: 560px) { .cv-section-double { grid-template-columns: 1fr; } }
+.cv-competence-ligne { display: grid; grid-template-columns: 9rem 1fr; align-items: center; gap: 0.6rem; font-size: 0.78rem; margin-bottom: 0.45rem; }
+.cv-competence-barre { height: 6px; background: rgba(0,0,0,0.1); border-radius: 3px; overflow: hidden; }
+.cv-competence-remplissage { height: 100%; background: var(--bordeaux); border-radius: 3px; }
+.cv-portfolio-ligne { font-size: 0.85rem; margin-bottom: 0.5rem; }
+.cv-portfolio-ligne a { color: var(--bordeaux); }
+
+.cv-bandeau-bas {
+  background: var(--bordeaux); color: #fff; padding: 1.2rem 1.6rem;
+  display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap;
+}
+.cv-photos-bande { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.cv-photos-bande img { width: 64px; height: 84px; object-fit: cover; border-radius: 3px; border: 1px solid rgba(255,255,255,0.25); }
+.cv-agence-contact { text-align: right; font-size: 0.78rem; line-height: 1.5; }
+.cv-agence-contact strong { font-family: var(--display); font-size: 1rem; display: block; margin-bottom: 0.2rem; }
+@media (max-width: 560px) { .cv-agence-contact { text-align: left; } .cv-bandeau-bas { justify-content: flex-start; } }
