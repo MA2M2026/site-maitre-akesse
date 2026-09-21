@@ -1789,115 +1789,110 @@ setTimeout(() => {
 .tdb-menu-panel.ouvert { transform: translateX(0); }
 
 .tdb-menu-entete { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
-.tdb-menu-entete strong { font-family: var(--display); letter-spacing: 0.14em; color: var(--titre-clair, #fff); font-size: 0.95rem; }
+.tdb-menu-entete strong { font-family: var(--display); letter-spacing: 0.14em; color: var(--titre-clair, #fff); font-size: 1.02rem; font-weight: 700; }
 
-/* ---------- Chaque bouton du menu = une vraie touche de clavier blanche ----------
-   Le fond général du panneau reste sombre (verre dépoli) ; c'est CHAQUE bouton pris
-   individuellement (Fermer, Accueil, blocs, sous-blocs, actions) qui a son propre fond
-   blanc, comme une touche physique posée dessus — en léger relief au repos, qui flotte
-   et s'éclaire au survol, puis s'enfonce et s'illumine réellement à l'appui (lueur
-   bordeaux→or) pour qu'on sente physiquement laquelle on a pressée. */
+/* Chaque entrée (accueil, blocs, sous-blocs, actions) : panneau de verre en léger
+   relief au repos, qui flotte et s'éclaire au survol, puis s'enfonce et s'illumine
+   réellement à l'appui (lueur bordeaux→or) — pour qu'on sente physiquement laquelle
+   on a pressée. Texte en gras et plus grand pour rester bien lisible sur le fond sombre. */
 
 .tdb-menu-fermer {
-  background: #f4f0ea; border: 1px solid rgba(0,0,0,0.08); border-radius: 999px;
-  color: #6b6560; font-size: 1rem; cursor: pointer; padding: 0.3rem 0.65rem;
-  box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 4px 10px -6px rgba(0,0,0,0.4);
-  transition: color 0.18s ease, background 0.18s ease, transform 0.12s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 999px;
+  color: var(--gris, #aaa); font-size: 1.1rem; font-weight: 700; cursor: pointer; padding: 0.3rem 0.65rem;
+  transition: color 0.18s ease, background 0.18s ease, transform 0.12s ease, border-color 0.18s ease;
 }
-.tdb-menu-fermer:hover { color: #1a1512; transform: translateY(-1px); box-shadow: 0 1px 0 rgba(255,255,255,0.7) inset, 0 8px 16px -8px rgba(122,18,32,0.35); }
+.tdb-menu-fermer:hover { color: #fff; background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
 .tdb-menu-fermer:active {
   transform: scale(0.92);
-  background: linear-gradient(160deg, #f3d4da, #f4ecd2); border-color: rgba(122,18,32,0.5); color: #7a1220;
-  box-shadow: 0 0 16px rgba(213,84,104,0.5);
-  transition: transform 0.08s ease, background 0.08s ease, box-shadow 0.08s ease;
+  background: rgba(213,84,104,0.3); border-color: rgba(213,84,104,0.6); color: #fff;
+  box-shadow: 0 0 14px rgba(213,84,104,0.4);
 }
 
 .tdb-menu-accueil {
   display: block; width: 100%; text-align: left; margin-bottom: 1.1rem;
   padding: 0.9rem 1.1rem; border-radius: 16px;
-  background: #f4f0ea; border: 1px solid rgba(0,0,0,0.06);
-  color: #1a1512; font-size: 0.85rem; cursor: pointer;
-  box-shadow: 0 1px 0 rgba(255,255,255,0.7) inset, 0 8px 18px -10px rgba(0,0,0,0.5);
-  transition: transform 0.16s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+  background: linear-gradient(160deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02));
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #fff; font-size: 0.94rem; font-weight: 700; cursor: pointer;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.08) inset, 0 8px 18px -10px rgba(0,0,0,0.55);
+  transition: border-color 0.2s ease, transform 0.16s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 .tdb-menu-accueil:hover {
-  transform: translateY(-2px); border-color: rgba(122,18,32,0.3);
-  box-shadow: 0 1px 0 rgba(255,255,255,0.8) inset, 0 14px 26px -12px rgba(122,18,32,0.4);
+  border-color: rgba(213,84,104,0.5); transform: translateY(-2px);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.1) inset, 0 14px 26px -12px rgba(122,18,32,0.4);
+  background: linear-gradient(160deg, rgba(213,84,104,0.14), rgba(255,255,255,0.03));
 }
 .tdb-menu-accueil:active {
   transform: translateY(1px) scale(0.98);
-  background: linear-gradient(160deg, #f3d4da, #f4ecd2);
-  box-shadow: 0 0 0 2px rgba(213,84,104,0.55), 0 0 26px rgba(213,84,104,0.5), 0 0 46px rgba(201,162,75,0.3);
+  box-shadow: 0 0 0 2px rgba(213,84,104,0.55), 0 0 24px rgba(213,84,104,0.45), 0 0 44px rgba(201,162,75,0.2);
+  background: linear-gradient(160deg, rgba(213,84,104,0.24), rgba(201,162,75,0.06));
   transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.08s ease;
 }
 
 .tdb-menu-bloc { border: none; border-top: 1px solid rgba(255,255,255,0.08); padding: 0.7rem 0; }
 .tdb-menu-bloc > summary {
   cursor: pointer; list-style: none; font-family: var(--display);
-  font-size: 0.82rem; letter-spacing: 0.1em; text-transform: uppercase;
-  color: #1a1512; padding: 0.65rem 0.8rem;
-  border-radius: 13px; border: 1px solid rgba(0,0,0,0.06);
-  background: #f4f0ea;
-  box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 5px 12px -8px rgba(0,0,0,0.4);
+  font-size: 0.9rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--titre-clair, #fff); padding: 0.65rem 0.8rem;
+  border-radius: 13px; border: 1px solid transparent;
+  background: rgba(255,255,255,0.02);
   transition: background 0.18s ease, border-color 0.18s ease, transform 0.12s ease, box-shadow 0.18s ease;
 }
 .tdb-menu-bloc > summary::-webkit-details-marker { display: none; }
-.tdb-menu-bloc > summary:before { content: "▸ "; color: var(--bordeaux, #7a1220); }
+.tdb-menu-bloc > summary:before { content: "▸ "; color: var(--bordeaux-clair, #cf3b52); }
 .tdb-menu-bloc[open] > summary:before { content: "▾ "; }
 .tdb-menu-bloc > summary:hover {
-  transform: translateX(3px); border-color: rgba(122,18,32,0.3);
-  box-shadow: 0 1px 0 rgba(255,255,255,0.7) inset, 0 8px 16px -8px rgba(122,18,32,0.3);
+  background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.14); transform: translateX(3px);
 }
 .tdb-menu-bloc > summary:active {
   transform: translateX(3px) scale(0.98);
-  background: linear-gradient(160deg, #f3d4da, #f4ecd2);
-  border-color: rgba(122,18,32,0.5);
-  box-shadow: 0 0 22px rgba(213,84,104,0.5);
+  background: linear-gradient(160deg, rgba(213,84,104,0.3), rgba(201,162,75,0.08));
+  border-color: rgba(213,84,104,0.6);
+  box-shadow: 0 0 20px rgba(213,84,104,0.4);
   transition: transform 0.08s ease, background 0.08s ease, box-shadow 0.08s ease;
 }
 
 .tdb-menu-sousbloc { margin: 0.35rem 0 0.35rem 0.6rem; border: none; }
 .tdb-menu-sousbloc > summary {
-  cursor: pointer; list-style: none; font-size: 0.74rem; letter-spacing: 0.06em;
-  text-transform: uppercase; color: #6b6560; padding: 0.5rem 0.7rem;
-  border-radius: 11px; border: 1px solid rgba(0,0,0,0.05); background: rgba(244,240,234,0.85);
-  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.12s ease;
+  cursor: pointer; list-style: none; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--gris, #aaa); padding: 0.5rem 0.7rem;
+  border-radius: 11px; transition: background 0.18s ease, color 0.18s ease, transform 0.12s ease;
 }
 .tdb-menu-sousbloc > summary::-webkit-details-marker { display: none; }
 .tdb-menu-sousbloc > summary:before { content: "▸ "; }
 .tdb-menu-sousbloc[open] > summary:before { content: "▾ "; }
-.tdb-menu-sousbloc > summary:hover { background: #f4f0ea; color: #1a1512; border-color: rgba(122,18,32,0.25); transform: translateX(3px); }
+.tdb-menu-sousbloc > summary:hover { background: rgba(255,255,255,0.06); color: #fff; transform: translateX(3px); }
 .tdb-menu-sousbloc > summary:active {
-  background: linear-gradient(160deg, #f3d4da, #f4ecd2); color: #1a1512; border-color: rgba(122,18,32,0.5);
-  transform: translateX(3px) scale(0.98);
-  box-shadow: 0 0 16px rgba(213,84,104,0.4);
+  background: rgba(213,84,104,0.24); color: #fff; transform: translateX(3px) scale(0.98);
+  box-shadow: 0 0 14px rgba(213,84,104,0.3);
   transition: transform 0.08s ease, background 0.08s ease, box-shadow 0.08s ease;
 }
 
 .tdb-menu-item {
   display: block; text-align: left; box-sizing: border-box;
   width: calc(100% - 0.9rem); margin: 0.28rem 0 0.28rem 0.9rem;
-  background: #f4f0ea; border: 1px solid rgba(0,0,0,0.06); color: #4a4540;
-  font-size: 0.82rem; padding: 0.65rem 0.85rem;
+  background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.09); color: #d8d8d8;
+  font-size: 0.9rem; font-weight: 600; padding: 0.65rem 0.85rem;
   border-radius: 12px; cursor: pointer;
-  box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 3px 8px -6px rgba(0,0,0,0.35);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset;
   transition: background 0.18s ease, color 0.18s ease, transform 0.12s ease, border-color 0.18s ease, box-shadow 0.18s ease;
 }
 .tdb-menu-item:hover {
-  color: #1a1512; border-color: rgba(122,18,32,0.3); transform: translateX(3px);
-  box-shadow: 0 1px 0 rgba(255,255,255,0.7) inset, 0 6px 14px -8px rgba(122,18,32,0.3);
+  background: rgba(255,255,255,0.09); color: #fff;
+  border-color: rgba(255,255,255,0.18); transform: translateX(3px);
 }
 .tdb-menu-item:active {
   transform: translateX(3px) scale(0.97);
-  background: linear-gradient(160deg, #f3d4da, #f4ecd2);
-  border-color: rgba(122,18,32,0.55); color: #1a1512;
-  box-shadow: 0 0 0 1px rgba(213,84,104,0.5), 0 0 20px rgba(213,84,104,0.5);
+  background: linear-gradient(160deg, rgba(213,84,104,0.32), rgba(201,162,75,0.1));
+  border-color: rgba(213,84,104,0.6);
+  box-shadow: 0 0 0 1px rgba(213,84,104,0.5), 0 0 20px rgba(213,84,104,0.45);
   transition: transform 0.08s ease, background 0.08s ease, box-shadow 0.08s ease, border-color 0.08s ease;
 }
 .tdb-menu-item.actif {
-  background: linear-gradient(160deg, #f3d4da, #f4ecd2); color: #1a1512;
-  border-color: rgba(122,18,32,0.5);
-  box-shadow: 0 0 0 1px rgba(213,84,104,0.35) inset, 0 0 14px rgba(213,84,104,0.3);
+  background: linear-gradient(160deg, rgba(213,84,104,0.26), rgba(201,162,75,0.06)); color: #fff;
+  border-color: rgba(213,84,104,0.55);
+  box-shadow: 0 0 0 1px rgba(213,84,104,0.35) inset, 0 0 14px rgba(213,84,104,0.25);
 }
 a.tdb-menu-item { text-decoration: none; }
 
