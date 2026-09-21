@@ -1,15 +1,10 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-whF4JLhP6FXQbxpwRRcBya3dUU0S8NrziaP925L2N8Q=' 'sha256-kgqJFmmWJ0/rHLmQAXAsqHhRjL8JHzmvBY1+/KZntxE='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-k8MH4dm2mMIsyTOtNFj1F+FwymkLURiA/PbBQPEmVvs=';">
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-1BX5MPZ6WE');
-</script>
+<script src="js/analytics-config.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Espace mannequin — Maître Akesse Model Management</title>
@@ -22,6 +17,41 @@
 <meta name="theme-color" content="#1e1d1c">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<style>
+.em-1 { padding-bottom:2rem; }
+.em-2 { font-size:0.9rem; color:var(--gris); margin-bottom:1rem; }
+.em-3 { display:none; background:#fdecea; border:1px solid #e0433d; color:#7a1712; padding:1.1rem 1.3rem; margin-bottom:1.8rem; font-size:0.92rem; }
+.em-4 { margin-bottom:0.5rem; }
+.em-5 { font-size:0.8rem; color:var(--gris); margin-top:-0.6rem; }
+.em-6 { display:none; margin-top:0.5rem; }
+.em-7 { margin-top:1.2rem; padding:1.2rem; border:1px solid var(--gris-clair); }
+.em-8 { display:none; font-size:0.82rem; color:var(--gris); margin-top:0.4rem; }
+.em-9 { display:contents; }
+.em-10 { display:none; margin-left:0.5rem; color:var(--gris); border-color:var(--gris-clair); }
+.em-11 { display:flex; flex-wrap:wrap; gap:1.2rem; margin-top:0.4rem; }
+.em-12 { display:flex; align-items:center; gap:0.5rem; font-weight:400; }
+.em-13 { width:auto; }
+.em-14 { display:none; margin-top:1.2rem; text-align:left; }
+.em-15 { display:flex; flex-direction:column; gap:0.8rem; }
+.em-16 { color:var(--gris); font-size:0.85rem; margin:0.8rem 0 0; }
+.em-17 { color:var(--gris); font-size:0.85rem; margin:0.4rem 0 0; }
+.em-18 { display:none; background:rgba(207,59,82,0.12); border-left:3px solid var(--bordeaux-clair); padding:0.8rem 1rem; font-size:0.88rem; margin-top:0; }
+.em-19 { background:var(--gris-clair); padding:1rem; border:1px solid var(--gris-clair); }
+.em-20 { color:var(--noir); }
+.em-21 { margin:0.3rem 0 0; font-size:0.88rem; color:#4a4a4a; }
+.em-22 { margin-top:0.6rem; font-size:0.88rem; }
+.em-23 { margin-top:0.3rem; }
+.em-24 { font-weight:600; color:var(--noir); }
+.em-25 { margin-top:0.6rem; font-size:0.8rem; color:var(--gris); }
+.em-26 { font-size:0.85rem; color:var(--gris); margin-top:1rem; }
+.em-27 { display:flex; align-items:center; gap:0.6rem; font-weight:600; margin-bottom:1.5rem; }
+.em-28 { color:var(--gris); font-size:0.85rem; grid-column:1/-1; }
+.em-29 { cursor:pointer; }
+.em-30 { color:var(--gris); font-size:0.9rem; }
+.em-31 { font-size:0.85rem; color:var(--gris); margin-top:0.2rem; }
+.em-32 { display:flex; gap:0.5rem; flex-shrink:0; }
+.em-33 { border-color:var(--gris); }
+</style>
 </head>
 <body>
 <script>
@@ -69,16 +99,16 @@ setTimeout(() => {
   </ul>
 </div>
 
-<section style="padding-bottom:2rem;">
+<section class="em-1">
   <div class="container">
     <div class="eyebrow reveal">Réservé aux mannequins de l'agence</div>
     <h1 class="reveal reveal-delay-1">Espace mannequin<span class="oeil">.</span></h1>
-    <p style="margin-top:1rem; ">L'inscription se fait uniquement avec un code d'invitation transmis par l'agence.</p>
+    <p class="u-mt-1">L'inscription se fait uniquement avec un code d'invitation transmis par l'agence.</p>
   </div>
 </section>
 
 <!-- ===== Bloc connexion / inscription ===== -->
-<section id="bloc-auth" style="padding-top:0;">
+<section id="bloc-auth" class="u-pt-0">
   <div class="container">
     <div class="onglets">
       <button class="onglet actif" data-cible="panneau-connexion">Se connecter</button>
@@ -98,19 +128,19 @@ setTimeout(() => {
         <button type="submit" class="btn btn--principal">Se connecter</button>
         <div id="co-msg" class="form-msg"></div>
       </form>
-      <p style="margin-top:1rem;"><a href="#" id="co-mdp-oublie-lien" style="font-size:0.85rem; color:var(--gris);">Mot de passe oublié ?</a></p>
+      <p class="u-mt-1"><a href="#" id="co-mdp-oublie-lien" class="u-texte-doux">Mot de passe oublié ?</a></p>
     </div>
 
     <div id="panneau-mdp-oublie" class="panneau">
-      <p style="font-size:0.9rem; color:var(--gris); margin-bottom:1rem;">Indiquez l'e-mail utilisé pour votre inscription : si un compte y est associé, un lien de réinitialisation vous sera envoyé par e-mail.</p>
+      <p class="em-2">Indiquez l'e-mail utilisé pour votre inscription : si un compte y est associé, un lien de réinitialisation vous sera envoyé par e-mail.</p>
       <div class="form-champ"><label for="co-mdp-oublie-email">E-mail</label><input type="email" id="co-mdp-oublie-email"></div>
       <button class="btn btn--principal" id="co-mdp-oublie-envoyer">Envoyer le lien de réinitialisation</button>
       <div id="co-mdp-oublie-msg" class="form-msg"></div>
-      <p style="margin-top:1rem;"><a href="#" id="co-mdp-oublie-retour" style="font-size:0.85rem; color:var(--gris);">← Retour à la connexion</a></p>
+      <p class="u-mt-1"><a href="#" id="co-mdp-oublie-retour" class="u-texte-doux">← Retour à la connexion</a></p>
     </div>
 
     <div id="panneau-nouveau-mdp" class="panneau">
-      <p style="font-size:0.9rem; color:var(--gris); margin-bottom:1rem;">Choisissez votre nouveau mot de passe (au moins 8 caractères).</p>
+      <p class="em-2">Choisissez votre nouveau mot de passe (au moins 8 caractères).</p>
       <div class="form-champ"><label for="co-nouveau-mdp">Nouveau mot de passe</label><input type="password" id="co-nouveau-mdp"></div>
       <button class="btn btn--principal" id="co-nouveau-mdp-valider">Valider le nouveau mot de passe</button>
       <div id="co-nouveau-mdp-msg" class="form-msg"></div>
@@ -152,11 +182,11 @@ setTimeout(() => {
       <button id="btn-deconnexion" class="btn">Se déconnecter</button>
     </div>
 
-    <div id="bandeau-refus" class="bandeau-refus" style="display:none;"></div>
+    <div id="bandeau-refus" class="bandeau-refus u-hidden"></div>
 
     <div class="apercu-fiche-carte reveal">
       <div class="apercu-fiche-photo">
-        <img id="ap-photo" src="" alt="" style="display:none;">
+        <img id="ap-photo" src="" alt="" class="u-hidden">
         <span id="ap-photo-placeholder" class="apercu-fiche-photo-vide">Photo</span>
       </div>
       <div class="apercu-fiche-infos">
@@ -167,7 +197,7 @@ setTimeout(() => {
       </div>
     </div>
 
-    <div id="notice-nouveaux-champs" style="display:none; background:#fdecea; border:1px solid #e0433d; color:#7a1712; padding:1.1rem 1.3rem; margin-bottom:1.8rem; font-size:0.92rem;">
+    <div id="notice-nouveaux-champs" class="em-3">
       <strong>🔴 Nouveau — merci de compléter votre fiche :</strong>
       Vos réalisations (défilés, shootings, publicités, castings…), vos années d'expérience, votre type de modèle, vos langues parlées, votre disponibilité et votre mensuration complète (Hanches pour les femmes, Entrejambe pour les hommes) sont maintenant demandés pour que les recruteurs vous connaissent mieux. Faites défiler jusqu'à « Mes réalisations » ci-dessous pour les renseigner.
     </div>
@@ -187,7 +217,7 @@ setTimeout(() => {
       <div class="form-grille">
         <div class="form-champ">
           <label for="pr-indicatif">Votre téléphone (usage interne agence uniquement)</label>
-          <select id="pr-indicatif" style="margin-bottom:0.5rem;"></select>
+          <select id="pr-indicatif" class="em-4"></select>
           <input type="tel" id="pr-telephone-numero" placeholder="07 00 00 00 00" pattern="[0-9 ]{6,14}">
         </div>
         <div class="form-champ">
@@ -195,12 +225,12 @@ setTimeout(() => {
           <input type="email" id="pr-email-perso">
         </div>
       </div>
-      <p style="font-size:0.8rem; color:var(--gris); margin-top:-0.6rem;">🔒 Ces coordonnées ne sont jamais affichées publiquement — seul le contact officiel de l'agence apparaît sur votre fiche.</p>
+      <p class="em-5">🔒 Ces coordonnées ne sont jamais affichées publiquement — seul le contact officiel de l'agence apparaît sur votre fiche.</p>
       <div class="form-grille">
         <div class="form-champ">
           <label for="pr-ville">Ville *</label>
           <select id="pr-ville" required></select>
-          <input type="text" id="pr-ville-autre" placeholder="Précisez la ville" style="display:none; margin-top:0.5rem;">
+          <input type="text" id="pr-ville-autre" placeholder="Précisez la ville" class="em-6">
         </div>
         <div class="form-champ">
           <label for="pr-naissance">Date de naissance *</label>
@@ -236,7 +266,7 @@ setTimeout(() => {
           <label for="pr-hanches">Hanches (cm) *</label>
           <select id="pr-hanches"></select>
         </div>
-        <div class="form-champ" id="champ-entrejambe" style="display:none;">
+        <div class="form-champ u-hidden" id="champ-entrejambe">
           <label for="pr-entrejambe">Entrejambe (cm) *</label>
           <select id="pr-entrejambe"></select>
         </div>
@@ -267,7 +297,7 @@ setTimeout(() => {
             <option value="XXL">XXL</option>
             <option value="Autre">Autre</option>
           </select>
-          <input type="text" id="pr-tailleveternents-autre" placeholder="Précisez la taille" style="display:none; margin-top:0.5rem;">
+          <input type="text" id="pr-tailleveternents-autre" placeholder="Précisez la taille" class="em-6">
         </div>
         <div class="form-champ">
           <label for="pr-yeux">Couleur des yeux</label>
@@ -281,7 +311,7 @@ setTimeout(() => {
             <option value="Noisette">Noisette</option>
             <option value="Autre">Autre</option>
           </select>
-          <input type="text" id="pr-yeux-autre" placeholder="Précisez la couleur" style="display:none; margin-top:0.5rem;">
+          <input type="text" id="pr-yeux-autre" placeholder="Précisez la couleur" class="em-6">
         </div>
         <div class="form-champ">
           <label for="pr-cheveux">Couleur des cheveux</label>
@@ -295,10 +325,10 @@ setTimeout(() => {
             <option value="Gris / Blanc">Gris / Blanc</option>
             <option value="Autre">Autre</option>
           </select>
-          <input type="text" id="pr-cheveux-autre" placeholder="Précisez la couleur" style="display:none; margin-top:0.5rem;">
+          <input type="text" id="pr-cheveux-autre" placeholder="Précisez la couleur" class="em-6">
         </div>
       </div>
-      <button type="submit" id="btn-enregistrer-infos" class="btn btn--principal" style="display:none;" disabled>Enregistrer mes informations</button>
+      <button type="submit" id="btn-enregistrer-infos" class="btn btn--principal u-hidden" disabled>Enregistrer mes informations</button>
       <div id="infos-msg" class="form-msg"></div>
     </form>
 
@@ -306,7 +336,7 @@ setTimeout(() => {
       <div class="section-tete-dossier"><span class="eyebrow">02</span><h3>Mes réalisations</h3></div>
       <p class="bloc-section-intro">Défilés, shootings, publicités, castings… Ajoutez chaque projet un par un, ils s'affichent tous sur votre fiche publique. Un seul projet suffit pour publier votre profil — vous pourrez toujours en ajouter d'autres plus tard.</p>
       <div id="projets-liste" class="projets-liste"></div>
-      <div id="form-projet" style="margin-top:1.2rem; padding:1.2rem; border:1px solid var(--gris-clair);">
+      <div id="form-projet" class="em-7">
         <div class="form-grille">
           <div class="form-champ">
             <label for="pj-type">Type de projet *</label>
@@ -319,10 +349,10 @@ setTimeout(() => {
               <option value="New Face">New Face (nouveau mannequin, aucune expérience pour l'instant)</option>
               <option value="Autre">Autre</option>
             </select>
-            <input type="text" id="pj-type-autre" placeholder="Précisez le type de projet" style="display:none; margin-top:0.5rem;">
-            <p id="pj-type-newface-note" style="display:none; font-size:0.82rem; color:var(--gris); margin-top:0.4rem;">Cette mention s'affichera simplement comme « New Face » sur votre fiche — elle indique que vous débutez. Vous pourrez ajouter vos vrais projets dès que vous en aurez réalisé un.</p>
+            <input type="text" id="pj-type-autre" placeholder="Précisez le type de projet" class="em-6">
+            <p id="pj-type-newface-note" class="em-8">Cette mention s'affichera simplement comme « New Face » sur votre fiche — elle indique que vous débutez. Vous pourrez ajouter vos vrais projets dès que vous en aurez réalisé un.</p>
           </div>
-          <div id="pj-details-autres-champs" style="display:contents;">
+          <div id="pj-details-autres-champs" class="em-9">
             <div class="form-champ">
               <label for="pj-titre">Nom du projet</label>
               <input type="text" id="pj-titre" placeholder="ex: Cacao Fashion Show">
@@ -335,19 +365,19 @@ setTimeout(() => {
                 <option value="mois">Je me souviens du mois et de l'année</option>
                 <option value="jour">Je me souviens de la date exacte</option>
               </select>
-              <select id="pj-periode-annee" style="display:none; margin-top:0.5rem;"></select>
-              <input type="month" id="pj-periode-mois" style="display:none; margin-top:0.5rem;">
-              <input type="date" id="pj-periode-jour" style="display:none; margin-top:0.5rem;">
+              <select id="pj-periode-annee" class="em-6"></select>
+              <input type="month" id="pj-periode-mois" class="em-6">
+              <input type="date" id="pj-periode-jour" class="em-6">
             </div>
             <div class="form-champ">
               <label for="pj-pays">Pays</label>
               <select id="pj-pays"></select>
-              <input type="text" id="pj-pays-autre" placeholder="Précisez le pays" style="display:none; margin-top:0.5rem;">
+              <input type="text" id="pj-pays-autre" placeholder="Précisez le pays" class="em-6">
             </div>
             <div class="form-champ">
               <label for="pj-ville">Ville</label>
               <select id="pj-ville"></select>
-              <input type="text" id="pj-ville-autre" placeholder="Précisez la ville" style="display:none; margin-top:0.5rem;">
+              <input type="text" id="pj-ville-autre" placeholder="Précisez la ville" class="em-6">
             </div>
             <div class="form-champ">
               <label for="pj-promoteur">Promoteur / organisateur</label>
@@ -356,7 +386,7 @@ setTimeout(() => {
           </div>
         </div>
         <button type="button" id="pj-ajouter" class="btn">Ajouter ce projet</button>
-        <button type="button" id="pj-annuler" class="btn" style="display:none; margin-left:0.5rem; color:var(--gris); border-color:var(--gris-clair);">Annuler la modification</button>
+        <button type="button" id="pj-annuler" class="btn em-10">Annuler la modification</button>
         <div id="pj-msg" class="form-msg"></div>
       </div>
       <script>
@@ -383,22 +413,22 @@ setTimeout(() => {
       </div>
       <div class="form-champ">
         <label>Type de modèle (cochez tout ce qui s'applique)</label>
-        <div style="display:flex; flex-wrap:wrap; gap:1.2rem; margin-top:0.4rem;">
-          <label style="display:flex; align-items:center; gap:0.5rem; font-weight:400;"><input type="checkbox" class="pr-type" value="catwalk" style="width:auto;"> Défilé / Catwalk</label>
-          <label style="display:flex; align-items:center; gap:0.5rem; font-weight:400;"><input type="checkbox" class="pr-type" value="photo" style="width:auto;"> Photo</label>
-          <label style="display:flex; align-items:center; gap:0.5rem; font-weight:400;"><input type="checkbox" class="pr-type" value="publicite" style="width:auto;"> Publicité</label>
-          <label style="display:flex; align-items:center; gap:0.5rem; font-weight:400;"><input type="checkbox" class="pr-type" value="commercial" style="width:auto;"> Commercial</label>
-          <label style="display:flex; align-items:center; gap:0.5rem; font-weight:400;"><input type="checkbox" class="pr-type" value="autre" style="width:auto;"> Autre</label>
+        <div class="em-11">
+          <label class="em-12"><input type="checkbox" class="pr-type em-13" value="catwalk"> Défilé / Catwalk</label>
+          <label class="em-12"><input type="checkbox" class="pr-type em-13" value="photo"> Photo</label>
+          <label class="em-12"><input type="checkbox" class="pr-type em-13" value="publicite"> Publicité</label>
+          <label class="em-12"><input type="checkbox" class="pr-type em-13" value="commercial"> Commercial</label>
+          <label class="em-12"><input type="checkbox" class="pr-type em-13" value="autre"> Autre</label>
         </div>
       </div>
       <div class="form-grille">
         <div class="form-champ">
           <label>Langues parlées</label>
-          <div style="display:flex; flex-wrap:wrap; gap:1.2rem; margin-top:0.4rem;">
-            <label style="display:flex; align-items:center; gap:0.5rem; font-weight:400;"><input type="checkbox" class="pr-langue" value="Français" style="width:auto;"> Français</label>
-            <label style="display:flex; align-items:center; gap:0.5rem; font-weight:400;"><input type="checkbox" class="pr-langue" value="Anglais" style="width:auto;"> Anglais</label>
-            <label style="display:flex; align-items:center; gap:0.5rem; font-weight:400;"><input type="checkbox" class="pr-langue" value="Espagnol" style="width:auto;"> Espagnol</label>
-            <label style="display:flex; align-items:center; gap:0.5rem; font-weight:400;"><input type="checkbox" class="pr-langue" value="Autre" style="width:auto;"> Autre</label>
+          <div class="em-11">
+            <label class="em-12"><input type="checkbox" class="pr-langue em-13" value="Français"> Français</label>
+            <label class="em-12"><input type="checkbox" class="pr-langue em-13" value="Anglais"> Anglais</label>
+            <label class="em-12"><input type="checkbox" class="pr-langue em-13" value="Espagnol"> Espagnol</label>
+            <label class="em-12"><input type="checkbox" class="pr-langue em-13" value="Autre"> Autre</label>
           </div>
         </div>
         <div class="form-champ">
@@ -419,7 +449,7 @@ setTimeout(() => {
         <label for="pr-video">Vidéo de présentation (lien YouTube ou Vimeo, facultatif)</label>
         <input type="url" id="pr-video" placeholder="https://www.youtube.com/watch?v=...">
       </div>
-      <button type="submit" id="btn-enregistrer-experience" class="btn btn--principal" style="display:none;" disabled>Enregistrer mon expérience</button>
+      <button type="submit" id="btn-enregistrer-experience" class="btn btn--principal u-hidden" disabled>Enregistrer mon expérience</button>
       <div id="exp-msg" class="form-msg"></div>
     </form>
 
@@ -428,36 +458,36 @@ setTimeout(() => {
       <div class="upload-zone">
         <p>Ajoutez vos photos (JPG, PNG ou HEIC — les photos iPhone sont converties automatiquement). Vous pouvez en sélectionner plusieurs à la fois.</p>
         <input type="file" id="input-photo" accept="image/*" multiple>
-        <div id="apercu-upload" style="display:none; margin-top:1.2rem; text-align:left;">
-          <div id="apercu-liste" style="display:flex; flex-direction:column; gap:0.8rem;"></div>
+        <div id="apercu-upload" class="em-14">
+          <div id="apercu-liste" class="em-15"></div>
         </div>
       </div>
-      <p style="color:var(--gris); font-size:0.85rem; margin:0.8rem 0 0;">Cliquez sur "☆ Profil" sur une photo pour en faire votre photo de profil — c'est celle qui s'affiche en premier sur votre fiche publique et dans The Book.</p>
-      <p style="color:var(--gris); font-size:0.85rem; margin:0.4rem 0 0;">Cliquez sur "+ Compcard" pour choisir jusqu'à 5 photos qui apparaîtront sur votre fiche téléchargeable (PDF/JPEG) envoyée aux recruteurs. Sans sélection, l'agence choisit automatiquement pour vous.</p>
+      <p class="em-16">Cliquez sur "☆ Profil" sur une photo pour en faire votre photo de profil — c'est celle qui s'affiche en premier sur votre fiche publique et dans The Book.</p>
+      <p class="em-17">Cliquez sur "+ Compcard" pour choisir jusqu'à 5 photos qui apparaîtront sur votre fiche téléchargeable (PDF/JPEG) envoyée aux recruteurs. Sans sélection, l'agence choisit automatiquement pour vous.</p>
       <div id="photos-grille" class="photos-grille"></div>
     </div>
 
     <form id="form-publication" class="bloc-section">
       <div class="section-tete-dossier"><span class="eyebrow">05</span><h3>Contact &amp; publication</h3></div>
-      <p id="guide-premiere-fois" style="display:none; background:rgba(207,59,82,0.12); border-left:3px solid var(--bordeaux-clair); padding:0.8rem 1rem; font-size:0.88rem; margin-top:0;">
+      <p id="guide-premiere-fois" class="em-18">
         👋 Première inscription : remplissez tous les blocs ci-dessus (informations, mensurations, au moins un projet réalisé, expérience, au moins une photo), puis validez tout ici en une seule fois avec le bouton "Enregistrer mon profil" ci-dessous.
       </p>
-      <div class="form-champ" style="background:var(--gris-clair); padding:1rem; border:1px solid var(--gris-clair);">
-        <label style="color:var(--noir);">🔒 Contact affiché sur votre fiche publique</label>
-        <p style="margin:0.3rem 0 0; font-size:0.88rem; color:#4a4a4a;">
+      <div class="form-champ em-19">
+        <label class="em-20">🔒 Contact affiché sur votre fiche publique</label>
+        <p class="em-21">
           Pour votre sécurité, c'est le contact officiel de l'agence qui apparaît sur votre profil public, jamais votre numéro ou compte personnel :
         </p>
-        <div style="margin-top:0.6rem; font-size:0.88rem;">
-          <div style="margin-top:0.3rem;"><a href="tel:+2252722231176" style="font-weight:600; color:var(--noir);">📞 +225 27 22 23 11 76</a></div>
-          <div style="margin-top:0.3rem;"><a href="tel:+2250545656887" style="font-weight:600; color:var(--noir);">📱 +225 05 45 65 68 87</a></div>
-          <div style="margin-top:0.3rem;"><a href="mailto:scoutmodel.ma2m@gmail.com" style="font-weight:600; color:var(--noir);">✉️ scoutmodel.ma2m@gmail.com</a></div>
-          <div style="margin-top:0.3rem;"><strong>Instagram :</strong> @maitreakessemodelmanagement</div>
+        <div class="em-22">
+          <div class="em-23"><a href="tel:+2252722231176" class="em-24">📞 +225 27 22 23 11 76</a></div>
+          <div class="em-23"><a href="tel:+2250545656887" class="em-24">📱 +225 05 45 65 68 87</a></div>
+          <div class="em-23"><a href="mailto:scoutmodel.ma2m@gmail.com" class="em-24">✉️ scoutmodel.ma2m@gmail.com</a></div>
+          <div class="em-23"><strong>Instagram :</strong> @maitreakessemodelmanagement</div>
         </div>
-        <p style="margin-top:0.6rem; font-size:0.8rem; color:var(--gris);">Géré par MA2M — non modifiable.</p>
+        <p class="em-25">Géré par MA2M — non modifiable.</p>
       </div>
-      <p style="font-size:0.85rem; color:var(--gris); margin-top:1rem;">* Champs obligatoires pour rendre votre profil visible publiquement (voir les blocs 1, 3 et 4 ci-dessus). Vous pouvez enregistrer un brouillon incomplet, il ne sera simplement pas publié.</p>
-      <label style="display:flex; align-items:center; gap:0.6rem; font-weight:600; margin-bottom:1.5rem;">
-        <input type="checkbox" id="pr-publie" style="width:auto;">
+      <p class="em-26">* Champs obligatoires pour rendre votre profil visible publiquement (voir les blocs 1, 3 et 4 ci-dessus). Vous pouvez enregistrer un brouillon incomplet, il ne sera simplement pas publié.</p>
+      <label class="em-27">
+        <input type="checkbox" id="pr-publie" class="em-13">
         Rendre mon profil visible publiquement sur le site
       </label>
       <button type="submit" class="btn btn--principal">Enregistrer mon profil</button>
@@ -492,9 +522,9 @@ setTimeout(() => {
         <div class="footer-reseaux">
           <a href="https://www.instagram.com/maitreakessemodelmanagement" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram"><svg viewBox="0 0 24 24"><defs><linearGradient id="ig-grad-8" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="#FFC107"/><stop offset="50%" stop-color="#F44336"/><stop offset="100%" stop-color="#9C27B0"/></linearGradient></defs><path fill="url(#ig-grad-8)" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98C.014 8.333 0 8.741 0 12s.014 3.667.072 4.948c.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24s3.667-.014 4.948-.072c4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.667.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
           <a href="https://www.tiktok.com/@agencemaitreakessemodel" target="_blank" rel="noopener" aria-label="TikTok" title="TikTok"><svg viewBox="0 0 24 24"><path fill="#25F4EE" transform="translate(-0.9,-0.9)" d="M16.6 5.82c-1.36-1.57-3.24-1.48-3.24-1.48h-3.09v12.4a2.592 2.592 0 01-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 004.3 1.38V7.3s-1.88.09-3.24-1.48z"/><path fill="#FE2C55" transform="translate(0.9,0.9)" d="M16.6 5.82c-1.36-1.57-3.24-1.48-3.24-1.48h-3.09v12.4a2.592 2.592 0 01-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 004.3 1.38V7.3s-1.88.09-3.24-1.48z"/><path fill="#000000" d="M16.6 5.82c-1.36-1.57-3.24-1.48-3.24-1.48h-3.09v12.4a2.592 2.592 0 01-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 004.3 1.38V7.3s-1.88.09-3.24-1.48z"/></svg></a>
-          <a href="https://www.facebook.com/share/1BzPN69rhE/" target="_blank" rel="noopener" aria-label="Facebook" title="Facebook" style="color:#1877F2;"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12.06C22 6.505 17.523 2 12 2S2 6.505 2 12.06c0 5.022 3.657 9.184 8.438 9.94v-7.03H7.898v-2.91h2.54V9.845c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.459h-1.26c-1.243 0-1.63.771-1.63 1.562v1.875h2.773l-.443 2.91h-2.33V22c4.78-.756 8.437-4.918 8.437-9.94z"/></svg></a>
-          <a href="https://youtube.com/@maitreakessemodelmanagement" target="_blank" rel="noopener" aria-label="YouTube" title="YouTube" style="color:#FF0000;"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a2.994 2.994 0 00-2.107-2.12C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.391.521A2.994 2.994 0 00.502 6.186 31.25 31.25 0 000 12a31.25 31.25 0 00.502 5.814 2.994 2.994 0 002.107 2.12c1.886.521 9.391.521 9.391.521s7.505 0 9.391-.521a2.994 2.994 0 002.107-2.12A31.25 31.25 0 0024 12a31.25 31.25 0 00-.502-5.814zM9.6 15.6V8.4l6.4 3.6-6.4 3.6z"/></svg></a>
-          <a href="https://wa.me/message/HJAMXGXHCL46I1" target="_blank" rel="noopener" aria-label="WhatsApp" title="WhatsApp" style="color:#25D366;"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.472-.148-.67.15-.198.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0a12 12 0 00-10.288 18.06L0 24l6.084-1.688A12 12 0 1012 0zm0 21.938a9.917 9.917 0 01-5.052-1.383l-.362-.215-3.752 1.041 1.004-3.665-.235-.375A9.938 9.938 0 1112 21.938z"/></svg></a>
+          <a href="https://www.facebook.com/share/1BzPN69rhE/" target="_blank" rel="noopener" aria-label="Facebook" title="Facebook" class="u-ic-facebook"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12.06C22 6.505 17.523 2 12 2S2 6.505 2 12.06c0 5.022 3.657 9.184 8.438 9.94v-7.03H7.898v-2.91h2.54V9.845c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.459h-1.26c-1.243 0-1.63.771-1.63 1.562v1.875h2.773l-.443 2.91h-2.33V22c4.78-.756 8.437-4.918 8.437-9.94z"/></svg></a>
+          <a href="https://youtube.com/@maitreakessemodelmanagement" target="_blank" rel="noopener" aria-label="YouTube" title="YouTube" class="u-ic-youtube"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a2.994 2.994 0 00-2.107-2.12C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.391.521A2.994 2.994 0 00.502 6.186 31.25 31.25 0 000 12a31.25 31.25 0 00.502 5.814 2.994 2.994 0 002.107 2.12c1.886.521 9.391.521 9.391.521s7.505 0 9.391-.521a2.994 2.994 0 002.107-2.12A31.25 31.25 0 0024 12a31.25 31.25 0 00-.502-5.814zM9.6 15.6V8.4l6.4 3.6-6.4 3.6z"/></svg></a>
+          <a href="https://wa.me/message/HJAMXGXHCL46I1" target="_blank" rel="noopener" aria-label="WhatsApp" title="WhatsApp" class="u-ic-whatsapp"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.472-.148-.67.15-.198.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0a12 12 0 00-10.288 18.06L0 24l6.084-1.688A12 12 0 1012 0zm0 21.938a9.917 9.917 0 01-5.052-1.383l-.362-.215-3.752 1.041 1.004-3.665-.235-.375A9.938 9.938 0 1112 21.938z"/></svg></a>
         </div>
       </div>
     </div>
@@ -506,7 +536,7 @@ setTimeout(() => {
   </div>
 </footer>
 
-<script>document.getElementById('an').textContent = new Date().getFullYear();</script>
+<script src="js/copyright-annee.js"></script>
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
 <script src="js/indicatifs-pays.js"></script>
@@ -837,7 +867,7 @@ function mettreAJourApercu() {
 
   document.getElementById('ap-mensurations').innerHTML = items.length
     ? items.map(([icone, label, valeur]) => `<div class="mensuration-item">${iconeMensurationApercu(icone)}<div><span class="label">${label}</span><span class="valeur">${echapperHtml(valeur)}</span></div></div>`).join('')
-    : '<p style="color:var(--gris); font-size:0.85rem; grid-column:1/-1;">Vos mensurations apparaîtront ici au fur et à mesure que vous les renseignez.</p>';
+    : '<p class="em-28">Vos mensurations apparaîtront ici au fur et à mesure que vous les renseignez.</p>';
 }
 function champHanchesVisible() { return document.getElementById('champ-hanches').style.display !== 'none'; }
 function champEntrejambeVisible() { return document.getElementById('champ-entrejambe').style.display !== 'none'; }
@@ -1308,7 +1338,7 @@ async function chargerPhotos() {
     const item = document.createElement('div');
     item.className = 'photo-item' + (photo.principale ? ' est-principale' : '');
     item.innerHTML = `
-      <img src="${echapperHtml(photo.url)}" alt="Photo du book" style="cursor:pointer;">
+      <img src="${echapperHtml(photo.url)}" alt="Photo du book" class="em-29">
       <button class="btn-principale" data-id="${photo.id}" title="Définir comme photo de profil">${photo.principale ? '★ Profil' : '☆ Profil'}</button>
       <button class="btn-supprimer" data-id="${photo.id}" data-chemin="${echapperHtml(photo.chemin || '')}" data-chemin-miniature="${echapperHtml(photo.chemin_miniature || '')}" title="Supprimer">✕</button>
       <button class="btn-compcard" data-id="${photo.id}" title="Choisir pour la fiche Compcard">${photo.compcard_ordre ? `Compcard n°${photo.compcard_ordre}` : '+ Compcard'}</button>
@@ -1563,7 +1593,7 @@ async function chargerProjets() {
   const liste = document.getElementById('projets-liste');
   liste.innerHTML = '';
   if (!projets || !projets.length) {
-    liste.innerHTML = '<p style="color:var(--gris); font-size:0.9rem;">Aucun projet ajouté pour le moment.</p>';
+    liste.innerHTML = '<p class="em-30">Aucun projet ajouté pour le moment.</p>';
     return;
   }
   projets.forEach(p => {
@@ -1573,12 +1603,12 @@ async function chargerProjets() {
     item.innerHTML = `
       <div>
         <strong>${echapperHtml(p.type_projet)}</strong>${p.titre ? ' — ' + echapperHtml(p.titre) : ''}
-        <div style="font-size:0.85rem; color:var(--gris); margin-top:0.2rem;">
+        <div class="em-31">
           ${[formaterPeriode(p.periode), lieu, p.promoteur].filter(Boolean).map(echapperHtml).join(' · ')}
         </div>
       </div>
-      <div style="display:flex; gap:0.5rem; flex-shrink:0;">
-        <button data-id="${p.id}" data-action="modifier" title="Modifier" style="border-color:var(--gris);">✎</button>
+      <div class="em-32">
+        <button data-id="${p.id}" data-action="modifier" title="Modifier" class="em-33">✎</button>
         <button data-id="${p.id}" data-action="supprimer" title="Supprimer">✕</button>
       </div>
     `;
