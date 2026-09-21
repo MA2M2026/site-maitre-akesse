@@ -1,15 +1,10 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-8/xe/ZPV1ovlLgkanqodUnrWdh+yD3EgUTknkXBP7J8='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-rlGOmtWoPiLQ3Ysci1f48TkvlFtTAWDWvlzX/Q47X6A=';">
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-1BX5MPZ6WE');
-</script>
+<script src="js/analytics-config.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Postuler à un casting — Maître Akesse Model Management</title>
@@ -33,6 +28,31 @@
 <meta name="theme-color" content="#1e1d1c">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<style>
+.ca-1 { max-width:640px; }
+.ca-2 { display:none; margin:0 0 1.2rem; padding:1.2rem 1.4rem; background:var(--anthracite, var(--noir)); border-left:3px solid var(--bordeaux-clair, var(--rouge)); font-size:0.88rem; line-height:1.65; }
+.ca-3 { margin:0 0 0.8rem; }
+.ca-4 { margin:0 0 0.4rem; }
+.ca-5 { margin:0; }
+.ca-6 { display:none; margin:-0.4rem 0 1rem; padding:0.8rem 1rem; background:var(--anthracite, var(--noir)); border-left:3px solid var(--bordeaux-clair, var(--rouge)); font-size:0.85rem; line-height:1.5; }
+.ca-7 { font-size:0.82rem; color:var(--gris); margin:0 0 1rem; }
+.ca-8 { margin-bottom:0.5rem; }
+.ca-9 { display:none; margin-top:0.5rem; }
+.ca-10 { display:none; margin:1rem 0; padding:1.2rem; border:1px solid var(--gris-clair); }
+.ca-11 { margin-top:0; font-size:0.95rem; }
+.ca-12 { font-size:0.85rem; color:var(--gris); margin:0.3rem 0 1rem; }
+.ca-13 { font-size:0.78rem; color:var(--gris); }
+.ca-14 { font-size:0.78rem; color:var(--gris); display:block; margin-top:0.3rem; }
+.ca-15 { display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.6rem; }
+.ca-16 { display:flex; align-items:flex-start; gap:0.6rem; }
+.ca-17 { width:auto; margin-top:0.3rem; }
+.ca-18 { font-weight:400; font-size:0.85rem; }
+.ca-19 { color:var(--rouge); }
+.ca-20 { position:relative; width:64px; height:64px; }
+.ca-21 { width:100%; height:100%; object-fit:cover; border-radius:4px; display:block; }
+.ca-22 { position:absolute; bottom:-6px; left:-6px; width:20px; height:20px; border-radius:50%; background:#333; color:#fff; border:2px solid #fff; font-size:0.7rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; }
+.ca-23 { position:absolute; top:-6px; right:-6px; width:20px; height:20px; border-radius:50%; background:var(--bordeaux, #7c1730); color:#fff; border:2px solid #fff; font-size:0.7rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; }
+</style>
 </head>
 <body>
 <script>
@@ -77,16 +97,16 @@ setTimeout(() => {
   </ul>
 </div>
 
-<section style="padding-bottom:1rem;">
+<section class="u-pb-1">
   <div class="container">
     <div class="eyebrow reveal">Rejoignez l'agence ou un casting</div>
     <h1 class="reveal reveal-delay-1">Postuler à un casting<span class="oeil">.</span></h1>
-    <p style="margin-top:1.2rem; max-width:60ch;" class="reveal reveal-delay-2">Vous souhaitez rejoindre Maître Akesse Model Management, ou postuler à un projet/casting précis lancé par l'agence ? Remplissez ce formulaire avec vos informations, vos mensurations et quatre photos minimum. Notre équipe étudie chaque candidature.</p>
+    <p class="reveal reveal-delay-2 u-maxw-60ch-texte u-mt-1-2">Vous souhaitez rejoindre Maître Akesse Model Management, ou postuler à un projet/casting précis lancé par l'agence ? Remplissez ce formulaire avec vos informations, vos mensurations et quatre photos minimum. Notre équipe étudie chaque candidature.</p>
   </div>
 </section>
 
-<section style="padding-top:1rem;">
-  <div class="container" style="max-width:640px;">
+<section class="u-pt-1">
+  <div class="container ca-1">
     <form id="form-casting">
       <div class="form-champ">
         <label for="ca-type">Vous postulez pour *</label>
@@ -97,16 +117,16 @@ setTimeout(() => {
         </select>
       </div>
 
-      <div id="ca-bloc-agence-info" style="display:none; margin:0 0 1.2rem; padding:1.2rem 1.4rem; background:var(--anthracite, var(--noir)); border-left:3px solid var(--bordeaux-clair, var(--rouge)); font-size:0.88rem; line-height:1.65;">
-        <p style="margin:0 0 0.8rem;">Bienvenue chez <strong>Maître Akesse Model Management</strong>, votre agence de mannequins.</p>
-        <p style="margin:0 0 0.8rem;">Vous avez sélectionné « Intégrer l'agence ». Le parcours est simple : deux castings sont nécessaires — le premier via ce formulaire, le second en présentiel après validation du premier.</p>
-        <p style="margin:0 0 0.4rem;">🌟 <strong>Conditions du 1er casting (en ligne)</strong></p>
-        <p style="margin:0 0 0.8rem;">🎯 Nos critères :<br>1️⃣ Femmes : 1m75 min minimum | 16–25 ans<br>2️⃣ Hommes : 1m85 min minimum | 16–26 ans<br><em>(Merci de ne postuler que si vous remplissez ces critères)</em></p>
-        <p style="margin:0 0 0.8rem;">📤 Si vous correspondez à ces critères, complétez simplement le formulaire ci-dessous.</p>
-        <p style="margin:0;">🚫 NB : si votre candidature est retenue, un message vous sera envoyé par WhatsApp ou e-mail avec la date et le dress code du casting en présentiel. 😎</p>
+      <div id="ca-bloc-agence-info" class="ca-2">
+        <p class="ca-3">Bienvenue chez <strong>Maître Akesse Model Management</strong>, votre agence de mannequins.</p>
+        <p class="ca-3">Vous avez sélectionné « Intégrer l'agence ». Le parcours est simple : deux castings sont nécessaires — le premier via ce formulaire, le second en présentiel après validation du premier.</p>
+        <p class="ca-4">🌟 <strong>Conditions du 1er casting (en ligne)</strong></p>
+        <p class="ca-3">🎯 Nos critères :<br>1️⃣ Femmes : 1m75 min minimum | 16–25 ans<br>2️⃣ Hommes : 1m85 min minimum | 16–26 ans<br><em>(Merci de ne postuler que si vous remplissez ces critères)</em></p>
+        <p class="ca-3">📤 Si vous correspondez à ces critères, complétez simplement le formulaire ci-dessous.</p>
+        <p class="ca-5">🚫 NB : si votre candidature est retenue, un message vous sera envoyé par WhatsApp ou e-mail avec la date et le dress code du casting en présentiel. 😎</p>
       </div>
 
-      <div id="ca-bloc-projet" style="display:none;">
+      <div id="ca-bloc-projet" class="u-hidden">
         <div class="form-champ">
           <label for="ca-projet">Projet / casting concerné *</label>
           <select id="ca-projet">
@@ -114,14 +134,14 @@ setTimeout(() => {
             <option value="__autre__">Autre (précisez)</option>
           </select>
         </div>
-        <p id="ca-projet-description" style="display:none; margin:-0.4rem 0 1rem; padding:0.8rem 1rem; background:var(--anthracite, var(--noir)); border-left:3px solid var(--bordeaux-clair, var(--rouge)); font-size:0.85rem; line-height:1.5;"></p>
-        <div class="form-champ" id="ca-bloc-projet-autre" style="display:none;">
+        <p id="ca-projet-description" class="ca-6"></p>
+        <div class="form-champ u-hidden" id="ca-bloc-projet-autre">
           <label for="ca-projet-autre">Nom du projet / casting *</label>
           <input type="text" id="ca-projet-autre" placeholder="Précisez le nom du casting ou de l'événement">
         </div>
       </div>
 
-      <p style="font-size:0.82rem; color:var(--gris); margin:0 0 1rem;">Merci d'indiquer un e-mail et un numéro WhatsApp valides et actifs ci-dessous : c'est par là que l'agence vous recontactera si votre candidature est retenue.</p>
+      <p class="ca-7">Merci d'indiquer un e-mail et un numéro WhatsApp valides et actifs ci-dessous : c'est par là que l'agence vous recontactera si votre candidature est retenue.</p>
 
       <div class="form-grille">
         <div class="form-champ">
@@ -134,13 +154,13 @@ setTimeout(() => {
         </div>
         <div class="form-champ">
           <label for="ca-indicatif">Téléphone / WhatsApp *</label>
-          <select id="ca-indicatif" required style="margin-bottom:0.5rem;"></select>
+          <select id="ca-indicatif" required class="ca-8"></select>
           <input type="tel" id="ca-telephone-numero" placeholder="07 00 00 00 00" required pattern="[0-9 ]{6,14}">
         </div>
         <div class="form-champ">
           <label for="ca-ville">Ville</label>
           <select id="ca-ville"></select>
-          <input type="text" id="ca-ville-autre" placeholder="Précisez la ville" style="display:none; margin-top:0.5rem;">
+          <input type="text" id="ca-ville-autre" placeholder="Précisez la ville" class="ca-9">
         </div>
         <div class="form-champ">
           <label for="ca-naissance">Date de naissance *</label>
@@ -148,9 +168,9 @@ setTimeout(() => {
         </div>
       </div>
 
-      <div id="ca-bloc-parent" style="display:none; margin:1rem 0; padding:1.2rem; border:1px solid var(--gris-clair);">
-        <h3 style="margin-top:0; font-size:0.95rem;">Informations du parent ou tuteur légal</h3>
-        <p style="font-size:0.85rem; color:var(--gris); margin:0.3rem 0 1rem;">L'agence accepte les candidatures de mineurs sous validation d'un parent ou tuteur légal — merci de renseigner son contact, il sera joint avant toute suite donnée.</p>
+      <div id="ca-bloc-parent" class="ca-10">
+        <h3 class="ca-11">Informations du parent ou tuteur légal</h3>
+        <p class="ca-12">L'agence accepte les candidatures de mineurs sous validation d'un parent ou tuteur légal — merci de renseigner son contact, il sera joint avant toute suite donnée.</p>
         <div class="form-grille">
           <div class="form-champ">
             <label for="ca-parent-nom">Nom du parent / tuteur</label>
@@ -158,7 +178,7 @@ setTimeout(() => {
           </div>
           <div class="form-champ">
             <label for="ca-parent-indicatif">Téléphone du parent / tuteur</label>
-            <select id="ca-parent-indicatif" style="margin-bottom:0.5rem;"></select>
+            <select id="ca-parent-indicatif" class="ca-8"></select>
             <input type="tel" id="ca-parent-telephone-numero" placeholder="07 00 00 00 00" pattern="[0-9 ]{6,14}">
           </div>
         </div>
@@ -176,7 +196,7 @@ setTimeout(() => {
         <div class="form-champ">
           <label for="ca-taille">Taille (cm) *</label>
           <select id="ca-taille" required></select>
-          <span id="ca-taille-indication" style="font-size:0.78rem; color:var(--gris);"></span>
+          <span id="ca-taille-indication" class="ca-13"></span>
         </div>
         <div class="form-champ">
           <label for="ca-poids">Poids (kg)</label>
@@ -208,15 +228,15 @@ setTimeout(() => {
       <div class="form-champ">
         <label for="ca-photos">Photos (4 minimum : portrait, plein pied, sans maquillage, autre...) *</label>
         <input type="file" id="ca-photos" accept="image/*" multiple>
-        <input type="file" id="ca-photo-remplacement" accept="image/*" style="display:none;">
-        <span id="ca-photos-compteur" style="font-size:0.78rem; color:var(--gris); display:block; margin-top:0.3rem;"></span>
-        <div id="ca-photos-apercu" style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.6rem;"></div>
+        <input type="file" id="ca-photo-remplacement" accept="image/*" class="u-hidden">
+        <span id="ca-photos-compteur" class="ca-14"></span>
+        <div id="ca-photos-apercu" class="ca-15"></div>
       </div>
 
-      <div class="form-champ" style="display:flex; align-items:flex-start; gap:0.6rem;">
-        <input type="checkbox" id="ca-consentement" required style="width:auto; margin-top:0.3rem;">
-        <label for="ca-consentement" id="ca-consentement-label" style="font-weight:400; font-size:0.85rem;">
-          J'ai pris connaissance de la <a href="politique-confidentialite.html" target="_blank" style="color:var(--rouge);">politique de confidentialité</a>. *
+      <div class="form-champ ca-16">
+        <input type="checkbox" id="ca-consentement" required class="ca-17">
+        <label for="ca-consentement" id="ca-consentement-label" class="ca-18">
+          J'ai pris connaissance de la <a href="politique-confidentialite.html" target="_blank" class="ca-19">politique de confidentialité</a>. *
         </label>
       </div>
 
@@ -252,9 +272,9 @@ setTimeout(() => {
         <div class="footer-reseaux">
           <a href="https://www.instagram.com/maitreakessemodelmanagement" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram"><svg viewBox="0 0 24 24"><defs><linearGradient id="ig-grad-10" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="#FFC107"/><stop offset="50%" stop-color="#F44336"/><stop offset="100%" stop-color="#9C27B0"/></linearGradient></defs><path fill="url(#ig-grad-10)" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98C.014 8.333 0 8.741 0 12s.014 3.667.072 4.948c.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24s3.667-.014 4.948-.072c4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.667.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
           <a href="https://www.tiktok.com/@agencemaitreakessemodel" target="_blank" rel="noopener" aria-label="TikTok" title="TikTok"><svg viewBox="0 0 24 24"><path fill="#25F4EE" transform="translate(-0.9,-0.9)" d="M16.6 5.82c-1.36-1.57-3.24-1.48-3.24-1.48h-3.09v12.4a2.592 2.592 0 01-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 004.3 1.38V7.3s-1.88.09-3.24-1.48z"/><path fill="#FE2C55" transform="translate(0.9,0.9)" d="M16.6 5.82c-1.36-1.57-3.24-1.48-3.24-1.48h-3.09v12.4a2.592 2.592 0 01-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 004.3 1.38V7.3s-1.88.09-3.24-1.48z"/><path fill="#000000" d="M16.6 5.82c-1.36-1.57-3.24-1.48-3.24-1.48h-3.09v12.4a2.592 2.592 0 01-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 004.3 1.38V7.3s-1.88.09-3.24-1.48z"/></svg></a>
-          <a href="https://www.facebook.com/share/1BzPN69rhE/" target="_blank" rel="noopener" aria-label="Facebook" title="Facebook" style="color:#1877F2;"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12.06C22 6.505 17.523 2 12 2S2 6.505 2 12.06c0 5.022 3.657 9.184 8.438 9.94v-7.03H7.898v-2.91h2.54V9.845c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.459h-1.26c-1.243 0-1.63.771-1.63 1.562v1.875h2.773l-.443 2.91h-2.33V22c4.78-.756 8.437-4.918 8.437-9.94z"/></svg></a>
-          <a href="https://youtube.com/@maitreakessemodelmanagement" target="_blank" rel="noopener" aria-label="YouTube" title="YouTube" style="color:#FF0000;"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a2.994 2.994 0 00-2.107-2.12C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.391.521A2.994 2.994 0 00.502 6.186 31.25 31.25 0 000 12a31.25 31.25 0 00.502 5.814 2.994 2.994 0 002.107 2.12c1.886.521 9.391.521 9.391.521s7.505 0 9.391-.521a2.994 2.994 0 002.107-2.12A31.25 31.25 0 0024 12a31.25 31.25 0 00-.502-5.814zM9.6 15.6V8.4l6.4 3.6-6.4 3.6z"/></svg></a>
-          <a href="https://wa.me/message/HJAMXGXHCL46I1" target="_blank" rel="noopener" aria-label="WhatsApp" title="WhatsApp" style="color:#25D366;"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.472-.148-.67.15-.198.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0a12 12 0 00-10.288 18.06L0 24l6.084-1.688A12 12 0 1012 0zm0 21.938a9.917 9.917 0 01-5.052-1.383l-.362-.215-3.752 1.041 1.004-3.665-.235-.375A9.938 9.938 0 1112 21.938z"/></svg></a>
+          <a href="https://www.facebook.com/share/1BzPN69rhE/" target="_blank" rel="noopener" aria-label="Facebook" title="Facebook" class="u-ic-facebook"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12.06C22 6.505 17.523 2 12 2S2 6.505 2 12.06c0 5.022 3.657 9.184 8.438 9.94v-7.03H7.898v-2.91h2.54V9.845c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.459h-1.26c-1.243 0-1.63.771-1.63 1.562v1.875h2.773l-.443 2.91h-2.33V22c4.78-.756 8.437-4.918 8.437-9.94z"/></svg></a>
+          <a href="https://youtube.com/@maitreakessemodelmanagement" target="_blank" rel="noopener" aria-label="YouTube" title="YouTube" class="u-ic-youtube"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a2.994 2.994 0 00-2.107-2.12C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.391.521A2.994 2.994 0 00.502 6.186 31.25 31.25 0 000 12a31.25 31.25 0 00.502 5.814 2.994 2.994 0 002.107 2.12c1.886.521 9.391.521 9.391.521s7.505 0 9.391-.521a2.994 2.994 0 002.107-2.12A31.25 31.25 0 0024 12a31.25 31.25 0 00-.502-5.814zM9.6 15.6V8.4l6.4 3.6-6.4 3.6z"/></svg></a>
+          <a href="https://wa.me/message/HJAMXGXHCL46I1" target="_blank" rel="noopener" aria-label="WhatsApp" title="WhatsApp" class="u-ic-whatsapp"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.472-.148-.67.15-.198.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0a12 12 0 00-10.288 18.06L0 24l6.084-1.688A12 12 0 1012 0zm0 21.938a9.917 9.917 0 01-5.052-1.383l-.362-.215-3.752 1.041 1.004-3.665-.235-.375A9.938 9.938 0 1112 21.938z"/></svg></a>
         </div>
       </div>
     </div>
@@ -266,7 +286,7 @@ setTimeout(() => {
   </div>
 </footer>
 
-<script>document.getElementById('an').textContent = new Date().getFullYear();</script>
+<script src="js/copyright-annee.js"></script>
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
 <script src="js/indicatifs-pays.js"></script>
@@ -458,10 +478,10 @@ function rafraichirApercuPhotos() {
   compteur.style.color = n >= 4 ? 'var(--gris)' : 'var(--rouge)';
 
   apercu.innerHTML = photosSelectionnees.map((f, i) => `
-    <div class="ca-photo-vignette" style="position:relative; width:64px; height:64px;">
-      <img src="${URL.createObjectURL(f)}" style="width:100%; height:100%; object-fit:cover; border-radius:4px; display:block;">
-      <button type="button" class="ca-photo-remplacer" data-index="${i}" title="Remplacer cette photo" style="position:absolute; bottom:-6px; left:-6px; width:20px; height:20px; border-radius:50%; background:#333; color:#fff; border:2px solid #fff; font-size:0.7rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;">⇄</button>
-      <button type="button" class="ca-photo-suppr" data-index="${i}" title="Supprimer cette photo" style="position:absolute; top:-6px; right:-6px; width:20px; height:20px; border-radius:50%; background:var(--bordeaux, #7c1730); color:#fff; border:2px solid #fff; font-size:0.7rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;">✕</button>
+    <div class="ca-photo-vignette ca-20">
+      <img src="${URL.createObjectURL(f)}" class="ca-21">
+      <button type="button" class="ca-photo-remplacer ca-22" data-index="${i}" title="Remplacer cette photo">⇄</button>
+      <button type="button" class="ca-photo-suppr ca-23" data-index="${i}" title="Supprimer cette photo">✕</button>
     </div>
   `).join('');
 
@@ -551,7 +571,7 @@ document.getElementById('ca-naissance').addEventListener('change', () => {
 function majConsentement() {
   const label = document.getElementById('ca-consentement-label');
   const checkbox = document.getElementById('ca-consentement');
-  const lienPolitique = '<a href="politique-confidentialite.html" target="_blank" style="color:var(--rouge);">politique de confidentialité</a>';
+  const lienPolitique = '<a href="politique-confidentialite.html" target="_blank" class="ca-19">politique de confidentialité</a>';
   const mineur = estMineur();
   if (!mineur) {
     label.innerHTML = `J'ai pris connaissance de la ${lienPolitique}. *`;

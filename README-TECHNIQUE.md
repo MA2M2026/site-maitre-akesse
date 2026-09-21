@@ -452,13 +452,29 @@ togglée via `classList`.
 **État à ce jour (fin septembre 2026)** — déjà migrées (plus
 `'unsafe-inline'` du tout) : `index.html`, `mannequins.html`,
 `mentions-legales.html`, `politique-confidentialite.html`, `services.html`,
-`actualites.html` (FR uniquement) + leurs équivalents `en/` sauf
-`en/actualites.html`. Pas encore migrées : `candidature.html`,
-`contact.html`, `en/actualites.html`, `espace-mannequin.html`,
-`evenements.html`, `inscription-mannequin.html`, `mannequin.html`,
-`partenaires.html`, `selection.html`, `tableau-de-bord.html` + leurs
-équivalents `en/` — prévues en dernier pour `tableau-de-bord.html` et
-`espace-mannequin.html`, les plus riches en JavaScript du site.
+`actualites.html`, `candidature.html`, `contact.html`, `evenements.html`,
+`mannequin.html`, `partenaires.html`, `selection.html`,
+`inscription-mannequin.html` + leurs équivalents `en/` (y compris
+`en/actualites.html`). Pas encore migrées : `espace-mannequin.html` et
+`tableau-de-bord.html` — volontairement laissées pour la fin, ce sont les
+deux pages les plus riches en JavaScript du site (respectivement environ
+80 et 163 `style=""` inline à l'époque de cet audit, et des blocs
+`<script>` de plusieurs dizaines de milliers de caractères), donc migrées
+séparément, une à la fois, avec des tests dédiés plus poussés plutôt que
+dans le même lot que les pages de contenu ci-dessus.
+
+Pour les pages avec un formulaire dont le JavaScript génère lui-même du
+HTML via `innerHTML`/template literal (aperçus photo, listes filtrées,
+etc.) : les `style=""` qui apparaissent DANS ce JavaScript (pas seulement
+dans le HTML statique) doivent aussi être remplacés par des classes,
+sinon ils sont bloqués en silence exactement comme un `<script>` non
+haché — voir le piège déjà rencontré ci-dessus. Chaque page migrée reçoit
+ses propres classes utilitaires dans un `<style>` posé dans son
+`<head>` (nommées `<prefixe>-1`, `<prefixe>-2`, ... — préfixe court propre
+à la page), pour rester page par page et isolé sans gonfler
+`css/style.css` de classes à usage unique ; seules les valeurs qui
+correspondent exactement à une classe `.u-*` déjà existante sont
+réutilisées telles quelles.
 
 ## Classes utilitaires CSS (`.u-*`)
 
