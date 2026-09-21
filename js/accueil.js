@@ -16,22 +16,15 @@ document.getElementById('entrer-btn').addEventListener('click', async () => {
 });
 
 // --- Intro : logo animé (5,8s ou "Passer l'intro"), avant la porte d'entrée ---
+// (L'affichage lui-même se fait plus tôt — tout en haut de <body>, voir le
+// commentaire à ce sujet dans le HTML — pour éviter qu'un instant de la porte
+// d'entrée (le texte "MA2M") n'apparaisse avant que ce script, chargé en fin de
+// page, ne s'exécute. Ce bloc ne gère donc plus que la fermeture.)
 (function () {
-  let dejaVue = false;
-  try { dejaVue = sessionStorage.getItem('ma2m_intro_vue'); } catch (e) {}
-  const reduitMouvement = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!document.documentElement.classList.contains('intro-a-venir')) return;
 
-  if (dejaVue || reduitMouvement) return;
-
-  const logoSplash = document.getElementById('logo-splash');
-  logoSplash.classList.remove('u-hidden');
-  document.body.classList.add('splash-active');
-
-  let introTerminee = false;
   function terminerIntro() {
-    if (introTerminee) return;
-    introTerminee = true;
-    logoSplash.classList.add('u-hidden');
+    document.documentElement.classList.remove('intro-a-venir');
     document.body.classList.remove('splash-active');
     try { sessionStorage.setItem('ma2m_intro_vue', '1'); } catch (e) {}
   }
