@@ -1,15 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-0in1gFkCnvC2KRmaj8jjUaKktLxvkyQ9hbcLpP0w/9I='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-tFcy5AGgtBPoC5kXJZsbtpg3iMcSamS5C0fbatbaxhs=';">
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-1BX5MPZ6WE');
-</script>
+<script src="../js/analytics-config.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>New Model Registration — Maître Akesse Model Management</title>
@@ -33,6 +28,36 @@
 <meta name="theme-color" content="#1e1d1c">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
+<style>
+.enim-1 { max-width:640px; }
+.enim-2 { font-size:0.78rem; color:var(--gris); }
+.enim-3 { display:none; margin-top:0.5rem; }
+.enim-4 { margin-bottom:0.5rem; }
+.enim-5 { display:none; margin:1rem 0; padding:1.2rem; border:1px solid var(--gris-clair); }
+.enim-6 { margin-top:0; font-size:0.95rem; }
+.enim-7 { font-size:0.85rem; color:var(--gris); margin:0.3rem 0 1rem; }
+.enim-8 { background:var(--gris-clair); padding:1rem; border:1px solid var(--gris-clair); }
+.enim-9 { color:var(--noir); }
+.enim-10 { margin-top:0.6rem; font-size:0.88rem; }
+.enim-11 { margin-top:0.3rem; }
+.enim-12 { font-weight:600; color:var(--noir); }
+.enim-13 { margin-top:0.6rem; font-size:0.8rem; color:var(--gris); }
+.enim-14 { display:flex; align-items:flex-start; gap:0.7rem; margin:1.5rem 0; font-size:0.9rem; }
+.enim-15 { width:auto; margin-top:0.2rem; }
+.enim-16 { color:var(--rouge); }
+.enim-17 { display:none; margin-top:1rem; padding:1.4rem; border:1px solid var(--gris-clair); text-align:center; }
+.enim-18 { margin:0.8rem 0; }
+.enim-19 { margin-bottom:0.8rem; }
+.enim-20 { text-align:left; margin-top:1rem; }
+.enim-21 { display:none; text-align:center; padding:3rem 0; }
+.enim-22 { margin:1rem auto; max-width:50ch; }
+.enim-23 { max-width:50ch; margin:2rem auto 0; padding:1.4rem; border:1px solid var(--gris-clair); text-align:left; }
+.enim-24 { margin-top:0; }
+.enim-25 { margin:0.5rem 0; font-size:0.9rem; }
+.enim-26 { display:block; font-size:0.64rem; text-transform:uppercase; letter-spacing:0.07em; color:var(--gris); }
+.enim-27 { margin:0.6rem 0; }
+.enim-28 { margin-top:0.8rem; }
+</style>
 </head>
 <body>
 <script>
@@ -76,16 +101,16 @@ setTimeout(() => {
   </ul>
 </div>
 
-<section style="padding-bottom:1rem;">
+<section class="u-pb-1">
   <div class="container">
     <div class="eyebrow reveal">Casting Approved</div>
     <h1 class="reveal reveal-delay-1">New Model Registration<span class="oeil">.</span></h1>
-    <p style="margin-top:1.2rem; max-width:60ch;" class="reveal reveal-delay-2">This page is reserved for models whose casting has been approved by the agency. Please have the registration code you were given ready.</p>
+    <p class="reveal reveal-delay-2 u-maxw-60ch-texte u-mt-1-2">This page is reserved for models whose casting has been approved by the agency. Please have the registration code you were given ready.</p>
   </div>
 </section>
 
-<section style="padding-top:1rem;">
-  <div class="container" style="max-width:640px;">
+<section class="u-pt-1">
+  <div class="container enim-1">
 
     <!-- Step 1: registration code -->
     <div id="bloc-code">
@@ -98,7 +123,7 @@ setTimeout(() => {
     </div>
 
     <!-- Step 2: full form (hidden until the code is confirmed) -->
-    <form id="form-inscription" style="display:none; margin-top:2rem;">
+    <form id="form-inscription" class="u-hidden u-mt-2">
       <div class="form-grille">
         <div class="form-champ">
           <label for="ins-nom">Full Name *</label>
@@ -121,7 +146,7 @@ setTimeout(() => {
         <div class="form-champ">
           <label for="ins-taille">Height (cm) *</label>
           <select id="ins-taille" required></select>
-          <span id="ins-taille-indication" style="font-size:0.78rem; color:var(--gris);"></span>
+          <span id="ins-taille-indication" class="enim-2"></span>
         </div>
       </div>
       <div class="form-grille">
@@ -137,19 +162,19 @@ setTimeout(() => {
             <option value="XXL">XXL</option>
             <option value="Autre">Other</option>
           </select>
-          <input type="text" id="ins-tailleveternents-autre" placeholder="Specify the size" style="display:none; margin-top:0.5rem;">
+          <input type="text" id="ins-tailleveternents-autre" placeholder="Specify the size" class="enim-3">
         </div>
       </div>
 
       <div class="form-champ">
         <label for="ins-indicatif">Your Phone Number *</label>
-        <select id="ins-indicatif" required style="margin-bottom:0.5rem;"></select>
+        <select id="ins-indicatif" required class="enim-4"></select>
         <input type="tel" id="ins-telephone-numero" placeholder="07 00 00 00 00" required>
       </div>
 
-      <div id="ins-bloc-parent" style="display:none; margin:1rem 0; padding:1.2rem; border:1px solid var(--gris-clair);">
-        <h3 style="margin-top:0; font-size:0.95rem;">Parent or Legal Guardian Information</h3>
-        <p style="font-size:0.85rem; color:var(--gris); margin:0.3rem 0 1rem;">The agency accepts registrations from minors with the approval of a parent or legal guardian — please provide their contact details, they will be reached before any further action is taken.</p>
+      <div id="ins-bloc-parent" class="enim-5">
+        <h3 class="enim-6">Parent or Legal Guardian Information</h3>
+        <p class="enim-7">The agency accepts registrations from minors with the approval of a parent or legal guardian — please provide their contact details, they will be reached before any further action is taken.</p>
         <div class="form-grille">
           <div class="form-champ">
             <label for="ins-parent-nom">Parent / Guardian Name</label>
@@ -157,7 +182,7 @@ setTimeout(() => {
           </div>
           <div class="form-champ">
             <label for="ins-parent-indicatif">Parent / Guardian Phone Number</label>
-            <select id="ins-parent-indicatif" style="margin-bottom:0.5rem;"></select>
+            <select id="ins-parent-indicatif" class="enim-4"></select>
             <input type="tel" id="ins-parent-telephone-numero">
           </div>
         </div>
@@ -180,27 +205,27 @@ setTimeout(() => {
         <input type="file" id="ins-photo4" accept="image/*" required>
       </div>
 
-      <div class="form-champ" style="background:var(--gris-clair); padding:1rem; border:1px solid var(--gris-clair);">
-        <label style="color:var(--noir);">🔒 Official Agency Contact</label>
-        <div style="margin-top:0.6rem; font-size:0.88rem;">
-          <div style="margin-top:0.3rem;"><a href="tel:+2252722231176" style="font-weight:600; color:var(--noir);">📞 +225 27 22 23 11 76</a></div>
-          <div style="margin-top:0.3rem;"><a href="tel:+2250545656887" style="font-weight:600; color:var(--noir);">📱 +225 05 45 65 68 87</a></div>
-          <div style="margin-top:0.3rem;"><a href="mailto:scoutmodel.ma2m@gmail.com" style="font-weight:600; color:var(--noir);">✉️ scoutmodel.ma2m@gmail.com</a></div>
-          <div style="margin-top:0.3rem;"><strong>Instagram:</strong> @maitreakessemodelmanagement</div>
+      <div class="form-champ enim-8">
+        <label class="enim-9">🔒 Official Agency Contact</label>
+        <div class="enim-10">
+          <div class="enim-11"><a href="tel:+2252722231176" class="enim-12">📞 +225 27 22 23 11 76</a></div>
+          <div class="enim-11"><a href="tel:+2250545656887" class="enim-12">📱 +225 05 45 65 68 87</a></div>
+          <div class="enim-11"><a href="mailto:scoutmodel.ma2m@gmail.com" class="enim-12">✉️ scoutmodel.ma2m@gmail.com</a></div>
+          <div class="enim-11"><strong>Instagram:</strong> @maitreakessemodelmanagement</div>
         </div>
-        <p style="margin-top:0.6rem; font-size:0.8rem; color:var(--gris);">Managed by MA2M — not editable.</p>
+        <p class="enim-13">Managed by MA2M — not editable.</p>
       </div>
 
-      <label style="display:flex; align-items:flex-start; gap:0.7rem; margin:1.5rem 0; font-size:0.9rem;">
-        <input type="checkbox" id="ins-conditions" required style="width:auto; margin-top:0.2rem;">
-        <span>I have read and accept the agency's registration terms as well as the <a href="politique-confidentialite.html" target="_blank" style="color:var(--rouge);">privacy policy</a>. If I am a minor, I certify that I am registering with the consent of a parent or legal guardian.</span>
+      <label class="enim-14">
+        <input type="checkbox" id="ins-conditions" required class="enim-15">
+        <span>I have read and accept the agency's registration terms as well as the <a href="politique-confidentialite.html" target="_blank" class="enim-16">privacy policy</a>. If I am a minor, I certify that I am registering with the consent of a parent or legal guardian.</span>
       </label>
 
-      <div id="bloc-paiement" style="display:none; margin-top:1rem; padding:1.4rem; border:1px solid var(--gris-clair); text-align:center;">
+      <div id="bloc-paiement" class="enim-17">
         <h3>Registration Fee — 45,000 FCFA</h3>
-        <p style="margin:0.8rem 0;">Pay your registration fee via Wave, then click "Submit My Application" — the agency will verify and confirm your payment.</p>
-        <a href="https://pay.wave.com/m/M_ci_5eXs19LXWW_D/c/ci/?amount=45000" target="_blank" rel="noopener" class="btn btn--principal" style="margin-bottom:0.8rem;">Pay with Wave</a>
-        <div class="form-champ" style="text-align:left; margin-top:1rem;">
+        <p class="enim-18">Pay your registration fee via Wave, then click "Submit My Application" — the agency will verify and confirm your payment.</p>
+        <a href="https://pay.wave.com/m/M_ci_5eXs19LXWW_D/c/ci/?amount=45000" target="_blank" rel="noopener" class="btn btn--principal enim-19">Pay with Wave</a>
+        <div class="form-champ enim-20">
           <label for="ins-reference-paiement">Wave Transaction Reference (received after payment) *</label>
           <input type="text" id="ins-reference-paiement" placeholder="e.g. TXN123456789" required>
         </div>
@@ -209,24 +234,24 @@ setTimeout(() => {
       <div id="inscription-msg" class="form-msg"></div>
     </form>
 
-    <div id="bloc-succes" style="display:none; text-align:center; padding:3rem 0;">
+    <div id="bloc-succes" class="enim-21">
       <h2>Application Sent<span class="oeil">.</span></h2>
-      <p style="margin:1rem auto; max-width:50ch;">Thank you! Your registration and photos have been received by the agency. Once your Wave payment is confirmed, your account will be approved.</p>
+      <p class="enim-22">Thank you! Your registration and photos have been received by the agency. Once your Wave payment is confirmed, your account will be approved.</p>
 
-      <div id="recu-inscription" style="max-width:50ch; margin:2rem auto 0; padding:1.4rem; border:1px solid var(--gris-clair); text-align:left;">
-        <h3 style="margin-top:0;">Registration Receipt</h3>
-        <p style="margin:0.5rem 0; font-size:0.9rem;"><span style="display:block; font-size:0.64rem; text-transform:uppercase; letter-spacing:0.07em; color:var(--gris);">Name</span><span id="recu-nom"></span></p>
-        <p style="margin:0.5rem 0; font-size:0.9rem;"><span style="display:block; font-size:0.64rem; text-transform:uppercase; letter-spacing:0.07em; color:var(--gris);">Date</span><span id="recu-date"></span></p>
-        <p style="margin:0.5rem 0; font-size:0.9rem;"><span style="display:block; font-size:0.64rem; text-transform:uppercase; letter-spacing:0.07em; color:var(--gris);">Registration Fee Amount</span><span>45,000 FCFA</span></p>
-        <p style="margin:0.5rem 0; font-size:0.9rem;"><span style="display:block; font-size:0.64rem; text-transform:uppercase; letter-spacing:0.07em; color:var(--gris);">Wave Payment Reference</span><span id="recu-reference"></span></p>
-        <p style="margin:0.5rem 0; font-size:0.9rem;"><span style="display:block; font-size:0.64rem; text-transform:uppercase; letter-spacing:0.07em; color:var(--gris);">Status</span><span>Pending agency verification</span></p>
-        <button id="btn-imprimer-recu" class="btn no-print" style="margin-top:1.2rem;">🖨️ Download My Receipt (PDF)</button>
+      <div id="recu-inscription" class="enim-23">
+        <h3 class="enim-24">Registration Receipt</h3>
+        <p class="enim-25"><span class="enim-26">Name</span><span id="recu-nom"></span></p>
+        <p class="enim-25"><span class="enim-26">Date</span><span id="recu-date"></span></p>
+        <p class="enim-25"><span class="enim-26">Registration Fee Amount</span><span>45,000 FCFA</span></p>
+        <p class="enim-25"><span class="enim-26">Wave Payment Reference</span><span id="recu-reference"></span></p>
+        <p class="enim-25"><span class="enim-26">Status</span><span>Pending agency verification</span></p>
+        <button id="btn-imprimer-recu" class="btn no-print u-mt-1-2">🖨️ Download My Receipt (PDF)</button>
       </div>
 
-      <div class="no-print" style="max-width:50ch; margin:2rem auto 0; padding:1.4rem; border:1px solid var(--gris-clair); text-align:left;">
-        <h3 style="margin-top:0;">Next Step: Join The Book</h3>
-        <p style="margin:0.6rem 0;">Once approved, the agency will send you an invitation code by message. With this code, log in to the <strong>Model Space</strong> to complete your full profile (measurements, experience, past projects) and add your photos — this is what will appear in The Book and be seen by recruiters.</p>
-        <a href="../espace-mannequin.html" class="btn btn--principal" style="margin-top:0.8rem;">Go to Model Space</a>
+      <div class="no-print enim-23">
+        <h3 class="enim-24">Next Step: Join The Book</h3>
+        <p class="enim-27">Once approved, the agency will send you an invitation code by message. With this code, log in to the <strong>Model Space</strong> to complete your full profile (measurements, experience, past projects) and add your photos — this is what will appear in The Book and be seen by recruiters.</p>
+        <a href="../espace-mannequin.html" class="btn btn--principal enim-28">Go to Model Space</a>
       </div>
     </div>
   </div>
@@ -258,9 +283,9 @@ setTimeout(() => {
         <div class="footer-reseaux">
           <a href="https://www.instagram.com/maitreakessemodelmanagement" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram"><svg viewBox="0 0 24 24"><defs><linearGradient id="ig-grad-3" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="#FFC107"/><stop offset="50%" stop-color="#F44336"/><stop offset="100%" stop-color="#9C27B0"/></linearGradient></defs><path fill="url(#ig-grad-3)" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98C.014 8.333 0 8.741 0 12s.014 3.667.072 4.948c.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24s3.667-.014 4.948-.072c4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.667.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
           <a href="https://www.tiktok.com/@agencemaitreakessemodel" target="_blank" rel="noopener" aria-label="TikTok" title="TikTok"><svg viewBox="0 0 24 24"><path fill="#25F4EE" transform="translate(-0.9,-0.9)" d="M16.6 5.82c-1.36-1.57-3.24-1.48-3.24-1.48h-3.09v12.4a2.592 2.592 0 01-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 004.3 1.38V7.3s-1.88.09-3.24-1.48z"/><path fill="#FE2C55" transform="translate(0.9,0.9)" d="M16.6 5.82c-1.36-1.57-3.24-1.48-3.24-1.48h-3.09v12.4a2.592 2.592 0 01-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 004.3 1.38V7.3s-1.88.09-3.24-1.48z"/><path fill="#000000" d="M16.6 5.82c-1.36-1.57-3.24-1.48-3.24-1.48h-3.09v12.4a2.592 2.592 0 01-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 004.3 1.38V7.3s-1.88.09-3.24-1.48z"/></svg></a>
-          <a href="https://www.facebook.com/share/1BzPN69rhE/" target="_blank" rel="noopener" aria-label="Facebook" title="Facebook" style="color:#1877F2;"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12.06C22 6.505 17.523 2 12 2S2 6.505 2 12.06c0 5.022 3.657 9.184 8.438 9.94v-7.03H7.898v-2.91h2.54V9.845c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.459h-1.26c-1.243 0-1.63.771-1.63 1.562v1.875h2.773l-.443 2.91h-2.33V22c4.78-.756 8.437-4.918 8.437-9.94z"/></svg></a>
-          <a href="https://youtube.com/@maitreakessemodelmanagement" target="_blank" rel="noopener" aria-label="YouTube" title="YouTube" style="color:#FF0000;"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a2.994 2.994 0 00-2.107-2.12C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.391.521A2.994 2.994 0 00.502 6.186 31.25 31.25 0 000 12a31.25 31.25 0 00.502 5.814 2.994 2.994 0 002.107 2.12c1.886.521 9.391.521 9.391.521s7.505 0 9.391-.521a2.994 2.994 0 002.107-2.12A31.25 31.25 0 0024 12a31.25 31.25 0 00-.502-5.814zM9.6 15.6V8.4l6.4 3.6-6.4 3.6z"/></svg></a>
-          <a href="https://wa.me/message/HJAMXGXHCL46I1" target="_blank" rel="noopener" aria-label="WhatsApp" title="WhatsApp" style="color:#25D366;"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.472-.148-.67.15-.198.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0a12 12 0 00-10.288 18.06L0 24l6.084-1.688A12 12 0 1012 0zm0 21.938a9.917 9.917 0 01-5.052-1.383l-.362-.215-3.752 1.041 1.004-3.665-.235-.375A9.938 9.938 0 1112 21.938z"/></svg></a>
+          <a href="https://www.facebook.com/share/1BzPN69rhE/" target="_blank" rel="noopener" aria-label="Facebook" title="Facebook" class="u-ic-facebook"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12.06C22 6.505 17.523 2 12 2S2 6.505 2 12.06c0 5.022 3.657 9.184 8.438 9.94v-7.03H7.898v-2.91h2.54V9.845c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.459h-1.26c-1.243 0-1.63.771-1.63 1.562v1.875h2.773l-.443 2.91h-2.33V22c4.78-.756 8.437-4.918 8.437-9.94z"/></svg></a>
+          <a href="https://youtube.com/@maitreakessemodelmanagement" target="_blank" rel="noopener" aria-label="YouTube" title="YouTube" class="u-ic-youtube"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a2.994 2.994 0 00-2.107-2.12C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.391.521A2.994 2.994 0 00.502 6.186 31.25 31.25 0 000 12a31.25 31.25 0 00.502 5.814 2.994 2.994 0 002.107 2.12c1.886.521 9.391.521 9.391.521s7.505 0 9.391-.521a2.994 2.994 0 002.107-2.12A31.25 31.25 0 0024 12a31.25 31.25 0 00-.502-5.814zM9.6 15.6V8.4l6.4 3.6-6.4 3.6z"/></svg></a>
+          <a href="https://wa.me/message/HJAMXGXHCL46I1" target="_blank" rel="noopener" aria-label="WhatsApp" title="WhatsApp" class="u-ic-whatsapp"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.472-.148-.67.15-.198.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0a12 12 0 00-10.288 18.06L0 24l6.084-1.688A12 12 0 1012 0zm0 21.938a9.917 9.917 0 01-5.052-1.383l-.362-.215-3.752 1.041 1.004-3.665-.235-.375A9.938 9.938 0 1112 21.938z"/></svg></a>
         </div>
       </div>
     </div>
@@ -272,7 +297,7 @@ setTimeout(() => {
   </div>
 </footer>
 
-<script>document.getElementById('an').textContent = new Date().getFullYear();</script>
+<script src="../js/copyright-annee.js"></script>
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"></script>
 <script src="../js/supabase-config.js"></script>
 <script src="../js/indicatifs-pays.js"></script>
