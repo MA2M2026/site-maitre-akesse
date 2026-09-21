@@ -63,6 +63,14 @@ navigateur.
    seulement une relecture du code) — voir l'historique de ce projet : des
    bugs bloquants (inscriptions de mannequins impossibles) ont déjà été
    introduits par du code jamais vérifié en conditions réelles.
+6. **Toute modification d'un script inline sur une page au CSP durci**
+   (`index.html`/`en/index.html` notamment — repérable au commentaire
+   d'avertissement juste avant le meta CSP) : lancer ensuite
+   `python3 scripts/verifier-csp.py` avant de proposer le correctif comme
+   fonctionnel. Sans ça, le script peut être bloqué en silence par le
+   navigateur sans qu'aucune erreur ne le signale — voir la section
+   "Porte d'entrée / verrou de scroll" plus bas pour l'incident qui a
+   motivé ce garde-fou.
 
 ## Structure des fichiers
 

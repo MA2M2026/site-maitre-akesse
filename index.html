@@ -2,6 +2,13 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
+<!-- ⚠️ CSP STRICTE — si tu modifies UN SEUL CARACTÈRE d'un script inline de cette
+     page (JSON-LD compris), son empreinte sha256 ci-dessous ne correspond plus : le
+     navigateur bloque ce script EN SILENCE, sans erreur visible. C'est ce qui a rendu
+     plusieurs correctifs du verrou de la porte d'entrée inopérants pendant des jours
+     fin septembre 2026 (voir README-TECHNIQUE.md, section "Porte d'entrée / verrou de
+     scroll"), sans qu'aucune erreur ne le laisse deviner. Après toute modification,
+     lance : python3 scripts/verifier-csp.py index.html -->
 <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-+RNW4S0yQzaSFYeXXZixl0gUnMTjIgN0p4p+hstTzP4=' 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-ScOUIlNThKPw+aEmdZLE2BPzW0k26ho2AOn39MHKPNw='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net;">
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
