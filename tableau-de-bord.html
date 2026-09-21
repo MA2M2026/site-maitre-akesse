@@ -1744,8 +1744,14 @@ setTimeout(() => {
   font-family: var(--texte); font-size: 0.82rem; letter-spacing: 0.06em;
   text-transform: uppercase; cursor: pointer;
   box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  transition: border-color 0.2s ease, transform 0.16s ease, box-shadow 0.2s ease;
 }
-.tdb-menu-toggle:hover { border-color: var(--bordeaux, #7a1220); }
+.tdb-menu-toggle:hover { border-color: var(--bordeaux-clair, #cf3b52); transform: translateY(-2px); }
+.tdb-menu-toggle:active {
+  transform: translateY(1px) scale(0.97);
+  box-shadow: 0 0 0 2px rgba(207,59,82,0.5), 0 0 18px rgba(207,59,82,0.4);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
 
 .tdb-menu-overlay {
   position: fixed; inset: 0; z-index: 960;
@@ -1767,42 +1773,100 @@ setTimeout(() => {
 
 .tdb-menu-entete { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
 .tdb-menu-entete strong { font-family: var(--display); letter-spacing: 0.14em; color: var(--titre-clair, #fff); font-size: 0.95rem; }
-.tdb-menu-fermer { background: none; border: none; color: var(--gris, #aaa); font-size: 1rem; cursor: pointer; }
+.tdb-menu-fermer {
+  background: none; border: 1px solid transparent; border-radius: 6px;
+  color: var(--gris, #aaa); font-size: 1rem; cursor: pointer; padding: 0.2rem 0.5rem;
+  transition: color 0.18s ease, background 0.18s ease, transform 0.12s ease;
+}
+.tdb-menu-fermer:hover { color: #fff; background: rgba(255,255,255,0.06); }
+.tdb-menu-fermer:active { transform: scale(0.92); background: rgba(207,59,82,0.24); color: #fff; }
+
+/* ---------- Menu du tableau de bord — touches de clavier rétroéclairées ----------
+   Chaque entrée (accueil, blocs, sous-blocs, actions) se comporte comme une touche :
+   légèrement en relief au repos, qui flotte et s'éclaire au survol, puis s'enfonce et
+   s'illumine réellement à l'appui — pour qu'on sente physiquement laquelle on a pressée. */
 
 .tdb-menu-accueil {
-  display: block; width: 100%; text-align: left; margin-bottom: 1rem;
-  padding: 0.7rem 0.8rem; border-radius: 6px;
-  background: rgba(255,255,255,0.05); border: 1px solid var(--gris-clair, #444);
+  display: block; width: 100%; text-align: left; margin-bottom: 1.1rem;
+  padding: 0.85rem 1rem; border-radius: 10px;
+  background: linear-gradient(160deg, rgba(255,255,255,0.07), rgba(255,255,255,0.015));
+  border: 1px solid var(--gris-clair, #444);
   color: #fff; font-size: 0.85rem; cursor: pointer;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.05) inset, 0 6px 14px -10px rgba(0,0,0,0.6);
+  transition: border-color 0.2s ease, transform 0.16s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+.tdb-menu-accueil:hover {
+  border-color: var(--bordeaux-clair, #cf3b52); transform: translateY(-2px);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.07) inset, 0 12px 22px -12px rgba(122,18,32,0.45);
+  background: linear-gradient(160deg, rgba(207,59,82,0.12), rgba(255,255,255,0.02));
+}
+.tdb-menu-accueil:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: 0 0 0 2px rgba(207,59,82,0.55), 0 0 20px rgba(207,59,82,0.4);
+  background: linear-gradient(160deg, rgba(207,59,82,0.2), rgba(255,255,255,0.03));
+  transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.08s ease;
 }
 
-.tdb-menu-bloc { border: none; border-top: 1px solid var(--gris-clair, #444); padding: 0.6rem 0; }
+.tdb-menu-bloc { border: none; border-top: 1px solid var(--gris-clair, #444); padding: 0.7rem 0; }
 .tdb-menu-bloc > summary {
   cursor: pointer; list-style: none; font-family: var(--display);
   font-size: 0.82rem; letter-spacing: 0.1em; text-transform: uppercase;
-  color: var(--titre-clair, #fff); padding: 0.3rem 0.2rem;
+  color: var(--titre-clair, #fff); padding: 0.6rem 0.7rem;
+  border-radius: 8px; border: 1px solid transparent;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.12s ease, box-shadow 0.18s ease;
 }
 .tdb-menu-bloc > summary::-webkit-details-marker { display: none; }
-.tdb-menu-bloc > summary:before { content: "▸ "; color: var(--bordeaux, #7a1220); }
+.tdb-menu-bloc > summary:before { content: "▸ "; color: var(--bordeaux-clair, #cf3b52); }
 .tdb-menu-bloc[open] > summary:before { content: "▾ "; }
+.tdb-menu-bloc > summary:hover {
+  background: rgba(255,255,255,0.06); border-color: var(--gris-clair, #444); transform: translateX(2px);
+}
+.tdb-menu-bloc > summary:active {
+  transform: translateX(2px) scale(0.98);
+  background: rgba(207,59,82,0.24); border-color: var(--bordeaux-clair, #cf3b52);
+  box-shadow: 0 0 16px rgba(207,59,82,0.35);
+  transition: transform 0.08s ease, background 0.08s ease, box-shadow 0.08s ease;
+}
 
-.tdb-menu-sousbloc { margin: 0.3rem 0 0.3rem 0.6rem; border: none; }
+.tdb-menu-sousbloc { margin: 0.35rem 0 0.35rem 0.6rem; border: none; }
 .tdb-menu-sousbloc > summary {
   cursor: pointer; list-style: none; font-size: 0.74rem; letter-spacing: 0.06em;
-  text-transform: uppercase; color: var(--gris, #aaa); padding: 0.35rem 0.2rem;
+  text-transform: uppercase; color: var(--gris, #aaa); padding: 0.45rem 0.6rem;
+  border-radius: 7px; transition: background 0.18s ease, color 0.18s ease, transform 0.12s ease;
 }
 .tdb-menu-sousbloc > summary::-webkit-details-marker { display: none; }
 .tdb-menu-sousbloc > summary:before { content: "▸ "; }
 .tdb-menu-sousbloc[open] > summary:before { content: "▾ "; }
+.tdb-menu-sousbloc > summary:hover { background: rgba(255,255,255,0.05); color: #fff; transform: translateX(2px); }
+.tdb-menu-sousbloc > summary:active {
+  background: rgba(207,59,82,0.2); color: #fff; transform: translateX(2px) scale(0.98);
+  transition: transform 0.08s ease, background 0.08s ease;
+}
 
 .tdb-menu-item {
-  display: block; width: 100%; text-align: left;
-  background: none; border: none; color: #d8d8d8;
-  font-size: 0.82rem; padding: 0.55rem 0.5rem 0.55rem 1.1rem;
-  border-radius: 4px; cursor: pointer;
+  display: block; text-align: left; box-sizing: border-box;
+  width: calc(100% - 0.9rem); margin: 0.25rem 0 0.25rem 0.9rem;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); color: #d8d8d8;
+  font-size: 0.82rem; padding: 0.62rem 0.75rem;
+  border-radius: 8px; cursor: pointer;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.03) inset;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.12s ease, border-color 0.18s ease, box-shadow 0.18s ease;
 }
-.tdb-menu-item:hover, .tdb-menu-item.actif { background: rgba(255,255,255,0.06); color: #fff; }
-.tdb-menu-item.actif { border-left: 2px solid var(--bordeaux, #7a1220); }
+.tdb-menu-item:hover {
+  background: rgba(255,255,255,0.08); color: #fff;
+  border-color: var(--gris-clair, #444); transform: translateX(3px);
+}
+.tdb-menu-item:active {
+  transform: translateX(3px) scale(0.97);
+  background: rgba(207,59,82,0.24); border-color: var(--bordeaux-clair, #cf3b52);
+  box-shadow: 0 0 0 1px rgba(207,59,82,0.5), 0 0 16px rgba(207,59,82,0.4);
+  transition: transform 0.08s ease, background 0.08s ease, box-shadow 0.08s ease, border-color 0.08s ease;
+}
+.tdb-menu-item.actif {
+  background: rgba(207,59,82,0.2); color: #fff;
+  border-color: var(--bordeaux-clair, #cf3b52);
+  box-shadow: 0 0 0 1px rgba(207,59,82,0.4) inset, 0 0 12px rgba(207,59,82,0.25);
+}
 a.tdb-menu-item { text-decoration: none; }
 
 .tdb-landing {
@@ -1811,14 +1875,29 @@ a.tdb-menu-item { text-decoration: none; }
 }
 @media (max-width: 900px) { .tdb-landing { grid-template-columns: 1fr; padding: 4.5rem 0 2rem; } }
 
+/* Même esprit "touche de clavier rétroéclairée" que le menu ci-dessus : relief au
+   repos, flotte et s'éclaire au survol, s'enfonce et s'illumine à l'appui. */
 .tdb-landing-carte {
   display: block; text-align: left; width: 100%;
-  background: linear-gradient(160deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
-  border: 1px solid var(--gris-clair, #444); border-radius: 10px;
+  background: linear-gradient(160deg, rgba(255,255,255,0.07), rgba(255,255,255,0.015));
+  border: 1px solid var(--gris-clair, #444); border-radius: 14px;
   padding: 1.8rem 1.5rem; cursor: pointer; color: #fff;
-  transition: border-color 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.06) inset, 0 10px 22px -16px rgba(0,0,0,0.7);
+  transition: border-color 0.22s ease, transform 0.18s ease, box-shadow 0.22s ease, background 0.22s ease;
 }
-.tdb-landing-carte:hover { border-color: var(--bordeaux, #7a1220); transform: translateY(-2px); }
+.tdb-landing-carte:hover {
+  border-color: var(--bordeaux-clair, #cf3b52);
+  transform: translateY(-5px);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.08) inset, 0 18px 32px -16px rgba(122,18,32,0.5), 0 0 0 1px rgba(207,59,82,0.25);
+  background: linear-gradient(160deg, rgba(207,59,82,0.1), rgba(255,255,255,0.02));
+}
+.tdb-landing-carte:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: 0 0 0 2px rgba(207,59,82,0.55), 0 0 28px rgba(207,59,82,0.4);
+  border-color: var(--bordeaux-clair, #cf3b52);
+  background: linear-gradient(160deg, rgba(207,59,82,0.2), rgba(255,255,255,0.03));
+  transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.08s ease, border-color 0.08s ease;
+}
 .tdb-landing-carte .tdb-landing-num {
   display: inline-block; font-family: var(--display); font-size: 0.72rem;
   letter-spacing: 0.16em; color: var(--bordeaux-clair, #cf3b52); margin-bottom: 0.6rem;
