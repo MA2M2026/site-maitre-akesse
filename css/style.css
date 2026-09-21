@@ -587,7 +587,7 @@ section { padding: 5rem 0; }
 .site-footer { background: var(--noir); color: var(--texte-corps); padding: 3.5rem 0 2rem; border-top: 1px solid var(--gris-clair); }
 
 .footer-grille { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 2rem; margin-bottom: 2rem; }
-.footer-grille h4 { color: var(--titre-clair); font-family: var(--texte); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.16em; margin-bottom: 1.1rem; font-weight: 500; }
+.footer-grille h3 { color: var(--titre-clair); font-family: var(--texte); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.16em; margin-bottom: 1.1rem; font-weight: 500; }
 .footer-grille a { font-size: 0.9rem; color: var(--texte-corps); display: block; margin-bottom: 0.6rem; }
 .footer-grille p { font-family: var(--display); font-style: italic; font-size: 1rem; line-height: 1.5; color: var(--texte-corps); display: block; margin-bottom: 0.6rem; }
 .footer-grille a:hover { color: var(--bordeaux-clair); }
