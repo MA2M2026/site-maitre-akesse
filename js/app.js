@@ -160,6 +160,56 @@ function deriverNiveauMannequin(anneesExperience) {
   return 'Professionnel';
 }
 
+// ================== Champs mensurations/apparence en listes déroulantes ==================
+// Mensurations en listes déroulantes plutôt qu'en saisie libre : évite les fautes
+// de frappe (ex. "17O" au lieu de "170") et les valeurs invraisemblables — déjà en
+// production sur espace-mannequin.html, repris ici pour espace-mannequin-MA2M-
+// premium-20.html sans dupliquer une 3e fois cette même logique.
+function remplirSelectNombres(id, min, max, pas, suffixe) {
+  const champ = document.getElementById(id);
+  if (!champ) return;
+  champ.appendChild(new Option('—', ''));
+  for (let v = min; v <= max; v += pas) {
+    champ.appendChild(new Option(v + (suffixe || ''), v));
+  }
+}
+
+// Bascule l'affichage du champ "Autre" (texte libre) selon que le select est sur
+// l'option "Autre" ou non — utilisé par tous les selects qui acceptent une valeur
+// hors liste (ville, carnation, yeux, cheveux, taille de vêtements...).
+function configurerSelectAvecAutre(idSelect, idAutre) {
+  const select = document.getElementById(idSelect);
+  const autre = document.getElementById(idAutre);
+  if (!select || !autre) return;
+  select.addEventListener('change', () => {
+    autre.style.display = select.value === 'Autre' ? 'block' : 'none';
+    if (select.value !== 'Autre') autre.value = '';
+  });
+}
+function valeurSelectOuAutre(idSelect, idAutre) {
+  const select = document.getElementById(idSelect);
+  const autre = document.getElementById(idAutre);
+  if (!select) return '';
+  if (select.value === 'Autre') return ((autre && autre.value) || '').trim();
+  return select.value;
+}
+function definirSelectOuAutre(idSelect, idAutre, valeur) {
+  const select = document.getElementById(idSelect);
+  const autre = document.getElementById(idAutre);
+  if (!select) return;
+  const options = Array.from(select.options).map(o => o.value);
+  if (valeur && options.includes(valeur)) {
+    select.value = valeur;
+    if (autre) { autre.style.display = 'none'; autre.value = ''; }
+  } else if (valeur) {
+    select.value = 'Autre';
+    if (autre) { autre.style.display = 'block'; autre.value = valeur; }
+  } else {
+    select.value = '';
+    if (autre) { autre.style.display = 'none'; autre.value = ''; }
+  }
+}
+
 // ================== Fiche Compcard (PDF/JPEG) ==================
 // Générateur partagé entre la fiche publique (mannequin.html) et l'espace mannequin
 // (téléchargement personnel) : un seul rendu, jamais deux générateurs qui pourraient

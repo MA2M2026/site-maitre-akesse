@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-uelQGrEUrjazU9dZufKKopUMcyrFiDn2X6DrHC657YY='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-7qzTX2fbWhcoN8NR8B0qP2PjgfCnkK2/b2LeciSYanY=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-wo6tClo7iRtMeRRDrx7n8CIEEjpvGfl903zR3kbAHCs='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-7qzTX2fbWhcoN8NR8B0qP2PjgfCnkK2/b2LeciSYanY=';">
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
 <script src="js/analytics-config.js"></script>
@@ -271,7 +271,7 @@ async function chargerProfilInterne() {
 
   const { data: photos } = await sb
     .from('model_photos')
-    .select('url, url_miniature, compcard_ordre')
+    .select('url, url_miniature, compcard_ordre, principale, photo_couverture')
     .eq('model_id', id)
     .order('principale', { ascending: false })
     .order('created_at', { ascending: true });
@@ -283,6 +283,7 @@ async function chargerProfilInterne() {
     .order('created_at', { ascending: false });
 
   const premierePhoto = (photos && photos[0]) ? photos[0].url : 'assets/logo-dark-bg.png';
+  const photoCouverture = (photos || []).find(p => p.photo_couverture);
   const libellesDispo = { immediate: 'Disponible immédiatement', rdv: 'Sur rendez-vous', mobile: 'Mobile pour déplacements' };
   let age = '';
   if (profil.date_naissance) {
@@ -343,13 +344,17 @@ async function chargerProfilInterne() {
     </div>` : '';
 
   contenu.innerHTML = `
-    <div class="compsheet-tete reveal">
-      <div class="compsheet-photo cliquable" id="compsheet-photo-clic"><img src="${echapperHtml(premierePhoto)}" alt="${echapperHtml(profil.full_name || '')}"></div>
-      <div>
-        <div class="eyebrow">${profil.category === 'homme' ? 'Homme' : profil.category === 'femme' ? 'Femme' : 'New Face'}</div>
-        <h1 class="mq-10">${echapperHtml(profil.full_name || 'Mannequin')}</h1>
-        <p class="mq-12">${echapperHtml(profil.city || '')}</p>
-
+    <div class="reveal">
+      <div class="profil-couverture">${photoCouverture ? `<img src="${echapperHtml(photoCouverture.url)}" alt="">` : ''}</div>
+      <div class="profil-avatar-ligne">
+        <div class="profil-avatar cliquable" id="compsheet-photo-clic"><img src="${echapperHtml(premierePhoto)}" alt="${echapperHtml(profil.full_name || '')}"></div>
+        <div>
+          <div class="eyebrow">${profil.category === 'homme' ? 'Homme' : profil.category === 'femme' ? 'Femme' : 'New Face'}</div>
+          <h1 class="mq-10">${echapperHtml(profil.full_name || 'Mannequin')}</h1>
+          <p class="mq-12">${echapperHtml(profil.city || '')}</p>
+        </div>
+      </div>
+      <div class="u-mt-1-8">
         <div class="mensurations">
           ${age ? `<div class="mensuration-item">${iconeMensuration('age')}<div><span class="label">Âge</span><span class="valeur">${age} ans</span></div></div>` : ''}
           ${profil.height_cm ? `<div class="mensuration-item">${iconeMensuration('taille')}<div><span class="label">Taille</span><span class="valeur">${profil.height_cm} cm</span></div></div>` : ''}

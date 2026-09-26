@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-8/xe/ZPV1ovlLgkanqodUnrWdh+yD3EgUTknkXBP7J8='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-rlGOmtWoPiLQ3Ysci1f48TkvlFtTAWDWvlzX/Q47X6A=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-20qxYIWuMS5pAX+xWu/WY37KHzJUOseP6LkXNvGtXy0='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-rlGOmtWoPiLQ3Ysci1f48TkvlFtTAWDWvlzX/Q47X6A=';">
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
 <script src="js/analytics-config.js"></script>
@@ -162,6 +162,15 @@ setTimeout(() => {
           <select id="ca-ville"></select>
           <input type="text" id="ca-ville-autre" placeholder="Précisez la ville" class="ca-9">
         </div>
+        <div class="form-champ u-hidden" id="ca-commune-wrap">
+          <label for="ca-commune">Commune (Abidjan)</label>
+          <select id="ca-commune"></select>
+          <input type="text" id="ca-commune-autre" placeholder="Précisez la commune" class="ca-9">
+        </div>
+        <div class="form-champ u-hidden" id="ca-quartier-wrap">
+          <label for="ca-quartier">Quartier (facultatif)</label>
+          <input type="text" id="ca-quartier" placeholder="ex : Angré, Riviera, II Plateaux…">
+        </div>
         <div class="form-champ">
           <label for="ca-naissance">Date de naissance *</label>
           <input type="date" id="ca-naissance" required>
@@ -290,6 +299,7 @@ setTimeout(() => {
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
 <script src="js/indicatifs-pays.js"></script>
+<script src="js/villes-cote-ivoire.js"></script>
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 <script src="js/emailjs-config.js"></script>
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
@@ -348,20 +358,12 @@ function valeurSelectOuAutre(idSelect, idAutre) {
   if (select.value === 'Autre') return (autre.value || '').trim();
   return select.value;
 }
-const VILLES_CI = [
-  'Abidjan', 'Abengourou', 'Aboisso', 'Adiaké', 'Adzopé', 'Affery', 'Agboville', 'Agnibilékrou',
-  'Akoupé', 'Alépé', 'Anyama', 'Arrah', 'Attiégouakro', 'Bangolo', 'Bettié', 'Biankouma',
-  'Bingerville', 'Bloléquin', 'Bocanda', 'Bondoukou', 'Bongouanou', 'Bouaflé', 'Bouaké', 'Bouna',
-  'Boundiali', 'Dabakala', 'Dabou', 'Daloa', 'Danané', 'Daoukro', 'Dimbokro', 'Divo', 'Duékoué',
-  'Facobly', 'Ferkessédougou', 'Fresco', 'Gagnoa', 'Grand-Bassam', 'Grand-Lahou', 'Guiglo',
-  'Guitry', 'Issia', 'Jacqueville', 'Kani', 'Katiola', 'Kong', 'Korhogo', 'Kouibly', 'Lakota',
-  'Man', 'Mankono', "M'Bahiakro", 'Minignan', 'Nassian', 'Odienné', 'Oumé', 'Ouangolodougou',
-  'Ouragahio', 'Prikro', 'Sakassou', 'San-Pédro', 'Sassandra', 'Séguéla', 'Sikensi', 'Sinfra',
-  'Soubré', 'Tabou', 'Tanda', 'Tengréla', 'Tiassalé', 'Tiébissou', 'Toulepleu', 'Toumodi',
-  'Touba', 'Vavoua', 'Yamoussoukro', 'Zouan-Hounien', 'Zuénoula'
-];
+// VILLES_CI vient désormais de js/villes-cote-ivoire.js (partagé avec
+// espace-mannequin.html et espace-mannequin-MA2M-premium-20.html).
 remplirSelectListe('ca-ville', VILLES_CI);
 configurerSelectAvecAutre('ca-ville', 'ca-ville-autre');
+brancherCascadeAbidjan('ca-ville', 'ca-commune-wrap', 'ca-commune', 'ca-commune-autre', 'ca-quartier-wrap');
+configurerSelectAvecAutre('ca-commune', 'ca-commune-autre');
 
 function redimensionnerImage(fichier, coteMax = 2800, qualite = 0.88) {
   return new Promise((resolve) => {
@@ -632,7 +634,8 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
     full_name: document.getElementById('ca-nom').value.trim(),
     email: document.getElementById('ca-email').value.trim(),
     phone: composerTelephone(document.getElementById('ca-indicatif'), document.getElementById('ca-telephone-numero')),
-    city: valeurSelectOuAutre('ca-ville', 'ca-ville-autre'),
+    city: villeAvecCommune(valeurSelectOuAutre('ca-ville', 'ca-ville-autre'), 'ca-commune', 'ca-commune-autre'),
+    quartier: document.getElementById('ca-quartier').value.trim() || null,
     date_naissance: document.getElementById('ca-naissance').value || null,
     genre: genre,
     height_cm: taille,

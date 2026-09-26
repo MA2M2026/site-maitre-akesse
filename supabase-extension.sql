@@ -3495,3 +3495,22 @@ alter table model_photos add column if not exists photo_cv boolean not null defa
 alter table model_photos add column if not exists photo_pleinpied boolean not null default false;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 83 : quartier (Abidjan) + photo de couverture.
+--
+-- quartier : précision facultative sous la commune, uniquement pertinente
+-- quand la ville est Abidjan (aucune liste fixe de quartiers n'existe —
+-- texte libre, comme "ville-autre"/"commune-autre").
+--
+-- photo_couverture : 4e rôle de photo indépendant (en plus de principale/
+-- photo_cv/photo_pleinpied), pour le futur profil public façon page de
+-- profil (bandeau de couverture + photo de profil). Même règle qu'existante
+-- pour les 3 autres rôles : une seule photo par mannequin peut avoir ce
+-- flag à true, appliqué côté application.
+-- ===================================================================
+alter table model_profiles add column if not exists quartier text;
+alter table casting_applications add column if not exists quartier text;
+alter table model_photos add column if not exists photo_couverture boolean not null default false;
+
+NOTIFY pgrst, 'reload schema';
