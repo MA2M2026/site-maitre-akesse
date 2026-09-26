@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-whF4JLhP6FXQbxpwRRcBya3dUU0S8NrziaP925L2N8Q=' 'sha256-i2ZWkDYJNHek6+uLX/+dJuNn9HfJ1BzZ+sehV1QKJwI='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-MUB6FhdJ9FpDQ3biQkblrXb2hxYFp094UdlwEclzM3I=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-whF4JLhP6FXQbxpwRRcBya3dUU0S8NrziaP925L2N8Q=' 'sha256-xs06pse3v3HwxsZsXRFFZoIE4jQWgFDqMD7hmDlQLbQ='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-MUB6FhdJ9FpDQ3biQkblrXb2hxYFp094UdlwEclzM3I=';">
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
 <script src="js/analytics-config.js"></script>
@@ -1034,17 +1034,8 @@ function mettreAJourApercu() {
 function champHanchesVisible() { return document.getElementById('champ-hanches').style.display !== 'none'; }
 function champEntrejambeVisible() { return document.getElementById('champ-entrejambe').style.display !== 'none'; }
 
-// --- Niveau (New Face / Amateur / Professionnel) : jamais demandé au mannequin,
-// toujours déduit des années d'expérience déjà renseignées (mêmes catégories
-// que sur le CV) — 0 an ou champ vide : New Face ; 1-2 ans : Amateur ; 3 ans
-// et plus : Professionnel. ---
-function deriverNiveauMannequin(anneesExperience) {
-  const annees = anneesExperience === '' || anneesExperience === null || anneesExperience === undefined
-    ? NaN : parseInt(anneesExperience);
-  if (isNaN(annees) || annees === 0) return 'New Face';
-  if (annees <= 2) return 'Amateur';
-  return 'Professionnel';
-}
+// deriverNiveauMannequin() est partagée dans js/app.js (utilisée aussi par
+// mannequin.html et espace-mannequin-MA2M-premium-20.html).
 function majNiveauMannequinApercu() {
   const niveau = deriverNiveauMannequin(document.getElementById('pr-experience').value);
   document.getElementById('niveau-mannequin-valeur').textContent = niveau;

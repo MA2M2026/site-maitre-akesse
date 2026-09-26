@@ -147,6 +147,394 @@ function echapperHtml(texte) {
     .replace(/'/g, '&#39;');
 }
 
+// Niveau New Face / Amateur / Professionnel : jamais demandé au mannequin,
+// toujours déduit de years_experience (partagé par espace-mannequin.html,
+// espace-mannequin-MA2M-premium-20.html et mannequin.html — même règle
+// partout : 0 an ou vide -> New Face ; 1-2 ans -> Amateur ; 3 ans et plus ->
+// Professionnel).
+function deriverNiveauMannequin(anneesExperience) {
+  const annees = anneesExperience === '' || anneesExperience === null || anneesExperience === undefined
+    ? NaN : parseInt(anneesExperience, 10);
+  if (isNaN(annees) || annees === 0) return 'New Face';
+  if (annees <= 2) return 'Amateur';
+  return 'Professionnel';
+}
+
+// ================== Fiche Compcard (PDF/JPEG) ==================
+// Générateur partagé entre la fiche publique (mannequin.html) et l'espace mannequin
+// (téléchargement personnel) : un seul rendu, jamais deux générateurs qui pourraient
+// diverger silencieusement l'un de l'autre.
+
+// Charge une photo à sa pleine résolution d'origine (jamais réduite ici) : la netteté
+// finale dépend uniquement de la qualité de la photo importée, jamais d'une compression
+// ajoutée par le générateur de fiche.
+//
+// On télécharge d'abord la photo nous-mêmes (fetch) puis on la relit depuis une URL
+// locale (blob:) plutôt que de charger l'image directement depuis le nom de domaine de
+// Supabase avec crossOrigin="anonymous" : cette dernière méthode dépend d'un en-tête CORS
+// correctement présent sur CHAQUE réponse, et échouait silencieusement (canvas "entaché")
+// pour certaines photos — d'où des fiches Compcard où seules une ou deux photos
+// apparaissaient sans message d'erreur. Le passage par fetch+blob évite ce problème
+// d'origine croisée.
+async function chargerImageHauteRes(url) {
+  let blob;
+  try {
+    const reponse = await fetch(url);
+    if (!reponse.ok) return null;
+    blob = await reponse.blob();
+  } catch (e) {
+    return null;
+  }
+  const urlLocale = URL.createObjectURL(blob);
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        canvas.getContext('2d').drawImage(img, 0, 0);
+        URL.revokeObjectURL(urlLocale);
+        resolve({ canvas, largeur: canvas.width, hauteur: canvas.height });
+      } catch (e) {
+        URL.revokeObjectURL(urlLocale);
+        resolve(null);
+      }
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(urlLocale);
+      resolve(null);
+    };
+    img.src = urlLocale;
+  });
+}
+
+// Charge une image du site (même origine, ex. le logo), sans filigrane.
+function chargerImageLocale(url) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      canvas.getContext('2d').drawImage(img, 0, 0);
+      resolve({ canvas, largeur: canvas.width, hauteur: canvas.height });
+    };
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+}
+
+// Icônes de réseaux sociaux, dessinées en vectoriel (jamais en emoji, dont le rendu est
+// flou et incohérent d'un système à l'autre une fois agrandi).
+function dessinerIconeReseau(ctx, cle, cx, cy, taille, couleurGlyphe) {
+  ctx.save();
+  ctx.strokeStyle = couleurGlyphe;
+  ctx.fillStyle = couleurGlyphe;
+  ctx.lineWidth = Math.max(1, taille * 0.09);
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  const r = taille / 2;
+  switch (cle) {
+    case 'instagram': {
+      const c = r * 1.55;
+      const rr = c * 0.32;
+      ctx.beginPath();
+      ctx.moveTo(cx - c / 2 + rr, cy - c / 2);
+      ctx.lineTo(cx + c / 2 - rr, cy - c / 2);
+      ctx.quadraticCurveTo(cx + c / 2, cy - c / 2, cx + c / 2, cy - c / 2 + rr);
+      ctx.lineTo(cx + c / 2, cy + c / 2 - rr);
+      ctx.quadraticCurveTo(cx + c / 2, cy + c / 2, cx + c / 2 - rr, cy + c / 2);
+      ctx.lineTo(cx - c / 2 + rr, cy + c / 2);
+      ctx.quadraticCurveTo(cx - c / 2, cy + c / 2, cx - c / 2, cy + c / 2 - rr);
+      ctx.lineTo(cx - c / 2, cy - c / 2 + rr);
+      ctx.quadraticCurveTo(cx - c / 2, cy - c / 2, cx - c / 2 + rr, cy - c / 2);
+      ctx.closePath(); ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx, cy, r * 0.42, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx + c * 0.28, cy - c * 0.28, r * 0.09, 0, Math.PI * 2); ctx.fill();
+      break;
+    }
+    case 'facebook':
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = `900 ${taille * 1.55}px Arial, Helvetica, sans-serif`;
+      ctx.fillText('f', cx + taille * 0.02, cy + taille * 0.08);
+      break;
+    case 'tiktok':
+      ctx.beginPath();
+      ctx.arc(cx - r * 0.2, cy + r * 0.4, r * 0.46, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(cx + r * 0.24, cy + r * 0.4);
+      ctx.lineTo(cx + r * 0.24, cy - r * 0.8);
+      ctx.quadraticCurveTo(cx + r * 0.5, cy - r * 0.32, cx + r * 0.8, cy - r * 0.3);
+      ctx.lineTo(cx + r * 0.8, cy + r * 0.12);
+      ctx.quadraticCurveTo(cx + r * 0.52, cy + r * 0.08, cx + r * 0.36, cy - r * 0.14);
+      ctx.lineTo(cx + r * 0.36, cy + r * 0.4);
+      ctx.closePath(); ctx.fill();
+      break;
+    case 'youtube':
+      ctx.beginPath();
+      ctx.moveTo(cx - r * 0.42, cy - r * 0.55);
+      ctx.lineTo(cx + r * 0.6, cy);
+      ctx.lineTo(cx - r * 0.42, cy + r * 0.55);
+      ctx.closePath(); ctx.fill();
+      break;
+  }
+  ctx.restore();
+}
+
+// Construit la fiche Compcard sur un grand canvas (qualité impression professionnelle,
+// 400 dpi sur une page A4 — net même de très près sur un écran géant) à partir de
+// { profil, photos, projets } :
+// - profil : colonnes model_profiles utiles (full_name, city, category,
+//   years_experience, height_cm, weight_kg, chest_cm, waist_cm, hips_cm, inseam_cm,
+//   shoe_size, carnation, clothing_size, eye_color, hair_color)
+// - photos : tableau de { url, compcard_ordre } (url = pleine résolution)
+// - projets : tableau quelconque, seule sa longueur sert (résumé du parcours en pied de page)
+async function construireCanvasCompcard(ficheData) {
+  const { profil, photos, projets } = ficheData;
+  const NOIR = '#060504', BORDEAUX = '#7a1220', BLANC = '#ffffff', GRIS = '#a79f96', ROUGECLAIR = '#cf3b52';
+  const LARGEUR_MM = 210, HAUTEUR_MM = 297;
+  const DPI = 400;
+  const ESCALE = DPI / 25.4;
+  const px = mm => mm * ESCALE;
+  const fpx = pt => pt * 0.3528 * ESCALE;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(LARGEUR_MM * ESCALE);
+  canvas.height = Math.round(HAUTEUR_MM * ESCALE);
+  const ctx = canvas.getContext('2d');
+
+  await Promise.all([
+    document.fonts.load('700 100px Arial'),
+    document.fonts.load('500 100px Arial')
+  ]);
+  if (document.fonts.ready) await document.fonts.ready;
+
+  const photosChoisies = photos.filter(p => p.compcard_ordre).sort((a, b) => a.compcard_ordre - b.compcard_ordre);
+  const urlsPhotos = (photosChoisies.length ? photosChoisies : photos.slice(0, 5)).map(p => p.url);
+  const [logo, ...imagesPhotos] = await Promise.all([
+    chargerImageLocale('assets/logo-dark-bg.png'),
+    ...urlsPhotos.map(u => chargerImageHauteRes(u))
+  ]);
+
+  function dessinerCouvrant(image, xMm, yMm, lMm, hMm, ancrage) {
+    if (!image) return;
+    const ratioImage = image.largeur / image.hauteur;
+    const ratioCadre = lMm / hMm;
+    let sx = 0, sy = 0, sL = image.largeur, sH = image.hauteur;
+    if (ratioImage > ratioCadre) { sL = image.hauteur * ratioCadre; sx = (image.largeur - sL) / 2; }
+    else { sH = image.largeur / ratioCadre; sy = (image.hauteur - sH) / 2; }
+    if (ancrage === 'haut') {
+      // Marge de sécurité volontaire : on laisse un peu de champ au-dessus du sujet
+      // plutôt que de coller pile sur le haut de la tête, pour ne jamais risquer de
+      // rogner cheveux/coiffure sur les photos où le sujet est déjà proche du bord.
+      const zoom = 0.93;
+      const nSL = sL * zoom, nSH = sH * zoom;
+      sx = sx + (sL - nSL) / 2;
+      sy = sy + (sH - nSH) * 0.6;
+      sL = nSL; sH = nSH;
+    }
+    ctx.drawImage(image.canvas, sx, sy, sL, sH, px(xMm), px(yMm), px(lMm), px(hMm));
+  }
+
+  // --- Fond noir "brillant", effet laqué/miroir : un dégradé diagonal avec un reflet
+  // clair traversant le noir profond, plutôt qu'un aplat plat.
+  const degradeNoir = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+  degradeNoir.addColorStop(0, '#0c0a08');
+  degradeNoir.addColorStop(0.22, '#020202');
+  degradeNoir.addColorStop(0.46, '#241f1a');
+  degradeNoir.addColorStop(0.5, '#2e2822');
+  degradeNoir.addColorStop(0.54, '#241f1a');
+  degradeNoir.addColorStop(0.78, '#020202');
+  degradeNoir.addColorStop(1, '#0c0a08');
+  ctx.fillStyle = degradeNoir;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // --- En-tête bordeaux : logo + "COMPCARD" ---
+  const hEntete = 30;
+  ctx.fillStyle = BORDEAUX;
+  ctx.fillRect(0, 0, canvas.width, px(hEntete));
+  if (logo) {
+    const hLogoMm = 19;
+    const wLogoMm = hLogoMm * (logo.largeur / logo.hauteur);
+    ctx.drawImage(logo.canvas, px(15), px(6), px(wLogoMm), px(hLogoMm));
+  }
+  ctx.fillStyle = BLANC;
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'alphabetic';
+  ctx.font = `bold ${fpx(30)}px Arial, sans-serif`;
+  ctx.fillText('COMPCARD', px(195), px(20));
+
+  // --- Photos : 1 grande + grille de 4 ---
+  const yPhotos = hEntete + 4, hPhotos = 130;
+  dessinerCouvrant(imagesPhotos[0], 15, yPhotos, 92, hPhotos, 'haut');
+
+  const cellulesX = [112, 155.5];
+  const cellulesY = [yPhotos, yPhotos + 67];
+  const lCellule = 39.5, hCellule = 63;
+  let idxGrille = 1;
+  for (const y of cellulesY) {
+    for (const x of cellulesX) {
+      dessinerCouvrant(imagesPhotos[idxGrille], x, y, lCellule, hCellule);
+      idxGrille++;
+    }
+  }
+
+  // --- Logo discret au centre, entre les photos : jamais perdu si la fiche est
+  // rognée physiquement (les bords partent en premier, jamais le centre).
+  if (logo) {
+    const hBadgeMm = 20;
+    const wBadgeMm = hBadgeMm * (logo.largeur / logo.hauteur);
+    const centreXmm = (15 + 195) / 2;
+    const centreYmm = yPhotos + hPhotos / 2;
+    ctx.save();
+    ctx.globalAlpha = 0.92;
+    ctx.shadowColor = 'rgba(0,0,0,0.6)';
+    ctx.shadowBlur = px(2.5);
+    ctx.drawImage(logo.canvas, px(centreXmm - wBadgeMm / 2), px(centreYmm - hBadgeMm / 2), px(wBadgeMm), px(hBadgeMm));
+    ctx.restore();
+  }
+
+  // --- Nom et catégorie (texte blanc, lisible sur fond noir) ---
+  let y = yPhotos + hPhotos + 13;
+  ctx.textAlign = 'left';
+  ctx.fillStyle = BLANC;
+  ctx.font = `bold ${fpx(27)}px Arial, sans-serif`;
+  ctx.fillText((profil.full_name || 'Mannequin').toUpperCase(), px(15), px(y));
+  y += 9;
+  const niveauMannequin = deriverNiveauMannequin(profil.years_experience);
+  ctx.fillStyle = ROUGECLAIR;
+  ctx.font = `${fpx(13)}px Arial, sans-serif`;
+  ctx.fillText(['Mannequin', niveauMannequin, profil.city].filter(Boolean).join(' '), px(15), px(y));
+
+  // --- Mensurations (grille 3 colonnes) ---
+  y += 11;
+  const champs = [
+    ['Taille', profil.height_cm ? profil.height_cm + ' cm' : null],
+    ['Poids', profil.weight_kg ? profil.weight_kg + ' kg' : null],
+    ['Poitrine', profil.chest_cm ? profil.chest_cm + ' cm' : null],
+    ['Tour de taille', profil.waist_cm ? profil.waist_cm + ' cm' : null],
+    [profil.category === 'homme' ? 'Entrejambe' : 'Hanches', profil.category === 'homme' ? (profil.inseam_cm ? profil.inseam_cm + ' cm' : null) : (profil.hips_cm ? profil.hips_cm + ' cm' : null)],
+    ['Pointure', profil.shoe_size || null],
+    ['Carnation', profil.carnation || null],
+    ['Taille vêtements', profil.clothing_size || null],
+    ['Yeux', profil.eye_color || null],
+    ['Cheveux', profil.hair_color || null]
+  ].filter(([, v]) => v);
+
+  const yGrilleDebut = y;
+  const PITCH = 13;
+  champs.forEach(([label, valeur], i) => {
+    const col = i % 3, ligne = Math.floor(i / 3);
+    const xMm = 15 + col * 60, yy = yGrilleDebut + ligne * PITCH;
+    ctx.fillStyle = GRIS;
+    ctx.font = `${fpx(9.5)}px Arial, sans-serif`;
+    ctx.fillText(label.toUpperCase(), px(xMm), px(yy));
+    ctx.fillStyle = BLANC;
+    ctx.font = `bold ${fpx(13.5)}px Arial, sans-serif`;
+    ctx.fillText(String(valeur), px(xMm), px(yy + 6));
+  });
+  const yFinGrille = yGrilleDebut + Math.ceil(champs.length / 3) * PITCH;
+
+  // --- Pied de page bordeaux : toujours à une hauteur sûre (jamais chevauché ni
+  // coupé), contacts et réseaux sociaux bien visibles quel que soit le nombre
+  // d'informations renseignées sur le profil.
+  const yPiedPage = Math.min(Math.max(yFinGrille + 8, 250), 253);
+
+  // --- Résumé du parcours : seulement si la place restante avant le pied de page
+  // bordeaux est suffisante. Avec un profil ayant les 10 mensurations remplies ET des
+  // projets, cette ligne peut finir à moins de 1mm du pied de page (qui est alors
+  // plafonné à 253mm) — un simple écart de rendu de police selon l'appareil du
+  // visiteur suffirait à les faire se chevaucher. On préfère omettre cette ligne
+  // facultative plutôt que risquer ce chevauchement.
+  if (projets && projets.length && yFinGrille + 3 + 5 < yPiedPage) {
+    ctx.fillStyle = GRIS;
+    ctx.font = `italic ${fpx(9.5)}px Arial, sans-serif`;
+    ctx.fillText(`${projets.length} projet${projets.length > 1 ? 's' : ''} réalisé${projets.length > 1 ? 's' : ''} — book complet sur maitreakessemodelmanagement.com`, px(15), px(yFinGrille + 3));
+  }
+  const hPiedPage = HAUTEUR_MM - yPiedPage;
+  ctx.fillStyle = BORDEAUX;
+  ctx.fillRect(0, px(yPiedPage), canvas.width, px(hPiedPage));
+  ctx.fillStyle = BLANC;
+  ctx.font = `bold ${fpx(12)}px Arial, sans-serif`;
+  ctx.fillText('CONTACT OFFICIEL MA2M', px(15), px(yPiedPage + 9));
+  ctx.font = `${fpx(11)}px Arial, sans-serif`;
+  ctx.fillText('+225 27 22 23 11 76   ·   +225 05 45 65 68 87', px(15), px(yPiedPage + 16.5));
+  ctx.fillText('scoutmodel.ma2m@gmail.com', px(15), px(yPiedPage + 23.5));
+
+  // Réseaux sociaux : icônes vectorielles blanches + le pseudo, sur la même ligne.
+  const reseaux = ['instagram', 'facebook', 'tiktok', 'youtube'];
+  let xIcone = 15;
+  reseaux.forEach(cle => {
+    dessinerIconeReseau(ctx, cle, px(xIcone + 2.2), px(yPiedPage + 29), px(4.4), BLANC);
+    xIcone += 7.5;
+  });
+  ctx.font = `${fpx(10.5)}px Arial, sans-serif`;
+  ctx.fillText('@maitreakessemodelmanagement', px(xIcone + 3), px(yPiedPage + 30.5));
+
+  ctx.font = `italic ${fpx(7)}px Arial, sans-serif`;
+  ctx.fillText(`Document officiel généré le ${new Date().toLocaleDateString('fr-FR')} depuis maitreakessemodelmanagement.com — toute demande de booking passe exclusivement par l'agence.`, px(15), px(yPiedPage + hPiedPage - 6));
+
+  return canvas;
+}
+
+// Charge jsPDF seulement quand on en a réellement besoin (bouton "Fiche en PDF") au lieu
+// de l'imposer à chaque visite de la page — ça allège nettement le chargement initial,
+// surtout sur mobile, pour une bibliothèque que la plupart des visiteurs n'utilisent jamais.
+let promesseJsPdf = null;
+function chargerJsPdf() {
+  if (window.jspdf) return Promise.resolve();
+  if (promesseJsPdf) return promesseJsPdf;
+  promesseJsPdf = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.crossOrigin = 'anonymous';
+    script.src = 'https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js';
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('jsPDF n\'a pas pu être chargé'));
+    document.body.appendChild(script);
+  });
+  return promesseJsPdf;
+}
+
+// Génère et télécharge la fiche (PDF ou JPEG) à partir de ficheData ({ profil, photos,
+// projets }), en désactivant/réactivant pendant la génération les deux boutons désignés
+// par leur id (idBtnPdf/idBtnJpeg — chaque page peut leur donner l'id de son choix).
+async function genererFiche(format, ficheData, idBtnPdf, idBtnJpeg) {
+  if (!ficheData || !ficheData.profil) return;
+  const btnPdf = idBtnPdf ? document.getElementById(idBtnPdf) : null;
+  const btnJpeg = idBtnJpeg ? document.getElementById(idBtnJpeg) : null;
+  const btnActif = format === 'jpeg' ? btnJpeg : btnPdf;
+  const texteOriginal = btnActif ? btnActif.textContent : '';
+  if (btnPdf) btnPdf.disabled = true;
+  if (btnJpeg) btnJpeg.disabled = true;
+  if (btnActif) btnActif.textContent = 'Génération…';
+
+  try {
+    if (format !== 'jpeg') await chargerJsPdf();
+    const canvas = await construireCanvasCompcard(ficheData);
+    const nomFichier = 'fiche-' + (ficheData.profil.full_name || 'mannequin').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase();
+
+    if (format === 'jpeg') {
+      const lien = document.createElement('a');
+      lien.href = canvas.toDataURL('image/jpeg', 0.98);
+      lien.download = nomFichier + '.jpg';
+      document.body.appendChild(lien);
+      lien.click();
+      lien.remove();
+    } else {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+      doc.addImage(canvas.toDataURL('image/jpeg', 0.98), 'JPEG', 0, 0, 210, 297);
+      doc.save(nomFichier + '.pdf');
+    }
+  } catch (e) {
+    alert('Une erreur est survenue pendant la génération du fichier. Réessayez.');
+  } finally {
+    if (btnPdf) btnPdf.disabled = false;
+    if (btnJpeg) btnJpeg.disabled = false;
+    if (btnActif) btnActif.textContent = texteOriginal;
+  }
+}
+
 // Nettoie un nom de fichier avant de l'utiliser dans un chemin de stockage (Supabase Storage) :
 // ne garde que lettres/chiffres/point/tiret/underscore, pour éviter qu'un nom de fichier
 // bricolé ne perturbe le chemin de stockage ou son affichage ailleurs sur le site.
