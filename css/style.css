@@ -239,6 +239,17 @@ section { padding: 5rem 0; }
 
 .mannequins-vide { padding: 3rem 0; color: var(--texte-doux); border-top: 1px solid var(--gris-clair); border-bottom: 1px solid var(--gris-clair); }
 
+/* ---------- Book d'un mannequin (fiche publique) : grille façon réseau
+   social — collée, sans espacement entre les photos, et qui s'adapte à
+   l'orientation de chaque photo (portrait, carrée, rectangulaire) au lieu
+   de forcer un recadrage 3:4 uniforme comme .mannequin-carte (qui reste
+   utilisée telle quelle pour la liste de tous les mannequins). ---------- */
+.book-grille-ig { column-count: 3; column-gap: 2px; }
+.book-photo-carte { display: block; break-inside: avoid; margin-bottom: 2px; background: var(--noir-doux); overflow: hidden; }
+.book-photo-carte img { width: 100%; height: auto; display: block; opacity: 0.94; transition: transform 0.5s var(--transition-douce), opacity 0.4s ease; }
+.book-photo-carte:hover img { transform: scale(1.03); opacity: 1; }
+@media (max-width: 700px) { .book-grille-ig { column-count: 2; } }
+
 /* ---------- Fiche mannequin (compsheet) ---------- */
 
 .compsheet-tete { display: grid; grid-template-columns: 340px 1fr; gap: 3rem; align-items: start; }

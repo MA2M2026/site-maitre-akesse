@@ -3529,3 +3529,18 @@ NOTIFY pgrst, 'reload schema';
 alter table model_profiles add column if not exists niveau_mannequin text;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 85 : cadrage de la photo de couverture (haut / centre / bas).
+--
+-- Une photo de couverture peut être plus grande que le bandeau qui l'affiche
+-- (ex. une photo plein pied dans un bandeau large et bas) : ce champ permet
+-- à la mannequin d'ajuster quelle partie de la photo reste visible (le
+-- visage, typiquement), sans recadrer le fichier lui-même. Appliqué en
+-- object-position à l'affichage (espace-mannequin.html en aperçu, et sur la
+-- fiche publique mannequin.html/en/mannequin.html). 'center' par défaut,
+-- comme le comportement actuel (object-position par défaut du navigateur).
+-- ===================================================================
+alter table model_photos add column if not exists couverture_position text not null default 'center';
+
+NOTIFY pgrst, 'reload schema';

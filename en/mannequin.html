@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-pQ8PkGbAQrsNiRAZE7pUbJKEWmbOTsjW9K9tz72TAUk='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-y1uUrOwe77NFmJ0cBblk4Umuy+CI60coB1HfDMSeLGE='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
 <script src="../js/analytics-config.js"></script>
@@ -96,7 +96,7 @@ setTimeout(() => {
 <section class="no-print u-pt-0">
   <div class="container">
     <h2 class="reveal enmq-2">Book</h2>
-    <div id="galerie" class="mannequins-grille reveal reveal-delay-1"></div>
+    <div id="galerie" class="book-grille-ig reveal reveal-delay-1"></div>
   </div>
 </section>
 
@@ -546,7 +546,7 @@ async function chargerProfilInterne() {
 
   const { data: profil, error } = await sb
     .from('model_profiles')
-    .select('id, full_name, city, category, date_naissance, height_cm, weight_kg, chest_cm, waist_cm, hips_cm, inseam_cm, shoe_size, carnation, clothing_size, eye_color, hair_color, bio, years_experience, model_types, languages, availability, video_url')
+    .select('id, full_name, city, category, niveau_mannequin, date_naissance, height_cm, weight_kg, chest_cm, waist_cm, hips_cm, inseam_cm, shoe_size, carnation, clothing_size, eye_color, hair_color, bio, years_experience, model_types, languages, availability, video_url')
     .eq('id', id)
     .eq('published', true)
     .single();
@@ -566,7 +566,7 @@ async function chargerProfilInterne() {
 
   const { data: photos } = await sb
     .from('model_photos')
-    .select('url, url_miniature, compcard_ordre, principale, photo_couverture')
+    .select('url, url_miniature, compcard_ordre, principale, photo_couverture, couverture_position')
     .eq('model_id', id)
     .order('principale', { ascending: false })
     .order('created_at', { ascending: true });
@@ -638,13 +638,13 @@ async function chargerProfilInterne() {
 
   contenu.innerHTML = `
     <div class="reveal">
-      <div class="profil-couverture">${photoCouverture ? `<img src="${echapperHtml(photoCouverture.url)}" alt="">` : ''}</div>
+      <div class="profil-couverture">${photoCouverture ? `<img data-couv-img src="${echapperHtml(photoCouverture.url)}" alt="">` : ''}</div>
       <div class="profil-avatar-ligne">
         <div class="profil-avatar cliquable" id="compsheet-photo-clic"><img src="${echapperHtml(premierePhoto)}" alt="${echapperHtml(profil.full_name || '')}"></div>
         <div>
           <div class="eyebrow">${profil.category === 'homme' ? 'Man' : profil.category === 'femme' ? 'Woman' : 'New Face'}</div>
           <h1 class="enmq-10">${echapperHtml(profil.full_name || 'Model')}</h1>
-          <p class="enmq-12">${echapperHtml(profil.city || '')}</p>
+          <p class="enmq-12">${echapperHtml([(profil.niveau_mannequin || deriverNiveauMannequin(profil.years_experience)) === 'Professionnel' ? 'Professional Model' : (profil.niveau_mannequin || deriverNiveauMannequin(profil.years_experience)) + ' Model', profil.city].filter(Boolean).join(' · '))}</p>
         </div>
       </div>
       <div class="u-mt-1-8">
@@ -688,6 +688,14 @@ async function chargerProfilInterne() {
     </div>
   `;
 
+  if (photoCouverture) {
+    const imgCouverture = contenu.querySelector('[data-couv-img]');
+    if (imgCouverture) {
+      const pos = photoCouverture.couverture_position;
+      imgCouverture.style.objectPosition = pos === 'top' ? '50% 0%' : pos === 'bottom' ? '50% 100%' : '50% 50%';
+    }
+  }
+
   const btnPdf = document.getElementById('btn-telecharger-pdf');
   if (btnPdf) btnPdf.addEventListener('click', () => genererFiche('pdf'));
   const btnJpeg = document.getElementById('btn-telecharger-jpeg');
@@ -728,7 +736,7 @@ async function chargerProfilInterne() {
 
   (photos || []).forEach((p, index) => {
     const div = document.createElement('div');
-    div.className = 'mannequin-carte cliquable';
+    div.className = 'book-photo-carte cliquable';
     div.innerHTML = `<img src="${echapperHtml(p.url_miniature || p.url)}" loading="lazy" alt="Book photo">`;
     div.addEventListener('click', () => ouvrirLightbox(index));
     galerie.appendChild(div);
