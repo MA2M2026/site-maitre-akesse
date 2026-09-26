@@ -1,0 +1,1873 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mon Espace Mannequin — MA2M | Premium</title>
+<meta name="theme-color" content="#080707">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+:root{
+  --noir:#0d0a08;
+  --noir-2:#151009;
+  --bordeaux:#5c0f1e;
+  --bordeaux-2:#7a1626;
+  --ivoire:#f4ede1;
+  --ivoire-2:#e8ddc9;
+  --or:#c9a24a;
+  --or-clair:#e4c477;
+  --texte-clair:rgba(244,237,225,.72);
+  --texte-tres-clair:rgba(244,237,225,.45);
+  --ok:#7fae7f;
+  --serif:'Cormorant Garamond',serif;
+  --sans:'Jost',sans-serif;
+  --radius:2px;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{height:100%}
+body{
+  margin:0;
+  background:
+    radial-gradient(1100px 600px at 15% -10%, rgba(92,15,30,.35), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgba(201,162,74,.08), transparent 55%),
+    var(--noir);
+  color:var(--ivoire);
+  font-family:var(--sans);
+  font-weight:300;
+  letter-spacing:.01em;
+  min-height:100%;
+  line-height:1.5;
+}
+img,svg{max-width:100%}
+a{color:inherit}
+
+.demo-banner{background:linear-gradient(90deg,var(--bordeaux-2),var(--bordeaux));color:var(--ivoire);text-align:center;font-size:.7rem;letter-spacing:.04em;padding:9px 14px}
+.demo-banner b{color:var(--or-clair)}
+.auth-loading{min-height:70vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;color:var(--texte-clair);font-size:.85rem}
+.spinner{width:26px;height:26px;border:2px solid rgba(244,237,225,.2);border-top-color:var(--or);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.hidden-input{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}
+
+/* ---------- shell ---------- */
+.shell{max-width:960px;margin:0 auto;padding:40px 22px 90px}
+.top{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:16px;margin-bottom:34px;padding-bottom:22px;
+  border-bottom:1px solid rgba(201,162,74,.22);
+}
+.wordmark{display:flex;flex-direction:column;gap:2px}
+.wordmark .mark{
+  font-family:var(--serif);font-size:1.9rem;letter-spacing:.06em;color:var(--or-clair);
+  font-style:italic;font-weight:500;
+}
+.wordmark .full{font-size:.66rem;letter-spacing:.22em;color:var(--texte-tres-clair);text-transform:uppercase}
+.espace-tag{font-size:.72rem;color:var(--texte-clair);letter-spacing:.06em;text-align:right}
+.espace-tag b{display:block;font-family:var(--serif);font-style:italic;color:var(--ivoire);font-size:1.15rem;font-weight:500}
+
+/* ---------- greeting card ---------- */
+.greet{
+  background:linear-gradient(160deg,var(--noir-2),rgba(92,15,30,.25));
+  border:1px solid rgba(201,162,74,.28);
+  border-radius:var(--radius);
+  padding:26px 28px;margin-bottom:30px;
+}
+.greet h1{font-family:var(--serif);font-weight:500;font-style:italic;font-size:1.7rem;margin:0 0 8px;color:var(--ivoire)}
+.greet p{margin:0 0 18px;color:var(--texte-clair);font-size:.92rem;max-width:56ch}
+.progress-row{display:flex;align-items:center;gap:14px}
+.progress-track{flex:1;height:3px;background:rgba(244,237,225,.12);position:relative;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--bordeaux-2),var(--or));transition:width .5s ease}
+.progress-pct{font-size:.78rem;color:var(--or-clair);min-width:3em;text-align:right}
+
+/* ---------- stepper ---------- */
+.stepper{display:flex;flex-wrap:wrap;gap:0;margin-bottom:26px;border:1px solid rgba(244,237,225,.1)}
+.step-tab{
+  flex:1 1 auto;min-width:110px;text-align:center;padding:13px 8px;
+  font-size:.72rem;letter-spacing:.04em;color:var(--texte-tres-clair);
+  border-right:1px solid rgba(244,237,225,.08);cursor:pointer;position:relative;
+  background:transparent;
+}
+.step-tab:last-child{border-right:none}
+.step-tab .n{display:block;font-family:var(--serif);font-style:italic;font-size:1.05rem;color:var(--texte-clair);margin-bottom:2px}
+.step-tab.active{background:rgba(201,162,74,.1);color:var(--ivoire)}
+.step-tab.active .n{color:var(--or-clair)}
+.step-tab.done .n::after{content:'✓';margin-left:4px;color:var(--ok)}
+.step-tab.locked{cursor:default;opacity:.4}
+
+/* ---------- panel / card ---------- */
+.panel{
+  background:var(--noir-2);
+  border:1px solid rgba(201,162,74,.2);
+  border-radius:var(--radius);
+  padding:30px clamp(18px,4vw,38px);
+  animation:panelIn .4s ease;
+}
+@keyframes panelIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.block-edit[style*="display: block"]{animation:panelIn .3s ease}
+.panel h2{
+  font-family:var(--serif);font-weight:500;font-style:italic;font-size:1.5rem;
+  color:var(--ivoire);margin:0 0 4px;
+}
+.panel .sub{color:var(--texte-tres-clair);font-size:.82rem;margin:0 0 26px}
+
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px 22px}
+.grid.g3{grid-template-columns:1fr 1fr 1fr}
+@media(max-width:620px){.grid,.grid.g3{grid-template-columns:1fr}}
+
+.field{display:flex;flex-direction:column;gap:7px;margin-bottom:2px}
+.field.full{grid-column:1/-1}
+.field label{font-size:.72rem;letter-spacing:.05em;color:var(--texte-clair)}
+.field label .req{color:var(--or-clair);margin-left:2px}
+.field input[type=text],.field input[type=date],.field input[type=tel],.field input[type=email],.field input[type=number],.field select,.field textarea{
+  background:rgba(244,237,225,.04);
+  border:1px solid rgba(244,237,225,.18);
+  border-radius:var(--radius);
+  color:var(--ivoire);
+  padding:11px 12px;
+  font-family:var(--sans);font-size:.92rem;font-weight:300;
+  outline:none;transition:border-color .2s, background .2s;
+}
+.field textarea{resize:vertical;min-height:70px}
+.field input:focus,.field select:focus,.field textarea:focus{
+  border-color:var(--or);background:rgba(201,162,74,.06);
+}
+.field input::placeholder,.field textarea::placeholder{color:var(--texte-tres-clair)}
+.field.invalid input,.field.invalid select{border-color:var(--bordeaux-2);background:rgba(122,22,38,.12)}
+.err-msg{font-size:.7rem;color:#d98a92;min-height:1em}
+
+.radio-row,.check-row{display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:2px}
+.radio-opt,.check-opt{display:flex;align-items:center;gap:9px;font-size:.88rem;color:var(--texte-clair);cursor:pointer}
+.radio-opt input,.check-opt input{accent-color:var(--or);width:16px;height:16px;cursor:pointer}
+.radio-opt.selected,.check-opt.selected{color:var(--ivoire)}
+
+/* ---------- buttons ---------- */
+.btn{
+  font-family:var(--sans);font-size:.78rem;letter-spacing:.07em;text-transform:uppercase;
+  padding:13px 26px;border-radius:var(--radius);border:1px solid var(--or);
+  background:transparent;color:var(--or-clair);cursor:pointer;transition:all .25s;
+  display:inline-flex;align-items:center;gap:8px;
+}
+.btn:hover{background:rgba(201,162,74,.12)}
+.btn.primary{background:linear-gradient(120deg,var(--bordeaux-2),var(--bordeaux));border-color:var(--bordeaux-2);color:var(--ivoire)}
+.btn.primary:hover{filter:brightness(1.12)}
+.btn.ghost{border-color:rgba(244,237,225,.25);color:var(--texte-clair)}
+.btn.ghost:hover{border-color:var(--ivoire);color:var(--ivoire);background:rgba(244,237,225,.05)}
+.btn.small{padding:8px 16px;font-size:.68rem}
+.btn.saved{border-color:var(--ok);color:var(--ok);background:rgba(127,174,127,.1)}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+.btn.block-btn{width:100%;justify-content:center}
+.actions-row{display:flex;justify-content:space-between;align-items:center;margin-top:30px;gap:12px}
+.actions-row.end{justify-content:flex-end}
+
+/* ---------- experiences ---------- */
+.exp-card{
+  border:1px solid rgba(244,237,225,.15);border-radius:var(--radius);
+  padding:16px 18px;margin-bottom:12px;display:flex;justify-content:space-between;gap:14px;align-items:center;
+}
+.exp-fields{display:grid;grid-template-columns:150px 1fr 130px 90px;gap:10px;flex:1}
+@media(max-width:680px){.exp-fields{grid-template-columns:1fr 1fr}}
+.exp-fields select,.exp-fields input{
+  background:rgba(244,237,225,.04);border:1px solid rgba(244,237,225,.18);border-radius:var(--radius);
+  color:var(--ivoire);padding:9px 10px;font-family:var(--sans);font-size:.84rem;font-weight:300;outline:none;
+  transition:border-color .2s, background .2s;
+}
+.exp-fields select:focus,.exp-fields input:focus{border-color:var(--or);background:rgba(201,162,74,.06)}
+.exp-fields input::placeholder{color:var(--texte-tres-clair)}
+.exp-remove{background:none;border:none;color:var(--texte-tres-clair);cursor:pointer;font-size:.72rem;text-decoration:underline}
+.exp-remove:hover{color:#d98a92}
+.exp-empty{color:var(--texte-tres-clair);font-size:.85rem;font-style:italic;padding:14px 0}
+.type-chip-row{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 20px}
+.type-chip{border:1px solid rgba(244,237,225,.2);color:var(--texte-clair);font-size:.72rem;padding:6px 12px;border-radius:20px}
+
+/* ---------- upload zones ---------- */
+.upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:24px}
+@media(max-width:620px){.upload-grid{grid-template-columns:1fr}}
+.upload-box{
+  border:1px dashed rgba(201,162,74,.45);border-radius:var(--radius);
+  aspect-ratio:3/4;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;background:rgba(244,237,225,.03);cursor:pointer;text-align:center;padding:14px;position:relative;overflow:hidden;
+  transition:border-color .2s,background .2s;
+}
+.upload-box:hover{border-color:var(--or);background:rgba(201,162,74,.06)}
+.upload-box.filled{border-style:solid}
+.upload-box .ic{font-size:1.6rem;color:var(--or-clair)}
+.upload-box .lbl{font-size:.78rem;color:var(--texte-clair)}
+.upload-box img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.upload-box .lbl-over{position:relative;z-index:1;background:rgba(13,10,8,.6);padding:4px 8px;border-radius:2px}
+.book-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+@media(max-width:520px){.book-grid{grid-template-columns:repeat(2,1fr)}}
+.book-thumb-remove{position:absolute;top:6px;right:6px;background:rgba(13,10,8,.8);border:1px solid rgba(244,237,225,.3);color:var(--ivoire);width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:.7rem;line-height:1;display:flex;align-items:center;justify-content:center;z-index:2}
+.book-thumb-remove:hover{border-color:#d98a92;color:#d98a92}
+.book-add{
+  aspect-ratio:3/4;border-radius:var(--radius);border:1px dashed rgba(201,162,74,.45);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  cursor:pointer;color:var(--or-clair);font-size:1.4rem;background:rgba(244,237,225,.03);
+  transition:border-color .2s, background .2s;
+}
+.book-add:hover{border-color:var(--or);background:rgba(201,162,74,.07)}
+.book-add span{font-size:.68rem;letter-spacing:.03em;color:var(--texte-clair)}
+.cc-counter{display:flex;align-items:center;gap:10px;font-size:.78rem;color:var(--texte-clair);margin:0 0 22px}
+.cc-counter b{color:var(--or-clair);font-family:var(--sans);font-weight:500}
+.cc-counter.full b{color:var(--ok)}
+.book-thumb{
+  aspect-ratio:3/4;border-radius:var(--radius);
+  background:linear-gradient(160deg,rgba(122,22,38,.3),rgba(201,162,74,.08));
+  border:1px solid rgba(244,237,225,.14);
+  display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;
+  font-size:1.2rem;color:var(--texte-tres-clair);
+}
+.book-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.compcard-check{position:absolute;bottom:6px;right:6px;background:rgba(13,10,8,.75);border-radius:3px;padding:3px 6px;font-size:.62rem;display:flex;align-items:center;gap:4px;color:var(--texte-clair);z-index:2}
+.compcard-check input{accent-color:var(--or);width:12px;height:12px}
+.doc-row{display:flex;align-items:center;justify-content:space-between;border:1px solid rgba(244,237,225,.14);border-radius:var(--radius);padding:13px 16px;margin-bottom:10px;font-size:.86rem}
+.doc-row .name{color:var(--texte-clair)}
+.doc-row .status-ok{color:var(--ok);font-size:.72rem;margin-left:8px}
+
+/* ---------- recap ---------- */
+.recap-block{border:1px solid rgba(244,237,225,.14);border-radius:var(--radius);padding:16px 18px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:14px}
+.recap-block .lbl{font-size:.68rem;letter-spacing:.08em;color:var(--or-clair);text-transform:uppercase;margin-bottom:4px}
+.recap-block .val{color:var(--texte-clair);font-size:.9rem}
+.recap-link{background:none;border:none;color:var(--texte-tres-clair);font-size:.72rem;text-decoration:underline;cursor:pointer;white-space:nowrap}
+.recap-link:hover{color:var(--or-clair)}
+.visible-toggle{display:flex;align-items:flex-start;gap:12px;margin:24px 0;padding:16px;border:1px solid rgba(201,162,74,.3);border-radius:var(--radius);background:rgba(201,162,74,.05)}
+.visible-toggle input{margin-top:3px;accent-color:var(--or);width:16px;height:16px}
+.visible-toggle p{margin:0;font-size:.85rem;color:var(--texte-clair)}
+
+/* ---------- confirmation ---------- */
+.confirm{text-align:center;padding:50px 20px}
+.confirm .check{
+  width:64px;height:64px;border-radius:50%;border:1px solid var(--or);
+  display:flex;align-items:center;justify-content:center;margin:0 auto 22px;
+  font-size:1.6rem;color:var(--or-clair);
+}
+.confirm.refuse .check{border-color:#d98a92;color:#d98a92}
+.confirm h2{font-family:var(--serif);font-style:italic;font-weight:500;font-size:1.7rem;margin:0 0 10px}
+.confirm p{color:var(--texte-clair);max-width:44ch;margin:0 auto 22px;font-size:.9rem}
+.status-pill{display:inline-flex;align-items:center;gap:8px;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;padding:8px 16px;border-radius:20px;border:1px solid var(--or);color:var(--or-clair)}
+.status-pill.online{border-color:var(--ok);color:var(--ok)}
+.status-pill.refuse{border-color:#d98a92;color:#d98a92}
+.dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+
+/* ---------- dashboard (post-validation) ---------- */
+.online-banner{display:flex;align-items:center;gap:10px;margin-bottom:24px;color:var(--ok);font-size:.8rem;letter-spacing:.05em}
+.blocks-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:620px){.blocks-grid{grid-template-columns:1fr}}
+.block-card{border:1px solid rgba(244,237,225,.16);border-radius:var(--radius);padding:20px;transition:border-color .2s}
+.block-card:hover{border-color:rgba(201,162,74,.4)}
+.block-card .ic{font-size:1.3rem;margin-bottom:8px;display:block}
+.block-card h3{font-family:var(--serif);font-style:italic;font-weight:500;margin:0 0 6px;font-size:1.15rem}
+.block-card p{font-size:.78rem;color:var(--texte-tres-clair);margin:0 0 14px;min-height:2.2em}
+.block-edit{margin-top:18px;padding-top:18px;border-top:1px dashed rgba(244,237,225,.2)}
+.block-edit .btn.save-block{display:none}
+.block-edit.dirty .btn.save-block{display:inline-flex}
+.cv-cta{margin-top:26px;padding:22px;border:1px solid rgba(201,162,74,.35);border-radius:var(--radius);background:linear-gradient(150deg,rgba(92,15,30,.3),transparent);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.cv-cta .txt h3{font-family:var(--serif);font-style:italic;font-weight:500;margin:0 0 4px;font-size:1.2rem}
+.cv-cta .txt p{margin:0;font-size:.78rem;color:var(--texte-tres-clair)}
+.lock-note{font-size:.68rem;color:var(--texte-tres-clair);margin-top:26px;text-align:center;letter-spacing:.03em}
+
+/* ---------- admin simulation panel (DEMO uniquement) ---------- */
+.admin-sim{
+  position:fixed;left:16px;bottom:16px;z-index:60;
+  background:rgba(13,10,8,.92);border:1px solid var(--or);border-radius:var(--radius);
+  padding:14px 16px;max-width:250px;backdrop-filter:blur(6px);
+  box-shadow:0 10px 30px rgba(0,0,0,.4);
+}
+.admin-sim h4{margin:0 0 4px;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--or-clair)}
+.admin-sim p{margin:0 0 10px;font-size:.72rem;color:var(--texte-tres-clair)}
+
+/* ---------- toast ---------- */
+.toast-wrap{position:fixed;top:calc(18px + env(safe-area-inset-top,0px));right:16px;z-index:80;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--noir-2);border:1px solid var(--ok);color:var(--ivoire);padding:11px 18px;border-radius:var(--radius);font-size:.8rem;box-shadow:0 8px 24px rgba(0,0,0,.4);animation:toastIn .25s ease}
+.toast.err{border-color:#d98a92}
+@keyframes toastIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ---------- CV / compcard overlay ---------- */
+.overlay{position:fixed;inset:0;background:rgba(6,4,3,.88);z-index:100;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:30px 16px calc(30px + env(safe-area-inset-bottom,0px))}
+.overlay.hidden{display:none}
+.overlay-close{position:sticky;top:0;display:flex;justify-content:flex-end;max-width:900px;margin:0 auto 10px;width:100%}
+.overlay-close button{background:none;border:1px solid rgba(244,237,225,.3);color:var(--ivoire);border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:.95rem}
+.cv-sheet{
+  width:100%;max-width:900px;background:var(--ivoire);color:#241a12;border-radius:2px;overflow:hidden;
+  font-family:var(--sans);
+}
+.cv-actions{padding:18px clamp(20px,5vw,40px) 0;display:flex;gap:10px;justify-content:flex-end}
+.private-note{background:#2c1116;color:#f0d3d7;font-size:.72rem;padding:10px 16px;text-align:center;letter-spacing:.03em}
+
+/* ---------- MODEL CV — deux colonnes ---------- */
+.mcv-wrap{display:flex;align-items:stretch}
+@media(max-width:700px){.mcv-wrap{flex-direction:column}}
+.mcv-side{
+  width:300px;flex-shrink:0;background:linear-gradient(175deg,#141010,var(--noir) 55%);
+  color:var(--ivoire);padding:0 0 26px;display:flex;flex-direction:column;
+}
+@media(max-width:700px){.mcv-side{width:100%}}
+.mcv-photo{
+  aspect-ratio:3/4;background:linear-gradient(160deg,#3a3632,#0d0a08 75%);
+  display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;
+}
+.mcv-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+.mcv-photo svg{width:34%;opacity:.28;position:relative;z-index:1}
+.mcv-photo::after{content:'';position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(13,10,8,.55) 0%,transparent 30%,transparent 62%,rgba(13,10,8,.6) 100%)}
+.mcv-photo-logo{position:absolute;top:16px;left:16px;z-index:2;color:var(--ivoire)}
+.mcv-photo-logo b{display:block;font-family:var(--serif);font-style:italic;font-weight:500;font-size:1.35rem;letter-spacing:.03em}
+.mcv-photo-logo small{display:block;font-size:.48rem;letter-spacing:.14em;color:var(--texte-tres-clair);line-height:1.35;margin-top:2px}
+.mcv-tagline{font-size:.6rem;letter-spacing:.28em;color:var(--or-clair);text-align:center;padding:16px 10px 4px;text-transform:uppercase}
+.mcv-name{padding:2px 22px 6px}
+.mcv-nom{display:block;font-size:1.7rem;font-weight:600;letter-spacing:.04em;color:var(--ivoire)}
+.mcv-prenom{display:block;font-family:var(--serif);font-style:italic;font-weight:500;font-size:2rem;color:var(--or-clair);margin-top:-2px}
+.mcv-role{padding:0 22px 14px;font-size:.68rem;letter-spacing:.18em;color:var(--texte-clair);text-transform:uppercase}
+.mcv-divider{height:1px;background:linear-gradient(90deg,var(--bordeaux-2),transparent);margin:0 22px 16px}
+.mcv-info-list{list-style:none;margin:0;padding:0 22px;display:flex;flex-direction:column;gap:14px}
+.mcv-info-list li{display:flex;gap:11px;align-items:flex-start}
+.mcv-info-list svg{flex-shrink:0;width:16px;height:16px;margin-top:2px;color:var(--or-clair)}
+.mcv-info-list .k{display:block;font-size:.6rem;letter-spacing:.06em;color:var(--texte-tres-clair);text-transform:uppercase}
+.mcv-info-list .v{display:block;font-size:.82rem;color:var(--ivoire);line-height:1.4}
+.mcv-cat{margin:20px 22px 0;padding-top:16px;border-top:1px solid rgba(244,237,225,.14)}
+.mcv-cat .lbl{display:block;font-size:.6rem;letter-spacing:.14em;color:var(--texte-tres-clair);text-transform:uppercase;margin-bottom:4px}
+.mcv-cat .val{font-family:var(--sans);font-weight:500;font-size:1rem;color:var(--ivoire);letter-spacing:.01em}
+.mcv-quote{margin:22px 22px 0;padding-top:16px;border-top:1px solid rgba(244,237,225,.1);font-family:var(--serif);font-style:italic;font-size:1.05rem;color:var(--ivoire-2);line-height:1.5}
+.mcv-agency{margin-top:auto;padding:26px 22px 0;text-align:center}
+.mcv-agency span{display:block;font-size:.82rem;letter-spacing:.18em;color:var(--or-clair)}
+.mcv-agency small{display:block;font-size:.6rem;letter-spacing:.2em;color:var(--texte-tres-clair);margin-top:2px}
+.mcv-right{flex:1;display:flex;flex-direction:column;min-width:0}
+.mcv-main{padding:26px clamp(18px,4vw,36px) 6px}
+.mcv-topline{text-align:right;font-size:.68rem;letter-spacing:.32em;color:#7a6a4f;margin-bottom:18px;text-transform:uppercase}
+.mcv-sec{margin-bottom:24px}
+.mcv-sec h4{
+  display:flex;align-items:center;gap:9px;font-family:var(--sans);font-weight:600;font-style:normal;font-size:.84rem;
+  letter-spacing:.09em;text-transform:uppercase;color:#241a12;margin:0 0 14px;
+}
+.mcv-sec h4 svg{width:17px;height:17px;color:var(--bordeaux-2);flex-shrink:0}
+.mcv-sec h4::after{content:'';flex:1;height:1px;background:#ddd0b8;margin-left:4px}
+.mcv-profil-row{display:flex;gap:20px;align-items:flex-start}
+.mcv-profile-text{flex:1;font-size:.86rem;line-height:1.7;color:#3d332a;margin:0}
+.mcv-side-tag{border-left:1px solid #ddd0b8;padding-left:14px;display:flex;flex-direction:column;gap:5px;font-size:.6rem;letter-spacing:.16em;color:#8a7a5e;text-transform:uppercase;white-space:nowrap;flex-shrink:0}
+.mcv-two-col{display:grid;grid-template-columns:1fr 1fr;gap:0 26px}
+@media(max-width:480px){.mcv-two-col{grid-template-columns:1fr}}
+.mcv-kv{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px}
+.mcv-two-col .mcv-kv{gap:9px}
+.mcv-kv li{display:flex;justify-content:space-between;gap:14px;font-size:.82rem;border-bottom:1px dotted #ddd0b8;padding-bottom:7px}
+.mcv-kv li span{color:#8a7a5e}
+.mcv-kv li b{font-weight:500;color:#241a12;text-align:right}
+.mcv-expgroup{margin-bottom:16px}
+.mcv-expgroup:last-child{margin-bottom:0}
+.mcv-expgroup .gh{display:flex;align-items:center;gap:8px;font-size:.74rem;letter-spacing:.08em;color:#241a12;text-transform:uppercase;margin-bottom:8px;font-weight:600}
+.mcv-expgroup .gh svg{width:15px;height:15px}
+.mcv-expgroup ul{list-style:none;margin:0;padding:0 0 0 23px;display:flex;flex-direction:column;gap:5px}
+.mcv-expgroup li{font-size:.82rem;color:#3d332a;position:relative}
+.mcv-expgroup li::before{content:'';position:absolute;left:-14px;top:.6em;width:4px;height:4px;background:var(--bordeaux-2);border-radius:50%}
+.mcv-bottom-row{display:flex;gap:32px;flex-wrap:wrap}
+.mcv-skills{flex:1.4;min-width:220px;display:flex;flex-direction:column;gap:9px}
+.mcv-skill-row{display:grid;grid-template-columns:150px 1fr;align-items:center;gap:10px}
+.mcv-skill-row .lbl{font-size:.76rem;color:#3d332a}
+.mcv-skill-bar{height:6px;background:#e3d9c4;border-radius:3px;overflow:hidden}
+.mcv-skill-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--bordeaux-2),var(--or));border-radius:3px}
+.mcv-portfolio{flex:1;min-width:180px;display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+.mcv-qr{width:92px;height:92px;background:#fff;border:1px solid #ddd0b8;padding:6px;display:grid;grid-template-columns:repeat(7,1fr);grid-template-rows:repeat(7,1fr);gap:1px}
+.mcv-qr i{background:#241a12}
+.mcv-qr i.off{background:transparent}
+.mcv-portfolio .cap{font-size:.7rem;color:#7a6a4f;line-height:1.4;max-width:20ch}
+.mcv-portfolio .soc{display:flex;align-items:center;gap:8px;font-size:.76rem;color:#3d332a}
+.mcv-portfolio .soc svg{width:15px;height:15px;color:var(--bordeaux-2)}
+.mcv-strip{display:flex;gap:0;margin-top:8px}
+@media(max-width:560px){.mcv-strip{flex-direction:column}}
+.mcv-strip-photos{flex:1;display:grid;grid-template-columns:repeat(5,1fr);gap:2px}
+.mcv-strip-photos div,.mcv-strip-photos img{aspect-ratio:3/4;background:linear-gradient(165deg,#5c4a3a,#241a12);object-fit:cover;width:100%}
+.mcv-strip-contact{
+  width:230px;flex-shrink:0;background:linear-gradient(160deg,var(--bordeaux-2),#3a0a13);color:var(--ivoire);
+  padding:14px 16px;font-size:.68rem;line-height:1.6;display:flex;flex-direction:column;gap:6px;
+}
+@media(max-width:560px){.mcv-strip-contact{width:100%}}
+.mcv-strip-contact b{font-size:.72rem;letter-spacing:.06em}
+.mcv-strip-contact .row{display:flex;align-items:center;gap:7px}
+.mcv-strip-contact svg{width:12px;height:12px;flex-shrink:0;color:var(--or-clair)}
+.mcv-strip-contact small{margin-top:auto;letter-spacing:.14em;color:var(--or-clair);font-size:.6rem;padding-top:6px}
+
+/* ---------- compcard print sheet ---------- */
+.compcard-sheet{width:100%;max-width:520px;background:var(--ivoire);color:#241a12}
+.cc-top{aspect-ratio:3/4;background:linear-gradient(160deg,#5c0f1e,#0d0a08);position:relative;overflow:hidden}
+.cc-top img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cc-top .cc-name{position:absolute;bottom:16px;left:18px;color:var(--ivoire);font-family:var(--serif);font-style:italic;font-size:1.6rem;z-index:1}
+.cc-meas-strip{display:flex;justify-content:space-around;padding:12px 10px;background:#efe6d4;font-size:.7rem;text-align:center}
+.cc-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:#ddd0b8}
+.cc-grid div,.cc-grid img{aspect-ratio:3/4;background:linear-gradient(160deg,#7a1626,#151009);object-fit:cover;width:100%}
+.cc-brand{text-align:center;padding:10px;font-size:.66rem;letter-spacing:.15em;color:#7a6a4f;text-transform:uppercase}
+
+@media print{
+  body *{visibility:hidden}
+  .print-area,.print-area *{visibility:visible}
+  .print-area{position:absolute;top:0;left:0;width:100%}
+  .overlay-close,.cv-actions,.demo-banner{display:none!important}
+}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+</style>
+
+<style id="ma2m-premium-ui">
+/* MA2M PREMIUM UI — presentation layer only */
+:root{--m-black:#080707;--m-black2:#111010;--m-wine:#5d0d1d;--m-wine2:#7d182b;--m-ivory:#f7f0e6;--m-muted:rgba(247,240,230,.62);--m-dim:rgba(247,240,230,.36);--m-gold:#c9a45b;--m-gold2:#e4c77f;--m-line:rgba(247,240,230,.11);--m-ok:#86ae83;--m-red:#d88a93;}
+html{scroll-behavior:smooth}body{background:radial-gradient(900px 500px at 5% -5%,rgba(93,13,29,.36),transparent 65%),radial-gradient(700px 450px at 100% 0,rgba(201,164,91,.08),transparent 60%),linear-gradient(180deg,#080707,#0d0b0b);color:var(--m-ivory);overflow-x:hidden}body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;background:linear-gradient(rgba(255,255,255,.012) 1px,transparent 1px);background-size:100% 5px;opacity:.12}
+.shell{max-width:1180px;padding:28px 28px 90px}.top{margin-bottom:38px;padding-bottom:20px;border-bottom:1px solid var(--m-line);position:relative}.top:after{content:"";position:absolute;left:0;bottom:-1px;width:82px;height:1px;background:linear-gradient(90deg,var(--m-gold),transparent)}
+.wordmark .mark{font-size:2.15rem;color:var(--m-ivory);letter-spacing:.045em}.wordmark .full{font-size:.54rem;letter-spacing:.28em;color:var(--m-gold2)}.espace-tag{font-size:.6rem;letter-spacing:.13em;text-transform:uppercase;color:var(--m-dim)}.espace-tag b{font-size:1.2rem;color:var(--m-ivory)}
+.greet{background:linear-gradient(135deg,rgba(93,13,29,.65),rgba(17,16,16,.96) 65%);border:1px solid rgba(201,164,91,.3);border-radius:4px;padding:34px 38px;box-shadow:0 24px 80px rgba(0,0,0,.25);position:relative;overflow:hidden}.greet:after{content:"MA2M";position:absolute;right:-20px;bottom:-50px;font:600 italic 9rem 'Cormorant Garamond',serif;color:rgba(255,255,255,.025)}.greet h1{font-size:2.2rem;line-height:1;font-style:italic}.greet p{color:var(--m-muted);font-size:.84rem}.progress-track{height:4px;background:rgba(255,255,255,.08);border-radius:10px}.progress-fill{background:linear-gradient(90deg,var(--m-wine2),var(--m-gold2));box-shadow:0 0 16px rgba(201,164,91,.2)}.progress-pct{color:var(--m-gold2)}
+.stepper{grid-template-columns:repeat(6,1fr);border:1px solid var(--m-line);border-radius:3px;background:rgba(255,255,255,.015);overflow:hidden}.step-tab{border-color:var(--m-line);padding:15px 8px;color:var(--m-dim);font-size:.6rem;text-transform:uppercase;letter-spacing:.07em}.step-tab:hover{background:rgba(201,164,91,.05);color:var(--m-ivory)}.step-tab.active{background:linear-gradient(180deg,rgba(125,24,43,.3),rgba(93,13,29,.08));color:var(--m-ivory)}.step-tab.active:after{content:"";position:absolute;left:20%;right:20%;bottom:0;height:2px;background:linear-gradient(90deg,transparent,var(--m-gold),transparent)}.step-tab.active .n{color:var(--m-gold2)}.step-tab.done .n:after{color:var(--m-ok)}
+.panel{background:rgba(17,16,16,.94);border:1px solid var(--m-line);border-radius:4px;padding:34px clamp(20px,4vw,48px);box-shadow:0 18px 65px rgba(0,0,0,.2)}.panel h2{font-size:1.9rem}.panel .sub{font-size:.72rem;color:var(--m-dim)}
+.field label{font-size:.61rem;text-transform:uppercase;letter-spacing:.1em;color:var(--m-muted)}.field input[type=text],.field input[type=date],.field input[type=tel],.field input[type=email],.field input[type=number],.field select,.field textarea{background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.13);border-radius:2px;min-height:47px;padding:13px 14px}.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--m-gold);background:rgba(201,164,91,.045);box-shadow:0 0 0 3px rgba(201,164,91,.05)}
+.radio-opt,.check-opt{padding:9px 13px;border:1px solid var(--m-line);background:rgba(255,255,255,.018);color:var(--m-muted)}.radio-opt.selected,.check-opt.selected{border-color:rgba(201,164,91,.32);background:rgba(201,164,91,.055);color:var(--m-ivory)}
+.btn{min-height:43px;border-radius:2px;border-color:rgba(201,164,91,.38);color:var(--m-gold2);font-size:.62rem;letter-spacing:.1em}.btn:hover{background:rgba(201,164,91,.07);border-color:var(--m-gold);transform:translateY(-1px)}.btn.primary{border-color:var(--m-wine2);background:linear-gradient(135deg,#7d182b,#4e0a16);color:var(--m-ivory)}.btn.ghost{border-color:var(--m-line);color:var(--m-muted)}
+.exp-card,.doc-row,.recap-block{border-color:var(--m-line);background:rgba(255,255,255,.014);border-radius:2px}.exp-fields select,.exp-fields input{background:rgba(255,255,255,.025);border-color:var(--m-line)}.type-chip{border-color:var(--m-line);color:var(--m-dim)}
+.upload-box{border:1px dashed rgba(201,164,91,.42);border-radius:3px;background:linear-gradient(135deg,rgba(93,13,29,.12),rgba(255,255,255,.015));transition:.25s}.upload-box:hover{border-color:var(--m-gold);background:rgba(201,164,91,.045)}.upload-box.filled{border-style:solid}.book-thumb,.book-add{border-color:var(--m-line);border-radius:2px}.book-add{border-style:dashed;border-color:rgba(201,164,91,.4);background:rgba(255,255,255,.015)}.book-add:hover{border-color:var(--m-gold);background:rgba(201,164,91,.05)}.cc-counter b{color:var(--m-gold2)}
+.visible-toggle{border-color:rgba(201,164,91,.3);background:rgba(201,164,91,.035)}.status-pill{border-color:var(--m-gold);color:var(--m-gold2)}.status-pill.online{border-color:var(--m-ok);color:var(--m-ok)}.status-pill.refuse{border-color:var(--m-red);color:var(--m-red)}
+.confirm .check{border-color:var(--m-gold);color:var(--m-gold2);box-shadow:0 0 0 8px rgba(201,164,91,.035),0 0 45px rgba(201,164,91,.08)}
+.online-banner{color:var(--m-ok);font-size:.61rem;letter-spacing:.11em;text-transform:uppercase}.blocks-grid{gap:13px}.block-card{min-height:185px;padding:24px;border-color:var(--m-line);background:linear-gradient(145deg,rgba(255,255,255,.025),rgba(255,255,255,.008));border-radius:3px;overflow:hidden}.block-card:before{content:"";position:absolute;left:0;top:0;width:2px;height:0;background:linear-gradient(var(--m-gold),var(--m-wine2));transition:.3s}.block-card:hover{border-color:rgba(201,164,91,.32);transform:translateY(-2px);box-shadow:0 16px 40px rgba(0,0,0,.18)}.block-card:hover:before{height:100%}.block-card h3{font-size:1.35rem}.block-card p{color:var(--m-dim)}.cv-cta{border-color:rgba(201,164,91,.3);background:linear-gradient(135deg,rgba(93,13,29,.22),rgba(201,164,91,.02));border-radius:3px;padding:23px 24px}.cv-cta .txt h3{font-size:1.3rem}.cv-cta .txt p{color:var(--m-dim)}.lock-note{color:var(--m-dim)}
+.toast{background:#151212;border-color:var(--m-ok);border-radius:2px}.toast.err{border-color:var(--m-red)}.admin-sim{background:rgba(10,9,9,.96);border-color:var(--m-gold);border-radius:3px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+.overlay{background:rgba(4,3,3,.93);backdrop-filter:blur(12px)}.overlay-close button{border-color:var(--m-line);background:rgba(8,7,7,.8)}.overlay-close button:hover{border-color:var(--m-gold);color:var(--m-gold2)}
+@media(max-width:900px){.shell{padding:24px 18px 70px}.mcv-main{padding:27px}}
+@media(max-width:700px){.shell{padding:18px 13px 55px}.stepper{grid-template-columns:repeat(3,1fr)}.panel{padding:25px 18px}.grid,.grid.g3{grid-template-columns:1fr}.blocks-grid{grid-template-columns:1fr}.book-grid{grid-template-columns:repeat(3,1fr)}.exp-card{align-items:stretch;flex-direction:column}.exp-fields{grid-template-columns:1fr 1fr}.mcv-wrap{flex-direction:column}.mcv-side{width:100%}.mcv-main{padding:22px 18px}.mcv-bottom-row{grid-template-columns:1fr}.mcv-strip{flex-direction:column}.mcv-strip-contact{width:100%}}
+@media(max-width:480px){.espace-tag{display:none}.greet{padding:25px 21px}.greet h1{font-size:1.85rem}.stepper{grid-template-columns:repeat(2,1fr)}.step-tab{padding:12px 5px;font-size:.54rem}.actions-row{flex-direction:column-reverse;align-items:stretch}.actions-row .btn{width:100%}.upload-grid{grid-template-columns:1fr 1fr;gap:9px}.book-grid{grid-template-columns:repeat(2,1fr)}.mcv-profil-row,.mcv-two-col{display:flex;flex-direction:column}.mcv-side-tag{width:100%;display:grid;grid-template-columns:repeat(3,1fr)}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.001ms!important;transition-duration:.001ms!important;scroll-behavior:auto!important}}
+
+/* ---------- premium dashboard block editors ---------- */
+.block-edit{
+  margin-top:18px;
+  padding:22px;
+  border:1px solid rgba(201,162,74,.22);
+  border-radius:16px;
+  background:
+    radial-gradient(circle at 100% 0, rgba(122,22,38,.10), transparent 34%),
+    linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.012));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.025),0 18px 42px rgba(0,0,0,.18);
+}
+.block-edit.dirty{border-color:rgba(201,162,74,.34)}
+.editor-head{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:18px;
+  padding-bottom:18px;margin-bottom:20px;border-bottom:1px solid rgba(244,237,225,.10)
+}
+.editor-head h4{margin:4px 0 5px;color:var(--ivoire);font-family:var(--serif);font-style:italic;font-weight:500;font-size:1.35rem}
+.editor-head p{margin:0;color:var(--texte-tres-clair);font-size:.78rem;line-height:1.6;max-width:680px}
+.editor-kicker{display:inline-block;color:var(--or-clair);font-size:.58rem;letter-spacing:.18em;text-transform:uppercase}
+.editor-inline-field{margin-top:18px}
+.editor-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px;padding-top:18px;border-top:1px solid rgba(244,237,225,.09)}
+.block-edit .upload-grid{margin-top:4px}
+.block-edit .book-grid{margin-top:6px}
+.block-edit .doc-row{background:rgba(255,255,255,.015)}
+.block-edit .sub{margin-bottom:12px}
+@media(max-width:620px){
+  .block-edit{padding:16px;border-radius:13px}
+  .editor-head{flex-direction:column}
+  .editor-head .btn{align-self:flex-start}
+  .editor-actions{justify-content:stretch}
+  .editor-actions .btn{width:100%;justify-content:center}
+}
+</style>
+
+<style id="ma2m-block-page-editor">
+.block-editor-page{max-width:1120px;margin:0 auto;padding:0 0 70px}
+.block-editor-top{margin:22px 0 18px;padding:8px 2px}
+.block-editor-top h1{font-family:var(--serif);font-style:italic;font-weight:500;font-size:2rem;color:var(--m-ivory,#f4ede1);margin:4px 0 8px}
+.block-editor-top p{margin:0;max-width:760px;color:var(--m-dim,#aaa);font-size:.78rem;line-height:1.7}
+.block-editor-panel{padding:34px 30px;box-shadow:0 22px 60px rgba(0,0,0,.28)}
+.block-editor-panel h2{font-size:1.75rem;margin-top:0}
+.block-editor-panel .sub{line-height:1.7}
+.editor-page-actions{display:flex;justify-content:flex-end;margin-top:30px;padding-top:24px;border-top:1px solid var(--m-line,rgba(255,255,255,.12))}
+.editor-save{min-width:190px;background:linear-gradient(135deg,#8b182e,#b3213d)!important;border:1px solid rgba(255,120,140,.38)!important;color:#fff!important;box-shadow:0 10px 30px rgba(112,14,35,.28)}
+.editor-save:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.editor-save.saved{background:linear-gradient(135deg,#1f6b45,#2f9b67)!important;border-color:rgba(119,226,165,.42)!important;color:#fff!important;box-shadow:0 10px 30px rgba(21,103,64,.24)}
+.editor-save:disabled{opacity:.92;cursor:wait}
+@media(max-width:700px){.block-editor-page{padding-bottom:35px}.block-editor-panel{padding:25px 18px}.editor-page-actions{justify-content:stretch}.editor-save{width:100%;min-width:0}}
+</style>
+
+<style id="ma2m-photo-system-v2">
+.photo-principals-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:22px 0 30px}
+.principal-photo-card{position:relative;min-height:300px;border:1px solid rgba(255,255,255,.10);background:linear-gradient(145deg,#171414,#0c0b0b);border-radius:16px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;justify-content:flex-end;padding:18px;transition:.25s ease;box-shadow:0 16px 45px rgba(0,0,0,.20)}
+.principal-photo-card:hover{border-color:rgba(184,139,61,.65);transform:translateY(-2px)}
+.principal-photo-card>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.72}
+.principal-photo-card:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%,rgba(7,6,6,.92) 100%);z-index:1}
+.principal-photo-card>*:not(img):not(.hidden-input){position:relative;z-index:2}
+.principal-photo-badge{display:inline-flex;align-self:flex-start;border:1px solid rgba(211,172,94,.45);color:#d8bd83;background:rgba(16,12,10,.78);padding:7px 9px;border-radius:999px;font-size:.62rem;letter-spacing:.14em;margin-bottom:10px}
+.principal-photo-badge.profile{border-color:rgba(151,81,91,.7);color:#e1a6ad}.principal-photo-badge.fullbody{color:#ddd1b8}
+.principal-photo-title{font-family:var(--serif);font-style:italic;font-size:1.28rem;color:#f4eee5}.principal-photo-hint{font-size:.72rem;color:#c0b8ad;margin-top:5px;line-height:1.5}
+.compcard-builder,.book-section,.documents-section{margin:26px 0;padding:22px;border:1px solid rgba(255,255,255,.08);border-radius:16px;background:rgba(255,255,255,.018)}
+.section-title-row{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:18px}.section-title-row h3{margin:4px 0;font-family:var(--serif);font-size:1.35rem;font-weight:500;font-style:italic;color:#f0e8dc}.section-title-row p{margin:0;color:#958d85;font-size:.76rem}.cc-rule{font-size:.64rem;letter-spacing:.1em;color:#bda979;text-transform:uppercase;white-space:nowrap}
+.compcard-slots{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}.compcard-slot{min-width:0;border:1px solid rgba(255,255,255,.10);border-radius:12px;overflow:hidden;background:#111;position:relative}.compcard-slot.fixed{border-color:rgba(190,151,73,.42)}.cc-slot-num{position:absolute;z-index:3;top:8px;left:8px;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.75);border:1px solid rgba(255,255,255,.2);font-size:.68rem;color:#f5eee5}.cc-slot-content{min-height:190px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:10px;position:relative}.cc-slot-content img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.82}.cc-slot-content:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(0,0,0,.85));}.cc-slot-label,.cc-slot-content small,.cc-slot-plus{position:relative;z-index:2}.cc-slot-label{font-size:.64rem;letter-spacing:.08em;text-align:center;color:#eee7dc;text-transform:uppercase}.cc-slot-content small{font-size:.57rem;color:#b5a995;margin-top:3px}.cc-slot-plus{font-size:2rem;color:#766f66}.cc-builder-note{font-size:.7rem;color:#8e867d;margin:14px 0 0}
+.book-multi-upload{display:inline-flex;align-items:center;gap:8px;padding:11px 15px;border:1px solid rgba(190,151,73,.55);border-radius:9px;color:#d7bd88;font-size:.72rem;letter-spacing:.05em;cursor:pointer;background:rgba(190,151,73,.06)}.book-multi-upload:hover{background:rgba(190,151,73,.12)}
+.book-thumb{position:relative}.book-thumb.cc-selected{outline:1px solid rgba(190,151,73,.65);outline-offset:-1px}.book-slot-tag{position:absolute;left:8px;top:8px;z-index:4;background:rgba(20,14,10,.86);color:#e3c788;border:1px solid rgba(210,170,87,.55);border-radius:5px;padding:4px 6px;font-size:.55rem;letter-spacing:.08em}.book-select-btn{position:absolute;left:8px;right:8px;bottom:8px;z-index:4;border:1px solid rgba(255,255,255,.22);background:rgba(8,7,7,.78);color:#eee7dc;border-radius:7px;padding:8px;font-size:.62rem;cursor:pointer}.book-thumb.cc-selected .book-select-btn{border-color:#b9934b;color:#e5c986}
+.cc-counter{padding:12px 14px;border:1px solid rgba(255,255,255,.08);border-radius:9px;background:rgba(255,255,255,.025);color:#aaa198}.cc-counter b{color:#d8bd83}.cc-counter.full{border-color:rgba(101,154,104,.4)}
+@media(max-width:900px){.photo-principals-grid{grid-template-columns:1fr 1fr}.principal-photo-card:last-child{grid-column:1/-1}.compcard-slots{grid-template-columns:repeat(5, minmax(115px,1fr));overflow-x:auto;padding-bottom:5px}.section-title-row{align-items:flex-start;flex-direction:column}}
+@media(max-width:600px){.photo-principals-grid{grid-template-columns:1fr}.principal-photo-card:last-child{grid-column:auto}.compcard-builder,.book-section,.documents-section{padding:15px}.principal-photo-card{min-height:260px}.compcard-slots{display:flex}.compcard-slot{width:120px;flex:0 0 120px}.cc-slot-content{min-height:170px}}
+</style>
+
+
+<style id="ma2m-independent-compcard-ui">.cc-upload-btn{position:relative;z-index:6;display:inline-flex;align-items:center;justify-content:center;margin-top:8px;border:1px solid rgba(190,151,73,.42);background:rgba(190,151,73,.10);color:#e7d09a;border-radius:7px;padding:6px 9px;font-size:.57rem;letter-spacing:.05em;text-transform:uppercase;cursor:pointer}.cc-upload-btn .hidden-input{display:none!important}.book-select-btn,.principal-cc-btn{display:none!important}.book-slot-tag{display:none!important}</style><style id="ma2m-compcard-model-v3">
+.principal-cc-btn{position:relative;z-index:5;margin-top:10px;align-self:flex-start;border:1px solid rgba(201,164,91,.4);background:rgba(9,8,8,.72);color:#e1c98d;border-radius:7px;padding:8px 10px;font-size:.6rem;cursor:pointer}.principal-cc-btn:hover{background:rgba(201,164,91,.12)}.cc-editable-slot{cursor:pointer}.cc-editable-slot:hover{border-color:rgba(201,164,91,.75);transform:translateY(-2px)}
+.cc-editable-slot small{color:#c9b789!important;text-align:center;line-height:1.4}.cc-clear-slot{position:relative;z-index:5;margin-top:7px;border:1px solid rgba(255,255,255,.18);background:rgba(8,7,7,.76);color:#e6ded3;border-radius:6px;padding:5px 8px;font-size:.55rem;cursor:pointer}.cc-active-slot{margin:0 0 14px;padding:10px 12px;border:1px solid rgba(190,151,73,.22);border-radius:8px;background:rgba(190,151,73,.045);color:#aaa198;font-size:.68rem}.cc-active-slot b{color:#dfc78f}.editable-slots .compcard-slot{min-height:210px}
+.compcard-model{width:min(100%,900px);background:#090909;color:#fff;box-shadow:0 28px 90px rgba(0,0,0,.45);font-family:Arial,Helvetica,sans-serif}.ccm-header{height:108px;background:#8e1024;display:flex;align-items:center;justify-content:space-between;padding:0 7.2%;gap:20px}.ccm-logo{font-size:14px;font-weight:800;letter-spacing:.02em;line-height:1}.ccm-logo small{display:block;font-size:6px;letter-spacing:.12em;margin-top:3px}.ccm-title{font-size:42px;font-weight:500;letter-spacing:-.03em}.ccm-photo-grid{display:grid;grid-template-columns:1.8fr 1fr;gap:12px;padding:18px 7.2% 0}.ccm-cover,.ccm-side-grid>div{background:#1a1817;overflow:hidden}.ccm-cover{aspect-ratio:1/1.2}.ccm-side-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.ccm-side-grid>div{aspect-ratio:3/4}.ccm-photo-grid img{width:100%;height:100%;display:block;object-fit:cover}.cc-empty-photo{height:100%;display:grid;place-items:center;color:#8d8377;font-size:11px;letter-spacing:.12em;text-align:center;padding:15px}.ccm-body{padding:22px 7.2% 42px}.ccm-body h1{margin:0;font-size:39px;font-weight:500;letter-spacing:.01em}.ccm-meta{margin-top:10px;color:#bd334b;font-size:17px}.ccm-measures{display:grid;grid-template-columns:repeat(3,1fr);gap:20px 70px;margin-top:28px}.ccm-measures div{display:flex;flex-direction:column;gap:5px}.ccm-measures span{font-size:12px;color:#8e8882;letter-spacing:.08em}.ccm-measures b{font-size:20px;font-weight:500;color:#fff}.ccm-footer{background:#8e1024;padding:25px 7.2% 27px;font-size:14px;line-height:1.8}.ccm-footer b{font-size:16px}.ccm-footer small{display:block;margin-top:14px;font-size:9px;font-style:italic;line-height:1.5;opacity:.9}
+@media(max-width:700px){.ccm-header{height:82px;padding:0 5%}.ccm-title{font-size:28px}.ccm-photo-grid{padding:12px 5% 0;gap:7px}.ccm-side-grid{gap:7px}.ccm-body{padding:18px 5% 30px}.ccm-body h1{font-size:29px}.ccm-meta{font-size:14px}.ccm-measures{gap:17px 20px}.ccm-measures span{font-size:9px}.ccm-measures b{font-size:16px}.ccm-footer{padding:20px 5%;font-size:11px}}
+@media(max-width:480px){.ccm-header{height:70px}.ccm-logo{font-size:10px}.ccm-title{font-size:23px}.ccm-photo-grid{grid-template-columns:1.5fr 1fr}.ccm-measures{grid-template-columns:repeat(2,1fr)}.ccm-body h1{font-size:25px}}
+@media print{body *{visibility:hidden!important}.print-area,.print-area *{visibility:visible!important}.print-area{position:absolute!important;left:0!important;top:0!important;width:100%!important;box-shadow:none!important}.compcard-model{max-width:none!important}.cv-sheet .mcv-strip{display:none!important}}
+</style>
+
+<style id="ma2m-step0-emotional-experience">
+/* ================================================================
+   MA2M — ÉTAPE 0 / EXPÉRIENCE ÉMOTIONNELLE + MODE CONSTRUCTION BLEU
+   Couche UI additive : ne remplace aucune logique métier existante.
+   ================================================================ */
+:root{
+  --ma2m-blue:#071326;
+  --ma2m-blue-2:#0b1d39;
+  --ma2m-blue-line:rgba(104,166,255,.28);
+  --ma2m-blue-glow:rgba(73,139,255,.18);
+}
+body.ma2m-construction{
+  background:
+    radial-gradient(900px 520px at 12% 0%,rgba(32,91,170,.30),transparent 62%),
+    radial-gradient(800px 560px at 100% 18%,rgba(78,126,204,.14),transparent 62%),
+    linear-gradient(145deg,#03070f 0%,#071326 48%,#02050b 100%);
+}
+body.ma2m-construction .greet,
+body.ma2m-construction .panel,
+body.ma2m-construction .stepper{
+  border-color:var(--ma2m-blue-line);
+  background-image:linear-gradient(145deg,rgba(7,19,38,.94),rgba(7,13,25,.86));
+  box-shadow:0 24px 80px rgba(0,0,0,.22),0 0 50px var(--ma2m-blue-glow);
+}
+body.ma2m-construction .progress-fill{background:linear-gradient(90deg,#477fc8,#a9cfff);box-shadow:0 0 20px rgba(91,153,245,.32)}
+body.ma2m-construction .step-tab.active{border-color:rgba(121,176,255,.5);background:rgba(54,106,175,.16);color:#d8e9ff}
+body.ma2m-construction .btn.primary{background:linear-gradient(135deg,#173d70,#245b9d);border-color:rgba(149,197,255,.48);box-shadow:0 10px 35px rgba(23,83,155,.22)}
+body.ma2m-construction input:focus,body.ma2m-construction select:focus,body.ma2m-construction textarea:focus{border-color:rgba(119,180,255,.65);box-shadow:0 0 0 3px rgba(65,130,220,.12)}
+body.ma2m-construction .top{border-bottom-color:rgba(104,166,255,.25)}
+
+#ma2mWelcome{
+  position:fixed;inset:0;z-index:99990;display:flex;align-items:center;justify-content:center;
+  overflow:hidden;background:#020202;color:#f4ede1;isolation:isolate;
+}
+#ma2mWelcome::before{content:"";position:absolute;inset:-20%;background:radial-gradient(ellipse at 50% 52%,rgba(92,15,30,.20),transparent 38%),radial-gradient(ellipse at 78% 22%,rgba(201,162,74,.06),transparent 30%);animation:ma2mAtmosphere 9s ease-in-out infinite alternate}
+#ma2mWelcome::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.78),rgba(0,0,0,.18) 50%,rgba(0,0,0,.75)),radial-gradient(circle at center,transparent 25%,rgba(0,0,0,.55) 100%);pointer-events:none}
+.ma2m-welcome-inner{position:relative;z-index:2;width:min(980px,92vw);min-height:min(760px,92dvh);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:44px 22px}
+.ma2m-logo-reveal{font-family:var(--serif);font-size:clamp(3.5rem,11vw,8rem);line-height:.82;letter-spacing:.08em;color:#e8c77c;font-style:italic;font-weight:500;opacity:0;transform:translateY(18px) scale(.98);animation:ma2mLogoIn 1.8s cubic-bezier(.16,1,.3,1) .2s forwards;text-shadow:0 0 30px rgba(201,162,74,.13)}
+.ma2m-logo-sub{margin-top:17px;font-size:clamp(.58rem,1.5vw,.78rem);letter-spacing:.36em;text-transform:uppercase;color:rgba(244,237,225,.52);opacity:0;animation:ma2mFadeUp 1.2s ease 1.2s forwards}
+.ma2m-gold-line{width:min(190px,34vw);height:1px;margin:35px auto 42px;background:linear-gradient(90deg,transparent,#c9a24a,transparent);transform:scaleX(0);animation:ma2mLine 1.3s ease 1.65s forwards;box-shadow:0 0 18px rgba(201,162,74,.3)}
+.ma2m-opening-quote{max-width:720px;font-family:var(--serif);font-size:clamp(1.65rem,4.5vw,3.25rem);line-height:1.12;font-weight:400;letter-spacing:.01em;color:#f5eee3;opacity:0;transform:translateY(18px);animation:ma2mFadeUp 1.35s ease 2.05s forwards}
+.ma2m-opening-quiet{margin-top:28px;font-size:.64rem;letter-spacing:.32em;text-transform:uppercase;color:rgba(244,237,225,.34);opacity:0;animation:ma2mFadeUp 1s ease 3s forwards}
+.ma2m-welcome-copy{position:absolute;left:50%;bottom:118px;transform:translateX(-50%);width:min(720px,88vw);opacity:0;transition:opacity .7s ease,transform .7s ease}
+#ma2mWelcome.ready .ma2m-welcome-copy{opacity:1;transform:translateX(-50%)}
+.ma2m-welcome-copy p{margin:0 auto;color:rgba(244,237,225,.72);font-family:var(--serif);font-size:clamp(1.08rem,2.4vw,1.5rem);line-height:1.45}
+.ma2m-welcome-copy strong{display:block;color:#e5c170;font-size:clamp(.72rem,1.3vw,.9rem);letter-spacing:.28em;text-transform:uppercase;margin-bottom:12px;font-family:var(--sans);font-weight:400}
+.ma2m-enter{position:absolute;bottom:44px;left:50%;transform:translateX(-50%) translateY(12px);opacity:0;min-width:250px;padding:14px 24px;border:1px solid rgba(201,162,74,.48);background:rgba(201,162,74,.06);color:#f3dfaa;font-family:var(--sans);font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;transition:all .3s ease;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+#ma2mWelcome.ready .ma2m-enter{opacity:1;transform:translateX(-50%) translateY(0);transition-delay:.15s}
+.ma2m-enter:hover{background:rgba(201,162,74,.13);border-color:#d9b65f;box-shadow:0 0 35px rgba(201,162,74,.12)}
+#ma2mWelcome.leaving{opacity:0;transform:scale(1.02);transition:opacity .9s ease,transform .9s ease;pointer-events:none}
+.ma2m-skip{position:absolute;top:calc(18px + env(safe-area-inset-top,0px));right:calc(18px + env(safe-area-inset-right,0px));z-index:3;border:0;background:transparent;color:rgba(244,237,225,.42);font:300 .62rem var(--sans);letter-spacing:.14em;text-transform:uppercase;cursor:pointer;padding:8px}
+.ma2m-skip:hover{color:#fff}
+@keyframes ma2mLogoIn{to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes ma2mFadeUp{to{opacity:1;transform:translateY(0)}}
+@keyframes ma2mLine{to{transform:scaleX(1)}}
+@keyframes ma2mAtmosphere{from{transform:scale(1) translate3d(-1%,0,0)}to{transform:scale(1.06) translate3d(1%,1%,0)}}
+
+.ma2m-soul-intro{margin:0 0 28px;padding:24px 24px 26px;border-left:1px solid rgba(201,162,74,.55);background:linear-gradient(90deg,rgba(201,162,74,.045),transparent);}
+.ma2m-soul-intro .kicker{font-size:.62rem;letter-spacing:.25em;text-transform:uppercase;color:#c9a24a;margin-bottom:9px}
+.ma2m-soul-intro h1{margin:0 0 10px;font-family:var(--serif);font-size:clamp(2rem,5vw,3.2rem);font-weight:500;line-height:1}
+.ma2m-soul-intro p{margin:0;max-width:720px;color:var(--texte-clair);font-size:.94rem;line-height:1.7}
+.ma2m-personal-note{margin-top:14px;color:#d9bd7c!important;font-family:var(--serif);font-size:1.1rem!important}
+@media(max-width:650px){.ma2m-welcome-inner{min-height:100dvh;padding:32px 18px}.ma2m-opening-quote{max-width:340px}.ma2m-opening-quiet{margin-top:20px}.ma2m-welcome-copy{bottom:106px}.ma2m-enter{bottom:30px;width:calc(100% - 36px)}.ma2m-soul-intro{padding:20px 18px}}
+@media(prefers-reduced-motion:reduce){#ma2mWelcome *{animation:none!important;transition:none!important}.ma2m-logo-reveal,.ma2m-logo-sub,.ma2m-opening-quote,.ma2m-opening-quiet,.ma2m-gold-line{opacity:1;transform:none}.ma2m-welcome-copy,.ma2m-enter{opacity:1;transform:translateX(-50%)}}
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha512-CNgIRecGo7nphbeZ04Sc13ka07paqdeTu0WR1IM4kNcpmBAUSHSQX0FslNhTDadL4O5SAGapGt4FodqL8My0mA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<style id="ma2m-premium-v18-fields">
+.mcv-qr-real{width:110px;height:110px;background:#fff;border:1px solid #ddd0b8;padding:5px;display:flex;align-items:center;justify-content:center}.mcv-qr-real img,.mcv-qr-real canvas{width:100%!important;height:100%!important;image-rendering:pixelated}.mcv-agency-footer{margin-top:0;background:linear-gradient(120deg,#5c0f1e,#2b0b12);color:#f4ede1;padding:16px 24px;text-align:center;display:flex;flex-direction:column;gap:4px;font-size:.72rem;line-height:1.5}.mcv-agency-footer strong{letter-spacing:.14em;color:#e4c681;font-size:.76rem}.mcv-agency-footer span{color:#e8dcd0}.field select{cursor:pointer}.field select option{background:#171314;color:#f4ede1}.mcv-portfolio .soc{overflow-wrap:anywhere}.ma2m-location-note{font-size:.65rem;color:var(--m-dim);margin-top:5px}
+@media(max-width:560px){.mcv-agency-footer{padding:15px 14px}.mcv-qr-real{width:100px;height:100px}}
+</style>
+</head>
+<body>
+
+<div class="demo-banner" id="demoBanner" style="display:none">
+  ⚠ <b>Mode démo</b> — Supabase non configuré dans ce fichier (voir <code>SUPABASE_URL</code> / <code>SUPABASE_ANON_KEY</code> en haut du script). Les données restent dans ce navigateur.
+</div>
+
+
+<div id="ma2mWelcome" aria-label="Bienvenue dans votre espace mannequin">
+  <button class="ma2m-skip" id="ma2mSkip" type="button">Passer l'introduction</button>
+  <div class="ma2m-welcome-inner">
+    <div class="ma2m-logo-reveal">MA2M</div>
+    <div class="ma2m-logo-sub">Maître Akesse · Model Management</div>
+    <div class="ma2m-gold-line"></div>
+    <div class="ma2m-opening-quote">« Vous êtes ici parce que quelque chose en vous mérite d'être vu. »</div>
+    <div class="ma2m-opening-quiet">Silence · présence · regard · identité</div>
+    <div class="ma2m-welcome-copy">
+      <strong>Ton espace commence ici</strong>
+      <p>Je ne veux pas que tu entres ici pour simplement remplir un formulaire. Je veux que tu construises ton identité professionnelle, ton image, ton parcours et ta signature.</p>
+    </div>
+    <button class="ma2m-enter" id="ma2mEnter" type="button">Entrer dans mon univers&nbsp; →</button>
+  </div>
+</div>
+
+<div class="shell" id="app">
+  <div class="auth-loading"><div class="spinner"></div><span>Chargement de votre espace…</span></div>
+</div>
+<div class="toast-wrap" id="toasts"></div>
+
+<div class="admin-sim" id="adminSim" style="display:none">
+  <h4>Simulation — Admin MA2M (démo)</h4>
+  <p id="adminSimTxt">Dossier en attente de validation.</p>
+  <button class="btn primary small block-btn" id="adminValidateBtn">Valider le dossier</button>
+  <button class="btn ghost small block-btn" id="adminRefuseBtn" style="margin-top:6px">Refuser / demander des corrections</button>
+</div>
+
+<div class="overlay hidden" id="overlay"><div id="overlayContent"></div></div>
+
+<script>
+/* =========================================================================
+   ESPACE MANNEQUIN — MA2M
+   Version connectée à Supabase, avec repli DÉMO (localStorage) si aucun
+   projet n'est configuré ci-dessous. Conçu pour être fusionné manuellement
+   dans espace-mannequin.html en respectant vos classes CSS et votre schéma
+   réels — voir NOTES-INTEGRATION-SUPABASE.md fourni avec ce fichier.
+   ========================================================================= */
+
+/* ---------------------------------------------------------- CONFIGURATION */
+const SUPABASE_URL = 'https://VOTRE-PROJET.supabase.co';      // ⚠️ à remplacer
+const SUPABASE_ANON_KEY = 'VOTRE-CLE-ANON-PUBLIQUE';           // ⚠️ à remplacer
+const LOGIN_PATH = 'connexion.html';                            // ⚠️ adapter au vrai chemin
+
+// Noms de tables supposés d'après le cahier des charges — À VÉRIFIER / ADAPTER
+// pour correspondre exactement à votre supabase-setup.sql / supabase-extension.sql
+const T = {
+  profiles:    'model_profiles',
+  experiences: 'model_experiences',
+  photos:      'model_photos',
+  documents:   'model_documents',
+};
+const BUCKET_PUBLIC  = 'model-photos-public';  // portrait, plein pied, book, compcard (public)
+const BUCKET_PRIVATE = 'model-private';        // pièce d'identité, autres documents (privé)
+
+const DEMO_MODE = SUPABASE_URL.includes('VOTRE-PROJET') || typeof window.supabase === 'undefined';
+
+let supa = null;
+if(!DEMO_MODE){
+  supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
+
+const LS_KEY = 'ma2m_espace_mannequin_demo_v2';
+let currentUser = null;
+
+/* --------------------------------------------------------------- TOASTS */
+function toast(msg, isErr){
+  const wrap = document.getElementById('toasts');
+  const el = document.createElement('div');
+  el.className = 'toast' + (isErr ? ' err' : '');
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(()=>{ el.style.opacity='0'; el.style.transition='opacity .3s'; setTimeout(()=>el.remove(),300); }, 2600);
+}
+
+/* ------------------------------------------------------------------ AUTH */
+async function initAuth(){
+  if(DEMO_MODE){
+    currentUser = { id:'demo-user', email:'demo@ma2m.test' };
+    return true;
+  }
+  try{
+    const { data:{ user }, error } = await supa.auth.getUser();
+    if(error || !user){
+      window.location.href = LOGIN_PATH;
+      return false;
+    }
+    currentUser = user;
+    return true;
+  }catch(e){
+    console.error(e);
+    toast("Erreur d'authentification", true);
+    return false;
+  }
+}
+
+/* ============================================================= LISTES PREMIUM
+   Données de sélection : pays/indicatifs ISO + 201 communes ivoiriennes +
+   communes du District autonome d'Abidjan. Les listes sont centralisées ici
+   afin que tous les écrans du profil utilisent les mêmes choix. */
+const MA2M_COUNTRIES = [{"iso":"AW","name":"Aruba","code":"297"},{"iso":"AF","name":"Afghanistan","code":"93"},{"iso":"AO","name":"Angola","code":"244"},{"iso":"AI","name":"Anguilla","code":"1264"},{"iso":"AX","name":"Îles Åland","code":"358"},{"iso":"AL","name":"Albanie","code":"355"},{"iso":"AD","name":"Andorre","code":"376"},{"iso":"AE","name":"Émirats arabes unis","code":"971"},{"iso":"AR","name":"Argentine","code":"54"},{"iso":"AM","name":"Arménie","code":"374"},{"iso":"AS","name":"Samoa américaines","code":"1684"},{"iso":"AQ","name":"Antarctique","code":""},{"iso":"TF","name":"Terres australes françaises","code":""},{"iso":"AG","name":"Antigua-et-Barbuda","code":"1268"},{"iso":"AU","name":"Australie","code":"61"},{"iso":"AT","name":"Autriche","code":"43"},{"iso":"AZ","name":"Azerbaïdjan","code":"994"},{"iso":"BI","name":"Burundi","code":"257"},{"iso":"BE","name":"Belgique","code":"32"},{"iso":"BJ","name":"Bénin","code":"229"},{"iso":"BQ","name":"Pays-Bas caribéens","code":"599"},{"iso":"BF","name":"Burkina Faso","code":"226"},{"iso":"BD","name":"Bangladesh","code":"880"},{"iso":"BG","name":"Bulgarie","code":"359"},{"iso":"BH","name":"Bahreïn","code":"973"},{"iso":"BS","name":"Bahamas","code":"1242"},{"iso":"BA","name":"Bosnie-Herzégovine","code":"387"},{"iso":"BL","name":"Saint-Barthélemy","code":"590"},{"iso":"BY","name":"Biélorussie","code":"375"},{"iso":"BZ","name":"Belize","code":"501"},{"iso":"BM","name":"Bermudes","code":"1441"},{"iso":"BO","name":"Bolivie","code":"591"},{"iso":"BR","name":"Brésil","code":"55"},{"iso":"BB","name":"Barbade","code":"1246"},{"iso":"BN","name":"Brunei","code":"673"},{"iso":"BT","name":"Bhoutan","code":"975"},{"iso":"BV","name":"Île Bouvet","code":"47"},{"iso":"BW","name":"Botswana","code":"267"},{"iso":"CF","name":"République centrafricaine","code":"236"},{"iso":"CA","name":"Canada","code":"1"},{"iso":"CC","name":"Îles Cocos","code":"61"},{"iso":"CH","name":"Suisse","code":"41"},{"iso":"CL","name":"Chili","code":"56"},{"iso":"CN","name":"Chine","code":"86"},{"iso":"CI","name":"Côte d’Ivoire","code":"225"},{"iso":"CM","name":"Cameroun","code":"237"},{"iso":"CD","name":"Congo-Kinshasa","code":"243"},{"iso":"CG","name":"Congo-Brazzaville","code":"242"},{"iso":"CK","name":"Îles Cook","code":"682"},{"iso":"CO","name":"Colombie","code":"57"},{"iso":"KM","name":"Comores","code":"269"},{"iso":"CV","name":"Cap-Vert","code":"238"},{"iso":"CR","name":"Costa Rica","code":"506"},{"iso":"CU","name":"Cuba","code":"53"},{"iso":"CW","name":"Curaçao","code":"599"},{"iso":"CX","name":"Île Christmas","code":"61"},{"iso":"KY","name":"Îles Caïmans","code":"1345"},{"iso":"CY","name":"Chypre","code":"357"},{"iso":"CZ","name":"Tchéquie","code":"420"},{"iso":"DE","name":"Allemagne","code":"49"},{"iso":"DJ","name":"Djibouti","code":"253"},{"iso":"DM","name":"Dominique","code":"1767"},{"iso":"DK","name":"Danemark","code":"45"},{"iso":"DO","name":"République dominicaine","code":"1809"},{"iso":"DZ","name":"Algérie","code":"213"},{"iso":"EC","name":"Équateur","code":"593"},{"iso":"EG","name":"Égypte","code":"20"},{"iso":"ER","name":"Érythrée","code":"291"},{"iso":"EH","name":"Sahara occidental","code":"212"},{"iso":"ES","name":"Espagne","code":"34"},{"iso":"EE","name":"Estonie","code":"372"},{"iso":"ET","name":"Éthiopie","code":"251"},{"iso":"FI","name":"Finlande","code":"358"},{"iso":"FJ","name":"Fidji","code":"679"},{"iso":"FK","name":"Îles Malouines","code":"500"},{"iso":"FR","name":"France","code":"33"},{"iso":"FO","name":"Îles Féroé","code":"298"},{"iso":"FM","name":"Micronésie","code":"691"},{"iso":"GA","name":"Gabon","code":"241"},{"iso":"GB","name":"Royaume-Uni","code":"44"},{"iso":"GE","name":"Géorgie","code":"995"},{"iso":"GG","name":"Guernesey","code":"44"},{"iso":"GH","name":"Ghana","code":"233"},{"iso":"GI","name":"Gibraltar","code":"350"},{"iso":"GN","name":"Guinée","code":"224"},{"iso":"GP","name":"Guadeloupe","code":"590"},{"iso":"GM","name":"Gambie","code":"220"},{"iso":"GW","name":"Guinée-Bissau","code":"245"},{"iso":"GQ","name":"Guinée équatoriale","code":"240"},{"iso":"GR","name":"Grèce","code":"30"},{"iso":"GD","name":"Grenade","code":"1473"},{"iso":"GL","name":"Groenland","code":"299"},{"iso":"GT","name":"Guatemala","code":"502"},{"iso":"GF","name":"Guyane française","code":"594"},{"iso":"GU","name":"Guam","code":"1671"},{"iso":"GY","name":"Guyana","code":"592"},{"iso":"HK","name":"R.A.S. chinoise de Hong Kong","code":"852"},{"iso":"HM","name":"Îles Heard-et-MacDonald","code":""},{"iso":"HN","name":"Honduras","code":"504"},{"iso":"HR","name":"Croatie","code":"385"},{"iso":"HT","name":"Haïti","code":"509"},{"iso":"HU","name":"Hongrie","code":"36"},{"iso":"ID","name":"Indonésie","code":"62"},{"iso":"IM","name":"Île de Man","code":"44"},{"iso":"IN","name":"Inde","code":"91"},{"iso":"IO","name":"Territoire britannique de l’océan Indien","code":"246"},{"iso":"IE","name":"Irlande","code":"353"},{"iso":"IR","name":"Iran","code":"98"},{"iso":"IQ","name":"Irak","code":"964"},{"iso":"IS","name":"Islande","code":"354"},{"iso":"IL","name":"Israël","code":"972"},{"iso":"IT","name":"Italie","code":"39"},{"iso":"JM","name":"Jamaïque","code":"1876"},{"iso":"JE","name":"Jersey","code":"44"},{"iso":"JO","name":"Jordanie","code":"962"},{"iso":"JP","name":"Japon","code":"81"},{"iso":"KZ","name":"Kazakhstan","code":"76"},{"iso":"KE","name":"Kenya","code":"254"},{"iso":"KG","name":"Kirghizstan","code":"996"},{"iso":"KH","name":"Cambodge","code":"855"},{"iso":"KI","name":"Kiribati","code":"686"},{"iso":"KN","name":"Saint-Christophe-et-Niévès","code":"1869"},{"iso":"KR","name":"Corée du Sud","code":"82"},{"iso":"KW","name":"Koweït","code":"965"},{"iso":"LA","name":"Laos","code":"856"},{"iso":"LB","name":"Liban","code":"961"},{"iso":"LR","name":"Liberia","code":"231"},{"iso":"LY","name":"Libye","code":"218"},{"iso":"LC","name":"Sainte-Lucie","code":"1758"},{"iso":"LI","name":"Liechtenstein","code":"423"},{"iso":"LK","name":"Sri Lanka","code":"94"},{"iso":"LS","name":"Lesotho","code":"266"},{"iso":"LT","name":"Lituanie","code":"370"},{"iso":"LU","name":"Luxembourg","code":"352"},{"iso":"LV","name":"Lettonie","code":"371"},{"iso":"MO","name":"R.A.S. chinoise de Macao","code":"853"},{"iso":"MF","name":"Saint-Martin","code":"590"},{"iso":"MA","name":"Maroc","code":"212"},{"iso":"MC","name":"Monaco","code":"377"},{"iso":"MD","name":"Moldavie","code":"373"},{"iso":"MG","name":"Madagascar","code":"261"},{"iso":"MV","name":"Maldives","code":"960"},{"iso":"MX","name":"Mexique","code":"52"},{"iso":"MH","name":"Îles Marshall","code":"692"},{"iso":"MK","name":"Macédoine du Nord","code":"389"},{"iso":"ML","name":"Mali","code":"223"},{"iso":"MT","name":"Malte","code":"356"},{"iso":"MM","name":"Myanmar (Birmanie)","code":"95"},{"iso":"ME","name":"Monténégro","code":"382"},{"iso":"MN","name":"Mongolie","code":"976"},{"iso":"MP","name":"Îles Mariannes du Nord","code":"1670"},{"iso":"MZ","name":"Mozambique","code":"258"},{"iso":"MR","name":"Mauritanie","code":"222"},{"iso":"MS","name":"Montserrat","code":"1664"},{"iso":"MQ","name":"Martinique","code":"596"},{"iso":"MU","name":"Maurice","code":"230"},{"iso":"MW","name":"Malawi","code":"265"},{"iso":"MY","name":"Malaisie","code":"60"},{"iso":"YT","name":"Mayotte","code":"262"},{"iso":"NA","name":"Namibie","code":"264"},{"iso":"NC","name":"Nouvelle-Calédonie","code":"687"},{"iso":"NE","name":"Niger","code":"227"},{"iso":"NF","name":"Île Norfolk","code":"672"},{"iso":"NG","name":"Nigeria","code":"234"},{"iso":"NI","name":"Nicaragua","code":"505"},{"iso":"NU","name":"Niue","code":"683"},{"iso":"NL","name":"Pays-Bas","code":"31"},{"iso":"NO","name":"Norvège","code":"47"},{"iso":"NP","name":"Népal","code":"977"},{"iso":"NR","name":"Nauru","code":"674"},{"iso":"NZ","name":"Nouvelle-Zélande","code":"64"},{"iso":"OM","name":"Oman","code":"968"},{"iso":"PK","name":"Pakistan","code":"92"},{"iso":"PA","name":"Panama","code":"507"},{"iso":"PN","name":"Îles Pitcairn","code":"64"},{"iso":"PE","name":"Pérou","code":"51"},{"iso":"PH","name":"Philippines","code":"63"},{"iso":"PW","name":"Palaos","code":"680"},{"iso":"PG","name":"Papouasie-Nouvelle-Guinée","code":"675"},{"iso":"PL","name":"Pologne","code":"48"},{"iso":"PR","name":"Porto Rico","code":"1787"},{"iso":"KP","name":"Corée du Nord","code":"850"},{"iso":"PT","name":"Portugal","code":"351"},{"iso":"PY","name":"Paraguay","code":"595"},{"iso":"PS","name":"Territoires palestiniens","code":"970"},{"iso":"PF","name":"Polynésie française","code":"689"},{"iso":"QA","name":"Qatar","code":"974"},{"iso":"RE","name":"La Réunion","code":"262"},{"iso":"RO","name":"Roumanie","code":"40"},{"iso":"RU","name":"Russie","code":"7"},{"iso":"RW","name":"Rwanda","code":"250"},{"iso":"SA","name":"Arabie saoudite","code":"966"},{"iso":"SD","name":"Soudan","code":"249"},{"iso":"SN","name":"Sénégal","code":"221"},{"iso":"SG","name":"Singapour","code":"65"},{"iso":"GS","name":"Géorgie du Sud-et-les Îles Sandwich du Sud","code":"500"},{"iso":"SH","name":"Sainte-Hélène","code":"290"},{"iso":"SJ","name":"Svalbard et Jan Mayen","code":"4779"},{"iso":"SB","name":"Îles Salomon","code":"677"},{"iso":"SL","name":"Sierra Leone","code":"232"},{"iso":"SV","name":"Salvador","code":"503"},{"iso":"SM","name":"Saint-Marin","code":"378"},{"iso":"SO","name":"Somalie","code":"252"},{"iso":"PM","name":"Saint-Pierre-et-Miquelon","code":"508"},{"iso":"RS","name":"Serbie","code":"381"},{"iso":"SS","name":"Soudan du Sud","code":"211"},{"iso":"ST","name":"Sao Tomé-et-Principe","code":"239"},{"iso":"SR","name":"Suriname","code":"597"},{"iso":"SK","name":"Slovaquie","code":"421"},{"iso":"SI","name":"Slovénie","code":"386"},{"iso":"SE","name":"Suède","code":"46"},{"iso":"SZ","name":"Eswatini","code":"268"},{"iso":"SX","name":"Saint-Martin (partie néerlandaise)","code":"1721"},{"iso":"SC","name":"Seychelles","code":"248"},{"iso":"SY","name":"Syrie","code":"963"},{"iso":"TC","name":"Îles Turques-et-Caïques","code":"1649"},{"iso":"TD","name":"Tchad","code":"235"},{"iso":"TG","name":"Togo","code":"228"},{"iso":"TH","name":"Thaïlande","code":"66"},{"iso":"TJ","name":"Tadjikistan","code":"992"},{"iso":"TK","name":"Tokelau","code":"690"},{"iso":"TM","name":"Turkménistan","code":"993"},{"iso":"TL","name":"Timor oriental","code":"670"},{"iso":"TO","name":"Tonga","code":"676"},{"iso":"TT","name":"Trinité-et-Tobago","code":"1868"},{"iso":"TN","name":"Tunisie","code":"216"},{"iso":"TR","name":"Turquie","code":"90"},{"iso":"TV","name":"Tuvalu","code":"688"},{"iso":"TW","name":"Taïwan","code":"886"},{"iso":"TZ","name":"Tanzanie","code":"255"},{"iso":"UG","name":"Ouganda","code":"256"},{"iso":"UA","name":"Ukraine","code":"380"},{"iso":"UM","name":"Îles mineures éloignées des États-Unis","code":"1"},{"iso":"UY","name":"Uruguay","code":"598"},{"iso":"US","name":"États-Unis","code":"1"},{"iso":"UZ","name":"Ouzbékistan","code":"998"},{"iso":"VA","name":"État de la Cité du Vatican","code":"39"},{"iso":"VC","name":"Saint-Vincent-et-les Grenadines","code":"1784"},{"iso":"VE","name":"Venezuela","code":"58"},{"iso":"VG","name":"Îles Vierges britanniques","code":"1284"},{"iso":"VI","name":"Îles Vierges des États-Unis","code":"1340"},{"iso":"VN","name":"Viêt Nam","code":"84"},{"iso":"VU","name":"Vanuatu","code":"678"},{"iso":"WF","name":"Wallis-et-Futuna","code":"681"},{"iso":"WS","name":"Samoa","code":"685"},{"iso":"YE","name":"Yémen","code":"967"},{"iso":"ZA","name":"Afrique du Sud","code":"27"},{"iso":"ZM","name":"Zambie","code":"260"},{"iso":"ZW","name":"Zimbabwe","code":"263"}];
+const MA2M_CI_CITIES = ["abengourou", "abobo", "aboisso", "adiake", "adjame", "adzope", "affery", "agboville", "agnibilekro", "agou", "akoupe", "alepe", "anoumaba", "anyama", "arrah", "assinie-mafia", "assuefry", "attecoube", "attiegouakro", "ayame", "azaguie", "bako", "bangolo", "bassawa", "bediala", "beoumi", "bettie", "biankouma", "bingerville", "binhouye", "bloolequin", "bocanda", "bodokro", "bondoukou", "bongouanou", "bonieredougou", "bonon", "bonoua", "booko", "borotou", "botro", "bouafle", "bouake", "bouna", "boundiali", "brobo", "buyo", "cocody", "dabakala", "dabou", "daloa", "danane", "daoukro", "diabo", "dianra", "diawala", "didievi", "diegonefla", "dikodougou", "dimbokro", "dioulatiedougou", "divo", "djebonoua", "djekanou", "djibrosso", "doropo", "dualla", "duekoue", "ettrokro", "facobly", "ferkessedougou", "foumbolo", "fresco", "fronan", "gagnoa", "gbeleban", "gboguhe", "gbon", "gbonne", "gohitafla", "goulia", "grabo", "grand lahou", "grand zattry", "grand-bassam", "grand-bereby", "gueyo", "guiberoua", "guiembe", "guiglo", "guinteguela", "guitry", "hire", "issia", "jacqueville", "kanakono", "kani", "kaniasso", "karakoro", "kassere", "katiola", "kokoumbo", "kolia", "komborodougou", "kong", "kongasso", "koonan", "korhogo", "koro", "kouassi dattekro", "kouassi kouassikro", "kouibly", "koumassi", "koumbala", "koun fao", "kounahiri", "kouto", "lakota", "logouale", "m'bahiakro", "m'batto", "m'bengue", "madinani", "mafere", "man", "mankono", "marcory", "massala", "mayo", "meagui", "minignan", "morondo", "n'douci", "napie", "nassian", "niable", "niakaramadougou", "nielle", "niofoin", "odienne", "ouangolodougou", "ouaninou", "ouelle", "oume", "ouragahio", "plateau", "port bouet", "prikro", "rubino", "saioua", "sakassou", "samatiguila", "san-pedro", "sandege", "sangouine", "sarhala", "sassandra", "satama sokoro", "satama sokoura", "seguela", "seguelon", "seydougou", "sifie", "sikensi", "sinematiali", "sinfra", "sipilou", "sirasso", "songon", "soubre", "taabo", "tabou", "tafire", "tai", "tanda", "tehini", "tengrela", "tiapoum", "tiassale", "tie n'diekro", "tiebissou", "tieme", "tiemelekro", "tieningboue", "tienko", "tioroniaradougou", "tortiya", "touba", "toulepleu", "toumodi", "transua", "treichville", "vavoua", "worofla", "yakasse attobrou", "yamoussoukro", "yopougon", "zikisso", "zouan hounien", "zoukougbeu", "zuenoula"];
+const MA2M_ABIDJAN_COMMUNES = ["Abobo", "Adjamé", "Attécoubé", "Cocody", "Koumassi", "Marcory", "Plateau", "Port-Bouët", "Treichville", "Yopougon", "Anyama", "Bingerville", "Songon"];
+const MA2M_PHONE_DEFAULT = 'CI';
+function ma2mFlag(iso){return String(iso||'').toUpperCase().replace(/[A-Z]/g,function(c){return String.fromCodePoint(127397+c.charCodeAt(0));});}
+function ma2mCountryOptions(selected, withBlank=true){
+  let h=withBlank?'<option value="">— Sélectionner un pays —</option>':'';
+  h+=MA2M_COUNTRIES.map(function(c){return '<option value="'+c.iso+'" '+(c.iso===selected?'selected':'')+'>'+ma2mFlag(c.iso)+' '+echapperHtml(c.name)+(c.code?'  +'+c.code:'  —')+'</option>';}).join('');
+  return h;
+}
+function ma2mCiCityOptions(selected, withBlank=true){
+  let h=withBlank?'<option value="">— Sélectionner une ville / commune —</option>':'';
+  h+='<option value="Abidjan" '+(selected==='Abidjan'?'selected':'')+'>Abidjan — District autonome</option>';
+  h+=MA2M_CI_CITIES.map(function(c){let label=c.replace(/(^|[ -])\w/g,function(m){return m.toUpperCase();}); return '<option value="'+echapperHtml(c)+'" '+(selected===c?'selected':'')+'>'+echapperHtml(label)+'</option>';}).join('');
+  return h;
+}
+function ma2mAbidjanOptions(selected){return '<option value="">— Choisir la commune / zone —</option>'+MA2M_ABIDJAN_COMMUNES.map(function(c){return '<option value="'+echapperHtml(c)+'" '+(selected===c?'selected':'')+'>'+echapperHtml(c)+'</option>';}).join('');}
+function ma2mCountryByIso(iso){return MA2M_COUNTRIES.find(function(c){return c.iso===iso;})||null;}
+function ma2mCountryIso(value){ const raw=String(value||'').trim().toLowerCase(); if(raw.length===2 && ma2mCountryByIso(raw.toUpperCase())) return raw.toUpperCase(); const aliases={"ivoirienne":"CI","ivoirien":"CI","côte d’ivoire":"CI","côte d'ivoire":"CI","cote d’ivoire":"CI","cote d'ivoire":"CI","française":"FR","francais":"FR"}; return aliases[raw]||''; }
+function ma2mParsePhone(value){
+  const raw=String(value||'').trim(); let iso=MA2M_PHONE_DEFAULT, number=raw;
+  if(raw.charAt(0)==='+'){
+    const digits=raw.slice(1).replace(/\D/g,'');
+    let match=MA2M_COUNTRIES.filter(function(c){return c.code;}).sort(function(a,b){return b.code.length-a.code.length;}).find(function(c){return digits.indexOf(c.code)===0;});
+    if(match){iso=match.iso; number=digits.slice(match.code.length);}
+  }
+  return {iso:iso,number:number};
+}
+function ma2mPhoneValue(iso, number){
+  const c=ma2mCountryByIso(iso)||ma2mCountryByIso(MA2M_PHONE_DEFAULT); const n=String(number||'').replace(/[^0-9 ]/g,'').trim();
+  return c&&c.code ? '+'+c.code+(n?' '+n:'') : n;
+}
+function ma2mLocationParts(value, fallbackCountry){
+  const raw=String(value||'').trim();
+  const ci=MA2M_CI_CITIES.find(function(c){return raw.toLowerCase()===c.toLowerCase();});
+  if(ci) return {country:'CI',city:ci,abidjan:MA2M_ABIDJAN_COMMUNES.indexOf(ci)>-1?ci:''};
+  const comma=raw.split(',').map(function(x){return x.trim();}).filter(Boolean);
+  return {country:(comma[1]&&MA2M_COUNTRIES.some(function(c){return c.name.toLowerCase()===comma[1].toLowerCase();}))?MA2M_COUNTRIES.find(function(c){return c.name.toLowerCase()===comma[1].toLowerCase();}).iso:(fallbackCountry||'CI'),city:comma[0]||raw,abidjan:MA2M_ABIDJAN_COMMUNES.indexOf(comma[0])>-1?comma[0]:''};
+}
+function ma2mNumericOptions(min,max,selected,unit,step){
+  step=step||1; let h='<option value="">— Choisir —</option>';
+  for(let n=min;n<=max;n+=step) h+='<option value="'+n+'" '+(String(selected)===String(n)?'selected':'')+'>'+n+(unit?' '+unit:'')+'</option>';
+  return h;
+}
+
+/* --------------------------------------------------------------- ÉTAT ---
+   Toujours reconstruit depuis la base (ou le repli démo) — jamais la
+   source de vérité elle-même. */
+function emptyState(){
+  return {
+    meta:{ statut:'brouillon', profilVisible:false, currentStep:1, commentaireAdmin:'', activeCompcardSlot:1, phoneCountry:'CI', residenceCountry:'CI', birthCountry:'CI', residenceAbidjan:'' },
+    identite:{ nom:'', prenom:'', dateNaissance:'', lieuNaissance:'', nationalite:'', ville:'', telephone:'', email: currentUser?currentUser.email:'', categorie:'' },
+    physique:{ taille:'', poids:'', poitrine:'', tailleM:'', hanches:'', pointure:'', tailleVet:'', yeux:'', cheveuxCouleur:'', cheveuxType:'', particularites:'' },
+    formation:{ niveau:'', etablissement:'', particuliere:'', mannequin:false, coaching:false, masterclass:false, autre:false },
+    experiences:[],
+    photos:{ portrait:null, photoProfil:null, pleinPied:null, compCard:[null,null,null,null,null], book:[], documents:{piece:null, autre:null} },
+    compcard:[]
+  };
+}
+let state = emptyState();
+
+function toNum(v){ const n=parseFloat(v); return (v===''||v===null||v===undefined||isNaN(n)) ? null : n; }
+function idOk(){ return currentUser && currentUser.id; }
+
+function allPublicPhotos(){
+  const out=[];
+  [state.photos.portrait,state.photos.photoProfil,state.photos.pleinPied].forEach(function(ph){ if(ph && ph.id) out.push(ph); });
+  (state.photos.book||[]).forEach(function(ph){ if(ph && ph.id) out.push(ph); });
+  return out;
+}
+
+/* La compcard est une composition de 5 emplacements.
+   Les 5 emplacements sont désormais librement sélectionnables.
+   Les cases 1 et 2 portent seulement une consigne éditoriale :
+   1 = photo PLEIN PIED ; 2 = photo PORTRAIT.
+   La contrainte visuelle ne force plus automatiquement une photo donnée. */
+function normalizeCompcard(){
+  const result=Array(5).fill(null), used=[];
+  (state.compcard||[]).slice(0,5).forEach(function(id,i){const ph=compcardPhotoById(id);if(id&&ph&&used.indexOf(String(id))===-1){result[i]=id;used.push(String(id));}});
+  state.compcard=result; state.photos.compCard=result.map(function(id){return id?compcardPhotoById(id):null;});
+}
+function compcardCount(){return (state.compcard||[]).filter(Boolean).length;}
+function compcardPhotoById(id){const cc=(state.photos.compCard||[]).find(function(ph){return ph&&String(ph.id)===String(id);});if(cc)return cc;return allPublicPhotos().find(function(ph){return String(ph.id)===String(id);})||null;}
+
+/* -------------------------------------------------- MAPPAGE ÉTAT <-> DB */
+function identiteToDb(d){
+  return { nom:d.nom, prenom:d.prenom, date_naissance:d.dateNaissance||null, lieu_naissance:d.lieuNaissance,
+    nationalite:d.nationalite, ville:d.ville, telephone:d.telephone, email:d.email, categorie:d.categorie };
+}
+function physiqueToDb(p){
+  return { taille:toNum(p.taille), poids:toNum(p.poids), poitrine:toNum(p.poitrine), taille_mensuration:toNum(p.tailleM),
+    hanches:toNum(p.hanches), pointure:toNum(p.pointure), taille_vetement:p.tailleVet, couleur_yeux:p.yeux,
+    couleur_cheveux:p.cheveuxCouleur, type_cheveux:p.cheveuxType, particularites:p.particularites };
+}
+function formationToDb(f){
+  return { niveau_etude:f.niveau, etablissement:f.etablissement, formation_particuliere:f.particuliere,
+    formation_mannequin:!!f.mannequin, coaching:!!f.coaching, masterclass:!!f.masterclass, autre_formation:!!f.autre };
+}
+function mapProfileFromDb(row){
+  const s = emptyState();
+  if(!row) return s;
+  s.meta.statut = row.statut || 'brouillon';
+  s.meta.profilVisible = !!row.profil_visible;
+  s.meta.commentaireAdmin = row.commentaire_admin || '';
+  Object.assign(s.identite, {
+    nom:row.nom||'', prenom:row.prenom||'', dateNaissance:row.date_naissance||'', lieuNaissance:row.lieu_naissance||'',
+    nationalite:ma2mCountryIso(row.nationalite)||row.nationalite||'', ville:row.ville||'', telephone:row.telephone||'', email:row.email||currentUser.email||'', categorie:row.categorie||''
+  });
+  const rp=ma2mLocationParts(s.identite.ville,'CI'), bp=ma2mLocationParts(s.identite.lieuNaissance,'CI'), pp=ma2mParsePhone(s.identite.telephone);
+  s.meta.residenceCountry=rp.country||'CI'; s.meta.residenceAbidjan=MA2M_ABIDJAN_COMMUNES.indexOf(rp.city)>-1?rp.city:'';
+  s.meta.birthCountry=bp.country||'CI'; s.meta.phoneCountry=pp.iso||'CI';
+  Object.assign(s.physique, {
+    taille:row.taille??'', poids:row.poids??'', poitrine:row.poitrine??'', tailleM:row.taille_mensuration??'',
+    hanches:row.hanches??'', pointure:row.pointure??'', tailleVet:row.taille_vetement||'', yeux:row.couleur_yeux||'',
+    cheveuxCouleur:row.couleur_cheveux||'', cheveuxType:row.type_cheveux||'', particularites:row.particularites||''
+  });
+  Object.assign(s.formation, {
+    niveau:row.niveau_etude||'', etablissement:row.etablissement||'', particuliere:row.formation_particuliere||'',
+    mannequin:!!row.formation_mannequin, coaching:!!row.coaching, masterclass:!!row.masterclass, autre:!!row.autre_formation
+  });
+  return s;
+}
+
+/* ------------------------------------------------------- COUCHE DONNÉES
+   DEMO_MODE : persistance locale (localStorage) pour prévisualiser.
+   Sinon     : appels Supabase réels — adapter les noms de colonnes/tables
+   à votre schéma réel avant déploiement (voir NOTES-INTEGRATION). */
+function loadDemo(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return emptyState();
+}
+function saveDemo(){
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){}
+}
+
+const Store = {
+  async load(){
+    if(DEMO_MODE) return loadDemo();
+    try{
+      const { data: profile, error: e1 } = await supa.from(T.profiles).select('*').eq('id', currentUser.id).maybeSingle();
+      if(e1) throw e1;
+      const s = mapProfileFromDb(profile);
+      const { data: exps } = await supa.from(T.experiences).select('*').eq('profile_id', currentUser.id).order('created_at', { ascending:true });
+      s.experiences = (exps||[]).map(e=>({ id:e.id, type:e.type, nom:e.nom, lieu:e.ville, annee:e.annee }));
+      const { data: photos } = await supa.from(T.photos).select('*').eq('profile_id', currentUser.id);
+      (photos||[]).forEach(p=>{
+        const url = p.is_public
+          ? supa.storage.from(BUCKET_PUBLIC).getPublicUrl(p.storage_path).data.publicUrl
+          : null;
+        const item = { id:p.id, path:p.storage_path, url };
+        if(p.type==='portrait') s.photos.portrait = item;
+        else if(p.type==='profil') s.photos.photoProfil = item;
+        else if(p.type==='plein_pied') s.photos.pleinPied = item;
+        else if(/^compcard_[1-5]$/.test(p.type)){ const slot=parseInt(p.type.split('_')[1],10)-1; item.compSlot=slot+1; s.photos.compCard[slot]=item; s.compcard[slot]=p.id; }
+        else if(p.type==='book') s.photos.book.push(item);
+      });
+      // Les 5 cases de la compcard sont sélectionnées par le mannequin ;
+      // les cases 1 et 2 portent des consignes éditoriales plein pied / portrait.
+      normalizeCompcard();
+      const { data: docs } = await supa.from(T.documents).select('*').eq('profile_id', currentUser.id);
+      (docs||[]).forEach(d=>{
+        if(d.type==='piece') s.photos.documents.piece = { id:d.id, path:d.storage_path };
+        else if(d.type==='autre') s.photos.documents.autre = { id:d.id, path:d.storage_path };
+      });
+      return s;
+    }catch(e){
+      console.error(e);
+      toast("Erreur de chargement du profil — vérifiez le schéma Supabase (voir notes d'intégration)", true);
+      return emptyState();
+    }
+  },
+
+  async ensureProfileRow(){
+    if(DEMO_MODE) return true;
+    // Crée la ligne si elle n'existe pas encore (première visite)
+    const { error } = await supa.from(T.profiles).upsert({ id: currentUser.id, email: currentUser.email, statut:'brouillon' }, { onConflict:'id', ignoreDuplicates:true });
+    if(error) console.warn('ensureProfileRow', error);
+    return true;
+  },
+
+  async saveBlock(fields){
+    if(DEMO_MODE){ saveDemo(); return true; }
+    const { error } = await supa.from(T.profiles).update(fields).eq('id', currentUser.id);
+    if(error){ console.error(error); toast("Échec de l'enregistrement", true); return false; }
+    return true;
+  },
+
+  async submit(fields){
+    if(DEMO_MODE){ state.meta.statut='en_attente'; saveDemo(); return true; }
+    const { error } = await supa.from(T.profiles).update({ ...fields, statut:'en_attente' }).eq('id', currentUser.id);
+    if(error){ console.error(error); toast('Échec de la soumission', true); return false; }
+    return true;
+  },
+
+  async addExperience(exp){
+    if(DEMO_MODE){ const item = { ...exp, id:'exp_'+Date.now() }; saveDemo(); return item; }
+    const { data, error } = await supa.from(T.experiences)
+      .insert({ profile_id: currentUser.id, type:exp.type, nom:exp.nom, ville:exp.lieu, annee:exp.annee })
+      .select().single();
+    if(error){ console.error(error); toast("Échec de l'ajout de l'expérience", true); return null; }
+    return { id:data.id, type:data.type, nom:data.nom, lieu:data.ville, annee:data.annee };
+  },
+  async updateExperience(id, exp){
+    if(DEMO_MODE){ saveDemo(); return true; }
+    const { error } = await supa.from(T.experiences).update({ type:exp.type, nom:exp.nom, ville:exp.lieu, annee:exp.annee }).eq('id', id).eq('profile_id', currentUser.id);
+    if(error){ console.error(error); toast('Échec de la mise à jour', true); return false; }
+    return true;
+  },
+  async removeExperience(id){
+    if(DEMO_MODE){ saveDemo(); return true; }
+    const { error } = await supa.from(T.experiences).delete().eq('id', id).eq('profile_id', currentUser.id);
+    if(error){ console.error(error); toast('Échec de la suppression', true); return false; }
+    return true;
+  },
+
+  async uploadPhoto(file, type, isPublic){
+    if(DEMO_MODE){
+      const url = URL.createObjectURL(file);
+      const item = { id:'photo_'+Date.now()+Math.random().toString(36).slice(2,6), url };
+      saveDemo();
+      return item;
+    }
+    try{
+      const bucket = isPublic ? BUCKET_PUBLIC : BUCKET_PRIVATE;
+      const safeName = file.name.replace(/[^a-zA-Z0-9.]+/g,'_');
+      const path = currentUser.id + '/' + type + '_' + Date.now() + '_' + safeName;
+      const { error: upErr } = await supa.storage.from(bucket).upload(path, file, { upsert:false, contentType:file.type });
+      if(upErr) throw upErr;
+      const { data: row, error: dbErr } = await supa.from(T.photos)
+        .insert({ profile_id: currentUser.id, type, storage_path: path, is_public: !!isPublic, is_compcard:false })
+        .select().single();
+      if(dbErr) throw dbErr;
+      const url = isPublic ? supa.storage.from(bucket).getPublicUrl(path).data.publicUrl : null;
+      return { id: row.id, path, url };
+    }catch(e){
+      console.error(e);
+      toast("Échec de l'envoi de la photo", true);
+      return null;
+    }
+  },
+  async removePhoto(id, path){
+    if(DEMO_MODE){ saveDemo(); return true; }
+    try{
+      await supa.from(T.photos).delete().eq('id', id).eq('profile_id', currentUser.id);
+      if(path){
+        supa.storage.from(BUCKET_PUBLIC).remove([path]).catch(()=>{});
+        supa.storage.from(BUCKET_PRIVATE).remove([path]).catch(()=>{});
+      }
+      return true;
+    }catch(e){ console.error(e); toast('Échec de la suppression', true); return false; }
+  },
+  async setCompcard(photoId, on){
+    if(DEMO_MODE){ saveDemo(); return true; }
+    const { error } = await supa.from(T.photos).update({ is_compcard: on }).eq('id', photoId).eq('profile_id', currentUser.id);
+    if(error){ console.error(error); toast('Échec de la sélection compcard', true); return false; }
+    return true;
+  },
+
+  async uploadDocument(file, type){
+    if(DEMO_MODE){ const item = { id:'doc_'+Date.now(), name:file.name }; saveDemo(); return item; }
+    try{
+      const safeName = file.name.replace(/[^a-zA-Z0-9.]+/g,'_');
+      const path = currentUser.id + '/' + type + '_' + Date.now() + '_' + safeName;
+      const { error: upErr } = await supa.storage.from(BUCKET_PRIVATE).upload(path, file, { upsert:false, contentType:file.type });
+      if(upErr) throw upErr;
+      const { data: row, error: dbErr } = await supa.from(T.documents)
+        .insert({ profile_id: currentUser.id, type, storage_path: path }).select().single();
+      if(dbErr) throw dbErr;
+      return { id: row.id, path, name:file.name };
+    }catch(e){ console.error(e); toast("Échec de l'envoi du document", true); return null; }
+  },
+};
+
+/* ------------------------------------------------------------- UTILS UI */
+function echapperHtml(str){
+  return String(str==null?'':str).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+const STEP_LABELS = ['Identité','Physique','Formation','Expérience','Photos','Récapitulatif'];
+// Édition post-validation : un bloc à la fois, en page complète.
+state.meta.editBlock = state.meta.editBlock || null;
+const EXP_TYPES = ['Défilé','Campagne','Éditorial','Shooting','Lookbook','Publicité','Fitting','Showroom','Vidéo','Autre'];
+
+function header(rightLabel){
+  return '<div class="top"><div class="wordmark"><span class="mark">MA2M</span>' +
+    '<span class="full">Maître Akessé Model Management</span></div>' +
+    '<div class="espace-tag">' + (rightLabel||'Mon espace mannequin') + '<b>' + echapperHtml((state.identite.prenom||'')+' '+(state.identite.nom||'')).trim() + '</b></div></div>';
+}
+
+/* =========================================================== RENDU MAIN */
+function render(){
+  const app = document.getElementById('app');
+  document.getElementById('adminSim').style.display = (DEMO_MODE && state.meta.statut === 'en_attente') ? 'block' : 'none';
+  document.getElementById('demoBanner').style.display = DEMO_MODE ? 'block' : 'none';
+  document.body.classList.toggle('ma2m-construction', state.meta.statut !== 'valide');
+
+  if(state.meta.statut === 'valide'){
+    if(state.meta.editBlock){ app.innerHTML = viewBlockEditor(state.meta.editBlock); bindBlockPage(state.meta.editBlock); return; }
+    app.innerHTML = viewDashboard(); bindDashboard(); return;
+  }
+  if(state.meta.statut === 'en_attente'){ app.innerHTML = viewConfirmation(); return; }
+  if(state.meta.statut === 'refuse'){ app.innerHTML = viewRefuse(); bindRefuse(); return; }
+  app.innerHTML = viewWizard();
+  bindWizard();
+}
+
+/* --------------------------------------------------------------- WIZARD */
+function stepComplete(n){
+  if(n===1) return !!(state.identite.nom && state.identite.prenom && state.identite.dateNaissance && state.identite.nationalite);
+  if(n===2) return !!(state.physique.taille && state.physique.poids);
+  if(n===3) return !!state.formation.niveau;
+  if(n===4) return state.experiences.length>0;
+  if(n===5) return !!(state.photos.portrait && state.photos.photoProfil && state.photos.pleinPied);
+  return false;
+}
+
+function viewWizard(){
+  const pct = Math.round(((state.meta.currentStep-1)/6)*100 + (stepComplete(state.meta.currentStep)?100/6:0));
+  const clamped = Math.min(100, Math.max(0,pct));
+  return header() +
+  '<div class="greet"><div class="ma2m-soul-intro"><div class="kicker">Ton univers · ton identité · ta signature</div><h1>Bienvenue dans ton espace' + (state.identite.prenom ? ', '+echapperHtml(state.identite.prenom) : '') + '.</h1>' +
+  '<p>Je ne veux pas que tu sois ici pour simplement remplir un formulaire. Je veux que tu comprennes que tu es en train de construire ton identité professionnelle : ton visage, ta silhouette, ton parcours, ton expérience et ton univers.</p>' +
+  '<p class="ma2m-personal-note">Ne cherche pas à ressembler à quelqu’un d’autre. La mode a besoin de personnalités. Ta singularité peut devenir ta signature.</p></div>' +
+  '<div class="progress-row"><div class="progress-track"><div class="progress-fill" style="width:'+clamped+'%"></div></div>' +
+  '<div class="progress-pct">'+clamped+'%</div></div></div>' +
+  '<div class="stepper">' + STEP_LABELS.map((l,i)=>{
+    const n=i+1; const cls = n===state.meta.currentStep?'active':(stepComplete(n)?'done':'');
+    return '<button class="step-tab '+cls+'" data-goto="'+n+'"><span class="n">'+['①','②','③','④','⑤','⑥'][i]+'</span>'+l+'</button>';
+  }).join('') + '</div>' +
+  '<div class="panel">' + stepContent(state.meta.currentStep) + '</div>';
+}
+
+function stepContent(n){
+  if(n===1) return stepIdentite();
+  if(n===2) return stepPhysique();
+  if(n===3) return stepFormation();
+  if(n===4) return stepExperience();
+  if(n===5) return stepPhotos();
+  return stepRecap();
+}
+
+function field(label, id, value, opts){
+  opts = opts||{};
+  if(opts.options){
+    const options=opts.options.map(function(o){const v=typeof o==='object'?o.value:o; const t=typeof o==='object'?o.label:o; return '<option value="'+echapperHtml(v)+'" '+(String(v)===String(value||'')?'selected':'')+'>'+echapperHtml(t)+'</option>';}).join('');
+    return '<div class="field '+(opts.full?'full':'')+'"><label>'+label+(opts.req?'<span class="req">*</span>':'')+'</label><select id="'+id+'">'+(opts.blank!==false?'<option value="">— Sélectionner —</option>':'')+options+'</select></div>';
+  }
+  return '<div class="field '+(opts.full?'full':'')+'"><label>'+label+(opts.req?'<span class="req">*</span>':'')+'</label>' +
+  '<input type="'+(opts.type||'text')+'" id="'+id+'" value="'+echapperHtml(value||'')+'" placeholder="'+(opts.placeholder||'')+'"></div>';
+}
+
+function stepIdentite(){
+  const d = state.identite, rp=ma2mLocationParts(d.ville,state.meta.residenceCountry||'CI'), bp=ma2mLocationParts(d.lieuNaissance,state.meta.birthCountry||'CI'), pp=ma2mParsePhone(d.telephone);
+  state.meta.residenceCountry=rp.country; state.meta.birthCountry=bp.country; state.meta.phoneCountry=pp.iso;
+  const residenceCity = rp.city==='Abidjan' ? 'Abidjan' : rp.city;
+  return '<h2>Identité</h2><p class="sub">Étape 1 sur 6 · présente-toi avec précision</p><div class="grid">' +
+    field('Nom','f-nom',d.nom,{req:true}) + field('Prénom(s)','f-prenom',d.prenom,{req:true}) +
+    field('Date de naissance','f-dob',d.dateNaissance,{type:'date',req:true}) +
+    '<div class="field"><label>Pays de naissance</label><select id="f-pays-naiss">'+ma2mCountryOptions(state.meta.birthCountry||'CI')+'</select></div>' +
+    '<div class="field"><label>Ville / commune de naissance</label><select id="f-ville-naiss">'+(state.meta.birthCountry==='CI'?ma2mCiCityOptions(bp.city):'<option value="'+echapperHtml(bp.city||'')+'">'+echapperHtml(bp.city||'—')+'</option>')+'</select></div>' +
+    '<div class="field"><label>Nationalité<span class="req">*</span></label><select id="f-nat">'+ma2mCountryOptions(ma2mCountryIso(d.nationalite)||null)+'</select></div>' +
+    '<div class="field"><label>Pays de résidence</label><select id="f-pays-res">'+ma2mCountryOptions(state.meta.residenceCountry||'CI')+'</select></div>' +
+    '<div class="field"><label>Ville / commune de résidence</label><select id="f-ville-res">'+(state.meta.residenceCountry==='CI'?ma2mCiCityOptions(residenceCity):'<option value="'+echapperHtml(rp.city||'')+'">'+echapperHtml(rp.city||'—')+'</option>')+'</select></div>' +
+    '<div class="field" id="abidjan-zone-field" style="display:'+(state.meta.residenceCountry==='CI' && residenceCity==='Abidjan'?'block':'none')+'"><label>Commune / zone d’Abidjan</label><select id="f-abidjan-zone">'+ma2mAbidjanOptions(state.meta.residenceAbidjan||'')+'</select></div>' +
+    '<div class="field"><label>Pays du téléphone</label><select id="f-phone-country">'+ma2mCountryOptions(pp.iso||'CI')+'</select></div>' +
+    '<div class="field"><label>Contact / numéro de téléphone</label><input type="tel" id="f-tel" value="'+echapperHtml(pp.number||'')+'" placeholder="05 45 65 68 87" inputmode="tel"></div>' +
+    field('Email','f-email',d.email,{type:'email',placeholder:'exemple@gmail.com'}) + '</div>' +
+    '<div class="field full" style="margin-top:20px"><label>Catégorie</label><select id="f-categorie"><option value="">— Sélectionner —</option><option '+(d.categorie==='Newface 0–1 an'?'selected':'')+'>Newface 0–1 an</option><option '+(d.categorie==='Amateur 1–3 ans'?'selected':'')+'>Amateur 1–3 ans</option><option '+(d.categorie==='Pro 3 ans +'?'selected':'')+'>Pro 3 ans +</option></select></div><div class="actions-row end"><button class="btn primary" id="save1">Enregistrer</button></div>';
+}
+function stepPhysique(){
+  const d = state.physique;
+  const eyes=['Marron','Noisette','Noir','Bleu','Vert','Gris','Ambre','Autre'];
+  const hairColor=['Noir','Brun','Châtain','Blond','Roux','Gris / poivre et sel','Blanc','Autre'];
+  const hairType=['Lisse','Ondulé','Bouclé','Frisé','Crépu','Locks / locs','Autre'];
+  const clothing=['XXS','XS','S','M','L','XL','XXL','XXXL','34','36','38','40','42','44','46','48','50','52'];
+  return '<h2>Informations physiques</h2><p class="sub">Étape 2 sur 6 · chaque mesure devient une donnée professionnelle précise</p><div class="grid g3">' +
+    field('Taille (cm)','f-taille',d.taille,{options:Array.from({length:81},(_,i)=>140+i),req:true}) +
+    field('Poids (kg)','f-poids',d.poids,{options:Array.from({length:116},(_,i)=>35+i),req:true}) +
+    field('Poitrine (cm)','f-poitrine',d.poitrine,{options:Array.from({length:71},(_,i)=>60+i)}) +
+    field('Tour de taille (cm)','f-tailleM',d.tailleM,{options:Array.from({length:61},(_,i)=>50+i)}) +
+    field('Hanches (cm)','f-hanches',d.hanches,{options:Array.from({length:71},(_,i)=>70+i)}) +
+    field('Pointure','f-pointure',d.pointure,{options:Array.from({length:21},(_,i)=>30+i)}) +
+    field('Taille vêtements','f-tailleVet',d.tailleVet,{options:clothing}) + '<div></div>' +
+    field('Couleur des yeux','f-yeux',d.yeux,{options:eyes}) + field('Couleur des cheveux','f-cheveuxCouleur',d.cheveuxCouleur,{options:hairColor}) +
+    field('Type de cheveux','f-cheveuxType',d.cheveuxType,{options:hairType}) + '</div>' +
+    '<div class="field full" style="margin-top:14px"><label>Particularités</label><textarea id="f-particularites">'+echapperHtml(d.particularites)+'</textarea></div>' +
+    '<div class="actions-row"><button class="btn ghost" data-goto="1">← Retour</button><button class="btn primary" id="save2">Enregistrer</button></div>';
+}
+function stepFormation(){
+  const d = state.formation;
+  return '<h2>Formation</h2><p class="sub">Étape 3 sur 6</p>' +
+    '<div class="field full"><label>Niveau d\u2019étude<span class="req">*</span></label><select id="f-niveau">' +
+    ['','Collège','Bac','Licence','Master','Autre'].map(o=>'<option value="'+o+'" '+(d.niveau===o?'selected':'')+'>'+(o||'— Sélectionner —')+'</option>').join('') +
+    '</select></div><div class="grid" style="margin-top:16px">' +
+    field('Établissement','f-etab',d.etablissement,{placeholder:'Lycée / Université / Établissement'}) +
+    field('Formation particulière','f-formPart',d.particuliere) + '</div>' +
+    '<div class="field full" style="margin-top:20px"><label>Formation mannequin</label><div class="check-row">' +
+    [['mannequin','Formation mannequin'],['coaching','Coaching'],['masterclass','Masterclass'],['autre','Autre']].map(function(pair){
+      var k=pair[0], l=pair[1];
+      return '<label class="check-opt '+(d[k]?'selected':'')+'"><input type="checkbox" data-k="'+k+'" '+(d[k]?'checked':'')+'> '+l+'</label>';
+    }).join('') + '</div></div>' +
+    '<div class="actions-row"><button class="btn ghost" data-goto="2">← Retour</button><button class="btn primary" id="save3">Enregistrer</button></div>';
+}
+
+function stepExperience(){
+  var listHtml = state.experiences.length===0
+    ? '<p class="exp-empty">Aucune expérience ajoutée pour le moment. Cliquez sur « + Ajouter une expérience ».</p>'
+    : state.experiences.map(function(e,i){
+        return '<div class="exp-card" data-exp="'+i+'"><div class="exp-fields">' +
+        '<select data-expf="type" data-i="'+i+'">' + EXP_TYPES.map(function(t){ return '<option value="'+t+'" '+(e.type===t?'selected':'')+'>'+t+'</option>'; }).join('') + '</select>' +
+        '<input type="text" data-expf="nom" data-i="'+i+'" placeholder="Nom du défilé / de la marque / de la campagne" value="'+echapperHtml(e.nom)+'">' +
+        '<input type="text" data-expf="lieu" data-i="'+i+'" placeholder="Ville" value="'+echapperHtml(e.lieu)+'">' +
+        '<input type="text" data-expf="annee" data-i="'+i+'" placeholder="Année" value="'+echapperHtml(e.annee)+'">' +
+        '</div><button class="exp-remove" data-rm="'+i+'">Supprimer</button></div>';
+      }).join('');
+  return '<h2>Expérience professionnelle</h2><p class="sub">Remplissez directement les champs — chaque ligne est enregistrée séparément</p>' +
+    '<button class="btn ghost small" id="addExp" style="margin-bottom:18px">+ Ajouter une expérience</button>' +
+    '<div id="expList">'+listHtml+'</div>' +
+    '<p class="sub" style="margin:18px 0 8px">Types disponibles</p>' +
+    '<div class="type-chip-row">'+EXP_TYPES.map(function(t){return '<span class="type-chip">'+t+'</span>';}).join('')+'</div>' +
+    '<div class="actions-row"><button class="btn ghost" data-goto="3">← Retour</button><button class="btn primary" id="save4">Continuer</button></div>';
+}
+
+function photoThumb(item, label){
+  if(item && item.url) return '<img src="'+item.url+'" alt="'+label+'">';
+  return '';
+}
+
+function stepPhotos(){
+  normalizeCompcard(); const p=state.photos;
+  const slots=[1,2,3,4,5].map(function(n){const ph=p.compCard[n-1],rule=n===1?'PLEIN PIED — téléchargement libre':n===2?'PORTRAIT — téléchargement libre':'PHOTO LIBRE — téléchargement libre';return '<div class="compcard-slot '+(ph?'filled ':'')+'cc-editable-slot"><div class="cc-slot-num">'+n+'</div><div class="cc-slot-content">'+(ph&&ph.url?'<img src="'+ph.url+'" alt="Photo compcard '+n+'">':'<span class="cc-slot-plus">＋</span>')+'<div class="cc-slot-label">'+(ph?'Photo téléchargée':'Télécharger une photo')+'</div><small>'+rule+'</small><label class="cc-upload-btn">'+(ph?'Remplacer':'Télécharger')+'<input class="hidden-input" type="file" accept="image/*" data-cc-upload="'+n+'"></label>'+(ph?'<button type="button" class="cc-clear-slot" data-clear-cc-photo="'+n+'">Supprimer</button>':'')+'</div></div>';}).join('');
+  return '<h2>Photos &amp; documents</h2><p class="sub">Les 5 photos de la compcard sont des téléchargements libres et totalement indépendants du Book. Si une photo doit apparaître dans le Book, elle est téléchargée séparément dans la galerie.</p><div class="photo-principals-grid">'+
+  '<div class="principal-photo-card '+(p.portrait?'filled':'')+'" id="uPortrait">'+photoThumb(p.portrait,'Photo principale CV')+'<div class="principal-photo-badge">PHOTO PRINCIPALE CV</div><div class="principal-photo-title">'+(p.portrait?'Photo CV enregistrée':'Ajouter la photo principale du CV')+'</div><div class="principal-photo-hint">Portrait — utilisée pour votre CV mannequin</div><input class="hidden-input" type="file" accept="image/*" id="fPortrait"></div>'+
+  '<div class="principal-photo-card '+(p.photoProfil?'filled':'')+'" id="uProfil">'+photoThumb(p.photoProfil,'Photo principale profil')+'<div class="principal-photo-badge profile">PHOTO PRINCIPALE PROFIL</div><div class="principal-photo-title">'+(p.photoProfil?'Photo profil enregistrée':'Ajouter la photo principale du profil')+'</div><div class="principal-photo-hint">Photo affichée sur votre profil public</div><input class="hidden-input" type="file" accept="image/*" id="fProfil"></div>'+
+  '<div class="principal-photo-card '+(p.pleinPied?'filled':'')+'" id="uPleinPied">'+photoThumb(p.pleinPied,'Photo plein pied')+'<div class="principal-photo-badge fullbody">PHOTO PLEIN PIED</div><div class="principal-photo-title">'+(p.pleinPied?'Photo plein pied enregistrée':'Ajouter la photo plein pied')+'</div><div class="principal-photo-hint">Photo de référence plein pied — indépendante de la compcard</div><input class="hidden-input" type="file" accept="image/*" id="fPleinPied"></div></div>'+
+  '<section class="compcard-builder"><div class="section-title-row"><div><span class="editor-kicker">COMPCARD</span><h3>Les 5 photos de la compcard</h3><p>Chaque case possède son propre téléchargement. Aucune sélection dans le Book.</p></div><span class="cc-rule">'+compcardCount()+' / 5 téléchargées</span></div><div class="compcard-slots editable-slots">'+slots+'</div><p class="cc-builder-note"><b>1 :</b> plein pied · <b>2 :</b> portrait · <b>3, 4, 5 :</b> libre. Ces 5 fichiers peuvent rester absents du Book.</p></section>'+ 
+  '<section class="book-section"><div class="section-title-row"><div><span class="editor-kicker">GALERIE</span><h3>Photos du Book</h3><p>Import multiple en une seule fois, sans limite de quantité. Le Book est indépendant de la compcard.</p></div><label class="book-multi-upload" for="fBook">＋ Ajouter plusieurs photos<input class="hidden-input" type="file" accept="image/*" id="fBook" multiple></label></div><div class="book-grid">'+p.book.map(function(ph){return '<div class="book-thumb">'+photoThumb(ph,'Book')+'<button class="book-thumb-remove" data-rmbook="'+ph.id+'" title="Retirer cette photo">✕</button></div>';}).join('')+'</div></section><p class="cc-counter"><b>'+compcardCount()+' / 5</b> photos compcard · <b>'+p.book.length+'</b> photos Book</p>'+ 
+  '<section class="documents-section"><div class="section-title-row"><div><span class="editor-kicker">DOCUMENTS</span><h3>Pièces et documents</h3></div></div><div class="doc-row"><span class="name">Pièce d’identité'+(p.documents.piece?'<span class="status-ok">✓ importée</span>':'')+'</span><button class="btn ghost small" id="dPiece">Importer<input class="hidden-input" type="file" id="fPiece"></button></div><div class="doc-row"><span class="name">Autre document'+(p.documents.autre?'<span class="status-ok">✓ importé</span>':'')+'</span><button class="btn ghost small" id="dAutre">Importer<input class="hidden-input" type="file" id="fAutre"></button></div></section><div class="actions-row"><button class="btn ghost" data-goto="4">← Retour</button><button class="btn primary" id="save5">Continuer</button></div>';
+}
+
+function stepRecap(){
+  const d = state.identite, ph=state.physique, f=state.formation;
+  const rows = [
+    ['Identité', (d.prenom||'—')+' '+(d.nom||'')+' · '+(d.categorie||'Catégorie non définie'), 1],
+    ['Informations physiques', (ph.taille||'—')+' cm · '+(ph.poids||'—')+' kg · '+(ph.poitrine||'–')+' / '+(ph.tailleM||'–')+' / '+(ph.hanches||'–'), 2],
+    ['Formation', (f.niveau||'—')+(f.mannequin?' · Formation mannequin':'')+(f.coaching?' · Coaching':''), 3],
+    ['Expérience professionnelle', state.experiences.length+' expérience(s) enregistrée(s)', 4],
+    ['Photos & documents', ([state.photos.portrait,state.photos.photoProfil,state.photos.pleinPied].filter(Boolean).length + state.photos.book.length)+' photos · '+Object.values(state.photos.documents).filter(Boolean).length+' documents', 5],
+  ];
+  return '<h2>Récapitulatif</h2><p class="sub">Vérifiez vos informations avant l\u2019envoi</p>' +
+    rows.map(function(r){ return '<div class="recap-block"><div><div class="lbl">'+r[0]+'</div><div class="val">'+r[1]+'</div></div>' +
+      '<button class="recap-link" data-goto="'+r[2]+'">Modifier</button></div>'; }).join('') +
+    '<div class="visible-toggle"><input type="checkbox" id="f-visible" '+(state.meta.profilVisible?'checked':'')+'>' +
+    '<p>Je souhaite rendre mon profil visible sur le site.</p></div>' +
+    '<div class="actions-row"><button class="btn ghost" data-goto="5">← Retour</button><button class="btn primary" id="submitProfile">Soumettre mon profil</button></div>';
+}
+
+function goto(n){ state.meta.currentStep = n; render(); window.scrollTo({top:0,behavior:'smooth'}); }
+function val(id){ const el=document.getElementById(id); return el?el.value:''; }
+
+function bindWizard(){
+  document.querySelectorAll('[data-goto]').forEach(function(b){ b.addEventListener('click', function(){ goto(parseInt(b.dataset.goto)); }); });
+  const s = state;
+
+  function bindIdentitySelectors(prefix){
+    const countryRes=document.getElementById(prefix+'pays-res'), cityRes=document.getElementById(prefix+'ville-res'), zone=document.getElementById(prefix+'abidjan-zone'), zoneField=document.getElementById('abidjan-zone-field');
+    const countryBirth=document.getElementById(prefix+'pays-naiss'), cityBirth=document.getElementById(prefix+'ville-naiss');
+    if(countryRes && cityRes){ countryRes.addEventListener('change',function(){ if(countryRes.value==='CI'){cityRes.innerHTML=ma2mCiCityOptions('');} else {cityRes.innerHTML='<option value="">— Saisir la ville après sélection du pays —</option>';} if(zone) zone.innerHTML=ma2mAbidjanOptions(''); if(zoneField) zoneField.style.display='none'; });
+      cityRes.addEventListener('change',function(){if(zoneField) zoneField.style.display=(countryRes.value==='CI'&&cityRes.value==='Abidjan')?'block':'none';});}
+    if(countryBirth && cityBirth){countryBirth.addEventListener('change',function(){if(countryBirth.value==='CI')cityBirth.innerHTML=ma2mCiCityOptions(''); else cityBirth.innerHTML='<option value="">— Saisir / préciser la ville à l’international —</option>';});}
+    if(zoneField) zoneField.style.display=(countryRes&&countryRes.value==='CI'&&cityRes&&cityRes.value==='Abidjan')?'block':'none';
+  }
+  bindIdentitySelectors('f-');
+
+  const btn1 = document.getElementById('save1');
+  if(btn1) btn1.addEventListener('click', async function(){
+    const birthCountry=val('f-pays-naiss')||'CI', birthCity=val('f-ville-naiss'), residenceCountry=val('f-pays-res')||'CI', residenceCity=val('f-ville-res'), abidjanZone=val('f-abidjan-zone'), phoneCountry=val('f-phone-country')||'CI';
+    const finalResidence=(residenceCountry==='CI' && residenceCity==='Abidjan' && abidjanZone)?abidjanZone:(residenceCity||'');
+    const birthCountryName=(ma2mCountryByIso(birthCountry)||{}).name||birthCountry;
+    Object.assign(s.identite, {
+      nom:val('f-nom'), prenom:val('f-prenom'), dateNaissance:val('f-dob'), lieuNaissance:birthCity ? (birthCountry==='CI' ? birthCity : birthCity+', '+birthCountryName) : '',
+      nationalite:val('f-nat'), ville:finalResidence, telephone:ma2mPhoneValue(phoneCountry,val('f-tel')), email:val('f-email'),
+      categorie: val('f-categorie') || s.identite.categorie
+    });
+    s.meta.residenceCountry=residenceCountry; s.meta.residenceAbidjan=abidjanZone; s.meta.birthCountry=birthCountry; s.meta.phoneCountry=phoneCountry;
+    btn1.disabled = true; btn1.textContent = 'Enregistrement…';
+    const ok = await Store.saveBlock(identiteToDb(s.identite));
+    if(ok){ toast('Enregistré'); goto(2); } else { btn1.disabled=false; btn1.textContent='Enregistrer'; }
+  });
+
+  const btn2 = document.getElementById('save2');
+  if(btn2) btn2.addEventListener('click', async function(){
+    Object.assign(s.physique, {
+      taille:val('f-taille'), poids:val('f-poids'), poitrine:val('f-poitrine'), tailleM:val('f-tailleM'),
+      hanches:val('f-hanches'), pointure:val('f-pointure'), tailleVet:val('f-tailleVet'), yeux:val('f-yeux'),
+      cheveuxCouleur:val('f-cheveuxCouleur'), cheveuxType:val('f-cheveuxType'), particularites:val('f-particularites')
+    });
+    btn2.disabled = true; btn2.textContent = 'Enregistrement…';
+    const ok = await Store.saveBlock(physiqueToDb(s.physique));
+    if(ok){ toast('Enregistré'); goto(3); } else { btn2.disabled=false; btn2.textContent='Enregistrer'; }
+  });
+
+  const btn3 = document.getElementById('save3');
+  if(btn3) btn3.addEventListener('click', async function(){
+    s.formation.niveau = val('f-niveau'); s.formation.etablissement = val('f-etab'); s.formation.particuliere = val('f-formPart');
+    document.querySelectorAll('#app input[type=checkbox][data-k]').forEach(function(cb){ s.formation[cb.dataset.k] = cb.checked; });
+    btn3.disabled = true; btn3.textContent = 'Enregistrement…';
+    const ok = await Store.saveBlock(formationToDb(s.formation));
+    if(ok){ toast('Enregistré'); goto(4); } else { btn3.disabled=false; btn3.textContent='Enregistrer'; }
+  });
+
+  const btn4 = document.getElementById('save4');
+  if(btn4) btn4.addEventListener('click', function(){ goto(5); });
+  const btn5 = document.getElementById('save5');
+  if(btn5) btn5.addEventListener('click', function(){ goto(6); });
+
+  document.getElementById('addExp')?.addEventListener('click', async function(){
+    const draft = { type:'Défilé', nom:'', lieu:'', annee:new Date().getFullYear().toString() };
+    const saved = await Store.addExperience(draft);
+    if(saved){ s.experiences.push(saved); render();
+      const inputs = document.querySelectorAll('[data-expf="nom"]'); inputs[inputs.length-1]?.focus(); }
+  });
+  document.querySelectorAll('[data-rm]').forEach(function(b){ b.addEventListener('click', async function(){
+    const i = parseInt(b.dataset.rm); const exp = s.experiences[i];
+    const ok = await Store.removeExperience(exp.id);
+    if(ok){ s.experiences.splice(i,1); render(); }
+  }); });
+  document.querySelectorAll('[data-expf]').forEach(function(el){
+    const eventName = el.tagName==='SELECT' ? 'change' : 'input';
+    let debounceTimer;
+    el.addEventListener(eventName, function(){
+      const i = parseInt(el.dataset.i);
+      s.experiences[i][el.dataset.expf] = el.value;
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(function(){ Store.updateExperience(s.experiences[i].id, s.experiences[i]); }, 500);
+    });
+  });
+
+  async function handlePhotoUpload(fileInput, type, isPublic, onDone){
+    fileInput.addEventListener('change', async function(){
+      const files=Array.from(fileInput.files||[]); if(!files.length) return;
+      if(files.length>1) toast(files.length+' photos du Book en cours d’envoi…');
+      for(const file of files){
+        toast('Envoi de la photo…');
+        const item=await Store.uploadPhoto(file,type,isPublic);
+        if(item) onDone(item);
+      }
+      fileInput.value='';
+    });
+  }
+  const fPortrait = document.getElementById('fPortrait');
+  if(fPortrait) handlePhotoUpload(fPortrait, 'portrait', true, function(item){ s.photos.portrait=item; normalizeCompcard(); render(); toast('Photo principale CV ajoutée'); });
+  const fProfil = document.getElementById('fProfil');
+  if(fProfil) handlePhotoUpload(fProfil, 'profil', true, function(item){ s.photos.photoProfil=item; render(); toast('Photo principale profil ajoutée'); });
+  const fPleinPied = document.getElementById('fPleinPied');
+  if(fPleinPied) handlePhotoUpload(fPleinPied, 'plein_pied', true, function(item){ s.photos.pleinPied=item; normalizeCompcard(); render(); toast('Photo plein pied ajoutée — case 1 de la compcard'); });
+  document.getElementById('uPortrait')?.addEventListener('click', function(e){ if(e.target.tagName!=='INPUT') fPortrait?.click(); });
+  document.getElementById('uProfil')?.addEventListener('click', function(e){ if(e.target.tagName!=='INPUT') fProfil?.click(); });
+  document.getElementById('uPleinPied')?.addEventListener('click', function(e){ if(e.target.tagName!=='INPUT') fPleinPied?.click(); });
+
+  const fBook = document.getElementById('fBook');
+  if(fBook) handlePhotoUpload(fBook, 'book', true, function(item){ s.photos.book.push(item); render(); toast('Photo ajoutée au Book'); });
+  document.getElementById('addBookPhoto')?.addEventListener('click', function(e){ if(e.target.tagName!=='INPUT') fBook?.click(); });
+
+  document.querySelectorAll('[data-rmbook]').forEach(function(b){ b.addEventListener('click', async function(e){
+    e.stopPropagation();
+    const id = b.dataset.rmbook; const photo = s.photos.book.find(function(ph){ return String(ph.id)===String(id); });
+    const ok = await Store.removePhoto(id, photo?photo.path:null);
+    if(ok){ s.photos.book=s.photos.book.filter(function(ph){return String(ph.id)!==String(id);}); s.compcard=s.compcard.filter(function(cid){return String(cid)!==String(id);}); normalizeCompcard(); render(); }
+  }); });
+  document.querySelectorAll('[data-cc-slot]').forEach(function(slotEl){
+    slotEl.addEventListener('click', function(e){
+      if(e.target.closest('[data-clear-cc]')) return;
+      state.meta.activeCompcardSlot=parseInt(slotEl.dataset.ccSlot,10) || 1;
+      render();
+    });
+  });
+  document.querySelectorAll('[data-principal-cc]').forEach(function(btn){
+    btn.addEventListener('click',async function(e){
+      e.stopPropagation();
+      const id=btn.dataset.principalCc;
+      const slot=Math.max(1,Math.min(5,parseInt(state.meta.activeCompcardSlot||1,10)));
+      const existing=state.compcard.findIndex(function(cid){return String(cid)===String(id);});
+      if(existing>=0 && existing!==slot-1){toast('Cette photo est déjà utilisée dans la case '+(existing+1),true);return;}
+      if(slot>=3){toast('Les cases 3, 4 et 5 sont réservées aux photos du Book.',true);return;}
+      const previous=state.compcard[slot-1];
+      if(previous && String(previous)!==String(id)){const cleared=await Store.setCompcard(previous,false);if(!cleared)return;}
+      const ok=await Store.setCompcard(id,true);
+      if(ok){state.compcard[slot-1]=id;normalizeCompcard();render();if(state.meta.editBlock==='photos')reopenDashboardBlock('photos');toast('Photo affectée à la case '+slot);}
+    });
+  });
+  document.querySelectorAll('[data-clear-cc]').forEach(function(btn){
+    btn.addEventListener('click', async function(e){
+      e.stopPropagation();
+      const slot=parseInt(btn.dataset.clearCc,10); const id=state.compcard[slot-1];
+      if(!id) return;
+      const ok=await Store.setCompcard(id,false);
+      if(ok){ state.compcard.splice(slot-1,1); normalizeCompcard(); render(); toast('Case '+slot+' libérée'); }
+    });
+  });
+  document.querySelectorAll('[data-book-select]').forEach(function(btn){ btn.addEventListener('click', async function(e){
+    e.stopPropagation();
+    const id=btn.dataset.bookSelect;
+    const existing=state.compcard.findIndex(function(cid){return String(cid)===String(id);});
+    if(existing>=0){ toast('Cette photo est déjà dans la compcard — utilisez « Retirer » sur sa case.',true); return; }
+    const slot=Math.max(1,Math.min(5,parseInt(state.meta.activeCompcardSlot||1,10)));
+    if(compcardCount()>=5 && !state.compcard[slot-1]){ toast('Les 5 cases de la compcard sont déjà définies',true); return; }
+    const previous=state.compcard[slot-1];
+    if(previous){ await Store.setCompcard(previous,false); }
+    const ok=await Store.setCompcard(id,true);
+    if(ok){
+      state.compcard[slot-1]=id;
+      normalizeCompcard();
+      state.meta.activeCompcardSlot=slot;
+      render();
+      toast('Photo affectée à la case '+slot);
+    }
+  }); });
+
+  function handleDocUpload(btnId, inputId, type, label){
+    const btn = document.getElementById(btnId), input = document.getElementById(inputId);
+    if(!btn||!input) return;
+    btn.addEventListener('click', function(e){ if(e.target.tagName!=='INPUT') input.click(); });
+    input.addEventListener('change', async function(){
+      const file = input.files[0]; if(!file) return;
+      toast('Envoi du document…');
+      const item = await Store.uploadDocument(file, type);
+      if(item){ s.photos.documents[type] = item; render(); toast(label+' importé(e)'); }
+    });
+  }
+  handleDocUpload('dPiece','fPiece','piece','Document');
+  handleDocUpload('dAutre','fAutre','autre','Document');
+
+  document.getElementById('f-visible')?.addEventListener('change', function(e){ s.meta.profilVisible = e.target.checked; });
+
+  document.getElementById('submitProfile')?.addEventListener('click', async function(){
+    if(!stepComplete(1)||!stepComplete(2)||!stepComplete(3)){ toast('Merci de compléter les étapes obligatoires', true); return; }
+    const payload = Object.assign({}, identiteToDb(s.identite), physiqueToDb(s.physique), formationToDb(s.formation), { profil_visible: s.meta.profilVisible });
+    const ok = await Store.submit(payload);
+    if(ok){ s.meta.statut='en_attente'; render(); toast('Profil soumis à MA2M'); }
+  });
+}
+
+/* ------------------------------------------------------------ REFUSÉ --- */
+function viewRefuse(){
+  return header() + '<div class="panel confirm refuse"><div class="check">!</div>' +
+    '<h2>Dossier à corriger</h2>' +
+    '<p>L\u2019administrateur a demandé des corrections avant de pouvoir valider votre profil.'+
+    (state.meta.commentaireAdmin ? '<br><br><em>« '+echapperHtml(state.meta.commentaireAdmin)+' »</em>' : '')+'</p>' +
+    '<div class="status-pill refuse"><span class="dot"></span> À corriger</div>' +
+    '<div style="margin-top:26px"><button class="btn primary" id="reprendreDossier">Reprendre mon dossier</button></div></div>';
+}
+function bindRefuse(){
+  document.getElementById('reprendreDossier')?.addEventListener('click', async function(){
+    const ok = await Store.saveBlock({ statut:'brouillon' });
+    if(ok){ state.meta.statut='brouillon'; state.meta.currentStep=1; render(); }
+  });
+}
+
+/* -------------------------------------------------------- CONFIRMATION */
+function viewConfirmation(){
+  return header() + '<div class="panel confirm"><div class="check">✓</div>' +
+    '<h2>Profil bien enregistré</h2>' +
+    '<p>Votre profil a bien été enregistré et transmis à Maître Akessé Model Management. Votre dossier est actuellement en attente de validation par l\u2019administrateur.</p>' +
+    '<div class="status-pill"><span class="dot"></span> En attente de validation</div></div>';
+}
+
+/* ------------------------------------------------------------ TABLEAU DE BORD */
+const BLOCKS = [
+  {k:'identite', ic:'👤', title:'Identité', desc:'Nom, contact, catégorie'},
+  {k:'physique', ic:'📏', title:'Physique', desc:'Mensurations et particularités'},
+  {k:'formation', ic:'🎓', title:'Formation', desc:'Études et formations mannequin'},
+  {k:'experiences', ic:'👠', title:'Expérience', desc:'Défilés, campagnes, shootings'},
+  {k:'photos', ic:'📸', title:'Photos', desc:'Portrait, book, compcard'},
+];
+
+function editorAction(label){
+  return '<div class="editor-page-actions"><button class="btn editor-save" data-editor-save="1">'+label+'</button></div>';
+}
+
+function editorPageBody(k){
+  if(k==='identite') return stepIdentite()
+    .replace('<p class="sub">Étape 1 sur 6</p>','<p class="sub">Modifiez ici tous les éléments de votre identité.</p>')
+    .replace('<div class="actions-row end"><button class="btn primary" id="save1">Enregistrer</button></div>', editorAction('Enregistrer'));
+  if(k==='physique') return stepPhysique()
+    .replace('<p class="sub">Étape 2 sur 6</p>','<p class="sub">Modifiez ici toutes vos mensurations et caractéristiques.</p>')
+    .replace('<div class="actions-row"><button class="btn ghost" data-goto="1">← Retour</button><button class="btn primary" id="save2">Enregistrer</button></div>', editorAction('Enregistrer'));
+  if(k==='formation') return stepFormation()
+    .replace('<p class="sub">Étape 3 sur 6</p>','<p class="sub">Modifiez ici tous les éléments de votre formation et de votre parcours mannequin.</p>')
+    .replace('<div class="actions-row"><button class="btn ghost" data-goto="2">← Retour</button><button class="btn primary" id="save3">Enregistrer</button></div>', editorAction('Enregistrer'));
+  if(k==='experiences') return stepExperience()
+    .replace('<p class="sub">Remplissez directement les champs — chaque ligne est enregistrée séparément</p>','<p class="sub">Modifiez toutes vos expériences ici. Utilisez ensuite le bouton rouge « Enregistrer » pour terminer.</p>')
+    .replace('<div class="actions-row"><button class="btn ghost" data-goto="3">← Retour</button><button class="btn primary" id="save4">Continuer</button></div>', editorAction('Enregistrer'));
+  if(k==='photos') return stepPhotos()
+    .replace('<p class="sub">Gérez ici toutes vos photos. Les photos du Book peuvent être importées en plusieurs fichiers à la fois, sans limite de quantité.</p>','<p class="sub">Gérez ici l’ensemble de vos photos, vos deux photos principales, la compcard et votre galerie.</p>')
+    .replace('<div class="actions-row"><button class="btn ghost" data-goto="4">← Retour</button><button class="btn primary" id="save5">Continuer</button></div>', editorAction('Enregistrer'));
+  return '';
+}
+
+function viewBlockEditor(k){
+  const titles = {identite:'Identité', physique:'Physique', formation:'Formation', experiences:'Expérience professionnelle', photos:'Photos & compcard'};
+  const title = titles[k] || 'Modification';
+  return header('Modification du profil') +
+    '<div class="block-editor-page">' +
+      '<div class="block-editor-top"><div><span class="editor-kicker">MODIFICATION DU BLOC</span><h1>'+echapperHtml(title)+'</h1><p>Cette page reprend la fiche complète de ce bloc, comme lors de l’enregistrement initial. Aucun bouton « Suivant » ou « Précédent ».</p></div></div>' +
+      '<div class="panel block-editor-panel">'+editorPageBody(k)+'</div>' +
+    '</div>';
+}
+
+function finishBlockEdit(k, btn){
+  btn.disabled=true;
+  btn.textContent='Enregistrement…';
+  return function(ok){
+    if(ok){
+      btn.textContent='✓ Enregistré';
+      btn.classList.add('saved');
+      setTimeout(function(){
+        state.meta.editBlock=null;
+        render();
+        toast('Bloc « '+k+' » modifié et enregistré');
+      },650);
+    }else{
+      btn.disabled=false;
+      btn.textContent='Enregistrer';
+      btn.classList.remove('saved');
+    }
+  };
+}
+
+function bindBlockPage(k){
+  const s=state;
+  const btn=document.querySelector('[data-editor-save="1"]');
+  if(!btn) return;
+  function bindIdentitySelectorsEditor(){
+    const cr=document.getElementById('e-pays-res'), vr=document.getElementById('e-ville-res'), z=document.getElementById('e-abidjan-zone'), zf=document.getElementById('e-abidjan-zone-field'), cb=document.getElementById('e-pays-naiss'), vb=document.getElementById('e-ville-naiss');
+    if(cr&&vr){cr.addEventListener('change',function(){vr.innerHTML=cr.value==='CI'?ma2mCiCityOptions(''):'<option value="">— Ville internationale —</option>'; if(z)z.innerHTML=ma2mAbidjanOptions(''); if(zf)zf.style.display='none';}); vr.addEventListener('change',function(){if(zf)zf.style.display=(cr.value==='CI'&&vr.value==='Abidjan')?'block':'none';}); if(zf)zf.style.display=(cr.value==='CI'&&vr.value==='Abidjan')?'block':'none';}
+    if(cb&&vb)cb.addEventListener('change',function(){vb.innerHTML=cb.value==='CI'?ma2mCiCityOptions(''):'<option value="">— Ville internationale —</option>';});
+  }
+  if(k==='identite') bindIdentitySelectorsEditor();
+
+  function saveIdentity(){
+    const birthCountry=val('f-pays-naiss')||'CI', birthCity=val('f-ville-naiss'), residenceCountry=val('f-pays-res')||'CI', residenceCity=val('f-ville-res'), abidjanZone=val('f-abidjan-zone'), phoneCountry=val('f-phone-country')||'CI';
+const finalResidence=(residenceCountry==='CI' && residenceCity==='Abidjan' && abidjanZone)?abidjanZone:(residenceCity||'');
+const birthCountryName=(ma2mCountryByIso(birthCountry)||{}).name||birthCountry;
+Object.assign(s.identite, {
+  nom:val('f-nom'), prenom:val('f-prenom'), dateNaissance:val('f-dob'), lieuNaissance:birthCity ? (birthCountry==='CI' ? birthCity : birthCity+', '+birthCountryName) : '',
+  nationalite:val('f-nat'), ville:finalResidence, telephone:ma2mPhoneValue(phoneCountry,val('f-tel')), email:val('f-email'),
+  categorie: (document.querySelector('input[name=categorie]:checked')||{}).value || s.identite.categorie
+});
+s.meta.residenceCountry=residenceCountry; s.meta.residenceAbidjan=abidjanZone; s.meta.birthCountry=birthCountry; s.meta.phoneCountry=phoneCountry;
+    return Store.saveBlock(identiteToDb(s.identite));
+  }
+  function savePhysical(){
+    Object.assign(s.physique,{taille:val('f-taille'),poids:val('f-poids'),poitrine:val('f-poitrine'),tailleM:val('f-tailleM'),hanches:val('f-hanches'),pointure:val('f-pointure'),tailleVet:val('f-tailleVet'),yeux:val('f-yeux'),cheveuxCouleur:val('f-cheveuxCouleur'),cheveuxType:val('f-cheveuxType'),particularites:val('f-particularites')});
+    return Store.saveBlock(physiqueToDb(s.physique));
+  }
+  function saveFormation(){
+    s.formation.niveau=val('f-niveau'); s.formation.etablissement=val('f-etab'); s.formation.particuliere=val('f-formPart');
+    document.querySelectorAll('#app input[type="checkbox"][data-k]').forEach(function(cb){s.formation[cb.dataset.k]=cb.checked;});
+    return Store.saveBlock(formationToDb(s.formation));
+  }
+  async function saveExperiences(){
+    const els=document.querySelectorAll('[data-expf]');
+    els.forEach(function(el){const i=parseInt(el.dataset.i,10); if(s.experiences[i]) s.experiences[i][el.dataset.expf]=el.value;});
+    for(const e of s.experiences){ if(!e.id) continue; const ok=await Store.updateExperience(e.id,e); if(!ok) return false; }
+    return true;
+  }
+
+  btn.addEventListener('click',async function(){
+    const finish=finishBlockEdit(k,btn);
+    let ok=false;
+    try{
+      if(k==='identite') ok=await saveIdentity();
+      else if(k==='physique') ok=await savePhysical();
+      else if(k==='formation') ok=await saveFormation();
+      else if(k==='experiences') ok=await saveExperiences();
+      else if(k==='photos') ok=true; // Les uploads/sélections photos sont déjà persistés par leurs actions existantes.
+    }catch(err){ console.error(err); ok=false; }
+    finish(ok);
+  });
+
+  // Le bouton Ajouter / supprimer et les champs d'expérience restent disponibles sur la fiche complète.
+  if(k==='experiences'){
+    document.getElementById('addExp')?.addEventListener('click',async function(){
+      const draft={type:'Défilé',nom:'',lieu:'',annee:new Date().getFullYear().toString()};
+      const saved=await Store.addExperience(draft);
+      if(saved){s.experiences.push(saved); render();}
+    });
+    document.querySelectorAll('[data-rm]').forEach(function(b){b.addEventListener('click',async function(){
+      const i=parseInt(b.dataset.rm,10), exp=s.experiences[i]; if(!exp) return;
+      const ok=await Store.removeExperience(exp.id); if(ok){s.experiences.splice(i,1); render();}
+    });});
+  }
+  if(k==='photos') bindDashboardPhotoEditor();
+}
+
+function viewDashboard(){
+  const d = state.identite;
+  return header('Espace validé') + '<div class="panel">' +
+    '<div class="online-banner"><span class="dot" style="background:var(--ok)"></span> Profil en ligne — visible sur le site</div>' +
+    '<h1 style="font-family:var(--serif);font-style:italic;font-weight:500;font-size:1.5rem;margin:0 0 4px">Bonjour '+echapperHtml(d.prenom||'')+'</h1>' +
+    '<p class="sub" style="margin-bottom:26px">Modifiez un bloc à la fois — le bouton Enregistrer n\u2019apparaît que si ce bloc a changé.</p>' +
+    '<div class="blocks-grid">' + BLOCKS.map(function(b){
+      return '<div class="block-card" data-block="'+b.k+'"><span class="ic">'+b.ic+'</span><h3>'+b.title+'</h3><p>'+b.desc+'</p>' +
+      '<button class="btn ghost small block-btn" data-edit="'+b.k+'">Modifier</button>' +
+      '<div class="block-edit" id="edit-'+b.k+'" style="display:none"></div></div>';
+    }).join('') + '</div>' +
+    '<div class="cv-cta"><div class="txt"><h3>CV mannequin — privé</h3><p>Généré à partir de votre profil. Visible uniquement par vous et l\u2019administrateur MA2M.</p></div>' +
+    '<button class="btn primary" id="openCv">Générer mon CV</button></div>' +
+    '<div class="cv-cta" style="margin-top:14px"><div class="txt"><h3>Compcard</h3><p>Fiche publique à partir des photos sélectionnées.</p></div>' +
+    '<button class="btn ghost" id="openCc">Voir la compcard</button></div>' +
+    '<p class="lock-note">La case « profil visible » et le bouton « soumettre » n\u2019existent plus après validation.<br>Le mannequin ne peut ni désactiver son profil, ni modifier son statut, ni accéder au dossier d\u2019un autre mannequin.</p></div>';
+}
+
+function bindDashboard(){
+  document.querySelectorAll('[data-edit]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      const k = btn.dataset.edit;
+      state.meta.editBlock=k;
+      render();
+      window.scrollTo({top:0,behavior:'smooth'});
+    });
+  });
+  document.getElementById('openCv')?.addEventListener('click', openCv);
+  document.getElementById('openCc')?.addEventListener('click', openCompcard);
+}
+
+function blockEditForm(k){
+  if(k==='identite'){
+    const d=state.identite;
+    return '<div class="editor-head"><div><span class="editor-kicker">ÉDITION DU BLOC</span><h4>Identité complète</h4><p>Modifiez ici tous les éléments liés à votre identité et à vos coordonnées.</p></div><button class="btn ghost small" data-close="1">Fermer</button></div>' +
+      '<div class="grid">' +
+      field('Nom','e-nom',d.nom,{req:true}) + field('Prénom(s)','e-prenom',d.prenom,{req:true}) +
+      field('Date de naissance','e-dob',d.dateNaissance,{type:'date'}) +
+      '<div class="field"><label>Pays de naissance</label><select id="e-pays-naiss">'+ma2mCountryOptions(state.meta.birthCountry||'CI')+'</select></div>' +
+      '<div class="field"><label>Ville / commune de naissance</label><select id="e-ville-naiss">'+(state.meta.birthCountry==='CI'?ma2mCiCityOptions(ma2mLocationParts(d.lieuNaissance,'CI').city):'<option value="'+echapperHtml(ma2mLocationParts(d.lieuNaissance,state.meta.birthCountry).city||'')+'">'+echapperHtml(ma2mLocationParts(d.lieuNaissance,state.meta.birthCountry).city||'—')+'</option>')+'</select></div>' +
+      '<div class="field"><label>Nationalité</label><select id="e-nat">'+ma2mCountryOptions(ma2mCountryIso(d.nationalite)||null)+'</select></div>' +
+      '<div class="field"><label>Pays de résidence</label><select id="e-pays-res">'+ma2mCountryOptions(state.meta.residenceCountry||'CI')+'</select></div>' +
+      '<div class="field"><label>Ville / commune de résidence</label><select id="e-ville-res">'+(state.meta.residenceCountry==='CI'?ma2mCiCityOptions(ma2mLocationParts(d.ville,'CI').city):'<option value="'+echapperHtml(ma2mLocationParts(d.ville,state.meta.residenceCountry).city||'')+'">'+echapperHtml(ma2mLocationParts(d.ville,state.meta.residenceCountry).city||'—')+'</option>')+'</select></div>' +
+      '<div class="field" id="e-abidjan-zone-field"><label>Commune / zone d’Abidjan</label><select id="e-abidjan-zone">'+ma2mAbidjanOptions(state.meta.residenceAbidjan||'')+'</select></div>' +
+      '<div class="field"><label>Pays du téléphone</label><select id="e-phone-country">'+ma2mCountryOptions(state.meta.phoneCountry||'CI')+'</select></div>' +
+      '<div class="field"><label>Contact / numéro</label><input type="tel" id="e-tel" value="'+echapperHtml(ma2mParsePhone(d.telephone).number)+'" inputmode="tel"></div>' +
+      field('Email','e-email',d.email,{type:'email',placeholder:'exemple@gmail.com'}) +
+      '</div>' +
+      '<div class="field full editor-inline-field"><label>Catégorie</label><select id="e-categorie"><option value="">— Sélectionner —</option><option '+(d.categorie==='Newface 0–1 an'?'selected':'')+'>Newface 0–1 an</option><option '+(d.categorie==='Amateur 1–3 ans'?'selected':'')+'>Amateur 1–3 ans</option><option '+(d.categorie==='Pro 3 ans +'?'selected':'')+'>Pro 3 ans +</option></select></div>' +
+      '<div class="editor-actions"><button class="btn primary small save-block" data-save="identite">Enregistrer les modifications</button></div>';
+  }
+  if(k==='physique'){
+    const p=state.physique;
+    return '<div class="editor-head"><div><span class="editor-kicker">ÉDITION DU BLOC</span><h4>Profil physique complet</h4><p>Toutes les mensurations, caractéristiques et particularités sont réunies dans cette fiche.</p></div><button class="btn ghost small" data-close="1">Fermer</button></div>' +
+      '<div class="grid g3">' +
+      field('Taille (cm)','e-taille',p.taille,{options:Array.from({length:81},(_,i)=>140+i)}) + field('Poids (kg)','e-poids',p.poids,{options:Array.from({length:116},(_,i)=>35+i)}) + field('Poitrine (cm)','e-poitrine',p.poitrine,{options:Array.from({length:71},(_,i)=>60+i)}) +
+      field('Tour de taille (cm)','e-tailleM',p.tailleM,{options:Array.from({length:61},(_,i)=>50+i)}) + field('Hanches (cm)','e-hanches',p.hanches,{options:Array.from({length:71},(_,i)=>70+i)}) + field('Pointure','e-pointure',p.pointure,{options:Array.from({length:21},(_,i)=>30+i)}) +
+      field('Taille vêtements','e-tailleVet',p.tailleVet,{options:['XXS','XS','S','M','L','XL','XXL','XXXL','34','36','38','40','42','44','46','48','50','52']}) + field('Couleur des yeux','e-yeux',p.yeux,{options:['Marron','Noisette','Noir','Bleu','Vert','Gris','Ambre','Autre']}) + field('Couleur des cheveux','e-cheveuxCouleur',p.cheveuxCouleur,{options:['Noir','Brun','Châtain','Blond','Roux','Gris / poivre et sel','Blanc','Autre']}) +
+      field('Type de cheveux','e-cheveuxType',p.cheveuxType,{options:['Lisse','Ondulé','Bouclé','Frisé','Crépu','Locks / locs','Autre']}) +
+      '</div><div class="field full editor-inline-field"><label>Particularités</label><textarea id="e-particularites">'+echapperHtml(p.particularites)+'</textarea></div>' +
+      '<div class="editor-actions"><button class="btn primary small save-block" data-save="physique">Enregistrer les modifications</button></div>';
+  }
+  if(k==='formation'){
+    const f=state.formation;
+    return '<div class="editor-head"><div><span class="editor-kicker">ÉDITION DU BLOC</span><h4>Formation complète</h4><p>Niveau d’étude, établissement, formation particulière et parcours mannequin.</p></div><button class="btn ghost small" data-close="1">Fermer</button></div>' +
+      '<div class="field full"><label>Niveau d’étude</label><select id="e-niveau">' +
+      ['','Collège','Bac','Licence','Master','Autre'].map(o=>'<option value="'+o+'" '+(f.niveau===o?'selected':'')+'>'+(o||'— Sélectionner —')+'</option>').join('') +
+      '</select></div><div class="grid" style="margin-top:16px">' +
+      field('Établissement','e-etab',f.etablissement,{placeholder:'Lycée / Université / Établissement'}) +
+      field('Formation particulière','e-formPart',f.particuliere) +
+      '</div><div class="field full editor-inline-field"><label>Formations et compétences mannequin</label><div class="check-row">' +
+      [['mannequin','Formation mannequin'],['coaching','Coaching'],['masterclass','Masterclass'],['autre','Autre']].map(function(pair){
+        var key=pair[0], label=pair[1];
+        return '<label class="check-opt '+(f[key]?'selected':'')+'"><input type="checkbox" data-ek="'+key+'" '+(f[key]?'checked':'')+'> '+label+'</label>';
+      }).join('') +
+      '</div></div><div class="editor-actions"><button class="btn primary small save-block" data-save="formation">Enregistrer les modifications</button></div>';
+  }
+  if(k==='experiences'){
+    var listHtml = state.experiences.length===0
+      ? '<p class="exp-empty">Aucune expérience ajoutée pour le moment. Cliquez sur « + Ajouter une expérience ».</p>'
+      : state.experiences.map(function(e,i){
+          return '<div class="exp-card" data-exp="'+i+'"><div class="exp-fields">' +
+          '<select data-dash-expf="type" data-i="'+i+'">' + EXP_TYPES.map(function(t){ return '<option value="'+t+'" '+(e.type===t?'selected':'')+'>'+t+'</option>'; }).join('') + '</select>' +
+          '<input type="text" data-dash-expf="nom" data-i="'+i+'" placeholder="Nom du défilé / de la marque / de la campagne" value="'+echapperHtml(e.nom)+'">' +
+          '<input type="text" data-dash-expf="lieu" data-i="'+i+'" placeholder="Ville" value="'+echapperHtml(e.lieu)+'">' +
+          '<input type="text" data-dash-expf="annee" data-i="'+i+'" placeholder="Année" value="'+echapperHtml(e.annee)+'">' +
+          '</div><button class="exp-remove" data-dash-rm="'+i+'">Supprimer</button></div>';
+        }).join('');
+    return '<div class="editor-head"><div><span class="editor-kicker">ÉDITION DU BLOC</span><h4>Expérience professionnelle complète</h4><p>Toutes les expériences enregistrées sont affichées ici. Chaque ligne peut être modifiée directement.</p></div><button class="btn ghost small" data-close="1">Fermer</button></div>' +
+      '<button class="btn ghost small" id="dashAddExp" style="margin-bottom:18px">+ Ajouter une expérience</button>' +
+      '<div id="dashExpList">'+listHtml+'</div>' +
+      '<p class="sub" style="margin:18px 0 8px">Types disponibles</p><div class="type-chip-row">'+EXP_TYPES.map(function(t){return '<span class="type-chip">'+t+'</span>';}).join('')+'</div>';
+  }
+  if(k==='photos'){
+    return '<div class="editor-head"><div><span class="editor-kicker">ÉDITION DU BLOC</span><h4>Photos &amp; compcard</h4><p>Gérez le portrait, le plein pied, l’ensemble du book, la sélection compcard et les documents associés.</p></div><button class="btn ghost small" data-close="1">Fermer</button></div>' +
+      stepPhotos().replace('<div class="actions-row"><button class="btn ghost" data-goto="4">← Retour</button><button class="btn primary" id="save5">Continuer</button></div>','');
+  }
+  return '';
+}
+
+function reopenDashboardBlock(k){
+  setTimeout(function(){
+    const btn=document.querySelector('[data-edit="'+k+'"]');
+    if(btn) btn.click();
+  },0);
+}
+
+function bindDashboardPhotoEditor(){
+  const s=state;
+  function single(id,type,setter,label){const input=document.getElementById(id);if(!input)return;input.addEventListener('change',async function(){const file=input.files[0];if(!file)return;const item=await Store.uploadPhoto(file,type,true);if(item){setter(item);render();reopenDashboardBlock('photos');toast(label+' ajoutée');}input.value='';});}
+  single('fPortrait','portrait',function(x){s.photos.portrait=x;},'Photo principale CV'); single('fProfil','profil',function(x){s.photos.photoProfil=x;},'Photo principale profil'); single('fPleinPied','plein_pied',function(x){s.photos.pleinPied=x;},'Photo plein pied');
+  document.querySelectorAll('[data-cc-upload]').forEach(function(input){input.addEventListener('change',async function(){const slot=parseInt(input.dataset.ccUpload,10),file=input.files[0];if(!file)return;const old=s.photos.compCard[slot-1];const item=await Store.uploadPhoto(file,'compcard_'+slot,true);if(item){item.compSlot=slot;s.photos.compCard[slot-1]=item;s.compcard[slot-1]=item.id;normalizeCompcard();if(old&&old.id)await Store.removePhoto(old.id,old.path||null);render();reopenDashboardBlock('photos');toast('Photo COMPCARD '+slot+' enregistrée');}input.value='';});});
+  document.querySelectorAll('[data-clear-cc-photo]').forEach(function(btn){btn.addEventListener('click',async function(e){e.stopPropagation();const slot=parseInt(btn.dataset.clearCcPhoto,10),ph=s.photos.compCard[slot-1];if(!ph)return;const ok=await Store.removePhoto(ph.id,ph.path||null);if(ok){s.photos.compCard[slot-1]=null;s.compcard[slot-1]=null;render();reopenDashboardBlock('photos');toast('Photo COMPCARD '+slot+' supprimée');}});});
+  const fBook=document.getElementById('fBook'); if(fBook)fBook.addEventListener('change',async function(){const files=Array.from(fBook.files||[]);if(!files.length)return;let added=0;for(const file of files){const item=await Store.uploadPhoto(file,'book',true);if(item){s.photos.book.push(item);added++;}}fBook.value='';render();reopenDashboardBlock('photos');toast(added+' photo(s) ajoutée(s) au Book');});
+  document.querySelectorAll('[data-rmbook]').forEach(function(btn){btn.addEventListener('click',async function(e){e.stopPropagation();const id=btn.dataset.rmbook,ph=s.photos.book.find(function(x){return String(x.id)===String(id);});const ok=await Store.removePhoto(id,ph?ph.path:null);if(ok){s.photos.book=s.photos.book.filter(function(x){return String(x.id)!==String(id);});render();reopenDashboardBlock('photos');}});});
+}
+
+function bindBlockForm(k){
+  const container=document.getElementById('edit-'+k);
+  if(!container) return;
+
+  container.querySelectorAll('input,select,textarea').forEach(function(input){
+    input.addEventListener('input',function(){container.classList.add('dirty');});
+    input.addEventListener('change',function(){container.classList.add('dirty');});
+  });
+  const closeBtn=container.querySelector('[data-close]');
+  if(closeBtn) closeBtn.addEventListener('click',function(){container.style.display='none';});
+
+  if(k==='photos'){
+    bindDashboardPhotoEditor();
+    return;
+  }
+
+  if(k==='experiences'){
+    document.getElementById('dashAddExp')?.addEventListener('click',async function(){
+      const draft={type:'Défilé',nom:'',lieu:'',annee:new Date().getFullYear().toString()};
+      const saved=await Store.addExperience(draft);
+      if(saved){ state.experiences.push(saved); render(); reopenDashboardBlock('experiences'); }
+    });
+    container.querySelectorAll('[data-dash-rm]').forEach(function(b){ b.addEventListener('click',async function(){
+      const i=parseInt(b.dataset.dashRm,10), exp=state.experiences[i];
+      if(!exp) return;
+      const ok=await Store.removeExperience(exp.id);
+      if(ok){ state.experiences.splice(i,1); render(); reopenDashboardBlock('experiences'); }
+    }); });
+    container.querySelectorAll('[data-dash-expf]').forEach(function(el){
+      const eventName=el.tagName==='SELECT'?'change':'input';
+      let debounceTimer;
+      el.addEventListener(eventName,function(){
+        const i=parseInt(el.dataset.i,10);
+        if(!state.experiences[i]) return;
+        state.experiences[i][el.dataset.dashExpf]=el.value;
+        clearTimeout(debounceTimer);
+        debounceTimer=setTimeout(function(){Store.updateExperience(state.experiences[i].id,state.experiences[i]);},500);
+      });
+    });
+    return;
+  }
+
+  const btn=container.querySelector('[data-save="'+k+'"]');
+  if(!btn) return;
+  btn.addEventListener('click',async function(){
+    let payload={};
+    if(k==='identite'){
+      const birthCountry=val('e-pays-naiss')||'CI', birthCity=val('e-ville-naiss'), residenceCountry=val('e-pays-res')||'CI', residenceCity=val('e-ville-res'), abidjanZone=val('e-abidjan-zone'), phoneCountry=val('e-phone-country')||'CI';
+      const finalResidence=(residenceCountry==='CI' && residenceCity==='Abidjan' && abidjanZone)?abidjanZone:(residenceCity||'');
+      const birthCountryName=(ma2mCountryByIso(birthCountry)||{}).name||birthCountry;
+      Object.assign(state.identite,{
+        nom:val('e-nom'),prenom:val('e-prenom'),dateNaissance:val('e-dob'),lieuNaissance:birthCity?(birthCountry==='CI'?birthCity:birthCity+', '+birthCountryName):'',
+        nationalite:val('e-nat'),ville:finalResidence,telephone:ma2mPhoneValue(phoneCountry,val('e-tel')),email:val('e-email'),
+        categorie:val('e-categorie')||state.identite.categorie
+      });
+      state.meta.residenceCountry=residenceCountry; state.meta.residenceAbidjan=abidjanZone; state.meta.birthCountry=birthCountry; state.meta.phoneCountry=phoneCountry;
+      payload=identiteToDb(state.identite);
+    }
+    if(k==='physique'){
+      Object.assign(state.physique,{
+        taille:val('e-taille'),poids:val('e-poids'),poitrine:val('e-poitrine'),tailleM:val('e-tailleM'),
+        hanches:val('e-hanches'),pointure:val('e-pointure'),tailleVet:val('e-tailleVet'),yeux:val('e-yeux'),
+        cheveuxCouleur:val('e-cheveuxCouleur'),cheveuxType:val('e-cheveuxType'),particularites:val('e-particularites')
+      });
+      payload=physiqueToDb(state.physique);
+    }
+    if(k==='formation'){
+      state.formation.niveau=val('e-niveau');
+      state.formation.etablissement=val('e-etab');
+      state.formation.particuliere=val('e-formPart');
+      container.querySelectorAll('input[data-ek]').forEach(function(cb){state.formation[cb.dataset.ek]=cb.checked;});
+      payload=formationToDb(state.formation);
+    }
+    btn.disabled=true; btn.textContent='Enregistrement…';
+    const ok=await Store.saveBlock(payload);
+    if(ok){
+      btn.textContent='✓ Enregistré'; btn.classList.add('saved');
+      setTimeout(function(){render(); toast('Bloc « '+k+' » enregistré — tous ses éléments ont été pris en compte');},500);
+    }else{
+      btn.disabled=false; btn.textContent='Enregistrer les modifications';
+    }
+  });
+}
+
+/* ------------------------------------------------------------- CV / PDF */
+const MCV_ICONS = {
+  user:'<circle cx="9" cy="6.2" r="3"/><path d="M3.2 16c.6-3.3 3-5.2 5.8-5.2s5.2 1.9 5.8 5.2"/>',
+  body:'<path d="M4 3h10M4 15h10M6 3v5.5c0 1.2-1 1.6-1 3.5s1 2.3 1 3M12 3v5.5c0 1.2 1 1.6 1 3.5s-1 2.3-1 3"/>',
+  grad:'<path d="M1.5 7 9 3.5 16.5 7 9 10.5 1.5 7Z"/><path d="M5 8.6v3.4c0 1 1.8 2 4 2s4-1 4-2V8.6"/><path d="M16.5 7v4.5"/>',
+  star:'<path d="M9 2.2l1.9 3.9 4.3.6-3.1 3 .7 4.3L9 12l-3.8 2 .7-4.3-3.1-3 4.3-.6L9 2.2Z"/>',
+  medal:'<circle cx="9" cy="11" r="4.3"/><path d="M6.4 6.6 4 2M11.6 6.6 14 2M7.4 11l1.1 1.4L11 9.6"/>',
+  image:'<rect x="1.7" y="3" width="14.6" height="12" rx="1"/><circle cx="6" cy="7.3" r="1.3"/><path d="M2 13.5l4-4 3 3 2.6-2.6L16.3 13"/>',
+  calendar:'<rect x="2" y="3.3" width="14" height="12.2" rx="1"/><path d="M2 7h14M5.5 1.8v3M12.5 1.8v3"/>',
+  pin:'<path d="M9 16.3S3.8 11 3.8 7.1a5.2 5.2 0 0 1 10.4 0C14.2 11 9 16.3 9 16.3Z"/><circle cx="9" cy="7.1" r="1.9"/>',
+  globe:'<circle cx="9" cy="9" r="7"/><path d="M2 9h14M9 2c2.2 2 2.2 12 0 14M9 2c-2.2 2-2.2 12 0 14"/>',
+  home:'<path d="M2.5 8.2 9 2.7l6.5 5.5"/><path d="M4 7v8h10V7"/><path d="M7.3 15V10.7h3.4V15"/>',
+  phone:'<path d="M4 2.5h2.3l1 3.3-1.7 1.3a9 9 0 0 0 4.3 4.3l1.3-1.7 3.3 1v2.3c0 .9-.8 1.6-1.7 1.4C7.9 13.6 4.4 10.1 3.6 5.2 3.4 4.3 4 3.5 4 2.5Z"/>',
+  mail:'<rect x="1.8" y="3.8" width="14.4" height="10.4" rx="1"/><path d="M2.3 4.5 9 9.8l6.7-5.3"/>',
+  insta:'<rect x="2" y="2" width="14" height="14" rx="4"/><circle cx="9" cy="9" r="3.4"/><circle cx="13.2" cy="4.8" r=".9"/>',
+  link:'<path d="M7.5 10.5 10.5 7.5"/><path d="M8.6 5.5 10 4a2.9 2.9 0 0 1 4.1 4.1l-1.5 1.5"/><path d="M9.4 12.5 8 14a2.9 2.9 0 0 1-4.1-4.1l1.5-1.5"/>',
+  dress:'<path d="M9 2 7.3 5h3.4L9 2Z"/><path d="M7.3 5 3.8 15.5h10.4L11 5"/><path d="M6.3 9.5h5.4"/>',
+  camera:'<rect x="1.8" y="5.5" width="14.4" height="9.7" rx="1.6"/><circle cx="9" cy="10.4" r="3"/><path d="M6.2 5.5 7.3 3.2h3.4l1.1 2.3"/>',
+  clapper:'<path d="M2.4 7.2 3 15.5h12l.6-8.3H2.4Z"/><path d="M2.6 7.2 4 3.6l2.6.7-1 2.9M7.1 4.3l1-2.9 2.6.7-1 2.9M11.6 4.3l1-2.9 2.6.7-1 2.9"/>',
+};
+function mcvIcon(name,size){ size=size||18; return '<svg viewBox="0 0 18 18" width="'+size+'" height="'+size+'" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">'+(MCV_ICONS[name]||'')+'</svg>'; }
+function strHash(s){ let h=0; for(const c of String(s)) h=(h*31 + c.charCodeAt(0))|0; return Math.abs(h); }
+function fmtDate(iso){
+  if(!iso) return '—';
+  const parts = iso.split('-'); const y=parts[0],m=parts[1],d=parts[2];
+  const mois = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+  if(!y||!m||!d) return iso;
+  return parseInt(d)+' '+(mois[parseInt(m)-1]||'')+' '+y;
+}
+function groupExperiences(){
+  const groups = [
+    {label:'Défilés', icon:'dress', items:[]},
+    {label:'Campagnes & éditoriaux', icon:'camera', items:[]},
+    {label:'Shootings', icon:'camera', items:[]},
+    {label:'Autres expériences', icon:'clapper', items:[]},
+  ];
+  state.experiences.forEach(function(e){
+    const meta = [e.lieu,e.annee].filter(Boolean);
+    const line = (e.nom||'Expérience') + (meta.length ? ' ('+meta.join(', ')+')' : '');
+    if(e.type==='Défilé') groups[0].items.push(line);
+    else if(e.type==='Campagne'||e.type==='Publicité'||e.type==='Éditorial'||e.type==='Lookbook') groups[1].items.push(line);
+    else if(e.type==='Shooting') groups[2].items.push(line);
+    else groups[3].items.push(line);
+  });
+  return groups.filter(function(g){ return g.items.length; });
+}
+const SKILLS = ['Runway / Défilé','Pose photographique','Editorial','Fashion campaign','Fitting','Présentation de collection','Expression corporelle','Travail en équipe','Discipline professionnelle'];
+function skillPct(label){
+  const map = {'Newface 0–1 an':56,'Amateur 1–3 ans':72,'Pro 3 ans +':88};
+  const base = map[state.identite.categorie] || 64;
+  const variation = (strHash((state.identite.nom||'')+label) % 19) - 9;
+  return Math.max(35, Math.min(98, base + variation));
+}
+
+function openCv(){
+  const d=state.identite, p=state.physique, f=state.formation;
+  const groups = groupExperiences();
+  const formationsChoisies = [f.mannequin&&'Formation mannequin',f.coaching&&'Coaching',f.masterclass&&'Masterclass',f.autre&&'Autre'].filter(Boolean).join(' · ') || '—';
+  const handle = '@'+((d.prenom||'aissatou')+'_'+(d.nom||'kouassi')).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_')+'_model';
+  const profileUrl = window.location.origin + '/mannequin.html?id=' + encodeURIComponent(currentUser && currentUser.id ? currentUser.id : 'demo');
+  const qrCells = '';
+  const heroPhoto = state.photos.portrait && state.photos.portrait.url ? '<img src="'+state.photos.portrait.url+'" alt="Photo">' : '';
+  document.getElementById('overlayContent').innerHTML =
+    '<div class="overlay-close"><button id="closeOv">✕</button></div>' +
+    '<div class="cv-sheet print-area">' +
+    '<div class="private-note">Document privé — visible uniquement par '+echapperHtml(d.prenom||'la mannequin')+' et l\u2019administrateur MA2M</div>' +
+    '<div class="mcv-wrap"><aside class="mcv-side">' +
+      '<div class="mcv-photo">'+heroPhoto+mcvIcon('user',48)+'<div class="mcv-photo-logo"><b>MA2M</b><small>MAÎTRE AKESSE<br>MODEL MANAGEMENT</small></div></div>' +
+      '<div class="mcv-tagline">Former · Révéler · Valoriser</div>' +
+      '<div class="mcv-name"><span class="mcv-nom">'+echapperHtml((d.nom||'').toUpperCase())+'</span><span class="mcv-prenom">'+echapperHtml(d.prenom||'')+'</span></div>' +
+      '<div class="mcv-role">Mannequin professionnel(le)</div><div class="mcv-divider"></div>' +
+      '<ul class="mcv-info-list">' +
+        '<li>'+mcvIcon('calendar')+'<div><span class="k">Date de naissance</span><span class="v">'+fmtDate(d.dateNaissance)+'</span></div></li>' +
+        '<li>'+mcvIcon('pin')+'<div><span class="k">Lieu de naissance</span><span class="v">'+echapperHtml(d.lieuNaissance||'—')+'</span></div></li>' +
+        '<li>'+mcvIcon('globe')+'<div><span class="k">Nationalité</span><span class="v">'+echapperHtml(d.nationalite||'—')+'</span></div></li>' +
+        '<li>'+mcvIcon('home')+'<div><span class="k">Ville de résidence</span><span class="v">'+echapperHtml(d.ville||'—')+'</span></div></li>' +
+        '<li>'+mcvIcon('phone')+'<div><span class="k">Contact agence</span><span class="v">'+echapperHtml(d.telephone||'—')+'<br>infos.ma2m@gmail.com</span></div></li>' +
+      '</ul>' +
+      '<div class="mcv-cat"><span class="lbl">Catégorie</span><span class="val">'+echapperHtml(d.categorie||'—')+'</span></div>' +
+      '<blockquote class="mcv-quote">« Une présence,<br>une attitude,<br>une émotion. »</blockquote>' +
+      '<div class="mcv-agency"><span>MAÎTRE AKESSE</span><small>MODEL MANAGEMENT</small></div>' +
+    '</aside><div class="mcv-right"><div class="mcv-main"><div class="mcv-topline">Model CV</div>' +
+      '<section class="mcv-sec"><h4>'+mcvIcon('user')+' Profil</h4><div class="mcv-profil-row">' +
+        '<p class="mcv-profile-text">Mannequin professionnel(le) basé(e) à '+echapperHtml(d.ville||'Abidjan')+', passionné(e) par la mode et l\u2019univers du luxe. Doté(e) d\u2019une forte présence, d\u2019une grande discipline et d\u2019un sens naturel de la pose, '+echapperHtml(d.prenom||'elle')+' est prêt(e) à relever de nouveaux défis sur les podiums, en shooting et dans les campagnes mode.</p>' +
+        '<div class="mcv-side-tag"><span>Mode</span><span>Élégance</span><span>Ambition</span></div></div></section>' +
+      '<section class="mcv-sec"><h4>'+mcvIcon('body')+' Informations physiques</h4><div class="mcv-two-col">' +
+        '<ul class="mcv-kv"><li><span>Taille</span><b>'+(p.taille?p.taille+' cm':'—')+'</b></li><li><span>Poids</span><b>'+(p.poids?p.poids+' kg':'—')+'</b></li>' +
+        '<li><span>Mensurations</span><b>'+([p.poitrine,p.tailleM,p.hanches].some(Boolean)?[p.poitrine||'–',p.tailleM||'–',p.hanches||'–'].join(' / '):'—')+'</b></li>' +
+        '<li><span>Pointure</span><b>'+(p.pointure||'—')+'</b></li></ul>' +
+        '<ul class="mcv-kv"><li><span>Taille vêtements</span><b>'+(p.tailleVet||'—')+'</b></li><li><span>Couleur des yeux</span><b>'+(p.yeux||'—')+'</b></li>' +
+        '<li><span>Couleur des cheveux</span><b>'+(p.cheveuxCouleur||'—')+'</b></li><li><span>Type de cheveux</span><b>'+(p.cheveuxType||'—')+'</b></li></ul>' +
+      '</div></section>' +
+      '<section class="mcv-sec"><h4>'+mcvIcon('grad')+' Formation</h4><ul class="mcv-kv">' +
+        '<li><span>Niveau d\u2019étude</span><b>'+(f.niveau||'—')+'</b></li><li><span>Établissement</span><b>'+(f.etablissement||'—')+'</b></li>' +
+        '<li><span>Formation particulière</span><b>'+(f.particuliere||'Aucune')+'</b></li><li><span>Formation mannequin</span><b>'+formationsChoisies+'</b></li></ul></section>' +
+      '<section class="mcv-sec"><h4>'+mcvIcon('star')+' Expérience professionnelle</h4>' +
+        (groups.length ? groups.map(function(g){ return '<div class="mcv-expgroup"><div class="gh">'+mcvIcon(g.icon,15)+' '+g.label+'</div><ul>'+g.items.map(function(i){return '<li>'+echapperHtml(i)+'</li>';}).join('')+'</ul></div>'; }).join('')
+          : '<p style="font-size:.82rem;color:#8a7a5e">Aucune expérience renseignée pour le moment.</p>') + '</section>' +
+      '<section class="mcv-sec"><div class="mcv-bottom-row"><div><h4>'+mcvIcon('medal')+' Compétences mannequin</h4><div class="mcv-skills">' +
+        SKILLS.map(function(sk){ return '<div class="mcv-skill-row"><span class="lbl">'+sk+'</span><div class="mcv-skill-bar"><i style="width:'+skillPct(sk)+'%"></i></div></div>'; }).join('') +
+        '</div></div><div><h4>'+mcvIcon('image')+' Portfolio</h4><div class="mcv-portfolio"><div class="mcv-qr-real" id="mcvQr" data-qr-url="'+echapperHtml(profileUrl)+'"></div>' +
+        '<p class="cap">Scanne pour ouvrir directement le profil public du mannequin</p><div class="soc">'+mcvIcon('insta',15)+' '+handle+'</div>' +
+        '<div class="soc">'+mcvIcon('link',15)+' '+echapperHtml(profileUrl)+'</div></div></div></div></section>' +
+    '</div></div></div>' +
+    '<div class="mcv-agency-footer"><strong>MAÎTRE AKESSE MODEL MANAGEMENT</strong><span>+225 05 45 65 68 87 · +225 27 22 23 11 76 · infos.ma2m@gmail.com</span><span>Abidjan, Côte d’Ivoire · Instagram @maitreakessemodelmanagement</span></div>' +
+    '<div class="cv-actions"><button class="btn ghost small" id="closeOv2">Fermer</button><button class="btn primary small" id="printCv">Télécharger le CV (PDF)</button></div></div>';
+  showOverlay();
+  document.getElementById('printCv').addEventListener('click', function(){ window.print(); });
+}
+
+function openCompcard(){
+  normalizeCompcard();
+  const slots = [1,2,3,4,5].map(function(n){ return compcardPhotoById(state.compcard[n-1]); });
+  const cover = slots[0];
+  const sidePhotos = slots.slice(1).map(function(ph){ return ph && ph.url ? '<img src="'+ph.url+'" alt="Photo compcard">' : '<div class="cc-empty-photo"></div>'; }).join('');
+  const d=state.identite, p=state.physique;
+  const logo='MAÎTRE AKESSE';
+  const contact='+225 27 22 23 11 76  ·  +225 05 45 65 68 87';
+  document.getElementById('overlayContent').innerHTML =
+    '<div class="overlay-close"><button id="closeOv">✕</button></div>' +
+    '<div class="compcard-model print-area">' +
+      '<div class="ccm-header"><div class="ccm-logo">'+logo+'<small>MODEL MANAGEMENT</small></div><div class="ccm-title">COMPCARD</div></div>' +
+      '<div class="ccm-photo-grid"><div class="ccm-cover">'+(cover&&cover.url?'<img src="'+cover.url+'" alt="Photo plein pied compcard">':'<div class="cc-empty-photo">PHOTO PLEIN PIED</div>')+'</div><div class="ccm-side-grid">'+sidePhotos+'</div></div>' +
+      '<div class="ccm-body"><h1>'+echapperHtml((d.prenom||'')+' '+(d.nom||''))+'</h1><div class="ccm-meta">'+echapperHtml(d.categorie||'Mannequin')+'  ·  '+echapperHtml(d.ville||'Abidjan')+'</div>' +
+      '<div class="ccm-measures">' +
+        '<div><span>TAILLE</span><b>'+(p.taille||'—')+' cm</b></div><div><span>POIDS</span><b>'+(p.poids||'—')+' kg</b></div><div><span>POITRINE</span><b>'+(p.poitrine||'—')+' cm</b></div>' +
+        '<div><span>TOUR DE TAILLE</span><b>'+(p.tailleM||'—')+' cm</b></div><div><span>HANCHES</span><b>'+(p.hanches||'—')+' cm</b></div><div><span>POINTURE</span><b>'+(p.pointure||'—')+'</b></div>' +
+        '<div><span>CARNATION</span><b>'+(p.carnation||'—')+'</b></div><div><span>TAILLE VÊTEMENTS</span><b>'+(p.tailleVet||'—')+'</b></div><div><span>YEUX</span><b>'+(p.yeux||'—')+'</b></div><div><span>CHEVEUX</span><b>'+(p.cheveuxCouleur||'—')+'</b></div>' +
+      '</div></div>' +
+      '<div class="ccm-footer"><b>CONTACT OFFICIEL MA2M</b><div>'+contact+'</div><div>infos.ma2m@gmail.com</div><div>Instagram · Facebook · TikTok · YouTube  @maitreakessemodelmanagement</div><small>Document officiel généré depuis maitreakessemodelmanagement.com — toute demande de booking passe exclusivement par l’agence.</small></div>' +
+    '</div>' +
+    '<div class="cv-actions"><button class="btn ghost small" id="closeOv2">Fermer</button><button class="btn primary small" id="printCc">Télécharger (PDF / JPG)</button></div>';
+  showOverlay();
+  document.getElementById('printCc').addEventListener('click', function(){ window.print(); });
+}
+
+function showOverlay(){
+  const ov = document.getElementById('overlay');
+  ov.classList.remove('hidden');
+  document.getElementById('closeOv')?.addEventListener('click', function(){ ov.classList.add('hidden'); });
+  document.getElementById('closeOv2')?.addEventListener('click', function(){ ov.classList.add('hidden'); });
+}
+
+/* --------------------------------------------------------- ADMIN SIM (démo) */
+document.getElementById('adminValidateBtn')?.addEventListener('click', async function(){
+  const ok = await Store.saveBlock({ statut:'valide' });
+  if(ok){ state.meta.statut='valide'; render(); toast('Dossier validé par l\u2019administrateur — profil en ligne'); }
+});
+document.getElementById('adminRefuseBtn')?.addEventListener('click', async function(){
+  const ok = await Store.saveBlock({ statut:'refuse', commentaire_admin:'Merci de préciser vos mensurations et d\u2019ajouter une photo plein pied plus récente.' });
+  if(ok){ state.meta.statut='refuse'; state.meta.commentaireAdmin='Merci de préciser vos mensurations et d\u2019ajouter une photo plein pied plus récente.'; render(); toast('Dossier renvoyé pour correction'); }
+});
+
+/* --------------------------------------------------------------- INIT */
+function closeMA2MWelcome(){
+  const welcome=document.getElementById('ma2mWelcome');
+  if(!welcome) return;
+  welcome.classList.add('leaving');
+  setTimeout(function(){ welcome.remove(); },900);
+  try{ sessionStorage.setItem('ma2m_step0_seen','1'); }catch(e){}
+}
+function prepareMA2MWelcome(){
+  const welcome=document.getElementById('ma2mWelcome');
+  if(!welcome) return;
+  setTimeout(function(){ welcome.classList.add('ready'); },3600);
+  document.getElementById('ma2mEnter')?.addEventListener('click',closeMA2MWelcome);
+  document.getElementById('ma2mSkip')?.addEventListener('click',closeMA2MWelcome);
+}
+
+(async function init(){
+  const ok = await initAuth();
+  if(!ok) return; // redirection vers la page de connexion déjà déclenchée
+  await Store.ensureProfileRow();
+  state = await Store.load();
+  if(!state.meta.currentStep) state.meta.currentStep = 1;
+  render();
+  prepareMA2MWelcome();
+})();
+</script>
+</body>
+</html>
