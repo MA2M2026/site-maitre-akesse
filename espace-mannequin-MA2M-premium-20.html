@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net 'sha256-DBoUmZxdykAHk1QcyCfOeDO3kysfHqH8RFEFoJh2Yhg='; style-src 'self' https://fonts.googleapis.com 'sha256-2kRDZo5gz7C6gqUjDGnkljCVV7qgEm/N6XlFEvvnZmI=' 'sha256-6qhUgUeUoQKz59fiistQN0Ss/B5WnFRs0pT8kPBjtFk=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-aV3Onw9NNjfc5pyK9wuAsj0djR/FRMuMYIVWqUi04+c=' 'sha256-AzdXLTndi6ATLACOIeqFDaSCB8rS+fmbgQZyBV9S27g=' 'sha256-oN6L8ZC5J5vq75YFwr+IQde5+86CAQyMUaE+VvKdg/s=' 'sha256-nsZYJU4jn9WiGCNfpzvOvlew1PkbvjP+RAoCo+LqagY=';">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mon Espace Mannequin — MA2M | Premium</title>
@@ -405,6 +406,32 @@ a{color:inherit}
 .whatsapp-flottant svg{width:28px;height:28px}
 @media(max-width:700px){.whatsapp-flottant{width:50px;height:50px;bottom:1rem;left:1rem}}
 
+/* Classes utilitaires remplaçant les attributs style="" en ligne, bloqués en
+   silence par le CSP strict de cette page (comme sur le reste du site —
+   voir README-TECHNIQUE.md). Numérotées, pas de nom descriptif : usages
+   ponctuels et variés (espacements, couleurs isolées), une par valeur unique
+   rencontrée dans le fichier. */
+.p20-2{background:#d55468}
+.p20-3{background:var(--ok)}
+.p20-4{background:var(--or)}
+.p20-5{color:#d55468}
+.p20-6{color:inherit}
+.p20-7{color:var(--or-clair)}
+.p20-8{display:flex;gap:10px;margin-bottom:24px}
+.p20-9{display:none}
+.p20-10{font-family:var(--serif);font-style:italic;font-weight:500;font-size:1.5rem;margin:14px 0 4px}
+.p20-11{font-size:.82rem;color:#6b6560}
+.p20-12{margin-bottom:18px}
+.p20-13{margin-bottom:26px}
+.p20-14{margin-top:10px}
+.p20-15{margin-top:14px}
+.p20-16{margin-top:16px}
+.p20-17{margin-top:20px}
+.p20-18{margin-top:26px}
+.p20-19{margin-top:8px}
+.p20-20{margin:22px 0 8px}
+.p20-21{margin:6px 0 0}
+
 @media print{
   body *{visibility:hidden}
   .print-area,.print-area *{visibility:visible}
@@ -627,7 +654,7 @@ const WORDMARK_HTML = '<div class="wordmark"><img src="assets/logo-header.png" a
 function viewAuthGate(){
   return '<div class="top">'+WORDMARK_HTML+'</div>' +
   '<div class="panel" id="authPanel">' +
-    '<div id="auth-onglets" style="display:flex;gap:10px;margin-bottom:24px">' +
+    '<div id="auth-onglets" class="p20-8">' +
       '<button type="button" class="btn small" id="auth-tab-connexion" data-auth-tab="connexion">Se connecter</button>' +
       '<button type="button" class="btn ghost small" id="auth-tab-inscription" data-auth-tab="inscription">Créer mon compte</button>' +
     '</div>' +
@@ -635,30 +662,30 @@ function viewAuthGate(){
       '<h2>Connexion</h2><p class="sub">Accédez à votre espace mannequin.</p>' +
       '<div class="grid">' + field('E-mail','au-co-email','',{type:'email',req:true}) + field('Mot de passe','au-co-mdp','',{type:'password',req:true}) + '</div>' +
       '<div class="actions-row end"><button class="btn primary" id="au-co-valider">Se connecter</button></div>' +
-      '<div id="au-co-msg" class="err-msg" style="margin-top:10px"></div>' +
-      '<p style="margin-top:14px"><a href="#" id="au-mdp-oublie-lien" style="color:var(--or-clair)">Mot de passe oublié ?</a></p>' +
+      '<div id="au-co-msg" class="err-msg p20-14"></div>' +
+      '<p class="p20-15"><a href="#" id="au-mdp-oublie-lien" class="p20-7">Mot de passe oublié ?</a></p>' +
     '</div>' +
-    '<div id="auth-panneau-inscription" style="display:none">' +
+    '<div id="auth-panneau-inscription" class="p20-9">' +
       '<h2>Créer mon compte</h2><p class="sub">Un code d’invitation vous a été fourni par l’agence.</p>' +
       '<div class="grid">' +
         field('Code d’invitation','au-in-code','',{req:true}) + field('Nom complet','au-in-nom','',{req:true}) +
         field('E-mail','au-in-email','',{type:'email',req:true}) + field('Mot de passe (6 caractères min.)','au-in-mdp','',{type:'password',req:true}) +
       '</div>' +
       '<div class="actions-row end"><button class="btn primary" id="au-in-valider">Créer mon compte</button></div>' +
-      '<div id="au-in-msg" class="err-msg" style="margin-top:10px"></div>' +
+      '<div id="au-in-msg" class="err-msg p20-14"></div>' +
     '</div>' +
-    '<div id="auth-panneau-mdp-oublie" style="display:none">' +
+    '<div id="auth-panneau-mdp-oublie" class="p20-9">' +
       '<h2>Mot de passe oublié</h2><p class="sub">Indiquez votre e-mail — si un compte y est associé, un lien de réinitialisation vous sera envoyé.</p>' +
       field('E-mail','au-mo-email','',{type:'email'}) +
       '<div class="actions-row end"><button class="btn primary" id="au-mo-envoyer">Envoyer le lien</button></div>' +
-      '<div id="au-mo-msg" class="err-msg" style="margin-top:10px"></div>' +
-      '<p style="margin-top:14px"><a href="#" id="au-mo-retour" style="color:var(--or-clair)">← Retour à la connexion</a></p>' +
+      '<div id="au-mo-msg" class="err-msg p20-14"></div>' +
+      '<p class="p20-15"><a href="#" id="au-mo-retour" class="p20-7">← Retour à la connexion</a></p>' +
     '</div>' +
-    '<div id="auth-panneau-nouveau-mdp" style="display:none">' +
+    '<div id="auth-panneau-nouveau-mdp" class="p20-9">' +
       '<h2>Nouveau mot de passe</h2><p class="sub">Choisissez votre nouveau mot de passe (8 caractères minimum).</p>' +
       field('Nouveau mot de passe','au-nm-mdp','',{type:'password'}) +
       '<div class="actions-row end"><button class="btn primary" id="au-nm-valider">Valider</button></div>' +
-      '<div id="au-nm-msg" class="err-msg" style="margin-top:10px"></div>' +
+      '<div id="au-nm-msg" class="err-msg p20-14"></div>' +
     '</div>' +
   '</div>';
 }
@@ -1088,7 +1115,7 @@ function viewWizard(){
   return header() +
   '<div class="greet"><h1>Bonjour ' + echapperHtml((state.identite.nomComplet||'').split(' ')[0]||'') + '</h1>' +
   '<p>Complétez votre profil professionnel pour permettre à l’agence de créer votre dossier mannequin. Chaque étape s’enregistre au fur et à mesure — vous pouvez y revenir à tout moment avant l’envoi final.</p>' +
-  '<div class="progress-row"><div class="progress-track"><div class="progress-fill" style="width:'+clamped+'%"></div></div>' +
+  '<div class="progress-row"><div class="progress-track"><div class="progress-fill" data-largeur="'+clamped+'"></div></div>' +
   '<div class="progress-pct">'+clamped+'%</div></div></div>' +
   '<div class="stepper">' + STEP_LABELS.map(function(l,i){
     const n=i+1; const cls = n===state.meta.currentStep?'active':(stepComplete(n)?'done':'');
@@ -1128,11 +1155,11 @@ function stepIdentite(){
     field('Nationalité','f-nat',d.nationalite||'Ivoirienne') + field('Ville de résidence','f-ville',d.ville) +
     field('Téléphone (usage interne agence)','f-tel',d.telephone,{type:'tel',placeholder:'+225 XX XX XX XX XX'}) +
     field('E-mail (usage interne agence)','f-email',d.email,{type:'email'}) + '</div>' +
-    '<p class="sub" style="margin:6px 0 0">🔒 Téléphone et e-mail ne sont jamais affichés publiquement — seul le contact officiel de l’agence apparaît sur votre fiche.</p>' +
-    '<div class="field full" style="margin-top:20px"><label>Sexe<span class="req">*</span></label><div class="radio-row">' +
+    '<p class="sub p20-21">🔒 Téléphone et e-mail ne sont jamais affichés publiquement — seul le contact officiel de l’agence apparaît sur votre fiche.</p>' +
+    '<div class="field full p20-17"><label>Sexe<span class="req">*</span></label><div class="radio-row">' +
     [['femme','Femme'],['homme','Homme']].map(function(c){ return '<label class="radio-opt '+(d.sexe===c[0]?'selected':'')+'"><input type="radio" name="sexe" value="'+c[0]+'" '+(d.sexe===c[0]?'checked':'')+'> '+c[1]+'</label>'; }).join('') +
     '</div></div>' +
-    '<div class="grid" style="margin-top:20px">' +
+    '<div class="grid p20-17">' +
     field('Présentation / profil','f-bio',state.bio,{tag:'textarea',full:true,req:true,placeholder:'Quelques phrases sur vous : votre parcours, votre style, ce qui vous distingue…'}) +
     field('Instagram (facultatif)','f-instagram',state.instagram,{placeholder:'@votre_compte'}) +
     field('Citation personnelle (facultatif)','f-citation',state.citation,{placeholder:'Une phrase courte qui vous représente',maxlength:120}) +
@@ -1151,7 +1178,7 @@ function stepPhysique(){
     field('Taille vêtements','f-tailleVet',d.tailleVet) +
     field('Couleur des yeux','f-yeux',d.yeux) + field('Couleur des cheveux','f-cheveux',d.cheveux) + '<div></div>' +
     '</div>' +
-    '<p class="sub" style="margin-top:10px">Hanches pour les femmes, entrejambe pour les hommes — renseignez le champ qui vous concerne.</p>' +
+    '<p class="sub p20-14">Hanches pour les femmes, entrejambe pour les hommes — renseignez le champ qui vous concerne.</p>' +
     '<div class="actions-row"><button class="btn ghost" data-goto="1">← Retour</button><button class="btn primary" id="save2">Enregistrer</button></div>';
 }
 
@@ -1159,10 +1186,10 @@ function stepFormation(){
   const d = state.formation;
   return '<h2>Formation</h2><p class="sub">Étape 3 sur 6</p>' +
     field('Niveau d’étude','f-niveau',d.niveau,{tag:'select',full:true,req:true,options:['','Collège','Bac','Licence','Master','Autre'].map(function(o){return {value:o,label:o||'— Sélectionner —'};})}) +
-    '<div class="grid" style="margin-top:16px">' +
+    '<div class="grid p20-16">' +
     field('Établissement','f-etab',d.etablissement,{placeholder:'Lycée / Université / Établissement'}) +
     field('Formation particulière','f-formPart',d.particuliere) + '</div>' +
-    '<div class="field full" style="margin-top:14px"><label>Formation mannequin (facultatif)</label>' +
+    '<div class="field full p20-15"><label>Formation mannequin (facultatif)</label>' +
     '<input type="text" id="f-formMannequin" value="'+echapperHtml(d.mannequin||'')+'" placeholder="ex : MA2M — Coaching &amp; Masterclass"></div>' +
     '<div class="actions-row"><button class="btn ghost" data-goto="2">← Retour</button><button class="btn primary" id="save3">Enregistrer</button></div>';
 }
@@ -1187,15 +1214,15 @@ function stepExperience(){
     field('Années d’expérience','f-anneesExp',pp.anneesExperience,{tag:'select',options:[{value:'',label:'—'}].concat(Array.from({length:21},function(_,i){return {value:String(i),label:i+' an(s)'};})).concat([{value:'21',label:'Plus de 20 ans'}])}) +
     field('Disponibilité','f-dispo',pp.disponibilite,{tag:'select',options:[{value:'',label:'—'},{value:'immediate',label:'Disponible immédiatement'},{value:'rdv',label:'Sur rendez-vous'},{value:'mobile',label:'Mobile pour déplacements'}]}) +
     '</div>' +
-    '<div class="field full" style="margin-top:14px"><label>Type de modèle (cochez tout ce qui s’applique)</label><div class="check-row">' +
+    '<div class="field full p20-15"><label>Type de modèle (cochez tout ce qui s’applique)</label><div class="check-row">' +
     MODEL_TYPES.map(function(t){ return '<label class="check-opt '+(pp.modelTypes.indexOf(t[0])!==-1?'selected':'')+'"><input type="checkbox" data-modeltype="'+t[0]+'" '+(pp.modelTypes.indexOf(t[0])!==-1?'checked':'')+'> '+t[1]+'</label>'; }).join('') +
     '</div></div>' +
-    '<div class="field full" style="margin-top:14px"><label>Langues parlées</label><div class="check-row">' +
+    '<div class="field full p20-15"><label>Langues parlées</label><div class="check-row">' +
     LANGUES_DISPONIBLES.map(function(l){ return '<label class="check-opt '+(pp.langues.indexOf(l)!==-1?'selected':'')+'"><input type="checkbox" data-langue="'+l+'" '+(pp.langues.indexOf(l)!==-1?'checked':'')+'> '+l+'</label>'; }).join('') +
     '</div></div>' +
-    '<div class="actions-row" style="margin-top:20px"><button class="btn ghost small" id="saveProfilPro">Enregistrer</button></div>' +
-    '<p class="sub" style="margin:22px 0 8px">Défilés, shootings, publicités, castings… Un seul projet suffit pour publier votre profil — vous pourrez toujours en ajouter d’autres plus tard.</p>' +
-    '<button class="btn ghost small" id="addExp" style="margin-bottom:18px">+ Ajouter une expérience</button>' +
+    '<div class="actions-row p20-17"><button class="btn ghost small" id="saveProfilPro">Enregistrer</button></div>' +
+    '<p class="sub p20-20">Défilés, shootings, publicités, castings… Un seul projet suffit pour publier votre profil — vous pourrez toujours en ajouter d’autres plus tard.</p>' +
+    '<button class="btn ghost small" id="addExp" class="p20-12">+ Ajouter une expérience</button>' +
     '<div id="expList">'+listHtml+'</div>' +
     '<div class="actions-row"><button class="btn ghost" data-goto="3">← Retour</button><button class="btn primary" id="save4">Continuer</button></div>';
 }
@@ -1257,6 +1284,10 @@ function stepRecap(){
 function goto(n){ state.meta.currentStep = n; render(); window.scrollTo({top:0,behavior:'smooth'}); }
 
 function bindWizard(){
+  // Largeur de la barre de progression posée après coup via l'API DOM (pas
+  // en style="" inline dans le HTML) : le CSP strict de cette page bloque
+  // silencieusement les valeurs de style calculées insérées comme texte.
+  document.querySelectorAll('.progress-fill[data-largeur]').forEach(function(el){ el.style.width = el.dataset.largeur + '%'; });
   document.querySelectorAll('[data-goto]').forEach(function(b){ b.addEventListener('click', function(){ goto(parseInt(b.dataset.goto,10)); }); });
   const s = state;
 
@@ -1454,7 +1485,7 @@ function viewRefuse(){
     '<p>L’administrateur a demandé des corrections avant de pouvoir valider votre profil.'+
     (state.meta.commentaireAdmin ? '<br><br><em>« '+echapperHtml(state.meta.commentaireAdmin)+' »</em>' : '')+'</p>' +
     '<div class="status-pill refuse"><span class="dot"></span> À corriger</div>' +
-    '<div style="margin-top:26px"><button class="btn primary" id="reprendreDossier">Reprendre mon dossier</button></div></div>';
+    '<div class="p20-18"><button class="btn primary" id="reprendreDossier">Reprendre mon dossier</button></div></div>';
 }
 function bindRefuse(){
   document.getElementById('reprendreDossier')?.addEventListener('click', function(){
@@ -1494,7 +1525,7 @@ function viewBlockEditor(k){
   const titles = {identite:'Identité', physique:'Physique', formation:'Formation', experiences:'Expérience professionnelle', photos:'Photos & compcard'};
   return header('Modification du profil') +
     '<div class="block-editor-page"><div class="block-editor-top"><div><span class="editor-kicker">MODIFICATION DU BLOC</span><h1>'+echapperHtml(titles[k]||'Modification')+'</h1><p>Ce bloc s’enregistre indépendamment des autres.</p></div>' +
-    '<button type="button" class="btn ghost small" id="fermerEditeurBloc" style="margin-top:8px">← Retour au tableau de bord</button></div>' +
+    '<button type="button" class="btn ghost small" id="fermerEditeurBloc" class="p20-19">← Retour au tableau de bord</button></div>' +
     '<div class="panel block-editor-panel">'+editorPageBody(k)+'</div></div>';
 }
 
@@ -1536,18 +1567,18 @@ function viewDashboard(){
   const d = state.identite;
   const niveau = deriverNiveauMannequin(state.experiences.length ? Math.max.apply(null, state.experiences.map(function(){return 0;})) : null);
   let bandeau = '';
-  if (state.meta.statutAffichage === 'en_attente') bandeau = '<div class="online-banner" style="color:var(--or-clair)"><span class="dot" style="background:var(--or)"></span> Modifications en cours de revalidation par l’agence</div>';
-  else if (state.meta.statutAffichage === 'refuse') bandeau = '<div class="online-banner" style="color:#d55468"><span class="dot" style="background:#d55468"></span> Correction demandée'+(state.meta.commentaireAdmin?' — « '+echapperHtml(state.meta.commentaireAdmin)+' »':'')+'</div>';
-  else bandeau = '<div class="online-banner"><span class="dot" style="background:var(--ok)"></span> Profil en ligne — visible sur le site</div>';
+  if (state.meta.statutAffichage === 'en_attente') bandeau = '<div class="online-banner p20-7"><span class="dot p20-4"></span> Modifications en cours de revalidation par l’agence</div>';
+  else if (state.meta.statutAffichage === 'refuse') bandeau = '<div class="online-banner p20-5"><span class="dot p20-2"></span> Correction demandée'+(state.meta.commentaireAdmin?' — « '+echapperHtml(state.meta.commentaireAdmin)+' »':'')+'</div>';
+  else bandeau = '<div class="online-banner"><span class="dot p20-3"></span> Profil en ligne — visible sur le site</div>';
   return header('Espace validé') + '<div class="panel">' + bandeau +
-    '<h1 style="font-family:var(--serif);font-style:italic;font-weight:500;font-size:1.5rem;margin:14px 0 4px">Bonjour '+echapperHtml((d.nomComplet||'').split(' ')[0]||'')+'</h1>' +
-    '<p class="sub" style="margin-bottom:26px">Modifiez un bloc à la fois — chaque bloc s’enregistre indépendamment des autres.</p>' +
+    '<h1 class="p20-10">Bonjour '+echapperHtml((d.nomComplet||'').split(' ')[0]||'')+'</h1>' +
+    '<p class="sub p20-13">Modifiez un bloc à la fois — chaque bloc s’enregistre indépendamment des autres.</p>' +
     '<div class="blocks-grid">' + BLOCKS.map(function(b){
       return '<div class="block-card" data-block="'+b.k+'"><span class="ic">'+b.ic+'</span><h3>'+b.title+'</h3><p>'+b.desc+'</p><button class="btn ghost small block-btn" data-edit="'+b.k+'">Modifier</button></div>';
     }).join('') + '</div>' +
     '<div class="cv-cta"><div class="txt"><h3>CV mannequin — privé</h3><p>Généré à partir de votre profil. Visible uniquement par vous et l’administrateur MA2M.</p></div>' +
     '<button class="btn primary" id="openCv">Voir mon CV</button></div>' +
-    '<div class="cv-cta" style="margin-top:14px"><div class="txt"><h3>Compcard</h3><p>Fiche publique à partir des 5 photos sélectionnées.</p></div>' +
+    '<div class="cv-cta p20-15"><div class="txt"><h3>Compcard</h3><p>Fiche publique à partir des 5 photos sélectionnées.</p></div>' +
     '<button class="btn ghost" id="openCc">Voir la compcard</button></div>' +
     '<p class="lock-note">La case « rendre visible » et le bouton « soumettre » n’existent plus après la première publication.<br>Vous ne pouvez ni dépublier votre profil vous-même, ni accéder au dossier d’un autre mannequin.</p></div>';
 }
@@ -1648,12 +1679,12 @@ function openCv(){
         '<li><span>Formation particulière</span><b>'+(f.particuliere||'Aucune')+'</b></li><li><span>Formation mannequin</span><b>'+(f.mannequin||'—')+'</b></li></ul></section>' +
       '<section class="mcv-sec"><h4>'+mcvIcon('star')+' Expérience professionnelle</h4>' +
         (groups.length ? groups.map(function(g){ return '<div class="mcv-expgroup"><div class="gh">'+g.label+'</div><ul>'+g.items.map(function(i){return '<li>'+echapperHtml(i)+'</li>';}).join('')+'</ul></div>'; }).join('')
-          : '<p style="font-size:.82rem;color:#6b6560">Aucune expérience renseignée pour le moment.</p>') + '</section>' +
+          : '<p class="p20-11">Aucune expérience renseignée pour le moment.</p>') + '</section>' +
       '<section class="mcv-sec"><div class="mcv-bottom-row"><div><h4>'+mcvIcon('medal')+' Compétences mannequin</h4><div class="mcv-skills">' +
-        ORDRE_COMPETENCES.map(function(cle){ const pct=((state.competences[cle]||3)/5)*100; return '<div class="mcv-skill-row"><span class="lbl">'+LIBELLES_COMPETENCES[cle]+'</span><div class="mcv-skill-bar"><i style="width:'+pct+'%"></i></div></div>'; }).join('') +
+        ORDRE_COMPETENCES.map(function(cle){ const pct=((state.competences[cle]||3)/5)*100; return '<div class="mcv-skill-row"><span class="lbl">'+LIBELLES_COMPETENCES[cle]+'</span><div class="mcv-skill-bar"><i data-largeur="'+pct+'"></i></div></div>'; }).join('') +
         '</div></div><div><h4>'+mcvIcon('image')+' Portfolio</h4><div class="mcv-portfolio">' +
         (handle?'<div class="soc">'+mcvIcon('insta',15)+' @'+echapperHtml(handle)+'</div>':'') +
-        '<div class="soc">'+mcvIcon('link',15)+' <a href="https://www.maitreakessemodelmanagement.com/mannequin.html?id='+encodeURIComponent(currentUser.id)+'" target="_blank" rel="noopener" style="color:inherit">Voir ma fiche publique</a></div></div></div></div></section>' +
+        '<div class="soc">'+mcvIcon('link',15)+' <a href="https://www.maitreakessemodelmanagement.com/mannequin.html?id='+encodeURIComponent(currentUser.id)+'" target="_blank" rel="noopener" class="p20-6">Voir ma fiche publique</a></div></div></div></div></section>' +
     '</div></div></div>' +
     '<div class="cv-actions"><button class="btn ghost small" id="closeOv2">Fermer</button><button class="btn primary small" id="printCv">Télécharger le CV (PDF)</button></div></div>';
   showOverlay();
@@ -1687,6 +1718,10 @@ function openCompcard(){
 function showOverlay(){
   const ov = document.getElementById('overlay');
   ov.classList.remove('hidden');
+  // Largeurs des barres de compétences posées après coup via l'API DOM (pas
+  // en style="" inline) : le CSP strict de cette page bloque silencieusement
+  // les valeurs de style calculées insérées comme texte dans le HTML.
+  document.querySelectorAll('#overlayContent [data-largeur]').forEach(function(el){ el.style.width = el.dataset.largeur + '%'; });
   document.getElementById('closeOv')?.addEventListener('click', function(){ ov.classList.add('hidden'); });
   document.getElementById('closeOv2')?.addEventListener('click', function(){ ov.classList.add('hidden'); });
 }
