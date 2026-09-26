@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<meta name="robots" content="noindex, nofollow">
 <style>
 :root{
   --noir:#0d0a08;
@@ -399,6 +399,15 @@ a{color:inherit}
 .cc-grid div,.cc-grid img{aspect-ratio:3/4;background:linear-gradient(160deg,#7a1626,#151009);object-fit:cover;width:100%}
 .cc-brand{text-align:center;padding:10px;font-size:.66rem;letter-spacing:.15em;color:#7a6a4f;text-transform:uppercase}
 
+/* Pastille WhatsApp flottante — injectée par js/app.js sur toutes les pages du
+   site ; cette page a son propre design autonome (pas de <link> vers
+   css/style.css pour éviter toute collision de classes), donc on reprend ici
+   juste la règle nécessaire pour qu'elle s'affiche correctement. */
+.whatsapp-flottant{position:fixed;bottom:1.4rem;left:1.4rem;z-index:200;width:56px;height:56px;border-radius:50%;background:#25D366;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 1px rgba(201,164,91,.5),0 0 24px rgba(201,164,91,.35),0 6px 18px rgba(0,0,0,.35);transition:transform .25s ease,box-shadow .25s ease}
+.whatsapp-flottant:hover{transform:scale(1.08)}
+.whatsapp-flottant svg{width:28px;height:28px}
+@media(max-width:700px){.whatsapp-flottant{width:50px;height:50px;bottom:1rem;left:1rem}}
+
 @media print{
   body *{visibility:hidden}
   .print-area,.print-area *{visibility:visible}
@@ -520,60 +529,86 @@ html{scroll-behavior:smooth}body{background:radial-gradient(900px 500px at 5% -5
 </head>
 <body>
 
-<div class="demo-banner" id="demoBanner" style="display:none">
-  ⚠ <b>Mode démo</b> — Supabase non configuré dans ce fichier (voir <code>SUPABASE_URL</code> / <code>SUPABASE_ANON_KEY</code> en haut du script). Les données restent dans ce navigateur.
-</div>
-
 <div class="shell" id="app">
   <div class="auth-loading"><div class="spinner"></div><span>Chargement de votre espace…</span></div>
 </div>
 <div class="toast-wrap" id="toasts"></div>
 
-<div class="admin-sim" id="adminSim" style="display:none">
-  <h4>Simulation — Admin MA2M (démo)</h4>
-  <p id="adminSimTxt">Dossier en attente de validation.</p>
-  <button class="btn primary small block-btn" id="adminValidateBtn">Valider le dossier</button>
-  <button class="btn ghost small block-btn" id="adminRefuseBtn" style="margin-top:6px">Refuser / demander des corrections</button>
-</div>
-
 <div class="overlay hidden" id="overlay"><div id="overlayContent"></div></div>
 
+<script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"></script>
+<script src="js/supabase-config.js"></script>
+<script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+<script src="js/app.js"></script>
 <script>
 /* =========================================================================
-   ESPACE MANNEQUIN — MA2M
-   Version connectée à Supabase, avec repli DÉMO (localStorage) si aucun
-   projet n'est configuré ci-dessous. Conçu pour être fusionné manuellement
-   dans espace-mannequin.html en respectant vos classes CSS et votre schéma
-   réels — voir NOTES-INTEGRATION-SUPABASE.md fourni avec ce fichier.
+   ESPACE MANNEQUIN — MA2M — PREMIUM 20
+   Interface Premium 20 (wizard en 6 étapes + tableau de bord post-validation),
+   connectée aux vraies tables/colonnes/fonctions Supabase de l'agence — pas
+   de table ni de colonne inventée, pas de mode démo, pas de donnée simulée.
+   Le "vrai" schéma est celui de supabase-setup.sql / supabase-extension.sql,
+   déjà utilisé par espace-mannequin.html (conservé en parallèle comme filet
+   de sécurité pendant la mise au point de ce fichier).
    ========================================================================= */
 
-/* ---------------------------------------------------------- CONFIGURATION */
-const SUPABASE_URL = 'https://VOTRE-PROJET.supabase.co';      // ⚠️ à remplacer
-const SUPABASE_ANON_KEY = 'VOTRE-CLE-ANON-PUBLIQUE';           // ⚠️ à remplacer
-const LOGIN_PATH = 'connexion.html';                            // ⚠️ adapter au vrai chemin
-
-// Noms de tables supposés d'après le cahier des charges — À VÉRIFIER / ADAPTER
-// pour correspondre exactement à votre supabase-setup.sql / supabase-extension.sql
-const T = {
-  profiles:    'model_profiles',
-  experiences: 'model_experiences',
-  photos:      'model_photos',
-  documents:   'model_documents',
-};
-const BUCKET_PUBLIC  = 'model-photos-public';  // portrait, plein pied, book, compcard (public)
-const BUCKET_PRIVATE = 'model-private';        // pièce d'identité, autres documents (privé)
-
-const DEMO_MODE = SUPABASE_URL.includes('VOTRE-PROJET') || typeof window.supabase === 'undefined';
-
-let supa = null;
-if(!DEMO_MODE){
-  supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-}
-
-const LS_KEY = 'ma2m_espace_mannequin_demo_v2';
+/* ---------------------------------------------------------------- ÉTAT --- */
 let currentUser = null;
 
-/* --------------------------------------------------------------- TOASTS */
+function emptyState(){
+  return {
+    meta:{
+      currentStep:1, editBlock:null, activeCompcardSlot:1,
+      // Dérivés à l'affichage à partir des vraies colonnes (published /
+      // en_attente_validation / raison_refus / premiere_publication_faite) —
+      // jamais écrits tels quels en base, voir deriverStatutAffichage().
+      statutAffichage:'brouillon', premierePublicationFaite:false, commentaireAdmin:''
+    },
+    identite:{ nomComplet:'', dateNaissance:'', lieuNaissance:'', nationalite:'', ville:'', telephone:'', email:'', sexe:'' },
+    physique:{
+      taille:'', poids:'', poitrine:'', tourTaille:'', hanches:'', entrejambe:'', pointure:'',
+      tailleVet:'', yeux:'', cheveux:'', carnation:''
+    },
+    formation:{ niveau:'', etablissement:'', particuliere:'', mannequin:'' },
+    // Années d'expérience / type de modèle / langues / disponibilité — sert
+    // uniquement à déduire automatiquement New Face/Amateur/Professionnel
+    // (voir deriverNiveauMannequin) : jamais redemandé comme catégorie manuelle.
+    profilPro:{ anneesExperience:'', disponibilite:'', modelTypes:[], langues:[] },
+    experiences:[],
+    photos:{ principale:null, photoCv:null, pleinPied:null, book:[] },
+    competences:{},
+    citation:'',
+    bio:'',
+    instagram:''
+  };
+}
+let state = emptyState();
+
+function toNum(v){ const n = parseInt(v, 10); return (v===''||v===null||v===undefined||isNaN(n)) ? null : n; }
+function val(id){ const el = document.getElementById(id); return el ? el.value : ''; }
+
+/* --- Niveau New Face / Amateur / Professionnel : jamais demandé au
+   mannequin, toujours déduit de years_experience (identique à la logique
+   déjà en production dans espace-mannequin.html). --- */
+function deriverNiveauMannequin(anneesExperience){
+  const annees = anneesExperience===''||anneesExperience===null||anneesExperience===undefined ? NaN : parseInt(anneesExperience,10);
+  if (isNaN(annees) || annees===0) return 'New Face';
+  if (annees<=2) return 'Amateur';
+  return 'Professionnel';
+}
+
+/* --- Mode guidé (première inscription) vs mode autonome (blocs indépendants)
+   identique à la logique déjà en production : une fois premiere_publication_faite
+   passé à true par le trigger serveur, c'est définitif — le mannequin garde
+   toujours accès au tableau de bord (jamais reverrouillé derrière un écran
+   "en attente"/"refusé"), seuls les bandeaux d'état changent. --- */
+function deriverStatutAffichage(profil){
+  if (profil.published) return 'valide';
+  if (profil.en_attente_validation) return 'en_attente';
+  if (!profil.published && !profil.en_attente_validation && profil.raison_refus) return 'refuse';
+  return 'brouillon';
+}
+
+/* ------------------------------------------------------------- TOASTS --- */
 function toast(msg, isErr){
   const wrap = document.getElementById('toasts');
   const el = document.createElement('div');
@@ -583,293 +618,469 @@ function toast(msg, isErr){
   setTimeout(()=>{ el.style.opacity='0'; el.style.transition='opacity .3s'; setTimeout(()=>el.remove(),300); }, 2600);
 }
 
-/* ------------------------------------------------------------------ AUTH */
-async function initAuth(){
-  if(DEMO_MODE){
-    currentUser = { id:'demo-user', email:'demo@ma2m.test' };
-    return true;
-  }
-  try{
-    const { data:{ user }, error } = await supa.auth.getUser();
-    if(error || !user){
-      window.location.href = LOGIN_PATH;
-      return false;
-    }
-    currentUser = user;
-    return true;
-  }catch(e){
-    console.error(e);
-    toast("Erreur d'authentification", true);
-    return false;
-  }
+/* --------------------------------------------------------- AUTH RÉELLE ---
+   Même flux que espace-mannequin.html : inscription avec code d'invitation
+   (check_invite_code / consume_invite_code), connexion, récupération de
+   mot de passe. Aucune redirection vers une page de connexion séparée —
+   tout se passe sur cette page, comme sur l'ancien espace mannequin. */
+let recuperationMdpEnCours = false;
+
+function viewAuthGate(){
+  return '<div class="top"><div class="wordmark"><span class="mark">MA2M</span><span class="full">Maître Akessé Model Management</span></div></div>' +
+  '<div class="panel" id="authPanel">' +
+    '<div id="auth-onglets" style="display:flex;gap:10px;margin-bottom:24px">' +
+      '<button type="button" class="btn small" id="auth-tab-connexion" data-auth-tab="connexion">Se connecter</button>' +
+      '<button type="button" class="btn ghost small" id="auth-tab-inscription" data-auth-tab="inscription">Créer mon compte</button>' +
+    '</div>' +
+    '<div id="auth-panneau-connexion">' +
+      '<h2>Connexion</h2><p class="sub">Accédez à votre espace mannequin.</p>' +
+      '<div class="grid">' + field('E-mail','au-co-email','',{type:'email',req:true}) + field('Mot de passe','au-co-mdp','',{type:'password',req:true}) + '</div>' +
+      '<div class="actions-row end"><button class="btn primary" id="au-co-valider">Se connecter</button></div>' +
+      '<div id="au-co-msg" class="err-msg" style="margin-top:10px"></div>' +
+      '<p style="margin-top:14px"><a href="#" id="au-mdp-oublie-lien" style="color:var(--or-clair)">Mot de passe oublié ?</a></p>' +
+    '</div>' +
+    '<div id="auth-panneau-inscription" style="display:none">' +
+      '<h2>Créer mon compte</h2><p class="sub">Un code d’invitation vous a été fourni par l’agence.</p>' +
+      '<div class="grid">' +
+        field('Code d’invitation','au-in-code','',{req:true}) + field('Nom complet','au-in-nom','',{req:true}) +
+        field('E-mail','au-in-email','',{type:'email',req:true}) + field('Mot de passe (6 caractères min.)','au-in-mdp','',{type:'password',req:true}) +
+      '</div>' +
+      '<div class="actions-row end"><button class="btn primary" id="au-in-valider">Créer mon compte</button></div>' +
+      '<div id="au-in-msg" class="err-msg" style="margin-top:10px"></div>' +
+    '</div>' +
+    '<div id="auth-panneau-mdp-oublie" style="display:none">' +
+      '<h2>Mot de passe oublié</h2><p class="sub">Indiquez votre e-mail — si un compte y est associé, un lien de réinitialisation vous sera envoyé.</p>' +
+      field('E-mail','au-mo-email','',{type:'email'}) +
+      '<div class="actions-row end"><button class="btn primary" id="au-mo-envoyer">Envoyer le lien</button></div>' +
+      '<div id="au-mo-msg" class="err-msg" style="margin-top:10px"></div>' +
+      '<p style="margin-top:14px"><a href="#" id="au-mo-retour" style="color:var(--or-clair)">← Retour à la connexion</a></p>' +
+    '</div>' +
+    '<div id="auth-panneau-nouveau-mdp" style="display:none">' +
+      '<h2>Nouveau mot de passe</h2><p class="sub">Choisissez votre nouveau mot de passe (8 caractères minimum).</p>' +
+      field('Nouveau mot de passe','au-nm-mdp','',{type:'password'}) +
+      '<div class="actions-row end"><button class="btn primary" id="au-nm-valider">Valider</button></div>' +
+      '<div id="au-nm-msg" class="err-msg" style="margin-top:10px"></div>' +
+    '</div>' +
+  '</div>';
 }
 
-/* --------------------------------------------------------------- ÉTAT ---
-   Toujours reconstruit depuis la base (ou le repli démo) — jamais la
-   source de vérité elle-même. */
-function emptyState(){
+function afficherPanneauAuth(id){
+  ['auth-panneau-connexion','auth-panneau-inscription','auth-panneau-mdp-oublie','auth-panneau-nouveau-mdp'].forEach(function(p){
+    const el = document.getElementById(p); if (el) el.style.display = (p===id) ? '' : 'none';
+  });
+}
+
+function bindAuthGate(){
+  document.getElementById('auth-tab-connexion')?.addEventListener('click', function(){ afficherPanneauAuth('auth-panneau-connexion'); });
+  document.getElementById('auth-tab-inscription')?.addEventListener('click', function(){ afficherPanneauAuth('auth-panneau-inscription'); });
+
+  document.getElementById('au-co-valider')?.addEventListener('click', async function(){
+    const msg = document.getElementById('au-co-msg');
+    const email = val('au-co-email').trim(), mdp = val('au-co-mdp');
+    const { error } = await sb.auth.signInWithPassword({ email, password: mdp });
+    if (error) { msg.textContent = 'E-mail ou mot de passe incorrect.'; return; }
+    msg.textContent = '';
+    await demarrerApresConnexion();
+  });
+
+  document.getElementById('au-in-valider')?.addEventListener('click', async function(){
+    const msg = document.getElementById('au-in-msg');
+    const code = val('au-in-code').trim(), nom = val('au-in-nom').trim(), email = val('au-in-email').trim(), mdp = val('au-in-mdp');
+    msg.textContent = 'Vérification du code…';
+
+    const { data: codeValide, error: erreurCode } = await sb.rpc('check_invite_code', { code_input: code });
+    if (erreurCode || !codeValide) { msg.textContent = "Ce code d'invitation est invalide ou déjà utilisé."; return; }
+
+    const { data: signUpData, error: erreurSignUp } = await sb.auth.signUp({ email, password: mdp });
+    if (erreurSignUp) { msg.textContent = "Erreur lors de la création du compte : " + erreurSignUp.message; return; }
+
+    if (!signUpData.session) {
+      msg.textContent = "Compte créé. Vérifiez votre boîte e-mail pour confirmer votre adresse avant de vous connecter.";
+      return;
+    }
+
+    const { data: consomme, error: erreurConsomme } = await sb.rpc('consume_invite_code', { code_input: code });
+    if (erreurConsomme || !consomme) {
+      msg.textContent = "Ce code vient d'être utilisé par quelqu'un d'autre. Contactez l'agence pour un nouveau code.";
+      await sb.auth.signOut();
+      return;
+    }
+
+    // Filet de sécurité identique à l'ancien système : s'assurer que la fiche
+    // model_profiles existe bien avant de continuer, avec quelques tentatives.
+    let erreurProfil = null;
+    for (let essai = 0; essai < 3; essai++) {
+      const { error } = await sb.from('model_profiles').upsert({ id: signUpData.user.id, full_name: nom, published: false });
+      erreurProfil = error;
+      if (!error) break;
+      await new Promise(function(r){ setTimeout(r, 1000); });
+    }
+    if (erreurProfil) {
+      msg.textContent = "Compte créé, mais la fiche profil n'a pas pu être créée (" + erreurProfil.message + "). Reconnectez-vous pour réessayer, ou contactez l'agence.";
+      return;
+    }
+
+    msg.textContent = '';
+    toast('Compte créé avec succès !');
+    await demarrerApresConnexion();
+  });
+
+  document.getElementById('au-mdp-oublie-lien')?.addEventListener('click', function(e){
+    e.preventDefault();
+    document.getElementById('au-mo-email').value = val('au-co-email');
+    afficherPanneauAuth('auth-panneau-mdp-oublie');
+  });
+  document.getElementById('au-mo-retour')?.addEventListener('click', function(e){ e.preventDefault(); afficherPanneauAuth('auth-panneau-connexion'); });
+  document.getElementById('au-mo-envoyer')?.addEventListener('click', async function(){
+    const email = val('au-mo-email').trim(); const msg = document.getElementById('au-mo-msg');
+    if (!email) return;
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname });
+    msg.textContent = error ? ("Erreur lors de l'envoi : " + error.message) : "Si cet e-mail est associé à un compte, un lien de réinitialisation vient d'être envoyé.";
+  });
+
+  document.getElementById('au-nm-valider')?.addEventListener('click', async function(){
+    const nouveauMdp = val('au-nm-mdp'); const msg = document.getElementById('au-nm-msg');
+    if (nouveauMdp.length < 8) { msg.textContent = 'Le mot de passe doit contenir au moins 8 caractères.'; return; }
+    const { error } = await sb.auth.updateUser({ password: nouveauMdp });
+    if (error) { msg.textContent = 'Erreur : ' + error.message; return; }
+    recuperationMdpEnCours = false;
+    await demarrerApresConnexion();
+  });
+}
+
+function renderAuthGate(){
+  const app = document.getElementById('app');
+  app.innerHTML = viewAuthGate();
+  bindAuthGate();
+}
+
+sb && sb.auth.onAuthStateChange(function(event){
+  if (event !== 'PASSWORD_RECOVERY') return;
+  recuperationMdpEnCours = true;
+  renderAuthGate();
+  afficherPanneauAuth('auth-panneau-nouveau-mdp');
+});
+
+/* --------------------------------------------------------------- ÉTAT <-> DB
+   Mappage explicite entre l'état local (pratique pour les formulaires) et
+   les vraies colonnes de model_profiles. Rien n'est jamais écrit avec un nom
+   de colonne inventé. */
+function identiteToDb(d){
   return {
-    meta:{ statut:'brouillon', profilVisible:false, currentStep:1, commentaireAdmin:'', activeCompcardSlot:1 },
-    identite:{ nom:'', prenom:'', dateNaissance:'', lieuNaissance:'', nationalite:'', ville:'', telephone:'', email: currentUser?currentUser.email:'', categorie:'' },
-    physique:{ taille:'', poids:'', poitrine:'', tailleM:'', hanches:'', pointure:'', tailleVet:'', yeux:'', cheveuxCouleur:'', cheveuxType:'', particularites:'' },
-    formation:{ niveau:'', etablissement:'', particuliere:'', mannequin:false, coaching:false, masterclass:false, autre:false },
-    experiences:[],
-    photos:{ portrait:null, photoProfil:null, pleinPied:null, compCard:[null,null,null,null,null], book:[], documents:{piece:null, autre:null} },
-    compcard:[]
+    full_name: d.nomComplet || null,
+    date_naissance: d.dateNaissance || null,
+    lieu_naissance: d.lieuNaissance || null,
+    nationalite: d.nationalite || null,
+    city: d.ville || null,
+    phone: d.telephone || null,
+    contact_email: d.email || null,
+    category: d.sexe || null
   };
 }
-let state = emptyState();
-
-function toNum(v){ const n=parseFloat(v); return (v===''||v===null||v===undefined||isNaN(n)) ? null : n; }
-function idOk(){ return currentUser && currentUser.id; }
-
-function allPublicPhotos(){
-  const out=[];
-  [state.photos.portrait,state.photos.photoProfil,state.photos.pleinPied].forEach(function(ph){ if(ph && ph.id) out.push(ph); });
-  (state.photos.book||[]).forEach(function(ph){ if(ph && ph.id) out.push(ph); });
-  return out;
-}
-
-/* La compcard est une composition de 5 emplacements.
-   Les 5 emplacements sont désormais librement sélectionnables.
-   Les cases 1 et 2 portent seulement une consigne éditoriale :
-   1 = photo PLEIN PIED ; 2 = photo PORTRAIT.
-   La contrainte visuelle ne force plus automatiquement une photo donnée. */
-function normalizeCompcard(){
-  const result=Array(5).fill(null), used=[];
-  (state.compcard||[]).slice(0,5).forEach(function(id,i){const ph=compcardPhotoById(id);if(id&&ph&&used.indexOf(String(id))===-1){result[i]=id;used.push(String(id));}});
-  state.compcard=result; state.photos.compCard=result.map(function(id){return id?compcardPhotoById(id):null;});
-}
-function compcardCount(){return (state.compcard||[]).filter(Boolean).length;}
-function compcardPhotoById(id){const cc=(state.photos.compCard||[]).find(function(ph){return ph&&String(ph.id)===String(id);});if(cc)return cc;return allPublicPhotos().find(function(ph){return String(ph.id)===String(id);})||null;}
-
-/* -------------------------------------------------- MAPPAGE ÉTAT <-> DB */
-function identiteToDb(d){
-  return { nom:d.nom, prenom:d.prenom, date_naissance:d.dateNaissance||null, lieu_naissance:d.lieuNaissance,
-    nationalite:d.nationalite, ville:d.ville, telephone:d.telephone, email:d.email, categorie:d.categorie };
-}
 function physiqueToDb(p){
-  return { taille:toNum(p.taille), poids:toNum(p.poids), poitrine:toNum(p.poitrine), taille_mensuration:toNum(p.tailleM),
-    hanches:toNum(p.hanches), pointure:toNum(p.pointure), taille_vetement:p.tailleVet, couleur_yeux:p.yeux,
-    couleur_cheveux:p.cheveuxCouleur, type_cheveux:p.cheveuxType, particularites:p.particularites };
+  return {
+    height_cm: toNum(p.taille), weight_kg: toNum(p.poids), chest_cm: toNum(p.poitrine),
+    waist_cm: toNum(p.tourTaille), hips_cm: toNum(p.hanches), inseam_cm: toNum(p.entrejambe),
+    shoe_size: p.pointure || null, clothing_size: p.tailleVet || null,
+    eye_color: p.yeux || null, hair_color: p.cheveux || null, carnation: p.carnation || null
+  };
 }
 function formationToDb(f){
-  return { niveau_etude:f.niveau, etablissement:f.etablissement, formation_particuliere:f.particuliere,
-    formation_mannequin:!!f.mannequin, coaching:!!f.coaching, masterclass:!!f.masterclass, autre_formation:!!f.autre };
+  return { niveau_etude: f.niveau || null, etablissement: f.etablissement || null, formation_particuliere: f.particuliere || null, formation_mannequin: f.mannequin || null };
 }
-function mapProfileFromDb(row){
+function profilProToDb(pp){
+  return {
+    years_experience: pp.anneesExperience!=='' ? parseInt(pp.anneesExperience,10) : null,
+    availability: pp.disponibilite || null,
+    model_types: pp.modelTypes, languages: pp.langues.join(', ')
+  };
+}
+
+/* Champ "sexe" (femme/homme) déjà utilisé par tout le reste du site pour
+   déterminer Hanches vs Entrejambe — on garde son vocabulaire (category),
+   jamais celui, différent, de "Newface/Amateur/Pro" qui lui n'est jamais
+   stocké : ce niveau est purement calculé à l'affichage. */
+function mapProfileFromDb(row, contactPrive){
   const s = emptyState();
-  if(!row) return s;
-  s.meta.statut = row.statut || 'brouillon';
-  s.meta.profilVisible = !!row.profil_visible;
-  s.meta.commentaireAdmin = row.commentaire_admin || '';
+  if (!row) return s;
+  s.meta.statutAffichage = deriverStatutAffichage(row);
+  s.meta.premierePublicationFaite = !!row.premiere_publication_faite;
+  s.meta.commentaireAdmin = row.raison_refus || '';
   Object.assign(s.identite, {
-    nom:row.nom||'', prenom:row.prenom||'', dateNaissance:row.date_naissance||'', lieuNaissance:row.lieu_naissance||'',
-    nationalite:row.nationalite||'', ville:row.ville||'', telephone:row.telephone||'', email:row.email||currentUser.email||'', categorie:row.categorie||''
+    nomComplet: row.full_name || '', dateNaissance: row.date_naissance || '', lieuNaissance: row.lieu_naissance || '',
+    nationalite: row.nationalite || '', ville: row.city || '',
+    telephone: (contactPrive && contactPrive.phone) || '', email: (contactPrive && contactPrive.contact_email) || '',
+    sexe: row.category || ''
   });
   Object.assign(s.physique, {
-    taille:row.taille??'', poids:row.poids??'', poitrine:row.poitrine??'', tailleM:row.taille_mensuration??'',
-    hanches:row.hanches??'', pointure:row.pointure??'', tailleVet:row.taille_vetement||'', yeux:row.couleur_yeux||'',
-    cheveuxCouleur:row.couleur_cheveux||'', cheveuxType:row.type_cheveux||'', particularites:row.particularites||''
+    taille: row.height_cm ?? '', poids: row.weight_kg ?? '', poitrine: row.chest_cm ?? '', tourTaille: row.waist_cm ?? '',
+    hanches: row.hips_cm ?? '', entrejambe: row.inseam_cm ?? '', pointure: row.shoe_size || '', tailleVet: row.clothing_size || '',
+    yeux: row.eye_color || '', cheveux: row.hair_color || '', carnation: row.carnation || ''
   });
   Object.assign(s.formation, {
-    niveau:row.niveau_etude||'', etablissement:row.etablissement||'', particuliere:row.formation_particuliere||'',
-    mannequin:!!row.formation_mannequin, coaching:!!row.coaching, masterclass:!!row.masterclass, autre:!!row.autre_formation
+    niveau: row.niveau_etude || '', etablissement: row.etablissement || '', particuliere: row.formation_particuliere || '', mannequin: row.formation_mannequin || ''
   });
+  Object.assign(s.profilPro, {
+    anneesExperience: row.years_experience ?? '', disponibilite: row.availability || '',
+    modelTypes: row.model_types || [], langues: (row.languages || '').split(',').map(function(l){return l.trim();}).filter(Boolean)
+  });
+  s.competences = row.competences || {};
+  s.citation = row.citation || '';
+  s.bio = row.bio || '';
+  s.instagram = row.instagram || '';
   return s;
 }
 
-/* ------------------------------------------------------- COUCHE DONNÉES
-   DEMO_MODE : persistance locale (localStorage) pour prévisualiser.
-   Sinon     : appels Supabase réels — adapter les noms de colonnes/tables
-   à votre schéma réel avant déploiement (voir NOTES-INTEGRATION). */
-function loadDemo(){
-  try{
-    const raw = localStorage.getItem(LS_KEY);
-    if(raw) return JSON.parse(raw);
-  }catch(e){}
-  return emptyState();
-}
-function saveDemo(){
-  try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){}
-}
-
+/* ------------------------------------------------------------- COUCHE DONNÉES
+   Appels Supabase réels uniquement — aucun repli localStorage/démo. */
 const Store = {
   async load(){
-    if(DEMO_MODE) return loadDemo();
-    try{
-      const { data: profile, error: e1 } = await supa.from(T.profiles).select('*').eq('id', currentUser.id).maybeSingle();
-      if(e1) throw e1;
-      const s = mapProfileFromDb(profile);
-      const { data: exps } = await supa.from(T.experiences).select('*').eq('profile_id', currentUser.id).order('created_at', { ascending:true });
-      s.experiences = (exps||[]).map(e=>({ id:e.id, type:e.type, nom:e.nom, lieu:e.ville, annee:e.annee }));
-      const { data: photos } = await supa.from(T.photos).select('*').eq('profile_id', currentUser.id);
-      (photos||[]).forEach(p=>{
-        const url = p.is_public
-          ? supa.storage.from(BUCKET_PUBLIC).getPublicUrl(p.storage_path).data.publicUrl
-          : null;
-        const item = { id:p.id, path:p.storage_path, url };
-        if(p.type==='portrait') s.photos.portrait = item;
-        else if(p.type==='profil') s.photos.photoProfil = item;
-        else if(p.type==='plein_pied') s.photos.pleinPied = item;
-        else if(/^compcard_[1-5]$/.test(p.type)){ const slot=parseInt(p.type.split('_')[1],10)-1; item.compSlot=slot+1; s.photos.compCard[slot]=item; s.compcard[slot]=p.id; }
-        else if(p.type==='book') s.photos.book.push(item);
-      });
-      // Les 5 cases de la compcard sont sélectionnées par le mannequin ;
-      // les cases 1 et 2 portent des consignes éditoriales plein pied / portrait.
-      normalizeCompcard();
-      const { data: docs } = await supa.from(T.documents).select('*').eq('profile_id', currentUser.id);
-      (docs||[]).forEach(d=>{
-        if(d.type==='piece') s.photos.documents.piece = { id:d.id, path:d.storage_path };
-        else if(d.type==='autre') s.photos.documents.autre = { id:d.id, path:d.storage_path };
-      });
-      return s;
-    }catch(e){
-      console.error(e);
-      toast("Erreur de chargement du profil — vérifiez le schéma Supabase (voir notes d'intégration)", true);
-      return emptyState();
-    }
+    const { data: profile, error: e1 } = await sb.from('model_profiles')
+      .select('id, full_name, bio, height_cm, weight_kg, city, instagram, published, created_at, category, chest_cm, waist_cm, hips_cm, shoe_size, carnation, clothing_size, date_naissance, eye_color, hair_color, years_experience, model_types, languages, availability, inseam_cm, featured, premiere_publication_faite, en_attente_validation, raison_refus, niveau_etude, etablissement, formation_particuliere, formation_mannequin, competences, citation, lieu_naissance, nationalite')
+      .eq('id', currentUser.id).maybeSingle();
+    if (e1) { console.error(e1); toast('Erreur de chargement du profil', true); return emptyState(); }
+
+    const { data: contactPriveRows } = await sb.rpc('mon_contact_prive');
+    const contactPrive = contactPriveRows && contactPriveRows[0] ? contactPriveRows[0] : null;
+
+    const s = mapProfileFromDb(profile, contactPrive);
+
+    const { data: exps } = await sb.from('model_projects').select('*').eq('model_id', currentUser.id).order('created_at', { ascending:true });
+    s.experiences = (exps||[]).map(function(e){ return { id:e.id, type:e.type_projet, nom:e.titre, lieu:e.ville, annee:e.periode }; });
+
+    const { data: photos } = await sb.from('model_photos').select('*').eq('model_id', currentUser.id).order('created_at', { ascending:true });
+    (photos||[]).forEach(function(p){
+      const item = { id:p.id, path:p.chemin, url:p.url_miniature||p.url, urlPleine:p.url, compcardOrdre:p.compcard_ordre };
+      s.photos.book.push(item);
+      if (p.principale) s.photos.principale = item;
+      if (p.photo_cv) s.photos.photoCv = item;
+      if (p.photo_pleinpied) s.photos.pleinPied = item;
+    });
+
+    return s;
   },
 
   async ensureProfileRow(){
-    if(DEMO_MODE) return true;
-    // Crée la ligne si elle n'existe pas encore (première visite)
-    const { error } = await supa.from(T.profiles).upsert({ id: currentUser.id, email: currentUser.email, statut:'brouillon' }, { onConflict:'id', ignoreDuplicates:true });
-    if(error) console.warn('ensureProfileRow', error);
-    return true;
+    const { error } = await sb.from('model_profiles').upsert({ id: currentUser.id }, { onConflict:'id', ignoreDuplicates:true });
+    if (error) console.warn('ensureProfileRow', error);
   },
 
   async saveBlock(fields){
-    if(DEMO_MODE){ saveDemo(); return true; }
-    const { error } = await supa.from(T.profiles).update(fields).eq('id', currentUser.id);
-    if(error){ console.error(error); toast("Échec de l'enregistrement", true); return false; }
+    const { error } = await sb.from('model_profiles').update(fields).eq('id', currentUser.id);
+    if (error) { console.error(error); toast("Échec de l'enregistrement", true); return false; }
     return true;
   },
 
-  async submit(fields){
-    if(DEMO_MODE){ state.meta.statut='en_attente'; saveDemo(); return true; }
-    const { error } = await supa.from(T.profiles).update({ ...fields, statut:'en_attente' }).eq('id', currentUser.id);
-    if(error){ console.error(error); toast('Échec de la soumission', true); return false; }
-    return true;
+  /* La publication passe toujours par les 3 vraies colonnes + le trigger
+     serveur gerer_validation_publication() — jamais de contournement côté
+     client de premiere_publication_faite. */
+  async submit(fields, publier){
+    const { data: resultat, error } = await sb.from('model_profiles')
+      .update(Object.assign({}, fields, { published: !!publier }))
+      .eq('id', currentUser.id).select().single();
+    if (error) { console.error(error); toast('Échec de la soumission', true); return null; }
+    return resultat;
   },
 
   async addExperience(exp){
-    if(DEMO_MODE){ const item = { ...exp, id:'exp_'+Date.now() }; saveDemo(); return item; }
-    const { data, error } = await supa.from(T.experiences)
-      .insert({ profile_id: currentUser.id, type:exp.type, nom:exp.nom, ville:exp.lieu, annee:exp.annee })
+    const { data, error } = await sb.from('model_projects')
+      .insert({ model_id: currentUser.id, type_projet: exp.type, titre: exp.nom, ville: exp.lieu, periode: exp.annee })
       .select().single();
-    if(error){ console.error(error); toast("Échec de l'ajout de l'expérience", true); return null; }
-    return { id:data.id, type:data.type, nom:data.nom, lieu:data.ville, annee:data.annee };
+    if (error) { console.error(error); toast("Échec de l'ajout de l'expérience", true); return null; }
+    return { id:data.id, type:data.type_projet, nom:data.titre, lieu:data.ville, annee:data.periode };
   },
   async updateExperience(id, exp){
-    if(DEMO_MODE){ saveDemo(); return true; }
-    const { error } = await supa.from(T.experiences).update({ type:exp.type, nom:exp.nom, ville:exp.lieu, annee:exp.annee }).eq('id', id).eq('profile_id', currentUser.id);
-    if(error){ console.error(error); toast('Échec de la mise à jour', true); return false; }
+    const { error } = await sb.from('model_projects').update({ type_projet:exp.type, titre:exp.nom, ville:exp.lieu, periode:exp.annee }).eq('id', id).eq('model_id', currentUser.id);
+    if (error) { console.error(error); toast('Échec de la mise à jour', true); return false; }
     return true;
   },
   async removeExperience(id){
-    if(DEMO_MODE){ saveDemo(); return true; }
-    const { error } = await supa.from(T.experiences).delete().eq('id', id).eq('profile_id', currentUser.id);
-    if(error){ console.error(error); toast('Échec de la suppression', true); return false; }
+    const { error } = await sb.from('model_projects').delete().eq('id', id).eq('model_id', currentUser.id);
+    if (error) { console.error(error); toast('Échec de la suppression', true); return false; }
     return true;
   },
 
-  async uploadPhoto(file, type, isPublic){
-    if(DEMO_MODE){
-      const url = URL.createObjectURL(file);
-      const item = { id:'photo_'+Date.now()+Math.random().toString(36).slice(2,6), url };
-      saveDemo();
-      return item;
-    }
+  /* Pipeline identique à l'ancien système : conversion HEIC, compression
+     modérée de l'original, upload, puis génération miniature (500px) et
+     version moyenne (1600px) à côté — jamais de nouvelle bibliothèque de
+     photos, tout reste dans model_photos / bucket model-photos. */
+  async uploadPhoto(file){
     try{
-      const bucket = isPublic ? BUCKET_PUBLIC : BUCKET_PRIVATE;
-      const safeName = file.name.replace(/[^a-zA-Z0-9.]+/g,'_');
-      const path = currentUser.id + '/' + type + '_' + Date.now() + '_' + safeName;
-      const { error: upErr } = await supa.storage.from(bucket).upload(path, file, { upsert:false, contentType:file.type });
-      if(upErr) throw upErr;
-      const { data: row, error: dbErr } = await supa.from(T.photos)
-        .insert({ profile_id: currentUser.id, type, storage_path: path, is_public: !!isPublic, is_compcard:false })
-        .select().single();
-      if(dbErr) throw dbErr;
-      const url = isPublic ? supa.storage.from(bucket).getPublicUrl(path).data.publicUrl : null;
-      return { id: row.id, path, url };
+      const fichierConverti = await convertirSiHeic(file);
+      const fichier = await compresserPhotoOrigine(fichierConverti);
+      const chemin = currentUser.id + '/' + Date.now() + '-' + Math.random().toString(36).slice(2,8) + '-' + nomFichierSur(fichier.name);
+      const { error: upErr } = await sb.storage.from('model-photos').upload(chemin, fichier);
+      if (upErr) throw upErr;
+      const url = sb.storage.from('model-photos').getPublicUrl(chemin).data.publicUrl;
+
+      let cheminMiniature=null, urlMiniature=null;
+      const blobMiniature = await genererMiniature(fichier);
+      if (blobMiniature) {
+        cheminMiniature = currentUser.id + '/miniatures/' + Date.now() + '-' + Math.random().toString(36).slice(2,8) + '.jpg';
+        const { error: eMini } = await sb.storage.from('model-photos').upload(cheminMiniature, blobMiniature);
+        if (!eMini) urlMiniature = sb.storage.from('model-photos').getPublicUrl(cheminMiniature).data.publicUrl; else cheminMiniature=null;
+      }
+      let cheminMoyenne=null, urlMoyenne=null;
+      const blobMoyenne = await genererMiniature(fichier, 1600, 0.82);
+      if (blobMoyenne) {
+        cheminMoyenne = currentUser.id + '/moyennes/' + Date.now() + '-' + Math.random().toString(36).slice(2,8) + '.jpg';
+        const { error: eMoy } = await sb.storage.from('model-photos').upload(cheminMoyenne, blobMoyenne);
+        if (!eMoy) urlMoyenne = sb.storage.from('model-photos').getPublicUrl(cheminMoyenne).data.publicUrl; else cheminMoyenne=null;
+      }
+
+      const { data: row, error: dbErr } = await sb.from('model_photos').insert({
+        model_id: currentUser.id, url, chemin, url_miniature:urlMiniature, chemin_miniature:cheminMiniature,
+        url_moyenne:urlMoyenne, chemin_moyenne:cheminMoyenne, originale_optimisee:true
+      }).select().single();
+      if (dbErr) throw dbErr;
+      return { id: row.id, path: chemin, url: urlMiniature||url, urlPleine:url, compcardOrdre:null };
     }catch(e){
-      console.error(e);
-      toast("Échec de l'envoi de la photo", true);
-      return null;
+      console.error(e); toast("Échec de l'envoi de la photo", true); return null;
     }
   },
-  async removePhoto(id, path){
-    if(DEMO_MODE){ saveDemo(); return true; }
+
+  async removePhoto(id, path, cheminMiniature, cheminMoyenne){
     try{
-      await supa.from(T.photos).delete().eq('id', id).eq('profile_id', currentUser.id);
-      if(path){
-        supa.storage.from(BUCKET_PUBLIC).remove([path]).catch(()=>{});
-        supa.storage.from(BUCKET_PRIVATE).remove([path]).catch(()=>{});
-      }
+      await sb.from('model_photos').delete().eq('id', id).eq('model_id', currentUser.id);
+      if (path) sb.storage.from('model-photos').remove([path]).catch(function(){});
+      if (cheminMiniature) sb.storage.from('model-photos').remove([cheminMiniature]).catch(function(){});
+      if (cheminMoyenne) sb.storage.from('model-photos').remove([cheminMoyenne]).catch(function(){});
       return true;
     }catch(e){ console.error(e); toast('Échec de la suppression', true); return false; }
   },
-  async setCompcard(photoId, on){
-    if(DEMO_MODE){ saveDemo(); return true; }
-    const { error } = await supa.from(T.photos).update({ is_compcard: on }).eq('id', photoId).eq('profile_id', currentUser.id);
-    if(error){ console.error(error); toast('Échec de la sélection compcard', true); return false; }
+
+  /* Un seul rôle à la fois par mannequin pour chaque colonne — même principe
+     que "principale" déjà en production : on désactive l'ancienne avant
+     d'activer la nouvelle. */
+  async setRolePhoto(colonne, photoId){
+    const { error: eOff } = await sb.from('model_photos').update({ [colonne]: false }).eq('model_id', currentUser.id).eq(colonne, true);
+    if (eOff) { console.error(eOff); toast('Échec de la mise à jour', true); return false; }
+    if (photoId) {
+      const { error: eOn } = await sb.from('model_photos').update({ [colonne]: true }).eq('id', photoId).eq('model_id', currentUser.id);
+      if (eOn) { console.error(eOn); toast('Échec de la mise à jour', true); return false; }
+    }
     return true;
   },
 
-  async uploadDocument(file, type){
-    if(DEMO_MODE){ const item = { id:'doc_'+Date.now(), name:file.name }; saveDemo(); return item; }
-    try{
-      const safeName = file.name.replace(/[^a-zA-Z0-9.]+/g,'_');
-      const path = currentUser.id + '/' + type + '_' + Date.now() + '_' + safeName;
-      const { error: upErr } = await supa.storage.from(BUCKET_PRIVATE).upload(path, file, { upsert:false, contentType:file.type });
-      if(upErr) throw upErr;
-      const { data: row, error: dbErr } = await supa.from(T.documents)
-        .insert({ profile_id: currentUser.id, type, storage_path: path }).select().single();
-      if(dbErr) throw dbErr;
-      return { id: row.id, path, name:file.name };
-    }catch(e){ console.error(e); toast("Échec de l'envoi du document", true); return null; }
+  /* compcard_ordre réel (1-5), avec renumérotation des emplacements suivants
+     au retrait — identique à la logique déjà en production. */
+  async setCompcardOrdre(photoId, ordre){
+    if (ordre === null) {
+      const { data: restantes } = await sb.from('model_photos').select('id, compcard_ordre').eq('model_id', currentUser.id).not('compcard_ordre','is',null).order('compcard_ordre',{ascending:true});
+      await sb.from('model_photos').update({ compcard_ordre: null }).eq('id', photoId).eq('model_id', currentUser.id);
+      const suite = (restantes||[]).filter(function(r){ return String(r.id)!==String(photoId); });
+      for (let i=0;i<suite.length;i++){
+        if (suite[i].compcard_ordre !== i+1) await sb.from('model_photos').update({ compcard_ordre:i+1 }).eq('id', suite[i].id);
+      }
+      return true;
+    }
+    const { error } = await sb.from('model_photos').update({ compcard_ordre: ordre }).eq('id', photoId).eq('model_id', currentUser.id);
+    if (error) { console.error(error); toast('Échec de la sélection compcard', true); return false; }
+    return true;
   },
 };
 
-/* ------------------------------------------------------------- UTILS UI */
-function echapperHtml(str){
-  return String(str==null?'':str).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/* ---------------------------------------------------------- UTILS PHOTOS ---
+   Repris à l'identique de espace-mannequin.html (même comportement, même
+   pipeline HEIC/compression/miniatures) — voir README-TECHNIQUE.md. */
+async function convertirSiHeic(fichier){
+  const estHeic = /image\/hei(c|f)/i.test(fichier.type) || /\.(heic|heif)$/i.test(fichier.name);
+  if (!estHeic || typeof heic2any === 'undefined') return fichier;
+  try{
+    const resultat = await heic2any({ blob: fichier, toType: 'image/jpeg', quality: 0.85 });
+    const blobFinal = Array.isArray(resultat) ? resultat[0] : resultat;
+    return new File([blobFinal], fichier.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' });
+  }catch(e){ console.error('Conversion HEIC échouée, envoi du fichier original :', e); return fichier; }
 }
+function compresserPhotoOrigine(fichier, coteMax, qualite){
+  coteMax = coteMax || 3000; qualite = qualite || 0.90;
+  return new Promise(function(resolve){
+    if (fichier.type !== 'image/jpeg' || fichier.size < 900*1024) { resolve(fichier); return; }
+    const img = new Image();
+    img.onload = function(){
+      try{
+        const coteActuel = Math.max(img.width, img.height);
+        const ratio = coteActuel > coteMax ? coteMax/coteActuel : 1;
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width*ratio); canvas.height = Math.round(img.height*ratio);
+        canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+        canvas.toBlob(function(blob){
+          if (!blob || blob.size >= fichier.size) { resolve(fichier); return; }
+          resolve(new File([blob], fichier.name.replace(/\.\w+$/, '.jpg'), { type:'image/jpeg' }));
+        }, 'image/jpeg', qualite);
+      }catch(e){ resolve(fichier); }
+    };
+    img.onerror = function(){ resolve(fichier); };
+    img.src = URL.createObjectURL(fichier);
+  });
+}
+function genererMiniature(fichier, coteMax, qualite){
+  coteMax = coteMax || 500; qualite = qualite || 0.75;
+  return new Promise(function(resolve){
+    const img = new Image();
+    img.onload = function(){
+      try{
+        const coteActuel = Math.max(img.width, img.height);
+        const ratio = coteActuel > coteMax ? coteMax/coteActuel : 1;
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width*ratio); canvas.height = Math.round(img.height*ratio);
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.drawImage(img,0,0,canvas.width,canvas.height);
+        canvas.toBlob(function(blob){ resolve(blob||null); }, 'image/jpeg', qualite);
+      }catch(e){ resolve(null); }
+    };
+    img.onerror = function(){ resolve(null); };
+    img.src = URL.createObjectURL(fichier);
+  });
+}
+
+/* ------------------------------------------------------------- UTILS UI --- */
 const STEP_LABELS = ['Identité','Physique','Formation','Expérience','Photos','Récapitulatif'];
-// Édition post-validation : un bloc à la fois, en page complète.
-state.meta.editBlock = state.meta.editBlock || null;
 const EXP_TYPES = ['Défilé','Campagne','Éditorial','Shooting','Lookbook','Publicité','Fitting','Showroom','Vidéo','Autre'];
+const MOIS_FR = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+function formaterPeriode(valeur){
+  if (!valeur) return '—';
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(valeur);
+  if (m) { const mois = MOIS_FR[parseInt(m[2],10)-1]; return mois ? (parseInt(m[3],10)+' '+mois+' '+m[1]) : valeur; }
+  const m2 = /^(\d{4})-(\d{2})$/.exec(valeur);
+  if (m2) { const mois = MOIS_FR[parseInt(m2[2],10)-1]; return mois ? (mois.charAt(0).toUpperCase()+mois.slice(1)+' '+m2[1]) : valeur; }
+  return valeur;
+}
 
 function header(rightLabel){
   return '<div class="top"><div class="wordmark"><span class="mark">MA2M</span>' +
     '<span class="full">Maître Akessé Model Management</span></div>' +
-    '<div class="espace-tag">' + (rightLabel||'Mon espace mannequin') + '<b>' + echapperHtml((state.identite.prenom||'')+' '+(state.identite.nom||'')).trim() + '</b></div></div>';
+    '<div class="espace-tag">' + (rightLabel||'Mon espace mannequin') + '<b>' + echapperHtml(state.identite.nomComplet||'').trim() + '</b></div></div>';
 }
 
 /* =========================================================== RENDU MAIN */
 function render(){
   const app = document.getElementById('app');
-  document.getElementById('adminSim').style.display = (DEMO_MODE && state.meta.statut === 'en_attente') ? 'block' : 'none';
-  document.getElementById('demoBanner').style.display = DEMO_MODE ? 'block' : 'none';
-
-  if(state.meta.statut === 'valide'){
-    if(state.meta.editBlock){ app.innerHTML = viewBlockEditor(state.meta.editBlock); bindBlockPage(state.meta.editBlock); return; }
-    app.innerHTML = viewDashboard(); bindDashboard(); return;
+  const enModeGuide = !state.meta.premierePublicationFaite;
+  if (enModeGuide) {
+    if (state.meta.statutAffichage === 'en_attente') { app.innerHTML = viewConfirmation(); return; }
+    if (state.meta.statutAffichage === 'refuse') { app.innerHTML = viewRefuse(); bindRefuse(); return; }
+    app.innerHTML = viewWizard();
+    bindWizard();
+    return;
   }
-  if(state.meta.statut === 'en_attente'){ app.innerHTML = viewConfirmation(); return; }
-  if(state.meta.statut === 'refuse'){ app.innerHTML = viewRefuse(); bindRefuse(); return; }
-  app.innerHTML = viewWizard();
-  bindWizard();
+  // Mode autonome : le tableau de bord reste toujours accessible une fois la
+  // première publication faite, même si le profil repasse en attente/refusé
+  // par la suite — seuls les bandeaux d'état changent (identique à l'ancien
+  // système, voir appliquerModeGuide()/gerer_validation_publication()).
+  if (state.meta.editBlock) { app.innerHTML = viewBlockEditor(state.meta.editBlock); bindBlockPage(state.meta.editBlock); return; }
+  app.innerHTML = viewDashboard();
+  bindDashboard();
 }
 
 /* --------------------------------------------------------------- WIZARD */
 function stepComplete(n){
-  if(n===1) return !!(state.identite.nom && state.identite.prenom && state.identite.dateNaissance && state.identite.nationalite);
-  if(n===2) return !!(state.physique.taille && state.physique.poids);
-  if(n===3) return !!state.formation.niveau;
-  if(n===4) return state.experiences.length>0;
-  if(n===5) return !!(state.photos.portrait && state.photos.photoProfil && state.photos.pleinPied);
+  if (n===1) return !!(state.identite.nomComplet && state.identite.dateNaissance && state.identite.sexe);
+  if (n===2) return !!(state.physique.taille && state.physique.poids);
+  if (n===3) return !!state.formation.niveau;
+  if (n===4) return state.experiences.length>0;
+  if (n===5) return !!(state.photos.principale && state.photos.book.length);
   return false;
 }
 
@@ -877,76 +1088,92 @@ function viewWizard(){
   const pct = Math.round(((state.meta.currentStep-1)/6)*100 + (stepComplete(state.meta.currentStep)?100/6:0));
   const clamped = Math.min(100, Math.max(0,pct));
   return header() +
-  '<div class="greet"><h1>Bonjour ' + echapperHtml(state.identite.prenom||'') + '</h1>' +
-  '<p>Complétez votre profil professionnel pour permettre à l\u2019agence de créer votre dossier mannequin.</p>' +
+  '<div class="greet"><h1>Bonjour ' + echapperHtml((state.identite.nomComplet||'').split(' ')[0]||'') + '</h1>' +
+  '<p>Complétez votre profil professionnel pour permettre à l’agence de créer votre dossier mannequin. Chaque étape s’enregistre au fur et à mesure — vous pouvez y revenir à tout moment avant l’envoi final.</p>' +
   '<div class="progress-row"><div class="progress-track"><div class="progress-fill" style="width:'+clamped+'%"></div></div>' +
   '<div class="progress-pct">'+clamped+'%</div></div></div>' +
-  '<div class="stepper">' + STEP_LABELS.map((l,i)=>{
+  '<div class="stepper">' + STEP_LABELS.map(function(l,i){
     const n=i+1; const cls = n===state.meta.currentStep?'active':(stepComplete(n)?'done':'');
-    return '<button class="step-tab '+cls+'" data-goto="'+n+'"><span class="n">'+['①','②','③','④','⑤','⑥'][i]+'</span>'+l+'</button>';
+    return '<button type="button" class="step-tab '+cls+'" data-goto="'+n+'"><span class="n">'+['①','②','③','④','⑤','⑥'][i]+'</span>'+l+'</button>';
   }).join('') + '</div>' +
   '<div class="panel">' + stepContent(state.meta.currentStep) + '</div>';
 }
 
 function stepContent(n){
-  if(n===1) return stepIdentite();
-  if(n===2) return stepPhysique();
-  if(n===3) return stepFormation();
-  if(n===4) return stepExperience();
-  if(n===5) return stepPhotos();
+  if (n===1) return stepIdentite();
+  if (n===2) return stepPhysique();
+  if (n===3) return stepFormation();
+  if (n===4) return stepExperience();
+  if (n===5) return stepPhotos();
   return stepRecap();
 }
 
 function field(label, id, value, opts){
-  opts = opts||{};
+  opts = opts || {};
+  if (opts.tag==='select') {
+    return '<div class="field '+(opts.full?'full':'')+'"><label>'+label+(opts.req?'<span class="req">*</span>':'')+'</label>' +
+      '<select id="'+id+'">' + (opts.options||[]).map(function(o){ return '<option value="'+echapperHtml(o.value)+'" '+(o.value===value?'selected':'')+'>'+echapperHtml(o.label)+'</option>'; }).join('') + '</select></div>';
+  }
+  if (opts.tag==='textarea') {
+    return '<div class="field '+(opts.full?'full':'')+'"><label>'+label+(opts.req?'<span class="req">*</span>':'')+'</label>' +
+      '<textarea id="'+id+'" placeholder="'+(opts.placeholder||'')+'"'+(opts.maxlength?' maxlength="'+opts.maxlength+'"':'')+'>'+echapperHtml(value||'')+'</textarea></div>';
+  }
   return '<div class="field '+(opts.full?'full':'')+'"><label>'+label+(opts.req?'<span class="req">*</span>':'')+'</label>' +
-  '<input type="'+(opts.type||'text')+'" id="'+id+'" value="'+echapperHtml(value||'')+'" placeholder="'+(opts.placeholder||'')+'"></div>';
+  '<input type="'+(opts.type||'text')+'" id="'+id+'" value="'+echapperHtml(value||'')+'" placeholder="'+(opts.placeholder||'')+'"'+(opts.maxlength?' maxlength="'+opts.maxlength+'"':'')+'></div>';
 }
 
 function stepIdentite(){
   const d = state.identite;
   return '<h2>Identité</h2><p class="sub">Étape 1 sur 6</p><div class="grid">' +
-    field('Nom','f-nom',d.nom,{req:true}) + field('Prénom(s)','f-prenom',d.prenom,{req:true}) +
+    field('Nom complet','f-nom',d.nomComplet,{req:true,full:true}) +
     field('Date de naissance','f-dob',d.dateNaissance,{type:'date',req:true}) + field('Lieu de naissance','f-lieu',d.lieuNaissance) +
-    field('Nationalité','f-nat',d.nationalite,{req:true}) + field('Ville de résidence','f-ville',d.ville) +
-    field('Téléphone','f-tel',d.telephone,{type:'tel',placeholder:'+225 XX XX XX XX XX'}) +
-    field('Email','f-email',d.email,{type:'email',placeholder:'exemple@gmail.com'}) + '</div>' +
-    '<div class="field full" style="margin-top:20px"><label>Catégorie</label><div class="radio-row">' +
-    ['Newface 0–1 an','Amateur 1–3 ans','Pro 3 ans +'].map(c=>'<label class="radio-opt '+(d.categorie===c?'selected':'')+'">' +
-      '<input type="radio" name="categorie" value="'+c+'" '+(d.categorie===c?'checked':'')+'> '+c+'</label>').join('') +
-    '</div></div><div class="actions-row end"><button class="btn primary" id="save1">Enregistrer</button></div>';
+    field('Nationalité','f-nat',d.nationalite||'Ivoirienne') + field('Ville de résidence','f-ville',d.ville) +
+    field('Téléphone (usage interne agence)','f-tel',d.telephone,{type:'tel',placeholder:'+225 XX XX XX XX XX'}) +
+    field('E-mail (usage interne agence)','f-email',d.email,{type:'email'}) + '</div>' +
+    '<p class="sub" style="margin:6px 0 0">🔒 Téléphone et e-mail ne sont jamais affichés publiquement — seul le contact officiel de l’agence apparaît sur votre fiche.</p>' +
+    '<div class="field full" style="margin-top:20px"><label>Sexe<span class="req">*</span></label><div class="radio-row">' +
+    [['femme','Femme'],['homme','Homme']].map(function(c){ return '<label class="radio-opt '+(d.sexe===c[0]?'selected':'')+'"><input type="radio" name="sexe" value="'+c[0]+'" '+(d.sexe===c[0]?'checked':'')+'> '+c[1]+'</label>'; }).join('') +
+    '</div></div>' +
+    '<div class="grid" style="margin-top:20px">' +
+    field('Présentation / profil','f-bio',state.bio,{tag:'textarea',full:true,req:true,placeholder:'Quelques phrases sur vous : votre parcours, votre style, ce qui vous distingue…'}) +
+    field('Instagram (facultatif)','f-instagram',state.instagram,{placeholder:'@votre_compte'}) +
+    field('Citation personnelle (facultatif)','f-citation',state.citation,{placeholder:'Une phrase courte qui vous représente',maxlength:120}) +
+    '</div>' +
+    '<div class="actions-row end"><button class="btn primary" id="save1">Enregistrer</button></div>';
 }
 
 function stepPhysique(){
   const d = state.physique;
   return '<h2>Informations physiques</h2><p class="sub">Étape 2 sur 6</p><div class="grid g3">' +
-    field('Taille (cm)','f-taille',d.taille,{type:'number',req:true}) + field('Poids (kg)','f-poids',d.poids,{type:'number',req:true}) + '<div></div>' +
-    field('Poitrine (cm)','f-poitrine',d.poitrine,{type:'number'}) + field('Taille (cm)','f-tailleM',d.tailleM,{type:'number'}) +
-    field('Hanches (cm)','f-hanches',d.hanches,{type:'number'}) + field('Pointure','f-pointure',d.pointure,{type:'number'}) +
-    field('Taille vêtements','f-tailleVet',d.tailleVet) + '<div></div>' +
-    field('Couleur des yeux','f-yeux',d.yeux) + field('Couleur des cheveux','f-cheveuxCouleur',d.cheveuxCouleur) +
-    field('Type de cheveux','f-cheveuxType',d.cheveuxType) + '</div>' +
-    '<div class="field full" style="margin-top:14px"><label>Particularités</label><textarea id="f-particularites">'+echapperHtml(d.particularites)+'</textarea></div>' +
+    field('Taille (cm)','f-taille',d.taille,{type:'number',req:true}) + field('Poids (kg)','f-poids',d.poids,{type:'number',req:true}) +
+    field('Carnation','f-carnation',d.carnation) +
+    field('Poitrine (cm)','f-poitrine',d.poitrine,{type:'number'}) + field('Tour de taille (cm)','f-tourTaille',d.tourTaille,{type:'number'}) +
+    field('Hanches (cm)','f-hanches',d.hanches,{type:'number'}) +
+    field('Entrejambe (cm)','f-entrejambe',d.entrejambe,{type:'number'}) + field('Pointure','f-pointure',d.pointure) +
+    field('Taille vêtements','f-tailleVet',d.tailleVet) +
+    field('Couleur des yeux','f-yeux',d.yeux) + field('Couleur des cheveux','f-cheveux',d.cheveux) + '<div></div>' +
+    '</div>' +
+    '<p class="sub" style="margin-top:10px">Hanches pour les femmes, entrejambe pour les hommes — renseignez le champ qui vous concerne.</p>' +
     '<div class="actions-row"><button class="btn ghost" data-goto="1">← Retour</button><button class="btn primary" id="save2">Enregistrer</button></div>';
 }
 
 function stepFormation(){
   const d = state.formation;
   return '<h2>Formation</h2><p class="sub">Étape 3 sur 6</p>' +
-    '<div class="field full"><label>Niveau d\u2019étude<span class="req">*</span></label><select id="f-niveau">' +
-    ['','Collège','Bac','Licence','Master','Autre'].map(o=>'<option value="'+o+'" '+(d.niveau===o?'selected':'')+'>'+(o||'— Sélectionner —')+'</option>').join('') +
-    '</select></div><div class="grid" style="margin-top:16px">' +
+    field('Niveau d’étude','f-niveau',d.niveau,{tag:'select',full:true,req:true,options:['','Collège','Bac','Licence','Master','Autre'].map(function(o){return {value:o,label:o||'— Sélectionner —'};})}) +
+    '<div class="grid" style="margin-top:16px">' +
     field('Établissement','f-etab',d.etablissement,{placeholder:'Lycée / Université / Établissement'}) +
     field('Formation particulière','f-formPart',d.particuliere) + '</div>' +
-    '<div class="field full" style="margin-top:20px"><label>Formation mannequin</label><div class="check-row">' +
-    [['mannequin','Formation mannequin'],['coaching','Coaching'],['masterclass','Masterclass'],['autre','Autre']].map(function(pair){
-      var k=pair[0], l=pair[1];
-      return '<label class="check-opt '+(d[k]?'selected':'')+'"><input type="checkbox" data-k="'+k+'" '+(d[k]?'checked':'')+'> '+l+'</label>';
-    }).join('') + '</div></div>' +
+    '<div class="field full" style="margin-top:14px"><label>Formation mannequin (facultatif)</label>' +
+    '<input type="text" id="f-formMannequin" value="'+echapperHtml(d.mannequin||'')+'" placeholder="ex : MA2M — Coaching &amp; Masterclass"></div>' +
     '<div class="actions-row"><button class="btn ghost" data-goto="2">← Retour</button><button class="btn primary" id="save3">Enregistrer</button></div>';
 }
 
+const MODEL_TYPES = [['catwalk','Défilé / Catwalk'],['photo','Photo'],['publicite','Publicité'],['commercial','Commercial'],['autre','Autre']];
+const LANGUES_DISPONIBLES = ['Français','Anglais','Espagnol','Autre'];
+
 function stepExperience(){
+  const pp = state.profilPro;
   var listHtml = state.experiences.length===0
     ? '<p class="exp-empty">Aucune expérience ajoutée pour le moment. Cliquez sur « + Ajouter une expérience ».</p>'
     : state.experiences.map(function(e,i){
@@ -957,260 +1184,268 @@ function stepExperience(){
         '<input type="text" data-expf="annee" data-i="'+i+'" placeholder="Année" value="'+echapperHtml(e.annee)+'">' +
         '</div><button class="exp-remove" data-rm="'+i+'">Supprimer</button></div>';
       }).join('');
-  return '<h2>Expérience professionnelle</h2><p class="sub">Remplissez directement les champs — chaque ligne est enregistrée séparément</p>' +
+  return '<h2>Expérience professionnelle</h2><p class="sub">Étape 4 sur 6</p>' +
+    '<div class="grid">' +
+    field('Années d’expérience','f-anneesExp',pp.anneesExperience,{tag:'select',options:[{value:'',label:'—'}].concat(Array.from({length:21},function(_,i){return {value:String(i),label:i+' an(s)'};})).concat([{value:'21',label:'Plus de 20 ans'}])}) +
+    field('Disponibilité','f-dispo',pp.disponibilite,{tag:'select',options:[{value:'',label:'—'},{value:'immediate',label:'Disponible immédiatement'},{value:'rdv',label:'Sur rendez-vous'},{value:'mobile',label:'Mobile pour déplacements'}]}) +
+    '</div>' +
+    '<div class="field full" style="margin-top:14px"><label>Type de modèle (cochez tout ce qui s’applique)</label><div class="check-row">' +
+    MODEL_TYPES.map(function(t){ return '<label class="check-opt '+(pp.modelTypes.indexOf(t[0])!==-1?'selected':'')+'"><input type="checkbox" data-modeltype="'+t[0]+'" '+(pp.modelTypes.indexOf(t[0])!==-1?'checked':'')+'> '+t[1]+'</label>'; }).join('') +
+    '</div></div>' +
+    '<div class="field full" style="margin-top:14px"><label>Langues parlées</label><div class="check-row">' +
+    LANGUES_DISPONIBLES.map(function(l){ return '<label class="check-opt '+(pp.langues.indexOf(l)!==-1?'selected':'')+'"><input type="checkbox" data-langue="'+l+'" '+(pp.langues.indexOf(l)!==-1?'checked':'')+'> '+l+'</label>'; }).join('') +
+    '</div></div>' +
+    '<div class="actions-row" style="margin-top:20px"><button class="btn ghost small" id="saveProfilPro">Enregistrer</button></div>' +
+    '<p class="sub" style="margin:22px 0 8px">Défilés, shootings, publicités, castings… Un seul projet suffit pour publier votre profil — vous pourrez toujours en ajouter d’autres plus tard.</p>' +
     '<button class="btn ghost small" id="addExp" style="margin-bottom:18px">+ Ajouter une expérience</button>' +
     '<div id="expList">'+listHtml+'</div>' +
-    '<p class="sub" style="margin:18px 0 8px">Types disponibles</p>' +
-    '<div class="type-chip-row">'+EXP_TYPES.map(function(t){return '<span class="type-chip">'+t+'</span>';}).join('')+'</div>' +
     '<div class="actions-row"><button class="btn ghost" data-goto="3">← Retour</button><button class="btn primary" id="save4">Continuer</button></div>';
 }
 
-function photoThumb(item, label){
-  if(item && item.url) return '<img src="'+item.url+'" alt="'+label+'">';
-  return '';
-}
+function photoThumb(item, label){ return (item && item.url) ? ('<img src="'+item.url+'" alt="'+label+'">') : ''; }
 
 function stepPhotos(){
-  normalizeCompcard(); const p=state.photos;
-  const slots=[1,2,3,4,5].map(function(n){
-    const ph=p.compCard[n-1];
-    const rule=n===1?'PLEIN PIED':n===2?'PORTRAIT':'PHOTO LIBRE';
-    const sourceLabel=ph?'Photo sélectionnée':'Aucune photo sélectionnée';
-    return '<div class="compcard-slot '+(ph?'filled ':'')+'cc-editable-slot" data-cc-slot="'+n+'">'+
-      '<div class="cc-slot-num">'+n+'</div><div class="cc-slot-content">'+
-      (ph&&ph.url?'<img src="'+ph.url+'" alt="Photo compcard '+n+'">':'<span class="cc-slot-plus">＋</span>')+
-      '<div class="cc-slot-label '+(ph?'cc-slot-assigned':'')+'">'+sourceLabel+'</div>'+
-      '<small>'+rule+' — 1 photo par emplacement</small>'+
-      '<div class="cc-source-actions">'+
-        '<button type="button" class="cc-source-btn gold" data-cc-book="'+n+'">Choisir dans mon Book</button>'+
-        '<label class="cc-source-btn">Télécharger une photo<input class="hidden-input" type="file" accept="image/*" data-cc-upload="'+n+'"></label>'+
-      '</div>'+
-      (ph?'<button type="button" class="cc-remove-assignment" data-clear-cc-slot="'+n+'">Retirer de la compcard</button>':'')+
+  const p = state.photos;
+  const compcardPhotos = p.book.filter(function(ph){ return ph.compcardOrdre; }).sort(function(a,b){ return a.compcardOrdre-b.compcardOrdre; });
+  const slots = [1,2,3,4,5].map(function(n){
+    const ph = compcardPhotos.find(function(x){ return x.compcardOrdre===n; });
+    const rule = n===1?'PLEIN PIED':n===2?'PORTRAIT':'PHOTO LIBRE';
+    return '<div class="compcard-slot '+(ph?'filled ':'')+'cc-editable-slot" data-cc-slot="'+n+'">' +
+      '<div class="cc-slot-num">'+n+'</div><div class="cc-slot-content">' +
+      (ph?'<img src="'+ph.url+'" alt="Photo compcard '+n+'">':'<span class="cc-slot-plus">＋</span>') +
+      '<div class="cc-slot-label '+(ph?'cc-slot-assigned':'')+'">'+(ph?'Photo sélectionnée':'Aucune photo sélectionnée')+'</div>' +
+      '<small>'+rule+' — indication éditoriale, pas une contrainte</small>' +
+      '<div class="cc-source-actions"><button type="button" class="cc-source-btn gold" data-cc-book="'+n+'">Choisir dans mon Book</button></div>' +
+      (ph?'<button type="button" class="cc-remove-assignment" data-clear-cc-slot="'+n+'">Retirer de la compcard</button>':'') +
       '</div></div>';
   }).join('');
-  return '<h2>Photos &amp; documents</h2><p class="sub">Ta photo principale CV et ta photo de profil restent totalement indépendantes. La compcard conserve son système de 5 emplacements : tu peux choisir une photo déjà présente dans ton Book ou télécharger une nouvelle photo.</p>'+
-  '<div class="photo-principals-grid">'+
-  '<div class="principal-photo-card '+(p.portrait?'filled':'')+'" id="uPortrait">'+photoThumb(p.portrait,'Photo principale CV')+'<div class="principal-photo-badge">PHOTO PRINCIPALE CV</div><div class="principal-photo-title">'+(p.portrait?'Photo CV enregistrée':'Ajouter la photo principale du CV')+'</div><div class="principal-photo-hint">Portrait — indépendante de la compcard</div><input class="hidden-input" type="file" accept="image/*" id="fPortrait"></div>'+
-  '<div class="principal-photo-card '+(p.photoProfil?'filled':'')+'" id="uProfil">'+photoThumb(p.photoProfil,'Photo principale profil')+'<div class="principal-photo-badge profile">PHOTO PRINCIPALE PROFIL</div><div class="principal-photo-title">'+(p.photoProfil?'Photo profil enregistrée':'Ajouter la photo principale du profil')+'</div><div class="principal-photo-hint">Photo affichée sur ton profil public — indépendante de la compcard</div><input class="hidden-input" type="file" accept="image/*" id="fProfil"></div>'+
-  '<div class="principal-photo-card '+(p.pleinPied?'filled':'')+'" id="uPleinPied">'+photoThumb(p.pleinPied,'Photo plein pied')+'<div class="principal-photo-badge fullbody">PHOTO PLEIN PIED</div><div class="principal-photo-title">'+(p.pleinPied?'Photo plein pied enregistrée':'Ajouter la photo plein pied')+'</div><div class="principal-photo-hint">Photo de référence plein pied — indépendante de la compcard</div><input class="hidden-input" type="file" accept="image/*" id="fPleinPied"></div></div>'+
-  '<section class="compcard-builder"><div class="section-title-row"><div><span class="editor-kicker">COMPCARD</span><h3>Les 5 photos de ta compcard</h3><p>Chaque emplacement peut recevoir une photo du Book ou une nouvelle photo.</p></div><span class="cc-rule">'+compcardCount()+' / 5 sélectionnées</span></div><div class="compcard-slots editable-slots">'+slots+'</div><p class="cc-builder-note"><b>1 :</b> plein pied · <b>2 :</b> portrait · <b>3, 4, 5 :</b> libre. Ce sont des indications éditoriales, pas un nouveau système de photos.</p></section>'+
-  '<section class="book-section"><div class="section-title-row"><div><span class="editor-kicker">GALERIE</span><h3>Photos du Book</h3><p>Tes photos restent dans ton Book même lorsqu’elles sont utilisées dans la compcard.</p></div><label class="book-multi-upload" for="fBook">＋ Ajouter plusieurs photos<input class="hidden-input" type="file" accept="image/*" id="fBook" multiple></label></div><div class="book-grid">'+p.book.map(function(ph){return '<div class="book-thumb">'+photoThumb(ph,'Book')+'<button class="book-thumb-remove" data-rmbook="'+ph.id+'" title="Supprimer cette photo du Book">✕</button></div>';}).join('')+'</div></section><p class="cc-counter"><b>'+compcardCount()+' / 5</b> photos compcard · <b>'+p.book.length+'</b> photos Book</p>'+
-  '<section class="documents-section"><div class="section-title-row"><div><span class="editor-kicker">DOCUMENTS</span><h3>Pièces et documents</h3></div></div><div class="doc-row"><span class="name">Pièce d’identité'+(p.documents.piece?'<span class="status-ok">✓ importée</span>':'')+'</span><button class="btn ghost small" id="dPiece">Importer<input class="hidden-input" type="file" id="fPiece"></button></div><div class="doc-row"><span class="name">Autre document'+(p.documents.autre?'<span class="status-ok">✓ importé</span>':'')+'</span><button class="btn ghost small" id="dAutre">Importer<input class="hidden-input" type="file" id="fAutre"></button></div></section><div class="actions-row"><button class="btn ghost" data-goto="4">← Retour</button><button class="btn primary" id="save5">Continuer</button></div>';
-}
-
-function openCompcardBook(slot){
-  const modal=document.getElementById('ccBookModal'); if(!modal)return;
-  modal.dataset.slot=String(slot);
-  const grid=modal.querySelector('[data-cc-book-grid]');
-  const photos=(state.photos.book||[]).filter(function(ph){return ph&&ph.id&&ph.url;});
-  grid.innerHTML=photos.length?photos.map(function(ph){return '<button type="button" class="cc-book-choice" data-cc-book-id="'+ph.id+'"><img src="'+ph.url+'" alt="Photo de mon Book"><span>Utiliser cette photo</span></button>';}).join(''):'<div class="cc-book-empty">Aucune photo disponible dans ton Book pour le moment.<br>Tu peux télécharger une nouvelle photo directement dans cet emplacement.</div>';
-  modal.classList.add('open');
-}
-
-function closeCompcardBook(){const m=document.getElementById('ccBookModal');if(m)m.classList.remove('open');}
-
-function assignCompcardPhoto(slot,id){
-  slot=parseInt(slot,10); if(!(slot>=1&&slot<=5))return false;
-  const photo=compcardPhotoById(id); if(!photo)return false;
-  // Une photo ne peut occuper qu’un seul emplacement. L’ancien emplacement est libéré, mais la photo reste dans le Book.
-  (state.compcard||[]).forEach(function(existing,i){if(String(existing)===String(id))state.compcard[i]=null;});
-  state.compcard[slot-1]=photo.id;
-  normalizeCompcard();
-  return true;
-}
-
-function removeCompcardAssignment(slot){
-  slot=parseInt(slot,10); if(!(slot>=1&&slot<=5))return;
-  state.compcard[slot-1]=null;
-  normalizeCompcard();
+  const competencesHtml = ORDRE_COMPETENCES.map(function(cle){
+    const v = state.competences[cle] || 3;
+    return '<div class="field"><label>'+LIBELLES_COMPETENCES[cle]+'</label><input type="range" min="1" max="5" value="'+v+'" data-competence="'+cle+'"></div>';
+  }).join('');
+  return '<h2>Photos &amp; compétences</h2><p class="sub">Vos 3 photos principales (CV, profil, plein pied) sont indépendantes de la compcard — une photo du Book choisie pour la compcard n’est jamais dupliquée, elle reçoit simplement son numéro d’emplacement.</p>' +
+  '<section class="documents-section"><div class="section-title-row"><div><span class="editor-kicker">CV</span><h3>Compétences mannequin</h3><p>Évaluez-vous honnêtement sur chaque compétence (1 à 5).</p></div></div>' +
+    '<div class="grid g3">'+competencesHtml+'</div></section>' +
+  '<div class="photo-principals-grid">' +
+    '<div class="principal-photo-card '+(p.photoCv?'filled':'')+'" id="uPhotoCv">'+photoThumb(p.photoCv,'Photo CV')+'<div class="principal-photo-badge">PHOTO PRINCIPALE CV</div><div class="principal-photo-title">'+(p.photoCv?'Photo CV définie':'Choisir la photo du CV')+'</div><div class="principal-photo-hint">Cliquez pour choisir une photo de votre Book</div></div>' +
+    '<div class="principal-photo-card '+(p.principale?'filled':'')+'" id="uPrincipale">'+photoThumb(p.principale,'Photo de profil')+'<div class="principal-photo-badge profile">PHOTO PRINCIPALE PROFIL</div><div class="principal-photo-title">'+(p.principale?'Photo profil définie':'Choisir la photo de profil')+'</div><div class="principal-photo-hint">Affichée sur votre fiche publique et dans THE BOOK</div></div>' +
+    '<div class="principal-photo-card '+(p.pleinPied?'filled':'')+'" id="uPleinPied">'+photoThumb(p.pleinPied,'Photo plein pied')+'<div class="principal-photo-badge fullbody">PHOTO PLEIN PIED</div><div class="principal-photo-title">'+(p.pleinPied?'Photo plein pied définie':'Choisir la photo plein pied')+'</div><div class="principal-photo-hint">Photo de référence plein pied</div></div>' +
+  '</div>' +
+  '<section class="book-section"><div class="section-title-row"><div><span class="editor-kicker">GALERIE</span><h3>Photos du Book</h3><p>Ajoutez vos photos ici — c’est parmi elles que vous choisirez ensuite vos photos principales et votre compcard.</p></div>' +
+    '<label class="book-multi-upload" for="fBook">＋ Ajouter des photos<input class="hidden-input" type="file" accept="image/*" id="fBook" multiple></label></div>' +
+    '<div class="book-grid">'+p.book.map(function(ph){
+      return '<div class="book-thumb" data-book-id="'+ph.id+'">'+photoThumb(ph,'Book')+'<button class="book-thumb-remove" data-rmbook="'+ph.id+'" title="Supprimer">✕</button></div>';
+    }).join('')+'</div></section>' +
+  '<section class="compcard-builder"><div class="section-title-row"><div><span class="editor-kicker">COMPCARD</span><h3>Les 5 photos de votre compcard</h3><p>Choisissez, parmi vos photos du Book, celles qui composent votre compcard.</p></div><span class="cc-rule">'+compcardPhotos.length+' / 5 sélectionnées</span></div>' +
+    '<div class="compcard-slots editable-slots">'+slots+'</div></section>' +
+  '<div class="actions-row"><button class="btn ghost" data-goto="4">← Retour</button><button class="btn primary" id="save5">Continuer</button></div>';
 }
 
 function stepRecap(){
-  const d = state.identite, ph=state.physique, f=state.formation;
+  const d = state.identite, ph = state.physique, f = state.formation;
   const rows = [
-    ['Identité', (d.prenom||'—')+' '+(d.nom||'')+' · '+(d.categorie||'Catégorie non définie'), 1],
-    ['Informations physiques', (ph.taille||'—')+' cm · '+(ph.poids||'—')+' kg · '+(ph.poitrine||'–')+' / '+(ph.tailleM||'–')+' / '+(ph.hanches||'–'), 2],
-    ['Formation', (f.niveau||'—')+(f.mannequin?' · Formation mannequin':'')+(f.coaching?' · Coaching':''), 3],
+    ['Identité', (d.nomComplet||'—')+' · '+deriverNiveauMannequin(state.profilPro.anneesExperience)+' · '+(d.sexe==='femme'?'Femme':d.sexe==='homme'?'Homme':'—'), 1],
+    ['Informations physiques', (ph.taille||'—')+' cm · '+(ph.poids||'—')+' kg', 2],
+    ['Formation', f.niveau||'—', 3],
     ['Expérience professionnelle', state.experiences.length+' expérience(s) enregistrée(s)', 4],
-    ['Photos & documents', ([state.photos.portrait,state.photos.photoProfil,state.photos.pleinPied].filter(Boolean).length + state.photos.book.length)+' photos · '+Object.values(state.photos.documents).filter(Boolean).length+' documents', 5],
+    ['Photos', state.photos.book.length+' photo(s) dans le Book', 5],
   ];
-  return '<h2>Récapitulatif</h2><p class="sub">Vérifiez vos informations avant l\u2019envoi</p>' +
-    rows.map(function(r){ return '<div class="recap-block"><div><div class="lbl">'+r[0]+'</div><div class="val">'+r[1]+'</div></div>' +
-      '<button class="recap-link" data-goto="'+r[2]+'">Modifier</button></div>'; }).join('') +
-    '<div class="visible-toggle"><input type="checkbox" id="f-visible" '+(state.meta.profilVisible?'checked':'')+'>' +
-    '<p>Je souhaite rendre mon profil visible sur le site.</p></div>' +
+  return '<h2>Récapitulatif</h2><p class="sub">Vérifiez vos informations avant l’envoi</p>' +
+    rows.map(function(r){ return '<div class="recap-block"><div><div class="lbl">'+r[0]+'</div><div class="val">'+r[1]+'</div></div><button class="recap-link" data-goto="'+r[2]+'">Modifier</button></div>'; }).join('') +
+    '<div class="visible-toggle"><input type="checkbox" id="f-visible"><p>Rendre mon profil visible publiquement sur le site.</p></div>' +
     '<div class="actions-row"><button class="btn ghost" data-goto="5">← Retour</button><button class="btn primary" id="submitProfile">Soumettre mon profil</button></div>';
 }
 
 function goto(n){ state.meta.currentStep = n; render(); window.scrollTo({top:0,behavior:'smooth'}); }
-function val(id){ const el=document.getElementById(id); return el?el.value:''; }
 
 function bindWizard(){
-  document.querySelectorAll('[data-goto]').forEach(function(b){ b.addEventListener('click', function(){ goto(parseInt(b.dataset.goto)); }); });
+  document.querySelectorAll('[data-goto]').forEach(function(b){ b.addEventListener('click', function(){ goto(parseInt(b.dataset.goto,10)); }); });
   const s = state;
 
-  const btn1 = document.getElementById('save1');
-  if(btn1) btn1.addEventListener('click', async function(){
+  document.getElementById('save1')?.addEventListener('click', async function(){
+    const btn = this;
     Object.assign(s.identite, {
-      nom:val('f-nom'), prenom:val('f-prenom'), dateNaissance:val('f-dob'), lieuNaissance:val('f-lieu'),
-      nationalite:val('f-nat'), ville:val('f-ville'), telephone:val('f-tel'), email:val('f-email'),
-      categorie: (document.querySelector('input[name=categorie]:checked')||{}).value || s.identite.categorie
+      nomComplet: val('f-nom'), dateNaissance: val('f-dob'), lieuNaissance: val('f-lieu'),
+      nationalite: val('f-nat'), ville: val('f-ville'), telephone: val('f-tel'), email: val('f-email'),
+      sexe: (document.querySelector('input[name=sexe]:checked')||{}).value || s.identite.sexe
     });
-    btn1.disabled = true; btn1.textContent = 'Enregistrement…';
-    const ok = await Store.saveBlock(identiteToDb(s.identite));
-    if(ok){ toast('Enregistré'); goto(2); } else { btn1.disabled=false; btn1.textContent='Enregistrer'; }
+    s.bio = val('f-bio'); s.instagram = val('f-instagram'); s.citation = val('f-citation');
+    btn.disabled = true; btn.textContent = 'Enregistrement…';
+    const ok = await Store.saveBlock(Object.assign(identiteToDb(s.identite), { bio: s.bio||null, instagram: s.instagram||null, citation: s.citation||null }));
+    if (ok) { toast('Enregistré'); goto(2); } else { btn.disabled=false; btn.textContent='Enregistrer'; }
   });
 
-  const btn2 = document.getElementById('save2');
-  if(btn2) btn2.addEventListener('click', async function(){
+  document.getElementById('save2')?.addEventListener('click', async function(){
+    const btn = this;
     Object.assign(s.physique, {
-      taille:val('f-taille'), poids:val('f-poids'), poitrine:val('f-poitrine'), tailleM:val('f-tailleM'),
-      hanches:val('f-hanches'), pointure:val('f-pointure'), tailleVet:val('f-tailleVet'), yeux:val('f-yeux'),
-      cheveuxCouleur:val('f-cheveuxCouleur'), cheveuxType:val('f-cheveuxType'), particularites:val('f-particularites')
+      taille: val('f-taille'), poids: val('f-poids'), poitrine: val('f-poitrine'), tourTaille: val('f-tourTaille'),
+      hanches: val('f-hanches'), entrejambe: val('f-entrejambe'), pointure: val('f-pointure'), tailleVet: val('f-tailleVet'),
+      yeux: val('f-yeux'), cheveux: val('f-cheveux'), carnation: val('f-carnation')
     });
-    btn2.disabled = true; btn2.textContent = 'Enregistrement…';
+    btn.disabled = true; btn.textContent = 'Enregistrement…';
     const ok = await Store.saveBlock(physiqueToDb(s.physique));
-    if(ok){ toast('Enregistré'); goto(3); } else { btn2.disabled=false; btn2.textContent='Enregistrer'; }
+    if (ok) { toast('Enregistré'); goto(3); } else { btn.disabled=false; btn.textContent='Enregistrer'; }
   });
 
-  const btn3 = document.getElementById('save3');
-  if(btn3) btn3.addEventListener('click', async function(){
-    s.formation.niveau = val('f-niveau'); s.formation.etablissement = val('f-etab'); s.formation.particuliere = val('f-formPart');
-    document.querySelectorAll('#app input[type=checkbox][data-k]').forEach(function(cb){ s.formation[cb.dataset.k] = cb.checked; });
-    btn3.disabled = true; btn3.textContent = 'Enregistrement…';
+  document.getElementById('save3')?.addEventListener('click', async function(){
+    const btn = this;
+    s.formation.niveau = val('f-niveau'); s.formation.etablissement = val('f-etab');
+    s.formation.particuliere = val('f-formPart'); s.formation.mannequin = val('f-formMannequin');
+    btn.disabled = true; btn.textContent = 'Enregistrement…';
     const ok = await Store.saveBlock(formationToDb(s.formation));
-    if(ok){ toast('Enregistré'); goto(4); } else { btn3.disabled=false; btn3.textContent='Enregistrer'; }
+    if (ok) { toast('Enregistré'); goto(4); } else { btn.disabled=false; btn.textContent='Enregistrer'; }
   });
 
-  const btn4 = document.getElementById('save4');
-  if(btn4) btn4.addEventListener('click', function(){ goto(5); });
-  const btn5 = document.getElementById('save5');
-  if(btn5) btn5.addEventListener('click', function(){ goto(6); });
+  document.getElementById('save4')?.addEventListener('click', function(){ goto(5); });
+  document.getElementById('save5')?.addEventListener('click', function(){ goto(6); });
 
+  bindExperienceHandlers();
+  bindProfilProHandlers();
+  bindPhotoHandlers();
+  bindCompetencesHandlers();
+
+  document.getElementById('submitProfile')?.addEventListener('click', async function(){
+    if (!stepComplete(1)||!stepComplete(2)||!stepComplete(3)) { toast('Merci de compléter les étapes obligatoires', true); return; }
+    const visible = document.getElementById('f-visible').checked;
+    const payload = Object.assign({}, identiteToDb(s.identite), physiqueToDb(s.physique), formationToDb(s.formation), { bio: s.bio||null, instagram: s.instagram||null, citation: s.citation||null });
+    const resultat = await Store.submit(payload, visible);
+    if (resultat) {
+      s.meta.statutAffichage = deriverStatutAffichage(resultat);
+      s.meta.premierePublicationFaite = !!resultat.premiere_publication_faite;
+      render();
+      toast(resultat.published ? 'Profil publié avec succès.' : 'Profil soumis à MA2M pour validation.');
+    }
+  });
+}
+
+/* -------------------------------------------------- EXPÉRIENCE : handlers */
+function bindExperienceHandlers(){
+  const s = state;
   document.getElementById('addExp')?.addEventListener('click', async function(){
     const draft = { type:'Défilé', nom:'', lieu:'', annee:new Date().getFullYear().toString() };
     const saved = await Store.addExperience(draft);
-    if(saved){ s.experiences.push(saved); render();
-      const inputs = document.querySelectorAll('[data-expf="nom"]'); inputs[inputs.length-1]?.focus(); }
+    if (saved) { s.experiences.push(saved); render(); }
   });
   document.querySelectorAll('[data-rm]').forEach(function(b){ b.addEventListener('click', async function(){
-    const i = parseInt(b.dataset.rm); const exp = s.experiences[i];
+    const i = parseInt(b.dataset.rm,10); const exp = s.experiences[i];
     const ok = await Store.removeExperience(exp.id);
-    if(ok){ s.experiences.splice(i,1); render(); }
+    if (ok) { s.experiences.splice(i,1); render(); }
   }); });
   document.querySelectorAll('[data-expf]').forEach(function(el){
     const eventName = el.tagName==='SELECT' ? 'change' : 'input';
     let debounceTimer;
     el.addEventListener(eventName, function(){
-      const i = parseInt(el.dataset.i);
+      const i = parseInt(el.dataset.i,10);
       s.experiences[i][el.dataset.expf] = el.value;
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(function(){ Store.updateExperience(s.experiences[i].id, s.experiences[i]); }, 500);
     });
   });
+}
 
-  async function handlePhotoUpload(fileInput, type, isPublic, onDone){
-    fileInput.addEventListener('change', async function(){
-      const files=Array.from(fileInput.files||[]); if(!files.length) return;
-      if(files.length>1) toast(files.length+' photos du Book en cours d’envoi…');
-      for(const file of files){
-        toast('Envoi de la photo…');
-        const item=await Store.uploadPhoto(file,type,isPublic);
-        if(item) onDone(item);
-      }
-      fileInput.value='';
+/* --- Profil professionnel (années d'expérience, type de modèle, langues,
+   disponibilité) : sert uniquement à déduire automatiquement le niveau
+   New Face/Amateur/Professionnel, jamais redemandé comme choix manuel. --- */
+function bindProfilProHandlers(){
+  const s = state;
+  document.getElementById('saveProfilPro')?.addEventListener('click', async function(){
+    const btn = this;
+    Object.assign(s.profilPro, {
+      anneesExperience: val('f-anneesExp'), disponibilite: val('f-dispo'),
+      modelTypes: Array.from(document.querySelectorAll('[data-modeltype]:checked')).map(function(c){ return c.dataset.modeltype; }),
+      langues: Array.from(document.querySelectorAll('[data-langue]:checked')).map(function(c){ return c.dataset.langue; })
     });
-  }
-  const fPortrait = document.getElementById('fPortrait');
-  if(fPortrait) handlePhotoUpload(fPortrait, 'portrait', true, function(item){ s.photos.portrait=item; normalizeCompcard(); render(); toast('Photo principale CV ajoutée'); });
-  const fProfil = document.getElementById('fProfil');
-  if(fProfil) handlePhotoUpload(fProfil, 'profil', true, function(item){ s.photos.photoProfil=item; render(); toast('Photo principale profil ajoutée'); });
-  const fPleinPied = document.getElementById('fPleinPied');
-  if(fPleinPied) handlePhotoUpload(fPleinPied, 'plein_pied', true, function(item){ s.photos.pleinPied=item; normalizeCompcard(); render(); toast('Photo plein pied ajoutée — case 1 de la compcard'); });
-  document.getElementById('uPortrait')?.addEventListener('click', function(e){ if(e.target.tagName!=='INPUT') fPortrait?.click(); });
-  document.getElementById('uProfil')?.addEventListener('click', function(e){ if(e.target.tagName!=='INPUT') fProfil?.click(); });
-  document.getElementById('uPleinPied')?.addEventListener('click', function(e){ if(e.target.tagName!=='INPUT') fPleinPied?.click(); });
+    btn.disabled = true; btn.textContent = 'Enregistrement…';
+    const ok = await Store.saveBlock(profilProToDb(s.profilPro));
+    if (ok) { toast('Enregistré'); render(); } else { btn.disabled=false; btn.textContent='Enregistrer'; }
+  });
+}
 
+/* ------------------------------------------------------- PHOTOS : handlers */
+function bindPhotoHandlers(){
+  const s = state;
   const fBook = document.getElementById('fBook');
-  if(fBook) handlePhotoUpload(fBook, 'book', true, function(item){ s.photos.book.push(item); render(); toast('Photo ajoutée au Book'); });
-  document.getElementById('addBookPhoto')?.addEventListener('click', function(e){ if(e.target.tagName!=='INPUT') fBook?.click(); });
-
+  if (fBook) fBook.addEventListener('change', async function(){
+    const files = Array.from(fBook.files||[]);
+    if (!files.length) return;
+    if (files.length>1) toast(files.length+' photos en cours d’envoi…');
+    for (const file of files) { const item = await Store.uploadPhoto(file); if (item) s.photos.book.push(item); }
+    fBook.value=''; render(); reopenDashboardBlock('photos');
+  });
   document.querySelectorAll('[data-rmbook]').forEach(function(b){ b.addEventListener('click', async function(e){
     e.stopPropagation();
     const id = b.dataset.rmbook; const photo = s.photos.book.find(function(ph){ return String(ph.id)===String(id); });
-    const ok = await Store.removePhoto(id, photo?photo.path:null);
-    if(ok){ s.photos.book=s.photos.book.filter(function(ph){return String(ph.id)!==String(id);}); s.compcard=s.compcard.filter(function(cid){return String(cid)!==String(id);}); normalizeCompcard(); render(); }
-  }); });
-  document.querySelectorAll('[data-cc-slot]').forEach(function(slotEl){
-    slotEl.addEventListener('click', function(e){
-      if(e.target.closest('[data-clear-cc]')) return;
-      state.meta.activeCompcardSlot=parseInt(slotEl.dataset.ccSlot,10) || 1;
-      render();
-    });
-  });
-  document.querySelectorAll('[data-principal-cc]').forEach(function(btn){
-    btn.addEventListener('click',async function(e){
-      e.stopPropagation();
-      const id=btn.dataset.principalCc;
-      const slot=Math.max(1,Math.min(5,parseInt(state.meta.activeCompcardSlot||1,10)));
-      const existing=state.compcard.findIndex(function(cid){return String(cid)===String(id);});
-      if(existing>=0 && existing!==slot-1){toast('Cette photo est déjà utilisée dans la case '+(existing+1),true);return;}
-      if(slot>=3){toast('Les cases 3, 4 et 5 sont réservées aux photos du Book.',true);return;}
-      const previous=state.compcard[slot-1];
-      if(previous && String(previous)!==String(id)){const cleared=await Store.setCompcard(previous,false);if(!cleared)return;}
-      const ok=await Store.setCompcard(id,true);
-      if(ok){state.compcard[slot-1]=id;normalizeCompcard();render();if(state.meta.editBlock==='photos')reopenDashboardBlock('photos');toast('Photo affectée à la case '+slot);}
-    });
-  });
-  document.querySelectorAll('[data-clear-cc]').forEach(function(btn){
-    btn.addEventListener('click', async function(e){
-      e.stopPropagation();
-      const slot=parseInt(btn.dataset.clearCc,10); const id=state.compcard[slot-1];
-      if(!id) return;
-      const ok=await Store.setCompcard(id,false);
-      if(ok){ state.compcard.splice(slot-1,1); normalizeCompcard(); render(); toast('Case '+slot+' libérée'); }
-    });
-  });
-  document.querySelectorAll('[data-book-select]').forEach(function(btn){ btn.addEventListener('click', async function(e){
-    e.stopPropagation();
-    const id=btn.dataset.bookSelect;
-    const existing=state.compcard.findIndex(function(cid){return String(cid)===String(id);});
-    if(existing>=0){ toast('Cette photo est déjà dans la compcard — utilisez « Retirer » sur sa case.',true); return; }
-    const slot=Math.max(1,Math.min(5,parseInt(state.meta.activeCompcardSlot||1,10)));
-    if(compcardCount()>=5 && !state.compcard[slot-1]){ toast('Les 5 cases de la compcard sont déjà définies',true); return; }
-    const previous=state.compcard[slot-1];
-    if(previous){ await Store.setCompcard(previous,false); }
-    const ok=await Store.setCompcard(id,true);
-    if(ok){
-      state.compcard[slot-1]=id;
-      normalizeCompcard();
-      state.meta.activeCompcardSlot=slot;
-      render();
-      toast('Photo affectée à la case '+slot);
+    if (!photo) return;
+    const ok = await Store.removePhoto(id, photo.path);
+    if (ok) {
+      s.photos.book = s.photos.book.filter(function(ph){ return String(ph.id)!==String(id); });
+      if (s.photos.principale && String(s.photos.principale.id)===String(id)) s.photos.principale=null;
+      if (s.photos.photoCv && String(s.photos.photoCv.id)===String(id)) s.photos.photoCv=null;
+      if (s.photos.pleinPied && String(s.photos.pleinPied.id)===String(id)) s.photos.pleinPied=null;
+      render(); reopenDashboardBlock('photos');
     }
   }); });
 
-  function handleDocUpload(btnId, inputId, type, label){
-    const btn = document.getElementById(btnId), input = document.getElementById(inputId);
-    if(!btn||!input) return;
-    btn.addEventListener('click', function(e){ if(e.target.tagName!=='INPUT') input.click(); });
-    input.addEventListener('change', async function(){
-      const file = input.files[0]; if(!file) return;
-      toast('Envoi du document…');
-      const item = await Store.uploadDocument(file, type);
-      if(item){ s.photos.documents[type] = item; render(); toast(label+' importé(e)'); }
-    });
+  function ouvrirChoixBook(onChoisir){
+    const modal = document.getElementById('ccBookModal'); if (!modal) return;
+    const grid = modal.querySelector('[data-cc-book-grid]');
+    grid.innerHTML = s.photos.book.length ? s.photos.book.map(function(ph){
+      return '<button type="button" class="cc-book-choice" data-choix-id="'+ph.id+'"><img src="'+ph.url+'" alt="Photo du Book"><span>Choisir</span></button>';
+    }).join('') : '<div class="cc-book-empty">Ajoutez d’abord des photos à votre Book.</div>';
+    modal.classList.add('open');
+    modal.dataset.onChoisir = '';
+    modal._onChoisir = onChoisir;
   }
-  handleDocUpload('dPiece','fPiece','piece','Document');
-  handleDocUpload('dAutre','fAutre','autre','Document');
+  function fermerChoixBook(){ const m=document.getElementById('ccBookModal'); if (m) m.classList.remove('open'); }
 
-  document.getElementById('f-visible')?.addEventListener('change', function(e){ s.meta.profilVisible = e.target.checked; });
+  document.getElementById('uPhotoCv')?.addEventListener('click', function(){
+    ouvrirChoixBook(async function(photo){ const ok = await Store.setRolePhoto('photo_cv', photo.id); if (ok) { s.photos.photoCv=photo; render(); reopenDashboardBlock('photos'); toast('Photo CV définie'); } });
+  });
+  document.getElementById('uPrincipale')?.addEventListener('click', function(){
+    ouvrirChoixBook(async function(photo){ const ok = await Store.setRolePhoto('principale', photo.id); if (ok) { s.photos.principale=photo; render(); reopenDashboardBlock('photos'); toast('Photo de profil définie'); } });
+  });
+  document.getElementById('uPleinPied')?.addEventListener('click', function(){
+    ouvrirChoixBook(async function(photo){ const ok = await Store.setRolePhoto('photo_pleinpied', photo.id); if (ok) { s.photos.pleinPied=photo; render(); reopenDashboardBlock('photos'); toast('Photo plein pied définie'); } });
+  });
+  document.querySelectorAll('[data-cc-book]').forEach(function(btn){ btn.addEventListener('click', function(e){
+    e.stopPropagation();
+    const slot = parseInt(btn.dataset.ccBook,10);
+    ouvrirChoixBook(async function(photo){
+      if (photo.compcardOrdre) { toast('Cette photo occupe déjà l’emplacement '+photo.compcardOrdre, true); return; }
+      const ok = await Store.setCompcardOrdre(photo.id, slot);
+      if (ok) { photo.compcardOrdre = slot; render(); reopenDashboardBlock('photos'); toast('Photo affectée à l’emplacement '+slot); }
+    });
+  }); });
+  document.querySelectorAll('[data-clear-cc-slot]').forEach(function(btn){ btn.addEventListener('click', async function(e){
+    e.stopPropagation();
+    const slot = parseInt(btn.dataset.clearCcSlot,10);
+    const photo = s.photos.book.find(function(ph){ return ph.compcardOrdre===slot; });
+    if (!photo) return;
+    const ok = await Store.setCompcardOrdre(photo.id, null);
+    if (ok) { render(); reopenDashboardBlock('photos'); toast('Emplacement '+slot+' libéré — la photo reste dans le Book'); }
+  }); });
 
-  document.getElementById('submitProfile')?.addEventListener('click', async function(){
-    if(!stepComplete(1)||!stepComplete(2)||!stepComplete(3)){ toast('Merci de compléter les étapes obligatoires', true); return; }
-    const payload = Object.assign({}, identiteToDb(s.identite), physiqueToDb(s.physique), formationToDb(s.formation), { profil_visible: s.meta.profilVisible });
-    const ok = await Store.submit(payload);
-    if(ok){ s.meta.statut='en_attente'; render(); toast('Profil soumis à MA2M'); }
+  document.addEventListener('click', function(e){
+    if (e.target.closest('[data-cc-book-close]') || e.target.id==='ccBookModal') fermerChoixBook();
+    const choix = e.target.closest('[data-choix-id]');
+    if (choix) {
+      const modal = document.getElementById('ccBookModal');
+      const photo = s.photos.book.find(function(ph){ return String(ph.id)===String(choix.dataset.choixId); });
+      if (photo && modal && modal._onChoisir) { modal._onChoisir(photo); }
+      fermerChoixBook();
+    }
+  });
+}
+
+/* --------------------------------------------------- COMPÉTENCES : handlers
+   Auto-enregistrées au relâchement du curseur (pas à chaque pixel glissé) —
+   même colonne jsonb "competences" que l'ancien système, déjà en production. */
+function bindCompetencesHandlers(){
+  document.querySelectorAll('input[data-competence]').forEach(function(el){
+    el.addEventListener('change', function(){
+      state.competences[el.dataset.competence] = parseInt(el.value, 10);
+      Store.saveBlock({ competences: state.competences });
+    });
   });
 }
 
@@ -1218,15 +1453,14 @@ function bindWizard(){
 function viewRefuse(){
   return header() + '<div class="panel confirm refuse"><div class="check">!</div>' +
     '<h2>Dossier à corriger</h2>' +
-    '<p>L\u2019administrateur a demandé des corrections avant de pouvoir valider votre profil.'+
+    '<p>L’administrateur a demandé des corrections avant de pouvoir valider votre profil.'+
     (state.meta.commentaireAdmin ? '<br><br><em>« '+echapperHtml(state.meta.commentaireAdmin)+' »</em>' : '')+'</p>' +
     '<div class="status-pill refuse"><span class="dot"></span> À corriger</div>' +
     '<div style="margin-top:26px"><button class="btn primary" id="reprendreDossier">Reprendre mon dossier</button></div></div>';
 }
 function bindRefuse(){
-  document.getElementById('reprendreDossier')?.addEventListener('click', async function(){
-    const ok = await Store.saveBlock({ statut:'brouillon' });
-    if(ok){ state.meta.statut='brouillon'; state.meta.currentStep=1; render(); }
+  document.getElementById('reprendreDossier')?.addEventListener('click', function(){
+    state.meta.currentStep = 1; state.meta.statutAffichage = 'brouillon'; render();
   });
 }
 
@@ -1234,326 +1468,105 @@ function bindRefuse(){
 function viewConfirmation(){
   return header() + '<div class="panel confirm"><div class="check">✓</div>' +
     '<h2>Profil bien enregistré</h2>' +
-    '<p>Votre profil a bien été enregistré et transmis à Maître Akessé Model Management. Votre dossier est actuellement en attente de validation par l\u2019administrateur.</p>' +
+    '<p>Votre profil a bien été enregistré et transmis à Maître Akessé Model Management. Votre dossier est actuellement en attente de validation par l’administrateur.</p>' +
     '<div class="status-pill"><span class="dot"></span> En attente de validation</div></div>';
 }
 
 /* ------------------------------------------------------------ TABLEAU DE BORD */
 const BLOCKS = [
-  {k:'identite', ic:'👤', title:'Identité', desc:'Nom, contact, catégorie'},
-  {k:'physique', ic:'📏', title:'Physique', desc:'Mensurations et particularités'},
-  {k:'formation', ic:'🎓', title:'Formation', desc:'Études et formations mannequin'},
-  {k:'experiences', ic:'👠', title:'Expérience', desc:'Défilés, campagnes, shootings'},
-  {k:'photos', ic:'📸', title:'Photos', desc:'Portrait, book, compcard'},
+  {k:'identite', ic:'👤', title:'Identité', desc:'Nom, contact, sexe, naissance'},
+  {k:'physique', ic:'📏', title:'Physique', desc:'Mensurations'},
+  {k:'formation', ic:'🎓', title:'Formation', desc:'Études et formation mannequin'},
+  {k:'experiences', ic:'👠', title:'Expérience', desc:'Défilés, campagnes, shootings…'},
+  {k:'photos', ic:'📸', title:'Photos', desc:'Principales, book, compcard'},
 ];
 
-function editorAction(label){
-  return '<div class="editor-page-actions"><button class="btn editor-save" data-editor-save="1">'+label+'</button></div>';
-}
+function editorAction(label){ return '<div class="editor-page-actions"><button class="btn editor-save" data-editor-save="1">'+label+'</button></div>'; }
 
 function editorPageBody(k){
-  if(k==='identite') return stepIdentite()
-    .replace('<p class="sub">Étape 1 sur 6</p>','<p class="sub">Modifiez ici tous les éléments de votre identité.</p>')
-    .replace('<div class="actions-row end"><button class="btn primary" id="save1">Enregistrer</button></div>', editorAction('Enregistrer'));
-  if(k==='physique') return stepPhysique()
-    .replace('<p class="sub">Étape 2 sur 6</p>','<p class="sub">Modifiez ici toutes vos mensurations et caractéristiques.</p>')
-    .replace('<div class="actions-row"><button class="btn ghost" data-goto="1">← Retour</button><button class="btn primary" id="save2">Enregistrer</button></div>', editorAction('Enregistrer'));
-  if(k==='formation') return stepFormation()
-    .replace('<p class="sub">Étape 3 sur 6</p>','<p class="sub">Modifiez ici tous les éléments de votre formation et de votre parcours mannequin.</p>')
-    .replace('<div class="actions-row"><button class="btn ghost" data-goto="2">← Retour</button><button class="btn primary" id="save3">Enregistrer</button></div>', editorAction('Enregistrer'));
-  if(k==='experiences') return stepExperience()
-    .replace('<p class="sub">Remplissez directement les champs — chaque ligne est enregistrée séparément</p>','<p class="sub">Modifiez toutes vos expériences ici. Utilisez ensuite le bouton rouge « Enregistrer » pour terminer.</p>')
-    .replace('<div class="actions-row"><button class="btn ghost" data-goto="3">← Retour</button><button class="btn primary" id="save4">Continuer</button></div>', editorAction('Enregistrer'));
-  if(k==='photos') return stepPhotos()
-    .replace('<p class="sub">Gérez ici toutes vos photos. Les photos du Book peuvent être importées en plusieurs fichiers à la fois, sans limite de quantité.</p>','<p class="sub">Gérez ici l’ensemble de vos photos, vos deux photos principales, la compcard et votre galerie.</p>')
-    .replace('<div class="actions-row"><button class="btn ghost" data-goto="4">← Retour</button><button class="btn primary" id="save5">Continuer</button></div>', editorAction('Enregistrer'));
+  if (k==='identite') return stepIdentite().replace('<p class="sub">Étape 1 sur 6</p>','<p class="sub">Modifiez ici tous les éléments de votre identité.</p>').replace('<div class="actions-row end"><button class="btn primary" id="save1">Enregistrer</button></div>', editorAction('Enregistrer'));
+  if (k==='physique') return stepPhysique().replace('<p class="sub">Étape 2 sur 6</p>','<p class="sub">Modifiez ici toutes vos mensurations.</p>').replace('<div class="actions-row"><button class="btn ghost" data-goto="1">← Retour</button><button class="btn primary" id="save2">Enregistrer</button></div>', editorAction('Enregistrer'));
+  if (k==='formation') return stepFormation().replace('<p class="sub">Étape 3 sur 6</p>','<p class="sub">Modifiez ici votre formation et votre parcours mannequin.</p>').replace('<div class="actions-row"><button class="btn ghost" data-goto="2">← Retour</button><button class="btn primary" id="save3">Enregistrer</button></div>', editorAction('Enregistrer'));
+  if (k==='experiences') return stepExperience().replace('<p class="sub">Étape 4 sur 6</p>','<p class="sub">Modifiez ici votre profil professionnel et vos expériences — chaque ligne est enregistrée séparément.</p>').replace('<div class="actions-row"><button class="btn ghost" data-goto="3">← Retour</button><button class="btn primary" id="save4">Continuer</button></div>','');
+  if (k==='photos') return stepPhotos().replace('<div class="actions-row"><button class="btn ghost" data-goto="4">← Retour</button><button class="btn primary" id="save5">Continuer</button></div>','');
   return '';
 }
 
 function viewBlockEditor(k){
   const titles = {identite:'Identité', physique:'Physique', formation:'Formation', experiences:'Expérience professionnelle', photos:'Photos & compcard'};
-  const title = titles[k] || 'Modification';
   return header('Modification du profil') +
-    '<div class="block-editor-page">' +
-      '<div class="block-editor-top"><div><span class="editor-kicker">MODIFICATION DU BLOC</span><h1>'+echapperHtml(title)+'</h1><p>Cette page reprend la fiche complète de ce bloc, comme lors de l’enregistrement initial. Aucun bouton « Suivant » ou « Précédent ».</p></div></div>' +
-      '<div class="panel block-editor-panel">'+editorPageBody(k)+'</div>' +
-    '</div>';
-}
-
-function finishBlockEdit(k, btn){
-  btn.disabled=true;
-  btn.textContent='Enregistrement…';
-  return function(ok){
-    if(ok){
-      btn.textContent='✓ Enregistré';
-      btn.classList.add('saved');
-      setTimeout(function(){
-        state.meta.editBlock=null;
-        render();
-        toast('Bloc « '+k+' » modifié et enregistré');
-      },650);
-    }else{
-      btn.disabled=false;
-      btn.textContent='Enregistrer';
-      btn.classList.remove('saved');
-    }
-  };
+    '<div class="block-editor-page"><div class="block-editor-top"><div><span class="editor-kicker">MODIFICATION DU BLOC</span><h1>'+echapperHtml(titles[k]||'Modification')+'</h1><p>Ce bloc s’enregistre indépendamment des autres.</p></div>' +
+    '<button type="button" class="btn ghost small" id="fermerEditeurBloc" style="margin-top:8px">← Retour au tableau de bord</button></div>' +
+    '<div class="panel block-editor-panel">'+editorPageBody(k)+'</div></div>';
 }
 
 function bindBlockPage(k){
-  const s=state;
-  const btn=document.querySelector('[data-editor-save="1"]');
-  if(!btn) return;
+  const s = state;
+  document.getElementById('fermerEditeurBloc')?.addEventListener('click', function(){ state.meta.editBlock=null; render(); });
+  bindExperienceHandlers();
+  bindProfilProHandlers();
+  bindPhotoHandlers();
+  bindCompetencesHandlers();
 
-  function saveIdentity(){
-    Object.assign(s.identite,{nom:val('f-nom'),prenom:val('f-prenom'),dateNaissance:val('f-dob'),lieuNaissance:val('f-lieu'),nationalite:val('f-nat'),ville:val('f-ville'),telephone:val('f-tel'),email:val('f-email'),categorie:(document.querySelector('input[name="categorie"]:checked')||{}).value||s.identite.categorie});
-    return Store.saveBlock(identiteToDb(s.identite));
-  }
-  function savePhysical(){
-    Object.assign(s.physique,{taille:val('f-taille'),poids:val('f-poids'),poitrine:val('f-poitrine'),tailleM:val('f-tailleM'),hanches:val('f-hanches'),pointure:val('f-pointure'),tailleVet:val('f-tailleVet'),yeux:val('f-yeux'),cheveuxCouleur:val('f-cheveuxCouleur'),cheveuxType:val('f-cheveuxType'),particularites:val('f-particularites')});
-    return Store.saveBlock(physiqueToDb(s.physique));
-  }
-  function saveFormation(){
-    s.formation.niveau=val('f-niveau'); s.formation.etablissement=val('f-etab'); s.formation.particuliere=val('f-formPart');
-    document.querySelectorAll('#app input[type="checkbox"][data-k]').forEach(function(cb){s.formation[cb.dataset.k]=cb.checked;});
-    return Store.saveBlock(formationToDb(s.formation));
-  }
-  async function saveExperiences(){
-    const els=document.querySelectorAll('[data-expf]');
-    els.forEach(function(el){const i=parseInt(el.dataset.i,10); if(s.experiences[i]) s.experiences[i][el.dataset.expf]=el.value;});
-    for(const e of s.experiences){ if(!e.id) continue; const ok=await Store.updateExperience(e.id,e); if(!ok) return false; }
-    return true;
-  }
+  if (k==='photos') return; // les uploads/sélections sont déjà persistés par leurs propres actions
 
-  btn.addEventListener('click',async function(){
-    const finish=finishBlockEdit(k,btn);
-    let ok=false;
-    try{
-      if(k==='identite') ok=await saveIdentity();
-      else if(k==='physique') ok=await savePhysical();
-      else if(k==='formation') ok=await saveFormation();
-      else if(k==='experiences') ok=await saveExperiences();
-      else if(k==='photos') ok=true; // Les uploads/sélections photos sont déjà persistés par leurs actions existantes.
-    }catch(err){ console.error(err); ok=false; }
-    finish(ok);
+  const btn = document.querySelector('[data-editor-save="1"]');
+  if (!btn) return;
+  btn.addEventListener('click', async function(){
+    btn.disabled = true; btn.textContent = 'Enregistrement…';
+    let ok = false, payload = {};
+    if (k==='identite') {
+      Object.assign(s.identite, { nomComplet:val('f-nom'), dateNaissance:val('f-dob'), lieuNaissance:val('f-lieu'), nationalite:val('f-nat'), ville:val('f-ville'), telephone:val('f-tel'), email:val('f-email'), sexe:(document.querySelector('input[name=sexe]:checked')||{}).value||s.identite.sexe });
+      s.bio = val('f-bio'); s.instagram = val('f-instagram'); s.citation = val('f-citation');
+      payload = Object.assign(identiteToDb(s.identite), { bio: s.bio||null, instagram: s.instagram||null, citation: s.citation||null });
+    } else if (k==='physique') {
+      Object.assign(s.physique, { taille:val('f-taille'), poids:val('f-poids'), poitrine:val('f-poitrine'), tourTaille:val('f-tourTaille'), hanches:val('f-hanches'), entrejambe:val('f-entrejambe'), pointure:val('f-pointure'), tailleVet:val('f-tailleVet'), yeux:val('f-yeux'), cheveux:val('f-cheveux'), carnation:val('f-carnation') });
+      payload = physiqueToDb(s.physique);
+    } else if (k==='formation') {
+      s.formation.niveau=val('f-niveau'); s.formation.etablissement=val('f-etab'); s.formation.particuliere=val('f-formPart'); s.formation.mannequin=val('f-formMannequin');
+      payload = formationToDb(s.formation);
+    }
+    ok = await Store.saveBlock(payload);
+    if (ok) { btn.textContent='✓ Enregistré'; btn.classList.add('saved'); setTimeout(function(){ toast('Bloc « '+k+' » enregistré'); }, 400); }
+    else { btn.disabled=false; btn.textContent='Enregistrer'; }
   });
-
-  // Le bouton Ajouter / supprimer et les champs d'expérience restent disponibles sur la fiche complète.
-  if(k==='experiences'){
-    document.getElementById('addExp')?.addEventListener('click',async function(){
-      const draft={type:'Défilé',nom:'',lieu:'',annee:new Date().getFullYear().toString()};
-      const saved=await Store.addExperience(draft);
-      if(saved){s.experiences.push(saved); render();}
-    });
-    document.querySelectorAll('[data-rm]').forEach(function(b){b.addEventListener('click',async function(){
-      const i=parseInt(b.dataset.rm,10), exp=s.experiences[i]; if(!exp) return;
-      const ok=await Store.removeExperience(exp.id); if(ok){s.experiences.splice(i,1); render();}
-    });});
-  }
-  if(k==='photos') bindDashboardPhotoEditor();
 }
+
+function reopenDashboardBlock(k){ setTimeout(function(){ const btn=document.querySelector('[data-edit="'+k+'"]'); if (btn) btn.click(); }, 0); }
 
 function viewDashboard(){
   const d = state.identite;
-  return header('Espace validé') + '<div class="panel">' +
-    '<div class="online-banner"><span class="dot" style="background:var(--ok)"></span> Profil en ligne — visible sur le site</div>' +
-    '<h1 style="font-family:var(--serif);font-style:italic;font-weight:500;font-size:1.5rem;margin:0 0 4px">Bonjour '+echapperHtml(d.prenom||'')+'</h1>' +
-    '<p class="sub" style="margin-bottom:26px">Modifiez un bloc à la fois — le bouton Enregistrer n\u2019apparaît que si ce bloc a changé.</p>' +
+  const niveau = deriverNiveauMannequin(state.experiences.length ? Math.max.apply(null, state.experiences.map(function(){return 0;})) : null);
+  let bandeau = '';
+  if (state.meta.statutAffichage === 'en_attente') bandeau = '<div class="online-banner" style="color:var(--or-clair)"><span class="dot" style="background:var(--or)"></span> Modifications en cours de revalidation par l’agence</div>';
+  else if (state.meta.statutAffichage === 'refuse') bandeau = '<div class="online-banner" style="color:#d98a93"><span class="dot" style="background:#d98a93"></span> Correction demandée'+(state.meta.commentaireAdmin?' — « '+echapperHtml(state.meta.commentaireAdmin)+' »':'')+'</div>';
+  else bandeau = '<div class="online-banner"><span class="dot" style="background:var(--ok)"></span> Profil en ligne — visible sur le site</div>';
+  return header('Espace validé') + '<div class="panel">' + bandeau +
+    '<h1 style="font-family:var(--serif);font-style:italic;font-weight:500;font-size:1.5rem;margin:14px 0 4px">Bonjour '+echapperHtml((d.nomComplet||'').split(' ')[0]||'')+'</h1>' +
+    '<p class="sub" style="margin-bottom:26px">Modifiez un bloc à la fois — chaque bloc s’enregistre indépendamment des autres.</p>' +
     '<div class="blocks-grid">' + BLOCKS.map(function(b){
-      return '<div class="block-card" data-block="'+b.k+'"><span class="ic">'+b.ic+'</span><h3>'+b.title+'</h3><p>'+b.desc+'</p>' +
-      '<button class="btn ghost small block-btn" data-edit="'+b.k+'">Modifier</button>' +
-      '<div class="block-edit" id="edit-'+b.k+'" style="display:none"></div></div>';
+      return '<div class="block-card" data-block="'+b.k+'"><span class="ic">'+b.ic+'</span><h3>'+b.title+'</h3><p>'+b.desc+'</p><button class="btn ghost small block-btn" data-edit="'+b.k+'">Modifier</button></div>';
     }).join('') + '</div>' +
-    '<div class="cv-cta"><div class="txt"><h3>CV mannequin — privé</h3><p>Généré à partir de votre profil. Visible uniquement par vous et l\u2019administrateur MA2M.</p></div>' +
-    '<button class="btn primary" id="openCv">Générer mon CV</button></div>' +
-    '<div class="cv-cta" style="margin-top:14px"><div class="txt"><h3>Compcard</h3><p>Fiche publique à partir des photos sélectionnées.</p></div>' +
+    '<div class="cv-cta"><div class="txt"><h3>CV mannequin — privé</h3><p>Généré à partir de votre profil. Visible uniquement par vous et l’administrateur MA2M.</p></div>' +
+    '<button class="btn primary" id="openCv">Voir mon CV</button></div>' +
+    '<div class="cv-cta" style="margin-top:14px"><div class="txt"><h3>Compcard</h3><p>Fiche publique à partir des 5 photos sélectionnées.</p></div>' +
     '<button class="btn ghost" id="openCc">Voir la compcard</button></div>' +
-    '<p class="lock-note">La case « profil visible » et le bouton « soumettre » n\u2019existent plus après validation.<br>Le mannequin ne peut ni désactiver son profil, ni modifier son statut, ni accéder au dossier d\u2019un autre mannequin.</p></div>';
+    '<p class="lock-note">La case « rendre visible » et le bouton « soumettre » n’existent plus après la première publication.<br>Vous ne pouvez ni dépublier votre profil vous-même, ni accéder au dossier d’un autre mannequin.</p></div>';
 }
 
 function bindDashboard(){
   document.querySelectorAll('[data-edit]').forEach(function(btn){
-    btn.addEventListener('click', function(){
-      const k = btn.dataset.edit;
-      state.meta.editBlock=k;
-      render();
-      window.scrollTo({top:0,behavior:'smooth'});
-    });
+    btn.addEventListener('click', function(){ state.meta.editBlock = btn.dataset.edit; render(); window.scrollTo({top:0,behavior:'smooth'}); });
   });
   document.getElementById('openCv')?.addEventListener('click', openCv);
   document.getElementById('openCc')?.addEventListener('click', openCompcard);
 }
 
-function blockEditForm(k){
-  if(k==='identite'){
-    const d=state.identite;
-    return '<div class="editor-head"><div><span class="editor-kicker">ÉDITION DU BLOC</span><h4>Identité complète</h4><p>Modifiez ici tous les éléments liés à votre identité et à vos coordonnées.</p></div><button class="btn ghost small" data-close="1">Fermer</button></div>' +
-      '<div class="grid">' +
-      field('Nom','e-nom',d.nom,{req:true}) + field('Prénom(s)','e-prenom',d.prenom,{req:true}) +
-      field('Date de naissance','e-dob',d.dateNaissance,{type:'date'}) + field('Lieu de naissance','e-lieu',d.lieuNaissance) +
-      field('Nationalité','e-nat',d.nationalite) + field('Ville de résidence','e-ville',d.ville) +
-      field('Téléphone','e-tel',d.telephone,{type:'tel',placeholder:'+225 XX XX XX XX XX'}) +
-      field('Email','e-email',d.email,{type:'email',placeholder:'exemple@gmail.com'}) +
-      '</div>' +
-      '<div class="field full editor-inline-field"><label>Catégorie</label><div class="radio-row">' +
-      ['Newface 0–1 an','Amateur 1–3 ans','Pro 3 ans +'].map(c=>'<label class="radio-opt '+(d.categorie===c?'selected':'')+'"><input type="radio" name="e-categorie" value="'+c+'" '+(d.categorie===c?'checked':'')+'> '+c+'</label>').join('') +
-      '</div></div>' +
-      '<div class="editor-actions"><button class="btn primary small save-block" data-save="identite">Enregistrer les modifications</button></div>';
-  }
-  if(k==='physique'){
-    const p=state.physique;
-    return '<div class="editor-head"><div><span class="editor-kicker">ÉDITION DU BLOC</span><h4>Profil physique complet</h4><p>Toutes les mensurations, caractéristiques et particularités sont réunies dans cette fiche.</p></div><button class="btn ghost small" data-close="1">Fermer</button></div>' +
-      '<div class="grid g3">' +
-      field('Taille (cm)','e-taille',p.taille,{type:'number'}) + field('Poids (kg)','e-poids',p.poids,{type:'number'}) + field('Poitrine (cm)','e-poitrine',p.poitrine,{type:'number'}) +
-      field('Tour de taille (cm)','e-tailleM',p.tailleM,{type:'number'}) + field('Hanches (cm)','e-hanches',p.hanches,{type:'number'}) + field('Pointure','e-pointure',p.pointure,{type:'number'}) +
-      field('Taille vêtements','e-tailleVet',p.tailleVet) + field('Couleur des yeux','e-yeux',p.yeux) + field('Couleur des cheveux','e-cheveuxCouleur',p.cheveuxCouleur) +
-      field('Type de cheveux','e-cheveuxType',p.cheveuxType) +
-      '</div><div class="field full editor-inline-field"><label>Particularités</label><textarea id="e-particularites">'+echapperHtml(p.particularites)+'</textarea></div>' +
-      '<div class="editor-actions"><button class="btn primary small save-block" data-save="physique">Enregistrer les modifications</button></div>';
-  }
-  if(k==='formation'){
-    const f=state.formation;
-    return '<div class="editor-head"><div><span class="editor-kicker">ÉDITION DU BLOC</span><h4>Formation complète</h4><p>Niveau d’étude, établissement, formation particulière et parcours mannequin.</p></div><button class="btn ghost small" data-close="1">Fermer</button></div>' +
-      '<div class="field full"><label>Niveau d’étude</label><select id="e-niveau">' +
-      ['','Collège','Bac','Licence','Master','Autre'].map(o=>'<option value="'+o+'" '+(f.niveau===o?'selected':'')+'>'+(o||'— Sélectionner —')+'</option>').join('') +
-      '</select></div><div class="grid" style="margin-top:16px">' +
-      field('Établissement','e-etab',f.etablissement,{placeholder:'Lycée / Université / Établissement'}) +
-      field('Formation particulière','e-formPart',f.particuliere) +
-      '</div><div class="field full editor-inline-field"><label>Formations et compétences mannequin</label><div class="check-row">' +
-      [['mannequin','Formation mannequin'],['coaching','Coaching'],['masterclass','Masterclass'],['autre','Autre']].map(function(pair){
-        var key=pair[0], label=pair[1];
-        return '<label class="check-opt '+(f[key]?'selected':'')+'"><input type="checkbox" data-ek="'+key+'" '+(f[key]?'checked':'')+'> '+label+'</label>';
-      }).join('') +
-      '</div></div><div class="editor-actions"><button class="btn primary small save-block" data-save="formation">Enregistrer les modifications</button></div>';
-  }
-  if(k==='experiences'){
-    var listHtml = state.experiences.length===0
-      ? '<p class="exp-empty">Aucune expérience ajoutée pour le moment. Cliquez sur « + Ajouter une expérience ».</p>'
-      : state.experiences.map(function(e,i){
-          return '<div class="exp-card" data-exp="'+i+'"><div class="exp-fields">' +
-          '<select data-dash-expf="type" data-i="'+i+'">' + EXP_TYPES.map(function(t){ return '<option value="'+t+'" '+(e.type===t?'selected':'')+'>'+t+'</option>'; }).join('') + '</select>' +
-          '<input type="text" data-dash-expf="nom" data-i="'+i+'" placeholder="Nom du défilé / de la marque / de la campagne" value="'+echapperHtml(e.nom)+'">' +
-          '<input type="text" data-dash-expf="lieu" data-i="'+i+'" placeholder="Ville" value="'+echapperHtml(e.lieu)+'">' +
-          '<input type="text" data-dash-expf="annee" data-i="'+i+'" placeholder="Année" value="'+echapperHtml(e.annee)+'">' +
-          '</div><button class="exp-remove" data-dash-rm="'+i+'">Supprimer</button></div>';
-        }).join('');
-    return '<div class="editor-head"><div><span class="editor-kicker">ÉDITION DU BLOC</span><h4>Expérience professionnelle complète</h4><p>Toutes les expériences enregistrées sont affichées ici. Chaque ligne peut être modifiée directement.</p></div><button class="btn ghost small" data-close="1">Fermer</button></div>' +
-      '<button class="btn ghost small" id="dashAddExp" style="margin-bottom:18px">+ Ajouter une expérience</button>' +
-      '<div id="dashExpList">'+listHtml+'</div>' +
-      '<p class="sub" style="margin:18px 0 8px">Types disponibles</p><div class="type-chip-row">'+EXP_TYPES.map(function(t){return '<span class="type-chip">'+t+'</span>';}).join('')+'</div>';
-  }
-  if(k==='photos'){
-    return '<div class="editor-head"><div><span class="editor-kicker">ÉDITION DU BLOC</span><h4>Photos &amp; compcard</h4><p>Gérez le portrait, le plein pied, l’ensemble du book, la sélection compcard et les documents associés.</p></div><button class="btn ghost small" data-close="1">Fermer</button></div>' +
-      stepPhotos().replace('<div class="actions-row"><button class="btn ghost" data-goto="4">← Retour</button><button class="btn primary" id="save5">Continuer</button></div>','');
-  }
-  return '';
-}
-
-function reopenDashboardBlock(k){
-  setTimeout(function(){
-    const btn=document.querySelector('[data-edit="'+k+'"]');
-    if(btn) btn.click();
-  },0);
-}
-
-function bindDashboardPhotoEditor(){
-  const s=state;
-  function single(id,type,setter,label){const input=document.getElementById(id);if(!input)return;input.addEventListener('change',async function(){const file=input.files[0];if(!file)return;const item=await Store.uploadPhoto(file,type,true);if(item){setter(item);render();reopenDashboardBlock('photos');toast(label+' ajoutée');}input.value='';});}
-  single('fPortrait','portrait',function(x){s.photos.portrait=x;},'Photo principale CV'); single('fProfil','profil',function(x){s.photos.photoProfil=x;},'Photo principale profil'); single('fPleinPied','plein_pied',function(x){s.photos.pleinPied=x;},'Photo plein pied');
-  document.querySelectorAll('[data-cc-book]').forEach(function(btn){btn.addEventListener('click',function(e){e.stopPropagation();openCompcardBook(parseInt(btn.dataset.ccBook,10));});});
-  document.querySelectorAll('[data-clear-cc-slot]').forEach(function(btn){btn.addEventListener('click',function(e){e.stopPropagation();removeCompcardAssignment(parseInt(btn.dataset.clearCcSlot,10));render();reopenDashboardBlock('photos');toast('Photo retirée de la compcard — elle reste dans ton Book');});});
-  document.querySelectorAll('[data-cc-upload]').forEach(function(input){input.addEventListener('change',async function(){const slot=parseInt(input.dataset.ccUpload,10),file=input.files[0];if(!file)return;const item=await Store.uploadPhoto(file,'book',true);if(item){if(!s.photos.book.some(function(x){return String(x.id)===String(item.id);}))s.photos.book.push(item);assignCompcardPhoto(slot,item.id);render();reopenDashboardBlock('photos');toast('Photo ajoutée au Book et affectée à la compcard '+slot);}input.value='';});});
-  const fBook=document.getElementById('fBook'); if(fBook)fBook.addEventListener('change',async function(){const files=Array.from(fBook.files||[]);if(!files.length)return;let added=0;for(const file of files){const item=await Store.uploadPhoto(file,'book',true);if(item){s.photos.book.push(item);added++;}}fBook.value='';render();reopenDashboardBlock('photos');toast(added+' photo(s) ajoutée(s) au Book');});
-  document.querySelectorAll('[data-rmbook]').forEach(function(btn){btn.addEventListener('click',async function(e){e.stopPropagation();const id=btn.dataset.rmbook,ph=s.photos.book.find(function(x){return String(x.id)===String(id);});const ok=await Store.removePhoto(id,ph?ph.path:null);if(ok){s.photos.book=s.photos.book.filter(function(x){return String(x.id)!==String(id);});render();reopenDashboardBlock('photos');}});});
-}
-
-document.addEventListener('click',function(e){
-  if(e.target.closest('[data-cc-book-close]') || e.target.id==='ccBookModal') closeCompcardBook();
-  const choice=e.target.closest('[data-cc-book-id]');
-  if(choice){const modal=document.getElementById('ccBookModal');const slot=parseInt(modal.dataset.slot,10);if(assignCompcardPhoto(slot,choice.dataset.ccBookId)){closeCompcardBook();render();reopenDashboardBlock('photos');toast('Photo du Book sélectionnée pour la compcard '+slot);}}
-});
-
-function bindBlockForm(k){
-  const container=document.getElementById('edit-'+k);
-  if(!container) return;
-
-  container.querySelectorAll('input,select,textarea').forEach(function(input){
-    input.addEventListener('input',function(){container.classList.add('dirty');});
-    input.addEventListener('change',function(){container.classList.add('dirty');});
-  });
-  const closeBtn=container.querySelector('[data-close]');
-  if(closeBtn) closeBtn.addEventListener('click',function(){container.style.display='none';});
-
-  if(k==='photos'){
-    bindDashboardPhotoEditor();
-    return;
-  }
-
-  if(k==='experiences'){
-    document.getElementById('dashAddExp')?.addEventListener('click',async function(){
-      const draft={type:'Défilé',nom:'',lieu:'',annee:new Date().getFullYear().toString()};
-      const saved=await Store.addExperience(draft);
-      if(saved){ state.experiences.push(saved); render(); reopenDashboardBlock('experiences'); }
-    });
-    container.querySelectorAll('[data-dash-rm]').forEach(function(b){ b.addEventListener('click',async function(){
-      const i=parseInt(b.dataset.dashRm,10), exp=state.experiences[i];
-      if(!exp) return;
-      const ok=await Store.removeExperience(exp.id);
-      if(ok){ state.experiences.splice(i,1); render(); reopenDashboardBlock('experiences'); }
-    }); });
-    container.querySelectorAll('[data-dash-expf]').forEach(function(el){
-      const eventName=el.tagName==='SELECT'?'change':'input';
-      let debounceTimer;
-      el.addEventListener(eventName,function(){
-        const i=parseInt(el.dataset.i,10);
-        if(!state.experiences[i]) return;
-        state.experiences[i][el.dataset.dashExpf]=el.value;
-        clearTimeout(debounceTimer);
-        debounceTimer=setTimeout(function(){Store.updateExperience(state.experiences[i].id,state.experiences[i]);},500);
-      });
-    });
-    return;
-  }
-
-  const btn=container.querySelector('[data-save="'+k+'"]');
-  if(!btn) return;
-  btn.addEventListener('click',async function(){
-    let payload={};
-    if(k==='identite'){
-      Object.assign(state.identite,{
-        nom:val('e-nom'),prenom:val('e-prenom'),dateNaissance:val('e-dob'),lieuNaissance:val('e-lieu'),
-        nationalite:val('e-nat'),ville:val('e-ville'),telephone:val('e-tel'),email:val('e-email'),
-        categorie:(document.querySelector('input[name="e-categorie"]:checked')||{}).value||state.identite.categorie
-      });
-      payload=identiteToDb(state.identite);
-    }
-    if(k==='physique'){
-      Object.assign(state.physique,{
-        taille:val('e-taille'),poids:val('e-poids'),poitrine:val('e-poitrine'),tailleM:val('e-tailleM'),
-        hanches:val('e-hanches'),pointure:val('e-pointure'),tailleVet:val('e-tailleVet'),yeux:val('e-yeux'),
-        cheveuxCouleur:val('e-cheveuxCouleur'),cheveuxType:val('e-cheveuxType'),particularites:val('e-particularites')
-      });
-      payload=physiqueToDb(state.physique);
-    }
-    if(k==='formation'){
-      state.formation.niveau=val('e-niveau');
-      state.formation.etablissement=val('e-etab');
-      state.formation.particuliere=val('e-formPart');
-      container.querySelectorAll('input[data-ek]').forEach(function(cb){state.formation[cb.dataset.ek]=cb.checked;});
-      payload=formationToDb(state.formation);
-    }
-    btn.disabled=true; btn.textContent='Enregistrement…';
-    const ok=await Store.saveBlock(payload);
-    if(ok){
-      btn.textContent='✓ Enregistré'; btn.classList.add('saved');
-      setTimeout(function(){render(); toast('Bloc « '+k+' » enregistré — tous ses éléments ont été pris en compte');},500);
-    }else{
-      btn.disabled=false; btn.textContent='Enregistrer les modifications';
-    }
-  });
-}
-
-/* ------------------------------------------------------------- CV / PDF */
+/* ------------------------------------------------------------- CV / PDF ---
+   Aperçu identique dans l'esprit à celui déjà en production dans
+   espace-mannequin.html (mêmes 4 catégories d'expérience, mêmes 9
+   compétences) — ici affiché en plein écran façon Premium 20, données
+   toujours réelles (aucun calcul aléatoire). */
 const MCV_ICONS = {
   user:'<circle cx="9" cy="6.2" r="3"/><path d="M3.2 16c.6-3.3 3-5.2 5.8-5.2s5.2 1.9 5.8 5.2"/>',
   body:'<path d="M4 3h10M4 15h10M6 3v5.5c0 1.2-1 1.6-1 3.5s1 2.3 1 3M12 3v5.5c0 1.2 1 1.6 1 3.5s-1 2.3-1 3"/>',
@@ -1566,7 +1579,6 @@ const MCV_ICONS = {
   globe:'<circle cx="9" cy="9" r="7"/><path d="M2 9h14M9 2c2.2 2 2.2 12 0 14M9 2c-2.2 2-2.2 12 0 14"/>',
   home:'<path d="M2.5 8.2 9 2.7l6.5 5.5"/><path d="M4 7v8h10V7"/><path d="M7.3 15V10.7h3.4V15"/>',
   phone:'<path d="M4 2.5h2.3l1 3.3-1.7 1.3a9 9 0 0 0 4.3 4.3l1.3-1.7 3.3 1v2.3c0 .9-.8 1.6-1.7 1.4C7.9 13.6 4.4 10.1 3.6 5.2 3.4 4.3 4 3.5 4 2.5Z"/>',
-  mail:'<rect x="1.8" y="3.8" width="14.4" height="10.4" rx="1"/><path d="M2.3 4.5 9 9.8l6.7-5.3"/>',
   insta:'<rect x="2" y="2" width="14" height="14" rx="4"/><circle cx="9" cy="9" r="3.4"/><circle cx="13.2" cy="4.8" r=".9"/>',
   link:'<path d="M7.5 10.5 10.5 7.5"/><path d="M8.6 5.5 10 4a2.9 2.9 0 0 1 4.1 4.1l-1.5 1.5"/><path d="M9.4 12.5 8 14a2.9 2.9 0 0 1-4.1-4.1l1.5-1.5"/>',
   dress:'<path d="M9 2 7.3 5h3.4L9 2Z"/><path d="M7.3 5 3.8 15.5h10.4L11 5"/><path d="M6.3 9.5h5.4"/>',
@@ -1574,92 +1586,76 @@ const MCV_ICONS = {
   clapper:'<path d="M2.4 7.2 3 15.5h12l.6-8.3H2.4Z"/><path d="M2.6 7.2 4 3.6l2.6.7-1 2.9M7.1 4.3l1-2.9 2.6.7-1 2.9M11.6 4.3l1-2.9 2.6.7-1 2.9"/>',
 };
 function mcvIcon(name,size){ size=size||18; return '<svg viewBox="0 0 18 18" width="'+size+'" height="'+size+'" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">'+(MCV_ICONS[name]||'')+'</svg>'; }
-function strHash(s){ let h=0; for(const c of String(s)) h=(h*31 + c.charCodeAt(0))|0; return Math.abs(h); }
-function fmtDate(iso){
-  if(!iso) return '—';
-  const parts = iso.split('-'); const y=parts[0],m=parts[1],d=parts[2];
-  const mois = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
-  if(!y||!m||!d) return iso;
-  return parseInt(d)+' '+(mois[parseInt(m)-1]||'')+' '+y;
+
+const LIBELLES_COMPETENCES = {
+  runway:'Runway / Défilé', pose:'Pose photographique', editorial:'Editorial', campagne:'Fashion campaign',
+  fitting:'Fitting', presentation:'Présentation de collection', expression:'Expression corporelle',
+  equipe:'Travail en équipe', discipline:'Discipline professionnelle'
+};
+const ORDRE_COMPETENCES = ['runway','pose','editorial','campagne','fitting','presentation','expression','equipe','discipline'];
+const ORDRE_CATEGORIES_PROJETS = ['Défilés','Campagnes & Éditoriaux','Shootings','Autres expériences'];
+function categoriserProjet(type){
+  if (type==='Défilé') return 'Défilés';
+  if (['Campagne','Publicité','Éditorial','Lookbook'].indexOf(type)!==-1) return 'Campagnes & Éditoriaux';
+  if (type==='Shooting') return 'Shootings';
+  return 'Autres expériences';
 }
 function groupExperiences(){
-  const groups = [
-    {label:'Défilés', icon:'dress', items:[]},
-    {label:'Campagnes & éditoriaux', icon:'camera', items:[]},
-    {label:'Shootings', icon:'camera', items:[]},
-    {label:'Autres expériences', icon:'clapper', items:[]},
-  ];
+  const groupes = ORDRE_CATEGORIES_PROJETS.map(function(label){ return { label:label, items:[] }; });
   state.experiences.forEach(function(e){
-    const meta = [e.lieu,e.annee].filter(Boolean);
-    const line = (e.nom||'Expérience') + (meta.length ? ' ('+meta.join(', ')+')' : '');
-    if(e.type==='Défilé') groups[0].items.push(line);
-    else if(e.type==='Campagne'||e.type==='Publicité'||e.type==='Éditorial'||e.type==='Lookbook') groups[1].items.push(line);
-    else if(e.type==='Shooting') groups[2].items.push(line);
-    else groups[3].items.push(line);
+    const cat = categoriserProjet(e.type);
+    const groupe = groupes.find(function(g){ return g.label===cat; });
+    const meta = [e.lieu, formaterPeriode(e.annee)].filter(Boolean).filter(function(x){return x!=='—';});
+    groupe.items.push((e.nom||'Expérience') + (meta.length ? ' ('+meta.join(', ')+')' : ''));
   });
-  return groups.filter(function(g){ return g.items.length; });
-}
-const SKILLS = ['Runway / Défilé','Pose photographique','Editorial','Fashion campaign','Fitting','Présentation de collection','Expression corporelle','Travail en équipe','Discipline professionnelle'];
-function skillPct(label){
-  const map = {'Newface 0–1 an':56,'Amateur 1–3 ans':72,'Pro 3 ans +':88};
-  const base = map[state.identite.categorie] || 64;
-  const variation = (strHash((state.identite.nom||'')+label) % 19) - 9;
-  return Math.max(35, Math.min(98, base + variation));
+  return groupes.filter(function(g){ return g.items.length; });
 }
 
 function openCv(){
-  const d=state.identite, p=state.physique, f=state.formation;
+  const d = state.identite, p = state.physique, f = state.formation;
   const groups = groupExperiences();
-  const formationsChoisies = [f.mannequin&&'Formation mannequin',f.coaching&&'Coaching',f.masterclass&&'Masterclass',f.autre&&'Autre'].filter(Boolean).join(' · ') || '—';
-  const handle = '@'+((d.prenom||'aissatou')+'_'+(d.nom||'kouassi')).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_')+'_model';
-  const qrCells = Array.from({length:49},function(_,i){
-    const r=Math.floor(i/7), c=i%7;
-    const onCorner = (r<3&&c<3)||(r<3&&c>3)||(r>3&&c<3);
-    const on = onCorner ? ((r===1||c===1||r===4||c===4)?1:0) : ((strHash(handle+i)%3)===0?1:0);
-    return '<i class="'+(on?'':'off')+'"></i>';
-  }).join('');
-  const heroPhoto = state.photos.portrait && state.photos.portrait.url ? '<img src="'+state.photos.portrait.url+'" alt="Photo">' : '';
+  const niveau = deriverNiveauMannequin(state.profilPro.anneesExperience);
+  const heroPhoto = state.photos.photoCv && state.photos.photoCv.urlPleine ? '<img src="'+state.photos.photoCv.urlPleine+'" alt="Photo">' : '';
+  const handle = state.instagram ? state.instagram.replace(/^@/,'') : '';
   document.getElementById('overlayContent').innerHTML =
     '<div class="overlay-close"><button id="closeOv">✕</button></div>' +
     '<div class="cv-sheet print-area">' +
-    '<div class="private-note">Document privé — visible uniquement par '+echapperHtml(d.prenom||'la mannequin')+' et l\u2019administrateur MA2M</div>' +
+    '<div class="private-note">Document privé — visible uniquement par '+echapperHtml((d.nomComplet||'').split(' ')[0]||'vous')+' et l’administrateur MA2M</div>' +
     '<div class="mcv-wrap"><aside class="mcv-side">' +
       '<div class="mcv-photo">'+heroPhoto+mcvIcon('user',48)+'<div class="mcv-photo-logo"><b>MA2M</b><small>MAÎTRE AKESSE<br>MODEL MANAGEMENT</small></div></div>' +
       '<div class="mcv-tagline">Former · Révéler · Valoriser</div>' +
-      '<div class="mcv-name"><span class="mcv-nom">'+echapperHtml((d.nom||'').toUpperCase())+'</span><span class="mcv-prenom">'+echapperHtml(d.prenom||'')+'</span></div>' +
+      '<div class="mcv-name"><span class="mcv-nom">'+echapperHtml(d.nomComplet||'')+'</span></div>' +
       '<div class="mcv-role">Mannequin professionnel(le)</div><div class="mcv-divider"></div>' +
       '<ul class="mcv-info-list">' +
-        '<li>'+mcvIcon('calendar')+'<div><span class="k">Date de naissance</span><span class="v">'+fmtDate(d.dateNaissance)+'</span></div></li>' +
+        '<li>'+mcvIcon('calendar')+'<div><span class="k">Date de naissance</span><span class="v">'+formaterPeriode(d.dateNaissance)+'</span></div></li>' +
         '<li>'+mcvIcon('pin')+'<div><span class="k">Lieu de naissance</span><span class="v">'+echapperHtml(d.lieuNaissance||'—')+'</span></div></li>' +
         '<li>'+mcvIcon('globe')+'<div><span class="k">Nationalité</span><span class="v">'+echapperHtml(d.nationalite||'—')+'</span></div></li>' +
         '<li>'+mcvIcon('home')+'<div><span class="k">Ville de résidence</span><span class="v">'+echapperHtml(d.ville||'—')+'</span></div></li>' +
-        '<li>'+mcvIcon('phone')+'<div><span class="k">Contact agence</span><span class="v">'+echapperHtml(d.telephone||'—')+'<br>infos.ma2m@gmail.com</span></div></li>' +
+        '<li>'+mcvIcon('phone')+'<div><span class="k">Contact agence</span><span class="v">+225 27 22 23 11 76<br>infos.ma2m@gmail.com</span></div></li>' +
       '</ul>' +
-      '<div class="mcv-cat"><span class="lbl">Catégorie</span><span class="val">'+echapperHtml(d.categorie||'—')+'</span></div>' +
-      '<blockquote class="mcv-quote">« Une présence,<br>une attitude,<br>une émotion. »</blockquote>' +
+      '<div class="mcv-cat"><span class="lbl">Catégorie</span><span class="val">'+echapperHtml(niveau)+'</span></div>' +
+      (state.citation ? '<blockquote class="mcv-quote">« '+echapperHtml(state.citation)+' »</blockquote>' : '') +
       '<div class="mcv-agency"><span>MAÎTRE AKESSE</span><small>MODEL MANAGEMENT</small></div>' +
     '</aside><div class="mcv-right"><div class="mcv-main"><div class="mcv-topline">Model CV</div>' +
-      '<section class="mcv-sec"><h4>'+mcvIcon('user')+' Profil</h4><div class="mcv-profil-row">' +
-        '<p class="mcv-profile-text">Mannequin professionnel(le) basé(e) à '+echapperHtml(d.ville||'Abidjan')+', passionné(e) par la mode et l\u2019univers du luxe. Doté(e) d\u2019une forte présence, d\u2019une grande discipline et d\u2019un sens naturel de la pose, '+echapperHtml(d.prenom||'elle')+' est prêt(e) à relever de nouveaux défis sur les podiums, en shooting et dans les campagnes mode.</p>' +
-        '<div class="mcv-side-tag"><span>Mode</span><span>Élégance</span><span>Ambition</span></div></div></section>' +
+      '<section class="mcv-sec"><h4>'+mcvIcon('user')+' Profil</h4><p class="mcv-profile-text">'+echapperHtml(state.bio||'Profil à compléter.')+'</p></section>' +
       '<section class="mcv-sec"><h4>'+mcvIcon('body')+' Informations physiques</h4><div class="mcv-two-col">' +
         '<ul class="mcv-kv"><li><span>Taille</span><b>'+(p.taille?p.taille+' cm':'—')+'</b></li><li><span>Poids</span><b>'+(p.poids?p.poids+' kg':'—')+'</b></li>' +
-        '<li><span>Mensurations</span><b>'+([p.poitrine,p.tailleM,p.hanches].some(Boolean)?[p.poitrine||'–',p.tailleM||'–',p.hanches||'–'].join(' / '):'—')+'</b></li>' +
+        '<li><span>Mensurations</span><b>'+([p.poitrine,p.tourTaille,p.hanches||p.entrejambe].some(Boolean)?[p.poitrine||'–',p.tourTaille||'–',p.hanches||p.entrejambe||'–'].join(' / '):'—')+'</b></li>' +
         '<li><span>Pointure</span><b>'+(p.pointure||'—')+'</b></li></ul>' +
         '<ul class="mcv-kv"><li><span>Taille vêtements</span><b>'+(p.tailleVet||'—')+'</b></li><li><span>Couleur des yeux</span><b>'+(p.yeux||'—')+'</b></li>' +
-        '<li><span>Couleur des cheveux</span><b>'+(p.cheveuxCouleur||'—')+'</b></li><li><span>Type de cheveux</span><b>'+(p.cheveuxType||'—')+'</b></li></ul>' +
+        '<li><span>Couleur des cheveux</span><b>'+(p.cheveux||'—')+'</b></li><li><span>Carnation</span><b>'+(p.carnation||'—')+'</b></li></ul>' +
       '</div></section>' +
       '<section class="mcv-sec"><h4>'+mcvIcon('grad')+' Formation</h4><ul class="mcv-kv">' +
-        '<li><span>Niveau d\u2019étude</span><b>'+(f.niveau||'—')+'</b></li><li><span>Établissement</span><b>'+(f.etablissement||'—')+'</b></li>' +
-        '<li><span>Formation particulière</span><b>'+(f.particuliere||'Aucune')+'</b></li><li><span>Formation mannequin</span><b>'+formationsChoisies+'</b></li></ul></section>' +
+        '<li><span>Niveau d’étude</span><b>'+(f.niveau||'—')+'</b></li><li><span>Établissement</span><b>'+(f.etablissement||'—')+'</b></li>' +
+        '<li><span>Formation particulière</span><b>'+(f.particuliere||'Aucune')+'</b></li><li><span>Formation mannequin</span><b>'+(f.mannequin||'—')+'</b></li></ul></section>' +
       '<section class="mcv-sec"><h4>'+mcvIcon('star')+' Expérience professionnelle</h4>' +
-        (groups.length ? groups.map(function(g){ return '<div class="mcv-expgroup"><div class="gh">'+mcvIcon(g.icon,15)+' '+g.label+'</div><ul>'+g.items.map(function(i){return '<li>'+echapperHtml(i)+'</li>';}).join('')+'</ul></div>'; }).join('')
+        (groups.length ? groups.map(function(g){ return '<div class="mcv-expgroup"><div class="gh">'+g.label+'</div><ul>'+g.items.map(function(i){return '<li>'+echapperHtml(i)+'</li>';}).join('')+'</ul></div>'; }).join('')
           : '<p style="font-size:.82rem;color:#8a7a5e">Aucune expérience renseignée pour le moment.</p>') + '</section>' +
       '<section class="mcv-sec"><div class="mcv-bottom-row"><div><h4>'+mcvIcon('medal')+' Compétences mannequin</h4><div class="mcv-skills">' +
-        SKILLS.map(function(sk){ return '<div class="mcv-skill-row"><span class="lbl">'+sk+'</span><div class="mcv-skill-bar"><i style="width:'+skillPct(sk)+'%"></i></div></div>'; }).join('') +
-        '</div></div><div><h4>'+mcvIcon('image')+' Portfolio</h4><div class="mcv-portfolio"><div class="mcv-qr">'+qrCells+'</div>' +
-        '<p class="cap">Scannez pour découvrir mon book complet</p><div class="soc">'+mcvIcon('insta',15)+' '+handle+'</div>' +
-        '<div class="soc">'+mcvIcon('link',15)+' Portfolio en ligne (lien sur demande)</div></div></div></div></section>' +
+        ORDRE_COMPETENCES.map(function(cle){ const pct=((state.competences[cle]||3)/5)*100; return '<div class="mcv-skill-row"><span class="lbl">'+LIBELLES_COMPETENCES[cle]+'</span><div class="mcv-skill-bar"><i style="width:'+pct+'%"></i></div></div>'; }).join('') +
+        '</div></div><div><h4>'+mcvIcon('image')+' Portfolio</h4><div class="mcv-portfolio">' +
+        (handle?'<div class="soc">'+mcvIcon('insta',15)+' @'+echapperHtml(handle)+'</div>':'') +
+        '<div class="soc">'+mcvIcon('link',15)+' <a href="https://www.maitreakessemodelmanagement.com/mannequin.html?id='+encodeURIComponent(currentUser.id)+'" target="_blank" rel="noopener" style="color:inherit">Voir ma fiche publique</a></div></div></div></div></section>' +
     '</div></div></div>' +
     '<div class="cv-actions"><button class="btn ghost small" id="closeOv2">Fermer</button><button class="btn primary small" id="printCv">Télécharger le CV (PDF)</button></div></div>';
   showOverlay();
@@ -1667,25 +1663,23 @@ function openCv(){
 }
 
 function openCompcard(){
-  normalizeCompcard();
-  const slots = [1,2,3,4,5].map(function(n){ return compcardPhotoById(state.compcard[n-1]); });
+  const compcardPhotos = state.photos.book.filter(function(ph){ return ph.compcardOrdre; }).sort(function(a,b){ return a.compcardOrdre-b.compcardOrdre; });
+  const slots = [1,2,3,4,5].map(function(n){ return compcardPhotos.find(function(ph){ return ph.compcardOrdre===n; }) || null; });
   const cover = slots[0];
-  const sidePhotos = slots.slice(1).map(function(ph){ return ph && ph.url ? '<img src="'+ph.url+'" alt="Photo compcard">' : '<div class="cc-empty-photo"></div>'; }).join('');
-  const d=state.identite, p=state.physique;
-  const logo='MAÎTRE AKESSE';
-  const contact='+225 27 22 23 11 76  ·  +225 05 45 65 68 87';
+  const sidePhotos = slots.slice(1).map(function(ph){ return ph ? '<img src="'+(ph.urlPleine||ph.url)+'" alt="Photo compcard">' : '<div class="cc-empty-photo"></div>'; }).join('');
+  const d = state.identite, p = state.physique;
   document.getElementById('overlayContent').innerHTML =
     '<div class="overlay-close"><button id="closeOv">✕</button></div>' +
     '<div class="compcard-model print-area">' +
-      '<div class="ccm-header"><div class="ccm-logo">'+logo+'<small>MODEL MANAGEMENT</small></div><div class="ccm-title">COMPCARD</div></div>' +
-      '<div class="ccm-photo-grid"><div class="ccm-cover">'+(cover&&cover.url?'<img src="'+cover.url+'" alt="Photo plein pied compcard">':'<div class="cc-empty-photo">PHOTO PLEIN PIED</div>')+'</div><div class="ccm-side-grid">'+sidePhotos+'</div></div>' +
-      '<div class="ccm-body"><h1>'+echapperHtml((d.prenom||'')+' '+(d.nom||''))+'</h1><div class="ccm-meta">'+echapperHtml(d.categorie||'Mannequin')+'  ·  '+echapperHtml(d.ville||'Abidjan')+'</div>' +
+      '<div class="ccm-header"><div class="ccm-logo">MAÎTRE AKESSE<small>MODEL MANAGEMENT</small></div><div class="ccm-title">COMPCARD</div></div>' +
+      '<div class="ccm-photo-grid"><div class="ccm-cover">'+(cover?'<img src="'+(cover.urlPleine||cover.url)+'" alt="Photo plein pied compcard">':'<div class="cc-empty-photo">PHOTO PLEIN PIED</div>')+'</div><div class="ccm-side-grid">'+sidePhotos+'</div></div>' +
+      '<div class="ccm-body"><h1>'+echapperHtml(d.nomComplet||'')+'</h1><div class="ccm-meta">'+echapperHtml(deriverNiveauMannequin(state.profilPro.anneesExperience))+'  ·  '+echapperHtml(d.ville||'Abidjan')+'</div>' +
       '<div class="ccm-measures">' +
         '<div><span>TAILLE</span><b>'+(p.taille||'—')+' cm</b></div><div><span>POIDS</span><b>'+(p.poids||'—')+' kg</b></div><div><span>POITRINE</span><b>'+(p.poitrine||'—')+' cm</b></div>' +
-        '<div><span>TOUR DE TAILLE</span><b>'+(p.tailleM||'—')+' cm</b></div><div><span>HANCHES</span><b>'+(p.hanches||'—')+' cm</b></div><div><span>POINTURE</span><b>'+(p.pointure||'—')+'</b></div>' +
-        '<div><span>CARNATION</span><b>'+(p.carnation||'—')+'</b></div><div><span>TAILLE VÊTEMENTS</span><b>'+(p.tailleVet||'—')+'</b></div><div><span>YEUX</span><b>'+(p.yeux||'—')+'</b></div><div><span>CHEVEUX</span><b>'+(p.cheveuxCouleur||'—')+'</b></div>' +
+        '<div><span>TOUR DE TAILLE</span><b>'+(p.tourTaille||'—')+' cm</b></div><div><span>HANCHES</span><b>'+(p.hanches||p.entrejambe||'—')+' cm</b></div><div><span>POINTURE</span><b>'+(p.pointure||'—')+'</b></div>' +
+        '<div><span>CARNATION</span><b>'+(p.carnation||'—')+'</b></div><div><span>TAILLE VÊTEMENTS</span><b>'+(p.tailleVet||'—')+'</b></div><div><span>YEUX</span><b>'+(p.yeux||'—')+'</b></div><div><span>CHEVEUX</span><b>'+(p.cheveux||'—')+'</b></div>' +
       '</div></div>' +
-      '<div class="ccm-footer"><b>CONTACT OFFICIEL MA2M</b><div>'+contact+'</div><div>infos.ma2m@gmail.com</div><div>Instagram · Facebook · TikTok · YouTube  @maitreakessemodelmanagement</div><small>Document officiel généré depuis maitreakessemodelmanagement.com — toute demande de booking passe exclusivement par l’agence.</small></div>' +
+      '<div class="ccm-footer"><b>CONTACT OFFICIEL MA2M</b><div>+225 27 22 23 11 76 · +225 05 45 65 68 87</div><div>infos.ma2m@gmail.com</div><div>Instagram · Facebook · TikTok · YouTube  @maitreakessemodelmanagement</div><small>Document officiel généré depuis maitreakessemodelmanagement.com — toute demande de booking passe exclusivement par l’agence.</small></div>' +
     '</div>' +
     '<div class="cv-actions"><button class="btn ghost small" id="closeOv2">Fermer</button><button class="btn primary small" id="printCc">Télécharger (PDF / JPG)</button></div>';
   showOverlay();
@@ -1699,25 +1693,33 @@ function showOverlay(){
   document.getElementById('closeOv2')?.addEventListener('click', function(){ ov.classList.add('hidden'); });
 }
 
-/* --------------------------------------------------------- ADMIN SIM (démo) */
-document.getElementById('adminValidateBtn')?.addEventListener('click', async function(){
-  const ok = await Store.saveBlock({ statut:'valide' });
-  if(ok){ state.meta.statut='valide'; render(); toast('Dossier validé par l\u2019administrateur — profil en ligne'); }
-});
-document.getElementById('adminRefuseBtn')?.addEventListener('click', async function(){
-  const ok = await Store.saveBlock({ statut:'refuse', commentaire_admin:'Merci de préciser vos mensurations et d\u2019ajouter une photo plein pied plus récente.' });
-  if(ok){ state.meta.statut='refuse'; state.meta.commentaireAdmin='Merci de préciser vos mensurations et d\u2019ajouter une photo plein pied plus récente.'; render(); toast('Dossier renvoyé pour correction'); }
-});
-
-/* --------------------------------------------------------------- INIT */
-(async function init(){
-  const ok = await initAuth();
-  if(!ok) return; // redirection vers la page de connexion déjà déclenchée
+/* --------------------------------------------------------------- INIT --- */
+async function demarrerApresConnexion(){
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) { renderAuthGate(); return; }
+  currentUser = user;
   await Store.ensureProfileRow();
   state = await Store.load();
-  if(!state.meta.currentStep) state.meta.currentStep = 1;
+  if (!state.meta.currentStep) state.meta.currentStep = 1;
   render();
+}
+
+(async function init(){
+  if (!sb) {
+    document.getElementById('app').innerHTML = '<div class="auth-loading"><span>Connexion au service indisponible pour le moment — réessayez dans quelques instants.</span></div>';
+    return;
+  }
+  if (recuperationMdpEnCours) return; // le gestionnaire PASSWORD_RECOVERY prend déjà le relais
+  try{
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { renderAuthGate(); return; }
+    await demarrerApresConnexion();
+  }catch(e){
+    console.error(e);
+    renderAuthGate();
+  }
 })();
+
 </script>
 
 <div class="cc-book-modal" id="ccBookModal" aria-hidden="true"><div class="cc-book-dialog" role="dialog" aria-modal="true" aria-labelledby="ccBookTitle"><div class="cc-book-head"><div><span class="editor-kicker">TON BOOK</span><h3 id="ccBookTitle">Choisir une photo pour la compcard</h3><p class="sub">La photo est réutilisée telle quelle. Elle reste dans ton Book.</p></div><button type="button" class="btn ghost small" data-cc-book-close>Fermer</button></div><div class="cc-book-grid" data-cc-book-grid></div></div></div>

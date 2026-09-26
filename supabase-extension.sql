@@ -3467,3 +3467,31 @@ alter table model_profiles add column if not exists competences jsonb;
 alter table model_profiles add column if not exists citation text;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 82 : préparation de l'intégration Premium 20 — champs
+-- identité manquants + 2 rôles de photo supplémentaires.
+--
+-- lieu_naissance / nationalite : demandés par la maquette CV, absents de
+-- model_profiles jusqu'ici. "nationalite" reste en saisie libre (pas de
+-- valeur par défaut stockée en base) : le pré-remplissage "Ivoirienne"
+-- pour un nouveau profil est géré côté formulaire, pas ici, pour ne pas
+-- attribuer silencieusement une nationalité aux profils déjà existants
+-- qui ne l'ont jamais confirmée.
+--
+-- photo_cv / photo_pleinpied : Premium 20 distingue 3 photos principales
+-- indépendantes (CV, Profil, Plein pied) alors que le système actuel n'en
+-- avait qu'une seule ("principale", déjà utilisée par tout le site pour
+-- la photo de profil / THE BOOK — on n'y touche pas, zéro régression).
+-- On ajoute donc seulement les 2 rôles manquants, avec la même règle
+-- qu'existante pour "principale" : une seule photo par mannequin peut
+-- avoir chaque flag à true (appliqué côté application, comme pour
+-- "principale" aujourd'hui).
+-- ===================================================================
+alter table model_profiles add column if not exists lieu_naissance text;
+alter table model_profiles add column if not exists nationalite text;
+
+alter table model_photos add column if not exists photo_cv boolean not null default false;
+alter table model_photos add column if not exists photo_pleinpied boolean not null default false;
+
+NOTIFY pgrst, 'reload schema';
