@@ -1,0 +1,2158 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-whF4JLhP6FXQbxpwRRcBya3dUU0S8NrziaP925L2N8Q=' 'sha256-O59CshpcWgfTtTUKlvTZI1h9xsGXJ71ELxUI8BJ9Ri4='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-MUB6FhdJ9FpDQ3biQkblrXb2hxYFp094UdlwEclzM3I=';">
+<!-- Google tag (gtag.js) -->
+<script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
+<script src="js/analytics-config.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Espace mannequin — Maître Akesse Model Management</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap">
+<link rel="stylesheet" href="css/style.css">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1e1d1c">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<style>
+.em-1 { padding-bottom:2rem; }
+.em-2 { font-size:0.9rem; color:var(--gris); margin-bottom:1rem; }
+.em-3 { display:none; background:#fdecea; border:1px solid #e0433d; color:#7a1712; padding:1.1rem 1.3rem; margin-bottom:1.8rem; font-size:0.92rem; }
+.em-4 { margin-bottom:0.5rem; }
+.em-5 { font-size:0.8rem; color:var(--gris); margin-top:-0.6rem; }
+.em-6 { display:none; margin-top:0.5rem; }
+.em-7 { margin-top:1.2rem; padding:1.2rem; border:1px solid var(--gris-clair); }
+.em-8 { display:none; font-size:0.82rem; color:var(--gris); margin-top:0.4rem; }
+.em-9 { display:contents; }
+.em-10 { display:none; margin-left:0.5rem; color:var(--gris); border-color:var(--gris-clair); }
+.em-11 { display:flex; flex-wrap:wrap; gap:1.2rem; margin-top:0.4rem; }
+.em-12 { display:flex; align-items:center; gap:0.5rem; font-weight:400; }
+.em-13 { width:auto; }
+.em-14 { display:none; margin-top:1.2rem; text-align:left; }
+.em-15 { display:flex; flex-direction:column; gap:0.8rem; }
+.em-16 { color:var(--gris); font-size:0.85rem; margin:0.8rem 0 0; }
+.em-17 { color:var(--gris); font-size:0.85rem; margin:0.4rem 0 0; }
+.em-18 { display:none; background:rgba(207,59,82,0.12); border-left:3px solid var(--bordeaux-clair); padding:0.8rem 1rem; font-size:0.88rem; margin-top:0; }
+.em-19 { background:var(--gris-clair); padding:1rem; border:1px solid var(--gris-clair); }
+.em-20 { color:var(--noir); }
+.em-21 { margin:0.3rem 0 0; font-size:0.88rem; color:#4a4a4a; }
+.em-22 { margin-top:0.6rem; font-size:0.88rem; }
+.em-23 { margin-top:0.3rem; }
+.em-24 { font-weight:600; color:var(--noir); }
+.em-25 { margin-top:0.6rem; font-size:0.8rem; color:var(--gris); }
+.em-26 { font-size:0.85rem; color:var(--gris); margin-top:1rem; }
+.em-27 { display:flex; align-items:center; gap:0.6rem; font-weight:600; margin-bottom:1.5rem; }
+.em-28 { color:var(--gris); font-size:0.85rem; grid-column:1/-1; }
+.em-29 { cursor:pointer; }
+.em-30 { color:var(--gris); font-size:0.9rem; }
+.em-31 { font-size:0.85rem; color:var(--gris); margin-top:0.2rem; }
+.em-32 { display:flex; gap:0.5rem; flex-shrink:0; }
+.em-33 { border-color:var(--gris); }
+.em-34 { font-size:0.85rem; color:var(--gris); margin-top:0.5rem; }
+.em-35 { margin-bottom:1.8rem; }
+</style>
+</head>
+<body>
+<script>
+// Filet de sécurité : sur une connexion instable, un script externe (Supabase, EmailJS,
+// heic2any...) peut être très lent ou échouer à charger — dans ce cas js/app.js ne
+// s'exécute jamais et les éléments ".reveal" (animation d'apparition au scroll) restent
+// invisibles indéfiniment, alors que le reste de la page (formulaires, boutons) fonctionne
+// normalement. Ce filet les révèle de force après 2,5s si l'animation normale n'a pas eu
+// lieu, pour qu'aucun contenu ne reste caché à cause d'un simple souci réseau.
+setTimeout(() => {
+  document.querySelectorAll('.reveal:not(.visible)').forEach(el => el.classList.add('visible'));
+}, 2500);
+</script>
+
+
+<div id="flash-succes-fond" class="flash-succes-fond"></div>
+<div id="flash-succes" class="flash-succes">
+  <span class="flash-succes-icone">🎉</span>
+  Félicitations, votre profil est maintenant visible sur Le Book !
+</div>
+
+<header class="site-header-v2">
+  <div class="container header-v2-inner">
+    <a href="index.html" class="logo-img-header"><img src="assets/logo-header.png" alt="Maître Akesse Model Management"></a>
+    <button class="menu-trigger" id="menuBtn">
+      <span>Menu</span>
+      <span class="dots"><span></span><span></span><span></span></span>
+    </button>
+  </div>
+</header>
+
+<div class="menu-overlay" id="menuOverlay">
+  <button class="close-menu" id="closeMenuBtn">Fermer ✕</button>
+  <ul class="nav-links">
+    <li><a href="index.html" class="">Accueil</a></li>
+    <li><a href="services.html" class="">Services</a></li>
+    <li><a href="mannequins.html" class="">The Book</a></li>
+    <li><a href="actualites.html">Actualités</a></li>
+    <li><a href="evenements.html">Nos Événements</a></li>
+    <li><a href="partenaires.html">Nos partenaires</a></li>
+    <li><a href="candidature.html" class="">Postuler à un casting</a></li>
+    <li><a href="inscription-mannequin.html">Inscription</a></li>
+    <li><a href="contact.html" class="">Contact</a></li>
+    <li class="item-cta"><a href="espace-mannequin.html">Espace mannequin</a></li>
+  </ul>
+</div>
+
+<section class="em-1">
+  <div class="container">
+    <div class="eyebrow reveal">Réservé aux mannequins de l'agence</div>
+    <h1 class="reveal reveal-delay-1">Espace mannequin<span class="oeil">.</span></h1>
+    <p class="u-mt-1">L'inscription se fait uniquement avec un code d'invitation transmis par l'agence.</p>
+  </div>
+</section>
+
+<!-- ===== Bloc connexion / inscription ===== -->
+<section id="bloc-auth" class="u-pt-0">
+  <div class="container">
+    <div class="onglets">
+      <button class="onglet actif" data-cible="panneau-connexion">Se connecter</button>
+      <button class="onglet" data-cible="panneau-inscription">Créer mon compte</button>
+    </div>
+
+    <div id="panneau-connexion" class="panneau actif">
+      <form id="form-connexion">
+        <div class="form-champ">
+          <label for="co-email">E-mail</label>
+          <input type="email" id="co-email" required>
+        </div>
+        <div class="form-champ">
+          <label for="co-mdp">Mot de passe</label>
+          <input type="password" id="co-mdp" required>
+        </div>
+        <button type="submit" class="btn btn--principal">Se connecter</button>
+        <div id="co-msg" class="form-msg"></div>
+      </form>
+      <p class="u-mt-1"><a href="#" id="co-mdp-oublie-lien" class="u-texte-doux">Mot de passe oublié ?</a></p>
+    </div>
+
+    <div id="panneau-mdp-oublie" class="panneau">
+      <p class="em-2">Indiquez l'e-mail utilisé pour votre inscription : si un compte y est associé, un lien de réinitialisation vous sera envoyé par e-mail.</p>
+      <div class="form-champ"><label for="co-mdp-oublie-email">E-mail</label><input type="email" id="co-mdp-oublie-email"></div>
+      <button class="btn btn--principal" id="co-mdp-oublie-envoyer">Envoyer le lien de réinitialisation</button>
+      <div id="co-mdp-oublie-msg" class="form-msg"></div>
+      <p class="u-mt-1"><a href="#" id="co-mdp-oublie-retour" class="u-texte-doux">← Retour à la connexion</a></p>
+    </div>
+
+    <div id="panneau-nouveau-mdp" class="panneau">
+      <p class="em-2">Choisissez votre nouveau mot de passe (au moins 8 caractères).</p>
+      <div class="form-champ"><label for="co-nouveau-mdp">Nouveau mot de passe</label><input type="password" id="co-nouveau-mdp"></div>
+      <button class="btn btn--principal" id="co-nouveau-mdp-valider">Valider le nouveau mot de passe</button>
+      <div id="co-nouveau-mdp-msg" class="form-msg"></div>
+    </div>
+
+    <div id="panneau-inscription" class="panneau">
+      <form id="form-inscription">
+        <div class="form-champ">
+          <label for="in-code">Code d'invitation</label>
+          <input type="text" id="in-code" required placeholder="Fourni par l'agence">
+        </div>
+        <div class="form-champ">
+          <label for="in-nom">Nom complet</label>
+          <input type="text" id="in-nom" required>
+        </div>
+        <div class="form-champ">
+          <label for="in-email">E-mail</label>
+          <input type="email" id="in-email" required>
+        </div>
+        <div class="form-champ">
+          <label for="in-mdp">Mot de passe</label>
+          <input type="password" id="in-mdp" required minlength="6">
+        </div>
+        <button type="submit" class="btn btn--principal">Créer mon compte</button>
+        <div id="in-msg" class="form-msg"></div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Tableau de bord (visible une fois connecté) ===== -->
+<section id="dashboard" class="dashboard">
+  <div class="container">
+    <div class="dashboard-header">
+      <div>
+        <h2 id="db-nom">Mon profil</h2>
+        <span id="db-statut" class="statut-pastille">Non publié</span>
+      </div>
+      <button id="btn-deconnexion" class="btn">Se déconnecter</button>
+    </div>
+
+    <div id="bandeau-refus" class="bandeau-refus u-hidden"></div>
+
+    <div class="apercu-fiche-carte reveal">
+      <div class="apercu-fiche-photo">
+        <img id="ap-photo" src="" alt="" class="u-hidden">
+        <span id="ap-photo-placeholder" class="apercu-fiche-photo-vide">Photo</span>
+      </div>
+      <div class="apercu-fiche-infos">
+        <span class="apercu-fiche-label">Aperçu de votre fiche publique</span>
+        <h3 id="ap-nom">Votre nom</h3>
+        <p id="ap-souscategorie">Complétez vos informations ci-dessous</p>
+        <div class="mensurations" id="ap-mensurations"></div>
+      </div>
+    </div>
+
+    <button type="button" id="btn-voir-cv" class="btn em-35">🪪 Voir mon CV</button>
+
+    <div id="notice-nouveaux-champs" class="em-3">
+      <strong>🔴 Nouveau — merci de compléter votre fiche :</strong>
+      Vos réalisations (défilés, shootings, publicités, castings…), vos années d'expérience, votre type de modèle, vos langues parlées, votre disponibilité et votre mensuration complète (Hanches pour les femmes, Entrejambe pour les hommes) sont maintenant demandés pour que les recruteurs vous connaissent mieux. Faites défiler jusqu'à « Expérience professionnelle » ci-dessous pour les renseigner.
+    </div>
+
+    <!-- Chaque bloc s'enregistre lui-même, indépendamment des autres : modifier
+         son nom ne bloque jamais sur les projets, les photos ou l'expérience.
+         Seule la case "rendre visible publiquement" (tout en bas) exige que
+         l'ensemble soit complet — c'est elle qui, la toute première fois,
+         pousse à remplir chaque bloc avant de pouvoir publier. -->
+
+    <form id="form-infos" class="bloc-section">
+      <div class="section-tete-dossier"><span class="eyebrow">01</span><h3>Profil &amp; informations physiques</h3></div>
+      <div class="form-champ">
+        <label for="pr-nom">Nom complet *</label>
+        <input type="text" id="pr-nom" required>
+      </div>
+      <div class="form-champ">
+        <label for="pr-bio">Présentation / profil *</label>
+        <textarea id="pr-bio" required placeholder="Quelques phrases sur vous : votre parcours, votre style, ce qui vous distingue…"></textarea>
+      </div>
+      <div class="form-grille">
+        <div class="form-champ">
+          <label for="pr-instagram">Instagram (facultatif)</label>
+          <input type="text" id="pr-instagram" placeholder="@votre_compte">
+        </div>
+        <div class="form-champ">
+          <label for="pr-citation">Citation personnelle (facultatif)</label>
+          <input type="text" id="pr-citation" placeholder="Une phrase courte qui vous représente" maxlength="120">
+        </div>
+      </div>
+      <div class="form-grille">
+        <div class="form-champ">
+          <label for="pr-indicatif">Votre téléphone (usage interne agence uniquement)</label>
+          <select id="pr-indicatif" class="em-4"></select>
+          <input type="tel" id="pr-telephone-numero" placeholder="07 00 00 00 00" pattern="[0-9 ]{6,14}">
+        </div>
+        <div class="form-champ">
+          <label for="pr-email-perso">Votre e-mail (usage interne agence uniquement)</label>
+          <input type="email" id="pr-email-perso">
+        </div>
+      </div>
+      <p class="em-5">🔒 Ces coordonnées ne sont jamais affichées publiquement — seul le contact officiel de l'agence apparaît sur votre fiche.</p>
+      <div class="form-grille">
+        <div class="form-champ">
+          <label for="pr-ville">Ville *</label>
+          <select id="pr-ville" required></select>
+          <input type="text" id="pr-ville-autre" placeholder="Précisez la ville" class="em-6">
+        </div>
+        <div class="form-champ u-hidden" id="pr-commune-wrap">
+          <label for="pr-commune">Commune (Abidjan)</label>
+          <select id="pr-commune"></select>
+          <input type="text" id="pr-commune-autre" placeholder="Précisez la commune" class="em-6">
+        </div>
+        <div class="form-champ u-hidden" id="pr-quartier-wrap">
+          <label for="pr-quartier">Quartier (facultatif)</label>
+          <input type="text" id="pr-quartier" placeholder="ex : Angré, Riviera, II Plateaux…">
+        </div>
+        <div class="form-champ">
+          <label for="pr-naissance">Date de naissance *</label>
+          <input type="date" id="pr-naissance" required>
+        </div>
+      </div>
+      <div class="form-champ">
+        <label for="pr-categorie">Sexe *</label>
+        <select id="pr-categorie" required>
+          <option value="">—</option>
+          <option value="femme">Femme</option>
+          <option value="homme">Homme</option>
+        </select>
+      </div>
+      <div class="form-grille">
+        <div class="form-champ">
+          <label for="pr-taille">Taille (cm) *</label>
+          <select id="pr-taille" required></select>
+        </div>
+        <div class="form-champ">
+          <label for="pr-poids">Poids (kg)</label>
+          <select id="pr-poids"></select>
+        </div>
+        <div class="form-champ">
+          <label for="pr-poitrine">Poitrine (cm) *</label>
+          <select id="pr-poitrine" required></select>
+        </div>
+        <div class="form-champ">
+          <label for="pr-tourtaille">Tour de taille (cm) *</label>
+          <select id="pr-tourtaille" required></select>
+        </div>
+        <div class="form-champ" id="champ-hanches">
+          <label for="pr-hanches">Hanches (cm) *</label>
+          <select id="pr-hanches"></select>
+        </div>
+        <div class="form-champ u-hidden" id="champ-entrejambe">
+          <label for="pr-entrejambe">Entrejambe (cm) *</label>
+          <select id="pr-entrejambe"></select>
+        </div>
+        <div class="form-champ">
+          <label for="pr-pointure">Pointure *</label>
+          <select id="pr-pointure" required></select>
+        </div>
+        <div class="form-champ">
+          <label for="pr-carnation">Carnation / teint *</label>
+          <select id="pr-carnation" required>
+            <option value="">—</option>
+            <option value="Claire">Claire</option>
+            <option value="Métisse claire">Métisse claire</option>
+            <option value="Métisse foncée">Métisse foncée</option>
+            <option value="Foncée">Foncée</option>
+            <option value="Très foncée">Très foncée</option>
+          </select>
+        </div>
+        <div class="form-champ">
+          <label for="pr-tailleveternents">Taille de vêtements *</label>
+          <select id="pr-tailleveternents" required>
+            <option value="">—</option>
+            <option value="XS">XS</option>
+            <option value="S">S</option>
+            <option value="M">M</option>
+            <option value="L">L</option>
+            <option value="XL">XL</option>
+            <option value="XXL">XXL</option>
+            <option value="Autre">Autre</option>
+          </select>
+          <input type="text" id="pr-tailleveternents-autre" placeholder="Précisez la taille" class="em-6">
+        </div>
+        <div class="form-champ">
+          <label for="pr-yeux">Couleur des yeux</label>
+          <select id="pr-yeux">
+            <option value="">—</option>
+            <option value="Marron">Marron</option>
+            <option value="Noir">Noir</option>
+            <option value="Vert">Vert</option>
+            <option value="Bleu">Bleu</option>
+            <option value="Gris">Gris</option>
+            <option value="Noisette">Noisette</option>
+            <option value="Autre">Autre</option>
+          </select>
+          <input type="text" id="pr-yeux-autre" placeholder="Précisez la couleur" class="em-6">
+        </div>
+        <div class="form-champ">
+          <label for="pr-cheveux">Couleur des cheveux</label>
+          <select id="pr-cheveux">
+            <option value="">—</option>
+            <option value="Noir">Noir</option>
+            <option value="Brun">Brun</option>
+            <option value="Châtain">Châtain</option>
+            <option value="Blond">Blond</option>
+            <option value="Roux">Roux</option>
+            <option value="Gris / Blanc">Gris / Blanc</option>
+            <option value="Autre">Autre</option>
+          </select>
+          <input type="text" id="pr-cheveux-autre" placeholder="Précisez la couleur" class="em-6">
+        </div>
+      </div>
+      <div class="form-champ">
+        <label for="pr-video">Vidéo de présentation (lien YouTube ou Vimeo, facultatif)</label>
+        <input type="url" id="pr-video" placeholder="https://www.youtube.com/watch?v=...">
+      </div>
+      <button type="submit" id="btn-enregistrer-infos" class="btn btn--principal u-hidden" disabled>Enregistrer mes informations</button>
+      <div id="infos-msg" class="form-msg"></div>
+    </form>
+
+    <form id="form-formation" class="bloc-section">
+      <div class="section-tete-dossier"><span class="eyebrow">02</span><h3>Formation</h3></div>
+      <div class="form-grille">
+        <div class="form-champ">
+          <label for="pr-niveau-etude">Niveau d'étude</label>
+          <input type="text" id="pr-niveau-etude" placeholder="ex : Baccalauréat, Licence…">
+        </div>
+        <div class="form-champ">
+          <label for="pr-etablissement">Établissement</label>
+          <input type="text" id="pr-etablissement" placeholder="ex : Lycée Classique d'Abidjan">
+        </div>
+      </div>
+      <div class="form-grille">
+        <div class="form-champ">
+          <label for="pr-formation-particuliere">Formation particulière (facultatif)</label>
+          <input type="text" id="pr-formation-particuliere" placeholder="ex : Aucune, ou une spécialité">
+        </div>
+        <div class="form-champ">
+          <label for="pr-formation-mannequin">Formation mannequin (facultatif)</label>
+          <input type="text" id="pr-formation-mannequin" placeholder="ex : MA2M — Coaching &amp; Masterclass">
+        </div>
+      </div>
+      <button type="submit" id="btn-enregistrer-formation" class="btn btn--principal u-hidden" disabled>Enregistrer ma formation</button>
+      <div id="formation-msg" class="form-msg"></div>
+    </form>
+
+    <div class="bloc-section">
+      <div class="section-tete-dossier"><span class="eyebrow">03</span><h3>Expérience professionnelle</h3></div>
+      <div class="form-grille">
+        <div class="form-champ">
+          <label for="pr-experience">Années d'expérience</label>
+          <select id="pr-experience"></select>
+          <p class="em-34">Votre niveau (calculé automatiquement, pas besoin de le choisir) : <strong id="niveau-mannequin-valeur">New Face</strong></p>
+        </div>
+        <div class="form-champ">
+          <label for="pr-disponibilite">Disponibilité</label>
+          <select id="pr-disponibilite">
+            <option value="">—</option>
+            <option value="immediate">Disponible immédiatement</option>
+            <option value="rdv">Sur rendez-vous</option>
+            <option value="mobile">Mobile pour déplacements</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-champ">
+        <label>Type de modèle (cochez tout ce qui s'applique)</label>
+        <div class="em-11">
+          <label class="em-12"><input type="checkbox" class="pr-type em-13" value="catwalk"> Défilé / Catwalk</label>
+          <label class="em-12"><input type="checkbox" class="pr-type em-13" value="photo"> Photo</label>
+          <label class="em-12"><input type="checkbox" class="pr-type em-13" value="publicite"> Publicité</label>
+          <label class="em-12"><input type="checkbox" class="pr-type em-13" value="commercial"> Commercial</label>
+          <label class="em-12"><input type="checkbox" class="pr-type em-13" value="autre"> Autre</label>
+        </div>
+      </div>
+      <div class="form-champ">
+        <label>Langues parlées</label>
+        <div class="em-11">
+          <label class="em-12"><input type="checkbox" class="pr-langue em-13" value="Français"> Français</label>
+          <label class="em-12"><input type="checkbox" class="pr-langue em-13" value="Anglais"> Anglais</label>
+          <label class="em-12"><input type="checkbox" class="pr-langue em-13" value="Espagnol"> Espagnol</label>
+          <label class="em-12"><input type="checkbox" class="pr-langue em-13" value="Autre"> Autre</label>
+        </div>
+      </div>
+      <button type="button" id="btn-enregistrer-experience" class="btn btn--principal u-hidden" disabled>Enregistrer mon profil professionnel</button>
+      <div id="exp-msg" class="form-msg"></div>
+      <p class="bloc-section-intro em-mt-1">Défilés, shootings, publicités, castings… Ajoutez chaque projet un par un, ils s'affichent tous sur votre fiche publique. Un seul projet suffit pour publier votre profil — vous pourrez toujours en ajouter d'autres plus tard.</p>
+      <div id="projets-liste" class="projets-liste"></div>
+      <div id="form-projet" class="em-7">
+        <div class="form-grille">
+          <div class="form-champ">
+            <label for="pj-type">Type de projet *</label>
+            <select id="pj-type" required>
+              <option value="">—</option>
+              <option value="Défilé">Défilé</option>
+              <option value="Shoot photo">Shoot photo</option>
+              <option value="Publicité">Publicité</option>
+              <option value="Casting">Casting</option>
+              <option value="New Face">New Face (nouveau mannequin, aucune expérience pour l'instant)</option>
+              <option value="Autre">Autre</option>
+            </select>
+            <input type="text" id="pj-type-autre" placeholder="Précisez le type de projet" class="em-6">
+            <p id="pj-type-newface-note" class="em-8">Cette mention s'affichera simplement comme « New Face » sur votre fiche — elle indique que vous débutez. Vous pourrez ajouter vos vrais projets dès que vous en aurez réalisé un.</p>
+          </div>
+          <div id="pj-details-autres-champs" class="em-9">
+            <div class="form-champ">
+              <label for="pj-titre">Nom du projet</label>
+              <input type="text" id="pj-titre" placeholder="ex: Cacao Fashion Show">
+            </div>
+            <div class="form-champ">
+              <label for="pj-periode-precision">Période</label>
+              <select id="pj-periode-precision">
+                <option value="">—</option>
+                <option value="annee">Je me souviens juste de l'année</option>
+                <option value="mois">Je me souviens du mois et de l'année</option>
+                <option value="jour">Je me souviens de la date exacte</option>
+              </select>
+              <select id="pj-periode-annee" class="em-6"></select>
+              <input type="month" id="pj-periode-mois" class="em-6">
+              <input type="date" id="pj-periode-jour" class="em-6">
+            </div>
+            <div class="form-champ">
+              <label for="pj-pays">Pays</label>
+              <select id="pj-pays"></select>
+              <input type="text" id="pj-pays-autre" placeholder="Précisez le pays" class="em-6">
+            </div>
+            <div class="form-champ">
+              <label for="pj-ville">Ville</label>
+              <select id="pj-ville"></select>
+              <input type="text" id="pj-ville-autre" placeholder="Précisez la ville" class="em-6">
+            </div>
+            <div class="form-champ">
+              <label for="pj-promoteur">Promoteur / organisateur</label>
+              <input type="text" id="pj-promoteur" placeholder="ex: JNCC">
+            </div>
+          </div>
+        </div>
+        <button type="button" id="pj-ajouter" class="btn">Ajouter ce projet</button>
+        <button type="button" id="pj-annuler" class="btn em-10">Annuler la modification</button>
+        <div id="pj-msg" class="form-msg"></div>
+      </div>
+      <script>
+        // Empêche la touche Entrée dans un champ "projet" de déclencher l'enregistrement
+        // du bloc "Informations" (aucun lien entre les deux formulaires, mais Entrée
+        // dans un champ texte déclenche par défaut le premier bouton submit de la
+        // page si on ne l'intercepte pas ici) : Entrée y déclenche "Ajouter ce projet".
+        document.getElementById('form-projet').addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+            document.getElementById('pj-ajouter').click();
+          }
+        });
+      </script>
+    </div>
+
+    <form id="form-competences" class="bloc-section">
+      <div class="section-tete-dossier"><span class="eyebrow">04</span><h3>Compétences &amp; portfolio</h3></div>
+      <p class="bloc-section-intro">Évaluez-vous honnêtement sur chaque compétence (1 à 5) — ça aide l'agence et les recruteurs à mieux vous connaître.</p>
+      <div class="competences-grille">
+        <div class="form-champ competence-champ">
+          <label for="comp-runway">Runway / Défilé</label>
+          <input type="range" id="comp-runway" min="1" max="5" value="3" data-competence="runway">
+        </div>
+        <div class="form-champ competence-champ">
+          <label for="comp-pose">Pose photographique</label>
+          <input type="range" id="comp-pose" min="1" max="5" value="3" data-competence="pose">
+        </div>
+        <div class="form-champ competence-champ">
+          <label for="comp-editorial">Editorial</label>
+          <input type="range" id="comp-editorial" min="1" max="5" value="3" data-competence="editorial">
+        </div>
+        <div class="form-champ competence-champ">
+          <label for="comp-campagne">Fashion campaign</label>
+          <input type="range" id="comp-campagne" min="1" max="5" value="3" data-competence="campagne">
+        </div>
+        <div class="form-champ competence-champ">
+          <label for="comp-fitting">Fitting</label>
+          <input type="range" id="comp-fitting" min="1" max="5" value="3" data-competence="fitting">
+        </div>
+        <div class="form-champ competence-champ">
+          <label for="comp-presentation">Présentation de collection</label>
+          <input type="range" id="comp-presentation" min="1" max="5" value="3" data-competence="presentation">
+        </div>
+        <div class="form-champ competence-champ">
+          <label for="comp-expression">Expression corporelle</label>
+          <input type="range" id="comp-expression" min="1" max="5" value="3" data-competence="expression">
+        </div>
+        <div class="form-champ competence-champ">
+          <label for="comp-equipe">Travail en équipe</label>
+          <input type="range" id="comp-equipe" min="1" max="5" value="3" data-competence="equipe">
+        </div>
+        <div class="form-champ competence-champ">
+          <label for="comp-discipline">Discipline professionnelle</label>
+          <input type="range" id="comp-discipline" min="1" max="5" value="3" data-competence="discipline">
+        </div>
+      </div>
+      <button type="submit" id="btn-enregistrer-competences" class="btn btn--principal u-hidden" disabled>Enregistrer mes compétences</button>
+      <div id="competences-msg" class="form-msg"></div>
+    </form>
+
+    <div class="bloc-section">
+      <div class="section-tete-dossier"><span class="eyebrow">05</span><h3>Mes photos</h3></div>
+      <div class="upload-zone">
+        <p>Ajoutez vos photos (JPG, PNG ou HEIC — les photos iPhone sont converties automatiquement). Vous pouvez en sélectionner plusieurs à la fois.</p>
+        <input type="file" id="input-photo" accept="image/*" multiple>
+        <div id="apercu-upload" class="em-14">
+          <div id="apercu-liste" class="em-15"></div>
+        </div>
+      </div>
+      <p class="em-16">Cliquez sur "☆ Profil" sur une photo pour en faire votre photo de profil — c'est celle qui s'affiche en premier sur votre fiche publique et dans The Book.</p>
+      <p class="em-17">Cliquez sur "+ Compcard" pour choisir jusqu'à 5 photos qui apparaîtront sur votre fiche téléchargeable (PDF/JPEG) envoyée aux recruteurs. Sans sélection, l'agence choisit automatiquement pour vous.</p>
+      <div id="photos-grille" class="photos-grille"></div>
+    </div>
+
+    <form id="form-publication" class="bloc-section">
+      <div class="section-tete-dossier"><span class="eyebrow">06</span><h3>Contact &amp; publication</h3></div>
+      <p id="guide-premiere-fois" class="em-18">
+        👋 Première inscription : remplissez tous les blocs ci-dessus (informations, mensurations, au moins un projet réalisé, expérience, au moins une photo), puis validez tout ici en une seule fois avec le bouton "Enregistrer mon profil" ci-dessous.
+      </p>
+      <div class="form-champ em-19">
+        <label class="em-20">🔒 Contact affiché sur votre fiche publique</label>
+        <p class="em-21">
+          Pour votre sécurité, c'est le contact officiel de l'agence qui apparaît sur votre profil public, jamais votre numéro ou compte personnel :
+        </p>
+        <div class="em-22">
+          <div class="em-23"><a href="tel:+2252722231176" class="em-24">📞 +225 27 22 23 11 76</a></div>
+          <div class="em-23"><a href="tel:+2250545656887" class="em-24">📱 +225 05 45 65 68 87</a></div>
+          <div class="em-23"><a href="mailto:scoutmodel.ma2m@gmail.com" class="em-24">✉️ scoutmodel.ma2m@gmail.com</a></div>
+          <div class="em-23"><strong>Instagram :</strong> @maitreakessemodelmanagement</div>
+        </div>
+        <p class="em-25">Géré par MA2M — non modifiable.</p>
+      </div>
+      <p class="em-26">* Champs obligatoires pour rendre votre profil visible publiquement (voir les blocs 1, 3 et 4 ci-dessus). Vous pouvez enregistrer un brouillon incomplet, il ne sera simplement pas publié.</p>
+      <label class="em-27">
+        <input type="checkbox" id="pr-publie" class="em-13">
+        Rendre mon profil visible publiquement sur le site
+      </label>
+      <button type="submit" class="btn btn--principal">Enregistrer mon profil</button>
+      <div id="pr-msg" class="form-msg"></div>
+    </form>
+  </div>
+</section>
+
+<!-- ===== Aperçu du CV — reproduit la maquette validée avec l'agence :
+     colonne sombre identité/contact + colonne claire profil/formation/
+     expérience/compétences, bandeau agence et 5 photos du compcard en bas.
+     Phase 2 (aperçu visuel) : l'export PDF viendra en Phase 3. ===== -->
+<div id="overlay-cv" class="cv-overlay u-hidden">
+  <div class="cv-overlay-scroll">
+    <button type="button" id="btn-fermer-cv" class="cv-fermer" aria-label="Fermer l'aperçu du CV">✕</button>
+    <div class="cv-document" id="cv-document">
+      <div class="cv-colonne-sombre">
+        <div class="cv-logo-agence">
+          <img src="assets/logo-dark-bg.png" alt="Maître Akesse Model Management" class="cv-logo-img">
+        </div>
+        <div class="cv-photo-portrait">
+          <img id="cv-photo" src="" alt="">
+        </div>
+        <p class="cv-baseline">FORMER — RÉVÉLER — VALORISER</p>
+        <h2 class="cv-nom" id="cv-nom">—</h2>
+        <p class="cv-souscategorie" id="cv-souscategorie">Mannequin professionnel(le)</p>
+        <div class="cv-identite-liste" id="cv-identite-liste"></div>
+        <p class="cv-categorie-label">Catégorie</p>
+        <p class="cv-categorie-valeur" id="cv-categorie-valeur">—</p>
+        <blockquote class="cv-citation" id="cv-citation"></blockquote>
+        <p class="cv-pied-agence">Maître Akesse<br>Model Management</p>
+      </div>
+      <div class="cv-colonne-claire">
+        <div class="cv-entete-doc">Model CV</div>
+
+        <section class="cv-section">
+          <h3>Profil</h3>
+          <p id="cv-profil-texte" class="cv-texte-libre"></p>
+        </section>
+
+        <section class="cv-section">
+          <h3>Informations physiques</h3>
+          <div class="cv-grille-infos" id="cv-grille-infos"></div>
+        </section>
+
+        <section class="cv-section" id="cv-section-formation">
+          <h3>Formation</h3>
+          <div class="cv-grille-infos" id="cv-grille-formation"></div>
+        </section>
+
+        <section class="cv-section">
+          <h3>Expérience professionnelle</h3>
+          <div id="cv-experience"></div>
+        </section>
+
+        <section class="cv-section cv-section-double">
+          <div>
+            <h3>Compétences mannequin</h3>
+            <div id="cv-competences"></div>
+          </div>
+          <div>
+            <h3>Portfolio</h3>
+            <div id="cv-portfolio"></div>
+          </div>
+        </section>
+      </div>
+    </div>
+    <div class="cv-bandeau-bas">
+      <div class="cv-photos-bande" id="cv-photos-bande"></div>
+      <div class="cv-agence-contact">
+        <strong>Maître Akesse Model Management</strong>
+        <p>📞 +225 27 22 23 11 76 · +225 05 45 65 68 87<br>✉️ infos.ma2m@gmail.com · 📍 Abidjan, Côte d'Ivoire</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grille">
+      <div>
+        <h3>Maître Akesse Model Management</h3>
+        <p>Chaque grand parcours commence par un rêve. Le nôtre commence à Abidjan.</p>
+      </div>
+      <div>
+        <h3>Navigation</h3>
+        <a href="index.html">Accueil</a>
+        <a href="services.html">Services</a>
+        <a href="mannequins.html">The Book</a>
+        <a href="actualites.html">Actualités</a>
+        <a href="evenements.html">Nos Événements</a>
+        <a href="partenaires.html">Nos partenaires</a>
+        <a href="candidature.html">Postuler à un casting</a>
+        <a href="inscription-mannequin.html">Inscription</a>
+      </div>
+      <div>
+        <h3>Contact</h3>
+        <a href="tel:+2250545656887">+225 05 45 65 68 87</a>
+        <a href="tel:+2252722231176">+225 27 22 23 11 76</a>
+        <a href="mailto:infos.ma2m@gmail.com">infos.ma2m@gmail.com</a>
+        <div class="footer-reseaux">
+          <a href="https://www.instagram.com/maitreakessemodelmanagement" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram"><svg viewBox="0 0 24 24"><defs><linearGradient id="ig-grad-8" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="#FFC107"/><stop offset="50%" stop-color="#F44336"/><stop offset="100%" stop-color="#9C27B0"/></linearGradient></defs><path fill="url(#ig-grad-8)" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98C.014 8.333 0 8.741 0 12s.014 3.667.072 4.948c.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24s3.667-.014 4.948-.072c4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.667.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
+          <a href="https://www.tiktok.com/@agencemaitreakessemodel" target="_blank" rel="noopener" aria-label="TikTok" title="TikTok"><svg viewBox="0 0 24 24"><path fill="#25F4EE" transform="translate(-0.9,-0.9)" d="M16.6 5.82c-1.36-1.57-3.24-1.48-3.24-1.48h-3.09v12.4a2.592 2.592 0 01-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 004.3 1.38V7.3s-1.88.09-3.24-1.48z"/><path fill="#FE2C55" transform="translate(0.9,0.9)" d="M16.6 5.82c-1.36-1.57-3.24-1.48-3.24-1.48h-3.09v12.4a2.592 2.592 0 01-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 004.3 1.38V7.3s-1.88.09-3.24-1.48z"/><path fill="#000000" d="M16.6 5.82c-1.36-1.57-3.24-1.48-3.24-1.48h-3.09v12.4a2.592 2.592 0 01-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 004.3 1.38V7.3s-1.88.09-3.24-1.48z"/></svg></a>
+          <a href="https://www.facebook.com/share/1BzPN69rhE/" target="_blank" rel="noopener" aria-label="Facebook" title="Facebook" class="u-ic-facebook"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12.06C22 6.505 17.523 2 12 2S2 6.505 2 12.06c0 5.022 3.657 9.184 8.438 9.94v-7.03H7.898v-2.91h2.54V9.845c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.459h-1.26c-1.243 0-1.63.771-1.63 1.562v1.875h2.773l-.443 2.91h-2.33V22c4.78-.756 8.437-4.918 8.437-9.94z"/></svg></a>
+          <a href="https://youtube.com/@maitreakessemodelmanagement" target="_blank" rel="noopener" aria-label="YouTube" title="YouTube" class="u-ic-youtube"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a2.994 2.994 0 00-2.107-2.12C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.391.521A2.994 2.994 0 00.502 6.186 31.25 31.25 0 000 12a31.25 31.25 0 00.502 5.814 2.994 2.994 0 002.107 2.12c1.886.521 9.391.521 9.391.521s7.505 0 9.391-.521a2.994 2.994 0 002.107-2.12A31.25 31.25 0 0024 12a31.25 31.25 0 00-.502-5.814zM9.6 15.6V8.4l6.4 3.6-6.4 3.6z"/></svg></a>
+          <a href="https://wa.me/message/HJAMXGXHCL46I1" target="_blank" rel="noopener" aria-label="WhatsApp" title="WhatsApp" class="u-ic-whatsapp"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.472-.148-.67.15-.198.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0a12 12 0 00-10.288 18.06L0 24l6.084-1.688A12 12 0 1012 0zm0 21.938a9.917 9.917 0 01-5.052-1.383l-.362-.215-3.752 1.041 1.004-3.665-.235-.375A9.938 9.938 0 1112 21.938z"/></svg></a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bas">
+      <span>© <span id="an"></span> Maître Akesse Model Management</span>
+      <span>Abidjan, Côte d'Ivoire</span>
+      <span><a href="mentions-legales.html">Mentions légales</a> · <a href="politique-confidentialite.html">Confidentialité</a></span>
+    </div>
+  </div>
+</footer>
+
+<script src="js/copyright-annee.js"></script>
+<script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/indicatifs-pays.js"></script>
+<script src="js/villes-cote-ivoire.js"></script>
+<script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+<script src="js/app.js"></script>
+<script src="js/menu.js"></script>
+<script>
+const blocAuth = document.getElementById('bloc-auth');
+const dashboard = document.getElementById('dashboard');
+
+// Sans bornes min/max, le calendrier natif du champ "date de naissance" laisse
+// défiler des années totalement absurdes (ex. 2090) et impose souvent de faire
+// défiler très loin pour atteindre un âge plausible — d'où l'impression que la
+// sélection "ne marche pas" alors qu'il faut juste taper la date à la main.
+(function limiterDateNaissance() {
+  const champ = document.getElementById('pr-naissance');
+  if (!champ) return;
+  const aujourdhui = new Date();
+  champ.max = aujourdhui.toISOString().slice(0, 10);
+  champ.min = new Date(aujourdhui.getFullYear() - 100, aujourdhui.getMonth(), aujourdhui.getDate()).toISOString().slice(0, 10);
+})();
+
+// --- Mensurations en listes déroulantes plutôt qu'en saisie libre : évite les
+// fautes de frappe (ex. "17O" au lieu de "170") et les valeurs invraisemblables. ---
+function remplirSelectNombres(id, min, max, pas, suffixe) {
+  const champ = document.getElementById(id);
+  if (!champ) return;
+  champ.appendChild(new Option('—', ''));
+  for (let v = min; v <= max; v += pas) {
+    champ.appendChild(new Option(v + (suffixe || ''), v));
+  }
+}
+remplirSelectNombres('pr-taille', 140, 210, 1, ' cm');
+remplirSelectNombres('pr-poids', 35, 130, 1, ' kg');
+remplirSelectNombres('pr-poitrine', 70, 130, 1, ' cm');
+remplirSelectNombres('pr-tourtaille', 55, 110, 1, ' cm');
+remplirSelectNombres('pr-hanches', 70, 130, 1, ' cm');
+remplirSelectNombres('pr-entrejambe', 60, 100, 1, ' cm');
+remplirSelectNombres('pr-pointure', 34, 46, 1, '');
+remplirSelectNombres('pr-experience', 0, 20, 1, ' an(s)');
+document.getElementById('pr-experience').appendChild(new Option('Plus de 20 ans', 21));
+
+// --- Listes déroulantes avec option "Autre" : garde la souplesse d'un champ libre
+// pour les cas non prévus dans la liste, sans forcer une saisie 100% manuelle. ---
+function configurerSelectAvecAutre(idSelect, idAutre) {
+  const select = document.getElementById(idSelect);
+  const autre = document.getElementById(idAutre);
+  if (!select || !autre) return;
+  select.addEventListener('change', () => {
+    autre.style.display = select.value === 'Autre' ? 'block' : 'none';
+    if (select.value !== 'Autre') autre.value = '';
+  });
+}
+remplirIndicatifs(document.getElementById('pr-indicatif'));
+
+function valeurSelectOuAutre(idSelect, idAutre) {
+  const select = document.getElementById(idSelect);
+  const autre = document.getElementById(idAutre);
+  if (select.value === 'Autre') return (autre.value || '').trim();
+  return select.value;
+}
+function definirSelectOuAutre(idSelect, idAutre, valeur) {
+  const select = document.getElementById(idSelect);
+  const autre = document.getElementById(idAutre);
+  if (!select) return;
+  const options = Array.from(select.options).map(o => o.value);
+  if (valeur && options.includes(valeur)) {
+    select.value = valeur;
+    if (autre) { autre.style.display = 'none'; autre.value = ''; }
+  } else if (valeur) {
+    select.value = 'Autre';
+    if (autre) { autre.style.display = 'block'; autre.value = valeur; }
+  } else {
+    select.value = '';
+    if (autre) { autre.style.display = 'none'; autre.value = ''; }
+  }
+}
+function remplirSelectListe(id, liste) {
+  const champ = document.getElementById(id);
+  if (!champ) return;
+  champ.appendChild(new Option('—', ''));
+  liste.forEach(v => champ.appendChild(new Option(v, v)));
+  champ.appendChild(new Option('Autre', 'Autre'));
+}
+
+// VILLES_CI/COMMUNES_ABIDJAN viennent désormais de js/villes-cote-ivoire.js
+// (partagé avec candidature.html et espace-mannequin-MA2M-premium-20.html —
+// une seule liste au lieu de 2 copies identiques auparavant).
+remplirSelectListe('pr-ville', VILLES_CI);
+remplirSelectListe('pj-ville', VILLES_CI);
+brancherCascadeAbidjan('pr-ville', 'pr-commune-wrap', 'pr-commune', 'pr-commune-autre', 'pr-quartier-wrap');
+configurerSelectAvecAutre('pr-commune', 'pr-commune-autre');
+
+// Pays du monde (pour le pays d'un projet, qui peut se dérouler n'importe où) —
+// Côte d'Ivoire en tête pour la même raison.
+remplirSelectListe('pj-pays', [
+  "Côte d'Ivoire", 'Afghanistan', 'Afrique du Sud', 'Albanie', 'Algérie', 'Allemagne', 'Andorre',
+  'Angola', 'Antigua-et-Barbuda', 'Arabie saoudite', 'Argentine', 'Arménie', 'Australie',
+  'Autriche', 'Azerbaïdjan', 'Bahamas', 'Bahreïn', 'Bangladesh', 'Barbade', 'Belgique', 'Belize',
+  'Bénin', 'Bhoutan', 'Biélorussie', 'Birmanie (Myanmar)', 'Bolivie', 'Bosnie-Herzégovine',
+  'Botswana', 'Brésil', 'Brunei', 'Bulgarie', 'Burkina Faso', 'Burundi', 'Cambodge', 'Cameroun',
+  'Canada', 'Cap-Vert', 'République centrafricaine', 'Chili', 'Chine', 'Chypre', 'Colombie',
+  'Comores', 'Congo-Brazzaville', 'République démocratique du Congo', 'Corée du Nord',
+  'Corée du Sud', 'Costa Rica', 'Croatie', 'Cuba', 'Danemark', 'Djibouti', 'Dominique', 'Égypte',
+  'Émirats arabes unis', 'Équateur', 'Érythrée', 'Espagne', 'Estonie', 'Eswatini', 'États-Unis',
+  'Éthiopie', 'Fidji', 'Finlande', 'France', 'Gabon', 'Gambie', 'Géorgie', 'Ghana', 'Grèce',
+  'Grenade', 'Guatemala', 'Guinée', 'Guinée-Bissau', 'Guinée équatoriale', 'Guyana', 'Haïti',
+  'Honduras', 'Hongrie', 'Îles Marshall', 'Îles Salomon', 'Inde', 'Indonésie', 'Irak', 'Iran',
+  'Irlande', 'Islande', 'Israël', 'Italie', 'Jamaïque', 'Japon', 'Jordanie', 'Kazakhstan',
+  'Kenya', 'Kirghizistan', 'Kiribati', 'Kosovo', 'Koweït', 'Laos', 'Lesotho', 'Lettonie', 'Liban',
+  'Libéria', 'Libye', 'Liechtenstein', 'Lituanie', 'Luxembourg', 'Macédoine du Nord',
+  'Madagascar', 'Malaisie', 'Malawi', 'Maldives', 'Mali', 'Malte', 'Maroc', 'Maurice',
+  'Mauritanie', 'Mexique', 'Micronésie', 'Moldavie', 'Monaco', 'Mongolie', 'Monténégro',
+  'Mozambique', 'Namibie', 'Nauru', 'Népal', 'Nicaragua', 'Niger', 'Nigeria', 'Norvège',
+  'Nouvelle-Zélande', 'Oman', 'Ouganda', 'Ouzbékistan', 'Pakistan', 'Palaos', 'Palestine',
+  'Panama', 'Papouasie-Nouvelle-Guinée', 'Paraguay', 'Pays-Bas', 'Pérou', 'Philippines',
+  'Pologne', 'Portugal', 'Qatar', 'Roumanie', 'Royaume-Uni', 'Russie', 'Rwanda',
+  'Saint-Christophe-et-Niévès', 'Saint-Marin', 'Saint-Vincent-et-les-Grenadines', 'Sainte-Lucie',
+  'Salvador', 'Samoa', 'São Tomé-et-Principe', 'Sénégal', 'Serbie', 'Seychelles',
+  'Sierra Leone', 'Singapour', 'Slovaquie', 'Slovénie', 'Somalie', 'Soudan', 'Soudan du Sud',
+  'Sri Lanka', 'Suède', 'Suisse', 'Suriname', 'Syrie', 'Tadjikistan', 'Tanzanie', 'Tchad',
+  'Tchéquie', 'Thaïlande', 'Timor oriental', 'Togo', 'Tonga', 'Trinité-et-Tobago', 'Tunisie',
+  'Turkménistan', 'Turquie', 'Tuvalu', 'Ukraine', 'Uruguay', 'Vanuatu', 'Vatican', 'Venezuela',
+  'Viêt Nam', 'Yémen', 'Zambie', 'Zimbabwe'
+]);
+
+['pr-ville', 'pr-tailleveternents', 'pr-yeux', 'pr-cheveux', 'pj-pays', 'pj-ville', 'pj-type'].forEach(id => configurerSelectAvecAutre(id, id + '-autre'));
+
+// "New Face" n'est pas un vrai projet avec un nom, un lieu, une date... : cacher
+// ces champs évite qu'une personne débutante se sente obligée de les remplir
+// alors qu'elle n'a justement rien à y mettre.
+function appliquerVisibiliteTypeProjet(valeur) {
+  const estNewFace = valeur === 'New Face';
+  document.getElementById('pj-type-newface-note').style.display = estNewFace ? 'block' : 'none';
+  document.getElementById('pj-details-autres-champs').style.display = estNewFace ? 'none' : 'contents';
+}
+document.getElementById('pj-type').addEventListener('change', (e) => appliquerVisibiliteTypeProjet(e.target.value));
+
+// La "Période" d'un projet passe d'un texte libre à des sélecteurs adaptés à ce
+// dont la personne se souvient réellement : juste l'année, le mois et l'année, ou
+// la date exacte. On ne rajoute pas de colonne en base : le format du texte stocké
+// suffit à retrouver la précision ("2026" / "2026-09" / "2026-09-14"), et les
+// anciennes valeurs en texte libre restent affichées telles quelles.
+const MOIS_FR = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+function formaterPeriode(valeur) {
+  if (!valeur) return '';
+  const mJour = /^(\d{4})-(\d{2})-(\d{2})$/.exec(valeur);
+  if (mJour) {
+    const mois = MOIS_FR[parseInt(mJour[2], 10) - 1];
+    return mois ? (parseInt(mJour[3], 10) + ' ' + mois + ' ' + mJour[1]) : valeur;
+  }
+  const mMois = /^(\d{4})-(\d{2})$/.exec(valeur);
+  if (mMois) {
+    const mois = MOIS_FR[parseInt(mMois[2], 10) - 1];
+    return mois ? (mois.charAt(0).toUpperCase() + mois.slice(1) + ' ' + mMois[1]) : valeur;
+  }
+  return valeur; // année seule ("2026"), ou ancienne saisie en texte libre
+}
+
+const anneeCourante = new Date().getFullYear();
+(function remplirAnneesPeriode() {
+  const select = document.getElementById('pj-periode-annee');
+  select.appendChild(new Option('—', ''));
+  for (let a = anneeCourante + 1; a >= anneeCourante - 60; a--) {
+    select.appendChild(new Option(a, a));
+  }
+})();
+
+function afficherChampPeriode(precision) {
+  document.getElementById('pj-periode-annee').style.display = precision === 'annee' ? 'block' : 'none';
+  document.getElementById('pj-periode-mois').style.display = precision === 'mois' ? 'block' : 'none';
+  document.getElementById('pj-periode-jour').style.display = precision === 'jour' ? 'block' : 'none';
+}
+document.getElementById('pj-periode-precision').addEventListener('change', (e) => afficherChampPeriode(e.target.value));
+
+function valeurPeriode() {
+  const precision = document.getElementById('pj-periode-precision').value;
+  if (precision === 'annee') return document.getElementById('pj-periode-annee').value;
+  if (precision === 'mois') return document.getElementById('pj-periode-mois').value;
+  if (precision === 'jour') return document.getElementById('pj-periode-jour').value;
+  return '';
+}
+
+function definirPeriode(valeur) {
+  const precisionSelect = document.getElementById('pj-periode-precision');
+  if (/^\d{4}-\d{2}-\d{2}$/.test(valeur || '')) {
+    precisionSelect.value = 'jour';
+    document.getElementById('pj-periode-jour').value = valeur;
+  } else if (/^\d{4}-\d{2}$/.test(valeur || '')) {
+    precisionSelect.value = 'mois';
+    document.getElementById('pj-periode-mois').value = valeur;
+  } else if (/^\d{4}$/.test(valeur || '')) {
+    precisionSelect.value = 'annee';
+    document.getElementById('pj-periode-annee').value = valeur;
+  } else {
+    precisionSelect.value = '';
+  }
+  afficherChampPeriode(precisionSelect.value);
+}
+function reinitialiserPeriode() {
+  document.getElementById('pj-periode-precision').value = '';
+  document.getElementById('pj-periode-annee').value = '';
+  document.getElementById('pj-periode-mois').value = '';
+  document.getElementById('pj-periode-jour').value = '';
+  afficherChampPeriode('');
+}
+
+// --- Onglets connexion / inscription ---
+document.querySelectorAll('.onglet').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.onglet').forEach(b => b.classList.remove('actif'));
+    document.querySelectorAll('.panneau').forEach(p => p.classList.remove('actif'));
+    btn.classList.add('actif');
+    document.getElementById(btn.dataset.cible).classList.add('actif');
+  });
+});
+
+function afficherMsg(el, texte, type) {
+  el.className = 'form-msg ' + type;
+  el.textContent = texte;
+}
+
+// --- Mode guidé (première inscription) vs mode libre (blocs autonomes) ---
+// Avant la toute première publication réussie, les boutons "Enregistrer" des
+// blocs 1 à 4 sont cachés : seuls la case "rendre visible" et le bouton final
+// "Enregistrer mon profil" (bloc 5) existent, pour forcer à tout remplir en
+// une fois. Une fois la première publication réussie, ces boutons
+// réapparaissent définitivement et, à l'inverse, la case + le bouton du
+// bloc 5 disparaissent définitivement — il n'y a volontairement aucun moyen
+// de se "dépublier" soi-même après coup depuis cet écran.
+function appliquerModeGuide(profil) {
+  const enModeGuide = !profil.premiere_publication_faite;
+  // "disabled" en plus de "display:none" : sans ça, la touche Entrée dans un
+  // champ texte du bloc peut quand même déclencher un bouton submit caché
+  // (un bouton masqué par CSS reste normalement actionnable par le navigateur).
+  const boutonsAutonomes = [
+    document.getElementById('btn-enregistrer-infos'),
+    document.getElementById('btn-enregistrer-formation'),
+    document.getElementById('btn-enregistrer-experience'),
+    document.getElementById('btn-enregistrer-competences')
+  ];
+  boutonsAutonomes.forEach(btn => {
+    btn.style.display = enModeGuide ? 'none' : '';
+    btn.disabled = enModeGuide;
+  });
+  document.getElementById('guide-premiere-fois').style.display = enModeGuide ? 'block' : 'none';
+
+  const champPublie = document.getElementById('pr-publie').closest('label');
+  const btnPublier = document.querySelector('#form-publication button[type="submit"]');
+  champPublie.style.display = enModeGuide ? '' : 'none';
+  btnPublier.style.display = enModeGuide ? '' : 'none';
+  btnPublier.disabled = !enModeGuide;
+}
+
+// --- Mensurations adaptées au genre : Hanches pour les femmes, Entrejambe pour les hommes ---
+function appliquerChampsGenre() {
+  const cat = document.getElementById('pr-categorie').value;
+  const champHanches = document.getElementById('champ-hanches');
+  const champEntrejambe = document.getElementById('champ-entrejambe');
+  if (cat === 'homme') {
+    champHanches.style.display = 'none';
+    champEntrejambe.style.display = '';
+  } else if (cat === 'femme') {
+    champHanches.style.display = '';
+    champEntrejambe.style.display = 'none';
+  } else {
+    // New Face : catégorie pas encore précisée, on affiche les deux au cas où
+    champHanches.style.display = '';
+    champEntrejambe.style.display = '';
+  }
+}
+document.getElementById('pr-categorie').addEventListener('change', appliquerChampsGenre);
+
+// --- Aperçu en direct de la fiche publique : se met à jour au fur et à
+// mesure que le mannequin remplit ses informations, mêmes icônes que la
+// fiche publique (mannequin.html) pour rester cohérent. ---
+const ICONES_MENSURATIONS_APERCU = {
+  age: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="3" y="4" width="14" height="13" rx="1"/><line x1="3" y1="8" x2="17" y2="8"/><line x1="7" y1="2.5" x2="7" y2="5.5"/><line x1="13" y1="2.5" x2="13" y2="5.5"/></svg>',
+  taille: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3"><line x1="10" y1="2" x2="10" y2="18"/><polyline points="6,6 10,2 14,6"/><polyline points="6,14 10,18 14,14"/></svg>',
+  poids: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l3 2"/></svg>',
+  ruban: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="2.5" y="7" width="15" height="6" rx="1"/><line x1="5.5" y1="7" x2="5.5" y2="9.5"/><line x1="8.5" y1="7" x2="8.5" y2="9.5"/><line x1="11.5" y1="7" x2="11.5" y2="9.5"/><line x1="14.5" y1="7" x2="14.5" y2="9.5"/></svg>',
+  pointure: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2.5 14.5c0-3 1.5-5 3-6.5.8-.8 1.3-1.8 1.5-3 2 0 3.5 1.2 4.2 2.6.5 1 1.4 1.7 2.5 1.9 1.7.3 3.3 1.4 3.3 3v2H2.5z"/></svg>',
+  carnation: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M10 2.5c3 4 5 6.8 5 9.5a5 5 0 01-10 0c0-2.7 2-5.5 5-9.5z"/></svg>',
+};
+function iconeMensurationApercu(cle) {
+  return `<span class="icone-stat" aria-hidden="true">${ICONES_MENSURATIONS_APERCU[cle] || ''}</span>`;
+}
+function calculerAgeApercu(dateNaissance) {
+  if (!dateNaissance) return null;
+  const naissance = new Date(dateNaissance);
+  if (isNaN(naissance.getTime())) return null;
+  const aujourdhui = new Date();
+  let age = aujourdhui.getFullYear() - naissance.getFullYear();
+  const pasEncoreAnniversaire = aujourdhui < new Date(aujourdhui.getFullYear(), naissance.getMonth(), naissance.getDate());
+  if (pasEncoreAnniversaire) age -= 1;
+  return age > 0 && age < 100 ? age : null;
+}
+function valeurChampOuAutre(idSelect, idAutre) {
+  const champAutre = document.getElementById(idAutre);
+  if (champAutre && champAutre.style.display !== 'none') return champAutre.value.trim();
+  return document.getElementById(idSelect).value.trim();
+}
+function mettreAJourApercu() {
+  const nom = document.getElementById('pr-nom').value.trim();
+  document.getElementById('ap-nom').textContent = nom || 'Votre nom';
+
+  const ville = villeAvecCommune(valeurChampOuAutre('pr-ville', 'pr-ville-autre'), 'pr-commune', 'pr-commune-autre');
+  const categorie = document.getElementById('pr-categorie').value;
+  const libelleCategorie = categorie === 'homme' ? 'Homme' : categorie === 'femme' ? 'Femme' : categorie ? 'New Face' : '';
+  document.getElementById('ap-souscategorie').textContent = [libelleCategorie, ville].filter(Boolean).join(' · ') || 'Complétez vos informations ci-dessous';
+
+  const age = calculerAgeApercu(document.getElementById('pr-naissance').value);
+  const items = [];
+  if (age) items.push(['age', 'Âge', age + ' ans']);
+  const taille = document.getElementById('pr-taille').value;
+  if (taille) items.push(['taille', 'Taille', taille + ' cm']);
+  const poids = document.getElementById('pr-poids').value;
+  if (poids) items.push(['poids', 'Poids', poids + ' kg']);
+  const poitrine = document.getElementById('pr-poitrine').value;
+  if (poitrine) items.push(['ruban', 'Poitrine', poitrine + ' cm']);
+  const tourTaille = document.getElementById('pr-tourtaille').value;
+  if (tourTaille) items.push(['ruban', 'Tour de taille', tourTaille + ' cm']);
+  const hanches = document.getElementById('pr-hanches').value;
+  if (hanches && champHanchesVisible()) items.push(['ruban', 'Hanches', hanches + ' cm']);
+  const entrejambe = document.getElementById('pr-entrejambe').value;
+  if (entrejambe && champEntrejambeVisible()) items.push(['ruban', 'Entrejambe', entrejambe + ' cm']);
+  const pointure = document.getElementById('pr-pointure').value;
+  if (pointure) items.push(['pointure', 'Pointure', pointure]);
+  const carnation = document.getElementById('pr-carnation').value;
+  if (carnation) items.push(['carnation', 'Carnation', carnation]);
+
+  document.getElementById('ap-mensurations').innerHTML = items.length
+    ? items.map(([icone, label, valeur]) => `<div class="mensuration-item">${iconeMensurationApercu(icone)}<div><span class="label">${label}</span><span class="valeur">${echapperHtml(valeur)}</span></div></div>`).join('')
+    : '<p class="em-28">Vos mensurations apparaîtront ici au fur et à mesure que vous les renseignez.</p>';
+}
+function champHanchesVisible() { return document.getElementById('champ-hanches').style.display !== 'none'; }
+function champEntrejambeVisible() { return document.getElementById('champ-entrejambe').style.display !== 'none'; }
+
+// deriverNiveauMannequin() est partagée dans js/app.js (utilisée aussi par
+// mannequin.html et espace-mannequin-MA2M-premium-20.html).
+function majNiveauMannequinApercu() {
+  const niveau = deriverNiveauMannequin(document.getElementById('pr-experience').value);
+  document.getElementById('niveau-mannequin-valeur').textContent = niveau;
+}
+document.getElementById('pr-experience').addEventListener('change', majNiveauMannequinApercu);
+
+['pr-nom', 'pr-ville', 'pr-ville-autre', 'pr-commune', 'pr-commune-autre', 'pr-categorie', 'pr-naissance', 'pr-taille', 'pr-poids', 'pr-poitrine', 'pr-tourtaille', 'pr-hanches', 'pr-entrejambe', 'pr-pointure', 'pr-carnation'].forEach((id) => {
+  const champ = document.getElementById(id);
+  if (champ) { champ.addEventListener('input', mettreAJourApercu); champ.addEventListener('change', mettreAJourApercu); }
+});
+
+// --- Inscription avec code d'invitation ---
+document.getElementById('form-inscription').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = document.getElementById('in-msg');
+  const code = document.getElementById('in-code').value.trim();
+  const nom = document.getElementById('in-nom').value.trim();
+  const email = document.getElementById('in-email').value.trim();
+  const mdp = document.getElementById('in-mdp').value;
+
+  afficherMsg(msg, 'Vérification du code…', 'ok');
+
+  const { data: codeValide, error: erreurCode } = await sb.rpc('check_invite_code', { code_input: code });
+  if (erreurCode || !codeValide) {
+    afficherMsg(msg, "Ce code d'invitation est invalide ou déjà utilisé.", 'err');
+    return;
+  }
+
+  const { data: signUpData, error: erreurSignUp } = await sb.auth.signUp({ email, password: mdp });
+  if (erreurSignUp) {
+    afficherMsg(msg, "Erreur lors de la création du compte : " + erreurSignUp.message, 'err');
+    return;
+  }
+
+  if (!signUpData.session) {
+    afficherMsg(msg, "Compte créé. Vérifiez votre boîte e-mail pour confirmer votre adresse avant de vous connecter.", 'ok');
+    return;
+  }
+
+  const { data: consomme, error: erreurConsomme } = await sb.rpc('consume_invite_code', { code_input: code });
+  if (erreurConsomme || !consomme) {
+    afficherMsg(msg, "Ce code vient d'être utilisé par quelqu'un d'autre. Contactez l'agence pour un nouveau code.", 'err');
+    await sb.auth.signOut();
+    return;
+  }
+
+  // Le compte d'authentification existe désormais (signUp a réussi) : s'il manque
+  // encore la fiche model_profiles derrière, tout le reste du tableau de bord casse
+  // en silence (ajout de projet, envoi de photo... échouent avec une erreur de clé
+  // étrangère incompréhensible, faute de fiche à laquelle se rattacher). On retente
+  // avant d'annoncer un succès, pour ne jamais laisser quelqu'un dans cet état.
+  let erreurProfil = null;
+  for (let essai = 0; essai < 3; essai++) {
+    const { error } = await sb.from('model_profiles').upsert({ id: signUpData.user.id, full_name: nom, published: false });
+    erreurProfil = error;
+    if (!error) break;
+    await new Promise(r => setTimeout(r, 1000));
+  }
+  if (erreurProfil) {
+    afficherMsg(msg, "Compte créé, mais la fiche profil n'a pas pu être créée (" + erreurProfil.message + "). Déconnectez-vous et reconnectez-vous pour réessayer, ou contactez l'agence.", 'err');
+    return;
+  }
+
+  afficherMsg(msg, 'Compte créé avec succès !', 'ok');
+  ouvrirDashboard();
+});
+
+// --- Connexion ---
+document.getElementById('form-connexion').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = document.getElementById('co-msg');
+  const email = document.getElementById('co-email').value.trim();
+  const mdp = document.getElementById('co-mdp').value;
+
+  const { error } = await sb.auth.signInWithPassword({ email, password: mdp });
+  if (error) {
+    afficherMsg(msg, "E-mail ou mot de passe incorrect.", 'err');
+    return;
+  }
+  ouvrirDashboard();
+});
+
+// --- Mot de passe oublié ---
+// Même principe que côté admin : ce drapeau évite qu'une reconnexion
+// automatique (session déjà active) n'ouvre le tableau de bord directement
+// pendant qu'un lien de réinitialisation est en train d'être traité.
+let recuperationMdpEnCoursMannequin = false;
+function afficherPanneau(idPanneau) {
+  document.querySelectorAll('#bloc-auth .panneau').forEach(p => p.classList.remove('actif'));
+  document.getElementById(idPanneau).classList.add('actif');
+}
+document.getElementById('co-mdp-oublie-lien').addEventListener('click', (e) => {
+  e.preventDefault();
+  document.getElementById('co-mdp-oublie-email').value = document.getElementById('co-email').value.trim();
+  afficherPanneau('panneau-mdp-oublie');
+});
+document.getElementById('co-mdp-oublie-retour').addEventListener('click', (e) => {
+  e.preventDefault();
+  afficherPanneau('panneau-connexion');
+});
+document.getElementById('co-mdp-oublie-envoyer').addEventListener('click', async () => {
+  if (!sb) return;
+  const email = document.getElementById('co-mdp-oublie-email').value.trim();
+  const msg = document.getElementById('co-mdp-oublie-msg');
+  if (!email) return;
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + window.location.pathname
+  });
+  msg.className = 'form-msg ' + (error ? 'err' : 'ok');
+  msg.textContent = error
+    ? "Erreur lors de l'envoi : " + error.message
+    : "Si cet e-mail est associé à un compte, un lien de réinitialisation vient d'être envoyé. Vérifiez votre boîte mail (et vos spams).";
+  msg.style.display = 'block';
+});
+
+sb && sb.auth.onAuthStateChange((event) => {
+  if (event !== 'PASSWORD_RECOVERY') return;
+  recuperationMdpEnCoursMannequin = true;
+  dashboard.classList.remove('actif');
+  blocAuth.style.display = '';
+  afficherPanneau('panneau-nouveau-mdp');
+});
+
+document.getElementById('co-nouveau-mdp-valider').addEventListener('click', async () => {
+  const nouveauMdp = document.getElementById('co-nouveau-mdp').value;
+  const msg = document.getElementById('co-nouveau-mdp-msg');
+  if (nouveauMdp.length < 8) {
+    msg.className = 'form-msg err';
+    msg.textContent = 'Le mot de passe doit contenir au moins 8 caractères.';
+    msg.style.display = 'block';
+    return;
+  }
+  if (!sb) return;
+  const { error } = await sb.auth.updateUser({ password: nouveauMdp });
+  if (error) {
+    msg.className = 'form-msg err';
+    msg.textContent = 'Erreur : ' + error.message;
+    msg.style.display = 'block';
+    return;
+  }
+  recuperationMdpEnCoursMannequin = false;
+  ouvrirDashboard();
+});
+
+// --- Déconnexion ---
+document.getElementById('btn-deconnexion').addEventListener('click', async () => {
+  await sb.auth.signOut();
+  dashboard.classList.remove('actif');
+  blocAuth.style.display = '';
+});
+
+// --- Ouvrir le tableau de bord et charger les données ---
+async function ouvrirDashboard() {
+  blocAuth.style.display = 'none';
+  dashboard.classList.add('actif');
+  await chargerProfil();
+  await chargerPhotos();
+  await chargerProjets();
+}
+
+// Conserve le dernier profil chargé pour savoir, au moment de publier, si la
+// personne en était déjà à son premier enregistrement complet ou non (sert à
+// ne déclencher le message de félicitations qu'une seule fois, la première fois).
+let dernierProfilCharge = null;
+
+async function chargerProfil() {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return;
+
+  // Le téléphone/e-mail privé ne fait plus partie de "select('*')" (retiré du rôle
+  // authenticated pour empêcher tout autre compte connecté de les lire via l'API) :
+  // on les récupère séparément via une fonction réservée au propriétaire de la fiche.
+  const { data: profil } = await sb.from('model_profiles')
+    .select('id, full_name, bio, height_cm, weight_kg, city, quartier, instagram, published, created_at, category, video_url, chest_cm, waist_cm, hips_cm, shoe_size, carnation, clothing_size, date_naissance, eye_color, hair_color, years_experience, model_types, languages, availability, inseam_cm, featured, premiere_publication_faite, en_attente_validation, raison_refus, niveau_etude, etablissement, formation_particuliere, formation_mannequin, competences, citation')
+    .eq('id', user.id).single();
+  if (!profil) return;
+  dernierProfilCharge = profil;
+  appliquerModeGuide(profil);
+
+  const { data: contactPrive } = await sb.rpc('mon_contact_prive');
+  if (contactPrive && contactPrive[0]) {
+    profil.phone = contactPrive[0].phone;
+    profil.contact_email = contactPrive[0].contact_email;
+  }
+
+  document.getElementById('db-nom').textContent = profil.full_name || 'Mon profil';
+  const statut = document.getElementById('db-statut');
+  if (profil.published) {
+    statut.textContent = 'Publié';
+  } else if (profil.en_attente_validation) {
+    statut.textContent = 'En attente de validation';
+  } else {
+    statut.textContent = 'Non publié';
+  }
+  statut.classList.toggle('publie', !!profil.published);
+  statut.classList.toggle('en-attente', !profil.published && !!profil.en_attente_validation);
+
+  const bandeauRefus = document.getElementById('bandeau-refus');
+  if (!profil.published && !profil.en_attente_validation && profil.raison_refus) {
+    bandeauRefus.innerHTML = `<strong>Fiche non publiée par l'agence.</strong> ${echapperHtml(profil.raison_refus)} — corrigez ce qui est signalé puis republiez votre fiche.`;
+    bandeauRefus.style.display = 'block';
+  } else {
+    bandeauRefus.style.display = 'none';
+  }
+
+  document.getElementById('pr-nom').value = profil.full_name || '';
+  preRemplirTelephone(profil.phone, document.getElementById('pr-indicatif'), document.getElementById('pr-telephone-numero'));
+  document.getElementById('pr-email-perso').value = profil.contact_email || '';
+  definirVilleAvecCommune(profil.city || '', 'pr-ville', 'pr-ville-autre', 'pr-commune', 'pr-commune-autre');
+  document.getElementById('pr-quartier').value = profil.quartier || '';
+  document.getElementById('pr-categorie').value = profil.category || '';
+  document.getElementById('pr-hanches').value = profil.hips_cm ?? '';
+  document.getElementById('pr-entrejambe').value = profil.inseam_cm ?? '';
+  appliquerChampsGenre();
+  document.getElementById('pr-taille').value = profil.height_cm || '';
+  document.getElementById('pr-poids').value = profil.weight_kg || '';
+  document.getElementById('pr-poitrine').value = profil.chest_cm || '';
+  document.getElementById('pr-tourtaille').value = profil.waist_cm || '';
+  document.getElementById('pr-pointure').value = profil.shoe_size || '';
+  document.getElementById('pr-carnation').value = profil.carnation || '';
+  document.getElementById('pr-naissance').value = profil.date_naissance || '';
+  definirSelectOuAutre('pr-yeux', 'pr-yeux-autre', profil.eye_color || '');
+  definirSelectOuAutre('pr-cheveux', 'pr-cheveux-autre', profil.hair_color || '');
+  definirSelectOuAutre('pr-tailleveternents', 'pr-tailleveternents-autre', profil.clothing_size || '');
+  document.getElementById('pr-bio').value = profil.bio || '';
+  document.getElementById('pr-video').value = profil.video_url || '';
+  document.getElementById('pr-instagram').value = profil.instagram || '';
+  document.getElementById('pr-citation').value = profil.citation || '';
+  document.getElementById('pr-niveau-etude').value = profil.niveau_etude || '';
+  document.getElementById('pr-etablissement').value = profil.etablissement || '';
+  document.getElementById('pr-formation-particuliere').value = profil.formation_particuliere || '';
+  document.getElementById('pr-formation-mannequin').value = profil.formation_mannequin || '';
+  const competencesProfil = profil.competences || {};
+  document.querySelectorAll('#form-competences input[data-competence]').forEach(input => {
+    input.value = competencesProfil[input.dataset.competence] || 3;
+  });
+  document.getElementById('pr-publie').checked = !!profil.published;
+  document.getElementById('pr-experience').value = profil.years_experience ?? '';
+  majNiveauMannequinApercu();
+  const languesCochees = (profil.languages || '').split(',').map(l => l.trim()).filter(Boolean);
+  document.querySelectorAll('.pr-langue').forEach(c => { c.checked = languesCochees.includes(c.value); });
+  document.getElementById('pr-disponibilite').value = profil.availability || '';
+  const typesCoches = profil.model_types || [];
+  document.querySelectorAll('.pr-type').forEach(c => { c.checked = typesCoches.includes(c.value); });
+
+  const notice = document.getElementById('notice-nouveaux-champs');
+  const mensurationGenreManquante = profil.category === 'homme' ? !profil.inseam_cm : (profil.category === 'femme' ? !profil.hips_cm : false);
+  const incomplet = (profil.years_experience === null || profil.years_experience === undefined)
+    || !typesCoches.length
+    || !profil.languages
+    || !profil.availability
+    || mensurationGenreManquante;
+  notice.dataset.profilIncomplet = incomplet ? '1' : '0';
+  await majNoticeNouveauxChamps();
+  mettreAJourApercu();
+}
+
+async function majNoticeNouveauxChamps() {
+  const notice = document.getElementById('notice-nouveaux-champs');
+  if (notice.dataset.profilIncomplet === '1') {
+    notice.style.display = 'block';
+    return;
+  }
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return;
+  const { count: nbProjets } = await sb.from('model_projects').select('id', { count: 'exact', head: true }).eq('model_id', user.id);
+  notice.style.display = !nbProjets ? 'block' : 'none';
+}
+
+// --- Bloc 1 : Informations & mensurations — enregistrement autonome, ne touche
+// jamais à "published" ni aux autres blocs (projets, expérience, photos). ---
+document.getElementById('form-infos').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = document.getElementById('infos-msg');
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return;
+
+  const maj = {
+    id: user.id,
+    full_name: document.getElementById('pr-nom').value.trim(),
+    phone: composerTelephone(document.getElementById('pr-indicatif'), document.getElementById('pr-telephone-numero')),
+    contact_email: document.getElementById('pr-email-perso').value.trim(),
+    city: villeAvecCommune(valeurSelectOuAutre('pr-ville', 'pr-ville-autre'), 'pr-commune', 'pr-commune-autre'),
+    quartier: document.getElementById('pr-quartier').value.trim() || null,
+    category: document.getElementById('pr-categorie').value,
+    date_naissance: document.getElementById('pr-naissance').value || null,
+    height_cm: parseInt(document.getElementById('pr-taille').value) || null,
+    weight_kg: parseInt(document.getElementById('pr-poids').value) || null,
+    chest_cm: parseInt(document.getElementById('pr-poitrine').value) || null,
+    waist_cm: parseInt(document.getElementById('pr-tourtaille').value) || null,
+    hips_cm: parseInt(document.getElementById('pr-hanches').value) || null,
+    inseam_cm: parseInt(document.getElementById('pr-entrejambe').value) || null,
+    shoe_size: document.getElementById('pr-pointure').value.trim(),
+    carnation: document.getElementById('pr-carnation').value,
+    clothing_size: valeurSelectOuAutre('pr-tailleveternents', 'pr-tailleveternents-autre'),
+    eye_color: valeurSelectOuAutre('pr-yeux', 'pr-yeux-autre'),
+    hair_color: valeurSelectOuAutre('pr-cheveux', 'pr-cheveux-autre'),
+    bio: document.getElementById('pr-bio').value.trim(),
+    video_url: document.getElementById('pr-video').value.trim() || null,
+    instagram: document.getElementById('pr-instagram').value.trim() || null,
+    citation: document.getElementById('pr-citation').value.trim() || null
+  };
+
+  const { error } = await sb.from('model_profiles').upsert(maj);
+  if (error) {
+    afficherMsg(msg, "Erreur lors de l'enregistrement.", 'err');
+    return;
+  }
+  afficherMsg(msg, '✅ Informations enregistrées.', 'ok');
+  chargerProfil();
+});
+
+// --- Bloc 2 : Formation — enregistrement autonome. ---
+document.getElementById('form-formation').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = document.getElementById('formation-msg');
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return;
+
+  const maj = {
+    id: user.id,
+    niveau_etude: document.getElementById('pr-niveau-etude').value.trim() || null,
+    etablissement: document.getElementById('pr-etablissement').value.trim() || null,
+    formation_particuliere: document.getElementById('pr-formation-particuliere').value.trim() || null,
+    formation_mannequin: document.getElementById('pr-formation-mannequin').value.trim() || null
+  };
+
+  const { error } = await sb.from('model_profiles').upsert(maj);
+  if (error) {
+    afficherMsg(msg, "Erreur lors de l'enregistrement.", 'err');
+    return;
+  }
+  afficherMsg(msg, '✅ Formation enregistrée.', 'ok');
+  chargerProfil();
+});
+
+// --- Bloc 3 : Expérience professionnelle — enregistrement autonome, idem.
+// Bouton simple (pas de submit de formulaire) : les projets de ce même bloc
+// s'ajoutent instantanément un par un via leurs propres boutons, il n'y a
+// donc pas de <form> englobant à intercepter ici. ---
+document.getElementById('btn-enregistrer-experience').addEventListener('click', async () => {
+  const msg = document.getElementById('exp-msg');
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return;
+
+  const maj = {
+    id: user.id,
+    years_experience: document.getElementById('pr-experience').value !== '' ? parseInt(document.getElementById('pr-experience').value) : null,
+    model_types: Array.from(document.querySelectorAll('.pr-type:checked')).map(c => c.value),
+    languages: Array.from(document.querySelectorAll('.pr-langue:checked')).map(c => c.value).join(', '),
+    availability: document.getElementById('pr-disponibilite').value
+  };
+
+  const { error } = await sb.from('model_profiles').upsert(maj);
+  if (error) {
+    afficherMsg(msg, "Erreur lors de l'enregistrement.", 'err');
+    return;
+  }
+  afficherMsg(msg, '✅ Expérience enregistrée.', 'ok');
+  chargerProfil();
+});
+
+// --- Bloc 4 : Compétences — enregistrement autonome. ---
+document.getElementById('form-competences').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = document.getElementById('competences-msg');
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return;
+
+  const competences = {};
+  document.querySelectorAll('#form-competences input[data-competence]').forEach(input => {
+    competences[input.dataset.competence] = parseInt(input.value);
+  });
+
+  const { error } = await sb.from('model_profiles').upsert({ id: user.id, competences });
+  if (error) {
+    afficherMsg(msg, "Erreur lors de l'enregistrement.", 'err');
+    return;
+  }
+  afficherMsg(msg, '✅ Compétences enregistrées.', 'ok');
+  chargerProfil();
+});
+
+// --- Bloc 5 : Contact & publication — seul endroit qui exige la fiche complète.
+// Ré-enregistre TOUT (au cas où des champs auraient été modifiés sans cliquer sur
+// le bouton de leur propre bloc), donc rien n'est jamais perdu même si les blocs
+// 1/2/3/4 n'ont pas été explicitement sauvegardés juste avant — c'est essentiel
+// en mode guidé (première inscription), où ce bouton est le SEUL visible. ---
+document.getElementById('form-publication').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = document.getElementById('pr-msg');
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return;
+
+  const competences = {};
+  document.querySelectorAll('#form-competences input[data-competence]').forEach(input => {
+    competences[input.dataset.competence] = parseInt(input.value);
+  });
+
+  const maj = {
+    id: user.id,
+    full_name: document.getElementById('pr-nom').value.trim(),
+    phone: composerTelephone(document.getElementById('pr-indicatif'), document.getElementById('pr-telephone-numero')),
+    contact_email: document.getElementById('pr-email-perso').value.trim(),
+    city: villeAvecCommune(valeurSelectOuAutre('pr-ville', 'pr-ville-autre'), 'pr-commune', 'pr-commune-autre'),
+    quartier: document.getElementById('pr-quartier').value.trim() || null,
+    category: document.getElementById('pr-categorie').value,
+    date_naissance: document.getElementById('pr-naissance').value || null,
+    height_cm: parseInt(document.getElementById('pr-taille').value) || null,
+    weight_kg: parseInt(document.getElementById('pr-poids').value) || null,
+    chest_cm: parseInt(document.getElementById('pr-poitrine').value) || null,
+    waist_cm: parseInt(document.getElementById('pr-tourtaille').value) || null,
+    hips_cm: parseInt(document.getElementById('pr-hanches').value) || null,
+    inseam_cm: parseInt(document.getElementById('pr-entrejambe').value) || null,
+    shoe_size: document.getElementById('pr-pointure').value.trim(),
+    carnation: document.getElementById('pr-carnation').value,
+    clothing_size: valeurSelectOuAutre('pr-tailleveternents', 'pr-tailleveternents-autre'),
+    eye_color: valeurSelectOuAutre('pr-yeux', 'pr-yeux-autre'),
+    hair_color: valeurSelectOuAutre('pr-cheveux', 'pr-cheveux-autre'),
+    video_url: document.getElementById('pr-video').value.trim() || null,
+    bio: document.getElementById('pr-bio').value.trim(),
+    instagram: document.getElementById('pr-instagram').value.trim() || null,
+    citation: document.getElementById('pr-citation').value.trim() || null,
+    niveau_etude: document.getElementById('pr-niveau-etude').value.trim() || null,
+    etablissement: document.getElementById('pr-etablissement').value.trim() || null,
+    formation_particuliere: document.getElementById('pr-formation-particuliere').value.trim() || null,
+    formation_mannequin: document.getElementById('pr-formation-mannequin').value.trim() || null,
+    competences: competences,
+    published: document.getElementById('pr-publie').checked,
+    years_experience: document.getElementById('pr-experience').value !== '' ? parseInt(document.getElementById('pr-experience').value) : null,
+    model_types: Array.from(document.querySelectorAll('.pr-type:checked')).map(c => c.value),
+    languages: Array.from(document.querySelectorAll('.pr-langue:checked')).map(c => c.value).join(', '),
+    availability: document.getElementById('pr-disponibilite').value
+  };
+
+  // --- Vérification de la fiche complète avant toute publication ---
+  if (maj.published) {
+    const champsObligatoires = {
+      'Nom complet': maj.full_name,
+      'Ville': maj.city,
+      'Date de naissance': maj.date_naissance,
+      'Catégorie': maj.category,
+      'Taille (cm)': maj.height_cm,
+      'Poitrine (cm)': maj.chest_cm,
+      'Tour de taille (cm)': maj.waist_cm,
+      'Pointure': maj.shoe_size,
+      'Carnation': maj.carnation,
+      'Taille de vêtements': maj.clothing_size,
+      'Présentation / expérience': maj.bio,
+      'Langues parlées': maj.languages,
+      'Disponibilité': maj.availability
+    };
+    if (maj.category === 'homme') {
+      champsObligatoires['Entrejambe (cm)'] = maj.inseam_cm;
+    } else if (maj.category === 'femme') {
+      champsObligatoires['Hanches (cm)'] = maj.hips_cm;
+    } else {
+      champsObligatoires['Hanches (cm) ou Entrejambe (cm)'] = maj.hips_cm || maj.inseam_cm;
+    }
+    const manquants = Object.entries(champsObligatoires).filter(([, v]) => !v).map(([nom]) => nom);
+
+    const { count: nbPhotos } = await sb.from('model_photos').select('id', { count: 'exact', head: true }).eq('model_id', user.id);
+    if (!nbPhotos) manquants.push('Au moins une photo');
+
+    // Redevenu obligatoire maintenant que "Type de projet" propose "New Face" :
+    // un mannequin qui débute sans aucune expérience a désormais toujours un moyen
+    // de remplir cette exigence (voir plus haut dans ce fichier).
+    const { count: nbProjets } = await sb.from('model_projects').select('id', { count: 'exact', head: true }).eq('model_id', user.id);
+    if (!nbProjets) manquants.push('Au moins un projet réalisé (ou "New Face" si vous débutez)');
+
+    if (manquants.length) {
+      maj.published = false;
+      document.getElementById('pr-publie').checked = false;
+      afficherMsg(msg, 'Fiche enregistrée en brouillon (non publiée) — informations manquantes : ' + manquants.join(', ') + '.', 'err');
+      await sb.from('model_profiles').upsert(maj);
+      chargerProfil();
+      return;
+    }
+  }
+
+  // premiere_publication_faite n'est plus fixé ici côté client : c'est le
+  // déclencheur SQL (gerer_validation_publication, Extension 64) qui en
+  // décide, uniquement quand un admin valide réellement la fiche — pas au
+  // moment où le mannequin clique sur "publier" lui-même. Sans ça, un
+  // envoi bloqué en attente de validation débloquerait quand même le mode
+  // autonome des blocs, à tort.
+  const etaitDejaFormee = dernierProfilCharge && !!dernierProfilCharge.premiere_publication_faite;
+
+  const { data: resultat, error } = await sb.from('model_profiles').update(maj).eq('id', user.id).select().single();
+  if (error) {
+    afficherMsg(msg, "Erreur lors de l'enregistrement.", 'err');
+    return;
+  }
+  // resultat reflète l'état réel après passage du déclencheur serveur : si on
+  // avait envoyé published:true mais que la fiche nécessitait une validation
+  // (première publication, ou profil de mineur), le serveur l'a remise en
+  // attente indépendamment de ce que le formulaire demandait.
+  if (maj.published && !resultat.published && resultat.en_attente_validation) {
+    document.getElementById('pr-publie').checked = false;
+    afficherMsg(msg, "Fiche complète envoyée à l'agence pour validation avant sa mise en ligne — vous serez notifié dès qu'elle sera publiée.", 'ok');
+  } else {
+    afficherMsg(msg, resultat.published ? 'Fiche complète et publiée avec succès.' : 'Profil enregistré.', 'ok');
+    if (resultat.published && !etaitDejaFormee) afficherFlashSucces();
+  }
+  chargerProfil();
+});
+
+// --- Message flash de félicitations à la toute première publication réussie ---
+// Bien visible, au centre de l'écran, pour que la personne comprenne sans
+// aucun doute que son profil est désormais en ligne (pas juste un petit
+// bandeau discret en haut de page).
+function afficherFlashSucces() {
+  const flash = document.getElementById('flash-succes');
+  const fond = document.getElementById('flash-succes-fond');
+  if (!flash || !fond) return;
+  const fermer = () => { flash.classList.remove('actif'); fond.classList.remove('actif'); };
+  flash.classList.add('actif');
+  fond.classList.add('actif');
+  fond.addEventListener('click', fermer, { once: true });
+  setTimeout(fermer, 6000);
+}
+
+// --- Photos ---
+async function chargerPhotos() {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return;
+
+  const { data: photos } = await sb.from('model_photos').select('*').eq('model_id', user.id)
+    .order('principale', { ascending: false }).order('created_at', { ascending: true });
+  const grille = document.getElementById('photos-grille');
+  grille.innerHTML = '';
+  const urlsPhotos = (photos || []).map(p => p.url);
+  const nbCompcard = (photos || []).filter(p => p.compcard_ordre).length;
+
+  const apPhoto = document.getElementById('ap-photo');
+  const apPhotoVide = document.getElementById('ap-photo-placeholder');
+  if (urlsPhotos[0]) {
+    apPhoto.src = urlsPhotos[0];
+    apPhoto.style.display = 'block';
+    apPhotoVide.style.display = 'none';
+  } else {
+    apPhoto.style.display = 'none';
+    apPhotoVide.style.display = 'block';
+  }
+  (photos || []).forEach((photo, index) => {
+    const item = document.createElement('div');
+    item.className = 'photo-item' + (photo.principale ? ' est-principale' : '');
+    item.innerHTML = `
+      <img src="${echapperHtml(photo.url_miniature || photo.url)}" alt="Photo du book" class="em-29">
+      <button class="btn-principale" data-id="${photo.id}" title="Définir comme photo de profil">${photo.principale ? '★ Profil' : '☆ Profil'}</button>
+      <button class="btn-supprimer" data-id="${photo.id}" data-chemin="${echapperHtml(photo.chemin || '')}" data-chemin-miniature="${echapperHtml(photo.chemin_miniature || '')}" data-chemin-moyenne="${echapperHtml(photo.chemin_moyenne || '')}" title="Supprimer">✕</button>
+      <button class="btn-compcard" data-id="${photo.id}" title="Choisir pour la fiche Compcard">${photo.compcard_ordre ? `Compcard n°${photo.compcard_ordre}` : '+ Compcard'}</button>
+    `;
+    item.querySelector('img').addEventListener('click', () => ouvrirGalerieLightbox(urlsPhotos, index));
+    grille.appendChild(item);
+  });
+
+  grille.querySelectorAll('.btn-supprimer').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      const chemin = btn.dataset.chemin;
+      const cheminMiniature = btn.dataset.cheminMiniature;
+      const cheminMoyenne = btn.dataset.cheminMoyenne;
+      if (chemin) await sb.storage.from('model-photos').remove([chemin]);
+      if (cheminMiniature) await sb.storage.from('model-photos').remove([cheminMiniature]);
+      if (cheminMoyenne) await sb.storage.from('model-photos').remove([cheminMoyenne]);
+      await sb.from('model_photos').delete().eq('id', id);
+      chargerPhotos();
+    });
+  });
+
+  grille.querySelectorAll('.btn-principale').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const { data: { user } } = await sb.auth.getUser();
+      await sb.from('model_photos').update({ principale: false }).eq('model_id', user.id);
+      await sb.from('model_photos').update({ principale: true }).eq('id', btn.dataset.id);
+      chargerPhotos();
+    });
+  });
+
+  // Sélection des 5 photos de la fiche Compcard (PDF/JPEG) : un clic ajoute la
+  // photo au prochain numéro disponible (1 à 5), un second clic la retire et
+  // referme les numéros des autres pour ne jamais laisser de trou (1,3 → 1,2).
+  grille.querySelectorAll('.btn-compcard').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const { data: { user } } = await sb.auth.getUser();
+      const id = btn.dataset.id;
+      const dejaChoisie = !!(photos.find(p => p.id === id) || {}).compcard_ordre;
+
+      if (dejaChoisie) {
+        await sb.from('model_photos').update({ compcard_ordre: null }).eq('id', id);
+        const { data: restantes } = await sb.from('model_photos').select('id, compcard_ordre')
+          .eq('model_id', user.id).not('compcard_ordre', 'is', null).order('compcard_ordre', { ascending: true });
+        for (let i = 0; i < (restantes || []).length; i++) {
+          if (restantes[i].compcard_ordre !== i + 1) {
+            await sb.from('model_photos').update({ compcard_ordre: i + 1 }).eq('id', restantes[i].id);
+          }
+        }
+      } else {
+        if (nbCompcard >= 5) { alert('5 photos sont déjà sélectionnées pour la fiche Compcard. Désélectionnez-en une avant d\'en ajouter une nouvelle.'); return; }
+        await sb.from('model_photos').update({ compcard_ordre: nbCompcard + 1 }).eq('id', id);
+      }
+      chargerPhotos();
+    });
+  });
+}
+
+async function convertirSiHeic(fichier) {
+  const estHeic = /image\/hei(c|f)/i.test(fichier.type) || /\.(heic|heif)$/i.test(fichier.name);
+  if (!estHeic || typeof heic2any === 'undefined') return fichier;
+  try {
+    const resultat = await heic2any({ blob: fichier, toType: 'image/jpeg', quality: 0.85 });
+    const blobFinal = Array.isArray(resultat) ? resultat[0] : resultat;
+    return new File([blobFinal], fichier.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' });
+  } catch (e) {
+    console.error('Conversion HEIC échouée, envoi du fichier original :', e);
+    return fichier;
+  }
+}
+
+// Compression modérée de la photo d'origine avant envoi : réduit nettement le
+// poids du fichier (donc le stockage ET la bande passante consommée à chaque
+// visite) sans perte visible, y compris pour l'impression du Compcard. 3000px
+// de côté maximum et qualité 0.90 restent largement au-dessus de ce qu'il faut
+// pour imprimer net à 400 DPI sur la plus grande case du Compcard (~130mm de
+// haut, soit environ 2050px à cette résolution) — aucune raison de conserver
+// des fichiers de 8-12 Mo tels quels. Ne touche pas au PNG (transparence).
+function compresserPhotoOrigine(fichier, coteMax = 3000, qualite = 0.90) {
+  return new Promise((resolve) => {
+    if (fichier.type !== 'image/jpeg' || fichier.size < 900 * 1024) { resolve(fichier); return; }
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const coteActuel = Math.max(img.width, img.height);
+        const ratio = coteActuel > coteMax ? coteMax / coteActuel : 1;
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * ratio);
+        canvas.height = Math.round(img.height * ratio);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+          if (!blob || blob.size >= fichier.size) { resolve(fichier); return; }
+          resolve(new File([blob], fichier.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' }));
+        }, 'image/jpeg', qualite);
+      } catch (e) {
+        resolve(fichier);
+      }
+    };
+    img.onerror = () => resolve(fichier);
+    img.src = URL.createObjectURL(fichier);
+  });
+}
+
+// Génère une version réduite de la photo — utilisée à la fois pour la
+// miniature de grille (500px par défaut) et pour la version moyenne des
+// grandes photos plein écran de la page d'accueil (appelée avec coteMax=1600).
+// La photo d'origine envoyée à côté reste, elle, intacte et en pleine
+// résolution pour le Compcard et le téléchargement. Réduit fortement la
+// consommation de bande passante Supabase sans jamais toucher à la qualité
+// de la photo réellement utilisée à l'impression.
+function genererMiniature(fichier, coteMax = 500, qualite = 0.75) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const coteActuel = Math.max(img.width, img.height);
+        const ratio = coteActuel > coteMax ? coteMax / coteActuel : 1;
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * ratio);
+        canvas.height = Math.round(img.height * ratio);
+        const ctx = canvas.getContext('2d');
+        // Fond blanc avant de dessiner : évite un fond noir si la photo d'origine
+        // a de la transparence (PNG) et qu'on la convertit en JPEG (sans alpha).
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => resolve(blob || null), 'image/jpeg', qualite);
+      } catch (e) {
+        resolve(null);
+      }
+    };
+    img.onerror = () => resolve(null);
+    img.src = URL.createObjectURL(fichier);
+  });
+}
+
+document.getElementById('input-photo').addEventListener('change', async (e) => {
+  const fichiers = Array.from(e.target.files || []);
+  if (!fichiers.length) return;
+
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return;
+
+  // Filet de sécurité : si la fiche model_profiles de cette personne n'existe pas
+  // encore (ex. échec silencieux au moment de l'inscription, avant le correctif),
+  // la photo se téléverserait dans le stockage mais sa fiche en base échouerait
+  // en silence (clé étrangère), et la photo n'apparaîtrait jamais dans la grille.
+  await sb.from('model_profiles').upsert({ id: user.id }, { ignoreDuplicates: true });
+
+  // Vérifié aussi côté serveur (trigger sur model_photos) — ce contrôle ici évite
+  // simplement de téléverser inutilement des fichiers qui seraient de toute façon
+  // refusés une fois la limite atteinte.
+  const LIMITE_PHOTOS = 30;
+  const { count: nbPhotosActuelles } = await sb.from('model_photos').select('id', { count: 'exact', head: true }).eq('model_id', user.id);
+  if ((nbPhotosActuelles || 0) + fichiers.length > LIMITE_PHOTOS) {
+    alert(`Limite de ${LIMITE_PHOTOS} photos par book atteinte (${nbPhotosActuelles || 0} déjà envoyées). Supprimez d'anciennes photos avant d'en ajouter de nouvelles.`);
+    e.target.value = '';
+    return;
+  }
+
+  const apercu = document.getElementById('apercu-upload');
+  const liste = document.getElementById('apercu-liste');
+  apercu.style.display = 'block';
+  liste.innerHTML = '';
+
+  // Une ligne d'état par photo sélectionnée, envoyées une par une en arrière-plan
+  const lignes = fichiers.map((fichierOriginal) => {
+    const ligne = document.createElement('div');
+    ligne.style.cssText = 'display:flex; align-items:center; gap:1rem;';
+    const img = document.createElement('img');
+    img.alt = 'Aperçu';
+    img.style.cssText = 'width:56px; height:72px; object-fit:cover; border:1px solid var(--gris-clair);';
+    try { img.src = URL.createObjectURL(fichierOriginal); } catch (err) {}
+    const infos = document.createElement('div');
+    const nom = document.createElement('div');
+    nom.style.cssText = 'font-weight:600; font-size:0.9rem;';
+    nom.textContent = fichierOriginal.name;
+    const statut = document.createElement('div');
+    statut.style.cssText = 'font-size:0.85rem; margin-top:0.2rem; color:var(--gris);';
+    statut.textContent = '⏳ En attente...';
+    infos.appendChild(nom);
+    infos.appendChild(statut);
+    ligne.appendChild(img);
+    ligne.appendChild(infos);
+    liste.appendChild(ligne);
+    return { fichierOriginal, img, statut };
+  });
+
+  let nbReussies = 0;
+  for (const { fichierOriginal, img, statut } of lignes) {
+    statut.textContent = '⏳ Préparation...';
+    try {
+      const fichierConverti = await convertirSiHeic(fichierOriginal);
+      const fichier = await compresserPhotoOrigine(fichierConverti);
+      try { img.src = URL.createObjectURL(fichier); } catch (err) {}
+      statut.textContent = '⏳ Envoi en cours...';
+
+      const chemin = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${nomFichierSur(fichier.name)}`;
+      const { error: erreurUpload } = await sb.storage.from('model-photos').upload(chemin, fichier);
+      if (erreurUpload) {
+        statut.textContent = '❌ Échec : ' + erreurUpload.message;
+        statut.style.color = 'var(--rouge)';
+        continue;
+      }
+      const { data: urlPublique } = sb.storage.from('model-photos').getPublicUrl(chemin);
+
+      // Miniature (grille) et version moyenne (grandes photos plein écran de la
+      // page d'accueil) envoyées à côté de l'originale — un échec ici n'empêche
+      // jamais l'ajout de la photo : la fiche retombe simplement sur la pleine
+      // résolution en attendant un rattrapage (voir le tableau de bord).
+      let cheminMiniature = null, urlMiniature = null;
+      const blobMiniature = await genererMiniature(fichier);
+      if (blobMiniature) {
+        cheminMiniature = `${user.id}/miniatures/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+        const { error: erreurMiniature } = await sb.storage.from('model-photos').upload(cheminMiniature, blobMiniature);
+        if (!erreurMiniature) {
+          urlMiniature = sb.storage.from('model-photos').getPublicUrl(cheminMiniature).data.publicUrl;
+        } else {
+          cheminMiniature = null;
+        }
+      }
+
+      let cheminMoyenne = null, urlMoyenne = null;
+      const blobMoyenne = await genererMiniature(fichier, 1600, 0.82);
+      if (blobMoyenne) {
+        cheminMoyenne = `${user.id}/moyennes/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+        const { error: erreurMoyenne } = await sb.storage.from('model-photos').upload(cheminMoyenne, blobMoyenne);
+        if (!erreurMoyenne) {
+          urlMoyenne = sb.storage.from('model-photos').getPublicUrl(cheminMoyenne).data.publicUrl;
+        } else {
+          cheminMoyenne = null;
+        }
+      }
+
+      const { error: erreurFiche } = await sb.from('model_photos').insert({
+        model_id: user.id,
+        url: urlPublique.publicUrl,
+        chemin,
+        url_miniature: urlMiniature,
+        chemin_miniature: cheminMiniature,
+        url_moyenne: urlMoyenne,
+        chemin_moyenne: cheminMoyenne,
+        originale_optimisee: true
+      });
+      if (erreurFiche) {
+        statut.textContent = '❌ Échec : ' + erreurFiche.message;
+        statut.style.color = 'var(--rouge)';
+        continue;
+      }
+
+      statut.textContent = '✅ Envoyée avec succès';
+      statut.style.color = '#1e5b25';
+      nbReussies++;
+    } catch (err) {
+      statut.textContent = '❌ Échec de l\'envoi';
+      statut.style.color = 'var(--rouge)';
+    }
+  }
+
+  e.target.value = '';
+  if (nbReussies) chargerPhotos();
+  setTimeout(() => { apercu.style.display = 'none'; liste.innerHTML = ''; }, 3000);
+});
+
+// --- Projets réalisés ---
+// --- Regroupement des projets pour l'affichage, façon CV : les 4 catégories
+// reprennent le "type_projet" existant (Extension antérieure) sans y toucher —
+// Défilé -> Défilés ; Publicité -> Campagnes & Éditoriaux ; Shoot photo ->
+// Shootings ; Casting/New Face/Autre (ou un type personnalisé saisi via
+// "Autre") -> Autres expériences. ---
+function categoriserProjet(typeProjet) {
+  if (typeProjet === 'Défilé') return 'Défilés';
+  if (typeProjet === 'Publicité') return 'Campagnes & Éditoriaux';
+  if (typeProjet === 'Shoot photo') return 'Shootings';
+  return 'Autres expériences';
+}
+const ORDRE_CATEGORIES_PROJETS = ['Défilés', 'Campagnes & Éditoriaux', 'Shootings', 'Autres expériences'];
+
+async function chargerProjets() {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return;
+
+  const { data: projets } = await sb.from('model_projects').select('*').eq('model_id', user.id).order('created_at', { ascending: false });
+  const liste = document.getElementById('projets-liste');
+  liste.innerHTML = '';
+  if (!projets || !projets.length) {
+    liste.innerHTML = '<p class="em-30">Aucun projet ajouté pour le moment.</p>';
+    return;
+  }
+
+  const parCategorie = new Map();
+  projets.forEach(p => {
+    const cat = categoriserProjet(p.type_projet);
+    if (!parCategorie.has(cat)) parCategorie.set(cat, []);
+    parCategorie.get(cat).push(p);
+  });
+
+  ORDRE_CATEGORIES_PROJETS.forEach(cat => {
+    const projetsCat = parCategorie.get(cat);
+    if (!projetsCat || !projetsCat.length) return;
+
+    const titreGroupe = document.createElement('h4');
+    titreGroupe.className = 'projets-groupe-titre';
+    titreGroupe.textContent = cat;
+    liste.appendChild(titreGroupe);
+
+    projetsCat.forEach(p => {
+      const item = document.createElement('div');
+      item.className = 'projet-item';
+      const lieu = [p.ville, p.pays].filter(Boolean).join(', ');
+      item.innerHTML = `
+        <div>
+          <strong>${echapperHtml(p.type_projet)}</strong>${p.titre ? ' — ' + echapperHtml(p.titre) : ''}
+          <div class="em-31">
+            ${[formaterPeriode(p.periode), lieu, p.promoteur].filter(Boolean).map(echapperHtml).join(' · ')}
+          </div>
+        </div>
+        <div class="em-32">
+          <button data-id="${p.id}" data-action="modifier" title="Modifier" class="em-33">✎</button>
+          <button data-id="${p.id}" data-action="supprimer" title="Supprimer">✕</button>
+        </div>
+      `;
+      liste.appendChild(item);
+    });
+  });
+
+  liste.querySelectorAll('button[data-action="modifier"]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const p = projets.find(x => x.id === btn.dataset.id);
+      if (!p) return;
+      projetEnEdition = p.id;
+      definirSelectOuAutre('pj-type', 'pj-type-autre', p.type_projet || '');
+      appliquerVisibiliteTypeProjet(p.type_projet || '');
+      document.getElementById('pj-titre').value = p.titre || '';
+      definirPeriode(p.periode || '');
+      definirSelectOuAutre('pj-pays', 'pj-pays-autre', p.pays || '');
+      definirSelectOuAutre('pj-ville', 'pj-ville-autre', p.ville || '');
+      document.getElementById('pj-promoteur').value = p.promoteur || '';
+      document.getElementById('pj-ajouter').textContent = 'Enregistrer les modifications';
+      document.getElementById('pj-annuler').style.display = 'inline-block';
+      document.getElementById('pj-type').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  });
+
+  liste.querySelectorAll('button[data-action="supprimer"]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await sb.from('model_projects').delete().eq('id', btn.dataset.id);
+      if (projetEnEdition === btn.dataset.id) annulerEditionProjet();
+      chargerProjets();
+    });
+  });
+
+  majNoticeNouveauxChamps();
+}
+
+let projetEnEdition = null;
+
+function annulerEditionProjet() {
+  projetEnEdition = null;
+  document.getElementById('form-projet').querySelectorAll('input, select').forEach(el => { el.value = ''; });
+  document.getElementById('pj-pays-autre').style.display = 'none';
+  document.getElementById('pj-ville-autre').style.display = 'none';
+  document.getElementById('pj-type-autre').style.display = 'none';
+  appliquerVisibiliteTypeProjet('');
+  reinitialiserPeriode();
+  document.getElementById('pj-ajouter').textContent = 'Ajouter ce projet';
+  document.getElementById('pj-annuler').style.display = 'none';
+}
+document.getElementById('pj-annuler').addEventListener('click', annulerEditionProjet);
+
+document.getElementById('pj-ajouter').addEventListener('click', async () => {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return;
+  const msg = document.getElementById('pj-msg');
+
+  const champType = document.getElementById('pj-type');
+  if (!champType.value) {
+    // reportValidity() affiche la bulle native du navigateur DIRECTEMENT sur le
+    // champ concerné (avec un focus dessus) — bien plus visible qu'un simple
+    // message texte que l'on peut facilement rater au milieu du formulaire.
+    champType.reportValidity();
+    afficherMsg(msg, 'Choisissez un type de projet ci-dessus avant de l\'ajouter.', 'err');
+    return;
+  }
+  if (champType.value === 'Autre' && !document.getElementById('pj-type-autre').value.trim()) {
+    document.getElementById('pj-type-autre').focus();
+    afficherMsg(msg, 'Précisez le type de projet avant de l\'ajouter.', 'err');
+    return;
+  }
+
+  const donneesProjet = {
+    type_projet: valeurSelectOuAutre('pj-type', 'pj-type-autre'),
+    titre: document.getElementById('pj-titre').value.trim(),
+    periode: valeurPeriode(),
+    pays: valeurSelectOuAutre('pj-pays', 'pj-pays-autre'),
+    ville: valeurSelectOuAutre('pj-ville', 'pj-ville-autre'),
+    promoteur: document.getElementById('pj-promoteur').value.trim()
+  };
+
+  if (projetEnEdition) {
+    const { error } = await sb.from('model_projects').update(donneesProjet).eq('id', projetEnEdition);
+    if (error) {
+      afficherMsg(msg, "Erreur lors de la modification du projet : " + error.message, 'err');
+      return;
+    }
+    afficherMsg(msg, 'Projet modifié.', 'ok');
+    annulerEditionProjet();
+    chargerProjets();
+    return;
+  }
+
+  // Filet de sécurité : si la fiche model_profiles de cette personne n'existe pas
+  // encore (ex. échec silencieux au moment de l'inscription, avant le correctif),
+  // l'ajout d'un projet échouerait avec une erreur de clé étrangère incompréhensible.
+  // On s'assure d'abord que la fiche existe (sans écraser des données existantes).
+  await sb.from('model_profiles').upsert({ id: user.id }, { ignoreDuplicates: true });
+
+  const { error } = await sb.from('model_projects').insert({ model_id: user.id, ...donneesProjet });
+  if (error) {
+    afficherMsg(msg, "Erreur lors de l'ajout du projet : " + error.message, 'err');
+    return;
+  }
+  document.getElementById('form-projet').querySelectorAll('input, select').forEach(el => { el.value = ''; });
+  document.getElementById('pj-pays-autre').style.display = 'none';
+  document.getElementById('pj-ville-autre').style.display = 'none';
+  document.getElementById('pj-type-autre').style.display = 'none';
+  appliquerVisibiliteTypeProjet('');
+  reinitialiserPeriode();
+  afficherMsg(msg, '✅ Projet ajouté avec succès ! Il apparaît ci-dessus.', 'ok');
+  await chargerProjets();
+  // Le formulaire d'ajout est en bas de la liste des projets déjà enregistrés —
+  // sans ça, après un ajout, la personne ne voit que le formulaire vidé et peut
+  // croire que rien ne s'est passé alors que le projet est bien ajouté au-dessus.
+  document.getElementById('projets-liste').scrollIntoView({ behavior: 'smooth', block: 'center' });
+});
+
+// --- Aperçu du CV (Phase 2 : design visuel, l'export PDF viendra en Phase 3) ---
+// Reconstruit à chaque ouverture à partir des données déjà en base (profil
+// mis en cache par chargerProfil(), photos et projets rechargés à la volée) :
+// aucune nouvelle saisie, le CV reflète toujours ce qui est déjà renseigné
+// dans les blocs ci-dessus, y compris pour les mannequins déjà inscrits
+// avant cette fonctionnalité.
+const LIBELLES_COMPETENCES = {
+  runway: 'Runway / Défilé', pose: 'Pose photographique', editorial: 'Editorial',
+  campagne: 'Fashion campaign', fitting: 'Fitting', presentation: 'Présentation de collection',
+  expression: 'Expression corporelle', equipe: 'Travail en équipe', discipline: 'Discipline professionnelle'
+};
+const ORDRE_COMPETENCES = ['runway', 'pose', 'editorial', 'campagne', 'fitting', 'presentation', 'expression', 'equipe', 'discipline'];
+
+function ligneIdentiteCv(label, valeurHtml) {
+  return `<div class="cv-identite-item"><span class="cv-identite-label">${echapperHtml(label)}</span><span class="cv-identite-valeur">${valeurHtml}</span></div>`;
+}
+function ligneInfoCv(label, valeur) {
+  if (!valeur) return '';
+  return `<div><span class="cv-info-label">${echapperHtml(label)}</span><span class="cv-info-valeur">${echapperHtml(String(valeur))}</span></div>`;
+}
+
+async function construireApercuCv() {
+  if (!sb) return;
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user || !dernierProfilCharge) return;
+  const profil = dernierProfilCharge;
+
+  const [{ data: photos }, { data: projets }] = await Promise.all([
+    sb.from('model_photos').select('*').eq('model_id', user.id).order('principale', { ascending: false }).order('created_at', { ascending: true }),
+    sb.from('model_projects').select('*').eq('model_id', user.id).order('created_at', { ascending: false })
+  ]);
+
+  const photoPrincipale = (photos || [])[0] || null;
+  document.getElementById('cv-photo').src = photoPrincipale ? (photoPrincipale.url_moyenne || photoPrincipale.url) : 'assets/logo-dark-bg.png';
+
+  document.getElementById('cv-nom').textContent = profil.full_name || 'Votre nom';
+  document.getElementById('cv-souscategorie').textContent = profil.category === 'homme' ? 'Mannequin professionnel' : profil.category === 'femme' ? 'Mannequin professionnelle' : 'Mannequin professionnel(le)';
+
+  let identiteHtml = '';
+  if (profil.date_naissance) identiteHtml += ligneIdentiteCv('Date de naissance', echapperHtml(formaterPeriode(profil.date_naissance)));
+  if (profil.city) identiteHtml += ligneIdentiteCv('Ville de résidence', echapperHtml(profil.city));
+  identiteHtml += ligneIdentiteCv('Contact agence', '+225 27 22 23 11 76<br>+225 05 45 65 68 87<br>infos.ma2m@gmail.com');
+  document.getElementById('cv-identite-liste').innerHTML = identiteHtml;
+
+  document.getElementById('cv-categorie-valeur').textContent = deriverNiveauMannequin(profil.years_experience);
+  document.getElementById('cv-citation').textContent = profil.citation ? '« ' + profil.citation + ' »' : '';
+  document.getElementById('cv-profil-texte').textContent = profil.bio || 'Profil à compléter.';
+
+  const taille = profil.height_cm ? (profil.height_cm / 100).toFixed(2).replace('.', ',') + ' m' : '';
+  const mensurations = [profil.chest_cm, profil.waist_cm, profil.hips_cm || profil.inseam_cm].filter(Boolean).join(' / ');
+  let infosHtml = '';
+  infosHtml += ligneInfoCv('Taille', taille);
+  infosHtml += ligneInfoCv('Poids', profil.weight_kg ? profil.weight_kg + ' kg' : '');
+  infosHtml += ligneInfoCv('Mensurations', mensurations);
+  infosHtml += ligneInfoCv('Pointure', profil.shoe_size);
+  infosHtml += ligneInfoCv('Taille vêtements', profil.clothing_size);
+  infosHtml += ligneInfoCv('Couleur des yeux', profil.eye_color);
+  infosHtml += ligneInfoCv('Couleur des cheveux', profil.hair_color);
+  infosHtml += ligneInfoCv('Carnation', profil.carnation);
+  document.getElementById('cv-grille-infos').innerHTML = infosHtml || '<p class="cv-texte-libre">Informations physiques à compléter.</p>';
+
+  let formationHtml = '';
+  formationHtml += ligneInfoCv("Niveau d'étude", profil.niveau_etude);
+  formationHtml += ligneInfoCv('Établissement', profil.etablissement);
+  formationHtml += ligneInfoCv('Formation particulière', profil.formation_particuliere);
+  formationHtml += ligneInfoCv('Formation mannequin', profil.formation_mannequin);
+  const sectionFormation = document.getElementById('cv-section-formation');
+  document.getElementById('cv-grille-formation').innerHTML = formationHtml;
+  sectionFormation.classList.toggle('u-hidden', !formationHtml);
+
+  const parCategorie = new Map();
+  (projets || []).forEach(p => {
+    const cat = categoriserProjet(p.type_projet);
+    if (!parCategorie.has(cat)) parCategorie.set(cat, []);
+    parCategorie.get(cat).push(p);
+  });
+  let expHtml = '';
+  ORDRE_CATEGORIES_PROJETS.forEach(cat => {
+    const liste = parCategorie.get(cat);
+    if (!liste || !liste.length) return;
+    const items = liste.map(p => {
+      const sousDetail = [[p.ville, p.pays].filter(Boolean).join(', '), formaterPeriode(p.periode)].filter(Boolean).join(', ');
+      return `<li>${echapperHtml(p.titre || p.type_projet)}${sousDetail ? ' — ' + echapperHtml(sousDetail) : ''}</li>`;
+    }).join('');
+    expHtml += `<div class="cv-experience-groupe"><p class="cv-experience-titre">${echapperHtml(cat)}</p><ul class="cv-experience-liste">${items}</ul></div>`;
+  });
+  document.getElementById('cv-experience').innerHTML = expHtml || '<p class="cv-texte-libre">Aucune expérience renseignée pour le moment.</p>';
+
+  const competencesData = profil.competences || {};
+  const compHtml = ORDRE_COMPETENCES.map(cle => {
+    const pourcentage = ((competencesData[cle] || 3) / 5) * 100;
+    return `<div class="cv-competence-ligne"><span>${echapperHtml(LIBELLES_COMPETENCES[cle])}</span><div class="cv-competence-barre"><div class="cv-competence-remplissage" data-pourcentage="${pourcentage}"></div></div></div>`;
+  }).join('');
+  document.getElementById('cv-competences').innerHTML = compHtml;
+  document.querySelectorAll('#cv-competences .cv-competence-remplissage').forEach(el => {
+    el.style.width = el.dataset.pourcentage + '%';
+  });
+
+  let portfolioHtml = '';
+  if (profil.instagram) {
+    portfolioHtml += `<p class="cv-portfolio-ligne">📷 @${echapperHtml(profil.instagram.replace(/^@/, ''))}</p>`;
+  }
+  const lienProfil = 'https://www.maitreakessemodelmanagement.com/mannequin.html?id=' + encodeURIComponent(user.id);
+  portfolioHtml += `<p class="cv-portfolio-ligne">🌐 Portfolio en ligne : <a href="${echapperHtml(lienProfil)}" target="_blank" rel="noopener">Voir la fiche complète</a></p>`;
+  document.getElementById('cv-portfolio').innerHTML = portfolioHtml;
+
+  const photosCompcard = (photos || []).filter(p => p.compcard_ordre).sort((a, b) => a.compcard_ordre - b.compcard_ordre);
+  document.getElementById('cv-photos-bande').innerHTML = photosCompcard.map(p => `<img src="${echapperHtml(p.url_miniature || p.url)}" alt="">`).join('');
+}
+
+document.getElementById('btn-voir-cv').addEventListener('click', async () => {
+  await construireApercuCv();
+  document.getElementById('overlay-cv').classList.remove('u-hidden');
+  document.body.style.overflow = 'hidden';
+});
+document.getElementById('btn-fermer-cv').addEventListener('click', () => {
+  document.getElementById('overlay-cv').classList.add('u-hidden');
+  document.body.style.overflow = '';
+});
+
+// --- Vérifier si déjà connecté au chargement de la page ---
+// Sur une connexion instable, la bibliothèque Supabase (chargée depuis un CDN)
+// peut échouer à se charger — sans ce filet, "sb" vaut alors null et cette
+// vérification plante toute la page au chargement (page blanche/figée) au
+// lieu de simplement retomber sur l'écran de connexion normal.
+(async () => {
+  try {
+    if (!sb) return;
+    const { data: { session } } = await sb.auth.getSession();
+    if (session && !recuperationMdpEnCoursMannequin) ouvrirDashboard();
+  } catch (e) {}
+})();
+</script>
+</body>
+</html>

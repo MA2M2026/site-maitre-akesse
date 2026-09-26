@@ -2,6 +2,7 @@ User-agent: *
 Allow: /
 Disallow: /tableau-de-bord.html
 Disallow: /espace-mannequin.html
+Disallow: /espace-mannequin-ancien.html
 Disallow: /selection.html
 Disallow: /outils/
 
