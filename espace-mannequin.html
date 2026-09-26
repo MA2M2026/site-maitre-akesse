@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net 'sha256-ypRY7L94nYtI2IjZX2D3Bk6lekuK2JxE+ZKXqjRCTHA='; style-src 'self' https://fonts.googleapis.com 'sha256-Nje5ryOeMAWI5y6IQJY4Vo1g2SCwMesK3s3XLQ/Cz48=' 'sha256-6qhUgUeUoQKz59fiistQN0Ss/B5WnFRs0pT8kPBjtFk=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-LZ0vMVaIXWi3mIOFbn6KkRdP6YTOzJEPg2IAf53utPc=' 'sha256-AzdXLTndi6ATLACOIeqFDaSCB8rS+fmbgQZyBV9S27g=' 'sha256-SM9HAx3efz4IO6xvWhRvZx1KFXzyS1of3diuoVLU/yY=' 'sha256-nsZYJU4jn9WiGCNfpzvOvlew1PkbvjP+RAoCo+LqagY=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net 'sha256-LaaZ9B2GZLe5CSd4NRANiOA9HAL1PTByVKxyZU4YuUc='; style-src 'self' https://fonts.googleapis.com 'sha256-Nje5ryOeMAWI5y6IQJY4Vo1g2SCwMesK3s3XLQ/Cz48=' 'sha256-6qhUgUeUoQKz59fiistQN0Ss/B5WnFRs0pT8kPBjtFk=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-LZ0vMVaIXWi3mIOFbn6KkRdP6YTOzJEPg2IAf53utPc=' 'sha256-AzdXLTndi6ATLACOIeqFDaSCB8rS+fmbgQZyBV9S27g=' 'sha256-SM9HAx3efz4IO6xvWhRvZx1KFXzyS1of3diuoVLU/yY=' 'sha256-nsZYJU4jn9WiGCNfpzvOvlew1PkbvjP+RAoCo+LqagY=';">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mon Espace Mannequin — MA2M | Premium</title>
@@ -647,10 +647,11 @@ function emptyState(){
       tailleVet:'', yeux:'', cheveux:'', carnation:''
     },
     formation:{ niveau:'', etablissement:'', particuliere:'', mannequin:'' },
-    // Années d'expérience / type de modèle / langues / disponibilité — sert
-    // uniquement à déduire automatiquement New Face/Amateur/Professionnel
-    // (voir deriverNiveauMannequin) : jamais redemandé comme catégorie manuelle.
-    profilPro:{ anneesExperience:'', disponibilite:'', modelTypes:[], langues:[] },
+    // Catégorie (New Face/Amateur/Professionnel) : choisie directement par
+    // la mannequin (niveauMannequin) — deriverNiveauMannequin() ne sert plus
+    // que de suggestion par défaut, à partir des années d'expérience, la
+    // première fois qu'elle ouvre ce bloc.
+    profilPro:{ anneesExperience:'', disponibilite:'', modelTypes:[], langues:[], niveauMannequin:'' },
     experiences:[],
     photos:{ principale:null, photoCv:null, pleinPied:null, couverture:null, book:[] },
     competences:{},
@@ -866,14 +867,15 @@ function profilProToDb(pp){
   return {
     years_experience: pp.anneesExperience!=='' ? parseInt(pp.anneesExperience,10) : null,
     availability: pp.disponibilite || null,
-    model_types: pp.modelTypes, languages: pp.langues.join(', ')
+    model_types: pp.modelTypes, languages: pp.langues.join(', '),
+    niveau_mannequin: pp.niveauMannequin || null
   };
 }
 
 /* Champ "sexe" (femme/homme) déjà utilisé par tout le reste du site pour
    déterminer Hanches vs Entrejambe — on garde son vocabulaire (category),
-   jamais celui, différent, de "Newface/Amateur/Pro" qui lui n'est jamais
-   stocké : ce niveau est purement calculé à l'affichage. */
+   distinct de "niveau_mannequin" (New Face/Amateur/Professionnel), choisi
+   par la mannequin elle-même dans le bloc Expérience. */
 function mapProfileFromDb(row, contactPrive){
   const s = emptyState();
   if (!row) return s;
@@ -896,7 +898,8 @@ function mapProfileFromDb(row, contactPrive){
   });
   Object.assign(s.profilPro, {
     anneesExperience: row.years_experience ?? '', disponibilite: row.availability || '',
-    modelTypes: row.model_types || [], langues: (row.languages || '').split(',').map(function(l){return l.trim();}).filter(Boolean)
+    modelTypes: row.model_types || [], langues: (row.languages || '').split(',').map(function(l){return l.trim();}).filter(Boolean),
+    niveauMannequin: row.niveau_mannequin || deriverNiveauMannequin(row.years_experience)
   });
   s.competences = row.competences || {};
   s.citation = row.citation || '';
@@ -910,7 +913,7 @@ function mapProfileFromDb(row, contactPrive){
 const Store = {
   async load(){
     const { data: profile, error: e1 } = await sb.from('model_profiles')
-      .select('id, full_name, bio, height_cm, weight_kg, city, quartier, instagram, published, created_at, category, chest_cm, waist_cm, hips_cm, shoe_size, carnation, clothing_size, date_naissance, eye_color, hair_color, years_experience, model_types, languages, availability, inseam_cm, featured, premiere_publication_faite, en_attente_validation, raison_refus, niveau_etude, etablissement, formation_particuliere, formation_mannequin, competences, citation, lieu_naissance, nationalite')
+      .select('id, full_name, bio, height_cm, weight_kg, city, quartier, instagram, published, created_at, category, chest_cm, waist_cm, hips_cm, shoe_size, carnation, clothing_size, date_naissance, eye_color, hair_color, years_experience, niveau_mannequin, model_types, languages, availability, inseam_cm, featured, premiere_publication_faite, en_attente_validation, raison_refus, niveau_etude, etablissement, formation_particuliere, formation_mannequin, competences, citation, lieu_naissance, nationalite')
       .eq('id', currentUser.id).maybeSingle();
     if (e1) { console.error(e1); toast('Erreur de chargement du profil', true); return emptyState(); }
 
@@ -1341,6 +1344,12 @@ function stepExperience(){
       }).join('');
   return '<h2>Expérience professionnelle</h2><p class="sub">Étape 4 sur 6</p>' +
     '<div class="grid">' +
+    field('Catégorie','f-niveauMannequin',pp.niveauMannequin,{tag:'select',options:[
+      {value:'',label:'— Sélectionner —'},
+      {value:'New Face',label:'New Face — 0 an d’expérience'},
+      {value:'Amateur',label:'Amateur — 1 à 2 ans d’expérience'},
+      {value:'Professionnel',label:'Professionnel — 3 ans et plus d’expérience'}
+    ]}) +
     field('Années d’expérience','f-anneesExp',pp.anneesExperience,{tag:'select',options:[{value:'',label:'—'}].concat(Array.from({length:21},function(_,i){return {value:String(i),label:i+' an(s)'};})).concat([{value:'21',label:'Plus de 20 ans'}])}) +
     field('Disponibilité','f-dispo',pp.disponibilite,{tag:'select',options:[{value:'',label:'—'},{value:'immediate',label:'Disponible immédiatement'},{value:'rdv',label:'Sur rendez-vous'},{value:'mobile',label:'Mobile pour déplacements'}]}) +
     '</div>' +
@@ -1407,7 +1416,7 @@ function stepPhotos(){
 function stepRecap(){
   const d = state.identite, ph = state.physique, f = state.formation;
   const rows = [
-    ['Identité', (d.nomComplet||'—')+' · '+deriverNiveauMannequin(state.profilPro.anneesExperience)+' · '+(d.sexe==='femme'?'Femme':d.sexe==='homme'?'Homme':'—'), 1],
+    ['Identité', (d.nomComplet||'—')+' · '+(state.profilPro.niveauMannequin || deriverNiveauMannequin(state.profilPro.anneesExperience))+' · '+(d.sexe==='femme'?'Femme':d.sexe==='homme'?'Homme':'—'), 1],
     ['Informations physiques', (ph.taille||'—')+' cm · '+(ph.poids||'—')+' kg', 2],
     ['Formation', f.niveau||'—', 3],
     ['Expérience professionnelle', state.experiences.length+' expérience(s) enregistrée(s)', 4],
@@ -1532,14 +1541,17 @@ function bindExperienceHandlers(){
   });
 }
 
-/* --- Profil professionnel (années d'expérience, type de modèle, langues,
-   disponibilité) : sert uniquement à déduire automatiquement le niveau
-   New Face/Amateur/Professionnel, jamais redemandé comme choix manuel. --- */
+/* --- Profil professionnel (catégorie, années d'expérience, type de modèle,
+   langues, disponibilité). La catégorie New Face/Amateur/Professionnel est
+   choisie directement par la mannequin (f-niveauMannequin) ; elle est
+   pré-remplie par deriverNiveauMannequin() à partir des années d'expérience
+   la première fois, mais reste modifiable. --- */
 function bindProfilProHandlers(){
   const s = state;
   document.getElementById('saveProfilPro')?.addEventListener('click', async function(){
     const btn = this;
     Object.assign(s.profilPro, {
+      niveauMannequin: val('f-niveauMannequin'),
       anneesExperience: val('f-anneesExp'), disponibilite: val('f-dispo'),
       modelTypes: Array.from(document.querySelectorAll('[data-modeltype]:checked')).map(function(c){ return c.dataset.modeltype; }),
       langues: Array.from(document.querySelectorAll('[data-langue]:checked')).map(function(c){ return c.dataset.langue; })
@@ -1864,7 +1876,7 @@ function groupExperiences(){
 function openCv(){
   const d = state.identite, p = state.physique, f = state.formation;
   const groups = groupExperiences();
-  const niveau = deriverNiveauMannequin(state.profilPro.anneesExperience);
+  const niveau = (state.profilPro.niveauMannequin || deriverNiveauMannequin(state.profilPro.anneesExperience));
   const heroPhoto = state.photos.photoCv && state.photos.photoCv.urlPleine ? '<img src="'+state.photos.photoCv.urlPleine+'" alt="Photo">' : '';
   const handle = state.instagram ? state.instagram.replace(/^@/,'') : '';
   const lienFichePublique = 'https://www.maitreakessemodelmanagement.com/mannequin.html?id='+encodeURIComponent(currentUser.id);
@@ -1925,6 +1937,7 @@ function ficheDataDepuisEtat(){
     profil: {
       full_name: d.nomComplet, city: d.ville || 'Abidjan', category: d.sexe,
       years_experience: state.profilPro.anneesExperience,
+      niveau_mannequin: state.profilPro.niveauMannequin || deriverNiveauMannequin(state.profilPro.anneesExperience),
       height_cm: p.taille, weight_kg: p.poids, chest_cm: p.poitrine, waist_cm: p.tourTaille,
       hips_cm: p.hanches, inseam_cm: p.entrejambe, shoe_size: p.pointure,
       carnation: p.carnation, clothing_size: p.tailleVet, eye_color: p.yeux, hair_color: p.cheveux
@@ -1945,7 +1958,7 @@ function openCompcard(){
     '<div class="compcard-model">' +
       '<div class="ccm-header"><img class="ccm-logo" src="assets/logo-header.png" alt="Maître Akesse Model Management"><div class="ccm-title">COMPCARD</div></div>' +
       '<div class="ccm-photo-grid"><div class="ccm-cover">'+(cover?'<img src="'+(cover.urlPleine||cover.url)+'" alt="Photo plein pied compcard">':'<div class="cc-empty-photo">PHOTO PLEIN PIED</div>')+'</div><div class="ccm-side-grid">'+sidePhotos+'</div></div>' +
-      '<div class="ccm-body"><h1>'+echapperHtml(d.nomComplet||'')+'</h1><div class="ccm-meta">'+echapperHtml('Mannequin '+deriverNiveauMannequin(state.profilPro.anneesExperience))+'  ·  '+echapperHtml(d.ville||'Abidjan')+'</div>' +
+      '<div class="ccm-body"><h1>'+echapperHtml(d.nomComplet||'')+'</h1><div class="ccm-meta">'+echapperHtml('Mannequin '+(state.profilPro.niveauMannequin || deriverNiveauMannequin(state.profilPro.anneesExperience)))+'  ·  '+echapperHtml(d.ville||'Abidjan')+'</div>' +
       '<div class="ccm-measures">' +
         '<div><span>TAILLE</span><b>'+(p.taille||'—')+' cm</b></div><div><span>POIDS</span><b>'+(p.poids||'—')+' kg</b></div><div><span>POITRINE</span><b>'+(p.poitrine||'—')+' cm</b></div>' +
         '<div><span>TOUR DE TAILLE</span><b>'+(p.tourTaille||'—')+' cm</b></div><div><span>HANCHES</span><b>'+(p.hanches||p.entrejambe||'—')+' cm</b></div><div><span>POINTURE</span><b>'+(p.pointure||'—')+'</b></div>' +

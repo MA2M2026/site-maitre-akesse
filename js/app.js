@@ -147,11 +147,13 @@ function echapperHtml(texte) {
     .replace(/'/g, '&#39;');
 }
 
-// Niveau New Face / Amateur / Professionnel : jamais demandé au mannequin,
-// toujours déduit de years_experience (partagé par espace-mannequin.html,
-// espace-mannequin-ancien.html et mannequin.html — même règle
-// partout : 0 an ou vide -> New Face ; 1-2 ans -> Amateur ; 3 ans et plus ->
-// Professionnel).
+// Niveau New Face / Amateur / Professionnel, déduit de years_experience :
+// sert de valeur par défaut suggérée (espace-mannequin.html pré-remplit son
+// champ "Catégorie" avec ce résultat la première fois, mais la mannequin
+// peut ensuite choisir directement) et reste la seule règle utilisée par
+// mannequin.html (fiche publique, où le champ n'existe pas) et par
+// espace-mannequin-ancien.html (figé). Règle : 0 an ou vide -> New Face ;
+// 1-2 ans -> Amateur ; 3 ans et plus -> Professionnel.
 function deriverNiveauMannequin(anneesExperience) {
   const annees = anneesExperience === '' || anneesExperience === null || anneesExperience === undefined
     ? NaN : parseInt(anneesExperience, 10);
@@ -452,7 +454,7 @@ async function construireCanvasCompcard(ficheData) {
   ctx.font = `bold ${fpx(27)}px Arial, sans-serif`;
   ctx.fillText((profil.full_name || 'Mannequin').toUpperCase(), px(15), px(y));
   y += 9;
-  const niveauMannequin = deriverNiveauMannequin(profil.years_experience);
+  const niveauMannequin = profil.niveau_mannequin || deriverNiveauMannequin(profil.years_experience);
   ctx.fillStyle = ROUGECLAIR;
   ctx.font = `${fpx(13)}px Arial, sans-serif`;
   ctx.fillText(['Mannequin', niveauMannequin, profil.city].filter(Boolean).join(' '), px(15), px(y));

@@ -3514,3 +3514,18 @@ alter table casting_applications add column if not exists quartier text;
 alter table model_photos add column if not exists photo_couverture boolean not null default false;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 84 : catégorie (New Face / Amateur / Professionnel) choisie
+-- directement par la mannequin dans le bloc Expérience de
+-- espace-mannequin.html, au lieu d'être seulement calculée à l'affichage
+-- à partir de years_experience (deriverNiveauMannequin() reste utilisée
+-- comme suggestion par défaut la première fois, et reste la seule règle
+-- pour la fiche publique mannequin.html, où ce champ n'existe pas).
+-- Valeur libre côté base (pas de contrainte check) pour rester tolérant
+-- si le vocabulaire évolue plus tard ; les 3 valeurs utilisées aujourd'hui
+-- par le formulaire sont exactement 'New Face', 'Amateur', 'Professionnel'.
+-- ===================================================================
+alter table model_profiles add column if not exists niveau_mannequin text;
+
+NOTIFY pgrst, 'reload schema';
