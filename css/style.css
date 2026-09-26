@@ -247,6 +247,18 @@ section { padding: 5rem 0; }
 .compsheet-photo.cliquable { cursor: pointer; }
 .compsheet-photo.cliquable:hover img { transform: scale(1.05); }
 
+/* ---------- Fiche publique — bandeau façon page de profil (couverture + photo
+   ronde en superposition) : pensé pour que la première impression, en arrivant
+   sur la fiche d'un mannequin, ressemble à l'ouverture d'un profil Instagram. ---------- */
+.profil-couverture { position: relative; width: 100%; aspect-ratio: 16/6; max-height: 320px; overflow: hidden; background: linear-gradient(135deg, var(--noir-doux), var(--noir)); border-radius: 4px; }
+.profil-couverture img { width: 100%; height: 100%; object-fit: cover; }
+.profil-avatar-ligne { display: flex; align-items: flex-end; gap: 1.5rem; margin-top: -64px; padding: 0 1.4rem; position: relative; z-index: 2; }
+.profil-avatar { width: 132px; height: 132px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: var(--noir-doux); border: 4px solid var(--noir); box-shadow: 0 6px 20px rgba(0,0,0,.45); }
+.profil-avatar.cliquable { cursor: pointer; }
+.profil-avatar img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s var(--transition-douce); }
+.profil-avatar.cliquable:hover img { transform: scale(1.05); }
+@media (max-width: 600px) { .profil-avatar-ligne { margin-top: -46px; gap: 1rem; padding: 0 1rem; } .profil-avatar { width: 92px; height: 92px; border-width: 3px; } }
+
 .mensurations { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.7rem; margin: 1.6rem 0; }
 /* Chaque case = une "touche de clavier" : fond noir laqué/miroir (même dégradé
    que la fiche Compcard PDF/JPEG), légèrement surélevée par son ombre, qui

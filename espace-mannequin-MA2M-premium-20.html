@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net 'sha256-lOfe0E8wc3rW8PzR9BLUaS6w5BzXeuszBoN5abFvxTc='; style-src 'self' https://fonts.googleapis.com 'sha256-Es2/O03V2IN21lcc5f6HOoHGt/UHkVChbxgn+54i0gE=' 'sha256-6qhUgUeUoQKz59fiistQN0Ss/B5WnFRs0pT8kPBjtFk=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-aV3Onw9NNjfc5pyK9wuAsj0djR/FRMuMYIVWqUi04+c=' 'sha256-AzdXLTndi6ATLACOIeqFDaSCB8rS+fmbgQZyBV9S27g=' 'sha256-SM9HAx3efz4IO6xvWhRvZx1KFXzyS1of3diuoVLU/yY=' 'sha256-nsZYJU4jn9WiGCNfpzvOvlew1PkbvjP+RAoCo+LqagY=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net 'sha256-eFII8v0DWKYBJyVyA/yDnLdB+he84iLN9o/tVdFnKE8='; style-src 'self' https://fonts.googleapis.com 'sha256-Nje5ryOeMAWI5y6IQJY4Vo1g2SCwMesK3s3XLQ/Cz48=' 'sha256-6qhUgUeUoQKz59fiistQN0Ss/B5WnFRs0pT8kPBjtFk=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-LZ0vMVaIXWi3mIOFbn6KkRdP6YTOzJEPg2IAf53utPc=' 'sha256-AzdXLTndi6ATLACOIeqFDaSCB8rS+fmbgQZyBV9S27g=' 'sha256-SM9HAx3efz4IO6xvWhRvZx1KFXzyS1of3diuoVLU/yY=' 'sha256-nsZYJU4jn9WiGCNfpzvOvlew1PkbvjP+RAoCo+LqagY=';">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mon Espace Mannequin — MA2M | Premium</title>
@@ -140,6 +140,11 @@ a{color:inherit}
 .field input::placeholder,.field textarea::placeholder{color:var(--texte-tres-clair)}
 .field.invalid input,.field.invalid select{border-color:var(--bordeaux-2);background:rgba(122,22,38,.12)}
 .err-msg{font-size:.7rem;color:#d55468;min-height:1em}
+
+.field-autre{display:none;margin-top:-3px}
+.tel-row{display:flex;gap:8px}
+.tel-row select{flex:0 0 auto;max-width:150px}
+.tel-row input{flex:1;min-width:0}
 
 .radio-row,.check-row{display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:2px}
 .radio-opt,.check-opt{display:flex;align-items:center;gap:9px;font-size:.88rem;color:var(--texte-clair);cursor:pointer}
@@ -367,9 +372,9 @@ a{color:inherit}
 .mcv-skill-bar{height:6px;background:#e3d9c4;border-radius:3px;overflow:hidden}
 .mcv-skill-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--bordeaux-2),var(--or));border-radius:3px}
 .mcv-portfolio{flex:1;min-width:180px;display:flex;flex-direction:column;align-items:flex-start;gap:10px}
-.mcv-qr{width:92px;height:92px;background:#fff;border:1px solid #ddd0b8;padding:6px;display:grid;grid-template-columns:repeat(7,1fr);grid-template-rows:repeat(7,1fr);gap:1px}
-.mcv-qr i{background:#2a2622}
-.mcv-qr i.off{background:transparent}
+.mcv-qr{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.mcv-qr img{width:92px;height:92px;background:#fff;border:1px solid #ddd0b8;padding:5px}
+.mcv-qr span{font-size:.62rem;color:#6b6560;letter-spacing:.03em}
 .mcv-portfolio .cap{font-size:.7rem;color:#6b6560;line-height:1.4;max-width:20ch}
 .mcv-portfolio .soc{display:flex;align-items:center;gap:8px;font-size:.76rem;color:#2a2622}
 .mcv-portfolio .soc svg{width:15px;height:15px;color:var(--bordeaux-2)}
@@ -439,6 +444,36 @@ a{color:inherit}
   .overlay-close,.cv-actions,.demo-banner{display:none!important}
 }
 @media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+
+/* ================== Écran de bienvenue cinématique (une fois par session) === */
+#ma2mWelcome{
+  position:fixed;inset:0;z-index:99990;display:flex;align-items:center;justify-content:center;
+  overflow:hidden;background:#020202;color:#f4ede1;isolation:isolate;
+}
+#ma2mWelcome::before{content:"";position:absolute;inset:-20%;background:radial-gradient(ellipse at 50% 52%,rgba(92,15,30,.20),transparent 38%),radial-gradient(ellipse at 78% 22%,rgba(201,162,74,.06),transparent 30%);animation:ma2mAtmosphere 9s ease-in-out infinite alternate}
+#ma2mWelcome::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.78),rgba(0,0,0,.18) 50%,rgba(0,0,0,.75)),radial-gradient(circle at center,transparent 25%,rgba(0,0,0,.55) 100%);pointer-events:none}
+.ma2m-welcome-inner{position:relative;z-index:2;width:min(980px,92vw);min-height:min(760px,92dvh);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:44px 22px}
+.ma2m-logo-reveal{width:min(360px,62vw);height:auto;opacity:0;transform:translateY(18px) scale(.98);animation:ma2mLogoIn 1.8s cubic-bezier(.16,1,.3,1) .2s forwards;filter:drop-shadow(0 0 30px rgba(201,162,74,.13))}
+.ma2m-logo-sub{margin-top:17px;font-size:clamp(.58rem,1.5vw,.78rem);letter-spacing:.36em;text-transform:uppercase;color:rgba(244,237,225,.52);opacity:0;animation:ma2mFadeUp 1.2s ease 1.2s forwards}
+.ma2m-gold-line{width:min(190px,34vw);height:1px;margin:35px auto 42px;background:linear-gradient(90deg,transparent,#c9a24a,transparent);transform:scaleX(0);animation:ma2mLine 1.3s ease 1.65s forwards;box-shadow:0 0 18px rgba(201,162,74,.3)}
+.ma2m-opening-quote{max-width:720px;font-family:var(--serif);font-size:clamp(1.65rem,4.5vw,3.25rem);line-height:1.12;font-weight:400;letter-spacing:.01em;color:#f5eee3;opacity:0;transform:translateY(18px);animation:ma2mFadeUp 1.35s ease 2.05s forwards}
+.ma2m-opening-quiet{margin-top:28px;font-size:.64rem;letter-spacing:.32em;text-transform:uppercase;color:rgba(244,237,225,.34);opacity:0;animation:ma2mFadeUp 1s ease 3s forwards}
+.ma2m-welcome-copy{position:absolute;left:50%;bottom:118px;transform:translateX(-50%);width:min(720px,88vw);opacity:0;transition:opacity .7s ease,transform .7s ease}
+#ma2mWelcome.ready .ma2m-welcome-copy{opacity:1;transform:translateX(-50%)}
+.ma2m-welcome-copy p{margin:0 auto;color:rgba(244,237,225,.72);font-family:var(--serif);font-size:clamp(1.08rem,2.4vw,1.5rem);line-height:1.45}
+.ma2m-welcome-copy strong{display:block;color:#e5c170;font-size:clamp(.72rem,1.3vw,.9rem);letter-spacing:.28em;text-transform:uppercase;margin-bottom:12px;font-family:var(--sans);font-weight:400}
+.ma2m-enter{position:absolute;bottom:44px;left:50%;transform:translateX(-50%) translateY(12px);opacity:0;min-width:250px;padding:14px 24px;border:1px solid rgba(201,162,74,.48);background:rgba(201,162,74,.06);color:#f3dfaa;font-family:var(--sans);font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;transition:all .3s ease;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+#ma2mWelcome.ready .ma2m-enter{opacity:1;transform:translateX(-50%) translateY(0);transition-delay:.15s}
+.ma2m-enter:hover{background:rgba(201,162,74,.13);border-color:#d9b65f;box-shadow:0 0 35px rgba(201,162,74,.12)}
+#ma2mWelcome.leaving{opacity:0;transform:scale(1.02);transition:opacity .9s ease,transform .9s ease;pointer-events:none}
+.ma2m-skip{position:absolute;top:calc(18px + env(safe-area-inset-top,0px));right:calc(18px + env(safe-area-inset-right,0px));z-index:3;border:0;background:transparent;color:rgba(244,237,225,.42);font:300 .62rem var(--sans);letter-spacing:.14em;text-transform:uppercase;cursor:pointer;padding:8px}
+.ma2m-skip:hover{color:#fff}
+@keyframes ma2mLogoIn{to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes ma2mFadeUp{to{opacity:1;transform:translateY(0)}}
+@keyframes ma2mLine{to{transform:scaleX(1)}}
+@keyframes ma2mAtmosphere{from{transform:scale(1) translate3d(-1%,0,0)}to{transform:scale(1.06) translate3d(1%,1%,0)}}
+@media(max-width:650px){.ma2m-welcome-inner{min-height:100dvh;padding:32px 18px}.ma2m-opening-quote{max-width:340px}.ma2m-opening-quiet{margin-top:20px}.ma2m-welcome-copy{bottom:106px}.ma2m-enter{bottom:30px;width:calc(100% - 36px)}}
+@media(prefers-reduced-motion:reduce){#ma2mWelcome *{animation:none!important;transition:none!important}.ma2m-logo-reveal,.ma2m-logo-sub,.ma2m-opening-quote,.ma2m-opening-quiet,.ma2m-gold-line{opacity:1;transform:none}.ma2m-welcome-copy,.ma2m-enter{opacity:1;transform:translateX(-50%)}}
 </style>
 
 <style id="ma2m-premium-ui">
@@ -516,14 +551,14 @@ html{scroll-behavior:smooth}body{background:radial-gradient(900px 500px at 5% -5
 </style>
 
 <style id="ma2m-photo-system-v2">
-.photo-principals-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:22px 0 30px}
+.photo-principals-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin:22px 0 30px}
 .principal-photo-card{position:relative;min-height:300px;border:1px solid rgba(255,255,255,.10);background:linear-gradient(145deg,#171414,#0c0b0b);border-radius:16px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;justify-content:flex-end;padding:18px;transition:.25s ease;box-shadow:0 16px 45px rgba(0,0,0,.20)}
 .principal-photo-card:hover{border-color:rgba(184,139,61,.65);transform:translateY(-2px)}
 .principal-photo-card>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.72}
 .principal-photo-card:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%,rgba(7,6,6,.92) 100%);z-index:1}
 .principal-photo-card>*:not(img):not(.hidden-input){position:relative;z-index:2}
 .principal-photo-badge{display:inline-flex;align-self:flex-start;border:1px solid rgba(211,172,94,.45);color:#d9b874;background:rgba(16,12,10,.78);padding:7px 9px;border-radius:999px;font-size:.62rem;letter-spacing:.14em;margin-bottom:10px}
-.principal-photo-badge.profile{border-color:rgba(151,81,91,.7);color:#e1a6ad}.principal-photo-badge.fullbody{color:#f5efe7}
+.principal-photo-badge.profile{border-color:rgba(151,81,91,.7);color:#e1a6ad}.principal-photo-badge.fullbody{color:#f5efe7}.principal-photo-badge.cover{border-color:rgba(122,150,151,.6);color:#a9d0d1}
 .principal-photo-title{font-family:var(--serif);font-style:italic;font-size:1.28rem;color:#f5efe7}.principal-photo-hint{font-size:.72rem;color:#948c85;margin-top:5px;line-height:1.5}
 .compcard-builder,.book-section,.documents-section{margin:26px 0;padding:22px;border:1px solid rgba(255,255,255,.08);border-radius:16px;background:rgba(255,255,255,.018)}
 .section-title-row{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:18px}.section-title-row h3{margin:4px 0;font-family:var(--serif);font-size:1.35rem;font-weight:500;font-style:italic;color:#f5efe7}.section-title-row p{margin:0;color:#948c85;font-size:.76rem}.cc-rule{font-size:.64rem;letter-spacing:.1em;color:#bda979;text-transform:uppercase;white-space:nowrap}
@@ -531,8 +566,8 @@ html{scroll-behavior:smooth}body{background:radial-gradient(900px 500px at 5% -5
 .book-multi-upload{display:inline-flex;align-items:center;gap:8px;padding:11px 15px;border:1px solid rgba(190,151,73,.55);border-radius:9px;color:#d9b874;font-size:.72rem;letter-spacing:.05em;cursor:pointer;background:rgba(190,151,73,.06)}.book-multi-upload:hover{background:rgba(190,151,73,.12)}
 .book-thumb{position:relative}.book-thumb.cc-selected{outline:1px solid rgba(190,151,73,.65);outline-offset:-1px}.book-slot-tag{position:absolute;left:8px;top:8px;z-index:4;background:rgba(20,14,10,.86);color:#d9b874;border:1px solid rgba(210,170,87,.55);border-radius:5px;padding:4px 6px;font-size:.55rem;letter-spacing:.08em}.book-select-btn{position:absolute;left:8px;right:8px;bottom:8px;z-index:4;border:1px solid rgba(255,255,255,.22);background:rgba(8,7,7,.78);color:#f5efe7;border-radius:7px;padding:8px;font-size:.62rem;cursor:pointer}.book-thumb.cc-selected .book-select-btn{border-color:#b9934b;color:#d9b874}
 .cc-counter{padding:12px 14px;border:1px solid rgba(255,255,255,.08);border-radius:9px;background:rgba(255,255,255,.025);color:#948c85}.cc-counter b{color:#d9b874}.cc-counter.full{border-color:rgba(101,154,104,.4)}
-@media(max-width:900px){.photo-principals-grid{grid-template-columns:1fr 1fr}.principal-photo-card:last-child{grid-column:1/-1}.compcard-slots{grid-template-columns:repeat(5, minmax(115px,1fr));overflow-x:auto;padding-bottom:5px}.section-title-row{align-items:flex-start;flex-direction:column}}
-@media(max-width:600px){.photo-principals-grid{grid-template-columns:1fr}.principal-photo-card:last-child{grid-column:auto}.compcard-builder,.book-section,.documents-section{padding:15px}.principal-photo-card{min-height:260px}.compcard-slots{display:flex}.compcard-slot{width:120px;flex:0 0 120px}.cc-slot-content{min-height:170px}}
+@media(max-width:900px){.photo-principals-grid{grid-template-columns:1fr 1fr}.compcard-slots{grid-template-columns:repeat(5, minmax(115px,1fr));overflow-x:auto;padding-bottom:5px}.section-title-row{align-items:flex-start;flex-direction:column}}
+@media(max-width:600px){.photo-principals-grid{grid-template-columns:1fr}.compcard-builder,.book-section,.documents-section{padding:15px}.principal-photo-card{min-height:260px}.compcard-slots{display:flex}.compcard-slot{width:120px;flex:0 0 120px}.cc-slot-content{min-height:170px}}
 </style>
 
 
@@ -558,10 +593,29 @@ html{scroll-behavior:smooth}body{background:radial-gradient(900px 500px at 5% -5
 </div>
 <div class="toast-wrap" id="toasts"></div>
 
+<div id="ma2mWelcome" aria-label="Bienvenue dans votre espace mannequin">
+  <button class="ma2m-skip" id="ma2mSkip" type="button">Passer l'introduction</button>
+  <div class="ma2m-welcome-inner">
+    <img class="ma2m-logo-reveal" src="assets/logo-dark-bg.png" alt="Maître Akesse Model Management">
+    <div class="ma2m-logo-sub">Maître Akesse · Model Management</div>
+    <div class="ma2m-gold-line"></div>
+    <div class="ma2m-opening-quote">« Vous êtes ici parce que quelque chose en vous mérite d'être vu. »</div>
+    <div class="ma2m-opening-quiet">Silence · présence · regard · identité</div>
+    <div class="ma2m-welcome-copy">
+      <strong>Votre espace commence ici</strong>
+      <p>Je ne veux pas que vous entriez ici pour simplement remplir un formulaire. Je veux que vous construisiez votre identité professionnelle, votre image, votre parcours et votre signature.</p>
+    </div>
+    <button class="ma2m-enter" id="ma2mEnter" type="button">Entrer dans mon univers&nbsp; →</button>
+  </div>
+</div>
+
 <div class="overlay hidden" id="overlay"><div id="overlayContent"></div></div>
 
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
+<script src="js/indicatifs-pays.js"></script>
+<script src="js/villes-cote-ivoire.js"></script>
+<script src="js/pays-naissance.js"></script>
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
 <script src="js/app.js"></script>
 <script>
@@ -587,7 +641,7 @@ function emptyState(){
       // jamais écrits tels quels en base, voir deriverStatutAffichage().
       statutAffichage:'brouillon', premierePublicationFaite:false, commentaireAdmin:''
     },
-    identite:{ nomComplet:'', dateNaissance:'', lieuNaissance:'', nationalite:'', ville:'', telephone:'', email:'', sexe:'' },
+    identite:{ nomComplet:'', dateNaissance:'', lieuNaissance:'', nationalite:'', ville:'', quartier:'', telephone:'', email:'', sexe:'' },
     physique:{
       taille:'', poids:'', poitrine:'', tourTaille:'', hanches:'', entrejambe:'', pointure:'',
       tailleVet:'', yeux:'', cheveux:'', carnation:''
@@ -598,7 +652,7 @@ function emptyState(){
     // (voir deriverNiveauMannequin) : jamais redemandé comme catégorie manuelle.
     profilPro:{ anneesExperience:'', disponibilite:'', modelTypes:[], langues:[] },
     experiences:[],
-    photos:{ principale:null, photoCv:null, pleinPied:null, book:[] },
+    photos:{ principale:null, photoCv:null, pleinPied:null, couverture:null, book:[] },
     competences:{},
     citation:'',
     bio:'',
@@ -791,6 +845,7 @@ function identiteToDb(d){
     lieu_naissance: d.lieuNaissance || null,
     nationalite: d.nationalite || null,
     city: d.ville || null,
+    quartier: d.quartier || null,
     phone: d.telephone || null,
     contact_email: d.email || null,
     category: d.sexe || null
@@ -827,7 +882,7 @@ function mapProfileFromDb(row, contactPrive){
   s.meta.commentaireAdmin = row.raison_refus || '';
   Object.assign(s.identite, {
     nomComplet: row.full_name || '', dateNaissance: row.date_naissance || '', lieuNaissance: row.lieu_naissance || '',
-    nationalite: row.nationalite || '', ville: row.city || '',
+    nationalite: row.nationalite || '', ville: row.city || '', quartier: row.quartier || '',
     telephone: (contactPrive && contactPrive.phone) || '', email: (contactPrive && contactPrive.contact_email) || '',
     sexe: row.category || ''
   });
@@ -855,7 +910,7 @@ function mapProfileFromDb(row, contactPrive){
 const Store = {
   async load(){
     const { data: profile, error: e1 } = await sb.from('model_profiles')
-      .select('id, full_name, bio, height_cm, weight_kg, city, instagram, published, created_at, category, chest_cm, waist_cm, hips_cm, shoe_size, carnation, clothing_size, date_naissance, eye_color, hair_color, years_experience, model_types, languages, availability, inseam_cm, featured, premiere_publication_faite, en_attente_validation, raison_refus, niveau_etude, etablissement, formation_particuliere, formation_mannequin, competences, citation, lieu_naissance, nationalite')
+      .select('id, full_name, bio, height_cm, weight_kg, city, quartier, instagram, published, created_at, category, chest_cm, waist_cm, hips_cm, shoe_size, carnation, clothing_size, date_naissance, eye_color, hair_color, years_experience, model_types, languages, availability, inseam_cm, featured, premiere_publication_faite, en_attente_validation, raison_refus, niveau_etude, etablissement, formation_particuliere, formation_mannequin, competences, citation, lieu_naissance, nationalite')
       .eq('id', currentUser.id).maybeSingle();
     if (e1) { console.error(e1); toast('Erreur de chargement du profil', true); return emptyState(); }
 
@@ -874,6 +929,7 @@ const Store = {
       if (p.principale) s.photos.principale = item;
       if (p.photo_cv) s.photos.photoCv = item;
       if (p.photo_pleinpied) s.photos.pleinPied = item;
+      if (p.photo_couverture) s.photos.couverture = item;
     });
 
     return s;
@@ -1130,7 +1186,22 @@ function field(label, id, value, opts){
   opts = opts || {};
   if (opts.tag==='select') {
     return '<div class="field '+(opts.full?'full':'')+'"><label>'+label+(opts.req?'<span class="req">*</span>':'')+'</label>' +
-      '<select id="'+id+'">' + (opts.options||[]).map(function(o){ return '<option value="'+echapperHtml(o.value)+'" '+(o.value===value?'selected':'')+'>'+echapperHtml(o.label)+'</option>'; }).join('') + '</select></div>';
+      '<select id="'+id+'">' + (opts.options||[]).map(function(o){ return '<option value="'+echapperHtml(o.value)+'" '+(String(o.value)===String(value==null?'':value)?'selected':'')+'>'+echapperHtml(o.label)+'</option>'; }).join('') + '</select></div>';
+  }
+  // Select à liste fixe + repli "Autre" (texte libre) — le champ "Autre" n'a
+  // jamais de style="" calculé dans le HTML (bloqué en silence par le CSP
+  // strict de cette page) : sa visibilité initiale est posée juste après le
+  // rendu via initSelectsAvecAutre() (element.style.display=…, une simple
+  // affectation de propriété CSSOM, jamais concernée par le CSP).
+  if (opts.tag==='select-autre') {
+    const valeurs = opts.options || [];
+    const estAutre = !!value && valeurs.indexOf(value) === -1;
+    return '<div class="field '+(opts.full?'full':'')+'"><label>'+label+(opts.req?'<span class="req">*</span>':'')+'</label>' +
+      '<select id="'+id+'" data-avec-autre="1"><option value="">—</option>' +
+        valeurs.map(function(o){ return '<option value="'+echapperHtml(o)+'" '+(o===value?'selected':'')+'>'+echapperHtml(o)+'</option>'; }).join('') +
+        '<option value="Autre" '+(estAutre?'selected':'')+'>Autre</option>' +
+      '</select>' +
+      '<input type="text" class="field-autre" id="'+id+'-autre" placeholder="Précisez" value="'+(estAutre?echapperHtml(value):'')+'"></div>';
   }
   if (opts.tag==='textarea') {
     return '<div class="field '+(opts.full?'full':'')+'"><label>'+label+(opts.req?'<span class="req">*</span>':'')+'</label>' +
@@ -1140,13 +1211,44 @@ function field(label, id, value, opts){
   '<input type="'+(opts.type||'text')+'" id="'+id+'" value="'+echapperHtml(value||'')+'" placeholder="'+(opts.placeholder||'')+'"'+(opts.maxlength?' maxlength="'+opts.maxlength+'"':'')+'></div>';
 }
 
+// Plage de nombres prête pour field({tag:'select'}) — mêmes plages que celles
+// déjà en production sur espace-mannequin.html (remplirSelectNombres), pour
+// éviter les fautes de frappe et les valeurs invraisemblables dans une liste
+// déroulante plutôt qu'un champ numérique libre.
+function plageNombres(min, max, pas, suffixe){
+  const options = [{value:'',label:'—'}];
+  for (let v = min; v <= max; v += pas) options.push({value:String(v), label:v+(suffixe||'')});
+  return options;
+}
+
+// Après chaque rendu, bascule les champs "Autre" (texte libre) associés à un
+// select selon sa valeur courante, et branche leur écoute de changement —
+// element.style.display=… reste une affectation de propriété CSSOM, jamais
+// concernée par le CSP strict de cette page (contrairement à style="" dans le HTML).
+function initSelectsAvecAutre(){
+  document.querySelectorAll('select[data-avec-autre]').forEach(function(sel){
+    const autre = document.getElementById(sel.id + '-autre');
+    if (!autre) return;
+    autre.style.display = sel.value === 'Autre' ? 'block' : 'none';
+    configurerSelectAvecAutre(sel.id, autre.id);
+  });
+}
+
 function stepIdentite(){
   const d = state.identite;
+  const villeSelect = (d.ville === 'Abidjan' || COMMUNES_ABIDJAN.includes(d.ville)) ? 'Abidjan' : d.ville;
   return '<h2>Identité</h2><p class="sub">Étape 1 sur 6</p><div class="grid">' +
     field('Nom complet','f-nom',d.nomComplet,{req:true,full:true}) +
-    field('Date de naissance','f-dob',d.dateNaissance,{type:'date',req:true}) + field('Lieu de naissance','f-lieu',d.lieuNaissance) +
-    field('Nationalité','f-nat',d.nationalite||'Ivoirienne') + field('Ville de résidence','f-ville',d.ville) +
-    field('Téléphone (usage interne agence)','f-tel',d.telephone,{type:'tel',placeholder:'+225 XX XX XX XX XX'}) +
+    field('Date de naissance','f-dob',d.dateNaissance,{type:'date',req:true}) +
+    field('Pays de naissance','f-pays-naissance',d.lieuNaissance,{tag:'select-autre',options:PAYS_NAISSANCE.map(function(p){return p[0];})}) +
+    field('Nationalité','f-nat',d.nationalite||'Ivoirienne') +
+    field('Ville de résidence','f-ville',villeSelect,{tag:'select-autre',options:VILLES_CI}) +
+    '<div class="field" id="f-commune-wrap"><label>Commune (Abidjan)</label><select id="f-commune"></select>' +
+      '<input type="text" class="field-autre" id="f-commune-autre" placeholder="Précisez la commune"></div>' +
+    '<div class="field" id="f-quartier-wrap"><label>Quartier (facultatif)</label>' +
+      '<input type="text" id="f-quartier" value="'+echapperHtml(d.quartier||'')+'" placeholder="ex : Angré, Riviera, II Plateaux…"></div>' +
+    '<div class="field"><label>Téléphone (usage interne agence)</label><div class="tel-row">' +
+      '<select id="f-tel-indicatif"></select><input type="tel" id="f-tel-numero" placeholder="07 00 00 00 00" pattern="[0-9 ]{6,14}"></div></div>' +
     field('E-mail (usage interne agence)','f-email',d.email,{type:'email'}) + '</div>' +
     '<p class="sub p20-21">🔒 Téléphone et e-mail ne sont jamais affichés publiquement — seul le contact officiel de l’agence apparaît sur votre fiche.</p>' +
     '<div class="field full p20-17"><label>Sexe<span class="req">*</span></label><div class="radio-row">' +
@@ -1160,16 +1262,51 @@ function stepIdentite(){
     '<div class="actions-row end"><button class="btn primary" id="save1">Enregistrer</button></div>';
 }
 
+// Branche les champs spécifiques à l'étape Identité qui ne sont pas de simples
+// champs texte : cascade ville→commune, indicatif téléphonique, et suggestion
+// automatique de la nationalité à partir du pays de naissance choisi (reste
+// modifiable librement ensuite : née au Mali mais ivoirienne, par exemple).
+function bindStepIdentite(){
+  // Appelée à chaque rendu du wizard quelle que soit l'étape affichée (voir
+  // bindWizard()) — ces champs n'existent que sur l'étape 1 (ou l'éditeur de
+  // bloc « identité »), on sort donc immédiatement s'ils sont absents du DOM.
+  const selectTel = document.getElementById('f-tel-indicatif');
+  if (!selectTel) return;
+
+  brancherCascadeAbidjan('f-ville', 'f-commune-wrap', 'f-commune', 'f-commune-autre', 'f-quartier-wrap');
+  if (COMMUNES_ABIDJAN.includes(state.identite.ville)) document.getElementById('f-commune').value = state.identite.ville;
+  configurerSelectAvecAutre('f-commune', 'f-commune-autre');
+
+  remplirIndicatifs(selectTel);
+  preRemplirTelephone(state.identite.telephone, selectTel, document.getElementById('f-tel-numero'));
+
+  const selectPays = document.getElementById('f-pays-naissance');
+  if (selectPays) selectPays.addEventListener('change', function(){
+    if (selectPays.value === 'Autre' || !selectPays.value) return;
+    const sexe = (document.querySelector('input[name=sexe]:checked')||{}).value || state.identite.sexe;
+    const suggestion = nationaliteSuggeree(selectPays.value, sexe);
+    if (suggestion) document.getElementById('f-nat').value = suggestion;
+  });
+}
+
 function stepPhysique(){
   const d = state.physique;
   return '<h2>Informations physiques</h2><p class="sub">Étape 2 sur 6</p><div class="grid g3">' +
-    field('Taille (cm)','f-taille',d.taille,{type:'number',req:true}) + field('Poids (kg)','f-poids',d.poids,{type:'number',req:true}) +
-    field('Carnation','f-carnation',d.carnation) +
-    field('Poitrine (cm)','f-poitrine',d.poitrine,{type:'number'}) + field('Tour de taille (cm)','f-tourTaille',d.tourTaille,{type:'number'}) +
-    field('Hanches (cm)','f-hanches',d.hanches,{type:'number'}) +
-    field('Entrejambe (cm)','f-entrejambe',d.entrejambe,{type:'number'}) + field('Pointure','f-pointure',d.pointure) +
-    field('Taille vêtements','f-tailleVet',d.tailleVet) +
-    field('Couleur des yeux','f-yeux',d.yeux) + field('Couleur des cheveux','f-cheveux',d.cheveux) + '<div></div>' +
+    field('Taille (cm)','f-taille',d.taille,{tag:'select',req:true,options:plageNombres(140,210,1,' cm')}) +
+    field('Poids (kg)','f-poids',d.poids,{tag:'select',req:true,options:plageNombres(35,130,1,' kg')}) +
+    field('Carnation','f-carnation',d.carnation,{tag:'select',options:[
+      {value:'',label:'—'},{value:'Claire',label:'Claire'},{value:'Métisse claire',label:'Métisse claire'},
+      {value:'Métisse foncée',label:'Métisse foncée'},{value:'Foncée',label:'Foncée'},{value:'Très foncée',label:'Très foncée'}
+    ]}) +
+    field('Poitrine (cm)','f-poitrine',d.poitrine,{tag:'select',options:plageNombres(70,130,1,' cm')}) +
+    field('Tour de taille (cm)','f-tourTaille',d.tourTaille,{tag:'select',options:plageNombres(55,110,1,' cm')}) +
+    field('Hanches (cm)','f-hanches',d.hanches,{tag:'select',options:plageNombres(70,130,1,' cm')}) +
+    field('Entrejambe (cm)','f-entrejambe',d.entrejambe,{tag:'select',options:plageNombres(60,100,1,' cm')}) +
+    field('Pointure','f-pointure',d.pointure,{tag:'select',options:plageNombres(34,46,1,'')}) +
+    field('Taille vêtements','f-tailleVet',d.tailleVet,{tag:'select-autre',options:['XS','S','M','L','XL','XXL']}) +
+    field('Couleur des yeux','f-yeux',d.yeux,{tag:'select-autre',options:['Marron','Noir','Vert','Bleu','Gris','Noisette']}) +
+    field('Couleur des cheveux','f-cheveux',d.cheveux,{tag:'select-autre',options:['Noir','Brun','Châtain','Blond','Roux','Gris / Blanc']}) +
+    '<div></div>' +
     '</div>' +
     '<p class="sub p20-14">Hanches pour les femmes, entrejambe pour les hommes — renseignez le champ qui vous concerne.</p>' +
     '<div class="actions-row"><button class="btn ghost" data-goto="1">← Retour</button><button class="btn primary" id="save2">Enregistrer</button></div>';
@@ -1233,7 +1370,10 @@ function stepPhotos(){
       (ph?'<img src="'+ph.url+'" alt="Photo compcard '+n+'">':'<span class="cc-slot-plus">＋</span>') +
       '<div class="cc-slot-label '+(ph?'cc-slot-assigned':'')+'">'+(ph?'Photo sélectionnée':'Aucune photo sélectionnée')+'</div>' +
       '<small>'+rule+' — indication éditoriale, pas une contrainte</small>' +
-      '<div class="cc-source-actions"><button type="button" class="cc-source-btn gold" data-cc-book="'+n+'">Choisir dans mon Book</button></div>' +
+      '<div class="cc-source-actions">' +
+        '<button type="button" class="cc-source-btn gold" data-cc-book="'+n+'">Choisir dans mon Book</button>' +
+        '<label class="cc-upload-btn" data-cc-upload-label="'+n+'"><input class="hidden-input" type="file" accept="image/*" id="fCcSlot'+n+'">Téléverser une nouvelle photo</label>' +
+      '</div>' +
       (ph?'<button type="button" class="cc-remove-assignment" data-clear-cc-slot="'+n+'">Retirer de la compcard</button>':'') +
       '</div></div>';
   }).join('');
@@ -1245,9 +1385,14 @@ function stepPhotos(){
   '<section class="documents-section"><div class="section-title-row"><div><span class="editor-kicker">CV</span><h3>Compétences mannequin</h3><p>Évaluez-vous honnêtement sur chaque compétence (1 à 5).</p></div></div>' +
     '<div class="grid g3">'+competencesHtml+'</div></section>' +
   '<div class="photo-principals-grid">' +
-    '<div class="principal-photo-card '+(p.photoCv?'filled':'')+'" id="uPhotoCv">'+photoThumb(p.photoCv,'Photo CV')+'<div class="principal-photo-badge">PHOTO PRINCIPALE CV</div><div class="principal-photo-title">'+(p.photoCv?'Photo CV définie':'Choisir la photo du CV')+'</div><div class="principal-photo-hint">Cliquez pour choisir une photo de votre Book</div></div>' +
-    '<div class="principal-photo-card '+(p.principale?'filled':'')+'" id="uPrincipale">'+photoThumb(p.principale,'Photo de profil')+'<div class="principal-photo-badge profile">PHOTO PRINCIPALE PROFIL</div><div class="principal-photo-title">'+(p.principale?'Photo profil définie':'Choisir la photo de profil')+'</div><div class="principal-photo-hint">Affichée sur votre fiche publique et dans THE BOOK</div></div>' +
-    '<div class="principal-photo-card '+(p.pleinPied?'filled':'')+'" id="uPleinPied">'+photoThumb(p.pleinPied,'Photo plein pied')+'<div class="principal-photo-badge fullbody">PHOTO PLEIN PIED</div><div class="principal-photo-title">'+(p.pleinPied?'Photo plein pied définie':'Choisir la photo plein pied')+'</div><div class="principal-photo-hint">Photo de référence plein pied</div></div>' +
+    '<div class="principal-photo-card '+(p.photoCv?'filled':'')+'" id="uPhotoCv">'+photoThumb(p.photoCv,'Photo CV')+'<div class="principal-photo-badge">PHOTO PRINCIPALE CV</div><div class="principal-photo-title">'+(p.photoCv?'Photo CV définie':'Choisir la photo du CV')+'</div><div class="principal-photo-hint">Portrait, buste ou 3/4 — la photo qui vous représente le mieux</div>' +
+      '<label class="cc-upload-btn" data-cc-upload-label="photoCv"><input class="hidden-input" type="file" accept="image/*" id="fPhotoCv">Téléverser une nouvelle photo</label></div>' +
+    '<div class="principal-photo-card '+(p.principale?'filled':'')+'" id="uPrincipale">'+photoThumb(p.principale,'Photo de profil')+'<div class="principal-photo-badge profile">PHOTO PRINCIPALE PROFIL</div><div class="principal-photo-title">'+(p.principale?'Photo profil définie':'Choisir la photo de profil')+'</div><div class="principal-photo-hint">Portrait, buste ou 3/4 — affichée sur votre fiche publique et dans THE BOOK</div>' +
+      '<label class="cc-upload-btn" data-cc-upload-label="principale"><input class="hidden-input" type="file" accept="image/*" id="fPrincipale">Téléverser une nouvelle photo</label></div>' +
+    '<div class="principal-photo-card '+(p.pleinPied?'filled':'')+'" id="uPleinPied">'+photoThumb(p.pleinPied,'Photo plein pied')+'<div class="principal-photo-badge fullbody">PHOTO PLEIN PIED</div><div class="principal-photo-title">'+(p.pleinPied?'Photo plein pied définie':'Choisir la photo plein pied')+'</div><div class="principal-photo-hint">Photo de référence plein pied</div>' +
+      '<label class="cc-upload-btn" data-cc-upload-label="pleinPied"><input class="hidden-input" type="file" accept="image/*" id="fPleinPied">Téléverser une nouvelle photo</label></div>' +
+    '<div class="principal-photo-card '+(p.couverture?'filled':'')+'" id="uCouverture">'+photoThumb(p.couverture,'Photo de couverture')+'<div class="principal-photo-badge cover">PHOTO DE COUVERTURE</div><div class="principal-photo-title">'+(p.couverture?'Photo de couverture définie':'Choisir la photo de couverture')+'</div><div class="principal-photo-hint">Bandeau en haut de votre fiche publique — plutôt une photo large</div>' +
+      '<label class="cc-upload-btn" data-cc-upload-label="couverture"><input class="hidden-input" type="file" accept="image/*" id="fCouverture">Téléverser une nouvelle photo</label></div>' +
   '</div>' +
   '<section class="book-section"><div class="section-title-row"><div><span class="editor-kicker">GALERIE</span><h3>Photos du Book</h3><p>Ajoutez vos photos ici — c’est parmi elles que vous choisirez ensuite vos photos principales et votre compcard.</p></div>' +
     '<label class="book-multi-upload" for="fBook">＋ Ajouter des photos<input class="hidden-input" type="file" accept="image/*" id="fBook" multiple></label></div>' +
@@ -1276,21 +1421,47 @@ function stepRecap(){
 
 function goto(n){ state.meta.currentStep = n; render(); window.scrollTo({top:0,behavior:'smooth'}); }
 
+// Lecture des champs Identité/Physique — mutualisée entre le formulaire du
+// premier parcours (bindWizard) et l'éditeur de bloc post-publication
+// (bindBlockPage), qui réutilisent tous les deux stepIdentite()/stepPhysique().
+function lireIdentiteFormulaire(){
+  return {
+    nomComplet: val('f-nom'), dateNaissance: val('f-dob'),
+    lieuNaissance: valeurSelectOuAutre('f-pays-naissance', 'f-pays-naissance-autre'),
+    nationalite: val('f-nat'),
+    ville: villeAvecCommune(valeurSelectOuAutre('f-ville', 'f-ville-autre'), 'f-commune', 'f-commune-autre'),
+    quartier: val('f-quartier'),
+    telephone: composerTelephone(document.getElementById('f-tel-indicatif'), document.getElementById('f-tel-numero')),
+    email: val('f-email'),
+    sexe: (document.querySelector('input[name=sexe]:checked')||{}).value || ''
+  };
+}
+function lirePhysiqueFormulaire(){
+  return {
+    taille: val('f-taille'), poids: val('f-poids'), poitrine: val('f-poitrine'), tourTaille: val('f-tourTaille'),
+    hanches: val('f-hanches'), entrejambe: val('f-entrejambe'), pointure: val('f-pointure'),
+    tailleVet: valeurSelectOuAutre('f-tailleVet', 'f-tailleVet-autre'),
+    yeux: valeurSelectOuAutre('f-yeux', 'f-yeux-autre'),
+    cheveux: valeurSelectOuAutre('f-cheveux', 'f-cheveux-autre'),
+    carnation: val('f-carnation')
+  };
+}
+
 function bindWizard(){
   // Largeur de la barre de progression posée après coup via l'API DOM (pas
   // en style="" inline dans le HTML) : le CSP strict de cette page bloque
   // silencieusement les valeurs de style calculées insérées comme texte.
   document.querySelectorAll('.progress-fill[data-largeur]').forEach(function(el){ el.style.width = el.dataset.largeur + '%'; });
   document.querySelectorAll('[data-goto]').forEach(function(b){ b.addEventListener('click', function(){ goto(parseInt(b.dataset.goto,10)); }); });
+  initSelectsAvecAutre();
+  bindStepIdentite();
   const s = state;
 
   document.getElementById('save1')?.addEventListener('click', async function(){
     const btn = this;
-    Object.assign(s.identite, {
-      nomComplet: val('f-nom'), dateNaissance: val('f-dob'), lieuNaissance: val('f-lieu'),
-      nationalite: val('f-nat'), ville: val('f-ville'), telephone: val('f-tel'), email: val('f-email'),
-      sexe: (document.querySelector('input[name=sexe]:checked')||{}).value || s.identite.sexe
-    });
+    const identiteFormulaire = lireIdentiteFormulaire();
+    identiteFormulaire.sexe = identiteFormulaire.sexe || s.identite.sexe;
+    Object.assign(s.identite, identiteFormulaire);
     s.bio = val('f-bio'); s.instagram = val('f-instagram'); s.citation = val('f-citation');
     btn.disabled = true; btn.textContent = 'Enregistrement…';
     const ok = await Store.saveBlock(Object.assign(identiteToDb(s.identite), { bio: s.bio||null, instagram: s.instagram||null, citation: s.citation||null }));
@@ -1299,11 +1470,7 @@ function bindWizard(){
 
   document.getElementById('save2')?.addEventListener('click', async function(){
     const btn = this;
-    Object.assign(s.physique, {
-      taille: val('f-taille'), poids: val('f-poids'), poitrine: val('f-poitrine'), tourTaille: val('f-tourTaille'),
-      hanches: val('f-hanches'), entrejambe: val('f-entrejambe'), pointure: val('f-pointure'), tailleVet: val('f-tailleVet'),
-      yeux: val('f-yeux'), cheveux: val('f-cheveux'), carnation: val('f-carnation')
-    });
+    Object.assign(s.physique, lirePhysiqueFormulaire());
     btn.disabled = true; btn.textContent = 'Enregistrement…';
     const ok = await Store.saveBlock(physiqueToDb(s.physique));
     if (ok) { toast('Enregistré'); goto(3); } else { btn.disabled=false; btn.textContent='Enregistrer'; }
@@ -1404,6 +1571,7 @@ function bindPhotoHandlers(){
       if (s.photos.principale && String(s.photos.principale.id)===String(id)) s.photos.principale=null;
       if (s.photos.photoCv && String(s.photos.photoCv.id)===String(id)) s.photos.photoCv=null;
       if (s.photos.pleinPied && String(s.photos.pleinPied.id)===String(id)) s.photos.pleinPied=null;
+      if (s.photos.couverture && String(s.photos.couverture.id)===String(id)) s.photos.couverture=null;
       render(); reopenDashboardBlock('photos');
     }
   }); });
@@ -1420,23 +1588,37 @@ function bindPhotoHandlers(){
   }
   function fermerChoixBook(){ const m=document.getElementById('ccBookModal'); if (m) m.classList.remove('open'); }
 
+  // Un seul point de vérité par rôle/emplacement, appelé aussi bien quand la
+  // photo vient d'être choisie dans le Book que quand elle vient d'être
+  // téléversée directement (cahier des charges, règle 13-A : les deux chemins
+  // doivent aboutir au même résultat, sans jamais dupliquer la photo).
+  async function assignerPhotoCv(photo){ const ok = await Store.setRolePhoto('photo_cv', photo.id); if (ok) { s.photos.photoCv=photo; toast('Photo CV définie'); } return ok; }
+  async function assignerPrincipale(photo){ const ok = await Store.setRolePhoto('principale', photo.id); if (ok) { s.photos.principale=photo; toast('Photo de profil définie'); } return ok; }
+  async function assignerPleinPied(photo){ const ok = await Store.setRolePhoto('photo_pleinpied', photo.id); if (ok) { s.photos.pleinPied=photo; toast('Photo plein pied définie'); } return ok; }
+  async function assignerCouverture(photo){ const ok = await Store.setRolePhoto('photo_couverture', photo.id); if (ok) { s.photos.couverture=photo; toast('Photo de couverture définie'); } return ok; }
+  async function assignerCompcardSlot(photo, slot){
+    if (photo.compcardOrdre) { toast('Cette photo occupe déjà l’emplacement '+photo.compcardOrdre, true); return false; }
+    const ok = await Store.setCompcardOrdre(photo.id, slot);
+    if (ok) { photo.compcardOrdre = slot; toast('Photo affectée à l’emplacement '+slot); }
+    return ok;
+  }
+
   document.getElementById('uPhotoCv')?.addEventListener('click', function(){
-    ouvrirChoixBook(async function(photo){ const ok = await Store.setRolePhoto('photo_cv', photo.id); if (ok) { s.photos.photoCv=photo; render(); reopenDashboardBlock('photos'); toast('Photo CV définie'); } });
+    ouvrirChoixBook(async function(photo){ if (await assignerPhotoCv(photo)) { render(); reopenDashboardBlock('photos'); } });
   });
   document.getElementById('uPrincipale')?.addEventListener('click', function(){
-    ouvrirChoixBook(async function(photo){ const ok = await Store.setRolePhoto('principale', photo.id); if (ok) { s.photos.principale=photo; render(); reopenDashboardBlock('photos'); toast('Photo de profil définie'); } });
+    ouvrirChoixBook(async function(photo){ if (await assignerPrincipale(photo)) { render(); reopenDashboardBlock('photos'); } });
   });
   document.getElementById('uPleinPied')?.addEventListener('click', function(){
-    ouvrirChoixBook(async function(photo){ const ok = await Store.setRolePhoto('photo_pleinpied', photo.id); if (ok) { s.photos.pleinPied=photo; render(); reopenDashboardBlock('photos'); toast('Photo plein pied définie'); } });
+    ouvrirChoixBook(async function(photo){ if (await assignerPleinPied(photo)) { render(); reopenDashboardBlock('photos'); } });
+  });
+  document.getElementById('uCouverture')?.addEventListener('click', function(){
+    ouvrirChoixBook(async function(photo){ if (await assignerCouverture(photo)) { render(); reopenDashboardBlock('photos'); } });
   });
   document.querySelectorAll('[data-cc-book]').forEach(function(btn){ btn.addEventListener('click', function(e){
     e.stopPropagation();
     const slot = parseInt(btn.dataset.ccBook,10);
-    ouvrirChoixBook(async function(photo){
-      if (photo.compcardOrdre) { toast('Cette photo occupe déjà l’emplacement '+photo.compcardOrdre, true); return; }
-      const ok = await Store.setCompcardOrdre(photo.id, slot);
-      if (ok) { photo.compcardOrdre = slot; render(); reopenDashboardBlock('photos'); toast('Photo affectée à l’emplacement '+slot); }
-    });
+    ouvrirChoixBook(async function(photo){ if (await assignerCompcardSlot(photo, slot)) { render(); reopenDashboardBlock('photos'); } });
   }); });
   document.querySelectorAll('[data-clear-cc-slot]').forEach(function(btn){ btn.addEventListener('click', async function(e){
     e.stopPropagation();
@@ -1446,6 +1628,31 @@ function bindPhotoHandlers(){
     const ok = await Store.setCompcardOrdre(photo.id, null);
     if (ok) { render(); reopenDashboardBlock('photos'); toast('Emplacement '+slot+' libéré — la photo reste dans le Book'); }
   }); });
+
+  // Téléversement direct par rôle : la photo est ajoutée au Book (comme toute
+  // autre photo, jamais de bibliothèque parallèle) ET reçoit son rôle en un
+  // seul geste, sans avoir à repasser ensuite par "Choisir dans mon Book".
+  document.querySelectorAll('[data-cc-upload-label]').forEach(function(label){
+    label.addEventListener('click', function(e){ e.stopPropagation(); });
+    const input = label.querySelector('input[type=file]');
+    if (!input) return;
+    const cle = label.dataset.ccUploadLabel;
+    input.addEventListener('change', async function(){
+      const file = input.files && input.files[0];
+      if (!file) return;
+      toast('Envoi de la photo…');
+      const item = await Store.uploadPhoto(file);
+      input.value = '';
+      if (!item) return;
+      s.photos.book.push(item);
+      if (cle==='photoCv') await assignerPhotoCv(item);
+      else if (cle==='principale') await assignerPrincipale(item);
+      else if (cle==='pleinPied') await assignerPleinPied(item);
+      else if (cle==='couverture') await assignerCouverture(item);
+      else await assignerCompcardSlot(item, parseInt(cle,10));
+      render(); reopenDashboardBlock('photos');
+    });
+  });
 
   document.addEventListener('click', function(e){
     if (e.target.closest('[data-cc-book-close]') || e.target.id==='ccBookModal') fermerChoixBook();
@@ -1503,14 +1710,21 @@ const BLOCKS = [
   {k:'photos', ic:'📸', title:'Photos', desc:'Principales, book, compcard'},
 ];
 
-function editorAction(label){ return '<div class="editor-page-actions"><button class="btn editor-save" data-editor-save="1">'+label+'</button></div>'; }
+// Bouton "Enregistrer" (rouge → vert une fois enregistré) + bouton "Retour au
+// tableau de bord" sous chaque bloc, sans exception — y compris Photos et
+// Expérience, où chaque action se sauvegarde déjà individuellement : le clic
+// y confirme simplement visuellement (même code couleur) plutôt que de forcer
+// à remonter en haut de page pour retrouver le bouton retour.
+function editorAction(label){
+  return '<div class="editor-page-actions"><button type="button" class="btn ghost ret" data-editor-retour="1">← Retour au tableau de bord</button><button class="btn editor-save" data-editor-save="1">'+label+'</button></div>';
+}
 
 function editorPageBody(k){
   if (k==='identite') return stepIdentite().replace('<p class="sub">Étape 1 sur 6</p>','<p class="sub">Modifiez ici tous les éléments de votre identité.</p>').replace('<div class="actions-row end"><button class="btn primary" id="save1">Enregistrer</button></div>', editorAction('Enregistrer'));
   if (k==='physique') return stepPhysique().replace('<p class="sub">Étape 2 sur 6</p>','<p class="sub">Modifiez ici toutes vos mensurations.</p>').replace('<div class="actions-row"><button class="btn ghost" data-goto="1">← Retour</button><button class="btn primary" id="save2">Enregistrer</button></div>', editorAction('Enregistrer'));
   if (k==='formation') return stepFormation().replace('<p class="sub">Étape 3 sur 6</p>','<p class="sub">Modifiez ici votre formation et votre parcours mannequin.</p>').replace('<div class="actions-row"><button class="btn ghost" data-goto="2">← Retour</button><button class="btn primary" id="save3">Enregistrer</button></div>', editorAction('Enregistrer'));
-  if (k==='experiences') return stepExperience().replace('<p class="sub">Étape 4 sur 6</p>','<p class="sub">Modifiez ici votre profil professionnel et vos expériences — chaque ligne est enregistrée séparément.</p>').replace('<div class="actions-row"><button class="btn ghost" data-goto="3">← Retour</button><button class="btn primary" id="save4">Continuer</button></div>','');
-  if (k==='photos') return stepPhotos().replace('<div class="actions-row"><button class="btn ghost" data-goto="4">← Retour</button><button class="btn primary" id="save5">Continuer</button></div>','');
+  if (k==='experiences') return stepExperience().replace('<p class="sub">Étape 4 sur 6</p>','<p class="sub">Modifiez ici votre profil professionnel et vos expériences — chaque ligne est enregistrée séparément.</p>').replace('<div class="actions-row"><button class="btn ghost" data-goto="3">← Retour</button><button class="btn primary" id="save4">Continuer</button></div>', editorAction('Enregistrer'));
+  if (k==='photos') return stepPhotos().replace('<div class="actions-row"><button class="btn ghost" data-goto="4">← Retour</button><button class="btn primary" id="save5">Continuer</button></div>', editorAction('Enregistrer'));
   return '';
 }
 
@@ -1525,24 +1739,39 @@ function viewBlockEditor(k){
 function bindBlockPage(k){
   const s = state;
   document.getElementById('fermerEditeurBloc')?.addEventListener('click', function(){ state.meta.editBlock=null; render(); });
+  document.querySelector('[data-editor-retour="1"]')?.addEventListener('click', function(){ state.meta.editBlock=null; render(); });
   bindExperienceHandlers();
   bindProfilProHandlers();
   bindPhotoHandlers();
   bindCompetencesHandlers();
-
-  if (k==='photos') return; // les uploads/sélections sont déjà persistés par leurs propres actions
+  initSelectsAvecAutre();
+  bindStepIdentite();
 
   const btn = document.querySelector('[data-editor-save="1"]');
   if (!btn) return;
+
+  // Photos et Expérience s'enregistrent déjà individuellement à chaque action
+  // (upload, sélection, ligne ajoutée…) : le bouton confirme simplement en
+  // vert, sans nouvel appel réseau ni notion de "payload" en attente.
+  if (k==='photos' || k==='experiences') {
+    btn.addEventListener('click', function(){
+      btn.textContent='✓ Enregistré'; btn.classList.add('saved');
+      setTimeout(function(){ btn.textContent='Enregistrer'; btn.classList.remove('saved'); }, 1800);
+    });
+    return;
+  }
+
   btn.addEventListener('click', async function(){
     btn.disabled = true; btn.textContent = 'Enregistrement…';
     let ok = false, payload = {};
     if (k==='identite') {
-      Object.assign(s.identite, { nomComplet:val('f-nom'), dateNaissance:val('f-dob'), lieuNaissance:val('f-lieu'), nationalite:val('f-nat'), ville:val('f-ville'), telephone:val('f-tel'), email:val('f-email'), sexe:(document.querySelector('input[name=sexe]:checked')||{}).value||s.identite.sexe });
+      const identiteFormulaire = lireIdentiteFormulaire();
+      identiteFormulaire.sexe = identiteFormulaire.sexe || s.identite.sexe;
+      Object.assign(s.identite, identiteFormulaire);
       s.bio = val('f-bio'); s.instagram = val('f-instagram'); s.citation = val('f-citation');
       payload = Object.assign(identiteToDb(s.identite), { bio: s.bio||null, instagram: s.instagram||null, citation: s.citation||null });
     } else if (k==='physique') {
-      Object.assign(s.physique, { taille:val('f-taille'), poids:val('f-poids'), poitrine:val('f-poitrine'), tourTaille:val('f-tourTaille'), hanches:val('f-hanches'), entrejambe:val('f-entrejambe'), pointure:val('f-pointure'), tailleVet:val('f-tailleVet'), yeux:val('f-yeux'), cheveux:val('f-cheveux'), carnation:val('f-carnation') });
+      Object.assign(s.physique, lirePhysiqueFormulaire());
       payload = physiqueToDb(s.physique);
     } else if (k==='formation') {
       s.formation.niveau=val('f-niveau'); s.formation.etablissement=val('f-etab'); s.formation.particuliere=val('f-formPart'); s.formation.mannequin=val('f-formMannequin');
@@ -1638,6 +1867,7 @@ function openCv(){
   const niveau = deriverNiveauMannequin(state.profilPro.anneesExperience);
   const heroPhoto = state.photos.photoCv && state.photos.photoCv.urlPleine ? '<img src="'+state.photos.photoCv.urlPleine+'" alt="Photo">' : '';
   const handle = state.instagram ? state.instagram.replace(/^@/,'') : '';
+  const lienFichePublique = 'https://www.maitreakessemodelmanagement.com/mannequin.html?id='+encodeURIComponent(currentUser.id);
   document.getElementById('overlayContent').innerHTML =
     '<div class="overlay-close"><button id="closeOv">✕</button></div>' +
     '<div class="cv-sheet print-area">' +
@@ -1649,9 +1879,9 @@ function openCv(){
       '<div class="mcv-role">Mannequin professionnel(le)</div><div class="mcv-divider"></div>' +
       '<ul class="mcv-info-list">' +
         '<li>'+mcvIcon('calendar')+'<div><span class="k">Date de naissance</span><span class="v">'+formaterPeriode(d.dateNaissance)+'</span></div></li>' +
-        '<li>'+mcvIcon('pin')+'<div><span class="k">Lieu de naissance</span><span class="v">'+echapperHtml(d.lieuNaissance||'—')+'</span></div></li>' +
+        '<li>'+mcvIcon('pin')+'<div><span class="k">Pays de naissance</span><span class="v">'+echapperHtml(d.lieuNaissance||'—')+'</span></div></li>' +
         '<li>'+mcvIcon('globe')+'<div><span class="k">Nationalité</span><span class="v">'+echapperHtml(d.nationalite||'—')+'</span></div></li>' +
-        '<li>'+mcvIcon('home')+'<div><span class="k">Ville de résidence</span><span class="v">'+echapperHtml(d.ville||'—')+'</span></div></li>' +
+        '<li>'+mcvIcon('home')+'<div><span class="k">Ville de résidence</span><span class="v">'+echapperHtml([d.ville,d.quartier].filter(Boolean).join(', ')||'—')+'</span></div></li>' +
         '<li>'+mcvIcon('phone')+'<div><span class="k">Contact agence</span><span class="v">+225 27 22 23 11 76<br>infos.ma2m@gmail.com</span></div></li>' +
       '</ul>' +
       '<div class="mcv-cat"><span class="lbl">Catégorie</span><span class="val">'+echapperHtml(niveau)+'</span></div>' +
@@ -1676,7 +1906,9 @@ function openCv(){
         ORDRE_COMPETENCES.map(function(cle){ const pct=((state.competences[cle]||3)/5)*100; return '<div class="mcv-skill-row"><span class="lbl">'+LIBELLES_COMPETENCES[cle]+'</span><div class="mcv-skill-bar"><i data-largeur="'+pct+'"></i></div></div>'; }).join('') +
         '</div></div><div><h4>'+mcvIcon('image')+' Portfolio</h4><div class="mcv-portfolio">' +
         (handle?'<div class="soc">'+mcvIcon('insta',15)+' @'+echapperHtml(handle)+'</div>':'') +
-        '<div class="soc">'+mcvIcon('link',15)+' <a href="https://www.maitreakessemodelmanagement.com/mannequin.html?id='+encodeURIComponent(currentUser.id)+'" target="_blank" rel="noopener" class="p20-6">Voir ma fiche publique</a></div></div></div></div></section>' +
+        '<div class="soc">'+mcvIcon('link',15)+' <a href="'+lienFichePublique+'" target="_blank" rel="noopener" class="p20-6">Voir ma fiche publique</a></div>' +
+        '<div class="mcv-qr"><img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&margin=8&color=241a12&bgcolor=ffffff&data='+encodeURIComponent(lienFichePublique)+'" alt="QR code vers ma fiche publique" width="140" height="140"><span>Scannez pour ouvrir ma fiche</span></div>' +
+        '</div></div></div></section>' +
     '</div></div></div>' +
     '<div class="cv-actions"><button class="btn ghost small" id="closeOv2">Fermer</button><button class="btn primary small" id="printCv">Télécharger le CV (PDF)</button></div></div>';
   showOverlay();
@@ -1738,6 +1970,28 @@ function showOverlay(){
   document.getElementById('closeOv2')?.addEventListener('click', function(){ ov.classList.add('hidden'); });
 }
 
+/* ------------------------------------------------- ÉCRAN DE BIENVENUE --- */
+// Introduction cinématique, une seule fois par session de navigateur (pas à
+// chaque re-rendu ni à chaque étape du wizard) — sessionStorage est effacé à
+// la fermeture de l'onglet, donc elle revient bien à la prochaine connexion.
+function closeMA2MWelcome(){
+  const welcome = document.getElementById('ma2mWelcome');
+  if (!welcome) return;
+  welcome.classList.add('leaving');
+  setTimeout(function(){ welcome.remove(); }, 900);
+  try{ sessionStorage.setItem('ma2m_welcome_vu', '1'); }catch(e){}
+}
+function prepareMA2MWelcome(){
+  const welcome = document.getElementById('ma2mWelcome');
+  if (!welcome) return;
+  let dejaVu = false;
+  try{ dejaVu = sessionStorage.getItem('ma2m_welcome_vu') === '1'; }catch(e){}
+  if (dejaVu) { welcome.remove(); return; }
+  setTimeout(function(){ welcome.classList.add('ready'); }, 3600);
+  document.getElementById('ma2mEnter')?.addEventListener('click', closeMA2MWelcome);
+  document.getElementById('ma2mSkip')?.addEventListener('click', closeMA2MWelcome);
+}
+
 /* --------------------------------------------------------------- INIT --- */
 async function demarrerApresConnexion(){
   const { data: { user } } = await sb.auth.getUser();
@@ -1747,6 +2001,7 @@ async function demarrerApresConnexion(){
   state = await Store.load();
   if (!state.meta.currentStep) state.meta.currentStep = 1;
   render();
+  prepareMA2MWelcome();
 }
 
 (async function init(){

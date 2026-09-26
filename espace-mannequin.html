@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-whF4JLhP6FXQbxpwRRcBya3dUU0S8NrziaP925L2N8Q=' 'sha256-xs06pse3v3HwxsZsXRFFZoIE4jQWgFDqMD7hmDlQLbQ='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-MUB6FhdJ9FpDQ3biQkblrXb2hxYFp094UdlwEclzM3I=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-whF4JLhP6FXQbxpwRRcBya3dUU0S8NrziaP925L2N8Q=' 'sha256-O59CshpcWgfTtTUKlvTZI1h9xsGXJ71ELxUI8BJ9Ri4='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-MUB6FhdJ9FpDQ3biQkblrXb2hxYFp094UdlwEclzM3I=';">
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
 <script src="js/analytics-config.js"></script>
@@ -249,6 +249,15 @@ setTimeout(() => {
           <label for="pr-ville">Ville *</label>
           <select id="pr-ville" required></select>
           <input type="text" id="pr-ville-autre" placeholder="Précisez la ville" class="em-6">
+        </div>
+        <div class="form-champ u-hidden" id="pr-commune-wrap">
+          <label for="pr-commune">Commune (Abidjan)</label>
+          <select id="pr-commune"></select>
+          <input type="text" id="pr-commune-autre" placeholder="Précisez la commune" class="em-6">
+        </div>
+        <div class="form-champ u-hidden" id="pr-quartier-wrap">
+          <label for="pr-quartier">Quartier (facultatif)</label>
+          <input type="text" id="pr-quartier" placeholder="ex : Angré, Riviera, II Plateaux…">
         </div>
         <div class="form-champ">
           <label for="pr-naissance">Date de naissance *</label>
@@ -689,6 +698,7 @@ setTimeout(() => {
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
 <script src="js/indicatifs-pays.js"></script>
+<script src="js/villes-cote-ivoire.js"></script>
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
 <script src="js/app.js"></script>
 <script src="js/menu.js"></script>
@@ -771,23 +781,13 @@ function remplirSelectListe(id, liste) {
   champ.appendChild(new Option('Autre', 'Autre'));
 }
 
-// Villes de Côte d'Ivoire (chefs-lieux de région/département les plus connus) —
-// Abidjan en tête car c'est de loin la ville la plus fréquente pour nos mannequins.
-// Réutilisée pour la ville du mannequin ET pour la ville d'un projet.
-const VILLES_CI = [
-  'Abidjan', 'Abengourou', 'Aboisso', 'Adiaké', 'Adzopé', 'Affery', 'Agboville', 'Agnibilékrou',
-  'Akoupé', 'Alépé', 'Anyama', 'Arrah', 'Attiégouakro', 'Bangolo', 'Bettié', 'Biankouma',
-  'Bingerville', 'Bloléquin', 'Bocanda', 'Bondoukou', 'Bongouanou', 'Bouaflé', 'Bouaké', 'Bouna',
-  'Boundiali', 'Dabakala', 'Dabou', 'Daloa', 'Danané', 'Daoukro', 'Dimbokro', 'Divo', 'Duékoué',
-  'Facobly', 'Ferkessédougou', 'Fresco', 'Gagnoa', 'Grand-Bassam', 'Grand-Lahou', 'Guiglo',
-  'Guitry', 'Issia', 'Jacqueville', 'Kani', 'Katiola', 'Kong', 'Korhogo', 'Kouibly', 'Lakota',
-  'Man', 'Mankono', "M'Bahiakro", 'Minignan', 'Nassian', 'Odienné', 'Oumé', 'Ouangolodougou',
-  'Ouragahio', 'Prikro', 'Sakassou', 'San-Pédro', 'Sassandra', 'Séguéla', 'Sikensi', 'Sinfra',
-  'Soubré', 'Tabou', 'Tanda', 'Tengréla', 'Tiassalé', 'Tiébissou', 'Toulepleu', 'Toumodi',
-  'Touba', 'Vavoua', 'Yamoussoukro', 'Zouan-Hounien', 'Zuénoula'
-];
+// VILLES_CI/COMMUNES_ABIDJAN viennent désormais de js/villes-cote-ivoire.js
+// (partagé avec candidature.html et espace-mannequin-MA2M-premium-20.html —
+// une seule liste au lieu de 2 copies identiques auparavant).
 remplirSelectListe('pr-ville', VILLES_CI);
 remplirSelectListe('pj-ville', VILLES_CI);
+brancherCascadeAbidjan('pr-ville', 'pr-commune-wrap', 'pr-commune', 'pr-commune-autre', 'pr-quartier-wrap');
+configurerSelectAvecAutre('pr-commune', 'pr-commune-autre');
 
 // Pays du monde (pour le pays d'un projet, qui peut se dérouler n'importe où) —
 // Côte d'Ivoire en tête pour la même raison.
@@ -1002,7 +1002,7 @@ function mettreAJourApercu() {
   const nom = document.getElementById('pr-nom').value.trim();
   document.getElementById('ap-nom').textContent = nom || 'Votre nom';
 
-  const ville = valeurChampOuAutre('pr-ville', 'pr-ville-autre');
+  const ville = villeAvecCommune(valeurChampOuAutre('pr-ville', 'pr-ville-autre'), 'pr-commune', 'pr-commune-autre');
   const categorie = document.getElementById('pr-categorie').value;
   const libelleCategorie = categorie === 'homme' ? 'Homme' : categorie === 'femme' ? 'Femme' : categorie ? 'New Face' : '';
   document.getElementById('ap-souscategorie').textContent = [libelleCategorie, ville].filter(Boolean).join(' · ') || 'Complétez vos informations ci-dessous';
@@ -1042,7 +1042,7 @@ function majNiveauMannequinApercu() {
 }
 document.getElementById('pr-experience').addEventListener('change', majNiveauMannequinApercu);
 
-['pr-nom', 'pr-ville', 'pr-ville-autre', 'pr-categorie', 'pr-naissance', 'pr-taille', 'pr-poids', 'pr-poitrine', 'pr-tourtaille', 'pr-hanches', 'pr-entrejambe', 'pr-pointure', 'pr-carnation'].forEach((id) => {
+['pr-nom', 'pr-ville', 'pr-ville-autre', 'pr-commune', 'pr-commune-autre', 'pr-categorie', 'pr-naissance', 'pr-taille', 'pr-poids', 'pr-poitrine', 'pr-tourtaille', 'pr-hanches', 'pr-entrejambe', 'pr-pointure', 'pr-carnation'].forEach((id) => {
   const champ = document.getElementById(id);
   if (champ) { champ.addEventListener('input', mettreAJourApercu); champ.addEventListener('change', mettreAJourApercu); }
 });
@@ -1209,7 +1209,7 @@ async function chargerProfil() {
   // authenticated pour empêcher tout autre compte connecté de les lire via l'API) :
   // on les récupère séparément via une fonction réservée au propriétaire de la fiche.
   const { data: profil } = await sb.from('model_profiles')
-    .select('id, full_name, bio, height_cm, weight_kg, city, instagram, published, created_at, category, video_url, chest_cm, waist_cm, hips_cm, shoe_size, carnation, clothing_size, date_naissance, eye_color, hair_color, years_experience, model_types, languages, availability, inseam_cm, featured, premiere_publication_faite, en_attente_validation, raison_refus, niveau_etude, etablissement, formation_particuliere, formation_mannequin, competences, citation')
+    .select('id, full_name, bio, height_cm, weight_kg, city, quartier, instagram, published, created_at, category, video_url, chest_cm, waist_cm, hips_cm, shoe_size, carnation, clothing_size, date_naissance, eye_color, hair_color, years_experience, model_types, languages, availability, inseam_cm, featured, premiere_publication_faite, en_attente_validation, raison_refus, niveau_etude, etablissement, formation_particuliere, formation_mannequin, competences, citation')
     .eq('id', user.id).single();
   if (!profil) return;
   dernierProfilCharge = profil;
@@ -1244,7 +1244,8 @@ async function chargerProfil() {
   document.getElementById('pr-nom').value = profil.full_name || '';
   preRemplirTelephone(profil.phone, document.getElementById('pr-indicatif'), document.getElementById('pr-telephone-numero'));
   document.getElementById('pr-email-perso').value = profil.contact_email || '';
-  definirSelectOuAutre('pr-ville', 'pr-ville-autre', profil.city || '');
+  definirVilleAvecCommune(profil.city || '', 'pr-ville', 'pr-ville-autre', 'pr-commune', 'pr-commune-autre');
+  document.getElementById('pr-quartier').value = profil.quartier || '';
   document.getElementById('pr-categorie').value = profil.category || '';
   document.getElementById('pr-hanches').value = profil.hips_cm ?? '';
   document.getElementById('pr-entrejambe').value = profil.inseam_cm ?? '';
@@ -1317,7 +1318,8 @@ document.getElementById('form-infos').addEventListener('submit', async (e) => {
     full_name: document.getElementById('pr-nom').value.trim(),
     phone: composerTelephone(document.getElementById('pr-indicatif'), document.getElementById('pr-telephone-numero')),
     contact_email: document.getElementById('pr-email-perso').value.trim(),
-    city: valeurSelectOuAutre('pr-ville', 'pr-ville-autre'),
+    city: villeAvecCommune(valeurSelectOuAutre('pr-ville', 'pr-ville-autre'), 'pr-commune', 'pr-commune-autre'),
+    quartier: document.getElementById('pr-quartier').value.trim() || null,
     category: document.getElementById('pr-categorie').value,
     date_naissance: document.getElementById('pr-naissance').value || null,
     height_cm: parseInt(document.getElementById('pr-taille').value) || null,
@@ -1438,7 +1440,8 @@ document.getElementById('form-publication').addEventListener('submit', async (e)
     full_name: document.getElementById('pr-nom').value.trim(),
     phone: composerTelephone(document.getElementById('pr-indicatif'), document.getElementById('pr-telephone-numero')),
     contact_email: document.getElementById('pr-email-perso').value.trim(),
-    city: valeurSelectOuAutre('pr-ville', 'pr-ville-autre'),
+    city: villeAvecCommune(valeurSelectOuAutre('pr-ville', 'pr-ville-autre'), 'pr-commune', 'pr-commune-autre'),
+    quartier: document.getElementById('pr-quartier').value.trim() || null,
     category: document.getElementById('pr-categorie').value,
     date_naissance: document.getElementById('pr-naissance').value || null,
     height_cm: parseInt(document.getElementById('pr-taille').value) || null,
