@@ -1,8 +1,8 @@
 // Villes de Côte d'Ivoire (chefs-lieux de région/département les plus connus) —
 // Abidjan en tête car c'est de loin la ville la plus fréquente pour nos mannequins.
 // Reprise à l'identique de la liste utilisée jusqu'ici séparément dans
-// candidature.html et espace-mannequin.html (une seule copie désormais, réutilisée
-// aussi par espace-mannequin-MA2M-premium-20.html).
+// candidature.html et espace-mannequin-ancien.html (une seule copie désormais,
+// réutilisée aussi par espace-mannequin.html).
 const VILLES_CI = [
   'Abidjan', 'Abengourou', 'Aboisso', 'Adiaké', 'Adzopé', 'Affery', 'Agboville', 'Agnibilékrou',
   'Akoupé', 'Alépé', 'Anyama', 'Arrah', 'Attiégouakro', 'Bangolo', 'Bettié', 'Biankouma',

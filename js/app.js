@@ -149,7 +149,7 @@ function echapperHtml(texte) {
 
 // Niveau New Face / Amateur / Professionnel : jamais demandé au mannequin,
 // toujours déduit de years_experience (partagé par espace-mannequin.html,
-// espace-mannequin-MA2M-premium-20.html et mannequin.html — même règle
+// espace-mannequin-ancien.html et mannequin.html — même règle
 // partout : 0 an ou vide -> New Face ; 1-2 ans -> Amateur ; 3 ans et plus ->
 // Professionnel).
 function deriverNiveauMannequin(anneesExperience) {
@@ -163,8 +163,9 @@ function deriverNiveauMannequin(anneesExperience) {
 // ================== Champs mensurations/apparence en listes déroulantes ==================
 // Mensurations en listes déroulantes plutôt qu'en saisie libre : évite les fautes
 // de frappe (ex. "17O" au lieu de "170") et les valeurs invraisemblables — déjà en
-// production sur espace-mannequin.html, repris ici pour espace-mannequin-MA2M-
-// premium-20.html sans dupliquer une 3e fois cette même logique.
+// production sur espace-mannequin-ancien.html, repris ici pour espace-mannequin.html
+// (l'ancien Premium 20, devenu la page définitive) sans dupliquer une 3e fois cette
+// même logique.
 function remplirSelectNombres(id, min, max, pas, suffixe) {
   const champ = document.getElementById(id);
   if (!champ) return;
