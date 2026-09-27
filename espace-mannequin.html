@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-txbt0dxL9XLAomSiPn3mJqgbPQfAAlAPw187inQWuuo='; style-src 'self' https://fonts.googleapis.com 'sha256-6Dvmfm4i5Akss/+IDah/Q4Mcd3MSpGLChYFtD36m1V0=' 'sha256-l6fymG/9VFModmkt4+Cju+Misw/e9E3nOMRhpZL+0so=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-FeHUSpIGhd1iTYVVJlXoOSiN8Df6HrAOpVurqCBDKG8='; style-src 'self' https://fonts.googleapis.com 'sha256-6Dvmfm4i5Akss/+IDah/Q4Mcd3MSpGLChYFtD36m1V0=' 'sha256-l6fymG/9VFModmkt4+Cju+Misw/e9E3nOMRhpZL+0so=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mon Espace Mannequin — MA2M | Premium</title>
@@ -1053,16 +1053,30 @@ async function jetonSessionCourante(){
 async function uploaderVersR2(modelId, chemin, blob, contentType){
   const jeton = await jetonSessionCourante();
   if (!jeton) throw new Error('Session expirée — reconnectez-vous.');
-  const reponse = await fetch('/api/r2-presigner', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jeton },
-    body: JSON.stringify({ modelId: modelId, chemin: chemin, contentType: contentType || 'image/jpeg' })
-  });
-  const resultat = await reponse.json().catch(function(){ return {}; });
-  if (!reponse.ok) throw new Error(resultat.error || "Échec de l'obtention de l'URL d'envoi.");
-  const envoi = await fetch(resultat.uploadUrl, { method: 'PUT', headers: { 'Content-Type': contentType || 'image/jpeg' }, body: blob });
-  if (!envoi.ok) throw new Error("Échec de l'envoi vers le stockage.");
-  return resultat.publicUrl;
+  // L'envoi part directement vers Cloudflare R2 (pas via notre propre serveur) :
+  // sur une connexion mobile instable, ce trajet plus long échoue parfois une
+  // fois puis réussit au second essai — on retente automatiquement avant de
+  // faire remonter l'échec, plutôt que de faire porter cette fragilité réseau
+  // à la mannequin dès le premier raté.
+  let derniereErreur;
+  for (let essai = 1; essai <= 3; essai++) {
+    try {
+      const reponse = await fetch('/api/r2-presigner', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jeton },
+        body: JSON.stringify({ modelId: modelId, chemin: chemin, contentType: contentType || 'image/jpeg' })
+      });
+      const resultat = await reponse.json().catch(function(){ return {}; });
+      if (!reponse.ok) throw new Error(resultat.error || "Échec de l'obtention de l'URL d'envoi.");
+      const envoi = await fetch(resultat.uploadUrl, { method: 'PUT', headers: { 'Content-Type': contentType || 'image/jpeg' }, body: blob });
+      if (!envoi.ok) throw new Error("Échec de l'envoi vers le stockage.");
+      return resultat.publicUrl;
+    } catch (e) {
+      derniereErreur = e;
+      if (essai < 3) await new Promise(function(r){ setTimeout(r, 700 * essai); });
+    }
+  }
+  throw derniereErreur;
 }
 async function supprimerDeR2(modelId, chemin){
   if (!chemin) return;
