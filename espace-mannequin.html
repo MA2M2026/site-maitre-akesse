@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net 'sha256-BLCfotbjlbrZ25Cm0xM9vE0t+KrlqzVdXj9PmKukWiI='; style-src 'self' https://fonts.googleapis.com 'sha256-wILGUDq5kuzOJoeN9cIe1PfYFOq+tOHH4KcUMe0FmjE=' 'sha256-/FvKPwpVq/Sr+bG1E1FBJCdeER/pyPoC+YtRu1R5nCc=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-oLw9DSpboiOuJ4OzTBaIYc2dbq60BrcOTMHDOskAXGE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net 'sha256-czT6oq43f83kY5Iw2gwZwRpqbfniZrmMO0uuxAo/2ao='; style-src 'self' https://fonts.googleapis.com 'sha256-wILGUDq5kuzOJoeN9cIe1PfYFOq+tOHH4KcUMe0FmjE=' 'sha256-/FvKPwpVq/Sr+bG1E1FBJCdeER/pyPoC+YtRu1R5nCc=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-oLw9DSpboiOuJ4OzTBaIYc2dbq60BrcOTMHDOskAXGE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4=';">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mon Espace Mannequin — MA2M | Premium</title>
@@ -618,7 +618,7 @@ function emptyState(){
       // jamais écrits tels quels en base, voir deriverStatutAffichage().
       statutAffichage:'brouillon', premierePublicationFaite:false, commentaireAdmin:''
     },
-    identite:{ nomComplet:'', dateNaissance:'', lieuNaissance:'', nationalite:'', ville:'', quartier:'', telephone:'', email:'', sexe:'' },
+    identite:{ nomComplet:'', dateNaissance:'', villeNaissance:'', lieuNaissance:'', nationalite:'', ville:'', quartier:'', telephone:'', email:'', sexe:'' },
     physique:{
       taille:'', poids:'', poitrine:'', tourTaille:'', hanches:'', entrejambe:'', pointure:'',
       tailleVet:'', yeux:'', cheveux:'', carnation:''
@@ -820,6 +820,7 @@ function identiteToDb(d){
   return {
     full_name: d.nomComplet || null,
     date_naissance: d.dateNaissance || null,
+    ville_naissance: d.villeNaissance || null,
     lieu_naissance: d.lieuNaissance || null,
     nationalite: d.nationalite || null,
     city: d.ville || null,
@@ -860,7 +861,7 @@ function mapProfileFromDb(row, contactPrive){
   s.meta.premierePublicationFaite = !!row.premiere_publication_faite;
   s.meta.commentaireAdmin = row.raison_refus || '';
   Object.assign(s.identite, {
-    nomComplet: row.full_name || '', dateNaissance: row.date_naissance || '', lieuNaissance: row.lieu_naissance || '',
+    nomComplet: row.full_name || '', dateNaissance: row.date_naissance || '', villeNaissance: row.ville_naissance || '', lieuNaissance: row.lieu_naissance || '',
     nationalite: row.nationalite || '', ville: row.city || '', quartier: row.quartier || '',
     telephone: (contactPrive && contactPrive.phone) || '', email: (contactPrive && contactPrive.contact_email) || '',
     sexe: row.category || ''
@@ -890,7 +891,7 @@ function mapProfileFromDb(row, contactPrive){
 const Store = {
   async load(){
     const { data: profile, error: e1 } = await sb.from('model_profiles')
-      .select('id, full_name, bio, height_cm, weight_kg, city, quartier, instagram, published, created_at, category, chest_cm, waist_cm, hips_cm, shoe_size, carnation, clothing_size, date_naissance, eye_color, hair_color, years_experience, niveau_mannequin, model_types, languages, availability, inseam_cm, featured, premiere_publication_faite, en_attente_validation, raison_refus, niveau_etude, etablissement, formation_particuliere, formation_mannequin, competences, citation, lieu_naissance, nationalite')
+      .select('id, full_name, bio, height_cm, weight_kg, city, quartier, instagram, published, created_at, category, chest_cm, waist_cm, hips_cm, shoe_size, carnation, clothing_size, date_naissance, eye_color, hair_color, years_experience, niveau_mannequin, model_types, languages, availability, inseam_cm, featured, premiere_publication_faite, en_attente_validation, raison_refus, niveau_etude, etablissement, formation_particuliere, formation_mannequin, competences, citation, ville_naissance, lieu_naissance, nationalite')
       .eq('id', currentUser.id).maybeSingle();
     if (e1) { console.error(e1); toast('Erreur de chargement du profil', true); return emptyState(); }
 
@@ -1229,6 +1230,7 @@ function stepIdentite(){
   return '<h2>Identité</h2><p class="sub">Étape 1 sur 6</p><div class="grid">' +
     field('Nom complet','f-nom',d.nomComplet,{req:true,full:true}) +
     field('Date de naissance','f-dob',d.dateNaissance,{type:'date',req:true}) +
+    field('Ville de naissance','f-ville-naissance',d.villeNaissance,{placeholder:'ex : Abidjan'}) +
     field('Pays de naissance','f-pays-naissance',d.lieuNaissance,{tag:'select-autre',options:PAYS_NAISSANCE.map(function(p){return p[0];})}) +
     field('Nationalité','f-nat',d.nationalite||'Ivoirienne') +
     field('Ville de résidence','f-ville',villeSelect,{tag:'select-autre',options:VILLES_CI}) +
@@ -1421,6 +1423,7 @@ function goto(n){ state.meta.currentStep = n; render(); window.scrollTo({top:0,b
 function lireIdentiteFormulaire(){
   return {
     nomComplet: val('f-nom'), dateNaissance: val('f-dob'),
+    villeNaissance: val('f-ville-naissance'),
     lieuNaissance: valeurSelectOuAutre('f-pays-naissance', 'f-pays-naissance-autre'),
     nationalite: val('f-nat'),
     ville: villeAvecCommune(valeurSelectOuAutre('f-ville', 'f-ville-autre'), 'f-commune', 'f-commune-autre'),
@@ -1912,7 +1915,7 @@ function openCv(){
       '<div class="mcv-role">Mannequin professionnel(le)</div><div class="mcv-divider"></div>' +
       '<ul class="mcv-info-list">' +
         '<li>'+mcvIcon('calendar')+'<div><span class="k">Date de naissance</span><span class="v">'+formaterPeriode(d.dateNaissance)+'</span></div></li>' +
-        '<li>'+mcvIcon('pin')+'<div><span class="k">Lieu de naissance</span><span class="v">'+echapperHtml(d.lieuNaissance||'—')+'</span></div></li>' +
+        '<li>'+mcvIcon('pin')+'<div><span class="k">Lieu de naissance</span><span class="v">'+echapperHtml([d.villeNaissance,d.lieuNaissance].filter(Boolean).join(', ')||'—')+'</span></div></li>' +
         '<li>'+mcvIcon('globe')+'<div><span class="k">Nationalité</span><span class="v">'+echapperHtml(d.nationalite||'—')+'</span></div></li>' +
         '<li>'+mcvIcon('home')+'<div><span class="k">Ville de résidence</span><span class="v">'+echapperHtml([d.ville,d.quartier].filter(Boolean).join(', ')||'—')+'</span></div></li>' +
         '<li>'+mcvIcon('phone')+'<div><span class="k">Contact agence</span><span class="v">+225 27 22 23 11 76<br>+225 05 45 65 66 87<br>infos.ma2m@gmail.com</span></div></li>' +
