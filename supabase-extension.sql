@@ -3554,3 +3554,21 @@ NOTIFY pgrst, 'reload schema';
 alter table model_profiles add column if not exists ville_naissance text;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 87 : autoriser la suppression d'un profil mannequin même s'il
+-- a déjà été proposé à un recruteur — recruiter_request_models.model_id
+-- référençait model_profiles(id) SANS "on delete cascade" ni "set null",
+-- ce qui bloquait (violation de contrainte) toute suppression d'un
+-- mannequin dès qu'il avait été proposé au moins une fois. La table garde
+-- déjà une "photo" du nom/de la taille au moment de la proposition
+-- (model_name_snapshot / model_height_snapshot), donc l'historique du
+-- recruteur reste lisible même une fois le profil disparu — la ligne peut
+-- donc sans risque perdre sa référence (set null) plutôt que bloquer.
+-- ===================================================================
+alter table recruiter_request_models drop constraint if exists recruiter_request_models_model_id_fkey;
+alter table recruiter_request_models
+  add constraint recruiter_request_models_model_id_fkey
+  foreign key (model_id) references model_profiles(id) on delete set null;
+
+NOTIFY pgrst, 'reload schema';
