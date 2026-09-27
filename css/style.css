@@ -1598,10 +1598,10 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
 }
 .evenement-carte-photo {
   position: relative; aspect-ratio: 4/3; overflow: hidden; border-radius: 4px;
-  background: var(--noir);
+  background: var(--noir-doux); display: flex; align-items: center; justify-content: center;
 }
 .evenement-carte-photo img {
-  width: 100%; height: 100%; object-fit: cover;
+  width: 100%; height: 100%; object-fit: contain;
   transition: transform 0.7s var(--transition-douce), filter 0.4s ease;
 }
 .evenement-album-carte:hover .evenement-carte-photo img { transform: scale(1.06); }
@@ -1619,7 +1619,11 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
   display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px;
   margin-top: 2rem;
 }
-.evenement-detail-photos img { width: 100%; aspect-ratio: 1/1; object-fit: cover; cursor: zoom-in; }
+.evenement-detail-photos div {
+  aspect-ratio: 1/1; background: var(--noir-doux); overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+}
+.evenement-detail-photos img { width: 100%; height: 100%; object-fit: contain; cursor: zoom-in; }
 
 /* ---------- Pastille d'installation PWA ---------- */
 #pastille-installer {
