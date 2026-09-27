@@ -3657,3 +3657,28 @@ where
   url like 'https://pub-bd96e72b6ed2444cab7b06f170bfe206.r2.dev%'
   or url_miniature like 'https://pub-bd96e72b6ed2444cab7b06f170bfe206.r2.dev%'
   or url_moyenne like 'https://pub-bd96e72b6ed2444cab7b06f170bfe206.r2.dev%';
+
+-- ===================================================================
+-- Extension 91 : retour en arrière TEMPORAIRE de l'Extension 90 —
+-- le nouveau domaine personnalisé "photos.maitreakessemodelmanagement.com"
+-- répond en NXDOMAIN pour la propriétaire et des tiers non liés à elle
+-- (vraisemblablement délai de propagation DNS régional en Côte d'Ivoire /
+-- Afrique de l'Ouest, la résolution mondiale étant déjà confirmée OK),
+-- alors que toutes les photos y pointent déjà exclusivement : plus aucune
+-- photo du Book n'est visible nulle part, pire que le bug d'origine
+-- (mobile uniquement). Restaure temporairement l'ancien domaine partagé
+-- r2.dev, en attendant que la propagation régionale se termine, pour ne
+-- pas laisser le site sans aucune photo pendant ce délai. À annuler (en
+-- ré-exécutant l'Extension 90) dès que
+-- https://photos.maitreakessemodelmanagement.com/ répond correctement
+-- depuis la Côte d'Ivoire.
+-- ===================================================================
+update model_photos
+set
+  url = replace(url, 'https://photos.maitreakessemodelmanagement.com', 'https://pub-bd96e72b6ed2444cab7b06f170bfe206.r2.dev'),
+  url_miniature = replace(url_miniature, 'https://photos.maitreakessemodelmanagement.com', 'https://pub-bd96e72b6ed2444cab7b06f170bfe206.r2.dev'),
+  url_moyenne = replace(url_moyenne, 'https://photos.maitreakessemodelmanagement.com', 'https://pub-bd96e72b6ed2444cab7b06f170bfe206.r2.dev')
+where
+  url like 'https://photos.maitreakessemodelmanagement.com%'
+  or url_miniature like 'https://photos.maitreakessemodelmanagement.com%'
+  or url_moyenne like 'https://photos.maitreakessemodelmanagement.com%';
