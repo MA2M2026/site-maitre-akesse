@@ -3,6 +3,22 @@
 Documentation pour tout développeur (humain ou IA) qui reprendrait ce
 projet.
 
+**Pour la propriétaire du site : si tu n'arrives plus à te connecter à
+cette session Claude Code (compte perdu, session expirée, etc.), tu peux
+ouvrir Claude Code sur n'importe quel autre compte, lui donner accès à ce
+même dépôt GitHub (`MA2M2026/site-maitre-akesse`) et lui demander de lire
+ce fichier en entier avant de continuer.** Il contient tout ce dont un
+nouvel assistant a besoin pour reprendre le travail sans rien perdre :
+la liste de tous les services connectés au site (Supabase, Vercel,
+Cloudflare R2, Resend, EmailJS, Google Analytics/Search Console, le
+domaine chez Spaceship), la méthode de déploiement à suivre, les pièges
+déjà rencontrés et corrigés (pour ne pas les refaire), et où se trouve
+chaque fonctionnalité dans le code. Rien d'important n'est stocké
+uniquement "dans la tête" de cette conversation — tout ce qui compte est
+écrit ici, dans `SECURITY.md`, et dans les commentaires du code lui-même.
+Ce fichier est mis à jour à chaque changement important : le relire en
+cas de doute donne toujours l'état le plus récent.
+
 ## Vue d'ensemble
 
 Site statique (HTML / CSS / JavaScript, aucun framework, aucune étape de
@@ -80,6 +96,12 @@ services.html                     Présentation des services + valeurs
 mannequins.html                    "The Book" — répertoire des mannequins
 mannequin.html                      Fiche publique d'un mannequin (+ génération Compcard PDF)
 actualites.html                      Actualités de l'agence (+ admin)
+evenements.html                       "Nos Événements" — même architecture qu'actualites.html
+                                        (bloc "à la une" + grille magazine + fiche modale avec
+                                        galerie photo adaptative + admin), depuis fin septembre
+                                        2026 — l'ancienne version (grille d'albums + page de
+                                        détail séparée) a été entièrement remplacée à la demande
+                                        du client, qui la trouvait moins belle qu'Actualités.
 partenaires.html                      "Nos partenaires" (+ admin)
 candidature.html                       Candidature casting (photos compressées, jamais publiées)
 inscription-mannequin.html              Page d'inscription (redirige en pratique vers espace-mannequin.html)
@@ -93,7 +115,6 @@ reinitialiser-mot-de-passe.html            Page dédiée de "nouveau mot de pass
 mentions-legales.html / politique-confidentialite.html   Pages légales
 google5acb001b6b29c80f.html                  Fichier de vérification Google Search Console — ne pas toucher
 
-evenements.html                    "Nos Événements" — albums photo par événement (+ admin)
 outils/carte-visite.html / qr-generateur.html / scannez-moi.html   Outils internes agence (cartes de visite, QR codes)
 
 en/                                Version anglaise de chaque page publique (structure identique,
@@ -108,6 +129,11 @@ js/accueil.js / accueil-en.js         Logique de la page d'accueil (porte d'entr
                                         mannequin à la une, mot du fondateur, stats...)
 js/mannequins.js / mannequins-en.js     Logique de "The Book" (filtres, sélection recruteur)
 js/actualites.js                    Logique de la page Actualités (admin publication/édition inclus)
+js/evenements.js                      Logique de la page Nos Événements (même schéma que
+                                        js/actualites.js — champs date/lieu au lieu de
+                                        catégorie/vidéo). Les versions en/ ont leur propre
+                                        logique en script inline (comme en/actualites.html),
+                                        pas ce fichier.
 js/selection.js                      Logique de la page selection.html
 js/indicatifs-pays.js                 Liste des indicatifs téléphoniques (formulaires)
 js/analytics-config.js               Initialise Google Analytics (dataLayer/gtag)
@@ -179,6 +205,47 @@ Tout code qui appelle `sb.xxx` sans avoir vérifié `if (!sb) return;` avant
 provoque une exception non gérée. Plusieurs bugs de ce type ont déjà été
 trouvés et corrigés dans ce projet — toujours vérifier ce garde-fou avant
 d'ajouter un nouvel appel `sb.` en haut d'un script.
+
+### Deux clients Supabase : `sb` (lecture publique) et `sbAdmin` (admin) — piège déjà rencontré
+
+`js/supabase-config.js` définit **deux** clients, pas un seul :
+
+- **`sb`** — utilisé pour toutes les lectures publiques (afficher les
+  actualités, événements, partenaires, profils...). Sur les pages qui ne
+  définissent pas `window.MA2M_SESSION_REQUISE = true` avant de charger ce
+  script (actualités, événements, partenaires — pages publiques avec un
+  panneau admin caché), `sb` est créé avec `persistSession: false` : il
+  **ignore volontairement** toute session déjà connectée dans le
+  navigateur, pour qu'une session périmée laissée par une connexion
+  précédente au tableau de bord ne fasse jamais échouer les lectures
+  publiques d'un simple visiteur (401 systématique — bug réel déjà
+  rencontré, voir plus bas "profils invisibles").
+- **`sbAdmin`** — utilisé UNIQUEMENT pour détecter qu'un admin est déjà
+  connecté (`verifierAdmin()`) et pour les actions d'écriture admin
+  (publier/modifier/supprimer une actualité, un événement, un partenaire).
+  Sur ces mêmes pages publiques, `sbAdmin` est un second client créé avec
+  `persistSession: true` : lui seul relit la session déjà posée dans le
+  `localStorage` par une connexion faite depuis `tableau-de-bord.html`
+  (même origine, même clé de stockage par défaut). Sur les pages qui
+  définissent déjà `MA2M_SESSION_REQUISE = true` (`tableau-de-bord.html`,
+  `espace-mannequin.html`), `sbAdmin` vaut simplement `sb` (même client,
+  pas de doublon) puisque `sb` y persiste déjà la session normalement.
+
+**Piège déjà rencontré (fin septembre 2026)** : un correctif du bug des
+"profils invisibles" (voir plus bas) avait fait passer `sb` en
+`persistSession: false` sur `actualites.html`/`evenements.html`/
+`partenaires.html` sans introduire `sbAdmin` en remplacement pour les
+usages admin — résultat, `verifierAdmin()` (qui appelait encore `sb.auth.
+getUser()`) ne retrouvait plus jamais aucune session, même pour un admin
+réellement connecté depuis le tableau de bord : le panneau de publication
+et les boutons Modifier/Supprimer disparaissaient totalement, sans aucune
+erreur visible (le `catch (e) {}` de `verifierAdmin()` avale l'échec en
+silence, par design, pour ne jamais planter la page pour un visiteur
+normal). **Règle à retenir** : toute lecture/écriture qui a besoin de
+savoir si l'utilisateur est l'admin, ou d'agir en tant qu'admin, doit
+utiliser `sbAdmin` — jamais `sb` — sur une page qui n'a pas
+`MA2M_SESSION_REQUISE`. Les lectures purement publiques (visibles par
+n'importe quel visiteur) continuent, elles, d'utiliser `sb`.
 
 ## Déploiement
 
@@ -683,8 +750,10 @@ les classes ajoutées dynamiquement (`classList.add(...)`, `className =
 
 ## Fonctionnalités majeures ajoutées récemment (repères pour s'orienter)
 
-- **`evenements.html`** — "Nos Événements", albums photo par événement,
-  admin de publication inclus (même schéma que les actualités/partenaires).
+- **`evenements.html`** — "Nos Événements", reconstruite fin septembre 2026
+  sur exactement la même architecture qu'`actualites.html` (bloc "à la
+  une", grille magazine, fiche modale, galerie photo adaptative, éditeur
+  plein écran) — voir `js/evenements.js` et la section dédiée plus haut.
 - **Refonte visuelle premium de "The Book"** (`mannequins.html`).
 - **Éditeur de texte enrichi** (Quill) pour les champs
   commentaire/description des actualités, événements et partenaires — voir
