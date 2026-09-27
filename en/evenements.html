@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-0P64kcZy3smu3cX6C/pEFRQaFMSea68eZVIs5pSAtWs=' 'sha256-qfpMxlxJ1n9L7JaINm/uD6pOLq4eW01j4T3O3ecKLrE=' 'sha256-xHiLWdn79wIkzRbR/GHX3iQns6L7VgY+Z1wo2ipMW9s='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-L9rRPgppERZQXggjyNrFrcg67TnXdwV3kQlBL7Kquas='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-0P64kcZy3smu3cX6C/pEFRQaFMSea68eZVIs5pSAtWs=' 'sha256-qfpMxlxJ1n9L7JaINm/uD6pOLq4eW01j4T3O3ecKLrE=' 'sha256-UEzjXoKlml2haQV2YDaKVt6k7Ruv8v7QlxvRa8wY5eA='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net ;">
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
 <script src="../js/analytics-config.js"></script>
@@ -39,15 +39,6 @@
 <meta name="theme-color" content="#1e1d1c">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
-<style>
-.enev-1 { margin-top:0.5rem; }
-.enev-2 { color:var(--texte-doux); margin-top:0.3rem; }
-.enev-3 { margin-top:1rem; max-width:70ch; }
-.enev-4 { display:none; margin-top:1.4rem; padding-top:1rem; border-top:1px solid var(--gris-clair); }
-.enev-5 { display:none; margin-top:1.4rem; padding-top:1rem; border-top:1px solid var(--gris-clair); max-width:480px; }
-.enev-6 { color:var(--texte-doux); font-size:0.8rem; margin-bottom:1.5rem; }
-.enev-7 { display:inline-block; margin-left:0.5rem; color:var(--or); font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase; }
-</style>
 </head>
 <body>
 <script>
@@ -96,34 +87,35 @@ setTimeout(() => {
     <div class="fil-ariane reveal"><a href="index.html">Home</a><span>/</span>Our Events</div>
     <div class="eyebrow reveal">Highlights & memories</div>
     <h1 class="reveal reveal-delay-1">Our Events<span class="oeil">.</span></h1>
-    <p class="reveal reveal-delay-2 u-maxw-60ch-texte u-mt-1-2">Every event held by the agency, or attended by our models, in pictures — one album per event.</p>
+    <p class="u-mt-1-2 u-maxw-60ch-texte reveal reveal-delay-2">Every event held by the agency, or attended by our models, in pictures — one album per event.</p>
   </div>
 </section>
 
-<section id="evenements-liste-section" class="u-pt-1">
+<section class="u-pt-1">
   <div class="container">
-    <div class="evenements-albums-grille" id="evenements-grille"></div>
-    <p id="evenements-vide" class="u-c-texte-doux u-hidden">No event published yet.</p>
+    <div id="evenements-une"></div>
+    <div id="evenements-grille" class="news-grille"></div>
+    <p id="evenements-vide" class="u-hidden u-c-texte-doux">No event published yet.</p>
   </div>
 </section>
 
-<section id="evenement-detail-section" class="u-hidden u-pt-1">
-  <div class="container">
-    <span class="evenement-retour" id="evenement-retour-btn">← Back to Our Events</span>
+<div class="news-modal" id="news-modal">
+  <div class="news-modal-contenu">
+    <button class="news-modal-fermer" id="news-modal-fermer">✕</button>
+    <div id="news-modal-media"></div>
+    <div class="news-modal-corps">
+      <div class="news-date" id="news-modal-date"></div>
+      <h2 id="news-modal-titre" class="u-mt-0-6"></h2>
+      <p id="news-modal-lieu" class="u-c-texte-doux u-hidden"></p>
+      <div id="news-modal-texte" class="contenu-riche u-mt-1"></div>
 
-    <div class="news-date" id="ed-date"></div>
-    <h2 id="ed-titre" class="enev-1"></h2>
-    <p id="ed-lieu" class="enev-2"></p>
-    <div id="ed-description" class="contenu-riche enev-3"></div>
-
-    <div id="ed-admin-actions" class="enev-4">
-      <button id="ed-modifier-btn" class="btn-mini-admin">✎ Edit</button>
-      <button id="ed-supprimer-btn" class="btn-mini-admin u-ml-0-6">🗑 Delete Event</button>
+      <div id="news-modal-admin-actions" class="news-modal-section-admin">
+        <button id="news-modal-modifier-btn" class="btn-mini-admin">✎ Edit</button>
+        <button id="news-modal-supprimer-btn" class="btn-mini-admin u-ml-0-6">🗑 Delete</button>
+      </div>
     </div>
-
-    <div class="evenement-detail-photos" id="ed-photos"></div>
   </div>
-</section>
+</div>
 
 <!-- Admin panel: entirely invisible to a visitor.
      Only shown if an admin session already logged in (via tableau-de-bord.html)
@@ -132,10 +124,10 @@ setTimeout(() => {
   <div class="container u-maxw-520">
     <div id="admin-publier">
       <div class="badge-page-admin">📍 You are on: Our Events (Administration)</div>
-      <p class="enev-6">To edit, add photos to, or delete an already published event, simply open it by clicking on it in the page (like a visitor) — the options will appear directly in its detail view.</p>
+      <p class="admin-note-texte">To edit or delete an already published event, simply open it by clicking on it in the page (like a visitor) — the options will appear directly in its detail view.</p>
       <button class="btn btn--principal u-mt-1-5" id="ouvrir-redaction-btn">✍️ Publish a New Event</button>
       <button class="btn u-ml-0-5" id="admin-logout-btn">Logout</button>
-      <a href="../tableau-de-bord.html" class="enev-7">View Dashboard →</a>
+      <a href="../tableau-de-bord.html" class="lien-tableau-bord">View Dashboard →</a>
     </div>
   </div>
 </section>
@@ -168,11 +160,11 @@ setTimeout(() => {
       <div class="redaction-colonne-apercu">
         <div class="redaction-apercu-etiquette">Preview — approximate public rendering</div>
         <div class="redaction-apercu-carte">
-          <div class="evenement-carte-photo" id="red-apercu-photo"><img id="red-apercu-img" class="u-hidden" src="" alt=""></div>
+          <div class="news-une-photo" id="red-apercu-photo"><img id="red-apercu-img" class="u-hidden" src="" alt=""></div>
           <div class="news-une-corps">
+            <span class="news-categorie u-hidden" id="red-apercu-lieu"></span>
             <div class="news-date" id="red-apercu-date"></div>
             <h2 id="red-apercu-titre">Event title</h2>
-            <p id="red-apercu-lieu" class="enev-2 u-hidden"></p>
             <div id="red-apercu-texte" class="contenu-riche"></div>
           </div>
         </div>
@@ -240,15 +232,29 @@ async function convertirSiHeic(fichier) {
   } catch (e) { return fichier; }
 }
 
-const quillRedaction = creerEditeurRiche('red-editeur', 'Write about this event here… (optional)');
+const quillRedaction = creerEditeurRiche('red-editeur', 'Tell the story of this event here… (optional)');
 
 function formatDateEvenement(dateStr) {
   if (!dateStr) return '';
+  // A date-only string ("2026-05-01") is parsed as UTC by `new Date`, which can show the
+  // previous day depending on the visitor's timezone — forcing noon avoids that.
   return new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+function formatDatePublication(dateStr) {
+  return new Date(dateStr).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+function dateAffichageEvenement(e) {
+  return e.date_evenement ? formatDateEvenement(e.date_evenement) : formatDatePublication(e.created_at);
+}
+
+function extraitTexte(texte, longueur) {
+  if (!texte) return '';
+  return texte.length > longueur ? texte.slice(0, longueur).trim() + '…' : texte;
 }
 
 async function chargerEvenements() {
   const grille = document.getElementById('evenements-grille');
+  const uneZone = document.getElementById('evenements-une');
   const vide = document.getElementById('evenements-vide');
   if (!sb) {
     vide.textContent = 'Failed to load events (unstable connection?). Reload the page.';
@@ -263,66 +269,100 @@ async function chargerEvenements() {
   const compteurParEvenement = {};
   (toutesLesPhotos || []).forEach(p => { compteurParEvenement[p.evenement_id] = (compteurParEvenement[p.evenement_id] || 0) + 1; });
 
-  grille.innerHTML = data.map((e, i) => {
+  const une = data[0];
+  uneZone.innerHTML = `
+    <div class="news-une reveal" data-index="0">
+      <div class="news-une-photo">
+        <img src="${echapperHtml(une.image_url || '')}" loading="lazy" alt="${echapperHtml(une.titre || '')}">
+        <span class="news-une-badge">★ Featured</span>
+      </div>
+      <div class="news-une-corps">
+        ${une.lieu ? `<span class="news-categorie">📍 ${echapperHtml(une.lieu)}</span>` : ''}
+        <div class="news-date">${dateAffichageEvenement(une)}</div>
+        ${une.titre ? `<h2>${echapperHtml(une.titre)}</h2>` : ''}
+        ${une.description ? `<p>${echapperHtml(extraitTexte(texteBrutDepuis(une.description), 180))}</p>` : ''}
+        <span class="news-lire">View Event →</span>
+      </div>
+    </div>
+  `;
+  uneZone.querySelector('.news-une').addEventListener('click', () => ouvrirEvenementModal(0));
+
+  const reste = data.slice(1);
+  grille.innerHTML = reste.map((e, i) => {
+    const indexReel = i + 1;
     const nbPhotos = compteurParEvenement[e.id] || (e.image_url ? 1 : 0);
     return `
-    <div class="evenement-album-carte reveal" data-index="${i}">
-      <div class="evenement-carte-photo">
+    <div class="news-carte reveal" data-index="${indexReel}">
+      <div class="news-img">
         <img src="${echapperHtml(e.image_url || '')}" loading="lazy" alt="${echapperHtml(e.titre || '')}">
         ${nbPhotos > 1 ? `<span class="news-compteur-photos">${nbPhotos}</span>` : ''}
       </div>
-      <div class="evenement-carte-corps">
-        ${e.date_evenement ? `<div class="news-date">${formatDateEvenement(e.date_evenement)}</div>` : ''}
-        <h3>${echapperHtml(e.titre || '')}</h3>
-        ${e.lieu ? `<div class="evenement-carte-lieu">📍 ${echapperHtml(e.lieu)}</div>` : ''}
+      <div class="news-corps">
+        ${e.lieu ? `<span class="news-categorie">📍 ${echapperHtml(e.lieu)}</span>` : ''}
+        <div class="news-date">${dateAffichageEvenement(e)}</div>
+        ${e.titre ? `<h3>${echapperHtml(e.titre)}</h3>` : ''}
+        ${e.description ? `<p class="news-extrait">${echapperHtml(extraitTexte(texteBrutDepuis(e.description), 110))}</p>` : ''}
+        <span class="news-lire">View Album →</span>
       </div>
     </div>
   `; }).join('');
 
-  grille.querySelectorAll('.evenement-album-carte').forEach(carte => {
-    carte.addEventListener('click', () => ouvrirEvenementDetail(data[parseInt(carte.dataset.index)].id));
+  grille.querySelectorAll('.news-carte').forEach(carte => {
+    carte.addEventListener('click', () => ouvrirEvenementModal(parseInt(carte.dataset.index)));
   });
 
   const idDepuisUrl = new URLSearchParams(window.location.search).get('evenement');
-  if (idDepuisUrl && data.some(e => e.id === idDepuisUrl)) ouvrirEvenementDetail(idDepuisUrl);
+  if (idDepuisUrl) {
+    const index = data.findIndex(e => e.id === idDepuisUrl);
+    if (index > -1) ouvrirEvenementModal(index);
+  }
 }
 chargerEvenements();
 
-async function ouvrirEvenementDetail(id) {
-  const e = window.evenementsData.find(x => x.id === id);
-  if (!e) return;
-  window.evenementDetailCourant = id;
+async function ouvrirEvenementModal(index) {
+  const e = window.evenementsData[index];
+  const zoneMedia = document.getElementById('news-modal-media');
 
-  const { data: photos } = await sb.from('evenement_photos').select('url').eq('evenement_id', id).order('created_at', { ascending: true });
+  const { data: photos } = await sb.from('evenement_photos').select('url').eq('evenement_id', e.id).order('created_at', { ascending: true });
   const listePhotos = (photos && photos.length) ? photos : (e.image_url ? [{ url: e.image_url }] : []);
-  window.lightboxPhotosEvenement = listePhotos.map(p => p.url);
 
-  document.getElementById('ed-date').textContent = e.date_evenement ? formatDateEvenement(e.date_evenement) : '';
-  document.getElementById('ed-titre').textContent = e.titre || '';
-  document.getElementById('ed-lieu').textContent = e.lieu ? ('📍 ' + e.lieu) : '';
-  document.getElementById('ed-description').innerHTML = rendreContenuRiche(e.description);
-
-  // Composition adapted to the number of photos (see .evenement-detail-photos[data-count]
-  // in css/style.css) ; beyond 4, a more spacious regular grid is used.
-  const zonePhotos = document.getElementById('ed-photos');
-  zonePhotos.dataset.count = Math.min(listePhotos.length, 4) || '';
-  zonePhotos.innerHTML = listePhotos.map(p => `<div><img src="${echapperHtml(p.url)}" loading="lazy" alt=""></div>`).join('');
-  zonePhotos.querySelectorAll('img').forEach((img, i) => {
-    img.addEventListener('click', () => ouvrirGalerieLightbox(window.lightboxPhotosEvenement, i));
+  let mediaHtml = '';
+  if (listePhotos.length > 1) {
+    const compteGalerie = Math.min(listePhotos.length, 4);
+    mediaHtml += `<div class="news-modal-galerie" data-count="${compteGalerie}">${listePhotos.map(p => `<div class="gal-item"><img src="${echapperHtml(p.url)}" loading="lazy" alt=""></div>`).join('')}</div>`;
+  } else if (listePhotos.length === 1) {
+    mediaHtml += `<img class="news-modal-img" src="${echapperHtml(listePhotos[0].url)}" alt="">`;
+  }
+  zoneMedia.innerHTML = mediaHtml;
+  window.lightboxPhotos = listePhotos.map(p => p.url);
+  zoneMedia.querySelectorAll('img').forEach((img, i) => {
+    img.style.cursor = 'pointer';
+    img.addEventListener('click', () => ouvrirGalerieLightbox(window.lightboxPhotos, i));
   });
 
-  document.getElementById('ed-admin-actions').style.display = window.estAdminConnecte ? 'block' : 'none';
+  document.getElementById('news-modal-date').textContent = dateAffichageEvenement(e);
+  document.getElementById('news-modal-titre').textContent = e.titre || '';
+  document.getElementById('news-modal-lieu').textContent = e.lieu ? ('📍 ' + e.lieu) : '';
+  document.getElementById('news-modal-lieu').classList.toggle('u-hidden', !e.lieu);
+  document.getElementById('news-modal-texte').innerHTML = rendreContenuRiche(e.description);
 
-  document.getElementById('evenements-liste-section').style.display = 'none';
-  document.getElementById('evenement-detail-section').style.display = 'block';
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  ouvrirNewsModal();
+
+  window.evenementModalCourant = e.id;
+  document.getElementById('news-modal-admin-actions').style.display = window.estAdminConnecte ? 'block' : 'none';
 }
-
-document.getElementById('evenement-retour-btn').addEventListener('click', () => {
-  document.getElementById('evenement-detail-section').style.display = 'none';
-  document.getElementById('evenements-liste-section').style.display = 'block';
-  window.history.replaceState({}, '', window.location.pathname);
-});
+// Locks page scrolling while the sheet is open (same mechanism, iPhone-safe, as the menu — see js/app.js).
+let newsModalEstOuverte = false;
+function ouvrirNewsModal() {
+  document.getElementById('news-modal').classList.add('active');
+  if (!newsModalEstOuverte) { newsModalEstOuverte = true; window.verrouillerDefilement(); }
+}
+function fermerNewsModal() {
+  document.getElementById('news-modal').classList.remove('active');
+  if (newsModalEstOuverte) { newsModalEstOuverte = false; window.deverrouillerDefilement(); }
+}
+document.getElementById('news-modal-fermer').addEventListener('click', fermerNewsModal);
+document.getElementById('news-modal').addEventListener('click', (e) => { if (e.target.id === 'news-modal') fermerNewsModal(); });
 
 async function verifierAdmin() {
   try {
@@ -333,28 +373,26 @@ async function verifierAdmin() {
     if (data) {
       window.estAdminConnecte = true;
       document.getElementById('admin-bloc').style.display = 'block';
-      const actionsVisibles = document.getElementById('evenement-detail-section').style.display === 'block';
-      if (actionsVisibles) document.getElementById('ed-admin-actions').style.display = 'block';
     }
   } catch (e) {}
 }
 verifierAdmin();
 
-document.getElementById('ed-modifier-btn').addEventListener('click', () => {
-  const e = window.evenementsData.find(x => x.id === window.evenementDetailCourant);
+document.getElementById('news-modal-modifier-btn').addEventListener('click', () => {
+  const e = window.evenementsData.find(x => x.id === window.evenementModalCourant);
   if (!e) return;
+  fermerNewsModal();
   ouvrirRedaction(e);
 });
 
-document.getElementById('ed-supprimer-btn').addEventListener('click', async () => {
-  const id = window.evenementDetailCourant;
-  if (!confirm("Permanently delete this event and all its photos?")) return;
+document.getElementById('news-modal-supprimer-btn').addEventListener('click', async () => {
+  const id = window.evenementModalCourant;
+  if (!confirm('Permanently delete this event and all its photos?')) return;
   const { data: photos } = await sbAdmin.from('evenement_photos').select('chemin').eq('evenement_id', id);
   const chemins = (photos || []).map(p => p.chemin).filter(Boolean);
   if (chemins.length) await sbAdmin.storage.from('evenements-images').remove(chemins);
   await sbAdmin.from('evenements').delete().eq('id', id);
-  document.getElementById('evenement-detail-section').style.display = 'none';
-  document.getElementById('evenements-liste-section').style.display = 'block';
+  fermerNewsModal();
   chargerEvenements();
 });
 
@@ -364,8 +402,6 @@ document.getElementById('admin-logout-btn').addEventListener('click', async () =
   window.estAdminConnecte = false;
 });
 
-// --- Full-screen writing page: used both to publish a new event (redactionIdEnCours
-// === null) and to edit an existing one (redactionIdEnCours = its id).
 let redactionIdEnCours = null;
 let redactionNouvellesImages = [];
 
@@ -487,15 +523,13 @@ document.getElementById('red-enregistrer-btn').addEventListener('click', async (
 
 document.getElementById('red-supprimer-btn').addEventListener('click', async () => {
   if (!redactionIdEnCours) return;
-  if (!confirm("Permanently delete this event and all its photos?")) return;
+  if (!confirm('Permanently delete this event and all its photos?')) return;
   const id = redactionIdEnCours;
   const { data: photos } = await sbAdmin.from('evenement_photos').select('chemin').eq('evenement_id', id);
   const chemins = (photos || []).map(p => p.chemin).filter(Boolean);
   if (chemins.length) await sbAdmin.storage.from('evenements-images').remove(chemins);
   await sbAdmin.from('evenements').delete().eq('id', id);
   fermerRedaction();
-  document.getElementById('evenement-detail-section').style.display = 'none';
-  document.getElementById('evenements-liste-section').style.display = 'block';
   chargerEvenements();
 });
 </script>
