@@ -1546,6 +1546,46 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
 
 .news-modal-galerie img, .news-modal-img { cursor: zoom-in; }
 
+/* ---------- Rédaction plein écran (admin actualités) : une vraie page d'écriture
+   spacieuse avec aperçu du rendu public en direct, à la place de l'ancien petit
+   encart coincé en bas de la page publique (difficile à lire pour rédiger). ---------- */
+.redaction-overlay {
+  position: fixed; inset: 0; z-index: 950; background: rgba(3,2,2,0.97);
+  display: flex; align-items: flex-start; justify-content: center;
+  opacity: 0; visibility: hidden; transition: opacity 0.25s ease, visibility 0.25s ease;
+  overflow-y: auto; padding: 2rem 1.2rem;
+}
+.redaction-overlay.active { opacity: 1; visibility: visible; }
+.redaction-shell { background: var(--creme); color: #1a1512; max-width: 1200px; width: 100%; border-radius: 4px; margin: 0 auto; }
+.redaction-entete { display: flex; align-items: center; justify-content: space-between; padding: 1.4rem 2rem; border-bottom: 1px solid #d8d2cb; }
+.redaction-entete h2 { margin: 0; font-size: 1.3rem; color: #1a1512; text-transform: none; }
+.redaction-fermer { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #6b6560; padding: 0.4rem 0.6rem; }
+.redaction-fermer:hover { color: #1a1512; }
+.redaction-corps { display: grid; grid-template-columns: 1fr; }
+@media (min-width: 960px) { .redaction-corps { grid-template-columns: 1.2fr 1fr; } }
+.redaction-colonne-edition { padding: 2rem; }
+@media (min-width: 960px) { .redaction-colonne-edition { border-right: 1px solid #d8d2cb; } }
+.redaction-colonne-edition .form-champ label { color: #6b6560; }
+.redaction-colonne-edition .form-champ input, .redaction-colonne-edition .form-champ select {
+  background: #fff; color: #1a1512; border-color: #d8d2cb;
+}
+.redaction-editeur .ql-toolbar.ql-snow { background: #f3efe9; border-color: #d8d2cb; }
+.redaction-editeur .ql-container.ql-snow { border-color: #d8d2cb; min-height: 40vh; }
+.redaction-editeur .ql-editor { background: #fff; color: #1a1512; font-size: 1rem; line-height: 1.7; min-height: 40vh; }
+.redaction-editeur .ql-snow .ql-stroke { stroke: #6b6560; }
+.redaction-editeur .ql-snow .ql-fill { fill: #6b6560; }
+.redaction-editeur .ql-snow .ql-picker { color: #6b6560; }
+.redaction-images-apercu { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 0.8rem; }
+.redaction-images-apercu .ria-item { position: relative; width: 96px; height: 120px; background: var(--noir-doux); border-radius: 3px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.redaction-images-apercu .ria-item img { width: 100%; height: 100%; object-fit: contain; }
+.redaction-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1.6rem; }
+.redaction-colonne-apercu { padding: 2rem; background: #f8f5f0; }
+.redaction-apercu-etiquette { font-size: 0.62rem; letter-spacing: 0.16em; text-transform: uppercase; color: #6b6560; margin-bottom: 1rem; }
+.redaction-apercu-carte { background: var(--noir); border-radius: 4px; overflow: hidden; }
+.redaction-apercu-carte .news-une-photo { aspect-ratio: 4/3; }
+.redaction-apercu-carte .news-une-corps { padding: 1.6rem; }
+.redaction-apercu-carte .news-une-corps .contenu-riche { color: var(--texte-corps); margin-top: 0.8rem; font-size: 0.88rem; }
+
 /* ---------- Nos Événements : galerie d'albums photo ---------- */
 .evenements-albums-grille {
   display: grid; grid-template-columns: 1fr; gap: 2.4rem;

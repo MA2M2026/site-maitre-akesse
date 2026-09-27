@@ -114,26 +114,6 @@ setTimeout(() => {
         <button id="news-modal-modifier-btn" class="btn-mini-admin">✎ Modifier</button>
         <button id="news-modal-supprimer-btn" class="btn-mini-admin u-ml-0-6">🗑 Supprimer</button>
       </div>
-
-      <div id="news-modal-edition" class="news-modal-section-admin">
-        <div class="form-champ"><label>Titre</label><input type="text" id="edit-actu-titre"></div>
-        <div class="form-champ"><label>Catégorie</label>
-          <select id="edit-actu-categorie">
-            <option value="">—</option>
-            <option value="Casting">Casting</option>
-            <option value="Mannequinat">Mannequinat</option>
-            <option value="Conseils">Conseils</option>
-            <option value="Événements">Événements</option>
-          </select>
-        </div>
-        <div class="form-champ"><label>Commentaire</label><div id="edit-actu-commentaire-editeur" class="editeur-riche"></div></div>
-        <div class="form-champ"><label>Vidéo (lien YouTube ou Vimeo, facultatif)</label><input type="text" id="edit-actu-video"></div>
-        <div class="form-champ"><label>Ajouter des photos (s'ajoutent à celles déjà en ligne)</label><input type="file" id="edit-actu-images" accept="image/*" multiple></div>
-
-        <button class="btn btn--principal u-mt-1-5" id="edit-actu-enregistrer-btn">Enregistrer</button>
-        <button class="btn u-ml-0-5" id="edit-actu-annuler-btn">Annuler</button>
-        <div id="edit-actu-msg" class="form-msg"></div>
-      </div>
     </div>
   </div>
 </div>
@@ -146,29 +126,61 @@ setTimeout(() => {
     <div id="admin-publier">
       <div class="badge-page-admin">📍 Vous êtes sur : Actualités (Administration)</div>
       <p class="admin-note-texte">Pour modifier ou supprimer une actualité déjà publiée, ouvre-la simplement en cliquant dessus dans la page (comme un visiteur) : les options apparaîtront directement dans sa fiche.</p>
-
-      <h3 class="u-mb-1">Publier une actualité</h3>
-      <div class="form-champ"><label>Titre</label><input type="text" id="actu-titre"></div>
-      <div class="form-champ"><label>Catégorie</label>
-        <select id="actu-categorie">
-          <option value="">—</option>
-          <option value="Casting">Casting</option>
-          <option value="Mannequinat">Mannequinat</option>
-          <option value="Conseils">Conseils</option>
-          <option value="Événements">Événements</option>
-        </select>
-      </div>
-      <div class="form-champ"><label>Commentaire</label><div id="actu-commentaire-editeur" class="editeur-riche"></div></div>
-      <div class="form-champ"><label>Images (tu peux en sélectionner plusieurs à la fois)</label><input type="file" id="actu-image" accept="image/*" multiple></div>
-      <div class="form-champ"><label>Vidéo (lien YouTube ou Vimeo, facultatif)</label><input type="text" id="actu-video" placeholder="https://youtube.com/watch?v=..."></div>
-
-      <button class="btn btn--principal u-mt-1-8" id="actu-publier-btn">Publier</button>
+      <button class="btn btn--principal u-mt-1-5" id="ouvrir-redaction-btn">✍️ Rédiger une actualité</button>
       <button class="btn u-ml-0-5" id="admin-logout-btn">Déconnexion</button>
       <a href="tableau-de-bord.html" class="lien-tableau-bord">Voir le tableau de bord →</a>
-      <div id="actu-msg" class="form-msg"></div>
     </div>
   </div>
 </section>
+
+<!-- Page de rédaction plein écran (admin) : remplace l'ancien petit encart coincé en
+     bas de la page publique et le formulaire de modification planqué dans la fiche —
+     une vraie page d'écriture spacieuse, avec aperçu du rendu public en direct. -->
+<div class="redaction-overlay" id="redaction-overlay">
+  <div class="redaction-shell">
+    <div class="redaction-entete">
+      <h2 id="redaction-titre-mode">Rédiger une actualité</h2>
+      <button class="redaction-fermer" id="redaction-fermer" aria-label="Fermer">✕</button>
+    </div>
+    <div class="redaction-corps">
+      <div class="redaction-colonne-edition">
+        <div class="form-champ"><label>Titre</label><input type="text" id="red-titre"></div>
+        <div class="form-champ"><label>Catégorie</label>
+          <select id="red-categorie">
+            <option value="">—</option>
+            <option value="Casting">Casting</option>
+            <option value="Mannequinat">Mannequinat</option>
+            <option value="Conseils">Conseils</option>
+            <option value="Événements">Événements</option>
+          </select>
+        </div>
+        <div class="form-champ"><label>Texte de l'article</label><div id="red-editeur" class="editeur-riche redaction-editeur"></div></div>
+        <div class="form-champ"><label>Vidéo (lien YouTube ou Vimeo, facultatif)</label><input type="text" id="red-video" placeholder="https://youtube.com/watch?v=..."></div>
+        <div class="form-champ"><label id="red-images-label">Images (tu peux en sélectionner plusieurs à la fois)</label><input type="file" id="red-images" accept="image/*" multiple></div>
+        <div id="red-images-apercu" class="redaction-images-apercu"></div>
+
+        <div class="redaction-actions">
+          <button class="btn btn--principal" id="red-enregistrer-btn">Publier</button>
+          <button class="btn" id="red-annuler-btn">Annuler</button>
+          <button class="btn u-ml-0-5 u-hidden" id="red-supprimer-btn">🗑 Supprimer</button>
+        </div>
+        <div id="red-msg" class="form-msg"></div>
+      </div>
+      <div class="redaction-colonne-apercu">
+        <div class="redaction-apercu-etiquette">Aperçu — rendu public approximatif</div>
+        <div class="redaction-apercu-carte">
+          <div class="news-une-photo" id="red-apercu-photo"><img id="red-apercu-img" class="u-hidden" src="" alt=""></div>
+          <div class="news-une-corps">
+            <span class="news-categorie u-hidden" id="red-apercu-categorie"></span>
+            <div class="news-date" id="red-apercu-date"></div>
+            <h2 id="red-apercu-titre">Titre de l'actualité</h2>
+            <div id="red-apercu-texte" class="contenu-riche"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <footer class="site-footer">
   <div class="container">
