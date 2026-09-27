@@ -121,9 +121,12 @@ supabase-extension.sql              Toutes les évolutions, par "Extension N" nu
 
 vercel.json                       En-têtes de sécurité HTTP (CSP, HSTS...) — inclut désormais les
                                     domaines Google Analytics dans le CSP
-api/supprimer-mannequin.js          Fonction serveur Vercel (seule à utiliser la clé secrète
-                                      Supabase) — supprime définitivement le compte de connexion
-                                      d'un mannequin, voir section dédiée plus bas
+api/supprimer-mannequin.js          Fonction serveur Vercel (clé secrète Supabase) — supprime
+                                      définitivement le compte de connexion d'un mannequin
+api/r2-presigner.js                  Fonction serveur Vercel (clés R2) — URL signées pour
+                                      envoyer/supprimer les photos du Book sur Cloudflare R2
+package.json                     Dépendances npm des fonctions api/ (@aws-sdk/*) — Vercel les
+                                   installe automatiquement, aucune étape manuelle
 manifest.json / service-worker.js   PWA (installation sur écran d'accueil)
 sitemap.xml / robots.txt             Référencement
 assets/ , icons/                      Logos et icônes
@@ -180,22 +183,73 @@ d'ajouter un nouvel appel `sb.` en haut d'un script.
 
 ## Variable d'environnement Vercel : `SUPABASE_SERVICE_ROLE_KEY`
 
-Première et seule fonction serveur du site (`api/supprimer-mannequin.js`,
-ajoutée pour permettre à l'agence de supprimer définitivement le profil ET
-le compte de connexion d'un mannequin depuis le tableau de bord). Elle a
-besoin de la clé **secrète** Supabase (jamais la clé publique déjà utilisée
-dans `js/supabase-config.js`), qui ne doit jamais apparaître dans un fichier
-du dépôt — elle se configure uniquement dans Vercel :
+Utilisée par `api/supprimer-mannequin.js`, ajoutée pour permettre à
+l'agence de supprimer définitivement le profil ET le compte de connexion
+d'un mannequin depuis le tableau de bord, et par `api/r2-presigner.js`
+(voir section suivante) pour vérifier qu'une demande d'envoi/suppression de
+photo vient bien du mannequin propriétaire ou d'un admin. Cette clé
+**secrète** Supabase (jamais la clé publique déjà utilisée dans
+`js/supabase-config.js`) ne doit jamais apparaître dans un fichier du
+dépôt — elle se configure uniquement dans Vercel :
 
 1. Sur Supabase : Project Settings → API → repérer la clé secrète /
    `service_role` (à ne jamais coller ailleurs que dans Vercel).
 2. Sur Vercel : Project Settings → Environment Variables → ajouter
    `SUPABASE_SERVICE_ROLE_KEY` avec cette valeur, puis redéployer.
 
-Sans cette variable, le bouton "🗑 Supprimer" du tableau de bord échoue
-proprement (message d'erreur explicite), sans jamais bloquer le reste du
-site — toutes les autres fonctionnalités continuent d'utiliser uniquement
-la clé publique comme avant.
+Sans cette variable, le bouton "🗑 Supprimer" du tableau de bord et l'envoi
+de nouvelles photos échouent proprement (message d'erreur explicite), sans
+jamais bloquer le reste du site.
+
+## Photos du Book sur Cloudflare R2 (plus sur Supabase Storage)
+
+Le plan gratuit Supabase limite la bande passante ("Cached Egress") à
+5 Go/mois — dépassé deux fois (222%, puis 291%) à cause des photos du Book,
+consultées en boucle par les visiteurs. Cloudflare R2 ne facture **aucune**
+bande passante de sortie ; les photos du Book (bucket `model-photos` côté
+DB, colonnes `model_photos.url` / `url_miniature` / `url_moyenne`
+inchangées) y sont désormais envoyées à la place. Supabase reste utilisé
+pour tout le reste (connexion, base de données) et pour les photos de
+candidature/inscription (toujours vers Google Drive, sans rapport avec ce
+quota — voir plus bas).
+
+**`api/r2-presigner.js`** — fonction serveur partagée par
+`espace-mannequin.html` et `tableau-de-bord.html` : génère une URL R2
+signée temporaire (5 minutes) pour un envoi (`PutObjectCommand`) ou une
+suppression (`DeleteObjectCommand`), après avoir vérifié que l'appelant est
+bien le mannequin propriétaire du dossier ciblé ou un admin — jamais les
+clés R2 elles-mêmes côté navigateur. Utilise le SDK AWS officiel (R2 est
+compatible S3), d'où le nouveau `package.json` du dépôt (`@aws-sdk/client-s3`,
+`@aws-sdk/s3-request-presigner` — première fois que ce site a des
+dépendances npm, Vercel les installe automatiquement au déploiement).
+
+Variables d'environnement Vercel requises : `R2_ACCOUNT_ID`,
+`R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`,
+`R2_PUBLIC_URL` (Cloudflare → R2 → compartiment `ma2m-photos` → jeton API
+de type Account, lecture/écriture, scopé à ce compartiment ; URL publique
+de développement activée pour `R2_PUBLIC_URL`).
+
+**CORS obligatoire sur le compartiment R2** (Paramètres → Politique CORS),
+sinon le navigateur ne peut pas envoyer directement vers l'URL signée :
+
+```json
+[
+  {
+    "AllowedOrigins": ["https://www.maitreakessemodelmanagement.com"],
+    "AllowedMethods": ["PUT", "GET"],
+    "AllowedHeaders": ["Content-Type"],
+    "MaxAgeSeconds": 3600
+  }
+]
+```
+
+**Migration des photos déjà en ligne** : outil admin dans le tableau de
+bord ("☁️ Migration des photos vers R2", Bloc 3 → 3A) — télécharge chaque
+photo encore hébergée sur Supabase Storage depuis le navigateur de l'admin,
+la renvoie vers R2 au même chemin, puis met à jour la fiche. Relançable
+sans risque (une photo déjà migrée est ignorée). Les nouveaux envois
+passent déjà par R2 dès ce déploiement ; cet outil ne concerne que
+l'historique.
 
 ### Méthode actuelle quand l'assistant IA a accès à git/GitHub (depuis fin
 ### septembre 2026) — à préférer à la méthode manuelle ci-dessus
