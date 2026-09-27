@@ -3637,3 +3637,23 @@ NOTIFY pgrst, 'reload schema';
 grant select (niveau_mannequin) on model_profiles to anon;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 90 : migration des photos du domaine partagé Cloudflare R2
+-- ("pub-....r2.dev", explicitement documenté par Cloudflare comme non
+-- destiné à la production) vers le domaine personnalisé dédié
+-- "photos.maitreakessemodelmanagement.com", connecté au même compartiment
+-- R2 après passage du DNS du domaine principal chez Cloudflare. Cause
+-- réelle du bug "photos du Book invisibles sur Android et iPhone" :
+-- ce domaine partagé r2.dev échoue de façon intermittente
+-- (ERR_CONNECTION_ABORTED) spécifiquement sur les navigateurs mobiles.
+-- ===================================================================
+update model_photos
+set
+  url = replace(url, 'https://pub-bd96e72b6ed2444cab7b06f170bfe206.r2.dev', 'https://photos.maitreakessemodelmanagement.com'),
+  url_miniature = replace(url_miniature, 'https://pub-bd96e72b6ed2444cab7b06f170bfe206.r2.dev', 'https://photos.maitreakessemodelmanagement.com'),
+  url_moyenne = replace(url_moyenne, 'https://pub-bd96e72b6ed2444cab7b06f170bfe206.r2.dev', 'https://photos.maitreakessemodelmanagement.com')
+where
+  url like 'https://pub-bd96e72b6ed2444cab7b06f170bfe206.r2.dev%'
+  or url_miniature like 'https://pub-bd96e72b6ed2444cab7b06f170bfe206.r2.dev%'
+  or url_moyenne like 'https://pub-bd96e72b6ed2444cab7b06f170bfe206.r2.dev%';
