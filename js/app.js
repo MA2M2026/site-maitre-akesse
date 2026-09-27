@@ -162,6 +162,136 @@ function deriverNiveauMannequin(anneesExperience) {
   return 'Professionnel';
 }
 
+// ================== CV mannequin ("Model CV") ==================
+// Gabarit partagé entre l'aperçu personnel du mannequin (espace-mannequin.html)
+// et l'outil admin du tableau de bord (tableau-de-bord.html) — un seul endroit
+// à maintenir pour les deux. construireHtmlCv() prend un objet de données simple
+// (pas de dépendance à un état global) et renvoie le HTML à placer à l'intérieur
+// d'un conteneur ayant la classe .cv-sheet (styles définis localement dans
+// chaque page, qui ont chacune leur propre système de variables CSS).
+const MOIS_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+function formaterPeriode(valeur) {
+  if (!valeur) return '—';
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(valeur);
+  if (m) { const mois = MOIS_FR[parseInt(m[2], 10) - 1]; return mois ? (parseInt(m[3], 10) + ' ' + mois + ' ' + m[1]) : valeur; }
+  const m2 = /^(\d{4})-(\d{2})$/.exec(valeur);
+  if (m2) { const mois = MOIS_FR[parseInt(m2[2], 10) - 1]; return mois ? (mois.charAt(0).toUpperCase() + mois.slice(1) + ' ' + m2[1]) : valeur; }
+  return valeur;
+}
+
+const MCV_ICONS = {
+  user: '<circle cx="9" cy="6.2" r="3"/><path d="M3.2 16c.6-3.3 3-5.2 5.8-5.2s5.2 1.9 5.8 5.2"/>',
+  body: '<path d="M4 3h10M4 15h10M6 3v5.5c0 1.2-1 1.6-1 3.5s1 2.3 1 3M12 3v5.5c0 1.2 1 1.6 1 3.5s-1 2.3-1 3"/>',
+  grad: '<path d="M1.5 7 9 3.5 16.5 7 9 10.5 1.5 7Z"/><path d="M5 8.6v3.4c0 1 1.8 2 4 2s4-1 4-2V8.6"/><path d="M16.5 7v4.5"/>',
+  star: '<path d="M9 2.2l1.9 3.9 4.3.6-3.1 3 .7 4.3L9 12l-3.8 2 .7-4.3-3.1-3 4.3-.6L9 2.2Z"/>',
+  medal: '<circle cx="9" cy="11" r="4.3"/><path d="M6.4 6.6 4 2M11.6 6.6 14 2M7.4 11l1.1 1.4L11 9.6"/>',
+  image: '<rect x="1.7" y="3" width="14.6" height="12" rx="1"/><circle cx="6" cy="7.3" r="1.3"/><path d="M2 13.5l4-4 3 3 2.6-2.6L16.3 13"/>',
+  calendar: '<rect x="2" y="3.3" width="14" height="12.2" rx="1"/><path d="M2 7h14M5.5 1.8v3M12.5 1.8v3"/>',
+  pin: '<path d="M9 16.3S3.8 11 3.8 7.1a5.2 5.2 0 0 1 10.4 0C14.2 11 9 16.3 9 16.3Z"/><circle cx="9" cy="7.1" r="1.9"/>',
+  globe: '<circle cx="9" cy="9" r="7"/><path d="M2 9h14M9 2c2.2 2 2.2 12 0 14M9 2c-2.2 2-2.2 12 0 14"/>',
+  home: '<path d="M2.5 8.2 9 2.7l6.5 5.5"/><path d="M4 7v8h10V7"/><path d="M7.3 15V10.7h3.4V15"/>',
+  phone: '<path d="M4 2.5h2.3l1 3.3-1.7 1.3a9 9 0 0 0 4.3 4.3l1.3-1.7 3.3 1v2.3c0 .9-.8 1.6-1.7 1.4C7.9 13.6 4.4 10.1 3.6 5.2 3.4 4.3 4 3.5 4 2.5Z"/>',
+  insta: '<rect x="2" y="2" width="14" height="14" rx="4"/><circle cx="9" cy="9" r="3.4"/><circle cx="13.2" cy="4.8" r=".9"/>',
+  link: '<path d="M7.5 10.5 10.5 7.5"/><path d="M8.6 5.5 10 4a2.9 2.9 0 0 1 4.1 4.1l-1.5 1.5"/><path d="M9.4 12.5 8 14a2.9 2.9 0 0 1-4.1-4.1l1.5-1.5"/>',
+  mail: '<rect x="2" y="4" width="14" height="10" rx="1.5"/><path d="M2.5 4.8 9 9.8l6.5-5"/>',
+};
+function mcvIcon(name, size) {
+  size = size || 18;
+  return '<svg viewBox="0 0 18 18" width="' + size + '" height="' + size + '" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">' + (MCV_ICONS[name] || '') + '</svg>';
+}
+
+const LIBELLES_COMPETENCES = {
+  runway: 'Runway / Défilé', pose: 'Pose photographique', editorial: 'Editorial', campagne: 'Fashion campaign',
+  fitting: 'Fitting', presentation: 'Présentation de collection', expression: 'Expression corporelle',
+  equipe: 'Travail en équipe', discipline: 'Discipline professionnelle'
+};
+const ORDRE_COMPETENCES = ['runway', 'pose', 'editorial', 'campagne', 'fitting', 'presentation', 'expression', 'equipe', 'discipline'];
+const ORDRE_CATEGORIES_PROJETS = ['Défilés', 'Campagnes & Éditoriaux', 'Shootings', 'Autres expériences'];
+function categoriserProjet(type) {
+  if (type === 'Défilé') return 'Défilés';
+  if (['Campagne', 'Publicité', 'Éditorial', 'Lookbook'].indexOf(type) !== -1) return 'Campagnes & Éditoriaux';
+  if (type === 'Shooting') return 'Shootings';
+  return 'Autres expériences';
+}
+function groupExperiences(experiences) {
+  const groupes = ORDRE_CATEGORIES_PROJETS.map(function (label) { return { label: label, items: [] }; });
+  (experiences || []).forEach(function (e) {
+    const cat = categoriserProjet(e.type);
+    const groupe = groupes.find(function (g) { return g.label === cat; });
+    const meta = [e.lieu, formaterPeriode(e.annee)].filter(Boolean).filter(function (x) { return x !== '—'; });
+    groupe.items.push((e.nom || 'Expérience') + (meta.length ? ' (' + meta.join(', ') + ')' : ''));
+  });
+  return groupes.filter(function (g) { return g.items.length; });
+}
+
+// d = { nomComplet, dateNaissance, villeNaissance, lieuNaissance, nationalite, ville,
+//   quartier, citation, bio, instagram, niveauMannequin, mannequinId, photoCvUrl,
+//   compcardPhotos: [url|null, ...] (jusqu'à 5), physique: {...}, formation: {...},
+//   competences: {...}, experiences: [{ type, nom, lieu, annee }, ...] }
+// Renvoie le HTML à placer à l'intérieur d'un conteneur .cv-sheet — n'inclut pas
+// le conteneur lui-même ni les boutons d'action (fermer/imprimer), propres à
+// chaque page.
+function construireHtmlCv(d) {
+  const p = d.physique || {}, f = d.formation || {};
+  const groups = groupExperiences(d.experiences);
+  const heroPhoto = d.photoCvUrl ? '<img src="' + d.photoCvUrl + '" alt="Photo">' : '';
+  const handle = d.instagram ? String(d.instagram).replace(/^@/, '') : '';
+  const lienFichePublique = 'https://www.maitreakessemodelmanagement.com/mannequin.html?id=' + encodeURIComponent(d.mannequinId || '');
+  const compcardPhotosCv = [0, 1, 2, 3, 4].map(function (i) {
+    const url = (d.compcardPhotos || [])[i];
+    return url ? '<img src="' + url + '" alt="Compcard ' + (i + 1) + '">' : '<div></div>';
+  }).join('');
+  return (
+    '<div class="private-note">Document privé — visible uniquement par ' + echapperHtml((d.nomComplet || '').split(' ')[0] || 'le mannequin') + ' et l’administrateur MA2M</div>' +
+    '<div class="mcv-wrap"><aside class="mcv-side">' +
+      '<div class="mcv-photo">' + heroPhoto + mcvIcon('user', 48) + '<div class="mcv-photo-logo"><img src="assets/logo-header.png" alt="Maître Akesse Model Management"></div></div>' +
+      '<div class="mcv-tagline">Former · Révéler · Valoriser</div>' +
+      '<div class="mcv-name"><span class="mcv-nom">' + echapperHtml(d.nomComplet || '') + '</span></div>' +
+      '<div class="mcv-divider"></div>' +
+      '<ul class="mcv-info-list">' +
+        '<li>' + mcvIcon('calendar') + '<div><span class="k">Date de naissance</span><span class="v">' + formaterPeriode(d.dateNaissance) + '</span></div></li>' +
+        '<li>' + mcvIcon('pin') + '<div><span class="k">Lieu de naissance</span><span class="v">' + echapperHtml([d.villeNaissance, d.lieuNaissance].filter(Boolean).join(', ') || '—') + '</span></div></li>' +
+        '<li>' + mcvIcon('globe') + '<div><span class="k">Nationalité</span><span class="v">' + echapperHtml(d.nationalite || '—') + '</span></div></li>' +
+        '<li>' + mcvIcon('home') + '<div><span class="k">Ville de résidence</span><span class="v">' + echapperHtml([d.ville, d.quartier].filter(Boolean).join(', ') || '—') + '</span></div></li>' +
+        '<li>' + mcvIcon('phone') + '<div><span class="k">Contact agence</span><span class="v">+225 27 22 23 11 76<br>+225 05 45 65 66 87<br>infos.ma2m@gmail.com</span></div></li>' +
+      '</ul>' +
+      '<div class="mcv-cat"><span class="lbl">Catégorie</span><span class="val">' + echapperHtml(d.niveauMannequin || '') + '</span></div>' +
+      (d.citation ? '<blockquote class="mcv-quote">« ' + echapperHtml(d.citation) + ' »</blockquote>' : '') +
+      '<div class="mcv-agency"><img src="assets/logo-header.png" alt="Maître Akesse Model Management"></div>' +
+    '</aside><div class="mcv-right"><div class="mcv-main"><div class="mcv-topline">Model CV</div>' +
+      '<section class="mcv-sec"><h4>' + mcvIcon('user') + ' Profil</h4><p class="mcv-profile-text">' + echapperHtml(d.bio || 'Profil à compléter.') + '</p></section>' +
+      '<section class="mcv-sec"><h4>' + mcvIcon('body') + ' Informations physiques</h4><div class="mcv-two-col">' +
+        '<ul class="mcv-kv"><li><span>Taille</span><b>' + (p.taille ? p.taille + ' cm' : '—') + '</b></li><li><span>Poids</span><b>' + (p.poids ? p.poids + ' kg' : '—') + '</b></li>' +
+        '<li><span>Mensurations</span><b>' + ([p.poitrine, p.tourTaille, p.hanches || p.entrejambe].some(Boolean) ? [p.poitrine || '–', p.tourTaille || '–', p.hanches || p.entrejambe || '–'].join(' / ') : '—') + '</b></li>' +
+        '<li><span>Pointure</span><b>' + (p.pointure || '—') + '</b></li></ul>' +
+        '<ul class="mcv-kv"><li><span>Taille vêtements</span><b>' + (p.tailleVet || '—') + '</b></li><li><span>Couleur des yeux</span><b>' + (p.yeux || '—') + '</b></li>' +
+        '<li><span>Couleur des cheveux</span><b>' + (p.cheveux || '—') + '</b></li><li><span>Carnation</span><b>' + (p.carnation || '—') + '</b></li></ul>' +
+      '</div></section>' +
+      '<section class="mcv-sec"><h4>' + mcvIcon('grad') + ' Formation</h4><ul class="mcv-kv">' +
+        '<li><span>Niveau d’étude</span><b>' + (f.niveau || '—') + '</b></li><li><span>Établissement</span><b>' + (f.etablissement || '—') + '</b></li>' +
+        '<li><span>Formation particulière</span><b>' + (f.particuliere || 'Aucune') + '</b></li><li><span>Formation mannequin</span><b>' + (f.mannequin || '—') + '</b></li></ul></section>' +
+      '<section class="mcv-sec"><h4>' + mcvIcon('star') + ' Expérience professionnelle</h4>' +
+        (groups.length ? groups.map(function (g) { return '<div class="mcv-expgroup"><div class="gh">' + g.label + '</div><ul>' + g.items.map(function (i) { return '<li>' + echapperHtml(i) + '</li>'; }).join('') + '</ul></div>'; }).join('')
+          : '<p class="p20-11">Aucune expérience renseignée pour le moment.</p>') + '</section>' +
+      '<section class="mcv-sec"><div class="mcv-bottom-row"><div><h4>' + mcvIcon('medal') + ' Compétences mannequin</h4><div class="mcv-skills">' +
+        ORDRE_COMPETENCES.map(function (cle) { const pct = (((d.competences || {})[cle] || 3) / 5) * 100; return '<div class="mcv-skill-row"><span class="lbl">' + LIBELLES_COMPETENCES[cle] + '</span><div class="mcv-skill-bar"><i data-largeur="' + pct + '"></i></div></div>'; }).join('') +
+        '</div></div><div><h4>' + mcvIcon('image') + ' Portfolio</h4><div class="mcv-portfolio">' +
+        (handle ? '<div class="soc">' + mcvIcon('insta', 15) + ' @' + echapperHtml(handle) + '</div>' : '') +
+        '<div class="soc">' + mcvIcon('link', 15) + ' <a href="' + lienFichePublique + '" target="_blank" rel="noopener" class="p20-6">Voir la fiche publique</a></div>' +
+        '<div class="mcv-qr"><img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&margin=8&color=241a12&bgcolor=ffffff&data=' + encodeURIComponent(lienFichePublique) + '" alt="QR code vers la fiche publique" width="140" height="140"><span>Scannez pour ouvrir la fiche</span></div>' +
+        '</div></div></div></section>' +
+    '</div></div>' +
+    '<div class="mcv-strip"><div class="mcv-strip-photos">' + compcardPhotosCv + '</div>' +
+      '<div class="mcv-strip-contact"><b>MAÎTRE AKESSE MODEL MANAGEMENT</b>' +
+      '<div class="row">' + mcvIcon('phone', 12) + ' +225 27 22 23 11 76</div>' +
+      '<div class="row">' + mcvIcon('phone', 12) + ' +225 05 45 65 66 87</div>' +
+      '<div class="row">' + mcvIcon('mail', 12) + ' infos.ma2m@gmail.com</div>' +
+      '<div class="row">' + mcvIcon('pin', 12) + ' Abidjan, Côte d’Ivoire</div>' +
+      '<small>Former · Révéler · Valoriser</small></div>' +
+    '</div>'
+  );
+}
+
 // ================== Champs mensurations/apparence en listes déroulantes ==================
 // Mensurations en listes déroulantes plutôt qu'en saisie libre : évite les fautes
 // de frappe (ex. "17O" au lieu de "170") et les valeurs invraisemblables — déjà en
