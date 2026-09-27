@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-fRx8uKrWqzU7ROjUYgN+o1iYbFDoejzjUIOdj3ZWmuo='; style-src 'self' https://fonts.googleapis.com 'sha256-XSixVhS6UmsPdkrCutkRwYcwFTpkYO5Yjoj0Eb8OMPE=' 'sha256-/FvKPwpVq/Sr+bG1E1FBJCdeER/pyPoC+YtRu1R5nCc=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-X6n604C9fzbIqNwpcRKcsAuc5pGoz5Y3sKIyIVaboiQ='; style-src 'self' https://fonts.googleapis.com 'sha256-XSixVhS6UmsPdkrCutkRwYcwFTpkYO5Yjoj0Eb8OMPE=' 'sha256-/FvKPwpVq/Sr+bG1E1FBJCdeER/pyPoC+YtRu1R5nCc=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mon Espace Mannequin — MA2M | Premium</title>
@@ -787,7 +787,8 @@ function bindAuthGate(){
     const email = val('au-mo-email').trim(); const msg = document.getElementById('au-mo-msg');
     if (!email) return;
     const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/reinitialiser-mot-de-passe.html' });
-    msg.textContent = error ? ("Erreur lors de l'envoi : " + error.message) : "Si cet e-mail est associé à un compte, un lien de réinitialisation vient d'être envoyé.";
+    if (error) console.warn('resetPasswordForEmail (mannequin) :', error.message);
+    msg.textContent = "Si cet e-mail est associé à un compte, un lien de réinitialisation vient d'être envoyé.";
   });
 
   document.getElementById('au-nm-valider')?.addEventListener('click', async function(){
