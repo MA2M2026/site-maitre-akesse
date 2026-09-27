@@ -103,6 +103,7 @@ async function chargerActualites() {
         <span class="news-une-badge">★ À la une</span>
       </div>
       <div class="news-une-corps">
+        ${une.categorie ? `<span class="news-categorie">${echapperHtml(une.categorie)}</span>` : ''}
         <div class="news-date">${formatDateActu(une.created_at)}</div>
         ${une.titre ? `<h2>${echapperHtml(une.titre)}</h2>` : ''}
         ${une.commentaire ? `<p>${echapperHtml(extraitTexte(texteBrutDepuis(une.commentaire), 180))}</p>` : ''}
@@ -124,6 +125,7 @@ async function chargerActualites() {
         ${nbPhotos > 1 ? `<span class="news-compteur-photos">${nbPhotos}</span>` : ''}
       </div>
       <div class="news-corps">
+        ${a.categorie ? `<span class="news-categorie">${echapperHtml(a.categorie)}</span>` : ''}
         <div class="news-date">${formatDateActu(a.created_at)}</div>
         ${a.titre ? `<h3>${echapperHtml(a.titre)}</h3>` : ''}
         ${a.commentaire ? `<p class="news-extrait">${echapperHtml(extraitTexte(texteBrutDepuis(a.commentaire), 110))}</p>` : ''}
@@ -160,7 +162,10 @@ async function ouvrirActuModal(index) {
     mediaHtml += `<div class="video-runway news-modal-video-embed"><iframe src="${echapperHtml(videoEmbed)}" allowfullscreen loading="lazy"></iframe></div>`;
   }
   if (listePhotos.length > 1) {
-    mediaHtml += `<div class="news-modal-galerie">${listePhotos.map(p => `<img src="${echapperHtml(p.url)}" loading="lazy" alt="">`).join('')}</div>`;
+    // Composition adaptée au nombre de photos (voir .news-modal-galerie[data-count] dans
+    // css/style.css) ; au-delà de 4, on garde une grille régulière classique.
+    const compteGalerie = Math.min(listePhotos.length, 4);
+    mediaHtml += `<div class="news-modal-galerie" data-count="${compteGalerie}">${listePhotos.map(p => `<div class="gal-item"><img src="${echapperHtml(p.url)}" loading="lazy" alt=""></div>`).join('')}</div>`;
   } else if (listePhotos.length === 1) {
     mediaHtml += `<img class="news-modal-img" src="${echapperHtml(listePhotos[0].url)}" alt="">`;
   }
