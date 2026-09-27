@@ -1379,16 +1379,22 @@ html.porte-verrouillee { overflow: hidden; height: 100%; }
   cursor: pointer;
 }
 @media (min-width: 760px) { .news-une { grid-template-columns: 1.1fr 1fr; align-items: center; gap: 3rem; } }
-.news-une-photo { position: relative; aspect-ratio: 4/3; overflow: hidden; border-radius: 4px; }
-.news-une-photo img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.7s var(--transition-douce); }
-.news-une:hover .news-une-photo img { transform: scale(1.06); }
+/* Fond neutre + object-fit: contain : la photo (portrait, paysage, affiche...) reste
+   toujours entièrement visible, jamais recadrée destructivement (tête/pieds coupés). */
+.news-une-photo {
+  position: relative; aspect-ratio: 4/3; overflow: hidden; border-radius: 4px;
+  background: var(--noir-doux); display: flex; align-items: center; justify-content: center;
+}
+.news-une-photo img { width: 100%; height: 100%; object-fit: contain; transition: transform 0.7s var(--transition-douce); }
+.news-une:hover .news-une-photo img { transform: scale(1.04); }
 .news-une-badge {
   position: absolute; top: 1rem; left: 1rem; background: var(--bordeaux); color: #fff;
   font-size: 0.62rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
-  padding: 0.5rem 0.9rem; display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.5rem 0.9rem; display: inline-flex; align-items: center; gap: 0.4rem; z-index: 1;
 }
+.news-categorie { display: block; font-size: 0.62rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--bordeaux-clair); font-weight: 600; margin-bottom: 0.5rem; }
 .news-une-corps .news-date { font-size: 0.64rem; }
-.news-une-corps h2 { margin-top: 0.8rem; font-size: clamp(1.6rem, 4vw, 2.4rem); }
+.news-une-corps h2 { margin-top: 0.3rem; font-size: clamp(1.6rem, 4vw, 2.4rem); }
 .news-une-corps p { margin-top: 1rem; color: var(--texte-corps); }
 .news-une-corps .news-lire { margin-top: 1.4rem; font-size: 0.68rem; }
 
@@ -1428,6 +1434,28 @@ html.porte-verrouillee { overflow: hidden; height: 100%; }
   .news-img { width: 100px; height: 100px; }
   .news-corps h3 { font-size: 0.9rem; }
 }
+
+/* ---------- Actualités : cartes façon magazine — l'image reste entière (jamais de
+   recadrage destructif : mannequin en pied, affiche verticale...), catégorie
+   affichée. Scopé via #actus-grille (id propre à actualites.html/en/actualites.html)
+   pour ne rien changer aux autres pages qui réutilisent .news-carte/.news-img
+   (ex. partenaires.html, qui garde son rendu en cercle inchangé). ---------- */
+#actus-grille .news-carte {
+  display: flex; flex-direction: column; align-items: stretch; text-align: left;
+  padding: 0; border-bottom: none; gap: 0;
+}
+#actus-grille .news-carte:hover { padding-left: 0; }
+#actus-grille .news-img {
+  width: 100%; height: auto; aspect-ratio: 4/5; margin: 0; border-radius: 4px;
+  background: var(--noir-doux); display: flex; align-items: center; justify-content: center;
+}
+#actus-grille .news-img img { width: 100%; height: 100%; object-fit: contain; border-radius: 0; border: none; filter: none; }
+#actus-grille .news-carte:hover .news-img img, #actus-grille .news-carte:focus-within .news-img img { transform: scale(1.04); border-color: transparent; }
+#actus-grille .news-carte:hover .news-img, #actus-grille .news-carte:focus-within .news-img { box-shadow: none; border-radius: 4px; }
+#actus-grille .news-corps { padding: 0.9rem 0 0; }
+#actus-grille.news-grille { gap: 2.2rem; }
+@media (min-width: 640px) { #actus-grille.news-grille { gap: 2.4rem; } }
+@media (min-width: 960px) { #actus-grille.news-grille { gap: 2.2rem; } }
 
 .news-modal {
   position: fixed; inset: 0; z-index: 900; background: rgba(3,2,2,0.94);
@@ -1481,13 +1509,24 @@ body.porte-verrouillee #marqueeBande { display: none; }
 @media (max-width: 700px) { .whatsapp-flottant { width: 50px; height: 50px; bottom: 1rem; left: 1rem; } }
 body.porte-verrouillee .whatsapp-flottant { display: none; }
 
-/* ---------- Galerie multi-photos dans la modale actualité (revue de presse) ---------- */
-.news-modal-galerie {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 4px;
+/* ---------- Galerie multi-photos dans la modale actualité (revue de presse) : la
+   composition s'adapte au nombre de photos (data-count posé par js/actualites.js),
+   et chaque photo reste entièrement visible (object-fit: contain sur fond neutre) —
+   jamais de recadrage destructif, même pour une affiche ou un mannequin en pied. ---------- */
+.news-modal-galerie { display: grid; gap: 4px; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+.news-modal-galerie .gal-item {
+  position: relative; overflow: hidden; background: var(--noir-doux);
+  display: flex; align-items: center; justify-content: center; aspect-ratio: 1/1;
 }
-.news-modal-galerie img { width: 100%; aspect-ratio: 1/1; object-fit: cover; }
+.news-modal-galerie .gal-item img { width: 100%; height: 100%; object-fit: contain; }
+
+.news-modal-galerie[data-count="2"] { grid-template-columns: 1fr 1fr; }
+.news-modal-galerie[data-count="2"] .gal-item { aspect-ratio: 3/4; }
+
+.news-modal-galerie[data-count="3"] { grid-template-columns: 1fr 1fr; }
+.news-modal-galerie[data-count="3"] .gal-item:first-child { grid-column: 1 / -1; aspect-ratio: 16/10; }
+
+.news-modal-galerie[data-count="4"] { grid-template-columns: 1fr 1fr; }
 
 .news-compteur-photos {
   position: absolute; bottom: 2%; right: 2%;

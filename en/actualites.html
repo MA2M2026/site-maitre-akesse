@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-OrsLxl6/77Y/qTP/5XFh8koHHJUsvhXo3Jxfk2PZ/d4=' 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-EZHxbXGyyXXkTPcZ2gBot0PU1F/Bbl72vfdGBC/DZPQ='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-xFz8jkXJLKQkAoroOcoQzkprI7PuV4VRqBd9JwD3/UI='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-OrsLxl6/77Y/qTP/5XFh8koHHJUsvhXo3Jxfk2PZ/d4=' 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-od93wOaYY/UMc6INJEDwg7MhkxrQYUfHNfQs97n6UPE='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-xFz8jkXJLKQkAoroOcoQzkprI7PuV4VRqBd9JwD3/UI='; worker-src 'self' blob:;">
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
 <script src="../js/analytics-config.js"></script>
@@ -328,6 +328,7 @@ async function chargerActualites() {
         <span class="news-une-badge">★ Featured</span>
       </div>
       <div class="news-une-corps">
+        ${une.categorie ? `<span class="news-categorie">${echapperHtml(une.categorie)}</span>` : ''}
         <div class="news-date">${formatDateActu(une.created_at)}</div>
         ${une.titre ? `<h2>${echapperHtml(une.titre)}</h2>` : ''}
         ${une.commentaire ? `<p>${echapperHtml(extraitTexte(texteBrutDepuis(une.commentaire), 180))}</p>` : ''}
@@ -349,6 +350,7 @@ async function chargerActualites() {
         ${nbPhotos > 1 ? `<span class="news-compteur-photos">${nbPhotos}</span>` : ''}
       </div>
       <div class="news-corps">
+        ${a.categorie ? `<span class="news-categorie">${echapperHtml(a.categorie)}</span>` : ''}
         <div class="news-date">${formatDateActu(a.created_at)}</div>
         ${a.titre ? `<h3>${echapperHtml(a.titre)}</h3>` : ''}
         ${a.commentaire ? `<p class="news-extrait">${echapperHtml(extraitTexte(texteBrutDepuis(a.commentaire), 110))}</p>` : ''}
@@ -384,7 +386,8 @@ async function ouvrirActuModal(index) {
     mediaHtml += `<div class="video-runway enac-6"><iframe src="${echapperHtml(videoEmbed)}" allowfullscreen loading="lazy"></iframe></div>`;
   }
   if (listePhotos.length > 1) {
-    mediaHtml += `<div class="news-modal-galerie">${listePhotos.map(p => `<img src="${echapperHtml(p.url)}" loading="lazy" alt="">`).join('')}</div>`;
+    const compteGalerie = Math.min(listePhotos.length, 4);
+    mediaHtml += `<div class="news-modal-galerie" data-count="${compteGalerie}">${listePhotos.map(p => `<div class="gal-item"><img src="${echapperHtml(p.url)}" loading="lazy" alt=""></div>`).join('')}</div>`;
   } else if (listePhotos.length === 1) {
     mediaHtml += `<img class="news-modal-img" src="${echapperHtml(listePhotos[0].url)}" alt="">`;
   }
