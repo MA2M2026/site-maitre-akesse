@@ -1435,27 +1435,31 @@ html.porte-verrouillee { overflow: hidden; height: 100%; }
   .news-corps h3 { font-size: 0.9rem; }
 }
 
-/* ---------- Actualités : cartes façon magazine — l'image reste entière (jamais de
-   recadrage destructif : mannequin en pied, affiche verticale...), catégorie
-   affichée. Scopé via #actus-grille (id propre à actualites.html/en/actualites.html)
-   pour ne rien changer aux autres pages qui réutilisent .news-carte/.news-img
-   (ex. partenaires.html, qui garde son rendu en cercle inchangé). ---------- */
-#actus-grille .news-carte {
+/* ---------- Actualités / Événements : cartes façon magazine — l'image reste
+   entière (jamais de recadrage destructif : mannequin en pied, affiche
+   verticale...), catégorie/lieu affiché. Scopé via #actus-grille et
+   #evenements-grille (ids propres à actualites.html/evenements.html et leurs
+   versions en/) pour ne rien changer aux autres pages qui réutilisent
+   .news-carte/.news-img (ex. partenaires.html, qui garde son rendu en cercle
+   inchangé). ---------- */
+#actus-grille .news-carte, #evenements-grille .news-carte {
   display: flex; flex-direction: column; align-items: stretch; text-align: left;
   padding: 0; border-bottom: none; gap: 0;
 }
-#actus-grille .news-carte:hover { padding-left: 0; }
-#actus-grille .news-img {
+#actus-grille .news-carte:hover, #evenements-grille .news-carte:hover { padding-left: 0; }
+#actus-grille .news-img, #evenements-grille .news-img {
   width: 100%; height: auto; aspect-ratio: 4/5; margin: 0; border-radius: 4px;
   background: var(--noir-doux); display: flex; align-items: center; justify-content: center;
 }
-#actus-grille .news-img img { width: 100%; height: 100%; object-fit: contain; border-radius: 0; border: none; filter: none; }
-#actus-grille .news-carte:hover .news-img img, #actus-grille .news-carte:focus-within .news-img img { transform: scale(1.04); border-color: transparent; }
-#actus-grille .news-carte:hover .news-img, #actus-grille .news-carte:focus-within .news-img { box-shadow: none; border-radius: 4px; }
-#actus-grille .news-corps { padding: 0.9rem 0 0; }
-#actus-grille.news-grille { gap: 2.2rem; }
-@media (min-width: 640px) { #actus-grille.news-grille { gap: 2.4rem; } }
-@media (min-width: 960px) { #actus-grille.news-grille { gap: 2.2rem; } }
+#actus-grille .news-img img, #evenements-grille .news-img img { width: 100%; height: 100%; object-fit: contain; border-radius: 0; border: none; filter: none; }
+#actus-grille .news-carte:hover .news-img img, #actus-grille .news-carte:focus-within .news-img img,
+#evenements-grille .news-carte:hover .news-img img, #evenements-grille .news-carte:focus-within .news-img img { transform: scale(1.04); border-color: transparent; }
+#actus-grille .news-carte:hover .news-img, #actus-grille .news-carte:focus-within .news-img,
+#evenements-grille .news-carte:hover .news-img, #evenements-grille .news-carte:focus-within .news-img { box-shadow: none; border-radius: 4px; }
+#actus-grille .news-corps, #evenements-grille .news-corps { padding: 0.9rem 0 0; }
+#actus-grille.news-grille, #evenements-grille.news-grille { gap: 2.2rem; }
+@media (min-width: 640px) { #actus-grille.news-grille, #evenements-grille.news-grille { gap: 2.4rem; } }
+@media (min-width: 960px) { #actus-grille.news-grille, #evenements-grille.news-grille { gap: 2.2rem; } }
 
 .news-modal {
   position: fixed; inset: 0; z-index: 900; background: rgba(3,2,2,0.94);
@@ -1585,61 +1589,6 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
 .redaction-apercu-carte .news-une-photo { aspect-ratio: 4/3; }
 .redaction-apercu-carte .news-une-corps { padding: 1.6rem; }
 .redaction-apercu-carte .news-une-corps .contenu-riche { color: var(--texte-corps); margin-top: 0.8rem; font-size: 0.88rem; }
-
-/* ---------- Nos Événements : galerie d'albums photo ---------- */
-.evenements-albums-grille {
-  display: grid; grid-template-columns: 1fr; gap: 2.4rem;
-}
-@media (min-width: 640px) { .evenements-albums-grille { grid-template-columns: repeat(2, 1fr); } }
-@media (min-width: 960px) { .evenements-albums-grille { grid-template-columns: repeat(3, 1fr); } }
-
-.evenement-album-carte {
-  cursor: pointer; display: block; text-decoration: none; color: inherit;
-}
-.evenement-carte-photo {
-  position: relative; aspect-ratio: 4/3; overflow: hidden; border-radius: 4px;
-  background: var(--noir-doux); display: flex; align-items: center; justify-content: center;
-}
-.evenement-carte-photo img {
-  width: 100%; height: 100%; object-fit: contain;
-  transition: transform 0.7s var(--transition-douce), filter 0.4s ease;
-}
-.evenement-album-carte:hover .evenement-carte-photo img { transform: scale(1.06); }
-.evenement-carte-corps { padding-top: 1rem; }
-.evenement-carte-corps h3 { margin-top: 0.4rem; font-size: 1.1rem; line-height: 1.3; }
-.evenement-carte-lieu { font-size: 0.8rem; color: var(--texte-corps); margin-top: 0.3rem; }
-
-.evenement-retour {
-  display: inline-block; margin-bottom: 1.6rem; font-size: 0.68rem; letter-spacing: 0.12em;
-  text-transform: uppercase; color: var(--bordeaux-clair); font-weight: 500;
-  border-bottom: 1px solid var(--bordeaux-clair); padding-bottom: 2px; cursor: pointer;
-}
-
-/* ---------- Galerie photo d'un événement : composition adaptée au nombre de
-   photos pour un petit album (2/3/4, même principe que la galerie d'Actualités),
-   et une grille plus large et plus confortable au-delà (albums de plusieurs
-   dizaines de photos) — jamais de recadrage destructif (object-fit: contain). ---------- */
-.evenement-detail-photos {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px;
-  margin-top: 2rem;
-}
-.evenement-detail-photos div {
-  aspect-ratio: 4/5; background: var(--noir-doux); overflow: hidden;
-  display: flex; align-items: center; justify-content: center;
-}
-.evenement-detail-photos img { width: 100%; height: 100%; object-fit: contain; cursor: zoom-in; }
-
-.evenement-detail-photos[data-count="1"] { grid-template-columns: 1fr; max-width: 640px; }
-.evenement-detail-photos[data-count="1"] div { aspect-ratio: 4/3; }
-
-.evenement-detail-photos[data-count="2"] { grid-template-columns: 1fr 1fr; }
-.evenement-detail-photos[data-count="2"] div { aspect-ratio: 3/4; }
-
-.evenement-detail-photos[data-count="3"] { grid-template-columns: 1fr 1fr; }
-.evenement-detail-photos[data-count="3"] div:first-child { grid-column: 1 / -1; aspect-ratio: 16/10; }
-
-.evenement-detail-photos[data-count="4"] { grid-template-columns: 1fr 1fr; }
-.evenement-detail-photos[data-count="4"] div { aspect-ratio: 1/1; }
 
 /* ---------- Pastille d'installation PWA ---------- */
 #pastille-installer {
