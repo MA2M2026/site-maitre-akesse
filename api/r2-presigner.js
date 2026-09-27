@@ -93,16 +93,20 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const autorisation = await autoriser(jeton, modelId);
-  if (!autorisation.ok) {
-    res.status(autorisation.code).json({ error: autorisation.message });
-    return;
-  }
-
-  const client = creerClientR2();
-  const bucket = process.env.R2_BUCKET_NAME;
-
+  // Tout ce qui suit (vérification Supabase, appels R2) peut échouer de façon
+  // inattendue (réseau, identifiants invalides...) — tout est regroupé dans
+  // ce seul bloc try/catch pour ne jamais laisser Vercel renvoyer sa propre
+  // page d'erreur générique (non-JSON), que le navigateur ne peut pas lire.
   try {
+    const autorisation = await autoriser(jeton, modelId);
+    if (!autorisation.ok) {
+      res.status(autorisation.code).json({ error: autorisation.message });
+      return;
+    }
+
+    const client = creerClientR2();
+    const bucket = process.env.R2_BUCKET_NAME;
+
     if (action === 'suppression') {
       await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: chemin }));
       res.status(200).json({ ok: true });
@@ -119,6 +123,7 @@ module.exports = async function handler(req, res) {
     const publicUrl = process.env.R2_PUBLIC_URL.replace(/\/$/, '') + '/' + chemin;
     res.status(200).json({ uploadUrl: uploadUrl, publicUrl: publicUrl });
   } catch (e) {
+    console.error('r2-presigner :', e);
     res.status(500).json({ error: e && e.message ? e.message : 'Erreur inattendue.' });
   }
 };
