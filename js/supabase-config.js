@@ -1,7 +1,7 @@
 // Configuration Supabase — Maître Akesse Model Management
 // Clé "anon public" : publique par nature, sans risque à exposer côté client.
 const SUPABASE_URL = 'https://dfhghgmwmxiguhtxtsle.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_-k2vIvxdu1Ya-WzZWgj2Fg_8eyTmOmu';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmaGdoZ213bXhpZ3VodHh0c2xlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg2NzI1ODQsImV4cCI6MjEwNDI0ODU4NH0.S-JftGJNtPMLZdK6Jy9AUwwOl56JzyllkEJ0GN0eZ-M';
 
 // Seules les pages avec une vraie connexion (espace-mannequin, tableau de bord)
 // définissent `window.MA2M_SESSION_REQUISE = true` avant de charger ce script.
