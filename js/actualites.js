@@ -40,8 +40,7 @@ function urlHttpSure(url) {
 
 const CATEGORIES_ACTUALITES = ['Casting', 'Mannequinat', 'Conseils', 'Événements'];
 
-const quillActuCommentaire = creerEditeurRiche('actu-commentaire-editeur');
-const quillEditActuCommentaire = creerEditeurRiche('edit-actu-commentaire-editeur');
+const quillRedaction = creerEditeurRiche('red-editeur', 'Racontez votre actualité ici… (vous pouvez coller un texte déjà mis en forme)');
 
 function formatDateActu(dateStr) {
   return new Date(dateStr).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -192,9 +191,6 @@ async function ouvrirActuModal(index) {
   ouvrirNewsModal();
 
   window.actualiteModalCourante = a.id;
-  document.getElementById('news-modal-edition').style.display = 'none';
-  document.getElementById('news-modal-titre').style.display = 'block';
-  document.getElementById('news-modal-texte').style.display = 'block';
   document.getElementById('news-modal-admin-actions').style.display = window.estAdminConnecte ? 'block' : 'none';
 }
 // Verrouille le défilement de la page tant que la fiche est ouverte (même mécanisme,
@@ -236,66 +232,8 @@ verifierAdmin();
 document.getElementById('news-modal-modifier-btn').addEventListener('click', () => {
   const a = window.actualitesData.find(x => x.id === window.actualiteModalCourante);
   if (!a) return;
-  document.getElementById('edit-actu-titre').value = a.titre || '';
-  document.getElementById('edit-actu-categorie').value = a.categorie || '';
-  chargerContenuDansEditeur(quillEditActuCommentaire, a.commentaire);
-  document.getElementById('edit-actu-video').value = a.video_url || '';
-  document.getElementById('edit-actu-images').value = '';
-  document.getElementById('edit-actu-msg').style.display = 'none';
-
-  document.getElementById('news-modal-titre').style.display = 'none';
-  document.getElementById('news-modal-texte').style.display = 'none';
-  document.getElementById('news-modal-video-lien').style.display = 'none';
-  document.getElementById('news-modal-admin-actions').style.display = 'none';
-  document.getElementById('news-modal-edition').style.display = 'block';
-});
-
-document.getElementById('edit-actu-annuler-btn').addEventListener('click', () => {
-  document.getElementById('news-modal-edition').style.display = 'none';
-  document.getElementById('news-modal-titre').style.display = 'block';
-  document.getElementById('news-modal-texte').style.display = 'block';
-  if (document.getElementById('news-modal-video-lien').href && document.getElementById('news-modal-video-lien').href !== '#' && !document.getElementById('news-modal-video-lien').href.endsWith('/#')) {
-    document.getElementById('news-modal-video-lien').style.display = 'inline-block';
-  }
-  document.getElementById('news-modal-admin-actions').style.display = 'block';
-});
-
-document.getElementById('edit-actu-enregistrer-btn').addEventListener('click', async () => {
-  const id = window.actualiteModalCourante;
-  const msg = document.getElementById('edit-actu-msg');
-  const titre = document.getElementById('edit-actu-titre').value.trim();
-  const categorie = document.getElementById('edit-actu-categorie').value;
-  const commentaire = lireContenuEditeur(quillEditActuCommentaire);
-  const videoUrl = document.getElementById('edit-actu-video').value.trim();
-  const fichiers = Array.from(document.getElementById('edit-actu-images').files || []);
-
-  msg.className = 'form-msg ok'; msg.textContent = 'Enregistrement…'; msg.style.display = 'block';
-
-  const { error: erreurUpdate } = await sb.from('actualites').update({ titre, categorie: categorie || null, commentaire, video_url: videoUrl }).eq('id', id);
-  if (erreurUpdate) { msg.className = 'form-msg err'; msg.textContent = "Erreur lors de la modification."; return; }
-
-  if (fichiers.length) {
-    msg.textContent = `Ajout de ${fichiers.length} nouvelle(s) photo(s)…`;
-    let premiereNouvellePhoto = null;
-    for (const fichierOriginal of fichiers) {
-      const fichier = await convertirSiHeic(fichierOriginal);
-      const chemin = `${id}/${Date.now()}-${nomFichierSur(fichier.name)}`;
-      const { error: erreurUpload } = await sb.storage.from('actualites-images').upload(chemin, fichier);
-      if (erreurUpload) continue;
-      const { data: urlPublique } = sb.storage.from('actualites-images').getPublicUrl(chemin);
-      await sb.from('actualite_photos').insert({ actualite_id: id, url: urlPublique.publicUrl, chemin: chemin });
-      if (!premiereNouvellePhoto) premiereNouvellePhoto = urlPublique.publicUrl;
-    }
-    const { data: actuActuelle } = await sb.from('actualites').select('image_url').eq('id', id).single();
-    if (!actuActuelle.image_url && premiereNouvellePhoto) {
-      await sb.from('actualites').update({ image_url: premiereNouvellePhoto }).eq('id', id);
-    }
-  }
-
-  msg.className = 'form-msg ok'; msg.textContent = 'Modifications enregistrées !';
-  await chargerActualites();
-  const index = window.actualitesData.findIndex(x => x.id === id);
-  if (index > -1) ouvrirActuModal(index);
+  fermerNewsModal();
+  ouvrirRedaction(a);
 });
 
 document.getElementById('news-modal-supprimer-btn').addEventListener('click', async () => {
@@ -315,49 +253,134 @@ document.getElementById('admin-logout-btn').addEventListener('click', async () =
   window.estAdminConnecte = false;
 });
 
-document.getElementById('actu-publier-btn').addEventListener('click', async () => {
-  const msg = document.getElementById('actu-msg');
-  const titre = document.getElementById('actu-titre').value.trim();
-  const categorie = document.getElementById('actu-categorie').value;
-  const commentaire = lireContenuEditeur(quillActuCommentaire);
-  const videoUrl = document.getElementById('actu-video').value.trim();
-  const fichierInput = document.getElementById('actu-image');
-  const fichiers = Array.from(fichierInput.files || []);
+// --- Page de rédaction plein écran : sert à la fois pour publier une nouvelle
+// actualité (redactionIdEnCours === null) et pour modifier une actualité existante
+// (redactionIdEnCours = son id) — un seul éditeur, un seul jeu de champs, avec un
+// aperçu du rendu public qui se met à jour en direct pendant la saisie.
+let redactionIdEnCours = null;
+let redactionNouvellesImages = [];
 
-  if (!fichiers.length && !videoUrl) {
+function ouvrirRedaction(actualiteExistante) {
+  redactionIdEnCours = actualiteExistante ? actualiteExistante.id : null;
+  redactionNouvellesImages = [];
+  document.getElementById('redaction-titre-mode').textContent = actualiteExistante ? 'Modifier l’actualité' : 'Rédiger une actualité';
+  document.getElementById('red-titre').value = actualiteExistante ? (actualiteExistante.titre || '') : '';
+  document.getElementById('red-categorie').value = actualiteExistante ? (actualiteExistante.categorie || '') : '';
+  chargerContenuDansEditeur(quillRedaction, actualiteExistante ? actualiteExistante.commentaire : '');
+  document.getElementById('red-video').value = actualiteExistante ? (actualiteExistante.video_url || '') : '';
+  document.getElementById('red-images').value = '';
+  document.getElementById('red-images-label').textContent = actualiteExistante ? 'Ajouter des photos (s’ajoutent à celles déjà en ligne)' : 'Images (tu peux en sélectionner plusieurs à la fois)';
+  document.getElementById('red-enregistrer-btn').textContent = actualiteExistante ? 'Enregistrer' : 'Publier';
+  document.getElementById('red-supprimer-btn').classList.toggle('u-hidden', !actualiteExistante);
+  document.getElementById('red-msg').style.display = 'none';
+  document.getElementById('red-images-apercu').innerHTML = '';
+  apercuImageCouverture(actualiteExistante ? actualiteExistante.image_url : null);
+  mettreAJourApercuRedaction();
+  document.getElementById('redaction-overlay').classList.add('active');
+  window.verrouillerDefilement();
+}
+
+function fermerRedaction() {
+  document.getElementById('redaction-overlay').classList.remove('active');
+  window.deverrouillerDefilement();
+}
+
+function apercuImageCouverture(url) {
+  const img = document.getElementById('red-apercu-img');
+  img.src = url || '';
+  img.classList.toggle('u-hidden', !url);
+}
+
+function mettreAJourApercuRedaction() {
+  const titre = document.getElementById('red-titre').value.trim();
+  const categorie = document.getElementById('red-categorie').value;
+  document.getElementById('red-apercu-titre').textContent = titre || 'Titre de l’actualité';
+  const catEl = document.getElementById('red-apercu-categorie');
+  catEl.textContent = categorie || '';
+  catEl.classList.toggle('u-hidden', !categorie);
+  document.getElementById('red-apercu-date').textContent = formatDateActu(new Date().toISOString());
+  document.getElementById('red-apercu-texte').innerHTML = rendreContenuRiche(lireContenuEditeur(quillRedaction));
+}
+document.getElementById('red-titre').addEventListener('input', mettreAJourApercuRedaction);
+document.getElementById('red-categorie').addEventListener('change', mettreAJourApercuRedaction);
+if (quillRedaction && typeof quillRedaction.on === 'function') quillRedaction.on('text-change', mettreAJourApercuRedaction);
+
+document.getElementById('red-images').addEventListener('change', (e) => {
+  redactionNouvellesImages = Array.from(e.target.files || []);
+  const conteneur = document.getElementById('red-images-apercu');
+  conteneur.innerHTML = '';
+  redactionNouvellesImages.forEach(fichier => {
+    conteneur.insertAdjacentHTML('beforeend', `<div class="ria-item"><img src="${URL.createObjectURL(fichier)}" alt=""></div>`);
+  });
+  if (redactionNouvellesImages.length) apercuImageCouverture(URL.createObjectURL(redactionNouvellesImages[0]));
+});
+
+document.getElementById('ouvrir-redaction-btn').addEventListener('click', () => ouvrirRedaction(null));
+document.getElementById('red-annuler-btn').addEventListener('click', fermerRedaction);
+document.getElementById('redaction-fermer').addEventListener('click', fermerRedaction);
+document.getElementById('redaction-overlay').addEventListener('click', (e) => { if (e.target.id === 'redaction-overlay') fermerRedaction(); });
+
+document.getElementById('red-enregistrer-btn').addEventListener('click', async () => {
+  const msg = document.getElementById('red-msg');
+  const titre = document.getElementById('red-titre').value.trim();
+  const categorie = document.getElementById('red-categorie').value;
+  const commentaire = lireContenuEditeur(quillRedaction);
+  const videoUrl = document.getElementById('red-video').value.trim();
+  const fichiers = redactionNouvellesImages;
+
+  if (!redactionIdEnCours && !fichiers.length && !videoUrl) {
     msg.className = 'form-msg err'; msg.textContent = 'Choisis au moins une image ou ajoute un lien vidéo.'; msg.style.display = 'block';
     return;
   }
 
-  msg.className = 'form-msg ok'; msg.textContent = `Envoi de ${fichiers.length} photo(s) en cours…`; msg.style.display = 'block';
+  msg.className = 'form-msg ok'; msg.textContent = fichiers.length ? `Envoi de ${fichiers.length} photo(s) en cours…` : 'Enregistrement…'; msg.style.display = 'block';
 
-  const idActualite = crypto.randomUUID();
+  const id = redactionIdEnCours || crypto.randomUUID();
   const urls = [];
-
   for (const fichierOriginal of fichiers) {
     const fichier = await convertirSiHeic(fichierOriginal);
-    const chemin = `${idActualite}/${Date.now()}-${nomFichierSur(fichier.name)}`;
+    const chemin = `${id}/${Date.now()}-${nomFichierSur(fichier.name)}`;
     const { error: erreurUpload } = await sb.storage.from('actualites-images').upload(chemin, fichier);
     if (erreurUpload) continue;
     const { data: urlPublique } = sb.storage.from('actualites-images').getPublicUrl(chemin);
     urls.push({ url: urlPublique.publicUrl, chemin });
   }
 
-  const { error: erreurInsert } = await sb.from('actualites').insert({
-    id: idActualite, titre, categorie: categorie || null, commentaire, video_url: videoUrl,
-    image_url: urls.length ? urls[0].url : null
-  });
-  if (erreurInsert) { msg.className = 'form-msg err'; msg.textContent = "Erreur d'enregistrement."; msg.style.display = 'block'; return; }
-
-  for (const photo of urls) {
-    await sb.from('actualite_photos').insert({ actualite_id: idActualite, url: photo.url, chemin: photo.chemin });
+  if (redactionIdEnCours) {
+    const { error: erreurUpdate } = await sb.from('actualites').update({ titre, categorie: categorie || null, commentaire, video_url: videoUrl }).eq('id', id);
+    if (erreurUpdate) { msg.className = 'form-msg err'; msg.textContent = "Erreur lors de la modification."; return; }
+    for (const photo of urls) {
+      await sb.from('actualite_photos').insert({ actualite_id: id, url: photo.url, chemin: photo.chemin });
+    }
+    if (urls.length) {
+      const { data: actuActuelle } = await sb.from('actualites').select('image_url').eq('id', id).single();
+      if (!actuActuelle.image_url) await sb.from('actualites').update({ image_url: urls[0].url }).eq('id', id);
+    }
+    msg.className = 'form-msg ok'; msg.textContent = 'Modifications enregistrées !';
+  } else {
+    const { error: erreurInsert } = await sb.from('actualites').insert({
+      id, titre, categorie: categorie || null, commentaire, video_url: videoUrl,
+      image_url: urls.length ? urls[0].url : null
+    });
+    if (erreurInsert) { msg.className = 'form-msg err'; msg.textContent = "Erreur d'enregistrement."; msg.style.display = 'block'; return; }
+    for (const photo of urls) {
+      await sb.from('actualite_photos').insert({ actualite_id: id, url: photo.url, chemin: photo.chemin });
+    }
+    msg.className = 'form-msg ok'; msg.textContent = `Actualité publiée avec ${urls.length} photo(s) !`;
   }
 
-  msg.className = 'form-msg ok'; msg.textContent = `Actualité publiée avec ${urls.length} photo(s) !`; msg.style.display = 'block';
-  document.getElementById('actu-titre').value = '';
-  document.getElementById('actu-categorie').value = '';
-  if (quillActuCommentaire) quillActuCommentaire.setText('');
-  document.getElementById('actu-video').value = '';
-  fichierInput.value = '';
+  await chargerActualites();
+  setTimeout(fermerRedaction, 900);
+});
+
+document.getElementById('red-supprimer-btn').addEventListener('click', async () => {
+  if (!redactionIdEnCours) return;
+  if (!confirm('Supprimer définitivement cette actualité et toutes ses photos ?')) return;
+  const id = redactionIdEnCours;
+  const { data: photos } = await sb.from('actualite_photos').select('chemin').eq('actualite_id', id);
+  const chemins = (photos || []).map(p => p.chemin).filter(Boolean);
+  if (chemins.length) await sb.storage.from('actualites-images').remove(chemins);
+  await sb.from('actualites').delete().eq('id', id);
+  fermerRedaction();
   chargerActualites();
 });
