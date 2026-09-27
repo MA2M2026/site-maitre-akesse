@@ -216,10 +216,10 @@ async function verifierAdmin() {
   // cette vérification silencieuse plante toute la page au chargement pour
   // un simple visiteur, pour une fonctionnalité qui ne concerne que l'admin.
   try {
-    if (!sb) return;
-    const { data: { user } } = await sb.auth.getUser();
+    if (!sbAdmin) return;
+    const { data: { user } } = await sbAdmin.auth.getUser();
     if (!user) return;
-    const { data } = await sb.from('admins').select('user_id').eq('user_id', user.id).single();
+    const { data } = await sbAdmin.from('admins').select('user_id').eq('user_id', user.id).single();
     if (data) {
       window.estAdminConnecte = true;
       document.getElementById('admin-bloc').style.display = 'block';
@@ -239,16 +239,16 @@ document.getElementById('news-modal-modifier-btn').addEventListener('click', () 
 document.getElementById('news-modal-supprimer-btn').addEventListener('click', async () => {
   const id = window.actualiteModalCourante;
   if (!confirm('Supprimer définitivement cette actualité et toutes ses photos ?')) return;
-  const { data: photos } = await sb.from('actualite_photos').select('chemin').eq('actualite_id', id);
+  const { data: photos } = await sbAdmin.from('actualite_photos').select('chemin').eq('actualite_id', id);
   const chemins = (photos || []).map(p => p.chemin).filter(Boolean);
-  if (chemins.length) await sb.storage.from('actualites-images').remove(chemins);
-  await sb.from('actualites').delete().eq('id', id);
+  if (chemins.length) await sbAdmin.storage.from('actualites-images').remove(chemins);
+  await sbAdmin.from('actualites').delete().eq('id', id);
   fermerNewsModal();
   chargerActualites();
 });
 
 document.getElementById('admin-logout-btn').addEventListener('click', async () => {
-  await sb.auth.signOut();
+  await sbAdmin.auth.signOut();
   document.getElementById('admin-bloc').style.display = 'none';
   window.estAdminConnecte = false;
 });
@@ -340,31 +340,31 @@ document.getElementById('red-enregistrer-btn').addEventListener('click', async (
   for (const fichierOriginal of fichiers) {
     const fichier = await convertirSiHeic(fichierOriginal);
     const chemin = `${id}/${Date.now()}-${nomFichierSur(fichier.name)}`;
-    const { error: erreurUpload } = await sb.storage.from('actualites-images').upload(chemin, fichier);
+    const { error: erreurUpload } = await sbAdmin.storage.from('actualites-images').upload(chemin, fichier);
     if (erreurUpload) continue;
-    const { data: urlPublique } = sb.storage.from('actualites-images').getPublicUrl(chemin);
+    const { data: urlPublique } = sbAdmin.storage.from('actualites-images').getPublicUrl(chemin);
     urls.push({ url: urlPublique.publicUrl, chemin });
   }
 
   if (redactionIdEnCours) {
-    const { error: erreurUpdate } = await sb.from('actualites').update({ titre, categorie: categorie || null, commentaire, video_url: videoUrl }).eq('id', id);
+    const { error: erreurUpdate } = await sbAdmin.from('actualites').update({ titre, categorie: categorie || null, commentaire, video_url: videoUrl }).eq('id', id);
     if (erreurUpdate) { msg.className = 'form-msg err'; msg.textContent = "Erreur lors de la modification."; return; }
     for (const photo of urls) {
-      await sb.from('actualite_photos').insert({ actualite_id: id, url: photo.url, chemin: photo.chemin });
+      await sbAdmin.from('actualite_photos').insert({ actualite_id: id, url: photo.url, chemin: photo.chemin });
     }
     if (urls.length) {
-      const { data: actuActuelle } = await sb.from('actualites').select('image_url').eq('id', id).single();
-      if (!actuActuelle.image_url) await sb.from('actualites').update({ image_url: urls[0].url }).eq('id', id);
+      const { data: actuActuelle } = await sbAdmin.from('actualites').select('image_url').eq('id', id).single();
+      if (!actuActuelle.image_url) await sbAdmin.from('actualites').update({ image_url: urls[0].url }).eq('id', id);
     }
     msg.className = 'form-msg ok'; msg.textContent = 'Modifications enregistrées !';
   } else {
-    const { error: erreurInsert } = await sb.from('actualites').insert({
+    const { error: erreurInsert } = await sbAdmin.from('actualites').insert({
       id, titre, categorie: categorie || null, commentaire, video_url: videoUrl,
       image_url: urls.length ? urls[0].url : null
     });
     if (erreurInsert) { msg.className = 'form-msg err'; msg.textContent = "Erreur d'enregistrement."; msg.style.display = 'block'; return; }
     for (const photo of urls) {
-      await sb.from('actualite_photos').insert({ actualite_id: id, url: photo.url, chemin: photo.chemin });
+      await sbAdmin.from('actualite_photos').insert({ actualite_id: id, url: photo.url, chemin: photo.chemin });
     }
     msg.className = 'form-msg ok'; msg.textContent = `Actualité publiée avec ${urls.length} photo(s) !`;
   }
@@ -377,10 +377,10 @@ document.getElementById('red-supprimer-btn').addEventListener('click', async () 
   if (!redactionIdEnCours) return;
   if (!confirm('Supprimer définitivement cette actualité et toutes ses photos ?')) return;
   const id = redactionIdEnCours;
-  const { data: photos } = await sb.from('actualite_photos').select('chemin').eq('actualite_id', id);
+  const { data: photos } = await sbAdmin.from('actualite_photos').select('chemin').eq('actualite_id', id);
   const chemins = (photos || []).map(p => p.chemin).filter(Boolean);
-  if (chemins.length) await sb.storage.from('actualites-images').remove(chemins);
-  await sb.from('actualites').delete().eq('id', id);
+  if (chemins.length) await sbAdmin.storage.from('actualites-images').remove(chemins);
+  await sbAdmin.from('actualites').delete().eq('id', id);
   fermerRedaction();
   chargerActualites();
 });

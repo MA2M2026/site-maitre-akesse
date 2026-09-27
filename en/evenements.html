@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-0P64kcZy3smu3cX6C/pEFRQaFMSea68eZVIs5pSAtWs=' 'sha256-qfpMxlxJ1n9L7JaINm/uD6pOLq4eW01j4T3O3ecKLrE=' 'sha256-yghOhiAFVqTxmsJhIxmhie5DJvunccghY15JTXAxbk8='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-L9rRPgppERZQXggjyNrFrcg67TnXdwV3kQlBL7Kquas='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-0P64kcZy3smu3cX6C/pEFRQaFMSea68eZVIs5pSAtWs=' 'sha256-qfpMxlxJ1n9L7JaINm/uD6pOLq4eW01j4T3O3ecKLrE=' 'sha256-xHiLWdn79wIkzRbR/GHX3iQns6L7VgY+Z1wo2ipMW9s='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-L9rRPgppERZQXggjyNrFrcg67TnXdwV3kQlBL7Kquas='; worker-src 'self' blob:;">
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
 <script src="../js/analytics-config.js"></script>
@@ -326,10 +326,10 @@ document.getElementById('evenement-retour-btn').addEventListener('click', () => 
 
 async function verifierAdmin() {
   try {
-    if (!sb) return;
-    const { data: { user } } = await sb.auth.getUser();
+    if (!sbAdmin) return;
+    const { data: { user } } = await sbAdmin.auth.getUser();
     if (!user) return;
-    const { data } = await sb.from('admins').select('user_id').eq('user_id', user.id).single();
+    const { data } = await sbAdmin.from('admins').select('user_id').eq('user_id', user.id).single();
     if (data) {
       window.estAdminConnecte = true;
       document.getElementById('admin-bloc').style.display = 'block';
@@ -349,17 +349,17 @@ document.getElementById('ed-modifier-btn').addEventListener('click', () => {
 document.getElementById('ed-supprimer-btn').addEventListener('click', async () => {
   const id = window.evenementDetailCourant;
   if (!confirm("Permanently delete this event and all its photos?")) return;
-  const { data: photos } = await sb.from('evenement_photos').select('chemin').eq('evenement_id', id);
+  const { data: photos } = await sbAdmin.from('evenement_photos').select('chemin').eq('evenement_id', id);
   const chemins = (photos || []).map(p => p.chemin).filter(Boolean);
-  if (chemins.length) await sb.storage.from('evenements-images').remove(chemins);
-  await sb.from('evenements').delete().eq('id', id);
+  if (chemins.length) await sbAdmin.storage.from('evenements-images').remove(chemins);
+  await sbAdmin.from('evenements').delete().eq('id', id);
   document.getElementById('evenement-detail-section').style.display = 'none';
   document.getElementById('evenements-liste-section').style.display = 'block';
   chargerEvenements();
 });
 
 document.getElementById('admin-logout-btn').addEventListener('click', async () => {
-  await sb.auth.signOut();
+  await sbAdmin.auth.signOut();
   document.getElementById('admin-bloc').style.display = 'none';
   window.estAdminConnecte = false;
 });
@@ -452,31 +452,31 @@ document.getElementById('red-enregistrer-btn').addEventListener('click', async (
   for (const fichierOriginal of fichiers) {
     const fichier = await convertirSiHeic(fichierOriginal);
     const chemin = `${id}/${Date.now()}-${nomFichierSur(fichier.name)}`;
-    const { error: erreurUpload } = await sb.storage.from('evenements-images').upload(chemin, fichier);
+    const { error: erreurUpload } = await sbAdmin.storage.from('evenements-images').upload(chemin, fichier);
     if (erreurUpload) continue;
-    const { data: urlPublique } = sb.storage.from('evenements-images').getPublicUrl(chemin);
+    const { data: urlPublique } = sbAdmin.storage.from('evenements-images').getPublicUrl(chemin);
     urls.push({ url: urlPublique.publicUrl, chemin });
   }
 
   if (redactionIdEnCours) {
-    const { error: erreurUpdate } = await sb.from('evenements').update({ titre, date_evenement: dateEvenement, lieu: lieu || null, description: description || null }).eq('id', id);
+    const { error: erreurUpdate } = await sbAdmin.from('evenements').update({ titre, date_evenement: dateEvenement, lieu: lieu || null, description: description || null }).eq('id', id);
     if (erreurUpdate) { msg.className = 'form-msg err'; msg.textContent = "Error while updating."; return; }
     for (const photo of urls) {
-      await sb.from('evenement_photos').insert({ evenement_id: id, url: photo.url, chemin: photo.chemin });
+      await sbAdmin.from('evenement_photos').insert({ evenement_id: id, url: photo.url, chemin: photo.chemin });
     }
     if (urls.length) {
-      const { data: evenementActuel } = await sb.from('evenements').select('image_url').eq('id', id).single();
-      if (!evenementActuel.image_url) await sb.from('evenements').update({ image_url: urls[0].url }).eq('id', id);
+      const { data: evenementActuel } = await sbAdmin.from('evenements').select('image_url').eq('id', id).single();
+      if (!evenementActuel.image_url) await sbAdmin.from('evenements').update({ image_url: urls[0].url }).eq('id', id);
     }
     msg.className = 'form-msg ok'; msg.textContent = 'Changes saved!';
   } else {
-    const { error: erreurInsert } = await sb.from('evenements').insert({
+    const { error: erreurInsert } = await sbAdmin.from('evenements').insert({
       id, titre, date_evenement: dateEvenement, lieu: lieu || null, description: description || null,
       image_url: urls.length ? urls[0].url : null
     });
     if (erreurInsert) { msg.className = 'form-msg err'; msg.textContent = "Error saving."; msg.style.display = 'block'; return; }
     for (const photo of urls) {
-      await sb.from('evenement_photos').insert({ evenement_id: id, url: photo.url, chemin: photo.chemin });
+      await sbAdmin.from('evenement_photos').insert({ evenement_id: id, url: photo.url, chemin: photo.chemin });
     }
     msg.className = 'form-msg ok'; msg.textContent = `Event published with ${urls.length} photo(s)!`;
   }
@@ -489,10 +489,10 @@ document.getElementById('red-supprimer-btn').addEventListener('click', async () 
   if (!redactionIdEnCours) return;
   if (!confirm("Permanently delete this event and all its photos?")) return;
   const id = redactionIdEnCours;
-  const { data: photos } = await sb.from('evenement_photos').select('chemin').eq('evenement_id', id);
+  const { data: photos } = await sbAdmin.from('evenement_photos').select('chemin').eq('evenement_id', id);
   const chemins = (photos || []).map(p => p.chemin).filter(Boolean);
-  if (chemins.length) await sb.storage.from('evenements-images').remove(chemins);
-  await sb.from('evenements').delete().eq('id', id);
+  if (chemins.length) await sbAdmin.storage.from('evenements-images').remove(chemins);
+  await sbAdmin.from('evenements').delete().eq('id', id);
   fermerRedaction();
   document.getElementById('evenement-detail-section').style.display = 'none';
   document.getElementById('evenements-liste-section').style.display = 'block';
