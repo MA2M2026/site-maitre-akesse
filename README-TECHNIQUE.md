@@ -148,6 +148,19 @@ Définies dans `js/app.js`, chargées sur (presque) chaque page :
   qui affichent des photos.
 - **`convertirSiHeic(fichier)`** — convertit une photo iPhone (HEIC) en
   JPEG avant l'envoi, quand nécessaire (dupliquée dans plusieurs pages).
+- **`construireHtmlCv(donnees)`** — gabarit du "Model CV" (icônes, libellés
+  de compétences, regroupement des expériences par catégorie), partagé
+  entre l'aperçu personnel du mannequin (`espace-mannequin.html`, bouton
+  "Voir mon CV") et l'outil admin du tableau de bord ("📄 Voir le CV" sur
+  chaque mannequin publié, dans "Mannequins publiés — gérer les photos").
+  Prend un objet de données simple (voir commentaire au-dessus de la
+  fonction dans `js/app.js`) — chaque page construit cet objet à partir de
+  sa propre source (état local pour le mannequin, requêtes Supabase directes
+  pour l'admin) et affiche le résultat dans son propre conteneur `.cv-sheet`
+  (styles CSS dupliqués dans les deux pages, qui ont chacune leur propre
+  système de variables CSS — voir plus bas, "Durcissement CSP page par
+  page"). Téléchargement en PDF via l'impression du navigateur
+  (`window.print()`), pas de génération PDF côté serveur.
 - **Surveillance globale des erreurs** (IIFE en tête de fichier) — capte
   silencieusement toute erreur JavaScript réelle (`error` et
   `unhandledrejection`) survenue chez un visiteur et l'enregistre dans la
