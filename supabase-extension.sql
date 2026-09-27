@@ -3572,3 +3572,54 @@ alter table recruiter_request_models
   foreign key (model_id) references model_profiles(id) on delete set null;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 88 : le déclencheur proteger_proprietaire_photo() (Extension
+-- 62) bloquait AUSSI toute suppression de photo sans jeton de connexion
+-- (auth.uid() alors NULL) — pas seulement les mannequins non concernés.
+-- Or c'est exactement le contexte : suppression directe dans l'éditeur
+-- Supabase (Table Editor/SQL Editor), et suppression en cascade depuis
+-- l'API Admin Auth (utilisée par api/supprimer-mannequin.js pour effacer
+-- un compte) : aucune des deux ne passe par une requête authentifiée
+-- classique, donc auth.uid() y est NULL — le déclencheur les bloquait
+-- TOUJOURS avec "cette photo ne vous appartient pas", même pour vous.
+--
+-- Correctif : l'exigence de propriété ne s'applique plus que lorsqu'il y
+-- a réellement un utilisateur connecté qui fait la demande (auth.uid()
+-- non NULL) — exactement le cas qu'elle est censée couvrir (empêcher un
+-- mannequin de toucher aux photos d'un autre via le site). Un accès sans
+-- jeton (vous, ou une action serveur) reste un accès privilégié par
+-- nature et n'a plus besoin d'être bloqué ici.
+-- ===================================================================
+create or replace function proteger_proprietaire_photo()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  est_admin boolean;
+begin
+  select exists(select 1 from admins where user_id = auth.uid()) into est_admin;
+  if est_admin then
+    return coalesce(NEW, OLD);
+  end if;
+
+  if TG_OP = 'DELETE' then
+    if auth.uid() is not null and OLD.model_id is distinct from auth.uid() then
+      raise exception 'Action refusée : cette photo ne vous appartient pas.';
+    end if;
+    return OLD;
+  end if;
+
+  if auth.uid() is not null and NEW.model_id is distinct from auth.uid() then
+    raise exception 'Action refusée : cette photo ne vous appartient pas.';
+  end if;
+  if TG_OP = 'UPDATE' and auth.uid() is not null and OLD.model_id is distinct from auth.uid() then
+    raise exception 'Action refusée : cette photo ne vous appartient pas.';
+  end if;
+  return NEW;
+end;
+$$;
+
+NOTIFY pgrst, 'reload schema';
