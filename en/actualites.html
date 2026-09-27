@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-OrsLxl6/77Y/qTP/5XFh8koHHJUsvhXo3Jxfk2PZ/d4=' 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-od93wOaYY/UMc6INJEDwg7MhkxrQYUfHNfQs97n6UPE='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-xFz8jkXJLKQkAoroOcoQzkprI7PuV4VRqBd9JwD3/UI='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-OrsLxl6/77Y/qTP/5XFh8koHHJUsvhXo3Jxfk2PZ/d4=' 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-qiSywRG8Jnli3z3q0EQZYO+pxcSzlzA5Jxty2zjKgTQ='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-xFz8jkXJLKQkAoroOcoQzkprI7PuV4VRqBd9JwD3/UI='; worker-src 'self' blob:;">
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
 <script src="../js/analytics-config.js"></script>
@@ -121,26 +121,6 @@ setTimeout(() => {
         <button id="news-modal-modifier-btn" class="btn-mini-admin">✎ Edit</button>
         <button id="news-modal-supprimer-btn" class="btn-mini-admin u-ml-0-6">🗑 Delete</button>
       </div>
-
-      <div id="news-modal-edition" class="enac-3">
-        <div class="form-champ"><label>Title</label><input type="text" id="edit-actu-titre"></div>
-        <div class="form-champ"><label>Category</label>
-          <select id="edit-actu-categorie">
-            <option value="">—</option>
-            <option value="Casting">Casting</option>
-            <option value="Mannequinat">Modeling</option>
-            <option value="Conseils">Tips</option>
-            <option value="Événements">Events</option>
-          </select>
-        </div>
-        <div class="form-champ"><label>Comment</label><div id="edit-actu-commentaire-editeur" class="editeur-riche"></div></div>
-        <div class="form-champ"><label>Video (YouTube or Vimeo link, optional)</label><input type="text" id="edit-actu-video"></div>
-        <div class="form-champ"><label>Add photos (added to those already online)</label><input type="file" id="edit-actu-images" accept="image/*" multiple></div>
-
-        <button class="btn btn--principal u-mt-1-5" id="edit-actu-enregistrer-btn">Save</button>
-        <button class="btn u-ml-0-5" id="edit-actu-annuler-btn">Cancel</button>
-        <div id="edit-actu-msg" class="form-msg"></div>
-      </div>
     </div>
   </div>
 </div>
@@ -153,29 +133,61 @@ setTimeout(() => {
     <div id="admin-publier">
       <div class="badge-page-admin">📍 You are on: News (Administration)</div>
       <p class="enac-4">To edit or delete an already published news item, simply open it by clicking on it in the page (like a visitor) — the options will appear directly in its detail view.</p>
-
-      <h3 class="u-mb-1">Publish a News Item</h3>
-      <div class="form-champ"><label>Title</label><input type="text" id="actu-titre"></div>
-      <div class="form-champ"><label>Category</label>
-        <select id="actu-categorie">
-          <option value="">—</option>
-          <option value="Casting">Casting</option>
-          <option value="Mannequinat">Modeling</option>
-          <option value="Conseils">Tips</option>
-          <option value="Événements">Events</option>
-        </select>
-      </div>
-      <div class="form-champ"><label>Comment</label><div id="actu-commentaire-editeur" class="editeur-riche"></div></div>
-      <div class="form-champ"><label>Images (you can select several at once)</label><input type="file" id="actu-image" accept="image/*" multiple></div>
-      <div class="form-champ"><label>Video (YouTube or Vimeo link, optional)</label><input type="text" id="actu-video" placeholder="https://youtube.com/watch?v=..."></div>
-
-      <button class="btn btn--principal u-mt-1-8" id="actu-publier-btn">Publish</button>
+      <button class="btn btn--principal u-mt-1-5" id="ouvrir-redaction-btn">✍️ Write a News Item</button>
       <button class="btn u-ml-0-5" id="admin-logout-btn">Logout</button>
       <a href="../tableau-de-bord.html" class="enac-5">View Dashboard →</a>
-      <div id="actu-msg" class="form-msg"></div>
     </div>
   </div>
 </section>
+
+<!-- Full-screen writing page (admin): replaces the old small embedded form and the
+     edit form hidden inside the article view — a real, spacious writing page, with a
+     live preview of the public rendering. -->
+<div class="redaction-overlay" id="redaction-overlay">
+  <div class="redaction-shell">
+    <div class="redaction-entete">
+      <h2 id="redaction-titre-mode">Write a News Item</h2>
+      <button class="redaction-fermer" id="redaction-fermer" aria-label="Close">✕</button>
+    </div>
+    <div class="redaction-corps">
+      <div class="redaction-colonne-edition">
+        <div class="form-champ"><label>Title</label><input type="text" id="red-titre"></div>
+        <div class="form-champ"><label>Category</label>
+          <select id="red-categorie">
+            <option value="">—</option>
+            <option value="Casting">Casting</option>
+            <option value="Mannequinat">Modeling</option>
+            <option value="Conseils">Tips</option>
+            <option value="Événements">Events</option>
+          </select>
+        </div>
+        <div class="form-champ"><label>Article text</label><div id="red-editeur" class="editeur-riche redaction-editeur"></div></div>
+        <div class="form-champ"><label>Video (YouTube or Vimeo link, optional)</label><input type="text" id="red-video" placeholder="https://youtube.com/watch?v=..."></div>
+        <div class="form-champ"><label id="red-images-label">Images (you can select several at once)</label><input type="file" id="red-images" accept="image/*" multiple></div>
+        <div id="red-images-apercu" class="redaction-images-apercu"></div>
+
+        <div class="redaction-actions">
+          <button class="btn btn--principal" id="red-enregistrer-btn">Publish</button>
+          <button class="btn" id="red-annuler-btn">Cancel</button>
+          <button class="btn u-ml-0-5 u-hidden" id="red-supprimer-btn">🗑 Delete</button>
+        </div>
+        <div id="red-msg" class="form-msg"></div>
+      </div>
+      <div class="redaction-colonne-apercu">
+        <div class="redaction-apercu-etiquette">Preview — approximate public rendering</div>
+        <div class="redaction-apercu-carte">
+          <div class="news-une-photo" id="red-apercu-photo"><img id="red-apercu-img" class="u-hidden" src="" alt=""></div>
+          <div class="news-une-corps">
+            <span class="news-categorie u-hidden" id="red-apercu-categorie"></span>
+            <div class="news-date" id="red-apercu-date"></div>
+            <h2 id="red-apercu-titre">News item title</h2>
+            <div id="red-apercu-texte" class="contenu-riche"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <footer class="site-footer">
   <div class="container">
@@ -265,8 +277,7 @@ function urlHttpSure(url) {
 
 const CATEGORIES_ACTUALITES = ['Casting', 'Mannequinat', 'Conseils', 'Événements'];
 
-const quillActuCommentaire = creerEditeurRiche('actu-commentaire-editeur', 'Write here… (you can paste text already formatted from Word)');
-const quillEditActuCommentaire = creerEditeurRiche('edit-actu-commentaire-editeur', 'Write here… (you can paste text already formatted from Word)');
+const quillRedaction = creerEditeurRiche('red-editeur', 'Write here… (you can paste text already formatted from Word)');
 const LIBELLES_CATEGORIES_EN = { Casting: 'Casting', Mannequinat: 'Modeling', Conseils: 'Tips', Événements: 'Events' };
 function libelleCategorieActu(cat) {
   return LIBELLES_CATEGORIES_EN[cat] || cat;
@@ -414,9 +425,6 @@ async function ouvrirActuModal(index) {
   ouvrirNewsModal();
 
   window.actualiteModalCourante = a.id;
-  document.getElementById('news-modal-edition').style.display = 'none';
-  document.getElementById('news-modal-titre').style.display = 'block';
-  document.getElementById('news-modal-texte').style.display = 'block';
   document.getElementById('news-modal-admin-actions').style.display = window.estAdminConnecte ? 'block' : 'none';
 }
 // Locks page scrolling while the sheet is open (same mechanism, iPhone-safe, as the menu — see js/app.js).
@@ -449,66 +457,8 @@ verifierAdmin();
 document.getElementById('news-modal-modifier-btn').addEventListener('click', () => {
   const a = window.actualitesData.find(x => x.id === window.actualiteModalCourante);
   if (!a) return;
-  document.getElementById('edit-actu-titre').value = a.titre || '';
-  document.getElementById('edit-actu-categorie').value = a.categorie || '';
-  chargerContenuDansEditeur(quillEditActuCommentaire, a.commentaire);
-  document.getElementById('edit-actu-video').value = a.video_url || '';
-  document.getElementById('edit-actu-images').value = '';
-  document.getElementById('edit-actu-msg').style.display = 'none';
-
-  document.getElementById('news-modal-titre').style.display = 'none';
-  document.getElementById('news-modal-texte').style.display = 'none';
-  document.getElementById('news-modal-video-lien').style.display = 'none';
-  document.getElementById('news-modal-admin-actions').style.display = 'none';
-  document.getElementById('news-modal-edition').style.display = 'block';
-});
-
-document.getElementById('edit-actu-annuler-btn').addEventListener('click', () => {
-  document.getElementById('news-modal-edition').style.display = 'none';
-  document.getElementById('news-modal-titre').style.display = 'block';
-  document.getElementById('news-modal-texte').style.display = 'block';
-  if (document.getElementById('news-modal-video-lien').href && document.getElementById('news-modal-video-lien').href !== '#' && !document.getElementById('news-modal-video-lien').href.endsWith('/#')) {
-    document.getElementById('news-modal-video-lien').style.display = 'inline-block';
-  }
-  document.getElementById('news-modal-admin-actions').style.display = 'block';
-});
-
-document.getElementById('edit-actu-enregistrer-btn').addEventListener('click', async () => {
-  const id = window.actualiteModalCourante;
-  const msg = document.getElementById('edit-actu-msg');
-  const titre = document.getElementById('edit-actu-titre').value.trim();
-  const categorie = document.getElementById('edit-actu-categorie').value;
-  const commentaire = lireContenuEditeur(quillEditActuCommentaire);
-  const videoUrl = document.getElementById('edit-actu-video').value.trim();
-  const fichiers = Array.from(document.getElementById('edit-actu-images').files || []);
-
-  msg.className = 'form-msg ok'; msg.textContent = 'Saving…'; msg.style.display = 'block';
-
-  const { error: erreurUpdate } = await sb.from('actualites').update({ titre, categorie: categorie || null, commentaire, video_url: videoUrl }).eq('id', id);
-  if (erreurUpdate) { msg.className = 'form-msg err'; msg.textContent = "Error while updating."; return; }
-
-  if (fichiers.length) {
-    msg.textContent = `Adding ${fichiers.length} new photo(s)…`;
-    let premiereNouvellePhoto = null;
-    for (const fichierOriginal of fichiers) {
-      const fichier = await convertirSiHeic(fichierOriginal);
-      const chemin = `${id}/${Date.now()}-${nomFichierSur(fichier.name)}`;
-      const { error: erreurUpload } = await sb.storage.from('actualites-images').upload(chemin, fichier);
-      if (erreurUpload) continue;
-      const { data: urlPublique } = sb.storage.from('actualites-images').getPublicUrl(chemin);
-      await sb.from('actualite_photos').insert({ actualite_id: id, url: urlPublique.publicUrl, chemin: chemin });
-      if (!premiereNouvellePhoto) premiereNouvellePhoto = urlPublique.publicUrl;
-    }
-    const { data: actuActuelle } = await sb.from('actualites').select('image_url').eq('id', id).single();
-    if (!actuActuelle.image_url && premiereNouvellePhoto) {
-      await sb.from('actualites').update({ image_url: premiereNouvellePhoto }).eq('id', id);
-    }
-  }
-
-  msg.className = 'form-msg ok'; msg.textContent = 'Changes saved!';
-  await chargerActualites();
-  const index = window.actualitesData.findIndex(x => x.id === id);
-  if (index > -1) ouvrirActuModal(index);
+  fermerNewsModal();
+  ouvrirRedaction(a);
 });
 
 document.getElementById('news-modal-supprimer-btn').addEventListener('click', async () => {
@@ -528,50 +478,133 @@ document.getElementById('admin-logout-btn').addEventListener('click', async () =
   window.estAdminConnecte = false;
 });
 
-document.getElementById('actu-publier-btn').addEventListener('click', async () => {
-  const msg = document.getElementById('actu-msg');
-  const titre = document.getElementById('actu-titre').value.trim();
-  const categorie = document.getElementById('actu-categorie').value;
-  const commentaire = lireContenuEditeur(quillActuCommentaire);
-  const videoUrl = document.getElementById('actu-video').value.trim();
-  const fichierInput = document.getElementById('actu-image');
-  const fichiers = Array.from(fichierInput.files || []);
+// --- Full-screen writing page: used both to publish a new item (redactionIdEnCours
+// === null) and to edit an existing one (redactionIdEnCours = its id).
+let redactionIdEnCours = null;
+let redactionNouvellesImages = [];
 
-  if (!fichiers.length && !videoUrl) {
+function ouvrirRedaction(actualiteExistante) {
+  redactionIdEnCours = actualiteExistante ? actualiteExistante.id : null;
+  redactionNouvellesImages = [];
+  document.getElementById('redaction-titre-mode').textContent = actualiteExistante ? 'Edit News Item' : 'Write a News Item';
+  document.getElementById('red-titre').value = actualiteExistante ? (actualiteExistante.titre || '') : '';
+  document.getElementById('red-categorie').value = actualiteExistante ? (actualiteExistante.categorie || '') : '';
+  chargerContenuDansEditeur(quillRedaction, actualiteExistante ? actualiteExistante.commentaire : '');
+  document.getElementById('red-video').value = actualiteExistante ? (actualiteExistante.video_url || '') : '';
+  document.getElementById('red-images').value = '';
+  document.getElementById('red-images-label').textContent = actualiteExistante ? 'Add photos (added to those already online)' : 'Images (you can select several at once)';
+  document.getElementById('red-enregistrer-btn').textContent = actualiteExistante ? 'Save' : 'Publish';
+  document.getElementById('red-supprimer-btn').classList.toggle('u-hidden', !actualiteExistante);
+  document.getElementById('red-msg').style.display = 'none';
+  document.getElementById('red-images-apercu').innerHTML = '';
+  apercuImageCouverture(actualiteExistante ? actualiteExistante.image_url : null);
+  mettreAJourApercuRedaction();
+  document.getElementById('redaction-overlay').classList.add('active');
+  window.verrouillerDefilement();
+}
+
+function fermerRedaction() {
+  document.getElementById('redaction-overlay').classList.remove('active');
+  window.deverrouillerDefilement();
+}
+
+function apercuImageCouverture(url) {
+  const img = document.getElementById('red-apercu-img');
+  img.src = url || '';
+  img.classList.toggle('u-hidden', !url);
+}
+
+function mettreAJourApercuRedaction() {
+  const titre = document.getElementById('red-titre').value.trim();
+  const categorie = document.getElementById('red-categorie').value;
+  document.getElementById('red-apercu-titre').textContent = titre || 'News item title';
+  const catEl = document.getElementById('red-apercu-categorie');
+  catEl.textContent = categorie ? libelleCategorieActu(categorie) : '';
+  catEl.classList.toggle('u-hidden', !categorie);
+  document.getElementById('red-apercu-date').textContent = formatDateActu(new Date().toISOString());
+  document.getElementById('red-apercu-texte').innerHTML = rendreContenuRiche(lireContenuEditeur(quillRedaction));
+}
+document.getElementById('red-titre').addEventListener('input', mettreAJourApercuRedaction);
+document.getElementById('red-categorie').addEventListener('change', mettreAJourApercuRedaction);
+if (quillRedaction && typeof quillRedaction.on === 'function') quillRedaction.on('text-change', mettreAJourApercuRedaction);
+
+document.getElementById('red-images').addEventListener('change', (e) => {
+  redactionNouvellesImages = Array.from(e.target.files || []);
+  const conteneur = document.getElementById('red-images-apercu');
+  conteneur.innerHTML = '';
+  redactionNouvellesImages.forEach(fichier => {
+    conteneur.insertAdjacentHTML('beforeend', `<div class="ria-item"><img src="${URL.createObjectURL(fichier)}" alt=""></div>`);
+  });
+  if (redactionNouvellesImages.length) apercuImageCouverture(URL.createObjectURL(redactionNouvellesImages[0]));
+});
+
+document.getElementById('ouvrir-redaction-btn').addEventListener('click', () => ouvrirRedaction(null));
+document.getElementById('red-annuler-btn').addEventListener('click', fermerRedaction);
+document.getElementById('redaction-fermer').addEventListener('click', fermerRedaction);
+document.getElementById('redaction-overlay').addEventListener('click', (e) => { if (e.target.id === 'redaction-overlay') fermerRedaction(); });
+
+document.getElementById('red-enregistrer-btn').addEventListener('click', async () => {
+  const msg = document.getElementById('red-msg');
+  const titre = document.getElementById('red-titre').value.trim();
+  const categorie = document.getElementById('red-categorie').value;
+  const commentaire = lireContenuEditeur(quillRedaction);
+  const videoUrl = document.getElementById('red-video').value.trim();
+  const fichiers = redactionNouvellesImages;
+
+  if (!redactionIdEnCours && !fichiers.length && !videoUrl) {
     msg.className = 'form-msg err'; msg.textContent = 'Choose at least one image or add a video link.'; msg.style.display = 'block';
     return;
   }
 
-  msg.className = 'form-msg ok'; msg.textContent = `Uploading ${fichiers.length} photo(s)…`; msg.style.display = 'block';
+  msg.className = 'form-msg ok'; msg.textContent = fichiers.length ? `Uploading ${fichiers.length} photo(s)…` : 'Saving…'; msg.style.display = 'block';
 
-  const idActualite = crypto.randomUUID();
+  const id = redactionIdEnCours || crypto.randomUUID();
   const urls = [];
-
   for (const fichierOriginal of fichiers) {
     const fichier = await convertirSiHeic(fichierOriginal);
-    const chemin = `${idActualite}/${Date.now()}-${nomFichierSur(fichier.name)}`;
+    const chemin = `${id}/${Date.now()}-${nomFichierSur(fichier.name)}`;
     const { error: erreurUpload } = await sb.storage.from('actualites-images').upload(chemin, fichier);
     if (erreurUpload) continue;
     const { data: urlPublique } = sb.storage.from('actualites-images').getPublicUrl(chemin);
     urls.push({ url: urlPublique.publicUrl, chemin });
   }
 
-  const { error: erreurInsert } = await sb.from('actualites').insert({
-    id: idActualite, titre, categorie: categorie || null, commentaire, video_url: videoUrl,
-    image_url: urls.length ? urls[0].url : null
-  });
-  if (erreurInsert) { msg.className = 'form-msg err'; msg.textContent = "Error saving."; msg.style.display = 'block'; return; }
-
-  for (const photo of urls) {
-    await sb.from('actualite_photos').insert({ actualite_id: idActualite, url: photo.url, chemin: photo.chemin });
+  if (redactionIdEnCours) {
+    const { error: erreurUpdate } = await sb.from('actualites').update({ titre, categorie: categorie || null, commentaire, video_url: videoUrl }).eq('id', id);
+    if (erreurUpdate) { msg.className = 'form-msg err'; msg.textContent = "Error while updating."; return; }
+    for (const photo of urls) {
+      await sb.from('actualite_photos').insert({ actualite_id: id, url: photo.url, chemin: photo.chemin });
+    }
+    if (urls.length) {
+      const { data: actuActuelle } = await sb.from('actualites').select('image_url').eq('id', id).single();
+      if (!actuActuelle.image_url) await sb.from('actualites').update({ image_url: urls[0].url }).eq('id', id);
+    }
+    msg.className = 'form-msg ok'; msg.textContent = 'Changes saved!';
+  } else {
+    const { error: erreurInsert } = await sb.from('actualites').insert({
+      id, titre, categorie: categorie || null, commentaire, video_url: videoUrl,
+      image_url: urls.length ? urls[0].url : null
+    });
+    if (erreurInsert) { msg.className = 'form-msg err'; msg.textContent = "Error saving."; msg.style.display = 'block'; return; }
+    for (const photo of urls) {
+      await sb.from('actualite_photos').insert({ actualite_id: id, url: photo.url, chemin: photo.chemin });
+    }
+    msg.className = 'form-msg ok'; msg.textContent = `News item published with ${urls.length} photo(s)!`;
   }
 
-  msg.className = 'form-msg ok'; msg.textContent = `News item published with ${urls.length} photo(s)!`; msg.style.display = 'block';
-  document.getElementById('actu-titre').value = '';
-  document.getElementById('actu-categorie').value = '';
-  if (quillActuCommentaire) quillActuCommentaire.setText('');
-  document.getElementById('actu-video').value = '';
-  fichierInput.value = '';
+  await chargerActualites();
+  setTimeout(fermerRedaction, 900);
+});
+
+document.getElementById('red-supprimer-btn').addEventListener('click', async () => {
+  if (!redactionIdEnCours) return;
+  if (!confirm('Permanently delete this news item and all its photos?')) return;
+  const id = redactionIdEnCours;
+  const { data: photos } = await sb.from('actualite_photos').select('chemin').eq('actualite_id', id);
+  const chemins = (photos || []).map(p => p.chemin).filter(Boolean);
+  if (chemins.length) await sb.storage.from('actualites-images').remove(chemins);
+  await sb.from('actualites').delete().eq('id', id);
+  fermerRedaction();
   chargerActualites();
 });
 </script>
