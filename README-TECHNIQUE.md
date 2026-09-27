@@ -214,6 +214,23 @@ pour tout le reste (connexion, base de données) et pour les photos de
 candidature/inscription (toujours vers Google Drive, sans rapport avec ce
 quota — voir plus bas).
 
+**Important — le quota n'était pas la seule cause des "profils invisibles" :**
+deux bugs distincts, sans lien avec la bande passante, produisaient le même
+symptôme (fiche mannequin vide) et ont été corrigés séparément :
+1. `js/supabase-config.js` utilisait le nouveau format de clé Supabase
+   (`sb_publishable_...`), rejeté par ce projet pour les appels REST directs
+   (401 systématique) — remplacé par la clé "anon" historique (format JWT,
+   récupérable dans Supabase → Settings → API → "Legacy anon, service_role
+   API keys").
+2. Extension 51 (verrouillage colonne par colonne pour `anon`, voir plus
+   bas) n'avait jamais été mise à jour après l'ajout de la colonne
+   `niveau_mannequin` à `model_profiles` — `mannequin.html`/`en/mannequin.html`
+   la sélectionnent pour toute fiche individuelle, et PostgREST refuse la
+   requête ENTIÈRE (401) dès qu'une seule colonne demandée n'a pas de droit
+   de lecture pour `anon`, même si les autres colonnes sont autorisées. Le
+   Book et l'accueil ne demandent pas cette colonne, d'où leur affichage
+   normal pendant que les fiches individuelles échouaient (voir Extension 89).
+
 **`api/r2-presigner.js`** — fonction serveur partagée par
 `espace-mannequin.html` et `tableau-de-bord.html` : génère une URL R2
 signée temporaire (5 minutes) pour un envoi (`PutObjectCommand`) ou une

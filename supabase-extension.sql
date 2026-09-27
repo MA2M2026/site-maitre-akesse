@@ -3623,3 +3623,17 @@ end;
 $$;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 89 : colonne "niveau_mannequin" oubliée dans le verrouillage
+-- colonne par colonne de l'Extension 51 — cause réelle des "profils
+-- invisibles" (mannequin.html / en/mannequin.html sélectionnent cette
+-- colonne pour toute fiche individuelle ; PostgREST refuse la requête
+-- ENTIÈRE avec 401 dès qu'une seule colonne demandée n'a pas de droit de
+-- lecture pour "anon" — pas seulement la colonne en question). Le Book et
+-- l'accueil ne demandent pas cette colonne, d'où leur affichage normal
+-- pendant que les fiches individuelles échouaient.
+-- ===================================================================
+grant select (niveau_mannequin) on model_profiles to anon;
+
+NOTIFY pgrst, 'reload schema';
