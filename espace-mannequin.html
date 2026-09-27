@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-FeHUSpIGhd1iTYVVJlXoOSiN8Df6HrAOpVurqCBDKG8='; style-src 'self' https://fonts.googleapis.com 'sha256-6Dvmfm4i5Akss/+IDah/Q4Mcd3MSpGLChYFtD36m1V0=' 'sha256-l6fymG/9VFModmkt4+Cju+Misw/e9E3nOMRhpZL+0so=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-bpw19AZrBCA/H2K4ENmZre2MqJsD5I0ximKfBf6xFCA='; style-src 'self' https://fonts.googleapis.com 'sha256-6Dvmfm4i5Akss/+IDah/Q4Mcd3MSpGLChYFtD36m1V0=' 'sha256-l6fymG/9VFModmkt4+Cju+Misw/e9E3nOMRhpZL+0so=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mon Espace Mannequin — MA2M | Premium</title>
@@ -887,6 +887,12 @@ function mapProfileFromDb(row, contactPrive){
 
 /* ------------------------------------------------------------- COUCHE DONNÉES
    Appels Supabase réels uniquement — aucun repli localStorage/démo. */
+// Doit rester identique à la limite imposée côté serveur (trigger
+// limiter_nombre_photos(), Extension 57 de supabase-extension.sql) — cette
+// valeur ici ne sert qu'à bloquer l'envoi côté client AVANT de gaspiller de
+// la bande passante (conversion HEIC, compression, 3 envois vers R2) sur un
+// envoi que le serveur refusera de toute façon.
+const LIMITE_PHOTOS_BOOK = 30;
 const Store = {
   async load(){
     const { data: profile, error: e1 } = await sb.from('model_profiles')
@@ -988,7 +994,10 @@ const Store = {
       if (dbErr) throw dbErr;
       return { id: row.id, path: chemin, url: urlMiniature||url, urlPleine:url, compcardOrdre:null };
     }catch(e){
-      console.error(e); toast("Échec de l'envoi de la photo", true); return null;
+      // e.message porte le vrai motif quand il vient d'un refus explicite du
+      // serveur (ex. limite de photos atteinte) — l'afficher plutôt qu'un
+      // message générique qui cacherait la cause réelle et la solution.
+      console.error(e); toast((e && e.message) || "Échec de l'envoi de la photo", true); return null;
     }
   },
 
@@ -1612,8 +1621,16 @@ function bindPhotoHandlers(){
   if (fBook) fBook.addEventListener('change', async function(){
     const files = Array.from(fBook.files||[]);
     if (!files.length) return;
-    if (files.length>1) toast(files.length+' photos en cours d’envoi…');
-    for (const file of files) { const item = await Store.uploadPhoto(file); if (item) s.photos.book.push(item); }
+    const place = LIMITE_PHOTOS_BOOK - s.photos.book.length;
+    if (place <= 0) {
+      fBook.value='';
+      toast('Limite de '+LIMITE_PHOTOS_BOOK+' photos atteinte pour ce book. Supprimez une photo avant d’en ajouter une nouvelle.', true);
+      return;
+    }
+    const aEnvoyer = files.slice(0, place);
+    if (files.length > place) toast('Limite de '+LIMITE_PHOTOS_BOOK+' photos : seules '+place+' photo(s) sur '+files.length+' seront envoyées.', true);
+    else if (aEnvoyer.length>1) toast(aEnvoyer.length+' photos en cours d’envoi…');
+    for (const file of aEnvoyer) { const item = await Store.uploadPhoto(file); if (item) s.photos.book.push(item); }
     fBook.value=''; render(); reopenDashboardBlock('photos');
   });
   document.querySelectorAll('[data-rmbook]').forEach(function(b){ b.addEventListener('click', async function(e){
@@ -1730,6 +1747,11 @@ function bindPhotoHandlers(){
     input.addEventListener('change', async function(){
       const file = input.files && input.files[0];
       if (!file) return;
+      if (s.photos.book.length >= LIMITE_PHOTOS_BOOK) {
+        input.value = '';
+        toast('Limite de '+LIMITE_PHOTOS_BOOK+' photos atteinte pour ce book. Supprimez une photo avant d’en ajouter une nouvelle.', true);
+        return;
+      }
       toast('Envoi de la photo…');
       const item = await Store.uploadPhoto(file);
       input.value = '';
