@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net 'sha256-Rs1aDiEH0ompnVfn3PRVG1IB5YOYTjNOBokdrMtxnS8='; style-src 'self' https://fonts.googleapis.com 'sha256-wILGUDq5kuzOJoeN9cIe1PfYFOq+tOHH4KcUMe0FmjE=' 'sha256-/FvKPwpVq/Sr+bG1E1FBJCdeER/pyPoC+YtRu1R5nCc=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net 'sha256-3fA3YDsW3/iNYCCUbwF09SgOdjp27PilDrNJKr+taYA='; style-src 'self' https://fonts.googleapis.com 'sha256-s1TH4/7ApM1ql6ULRjpmTOuYvVh8qMiPhJGLSqjEpeo=' 'sha256-/FvKPwpVq/Sr+bG1E1FBJCdeER/pyPoC+YtRu1R5nCc=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4=';">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mon Espace Mannequin — MA2M | Premium</title>
@@ -452,9 +452,15 @@ a{color:inherit}
 #ma2mWelcome{
   position:fixed;inset:0;z-index:99990;display:flex;align-items:center;justify-content:center;
   background:#020202;color:#f5eee3;padding:24px;text-align:center;cursor:pointer;
-  opacity:0;transition:opacity .6s ease;
+  opacity:0;pointer-events:none;transition:opacity .6s ease;
 }
-#ma2mWelcome.ready{opacity:1}
+/* pointer-events:none par défaut est essentiel : cet élément est toujours
+   présent dans le DOM (avant même la connexion), et .ready n'est ajouté
+   qu'après la connexion (prepareMA2MWelcome(), appelée depuis
+   demarrerApresConnexion()) — sans ce garde-fou, il resterait invisible
+   mais bloquerait quand même tous les clics sur l'écran de connexion,
+   pour toujours (bug réel constaté en production le 27/09/2026). */
+#ma2mWelcome.ready{opacity:1;pointer-events:auto}
 #ma2mWelcome.leaving{opacity:0;transition:opacity .8s ease;pointer-events:none}
 .ma2m-welcome-msg{margin:0;max-width:560px;font-family:var(--serif);font-style:italic;font-weight:400;font-size:clamp(1.15rem,3.6vw,1.65rem);line-height:1.4}
 @media(prefers-reduced-motion:reduce){#ma2mWelcome{transition:none}}
@@ -716,8 +722,11 @@ function viewAuthGate(){
 }
 
 function afficherPanneauAuth(id){
+  // 'block' explicite (jamais '') : plusieurs de ces panneaux portent une
+  // classe utilitaire display:none (ex. p20-9) — un style inline vide ne
+  // l'emporte pas dessus, le panneau resterait invisible même actif.
   ['auth-panneau-connexion','auth-panneau-inscription','auth-panneau-mdp-oublie','auth-panneau-nouveau-mdp'].forEach(function(p){
-    const el = document.getElementById(p); if (el) el.style.display = (p===id) ? '' : 'none';
+    const el = document.getElementById(p); if (el) el.style.display = (p===id) ? 'block' : 'none';
   });
 }
 
