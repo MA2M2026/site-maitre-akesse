@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-0P64kcZy3smu3cX6C/pEFRQaFMSea68eZVIs5pSAtWs=' 'sha256-qfpMxlxJ1n9L7JaINm/uD6pOLq4eW01j4T3O3ecKLrE=' 'sha256-v2O1Glh5kdqgdpN5blJmmSTsdicJStp6boix7Sykh1k='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-L9rRPgppERZQXggjyNrFrcg67TnXdwV3kQlBL7Kquas='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-0P64kcZy3smu3cX6C/pEFRQaFMSea68eZVIs5pSAtWs=' 'sha256-qfpMxlxJ1n9L7JaINm/uD6pOLq4eW01j4T3O3ecKLrE=' 'sha256-yghOhiAFVqTxmsJhIxmhie5DJvunccghY15JTXAxbk8='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-L9rRPgppERZQXggjyNrFrcg67TnXdwV3kQlBL7Kquas='; worker-src 'self' blob:;">
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
 <script src="../js/analytics-config.js"></script>
@@ -302,7 +302,10 @@ async function ouvrirEvenementDetail(id) {
   document.getElementById('ed-lieu').textContent = e.lieu ? ('📍 ' + e.lieu) : '';
   document.getElementById('ed-description').innerHTML = rendreContenuRiche(e.description);
 
+  // Composition adapted to the number of photos (see .evenement-detail-photos[data-count]
+  // in css/style.css) ; beyond 4, a more spacious regular grid is used.
   const zonePhotos = document.getElementById('ed-photos');
+  zonePhotos.dataset.count = Math.min(listePhotos.length, 4) || '';
   zonePhotos.innerHTML = listePhotos.map(p => `<div><img src="${echapperHtml(p.url)}" loading="lazy" alt=""></div>`).join('');
   zonePhotos.querySelectorAll('img').forEach((img, i) => {
     img.addEventListener('click', () => ouvrirGalerieLightbox(window.lightboxPhotosEvenement, i));
