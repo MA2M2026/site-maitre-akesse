@@ -280,7 +280,7 @@ function construireHtmlCv(d) {
         '<div class="soc">' + mcvIcon('link', 15) + ' <a href="' + lienFichePublique + '" target="_blank" rel="noopener" class="p20-6">Voir la fiche publique</a></div>' +
         '<div class="mcv-qr"><img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&margin=8&color=241a12&bgcolor=ffffff&data=' + encodeURIComponent(lienFichePublique) + '" alt="QR code vers la fiche publique" width="140" height="140"><span>Scannez pour ouvrir la fiche</span></div>' +
         '</div></div></div></section>' +
-    '</div></div>' +
+    '</div></div></div>' +
     '<div class="mcv-strip"><div class="mcv-strip-photos">' + compcardPhotosCv + '</div>' +
       '<div class="mcv-strip-contact"><b>MAÎTRE AKESSE MODEL MANAGEMENT</b>' +
       '<div class="row">' + mcvIcon('phone', 12) + ' +225 27 22 23 11 76</div>' +
