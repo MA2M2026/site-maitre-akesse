@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net 'sha256-np0hy57FQAYfqaYKHi8L7nf7OJRxjvcP2At4Y1ZSLxI='; style-src 'self' https://fonts.googleapis.com 'sha256-wILGUDq5kuzOJoeN9cIe1PfYFOq+tOHH4KcUMe0FmjE=' 'sha256-/FvKPwpVq/Sr+bG1E1FBJCdeER/pyPoC+YtRu1R5nCc=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-oLw9DSpboiOuJ4OzTBaIYc2dbq60BrcOTMHDOskAXGE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net 'sha256-BLCfotbjlbrZ25Cm0xM9vE0t+KrlqzVdXj9PmKukWiI='; style-src 'self' https://fonts.googleapis.com 'sha256-wILGUDq5kuzOJoeN9cIe1PfYFOq+tOHH4KcUMe0FmjE=' 'sha256-/FvKPwpVq/Sr+bG1E1FBJCdeER/pyPoC+YtRu1R5nCc=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-oLw9DSpboiOuJ4OzTBaIYc2dbq60BrcOTMHDOskAXGE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4=';">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mon Espace Mannequin — MA2M | Premium</title>
@@ -1912,7 +1912,7 @@ function openCv(){
       '<div class="mcv-role">Mannequin professionnel(le)</div><div class="mcv-divider"></div>' +
       '<ul class="mcv-info-list">' +
         '<li>'+mcvIcon('calendar')+'<div><span class="k">Date de naissance</span><span class="v">'+formaterPeriode(d.dateNaissance)+'</span></div></li>' +
-        '<li>'+mcvIcon('pin')+'<div><span class="k">Pays de naissance</span><span class="v">'+echapperHtml(d.lieuNaissance||'—')+'</span></div></li>' +
+        '<li>'+mcvIcon('pin')+'<div><span class="k">Lieu de naissance</span><span class="v">'+echapperHtml(d.lieuNaissance||'—')+'</span></div></li>' +
         '<li>'+mcvIcon('globe')+'<div><span class="k">Nationalité</span><span class="v">'+echapperHtml(d.nationalite||'—')+'</span></div></li>' +
         '<li>'+mcvIcon('home')+'<div><span class="k">Ville de résidence</span><span class="v">'+echapperHtml([d.ville,d.quartier].filter(Boolean).join(', ')||'—')+'</span></div></li>' +
         '<li>'+mcvIcon('phone')+'<div><span class="k">Contact agence</span><span class="v">+225 27 22 23 11 76<br>+225 05 45 65 66 87<br>infos.ma2m@gmail.com</span></div></li>' +
