@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-5LL01Lpcu4qH1MLYDUJqVhR+8JVkzp/MaMN18+96LkQ='; style-src 'self' https://fonts.googleapis.com 'sha256-XSixVhS6UmsPdkrCutkRwYcwFTpkYO5Yjoj0Eb8OMPE=' 'sha256-/FvKPwpVq/Sr+bG1E1FBJCdeER/pyPoC+YtRu1R5nCc=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-EjMjbaJ6IJ30w+tkmUP/CF8H5K3jBG2gTKJGU+Db3V4='; style-src 'self' https://fonts.googleapis.com 'sha256-XSixVhS6UmsPdkrCutkRwYcwFTpkYO5Yjoj0Eb8OMPE=' 'sha256-/FvKPwpVq/Sr+bG1E1FBJCdeER/pyPoC+YtRu1R5nCc=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4=';">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mon Espace Mannequin — MA2M | Premium</title>
@@ -663,7 +663,7 @@ function toast(msg, isErr){
    tout se passe sur cette page, comme sur l'ancien espace mannequin. */
 let recuperationMdpEnCours = false;
 
-const WORDMARK_HTML = '<div class="wordmark"><img src="assets/logo-header.png" alt="Maître Akesse Model Management"></div>';
+const WORDMARK_HTML = '<a class="wordmark" href="index.html"><img src="assets/logo-header.png" alt="Maître Akesse Model Management"></a>';
 
 function viewAuthGate(){
   return '<div class="top">'+WORDMARK_HTML+'</div>' +
@@ -957,7 +957,7 @@ const Store = {
       const fichierConverti = await convertirSiHeic(file);
       const fichier = await compresserPhotoOrigine(fichierConverti);
       const chemin = currentUser.id + '/' + Date.now() + '-' + Math.random().toString(36).slice(2,8) + '-' + nomFichierSur(fichier.name);
-      const { error: upErr } = await sb.storage.from('model-photos').upload(chemin, fichier);
+      const { error: upErr } = await sb.storage.from('model-photos').upload(chemin, fichier, { cacheControl: '31536000' });
       if (upErr) throw upErr;
       const url = sb.storage.from('model-photos').getPublicUrl(chemin).data.publicUrl;
 
@@ -965,14 +965,14 @@ const Store = {
       const blobMiniature = await genererMiniature(fichier);
       if (blobMiniature) {
         cheminMiniature = currentUser.id + '/miniatures/' + Date.now() + '-' + Math.random().toString(36).slice(2,8) + '.jpg';
-        const { error: eMini } = await sb.storage.from('model-photos').upload(cheminMiniature, blobMiniature);
+        const { error: eMini } = await sb.storage.from('model-photos').upload(cheminMiniature, blobMiniature, { cacheControl: '31536000' });
         if (!eMini) urlMiniature = sb.storage.from('model-photos').getPublicUrl(cheminMiniature).data.publicUrl; else cheminMiniature=null;
       }
       let cheminMoyenne=null, urlMoyenne=null;
-      const blobMoyenne = await genererMiniature(fichier, 1600, 0.82);
+      const blobMoyenne = await genererMiniature(fichier, 1400, 0.78);
       if (blobMoyenne) {
         cheminMoyenne = currentUser.id + '/moyennes/' + Date.now() + '-' + Math.random().toString(36).slice(2,8) + '.jpg';
-        const { error: eMoy } = await sb.storage.from('model-photos').upload(cheminMoyenne, blobMoyenne);
+        const { error: eMoy } = await sb.storage.from('model-photos').upload(cheminMoyenne, blobMoyenne, { cacheControl: '31536000' });
         if (!eMoy) urlMoyenne = sb.storage.from('model-photos').getPublicUrl(cheminMoyenne).data.publicUrl; else cheminMoyenne=null;
       }
 
@@ -1050,7 +1050,7 @@ async function convertirSiHeic(fichier){
   }catch(e){ console.error('Conversion HEIC échouée, envoi du fichier original :', e); return fichier; }
 }
 function compresserPhotoOrigine(fichier, coteMax, qualite){
-  coteMax = coteMax || 3000; qualite = qualite || 0.90;
+  coteMax = coteMax || 2200; qualite = qualite || 0.85;
   return new Promise(function(resolve){
     if (fichier.type !== 'image/jpeg' || fichier.size < 900*1024) { resolve(fichier); return; }
     const img = new Image();
@@ -1072,7 +1072,7 @@ function compresserPhotoOrigine(fichier, coteMax, qualite){
   });
 }
 function genererMiniature(fichier, coteMax, qualite){
-  coteMax = coteMax || 500; qualite = qualite || 0.75;
+  coteMax = coteMax || 500; qualite = qualite || 0.70;
   return new Promise(function(resolve){
     const img = new Image();
     img.onload = function(){
@@ -1109,6 +1109,7 @@ function header(rightLabel){
   return '<div class="top">'+WORDMARK_HTML+
     '<div class="top-right">' +
       '<div class="espace-tag">' + (rightLabel||'Mon espace mannequin') + '<b>' + echapperHtml(state.identite.nomComplet||'').trim() + '</b></div>' +
+      '<a href="index.html" class="btn ghost small">Retour au site</a>' +
       '<button type="button" class="btn ghost small" data-deconnexion="1">Se déconnecter</button>' +
     '</div></div>';
 }

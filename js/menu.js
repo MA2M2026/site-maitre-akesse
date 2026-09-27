@@ -66,23 +66,16 @@ document.addEventListener('DOMContentLoaded', () => {
   navLinks.parentNode.insertBefore(bloc, navLinks.nextSibling);
 });
 
-// Lien "Tableau de bord" : ajouté dans le menu UNIQUEMENT si une session admin
-// déjà connectée est détectée — invisible pour tout visiteur normal, mais
-// accessible en un clic depuis n'importe quelle page une fois connecté.
-document.addEventListener('DOMContentLoaded', async () => {
-  if (typeof sb === 'undefined' || !sb) return;
+// Lien "Tableau de bord" : toujours visible dans le menu, connecté ou non —
+// la page elle-même affiche l'écran de connexion si besoin. Rester caché
+// tant qu'aucune session admin n'était détectée obligeait à connaître/taper
+// l'adresse à la main pour se reconnecter après une déconnexion.
+document.addEventListener('DOMContentLoaded', () => {
   const navLinks = document.querySelector('.menu-overlay .nav-links');
-  if (!navLinks || navLinks.querySelector('.item-admin')) return;
+  if (!navLinks || navLinks.querySelector('a[href$="tableau-de-bord.html"]')) return;
 
-  try {
-    const { data: { user } } = await sb.auth.getUser();
-    if (!user) return;
-    const { data } = await sb.from('admins').select('user_id').eq('user_id', user.id).single();
-    if (!data) return;
-
-    const li = document.createElement('li');
-    li.className = 'item-admin';
-    li.innerHTML = '<a href="/tableau-de-bord.html">Tableau de bord</a>';
-    navLinks.appendChild(li);
-  } catch (e) {}
+  const li = document.createElement('li');
+  li.className = 'item-admin';
+  li.innerHTML = '<a href="/tableau-de-bord.html">Tableau de bord</a>';
+  navLinks.appendChild(li);
 });

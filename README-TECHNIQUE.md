@@ -288,7 +288,7 @@ Solution mise en place en deux temps :
 
 1. **Extension 45** : chaque photo uploadée génère désormais, à côté de
    l'originale, une miniature légère (`model_photos.url_miniature` /
-   `chemin_miniature`, ~500px, JPEG qualité 0.75) stockée dans un
+   `chemin_miniature`, ~500px, JPEG qualité 0.70) stockée dans un
    sous-dossier `miniatures/` du même dossier utilisateur. Utilisée
    uniquement pour l'affichage en grille (book public, galerie de la fiche).
    Un outil admin dans `tableau-de-bord.html` ("🖼️ Miniatures des photos")
@@ -301,16 +301,30 @@ Solution mise en place en deux temps :
 2. **`compresserPhotoOrigine()`** (`espace-mannequin.html`) : contrairement
    à ce qui avait été décidé initialement (photos du book jamais
    compressées, pour préserver la qualité Compcard), l'originale elle-même
-   est désormais compressée modérément à l'envoi — 3000px de côté maximum,
-   JPEG qualité 0.90, uniquement si le fichier dépasse 900 Ko. Ces réglages
-   restent largement supérieurs à ce qu'il faut pour imprimer net à 400 DPI
-   sur la plus grande case du Compcard (~2050px), donc aucune perte visible
-   attendue, tout en réduisant nettement le poids de chaque photo (stockage
-   ET bande passante). Ne s'applique qu'aux nouveaux envois — les photos
+   est désormais compressée modérément à l'envoi — 2200px de côté maximum,
+   JPEG qualité 0.85, uniquement si le fichier dépasse 900 Ko. Ce réglage
+   reste supérieur à ce qu'il faut pour imprimer net à 400 DPI sur la plus
+   grande case du Compcard (~2050px), donc aucune perte visible attendue,
+   tout en réduisant nettement le poids de chaque photo (stockage ET bande
+   passante) — resserré depuis 3000px/0.90 (un excédent bien au-delà du
+   besoin réel d'impression) après un second dépassement de quota (291%).
+   La version "moyenne" (grandes photos plein écran de l'accueil,
+   `url_moyenne`/`chemin_moyenne`) est passée de 1600px/0.82 à 1400px/0.78
+   pour la même raison. Ne s'applique qu'aux nouveaux envois — les photos
    déjà en ligne avant ce changement restent à leur poids d'origine (aucun
    rattrapage automatique prévu sur les originales, contrairement aux
    miniatures : modifier une originale déjà publiée est plus risqué qu'en
    ajouter une copie réduite à côté).
+
+3. **`cacheControl` sur chaque upload Storage** : les photos ne changent
+   jamais après leur envoi, mais étaient mises en cache seulement 1 heure
+   (valeur par défaut de `supabase-js`) — un visiteur qui revient (même le
+   jour même) retéléchargeait donc la même image. Chaque `.upload(...)` de
+   `model-photos` passe désormais `{ cacheControl: '31536000' }` (1 an),
+   pour que le navigateur ET le CDN Supabase réutilisent l'image déjà
+   servie au lieu de la retélécharger. Ne s'applique, là aussi, qu'aux
+   nouveaux envois (une valeur de cache ne se change pas rétroactivement
+   sans réenvoyer le fichier).
 
 ## Surveillance des erreurs réelles (alternative aux audits manuels)
 
