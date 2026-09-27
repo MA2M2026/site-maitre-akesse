@@ -3544,3 +3544,13 @@ NOTIFY pgrst, 'reload schema';
 alter table model_photos add column if not exists couverture_position text not null default 'center';
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 86 : ville de naissance (texte libre), en plus du pays déjà
+-- choisi (lieu_naissance, Extension 82) — sur la plaquette de référence,
+-- "Lieu de naissance" affiche ville ET pays ("Abidjan, Côte d'Ivoire").
+-- Champ facultatif, jamais requis, distinct de "Ville de résidence" (city).
+-- ===================================================================
+alter table model_profiles add column if not exists ville_naissance text;
+
+NOTIFY pgrst, 'reload schema';
