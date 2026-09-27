@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-kq10uo71kMLKN/BodzyvxjzZUeoqfdBPvMlUrVzzr5c='; style-src 'self' https://fonts.googleapis.com 'sha256-XSixVhS6UmsPdkrCutkRwYcwFTpkYO5Yjoj0Eb8OMPE=' 'sha256-/FvKPwpVq/Sr+bG1E1FBJCdeER/pyPoC+YtRu1R5nCc=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-vPnDGuCEPmz9ncG1iNOPauXyidpE9+AGYch3aw1PIgU='; style-src 'self' https://fonts.googleapis.com 'sha256-XSixVhS6UmsPdkrCutkRwYcwFTpkYO5Yjoj0Eb8OMPE=' 'sha256-/FvKPwpVq/Sr+bG1E1FBJCdeER/pyPoC+YtRu1R5nCc=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4=';">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mon Espace Mannequin — MA2M | Premium</title>
@@ -661,7 +661,16 @@ function toast(msg, isErr){
    (check_invite_code / consume_invite_code), connexion, récupération de
    mot de passe. Aucune redirection vers une page de connexion séparée —
    tout se passe sur cette page, comme sur l'ancien espace mannequin. */
-let recuperationMdpEnCours = false;
+// Détecté directement depuis l'URL (synchrone, avant tout appel réseau) —
+// évite une course avec init() plus bas : si sb.auth.getSession() répond
+// avant que l'évènement PASSWORD_RECOVERY (qui attend une validation
+// réseau du jeton) n'ait eu le temps de poser recuperationMdpEnCours à
+// true, demarrerApresConnexion() fonçait tout droit vers le tableau de
+// bord, sans jamais proposer de changer le mot de passe.
+function urlIndiqueRecuperationMdp(){
+  return /type=recovery/.test(window.location.hash + window.location.search);
+}
+let recuperationMdpEnCours = urlIndiqueRecuperationMdp();
 
 const WORDMARK_HTML = '<a class="wordmark" href="index.html"><img src="assets/logo-header.png" alt="Maître Akesse Model Management"></a>';
 
