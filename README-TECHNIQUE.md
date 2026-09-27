@@ -19,6 +19,69 @@ uniquement "dans la tête" de cette conversation — tout ce qui compte est
 Ce fichier est mis à jour à chaque changement important : le relire en
 cas de doute donne toujours l'état le plus récent.
 
+## ⚠️ INCIDENT EN COURS (27 septembre 2026, soir) — À LIRE EN PRIORITÉ
+
+**Symptôme actuel : toutes les photos du Book sont invisibles, sur TOUS les
+appareils et TOUS les réseaux (ordinateur, téléphone, tablette, wifi ET
+4G), y compris pour des personnes non liées à la propriétaire du site.**
+Ouvrir directement `https://photos.maitreakessemodelmanagement.com/...`
+renvoie `DNS_PROBE_FINISHED_NXDOMAIN` dans le navigateur.
+
+**Ce qui vient d'être fait juste avant, dans l'ordre** (voir section
+"Photos du Book sur Cloudflare R2" plus bas pour le contexte complet) :
+1. DNS du domaine `maitreakessemodelmanagement.com` migré de Spaceship
+   vers Cloudflare (nameservers changés chez Spaceship) — propagation des
+   enregistrements NS confirmée complète et mondiale (dnschecker.org, tous
+   verts).
+2. Domaine personnalisé R2 `photos.maitreakessemodelmanagement.com`
+   connecté au compartiment `ma2m-photos` — Cloudflare affiche son statut
+   comme **"Actif"**.
+3. Variable Vercel `R2_PUBLIC_URL` (projet **`site-maitre-akesse-kiw2`**,
+   PAS `site-maitre-akesse` qui est un ancien projet cassé/abandonné —
+   voir plus bas) changée de l'ancien `pub-....r2.dev` vers
+   `https://photos.maitreakessemodelmanagement.com`, puis redéploiement
+   fait.
+4. SQL exécuté (Extension 90, déjà dans `supabase-extension.sql`) :
+   les 276 lignes de `model_photos` (`url`/`url_miniature`/`url_moyenne`)
+   réécrites de l'ancien `pub-bd96e72b6ed2444cab7b06f170bfe206.r2.dev` vers
+   le nouveau domaine. Vérifié : 0 ligne restante avec l'ancienne adresse.
+
+**Contradiction observée, non résolue :** dnschecker.org (type A, sondes
+US : San Francisco, Mountain View, Berkeley, Cambridge, Ashburn) montre le
+domaine résolu partout en vert, vers des IP Cloudflare normales
+(`172.67.219.254` / `104.21.70.50`). Pourtant la propriétaire ET des tiers
+sans lien avec elle (vraisemblablement tous en Côte d'Ivoire) obtiennent
+`NXDOMAIN` en test réel, sur wifi ET sur 4G, sur 3 appareils différents.
+**Hypothèse non encore confirmée au moment de la coupure de cette
+session** : propagation DNS régionale (Afrique de l'Ouest / fournisseurs
+ivoiriens) en retard par rapport à la propagation mondiale déjà complète —
+à vérifier en relançant dnschecker.org et en faisant défiler la liste
+jusqu'aux sondes africaines (Nigeria, Afrique du Sud, Égypte...), pas
+seulement les sondes américaines affichées par défaut.
+
+**Important pour la suite (prochain assistant) :**
+- Ne PAS repartir de zéro : DNS, domaine personnalisé R2, variable Vercel
+  et migration SQL sont normalement corrects (voir points 1 à 4
+  ci-dessus) — le problème est probablement seulement un délai de
+  propagation régional, pas une erreur de configuration.
+- Si le problème persiste au-delà de 24-48h après le changement de
+  nameservers (donc après le 28-29 septembre 2026), ou si les sondes
+  africaines de dnschecker.org sont AUSSI rouges, revoir l'hypothèse et
+  creuser plus loin (ex. vérifier le certificat SSL du domaine
+  personnalisé côté Cloudflare, contacter le support Cloudflare).
+- **Solution de repli si urgence absolue et qu'aucune photo n'est visible
+  depuis trop longtemps** : on peut revenir en arrière temporairement en
+  remettant `R2_PUBLIC_URL` sur l'ancienne adresse
+  `https://pub-bd96e72b6ed2444cab7b06f170bfe206.r2.dev` sur Vercel (projet
+  `site-maitre-akesse-kiw2`) et en ré-exécutant l'inverse de l'Extension 90
+  sur `model_photos` — mais ça réintroduit le bug d'origine (photos
+  invisibles spécifiquement sur mobile). À n'utiliser qu'en dernier
+  recours, et à annoncer clairement à la propriétaire que ce n'est qu'un
+  pansement temporaire.
+- Ne jamais reproposer le retour à `r2.dev` comme solution définitive —
+  c'est justement la cause du problème initial (voir section "Photos du
+  Book sur Cloudflare R2" plus bas).
+
 ## Vue d'ensemble
 
 Site statique (HTML / CSS / JavaScript, aucun framework, aucune étape de
