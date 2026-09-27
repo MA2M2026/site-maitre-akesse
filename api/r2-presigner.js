@@ -62,7 +62,32 @@ async function autoriser(jeton, modelId) {
   return { ok: false, code: 403, message: "Vous n'avez pas le droit d'agir sur ces photos." };
 }
 
+// Diagnostic temporaire : vérifie que chaque variable d'environnement est
+// bien composée uniquement de caractères ASCII/Latin-1 (0-255), sans jamais
+// révéler sa vraie valeur — juste sa longueur et la position d'un éventuel
+// caractère invalide (ex. un "•" introduit par un copier-coller). À retirer
+// une fois le diagnostic terminé.
+function diagnostiquerVariables(res) {
+  const noms = ['R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCKET_NAME', 'R2_PUBLIC_URL', 'SUPABASE_SERVICE_ROLE_KEY'];
+  const rapport = {};
+  noms.forEach(function (nom) {
+    const valeur = process.env[nom];
+    if (!valeur) { rapport[nom] = { presente: false }; return; }
+    let indexInvalide = -1, codeInvalide = null;
+    for (let i = 0; i < valeur.length; i++) {
+      const code = valeur.charCodeAt(i);
+      if (code > 255) { indexInvalide = i; codeInvalide = code; break; }
+    }
+    rapport[nom] = { presente: true, longueur: valeur.length, indexCaractereInvalide: indexInvalide, codeCaractereInvalide: codeInvalide };
+  });
+  res.status(200).json(rapport);
+}
+
 module.exports = async function handler(req, res) {
+  if (req.method === 'GET' && req.query && req.query.diag === 'r2env') {
+    diagnostiquerVariables(res);
+    return;
+  }
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Méthode non autorisée.' });
     return;
