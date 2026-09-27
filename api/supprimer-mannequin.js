@@ -1,17 +1,22 @@
-// Fonction serverless Vercel — la SEULE action de ce site qui a besoin de la
-// clé secrète Supabase (jamais exposée côté navigateur) : supprimer le
-// compte de connexion d'un mannequin, pas seulement sa fiche.
+// Fonction serverless Vercel — supprime le compte de connexion d'un
+// mannequin, pas seulement sa fiche.
 //
 // Supprimer uniquement la ligne model_profiles (sb.from('model_profiles').delete(),
 // possible avec la clé publique) ne suffit pas : le mannequin garde son
 // compte et peut se reconnecter — Store.ensureProfileRow() dans
 // espace-mannequin.html recrée alors une fiche vide automatiquement. Pour
 // une suppression définitive, il faut supprimer le compte auth.users
-// lui-même, ce qui n'est possible qu'avec la clé secrète (API Admin Auth).
+// lui-même, ce qui n'est possible qu'avec la clé secrète Supabase (API
+// Admin Auth). Les photos, elles, vivent maintenant sur Cloudflare R2 (plus
+// sur Supabase Storage) — leur suppression utilise donc les clés R2, via le
+// même client S3 que api/r2-presigner.js.
 //
-// Variable d'environnement requise sur Vercel : SUPABASE_SERVICE_ROLE_KEY
+// Variables d'environnement requises sur Vercel : SUPABASE_SERVICE_ROLE_KEY
 // (Project Settings > API sur Supabase — clé secrète / service_role,
-// jamais la clé publique déjà utilisée dans js/supabase-config.js).
+// jamais la clé publique déjà utilisée dans js/supabase-config.js) et
+// R2_ACCOUNT_ID / R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY / R2_BUCKET_NAME.
+
+const { S3Client, DeleteObjectsCommand } = require('@aws-sdk/client-s3');
 
 const SUPABASE_URL = 'https://dfhghgmwmxiguhtxtsle.supabase.co';
 
@@ -92,15 +97,21 @@ module.exports = async function handler(req, res) {
       return;
     }
 
-    // 5. Nettoyage des fichiers Storage (best-effort : la base est déjà
-    // propre à ce stade, un échec ici ne doit pas être présenté comme un
-    // échec de la suppression elle-même).
-    if (chemins.length) {
-      await fetch(SUPABASE_URL + '/storage/v1/object/model-photos', {
-        method: 'DELETE',
-        headers: { apikey: cleSecrete, Authorization: 'Bearer ' + cleSecrete, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prefixes: chemins })
-      }).catch(function () {});
+    // 5. Nettoyage des fichiers R2 (best-effort : la base est déjà propre à
+    // ce stade, un échec ici ne doit pas être présenté comme un échec de la
+    // suppression elle-même).
+    if (chemins.length && process.env.R2_ACCOUNT_ID && process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY && process.env.R2_BUCKET_NAME) {
+      try {
+        const clientR2 = new S3Client({
+          region: 'auto',
+          endpoint: 'https://' + process.env.R2_ACCOUNT_ID + '.r2.cloudflarestorage.com',
+          credentials: { accessKeyId: process.env.R2_ACCESS_KEY_ID, secretAccessKey: process.env.R2_SECRET_ACCESS_KEY }
+        });
+        await clientR2.send(new DeleteObjectsCommand({
+          Bucket: process.env.R2_BUCKET_NAME,
+          Delete: { Objects: chemins.map(function (c) { return { Key: c }; }) }
+        }));
+      } catch (e) { console.warn('Nettoyage R2 non confirmé :', e); }
     }
 
     res.status(200).json({ ok: true });

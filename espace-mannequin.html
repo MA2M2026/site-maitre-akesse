@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-EjMjbaJ6IJ30w+tkmUP/CF8H5K3jBG2gTKJGU+Db3V4='; style-src 'self' https://fonts.googleapis.com 'sha256-XSixVhS6UmsPdkrCutkRwYcwFTpkYO5Yjoj0Eb8OMPE=' 'sha256-/FvKPwpVq/Sr+bG1E1FBJCdeER/pyPoC+YtRu1R5nCc=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-kq10uo71kMLKN/BodzyvxjzZUeoqfdBPvMlUrVzzr5c='; style-src 'self' https://fonts.googleapis.com 'sha256-XSixVhS6UmsPdkrCutkRwYcwFTpkYO5Yjoj0Eb8OMPE=' 'sha256-/FvKPwpVq/Sr+bG1E1FBJCdeER/pyPoC+YtRu1R5nCc=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4=';">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mon Espace Mannequin — MA2M | Premium</title>
@@ -957,23 +957,21 @@ const Store = {
       const fichierConverti = await convertirSiHeic(file);
       const fichier = await compresserPhotoOrigine(fichierConverti);
       const chemin = currentUser.id + '/' + Date.now() + '-' + Math.random().toString(36).slice(2,8) + '-' + nomFichierSur(fichier.name);
-      const { error: upErr } = await sb.storage.from('model-photos').upload(chemin, fichier, { cacheControl: '31536000' });
-      if (upErr) throw upErr;
-      const url = sb.storage.from('model-photos').getPublicUrl(chemin).data.publicUrl;
+      const url = await uploaderVersR2(currentUser.id, chemin, fichier, fichier.type || 'image/jpeg');
 
       let cheminMiniature=null, urlMiniature=null;
       const blobMiniature = await genererMiniature(fichier);
       if (blobMiniature) {
         cheminMiniature = currentUser.id + '/miniatures/' + Date.now() + '-' + Math.random().toString(36).slice(2,8) + '.jpg';
-        const { error: eMini } = await sb.storage.from('model-photos').upload(cheminMiniature, blobMiniature, { cacheControl: '31536000' });
-        if (!eMini) urlMiniature = sb.storage.from('model-photos').getPublicUrl(cheminMiniature).data.publicUrl; else cheminMiniature=null;
+        try { urlMiniature = await uploaderVersR2(currentUser.id, cheminMiniature, blobMiniature, 'image/jpeg'); }
+        catch(e) { console.warn('Miniature non envoyée :', e); cheminMiniature=null; }
       }
       let cheminMoyenne=null, urlMoyenne=null;
       const blobMoyenne = await genererMiniature(fichier, 1400, 0.78);
       if (blobMoyenne) {
         cheminMoyenne = currentUser.id + '/moyennes/' + Date.now() + '-' + Math.random().toString(36).slice(2,8) + '.jpg';
-        const { error: eMoy } = await sb.storage.from('model-photos').upload(cheminMoyenne, blobMoyenne, { cacheControl: '31536000' });
-        if (!eMoy) urlMoyenne = sb.storage.from('model-photos').getPublicUrl(cheminMoyenne).data.publicUrl; else cheminMoyenne=null;
+        try { urlMoyenne = await uploaderVersR2(currentUser.id, cheminMoyenne, blobMoyenne, 'image/jpeg'); }
+        catch(e) { console.warn('Version moyenne non envoyée :', e); cheminMoyenne=null; }
       }
 
       const { data: row, error: dbErr } = await sb.from('model_photos').insert({
@@ -990,9 +988,9 @@ const Store = {
   async removePhoto(id, path, cheminMiniature, cheminMoyenne){
     try{
       await sb.from('model_photos').delete().eq('id', id).eq('model_id', currentUser.id);
-      if (path) sb.storage.from('model-photos').remove([path]).catch(function(){});
-      if (cheminMiniature) sb.storage.from('model-photos').remove([cheminMiniature]).catch(function(){});
-      if (cheminMoyenne) sb.storage.from('model-photos').remove([cheminMoyenne]).catch(function(){});
+      if (path) supprimerDeR2(currentUser.id, path);
+      if (cheminMiniature) supprimerDeR2(currentUser.id, cheminMiniature);
+      if (cheminMoyenne) supprimerDeR2(currentUser.id, cheminMoyenne);
       return true;
     }catch(e){ console.error(e); toast('Échec de la suppression', true); return false; }
   },
@@ -1036,6 +1034,41 @@ const Store = {
     return true;
   },
 };
+
+/* ------------------------------------------------------- ENVOI VERS R2 ---
+   Les photos du Book ne passent plus par Supabase Storage (bande passante
+   trop coûteuse) mais par Cloudflare R2, via une URL signée temporaire que
+   seule api/r2-presigner.js peut délivrer (clés R2 jamais côté navigateur). */
+async function jetonSessionCourante(){
+  const { data: { session } } = await sb.auth.getSession();
+  return session ? session.access_token : null;
+}
+async function uploaderVersR2(modelId, chemin, blob, contentType){
+  const jeton = await jetonSessionCourante();
+  if (!jeton) throw new Error('Session expirée — reconnectez-vous.');
+  const reponse = await fetch('/api/r2-presigner', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jeton },
+    body: JSON.stringify({ modelId: modelId, chemin: chemin, contentType: contentType || 'image/jpeg' })
+  });
+  const resultat = await reponse.json().catch(function(){ return {}; });
+  if (!reponse.ok) throw new Error(resultat.error || "Échec de l'obtention de l'URL d'envoi.");
+  const envoi = await fetch(resultat.uploadUrl, { method: 'PUT', headers: { 'Content-Type': contentType || 'image/jpeg' }, body: blob });
+  if (!envoi.ok) throw new Error("Échec de l'envoi vers le stockage.");
+  return resultat.publicUrl;
+}
+async function supprimerDeR2(modelId, chemin){
+  if (!chemin) return;
+  try{
+    const jeton = await jetonSessionCourante();
+    if (!jeton) return;
+    await fetch('/api/r2-presigner', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jeton },
+      body: JSON.stringify({ action: 'suppression', modelId: modelId, chemin: chemin })
+    });
+  }catch(e){ console.warn('Suppression R2 non confirmée :', e); }
+}
 
 /* ---------------------------------------------------------- UTILS PHOTOS ---
    Repris à l'identique de espace-mannequin-ancien.html (même comportement, même
