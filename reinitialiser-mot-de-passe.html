@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-aDsq11xPPO7O1ScX6DQh9KtdnvHU6UEeMvLSeJFqbok='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-DMFUS9PHoqdPefpoxYYv9XwLjgIP96vvxGSR7XV59vY=';">
+<!-- Google tag (gtag.js) -->
+<script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
+<script src="js/analytics-config.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nouveau mot de passe — Maître Akesse Model Management</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap">
+<link rel="stylesheet" href="css/style.css">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1e1d1c">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<style>
+.rmdp-section { padding-bottom: 4rem; }
+.rmdp-carte { max-width: 460px; margin: 0 auto; }
+.rmdp-liens { margin-top: 1.2rem; display: flex; flex-direction: column; gap: 0.5rem; }
+</style>
+</head>
+<body>
+<script>window.MA2M_SESSION_REQUISE = true;</script>
+
+<header class="site-header-v2">
+  <div class="container header-v2-inner">
+    <a href="index.html" class="logo-img-header"><img src="assets/logo-header.png" alt="Maître Akesse Model Management"></a>
+  </div>
+</header>
+
+<section class="rmdp-section">
+  <div class="container">
+    <div class="eyebrow reveal visible">Sécurité du compte</div>
+    <h1 class="reveal visible">Nouveau mot de passe<span class="oeil">.</span></h1>
+
+    <div class="rmdp-carte">
+      <p id="rmdp-intro" class="form-msg">Vérification du lien en cours…</p>
+
+      <form id="rmdp-form" style="display:none">
+        <div class="form-champ">
+          <label for="rmdp-mdp">Nouveau mot de passe (8 caractères minimum)</label>
+          <input type="password" id="rmdp-mdp" required minlength="8" autocomplete="new-password">
+        </div>
+        <div class="form-champ">
+          <label for="rmdp-mdp-confirmer">Confirmer le nouveau mot de passe</label>
+          <input type="password" id="rmdp-mdp-confirmer" required minlength="8" autocomplete="new-password">
+        </div>
+        <button type="submit" class="btn btn--principal">Enregistrer le nouveau mot de passe</button>
+        <div id="rmdp-msg" class="form-msg"></div>
+      </form>
+
+      <div id="rmdp-liens" class="rmdp-liens" style="display:none">
+        <a href="tableau-de-bord.html" class="btn">Aller au tableau de bord</a>
+        <a href="espace-mannequin.html" class="btn">Aller à l'espace mannequin</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-bas">
+      <span>© <span id="an"></span> Maître Akesse Model Management</span>
+      <span>Abidjan, Côte d'Ivoire</span>
+      <span><a href="mentions-legales.html">Mentions légales</a> · <a href="politique-confidentialite.html">Confidentialité</a></span>
+    </div>
+  </div>
+</footer>
+
+<script src="js/copyright-annee.js"></script>
+<script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"></script>
+<script src="js/supabase-config.js"></script>
+<script>
+// Page dédiée, volontairement séparée de tableau-de-bord.html et
+// espace-mannequin.html : ces deux pages ont leur propre logique de
+// démarrage (vérification de session, chargement du tableau/de l'espace),
+// qui entrait en course avec la détection du lien de réinitialisation —
+// selon l'ordre d'arrivée des réponses réseau, l'utilisateur atterrissait
+// parfois directement dans son espace au lieu de pouvoir changer son mot
+// de passe. Une page à usage unique, sans autre logique de démarrage,
+// supprime cette course : rien d'autre ne peut lui disputer l'écran.
+const intro = document.getElementById('rmdp-intro');
+const form = document.getElementById('rmdp-form');
+const liens = document.getElementById('rmdp-liens');
+const msg = document.getElementById('rmdp-msg');
+
+const lienValide = /type=recovery/.test(window.location.hash + window.location.search);
+if (!lienValide) {
+  intro.className = 'form-msg err';
+  intro.textContent = "Ce lien est invalide ou a déjà été utilisé. Redemandez une réinitialisation depuis l'écran de connexion.";
+} else {
+  intro.textContent = 'Lien vérifié — choisissez votre nouveau mot de passe ci-dessous.';
+  form.style.display = 'block';
+}
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const mdp = document.getElementById('rmdp-mdp').value;
+  const mdpConfirmer = document.getElementById('rmdp-mdp-confirmer').value;
+  const bouton = form.querySelector('button[type="submit"]');
+
+  if (mdp.length < 8) {
+    msg.className = 'form-msg err';
+    msg.textContent = 'Le mot de passe doit contenir au moins 8 caractères.';
+    msg.style.display = 'block';
+    return;
+  }
+  if (mdp !== mdpConfirmer) {
+    msg.className = 'form-msg err';
+    msg.textContent = 'Les deux mots de passe ne correspondent pas.';
+    msg.style.display = 'block';
+    return;
+  }
+
+  bouton.disabled = true;
+  msg.className = 'form-msg ok';
+  msg.textContent = 'Enregistrement…';
+  msg.style.display = 'block';
+
+  if (!sb) {
+    msg.className = 'form-msg err';
+    msg.textContent = 'Service indisponible pour le moment — réessayez dans quelques instants.';
+    bouton.disabled = false;
+    return;
+  }
+
+  const { error } = await sb.auth.updateUser({ password: mdp });
+  bouton.disabled = false;
+
+  if (error) {
+    msg.className = 'form-msg err';
+    msg.textContent = "Erreur : " + error.message + " — le lien a peut-être expiré, redemandez une réinitialisation.";
+    msg.style.display = 'block';
+    return;
+  }
+
+  await sb.auth.signOut();
+  form.style.display = 'none';
+  intro.className = 'form-msg ok';
+  intro.textContent = 'Mot de passe mis à jour ! Vous pouvez maintenant vous reconnecter.';
+  liens.style.display = 'flex';
+});
+</script>
+</body>
+</html>

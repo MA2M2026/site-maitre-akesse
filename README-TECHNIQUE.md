@@ -89,6 +89,7 @@ espace-mannequin.html                    Espace personnel du mannequin (connexio
 selection.html                            Sélection recruteur (localStorage + envoi par e-mail)
 contact.html                               Formulaire de contact (enregistré en base)
 tableau-de-bord.html                        Admin : statistiques, listes, modération, journal d'erreurs
+reinitialiser-mot-de-passe.html            Page dédiée de "nouveau mot de passe" (lien reçu par e-mail)
 mentions-legales.html / politique-confidentialite.html   Pages légales
 google5acb001b6b29c80f.html                  Fichier de vérification Google Search Console — ne pas toucher
 
@@ -317,17 +318,28 @@ libre, pour tout type de projet non prévu dans la liste fixe.
 
 ## Mot de passe oublié (mannequins ET admin)
 
-Implémenté à l'identique sur `tableau-de-bord.html` (écran de connexion
-admin) et `espace-mannequin.html` (écran de connexion mannequin) :
-`sb.auth.resetPasswordForEmail()` envoie le lien, et
-`sb.auth.onAuthStateChange()` écoute l'événement `PASSWORD_RECOVERY` pour
-afficher l'écran "nouveau mot de passe" sur la même page (pas de page dédiée
-séparée). Un drapeau (`recuperationMdpEnCours` / `recuperationMdpEnCoursMannequin`)
-empêche la reconnexion automatique habituelle (session déjà active) de
-court-circuiter cet écran pendant qu'une récupération est en cours — sans
-lui, l'ordre d'exécution entre les deux traitements asynchrones n'est pas
-garanti. Dépend entièrement du SMTP personnalisé Resend (voir plus haut) et
-des Redirect URLs Supabase correctement configurées.
+`sb.auth.resetPasswordForEmail()` est appelé depuis `tableau-de-bord.html`
+(écran de connexion admin) et `espace-mannequin.html` (écran de connexion
+mannequin), avec `redirectTo` pointant vers **`reinitialiser-mot-de-passe.html`**
+— une page dédiée, à usage unique, séparée du tableau de bord et de l'espace
+mannequin.
+
+Ce choix vient d'un bug réel : quand le lien de récupération ramenait
+l'utilisateur directement sur `tableau-de-bord.html`/`espace-mannequin.html`,
+une course entre deux traitements asynchrones au démarrage de la page
+(la reconnexion automatique habituelle vs. l'événement `PASSWORD_RECOVERY`,
+qui attend une validation réseau du jeton) pouvait faire gagner la
+reconnexion automatique et sauter complètement l'écran "nouveau mot de
+passe". Plutôt que de continuer à rustiner cette logique de démarrage
+partagée, `reinitialiser-mot-de-passe.html` n'a aucune autre logique au
+chargement : elle détecte `type=recovery` directement dans l'URL (test
+synchrone, sans attendre aucun appel réseau), affiche le formulaire de
+nouveau mot de passe si présent, appelle `sb.auth.updateUser({ password })`
+à la soumission, puis propose des liens vers le tableau de bord et l'espace
+mannequin. Aucune course possible : rien d'autre ne dispute l'écran.
+
+Dépend entièrement du SMTP personnalisé Resend (voir plus haut) et des
+Redirect URLs Supabase correctement configurées.
 
 ## Miniatures des photos (consommation Supabase)
 
