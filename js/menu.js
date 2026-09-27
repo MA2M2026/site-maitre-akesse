@@ -66,23 +66,9 @@ document.addEventListener('DOMContentLoaded', () => {
   navLinks.parentNode.insertBefore(bloc, navLinks.nextSibling);
 });
 
-// Lien "Tableau de bord" : toujours visible dans le menu, connecté ou non —
-// la page elle-même affiche l'écran de connexion si besoin. Rester caché
-// tant qu'aucune session admin n'était détectée obligeait à connaître/taper
-// l'adresse à la main pour se reconnecter après une déconnexion.
-document.addEventListener('DOMContentLoaded', () => {
-  const navLinks = document.querySelector('.menu-overlay .nav-links');
-  if (!navLinks || navLinks.querySelector('a[href$="tableau-de-bord.html"]')) return;
-
-  const li = document.createElement('li');
-  li.className = 'item-admin';
-  li.innerHTML = '<a href="/tableau-de-bord.html">Tableau de bord</a>';
-  navLinks.appendChild(li);
-});
-
-// Même lien "Tableau de bord", mais directement dans la barre d'en-tête
-// (à côté du bouton Menu), visible sans avoir à l'ouvrir — demandé pour y
-// accéder plus vite qu'en fouillant dans le menu plein écran.
+// Lien "Admin" directement dans la barre d'en-tête (à côté du bouton Menu),
+// visible sans avoir à ouvrir le menu plein écran. Remplace l'ancien lien
+// "Tableau de bord" du menu hamburger, retiré pour éviter le doublon.
 document.addEventListener('DOMContentLoaded', () => {
   const menuBtn = document.getElementById('menuBtn');
   if (!menuBtn || !menuBtn.parentNode || document.querySelector('.header-admin-lien')) return;
