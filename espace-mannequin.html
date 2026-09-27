@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-fh9Z2q1PMyn3Hi3LSM14MsrjJWNse0kJ5OqLTbUYflA='; style-src 'self' https://fonts.googleapis.com 'sha256-FSWD2RZV6JCmZ/03G/FhDzk5okuwupTAIlaErqeCmPE=' 'sha256-/FvKPwpVq/Sr+bG1E1FBJCdeER/pyPoC+YtRu1R5nCc=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-5LL01Lpcu4qH1MLYDUJqVhR+8JVkzp/MaMN18+96LkQ='; style-src 'self' https://fonts.googleapis.com 'sha256-XSixVhS6UmsPdkrCutkRwYcwFTpkYO5Yjoj0Eb8OMPE=' 'sha256-/FvKPwpVq/Sr+bG1E1FBJCdeER/pyPoC+YtRu1R5nCc=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4=';">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mon Espace Mannequin — MA2M | Premium</title>
@@ -70,6 +70,8 @@ a{color:inherit}
 .wordmark img{height:46px;width:auto;display:block}
 .espace-tag{font-size:.72rem;color:var(--texte-clair);letter-spacing:.06em;text-align:right}
 .espace-tag b{display:block;font-family:var(--serif);font-style:italic;color:var(--ivoire);font-size:1.15rem;font-weight:500}
+.top-right{display:flex;align-items:center;gap:14px}
+@media(max-width:480px){.top-right{flex-direction:column;align-items:flex-end;gap:6px}}
 
 /* ---------- greeting card ---------- */
 .greet{
@@ -1105,8 +1107,18 @@ function formaterPeriode(valeur){
 
 function header(rightLabel){
   return '<div class="top">'+WORDMARK_HTML+
-    '<div class="espace-tag">' + (rightLabel||'Mon espace mannequin') + '<b>' + echapperHtml(state.identite.nomComplet||'').trim() + '</b></div></div>';
+    '<div class="top-right">' +
+      '<div class="espace-tag">' + (rightLabel||'Mon espace mannequin') + '<b>' + echapperHtml(state.identite.nomComplet||'').trim() + '</b></div>' +
+      '<button type="button" class="btn ghost small" data-deconnexion="1">Se déconnecter</button>' +
+    '</div></div>';
 }
+// Délégué une seule fois (pas à chaque render, header() étant réinjecté par
+// innerHTML à chaque écran) : indispensable pour qu'une mannequin puisse
+// quitter son espace sur un appareil partagé, sans devoir fermer l'onglet.
+document.addEventListener('click', function(e){
+  if (!e.target.closest('[data-deconnexion="1"]')) return;
+  sb.auth.signOut().then(function(){ window.location.reload(); });
+});
 
 /* =========================================================== RENDU MAIN */
 function render(){
