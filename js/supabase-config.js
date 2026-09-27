@@ -21,3 +21,19 @@ const optionsAuthSupabase = window.MA2M_SESSION_REQUISE
 // Supabase (CDN) n'a pas pu charger — un simple `typeof sb` ailleurs sur le site
 // reste alors fiable au lieu de lever une erreur qui bloquerait la page.
 const sb = (typeof supabase !== 'undefined') ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, optionsAuthSupabase) : null;
+
+// `sbAdmin` : client dédié à la détection d'une session admin déjà ouverte (depuis
+// tableau-de-bord.html) et aux actions d'administration (ajout/modification/suppression)
+// sur les pages publiques qui n'exigent pas MA2M_SESSION_REQUISE (actualités, événements,
+// partenaires...). Ces pages utilisent `sb` sans persistance pour ne jamais faire échouer
+// une lecture publique à cause d'une session périmée (voir plus haut) — mais il leur faut
+// malgré tout un moyen de savoir si l'admin est connecté et d'écrire en tant que tel. Ce
+// second client, lui, lit/rafraîchit la session dans le même localStorage (même origine),
+// donc retrouve la connexion faite depuis le tableau de bord, sans jamais s'en servir pour
+// les requêtes publiques ordinaires. Sur les pages qui exigent déjà une vraie session
+// (MA2M_SESSION_REQUISE), `sb` la persiste déjà : `sbAdmin` s'y confond alors avec `sb`
+// plutôt que de dupliquer le client (évite l'avertissement Supabase "Multiple GoTrueClient
+// instances" et toute désynchronisation entre deux clients sur la même page).
+const sbAdmin = window.MA2M_SESSION_REQUISE
+  ? sb
+  : (typeof supabase !== 'undefined') ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } }) : null;
