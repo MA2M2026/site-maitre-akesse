@@ -259,7 +259,7 @@ function construireHtmlCv(d) {
       (d.citation ? '<blockquote class="mcv-quote">« ' + echapperHtml(d.citation) + ' »</blockquote>' : '') +
       '<div class="mcv-agency"><img src="assets/logo-header.png" alt="Maître Akesse Model Management"></div>' +
     '</aside><div class="mcv-right"><div class="mcv-main"><div class="mcv-topline">Model CV</div>' +
-      '<section class="mcv-sec"><h4>' + mcvIcon('user') + ' Profil</h4><p class="mcv-profile-text">' + echapperHtml(d.bio || 'Profil à compléter.') + '</p></section>' +
+      '<section class="mcv-sec mcv-sec-subtile"><h4>' + mcvIcon('user') + ' Profil</h4><p class="mcv-profile-text">' + echapperHtml(d.bio || 'Profil à compléter.') + '</p></section>' +
       '<section class="mcv-sec"><h4>' + mcvIcon('body') + ' Informations physiques</h4><div class="mcv-two-col">' +
         '<ul class="mcv-kv"><li><span>Taille</span><b>' + (p.taille ? p.taille + ' cm' : '—') + '</b></li><li><span>Poids</span><b>' + (p.poids ? p.poids + ' kg' : '—') + '</b></li>' +
         '<li><span>Mensurations</span><b>' + ([p.poitrine, p.tourTaille, p.hanches || p.entrejambe].some(Boolean) ? [p.poitrine || '–', p.tourTaille || '–', p.hanches || p.entrejambe || '–'].join(' / ') : '—') + '</b></li>' +
@@ -276,19 +276,12 @@ function construireHtmlCv(d) {
       '<section class="mcv-sec"><div class="mcv-bottom-row"><div><h4>' + mcvIcon('medal') + ' Compétences mannequin</h4><div class="mcv-skills">' +
         ORDRE_COMPETENCES.map(function (cle) { const pct = (((d.competences || {})[cle] || 3) / 5) * 100; return '<div class="mcv-skill-row"><span class="lbl">' + LIBELLES_COMPETENCES[cle] + '</span><div class="mcv-skill-bar"><i data-largeur="' + pct + '"></i></div></div>'; }).join('') +
         '</div></div><div><h4>' + mcvIcon('image') + ' Portfolio</h4><div class="mcv-portfolio">' +
+        '<div class="mcv-portfolio-photos">' + compcardPhotosCv + '</div>' +
         (handle ? '<div class="soc">' + mcvIcon('insta', 15) + ' @' + echapperHtml(handle) + '</div>' : '') +
         '<div class="soc">' + mcvIcon('link', 15) + ' <a href="' + lienFichePublique + '" target="_blank" rel="noopener" class="p20-6">Voir la fiche publique</a></div>' +
         '<div class="mcv-qr"><img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&margin=8&color=241a12&bgcolor=ffffff&data=' + encodeURIComponent(lienFichePublique) + '" alt="QR code vers la fiche publique" width="140" height="140"><span>Scannez pour ouvrir la fiche</span></div>' +
         '</div></div></div></section>' +
-    '</div></div></div>' +
-    '<div class="mcv-strip"><div class="mcv-strip-photos">' + compcardPhotosCv + '</div>' +
-      '<div class="mcv-strip-contact"><b>MAÎTRE AKESSE MODEL MANAGEMENT</b>' +
-      '<div class="row">' + mcvIcon('phone', 12) + ' +225 27 22 23 11 76</div>' +
-      '<div class="row">' + mcvIcon('phone', 12) + ' +225 05 45 65 66 87</div>' +
-      '<div class="row">' + mcvIcon('mail', 12) + ' infos.ma2m@gmail.com</div>' +
-      '<div class="row">' + mcvIcon('pin', 12) + ' Abidjan, Côte d’Ivoire</div>' +
-      '<small>Former · Révéler · Valoriser</small></div>' +
-    '</div>'
+    '</div></div></div>'
   );
 }
 
