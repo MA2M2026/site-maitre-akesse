@@ -126,6 +126,8 @@ api/supprimer-mannequin.js          Fonction serveur Vercel (clé secrète Supab
                                       définitivement le compte de connexion d'un mannequin
 api/r2-presigner.js                  Fonction serveur Vercel (clés R2) — URL signées pour
                                       envoyer/supprimer les photos du Book sur Cloudflare R2
+api/creer-admin.js                  Fonction serveur Vercel (clé secrète Supabase) — crée un
+                                      nouveau compte admin, réservé aux admins déjà connectés
 package.json                     Dépendances npm des fonctions api/ (@aws-sdk/*) — Vercel les
                                    installe automatiquement, aucune étape manuelle
 manifest.json / service-worker.js   PWA (installation sur écran d'accueil)
@@ -199,9 +201,16 @@ d'ajouter un nouvel appel `sb.` en haut d'un script.
 
 Utilisée par `api/supprimer-mannequin.js`, ajoutée pour permettre à
 l'agence de supprimer définitivement le profil ET le compte de connexion
-d'un mannequin depuis le tableau de bord, et par `api/r2-presigner.js`
+d'un mannequin depuis le tableau de bord, par `api/r2-presigner.js`
 (voir section suivante) pour vérifier qu'une demande d'envoi/suppression de
-photo vient bien du mannequin propriétaire ou d'un admin. Cette clé
+photo vient bien du mannequin propriétaire ou d'un admin, et par
+`api/creer-admin.js` (bouton "Créer un compte admin", tableau de bord →
+Bloc 3 → 3B — Sécurité & accès) pour créer un nouveau compte admin sans
+passer par la manipulation manuelle dans Supabase (Authentication > Add
+user, puis Table Editor > admins > Insert row) — réservé aux admins déjà
+connectés (même contrôle que les deux fonctions précédentes), avec
+annulation automatique du compte de connexion si l'ajout dans la table
+`admins` échoue (jamais de compte orphelin sans rôle). Cette clé
 **secrète** Supabase (jamais la clé publique déjà utilisée dans
 `js/supabase-config.js`) ne doit jamais apparaître dans un fichier du
 dépôt — elle se configure uniquement dans Vercel :
