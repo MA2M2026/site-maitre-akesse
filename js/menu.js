@@ -79,3 +79,18 @@ document.addEventListener('DOMContentLoaded', () => {
   li.innerHTML = '<a href="/tableau-de-bord.html">Tableau de bord</a>';
   navLinks.appendChild(li);
 });
+
+// Même lien "Tableau de bord", mais directement dans la barre d'en-tête
+// (à côté du bouton Menu), visible sans avoir à l'ouvrir — demandé pour y
+// accéder plus vite qu'en fouillant dans le menu plein écran.
+document.addEventListener('DOMContentLoaded', () => {
+  const menuBtn = document.getElementById('menuBtn');
+  if (!menuBtn || !menuBtn.parentNode || document.querySelector('.header-admin-lien')) return;
+  if (window.location.pathname.replace(/\/$/, '').endsWith('tableau-de-bord.html') || window.location.pathname.replace(/\/$/, '').endsWith('tableau-de-bord')) return;
+
+  const lien = document.createElement('a');
+  lien.className = 'lang-switch header-admin-lien';
+  lien.href = '/tableau-de-bord.html';
+  lien.textContent = 'Admin';
+  menuBtn.parentNode.insertBefore(lien, menuBtn);
+});
