@@ -181,23 +181,23 @@ function formaterPeriode(valeur) {
 
 const MCV_ICONS = {
   user: '<circle cx="9" cy="6.2" r="3"/><path d="M3.2 16c.6-3.3 3-5.2 5.8-5.2s5.2 1.9 5.8 5.2"/>',
-  body: '<path d="M4 3h10M4 15h10M6 3v5.5c0 1.2-1 1.6-1 3.5s1 2.3 1 3M12 3v5.5c0 1.2 1 1.6 1 3.5s-1 2.3-1 3"/>',
+  body: '<rect x="3.2" y="1.8" width="11.6" height="14.4" rx="1.6"/><path d="M5.7 5.4h1.9M5.4 8.4h2.5M5.7 11.4h1.9M5.4 14h2.5"/>',
   grad: '<path d="M1.5 7 9 3.5 16.5 7 9 10.5 1.5 7Z"/><path d="M5 8.6v3.4c0 1 1.8 2 4 2s4-1 4-2V8.6"/><path d="M16.5 7v4.5"/>',
-  star: '<path d="M9 2.2l1.9 3.9 4.3.6-3.1 3 .7 4.3L9 12l-3.8 2 .7-4.3-3.1-3 4.3-.6L9 2.2Z"/>',
-  medal: '<circle cx="9" cy="11" r="4.3"/><path d="M6.4 6.6 4 2M11.6 6.6 14 2M7.4 11l1.1 1.4L11 9.6"/>',
+  star: '<path d="M9 2 11.1 6.5 16 7.2 12.5 10.6 13.3 15.5 9 13.2 4.7 15.5 5.5 10.6 2 7.2 6.9 6.5 9 2Z"/>',
+  medal: '<circle cx="9" cy="11.3" r="4.1"/><path d="M6.6 7 4.3 2.2M11.4 7 13.7 2.2"/><path d="M7.2 11.3 8.4 12.6 11 9.9"/>',
   image: '<rect x="1.7" y="3" width="14.6" height="12" rx="1"/><circle cx="6" cy="7.3" r="1.3"/><path d="M2 13.5l4-4 3 3 2.6-2.6L16.3 13"/>',
   calendar: '<rect x="2" y="3.3" width="14" height="12.2" rx="1"/><path d="M2 7h14M5.5 1.8v3M12.5 1.8v3"/>',
   pin: '<path d="M9 16.3S3.8 11 3.8 7.1a5.2 5.2 0 0 1 10.4 0C14.2 11 9 16.3 9 16.3Z"/><circle cx="9" cy="7.1" r="1.9"/>',
   globe: '<circle cx="9" cy="9" r="7"/><path d="M2 9h14M9 2c2.2 2 2.2 12 0 14M9 2c-2.2 2-2.2 12 0 14"/>',
   home: '<path d="M2.5 8.2 9 2.7l6.5 5.5"/><path d="M4 7v8h10V7"/><path d="M7.3 15V10.7h3.4V15"/>',
-  phone: '<path d="M4 2.5h2.3l1 3.3-1.7 1.3a9 9 0 0 0 4.3 4.3l1.3-1.7 3.3 1v2.3c0 .9-.8 1.6-1.7 1.4C7.9 13.6 4.4 10.1 3.6 5.2 3.4 4.3 4 3.5 4 2.5Z"/>',
+  phone: '<path d="M5.8 2.3 7.4 2.3 8.4 5.3 6.6 6.7C7.4 8.7 8.9 10.2 10.9 11l1.4-1.8 3 1v1.6c0 1-.8 1.8-1.8 1.6C9.2 12.6 5.9 9.3 5.1 5 4.9 4 5 3.3 5.8 2.3Z"/>',
   insta: '<rect x="2" y="2" width="14" height="14" rx="4"/><circle cx="9" cy="9" r="3.4"/><circle cx="13.2" cy="4.8" r=".9"/>',
   link: '<path d="M7.5 10.5 10.5 7.5"/><path d="M8.6 5.5 10 4a2.9 2.9 0 0 1 4.1 4.1l-1.5 1.5"/><path d="M9.4 12.5 8 14a2.9 2.9 0 0 1-4.1-4.1l1.5-1.5"/>',
   mail: '<rect x="2" y="4" width="14" height="10" rx="1.5"/><path d="M2.5 4.8 9 9.8l6.5-5"/>',
 };
 function mcvIcon(name, size) {
   size = size || 18;
-  return '<svg viewBox="0 0 18 18" width="' + size + '" height="' + size + '" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">' + (MCV_ICONS[name] || '') + '</svg>';
+  return '<svg viewBox="0 0 18 18" width="' + size + '" height="' + size + '" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">' + (MCV_ICONS[name] || '') + '</svg>';
 }
 
 const LIBELLES_COMPETENCES = {
@@ -279,7 +279,7 @@ function construireHtmlCv(d) {
         '<div class="mcv-portfolio-photos">' + compcardPhotosCv + '</div>' +
         (handle ? '<div class="soc">' + mcvIcon('insta', 15) + ' @' + echapperHtml(handle) + '</div>' : '') +
         '<div class="soc">' + mcvIcon('link', 15) + ' <a href="' + lienFichePublique + '" target="_blank" rel="noopener" class="p20-6">Voir la fiche publique</a></div>' +
-        '<div class="mcv-qr"><img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&margin=8&color=241a12&bgcolor=ffffff&data=' + encodeURIComponent(lienFichePublique) + '" alt="QR code vers la fiche publique" width="140" height="140"><span>Scannez pour ouvrir la fiche</span></div>' +
+        '<div class="mcv-qr"><img src="https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=8&color=241a12&bgcolor=ffffff&data=' + encodeURIComponent(lienFichePublique) + '" alt="QR code vers la fiche publique" width="260" height="260"><span>Scannez pour ouvrir la fiche</span></div>' +
         '</div></div></div></section>' +
     '</div></div></div>'
   );
