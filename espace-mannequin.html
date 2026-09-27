@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net 'sha256-3fA3YDsW3/iNYCCUbwF09SgOdjp27PilDrNJKr+taYA='; style-src 'self' https://fonts.googleapis.com 'sha256-s1TH4/7ApM1ql6ULRjpmTOuYvVh8qMiPhJGLSqjEpeo=' 'sha256-/FvKPwpVq/Sr+bG1E1FBJCdeER/pyPoC+YtRu1R5nCc=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net 'sha256-fh9Z2q1PMyn3Hi3LSM14MsrjJWNse0kJ5OqLTbUYflA='; style-src 'self' https://fonts.googleapis.com 'sha256-FSWD2RZV6JCmZ/03G/FhDzk5okuwupTAIlaErqeCmPE=' 'sha256-/FvKPwpVq/Sr+bG1E1FBJCdeER/pyPoC+YtRu1R5nCc=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4=';">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mon Espace Mannequin — MA2M | Premium</title>
@@ -445,25 +445,9 @@ a{color:inherit}
 }
 @media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
 
-/* ================== Écran de bienvenue (bref, une fois par session) === */
-/* Volontairement minimal : pas de logo, pas de citation longue — juste une
-   phrase, ~3 secondes, pour ne pas donner l'impression de "repartir à zéro"
-   à une mannequin déjà validée, et pour ne pas charger d'image inutile. */
-#ma2mWelcome{
-  position:fixed;inset:0;z-index:99990;display:flex;align-items:center;justify-content:center;
-  background:#020202;color:#f5eee3;padding:24px;text-align:center;cursor:pointer;
-  opacity:0;pointer-events:none;transition:opacity .6s ease;
-}
-/* pointer-events:none par défaut est essentiel : cet élément est toujours
-   présent dans le DOM (avant même la connexion), et .ready n'est ajouté
-   qu'après la connexion (prepareMA2MWelcome(), appelée depuis
-   demarrerApresConnexion()) — sans ce garde-fou, il resterait invisible
-   mais bloquerait quand même tous les clics sur l'écran de connexion,
-   pour toujours (bug réel constaté en production le 27/09/2026). */
-#ma2mWelcome.ready{opacity:1;pointer-events:auto}
-#ma2mWelcome.leaving{opacity:0;transition:opacity .8s ease;pointer-events:none}
-.ma2m-welcome-msg{margin:0;max-width:560px;font-family:var(--serif);font-style:italic;font-weight:400;font-size:clamp(1.15rem,3.6vw,1.65rem);line-height:1.4}
-@media(prefers-reduced-motion:reduce){#ma2mWelcome{transition:none}}
+/* Écran de bienvenue supprimé (27/09/2026) — il bloquait silencieusement
+   tous les clics sur l'écran de connexion (voir correctif précédent) et
+   n'était de toute façon plus jugé nécessaire. */
 </style>
 
 <style id="ma2m-premium-ui">
@@ -587,10 +571,6 @@ html{scroll-behavior:smooth}body{background:radial-gradient(900px 500px at 5% -5
   <div class="auth-loading"><div class="spinner"></div><span>Chargement de votre espace…</span></div>
 </div>
 <div class="toast-wrap" id="toasts"></div>
-
-<div id="ma2mWelcome" aria-label="Bienvenue dans votre espace mannequin">
-  <p class="ma2m-welcome-msg">Bienvenue dans votre espace. Votre image mérite d'être vue.</p>
-</div>
 
 <div class="overlay hidden" id="overlay"><div id="overlayContent"></div></div>
 
@@ -2050,29 +2030,6 @@ function showOverlay(){
   document.getElementById('closeOv2')?.addEventListener('click', function(){ ov.classList.add('hidden'); });
 }
 
-/* ------------------------------------------------- ÉCRAN DE BIENVENUE --- */
-// Message bref (~3 secondes), une seule fois par session de navigateur (pas à
-// chaque re-rendu ni à chaque étape du wizard) — sessionStorage est effacé à
-// la fermeture de l'onglet, donc il revient bien à la prochaine connexion.
-// Se ferme tout seul, ou au premier clic si la mannequin ne veut pas attendre.
-function closeMA2MWelcome(){
-  const welcome = document.getElementById('ma2mWelcome');
-  if (!welcome) return;
-  welcome.classList.add('leaving');
-  setTimeout(function(){ welcome.remove(); }, 800);
-  try{ sessionStorage.setItem('ma2m_welcome_vu', '1'); }catch(e){}
-}
-function prepareMA2MWelcome(){
-  const welcome = document.getElementById('ma2mWelcome');
-  if (!welcome) return;
-  let dejaVu = false;
-  try{ dejaVu = sessionStorage.getItem('ma2m_welcome_vu') === '1'; }catch(e){}
-  if (dejaVu) { welcome.remove(); return; }
-  requestAnimationFrame(function(){ welcome.classList.add('ready'); });
-  welcome.addEventListener('click', closeMA2MWelcome);
-  setTimeout(closeMA2MWelcome, 3000);
-}
-
 /* --------------------------------------------------------------- INIT --- */
 async function demarrerApresConnexion(){
   const { data: { user } } = await sb.auth.getUser();
@@ -2082,7 +2039,6 @@ async function demarrerApresConnexion(){
   state = await Store.load();
   if (!state.meta.currentStep) state.meta.currentStep = 1;
   render();
-  prepareMA2MWelcome();
 }
 
 (async function init(){
