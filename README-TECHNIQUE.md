@@ -50,7 +50,15 @@ navigateur.
     normale ET en version "www.") doivent rester dans Supabase →
     Authentication → URL Configuration → Redirect URLs, sinon le lien de
     réinitialisation renvoie vers la page d'accueil au lieu du bon écran.
-- **Domaine** : maitreakessemodelmanagement.com (DNS via Spaceship)
+- **Domaine** : maitreakessemodelmanagement.com — bureau d'enregistrement
+  (registrar) : Spaceship. **DNS géré par Cloudflare depuis fin septembre
+  2026** (nameservers Cloudflare configurés chez Spaceship ; les
+  enregistrements DNS eux-mêmes se gèrent désormais dans Cloudflare, plus
+  chez Spaceship), condition nécessaire pour connecter le domaine
+  personnalisé R2 (`photos.maitreakessemodelmanagement.com`, voir plus
+  bas). Tous les enregistrements existants (Vercel, Resend/e-mail) ont été
+  reportés en mode "DNS uniquement" (non proxié) dans Cloudflare pour ne
+  rien changer à leur comportement.
 - **Analytics** : Google Analytics (gtag.js, ID `G-1BX5MPZ6WE`), installé à
   l'identique sur les 14 pages réelles du site. Google Search Console est
   aussi vérifié (fichier `google5acb001b6b29c80f.html` à la racine — ne
@@ -333,8 +341,30 @@ dépendances npm, Vercel les installe automatiquement au déploiement).
 Variables d'environnement Vercel requises : `R2_ACCOUNT_ID`,
 `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`,
 `R2_PUBLIC_URL` (Cloudflare → R2 → compartiment `ma2m-photos` → jeton API
-de type Account, lecture/écriture, scopé à ce compartiment ; URL publique
-de développement activée pour `R2_PUBLIC_URL`).
+de type Account, lecture/écriture, scopé à ce compartiment).
+
+**`R2_PUBLIC_URL` = domaine personnalisé, jamais `r2.dev` (fin septembre
+2026) :** `R2_PUBLIC_URL` pointait au départ vers l'URL publique de
+développement de Cloudflare (`https://pub-<hash>.r2.dev`), activée en
+urgence lors de la migration initiale depuis Supabase Storage. Cloudflare
+documente explicitement ce domaine comme non destiné à la production, et
+c'est la cause réelle trouvée d'un bug signalé début : les photos du Book
+étaient invisibles pour TOUS les mannequins, mais seulement sur
+navigateurs mobiles (Android ET iPhone, sur wifi comme en données
+mobiles) — desktop et tablette n'étaient jamais concernés. Symptôme
+navigateur : `ERR_CONNECTION_ABORTED`. Corrigé en migrant vers un domaine
+personnalisé R2 dédié (`photos.maitreakessemodelmanagement.com`,
+Cloudflare → R2 → compartiment `ma2m-photos` → Paramètres → Domaines
+personnalisés), ce qui a nécessité au préalable de faire gérer le DNS du
+domaine principal par Cloudflare (voir section suivante) — un domaine
+personnalisé R2 exige que la zone DNS soit déjà chez Cloudflare. Après
+connexion du domaine personnalisé, `R2_PUBLIC_URL` a été mis à jour vers
+`https://photos.maitreakessemodelmanagement.com` sur Vercel (redéploiement
+nécessaire pour prise en compte) et les URLs déjà enregistrées dans
+`model_photos` (`url` / `url_miniature` / `url_moyenne`) ont été réécrites
+en une fois via SQL (Extension 90). **Ne jamais repasser `R2_PUBLIC_URL`
+sur une URL `r2.dev`**, même temporairement pour dépanner : le bug mobile
+reviendrait.
 
 **CORS obligatoire sur le compartiment R2** (Paramètres → Politique CORS),
 sinon le navigateur ne peut pas envoyer directement vers l'URL signée :
