@@ -953,6 +953,12 @@ les classes ajoutées dynamiquement (`classList.add(...)`, `className =
   À propos + Contact / Parcours (frise) + Vidéo, sur deux colonnes dès
   900px. Styles : classes `.fiche-*` en fin de `css/style.css`. Le CV reste
   privé (espace mannequin et tableau de bord uniquement).
+  2e passe le même jour : boutons dans la typographie de « MENU » (pilules
+  fines), barre d'onglets (À propos / Parcours / Photos / Contact, simples
+  ancres), et contact officiel déplacé tout en bas, après le Book
+  (`#fiche-contact-bas`, rempli en JS) — objectif de la propriétaire : qu'on
+  ait l'impression d'être sur la page Facebook du mannequin, sans copier
+  Facebook.
 - **`evenements.html`** — "Nos Événements", reconstruite fin septembre 2026
   sur exactement la même architecture qu'`actualites.html` (bloc "à la
   une", grille magazine, fiche modale, galerie photo adaptative, éditeur
