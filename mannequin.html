@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-2YLaNh1HHVRwB3gFwQGCHqAdIazjnazAda811UucXlE='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-7qzTX2fbWhcoN8NR8B0qP2PjgfCnkK2/b2LeciSYanY=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-vmGXxooH/H56GXuP5FGL+5/WK0iXIkDOPHxeOBp/saw='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-7qzTX2fbWhcoN8NR8B0qP2PjgfCnkK2/b2LeciSYanY=';">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
@@ -347,7 +347,7 @@ async function chargerProfilInterne() {
 
   contenu.innerHTML = `
     <div class="reveal">
-      <div class="profil-hero-fullbleed">
+      <div class="profil-hero-fullbleed${(photos && photos.length) ? ' cliquable' : ''}" id="couverture-clic"${(photos && photos.length) ? ' role="button" tabindex="0" aria-label="Ouvrir la galerie photo"' : ''}>
         <img data-couv-img src="${echapperHtml(photoHero)}" alt="">
         <div class="profil-hero-scrim"></div>
         <div class="profil-hero-contenu">
@@ -445,6 +445,18 @@ async function chargerProfilInterne() {
 
   const photoPrincipale = document.getElementById('compsheet-photo-clic');
   if (photoPrincipale) photoPrincipale.addEventListener('click', () => ouvrirLightbox(0));
+
+  // Photo de couverture cliquable (demande de la propriétaire, 28 sept. 2026) :
+  // ouvre la galerie plein écran directement sur la photo de couverture, puis
+  // on balaie le reste du Book comme depuis la grille.
+  const couverture = document.getElementById('couverture-clic');
+  if (couverture && urlsPhotos.length) {
+    const indexCouv = photoCouverture ? Math.max(0, photos.indexOf(photoCouverture)) : 0;
+    couverture.addEventListener('click', () => ouvrirLightbox(indexCouv));
+    couverture.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); ouvrirLightbox(indexCouv); }
+    });
+  }
 
   (photos || []).forEach((p, index) => {
     const div = document.createElement('div');
