@@ -3922,3 +3922,38 @@ end;
 $$;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 97 : corrige code_validation_statut() — colonne ambiguë
+-- "email_recuperation" (RETURNS TABLE déclare une colonne de sortie du
+-- même nom que la colonne lue dans admin_securite ; PL/pgSQL ne peut
+-- alors plus savoir laquelle des deux est visée dans le SELECT, et
+-- échoue systématiquement avec "column reference "email_recuperation"
+-- is ambiguous"). Résultat concret côté propriétaire : reconnexion au
+-- tableau de bord impossible à CHAQUE tentative (même juste après
+-- réinitialisation du mot de passe), pris à tort pour un problème de
+-- mot de passe puis de réseau — diagnostiqué le 28 septembre 2026 en
+-- affichant temporairement le détail de l'erreur à l'écran. Simple
+-- qualification de la colonne table (admin_securite.email_recuperation)
+-- pour lever l'ambiguïté ; comportement inchangé sinon.
+-- ===================================================================
+create or replace function code_validation_statut()
+returns table(defini boolean, email_recuperation text)
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  v_hash text;
+  v_email text;
+begin
+  if not exists (select 1 from admins where user_id = auth.uid()) then
+    raise exception 'non_autorise';
+  end if;
+  select code_hash, admin_securite.email_recuperation into v_hash, v_email
+    from admin_securite where admin_user_id = auth.uid();
+  return query select (v_hash is not null), v_email;
+end;
+$$;
+
+NOTIFY pgrst, 'reload schema';
