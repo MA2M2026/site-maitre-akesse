@@ -944,6 +944,24 @@ les classes ajoutées dynamiquement (`classList.add(...)`, `className =
 
 ## Fonctionnalités majeures ajoutées récemment (repères pour s'orienter)
 
+- **Allègement du site (28 septembre 2026)** — plainte de la propriétaire :
+  site très lourd depuis le navigateur intégré de Facebook, photos qui ne
+  s'affichent pas. Constats et corrections :
+  - `vercel.json` posait `Cache-Control: no-cache, must-revalidate` sur
+    TOUT (`/(.*)`), y compris les photos du relais `/book-photos/*` : le
+    téléphone ne gardait jamais une photo, chaque visite repassait par le
+    relais Vercel → r2.dev. Ajout de règles plus bas dans `headers` (la
+    dernière règle correspondante l'emporte) : `/book-photos/*` en cache
+    1 an `immutable` (chaque photo a un nom unique horodaté, elle ne change
+    jamais) + `CDN-Cache-Control` pour que Vercel la garde aussi ;
+    `/assets/*` et `/icons/*` en cache 1 jour. HTML/JS/CSS inchangés
+    (toujours revalidés, pour que les mises à jour se voient tout de suite).
+  - `assets/logo-header.png` (bandeau de toutes les pages) : 492 Ko → 20 Ko,
+    `assets/logo-dark-bg.png` : 840 Ko → 34 Ko (redimensionnés à 600 et
+    800 px + palette 256 couleurs, rendu identique ; restent assez grands
+    pour la compcard 400 dpi et le CV 300 dpi).
+  - Fiche mannequin : couverture en `url_moyenne`, médaillon en
+    `url_miniature` au lieu de l'originale.
 - **CV téléchargé (PDF/JPEG, `construireCanvasCv()` dans `js/app.js`)** —
   28 septembre 2026 : hauteur exacte (le dessin est fait deux fois, d'abord
   « à blanc » pour mesurer, plus aucune estimation qui laissait un grand
