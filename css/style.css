@@ -1578,19 +1578,19 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
   position: fixed; inset: 0; z-index: 950; background: rgba(3,2,2,0.97);
   display: flex; align-items: flex-start; justify-content: center;
   opacity: 0; visibility: hidden; transition: opacity 0.25s ease, visibility 0.25s ease;
-  overflow-y: auto; padding: 2rem 1.2rem;
+  padding: 2rem 1.2rem;
 }
 .redaction-overlay.active { opacity: 1; visibility: visible; }
-/* max-height + overflow-y propres au panneau (pas seulement au calque du
-   fond) : sur mobile, certains navigateurs ne laissent pas remonter le
-   scroll tactile jusqu'au calque parent quand le panneau lui-même n'a pas
-   sa propre limite de hauteur — la propriétaire ne pouvait plus atteindre
-   le bouton "Enregistrer" en bas du formulaire (signalé le 28 septembre
-   2026). dvh (hauteur d'écran réelle, barres d'adresse mobiles incluses)
-   avec repli en vh pour les navigateurs plus anciens. */
+/* max-height + overflow-y sur le panneau UNIQUEMENT (pas sur le calque du
+   fond, .redaction-overlay, qui n'en a plus) : deux conteneurs défilants
+   imbriqués empêchaient le scroll tactile d'atteindre le bas du formulaire
+   sur mobile, la propriétaire ne pouvait jamais atteindre le bouton
+   "Enregistrer" (signalé le 28 septembre 2026, persistait après un premier
+   correctif incomplet). Même recette que .news-modal-contenu ci-dessous,
+   qui elle fonctionne déjà correctement sur mobile. */
 .redaction-shell {
   background: var(--creme); color: #1a1512; max-width: 1200px; width: 100%; border-radius: 4px; margin: 0 auto;
-  max-height: 92vh; max-height: 92dvh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  max-height: 92vh; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
 }
 .redaction-entete {
   display: flex; align-items: center; justify-content: space-between; padding: 1.4rem 2rem; border-bottom: 1px solid #d8d2cb;
