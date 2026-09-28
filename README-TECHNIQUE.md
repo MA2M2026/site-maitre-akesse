@@ -957,6 +957,17 @@ les classes ajoutées dynamiquement (`classList.add(...)`, `className =
 
 ## Fonctionnalités majeures ajoutées récemment (repères pour s'orienter)
 
+- **heic2any retiré (28 septembre 2026)** — ~90 % du journal d'erreurs était
+  une « EvalError » : heic2any (conversion des photos HEIC d'iPhone) utilise
+  `new Function`, interdit par le CSP (pas de `'unsafe-eval'`, à ne pas
+  ajouter). Il plantait à chaque chargement des 12 pages d'envoi de photos,
+  sans jamais pouvoir convertir, et pesait 1,3 Mo par page. Remplacé par une
+  conversion faite par le navigateur (`window.heic2any` défini dans
+  `js/app.js`, même signature) : fonctionne là où le HEIC est lisible
+  (Safari iPhone/Mac) ; ailleurs les pages envoient le fichier d'origine,
+  comme avant. Le tableau de bord affiche aussi désormais le détail technique
+  de chaque erreur (fichier/ligne/adresse), pour diagnostiquer depuis une
+  simple capture d'écran.
 - **Cases photo du CV et de la compcard remplies automatiquement**
   (28 septembre 2026) : si le mannequin n'a pas choisi sa photo de CV ou
   une photo pour une case de la compcard, la case est complétée avec ses
