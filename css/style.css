@@ -231,10 +231,26 @@ section { padding: 5rem 0; }
    social — collée, sans espacement entre les photos, et qui s'adapte à
    l'orientation de chaque photo (portrait, carrée, rectangulaire). ---------- */
 .book-grille-ig { column-count: 3; column-gap: 2px; }
-.book-photo-carte { display: block; break-inside: avoid; margin-bottom: 2px; background: var(--noir-doux); overflow: hidden; }
+.book-photo-carte { position: relative; display: block; break-inside: avoid; margin-bottom: 2px; background: var(--noir-doux); overflow: hidden; }
 .book-photo-carte img { width: 100%; height: auto; display: block; opacity: 0.94; transition: transform 0.5s var(--transition-douce), opacity 0.4s ease; }
 .book-photo-carte:hover img { transform: scale(1.03); opacity: 1; }
 @media (max-width: 700px) { .book-grille-ig { column-count: 2; } }
+
+.book-photo-coeur {
+  position: absolute; right: 8px; bottom: 8px; z-index: 2;
+  display: flex; align-items: center; gap: 4px;
+  background: rgba(10,8,7,0.55); backdrop-filter: blur(2px);
+  border: none; border-radius: 999px; padding: 5px 10px;
+  font-size: 13px; font-weight: 600; color: #f2ede4;
+  cursor: pointer; transition: background 0.2s ease, transform 0.15s ease;
+}
+.book-photo-coeur:hover { background: rgba(10,8,7,0.75); }
+.book-photo-coeur:active { transform: scale(0.92); }
+.book-photo-coeur svg { width: 16px; height: 16px; flex-shrink: 0; }
+.book-photo-coeur .coeur-icone { fill: none; stroke: #f2ede4; stroke-width: 2; transition: fill 0.15s ease, stroke 0.15s ease; }
+.book-photo-coeur.aime .coeur-icone { fill: var(--rouge); stroke: var(--rouge); }
+.book-photo-coeur.aime { animation: coeur-pop 0.3s ease; }
+@keyframes coeur-pop { 0% { transform: scale(1); } 40% { transform: scale(1.25); } 100% { transform: scale(1); } }
 
 /* ---------- Fiche publique — bandeau façon page de profil (couverture + photo
    ronde en superposition) : pensé pour que la première impression, en arrivant

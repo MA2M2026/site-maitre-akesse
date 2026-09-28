@@ -3702,3 +3702,110 @@ where
   url like 'https://pub-bd96e72b6ed2444cab7b06f170bfe206.r2.dev%'
   or url_miniature like 'https://pub-bd96e72b6ed2444cab7b06f170bfe206.r2.dev%'
   or url_moyenne like 'https://pub-bd96e72b6ed2444cab7b06f170bfe206.r2.dev%';
+
+-- ===================================================================
+-- Extension 93 : cœurs (likes) sur les photos du Book, visibles par tout
+-- visiteur (comme sur un réseau social), + petit indicateur "nouveaux
+-- cœurs reçus" dans l'espace mannequin (pas d'e-mail à chaque cœur, pour
+-- éviter le spam si une photo devient populaire — demande explicite de
+-- la propriétaire, 28 septembre 2026). Réutilise le même principe
+-- d'empreinte IP anonymisée que page_views (Extension 21) pour empêcher
+-- un même visiteur de liker 50 fois la même photo, sans jamais stocker
+-- son adresse IP en clair.
+-- ===================================================================
+create table if not exists photo_likes (
+  id uuid primary key default gen_random_uuid(),
+  photo_id uuid not null references model_photos(id) on delete cascade,
+  ip_hash text not null,
+  created_at timestamptz not null default now(),
+  constraint photo_likes_ip_hash_format check (ip_hash ~ '^[0-9a-f]{64}$'),
+  unique (photo_id, ip_hash)
+);
+create index if not exists idx_photo_likes_photo on photo_likes(photo_id);
+alter table photo_likes enable row level security;
+-- Pas de policy directe : toute lecture/écriture passe par les fonctions
+-- SECURITY DEFINER ci-dessous (même approche que le reste du site).
+
+-- Nombre de cœurs par photo + si CE visiteur (identifié par son empreinte)
+-- a déjà aimé chacune, en un seul aller-retour (même principe de lot que
+-- photos_couverture_mannequins).
+create or replace function etat_likes_photos(p_ids uuid[], p_ip_hash text)
+returns table(photo_id uuid, total bigint, aime_par_moi boolean)
+language sql
+security definer
+set search_path = public
+as $$
+  select
+    mp.id,
+    (select count(*) from photo_likes pl where pl.photo_id = mp.id),
+    exists(select 1 from photo_likes pl where pl.photo_id = mp.id and pl.ip_hash = p_ip_hash)
+  from model_photos mp
+  where mp.id = any(p_ids);
+$$;
+grant execute on function etat_likes_photos(uuid[], text) to anon;
+
+-- Ajoute ou retire le cœur de ce visiteur sur cette photo (bascule),
+-- renvoie le nouvel état pour mettre à jour l'affichage immédiatement.
+create or replace function basculer_like_photo(p_photo_id uuid, p_ip_hash text)
+returns table(aime boolean, total bigint)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_existe boolean;
+begin
+  if p_ip_hash !~ '^[0-9a-f]{64}$' then
+    raise exception 'empreinte invalide';
+  end if;
+  select exists(select 1 from photo_likes where photo_id = p_photo_id and ip_hash = p_ip_hash) into v_existe;
+  if v_existe then
+    delete from photo_likes where photo_id = p_photo_id and ip_hash = p_ip_hash;
+  else
+    insert into photo_likes (photo_id, ip_hash) values (p_photo_id, p_ip_hash);
+  end if;
+  return query select not v_existe, (select count(*) from photo_likes where photo_id = p_photo_id);
+end;
+$$;
+grant execute on function basculer_like_photo(uuid, text) to anon;
+
+-- Petit indicateur côté espace mannequin : total de cœurs reçus sur son
+-- Book, et combien sont "nouveaux" depuis sa dernière visite de cet
+-- indicateur (pas depuis sa dernière connexion générale).
+alter table model_profiles add column if not exists derniere_consultation_likes timestamptz;
+
+create or replace function mes_likes_book()
+returns table(total bigint, nouveaux bigint)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_model_id uuid := auth.uid();
+  v_depuis timestamptz;
+begin
+  select derniere_consultation_likes into v_depuis from model_profiles where id = v_model_id;
+  return query
+    select
+      count(*),
+      count(*) filter (where v_depuis is null or pl.created_at > v_depuis)
+    from photo_likes pl
+    join model_photos mp on mp.id = pl.photo_id
+    where mp.model_id = v_model_id;
+end;
+$$;
+grant execute on function mes_likes_book() to authenticated;
+
+create or replace function marquer_likes_vus()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update model_profiles set derniere_consultation_likes = now() where id = auth.uid();
+end;
+$$;
+grant execute on function marquer_likes_vus() to authenticated;
+
+NOTIFY pgrst, 'reload schema';
