@@ -1369,9 +1369,16 @@ html.porte-verrouillee { overflow: hidden; height: 100%; }
 .news-une {
   position: relative; overflow: hidden; display: block;
   width: 100vw; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw);
-  min-height: 64vh; margin-bottom: 3.5rem; cursor: pointer;
+  /* dvh (hauteur d'écran réelle) après vh (repli) : sur mobile, vh seul se
+     recalcule selon que la barre d'adresse du navigateur est affichée ou
+     cachée à l'instant du rendu, ce qui décale le cadrage de la photo
+     (object-fit: cover) d'un chargement à l'autre — remarqué et signalé par
+     la propriétaire le 28 septembre 2026 en comparant deux captures prises
+     à des moments différents. Même recette déjà en place pour le verrou de
+     la porte d'entrée (body.porte-verrouillee), qui a le même souci. */
+  min-height: 64vh; min-height: 64dvh; margin-bottom: 3.5rem; cursor: pointer;
 }
-@media (min-width: 760px) { .news-une { min-height: 84vh; } }
+@media (min-width: 760px) { .news-une { min-height: 84vh; min-height: 84dvh; } }
 
 .news-une .news-une-photo {
   position: absolute; inset: 0; aspect-ratio: unset; border-radius: 0; overflow: hidden;
@@ -1391,9 +1398,9 @@ html.porte-verrouillee { overflow: hidden; height: 100%; }
 }
 .news-une .news-une-corps {
   position: relative; z-index: 1; display: flex; flex-direction: column; justify-content: flex-end;
-  min-height: 64vh; max-width: 760px; padding: 2rem var(--marge) 2.6rem;
+  min-height: 64vh; min-height: 64dvh; max-width: 760px; padding: 2rem var(--marge) 2.6rem;
 }
-@media (min-width: 760px) { .news-une .news-une-corps { min-height: 84vh; padding: 3rem 4rem 4rem; } }
+@media (min-width: 760px) { .news-une .news-une-corps { min-height: 84vh; min-height: 84dvh; padding: 3rem 4rem 4rem; } }
 
 /* Aperçu admin (formulaire de rédaction) : rendu compact d'origine, inchangé. */
 .news-une-photo {
