@@ -1,39 +1,10 @@
 // ================== Surveillance des erreurs réelles du site ==================
-// Capte toute erreur JavaScript qui se produit VRAIMENT dans le navigateur d'un
-// visiteur (pas une relecture de code) et l'enregistre pour l'agence, consultable
-// depuis le tableau de bord — plutôt que de découvrir un bug par hasard, des mois
-// plus tard, si quelqu'un pense à le signaler. Enregistré tout en haut du fichier,
-// avant tout le reste, pour capter les erreurs le plus tôt possible.
-(function surveillanceErreurs() {
-  function envoyerErreur(message, pile) {
-    if (typeof sb === 'undefined' || !sb || !message) return;
-    // Anti-spam : au plus un envoi de cette erreur précise par navigateur, par jour —
-    // évite qu'une même erreur répétée (ex. survenant à chaque clic) ne remplisse le
-    // journal ou ne fasse gonfler artificiellement son importance.
-    const texte = String(message).slice(0, 500);
-    try {
-      const cle = 'ma2m_err_' + texte.length + '_' + texte.slice(0, 40);
-      const derniereFois = sessionStorage.getItem(cle);
-      if (derniereFois) return;
-      sessionStorage.setItem(cle, '1');
-    } catch (e) {}
-
-    sb.from('journal_erreurs').insert({
-      message: texte,
-      page: window.location.pathname,
-      pile: pile ? String(pile).slice(0, 1000) : null,
-      user_agent: navigator.userAgent.slice(0, 300)
-    }).then(() => {}).catch(() => {});
-  }
-
-  window.addEventListener('error', (e) => {
-    envoyerErreur(e.message, e.error && e.error.stack);
-  });
-  window.addEventListener('unhandledrejection', (e) => {
-    const raison = e.reason;
-    envoyerErreur(raison && raison.message ? raison.message : String(raison), raison && raison.stack);
-  });
-})();
+// Déplacée dans js/surveillance.js (chargé tout en haut de chaque page, bien avant
+// ce fichier) et élargie aux dysfonctionnements silencieux. Ici, un simple relais
+// pour signaler aussi les échecs que le code rattrape sans planter.
+function signalerProbleme(categorie, message, detail) {
+  if (window.signalerErreur) window.signalerErreur(categorie, message, detail);
+}
 
 // ================== Verrou de défilement fiable, y compris sur iPhone ==================
 // `overflow: hidden` seul (utilisé auparavant) ne bloque PAS le défilement tactile sur
@@ -383,10 +354,10 @@ async function chargerImageHauteRes(url) {
   let blob;
   try {
     const reponse = await fetch(url);
-    if (!reponse.ok) return null;
+    if (!reponse.ok) return null; // déjà signalé par la surveillance des requêtes
     blob = await reponse.blob();
   } catch (e) {
-    return null;
+    return null; // idem (réseau injoignable)
   }
   const urlLocale = URL.createObjectURL(blob);
   return new Promise((resolve) => {
@@ -406,6 +377,7 @@ async function chargerImageHauteRes(url) {
     };
     img.onerror = () => {
       URL.revokeObjectURL(urlLocale);
+      signalerProbleme('Photo illisible pour la fiche/CV', url);
       resolve(null);
     };
     img.src = urlLocale;
@@ -423,7 +395,7 @@ function chargerImageLocale(url) {
       canvas.getContext('2d').drawImage(img, 0, 0);
       resolve({ canvas, largeur: canvas.width, hauteur: canvas.height });
     };
-    img.onerror = () => resolve(null);
+    img.onerror = () => { signalerProbleme('Image du site non chargée', url); resolve(null); };
     img.src = url;
   });
 }
@@ -732,6 +704,7 @@ async function genererFiche(format, ficheData, idBtnPdf, idBtnJpeg) {
       doc.save(nomFichier + '.pdf');
     }
   } catch (e) {
+    signalerProbleme('Génération de fichier échouée', (e && e.message) || String(e), e && e.stack);
     alert('Une erreur est survenue pendant la génération du fichier. Réessayez.');
   } finally {
     if (btnPdf) btnPdf.disabled = false;
@@ -880,6 +853,7 @@ async function construireCanvasCv(d) {
     chargerQrLib().catch(function () { return null; })
   ]);
   photosPortfolio.pop(); // résultat de chargerQrLib, pas une photo
+  if (!window.qrcode) signalerProbleme('QR code absent du CV', 'le générateur de QR code n\'a pas pu se charger');
   const photosPresentes = photosPortfolio.filter(Boolean);
   const handle = d.instagram ? String(d.instagram).replace(/^@/, '') : '';
 
@@ -1222,6 +1196,7 @@ async function genererCvFichier(format, donneesCv, idBtnPdf, idBtnJpeg) {
       doc.save(nomFichier + '.pdf');
     }
   } catch (e) {
+    signalerProbleme('Génération de fichier échouée', (e && e.message) || String(e), e && e.stack);
     alert('Une erreur est survenue pendant la génération du fichier. Réessayez.');
   } finally {
     if (btnPdf) btnPdf.disabled = false;

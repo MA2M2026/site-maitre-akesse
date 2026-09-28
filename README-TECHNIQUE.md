@@ -542,13 +542,11 @@ Vercel, aucun nouveau réglage DNS ou CORS nécessaire, le compartiment R2
 est le même (`ma2m-photos`), seul le préfixe de chemin change
 (`site/<categorie>/...` au lieu de `<model_id>/...`).
 
-**Migration des images déjà en ligne : pas encore faite.** Contrairement
-aux photos du Book, aucun outil admin n'a encore été construit pour
-rapatrier vers R2 les images déjà envoyées avant ce déploiement — elles
-restent sur Supabase Storage (et continuent donc de consommer le quota)
-jusqu'à ce qu'un outil équivalent à "☁️ Migration des photos vers R2" soit
-ajouté pour `actualites`, `evenements` et `partenaires`. À faire avant le
-15 octobre 2026 (date de restriction annoncée par Supabase).
+**Migration des images déjà en ligne : faite.** Outil admin « ☁️ Migration
+des images du site vers R2 » (tableau de bord, section Migration des photos
+vers R2, PR #192) — lancé par la propriétaire le 28 septembre 2026, réponse
+« Aucune image à migrer — tout est déjà sur R2 ». Rien à faire avant la
+restriction Supabase du 15 octobre 2026.
 
 ### Méthode actuelle quand l'assistant IA a accès à git/GitHub (depuis fin
 ### septembre 2026) — à préférer à la méthode manuelle ci-dessus
@@ -693,6 +691,21 @@ Solution mise en place en deux temps :
    sans réenvoyer le fichier).
 
 ## Surveillance des erreurs réelles (alternative aux audits manuels)
+
+**Depuis le 28 septembre 2026 : `js/surveillance.js`**, chargé tout en haut de
+chaque page (juste après Sentry). La propriétaire veut que le site détecte TOUT
+dysfonctionnement, pas seulement les plantages — les bugs du jour (QR code du CV
+bloqué par le CSP, photos absentes depuis Facebook) étaient silencieux. Il signale,
+dans `journal_erreurs` ET dans Sentry, avec une catégorie entre crochets : erreurs
+JS, images/scripts/styles non chargés, blocages CSP (`securitypolicyviolation`),
+requêtes réseau en échec (fetch surveillé ; 401/403/404/406/409 ignorés car
+normaux), `console.error`, page très lente (> 12 s, avec les fichiers les plus
+longs), supabase-js jamais chargé. L'appli d'origine (Facebook, Instagram…) et le
+type de réseau sont ajoutés en première ligne de `pile` et affichés dans le tableau
+de bord. Envoi direct par fetch à l'API REST (clé anon), indépendant de supabase-js.
+Anti-doublon par session, 25 signalements max par page. Depuis le code :
+`window.signalerErreur(catégorie, message, détail)` (ou `signalerProbleme()` dans
+`js/app.js`) pour tout échec rattrapé sans planter.
 
 Table `journal_erreurs` (Extension 44) + capture globale dans `js/app.js`
 + section "🔴 Erreurs réelles du site" dans `tableau-de-bord.html`.

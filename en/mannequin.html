@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-0sF7UuQpw4tXmagY7bV3ctpoDGjRoVBlvsK7Eg5JU/E='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-klc6DFy3aFt/6gjSoI1iukiTl5TKg++BJEN20munD4Q='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
+<script src="../js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
 <script src="../js/analytics-config.js"></script>
@@ -519,6 +520,7 @@ async function genererFicheEn(format) {
       doc.save(nomFichier + '.pdf');
     }
   } catch (e) {
+    if (window.signalerErreur) window.signalerErreur('Génération de fichier échouée', (e && e.message) || String(e), e && e.stack);
     alert('An error occurred while generating the file. Please try again.');
   } finally {
     if (btnPdf) btnPdf.disabled = false;
