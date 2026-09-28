@@ -252,17 +252,38 @@ section { padding: 5rem 0; }
 .book-photo-coeur.aime { animation: coeur-pop 0.3s ease; }
 @keyframes coeur-pop { 0% { transform: scale(1); } 40% { transform: scale(1.25); } 100% { transform: scale(1); } }
 
-/* ---------- Fiche publique — bandeau façon page de profil (couverture + photo
-   ronde en superposition) : pensé pour que la première impression, en arrivant
-   sur la fiche d'un mannequin, ressemble à l'ouverture d'un profil Instagram. ---------- */
-.profil-couverture { position: relative; width: 100%; aspect-ratio: 16/6; max-height: 320px; overflow: hidden; background: linear-gradient(135deg, var(--noir-doux), var(--noir)); border-radius: 4px; }
-.profil-couverture img { width: 100%; height: 100%; object-fit: cover; }
-.profil-avatar-ligne { display: flex; align-items: flex-end; gap: 1.5rem; margin-top: -64px; padding: 0 1.4rem; position: relative; z-index: 2; }
+/* ---------- Fiche publique — photo de couverture en plein écran : même recette que
+   "Mannequin à la une" (.vedette-fullbleed) / actualités-événements (.news-une) / mot du
+   fondateur — demande de la propriétaire, 28 septembre 2026 : que la photo de couverture
+   du mannequin s'affiche en grand avec son nom et ses informations en surimpression,
+   comme les autres photos "à la une" du site, plutôt qu'un petit bandeau. ---------- */
+.profil-hero-fullbleed {
+  display: block; position: relative;
+  width: 100vw; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw);
+  height: 86vh; height: 86dvh; min-height: 520px; max-height: 820px;
+  overflow: hidden;
+}
+.profil-hero-fullbleed img {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top center;
+}
+.profil-hero-scrim {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.35) 40%, rgba(0,0,0,0.04) 68%, rgba(0,0,0,0) 82%);
+}
+.profil-hero-contenu { position: absolute; left: 0; right: 0; bottom: 0; padding: clamp(1.6rem, 5vw, 4rem); max-width: 760px; }
+.profil-hero-contenu h1 {
+  color: var(--titre-clair); margin-top: 0.6rem;
+  font-size: clamp(2.2rem, 6vw, 4rem); line-height: 1.05; text-shadow: 0 4px 30px rgba(0,0,0,0.6);
+}
+.profil-hero-contenu p { color: var(--texte-corps); margin-top: 0.6rem; font-size: 1.02rem; letter-spacing: 0.04em; }
+@media (max-width: 640px) { .profil-hero-fullbleed { height: 78vh; height: 78dvh; min-height: 460px; } }
+
+.profil-avatar-centree { display: flex; justify-content: center; padding: 1.6rem 1rem 0; }
 .profil-avatar { width: 132px; height: 132px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: var(--noir-doux); border: 4px solid var(--noir); box-shadow: 0 6px 20px rgba(0,0,0,.45); }
 .profil-avatar.cliquable { cursor: pointer; }
 .profil-avatar img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s var(--transition-douce); }
 .profil-avatar.cliquable:hover img { transform: scale(1.05); }
-@media (max-width: 600px) { .profil-avatar-ligne { margin-top: -46px; gap: 1rem; padding: 0 1rem; } .profil-avatar { width: 92px; height: 92px; border-width: 3px; } }
+@media (max-width: 600px) { .profil-avatar { width: 92px; height: 92px; border-width: 3px; } }
 
 .mensurations { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.7rem; margin: 1.6rem 0; }
 /* Chaque case = une "touche de clavier" : fond noir laqué/miroir (même dégradé

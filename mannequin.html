@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-9vW/saugtQv3HdnsOPaFPmEl1LUyORgQGC7Grf6hGPs='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-7qzTX2fbWhcoN8NR8B0qP2PjgfCnkK2/b2LeciSYanY=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-2YLaNh1HHVRwB3gFwQGCHqAdIazjnazAda811UucXlE='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-7qzTX2fbWhcoN8NR8B0qP2PjgfCnkK2/b2LeciSYanY=';">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
@@ -285,6 +285,7 @@ async function chargerProfilInterne() {
 
   const premierePhoto = (photos && photos[0]) ? photos[0].url : 'assets/logo-dark-bg.png';
   const photoCouverture = (photos || []).find(p => p.photo_couverture);
+  const photoHero = photoCouverture ? photoCouverture.url : premierePhoto;
   const libellesDispo = { immediate: 'Disponible immédiatement', rdv: 'Sur rendez-vous', mobile: 'Mobile pour déplacements' };
   let age = '';
   if (profil.date_naissance) {
@@ -346,14 +347,17 @@ async function chargerProfilInterne() {
 
   contenu.innerHTML = `
     <div class="reveal">
-      <div class="profil-couverture">${photoCouverture ? `<img data-couv-img src="${echapperHtml(photoCouverture.url)}" alt="">` : ''}</div>
-      <div class="profil-avatar-ligne">
-        <div class="profil-avatar cliquable" id="compsheet-photo-clic"><img src="${echapperHtml(premierePhoto)}" alt="${echapperHtml(profil.full_name || '')}"></div>
-        <div>
-          <div class="eyebrow">${profil.category === 'homme' ? 'Homme' : profil.category === 'femme' ? 'Femme' : 'New Face'}</div>
-          <h1 class="mq-10">${echapperHtml(profil.full_name || 'Mannequin')}</h1>
-          <p class="mq-12">${echapperHtml(['Mannequin ' + (profil.niveau_mannequin || deriverNiveauMannequin(profil.years_experience)), profil.city].filter(Boolean).join(' · '))}</p>
+      <div class="profil-hero-fullbleed">
+        <img data-couv-img src="${echapperHtml(photoHero)}" alt="">
+        <div class="profil-hero-scrim"></div>
+        <div class="profil-hero-contenu">
+          <div class="eyebrow eyebrow--clair">${profil.category === 'homme' ? 'Homme' : profil.category === 'femme' ? 'Femme' : 'New Face'}</div>
+          <h1>${echapperHtml(profil.full_name || 'Mannequin')}</h1>
+          <p>${echapperHtml(['Mannequin ' + (profil.niveau_mannequin || deriverNiveauMannequin(profil.years_experience)), profil.city].filter(Boolean).join(' · '))}</p>
         </div>
+      </div>
+      <div class="profil-avatar-centree">
+        <div class="profil-avatar cliquable" id="compsheet-photo-clic"><img src="${echapperHtml(premierePhoto)}" alt="${echapperHtml(profil.full_name || '')}"></div>
       </div>
       <div class="u-mt-1-8">
         <div class="mensurations">
