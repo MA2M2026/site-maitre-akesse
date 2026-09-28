@@ -52,11 +52,10 @@ async function chargerEvenements() {
   const une = data[0];
   uneZone.innerHTML = `
     <div class="news-une reveal" data-index="0">
-      <div class="news-une-photo">
-        <img src="${echapperHtml(une.image_url || '')}" loading="lazy" alt="${echapperHtml(une.titre || '')}">
-        <span class="news-une-badge">★ À la une</span>
-      </div>
+      <img src="${echapperHtml(une.image_url || '')}" loading="lazy" alt="${echapperHtml(une.titre || '')}">
+      <div class="news-une-scrim"></div>
       <div class="news-une-corps">
+        <span class="news-une-badge">★ À la une</span>
         ${une.lieu ? `<span class="news-categorie">📍 ${echapperHtml(une.lieu)}</span>` : ''}
         <div class="news-date">${dateAffichageEvenement(une)}</div>
         ${une.titre ? `<h2>${echapperHtml(une.titre)}</h2>` : ''}
