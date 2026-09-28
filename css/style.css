@@ -1391,9 +1391,15 @@ html.porte-verrouillee { overflow: hidden; height: 100%; }
    plein écran, quitte à recadrer légèrement certaines photos. Le calque de
    fond flouté (.news-une-fond) reste dans le HTML mais n'est plus affiché. */
 .news-une .news-une-photo .news-une-fond { display: none; }
-.news-une .news-une-photo img:not(.news-une-fond) { position: relative; z-index: 1; object-fit: cover; }
+.news-une .news-une-photo img:not(.news-une-fond) { object-fit: cover; }
+/* z-index: 2 explicite (pas "auto") : sans lui, l'ajout de position:relative
+   sur l'image ci-dessus (nécessaire pour object-fit: cover) la faisait
+   passer AU-DESSUS de ce dégradé au lieu d'en dessous — le dégradé était
+   toujours calculé, mais invisible, cachée derrière la photo. Repéré par la
+   propriétaire le 28 septembre 2026 en comparant plusieurs captures d'écran
+   où le bas de la photo restait net au lieu de s'assombrir. */
 .news-une .news-une-photo::after {
-  content: ''; position: absolute; inset: 0; pointer-events: none;
+  content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
   background: linear-gradient(to top, rgba(6,5,4,0.92) 0%, rgba(6,5,4,0.55) 40%, rgba(6,5,4,0) 74%);
 }
 .news-une .news-une-corps {
