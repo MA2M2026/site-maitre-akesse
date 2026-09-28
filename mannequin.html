@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-T+XCnW5hwF2GhweFqm4qdvFxL4lAIEoTZhUthND6nz8='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-7qzTX2fbWhcoN8NR8B0qP2PjgfCnkK2/b2LeciSYanY=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-XOqG7cNeD+qmuCuEWpXEeXG0JV7753wtT7xmBCisWeo='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-7qzTX2fbWhcoN8NR8B0qP2PjgfCnkK2/b2LeciSYanY=';">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
@@ -278,7 +278,7 @@ async function chargerProfilInterne() {
 
   const { data: photos } = await sb
     .from('model_photos')
-    .select('id, url, url_miniature, compcard_ordre, principale, photo_couverture, couverture_position')
+    .select('id, url, url_miniature, url_moyenne, compcard_ordre, principale, photo_couverture, couverture_position')
     .eq('model_id', id)
     .order('principale', { ascending: false })
     .order('created_at', { ascending: true });
@@ -291,7 +291,12 @@ async function chargerProfilInterne() {
 
   const premierePhoto = (photos && photos[0]) ? photos[0].url : 'assets/logo-dark-bg.png';
   const photoCouverture = (photos || []).find(p => p.photo_couverture);
-  const photoHero = photoCouverture ? photoCouverture.url : premierePhoto;
+  // Versions allégées pour l'affichage (la fiche était lourde à ouvrir, surtout depuis
+  // le navigateur intégré de Facebook) : couverture en taille « moyenne » (~1400px),
+  // médaillon en miniature (~500px). L'originale reste utilisée pour la galerie plein
+  // écran et la compcard.
+  const photoHero = photoCouverture ? (photoCouverture.url_moyenne || photoCouverture.url) : ((photos && photos[0]) ? (photos[0].url_moyenne || photos[0].url) : premierePhoto);
+  const photoAvatar = (photos && photos[0]) ? (photos[0].url_miniature || photos[0].url) : 'assets/logo-dark-bg.png';
   const libellesDispo = { immediate: 'Disponible immédiatement', rdv: 'Sur rendez-vous', mobile: 'Mobile pour déplacements' };
   let age = '';
   if (profil.date_naissance) {
@@ -366,7 +371,7 @@ async function chargerProfilInterne() {
         </div>
       </div>
       <div class="fiche-entete">
-        <div class="profil-avatar fiche-avatar cliquable" id="compsheet-photo-clic" role="button" tabindex="0" aria-label="Voir la photo en grand"><img src="${echapperHtml(premierePhoto)}" alt="${echapperHtml(profil.full_name || '')}"></div>
+        <div class="profil-avatar fiche-avatar cliquable" id="compsheet-photo-clic" role="button" tabindex="0" aria-label="Voir la photo en grand"><img src="${echapperHtml(photoAvatar)}" alt="${echapperHtml(profil.full_name || '')}"></div>
         <dl class="fiche-mesures" aria-label="Mensurations">
           ${age ? `<div class="fiche-mesure"><dt>${iconeMensuration('age')}Âge</dt><dd>${age} ans</dd></div>` : ''}
           ${profil.height_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('taille')}Taille</dt><dd>${profil.height_cm} cm</dd></div>` : ''}
