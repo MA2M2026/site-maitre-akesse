@@ -909,3 +909,27 @@ les classes ajoutées dynamiquement (`classList.add(...)`, `className =
 - **Refonte de la navigation du tableau de bord** en 3 blocs + menu mobile
   dédié (`.tdb-menu-panel`/`.tdb-menu-toggle`) — voir aussi la section
   verrou de défilement plus haut, ce tiroir en fait partie.
+
+## Diagnostic sécurité du 28 septembre 2026 (nuit)
+
+Revue complète de la sécurité et des connexions, à la demande de la
+propriétaire, faite pendant que le site tournait normalement (lecture et
+vérification uniquement, aucune modification risquée). Rapport complet :
+https://claude.ai/artifact/6VhrViMnZ8cRxJvsnnrNtD
+
+**Résumé** : fondations déjà solides — RLS activé sur les 36 tables sans
+exception, les 43 fonctions `SECURITY DEFINER` ont `set search_path`
+(protection contre le détournement de chemin de recherche), aucun secret
+dans le code, aucun lien mort, endpoints d'administration (créer admin,
+supprimer mannequin) correctement vérifiés côté serveur.
+
+Deux points mineurs relevés sur le tout nouveau système de cœurs
+(Extension 93 de la même nuit) ont été corrigés dans la foulée
+(Extension 95) : limite anti-spam par visiteur (réutilise
+`limiter_soumissions_publiques`, Extension 75) et cœurs désormais
+réservés aux profils publiés.
+
+Recommandations restantes (aucune urgente) : confirmer Resend par un
+envoi réel, envisager une vérification plus poussée du contenu des
+fichiers uploadés (limite déjà documentée dans `SECURITY.md`), faire
+tourner Mozilla Observatory / SSL Labs pour un second avis extérieur.
