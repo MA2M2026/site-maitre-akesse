@@ -503,6 +503,53 @@ sans risque (une photo déjà migrée est ignorée). Les nouveaux envois
 passent déjà par R2 dès ce déploiement ; cet outil ne concerne que
 l'historique.
 
+## Images du site (actualités, événements, partenaires) sur R2 également (28 septembre 2026)
+
+Même cause, même remède que pour les photos du Book ci-dessus, mais
+découvert plus tard : les images des actualités (`actualites-images`), des
+événements (`evenements-images`), des logos de partenaires
+(`partenaires-logos`) et de la photo du mot du fondateur (également dans
+`partenaires-logos`, chemin `responsable/...`) restaient hébergées
+directement sur Supabase Storage. Chaque visite d'une page publique les
+rechargeait depuis Supabase, consommant le même quota gratuit de bande
+passante ("Cached Egress") — repéré cette fois via un avertissement de
+facturation Supabase (organisation restreinte à partir du 15 octobre 2026,
+quota à 293%).
+
+**`api/r2-site-images.js`** — même principe que `api/r2-presigner.js`
+(URL R2 signée temporaire, jamais les clés côté navigateur), mais réservé
+aux admins uniquement (ces images n'appartiennent à aucun mannequin).
+Catégories autorisées : `actualites`, `evenements`, `partenaires`,
+`responsable`. Chaque chemin envoyé doit commencer par
+`site/<categorie>/` — vérifié côté serveur avant toute opération.
+
+**`js/app.js`** — trois fonctions partagées par toutes les pages
+concernées :
+- `envoyerImageSite(categorie, chemin, fichier)` : upload avec 3 tentatives
+  (délai croissant) avant d'abandonner.
+- `supprimerImageSite(categorie, chemin)` : suppression sur R2, échoue en
+  silence (une image déjà supprimée ou introuvable ne doit jamais bloquer
+  la suppression de la fiche qui la référence).
+- `supprimerCheminsImagesSite(categorie, bucketSupabase, chemins)` :
+  aiguille chaque chemin vers R2 ou vers l'ancien Supabase Storage selon
+  qu'il commence par `site/<categorie>/` ou non — nécessaire pendant la
+  période de transition où une même actualité/événement peut avoir des
+  photos encore anciennes (Supabase) et des photos nouvelles (R2).
+
+Toutes ces images sont servies via le même relais Vercel `/book-photos/`
+déjà en place pour le Book (voir plus haut) — aucune nouvelle variable
+Vercel, aucun nouveau réglage DNS ou CORS nécessaire, le compartiment R2
+est le même (`ma2m-photos`), seul le préfixe de chemin change
+(`site/<categorie>/...` au lieu de `<model_id>/...`).
+
+**Migration des images déjà en ligne : pas encore faite.** Contrairement
+aux photos du Book, aucun outil admin n'a encore été construit pour
+rapatrier vers R2 les images déjà envoyées avant ce déploiement — elles
+restent sur Supabase Storage (et continuent donc de consommer le quota)
+jusqu'à ce qu'un outil équivalent à "☁️ Migration des photos vers R2" soit
+ajouté pour `actualites`, `evenements` et `partenaires`. À faire avant le
+15 octobre 2026 (date de restriction annoncée par Supabase).
+
 ### Méthode actuelle quand l'assistant IA a accès à git/GitHub (depuis fin
 ### septembre 2026) — à préférer à la méthode manuelle ci-dessus
 
