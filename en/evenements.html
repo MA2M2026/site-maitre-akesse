@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-qfpMxlxJ1n9L7JaINm/uD6pOLq4eW01j4T3O3ecKLrE=' 'sha256-0P64kcZy3smu3cX6C/pEFRQaFMSea68eZVIs5pSAtWs=' 'sha256-woKp3yCCQ5SG1jVG/JmQh19ffKuqlN7Dx1qnFaUTM0s='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net ;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-qfpMxlxJ1n9L7JaINm/uD6pOLq4eW01j4T3O3ecKLrE=' 'sha256-0P64kcZy3smu3cX6C/pEFRQaFMSea68eZVIs5pSAtWs=' 'sha256-IsbKHQY+EOWjOthHg3RkA0epOcLAYclyMSRv8BV3ihs='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net ;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -390,8 +390,10 @@ document.getElementById('news-modal-supprimer-btn').addEventListener('click', as
   if (!confirm('Permanently delete this event and all its photos?')) return;
   const { data: photos } = await sbAdmin.from('evenement_photos').select('chemin').eq('evenement_id', id);
   const chemins = (photos || []).map(p => p.chemin).filter(Boolean);
+  // Base d'abord : si la suppression échoue, les images restent intactes.
+  const { error: erreurSuppression } = await sbAdmin.from('evenements').delete().eq('id', id);
+  if (erreurSuppression) { alert('Deletion failed. Please try again.'); return; }
   if (chemins.length) await supprimerCheminsImagesSite('evenements', 'evenements-images', chemins);
-  await sbAdmin.from('evenements').delete().eq('id', id);
   fermerNewsModal();
   chargerEvenements();
 });
@@ -527,8 +529,10 @@ document.getElementById('red-supprimer-btn').addEventListener('click', async () 
   const id = redactionIdEnCours;
   const { data: photos } = await sbAdmin.from('evenement_photos').select('chemin').eq('evenement_id', id);
   const chemins = (photos || []).map(p => p.chemin).filter(Boolean);
+  // Base d'abord : si la suppression échoue, les images restent intactes.
+  const { error: erreurSuppression } = await sbAdmin.from('evenements').delete().eq('id', id);
+  if (erreurSuppression) { alert('Deletion failed. Please try again.'); return; }
   if (chemins.length) await supprimerCheminsImagesSite('evenements', 'evenements-images', chemins);
-  await sbAdmin.from('evenements').delete().eq('id', id);
   fermerRedaction();
   chargerEvenements();
 });

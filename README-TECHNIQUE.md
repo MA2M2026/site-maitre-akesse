@@ -1088,6 +1088,12 @@ vérifier qu'aucun texte n'est jamais exécuté). Corrigé :
 - Surveillance : ignore les `<img src="">` en attente et les services d'audience
   bloqués par les bloqueurs de pub (ipify, Google Analytics) — sinon bruit inutile.
 - `robots.txt` : chemins sans `.html` (le site utilise `cleanUrls`).
+- **Suppressions dans le bon ordre** (photo du Book côté mannequin et admin,
+  photo de dossier, actualité, événement, partenaire — FR/EN) : la fiche en base
+  est supprimée d'abord, les fichiers ensuite seulement si la base a accepté.
+  Avant, les fichiers partaient en premier et l'erreur de base était ignorée →
+  élément toujours listé mais image cassée. En cas d'échec : message clair.
+- Types `image/jpg` et `image/pjpeg` (certains Android) acceptés par les `/api`.
 - Outils internes (`outils/`) : logos introuvables (mauvais chemin) corrigés.
 
 **Recommandation non appliquée (demande une décision + du SQL)** : le code de
