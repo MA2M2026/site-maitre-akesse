@@ -2141,3 +2141,7 @@ html.porte-deja-vue #porte-entree { display: none; }
   .fiche-contact-tuile .fiche-contact-rond { width: 36px; height: 36px; }
   .fiche-contact-valeur { font-size: 0.84rem; }
 }
+
+/* Tableau de bord — détail technique sous chaque erreur (fichier, ligne, adresse
+   concernée), pour pouvoir diagnostiquer à partir d'une simple capture d'écran. */
+.tdb-erreur-detail { display: block; margin-top: 0.35rem; font-family: var(--texte); font-size: 0.68rem; color: var(--texte-doux); word-break: break-all; opacity: 0.85; }

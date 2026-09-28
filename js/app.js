@@ -6,6 +6,40 @@ function signalerProbleme(categorie, message, detail) {
   if (window.signalerErreur) window.signalerErreur(categorie, message, detail);
 }
 
+// ================== Conversion des photos HEIC (iPhone) en JPEG ==================
+// Remplace la bibliothèque heic2any (retirée le 28 septembre 2026) : elle utilise
+// « new Function » (évaluation de code), interdit par nos règles de sécurité (CSP,
+// pas de 'unsafe-eval') — d'où une erreur « EvalError » à CHAQUE chargement des pages
+// d'envoi de photos (l'essentiel du journal d'erreurs ce jour-là), sans jamais
+// réussir à convertir quoi que ce soit, en plus de peser 1,3 Mo par page.
+// Même signature que heic2any({ blob, toType, quality }) pour ne rien changer aux
+// pages qui l'appellent. La conversion est faite par le navigateur lui-même : ça
+// marche là où il sait lire le HEIC (Safari sur iPhone/Mac, d'où viennent ces
+// photos — et l'iPhone convertit d'ailleurs souvent tout seul en JPEG à l'envoi).
+// Ailleurs la promesse échoue : les pages gardent alors leur comportement habituel
+// (envoi du fichier d'origine), et la surveillance le signale.
+if (typeof window.heic2any === 'undefined') {
+  window.heic2any = async function (options) {
+    const url = URL.createObjectURL(options.blob);
+    try {
+      const img = await new Promise(function (ok, ko) {
+        const i = new Image();
+        i.onload = function () { ok(i); };
+        i.onerror = function () { ko(new Error('Photo HEIC illisible par ce navigateur')); };
+        i.src = url;
+      });
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
+      canvas.getContext('2d').drawImage(img, 0, 0);
+      return await new Promise(function (ok, ko) {
+        canvas.toBlob(function (b) { b ? ok(b) : ko(new Error('Conversion JPEG impossible')); }, options.toType || 'image/jpeg', options.quality || 0.85);
+      });
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  };
+}
+
 // ================== Verrou de défilement fiable, y compris sur iPhone ==================
 // `overflow: hidden` seul (utilisé auparavant) ne bloque PAS le défilement tactile sur
 // iOS Safari — limitation connue et documentée d'iOS, pas un bug ponctuel. La seule
