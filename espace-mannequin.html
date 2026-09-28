@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://cdn.jsdelivr.net 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-heOBL/XrD8xWCezpSD8wkmhT2waauIOVfF2DHBnGmdY='; style-src 'self' https://fonts.googleapis.com 'sha256-2RaJjkt0dwCPrM/WQd2sjLywmysdtxLwAh6UXghu0HQ=' 'sha256-l6fymG/9VFModmkt4+Cju+Misw/e9E3nOMRhpZL+0so=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://cdn.jsdelivr.net 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-94jWGOu2MK5VPZF8/wtRRQ8zgmvo1XC8wLb8UKz6PMI='; style-src 'self' https://fonts.googleapis.com 'sha256-2RaJjkt0dwCPrM/WQd2sjLywmysdtxLwAh6UXghu0HQ=' 'sha256-l6fymG/9VFModmkt4+Cju+Misw/e9E3nOMRhpZL+0so=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <meta charset="UTF-8">
@@ -874,15 +874,15 @@ function mapProfileFromDb(row, contactPrive){
     sexe: row.category || ''
   });
   Object.assign(s.physique, {
-    taille: row.height_cm ?? '', poids: row.weight_kg ?? '', poitrine: row.chest_cm ?? '', tourTaille: row.waist_cm ?? '',
-    hanches: row.hips_cm ?? '', entrejambe: row.inseam_cm ?? '', pointure: row.shoe_size || '', tailleVet: row.clothing_size || '',
+    taille: (row.height_cm == null ? '' : row.height_cm), poids: (row.weight_kg == null ? '' : row.weight_kg), poitrine: (row.chest_cm == null ? '' : row.chest_cm), tourTaille: (row.waist_cm == null ? '' : row.waist_cm),
+    hanches: (row.hips_cm == null ? '' : row.hips_cm), entrejambe: (row.inseam_cm == null ? '' : row.inseam_cm), pointure: row.shoe_size || '', tailleVet: row.clothing_size || '',
     yeux: row.eye_color || '', cheveux: row.hair_color || '', carnation: row.carnation || ''
   });
   Object.assign(s.formation, {
     niveau: row.niveau_etude || '', etablissement: row.etablissement || '', particuliere: row.formation_particuliere || '', mannequin: row.formation_mannequin || ''
   });
   Object.assign(s.profilPro, {
-    anneesExperience: row.years_experience ?? '', disponibilite: row.availability || '',
+    anneesExperience: (row.years_experience == null ? '' : row.years_experience), disponibilite: row.availability || '',
     modelTypes: row.model_types || [], langues: (row.languages || '').split(',').map(function(l){return l.trim();}).filter(Boolean),
     niveauMannequin: row.niveau_mannequin || deriverNiveauMannequin(row.years_experience)
   });
@@ -1005,7 +1005,16 @@ const Store = {
       // e.message porte le vrai motif quand il vient d'un refus explicite du
       // serveur (ex. limite de photos atteinte) — l'afficher plutôt qu'un
       // message générique qui cacherait la cause réelle et la solution.
-      console.error(e); toast((e && e.message) || "Échec de l'envoi de la photo", true); return null;
+      console.error(e);
+      // Coupure réseau : le navigateur renvoie un message technique en anglais
+      // (« Failed to fetch » sur Android, « Load failed » sur iPhone) — le remplacer
+      // par une phrase compréhensible pour la mannequin.
+      const brut = (e && e.message) || '';
+      const reseau = /failed to fetch|load failed|networkerror|network request failed|réseau/i.test(brut);
+      toast(reseau
+        ? 'Connexion interrompue pendant l’envoi de « ' + ((file && file.name) || 'la photo') + ' ». Vérifiez votre connexion et réessayez.'
+        : (brut || "Échec de l'envoi de la photo"), true);
+      return null;
     }
   },
 
@@ -1126,7 +1135,12 @@ async function convertirSiHeic(fichier){
 function compresserPhotoOrigine(fichier, coteMax, qualite){
   coteMax = coteMax || 2200; qualite = qualite || 0.85;
   return new Promise(function(resolve){
-    if (fichier.type !== 'image/jpeg' || fichier.size < 900*1024) { resolve(fichier); return; }
+    // Compresse toute photo lourde (> 900 Ko), pas seulement les JPEG : les captures
+    // d'écran PNG ou les WebP de plusieurs Mo partaient telles quelles, très lentes à
+    // envoyer sur une connexion mobile (audit du 28 septembre 2026). Les GIF sont
+    // laissés intacts (animation). Sortie toujours en JPEG, sur fond blanc.
+    const compressible = /^image\/(jpeg|jpg|pjpeg|png|webp)$/i.test(fichier.type || '');
+    if (!compressible || fichier.size < 900*1024) { resolve(fichier); return; }
     const img = new Image();
     img.onload = function(){
       try{
@@ -1134,7 +1148,9 @@ function compresserPhotoOrigine(fichier, coteMax, qualite){
         const ratio = coteActuel > coteMax ? coteMax/coteActuel : 1;
         const canvas = document.createElement('canvas');
         canvas.width = Math.round(img.width*ratio); canvas.height = Math.round(img.height*ratio);
-        canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+        const ctxC = canvas.getContext('2d');
+        ctxC.fillStyle = '#fff'; ctxC.fillRect(0,0,canvas.width,canvas.height); // transparence PNG → blanc
+        ctxC.drawImage(img,0,0,canvas.width,canvas.height);
         canvas.toBlob(function(blob){
           if (!blob || blob.size >= fichier.size) { resolve(fichier); return; }
           resolve(new File([blob], fichier.name.replace(/\.\w+$/, '.jpg'), { type:'image/jpeg' }));
@@ -1640,8 +1656,16 @@ function bindPhotoHandlers(){
     }
     const aEnvoyer = files.slice(0, place);
     if (files.length > place) toast('Limite de '+LIMITE_PHOTOS_BOOK+' photos : seules '+place+' photo(s) sur '+files.length+' seront envoyées.', true);
-    else if (aEnvoyer.length>1) toast(aEnvoyer.length+' photos en cours d’envoi…');
-    for (const file of aEnvoyer) { const item = await Store.uploadPhoto(file); if (item) s.photos.book.push(item); }
+    // Progression visible photo par photo : sans elle, un envoi de plusieurs photos sur
+    // une connexion lente donnait l'impression que rien ne se passait.
+    let nbOk = 0;
+    for (let i = 0; i < aEnvoyer.length; i++) {
+      if (aEnvoyer.length > 1) toast('Envoi de la photo '+(i+1)+' sur '+aEnvoyer.length+'…');
+      const item = await Store.uploadPhoto(aEnvoyer[i]);
+      if (item) { s.photos.book.push(item); nbOk++; }
+    }
+    if (aEnvoyer.length > 1) toast(nbOk === aEnvoyer.length ? 'Les '+nbOk+' photos ont bien été ajoutées.' : nbOk+' photo(s) ajoutée(s) sur '+aEnvoyer.length+'.', nbOk !== aEnvoyer.length);
+    else if (nbOk === 1) toast('Photo ajoutée.');
     fBook.value=''; render(); reopenDashboardBlock('photos');
   });
   document.querySelectorAll('[data-rmbook]').forEach(function(b){ b.addEventListener('click', async function(e){

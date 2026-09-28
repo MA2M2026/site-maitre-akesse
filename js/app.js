@@ -1,3 +1,20 @@
+// ================== Compatibilité anciens téléphones ==================
+// crypto.randomUUID n'existe que depuis iOS 15.4 / Chrome 92 : sur un iPhone plus
+// ancien, l'envoi d'une candidature ou d'une sélection recruteur plantait sans
+// message (audit du 28 septembre 2026). Équivalent standard (UUID v4) basé sur
+// crypto.getRandomValues, disponible partout.
+if (window.crypto && typeof window.crypto.randomUUID !== 'function' && typeof window.crypto.getRandomValues === 'function') {
+  try {
+    window.crypto.randomUUID = function () {
+      const o = window.crypto.getRandomValues(new Uint8Array(16));
+      o[6] = (o[6] & 0x0f) | 0x40;
+      o[8] = (o[8] & 0x3f) | 0x80;
+      const hex = Array.prototype.map.call(o, function (b) { return (b + 0x100).toString(16).slice(1); }).join('');
+      return hex.slice(0, 8) + '-' + hex.slice(8, 12) + '-' + hex.slice(12, 16) + '-' + hex.slice(16, 20) + '-' + hex.slice(20);
+    };
+  } catch (e) {}
+}
+
 // ================== Surveillance des erreurs réelles du site ==================
 // Déplacée dans js/surveillance.js (chargé tout en haut de chaque page, bien avant
 // ce fichier) et élargie aux dysfonctionnements silencieux. Ici, un simple relais
