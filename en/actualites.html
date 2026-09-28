@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-OrsLxl6/77Y/qTP/5XFh8koHHJUsvhXo3Jxfk2PZ/d4=' 'sha256-AYj4o4PRSSkUDKYHMmS7/1R6L6D8QEczEYEIX5Tz4Yc='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-xFz8jkXJLKQkAoroOcoQzkprI7PuV4VRqBd9JwD3/UI='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-OrsLxl6/77Y/qTP/5XFh8koHHJUsvhXo3Jxfk2PZ/d4=' 'sha256-YuoZUADufpRnoZ5GcJDlnuA1Lr/MGrlEprK/UPNZw9E='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-xFz8jkXJLKQkAoroOcoQzkprI7PuV4VRqBd9JwD3/UI='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
@@ -337,11 +337,10 @@ async function chargerActualites() {
   const une = data[0];
   uneZone.innerHTML = `
     <div class="news-une reveal" data-index="0">
-      <div class="news-une-photo">
-        <img src="${echapperHtml(une.image_url)}" loading="lazy" alt="${echapperHtml(une.titre || '')}">
-        <span class="news-une-badge">★ Featured</span>
-      </div>
+      <img src="${echapperHtml(une.image_url)}" loading="lazy" alt="${echapperHtml(une.titre || '')}">
+      <div class="news-une-scrim"></div>
       <div class="news-une-corps">
+        <span class="news-une-badge">★ Featured</span>
         ${une.categorie ? `<span class="news-categorie">${echapperHtml(une.categorie)}</span>` : ''}
         <div class="news-date">${formatDateActu(une.created_at)}</div>
         ${une.titre ? `<h2>${echapperHtml(une.titre)}</h2>` : ''}

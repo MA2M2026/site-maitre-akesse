@@ -1356,51 +1356,51 @@ html.porte-verrouillee { overflow: hidden; height: 100%; }
 .filtre-categorie:hover { border-color: var(--bordeaux-clair); color: #fff; }
 .filtre-categorie.actif { background: var(--bordeaux); border-color: var(--bordeaux); color: #fff; box-shadow: var(--glow-bordeaux); }
 
-/* "À la une" (Actualités / Événements) : hero plein écran immersif, façon
-   couverture de magazine mode — demande de la propriétaire, affinée au fil
-   de plusieurs allers-retours le 28 septembre 2026 : plein écran en largeur
-   ET en hauteur (pas de petit cadre 4/3 à côté du texte), photo recadrée
-   pour remplir l'écran (object-fit: cover — elle préfère ça à une photo
-   entière avec des bandes vides), dégradé sombre doux en bas pour lire le
-   texte sans écraser la photo, cadrage stable sur mobile (dvh). Portée
+/* "À la une" (Actualités / Événements) : reprend EXACTEMENT la recette de
+   "Mannequin à la une" sur l'accueil (.vedette-fullbleed ci-dessous),
+   qu'elle a validée comme le bon rendu plein écran — même structure plate
+   (photo, calque de dégradé, texte, tous en enfants directs du même bloc,
+   sans z-index ni hauteur calculée indépendamment), demande explicite de
+   la propriétaire le 28 septembre 2026 après plusieurs essais. Portée
    scopée à .news-une (vrai bloc public) uniquement — l'aperçu admin du
    formulaire de rédaction (.redaction-apercu-carte), qui réutilise
-   .news-une-photo/.news-une-corps SANS le conteneur .news-une, garde son
-   rendu compact d'origine (règles plus bas). */
+   .news-une-photo/.news-une-corps dans son propre balisage compact séparé,
+   garde son rendu d'origine (règles plus bas). */
 .news-une {
-  position: relative; overflow: hidden; display: block;
+  display: block; position: relative; cursor: pointer; text-decoration: none;
   width: 100vw; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw);
-  /* dvh après vh (repli) : vh seul se recalcule sur mobile selon que la
-     barre d'adresse du navigateur est affichée ou cachée, ce qui décale le
-     cadrage de la photo d'un chargement à l'autre. */
-  min-height: 64vh; min-height: 64dvh; margin-bottom: 3.5rem; cursor: pointer;
+  height: 86vh; height: 86dvh; min-height: 520px; max-height: 820px;
+  overflow: hidden; margin-bottom: 3.5rem;
 }
-@media (min-width: 760px) { .news-une { min-height: 84vh; min-height: 84dvh; } }
-
-.news-une .news-une-photo { position: absolute; inset: 0; }
-.news-une .news-une-photo img { object-fit: cover; }
-.news-une:hover .news-une-photo img { transform: scale(1.04); }
-/* z-index: 2 explicite sur le dégradé : sans lui, et si jamais la photo
-   reçoit elle-même un position/z-index plus tard, elle pourrait repasser
-   au-dessus du dégradé et le rendre invisible sans qu'aucune erreur ne le
-   signale — piège déjà rencontré une fois avec ce même bloc. */
-.news-une .news-une-photo::after {
-  content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
-  background: linear-gradient(to top, rgba(6,5,4,0.7) 0%, rgba(6,5,4,0.3) 32%, rgba(6,5,4,0.06) 54%, rgba(6,5,4,0) 68%);
+.news-une > img {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top center;
+  transition: transform 1.2s ease;
 }
-/* position: absolute + inset: 0 (comme .news-une-photo juste au-dessus),
-   PAS min-height indépendant : demander à la fois à .news-une ET à
-   .news-une-corps de calculer 64dvh chacun de son côté (comme avant)
-   pouvait donner deux hauteurs légèrement différentes selon le moment du
-   calcul sur mobile (dvh est justement dynamique) — texte et photo ne
-   coïncidaient alors plus exactement, avec un bord dur visible entre les
-   deux. En ancrant le texte sur .news-une via inset: 0, il prend TOUJOURS
-   exactement la même hauteur que la photo, aucun calcul indépendant. */
-.news-une .news-une-corps {
-  position: absolute; inset: 0; z-index: 1; display: flex; flex-direction: column; justify-content: flex-end;
-  max-width: 760px; padding: 2rem var(--marge) 2.6rem;
+.news-une:hover > img { transform: scale(1.05); }
+.news-une .news-une-scrim {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.35) 40%, rgba(0,0,0,0.04) 68%, rgba(0,0,0,0) 82%);
 }
-@media (min-width: 760px) { .news-une .news-une-corps { padding: 3rem 4rem 4rem; } }
+.news-une .news-une-corps { position: absolute; left: 0; right: 0; bottom: 0; padding: clamp(1.6rem, 5vw, 4rem); max-width: 760px; }
+.news-une .news-une-badge {
+  display: inline-block; position: static; background: var(--bordeaux); color: #fff;
+  font-family: var(--texte); font-weight: 600; font-size: 0.68rem; letter-spacing: 0.16em;
+  text-transform: uppercase; padding: 0.5rem 1.1rem;
+}
+.news-une .news-une-corps .news-categorie { color: var(--bordeaux-clair); margin-top: 1rem; }
+.news-une .news-une-corps .news-date { margin-top: 0.3rem; }
+.news-une .news-une-corps h2 {
+  color: var(--titre-clair); margin-top: 0.6rem;
+  font-size: clamp(2.2rem, 6vw, 4rem); line-height: 1.05; text-shadow: 0 4px 30px rgba(0,0,0,0.6);
+}
+.news-une .news-une-corps p { color: var(--texte-corps); margin-top: 0.6rem; font-size: 1.02rem; letter-spacing: 0.04em; }
+.news-une .news-une-corps .news-lire {
+  display: inline-block; margin-top: 1.4rem; color: #fff; border-bottom: 2px solid var(--bordeaux-clair);
+  padding-bottom: 0.3rem; font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase;
+  transition: border-color 0.3s ease, letter-spacing 0.3s ease;
+}
+.news-une:hover .news-une-corps .news-lire { border-color: #fff; letter-spacing: 0.18em; }
+@media (max-width: 640px) { .news-une { height: 78vh; height: 78dvh; min-height: 460px; } }
 
 /* Aperçu admin (formulaire de rédaction) : rendu compact d'origine, inchangé —
    .redaction-apercu-carte réutilise .news-une-photo/.news-une-corps SANS le
