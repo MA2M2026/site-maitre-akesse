@@ -417,8 +417,25 @@ section { padding: 5rem 0; }
 .contenu-riche p, .contenu-riche li { color: inherit; }
 .contenu-riche p { margin: 0 0 1.1em; }
 .contenu-riche p:last-child { margin-bottom: 0; }
-.contenu-riche h2, .contenu-riche h3, .contenu-riche h4 { margin: 1.5em 0 0.6em; line-height: 1.3; }
-.contenu-riche h2:first-child, .contenu-riche h3:first-child, .contenu-riche h4:first-child { margin-top: 0; }
+.contenu-riche h1, .contenu-riche h2, .contenu-riche h3, .contenu-riche h4 { margin: 1.5em 0 0.6em; line-height: 1.3; }
+.contenu-riche h1:first-child, .contenu-riche h2:first-child, .contenu-riche h3:first-child, .contenu-riche h4:first-child { margin-top: 0; }
+.contenu-riche h1 { font-size: 1.9em; }
+.contenu-riche h2 { font-size: 1.5em; }
+.contenu-riche h3 { font-size: 1.22em; }
+/* Alignements et retraits posés par l'éditeur (classes Quill conservées au rendu). */
+.contenu-riche .ql-align-center { text-align: center; }
+.contenu-riche .ql-align-right { text-align: right; }
+.contenu-riche .ql-align-justify { text-align: justify; }
+.contenu-riche li.ql-indent-1 { margin-left: 1.5em; }
+.contenu-riche li.ql-indent-2 { margin-left: 3em; }
+.contenu-riche li.ql-indent-3 { margin-left: 4.5em; }
+.contenu-riche li.ql-indent-4, .contenu-riche li.ql-indent-5, .contenu-riche li.ql-indent-6,
+.contenu-riche li.ql-indent-7, .contenu-riche li.ql-indent-8 { margin-left: 6em; }
+.contenu-riche ul li.ql-indent-1, .contenu-riche ul li.ql-indent-3 { list-style-type: circle; }
+.contenu-riche ul li.ql-indent-2 { list-style-type: square; }
+.contenu-riche ul { list-style-type: disc; }
+.contenu-riche ol { list-style-type: decimal; }
+.contenu-riche sup, .contenu-riche sub { font-size: 0.72em; line-height: 0; }
 .contenu-riche ul, .contenu-riche ol { margin: 0 0 1.1em; padding-left: 1.4em; }
 .contenu-riche li { margin-bottom: 0.4em; }
 .contenu-riche blockquote {
@@ -1560,6 +1577,7 @@ html.porte-verrouillee { overflow: hidden; height: 100%; }
 .news-lecture-sombre .news-modal-corps .contenu-riche p { margin-bottom: 1.3em; }
 .news-lecture-sombre .news-modal-corps .contenu-riche strong,
 .news-lecture-sombre .news-modal-corps .contenu-riche b { font-weight: 600; color: #fff !important; }
+.news-lecture-sombre .news-modal-corps .contenu-riche h1,
 .news-lecture-sombre .news-modal-corps .contenu-riche h2,
 .news-lecture-sombre .news-modal-corps .contenu-riche h3,
 .news-lecture-sombre .news-modal-corps .contenu-riche h4 { font-family: var(--display); color: var(--titre-clair) !important; }

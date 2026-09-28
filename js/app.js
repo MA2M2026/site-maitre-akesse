@@ -1348,8 +1348,38 @@ function convertirTexteBrutEnHtml(texte) {
 // Liste blanche volontairement réduite : assez pour une "belle mise en page" (gras,
 // italique, titres, listes, citation, paragraphes) sans jamais autoriser de script ou
 // d'attribut dangereux, même si la source du texte est un admin — défense en profondeur.
-const CONTENU_RICHE_BALISES_AUTORISEES = ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'h2', 'h3', 'h4', 'ul', 'ol', 'li', 'blockquote', 'a'];
-const CONTENU_RICHE_ATTRIBUTS_AUTORISES = ['href', 'target', 'rel'];
+const CONTENU_RICHE_BALISES_AUTORISEES = ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'sub', 'sup', 'h1', 'h2', 'h3', 'h4', 'ul', 'ol', 'li', 'blockquote', 'a'];
+const CONTENU_RICHE_ATTRIBUTS_AUTORISES = ['href', 'target', 'rel', 'class', 'data-list'];
+// Seules classes conservées : alignement (centré, à droite, justifié) et retrait des
+// listes imbriquées, telles que l'éditeur les pose — tout le reste est retiré.
+const CONTENU_RICHE_CLASSES_AUTORISEES = /^ql-(align-(center|right|justify)|indent-[1-8])$/;
+
+// Quill 2 enregistre TOUTES les listes dans un seul <ol>, le type réel étant porté par
+// chaque <li data-list="bullet|ordered"> (sa propre feuille de style fait la
+// différence). Sur les pages publiques, sans cette feuille, une liste à puces
+// s'affichait donc numérotée, et deux listes qui se suivent étaient fusionnées. On
+// reconstruit ici de vrais <ul>/<ol>, et on retire les pastilles internes de Quill.
+function normaliserListesQuill(racine) {
+  racine.querySelectorAll('.ql-ui').forEach(el => el.remove());
+  racine.querySelectorAll('ol, ul').forEach(liste => {
+    const items = Array.from(liste.children).filter(li => li.tagName === 'LI' && li.hasAttribute('data-list'));
+    if (!items.length) return;
+    const parent = liste.parentNode;
+    let courant = null;
+    let typeCourant = '';
+    Array.from(liste.children).forEach(li => {
+      const type = li.getAttribute('data-list') === 'bullet' ? 'ul' : 'ol';
+      if (!courant || type !== typeCourant) {
+        courant = document.createElement(type);
+        typeCourant = type;
+        parent.insertBefore(courant, liste);
+      }
+      li.removeAttribute('data-list');
+      courant.appendChild(li);
+    });
+    liste.remove();
+  });
+}
 
 // Rend un contenu (nouveau HTML ou ancien texte brut) prêt à être injecté avec
 // .innerHTML : convertit l'ancien texte brut en paragraphes puis nettoie systématiquement
@@ -1358,10 +1388,21 @@ function rendreContenuRiche(texte) {
   const html = texteEstDejaHtml(texte) ? String(texte) : convertirTexteBrutEnHtml(texte);
   if (!html) return '';
   if (typeof DOMPurify === 'undefined') return echapperHtml(texte || '').replace(/\n/g, '<br>');
-  return DOMPurify.sanitize(html, {
+  const propre = DOMPurify.sanitize(html, {
     ALLOWED_TAGS: CONTENU_RICHE_BALISES_AUTORISEES,
-    ALLOWED_ATTR: CONTENU_RICHE_ATTRIBUTS_AUTORISES
+    ALLOWED_ATTR: CONTENU_RICHE_ATTRIBUTS_AUTORISES,
+    ALLOW_DATA_ATTR: false,
+    RETURN_DOM_FRAGMENT: true
   });
+  propre.querySelectorAll('[class]').forEach(el => {
+    const gardees = el.className.split(/\s+/).filter(c => CONTENU_RICHE_CLASSES_AUTORISEES.test(c));
+    if (gardees.length) el.className = gardees.join(' ');
+    else el.removeAttribute('class');
+  });
+  const conteneur = document.createElement('div');
+  conteneur.appendChild(propre);
+  normaliserListesQuill(conteneur);
+  return conteneur.innerHTML;
 }
 
 // Version texte brut (pour les extraits de carte, tronqués à N caractères) : dépouille
@@ -1370,8 +1411,11 @@ function texteBrutDepuis(texte) {
   if (!texte) return '';
   if (!texteEstDejaHtml(texte)) return String(texte);
   const conteneur = document.createElement('div');
-  conteneur.innerHTML = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(String(texte)) : '';
-  return conteneur.textContent || conteneur.innerText || '';
+  // Un espace après chaque bloc (paragraphe, titre, puce) : sinon "Puce un" et
+  // "Puce deux" se retrouvaient collés ("Puce unPuce deux") dans l'extrait.
+  const avecEspaces = String(texte).replace(/<\/(p|h[1-6]|li|blockquote)>/gi, '$& ');
+  conteneur.innerHTML = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(avecEspaces) : '';
+  return (conteneur.textContent || conteneur.innerText || '').replace(/\s+/g, ' ').trim();
 }
 
 // Crée un éditeur de texte enrichi (Quill) dans le conteneur donné — barre d'outils
@@ -1407,6 +1451,56 @@ function creerRepliEditeur(conteneur, placeholder) {
   };
 }
 
+// Collage depuis Word, Google Docs, Claude… : beaucoup de mises en forme y sont
+// écrites en style ("font-weight:700", "text-align:center"…). Or la sécurité du site
+// (CSP, qui interdit les styles écrits dans le HTML) empêche le navigateur de lire ces
+// styles pendant le collage : Quill perdait alors le gras, l'italique, le souligné et
+// le centrage. On relit donc ici le texte brut de l'attribut "style" pour retrouver
+// ces mises en forme, sans jamais appliquer le style lui-même.
+function lireStyleBrut(node, propriete) {
+  const brut = node.getAttribute && node.getAttribute('style');
+  if (!brut) return '';
+  const m = brut.match(new RegExp('(?:^|;)\\s*' + propriete + '\\s*:\\s*([^;]+)', 'i'));
+  return m ? m[1].trim().toLowerCase() : '';
+}
+
+function ajouterLectureStylesCollage(quill) {
+  if (!quill || !quill.clipboard || typeof Quill === 'undefined') return;
+  const Delta = Quill.import('delta');
+  const BLOCS = /^(P|DIV|H[1-6]|LI|BLOCKQUOTE)$/;
+  quill.clipboard.addMatcher(Node.ELEMENT_NODE, (node, delta) => {
+    const inline = {};
+    const poids = lireStyleBrut(node, 'font-weight');
+    if (poids === 'bold' || poids === 'bolder' || parseInt(poids, 10) >= 600) inline.bold = true;
+    if (lireStyleBrut(node, 'font-style') === 'italic') inline.italic = true;
+    const deco = lireStyleBrut(node, 'text-decoration') + ' ' + lireStyleBrut(node, 'text-decoration-line');
+    if (/underline/.test(deco)) inline.underline = true;
+    if (/line-through/.test(deco)) inline.strike = true;
+    const vertical = lireStyleBrut(node, 'vertical-align');
+    if (vertical === 'super') inline.script = 'super';
+    else if (vertical === 'sub') inline.script = 'sub';
+    let alignement = lireStyleBrut(node, 'text-align') || (node.getAttribute('align') || '').toLowerCase();
+    if (!/^(center|right|justify)$/.test(alignement) || !BLOCS.test(node.tagName)) alignement = '';
+    if (!Object.keys(inline).length && !alignement) return delta;
+    const resultat = new Delta();
+    delta.ops.forEach(op => {
+      if (typeof op.insert !== 'string') { resultat.push(op); return; }
+      op.insert.split(/(\n)/).forEach(morceau => {
+        if (!morceau) return;
+        if (morceau === '\n') {
+          const attrs = Object.assign({}, op.attributes);
+          if (alignement && attrs.align === undefined) attrs.align = alignement;
+          resultat.insert('\n', Object.keys(attrs).length ? attrs : undefined);
+        } else {
+          const attrs = Object.assign({}, inline, op.attributes);
+          resultat.insert(morceau, Object.keys(attrs).length ? attrs : undefined);
+        }
+      });
+    });
+    return resultat;
+  });
+}
+
 function creerEditeurRiche(idConteneur, placeholder) {
   const conteneur = document.getElementById(idConteneur);
   if (!conteneur) return null;
@@ -1416,14 +1510,16 @@ function creerEditeurRiche(idConteneur, placeholder) {
     placeholder: placeholder || 'Écrivez ici… (vous pouvez coller un texte déjà mis en forme depuis Word)',
     modules: {
       toolbar: [
-        ['bold', 'italic', 'underline'],
-        [{ header: [2, 3, false] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ header: [1, 2, 3, false] }],
+        [{ align: [] }],
         [{ list: 'ordered' }, { list: 'bullet' }],
-        ['blockquote'],
+        ['blockquote', 'link'],
         ['clean']
       ]
     }
   });
+  ajouterLectureStylesCollage(quill);
   // Le script Quill peut charger sans sa feuille de style associée (CDN lent ou
   // partiellement indisponible sur le réseau du visiteur) : l'éditeur serait alors
   // fonctionnel mais complètement non stylé — en particulier, le menu déroulant des
