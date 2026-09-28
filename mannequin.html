@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-98t+HyphGeXIi86HMMULvXI4PUsrAbbgC5PN6PEggKg='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-7qzTX2fbWhcoN8NR8B0qP2PjgfCnkK2/b2LeciSYanY=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-loPD1w2OpuPQmF/2XNb2APmO5Um88SMUUSanzrtaLj0='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-7qzTX2fbWhcoN8NR8B0qP2PjgfCnkK2/b2LeciSYanY=';">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
@@ -350,11 +350,11 @@ async function chargerProfilInterne() {
       <div class="profil-hero-fullbleed${(photos && photos.length) ? ' cliquable' : ''}" id="couverture-clic"${(photos && photos.length) ? ' role="button" tabindex="0" aria-label="Ouvrir la galerie photo"' : ''}>
         <img data-couv-img src="${echapperHtml(photoHero)}" alt="">
         <div class="profil-hero-scrim"></div>
-        ${(photos && photos.length) ? `<span class="profil-hero-voir" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="14" height="14" rx="1.5"/><path d="M7 3h13a1 1 0 0 1 1 1v13"/></svg>Voir le book · ${photos.length}</span>` : ''}
         <div class="profil-hero-contenu">
           <div class="eyebrow eyebrow--clair">${profil.category === 'homme' ? 'Homme' : profil.category === 'femme' ? 'Femme' : 'New Face'}</div>
           <h1>${echapperHtml(profil.full_name || 'Mannequin')}</h1>
           <p>${echapperHtml(['Mannequin ' + (profil.niveau_mannequin || deriverNiveauMannequin(profil.years_experience)), profil.city].filter(Boolean).join(' · '))}</p>
+          ${(photos && photos.length) ? `<span class="profil-hero-voir" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="14" height="14" rx="1.5"/><path d="M7 3h13a1 1 0 0 1 1 1v13"/></svg>Voir le book · ${photos.length}</span>` : ''}
         </div>
       </div>
       <div class="profil-avatar-centree">
