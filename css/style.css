@@ -1376,15 +1376,15 @@ html.porte-verrouillee { overflow: hidden; height: 100%; }
 .news-une .news-une-photo {
   position: absolute; inset: 0; aspect-ratio: unset; border-radius: 0; overflow: hidden;
 }
-/* Affiche/poster en hauteur dans un cadre très en largeur : plutôt que de la
-   recadrer (perte de texte/éléments importants du visuel), une version floutée
-   en fond remplit tout l'écran sans bande vide, pendant que la photo réelle
-   reste entièrement visible par-dessus, jamais coupée. */
-.news-une .news-une-photo .news-une-fond {
-  position: absolute; inset: -30px; width: calc(100% + 60px); height: calc(100% + 60px);
-  object-fit: cover; filter: blur(38px) brightness(0.55) saturate(1.1); transform: scale(1.05);
-}
-.news-une .news-une-photo img:not(.news-une-fond) { position: relative; z-index: 1; object-fit: contain; }
+/* Retour au plein écran total (object-fit: cover) après retour de la
+   propriétaire le 28 septembre 2026 : la version avec fond flouté (qui
+   évitait de couper les affiches/posters) laissait des bandes visibles sur
+   les photos "portrait" classiques, ce qui donnait une impression de format
+   carré/coincé plutôt que plein écran — elle préfère nettement l'effet
+   plein écran, quitte à recadrer légèrement certaines photos. Le calque de
+   fond flouté (.news-une-fond) reste dans le HTML mais n'est plus affiché. */
+.news-une .news-une-photo .news-une-fond { display: none; }
+.news-une .news-une-photo img:not(.news-une-fond) { position: relative; z-index: 1; object-fit: cover; }
 .news-une .news-une-photo::after {
   content: ''; position: absolute; inset: 0; pointer-events: none;
   background: linear-gradient(to top, rgba(6,5,4,0.92) 0%, rgba(6,5,4,0.55) 40%, rgba(6,5,4,0) 74%);
