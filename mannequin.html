@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-vmGXxooH/H56GXuP5FGL+5/WK0iXIkDOPHxeOBp/saw='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-7qzTX2fbWhcoN8NR8B0qP2PjgfCnkK2/b2LeciSYanY=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-ZbEgIHu9LgIM7F50rnlZ6+7c2gIg5l7mgYUzURUdaJ8='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-7qzTX2fbWhcoN8NR8B0qP2PjgfCnkK2/b2LeciSYanY=';">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
@@ -297,28 +297,27 @@ async function chargerProfilInterne() {
   const NB_PROJETS_APERCU = 5;
   function ligneProjetHtml(p) {
     const lieu = [p.ville, p.pays].filter(Boolean).join(', ');
+    const meta = [p.periode, lieu, p.promoteur].filter(Boolean).map(echapperHtml).join(' · ');
     return `
-      <div class="projet-item-public">
-        <strong>${echapperHtml(p.type_projet)}</strong>${p.titre ? ' — ' + echapperHtml(p.titre) : ''}
-        <div class="mq-3">
-          ${[p.periode, lieu, p.promoteur].filter(Boolean).map(echapperHtml).join(' · ')}
-        </div>
-      </div>`;
+      <li class="fiche-projet">
+        <span class="fiche-projet-type">${echapperHtml(p.type_projet)}</span>
+        ${p.titre ? `<span class="fiche-projet-titre">${echapperHtml(p.titre)}</span>` : ''}
+        ${meta ? `<span class="fiche-projet-meta">${meta}</span>` : ''}
+      </li>`;
   }
 
   const blocProjets = (projets && projets.length) ? `
-    <div class="u-mt-1-8">
-      <h3 class="mq-4">Parcours</h3>
-      <p class="mq-5">${projets.length} projet${projets.length > 1 ? 's' : ''} réalisé${projets.length > 1 ? 's' : ''}</p>
-      <div class="projets-liste-publique">
+    <section class="fiche-carte">
+      <h3 class="fiche-carte-titre">Parcours <span>${projets.length} projet${projets.length > 1 ? 's' : ''}</span></h3>
+      <ol class="fiche-projets">
         ${projets.slice(0, NB_PROJETS_APERCU).map(ligneProjetHtml).join('')}
-      </div>
+      </ol>
       ${projets.length > NB_PROJETS_APERCU ? `
-        <button id="btn-voir-tous-projets" class="btn u-mt-1">Voir tous les projets (${projets.length})</button>
-        <div id="tous-les-projets" class="projets-liste-publique projets-liste-scroll u-hidden">
-          ${projets.map(ligneProjetHtml).join('')}
-        </div>` : ''}
-    </div>` : '';
+        <ol id="tous-les-projets" class="fiche-projets fiche-projets-suite u-hidden">
+          ${projets.slice(NB_PROJETS_APERCU).map(ligneProjetHtml).join('')}
+        </ol>
+        <button id="btn-voir-tous-projets" class="fiche-lien-plus" type="button">Voir tous les projets (${projets.length})</button>` : ''}
+    </section>` : '';
 
   // Conservé pour le générateur de fiche PDF (comp card), déclenché plus tard
   // par un clic — évite de refaire les mêmes requêtes à ce moment-là.
@@ -327,27 +326,31 @@ async function chargerProfilInterne() {
   const urlVideo = urlEmbedVideo(profil.video_url);
   const urlVideoSure = urlHttpSure(profil.video_url);
   const blocVideo = (urlVideo || urlVideoSure) ? `
-    <div class="u-mt-1-8">
-      <h3 class="mq-4">Vidéo</h3>
+    <section class="fiche-carte">
+      <h3 class="fiche-carte-titre">Vidéo</h3>
       ${urlVideo
-        ? `<div class="video-embed-wrap"><iframe src="${echapperHtml(urlVideo)}" title="Vidéo de présentation" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`
+        ? `<div class="video-embed-wrap fiche-video"><iframe src="${echapperHtml(urlVideo)}" title="Vidéo de présentation" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`
         : `<a href="${echapperHtml(urlVideoSure)}" target="_blank" rel="noopener" class="mq-6">▶ Voir la vidéo de présentation</a>`}
-    </div>` : '';
+    </section>` : '';
 
-  const blocProfil = (profil.years_experience || (profil.model_types && profil.model_types.length) || profil.languages || profil.availability) ? `
-    <div class="u-mt-1-8">
-      ${profil.years_experience ? `<div class="mensuration-item mq-7"><span class="label">Expérience</span><span class="valeur">${profil.years_experience} an${profil.years_experience > 1 ? 's' : ''}</span></div>` : ''}
-      ${profil.availability && libellesDispo[profil.availability] ? `<div class="mensuration-item mq-8"><span class="label">Disponibilité</span><span class="valeur mq-9">${libellesDispo[profil.availability]}</span></div>` : ''}
+  const blocProfil = (profil.bio || profil.years_experience || (profil.model_types && profil.model_types.length) || profil.languages || profil.availability) ? `
+    <section class="fiche-carte">
+      <h3 class="fiche-carte-titre">À propos</h3>
+      ${profil.bio ? `<p class="mannequin-bio fiche-bio">${echapperHtml(profil.bio)}</p>` : ''}
+      <ul class="fiche-infos">
+        ${profil.years_experience ? `<li><span class="fiche-ico"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg></span>${profil.years_experience} an${profil.years_experience > 1 ? 's' : ''} d'expérience</li>` : ''}
+        ${profil.availability && libellesDispo[profil.availability] ? `<li><span class="fiche-ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span>${libellesDispo[profil.availability]}</li>` : ''}
+        ${profil.languages ? `<li><span class="fiche-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></span>Langues : ${echapperHtml(profil.languages)}</li>` : ''}
+      </ul>
       ${(profil.model_types && profil.model_types.length) ? `
-        <div class="mq-10">
-          ${profil.model_types.map(t => `<span class="badge-type-modele">${echapperHtml(libelleTypeModele(t))}</span>`).join('')}
+        <div class="fiche-types">
+          ${profil.model_types.map(t => `<span class="fiche-type">${echapperHtml(libelleTypeModele(t))}</span>`).join('')}
         </div>` : ''}
-      ${profil.languages ? `<p class="mq-11"><strong>Langues :</strong> ${echapperHtml(profil.languages)}</p>` : ''}
-    </div>` : '';
+    </section>` : '';
 
   contenu.innerHTML = `
     <div class="reveal">
-      <div class="profil-hero-fullbleed${(photos && photos.length) ? ' cliquable' : ''}" id="couverture-clic"${(photos && photos.length) ? ' role="button" tabindex="0" aria-label="Ouvrir la galerie photo"' : ''}>
+      <div class="profil-hero-fullbleed profil-hero--avatar${(photos && photos.length) ? ' cliquable' : ''}" id="couverture-clic"${(photos && photos.length) ? ' role="button" tabindex="0" aria-label="Ouvrir la galerie photo"' : ''}>
         <img data-couv-img src="${echapperHtml(photoHero)}" alt="">
         <div class="profil-hero-scrim"></div>
         <div class="profil-hero-contenu">
@@ -356,45 +359,49 @@ async function chargerProfilInterne() {
           <p>${echapperHtml(['Mannequin ' + (profil.niveau_mannequin || deriverNiveauMannequin(profil.years_experience)), profil.city].filter(Boolean).join(' · '))}</p>
         </div>
       </div>
-      <div class="profil-avatar-centree">
-        <div class="profil-avatar cliquable" id="compsheet-photo-clic"><img src="${echapperHtml(premierePhoto)}" alt="${echapperHtml(profil.full_name || '')}"></div>
+      <div class="fiche-entete">
+        <div class="profil-avatar fiche-avatar cliquable" id="compsheet-photo-clic" role="button" tabindex="0" aria-label="Voir la photo en grand"><img src="${echapperHtml(premierePhoto)}" alt="${echapperHtml(profil.full_name || '')}"></div>
+        <dl class="fiche-mesures" aria-label="Mensurations">
+          ${age ? `<div class="fiche-mesure"><dt>${iconeMensuration('age')}Âge</dt><dd>${age} ans</dd></div>` : ''}
+          ${profil.height_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('taille')}Taille</dt><dd>${profil.height_cm} cm</dd></div>` : ''}
+          ${profil.weight_kg ? `<div class="fiche-mesure"><dt>${iconeMensuration('poids')}Poids</dt><dd>${profil.weight_kg} kg</dd></div>` : ''}
+          ${profil.chest_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Poitrine</dt><dd>${profil.chest_cm} cm</dd></div>` : ''}
+          ${profil.waist_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Tour de taille</dt><dd>${profil.waist_cm} cm</dd></div>` : ''}
+          ${profil.hips_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Hanches</dt><dd>${profil.hips_cm} cm</dd></div>` : ''}
+          ${profil.inseam_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Entrejambe</dt><dd>${profil.inseam_cm} cm</dd></div>` : ''}
+          ${profil.shoe_size ? `<div class="fiche-mesure"><dt>${iconeMensuration('pointure')}Pointure</dt><dd>${echapperHtml(profil.shoe_size)}</dd></div>` : ''}
+          ${profil.carnation ? `<div class="fiche-mesure"><dt>${iconeMensuration('carnation')}Carnation</dt><dd>${echapperHtml(profil.carnation)}</dd></div>` : ''}
+          ${profil.clothing_size ? `<div class="fiche-mesure"><dt>${iconeMensuration('vetements')}Vêtements</dt><dd>${echapperHtml(profil.clothing_size)}</dd></div>` : ''}
+          ${profil.eye_color ? `<div class="fiche-mesure"><dt>${iconeMensuration('yeux')}Yeux</dt><dd>${echapperHtml(profil.eye_color)}</dd></div>` : ''}
+          ${profil.hair_color ? `<div class="fiche-mesure"><dt>${iconeMensuration('cheveux')}Cheveux</dt><dd>${echapperHtml(profil.hair_color)}</dd></div>` : ''}
+        </dl>
       </div>
-      <div class="u-mt-1-8">
-        <div class="mensurations">
-          ${age ? `<div class="mensuration-item">${iconeMensuration('age')}<div><span class="label">Âge</span><span class="valeur">${age} ans</span></div></div>` : ''}
-          ${profil.height_cm ? `<div class="mensuration-item">${iconeMensuration('taille')}<div><span class="label">Taille</span><span class="valeur">${profil.height_cm} cm</span></div></div>` : ''}
-          ${profil.weight_kg ? `<div class="mensuration-item">${iconeMensuration('poids')}<div><span class="label">Poids</span><span class="valeur">${profil.weight_kg} kg</span></div></div>` : ''}
-          ${profil.chest_cm ? `<div class="mensuration-item">${iconeMensuration('ruban')}<div><span class="label">Poitrine</span><span class="valeur">${profil.chest_cm} cm</span></div></div>` : ''}
-          ${profil.waist_cm ? `<div class="mensuration-item">${iconeMensuration('ruban')}<div><span class="label">Taille (tour)</span><span class="valeur">${profil.waist_cm} cm</span></div></div>` : ''}
-          ${profil.hips_cm ? `<div class="mensuration-item">${iconeMensuration('ruban')}<div><span class="label">Hanches</span><span class="valeur">${profil.hips_cm} cm</span></div></div>` : ''}
-          ${profil.inseam_cm ? `<div class="mensuration-item">${iconeMensuration('ruban')}<div><span class="label">Entrejambe</span><span class="valeur">${profil.inseam_cm} cm</span></div></div>` : ''}
-          ${profil.shoe_size ? `<div class="mensuration-item">${iconeMensuration('pointure')}<div><span class="label">Pointure</span><span class="valeur">${echapperHtml(profil.shoe_size)}</span></div></div>` : ''}
-          ${profil.carnation ? `<div class="mensuration-item">${iconeMensuration('carnation')}<div><span class="label">Carnation</span><span class="valeur mq-9">${echapperHtml(profil.carnation)}</span></div></div>` : ''}
-          ${profil.clothing_size ? `<div class="mensuration-item">${iconeMensuration('vetements')}<div><span class="label">Taille vêtements</span><span class="valeur mq-9">${echapperHtml(profil.clothing_size)}</span></div></div>` : ''}
-          ${profil.eye_color ? `<div class="mensuration-item">${iconeMensuration('yeux')}<div><span class="label">Yeux</span><span class="valeur mq-9">${echapperHtml(profil.eye_color)}</span></div></div>` : ''}
-          ${profil.hair_color ? `<div class="mensuration-item">${iconeMensuration('cheveux')}<div><span class="label">Cheveux</span><span class="valeur mq-9">${echapperHtml(profil.hair_color)}</span></div></div>` : ''}
+
+      <div class="fiche-actions no-print">
+        <button id="btn-select-fiche" class="btn btn--principal"></button>
+        <div class="fiche-telecharger">
+          <button id="btn-compcard" class="btn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Télécharger la compcard"><span class="fiche-ico"><svg viewBox="0 0 24 24"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14"/></svg></span>Compcard</button>
+          <div class="fiche-telecharger-menu u-hidden" id="menu-compcard">
+            <button id="btn-telecharger-pdf" type="button">PDF</button>
+            <button id="btn-telecharger-jpeg" type="button">JPEG</button>
+          </div>
         </div>
+      </div>
 
-        ${blocProjets}
-
-        ${blocProfil}
-
-        ${profil.bio ? `<p class="mannequin-bio u-mt-1-2">${echapperHtml(profil.bio)}</p>` : ''}
-
-        ${blocVideo}
-
-        <div class="mq-13">
-          <div class="mq-14">🔒 Contact officiel MA2M</div>
-          <div class="mq-15"><a href="tel:+2252722231176" class="mq-16">📞 +225 27 22 23 11 76</a></div>
-          <div class="mq-15"><a href="tel:+2250545656887" class="mq-16">📱 +225 05 45 65 68 87</a></div>
-          <div class="mq-15"><a href="mailto:scoutmodel.ma2m@gmail.com" class="mq-16">✉️ scoutmodel.ma2m@gmail.com</a></div>
-          <a href="https://www.instagram.com/maitreakessemodelmanagement" target="_blank" rel="noopener" class="mq-17">@maitreakessemodelmanagement</a>
+      <div class="fiche-grille">
+        <div class="fiche-col">
+          ${blocProfil}
+        <section class="fiche-carte fiche-contact">
+          <h3 class="fiche-carte-titre"><span class="fiche-ico"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>Contact officiel MA2M</h3>
+          <a href="tel:+2252722231176"><span class="fiche-ico"><svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg></span>+225 27 22 23 11 76</a>
+          <a href="tel:+2250545656887"><span class="fiche-ico"><svg viewBox="0 0 24 24"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg></span>+225 05 45 65 68 87</a>
+          <a href="mailto:scoutmodel.ma2m@gmail.com"><span class="fiche-ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 8.5 6.5 8.5-6.5"/></svg></span>scoutmodel.ma2m@gmail.com</a>
+          <a href="https://www.instagram.com/maitreakessemodelmanagement" target="_blank" rel="noopener"><span class="fiche-ico"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.4" cy="6.6" r=".6"/></svg></span>@maitreakessemodelmanagement</a>
+        </section>
         </div>
-
-        <div class="mq-18">
-          <button id="btn-select-fiche" class="btn btn--principal"></button>
-          <button id="btn-telecharger-pdf" class="btn no-print">🖨️ Fiche en PDF</button>
-          <button id="btn-telecharger-jpeg" class="btn no-print">🖼️ Fiche en JPEG</button>
+        <div class="fiche-col">
+          ${blocProjets}
+          ${blocVideo}
         </div>
       </div>
     </div>
@@ -415,13 +422,27 @@ async function chargerProfilInterne() {
 
   const btnVoirTous = document.getElementById('btn-voir-tous-projets');
   if (btnVoirTous) {
+    btnVoirTous.dataset.labelFerme = btnVoirTous.textContent;
     btnVoirTous.addEventListener('click', () => {
       const bloc = document.getElementById('tous-les-projets');
-      const ouvert = bloc.style.display !== 'none';
-      bloc.style.display = ouvert ? 'none' : 'block';
-      btnVoirTous.textContent = ouvert ? btnVoirTous.dataset.labelFerme : 'Réduire';
+      const ouvert = !bloc.classList.toggle('u-hidden');
+      btnVoirTous.textContent = ouvert ? 'Réduire' : btnVoirTous.dataset.labelFerme;
     });
-    btnVoirTous.dataset.labelFerme = btnVoirTous.textContent;
+  }
+
+  // Menu « Compcard » : un seul bouton, qui propose PDF ou JPEG.
+  const btnCompcard = document.getElementById('btn-compcard');
+  const menuCompcard = document.getElementById('menu-compcard');
+  if (btnCompcard && menuCompcard) {
+    const fermerMenu = () => { menuCompcard.classList.add('u-hidden'); btnCompcard.setAttribute('aria-expanded', 'false'); };
+    btnCompcard.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const ouvert = menuCompcard.classList.toggle('u-hidden') === false;
+      btnCompcard.setAttribute('aria-expanded', ouvert ? 'true' : 'false');
+    });
+    menuCompcard.addEventListener('click', (e) => e.stopPropagation());
+    document.addEventListener('click', fermerMenu);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fermerMenu(); });
   }
 
   const btnSelect = document.getElementById('btn-select-fiche');
@@ -445,6 +466,9 @@ async function chargerProfilInterne() {
 
   const photoPrincipale = document.getElementById('compsheet-photo-clic');
   if (photoPrincipale) photoPrincipale.addEventListener('click', () => ouvrirLightbox(0));
+  if (photoPrincipale) photoPrincipale.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); ouvrirLightbox(0); }
+  });
 
   // Photo de couverture cliquable (demande de la propriétaire, 28 sept. 2026) :
   // ouvre la galerie plein écran directement sur la photo de couverture, puis

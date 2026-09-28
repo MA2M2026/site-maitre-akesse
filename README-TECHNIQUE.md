@@ -571,8 +571,10 @@ l'API GitHub (`$GITHUB_TOKEN`), la méthode retenue avec lui est :
    PR **et** le lien direct de l'aperçu Vercel (`https://<projet>-git-
    <branche>-<org>.vercel.app`, retrouvable dans les commentaires du bot
    Vercel sur la PR) pour qu'il teste avant de merger.
-5. **C'est lui qui merge**, depuis l'interface GitHub — l'assistant ne
-   merge jamais lui-même.
+5. ~~C'est lui qui merge~~ — **changé le 28 septembre 2026** : la
+   propriétaire demande désormais que l'assistant **merge et publie
+   directement lui-même** une fois le travail terminé et l'aperçu Vercel
+   au vert (squash merge), sans attendre son clic.
 6. Après confirmation du merge, `git fetch`/`git merge --ff-only
    origin/main` pour resynchroniser la copie locale, et **vérifier
    concrètement** que le fichier mergé contient bien le changement
@@ -942,6 +944,15 @@ les classes ajoutées dynamiquement (`classList.add(...)`, `className =
 
 ## Fonctionnalités majeures ajoutées récemment (repères pour s'orienter)
 
+- **Fiche mannequin publique (`mannequin.html` / `en/mannequin.html`) en
+  mise en page « profil » façon Facebook/Instagram** (28 septembre 2026) :
+  couverture plein écran cliquable (ouvre la galerie du Book), photo de
+  profil en médaillon à gauche qui chevauche le bas de la couverture,
+  mensurations en liste aérée à sa droite, boutons « Sélectionner » et
+  « Compcard » (un seul bouton → menu PDF / JPEG) juste dessous, puis cartes
+  À propos + Contact / Parcours (frise) + Vidéo, sur deux colonnes dès
+  900px. Styles : classes `.fiche-*` en fin de `css/style.css`. Le CV reste
+  privé (espace mannequin et tableau de bord uniquement).
 - **`evenements.html`** — "Nos Événements", reconstruite fin septembre 2026
   sur exactement la même architecture qu'`actualites.html` (bloc "à la
   une", grille magazine, fiche modale, galerie photo adaptative, éditeur
