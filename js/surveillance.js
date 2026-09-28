@@ -89,14 +89,6 @@
     catch (e) { return String(url).slice(0, 150); }
   }
 
-  // Code qui n'est PAS celui du site : navigateurs intégrés d'Instagram/Facebook
-  // (scripts « iabjs:// », pont Java d'Android « Java object is gone »), extensions
-  // de navigateur. Leurs erreurs ne disent rien de l'état du site — les ignorer
-  // (constaté dans le journal le 28 septembre 2026).
-  function codeEtranger(texte) {
-    return /iabjs:\/\/|Java object is gone|chrome-extension:\/\/|moz-extension:\/\/|safari-(web-)?extension:\/\//i.test(texte || '');
-  }
-
   // --- Erreurs JavaScript + fichiers (images, scripts, styles) qui ne chargent pas ---
   // Écoute en phase de capture : c'est la seule façon de voir l'échec d'une <img>,
   // d'un <script> ou d'un <link>, qui ne remonte pas jusqu'à window autrement.
@@ -112,14 +104,11 @@
       signaler(type, nomCourt(url), url);
       return;
     }
-    const pileJs = (e.error && e.error.stack) || (e.filename ? e.filename + ':' + e.lineno : '');
-    if (codeEtranger(pileJs + ' ' + (e.filename || '') + ' ' + (e.message || ''))) return;
-    signaler('Erreur JavaScript', e.message || 'Erreur inconnue', pileJs);
+    signaler('Erreur JavaScript', e.message || 'Erreur inconnue', (e.error && e.error.stack) || (e.filename ? e.filename + ':' + e.lineno : ''));
   }, true);
 
   window.addEventListener('unhandledrejection', function (e) {
     const r = e.reason;
-    if (codeEtranger((r && r.stack) || '') || codeEtranger(String(r && r.message || r))) return;
     signaler('Erreur JavaScript', r && r.message ? r.message : String(r), r && r.stack);
   });
 
@@ -156,9 +145,7 @@
       const url = typeof entree === 'string' ? entree : (entree && entree.url) || '';
       const methode = ((options && options.method) || (entree && entree.method) || 'GET').toUpperCase();
       return fetchOriginal(entree, options).then(function (rep) {
-        // Réponse « opaque » (envoi sans lecture de la réponse, statut 0) : normal,
-        // ce n'est pas un échec (ex. statistiques Google).
-        if (!rep.ok && rep.type !== 'opaque' && [401, 403, 404, 406, 409].indexOf(rep.status) === -1 && url.indexOf('journal_erreurs') === -1 && !IGNORES.test(url)) {
+        if (!rep.ok && [401, 403, 404, 406, 409].indexOf(rep.status) === -1 && url.indexOf('journal_erreurs') === -1 && !IGNORES.test(url)) {
           signaler('Requête en échec', methode + ' ' + nomCourt(url) + ' → ' + rep.status, url);
         }
         return rep;

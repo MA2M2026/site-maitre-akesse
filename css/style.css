@@ -417,25 +417,8 @@ section { padding: 5rem 0; }
 .contenu-riche p, .contenu-riche li { color: inherit; }
 .contenu-riche p { margin: 0 0 1.1em; }
 .contenu-riche p:last-child { margin-bottom: 0; }
-.contenu-riche h1, .contenu-riche h2, .contenu-riche h3, .contenu-riche h4 { margin: 1.5em 0 0.6em; line-height: 1.3; }
-.contenu-riche h1:first-child, .contenu-riche h2:first-child, .contenu-riche h3:first-child, .contenu-riche h4:first-child { margin-top: 0; }
-.contenu-riche h1 { font-size: 1.9em; }
-.contenu-riche h2 { font-size: 1.5em; }
-.contenu-riche h3 { font-size: 1.22em; }
-/* Alignements et retraits posés par l'éditeur (classes Quill conservées au rendu). */
-.contenu-riche .ql-align-center { text-align: center; }
-.contenu-riche .ql-align-right { text-align: right; }
-.contenu-riche .ql-align-justify { text-align: justify; }
-.contenu-riche li.ql-indent-1 { margin-left: 1.5em; }
-.contenu-riche li.ql-indent-2 { margin-left: 3em; }
-.contenu-riche li.ql-indent-3 { margin-left: 4.5em; }
-.contenu-riche li.ql-indent-4, .contenu-riche li.ql-indent-5, .contenu-riche li.ql-indent-6,
-.contenu-riche li.ql-indent-7, .contenu-riche li.ql-indent-8 { margin-left: 6em; }
-.contenu-riche ul li.ql-indent-1, .contenu-riche ul li.ql-indent-3 { list-style-type: circle; }
-.contenu-riche ul li.ql-indent-2 { list-style-type: square; }
-.contenu-riche ul { list-style-type: disc; }
-.contenu-riche ol { list-style-type: decimal; }
-.contenu-riche sup, .contenu-riche sub { font-size: 0.72em; line-height: 0; }
+.contenu-riche h2, .contenu-riche h3, .contenu-riche h4 { margin: 1.5em 0 0.6em; line-height: 1.3; }
+.contenu-riche h2:first-child, .contenu-riche h3:first-child, .contenu-riche h4:first-child { margin-top: 0; }
 .contenu-riche ul, .contenu-riche ol { margin: 0 0 1.1em; padding-left: 1.4em; }
 .contenu-riche li { margin-bottom: 0.4em; }
 .contenu-riche blockquote {
@@ -1423,7 +1406,7 @@ html.porte-verrouillee { overflow: hidden; height: 100%; }
 .news-une:hover > img { transform: scale(1.05); }
 .news-une .news-une-scrim {
   position: absolute; inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.82) 35%, rgba(0,0,0,0.45) 60%, rgba(0,0,0,0) 85%);
+  background: linear-gradient(to top, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.35) 40%, rgba(0,0,0,0.04) 68%, rgba(0,0,0,0) 82%);
 }
 .news-une .news-une-corps { position: absolute; left: 0; right: 0; bottom: 0; padding: clamp(1.6rem, 5vw, 4rem); max-width: 760px; }
 .news-une .news-une-badge {
@@ -1432,13 +1415,12 @@ html.porte-verrouillee { overflow: hidden; height: 100%; }
   text-transform: uppercase; padding: 0.5rem 1.1rem;
 }
 .news-une .news-une-corps .news-categorie { color: var(--bordeaux-clair); margin-top: 1rem; }
-.news-une .news-une-corps .news-date { margin-top: 0.3rem; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.85); }
-.news-une .news-une-corps .news-categorie { text-shadow: 0 1px 3px rgba(0,0,0,0.85); }
+.news-une .news-une-corps .news-date { margin-top: 0.3rem; }
 .news-une .news-une-corps h2 {
   color: var(--titre-clair); margin-top: 0.6rem;
   font-size: clamp(2.2rem, 6vw, 4rem); line-height: 1.05; text-shadow: 0 4px 30px rgba(0,0,0,0.6);
 }
-.news-une .news-une-corps p { color: #f3eee9; margin-top: 0.6rem; font-size: 1.02rem; letter-spacing: 0.02em; line-height: 1.6; text-shadow: 0 1px 3px rgba(0,0,0,0.85); }
+.news-une .news-une-corps p { color: var(--texte-corps); margin-top: 0.6rem; font-size: 1.02rem; letter-spacing: 0.04em; }
 .news-une .news-une-corps .news-lire {
   display: inline-block; margin-top: 1.4rem; color: #fff; border-bottom: 2px solid var(--bordeaux-clair);
   padding-bottom: 0.3rem; font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase;
@@ -1566,25 +1548,8 @@ html.porte-verrouillee { overflow: hidden; height: 100%; }
 .news-lecture-sombre .news-modal-corps .news-date { color: var(--bordeaux-clair); }
 .news-lecture-sombre .news-modal-corps h2, .news-lecture-sombre .news-modal-corps h3 { color: var(--titre-clair); }
 .news-lecture-sombre .news-modal-corps .contenu-riche,
-.news-lecture-sombre .news-modal-corps .contenu-riche :not(a) { color: #ece6e0 !important; }
-/* Texte courant de l'article dans la police nette du site (Jost) : la police
-   d'affichage, très fine, reste réservée aux titres — plus confortable à lire
-   sur un paragraphe entier, surtout sur téléphone. */
-.news-lecture-sombre .news-modal-corps .contenu-riche {
-  font-family: var(--texte); font-weight: 400; font-size: 1.06rem; line-height: 1.85;
-  letter-spacing: 0.01em; max-width: 64ch;
-}
-.news-lecture-sombre .news-modal-corps .contenu-riche p { margin-bottom: 1.3em; }
-.news-lecture-sombre .news-modal-corps .contenu-riche strong,
-.news-lecture-sombre .news-modal-corps .contenu-riche b { font-weight: 600; color: #fff !important; }
-.news-lecture-sombre .news-modal-corps .contenu-riche h1,
-.news-lecture-sombre .news-modal-corps .contenu-riche h2,
-.news-lecture-sombre .news-modal-corps .contenu-riche h3,
-.news-lecture-sombre .news-modal-corps .contenu-riche h4 { font-family: var(--display); color: var(--titre-clair) !important; }
-@media (max-width: 700px) {
-  .news-lecture-sombre .news-modal-corps { padding: 1.6rem 1.35rem 2rem; }
-  .news-lecture-sombre .news-modal-corps .contenu-riche { font-size: 1.02rem; line-height: 1.8; }
-}
+.news-lecture-sombre .news-modal-corps .contenu-riche :not(a) { color: var(--texte-corps) !important; }
+.news-lecture-sombre .news-modal-corps .contenu-riche { font-size: 1.2rem; line-height: 1.8; }
 .news-lecture-sombre .news-modal-corps .contenu-riche a { color: var(--bordeaux-clair); }
 
 /* ---------- Verrouillage complet pendant la porte d'entrée ---------- */

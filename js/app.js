@@ -1,20 +1,3 @@
-// ================== Compatibilité anciens téléphones ==================
-// crypto.randomUUID n'existe que depuis iOS 15.4 / Chrome 92 : sur un iPhone plus
-// ancien, l'envoi d'une candidature ou d'une sélection recruteur plantait sans
-// message (audit du 28 septembre 2026). Équivalent standard (UUID v4) basé sur
-// crypto.getRandomValues, disponible partout.
-if (window.crypto && typeof window.crypto.randomUUID !== 'function' && typeof window.crypto.getRandomValues === 'function') {
-  try {
-    window.crypto.randomUUID = function () {
-      const o = window.crypto.getRandomValues(new Uint8Array(16));
-      o[6] = (o[6] & 0x0f) | 0x40;
-      o[8] = (o[8] & 0x3f) | 0x80;
-      const hex = Array.prototype.map.call(o, function (b) { return (b + 0x100).toString(16).slice(1); }).join('');
-      return hex.slice(0, 8) + '-' + hex.slice(8, 12) + '-' + hex.slice(12, 16) + '-' + hex.slice(16, 20) + '-' + hex.slice(20);
-    };
-  } catch (e) {}
-}
-
 // ================== Surveillance des erreurs réelles du site ==================
 // Déplacée dans js/surveillance.js (chargé tout en haut de chaque page, bien avant
 // ce fichier) et élargie aux dysfonctionnements silencieux. Ici, un simple relais
@@ -1348,38 +1331,8 @@ function convertirTexteBrutEnHtml(texte) {
 // Liste blanche volontairement réduite : assez pour une "belle mise en page" (gras,
 // italique, titres, listes, citation, paragraphes) sans jamais autoriser de script ou
 // d'attribut dangereux, même si la source du texte est un admin — défense en profondeur.
-const CONTENU_RICHE_BALISES_AUTORISEES = ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'sub', 'sup', 'h1', 'h2', 'h3', 'h4', 'ul', 'ol', 'li', 'blockquote', 'a'];
-const CONTENU_RICHE_ATTRIBUTS_AUTORISES = ['href', 'target', 'rel', 'class', 'data-list'];
-// Seules classes conservées : alignement (centré, à droite, justifié) et retrait des
-// listes imbriquées, telles que l'éditeur les pose — tout le reste est retiré.
-const CONTENU_RICHE_CLASSES_AUTORISEES = /^ql-(align-(center|right|justify)|indent-[1-8])$/;
-
-// Quill 2 enregistre TOUTES les listes dans un seul <ol>, le type réel étant porté par
-// chaque <li data-list="bullet|ordered"> (sa propre feuille de style fait la
-// différence). Sur les pages publiques, sans cette feuille, une liste à puces
-// s'affichait donc numérotée, et deux listes qui se suivent étaient fusionnées. On
-// reconstruit ici de vrais <ul>/<ol>, et on retire les pastilles internes de Quill.
-function normaliserListesQuill(racine) {
-  racine.querySelectorAll('.ql-ui').forEach(el => el.remove());
-  racine.querySelectorAll('ol, ul').forEach(liste => {
-    const items = Array.from(liste.children).filter(li => li.tagName === 'LI' && li.hasAttribute('data-list'));
-    if (!items.length) return;
-    const parent = liste.parentNode;
-    let courant = null;
-    let typeCourant = '';
-    Array.from(liste.children).forEach(li => {
-      const type = li.getAttribute('data-list') === 'bullet' ? 'ul' : 'ol';
-      if (!courant || type !== typeCourant) {
-        courant = document.createElement(type);
-        typeCourant = type;
-        parent.insertBefore(courant, liste);
-      }
-      li.removeAttribute('data-list');
-      courant.appendChild(li);
-    });
-    liste.remove();
-  });
-}
+const CONTENU_RICHE_BALISES_AUTORISEES = ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'h2', 'h3', 'h4', 'ul', 'ol', 'li', 'blockquote', 'a'];
+const CONTENU_RICHE_ATTRIBUTS_AUTORISES = ['href', 'target', 'rel'];
 
 // Rend un contenu (nouveau HTML ou ancien texte brut) prêt à être injecté avec
 // .innerHTML : convertit l'ancien texte brut en paragraphes puis nettoie systématiquement
@@ -1388,21 +1341,10 @@ function rendreContenuRiche(texte) {
   const html = texteEstDejaHtml(texte) ? String(texte) : convertirTexteBrutEnHtml(texte);
   if (!html) return '';
   if (typeof DOMPurify === 'undefined') return echapperHtml(texte || '').replace(/\n/g, '<br>');
-  const propre = DOMPurify.sanitize(html, {
+  return DOMPurify.sanitize(html, {
     ALLOWED_TAGS: CONTENU_RICHE_BALISES_AUTORISEES,
-    ALLOWED_ATTR: CONTENU_RICHE_ATTRIBUTS_AUTORISES,
-    ALLOW_DATA_ATTR: false,
-    RETURN_DOM_FRAGMENT: true
+    ALLOWED_ATTR: CONTENU_RICHE_ATTRIBUTS_AUTORISES
   });
-  propre.querySelectorAll('[class]').forEach(el => {
-    const gardees = el.className.split(/\s+/).filter(c => CONTENU_RICHE_CLASSES_AUTORISEES.test(c));
-    if (gardees.length) el.className = gardees.join(' ');
-    else el.removeAttribute('class');
-  });
-  const conteneur = document.createElement('div');
-  conteneur.appendChild(propre);
-  normaliserListesQuill(conteneur);
-  return conteneur.innerHTML;
 }
 
 // Version texte brut (pour les extraits de carte, tronqués à N caractères) : dépouille
@@ -1411,11 +1353,8 @@ function texteBrutDepuis(texte) {
   if (!texte) return '';
   if (!texteEstDejaHtml(texte)) return String(texte);
   const conteneur = document.createElement('div');
-  // Un espace après chaque bloc (paragraphe, titre, puce) : sinon "Puce un" et
-  // "Puce deux" se retrouvaient collés ("Puce unPuce deux") dans l'extrait.
-  const avecEspaces = String(texte).replace(/<\/(p|h[1-6]|li|blockquote)>/gi, '$& ');
-  conteneur.innerHTML = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(avecEspaces) : '';
-  return (conteneur.textContent || conteneur.innerText || '').replace(/\s+/g, ' ').trim();
+  conteneur.innerHTML = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(String(texte)) : '';
+  return conteneur.textContent || conteneur.innerText || '';
 }
 
 // Crée un éditeur de texte enrichi (Quill) dans le conteneur donné — barre d'outils
@@ -1451,126 +1390,6 @@ function creerRepliEditeur(conteneur, placeholder) {
   };
 }
 
-// Collage depuis Word, Google Docs, Claude… : beaucoup de mises en forme y sont
-// écrites en style ("font-weight:700", "text-align:center"…). Or la sécurité du site
-// (CSP, qui interdit les styles écrits dans le HTML) empêche le navigateur de lire ces
-// styles pendant le collage : Quill perdait alors le gras, l'italique, le souligné et
-// le centrage. On relit donc ici le texte brut de l'attribut "style" pour retrouver
-// ces mises en forme, sans jamais appliquer le style lui-même.
-function lireStyleBrut(node, propriete) {
-  const brut = node.getAttribute && node.getAttribute('style');
-  if (!brut) return '';
-  const m = brut.match(new RegExp('(?:^|;)\\s*' + propriete + '\\s*:\\s*([^;]+)', 'i'));
-  return m ? m[1].trim().toLowerCase() : '';
-}
-
-function ajouterLectureStylesCollage(quill) {
-  if (!quill || !quill.clipboard || typeof Quill === 'undefined') return;
-  const Delta = Quill.import('delta');
-  const BLOCS = /^(P|DIV|H[1-6]|LI|BLOCKQUOTE)$/;
-  quill.clipboard.addMatcher(Node.ELEMENT_NODE, (node, delta) => {
-    const inline = {};
-    const poids = lireStyleBrut(node, 'font-weight');
-    if (poids === 'bold' || poids === 'bolder' || parseInt(poids, 10) >= 600) inline.bold = true;
-    if (lireStyleBrut(node, 'font-style') === 'italic') inline.italic = true;
-    const deco = lireStyleBrut(node, 'text-decoration') + ' ' + lireStyleBrut(node, 'text-decoration-line');
-    if (/underline/.test(deco)) inline.underline = true;
-    if (/line-through/.test(deco)) inline.strike = true;
-    const vertical = lireStyleBrut(node, 'vertical-align');
-    if (vertical === 'super') inline.script = 'super';
-    else if (vertical === 'sub') inline.script = 'sub';
-    let alignement = lireStyleBrut(node, 'text-align') || (node.getAttribute('align') || '').toLowerCase();
-    if (!/^(center|right|justify)$/.test(alignement) || !BLOCS.test(node.tagName)) alignement = '';
-    if (!Object.keys(inline).length && !alignement) return delta;
-    const resultat = new Delta();
-    delta.ops.forEach(op => {
-      if (typeof op.insert !== 'string') { resultat.push(op); return; }
-      op.insert.split(/(\n)/).forEach(morceau => {
-        if (!morceau) return;
-        if (morceau === '\n') {
-          const attrs = Object.assign({}, op.attributes);
-          if (alignement && attrs.align === undefined) attrs.align = alignement;
-          resultat.insert('\n', Object.keys(attrs).length ? attrs : undefined);
-        } else {
-          const attrs = Object.assign({}, inline, op.attributes);
-          resultat.insert(morceau, Object.keys(attrs).length ? attrs : undefined);
-        }
-      });
-    });
-    return resultat;
-  });
-}
-
-// Texte copié depuis l'application Claude (bouton « Copier ») ou un autre outil qui
-// écrit en « Markdown » : la mise en forme y est notée avec des symboles (**gras**,
-// *italique*, « ## » pour un titre, « - » pour une puce) et le presse-papiers ne
-// contient que ce texte brut, sans aucune mise en forme. Sans conversion, ces
-// symboles apparaissaient tels quels ou la mise en page était perdue. On reconnaît ce
-// format et on le transforme en vraie mise en forme au moment du collage.
-function ressembleMarkdown(texte) {
-  return /(^|\n)[ \t]{0,3}(#{1,6}[ \t]|[-*+][ \t]|\d+[.)][ \t]|>)|\*\*[^*\n]+\*\*|__[^_\n]+__|(^|[\s(])\*[^*\s][^*\n]*\*|~~[^~\n]+~~|\[[^\]\n]+\]\(https?:\/\/[^)\s]+\)/.test(texte);
-}
-
-function markdownEnLigneVersHtml(texte) {
-  let t = echapperHtml(texte);
-  t = t.replace(/`([^`\n]+)`/g, '$1');
-  t = t.replace(/\[([^\]\n]+)\]\((https?:\/\/[^)\s]+|mailto:[^)\s]+)\)/g, '<a href="$2">$1</a>');
-  t = t.replace(/(\*\*\*|___)(?=\S)([^\n]*?\S)\1/g, '<strong><em>$2</em></strong>');
-  t = t.replace(/(\*\*|__)(?=\S)([^\n]*?\S)\1/g, '<strong>$2</strong>');
-  t = t.replace(/(^|[^*\w])\*(?=\S)([^*\n]*?\S)\*(?!\*)/g, '$1<em>$2</em>');
-  t = t.replace(/(^|[^_\w])_(?=\S)([^_\n]*?\S)_(?![_\w])/g, '$1<em>$2</em>');
-  t = t.replace(/~~(?=\S)([^~\n]*?\S)~~/g, '<s>$1</s>');
-  return t;
-}
-
-function markdownVersHtml(texte) {
-  const lignes = String(texte || '').replace(/\r\n?/g, '\n').split('\n');
-  const html = [];
-  let liste = '';
-  const fermerListe = () => { if (liste) { html.push('</' + liste + '>'); liste = ''; } };
-  lignes.forEach(ligne => {
-    const brute = ligne.trim();
-    let m;
-    if (!brute || /^([-*_])(\s*\1){2,}$/.test(brute)) { fermerListe(); return; }
-    if ((m = brute.match(/^(#{1,6})\s+(.*?)\s*#*$/))) {
-      fermerListe();
-      const niveau = Math.min(m[1].length, 3);
-      html.push('<h' + niveau + '>' + markdownEnLigneVersHtml(m[2]) + '</h' + niveau + '>');
-    } else if ((m = brute.match(/^[-*+•]\s+(.*)$/)) || (m = brute.match(/^\d+[.)]\s+(.*)$/))) {
-      const type = /^\d/.test(brute) ? 'ol' : 'ul';
-      if (liste !== type) { fermerListe(); html.push('<' + type + '>'); liste = type; }
-      html.push('<li>' + markdownEnLigneVersHtml(m[1]) + '</li>');
-    } else if ((m = brute.match(/^>\s?(.*)$/))) {
-      fermerListe();
-      html.push('<blockquote>' + markdownEnLigneVersHtml(m[1]) + '</blockquote>');
-    } else {
-      fermerListe();
-      html.push('<p>' + markdownEnLigneVersHtml(brute) + '</p>');
-    }
-  });
-  fermerListe();
-  return html.join('');
-}
-
-function ajouterCollageMarkdown(quill) {
-  if (!quill || !quill.root || !quill.clipboard) return;
-  // Phase de capture : passe avant le gestionnaire de collage de Quill.
-  quill.root.addEventListener('paste', (e) => {
-    const donnees = e.clipboardData;
-    if (!donnees) return;
-    const html = donnees.getData('text/html') || '';
-    const texte = donnees.getData('text/plain') || '';
-    if (html.trim() || !texte.trim() || !ressembleMarkdown(texte)) return;
-    e.preventDefault();
-    e.stopImmediatePropagation();
-    const selection = quill.getSelection(true) || { index: quill.getLength(), length: 0 };
-    if (selection.length) quill.deleteText(selection.index, selection.length, 'user');
-    const avant = quill.getLength();
-    quill.clipboard.dangerouslyPasteHTML(selection.index, markdownVersHtml(texte), 'user');
-    quill.setSelection(selection.index + (quill.getLength() - avant), 0, 'silent');
-  }, true);
-}
-
 function creerEditeurRiche(idConteneur, placeholder) {
   const conteneur = document.getElementById(idConteneur);
   if (!conteneur) return null;
@@ -1580,17 +1399,14 @@ function creerEditeurRiche(idConteneur, placeholder) {
     placeholder: placeholder || 'Écrivez ici… (vous pouvez coller un texte déjà mis en forme depuis Word)',
     modules: {
       toolbar: [
-        ['bold', 'italic', 'underline', 'strike'],
-        [{ header: [1, 2, 3, false] }],
-        [{ align: [] }],
+        ['bold', 'italic', 'underline'],
+        [{ header: [2, 3, false] }],
         [{ list: 'ordered' }, { list: 'bullet' }],
-        ['blockquote', 'link'],
+        ['blockquote'],
         ['clean']
       ]
     }
   });
-  ajouterLectureStylesCollage(quill);
-  ajouterCollageMarkdown(quill);
   // Le script Quill peut charger sans sa feuille de style associée (CDN lent ou
   // partiellement indisponible sur le réseau du visiteur) : l'éditeur serait alors
   // fonctionnel mais complètement non stylé — en particulier, le menu déroulant des
