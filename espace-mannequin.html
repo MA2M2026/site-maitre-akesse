@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-bpw19AZrBCA/H2K4ENmZre2MqJsD5I0ximKfBf6xFCA='; style-src 'self' https://fonts.googleapis.com 'sha256-6Dvmfm4i5Akss/+IDah/Q4Mcd3MSpGLChYFtD36m1V0=' 'sha256-l6fymG/9VFModmkt4+Cju+Misw/e9E3nOMRhpZL+0so=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-URNNk5M4iQoWAjhcHIN44PydHpsYcRhUNUyG0J1h2vM='; style-src 'self' https://fonts.googleapis.com 'sha256-AUstRnNvz7P8UtySOPmMwTEEcDPGQHR0hHYB9RQ1ItA=' 'sha256-l6fymG/9VFModmkt4+Cju+Misw/e9E3nOMRhpZL+0so=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mon Espace Mannequin — MA2M | Premium</title>
@@ -263,6 +263,7 @@ a{color:inherit}
 
 /* ---------- dashboard (post-validation) ---------- */
 .online-banner{display:flex;align-items:center;gap:10px;margin-bottom:24px;color:var(--ok);font-size:.8rem;letter-spacing:.05em}
+.likes-banner-contenu{display:flex;align-items:center;gap:8px;margin-bottom:24px;padding:10px 14px;border:1px solid rgba(213,84,104,.35);border-radius:var(--radius);background:rgba(213,84,104,.08);color:#f2ede4;font-size:.85rem}
 .blocks-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 @media(max-width:620px){.blocks-grid{grid-template-columns:1fr}}
 .block-card{border:1px solid rgba(244,237,225,.16);border-radius:var(--radius);padding:20px;transition:border-color .2s}
@@ -1920,6 +1921,7 @@ function viewDashboard(){
   else if (state.meta.statutAffichage === 'refuse') bandeau = '<div class="online-banner p20-5"><span class="dot p20-2"></span> Correction demandée'+(state.meta.commentaireAdmin?' — « '+echapperHtml(state.meta.commentaireAdmin)+' »':'')+'</div>';
   else bandeau = '<div class="online-banner"><span class="dot p20-3"></span> Profil en ligne — visible sur le site</div>';
   return header('Espace validé') + '<div class="panel">' + bandeau +
+    '<div id="likes-banner"></div>' +
     '<h1 class="p20-10">Bonjour '+echapperHtml((d.nomComplet||'').split(' ')[0]||'')+'</h1>' +
     '<p class="sub p20-13">Modifiez un bloc à la fois — chaque bloc s’enregistre indépendamment des autres.</p>' +
     '<div class="blocks-grid">' + BLOCKS.map(function(b){
@@ -1938,6 +1940,26 @@ function bindDashboard(){
   });
   document.getElementById('openCv')?.addEventListener('click', openCv);
   document.getElementById('openCc')?.addEventListener('click', openCompcard);
+  chargerBandeauLikes();
+}
+
+// Petit indicateur "nouveaux cœurs reçus" (Extension 93) — pas d'e-mail à
+// chaque cœur (spam si une photo devient populaire), juste ce rappel
+// visible à la prochaine visite de l'espace mannequin.
+async function chargerBandeauLikes(){
+  const conteneur = document.getElementById('likes-banner');
+  if (!conteneur) return;
+  try {
+    const { data, error } = await sb.rpc('mes_likes_book');
+    if (error || !data) return;
+    const ligne = Array.isArray(data) ? data[0] : data;
+    if (!ligne || !ligne.nouveaux) return;
+    const pluriel = ligne.nouveaux > 1;
+    conteneur.innerHTML = '<div class="likes-banner-contenu">❤️ ' + ligne.nouveaux +
+      (pluriel ? ' nouveaux cœurs reçus' : ' nouveau cœur reçu') +
+      ' sur votre Book (total : ' + ligne.total + ').</div>';
+    sb.rpc('marquer_likes_vus').then(function(){}).catch(function(){});
+  } catch (e) {}
 }
 
 /* ------------------------------------------------------------- CV / PDF ---
