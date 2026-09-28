@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-URNNk5M4iQoWAjhcHIN44PydHpsYcRhUNUyG0J1h2vM='; style-src 'self' https://fonts.googleapis.com 'sha256-AUstRnNvz7P8UtySOPmMwTEEcDPGQHR0hHYB9RQ1ItA=' 'sha256-l6fymG/9VFModmkt4+Cju+Misw/e9E3nOMRhpZL+0so=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-486bX0XfrE2sMn3gbOaf7AGygriYBwVrq66vxlAwTy0='; style-src 'self' https://fonts.googleapis.com 'sha256-wTotCZTXh08ElLu4hclIVfpAEGgpmMsAKgOhmSHenvk=' 'sha256-l6fymG/9VFModmkt4+Cju+Misw/e9E3nOMRhpZL+0so=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mon Espace Mannequin — MA2M | Premium</title>
@@ -264,6 +264,11 @@ a{color:inherit}
 /* ---------- dashboard (post-validation) ---------- */
 .online-banner{display:flex;align-items:center;gap:10px;margin-bottom:24px;color:var(--ok);font-size:.8rem;letter-spacing:.05em}
 .likes-banner-contenu{display:flex;align-items:center;gap:8px;margin-bottom:24px;padding:10px 14px;border:1px solid rgba(213,84,104,.35);border-radius:var(--radius);background:rgba(213,84,104,.08);color:#f2ede4;font-size:.85rem}
+.alerte-incomplet{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:24px;padding:12px 16px;border:2px solid #e0384f;border-radius:var(--radius);background:rgba(224,56,79,.12);color:#f2ede4;font-size:.85rem;animation:alerte-clignote 1.6s ease-in-out infinite}
+@keyframes alerte-clignote{0%,100%{border-color:#e0384f;background:rgba(224,56,79,.12)}50%{border-color:#ff5c72;background:rgba(224,56,79,.28)}}
+@media (prefers-reduced-motion: reduce){.alerte-incomplet{animation:none;border-color:#e0384f}}
+.alerte-lien{background:none;border:none;padding:0;color:#ff8a97;font-weight:700;text-decoration:underline;cursor:pointer;font-size:inherit}
+.alerte-lien:hover{color:#ffb3bc}
 .blocks-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 @media(max-width:620px){.blocks-grid{grid-template-columns:1fr}}
 .block-card{border:1px solid rgba(244,237,225,.16);border-radius:var(--radius);padding:20px;transition:border-color .2s}
@@ -1920,7 +1925,19 @@ function viewDashboard(){
   if (state.meta.statutAffichage === 'en_attente') bandeau = '<div class="online-banner p20-7"><span class="dot p20-4"></span> Modifications en cours de revalidation par l’agence</div>';
   else if (state.meta.statutAffichage === 'refuse') bandeau = '<div class="online-banner p20-5"><span class="dot p20-2"></span> Correction demandée'+(state.meta.commentaireAdmin?' — « '+echapperHtml(state.meta.commentaireAdmin)+' »':'')+'</div>';
   else bandeau = '<div class="online-banner"><span class="dot p20-3"></span> Profil en ligne — visible sur le site</div>';
-  return header('Espace validé') + '<div class="panel">' + bandeau +
+
+  // Rappel (non bloquant) des blocs encore incomplets — le profil reste en
+  // ligne tel quel, mais un book/fiche plus complet est plus attrayant pour
+  // les recruteurs. Demande explicite de la propriétaire, 28 septembre 2026.
+  const blocsIncomplets = BLOCKS.filter(function(b, i){ return !stepComplete(i + 1); });
+  let alerteIncomplet = '';
+  if (blocsIncomplets.length) {
+    alerteIncomplet = '<div class="alerte-incomplet">⚠ <strong>Votre profil n’est pas complet.</strong> Un profil complet est bien plus attrayant pour les recruteurs — complétez : ' +
+      blocsIncomplets.map(function(b){ return '<button type="button" class="alerte-lien" data-alerte-goto="'+b.k+'">'+b.title+'</button>'; }).join(', ') +
+      '.</div>';
+  }
+
+  return header('Espace validé') + '<div class="panel">' + bandeau + alerteIncomplet +
     '<div id="likes-banner"></div>' +
     '<h1 class="p20-10">Bonjour '+echapperHtml((d.nomComplet||'').split(' ')[0]||'')+'</h1>' +
     '<p class="sub p20-13">Modifiez un bloc à la fois — chaque bloc s’enregistre indépendamment des autres.</p>' +
@@ -1937,6 +1954,9 @@ function viewDashboard(){
 function bindDashboard(){
   document.querySelectorAll('[data-edit]').forEach(function(btn){
     btn.addEventListener('click', function(){ state.meta.editBlock = btn.dataset.edit; render(); window.scrollTo({top:0,behavior:'smooth'}); });
+  });
+  document.querySelectorAll('[data-alerte-goto]').forEach(function(btn){
+    btn.addEventListener('click', function(){ state.meta.editBlock = btn.dataset.alerteGoto; render(); window.scrollTo({top:0,behavior:'smooth'}); });
   });
   document.getElementById('openCv')?.addEventListener('click', openCv);
   document.getElementById('openCc')?.addEventListener('click', openCompcard);
