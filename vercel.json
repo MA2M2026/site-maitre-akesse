@@ -1,5 +1,9 @@
 {
   "cleanUrls": true,
+  "redirects": [
+    { "source": "/espace-mannequin-ancien", "destination": "/espace-mannequin", "permanent": true },
+    { "source": "/espace-mannequin-ancien.html", "destination": "/espace-mannequin", "permanent": true }
+  ],
   "rewrites": [
     {
       "source": "/book-photos/:path*",
