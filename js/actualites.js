@@ -98,7 +98,6 @@ async function chargerActualites() {
   uneZone.innerHTML = `
     <div class="news-une reveal" data-index="0">
       <div class="news-une-photo">
-        <img class="news-une-fond" src="${echapperHtml(une.image_url)}" aria-hidden="true" alt="">
         <img src="${echapperHtml(une.image_url)}" loading="lazy" alt="${echapperHtml(une.titre || '')}">
         <span class="news-une-badge">★ À la une</span>
       </div>

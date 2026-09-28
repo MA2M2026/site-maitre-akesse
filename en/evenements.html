@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-qfpMxlxJ1n9L7JaINm/uD6pOLq4eW01j4T3O3ecKLrE=' 'sha256-0P64kcZy3smu3cX6C/pEFRQaFMSea68eZVIs5pSAtWs=' 'sha256-KOrLWfdV55uZM+VLQTqNa3tgfqx2sVXF9HP0p2AxFJU='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net ;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-qfpMxlxJ1n9L7JaINm/uD6pOLq4eW01j4T3O3ecKLrE=' 'sha256-0P64kcZy3smu3cX6C/pEFRQaFMSea68eZVIs5pSAtWs=' 'sha256-L2Qpb/VBSD3+HwxibdP7rbZf8jYxA8Al9+m9neKwNKM='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net ;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
@@ -274,7 +274,6 @@ async function chargerEvenements() {
   uneZone.innerHTML = `
     <div class="news-une reveal" data-index="0">
       <div class="news-une-photo">
-        <img class="news-une-fond" src="${echapperHtml(une.image_url || '')}" aria-hidden="true" alt="">
         <img src="${echapperHtml(une.image_url || '')}" loading="lazy" alt="${echapperHtml(une.titre || '')}">
         <span class="news-une-badge">★ Featured</span>
       </div>
