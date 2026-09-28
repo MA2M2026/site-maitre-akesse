@@ -32,15 +32,26 @@ async function chargerMannequins() {
   // ça tient donc même à 100+ mannequins.
   const ids = profils.map(p => p.id);
   const { data: photos } = await sb.rpc('photos_couverture_mannequins', { ids });
+  const { data: likes } = await sb.rpc('likes_totaux_mannequins', { p_ids: ids });
 
   const photoParMannequin = {};
   (photos || []).forEach(p => {
     photoParMannequin[p.model_id] = p.url;
   });
+  const likesParMannequin = {};
+  (likes || []).forEach(l => {
+    likesParMannequin[l.model_id] = l.total;
+  });
 
   profils.forEach(profil => {
     profil.photoUrl = photoParMannequin[profil.id] || 'assets/logo-dark-bg.png';
+    profil.totalLikes = likesParMannequin[profil.id] || 0;
   });
+
+  // Les mannequins les plus aimés (cœurs sur leur Book) apparaissent en
+  // premier — demande explicite de la propriétaire pour "booster" les
+  // profils les plus appréciés du public.
+  profils.sort((a, b) => b.totalLikes - a.totalLikes);
 
   tousLesProfils = profils;
   appliquerFiltres();
