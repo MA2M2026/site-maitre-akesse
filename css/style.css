@@ -1388,11 +1388,19 @@ html.porte-verrouillee { overflow: hidden; height: 100%; }
   content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
   background: linear-gradient(to top, rgba(6,5,4,0.7) 0%, rgba(6,5,4,0.3) 32%, rgba(6,5,4,0.06) 54%, rgba(6,5,4,0) 68%);
 }
+/* position: absolute + inset: 0 (comme .news-une-photo juste au-dessus),
+   PAS min-height indépendant : demander à la fois à .news-une ET à
+   .news-une-corps de calculer 64dvh chacun de son côté (comme avant)
+   pouvait donner deux hauteurs légèrement différentes selon le moment du
+   calcul sur mobile (dvh est justement dynamique) — texte et photo ne
+   coïncidaient alors plus exactement, avec un bord dur visible entre les
+   deux. En ancrant le texte sur .news-une via inset: 0, il prend TOUJOURS
+   exactement la même hauteur que la photo, aucun calcul indépendant. */
 .news-une .news-une-corps {
-  position: relative; z-index: 1; display: flex; flex-direction: column; justify-content: flex-end;
-  min-height: 64vh; min-height: 64dvh; max-width: 760px; padding: 2rem var(--marge) 2.6rem;
+  position: absolute; inset: 0; z-index: 1; display: flex; flex-direction: column; justify-content: flex-end;
+  max-width: 760px; padding: 2rem var(--marge) 2.6rem;
 }
-@media (min-width: 760px) { .news-une .news-une-corps { min-height: 84vh; min-height: 84dvh; padding: 3rem 4rem 4rem; } }
+@media (min-width: 760px) { .news-une .news-une-corps { padding: 3rem 4rem 4rem; } }
 
 /* Aperçu admin (formulaire de rédaction) : rendu compact d'origine, inchangé —
    .redaction-apercu-carte réutilise .news-une-photo/.news-une-corps SANS le
