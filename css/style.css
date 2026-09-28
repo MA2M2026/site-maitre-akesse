@@ -1356,28 +1356,60 @@ html.porte-verrouillee { overflow: hidden; height: 100%; }
 .filtre-categorie:hover { border-color: var(--bordeaux-clair); color: #fff; }
 .filtre-categorie.actif { background: var(--bordeaux); border-color: var(--bordeaux); color: #fff; box-shadow: var(--glow-bordeaux); }
 
+/* "À la une" (Actualités / Événements) : hero plein écran immersif, façon
+   couverture de magazine mode — demande de la propriétaire, affinée au fil
+   de plusieurs allers-retours le 28 septembre 2026 : plein écran en largeur
+   ET en hauteur (pas de petit cadre 4/3 à côté du texte), photo recadrée
+   pour remplir l'écran (object-fit: cover — elle préfère ça à une photo
+   entière avec des bandes vides), dégradé sombre doux en bas pour lire le
+   texte sans écraser la photo, cadrage stable sur mobile (dvh). Portée
+   scopée à .news-une (vrai bloc public) uniquement — l'aperçu admin du
+   formulaire de rédaction (.redaction-apercu-carte), qui réutilise
+   .news-une-photo/.news-une-corps SANS le conteneur .news-une, garde son
+   rendu compact d'origine (règles plus bas). */
 .news-une {
-  display: grid; grid-template-columns: 1fr; gap: 1.6rem;
-  margin-bottom: 3.5rem; padding-bottom: 3rem; border-bottom: 1px solid var(--gris-clair);
-  cursor: pointer;
+  position: relative; overflow: hidden; display: block;
+  width: 100vw; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw);
+  /* dvh après vh (repli) : vh seul se recalcule sur mobile selon que la
+     barre d'adresse du navigateur est affichée ou cachée, ce qui décale le
+     cadrage de la photo d'un chargement à l'autre. */
+  min-height: 64vh; min-height: 64dvh; margin-bottom: 3.5rem; cursor: pointer;
 }
-@media (min-width: 760px) { .news-une { grid-template-columns: 1.1fr 1fr; align-items: center; gap: 3rem; } }
-/* Fond neutre + object-fit: contain : la photo (portrait, paysage, affiche...) reste
-   toujours entièrement visible, jamais recadrée destructivement (tête/pieds coupés). */
+@media (min-width: 760px) { .news-une { min-height: 84vh; min-height: 84dvh; } }
+
+.news-une .news-une-photo { position: absolute; inset: 0; }
+.news-une .news-une-photo img { object-fit: cover; }
+.news-une:hover .news-une-photo img { transform: scale(1.04); }
+/* z-index: 2 explicite sur le dégradé : sans lui, et si jamais la photo
+   reçoit elle-même un position/z-index plus tard, elle pourrait repasser
+   au-dessus du dégradé et le rendre invisible sans qu'aucune erreur ne le
+   signale — piège déjà rencontré une fois avec ce même bloc. */
+.news-une .news-une-photo::after {
+  content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  background: linear-gradient(to top, rgba(6,5,4,0.7) 0%, rgba(6,5,4,0.3) 32%, rgba(6,5,4,0.06) 54%, rgba(6,5,4,0) 68%);
+}
+.news-une .news-une-corps {
+  position: relative; z-index: 1; display: flex; flex-direction: column; justify-content: flex-end;
+  min-height: 64vh; min-height: 64dvh; max-width: 760px; padding: 2rem var(--marge) 2.6rem;
+}
+@media (min-width: 760px) { .news-une .news-une-corps { min-height: 84vh; min-height: 84dvh; padding: 3rem 4rem 4rem; } }
+
+/* Aperçu admin (formulaire de rédaction) : rendu compact d'origine, inchangé —
+   .redaction-apercu-carte réutilise .news-une-photo/.news-une-corps SANS le
+   conteneur .news-une, donc aucune des règles ci-dessus ne s'y applique. */
 .news-une-photo {
   position: relative; aspect-ratio: 4/3; overflow: hidden; border-radius: 4px;
   background: var(--noir-doux); display: flex; align-items: center; justify-content: center;
 }
 .news-une-photo img { width: 100%; height: 100%; object-fit: contain; transition: transform 0.7s var(--transition-douce); }
-.news-une:hover .news-une-photo img { transform: scale(1.04); }
 .news-une-badge {
   position: absolute; top: 1rem; left: 1rem; background: var(--bordeaux); color: #fff;
   font-size: 0.62rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
-  padding: 0.5rem 0.9rem; display: inline-flex; align-items: center; gap: 0.4rem; z-index: 1;
+  padding: 0.5rem 0.9rem; display: inline-flex; align-items: center; gap: 0.4rem; z-index: 3;
 }
 .news-categorie { display: block; font-size: 0.62rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--bordeaux-clair); font-weight: 600; margin-bottom: 0.5rem; }
 .news-une-corps .news-date { font-size: 0.64rem; }
-.news-une-corps h2 { margin-top: 0.3rem; font-size: clamp(1.6rem, 4vw, 2.4rem); }
+.news-une-corps h2 { margin-top: 0.3rem; font-size: clamp(1.8rem, 5vw, 3.4rem); }
 .news-une-corps p { margin-top: 1rem; color: var(--texte-corps); }
 .news-une-corps .news-lire { margin-top: 1.4rem; font-size: 0.68rem; }
 
