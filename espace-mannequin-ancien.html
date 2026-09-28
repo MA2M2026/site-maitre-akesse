@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-whF4JLhP6FXQbxpwRRcBya3dUU0S8NrziaP925L2N8Q=' 'sha256-ZNs/mQlT+HLqjPM2xQYksBpoM7Og48X81RKzj20xb8s='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-MUB6FhdJ9FpDQ3biQkblrXb2hxYFp094UdlwEclzM3I='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-whF4JLhP6FXQbxpwRRcBya3dUU0S8NrziaP925L2N8Q=' 'sha256-+ntSyDYGm4MuBRkcTws9GBhIqgWE4/tiSkUOsEe7+2E='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-MUB6FhdJ9FpDQ3biQkblrXb2hxYFp094UdlwEclzM3I='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -1596,6 +1596,9 @@ async function chargerPhotos() {
 
   grille.querySelectorAll('.btn-supprimer').forEach(btn => {
     btn.addEventListener('click', async () => {
+      // Suppression désactivée ici (voir l'envoi de photos plus bas).
+      alert('Pour ajouter ou supprimer des photos, utilisez le nouvel espace mannequin : maitreakessemodelmanagement.com/espace-mannequin');
+      return;
       const id = btn.dataset.id;
       const chemin = btn.dataset.chemin;
       const cheminMiniature = btn.dataset.cheminMiniature;
@@ -1723,6 +1726,14 @@ function genererMiniature(fichier, coteMax = 500, qualite = 0.75) {
 }
 
 document.getElementById('input-photo').addEventListener('change', async (e) => {
+  // Ancienne page de secours : elle envoyait encore les photos vers Supabase Storage,
+  // dont la bande passante est à préserver (restriction du 15 octobre 2026). Toutes
+  // les photos passent désormais par Cloudflare R2 via le nouvel espace mannequin —
+  // envoi et suppression de photos désactivés ici (décision de la propriétaire,
+  // 28 septembre 2026). Le reste de la page fonctionne normalement.
+  e.target.value = '';
+  alert('Pour ajouter ou supprimer des photos, utilisez le nouvel espace mannequin : maitreakessemodelmanagement.com/espace-mannequin');
+  return;
   const fichiers = Array.from(e.target.files || []);
   if (!fichiers.length) return;
 

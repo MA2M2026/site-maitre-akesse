@@ -1094,6 +1094,13 @@ vérifier qu'aucun texte n'est jamais exécuté). Corrigé :
   Avant, les fichiers partaient en premier et l'erreur de base était ignorée →
   élément toujours listé mais image cassée. En cas d'échec : message clair.
 - Types `image/jpg` et `image/pjpeg` (certains Android) acceptés par les `/api`.
+- **Aucun flux photo vers Supabase** (règle de la propriétaire, restriction
+  Supabase du 15 octobre 2026) : `espace-mannequin-ancien.html` envoyait encore
+  les photos vers Supabase Storage → envoi et suppression de photos désactivés sur
+  cette page de secours (message renvoyant vers le nouvel espace). Restent
+  seulement, côté tableau de bord, des suppressions (libèrent de la place, sans
+  bande passante) et l'affichage des très anciennes photos de candidatures d'avant
+  Google Drive (URL signées, uniquement à l'ouverture de ces vieux dossiers).
 - Outils internes (`outils/`) : logos introuvables (mauvais chemin) corrigés.
 
 **Recommandation non appliquée (demande une décision + du SQL)** : le code de
