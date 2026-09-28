@@ -3891,3 +3891,34 @@ end;
 $$;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 96 : relève la limite de photos par mannequin de 30 à 60
+-- (Extension 57). La raison d'origine (quota de stockage/bande passante
+-- Supabase) ne s'applique plus depuis que les photos du Book vivent chez
+-- Cloudflare R2, largement plus généreux — demande explicite de la
+-- propriétaire, 28 septembre 2026.
+-- ===================================================================
+create or replace function limiter_nombre_photos()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  nb_photos int;
+  est_admin boolean;
+begin
+  select exists(select 1 from admins where user_id = auth.uid()) into est_admin;
+  if est_admin then
+    return NEW;
+  end if;
+  select count(*) into nb_photos from model_photos where model_id = NEW.model_id;
+  if nb_photos >= 60 then
+    raise exception 'Limite de 60 photos atteinte pour ce book. Supprimez une photo avant d''en ajouter une nouvelle.';
+  end if;
+  return NEW;
+end;
+$$;
+
+NOTIFY pgrst, 'reload schema';

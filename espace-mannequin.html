@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-486bX0XfrE2sMn3gbOaf7AGygriYBwVrq66vxlAwTy0='; style-src 'self' https://fonts.googleapis.com 'sha256-wTotCZTXh08ElLu4hclIVfpAEGgpmMsAKgOhmSHenvk=' 'sha256-l6fymG/9VFModmkt4+Cju+Misw/e9E3nOMRhpZL+0so=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-ejpuCuw6ozBZsFwYvYK4fp8Z1Yj9jfUk0dQNqIJTEWA='; style-src 'self' https://fonts.googleapis.com 'sha256-wTotCZTXh08ElLu4hclIVfpAEGgpmMsAKgOhmSHenvk=' 'sha256-l6fymG/9VFModmkt4+Cju+Misw/e9E3nOMRhpZL+0so=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mon Espace Mannequin — MA2M | Premium</title>
@@ -898,7 +898,7 @@ function mapProfileFromDb(row, contactPrive){
 // valeur ici ne sert qu'à bloquer l'envoi côté client AVANT de gaspiller de
 // la bande passante (conversion HEIC, compression, 3 envois vers R2) sur un
 // envoi que le serveur refusera de toute façon.
-const LIMITE_PHOTOS_BOOK = 30;
+const LIMITE_PHOTOS_BOOK = 60;
 const Store = {
   async load(){
     const { data: profile, error: e1 } = await sb.from('model_profiles')
