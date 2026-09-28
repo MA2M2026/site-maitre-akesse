@@ -50,6 +50,13 @@
 * { box-sizing: border-box; }
 
 html { scroll-behavior: smooth; overflow-x: hidden; }
+/* Dans certains navigateurs intégrés (Instagram, Facebook), "overflow-x: hidden" sur
+   <html> ne suffit pas : un élément qui dépasse sur le côté permettait quand même de
+   dézoomer et de balayer l'accueil à gauche et à droite. "clip" coupe ce dépassement
+   sans créer de zone de défilement (les en-têtes "sticky" continuent de fonctionner). */
+@supports (overflow: clip) {
+  html, body { overflow-x: clip; }
+}
 
 body {
   margin: 0;
