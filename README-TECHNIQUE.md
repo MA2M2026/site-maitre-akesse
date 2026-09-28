@@ -1133,3 +1133,40 @@ appeler directement Supabase et les `/api` sans le code. Le rendre vraiment
 obligatoire suppose de le vérifier côté base (RLS) et côté `/api` — chantier à
 part, à préparer avec soin pour ne pas bloquer l'accès de la propriétaire.
 
+### Vérification espace mannequin / envoi de photos (28 septembre 2026, suite)
+
+Demande de la propriétaire (« les mannequins disent que télécharger des images
+c'est compliqué »). Simulation complète en navigateur (session simulée, envoi réel
+jusqu'à `/api/r2-presigner` + PUT + insertion en base) sur iPhone SE, iPhone 12,
+Galaxy S9+, iPad et ordinateur — NB : moteur Chromium uniquement (Safari/WebKit
+indisponible dans l'environnement de l'assistant), d'où en plus une vérification
+statique de compatibilité iOS. Corrigé :
+- `crypto.randomUUID` (iOS ≥ 15.4 seulement) utilisé par candidature, sélection,
+  actualités/événements/partenaires : équivalent ajouté en tête de `js/app.js`
+  pour les iPhone plus anciens (l'envoi plantait sans message).
+- `??` dans `espace-mannequin.html` (iOS ≥ 13.4) : remplacé — sur un iPhone plus
+  ancien, tout le script de l'espace mannequin ne se chargeait pas.
+- Photos lourdes non-JPEG (captures PNG, WebP > 900 Ko) désormais compressées en
+  JPEG avant envoi (avant : envoyées telles quelles, parfois 10-20 Mo).
+- Envoi de plusieurs photos : message « Envoi de la photo 2 sur 5… » puis bilan.
+- Coupure réseau : message en français au lieu de « Failed to fetch » /
+  « Load failed ».
+Résultat : 0 appel au stockage Supabase, 3 versions par photo vers R2, fiche en
+base ; Book, fiche mannequin FR/EN et accueil : toutes les images chargées sur les
+5 appareils, sans erreur ni débordement.
+
+### Journal d'erreurs du 28 septembre 2026 (soir) — analyse et corrections
+
+- **Sentry ne fonctionnait pas** : le chargeur (`js-de.sentry-cdn.com`) télécharge
+  ensuite le SDK complet depuis `browser.sentry-cdn.com`, absent du CSP → bloqué
+  partout, Sentry n'a jamais rien enregistré. Ajouté à `script-src` (vercel.json +
+  meta CSP des 29 pages) et à `connect-src`.
+- Navigateurs intégrés Instagram/Facebook : ils injectent leur propre code
+  (`iabjs://…`, « Java object is gone ») et re-téléchargent par `fetch` les
+  scripts/polices de la page → faux signalements. `connect-src` autorise
+  désormais `cdn.jsdelivr.net`, `fonts.googleapis.com`, `fonts.gstatic.com` ;
+  `js/surveillance.js` ignore les erreurs de code étranger (`codeEtranger()`) et
+  les réponses « opaques » (statut 0, ex. Google Analytics).
+- Aucune erreur du journal ne venait d'une page du site ni d'une photo non
+  affichée (y compris depuis Facebook).
+
