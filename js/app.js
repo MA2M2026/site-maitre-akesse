@@ -224,9 +224,35 @@ function groupExperiences(experiences) {
   return groupes.filter(function (g) { return g.items.length; });
 }
 
+// Remplissage automatique des cases photo du CV et de la compcard (demande de la
+// propriétaire, 28 septembre 2026) : tant qu'un mannequin n'a pas choisi de photo
+// pour une case, elle est remplie avec ses photos du Book plutôt que laissée vide.
+// Son propre choix reste toujours prioritaire, et rien n'est enregistré en base :
+// dès qu'il choisit, c'est son choix qui s'affiche.
+// choisies : tableau d'URL (ou null) par case ; reserve : URL du Book par ordre de
+// préférence. Une même photo n'apparaît jamais deux fois tant qu'il en reste d'autres.
+function completerEmplacementsPhotos(choisies, reserve, nb) {
+  const res = [];
+  for (let i = 0; i < nb; i++) res.push((choisies || [])[i] || null);
+  const prises = new Set(res.filter(Boolean));
+  const dispo = [];
+  (reserve || []).forEach(function (u) { if (u && !prises.has(u) && dispo.indexOf(u) === -1) dispo.push(u); });
+  for (let i = 0; i < nb; i++) if (!res[i] && dispo.length) res[i] = dispo.shift();
+  return res;
+}
+// Photo principale du CV + 5 photos du portfolio, complétées automatiquement.
+// d.photosBook : URL des photos du Book, photo de profil en premier.
+function photosCvCompletees(d) {
+  const book = (d.photosBook || []).filter(Boolean);
+  const hero = d.photoCvUrl || book[0] || '';
+  const reserve = book.filter(function (u) { return u !== hero; }).concat(hero ? [hero] : []);
+  return { hero: hero, compcard: completerEmplacementsPhotos(d.compcardPhotos, reserve, 5) };
+}
+
 // d = { nomComplet, dateNaissance, villeNaissance, lieuNaissance, nationalite, ville,
 //   quartier, citation, bio, instagram, niveauMannequin, mannequinId, photoCvUrl,
-//   compcardPhotos: [url|null, ...] (jusqu'à 5), physique: {...}, formation: {...},
+//   compcardPhotos: [url|null, ...] (jusqu'à 5), photosBook: [url, ...] (complète les
+//   cases vides, voir photosCvCompletees), physique: {...}, formation: {...},
 //   competences: {...}, experiences: [{ type, nom, lieu, annee }, ...] }
 // Renvoie le HTML à placer à l'intérieur d'un conteneur .cv-sheet — n'inclut pas
 // le conteneur lui-même ni les boutons d'action (fermer/imprimer), propres à
@@ -234,11 +260,12 @@ function groupExperiences(experiences) {
 function construireHtmlCv(d) {
   const p = d.physique || {}, f = d.formation || {};
   const groups = groupExperiences(d.experiences);
-  const heroPhoto = d.photoCvUrl ? '<img src="' + d.photoCvUrl + '" alt="Photo">' : '';
+  const photosAuto = photosCvCompletees(d);
+  const heroPhoto = photosAuto.hero ? '<img src="' + photosAuto.hero + '" alt="Photo">' : '';
   const handle = d.instagram ? String(d.instagram).replace(/^@/, '') : '';
   const lienFichePublique = 'https://www.maitreakessemodelmanagement.com/mannequin.html?id=' + encodeURIComponent(d.mannequinId || '');
   const compcardPhotosCv = [0, 1, 2, 3, 4].map(function (i) {
-    const url = (d.compcardPhotos || [])[i];
+    const url = photosAuto.compcard[i];
     return url ? '<img src="' + url + '" alt="Compcard ' + (i + 1) + '">' : '<div></div>';
   }).join('');
   return (
@@ -485,8 +512,10 @@ async function construireCanvasCompcard(ficheData) {
   ]);
   if (document.fonts.ready) await document.fonts.ready;
 
-  const photosChoisies = photos.filter(p => p.compcard_ordre).sort((a, b) => a.compcard_ordre - b.compcard_ordre);
-  const urlsPhotos = (photosChoisies.length ? photosChoisies : photos.slice(0, 5)).map(p => p.url);
+  // Chaque case garde la photo choisie pour elle ; les cases vides sont complétées
+  // avec les autres photos du Book (voir completerEmplacementsPhotos).
+  const choisiesParCase = [1, 2, 3, 4, 5].map(n => { const ph = photos.find(p => p.compcard_ordre === n); return ph ? ph.url : null; });
+  const urlsPhotos = completerEmplacementsPhotos(choisiesParCase, photos.map(p => p.url), 5).filter(Boolean);
   const [logo, ...imagesPhotos] = await Promise.all([
     chargerImageLocale('assets/logo-dark-bg.png'),
     ...urlsPhotos.map(u => chargerImageHauteRes(u))
@@ -843,10 +872,11 @@ async function construireCanvasCv(d) {
   if (document.fonts.ready) await document.fonts.ready;
 
   const lienFichePublique = 'https://www.maitreakessemodelmanagement.com/mannequin.html?id=' + encodeURIComponent(d.mannequinId || '');
+  const photosAuto = photosCvCompletees(d);
   const [photoHero, logo, ...photosPortfolio] = await Promise.all([
-    d.photoCvUrl ? chargerImageHauteRes(d.photoCvUrl) : Promise.resolve(null),
+    photosAuto.hero ? chargerImageHauteRes(photosAuto.hero) : Promise.resolve(null),
     chargerImageLocale('assets/logo-header.png'),
-    ...[0, 1, 2, 3, 4].map(function (i) { const u = (d.compcardPhotos || [])[i]; return u ? chargerImageHauteRes(u) : Promise.resolve(null); }),
+    ...[0, 1, 2, 3, 4].map(function (i) { const u = photosAuto.compcard[i]; return u ? chargerImageHauteRes(u) : Promise.resolve(null); }),
     chargerQrLib().catch(function () { return null; })
   ]);
   photosPortfolio.pop(); // résultat de chargerQrLib, pas une photo
