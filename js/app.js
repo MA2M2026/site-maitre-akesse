@@ -1501,6 +1501,76 @@ function ajouterLectureStylesCollage(quill) {
   });
 }
 
+// Texte copié depuis l'application Claude (bouton « Copier ») ou un autre outil qui
+// écrit en « Markdown » : la mise en forme y est notée avec des symboles (**gras**,
+// *italique*, « ## » pour un titre, « - » pour une puce) et le presse-papiers ne
+// contient que ce texte brut, sans aucune mise en forme. Sans conversion, ces
+// symboles apparaissaient tels quels ou la mise en page était perdue. On reconnaît ce
+// format et on le transforme en vraie mise en forme au moment du collage.
+function ressembleMarkdown(texte) {
+  return /(^|\n)[ \t]{0,3}(#{1,6}[ \t]|[-*+][ \t]|\d+[.)][ \t]|>)|\*\*[^*\n]+\*\*|__[^_\n]+__|(^|[\s(])\*[^*\s][^*\n]*\*|~~[^~\n]+~~|\[[^\]\n]+\]\(https?:\/\/[^)\s]+\)/.test(texte);
+}
+
+function markdownEnLigneVersHtml(texte) {
+  let t = echapperHtml(texte);
+  t = t.replace(/`([^`\n]+)`/g, '$1');
+  t = t.replace(/\[([^\]\n]+)\]\((https?:\/\/[^)\s]+|mailto:[^)\s]+)\)/g, '<a href="$2">$1</a>');
+  t = t.replace(/(\*\*\*|___)(?=\S)([^\n]*?\S)\1/g, '<strong><em>$2</em></strong>');
+  t = t.replace(/(\*\*|__)(?=\S)([^\n]*?\S)\1/g, '<strong>$2</strong>');
+  t = t.replace(/(^|[^*\w])\*(?=\S)([^*\n]*?\S)\*(?!\*)/g, '$1<em>$2</em>');
+  t = t.replace(/(^|[^_\w])_(?=\S)([^_\n]*?\S)_(?![_\w])/g, '$1<em>$2</em>');
+  t = t.replace(/~~(?=\S)([^~\n]*?\S)~~/g, '<s>$1</s>');
+  return t;
+}
+
+function markdownVersHtml(texte) {
+  const lignes = String(texte || '').replace(/\r\n?/g, '\n').split('\n');
+  const html = [];
+  let liste = '';
+  const fermerListe = () => { if (liste) { html.push('</' + liste + '>'); liste = ''; } };
+  lignes.forEach(ligne => {
+    const brute = ligne.trim();
+    let m;
+    if (!brute || /^([-*_])(\s*\1){2,}$/.test(brute)) { fermerListe(); return; }
+    if ((m = brute.match(/^(#{1,6})\s+(.*?)\s*#*$/))) {
+      fermerListe();
+      const niveau = Math.min(m[1].length, 3);
+      html.push('<h' + niveau + '>' + markdownEnLigneVersHtml(m[2]) + '</h' + niveau + '>');
+    } else if ((m = brute.match(/^[-*+•]\s+(.*)$/)) || (m = brute.match(/^\d+[.)]\s+(.*)$/))) {
+      const type = /^\d/.test(brute) ? 'ol' : 'ul';
+      if (liste !== type) { fermerListe(); html.push('<' + type + '>'); liste = type; }
+      html.push('<li>' + markdownEnLigneVersHtml(m[1]) + '</li>');
+    } else if ((m = brute.match(/^>\s?(.*)$/))) {
+      fermerListe();
+      html.push('<blockquote>' + markdownEnLigneVersHtml(m[1]) + '</blockquote>');
+    } else {
+      fermerListe();
+      html.push('<p>' + markdownEnLigneVersHtml(brute) + '</p>');
+    }
+  });
+  fermerListe();
+  return html.join('');
+}
+
+function ajouterCollageMarkdown(quill) {
+  if (!quill || !quill.root || !quill.clipboard) return;
+  // Phase de capture : passe avant le gestionnaire de collage de Quill.
+  quill.root.addEventListener('paste', (e) => {
+    const donnees = e.clipboardData;
+    if (!donnees) return;
+    const html = donnees.getData('text/html') || '';
+    const texte = donnees.getData('text/plain') || '';
+    if (html.trim() || !texte.trim() || !ressembleMarkdown(texte)) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    const selection = quill.getSelection(true) || { index: quill.getLength(), length: 0 };
+    if (selection.length) quill.deleteText(selection.index, selection.length, 'user');
+    const avant = quill.getLength();
+    quill.clipboard.dangerouslyPasteHTML(selection.index, markdownVersHtml(texte), 'user');
+    quill.setSelection(selection.index + (quill.getLength() - avant), 0, 'silent');
+  }, true);
+}
+
 function creerEditeurRiche(idConteneur, placeholder) {
   const conteneur = document.getElementById(idConteneur);
   if (!conteneur) return null;
@@ -1520,6 +1590,7 @@ function creerEditeurRiche(idConteneur, placeholder) {
     }
   });
   ajouterLectureStylesCollage(quill);
+  ajouterCollageMarkdown(quill);
   // Le script Quill peut charger sans sa feuille de style associée (CDN lent ou
   // partiellement indisponible sur le réseau du visiteur) : l'éditeur serait alors
   // fonctionnel mais complètement non stylé — en particulier, le menu déroulant des
