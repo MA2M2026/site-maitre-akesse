@@ -3831,3 +3831,63 @@ $$;
 grant execute on function likes_totaux_mannequins(uuid[]) to anon;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 95 : durcissement des cœurs (Extension 93) suite au
+-- diagnostic de sécurité du 28 septembre 2026 — deux points mineurs,
+-- aucun risque de fuite de données, mais à fermer par principe :
+-- 1. Un cœur ne peut plus être posé sur la photo d'un profil non publié.
+-- 2. Un même visiteur ne peut plus déclencher la fonction plus de 30
+--    fois par minute (réutilise la même limite anti-spam par IP déjà en
+--    place sur les formulaires publics, Extension 75).
+-- ===================================================================
+create or replace function etat_likes_photos(p_ids uuid[], p_ip_hash text)
+returns table(photo_id uuid, total bigint, aime_par_moi boolean)
+language sql
+security definer
+set search_path = public
+as $$
+  select
+    mp.id,
+    (select count(*) from photo_likes pl where pl.photo_id = mp.id),
+    exists(select 1 from photo_likes pl where pl.photo_id = mp.id and pl.ip_hash = p_ip_hash)
+  from model_photos mp
+  join model_profiles pr on pr.id = mp.model_id
+  where mp.id = any(p_ids) and pr.published = true;
+$$;
+
+create or replace function basculer_like_photo(p_photo_id uuid, p_ip_hash text)
+returns table(aime boolean, total bigint)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_existe boolean;
+  v_publie boolean;
+begin
+  if p_ip_hash !~ '^[0-9a-f]{64}$' then
+    raise exception 'empreinte invalide';
+  end if;
+  if not limiter_soumissions_publiques('like_photo', 30) then
+    raise exception 'Trop de tentatives, réessayez dans un instant.';
+  end if;
+
+  select pr.published into v_publie
+  from model_photos mp join model_profiles pr on pr.id = mp.model_id
+  where mp.id = p_photo_id;
+  if v_publie is not true then
+    raise exception 'Photo introuvable.';
+  end if;
+
+  select exists(select 1 from photo_likes where photo_id = p_photo_id and ip_hash = p_ip_hash) into v_existe;
+  if v_existe then
+    delete from photo_likes where photo_id = p_photo_id and ip_hash = p_ip_hash;
+  else
+    insert into photo_likes (photo_id, ip_hash) values (p_photo_id, p_ip_hash);
+  end if;
+  return query select not v_existe, (select count(*) from photo_likes where photo_id = p_photo_id);
+end;
+$$;
+
+NOTIFY pgrst, 'reload schema';
