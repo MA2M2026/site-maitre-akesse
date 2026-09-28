@@ -19,17 +19,54 @@ uniquement "dans la tête" de cette conversation — tout ce qui compte est
 Ce fichier est mis à jour à chaque changement important : le relire en
 cas de doute donne toujours l'état le plus récent.
 
-## ⚠️ INCIDENT DU 27-28 SEPTEMBRE 2026 — TERMINÉ (repli temporaire actif)
-## À LIRE EN PRIORITÉ avant de retoucher au domaine ou à R2
+## ⚠️ HISTORIQUE DU 27-28 SEPTEMBRE 2026 — architecture photos revue
+## À LIRE avant de retoucher à R2, au domaine personnalisé ou à `vercel.json`
 
-**État actuel (28 septembre 2026, ~00h10) : repli effectué, site et photos
-de nouveau fonctionnels.** Le domaine personnalisé R2
-(`photos.maitreakessemodelmanagement.com`) N'EST PLUS UTILISÉ pour
-l'instant — le site est revenu sur l'ancien domaine partagé `r2.dev`
-(Extension 91 exécutée, variable Vercel `R2_PUBLIC_URL` remise sur
-l'ancienne valeur). **Le bug d'origine (photos parfois invisibles sur
-mobile) est donc de nouveau présent** — c'est un compromis assumé, pas un
-oubli.
+**Nouvelle architecture (28 septembre 2026, nuit) : les photos passent
+maintenant par le domaine du site lui-même, plus jamais directement par un
+domaine Cloudflare.** Après l'échec du domaine personnalisé R2 (incident
+détaillé ci-dessous), plutôt que de re-tenter un nouveau sous-domaine, le
+choix a été de faire de Vercel un relais : le navigateur du visiteur ne
+contacte jamais R2 ni `r2.dev` directement, il contacte uniquement
+`www.maitreakessemodelmanagement.com`, qui va lui-même chercher la photo
+côté serveur.
+
+- **`vercel.json`** : ajout d'une règle `rewrites` — toute requête vers
+  `/book-photos/:path*` est transmise (proxy serveur-à-serveur, invisible
+  pour le visiteur) vers
+  `https://pub-bd96e72b6ed2444cab7b06f170bfe206.r2.dev/:path*`.
+- **Pourquoi ça règle le bug mobile** : le problème d'origine
+  (`ERR_CONNECTION_ABORTED` sur Android/iPhone) semble spécifique à la
+  façon dont les navigateurs MOBILES contactent le domaine partagé
+  `r2.dev`. En passant par Vercel (un serveur, pas un téléphone), c'est
+  Vercel qui contacte `r2.dev` — jamais l'appareil du visiteur — donc ce
+  problème ne peut plus se produire, quel que soit l'appareil ou le réseau
+  du visiteur.
+- **Avantage supplémentaire** : plus besoin d'un domaine personnalisé
+  séparé, donc plus aucun risque de DNS/propagation comme celui rencontré
+  cette nuit avec `photos.maitreakessemodelmanagement.com`. Pas de
+  changement de CSP nécessaire non plus : les photos étant désormais
+  servies par le même domaine que le site (`img-src 'self'`), l'ancienne
+  règle CSP autorisant `*.r2.dev` reste seulement utile pour les mises en
+  ligne (upload direct par URL signée), pas pour l'affichage.
+- **`R2_PUBLIC_URL`** (Vercel, projet `site-maitre-akesse-kiw2`) doit
+  valoir `https://www.maitreakessemodelmanagement.com/book-photos` — plus
+  jamais une adresse `r2.dev` ni `photos.maitreakessemodelmanagement.com`
+  directement.
+- **Point à surveiller** : ce relais fait transiter le trafic des photos
+  par le quota Vercel ("Fast Data Transfer", 100 Go/mois gratuits, 1 To
+  sur le plan Pro à 20 $/mois). Vérifier périodiquement Vercel → Usage →
+  "Transfert de données rapide". Le 28 septembre 2026, le site utilisait
+  2,1 Go/100 Go avant même d'ajouter les photos — large marge, mais à
+  re-vérifier si le nombre de mannequins ou de visites augmente fortement.
+
+**Ce qui reste vrai de l'ancien diagnostic (voir aussi plus bas, section
+"Photos du Book sur Cloudflare R2") :** le domaine partagé `r2.dev` en
+lui-même n'est toujours pas fiable pour un accès DIRECT depuis un
+navigateur (raison pour laquelle il ne faut jamais redonner cette adresse
+brute à un visiteur) — mais il reste parfaitement utilisable comme
+destination d'un appel serveur-à-serveur, ce que fait justement ce relais
+Vercel.
 
 **Chronologie de l'incident, pour comprendre le contexte :**
 1. DNS du domaine migré de Spaceship vers Cloudflare, domaine personnalisé
@@ -65,28 +102,28 @@ oubli.
    propriétaire après coup.
 
 **Pour la suite (prochain assistant, ou reprise plus tard) :**
-- **Ne pas re-basculer vers le domaine personnalisé sans comprendre
-  d'abord la cause du NXDOMAIN.** Le fait que le site principal
-  (totalement indépendant de R2) ait présenté le même symptôme suggère
-  que le problème n'était peut-être pas spécifique à R2/au domaine
-  personnalisé, mais plus large — possiblement lié à la zone Cloudflare
-  elle-même pour ce compte, ou à un mécanisme non identifié. Avant de
-  retenter quoi que ce soit, il vaudrait la peine de : (a) attendre
-  plusieurs jours et retester calmement le domaine personnalisé seul,
-  sans rien basculer en production, (b) si le souci persiste, contacter
-  le support Cloudflare directement avec le détail de cette contradiction
-  (résolution mondiale OK via dnschecker, NXDOMAIN réel constaté), (c)
-  envisager en dernier recours de refaire le test depuis un réseau/lieu
-  extérieur à la Côte d'Ivoire pour confirmer ou infirmer la piste
-  régionale.
-- L'Extension 90 (SQL) et le changement d'archive Vercel restent tous les
-  deux dans l'historique (`supabase-extension.sql`, PR #177) — rien à
-  refaire de ce côté le jour où le nouveau domaine sera confirmé fiable :
-  il suffira de ré-exécuter l'Extension 90 et de remettre
-  `R2_PUBLIC_URL` sur `https://photos.maitreakessemodelmanagement.com`.
-- Ne jamais laisser `r2.dev` comme solution permanente déclarée "réglée" —
-  c'est un repli assumé, pas une correction. Le garder tant que le
-  domaine personnalisé n'est pas confirmé stable dans la durée.
+- **Le domaine personnalisé R2 (`photos.maitreakessemodelmanagement.com`)
+  n'est plus le plan retenu.** Il reste techniquement en place côté
+  Cloudflare (rien supprimé), mais le site ne l'utilise plus du tout — la
+  solution adoptée est le relais Vercel décrit plus haut, qui évite
+  complètement le problème de fond (un nouveau nom de domaine à faire
+  reconnaître mondialement). Ne pas y revenir sans raison précise.
+- Si jamais le relais Vercel montrait à son tour un problème inattendu, la
+  piste du domaine personnalisé reste documentée ici en dernier recours,
+  avec la contradiction jamais élucidée à garder en tête : résolution
+  mondiale confirmée OK (dnschecker) mais `NXDOMAIN` réel pour la
+  propriétaire et des tiers en Côte d'Ivoire, y compris sur le site
+  principal (indépendant de R2) au même moment — donc peut-être pas un
+  problème spécifique à R2, plutôt un souci propre à la zone Cloudflare de
+  ce compte à ce moment-là. Pistes déjà écartées : DNSSEC (désactivé des
+  deux côtés), VPN/filtre, cache navigateur, box/routeur.
+- L'Extension 90 (SQL, bascule vers l'ancien domaine personnalisé) et
+  l'Extension 91 (retour à `r2.dev`) restent toutes les deux dans
+  l'historique (`supabase-extension.sql`) à titre de référence, mais
+  aucune des deux ne doit être ré-exécutée : la bonne adresse actuelle
+  pour `model_photos` est désormais
+  `https://www.maitreakessemodelmanagement.com/book-photos/...` (voir
+  Extension 92).
 
 ## Vue d'ensemble
 

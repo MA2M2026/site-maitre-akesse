@@ -3682,3 +3682,23 @@ where
   url like 'https://photos.maitreakessemodelmanagement.com%'
   or url_miniature like 'https://photos.maitreakessemodelmanagement.com%'
   or url_moyenne like 'https://photos.maitreakessemodelmanagement.com%';
+
+-- ===================================================================
+-- Extension 92 : nouvelle architecture définitive pour les photos du
+-- Book — au lieu d'un domaine séparé (Extension 90, abandonné après
+-- incident NXDOMAIN) ou du domaine partagé r2.dev exposé directement au
+-- visiteur (Extension 91, temporaire, capricieux sur mobile), les photos
+-- passent désormais par le domaine du site lui-même : Vercel relaie la
+-- requête vers r2.dev côté serveur (voir "rewrites" dans vercel.json),
+-- donc le navigateur du visiteur ne contacte jamais r2.dev. Réécrit les
+-- 276 lignes de model_photos vers ce nouveau chemin.
+-- ===================================================================
+update model_photos
+set
+  url = replace(url, 'https://pub-bd96e72b6ed2444cab7b06f170bfe206.r2.dev', 'https://www.maitreakessemodelmanagement.com/book-photos'),
+  url_miniature = replace(url_miniature, 'https://pub-bd96e72b6ed2444cab7b06f170bfe206.r2.dev', 'https://www.maitreakessemodelmanagement.com/book-photos'),
+  url_moyenne = replace(url_moyenne, 'https://pub-bd96e72b6ed2444cab7b06f170bfe206.r2.dev', 'https://www.maitreakessemodelmanagement.com/book-photos')
+where
+  url like 'https://pub-bd96e72b6ed2444cab7b06f170bfe206.r2.dev%'
+  or url_miniature like 'https://pub-bd96e72b6ed2444cab7b06f170bfe206.r2.dev%'
+  or url_moyenne like 'https://pub-bd96e72b6ed2444cab7b06f170bfe206.r2.dev%';
