@@ -59,7 +59,7 @@ if (!window.verrouillerDefilement) (function verrouDefilementIOS() {
   // tant que la page est verrouillée — sauf à l'intérieur des zones qui ont
   // légitimement leur propre défilement interne (menu, fiches, tiroir du tableau
   // de bord), pour ne pas les casser.
-  const ZONES_DEFILEMENT_AUTORISE = '.menu-overlay, .news-modal-contenu, .modal-overlay, .tdb-menu-panel, .projets-liste-scroll';
+  const ZONES_DEFILEMENT_AUTORISE = '.menu-overlay, .news-modal-contenu, .modal-overlay, .tdb-menu-panel, .projets-liste-scroll, .redaction-shell';
   function bloquerGesteTactile(e) {
     if (e.target.closest(ZONES_DEFILEMENT_AUTORISE)) return;
     e.preventDefault();
