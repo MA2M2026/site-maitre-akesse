@@ -1513,6 +1513,18 @@ html.porte-verrouillee { overflow: hidden; height: 100%; }
 .news-modal-corps .form-champ select option { background: #fff; color: #1a1512; }
 .news-modal-fermer { position: absolute; top: 1.2rem; right: 1.4rem; background: rgba(0,0,0,0.6); color: #fff; border: none; width: 32px; height: 32px; cursor: pointer; font-size: 1rem; z-index: 2; }
 
+/* ---------- Lecture d'une actualité/événement (popup) : même traitement que "Mot du
+   fondateur" sur l'accueil — fond sombre et grande police, plus confortable pour lire un
+   article en entier. Scopé à .news-lecture-sombre pour ne pas toucher la même modale
+   réutilisée par Partenaires (qui contient un formulaire d'édition en clair). ---------- */
+.news-modal-contenu.news-lecture-sombre { background: var(--anthracite); color: var(--texte-corps); }
+.news-lecture-sombre .news-modal-corps .news-date { color: var(--bordeaux-clair); }
+.news-lecture-sombre .news-modal-corps h2, .news-lecture-sombre .news-modal-corps h3 { color: var(--titre-clair); }
+.news-lecture-sombre .news-modal-corps .contenu-riche,
+.news-lecture-sombre .news-modal-corps .contenu-riche :not(a) { color: var(--texte-corps) !important; }
+.news-lecture-sombre .news-modal-corps .contenu-riche { font-size: 1.2rem; line-height: 1.8; }
+.news-lecture-sombre .news-modal-corps .contenu-riche a { color: var(--bordeaux-clair); }
+
 /* ---------- Verrouillage complet pendant la porte d'entrée ---------- */
 body.porte-verrouillee .site-header-v2 { display: none; }
 /* Empêche la bande d'annonce de dépasser sous le hero tant que la porte est
@@ -1542,24 +1554,15 @@ body.porte-verrouillee #marqueeBande { display: none; }
 @media (max-width: 700px) { .whatsapp-flottant { width: 50px; height: 50px; bottom: 1rem; left: 1rem; } }
 body.porte-verrouillee .whatsapp-flottant { display: none; }
 
-/* ---------- Galerie multi-photos dans la modale actualité (revue de presse) : la
-   composition s'adapte au nombre de photos (data-count posé par js/actualites.js),
-   et chaque photo reste entièrement visible (object-fit: contain sur fond neutre) —
-   jamais de recadrage destructif, même pour une affiche ou un mannequin en pied. ---------- */
-.news-modal-galerie { display: grid; gap: 4px; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+/* ---------- Galerie multi-photos dans la modale actualité (revue de presse) : même
+   grille façon réseau social que "The Book" (.book-grille-ig) — collée, sans espacement,
+   chaque photo garde sa hauteur naturelle (jamais de recadrage). ---------- */
+.news-modal-galerie { column-count: 2; column-gap: 3px; display: block; }
 .news-modal-galerie .gal-item {
-  position: relative; overflow: hidden; background: var(--noir-doux);
-  display: flex; align-items: center; justify-content: center; aspect-ratio: 1/1;
+  position: relative; display: block; break-inside: avoid; margin-bottom: 3px;
+  background: var(--noir-doux); overflow: hidden; aspect-ratio: auto;
 }
-.news-modal-galerie .gal-item img { width: 100%; height: 100%; object-fit: contain; }
-
-.news-modal-galerie[data-count="2"] { grid-template-columns: 1fr 1fr; }
-.news-modal-galerie[data-count="2"] .gal-item { aspect-ratio: 3/4; }
-
-.news-modal-galerie[data-count="3"] { grid-template-columns: 1fr 1fr; }
-.news-modal-galerie[data-count="3"] .gal-item:first-child { grid-column: 1 / -1; aspect-ratio: 16/10; }
-
-.news-modal-galerie[data-count="4"] { grid-template-columns: 1fr 1fr; }
+.news-modal-galerie .gal-item img { width: 100%; height: auto; display: block; }
 
 .news-compteur-photos {
   position: absolute; bottom: 2%; right: 2%;
