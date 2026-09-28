@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-VNB4fTDSqH5wsKHKAKVUPFPwRFbYfEz2qItVedxBHLM='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-UA7MRIUiLQUh7IAVwmgcTPOO+KsksQXpqSGswV/3VLU='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
@@ -197,7 +197,7 @@ function urlEmbedVideo(url) {
 
 let ficheData = null;
 
-async function chargerImageHauteRes(url) {
+async function chargerImageHauteResEn(url) {
   let blob;
   try {
     const reponse = await fetch(url);
@@ -230,7 +230,7 @@ async function chargerImageHauteRes(url) {
   });
 }
 
-function chargerImageLocale(url) {
+function chargerImageLocaleEn(url) {
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
@@ -245,7 +245,7 @@ function chargerImageLocale(url) {
   });
 }
 
-function dessinerIconeReseau(ctx, cle, cx, cy, taille, couleurGlyphe) {
+function dessinerIconeReseauEn(ctx, cle, cx, cy, taille, couleurGlyphe) {
   ctx.save();
   ctx.strokeStyle = couleurGlyphe;
   ctx.fillStyle = couleurGlyphe;
@@ -299,7 +299,7 @@ function dessinerIconeReseau(ctx, cle, cx, cy, taille, couleurGlyphe) {
   ctx.restore();
 }
 
-async function construireCanvasCompcard() {
+async function construireCanvasCompcardEn() {
   const { profil, photos, projets, age } = ficheData;
   const NOIR = '#060504', BORDEAUX = '#7a1220', BLANC = '#ffffff', GRIS = '#a79f96', ROUGECLAIR = '#cf3b52';
   const LARGEUR_MM = 210, HAUTEUR_MM = 297;
@@ -323,8 +323,8 @@ async function construireCanvasCompcard() {
   const photosChoisies = photos.filter(p => p.compcard_ordre).sort((a, b) => a.compcard_ordre - b.compcard_ordre);
   const urlsPhotos = (photosChoisies.length ? photosChoisies : photos.slice(0, 5)).map(p => p.url);
   const [logo, ...imagesPhotos] = await Promise.all([
-    chargerImageLocale('../assets/logo-dark-bg.png'),
-    ...urlsPhotos.map(u => chargerImageHauteRes(u))
+    chargerImageLocaleEn('../assets/logo-dark-bg.png'),
+    ...urlsPhotos.map(u => chargerImageHauteResEn(u))
   ]);
 
   function dessinerCouvrant(image, xMm, yMm, lMm, hMm, ancrage) {
@@ -455,7 +455,7 @@ async function construireCanvasCompcard() {
   const reseaux = ['instagram', 'facebook', 'tiktok', 'youtube'];
   let xIcone = 15;
   reseaux.forEach(cle => {
-    dessinerIconeReseau(ctx, cle, px(xIcone + 2.2), px(yPiedPage + 29), px(4.4), BLANC);
+    dessinerIconeReseauEn(ctx, cle, px(xIcone + 2.2), px(yPiedPage + 29), px(4.4), BLANC);
     xIcone += 7.5;
   });
   ctx.font = `${fpx(10.5)}px Arial, sans-serif`;
@@ -467,11 +467,11 @@ async function construireCanvasCompcard() {
   return canvas;
 }
 
-let promesseJsPdf = null;
-function chargerJsPdf() {
+let promesseJsPdfEn = null;
+function chargerJsPdfEn() {
   if (window.jspdf) return Promise.resolve();
-  if (promesseJsPdf) return promesseJsPdf;
-  promesseJsPdf = new Promise((resolve, reject) => {
+  if (promesseJsPdfEn) return promesseJsPdfEn;
+  promesseJsPdfEn = new Promise((resolve, reject) => {
     const script = document.createElement('script');
     script.crossOrigin = 'anonymous';
     script.src = 'https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js';
@@ -479,10 +479,10 @@ function chargerJsPdf() {
     script.onerror = () => reject(new Error('jsPDF could not be loaded'));
     document.body.appendChild(script);
   });
-  return promesseJsPdf;
+  return promesseJsPdfEn;
 }
 
-async function genererFiche(format) {
+async function genererFicheEn(format) {
   if (!ficheData || !ficheData.profil) return;
   const btnPdf = document.getElementById('btn-telecharger-pdf');
   const btnJpeg = document.getElementById('btn-telecharger-jpeg');
@@ -493,8 +493,8 @@ async function genererFiche(format) {
   if (btnActif) btnActif.textContent = 'Generating…';
 
   try {
-    if (format !== 'jpeg') await chargerJsPdf();
-    const canvas = await construireCanvasCompcard();
+    if (format !== 'jpeg') await chargerJsPdfEn();
+    const canvas = await construireCanvasCompcardEn();
     const nomFichier = 'card-' + (ficheData.profil.full_name || 'model').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase();
 
     if (format === 'jpeg') {
@@ -698,9 +698,9 @@ async function chargerProfilInterne() {
   }
 
   const btnPdf = document.getElementById('btn-telecharger-pdf');
-  if (btnPdf) btnPdf.addEventListener('click', () => genererFiche('pdf'));
+  if (btnPdf) btnPdf.addEventListener('click', () => genererFicheEn('pdf'));
   const btnJpeg = document.getElementById('btn-telecharger-jpeg');
-  if (btnJpeg) btnJpeg.addEventListener('click', () => genererFiche('jpeg'));
+  if (btnJpeg) btnJpeg.addEventListener('click', () => genererFicheEn('jpeg'));
 
   const btnVoirTous = document.getElementById('btn-voir-tous-projets');
   if (btnVoirTous) {
