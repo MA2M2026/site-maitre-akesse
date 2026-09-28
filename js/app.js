@@ -711,6 +711,70 @@ async function genererFiche(format, ficheData, idBtnPdf, idBtnJpeg) {
   }
 }
 
+// Charge html2canvas seulement quand on en a réellement besoin (bouton "Télécharger le
+// CV"), même logique que chargerJsPdf() ci-dessus.
+let promesseHtml2Canvas = null;
+function chargerHtml2Canvas() {
+  if (window.html2canvas) return Promise.resolve();
+  if (promesseHtml2Canvas) return promesseHtml2Canvas;
+  promesseHtml2Canvas = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.crossOrigin = 'anonymous';
+    script.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('html2canvas n\'a pas pu être chargé'));
+    document.body.appendChild(script);
+  });
+  return promesseHtml2Canvas;
+}
+
+// Génère et télécharge le CV (PDF ou JPEG) à partir de l'élément DOM affiché à l'écran
+// (idElementCv) — une "photographie" exacte du rendu (mêmes couleurs, mise en page,
+// polices que sur le site), plutôt qu'un dessin recomposé à la main comme pour la
+// compcard : la mise en page du CV (colonnes, barres de compétences, grille photos) est
+// bien plus complexe et doit rester identique à ce que montre le site sans double
+// maintenance visuelle.
+async function genererCvFichier(format, idElementCv, nomBase, idBtnPdf, idBtnJpeg) {
+  const elementCv = document.getElementById(idElementCv);
+  if (!elementCv) return;
+  const btnPdf = idBtnPdf ? document.getElementById(idBtnPdf) : null;
+  const btnJpeg = idBtnJpeg ? document.getElementById(idBtnJpeg) : null;
+  const btnActif = format === 'jpeg' ? btnJpeg : btnPdf;
+  const texteOriginal = btnActif ? btnActif.textContent : '';
+  if (btnPdf) btnPdf.disabled = true;
+  if (btnJpeg) btnJpeg.disabled = true;
+  if (btnActif) btnActif.textContent = 'Génération…';
+
+  try {
+    if (format !== 'jpeg') await chargerJsPdf();
+    await chargerHtml2Canvas();
+    const canvas = await window.html2canvas(elementCv, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+    const nomFichier = 'cv-' + (nomBase || 'mannequin').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase();
+
+    if (format === 'jpeg') {
+      const lien = document.createElement('a');
+      lien.href = canvas.toDataURL('image/jpeg', 0.95);
+      lien.download = nomFichier + '.jpg';
+      document.body.appendChild(lien);
+      lien.click();
+      lien.remove();
+    } else {
+      const { jsPDF } = window.jspdf;
+      const largeurMm = 210;
+      const hauteurMm = largeurMm * canvas.height / canvas.width;
+      const doc = new jsPDF({ unit: 'mm', format: [largeurMm, hauteurMm] });
+      doc.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, largeurMm, hauteurMm);
+      doc.save(nomFichier + '.pdf');
+    }
+  } catch (e) {
+    alert('Une erreur est survenue pendant la génération du fichier. Réessayez.');
+  } finally {
+    if (btnPdf) btnPdf.disabled = false;
+    if (btnJpeg) btnJpeg.disabled = false;
+    if (btnActif) btnActif.textContent = texteOriginal;
+  }
+}
+
 // Nettoie un nom de fichier avant de l'utiliser dans un chemin de stockage (Supabase Storage) :
 // ne garde que lettres/chiffres/point/tiret/underscore, pour éviter qu'un nom de fichier
 // bricolé ne perturbe le chemin de stockage ou son affichage ailleurs sur le site.
