@@ -19,68 +19,74 @@ uniquement "dans la tête" de cette conversation — tout ce qui compte est
 Ce fichier est mis à jour à chaque changement important : le relire en
 cas de doute donne toujours l'état le plus récent.
 
-## ⚠️ INCIDENT EN COURS (27 septembre 2026, soir) — À LIRE EN PRIORITÉ
+## ⚠️ INCIDENT DU 27-28 SEPTEMBRE 2026 — TERMINÉ (repli temporaire actif)
+## À LIRE EN PRIORITÉ avant de retoucher au domaine ou à R2
 
-**Symptôme actuel : toutes les photos du Book sont invisibles, sur TOUS les
-appareils et TOUS les réseaux (ordinateur, téléphone, tablette, wifi ET
-4G), y compris pour des personnes non liées à la propriétaire du site.**
-Ouvrir directement `https://photos.maitreakessemodelmanagement.com/...`
-renvoie `DNS_PROBE_FINISHED_NXDOMAIN` dans le navigateur.
+**État actuel (28 septembre 2026, ~00h10) : repli effectué, site et photos
+de nouveau fonctionnels.** Le domaine personnalisé R2
+(`photos.maitreakessemodelmanagement.com`) N'EST PLUS UTILISÉ pour
+l'instant — le site est revenu sur l'ancien domaine partagé `r2.dev`
+(Extension 91 exécutée, variable Vercel `R2_PUBLIC_URL` remise sur
+l'ancienne valeur). **Le bug d'origine (photos parfois invisibles sur
+mobile) est donc de nouveau présent** — c'est un compromis assumé, pas un
+oubli.
 
-**Ce qui vient d'être fait juste avant, dans l'ordre** (voir section
-"Photos du Book sur Cloudflare R2" plus bas pour le contexte complet) :
-1. DNS du domaine `maitreakessemodelmanagement.com` migré de Spaceship
-   vers Cloudflare (nameservers changés chez Spaceship) — propagation des
-   enregistrements NS confirmée complète et mondiale (dnschecker.org, tous
-   verts).
-2. Domaine personnalisé R2 `photos.maitreakessemodelmanagement.com`
-   connecté au compartiment `ma2m-photos` — Cloudflare affiche son statut
-   comme **"Actif"**.
-3. Variable Vercel `R2_PUBLIC_URL` (projet **`site-maitre-akesse-kiw2`**,
-   PAS `site-maitre-akesse` qui est un ancien projet cassé/abandonné —
-   voir plus bas) changée de l'ancien `pub-....r2.dev` vers
-   `https://photos.maitreakessemodelmanagement.com`, puis redéploiement
-   fait.
-4. SQL exécuté (Extension 90, déjà dans `supabase-extension.sql`) :
-   les 276 lignes de `model_photos` (`url`/`url_miniature`/`url_moyenne`)
-   réécrites de l'ancien `pub-bd96e72b6ed2444cab7b06f170bfe206.r2.dev` vers
-   le nouveau domaine. Vérifié : 0 ligne restante avec l'ancienne adresse.
+**Chronologie de l'incident, pour comprendre le contexte :**
+1. DNS du domaine migré de Spaceship vers Cloudflare, domaine personnalisé
+   R2 connecté et affiché "Actif", variable Vercel `R2_PUBLIC_URL` et les
+   276 lignes de `model_photos` basculées vers le nouveau domaine
+   (Extension 90). Tout semblait correct côté configuration.
+2. Le nouveau domaine `photos.maitreakessemodelmanagement.com` s'est mis à
+   répondre `DNS_PROBE_FINISHED_NXDOMAIN` pour la propriétaire ET des tiers
+   sans lien avec elle, sur wifi ET 4G, sur plusieurs appareils —
+   **alors que dnschecker.org (sondes US, type A et CNAME) montrait une
+   résolution mondiale normale, en vert, vers des IP Cloudflare
+   classiques**. Contradiction jamais élucidée pendant cette session.
+3. Peu après, le SITE PRINCIPAL (`www.maitreakessemodelmanagement.com`,
+   qui ne passe pourtant pas par R2 ni par le domaine personnalisé — DNS
+   uniquement chez Cloudflare, pointant vers Vercel) a présenté le même
+   genre de symptôme pour au moins un utilisateur iPhone ("Safari n'a pas
+   pu ouvrir la page car le serveur ne répondait plus"), avec le même
+   paradoxe (dnschecker.org vert partout). La propriétaire, elle,
+   gardait un accès normal au site — donc portée exacte de ce
+   second symptôme non confirmée (un seul utilisateur rapporté, pas
+   vérifié comme généralisé).
+4. Pistes vérifiées et écartées pendant le diagnostic : DNSSEC désactivé
+   à la fois chez Cloudflare et chez Spaceship (donc pas de conflit de
+   clés DNSSEC) ; pas de VPN/filtre DNS côté utilisateurs concernés ; pas
+   un problème de cache navigateur (testé en navigation privée) ; pas un
+   problème de box/routeur (reproduit aussi en 4G, sur un réseau
+   totalement différent).
+5. Décision prise avec la propriétaire : revenir en arrière plutôt que de
+   continuer à chercher en pleine nuit. Exécution de l'Extension 91
+   (inverse de l'Extension 90, remet `r2.dev` dans `model_photos`) +
+   remise de `R2_PUBLIC_URL` sur `r2.dev` sur Vercel (projet
+   `site-maitre-akesse-kiw2`) + redéploiement. Confirmé fonctionnel par la
+   propriétaire après coup.
 
-**Contradiction observée, non résolue :** dnschecker.org (type A, sondes
-US : San Francisco, Mountain View, Berkeley, Cambridge, Ashburn) montre le
-domaine résolu partout en vert, vers des IP Cloudflare normales
-(`172.67.219.254` / `104.21.70.50`). Pourtant la propriétaire ET des tiers
-sans lien avec elle (vraisemblablement tous en Côte d'Ivoire) obtiennent
-`NXDOMAIN` en test réel, sur wifi ET sur 4G, sur 3 appareils différents.
-**Hypothèse non encore confirmée au moment de la coupure de cette
-session** : propagation DNS régionale (Afrique de l'Ouest / fournisseurs
-ivoiriens) en retard par rapport à la propagation mondiale déjà complète —
-à vérifier en relançant dnschecker.org et en faisant défiler la liste
-jusqu'aux sondes africaines (Nigeria, Afrique du Sud, Égypte...), pas
-seulement les sondes américaines affichées par défaut.
-
-**Important pour la suite (prochain assistant) :**
-- Ne PAS repartir de zéro : DNS, domaine personnalisé R2, variable Vercel
-  et migration SQL sont normalement corrects (voir points 1 à 4
-  ci-dessus) — le problème est probablement seulement un délai de
-  propagation régional, pas une erreur de configuration.
-- Si le problème persiste au-delà de 24-48h après le changement de
-  nameservers (donc après le 28-29 septembre 2026), ou si les sondes
-  africaines de dnschecker.org sont AUSSI rouges, revoir l'hypothèse et
-  creuser plus loin (ex. vérifier le certificat SSL du domaine
-  personnalisé côté Cloudflare, contacter le support Cloudflare).
-- **Solution de repli si urgence absolue et qu'aucune photo n'est visible
-  depuis trop longtemps** : on peut revenir en arrière temporairement en
-  remettant `R2_PUBLIC_URL` sur l'ancienne adresse
-  `https://pub-bd96e72b6ed2444cab7b06f170bfe206.r2.dev` sur Vercel (projet
-  `site-maitre-akesse-kiw2`) et en ré-exécutant l'inverse de l'Extension 90
-  sur `model_photos` — mais ça réintroduit le bug d'origine (photos
-  invisibles spécifiquement sur mobile). À n'utiliser qu'en dernier
-  recours, et à annoncer clairement à la propriétaire que ce n'est qu'un
-  pansement temporaire.
-- Ne jamais reproposer le retour à `r2.dev` comme solution définitive —
-  c'est justement la cause du problème initial (voir section "Photos du
-  Book sur Cloudflare R2" plus bas).
+**Pour la suite (prochain assistant, ou reprise plus tard) :**
+- **Ne pas re-basculer vers le domaine personnalisé sans comprendre
+  d'abord la cause du NXDOMAIN.** Le fait que le site principal
+  (totalement indépendant de R2) ait présenté le même symptôme suggère
+  que le problème n'était peut-être pas spécifique à R2/au domaine
+  personnalisé, mais plus large — possiblement lié à la zone Cloudflare
+  elle-même pour ce compte, ou à un mécanisme non identifié. Avant de
+  retenter quoi que ce soit, il vaudrait la peine de : (a) attendre
+  plusieurs jours et retester calmement le domaine personnalisé seul,
+  sans rien basculer en production, (b) si le souci persiste, contacter
+  le support Cloudflare directement avec le détail de cette contradiction
+  (résolution mondiale OK via dnschecker, NXDOMAIN réel constaté), (c)
+  envisager en dernier recours de refaire le test depuis un réseau/lieu
+  extérieur à la Côte d'Ivoire pour confirmer ou infirmer la piste
+  régionale.
+- L'Extension 90 (SQL) et le changement d'archive Vercel restent tous les
+  deux dans l'historique (`supabase-extension.sql`, PR #177) — rien à
+  refaire de ce côté le jour où le nouveau domaine sera confirmé fiable :
+  il suffira de ré-exécuter l'Extension 90 et de remettre
+  `R2_PUBLIC_URL` sur `https://photos.maitreakessemodelmanagement.com`.
+- Ne jamais laisser `r2.dev` comme solution permanente déclarée "réglée" —
+  c'est un repli assumé, pas une correction. Le garder tant que le
+  domaine personnalisé n'est pas confirmé stable dans la durée.
 
 ## Vue d'ensemble
 
