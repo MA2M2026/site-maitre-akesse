@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-rGiubhGxz/XmXEvRcZzxsFOkN5PrT06AgT03PraVrx0='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-jQLfDPnJ0WAwj/alKjnSLPmM23GyNAy8q3t1zc3Fo6c='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-hU7zxDyawV1k0I7snAT+2vVfLtAL4C8nWeP/7Xxz+bw='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-jQLfDPnJ0WAwj/alKjnSLPmM23GyNAy8q3t1zc3Fo6c='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -401,8 +401,10 @@ document.getElementById('part-modal-supprimer-btn').addEventListener('click', as
   const id = window.partenaireModalCourant;
   if (!confirm('Supprimer définitivement ce partenaire ?')) return;
   const p = window.partenairesData.find(x => x.id === id);
+  // Base d'abord : si la suppression échoue, les images restent intactes.
+  const { error: erreurSuppression } = await sbAdmin.from('partenaires').delete().eq('id', id);
+  if (erreurSuppression) { alert('La suppression a échoué. Réessayez.'); return; }
   if (p && p.logo_chemin) await supprimerCheminsImagesSite('partenaires', 'partenaires-logos', [p.logo_chemin]);
-  await sbAdmin.from('partenaires').delete().eq('id', id);
   fermerPartModal();
   chargerPartenaires();
 });

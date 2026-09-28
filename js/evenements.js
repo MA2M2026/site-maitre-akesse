@@ -181,8 +181,10 @@ document.getElementById('news-modal-supprimer-btn').addEventListener('click', as
   if (!confirm("Supprimer définitivement cet événement et toutes ses photos ?")) return;
   const { data: photos } = await sbAdmin.from('evenement_photos').select('chemin').eq('evenement_id', id);
   const chemins = (photos || []).map(p => p.chemin).filter(Boolean);
+  // Base d'abord : si la suppression échoue, les images restent intactes.
+  const { error: erreurSuppression } = await sbAdmin.from('evenements').delete().eq('id', id);
+  if (erreurSuppression) { alert('La suppression a échoué. Réessayez.'); return; }
   if (chemins.length) await supprimerCheminsImagesSite('evenements', 'evenements-images', chemins);
-  await sbAdmin.from('evenements').delete().eq('id', id);
   fermerNewsModal();
   chargerEvenements();
 });
@@ -322,8 +324,10 @@ document.getElementById('red-supprimer-btn').addEventListener('click', async () 
   const id = redactionIdEnCours;
   const { data: photos } = await sbAdmin.from('evenement_photos').select('chemin').eq('evenement_id', id);
   const chemins = (photos || []).map(p => p.chemin).filter(Boolean);
+  // Base d'abord : si la suppression échoue, les images restent intactes.
+  const { error: erreurSuppression } = await sbAdmin.from('evenements').delete().eq('id', id);
+  if (erreurSuppression) { alert('La suppression a échoué. Réessayez.'); return; }
   if (chemins.length) await supprimerCheminsImagesSite('evenements', 'evenements-images', chemins);
-  await sbAdmin.from('evenements').delete().eq('id', id);
   fermerRedaction();
   chargerEvenements();
 });

@@ -59,7 +59,7 @@ async function estAdmin(userId) {
 // et voler la session d'un visiteur connecté. On n'accepte donc que de vraies images
 // (octet-stream toléré : jamais exécuté par un navigateur, et renvoyé par certains
 // téléchargements lors des migrations).
-const TYPES_AUTORISES = /^(image\/(jpeg|png|webp|gif|heic|heif|avif)|application\/octet-stream)$/i;
+const TYPES_AUTORISES = /^(image\/(jpeg|jpg|pjpeg|png|webp|gif|heic|heif|avif)|application\/octet-stream)$/i;
 function cheminSur(chemin) {
   // Refuse les remontées de dossier (« .. » comme segment), les antislashs, les
   // doubles barres et les caractères de contrôle ; « photo..jpg » reste accepté.
