@@ -944,6 +944,15 @@ les classes ajoutées dynamiquement (`classList.add(...)`, `className =
 
 ## Fonctionnalités majeures ajoutées récemment (repères pour s'orienter)
 
+- **Cases photo du CV et de la compcard remplies automatiquement**
+  (28 septembre 2026) : si le mannequin n'a pas choisi sa photo de CV ou
+  une photo pour une case de la compcard, la case est complétée avec ses
+  photos du Book (photo de profil en premier), sans doublon tant qu'il en
+  reste d'autres — `completerEmplacementsPhotos()` / `photosCvCompletees()`
+  dans `js/app.js`, utilisés par le CV (HTML + fichier), la compcard
+  (fichier FR/EN + aperçu de l'espace mannequin). Le choix du mannequin
+  reste prioritaire ; rien n'est écrit en base (c'est un remplissage à
+  l'affichage, qui disparaît dès qu'il choisit lui-même).
 - **Allègement du site (28 septembre 2026)** — plainte de la propriétaire :
   site très lourd depuis le navigateur intégré de Facebook, photos qui ne
   s'affichent pas. Constats et corrections :

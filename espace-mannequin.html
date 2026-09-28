@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://cdn.jsdelivr.net 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-J85MwJTfwx/HXmDwtjlJp3ArVxSCFKz5fF6oQtExBLA='; style-src 'self' https://fonts.googleapis.com 'sha256-2RaJjkt0dwCPrM/WQd2sjLywmysdtxLwAh6UXghu0HQ=' 'sha256-l6fymG/9VFModmkt4+Cju+Misw/e9E3nOMRhpZL+0so=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://cdn.jsdelivr.net 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-3olmGx1h6IzPguDzfv5/gK0B/C48iRPENYg2i07KS5g='; style-src 'self' https://fonts.googleapis.com 'sha256-2RaJjkt0dwCPrM/WQd2sjLywmysdtxLwAh6UXghu0HQ=' 'sha256-l6fymG/9VFModmkt4+Cju+Misw/e9E3nOMRhpZL+0so=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -2004,6 +2004,7 @@ function donneesCvDepuisEtat(){
       const ph = state.photos.book.find(function(x){ return x.compcardOrdre===n; });
       return ph ? (ph.urlPleine||ph.url) : null;
     }),
+    photosBook: (state.photos.principale ? [state.photos.principale] : []).concat(state.photos.book).map(function(ph){ return ph.urlPleine||ph.url; }),
     physique: p, formation: f, competences: state.competences, experiences: state.experiences
   };
 }
@@ -2043,7 +2044,11 @@ function ficheDataDepuisEtat(){
 
 function openCompcard(){
   const compcardPhotos = state.photos.book.filter(function(ph){ return ph.compcardOrdre; }).sort(function(a,b){ return a.compcardOrdre-b.compcardOrdre; });
-  const slots = [1,2,3,4,5].map(function(n){ return compcardPhotos.find(function(ph){ return ph.compcardOrdre===n; }) || null; });
+  const slotsChoisis = [1,2,3,4,5].map(function(n){ return compcardPhotos.find(function(ph){ return ph.compcardOrdre===n; }) || null; });
+  // Cases vides complétées automatiquement avec les autres photos du Book (même règle
+  // que le fichier PDF/JPEG, voir completerEmplacementsPhotos dans js/app.js).
+  const urlsSlots = completerEmplacementsPhotos(slotsChoisis.map(function(ph){ return ph ? (ph.urlPleine||ph.url) : null; }), state.photos.book.map(function(ph){ return ph.urlPleine||ph.url; }), 5);
+  const slots = urlsSlots.map(function(u){ return u ? { urlPleine: u } : null; });
   const cover = slots[0];
   const sidePhotos = slots.slice(1).map(function(ph){ return ph ? '<img src="'+(ph.urlPleine||ph.url)+'" alt="Photo compcard">' : '<div class="cc-empty-photo"></div>'; }).join('');
   const d = state.identite, p = state.physique;
