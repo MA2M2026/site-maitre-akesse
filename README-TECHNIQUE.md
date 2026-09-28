@@ -1057,3 +1057,43 @@ Recommandations restantes (aucune urgente) : confirmer Resend par un
 envoi réel, envisager une vérification plus poussée du contenu des
 fichiers uploadés (limite déjà documentée dans `SECURITY.md`), faire
 tourner Mozilla Observatory / SSL Labs pour un second avis extérieur.
+
+## Audit complet du 28 septembre 2026 (soir) — demandé par la propriétaire
+
+Revue de bout en bout (analyse statique de tout le code + chargement de chaque
+page FR/EN en navigateur réel, mobile et ordinateur, avec base simulée — vide,
+absente, puis remplie de fausses données contenant du code malveillant pour
+vérifier qu'aucun texte n'est jamais exécuté). Corrigé :
+
+- **Faille d'envoi de fichiers** (`api/r2-presigner.js`, `api/r2-site-images.js`) :
+  le type de fichier n'était pas vérifié. Un compte mannequin pouvait envoyer un
+  fichier HTML/SVG « déguisé » en photo, servi ensuite depuis le domaine du site
+  (relais `/book-photos`) → exécution de code possible, vol de session. Désormais
+  seules les vraies images sont acceptées (JPEG, PNG, WebP, GIF, HEIC, AVIF), les
+  remontées de dossier (`..`) sont refusées, et `vercel.json` sert tout
+  `/book-photos/*` avec un CSP `sandbox` (aucun code ne peut s'y exécuter, même
+  si un mauvais fichier y était déjà). Conséquence : un logo partenaire en SVG est
+  désormais refusé à l'envoi (message clair) — utiliser PNG.
+- **Comptage des visites** (`js/app.js`) : toutes les fiches mannequin
+  partageaient la même clé de session → seule la première fiche vue était
+  comptée, le classement « Top 10 » était faussé. Clé désormais par fiche.
+- **Page « nouveau mot de passe »** : formulaire affiché trop tôt (attribut
+  `style="display:none"` bloqué en silence par le CSP) → règle déplacée dans
+  `css/style.css`.
+- **espace-mannequin-ancien.html** (filet de secours) : entièrement cassé
+  (constantes redéclarées, déjà fournies par `js/app.js`) → réparé ; heic2any
+  retiré aussi.
+- Bouton « Sélectionner » : ne plante plus si le stockage du navigateur est
+  indisponible. Liens Instagram de l'accueil limités à `https://`.
+- Surveillance : ignore les `<img src="">` en attente et les services d'audience
+  bloqués par les bloqueurs de pub (ipify, Google Analytics) — sinon bruit inutile.
+- `robots.txt` : chemins sans `.html` (le site utilise `cleanUrls`).
+- Outils internes (`outils/`) : logos introuvables (mauvais chemin) corrigés.
+
+**Recommandation non appliquée (demande une décision + du SQL)** : le code de
+validation admin (2ᵉ facteur) n'est vérifié que dans le navigateur
+(`sessionStorage`). Quelqu'un qui aurait le mot de passe d'un admin pourrait
+appeler directement Supabase et les `/api` sans le code. Le rendre vraiment
+obligatoire suppose de le vérifier côté base (RLS) et côté `/api` — chantier à
+part, à préparer avec soin pour ne pas bloquer l'accès de la propriétaire.
+

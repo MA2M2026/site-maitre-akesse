@@ -102,7 +102,7 @@ async function chargerFluxInstagram() {
 
   const grille = document.getElementById('instagram-grille');
   grille.innerHTML = posts.slice(0, 8).map(p => `
-    <a href="${echapperHtml(p.lien)}" target="_blank" rel="noopener" class="instagram-vignette" title="${echapperHtml(p.legende || '')}">
+    <a href="${echapperHtml(/^https:\/\//i.test(p.lien || '') ? p.lien : 'https://www.instagram.com/maitreakessemodelmanagement')}" target="_blank" rel="noopener" class="instagram-vignette" title="${echapperHtml(p.legende || '')}">
       <img src="${echapperHtml(p.image)}" alt="${echapperHtml(p.legende || 'Instagram post')}" loading="lazy">
     </a>
   `).join('');

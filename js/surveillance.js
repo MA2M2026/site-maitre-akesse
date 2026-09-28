@@ -96,7 +96,10 @@
     const cible = e.target;
     if (cible && cible !== window && (cible.tagName === 'IMG' || cible.tagName === 'SCRIPT' || cible.tagName === 'LINK' || cible.tagName === 'VIDEO' || cible.tagName === 'SOURCE' || cible.tagName === 'IFRAME')) {
       const url = cible.currentSrc || cible.src || cible.href || '';
-      if (!url || url.indexOf('data:') === 0 || pageQuittee) return;
+      // Une <img src=""> en attente (remplie plus tard par le JS) « échoue » en
+      // pointant vers la page elle-même : ce n'est pas une vraie erreur.
+      const attr = cible.getAttribute('src') !== null ? cible.getAttribute('src') : cible.getAttribute('href');
+      if (!url || !attr || url.indexOf('data:') === 0 || url.split('#')[0] === location.href.split('#')[0] || pageQuittee || /googletagmanager\.com|google-analytics\.com/.test(url)) return;
       const type = cible.tagName === 'IMG' ? 'Image non chargée' : cible.tagName === 'SCRIPT' ? 'Script non chargé' : cible.tagName === 'LINK' ? 'Style non chargé' : 'Média non chargé';
       signaler(type, nomCourt(url), url);
       return;
@@ -134,17 +137,20 @@
   // --- Appels réseau qui échouent (base de données, /api, envoi de photos…) ---
   // Codes ignorés car normaux : 401/403 (pas connecté), 404/406 (« aucun résultat »
   // de Supabase, ex. fiche non publiée), 409 (doublon ignoré volontairement).
+  // Services de mesure d'audience, souvent bloqués par les bloqueurs de publicité des
+  // visiteurs : leur échec n'est pas un dysfonctionnement du site (le code s'en passe).
+  const IGNORES = /api\.ipify\.org|google-analytics\.com|googletagmanager\.com|analytics\.google\.com|sentry\.io|sentry-cdn\.com/;
   if (fetchOriginal) {
     window.fetch = function (entree, options) {
       const url = typeof entree === 'string' ? entree : (entree && entree.url) || '';
       const methode = ((options && options.method) || (entree && entree.method) || 'GET').toUpperCase();
       return fetchOriginal(entree, options).then(function (rep) {
-        if (!rep.ok && [401, 403, 404, 406, 409].indexOf(rep.status) === -1 && url.indexOf('journal_erreurs') === -1) {
+        if (!rep.ok && [401, 403, 404, 406, 409].indexOf(rep.status) === -1 && url.indexOf('journal_erreurs') === -1 && !IGNORES.test(url)) {
           signaler('Requête en échec', methode + ' ' + nomCourt(url) + ' → ' + rep.status, url);
         }
         return rep;
       }, function (err) {
-        if (!pageQuittee && !(err && err.name === 'AbortError') && url.indexOf('journal_erreurs') === -1) {
+        if (!pageQuittee && !(err && err.name === 'AbortError') && url.indexOf('journal_erreurs') === -1 && !IGNORES.test(url)) {
           signaler('Réseau injoignable', methode + ' ' + nomCourt(url) + ' → ' + (err && err.message ? err.message : err), url);
         }
         throw err;

@@ -62,6 +62,19 @@ async function autoriser(jeton, modelId) {
   return { ok: false, code: 403, message: "Vous n'avez pas le droit d'agir sur ces photos." };
 }
 
+// Types de fichiers acceptés (audit du 28 septembre 2026). Les photos sont servies
+// depuis le domaine du site lui-même (relais /book-photos) : un fichier HTML ou SVG
+// « déguisé » en photo pourrait sinon exécuter du code sur www.maitreakessemodelmanagement.com
+// et voler la session d'un visiteur connecté. On n'accepte donc que de vraies images
+// (octet-stream toléré : jamais exécuté par un navigateur, et renvoyé par certains
+// téléchargements lors des migrations).
+const TYPES_AUTORISES = /^(image\/(jpeg|png|webp|gif|heic|heif|avif)|application\/octet-stream)$/i;
+function cheminSur(chemin) {
+  // Refuse les remontées de dossier (« .. » comme segment), les antislashs, les
+  // doubles barres et les caractères de contrôle ; « photo..jpg » reste accepté.
+  return !/(^|\/)\.\.(\/|$)|\\|\/\/|[\u0000-\u001f]/.test(chemin);
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Méthode non autorisée.' });
@@ -93,6 +106,16 @@ module.exports = async function handler(req, res) {
     return;
   }
 
+  if (!cheminSur(chemin)) {
+    res.status(400).json({ error: 'Chemin invalide.' });
+    return;
+  }
+  const typeFichier = contentType || 'image/jpeg';
+  if (typeof typeFichier !== 'string' || !TYPES_AUTORISES.test(typeFichier)) {
+    res.status(400).json({ error: 'Format de fichier non accepté (photos JPEG, PNG, WebP, GIF, HEIC uniquement).' });
+    return;
+  }
+
   // Tout ce qui suit (vérification Supabase, appels R2) peut échouer de façon
   // inattendue (réseau, identifiants invalides...) — tout est regroupé dans
   // ce seul bloc try/catch pour ne jamais laisser Vercel renvoyer sa propre
@@ -117,7 +140,7 @@ module.exports = async function handler(req, res) {
     const commande = new PutObjectCommand({
       Bucket: bucket,
       Key: chemin,
-      ContentType: contentType || 'image/jpeg'
+      ContentType: typeFichier
     });
     const uploadUrl = await getSignedUrl(client, commande, { expiresIn: 300 });
     const publicUrl = process.env.R2_PUBLIC_URL.replace(/\/$/, '') + '/' + chemin;

@@ -233,7 +233,7 @@ async function chargerFluxInstagram() {
       .slice(0, 8)
       .map(p => `
         <a
-          href="${echapperHtml(p.lien)}"
+          href="${echapperHtml(/^https:\/\//i.test(p.lien || '') ? p.lien : 'https://www.instagram.com/maitreakessemodelmanagement')}"
           target="_blank"
           rel="noopener"
           class="instagram-vignette"

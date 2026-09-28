@@ -1523,7 +1523,11 @@ async function journaliserPhotosEchouees(source, dossierId, nbEchouees) {
 // personne = pas de doublon), notamment pour le classement des fiches mannequins.
 document.addEventListener('DOMContentLoaded', async () => {
   if (!sb) return;
-  const cle = 'ma2m_vue_' + window.location.pathname;
+  // Clé par page ET par fiche : avant, toutes les fiches mannequin partageaient la
+  // même clé (/mannequin) — seule la première fiche vue dans la session était
+  // comptée, ce qui faussait le classement des mannequins les plus vus.
+  const idPourCle = new URLSearchParams(window.location.search).get('id');
+  const cle = 'ma2m_vue_' + window.location.pathname + (idPourCle ? '?id=' + idPourCle : '');
   try {
     if (sessionStorage.getItem(cle)) return;
     sessionStorage.setItem(cle, '1');

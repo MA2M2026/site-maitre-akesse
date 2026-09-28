@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-whF4JLhP6FXQbxpwRRcBya3dUU0S8NrziaP925L2N8Q=' 'sha256-O59CshpcWgfTtTUKlvTZI1h9xsGXJ71ELxUI8BJ9Ri4='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-MUB6FhdJ9FpDQ3biQkblrXb2hxYFp094UdlwEclzM3I='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-whF4JLhP6FXQbxpwRRcBya3dUU0S8NrziaP925L2N8Q=' 'sha256-ZNs/mQlT+HLqjPM2xQYksBpoM7Og48X81RKzj20xb8s='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-MUB6FhdJ9FpDQ3biQkblrXb2hxYFp094UdlwEclzM3I='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -701,7 +701,6 @@ setTimeout(() => {
 <script src="js/supabase-config.js"></script>
 <script src="js/indicatifs-pays.js"></script>
 <script src="js/villes-cote-ivoire.js"></script>
-<script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
 <script src="js/app.js"></script>
 <script src="js/menu.js"></script>
 <script>
@@ -841,7 +840,7 @@ document.getElementById('pj-type').addEventListener('change', (e) => appliquerVi
 // la date exacte. On ne rajoute pas de colonne en base : le format du texte stocké
 // suffit à retrouver la précision ("2026" / "2026-09" / "2026-09-14"), et les
 // anciennes valeurs en texte libre restent affichées telles quelles.
-const MOIS_FR = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+// MOIS_FR : fourni par js/app.js (le redéclarer ici faisait planter tout ce script).
 function formaterPeriode(valeur) {
   if (!valeur) return '';
   const mJour = /^(\d{4})-(\d{2})-(\d{2})$/.exec(valeur);
@@ -1863,7 +1862,7 @@ function categoriserProjet(typeProjet) {
   if (typeProjet === 'Shoot photo') return 'Shootings';
   return 'Autres expériences';
 }
-const ORDRE_CATEGORIES_PROJETS = ['Défilés', 'Campagnes & Éditoriaux', 'Shootings', 'Autres expériences'];
+// ORDRE_CATEGORIES_PROJETS : fourni par js/app.js (même valeur).
 
 async function chargerProjets() {
   const { data: { user } } = await sb.auth.getUser();
@@ -2029,12 +2028,8 @@ document.getElementById('pj-ajouter').addEventListener('click', async () => {
 // aucune nouvelle saisie, le CV reflète toujours ce qui est déjà renseigné
 // dans les blocs ci-dessus, y compris pour les mannequins déjà inscrits
 // avant cette fonctionnalité.
-const LIBELLES_COMPETENCES = {
-  runway: 'Runway / Défilé', pose: 'Pose photographique', editorial: 'Editorial',
-  campagne: 'Fashion campaign', fitting: 'Fitting', presentation: 'Présentation de collection',
-  expression: 'Expression corporelle', equipe: 'Travail en équipe', discipline: 'Discipline professionnelle'
-};
-const ORDRE_COMPETENCES = ['runway', 'pose', 'editorial', 'campagne', 'fitting', 'presentation', 'expression', 'equipe', 'discipline'];
+// LIBELLES_COMPETENCES : fourni par js/app.js (mêmes libellés).
+// ORDRE_COMPETENCES : fourni par js/app.js (même valeur).
 
 function ligneIdentiteCv(label, valeurHtml) {
   return `<div class="cv-identite-item"><span class="cv-identite-label">${echapperHtml(label)}</span><span class="cv-identite-valeur">${valeurHtml}</span></div>`;

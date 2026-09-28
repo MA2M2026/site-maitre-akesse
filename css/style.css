@@ -2145,3 +2145,9 @@ html.porte-deja-vue #porte-entree { display: none; }
 /* Tableau de bord — détail technique sous chaque erreur (fichier, ligne, adresse
    concernée), pour pouvoir diagnostiquer à partir d'une simple capture d'écran. */
 .tdb-erreur-detail { display: block; margin-top: 0.35rem; font-family: var(--texte); font-size: 0.68rem; color: var(--texte-doux); word-break: break-all; opacity: 0.85; }
+
+/* reinitialiser-mot-de-passe.html — formulaire et liens masqués au départ (le JS les
+   affiche via element.style). Auparavant un attribut style="display:none", bloqué
+   en silence par le CSP de la page (style-src sans 'unsafe-inline') : le formulaire
+   apparaissait avant même que le lien de réinitialisation ait été vérifié. */
+#rmdp-form, #rmdp-liens { display: none; }

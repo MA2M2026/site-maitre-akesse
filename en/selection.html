@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-ye3JTnCSEDaV8JBJcPZxuslTak7vmk70zeerGdnjzVI='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-SCQggsnrEpOAEmOZ3AazKXnQCalP+3heYJ7jkPyqbhQ=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-s7zf8KJUVniwkW8J1ciIC4mOU7pJKQtyMm2W0amUvJU='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-SCQggsnrEpOAEmOZ3AazKXnQCalP+3heYJ7jkPyqbhQ=';">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -319,7 +319,7 @@ document.getElementById('form-recruteur').addEventListener('submit', async (e) =
     message: `New recruiter casting request.\nCompany: ${demande.company || '-'}\nProject type: ${demande.project_type || '-'}\nCity: ${demande.city || '-'}\nDesired date: ${demande.event_date || '-'}\nSelected models: ${nomsMannequins || '-'}\nMessage: ${demande.message || '-'}`
   });
 
-  localStorage.removeItem('ma2m_selection');
+  try { localStorage.removeItem('ma2m_selection'); } catch (e) {}
   document.getElementById('bloc-selection').innerHTML = `
     <div class="ense-8">
       <h2>Thank You!</h2>

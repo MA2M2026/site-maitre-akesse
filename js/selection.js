@@ -7,7 +7,9 @@ function obtenirSelection() {
 }
 
 function sauvegarderSelection(liste) {
-  localStorage.setItem(MA2M_SELECTION_CLE, JSON.stringify(liste));
+  // Stockage parfois indisponible (navigation privée, certains navigateurs intégrés) :
+  // ne jamais faire planter le bouton « Sélectionner » pour autant.
+  try { localStorage.setItem(MA2M_SELECTION_CLE, JSON.stringify(liste)); } catch (e) {}
   majWidgetSelection();
 }
 
