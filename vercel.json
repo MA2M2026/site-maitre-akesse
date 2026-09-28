@@ -1,5 +1,11 @@
 {
   "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/book-photos/:path*",
+      "destination": "https://pub-bd96e72b6ed2444cab7b06f170bfe206.r2.dev/:path*"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
