@@ -720,6 +720,65 @@ function nomFichierSur(nom) {
   return nom.replace(/[^a-zA-Z0-9._-]/g, '_').slice(-80) || 'fichier';
 }
 
+// ================== Images du site (actualités/événements/partenaires) sur
+// Cloudflare R2, via api/r2-site-images.js — remplace l'envoi direct vers
+// Supabase Storage, dont le quota gratuit de bande passante était dépassé
+// (voir README-TECHNIQUE.md, diagnostic du 28 septembre 2026). Même
+// principe de nouvelle tentative (3 essais) que uploaderVersR2() dans
+// espace-mannequin.html/tableau-de-bord.html pour les photos du Book. ==================
+async function envoyerImageSite(categorie, chemin, fichier) {
+  const { data: { session } } = await sbAdmin.auth.getSession();
+  if (!session) throw new Error('Session expirée — reconnectez-vous.');
+  let derniereErreur;
+  for (let essai = 1; essai <= 3; essai++) {
+    try {
+      const reponsePresign = await fetch('/api/r2-site-images', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+        body: JSON.stringify({ categorie, chemin, contentType: fichier.type || 'image/jpeg' })
+      });
+      const resultat = await reponsePresign.json().catch(() => ({}));
+      if (!reponsePresign.ok) throw new Error(resultat.error || "Échec de la préparation de l'envoi.");
+      const reponseUpload = await fetch(resultat.uploadUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': fichier.type || 'image/jpeg' },
+        body: fichier
+      });
+      if (!reponseUpload.ok) throw new Error("Échec de l'envoi du fichier.");
+      return resultat.publicUrl;
+    } catch (e) {
+      derniereErreur = e;
+      if (essai < 3) await new Promise(r => setTimeout(r, 700 * essai));
+    }
+  }
+  throw derniereErreur;
+}
+
+async function supprimerImageSite(categorie, chemin) {
+  if (!chemin) return;
+  try {
+    const { data: { session } } = await sbAdmin.auth.getSession();
+    if (!session) return;
+    await fetch('/api/r2-site-images', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+      body: JSON.stringify({ action: 'suppression', categorie, chemin })
+    });
+  } catch (e) {}
+}
+
+// Pendant la période de transition, certaines lignes ont encore leur
+// ancienne image chez Supabase Storage (chemin sans préfixe "site/"),
+// pendant que les nouvelles passent déjà par R2 — trie et supprime au
+// bon endroit selon le cas, sans que chaque page ait à s'en soucier.
+async function supprimerCheminsImagesSite(categorie, bucketSupabase, chemins) {
+  const versR2 = [];
+  const versSupabase = [];
+  (chemins || []).filter(Boolean).forEach(c => (c.startsWith('site/' + categorie + '/') ? versR2 : versSupabase).push(c));
+  await Promise.all(versR2.map(c => supprimerImageSite(categorie, c)));
+  if (versSupabase.length) await sbAdmin.storage.from(bucketSupabase).remove(versSupabase);
+}
+
 // ================== Texte enrichi (actualités, événements, partenaires) ==================
 // Les champs "commentaire"/"description" étaient de simples <textarea> : un mannequin
 // pouvait coller un texte mis en forme dans Word (gras, titres, paragraphes), mais un
