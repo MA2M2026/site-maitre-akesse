@@ -116,7 +116,16 @@ Vercel.
   principal (indépendant de R2) au même moment — donc peut-être pas un
   problème spécifique à R2, plutôt un souci propre à la zone Cloudflare de
   ce compte à ce moment-là. Pistes déjà écartées : DNSSEC (désactivé des
-  deux côtés), VPN/filtre, cache navigateur, box/routeur.
+  deux côtés), VPN/filtre, cache navigateur, box/routeur. À noter : les
+  "domaines personnalisés R2" de Cloudflare ont un historique documenté de
+  bugs discrets (ex. un bug HTTP/3 fin août/début septembre 2026, réglé le
+  3 septembre — donc pas la cause directe de notre incident du 27-28, mais
+  ça montre que cette fonctionnalité précise mérite prudence).
+- **Décision de la propriétaire (28 septembre 2026) : on reste sur le
+  relais Vercel, on ne retente pas le domaine personnalisé R2 pour
+  l'instant.** Revoir cette décision seulement si le relais Vercel pose
+  un problème réel (fiabilité ou coût de bande passante), pas par
+  précaution préventive.
 - L'Extension 90 (SQL, bascule vers l'ancien domaine personnalisé) et
   l'Extension 91 (retour à `r2.dev`) restent toutes les deux dans
   l'historique (`supabase-extension.sql`) à titre de référence, mais
