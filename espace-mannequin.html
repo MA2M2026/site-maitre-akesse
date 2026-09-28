@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://cdn.jsdelivr.net 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-xKmgiAV42NuXukWcuA1tUlSW64gp/YEhrKchJR9+F2M='; style-src 'self' https://fonts.googleapis.com 'sha256-2RaJjkt0dwCPrM/WQd2sjLywmysdtxLwAh6UXghu0HQ=' 'sha256-l6fymG/9VFModmkt4+Cju+Misw/e9E3nOMRhpZL+0so=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://cdn.jsdelivr.net 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-J85MwJTfwx/HXmDwtjlJp3ArVxSCFKz5fF6oQtExBLA='; style-src 'self' https://fonts.googleapis.com 'sha256-2RaJjkt0dwCPrM/WQd2sjLywmysdtxLwAh6UXghu0HQ=' 'sha256-l6fymG/9VFModmkt4+Cju+Misw/e9E3nOMRhpZL+0so=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -2017,8 +2017,8 @@ function openCv(){
     '<div class="cv-actions"><button class="btn ghost small" id="closeOv2">Fermer</button><button class="btn ghost small" id="btnCvJpeg">🖼️ Télécharger en JPEG</button><button class="btn primary small" id="btnCvPdf">🖨️ Télécharger en PDF</button></div>' +
     '</div>';
   showOverlay();
-  document.getElementById('btnCvPdf').addEventListener('click', function(){ genererCvFichier('pdf', 'cv-mannequin-contenu', donneesCv.nomComplet, 'btnCvPdf', 'btnCvJpeg'); });
-  document.getElementById('btnCvJpeg').addEventListener('click', function(){ genererCvFichier('jpeg', 'cv-mannequin-contenu', donneesCv.nomComplet, 'btnCvPdf', 'btnCvJpeg'); });
+  document.getElementById('btnCvPdf').addEventListener('click', function(){ genererCvFichier('pdf', donneesCv, 'btnCvPdf', 'btnCvJpeg'); });
+  document.getElementById('btnCvJpeg').addEventListener('click', function(){ genererCvFichier('jpeg', donneesCv, 'btnCvPdf', 'btnCvJpeg'); });
 }
 
 // Reconstruit, à partir de l'état réel du profil, l'objet { profil, photos, projets }
