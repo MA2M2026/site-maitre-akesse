@@ -1155,3 +1155,18 @@ Résultat : 0 appel au stockage Supabase, 3 versions par photo vers R2, fiche en
 base ; Book, fiche mannequin FR/EN et accueil : toutes les images chargées sur les
 5 appareils, sans erreur ni débordement.
 
+### Journal d'erreurs du 28 septembre 2026 (soir) — analyse et corrections
+
+- **Sentry ne fonctionnait pas** : le chargeur (`js-de.sentry-cdn.com`) télécharge
+  ensuite le SDK complet depuis `browser.sentry-cdn.com`, absent du CSP → bloqué
+  partout, Sentry n'a jamais rien enregistré. Ajouté à `script-src` (vercel.json +
+  meta CSP des 29 pages) et à `connect-src`.
+- Navigateurs intégrés Instagram/Facebook : ils injectent leur propre code
+  (`iabjs://…`, « Java object is gone ») et re-téléchargent par `fetch` les
+  scripts/polices de la page → faux signalements. `connect-src` autorise
+  désormais `cdn.jsdelivr.net`, `fonts.googleapis.com`, `fonts.gstatic.com` ;
+  `js/surveillance.js` ignore les erreurs de code étranger (`codeEtranger()`) et
+  les réponses « opaques » (statut 0, ex. Google Analytics).
+- Aucune erreur du journal ne venait d'une page du site ni d'une photo non
+  affichée (y compris depuis Facebook).
+
