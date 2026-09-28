@@ -134,6 +134,23 @@ Vercel.
   `https://www.maitreakessemodelmanagement.com/book-photos/...` (voir
   Extension 92).
 
+## 📝 À faire plus tard (demandé par la propriétaire — à lui rappeler)
+
+- **Nettoyer les anciennes copies de photos sur Supabase Storage** (noté le 28
+  septembre 2026). Les outils « Migration des photos vers R2 » du tableau de bord
+  ont COPIÉ les photos vers Cloudflare R2 sans les effacer de Supabase. Vérifié le
+  28/09 : « Aucune photo à migrer — tout est déjà sur R2 » pour le Book ET pour
+  les images du site. Les copies Supabase ne servent donc plus (aucune bande
+  passante consommée, seulement de la place de stockage). Idée validée avec la
+  propriétaire, à faire quand elle le demandera : un bouton « Nettoyer les
+  anciennes copies sur Supabase » dans le tableau de bord, qui supprime
+  uniquement dans les buckets `model-photos`, `actualites-images`,
+  `evenements-images`, `partenaires-logos` les fichiers qu'AUCUNE fiche ne
+  référence plus — sans jamais toucher `casting-applications` ni
+  `inscriptions-photos` (anciennes photos de dossiers encore affichées).
+- **Rendre le code de validation admin (2FA) obligatoire côté serveur** — voir
+  la section « Audit complet du 28 septembre 2026 » en bas de ce fichier.
+
 ## Vue d'ensemble
 
 Site statique (HTML / CSS / JavaScript, aucun framework, aucune étape de
