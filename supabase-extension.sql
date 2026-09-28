@@ -3809,3 +3809,25 @@ $$;
 grant execute on function marquer_likes_vus() to authenticated;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 94 : classement de la page "Nos Mannequins" par popularité
+-- (total de cœurs reçus sur le Book), demande explicite de la
+-- propriétaire pour "booster" les mannequins les plus appréciés — plus
+-- de cœurs, plus de visibilité en tête de liste.
+-- ===================================================================
+create or replace function likes_totaux_mannequins(p_ids uuid[])
+returns table(model_id uuid, total bigint)
+language sql
+security definer
+set search_path = public
+as $$
+  select mp.model_id, count(*)
+  from photo_likes pl
+  join model_photos mp on mp.id = pl.photo_id
+  where mp.model_id = any(p_ids)
+  group by mp.model_id;
+$$;
+grant execute on function likes_totaux_mannequins(uuid[]) to anon;
+
+NOTIFY pgrst, 'reload schema';
