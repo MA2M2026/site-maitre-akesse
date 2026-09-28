@@ -1094,6 +1094,12 @@ vérifier qu'aucun texte n'est jamais exécuté). Corrigé :
   Avant, les fichiers partaient en premier et l'erreur de base était ignorée →
   élément toujours listé mais image cassée. En cas d'échec : message clair.
 - Types `image/jpg` et `image/pjpeg` (certains Android) acceptés par les `/api`.
+- **espace-mannequin-ancien.html supprimé** (même soir, sur conseil de l'assistant
+  et accord de la propriétaire) : doublon inutilisé du nouvel espace, encore basé
+  sur Supabase Storage, et une page de connexion de plus à protéger. Redirection
+  permanente vers `/espace-mannequin` dans `vercel.json`. Récupérable à tout
+  moment dans l'historique git si besoin. Les mentions qui restent dans les
+  commentaires du code sont historiques.
 - **Aucun flux photo vers Supabase** (règle de la propriétaire, restriction
   Supabase du 15 octobre 2026) : `espace-mannequin-ancien.html` envoyait encore
   les photos vers Supabase Storage → envoi et suppression de photos désactivés sur
