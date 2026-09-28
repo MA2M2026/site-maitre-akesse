@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-p4h3C9gYcnZ5zzqJhZtW8ze6AcfNa22OpOJ9HAOhaWc='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-jQLfDPnJ0WAwj/alKjnSLPmM23GyNAy8q3t1zc3Fo6c='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-rGiubhGxz/XmXEvRcZzxsFOkN5PrT06AgT03PraVrx0='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-jQLfDPnJ0WAwj/alKjnSLPmM23GyNAy8q3t1zc3Fo6c='; worker-src 'self' blob:;">
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
 <script src="js/analytics-config.js"></script>
@@ -380,13 +380,11 @@ document.getElementById('edit-p-enregistrer-btn').addEventListener('click', asyn
   const logoInput = document.getElementById('edit-p-logo');
   if (logoInput.files[0]) {
     const fichier = await convertirSiHeic(logoInput.files[0]);
-    const chemin = `${id}/${Date.now()}-${nomFichierSur(fichier.name)}`;
-    const { error: erreurLogo } = await sbAdmin.storage.from('partenaires-logos').upload(chemin, fichier);
-    if (!erreurLogo) {
-      const { data: urlLogo } = sbAdmin.storage.from('partenaires-logos').getPublicUrl(chemin);
-      maj.logo_url = urlLogo.publicUrl;
+    const chemin = `site/partenaires/${id}/${Date.now()}-${nomFichierSur(fichier.name)}`;
+    try {
+      maj.logo_url = await envoyerImageSite('partenaires', chemin, fichier);
       maj.logo_chemin = chemin;
-    }
+    } catch (e) {}
   }
 
   const { error } = await sbAdmin.from('partenaires').update(maj).eq('id', id);
@@ -402,7 +400,7 @@ document.getElementById('part-modal-supprimer-btn').addEventListener('click', as
   const id = window.partenaireModalCourant;
   if (!confirm('Supprimer définitivement ce partenaire ?')) return;
   const p = window.partenairesData.find(x => x.id === id);
-  if (p && p.logo_chemin) await sbAdmin.storage.from('partenaires-logos').remove([p.logo_chemin]);
+  if (p && p.logo_chemin) await supprimerCheminsImagesSite('partenaires', 'partenaires-logos', [p.logo_chemin]);
   await sbAdmin.from('partenaires').delete().eq('id', id);
   fermerPartModal();
   chargerPartenaires();
@@ -421,13 +419,11 @@ document.getElementById('p-publier-btn').addEventListener('click', async () => {
   const logoInput = document.getElementById('p-logo');
   if (logoInput.files[0]) {
     const fichier = await convertirSiHeic(logoInput.files[0]);
-    const chemin = `${idPartenaire}/${Date.now()}-${nomFichierSur(fichier.name)}`;
-    const { error: erreurLogo } = await sbAdmin.storage.from('partenaires-logos').upload(chemin, fichier);
-    if (!erreurLogo) {
-      const { data: urlLogo } = sbAdmin.storage.from('partenaires-logos').getPublicUrl(chemin);
-      logo_url = urlLogo.publicUrl;
+    const chemin = `site/partenaires/${idPartenaire}/${Date.now()}-${nomFichierSur(fichier.name)}`;
+    try {
+      logo_url = await envoyerImageSite('partenaires', chemin, fichier);
       logo_chemin = chemin;
-    }
+    } catch (e) {}
   }
 
   const { error } = await sbAdmin.from('partenaires').insert({

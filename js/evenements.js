@@ -182,7 +182,7 @@ document.getElementById('news-modal-supprimer-btn').addEventListener('click', as
   if (!confirm("Supprimer définitivement cet événement et toutes ses photos ?")) return;
   const { data: photos } = await sbAdmin.from('evenement_photos').select('chemin').eq('evenement_id', id);
   const chemins = (photos || []).map(p => p.chemin).filter(Boolean);
-  if (chemins.length) await sbAdmin.storage.from('evenements-images').remove(chemins);
+  if (chemins.length) await supprimerCheminsImagesSite('evenements', 'evenements-images', chemins);
   await sbAdmin.from('evenements').delete().eq('id', id);
   fermerNewsModal();
   chargerEvenements();
@@ -283,11 +283,11 @@ document.getElementById('red-enregistrer-btn').addEventListener('click', async (
   const urls = [];
   for (const fichierOriginal of fichiers) {
     const fichier = await convertirSiHeic(fichierOriginal);
-    const chemin = `${id}/${Date.now()}-${nomFichierSur(fichier.name)}`;
-    const { error: erreurUpload } = await sbAdmin.storage.from('evenements-images').upload(chemin, fichier);
-    if (erreurUpload) continue;
-    const { data: urlPublique } = sbAdmin.storage.from('evenements-images').getPublicUrl(chemin);
-    urls.push({ url: urlPublique.publicUrl, chemin });
+    const chemin = `site/evenements/${id}/${Date.now()}-${nomFichierSur(fichier.name)}`;
+    try {
+      const url = await envoyerImageSite('evenements', chemin, fichier);
+      urls.push({ url, chemin });
+    } catch (e) { continue; }
   }
 
   if (redactionIdEnCours) {
@@ -323,7 +323,7 @@ document.getElementById('red-supprimer-btn').addEventListener('click', async () 
   const id = redactionIdEnCours;
   const { data: photos } = await sbAdmin.from('evenement_photos').select('chemin').eq('evenement_id', id);
   const chemins = (photos || []).map(p => p.chemin).filter(Boolean);
-  if (chemins.length) await sbAdmin.storage.from('evenements-images').remove(chemins);
+  if (chemins.length) await supprimerCheminsImagesSite('evenements', 'evenements-images', chemins);
   await sbAdmin.from('evenements').delete().eq('id', id);
   fermerRedaction();
   chargerEvenements();

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-0P64kcZy3smu3cX6C/pEFRQaFMSea68eZVIs5pSAtWs=' 'sha256-qfpMxlxJ1n9L7JaINm/uD6pOLq4eW01j4T3O3ecKLrE=' 'sha256-UEzjXoKlml2haQV2YDaKVt6k7Ruv8v7QlxvRa8wY5eA='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net ;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-qfpMxlxJ1n9L7JaINm/uD6pOLq4eW01j4T3O3ecKLrE=' 'sha256-L2Qpb/VBSD3+HwxibdP7rbZf8jYxA8Al9+m9neKwNKM=' 'sha256-0P64kcZy3smu3cX6C/pEFRQaFMSea68eZVIs5pSAtWs='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net ;">
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
 <script src="../js/analytics-config.js"></script>
@@ -390,7 +390,7 @@ document.getElementById('news-modal-supprimer-btn').addEventListener('click', as
   if (!confirm('Permanently delete this event and all its photos?')) return;
   const { data: photos } = await sbAdmin.from('evenement_photos').select('chemin').eq('evenement_id', id);
   const chemins = (photos || []).map(p => p.chemin).filter(Boolean);
-  if (chemins.length) await sbAdmin.storage.from('evenements-images').remove(chemins);
+  if (chemins.length) await supprimerCheminsImagesSite('evenements', 'evenements-images', chemins);
   await sbAdmin.from('evenements').delete().eq('id', id);
   fermerNewsModal();
   chargerEvenements();
@@ -487,11 +487,11 @@ document.getElementById('red-enregistrer-btn').addEventListener('click', async (
   const urls = [];
   for (const fichierOriginal of fichiers) {
     const fichier = await convertirSiHeic(fichierOriginal);
-    const chemin = `${id}/${Date.now()}-${nomFichierSur(fichier.name)}`;
-    const { error: erreurUpload } = await sbAdmin.storage.from('evenements-images').upload(chemin, fichier);
-    if (erreurUpload) continue;
-    const { data: urlPublique } = sbAdmin.storage.from('evenements-images').getPublicUrl(chemin);
-    urls.push({ url: urlPublique.publicUrl, chemin });
+    const chemin = `site/evenements/${id}/${Date.now()}-${nomFichierSur(fichier.name)}`;
+    try {
+      const url = await envoyerImageSite('evenements', chemin, fichier);
+      urls.push({ url, chemin });
+    } catch (e) { continue; }
   }
 
   if (redactionIdEnCours) {
@@ -527,7 +527,7 @@ document.getElementById('red-supprimer-btn').addEventListener('click', async () 
   const id = redactionIdEnCours;
   const { data: photos } = await sbAdmin.from('evenement_photos').select('chemin').eq('evenement_id', id);
   const chemins = (photos || []).map(p => p.chemin).filter(Boolean);
-  if (chemins.length) await sbAdmin.storage.from('evenements-images').remove(chemins);
+  if (chemins.length) await supprimerCheminsImagesSite('evenements', 'evenements-images', chemins);
   await sbAdmin.from('evenements').delete().eq('id', id);
   fermerRedaction();
   chargerEvenements();

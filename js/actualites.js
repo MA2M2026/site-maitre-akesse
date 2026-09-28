@@ -241,7 +241,7 @@ document.getElementById('news-modal-supprimer-btn').addEventListener('click', as
   if (!confirm('Supprimer définitivement cette actualité et toutes ses photos ?')) return;
   const { data: photos } = await sbAdmin.from('actualite_photos').select('chemin').eq('actualite_id', id);
   const chemins = (photos || []).map(p => p.chemin).filter(Boolean);
-  if (chemins.length) await sbAdmin.storage.from('actualites-images').remove(chemins);
+  if (chemins.length) await supprimerCheminsImagesSite('actualites', 'actualites-images', chemins);
   await sbAdmin.from('actualites').delete().eq('id', id);
   fermerNewsModal();
   chargerActualites();
@@ -339,11 +339,11 @@ document.getElementById('red-enregistrer-btn').addEventListener('click', async (
   const urls = [];
   for (const fichierOriginal of fichiers) {
     const fichier = await convertirSiHeic(fichierOriginal);
-    const chemin = `${id}/${Date.now()}-${nomFichierSur(fichier.name)}`;
-    const { error: erreurUpload } = await sbAdmin.storage.from('actualites-images').upload(chemin, fichier);
-    if (erreurUpload) continue;
-    const { data: urlPublique } = sbAdmin.storage.from('actualites-images').getPublicUrl(chemin);
-    urls.push({ url: urlPublique.publicUrl, chemin });
+    const chemin = `site/actualites/${id}/${Date.now()}-${nomFichierSur(fichier.name)}`;
+    try {
+      const url = await envoyerImageSite('actualites', chemin, fichier);
+      urls.push({ url, chemin });
+    } catch (e) { continue; }
   }
 
   if (redactionIdEnCours) {
@@ -379,7 +379,7 @@ document.getElementById('red-supprimer-btn').addEventListener('click', async () 
   const id = redactionIdEnCours;
   const { data: photos } = await sbAdmin.from('actualite_photos').select('chemin').eq('actualite_id', id);
   const chemins = (photos || []).map(p => p.chemin).filter(Boolean);
-  if (chemins.length) await sbAdmin.storage.from('actualites-images').remove(chemins);
+  if (chemins.length) await supprimerCheminsImagesSite('actualites', 'actualites-images', chemins);
   await sbAdmin.from('actualites').delete().eq('id', id);
   fermerRedaction();
   chargerActualites();
