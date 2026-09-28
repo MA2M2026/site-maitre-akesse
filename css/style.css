@@ -1549,8 +1549,24 @@ html.porte-verrouillee { overflow: hidden; height: 100%; }
 .news-lecture-sombre .news-modal-corps .news-date { color: var(--bordeaux-clair); }
 .news-lecture-sombre .news-modal-corps h2, .news-lecture-sombre .news-modal-corps h3 { color: var(--titre-clair); }
 .news-lecture-sombre .news-modal-corps .contenu-riche,
-.news-lecture-sombre .news-modal-corps .contenu-riche :not(a) { color: var(--texte-corps) !important; }
-.news-lecture-sombre .news-modal-corps .contenu-riche { font-size: 1.2rem; line-height: 1.8; }
+.news-lecture-sombre .news-modal-corps .contenu-riche :not(a) { color: #ece6e0 !important; }
+/* Texte courant de l'article dans la police nette du site (Jost) : la police
+   d'affichage, très fine, reste réservée aux titres — plus confortable à lire
+   sur un paragraphe entier, surtout sur téléphone. */
+.news-lecture-sombre .news-modal-corps .contenu-riche {
+  font-family: var(--texte); font-weight: 400; font-size: 1.06rem; line-height: 1.85;
+  letter-spacing: 0.01em; max-width: 64ch;
+}
+.news-lecture-sombre .news-modal-corps .contenu-riche p { margin-bottom: 1.3em; }
+.news-lecture-sombre .news-modal-corps .contenu-riche strong,
+.news-lecture-sombre .news-modal-corps .contenu-riche b { font-weight: 600; color: #fff !important; }
+.news-lecture-sombre .news-modal-corps .contenu-riche h2,
+.news-lecture-sombre .news-modal-corps .contenu-riche h3,
+.news-lecture-sombre .news-modal-corps .contenu-riche h4 { font-family: var(--display); color: var(--titre-clair) !important; }
+@media (max-width: 700px) {
+  .news-lecture-sombre .news-modal-corps { padding: 1.6rem 1.35rem 2rem; }
+  .news-lecture-sombre .news-modal-corps .contenu-riche { font-size: 1.02rem; line-height: 1.8; }
+}
 .news-lecture-sombre .news-modal-corps .contenu-riche a { color: var(--bordeaux-clair); }
 
 /* ---------- Verrouillage complet pendant la porte d'entrée ---------- */
