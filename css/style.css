@@ -1400,7 +1400,10 @@ html.porte-verrouillee { overflow: hidden; height: 100%; }
    où le bas de la photo restait net au lieu de s'assombrir. */
 .news-une .news-une-photo::after {
   content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
-  background: linear-gradient(to top, rgba(6,5,4,0.92) 0%, rgba(6,5,4,0.55) 40%, rgba(6,5,4,0) 74%);
+  /* Adouci le 28 septembre 2026 : maintenant que le dégradé est bien visible
+     (voir plus haut), il assombrissait trop la photo et gênait la lecture
+     du lien "Voir l'événement" — moins opaque, sur une zone plus réduite. */
+  background: linear-gradient(to top, rgba(6,5,4,0.7) 0%, rgba(6,5,4,0.3) 32%, rgba(6,5,4,0.06) 54%, rgba(6,5,4,0) 68%);
 }
 .news-une .news-une-corps {
   position: relative; z-index: 1; display: flex; flex-direction: column; justify-content: flex-end;
