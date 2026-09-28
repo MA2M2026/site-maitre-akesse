@@ -770,13 +770,61 @@ function dessinerIconeMcvCanvas(ctx, cle, xPx, yPx, taillePx, couleur) {
   ctx.restore();
 }
 
+// Charge (une seule fois) le générateur de QR code hébergé sur le site — voir
+// js/qrcode-generator.js pour le pourquoi (plus de service extérieur).
+let promesseQrLib = null;
+function chargerQrLib() {
+  if (window.qrcode) return Promise.resolve();
+  if (promesseQrLib) return promesseQrLib;
+  promesseQrLib = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = '/js/qrcode-generator.js';
+    script.onload = () => resolve();
+    script.onerror = () => { promesseQrLib = null; reject(new Error('QR indisponible')); };
+    document.body.appendChild(script);
+  });
+  return promesseQrLib;
+}
+
+// Dessine un QR code net (modules pleins, sans image intermédiaire) dans un carré de
+// tailleMm, fond blanc + petite marge. Ne fait rien si le générateur n'a pas pu charger.
+function dessinerQrCanvas(ctx, texte, xPx, yPx, taillePx, couleur) {
+  if (!window.qrcode) return false;
+  const qr = window.qrcode(0, 'M');
+  qr.addData(texte);
+  qr.make();
+  const n = qr.getModuleCount(), marge = 2;
+  const module = taillePx / (n + marge * 2);
+  ctx.save();
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(xPx, yPx, taillePx, taillePx);
+  ctx.fillStyle = couleur;
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
+      if (qr.isDark(r, c)) ctx.fillRect(xPx + (c + marge) * module, yPx + (r + marge) * module, Math.ceil(module), Math.ceil(module));
+    }
+  }
+  ctx.restore();
+  return true;
+}
+
 // Construit le CV sur un grand canvas (qualité impression, 300 dpi), même principe que
 // construireCanvasCompcard() ci-dessus : un dessin recomposé à la main plutôt qu'une
 // "photographie" de la page (html2canvas), pour un rendu garanti identique quel que soit
-// l'appareil — le CV a beaucoup plus de contenu que la compcard (parcours de longueur
-// variable), donc la hauteur du canvas n'est pas fixe : elle est calculée en fonction du
-// contenu réel de CE mannequin (deux passes : d'abord mesurer, puis dessiner pour de vrai).
+// l'appareil.
+//
+// Hauteur : le CV n'a pas une longueur fixe (un mannequin peut renseigner une dizaine de
+// défilés ou plus). Plutôt que d'ESTIMER la hauteur à part (l'ancienne méthode surestimait
+// et laissait un grand vide en bas — retour de la propriétaire, 28 sept. 2026), le dessin
+// complet est fait deux fois par la même fonction : une première fois « à blanc » sur un
+// canvas jetable pour relever où s'arrête réellement chaque colonne, puis pour de vrai à
+// la hauteur exacte. Impossible que les deux divergent.
+//
+// Bas de la colonne droite (même retour) : compétences sur deux colonnes, puis le
+// portfolio en une rangée de photos, puis Instagram + lien vers la fiche + QR code.
 // d : même objet que celui attendu par construireHtmlCv() ci-dessus.
+// Le canvas renvoyé porte canvas.zonesLiens = [{ x, y, l, h, url }] (en mm) pour que le
+// PDF rende le lien et le QR cliquables.
 async function construireCanvasCv(d) {
   const p = d.physique || {}, f = d.formation || {};
   const groupes = groupExperiences(d.experiences);
@@ -799,330 +847,311 @@ async function construireCanvasCv(d) {
     d.photoCvUrl ? chargerImageHauteRes(d.photoCvUrl) : Promise.resolve(null),
     chargerImageLocale('assets/logo-header.png'),
     ...[0, 1, 2, 3, 4].map(function (i) { const u = (d.compcardPhotos || [])[i]; return u ? chargerImageHauteRes(u) : Promise.resolve(null); }),
-    chargerImageHauteRes('https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=8&color=241a12&bgcolor=ffffff&data=' + encodeURIComponent(lienFichePublique))
+    chargerQrLib().catch(function () { return null; })
   ]);
-  const qr = photosPortfolio.pop();
-
-  // Canvas jetable utilisé uniquement pour mesurer du texte (measureText ne dépend que de
-  // ctx.font, pas de la taille du canvas) — sert aux deux passes ci-dessous.
-  const ctxMesure = document.createElement('canvas').getContext('2d');
+  photosPortfolio.pop(); // résultat de chargerQrLib, pas une photo
+  const photosPresentes = photosPortfolio.filter(Boolean);
+  const handle = d.instagram ? String(d.instagram).replace(/^@/, '') : '';
 
   const PAD_SIDEBAR = 7, PAD_MAIN = 8;
   const hPhotoHero = SIDEBAR_MM; // photo carrée pleine largeur (ratio 1/1, plus sûr que 3/4 quelle que soit la photo fournie)
-
-  function mesurerSidebar() {
-    let y = hPhotoHero + 8;
-    y += 6; // tagline
-    const lignesNom = envelopperLignesCanvas(ctxMesure, d.nomComplet || '', px(SIDEBAR_MM - PAD_SIDEBAR * 2), `600 ${fpx(16)}px "Cormorant Garamond", serif`);
-    y += lignesNom.length * 7.5 + 6; // nom + marge avant le trait
-    y += 6; // trait + marge
-    const lignesInfo = [
-      ['calendar', 'Date de naissance', formaterPeriode(d.dateNaissance)],
-      ['pin', 'Lieu de naissance', [d.villeNaissance, d.lieuNaissance].filter(Boolean).join(', ') || '—'],
-      ['globe', 'Nationalité', d.nationalite || '—'],
-      ['home', 'Ville de résidence', [d.ville, d.quartier].filter(Boolean).join(', ') || '—'],
-      ['phone', 'Contact agence', '+225 27 22 23 11 76 / +225 05 45 65 66 87 / infos.ma2m@gmail.com']
-    ];
-    lignesInfo.forEach(function (ligne) {
-      const lignesVal = envelopperLignesCanvas(ctxMesure, ligne[2], px(SIDEBAR_MM - PAD_SIDEBAR * 2 - 8), `400 ${fpx(9.5)}px Jost, sans-serif`);
-      y += 4 + lignesVal.length * 4.2 + 4; // libellé + valeur (peut faire plusieurs lignes)
-    });
-    y += 6; // marge avant catégorie
-    y += 10; // catégorie (trait + libellé + valeur)
-    if (d.citation) {
-      const lignesCitation = envelopperLignesCanvas(ctxMesure, '« ' + d.citation + ' »', px(SIDEBAR_MM - PAD_SIDEBAR * 2), `italic 400 ${fpx(11)}px "Cormorant Garamond", serif`);
-      y += 6 + lignesCitation.length * 5.5;
-    }
-    y += 18; // réserve pour le logo de l'agence en pied de colonne
-    return y;
-  }
-
-  function mesurerMain() {
-    let y = PAD_MAIN + 6; // topline
-    // Profil (bio)
-    y += 6;
-    const lignesBio = envelopperLignesCanvas(ctxMesure, d.bio || 'Profil à compléter.', px(MAIN_MM - PAD_MAIN * 2), `italic 400 ${fpx(10.5)}px Jost, sans-serif`);
-    y += lignesBio.length * 5.2 + 8;
-    // Informations physiques (4 lignes sur 2 colonnes)
-    y += 7 + 4 * 7 + 8;
-    // Formation (4 lignes)
-    y += 7 + 4 * 7 + 8;
-    // Expérience
-    y += 7;
-    groupes.forEach(function (g) {
-      y += 6 + g.items.length * 5.2;
-    });
-    y += 8;
-    // Compétences + portfolio (rangée du bas)
-    const hCompetences = 7 + ORDRE_COMPETENCES.length * 7;
-    const hPortfolio = 7 + (MAIN_MM * 0.42) + 6 + 6 + 32;
-    y += Math.max(hCompetences, hPortfolio);
-    return y;
-  }
-
-  const hSidebar = mesurerSidebar();
-  const hMain = mesurerMain();
-  const hColonnes = Math.max(hSidebar, hMain);
   const hBanniere = 9;
-  const HAUTEUR_MM = hBanniere + hColonnes;
+  const RESERVE_LOGO_BAS = 22; // logo de l'agence en pied de colonne gauche
 
-  const canvas = document.createElement('canvas');
-  canvas.width = Math.round(px(LARGEUR_MM));
-  canvas.height = Math.round(px(HAUTEUR_MM));
-  const ctx = canvas.getContext('2d');
-  ctxMesure.canvas.width = 1; ctxMesure.canvas.height = 1; // libère la mémoire du canvas de mesure
+  function dessinerTout(ctx, hColonnes) {
+    const zonesLiens = [];
+    function dessinerCouvrant(image, xMm, yMm, lMm, hMm) {
+      if (!image) return;
+      const ratioImage = image.largeur / image.hauteur, ratioCadre = lMm / hMm;
+      let sx = 0, sy = 0, sL = image.largeur, sH = image.hauteur;
+      if (ratioImage > ratioCadre) { sL = image.hauteur * ratioCadre; sx = (image.largeur - sL) / 2; }
+      else { sH = image.largeur / ratioCadre; sy = (image.hauteur - sH) / 2; }
+      ctx.drawImage(image.canvas, sx, sy, sL, sH, px(xMm), px(yMm), px(lMm), px(hMm));
+    }
 
-  function dessinerCouvrant(image, xMm, yMm, lMm, hMm) {
-    if (!image) return;
-    const ratioImage = image.largeur / image.hauteur, ratioCadre = lMm / hMm;
-    let sx = 0, sy = 0, sL = image.largeur, sH = image.hauteur;
-    if (ratioImage > ratioCadre) { sL = image.hauteur * ratioCadre; sx = (image.largeur - sL) / 2; }
-    else { sH = image.largeur / ratioCadre; sy = (image.hauteur - sH) / 2; }
-    ctx.drawImage(image.canvas, sx, sy, sL, sH, px(xMm), px(yMm), px(lMm), px(hMm));
-  }
+    // --- Bandeau "document privé" ---
+    ctx.fillStyle = '#2c1116';
+    ctx.fillRect(0, 0, px(LARGEUR_MM), px(hBanniere));
+    ctx.fillStyle = '#f0d3d7';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = `400 ${fpx(9)}px Jost, sans-serif`;
+    ctx.fillText('Document privé — visible uniquement par ' + ((d.nomComplet || '').split(' ')[0] || 'le mannequin') + ' et l’administrateur MA2M', px(LARGEUR_MM) / 2, px(hBanniere / 2));
 
-  // --- Bandeau "document privé" ---
-  ctx.fillStyle = '#2c1116';
-  ctx.fillRect(0, 0, canvas.width, px(hBanniere));
-  ctx.fillStyle = '#f0d3d7';
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.font = `400 ${fpx(9)}px Jost, sans-serif`;
-  ctx.fillText('Document privé — visible uniquement par ' + ((d.nomComplet || '').split(' ')[0] || 'le mannequin') + ' et l’administrateur MA2M', canvas.width / 2, px(hBanniere / 2));
+    // ============== COLONNE GAUCHE (sidebar sombre) ==============
+    const yColDebut = hBanniere;
+    const degradeSidebar = ctx.createLinearGradient(0, px(yColDebut), px(SIDEBAR_MM) * 0.6, px(yColDebut + hColonnes));
+    degradeSidebar.addColorStop(0, '#141010');
+    degradeSidebar.addColorStop(0.55, NOIR);
+    degradeSidebar.addColorStop(1, NOIR);
+    ctx.fillStyle = degradeSidebar;
+    ctx.fillRect(0, px(yColDebut), px(SIDEBAR_MM), px(hColonnes));
 
-  // ============== COLONNE GAUCHE (sidebar sombre) ==============
-  const yColDebut = hBanniere;
-  const degradeSidebar = ctx.createLinearGradient(0, px(yColDebut), px(SIDEBAR_MM) * 0.6, px(yColDebut + hColonnes));
-  degradeSidebar.addColorStop(0, '#141010');
-  degradeSidebar.addColorStop(0.55, NOIR);
-  degradeSidebar.addColorStop(1, NOIR);
-  ctx.fillStyle = degradeSidebar;
-  ctx.fillRect(0, px(yColDebut), px(SIDEBAR_MM), px(hColonnes));
+    dessinerCouvrant(photoHero, 0, yColDebut, SIDEBAR_MM, hPhotoHero);
+    const degradePhoto = ctx.createLinearGradient(0, px(yColDebut), 0, px(yColDebut + hPhotoHero));
+    degradePhoto.addColorStop(0, 'rgba(13,10,8,.55)');
+    degradePhoto.addColorStop(0.3, 'rgba(13,10,8,0)');
+    degradePhoto.addColorStop(0.62, 'rgba(13,10,8,0)');
+    degradePhoto.addColorStop(1, 'rgba(13,10,8,.6)');
+    ctx.fillStyle = degradePhoto;
+    ctx.fillRect(0, px(yColDebut), px(SIDEBAR_MM), px(hPhotoHero));
+    if (logo) {
+      const hLogoMm = 6.5, wLogoMm = hLogoMm * (logo.largeur / logo.hauteur);
+      ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.5)'; ctx.shadowBlur = px(1);
+      ctx.drawImage(logo.canvas, px(4), px(yColDebut + 4), px(wLogoMm), px(hLogoMm));
+      ctx.restore();
+    }
 
-  dessinerCouvrant(photoHero, 0, yColDebut, SIDEBAR_MM, hPhotoHero);
-  const degradePhoto = ctx.createLinearGradient(0, px(yColDebut), 0, px(yColDebut + hPhotoHero));
-  degradePhoto.addColorStop(0, 'rgba(13,10,8,.55)');
-  degradePhoto.addColorStop(0.3, 'rgba(13,10,8,0)');
-  degradePhoto.addColorStop(0.62, 'rgba(13,10,8,0)');
-  degradePhoto.addColorStop(1, 'rgba(13,10,8,.6)');
-  ctx.fillStyle = degradePhoto;
-  ctx.fillRect(0, px(yColDebut), px(SIDEBAR_MM), px(hPhotoHero));
-  if (logo) {
-    const hLogoMm = 6.5, wLogoMm = hLogoMm * (logo.largeur / logo.hauteur);
-    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.5)'; ctx.shadowBlur = px(1);
-    ctx.drawImage(logo.canvas, px(4), px(yColDebut + 4), px(wLogoMm), px(hLogoMm));
-    ctx.restore();
-  }
-
-  let y = yColDebut + hPhotoHero + 8;
-  ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-  ctx.fillStyle = OR;
-  ctx.font = `400 ${fpx(6.2)}px Jost, sans-serif`;
-  ctx.fillText('F O R M E R   ·   R É V É L E R   ·   V A L O R I S E R', px(SIDEBAR_MM / 2), px(y));
-  y += 6;
-
-  ctx.textAlign = 'left';
-  ctx.fillStyle = IVOIRE;
-  const lignesNom = envelopperLignesCanvas(ctx, d.nomComplet || '', px(SIDEBAR_MM - PAD_SIDEBAR * 2), `600 ${fpx(16)}px "Cormorant Garamond", serif`);
-  ctx.font = `600 ${fpx(16)}px "Cormorant Garamond", serif`;
-  lignesNom.forEach(function (ligne) { y += 7.5; ctx.fillText(ligne, px(PAD_SIDEBAR), px(y)); });
-  y += 6;
-
-  ctx.strokeStyle = BORDEAUX2; ctx.lineWidth = px(0.35);
-  ctx.beginPath(); ctx.moveTo(px(PAD_SIDEBAR), px(y)); ctx.lineTo(px(SIDEBAR_MM - PAD_SIDEBAR), px(y)); ctx.stroke();
-  y += 6;
-
-  const infosCv = [
-    ['calendar', 'Date de naissance', formaterPeriode(d.dateNaissance)],
-    ['pin', 'Lieu de naissance', [d.villeNaissance, d.lieuNaissance].filter(Boolean).join(', ') || '—'],
-    ['globe', 'Nationalité', d.nationalite || '—'],
-    ['home', 'Ville de résidence', [d.ville, d.quartier].filter(Boolean).join(', ') || '—'],
-    ['phone', 'Contact agence', '+225 27 22 23 11 76 / +225 05 45 65 66 87 / infos.ma2m@gmail.com']
-  ];
-  infosCv.forEach(function (ligne) {
-    dessinerIconeMcvCanvas(ctx, ligne[0], px(PAD_SIDEBAR), px(y - 3.2), px(4.2), OR);
-    ctx.fillStyle = 'rgba(244,240,234,.55)';
-    ctx.font = `400 ${fpx(6.6)}px Jost, sans-serif`;
-    ctx.fillText(ligne[1].toUpperCase(), px(PAD_SIDEBAR + 6.5), px(y));
-    y += 4;
-    ctx.fillStyle = IVOIRE;
-    ctx.font = `400 ${fpx(9.5)}px Jost, sans-serif`;
-    const lignesVal = envelopperLignesCanvas(ctx, ligne[2], px(SIDEBAR_MM - PAD_SIDEBAR * 2 - 6.5), `400 ${fpx(9.5)}px Jost, sans-serif`);
-    lignesVal.forEach(function (l) { ctx.fillText(l, px(PAD_SIDEBAR + 6.5), px(y)); y += 4.2; });
-    y += 4;
-  });
-
-  y += 4;
-  ctx.strokeStyle = 'rgba(244,237,225,.14)'; ctx.lineWidth = px(0.3);
-  ctx.beginPath(); ctx.moveTo(px(PAD_SIDEBAR), px(y)); ctx.lineTo(px(SIDEBAR_MM - PAD_SIDEBAR), px(y)); ctx.stroke();
-  y += 5;
-  ctx.fillStyle = 'rgba(244,240,234,.55)';
-  ctx.font = `400 ${fpx(6.6)}px Jost, sans-serif`;
-  ctx.fillText('CATÉGORIE', px(PAD_SIDEBAR), px(y));
-  y += 5;
-  ctx.fillStyle = IVOIRE;
-  ctx.font = `500 ${fpx(11)}px Jost, sans-serif`;
-  ctx.fillText(d.niveauMannequin || '—', px(PAD_SIDEBAR), px(y));
-
-  if (d.citation) {
+    let y = yColDebut + hPhotoHero + 8;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = OR;
+    ctx.font = `400 ${fpx(6.2)}px Jost, sans-serif`;
+    ctx.fillText('F O R M E R   ·   R É V É L E R   ·   V A L O R I S E R', px(SIDEBAR_MM / 2), px(y));
     y += 6;
-    ctx.strokeStyle = 'rgba(244,237,225,.1)'; ctx.lineWidth = px(0.3);
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = IVOIRE;
+    const lignesNom = envelopperLignesCanvas(ctx, d.nomComplet || '', px(SIDEBAR_MM - PAD_SIDEBAR * 2), `600 ${fpx(16)}px "Cormorant Garamond", serif`);
+    ctx.font = `600 ${fpx(16)}px "Cormorant Garamond", serif`;
+    lignesNom.forEach(function (ligne) { y += 7.5; ctx.fillText(ligne, px(PAD_SIDEBAR), px(y)); });
+    y += 6;
+
+    ctx.strokeStyle = BORDEAUX2; ctx.lineWidth = px(0.35);
     ctx.beginPath(); ctx.moveTo(px(PAD_SIDEBAR), px(y)); ctx.lineTo(px(SIDEBAR_MM - PAD_SIDEBAR), px(y)); ctx.stroke();
     y += 6;
-    ctx.fillStyle = '#e8e0d2';
-    ctx.font = `italic 400 ${fpx(11)}px "Cormorant Garamond", serif`;
-    const lignesCitation = envelopperLignesCanvas(ctx, '« ' + d.citation + ' »', px(SIDEBAR_MM - PAD_SIDEBAR * 2), `italic 400 ${fpx(11)}px "Cormorant Garamond", serif`);
-    lignesCitation.forEach(function (l) { ctx.fillText(l, px(PAD_SIDEBAR), px(y)); y += 5.5; });
-  }
 
-  if (logo) {
-    const hLogoBasMm = 7, wLogoBasMm = hLogoBasMm * (logo.largeur / logo.hauteur);
-    ctx.save(); ctx.globalAlpha = 0.9;
-    ctx.drawImage(logo.canvas, px(SIDEBAR_MM / 2 - wLogoBasMm / 2), px(yColDebut + hColonnes - hLogoBasMm - 8), px(wLogoBasMm), px(hLogoBasMm));
-    ctx.restore();
-  }
-
-  // ============== COLONNE DROITE (contenu clair) ==============
-  ctx.fillStyle = IVOIRE;
-  ctx.fillRect(px(SIDEBAR_MM), px(yColDebut), px(MAIN_MM), px(hColonnes));
-
-  const xMain = SIDEBAR_MM + PAD_MAIN, lMain = MAIN_MM - PAD_MAIN * 2;
-  let ym = yColDebut + PAD_MAIN;
-  ctx.textAlign = 'right'; ctx.fillStyle = TEXTE_GRIS_CLAIR;
-  ctx.font = `400 ${fpx(6.8)}px Jost, sans-serif`;
-  ctx.fillText('M O D E L   C V', px(SIDEBAR_MM + MAIN_MM - PAD_MAIN), px(ym));
-  ym += 6;
-
-  function titreSection(icone, libelle) {
-    dessinerIconeMcvCanvas(ctx, icone, px(xMain), px(ym - 3.2), px(4.4), BORDEAUX2);
-    ctx.textAlign = 'left'; ctx.fillStyle = TEXTE_SOMBRE;
-    ctx.font = `600 ${fpx(8.4)}px Jost, sans-serif`;
-    ctx.fillText(libelle.toUpperCase(), px(xMain + 6.5), px(ym));
-    ctx.strokeStyle = TRAIT; ctx.lineWidth = px(0.3);
-    const largeurTexte = ctx.measureText(libelle.toUpperCase()).width / ESCALE;
-    ctx.beginPath(); ctx.moveTo(px(xMain + 6.5 + largeurTexte + 1.5), px(ym - 1.5)); ctx.lineTo(px(xMain + lMain), px(ym - 1.5)); ctx.stroke();
-    ym += 6;
-  }
-
-  // --- Profil ---
-  titreSection('user', 'Profil');
-  ctx.fillStyle = TEXTE_GRIS_CLAIR;
-  ctx.font = `italic 400 ${fpx(10.5)}px Jost, sans-serif`;
-  envelopperLignesCanvas(ctx, d.bio || 'Profil à compléter.', px(lMain), `italic 400 ${fpx(10.5)}px Jost, sans-serif`).forEach(function (l) {
-    ctx.fillText(l, px(xMain), px(ym)); ym += 5.2;
-  });
-  ym += 4;
-
-  // --- Informations physiques ---
-  titreSection('body', 'Informations physiques');
-  const colInfosPhysiques = [
-    [['Taille', p.taille ? p.taille + ' cm' : '—'], ['Poids', p.poids ? p.poids + ' kg' : '—'],
-     ['Mensurations', [p.poitrine, p.tourTaille, p.hanches || p.entrejambe].some(Boolean) ? [p.poitrine || '–', p.tourTaille || '–', p.hanches || p.entrejambe || '–'].join(' / ') : '—'],
-     ['Pointure', p.pointure || '—']],
-    [['Taille vêtements', p.tailleVet || '—'], ['Couleur des yeux', p.yeux || '—'], ['Couleur des cheveux', p.cheveux || '—'], ['Carnation', p.carnation || '—']]
-  ];
-  const yInfosDebut = ym;
-  const largeurColMm = (lMain - 5) / 2;
-  colInfosPhysiques.forEach(function (col, iCol) {
-    let yc = yInfosDebut;
-    const xcMm = xMain + iCol * (largeurColMm + 5);
-    col.forEach(function (ligne) {
-      ctx.strokeStyle = TRAIT; ctx.lineWidth = px(0.25);
-      ctx.beginPath(); ctx.moveTo(px(xcMm), px(yc + 2)); ctx.lineTo(px(xcMm + largeurColMm), px(yc + 2)); ctx.stroke();
-      ctx.textAlign = 'left'; ctx.fillStyle = TEXTE_GRIS;
-      ctx.font = `400 ${fpx(8.2)}px Jost, sans-serif`;
-      ctx.fillText(ligne[0], px(xcMm), px(yc));
-      ctx.textAlign = 'right'; ctx.fillStyle = TEXTE_SOMBRE;
-      ctx.font = `500 ${fpx(8.6)}px Jost, sans-serif`;
-      ctx.fillText(String(ligne[1]), px(xcMm + largeurColMm), px(yc));
-      yc += 7;
-    });
-  });
-  ym = yInfosDebut + 4 * 7 + 6;
-
-  // --- Formation ---
-  titreSection('grad', 'Formation');
-  ctx.textAlign = 'left';
-  [['Niveau d’étude', f.niveau || '—'], ['Établissement', f.etablissement || '—'], ['Formation particulière', f.particuliere || 'Aucune'], ['Formation mannequin', f.mannequin || '—']].forEach(function (ligne) {
-    ctx.strokeStyle = TRAIT; ctx.lineWidth = px(0.25);
-    ctx.beginPath(); ctx.moveTo(px(xMain), px(ym + 2)); ctx.lineTo(px(xMain + lMain), px(ym + 2)); ctx.stroke();
-    ctx.fillStyle = TEXTE_GRIS; ctx.font = `400 ${fpx(8.2)}px Jost, sans-serif`;
-    ctx.fillText(ligne[0], px(xMain), px(ym));
-    ctx.textAlign = 'right'; ctx.fillStyle = TEXTE_SOMBRE; ctx.font = `500 ${fpx(8.6)}px Jost, sans-serif`;
-    ctx.fillText(String(ligne[1]), px(xMain + lMain), px(ym));
-    ctx.textAlign = 'left';
-    ym += 7;
-  });
-  ym += 4;
-
-  // --- Expérience professionnelle ---
-  titreSection('star', 'Expérience professionnelle');
-  if (groupes.length) {
-    groupes.forEach(function (g) {
-      ctx.fillStyle = TEXTE_SOMBRE; ctx.font = `600 ${fpx(7.6)}px Jost, sans-serif`;
-      ctx.fillText(g.label.toUpperCase(), px(xMain), px(ym));
-      ym += 5;
-      g.items.forEach(function (item) {
-        ctx.fillStyle = BORDEAUX2;
-        ctx.beginPath(); ctx.arc(px(xMain + 1), px(ym - 1.6), px(0.55), 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = TEXTE_SOMBRE; ctx.font = `400 ${fpx(8.4)}px Jost, sans-serif`;
-        ctx.fillText(item, px(xMain + 3.5), px(ym));
-        ym += 5.2;
+    const infosCv = [
+      ['calendar', 'Date de naissance', [formaterPeriode(d.dateNaissance)]],
+      ['pin', 'Lieu de naissance', [[d.villeNaissance, d.lieuNaissance].filter(Boolean).join(', ') || '—']],
+      ['globe', 'Nationalité', [d.nationalite || '—']],
+      ['home', 'Ville de résidence', [[d.ville, d.quartier].filter(Boolean).join(', ') || '—']],
+      ['phone', 'Contact agence', ['+225 27 22 23 11 76', '+225 05 45 65 66 87', 'infos.ma2m@gmail.com']]
+    ];
+    infosCv.forEach(function (ligne) {
+      dessinerIconeMcvCanvas(ctx, ligne[0], px(PAD_SIDEBAR), px(y - 3.2), px(4.2), OR);
+      ctx.fillStyle = 'rgba(244,240,234,.55)';
+      ctx.font = `400 ${fpx(6.6)}px Jost, sans-serif`;
+      ctx.fillText(ligne[1].toUpperCase(), px(PAD_SIDEBAR + 6.5), px(y));
+      y += 4;
+      ctx.fillStyle = IVOIRE;
+      ligne[2].forEach(function (valeur) {
+        const lignesVal = envelopperLignesCanvas(ctx, valeur, px(SIDEBAR_MM - PAD_SIDEBAR * 2 - 6.5), `400 ${fpx(9.5)}px Jost, sans-serif`);
+        lignesVal.forEach(function (l) { ctx.fillText(l, px(PAD_SIDEBAR + 6.5), px(y)); y += 4.2; });
       });
-      ym += 1;
+      y += 4;
     });
-  } else {
-    ctx.fillStyle = TEXTE_GRIS_CLAIR; ctx.font = `italic 400 ${fpx(8.4)}px Jost, sans-serif`;
-    ctx.fillText('Aucune expérience renseignée pour le moment.', px(xMain), px(ym));
+
+    y += 4;
+    ctx.strokeStyle = 'rgba(244,237,225,.14)'; ctx.lineWidth = px(0.3);
+    ctx.beginPath(); ctx.moveTo(px(PAD_SIDEBAR), px(y)); ctx.lineTo(px(SIDEBAR_MM - PAD_SIDEBAR), px(y)); ctx.stroke();
+    y += 5;
+    ctx.fillStyle = 'rgba(244,240,234,.55)';
+    ctx.font = `400 ${fpx(6.6)}px Jost, sans-serif`;
+    ctx.fillText('CATÉGORIE', px(PAD_SIDEBAR), px(y));
+    y += 5;
+    ctx.fillStyle = IVOIRE;
+    ctx.font = `500 ${fpx(11)}px Jost, sans-serif`;
+    ctx.fillText(d.niveauMannequin || '—', px(PAD_SIDEBAR), px(y));
+
+    if (d.citation) {
+      y += 6;
+      ctx.strokeStyle = 'rgba(244,237,225,.1)'; ctx.lineWidth = px(0.3);
+      ctx.beginPath(); ctx.moveTo(px(PAD_SIDEBAR), px(y)); ctx.lineTo(px(SIDEBAR_MM - PAD_SIDEBAR), px(y)); ctx.stroke();
+      y += 6;
+      ctx.fillStyle = '#e8e0d2';
+      const lignesCitation = envelopperLignesCanvas(ctx, '« ' + d.citation + ' »', px(SIDEBAR_MM - PAD_SIDEBAR * 2), `italic 400 ${fpx(11)}px "Cormorant Garamond", serif`);
+      lignesCitation.forEach(function (l) { ctx.fillText(l, px(PAD_SIDEBAR), px(y)); y += 5.5; });
+    }
+    const finSidebar = y - yColDebut;
+
+    if (logo) {
+      const hLogoBasMm = 7, wLogoBasMm = hLogoBasMm * (logo.largeur / logo.hauteur);
+      ctx.save(); ctx.globalAlpha = 0.9;
+      ctx.drawImage(logo.canvas, px(SIDEBAR_MM / 2 - wLogoBasMm / 2), px(yColDebut + hColonnes - hLogoBasMm - 8), px(wLogoBasMm), px(hLogoBasMm));
+      ctx.restore();
+    }
+
+    // ============== COLONNE DROITE (contenu clair) ==============
+    ctx.fillStyle = IVOIRE;
+    ctx.fillRect(px(SIDEBAR_MM), px(yColDebut), px(MAIN_MM), px(hColonnes));
+
+    const xMain = SIDEBAR_MM + PAD_MAIN, lMain = MAIN_MM - PAD_MAIN * 2;
+    let ym = yColDebut + PAD_MAIN;
+    ctx.textAlign = 'right'; ctx.fillStyle = TEXTE_GRIS_CLAIR;
+    ctx.font = `400 ${fpx(6.8)}px Jost, sans-serif`;
+    ctx.fillText('M O D E L   C V', px(SIDEBAR_MM + MAIN_MM - PAD_MAIN), px(ym));
     ym += 6;
+
+    function titreSection(icone, libelle) {
+      dessinerIconeMcvCanvas(ctx, icone, px(xMain), px(ym - 3.2), px(4.4), BORDEAUX2);
+      ctx.textAlign = 'left'; ctx.fillStyle = TEXTE_SOMBRE;
+      ctx.font = `600 ${fpx(8.4)}px Jost, sans-serif`;
+      ctx.fillText(libelle.toUpperCase(), px(xMain + 6.5), px(ym));
+      ctx.strokeStyle = TRAIT; ctx.lineWidth = px(0.3);
+      const largeurTexte = ctx.measureText(libelle.toUpperCase()).width / ESCALE;
+      ctx.beginPath(); ctx.moveTo(px(xMain + 6.5 + largeurTexte + 1.5), px(ym - 1.5)); ctx.lineTo(px(xMain + lMain), px(ym - 1.5)); ctx.stroke();
+      ym += 6;
+    }
+
+    // --- Profil ---
+    titreSection('user', 'Profil');
+    ctx.fillStyle = TEXTE_GRIS_CLAIR;
+    envelopperLignesCanvas(ctx, d.bio || 'Profil à compléter.', px(lMain), `italic 400 ${fpx(10.5)}px Jost, sans-serif`).forEach(function (l) {
+      ctx.fillText(l, px(xMain), px(ym)); ym += 5.2;
+    });
+    ym += 4;
+
+    // --- Informations physiques ---
+    titreSection('body', 'Informations physiques');
+    const colInfosPhysiques = [
+      [['Taille', p.taille ? p.taille + ' cm' : '—'], ['Poids', p.poids ? p.poids + ' kg' : '—'],
+       ['Mensurations', [p.poitrine, p.tourTaille, p.hanches || p.entrejambe].some(Boolean) ? [p.poitrine || '–', p.tourTaille || '–', p.hanches || p.entrejambe || '–'].join(' / ') : '—'],
+       ['Pointure', p.pointure || '—']],
+      [['Taille vêtements', p.tailleVet || '—'], ['Couleur des yeux', p.yeux || '—'], ['Couleur des cheveux', p.cheveux || '—'], ['Carnation', p.carnation || '—']]
+    ];
+    const yInfosDebut = ym;
+    const largeurColMm = (lMain - 5) / 2;
+    colInfosPhysiques.forEach(function (col, iCol) {
+      let yc = yInfosDebut;
+      const xcMm = xMain + iCol * (largeurColMm + 5);
+      col.forEach(function (ligne) {
+        ctx.strokeStyle = TRAIT; ctx.lineWidth = px(0.25);
+        ctx.beginPath(); ctx.moveTo(px(xcMm), px(yc + 2)); ctx.lineTo(px(xcMm + largeurColMm), px(yc + 2)); ctx.stroke();
+        ctx.textAlign = 'left'; ctx.fillStyle = TEXTE_GRIS;
+        ctx.font = `400 ${fpx(8.2)}px Jost, sans-serif`;
+        ctx.fillText(ligne[0], px(xcMm), px(yc));
+        ctx.textAlign = 'right'; ctx.fillStyle = TEXTE_SOMBRE;
+        ctx.font = `500 ${fpx(8.6)}px Jost, sans-serif`;
+        ctx.fillText(String(ligne[1]), px(xcMm + largeurColMm), px(yc));
+        yc += 7;
+      });
+    });
+    ym = yInfosDebut + 4 * 7 + 6;
+
+    // --- Formation ---
+    titreSection('grad', 'Formation');
+    ctx.textAlign = 'left';
+    [['Niveau d’étude', f.niveau || '—'], ['Établissement', f.etablissement || '—'], ['Formation particulière', f.particuliere || 'Aucune'], ['Formation mannequin', f.mannequin || '—']].forEach(function (ligne) {
+      ctx.strokeStyle = TRAIT; ctx.lineWidth = px(0.25);
+      ctx.beginPath(); ctx.moveTo(px(xMain), px(ym + 2)); ctx.lineTo(px(xMain + lMain), px(ym + 2)); ctx.stroke();
+      ctx.fillStyle = TEXTE_GRIS; ctx.font = `400 ${fpx(8.2)}px Jost, sans-serif`;
+      ctx.fillText(ligne[0], px(xMain), px(ym));
+      ctx.textAlign = 'right'; ctx.fillStyle = TEXTE_SOMBRE; ctx.font = `500 ${fpx(8.6)}px Jost, sans-serif`;
+      ctx.fillText(String(ligne[1]), px(xMain + lMain), px(ym));
+      ctx.textAlign = 'left';
+      ym += 7;
+    });
+    ym += 4;
+
+    // --- Expérience professionnelle (autant de lignes que nécessaire) ---
+    titreSection('star', 'Expérience professionnelle');
+    if (groupes.length) {
+      groupes.forEach(function (g) {
+        ctx.fillStyle = TEXTE_SOMBRE; ctx.font = `600 ${fpx(7.6)}px Jost, sans-serif`;
+        ctx.fillText(g.label.toUpperCase(), px(xMain), px(ym));
+        ym += 5;
+        g.items.forEach(function (item) {
+          ctx.fillStyle = BORDEAUX2;
+          ctx.beginPath(); ctx.arc(px(xMain + 1), px(ym - 1.6), px(0.55), 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = TEXTE_SOMBRE;
+          envelopperLignesCanvas(ctx, item, px(lMain - 3.5), `400 ${fpx(8.4)}px Jost, sans-serif`).forEach(function (l) {
+            ctx.fillText(l, px(xMain + 3.5), px(ym)); ym += 4.6;
+          });
+          ym += 0.6;
+        });
+        ym += 1.5;
+      });
+    } else {
+      ctx.fillStyle = TEXTE_GRIS_CLAIR; ctx.font = `italic 400 ${fpx(8.4)}px Jost, sans-serif`;
+      ctx.fillText('Aucune expérience renseignée pour le moment.', px(xMain), px(ym));
+      ym += 6;
+    }
+    ym += 4;
+
+    // --- Compétences : deux colonnes ---
+    titreSection('medal', 'Compétences mannequin');
+    const nbGauche = Math.ceil(ORDRE_COMPETENCES.length / 2);
+    const largeurColSkills = (lMain - 8) / 2;
+    const ySkillsDebut = ym;
+    ORDRE_COMPETENCES.forEach(function (cle, i) {
+      const pct = (((d.competences || {})[cle] || 3) / 5);
+      const iCol = i < nbGauche ? 0 : 1;
+      const xs = xMain + iCol * (largeurColSkills + 8);
+      const ys = ySkillsDebut + (i - iCol * nbGauche) * 7;
+      ctx.textAlign = 'left'; ctx.fillStyle = TEXTE_SOMBRE; ctx.font = `400 ${fpx(7.6)}px Jost, sans-serif`;
+      ctx.fillText(LIBELLES_COMPETENCES[cle], px(xs), px(ys));
+      const yBarre = ys + 1.5, lBarre = largeurColSkills, hBarre = 1.4;
+      ctx.fillStyle = '#e3d9c4';
+      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(px(xs), px(yBarre), px(lBarre), px(hBarre), px(0.7)) : ctx.rect(px(xs), px(yBarre), px(lBarre), px(hBarre));
+      ctx.fill();
+      const degradeBarre = ctx.createLinearGradient(px(xs), 0, px(xs + lBarre * pct), 0);
+      degradeBarre.addColorStop(0, BORDEAUX2); degradeBarre.addColorStop(1, OR);
+      ctx.fillStyle = degradeBarre;
+      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(px(xs), px(yBarre), px(lBarre * pct), px(hBarre), px(0.7)) : ctx.rect(px(xs), px(yBarre), px(lBarre * pct), px(hBarre));
+      ctx.fill();
+    });
+    ym = ySkillsDebut + nbGauche * 7 + 4;
+
+    // --- Portfolio : une rangée de photos (5 emplacements), tout en bas ---
+    if (photosPresentes.length) {
+      titreSection('image', 'Portfolio');
+      const ecart = 2, lPhoto = (lMain - ecart * 4) / 5, hPhoto = lPhoto * 4 / 3;
+      const lRangee = photosPresentes.length * lPhoto + (photosPresentes.length - 1) * ecart;
+      const xRangee = xMain + (lMain - lRangee) / 2;
+      photosPresentes.forEach(function (photo, i) {
+        dessinerCouvrant(photo, xRangee + i * (lPhoto + ecart), ym - 1, lPhoto, hPhoto);
+      });
+      ym += hPhoto + 6;
+    }
+
+    // --- En ligne : Instagram + lien vers la fiche publique + QR code ---
+    titreSection('link', 'En ligne');
+    const tailleQr = 24;
+    const xQr = xMain + lMain - tailleQr;
+    const yBlocLiens = ym - 2;
+    let yl = ym + 3;
+    ctx.textAlign = 'left';
+    if (handle) {
+      dessinerIconeMcvCanvas(ctx, 'insta', px(xMain), px(yl - 3.3), px(4.2), BORDEAUX2);
+      ctx.fillStyle = TEXTE_GRIS; ctx.font = `400 ${fpx(6.6)}px Jost, sans-serif`;
+      ctx.fillText('INSTAGRAM', px(xMain + 6.5), px(yl - 0.2));
+      ctx.fillStyle = TEXTE_SOMBRE; ctx.font = `500 ${fpx(9)}px Jost, sans-serif`;
+      ctx.fillText('@' + handle, px(xMain + 6.5), px(yl + 4.2));
+      zonesLiens.push({ x: xMain, y: yl - 4, l: 70, h: 10, url: 'https://www.instagram.com/' + encodeURIComponent(handle) });
+      yl += 12;
+    }
+    dessinerIconeMcvCanvas(ctx, 'link', px(xMain), px(yl - 3.3), px(4.2), BORDEAUX2);
+    ctx.fillStyle = TEXTE_GRIS; ctx.font = `400 ${fpx(6.6)}px Jost, sans-serif`;
+    ctx.fillText('FICHE EN LIGNE', px(xMain + 6.5), px(yl - 0.2));
+    ctx.fillStyle = BORDEAUX2; ctx.font = `500 ${fpx(9)}px Jost, sans-serif`;
+    ctx.fillText('maitreakessemodelmanagement.com', px(xMain + 6.5), px(yl + 4.2));
+    zonesLiens.push({ x: xMain, y: yl - 4, l: 80, h: 10, url: lienFichePublique });
+    yl += 10;
+
+    if (dessinerQrCanvas(ctx, lienFichePublique, px(xQr), px(yBlocLiens), px(tailleQr), '#241a12')) {
+      ctx.strokeStyle = TRAIT; ctx.lineWidth = px(0.25);
+      ctx.strokeRect(px(xQr), px(yBlocLiens), px(tailleQr), px(tailleQr));
+      ctx.textAlign = 'center'; ctx.fillStyle = TEXTE_GRIS; ctx.font = `400 ${fpx(6)}px Jost, sans-serif`;
+      ctx.fillText('Scannez pour ouvrir la fiche', px(xQr + tailleQr / 2), px(yBlocLiens + tailleQr + 3.8));
+      zonesLiens.push({ x: xQr, y: yBlocLiens, l: tailleQr, h: tailleQr, url: lienFichePublique });
+      yl = Math.max(yl, yBlocLiens + tailleQr + 4);
+    }
+    ym = yl + PAD_MAIN;
+
+    return { finSidebar: finSidebar, finMain: ym - yColDebut, zonesLiens: zonesLiens };
   }
-  ym += 4;
 
-  // --- Compétences (gauche) + Portfolio (droite) ---
-  const largeurCompetences = lMain * 0.56, largeurPortfolio = lMain * 0.40;
-  const xPortfolio = xMain + largeurCompetences + lMain * 0.04;
+  // Passe 1 : dessin « à blanc » pour connaître la hauteur réelle de chaque colonne.
+  const essai = document.createElement('canvas');
+  essai.width = 1; essai.height = 1;
+  const fins = dessinerTout(essai.getContext('2d'), 297);
+  const hColonnes = Math.max(fins.finSidebar + RESERVE_LOGO_BAS, fins.finMain);
 
-  titreSection('medal', 'Compétences mannequin');
-  const ySkillsDebut = ym;
-  ORDRE_COMPETENCES.forEach(function (cle) {
-    const pct = (((d.competences || {})[cle] || 3) / 5);
-    ctx.textAlign = 'left'; ctx.fillStyle = TEXTE_SOMBRE; ctx.font = `400 ${fpx(7.6)}px Jost, sans-serif`;
-    ctx.fillText(LIBELLES_COMPETENCES[cle], px(xMain), px(ym));
-    const yBarre = ym + 1.5, xBarre = xMain, lBarre = 26, hBarre = 1.4;
-    ctx.fillStyle = '#e3d9c4';
-    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(px(xBarre), px(yBarre), px(lBarre), px(hBarre), px(0.7)) : ctx.rect(px(xBarre), px(yBarre), px(lBarre), px(hBarre));
-    ctx.fill();
-    const degradeBarre = ctx.createLinearGradient(px(xBarre), 0, px(xBarre + lBarre * pct), 0);
-    degradeBarre.addColorStop(0, BORDEAUX2); degradeBarre.addColorStop(1, OR);
-    ctx.fillStyle = degradeBarre;
-    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(px(xBarre), px(yBarre), px(lBarre * pct), px(hBarre), px(0.7)) : ctx.rect(px(xBarre), px(yBarre), px(lBarre * pct), px(hBarre));
-    ctx.fill();
-    ym += 7;
-  });
-
-  // Portfolio : mini-grille 5 photos (ligne du haut : 3, ligne du bas : 2) + pseudo + lien + QR
-  ym = ySkillsDebut;
-  ctx.fillStyle = TEXTE_GRIS_CLAIR; ctx.font = `500 ${fpx(6.6)}px Jost, sans-serif`;
-  dessinerIconeMcvCanvas(ctx, 'image', px(xPortfolio), px(ym - 2.6), px(3.6), TEXTE_GRIS_CLAIR);
-  ctx.fillText('PORTFOLIO', px(xPortfolio + 5.5), px(ym));
-  ym += 5;
-  const lPhotoPortfolio = (largeurPortfolio - 3 * 0.8) / 3;
-  [0, 1, 2, 3, 4].forEach(function (i) {
-    const col = i % 3, ligne = Math.floor(i / 3);
-    dessinerCouvrant(photosPortfolio[i], xPortfolio + col * (lPhotoPortfolio + 0.8), ym + ligne * (lPhotoPortfolio * 4 / 3 + 0.8), lPhotoPortfolio, lPhotoPortfolio * 4 / 3);
-  });
-  ym += (lPhotoPortfolio * 4 / 3) * 2 + 0.8 + 5;
-  if (d.instagram) {
-    ctx.fillStyle = TEXTE_SOMBRE; ctx.font = `400 ${fpx(7.6)}px Jost, sans-serif`;
-    ctx.fillText('@' + String(d.instagram).replace(/^@/, ''), px(xPortfolio), px(ym));
-    ym += 5;
-  }
-  if (qr) {
-    const tailleQrMm = Math.min(largeurPortfolio * 0.6, 22);
-    ctx.drawImage(qr.canvas, px(xPortfolio), px(ym), px(tailleQrMm), px(tailleQrMm));
-    ctx.fillStyle = TEXTE_GRIS; ctx.font = `400 ${fpx(6)}px Jost, sans-serif`;
-    ctx.fillText('Scannez pour ouvrir la fiche', px(xPortfolio), px(ym + tailleQrMm + 4));
-  }
-
+  // Passe 2 : dessin réel, à la hauteur exacte.
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(px(LARGEUR_MM));
+  canvas.height = Math.round(px(hBanniere + hColonnes));
+  const resultat = dessinerTout(canvas.getContext('2d'), hColonnes);
+  canvas.zonesLiens = resultat.zonesLiens;
   return canvas;
 }
 
@@ -1158,6 +1187,8 @@ async function genererCvFichier(format, donneesCv, idBtnPdf, idBtnJpeg) {
       const hauteurMm = largeurMm * canvas.height / canvas.width;
       const doc = new jsPDF({ unit: 'mm', format: [largeurMm, hauteurMm] });
       doc.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, largeurMm, hauteurMm);
+      // Lien vers la fiche, Instagram et QR code cliquables dans le PDF (mêmes mm que le canvas).
+      (canvas.zonesLiens || []).forEach(function (z) { doc.link(z.x, z.y, z.l, z.h, { url: z.url }); });
       doc.save(nomFichier + '.pdf');
     }
   } catch (e) {
