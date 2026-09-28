@@ -6,7 +6,7 @@
 <title>Générateur QR Code — Maître Akesse Model Management</title>
 <style>
   body { font-family: sans-serif; background:#f4f3f1; display:flex; flex-direction:column; align-items:center; padding:3rem 1rem; }
-  h1 { font-size:1.3rem; margin-bottom:0.3rem; text-align:center; }
+  h1 { font-size:1.3rem; margin-bottom:0.3rem; text-align:center; overflow-wrap:anywhere; }
   p { color:#555; margin-top:0; text-align:center; }
   #conteneur { position:relative; background:#fff; padding:1.5rem; box-shadow:0 8px 24px rgba(0,0,0,0.1); margin-top:1.5rem; width:500px; max-width:80vw; aspect-ratio:1/1; }
   #conteneur img#qr-img { width:100%; height:100%; display:block; }
@@ -24,7 +24,7 @@
   <p>Le code se génère automatiquement ci-dessous, avec ton logo au centre.</p>
   <div id="conteneur">
     <img id="qr-img" alt="QR code vers www.maitreakessemodelmanagement.com">
-    <div id="logo-overlay"><img src="assets/logo-light-bg.jpg" alt=""></div>
+    <div id="logo-overlay"><img src="../assets/logo-light-bg.jpg" alt=""></div>
   </div>
   <a class="telecharger" id="telecharger" download="qr-code-maitreakessemodelmanagement.png">Télécharger le QR code (PNG)</a>
 

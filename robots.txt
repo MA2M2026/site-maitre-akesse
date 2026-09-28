@@ -1,9 +1,10 @@
 User-agent: *
 Allow: /
-Disallow: /tableau-de-bord.html
-Disallow: /espace-mannequin.html
-Disallow: /espace-mannequin-ancien.html
-Disallow: /selection.html
+Disallow: /tableau-de-bord
+Disallow: /espace-mannequin
+Disallow: /selection
+Disallow: /en/selection
+Disallow: /reinitialiser-mot-de-passe
 Disallow: /outils/
 
 Sitemap: https://www.maitreakessemodelmanagement.com/sitemap.xml
