@@ -944,6 +944,15 @@ les classes ajoutées dynamiquement (`classList.add(...)`, `className =
 
 ## Fonctionnalités majeures ajoutées récemment (repères pour s'orienter)
 
+- **CV téléchargé (PDF/JPEG, `construireCanvasCv()` dans `js/app.js`)** —
+  28 septembre 2026 : hauteur exacte (le dessin est fait deux fois, d'abord
+  « à blanc » pour mesurer, plus aucune estimation qui laissait un grand
+  vide en bas) ; bas de page réorganisé (compétences sur deux colonnes, puis
+  portfolio en une rangée de photos, puis « En ligne » : Instagram + lien
+  vers la fiche + QR code, cliquables dans le PDF). Le QR code est désormais
+  calculé localement (`js/qrcode-generator.js`, copie de qrcode-generator
+  1.4.4) : l'ancien appel à api.qrserver.com était bloqué par `connect-src`
+  du CSP et le QR disparaissait en silence du fichier.
 - **Fiche mannequin publique (`mannequin.html` / `en/mannequin.html`) en
   mise en page « profil » façon Facebook/Instagram** (28 septembre 2026) :
   couverture plein écran cliquable (ouvre la galerie du Book), photo de
