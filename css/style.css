@@ -1406,7 +1406,7 @@ html.porte-verrouillee { overflow: hidden; height: 100%; }
 .news-une:hover > img { transform: scale(1.05); }
 .news-une .news-une-scrim {
   position: absolute; inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.35) 40%, rgba(0,0,0,0.04) 68%, rgba(0,0,0,0) 82%);
+  background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.82) 35%, rgba(0,0,0,0.45) 60%, rgba(0,0,0,0) 85%);
 }
 .news-une .news-une-corps { position: absolute; left: 0; right: 0; bottom: 0; padding: clamp(1.6rem, 5vw, 4rem); max-width: 760px; }
 .news-une .news-une-badge {
@@ -1415,12 +1415,13 @@ html.porte-verrouillee { overflow: hidden; height: 100%; }
   text-transform: uppercase; padding: 0.5rem 1.1rem;
 }
 .news-une .news-une-corps .news-categorie { color: var(--bordeaux-clair); margin-top: 1rem; }
-.news-une .news-une-corps .news-date { margin-top: 0.3rem; }
+.news-une .news-une-corps .news-date { margin-top: 0.3rem; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.85); }
+.news-une .news-une-corps .news-categorie { text-shadow: 0 1px 3px rgba(0,0,0,0.85); }
 .news-une .news-une-corps h2 {
   color: var(--titre-clair); margin-top: 0.6rem;
   font-size: clamp(2.2rem, 6vw, 4rem); line-height: 1.05; text-shadow: 0 4px 30px rgba(0,0,0,0.6);
 }
-.news-une .news-une-corps p { color: var(--texte-corps); margin-top: 0.6rem; font-size: 1.02rem; letter-spacing: 0.04em; }
+.news-une .news-une-corps p { color: #f3eee9; margin-top: 0.6rem; font-size: 1.02rem; letter-spacing: 0.02em; line-height: 1.6; text-shadow: 0 1px 3px rgba(0,0,0,0.85); }
 .news-une .news-une-corps .news-lire {
   display: inline-block; margin-top: 1.4rem; color: #fff; border-bottom: 2px solid var(--bordeaux-clair);
   padding-bottom: 0.3rem; font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase;
