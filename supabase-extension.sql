@@ -5007,3 +5007,18 @@ insert into boutique_categories (nom, slug, univers, ordre) values
 on conflict (slug) do update set univers = excluded.univers;
 
 NOTIFY pgrst, 'reload schema';
+
+
+-- ===================================================================
+-- Extension 101 : BOUTIQUE MA2M — message du bandeau défilant
+-- Réglé dans Gestion → Réglages (demande de la propriétaire du 29/09/2026).
+-- Désactivé ou vide : le bandeau affiche le texte habituel de la Maison.
+-- Peut être relancée sans risque.
+-- ===================================================================
+alter table boutique_reglages add column if not exists bandeau_texte text;
+alter table boutique_reglages add column if not exists bandeau_actif boolean not null default false;
+do $$ begin
+  alter table boutique_reglages add constraint boutique_reglages_bandeau_longueur check (bandeau_texte is null or length(bandeau_texte) <= 160);
+exception when duplicate_object then null; end $$;
+
+NOTIFY pgrst, 'reload schema';

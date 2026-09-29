@@ -780,6 +780,11 @@
             '<div class="form-champ"><label for="mpg-delai">Délai de paiement (heures)</label><input id="mpg-delai" type="number" min="1" max="168" inputmode="numeric" value="' + (r.delai_paiement_heures || 24) + '"><small>Passé ce délai, une commande non payée est annulée et son stock revient.</small></div>' +
           '</div>' +
         '</div>' +
+        '<div class="mpg-bloc"><div class="eyebrow">Bandeau défilant</div>' +
+          '<p class="mpg-aide">Le bandeau rouge qui défile sur l’accueil de la boutique. Désactivé ou vide, il affiche le texte habituel : « La Maison MA2M ✦ Articles ✦ Billets ✦ Services ».</p>' +
+          '<div class="form-champ"><label for="mpg-bandeau">Message</label><input id="mpg-bandeau" maxlength="160" placeholder="Billets du Gala en vente — livraison offerte dès 50 000 FCFA" value="' + echapperHtml(r.bandeau_texte || '') + '"></div>' +
+          '<label class="mpg-case"><input type="checkbox" id="mpg-bandeau-actif"' + (r.bandeau_actif ? ' checked' : '') + '> Afficher ce message dans le bandeau</label>' +
+        '</div>' +
         '<div class="mpg-bloc"><div class="eyebrow">Identité du vendeur (factures)</div>' +
           '<p class="mpg-aide">Imprimée sur chaque facture. À remplir avec votre comptable ; la mention fiscale (TVA ou régime d’imposition) doit être validée par lui.</p>' +
           '<div class="mpg-grille2">' +
@@ -809,6 +814,8 @@
         numero_mtn_momo: document.getElementById('mpg-mtn').value.trim() || null,
         delai_paiement_heures: delai,
         livraison_offerte_des_fcfa: offerte === '' ? null : Math.max(0, parseInt(offerte, 10) || 0),
+        bandeau_texte: document.getElementById('mpg-bandeau').value.trim() || null,
+        bandeau_actif: document.getElementById('mpg-bandeau-actif').checked,
         vendeur_raison_sociale: document.getElementById('mpg-v-nom').value.trim() || null,
         vendeur_forme_juridique: document.getElementById('mpg-v-forme').value.trim() || null,
         vendeur_rccm: document.getElementById('mpg-v-rccm').value.trim() || null,

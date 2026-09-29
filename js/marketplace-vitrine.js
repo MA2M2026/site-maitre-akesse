@@ -87,6 +87,9 @@
     const vedette = avecPhoto.find(p => p.mis_en_avant) || avecPhoto[0] || null;
     const annee = new Date().getFullYear();
     const rayons = cle => categories.filter(c => (c.univers || 'physique') === cle);
+    // Message du bandeau défilant (Gestion → Réglages, Extension 101).
+    const reglages = acces.reglages || {};
+    const message = reglages.bandeau_actif && reglages.bandeau_texte && reglages.bandeau_texte.trim() ? reglages.bandeau_texte.trim() : '';
 
     principal.innerHTML =
       // ---- Ouverture : l'affiche (nuit laquée, filets de lumière rouge, grand nom espacé)
@@ -106,7 +109,8 @@
       '</section>' +
       // ---- Bandeau défilant (même bandeau que l'accueil du site)
       '<div class="marquee-bande mp-bande" aria-hidden="true"><div class="marquee-viewport"><div class="marquee-piste">' +
-        ('<span>La Maison MA2M</span><span>✦</span><span>Articles</span><span>✦</span><span>Billets</span><span>✦</span><span>Services</span><span>✦</span><span>Abidjan ' + annee + '</span><span>✦</span>').repeat(4) +
+        (message ? ('<span>' + echapperHtml(message) + '</span><span>✦</span>').repeat(6)
+          : ('<span>La Maison MA2M</span><span>✦</span><span>Articles</span><span>✦</span><span>Billets</span><span>✦</span><span>Services</span><span>✦</span><span>Abidjan ' + annee + '</span><span>✦</span>').repeat(4)) +
       '</div></div></div>' +
       // ---- Les trois portes de la Maison
       '<section class="mp-portes" id="portes"><div class="container">' +
