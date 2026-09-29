@@ -150,10 +150,11 @@ Vercel.
 ## 📐 « Affichage qui saute » (29 septembre 2026)
 
 - Actualités / Événements (FR/EN) : la hauteur du bloc « À la une » est réservée
-  en CSS tant qu'il est vide (`#actus-une:empty`, `#evenements-une:empty` dans
-  `css/style.css`). Mesuré en navigateur : saut 0,52-0,56 → 0,001. Si aucune
-  actualité n'existe, la réservation disparaît au profit du message « Aucune… »
-  (petit saut à ce moment-là, cas rare accepté).
+  par la classe `.une-reservee` (css/style.css), posée dans le HTML et retirée par
+  js/app.js dès que le bloc est rempli, que le message « Aucune… » s'affiche, ou
+  après 12 s. Choix de la propriétaire : une règle comprise par TOUS les
+  navigateurs, y compris anciens (remplace la version `:empty:not(:has(...))` du
+  même jour, ignorée par les navigateurs d'avant 2023).
 - Reste à traiter si la propriétaire le souhaite : le même défaut sur l'accueil,
   quand le « Mot de Maître Akesse » apparaît.
 

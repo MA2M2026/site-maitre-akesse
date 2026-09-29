@@ -1726,6 +1726,32 @@ document.addEventListener('submit', () => {
   } catch (e) {}
 }, true);
 
+// Libère la place réservée au bloc « À la une » (classe .une-reservee, voir
+// css/style.css) dès qu'il est rempli, que le message « Aucune… » s'affiche, ou
+// au bout de 12 s au plus tard (connexion coupée) : jamais de grand vide durable.
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.une-reservee').forEach(zone => {
+    const vide = zone.parentElement ? zone.parentElement.querySelector('[id$="-vide"]') : null;
+    let observateur = null;
+    let minuteur = null;
+    function liberer() {
+      zone.classList.remove('une-reservee');
+      if (observateur) observateur.disconnect();
+      clearTimeout(minuteur);
+    }
+    function verifier() {
+      if (zone.children.length || (vide && getComputedStyle(vide).display !== 'none')) liberer();
+    }
+    minuteur = setTimeout(liberer, 12000);
+    if (window.MutationObserver) {
+      observateur = new MutationObserver(verifier);
+      observateur.observe(zone, { childList: true });
+      if (vide) observateur.observe(vide, { attributes: true, attributeFilter: ['style', 'class'] });
+    }
+    verifier();
+  });
+});
+
 // ================== Partage d'une actualité / d'un événement ==================
 // Demande de la propriétaire (29/09/2026) : quand une fiche est ouverte, l'adresse
 // du navigateur devient celle de CETTE fiche (?actu=ID ou ?evenement=ID), et des

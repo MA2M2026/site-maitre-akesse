@@ -1442,10 +1442,10 @@ html.porte-verrouillee { overflow: hidden; height: 100%; }
 }
 /* Place du bloc « À la une » réservée pendant le chargement (Actualités / Événements) :
    sans elle, le bas de page s'affiche d'abord tout en haut puis « saute » quand les
-   actualités arrivent (signalé « Affichage qui saute » le 29/09). Plus de réservation
-   dès que le bloc est rempli, ou si le message « aucune actualité » s'affiche. */
-#actus-une:empty:not(:has(~ p[style])),
-#evenements-une:empty:not(:has(~ p[style])) {
+   actualités arrivent (signalé « Affichage qui saute » le 29/09). Règle simple, comprise
+   par TOUS les navigateurs (y compris anciens) ; la classe est retirée par js/app.js
+   dès que le bloc est rempli, que le message « Aucune… » s'affiche, ou après 12 s. */
+.une-reservee {
   height: 86vh; height: 86dvh; min-height: 520px; max-height: 820px; margin-bottom: 3.5rem;
 }
 .news-une > img {
