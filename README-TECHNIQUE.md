@@ -134,6 +134,19 @@ Vercel.
   `https://www.maitreakessemodelmanagement.com/book-photos/...` (voir
   Extension 92).
 
+## 🖼️ Photos des mannequins : cadrage validé (29 septembre 2026)
+
+- **Ronds de l'accueil, vignettes du Book, photo ronde de la fiche** :
+  `object-position: center top` : on garde le haut de la photo (le visage).
+- **Couverture de la fiche** : plein cadre sur tous les écrans, haut de la
+  photo gardé quand elle est plus étroite que le cadre (tablette, ordinateur).
+  Dôme d'ombre qui monte du bas. L'essai « photo entière sur fond flou » a été
+  refusé par la propriétaire : ne pas le remettre.
+- **Vérifier qu'une mise en ligne est bien en Production** : sur Vercel →
+  Deployments, la ligne du commit de `main` doit porter l'étiquette
+  « Production ». Le 29/09, une fusion n'a produit qu'un « Aperçu » (limite
+  quotidienne probable) : il a fallu une nouvelle fusion pour relancer.
+
 ## 📝 À faire plus tard (demandé par la propriétaire — à lui rappeler)
 
 - **Nettoyer les anciennes copies de photos sur Supabase Storage** (noté le 28
