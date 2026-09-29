@@ -2189,6 +2189,37 @@ html.porte-deja-vue #porte-entree { display: none; }
 .tdb-erreur-clair { display: block; margin-top: 0.45rem; font-family: var(--texte); font-size: 0.8rem; line-height: 1.5; color: var(--titre-clair); }
 .tdb-erreur-detail { display: block; margin-top: 0.35rem; font-family: var(--texte); font-size: 0.68rem; color: var(--texte-doux); word-break: break-all; opacity: 0.85; }
 
+/* Tableau de bord — journal des erreurs réorganisé (29/09/2026) : fiches par gravité
+   et par famille, avec « Où / Appareil / Dernier clic / Quand / En clair / Que faire ». */
+#erreurs-resume { margin: 0.4rem 0 1rem; }
+.journal-resume-gravites { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.8rem; }
+.journal-resume-case { flex: 1 1 140px; padding: 0.6rem 0.8rem; border-radius: 7px; border: 1px solid rgba(255,255,255,.08); border-left-width: 4px; font-size: 0.8rem; color: var(--texte-doux); background: rgba(255,255,255,.025); }
+.journal-resume-case b { display: block; font-size: 1.4rem; color: #f3eee9; font-weight: 600; }
+.journal-filtres { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.journal-filtre { font: inherit; font-size: 0.78rem; padding: 0.4rem 0.8rem; border-radius: 999px; border: 1px solid rgba(255,255,255,.18); background: transparent; color: var(--texte-doux); cursor: pointer; }
+.journal-filtre.actif { background: #7c1730; border-color: #7c1730; color: #fff; }
+.journal-btn { font-size: 0.78rem; padding: 0.45rem 0.9rem; margin: 0 0 0.8rem; }
+.journal-btn[hidden] { display: none; }
+.journal-carte { margin-bottom: 0.9rem; padding: 1rem 1.1rem 0.6rem; border-radius: 8px; border: 1px solid rgba(255,255,255,.07); border-left: 4px solid rgba(255,255,255,.2); background: rgba(255,255,255,.025); min-width: 0; }
+.journal-corriger { border-left-color: #d64545; }
+.journal-surveiller { border-left-color: #e0913a; }
+.journal-info { border-left-color: #4f9d69; }
+.journal-tete { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.8rem; font-size: 0.75rem; color: var(--texte-doux); }
+.journal-badge { font-weight: 600; color: #f3eee9; }
+.journal-nombre { margin-left: auto; }
+.journal-titre { margin: 0.5rem 0 0.4rem; font-family: var(--display); font-size: 1.1rem; color: #f3eee9; }
+.journal-infos { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0.3rem 0.8rem; margin: 0 0 0.6rem; font-size: 0.82rem; }
+.journal-infos dt { color: var(--gris); }
+.journal-infos dd { margin: 0; color: #e8e2da; overflow-wrap: anywhere; }
+.journal-infos dd small { color: var(--texte-doux); font-size: 0.74rem; }
+.journal-clair, .journal-action { margin: 0.35rem 0; font-size: 0.84rem; line-height: 1.5; color: #e8e2da; }
+.journal-action { color: #f3eee9; }
+.journal-detail { margin: 0.4rem 0; font-size: 0.72rem; color: var(--texte-doux); }
+.journal-detail summary { cursor: pointer; }
+.journal-detail pre { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0.4rem 0 0; font-size: 0.7rem; }
+.journal-boutons { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.6rem; }
+.journal-boutons .journal-btn { margin: 0; }
+
 /* reinitialiser-mot-de-passe.html — formulaire et liens masqués au départ (le JS les
    affiche via element.style). Auparavant un attribut style="display:none", bloqué
    en silence par le CSP de la page (style-src sans 'unsafe-inline') : le formulaire

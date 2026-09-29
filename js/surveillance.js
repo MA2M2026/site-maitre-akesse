@@ -17,7 +17,12 @@
 //   - les pages très lentes à charger (avec les fichiers les plus lourds) ;
 //   - une bibliothèque indispensable (Supabase) qui ne s'est jamais chargée ;
 //   - une page plus large que l'écran (ce qui permettait de dézoomer et de balayer
-//     l'accueil sur le côté, 28 septembre 2026), avec l'élément responsable.
+//     l'accueil sur le côté, 28 septembre 2026), avec l'élément responsable ;
+//   - (29 septembre 2026, demande de la propriétaire : « détecter tout, et dire
+//     précisément où ») : zoom automatique ou inattendu de l'écran, affichage qui
+//     saute, page figée, page restée vide, clics répétés sur un bouton qui ne
+//     réagit pas. Chaque signalement indique aussi l'appareil, la taille d'écran,
+//     le zoom, une éventuelle coupure de connexion et le dernier élément cliqué.
 // Chaque signalement part dans la table journal_erreurs (section « 🔴 Erreurs
 // réelles du site » du tableau de bord) ET dans Sentry.
 //
@@ -51,9 +56,31 @@
     // 29/09/2026 (la propriétaire, en Wi-Fi, lisait « réseau 4g »).
     const vitesses = { '4g': 'rapide', '3g': 'moyenne', '2g': 'lente', 'slow-2g': 'très lente' };
     const type = navigator.connection && navigator.connection.effectiveType;
-    const co = type ? ' · connexion ' + (vitesses[type] || type) : '';
-    return (appli ? 'depuis ' + appli : '') + co;
+    const parties = [typeAppareil(), 'écran ' + window.innerWidth + '×' + window.innerHeight];
+    const vv = window.visualViewport;
+    if (vv && Math.abs(vv.scale - 1) > 0.05) parties.push('zoom ×' + vv.scale.toFixed(2));
+    if (appli) parties.push('depuis ' + appli);
+    if (type) parties.push('connexion ' + (vitesses[type] || type));
+    if (navigator.onLine === false) parties.push('HORS LIGNE');
+    let texte = 'Contexte : ' + parties.join(' · ');
+    if (dernierClic && Date.now() - dernierClic.t < 60000) {
+      texte += '\nDernier clic : ' + dernierClic.desc + ' (il y a ' + Math.round((Date.now() - dernierClic.t) / 1000) + ' s)';
+    }
+    return texte;
   }
+
+  function typeAppareil() {
+    const ua = navigator.userAgent || '';
+    const tactile = navigator.maxTouchPoints > 1 || 'ontouchstart' in window;
+    const petitCote = Math.min(screen.width || 0, screen.height || 0);
+    if (/iPad|Tablet|SM-T\d|Tab\b/i.test(ua) || (/Android/.test(ua) && !/Mobile/.test(ua)) || (/Macintosh/.test(ua) && tactile)) return 'tablette';
+    if (/Mobi|iPhone|Android/i.test(ua) || (tactile && petitCote && petitCote < 600)) return 'téléphone';
+    return 'ordinateur';
+  }
+
+  // Dernier élément cliqué par le visiteur : ajouté à chaque signalement, il dit
+  // « où » le visiteur était en train d'agir quand le problème est arrivé.
+  let dernierClic = null;
 
   function signaler(categorie, message, detail) {
     try {
@@ -212,7 +239,8 @@
     if (el.id) nom += '#' + el.id;
     const classes = typeof el.className === 'string' ? el.className.trim().split(/\s+/).slice(0, 2).join('.') : '';
     if (classes) nom += '.' + classes;
-    const texte = (el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 40);
+    if (el.getAttribute && el.getAttribute('name')) nom += '[name=' + el.getAttribute('name') + ']';
+    const texte = ((el.getAttribute && (el.getAttribute('aria-label') || el.getAttribute('placeholder') || el.getAttribute('alt'))) || el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 40);
     return nom + (texte ? ' « ' + texte + ' »' : '');
   }
 
@@ -257,6 +285,131 @@
   }
   window.addEventListener('orientationchange', function () { setTimeout(verifierDebordement, 1500); });
 
+  // --- Dernier clic + clics répétés sur un élément qui ne réagit pas ---
+  // Quatre clics sur le même bouton en moins de 2 secondes : le visiteur s'impatiente,
+  // le bouton ne répond sans doute pas (ou trop lentement). Les flèches de galerie,
+  // qu'on touche plusieurs fois exprès, ne comptent pas.
+  let clicsRecents = [];
+  document.addEventListener('click', function (e) {
+    try {
+      const brut = e.target && e.target.nodeType === 1 ? e.target : null;
+      if (!brut) return;
+      const cible = brut.closest('a, button, [role="button"], input, select, label, summary') || brut;
+      dernierClic = { desc: decrireElement(cible), t: Date.now() };
+      // Seuls les liens et boutons comptent pour les clics répétés (pas les champs
+      // de saisie, où l'on clique souvent pour placer le curseur).
+      if (!brut.closest('a, button, [role="button"]')) { clicsRecents = []; return; }
+      const zone = cible.closest('[class*="lightbox"], [class*="galerie"], [class*="carrousel"], [class*="carousel"]');
+      const nomCible = (cible.className || '') + ' ' + (cible.getAttribute('aria-label') || '');
+      if (zone || /suivant|précédent|next|prev|fleche|flèche|arrow/i.test(nomCible)) return;
+      const maintenant = Date.now();
+      clicsRecents = clicsRecents.filter(function (c) { return c.el === cible && maintenant - c.t < 2000; });
+      clicsRecents.push({ el: cible, t: maintenant });
+      if (clicsRecents.length === 4) {
+        signaler('Clics répétés sans effet', location.pathname + ' : ' + decrireElement(cible) + ' cliqué 4 fois en 2 s',
+          'Le visiteur a cliqué plusieurs fois de suite sur cet élément : il ne réagissait pas, ou trop lentement.');
+      }
+    } catch (x) {}
+  }, true);
+
+  // --- Zoom de l'écran qui change tout seul ---
+  // Cas classique : sur iPhone, toucher un champ de formulaire dont le texte fait
+  // moins de 16 px fait zoomer la page automatiquement (et elle reste zoomée). On
+  // signale aussi tout zoom qui change sans que le visiteur ait touché l'écran.
+  // Un pincement ou un double-tap du visiteur (geste volontaire) est ignoré.
+  const vv = window.visualViewport;
+  const tactile = navigator.maxTouchPoints > 0 || 'ontouchstart' in window;
+  if (vv && tactile) {
+    let dernierToucher = 0;
+    let pincement = false;
+    let echelle = vv.scale;
+    document.addEventListener('touchstart', function (e) {
+      dernierToucher = Date.now();
+      if (e.touches && e.touches.length > 1) pincement = true;
+    }, { passive: true, capture: true });
+    document.addEventListener('touchend', function (e) {
+      dernierToucher = Date.now();
+      if (!e.touches || e.touches.length === 0) setTimeout(function () { pincement = false; }, 1000);
+    }, { passive: true, capture: true });
+    vv.addEventListener('resize', function () {
+      try {
+        const s = vv.scale;
+        if (Math.abs(s - echelle) < 0.05) return;
+        echelle = s;
+        if (pincement || s <= 1.05) return;
+        const actif = document.activeElement;
+        if (actif && /^(INPUT|TEXTAREA|SELECT)$/.test(actif.tagName)) {
+          const taille = parseFloat(getComputedStyle(actif).fontSize) || 0;
+          if (taille && taille < 16) {
+            signaler('Zoom automatique', location.pathname + ' : ' + decrireElement(actif) + ' (texte ' + Math.round(taille) + ' px)',
+              'Le téléphone a zoomé tout seul quand le visiteur a touché ce champ : son texte fait moins de 16 px (règle des iPhone). Zoom ×' + s.toFixed(2));
+            return;
+          }
+        }
+        if (Date.now() - dernierToucher > 1500) {
+          signaler('Zoom inattendu', location.pathname + ' : zoom passé à ×' + s.toFixed(2) + ' sans geste du visiteur',
+            'Élément actif : ' + (actif && actif !== document.body ? decrireElement(actif) : 'aucun'));
+        }
+      } catch (x) {}
+    });
+  }
+
+  // --- Affichage qui « saute » (des blocs qui bougent pendant la lecture) ---
+  // Mesure du navigateur (Chrome/Android) : au-delà de 0,25, Google considère que la
+  // page bouge de façon gênante. Signalé quand le visiteur quitte la page, avec les
+  // éléments qui ont le plus bougé.
+  const typesMesures = (window.PerformanceObserver && PerformanceObserver.supportedEntryTypes) || [];
+  if (typesMesures.indexOf('layout-shift') !== -1) {
+    let totalSauts = 0;
+    let pireSaut = null;
+    try {
+      new PerformanceObserver(function (liste) {
+        liste.getEntries().forEach(function (en) {
+          if (en.hadRecentInput) return;
+          totalSauts += en.value;
+          if (!pireSaut || en.value > pireSaut.value) pireSaut = en;
+        });
+      }).observe({ type: 'layout-shift', buffered: true });
+    } catch (x) {}
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState !== 'hidden' || totalSauts < 0.25 || !pireSaut) return;
+      const sources = (pireSaut.sources || []).map(function (s) {
+        return s.node && s.node.nodeType === 1 ? decrireElement(s.node) : '';
+      }).filter(Boolean).slice(0, 2).join(' ; ');
+      signaler('Affichage qui saute', location.pathname + ' : ' + (sources || 'élément non identifié'),
+        'Score ' + totalSauts.toFixed(2) + ' (gênant au-delà de 0,25) ; plus gros saut ' + pireSaut.value.toFixed(2) + ', ' + Math.round(pireSaut.startTime / 1000) + ' s après l\'ouverture');
+      totalSauts = 0;
+    });
+  }
+
+  // --- Page figée (le téléphone ne répond plus pendant plusieurs secondes) ---
+  if (typesMesures.indexOf('longtask') !== -1) {
+    try {
+      new PerformanceObserver(function (liste) {
+        liste.getEntries().forEach(function (en) {
+          if (en.duration < 3000) return;
+          signaler('Page figée', location.pathname + ' : bloquée ' + (en.duration / 1000).toFixed(1) + ' s',
+            'La page ne répondait plus aux gestes du visiteur pendant ce temps (' + Math.round(en.startTime / 1000) + ' s après l\'ouverture).');
+        });
+      }).observe({ type: 'longtask', buffered: true });
+    } catch (x) {}
+  }
+
+  // --- Page restée vide ou dézoomée ---
+  function verifierPageVisible() {
+    try {
+      if (/^\/outils\//.test(location.pathname) || document.visibilityState === 'hidden') return;
+      const texte = (document.body && document.body.innerText || '').replace(/\s+/g, ' ').trim();
+      if (texte.length < 30) {
+        signaler('Page vide', location.pathname + ' : presque aucun texte affiché 8 s après l\'ouverture', 'Texte visible : « ' + texte + ' »');
+      }
+      if (vv && tactile && vv.scale < 0.95) {
+        signaler('Page dézoomée', location.pathname + ' : la page s\'affiche dézoomée (×' + vv.scale.toFixed(2) + ')',
+          'Le contenu est plus large que l\'écran : le téléphone a réduit la page pour tout faire tenir.');
+      }
+    } catch (x) {}
+  }
+
   // --- Page très lente + bibliothèque indispensable jamais chargée ---
   window.addEventListener('load', function () {
     setTimeout(function () {
@@ -276,6 +429,7 @@
       // puis une seconde fois plus tard pour les contenus arrivés en retard.
       setTimeout(verifierDebordement, 4000);
       setTimeout(verifierDebordement, 15000);
+      setTimeout(verifierPageVisible, 8000);
       // Pages qui chargent supabase-js : s'il n'est toujours pas là, rien ne s'affichera.
       const attendSupabase = !!document.querySelector('script[src*="supabase-js"], script[src*="/supabase.js"]');
       if (attendSupabase && typeof window.supabase === 'undefined') {
