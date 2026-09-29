@@ -1239,3 +1239,14 @@ base ; Book, fiche mannequin FR/EN et accueil : toutes les images chargées sur 
   téléphone, un 4e bouton écrasait le logo).
 - **Prochaine étape** : commande (formulaire, zones, CGV), paiement avec référence,
   suivi client, onglet « Commandes » du tableau de bord.
+- **Direction artistique (29/09, 3e version)** : la propriétaire a jugé la version
+  « alignée » trop plate et a fourni ses références (FORM, KANTO, GAZU). Vitrine :
+  scène d'ouverture de nuit avec filets de lumière chaude (or du logo) et trame
+  d'architecte, nom géant « MA2M » (lettres qui montent une à une) avec la pièce à
+  la une posée devant, textes de coin, bandeau défilant du site, bande « univers »
+  (catégories avec photo), bannière éditoriale texte/image, engagements avec icônes
+  fines, grille qui apparaît au défilement (« Voir la pièce » au survol), mot de
+  l'agence avec ornement trait-point-trait. Fiche : galerie en pile (ordinateur) /
+  à glisser (téléphone). Boutons « prestige » = .btn du site + reflet, filet et
+  flèche. Tout respecte « réduire les animations ». Composants du site conservés
+  (titres capitales + point rouge, eyebrow, .filtre-btn, .form-champ, .fil-ariane).
