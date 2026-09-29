@@ -2240,3 +2240,9 @@ button.btn.journal-copier-tout:hover { background: #93203c !important; }
    en silence par le CSP de la page (style-src sans 'unsafe-inline') : le formulaire
    apparaissait avant même que le lien de réinitialisation ait été vérifié. */
 #rmdp-form, #rmdp-liens { display: none; }
+
+/* Boutons de partage d'une actualité / d'un événement (fiche ouverte) — 29/09/2026 */
+.fiche-partage { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.9rem 0 0.3rem; }
+.fiche-partage-btn { font: inherit; font-size: 0.8rem; letter-spacing: 0.04em; padding: 0.5rem 0.95rem; border-radius: 999px; border: 1px solid rgba(255,255,255,.25); background: rgba(255,255,255,.06); color: #f3eee9; cursor: pointer; transition: background .2s, border-color .2s; }
+.fiche-partage-btn:hover { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.45); }
+.fiche-partage-btn[data-partage="whatsapp"] { border-color: rgba(37,211,102,.55); }

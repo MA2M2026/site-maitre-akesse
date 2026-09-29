@@ -1,5 +1,15 @@
 {
   "cleanUrls": true,
+  "images": {
+    "sizes": [640, 1080],
+    "minimumCacheTTL": 2678400,
+    "remotePatterns": [
+      { "protocol": "https", "hostname": "**.r2.dev" },
+      { "protocol": "https", "hostname": "www.maitreakessemodelmanagement.com" },
+      { "protocol": "https", "hostname": "maitreakessemodelmanagement.com" },
+      { "protocol": "https", "hostname": "dfhghgmwmxiguhtxtsle.supabase.co" }
+    ]
+  },
   "redirects": [
     { "source": "/espace-mannequin-ancien", "destination": "/espace-mannequin", "permanent": true },
     { "source": "/espace-mannequin-ancien.html", "destination": "/espace-mannequin", "permanent": true }

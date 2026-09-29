@@ -1726,6 +1726,87 @@ document.addEventListener('submit', () => {
   } catch (e) {}
 }, true);
 
+// ================== Partage d'une actualité / d'un événement ==================
+// Demande de la propriétaire (29/09/2026) : quand une fiche est ouverte, l'adresse
+// du navigateur devient celle de CETTE fiche (?actu=ID ou ?evenement=ID), et des
+// boutons Partager / WhatsApp / Copier le lien envoient ce lien précis. Collé dans
+// WhatsApp, Facebook…, il affiche l'aperçu de la fiche (voir middleware.js).
+// Appelé par les pages actualités/événements (FR et EN) à l'ouverture et à la
+// fermeture de la fiche.
+(function () {
+  let ficheCourante = null;
+  function anglais() { return (document.documentElement.lang || '').indexOf('en') === 0; }
+  function remplacerAdresse(url) {
+    try { history.replaceState(history.state, '', url.pathname + url.search + url.hash); } catch (e) {}
+  }
+  function lienFiche() {
+    const url = new URL(location.origin + location.pathname);
+    url.searchParams.set(ficheCourante.param, ficheCourante.id);
+    return url.toString();
+  }
+  async function copierLien(lien, bouton) {
+    let ok = false;
+    try { await navigator.clipboard.writeText(lien); ok = true; } catch (e) {
+      try {
+        const zone = document.createElement('textarea');
+        zone.value = lien; zone.setAttribute('readonly', ''); zone.style.position = 'fixed'; zone.style.opacity = '0';
+        document.body.appendChild(zone); zone.select(); ok = document.execCommand('copy'); zone.remove();
+      } catch (x) {}
+    }
+    const avant = bouton.textContent;
+    bouton.textContent = ok ? (anglais() ? '✓ Link copied' : '✓ Lien copié') : (anglais() ? 'Copy failed' : 'Copie impossible');
+    setTimeout(() => { bouton.textContent = avant; }, 2200);
+  }
+  async function clicPartage(e) {
+    const bouton = e.target.closest('[data-partage]');
+    if (!bouton || !ficheCourante) return;
+    const lien = lienFiche();
+    const titre = ficheCourante.titre;
+    const action = bouton.dataset.partage;
+    if (action === 'partager' && navigator.share) {
+      try { await navigator.share({ title: titre, text: titre, url: lien }); } catch (x) {}
+    } else if (action === 'whatsapp') {
+      window.open('https://wa.me/?text=' + encodeURIComponent((titre ? titre + '\n' : '') + lien), '_blank', 'noopener');
+    } else {
+      copierLien(lien, bouton);
+    }
+  }
+  window.ficheOuverte = function (param, id, titre) {
+    try {
+      if (!id) return;
+      ficheCourante = { param: param, id: id, titre: titre || '' };
+      const url = new URL(location.href);
+      url.searchParams.set(param, id);
+      remplacerAdresse(url);
+      let barre = document.getElementById('news-modal-partage');
+      if (!barre) {
+        const texte = document.getElementById('news-modal-texte');
+        if (!texte) return;
+        const en = anglais();
+        barre = document.createElement('div');
+        barre.id = 'news-modal-partage';
+        barre.className = 'fiche-partage';
+        barre.innerHTML =
+          (navigator.share ? '<button type="button" class="fiche-partage-btn" data-partage="partager">' + (en ? '↗ Share' : '↗ Partager') + '</button>' : '') +
+          '<button type="button" class="fiche-partage-btn" data-partage="whatsapp">WhatsApp</button>' +
+          '<button type="button" class="fiche-partage-btn" data-partage="copier">' + (en ? '🔗 Copy link' : '🔗 Copier le lien') + '</button>';
+        texte.insertAdjacentElement('beforebegin', barre);
+        barre.addEventListener('click', clicPartage);
+      }
+    } catch (e) {}
+  };
+  window.ficheFermee = function () {
+    try {
+      ficheCourante = null;
+      const url = new URL(location.href);
+      if (!url.searchParams.has('actu') && !url.searchParams.has('evenement')) return;
+      url.searchParams.delete('actu');
+      url.searchParams.delete('evenement');
+      remplacerAdresse(url);
+    } catch (e) {}
+  };
+})();
+
 // Pastille WhatsApp flottante, injectée sur toutes les pages
 document.addEventListener('DOMContentLoaded', () => {
   const bouton = document.createElement('a');
