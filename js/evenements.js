@@ -131,6 +131,7 @@ async function ouvrirEvenementModal(index) {
   ouvrirNewsModal();
 
   window.evenementModalCourant = e.id;
+  if (window.ficheOuverte) window.ficheOuverte('evenement', e.id, e.titre);
   document.getElementById('news-modal-admin-actions').style.display = window.estAdminConnecte ? 'block' : 'none';
 }
 // Verrouille le défilement de la page tant que la fiche est ouverte (même mécanisme,
@@ -142,6 +143,7 @@ function ouvrirNewsModal() {
 }
 function fermerNewsModal() {
   document.getElementById('news-modal').classList.remove('active');
+  if (window.ficheFermee) window.ficheFermee();
   if (newsModalEstOuverte) { newsModalEstOuverte = false; window.deverrouillerDefilement(); }
 }
 document.getElementById('news-modal-fermer').addEventListener('click', fermerNewsModal);

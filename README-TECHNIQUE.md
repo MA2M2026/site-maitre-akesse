@@ -1183,3 +1183,20 @@ base ; Book, fiche mannequin FR/EN et accueil : toutes les images chargées sur 
 - Aucune erreur du journal ne venait d'une page du site ni d'une photo non
   affichée (y compris depuis Facebook).
 
+
+## 🔗 Aperçu des liens partagés + boutons Partager (29 septembre 2026)
+
+- Ouvrir une actualité ou un événement met son adresse précise dans le navigateur
+  (`?actu=ID` / `?evenement=ID`), et la fiche propose **Partager** (téléphone),
+  **WhatsApp** et **Copier le lien** (`window.ficheOuverte` / `window.ficheFermee`
+  dans `js/app.js`, appelés par `js/actualites.js`, `js/evenements.js` et les
+  pages anglaises).
+- `middleware.js` (Routing Middleware Vercel) : **seuls les robots d'aperçu**
+  (WhatsApp, Facebook, Telegram, X, LinkedIn…) reçoivent une petite page avec les
+  balises `og:` de la fiche (titre, texte, photo). Les visiteurs ne sont jamais
+  concernés ; au moindre problème, le robot reçoit la page normale.
+- La photo d'aperçu passe par l'optimiseur d'images de Vercel
+  (`/_vercel/image?...&w=1080`, réglé par la clé `images` de `vercel.json`) :
+  WhatsApp n'affiche pas les photos trop lourdes.
+- Ne pas ajouter les navigateurs intégrés des applis (Instagram, « FBAN »,
+  Snapchat, LINE…) à la liste des robots : ce sont de vraies personnes.
