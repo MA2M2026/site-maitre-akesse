@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://cdn.jsdelivr.net 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-94jWGOu2MK5VPZF8/wtRRQ8zgmvo1XC8wLb8UKz6PMI='; style-src 'self' https://fonts.googleapis.com 'sha256-2RaJjkt0dwCPrM/WQd2sjLywmysdtxLwAh6UXghu0HQ=' 'sha256-l6fymG/9VFModmkt4+Cju+Misw/e9E3nOMRhpZL+0so=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://cdn.jsdelivr.net 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-RItPdwosG6ZyhJxHkdEMNhQub3U/RsptdKRsPVskfYg='; style-src 'self' https://fonts.googleapis.com 'sha256-2RaJjkt0dwCPrM/WQd2sjLywmysdtxLwAh6UXghu0HQ=' 'sha256-l6fymG/9VFModmkt4+Cju+Misw/e9E3nOMRhpZL+0so=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <meta charset="UTF-8">
@@ -974,6 +974,14 @@ const Store = {
      version moyenne (1600px) à côté — jamais de nouvelle bibliothèque de
      photos, tout reste dans model_photos / bucket model-photos. */
   async uploadPhoto(file){
+    // Signalement dans le journal du tableau de bord (demande de la propriétaire,
+    // 29/09/2026) : si l'envoi d'une photo échoue ou traîne, elle doit le voir, avec le
+    // nom du mannequin, pour pouvoir le prévenir (souvent un problème de réseau).
+    const qui = (currentUser && ((currentUser.user_metadata && currentUser.user_metadata.full_name) || currentUser.email)) || 'mannequin inconnu';
+    const infosFichier = file ? ('« ' + (file.name || 'photo') + ' », ' + Math.round((file.size || 0) / 1024) + ' Ko, ' + (file.type || 'type inconnu')) : '';
+    const alerteLenteur = setTimeout(() => {
+      if (window.signalerErreur) window.signalerErreur('Envoi de photo très lent', qui + ' : une photo met plus de 90 secondes à partir', infosFichier);
+    }, 90000);
     try{
       const fichierConverti = await convertirSiHeic(file);
       const fichier = await compresserPhotoOrigine(fichierConverti);
@@ -1005,16 +1013,19 @@ const Store = {
       // e.message porte le vrai motif quand il vient d'un refus explicite du
       // serveur (ex. limite de photos atteinte) — l'afficher plutôt qu'un
       // message générique qui cacherait la cause réelle et la solution.
-      console.error(e);
+      console.warn(e);
       // Coupure réseau : le navigateur renvoie un message technique en anglais
       // (« Failed to fetch » sur Android, « Load failed » sur iPhone) — le remplacer
       // par une phrase compréhensible pour la mannequin.
       const brut = (e && e.message) || '';
       const reseau = /failed to fetch|load failed|networkerror|network request failed|réseau/i.test(brut);
+      if (window.signalerErreur) window.signalerErreur('Envoi de photo échoué', qui + ' : ' + (reseau ? 'connexion coupée pendant l’envoi' : (brut || 'erreur inconnue')), infosFichier);
       toast(reseau
         ? 'Connexion interrompue pendant l’envoi de « ' + ((file && file.name) || 'la photo') + ' ». Vérifiez votre connexion et réessayez.'
         : (brut || "Échec de l'envoi de la photo"), true);
       return null;
+    }finally{
+      clearTimeout(alerteLenteur);
     }
   },
 
