@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://cdn.jsdelivr.net 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-RItPdwosG6ZyhJxHkdEMNhQub3U/RsptdKRsPVskfYg='; style-src 'self' https://fonts.googleapis.com 'sha256-2RaJjkt0dwCPrM/WQd2sjLywmysdtxLwAh6UXghu0HQ=' 'sha256-l6fymG/9VFModmkt4+Cju+Misw/e9E3nOMRhpZL+0so=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://cdn.jsdelivr.net 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-245w0Rp8pPZEW+xnrTQhJ8WExwqJX2rOORi8I9dtd6U='; style-src 'self' https://fonts.googleapis.com 'sha256-2RaJjkt0dwCPrM/WQd2sjLywmysdtxLwAh6UXghu0HQ=' 'sha256-l6fymG/9VFModmkt4+Cju+Misw/e9E3nOMRhpZL+0so=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <meta charset="UTF-8">
@@ -1978,7 +1978,6 @@ function viewDashboard(){
   }
 
   return header('Espace validé') + '<div class="panel">' + bandeau + alerteIncomplet +
-    '<div id="likes-banner"></div>' +
     '<h1 class="p20-10">Bonjour '+echapperHtml((d.nomComplet||'').split(' ')[0]||'')+'</h1>' +
     '<p class="sub p20-13">Modifiez un bloc à la fois — chaque bloc s’enregistre indépendamment des autres.</p>' +
     '<div class="blocks-grid">' + BLOCKS.map(function(b){
@@ -2000,27 +1999,8 @@ function bindDashboard(){
   });
   document.getElementById('openCv')?.addEventListener('click', openCv);
   document.getElementById('openCc')?.addEventListener('click', openCompcard);
-  chargerBandeauLikes();
 }
 
-// Petit indicateur "nouveaux cœurs reçus" (Extension 93) — pas d'e-mail à
-// chaque cœur (spam si une photo devient populaire), juste ce rappel
-// visible à la prochaine visite de l'espace mannequin.
-async function chargerBandeauLikes(){
-  const conteneur = document.getElementById('likes-banner');
-  if (!conteneur) return;
-  try {
-    const { data, error } = await sb.rpc('mes_likes_book');
-    if (error || !data) return;
-    const ligne = Array.isArray(data) ? data[0] : data;
-    if (!ligne || !ligne.nouveaux) return;
-    const pluriel = ligne.nouveaux > 1;
-    conteneur.innerHTML = '<div class="likes-banner-contenu">❤️ ' + ligne.nouveaux +
-      (pluriel ? ' nouveaux cœurs reçus' : ' nouveau cœur reçu') +
-      ' sur votre Book (total : ' + ligne.total + ').</div>';
-    sb.rpc('marquer_likes_vus').then(function(){}).catch(function(){});
-  } catch (e) {}
-}
 
 /* ------------------------------------------------------------- CV / PDF ---
    Icônes, libellés de compétences et regroupement des expériences : partagés
