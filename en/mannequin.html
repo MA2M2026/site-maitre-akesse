@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-tyIljNTuD22ArbE/zFQZMcfwJQC4UsktfEQIwJm8KDw='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-Ie8A432MT0Uzf4hTsUnimA3mTX6mgRA0Qk6cEXtOlf8='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -829,56 +829,12 @@ async function chargerProfilInterne() {
   (photos || []).forEach((p, index) => {
     const div = document.createElement('div');
     div.className = 'book-photo-carte cliquable';
-    div.innerHTML = `<img src="${echapperHtml(p.url_miniature || p.url)}" loading="lazy" alt="Book photo">
-      <button type="button" class="book-photo-coeur" data-photo-id="${p.id}" aria-label="Like this photo">
-        <svg viewBox="0 0 24 24"><path class="coeur-icone" d="M12 21s-7.5-4.6-10-9.3C.4 8.1 2.3 4.5 6 4.5c2.1 0 3.6 1.1 4.6 2.6a5.4 5.4 0 0 1 1.4-1.6C13.7 4.2 16 3.9 18 5.3c2.6 1.8 3.1 5.3 1 8.4C16.5 16.4 12 21 12 21z"/></svg>
-        <span class="coeur-total">0</span>
-      </button>`;
+    div.innerHTML = `<img src="${echapperHtml(p.url_miniature || p.url)}" loading="lazy" alt="Book photo">`;
     div.querySelector('img').addEventListener('click', () => ouvrirLightbox(index));
     galerie.appendChild(div);
   });
-
-  chargerLikesPhotos((photos || []).map(p => p.id));
 }
 
-// --- Hearts on Book photos (anonymous visitors, one fingerprint = one
-// heart per photo, see Extension 93) ---
-let empreinteVisiteurLikes = null;
-async function obtenirEmpreinteVisiteurLikes() {
-  if (empreinteVisiteurLikes) return empreinteVisiteurLikes;
-  empreinteVisiteurLikes = await empreinteVisiteur();
-  return empreinteVisiteurLikes;
-}
-
-async function chargerLikesPhotos(ids) {
-  if (!ids.length) return;
-  const empreinte = await obtenirEmpreinteVisiteurLikes();
-  if (!empreinte) return;
-  const { data, error } = await sb.rpc('etat_likes_photos', { p_ids: ids, p_ip_hash: empreinte });
-  if (error || !data) return;
-  const conteneurGalerie = document.getElementById('galerie');
-  data.forEach(ligne => {
-    const bouton = conteneurGalerie.querySelector(`.book-photo-coeur[data-photo-id="${ligne.photo_id}"]`);
-    if (!bouton) return;
-    bouton.querySelector('.coeur-total').textContent = ligne.total;
-    bouton.classList.toggle('aime', !!ligne.aime_par_moi);
-  });
-}
-
-document.getElementById('galerie').addEventListener('click', async (e) => {
-  const bouton = e.target.closest('.book-photo-coeur');
-  if (!bouton) return;
-  e.stopPropagation();
-  bouton.disabled = true;
-  const empreinte = await obtenirEmpreinteVisiteurLikes();
-  if (!empreinte) { bouton.disabled = false; return; }
-  const { data, error } = await sb.rpc('basculer_like_photo', { p_photo_id: bouton.dataset.photoId, p_ip_hash: empreinte });
-  bouton.disabled = false;
-  if (error || !data) return;
-  const ligne = Array.isArray(data) ? data[0] : data;
-  bouton.querySelector('.coeur-total').textContent = ligne.total;
-  bouton.classList.toggle('aime', !!ligne.aime);
-});
 function ouvrirLightbox(index) {
   if (!window.photosLightbox || !window.photosLightbox.length) return;
   ouvrirGalerieLightbox(window.photosLightbox, index);
