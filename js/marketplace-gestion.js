@@ -173,9 +173,8 @@
           '</div><small id="mpg-type-aide"></small></div>' +
           '<div class="mpg-grille2">' +
             '<div class="form-champ"><label for="mpg-nom">Nom du produit *</label><input id="mpg-nom" maxlength="140" required value="' + echapperHtml(p.nom) + '"></div>' +
-            '<div class="form-champ"><label for="mpg-categorie">Catégorie</label><select id="mpg-categorie"><option value="">— Aucune —</option>' +
-              etat.categories.map(c => '<option value="' + c.id + '"' + (c.id === p.categorie_id ? ' selected' : '') + '>' + echapperHtml(c.nom) + '</option>').join('') + '</select>' +
-              (etat.categories.length ? '' : '<small>Créez vos catégories dans l’onglet « Catégories ».</small>') + '</div>' +
+            '<div class="form-champ"><label for="mpg-categorie">Rayon</label><select id="mpg-categorie"></select>' +
+              '<small>Les rayons se gèrent dans l’onglet « Catégories ».</small></div>' +
             '<div class="form-champ"><label for="mpg-statut">Statut</label><select id="mpg-statut">' +
               Object.keys(LIBELLES_STATUT).map(s => '<option value="' + s + '"' + (s === p.statut ? ' selected' : '') + '>' + LIBELLES_STATUT[s] + '</option>').join('') + '</select></div>' +
           '</div>' +
@@ -297,7 +296,15 @@
       billet: ['Places', 'Une ligne par type de place (par exemple « Standard », « VIP ») avec son nombre de places. Chaque place achetée donne un billet à code.', 'Type de place', 'Places', 'Une place pour un événement : le client reçoit un billet à code, sans livraison.'],
       service: ['Formules', 'Une ligne par formule (par exemple « Shooting 1 h »). Le nombre indique combien de clients vous pouvez accepter.', 'Formule', 'Disponibles', 'Une prestation de l’agence (shooting, formation…) : rendez-vous fixé après paiement.']
     };
+    let rayonChoisi = p.categorie_id || '';
+    function rendreRayons() {
+      const select = document.getElementById('mpg-categorie');
+      if (select.options.length) rayonChoisi = select.value;
+      const liste = etat.categories.filter(c => (c.univers || 'physique') === type);
+      select.innerHTML = '<option value="">— Aucun —</option>' + liste.map(c => '<option value="' + c.id + '"' + (c.id === rayonChoisi ? ' selected' : '') + '>' + echapperHtml(c.nom) + '</option>').join('');
+    }
     function appliquerType() {
+      rendreRayons();
       const t = TEXTES_TYPE[type];
       document.getElementById('mpg-versions-titre').textContent = t[0];
       document.getElementById('mpg-versions-aide').textContent = t[1];
@@ -665,19 +672,20 @@
   function afficherCategories() {
     const zone = document.getElementById('mpg-categories');
     zone.innerHTML =
-      '<div class="mpg-barre"><h2>Catégories</h2></div>' +
-      '<p class="mpg-aide">Les rayons à l’intérieur des trois portes (Articles, Billets, Services) : par exemple Vêtements et Accessoires pour les articles, Galas et Castings pour les billets. Une catégorie apparaît comme filtre dès qu’elle contient au moins un produit en vente.</p>' +
-      '<form class="mpg-bloc" id="mpg-form-categorie"><div class="eyebrow">Nouvelle catégorie</div><div class="mpg-grille2">' +
-        '<div class="form-champ"><label for="mpg-cat-nom">Nom</label><input id="mpg-cat-nom" maxlength="80" placeholder="Vêtements"></div>' +
+      '<div class="mpg-barre"><h2>Catégories (rayons)</h2></div>' +
+      '<p class="mpg-aide">Les rayons à l’intérieur des trois portes. Ils apparaissent tous dans la boutique ; un rayon sans produit en vente affiche « bientôt ». « Masquer » retire un rayon de la boutique sans le supprimer.</p>' +
+      '<form class="mpg-bloc" id="mpg-form-categorie"><div class="eyebrow">Nouveau rayon</div><div class="mpg-grille2">' +
+        '<div class="form-champ"><label for="mpg-cat-univers">Porte</label><select id="mpg-cat-univers">' + MP.UNIVERS.map(u => '<option value="' + u.cle + '">' + u.nom + '</option>').join('') + '</select></div>' +
+        '<div class="form-champ"><label for="mpg-cat-nom">Nom du rayon</label><input id="mpg-cat-nom" maxlength="80" placeholder="Vêtements"></div>' +
         '<div class="form-champ"><label for="mpg-cat-ordre">Ordre</label><input id="mpg-cat-ordre" type="number" inputmode="numeric" value="0"></div>' +
       '</div><div class="mpg-actions"><button type="submit" class="btn btn--principal">Ajouter</button><span class="mpg-message" id="mpg-msg-cat"></span></div></form>' +
-      '<div class="mpg-liste">' + (etat.categories.map(c =>
+      MP.UNIVERS.map(u => '<h3 class="mpg-porte-titre">' + u.nom + '</h3><div class="mpg-liste">' + (etat.categories.filter(c => (c.univers || 'physique') === u.cle).map(c =>
         '<div class="mpg-ligne" data-id="' + c.id + '"><div><div class="mpg-ligne-titre">' + echapperHtml(c.nom) + '</div>' +
           '<div class="mpg-ligne-sous">' + (c.actif ? 'Visible' : 'Masquée') + ' · ordre ' + c.ordre + ' · ' +
           etat.produits.filter(p => p.categorie_id === c.id).length + ' produit(s)</div></div>' +
           '<div class="mpg-ligne-actions"><button type="button" class="btn-mini-admin" data-basculer>' + (c.actif ? 'Masquer' : 'Afficher') + '</button>' +
           '<button type="button" class="btn-mini-admin mpg-bouton-danger" data-supprimer>Supprimer</button></div></div>').join('') ||
-        '<div class="mpg-vide">Aucune catégorie.</div>') + '</div>';
+        '<div class="mpg-vide">Aucun rayon dans cette porte.</div>') + '</div>').join('');
     document.getElementById('mpg-form-categorie').addEventListener('submit', async e => {
       e.preventDefault();
       const nom = document.getElementById('mpg-cat-nom').value.trim();
@@ -686,7 +694,7 @@
       const base = MP.slugifier(nom);
       let slug = base, n = 2;
       while (etat.categories.some(c => c.slug === slug)) slug = base + '-' + n++;
-      const { error } = await sbAdmin.from('boutique_categories').insert({ nom: nom, slug: slug, ordre: parseInt(document.getElementById('mpg-cat-ordre').value, 10) || 0 });
+      const { error } = await sbAdmin.from('boutique_categories').insert({ nom: nom, slug: slug, univers: document.getElementById('mpg-cat-univers').value, ordre: parseInt(document.getElementById('mpg-cat-ordre').value, 10) || 0 });
       if (error) { message(msg, erreurLisible(error), 'err'); return; }
       await chargerTout(); afficherCategories(); MP.toast('Catégorie ajoutée.');
     });

@@ -1268,3 +1268,10 @@ base ; Book, fiche mannequin FR/EN et accueil : toutes les images chargées sur 
   `boutique_controler_billet`, suivi enrichi, « payée → terminée » pour billets et
   services). Testée sur PostgreSQL 16 (installée deux fois, billets sans doublon,
   refus d'un événement passé, contrôle réservé aux admins).
+- **Rayons** (Extension 100) : chaque catégorie appartient à une porte
+  (`boutique_categories.univers`). Rayons de départ : Articles (Vêtements,
+  Accessoires, Objets de l'agence), Billets (Défilés, Galas et soirées, Castings,
+  Ateliers et masterclass), Services (Shooting photo, Formation privée, Coaching et
+  accompagnement, Autres services). Tous visibles dans la boutique, « bientôt »
+  quand ils sont vides ; l'éditeur de produit ne propose que les rayons de la porte
+  choisie.

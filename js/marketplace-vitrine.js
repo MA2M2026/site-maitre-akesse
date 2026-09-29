@@ -86,6 +86,7 @@
     const avecPhoto = produits.filter(p => premierePhoto(p)[0]);
     const vedette = avecPhoto.find(p => p.mis_en_avant) || avecPhoto[0] || null;
     const annee = new Date().getFullYear();
+    const rayons = cle => categories.filter(c => (c.univers || 'physique') === cle);
 
     principal.innerHTML =
       // ---- Ouverture : l'affiche (nuit laquée, filets de lumière rouge, grand nom espacé)
@@ -119,6 +120,7 @@
               '<span class="mp-porte-num">0' + (i + 1) + '</span>' +
               '<strong>' + u.nom + '</strong>' +
               '<span>' + u.texte + '</span>' +
+              (rayons(u.cle).length ? '<span class="mp-porte-rayons">' + rayons(u.cle).map(c => echapperHtml(c.nom)).join('<i aria-hidden="true">·</i>') + '</span>' : '') +
               '<span class="btn' + (liste.length ? ' btn--principal' : '') + '">' + (liste.length ? liste.length + ' ' + (liste.length > 1 ? 'propositions' : 'proposition') + ' ' + FLECHE : 'Bientôt') + '</span>' +
             '</span></a>';
         }).join('') + '</div>' +
@@ -178,14 +180,19 @@
     function dansUnivers() {
       return produits.filter(p => !univers || MP.univers(p.type).slug === univers);
     }
+    // Rayons de la porte choisie (Extension 100) : tous affichés, même vides
+    // (« bientôt »), pour que la structure de la Maison soit lisible d'emblée.
     function rendreCategories() {
       const liste = dansUnivers();
-      const cats = categories.filter(c => liste.some(p => p.categorie && p.categorie.slug === c.slug));
-      barreFiltres.innerHTML = cats.length > 1
-        ? '<button type="button" class="filtre-btn actif" data-filtre="">Toutes</button>' +
-          cats.map(c => '<button type="button" class="filtre-btn" data-filtre="' + echapperHtml(c.slug) + '">' + echapperHtml(c.nom) + '</button>').join('')
+      const cats = univers ? rayons(MP.univers(univers).cle) : [];
+      barreFiltres.innerHTML = cats.length
+        ? '<button type="button" class="filtre-btn actif" data-filtre="">Tous les rayons</button>' +
+          cats.map(c => {
+            const nb = liste.filter(p => p.categorie && p.categorie.slug === c.slug).length;
+            return '<button type="button" class="filtre-btn' + (nb ? '' : ' mp-filtre-vide') + '" data-filtre="' + echapperHtml(c.slug) + '">' + echapperHtml(c.nom) + (nb ? '' : ' · bientôt') + '</button>';
+          }).join('')
         : '';
-      barreFiltres.classList.toggle('mp-cache', cats.length <= 1);
+      barreFiltres.classList.toggle('mp-cache', !cats.length);
     }
     function rendreGrille() {
       const zone = document.getElementById('mp-grille-zone');
@@ -195,8 +202,9 @@
       if (tri === 'recent') liste = liste.slice().sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
       document.getElementById('mp-collection-titre').innerHTML = (univers ? MP.univers(univers).nom : 'Tout') + '<span class="oeil">.</span>';
       if (!liste.length) {
+        const rayon = filtre && categories.find(c => c.slug === filtre);
         zone.innerHTML = '<div class="mp-attente mp-apparait"><div class="mp-ornement" aria-hidden="true"><span></span><i></i><span></span></div>' +
-          '<p>' + (univers ? 'Les ' + MP.univers(univers).nom.toLowerCase() + ' de la Maison seront bientôt présentés ici.' : 'La première collection de la Maison sera bientôt présentée ici.') + '</p>' +
+          '<p>' + (rayon ? 'Le rayon « ' + echapperHtml(rayon.nom) + ' » ouvre bientôt.' : univers ? 'Les ' + MP.univers(univers).nom.toLowerCase() + ' de la Maison seront bientôt présentés ici.' : 'La première collection de la Maison sera bientôt présentée ici.') + '</p>' +
           (acces.admin ? '<a class="btn btn--principal" href="/marketplace/gestion"><span>Ajouter dans la gestion</span>' + FLECHE + '</a>' : '') + '</div>';
       } else {
         zone.innerHTML = '<div class="mp-grille">' + liste.map(carteProduit).join('') + '</div>';

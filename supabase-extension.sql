@@ -4972,3 +4972,38 @@ revoke all on function boutique_controler_billet(text, boolean) from public;
 grant execute on function boutique_controler_billet(text, boolean) to authenticated;
 
 NOTIFY pgrst, 'reload schema';
+
+
+-- ===================================================================
+-- Extension 100 : BOUTIQUE MA2M — rayons rangés dans les trois portes
+-- (Demande de la propriétaire du 29/09/2026.)
+--   - Chaque catégorie (« rayon ») appartient à une porte : articles
+--     (physique), billets (billet) ou services (service).
+--   - Rayons de départ, modifiables ensuite dans Gestion → Catégories :
+--       Articles : Vêtements, Accessoires, Objets de l'agence
+--       Billets  : Défilés, Galas et soirées, Castings, Ateliers et masterclass
+--       Services : Shooting photo, Formation privée, Coaching et
+--                  accompagnement, Autres services
+-- Sans effet sur le reste du site. Peut être relancée sans risque (un rayon
+-- déjà présent n'est pas dupliqué ; son nom et son ordre ne sont pas écrasés).
+-- ===================================================================
+alter table boutique_categories add column if not exists univers text not null default 'physique';
+do $$ begin
+  alter table boutique_categories add constraint boutique_categories_univers_check check (univers in ('physique', 'billet', 'service'));
+exception when duplicate_object then null; end $$;
+
+insert into boutique_categories (nom, slug, univers, ordre) values
+  ('Vêtements', 'vetements', 'physique', 1),
+  ('Accessoires', 'accessoires', 'physique', 2),
+  ('Objets de l''agence', 'objets-de-l-agence', 'physique', 3),
+  ('Défilés', 'defiles', 'billet', 1),
+  ('Galas et soirées', 'galas-et-soirees', 'billet', 2),
+  ('Castings', 'castings', 'billet', 3),
+  ('Ateliers et masterclass', 'ateliers-et-masterclass', 'billet', 4),
+  ('Shooting photo', 'shooting-photo', 'service', 1),
+  ('Formation privée', 'formation-privee', 'service', 2),
+  ('Coaching et accompagnement', 'coaching-et-accompagnement', 'service', 3),
+  ('Autres services', 'autres-services', 'service', 4)
+on conflict (slug) do update set univers = excluded.univers;
+
+NOTIFY pgrst, 'reload schema';

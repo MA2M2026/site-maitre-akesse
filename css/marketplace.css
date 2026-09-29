@@ -682,3 +682,9 @@ a:hover > .mp-fleche, button:hover > .mp-fleche, .mp-carte:hover .mp-fleche, .mp
   .mp-nav-liens::-webkit-scrollbar { display: none; }
   .mp-nav-liens a, .mp-nav-liens button { flex: none; }
 }
+/* Rayons des portes (Extension 100) */
+.mp-porte-rayons { display: flex; flex-wrap: wrap; gap: 0.2rem 0.5rem; font-size: 0.66rem !important; letter-spacing: 0.14em; text-transform: uppercase; color: var(--texte-corps) !important; line-height: 1.8 !important; }
+.mp-porte-rayons i { font-style: normal; color: var(--bordeaux-clair); }
+.mp-corps .filtre-btn.mp-filtre-vide { opacity: 0.55; border-style: dashed; }
+.mp-corps .filtre-btn.mp-filtre-vide.actif { opacity: 1; }
+.mpg-porte-titre { font-size: 1rem; margin: 1.6rem 0 0.8rem; color: var(--bordeaux-clair); }
