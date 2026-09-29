@@ -195,6 +195,21 @@ async function chargerMannequinVedette() {
 }
 window.promesseVedette = chargerMannequinVedette();
 
+// Place réservée (classe .section-reservee, css/style.css) : libérée dès que le
+// chargement est terminé — bloc affiché, ou masqué s'il n'y a rien à montrer —
+// et au plus tard après 15 s (connexion coupée).
+// Le site mémorise si le bloc était vide : à la visite suivante, pas de place réservée
+// (lu tout en haut de index.html, classe html.vide-…).
+function libererSectionReservee(id, chargementTermine) {
+  const section = document.getElementById(id);
+  if (!section) return;
+  section.classList.remove('section-reservee');
+  if (!chargementTermine) return;
+  try { localStorage.setItem('ma2m_bloc_vide_' + id, section.style.display === 'block' ? '0' : '1'); } catch (e) {}
+}
+Promise.resolve(window.promesseVedette).catch(() => {}).then(() => libererSectionReservee('mannequin-vedette', true));
+setTimeout(() => libererSectionReservee('mannequin-vedette'), 15000);
+
 // --- Founder's word: photo and message editable from the dashboard ---
 async function chargerMotResponsable() {
   if (!sb) return;
@@ -214,7 +229,8 @@ async function chargerMotResponsable() {
   }
   document.getElementById('mot-responsable').style.display = 'block';
 }
-chargerMotResponsable();
+Promise.resolve(chargerMotResponsable()).catch(() => {}).then(() => libererSectionReservee('mot-responsable', true));
+setTimeout(() => libererSectionReservee('mot-responsable'), 15000);
 
 // --- "Trusted By" banner ---
 async function chargerBandeauConfiance() {
