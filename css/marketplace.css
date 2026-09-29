@@ -480,3 +480,205 @@ a:hover > .mp-fleche, button:hover > .mp-fleche, .mp-carte:hover .mp-fleche, .mp
   .mp-decor span, .mp-secousse { animation: none; }
 }
 .mp-corps select, .mp-corps input, .mp-corps textarea { font-family: var(--texte); }
+
+/* ==========================================================================
+   BOUTIQUE COMPLÈTE (29/09/2026) : trois portes, commande, paiement, suivi,
+   billets, facture, conditions de vente, commandes et billets en gestion.
+   ========================================================================== */
+@media (max-width: 600px) {
+  .mp-nav-liens { flex-wrap: wrap; justify-content: flex-start; gap: 0.45rem; }
+  .mp-nav-liens a, .mp-nav-liens button { padding: 0.45rem 0.8rem; font-size: 0.66rem; }
+}
+
+/* ---------- Les trois portes ---------- */
+.mp-portes { padding: clamp(3.5rem, 8vw, 6rem) 0; border-bottom: 1px solid var(--mp-filet); scroll-margin-top: calc(var(--mp-haut-entete, 84px) + 50px); }
+.mp-portes-tete { margin-bottom: 2.2rem; }
+.mp-portes-grille { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(0.8rem, 2vw, 1.4rem); }
+.mp-porte { position: relative; display: grid; grid-template-rows: auto 1fr; color: var(--texte-corps); border: 1px solid var(--mp-filet); background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0)); transition: border-color 0.35s ease, transform 0.5s var(--transition-douce); }
+.mp-porte:hover { border-color: rgba(213,84,104,0.55); transform: translateY(-4px); }
+.mp-porte-visuel { position: relative; aspect-ratio: 4 / 3; overflow: hidden; background: radial-gradient(60% 70% at 50% 100%, rgba(122,18,32,0.35), rgba(4,3,3,0) 70%), #070505; }
+.mp-porte-visuel img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.55; transition: opacity 0.5s ease, transform 1.2s var(--transition-douce); }
+.mp-porte:hover .mp-porte-visuel img { opacity: 0.8; transform: scale(1.05); }
+/* Une arche lumineuse (la porte) dessinée par-dessus */
+.mp-porte-arche { position: absolute; left: 50%; bottom: 0; width: 34%; height: 78%; transform: translateX(-50%); border: 1px solid rgba(255,214,220,0.75); border-bottom: 0; border-radius: 999px 999px 0 0; box-shadow: 0 0 18px rgba(213,84,104,0.55), inset 0 0 26px rgba(213,84,104,0.25); }
+.mp-porte-texte { display: grid; align-content: start; gap: 0.6rem; padding: 1.4rem 1.3rem 1.5rem; }
+.mp-porte-num { font-size: 0.66rem; letter-spacing: 0.3em; color: var(--bordeaux-clair); }
+.mp-porte-texte strong { font-family: var(--display); font-weight: 400; font-size: clamp(1.6rem, 2.6vw, 2.2rem); letter-spacing: 0.06em; text-transform: uppercase; color: var(--titre-clair); line-height: 1.1; }
+.mp-porte-texte > span:not(.mp-porte-num):not(.btn) { font-size: 0.86rem; line-height: 1.6; color: var(--texte-doux); }
+.mp-porte-texte .btn { justify-self: start; margin-top: 0.4rem; }
+.mp-porte-vide .mp-porte-visuel img { opacity: 0.25; }
+@media (max-width: 800px) {
+  .mp-portes-grille { grid-template-columns: minmax(0, 1fr); }
+  .mp-porte { grid-template-rows: none; grid-template-columns: 38% minmax(0, 1fr); }
+  .mp-porte-visuel { aspect-ratio: auto; min-height: 150px; }
+  .mp-porte-texte { padding: 1.1rem 1rem; }
+}
+.mp-filtres-univers { margin-bottom: 0.9rem; }
+.mp-collection .mp-filtres-categories { margin-bottom: 2.4rem; }
+.mp-collection .mp-filtres-categories .filtre-btn { font-size: 0.64rem; padding: 0.4rem 0.9rem; }
+.mp-collection .mp-filtres-univers + .mp-filtres-categories.mp-cache + #mp-grille-zone { margin-top: 1.6rem; }
+
+/* ---------- Fiche : événement ---------- */
+.mp-evenement { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.8rem; margin: 0; padding: 1rem 1.1rem; border: 1px solid rgba(213,84,104,0.35); background: rgba(122,18,32,0.08); }
+.mp-evenement dt { font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--bordeaux-clair); }
+.mp-evenement dd { margin: 0.2rem 0 0; color: var(--titre-clair); }
+
+/* ---------- Parcours client : commande, paiement, suivi ---------- */
+.mp-parcours { padding-top: clamp(1.5rem, 4vw, 2.5rem); padding-bottom: clamp(3rem, 7vw, 5rem); }
+.mp-etapes { list-style: none; display: flex; gap: 0.4rem; margin: 0 0 2rem; padding: 0; counter-reset: etape; }
+.mp-etapes li { counter-increment: etape; display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.4rem 0.9rem; border: 1px solid var(--gris-clair); border-radius: 999px; font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--texte-doux); }
+.mp-etapes li::before { content: counter(etape); font-size: 0.62rem; color: inherit; }
+.mp-etapes li.actif { border-color: rgba(213,84,104,0.55); color: var(--titre-clair); }
+.mp-etapes li.fait { color: var(--texte-corps); }
+.mp-etapes li.fait::before { content: "✓"; color: var(--bordeaux-clair); }
+.mp-commande { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: clamp(1.5rem, 5vw, 4rem); align-items: start; }
+@media (max-width: 900px) { .mp-commande { grid-template-columns: minmax(0, 1fr); } .mp-recap { order: -1; } }
+.mp-commande-form { display: grid; gap: 0.2rem; }
+.mp-commande-form h1 { margin: 0.8rem 0 1.4rem; }
+.mp-sous-titre { font-size: 1.15rem; margin: 1.2rem 0 1rem; }
+.mp-aide { display: block; margin-top: 0.35rem; font-size: 0.74rem; color: var(--texte-doux); }
+.mp-petit { font-size: 0.78rem; color: var(--texte-doux); margin: 0.8rem 0 0; }
+.mp-info { padding: 1rem 1.1rem; border-left: 1px solid var(--bordeaux-clair); background: rgba(255,255,255,0.03); font-size: 0.9rem; margin: 0.6rem 0 1.4rem; }
+.mp-case-cgv { display: flex; gap: 0.7rem; align-items: flex-start; margin: 0.6rem 0 0.4rem; font-size: 0.9rem; color: var(--texte-corps); cursor: pointer; }
+.mp-case-cgv input { width: 1.15rem; height: 1.15rem; margin-top: 0.15rem; accent-color: var(--bordeaux-clair); flex: none; }
+.mp-case-cgv a { color: var(--bordeaux-clair); text-decoration: underline; text-underline-offset: 3px; }
+.mp-corps .mp-bouton-large { width: 100%; padding: 0.85rem 1.4rem; margin-top: 0.6rem; }
+.mp-recap { position: sticky; top: calc(var(--mp-haut-entete, 84px) + 80px); border: 1px solid var(--mp-filet); background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.01)); padding: clamp(1.1rem, 3vw, 1.6rem); }
+@media (max-width: 900px) { .mp-recap { position: static; } }
+.mp-recap h2 { font-size: 1.1rem; margin-bottom: 1rem; }
+.mp-recap-ligne { display: grid; grid-template-columns: 54px minmax(0, 1fr) auto; gap: 0.9rem; align-items: center; padding: 0.8rem 0; border-bottom: 1px solid var(--mp-filet); }
+.mp-recap-ligne > span:nth-child(2) { display: grid; gap: 0.15rem; }
+.mp-recap-ligne-texte { grid-template-columns: minmax(0, 1fr) auto; }
+.mp-recap-totaux { display: grid; gap: 0.5rem; padding-top: 1rem; font-size: 0.86rem; }
+.mp-recap-totaux > div { display: flex; justify-content: space-between; gap: 1rem; }
+.mp-recap-total { padding-top: 0.6rem; border-top: 1px solid var(--mp-filet); font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; align-items: baseline; }
+.mp-recap-total b { font-family: var(--display); font-weight: 400; font-size: 1.6rem; letter-spacing: 0.02em; color: var(--titre-clair); }
+.mp-retour { display: inline-block; margin-top: 1.2rem; font-size: 0.78rem; color: var(--texte-doux); }
+.mp-retour:hover { color: var(--bordeaux-clair); }
+
+.mp-suivi-tete { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1rem; margin-bottom: 1.6rem; }
+.mp-suivi-tete h1 { margin-top: 0.8rem; }
+.mp-statut { display: inline-flex; padding: 0.45rem 0.95rem; border-radius: 999px; border: 1px solid var(--gris-clair); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--texte-corps); }
+.mp-statut-paiement_declare, .mp-statut-en_attente_paiement { border-color: rgba(213,84,104,0.55); color: var(--titre-clair); }
+.mp-statut-payee, .mp-statut-en_preparation, .mp-statut-expediee, .mp-statut-livree { border-color: rgba(255,255,255,0.45); color: var(--titre-clair); }
+.mp-frise { list-style: none; margin: 0 0 2.2rem; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); border-top: 1px solid var(--gris-clair); }
+.mp-frise li { position: relative; padding: 1rem 0.6rem 0 0; display: grid; gap: 0.25rem; font-size: 0.78rem; color: var(--texte-doux); }
+.mp-frise li::before { content: ""; position: absolute; top: -5px; left: 0; width: 9px; height: 9px; border-radius: 50%; background: var(--noir); border: 1px solid var(--gris-clair); }
+.mp-frise li.fait { color: var(--titre-clair); }
+.mp-frise li.fait::before { background: var(--bordeaux-clair); border-color: var(--bordeaux-clair); box-shadow: 0 0 10px var(--bordeaux-clair); }
+.mp-frise small { font-size: 0.7rem; color: var(--texte-doux); }
+.mp-bloc-paiement, .mp-info-bloc, .mp-billets { border: 1px solid var(--mp-filet); padding: clamp(1.2rem, 4vw, 2rem); margin-bottom: 1.6rem; background: linear-gradient(180deg, rgba(122,18,32,0.08), rgba(4,3,3,0)); }
+.mp-bloc-paiement h2, .mp-info-bloc h2, .mp-billets h2 { margin: 0.7rem 0 0.8rem; }
+.mp-montant { margin: 0; font-family: var(--display); font-size: clamp(2.2rem, 6vw, 3.4rem); color: var(--titre-clair); line-height: 1.1; }
+.mp-bloc-paiement .filtres { margin: 1.4rem 0 1rem; }
+.mp-consignes { margin: 0 0 1.4rem; padding-left: 1.2rem; display: grid; gap: 0.55rem; font-size: 0.92rem; color: var(--texte-corps); }
+.mp-numero { font-size: 1.1rem; letter-spacing: 0.06em; color: var(--titre-clair); white-space: nowrap; }
+.mp-form-paiement { max-width: 460px; }
+.mp-billets-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 1rem; margin-top: 1.2rem; }
+.mp-billet { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1rem; align-items: center; padding: 1.1rem; border: 1px solid rgba(213,84,104,0.45); border-radius: 6px; background: #0a0707; position: relative; }
+.mp-billet::after { content: ""; position: absolute; top: 12px; bottom: 12px; right: 146px; border-left: 1px dashed rgba(255,255,255,0.18); }
+.mp-billet-texte { display: grid; gap: 0.2rem; font-size: 0.8rem; color: var(--texte-corps); min-width: 0; }
+.mp-billet-marque { font-size: 0.58rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--bordeaux-clair); }
+.mp-billet-texte strong { font-family: var(--display); font-weight: 400; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--titre-clair); }
+.mp-billet-texte code { margin-top: 0.4rem; font-size: 0.82rem; letter-spacing: 0.08em; color: var(--titre-clair); overflow-wrap: anywhere; }
+.mp-billet-texte em { font-style: normal; color: var(--bordeaux-clair); font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; }
+.mp-billet-qr { width: 124px; background: #fff; padding: 6px; border-radius: 4px; }
+.mp-billet-qr img { display: block; width: 100%; height: auto; image-rendering: pixelated; }
+.mp-billet-utilise, .mp-billet-annule { opacity: 0.55; }
+@media (max-width: 420px) { .mp-billet { grid-template-columns: minmax(0, 1fr); } .mp-billet::after { display: none; } .mp-billet-qr { width: 150px; } }
+.mp-suivi-detail { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: clamp(1.2rem, 4vw, 3rem); align-items: start; }
+@media (max-width: 900px) { .mp-suivi-detail { grid-template-columns: minmax(0, 1fr); } }
+.mp-suivi-detail .mp-recap { position: static; }
+.mp-suivi-actions { display: grid; gap: 0.8rem; justify-items: start; }
+.mp-recherche h1 { margin: 0.8rem 0 1.6rem; }
+.mp-mes-commandes { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 1.6rem; align-items: center; }
+.mp-mes-commandes .mp-sous-titre { width: 100%; margin: 0 0 0.3rem; }
+.mp-form-recherche { max-width: 640px; }
+.mp-panier-vide { display: grid; gap: 1rem; justify-items: start; }
+.mp-panier-vide p { margin: 0; }
+
+/* ---------- Conditions de vente ---------- */
+.mp-document { max-width: 780px; padding: clamp(1.5rem, 4vw, 2.5rem) 0 clamp(3rem, 7vw, 5rem); }
+.mp-document h1 { margin: 0.8rem 0 1.2rem; }
+.mp-document h2 { font-size: 1.1rem; margin: 2rem 0 0.7rem; }
+.mp-document p { font-size: 0.94rem; line-height: 1.75; max-width: none; }
+.mp-document a { color: var(--bordeaux-clair); text-decoration: underline; text-underline-offset: 3px; }
+.mp-document-avertissement { padding: 0.9rem 1rem; border: 1px solid rgba(213,84,104,0.45); background: rgba(122,18,32,0.12); }
+.mp-document-date { color: var(--texte-doux); font-size: 0.8rem !important; margin-top: 2rem; }
+
+/* ---------- Facture (papier blanc, imprimable) ---------- */
+.mp-page-facture { background: #2a2626; }
+.mp-facture-outils { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.7rem; padding: 1.2rem 16px; }
+.mp-page-facture main { min-height: 0; padding: 0 16px 3rem; }
+.mp-facture { max-width: 800px; margin: 0 auto; background: #fff; color: #1a1414; padding: clamp(1.4rem, 5vw, 3rem); font-family: var(--texte); font-size: 0.86rem; line-height: 1.55; box-shadow: 0 30px 80px -30px rgba(0,0,0,0.8); }
+.mp-facture h1, .mp-facture h2 { color: #1a1414; }
+.mp-facture p { color: #1a1414; max-width: none; }
+.mp-facture-tete { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1.5rem; padding-bottom: 1.4rem; border-bottom: 2px solid #7a1220; }
+.mp-facture-logo { height: 34px; width: auto; filter: invert(1) hue-rotate(180deg); margin-bottom: 0.8rem; }
+.mp-facture-vendeur { margin: 0; font-size: 0.8rem; }
+.mp-facture-titre { text-align: right; }
+.mp-facture-titre h1 { font-size: 1.9rem; letter-spacing: 0.12em; color: #7a1220; }
+.mp-facture-titre p { margin: 0.4rem 0 0; }
+.mp-facture-client { margin: 1.4rem 0; }
+.mp-facture-client h2 { font-family: var(--texte); font-size: 0.66rem; letter-spacing: 0.2em; color: #7a1220; margin-bottom: 0.4rem; }
+.mp-facture-client p { margin: 0; }
+.mp-facture-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+.mp-facture-table th { text-align: left; font-size: 0.64rem; letter-spacing: 0.14em; text-transform: uppercase; border-bottom: 1px solid #1a1414; padding: 0.5rem 0.4rem; font-weight: 400; }
+.mp-facture-table td { padding: 0.6rem 0.4rem; border-bottom: 1px solid #e3dcdc; vertical-align: top; }
+.mp-facture-table th:not(:first-child), .mp-facture-table td:not(:first-child) { text-align: right; white-space: nowrap; }
+.mp-facture-table tfoot td { border-bottom: 0; border-top: 2px solid #1a1414; font-size: 1rem; padding-top: 0.8rem; }
+.mp-facture-table small { color: #6b5f5f; }
+.mp-facture-paiement { font-weight: 600; }
+.mp-facture-mention { font-size: 0.78rem; color: #4a4040 !important; }
+.mp-facture-pied { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e3dcdc; font-size: 0.7rem; color: #6b5f5f; }
+.mp-a-completer { color: #b3261e; font-style: italic; }
+@media print {
+  .mp-page-facture { background: #fff; }
+  .mp-facture-outils, .mp-toast { display: none !important; }
+  .mp-page-facture main { padding: 0; }
+  .mp-facture { box-shadow: none; max-width: none; padding: 0; }
+  .mp-a-completer { color: #b3261e; }
+}
+
+/* ---------- Gestion : produits par univers, commandes, billets ---------- */
+.mpg-types { margin: 0.2rem 0 0.4rem; }
+.mpg-recherche { max-width: 420px; margin-bottom: 1.2rem; }
+.mpg-commande {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1rem; align-items: center;
+  padding: 0.85rem 1rem; border: 1px solid var(--gris-clair); background: var(--noir-doux); cursor: pointer; transition: border-color 0.25s ease;
+}
+.mpg-commande:hover, .mpg-commande:focus-visible { border-color: var(--bordeaux-clair); outline: none; }
+.mpg-statut { border-radius: 999px; }
+.mpg-statut.st-paiement_declare { color: #fff; border-color: var(--bordeaux-clair); background: rgba(122,18,32,0.45); }
+.mpg-statut.st-en_attente_paiement { color: var(--bordeaux-clair); border-color: rgba(213,84,104,0.45); }
+.mpg-statut.st-payee, .mpg-statut.st-en_preparation, .mpg-statut.st-expediee { color: var(--titre-clair); border-color: rgba(255,255,255,0.45); }
+.mpg-statut.st-livree { color: #8fd0a4; border-color: rgba(143,208,164,0.45); }
+.mpg-statut.st-annulee, .mpg-statut.st-remboursee { color: var(--texte-doux); }
+.mpg-commande-detail { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 1rem; }
+.mpg-commande-detail .mpg-bloc p { margin: 0 0 0.7rem; }
+.mpg-a-verifier { padding: 0.9rem 1rem; border: 1px solid var(--bordeaux-clair); background: rgba(122,18,32,0.14); margin-bottom: 1rem; }
+.mpg-reference { font-size: 1.15rem; letter-spacing: 0.06em; color: #fff; overflow-wrap: anywhere; }
+.mpg-livreur { margin-top: 0.4rem; }
+.mpg-journal { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.45rem; font-size: 0.8rem; color: var(--texte-corps); }
+.mpg-journal span { color: var(--texte-doux); margin-right: 0.4rem; }
+.mpg-billet-verdict { padding: 1.4rem; border: 1px solid var(--gris-clair); text-align: center; display: grid; gap: 0.6rem; justify-items: center; }
+.mpg-billet-verdict strong { font-family: var(--display); font-weight: 400; font-size: 1.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.mpg-billet-verdict p { margin: 0; }
+.mpg-billet-verdict.valide { border-color: rgba(255,255,255,0.5); }
+.mpg-billet-verdict.accepte { border-color: #8fd0a4; background: rgba(143,208,164,0.1); }
+.mpg-billet-verdict.accepte strong { color: #8fd0a4; }
+.mpg-billet-verdict.refuse { border-color: var(--bordeaux-clair); background: rgba(122,18,32,0.2); }
+.mpg-billet-verdict.refuse strong { color: var(--bordeaux-clair); }
+.mpg .mpg-bloc textarea, .mp-corps .form-champ textarea { width: 100%; }
+.mp-recap-ligne-texte > span:first-child { display: grid; gap: 0.15rem; }
+.mp-page-facture .whatsapp-flottant { display: none !important; }
+@media (min-width: 640px) {
+  .mp-facture-tete { flex-wrap: nowrap; align-items: flex-start; }
+  .mp-facture-titre { flex: none; }
+}
+.mpg-commande-detail .mpg-table { min-width: 0; }
+@media (max-width: 600px) {
+  .mp-nav-liens { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .mp-nav-liens::-webkit-scrollbar { display: none; }
+  .mp-nav-liens a, .mp-nav-liens button { flex: none; }
+}

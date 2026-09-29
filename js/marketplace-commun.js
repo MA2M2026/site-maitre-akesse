@@ -35,6 +35,54 @@
       : '<span>' + MP.formaterPrix(p.prix) + '</span>';
   };
 
+  // Les trois univers de la Maison (colonne « type » des produits).
+  MP.UNIVERS = [
+    { cle: 'physique', nom: 'Articles', slug: 'articles', texte: 'Vêtements, accessoires et pièces de l’agence, livrés chez vous.' },
+    { cle: 'billet', nom: 'Billets', slug: 'billets', texte: 'Vos places pour les événements de l’agence, avec billet à code.' },
+    { cle: 'service', nom: 'Services', slug: 'services', texte: 'Shootings, formations et accompagnement par l’agence.' }
+  ];
+  MP.univers = function (cle) { return MP.UNIVERS.find(u => u.cle === cle || u.slug === cle) || MP.UNIVERS[0]; };
+
+  MP.formaterDate = function (valeur, avecHeure) {
+    if (!valeur) return '';
+    const d = new Date(valeur);
+    if (isNaN(d)) return '';
+    const options = { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Africa/Abidjan' };
+    if (avecHeure) { options.hour = '2-digit'; options.minute = '2-digit'; }
+    return d.toLocaleString('fr-FR', options).replace(':', ' h ');
+  };
+
+  // Messages clairs pour les refus renvoyés par la base (voir Extensions 98 et 99).
+  const ERREURS = {
+    boutique_fermee: 'La boutique n’est pas encore ouverte.',
+    cgv_non_acceptees: 'Merci d’accepter les conditions générales de vente.',
+    nom_invalide: 'Indiquez votre nom complet.',
+    telephone_invalide: 'Le numéro de téléphone ne semble pas correct.',
+    email_invalide: 'L’adresse e-mail ne semble pas correcte.',
+    panier_vide: 'Votre panier est vide.',
+    panier_trop_grand: 'Votre panier contient trop d’articles différents.',
+    trop_de_commandes: 'Plusieurs commandes attendent déjà un paiement avec ce numéro. Réglez-les ou patientez une heure.',
+    quantite_invalide: 'Une quantité n’est pas valable.',
+    article_indisponible: 'Un produit de votre panier n’est plus disponible. Retirez-le puis réessayez.',
+    stock_insuffisant: 'Il ne reste plus assez de pièces pour un produit de votre panier.',
+    evenement_passe: 'Un événement de votre panier est déjà passé.',
+    zone_livraison_invalide: 'Choisissez votre zone de livraison.',
+    adresse_invalide: 'Indiquez votre commune et votre quartier pour la livraison.',
+    moyen_invalide: 'Choisissez le moyen de paiement utilisé.',
+    reference_invalide: 'La référence de la transaction semble incomplète.',
+    reference_deja_utilisee: 'Cette référence a déjà été utilisée pour une autre commande.',
+    commande_introuvable: 'Aucune commande ne correspond. Vérifiez le numéro et le téléphone.',
+    statut_incompatible: 'Cette commande n’attend plus de paiement.',
+    transition_interdite: 'Ce changement n’est pas possible à cette étape.',
+    billet_introuvable: 'Aucun billet ne porte ce code.',
+    non_autorise: 'Action réservée à l’administration.'
+  };
+  MP.messageErreur = function (erreur) {
+    const texte = String((erreur && (erreur.message || erreur)) || '');
+    const cle = Object.keys(ERREURS).find(k => texte.indexOf(k) !== -1);
+    return cle ? ERREURS[cle] : 'Une erreur est survenue (connexion instable ?). Réessayez dans un instant.';
+  };
+
   MP.slugifier = function (texte) {
     let s = String(texte || '');
     try { s = s.normalize('NFD').replace(/[̀-ͯ]/g, ''); } catch (e) {}
@@ -92,10 +140,23 @@
   };
 
   MP.afficherBandeauApercu = function (acces) {
+    // Le lien « Gestion » de la barre n'est montré qu'aux administrateurs.
+    if (acces.admin) document.querySelectorAll('.mp-lien-admin').forEach(el => el.classList.remove('mp-cache'));
     const bandeau = document.getElementById('mp-apercu');
     if (!bandeau) return;
     if (acces.admin && !acces.ouverte) bandeau.classList.remove('mp-cache');
   };
+
+  // Pages sans script propre (conditions de vente) : même règle d'accès que le reste.
+  MP.autorise = function (acces) { return acces.admin || acces.ouverte; };
+  document.addEventListener('DOMContentLoaded', async () => {
+    const garde = document.querySelector('[data-mp-garde]');
+    if (!garde) return;
+    const acces = await MP.acces;
+    if (!MP.autorise(acces)) { garde.classList.remove('mp-cache'); MP.afficherIntrouvable(); return; }
+    MP.afficherBandeauApercu(acces);
+    garde.classList.remove('mp-cache');
+  });
 
   // --- Panier (gardé dans ce navigateur ; les prix sont recalculés à la commande) ---
   const CLE_PANIER = 'ma2m_boutique_panier';
@@ -118,6 +179,20 @@
     MP.ecrirePanier(lignes);
     MP.majCompteurPanier(true);
   };
+  // Commandes passées depuis ce navigateur (pour les retrouver sur la page de suivi).
+  const CLE_COMMANDES = 'ma2m_boutique_commandes';
+  MP.commandesMemorisees = function () {
+    try {
+      const brut = JSON.parse(localStorage.getItem(CLE_COMMANDES) || '[]');
+      return Array.isArray(brut) ? brut.filter(c => c && c.numero && c.jeton) : [];
+    } catch (e) { return []; }
+  };
+  MP.memoriserCommande = function (numero, jeton) {
+    const liste = MP.commandesMemorisees().filter(c => c.numero !== numero);
+    liste.unshift({ numero: numero, jeton: jeton, date: new Date().toISOString() });
+    try { localStorage.setItem(CLE_COMMANDES, JSON.stringify(liste.slice(0, 10))); } catch (e) {}
+  };
+
   // Apparition douce des blocs au défilement (.mp-apparait → .mp-vu), avec un léger
   // décalage entre voisins (data-delai 0 à 3). Le site a son propre effet « reveal »,
   // mais il n'observe que ce qui existe au chargement ; la boutique, elle, construit
@@ -156,7 +231,7 @@
     if (!zone) return;
     const lignes = MP.lirePanier();
     if (!lignes.length) {
-      zone.innerHTML = '<div class="mp-panier-vide">Votre panier est vide. <a href="/marketplace/#collection">Voir la collection</a></div>';
+      zone.innerHTML = '<div class="mp-panier-vide"><p>Votre panier est vide.</p><a class="btn" href="/marketplace/#collection">Voir la collection</a></div>';
       pied.classList.add('mp-cache');
       return;
     }
@@ -176,6 +251,9 @@
       '</div>').join('');
     const total = lignes.reduce((s, l) => s + l.prix * l.quantite, 0);
     document.getElementById('mp-panier-total').textContent = MP.formaterPrix(total);
+    const note = document.getElementById('mp-panier-note');
+    if (note) note.textContent = (lignes.some(l => (l.type || 'physique') === 'physique') ? 'Les frais de livraison s’ajoutent selon votre commune. ' : '') +
+      'Paiement par Wave, Orange Money ou MTN Mobile Money.';
   }
 
   MP.ouvrirPanier = function () {
@@ -219,9 +297,6 @@
       else if (retirer) { lignes.splice(+retirer.dataset.mpRetirer, 1); }
       else return;
       MP.ecrirePanier(lignes);
-    });
-    document.getElementById('mp-commander').addEventListener('click', () => {
-      MP.toast('La commande en ligne sera disponible à la prochaine étape.');
     });
   });
 })();

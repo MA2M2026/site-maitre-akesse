@@ -1212,7 +1212,7 @@ base ; Book, fiche mannequin FR/EN et accueil : toutes les images chargées sur 
 - Ne pas ajouter les navigateurs intégrés des applis (Instagram, « FBAN »,
   Snapchat, LINE…) à la liste des robots : ce sont de vraies personnes.
 
-## 🛍️ Marketplace — Boutique MA2M (29 septembre 2026, étape 1 en cours)
+## 🛍️ Marketplace — Boutique MA2M (29 septembre 2026 — construite, fermée au public)
 
 - **Cahier des charges** validé par la propriétaire (boutique de l'agence, paiement
   Wave / Orange Money / MTN avec référence, livraison à domicile).
@@ -1237,16 +1237,34 @@ base ; Book, fiche mannequin FR/EN et accueil : toutes les images chargées sur 
 - **Lien « Marketplace »** (js/menu.js) : visible seulement pour un admin connecté ;
   dans la barre du haut sur ordinateur/tablette, en tête du menu sur téléphone (sur
   téléphone, un 4e bouton écrasait le logo).
-- **Prochaine étape** : commande (formulaire, zones, CGV), paiement avec référence,
-  suivi client, onglet « Commandes » du tableau de bord.
-- **Direction artistique (29/09, 3e version)** : la propriétaire a jugé la version
-  « alignée » trop plate et a fourni ses références (FORM, KANTO, GAZU). Vitrine :
-  scène d'ouverture de nuit avec filets de lumière chaude (or du logo) et trame
-  d'architecte, nom géant « MA2M » (lettres qui montent une à une) avec la pièce à
-  la une posée devant, textes de coin, bandeau défilant du site, bande « univers »
-  (catégories avec photo), bannière éditoriale texte/image, engagements avec icônes
-  fines, grille qui apparaît au défilement (« Voir la pièce » au survol), mot de
-  l'agence avec ornement trait-point-trait. Fiche : galerie en pile (ordinateur) /
-  à glisser (téléphone). Boutons « prestige » = .btn du site + reflet, filet et
-  flèche. Tout respecte « réduire les animations ». Composants du site conservés
-  (titres capitales + point rouge, eyebrow, .filtre-btn, .form-champ, .fil-ariane).
+- **Direction artistique (29/09, version « affiche »)** : ouverture reprise de
+  l'affiche FORM choisie par la propriétaire (nuit laquée, filets de lumière, grand
+  « M A 2 M » espacé, trait, accroche, ornement trait-point-trait), **rouge et noir
+  uniquement — aucun doré** (`--or` est redéfini en rouge dans `.mp-corps`).
+  **Tous les boutons** ont la forme ronde des boutons de l'en-tête (EN / Admin /
+  Marketplace). Polices de la boutique : Bodoni Moda (titres) + Tenor Sans (textes).
+- **Adresses absolues partout** (`/marketplace/gestion`, `/css/…`) : avec les
+  adresses propres de Vercel, `/marketplace` sans « / » final cassait les liens
+  relatifs (page 404 signalée le 29/09). Pages générées par un script (même
+  en-tête, barre, panier, pied) : garder cette règle en cas d'ajout.
+- **Trois univers** (colonne `type` des produits) : Articles (`physique`, livrés),
+  Billets (`billet` : date, lieu, « stock » = places ; un billet à code + QR par
+  place, émis à la validation du paiement), Services (`service` : modalités,
+  rendez-vous après paiement). Vitrine : section « Trois portes », puis filtres
+  univers → catégories.
+- **Parcours client complet** : `commande.html` (coordonnées, zone de livraison
+  seulement s'il y a un article, CGV obligatoires) → `suivi.html?n=&j=` (paiement :
+  numéro Wave/OM/MTN + saisie de la référence ; puis étapes, livreur, billets QR,
+  facture) → `facture.html?n=&j=` (imprimable / PDF, numéro F-AAAA-NNNNN). Suivi
+  aussi par numéro + téléphone. `cgv.html` = **projet à faire valider par un juriste**.
+- **Gestion** : onglet Commandes (« À vérifier » en tête ; confirmer / refuser le
+  paiement, préparer, remettre au livreur, terminer, rembourser ; WhatsApp client ;
+  historique), onglet Billets (contrôle à l'entrée ; le QR ouvre
+  `/marketplace/gestion?billet=CODE`, un billet ne sert qu'une fois), Réglages
+  (identité légale du vendeur imprimée sur les factures : RCCM, NCC, mention fiscale
+  à valider avec le comptable).
+- **Base** : Extension 99 (colonnes événement/service, `type_produit` des lignes,
+  table `boutique_billets`, fonctions `boutique_emettre_billets`,
+  `boutique_controler_billet`, suivi enrichi, « payée → terminée » pour billets et
+  services). Testée sur PostgreSQL 16 (installée deux fois, billets sans doublon,
+  refus d'un événement passé, contrôle réservé aux admins).
