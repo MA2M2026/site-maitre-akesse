@@ -161,7 +161,15 @@
         // Réponse « opaque » (envoi sans lecture de la réponse, statut 0) : normal,
         // ce n'est pas un échec (ex. statistiques Google).
         if (!rep.ok && rep.type !== 'opaque' && [401, 403, 404, 406, 409].indexOf(rep.status) === -1 && url.indexOf('journal_erreurs') === -1 && !IGNORES.test(url)) {
-          signaler('Requête en échec', methode + ' ' + nomCourt(url) + ' → ' + rep.status, url);
+          // On joint la raison renvoyée par le serveur (ex. Supabase : « la colonne
+          // genre n'existe pas »), lue sur une COPIE de la réponse pour ne pas priver
+          // le code du site de sa lecture. Sans elle, un « 400 » ne dit pas quoi corriger.
+          const message = methode + ' ' + nomCourt(url) + ' → ' + rep.status;
+          rep.clone().text().then(function (corps) {
+            signaler('Requête en échec', message, (corps ? 'Réponse : ' + corps.slice(0, 300) + ' · ' : '') + url);
+          }, function () {
+            signaler('Requête en échec', message, url);
+          });
         }
         return rep;
       }, function (err) {
