@@ -2178,6 +2178,7 @@ html.porte-deja-vue #porte-entree { display: none; }
 
 /* Tableau de bord — détail technique sous chaque erreur (fichier, ligne, adresse
    concernée), pour pouvoir diagnostiquer à partir d'une simple capture d'écran. */
+.tdb-erreur-clair { display: block; margin-top: 0.45rem; font-family: var(--texte); font-size: 0.8rem; line-height: 1.5; color: var(--titre-clair); }
 .tdb-erreur-detail { display: block; margin-top: 0.35rem; font-family: var(--texte); font-size: 0.68rem; color: var(--texte-doux); word-break: break-all; opacity: 0.85; }
 
 /* reinitialiser-mot-de-passe.html — formulaire et liens masqués au départ (le JS les
