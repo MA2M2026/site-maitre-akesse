@@ -2277,3 +2277,62 @@ html.vide-mot-responsable #mot-responsable.section-reservee.u-hidden { display: 
    soir, fiche d'Osiris N'Goran). Dès que la fiche s'affiche, le texte « Chargement… »
    disparaît et la réservation avec lui — aucun script à modifier. */
 #contenu:has(> .fiche-en-chargement) { min-height: calc(100svh - 120px); }
+
+/* ==========================================================================
+   Confort de navigation (29/09/2026, validé par la propriétaire) — js/confort.js
+   et bandeau cookies (js/analytics-config.js). Mêmes boutons ronds que l'en-tête.
+   ========================================================================== */
+/* Œil des mots de passe */
+.champ-mdp { position: relative; display: block; }
+.champ-mdp > input { padding-right: 3.2rem !important; }
+.champ-mdp-oeil {
+  position: absolute; top: 50%; right: 0.5rem; transform: translateY(-50%);
+  width: 2.3rem; height: 2.3rem; display: grid; place-items: center; padding: 0;
+  background: transparent; border: 0; border-radius: 999px; color: var(--texte-doux); cursor: pointer;
+}
+.champ-mdp-oeil:hover, .champ-mdp-oeil:focus-visible, .champ-mdp-oeil[aria-pressed="true"] { color: var(--bordeaux-clair); }
+.champ-mdp-oeil svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Retour en haut (coin droit ; le bouton WhatsApp est à gauche) */
+.retour-haut {
+  position: fixed; right: 1.4rem; bottom: calc(1.4rem + env(safe-area-inset-bottom, 0px)); z-index: 190;
+  width: 48px; height: 48px; display: grid; place-items: center; padding: 0;
+  background: rgba(6,5,4,0.82); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border: 1px solid var(--gris-clair); border-radius: 999px; color: var(--titre-clair); cursor: pointer;
+  opacity: 0; visibility: hidden; transform: translateY(10px);
+  transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s, border-color 0.2s ease, color 0.2s ease, bottom 0.3s ease;
+}
+.retour-haut.visible { opacity: 1; visibility: visible; transform: none; }
+.retour-haut:hover, .retour-haut:focus-visible { border-color: var(--bordeaux-clair); color: var(--bordeaux-clair); }
+.retour-haut svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.retour-haut--rehausse { bottom: calc(5.6rem + env(safe-area-inset-bottom, 0px)); }
+@media (max-width: 700px) { .retour-haut { right: 1rem; bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); width: 44px; height: 44px; } }
+@media print { .retour-haut, .lien-evitement, .bandeau-cookies { display: none !important; } }
+
+/* Aller au contenu : invisible, apparaît seulement au clavier (touche Tab) */
+.lien-evitement {
+  position: fixed; top: 0.6rem; left: 0.6rem; z-index: 3000; transform: translateY(-160%);
+  padding: 0.6rem 1.1rem; border-radius: 999px; background: var(--noir); color: var(--titre-clair);
+  border: 1px solid var(--bordeaux-clair); font-family: var(--texte); font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase;
+  transition: transform 0.2s ease;
+}
+.lien-evitement:focus { transform: none; outline: none; }
+#contenu-principal:focus, main:focus, #contenu:focus { outline: none; }
+
+/* Bandeau cookies */
+.bandeau-cookies {
+  position: fixed; left: 1rem; right: 1rem; bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); z-index: 1500;
+  max-width: 760px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.9rem 1.4rem;
+  padding: 1rem 1.2rem; background: rgba(14,11,10,0.97); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  border: 1px solid var(--gris-clair); box-shadow: 0 20px 50px -20px rgba(0,0,0,0.9);
+  animation: bandeau-cookies-arrivee 0.5s var(--transition-douce);
+}
+.bandeau-cookies p { margin: 0; flex: 1 1 320px; max-width: none; font-size: 0.86rem; line-height: 1.55; color: var(--texte-corps); }
+.bandeau-cookies a { color: var(--bordeaux-clair); text-decoration: underline; text-underline-offset: 3px; }
+.bandeau-cookies-boutons { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+.bandeau-cookies .btn { padding: 0.6rem 1.3rem; border-radius: 999px; }
+@keyframes bandeau-cookies-arrivee { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .bandeau-cookies { animation: none; } }
+
+/* Date de dernière mise à jour (pages légales) */
+.date-maj { margin-top: 2.4rem; font-size: 0.78rem; letter-spacing: 0.04em; color: var(--texte-doux); }

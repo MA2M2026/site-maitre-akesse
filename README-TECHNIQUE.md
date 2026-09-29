@@ -1277,3 +1277,23 @@ base ; Book, fiche mannequin FR/EN et accueil : toutes les images chargées sur 
   choisie.
 - **Bandeau défilant** (Extension 101) : message réglable dans Gestion → Réglages
   (`bandeau_texte`, `bandeau_actif`) ; désactivé ou vide = texte habituel.
+
+## 🧭 Confort de navigation et cookies (29 septembre 2026)
+
+Liste de la propriétaire, triée avec elle : ajouté ce qui manquait et avait du sens.
+- **Bandeau cookies** (`js/analytics-config.js`) : Google Analytics en « mode
+  consentement » — refusé par défaut, accordé seulement après « Accepter »
+  (`localStorage.ma2m_cookies` = oui / non). Bouton « Modifier mon choix » sur la
+  page Confidentialité (`[data-cookies-modifier]`), dont le paragraphe Cookies a été
+  corrigé (il disait à tort « aucun traceur tiers »).
+- **`js/confort.js`** (chargé après app.js sur toutes les pages, et sur
+  reinitialiser-mot-de-passe) : œil sur chaque champ mot de passe (y compris ajoutés
+  plus tard), bouton « retour en haut » (coin droit, rehaussé au-dessus de « Ma
+  sélection »), lien « Aller au contenu » visible seulement au clavier.
+- **Liens partagés marqués (UTM)** : actualités / événements partagés par WhatsApp,
+  lien copié ou partage du téléphone → `utm_source`, `utm_medium=partage`,
+  `utm_campaign=actualite|evenement` (sans effet sur les aperçus, middleware.js).
+- **Date de dernière mise à jour** en bas des mentions légales et de la
+  confidentialité (FR + EN) — à changer à chaque modification de ces pages.
+- Écartés avec la propriétaire : mode sombre (le site est noir), barre de progression,
+  bouton copier sur les textes, recherche globale ; FAQ en attente de ses questions.

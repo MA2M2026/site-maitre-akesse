@@ -1765,9 +1765,17 @@ document.addEventListener('DOMContentLoaded', () => {
   function remplacerAdresse(url) {
     try { history.replaceState(history.state, '', url.pathname + url.search + url.hash); } catch (e) {}
   }
-  function lienFiche() {
+  // Liens marqués (UTM, validé le 29/09) : Google Analytics indique ensuite d'où
+  // viennent les visiteurs (WhatsApp, lien copié, partage du téléphone) et pour
+  // quelle fiche. L'aperçu du lien (middleware.js) n'en est pas affecté.
+  function lienFiche(source) {
     const url = new URL(location.origin + location.pathname);
     url.searchParams.set(ficheCourante.param, ficheCourante.id);
+    if (source) {
+      url.searchParams.set('utm_source', source);
+      url.searchParams.set('utm_medium', 'partage');
+      url.searchParams.set('utm_campaign', ficheCourante.param === 'evenement' ? 'evenement' : 'actualite');
+    }
     return url.toString();
   }
   async function copierLien(lien, bouton) {
@@ -1786,9 +1794,9 @@ document.addEventListener('DOMContentLoaded', () => {
   async function clicPartage(e) {
     const bouton = e.target.closest('[data-partage]');
     if (!bouton || !ficheCourante) return;
-    const lien = lienFiche();
     const titre = ficheCourante.titre;
     const action = bouton.dataset.partage;
+    const lien = lienFiche(action === 'whatsapp' ? 'whatsapp' : action === 'partager' ? 'partage_telephone' : 'lien_copie');
     if (action === 'partager' && navigator.share) {
       try { await navigator.share({ title: titre, text: titre, url: lien }); } catch (x) {}
     } else if (action === 'whatsapp') {
