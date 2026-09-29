@@ -53,7 +53,7 @@
     if (!stock) badges.push('<span class="mp-badge epuise">Épuisé</span>');
     else if (prix.barre != null) badges.push('<span class="mp-badge promo">−' + Math.round(100 - prix.prix * 100 / prix.barre) + ' %</span>');
     else if (nouveau) badges.push('<span class="mp-badge">Nouveau</span>');
-    return '<a class="mp-carte mp-apparait" data-delai="' + (index % 4) + '" href="produit.html?p=' + encodeURIComponent(p.slug) + '">' +
+    return '<a class="mp-carte mp-apparait" data-delai="' + (index % 4) + '" href="/marketplace/produit?p=' + encodeURIComponent(p.slug) + '">' +
       '<div class="mp-carte-visuel">' +
         (photos[0] ? '<img class="mp-premiere" src="' + echapperHtml(photos[0].url_miniature || photos[0].url) + '" alt="' + echapperHtml(p.nom) + '" loading="lazy">' : '<div class="mp-carte-vide">MA2M</div>') +
         (photos[1] ? '<img class="mp-seconde" src="' + echapperHtml(photos[1].url_miniature || photos[1].url) + '" alt="" loading="lazy">' : '') +
@@ -93,7 +93,7 @@
           '<p class="mp-accroche mp-monte">La Maison · Révéler le potentiel</p>' +
           '<div class="mp-affiche-actions mp-monte">' +
             '<a class="btn btn--principal" href="#collection"><span>Découvrir la collection</span>' + FLECHE + '</a>' +
-            (vedette ? '<a class="btn" href="produit.html?p=' + encodeURIComponent(vedette.slug) + '">La pièce à la une</a>' : '') +
+            (vedette ? '<a class="btn" href="/marketplace/produit?p=' + encodeURIComponent(vedette.slug) + '">La pièce à la une</a>' : '') +
           '</div>' +
         '</div>' +
         '<div class="mp-affiche-pied mp-monte"><span>Pièces de l’agence · Abidjan</span><div class="mp-ornement" aria-hidden="true"><span></span><i></i><span></span></div></div>' +
@@ -121,9 +121,9 @@
             '<div class="eyebrow">À la une</div>' +
             '<h2 class="mp-banniere-titre">' + echapperHtml(seconde.nom) + '<span class="oeil">.</span></h2>' +
             '<p class="mp-prix">' + MP.htmlPrix(seconde) + '</p>' +
-            '<a class="btn btn--principal" href="produit.html?p=' + encodeURIComponent(seconde.slug) + '"><span>Voir la pièce</span>' + FLECHE + '</a>' +
+            '<a class="btn btn--principal" href="/marketplace/produit?p=' + encodeURIComponent(seconde.slug) + '"><span>Voir la pièce</span>' + FLECHE + '</a>' +
           '</div>' +
-          '<a class="mp-banniere-image" href="produit.html?p=' + encodeURIComponent(seconde.slug) + '"><img src="' + echapperHtml(premierePhoto(seconde)[0].url) + '" alt="' + echapperHtml(seconde.nom) + '" loading="lazy"></a>' +
+          '<a class="mp-banniere-image" href="/marketplace/produit?p=' + encodeURIComponent(seconde.slug) + '"><img src="' + echapperHtml(premierePhoto(seconde)[0].url) + '" alt="' + echapperHtml(seconde.nom) + '" loading="lazy"></a>' +
         '</section>' : '') +
       // ---- Engagements
       '<section class="mp-engagements"><div class="container"><ul>' +
@@ -169,7 +169,7 @@
       if (!produits.length) {
         zone.innerHTML = '<div class="mp-attente mp-apparait"><div class="mp-ornement" aria-hidden="true"><span></span><i></i><span></span></div>' +
           '<p>La première collection de la Maison sera bientôt présentée ici.</p>' +
-          (acces.admin ? '<a class="btn btn--principal" href="gestion.html"><span>Ajouter une pièce</span>' + FLECHE + '</a>' : '') + '</div>';
+          (acces.admin ? '<a class="btn btn--principal" href="/marketplace/gestion"><span>Ajouter une pièce</span>' + FLECHE + '</a>' : '') + '</div>';
       } else {
         zone.innerHTML = '<div class="mp-grille">' + liste.map(carteProduit).join('') + '</div>';
       }
@@ -207,7 +207,7 @@
     principal.innerHTML =
       '<div class="mp-fiche">' +
         '<div>' +
-          '<div class="fil-ariane"><a href="index.html">La Maison MA2M</a><span>/</span>' + (produit.categorie ? '<a href="index.html#collection">' + echapperHtml(produit.categorie.nom) + '</a><span>/</span>' : '') + echapperHtml(produit.nom) + '</div>' +
+          '<div class="fil-ariane"><a href="/marketplace/">La Maison MA2M</a><span>/</span>' + (produit.categorie ? '<a href="/marketplace/#collection">' + echapperHtml(produit.categorie.nom) + '</a><span>/</span>' : '') + echapperHtml(produit.nom) + '</div>' +
           // Galerie façon maison de couture : les photos les unes sous les autres sur
           // ordinateur, à faire glisser du doigt sur téléphone (avec repères).
           '<div class="mp-galerie">' +

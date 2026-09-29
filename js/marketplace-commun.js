@@ -156,7 +156,7 @@
     if (!zone) return;
     const lignes = MP.lirePanier();
     if (!lignes.length) {
-      zone.innerHTML = '<div class="mp-panier-vide">Votre panier est vide. <a href="index.html#collection">Voir la collection</a></div>';
+      zone.innerHTML = '<div class="mp-panier-vide">Votre panier est vide. <a href="/marketplace/#collection">Voir la collection</a></div>';
       pied.classList.add('mp-cache');
       return;
     }
