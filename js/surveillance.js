@@ -111,6 +111,20 @@
       const attr = cible.getAttribute('src') !== null ? cible.getAttribute('src') : cible.getAttribute('href');
       if (!url || !attr || url.indexOf('data:') === 0 || url.split('#')[0] === location.href.split('#')[0] || pageQuittee || /googletagmanager\.com|google-analytics\.com/.test(url)) return;
       const type = cible.tagName === 'IMG' ? 'Image non chargée' : cible.tagName === 'SCRIPT' ? 'Script non chargé' : cible.tagName === 'LINK' ? 'Style non chargé' : 'Média non chargé';
+      if (cible.tagName === 'IMG') {
+        // Fausses alertes du 29/09 : 9 miniatures « non chargées » dans la même seconde
+        // (4G, page quittée ou chargement interrompu), alors que les photos
+        // s'ouvraient normalement. On ne signale donc une image qu'après un second
+        // essai de chargement, quelques secondes plus tard, qui échoue lui aussi.
+        setTimeout(function () {
+          if (pageQuittee) return;
+          const essai = new Image();
+          essai.onload = function () {};
+          essai.onerror = function () { if (!pageQuittee) signaler(type, nomCourt(url), url); };
+          essai.src = url;
+        }, 4000);
+        return;
+      }
       signaler(type, nomCourt(url), url);
       return;
     }
