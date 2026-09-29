@@ -2195,6 +2195,18 @@ html.porte-deja-vue #porte-entree { display: none; }
 .journal-resume-gravites { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.8rem; }
 .journal-resume-case { flex: 1 1 140px; padding: 0.6rem 0.8rem; border-radius: 7px; border: 1px solid rgba(255,255,255,.08); border-left-width: 4px; font-size: 0.8rem; color: var(--texte-doux); background: rgba(255,255,255,.025); }
 .journal-resume-case b { display: block; font-size: 1.4rem; color: #f3eee9; font-weight: 600; }
+.journal-resume-case { font: inherit; font-size: 0.8rem; text-align: left; cursor: pointer; transition: background .2s, transform .2s, box-shadow .2s; }
+.journal-resume-case small { display: block; margin-top: 0.2rem; font-size: 0.68rem; opacity: 0.75; }
+.journal-resume-case:hover:not(:disabled) { transform: translateY(-1px); background: rgba(255,255,255,.05); }
+.journal-resume-case:disabled { cursor: default; opacity: 0.55; }
+.journal-resume-case.journal-corriger { border-left-color: #d64545; }
+.journal-resume-case.journal-surveiller { border-left-color: #e0913a; }
+.journal-resume-case.journal-info { border-left-color: #4f9d69; }
+.journal-resume-case.actif.journal-corriger { background: rgba(214,69,69,.28); box-shadow: 0 0 0 2px #d64545 inset; }
+.journal-resume-case.actif.journal-surveiller { background: rgba(224,145,58,.28); box-shadow: 0 0 0 2px #e0913a inset; }
+.journal-resume-case.actif.journal-info { background: rgba(79,157,105,.28); box-shadow: 0 0 0 2px #4f9d69 inset; }
+.journal-nettoyage { margin: 0 0 0.8rem; font-size: 0.8rem; color: #8fd0a4; }
+.journal-nettoyage[hidden] { display: none; }
 .journal-filtres { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .journal-filtre { font: inherit; font-size: 0.78rem; padding: 0.4rem 0.8rem; border-radius: 999px; border: 1px solid rgba(255,255,255,.18); background: transparent; color: var(--texte-doux); cursor: pointer; }
 .journal-filtre.actif { background: #7c1730; border-color: #7c1730; color: #fff; }
