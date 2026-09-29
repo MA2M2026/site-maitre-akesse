@@ -190,7 +190,7 @@
 .mpg-produit-meta { font-size: 0.74rem; color: var(--texte-doux); margin-top: 0.25rem; display: flex; flex-wrap: wrap; gap: 0.3rem 0.9rem; }
 .mpg-statut { font-size: 0.6rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; padding: 0.35rem 0.6rem; border: 1px solid var(--gris-clair); white-space: nowrap; }
 .mpg-statut.en_vente { color: #8fd0a4; border-color: rgba(143,208,164,0.45); }
-.mpg-statut.brouillon { color: var(--or); border-color: rgba(201,162,75,0.45); }
+.mpg-statut.brouillon { color: var(--bordeaux-clair); border-color: rgba(213,84,104,0.45); }
 .mpg-statut.retire { color: var(--texte-doux); }
 .mpg-vide { padding: 2.2rem 1rem; text-align: center; color: var(--texte-doux); border: 1px dashed var(--gris-clair); }
 .mpg-form { display: grid; gap: 1.4rem; }
@@ -242,118 +242,144 @@
 .mpg .editeur-riche .ql-editor { min-height: 160px; }
 
 /* ==========================================================================
-   DIRECTION ARTISTIQUE PREMIUM (29/09/2026)
-   Références choisies par la propriétaire : FORM (nuit, filets de lumière
-   chaude, capitales très espacées, ornement trait-point-trait), KANTO (lignes
-   fines d'architecte), GAZU (nom géant avec la pièce devant, textes de coin,
-   bandeau d'univers, bannière éditoriale). La lumière chaude reprend l'or du
-   logo (--or), les accents restent bordeaux.
+   DIRECTION ARTISTIQUE — « L'AFFICHE » (29/09/2026)
+   Demandé par la propriétaire à partir de l'affiche FORM : nuit noire et
+   brillante, filets de lumière, grand nom en capitales très espacées, petit
+   trait, accroche, ornement trait-point-trait en bas. Couleurs de la Maison :
+   ROUGE ET NOIR UNIQUEMENT (pas de doré). Tous les boutons prennent la forme
+   des boutons ronds de l'en-tête du site (EN / Admin / Marketplace).
+   Polices de la boutique : Bodoni Moda (titres, style magazine de mode) et
+   Tenor Sans (textes, capitales espacées, boutons).
    ========================================================================== */
-:root { --mp-lumiere: rgba(201,162,75,0.55); --mp-filet: rgba(255,255,255,0.07); }
+.mp-corps {
+  --display: 'Bodoni Moda', 'Cormorant Garamond', serif;
+  --texte: 'Tenor Sans', 'Jost', sans-serif;
+  --or: var(--bordeaux-clair);            /* aucun doré dans la boutique */
+  --mp-filet: rgba(255,255,255,0.07);
+  --mp-rouge-lumiere: rgba(213,84,104,0.9);
+  font-synthesis: none;                    /* Tenor Sans n'a qu'une graisse : pas de faux gras */
+  background-color: #040303;
+  background-image:
+    linear-gradient(180deg, rgba(255,255,255,0.028) 0%, rgba(255,255,255,0) 22%),
+    radial-gradient(90% 60% at 50% 0%, rgba(122,18,32,0.10) 0%, rgba(4,3,3,0) 70%);
+}
+.mp-corps h1, .mp-corps h2, .mp-corps h3 { font-weight: 400; letter-spacing: 0.06em; }
 
-/* ---------- Scène d'ouverture ---------- */
-.mp-scene {
+/* ---------- Tous les boutons : la forme ronde de l'en-tête ---------- */
+.mp-corps .btn, .mp-corps .btn--principal, .mp-corps .filtre-btn, .mp-corps .btn-mini-admin,
+.mp-corps .menu-overlay .close-menu, .mp-nav-liens a, .mp-nav-liens button, .mp-fermer, .mp-retirer,
+.mp-lien-souligne, .mp-carte-voir, .mp-univers-lien, .mpg-suppr, .mpg-photo-actions button, .mp-apercu a {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  font-family: var(--texte); font-size: 0.72rem; font-weight: 400; letter-spacing: 0.12em; text-transform: uppercase;
+  line-height: 1.2; text-decoration: none; white-space: nowrap;
+  color: var(--texte-corps); background: transparent; border: 1px solid var(--gris-clair); border-radius: 999px;
+  padding: 0.5rem 1.05rem; cursor: pointer; box-shadow: none; transform: none;
+  transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+}
+.mp-corps .btn:hover, .mp-corps .filtre-btn:hover, .mp-corps .btn-mini-admin:hover,
+.mp-corps .menu-overlay .close-menu:hover, .mp-nav-liens a:hover, .mp-nav-liens button:hover, .mp-fermer:hover, .mp-retirer:hover,
+.mp-lien-souligne:hover, .mpg-suppr:hover, .mpg-photo-actions button:hover, .mp-apercu a:hover {
+  color: var(--bordeaux-clair); border-color: var(--bordeaux-clair); background: transparent; box-shadow: none; transform: none;
+}
+/* Bouton principal = comme « Marketplace » : contour rouge */
+.mp-corps .btn--principal, .mp-nav-liens a.actif, .mp-corps .filtre-btn.actif {
+  border-color: rgba(213,84,104,0.55); color: var(--titre-clair); background: transparent; box-shadow: none;
+}
+.mp-corps .btn--principal:hover { border-color: var(--bordeaux-clair); color: var(--bordeaux-clair); background: rgba(122,18,32,0.14); }
+.mp-corps .filtre-btn.actif::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--bordeaux-clair); box-shadow: 0 0 8px var(--bordeaux-clair); }
+.mp-corps .btn:disabled, .mp-corps .btn[disabled] { opacity: 0.4; cursor: not-allowed; }
+.mp-corps .btn:active, .mp-corps .filtre-btn:active { transform: scale(0.97); }
+.mp-corps .filtre-btn:disabled { border-radius: 999px; }
+.mpg-bouton-danger, .mp-corps .mpg-bouton-danger { border-color: rgba(213,84,104,0.55); color: var(--bordeaux-clair); }
+.mpg-photo-actions { gap: 0.25rem; padding: 0.3rem; justify-content: center; }
+.mpg-photo-actions button { flex: 0 0 auto; padding: 0.3rem 0.55rem; font-size: 0.78rem; letter-spacing: 0; background: rgba(6,5,4,0.8); }
+.mpg-suppr { padding: 0.35rem 0.65rem; letter-spacing: 0; }
+.mp-panier-compte { border-radius: 999px; }
+.mp-quantite { border-radius: 999px; overflow: hidden; }
+.mp-quantite button:hover { color: var(--bordeaux-clair); }
+.mp-fleche { display: inline-block; transition: transform 0.35s var(--transition-douce); }
+a:hover > .mp-fleche, button:hover > .mp-fleche, .mp-carte:hover .mp-fleche, .mp-univers-carte:hover .mp-fleche { transform: translateX(4px); }
+.mp-ajoute { border-color: var(--bordeaux-clair) !important; color: var(--bordeaux-clair) !important; }
+
+/* ---------- L'affiche d'ouverture ---------- */
+.mp-affiche {
   position: relative; overflow: hidden; isolation: isolate;
-  min-height: calc(100svh - var(--mp-haut-entete, 84px) - 96px); display: flex;
+  min-height: calc(100svh - var(--mp-haut-entete, 84px) - 52px);
+  display: grid; grid-template-rows: minmax(0, 1fr) auto;
   background:
-    radial-gradient(70% 60% at 12% 100%, rgba(201,162,75,0.10) 0%, rgba(6,5,4,0) 60%),
-    radial-gradient(60% 70% at 92% 0%, rgba(122,18,32,0.38) 0%, rgba(43,10,14,0.18) 40%, rgba(6,5,4,0) 72%),
-    var(--noir);
+    radial-gradient(46% 38% at 50% 36%, rgba(122,18,32,0.26) 0%, rgba(122,18,32,0.06) 55%, rgba(4,3,3,0) 75%),
+    linear-gradient(180deg, #070505 0%, #030202 70%, #000 70.2%, #050404 100%);
   border-bottom: 1px solid var(--mp-filet);
 }
-/* Filets de lumière (façon bandeaux LED) : un vertical à gauche, un horizontal en haut. */
-.mp-scene-lumiere::before, .mp-scene-lumiere::after { content: ""; position: absolute; z-index: -1; pointer-events: none; }
-.mp-scene-lumiere::before {
-  left: clamp(12px, 4vw, 56px); top: 12%; bottom: 0; width: 1px;
-  background: linear-gradient(to bottom, rgba(201,162,75,0) 0%, var(--mp-lumiere) 30%, rgba(201,162,75,0.9) 70%, rgba(201,162,75,0) 100%);
-  box-shadow: 0 0 18px 2px rgba(201,162,75,0.35), 0 0 60px 6px rgba(201,162,75,0.12);
+/* Décor d'architecture : un mur éclairé à gauche, une fente de lumière à droite, un sol laqué */
+.mp-decor { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+.mp-decor span { position: absolute; display: block; }
+.mp-mur {
+  left: 0; top: 20%; bottom: 30%; width: clamp(54px, 15vw, 230px);
+  background: linear-gradient(180deg, rgba(213,84,104,0.16) 0%, rgba(24,14,16,0.9) 30%, #0b0909 100%);
+  box-shadow: inset -1px 0 0 rgba(255,255,255,0.04);
+}
+.mp-led-haut {
+  left: 0; top: 20%; width: clamp(54px, 15vw, 230px); height: 1px;
+  background: linear-gradient(90deg, rgba(255,190,198,0.2), #ffd6dc 60%, rgba(255,190,198,0.9));
+  box-shadow: 0 0 10px 1px var(--mp-rouge-lumiere), 0 0 46px 8px rgba(213,84,104,0.28);
   animation: mp-respire 6s ease-in-out infinite;
 }
-.mp-scene-lumiere::after {
-  top: clamp(14px, 3vw, 36px); left: 20%; right: 0; height: 1px;
-  background: linear-gradient(to right, rgba(213,84,104,0) 0%, rgba(213,84,104,0.55) 45%, rgba(213,84,104,0) 100%);
-  box-shadow: 0 0 14px 1px rgba(213,84,104,0.3);
+.mp-led-mur {
+  left: clamp(54px, 15vw, 230px); top: 20%; bottom: 30%; width: 1px;
+  background: linear-gradient(180deg, #ffd6dc, rgba(213,84,104,0.7) 60%, rgba(213,84,104,0.15));
+  box-shadow: 0 0 10px 1px rgba(213,84,104,0.7), 0 0 40px 6px rgba(213,84,104,0.2);
+  animation: mp-respire 6s ease-in-out infinite;
+}
+.mp-fente {
+  right: clamp(18px, 12vw, 190px); top: 26%; bottom: 30%; width: clamp(6px, 0.8vw, 12px);
+  background: linear-gradient(180deg, rgba(255,214,220,0.55), rgba(213,84,104,0.35) 70%, rgba(122,18,32,0.2));
+  box-shadow: 0 0 22px 2px rgba(213,84,104,0.35), 0 0 70px 14px rgba(122,18,32,0.25);
   animation: mp-respire 7s ease-in-out infinite reverse;
 }
-@keyframes mp-respire { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
-/* Trame d'architecte : colonnes très fines. */
-.mp-scene-trame {
-  position: absolute; inset: 0; z-index: -1; pointer-events: none;
-  background-image: linear-gradient(to right, var(--mp-filet) 1px, transparent 1px);
-  background-size: 25% 100%;
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 60%, transparent 100%);
-          mask-image: linear-gradient(to bottom, #000 0%, #000 60%, transparent 100%);
+.mp-sol {
+  left: 0; right: 0; bottom: 0; height: 30%;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 35%),
+    radial-gradient(40% 70% at 50% 0%, rgba(122,18,32,0.3) 0%, rgba(4,3,3,0) 70%);
 }
-.mp-scene-cadre { position: relative; flex: 1; display: grid; grid-template-rows: auto 1fr auto; padding-top: clamp(1.4rem, 4vh, 2.4rem); padding-bottom: clamp(1.4rem, 4vh, 2.4rem); }
-.mp-coin { font-size: 0.66rem; font-weight: 500; letter-spacing: 0.3em; text-transform: uppercase; color: var(--texte-corps); line-height: 2; z-index: 3; }
-.mp-coin-haut::after { content: ""; display: block; width: 34px; height: 1px; margin-top: 0.8rem; background: var(--bordeaux-clair); }
-.mp-scene-haut { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; position: relative; z-index: 3; }
-.mp-coin-droite { text-align: right; }
-.mp-coin-droite::after { content: ""; display: block; width: 34px; height: 1px; margin: 0.8rem 0 0 auto; background: var(--or); }
+/* Reflets sur le sol laqué : le mur éclairé et la fente se reflètent, floutés */
+.mp-sol::before, .mp-sol::after { content: ""; position: absolute; top: 0; filter: blur(5px); }
+.mp-sol::before { left: 0; width: clamp(54px, 15vw, 230px); height: 55%; background: linear-gradient(180deg, rgba(213,84,104,0.2), rgba(4,3,3,0)); }
+.mp-sol::after { right: clamp(18px, 12vw, 190px); width: clamp(6px, 0.8vw, 12px); height: 70%; background: linear-gradient(180deg, rgba(213,84,104,0.45), rgba(4,3,3,0)); }
+@keyframes mp-respire { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
 
-/* Nom géant */
-.mp-scene-centre { display: grid; place-items: center; padding: clamp(0.4rem, 2vh, 1.4rem) 0; }
-.mp-scene-centre > * { grid-area: 1 / 1; }
-.mp-nom-geant { position: relative; display: grid; place-items: center; text-align: center; z-index: 1; pointer-events: none; }
-.mp-nom-grand {
-  display: block; font-family: var(--display); font-weight: 500; line-height: 0.82; letter-spacing: 0.02em; white-space: nowrap;
-  font-size: clamp(6rem, 19vw, 17.5rem); color: var(--titre-clair);
-  text-shadow: 0 0 80px rgba(122,18,32,0.35); will-change: transform;
+.mp-affiche-contenu {
+  display: grid; justify-items: center; align-content: center; text-align: center;
+  padding: clamp(2rem, 6vh, 4.5rem) var(--marge) clamp(1.5rem, 4vh, 3rem); position: relative; z-index: 2;
 }
-.mp-lettre { display: inline-block; opacity: 0; transform: translateY(0.35em); filter: blur(6px); transition: opacity 1.2s var(--transition-douce), transform 1.4s var(--transition-douce), filter 1.2s ease; transition-delay: calc(0.25s + var(--i, 0) * 0.12s); }
-.mp-scene-prete .mp-lettre { opacity: 1; transform: none; filter: none; }
-.mp-monte { opacity: 0; transform: translateY(14px); transition: opacity 1s ease 0.9s, transform 1.2s var(--transition-douce) 0.9s; }
-.mp-scene-prete .mp-monte { opacity: 1; transform: none; }
-
-/* Pièce à la une posée devant le nom */
-.mp-piece-une {
-  position: relative; z-index: 2; width: clamp(150px, 14.5vw, 235px); color: var(--titre-clair);
-  transform: translateY(24px); opacity: 0; transition: opacity 1.4s ease 0.6s, transform 1.6s var(--transition-douce) 0.6s;
+.mp-embleme { width: clamp(54px, 5.5vw, 72px); margin-bottom: clamp(1.4rem, 4.5vh, 2.6rem); }
+.mp-embleme svg { display: block; width: 100%; height: auto; fill: none; stroke: var(--titre-clair); stroke-width: 1.1; }
+.mp-embleme .mp-point { fill: var(--bordeaux-clair); stroke: none; }
+.mp-corps .mp-grand-nom {
+  font-family: var(--texte); font-weight: 400; line-height: 1; text-transform: uppercase; color: var(--titre-clair);
+  font-size: clamp(3rem, 9vw, 7rem); letter-spacing: 0.34em; margin: 0 -0.34em 0 0;
+  text-shadow: 0 0 60px rgba(213,84,104,0.18);
 }
-.mp-scene-prete .mp-piece-une { opacity: 1; transform: none; }
-.mp-piece-une-cadre { display: block; aspect-ratio: 3 / 4; overflow: hidden; background: var(--noir-doux); outline: 1px solid rgba(201,162,75,0.35); outline-offset: 8px; box-shadow: 0 40px 80px -30px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.06); }
-.mp-piece-une-cadre img { width: 100%; height: 100%; object-fit: cover; object-position: center top; transform: scale(1.08); transition: transform 1.4s var(--transition-douce); will-change: transform; }
-.mp-piece-une:hover .mp-piece-une-cadre img { transform: scale(1.14); }
-.mp-piece-une-legende { display: grid; gap: 0.2rem; margin-top: 1.1rem; text-align: center; font-size: 0.64rem; letter-spacing: 0.26em; text-transform: uppercase; color: var(--bordeaux-clair); }
-.mp-piece-une-legende strong { font-family: var(--display); font-weight: 500; font-size: 1.05rem; letter-spacing: 0.08em; color: var(--titre-clair); }
-.mp-piece-une-legende .mp-prix { justify-content: center; font-size: 0.8rem; letter-spacing: 0.06em; text-transform: none; }
-
-.mp-scene-bas { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1.2rem 2rem; z-index: 3; }
-.mp-devise { margin: 0; max-width: 30ch; font-family: var(--display); font-style: italic; font-size: clamp(1.1rem, 2vw, 1.45rem); line-height: 1.4; color: var(--titre-clair); }
-.mp-scene-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.6rem; }
-.mp-defiler { position: absolute; left: 50%; bottom: 0.9rem; transform: translateX(-50%); display: grid; justify-items: center; gap: 0.4rem; font-size: 0.56rem; letter-spacing: 0.34em; text-transform: uppercase; color: var(--texte-doux); z-index: 3; }
-.mp-defiler span { width: 1px; height: 28px; background: linear-gradient(var(--bordeaux-clair), transparent); animation: mp-descend 2.2s ease-in-out infinite; transform-origin: top; }
-@keyframes mp-descend { 0% { transform: scaleY(0); opacity: 0; } 40% { transform: scaleY(1); opacity: 1; } 100% { transform: scaleY(1) translateY(12px); opacity: 0; } }
-
+.mp-trait { width: 54px; height: 1px; margin: clamp(1.3rem, 4vh, 2.2rem) 0; background: var(--bordeaux-clair); box-shadow: 0 0 10px rgba(213,84,104,0.8); }
+.mp-accroche { margin: 0; max-width: none; font-size: clamp(0.66rem, 1.1vw, 0.8rem); letter-spacing: 0.42em; margin-right: -0.42em; text-transform: uppercase; color: var(--bordeaux-clair); }
+.mp-affiche-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.8rem; margin-top: clamp(1.8rem, 5vh, 2.8rem); }
+.mp-affiche-pied {
+  position: relative; z-index: 2; display: grid; justify-items: center; gap: 0.9rem;
+  padding: 0 var(--marge) clamp(1.3rem, 4vh, 2.2rem);
+  font-size: 0.64rem; letter-spacing: 0.42em; margin-right: -0.42em; text-transform: uppercase; color: var(--texte-corps);
+}
+.mp-lettre { display: inline-block; opacity: 0; transform: translateY(0.25em); filter: blur(6px); transition: opacity 1.2s var(--transition-douce), transform 1.4s var(--transition-douce), filter 1.2s ease; transition-delay: calc(0.25s + var(--i, 0) * 0.12s); }
+.mp-affiche-prete .mp-lettre { opacity: 1; transform: none; filter: none; }
+.mp-monte { opacity: 0; transform: translateY(12px); transition: opacity 1s ease 0.9s, transform 1.2s var(--transition-douce) 0.9s; }
+.mp-affiche-prete .mp-monte { opacity: 1; transform: none; }
 @media (max-width: 700px) {
-  .mp-scene { min-height: calc(100svh - var(--mp-haut-entete, 84px) - 90px); }
-  .mp-scene-trame { background-size: 50% 100%; }
-  .mp-nom-grand { font-size: 30vw; }
-  .mp-piece-une { width: 44vw; }
-  .mp-coin-droite { display: none; }
-  .mp-defiler { display: none; }
-  .mp-scene-bas { padding-top: 2.2rem; }
+  .mp-affiche { min-height: calc(100svh - var(--mp-haut-entete, 84px) - 90px); }
+  .mp-corps .mp-grand-nom { font-size: 15vw; letter-spacing: 0.26em; margin-right: -0.26em; }
+  .mp-accroche { letter-spacing: 0.3em; margin-right: -0.3em; }
+  .mp-affiche-pied { letter-spacing: 0.3em; margin-right: -0.3em; }
 }
-
-/* ---------- Boutons de prestige (base : .btn du site) ---------- */
-.mp-btn-prestige, .mp-btn-contour { position: relative; overflow: hidden; isolation: isolate; gap: 0.9rem; }
-.mp-btn-prestige { box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14), 0 14px 34px -14px rgba(122,18,32,0.9); background-image: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0) 55%); }
-.mp-btn-prestige::before {
-  content: ""; position: absolute; top: 0; bottom: 0; left: -60%; width: 45%; z-index: -1;
-  background: linear-gradient(100deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.28) 50%, rgba(255,255,255,0) 100%);
-  transform: skewX(-18deg); transition: left 0.9s var(--transition-douce);
-}
-.mp-btn-prestige:hover::before { left: 120%; }
-.mp-btn-contour { border-color: rgba(201,162,75,0.6); color: var(--titre-clair); }
-.mp-btn-contour::after { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--bordeaux); transform: scaleX(0); transform-origin: left; transition: transform 0.6s var(--transition-douce); }
-.mp-btn-contour:hover { border-color: var(--bordeaux); color: #fff; }
-.mp-btn-contour:hover::after { transform: scaleX(1); }
-.mp-fleche { display: inline-block; transition: transform 0.45s var(--transition-douce); }
-a:hover > .mp-fleche, button:hover > .mp-fleche, .mp-carte:hover .mp-fleche, .mp-univers-carte:hover .mp-fleche { transform: translateX(5px); }
-.mp-btn-prestige.mp-ajoute { background: var(--titre-clair); border-color: var(--titre-clair); color: var(--noir); }
-.mp-lien-souligne { position: relative; font-size: 0.7rem; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; color: var(--titre-clair); padding-bottom: 0.35rem; }
-.mp-lien-souligne::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--or); transform-origin: right; transition: transform 0.5s var(--transition-douce); }
-.mp-lien-souligne:hover::after { transform: scaleX(0.3); }
 
 /* ---------- Bandeau défilant ---------- */
 .mp-bande { border-top: 1px solid rgba(255,255,255,0.08); }
@@ -369,7 +395,8 @@ a:hover > .mp-fleche, button:hover > .mp-fleche, .mp-carte:hover .mp-fleche, .mp
 .mp-univers-carte:hover .mp-univers-photo img { transform: scale(1.08); }
 .mp-univers-texte { display: grid; gap: 0.3rem; font-size: 0.8rem; color: var(--texte-doux); }
 .mp-univers-texte strong { font-family: var(--display); font-weight: 500; font-size: 1.35rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--titre-clair); }
-.mp-univers-lien { margin-top: 0.3rem; font-size: 0.64rem; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; color: var(--bordeaux-clair); }
+.mp-univers-lien { justify-self: start; margin-top: 0.5rem; padding: 0.35rem 0.8rem; font-size: 0.64rem; }
+.mp-univers-carte:hover .mp-univers-lien { color: var(--bordeaux-clair); border-color: var(--bordeaux-clair); }
 @media (max-width: 600px) { .mp-univers-carte { border-right: 0; border-bottom: 1px solid var(--mp-filet); } }
 
 /* ---------- Bannière éditoriale (texte / image) ---------- */
@@ -378,7 +405,7 @@ a:hover > .mp-fleche, button:hover > .mp-fleche, .mp-carte:hover .mp-fleche, .mp
   position: relative; display: grid; align-content: center; gap: 1.2rem; padding: clamp(2.5rem, 6vw, 5rem) var(--marge);
   background: linear-gradient(135deg, var(--bordeaux-noir) 0%, var(--noir) 70%);
 }
-.mp-banniere-texte::before { content: ""; position: absolute; inset: clamp(12px, 2vw, 24px); border: 1px solid rgba(201,162,75,0.18); pointer-events: none; }
+.mp-banniere-texte::before { content: ""; position: absolute; inset: clamp(12px, 2vw, 24px); border: 1px solid rgba(213,84,104,0.18); pointer-events: none; }
 .mp-banniere-titre { font-size: clamp(2.4rem, 6vw, 4.8rem); line-height: 1; }
 .mp-banniere-texte .mp-prix { font-size: 1rem; color: var(--titre-clair); }
 .mp-banniere-texte .btn { justify-self: start; }
@@ -396,7 +423,7 @@ a:hover > .mp-fleche, button:hover > .mp-fleche, .mp-carte:hover .mp-fleche, .mp
 .mp-engagements li { display: flex; align-items: center; gap: 0.9rem; padding: 1.6rem clamp(0.4rem, 2vw, 1.4rem); border-right: 1px solid var(--mp-filet); font-size: 0.78rem; color: var(--texte-doux); line-height: 1.5; }
 .mp-engagements li:last-child { border-right: 0; }
 .mp-engagements li strong { display: block; font-size: 0.66rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--titre-clair); }
-.mp-engagements svg { flex: none; width: 30px; height: 30px; fill: none; stroke: var(--or); stroke-width: 1.1; stroke-linecap: round; stroke-linejoin: round; }
+.mp-engagements svg { flex: none; width: 30px; height: 30px; fill: none; stroke: var(--bordeaux-clair); stroke-width: 1.1; stroke-linecap: round; stroke-linejoin: round; }
 @media (max-width: 600px) { .mp-engagements ul { grid-template-columns: repeat(2, minmax(0, 1fr)); } .mp-engagements li { border-bottom: 1px solid var(--mp-filet); } }
 
 /* ---------- Collection ---------- */
@@ -404,14 +431,13 @@ a:hover > .mp-fleche, button:hover > .mp-fleche, .mp-carte:hover .mp-fleche, .mp
 .mp-collection-tete { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1.2rem 2rem; margin-bottom: 1.8rem; }
 .mp-collection .filtres { margin-bottom: 2.4rem; }
 .mp-carte-voir {
-  position: absolute; left: 0; right: 0; bottom: 0; padding: 0.9rem 1rem; display: flex; justify-content: space-between;
-  background: linear-gradient(to top, rgba(6,5,4,0.92), rgba(6,5,4,0.6)); color: var(--titre-clair);
-  font-size: 0.64rem; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase;
-  transform: translateY(101%); transition: transform 0.55s var(--transition-douce);
+  position: absolute; left: 0.8rem; bottom: 0.8rem; background: rgba(6,5,4,0.78); color: var(--titre-clair);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  opacity: 0; transform: translateY(8px); transition: opacity 0.4s ease, transform 0.5s var(--transition-douce), border-color 0.2s ease;
 }
-.mp-carte:hover .mp-carte-voir, .mp-carte:focus-visible .mp-carte-voir { transform: none; }
+.mp-carte:hover .mp-carte-voir, .mp-carte:focus-visible .mp-carte-voir { opacity: 1; transform: none; border-color: rgba(213,84,104,0.55); }
 .mp-carte-visuel::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05); pointer-events: none; transition: box-shadow 0.4s ease; }
-.mp-carte:hover .mp-carte-visuel::after { box-shadow: inset 0 0 0 1px rgba(201,162,75,0.45); }
+.mp-carte:hover .mp-carte-visuel::after { box-shadow: inset 0 0 0 1px rgba(213,84,104,0.45); }
 @media (hover: none) { .mp-carte-voir { display: none; } }
 
 /* ---------- Apparitions au défilement ---------- */
@@ -421,11 +447,11 @@ a:hover > .mp-fleche, button:hover > .mp-fleche, .mp-carte:hover .mp-fleche, .mp
 /* ---------- Mot de la Maison ---------- */
 .mp-manifeste { padding: clamp(4rem, 10vw, 8rem) 0; text-align: center; background: radial-gradient(60% 80% at 50% 50%, rgba(122,18,32,0.18) 0%, rgba(6,5,4,0) 70%); border-top: 1px solid var(--mp-filet); }
 .mp-manifeste blockquote { margin: 1.6rem auto 1.2rem; max-width: 22ch; font-family: var(--display); font-style: italic; font-weight: 400; font-size: clamp(1.8rem, 4.6vw, 3.4rem); line-height: 1.2; color: var(--titre-clair); text-wrap: balance; }
-.mp-manifeste cite { font-style: normal; font-size: 0.64rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--or); }
+.mp-manifeste cite { font-style: normal; font-size: 0.64rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--bordeaux-clair); }
 .mp-ornement { display: flex; align-items: center; justify-content: center; gap: 0.9rem; }
-.mp-ornement span { width: clamp(50px, 12vw, 120px); height: 1px; background: linear-gradient(to right, transparent, var(--or)); }
-.mp-ornement span:last-child { background: linear-gradient(to left, transparent, var(--or)); }
-.mp-ornement i { width: 5px; height: 5px; border-radius: 50%; background: var(--or); box-shadow: 0 0 10px var(--or); }
+.mp-ornement span { width: clamp(50px, 12vw, 120px); height: 1px; background: linear-gradient(to right, transparent, var(--bordeaux-clair)); }
+.mp-ornement span:last-child { background: linear-gradient(to left, transparent, var(--bordeaux-clair)); }
+.mp-ornement i { width: 5px; height: 5px; border-radius: 50%; background: var(--bordeaux-clair); box-shadow: 0 0 10px var(--bordeaux-clair); }
 .mp-attente { display: grid; justify-items: center; gap: 1.4rem; padding: 4rem 1rem; text-align: center; border: 1px solid var(--mp-filet); }
 .mp-attente p { margin: 0; font-family: var(--display); font-style: italic; font-size: 1.5rem; color: var(--titre-clair); }
 
@@ -447,9 +473,10 @@ a:hover > .mp-fleche, button:hover > .mp-fleche, .mp-carte:hover .mp-fleche, .mp
 
 /* ---------- Panier : petit sursaut quand on ajoute une pièce ---------- */
 .mp-secousse { animation: mp-sursaut 0.6s var(--transition-douce); }
-@keyframes mp-sursaut { 0% { transform: scale(1); } 35% { transform: scale(1.45); background: var(--or); color: var(--noir); } 100% { transform: scale(1); } }
+@keyframes mp-sursaut { 0% { transform: scale(1); } 35% { transform: scale(1.45); background: var(--bordeaux-clair); color: #fff; } 100% { transform: scale(1); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .mp-lettre, .mp-monte, .mp-piece-une, .mp-apparait { transition: none !important; opacity: 1 !important; transform: none !important; filter: none !important; }
-  .mp-scene-lumiere::before, .mp-scene-lumiere::after, .mp-defiler span, .mp-secousse { animation: none; }
+  .mp-lettre, .mp-monte, .mp-apparait { transition: none !important; opacity: 1 !important; transform: none !important; filter: none !important; }
+  .mp-decor span, .mp-secousse { animation: none; }
 }
+.mp-corps select, .mp-corps input, .mp-corps textarea { font-family: var(--texte); }
