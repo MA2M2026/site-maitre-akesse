@@ -19,7 +19,8 @@ const { S3Client, DeleteObjectCommand, PutObjectCommand } = require('@aws-sdk/cl
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 
 const SUPABASE_URL = 'https://dfhghgmwmxiguhtxtsle.supabase.co';
-const CATEGORIES_AUTORISEES = ['actualites', 'evenements', 'partenaires', 'responsable'];
+// 'boutique' : photos des produits de la Marketplace (29/09/2026).
+const CATEGORIES_AUTORISEES = ['actualites', 'evenements', 'partenaires', 'responsable', 'boutique'];
 
 function creerClientR2() {
   return new S3Client({
