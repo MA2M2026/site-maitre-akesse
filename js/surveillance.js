@@ -334,6 +334,7 @@
     vv.addEventListener('resize', function () {
       try {
         const s = vv.scale;
+        if (window.innerWidth < 50 || window.innerHeight < 50) return;
         if (Math.abs(s - echelle) < 0.05) return;
         echelle = s;
         if (pincement || s <= 1.05) return;
@@ -396,9 +397,15 @@
   }
 
   // --- Page restée vide ou dézoomée ---
+  // Écran de 0×0 (ou presque) : la page a été ouverte dans une fenêtre invisible
+  // (aperçu de lien, préchargement par le navigateur ou une appli), pas par un vrai
+  // visiteur. Le zoom mesuré n'y veut rien dire (×0.25 constaté le 29/09).
+  function ecranInvisible() {
+    return window.innerWidth < 50 || window.innerHeight < 50;
+  }
   function verifierPageVisible() {
     try {
-      if (/^\/outils\//.test(location.pathname) || document.visibilityState === 'hidden') return;
+      if (/^\/outils\//.test(location.pathname) || document.visibilityState === 'hidden' || ecranInvisible()) return;
       const texte = (document.body && document.body.innerText || '').replace(/\s+/g, ' ').trim();
       if (texte.length < 30) {
         signaler('Page vide', location.pathname + ' : presque aucun texte affiché 8 s après l\'ouverture', 'Texte visible : « ' + texte + ' »');
