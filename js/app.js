@@ -1625,7 +1625,7 @@ function lireContenuEditeur(quill) {
 }
 
 // ================== Effets sonores ==================
-// Demande de la propriétaire (29/09/2026) : un son élégant et discret au clic sur
+// Demande de la propriétaire (29/09/2026) : un son discret au clic sur
 // « Entrer » (porte d'entrée de l'accueil), pour commencer. Le son est fabriqué par le
 // navigateur (Web Audio) : aucun fichier à télécharger, rien qui ralentisse le site.
 // Il ne se joue qu'après un geste du visiteur (les navigateurs l'imposent de toute
@@ -1644,20 +1644,26 @@ window.jouerSon = function (nom) {
     sortie.gain.value = 2.5;
     sortie.connect(ctx.destination);
     if (nom === 'entree') {
-      // Accord cristallin (la – mi – la) qui s'éteint doucement, sur une nappe grave
-      // très légère : chic et bref (≈ 2 s), jamais agressif.
-      [[440, 0.05, 2.2], [659.25, 0.035, 1.9], [880, 0.03, 1.7], [1318.5, 0.012, 1.3], [110, 0.05, 1.6]].forEach(([freq, volume, duree], i) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = i === 4 ? 'triangle' : 'sine';
-        osc.frequency.value = freq;
-        const debut = t + (i < 4 ? i * 0.06 : 0);
-        gain.gain.setValueAtTime(0.0001, debut);
-        gain.gain.exponentialRampToValueAtTime(volume, debut + 0.04);
-        gain.gain.exponentialRampToValueAtTime(0.0001, debut + duree);
-        osc.connect(gain); gain.connect(sortie);
-        osc.start(debut); osc.stop(debut + duree + 0.05);
-      });
+      // « Rideau » (choisi par la propriétaire parmi 5 essais) : souffle d'air filtré
+      // qui monte puis retombe, comme un rideau de défilé qui s'ouvre (≈ 1,8 s).
+      const taille = Math.floor(ctx.sampleRate * 2);
+      const tampon = ctx.createBuffer(1, taille, ctx.sampleRate);
+      const donnees = tampon.getChannelData(0);
+      for (let i = 0; i < taille; i++) donnees[i] = Math.random() * 2 - 1;
+      const souffle = ctx.createBufferSource();
+      souffle.buffer = tampon;
+      const filtre = ctx.createBiquadFilter();
+      filtre.type = 'bandpass';
+      filtre.Q.value = 0.8;
+      filtre.frequency.setValueAtTime(300, t);
+      filtre.frequency.exponentialRampToValueAtTime(3500, t + 0.9);
+      filtre.frequency.exponentialRampToValueAtTime(1200, t + 1.8);
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.exponentialRampToValueAtTime(0.25, t + 0.5);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 1.8);
+      souffle.connect(filtre); filtre.connect(gain); gain.connect(sortie);
+      souffle.start(t); souffle.stop(t + 2);
     }
   } catch (e) {}
 };
