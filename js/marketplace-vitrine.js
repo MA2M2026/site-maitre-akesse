@@ -30,10 +30,10 @@
   }
 
   // ---------------------------------------------------------------- Vitrine
-  // Direction artistique (29/09/2026, références choisies par la propriétaire :
-  // FORM, KANTO, GAZU) : nuit profonde, filets de lumière chaude, lignes fines
-  // d'architecte, très grand nom de la Maison avec la pièce à la une devant lui,
-  // bandeau d'univers, bannière éditoriale, sélection animée au défilement.
+  // Direction artistique (29/09/2026) : l'ouverture reprend l'affiche FORM choisie
+  // par la propriétaire (nuit laquée, filets de lumière, grand nom espacé, trait,
+  // accroche, ornement), en rouge et noir seulement ; puis bandeau, univers,
+  // pièce à la une, engagements, collection animée au défilement.
   const ICONES = {
     livraison: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h11v10H3zM14 9h4l3 3v4h-7"/><circle cx="7" cy="17.5" r="1.6"/><circle cx="17.5" cy="17.5" r="1.6"/></svg>',
     paiement: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2"/><path d="M10 18.5h4M9 8h6M9 11.5h4"/></svg>',
@@ -41,6 +41,8 @@
     suivi: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.5 2"/></svg>'
   };
   const FLECHE = '<span class="mp-fleche" aria-hidden="true">→</span>';
+  // Emblème de la Maison : un cadre fin et une porte en arche (la « Maison »), point rouge.
+  const EMBLEME = '<svg viewBox="0 0 64 64"><rect x="1.5" y="1.5" width="61" height="61"/><path d="M20 62.5V30a12 12 0 0 1 24 0v32.5"/><circle class="mp-point" cx="32" cy="42" r="2"/></svg>';
 
   function carteProduit(p, index) {
     const photos = premierePhoto(p);
@@ -78,38 +80,23 @@
     const vedette = avecPhoto.find(p => p.mis_en_avant) || avecPhoto[0] || null;
     const categoriesUtilisees = categories.filter(c => produits.some(p => p.categorie && p.categorie.slug === c.slug));
     const annee = new Date().getFullYear();
-    const photoVedette = vedette ? premierePhoto(vedette)[0] : null;
-    const seconde = vedette && avecPhoto.find(p => p.id !== vedette.id);
+    const seconde = vedette;
 
     principal.innerHTML =
-      // ---- Ouverture
-      '<section class="mp-scene">' +
-        '<div class="mp-scene-lumiere" aria-hidden="true"></div>' +
-        '<div class="mp-scene-trame" aria-hidden="true"></div>' +
-        '<div class="container mp-scene-cadre">' +
-          '<div class="mp-scene-haut mp-monte">' +
-            '<div class="mp-coin mp-coin-haut">La Maison<br>Pièces de l’agence<br>Abidjan<span class="oeil">.</span></div>' +
-            '<div class="mp-coin mp-coin-droite">Collection<br>' + annee + '</div>' +
-          '</div>' +
-          '<div class="mp-scene-centre">' +
-          '<div class="mp-nom-geant" aria-label="La Maison MA2M">' +
-            '<span class="mp-nom-grand" id="mp-nom-grand" aria-hidden="true">' + lettres('MA2M') + '</span>' +
-          '</div>' +
-          (photoVedette ?
-            '<a class="mp-piece-une" href="produit.html?p=' + encodeURIComponent(vedette.slug) + '">' +
-              '<span class="mp-piece-une-cadre"><img id="mp-piece-une-img" src="' + echapperHtml(photoVedette.url) + '" alt="' + echapperHtml(vedette.nom) + '"></span>' +
-              '<span class="mp-piece-une-legende"><span>À la une</span><strong>' + echapperHtml(vedette.nom) + '</strong><span class="mp-prix">' + MP.htmlPrix(vedette) + '</span></span>' +
-            '</a>' : '') +
-          '</div>' +
-          '<div class="mp-scene-bas mp-monte">' +
-            '<p class="mp-devise">Révéler le potentiel. Construire l’image. Créer des opportunités.</p>' +
-            '<div class="mp-scene-actions">' +
-              '<a class="btn btn--principal mp-btn-prestige" href="#collection"><span>Découvrir la collection</span>' + FLECHE + '</a>' +
-              (vedette ? '<a class="mp-lien-souligne" href="produit.html?p=' + encodeURIComponent(vedette.slug) + '">La pièce à la une</a>' : '') +
-            '</div>' +
+      // ---- Ouverture : l'affiche (nuit laquée, filets de lumière rouge, grand nom espacé)
+      '<section class="mp-affiche">' +
+        '<div class="mp-decor" aria-hidden="true"><span class="mp-mur"></span><span class="mp-led-haut"></span><span class="mp-led-mur"></span><span class="mp-fente"></span><span class="mp-sol"></span></div>' +
+        '<div class="mp-affiche-contenu">' +
+          '<span class="mp-embleme mp-monte" aria-hidden="true">' + EMBLEME + '</span>' +
+          '<h1 class="mp-grand-nom" aria-label="La Maison MA2M"><span id="mp-nom-grand" aria-hidden="true">' + lettres('MA2M') + '</span></h1>' +
+          '<span class="mp-trait mp-monte" aria-hidden="true"></span>' +
+          '<p class="mp-accroche mp-monte">La Maison · Révéler le potentiel</p>' +
+          '<div class="mp-affiche-actions mp-monte">' +
+            '<a class="btn btn--principal" href="#collection"><span>Découvrir la collection</span>' + FLECHE + '</a>' +
+            (vedette ? '<a class="btn" href="produit.html?p=' + encodeURIComponent(vedette.slug) + '">La pièce à la une</a>' : '') +
           '</div>' +
         '</div>' +
-        '<div class="mp-defiler" aria-hidden="true"><span></span>Défiler</div>' +
+        '<div class="mp-affiche-pied mp-monte"><span>Pièces de l’agence · Abidjan</span><div class="mp-ornement" aria-hidden="true"><span></span><i></i><span></span></div></div>' +
       '</section>' +
       // ---- Bandeau défilant (même bandeau que l'accueil du site)
       '<div class="marquee-bande mp-bande" aria-hidden="true"><div class="marquee-viewport"><div class="marquee-piste">' +
@@ -131,10 +118,10 @@
       (seconde ?
         '<section class="mp-banniere">' +
           '<div class="mp-banniere-texte mp-apparait">' +
-            '<div class="eyebrow">Sélection de la Maison</div>' +
+            '<div class="eyebrow">À la une</div>' +
             '<h2 class="mp-banniere-titre">' + echapperHtml(seconde.nom) + '<span class="oeil">.</span></h2>' +
             '<p class="mp-prix">' + MP.htmlPrix(seconde) + '</p>' +
-            '<a class="btn mp-btn-contour" href="produit.html?p=' + encodeURIComponent(seconde.slug) + '"><span>Voir la pièce</span>' + FLECHE + '</a>' +
+            '<a class="btn btn--principal" href="produit.html?p=' + encodeURIComponent(seconde.slug) + '"><span>Voir la pièce</span>' + FLECHE + '</a>' +
           '</div>' +
           '<a class="mp-banniere-image" href="produit.html?p=' + encodeURIComponent(seconde.slug) + '"><img src="' + echapperHtml(premierePhoto(seconde)[0].url) + '" alt="' + echapperHtml(seconde.nom) + '" loading="lazy"></a>' +
         '</section>' : '') +
@@ -169,7 +156,7 @@
 
     // Lettres du grand nom : décalage d'apparition.
     document.querySelectorAll('#mp-nom-grand .mp-lettre').forEach((l, i) => l.style.setProperty('--i', i));
-    requestAnimationFrame(() => principal.querySelector('.mp-scene').classList.add('mp-scene-prete'));
+    requestAnimationFrame(() => principal.querySelector('.mp-affiche').classList.add('mp-affiche-prete'));
 
     let filtre = '';
     let tri = '';
@@ -182,7 +169,7 @@
       if (!produits.length) {
         zone.innerHTML = '<div class="mp-attente mp-apparait"><div class="mp-ornement" aria-hidden="true"><span></span><i></i><span></span></div>' +
           '<p>La première collection de la Maison sera bientôt présentée ici.</p>' +
-          (acces.admin ? '<a class="btn btn--principal mp-btn-prestige" href="gestion.html"><span>Ajouter une pièce</span>' + FLECHE + '</a>' : '') + '</div>';
+          (acces.admin ? '<a class="btn btn--principal" href="gestion.html"><span>Ajouter une pièce</span>' + FLECHE + '</a>' : '') + '</div>';
       } else {
         zone.innerHTML = '<div class="mp-grille">' + liste.map(carteProduit).join('') + '</div>';
       }
@@ -203,24 +190,6 @@
     });
     principal.querySelectorAll('[data-aller-filtre]').forEach(a => a.addEventListener('click', () => choisirFiltre(a.dataset.allerFiltre)));
     document.getElementById('mp-tri').addEventListener('change', e => { tri = e.target.value; rendreGrille(); });
-
-    // Profondeur : le grand nom et la pièce à la une glissent à des vitesses différentes.
-    const reduit = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const nom = document.getElementById('mp-nom-grand');
-    const image = document.getElementById('mp-piece-une-img');
-    if (!reduit && (nom || image)) {
-      let attente = false;
-      window.addEventListener('scroll', () => {
-        if (attente) return;
-        attente = true;
-        requestAnimationFrame(() => {
-          const y = Math.min(window.scrollY, 900);
-          if (nom) nom.style.transform = 'translate3d(0,' + (y * 0.18) + 'px,0)';
-          if (image) image.style.transform = 'translate3d(0,' + (y * -0.06) + 'px,0) scale(1.08)';
-          attente = false;
-        });
-      }, { passive: true });
-    }
   }
 
   // ---------------------------------------------------------------- Fiche produit
@@ -262,7 +231,7 @@
           '<div class="mp-stock" id="mp-stock"></div>' +
           '<div class="mp-achat">' +
             '<div class="mp-quantite"><button type="button" id="mp-qte-moins" aria-label="Moins">−</button><span id="mp-qte">1</span><button type="button" id="mp-qte-plus" aria-label="Plus">+</button></div>' +
-            '<button type="button" class="btn btn--principal mp-btn-prestige" id="mp-ajouter"><span>Ajouter au panier</span><span class="mp-fleche" aria-hidden="true">→</span></button>' +
+            '<button type="button" class="btn btn--principal" id="mp-ajouter"><span>Ajouter au panier</span><span class="mp-fleche" aria-hidden="true">→</span></button>' +
           '</div>' +
           '<div class="mp-accordeon">' +
             (description ? '<details open><summary>Description</summary><div class="mp-texte contenu-riche" id="mp-description"></div></details>' : '') +
