@@ -46,7 +46,12 @@
     else if (/Instagram/.test(ua)) appli = 'Instagram';
     else if (/musical_ly|TikTok|BytedanceWebview/i.test(ua)) appli = 'TikTok';
     else if (/WhatsApp/i.test(ua)) appli = 'WhatsApp';
-    const co = navigator.connection && navigator.connection.effectiveType ? ' · réseau ' + navigator.connection.effectiveType : '';
+    // effectiveType n'est PAS le type de connexion (Wi-Fi, 4G…) mais une catégorie de
+    // vitesse mesurée : « 4g » s'affiche aussi en Wi-Fi rapide. Libellé clarifié le
+    // 29/09/2026 (la propriétaire, en Wi-Fi, lisait « réseau 4g »).
+    const vitesses = { '4g': 'rapide', '3g': 'moyenne', '2g': 'lente', 'slow-2g': 'très lente' };
+    const type = navigator.connection && navigator.connection.effectiveType;
+    const co = type ? ' · connexion ' + (vitesses[type] || type) : '';
     return (appli ? 'depuis ' + appli : '') + co;
   }
 
