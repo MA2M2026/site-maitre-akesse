@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com; style-src 'self' https://fonts.googleapis.com;">
+<script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
+<script src="../js/surveillance.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maison MA2M — Boutique officielle</title>
+<meta name="description" content="La boutique officielle de Maître Akesse Model Management : pièces signature, accessoires et expériences mode.">
+<!-- Boutique en construction : invisible des moteurs de recherche tant qu'elle n'est pas ouverte. -->
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/marketplace.css">
+<meta name="theme-color" content="#060504">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
+</head>
+<body class="mp-corps">
+<header class="site-header-v2">
+  <div class="container header-v2-inner">
+    <a href="../index.html" class="logo-img-header"><img src="../assets/logo-header.png" alt="Maître Akesse Model Management"></a>
+    <div class="header-v2-droite">
+      <button class="menu-trigger" id="menuBtn">
+        <span>Menu</span>
+        <span class="dots"><span></span><span></span><span></span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="menu-overlay" id="menuOverlay">
+  <button class="close-menu" id="closeMenuBtn">Fermer ✕</button>
+  <ul class="nav-links">
+    <li><a href="index.html">La Boutique</a></li>
+    <li><a href="../index.html">Accueil de l'agence</a></li>
+    <li><a href="../mannequins.html">The Book</a></li>
+    <li><a href="../actualites.html">Actualités</a></li>
+    <li><a href="../evenements.html">Nos Événements</a></li>
+    <li><a href="../contact.html">Contact</a></li>
+  </ul>
+</div>
+
+<div class="mp-apercu mp-cache" id="mp-apercu">
+  <strong>Aperçu privé</strong>
+  <span>La boutique est fermée au public : vous seule la voyez.</span>
+  <a href="gestion.html">Tableau de bord de la boutique</a>
+</div>
+
+<nav class="mp-nav" aria-label="Boutique">
+  <div class="mp-nav-inner">
+    <a href="index.html" class="mp-marque">Maison <em>MA2M</em></a>
+    <div class="mp-nav-liens">
+      <a href="index.html#collection" class="actif ">Collection</a>
+      <a href="index.html#collection" class="mp-lien-secondaire">Nouveautés</a>
+      <a href="gestion.html" class="">Gestion</a>
+      <button type="button" class="mp-panier-btn" data-mp-ouvrir-panier>Panier <span class="mp-panier-compte mp-cache" data-mp-compte-panier>0</span></button>
+    </div>
+  </div>
+</nav>
+
+<main id="mp-principal">
+  <div class="mp-chargement"><span></span></div>
+</main>
+
+<div class="mp-voile-panier" id="mp-voile-panier"></div>
+<aside class="mp-panier" id="mp-panier" aria-hidden="true" aria-label="Panier">
+  <div class="mp-panier-tete">
+    <h2>Votre panier</h2>
+    <button type="button" class="mp-fermer" id="mp-panier-fermer">Fermer ✕</button>
+  </div>
+  <div class="mp-panier-lignes" id="mp-panier-lignes"></div>
+  <div class="mp-panier-pied mp-cache" id="mp-panier-pied">
+    <div class="mp-total"><span>Sous-total</span><b id="mp-panier-total">0 FCFA</b></div>
+    <p class="mp-panier-note">Livraison calculée à l'étape suivante. Paiement par Wave, Orange Money ou MTN.</p>
+    <button type="button" class="btn btn--principal" id="mp-commander">Passer commande</button>
+  </div>
+</aside>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-bas">
+      <span>© <span id="an"></span> Maître Akesse Model Management</span>
+      <span>Abidjan, Côte d'Ivoire</span>
+      <span><a href="../mentions-legales.html">Mentions légales</a> · <a href="../politique-confidentialite.html">Confidentialité</a></span>
+    </div>
+  </div>
+</footer>
+<script src="../js/copyright-annee.js"></script>
+<script src="../js/vendor/supabase-js-2.110.6.js"></script>
+<script src="../js/supabase-config.js"></script>
+<script src="../js/vendor/dompurify-3.4.16.min.js"></script>
+<script src="../js/app.js"></script>
+<script src="../js/menu.js"></script>
+<script src="../js/marketplace-commun.js"></script>
+<script src="../js/marketplace-vitrine.js"></script>
+</body>
+</html>

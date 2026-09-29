@@ -1211,3 +1211,30 @@ base ; Book, fiche mannequin FR/EN et accueil : toutes les images chargées sur 
   WhatsApp n'affiche pas les photos trop lourdes.
 - Ne pas ajouter les navigateurs intégrés des applis (Instagram, « FBAN »,
   Snapchat, LINE…) à la liste des robots : ce sont de vraies personnes.
+
+## 🛍️ Marketplace — Boutique MA2M (29 septembre 2026, étape 1 en cours)
+
+- **Cahier des charges** validé par la propriétaire (boutique de l'agence, paiement
+  Wave / Orange Money / MTN avec référence, livraison à domicile).
+- **Base de données** : Extension 98 (`supabase-extension.sql`), lancée dans Supabase
+  le 29/09. Tables `boutique_*`, prix calculés par la base, stock verrouillé,
+  factures numérotées sans trou, annulation automatique des commandes non payées.
+  Testée sur PostgreSQL 16 avant envoi (y compris l'achat simultané du dernier article).
+- **FERMÉE au public** tant que `boutique_reglages.ouverte = false` : les règles RLS
+  ne laissent rien lire à un non-admin ; les pages `marketplace/` affichent alors
+  « Page introuvable ». Ne PAS passer `ouverte` à true avant la fin de la construction,
+  la relecture des CGV et l'accord de la propriétaire.
+- **Pages** : `marketplace/index.html` (vitrine), `produit.html?p=<slug>` (fiche),
+  `gestion.html` (tableau de bord de la boutique : exige un admin connecté ET le code
+  de validation saisi dans cet onglet). Code : `js/marketplace-commun.js` (accès,
+  prix, panier), `js/marketplace-vitrine.js`, `js/marketplace-gestion.js`, styles
+  `css/marketplace.css` (préfixe `mp-` / `mpg-`, aucun effet sur le reste du site).
+  Aucun script en ligne : CSP stricte sans empreinte à maintenir.
+- **Photos produits** : Cloudflare R2, dossier `site/boutique/<produit>/`, catégorie
+  `boutique` ajoutée à `api/r2-site-images.js`. Allégées dans le navigateur avant
+  envoi (1800 px + miniature 640 px). Jamais de photo sur Supabase.
+- **Lien « Marketplace »** (js/menu.js) : visible seulement pour un admin connecté ;
+  dans la barre du haut sur ordinateur/tablette, en tête du menu sur téléphone (sur
+  téléphone, un 4e bouton écrasait le logo).
+- **Prochaine étape** : commande (formulaire, zones, CGV), paiement avec référence,
+  suivi client, onglet « Commandes » du tableau de bord.

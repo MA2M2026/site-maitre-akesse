@@ -3957,3 +3957,610 @@ end;
 $$;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 98 : BOUTIQUE MA2M (Marketplace) — socle de la base de données
+-- (cahier des charges du 29 septembre 2026, étape 1).
+--
+-- Principes :
+--   - Boutique FERMÉE par défaut (boutique_reglages.ouverte = false) : tant
+--     qu'elle est fermée, seuls les admins voient catalogue, stock et réglages.
+--   - Les prix, frais de livraison et totaux sont TOUJOURS calculés ici, dans
+--     la base (fonction boutique_passer_commande), jamais par le navigateur.
+--   - Le stock est réservé au moment de la commande (ligne verrouillée : pas
+--     de double vente du dernier article) et rendu automatiquement si la
+--     commande est annulée ou n'est pas payée dans le délai.
+--   - Commandes, clients et journal : lisibles uniquement par les admins ;
+--     un client ne voit que SA commande, via numéro + code de suivi.
+--   - Photos des produits : sur Cloudflare R2 (colonnes url/chemin), jamais
+--     dans Supabase Storage.
+-- Sans effet sur le reste du site. Peut être relancée sans risque.
+-- ===================================================================
+
+-- --- Outils communs ---------------------------------------------------
+create or replace function boutique_est_admin()
+returns boolean
+language sql stable security definer
+set search_path = public
+as $$
+  select exists (select 1 from admins where user_id = auth.uid());
+$$;
+
+create table if not exists boutique_reglages (
+  id text primary key default 'principal' check (id = 'principal'),
+  ouverte boolean not null default false,
+  nom text not null default 'Boutique MA2M',
+  numero_wave text,
+  numero_orange_money text,
+  numero_mtn_momo text,
+  delai_paiement_heures int not null default 24 check (delai_paiement_heures between 1 and 168),
+  livraison_offerte_des_fcfa int check (livraison_offerte_des_fcfa is null or livraison_offerte_des_fcfa >= 0),
+  updated_at timestamptz not null default now()
+);
+insert into boutique_reglages (id) values ('principal') on conflict (id) do nothing;
+
+create or replace function boutique_ouverte()
+returns boolean
+language sql stable security definer
+set search_path = public
+as $$
+  select coalesce((select ouverte from boutique_reglages where id = 'principal'), false);
+$$;
+
+-- --- Catalogue --------------------------------------------------------
+create table if not exists boutique_categories (
+  id uuid primary key default gen_random_uuid(),
+  nom text not null check (length(trim(nom)) between 1 and 80),
+  slug text not null unique check (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
+  parent_id uuid references boutique_categories(id) on delete set null,
+  ordre int not null default 0,
+  actif boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists boutique_produits (
+  id uuid primary key default gen_random_uuid(),
+  categorie_id uuid references boutique_categories(id) on delete set null,
+  type text not null default 'physique' check (type in ('physique', 'billet', 'service')),
+  nom text not null check (length(trim(nom)) between 1 and 140),
+  slug text not null unique check (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
+  description text,
+  composition text,
+  entretien text,
+  prix_fcfa int not null check (prix_fcfa >= 0),
+  prix_promo_fcfa int check (prix_promo_fcfa is null or prix_promo_fcfa >= 0),
+  promo_debut timestamptz,
+  promo_fin timestamptz,
+  poids_g int check (poids_g is null or poids_g >= 0),
+  statut text not null default 'brouillon' check (statut in ('brouillon', 'en_vente', 'retire')),
+  mis_en_avant boolean not null default false,
+  ordre int not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists boutique_photos (
+  id uuid primary key default gen_random_uuid(),
+  produit_id uuid not null references boutique_produits(id) on delete cascade,
+  url text not null,
+  url_miniature text,
+  chemin text,
+  ordre int not null default 0,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists boutique_variantes (
+  id uuid primary key default gen_random_uuid(),
+  produit_id uuid not null references boutique_produits(id) on delete cascade,
+  taille text,
+  couleur text,
+  reference_interne text,
+  prix_fcfa int check (prix_fcfa is null or prix_fcfa >= 0),
+  stock int not null default 0 check (stock >= 0),
+  actif boolean not null default true,
+  ordre int not null default 0,
+  created_at timestamptz not null default now()
+);
+create index if not exists boutique_variantes_produit_idx on boutique_variantes (produit_id);
+create index if not exists boutique_photos_produit_idx on boutique_photos (produit_id);
+
+-- --- Livraison --------------------------------------------------------
+create table if not exists boutique_zones_livraison (
+  id uuid primary key default gen_random_uuid(),
+  nom text not null check (length(trim(nom)) between 1 and 80),
+  tarif_fcfa int not null check (tarif_fcfa >= 0),
+  delai text,
+  ordre int not null default 0,
+  actif boolean not null default true
+);
+
+-- --- Commandes --------------------------------------------------------
+-- Compteurs SANS TROU (numéros de commande et surtout de facture : la loi exige une
+-- numérotation continue). Contrairement à une « sequence », ce compteur n'avance
+-- que si l'opération réussit (il est annulé avec elle en cas d'erreur).
+-- Repart à 1 chaque année : MA2M-2026-00001, F-2026-00001, puis MA2M-2027-00001…
+create table if not exists boutique_compteurs (
+  nom text primary key,
+  annee int not null,
+  valeur int not null default 0
+);
+alter table boutique_compteurs enable row level security;
+
+create or replace function boutique_prochain_numero(p_nom text)
+returns int
+language plpgsql security definer
+set search_path = public
+as $$
+declare
+  v_annee int := extract(year from now() at time zone 'Africa/Abidjan')::int;
+  v_valeur int;
+begin
+  insert into boutique_compteurs (nom, annee, valeur) values (p_nom, v_annee, 1)
+    on conflict (nom) do update
+      set valeur = case when boutique_compteurs.annee = excluded.annee then boutique_compteurs.valeur + 1 else 1 end,
+          annee = excluded.annee
+    returning valeur into v_valeur;
+  return v_valeur;
+end;
+$$;
+revoke all on function boutique_prochain_numero(text) from public;
+
+create table if not exists boutique_commandes (
+  id uuid primary key default gen_random_uuid(),
+  numero text not null unique,
+  numero_facture text unique,
+  jeton_suivi uuid not null default gen_random_uuid(),
+  statut text not null default 'en_attente_paiement' check (statut in (
+    'en_attente_paiement', 'paiement_declare', 'payee', 'en_preparation',
+    'expediee', 'livree', 'annulee', 'remboursee')),
+  client_nom text not null,
+  client_telephone text not null,
+  client_email text,
+  adresse_commune text,
+  adresse_quartier text,
+  adresse_repere text,
+  zone_id uuid references boutique_zones_livraison(id) on delete set null,
+  zone_nom text,
+  sous_total_fcfa int not null check (sous_total_fcfa >= 0),
+  frais_livraison_fcfa int not null default 0 check (frais_livraison_fcfa >= 0),
+  total_fcfa int not null check (total_fcfa >= 0),
+  moyen_paiement text check (moyen_paiement is null or moyen_paiement in ('wave', 'orange_money', 'mtn_momo')),
+  reference_paiement text,
+  note_client text,
+  note_interne text,
+  livreur_nom text,
+  livreur_telephone text,
+  cgv_acceptees_le timestamptz not null,
+  expire_le timestamptz not null,
+  paiement_declare_le timestamptz,
+  payee_le timestamptz,
+  expediee_le timestamptz,
+  livree_le timestamptz,
+  annulee_le timestamptz,
+  motif_annulation text,
+  stock_rendu boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create unique index if not exists boutique_commandes_reference_unique
+  on boutique_commandes (reference_paiement) where reference_paiement is not null;
+create index if not exists boutique_commandes_statut_idx on boutique_commandes (statut, created_at desc);
+create index if not exists boutique_commandes_tel_idx on boutique_commandes (client_telephone, created_at desc);
+
+create table if not exists boutique_lignes (
+  id uuid primary key default gen_random_uuid(),
+  commande_id uuid not null references boutique_commandes(id) on delete cascade,
+  produit_id uuid references boutique_produits(id) on delete set null,
+  variante_id uuid references boutique_variantes(id) on delete set null,
+  nom_produit text not null,
+  libelle_variante text,
+  prix_unitaire_fcfa int not null check (prix_unitaire_fcfa >= 0),
+  quantite int not null check (quantite between 1 and 20),
+  total_fcfa int not null check (total_fcfa >= 0)
+);
+create index if not exists boutique_lignes_commande_idx on boutique_lignes (commande_id);
+
+-- Qui a fait quoi, quand (traçabilité des validations de paiement, etc.)
+create table if not exists boutique_journal (
+  id bigint generated always as identity primary key,
+  commande_id uuid references boutique_commandes(id) on delete cascade,
+  admin_user_id uuid,
+  action text not null,
+  detail text,
+  created_at timestamptz not null default now()
+);
+create index if not exists boutique_journal_commande_idx on boutique_journal (commande_id, created_at);
+
+-- --- Règles d'accès (RLS) ----------------------------------------------
+alter table boutique_reglages enable row level security;
+alter table boutique_categories enable row level security;
+alter table boutique_produits enable row level security;
+alter table boutique_photos enable row level security;
+alter table boutique_variantes enable row level security;
+alter table boutique_zones_livraison enable row level security;
+alter table boutique_commandes enable row level security;
+alter table boutique_lignes enable row level security;
+alter table boutique_journal enable row level security;
+
+drop policy if exists "boutique reglages lecture" on boutique_reglages;
+create policy "boutique reglages lecture" on boutique_reglages for select
+  using (boutique_est_admin() or ouverte);
+drop policy if exists "boutique reglages admin" on boutique_reglages;
+create policy "boutique reglages admin" on boutique_reglages for update
+  using (boutique_est_admin()) with check (boutique_est_admin());
+
+drop policy if exists "boutique categories lecture" on boutique_categories;
+create policy "boutique categories lecture" on boutique_categories for select
+  using (boutique_est_admin() or (boutique_ouverte() and actif));
+drop policy if exists "boutique categories admin" on boutique_categories;
+create policy "boutique categories admin" on boutique_categories for all
+  using (boutique_est_admin()) with check (boutique_est_admin());
+
+drop policy if exists "boutique produits lecture" on boutique_produits;
+create policy "boutique produits lecture" on boutique_produits for select
+  using (boutique_est_admin() or (boutique_ouverte() and statut = 'en_vente'));
+drop policy if exists "boutique produits admin" on boutique_produits;
+create policy "boutique produits admin" on boutique_produits for all
+  using (boutique_est_admin()) with check (boutique_est_admin());
+
+drop policy if exists "boutique photos lecture" on boutique_photos;
+create policy "boutique photos lecture" on boutique_photos for select
+  using (boutique_est_admin() or (boutique_ouverte() and exists (
+    select 1 from boutique_produits p where p.id = produit_id and p.statut = 'en_vente')));
+drop policy if exists "boutique photos admin" on boutique_photos;
+create policy "boutique photos admin" on boutique_photos for all
+  using (boutique_est_admin()) with check (boutique_est_admin());
+
+drop policy if exists "boutique variantes lecture" on boutique_variantes;
+create policy "boutique variantes lecture" on boutique_variantes for select
+  using (boutique_est_admin() or (boutique_ouverte() and actif and exists (
+    select 1 from boutique_produits p where p.id = produit_id and p.statut = 'en_vente')));
+drop policy if exists "boutique variantes admin" on boutique_variantes;
+create policy "boutique variantes admin" on boutique_variantes for all
+  using (boutique_est_admin()) with check (boutique_est_admin());
+
+drop policy if exists "boutique zones lecture" on boutique_zones_livraison;
+create policy "boutique zones lecture" on boutique_zones_livraison for select
+  using (boutique_est_admin() or (boutique_ouverte() and actif));
+drop policy if exists "boutique zones admin" on boutique_zones_livraison;
+create policy "boutique zones admin" on boutique_zones_livraison for all
+  using (boutique_est_admin()) with check (boutique_est_admin());
+
+-- Commandes, lignes, journal : admins uniquement (les clients passent par les
+-- fonctions ci-dessous, qui ne renvoient que LEUR commande).
+drop policy if exists "boutique commandes admin" on boutique_commandes;
+create policy "boutique commandes admin" on boutique_commandes for all
+  using (boutique_est_admin()) with check (boutique_est_admin());
+drop policy if exists "boutique lignes admin" on boutique_lignes;
+create policy "boutique lignes admin" on boutique_lignes for all
+  using (boutique_est_admin()) with check (boutique_est_admin());
+drop policy if exists "boutique journal admin" on boutique_journal;
+create policy "boutique journal admin" on boutique_journal for select
+  using (boutique_est_admin());
+
+-- --- Annulation des commandes non payées dans le délai -----------------
+create or replace function boutique_annuler_expirees()
+returns int
+language plpgsql security definer
+set search_path = public
+as $$
+declare
+  v_commande record;
+  v_nb int := 0;
+begin
+  for v_commande in
+    select id from boutique_commandes
+    where statut = 'en_attente_paiement' and expire_le < now()
+    for update skip locked
+  loop
+    update boutique_variantes v set stock = v.stock + l.quantite
+      from boutique_lignes l
+      where l.commande_id = v_commande.id and l.variante_id = v.id;
+    update boutique_commandes
+      set statut = 'annulee', annulee_le = now(), updated_at = now(), stock_rendu = true,
+          motif_annulation = 'Délai de paiement dépassé'
+      where id = v_commande.id;
+    insert into boutique_journal (commande_id, action, detail)
+      values (v_commande.id, 'annulation_automatique', 'Délai de paiement dépassé');
+    v_nb := v_nb + 1;
+  end loop;
+  return v_nb;
+end;
+$$;
+
+-- --- Passer commande (client) -------------------------------------------
+-- p_articles : [{"variante_id": "...", "quantite": 2}, ...]
+-- p_client   : {"nom","telephone","email","commune","quartier","repere","note"}
+create or replace function boutique_passer_commande(
+  p_articles jsonb,
+  p_client jsonb,
+  p_zone_id uuid,
+  p_cgv_acceptees boolean
+)
+returns table(numero text, jeton_suivi uuid, total_fcfa int, expire_le timestamptz)
+language plpgsql security definer
+set search_path = public
+as $$
+declare
+  v_reglages boutique_reglages;
+  v_nom text := trim(coalesce(p_client->>'nom', ''));
+  v_tel text := regexp_replace(coalesce(p_client->>'telephone', ''), '[^0-9+]', '', 'g');
+  v_email text := nullif(trim(coalesce(p_client->>'email', '')), '');
+  v_article record;
+  v_var record;
+  v_prix int;
+  v_sous_total int := 0;
+  v_frais int := 0;
+  v_physique boolean := false;
+  v_zone boutique_zones_livraison;
+  v_commande_id uuid := gen_random_uuid();
+  v_numero text;
+  v_jeton uuid := gen_random_uuid();
+  v_expire timestamptz;
+  v_nb_lignes int := 0;
+begin
+  select * into v_reglages from boutique_reglages where id = 'principal';
+  if not coalesce(v_reglages.ouverte, false) and not boutique_est_admin() then
+    raise exception 'boutique_fermee';
+  end if;
+  if p_cgv_acceptees is not true then
+    raise exception 'cgv_non_acceptees';
+  end if;
+  if length(v_nom) < 2 or length(v_nom) > 120 then raise exception 'nom_invalide'; end if;
+  if length(v_tel) < 8 or length(v_tel) > 20 then raise exception 'telephone_invalide'; end if;
+  if v_email is not null and (length(v_email) > 160 or v_email !~ '^[^@\s]+@[^@\s]+\.[^@\s]+$') then
+    raise exception 'email_invalide';
+  end if;
+  if jsonb_typeof(p_articles) is distinct from 'array' or jsonb_array_length(p_articles) = 0 then
+    raise exception 'panier_vide';
+  end if;
+  if jsonb_array_length(p_articles) > 50 then raise exception 'panier_trop_grand'; end if;
+
+  -- Garde-fou contre les commandes en rafale (robots) : 3 commandes non payées
+  -- maximum par téléphone sur la dernière heure.
+  if (select count(*) from boutique_commandes c
+      where c.client_telephone = v_tel and c.statut = 'en_attente_paiement'
+        and c.created_at > now() - interval '1 hour') >= 3 then
+    raise exception 'trop_de_commandes';
+  end if;
+
+  perform boutique_annuler_expirees();
+
+  v_numero := 'MA2M-' || to_char(now() at time zone 'Africa/Abidjan', 'YYYY') || '-'
+              || lpad(boutique_prochain_numero('commande')::text, 5, '0');
+  v_expire := now() + make_interval(hours => v_reglages.delai_paiement_heures);
+
+  insert into boutique_commandes (id, numero, jeton_suivi, client_nom, client_telephone, client_email,
+      adresse_commune, adresse_quartier, adresse_repere, note_client,
+      sous_total_fcfa, frais_livraison_fcfa, total_fcfa, cgv_acceptees_le, expire_le)
+    values (v_commande_id, v_numero, v_jeton, v_nom, v_tel, v_email,
+      left(nullif(trim(coalesce(p_client->>'commune', '')), ''), 80),
+      left(nullif(trim(coalesce(p_client->>'quartier', '')), ''), 120),
+      left(nullif(trim(coalesce(p_client->>'repere', '')), ''), 240),
+      left(nullif(trim(coalesce(p_client->>'note', '')), ''), 500),
+      0, 0, 0, now(), v_expire);
+
+  -- Articles regroupés par variante (un même article envoyé deux fois = une ligne),
+  -- verrouillés dans un ordre fixe pour éviter tout blocage entre deux commandes.
+  for v_article in
+    select (a->>'variante_id')::uuid as variante_id, sum((a->>'quantite')::int) as quantite
+    from jsonb_array_elements(p_articles) a
+    group by 1
+    order by 1
+  loop
+    if v_article.quantite is null or v_article.quantite < 1 or v_article.quantite > 20 then
+      raise exception 'quantite_invalide';
+    end if;
+    select v.id, v.stock, v.prix_fcfa as prix_variante, v.taille, v.couleur, v.actif,
+           p.id as produit_id, p.nom, p.type, p.statut, p.prix_fcfa, p.prix_promo_fcfa, p.promo_debut, p.promo_fin
+      into v_var
+      from boutique_variantes v join boutique_produits p on p.id = v.produit_id
+      where v.id = v_article.variante_id
+      for update of v;
+    if not found or not v_var.actif or v_var.statut <> 'en_vente' then
+      raise exception 'article_indisponible';
+    end if;
+    if v_var.stock < v_article.quantite then
+      raise exception 'stock_insuffisant';
+    end if;
+    v_prix := coalesce(v_var.prix_variante,
+      case when v_var.prix_promo_fcfa is not null
+            and (v_var.promo_debut is null or now() >= v_var.promo_debut)
+            and (v_var.promo_fin is null or now() < v_var.promo_fin)
+           then v_var.prix_promo_fcfa else v_var.prix_fcfa end);
+    update boutique_variantes set stock = stock - v_article.quantite where id = v_var.id;
+    insert into boutique_lignes (commande_id, produit_id, variante_id, nom_produit, libelle_variante,
+        prix_unitaire_fcfa, quantite, total_fcfa)
+      values (v_commande_id, v_var.produit_id, v_var.id, v_var.nom,
+        nullif(concat_ws(' · ', v_var.taille, v_var.couleur), ''),
+        v_prix, v_article.quantite, v_prix * v_article.quantite);
+    v_sous_total := v_sous_total + v_prix * v_article.quantite;
+    v_physique := v_physique or v_var.type = 'physique';
+    v_nb_lignes := v_nb_lignes + 1;
+  end loop;
+
+  if v_physique then
+    select * into v_zone from boutique_zones_livraison z where z.id = p_zone_id and z.actif;
+    if not found then raise exception 'zone_livraison_invalide'; end if;
+    if length(coalesce(p_client->>'commune', '') || coalesce(p_client->>'quartier', '')) < 2 then
+      raise exception 'adresse_invalide';
+    end if;
+    v_frais := case when v_reglages.livraison_offerte_des_fcfa is not null
+                     and v_sous_total >= v_reglages.livraison_offerte_des_fcfa then 0
+                    else v_zone.tarif_fcfa end;
+  end if;
+
+  update boutique_commandes set
+      sous_total_fcfa = v_sous_total, frais_livraison_fcfa = v_frais, total_fcfa = v_sous_total + v_frais,
+      zone_id = case when v_physique then v_zone.id end, zone_nom = case when v_physique then v_zone.nom end
+    where id = v_commande_id;
+  insert into boutique_journal (commande_id, action, detail)
+    values (v_commande_id, 'commande_creee', v_nb_lignes || ' ligne(s), total ' || (v_sous_total + v_frais) || ' FCFA');
+
+  return query select v_numero, v_jeton, v_sous_total + v_frais, v_expire;
+end;
+$$;
+
+-- --- Déclarer son paiement (client) --------------------------------------
+create or replace function boutique_declarer_paiement(
+  p_numero text,
+  p_jeton uuid,
+  p_moyen text,
+  p_reference text
+)
+returns text
+language plpgsql security definer
+set search_path = public
+as $$
+declare
+  v_commande boutique_commandes;
+  v_reference text := upper(regexp_replace(coalesce(p_reference, ''), '\s', '', 'g'));
+begin
+  if p_moyen not in ('wave', 'orange_money', 'mtn_momo') then raise exception 'moyen_invalide'; end if;
+  if length(v_reference) < 4 or length(v_reference) > 60 then raise exception 'reference_invalide'; end if;
+  perform boutique_annuler_expirees();
+  select * into v_commande from boutique_commandes c
+    where c.numero = p_numero and c.jeton_suivi = p_jeton for update;
+  if not found then raise exception 'commande_introuvable'; end if;
+  if v_commande.statut <> 'en_attente_paiement' then raise exception 'statut_incompatible'; end if;
+  begin
+    update boutique_commandes set statut = 'paiement_declare', moyen_paiement = p_moyen,
+        reference_paiement = v_reference, paiement_declare_le = now(), updated_at = now()
+      where id = v_commande.id;
+  exception when unique_violation then
+    raise exception 'reference_deja_utilisee';
+  end;
+  insert into boutique_journal (commande_id, action, detail)
+    values (v_commande.id, 'paiement_declare', p_moyen || ' ' || v_reference);
+  return 'paiement_declare';
+end;
+$$;
+
+-- --- Suivre sa commande (client) -----------------------------------------
+-- Par le lien reçu (numéro + code de suivi) OU par numéro + téléphone.
+create or replace function boutique_suivi_commande(
+  p_numero text,
+  p_jeton uuid default null,
+  p_telephone text default null
+)
+returns jsonb
+language plpgsql security definer
+set search_path = public
+as $$
+declare
+  v_commande boutique_commandes;
+  v_tel text := regexp_replace(coalesce(p_telephone, ''), '[^0-9+]', '', 'g');
+begin
+  perform boutique_annuler_expirees();
+  select * into v_commande from boutique_commandes c
+    where c.numero = p_numero
+      and ((p_jeton is not null and c.jeton_suivi = p_jeton)
+        or (length(v_tel) >= 8 and c.client_telephone = v_tel));
+  if not found then raise exception 'commande_introuvable'; end if;
+  return jsonb_build_object(
+    'numero', v_commande.numero,
+    'jeton_suivi', v_commande.jeton_suivi,
+    'statut', v_commande.statut,
+    'numero_facture', v_commande.numero_facture,
+    'client_nom', v_commande.client_nom,
+    'zone_nom', v_commande.zone_nom,
+    'adresse_commune', v_commande.adresse_commune,
+    'adresse_quartier', v_commande.adresse_quartier,
+    'sous_total_fcfa', v_commande.sous_total_fcfa,
+    'frais_livraison_fcfa', v_commande.frais_livraison_fcfa,
+    'total_fcfa', v_commande.total_fcfa,
+    'moyen_paiement', v_commande.moyen_paiement,
+    'expire_le', v_commande.expire_le,
+    'created_at', v_commande.created_at,
+    'payee_le', v_commande.payee_le,
+    'expediee_le', v_commande.expediee_le,
+    'livree_le', v_commande.livree_le,
+    'livreur_nom', v_commande.livreur_nom,
+    'livreur_telephone', v_commande.livreur_telephone,
+    'lignes', coalesce((select jsonb_agg(jsonb_build_object(
+        'nom_produit', l.nom_produit, 'libelle_variante', l.libelle_variante,
+        'prix_unitaire_fcfa', l.prix_unitaire_fcfa, 'quantite', l.quantite, 'total_fcfa', l.total_fcfa)
+        order by l.nom_produit)
+      from boutique_lignes l where l.commande_id = v_commande.id), '[]'::jsonb)
+  );
+end;
+$$;
+
+-- --- Changer le statut d'une commande (admin) -----------------------------
+create or replace function boutique_changer_statut(
+  p_commande_id uuid,
+  p_statut text,
+  p_detail text default null,
+  p_livreur_nom text default null,
+  p_livreur_telephone text default null
+)
+returns text
+language plpgsql security definer
+set search_path = public
+as $$
+declare
+  v_commande boutique_commandes;
+  v_permis boolean;
+begin
+  if not boutique_est_admin() then raise exception 'non_autorise'; end if;
+  select * into v_commande from boutique_commandes where id = p_commande_id for update;
+  if not found then raise exception 'commande_introuvable'; end if;
+
+  v_permis := case v_commande.statut
+    when 'en_attente_paiement' then p_statut in ('payee', 'annulee')
+    when 'paiement_declare'    then p_statut in ('payee', 'en_attente_paiement', 'annulee')
+    when 'payee'               then p_statut in ('en_preparation', 'expediee', 'remboursee')
+    when 'en_preparation'      then p_statut in ('expediee', 'remboursee')
+    when 'expediee'            then p_statut in ('livree', 'remboursee')
+    when 'livree'              then p_statut in ('remboursee')
+    else false end;
+  if not v_permis then raise exception 'transition_interdite'; end if;
+
+  if p_statut = 'annulee' and not v_commande.stock_rendu then
+    update boutique_variantes v set stock = v.stock + l.quantite
+      from boutique_lignes l where l.commande_id = v_commande.id and l.variante_id = v.id;
+  end if;
+
+  update boutique_commandes set
+      statut = p_statut,
+      updated_at = now(),
+      -- Paiement refusé : retour « en attente », référence effacée, nouveau délai.
+      reference_paiement = case when p_statut = 'en_attente_paiement' then null else reference_paiement end,
+      moyen_paiement = case when p_statut = 'en_attente_paiement' then null else moyen_paiement end,
+      paiement_declare_le = case when p_statut = 'en_attente_paiement' then null else paiement_declare_le end,
+      expire_le = case when p_statut = 'en_attente_paiement'
+                       then now() + make_interval(hours => (select delai_paiement_heures from boutique_reglages where id = 'principal'))
+                       else expire_le end,
+      payee_le = case when p_statut = 'payee' then now() else payee_le end,
+      numero_facture = case when p_statut = 'payee' and numero_facture is null
+                            then 'F-' || to_char(now() at time zone 'Africa/Abidjan', 'YYYY') || '-'
+                                 || lpad(boutique_prochain_numero('facture')::text, 5, '0')
+                            else numero_facture end,
+      expediee_le = case when p_statut = 'expediee' then now() else expediee_le end,
+      livreur_nom = case when p_statut = 'expediee' then coalesce(nullif(trim(p_livreur_nom), ''), livreur_nom) else livreur_nom end,
+      livreur_telephone = case when p_statut = 'expediee' then coalesce(nullif(trim(p_livreur_telephone), ''), livreur_telephone) else livreur_telephone end,
+      livree_le = case when p_statut = 'livree' then now() else livree_le end,
+      annulee_le = case when p_statut = 'annulee' then now() else annulee_le end,
+      motif_annulation = case when p_statut = 'annulee' then nullif(trim(p_detail), '') else motif_annulation end,
+      stock_rendu = stock_rendu or p_statut = 'annulee'
+    where id = v_commande.id;
+
+  insert into boutique_journal (commande_id, admin_user_id, action, detail)
+    values (v_commande.id, auth.uid(), v_commande.statut || ' → ' || p_statut, nullif(trim(p_detail), ''));
+  return p_statut;
+end;
+$$;
+
+-- --- Droits d'exécution ----------------------------------------------------
+revoke all on function boutique_annuler_expirees() from public;
+grant execute on function boutique_annuler_expirees() to authenticated;
+revoke all on function boutique_passer_commande(jsonb, jsonb, uuid, boolean) from public;
+grant execute on function boutique_passer_commande(jsonb, jsonb, uuid, boolean) to anon, authenticated;
+revoke all on function boutique_declarer_paiement(text, uuid, text, text) from public;
+grant execute on function boutique_declarer_paiement(text, uuid, text, text) to anon, authenticated;
+revoke all on function boutique_suivi_commande(text, uuid, text) from public;
+grant execute on function boutique_suivi_commande(text, uuid, text) to anon, authenticated;
+revoke all on function boutique_changer_statut(uuid, text, text, text, text) from public;
+grant execute on function boutique_changer_statut(uuid, text, text, text, text) to authenticated;
+
+NOTIFY pgrst, 'reload schema';

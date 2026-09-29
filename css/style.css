@@ -2263,3 +2263,10 @@ button.btn.journal-copier-tout[hidden] { display: none; } /* plus précis que la
 html.vide-mannequin-vedette #mannequin-vedette.section-reservee.u-hidden,
 html.vide-mot-responsable #mot-responsable.section-reservee.u-hidden { display: none; }
 .section-reservee > * { visibility: hidden; }
+
+/* Lien « Marketplace » (admins seulement, ajouté par js/menu.js) : dans la barre du
+   haut sur ordinateur et tablette ; sur téléphone il n'y a pas la place (le logo
+   était écrasé), il est alors proposé en tête du menu plein écran. */
+.header-marketplace-lien { border-color: rgba(213,84,104,0.55); color: var(--titre-clair); }
+@media (max-width: 700px) { .header-marketplace-lien { display: none; } }
+.nav-links .item-marketplace a { color: var(--bordeaux-clair); }
