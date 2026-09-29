@@ -2212,6 +2212,9 @@ html.porte-deja-vue #porte-entree { display: none; }
 .journal-filtre.actif { background: #7c1730; border-color: #7c1730; color: #fff; }
 .journal-btn { font-size: 0.78rem; padding: 0.45rem 0.9rem; margin: 0 0 0.8rem; }
 .journal-btn[hidden] { display: none; }
+button.btn.journal-copier-tout { display: block; width: 100%; margin: 0.4rem 0 1rem; padding: 0.9rem 1rem; font-size: 0.9rem; font-weight: 600; background: #7c1730 !important; border: 1px solid #c23a5e !important; color: #fff !important; box-shadow: 0 4px 14px rgba(124,23,48,.45); }
+button.btn.journal-copier-tout:hover { background: #93203c !important; }
+.journal-copier-tout[hidden] { display: none; }
 .journal-carte { margin-bottom: 0.9rem; padding: 1rem 1.1rem 0.6rem; border-radius: 8px; border: 1px solid rgba(255,255,255,.07); border-left: 4px solid rgba(255,255,255,.2); background: rgba(255,255,255,.025); min-width: 0; }
 .journal-corriger { border-left-color: #d64545; }
 .journal-surveiller { border-left-color: #e0913a; }
