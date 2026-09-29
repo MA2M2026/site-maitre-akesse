@@ -50,7 +50,7 @@
     principal.innerHTML =
       '<div class="container mpg">' +
         '<div class="mpg-tete"><div><div class="eyebrow">La Maison MA2M</div><h1 class="u-mt-1">Gestion de la boutique<span class="oeil">.</span></h1></div>' +
-          '<a class="btn" href="index.html">Voir la boutique</a></div>' +
+          '<a class="btn" href="/marketplace/">Voir la boutique</a></div>' +
         '<div class="filtres mpg-onglets" role="tablist">' +
           '<button type="button" class="filtre-btn mpg-onglet actif" data-onglet="produits">Produits<span class="mpg-nb" id="mpg-nb-produits"></span></button>' +
           '<button type="button" class="filtre-btn mpg-onglet" data-onglet="commandes">Commandes</button>' +
@@ -194,7 +194,7 @@
         '</div>' +
         '<div class="mpg-actions">' +
           '<button type="submit" class="btn btn--principal" id="mpg-enregistrer">Enregistrer</button>' +
-          (estNouveau ? '' : '<a class="btn" href="produit.html?p=' + encodeURIComponent(p.slug) + '" target="_blank" rel="noopener">Voir la fiche</a>') +
+          (estNouveau ? '' : '<a class="btn" href="/marketplace/produit?p=' + encodeURIComponent(p.slug) + '" target="_blank" rel="noopener">Voir la fiche</a>') +
           (estNouveau ? '' : '<button type="button" class="btn mpg-bouton-danger mpg-droite" id="mpg-supprimer">Supprimer le produit</button>') +
         '</div>' +
         '<div class="mpg-message" id="mpg-msg-produit" role="status"></div>' +
