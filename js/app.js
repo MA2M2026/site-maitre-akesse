@@ -1624,6 +1624,44 @@ function lireContenuEditeur(quill) {
   return quill.getText().trim() ? quill.root.innerHTML : '';
 }
 
+// ================== Effets sonores ==================
+// Demande de la propriétaire (29/09/2026) : un son élégant et discret au clic sur
+// « Entrer » (porte d'entrée de l'accueil), pour commencer. Le son est fabriqué par le
+// navigateur (Web Audio) : aucun fichier à télécharger, rien qui ralentisse le site.
+// Il ne se joue qu'après un geste du visiteur (les navigateurs l'imposent de toute
+// façon) et jamais si le visiteur a coupé le son (clé ma2m_son_coupe).
+window.jouerSon = function (nom) {
+  try {
+    if (localStorage.getItem('ma2m_son_coupe') === '1') return;
+  } catch (e) {}
+  try {
+    const Contexte = window.AudioContext || window.webkitAudioContext;
+    if (!Contexte) return;
+    const ctx = window.__ma2mAudio || (window.__ma2mAudio = new Contexte());
+    if (ctx.state === 'suspended') ctx.resume();
+    const t = ctx.currentTime + 0.02;
+    const sortie = ctx.createGain();
+    sortie.gain.value = 2.5;
+    sortie.connect(ctx.destination);
+    if (nom === 'entree') {
+      // Accord cristallin (la – mi – la) qui s'éteint doucement, sur une nappe grave
+      // très légère : chic et bref (≈ 2 s), jamais agressif.
+      [[440, 0.05, 2.2], [659.25, 0.035, 1.9], [880, 0.03, 1.7], [1318.5, 0.012, 1.3], [110, 0.05, 1.6]].forEach(([freq, volume, duree], i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = i === 4 ? 'triangle' : 'sine';
+        osc.frequency.value = freq;
+        const debut = t + (i < 4 ? i * 0.06 : 0);
+        gain.gain.setValueAtTime(0.0001, debut);
+        gain.gain.exponentialRampToValueAtTime(volume, debut + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.0001, debut + duree);
+        osc.connect(gain); gain.connect(sortie);
+        osc.start(debut); osc.stop(debut + duree + 0.05);
+      });
+    }
+  } catch (e) {}
+};
+
 // Pastille WhatsApp flottante, injectée sur toutes les pages
 document.addEventListener('DOMContentLoaded', () => {
   const bouton = document.createElement('a');
