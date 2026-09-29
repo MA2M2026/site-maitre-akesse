@@ -1275,3 +1275,5 @@ base ; Book, fiche mannequin FR/EN et accueil : toutes les images chargées sur 
   accompagnement, Autres services). Tous visibles dans la boutique, « bientôt »
   quand ils sont vides ; l'éditeur de produit ne propose que les rayons de la porte
   choisie.
+- **Bandeau défilant** (Extension 101) : message réglable dans Gestion → Réglages
+  (`bandeau_texte`, `bandeau_actif`) ; désactivé ou vide = texte habituel.
