@@ -576,6 +576,27 @@ async function chargerMannequinVedette() {
 window.promesseVedette =
   chargerMannequinVedette();
 
+// Place réservée (classe .section-reservee, css/style.css) : libérée dès que le
+// chargement est terminé — bloc affiché, ou masqué s'il n'y a rien à montrer —
+// et au plus tard après 15 s (connexion coupée).
+// Le site mémorise si le bloc était vide la dernière fois : dans ce cas, pas de place
+// réservée (sinon un grand vide apparaîtrait puis disparaîtrait à chaque visite).
+function libererSectionReservee(id, chargementTermine) {
+  const section = document.getElementById(id);
+  if (!section) return;
+  section.classList.remove('section-reservee');
+  if (!chargementTermine) return;
+  try { localStorage.setItem('ma2m_bloc_vide_' + id, section.style.display === 'block' ? '0' : '1'); } catch (e) {}
+}
+['mannequin-vedette', 'mot-responsable'].forEach((id) => {
+  let etaitVide = false;
+  try { etaitVide = localStorage.getItem('ma2m_bloc_vide_' + id) === '1'; } catch (e) {}
+  const section = document.getElementById(id);
+  if (etaitVide && section) section.classList.remove('section-reservee');
+});
+Promise.resolve(window.promesseVedette).catch(() => {}).then(() => libererSectionReservee('mannequin-vedette', true));
+setTimeout(() => libererSectionReservee('mannequin-vedette'), 15000);
+
 
 // --- Mot du fondateur ---
 
@@ -647,7 +668,8 @@ async function chargerMotResponsable() {
 
 }
 
-chargerMotResponsable();
+Promise.resolve(chargerMotResponsable()).catch(() => {}).then(() => libererSectionReservee('mot-responsable', true));
+setTimeout(() => libererSectionReservee('mot-responsable'), 15000);
 
 
 // --- Bandeau "Ils nous ont fait confiance" ---

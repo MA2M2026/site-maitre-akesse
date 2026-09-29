@@ -82,9 +82,17 @@
   // « où » le visiteur était en train d'agir quand le problème est arrivé.
   let dernierClic = null;
 
+  // Robots (aperçus Facebook/WhatsApp, moteurs de recherche, outils d'analyse) : ce ne
+  // sont pas de vrais visiteurs, leurs « erreurs » (polices non chargées, etc.) ne
+  // disent rien de l'état du site. Constaté le 29/09 : « meta-externalagent »
+  // (robot de Facebook) signalait des polices non chargées. On les ignore.
+  // (« bot/ » et non « bot » seul : les téléphones de marque Cubot sont de vrais visiteurs.
+  // navigator.webdriver : navigateur piloté par un programme — y compris nos tests.)
+  const ROBOT = /bot\/|crawler|spider|externalagent|facebookexternalhit|facebot|headless|lighthouse|pagespeed|slurp|preview|bytespider|petalbot|ahrefs|semrush|yandex|baiduspider|duckduck|embedly|iframely|whatsapp\//i.test(navigator.userAgent || '') || navigator.webdriver === true;
+
   function signaler(categorie, message, detail) {
     try {
-      if (!message) return;
+      if (!message || ROBOT) return;
       const texte = ('[' + categorie + '] ' + String(message)).slice(0, 500);
       // Anti-doublon : une même erreur n'est envoyée qu'une fois par session de
       // navigation (elle reste comptée une fois par visiteur concerné).
