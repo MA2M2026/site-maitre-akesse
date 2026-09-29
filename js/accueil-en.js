@@ -198,8 +198,8 @@ window.promesseVedette = chargerMannequinVedette();
 // Place réservée (classe .section-reservee, css/style.css) : libérée dès que le
 // chargement est terminé — bloc affiché, ou masqué s'il n'y a rien à montrer —
 // et au plus tard après 15 s (connexion coupée).
-// Le site mémorise si le bloc était vide la dernière fois : dans ce cas, pas de place
-// réservée (sinon un grand vide apparaîtrait puis disparaîtrait à chaque visite).
+// Le site mémorise si le bloc était vide : à la visite suivante, pas de place réservée
+// (lu tout en haut de index.html, classe html.vide-…).
 function libererSectionReservee(id, chargementTermine) {
   const section = document.getElementById(id);
   if (!section) return;
@@ -207,12 +207,6 @@ function libererSectionReservee(id, chargementTermine) {
   if (!chargementTermine) return;
   try { localStorage.setItem('ma2m_bloc_vide_' + id, section.style.display === 'block' ? '0' : '1'); } catch (e) {}
 }
-['mannequin-vedette', 'mot-responsable'].forEach((id) => {
-  let etaitVide = false;
-  try { etaitVide = localStorage.getItem('ma2m_bloc_vide_' + id) === '1'; } catch (e) {}
-  const section = document.getElementById(id);
-  if (etaitVide && section) section.classList.remove('section-reservee');
-});
 Promise.resolve(window.promesseVedette).catch(() => {}).then(() => libererSectionReservee('mannequin-vedette', true));
 setTimeout(() => libererSectionReservee('mannequin-vedette'), 15000);
 

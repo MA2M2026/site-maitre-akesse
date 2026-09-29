@@ -2260,4 +2260,6 @@ button.btn.journal-copier-tout:hover { background: #93203c !important; }
    de la page ne « saute » pas (signalé le 29/09). js/accueil.js retire la classe dès
    que le chargement est terminé (bloc affiché, ou masqué s'il n'y a rien à montrer). */
 .section-reservee.u-hidden { display: block; }
+html.vide-mannequin-vedette #mannequin-vedette.section-reservee.u-hidden,
+html.vide-mot-responsable #mot-responsable.section-reservee.u-hidden { display: none; }
 .section-reservee > * { visibility: hidden; }
