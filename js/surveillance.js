@@ -15,7 +15,9 @@
 //     l'erreur sans rien afficher ;
 //   - les console.error (le code du site en écrit dans ses « catch ») ;
 //   - les pages très lentes à charger (avec les fichiers les plus lourds) ;
-//   - une bibliothèque indispensable (Supabase) qui ne s'est jamais chargée.
+//   - une bibliothèque indispensable (Supabase) qui ne s'est jamais chargée ;
+//   - une page plus large que l'écran (ce qui permettait de dézoomer et de balayer
+//     l'accueil sur le côté, 28 septembre 2026), avec l'élément responsable.
 // Chaque signalement part dans la table journal_erreurs (section « 🔴 Erreurs
 // réelles du site » du tableau de bord) ET dans Sentry.
 //
@@ -171,6 +173,58 @@
     };
   }
 
+  // --- Page plus large que l'écran ---
+  // Un élément qui dépasse sur le côté (texte trop long, image, bandeau…) permettait
+  // de dézoomer et de balayer la page à gauche et à droite. La protection CSS
+  // (overflow-x: clip dans css/style.css) coupe ce dépassement, mais on veut SAVOIR
+  // quand il se produit pour corriger l'élément en cause : on cherche ici les éléments
+  // visibles qui sortent de l'écran sans être coupés par un de leurs conteneurs, et on
+  // signale le premier trouvé (page + élément + largeur), une fois par session.
+  function decrireElement(el) {
+    let nom = el.tagName.toLowerCase();
+    if (el.id) nom += '#' + el.id;
+    const classes = typeof el.className === 'string' ? el.className.trim().split(/\s+/).slice(0, 2).join('.') : '';
+    if (classes) nom += '.' + classes;
+    const texte = (el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 40);
+    return nom + (texte ? ' « ' + texte + ' »' : '');
+  }
+
+  function estCoupeParUnParent(el, largeur) {
+    for (let p = el.parentElement; p && p !== document.body && p !== document.documentElement; p = p.parentElement) {
+      const cs = getComputedStyle(p);
+      if (cs.position === 'fixed') return true; // un élément fixe ne peut pas élargir la page
+      if (cs.overflowX !== 'visible') {
+        const r = p.getBoundingClientRect();
+        if (r.left >= -2 && r.right <= largeur + 2) return true;
+      }
+    }
+    return false;
+  }
+
+  function verifierDebordement() {
+    try {
+      if (/^\/outils\//.test(location.pathname)) return; // affiches à imprimer, larges par nature
+      const largeur = document.documentElement.clientWidth;
+      if (!largeur) return;
+      const elements = document.body ? document.body.getElementsByTagName('*') : [];
+      for (let i = 0; i < elements.length; i++) {
+        const el = elements[i];
+        const r = el.getBoundingClientRect();
+        if (!r.width || !r.height) continue;
+        if (r.right <= largeur + 2 && r.left >= -2) continue;
+        const cs = getComputedStyle(el);
+        if (cs.position === 'fixed' || cs.visibility === 'hidden' || cs.opacity === '0') continue;
+        if (estCoupeParUnParent(el, largeur)) continue;
+        const depasse = Math.round(Math.max(r.right - largeur, -r.left));
+        signaler('Page plus large que l\'écran',
+          location.pathname + ' : ' + decrireElement(el) + ' dépasse de ' + depasse + ' px',
+          'Écran de ' + largeur + ' px ; élément de ' + Math.round(r.width) + ' px (gauche ' + Math.round(r.left) + ', droite ' + Math.round(r.right) + ')');
+        return;
+      }
+    } catch (e) {}
+  }
+  window.addEventListener('orientationchange', function () { setTimeout(verifierDebordement, 1500); });
+
   // --- Page très lente + bibliothèque indispensable jamais chargée ---
   window.addEventListener('load', function () {
     setTimeout(function () {
@@ -186,6 +240,10 @@
           signaler('Page très lente', 'chargement complet en ' + Math.round(duree / 1000) + ' s', 'Fichiers les plus longs : ' + lourds.join(' ; '));
         }
       } catch (e) {}
+      // Contrôle du débordement une fois les données chargées (actualités, mannequins…),
+      // puis une seconde fois plus tard pour les contenus arrivés en retard.
+      setTimeout(verifierDebordement, 4000);
+      setTimeout(verifierDebordement, 15000);
       // Pages qui chargent supabase-js : s'il n'est toujours pas là, rien ne s'affichera.
       const attendSupabase = !!document.querySelector('script[src*="supabase-js"], script[src*="/supabase.js"]');
       if (attendSupabase && typeof window.supabase === 'undefined') {
