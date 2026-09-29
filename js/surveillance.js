@@ -238,6 +238,11 @@
         if (cs.position === 'fixed' || cs.visibility === 'hidden' || cs.opacity === '0') continue;
         if (estCoupeParUnParent(el, largeur)) continue;
         const depasse = Math.round(Math.max(r.right - largeur, -r.left));
+        // Sur ordinateur, les blocs « plein écran » (largeur 100vw) incluent la barre de
+        // défilement : ils dépassent de quelques pixels, coupés sans effet visible.
+        // Fausses alertes du 29/09 (8 px sur un écran de 1521 px) : on les ignore.
+        const barreDefilement = window.innerWidth - largeur;
+        if (depasse <= barreDefilement + 1) continue;
         signaler('Page plus large que l\'écran',
           location.pathname + ' : ' + decrireElement(el) + ' dépasse de ' + depasse + ' px',
           'Écran de ' + largeur + ' px ; élément de ' + Math.round(r.width) + ' px (gauche ' + Math.round(r.left) + ', droite ' + Math.round(r.right) + ')');
