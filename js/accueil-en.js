@@ -3,6 +3,7 @@
 // at the very start of <body>, see the comment there — so neither the door nor the
 // ability to scroll past it appear for a moment before this end-of-page script runs.)
 document.getElementById('entrer-btn').addEventListener('click', async () => {
+  if (window.jouerSon) window.jouerSon('entree');
   if (window.promesseVedette) {
     try { await Promise.race([window.promesseVedette, new Promise((r) => setTimeout(r, 4000))]); } catch (e) {}
   }

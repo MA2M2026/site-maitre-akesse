@@ -4,6 +4,7 @@
 // HTML — pour éviter qu'elle n'apparaisse, ou reste défilable, un instant avant que ce
 // script, chargé en fin de page, ne s'exécute.)
 document.getElementById('entrer-btn').addEventListener('click', async () => {
+  if (window.jouerSon) window.jouerSon('entree');
   if (window.promesseVedette) {
     try { await Promise.race([window.promesseVedette, new Promise((r) => setTimeout(r, 4000))]); } catch (e) {}
   }
