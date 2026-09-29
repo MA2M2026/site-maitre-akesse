@@ -132,7 +132,7 @@
     if (!zone) return;
     const lignes = MP.lirePanier();
     if (!lignes.length) {
-      zone.innerHTML = '<div class="mp-panier-vide"><p>Votre panier est vide</p><span>Découvrez la collection de la Maison.</span></div>';
+      zone.innerHTML = '<div class="mp-panier-vide">Votre panier est vide. <a href="index.html#collection">Voir la collection</a></div>';
       pied.classList.add('mp-cache');
       return;
     }
@@ -197,7 +197,7 @@
       MP.ecrirePanier(lignes);
     });
     document.getElementById('mp-commander').addEventListener('click', () => {
-      MP.toast('La commande et le paiement arrivent à la prochaine étape de construction.');
+      MP.toast('La commande en ligne sera disponible à la prochaine étape.');
     });
   });
 })();

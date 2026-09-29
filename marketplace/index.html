@@ -6,8 +6,8 @@
 <script src="../js/surveillance.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Maison MA2M — Boutique officielle</title>
-<meta name="description" content="La boutique officielle de Maître Akesse Model Management : pièces signature, accessoires et expériences mode.">
+<title>La Maison MA2M — Maître Akesse Model Management</title>
+<meta name="description" content="La boutique de Maître Akesse Model Management : pièces et accessoires de l’agence, en vente directe depuis Abidjan.">
 <!-- Boutique en construction : invisible des moteurs de recherche tant qu'elle n'est pas ouverte. -->
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -35,7 +35,7 @@
 <div class="menu-overlay" id="menuOverlay">
   <button class="close-menu" id="closeMenuBtn">Fermer ✕</button>
   <ul class="nav-links">
-    <li><a href="index.html">La Boutique</a></li>
+    <li><a href="index.html">La Maison MA2M</a></li>
     <li><a href="../index.html">Accueil de l'agence</a></li>
     <li><a href="../mannequins.html">The Book</a></li>
     <li><a href="../actualites.html">Actualités</a></li>
@@ -45,17 +45,16 @@
 </div>
 
 <div class="mp-apercu mp-cache" id="mp-apercu">
-  <strong>Aperçu privé</strong>
-  <span>La boutique est fermée au public : vous seule la voyez.</span>
-  <a href="gestion.html">Tableau de bord de la boutique</a>
+  <strong>Aperçu administration</strong>
+  <span>La boutique n’est pas encore ouverte au public.</span>
+  <a href="gestion.html">Gestion de la boutique</a>
 </div>
 
 <nav class="mp-nav" aria-label="Boutique">
-  <div class="mp-nav-inner">
-    <a href="index.html" class="mp-marque">Maison <em>MA2M</em></a>
+  <div class="container mp-nav-inner">
+    <a href="index.html" class="mp-marque">La Maison MA2M</a>
     <div class="mp-nav-liens">
       <a href="index.html#collection" class="actif ">Collection</a>
-      <a href="index.html#collection" class="mp-lien-secondaire">Nouveautés</a>
       <a href="gestion.html" class="">Gestion</a>
       <button type="button" class="mp-panier-btn" data-mp-ouvrir-panier>Panier <span class="mp-panier-compte mp-cache" data-mp-compte-panier>0</span></button>
     </div>
@@ -69,13 +68,13 @@
 <div class="mp-voile-panier" id="mp-voile-panier"></div>
 <aside class="mp-panier" id="mp-panier" aria-hidden="true" aria-label="Panier">
   <div class="mp-panier-tete">
-    <h2>Votre panier</h2>
+    <h2>Panier<span class="oeil">.</span></h2>
     <button type="button" class="mp-fermer" id="mp-panier-fermer">Fermer ✕</button>
   </div>
   <div class="mp-panier-lignes" id="mp-panier-lignes"></div>
   <div class="mp-panier-pied mp-cache" id="mp-panier-pied">
     <div class="mp-total"><span>Sous-total</span><b id="mp-panier-total">0 FCFA</b></div>
-    <p class="mp-panier-note">Livraison calculée à l'étape suivante. Paiement par Wave, Orange Money ou MTN.</p>
+    <p class="mp-panier-note">Les frais de livraison s’ajoutent selon votre commune. Paiement par Wave, Orange Money ou MTN Mobile Money.</p>
     <button type="button" class="btn btn--principal" id="mp-commander">Passer commande</button>
   </div>
 </aside>
