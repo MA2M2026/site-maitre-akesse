@@ -2270,3 +2270,10 @@ html.vide-mot-responsable #mot-responsable.section-reservee.u-hidden { display: 
 .header-marketplace-lien { border-color: rgba(213,84,104,0.55); color: var(--titre-clair); }
 @media (max-width: 700px) { .header-marketplace-lien { display: none; } }
 .nav-links .item-marketplace a { color: var(--bordeaux-clair); }
+
+/* Fiche d'un mannequin : tant que la fiche charge (1-2 s), sa place est réservée
+   (hauteur d'un écran) pour que le Book et le bas de page n'apparaissent pas tout en
+   haut avant d'être repoussés d'un coup (« affichage qui saute » signalé le 29/09 au
+   soir, fiche d'Osiris N'Goran). Dès que la fiche s'affiche, le texte « Chargement… »
+   disparaît et la réservation avec lui — aucun script à modifier. */
+#contenu:has(> .fiche-en-chargement) { min-height: calc(100svh - 120px); }

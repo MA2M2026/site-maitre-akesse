@@ -86,13 +86,20 @@
   // sont pas de vrais visiteurs, leurs « erreurs » (polices non chargées, etc.) ne
   // disent rien de l'état du site. Constaté le 29/09 : « meta-externalagent »
   // (robot de Facebook) signalait des polices non chargées. On les ignore.
+  // Ajout du 29/09 au soir : lecture à voix haute de Google (« Google-Read-Aloud »).
   // (« bot/ » et non « bot » seul : les téléphones de marque Cubot sont de vrais visiteurs.
   // navigator.webdriver : navigateur piloté par un programme — y compris nos tests.)
-  const ROBOT = /bot\/|crawler|spider|externalagent|facebookexternalhit|facebot|headless|lighthouse|pagespeed|slurp|preview|bytespider|petalbot|ahrefs|semrush|yandex|baiduspider|duckduck|embedly|iframely|whatsapp\//i.test(navigator.userAgent || '') || navigator.webdriver === true;
+  const ROBOT = /bot\/|crawler|spider|externalagent|read-aloud|googleother|google-inspectiontool|facebookexternalhit|facebot|headless|lighthouse|pagespeed|slurp|preview|bytespider|petalbot|ahrefs|semrush|yandex|baiduspider|duckduck|embedly|iframely|whatsapp\//i.test(navigator.userAgent || '') || navigator.webdriver === true;
+
+  // Copies de test de Vercel (adresses « …vercel.app ») : Vercel y ajoute sa propre
+  // barre d'outils (vercel.live), bloquée par la sécurité du site. Ce ne sont pas des
+  // pages vues par les visiteurs : le journal ne suit que la vraie adresse du site
+  // (constaté le 29/09).
+  const COPIE_DE_TEST = /\.vercel\.app$/i.test(location.hostname || '');
 
   function signaler(categorie, message, detail) {
     try {
-      if (!message || ROBOT) return;
+      if (!message || ROBOT || COPIE_DE_TEST || /vercel\.live/i.test(String(message) + ' ' + (detail || ''))) return;
       const texte = ('[' + categorie + '] ' + String(message)).slice(0, 500);
       // Anti-doublon : une même erreur n'est envoyée qu'une fois par session de
       // navigation (elle reste comptée une fois par visiteur concerné).
