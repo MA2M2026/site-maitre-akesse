@@ -275,8 +275,23 @@ section { padding: 5rem 0; }
 }
 .profil-hero-scrim {
   position: absolute; inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.35) 40%, rgba(0,0,0,0.04) 68%, rgba(0,0,0,0) 82%);
+  /* Dôme d'ombre qui monte du bas : le mannequin semble sortir de l'ombre
+     (demande de la propriétaire, 29 septembre 2026). */
+  background:
+    radial-gradient(ellipse 130% 55% at 50% 100%, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.62) 38%, rgba(0,0,0,0.18) 68%, rgba(0,0,0,0) 85%),
+    linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 45%);
 }
+/* Fond flou tiré de la photo elle-même, visible seulement en mode « plein pied »
+   (photo entière, sans recadrage) : remplit les côtés avec les couleurs de la photo
+   au lieu de bandes noires. */
+.profil-hero-fullbleed { background: #000; }
+.profil-hero-fullbleed img.profil-hero-fond { display: none; }
+.profil-hero-fullbleed.plein-pied img.profil-hero-fond {
+  display: block; object-fit: cover; object-position: center;
+  filter: blur(28px) brightness(0.42) saturate(1.1); transform: scale(1.2);
+}
+.profil-hero-fullbleed.plein-pied img[data-couv-img] { object-fit: contain; }
+.profil-hero-fullbleed.cliquable:hover img.profil-hero-fond { transform: scale(1.2); }
 .profil-hero-contenu { position: absolute; left: 0; right: 0; bottom: 0; padding: clamp(1.6rem, 5vw, 4rem); max-width: 760px; }
 .profil-hero-contenu h1 {
   color: var(--titre-clair); margin-top: 0.6rem;
