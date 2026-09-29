@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-hPERbhp+0TSrR2h0nw66gPKlAFj0Bt88t5WjMqpPTcw='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-tyIljNTuD22ArbE/zFQZMcfwJQC4UsktfEQIwJm8KDw='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -659,7 +659,6 @@ async function chargerProfilInterne() {
   contenu.innerHTML = `
     <div class="reveal">
       <div class="profil-hero-fullbleed profil-hero--avatar${(photos && photos.length) ? ' cliquable' : ''}" id="couverture-clic"${(photos && photos.length) ? ' role="button" tabindex="0" aria-label="Open the photo gallery"' : ''}>
-        <img class="profil-hero-fond" src="${echapperHtml(photoHero)}" alt="" aria-hidden="true">
         <img data-couv-img src="${echapperHtml(photoHero)}" alt="">
         <div class="profil-hero-scrim"></div>
         <div class="profil-hero-contenu">
@@ -740,17 +739,18 @@ async function chargerProfilInterne() {
     if (imgCouverture) {
       const pos = photoCouverture ? photoCouverture.couverture_position : '';
       const positionChoisie = pos === 'top' ? '50% 0%' : pos === 'bottom' ? '50% 100%' : '50% 50%';
-      // « Plein pied » : une photo plus étroite que le cadre (verticale, cas le plus
-      // courant) est affichée ENTIÈRE, posée en bas, sur un fond flou tiré d'elle-même,
-      // au lieu d'être recadrée (la tête était coupée). Une photo plus large que le
-      // cadre garde l'ancien affichage plein cadre, pour ne jamais paraître petite.
+      // Photo plus étroite que le cadre (photo verticale sur tablette/ordinateur) :
+      // elle remplit toute la largeur et on garde son HAUT, pour que la tête ne soit
+      // jamais coupée (seul le bas peut l'être). Essai « photo entière sur fond flou »
+      // retiré à la demande de la propriétaire (29/09/2026) : elle veut sur tablette le
+      // même rendu plein cadre que sur téléphone.
       const cadreCouverture = imgCouverture.parentElement;
       const ajusterCouverture = () => {
         const ratioPhoto = imgCouverture.naturalWidth / imgCouverture.naturalHeight;
         const ratioCadre = cadreCouverture.clientWidth / cadreCouverture.clientHeight;
         const pleinPied = ratioPhoto > 0 && ratioPhoto < ratioCadre;
         cadreCouverture.classList.toggle('plein-pied', pleinPied);
-        imgCouverture.style.objectPosition = pleinPied ? '50% 100%' : positionChoisie;
+        imgCouverture.style.objectPosition = pleinPied ? '50% 0%' : positionChoisie;
       };
       imgCouverture.style.objectPosition = positionChoisie;
       if (imgCouverture.complete && imgCouverture.naturalWidth) ajusterCouverture();
