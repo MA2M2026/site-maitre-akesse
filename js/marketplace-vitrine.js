@@ -30,7 +30,19 @@
   }
 
   // ---------------------------------------------------------------- Vitrine
-  function carteProduit(p) {
+  // Direction artistique (29/09/2026, références choisies par la propriétaire :
+  // FORM, KANTO, GAZU) : nuit profonde, filets de lumière chaude, lignes fines
+  // d'architecte, très grand nom de la Maison avec la pièce à la une devant lui,
+  // bandeau d'univers, bannière éditoriale, sélection animée au défilement.
+  const ICONES = {
+    livraison: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h11v10H3zM14 9h4l3 3v4h-7"/><circle cx="7" cy="17.5" r="1.6"/><circle cx="17.5" cy="17.5" r="1.6"/></svg>',
+    paiement: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2"/><path d="M10 18.5h4M9 8h6M9 11.5h4"/></svg>',
+    maison: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V9l8-5 8 5v11"/><path d="M9.5 20v-6h5v6"/></svg>',
+    suivi: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.5 2"/></svg>'
+  };
+  const FLECHE = '<span class="mp-fleche" aria-hidden="true">→</span>';
+
+  function carteProduit(p, index) {
     const photos = premierePhoto(p);
     const stock = stockTotal(p);
     const prix = MP.prixProduit(p);
@@ -39,11 +51,12 @@
     if (!stock) badges.push('<span class="mp-badge epuise">Épuisé</span>');
     else if (prix.barre != null) badges.push('<span class="mp-badge promo">−' + Math.round(100 - prix.prix * 100 / prix.barre) + ' %</span>');
     else if (nouveau) badges.push('<span class="mp-badge">Nouveau</span>');
-    return '<a class="mp-carte" href="produit.html?p=' + encodeURIComponent(p.slug) + '" data-categorie="' + echapperHtml(p.categorie ? p.categorie.slug : '') + '">' +
+    return '<a class="mp-carte mp-apparait" data-delai="' + (index % 4) + '" href="produit.html?p=' + encodeURIComponent(p.slug) + '">' +
       '<div class="mp-carte-visuel">' +
         (photos[0] ? '<img class="mp-premiere" src="' + echapperHtml(photos[0].url_miniature || photos[0].url) + '" alt="' + echapperHtml(p.nom) + '" loading="lazy">' : '<div class="mp-carte-vide">MA2M</div>') +
         (photos[1] ? '<img class="mp-seconde" src="' + echapperHtml(photos[1].url_miniature || photos[1].url) + '" alt="" loading="lazy">' : '') +
         (badges.length ? '<div class="mp-badges">' + badges.join('') + '</div>' : '') +
+        '<span class="mp-carte-voir">Voir la pièce ' + FLECHE + '</span>' +
       '</div>' +
       '<div class="mp-carte-infos">' +
         (p.categorie ? '<span class="mp-carte-cat">' + echapperHtml(p.categorie.nom) + '</span>' : '') +
@@ -53,36 +66,89 @@
     '</a>';
   }
 
+  // Lettres du grand nom qui montent une à une (le décalage est posé en JS :
+  // la sécurité du site interdit les styles écrits dans le HTML).
+  function lettres(texte) {
+    return texte.split('').map(c => '<span class="mp-lettre">' + (c === ' ' ? '&nbsp;' : echapperHtml(c)) + '</span>').join('');
+  }
+
   function afficherVitrine(catalogue, acces) {
     const { produits, categories } = catalogue;
-    const vedette = produits.find(p => p.mis_en_avant && premierePhoto(p)[0]) || produits.find(p => premierePhoto(p)[0]);
+    const avecPhoto = produits.filter(p => premierePhoto(p)[0]);
+    const vedette = avecPhoto.find(p => p.mis_en_avant) || avecPhoto[0] || null;
     const categoriesUtilisees = categories.filter(c => produits.some(p => p.categorie && p.categorie.slug === c.slug));
-
+    const annee = new Date().getFullYear();
     const photoVedette = vedette ? premierePhoto(vedette)[0] : null;
+    const seconde = vedette && avecPhoto.find(p => p.id !== vedette.id);
+
     principal.innerHTML =
-      '<section class="u-pb-1 mp-entree"><div class="container">' +
-        '<div class="eyebrow">Boutique de l’agence</div>' +
-        '<h1>La Maison MA2M<span class="oeil">.</span></h1>' +
-        '<p class="u-mt-1-2">Révéler le potentiel. Construire l’image. Créer des opportunités. ' +
-          'Les pièces et accessoires de Maître Akesse Model Management, en vente directe depuis Abidjan.</p>' +
-      '</div></section>' +
-      (vedette ?
-        '<a class="vedette-fullbleed mp-vedette" href="produit.html?p=' + encodeURIComponent(vedette.slug) + '">' +
-          '<img src="' + echapperHtml(photoVedette.url) + '" alt="' + echapperHtml(vedette.nom) + '">' +
-          '<div class="vedette-scrim"></div>' +
-          '<div class="vedette-contenu">' +
-            '<span class="vedette-badge">À la une</span>' +
-            '<h2>' + echapperHtml(vedette.nom) + '</h2>' +
-            '<p class="mp-prix">' + MP.htmlPrix(vedette) + '</p>' +
-            '<span class="vedette-cta">Voir la pièce</span>' +
+      // ---- Ouverture
+      '<section class="mp-scene">' +
+        '<div class="mp-scene-lumiere" aria-hidden="true"></div>' +
+        '<div class="mp-scene-trame" aria-hidden="true"></div>' +
+        '<div class="container mp-scene-cadre">' +
+          '<div class="mp-scene-haut mp-monte">' +
+            '<div class="mp-coin mp-coin-haut">La Maison<br>Pièces de l’agence<br>Abidjan<span class="oeil">.</span></div>' +
+            '<div class="mp-coin mp-coin-droite">Collection<br>' + annee + '</div>' +
           '</div>' +
-        '</a>' : '') +
-      '<section id="collection"><div class="container">' +
-        '<div class="eyebrow">La collection</div>' +
-        '<h2 class="u-mt-1">Nos pièces<span class="oeil">.</span></h2>' +
-        '<div class="mp-outils u-mt-1-8">' +
-          (categoriesUtilisees.length > 1 ? '<div class="filtres" id="mp-filtres"><button type="button" class="filtre-btn actif" data-filtre="">Tout</button>' +
-            categoriesUtilisees.map(c => '<button type="button" class="filtre-btn" data-filtre="' + echapperHtml(c.slug) + '">' + echapperHtml(c.nom) + '</button>').join('') + '</div>' : '<div id="mp-filtres"></div>') +
+          '<div class="mp-scene-centre">' +
+          '<div class="mp-nom-geant" aria-label="La Maison MA2M">' +
+            '<span class="mp-nom-grand" id="mp-nom-grand" aria-hidden="true">' + lettres('MA2M') + '</span>' +
+          '</div>' +
+          (photoVedette ?
+            '<a class="mp-piece-une" href="produit.html?p=' + encodeURIComponent(vedette.slug) + '">' +
+              '<span class="mp-piece-une-cadre"><img id="mp-piece-une-img" src="' + echapperHtml(photoVedette.url) + '" alt="' + echapperHtml(vedette.nom) + '"></span>' +
+              '<span class="mp-piece-une-legende"><span>À la une</span><strong>' + echapperHtml(vedette.nom) + '</strong><span class="mp-prix">' + MP.htmlPrix(vedette) + '</span></span>' +
+            '</a>' : '') +
+          '</div>' +
+          '<div class="mp-scene-bas mp-monte">' +
+            '<p class="mp-devise">Révéler le potentiel. Construire l’image. Créer des opportunités.</p>' +
+            '<div class="mp-scene-actions">' +
+              '<a class="btn btn--principal mp-btn-prestige" href="#collection"><span>Découvrir la collection</span>' + FLECHE + '</a>' +
+              (vedette ? '<a class="mp-lien-souligne" href="produit.html?p=' + encodeURIComponent(vedette.slug) + '">La pièce à la une</a>' : '') +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="mp-defiler" aria-hidden="true"><span></span>Défiler</div>' +
+      '</section>' +
+      // ---- Bandeau défilant (même bandeau que l'accueil du site)
+      '<div class="marquee-bande mp-bande" aria-hidden="true"><div class="marquee-viewport"><div class="marquee-piste">' +
+        ('<span>La Maison MA2M</span><span>✦</span><span>Pièces de l’agence</span><span>✦</span><span>Abidjan</span><span>✦</span><span>Collection ' + annee + '</span><span>✦</span>').repeat(4) +
+      '</div></div></div>' +
+      // ---- Univers (catégories)
+      (categoriesUtilisees.length ?
+        '<section class="mp-univers"><div class="container">' +
+          '<div class="mp-univers-grille">' + categoriesUtilisees.map((c, i) => {
+            const p = avecPhoto.find(x => x.categorie && x.categorie.slug === c.slug);
+            const nb = produits.filter(x => x.categorie && x.categorie.slug === c.slug).length;
+            return '<a class="mp-univers-carte mp-apparait" data-delai="' + (i % 4) + '" href="#collection" data-aller-filtre="' + echapperHtml(c.slug) + '">' +
+              '<span class="mp-univers-photo">' + (p ? '<img src="' + echapperHtml(premierePhoto(p)[0].url_miniature || premierePhoto(p)[0].url) + '" alt="" loading="lazy">' : '') + '</span>' +
+              '<span class="mp-univers-texte"><strong>' + echapperHtml(c.nom) + '</strong><span>' + nb + ' pièce' + (nb > 1 ? 's' : '') + '</span>' +
+              '<span class="mp-univers-lien">Voir ' + FLECHE + '</span></span></a>';
+          }).join('') + '</div>' +
+        '</div></section>' : '') +
+      // ---- Bannière éditoriale
+      (seconde ?
+        '<section class="mp-banniere">' +
+          '<div class="mp-banniere-texte mp-apparait">' +
+            '<div class="eyebrow">Sélection de la Maison</div>' +
+            '<h2 class="mp-banniere-titre">' + echapperHtml(seconde.nom) + '<span class="oeil">.</span></h2>' +
+            '<p class="mp-prix">' + MP.htmlPrix(seconde) + '</p>' +
+            '<a class="btn mp-btn-contour" href="produit.html?p=' + encodeURIComponent(seconde.slug) + '"><span>Voir la pièce</span>' + FLECHE + '</a>' +
+          '</div>' +
+          '<a class="mp-banniere-image" href="produit.html?p=' + encodeURIComponent(seconde.slug) + '"><img src="' + echapperHtml(premierePhoto(seconde)[0].url) + '" alt="' + echapperHtml(seconde.nom) + '" loading="lazy"></a>' +
+        '</section>' : '') +
+      // ---- Engagements
+      '<section class="mp-engagements"><div class="container"><ul>' +
+        '<li class="mp-apparait" data-delai="0">' + ICONES.livraison + '<span><strong>Livraison à domicile</strong>Abidjan et reste du pays</span></li>' +
+        '<li class="mp-apparait" data-delai="1">' + ICONES.paiement + '<span><strong>Paiement mobile</strong>Wave, Orange Money, MTN</span></li>' +
+        '<li class="mp-apparait" data-delai="2">' + ICONES.maison + '<span><strong>Pièces de l’agence</strong>Choisies par Maître Akesse</span></li>' +
+        '<li class="mp-apparait" data-delai="3">' + ICONES.suivi + '<span><strong>Suivi de commande</strong>À chaque étape</span></li>' +
+      '</ul></div></section>' +
+      // ---- Collection
+      '<section id="collection" class="mp-collection"><div class="container">' +
+        '<div class="mp-collection-tete">' +
+          '<div><div class="eyebrow">La collection</div><h2 class="u-mt-1">Nos pièces<span class="oeil">.</span></h2></div>' +
           '<div class="form-champ mp-tri"><label for="mp-tri">Trier</label><select id="mp-tri">' +
             '<option value="">Ordre de la Maison</option>' +
             '<option value="prix-asc">Prix croissant</option>' +
@@ -90,9 +156,20 @@
             '<option value="recent">Les plus récentes</option>' +
           '</select></div>' +
         '</div>' +
+        (categoriesUtilisees.length > 1 ? '<div class="filtres" id="mp-filtres"><button type="button" class="filtre-btn actif" data-filtre="">Tout</button>' +
+          categoriesUtilisees.map(c => '<button type="button" class="filtre-btn" data-filtre="' + echapperHtml(c.slug) + '">' + echapperHtml(c.nom) + '</button>').join('') + '</div>' : '<div id="mp-filtres"></div>') +
         '<div id="mp-grille-zone"></div>' +
-        '<p class="mp-pratique">Livraison à domicile à Abidjan et dans le reste du pays. Paiement par Wave, Orange Money ou MTN Mobile Money.</p>' +
+      '</div></section>' +
+      // ---- Mot de la Maison
+      '<section class="mp-manifeste"><div class="container mp-apparait">' +
+        '<div class="mp-ornement" aria-hidden="true"><span></span><i></i><span></span></div>' +
+        '<blockquote>Chaque grand parcours commence par un rêve. Le nôtre commence à Abidjan.</blockquote>' +
+        '<cite>Maître Akesse Model Management</cite>' +
       '</div></section>';
+
+    // Lettres du grand nom : décalage d'apparition.
+    document.querySelectorAll('#mp-nom-grand .mp-lettre').forEach((l, i) => l.style.setProperty('--i', i));
+    requestAnimationFrame(() => principal.querySelector('.mp-scene').classList.add('mp-scene-prete'));
 
     let filtre = '';
     let tri = '';
@@ -103,22 +180,47 @@
       if (tri === 'prix-desc') liste = liste.slice().sort((a, b) => MP.prixProduit(b).prix - MP.prixProduit(a).prix);
       if (tri === 'recent') liste = liste.slice().sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
       if (!produits.length) {
-        zone.innerHTML = '<div class="mannequins-vide">Aucune pièce en vente pour le moment.' +
-          (acces.admin ? ' <a href="gestion.html">Ajouter un produit dans la gestion de la boutique.</a>' : '') + '</div>';
-        return;
+        zone.innerHTML = '<div class="mp-attente mp-apparait"><div class="mp-ornement" aria-hidden="true"><span></span><i></i><span></span></div>' +
+          '<p>La première collection de la Maison sera bientôt présentée ici.</p>' +
+          (acces.admin ? '<a class="btn btn--principal mp-btn-prestige" href="gestion.html"><span>Ajouter une pièce</span>' + FLECHE + '</a>' : '') + '</div>';
+      } else {
+        zone.innerHTML = '<div class="mp-grille">' + liste.map(carteProduit).join('') + '</div>';
       }
-      zone.innerHTML = '<div class="mp-grille">' + liste.map(carteProduit).join('') + '</div>';
+      MP.observerApparitions(zone);
     }
     rendreGrille();
+    MP.observerApparitions(principal);
+
     const barreFiltres = document.getElementById('mp-filtres');
+    function choisirFiltre(valeur) {
+      filtre = valeur;
+      barreFiltres.querySelectorAll('[data-filtre]').forEach(b => b.classList.toggle('actif', b.dataset.filtre === valeur));
+      rendreGrille();
+    }
     barreFiltres.addEventListener('click', e => {
       const bouton = e.target.closest('[data-filtre]');
-      if (!bouton) return;
-      filtre = bouton.dataset.filtre;
-      barreFiltres.querySelectorAll('[data-filtre]').forEach(b => b.classList.toggle('actif', b === bouton));
-      rendreGrille();
+      if (bouton) choisirFiltre(bouton.dataset.filtre);
     });
+    principal.querySelectorAll('[data-aller-filtre]').forEach(a => a.addEventListener('click', () => choisirFiltre(a.dataset.allerFiltre)));
     document.getElementById('mp-tri').addEventListener('change', e => { tri = e.target.value; rendreGrille(); });
+
+    // Profondeur : le grand nom et la pièce à la une glissent à des vitesses différentes.
+    const reduit = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const nom = document.getElementById('mp-nom-grand');
+    const image = document.getElementById('mp-piece-une-img');
+    if (!reduit && (nom || image)) {
+      let attente = false;
+      window.addEventListener('scroll', () => {
+        if (attente) return;
+        attente = true;
+        requestAnimationFrame(() => {
+          const y = Math.min(window.scrollY, 900);
+          if (nom) nom.style.transform = 'translate3d(0,' + (y * 0.18) + 'px,0)';
+          if (image) image.style.transform = 'translate3d(0,' + (y * -0.06) + 'px,0) scale(1.08)';
+          attente = false;
+        });
+      }, { passive: true });
+    }
   }
 
   // ---------------------------------------------------------------- Fiche produit
@@ -137,12 +239,16 @@
       '<div class="mp-fiche">' +
         '<div>' +
           '<div class="fil-ariane"><a href="index.html">La Maison MA2M</a><span>/</span>' + (produit.categorie ? '<a href="index.html#collection">' + echapperHtml(produit.categorie.nom) + '</a><span>/</span>' : '') + echapperHtml(produit.nom) + '</div>' +
+          // Galerie façon maison de couture : les photos les unes sous les autres sur
+          // ordinateur, à faire glisser du doigt sur téléphone (avec repères).
           '<div class="mp-galerie">' +
-            '<div class="mp-galerie-principale" id="mp-galerie-principale">' +
-              (photos[0] ? '<img id="mp-photo-principale" src="' + echapperHtml(photos[0].url) + '" alt="' + echapperHtml(produit.nom) + '">' : '<div class="mp-carte-vide">MA2M</div>') +
+            '<div class="mp-galerie-piste" id="mp-galerie-piste">' +
+              (photos.length ? photos.map((ph, i) =>
+                '<button type="button" class="mp-galerie-vue" data-index="' + i + '" aria-label="Agrandir la photo ' + (i + 1) + '">' +
+                  '<img src="' + echapperHtml(ph.url) + '" alt="' + (i === 0 ? echapperHtml(produit.nom) : '') + '"' + (i > 1 ? ' loading="lazy"' : '') + '></button>').join('')
+                : '<div class="mp-galerie-vue"><div class="mp-carte-vide">MA2M</div></div>') +
             '</div>' +
-            (photos.length > 1 ? '<div class="mp-miniatures" id="mp-miniatures">' + photos.map((ph, i) =>
-              '<button type="button" class="mp-miniature' + (i === 0 ? ' actif' : '') + '" data-index="' + i + '" aria-label="Photo ' + (i + 1) + '"><img src="' + echapperHtml(ph.url_miniature || ph.url) + '" alt=""></button>').join('') + '</div>' : '') +
+            (photos.length > 1 ? '<div class="mp-galerie-points" id="mp-galerie-points">' + photos.map((ph, i) => '<span' + (i === 0 ? ' class="actif"' : '') + '></span>').join('') + '</div>' : '') +
           '</div>' +
         '</div>' +
         '<div class="mp-infos">' +
@@ -156,7 +262,7 @@
           '<div class="mp-stock" id="mp-stock"></div>' +
           '<div class="mp-achat">' +
             '<div class="mp-quantite"><button type="button" id="mp-qte-moins" aria-label="Moins">−</button><span id="mp-qte">1</span><button type="button" id="mp-qte-plus" aria-label="Plus">+</button></div>' +
-            '<button type="button" class="btn btn--principal" id="mp-ajouter">Ajouter au panier</button>' +
+            '<button type="button" class="btn btn--principal mp-btn-prestige" id="mp-ajouter"><span>Ajouter au panier</span><span class="mp-fleche" aria-hidden="true">→</span></button>' +
           '</div>' +
           '<div class="mp-accordeon">' +
             (description ? '<details open><summary>Description</summary><div class="mp-texte contenu-riche" id="mp-description"></div></details>' : '') +
@@ -170,21 +276,17 @@
     // rendreContenuRiche (js/app.js) renvoie un HTML déjà nettoyé par DOMPurify.
     if (description) document.getElementById('mp-description').innerHTML = description;
 
-    // Galerie
-    const principale = document.getElementById('mp-photo-principale');
-    const miniatures = document.getElementById('mp-miniatures');
-    if (miniatures) miniatures.addEventListener('click', e => {
-      const b = e.target.closest('[data-index]');
-      if (!b) return;
-      principale.src = photos[+b.dataset.index].url;
-      miniatures.querySelectorAll('.mp-miniature').forEach(m => m.classList.toggle('actif', m === b));
+    // Galerie : agrandissement plein écran, repères qui suivent le glissement.
+    const piste = document.getElementById('mp-galerie-piste');
+    piste.addEventListener('click', e => {
+      const vue = e.target.closest('[data-index]');
+      if (vue && photos.length && typeof ouvrirGalerieLightbox === 'function') ouvrirGalerieLightbox(photos.map(ph => ph.url), +vue.dataset.index);
     });
-    if (principale && typeof ouvrirGalerieLightbox === 'function') {
-      document.getElementById('mp-galerie-principale').addEventListener('click', () => {
-        const actuelle = photos.findIndex(ph => ph.url === principale.getAttribute('src'));
-        ouvrirGalerieLightbox(photos.map(ph => ph.url), Math.max(0, actuelle));
-      });
-    }
+    const points = document.getElementById('mp-galerie-points');
+    if (points) piste.addEventListener('scroll', () => {
+      const i = Math.round(piste.scrollLeft / Math.max(1, piste.clientWidth));
+      points.querySelectorAll('span').forEach((p, n) => p.classList.toggle('actif', n === i));
+    }, { passive: true });
 
     function varianteChoisie() {
       return variantes.find(v => (!tailles.length || v.taille === tailleChoisie) && (!couleurs.length || v.couleur === couleurChoisie)) || null;
@@ -247,7 +349,11 @@
         quantite: quantite
       });
       if (window.jouerSon) window.jouerSon('coeur');
-      MP.ouvrirPanier();
+      const bouton = document.getElementById('mp-ajouter');
+      bouton.classList.add('mp-ajoute');
+      bouton.querySelector('span').textContent = 'Ajoutée au panier';
+      setTimeout(() => { bouton.classList.remove('mp-ajoute'); bouton.querySelector('span').textContent = 'Ajouter au panier'; }, 1800);
+      setTimeout(MP.ouvrirPanier, 450);
     });
     majEtat();
   }

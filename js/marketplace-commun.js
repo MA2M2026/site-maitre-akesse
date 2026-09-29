@@ -116,8 +116,32 @@
     if (existante) existante.quantite = Math.min(20, existante.quantite + ligne.quantite);
     else lignes.push(ligne);
     MP.ecrirePanier(lignes);
+    MP.majCompteurPanier(true);
   };
-  MP.majCompteurPanier = function () {
+  // Apparition douce des blocs au défilement (.mp-apparait → .mp-vu), avec un léger
+  // décalage entre voisins (data-delai 0 à 3). Le site a son propre effet « reveal »,
+  // mais il n'observe que ce qui existe au chargement ; la boutique, elle, construit
+  // sa page après coup.
+  MP.observerApparitions = function (racine) {
+    const elements = Array.from((racine || document).querySelectorAll('.mp-apparait:not(.mp-vu)'));
+    elements.forEach(el => el.style.setProperty('--d', +el.dataset.delai || 0));
+    if (!('IntersectionObserver' in window)) { elements.forEach(el => el.classList.add('mp-vu')); return; }
+    if (!MP._observateur) {
+      MP._observateur = new IntersectionObserver(entrees => entrees.forEach(en => {
+        if (!en.isIntersecting) return;
+        en.target.classList.add('mp-vu');
+        MP._observateur.unobserve(en.target);
+      }), { rootMargin: '0px 0px -6% 0px', threshold: 0.06 });
+    }
+    elements.forEach(el => MP._observateur.observe(el));
+  };
+
+  MP.majCompteurPanier = function (secouer) {
+    if (secouer) document.querySelectorAll('[data-mp-compte-panier]').forEach(el => {
+      el.classList.remove('mp-secousse');
+      void el.offsetWidth;
+      el.classList.add('mp-secousse');
+    });
     const n = MP.lirePanier().reduce((s, l) => s + l.quantite, 0);
     document.querySelectorAll('[data-mp-compte-panier]').forEach(el => {
       el.textContent = n;
