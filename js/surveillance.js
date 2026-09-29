@@ -135,8 +135,12 @@
   // (scripts « iabjs:// », pont Java d'Android « Java object is gone »), extensions
   // de navigateur. Leurs erreurs ne disent rien de l'état du site — les ignorer
   // (constaté dans le journal le 28 septembre 2026).
+  // Ajout du 29/09 : programmes que certains navigateurs injectent eux-mêmes dans
+  // chaque page — Brave/Firefox sur iPhone (« __firefox__ »), Chrome sur iPhone
+  // (« __gCrWeb »), portefeuilles de cryptomonnaie (« ethereum »). Aucun de ces mots
+  // n'existe dans le code du site : une vraie erreur du site n'est jamais écartée.
   function codeEtranger(texte) {
-    return /iabjs:\/\/|Java object is gone|chrome-extension:\/\/|moz-extension:\/\/|safari-(web-)?extension:\/\//i.test(texte || '');
+    return /iabjs:\/\/|Java object is gone|chrome-extension:\/\/|moz-extension:\/\/|safari-(web-)?extension:\/\/|__firefox__|__gCrWeb|\bethereum\b/i.test(texte || '');
   }
 
   // --- Erreurs JavaScript + fichiers (images, scripts, styles) qui ne chargent pas ---
@@ -168,6 +172,10 @@
       signaler(type, nomCourt(url), url);
       return;
     }
+    // « Script error. » sans aucun détail : le navigateur masque ainsi les erreurs du
+    // code venant d'un AUTRE site (Google, extensions…). Tout le code du site est
+    // hébergé chez nous : ses erreurs arrivent toujours avec message, fichier et ligne.
+    if (/^Script error\.?$/i.test(e.message || '') && !e.filename && !e.error) return;
     const pileJs = (e.error && e.error.stack) || (e.filename ? e.filename + ':' + e.lineno : '');
     if (codeEtranger(pileJs + ' ' + (e.filename || '') + ' ' + (e.message || ''))) return;
     signaler('Erreur JavaScript', e.message || 'Erreur inconnue', pileJs);

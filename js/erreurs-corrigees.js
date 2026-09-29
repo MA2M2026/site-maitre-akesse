@@ -17,5 +17,8 @@ window.MA2M_ERREURS_CORRIGEES = [
   { motif: 'footer.site-footer', corrige_le: '2026-09-29T15:52:23Z', note: 'Actualités / Événements : place du bloc « À la une » réservée pendant le chargement, le bas de page ne saute plus' },
   { motif: 'meta-externalagent', corrige_le: '2026-09-29T16:26:11Z', note: 'Robot de Facebook (aperçus de liens) : les robots sont désormais ignorés par le journal' },
   { motif: 'section#mot-responsable', corrige_le: '2026-09-29T16:26:11Z', note: 'Accueil : place réservée pour « Mot de Maître Akesse » pendant le chargement' },
-  { motif: '« 02 — La vision', corrige_le: '2026-09-29T16:26:11Z', note: 'Accueil : place réservée pour « Mannequin à la une » pendant le chargement' }
+  { motif: '« 02 — La vision', corrige_le: '2026-09-29T16:26:11Z', note: 'Accueil : place réservée pour « Mannequin à la une » pendant le chargement' },
+  { motif: '__firefox__', corrige_le: '2026-09-29T16:37:12Z', note: 'Programmes injectés par le navigateur Brave (iPhone) : ignorés par le journal' },
+  { motif: 'window.ethereum', corrige_le: '2026-09-29T16:37:12Z', note: 'Portefeuille de cryptomonnaie injecté par le navigateur : ignoré par le journal' },
+  { motif: '[Erreur JavaScript] Script error.', corrige_le: '2026-09-29T16:37:12Z', note: 'Message vide du navigateur pour du code venant d’un autre site : ignoré par le journal' }
 ];
