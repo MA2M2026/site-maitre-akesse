@@ -1220,6 +1220,11 @@ section { padding: 5rem 0; }
 
 .medaillon-carte {
   position: relative;
+  /* min-width: 0 + colonnes « minmax(0, 1fr) » : sans cela, une photo encore en
+     chargement (largeur naturelle de l'image) élargissait la colonne au-delà de
+     l'écran — la page d'accueil devenait deux fois plus large que le téléphone et se
+     laissait dézoomer/balayer sur le côté (28-29 septembre 2026). */
+  min-width: 0;
   display: flex; flex-direction: column; align-items: center;
   text-align: center;
   /* Le Book (mannequins.html) peut afficher des dizaines de cartes d'un coup,
@@ -1300,6 +1305,10 @@ section { padding: 5rem 0; }
   gap: 1.8rem 1.3rem;
   justify-items: center;
 }
+/* La carte prend toute la largeur de sa colonne : centrée sans largeur fixée, elle
+   prenait la largeur d'origine de la photo pendant son chargement (jusqu'à deux fois
+   l'écran d'un téléphone). */
+#medaillons-accueil .medaillon-carte { width: 100%; }
 #medaillons-accueil .medaillon-photo {
   aspect-ratio: 1 / 1;
   width: 100%;
@@ -1308,12 +1317,12 @@ section { padding: 5rem 0; }
 }
 
 @media (max-width: 640px) {
-  #medaillons-accueil.medaillon-grille { grid-template-columns: repeat(2, 1fr); gap: 1.6rem 1rem; }
+  #medaillons-accueil.medaillon-grille { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.6rem 1rem; }
   #medaillons-accueil .medaillon-photo { max-width: 100%; }
 }
 
 @media (max-width: 640px) {
-  .medaillon-grille { grid-template-columns: repeat(2, 1fr); gap: 2rem 0.9rem; }
+  .medaillon-grille { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem 0.9rem; }
   .medaillon-nom { font-size: 0.92rem; margin-top: 0.7rem; }
   .medaillon-info { font-size: 0.58rem; margin-top: 0.25rem; }
   .medaillon-carte .btn-selection { top: 0.4rem; right: 0.4rem; padding: 0.3rem 0.6rem; font-size: 0.56rem; }
@@ -1355,12 +1364,12 @@ section { padding: 5rem 0; }
 #grille .medaillon-carte .btn-selection:hover { background: var(--bordeaux); border-color: var(--bordeaux); color: #fff; }
 
 @media (max-width: 640px) {
-  #grille.medaillon-grille { grid-template-columns: repeat(2, 1fr); gap: 3px; }
+  #grille.medaillon-grille { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3px; }
   .book-carte-legende { padding: 1.4rem 0.6rem 0.6rem; }
 }
 
 @media (max-width: 400px) {
-  .medaillon-grille { grid-template-columns: repeat(2, 1fr); gap: 1.8rem 0.8rem; }
+  .medaillon-grille { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.8rem 0.8rem; }
 }
 
 /* ---------- Porte d'entrée (hero verrouillé) ---------- */
@@ -1496,7 +1505,7 @@ html.porte-verrouillee { overflow: hidden; height: 100%; }
 .news-lire { display: inline-block; margin-top: 0.6rem; font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--bordeaux-clair); font-weight: 500; border-bottom: 1px solid var(--bordeaux-clair); padding-bottom: 2px; }
 
 @media (min-width: 640px) {
-  .news-grille { grid-template-columns: repeat(2, 1fr); gap: 1rem 2.4rem; }
+  .news-grille { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem 2.4rem; }
   .news-carte { flex-direction: column; text-align: center; border-bottom: none; padding: 1.6rem 0; }
   .news-img { width: 170px; height: 170px; margin: 0 auto; }
   .news-corps .news-extrait { -webkit-line-clamp: 3; }
