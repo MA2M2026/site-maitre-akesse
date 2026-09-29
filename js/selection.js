@@ -22,6 +22,7 @@ function ajouterSelection(mannequin) {
   if (liste.some(m => m.id === mannequin.id)) return;
   liste.push(mannequin);
   sauvegarderSelection(liste);
+  if (window.jouerSon) window.jouerSon('coeur');
 }
 
 function retirerSelection(id) {

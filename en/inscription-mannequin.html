@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-0in1gFkCnvC2KRmaj8jjUaKktLxvkyQ9hbcLpP0w/9I='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-tFcy5AGgtBPoC5kXJZsbtpg3iMcSamS5C0fbatbaxhs='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-D8J8r2Yn7wRPCcbyJbrJwew1umHRUeogds/vSSIo6HY='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-tFcy5AGgtBPoC5kXJZsbtpg3iMcSamS5C0fbatbaxhs='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -568,6 +568,7 @@ document.getElementById('form-inscription').addEventListener('submit', async (e)
   }
   journaliserPhotosEchouees('inscription', idInscription, nbPhotosEchouees);
 
+  if (window.jouerSon) window.jouerSon('envoi');
   msg.className = 'form-msg ok';
   msg.textContent = nbPhotosEchouees
     ? `Application sent successfully! (${nbPhotosEchouees} photo${nbPhotosEchouees > 1 ? 's could' : ' could'} not be sent — contact the agency to send ${nbPhotosEchouees > 1 ? 'them' : 'it'} another way.)`

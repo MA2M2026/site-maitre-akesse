@@ -1663,9 +1663,68 @@ window.jouerSon = function (nom) {
       gain.gain.exponentialRampToValueAtTime(0.0001, t + 1.8);
       souffle.connect(filtre); filtre.connect(gain); gain.connect(sortie);
       souffle.start(t); souffle.stop(t + 2);
+    } else if (nom === 'menu') {
+      // Souffle d'étoffe court, de la même famille que « Rideau » (≈ 0,4 s).
+      const taille = Math.floor(ctx.sampleRate * 0.5);
+      const tampon = ctx.createBuffer(1, taille, ctx.sampleRate);
+      const donnees = tampon.getChannelData(0);
+      for (let i = 0; i < taille; i++) donnees[i] = Math.random() * 2 - 1;
+      const souffle = ctx.createBufferSource();
+      souffle.buffer = tampon;
+      const filtre = ctx.createBiquadFilter();
+      filtre.type = 'bandpass';
+      filtre.Q.value = 1;
+      filtre.frequency.setValueAtTime(700, t);
+      filtre.frequency.exponentialRampToValueAtTime(2600, t + 0.35);
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.exponentialRampToValueAtTime(0.22, t + 0.1);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.4);
+      souffle.connect(filtre); filtre.connect(gain); gain.connect(sortie);
+      souffle.start(t); souffle.stop(t + 0.45);
+    } else if (nom === 'coeur') {
+      // Petite note cristalline (mi aigu + son harmonique), ≈ 0,3 s.
+      [[1318.5, 0.05, 0.35], [2637, 0.012, 0.2]].forEach(([frequence, volume, duree]) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = frequence;
+        gain.gain.setValueAtTime(0.0001, t);
+        gain.gain.exponentialRampToValueAtTime(volume, t + 0.006);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + duree);
+        osc.connect(gain); gain.connect(sortie);
+        osc.start(t); osc.stop(t + duree + 0.05);
+      });
+    } else if (nom === 'envoi') {
+      // « Bien reçu » : deux notes douces qui montent (sol puis do), ≈ 0,6 s.
+      [[783.99, 0], [1046.5, 0.15]].forEach(([frequence, decalage]) => {
+        const debut = t + decalage;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.value = frequence;
+        gain.gain.setValueAtTime(0.0001, debut);
+        gain.gain.exponentialRampToValueAtTime(0.06, debut + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, debut + 0.45);
+        osc.connect(gain); gain.connect(sortie);
+        osc.start(debut); osc.stop(debut + 0.5);
+      });
     }
   } catch (e) {}
 };
+
+// Sur iPhone/iPad, le son n'est autorisé que s'il est « réveillé » pendant un geste
+// du visiteur. Les formulaires jouent leur son après l'envoi (donc après ce geste) :
+// on réveille le lecteur audio dès le clic sur « Envoyer », sans rien jouer.
+document.addEventListener('submit', () => {
+  try {
+    if (localStorage.getItem('ma2m_son_coupe') === '1') return;
+    const Contexte = window.AudioContext || window.webkitAudioContext;
+    if (!Contexte) return;
+    const ctx = window.__ma2mAudio || (window.__ma2mAudio = new Contexte());
+    if (ctx.state === 'suspended') ctx.resume();
+  } catch (e) {}
+}, true);
 
 // Pastille WhatsApp flottante, injectée sur toutes les pages
 document.addEventListener('DOMContentLoaded', () => {

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-IVZJzkD0e14U5YiCYMFWx9AbYdddwiuyyzCqVyTCZ9A='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-OTfHT1lrDEpPzNsdPp4OjhDqKTSZ5t8SQEpw+9+WoV4=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-WtLLJ4kNd6YxLRu70NeqxvPO4eonPpVJQkEgOzpX/Eo='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-OTfHT1lrDEpPzNsdPp4OjhDqKTSZ5t8SQEpw+9+WoV4=';">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -287,6 +287,7 @@ document.getElementById('form-contact').addEventListener('submit', async functio
     message: (ville ? `City: ${ville}\n\n` : '') + message
   });
 
+  if (window.jouerSon) window.jouerSon('envoi');
   msg.className = 'form-msg ok';
   msg.textContent = 'Message sent! We will get back to you shortly.';
   e.target.reset();

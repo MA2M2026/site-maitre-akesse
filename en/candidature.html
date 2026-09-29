@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-qHNtu1qgcdPpbu8VKIVjiC6Rp+laFYXHFP6Cu7G1l1s='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-wY5HlBWQW7uoDVNPS6YVpI0janGrwB1+YtjhfMQ8c4Q='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-/+KbfeXVW+VIQrOprKwovBFIsfB0rX6A03kNaEbokXM='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-wY5HlBWQW7uoDVNPS6YVpI0janGrwB1+YtjhfMQ8c4Q='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -612,6 +612,7 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
     message: `New casting application.\nApplying for: ${libelleType}\nCity: ${candidature.city || '-'}\nHeight: ${candidature.height_cm || '-'} cm\nMessage: ${candidature.message || '-'}${mineur ? `\n⚠️ MINOR — Parent/guardian: ${candidature.parent_nom || '-'} — ${candidature.parent_telephone || '-'}` : ''}`
   });
 
+  if (window.jouerSon) window.jouerSon('envoi');
   afficherMsg(msg, nbPhotosEchouees
     ? `Application sent, but ${nbPhotosEchouees} photo${nbPhotosEchouees > 1 ? 's could' : ' could'} not be uploaded (unstable connection?). The rest of your application is saved.`
     : 'Thank you! Your application has been sent. Our team will contact you if your profile is selected.', 'ok');

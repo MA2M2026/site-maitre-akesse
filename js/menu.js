@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let menuEstOuvert = false;
   function ouvrirMenu() {
     overlay.classList.add('active');
+    if (window.jouerSon) window.jouerSon('menu');
     menuEstOuvert = true;
     window.verrouillerDefilement();
   }
