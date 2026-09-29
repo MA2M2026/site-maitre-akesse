@@ -6,8 +6,8 @@
 <script src="/js/surveillance.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>La Maison MA2M — Maître Akesse Model Management</title>
-<meta name="description" content="Une pièce de La Maison MA2M, la boutique de Maître Akesse Model Management.">
+<title>Suivre ma commande — La Maison MA2M</title>
+<meta name="description" content="Paiement et suivi de votre commande à La Maison MA2M.">
 <!-- Boutique en construction : invisible des moteurs de recherche tant qu'elle n'est pas ouverte. -->
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -55,8 +55,8 @@
   <div class="container mp-nav-inner">
     <a href="/marketplace/" class="mp-marque">La Maison MA2M</a>
     <div class="mp-nav-liens">
-      <a href="/marketplace/#collection" class="actif">Collection</a>
-      <a href="/marketplace/suivi">Suivi</a>
+      <a href="/marketplace/#collection">Collection</a>
+      <a href="/marketplace/suivi" class="actif">Suivi</a>
       <a href="/marketplace/gestion" class="mp-lien-admin mp-cache">Gestion</a>
       <button type="button" class="mp-panier-btn" data-mp-ouvrir-panier>Panier <span class="mp-panier-compte mp-cache" data-mp-compte-panier>0</span></button>
     </div>
@@ -66,20 +66,6 @@
 <main id="mp-principal" class="container">
   <div class="mp-chargement"><span></span></div>
 </main>
-
-<div class="mp-voile-panier" id="mp-voile-panier"></div>
-<aside class="mp-panier" id="mp-panier" aria-hidden="true" aria-label="Panier">
-  <div class="mp-panier-tete">
-    <h2>Panier<span class="oeil">.</span></h2>
-    <button type="button" class="mp-fermer" id="mp-panier-fermer">Fermer ✕</button>
-  </div>
-  <div class="mp-panier-lignes" id="mp-panier-lignes"></div>
-  <div class="mp-panier-pied mp-cache" id="mp-panier-pied">
-    <div class="mp-total"><span>Sous-total</span><b id="mp-panier-total">0 FCFA</b></div>
-    <p class="mp-panier-note" id="mp-panier-note">Paiement par Wave, Orange Money ou MTN Mobile Money.</p>
-    <a class="btn btn--principal" href="/marketplace/commande" id="mp-commander">Passer commande <span class="mp-fleche" aria-hidden="true">→</span></a>
-  </div>
-</aside>
 
 <footer class="site-footer">
   <div class="container">
@@ -93,10 +79,10 @@
 <script src="/js/copyright-annee.js"></script>
 <script src="/js/vendor/supabase-js-2.110.6.js"></script>
 <script src="/js/supabase-config.js"></script>
-<script src="/js/vendor/dompurify-3.4.16.min.js"></script>
 <script src="/js/app.js"></script>
 <script src="/js/menu.js"></script>
 <script src="/js/marketplace-commun.js"></script>
-<script src="/js/marketplace-vitrine.js"></script>
+<script src="/js/qrcode-generator.js"></script>
+<script src="/js/marketplace-suivi.js"></script>
 </body>
 </html>

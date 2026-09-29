@@ -7,12 +7,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>La Maison MA2M — Maître Akesse Model Management</title>
-<meta name="description" content="La boutique de Maître Akesse Model Management : pièces et accessoires de l’agence, en vente directe depuis Abidjan.">
+<meta name="description" content="La boutique de Maître Akesse Model Management : articles, billets d’événements et services de l’agence, depuis Abidjan.">
 <!-- Boutique en construction : invisible des moteurs de recherche tant qu'elle n'est pas ouverte. -->
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..500&family=Tenor+Sans&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..500&amp;family=Tenor+Sans&amp;display=swap">
 <link rel="stylesheet" href="/css/style.css">
 <link rel="stylesheet" href="/css/marketplace.css">
 <meta name="theme-color" content="#060504">
@@ -36,6 +36,7 @@
   <button class="close-menu" id="closeMenuBtn">Fermer ✕</button>
   <ul class="nav-links">
     <li><a href="/marketplace/">La Maison MA2M</a></li>
+    <li><a href="/marketplace/suivi">Suivre ma commande</a></li>
     <li><a href="/index.html">Accueil de l'agence</a></li>
     <li><a href="/mannequins.html">The Book</a></li>
     <li><a href="/actualites.html">Actualités</a></li>
@@ -54,8 +55,9 @@
   <div class="container mp-nav-inner">
     <a href="/marketplace/" class="mp-marque">La Maison MA2M</a>
     <div class="mp-nav-liens">
-      <a href="/marketplace/#collection" class="actif ">Collection</a>
-      <a href="/marketplace/gestion" class="">Gestion</a>
+      <a href="/marketplace/#collection" class="actif">Collection</a>
+      <a href="/marketplace/suivi">Suivi</a>
+      <a href="/marketplace/gestion" class="mp-lien-admin mp-cache">Gestion</a>
       <button type="button" class="mp-panier-btn" data-mp-ouvrir-panier>Panier <span class="mp-panier-compte mp-cache" data-mp-compte-panier>0</span></button>
     </div>
   </div>
@@ -74,8 +76,8 @@
   <div class="mp-panier-lignes" id="mp-panier-lignes"></div>
   <div class="mp-panier-pied mp-cache" id="mp-panier-pied">
     <div class="mp-total"><span>Sous-total</span><b id="mp-panier-total">0 FCFA</b></div>
-    <p class="mp-panier-note">Les frais de livraison s’ajoutent selon votre commune. Paiement par Wave, Orange Money ou MTN Mobile Money.</p>
-    <button type="button" class="btn btn--principal" id="mp-commander">Passer commande</button>
+    <p class="mp-panier-note" id="mp-panier-note">Paiement par Wave, Orange Money ou MTN Mobile Money.</p>
+    <a class="btn btn--principal" href="/marketplace/commande" id="mp-commander">Passer commande <span class="mp-fleche" aria-hidden="true">→</span></a>
   </div>
 </aside>
 
@@ -84,7 +86,7 @@
     <div class="footer-bas">
       <span>© <span id="an"></span> Maître Akesse Model Management</span>
       <span>Abidjan, Côte d'Ivoire</span>
-      <span><a href="/mentions-legales.html">Mentions légales</a> · <a href="/politique-confidentialite.html">Confidentialité</a></span>
+      <span><a href="/marketplace/cgv">Conditions de vente</a> · <a href="/mentions-legales.html">Mentions légales</a> · <a href="/politique-confidentialite.html">Confidentialité</a></span>
     </div>
   </div>
 </footer>

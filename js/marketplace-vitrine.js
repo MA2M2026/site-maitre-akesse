@@ -37,12 +37,18 @@
   const ICONES = {
     livraison: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h11v10H3zM14 9h4l3 3v4h-7"/><circle cx="7" cy="17.5" r="1.6"/><circle cx="17.5" cy="17.5" r="1.6"/></svg>',
     paiement: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2"/><path d="M10 18.5h4M9 8h6M9 11.5h4"/></svg>',
-    maison: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V9l8-5 8 5v11"/><path d="M9.5 20v-6h5v6"/></svg>',
+    billet: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7.5h18v3a1.8 1.8 0 0 0 0 3v3H3v-3a1.8 1.8 0 0 0 0-3z"/><path d="M14.5 7.5v9" stroke-dasharray="1.6 1.6"/></svg>',
     suivi: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.5 2"/></svg>'
   };
   const FLECHE = '<span class="mp-fleche" aria-hidden="true">→</span>';
   // Emblème de la Maison : un cadre fin et une porte en arche (la « Maison »), point rouge.
   const EMBLEME = '<svg viewBox="0 0 64 64"><rect x="1.5" y="1.5" width="61" height="61"/><path d="M20 62.5V30a12 12 0 0 1 24 0v32.5"/><circle class="mp-point" cx="32" cy="42" r="2"/></svg>';
+
+  function ligneInfo(p) {
+    if (p.type === 'billet') return ['Billet', MP.formaterDate(p.evenement_debut), p.evenement_lieu].filter(Boolean).join(' · ');
+    if (p.type === 'service') return 'Service' + (p.categorie ? ' · ' + p.categorie.nom : '');
+    return p.categorie ? p.categorie.nom : 'Article';
+  }
 
   function carteProduit(p, index) {
     const photos = premierePhoto(p);
@@ -50,7 +56,7 @@
     const prix = MP.prixProduit(p);
     const nouveau = Date.now() - new Date(p.created_at).getTime() < 30 * 24 * 3600 * 1000;
     const badges = [];
-    if (!stock) badges.push('<span class="mp-badge epuise">Épuisé</span>');
+    if (!stock) badges.push('<span class="mp-badge epuise">' + (p.type === 'billet' ? 'Complet' : 'Épuisé') + '</span>');
     else if (prix.barre != null) badges.push('<span class="mp-badge promo">−' + Math.round(100 - prix.prix * 100 / prix.barre) + ' %</span>');
     else if (nouveau) badges.push('<span class="mp-badge">Nouveau</span>');
     return '<a class="mp-carte mp-apparait" data-delai="' + (index % 4) + '" href="/marketplace/produit?p=' + encodeURIComponent(p.slug) + '">' +
@@ -58,10 +64,10 @@
         (photos[0] ? '<img class="mp-premiere" src="' + echapperHtml(photos[0].url_miniature || photos[0].url) + '" alt="' + echapperHtml(p.nom) + '" loading="lazy">' : '<div class="mp-carte-vide">MA2M</div>') +
         (photos[1] ? '<img class="mp-seconde" src="' + echapperHtml(photos[1].url_miniature || photos[1].url) + '" alt="" loading="lazy">' : '') +
         (badges.length ? '<div class="mp-badges">' + badges.join('') + '</div>' : '') +
-        '<span class="mp-carte-voir">Voir la pièce ' + FLECHE + '</span>' +
+        '<span class="mp-carte-voir">' + (p.type === 'billet' ? 'Réserver' : p.type === 'service' ? 'Découvrir' : 'Voir la pièce') + ' ' + FLECHE + '</span>' +
       '</div>' +
       '<div class="mp-carte-infos">' +
-        (p.categorie ? '<span class="mp-carte-cat">' + echapperHtml(p.categorie.nom) + '</span>' : '') +
+        '<span class="mp-carte-cat">' + echapperHtml(ligneInfo(p)) + '</span>' +
         '<span class="mp-carte-nom">' + echapperHtml(p.nom) + '</span>' +
         '<span class="mp-prix">' + MP.htmlPrix(p) + '</span>' +
       '</div>' +
@@ -76,11 +82,11 @@
 
   function afficherVitrine(catalogue, acces) {
     const { produits, categories } = catalogue;
+    produits.forEach(p => { p.type = p.type || 'physique'; });
     const avecPhoto = produits.filter(p => premierePhoto(p)[0]);
     const vedette = avecPhoto.find(p => p.mis_en_avant) || avecPhoto[0] || null;
-    const categoriesUtilisees = categories.filter(c => produits.some(p => p.categorie && p.categorie.slug === c.slug));
     const annee = new Date().getFullYear();
-    const seconde = vedette;
+    const rayons = cle => categories.filter(c => (c.univers || 'physique') === cle);
 
     principal.innerHTML =
       // ---- Ouverture : l'affiche (nuit laquée, filets de lumière rouge, grand nom espacé)
@@ -92,50 +98,55 @@
           '<span class="mp-trait mp-monte" aria-hidden="true"></span>' +
           '<p class="mp-accroche mp-monte">La Maison · Révéler le potentiel</p>' +
           '<div class="mp-affiche-actions mp-monte">' +
-            '<a class="btn btn--principal" href="#collection"><span>Découvrir la collection</span>' + FLECHE + '</a>' +
-            (vedette ? '<a class="btn" href="/marketplace/produit?p=' + encodeURIComponent(vedette.slug) + '">La pièce à la une</a>' : '') +
+            '<a class="btn btn--principal" href="#portes"><span>Entrer dans la Maison</span>' + FLECHE + '</a>' +
+            (vedette ? '<a class="btn" href="/marketplace/produit?p=' + encodeURIComponent(vedette.slug) + '">À la une</a>' : '') +
           '</div>' +
         '</div>' +
-        '<div class="mp-affiche-pied mp-monte"><span>Pièces de l’agence · Abidjan</span><div class="mp-ornement" aria-hidden="true"><span></span><i></i><span></span></div></div>' +
+        '<div class="mp-affiche-pied mp-monte"><span>Articles · Billets · Services · Abidjan</span><div class="mp-ornement" aria-hidden="true"><span></span><i></i><span></span></div></div>' +
       '</section>' +
       // ---- Bandeau défilant (même bandeau que l'accueil du site)
       '<div class="marquee-bande mp-bande" aria-hidden="true"><div class="marquee-viewport"><div class="marquee-piste">' +
-        ('<span>La Maison MA2M</span><span>✦</span><span>Pièces de l’agence</span><span>✦</span><span>Abidjan</span><span>✦</span><span>Collection ' + annee + '</span><span>✦</span>').repeat(4) +
+        ('<span>La Maison MA2M</span><span>✦</span><span>Articles</span><span>✦</span><span>Billets</span><span>✦</span><span>Services</span><span>✦</span><span>Abidjan ' + annee + '</span><span>✦</span>').repeat(4) +
       '</div></div></div>' +
-      // ---- Univers (catégories)
-      (categoriesUtilisees.length ?
-        '<section class="mp-univers"><div class="container">' +
-          '<div class="mp-univers-grille">' + categoriesUtilisees.map((c, i) => {
-            const p = avecPhoto.find(x => x.categorie && x.categorie.slug === c.slug);
-            const nb = produits.filter(x => x.categorie && x.categorie.slug === c.slug).length;
-            return '<a class="mp-univers-carte mp-apparait" data-delai="' + (i % 4) + '" href="#collection" data-aller-filtre="' + echapperHtml(c.slug) + '">' +
-              '<span class="mp-univers-photo">' + (p ? '<img src="' + echapperHtml(premierePhoto(p)[0].url_miniature || premierePhoto(p)[0].url) + '" alt="" loading="lazy">' : '') + '</span>' +
-              '<span class="mp-univers-texte"><strong>' + echapperHtml(c.nom) + '</strong><span>' + nb + ' pièce' + (nb > 1 ? 's' : '') + '</span>' +
-              '<span class="mp-univers-lien">Voir ' + FLECHE + '</span></span></a>';
-          }).join('') + '</div>' +
-        '</div></section>' : '') +
-      // ---- Bannière éditoriale
-      (seconde ?
+      // ---- Les trois portes de la Maison
+      '<section class="mp-portes" id="portes"><div class="container">' +
+        '<div class="mp-portes-tete mp-apparait"><div class="eyebrow">Que cherchez-vous ?</div><h2 class="u-mt-1">Trois portes<span class="oeil">.</span></h2></div>' +
+        '<div class="mp-portes-grille">' + MP.UNIVERS.map((u, i) => {
+          const liste = produits.filter(p => p.type === u.cle);
+          const image = liste.map(p => premierePhoto(p)[0]).find(Boolean);
+          return '<a class="mp-porte mp-apparait' + (liste.length ? '' : ' mp-porte-vide') + '" data-delai="' + i + '" href="#collection" data-aller-univers="' + u.slug + '">' +
+            '<span class="mp-porte-visuel">' + (image ? '<img src="' + echapperHtml(image.url_miniature || image.url) + '" alt="" loading="lazy">' : '') + '<span class="mp-porte-arche" aria-hidden="true"></span></span>' +
+            '<span class="mp-porte-texte">' +
+              '<span class="mp-porte-num">0' + (i + 1) + '</span>' +
+              '<strong>' + u.nom + '</strong>' +
+              '<span>' + u.texte + '</span>' +
+              (rayons(u.cle).length ? '<span class="mp-porte-rayons">' + rayons(u.cle).map(c => echapperHtml(c.nom)).join('<i aria-hidden="true">·</i>') + '</span>' : '') +
+              '<span class="btn' + (liste.length ? ' btn--principal' : '') + '">' + (liste.length ? liste.length + ' ' + (liste.length > 1 ? 'propositions' : 'proposition') + ' ' + FLECHE : 'Bientôt') + '</span>' +
+            '</span></a>';
+        }).join('') + '</div>' +
+      '</div></section>' +
+      // ---- Bannière éditoriale : la pièce à la une
+      (vedette ?
         '<section class="mp-banniere">' +
           '<div class="mp-banniere-texte mp-apparait">' +
-            '<div class="eyebrow">À la une</div>' +
-            '<h2 class="mp-banniere-titre">' + echapperHtml(seconde.nom) + '<span class="oeil">.</span></h2>' +
-            '<p class="mp-prix">' + MP.htmlPrix(seconde) + '</p>' +
-            '<a class="btn btn--principal" href="/marketplace/produit?p=' + encodeURIComponent(seconde.slug) + '"><span>Voir la pièce</span>' + FLECHE + '</a>' +
+            '<div class="eyebrow">À la une · ' + MP.univers(vedette.type).nom + '</div>' +
+            '<h2 class="mp-banniere-titre">' + echapperHtml(vedette.nom) + '<span class="oeil">.</span></h2>' +
+            '<p class="mp-prix">' + MP.htmlPrix(vedette) + '</p>' +
+            '<a class="btn btn--principal" href="/marketplace/produit?p=' + encodeURIComponent(vedette.slug) + '"><span>Découvrir</span>' + FLECHE + '</a>' +
           '</div>' +
-          '<a class="mp-banniere-image" href="/marketplace/produit?p=' + encodeURIComponent(seconde.slug) + '"><img src="' + echapperHtml(premierePhoto(seconde)[0].url) + '" alt="' + echapperHtml(seconde.nom) + '" loading="lazy"></a>' +
+          '<a class="mp-banniere-image" href="/marketplace/produit?p=' + encodeURIComponent(vedette.slug) + '"><img src="' + echapperHtml(premierePhoto(vedette)[0].url) + '" alt="' + echapperHtml(vedette.nom) + '" loading="lazy"></a>' +
         '</section>' : '') +
       // ---- Engagements
       '<section class="mp-engagements"><div class="container"><ul>' +
-        '<li class="mp-apparait" data-delai="0">' + ICONES.livraison + '<span><strong>Livraison à domicile</strong>Abidjan et reste du pays</span></li>' +
+        '<li class="mp-apparait" data-delai="0">' + ICONES.livraison + '<span><strong>Livraison à domicile</strong>Pour les articles, selon votre commune</span></li>' +
         '<li class="mp-apparait" data-delai="1">' + ICONES.paiement + '<span><strong>Paiement mobile</strong>Wave, Orange Money, MTN</span></li>' +
-        '<li class="mp-apparait" data-delai="2">' + ICONES.maison + '<span><strong>Pièces de l’agence</strong>Choisies par Maître Akesse</span></li>' +
-        '<li class="mp-apparait" data-delai="3">' + ICONES.suivi + '<span><strong>Suivi de commande</strong>À chaque étape</span></li>' +
+        '<li class="mp-apparait" data-delai="2">' + ICONES.billet + '<span><strong>Billets à code</strong>Contrôlés à l’entrée de l’événement</span></li>' +
+        '<li class="mp-apparait" data-delai="3">' + ICONES.suivi + '<span><strong>Suivi de commande</strong>Facture et étapes en ligne</span></li>' +
       '</ul></div></section>' +
       // ---- Collection
       '<section id="collection" class="mp-collection"><div class="container">' +
         '<div class="mp-collection-tete">' +
-          '<div><div class="eyebrow">La collection</div><h2 class="u-mt-1">Nos pièces<span class="oeil">.</span></h2></div>' +
+          '<div><div class="eyebrow">La collection</div><h2 class="u-mt-1" id="mp-collection-titre">Tout<span class="oeil">.</span></h2></div>' +
           '<div class="form-champ mp-tri"><label for="mp-tri">Trier</label><select id="mp-tri">' +
             '<option value="">Ordre de la Maison</option>' +
             '<option value="prix-asc">Prix croissant</option>' +
@@ -143,8 +154,9 @@
             '<option value="recent">Les plus récentes</option>' +
           '</select></div>' +
         '</div>' +
-        (categoriesUtilisees.length > 1 ? '<div class="filtres" id="mp-filtres"><button type="button" class="filtre-btn actif" data-filtre="">Tout</button>' +
-          categoriesUtilisees.map(c => '<button type="button" class="filtre-btn" data-filtre="' + echapperHtml(c.slug) + '">' + echapperHtml(c.nom) + '</button>').join('') + '</div>' : '<div id="mp-filtres"></div>') +
+        '<div class="filtres mp-filtres-univers" id="mp-univers"><button type="button" class="filtre-btn actif" data-univers="">Tout</button>' +
+          MP.UNIVERS.map(u => '<button type="button" class="filtre-btn" data-univers="' + u.slug + '">' + u.nom + '</button>').join('') + '</div>' +
+        '<div class="filtres mp-filtres-categories" id="mp-filtres"></div>' +
         '<div id="mp-grille-zone"></div>' +
       '</div></section>' +
       // ---- Mot de la Maison
@@ -158,38 +170,71 @@
     document.querySelectorAll('#mp-nom-grand .mp-lettre').forEach((l, i) => l.style.setProperty('--i', i));
     requestAnimationFrame(() => principal.querySelector('.mp-affiche').classList.add('mp-affiche-prete'));
 
+    const depart = new URLSearchParams(location.search).get('univers') || '';
+    let univers = MP.UNIVERS.some(u => u.slug === depart) ? depart : '';
     let filtre = '';
     let tri = '';
+    const barreUnivers = document.getElementById('mp-univers');
+    const barreFiltres = document.getElementById('mp-filtres');
+
+    function dansUnivers() {
+      return produits.filter(p => !univers || MP.univers(p.type).slug === univers);
+    }
+    // Rayons de la porte choisie (Extension 100) : tous affichés, même vides
+    // (« bientôt »), pour que la structure de la Maison soit lisible d'emblée.
+    function rendreCategories() {
+      const liste = dansUnivers();
+      const cats = univers ? rayons(MP.univers(univers).cle) : [];
+      barreFiltres.innerHTML = cats.length
+        ? '<button type="button" class="filtre-btn actif" data-filtre="">Tous les rayons</button>' +
+          cats.map(c => {
+            const nb = liste.filter(p => p.categorie && p.categorie.slug === c.slug).length;
+            return '<button type="button" class="filtre-btn' + (nb ? '' : ' mp-filtre-vide') + '" data-filtre="' + echapperHtml(c.slug) + '">' + echapperHtml(c.nom) + (nb ? '' : ' · bientôt') + '</button>';
+          }).join('')
+        : '';
+      barreFiltres.classList.toggle('mp-cache', !cats.length);
+    }
     function rendreGrille() {
       const zone = document.getElementById('mp-grille-zone');
-      let liste = produits.filter(p => !filtre || (p.categorie && p.categorie.slug === filtre));
+      let liste = dansUnivers().filter(p => !filtre || (p.categorie && p.categorie.slug === filtre));
       if (tri === 'prix-asc') liste = liste.slice().sort((a, b) => MP.prixProduit(a).prix - MP.prixProduit(b).prix);
       if (tri === 'prix-desc') liste = liste.slice().sort((a, b) => MP.prixProduit(b).prix - MP.prixProduit(a).prix);
       if (tri === 'recent') liste = liste.slice().sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-      if (!produits.length) {
+      document.getElementById('mp-collection-titre').innerHTML = (univers ? MP.univers(univers).nom : 'Tout') + '<span class="oeil">.</span>';
+      if (!liste.length) {
+        const rayon = filtre && categories.find(c => c.slug === filtre);
         zone.innerHTML = '<div class="mp-attente mp-apparait"><div class="mp-ornement" aria-hidden="true"><span></span><i></i><span></span></div>' +
-          '<p>La première collection de la Maison sera bientôt présentée ici.</p>' +
-          (acces.admin ? '<a class="btn btn--principal" href="/marketplace/gestion"><span>Ajouter une pièce</span>' + FLECHE + '</a>' : '') + '</div>';
+          '<p>' + (rayon ? 'Le rayon « ' + echapperHtml(rayon.nom) + ' » ouvre bientôt.' : univers ? 'Les ' + MP.univers(univers).nom.toLowerCase() + ' de la Maison seront bientôt présentés ici.' : 'La première collection de la Maison sera bientôt présentée ici.') + '</p>' +
+          (acces.admin ? '<a class="btn btn--principal" href="/marketplace/gestion"><span>Ajouter dans la gestion</span>' + FLECHE + '</a>' : '') + '</div>';
       } else {
         zone.innerHTML = '<div class="mp-grille">' + liste.map(carteProduit).join('') + '</div>';
       }
       MP.observerApparitions(zone);
     }
-    rendreGrille();
-    MP.observerApparitions(principal);
-
-    const barreFiltres = document.getElementById('mp-filtres');
-    function choisirFiltre(valeur) {
-      filtre = valeur;
-      barreFiltres.querySelectorAll('[data-filtre]').forEach(b => b.classList.toggle('actif', b.dataset.filtre === valeur));
+    function choisirUnivers(valeur) {
+      univers = valeur;
+      filtre = '';
+      barreUnivers.querySelectorAll('[data-univers]').forEach(b => b.classList.toggle('actif', b.dataset.univers === valeur));
+      rendreCategories();
       rendreGrille();
     }
+    choisirUnivers(univers);
+    MP.observerApparitions(principal);
+
+    barreUnivers.addEventListener('click', e => {
+      const bouton = e.target.closest('[data-univers]');
+      if (bouton) choisirUnivers(bouton.dataset.univers);
+    });
     barreFiltres.addEventListener('click', e => {
       const bouton = e.target.closest('[data-filtre]');
-      if (bouton) choisirFiltre(bouton.dataset.filtre);
+      if (!bouton) return;
+      filtre = bouton.dataset.filtre;
+      barreFiltres.querySelectorAll('[data-filtre]').forEach(b => b.classList.toggle('actif', b.dataset.filtre === filtre));
+      rendreGrille();
     });
-    principal.querySelectorAll('[data-aller-filtre]').forEach(a => a.addEventListener('click', () => choisirFiltre(a.dataset.allerFiltre)));
+    principal.querySelectorAll('[data-aller-univers]').forEach(a => a.addEventListener('click', () => choisirUnivers(a.dataset.allerUnivers)));
     document.getElementById('mp-tri').addEventListener('change', e => { tri = e.target.value; rendreGrille(); });
+    if (depart && univers) setTimeout(() => document.getElementById('collection').scrollIntoView(), 50);
   }
 
   // ---------------------------------------------------------------- Fiche produit
@@ -197,17 +242,22 @@
     const photos = premierePhoto(produit);
     const variantes = (produit.variantes || []).filter(v => v.actif).sort((a, b) => a.ordre - b.ordre);
     const tailles = [...new Set(variantes.map(v => v.taille).filter(Boolean))];
-    const couleurs = [...new Set(variantes.map(v => v.couleur).filter(Boolean))];
+    const couleurs = (produit.type || 'physique') === 'physique' ? [...new Set(variantes.map(v => v.couleur).filter(Boolean))] : [];
     let tailleChoisie = tailles.length === 1 ? tailles[0] : null;
     let couleurChoisie = couleurs.length === 1 ? couleurs[0] : null;
     let quantite = 1;
+    const type = produit.type || 'physique';
+    const estArticle = type === 'physique';
+    // Libellés selon l'univers : taille (article), type de place (billet), formule (service).
+    const libelleChoix = type === 'billet' ? 'Place' : type === 'service' ? 'Formule' : 'Taille';
+    const unite = type === 'billet' ? ['place', 'places'] : type === 'service' ? ['créneau', 'créneaux'] : ['disponible', 'disponibles'];
     document.title = produit.nom + ' — La Maison MA2M';
 
     const description = produit.description ? rendreContenuRiche(produit.description) : '';
     principal.innerHTML =
       '<div class="mp-fiche">' +
         '<div>' +
-          '<div class="fil-ariane"><a href="/marketplace/">La Maison MA2M</a><span>/</span>' + (produit.categorie ? '<a href="/marketplace/#collection">' + echapperHtml(produit.categorie.nom) + '</a><span>/</span>' : '') + echapperHtml(produit.nom) + '</div>' +
+          '<div class="fil-ariane"><a href="/marketplace/">La Maison MA2M</a><span>/</span><a href="/marketplace/?univers=' + MP.univers(type).slug + '">' + MP.univers(type).nom + '</a><span>/</span>' + echapperHtml(produit.nom) + '</div>' +
           // Galerie façon maison de couture : les photos les unes sous les autres sur
           // ordinateur, à faire glisser du doigt sur téléphone (avec repères).
           '<div class="mp-galerie">' +
@@ -221,10 +271,15 @@
           '</div>' +
         '</div>' +
         '<div class="mp-infos">' +
-          (produit.categorie ? '<div class="eyebrow">' + echapperHtml(produit.categorie.nom) + '</div>' : '') +
+          '<div class="eyebrow">' + MP.univers(type).nom + (produit.categorie ? ' · ' + echapperHtml(produit.categorie.nom) : '') + '</div>' +
           '<h1>' + echapperHtml(produit.nom) + '</h1>' +
           '<div class="mp-prix" id="mp-fiche-prix">' + MP.htmlPrix(produit) + '</div>' +
-          (tailles.length ? '<div class="mp-choix"><div class="mp-choix-titre"><span>Taille</span><b id="mp-taille-choisie">' + echapperHtml(tailleChoisie || '') + '</b></div><div class="filtres mp-pastilles" id="mp-tailles">' +
+          (type === 'billet' && (produit.evenement_debut || produit.evenement_lieu) ?
+            '<dl class="mp-evenement">' +
+              (produit.evenement_debut ? '<div><dt>Date</dt><dd>' + echapperHtml(MP.formaterDate(produit.evenement_debut, true)) + '</dd></div>' : '') +
+              (produit.evenement_lieu ? '<div><dt>Lieu</dt><dd>' + echapperHtml(produit.evenement_lieu) + '</dd></div>' : '') +
+            '</dl>' : '') +
+          (tailles.length ? '<div class="mp-choix"><div class="mp-choix-titre"><span>' + libelleChoix + '</span><b id="mp-taille-choisie">' + echapperHtml(tailleChoisie || '') + '</b></div><div class="filtres mp-pastilles" id="mp-tailles">' +
             tailles.map(t => '<button type="button" class="filtre-btn" data-taille="' + echapperHtml(t) + '">' + echapperHtml(t) + '</button>').join('') + '</div></div>' : '') +
           (couleurs.length ? '<div class="mp-choix"><div class="mp-choix-titre"><span>Couleur</span><b id="mp-couleur-choisie">' + echapperHtml(couleurChoisie || '') + '</b></div><div class="filtres mp-pastilles" id="mp-couleurs">' +
             couleurs.map(c => '<button type="button" class="filtre-btn" data-couleur="' + echapperHtml(c) + '">' + echapperHtml(c) + '</button>').join('') + '</div></div>' : '') +
@@ -238,7 +293,12 @@
             ((produit.composition || produit.entretien) ? '<details><summary>Composition & entretien</summary><div class="mp-texte">' +
               (produit.composition ? '<p><strong>Composition :</strong> ' + echapperHtml(produit.composition) + '</p>' : '') +
               (produit.entretien ? '<p><strong>Entretien :</strong> ' + echapperHtml(produit.entretien) + '</p>' : '') + '</div></details>' : '') +
-            '<details><summary>Livraison et paiement</summary><div class="mp-texte"><p>Livraison à domicile. Le tarif et le délai dépendent de votre commune ; ils sont indiqués avant que vous validiez la commande.</p><p>Paiement par Wave, Orange Money ou MTN Mobile Money. La commande est confirmée dès que l’agence a vérifié le paiement.</p></div></details>' +
+            (type === 'service' && produit.service_modalites ? '<details open><summary>Déroulement</summary><div class="mp-texte"><p>' + echapperHtml(produit.service_modalites).replace(/\n/g, '<br>') + '</p></div></details>' : '') +
+            '<details><summary>' + (estArticle ? 'Livraison et paiement' : type === 'billet' ? 'Votre billet et le paiement' : 'Rendez-vous et paiement') + '</summary><div class="mp-texte">' +
+              (estArticle ? '<p>Livraison à domicile. Le tarif et le délai dépendent de votre commune ; ils sont indiqués avant que vous validiez la commande.</p>'
+                : type === 'billet' ? '<p>Dès que l’agence a vérifié votre paiement, vos billets (un par place, avec un code et un QR code) apparaissent sur votre page de suivi. Présentez-les à l’entrée, sur téléphone ou imprimés.</p>'
+                : '<p>Dès que l’agence a vérifié votre paiement, elle vous contacte pour fixer le rendez-vous.</p>') +
+              '<p>Paiement par Wave, Orange Money ou MTN Mobile Money. <a href="/marketplace/cgv">Conditions de vente</a>.</p></div></details>' +
           '</div>' +
         '</div>' +
       '</div>';
@@ -278,17 +338,17 @@
       const bouton = document.getElementById('mp-ajouter');
       document.getElementById('mp-fiche-prix').innerHTML = MP.htmlPrix(produit, v);
       if (!variantes.length || !variantes.some(x => x.stock > 0)) {
-        stock.textContent = 'Épuisé pour le moment';
+        stock.textContent = type === 'billet' ? 'Complet' : 'Épuisé pour le moment';
         bouton.disabled = true;
       } else if (!v) {
-        stock.textContent = tailles.length && !tailleChoisie ? 'Choisissez votre taille' : 'Choisissez une couleur';
+        stock.textContent = tailles.length && !tailleChoisie ? 'Choisissez : ' + libelleChoix.toLowerCase() : 'Choisissez une couleur';
         stock.classList.remove('faible');
         bouton.disabled = false;
       } else if (v.stock <= 0) {
         stock.textContent = 'Épuisé dans cette version';
         bouton.disabled = true;
       } else {
-        stock.textContent = v.stock <= 3 ? 'Plus que ' + v.stock + ' disponible' + (v.stock > 1 ? 's' : '') : 'En stock';
+        stock.textContent = v.stock <= 3 ? 'Plus que ' + v.stock + ' ' + unite[v.stock > 1 ? 1 : 0] : (estArticle ? 'En stock' : 'Disponible');
         stock.classList.toggle('faible', v.stock <= 3);
         bouton.disabled = false;
         quantite = Math.min(quantite, v.stock);
@@ -305,13 +365,14 @@
     });
     document.getElementById('mp-ajouter').addEventListener('click', () => {
       const v = varianteChoisie();
-      if (!v) { MP.toast(tailles.length && !tailleChoisie ? 'Choisissez d’abord votre taille.' : 'Choisissez d’abord une couleur.'); return; }
+      if (!v) { MP.toast(tailles.length && !tailleChoisie ? 'Choisissez d’abord : ' + libelleChoix.toLowerCase() + '.' : 'Choisissez d’abord une couleur.'); return; }
       const dejaDansPanier = (MP.lirePanier().find(l => l.variante_id === v.id) || { quantite: 0 }).quantite;
       if (dejaDansPanier + quantite > v.stock) { MP.toast('Stock insuffisant : ' + v.stock + ' disponible(s) au total.'); return; }
       MP.ajouterAuPanier({
         variante_id: v.id,
         produit_slug: produit.slug,
         nom: produit.nom,
+        type: type,
         variante: [v.taille, v.couleur].filter(Boolean).join(' · '),
         prix: MP.prixProduit(produit, v).prix,
         photo: photos[0] ? (photos[0].url_miniature || photos[0].url) : '',
