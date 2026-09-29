@@ -48,19 +48,19 @@
   // ------------------------------------------------------------ Structure
   function afficherStructure() {
     principal.innerHTML =
-      '<div class="mpg">' +
-        '<div class="mpg-tete"><div><div class="mp-surtitre">Maison MA2M</div><h1>Tableau de bord de la boutique</h1></div>' +
+      '<div class="container mpg">' +
+        '<div class="mpg-tete"><div><div class="eyebrow">La Maison MA2M</div><h1 class="u-mt-1">Gestion de la boutique<span class="oeil">.</span></h1></div>' +
           '<a class="btn" href="index.html">Voir la boutique</a></div>' +
-        '<div class="mpg-onglets" role="tablist">' +
-          '<button type="button" class="mpg-onglet actif" data-onglet="produits">Produits<span class="mpg-nb" id="mpg-nb-produits"></span></button>' +
-          '<button type="button" class="mpg-onglet" data-onglet="commandes">Commandes</button>' +
-          '<button type="button" class="mpg-onglet" data-onglet="categories">Catégories</button>' +
-          '<button type="button" class="mpg-onglet" data-onglet="livraison">Livraison</button>' +
-          '<button type="button" class="mpg-onglet" data-onglet="reglages">Réglages</button>' +
+        '<div class="filtres mpg-onglets" role="tablist">' +
+          '<button type="button" class="filtre-btn mpg-onglet actif" data-onglet="produits">Produits<span class="mpg-nb" id="mpg-nb-produits"></span></button>' +
+          '<button type="button" class="filtre-btn mpg-onglet" data-onglet="commandes">Commandes</button>' +
+          '<button type="button" class="filtre-btn mpg-onglet" data-onglet="categories">Catégories</button>' +
+          '<button type="button" class="filtre-btn mpg-onglet" data-onglet="livraison">Livraison</button>' +
+          '<button type="button" class="filtre-btn mpg-onglet" data-onglet="reglages">Réglages</button>' +
         '</div>' +
         '<section class="mpg-panneau actif" data-panneau="produits" id="mpg-produits"></section>' +
-        '<section class="mpg-panneau" data-panneau="commandes"><div class="mpg-bientot"><h3>Les commandes arrivent bientôt</h3>' +
-          '<p>À la prochaine étape : réception des commandes, validation des paiements Wave, Orange Money et MTN, expédition et suivi.</p></div></section>' +
+        '<section class="mpg-panneau" data-panneau="commandes"><div class="mpg-bientot"><h3>Commandes</h3>' +
+          '<p>Cette partie sera ajoutée à la prochaine étape : réception des commandes, vérification des paiements Wave, Orange Money et MTN, expédition et suivi.</p></div></section>' +
         '<section class="mpg-panneau" data-panneau="categories" id="mpg-categories"></section>' +
         '<section class="mpg-panneau" data-panneau="livraison" id="mpg-livraison"></section>' +
         '<section class="mpg-panneau" data-panneau="reglages" id="mpg-reglages"></section>' +
@@ -154,42 +154,42 @@
       '<div class="mpg-barre"><h2>' + (estNouveau ? 'Nouveau produit' : 'Modifier le produit') + '</h2>' +
         '<button type="button" class="btn" id="mpg-retour">← Retour à la liste</button></div>' +
       '<form class="mpg-form" id="mpg-form-produit" novalidate>' +
-        '<div class="mpg-bloc"><h3>L’essentiel</h3>' +
+        '<div class="mpg-bloc"><div class="eyebrow">L’essentiel</div>' +
           '<div class="mpg-grille2">' +
-            '<div class="mpg-champ"><label for="mpg-nom">Nom du produit *</label><input id="mpg-nom" maxlength="140" required value="' + echapperHtml(p.nom) + '"></div>' +
-            '<div class="mpg-champ"><label for="mpg-categorie">Catégorie</label><select id="mpg-categorie"><option value="">— Aucune —</option>' +
+            '<div class="form-champ"><label for="mpg-nom">Nom du produit *</label><input id="mpg-nom" maxlength="140" required value="' + echapperHtml(p.nom) + '"></div>' +
+            '<div class="form-champ"><label for="mpg-categorie">Catégorie</label><select id="mpg-categorie"><option value="">— Aucune —</option>' +
               etat.categories.map(c => '<option value="' + c.id + '"' + (c.id === p.categorie_id ? ' selected' : '') + '>' + echapperHtml(c.nom) + '</option>').join('') + '</select>' +
               (etat.categories.length ? '' : '<small>Créez vos catégories dans l’onglet « Catégories ».</small>') + '</div>' +
-            '<div class="mpg-champ"><label for="mpg-statut">Statut</label><select id="mpg-statut">' +
+            '<div class="form-champ"><label for="mpg-statut">Statut</label><select id="mpg-statut">' +
               Object.keys(LIBELLES_STATUT).map(s => '<option value="' + s + '"' + (s === p.statut ? ' selected' : '') + '>' + LIBELLES_STATUT[s] + '</option>').join('') + '</select></div>' +
           '</div>' +
           '<label class="mpg-case"><input type="checkbox" id="mpg-avant"' + (p.mis_en_avant ? ' checked' : '') + '> Mettre en avant (grande photo d’accueil de la boutique, en premier dans la liste)</label>' +
         '</div>' +
-        '<div class="mpg-bloc"><h3>Photos</h3>' +
+        '<div class="mpg-bloc"><div class="eyebrow">Photos</div>' +
           '<p class="mpg-aide">La première photo est la photo principale. Photos verticales conseillées. Elles sont allégées automatiquement avant l’envoi.</p>' +
           '<div class="mpg-photos" id="mpg-photos"></div>' +
           '<div class="mpg-progression" id="mpg-progression"></div>' +
         '</div>' +
-        '<div class="mpg-bloc"><h3>Prix</h3>' +
+        '<div class="mpg-bloc"><div class="eyebrow">Prix</div>' +
           '<div class="mpg-grille2">' +
-            '<div class="mpg-champ"><label for="mpg-prix">Prix (FCFA, toutes taxes comprises) *</label><input id="mpg-prix" type="number" min="0" step="100" inputmode="numeric" value="' + (p.prix_fcfa != null ? p.prix_fcfa : '') + '"></div>' +
-            '<div class="mpg-champ"><label for="mpg-promo">Prix promotionnel (facultatif)</label><input id="mpg-promo" type="number" min="0" step="100" inputmode="numeric" value="' + (p.prix_promo_fcfa != null ? p.prix_promo_fcfa : '') + '"></div>' +
-            '<div class="mpg-champ"><label for="mpg-promo-debut">Début de la promotion</label><input id="mpg-promo-debut" type="datetime-local" value="' + versLocal(p.promo_debut) + '"></div>' +
-            '<div class="mpg-champ"><label for="mpg-promo-fin">Fin de la promotion</label><input id="mpg-promo-fin" type="datetime-local" value="' + versLocal(p.promo_fin) + '"></div>' +
+            '<div class="form-champ"><label for="mpg-prix">Prix (FCFA, toutes taxes comprises) *</label><input id="mpg-prix" type="number" min="0" step="100" inputmode="numeric" value="' + (p.prix_fcfa != null ? p.prix_fcfa : '') + '"></div>' +
+            '<div class="form-champ"><label for="mpg-promo">Prix promotionnel (facultatif)</label><input id="mpg-promo" type="number" min="0" step="100" inputmode="numeric" value="' + (p.prix_promo_fcfa != null ? p.prix_promo_fcfa : '') + '"></div>' +
+            '<div class="form-champ"><label for="mpg-promo-debut">Début de la promotion</label><input id="mpg-promo-debut" type="datetime-local" value="' + versLocal(p.promo_debut) + '"></div>' +
+            '<div class="form-champ"><label for="mpg-promo-fin">Fin de la promotion</label><input id="mpg-promo-fin" type="datetime-local" value="' + versLocal(p.promo_fin) + '"></div>' +
           '</div>' +
         '</div>' +
-        '<div class="mpg-bloc"><h3>Tailles, couleurs et stock</h3>' +
+        '<div class="mpg-bloc"><div class="eyebrow">Tailles, couleurs et stock</div>' +
           '<p class="mpg-aide">Une ligne par version du produit (par exemple « M · Noir »). Laissez taille et couleur vides pour un produit unique. Le prix spécifique est facultatif.</p>' +
           '<div class="mpg-table-wrap"><table class="mpg-table"><thead><tr><th>Taille</th><th>Couleur</th><th>Prix spécifique</th><th>Stock</th><th>Actif</th><th></th></tr></thead><tbody id="mpg-variantes"></tbody></table></div>' +
-          '<div><button type="button" class="btn mpg-petit" id="mpg-ajout-variante">+ Ajouter une version</button></div>' +
+          '<div><button type="button" class="btn-mini-admin" id="mpg-ajout-variante">+ Ajouter une version</button></div>' +
         '</div>' +
-        '<div class="mpg-bloc"><h3>Description</h3>' +
-          '<div class="mpg-editeur"><div id="mpg-description"></div></div>' +
+        '<div class="mpg-bloc"><div class="eyebrow">Description</div>' +
+          '<div class="editeur-riche"><div id="mpg-description"></div></div>' +
           '<div class="mpg-grille2">' +
-            '<div class="mpg-champ"><label for="mpg-composition">Composition</label><input id="mpg-composition" maxlength="300" value="' + echapperHtml(p.composition || '') + '"></div>' +
-            '<div class="mpg-champ"><label for="mpg-entretien">Entretien</label><input id="mpg-entretien" maxlength="300" value="' + echapperHtml(p.entretien || '') + '"></div>' +
-            '<div class="mpg-champ"><label for="mpg-poids">Poids (grammes)</label><input id="mpg-poids" type="number" min="0" inputmode="numeric" value="' + (p.poids_g != null ? p.poids_g : '') + '"></div>' +
-            '<div class="mpg-champ"><label for="mpg-ordre">Ordre d’affichage</label><input id="mpg-ordre" type="number" inputmode="numeric" value="' + (p.ordre || 0) + '"><small>Plus petit = plus haut dans la liste.</small></div>' +
+            '<div class="form-champ"><label for="mpg-composition">Composition</label><input id="mpg-composition" maxlength="300" value="' + echapperHtml(p.composition || '') + '"></div>' +
+            '<div class="form-champ"><label for="mpg-entretien">Entretien</label><input id="mpg-entretien" maxlength="300" value="' + echapperHtml(p.entretien || '') + '"></div>' +
+            '<div class="form-champ"><label for="mpg-poids">Poids (grammes)</label><input id="mpg-poids" type="number" min="0" inputmode="numeric" value="' + (p.poids_g != null ? p.poids_g : '') + '"></div>' +
+            '<div class="form-champ"><label for="mpg-ordre">Ordre d’affichage</label><input id="mpg-ordre" type="number" inputmode="numeric" value="' + (p.ordre || 0) + '"><small>Plus petit = plus haut dans la liste.</small></div>' +
           '</div>' +
         '</div>' +
         '<div class="mpg-actions">' +
@@ -404,16 +404,16 @@
     zone.innerHTML =
       '<div class="mpg-barre"><h2>Catégories</h2></div>' +
       '<p class="mpg-aide">Les familles de produits de la boutique (Vêtements, Accessoires, Billets…). Vous pouvez en ajouter à tout moment.</p>' +
-      '<form class="mpg-bloc" id="mpg-form-categorie"><h3>Nouvelle catégorie</h3><div class="mpg-grille2">' +
-        '<div class="mpg-champ"><label for="mpg-cat-nom">Nom</label><input id="mpg-cat-nom" maxlength="80" placeholder="Vêtements"></div>' +
-        '<div class="mpg-champ"><label for="mpg-cat-ordre">Ordre</label><input id="mpg-cat-ordre" type="number" inputmode="numeric" value="0"></div>' +
-      '</div><div class="mpg-actions"><button type="submit" class="btn btn--principal mpg-petit">Ajouter</button><span class="mpg-message" id="mpg-msg-cat"></span></div></form>' +
+      '<form class="mpg-bloc" id="mpg-form-categorie"><div class="eyebrow">Nouvelle catégorie</div><div class="mpg-grille2">' +
+        '<div class="form-champ"><label for="mpg-cat-nom">Nom</label><input id="mpg-cat-nom" maxlength="80" placeholder="Vêtements"></div>' +
+        '<div class="form-champ"><label for="mpg-cat-ordre">Ordre</label><input id="mpg-cat-ordre" type="number" inputmode="numeric" value="0"></div>' +
+      '</div><div class="mpg-actions"><button type="submit" class="btn btn--principal">Ajouter</button><span class="mpg-message" id="mpg-msg-cat"></span></div></form>' +
       '<div class="mpg-liste">' + (etat.categories.map(c =>
         '<div class="mpg-ligne" data-id="' + c.id + '"><div><div class="mpg-ligne-titre">' + echapperHtml(c.nom) + '</div>' +
           '<div class="mpg-ligne-sous">' + (c.actif ? 'Visible' : 'Masquée') + ' · ordre ' + c.ordre + ' · ' +
           etat.produits.filter(p => p.categorie_id === c.id).length + ' produit(s)</div></div>' +
-          '<div class="mpg-ligne-actions"><button type="button" class="btn mpg-petit" data-basculer>' + (c.actif ? 'Masquer' : 'Afficher') + '</button>' +
-          '<button type="button" class="btn mpg-petit mpg-bouton-danger" data-supprimer>Supprimer</button></div></div>').join('') ||
+          '<div class="mpg-ligne-actions"><button type="button" class="btn-mini-admin" data-basculer>' + (c.actif ? 'Masquer' : 'Afficher') + '</button>' +
+          '<button type="button" class="btn-mini-admin mpg-bouton-danger" data-supprimer>Supprimer</button></div></div>').join('') ||
         '<div class="mpg-vide">Aucune catégorie.</div>') + '</div>';
     document.getElementById('mpg-form-categorie').addEventListener('submit', async e => {
       e.preventDefault();
@@ -449,17 +449,17 @@
     zone.innerHTML =
       '<div class="mpg-barre"><h2>Zones de livraison</h2></div>' +
       '<p class="mpg-aide">Chaque zone a son tarif et son délai, affichés au client avant qu’il valide sa commande (exemple : « Abidjan — Cocody », 2 000 FCFA, 24 à 48 h).</p>' +
-      '<form class="mpg-bloc" id="mpg-form-zone"><h3>Nouvelle zone</h3><div class="mpg-grille2">' +
-        '<div class="mpg-champ"><label for="mpg-zone-nom">Nom de la zone</label><input id="mpg-zone-nom" maxlength="80" placeholder="Abidjan — Cocody"></div>' +
-        '<div class="mpg-champ"><label for="mpg-zone-tarif">Tarif (FCFA)</label><input id="mpg-zone-tarif" type="number" min="0" step="100" inputmode="numeric" placeholder="2000"></div>' +
-        '<div class="mpg-champ"><label for="mpg-zone-delai">Délai annoncé</label><input id="mpg-zone-delai" maxlength="60" placeholder="24 à 48 h"></div>' +
-        '<div class="mpg-champ"><label for="mpg-zone-ordre">Ordre</label><input id="mpg-zone-ordre" type="number" inputmode="numeric" value="0"></div>' +
-      '</div><div class="mpg-actions"><button type="submit" class="btn btn--principal mpg-petit">Ajouter</button><span class="mpg-message" id="mpg-msg-zone"></span></div></form>' +
+      '<form class="mpg-bloc" id="mpg-form-zone"><div class="eyebrow">Nouvelle zone</div><div class="mpg-grille2">' +
+        '<div class="form-champ"><label for="mpg-zone-nom">Nom de la zone</label><input id="mpg-zone-nom" maxlength="80" placeholder="Abidjan — Cocody"></div>' +
+        '<div class="form-champ"><label for="mpg-zone-tarif">Tarif (FCFA)</label><input id="mpg-zone-tarif" type="number" min="0" step="100" inputmode="numeric" placeholder="2000"></div>' +
+        '<div class="form-champ"><label for="mpg-zone-delai">Délai annoncé</label><input id="mpg-zone-delai" maxlength="60" placeholder="24 à 48 h"></div>' +
+        '<div class="form-champ"><label for="mpg-zone-ordre">Ordre</label><input id="mpg-zone-ordre" type="number" inputmode="numeric" value="0"></div>' +
+      '</div><div class="mpg-actions"><button type="submit" class="btn btn--principal">Ajouter</button><span class="mpg-message" id="mpg-msg-zone"></span></div></form>' +
       '<div class="mpg-liste">' + (etat.zones.map(z =>
         '<div class="mpg-ligne" data-id="' + z.id + '"><div><div class="mpg-ligne-titre">' + echapperHtml(z.nom) + ' — ' + MP.formaterPrix(z.tarif_fcfa) + '</div>' +
           '<div class="mpg-ligne-sous">' + (z.delai ? echapperHtml(z.delai) + ' · ' : '') + (z.actif ? 'Proposée' : 'Désactivée') + '</div></div>' +
-          '<div class="mpg-ligne-actions"><button type="button" class="btn mpg-petit" data-basculer>' + (z.actif ? 'Désactiver' : 'Activer') + '</button>' +
-          '<button type="button" class="btn mpg-petit mpg-bouton-danger" data-supprimer>Supprimer</button></div></div>').join('') ||
+          '<div class="mpg-ligne-actions"><button type="button" class="btn-mini-admin" data-basculer>' + (z.actif ? 'Désactiver' : 'Activer') + '</button>' +
+          '<button type="button" class="btn-mini-admin mpg-bouton-danger" data-supprimer>Supprimer</button></div></div>').join('') ||
         '<div class="mpg-vide">Aucune zone de livraison.</div>') + '</div>';
     document.getElementById('mpg-form-zone').addEventListener('submit', async e => {
       e.preventDefault();
@@ -497,20 +497,20 @@
     zone.innerHTML =
       '<div class="mpg-barre"><h2>Réglages</h2></div>' +
       '<form class="mpg-form" id="mpg-form-reglages">' +
-        '<div class="mpg-bloc"><h3>État de la boutique</h3>' +
+        '<div class="mpg-bloc"><div class="eyebrow">État de la boutique</div>' +
           '<p>' + (r.ouverte ? '<strong>Ouverte au public.</strong>' : '<strong>Fermée au public</strong> : vous seule la voyez. Elle sera ouverte à la fin de la construction, après vos tests et la relecture des documents légaux.') + '</p>' +
         '</div>' +
-        '<div class="mpg-bloc"><h3>Paiement</h3>' +
+        '<div class="mpg-bloc"><div class="eyebrow">Paiement</div>' +
           '<p class="mpg-aide">Numéros qui recevront les paiements, affichés au client après sa commande. Valeurs d’essai possibles pendant les tests.</p>' +
           '<div class="mpg-grille2">' +
-            '<div class="mpg-champ"><label for="mpg-wave">Numéro Wave</label><input id="mpg-wave" inputmode="tel" maxlength="30" value="' + echapperHtml(r.numero_wave || '') + '"></div>' +
-            '<div class="mpg-champ"><label for="mpg-om">Numéro Orange Money</label><input id="mpg-om" inputmode="tel" maxlength="30" value="' + echapperHtml(r.numero_orange_money || '') + '"></div>' +
-            '<div class="mpg-champ"><label for="mpg-mtn">Numéro MTN Mobile Money</label><input id="mpg-mtn" inputmode="tel" maxlength="30" value="' + echapperHtml(r.numero_mtn_momo || '') + '"></div>' +
-            '<div class="mpg-champ"><label for="mpg-delai">Délai de paiement (heures)</label><input id="mpg-delai" type="number" min="1" max="168" inputmode="numeric" value="' + (r.delai_paiement_heures || 24) + '"><small>Passé ce délai, une commande non payée est annulée et son stock revient.</small></div>' +
+            '<div class="form-champ"><label for="mpg-wave">Numéro Wave</label><input id="mpg-wave" inputmode="tel" maxlength="30" value="' + echapperHtml(r.numero_wave || '') + '"></div>' +
+            '<div class="form-champ"><label for="mpg-om">Numéro Orange Money</label><input id="mpg-om" inputmode="tel" maxlength="30" value="' + echapperHtml(r.numero_orange_money || '') + '"></div>' +
+            '<div class="form-champ"><label for="mpg-mtn">Numéro MTN Mobile Money</label><input id="mpg-mtn" inputmode="tel" maxlength="30" value="' + echapperHtml(r.numero_mtn_momo || '') + '"></div>' +
+            '<div class="form-champ"><label for="mpg-delai">Délai de paiement (heures)</label><input id="mpg-delai" type="number" min="1" max="168" inputmode="numeric" value="' + (r.delai_paiement_heures || 24) + '"><small>Passé ce délai, une commande non payée est annulée et son stock revient.</small></div>' +
           '</div>' +
         '</div>' +
-        '<div class="mpg-bloc"><h3>Livraison</h3><div class="mpg-grille2">' +
-          '<div class="mpg-champ"><label for="mpg-offerte">Livraison offerte à partir de (FCFA)</label><input id="mpg-offerte" type="number" min="0" step="1000" inputmode="numeric" placeholder="Jamais" value="' + (r.livraison_offerte_des_fcfa != null ? r.livraison_offerte_des_fcfa : '') + '"></div>' +
+        '<div class="mpg-bloc"><div class="eyebrow">Livraison</div><div class="mpg-grille2">' +
+          '<div class="form-champ"><label for="mpg-offerte">Livraison offerte à partir de (FCFA)</label><input id="mpg-offerte" type="number" min="0" step="1000" inputmode="numeric" placeholder="Jamais" value="' + (r.livraison_offerte_des_fcfa != null ? r.livraison_offerte_des_fcfa : '') + '"></div>' +
         '</div></div>' +
         '<div class="mpg-actions"><button type="submit" class="btn btn--principal">Enregistrer les réglages</button><span class="mpg-message" id="mpg-msg-reglages"></span></div>' +
       '</form>';

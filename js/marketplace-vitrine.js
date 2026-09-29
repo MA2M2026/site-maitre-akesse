@@ -38,7 +38,7 @@
     const badges = [];
     if (!stock) badges.push('<span class="mp-badge epuise">Épuisé</span>');
     else if (prix.barre != null) badges.push('<span class="mp-badge promo">−' + Math.round(100 - prix.prix * 100 / prix.barre) + ' %</span>');
-    else if (nouveau) badges.push('<span class="mp-badge">Nouveauté</span>');
+    else if (nouveau) badges.push('<span class="mp-badge">Nouveau</span>');
     return '<a class="mp-carte" href="produit.html?p=' + encodeURIComponent(p.slug) + '" data-categorie="' + echapperHtml(p.categorie ? p.categorie.slug : '') + '">' +
       '<div class="mp-carte-visuel">' +
         (photos[0] ? '<img class="mp-premiere" src="' + echapperHtml(photos[0].url_miniature || photos[0].url) + '" alt="' + echapperHtml(p.nom) + '" loading="lazy">' : '<div class="mp-carte-vide">MA2M</div>') +
@@ -58,48 +58,41 @@
     const vedette = produits.find(p => p.mis_en_avant && premierePhoto(p)[0]) || produits.find(p => premierePhoto(p)[0]);
     const categoriesUtilisees = categories.filter(c => produits.some(p => p.categorie && p.categorie.slug === c.slug));
 
+    const photoVedette = vedette ? premierePhoto(vedette)[0] : null;
     principal.innerHTML =
-      '<section class="mp-hero" id="mp-hero">' +
-        (vedette ? '<div class="mp-hero-image" id="mp-hero-image"></div><div class="mp-hero-voile"></div>' : '') +
-        '<div class="mp-hero-contenu">' +
-          '<div class="mp-surtitre mp-apparition">Boutique officielle · Abidjan</div>' +
-          '<h1 class="mp-apparition d2">La Maison<br><em>MA2M</em></h1>' +
-          '<div class="mp-hero-bas mp-apparition d3">' +
-            '<p class="mp-hero-texte">Pièces signature, accessoires et expériences mode, choisis par l’agence qui révèle les visages de demain.</p>' +
-            '<a class="btn btn--principal" href="#collection">Découvrir la collection</a>' +
+      '<section class="u-pb-1 mp-entree"><div class="container">' +
+        '<div class="eyebrow">Boutique de l’agence</div>' +
+        '<h1>La Maison MA2M<span class="oeil">.</span></h1>' +
+        '<p class="u-mt-1-2">Révéler le potentiel. Construire l’image. Créer des opportunités. ' +
+          'Les pièces et accessoires de Maître Akesse Model Management, en vente directe depuis Abidjan.</p>' +
+      '</div></section>' +
+      (vedette ?
+        '<a class="vedette-fullbleed mp-vedette" href="produit.html?p=' + encodeURIComponent(vedette.slug) + '">' +
+          '<img src="' + echapperHtml(photoVedette.url) + '" alt="' + echapperHtml(vedette.nom) + '">' +
+          '<div class="vedette-scrim"></div>' +
+          '<div class="vedette-contenu">' +
+            '<span class="vedette-badge">À la une</span>' +
+            '<h2>' + echapperHtml(vedette.nom) + '</h2>' +
+            '<p class="mp-prix">' + MP.htmlPrix(vedette) + '</p>' +
+            '<span class="vedette-cta">Voir la pièce</span>' +
           '</div>' +
-        '</div>' +
-      '</section>' +
-      '<section class="mp-confiance" aria-label="Nos engagements"><ul>' +
-        '<li><b>01</b>Livraison à domicile partout à Abidjan</li>' +
-        '<li><b>02</b>Paiement Wave, Orange Money ou MTN</li>' +
-        '<li><b>03</b>Pièces authentiques signées MA2M</li>' +
-        '<li><b>04</b>Suivi de commande à chaque étape</li>' +
-      '</ul></section>' +
-      '<section class="mp-section" id="collection">' +
-        '<div class="mp-section-tete">' +
-          '<div><div class="mp-surtitre">La collection</div><h2>Pièces <em>choisies</em></h2></div>' +
-          '<div class="mp-filtres" id="mp-filtres">' +
-            (categoriesUtilisees.length > 1 ? '<button type="button" class="mp-filtre actif" data-filtre="">Tout</button>' +
-              categoriesUtilisees.map(c => '<button type="button" class="mp-filtre" data-filtre="' + echapperHtml(c.slug) + '">' + echapperHtml(c.nom) + '</button>').join('') : '') +
-            '<select class="mp-tri" id="mp-tri" aria-label="Trier">' +
-              '<option value="">Sélection de la Maison</option>' +
-              '<option value="prix-asc">Prix croissant</option>' +
-              '<option value="prix-desc">Prix décroissant</option>' +
-              '<option value="recent">Nouveautés</option>' +
-            '</select>' +
-          '</div>' +
+        '</a>' : '') +
+      '<section id="collection"><div class="container">' +
+        '<div class="eyebrow">La collection</div>' +
+        '<h2 class="u-mt-1">Nos pièces<span class="oeil">.</span></h2>' +
+        '<div class="mp-outils u-mt-1-8">' +
+          (categoriesUtilisees.length > 1 ? '<div class="filtres" id="mp-filtres"><button type="button" class="filtre-btn actif" data-filtre="">Tout</button>' +
+            categoriesUtilisees.map(c => '<button type="button" class="filtre-btn" data-filtre="' + echapperHtml(c.slug) + '">' + echapperHtml(c.nom) + '</button>').join('') + '</div>' : '<div id="mp-filtres"></div>') +
+          '<div class="form-champ mp-tri"><label for="mp-tri">Trier</label><select id="mp-tri">' +
+            '<option value="">Ordre de la Maison</option>' +
+            '<option value="prix-asc">Prix croissant</option>' +
+            '<option value="prix-desc">Prix décroissant</option>' +
+            '<option value="recent">Les plus récentes</option>' +
+          '</select></div>' +
         '</div>' +
         '<div id="mp-grille-zone"></div>' +
-      '</section>';
-
-    if (vedette) {
-      const image = document.getElementById('mp-hero-image');
-      const url = premierePhoto(vedette)[0].url;
-      const precharge = new Image();
-      precharge.onload = () => { image.style.backgroundImage = 'url("' + url.replace(/"/g, '%22') + '")'; document.getElementById('mp-hero').classList.add('pret'); };
-      precharge.src = url;
-    }
+        '<p class="mp-pratique">Livraison à domicile à Abidjan et dans le reste du pays. Paiement par Wave, Orange Money ou MTN Mobile Money.</p>' +
+      '</div></section>';
 
     let filtre = '';
     let tri = '';
@@ -110,9 +103,8 @@
       if (tri === 'prix-desc') liste = liste.slice().sort((a, b) => MP.prixProduit(b).prix - MP.prixProduit(a).prix);
       if (tri === 'recent') liste = liste.slice().sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
       if (!produits.length) {
-        zone.innerHTML = '<div class="mp-vide-catalogue"><h3>La collection se prépare</h3>' +
-          '<p>Aucune pièce n’est encore en vente. Ajoutez vos premiers produits depuis le tableau de bord de la boutique, puis passez-les « En vente » : ils apparaîtront ici.</p>' +
-          (acces.admin ? '<a class="btn btn--principal" href="gestion.html">Ajouter un produit</a>' : '') + '</div>';
+        zone.innerHTML = '<div class="mannequins-vide">Aucune pièce en vente pour le moment.' +
+          (acces.admin ? ' <a href="gestion.html">Ajouter un produit dans la gestion de la boutique.</a>' : '') + '</div>';
         return;
       }
       zone.innerHTML = '<div class="mp-grille">' + liste.map(carteProduit).join('') + '</div>';
@@ -138,13 +130,13 @@
     let tailleChoisie = tailles.length === 1 ? tailles[0] : null;
     let couleurChoisie = couleurs.length === 1 ? couleurs[0] : null;
     let quantite = 1;
-    document.title = produit.nom + ' — Maison MA2M';
+    document.title = produit.nom + ' — La Maison MA2M';
 
     const description = produit.description ? rendreContenuRiche(produit.description) : '';
     principal.innerHTML =
       '<div class="mp-fiche">' +
         '<div>' +
-          '<div class="mp-fil"><a href="index.html">La Maison</a> / ' + (produit.categorie ? '<a href="index.html#collection">' + echapperHtml(produit.categorie.nom) + '</a> / ' : '') + echapperHtml(produit.nom) + '</div>' +
+          '<div class="fil-ariane"><a href="index.html">La Maison MA2M</a><span>/</span>' + (produit.categorie ? '<a href="index.html#collection">' + echapperHtml(produit.categorie.nom) + '</a><span>/</span>' : '') + echapperHtml(produit.nom) + '</div>' +
           '<div class="mp-galerie">' +
             '<div class="mp-galerie-principale" id="mp-galerie-principale">' +
               (photos[0] ? '<img id="mp-photo-principale" src="' + echapperHtml(photos[0].url) + '" alt="' + echapperHtml(produit.nom) + '">' : '<div class="mp-carte-vide">MA2M</div>') +
@@ -154,13 +146,13 @@
           '</div>' +
         '</div>' +
         '<div class="mp-infos">' +
-          (produit.categorie ? '<div class="mp-surtitre">' + echapperHtml(produit.categorie.nom) + '</div>' : '') +
+          (produit.categorie ? '<div class="eyebrow">' + echapperHtml(produit.categorie.nom) + '</div>' : '') +
           '<h1>' + echapperHtml(produit.nom) + '</h1>' +
           '<div class="mp-prix" id="mp-fiche-prix">' + MP.htmlPrix(produit) + '</div>' +
-          (tailles.length ? '<div class="mp-choix"><div class="mp-choix-titre"><span>Taille</span><b id="mp-taille-choisie">' + echapperHtml(tailleChoisie || '') + '</b></div><div class="mp-pastilles" id="mp-tailles">' +
-            tailles.map(t => '<button type="button" class="mp-pastille" data-taille="' + echapperHtml(t) + '">' + echapperHtml(t) + '</button>').join('') + '</div></div>' : '') +
-          (couleurs.length ? '<div class="mp-choix"><div class="mp-choix-titre"><span>Couleur</span><b id="mp-couleur-choisie">' + echapperHtml(couleurChoisie || '') + '</b></div><div class="mp-pastilles" id="mp-couleurs">' +
-            couleurs.map(c => '<button type="button" class="mp-pastille" data-couleur="' + echapperHtml(c) + '">' + echapperHtml(c) + '</button>').join('') + '</div></div>' : '') +
+          (tailles.length ? '<div class="mp-choix"><div class="mp-choix-titre"><span>Taille</span><b id="mp-taille-choisie">' + echapperHtml(tailleChoisie || '') + '</b></div><div class="filtres mp-pastilles" id="mp-tailles">' +
+            tailles.map(t => '<button type="button" class="filtre-btn" data-taille="' + echapperHtml(t) + '">' + echapperHtml(t) + '</button>').join('') + '</div></div>' : '') +
+          (couleurs.length ? '<div class="mp-choix"><div class="mp-choix-titre"><span>Couleur</span><b id="mp-couleur-choisie">' + echapperHtml(couleurChoisie || '') + '</b></div><div class="filtres mp-pastilles" id="mp-couleurs">' +
+            couleurs.map(c => '<button type="button" class="filtre-btn" data-couleur="' + echapperHtml(c) + '">' + echapperHtml(c) + '</button>').join('') + '</div></div>' : '') +
           '<div class="mp-stock" id="mp-stock"></div>' +
           '<div class="mp-achat">' +
             '<div class="mp-quantite"><button type="button" id="mp-qte-moins" aria-label="Moins">−</button><span id="mp-qte">1</span><button type="button" id="mp-qte-plus" aria-label="Plus">+</button></div>' +
@@ -171,9 +163,8 @@
             ((produit.composition || produit.entretien) ? '<details><summary>Composition & entretien</summary><div class="mp-texte">' +
               (produit.composition ? '<p><strong>Composition :</strong> ' + echapperHtml(produit.composition) + '</p>' : '') +
               (produit.entretien ? '<p><strong>Entretien :</strong> ' + echapperHtml(produit.entretien) + '</p>' : '') + '</div></details>' : '') +
-            '<details><summary>Livraison & paiement</summary><div class="mp-texte"><p>Livraison à domicile, tarif et délai selon votre commune, affichés avant la validation de la commande.</p><p>Paiement par Wave, Orange Money ou MTN Mobile Money. Votre commande est confirmée dès la vérification du paiement.</p></div></details>' +
+            '<details><summary>Livraison et paiement</summary><div class="mp-texte"><p>Livraison à domicile. Le tarif et le délai dépendent de votre commune ; ils sont indiqués avant que vous validiez la commande.</p><p>Paiement par Wave, Orange Money ou MTN Mobile Money. La commande est confirmée dès que l’agence a vérifié le paiement.</p></div></details>' +
           '</div>' +
-          '<div class="mp-reassurance"><span>Pièce authentique Maison MA2M</span><span>Suivi de commande à chaque étape</span></div>' +
         '</div>' +
       '</div>';
     // rendreContenuRiche (js/app.js) renvoie un HTML déjà nettoyé par DOMPurify.

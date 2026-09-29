@@ -1224,6 +1224,7 @@ base ; Book, fiche mannequin FR/EN et accueil : toutes les images chargées sur 
   ne laissent rien lire à un non-admin ; les pages `marketplace/` affichent alors
   « Page introuvable ». Ne PAS passer `ouverte` à true avant la fin de la construction,
   la relecture des CGV et l'accord de la propriétaire.
+- **Nom retenu : « La Maison MA2M ».** Règle de la propriétaire : la boutique réutilise les composants du site officiel (eyebrow, titres capitales + point rouge, .btn, .filtre-btn, .form-champ, .fil-ariane, .vedette-fullbleed, .btn-mini-admin) et des textes naturels — pas d’interface ni de phrases « génériques IA ».
 - **Pages** : `marketplace/index.html` (vitrine), `produit.html?p=<slug>` (fiche),
   `gestion.html` (tableau de bord de la boutique : exige un admin connecté ET le code
   de validation saisi dans cet onglet). Code : `js/marketplace-commun.js` (accès,
