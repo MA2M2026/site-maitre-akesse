@@ -147,6 +147,16 @@ Vercel.
   « Production ». Le 29/09, une fusion n'a produit qu'un « Aperçu » (limite
   quotidienne probable) : il a fallu une nouvelle fusion pour relancer.
 
+## 📐 « Affichage qui saute » (29 septembre 2026)
+
+- Actualités / Événements (FR/EN) : la hauteur du bloc « À la une » est réservée
+  en CSS tant qu'il est vide (`#actus-une:empty`, `#evenements-une:empty` dans
+  `css/style.css`). Mesuré en navigateur : saut 0,52-0,56 → 0,001. Si aucune
+  actualité n'existe, la réservation disparaît au profit du message « Aucune… »
+  (petit saut à ce moment-là, cas rare accepté).
+- Reste à traiter si la propriétaire le souhaite : le même défaut sur l'accueil,
+  quand le « Mot de Maître Akesse » apparaît.
+
 ## 📝 À faire plus tard (demandé par la propriétaire — à lui rappeler)
 
 - **Nettoyer les anciennes copies de photos sur Supabase Storage** (noté le 28
