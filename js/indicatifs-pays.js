@@ -198,8 +198,27 @@ const INDICATIFS_PAYS = [
   ['+263', '🇿🇼 Zimbabwe (+263)']
 ];
 
+// Pages anglaises : noms des pays en anglais (traduits par le navigateur à partir du
+// drapeau, qui contient le code du pays), classés dans l'ordre alphabétique anglais.
+// Navigateur trop ancien pour traduire : la liste française reste affichée.
+function indicatifsAffiches() {
+  if ((document.documentElement.lang || '').indexOf('en') !== 0 || typeof Intl === 'undefined' || !Intl.DisplayNames) return INDICATIFS_PAYS;
+  try {
+    const noms = new Intl.DisplayNames(['en'], { type: 'region' });
+    return INDICATIFS_PAYS.map(([valeur, libelle]) => {
+      const lettres = Array.from(libelle).slice(0, 2).map(c => c.codePointAt(0) - 0x1F1E6);
+      if (lettres.length !== 2 || lettres.some(n => n < 0 || n > 25)) return [valeur, libelle, libelle];
+      const code = String.fromCharCode(65 + lettres[0], 65 + lettres[1]);
+      const nom = noms.of(code);
+      if (!nom || nom === code) return [valeur, libelle, libelle];
+      const drapeau = Array.from(libelle).slice(0, 2).join('');
+      return [valeur, `${drapeau} ${nom} (${valeur})`, nom];
+    }).sort((a, b) => a[2].localeCompare(b[2], 'en'));
+  } catch (e) { return INDICATIFS_PAYS; }
+}
+
 function remplirIndicatifs(selectEl, indicatifParDefaut) {
-  selectEl.innerHTML = INDICATIFS_PAYS.map(([valeur, libelle]) => `<option value="${valeur}">${libelle}</option>`).join('');
+  selectEl.innerHTML = indicatifsAffiches().map(([valeur, libelle]) => `<option value="${valeur}">${libelle}</option>`).join('');
   selectEl.value = indicatifParDefaut || '+225';
 }
 

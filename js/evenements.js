@@ -25,7 +25,12 @@ function dateAffichageEvenement(e) {
 
 function extraitTexte(texte, longueur) {
   if (!texte) return '';
-  return texte.length > longueur ? texte.slice(0, longueur).trim() + '…' : texte;
+  if (texte.length <= longueur) return texte;
+  // Coupe entre deux mots (et non au milieu d'un mot : « Cette nouvel… »).
+  let coupe = texte.slice(0, longueur);
+  const espace = coupe.lastIndexOf(' ');
+  if (espace > longueur * 0.6) coupe = coupe.slice(0, espace);
+  return coupe.replace(/[\s,;:.\-–—(]+$/, '') + '…';
 }
 
 async function chargerEvenements() {

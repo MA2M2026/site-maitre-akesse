@@ -2382,3 +2382,7 @@ html.vide-mot-responsable #mot-responsable.section-reservee.u-hidden { display: 
   /* Plein écran : la croix reste visible même après avoir fait défiler le texte. */
   #part-modal .news-modal-fermer { position: fixed; top: 1rem; right: 1rem; width: 44px; height: 44px; font-size: 1.2rem; }
 }
+
+/* Ma sélection : état « vide » connu dès le début du chargement (js/selection-etat.js). */
+html.selection-vide #bloc-selection { display: none; }
+html.selection-vide #liste-vide { display: block; }
