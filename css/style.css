@@ -2433,3 +2433,11 @@ html.selection-vide #liste-vide { display: block; }
 .mg-apercu { display: none; white-space: pre-line; background: rgba(255,255,255,0.04); border-left: 3px solid var(--bordeaux-clair); padding: 0.9rem 1rem; margin: 0 0 1rem; font-size: 0.88rem; color: var(--texte-corps); }
 .mg-actions { display: flex; flex-wrap: wrap; gap: 0.7rem; margin: 0.4rem 0 0.8rem; }
 .mg-sous-titre { margin-top: 2rem; font-size: 1rem; }
+.mg-date, .mg-envoye { display: block; margin-top: 0.15rem; font-size: 0.76rem; }
+.mg-date { color: var(--texte-doux); }
+.mg-envoye { color: #7fd8a3; }
+.mg-personne { flex-wrap: wrap; }
+@media (max-width: 600px) {
+  .mg-nom { min-width: 0; }
+  .mg-infos { flex-basis: 100%; padding-left: 1.65rem; }
+}

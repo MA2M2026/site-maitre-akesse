@@ -42,8 +42,18 @@
     let h = 0; for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0;
     return 'ma2m_mg_' + canal + '_' + h;
   }
-  function dejaFaits(canal) { try { return new Set(JSON.parse(localStorage.getItem(cleSuivi(canal)) || '[]')); } catch (e) { return new Set(); } }
-  function noterFait(canal, id) { const s = dejaFaits(canal); s.add(id); try { localStorage.setItem(cleSuivi(canal), JSON.stringify([...s])); } catch (e) {} }
+  // Envois mémorisés avec leur date : { id: 'AAAA-MM-JJTHH:MM…' }. (Ancien format :
+  // simple liste d'identifiants — toujours compris.)
+  function datesEnvoi(canal) {
+    try {
+      const v = JSON.parse(localStorage.getItem(cleSuivi(canal)) || '{}');
+      if (Array.isArray(v)) { const o = {}; v.forEach(id => { o[id] = ''; }); return o; }
+      return v || {};
+    } catch (e) { return {}; }
+  }
+  function dejaFaits(canal) { return new Set(Object.keys(datesEnvoi(canal))); }
+  function noterFait(canal, id) { const o = datesEnvoi(canal); o[id] = new Date().toISOString(); try { localStorage.setItem(cleSuivi(canal), JSON.stringify(o)); } catch (e) {} }
+  function dateCourte(iso) { return iso ? new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : ''; }
 
   // Dimanche qui suit (jamais aujourd'hui) : date du casting en présentiel de l'agence.
   function dimancheSuivant() {
@@ -168,12 +178,20 @@ L'équipe Maître Akesse Model Management`;
     $('mg-resume').textContent = destinataires.length
       ? `${destinataires.length} personne(s) — ${avecEmail} avec e-mail, ${avecWa} avec numéro WhatsApp. Décochez celles à qui vous ne voulez pas écrire.`
       : 'Personne dans ce groupe.';
-    $('mg-liste').innerHTML = destinataires.map((d, i) => `
+    const mails = datesEnvoi('email'), was = datesEnvoi('wa');
+    $('mg-liste').innerHTML = destinataires.map((d, i) => {
+      const envois = [
+        d.id in mails ? '✉️ e-mail envoyé' + (mails[d.id] ? ' le ' + dateCourte(mails[d.id]) : '') : '',
+        d.id in was ? '💬 WhatsApp ouvert' + (was[d.id] ? ' le ' + dateCourte(was[d.id]) : '') : ''
+      ].filter(Boolean).join(' · ');
+      return `
       <label class="mg-personne">
         <input type="checkbox" data-i="${i}" ${d.choisi ? 'checked' : ''}>
         <span class="mg-nom">${echapper(d.full_name || '—')}</span>
-        <span class="mg-infos">${echapper([d.email, d.phone].filter(Boolean).join(' · ') || 'aucun contact')}</span>
-      </label>`).join('');
+        <span class="mg-infos">${echapper([d.email, d.phone].filter(Boolean).join(' · ') || 'aucun contact')}
+          <span class="mg-date">Postulé le ${dateCourte(d.created_at)}</span>${envois ? `<span class="mg-envoye">${envois}</span>` : ''}</span>
+      </label>`;
+    }).join('');
     majApercu(); majBoutons();
   }
 
@@ -232,6 +250,7 @@ L'équipe Maître Akesse Model Management`;
     }
     etat.className = echecs.length ? 'form-msg err' : 'form-msg ok';
     etat.style.whiteSpace = 'pre-line';
+    afficherListe();
     etat.textContent = `✓ ${ok} e-mail(s) envoyé(s).` + (echecs.length ? `\n${echecs.length} échec(s) — vous pouvez rappuyer pour réessayer uniquement ceux-là :\n` + echecs.join('\n') : '');
     majBoutons();
   }
@@ -244,6 +263,7 @@ L'équipe Maître Akesse Model Management`;
     if (!d || !t) return;
     window.open('https://wa.me/' + numeroWa(d.phone) + '?text=' + encodeURIComponent(personnaliser(t, d)), '_blank', 'noopener');
     noterFait('wa', d.id);
+    afficherListe();
     $('mg-wa-etat').textContent = `Ouvert pour ${d.full_name || d.phone}. Appuyez sur « Envoyer » dans WhatsApp, puis revenez ici pour la personne suivante.`;
     majBoutons();
   }
