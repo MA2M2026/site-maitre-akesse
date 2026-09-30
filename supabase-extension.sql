@@ -5105,3 +5105,45 @@ select cron.schedule(
 );
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 104 : nouveau formulaire de candidature (validé par la
+-- propriétaire le 30/09/2026).
+--   - « Intégrer l'agence » : parcours Débutant·e (formulaire allégé) ou
+--     Déjà mannequin (formulaire complet) ;
+--   - niveau d'études, taille de vêtements, vidéo de présentation.
+-- La vidéo est rangée dans le Google Drive de l'agence (jamais dans Supabase) :
+-- seul son lien est enregistré, APRÈS l'envoi de la candidature, par la fonction
+-- ajouter_video_candidature() — le site ne peut pas modifier une candidature
+-- lui-même, et cette fonction n'accepte qu'un seul lien Google Drive, une seule
+-- fois, sur une candidature toute récente.
+-- ===================================================================
+alter table casting_applications add column if not exists experience_mannequin text;   -- 'oui' / 'non'
+alter table casting_applications add column if not exists situation_scolaire text;     -- 'en cours' / 'plus à l''école' / 'jamais scolarisé(e)'
+alter table casting_applications add column if not exists niveau_etudes text;          -- ex. « Secondaire — 3e »
+alter table casting_applications add column if not exists clothing_size text;
+alter table casting_applications add column if not exists video_url text;
+
+create or replace function ajouter_video_candidature(p_id uuid, p_url text)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if p_url is null or p_url !~ '^https://drive\.google\.com/file/d/[A-Za-z0-9_-]+/view$' then
+    return false;
+  end if;
+  update casting_applications
+     set video_url = p_url
+   where id = p_id
+     and video_url is null
+     and status = 'nouvelle'
+     and created_at > now() - interval '2 hours';
+  return found;
+end;
+$$;
+revoke all on function ajouter_video_candidature(uuid, text) from public;
+grant execute on function ajouter_video_candidature(uuid, text) to anon, authenticated;
+
+NOTIFY pgrst, 'reload schema';
