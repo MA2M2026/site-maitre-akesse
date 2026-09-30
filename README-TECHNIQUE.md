@@ -1369,3 +1369,43 @@ fiches) et formulaires remplis jusqu'au bout — **sans aucune écriture** : tou
   The Book (largeur des cartes fixée avant l'arrivée des photos).
 - **Outils** : empreintes CSP à recalculer après toute retouche d'un script inline
   (`scripts/verifier-csp.py` pour vérifier).
+
+## 📌 Rappels et suivis (mis à jour le 30 septembre 2026)
+
+Liste de tout ce qui reste à faire ou à surveiller, pour la propriétaire et pour Claude.
+
+**Rappels programmés**
+- **Dimanche 4 octobre 2026** : documents légaux (CGU, page cookies, politique de
+  remboursement dont les 45 000 FCFA d'inscription, relecture des CGV de la boutique,
+  infos vendeur, mention fiscale) — dès que la propriétaire a les documents de la société.
+- **Lundi 5 octobre 2026, puis chaque lundi à 6 h 47 (Abidjan)** : visite automatique du
+  site sur 4 appareils, rapport par notification et e-mail. La visite signale ; les
+  corrections se font ensuite dans une conversation.
+- **Jeudi 8 octobre 2026** : vérifier la consommation Supabase du nouveau mois
+  (https://supabase.com/dashboard/org/_/usage) — « Cached Egress » était à 294 % sur le
+  mois 6 sept.–6 oct. (photos servies par Supabase avant leur passage chez Cloudflare),
+  restriction annoncée au 15 octobre si le dépassement continuait.
+
+**À faire par la propriétaire**
+- Corriger dans le tableau de bord les fautes de ses propres textes : « Afik » →
+  « Afrik » (actualité Afrik Fashion Week) ; titres « FASHION WEEKS », « FOLIES DE MODE
+  14 » ; « 15hrs » → « 15 h » (bandeau, casting Newface) ; « AFRICA IN RHYTHM » et
+  NOOM/Noum ; « Les belles créations » ; « Créations signées GILLES TOURÉ » ; partenaire
+  « GILLES TOURÉ » ; fiche Cha Kane (un « 1 » isolé et des `` à la fin).
+- Alerte de disponibilité du site (UptimeRobot) et droits sur les photos (audit de conformité).
+- Supprimer le secret GitHub devenu inutile SUPABASE_DB_URL (facultatif).
+
+**Prochaines étapes techniques**
+- Envoi d'e-mails : passer à un service gratuit à 300 e-mails/jour (EmailJS actuel :
+  200/mois) — création d'un compte par la propriétaire, guidée pas à pas.
+- FAQ du site : quand la propriétaire aura envoyé ses questions.
+- Plus tard : vraie double authentification admin ; détection « page figée » sur iPhone.
+
+**Liens de consommation**
+- Vercel : https://vercel.com/ma-2-m/~/usage (au 30/09 : 3 % de la bande passante)
+- Supabase : https://supabase.com/dashboard/org/_/usage
+- Cloudflare (photos) : https://dash.cloudflare.com/?to=/:account/r2/overview (4 % du gratuit)
+
+**Accès de Claude (réglés le 30/09)** : lecture des pages du site et des données
+publiques de la base, comme un visiteur. Pas d'accès au tableau de bord, aux données
+privées ni aux écrans de consommation (connexion de la propriétaire nécessaire).
