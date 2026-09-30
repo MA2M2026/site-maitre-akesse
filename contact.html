@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-BPUAyTkOKgl81KOUh3FZrp9GI4hQq6Du2VAREnEIxsc='; style-src 'self' https://fonts.googleapis.com 'sha256-cc6x/wRBjT7WzYbXAbHWiOCuj91Hf/4++nRS2qc3waw=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-Cjh6U/SmIjBn+RBIiCp+Q3QMnOdidyasxhvo/EVrJPs='; style-src 'self' https://fonts.googleapis.com 'sha256-cc6x/wRBjT7WzYbXAbHWiOCuj91Hf/4++nRS2qc3waw=';">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -272,9 +272,9 @@ document.getElementById('form-contact').addEventListener('submit', async functio
   msg.textContent = 'Envoi en cours…';
   msg.style.display = 'block';
 
-  const { error } = await sb.from('messages_contact').insert({
+  const { error } = await insererAvecPatience('messages_contact', {
     nom, telephone, email, type_contact: typeContact, structure, ville, message
-  });
+  }, (reste) => { msg.textContent = texteAttenteEnvoi(reste); });
 
   boutonEnvoyer.disabled = false;
 

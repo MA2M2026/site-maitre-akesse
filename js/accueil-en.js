@@ -151,9 +151,11 @@ async function chargerMedaillonsAccueil() {
   const { data: profils } = await sb.from('model_profiles').select('id, full_name, city, height_cm').eq('published', true).order('created_at', { ascending: false }).limit(6);
   if (!profils || !profils.length) { conteneur.innerHTML = '<p class="u-texte-gris">Profiles coming soon.</p>'; return; }
 
+  // One grouped request for all photos (same photo as The Book), instead of one per model.
+  const { data: couvertures } = await sb.rpc('photos_couverture_mannequins', { ids: profils.map(p => p.id) });
+  const photoPar = {}; (couvertures || []).forEach(c => { photoPar[c.model_id] = c.url; });
   for (const profil of profils) {
-    const { data: photos } = await sb.from('model_photos').select('url, url_miniature').eq('model_id', profil.id).order('created_at', { ascending: true }).limit(1);
-    const photoUrl = (photos && photos[0]) ? (photos[0].url_miniature || photos[0].url) : '../assets/logo-dark-bg.png';
+    const photoUrl = photoPar[profil.id] || '../assets/logo-dark-bg.png';
     const carte = document.createElement('a');
     carte.href = 'mannequin.html?id=' + profil.id;
     carte.className = 'medaillon-carte reveal';

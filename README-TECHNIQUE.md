@@ -1342,3 +1342,30 @@ fournie. D'où `.github/workflows/sauvegarde-base.yml` + `scripts/sauvegarde-bas
   (la base cible doit déjà avoir les schémas Supabase `auth`, `storage` — c'est le cas
   d'un nouveau projet Supabase).
 - Les photos ne sont pas dans la base (Cloudflare R2).
+
+## 🔎 Visite complète du site (30 septembre 2026, nuit)
+
+Visite de toutes les pages publiques (FR/EN) sur iPhone, Android, tablette et ordinateur,
+avec gestes réels (menu, langue, filtres du Book, sélection, visionneuse, compcard,
+fiches) et formulaires remplis jusqu'au bout — **sans aucune écriture** : toutes les
+écritures (base, Drive, EmailJS, compteurs de visites, statistiques) étaient interceptées.
+
+- **Formulaires publics et afflux** : la base limite les envois (anti-robots). Les
+  formulaires candidature / contact / sélection passent par `insererAvecPatience()`
+  (`js/app.js`) : un envoi refusé pour cette seule raison est retenté 3 fois (15, 25,
+  35 s) avec un compte à rebours, au lieu d'afficher « Erreur lors de l'envoi ».
+  **Extension 102** (à lancer dans Supabase) relève les plafonds : candidatures 60/min
+  pour le site et 6/min par connexion ; contact et recruteurs 30/min et 3/min.
+- **Charge (lecture seule, site réel)** : une visite de 6 pages = 24 petites lectures
+  (≈ 50 Ko). Jusqu'à 50 visiteurs arrivant à la même seconde : tout fonctionne (réponses
+  de la base 1 à 4 s). Au-delà, la machine de test elle-même saturait (test témoin sur un
+  simple fichier du site) : pas de mesure fiable possible depuis l'environnement de test.
+- **Accueil** : les photos des 6 médaillons arrivent en une seule demande groupée
+  (`photos_couverture_mannequins`, comme le Book) au lieu de 6 demandes successives.
+- **Adresse /en** : Vercel transforme `/en/index.html` en `/en` ; les liens relatifs de
+  l'accueil anglais menaient alors aux pages françaises. `js/adresse-en.js` remet la
+  barre finale (`history.replaceState`, sans rechargement).
+- **Sauts d'affichage corrigés** : Partenaires, Ma sélection (`js/selection-etat.js`),
+  The Book (largeur des cartes fixée avant l'arrivée des photos).
+- **Outils** : empreintes CSP à recalculer après toute retouche d'un script inline
+  (`scripts/verifier-csp.py` pour vérifier).

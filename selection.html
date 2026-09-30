@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-RKzHiJOjluVFgQDxdxzH53kxIqT+Hd5tbSKO3A/y5og='; style-src 'self' https://fonts.googleapis.com 'sha256-SdRYxWKqm5ftdqMeUdvybdnuqWRV6FlA7r2YdjWdsXA=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-UdNwoKbUE0NthjmPuLo3prBxnf1FBw1huLzLxXH7fxU='; style-src 'self' https://fonts.googleapis.com 'sha256-SdRYxWKqm5ftdqMeUdvybdnuqWRV6FlA7r2YdjWdsXA=';">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -301,7 +301,7 @@ document.getElementById('form-recruteur').addEventListener('submit', async (e) =
     message: document.getElementById('re-message').value.trim()
   };
 
-  const { error } = await sb.from('recruiter_requests').insert(demande);
+  const { error } = await insererAvecPatience('recruiter_requests', demande, (reste) => { msg.className = 'form-msg ok'; msg.textContent = texteAttenteEnvoi(reste); });
 
   if (error) {
     msg.className = 'form-msg err';
