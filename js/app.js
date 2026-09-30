@@ -1930,12 +1930,32 @@ async function envoyerPhotosVersDrive(urlScript, payload, tentatives = 2) {
       });
       const resultat = await reponse.json();
       if (resultat.ok && Array.isArray(resultat.liens)) {
-        return { liens: resultat.liens, echec: false };
+        return { liens: resultat.liens, echec: false, dossier: resultat.dossier || null };
       }
     } catch (e) {}
     if (essai < tentatives) await new Promise(r => setTimeout(r, 1500));
   }
-  return { liens: [], echec: true };
+  return { liens: [], echec: true, dossier: null };
+}
+
+// Vidéo de présentation (candidatures) : envoyée à part, après les photos, vers le
+// même programme Google ; range la vidéo dans le dossier Drive de la personne.
+// Renvoie le lien de la vidéo, ou null si elle n'a pas pu partir (un nouvel essai).
+async function envoyerVideoVersDrive(urlScript, payload, tentatives = 2) {
+  const payloadAvecCle = { ...payload, cle: CLE_SCRIPT_PHOTOS_DRIVE };
+  for (let essai = 1; essai <= tentatives; essai++) {
+    try {
+      const reponse = await fetch(urlScript, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payloadAvecCle)
+      });
+      const resultat = await reponse.json();
+      if (resultat.ok && typeof resultat.video === 'string') return resultat.video;
+    } catch (e) {}
+    if (essai < tentatives) await new Promise(r => setTimeout(r, 2000));
+  }
+  return null;
 }
 
 // Journalise, côté base de données, les photos qui n'ont vraiment pas pu être

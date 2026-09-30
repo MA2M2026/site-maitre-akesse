@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-rJvlJPbYwoVF8MW1GWwum7kxiNRzprxv6pucEdnX43g='; style-src 'self' https://fonts.googleapis.com 'sha256-wY5HlBWQW7uoDVNPS6YVpI0janGrwB1+YtjhfMQ8c4Q='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-elxG8jGF7m56gmb4H2KCMArhdizOp98InciKcEz5UN4='; style-src 'self' https://fonts.googleapis.com 'sha256-wY5HlBWQW7uoDVNPS6YVpI0janGrwB1+YtjhfMQ8c4Q='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -92,7 +92,7 @@ setTimeout(() => {
   <div class="container">
     <div class="eyebrow reveal">Join the agency or a casting</div>
     <h1 class="reveal reveal-delay-1">Apply for a Casting<span class="oeil">.</span></h1>
-    <p class="reveal reveal-delay-2 u-maxw-60ch-texte u-mt-1-2">Want to join Maître Akesse Model Management, or apply for a specific project/casting launched by the agency? Fill out this form with your information, your measurements, and at least four photos. Our team reviews every application.</p>
+    <p class="reveal reveal-delay-2 u-maxw-60ch-texte u-mt-1-2">Want to join Maître Akesse Model Management, or apply for a specific project/casting launched by the agency? Fill out this form with your information, your measurements, your photos and a short introduction video. Our team reviews every application.</p>
   </div>
 </section>
 
@@ -121,6 +121,15 @@ setTimeout(() => {
         </div>
       </div>
 
+      <div class="form-champ u-hidden" id="ca-bloc-experience">
+        <label for="ca-experience">Have you ever worked as a model? *</label>
+        <select id="ca-experience">
+          <option value="">Select</option>
+          <option value="non">No, this would be my first experience</option>
+          <option value="oui">Yes, I have already worked as a model</option>
+        </select>
+      </div>
+
       <div class="form-grille">
         <div class="form-champ">
           <label for="ca-nom">Full name</label>
@@ -136,13 +145,47 @@ setTimeout(() => {
           <input type="tel" id="ca-telephone-numero" placeholder="07 00 00 00 00">
         </div>
         <div class="form-champ">
-          <label for="ca-ville">City</label>
-          <select id="ca-ville"></select>
+          <label for="ca-ville">City *</label>
+          <select id="ca-ville" required></select>
           <input type="text" id="ca-ville-autre" placeholder="Specify the city" class="enca-3">
+        </div>
+        <div class="form-champ u-hidden" id="ca-commune-wrap">
+          <label for="ca-commune">District (Abidjan) *</label>
+          <select id="ca-commune"></select>
+          <input type="text" id="ca-commune-autre" placeholder="Specify the district" class="enca-3">
+        </div>
+        <div class="form-champ" id="ca-quartier-wrap">
+          <label for="ca-quartier">Neighbourhood *</label>
+          <input type="text" id="ca-quartier" required placeholder="e.g. Angré, Riviera, II Plateaux…">
         </div>
         <div class="form-champ">
           <label for="ca-naissance">Date of birth *</label>
           <input type="date" id="ca-naissance" required>
+        </div>
+      </div>
+
+      <div class="form-grille" id="ca-bloc-etudes">
+        <div class="form-champ">
+          <label for="ca-scolarite">School situation *</label>
+          <select id="ca-scolarite" required>
+            <option value="">Select</option>
+            <option value="en cours">I am still a pupil / student</option>
+            <option value="plus à l'école">I am no longer in school</option>
+            <option value="jamais scolarisé(e)">I have never been to school</option>
+          </select>
+        </div>
+        <div class="form-champ" id="ca-etudes-cat-wrap">
+          <label for="ca-etudes-cat" id="ca-etudes-cat-label">Education level *</label>
+          <select id="ca-etudes-cat">
+            <option value="">Select</option>
+            <option value="Primaire">Primary school</option>
+            <option value="Secondaire">Secondary school</option>
+            <option value="Supérieur">Higher education</option>
+          </select>
+        </div>
+        <div class="form-champ u-hidden" id="ca-etudes-classe-wrap">
+          <label for="ca-etudes-classe">Class / year *</label>
+          <select id="ca-etudes-classe"></select>
         </div>
       </div>
 
@@ -177,23 +220,30 @@ setTimeout(() => {
           <span id="ca-taille-indication" class="enca-7"></span>
         </div>
         <div class="form-champ">
-          <label for="ca-poids">Weight (kg)</label>
-          <select id="ca-poids"></select>
+          <label for="ca-poids">Weight (kg) *</label>
+          <select id="ca-poids" required></select>
         </div>
         <div class="form-champ">
-          <label for="ca-pointure">Shoe size</label>
+          <label for="ca-vetements">Clothing size *</label>
+          <select id="ca-vetements" required>
+            <option value="">Select</option>
+            <option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option><option>XXXL</option>
+          </select>
+        </div>
+        <div class="form-champ ca-mensuration-complete">
+          <label for="ca-pointure">Shoe size *</label>
           <select id="ca-pointure"></select>
         </div>
-        <div class="form-champ">
-          <label for="ca-poitrine">Chest (cm)</label>
+        <div class="form-champ ca-mensuration-complete">
+          <label for="ca-poitrine">Chest (cm) *</label>
           <select id="ca-poitrine"></select>
         </div>
-        <div class="form-champ">
-          <label for="ca-tourtaille">Waist (cm)</label>
+        <div class="form-champ ca-mensuration-complete">
+          <label for="ca-tourtaille">Waist (cm) *</label>
           <select id="ca-tourtaille"></select>
         </div>
-        <div class="form-champ">
-          <label for="ca-hanches">Hips (cm)</label>
+        <div class="form-champ ca-mensuration-complete">
+          <label for="ca-hanches">Hips (cm) *</label>
           <select id="ca-hanches"></select>
         </div>
       </div>
@@ -204,10 +254,17 @@ setTimeout(() => {
       </div>
 
       <div class="form-champ">
-        <label for="ca-photos">Photos (4 minimum: portrait, full body, no makeup, other...) *</label>
+        <label for="ca-photos" id="ca-photos-label">Photos (4 minimum: portrait, full body, no makeup, other...) *</label>
         <input type="file" id="ca-photos" accept="image/*" multiple required>
         <span id="ca-photos-compteur" class="enca-8"></span>
         <div id="ca-photos-apercu" class="enca-9"></div>
+      </div>
+
+      <div class="form-champ">
+        <label for="ca-video">Introduction video *</label>
+        <p class="enca-6 ca-video-aide">30 seconds maximum, filmed facing the camera: "Hello, my name is…, I am … years old, I am … tall, and I would like to…".</p>
+        <input type="file" id="ca-video" accept="video/*">
+        <span id="ca-video-info" class="enca-8"></span>
       </div>
 
       <div class="form-champ form-consentement enca-10">
@@ -267,6 +324,7 @@ setTimeout(() => {
 <script src="../js/vendor/supabase-js-2.110.6.js"></script>
 <script src="../js/supabase-config.js"></script>
 <script src="../js/indicatifs-pays.js"></script>
+<script src="../js/villes-cote-ivoire.js"></script>
 <script src="../js/vendor/emailjs-browser-3.12.1.min.js"></script>
 <script src="../js/emailjs-config.js"></script>
 <script src="../js/app.js"></script>
@@ -317,20 +375,14 @@ function valeurSelectOuAutre(idSelect, idAutre) {
   if (select.value === 'Autre') return (autre.value || '').trim();
   return select.value;
 }
-const VILLES_CI = [
-  'Abidjan', 'Abengourou', 'Aboisso', 'Adiaké', 'Adzopé', 'Affery', 'Agboville', 'Agnibilékrou',
-  'Akoupé', 'Alépé', 'Anyama', 'Arrah', 'Attiégouakro', 'Bangolo', 'Bettié', 'Biankouma',
-  'Bingerville', 'Bloléquin', 'Bocanda', 'Bondoukou', 'Bongouanou', 'Bouaflé', 'Bouaké', 'Bouna',
-  'Boundiali', 'Dabakala', 'Dabou', 'Daloa', 'Danané', 'Daoukro', 'Dimbokro', 'Divo', 'Duékoué',
-  'Facobly', 'Ferkessédougou', 'Fresco', 'Gagnoa', 'Grand-Bassam', 'Grand-Lahou', 'Guiglo',
-  'Guitry', 'Issia', 'Jacqueville', 'Kani', 'Katiola', 'Kong', 'Korhogo', 'Kouibly', 'Lakota',
-  'Man', 'Mankono', "M'Bahiakro", 'Minignan', 'Nassian', 'Odienné', 'Oumé', 'Ouangolodougou',
-  'Ouragahio', 'Prikro', 'Sakassou', 'San-Pédro', 'Sassandra', 'Séguéla', 'Sikensi', 'Sinfra',
-  'Soubré', 'Tabou', 'Tanda', 'Tengréla', 'Tiassalé', 'Tiébissou', 'Toulepleu', 'Toumodi',
-  'Touba', 'Vavoua', 'Yamoussoukro', 'Zouan-Hounien', 'Zuénoula'
-];
 remplirSelectListe('ca-ville', VILLES_CI);
 configurerSelectAvecAutre('ca-ville', 'ca-ville-autre');
+brancherCascadeAbidjan('ca-ville', 'ca-commune-wrap', 'ca-commune', 'ca-commune-autre');
+configurerSelectAvecAutre('ca-commune', 'ca-commune-autre');
+[...document.getElementById('ca-commune').options].forEach(o => {
+  if (o.value === 'Abidjan') o.text = 'Abidjan (no specific district)';
+  if (o.value === 'Autre') o.text = 'Other';
+});
 
 function redimensionnerImage(fichier, coteMax = 2800, qualite = 0.88) {
   return new Promise((resolve) => {
@@ -406,8 +458,13 @@ remplirIndicatifs(document.getElementById('ca-parent-indicatif'));
 
 document.getElementById('ca-type').addEventListener('change', (e) => {
   const estProjet = e.target.value === 'projet';
+  const estAgence = e.target.value === 'agence';
   document.getElementById('ca-bloc-projet').style.display = estProjet ? 'block' : 'none';
   document.getElementById('ca-projet').required = estProjet;
+  document.getElementById('ca-bloc-experience').style.display = estAgence ? 'block' : 'none';
+  document.getElementById('ca-experience').required = estAgence;
+  if (!estAgence) document.getElementById('ca-experience').value = '';
+  majParcours();
   if (!estProjet) {
     document.getElementById('ca-projet').value = '';
     document.getElementById('ca-bloc-projet-autre').style.display = 'none';
@@ -420,14 +477,110 @@ document.getElementById('ca-projet').addEventListener('change', (e) => {
   document.getElementById('ca-projet-autre').required = estAutre;
 });
 
+// --- Path (same rules as the French page) ---------------------------------
+// "Join the agency" + never a model = BEGINNER: lighter form (no shoe size / chest /
+// waist / hips, 3 photos minimum). Already a model, or a specific casting = FULL
+// form, everything required, 4 photos. For everyone: full address, education
+// level, weight, clothing size, introduction video.
+function estDebutant() {
+  return document.getElementById('ca-type').value === 'agence' && document.getElementById('ca-experience').value === 'non';
+}
+function photosMin() { return estDebutant() ? 3 : 4; }
+function majParcours() {
+  const debutant = estDebutant();
+  document.querySelectorAll('.ca-mensuration-complete').forEach(bloc => {
+    bloc.style.display = debutant ? 'none' : '';
+    const champ = bloc.querySelector('select, input');
+    champ.required = !debutant;
+    if (debutant) champ.value = '';
+  });
+  document.getElementById('ca-photos-label').textContent = debutant
+    ? 'Photos (3 minimum: a portrait, a full-body photo, another of your choice) *'
+    : 'Photos (4 minimum: portrait, full body, no makeup, other...) *';
+  majCompteurPhotos();
+}
+document.getElementById('ca-experience').addEventListener('change', majParcours);
+
+// --- Education level: three main categories, then the class ---
+const CLASSES_ETUDES = {
+  Primaire: ['CP1', 'CP2', 'CE1', 'CE2', 'CM1', 'CM2'],
+  Secondaire: ['6e', '5e', '4e', '3e', '2nde', '1re', 'Terminale'],
+  'Supérieur': ['BTS', 'Licence 1', 'Licence 2', 'Licence 3', 'Master 1', 'Master 2', 'Doctorat', 'Autre formation supérieure']
+};
+const CLASSES_ETUDES_EN = { 'Licence 1': 'Bachelor year 1', 'Licence 2': 'Bachelor year 2', 'Licence 3': 'Bachelor year 3', 'Doctorat': 'PhD', 'Autre formation supérieure': 'Other higher education' };
+function majEtudes() {
+  const situation = document.getElementById('ca-scolarite').value;
+  const jamais = situation === 'jamais scolarisé(e)';
+  const cat = document.getElementById('ca-etudes-cat');
+  const classe = document.getElementById('ca-etudes-classe');
+  document.getElementById('ca-etudes-cat-wrap').style.display = jamais ? 'none' : '';
+  document.getElementById('ca-etudes-cat-label').textContent = situation === "plus à l'école" ? 'Last level reached *' : 'Education level *';
+  cat.required = !jamais;
+  if (jamais) cat.value = '';
+  const liste = CLASSES_ETUDES[cat.value];
+  document.getElementById('ca-etudes-classe-wrap').style.display = liste && !jamais ? 'block' : 'none';
+  classe.required = !!liste && !jamais;
+  if (liste && classe.dataset.categorie !== cat.value) {
+    classe.innerHTML = '<option value="">Select</option>' + liste.map(c => `<option value="${c}">${CLASSES_ETUDES_EN[c] || c}</option>`).join('');
+    classe.dataset.categorie = cat.value;
+  }
+}
+document.getElementById('ca-scolarite').addEventListener('change', majEtudes);
+document.getElementById('ca-etudes-cat').addEventListener('change', majEtudes);
+function niveauEtudesChoisi() {
+  const cat = document.getElementById('ca-etudes-cat').value;
+  const classe = document.getElementById('ca-etudes-classe').value;
+  return cat ? cat + (classe ? ' — ' + classe : '') : null;
+}
+
+// --- Introduction video: required, 30 seconds / 30 MB maximum ---
+const VIDEO_MAX_OCTETS = 30 * 1024 * 1024;
+const VIDEO_MAX_SECONDES = 35; // 30 s announced, small margin
+let videoChoisie = null;
+function dureeVideo(fichier) {
+  return new Promise(resolve => {
+    const v = document.createElement('video');
+    v.preload = 'metadata';
+    v.onloadedmetadata = () => { URL.revokeObjectURL(v.src); resolve(v.duration); };
+    v.onerror = () => resolve(null);
+    v.src = URL.createObjectURL(fichier);
+  });
+}
+document.getElementById('ca-video').addEventListener('change', async (e) => {
+  const info = document.getElementById('ca-video-info');
+  const fichier = e.target.files && e.target.files[0];
+  videoChoisie = null;
+  info.style.color = 'var(--rouge)';
+  if (!fichier) { info.textContent = ''; return; }
+  if (!/^video\//.test(fichier.type || '') && !/\.(mp4|mov|m4v|3gp|webm)$/i.test(fichier.name || '')) { info.textContent = 'This file is not a video.'; e.target.value = ''; return; }
+  if (fichier.size > VIDEO_MAX_OCTETS) {
+    info.textContent = `Video too large (${Math.round(fichier.size / 1048576)} MB): 30 MB maximum. Film 30 seconds maximum, or lower the camera quality.`;
+    e.target.value = ''; return;
+  }
+  const duree = await dureeVideo(fichier);
+  if (duree && isFinite(duree) && duree > VIDEO_MAX_SECONDES) {
+    info.textContent = `Video too long (${Math.round(duree)} s): 30 seconds maximum.`;
+    e.target.value = ''; return;
+  }
+  videoChoisie = fichier;
+  info.style.color = 'var(--gris)';
+  info.textContent = `✓ Video ready (${duree && isFinite(duree) ? Math.round(duree) + ' s, ' : ''}${(fichier.size / 1048576).toFixed(1)} MB).`;
+});
+
+function majCompteurPhotos() {
+  const fichiers = Array.from(document.getElementById('ca-photos').files || []);
+  const compteur = document.getElementById('ca-photos-compteur');
+  if (!fichiers.length) { compteur.textContent = ''; return; }
+  const min = photosMin();
+  compteur.textContent = fichiers.length >= min
+    ? `${fichiers.length} photo${fichiers.length > 1 ? 's' : ''} selected.`
+    : `${fichiers.length} photo${fichiers.length > 1 ? 's' : ''} selected — ${min} minimum required.`;
+  compteur.style.color = fichiers.length >= min ? 'var(--gris)' : 'var(--rouge)';
+}
 document.getElementById('ca-photos').addEventListener('change', (e) => {
   const fichiers = Array.from(e.target.files || []);
-  const compteur = document.getElementById('ca-photos-compteur');
   const apercu = document.getElementById('ca-photos-apercu');
-  compteur.textContent = fichiers.length >= 4
-    ? `${fichiers.length} photo${fichiers.length > 1 ? 's' : ''} selected.`
-    : `${fichiers.length} photo${fichiers.length > 1 ? 's' : ''} selected — 4 minimum required.`;
-  compteur.style.color = fichiers.length >= 4 ? 'var(--gris)' : 'var(--rouge)';
+  majCompteurPhotos();
   apercu.innerHTML = '';
   fichiers.forEach(f => {
     const img = document.createElement('img');
@@ -524,9 +677,19 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
     }
   }
 
+  if (document.getElementById('ca-ville').value === 'Abidjan' && document.getElementById('ca-commune').value === 'Abidjan') {
+    afficherMsg(msg, 'Please specify your district in Abidjan.', 'err');
+    return;
+  }
+
   const fichiersPhotos = Array.from(document.getElementById('ca-photos').files || []);
-  if (fichiersPhotos.length < 4) {
-    afficherMsg(msg, `Please add at least 4 photos (${fichiersPhotos.length} selected so far).`, 'err');
+  const minPhotos = photosMin();
+  if (fichiersPhotos.length < minPhotos) {
+    afficherMsg(msg, `Please add at least ${minPhotos} photos (${fichiersPhotos.length} selected so far).`, 'err');
+    return;
+  }
+  if (!videoChoisie) {
+    afficherMsg(msg, 'Please add your introduction video (30 seconds maximum).', 'err');
     return;
   }
   if (fichiersPhotos.length > 12) {
@@ -542,7 +705,8 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
     full_name: document.getElementById('ca-nom').value.trim(),
     email: document.getElementById('ca-email').value.trim(),
     phone: composerTelephone(document.getElementById('ca-indicatif'), document.getElementById('ca-telephone-numero')),
-    city: valeurSelectOuAutre('ca-ville', 'ca-ville-autre'),
+    city: villeAvecCommune(valeurSelectOuAutre('ca-ville', 'ca-ville-autre'), 'ca-commune', 'ca-commune-autre'),
+    quartier: document.getElementById('ca-quartier').value.trim() || null,
     date_naissance: document.getElementById('ca-naissance').value || null,
     genre: genre,
     height_cm: taille,
@@ -555,7 +719,11 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
     parent_nom: mineur ? document.getElementById('ca-parent-nom').value.trim() : null,
     parent_telephone: mineur ? composerTelephone(document.getElementById('ca-parent-indicatif'), document.getElementById('ca-parent-telephone-numero')) : null,
     type_candidature: typeCandidature,
-    projet_nom: projetNom
+    projet_nom: projetNom,
+    experience_mannequin: typeCandidature === 'agence' ? document.getElementById('ca-experience').value : 'oui',
+    situation_scolaire: document.getElementById('ca-scolarite').value || null,
+    niveau_etudes: niveauEtudesChoisi(),
+    clothing_size: document.getElementById('ca-vetements').value || null
   };
 
   candidature.id = crypto.randomUUID();
@@ -570,6 +738,7 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
   }
 
   let nbPhotosEchouees = 0;
+  let dossierDrive = null;
   try {
     const photosBase64 = [];
     for (const fichierOriginal of fichiersPhotos) {
@@ -582,7 +751,7 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
       }
     }
 
-    const { liens, echec } = await envoyerPhotosVersDrive(URL_SCRIPT_PHOTOS_CASTING, {
+    const { liens, echec, dossier } = await envoyerPhotosVersDrive(URL_SCRIPT_PHOTOS_CASTING, {
       nom: candidature.full_name,
       email: candidature.email,
       phone: candidature.phone,
@@ -591,6 +760,7 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
       photos: photosBase64
     });
 
+    dossierDrive = dossier || null;
     if (!echec) {
       for (const lien of liens) {
         await sb.from('casting_photos').insert({ application_id: candidature.id, url: lien, chemin: null });
@@ -604,22 +774,45 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
   }
   journaliserPhotosEchouees('candidature', candidature.id, nbPhotosEchouees);
 
+  // Introduction video: sent AFTER the photos (it is heavier), into the same Drive
+  // folder; its link is then attached to the application.
+  let lienVideo = null;
+  afficherMsg(msg, 'Uploading your video… (this may take a minute, keep the page open)', 'ok');
+  try {
+    lienVideo = await envoyerVideoVersDrive(URL_SCRIPT_PHOTOS_CASTING, {
+      nom: candidature.full_name, email: candidature.email, phone: candidature.phone,
+      type: typeCandidature, projet: projetNom || '', dossier: dossierDrive,
+      // Some Android phones do not give the file type: we set it.
+      video: (await fichierEnBase64(videoChoisie)).replace(/^data:(?!video\/)[^;,]*(;base64,)/, 'data:video/mp4$1')
+    });
+    if (lienVideo) await sb.rpc('ajouter_video_candidature', { p_id: candidature.id, p_url: lienVideo });
+  } catch (e) { lienVideo = null; }
+
   const libelleType = typeCandidature === 'projet' ? `Project/casting: ${projetNom}` : `Join the agency`;
   envoyerNotificationEmail({
     name: candidature.full_name,
     telephone: candidature.phone,
     email: candidature.email,
-    message: `New casting application.\nApplying for: ${libelleType}\nCity: ${candidature.city || '-'}\nHeight: ${candidature.height_cm || '-'} cm\nMessage: ${candidature.message || '-'}${mineur ? `\n⚠️ MINOR — Parent/guardian: ${candidature.parent_nom || '-'} — ${candidature.parent_telephone || '-'}` : ''}`
+    message: `New casting application (English form).\nApplying for: ${libelleType}${typeCandidature === 'agence' ? (candidature.experience_mannequin === 'non' ? ' — Débutant(e)' : ' — Déjà mannequin') : ''}\nCity: ${candidature.city || '-'}${candidature.quartier ? ' — ' + candidature.quartier : ''}\nNiveau d'études : ${candidature.niveau_etudes || candidature.situation_scolaire || '-'}\nTaille de vêtements : ${candidature.clothing_size || '-'}\nVidéo : ${lienVideo || 'non reçue'}\nHeight: ${candidature.height_cm || '-'} cm\nMessage: ${candidature.message || '-'}${mineur ? `\n⚠️ MINOR — Parent/guardian: ${candidature.parent_nom || '-'} — ${candidature.parent_telephone || '-'}` : ''}`
   });
 
   if (window.jouerSon) window.jouerSon('envoi');
-  afficherMsg(msg, nbPhotosEchouees
-    ? `Application sent, but ${nbPhotosEchouees} photo${nbPhotosEchouees > 1 ? 's could' : ' could'} not be uploaded (unstable connection?). The rest of your application is saved.`
+  const soucis = [];
+  if (nbPhotosEchouees) soucis.push(`${nbPhotosEchouees} photo${nbPhotosEchouees > 1 ? 's' : ''} could not be uploaded`);
+  if (!lienVideo) soucis.push('your video could not be uploaded — please send it on WhatsApp to +225 05 45 65 68 87 with your name');
+  afficherMsg(msg, soucis.length
+    ? `Application sent, but ${soucis.join('; ')} (unstable connection?). The rest of your application is saved.`
     : 'Thank you! Your application has been sent. Our team will contact you if your profile is selected.', 'ok');
   document.getElementById('form-casting').reset();
   document.getElementById('ca-bloc-parent').style.display = 'none';
   document.getElementById('ca-bloc-projet').style.display = 'none';
   document.getElementById('ca-bloc-projet-autre').style.display = 'none';
+  document.getElementById('ca-bloc-experience').style.display = 'none';
+  document.getElementById('ca-experience').required = false;
+  videoChoisie = null;
+  document.getElementById('ca-video-info').textContent = '';
+  majParcours();
+  majEtudes();
   document.getElementById('ca-photos-compteur').textContent = '';
   document.getElementById('ca-photos-apercu').innerHTML = '';
   document.getElementById('ca-consentement').disabled = false;

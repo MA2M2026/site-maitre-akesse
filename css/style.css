@@ -2441,3 +2441,6 @@ html.selection-vide #liste-vide { display: block; }
   .mg-nom { min-width: 0; }
   .mg-infos { flex-basis: 100%; padding-left: 1.65rem; }
 }
+
+/* Candidature : aide sous le champ « Vidéo de présentation » (toujours visible) */
+.form-champ .ca-video-aide { display: block; }

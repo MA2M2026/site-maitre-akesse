@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-kGZOP2sMxPVRdgHkQZNufguzlRyCbuKOsnD4FSIAnF4='; style-src 'self' https://fonts.googleapis.com 'sha256-rlGOmtWoPiLQ3Ysci1f48TkvlFtTAWDWvlzX/Q47X6A='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-g0tdsktwRBLYDkEGJQ7bbHdnXO6kHwp+eXDsKhnfadY='; style-src 'self' https://fonts.googleapis.com 'sha256-rlGOmtWoPiLQ3Ysci1f48TkvlFtTAWDWvlzX/Q47X6A='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -103,7 +103,7 @@ setTimeout(() => {
   <div class="container">
     <div class="eyebrow reveal">Rejoignez l'agence ou un casting</div>
     <h1 class="reveal reveal-delay-1">Postuler à un casting<span class="oeil">.</span></h1>
-    <p class="reveal reveal-delay-2 u-maxw-60ch-texte u-mt-1-2">Vous souhaitez rejoindre Maître Akesse Model Management, ou postuler à un projet/casting précis lancé par l'agence ? Remplissez ce formulaire avec vos informations, vos mensurations et quatre photos minimum. Notre équipe étudie chaque candidature.</p>
+    <p class="reveal reveal-delay-2 u-maxw-60ch-texte u-mt-1-2">Vous souhaitez rejoindre Maître Akesse Model Management, ou postuler à un projet/casting précis lancé par l'agence ? Remplissez ce formulaire avec vos informations, vos mensurations, vos photos et une courte vidéo de présentation. Notre équipe étudie chaque candidature.</p>
   </div>
 </section>
 
@@ -143,6 +143,15 @@ setTimeout(() => {
         </div>
       </div>
 
+      <div class="form-champ u-hidden" id="ca-bloc-experience">
+        <label for="ca-experience">Avez-vous déjà été mannequin ? *</label>
+        <select id="ca-experience">
+          <option value="">Sélectionner</option>
+          <option value="non">Non, ce serait ma première expérience</option>
+          <option value="oui">Oui, j'ai déjà été mannequin</option>
+        </select>
+      </div>
+
       <p class="ca-7">Merci d'indiquer un e-mail et un numéro WhatsApp valides et actifs ci-dessous : c'est par là que l'agence vous recontactera si votre candidature est retenue.</p>
 
       <div class="form-grille">
@@ -160,22 +169,47 @@ setTimeout(() => {
           <input type="tel" id="ca-telephone-numero" placeholder="07 00 00 00 00" required pattern="[0-9 ]{6,14}">
         </div>
         <div class="form-champ">
-          <label for="ca-ville">Ville</label>
-          <select id="ca-ville"></select>
+          <label for="ca-ville">Ville *</label>
+          <select id="ca-ville" required></select>
           <input type="text" id="ca-ville-autre" placeholder="Précisez la ville" class="ca-9">
         </div>
         <div class="form-champ u-hidden" id="ca-commune-wrap">
-          <label for="ca-commune">Commune (Abidjan)</label>
+          <label for="ca-commune">Commune (Abidjan) *</label>
           <select id="ca-commune"></select>
           <input type="text" id="ca-commune-autre" placeholder="Précisez la commune" class="ca-9">
         </div>
-        <div class="form-champ u-hidden" id="ca-quartier-wrap">
-          <label for="ca-quartier">Quartier (facultatif)</label>
-          <input type="text" id="ca-quartier" placeholder="ex : Angré, Riviera, II Plateaux…">
+        <div class="form-champ" id="ca-quartier-wrap">
+          <label for="ca-quartier">Quartier *</label>
+          <input type="text" id="ca-quartier" required placeholder="ex. : Angré, Riviera, II Plateaux…">
         </div>
         <div class="form-champ">
           <label for="ca-naissance">Date de naissance *</label>
           <input type="date" id="ca-naissance" required>
+        </div>
+      </div>
+
+      <div class="form-grille" id="ca-bloc-etudes">
+        <div class="form-champ">
+          <label for="ca-scolarite">Situation scolaire *</label>
+          <select id="ca-scolarite" required>
+            <option value="">Sélectionner</option>
+            <option value="en cours">Je suis encore élève / étudiant(e)</option>
+            <option value="plus à l'école">Je ne suis plus à l'école</option>
+            <option value="jamais scolarisé(e)">Je n'ai jamais été scolarisé(e)</option>
+          </select>
+        </div>
+        <div class="form-champ" id="ca-etudes-cat-wrap">
+          <label for="ca-etudes-cat" id="ca-etudes-cat-label">Niveau d'études *</label>
+          <select id="ca-etudes-cat">
+            <option value="">Sélectionner</option>
+            <option value="Primaire">Primaire</option>
+            <option value="Secondaire">Secondaire</option>
+            <option value="Supérieur">Supérieur</option>
+          </select>
+        </div>
+        <div class="form-champ u-hidden" id="ca-etudes-classe-wrap">
+          <label for="ca-etudes-classe">Classe *</label>
+          <select id="ca-etudes-classe"></select>
         </div>
       </div>
 
@@ -210,23 +244,30 @@ setTimeout(() => {
           <span id="ca-taille-indication" class="ca-13"></span>
         </div>
         <div class="form-champ">
-          <label for="ca-poids">Poids (kg)</label>
-          <select id="ca-poids"></select>
+          <label for="ca-poids">Poids (kg) *</label>
+          <select id="ca-poids" required></select>
         </div>
         <div class="form-champ">
-          <label for="ca-pointure">Pointure</label>
+          <label for="ca-vetements">Taille de vêtements *</label>
+          <select id="ca-vetements" required>
+            <option value="">Sélectionner</option>
+            <option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option><option>XXXL</option>
+          </select>
+        </div>
+        <div class="form-champ ca-mensuration-complete">
+          <label for="ca-pointure">Pointure *</label>
           <select id="ca-pointure"></select>
         </div>
-        <div class="form-champ">
-          <label for="ca-poitrine">Poitrine (cm)</label>
+        <div class="form-champ ca-mensuration-complete">
+          <label for="ca-poitrine">Poitrine (cm) *</label>
           <select id="ca-poitrine"></select>
         </div>
-        <div class="form-champ">
-          <label for="ca-tourtaille">Tour de taille (cm)</label>
+        <div class="form-champ ca-mensuration-complete">
+          <label for="ca-tourtaille">Tour de taille (cm) *</label>
           <select id="ca-tourtaille"></select>
         </div>
-        <div class="form-champ">
-          <label for="ca-hanches">Hanches (cm)</label>
+        <div class="form-champ ca-mensuration-complete">
+          <label for="ca-hanches">Hanches (cm) *</label>
           <select id="ca-hanches"></select>
         </div>
       </div>
@@ -237,11 +278,18 @@ setTimeout(() => {
       </div>
 
       <div class="form-champ">
-        <label for="ca-photos">Photos (4 minimum : portrait, plein pied, sans maquillage, autre...) *</label>
+        <label for="ca-photos" id="ca-photos-label">Photos (4 minimum : portrait, plein pied, sans maquillage, autre...) *</label>
         <input type="file" id="ca-photos" accept="image/*" multiple>
         <input type="file" id="ca-photo-remplacement" accept="image/*" class="u-hidden">
         <span id="ca-photos-compteur" class="ca-14"></span>
         <div id="ca-photos-apercu" class="ca-15"></div>
+      </div>
+
+      <div class="form-champ">
+        <label for="ca-video">Vidéo de présentation *</label>
+        <p class="ca-6 ca-video-aide">30 secondes maximum, filmée face à la caméra : « Bonjour, je m'appelle…, j'ai … ans, je mesure …, et je souhaite… ».</p>
+        <input type="file" id="ca-video" accept="video/*">
+        <span id="ca-video-info" class="ca-14"></span>
       </div>
 
       <div class="form-champ form-consentement ca-16">
@@ -364,7 +412,7 @@ function valeurSelectOuAutre(idSelect, idAutre) {
 // espace-mannequin.html et espace-mannequin-MA2M-premium-20.html).
 remplirSelectListe('ca-ville', VILLES_CI);
 configurerSelectAvecAutre('ca-ville', 'ca-ville-autre');
-brancherCascadeAbidjan('ca-ville', 'ca-commune-wrap', 'ca-commune', 'ca-commune-autre', 'ca-quartier-wrap');
+brancherCascadeAbidjan('ca-ville', 'ca-commune-wrap', 'ca-commune', 'ca-commune-autre');
 configurerSelectAvecAutre('ca-commune', 'ca-commune-autre');
 
 function redimensionnerImage(fichier, coteMax = 2800, qualite = 0.88) {
@@ -448,6 +496,10 @@ document.getElementById('ca-type').addEventListener('change', (e) => {
   document.getElementById('ca-bloc-agence-info').style.display = estAgence ? 'block' : 'none';
   document.getElementById('ca-bloc-projet').style.display = estProjet ? 'block' : 'none';
   document.getElementById('ca-projet').required = estProjet;
+  document.getElementById('ca-bloc-experience').style.display = estAgence ? 'block' : 'none';
+  document.getElementById('ca-experience').required = estAgence;
+  if (!estAgence) document.getElementById('ca-experience').value = '';
+  majParcours();
   if (!estProjet) {
     document.getElementById('ca-projet').value = '';
     document.getElementById('ca-bloc-projet-autre').style.display = 'none';
@@ -466,6 +518,96 @@ document.getElementById('ca-projet').addEventListener('change', (e) => {
   else { descriptionEl.style.display = 'none'; }
 });
 
+// --- Parcours (validé par la propriétaire le 30/09) ---------------------------
+// « Intégrer l'agence » + jamais mannequin = DÉBUTANT·E : formulaire allégé
+// (pas de pointure/poitrine/tour de taille/hanches, 3 photos minimum).
+// Déjà mannequin, ou casting précis = formulaire COMPLET, tout obligatoire, 4 photos.
+// Pour tous : résidence complète, niveau d'études, poids, taille de vêtements, vidéo.
+function estDebutant() {
+  return document.getElementById('ca-type').value === 'agence' && document.getElementById('ca-experience').value === 'non';
+}
+function photosMin() { return estDebutant() ? 3 : 4; }
+function majParcours() {
+  const debutant = estDebutant();
+  document.querySelectorAll('.ca-mensuration-complete').forEach(bloc => {
+    bloc.style.display = debutant ? 'none' : '';
+    const champ = bloc.querySelector('select, input');
+    champ.required = !debutant;
+    if (debutant) champ.value = '';
+  });
+  document.getElementById('ca-photos-label').textContent = debutant
+    ? 'Photos (3 minimum : un portrait, une photo en pied, une autre au choix) *'
+    : 'Photos (4 minimum : portrait, plein pied, sans maquillage, autre...) *';
+  if (photosSelectionnees.length) rafraichirApercuPhotos();
+}
+document.getElementById('ca-experience').addEventListener('change', majParcours);
+
+// --- Niveau d'études : trois grandes catégories qui se déroulent ---
+const CLASSES_ETUDES = {
+  Primaire: ['CP1', 'CP2', 'CE1', 'CE2', 'CM1', 'CM2'],
+  Secondaire: ['6e', '5e', '4e', '3e', '2nde', '1re', 'Terminale'],
+  'Supérieur': ['BTS', 'Licence 1', 'Licence 2', 'Licence 3', 'Master 1', 'Master 2', 'Doctorat', 'Autre formation supérieure']
+};
+function majEtudes() {
+  const situation = document.getElementById('ca-scolarite').value;
+  const jamais = situation === 'jamais scolarisé(e)';
+  const cat = document.getElementById('ca-etudes-cat');
+  const classe = document.getElementById('ca-etudes-classe');
+  document.getElementById('ca-etudes-cat-wrap').style.display = jamais ? 'none' : '';
+  document.getElementById('ca-etudes-cat-label').textContent = situation === "plus à l'école" ? "Dernier niveau atteint *" : "Niveau d'études *";
+  cat.required = !jamais;
+  if (jamais) cat.value = '';
+  const liste = CLASSES_ETUDES[cat.value];
+  document.getElementById('ca-etudes-classe-wrap').style.display = liste && !jamais ? 'block' : 'none';
+  classe.required = !!liste && !jamais;
+  if (liste && classe.dataset.categorie !== cat.value) {
+    classe.innerHTML = '<option value="">Sélectionner</option>' + liste.map(c => `<option>${c}</option>`).join('');
+    classe.dataset.categorie = cat.value;
+  }
+}
+document.getElementById('ca-scolarite').addEventListener('change', majEtudes);
+document.getElementById('ca-etudes-cat').addEventListener('change', majEtudes);
+function niveauEtudesChoisi() {
+  const cat = document.getElementById('ca-etudes-cat').value;
+  const classe = document.getElementById('ca-etudes-classe').value;
+  return cat ? cat + (classe ? ' — ' + classe : '') : null;
+}
+
+// --- Vidéo de présentation : obligatoire, 30 secondes / 30 Mo maximum (au-delà,
+// l'envoi échoue sur les connexions mobiles et le Drive la refuse). ---
+const VIDEO_MAX_OCTETS = 30 * 1024 * 1024;
+const VIDEO_MAX_SECONDES = 35; // 30 s annoncées, petite marge
+let videoChoisie = null;
+function dureeVideo(fichier) {
+  return new Promise(resolve => {
+    const v = document.createElement('video');
+    v.preload = 'metadata';
+    v.onloadedmetadata = () => { URL.revokeObjectURL(v.src); resolve(v.duration); };
+    v.onerror = () => resolve(null);
+    v.src = URL.createObjectURL(fichier);
+  });
+}
+document.getElementById('ca-video').addEventListener('change', async (e) => {
+  const info = document.getElementById('ca-video-info');
+  const fichier = e.target.files && e.target.files[0];
+  videoChoisie = null;
+  info.style.color = 'var(--rouge)';
+  if (!fichier) { info.textContent = ''; return; }
+  if (!/^video\//.test(fichier.type || '') && !/\.(mp4|mov|m4v|3gp|webm)$/i.test(fichier.name || '')) { info.textContent = "Ce fichier n'est pas une vidéo."; e.target.value = ''; return; }
+  if (fichier.size > VIDEO_MAX_OCTETS) {
+    info.textContent = `Vidéo trop lourde (${Math.round(fichier.size / 1048576)} Mo) : 30 Mo maximum. Filmez 30 secondes maximum, ou baissez la qualité de la caméra.`;
+    e.target.value = ''; return;
+  }
+  const duree = await dureeVideo(fichier);
+  if (duree && isFinite(duree) && duree > VIDEO_MAX_SECONDES) {
+    info.textContent = `Vidéo trop longue (${Math.round(duree)} s) : 30 secondes maximum.`;
+    e.target.value = ''; return;
+  }
+  videoChoisie = fichier;
+  info.style.color = 'var(--gris)';
+  info.textContent = `✓ Vidéo prête (${duree && isFinite(duree) ? Math.round(duree) + ' s, ' : ''}${(fichier.size / 1048576).toFixed(1)} Mo).`;
+});
+
 // --- Photos : 4 minimum, avec aperçu, compteur en direct, et gestion
 // individuelle (ajouter/supprimer/remplacer une seule photo sans reprendre
 // toute la sélection depuis le début — cahier des charges, étape 5). ---
@@ -476,10 +618,11 @@ function rafraichirApercuPhotos() {
   const compteur = document.getElementById('ca-photos-compteur');
   const apercu = document.getElementById('ca-photos-apercu');
   const n = photosSelectionnees.length;
-  compteur.textContent = n >= 4
+  const min = photosMin();
+  compteur.textContent = n >= min
     ? `${n} photo${n > 1 ? 's' : ''} sélectionnée${n > 1 ? 's' : ''}.`
-    : `${n} photo${n > 1 ? 's' : ''} sélectionnée${n > 1 ? 's' : ''} — 4 minimum requises.`;
-  compteur.style.color = n >= 4 ? 'var(--gris)' : 'var(--rouge)';
+    : `${n} photo${n > 1 ? 's' : ''} sélectionnée${n > 1 ? 's' : ''} — ${min} minimum requises.`;
+  compteur.style.color = n >= min ? 'var(--gris)' : 'var(--rouge)';
 
   apercu.innerHTML = photosSelectionnees.map((f, i) => `
     <div class="ca-photo-vignette ca-20">
@@ -618,9 +761,19 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
     }
   }
 
+  if (document.getElementById('ca-ville').value === 'Abidjan' && document.getElementById('ca-commune').value === 'Abidjan') {
+    afficherMsg(msg, 'Merci de préciser votre commune à Abidjan.', 'err');
+    return;
+  }
+
   const fichiersPhotos = photosSelectionnees;
-  if (fichiersPhotos.length < 4) {
-    afficherMsg(msg, `Merci d'ajouter au moins 4 photos (${fichiersPhotos.length} sélectionnée${fichiersPhotos.length > 1 ? 's' : ''} pour l'instant).`, 'err');
+  const minPhotos = photosMin();
+  if (fichiersPhotos.length < minPhotos) {
+    afficherMsg(msg, `Merci d'ajouter au moins ${minPhotos} photos (${fichiersPhotos.length} sélectionnée${fichiersPhotos.length > 1 ? 's' : ''} pour l'instant).`, 'err');
+    return;
+  }
+  if (!videoChoisie) {
+    afficherMsg(msg, 'Merci d\'ajouter votre vidéo de présentation (30 secondes maximum).', 'err');
     return;
   }
   if (fichiersPhotos.length > 12) {
@@ -650,7 +803,11 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
     parent_nom: mineur ? document.getElementById('ca-parent-nom').value.trim() : null,
     parent_telephone: mineur ? composerTelephone(document.getElementById('ca-parent-indicatif'), document.getElementById('ca-parent-telephone-numero')) : null,
     type_candidature: typeCandidature,
-    projet_nom: projetNom
+    projet_nom: projetNom,
+    experience_mannequin: typeCandidature === 'agence' ? document.getElementById('ca-experience').value : 'oui',
+    situation_scolaire: document.getElementById('ca-scolarite').value || null,
+    niveau_etudes: niveauEtudesChoisi(),
+    clothing_size: document.getElementById('ca-vetements').value || null
   };
 
   candidature.id = crypto.randomUUID();
@@ -665,6 +822,7 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
   }
 
   let nbPhotosEchouees = 0;
+  let dossierDrive = null;
   try {
     const photosBase64 = [];
     for (const fichierOriginal of fichiersPhotos) {
@@ -677,7 +835,7 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
       }
     }
 
-    const { liens, echec } = await envoyerPhotosVersDrive(URL_SCRIPT_PHOTOS_CASTING, {
+    const { liens, echec, dossier } = await envoyerPhotosVersDrive(URL_SCRIPT_PHOTOS_CASTING, {
       nom: candidature.full_name,
       email: candidature.email,
       phone: candidature.phone,
@@ -686,6 +844,7 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
       photos: photosBase64
     });
 
+    dossierDrive = dossier || null;
     if (!echec) {
       for (const lien of liens) {
         const { error: erreurInsertPhoto } = await sb.from('casting_photos').insert({ application_id: candidature.id, url: lien, chemin: null });
@@ -708,23 +867,46 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
   }
   journaliserPhotosEchouees('candidature', candidature.id, nbPhotosEchouees);
 
+  // Vidéo de présentation : envoyée APRÈS les photos (elle est plus lourde), dans le
+  // même dossier Drive ; son lien est ensuite rattaché à la candidature.
+  let lienVideo = null;
+  afficherMsg(msg, 'Envoi de votre vidéo… (cela peut prendre une minute, gardez la page ouverte)', 'ok');
+  try {
+    lienVideo = await envoyerVideoVersDrive(URL_SCRIPT_PHOTOS_CASTING, {
+      nom: candidature.full_name, email: candidature.email, phone: candidature.phone,
+      type: typeCandidature, projet: projetNom || '', dossier: dossierDrive,
+      // Certains téléphones Android ne donnent pas le type du fichier : on le précise.
+      video: (await fichierEnBase64(videoChoisie)).replace(/^data:(?!video\/)[^;,]*(;base64,)/, 'data:video/mp4$1')
+    });
+    if (lienVideo) await sb.rpc('ajouter_video_candidature', { p_id: candidature.id, p_url: lienVideo });
+  } catch (e) { lienVideo = null; }
+
   const libelleType = typeCandidature === 'projet' ? `Projet/casting : ${projetNom}` : `Intégrer l'agence`;
   envoyerNotificationEmail({
     name: candidature.full_name,
     telephone: candidature.phone,
     email: candidature.email,
-    message: `Nouvelle candidature casting.\nPostule pour : ${libelleType}\nVille : ${candidature.city || '-'}\nTaille : ${candidature.height_cm || '-'} cm\nMessage : ${candidature.message || '-'}${mineur ? `\n⚠️ MINEUR — Parent/tuteur : ${candidature.parent_nom || '-'} — ${candidature.parent_telephone || '-'}` : ''}`
+    message: `Nouvelle candidature casting.\nPostule pour : ${libelleType}${typeCandidature === 'agence' ? (candidature.experience_mannequin === 'non' ? ' — Débutant(e)' : ' — Déjà mannequin') : ''}\nVille : ${candidature.city || '-'}${candidature.quartier ? ' — ' + candidature.quartier : ''}\nNiveau d'études : ${candidature.niveau_etudes || candidature.situation_scolaire || '-'}\nTaille de vêtements : ${candidature.clothing_size || '-'}\nVidéo : ${lienVideo || 'non reçue'}\nTaille : ${candidature.height_cm || '-'} cm\nMessage : ${candidature.message || '-'}${mineur ? `\n⚠️ MINEUR — Parent/tuteur : ${candidature.parent_nom || '-'} — ${candidature.parent_telephone || '-'}` : ''}`
   });
 
   if (window.jouerSon) window.jouerSon('envoi');
-  afficherMsg(msg, nbPhotosEchouees
-    ? `Candidature envoyée, mais ${nbPhotosEchouees} photo${nbPhotosEchouees > 1 ? 's n\'ont' : ' n\'a'} pas pu être envoyée${nbPhotosEchouees > 1 ? 's' : ''} (connexion instable ?). Le reste du dossier est bien enregistré.`
+  const soucis = [];
+  if (nbPhotosEchouees) soucis.push(`${nbPhotosEchouees} photo${nbPhotosEchouees > 1 ? 's n\'ont' : ' n\'a'} pas pu être envoyée${nbPhotosEchouees > 1 ? 's' : ''}`);
+  if (!lienVideo) soucis.push('votre vidéo n\'a pas pu être envoyée — envoyez-la sur WhatsApp au +225 05 45 65 68 87 en indiquant votre nom');
+  afficherMsg(msg, soucis.length
+    ? `Candidature envoyée, mais ${soucis.join(' ; ')} (connexion instable ?). Le reste du dossier est bien enregistré.`
     : 'Merci ! Votre candidature a bien été envoyée. Notre équipe vous recontactera si votre profil est retenu.', 'ok');
   document.getElementById('form-casting').reset();
   document.getElementById('ca-bloc-parent').style.display = 'none';
   document.getElementById('ca-bloc-projet').style.display = 'none';
   document.getElementById('ca-bloc-projet-autre').style.display = 'none';
+  document.getElementById('ca-bloc-experience').style.display = 'none';
+  document.getElementById('ca-experience').required = false;
+  videoChoisie = null;
+  document.getElementById('ca-video-info').textContent = '';
   photosSelectionnees = [];
+  majParcours();
+  majEtudes();
   document.getElementById('ca-photos-compteur').textContent = '';
   document.getElementById('ca-photos-apercu').innerHTML = '';
   document.getElementById('ca-consentement').disabled = false;
