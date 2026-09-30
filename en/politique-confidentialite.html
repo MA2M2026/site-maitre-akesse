@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A='; style-src 'self' https://fonts.googleapis.com;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -107,6 +107,23 @@ setTimeout(() => {
       your personal phone number and email are never displayed publicly. Interested recruiters
       always go through the agency, never through direct contact with the model.
     </p>
+
+    <h3 class="u-mt-2" id="prestataires">Technical services that process your data</h3>
+    <p>
+      To work, the site relies on technical providers. They process your data only to deliver this service,
+      never for their own purposes or for advertising:
+    </p>
+    <ul class="liste-prestataires">
+      <li><strong>Supabase</strong> — database (profiles, applications, registrations, accounts).</li>
+      <li><strong>Cloudflare R2</strong> — photo storage and display.</li>
+      <li><strong>Vercel</strong> — website hosting.</li>
+      <li><strong>EmailJS</strong> — sends form messages to the agency (contact, application, registration, selection).</li>
+      <li><strong>Google Drive</strong> — copy of photos sent with an application or registration, for the agency team.</li>
+      <li><strong>Sentry</strong> — detects site failures (technical error messages, not your forms).</li>
+      <li><strong>Google Analytics</strong> — audience measurement, only if you accept it (see "Cookies" below).</li>
+      <li><strong>Google Fonts</strong> — fonts.</li>
+    </ul>
+    <p>Some of these providers may host data outside Côte d'Ivoire (Europe, United States), with security safeguards.</p>
 
     <h3 class="u-mt-2">Minors</h3>
     <p>

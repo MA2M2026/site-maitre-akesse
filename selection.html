@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-RKzHiJOjluVFgQDxdxzH53kxIqT+Hd5tbSKO3A/y5og='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-SdRYxWKqm5ftdqMeUdvybdnuqWRV6FlA7r2YdjWdsXA=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-RKzHiJOjluVFgQDxdxzH53kxIqT+Hd5tbSKO3A/y5og='; style-src 'self' https://fonts.googleapis.com 'sha256-SdRYxWKqm5ftdqMeUdvybdnuqWRV6FlA7r2YdjWdsXA=';">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -133,6 +133,7 @@ setTimeout(() => {
           <label for="re-message">Informations complémentaires</label>
           <textarea id="re-message"></textarea>
         </div>
+        <div class="form-champ form-consentement"><input type="checkbox" id="re-consentement" required><label for="re-consentement">J’ai lu la <a href="politique-confidentialite.html" target="_blank" rel="noopener">politique de confidentialité</a> et j’accepte que mes informations soient utilisées pour traiter ma demande. *</label></div>
         <button type="submit" class="btn btn--principal" id="btn-envoyer-recruteur">Envoyer ma sélection</button>
         <div id="re-msg" class="form-msg"></div>
       </form>

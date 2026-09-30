@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://cdn.jsdelivr.net 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-245w0Rp8pPZEW+xnrTQhJ8WExwqJX2rOORi8I9dtd6U='; style-src 'self' https://fonts.googleapis.com 'sha256-2RaJjkt0dwCPrM/WQd2sjLywmysdtxLwAh6UXghu0HQ=' 'sha256-l6fymG/9VFModmkt4+Cju+Misw/e9E3nOMRhpZL+0so=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-lVBtQouxrUK93d/ezNgbHBu6CFE33vMy2o+mZNsofjw='; style-src 'self' https://fonts.googleapis.com 'sha256-2RaJjkt0dwCPrM/WQd2sjLywmysdtxLwAh6UXghu0HQ=' 'sha256-l6fymG/9VFModmkt4+Cju+Misw/e9E3nOMRhpZL+0so=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <meta charset="UTF-8">
@@ -1272,7 +1272,7 @@ function stepContent(n){
 function field(label, id, value, opts){
   opts = opts || {};
   if (opts.tag==='select') {
-    return '<div class="field '+(opts.full?'full':'')+'"><label>'+label+(opts.req?'<span class="req">*</span>':'')+'</label>' +
+    return '<div class="field '+(opts.full?'full':'')+'"><label for="'+id+'">'+label+(opts.req?'<span class="req">*</span>':'')+'</label>' +
       '<select id="'+id+'">' + (opts.options||[]).map(function(o){ return '<option value="'+echapperHtml(o.value)+'" '+(String(o.value)===String(value==null?'':value)?'selected':'')+'>'+echapperHtml(o.label)+'</option>'; }).join('') + '</select></div>';
   }
   // Select à liste fixe + repli "Autre" (texte libre) — le champ "Autre" n'a
@@ -1283,7 +1283,7 @@ function field(label, id, value, opts){
   if (opts.tag==='select-autre') {
     const valeurs = opts.options || [];
     const estAutre = !!value && valeurs.indexOf(value) === -1;
-    return '<div class="field '+(opts.full?'full':'')+'"><label>'+label+(opts.req?'<span class="req">*</span>':'')+'</label>' +
+    return '<div class="field '+(opts.full?'full':'')+'"><label for="'+id+'">'+label+(opts.req?'<span class="req">*</span>':'')+'</label>' +
       '<select id="'+id+'" data-avec-autre="1"><option value="">—</option>' +
         valeurs.map(function(o){ return '<option value="'+echapperHtml(o)+'" '+(o===value?'selected':'')+'>'+echapperHtml(o)+'</option>'; }).join('') +
         '<option value="Autre" '+(estAutre?'selected':'')+'>Autre</option>' +
@@ -1291,10 +1291,10 @@ function field(label, id, value, opts){
       '<input type="text" class="field-autre" id="'+id+'-autre" placeholder="Précisez" value="'+(estAutre?echapperHtml(value):'')+'"></div>';
   }
   if (opts.tag==='textarea') {
-    return '<div class="field '+(opts.full?'full':'')+'"><label>'+label+(opts.req?'<span class="req">*</span>':'')+'</label>' +
+    return '<div class="field '+(opts.full?'full':'')+'"><label for="'+id+'">'+label+(opts.req?'<span class="req">*</span>':'')+'</label>' +
       '<textarea id="'+id+'" placeholder="'+(opts.placeholder||'')+'"'+(opts.maxlength?' maxlength="'+opts.maxlength+'"':'')+'>'+echapperHtml(value||'')+'</textarea></div>';
   }
-  return '<div class="field '+(opts.full?'full':'')+'"><label>'+label+(opts.req?'<span class="req">*</span>':'')+'</label>' +
+  return '<div class="field '+(opts.full?'full':'')+'"><label for="'+id+'">'+label+(opts.req?'<span class="req">*</span>':'')+'</label>' +
   '<input type="'+(opts.type||'text')+'" id="'+id+'" value="'+echapperHtml(value||'')+'" placeholder="'+(opts.placeholder||'')+'"'+(opts.maxlength?' maxlength="'+opts.maxlength+'"':'')+'></div>';
 }
 
