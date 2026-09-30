@@ -21,7 +21,7 @@
 // Doit être EXACTEMENT le même texte que CLE_SCRIPT_PHOTOS_DRIVE dans js/app.js du site.
 var CLE_ATTENDUE = 'b56772fb9c5075517dc36a6b20db10734701e262274f3beb';
 var ID_DOSSIER_RACINE = '1hHOId-298nSWbUsRCLStpbAMZD4bgQzl';
-var NB_PHOTOS_MAX = 12;
+var NB_PHOTOS_MAX = 20;
 var TAILLE_MAX_OCTETS = 15 * 1024 * 1024;        // par photo
 var TAILLE_MAX_VIDEO_OCTETS = 30 * 1024 * 1024;  // vidéo de présentation (~30 s)
 
