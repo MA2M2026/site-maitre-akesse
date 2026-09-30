@@ -1729,8 +1729,9 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
 }
 .pastille-installer-icone { font-size: 1rem; }
 .pastille-installer-fermer {
-  margin-left: 0.4rem; padding: 0 0.3rem; opacity: 0.6; font-size: 0.9rem;
+  margin-left: 0.4rem; padding: 0.35rem 0.55rem; opacity: 0.6; font-size: 0.9rem;
 }
+#pastille-installer.pastille-installer--sortie { opacity: 0; transition: opacity 0.4s ease; pointer-events: none; }
 .pastille-installer-fermer:hover { opacity: 1; }
 @keyframes pastille-apparition {
   from { opacity: 0; transform: translateX(-50%) translateY(12px); }
