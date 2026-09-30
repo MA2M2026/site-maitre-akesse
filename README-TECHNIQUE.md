@@ -1332,7 +1332,7 @@ fournie. D'où `.github/workflows/sauvegarde-base.yml` + `scripts/sauvegarde-bas
   copie du schéma `public` (structure + données + règles RLS) et de `auth.users`
   (données), compressée puis **chiffrée AES-256** (gpg) avec la phrase secrète de la
   propriétaire ; gardée **90 jours** en « Artifact » de l'exécution ;
-- secrets GitHub requis : `SUPABASE_DB_URL` (adresse « Session pooler » de Supabase →
+- secrets GitHub requis : `SUPABASE_DB_PASSWORD` (mot de passe de la base seul — le serveur « Session pooler » est fixé dans le script ; plus simple et sans risque de caractère spécial) ou, à défaut, `SUPABASE_DB_URL` (adresse « Session pooler » de Supabase →
   bouton Connect, mot de passe compris ; les machines GitHub n'ont pas d'IPv6, la
   connexion directe ne marcherait pas) et `BACKUP_PASSPHRASE` ;
 - échec (secret faux, base injoignable, fichier < 2 Ko) → e-mail automatique de GitHub.
