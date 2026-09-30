@@ -5062,7 +5062,10 @@ NOTIFY pgrst, 'reload schema';
 -- (décision de la propriétaire, 30/09/2026).
 --
 --   - candidatures REFUSÉES : effacées 30 jours après le refus ;
---   - candidatures RETENUES : effacées 6 mois après la décision.
+--   - candidatures RETENUES, EN ÉTUDE, EN ATTENTE et NOUVELLES : effacées
+--     après 6 mois sans aucun changement de statut.
+-- Le statut « Vue » est retiré (il faisait double emploi avec « En étude ») :
+-- les candidatures encore « vue » passent « en étude ».
 -- Le délai part du dernier changement de statut (statut_change_at, mis à
 -- jour par un trigger, Extension 70). Les liens de photos de la candidature
 -- partent avec elle (casting_photos, « on delete cascade ») ; les photos
@@ -5073,6 +5076,8 @@ NOTIFY pgrst, 'reload schema';
 -- en contient 500 Mo), mais pour ne pas garder des données personnelles
 -- plus longtemps que nécessaire, et garder un tableau de bord lisible.
 -- ===================================================================
+update casting_applications set status = 'en étude' where status = 'vue';
+
 create or replace function effacer_anciennes_candidatures()
 returns integer
 language plpgsql
@@ -5084,7 +5089,7 @@ declare
 begin
   delete from casting_applications
   where (status = 'refusée' and statut_change_at < now() - interval '30 days')
-     or (status = 'retenue' and statut_change_at < now() - interval '6 months');
+     or (status <> 'refusée' and statut_change_at < now() - interval '6 months');
   get diagnostics n = row_count;
   return n;
 end;
