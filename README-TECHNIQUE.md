@@ -1396,6 +1396,12 @@ Liste de tout ce qui reste à faire ou à surveiller, pour la propriétaire et p
 - Supprimer le secret GitHub devenu inutile SUPABASE_DB_URL (facultatif).
 
 **Prochaines étapes techniques**
+- ✅ **Tableau de bord (30/09)** : menu limité au bloc choisi (BLOC 1/2/3), page gardée
+  dans l'adresse (#…) au rechargement, boutons « touche de clavier » (css/tableau-boutons.css),
+  avatar « MA » retiré, cloche 🔔 → page « À traiter ».
+- ⚠️ **Limite de publication Vercel (offre gratuite, 100 publications / 24 h)** : chaque
+  demande de fusion compte DEUX publications (aperçu + mise en ligne). Les jours de gros
+  travaux, regrouper les changements pour ne pas atteindre la limite (atteinte le 30/09).
 - ✅ **Vidéo de candidature envoyée en morceaux de 4 Mo** (30/09, programme Google
   version 7, autorisation « service externe » donnée) : une vidéo de 20 Mo d'un seul bloc
   faisait échouer le programme (2 et 8 Mo passaient). Essai réel de 20 Mo réussi.
