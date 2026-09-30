@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-AL+q3GtqrbB90LfbCTm+MER4PIrs0eng4bekurB0jBM='; style-src 'self' https://fonts.googleapis.com 'sha256-wY5HlBWQW7uoDVNPS6YVpI0janGrwB1+YtjhfMQ8c4Q='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-SGuIPcPGK2Q/cSEpCpDyofEWqvDK7rHIbGZGst8p26o='; style-src 'self' https://fonts.googleapis.com 'sha256-wY5HlBWQW7uoDVNPS6YVpI0janGrwB1+YtjhfMQ8c4Q='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -26,6 +26,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap">
 <link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/jauges-envoi.css">
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#1e1d1c">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
@@ -257,6 +258,7 @@ setTimeout(() => {
         <label for="ca-photos" id="ca-photos-label">Photos (4 minimum: portrait, full body, no makeup, other...) *</label>
         <input type="file" id="ca-photos" accept="image/*" multiple required>
         <span id="ca-photos-compteur" class="enca-8"></span>
+        <p id="ca-photos-consigne" class="enca-8 u-hidden">Check your photos: tap one to see it full size.</p>
         <div id="ca-photos-apercu" class="enca-9"></div>
       </div>
 
@@ -265,6 +267,14 @@ setTimeout(() => {
         <p class="enca-6 ca-video-aide">1 minute maximum, filmed facing the camera: "Hello, my name is…, I am … years old, I am … tall, and I would like to…".</p>
         <input type="file" id="ca-video" accept="video/*">
         <span id="ca-video-info" class="enca-8"></span>
+        <div id="ca-video-jauge" class="jauge u-hidden" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+          <div class="jauge-haut"><span class="jauge-titre">Preparing your video…</span><span class="jauge-pc">0 %</span></div>
+          <div class="jauge-barre"><span class="jauge-remplie"></span></div>
+        </div>
+        <div id="ca-video-apercu" class="video-apercu u-hidden">
+          <img alt="Preview of your video">
+          <span class="video-apercu-texte"></span>
+        </div>
       </div>
 
       <div class="form-champ form-consentement enca-10">
@@ -276,7 +286,21 @@ setTimeout(() => {
 
       <button type="submit" class="btn btn--principal" id="btn-envoyer">Submit my application</button>
       <div id="ca-msg" class="form-msg"></div>
+      <div id="ca-envoi-jauges" class="envoi-jauges u-hidden">
+        <div id="ca-jauge-photos" class="jauge" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+          <div class="jauge-haut"><span class="jauge-titre">Photos</span><span class="jauge-pc">0 %</span></div>
+          <div class="jauge-barre"><span class="jauge-remplie"></span></div>
+        </div>
+        <div id="ca-jauge-video" class="jauge" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+          <div class="jauge-haut"><span class="jauge-titre">Video</span><span class="jauge-pc">0 %</span></div>
+          <div class="jauge-barre"><span class="jauge-remplie"></span></div>
+        </div>
+      </div>
     </form>
+  </div>
+  <div id="ca-visionneuse" class="visionneuse u-hidden" role="dialog" aria-modal="true" aria-label="Full-size photo">
+    <img alt="">
+    <button type="button" class="btn visionneuse-fermer">✕ Close</button>
   </div>
 </section>
 
@@ -328,6 +352,7 @@ setTimeout(() => {
 <script src="../js/vendor/emailjs-browser-3.12.1.min.js"></script>
 <script src="../js/emailjs-config.js"></script>
 <script src="../js/app.js"></script>
+<script src="../js/video-allegee.js"></script>
 <script src="../js/confort.js"></script>
 <script src="../js/menu.js"></script>
 <script>
@@ -533,10 +558,15 @@ function niveauEtudesChoisi() {
   return cat ? cat + (classe ? ' — ' + classe : '') : null;
 }
 
-// --- Introduction video: required, 1 minute / 60 MB maximum ---
+// --- Introduction video: required, 1 minute maximum. A heavy video (4K, 60 fps…)
+// is first MADE LIGHTER by the applicant's device (js/video-allegee.js, 30/09);
+// if the device cannot do it, the original is sent as is, up to 60 MB. ---
 const VIDEO_MAX_OCTETS = 60 * 1024 * 1024;
+const VIDEO_MAX_ORIGINAL = 2 * 1024 * 1024 * 1024; // before lightening
 const VIDEO_MAX_SECONDES = 65; // 1 minute announced, small margin
 let videoChoisie = null;
+let videoEnPreparation = null;
+let numeroVideo = 0;
 // Durée lue directement dans le fichier (boîte « mvhd » des vidéos MP4/MOV/3GP de
 // téléphone) : l'ancienne méthode passait par un lecteur vidéo que la sécurité du
 // site bloque (journal du 30/09 : « media-src → blob »). null si illisible.
@@ -556,25 +586,87 @@ async function dureeVideo(fichier) {
   } catch (e) {}
   return null;
 }
+function majJauge(id, pc, titre) {
+  const j = document.getElementById(id);
+  if (!j) return;
+  pc = Math.max(0, Math.min(100, Math.round(pc)));
+  j.classList.remove('u-hidden', 'en-erreur');
+  j.classList.toggle('terminee', pc >= 100);
+  j.querySelector('.jauge-remplie').style.width = pc + '%';
+  j.querySelector('.jauge-pc').textContent = pc + ' %';
+  j.setAttribute('aria-valuenow', pc);
+  if (titre) j.querySelector('.jauge-titre').textContent = titre;
+}
+function jaugeEnErreur(id, titre) {
+  const j = document.getElementById(id);
+  if (!j) return;
+  j.classList.add('en-erreur'); j.classList.remove('terminee');
+  if (titre) j.querySelector('.jauge-titre').textContent = titre;
+}
+function cacherJauge(id) { const j = document.getElementById(id); if (j) j.classList.add('u-hidden'); }
+function montrerApercuVideo(adresseImage, texte) {
+  const bloc = document.getElementById('ca-video-apercu');
+  const img = bloc.querySelector('img');
+  if (adresseImage) { img.src = adresseImage; img.classList.remove('u-hidden'); } else { img.removeAttribute('src'); img.classList.add('u-hidden'); }
+  bloc.querySelector('.video-apercu-texte').textContent = texte || '';
+  bloc.classList.toggle('u-hidden', !adresseImage && !texte);
+}
+const enMo = (octets) => (octets / 1048576).toFixed(1) + ' MB';
+function videoPrete(fichier, duree, origine) {
+  videoChoisie = fichier;
+  const info = document.getElementById('ca-video-info');
+  info.style.color = 'var(--gris)';
+  info.textContent = `✓ Video ready (${duree ? Math.round(duree) + ' s, ' : ''}${enMo(fichier.size)}${origine && origine.size > fichier.size ? ', reduced from ' + enMo(origine.size) : ''}).`;
+}
 document.getElementById('ca-video').addEventListener('change', async (e) => {
   const info = document.getElementById('ca-video-info');
   const fichier = e.target.files && e.target.files[0];
+  const numero = ++numeroVideo;
   videoChoisie = null;
+  videoEnPreparation = null;
+  cacherJauge('ca-video-jauge');
+  montrerApercuVideo(null, '');
   info.style.color = 'var(--rouge)';
   if (!fichier) { info.textContent = ''; return; }
   if (!/^video\//.test(fichier.type || '') && !/\.(mp4|mov|m4v|3gp|webm)$/i.test(fichier.name || '')) { info.textContent = 'This file is not a video.'; e.target.value = ''; return; }
-  if (fichier.size > VIDEO_MAX_OCTETS) {
-    info.textContent = `Video too large (${(fichier.size / 1048576).toFixed(1)} MB): 60 MB maximum. Film 1 minute maximum, or lower the camera quality (720p instead of 1080p or 4K).`;
+  if (fichier.size > VIDEO_MAX_ORIGINAL) {
+    info.textContent = `Video far too large (${enMo(fichier.size)}). Film 1 minute maximum.`;
     e.target.value = ''; return;
   }
-  const duree = await dureeVideo(fichier);
+  info.style.color = 'var(--gris)';
+  info.textContent = 'Reading the video…';
+  const examen = window.examinerVideo ? await window.examinerVideo(fichier) : { duree: null, apercu: null };
+  if (numero !== numeroVideo) return;
+  const duree = examen.duree || (fichier.size <= 300 * 1048576 ? await dureeVideo(fichier) : null);
+  if (numero !== numeroVideo) return;
   if (duree && isFinite(duree) && duree > VIDEO_MAX_SECONDES) {
+    info.style.color = 'var(--rouge)';
     info.textContent = `Video too long (${Math.round(duree)} s): 1 minute maximum.`;
     e.target.value = ''; return;
   }
-  videoChoisie = fichier;
-  info.style.color = 'var(--gris)';
-  info.textContent = `✓ Video ready (${duree && isFinite(duree) ? Math.round(duree) + ' s, ' : ''}${(fichier.size / 1048576).toFixed(1)} MB).`;
+  montrerApercuVideo(examen.apercu, examen.apercu ? 'Your video: check that it is the right one.' : '');
+  const refuserTropLourde = () => {
+    info.style.color = 'var(--rouge)';
+    info.textContent = `Video too large (${enMo(fichier.size)}) and this device cannot make it lighter: 60 MB maximum. Film 1 minute maximum, or lower the camera quality (720p instead of 1080p or 4K).`;
+    e.target.value = '';
+  };
+  info.textContent = '';
+  videoEnPreparation = (async () => {
+    let allegee = null;
+    try {
+      if (window.allegerVideo) allegee = await window.allegerVideo(fichier, (pc) => {
+        if (numero === numeroVideo) majJauge('ca-video-jauge', pc, 'Preparing your video (making it lighter for a fast upload)…');
+      });
+    } catch (err) {
+      allegee = null;
+      if (window.signalerErreur) window.signalerErreur('Vidéo non allégée (envoi de l\'originale)', (err && err.message) || String(err), enMo(fichier.size) + ', ' + (fichier.type || 'type inconnu'));
+    }
+    if (numero !== numeroVideo) return;
+    if (allegee) { majJauge('ca-video-jauge', 100, 'Video prepared'); videoPrete(allegee, duree, fichier); }
+    else if (fichier.size <= VIDEO_MAX_OCTETS) { cacherJauge('ca-video-jauge'); videoPrete(fichier, duree, null); }
+    else { cacherJauge('ca-video-jauge'); montrerApercuVideo(null, ''); refuserTropLourde(); }
+    videoEnPreparation = null;
+  })();
 });
 
 function majCompteurPhotos() {
@@ -595,10 +687,22 @@ document.getElementById('ca-photos').addEventListener('change', (e) => {
   fichiers.forEach(f => {
     const img = document.createElement('img');
     img.src = URL.createObjectURL(f);
-    img.style.cssText = 'width:64px; height:64px; object-fit:cover; border-radius:4px;';
+    img.style.cssText = 'width:84px; height:84px; object-fit:cover; border-radius:4px; cursor:zoom-in;';
+    img.addEventListener('click', () => ouvrirVisionneuse(img.src));
     apercu.appendChild(img);
   });
+  document.getElementById('ca-photos-consigne').classList.toggle('u-hidden', !fichiers.length);
 });
+// Full-size photo, to check they are the right ones before sending.
+function ouvrirVisionneuse(adresse) {
+  const v = document.getElementById('ca-visionneuse');
+  v.querySelector('img').src = adresse;
+  v.classList.remove('u-hidden');
+  v.querySelector('.visionneuse-fermer').focus();
+}
+function fermerVisionneuse() { document.getElementById('ca-visionneuse').classList.add('u-hidden'); }
+document.getElementById('ca-visionneuse').addEventListener('click', fermerVisionneuse);
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fermerVisionneuse(); });
 
 function remplirTailleSelonGenre() {
   const genre = document.getElementById('ca-genre').value;
@@ -698,6 +802,12 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
     afficherMsg(msg, `Please add at least ${minPhotos} photos (${fichiersPhotos.length} selected so far).`, 'err');
     return;
   }
+  if (videoEnPreparation) {
+    afficherMsg(msg, 'Your video is being prepared — sending starts as soon as it is ready…', 'ok');
+    document.getElementById('btn-envoyer').disabled = true;
+    await videoEnPreparation;
+    document.getElementById('btn-envoyer').disabled = false;
+  }
   if (!videoChoisie) {
     afficherMsg(msg, 'Please add your introduction video (1 minute maximum).', 'err');
     return;
@@ -749,8 +859,15 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
 
   let nbPhotosEchouees = 0;
   let dossierDrive = null;
+  // Progress bars: photos are prepared one by one (0 → 50%), then sent together;
+  // during the upload the bar moves by estimated time, never above 95% before Google replies.
+  document.getElementById('ca-envoi-jauges').classList.remove('u-hidden');
+  majJauge('ca-jauge-photos', 0, `Photos (${fichiersPhotos.length}): preparing…`);
+  majJauge('ca-jauge-video', 0, 'Video: waiting for the photos…');
+  let minuteurPhotos = null;
   try {
     const photosBase64 = [];
+    let prepares = 0;
     for (const fichierOriginal of fichiersPhotos) {
       try {
         const fichierConverti = await convertirSiHeic(fichierOriginal);
@@ -759,8 +876,18 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
       } catch (e) {
         nbPhotosEchouees++;
       }
+      majJauge('ca-jauge-photos', ++prepares / fichiersPhotos.length * 50, `Photos (${fichiersPhotos.length}): preparing…`);
     }
 
+    const octetsPhotos = photosBase64.reduce((t, b) => t + b.length, 0);
+    const debitEstime = ((navigator.connection && navigator.connection.downlink) || 1) * 125000 * 0.6;
+    const dureeEstimee = Math.max(3, octetsPhotos / debitEstime + 3);
+    const debutEnvoiPhotos = Date.now();
+    majJauge('ca-jauge-photos', 50, `Photos (${fichiersPhotos.length}): uploading…`);
+    minuteurPhotos = setInterval(() => {
+      const ecoule = (Date.now() - debutEnvoiPhotos) / 1000;
+      majJauge('ca-jauge-photos', 50 + 45 * (1 - Math.exp(-ecoule / dureeEstimee * 1.6)), `Photos (${fichiersPhotos.length}): uploading…`);
+    }, 300);
     const { liens, echec, dossier } = await envoyerPhotosVersDrive(URL_SCRIPT_PHOTOS_CASTING, {
       nom: candidature.full_name,
       email: candidature.email,
@@ -770,6 +897,9 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
       photos: photosBase64
     });
 
+    clearInterval(minuteurPhotos);
+    if (echec) jaugeEnErreur('ca-jauge-photos', 'Photos: not uploaded');
+    else majJauge('ca-jauge-photos', 100, `Photos (${liens.length}): uploaded ✓`);
     dossierDrive = dossier || null;
     if (!echec) {
       for (const lien of liens) {
@@ -781,21 +911,27 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
     }
   } catch (e) {
     nbPhotosEchouees = fichiersPhotos.length;
+    clearInterval(minuteurPhotos);
+    jaugeEnErreur('ca-jauge-photos', 'Photos: not uploaded');
   }
   journaliserPhotosEchouees('candidature', candidature.id, nbPhotosEchouees);
 
   // Introduction video: sent AFTER the photos (it is heavier), into the same Drive
   // folder; its link is then attached to the application.
   let lienVideo = null;
-  afficherMsg(msg, 'Uploading your video… (this may take a minute, keep the page open)', 'ok');
+  afficherMsg(msg, 'Uploading your video… keep the page open.', 'ok');
+  majJauge('ca-jauge-video', 0, `Video (${enMo(videoChoisie.size)}): uploading…`);
   try {
     lienVideo = await envoyerVideoVersDrive(URL_SCRIPT_PHOTOS_CASTING, {
       nom: candidature.full_name, email: candidature.email, phone: candidature.phone,
       type: typeCandidature, projet: projetNom || '', dossier: dossierDrive
-    }, videoChoisie, (pc) => afficherMsg(msg, `Uploading your video… ${pc}% (keep the page open)`, 'ok'));
+    }, videoChoisie, (pc) => majJauge('ca-jauge-video', pc, `Video (${enMo(videoChoisie.size)}): uploading…`));
     if (lienVideo) await sb.rpc('ajouter_video_candidature', { p_id: candidature.id, p_url: lienVideo });
+    if (lienVideo) majJauge('ca-jauge-video', 100, 'Video: uploaded ✓');
+    else jaugeEnErreur('ca-jauge-video', 'Video: not uploaded');
   } catch (e) {
     lienVideo = null;
+    jaugeEnErreur('ca-jauge-video', 'Video: not uploaded');
     if (window.signalerErreur) window.signalerErreur('Vidéo de candidature non envoyée', 'lecture du fichier sur le téléphone : ' + ((e && e.message) || e), (videoChoisie ? (videoChoisie.size / 1048576).toFixed(1) + ' Mo, ' + (videoChoisie.type || 'type inconnu') : ''));
   }
 
@@ -821,11 +957,15 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
   document.getElementById('ca-bloc-experience').style.display = 'none';
   document.getElementById('ca-experience').required = false;
   videoChoisie = null;
+  numeroVideo++;
   document.getElementById('ca-video-info').textContent = '';
+  cacherJauge('ca-video-jauge');
+  montrerApercuVideo(null, '');
   majParcours();
   majEtudes();
   document.getElementById('ca-photos-compteur').textContent = '';
   document.getElementById('ca-photos-apercu').innerHTML = '';
+  document.getElementById('ca-photos-consigne').classList.add('u-hidden');
   document.getElementById('ca-consentement').disabled = false;
   majConsentement();
   btn.disabled = false;

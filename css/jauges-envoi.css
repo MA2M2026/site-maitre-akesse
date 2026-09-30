@@ -1,0 +1,51 @@
+/* Formulaire de candidature (30/09/2026) : jauges qui se remplissent pendant la
+   préparation et l'envoi des photos et de la vidéo, aperçu de la vidéo, et photo en
+   grand pour vérifier avant d'envoyer. */
+
+.jauge { margin-top: 0.8rem; }
+.jauge.u-hidden, .envoi-jauges.u-hidden, .video-apercu.u-hidden, .visionneuse.u-hidden { display: none; }
+.jauge-haut {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 1rem;
+  font-size: 0.82rem; color: #e8d9d2; margin-bottom: 0.35rem;
+}
+.jauge-pc { font-weight: 600; color: #fff; font-variant-numeric: tabular-nums; }
+.jauge-barre {
+  height: 12px; border-radius: 999px; overflow: hidden;
+  background: #1a1a1c; border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6) inset;
+}
+.jauge-remplie {
+  display: block; height: 100%; width: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #6d1222 0%, #a3243a 60%, #d4455f 100%);
+  transition: width 0.35s ease;
+}
+.jauge.terminee .jauge-remplie { background: linear-gradient(90deg, #1f6b3a 0%, #2f9a55 100%); }
+.jauge.terminee .jauge-pc { color: #7fd69a; }
+.jauge.en-erreur .jauge-remplie { background: #5a5a5f; }
+
+.envoi-jauges {
+  margin-top: 1rem; padding: 1rem 1.1rem; border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.envoi-jauges .jauge:first-child { margin-top: 0; }
+
+/* Aperçu de la vidéo choisie (une image tirée de la vidéo). */
+.video-apercu {
+  display: flex; align-items: center; gap: 0.8rem; margin-top: 0.7rem;
+}
+.video-apercu img {
+  width: 96px; height: 96px; object-fit: cover; border-radius: 8px; display: block;
+  border: 1px solid rgba(255, 255, 255, 0.2); background: #111;
+}
+.video-apercu-texte { font-size: 0.8rem; color: #e8d9d2; line-height: 1.4; }
+
+/* Vignettes photos un peu plus grandes, et photo en grand au toucher. */
+#ca-photos-apercu .ca-photo-vignette { width: 84px; height: 84px; }
+#ca-photos-apercu .ca-photo-vignette img { cursor: zoom-in; }
+.visionneuse {
+  position: fixed; inset: 0; z-index: 100000;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem;
+  padding: 1rem; background: rgba(0, 0, 0, 0.92);
+}
+.visionneuse img { max-width: 100%; max-height: calc(100vh - 6rem); object-fit: contain; border-radius: 6px; }
