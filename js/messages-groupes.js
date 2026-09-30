@@ -173,11 +173,7 @@ L'équipe Maître Akesse Model Management`;
   }
 
   function afficherListe() {
-    const avecEmail = destinataires.filter(d => d.email).length;
-    const avecWa = destinataires.filter(d => numeroWa(d.phone)).length;
-    $('mg-resume').textContent = destinataires.length
-      ? `${destinataires.length} personne(s) — ${avecEmail} avec e-mail, ${avecWa} avec numéro WhatsApp. Décochez celles à qui vous ne voulez pas écrire.`
-      : 'Personne dans ce groupe.';
+    $('mg-resume').textContent = destinataires.length ? '' : 'Personne dans ce groupe.';
     const mails = datesEnvoi('email'), was = datesEnvoi('wa');
     $('mg-liste').innerHTML = destinataires.map((d, i) => {
       const envois = [
@@ -207,6 +203,15 @@ L'équipe Maître Akesse Model Management`;
   function majBoutons() {
     const t = $('mg-message').value.trim();
     const liste = choisis();
+    // Toujours dire clairement pourquoi un bouton ne marche pas (constaté le 30/09 :
+    // message vide = boutons bloqués, sans aucune explication visible).
+    if (destinataires.length) {
+      $('mg-resume').textContent = `${liste.length} personne(s) cochée(s) sur ${destinataires.length} — ${liste.filter(d => d.email).length} avec e-mail, ${liste.filter(d => numeroWa(d.phone)).length} avec numéro WhatsApp. Décochez celles à qui vous ne voulez pas écrire.`;
+    }
+    $('mg-consigne').textContent = !destinataires.length ? ''
+      : !liste.length ? '☝️ Cochez au moins une personne dans la liste.'
+      : !t ? '✍️ La case « Message » est vide : écrivez votre message, les boutons d’envoi s’activeront.'
+      : '';
     const faitsMail = dejaFaits('email'), faitsWa = dejaFaits('wa');
     const restantMail = liste.filter(d => d.email && !faitsMail.has(d.id)).length;
     const restantWa = liste.filter(d => numeroWa(d.phone) && !faitsWa.has(d.id));
@@ -216,7 +221,7 @@ L'équipe Maître Akesse Model Management`;
     const suivant = restantWa[0];
     $('mg-wa-suivant').disabled = !t || !suivant;
     $('mg-wa-suivant').textContent = suivant
-      ? `💬 Ouvrir WhatsApp pour ${suivant.full_name || suivant.phone} (${liste.filter(d => numeroWa(d.phone)).length - restantWa.length + 1}/${liste.filter(d => numeroWa(d.phone)).length})`
+      ? `💬 Ouvrir WhatsApp pour ${suivant.full_name || suivant.phone} — personne ${liste.filter(d => numeroWa(d.phone)).length - restantWa.length + 1} sur ${liste.filter(d => numeroWa(d.phone)).length}`
       : (liste.some(d => numeroWa(d.phone)) && t ? '✓ WhatsApp : tout le monde a été fait' : '💬 Ouvrir WhatsApp pour la personne suivante');
   }
 
