@@ -45,11 +45,55 @@
   function dejaFaits(canal) { try { return new Set(JSON.parse(localStorage.getItem(cleSuivi(canal)) || '[]')); } catch (e) { return new Set(); } }
   function noterFait(canal, id) { const s = dejaFaits(canal); s.add(id); try { localStorage.setItem(cleSuivi(canal), JSON.stringify([...s])); } catch (e) {} }
 
+  // Dimanche qui suit (jamais aujourd'hui) : date du casting en présentiel de l'agence.
+  function dimancheSuivant() {
+    const d = new Date(); d.setHours(12, 0, 0, 0);
+    d.setDate(d.getDate() + ((7 - d.getDay()) % 7 || 7));
+    const t = d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    return t.charAt(0).toUpperCase() + t.slice(1);
+  }
+
+  // Deuxième message proposé d'office aux candidates retenues pour intégrer l'agence
+  // (modèle de la propriétaire, 30/09/2026, légèrement retravaillé). Modifiable avant envoi.
+  function modeleAgence() {
+    return `✨ MAÎTRE AKESSE MODEL MANAGEMENT ✨
+
+Bonjour {prénom},
+
+Félicitations ! 🎉 Votre candidature a retenu toute notre attention : vous êtes sélectionné(e) pour la prochaine étape.
+
+Nous avons le plaisir de vous inviter à notre casting en présentiel :
+
+📅 ${dimancheSuivant()}
+🕒 15 h 00
+📍 Riviera Faya – Cité ATCI
+
+👗 Tenue exigée
+• Filles : talons, legging long noir et top noir
+• Garçons : pantalon noir et chaussures noires
+
+💡 Bon à savoir : ce casting est aussi une séance de formation et de mise en situation. Débutant(e) ou expérimenté(e), et même si vous ne maîtrisez pas encore la marche en talons, venez : nous vous accompagnerons pas à pas.
+
+Merci de confirmer votre présence en répondant à ce message.
+
+À dimanche !
+L'équipe Maître Akesse Model Management`;
+  }
+  let dernierModele = '';
+  function proposerModele() {
+    const zone = $('mg-message');
+    const actuel = zone.value.trim();
+    const modele = ($('mg-source').value === 'agence' && $('mg-statut').value === 'retenue') ? modeleAgence() : '';
+    // Ne jamais écraser un message déjà écrit à la main.
+    if (!actuel || actuel === dernierModele.trim()) { zone.value = modele; dernierModele = modele; }
+  }
+
   function remplirStatuts() {
     const c = conf();
     $('mg-statut').innerHTML = c.statuts.map(s => `<option value="${echapper(s)}">${echapper(c.libellesStatut[s] || s)}</option>`).join('');
     $('mg-statut').value = c.statuts.includes('retenue') ? 'retenue' : c.statuts.includes('payée') ? 'payée' : c.statuts[0];
     $('mg-champ-casting').style.display = $('mg-source').value === 'casting' ? '' : 'none';
+    proposerModele();
     viderListe();
   }
 
@@ -180,7 +224,7 @@
   }
 
   $('mg-source').addEventListener('change', remplirStatuts);
-  $('mg-statut').addEventListener('change', viderListe);
+  $('mg-statut').addEventListener('change', () => { proposerModele(); viderListe(); });
   $('mg-casting').addEventListener('change', () => { if ($('mg-casting').value) charger(); else viderListe(); });
   $('mg-charger').addEventListener('click', charger);
   $('mg-liste').addEventListener('change', (e) => { const i = e.target.dataset.i; if (i !== undefined) { destinataires[i].choisi = e.target.checked; majApercu(); majBoutons(); } });
