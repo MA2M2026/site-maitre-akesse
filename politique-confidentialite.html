@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY='; style-src 'self' https://fonts.googleapis.com;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -109,6 +109,23 @@ setTimeout(() => {
       votre téléphone et votre e-mail personnels ne sont jamais affichés publiquement. Les recruteurs intéressés
       passent obligatoirement par l'agence, jamais par un contact direct avec le mannequin.
     </p>
+
+    <h3 class="u-mt-2" id="prestataires">Services techniques qui traitent vos données</h3>
+    <p>
+      Pour fonctionner, le site s'appuie sur des prestataires techniques. Ils ne traitent vos données que pour
+      rendre ce service, jamais pour leur propre compte ni pour de la publicité :
+    </p>
+    <ul class="liste-prestataires">
+      <li><strong>Supabase</strong> — base de données (fiches, candidatures, inscriptions, comptes).</li>
+      <li><strong>Cloudflare R2</strong> — stockage et affichage des photos.</li>
+      <li><strong>Vercel</strong> — hébergement du site.</li>
+      <li><strong>EmailJS</strong> — envoi à l'agence des messages des formulaires (contact, candidature, inscription, sélection).</li>
+      <li><strong>Google Drive</strong> — copie des photos envoyées avec une candidature ou une inscription, pour l'équipe de l'agence.</li>
+      <li><strong>Sentry</strong> — détection des pannes du site (messages d'erreur techniques, sans vos formulaires).</li>
+      <li><strong>Google Analytics</strong> — mesure d'audience, seulement si vous l'acceptez (voir « Cookies » ci-dessous).</li>
+      <li><strong>Google Fonts</strong> — polices d'écriture.</li>
+    </ul>
+    <p>Certains de ces prestataires peuvent héberger les données en dehors de la Côte d'Ivoire (Europe, États-Unis), avec des garanties de sécurité.</p>
 
     <h3 class="u-mt-2">Mineurs</h3>
     <p>

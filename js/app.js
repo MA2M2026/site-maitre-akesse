@@ -1853,21 +1853,27 @@ document.addEventListener('DOMContentLoaded', () => {
   document.body.appendChild(bouton);
 });
 
-// Récupère l'adresse IP publique du visiteur auprès d'un service standard, puis la
-// transforme immédiatement en empreinte anonyme (jamais l'adresse en clair) — sert
-// uniquement à distinguer une vraie visite d'un simple rechargement de page.
+// Identifiant anonyme de visiteur, pour compter les visiteurs uniques (statistiques
+// du tableau de bord). Avant le 30/09/2026, l'adresse IP du visiteur était envoyée à
+// un service extérieur (ipify) pour en tirer une empreinte : retiré (données
+// minimales, aucun service tiers). Désormais : un simple nombre tiré au hasard,
+// sans lien avec la personne — gardé dans ce navigateur seulement si le visiteur a
+// accepté les cookies de mesure d'audience, sinon valable pour la visite en cours.
 async function empreinteVisiteur() {
+  const nouveau = () => {
+    const octets = new Uint8Array(32);
+    crypto.getRandomValues(octets);
+    return Array.from(octets).map(b => b.toString(16).padStart(2, '0')).join('');
+  };
   try {
-    const controleur = new AbortController();
-    const delaiMax = setTimeout(() => controleur.abort(), 2500);
-    const reponse = await fetch('https://api.ipify.org?format=json', { signal: controleur.signal });
-    clearTimeout(delaiMax);
-    const { ip } = await reponse.json();
-    const donnees = new TextEncoder().encode(ip);
-    const hachage = await crypto.subtle.digest('SHA-256', donnees);
-    return Array.from(new Uint8Array(hachage)).map(b => b.toString(16).padStart(2, '0')).join('');
+    let accord = false;
+    try { accord = localStorage.getItem('ma2m_cookies') === 'oui'; } catch (e) {}
+    const stockage = accord ? localStorage : sessionStorage;
+    let id = stockage.getItem('ma2m_visiteur');
+    if (!id) { id = nouveau(); stockage.setItem('ma2m_visiteur', id); }
+    return id;
   } catch (e) {
-    return null;
+    try { return nouveau(); } catch (x) { return null; }
   }
 }
 

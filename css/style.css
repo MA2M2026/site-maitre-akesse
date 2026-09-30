@@ -2336,3 +2336,10 @@ html.vide-mot-responsable #mot-responsable.section-reservee.u-hidden { display: 
 
 /* Date de dernière mise à jour (pages légales) */
 .date-maj { margin-top: 2.4rem; font-size: 0.78rem; letter-spacing: 0.04em; color: var(--texte-doux); }
+
+/* Case d'accord (formulaires d'inscription, contact, sélection — ajout du 30/09) */
+.form-champ.form-consentement { display: flex; flex-direction: row; align-items: flex-start; gap: 0.7rem; margin: 0.4rem 0 1.2rem; }
+.form-consentement input[type="checkbox"] { flex: none; width: 1.15rem; height: 1.15rem; margin-top: 0.2rem; padding: 0; accent-color: var(--bordeaux-clair); }
+.form-consentement label { margin: 0; font-size: 0.85rem; line-height: 1.55; letter-spacing: 0; text-transform: none; color: var(--texte-corps); }
+.form-consentement a { color: var(--bordeaux-clair); text-decoration: underline; text-underline-offset: 3px; }
+.liste-prestataires { margin: 0.6rem 0 1rem; padding-left: 1.2rem; display: grid; gap: 0.35rem; color: var(--texte-corps); line-height: 1.6; }

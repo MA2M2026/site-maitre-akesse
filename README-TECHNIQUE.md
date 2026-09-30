@@ -1297,3 +1297,29 @@ Liste de la propriétaire, triée avec elle : ajouté ce qui manquait et avait d
   confidentialité (FR + EN) — à changer à chaque modification de ces pages.
 - Écartés avec la propriétaire : mode sombre (le site est noir), barre de progression,
   bouton copier sur les textes, recherche globale ; FAQ en attente de ses questions.
+
+## ⚖️ Conformité et sécurité (30 septembre 2026)
+
+Audit à partir d'une liste générale fournie par la propriétaire (beaucoup de points
+déjà en place ou sans objet : pas d'IA, pas de connexion Google, pas de paiement
+par carte). Corrigé :
+- **Case d'accord obligatoire** (`.form-consentement`, `required`) sur les formulaires
+  d'inscription, de contact et de sélection (FR + EN) ; la candidature l'avait déjà.
+- **Plus d'appel à ipify** : l'adresse IP des visiteurs n'est plus envoyée à un tiers.
+  `empreinteVisiteur()` (js/app.js) = identifiant aléatoire, gardé dans le navigateur
+  seulement si les cookies de mesure sont acceptés, sinon pour la visite en cours.
+  `api.ipify.org` retiré du CSP (vercel.json).
+- **Prestataires déclarés** dans la politique de confidentialité (#prestataires).
+- **jsDelivr retiré** de tous les CSP : plus aucun code chargé depuis ce CDN (jsPDF de
+  en/mannequin.html passé en copie locale, empreinte CSP mise à jour).
+- **Accessibilité** : audit axe-core (WCAG 2 A/AA) sur toutes les pages — seuls défauts :
+  étiquettes non reliées à leur champ (connexion admin, espace mannequin, codes du
+  tableau de bord) → corrigées. Contrastes et textes alternatifs : conformes.
+- Déjà en place : limite anti-spam des formulaires publics
+  (`limiter_soumissions_publiques`), code de validation admin vérifié par la base avec
+  limite de tentatives, aucune redirection ouverte.
+- **Reste** : documents légaux de l'entreprise (CGU, page cookies, remboursement des
+  droits d'inscription) — en attente des documents de la propriétaire (rappel le 04/10).
+  Le « code validé » de l'administration n'est gardé que dans l'onglet (les règles de
+  la base ne le vérifient pas) : pour une vraie double authentification, activer le MFA
+  de Supabase Auth.
