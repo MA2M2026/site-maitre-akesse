@@ -1941,19 +1941,37 @@ async function envoyerPhotosVersDrive(urlScript, payload, tentatives = 2) {
 // Vidéo de présentation (candidatures) : envoyée à part, après les photos, vers le
 // même programme Google ; range la vidéo dans le dossier Drive de la personne.
 // Renvoie le lien de la vidéo, ou null si elle n'a pas pu partir (un nouvel essai).
-async function envoyerVideoVersDrive(urlScript, payload, tentatives = 2) {
+async function envoyerVideoVersDrive(urlScript, payload, tentatives = 3) {
   const payloadAvecCle = { ...payload, cle: CLE_SCRIPT_PHOTOS_DRIVE };
-  for (let essai = 1; essai <= tentatives; essai++) {
+  const causes = [];
+  const debut = Date.now();
+  let corps;
+  try { corps = JSON.stringify(payloadAvecCle); }
+  catch (e) { causes.push('préparation : ' + (e.message || e)); }
+  for (let essai = 1; corps && essai <= tentatives; essai++) {
+    const t0 = Date.now();
     try {
       const reponse = await fetch(urlScript, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(payloadAvecCle)
+        body: corps
       });
-      const resultat = await reponse.json();
-      if (resultat.ok && typeof resultat.video === 'string') return resultat.video;
-    } catch (e) {}
-    if (essai < tentatives) await new Promise(r => setTimeout(r, 2000));
+      const texte = await reponse.text();
+      let resultat = null;
+      try { resultat = JSON.parse(texte); } catch (e) {}
+      if (resultat && resultat.ok && typeof resultat.video === 'string') return resultat.video;
+      causes.push(`essai ${essai} : HTTP ${reponse.status}, ${resultat ? 'réponse ' + (resultat.erreur || JSON.stringify(resultat).slice(0, 80)) : 'réponse non lisible « ' + texte.slice(0, 80).replace(/\s+/g, ' ') + ' »'} (${Math.round((Date.now() - t0) / 1000)} s)`);
+    } catch (e) {
+      causes.push(`essai ${essai} : ${(e && e.message) || e} (${Math.round((Date.now() - t0) / 1000)} s, en ligne : ${navigator.onLine})`);
+    }
+    if (essai < tentatives) await new Promise(r => setTimeout(r, 3000));
+  }
+  // Journal MA2M : savoir POURQUOI une vidéo n'arrive pas (taille, étape, réponse de Google).
+  if (window.signalerErreur) {
+    const conn = navigator.connection || {};
+    window.signalerErreur('Vidéo de candidature non envoyée',
+      `${payload.nom || '?'} — vidéo ${corps ? (corps.length / 1048576).toFixed(1) + ' Mo à envoyer' : 'non préparée'}, ${Math.round((Date.now() - debut) / 1000)} s au total, réseau ${conn.effectiveType || '?'}${conn.downlink ? ' ~' + conn.downlink + ' Mbit/s' : ''}`,
+      causes.join(' | '));
   }
   return null;
 }

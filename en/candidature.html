@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-VQO6kV0oDomWiOPwk1xa3/Gha8esRckPSp6C7cBiWl8='; style-src 'self' https://fonts.googleapis.com 'sha256-wY5HlBWQW7uoDVNPS6YVpI0janGrwB1+YtjhfMQ8c4Q='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-+9VN9FmJSLR8Oq2A8LafIyiw+oaKjnaaDcrJOgmbyt4='; style-src 'self' https://fonts.googleapis.com 'sha256-wY5HlBWQW7uoDVNPS6YVpI0janGrwB1+YtjhfMQ8c4Q='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -796,7 +796,10 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
       video: (await fichierEnBase64(videoChoisie)).replace(/^data:(?!video\/)[^;,]*(;base64,)/, 'data:video/mp4$1')
     });
     if (lienVideo) await sb.rpc('ajouter_video_candidature', { p_id: candidature.id, p_url: lienVideo });
-  } catch (e) { lienVideo = null; }
+  } catch (e) {
+    lienVideo = null;
+    if (window.signalerErreur) window.signalerErreur('Vidéo de candidature non envoyée', 'lecture du fichier sur le téléphone : ' + ((e && e.message) || e), (videoChoisie ? (videoChoisie.size / 1048576).toFixed(1) + ' Mo, ' + (videoChoisie.type || 'type inconnu') : ''));
+  }
 
   const libelleType = typeCandidature === 'projet' ? `Project/casting: ${projetNom}` : `Join the agency`;
   envoyerNotificationEmail({

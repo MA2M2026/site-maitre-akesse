@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-AnzfcouruTztMIU4DBbTsymQvG0bjPUpmV3TKc1Qxqw='; style-src 'self' https://fonts.googleapis.com 'sha256-rlGOmtWoPiLQ3Ysci1f48TkvlFtTAWDWvlzX/Q47X6A='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-OGTgMy0p28I+Nbz1B0xrL16ocoL7+Td4uJiS19piLIA='; style-src 'self' https://fonts.googleapis.com 'sha256-rlGOmtWoPiLQ3Ysci1f48TkvlFtTAWDWvlzX/Q47X6A='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -889,7 +889,10 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
       video: (await fichierEnBase64(videoChoisie)).replace(/^data:(?!video\/)[^;,]*(;base64,)/, 'data:video/mp4$1')
     });
     if (lienVideo) await sb.rpc('ajouter_video_candidature', { p_id: candidature.id, p_url: lienVideo });
-  } catch (e) { lienVideo = null; }
+  } catch (e) {
+    lienVideo = null;
+    if (window.signalerErreur) window.signalerErreur('Vidéo de candidature non envoyée', 'lecture du fichier sur le téléphone : ' + ((e && e.message) || e), (videoChoisie ? (videoChoisie.size / 1048576).toFixed(1) + ' Mo, ' + (videoChoisie.type || 'type inconnu') : ''));
+  }
 
   const libelleType = typeCandidature === 'projet' ? `Projet/casting : ${projetNom}` : `Intégrer l'agence`;
   envoyerNotificationEmail({
