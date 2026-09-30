@@ -30,5 +30,7 @@ window.MA2M_ERREURS_CORRIGEES = [
   { motif: 'Googlebot', corrige_le: '2100-01-01T00:00:00Z', note: 'Robot de Google : toujours ignoré (il garde parfois une ancienne version du site en mémoire, d’où des appels déjà retirés comme ipify)' },
   { motif: '/partenaires : footer.site-footer', corrige_le: '2026-09-30T03:22:02Z', note: 'Partenaires : place de la liste réservée pendant le chargement, le bas de page ne saute plus' },
   { motif: 'style-src-attr → inline', corrige_le: '2026-09-30T03:22:02Z', note: 'Un seul cas (Brave sur iPhone), non reproduit : aucun style de ce type dans le code du site. S’il revient, il réapparaîtra ici' },
-  { motif: 'nettoyage-supabase-btn', corrige_le: '2026-09-30T03:22:02Z', note: 'Pause de 3 s pendant le nettoyage ponctuel des photos Supabase : normal, l’outil vérifie toutes les fiches d’un coup' }
+  { motif: 'nettoyage-supabase-btn', corrige_le: '2026-09-30T03:22:02Z', note: 'Pause de 3 s pendant le nettoyage ponctuel des photos Supabase : normal, l’outil vérifie toutes les fiches d’un coup' },
+  { motif: 'selection : footer.site-footer', corrige_le: '2026-09-30T04:51:00Z', note: 'Ma sélection : la page sait dès le départ si la sélection est vide, le bas de page ne saute plus' },
+  { motif: 'mannequins : footer.site-footer', corrige_le: '2026-09-30T04:51:00Z', note: 'The Book : les cartes ont leur taille définitive avant l’arrivée des photos, le bas de page ne saute plus' }
 ];
