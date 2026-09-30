@@ -26,7 +26,11 @@ if [ -n "${SUPABASE_DB_PASSWORD:-}" ]; then
   export PGPORT="${PGPORT:-5432}"
   export PGUSER="${PGUSER:-postgres.dfhghgmwmxiguhtxtsle}"
   export PGDATABASE="${PGDATABASE:-postgres}"
-  export PGPASSWORD="$SUPABASE_DB_PASSWORD"
+  # Retours à la ligne et espaces en trop (copier-coller) retirés.
+  MDP="$(printf '%s' "$SUPABASE_DB_PASSWORD" | tr -d '\r\n')"
+  MDP="${MDP#"${MDP%%[![:space:]]*}"}"; MDP="${MDP%"${MDP##*[![:space:]]}"}"
+  export PGPASSWORD="$MDP"
+  echo "Connexion à la base avec un mot de passe de ${#MDP} caractères."
   export PGSSLMODE="${PGSSLMODE:-require}"
   SUPABASE_DB_URL=""
 fi
