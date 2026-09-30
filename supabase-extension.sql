@@ -5056,3 +5056,47 @@ create policy "Tout le monde peut envoyer un message de contact"
   with check (limiter_soumissions_publiques_ip('contact', 30, 3));
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 103 : effacement automatique des anciennes candidatures
+-- (décision de la propriétaire, 30/09/2026).
+--
+--   - candidatures REFUSÉES : effacées 30 jours après le refus ;
+--   - candidatures RETENUES : effacées 6 mois après la décision.
+-- Le délai part du dernier changement de statut (statut_change_at, mis à
+-- jour par un trigger, Extension 70). Les liens de photos de la candidature
+-- partent avec elle (casting_photos, « on delete cascade ») ; les photos
+-- elles-mêmes restent dans le Google Drive de l'agence.
+-- Les INSCRIPTIONS des mannequins ne sont jamais touchées ici.
+--
+-- Pourquoi : pas pour la place (une candidature ≈ 2 Ko, la base gratuite
+-- en contient 500 Mo), mais pour ne pas garder des données personnelles
+-- plus longtemps que nécessaire, et garder un tableau de bord lisible.
+-- ===================================================================
+create or replace function effacer_anciennes_candidatures()
+returns integer
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  n integer;
+begin
+  delete from casting_applications
+  where (status = 'refusée' and statut_change_at < now() - interval '30 days')
+     or (status = 'retenue' and statut_change_at < now() - interval '6 months');
+  get diagnostics n = row_count;
+  return n;
+end;
+$$;
+revoke all on function effacer_anciennes_candidatures() from public, anon, authenticated;
+
+-- Chaque nuit à 3 h 30 (même principe que le nettoyage des photos traitées).
+create extension if not exists pg_cron;
+select cron.schedule(
+  'effacement-anciennes-candidatures',
+  '30 3 * * *',
+  $$select effacer_anciennes_candidatures();$$
+);
+
+NOTIFY pgrst, 'reload schema';
