@@ -1939,23 +1939,82 @@ async function envoyerPhotosVersDrive(urlScript, payload, tentatives = 2) {
 }
 
 // Vidéo de présentation (candidatures) : envoyée à part, après les photos, vers le
-// même programme Google ; range la vidéo dans le dossier Drive de la personne.
-// Renvoie le lien de la vidéo, ou null si elle n'a pas pu partir (un nouvel essai).
-async function envoyerVideoVersDrive(urlScript, payload, tentatives = 2) {
-  const payloadAvecCle = { ...payload, cle: CLE_SCRIPT_PHOTOS_DRIVE };
-  for (let essai = 1; essai <= tentatives; essai++) {
-    try {
-      const reponse = await fetch(urlScript, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(payloadAvecCle)
-      });
-      const resultat = await reponse.json();
-      if (resultat.ok && typeof resultat.video === 'string') return resultat.video;
-    } catch (e) {}
-    if (essai < tentatives) await new Promise(r => setTimeout(r, 2000));
+// même programme Google, EN MORCEAUX de 4 Mo (constaté le 30/09 : une vidéo de
+// téléphone de 20 Mo envoyée d'un seul bloc faisait échouer le programme Google).
+// Chaque morceau est retenté ; après une coupure, on reprend là où Google s'est
+// arrêté. Renvoie le lien de la vidéo, ou null (cause notée dans le Journal MA2M).
+const TAILLE_MORCEAU_VIDEO = 4 * 1024 * 1024; // multiple de 256 Ko (exigé par Google Drive)
+async function appelScriptDrive(urlScript, donnees) {
+  const reponse = await fetch(urlScript, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ ...donnees, cle: CLE_SCRIPT_PHOTOS_DRIVE })
+  });
+  const texte = await reponse.text();
+  try { return JSON.parse(texte); }
+  catch (e) { throw new Error(`HTTP ${reponse.status}, réponse non lisible « ${texte.slice(0, 60).replace(/\s+/g, ' ')} »`); }
+}
+function morceauEnBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const lecteur = new FileReader();
+    lecteur.onload = () => resolve(String(lecteur.result).split(',')[1] || '');
+    lecteur.onerror = () => reject(lecteur.error || new Error('lecture impossible'));
+    lecteur.readAsDataURL(blob);
+  });
+}
+async function envoyerVideoVersDrive(urlScript, infos, fichier, surProgres) {
+  const causes = [];
+  const debut = Date.now();
+  const total = fichier.size;
+  const typeVideo = /^video\//.test(fichier.type || '') ? fichier.type
+    : /\.mov$/i.test(fichier.name || '') ? 'video/quicktime' : 'video/mp4';
+  const pause = (ms) => new Promise(r => setTimeout(r, ms));
+  let lien = null;
+  try {
+    let session = null;
+    for (let essai = 1; !session && essai <= 3; essai++) {
+      try {
+        const r = await appelScriptDrive(urlScript, { ...infos, action: 'video_debut', typeVideo, taille: total });
+        if (r.ok && r.session) session = r.session;
+        else causes.push('ouverture : ' + (r.erreur || JSON.stringify(r).slice(0, 80)));
+      } catch (e) { causes.push(`ouverture essai ${essai} : ${(e && e.message) || e}`); }
+      if (!session && essai < 3) await pause(3000);
+    }
+    if (!session) throw new Error('envoi non ouvert');
+
+    let position = 0, echecsDeSuite = 0;
+    while (!lien && position < total) {
+      if (surProgres) surProgres(Math.floor(position / total * 100));
+      try {
+        const morceau = await morceauEnBase64(fichier.slice(position, Math.min(position + TAILLE_MORCEAU_VIDEO, total)));
+        const r = await appelScriptDrive(urlScript, { ...infos, action: 'video_morceau', session, debut: position, total, morceau });
+        if (r.ok && r.video) { lien = r.video; break; }
+        if (!r.ok) throw new Error(r.erreur || 'refusé');
+        position = typeof r.recu === 'number' && r.recu > position ? r.recu : Math.min(position + TAILLE_MORCEAU_VIDEO, total);
+        echecsDeSuite = 0;
+      } catch (e) {
+        causes.push(`morceau à ${(position / 1048576).toFixed(1)} Mo : ${(e && e.message) || e} (en ligne : ${navigator.onLine})`);
+        if (++echecsDeSuite > 4) throw new Error('trop de coupures');
+        await pause(3000 * echecsDeSuite);
+        // Reprise : demander à Google ce qu'il a déjà reçu.
+        try {
+          const etat = await appelScriptDrive(urlScript, { ...infos, action: 'video_etat', session, total });
+          if (etat.ok && etat.video) lien = etat.video;
+          else if (etat.ok && typeof etat.recu === 'number') position = etat.recu;
+        } catch (e2) {}
+      }
+    }
+    if (surProgres && lien) surProgres(100);
+  } catch (e) {
+    causes.push((e && e.message) || String(e));
   }
-  return null;
+  if (!lien && window.signalerErreur) {
+    const conn = navigator.connection || {};
+    window.signalerErreur('Vidéo de candidature non envoyée',
+      `${infos.nom || '?'} — vidéo ${(total / 1048576).toFixed(1)} Mo (${typeVideo}), ${Math.round((Date.now() - debut) / 1000)} s au total, réseau ${conn.effectiveType || '?'}${conn.downlink ? ' ~' + conn.downlink + ' Mbit/s' : ''}`,
+      causes.slice(-6).join(' | '));
+  }
+  return lien;
 }
 
 // Journalise, côté base de données, les photos qui n'ont vraiment pas pu être

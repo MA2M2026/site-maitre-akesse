@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-toVNtPdQvrQg29qb7S0nFTRqli+/uu6/wfaNDMHGjWE='; style-src 'self' https://fonts.googleapis.com 'sha256-rlGOmtWoPiLQ3Ysci1f48TkvlFtTAWDWvlzX/Q47X6A='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-t4y9Zeg8qH9dChTUhxrAj4FbQQrX/ma6OD9AZcJAgfk='; style-src 'self' https://fonts.googleapis.com 'sha256-rlGOmtWoPiLQ3Ysci1f48TkvlFtTAWDWvlzX/Q47X6A='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -573,19 +573,29 @@ function niveauEtudesChoisi() {
   return cat ? cat + (classe ? ' — ' + classe : '') : null;
 }
 
-// --- Vidéo de présentation : obligatoire, 30 secondes / 30 Mo maximum (au-delà,
+// --- Vidéo de présentation : obligatoire, 30 secondes / 60 Mo maximum (au-delà,
 // l'envoi échoue sur les connexions mobiles et le Drive la refuse). ---
-const VIDEO_MAX_OCTETS = 30 * 1024 * 1024;
+const VIDEO_MAX_OCTETS = 60 * 1024 * 1024;
 const VIDEO_MAX_SECONDES = 35; // 30 s annoncées, petite marge
 let videoChoisie = null;
-function dureeVideo(fichier) {
-  return new Promise(resolve => {
-    const v = document.createElement('video');
-    v.preload = 'metadata';
-    v.onloadedmetadata = () => { URL.revokeObjectURL(v.src); resolve(v.duration); };
-    v.onerror = () => resolve(null);
-    v.src = URL.createObjectURL(fichier);
-  });
+// Durée lue directement dans le fichier (boîte « mvhd » des vidéos MP4/MOV/3GP de
+// téléphone) : l'ancienne méthode passait par un lecteur vidéo que la sécurité du
+// site bloque (journal du 30/09 : « media-src → blob »). null si illisible.
+async function dureeVideo(fichier) {
+  try {
+    const octets = new Uint8Array(await fichier.arrayBuffer());
+    const vue = new DataView(octets.buffer);
+    for (let i = 4; i < octets.length - 32; i++) {
+      if (octets[i] !== 0x6d || octets[i + 1] !== 0x76 || octets[i + 2] !== 0x68 || octets[i + 3] !== 0x64) continue; // "mvhd"
+      const version = octets[i + 4];
+      const echelle = vue.getUint32(i + (version === 1 ? 24 : 16));
+      const duree = version === 1
+        ? vue.getUint32(i + 28) * 4294967296 + vue.getUint32(i + 32)
+        : vue.getUint32(i + 20);
+      return echelle ? duree / echelle : null;
+    }
+  } catch (e) {}
+  return null;
 }
 document.getElementById('ca-video').addEventListener('change', async (e) => {
   const info = document.getElementById('ca-video-info');
@@ -595,7 +605,7 @@ document.getElementById('ca-video').addEventListener('change', async (e) => {
   if (!fichier) { info.textContent = ''; return; }
   if (!/^video\//.test(fichier.type || '') && !/\.(mp4|mov|m4v|3gp|webm)$/i.test(fichier.name || '')) { info.textContent = "Ce fichier n'est pas une vidéo."; e.target.value = ''; return; }
   if (fichier.size > VIDEO_MAX_OCTETS) {
-    info.textContent = `Vidéo trop lourde (${Math.round(fichier.size / 1048576)} Mo) : 30 Mo maximum. Filmez 30 secondes maximum, ou baissez la qualité de la caméra.`;
+    info.textContent = `Vidéo trop lourde (${Math.round(fichier.size / 1048576)} Mo) : 60 Mo maximum. Filmez 30 secondes maximum, ou baissez la qualité de la caméra.`;
     e.target.value = ''; return;
   }
   const duree = await dureeVideo(fichier);
@@ -874,12 +884,13 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
   try {
     lienVideo = await envoyerVideoVersDrive(URL_SCRIPT_PHOTOS_CASTING, {
       nom: candidature.full_name, email: candidature.email, phone: candidature.phone,
-      type: typeCandidature, projet: projetNom || '', dossier: dossierDrive,
-      // Certains téléphones Android ne donnent pas le type du fichier : on le précise.
-      video: (await fichierEnBase64(videoChoisie)).replace(/^data:(?!video\/)[^;,]*(;base64,)/, 'data:video/mp4$1')
-    });
+      type: typeCandidature, projet: projetNom || '', dossier: dossierDrive
+    }, videoChoisie, (pc) => afficherMsg(msg, `Envoi de votre vidéo… ${pc} % (gardez la page ouverte)`, 'ok'));
     if (lienVideo) await sb.rpc('ajouter_video_candidature', { p_id: candidature.id, p_url: lienVideo });
-  } catch (e) { lienVideo = null; }
+  } catch (e) {
+    lienVideo = null;
+    if (window.signalerErreur) window.signalerErreur('Vidéo de candidature non envoyée', 'lecture du fichier sur le téléphone : ' + ((e && e.message) || e), (videoChoisie ? (videoChoisie.size / 1048576).toFixed(1) + ' Mo, ' + (videoChoisie.type || 'type inconnu') : ''));
+  }
 
   const libelleType = typeCandidature === 'projet' ? `Projet/casting : ${projetNom}` : `Intégrer l'agence`;
   envoyerNotificationEmail({

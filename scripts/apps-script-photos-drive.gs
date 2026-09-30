@@ -9,13 +9,23 @@
 // tout remplacer par ce texte → Enregistrer → Déployer → Gérer les déploiements →
 // crayon → Version : « Nouvelle version » → Déployer (l'adresse reste la même).
 //
-// Deux sortes d'envoi (même adresse) :
+// Envois possibles (même adresse) :
 //   1) photos : { cle, nom, email, phone, type, projet, photos: [dataURL image…] }
 //      → { ok, liens: [...], dossier: <id du dossier de la personne> }
-//   2) vidéo  : { cle, nom, email, phone, type, projet, dossier: <id reçu en 1>,
-//                 video: dataURL vidéo }  → { ok, video: <lien>, dossier }
-// La vidéo part dans un envoi séparé : si elle échoue (connexion lente), les
-// photos sont déjà arrivées.
+//   2) vidéo EN MORCEAUX (depuis le 30/09 — une vidéo de téléphone de 20 Mo envoyée
+//      d'un seul bloc faisait échouer le programme, faute de mémoire) :
+//      a) { cle, action:'video_debut', nom, email, phone, type, projet, dossier,
+//           typeVideo, taille }                → { ok, session, dossier }
+//      b) { cle, action:'video_morceau', session, debut, total, morceau: base64 }
+//           → { ok, suite:true } … puis au dernier morceau { ok, video: <lien> }
+//      c) { cle, action:'video_etat', session, total } → { ok, recu } (reprise
+//           après une coupure de connexion)
+//   3) ancienne vidéo d'un seul bloc { …, video: dataURL } : gardée pour les
+//      petites vidéos et les pages pas encore mises à jour.
+// La vidéo part après les photos : si elle échoue, les photos sont déjà arrivées.
+//
+// Nécessite l'autorisation « se connecter à un service externe » (UrlFetchApp) :
+// Google la demande une fois au moment du déploiement.
 // =====================================================================
 
 // Doit être EXACTEMENT le même texte que CLE_SCRIPT_PHOTOS_DRIVE dans js/app.js du site.
@@ -23,7 +33,9 @@ var CLE_ATTENDUE = 'b56772fb9c5075517dc36a6b20db10734701e262274f3beb';
 var ID_DOSSIER_RACINE = '1hHOId-298nSWbUsRCLStpbAMZD4bgQzl';
 var NB_PHOTOS_MAX = 20;
 var TAILLE_MAX_OCTETS = 15 * 1024 * 1024;        // par photo
-var TAILLE_MAX_VIDEO_OCTETS = 30 * 1024 * 1024;  // vidéo de présentation (~30 s)
+var TAILLE_MAX_VIDEO_OCTETS = 60 * 1024 * 1024;  // vidéo de présentation (~30 s)
+var TAILLE_MAX_MORCEAU = 8 * 1024 * 1024;        // le site envoie des morceaux de 4 Mo
+var DEBUT_SESSION = 'https://www.googleapis.com/upload/drive/v3/files?';
 
 function reponse(objet) {
   return ContentService.createTextOutput(JSON.stringify(objet))
@@ -40,7 +52,12 @@ function doPost(e) {
 
     var dossierRacine = DriveApp.getFolderById(ID_DOSSIER_RACINE);
 
-    // ---------- 2) Envoi de la vidéo de présentation ----------
+    // ---------- 2) Vidéo en morceaux ----------
+    if (data.action === 'video_debut') return videoDebut(dossierRacine, data);
+    if (data.action === 'video_morceau') return videoMorceau(dossierRacine, data);
+    if (data.action === 'video_etat') return videoEtat(data);
+
+    // ---------- 3) Vidéo d'un seul bloc (petites vidéos) ----------
     if (data.video) {
       var video = String(data.video);
       var entete = video.slice(0, 40);
@@ -113,6 +130,87 @@ function doPost(e) {
   }
 }
 
+// a) Ouvre un envoi « en plusieurs fois » auprès de Google Drive, directement dans le
+// dossier de la personne. Google renvoie une adresse d'envoi (session) propre à ce
+// seul fichier, valable une semaine.
+function videoDebut(dossierRacine, data) {
+  var typeVideo = String(data.typeVideo || '');
+  if (!/^video\/[a-z0-9.+-]+$/i.test(typeVideo)) return reponse({ ok: false, erreur: 'pas_une_video' });
+  var taille = Number(data.taille);
+  if (!(taille > 0 && taille <= TAILLE_MAX_VIDEO_OCTETS)) return reponse({ ok: false, erreur: 'video_trop_lourde' });
+  var dossier = dossierDeLaPersonne(dossierRacine, data);
+  var extension = (typeVideo.split('/')[1] || 'mp4').replace('quicktime', 'mov');
+  var rep = UrlFetchApp.fetch(DEBUT_SESSION + 'uploadType=resumable&fields=id', {
+    method: 'post',
+    contentType: 'application/json; charset=UTF-8',
+    headers: {
+      Authorization: 'Bearer ' + ScriptApp.getOAuthToken(),
+      'X-Upload-Content-Type': typeVideo,
+      'X-Upload-Content-Length': String(taille)
+    },
+    payload: JSON.stringify({ name: 'video-presentation.' + extension, parents: [dossier.getId()], mimeType: typeVideo }),
+    muteHttpExceptions: true
+  });
+  var entetes = rep.getHeaders();
+  var session = entetes.Location || entetes.location;
+  if (!session) return reponse({ ok: false, erreur: 'session_refusee ' + rep.getResponseCode() + ' ' + rep.getContentText().slice(0, 150) });
+  return reponse({ ok: true, session: session, dossier: dossier.getId() });
+}
+
+// b) Transmet un morceau à Google Drive. Au dernier morceau, Drive crée le fichier :
+// on le partage « lecture par lien », on note la ligne dans la feuille, on renvoie le lien.
+function videoMorceau(dossierRacine, data) {
+  var session = String(data.session || '');
+  if (session.indexOf(DEBUT_SESSION) !== 0) return reponse({ ok: false, erreur: 'session_invalide' });
+  var debut = Number(data.debut), total = Number(data.total);
+  var octets = Utilities.base64Decode(String(data.morceau || ''));
+  if (!octets.length || octets.length > TAILLE_MAX_MORCEAU || !(total > 0 && total <= TAILLE_MAX_VIDEO_OCTETS) || !(debut >= 0) || debut + octets.length > total) {
+    return reponse({ ok: false, erreur: 'morceau_invalide' });
+  }
+  var rep = UrlFetchApp.fetch(session, {
+    method: 'put',
+    contentType: 'application/octet-stream',
+    headers: { 'Content-Range': 'bytes ' + debut + '-' + (debut + octets.length - 1) + '/' + total },
+    payload: octets,
+    muteHttpExceptions: true
+  });
+  var code = rep.getResponseCode();
+  if (code === 308) return reponse({ ok: true, suite: true, recu: plageRecue(rep) });
+  if (code !== 200 && code !== 201) return reponse({ ok: false, erreur: 'morceau_refuse ' + code + ' ' + rep.getContentText().slice(0, 150) });
+  return reponse(videoTerminee(rep, data));
+}
+
+function videoTerminee(rep, data) {
+  var fichier = DriveApp.getFileById(JSON.parse(rep.getContentText()).id);
+  fichier.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  var lien = 'https://drive.google.com/file/d/' + fichier.getId() + '/view';
+  var feuille = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  feuille.appendRow([new Date(), data.nom || '', data.email || '', data.phone || '', data.type || '', data.projet || '', 'VIDÉO : ' + lien]);
+  return { ok: true, video: lien };
+}
+
+// c) Après une coupure : combien d'octets Google a déjà reçus pour cette vidéo ?
+function videoEtat(data) {
+  var session = String(data.session || '');
+  if (session.indexOf(DEBUT_SESSION) !== 0) return reponse({ ok: false, erreur: 'session_invalide' });
+  var rep = UrlFetchApp.fetch(session, {
+    method: 'put',
+    headers: { 'Content-Range': 'bytes */' + Number(data.total) },
+    muteHttpExceptions: true
+  });
+  var code = rep.getResponseCode();
+  if (code === 308) return reponse({ ok: true, recu: plageRecue(rep) });
+  if (code === 200 || code === 201) return reponse(videoTerminee(rep, data));
+  return reponse({ ok: false, erreur: 'etat_' + code });
+}
+
+function plageRecue(rep) {
+  var entetes = rep.getHeaders();
+  var plage = entetes.Range || entetes.range || '';
+  var m = String(plage).match(/bytes=0-(\d+)/);
+  return m ? Number(m[1]) + 1 : 0;
+}
+
 // Dossier où ranger la vidéo : celui des photos de la même personne (identifiant
 // renvoyé par l'envoi des photos) — uniquement s'il se trouve bien dans le dossier
 // racine de l'agence (racine → catégorie → personne). Sinon, un nouveau dossier.
@@ -144,4 +242,12 @@ function obtenirOuCreerSousDossier(parent, nom) {
   var dossiers = parent.getFoldersByName(nom);
   if (dossiers.hasNext()) return dossiers.next();
   return parent.createFolder(nom);
+}
+
+// À lancer UNE fois à la main (menu des fonctions → « autoriser » → Exécuter) après
+// avoir collé ce code : Google demande alors l'autorisation « se connecter à un
+// service externe », nécessaire à l'envoi des vidéos en morceaux.
+function autoriser() {
+  UrlFetchApp.fetch('https://www.googleapis.com/discovery/v1/apis?name=drive', { muteHttpExceptions: true });
+  DriveApp.getFolderById(ID_DOSSIER_RACINE).getName();
 }

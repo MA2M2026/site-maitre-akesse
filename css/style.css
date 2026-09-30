@@ -2444,3 +2444,8 @@ html.selection-vide #liste-vide { display: block; }
 
 /* Candidature : aide sous le champ « Vidéo de présentation » (toujours visible) */
 .form-champ .ca-video-aide { display: block; }
+
+/* Messages groupés : boutons bloqués bien visibles + consigne qui dit pourquoi */
+.mg-actions .btn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+.mg-consigne { margin: -0.4rem 0 1rem; color: #f0b35a; font-size: 0.88rem; }
+.mg-consigne:empty { display: none; }
