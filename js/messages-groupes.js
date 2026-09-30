@@ -21,8 +21,9 @@
     inscription: 'id, full_name, email, phone, statut, created_at'
   };
   let destinataires = [];
-
-  function conf() { return DOSSIERS[$('mg-source').value]; }
+  // « Qui ? » : agence et casting précis sont deux sortes de candidatures (même table).
+  function table() { return $('mg-source').value === 'inscription' ? 'inscription' : 'casting'; }
+  function conf() { return DOSSIERS[table()]; }
   function prenom(d) { return String(d.full_name || '').trim().split(/\s+/)[0] || ''; }
   function casting(d) {
     if (d.type_candidature === 'projet') return d.projet_nom || 'notre casting';
@@ -49,8 +50,23 @@
     $('mg-statut').innerHTML = c.statuts.map(s => `<option value="${echapper(s)}">${echapper(c.libellesStatut[s] || s)}</option>`).join('');
     $('mg-statut').value = c.statuts.includes('retenue') ? 'retenue' : c.statuts.includes('payée') ? 'payée' : c.statuts[0];
     $('mg-champ-casting').style.display = $('mg-source').value === 'casting' ? '' : 'none';
-    $('mg-casting').innerHTML = '<option value="">Tous les castings</option>';
     viderListe();
+  }
+
+  // Liste des castings : ceux créés dans « Projets & Castings » (actifs ou non) + ceux
+  // pour lesquels des candidatures existent déjà (nom saisi par la candidate).
+  async function chargerCastings() {
+    const noms = new Set();
+    const [{ data: projets }, { data: cands }] = await Promise.all([
+      sb.from('casting_projets').select('nom').order('created_at', { ascending: false }),
+      sb.from('casting_applications').select('projet_nom').eq('type_candidature', 'projet').not('projet_nom', 'is', null).limit(5000)
+    ]);
+    (projets || []).forEach(p => p.nom && noms.add(p.nom.trim()));
+    (cands || []).forEach(c => c.projet_nom && noms.add(c.projet_nom.trim()));
+    const liste = [...noms].sort((a, b) => a.localeCompare(b, 'fr'));
+    $('mg-casting').innerHTML = liste.length
+      ? '<option value="">— Choisissez le casting —</option>' + liste.map(n => `<option value="${echapper(n)}">${echapper(n)}</option>`).join('')
+      : '<option value="">Aucun casting pour l’instant</option>';
   }
 
   function viderListe() {
@@ -62,24 +78,20 @@
 
   async function charger() {
     const c = conf();
+    const qui = $('mg-source').value;
+    if (qui === 'casting' && !$('mg-casting').value) { $('mg-resume').textContent = 'Choisissez d’abord le casting.'; return; }
     $('mg-resume').textContent = 'Chargement…';
     const lignes = [];
     for (let depart = 0; ; depart += 1000) {
-      const { data, error } = await sb.from(c.table).select(CHAMPS[$('mg-source').value])
-        .eq(c.statutChamp, $('mg-statut').value).order('created_at', { ascending: true }).range(depart, depart + 999);
+      let q = sb.from(c.table).select(CHAMPS[table()]).eq(c.statutChamp, $('mg-statut').value);
+      if (qui === 'agence') q = q.eq('type_candidature', 'agence');
+      if (qui === 'casting') q = q.eq('type_candidature', 'projet').eq('projet_nom', $('mg-casting').value);
+      const { data, error } = await q.order('created_at', { ascending: true }).range(depart, depart + 999);
       if (error) { $('mg-resume').textContent = 'Erreur : ' + error.message; return; }
       lignes.push(...(data || []));
       if (!data || data.length < 1000) break;
     }
-    // Liste des castings présents dans ce groupe (pour filtrer par casting).
-    if ($('mg-source').value === 'casting') {
-      const choixActuel = $('mg-casting').value;
-      const noms = [...new Set(lignes.map(casting))].sort();
-      $('mg-casting').innerHTML = '<option value="">Tous les castings</option>' + noms.map(n => `<option value="${echapper(n)}">${echapper(n)}</option>`).join('');
-      if (noms.includes(choixActuel)) $('mg-casting').value = choixActuel;
-    }
-    const filtreCasting = $('mg-source').value === 'casting' ? $('mg-casting').value : '';
-    destinataires = lignes.filter(d => !filtreCasting || casting(d) === filtreCasting).map(d => Object.assign(d, { choisi: true }));
+    destinataires = lignes.map(d => Object.assign(d, { choisi: true }));
     afficherListe();
   }
 
@@ -169,7 +181,7 @@
 
   $('mg-source').addEventListener('change', remplirStatuts);
   $('mg-statut').addEventListener('change', viderListe);
-  $('mg-casting').addEventListener('change', () => { if (destinataires.length || $('mg-casting').value) charger(); });
+  $('mg-casting').addEventListener('change', () => { if ($('mg-casting').value) charger(); else viderListe(); });
   $('mg-charger').addEventListener('click', charger);
   $('mg-liste').addEventListener('change', (e) => { const i = e.target.dataset.i; if (i !== undefined) { destinataires[i].choisi = e.target.checked; majApercu(); majBoutons(); } });
   $('mg-message').addEventListener('input', () => { majApercu(); majBoutons(); });
@@ -178,6 +190,6 @@
   $('mg-wa-copier').addEventListener('click', copierNumeros);
   $('mg-tout').addEventListener('click', () => { const tous = !choisis().length || choisis().length < destinataires.length; destinataires.forEach(d => { d.choisi = tous; }); afficherListe(); });
 
-  function demarrer() { if (typeof DOSSIERS === 'undefined') return setTimeout(demarrer, 300); remplirStatuts(); }
+  function demarrer() { if (typeof DOSSIERS === 'undefined' || typeof sb === 'undefined') return setTimeout(demarrer, 300); remplirStatuts(); chargerCastings(); }
   demarrer();
 })();
