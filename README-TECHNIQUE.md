@@ -1323,3 +1323,22 @@ par carte). Corrigé :
   Le « code validé » de l'administration n'est gardé que dans l'onglet (les règles de
   la base ne le vérifient pas) : pour une vraie double authentification, activer le MFA
   de Supabase Auth.
+
+## 💾 Sauvegardes de la base (30 septembre 2026)
+
+Supabase est en offre **gratuite** (choix de la propriétaire) : aucune sauvegarde
+fournie. D'où `.github/workflows/sauvegarde-base.yml` + `scripts/sauvegarde-base.sh` :
+- chaque **dimanche à 3 h UTC** (et à la demande : onglet Actions → « Run workflow »),
+  copie du schéma `public` (structure + données + règles RLS) et de `auth.users`
+  (données), compressée puis **chiffrée AES-256** (gpg) avec la phrase secrète de la
+  propriétaire ; gardée **90 jours** en « Artifact » de l'exécution ;
+- secrets GitHub requis : `SUPABASE_DB_URL` (adresse « Session pooler » de Supabase →
+  bouton Connect, mot de passe compris ; les machines GitHub n'ont pas d'IPv6, la
+  connexion directe ne marcherait pas) et `BACKUP_PASSPHRASE` ;
+- échec (secret faux, base injoignable, fichier < 2 Ko) → e-mail automatique de GitHub.
+- **Restauration testée** le 30/09 sur une base locale : données et 16 règles RLS
+  identiques. Procédure :
+  `gpg --decrypt ma2m-base-AAAA-MM-JJ.sql.gz.gpg | gunzip | psql "<base vide>" -v ON_ERROR_STOP=1`
+  (la base cible doit déjà avoir les schémas Supabase `auth`, `storage` — c'est le cas
+  d'un nouveau projet Supabase).
+- Les photos ne sont pas dans la base (Cloudflare R2).
