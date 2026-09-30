@@ -39,5 +39,8 @@ window.MA2M_ERREURS_CORRIGEES = [
   { motif: '[Zoom automatique] /espace-mannequin', corrige_le: '2026-09-30T16:12:00Z', note: 'Espace mannequin : tous les champs à 16 px sur téléphone, l’iPhone ne zoome plus tout seul' },
   { motif: "[Page plus large que l'écran] /espace-mannequin", corrige_le: '2026-09-30T16:12:00Z', note: 'Espace mannequin : conséquence du zoom automatique de l’iPhone (corrigé) ; champs limités à leur colonne' },
   { motif: 'div.ref-core-grid', corrige_le: '2026-09-30T16:25:00Z', note: 'Tableau de bord, Statistiques : place réservée aux graphiques pendant le chargement, plus de faux pourcentages' },
-  { motif: '[Zoom inattendu]', corrige_le: '2026-09-30T16:55:00Z', note: 'Zoom fait avec les doigts sur la tablette (appareil qui se présente comme un ordinateur) : pas un défaut du site. S’il revient sans geste, il réapparaîtra ici' }
+  { motif: 'invalid_credentials', corrige_le: '2100-01-01T00:00:00Z', note: 'Mauvais e-mail ou mot de passe tapé par une personne : pas un défaut du site (toujours ignoré)' },
+  { motif: '[Page figée] /tableau-de-bord', corrige_le: '2026-09-30T17:10:00Z', note: 'Fausse alerte : temps passé dans la fenêtre « Envoyer ce message ? » ou dans WhatsApp — désormais écarté par le journal' },
+  { motif: 'auth-tab-connexion', corrige_le: '2026-09-30T17:10:00Z', note: 'Onglet « Se connecter » touché plusieurs fois alors qu’il était déjà ouvert (juste après un mauvais mot de passe) : pas un défaut' },
+  { motif: '[Zoom inattendu]', corrige_le: '2026-09-30T17:10:00Z', note: 'Zoom fait avec les doigts sur la tablette (appareil qui se présente comme un ordinateur) : pas un défaut du site. S’il revient sans geste, il réapparaîtra ici' }
 ];
