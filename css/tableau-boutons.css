@@ -1,20 +1,24 @@
 /* =====================================================================
    Tableau de bord — boutons « touche de clavier » (demande de la propriétaire,
    30/09/2026) : même famille que les pilules « MENU », « Admin » et « Marketplace »
-   (bords arrondis, contour bordeaux), avec un vrai relief sous le bouton qui
+   (bords arrondis, fond noir — rouge seulement à l'appui), avec un vrai relief sous le bouton qui
    disparaît quand on appuie — le bouton s'enfonce comme une touche de clavier.
    Chargé APRÈS les styles de la page : il ne change que l'apparence des boutons,
    jamais l'organisation du tableau de bord.
    ===================================================================== */
 
 :root {
-  --touche-fond: linear-gradient(180deg, #2b161a 0%, #150b0d 100%);
-  --touche-fond-survol: linear-gradient(180deg, #3a1a20 0%, #1c0d10 100%);
-  --touche-fond-actif: linear-gradient(180deg, #a3243a 0%, #6d1222 100%);
-  --touche-contour: rgba(213, 84, 104, 0.5);
-  --touche-contour-vif: rgba(229, 108, 128, 0.9);
-  --touche-relief: #4a0f1a;          /* l'épaisseur visible sous la touche */
-  --touche-relief-actif: #3a0812;
+  /* 30/09 (2e demande) : fond noir neutre, PAS de rouge au repos ni au survol —
+     le rouge n'apparaît qu'à l'appui. */
+  --touche-fond: linear-gradient(180deg, #1d1d1f 0%, #0d0d0e 100%);
+  --touche-fond-survol: linear-gradient(180deg, #27272a 0%, #121213 100%);
+  --touche-fond-actif: linear-gradient(180deg, #a3243a 0%, #6d1222 100%);   /* appui */
+  --touche-fond-choisi: linear-gradient(180deg, #34343a 0%, #1a1a1d 100%);  /* page ouverte */
+  --touche-contour: rgba(255, 255, 255, 0.18);
+  --touche-contour-vif: rgba(255, 255, 255, 0.34);
+  --touche-contour-appui: rgba(229, 108, 128, 0.9);
+  --touche-relief: #000;
+  --touche-relief-actif: #000;
 }
 
 /* ---------- Toutes les touches ---------- */
@@ -62,7 +66,7 @@ body .modal .btn {
     box-shadow:
       0 1px 0 rgba(255, 255, 255, 0.16) inset,
       0 5px 0 var(--touche-relief),
-      0 12px 22px -8px rgba(122, 18, 32, 0.55);
+      0 12px 22px -8px rgba(0, 0, 0, 0.8);
   }
 }
 
@@ -85,20 +89,20 @@ body .touche-appuyee {
     0 0 0 var(--touche-relief),
     0 0 18px rgba(213, 84, 104, 0.45) !important;
   background: var(--touche-fond-actif) !important;
-  border-color: var(--touche-contour-vif) !important;
+  border-color: var(--touche-contour-appui) !important;
   color: #fff !important;
   transition: transform 0.05s ease, box-shadow 0.05s ease, background 0.05s ease;
 }
 
-/* Bouton principal (Envoyer, Enregistrer…) : touche déjà bordeaux. */
+/* Bouton principal (Envoyer, Enregistrer…) : même touche noire, contour un peu plus clair. */
 body #bloc-tableau .btn--principal,
 body .modal .btn--principal {
-  background: var(--touche-fond-actif);
+  background: var(--touche-fond);
   border-color: var(--touche-contour-vif);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.22) inset,
     0 4px 0 var(--touche-relief-actif),
-    0 10px 22px -8px rgba(122, 18, 32, 0.7);
+    0 10px 22px -8px rgba(0, 0, 0, 0.8);
 }
 
 /* Bouton bloqué : grisé, plus de relief (il ne peut pas s'enfoncer). */
@@ -114,13 +118,12 @@ body .modal .btn:disabled {
 /* Élément sélectionné (page ouverte, filtre choisi) : touche restée allumée. */
 body .tdb-menu-item.actif,
 body #bloc-tableau .filtre-pill.actif {
-  background: var(--touche-fond-actif);
-  border-color: var(--touche-contour-vif);
+  background: var(--touche-fond-choisi);
+  border-color: rgba(255, 255, 255, 0.55);
   color: #fff;
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.2) inset,
-    0 3px 0 var(--touche-relief-actif),
-    0 0 16px rgba(213, 84, 104, 0.35);
+    0 1px 0 rgba(255, 255, 255, 0.14) inset,
+    0 3px 0 var(--touche-relief-actif);
 }
 
 /* ---------- Tailles et placements dans le menu ---------- */
@@ -149,8 +152,8 @@ body .tdb-landing-carte {
   border-radius: 26px;
   border: 1px solid var(--touche-contour);
   background:
-    radial-gradient(120% 80% at 0% 0%, rgba(213, 84, 104, 0.22), transparent 55%),
-    linear-gradient(180deg, #24120f 0%, #120909 100%);
+    radial-gradient(120% 80% at 0% 0%, rgba(255, 255, 255, 0.07), transparent 55%),
+    linear-gradient(180deg, #1c1c1e 0%, #0b0b0c 100%);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.14) inset,
     0 8px 0 var(--touche-relief),
@@ -162,25 +165,26 @@ body .tdb-landing-carte {
 body .tdb-landing-carte::after {
   content: "Ouvrir  →"; position: absolute; right: 1.4rem; bottom: 1.1rem;
   font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase;
-  color: var(--bordeaux-clair, #d55468);
+  color: #b9aca6;
 }
 @media (hover: hover) {
   body .tdb-landing-carte:hover {
     transform: translateY(-3px);
     border-color: var(--touche-contour-vif);
     background:
-      radial-gradient(120% 80% at 0% 0%, rgba(213, 84, 104, 0.32), transparent 55%),
-      linear-gradient(180deg, #2c1512 0%, #150a0a 100%);
+      radial-gradient(120% 80% at 0% 0%, rgba(255, 255, 255, 0.1), transparent 55%),
+      linear-gradient(180deg, #232326 0%, #101011 100%);
     box-shadow:
       0 1px 0 rgba(255, 255, 255, 0.16) inset,
       0 11px 0 var(--touche-relief),
-      0 28px 44px -14px rgba(122, 18, 32, 0.6);
+      0 28px 44px -14px rgba(0, 0, 0, 0.85);
   }
 }
 body .tdb-landing-carte:active,
 body .tdb-landing-carte.touche-appuyee {
   transform: translateY(8px) !important;
-  border-color: var(--touche-contour-vif) !important;
+  border-color: var(--touche-contour-appui) !important;
+  background: linear-gradient(180deg, #5a1422 0%, #2a0a11 100%) !important;
   box-shadow:
     0 3px 10px rgba(0, 0, 0, 0.7) inset,
     0 0 0 var(--touche-relief),
@@ -189,9 +193,9 @@ body .tdb-landing-carte.touche-appuyee {
 }
 body .tdb-landing-carte .tdb-landing-num {
   font-size: 0.78rem; font-weight: 700; padding: 0.3rem 0.9rem;
-  color: #fff; background: var(--touche-fond-actif);
-  border: 1px solid var(--touche-contour-vif);
-  box-shadow: 0 2px 0 var(--touche-relief-actif);
+  color: #fff; background: var(--touche-fond-choisi);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 0 #000;
 }
 body .tdb-landing-carte h3 { margin-bottom: 0.7rem; }
 body .tdb-landing-carte p { padding-bottom: 1.2rem; color: #b9aca6; }
