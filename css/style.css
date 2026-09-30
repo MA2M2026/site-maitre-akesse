@@ -2420,3 +2420,16 @@ html.selection-vide #liste-vide { display: block; }
 #grille.medaillon-grille .medaillon-carte > a { width: 100%; }
 #part-modal-description, #part-modal-description :not(a) { color: var(--texte-corps) !important; }
 #part-modal-description a { color: var(--bordeaux-clair); }
+
+/* Tableau de bord — Messages groupés (js/messages-groupes.js) */
+.mg-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0 1rem; margin-top: 1rem; }
+.mg-resume { margin: 0.8rem 0; color: var(--texte-corps); font-size: 0.9rem; }
+.mg-liste { max-height: 320px; overflow-y: auto; border: 1px solid var(--gris-clair); margin: 0.6rem 0 1.2rem; }
+.mg-liste:empty { display: none; }
+.mg-personne { display: flex; align-items: baseline; gap: 0.6rem; padding: 0.55rem 0.8rem; border-bottom: 1px solid var(--gris-clair); cursor: pointer; font-size: 0.88rem; text-transform: none; letter-spacing: 0; }
+.mg-personne input { flex: none; width: 1.05rem; height: 1.05rem; accent-color: var(--bordeaux-clair); }
+.mg-nom { color: var(--titre-clair); min-width: 10rem; }
+.mg-infos { color: var(--texte-doux); font-size: 0.8rem; overflow-wrap: anywhere; }
+.mg-apercu { display: none; white-space: pre-line; background: rgba(255,255,255,0.04); border-left: 3px solid var(--bordeaux-clair); padding: 0.9rem 1rem; margin: 0 0 1rem; font-size: 0.88rem; color: var(--texte-corps); }
+.mg-actions { display: flex; flex-wrap: wrap; gap: 0.7rem; margin: 0.4rem 0 0.8rem; }
+.mg-sous-titre { margin-top: 2rem; font-size: 1rem; }
