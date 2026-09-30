@@ -1892,6 +1892,33 @@ const CLE_SCRIPT_PHOTOS_DRIVE = 'b56772fb9c5075517dc36a6b20db10734701e262274f3be
 // pendant l'envoi faisait perdre les photos pour de bon, sans aucun moyen
 // de rattraper le coup. Un second essai automatique, après une courte
 // pause, résout la grande majorité des échecs purement transitoires.
+// Envoi d'un formulaire public (candidature, contact, demande de sélection) avec patience.
+// La base limite le nombre d'envois par minute (protection contre les robots). Lors d'un
+// vrai afflux (annonce de casting, jour de casting où tout le monde est sur le même
+// Wi-Fi), un envoi refusé pour cette seule raison était perdu avec « Erreur lors de
+// l'envoi » (constaté lors de l'audit du 30/09). Il est désormais retenté tout seul,
+// en affichant un compte à rebours. Les autres erreurs sont renvoyées telles quelles.
+async function insererAvecPatience(table, ligne, surAttente) {
+  const attentes = [15, 25, 35];
+  for (let essai = 0; ; essai++) {
+    const { error } = await sb.from(table).insert(ligne);
+    if (!error) return { error: null };
+    // Déjà enregistré lors d'un essai précédent dont la réponse s'est perdue.
+    if (error.code === '23505' && ligne && ligne.id) return { error: null };
+    const limiteAtteinte = error.code === '42501' || /row-level security/i.test(error.message || '');
+    if (!limiteAtteinte || essai >= attentes.length) return { error };
+    for (let reste = attentes[essai]; reste > 0; reste--) {
+      if (surAttente) surAttente(reste);
+      await new Promise(ok => setTimeout(ok, 1000));
+    }
+  }
+}
+function texteAttenteEnvoi(secondes) {
+  return (document.documentElement.lang || '').indexOf('en') === 0
+    ? `Many submissions right now — trying again automatically in ${secondes} s. Please keep this page open.`
+    : `Beaucoup d'envois en ce moment — nouvel essai automatique dans ${secondes} s. Merci de garder la page ouverte.`;
+}
+
 async function envoyerPhotosVersDrive(urlScript, payload, tentatives = 2) {
   const payloadAvecCle = { ...payload, cle: CLE_SCRIPT_PHOTOS_DRIVE };
   for (let essai = 1; essai <= tentatives; essai++) {

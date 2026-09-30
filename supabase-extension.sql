@@ -5022,3 +5022,37 @@ do $$ begin
 exception when duplicate_object then null; end $$;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 102 : formulaires publics — limites relevées pour les vrais
+-- afflux (audit du 30/09/2026).
+--
+-- Jusqu'ici : 10 candidatures par minute pour TOUT le site, et 3 par minute
+-- depuis une même connexion. Après une annonce de casting, ou le jour d'un
+-- casting où les candidates sont toutes sur le même Wi-Fi (ou chez le même
+-- opérateur mobile, qui partage souvent une même adresse entre des milliers
+-- d'abonnés), la 11e candidate de la minute recevait « Erreur lors de
+-- l'envoi ». Le site retente désormais tout seul (insererAvecPatience dans
+-- js/app.js) ; cette extension relève en plus les plafonds :
+--   - candidatures : 60 par minute pour tout le site, 6 par connexion ;
+--   - demandes de sélection (recruteurs) et messages de contact : 30 par
+--     minute pour tout le site, 3 par connexion.
+-- Les robots restent freinés (un robot seul ne peut plus bloquer tout le
+-- monde plus d'une minute, et pas au-delà de 6 envois).
+-- ===================================================================
+drop policy if exists "Tout le monde peut candidater" on casting_applications;
+create policy "Tout le monde peut candidater"
+  on casting_applications for insert
+  with check (limiter_soumissions_publiques_ip('candidature', 60, 6) and status = 'nouvelle');
+
+drop policy if exists "Tout le monde peut envoyer une demande de casting" on recruiter_requests;
+create policy "Tout le monde peut envoyer une demande de casting"
+  on recruiter_requests for insert
+  with check (limiter_soumissions_publiques_ip('recruteur', 30, 3) and status = 'nouvelle');
+
+drop policy if exists "Tout le monde peut envoyer un message de contact" on messages_contact;
+create policy "Tout le monde peut envoyer un message de contact"
+  on messages_contact for insert
+  with check (limiter_soumissions_publiques_ip('contact', 30, 3));
+
+NOTIFY pgrst, 'reload schema';

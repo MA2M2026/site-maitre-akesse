@@ -396,24 +396,17 @@ async function chargerMedaillonsAccueil() {
   }
 
 
+  // Une seule demande groupée pour toutes les photos (la même photo que dans le Book),
+  // au lieu d'une demande par mannequin, faites l'une après l'autre (audit du 30/09 :
+  // environ 2 s d'attente en moins, et une base moins sollicitée en cas d'affluence).
+  const { data: couvertures } =
+    await sb.rpc('photos_couverture_mannequins', { ids: profils.map(p => p.id) });
+  const photoPar = {};
+  (couvertures || []).forEach(c => { photoPar[c.model_id] = c.url; });
+
   for (const profil of profils) {
 
-    const { data: photos } =
-      await sb
-        .from('model_photos')
-        .select('url, url_miniature')
-        .eq('model_id', profil.id)
-        .order(
-          'created_at',
-          { ascending: true }
-        )
-        .limit(1);
-
-
-    const photoUrl =
-      (photos && photos[0])
-        ? (photos[0].url_miniature || photos[0].url)
-        : 'assets/logo-dark-bg.png';
+    const photoUrl = photoPar[profil.id] || 'assets/logo-dark-bg.png';
 
 
     const carte =
