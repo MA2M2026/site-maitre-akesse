@@ -7,9 +7,59 @@
 // Sécurité : un fichier n'est supprimé que si AUCUNE fiche ne le cite encore (image de
 // couverture, galerie, texte des fiches, contenu « À la une »). En cas de doute (lecture
 // impossible d'une table), rien n'est supprimé. Confirmation demandée avant d'effacer.
+//
+// Photo encore citée par une fiche (demande du 30/09/2026 : plus AUCUNE photo chez
+// Supabase) : elle est d'abord recopiée chez Cloudflare R2, l'adresse est remplacée
+// dans la fiche, puis on relit les fiches ; elle n'est effacée que si plus rien ne la cite.
 (function () {
   const BUCKETS = ['actualites-images', 'evenements-images'];
   const TABLES = ['actualites', 'actualite_photos', 'evenements', 'evenement_photos', 'contenu_a_la_une'];
+
+  const CATEGORIE = { 'actualites-images': 'actualites', 'evenements-images': 'evenements' };
+
+  function echapper(t) { return t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+  async function lireFiches() {
+    const lectures = await Promise.all(TABLES.map(t => sb.from(t).select('*')));
+    const echec = lectures.find(r => r.error);
+    if (echec) throw new Error('lecture impossible des fiches (' + echec.error.message + ') — rien n’a été supprimé');
+    return TABLES.map((t, i) => ({ table: t, lignes: lectures[i].data || [] }));
+  }
+
+  function cite(texte, bucket, chemin) {
+    return texte.indexOf(bucket + '/' + chemin) !== -1 || texte.indexOf(bucket + '/' + encodeURI(chemin)) !== -1;
+  }
+
+  function nomFiche(table, ligne) {
+    const nom = ligne.titre || ligne.nom || ligne.title || '';
+    return (table.indexOf('actualite') === 0 ? 'Actualité' : table.indexOf('evenement') === 0 ? 'Événement' : 'À la une') +
+      (nom ? ' « ' + nom + ' »' : '');
+  }
+
+  // Recopie chez R2 puis remplace l'adresse Supabase dans toutes les fiches qui la citent.
+  async function deplacerVersR2(bucket, chemin, fiches) {
+    const { data: blob, error } = await sb.storage.from(bucket).download(chemin);
+    if (error || !blob) throw new Error('téléchargement impossible de ' + chemin);
+    const categorie = CATEGORIE[bucket];
+    const nouvelleUrl = await envoyerImageSite(categorie, 'site/' + categorie + '/' + chemin, blob);
+    const motif = new RegExp('https?://[^\\s"\'<>()]*?/storage/v1/object/(?:public|sign)/' + echapper(bucket) + '/(?:' +
+      echapper(chemin) + '|' + echapper(encodeURI(chemin)) + ')(?:\\?[^\\s"\'<>()]*)?', 'g');
+    for (const { table, lignes } of fiches) {
+      for (const ligne of lignes) {
+        if (!ligne.id) continue;
+        const modifs = {};
+        for (const col in ligne) {
+          const v = ligne[col];
+          if (typeof v === 'string' && motif.test(v)) { motif.lastIndex = 0; modifs[col] = v.replace(motif, nouvelleUrl); }
+          motif.lastIndex = 0;
+        }
+        if (Object.keys(modifs).length) {
+          const { error: e2 } = await sb.from(table).update(modifs).eq('id', ligne.id);
+          if (e2) throw new Error('mise à jour impossible (' + nomFiche(table, ligne) + ') : ' + e2.message);
+        }
+      }
+    }
+  }
 
   // Tous les fichiers d'un bucket, dossiers compris.
   async function listerTout(bucket, dossier) {
@@ -37,39 +87,61 @@
     msg.textContent = 'Vérification des fiches…';
     try {
       // 1. Tout ce que les fiches citent encore.
-      const lectures = await Promise.all(TABLES.map(t => sb.from(t).select('*')));
-      const echec = lectures.find(r => r.error);
-      if (echec) throw new Error('lecture impossible des fiches (' + echec.error.message + ') — rien n’a été supprimé');
-      const texte = JSON.stringify(lectures.map(r => r.data));
+      let fiches = await lireFiches();
+      let texte = JSON.stringify(fiches);
 
-      // 2. Fichiers présents chez Supabase, et ceux qui ne servent plus.
-      const aSupprimer = {};
-      let nbGardes = 0, nb = 0, octets = 0;
+      // 2. Fichiers présents chez Supabase.
+      const inventaire = {};
+      let aDeplacer = [];
       for (const bucket of BUCKETS) {
         msg.textContent = 'Inventaire de « ' + bucket + ' »…';
-        const fichiers = await listerTout(bucket, '');
-        aSupprimer[bucket] = [];
-        for (const f of fichiers) {
-          if (texte.indexOf(bucket + '/' + f.chemin) !== -1 || texte.indexOf(bucket + '/' + encodeURI(f.chemin)) !== -1) { nbGardes++; continue; }
-          aSupprimer[bucket].push(f.chemin);
-          nb++; octets += f.taille;
-        }
+        inventaire[bucket] = await listerTout(bucket, '');
+        for (const f of inventaire[bucket]) if (cite(texte, bucket, f.chemin)) aDeplacer.push({ bucket: bucket, chemin: f.chemin });
       }
-      const mo = (octets / 1048576).toFixed(1);
-      if (!nb) {
-        msg.textContent = 'Rien à nettoyer : aucune ancienne copie d’actualité ou d’événement sur Supabase' + (nbGardes ? ' (' + nbGardes + ' fichier(s) encore utilisé(s), conservé(s)).' : '.');
+      const total = BUCKETS.reduce((n, b) => n + inventaire[b].length, 0);
+      if (!total) {
+        msg.textContent = 'Rien à nettoyer : plus aucune photo d’actualité ou d’événement sur Supabase.';
         btn.disabled = false;
         return;
       }
-      if (!confirm(nb + ' ancienne(s) copie(s) de photos d’actualités et d’événements (' + mo + ' Mo) ne servent plus à aucune fiche.' +
-          (nbGardes ? '\n' + nbGardes + ' fichier(s) encore utilisé(s) seront conservés.' : '') +
-          '\n\nLes supprimer de Supabase ? Les photos restent affichées sur le site (elles sont chez Cloudflare).')) {
+      if (!confirm(total + ' photo(s) d’actualités et d’événements encore sur Supabase.' +
+          (aDeplacer.length ? '\n' + aDeplacer.length + ' est (sont) encore utilisée(s) par une fiche : elle(s) sera (seront) d’abord recopiée(s) chez Cloudflare, et la fiche mise à jour.' : '') +
+          '\n\nTout effacer de Supabase ? Les photos restent affichées sur le site (elles sont chez Cloudflare).')) {
         msg.textContent = 'Annulé : rien n’a été supprimé.';
         btn.disabled = false;
         return;
       }
 
-      // 3. Suppression par paquets de 100.
+      // 3. Photos encore citées : recopie chez R2 et mise à jour des fiches, puis relecture.
+      const erreursDeplacement = [];
+      let n = 0;
+      for (const d of aDeplacer) {
+        msg.textContent = 'Recopie chez Cloudflare… ' + (++n) + ' / ' + aDeplacer.length;
+        try { await deplacerVersR2(d.bucket, d.chemin, fiches); }
+        catch (e) { erreursDeplacement.push(d.chemin + ' : ' + ((e && e.message) || e)); }
+      }
+      if (aDeplacer.length) { fiches = await lireFiches(); texte = JSON.stringify(fiches); }
+
+      // Ce qui ne sert plus (et, par sécurité, ce qui est encore cité reste).
+      const aSupprimer = {};
+      const gardes = [];
+      let nb = 0, octets = 0;
+      for (const bucket of BUCKETS) {
+        aSupprimer[bucket] = [];
+        for (const f of inventaire[bucket]) {
+          if (cite(texte, bucket, f.chemin)) {
+            const ou = [];
+            for (const { table, lignes } of fiches) for (const l of lignes) if (cite(JSON.stringify(l), bucket, f.chemin)) ou.push(nomFiche(table, l));
+            gardes.push(f.chemin + ' — ' + (ou.join(', ') || 'fiche inconnue'));
+            continue;
+          }
+          aSupprimer[bucket].push(f.chemin);
+          nb++; octets += f.taille;
+        }
+      }
+      const mo = (octets / 1048576).toFixed(1);
+
+      // 4. Suppression par paquets de 100.
       let faits = 0;
       for (const bucket of BUCKETS) {
         const liste = aSupprimer[bucket];
@@ -80,8 +152,12 @@
           msg.textContent = 'Suppression… ' + faits + ' / ' + nb;
         }
       }
-      msg.textContent = '✓ ' + faits + ' ancienne(s) copie(s) supprimée(s) — ' + mo + ' Mo libérés sur Supabase.' +
-        (nbGardes ? ' ' + nbGardes + ' fichier(s) encore utilisé(s) conservé(s).' : '');
+      msg.style.whiteSpace = 'pre-line';
+      msg.textContent = '✓ ' + faits + ' photo(s) supprimée(s) de Supabase — ' + mo + ' Mo libérés.' +
+        (aDeplacer.length - erreursDeplacement.length > 0 ? '\n' + (aDeplacer.length - erreursDeplacement.length) + ' photo(s) recopiée(s) chez Cloudflare, fiche(s) mise(s) à jour.' : '') +
+        (gardes.length ? '\n\nConservée(s) car encore utilisée(s) :\n' + gardes.join('\n') : '') +
+        (erreursDeplacement.length ? '\n\nProblème :\n' + erreursDeplacement.join('\n') : '');
+      if (gardes.length || erreursDeplacement.length) msg.className = 'form-msg err';
     } catch (e) {
       msg.className = 'form-msg err';
       msg.textContent = 'Erreur : ' + ((e && e.message) || e);
