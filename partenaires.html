@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-c7VnXgWpnX+9udXYfJ/2haNgEMGmngy7xzxAwOx4rR0='; style-src 'self' https://fonts.googleapis.com 'sha256-jQLfDPnJ0WAwj/alKjnSLPmM23GyNAy8q3t1zc3Fo6c='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-oq28TrirGCVx84SSc+NiFn0ZYu7bVzOOJzhGxdRX2fQ='; style-src 'self' https://fonts.googleapis.com 'sha256-jQLfDPnJ0WAwj/alKjnSLPmM23GyNAy8q3t1zc3Fo6c='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -79,7 +79,7 @@ setTimeout(() => {
     <li><a href="services.html">Services</a></li>
     <li><a href="mannequins.html">The Book</a></li>
     <li><a href="actualites.html">Actualités</a></li>
-    <li><a href="evenements.html">Nos Événements</a></li>
+    <li><a href="evenements.html">Nos événements</a></li>
     <li><a href="partenaires.html" class="actif">Nos partenaires</a></li>
     <li><a href="candidature.html">Postuler à un casting</a></li>
     <li><a href="inscription-mannequin.html">Inscription</a></li>
@@ -107,7 +107,15 @@ setTimeout(() => {
   <div class="news-modal-contenu">
     <button class="news-modal-fermer" id="part-modal-fermer">✕</button>
     <div id="part-modal-media" class="pt-1">
+      <img id="part-modal-fond" src="" alt="" aria-hidden="true">
       <img id="part-modal-logo" src="" alt="" class="pt-2">
+      <div class="part-une-scrim"></div>
+      <div class="part-une-legende">
+        <span class="vedette-badge">Partenaire</span>
+        <h2 id="part-une-nom"></h2>
+        <p id="part-une-role"></p>
+        <button type="button" class="vedette-cta part-une-suite" id="part-une-suite">Découvrir ↓</button>
+      </div>
     </div>
     <div class="news-modal-corps">
       <div class="news-date" id="part-modal-role"></div>
@@ -158,9 +166,9 @@ setTimeout(() => {
       <p class="pt-7">Pour modifier ou supprimer un partenaire déjà publié, ouvre simplement sa fiche en cliquant dessus dans la page.</p>
 
       <h3 class="u-mb-1">Ajouter un partenaire</h3>
-      <div class="form-champ"><label>Nom (personne ou institution) *</label><input type="text" id="p-nom" placeholder="ex: Gilles Touré"></div>
-      <div class="form-champ"><label>Structure représentée</label><input type="text" id="p-structure" placeholder="ex: Conseil du Café-Cacao"></div>
-      <div class="form-champ"><label>Événement associé</label><input type="text" id="p-evenement" placeholder="ex: Cacao Fashion Show — JNCC 2026"></div>
+      <div class="form-champ"><label>Nom (personne ou institution) *</label><input type="text" id="p-nom" placeholder="ex. : Gilles Touré"></div>
+      <div class="form-champ"><label>Structure représentée</label><input type="text" id="p-structure" placeholder="ex. : Conseil du Café-Cacao"></div>
+      <div class="form-champ"><label>Événement associé</label><input type="text" id="p-evenement" placeholder="ex. : Cacao Fashion Show — JNCC 2026"></div>
       <div class="form-champ">
         <label>Rôle</label>
         <select id="p-role">
@@ -198,7 +206,7 @@ setTimeout(() => {
         <a href="services.html">Services</a>
         <a href="mannequins.html">The Book</a>
         <a href="actualites.html">Actualités</a>
-        <a href="evenements.html">Nos Événements</a>
+        <a href="evenements.html">Nos événements</a>
         <a href="partenaires.html">Nos partenaires</a>
         <a href="candidature.html">Postuler à un casting</a>
         <a href="inscription-mannequin.html">Inscription</a>
@@ -303,6 +311,10 @@ function ouvrirPartModal(index) {
   window.partenaireModalCourant = p.id;
 
   document.getElementById('part-modal-logo').src = p.logo_url || 'assets/logo-dark-bg.png';
+  document.getElementById('part-modal-fond').src = document.getElementById('part-modal-logo').src;
+  document.getElementById('part-une-nom').textContent = p.nom || '';
+  document.getElementById('part-une-role').textContent = [p.role, p.structure].filter(x => x && !/^(autre|other)$/i.test(x)).join(' · ');
+  document.querySelector('#part-modal .news-modal-contenu').scrollTop = 0;
   document.getElementById('part-modal-logo').onclick = () => {
     if (p.logo_url) ouvrirGalerieLightbox([p.logo_url], 0);
   };
@@ -328,6 +340,9 @@ function afficherPartModal() {
   document.getElementById('part-modal').classList.add('active');
   if (!partModalEstOuverte) { partModalEstOuverte = true; window.verrouillerDefilement(); }
 }
+document.getElementById('part-une-suite').addEventListener('click', () => {
+  document.querySelector('#part-modal .news-modal-corps').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
 function fermerPartModal() {
   document.getElementById('part-modal').classList.remove('active');
   if (partModalEstOuverte) { partModalEstOuverte = false; window.deverrouillerDefilement(); }

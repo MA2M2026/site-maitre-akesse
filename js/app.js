@@ -1848,7 +1848,7 @@ document.addEventListener('DOMContentLoaded', () => {
   bouton.target = '_blank';
   bouton.rel = 'noopener';
   bouton.className = 'whatsapp-flottant';
-  bouton.setAttribute('aria-label', 'Nous contacter sur WhatsApp');
+  bouton.setAttribute('aria-label', (document.documentElement.lang || '').indexOf('en') === 0 ? 'Contact us on WhatsApp' : 'Nous contacter sur WhatsApp');
   bouton.innerHTML = '<svg viewBox="0 0 32 32" fill="#fff"><path d="M16.001 3C9.373 3 4 8.373 4 15c0 2.386.7 4.61 1.902 6.475L4 29l7.727-1.868A11.94 11.94 0 0016 27c6.628 0 12-5.373 12-12S22.629 3 16.001 3zm0 21.6c-1.98 0-3.833-.55-5.41-1.505l-.388-.23-4.586 1.108 1.146-4.47-.253-.397A9.58 9.58 0 016.4 15c0-5.302 4.299-9.6 9.601-9.6 5.301 0 9.6 4.298 9.6 9.6 0 5.301-4.299 9.6-9.6 9.6zm5.263-7.19c-.288-.144-1.705-.841-1.969-.937-.264-.096-.456-.144-.648.144-.192.288-.744.937-.912 1.129-.168.192-.336.216-.624.072-.288-.144-1.216-.448-2.316-1.428-.856-.763-1.434-1.706-1.602-1.994-.168-.288-.018-.443.126-.587.129-.129.288-.336.432-.504.144-.168.192-.288.288-.48.096-.192.048-.36-.024-.504-.072-.144-.648-1.563-.888-2.14-.234-.562-.472-.486-.648-.495-.168-.009-.36-.011-.552-.011-.192 0-.504.072-.768.36-.264.288-1.008.985-1.008 2.403s1.032 2.786 1.176 2.978c.144.192 2.03 3.1 4.92 4.347.688.297 1.224.474 1.643.606.69.22 1.318.189 1.815.115.554-.083 1.705-.697 1.945-1.371.24-.674.24-1.251.168-1.371-.072-.12-.264-.192-.552-.336z"/></svg>';
   document.body.appendChild(bouton);
 });
@@ -1998,7 +1998,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   // pas (le bouton Partager de ces apps ne propose pas cette option). Autant ne pas montrer
   // une bannière qui promet une fonctionnalité indisponible dans ce contexte.
   const estNavigateurIntegre = /Instagram|FBAN|FBAV|FB_IAB|MessengerForiOS/i.test(navigator.userAgent);
-  if (dejaInstalle || refusePrecedemment || estNavigateurIntegre) return;
+  // Une seule apparition par visite (relevé le 30/09 : la pastille revenait sur chaque
+  // page et cachait le contenu en bas de l'écran des téléphones tant qu'on ne l'avait pas
+  // fermée). Elle s'efface aussi d'elle-même au bout de 12 s ou dès qu'on fait défiler.
+  const CLE_VUE = 'ma2m_installation_vue';
+  const dejaVueCetteVisite = (() => { try { return sessionStorage.getItem(CLE_VUE) === '1'; } catch (e) { return false; } })();
+  if (dejaInstalle || refusePrecedemment || estNavigateurIntegre || dejaVueCetteVisite) return;
+  const anglais = (document.documentElement.lang || '').indexOf('en') === 0;
 
   const estIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
   let evenementInstall = null;
@@ -2008,10 +2014,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     pastille.id = 'pastille-installer';
     pastille.innerHTML = `
       <span class="pastille-installer-icone">⬇</span>
-      <span>Installer l'app MA2M</span>
-      <span class="pastille-installer-fermer" title="Fermer">✕</span>
+      <span>${anglais ? 'Install the MA2M app' : "Installer l'app MA2M"}</span>
+      <span class="pastille-installer-fermer" title="${anglais ? 'Close' : 'Fermer'}">✕</span>
     `;
     document.body.appendChild(pastille);
+    try { sessionStorage.setItem(CLE_VUE, '1'); } catch (e) {}
+
+    // Disparition douce (sans la marquer « refusée » : elle reviendra à une prochaine visite).
+    function effacer() {
+      window.removeEventListener('scroll', auDefilement);
+      if (!pastille.isConnected) return;
+      pastille.classList.add('pastille-installer--sortie');
+      setTimeout(() => pastille.remove(), 400);
+    }
+    function auDefilement() { if (window.scrollY > window.innerHeight * 0.6) effacer(); }
+    window.addEventListener('scroll', auDefilement, { passive: true });
+    setTimeout(effacer, 12000);
 
     pastille.querySelector('.pastille-installer-fermer').addEventListener('click', (e) => {
       e.stopPropagation();
@@ -2048,13 +2066,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     fond.className = 'modale-ios-fond';
     fond.innerHTML = `
       <div class="modale-ios-contenu">
-        <button class="modale-ios-fermer" title="Fermer">✕</button>
-        <h3>Installer l'app sur votre écran d'accueil</h3>
+        <button class="modale-ios-fermer" title="${anglais ? 'Close' : 'Fermer'}">✕</button>
+        ${anglais ? `<h3>Install the app on your home screen</h3>
+        <ol>
+          <li>Tap the <strong>Share</strong> icon <span class="u-icone-partage">⬆️</span> at the bottom of Safari</li>
+          <li>Scroll down and choose <strong>“Add to Home Screen”</strong></li>
+          <li>Tap <strong>“Add”</strong> in the top right corner</li>
+        </ol>` : `<h3>Installer l'app sur votre écran d'accueil</h3>
         <ol>
           <li>Appuyez sur l'icône <strong>Partager</strong> <span class="u-icone-partage">⬆️</span> en bas de Safari</li>
           <li>Faites défiler et choisissez <strong>« Sur l'écran d'accueil »</strong></li>
           <li>Appuyez sur <strong>« Ajouter »</strong> en haut à droite</li>
-        </ol>
+        </ol>`}
       </div>
     `;
     document.body.appendChild(fond);

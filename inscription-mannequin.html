@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-qZnxX+ZhfwDTKNBQkjOFpIDQfyMZ7DssrcbU/36KHTw='; style-src 'self' https://fonts.googleapis.com 'sha256-IAm29wMK+UGV3lwLkMc4EAHslPzK8bjM/yZbq4WNCRE='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-K/LEWODWSf5iwvxbciUF4WZAEBt0Un5Nxj2qmy9VwqM='; style-src 'self' https://fonts.googleapis.com 'sha256-IAm29wMK+UGV3lwLkMc4EAHslPzK8bjM/yZbq4WNCRE='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -100,7 +100,7 @@ setTimeout(() => {
     <li><a href="services.html">Services</a></li>
     <li><a href="mannequins.html">The Book</a></li>
     <li><a href="actualites.html">Actualités</a></li>
-    <li><a href="evenements.html">Nos Événements</a></li>
+    <li><a href="evenements.html">Nos événements</a></li>
     <li><a href="partenaires.html">Nos partenaires</a></li>
     <li><a href="candidature.html">Postuler à un casting</a></li>
     <li><a href="inscription-mannequin.html" class="actif">Inscription</a></li>
@@ -238,7 +238,7 @@ setTimeout(() => {
 
       <div id="bloc-paiement" class="im-18">
         <h3>Droits d'inscription — 45 000 FCFA</h3>
-        <p class="im-19">Réglez vos droits d'inscription via Wave, puis cliquez sur "Envoyer mon dossier" — l'agence vérifiera et validera votre paiement.</p>
+        <p class="im-19">Réglez vos droits d'inscription via Wave, puis cliquez sur « Envoyer mon dossier » — l'agence vérifiera et validera votre paiement.</p>
         <a href="https://pay.wave.com/m/M_ci_5eXs19LXWW_D/c/ci/?amount=45000" target="_blank" rel="noopener" class="btn btn--principal im-20">Payer avec Wave</a>
         <div class="form-champ im-21">
           <label for="ins-reference-paiement">Référence de la transaction Wave (reçue après le paiement) *</label>
@@ -252,7 +252,7 @@ setTimeout(() => {
 
     <div id="bloc-succes" class="im-22">
       <h2>Dossier envoyé<span class="oeil">.</span></h2>
-      <p class="im-23">Merci ! Ton dossier d'inscription et tes photos sont bien reçus par l'agence. Dès que ton paiement Wave est confirmé, ton compte sera validé.</p>
+      <p class="im-23">Merci ! Votre dossier d'inscription et vos photos sont bien reçus par l'agence. Dès que votre paiement Wave sera confirmé, votre compte sera validé.</p>
 
       <div id="recu-inscription" class="im-24">
         <h3 class="im-25">Reçu d'inscription</h3>
@@ -265,8 +265,8 @@ setTimeout(() => {
       </div>
 
       <div class="no-print im-24">
-        <h3 class="im-25">Prochaine étape : rejoins The Book</h3>
-        <p class="im-28">Dès validation, l'agence t'enverra un code d'invitation par message. Avec ce code, connecte-toi sur <strong>l'Espace mannequin</strong> pour compléter ton profil complet (mensurations, expérience, projets déjà réalisés) et ajouter tes photos — c'est ce qui apparaîtra dans The Book et sera vu par les recruteurs.</p>
+        <h3 class="im-25">Prochaine étape : rejoignez The Book</h3>
+        <p class="im-28">Dès validation, l'agence vous enverra un code d'invitation par message. Avec ce code, connectez-vous sur <strong>l'Espace mannequin</strong> pour compléter votre profil (mensurations, expérience, projets déjà réalisés) et ajouter vos photos — c'est ce qui apparaîtra dans The Book et sera vu par les recruteurs.</p>
         <a href="espace-mannequin.html" class="btn btn--principal im-29">Aller vers l'Espace mannequin</a>
       </div>
     </div>
@@ -286,7 +286,7 @@ setTimeout(() => {
         <a href="services.html">Services</a>
         <a href="mannequins.html">The Book</a>
         <a href="actualites.html">Actualités</a>
-        <a href="evenements.html">Nos Événements</a>
+        <a href="evenements.html">Nos événements</a>
         <a href="partenaires.html">Nos partenaires</a>
         <a href="candidature.html">Postuler à un casting</a>
         <a href="inscription-mannequin.html">Inscription</a>
@@ -507,7 +507,7 @@ document.getElementById('valider-code-btn').addEventListener('click', async () =
   const { data, error } = await sb.rpc('verifier_code_inscription', { code_input: code });
   if (error || !data) {
     msg.className = 'form-msg err';
-    msg.textContent = "Ce code n'est pas reconnu. Vérifie-le auprès de l'agence.";
+    msg.textContent = "Ce code n'est pas reconnu. Vérifiez-le auprès de l'agence.";
     msg.style.display = 'block';
     return;
   }
@@ -566,11 +566,11 @@ document.getElementById('form-inscription').addEventListener('submit', async (e)
     boutonEnvoyer.disabled = false;
     msg.className = 'form-msg err';
     if (error.message && error.message.includes('code_invalide_ou_deja_utilise')) {
-      msg.textContent = "Ce code n'est plus valable (peut-être déjà utilisé par une autre personne). Contacte l'agence pour obtenir un nouveau code.";
+      msg.textContent = "Ce code n'est plus valable (peut-être déjà utilisé par une autre personne). Contactez l'agence pour obtenir un nouveau code.";
     } else if (error.code === '23505') {
-      msg.textContent = "Cette référence de paiement Wave a déjà été utilisée pour une autre inscription. Vérifie que tu as bien copié TA propre référence, puis réessaie.";
+      msg.textContent = "Cette référence de paiement Wave a déjà été utilisée pour une autre inscription. Vérifiez que vous avez bien copié VOTRE propre référence, puis réessayez.";
     } else {
-      msg.textContent = "Erreur lors de l'envoi. Réessaie, ou contacte directement l'agence.";
+      msg.textContent = "Erreur lors de l'envoi. Réessayez, ou contactez directement l'agence.";
     }
     msg.style.display = 'block';
     return;
@@ -634,7 +634,7 @@ document.getElementById('form-inscription').addEventListener('submit', async (e)
   if (window.jouerSon) window.jouerSon('envoi');
   msg.className = 'form-msg ok';
   msg.textContent = nbPhotosEchouees
-    ? `Dossier envoyé avec succès ! (${nbPhotosEchouees} photo${nbPhotosEchouees > 1 ? 's n\'ont' : ' n\'a'} pas pu être envoyée${nbPhotosEchouees > 1 ? 's' : ''} — contacte l'agence pour les transmettre autrement.)`
+    ? `Dossier envoyé avec succès ! (${nbPhotosEchouees} photo${nbPhotosEchouees > 1 ? 's n\'ont' : ' n\'a'} pas pu être envoyée${nbPhotosEchouees > 1 ? 's' : ''} — contactez l'agence pour les transmettre autrement.)`
     : 'Dossier envoyé avec succès !';
   msg.style.display = 'block';
 

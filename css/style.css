@@ -1729,8 +1729,9 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
 }
 .pastille-installer-icone { font-size: 1rem; }
 .pastille-installer-fermer {
-  margin-left: 0.4rem; padding: 0 0.3rem; opacity: 0.6; font-size: 0.9rem;
+  margin-left: 0.4rem; padding: 0.35rem 0.55rem; opacity: 0.6; font-size: 0.9rem;
 }
+#pastille-installer.pastille-installer--sortie { opacity: 0; transition: opacity 0.4s ease; pointer-events: none; }
 .pastille-installer-fermer:hover { opacity: 1; }
 @keyframes pastille-apparition {
   from { opacity: 0; transform: translateX(-50%) translateY(12px); }
@@ -2350,35 +2351,72 @@ html.vide-mot-responsable #mot-responsable.section-reservee.u-hidden { display: 
    « aucun partenaire » s'affiche. */
 #partenaires-grille:empty:not(:has(~ p[style])) { min-height: 100vh; min-height: 100dvh; }
 
-/* Fiche d'un partenaire (demande du 30/09) : le logo est mis à l'honneur, affiché en grand
-   comme une image sur fond noir en haut de la fiche, et le texte vient dessous.
-   Plein écran sur téléphone ; fenêtre large sur tablette et ordinateur. Un appui sur le
-   logo l'ouvre toujours en plein écran (visionneuse). Les identifiants servent pour les
-   pages FR et EN (leurs classes pt-* / enpt-* n'ont pas le même nom). */
-#part-modal.news-modal { padding: 1.2rem; }
-#part-modal .news-modal-contenu { max-width: 1200px; max-height: 96vh; max-height: 96dvh; }
+/* Fiche d'un partenaire « à la une » (demande du 30/09) : comme le « Mannequin à la une »
+   et les actualités à la une, tout le premier écran est consacré au partenaire — son logo
+   en très grand, sur un fond qui reprend ses couleurs (le même logo, agrandi et flouté),
+   avec son nom en grand en bas. La présentation se lit en faisant défiler. Plein écran sur
+   tous les appareils. Les identifiants servent aux pages FR et EN. Un appui sur le logo
+   l'ouvre toujours en plein écran dans la visionneuse. */
+#part-modal.news-modal { padding: 0; }
+#part-modal .news-modal-contenu {
+  max-width: none; width: 100%; height: 100%; max-height: none;
+  background: var(--anthracite); color: var(--texte-corps);
+}
 #part-modal-media {
-  padding: 0; background: var(--noir);
-  display: flex; align-items: center; justify-content: center;
-  min-height: 200px;
+  position: relative; overflow: hidden; padding: 0; background: var(--noir);
+  min-height: 100vh; min-height: 100dvh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 4.5rem 0 2.5rem; text-align: center;
 }
-/* Le cadre prend la forme du logo : un logo large occupe toute la largeur, un logo carré
-   ou en hauteur monte jusqu'aux 4/5 de l'écran — sans grandes bandes noires. */
+#part-modal-fond {
+  position: absolute; inset: -8%; width: 116%; height: 116%; max-width: none; max-height: none;
+  object-fit: cover; filter: blur(34px) brightness(0.55) saturate(1.2); transform: scale(1.05);
+  pointer-events: none;
+}
 #part-modal-logo {
-  display: block; width: 100%; height: auto; max-width: none;
-  max-height: 80vh; max-height: 80dvh; object-fit: contain; cursor: zoom-in;
+  position: relative; z-index: 1; display: block;
+  width: auto; height: auto; max-width: min(88%, 1100px); max-height: 58vh; max-height: 58dvh;
+  object-fit: contain; cursor: zoom-in;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.55); animation: part-une-entree 0.9s ease both;
 }
-#part-modal .news-modal-corps { padding: 2.2rem 2.5rem 2.5rem; }
-#part-modal-nom { font-size: clamp(2rem, 4.5vw, 3rem); line-height: 1.1; }
-#part-modal-structure { font-size: 1.15rem; }
-#part-modal-evenement { font-size: 1rem; }
-#part-modal-description { font-size: 1.2rem; line-height: 1.8; }
+@keyframes part-une-entree { from { opacity: 0; transform: translateY(18px) scale(0.97); } to { opacity: 1; transform: none; } }
+.part-une-scrim {
+  position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 16%, rgba(0,0,0,0) 32%);
+}
+.part-une-legende {
+  position: relative; z-index: 2; width: 100%; max-width: 900px;
+  padding: clamp(1.4rem, 4vh, 2.6rem) clamp(1.2rem, 5vw, 3rem) 0; color: var(--blanc);
+}
+.part-une-legende h2 {
+  color: var(--titre-clair); margin-top: 0.9rem;
+  font-size: clamp(2.3rem, 7vw, 4.6rem); line-height: 1.02; text-shadow: 0 4px 30px rgba(0,0,0,0.6);
+}
+.part-une-legende p { color: var(--texte-corps); margin-top: 0.5rem; font-size: 1rem; letter-spacing: 0.04em; }
+.part-une-legende p:empty { display: none; }
+.part-une-suite { background: none; border: none; border-bottom: 2px solid var(--bordeaux-clair); cursor: pointer; font-family: var(--texte); }
+/* Le nom et le rôle sont déjà affichés en grand sur le premier écran. */
+#part-modal-nom, #part-modal-role { display: none !important; }
+#part-modal .news-modal-corps { max-width: 900px; margin: 0 auto; padding: clamp(2rem, 6vw, 4rem) clamp(1.3rem, 5vw, 3rem) 4rem; }
+#part-modal .news-modal-corps .contenu-riche { font-size: 1.2rem; line-height: 1.8; }
+#part-modal-structure { font-size: 1.15rem; margin-top: 0; }
+#part-modal-evenement { font-size: 1rem; color: var(--bordeaux-clair); }
+/* La croix reste visible même après avoir fait défiler la présentation. */
+#part-modal .news-modal-fermer { position: fixed; top: 1rem; right: 1rem; width: 44px; height: 44px; font-size: 1.2rem; z-index: 5; }
 @media (max-width: 700px) {
-  #part-modal.news-modal { padding: 0; }
-  #part-modal .news-modal-contenu { max-height: none; height: 100%; }
-  #part-modal-media { min-height: 160px; }
-  #part-modal-logo { max-height: 72vh; max-height: 72dvh; }
-  #part-modal .news-modal-corps { padding: 1.6rem 1.3rem 2.5rem; }
-  /* Plein écran : la croix reste visible même après avoir fait défiler le texte. */
-  #part-modal .news-modal-fermer { position: fixed; top: 1rem; right: 1rem; width: 44px; height: 44px; font-size: 1.2rem; }
+  #part-modal-logo { max-width: 94%; max-height: 54vh; max-height: 54dvh; }
 }
+
+/* Ma sélection : état « vide » connu dès le début du chargement (js/selection-etat.js). */
+html.selection-vide #bloc-selection { display: none; }
+html.selection-vide #liste-vide { display: block; }
+
+/* The Book : place de la grille réservée pendant le chargement (signalé le 30/09 : le bas
+   de page sautait sur tablette et ordinateur à l'arrivée des mannequins). */
+#grille.medaillon-grille:empty:not(:has(~ p[style])) { min-height: 100vh; min-height: 100dvh; }
+/* Même principe dans le Book : le lien de chaque carte prend toute la largeur de sa
+   colonne, la photo a donc sa taille définitive avant même d'être chargée (la grille ne
+   se tasse plus puis ne s'allonge plus au fil du chargement des photos). */
+#grille.medaillon-grille .medaillon-carte > a { width: 100%; }
+#part-modal-description, #part-modal-description :not(a) { color: var(--texte-corps) !important; }
+#part-modal-description a { color: var(--bordeaux-clair); }

@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-lVBtQouxrUK93d/ezNgbHBu6CFE33vMy2o+mZNsofjw='; style-src 'self' https://fonts.googleapis.com 'sha256-2RaJjkt0dwCPrM/WQd2sjLywmysdtxLwAh6UXghu0HQ=' 'sha256-l6fymG/9VFModmkt4+Cju+Misw/e9E3nOMRhpZL+0so=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-xBaPA7FY0mbHEDJvQk/tuHl0cDkt4JjX0R4ZrIwoStI='; style-src 'self' https://fonts.googleapis.com 'sha256-2RaJjkt0dwCPrM/WQd2sjLywmysdtxLwAh6UXghu0HQ=' 'sha256-l6fymG/9VFModmkt4+Cju+Misw/e9E3nOMRhpZL+0so=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Mon Espace Mannequin — MA2M | Premium</title>
+<title>Mon espace mannequin — Maître Akesse Model Management</title>
 <meta name="theme-color" content="#080707">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -698,7 +698,7 @@ function viewAuthGate(){
       '<h2>Créer mon compte</h2><p class="sub">Un code d’invitation vous a été fourni par l’agence.</p>' +
       '<div class="grid">' +
         field('Code d’invitation','au-in-code','',{req:true}) + field('Nom complet','au-in-nom','',{req:true}) +
-        field('E-mail','au-in-email','',{type:'email',req:true}) + field('Mot de passe (6 caractères min.)','au-in-mdp','',{type:'password',req:true}) +
+        field('E-mail','au-in-email','',{type:'email',req:true}) + field('Mot de passe (8 caractères minimum)','au-in-mdp','',{type:'password',req:true}) +
       '</div>' +
       '<div class="actions-row end"><button class="btn primary" id="au-in-valider">Créer mon compte</button></div>' +
       '<div id="au-in-msg" class="err-msg p20-14"></div>' +
@@ -744,6 +744,8 @@ function bindAuthGate(){
   document.getElementById('au-in-valider')?.addEventListener('click', async function(){
     const msg = document.getElementById('au-in-msg');
     const code = val('au-in-code').trim(), nom = val('au-in-nom').trim(), email = val('au-in-email').trim(), mdp = val('au-in-mdp');
+    if (!code || !nom || !email) { msg.textContent = 'Merci de remplir tous les champs.'; return; }
+    if (mdp.length < 8) { msg.textContent = 'Le mot de passe doit contenir au moins 8 caractères.'; return; }
     msg.textContent = 'Vérification du code…';
 
     const { data: codeValide, error: erreurCode } = await sb.rpc('check_invite_code', { code_input: code });

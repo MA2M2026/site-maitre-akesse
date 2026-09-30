@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-2ZrQ4YAkiJ0/O1FTNhB4VKx14gn/j7JhxsHXu/mAEvY='; style-src 'self' https://fonts.googleapis.com 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-QUrv6BkU4oaLi+qv+Is/XCVNQBAnBmYZ9wCAGq0fpDU='; style-src 'self' https://fonts.googleapis.com 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -671,7 +671,7 @@ async function chargerProfilInterne() {
       <div class="fiche-entete">
         <div class="profil-avatar fiche-avatar cliquable" id="compsheet-photo-clic" role="button" tabindex="0" aria-label="View photo full size"><img src="${echapperHtml(photoAvatar)}" alt="${echapperHtml(profil.full_name || '')}"></div>
         <dl class="fiche-mesures" aria-label="Measurements">
-          ${age ? `<div class="fiche-mesure"><dt>${iconeMensuration('age')}Age</dt><dd>${age} y/o</dd></div>` : ''}
+          ${age ? `<div class="fiche-mesure"><dt>${iconeMensuration('age')}Age</dt><dd>${age} years</dd></div>` : ''}
           ${profil.height_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('taille')}Height</dt><dd>${profil.height_cm} cm</dd></div>` : ''}
           ${profil.weight_kg ? `<div class="fiche-mesure"><dt>${iconeMensuration('poids')}Weight</dt><dd>${profil.weight_kg} kg</dd></div>` : ''}
           ${profil.chest_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Chest</dt><dd>${profil.chest_cm} cm</dd></div>` : ''}
