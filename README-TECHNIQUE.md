@@ -1396,6 +1396,22 @@ Liste de tout ce qui reste à faire ou à surveiller, pour la propriétaire et p
 - Supprimer le secret GitHub devenu inutile SUPABASE_DB_URL (facultatif).
 
 **Prochaines étapes techniques**
+- **Nouveau formulaire de candidature** (validé par la propriétaire le 30/09, en attente
+  des captures du programme Google « Projet sans titre » sur script.google.com, lignes
+  1 à 63, pour qu'il accepte les vidéos) :
+  - « Intégrer l'agence » : première question « Avez-vous déjà été mannequin ? » Oui / Non.
+  - **Non (débutant·e)** — tout obligatoire : nom, e-mail, WhatsApp, date de naissance,
+    genre, résidence (ville ; commune si Abidjan ; quartier), niveau d'études, taille
+    (blocage 1,75 m F / 1,85 m H déjà en place), poids, taille de vêtements (liste),
+    **3 photos** minimum, **vidéo de présentation** (~30 s).
+  - **Oui (déjà mannequin)** et **tout casting précis** — tout obligatoire : le formulaire
+    complet (taille, poids, pointure, poitrine, tour de taille, hanches, taille de
+    vêtements), résidence complète, niveau d'études, **4 photos** minimum, vidéo.
+  - Niveau d'études en trois listes : Primaire (CP1 → CM2), Secondaire (6e → Terminale),
+    Supérieur (BTS, Licence 1-3, Master 1-2, Doctorat, Autre) ; plus « Je ne suis plus à
+    l'école » (dernier niveau atteint) et « Jamais scolarisé(e) ».
+  - Tableau de bord : « Débutant·e » / « Déjà mannequin », niveau d'études, quartier,
+    lien vers la vidéo. Vidéos rangées dans le Google Drive (jamais dans Supabase).
 - Envoi d'e-mails : passer à un service gratuit à 300 e-mails/jour (EmailJS actuel :
   200/mois) — création d'un compte par la propriétaire, guidée pas à pas.
 - FAQ du site : quand la propriétaire aura envoyé ses questions.
