@@ -1,0 +1,16 @@
+/* Espace mannequin — correctifs téléphone (Journal MA2M du 30/09/2026).
+   1) Sur iPhone, un champ dont le texte fait moins de 16 px fait zoomer la page
+      toute seule quand on le touche (constaté : connexion, création de compte,
+      fiche profil — champs à 11-15 px). Tous les champs passent à 16 px sur
+      téléphone/tablette ; l'ordinateur garde les tailles d'origine.
+   2) Un champ ne doit jamais dépasser de l'écran (« Nom complet » débordait de
+      7 px sur un iPhone de 375 px). */
+@media (max-width: 1024px), (pointer: coarse) {
+  input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+.grid > *, .field { min-width: 0; }
+.field input, .field select, .field textarea { max-width: 100%; box-sizing: border-box; }
