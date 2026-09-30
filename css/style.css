@@ -2349,3 +2349,35 @@ html.vide-mot-responsable #mot-responsable.section-reservee.u-hidden { display: 
    n'est pas arrivée. Plus de réservation dès qu'elle est remplie ou que le message
    « aucun partenaire » s'affiche. */
 #partenaires-grille:empty:not(:has(~ p[style])) { min-height: 100vh; min-height: 100dvh; }
+
+/* Fiche d'un partenaire (demande du 30/09) : le logo est mis à l'honneur, affiché en grand
+   comme une image sur fond noir en haut de la fiche, et le texte vient dessous.
+   Plein écran sur téléphone ; fenêtre large sur tablette et ordinateur. Un appui sur le
+   logo l'ouvre toujours en plein écran (visionneuse). Les identifiants servent pour les
+   pages FR et EN (leurs classes pt-* / enpt-* n'ont pas le même nom). */
+#part-modal .news-modal-contenu { max-width: 980px; max-height: 92vh; max-height: 92dvh; }
+#part-modal-media {
+  padding: 0; background: var(--noir);
+  display: flex; align-items: center; justify-content: center;
+  min-height: 200px;
+}
+/* Le cadre prend la forme du logo : un logo large occupe toute la largeur, un logo carré
+   ou en hauteur monte jusqu'aux 2/3 de l'écran — sans grandes bandes noires. */
+#part-modal-logo {
+  display: block; width: 100%; height: auto; max-width: none;
+  max-height: 68vh; max-height: 68dvh; object-fit: contain; cursor: zoom-in;
+}
+#part-modal .news-modal-corps { padding: 2.2rem 2.5rem 2.5rem; }
+#part-modal-nom { font-size: clamp(2rem, 4.5vw, 3rem); line-height: 1.1; }
+#part-modal-structure { font-size: 1.15rem; }
+#part-modal-evenement { font-size: 1rem; }
+#part-modal-description { font-size: 1.2rem; line-height: 1.8; }
+@media (max-width: 700px) {
+  #part-modal.news-modal { padding: 0; }
+  #part-modal .news-modal-contenu { max-height: none; height: 100%; }
+  #part-modal-media { min-height: 160px; }
+  #part-modal-logo { max-height: 60vh; max-height: 60dvh; }
+  #part-modal .news-modal-corps { padding: 1.6rem 1.3rem 2.5rem; }
+  /* Plein écran : la croix reste visible même après avoir fait défiler le texte. */
+  #part-modal .news-modal-fermer { position: fixed; top: 1rem; right: 1rem; width: 44px; height: 44px; font-size: 1.2rem; }
+}
