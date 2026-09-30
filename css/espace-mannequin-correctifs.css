@@ -14,3 +14,67 @@
 }
 .grid > *, .field { min-width: 0; }
 .field input, .field select, .field textarea { max-width: 100%; box-sizing: border-box; }
+
+/* Lien vers la candidature, en haut de l'écran de connexion (30/09). */
+.em-vers-candidature {
+  display: block; margin: 0 0 1.4rem; padding: 0.95rem 1.1rem;
+  border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 14px;
+  background: linear-gradient(180deg, #1d1d1f, #0d0d0e);
+  color: #e9e1da; font-size: 0.92rem; line-height: 1.5; text-decoration: none;
+}
+.em-vers-candidature strong { color: #fff; }
+.em-vers-candidature span {
+  display: inline-block; margin-top: 0.45rem; padding: 0.35rem 0.9rem; border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.3); color: #fff; font-weight: 600; letter-spacing: 0.04em;
+  box-shadow: 0 3px 0 #000;
+}
+.em-vers-candidature:active span { background: linear-gradient(180deg, #a3243a, #6d1222); transform: translateY(3px); box-shadow: none; }
+
+/* Mot de passe : même champ noir que les autres (il restait blanc, sans style) et
+   bouton « œil » bien placé dans le champ (styles repris de css/style.css, que cette
+   page ne charge pas). */
+.field input[type=password] {
+  width: 100%; background: rgba(255, 255, 255, 0.025); color: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.13); border-radius: 2px;
+  min-height: 47px; padding: 13px 14px; font: inherit;
+}
+.field input[type=password]:focus { outline: none; border-color: rgba(255, 255, 255, 0.4); }
+.champ-mdp { position: relative; display: block; }
+.champ-mdp > input { padding-right: 3.2rem !important; }
+.champ-mdp-oeil {
+  position: absolute; right: 0.4rem; top: 50%; transform: translateY(-50%);
+  background: none; border: none; color: #b9aca6; cursor: pointer; padding: 0.4rem; line-height: 0;
+}
+.champ-mdp-oeil[aria-pressed="true"] { color: #fff; }
+.champ-mdp-oeil svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Boutons « touche » (comme sur tout le site depuis le 30/09) : noirs au repos et au
+   survol, ils s'enfoncent et deviennent rouges seulement à l'appui. */
+.btn, .btn.primary, .btn.ghost {
+  border-radius: 999px !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  background: linear-gradient(180deg, #1d1d1f 0%, #0d0d0e 100%) !important;
+  color: #f4efe9 !important; filter: none !important;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 4px 0 #000, 0 9px 16px -8px rgba(0, 0, 0, 0.85) !important;
+  transform: translateY(0);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.15s ease !important;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn.primary { border-color: rgba(255, 255, 255, 0.34) !important; }
+@media (hover: hover) {
+  .btn:hover, .btn.primary:hover, .btn.ghost:hover {
+    background: linear-gradient(180deg, #27272a 0%, #121213 100%) !important;
+    border-color: rgba(255, 255, 255, 0.34) !important; color: #fff !important; transform: translateY(-1px);
+  }
+}
+.btn:active, .btn.primary:active, .btn.ghost:active, .btn.touche-appuyee {
+  transform: translateY(4px) !important;
+  background: linear-gradient(180deg, #a3243a 0%, #6d1222 100%) !important;
+  border-color: rgba(229, 108, 128, 0.9) !important; color: #fff !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.7) inset, 0 0 16px rgba(213, 84, 104, 0.4) !important;
+}
+/* Onglet choisi (Se connecter / Créer mon compte) : allumé en clair, pas en rouge. */
+#auth-onglets .btn:not(.ghost) { background: linear-gradient(180deg, #34343a 0%, #1a1a1d 100%) !important; border-color: rgba(255, 255, 255, 0.55) !important; }
+/* Bouton « Enregistré » : garde son vert (confirmation). */
+.btn.saved { color: #9fd49f !important; border-color: rgba(127, 174, 127, 0.6) !important; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
