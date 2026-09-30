@@ -2438,7 +2438,7 @@ document.addEventListener('DOMContentLoaded', function () {
 </div>
 <div class="liste-recente" data-section="b3a-migration-r2">
 <h2 class="tdb-4">🧹 Nettoyer les anciennes copies (actualités et événements)</h2>
-<p class="tdb-9">Supprime de Supabase les anciennes copies des photos d'actualités et d'événements, déjà recopiées chez Cloudflare. Chaque fichier est vérifié : s'il est encore utilisé par une fiche, il est conservé. Rien ne change sur le site. Les photos des mannequins, les logos et les photos de candidature ne sont pas touchés.</p>
+<p class="tdb-9">Supprime de Supabase les anciennes copies des photos d'actualités et d'événements, déjà recopiées chez Cloudflare. Si une fiche utilise encore une de ces photos, elle est d'abord recopiée chez Cloudflare et la fiche est mise à jour : il ne reste ensuite plus aucune photo d'actualité ou d'événement sur Supabase. Rien ne change sur le site. Les photos des mannequins, les logos et les photos de candidature ne sont pas touchés.</p>
 <button class="btn" id="nettoyage-supabase-btn" type="button">Vérifier et nettoyer</button>
 <div class="form-msg" id="nettoyage-supabase-msg"></div>
 </div>
