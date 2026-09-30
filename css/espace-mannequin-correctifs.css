@@ -78,3 +78,7 @@
 /* Bouton « Enregistré » : garde son vert (confirmation). */
 .btn.saved { color: #9fd49f !important; border-color: rgba(127, 174, 127, 0.6) !important; }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Curseurs « compétences » (étape Photos) : couleurs de l'agence au lieu du bleu du
+   navigateur (30/09). */
+input[type=range] { accent-color: #c21d36; }
