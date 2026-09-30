@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-+9VN9FmJSLR8Oq2A8LafIyiw+oaKjnaaDcrJOgmbyt4='; style-src 'self' https://fonts.googleapis.com 'sha256-wY5HlBWQW7uoDVNPS6YVpI0janGrwB1+YtjhfMQ8c4Q='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-28B/M8C0Ace0gNgxJ+H47A6fDFdK44AsU5NEGByrRGM='; style-src 'self' https://fonts.googleapis.com 'sha256-wY5HlBWQW7uoDVNPS6YVpI0janGrwB1+YtjhfMQ8c4Q='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -533,8 +533,8 @@ function niveauEtudesChoisi() {
   return cat ? cat + (classe ? ' — ' + classe : '') : null;
 }
 
-// --- Introduction video: required, 30 seconds / 30 MB maximum ---
-const VIDEO_MAX_OCTETS = 30 * 1024 * 1024;
+// --- Introduction video: required, 30 seconds / 60 MB maximum ---
+const VIDEO_MAX_OCTETS = 60 * 1024 * 1024;
 const VIDEO_MAX_SECONDES = 35; // 30 s announced, small margin
 let videoChoisie = null;
 // Durée lue directement dans le fichier (boîte « mvhd » des vidéos MP4/MOV/3GP de
@@ -564,7 +564,7 @@ document.getElementById('ca-video').addEventListener('change', async (e) => {
   if (!fichier) { info.textContent = ''; return; }
   if (!/^video\//.test(fichier.type || '') && !/\.(mp4|mov|m4v|3gp|webm)$/i.test(fichier.name || '')) { info.textContent = 'This file is not a video.'; e.target.value = ''; return; }
   if (fichier.size > VIDEO_MAX_OCTETS) {
-    info.textContent = `Video too large (${Math.round(fichier.size / 1048576)} MB): 30 MB maximum. Film 30 seconds maximum, or lower the camera quality.`;
+    info.textContent = `Video too large (${Math.round(fichier.size / 1048576)} MB): 60 MB maximum. Film 30 seconds maximum, or lower the camera quality.`;
     e.target.value = ''; return;
   }
   const duree = await dureeVideo(fichier);
@@ -791,10 +791,8 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
   try {
     lienVideo = await envoyerVideoVersDrive(URL_SCRIPT_PHOTOS_CASTING, {
       nom: candidature.full_name, email: candidature.email, phone: candidature.phone,
-      type: typeCandidature, projet: projetNom || '', dossier: dossierDrive,
-      // Some Android phones do not give the file type: we set it.
-      video: (await fichierEnBase64(videoChoisie)).replace(/^data:(?!video\/)[^;,]*(;base64,)/, 'data:video/mp4$1')
-    });
+      type: typeCandidature, projet: projetNom || '', dossier: dossierDrive
+    }, videoChoisie, (pc) => afficherMsg(msg, `Uploading your video… ${pc}% (keep the page open)`, 'ok'));
     if (lienVideo) await sb.rpc('ajouter_video_candidature', { p_id: candidature.id, p_url: lienVideo });
   } catch (e) {
     lienVideo = null;
