@@ -346,6 +346,16 @@
     let dernierToucher = 0;
     let pincement = false;
     let echelle = vv.scale;
+    let zoomDejaSignale = false;
+    // Autres gestes volontaires (30/09, Journal 18:37) : pincement sur le pavé tactile
+    // ou Ctrl + molette (le navigateur les transmet comme une molette avec « Ctrl »),
+    // touches du clavier, et retour d'une autre fenêtre (choix d'une vidéo, d'une
+    // photo : le téléphone rétablit parfois le zoom en revenant sur la page).
+    document.addEventListener('wheel', function (e) { if (e.ctrlKey) dernierToucher = Date.now(); }, { passive: true, capture: true });
+    document.addEventListener('keydown', function () { dernierToucher = Date.now(); }, true);
+    document.addEventListener('visibilitychange', function () { dernierToucher = Date.now(); });
+    window.addEventListener('focus', function () { dernierToucher = Date.now(); });
+    document.addEventListener('change', function (e) { if (e.target && e.target.type === 'file') dernierToucher = Date.now(); }, true);
     document.addEventListener('touchstart', function (e) {
       dernierToucher = Date.now();
       if (e.touches && e.touches.length > 1) pincement = true;
@@ -370,7 +380,8 @@
             return;
           }
         }
-        if (Date.now() - dernierToucher > 1500) {
+        if (Date.now() - dernierToucher > 5000 && !zoomDejaSignale) {
+          zoomDejaSignale = true; // un seul signalement par page (un zoom progressif en faisait 10)
           signaler('Zoom inattendu', location.pathname + ' : zoom passé à ×' + s.toFixed(2) + ' sans geste du visiteur',
             'Élément actif : ' + (actif && actif !== document.body ? decrireElement(actif) : 'aucun'));
         }
@@ -386,10 +397,17 @@
   if (typesMesures.indexOf('layout-shift') !== -1) {
     let totalSauts = 0;
     let pireSaut = null;
+    // Un bloc qui change dans les 3 s qui suivent un clic est la RÉPONSE à ce clic
+    // (ex. tableau de bord : la liste d'erreurs vidée après « Supprimer ») — pas un
+    // saut gênant. Le navigateur, lui, ne l'excuse que pendant 0,5 s.
+    let dernierClicPerf = -1e9;
+    document.addEventListener('pointerdown', function () { dernierClicPerf = performance.now(); }, true);
+    document.addEventListener('keydown', function () { dernierClicPerf = performance.now(); }, true);
     try {
       new PerformanceObserver(function (liste) {
         liste.getEntries().forEach(function (en) {
           if (en.hadRecentInput) return;
+          if (en.startTime >= dernierClicPerf && en.startTime - dernierClicPerf < 3000) return;
           totalSauts += en.value;
           if (!pireSaut || en.value > pireSaut.value) pireSaut = en;
         });
