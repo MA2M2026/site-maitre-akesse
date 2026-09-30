@@ -1396,9 +1396,9 @@ Liste de tout ce qui reste à faire ou à surveiller, pour la propriétaire et p
 - Supprimer le secret GitHub devenu inutile SUPABASE_DB_URL (facultatif).
 
 **Prochaines étapes techniques**
-- **Nouveau formulaire de candidature** (validé par la propriétaire le 30/09, en attente
-  des captures du programme Google « Projet sans titre » sur script.google.com, lignes
-  1 à 63, pour qu'il accepte les vidéos) :
+- ✅ **Nouveau formulaire de candidature — EN LIGNE le 30/09** (Extension 104 exécutée,
+  programme Google remplacé par scripts/apps-script-photos-drive.gs → version 6, même
+  adresse ; si le programme est un jour modifié, repartir de cette copie) :
   - « Intégrer l'agence » : première question « Avez-vous déjà été mannequin ? » Oui / Non.
   - **Non (débutant·e)** — tout obligatoire : nom, e-mail, WhatsApp, date de naissance,
     genre, résidence (ville ; commune si Abidjan ; quartier), niveau d'études, taille
