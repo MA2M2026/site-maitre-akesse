@@ -199,3 +199,8 @@ body .tdb-landing-carte p { padding-bottom: 1.2rem; color: #b9aca6; }
 @media (prefers-reduced-motion: reduce) {
   body .tdb-landing-carte, body .tdb-menu-item, body #bloc-tableau .btn { transition: none; }
 }
+
+/* Statistiques : place réservée aux graphiques pendant leur chargement, pour que la
+   page ne « saute » plus quand ils arrivent (Journal MA2M, 30/09 16:15). */
+body #activite-barres, body #evolution-candidatures { min-height: 170px; }
+body #dernieres-activites, body #a-traiter-liste { min-height: 120px; }
