@@ -407,11 +407,35 @@
   }
 
   // --- Page figée (le téléphone ne répond plus pendant plusieurs secondes) ---
+  // Fausses alertes écartées (30/09, messages groupés) : le temps passé dans une
+  // fenêtre de confirmation du navigateur (« Envoyer ce message ? »), ou dans une autre
+  // appli ouverte depuis la page (WhatsApp), compte comme « page bloquée » pour le
+  // navigateur. On note ces moments et on ignore un blocage qui les chevauche.
+  var momentsExcuses = [];
+  ['alert', 'confirm', 'prompt', 'open'].forEach(function (nom) {
+    var origine = window[nom];
+    if (typeof origine !== 'function') return;
+    window[nom] = function () {
+      var t0 = performance.now();
+      try { return origine.apply(window, arguments); }
+      finally { momentsExcuses.push([t0, performance.now() + (nom === 'open' ? 3000 : 500)]); }
+    };
+  });
+  var debutCache = null;
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden') debutCache = performance.now();
+    else if (debutCache !== null) { momentsExcuses.push([debutCache, performance.now() + 1000]); debutCache = null; }
+  });
+  function blocageExcuse(debut, fin) {
+    if (debutCache !== null) return true;
+    return momentsExcuses.some(function (m) { return m[0] < fin && m[1] > debut; });
+  }
   if (typesMesures.indexOf('longtask') !== -1) {
     try {
       new PerformanceObserver(function (liste) {
         liste.getEntries().forEach(function (en) {
           if (en.duration < 3000) return;
+          if (blocageExcuse(en.startTime, en.startTime + en.duration)) return;
           signaler('Page figée', location.pathname + ' : bloquée ' + (en.duration / 1000).toFixed(1) + ' s',
             'La page ne répondait plus aux gestes du visiteur pendant ce temps (' + Math.round(en.startTime / 1000) + ' s après l\'ouverture).');
         });
