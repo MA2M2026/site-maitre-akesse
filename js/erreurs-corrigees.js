@@ -42,5 +42,7 @@ window.MA2M_ERREURS_CORRIGEES = [
   { motif: 'invalid_credentials', corrige_le: '2100-01-01T00:00:00Z', note: 'Mauvais e-mail ou mot de passe tapé par une personne : pas un défaut du site (toujours ignoré)' },
   { motif: '[Page figée] /tableau-de-bord', corrige_le: '2026-09-30T17:10:00Z', note: 'Fausse alerte : temps passé dans la fenêtre « Envoyer ce message ? » ou dans WhatsApp — désormais écarté par le journal' },
   { motif: 'auth-tab-connexion', corrige_le: '2026-09-30T17:10:00Z', note: 'Onglet « Se connecter » touché plusieurs fois alors qu’il était déjà ouvert (juste après un mauvais mot de passe) : pas un défaut' },
-  { motif: '[Zoom inattendu]', corrige_le: '2026-09-30T17:10:00Z', note: 'Zoom fait avec les doigts sur la tablette (appareil qui se présente comme un ordinateur) : pas un défaut du site. S’il revient sans geste, il réapparaîtra ici' }
+  { motif: '[Zoom inattendu]', corrige_le: '2026-09-30T18:45:00Z', note: 'Zoom fait par la personne (pincement sur l’écran ou le pavé tactile, Ctrl + molette) ou rétabli par le téléphone au retour du choix d’une vidéo : ces gestes sont maintenant reconnus, et un seul signalement par page. S’il revient, il réapparaîtra ici' },
+  { motif: 'missing email or phone', corrige_le: '2026-09-30T18:45:00Z', note: 'Espace mannequin : « Se connecter » touché avec l’e-mail vide — le site le dit maintenant tout de suite, sans interroger le serveur' },
+  { motif: '/tableau-de-bord : div#liste-erreurs', corrige_le: '2026-09-30T18:45:00Z', note: 'Tableau de bord : liste d’erreurs vidée juste après un clic de la propriétaire — une page qui change en réponse à un clic n’est plus comptée comme un « saut »' }
 ];
