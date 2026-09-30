@@ -1,0 +1,48 @@
+name: Sauvegarde de la base (chaque semaine)
+
+# Supabase en offre gratuite ne sauvegarde rien. Chaque dimanche à 3 h (heure
+# d'Abidjan), cette automatisation copie la base, la CHIFFRE avec la phrase secrète
+# de la propriétaire, et la garde 90 jours dans l'onglet « Actions » de GitHub
+# (onglet de ce dépôt → exécution → « Artifacts »). En cas d'échec, GitHub envoie
+# un e-mail au propriétaire du dépôt : c'est l'alerte.
+# Détails et restauration : scripts/sauvegarde-base.sh et README-TECHNIQUE.md.
+
+on:
+  schedule:
+    - cron: '0 3 * * 0'
+  workflow_dispatch: {}
+
+# Droits minimaux : lire le code, rien d'autre.
+permissions:
+  contents: read
+
+concurrency:
+  group: sauvegarde-base
+  cancel-in-progress: false
+
+jobs:
+  sauvegarder:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Installer l'outil de copie PostgreSQL (version 17, compatible 15 et 17)
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-17
+          echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
+      - name: Copier et chiffrer la base
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: bash scripts/sauvegarde-base.sh
+      - name: Garder la sauvegarde 90 jours
+        uses: actions/upload-artifact@v4
+        with:
+          name: sauvegarde-ma2m-${{ github.run_number }}
+          path: sauvegarde/*.gpg
+          retention-days: 90
+          if-no-files-found: error
