@@ -60,7 +60,7 @@
 
 Bonjour {prénom},
 
-Félicitations ! 🎉 Votre candidature a retenu toute notre attention : vous êtes sélectionné(e) pour la prochaine étape.
+Félicitations ! 🎉 Comme annoncé dans notre premier message de confirmation, votre candidature a été retenue : vous êtes sélectionné(e) pour la prochaine étape.
 
 Nous avons le plaisir de vous inviter à notre casting en présentiel :
 
@@ -79,11 +79,34 @@ Merci de confirmer votre présence en répondant à ce message.
 À dimanche !
 L'équipe Maître Akesse Model Management`;
   }
+  // Deuxième message pour un casting précis : même esprit, avec les informations
+  // pratiques à compléter (elles changent d'un casting à l'autre).
+  const A_COMPLETER = '[à compléter]';
+  function modeleCasting() {
+    return `✨ MAÎTRE AKESSE MODEL MANAGEMENT ✨
+
+Bonjour {prénom},
+
+Félicitations ! 🎉 Comme annoncé dans notre premier message de confirmation, votre candidature au casting « {casting} » a été retenue : vous êtes sélectionné(e) pour la prochaine étape.
+
+Voici les informations pratiques :
+
+📅 Date : ${A_COMPLETER}
+🕒 Heure : ${A_COMPLETER}
+📍 Lieu : ${A_COMPLETER}
+👗 Tenue : ${A_COMPLETER}
+
+Merci de confirmer votre présence en répondant à ce message.
+
+Au plaisir de vous retrouver !
+L'équipe Maître Akesse Model Management`;
+  }
   let dernierModele = '';
   function proposerModele() {
     const zone = $('mg-message');
     const actuel = zone.value.trim();
-    const modele = ($('mg-source').value === 'agence' && $('mg-statut').value === 'retenue') ? modeleAgence() : '';
+    const retenue = $('mg-statut').value === 'retenue';
+    const modele = !retenue ? '' : $('mg-source').value === 'agence' ? modeleAgence() : $('mg-source').value === 'casting' ? modeleCasting() : '';
     // Ne jamais écraser un message déjà écrit à la main.
     if (!actuel || actuel === dernierModele.trim()) { zone.value = modele; dernierModele = modele; }
   }
@@ -179,7 +202,14 @@ L'équipe Maître Akesse Model Management`;
       : (liste.some(d => numeroWa(d.phone)) && t ? '✓ WhatsApp : tout le monde a été fait' : '💬 Ouvrir WhatsApp pour la personne suivante');
   }
 
+  function resteACompleter() {
+    if ($('mg-message').value.indexOf(A_COMPLETER) === -1) return false;
+    alert('Le message contient encore « ' + A_COMPLETER + ' » : remplacez ces passages par les vraies informations (date, heure, lieu, tenue) avant d\'envoyer.');
+    return true;
+  }
+
   async function envoyerEmails() {
+    if (resteACompleter()) return;
     const t = $('mg-message').value.trim();
     const faits = dejaFaits('email');
     const liste = choisis().filter(d => d.email && !faits.has(d.id));
@@ -207,6 +237,7 @@ L'équipe Maître Akesse Model Management`;
   }
 
   function whatsappSuivant() {
+    if (resteACompleter()) return;
     const t = $('mg-message').value.trim();
     const faits = dejaFaits('wa');
     const d = choisis().find(x => numeroWa(x.phone) && !faits.has(x.id));
