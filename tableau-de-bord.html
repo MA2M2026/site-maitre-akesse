@@ -2436,6 +2436,12 @@ document.addEventListener('DOMContentLoaded', function () {
 <button class="btn btn--principal" id="migration-r2-site-btn" type="button">Migrer les images du site restantes vers R2</button>
 <div class="form-msg" id="migration-r2-site-msg"></div>
 </div>
+<div class="liste-recente" data-section="b3a-migration-r2">
+<h2 class="tdb-4">🧹 Nettoyer les anciennes copies (actualités et événements)</h2>
+<p class="tdb-9">Supprime de Supabase les anciennes copies des photos d'actualités et d'événements, déjà recopiées chez Cloudflare. Chaque fichier est vérifié : s'il est encore utilisé par une fiche, il est conservé. Rien ne change sur le site. Les photos des mannequins, les logos et les photos de candidature ne sont pas touchés.</p>
+<button class="btn" id="nettoyage-supabase-btn" type="button">Vérifier et nettoyer</button>
+<div class="form-msg" id="nettoyage-supabase-msg"></div>
+</div>
 <div class="liste-recente" data-section="b3b-code-validation">
 <div class="dossiers-entete">
 <h2 class="tdb-10">🔐 Code de validation (2ᵉ facteur)</h2>
@@ -2654,6 +2660,7 @@ document.addEventListener('DOMContentLoaded', function () {
 <script src="js/confort.js"></script>
 <script src="js/menu.js"></script>
 <script src="js/erreurs-corrigees.js"></script>
+<script src="js/nettoyage-supabase.js"></script>
 <script>
 // La sidebar du centre de contrôle (Étape 12) a son propre logo et sa propre
 // navigation : une fois connecté, le header public et le titre "Administration"
