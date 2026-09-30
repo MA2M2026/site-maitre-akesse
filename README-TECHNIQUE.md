@@ -1442,3 +1442,13 @@ privées ni aux écrans de consommation (connexion de la propriétaire nécessai
 Trois vidéos de démonstration (présentation du site, comment postuler, inscription à
 l'Espace mannequin) ont été filmées en format téléphone, sans rien écrire dans la base :
 toutes les écritures sont simulées pendant l'enregistrement.
+
+## Vidéo de candidature allégée, jauges et aperçu (30/09/2026)
+
+- `js/video-allegee.js` : avant l'envoi, l'appareil du candidat réduit sa vidéo en 720p,
+  30 images/s, ~1,8 Mbit/s (outil libre Mediabunny, licence MPL-2.0, copié dans
+  `js/vendor/mediabunny-1.61.0.min.js`, chargé seulement quand une vidéo est choisie).
+  Aucun service extérieur. Si l'appareil ne sait pas le faire, la vidéo d'origine part
+  telle quelle (60 Mo maximum, comme avant).
+- Formulaire FR/EN : jauges « Photos » et « Vidéo » qui se remplissent pendant l'envoi,
+  image d'aperçu de la vidéo, photos agrandies au toucher (`css/jauges-envoi.css`).
