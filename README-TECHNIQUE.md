@@ -1436,3 +1436,9 @@ Liste de tout ce qui reste à faire ou à surveiller, pour la propriétaire et p
 **Accès de Claude (réglés le 30/09)** : lecture des pages du site et des données
 publiques de la base, comme un visiteur. Pas d'accès au tableau de bord, aux données
 privées ni aux écrans de consommation (connexion de la propriétaire nécessaire).
+
+## Vidéos tutoriels (30/09/2026)
+
+Trois vidéos de démonstration (présentation du site, comment postuler, inscription à
+l'Espace mannequin) ont été filmées en format téléphone, sans rien écrire dans la base :
+toutes les écritures sont simulées pendant l'enregistrement.
