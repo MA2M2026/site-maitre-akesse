@@ -243,3 +243,11 @@ function obtenirOuCreerSousDossier(parent, nom) {
   if (dossiers.hasNext()) return dossiers.next();
   return parent.createFolder(nom);
 }
+
+// À lancer UNE fois à la main (menu des fonctions → « autoriser » → Exécuter) après
+// avoir collé ce code : Google demande alors l'autorisation « se connecter à un
+// service externe », nécessaire à l'envoi des vidéos en morceaux.
+function autoriser() {
+  UrlFetchApp.fetch('https://www.googleapis.com/discovery/v1/apis?name=drive', { muteHttpExceptions: true });
+  DriveApp.getFolderById(ID_DOSSIER_RACINE).getName();
+}
