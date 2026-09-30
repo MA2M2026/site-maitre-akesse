@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-n1up/YqbW6MWgwqD9BYTtwsyIE56lVKWF0t7MlbWnzg='; style-src 'self' https://fonts.googleapis.com 'sha256-2RaJjkt0dwCPrM/WQd2sjLywmysdtxLwAh6UXghu0HQ=' 'sha256-l6fymG/9VFModmkt4+Cju+Misw/e9E3nOMRhpZL+0so=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-F5NtfiknCPYzDMoWlZxX5HmsngJamhpeeKbNVevA40k='; style-src 'self' https://fonts.googleapis.com 'sha256-2RaJjkt0dwCPrM/WQd2sjLywmysdtxLwAh6UXghu0HQ=' 'sha256-l6fymG/9VFModmkt4+Cju+Misw/e9E3nOMRhpZL+0so=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <meta charset="UTF-8">
@@ -684,6 +684,9 @@ const WORDMARK_HTML = '<a class="wordmark" href="index.html"><img src="assets/lo
 function viewAuthGate(){
   return '<div class="top">'+WORDMARK_HTML+'</div>' +
   '<div class="panel" id="authPanel">' +
+    // 30/09 : des personnes venues postuler à un casting arrivaient ici et tentaient de se
+    // connecter avec un faux code — on leur montre tout de suite le bon chemin.
+    '<a class="em-vers-candidature" href="candidature.html">Vous souhaitez <strong>postuler à un casting</strong> ou <strong>rejoindre l’agence</strong> ? <span>Postuler ici →</span></a>' +
     '<div id="auth-onglets" class="p20-8">' +
       '<button type="button" class="btn small" id="auth-tab-connexion" data-auth-tab="connexion">Se connecter</button>' +
       '<button type="button" class="btn ghost small" id="auth-tab-inscription" data-auth-tab="inscription">Créer mon compte</button>' +
@@ -727,6 +730,16 @@ function afficherPanneauAuth(id){
   ['auth-panneau-connexion','auth-panneau-inscription','auth-panneau-mdp-oublie','auth-panneau-nouveau-mdp'].forEach(function(p){
     const el = document.getElementById(p); if (el) el.style.display = (p===id) ? 'block' : 'none';
   });
+  // L'onglet ouvert s'allume (30/09 : les onglets ne changeaient jamais d'aspect —
+  // une personne a touché 4 fois « Se connecter » sans voir que c'était déjà ouvert).
+  const tabCo = document.getElementById('auth-tab-connexion');
+  const tabIn = document.getElementById('auth-tab-inscription');
+  if (tabCo && tabIn && (id === 'auth-panneau-connexion' || id === 'auth-panneau-inscription')) {
+    tabCo.classList.toggle('ghost', id !== 'auth-panneau-connexion');
+    tabIn.classList.toggle('ghost', id !== 'auth-panneau-inscription');
+    tabCo.setAttribute('aria-pressed', String(id === 'auth-panneau-connexion'));
+    tabIn.setAttribute('aria-pressed', String(id === 'auth-panneau-inscription'));
+  }
 }
 
 function bindAuthGate(){
