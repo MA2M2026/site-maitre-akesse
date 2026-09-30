@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-28B/M8C0Ace0gNgxJ+H47A6fDFdK44AsU5NEGByrRGM='; style-src 'self' https://fonts.googleapis.com 'sha256-wY5HlBWQW7uoDVNPS6YVpI0janGrwB1+YtjhfMQ8c4Q='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-AL+q3GtqrbB90LfbCTm+MER4PIrs0eng4bekurB0jBM='; style-src 'self' https://fonts.googleapis.com 'sha256-wY5HlBWQW7uoDVNPS6YVpI0janGrwB1+YtjhfMQ8c4Q='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -262,7 +262,7 @@ setTimeout(() => {
 
       <div class="form-champ">
         <label for="ca-video">Introduction video *</label>
-        <p class="enca-6 ca-video-aide">30 seconds maximum, filmed facing the camera: "Hello, my name is…, I am … years old, I am … tall, and I would like to…".</p>
+        <p class="enca-6 ca-video-aide">1 minute maximum, filmed facing the camera: "Hello, my name is…, I am … years old, I am … tall, and I would like to…".</p>
         <input type="file" id="ca-video" accept="video/*">
         <span id="ca-video-info" class="enca-8"></span>
       </div>
@@ -533,9 +533,9 @@ function niveauEtudesChoisi() {
   return cat ? cat + (classe ? ' — ' + classe : '') : null;
 }
 
-// --- Introduction video: required, 30 seconds / 60 MB maximum ---
+// --- Introduction video: required, 1 minute / 60 MB maximum ---
 const VIDEO_MAX_OCTETS = 60 * 1024 * 1024;
-const VIDEO_MAX_SECONDES = 35; // 30 s announced, small margin
+const VIDEO_MAX_SECONDES = 65; // 1 minute announced, small margin
 let videoChoisie = null;
 // Durée lue directement dans le fichier (boîte « mvhd » des vidéos MP4/MOV/3GP de
 // téléphone) : l'ancienne méthode passait par un lecteur vidéo que la sécurité du
@@ -564,12 +564,12 @@ document.getElementById('ca-video').addEventListener('change', async (e) => {
   if (!fichier) { info.textContent = ''; return; }
   if (!/^video\//.test(fichier.type || '') && !/\.(mp4|mov|m4v|3gp|webm)$/i.test(fichier.name || '')) { info.textContent = 'This file is not a video.'; e.target.value = ''; return; }
   if (fichier.size > VIDEO_MAX_OCTETS) {
-    info.textContent = `Video too large (${Math.round(fichier.size / 1048576)} MB): 60 MB maximum. Film 30 seconds maximum, or lower the camera quality.`;
+    info.textContent = `Video too large (${(fichier.size / 1048576).toFixed(1)} MB): 60 MB maximum. Film 1 minute maximum, or lower the camera quality (720p instead of 1080p or 4K).`;
     e.target.value = ''; return;
   }
   const duree = await dureeVideo(fichier);
   if (duree && isFinite(duree) && duree > VIDEO_MAX_SECONDES) {
-    info.textContent = `Video too long (${Math.round(duree)} s): 30 seconds maximum.`;
+    info.textContent = `Video too long (${Math.round(duree)} s): 1 minute maximum.`;
     e.target.value = ''; return;
   }
   videoChoisie = fichier;
@@ -699,7 +699,7 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
     return;
   }
   if (!videoChoisie) {
-    afficherMsg(msg, 'Please add your introduction video (30 seconds maximum).', 'err');
+    afficherMsg(msg, 'Please add your introduction video (1 minute maximum).', 'err');
     return;
   }
   if (fichiersPhotos.length > 12) {

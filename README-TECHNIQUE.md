@@ -1408,7 +1408,7 @@ Liste de tout ce qui reste à faire ou à surveiller, pour la propriétaire et p
   - **Non (débutant·e)** — tout obligatoire : nom, e-mail, WhatsApp, date de naissance,
     genre, résidence (ville ; commune si Abidjan ; quartier), niveau d'études, taille
     (blocage 1,75 m F / 1,85 m H déjà en place), poids, taille de vêtements (liste),
-    **3 photos** minimum, **vidéo de présentation** (~30 s).
+    **3 photos** minimum, **vidéo de présentation** (1 minute maximum depuis le 30/09, 60 Mo).
   - **Oui (déjà mannequin)** et **tout casting précis** — tout obligatoire : le formulaire
     complet (taille, poids, pointure, poitrine, tour de taille, hanches, taille de
     vêtements), résidence complète, niveau d'études, **4 photos** minimum, vidéo.
