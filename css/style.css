@@ -2449,3 +2449,68 @@ html.selection-vide #liste-vide { display: block; }
 .mg-actions .btn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
 .mg-consigne { margin: -0.4rem 0 1rem; color: #f0b35a; font-size: 0.88rem; }
 .mg-consigne:empty { display: none; }
+
+/* =====================================================================
+   Boutons « touche » de tout le site (demande de la propriétaire, 30/09/2026) :
+   fond noir, contour discret, comme les pilules « EN » / « Admin » du haut —
+   PAS de rouge au repos ni au survol (le rouge fatiguait les yeux). Un relief
+   noir sous chaque bouton : à l'appui, le bouton s'enfonce comme une touche de
+   clavier et devient rouge, uniquement à ce moment-là.
+   ===================================================================== */
+:root {
+  --touche-n-fond: linear-gradient(180deg, #1d1d1f 0%, #0d0d0e 100%);
+  --touche-n-fond-survol: linear-gradient(180deg, #27272a 0%, #121213 100%);
+  --touche-n-contour: rgba(255, 255, 255, 0.18);
+  --touche-n-contour-survol: rgba(255, 255, 255, 0.34);
+  --touche-n-relief: #000;
+  --touche-appui-fond: linear-gradient(180deg, #a3243a 0%, #6d1222 100%);
+  --touche-appui-contour: rgba(229, 108, 128, 0.9);
+}
+.btn, .btn--principal, .btn-mini-admin, .filtre-btn, .fiche-partage-btn, .journal-btn,
+.lang-switch, .header-marketplace-lien, .mpg-bouton-danger, .mp-panier-btn {
+  border-radius: 999px !important;
+  border: 1px solid var(--touche-n-contour) !important;
+  background: var(--touche-n-fond) !important;
+  color: #f4efe9 !important;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 4px 0 var(--touche-n-relief), 0 9px 16px -8px rgba(0, 0, 0, 0.85) !important;
+  transform: translateY(0);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.15s ease, border-color 0.15s ease !important;
+  -webkit-tap-highlight-color: transparent;
+}
+.lang-switch, .header-marketplace-lien {
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 3px 0 var(--touche-n-relief) !important;
+}
+@media (hover: hover) {
+  .btn:hover, .btn--principal:hover, .btn-mini-admin:hover, .filtre-btn:hover, .fiche-partage-btn:hover,
+  .journal-btn:hover, .lang-switch:hover, .header-marketplace-lien:hover, .mpg-bouton-danger:hover, .mp-panier-btn:hover,
+  .mp-corps .btn--principal:hover {
+    background: var(--touche-n-fond-survol) !important;
+    border-color: var(--touche-n-contour-survol) !important;
+    color: #fff !important;
+    transform: translateY(-1px);
+  }
+}
+/* Élément choisi (filtre actif) : allumé en clair, pas en rouge. */
+.filtre-btn.actif {
+  background: linear-gradient(180deg, #34343a 0%, #1a1a1d 100%) !important;
+  border-color: rgba(255, 255, 255, 0.55) !important;
+  color: #fff !important;
+}
+/* L'appui : la touche s'enfonce et devient rouge. */
+.btn:active, .btn--principal:active, .btn-mini-admin:active, .filtre-btn:active, .fiche-partage-btn:active,
+.journal-btn:active, .lang-switch:active, .header-marketplace-lien:active, .mpg-bouton-danger:active, .mp-panier-btn:active,
+.touche-appuyee {
+  transform: translateY(4px) !important;
+  background: var(--touche-appui-fond) !important;
+  border-color: var(--touche-appui-contour) !important;
+  color: #fff !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.7) inset, 0 0 0 var(--touche-n-relief), 0 0 16px rgba(213, 84, 104, 0.4) !important;
+  transition: transform 0.05s ease, box-shadow 0.05s ease, background 0.05s ease !important;
+}
+.btn:disabled, .btn-mini-admin:disabled, .filtre-btn:disabled {
+  opacity: 0.42; cursor: not-allowed;
+  transform: translateY(4px) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6) inset !important;
+}
+/* Bouton « supprimer » : seul le texte garde une couleur d'alerte. */
+.mpg-bouton-danger { color: #e98a98 !important; }
