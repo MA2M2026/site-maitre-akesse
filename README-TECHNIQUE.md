@@ -1396,6 +1396,11 @@ Liste de tout ce qui reste à faire ou à surveiller, pour la propriétaire et p
 - Supprimer le secret GitHub devenu inutile SUPABASE_DB_URL (facultatif).
 
 **Prochaines étapes techniques**
+- ✅ **Vidéo de candidature envoyée en morceaux de 4 Mo** (30/09, programme Google
+  version 7, autorisation « service externe » donnée) : une vidéo de 20 Mo d'un seul bloc
+  faisait échouer le programme (2 et 8 Mo passaient). Essai réel de 20 Mo réussi.
+- ✅ **Numéro de l'agence : +225 05 45 65 66 87** (corrigé partout le 30/09 ; l'ancien
+  « 68 87 » était faux).
 - ✅ **Nouveau formulaire de candidature — EN LIGNE le 30/09** (Extension 104 exécutée,
   programme Google remplacé par scripts/apps-script-photos-drive.gs → version 6, même
   adresse ; si le programme est un jour modifié, repartir de cette copie) :
