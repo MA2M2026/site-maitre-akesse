@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-elxG8jGF7m56gmb4H2KCMArhdizOp98InciKcEz5UN4='; style-src 'self' https://fonts.googleapis.com 'sha256-wY5HlBWQW7uoDVNPS6YVpI0janGrwB1+YtjhfMQ8c4Q='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-cAWP2TEC/3x71gahkrgJhY1wQ9Da8jQZl1lmPQkH1QM='; style-src 'self' https://fonts.googleapis.com 'sha256-wY5HlBWQW7uoDVNPS6YVpI0janGrwB1+YtjhfMQ8c4Q='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -300,7 +300,7 @@ setTimeout(() => {
       </div>
       <div>
         <h3>Contact</h3>
-        <a href="tel:+2250545656887">+225 05 45 65 68 87</a>
+        <a href="tel:+2250545656687">+225 05 45 65 66 87</a>
         <a href="tel:+2252722231176">+225 27 22 23 11 76</a>
         <a href="mailto:infos.ma2m@gmail.com">infos.ma2m@gmail.com</a>
         <div class="footer-reseaux">
@@ -799,7 +799,7 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
   if (window.jouerSon) window.jouerSon('envoi');
   const soucis = [];
   if (nbPhotosEchouees) soucis.push(`${nbPhotosEchouees} photo${nbPhotosEchouees > 1 ? 's' : ''} could not be uploaded`);
-  if (!lienVideo) soucis.push('your video could not be uploaded — please send it on WhatsApp to +225 05 45 65 68 87 with your name');
+  if (!lienVideo) soucis.push('your video could not be uploaded — please send it on WhatsApp to +225 05 45 65 66 87 with your name');
   afficherMsg(msg, soucis.length
     ? `Application sent, but ${soucis.join('; ')} (unstable connection?). The rest of your application is saved.`
     : 'Thank you! Your application has been sent. Our team will contact you if your profile is selected.', 'ok');

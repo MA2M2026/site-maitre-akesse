@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-g0tdsktwRBLYDkEGJQ7bbHdnXO6kHwp+eXDsKhnfadY='; style-src 'self' https://fonts.googleapis.com 'sha256-rlGOmtWoPiLQ3Ysci1f48TkvlFtTAWDWvlzX/Q47X6A='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-toVNtPdQvrQg29qb7S0nFTRqli+/uu6/wfaNDMHGjWE='; style-src 'self' https://fonts.googleapis.com 'sha256-rlGOmtWoPiLQ3Ysci1f48TkvlFtTAWDWvlzX/Q47X6A='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -325,7 +325,7 @@ setTimeout(() => {
       </div>
       <div>
         <h3>Contact</h3>
-        <a href="tel:+2250545656887">+225 05 45 65 68 87</a>
+        <a href="tel:+2250545656687">+225 05 45 65 66 87</a>
         <a href="tel:+2252722231176">+225 27 22 23 11 76</a>
         <a href="mailto:infos.ma2m@gmail.com">infos.ma2m@gmail.com</a>
         <div class="footer-reseaux">
@@ -892,7 +892,7 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
   if (window.jouerSon) window.jouerSon('envoi');
   const soucis = [];
   if (nbPhotosEchouees) soucis.push(`${nbPhotosEchouees} photo${nbPhotosEchouees > 1 ? 's n\'ont' : ' n\'a'} pas pu être envoyée${nbPhotosEchouees > 1 ? 's' : ''}`);
-  if (!lienVideo) soucis.push('votre vidéo n\'a pas pu être envoyée — envoyez-la sur WhatsApp au +225 05 45 65 68 87 en indiquant votre nom');
+  if (!lienVideo) soucis.push('votre vidéo n\'a pas pu être envoyée — envoyez-la sur WhatsApp au +225 05 45 65 66 87 en indiquant votre nom');
   afficherMsg(msg, soucis.length
     ? `Candidature envoyée, mais ${soucis.join(' ; ')} (connexion instable ?). Le reste du dossier est bien enregistré.`
     : 'Merci ! Votre candidature a bien été envoyée. Notre équipe vous recontactera si votre profil est retenu.', 'ok');

@@ -686,7 +686,7 @@ async function construireCanvasCompcard(ficheData) {
   ctx.font = `bold ${fpx(12)}px Arial, sans-serif`;
   ctx.fillText('CONTACT OFFICIEL MA2M', px(15), px(yPiedPage + 9));
   ctx.font = `${fpx(11)}px Arial, sans-serif`;
-  ctx.fillText('+225 27 22 23 11 76   ·   +225 05 45 65 68 87', px(15), px(yPiedPage + 16.5));
+  ctx.fillText('+225 27 22 23 11 76   ·   +225 05 45 65 66 87', px(15), px(yPiedPage + 16.5));
   ctx.fillText('scoutmodel.ma2m@gmail.com', px(15), px(yPiedPage + 23.5));
 
   // Réseaux sociaux : icônes vectorielles blanches + le pseudo, sur la même ligne.
