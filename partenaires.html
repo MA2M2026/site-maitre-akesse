@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-hU7zxDyawV1k0I7snAT+2vVfLtAL4C8nWeP/7Xxz+bw='; style-src 'self' https://fonts.googleapis.com 'sha256-jQLfDPnJ0WAwj/alKjnSLPmM23GyNAy8q3t1zc3Fo6c='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-c7VnXgWpnX+9udXYfJ/2haNgEMGmngy7xzxAwOx4rR0='; style-src 'self' https://fonts.googleapis.com 'sha256-jQLfDPnJ0WAwj/alKjnSLPmM23GyNAy8q3t1zc3Fo6c='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -319,12 +319,12 @@ function ouvrirPartModal(index) {
   document.getElementById('part-modal-edition').style.display = 'none';
   document.getElementById('part-modal-admin-actions').style.display = window.estAdminConnecte ? 'block' : 'none';
 
-  ouvrirPartModal();
+  afficherPartModal();
 }
 // Verrouille le défilement de la page tant que la fiche est ouverte (même mécanisme,
 // compatible iPhone, que celui du menu — voir js/app.js).
 let partModalEstOuverte = false;
-function ouvrirPartModal() {
+function afficherPartModal() {
   document.getElementById('part-modal').classList.add('active');
   if (!partModalEstOuverte) { partModalEstOuverte = true; window.verrouillerDefilement(); }
 }
