@@ -5191,3 +5191,120 @@ create policy "Tout le monde peut candidater"
 NOTIFY pgrst, 'reload schema';
 
 NOTIFY pgrst, 'reload schema';
+
+-- =====================================================================
+-- Extension 107 — Grand 3 (N-5 à N-20) : notifications push réelles
+-- sur le téléphone de l'administration, déclenchées par le SERVEUR
+-- (triggers de base de données), pas par le navigateur du visiteur.
+-- =====================================================================
+
+-- Appareils (téléphones/navigateurs) abonnés aux notifications push.
+-- Un admin peut en enregistrer plusieurs (N-8).
+create table if not exists push_abonnements (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  endpoint text not null unique,
+  p256dh text not null,
+  auth text not null,
+  appareil text,
+  actif boolean not null default true,
+  cree_le timestamptz not null default now()
+);
+alter table push_abonnements enable row level security;
+
+drop policy if exists "Un admin gère ses propres appareils" on push_abonnements;
+create policy "Un admin gère ses propres appareils"
+  on push_abonnements for all
+  using (user_id = auth.uid() and exists (select 1 from admins where user_id = auth.uid()))
+  with check (user_id = auth.uid() and exists (select 1 from admins where user_id = auth.uid()));
+
+-- Réglages : quels événements et quels canaux sont actifs (N-13).
+create table if not exists notifications_reglages (
+  cle text primary key,
+  actif boolean not null default true
+);
+alter table notifications_reglages enable row level security;
+
+drop policy if exists "Tout le monde lit les réglages de notifications" on notifications_reglages;
+create policy "Tout le monde lit les réglages de notifications"
+  on notifications_reglages for select using (true);
+
+drop policy if exists "Les admins modifient les réglages de notifications" on notifications_reglages;
+create policy "Les admins modifient les réglages de notifications"
+  on notifications_reglages for all
+  using (exists (select 1 from admins where user_id = auth.uid()))
+  with check (exists (select 1 from admins where user_id = auth.uid()));
+
+insert into notifications_reglages (cle, actif) values
+  ('evenement_candidature_casting', true),
+  ('evenement_integration_agence', true),
+  ('evenement_message_recruteur', true),
+  ('evenement_message_visiteur', true),
+  ('canal_push', true)
+on conflict (cle) do nothing;
+
+-- Journal des envois (N-11) : visible uniquement par les admins.
+create table if not exists notifications_journal (
+  id uuid primary key default gen_random_uuid(),
+  evenement text not null,
+  canal text not null default 'push',
+  statut text not null,
+  cible_table text,
+  cible_id uuid,
+  resume text,
+  erreur text,
+  cree_le timestamptz not null default now()
+);
+alter table notifications_journal enable row level security;
+
+drop policy if exists "Les admins lisent le journal des notifications" on notifications_journal;
+create policy "Les admins lisent le journal des notifications"
+  on notifications_journal for select
+  using (exists (select 1 from admins where user_id = auth.uid()));
+
+-- Déclencheurs serveur : après chaque enregistrement réussi dans les 3 tables
+-- existantes qui couvrent les 4 événements (N-1 à N-4), le serveur appelle
+-- directement notre fonction d'envoi — indépendant du navigateur du visiteur
+-- (N-9), et la candidature/le message est déjà enregistré avant cet appel
+-- (N-10 : aucune perte de données même si l'envoi échoue).
+--
+-- ⚠️ Remplacez <WEBHOOK_SECRET> ci-dessous par la valeur secrète donnée
+-- séparément (jamais dans ce fichier versionné, voir N-17) avant d'exécuter.
+
+drop trigger if exists trg_notif_casting_applications on casting_applications;
+create trigger trg_notif_casting_applications
+  after insert on casting_applications
+  for each row
+  execute function supabase_functions.http_request(
+    'https://www.maitreakessemodelmanagement.com/api/notifications-webhook',
+    'POST',
+    '{"Content-Type":"application/json","x-webhook-secret":"<WEBHOOK_SECRET>"}',
+    '{}',
+    '5000'
+  );
+
+drop trigger if exists trg_notif_recruiter_requests on recruiter_requests;
+create trigger trg_notif_recruiter_requests
+  after insert on recruiter_requests
+  for each row
+  execute function supabase_functions.http_request(
+    'https://www.maitreakessemodelmanagement.com/api/notifications-webhook',
+    'POST',
+    '{"Content-Type":"application/json","x-webhook-secret":"<WEBHOOK_SECRET>"}',
+    '{}',
+    '5000'
+  );
+
+drop trigger if exists trg_notif_messages_contact on messages_contact;
+create trigger trg_notif_messages_contact
+  after insert on messages_contact
+  for each row
+  execute function supabase_functions.http_request(
+    'https://www.maitreakessemodelmanagement.com/api/notifications-webhook',
+    'POST',
+    '{"Content-Type":"application/json","x-webhook-secret":"<WEBHOOK_SECRET>"}',
+    '{}',
+    '5000'
+  );
+
+NOTIFY pgrst, 'reload schema';
