@@ -34,19 +34,35 @@
   position: absolute;
   bottom: 2.6rem;
   right: 2.6rem;
-  background: none;
-  border: 1px solid rgba(255,255,255,0.2);
-  color: #aaa;
+  border-radius: 999px;
+  border: 1px solid var(--touche-n-contour, rgba(255,255,255,0.18));
+  background: var(--touche-n-fond, #1d1d1f);
+  color: #f4efe9;
   padding: 0.75rem 1.7rem;
   font-family: var(--texte);
   font-size: 0.66rem;
   letter-spacing: 0.28em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: all 0.35s ease;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.08) inset, 0 4px 0 #000, 0 9px 16px -8px rgba(0,0,0,0.85);
+  transform: translateY(0);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.15s ease, border-color 0.15s ease;
 }
 
-.splash-passer:hover { border-color: #fff; color: #fff; background: rgba(255,255,255,0.05); }
+@media (hover: hover) {
+  .splash-passer:hover {
+    background: var(--touche-n-fond-survol, #27272a);
+    border-color: var(--touche-n-contour-survol, rgba(255,255,255,0.34));
+    color: #fff;
+  }
+}
+.splash-passer:active {
+  transform: translateY(4px);
+  background: var(--touche-appui-fond, linear-gradient(180deg, #a3243a 0%, #6d1222 100%));
+  border-color: var(--touche-appui-contour, rgba(229,108,128,0.9));
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.7) inset, 0 0 16px rgba(213,84,104,0.4);
+}
 
 body.splash-active { overflow: hidden; }
 
