@@ -760,35 +760,65 @@ section { padding: 5rem 0; }
   position: sticky;
   top: 0;
   z-index: 400;
-  background: rgba(6,5,4,0.72);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  min-height: clamp(240px, 36vh, 420px);
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  /* Fond par défaut élégant tant qu'aucune photo n'est envoyée (H-4) — même lueur
+     bordeaux discrète que le panneau du menu, pas un simple noir plat. Recouverte
+     par la photo dès qu'une photo est chargée (.entete-photo-fond.chargee). */
+  background: var(--noir) radial-gradient(ellipse 90% 70% at 50% 30%, rgba(122,18,32,0.16), transparent 65%);
   border-bottom: 1px solid var(--gris-clair);
-  isolation: isolate; /* garde la photo de couverture sous ce fond + ce blur, jamais au-dessus */
+  isolation: isolate; /* garde la photo + le voile sous le contenu, jamais au-dessus */
+  transition: min-height 0.4s ease;
+}
+/* Une vraie entête haute en arrivant sur la page (H-2) ; une fois qu'on défile, elle
+   se réduit en bande fine pour garder les boutons accessibles sans occuper tout
+   l'écran (H-9, option "qui se réduit en défilant" — bascule posée par le petit
+   script de défilement dans js/app.js, juste en dessous des boutons « touche »). */
+.site-header-v2.entete-reduite {
+  min-height: 84px;
+  align-items: center;
 }
 
 /* Photo de couverture de l'entête (H-2/H-3/H-4) : posée par appliquerPhotoEntete()
    dans js/app.js, sur chaque page. Opacité 0 tant qu'aucune photo n'est chargée —
-   le fond sombre existant (ci-dessus) reste seul visible, jamais de case vide ni
-   de clignotement (H-4, H-8). Si aucune photo n'est définie par l'agence, cette
+   le fond sombre existant reste seul visible, jamais de case vide ni de
+   clignotement (H-4, H-8). Si aucune photo n'est définie par l'agence, cette
    couche reste invisible pour toujours : c'est le fond par défaut. */
 .entete-photo-fond {
-  position: absolute; inset: 0; z-index: -1;
+  position: absolute; inset: 0; z-index: -2;
   background-color: var(--noir);
   background-size: cover; background-position: center;
   opacity: 0; transition: opacity 0.6s ease;
 }
-.entete-photo-fond.chargee { opacity: 0.5; }
+.entete-photo-fond.chargee { opacity: 1; }
+
+/* Voile : fort en bas (là où vivent le logo et les boutons), discret en haut, pour
+   que la photo reste bien visible tout en gardant un texte lisible (H-6). Une fois
+   l'entête réduite, le voile redevient un fond uni flouté (lisibilité garantie même
+   avec une photo très claire, sur une bande désormais fine). */
+.site-header-v2::before {
+  content: ''; position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(0deg, rgba(6,5,4,0.9) 0%, rgba(6,5,4,0.5) 55%, rgba(6,5,4,0.12) 100%);
+  transition: background 0.4s ease, backdrop-filter 0.4s ease;
+}
+.site-header-v2.entete-reduite::before {
+  background: rgba(6,5,4,0.78);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
 
 .header-v2-inner {
-  position: relative; z-index: 1; /* toujours au-dessus de .entete-photo-fond */
+  position: relative; z-index: 1; /* toujours au-dessus de la photo + du voile */
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  width: 100%;
   gap: 0.6rem 1rem;
-  min-height: 84px;
-  padding-block: 0.7rem;
+  padding-block: 1.3rem 1.7rem;
+  transition: padding 0.4s ease;
 }
+.entete-reduite .header-v2-inner { padding-block: 0.7rem; }
 
 .logo-img-header { display: flex; align-items: center; order: 0; }
 .logo-img-header img { height: 34px; width: auto; display: block; }

@@ -2291,6 +2291,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     .catch(function () {});
 })();
 
+// Entête haute (une vraie photo de couverture, H-2) qui se réduit en bande fine une
+// fois qu'on défile, pour garder les 4 boutons accessibles sans occuper tout l'écran
+// en permanence (H-9, option "qui se réduit en défilant"). Un seul seuil, pas de
+// calcul coûteux à chaque pixel défilé : { passive: true } laisse le défilement
+// fluide, la classe ne change que quand on franchit vraiment le seuil.
+(function reduireEnteteAuDefilement() {
+  const entete = document.querySelector('.site-header-v2');
+  if (!entete) return;
+  const SEUIL = 80;
+  let reduite = null; // forcé à true/false au premier appel, quel que soit scrollY
+  function maj() {
+    const doitReduire = window.scrollY > SEUIL;
+    if (doitReduire === reduite) return;
+    reduite = doitReduire;
+    entete.classList.toggle('entete-reduite', reduite);
+  }
+  maj();
+  window.addEventListener('scroll', maj, { passive: true });
+})();
+
 // Boutons « touche » (30/09) : sur téléphone, le doigt quitte souvent l'écran avant
 // qu'on voie le bouton s'enfoncer — on le garde enfoncé (et rouge) un court instant,
 // avec une petite vibration sur Android. Le style est dans css/style.css.
