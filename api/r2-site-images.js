@@ -20,8 +20,7 @@ const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 
 const SUPABASE_URL = 'https://dfhghgmwmxiguhtxtsle.supabase.co';
 // 'boutique' : photos des produits de la Marketplace (29/09/2026).
-// 'entete' : photo de couverture de l'entête persistante du site (cahier V2, H-3).
-const CATEGORIES_AUTORISEES = ['actualites', 'evenements', 'partenaires', 'responsable', 'boutique', 'entete'];
+const CATEGORIES_AUTORISEES = ['actualites', 'evenements', 'partenaires', 'responsable', 'boutique'];
 
 function creerClientR2() {
   return new S3Client({

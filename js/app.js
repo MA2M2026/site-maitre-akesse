@@ -2267,50 +2267,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
 })();
 
-// Photo de couverture de l'entête persistante (cahier V2, H-2/H-3/H-4) : une seule
-// photo pour tout le site, modifiable par l'admin depuis le tableau de bord
-// (table parametres_site, clé 'photo_entete', catégorie R2 'entete'). Si aucune
-// photo n'est définie, ou en cas d'erreur réseau, l'entête garde son fond sombre
-// par défaut (voir .entete-photo-fond dans css/style.css) — jamais de case vide,
-// jamais de clignotement (la classe "chargee" ne s'ajoute qu'une fois l'image
-// réellement chargée en mémoire, via Image().onload).
-(function appliquerPhotoEntete() {
-  const fond = document.querySelector('.entete-photo-fond');
-  if (!fond || !window.sb) return;
-  sb.from('parametres_site').select('valeur').eq('cle', 'photo_entete').maybeSingle()
-    .then(function (res) {
-      const url = res && res.data && res.data.valeur;
-      if (!url || !/^https:\/\//i.test(url)) return;
-      const img = new Image();
-      img.onload = function () {
-        fond.style.backgroundImage = 'url("' + url.replace(/"/g, '%22') + '")';
-        fond.classList.add('chargee');
-      };
-      img.src = url;
-    })
-    .catch(function () {});
-})();
-
-// Entête haute (une vraie photo de couverture, H-2) qui se réduit en bande fine une
-// fois qu'on défile, pour garder les 4 boutons accessibles sans occuper tout l'écran
-// en permanence (H-9, option "qui se réduit en défilant"). Un seul seuil, pas de
-// calcul coûteux à chaque pixel défilé : { passive: true } laisse le défilement
-// fluide, la classe ne change que quand on franchit vraiment le seuil.
-(function reduireEnteteAuDefilement() {
-  const entete = document.querySelector('.site-header-v2');
-  if (!entete) return;
-  const SEUIL = 80;
-  let reduite = null; // forcé à true/false au premier appel, quel que soit scrollY
-  function maj() {
-    const doitReduire = window.scrollY > SEUIL;
-    if (doitReduire === reduite) return;
-    reduite = doitReduire;
-    entete.classList.toggle('entete-reduite', reduite);
-  }
-  maj();
-  window.addEventListener('scroll', maj, { passive: true });
-})();
-
 // Boutons « touche » (30/09) : sur téléphone, le doigt quitte souvent l'écran avant
 // qu'on voie le bouton s'enfoncer — on le garde enfoncé (et rouge) un court instant,
 // avec une petite vibration sur Android. Le style est dans css/style.css.
