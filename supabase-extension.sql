@@ -5146,4 +5146,48 @@ $$;
 revoke all on function ajouter_video_candidature(uuid, text) from public;
 grant execute on function ajouter_video_candidature(uuid, text) to anon, authenticated;
 
+-- ===================================================================
+-- Extension 105 : Cahier des charges V2, Grand 1 — séparation de
+-- « Intégrer l'agence » (integrer-agence.html) et « Postuler à un
+-- casting » (candidature.html, désormais casting uniquement).
+--
+--   - C-7 : un casting a désormais une date, un lieu et un ordre
+--     d'affichage (en plus du nom/actif/description déjà existants
+--     depuis l'Extension 38/67).
+--   - C-8/C-9/C-10 : quand AUCUN casting n'est ouvert (aucune ligne
+--     casting_projets avec actif = true), candidature.html masque son
+--     formulaire côté interface (déjà fait, voir ca-aucun-casting dans
+--     la page) ET le serveur refuse toute candidature de type 'projet'
+--     dans ce cas — un appel direct à l'API qui contournerait
+--     l'interface est donc bloqué lui aussi, pas seulement le bouton.
+--     Les candidatures de type 'agence' (integrer-agence.html) ne sont
+--     jamais concernées par cette règle.
+-- ===================================================================
+alter table casting_projets add column if not exists date_casting date;
+alter table casting_projets add column if not exists lieu text;
+alter table casting_projets add column if not exists ordre_affichage int not null default 0;
+
+create or replace function casting_ouvert()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (select 1 from casting_projets where actif = true);
+$$;
+revoke all on function casting_ouvert() from public;
+grant execute on function casting_ouvert() to anon, authenticated;
+
+drop policy if exists "Tout le monde peut candidater" on casting_applications;
+create policy "Tout le monde peut candidater"
+  on casting_applications for insert
+  with check (
+    limiter_soumissions_publiques('candidature')
+    and status = 'nouvelle'
+    and (type_candidature <> 'projet' or casting_ouvert())
+  );
+
+NOTIFY pgrst, 'reload schema';
+
 NOTIFY pgrst, 'reload schema';
