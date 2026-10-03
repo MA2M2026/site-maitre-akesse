@@ -2571,3 +2571,79 @@ html.selection-vide #liste-vide { display: block; }
 }
 /* Bouton « supprimer » : seul le texte garde une couleur d'alerte. */
 .mpg-bouton-danger { color: #e98a98 !important; }
+
+/* =====================================================================
+   Grand 2 (G-4, G-5, G-6, G-11) : relief sur le reste du site — cartes,
+   formulaires, fenêtres/popups, menu. Mêmes couleurs que le reste du
+   site (aucune nouvelle palette) : on ajoute du volume (ombres superposées,
+   liseré clair en haut, creux pour les champs), jamais une nouvelle
+   matière. Les boutons et l'entête ont déjà ce traitement plus haut.
+   ===================================================================== */
+
+/* ---- G-6 : champs de formulaire « en creux », jamais plats ---- */
+.form-champ input, .form-champ textarea, .form-champ select {
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.03);
+}
+.form-champ input:focus, .form-champ textarea:focus, .form-champ select:focus {
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.5), 0 0 0 3px rgba(207,59,82,0.16);
+}
+
+/* ---- G-5 : cartes et blocs de contenu — épaisseur + liseré clair en haut ---- */
+.bloc-section {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.05),
+    0 1px 0 rgba(0,0,0,0.4),
+    0 22px 46px -24px rgba(0,0,0,0.85);
+}
+.projet-item, .projet-item-public {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 14px 30px -20px rgba(0,0,0,0.85);
+  transition: box-shadow 0.25s ease, transform 0.2s ease, border-color 0.25s ease;
+}
+.projet-item:hover {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 18px 34px -16px rgba(0,0,0,0.9), 0 0 0 1px rgba(207,59,82,0.18);
+  transform: translateY(-2px);
+  border-color: var(--bordeaux-clair);
+}
+.apercu-fiche-carte {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.05),
+    0 18px 40px -22px rgba(0,0,0,0.7),
+    0 0 0 1px rgba(207,59,82,0.08);
+}
+.evenement-carte {
+  box-shadow: 0 16px 34px -26px rgba(0,0,0,0.9);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.25s ease, background 0.3s ease;
+}
+.evenement-carte:hover {
+  box-shadow: 0 0 20px -4px rgba(207,59,82,0.3), 0 18px 36px -20px rgba(0,0,0,0.85);
+  transform: translateY(-3px);
+  background: rgba(255,255,255,0.02);
+}
+.selection-item { transition: box-shadow 0.25s ease, transform 0.2s ease; position: relative; }
+.selection-item:hover { box-shadow: 0 10px 24px -10px rgba(0,0,0,0.4); transform: translateY(-1px); z-index: 1; }
+
+/* ---- G-11 : fenêtres et popups — épaisseur, jamais un simple aplat posé à plat ---- */
+.news-modal-contenu {
+  border-radius: 8px;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.35) inset, 0 30px 70px -20px rgba(0,0,0,0.75);
+}
+.flash-succes { box-shadow: 0 1px 0 rgba(255,255,255,0.15) inset, 0 20px 60px rgba(0,0,0,0.5); }
+
+/* Boutons de fermeture/navigation ronds (modale, lightbox, menu) : même logique
+   de relief que les boutons « touche », à l'échelle d'une icône. */
+.news-modal-fermer, .lightbox-global .lightbox-fermer, .lightbox-global .lightbox-fleche, .menu-overlay .close-menu {
+  box-shadow: 0 1px 0 rgba(255,255,255,0.1) inset, 0 3px 10px -4px rgba(0,0,0,0.8);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.2s ease, border-color 0.2s ease;
+}
+.news-modal-fermer:active, .lightbox-global .lightbox-fermer:active, .lightbox-global .lightbox-fleche:active, .menu-overlay .close-menu:active {
+  transform: translateY(2px) scale(0.96);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.6) inset;
+}
+
+/* ---- G-4 : menu plein écran — chaque entrée s'allume en relief au survol/actif ---- */
+.menu-overlay { box-shadow: inset 0 0 180px rgba(0,0,0,0.55); }
+.menu-overlay .nav-links a { border-radius: 6px; transition: color 0.25s ease, letter-spacing 0.25s ease, background 0.25s ease, box-shadow 0.25s ease; }
+.menu-overlay .nav-links a:hover, .menu-overlay .nav-links a.actif {
+  background: rgba(122,18,32,0.08);
+  box-shadow: inset 0 0 0 1px rgba(207,59,82,0.25), 0 0 24px -6px rgba(207,59,82,0.35);
+}
