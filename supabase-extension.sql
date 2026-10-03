@@ -5270,41 +5270,41 @@ create policy "Les admins lisent le journal des notifications"
 --
 -- ⚠️ Remplacez <WEBHOOK_SECRET> ci-dessous par la valeur secrète donnée
 -- séparément (jamais dans ce fichier versionné, voir N-17) avant d'exécuter.
+--
+-- Utilise l'extension pg_net (standard chez Supabase) plutôt que
+-- supabase_functions.http_request, absente sur certains projets.
+
+create extension if not exists pg_net with schema extensions;
+
+create or replace function notifier_push_notification()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+begin
+  perform net.http_post(
+    url := 'https://www.maitreakessemodelmanagement.com/api/notifications-webhook',
+    headers := jsonb_build_object('Content-Type', 'application/json', 'x-webhook-secret', '<WEBHOOK_SECRET>'),
+    body := jsonb_build_object('table', TG_TABLE_NAME, 'record', row_to_json(NEW))
+  );
+  return new;
+end;
+$$;
 
 drop trigger if exists trg_notif_casting_applications on casting_applications;
 create trigger trg_notif_casting_applications
   after insert on casting_applications
-  for each row
-  execute function supabase_functions.http_request(
-    'https://www.maitreakessemodelmanagement.com/api/notifications-webhook',
-    'POST',
-    '{"Content-Type":"application/json","x-webhook-secret":"<WEBHOOK_SECRET>"}',
-    '{}',
-    '5000'
-  );
+  for each row execute function notifier_push_notification();
 
 drop trigger if exists trg_notif_recruiter_requests on recruiter_requests;
 create trigger trg_notif_recruiter_requests
   after insert on recruiter_requests
-  for each row
-  execute function supabase_functions.http_request(
-    'https://www.maitreakessemodelmanagement.com/api/notifications-webhook',
-    'POST',
-    '{"Content-Type":"application/json","x-webhook-secret":"<WEBHOOK_SECRET>"}',
-    '{}',
-    '5000'
-  );
+  for each row execute function notifier_push_notification();
 
 drop trigger if exists trg_notif_messages_contact on messages_contact;
 create trigger trg_notif_messages_contact
   after insert on messages_contact
-  for each row
-  execute function supabase_functions.http_request(
-    'https://www.maitreakessemodelmanagement.com/api/notifications-webhook',
-    'POST',
-    '{"Content-Type":"application/json","x-webhook-secret":"<WEBHOOK_SECRET>"}',
-    '{}',
-    '5000'
-  );
+  for each row execute function notifier_push_notification();
 
 NOTIFY pgrst, 'reload schema';
