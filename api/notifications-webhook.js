@@ -25,14 +25,14 @@ function construireNotification(table, record) {
     if (record.type_candidature === 'projet') {
       return {
         cle: 'evenement_candidature_casting',
-        titre: 'Nouvelle candidature casting',
+        titre: '📸 Nouvelle candidature casting',
         texte: (record.full_name || 'Candidat') + (record.projet_nom ? ' — ' + record.projet_nom : ''),
         url: '/tableau-de-bord.html?notif=candidature&id=' + record.id
       };
     }
     return {
       cle: 'evenement_integration_agence',
-      titre: "Nouvelle demande d'intégration",
+      titre: "⭐ Nouvelle demande d'intégration",
       texte: record.full_name || 'Candidat',
       url: '/tableau-de-bord.html?notif=candidature&id=' + record.id
     };
@@ -41,7 +41,7 @@ function construireNotification(table, record) {
     const qui = record.contact_name || record.company || 'Un recruteur';
     return {
       cle: 'evenement_message_recruteur',
-      titre: 'Nouveau message recruteur',
+      titre: '💼 Nouveau message recruteur',
       texte: qui + (record.message ? ' — ' + String(record.message).slice(0, 70) : ''),
       url: '/tableau-de-bord.html?notif=recruteur&id=' + record.id
     };
@@ -49,7 +49,7 @@ function construireNotification(table, record) {
   if (table === 'messages_contact') {
     return {
       cle: 'evenement_message_visiteur',
-      titre: 'Nouveau message visiteur',
+      titre: '💬 Nouveau message visiteur',
       texte: (record.nom || 'Visiteur') + (record.message ? ' — ' + String(record.message).slice(0, 70) : ''),
       url: '/tableau-de-bord.html?notif=contact&id=' + record.id
     };
