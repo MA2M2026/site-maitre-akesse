@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-2YLaNh1HHVRwB3gFwQGCHqAdIazjnazAda811UucXlE='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-7qzTX2fbWhcoN8NR8B0qP2PjgfCnkK2/b2LeciSYanY=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://cdn.jsdelivr.net https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-ANOLLTmE0C/H9ENQnhXCHU8IZ8vE7WZfCyJ2AFBR254='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'sha256-7qzTX2fbWhcoN8NR8B0qP2PjgfCnkK2/b2LeciSYanY=';">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
@@ -347,7 +347,7 @@ async function chargerProfilInterne() {
 
   contenu.innerHTML = `
     <div class="reveal">
-      <div class="profil-hero-fullbleed">
+      <div class="profil-hero-fullbleed cliquable" id="profil-hero-photo-clic">
         <img data-couv-img src="${echapperHtml(photoHero)}" alt="">
         <div class="profil-hero-scrim"></div>
         <div class="profil-hero-contenu">
@@ -356,8 +356,14 @@ async function chargerProfilInterne() {
           <p>${echapperHtml(['Mannequin ' + (profil.niveau_mannequin || deriverNiveauMannequin(profil.years_experience)), profil.city].filter(Boolean).join(' · '))}</p>
         </div>
       </div>
-      <div class="profil-avatar-centree">
+      <div class="profil-identite-ligne">
         <div class="profil-avatar cliquable" id="compsheet-photo-clic"><img src="${echapperHtml(premierePhoto)}" alt="${echapperHtml(profil.full_name || '')}"></div>
+        <div class="profil-stats-cles">
+          ${age ? `<div class="stat-cle"><span class="v">${age}</span><span class="l">ans</span></div>` : ''}
+          ${profil.height_cm ? `<div class="stat-cle"><span class="v">${profil.height_cm}</span><span class="l">cm</span></div>` : ''}
+          ${profil.weight_kg ? `<div class="stat-cle"><span class="v">${profil.weight_kg}</span><span class="l">kg</span></div>` : ''}
+          ${profil.shoe_size ? `<div class="stat-cle"><span class="v">${echapperHtml(profil.shoe_size)}</span><span class="l">pointure</span></div>` : ''}
+        </div>
       </div>
       <div class="u-mt-1-8">
         <div class="mensurations">
@@ -445,6 +451,8 @@ async function chargerProfilInterne() {
 
   const photoPrincipale = document.getElementById('compsheet-photo-clic');
   if (photoPrincipale) photoPrincipale.addEventListener('click', () => ouvrirLightbox(0));
+  const photoHeroEl = document.getElementById('profil-hero-photo-clic');
+  if (photoHeroEl) photoHeroEl.addEventListener('click', () => ouvrirLightbox(0));
 
   (photos || []).forEach((p, index) => {
     const div = document.createElement('div');
