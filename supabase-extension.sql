@@ -5326,6 +5326,7 @@ create table if not exists connexion_reglages (
   cle text primary key,
   valeur int not null
 );
+alter table connexion_reglages enable row level security;
 insert into connexion_reglages (cle, valeur) values
   ('essais_avertissement_des', 3),
   ('essais_avant_blocage', 5),
