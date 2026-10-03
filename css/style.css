@@ -764,22 +764,49 @@ section { padding: 5rem 0; }
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--gris-clair);
+  isolation: isolate; /* garde la photo de couverture sous ce fond + ce blur, jamais au-dessus */
 }
+
+/* Photo de couverture de l'entête (H-2/H-3/H-4) : posée par appliquerPhotoEntete()
+   dans js/app.js, sur chaque page. Opacité 0 tant qu'aucune photo n'est chargée —
+   le fond sombre existant (ci-dessus) reste seul visible, jamais de case vide ni
+   de clignotement (H-4, H-8). Si aucune photo n'est définie par l'agence, cette
+   couche reste invisible pour toujours : c'est le fond par défaut. */
+.entete-photo-fond {
+  position: absolute; inset: 0; z-index: -1;
+  background-color: var(--noir);
+  background-size: cover; background-position: center;
+  opacity: 0; transition: opacity 0.6s ease;
+}
+.entete-photo-fond.chargee { opacity: 0.5; }
 
 .header-v2-inner {
+  position: relative; z-index: 1; /* toujours au-dessus de .entete-photo-fond */
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  height: 84px;
+  gap: 0.6rem 1rem;
+  min-height: 84px;
+  padding-block: 0.7rem;
 }
 
-.logo-img-header { display: flex; align-items: center; }
+.logo-img-header { display: flex; align-items: center; order: 0; }
 .logo-img-header img { height: 34px; width: auto; display: block; }
 @media (max-width: 480px) {
   .logo-img-header img { height: 28px; }
 }
 
-.header-v2-droite { display: flex; align-items: center; gap: 1.4rem; }
+/* B-1 à B-3 : Intégrer l'agence / Postuler à un casting / Visiter le book.
+   Réutilise exactement le système de boutons « touche » déjà sur le site
+   (.btn, voir plus bas) — même matière partout, rien de nouveau (G-3). */
+.entete-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; order: 2; width: 100%; }
+.btn--entete { padding: 0.55rem 1.1rem; font-size: 0.6rem; }
+@media (min-width: 900px) {
+  .entete-actions { order: 1; width: auto; margin-left: auto; margin-right: 0.4rem; }
+  .header-v2-droite { order: 2; }
+}
+
+.header-v2-droite { display: flex; align-items: center; gap: 1.4rem; order: 1; }
 .lang-switch {
   font-family: var(--texte); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em;
   color: var(--texte-corps); border: 1px solid var(--gris-clair); border-radius: 999px;

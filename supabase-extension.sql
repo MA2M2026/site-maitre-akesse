@@ -5190,4 +5190,34 @@ create policy "Tout le monde peut candidater"
 
 NOTIFY pgrst, 'reload schema';
 
+-- ===================================================================
+-- Extension 106 : Cahier des charges V2, Grand 1 — H-2/H-3/H-4, photo
+-- de couverture de la nouvelle entête persistante.
+--
+-- Table à une ligne par réglage (clé/valeur), pour ne pas créer une
+-- table dédiée à chaque nouveau réglage global du site. Première
+-- utilisation : 'photo_entete' (URL de la photo envoyée par l'admin
+-- via api/r2-site-images.js, catégorie 'entete'). Lecture publique
+-- (toute page doit pouvoir l'afficher), écriture réservée aux admins.
+-- Si aucune ligne 'photo_entete' n'existe, le site utilise le fond par
+-- défaut déjà prévu en CSS (H-4) — rien ne casse.
+-- ===================================================================
+create table if not exists parametres_site (
+  cle text primary key,
+  valeur text,
+  modifie_le timestamptz not null default now()
+);
+alter table parametres_site enable row level security;
+
+drop policy if exists "Tout le monde lit les paramètres du site" on parametres_site;
+create policy "Tout le monde lit les paramètres du site"
+  on parametres_site for select
+  using (true);
+
+drop policy if exists "Les admins modifient les paramètres du site" on parametres_site;
+create policy "Les admins modifient les paramètres du site"
+  on parametres_site for all
+  using (exists (select 1 from admins where user_id = auth.uid()))
+  with check (exists (select 1 from admins where user_id = auth.uid()));
+
 NOTIFY pgrst, 'reload schema';

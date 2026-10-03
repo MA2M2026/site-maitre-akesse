@@ -2267,6 +2267,30 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
 })();
 
+// Photo de couverture de l'entête persistante (cahier V2, H-2/H-3/H-4) : une seule
+// photo pour tout le site, modifiable par l'admin depuis le tableau de bord
+// (table parametres_site, clé 'photo_entete', catégorie R2 'entete'). Si aucune
+// photo n'est définie, ou en cas d'erreur réseau, l'entête garde son fond sombre
+// par défaut (voir .entete-photo-fond dans css/style.css) — jamais de case vide,
+// jamais de clignotement (la classe "chargee" ne s'ajoute qu'une fois l'image
+// réellement chargée en mémoire, via Image().onload).
+(function appliquerPhotoEntete() {
+  const fond = document.querySelector('.entete-photo-fond');
+  if (!fond || !window.sb) return;
+  sb.from('parametres_site').select('valeur').eq('cle', 'photo_entete').maybeSingle()
+    .then(function (res) {
+      const url = res && res.data && res.data.valeur;
+      if (!url || !/^https:\/\//i.test(url)) return;
+      const img = new Image();
+      img.onload = function () {
+        fond.style.backgroundImage = 'url("' + url.replace(/"/g, '%22') + '")';
+        fond.classList.add('chargee');
+      };
+      img.src = url;
+    })
+    .catch(function () {});
+})();
+
 // Boutons « touche » (30/09) : sur téléphone, le doigt quitte souvent l'écran avant
 // qu'on voie le bouton s'enfoncer — on le garde enfoncé (et rouge) un court instant,
 // avec une petite vibration sur Android. Le style est dans css/style.css.
