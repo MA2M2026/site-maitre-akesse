@@ -5308,3 +5308,206 @@ create trigger trg_notif_messages_contact
   for each row execute function notifier_push_notification();
 
 NOTIFY pgrst, 'reload schema';
+
+-- =====================================================================
+-- Extension 109 — Grand 4 (S-1 à S-16) : blocage après trop de codes/mots
+-- de passe erronés. Protège 3 endroits : connexion admin (mot de passe),
+-- code de validation admin (2FA), connexion espace mannequin (mot de
+-- passe). Tout le comptage et le blocage sont en base de données, jamais
+-- dans le navigateur (S-6) — un visiteur qui vide ses cookies ou passe en
+-- navigation privée reste bloqué.
+--
+-- Interprétation appliquée (comme indiqué dans le cahier) : 3 erreurs
+-- normales, puis 2 dernières tentatives averties, soit 5 erreurs avant
+-- blocage. Valeurs modifiables sans toucher au code (table ci-dessous).
+-- =====================================================================
+
+create table if not exists connexion_reglages (
+  cle text primary key,
+  valeur int not null
+);
+insert into connexion_reglages (cle, valeur) values
+  ('essais_avertissement_des', 3),
+  ('essais_avant_blocage', 5),
+  ('duree_blocage_minutes', 60),
+  ('duree_blocage_recidive_minutes', 120),
+  ('expiration_compteur_minutes', 30)
+on conflict (cle) do nothing;
+
+-- Nouveau type d'événement de notification (réutilise notifications_reglages
+-- de l'Extension 107) pour les blocages de connexion.
+insert into notifications_reglages (cle, actif) values
+  ('evenement_blocage_connexion', true)
+on conflict (cle) do nothing;
+
+-- Deux compteurs indépendants (S-8) : par IP (protège contre un robot qui
+-- essaie plein de comptes depuis une seule adresse) et par compte visé
+-- (protège un compte précis même si l'attaque change d'IP). Le blocage le
+-- plus strict des deux s'applique.
+create table if not exists connexion_tentatives_ip (
+  ip text not null,
+  espace text not null,
+  compteur int not null default 0,
+  derniere_tentative timestamptz not null default now(),
+  bloque_jusqua timestamptz,
+  primary key (ip, espace)
+);
+create table if not exists connexion_tentatives_compte (
+  identifiant text not null,
+  espace text not null,
+  compteur int not null default 0,
+  derniere_tentative timestamptz not null default now(),
+  bloque_jusqua timestamptz,
+  primary key (identifiant, espace)
+);
+
+-- IP de confiance de l'agence, jamais bloquées (S-14).
+create table if not exists connexion_liste_blanche (
+  ip text primary key,
+  note text,
+  ajoute_le timestamptz not null default now()
+);
+
+-- Journal des blocages (S-12) + déclenche une notification push (réutilise
+-- le système du Grand 3, S-15) — aucune donnée sensible : identifiant
+-- masqué, jamais le code/mot de passe.
+create table if not exists blocages_connexion (
+  id uuid primary key default gen_random_uuid(),
+  ip text not null,
+  identifiant text,
+  espace text not null,
+  duree_minutes int not null,
+  recidive boolean not null default false,
+  cree_le timestamptz not null default now()
+);
+
+alter table connexion_tentatives_ip enable row level security;
+alter table connexion_tentatives_compte enable row level security;
+alter table connexion_liste_blanche enable row level security;
+alter table blocages_connexion enable row level security;
+-- Aucune policy publique sur ces 4 tables : seule la clé service_role
+-- (utilisée uniquement par les fonctions api/ côté serveur) peut les lire
+-- ou les modifier — un visiteur ne peut jamais toucher à son propre
+-- compteur depuis le navigateur.
+
+-- Vérifie si ip+espace ou identifiant+espace est actuellement bloqué,
+-- SANS vérifier le mot de passe/code (S-6 : pendant un blocage, on refuse
+-- avant même de regarder si le code est bon).
+create or replace function connexion_verifier_blocage(p_ip text, p_identifiant text, p_espace text)
+returns table(bloque boolean, minutes_restantes int)
+language plpgsql
+security definer
+as $$
+declare
+  v_ip_bloque timestamptz;
+  v_compte_bloque timestamptz;
+  v_max timestamptz;
+begin
+  if exists (select 1 from connexion_liste_blanche where ip = p_ip) then
+    return query select false, 0;
+    return;
+  end if;
+  select bloque_jusqua into v_ip_bloque from connexion_tentatives_ip where ip = p_ip and espace = p_espace;
+  select bloque_jusqua into v_compte_bloque from connexion_tentatives_compte where identifiant = p_identifiant and espace = p_espace;
+  v_max := greatest(coalesce(v_ip_bloque, 'epoch'::timestamptz), coalesce(v_compte_bloque, 'epoch'::timestamptz));
+  if v_max > now() then
+    return query select true, greatest(1, ceil(extract(epoch from (v_max - now())) / 60)::int);
+  else
+    return query select false, 0;
+  end if;
+end;
+$$;
+
+-- Enregistre un échec, incrémente les deux compteurs, déclenche le
+-- blocage (avec récidive = nouveau blocage dans les 24h) si le seuil est
+-- atteint.
+create or replace function connexion_enregistrer_echec(p_ip text, p_identifiant text, p_espace text)
+returns table(bloque boolean, avertissement boolean, essais_restants int, minutes_blocage int)
+language plpgsql
+security definer
+as $$
+declare
+  v_expir int; v_avert int; v_max int; v_duree int; v_duree_recid int;
+  v_ip_row connexion_tentatives_ip%rowtype;
+  v_compte_row connexion_tentatives_compte%rowtype;
+  v_compteur int;
+  v_recidive boolean;
+  v_duree_appliquee int;
+begin
+  select
+    max(valeur) filter (where cle = 'expiration_compteur_minutes'),
+    max(valeur) filter (where cle = 'essais_avertissement_des'),
+    max(valeur) filter (where cle = 'essais_avant_blocage'),
+    max(valeur) filter (where cle = 'duree_blocage_minutes'),
+    max(valeur) filter (where cle = 'duree_blocage_recidive_minutes')
+  into v_expir, v_avert, v_max, v_duree, v_duree_recid
+  from connexion_reglages;
+  v_expir := coalesce(v_expir, 30); v_avert := coalesce(v_avert, 3); v_max := coalesce(v_max, 5);
+  v_duree := coalesce(v_duree, 60); v_duree_recid := coalesce(v_duree_recid, 120);
+
+  select * into v_ip_row from connexion_tentatives_ip where ip = p_ip and espace = p_espace for update;
+  if not found or v_ip_row.derniere_tentative < now() - (v_expir || ' minutes')::interval then
+    insert into connexion_tentatives_ip (ip, espace, compteur, derniere_tentative, bloque_jusqua)
+      values (p_ip, p_espace, 1, now(), null)
+      on conflict (ip, espace) do update set compteur = 1, derniere_tentative = now()
+      returning * into v_ip_row;
+  else
+    update connexion_tentatives_ip set compteur = compteur + 1, derniere_tentative = now()
+      where ip = p_ip and espace = p_espace returning * into v_ip_row;
+  end if;
+
+  select * into v_compte_row from connexion_tentatives_compte where identifiant = p_identifiant and espace = p_espace for update;
+  if not found or v_compte_row.derniere_tentative < now() - (v_expir || ' minutes')::interval then
+    insert into connexion_tentatives_compte (identifiant, espace, compteur, derniere_tentative, bloque_jusqua)
+      values (p_identifiant, p_espace, 1, now(), null)
+      on conflict (identifiant, espace) do update set compteur = 1, derniere_tentative = now()
+      returning * into v_compte_row;
+  else
+    update connexion_tentatives_compte set compteur = compteur + 1, derniere_tentative = now()
+      where identifiant = p_identifiant and espace = p_espace returning * into v_compte_row;
+  end if;
+
+  v_compteur := greatest(v_ip_row.compteur, v_compte_row.compteur);
+
+  if v_compteur >= v_max then
+    v_recidive := (v_ip_row.bloque_jusqua is not null and v_ip_row.bloque_jusqua > now() - interval '24 hours')
+               or (v_compte_row.bloque_jusqua is not null and v_compte_row.bloque_jusqua > now() - interval '24 hours');
+    v_duree_appliquee := case when v_recidive then v_duree_recid else v_duree end;
+    update connexion_tentatives_ip set bloque_jusqua = now() + (v_duree_appliquee || ' minutes')::interval, compteur = 0
+      where ip = p_ip and espace = p_espace;
+    update connexion_tentatives_compte set bloque_jusqua = now() + (v_duree_appliquee || ' minutes')::interval, compteur = 0
+      where identifiant = p_identifiant and espace = p_espace;
+    insert into blocages_connexion (ip, identifiant, espace, duree_minutes, recidive)
+      values (p_ip, left(p_identifiant, 2) || '***', p_espace, v_duree_appliquee, v_recidive);
+    return query select true, false, 0, v_duree_appliquee;
+  elsif v_compteur >= v_avert then
+    return query select false, true, (v_max - v_compteur), 0;
+  else
+    return query select false, false, (v_max - v_compteur), 0;
+  end if;
+end;
+$$;
+
+-- Remet les deux compteurs à zéro après une connexion réussie (S-4).
+create or replace function connexion_enregistrer_succes(p_ip text, p_identifiant text, p_espace text)
+returns void
+language plpgsql
+security definer
+as $$
+begin
+  delete from connexion_tentatives_ip where ip = p_ip and espace = p_espace;
+  delete from connexion_tentatives_compte where identifiant = p_identifiant and espace = p_espace;
+end;
+$$;
+
+revoke all on function connexion_verifier_blocage(text, text, text) from public, anon, authenticated;
+revoke all on function connexion_enregistrer_echec(text, text, text) from public, anon, authenticated;
+revoke all on function connexion_enregistrer_succes(text, text, text) from public, anon, authenticated;
+
+-- Même notification push que le Grand 3, pour chaque blocage (S-15).
+drop trigger if exists trg_notif_blocages_connexion on blocages_connexion;
+create trigger trg_notif_blocages_connexion
+  after insert on blocages_connexion
+  for each row execute function notifier_push_notification();
+
+NOTIFY pgrst, 'reload schema';

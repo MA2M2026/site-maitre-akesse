@@ -54,6 +54,15 @@ function construireNotification(table, record) {
       url: '/tableau-de-bord.html?notif=contact&id=' + record.id
     };
   }
+  if (table === 'blocages_connexion') {
+    const lieu = record.espace === 'admin' ? 'connexion admin' : record.espace === 'admin-code' ? 'code de validation admin' : 'connexion espace mannequin';
+    return {
+      cle: 'evenement_blocage_connexion',
+      titre: '🔒 Accès bloqué',
+      texte: 'Trop de tentatives — ' + lieu + (record.recidive ? ' (récidive)' : ''),
+      url: '/tableau-de-bord.html'
+    };
+  }
   return null;
 }
 
