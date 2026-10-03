@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-GR5DmaFaylQQ9Gre6c17bVX90WiLQoCCdDnT/loTjLM=' 'sha256-iYduWIMjdIkMaWx15GjZLHGyFXGCZDoCqpRtwyFAya4='; style-src 'self' https://fonts.googleapis.com 'sha256-2RaJjkt0dwCPrM/WQd2sjLywmysdtxLwAh6UXghu0HQ=' 'sha256-l6fymG/9VFModmkt4+Cju+Misw/e9E3nOMRhpZL+0so=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-GR5DmaFaylQQ9Gre6c17bVX90WiLQoCCdDnT/loTjLM=' 'sha256-iYduWIMjdIkMaWx15GjZLHGyFXGCZDoCqpRtwyFAya4=' 'sha256-MK1G5JEWc88EOM8k0WKoGU/GasD7ldyaHBZs54Wovng='; style-src 'self' https://fonts.googleapis.com 'sha256-2RaJjkt0dwCPrM/WQd2sjLywmysdtxLwAh6UXghu0HQ=' 'sha256-l6fymG/9VFModmkt4+Cju+Misw/e9E3nOMRhpZL+0so=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <meta charset="UTF-8">
@@ -2162,7 +2162,21 @@ async function demarrerApresConnexion(){
   }
   if (recuperationMdpEnCours) return; // le gestionnaire PASSWORD_RECOVERY prend déjà le relais
   try{
-    const { data: { session } } = await sb.auth.getSession();
+    // Filet de sécurité : sur une connexion lente/instable, la requête de
+    // session peut ne jamais répondre (ni succès ni erreur), laissant la
+    // page bloquée sur "Chargement…" indéfiniment (journal du site,
+    // 03/10/2026). Au-delà de 10 s, on propose de réessayer plutôt que
+    // de laisser l'écran vide.
+    const delaiDepasse = Symbol('timeout');
+    const resultat = await Promise.race([
+      sb.auth.getSession(),
+      new Promise(resolve => setTimeout(() => resolve(delaiDepasse), 10000))
+    ]);
+    if (resultat === delaiDepasse) {
+      document.getElementById('app').innerHTML = '<div class="auth-loading"><span>La connexion prend plus de temps que prévu. </span><button class="btn ghost small" onclick="location.reload()">Réessayer</button></div>';
+      return;
+    }
+    const { data: { session } } = resultat;
     if (!session) { renderAuthGate(); return; }
     await demarrerApresConnexion();
   }catch(e){

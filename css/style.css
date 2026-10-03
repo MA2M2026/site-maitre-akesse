@@ -372,8 +372,13 @@ section { padding: 5rem 0; }
   font-family: var(--texte); font-size: 1rem; padding: 0.85rem 1rem;
   border: 1px solid var(--gris-clair); background: rgba(255,255,255,0.03); color: var(--texte-corps);
   border-radius: 2px; transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
-  min-width: 0; width: 100%;
+  min-width: 0; width: 100%; max-width: 100%;
 }
+/* Safari iOS : le champ date déborde parfois de son conteneur malgré
+   width:100% (élément de 390 px dépassant de 14 px, signalé par le
+   journal du site le 01-02/10/2026) — max-width le force à rester dans
+   l'écran quoi qu'il arrive. */
+.form-champ input[type="date"] { max-width: 100%; }
 .form-champ input:focus, .form-champ textarea:focus, .form-champ select:focus {
   outline: none; border-color: var(--bordeaux-clair); background: rgba(255,255,255,0.05);
   box-shadow: 0 0 0 3px rgba(207,59,82,0.16);

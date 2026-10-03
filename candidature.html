@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-KWoG52RevPpdh1Cp9G82ywc7sHbI/hSTNBMJsr3P/AI='; style-src 'self' https://fonts.googleapis.com 'sha256-lAujTgC9U0NCyjDT7ti2N4olkJXP+Yzug1d3VIqDXd8='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-KWoG52RevPpdh1Cp9G82ywc7sHbI/hSTNBMJsr3P/AI=' 'sha256-WTZ/vQtWbf0OItw9C655Et3rpRSMMc5Eckyyzhs05Cs='; style-src 'self' https://fonts.googleapis.com 'sha256-lAujTgC9U0NCyjDT7ti2N4olkJXP+Yzug1d3VIqDXd8='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -810,6 +810,10 @@ remplirIndicatifs(document.getElementById('ca-parent-indicatif'));
 
 document.getElementById('form-casting').addEventListener('submit', async (e) => {
   e.preventDefault();
+  // Évite les envois multiples : un visiteur qui tape plusieurs fois sur
+  // "Envoyer" (le temps que la validation s'exécute) ne déclenche l'envoi
+  // qu'une seule fois (journal du site, 01-02/10/2026 : 4 clics en 2 s).
+  if (document.getElementById('btn-envoyer').disabled) return;
   const msg = document.getElementById('ca-msg');
 
   const genre = document.getElementById('ca-genre').value;
