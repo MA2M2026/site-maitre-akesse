@@ -34,7 +34,12 @@
     return texte.replace(/\{pr[ée]nom\}/gi, prenom(d) || 'Madame, Monsieur').replace(/\{casting\}/gi, casting(d));
   }
   function echapper(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
-  function numeroWa(tel) { return String(tel || '').replace(/[^\d]/g, ''); }
+  function numeroWa(tel) {
+    let n = String(tel || '').replace(/[^\d]/g, '');
+    if (n.startsWith('00')) n = n.slice(2);
+    if ((n.length === 10 && n.startsWith('0')) || n.length === 8) n = '225' + n; // numéro ivoirien sans indicatif
+    return n;
+  }
 
   // Suivi des envois déjà faits pour CE message (même texte = même envoi), sur cet appareil.
   function cleSuivi(canal) {
@@ -87,6 +92,9 @@ Nous avons le plaisir de vous inviter à notre casting en présentiel :
 Merci de confirmer votre présence en répondant à ce message.
 
 À dimanche !
+
+📞 Une question ? Écrivez-nous sur WhatsApp au 05 45 65 66 87.
+
 L'équipe Maître Akesse Model Management`;
   }
   // Deuxième message pour un casting précis : même esprit, avec les informations
@@ -109,14 +117,42 @@ Voici les informations pratiques :
 Merci de confirmer votre présence en répondant à ce message.
 
 Au plaisir de vous retrouver !
+
+📞 Une question ? Écrivez-nous sur WhatsApp au 05 45 65 66 87.
+
 L'équipe Maître Akesse Model Management`;
+  }
+  // Messages proposés d'office pour CHAQUE groupe (demande de la propriétaire, 04/10/2026 :
+  // « il faut bien structurer, bien rédiger »). Même présentation partout : en-tête de
+  // l'agence, une idée par paragraphe, contact, signature. Toujours modifiables avant envoi.
+  const ENTETE = '✨ MAÎTRE AKESSE MODEL MANAGEMENT ✨';
+  const CONTACT = '📞 Une question ? Écrivez-nous sur WhatsApp au 05 45 65 66 87.';
+  const SIGNATURE = "Bien cordialement,\nL'équipe Maître Akesse Model Management";
+  function message(corps) { return `${ENTETE}\n\nBonjour {prénom},\n\n${corps}\n\n${CONTACT}\n\n${SIGNATURE}`; }
+  // « pour intégrer l'agence » ou « au casting « X » » selon le groupe choisi.
+  function objet() { return $('mg-source').value === 'agence' ? "pour intégrer Maître Akesse Model Management" : 'au casting « {casting} »'; }
+  function modelePour(qui, statut) {
+    if (qui === 'inscription') {
+      return ({
+        'en attente de paiement': message(`Nous avons bien reçu votre inscription auprès de Maître Akesse Model Management. Merci pour votre confiance !\n\n🔎 Votre paiement est en cours de vérification par notre équipe. Cette étape peut prendre un peu de temps.\n\nDès que votre paiement sera confirmé, nous vous enverrons un nouveau message pour la suite de votre inscription.`),
+        'dossier en vérification': message(`Votre paiement a bien été reçu ✅\n\n🔎 Votre dossier d'inscription est maintenant en cours de vérification par notre équipe (informations et photos).\n\nNous reviendrons vers vous très prochainement avec la réponse et les prochaines étapes.`),
+        'payée': message(`Félicitations ! 🎉 Votre inscription auprès de Maître Akesse Model Management est validée.\n\nBienvenue dans l'agence ! Nous sommes ravis de vous compter parmi nos mannequins.\n\n📌 Prochaine étape : nous vous contacterons très prochainement pour vous présenter le déroulement de la suite (formation, séances photo et castings).`),
+        'annulée': message(`Nous vous remercions pour l'intérêt que vous portez à Maître Akesse Model Management.\n\nAprès étude, nous ne sommes malheureusement pas en mesure de valider votre inscription pour le moment.\n\nSi vous pensez qu'il s'agit d'une erreur, ou pour connaître les raisons de cette décision, n'hésitez pas à nous contacter.`)
+      })[statut] || '';
+    }
+    if (statut === 'retenue') return qui === 'agence' ? modeleAgence() : modeleCasting();
+    return ({
+      'nouvelle': message(`Nous avons bien reçu votre candidature ${objet()}. Merci pour votre confiance ! 🙏\n\n📋 Notre équipe va étudier votre dossier avec attention dans les prochains jours.\n\nNous vous recontacterons dès qu'une décision sera prise. Inutile de renvoyer votre candidature.`),
+      'en étude': message(`Votre candidature ${objet()} est actuellement en cours d'étude par notre équipe 🔎\n\nNous prenons le temps d'examiner chaque dossier avec attention : profil, photos et informations.\n\nVous recevrez notre réponse très prochainement. Merci pour votre patience.`),
+      'en attente': message(`Merci d'avoir postulé ${objet()}.\n\n⏳ Votre dossier a retenu notre attention et se trouve actuellement en liste d'attente : notre équipe finalise sa sélection.\n\nNous reviendrons vers vous dès qu'une place se libère ou qu'une décision définitive sera prise. Gardez votre téléphone à portée de main !`),
+      'refusée': message(`Merci sincèrement d'avoir postulé ${objet()}, et pour le temps que vous nous avez consacré.\n\nAprès étude attentive, votre profil n'a pas été retenu pour cette sélection.\n\n🌟 Cette décision ne remet pas en cause votre potentiel : nos besoins changent d'un casting à l'autre. Nous conservons votre dossier et vous encourageons à postuler de nouveau lors de nos prochains castings.`)
+    })[statut] || '';
   }
   let dernierModele = '';
   function proposerModele() {
     const zone = $('mg-message');
     const actuel = zone.value.trim();
-    const retenue = $('mg-statut').value === 'retenue';
-    const modele = !retenue ? '' : $('mg-source').value === 'agence' ? modeleAgence() : $('mg-source').value === 'casting' ? modeleCasting() : '';
+    const modele = modelePour($('mg-source').value, $('mg-statut').value);
     // Ne jamais écraser un message déjà écrit à la main.
     if (!actuel || actuel === dernierModele.trim()) { zone.value = modele; dernierModele = modele; }
   }
@@ -280,6 +316,7 @@ L'équipe Maître Akesse Model Management`;
   }
 
   $('mg-source').addEventListener('change', remplirStatuts);
+  $('mg-casting').addEventListener('change', proposerModele);
   $('mg-statut').addEventListener('change', () => { proposerModele(); viderListe(); });
   $('mg-casting').addEventListener('change', () => { if ($('mg-casting').value) charger(); else viderListe(); });
   $('mg-charger').addEventListener('click', charger);
