@@ -7,6 +7,7 @@
 // Appelée par la BASE DE DONNÉES elle-même (pas par le navigateur du
 // visiteur, N-9) : la ligne est déjà enregistrée avant cet appel, donc un
 // échec d'envoi ne fait jamais perdre une candidature ou un message (N-10).
+// Elle ne répond qu'une fois les envois terminés (voir plus bas).
 //
 // Variables d'environnement requises sur Vercel :
 //   SUPABASE_SERVICE_ROLE_KEY (déjà utilisée par les autres fonctions api/)
@@ -95,13 +96,14 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  // Toujours répondre vite et sans erreur au déclencheur — l'enregistrement
-  // en base a déjà réussi, ce qui suit est un "bonus" best-effort (N-10).
-  res.status(200).json({ ok: true });
-
+  // La réponse n'est envoyée qu'APRÈS l'envoi des notifications : sur Vercel,
+  // le programme peut être arrêté dès que la réponse est partie, et tout ce
+  // qui suivait n'était alors jamais exécuté. L'enregistrement en base a
+  // déjà réussi avant cet appel, donc attendre ici ne ralentit personne (N-10).
+  let bilan = { ok: true };
   try {
     const notif = construireNotification(table, record);
-    if (!notif) return;
+    if (!notif) { res.status(200).json({ ok: true, ignore: true }); return; }
 
     webpush.setVapidDetails(VAPID_CONTACT, vapidPublique, vapidPrivee);
 
@@ -123,6 +125,7 @@ module.exports = async function handler(req, res) {
         headers: { ...enTetes, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
         body: JSON.stringify({ evenement: notif.cle, canal: 'push', statut: 'desactivee', cible_table: table, cible_id: record.id, resume: notif.texte })
       });
+      res.status(200).json({ ok: true, desactivee: true });
       return;
     }
 
@@ -135,6 +138,7 @@ module.exports = async function handler(req, res) {
 
     let reussites = 0;
     let echecs = 0;
+    let derniereErreur = null;
 
     for (const abo of abonnements) {
       const sub = { endpoint: abo.endpoint, keys: { p256dh: abo.p256dh, auth: abo.auth } };
@@ -147,6 +151,7 @@ module.exports = async function handler(req, res) {
           await webpush.sendNotification(sub, payload);
           envoye = true;
         } catch (err) {
+          derniereErreur = (err && (err.statusCode ? 'HTTP ' + err.statusCode + ' ' : '') + (err.body || err.message || '')) || 'inconnue';
           // 404/410 : abonnement expiré ou révoqué côté navigateur — on le
           // désactive pour ne plus perdre de temps dessus (pratique standard
           // web-push, pas une tentative supplémentaire à faire).
@@ -173,12 +178,13 @@ module.exports = async function handler(req, res) {
         cible_table: table,
         cible_id: record.id,
         resume: notif.texte,
-        erreur: echecs ? echecs + ' appareil(s) en échec sur ' + abonnements.length : null
+        erreur: echecs ? echecs + ' appareil(s) en échec sur ' + abonnements.length + ' — ' + String(derniereErreur).slice(0, 200) : null
       })
     });
+    bilan = { ok: true, appareils: abonnements.length, reussites, echecs };
   } catch (err) {
-    // Jamais remonté au visiteur (déjà répondu plus haut) — juste journalisé
-    // côté serveur Vercel pour debug.
     console.error('notifications-webhook:', err);
+    bilan = { ok: false, erreur: String(err && err.message || err) };
   }
+  res.status(200).json(bilan);
 };
