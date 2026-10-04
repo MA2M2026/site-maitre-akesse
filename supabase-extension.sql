@@ -5512,3 +5512,201 @@ create trigger trg_notif_blocages_connexion
   for each row execute function notifier_push_notification();
 
 NOTIFY pgrst, 'reload schema';
+
+-- =====================================================================
+-- Extension 110 — Grand 4, complément (demande du 04/10/2026) :
+-- 1) Le code d'inscription (inscription-mannequin.html) et le code
+--    d'invitation (« Créer mon compte » de espace-mannequin.html) étaient
+--    vérifiés directement depuis le navigateur, sans aucun blocage. Ils
+--    passent désormais par api/code-protege.js (même blocage que les mots
+--    de passe), et ne sont plus appelables depuis le navigateur.
+-- 2) Compteur commun à tout le site pour un même téléphone : chaque erreur
+--    (mot de passe, code admin, code d'inscription, code d'invitation)
+--    compte dans un compteur partagé (espace '*', identifiant
+--    'appareil:<id>'), et les avertissements « il vous reste N
+--    tentatives » / le blocage suivent ce compteur partout. Une connexion
+--    réussie ne remet PAS ce compteur commun à zéro (sinon il suffirait de
+--    se connecter à son propre compte pour repartir de zéro ailleurs) : il
+--    s'efface seul après 30 min sans erreur.
+-- Les anciennes versions à 3 paramètres restent (elles appellent les
+-- nouvelles) pour que la mise en ligne du site et de ce SQL puisse se
+-- faire dans n'importe quel ordre sans rien casser.
+-- =====================================================================
+
+create or replace function connexion_verifier_blocage(p_ip text, p_identifiant text, p_espace text, p_appareil text)
+returns table(bloque boolean, minutes_restantes int)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_max timestamptz;
+begin
+  if exists (select 1 from connexion_liste_blanche where ip = p_ip) then
+    return query select false, 0;
+    return;
+  end if;
+  select greatest(
+    coalesce((select bloque_jusqua from connexion_tentatives_ip where ip = p_ip and espace = p_espace), 'epoch'::timestamptz),
+    coalesce((select bloque_jusqua from connexion_tentatives_compte where identifiant = p_identifiant and espace = p_espace), 'epoch'::timestamptz),
+    coalesce((select bloque_jusqua from connexion_tentatives_compte where p_appareil is not null and identifiant = 'appareil:' || p_appareil and espace = '*'), 'epoch'::timestamptz)
+  ) into v_max;
+  if v_max > now() then
+    return query select true, greatest(1, ceil(extract(epoch from (v_max - now())) / 60)::int);
+  else
+    return query select false, 0;
+  end if;
+end;
+$$;
+
+-- Incrémente (ou remet à 1 si expiré) un compteur de la table _compte.
+create or replace function connexion_incrementer_compte(p_identifiant text, p_espace text, p_expir int)
+returns connexion_tentatives_compte
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  r connexion_tentatives_compte%rowtype;
+begin
+  select * into r from connexion_tentatives_compte where identifiant = p_identifiant and espace = p_espace for update;
+  if not found or r.derniere_tentative < now() - (p_expir || ' minutes')::interval then
+    insert into connexion_tentatives_compte (identifiant, espace, compteur, derniere_tentative, bloque_jusqua)
+      values (p_identifiant, p_espace, 1, now(), r.bloque_jusqua)
+      on conflict (identifiant, espace) do update set compteur = 1, derniere_tentative = now()
+      returning * into r;
+  else
+    update connexion_tentatives_compte set compteur = compteur + 1, derniere_tentative = now()
+      where identifiant = p_identifiant and espace = p_espace returning * into r;
+  end if;
+  return r;
+end;
+$$;
+
+create or replace function connexion_enregistrer_echec(p_ip text, p_identifiant text, p_espace text, p_appareil text)
+returns table(bloque boolean, avertissement boolean, essais_restants int, minutes_blocage int)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_expir int; v_avert int; v_max int; v_duree int; v_duree_recid int;
+  v_ip_row connexion_tentatives_ip%rowtype;
+  v_compte_row connexion_tentatives_compte%rowtype;
+  v_app_row connexion_tentatives_compte%rowtype;
+  v_app_id text := case when p_appareil is null then null else 'appareil:' || p_appareil end;
+  v_compteur int;
+  v_recidive boolean;
+  v_duree_appliquee int;
+begin
+  select
+    max(valeur) filter (where cle = 'expiration_compteur_minutes'),
+    max(valeur) filter (where cle = 'essais_avertissement_des'),
+    max(valeur) filter (where cle = 'essais_avant_blocage'),
+    max(valeur) filter (where cle = 'duree_blocage_minutes'),
+    max(valeur) filter (where cle = 'duree_blocage_recidive_minutes')
+  into v_expir, v_avert, v_max, v_duree, v_duree_recid
+  from connexion_reglages;
+  v_expir := coalesce(v_expir, 30); v_avert := coalesce(v_avert, 3); v_max := coalesce(v_max, 5);
+  v_duree := coalesce(v_duree, 60); v_duree_recid := coalesce(v_duree_recid, 120);
+
+  select * into v_ip_row from connexion_tentatives_ip where ip = p_ip and espace = p_espace for update;
+  if not found or v_ip_row.derniere_tentative < now() - (v_expir || ' minutes')::interval then
+    insert into connexion_tentatives_ip (ip, espace, compteur, derniere_tentative, bloque_jusqua)
+      values (p_ip, p_espace, 1, now(), v_ip_row.bloque_jusqua)
+      on conflict (ip, espace) do update set compteur = 1, derniere_tentative = now()
+      returning * into v_ip_row;
+  else
+    update connexion_tentatives_ip set compteur = compteur + 1, derniere_tentative = now()
+      where ip = p_ip and espace = p_espace returning * into v_ip_row;
+  end if;
+
+  v_compte_row := connexion_incrementer_compte(p_identifiant, p_espace, v_expir);
+  if v_app_id is not null then
+    v_app_row := connexion_incrementer_compte(v_app_id, '*', v_expir);
+  end if;
+
+  v_compteur := greatest(v_ip_row.compteur, v_compte_row.compteur, coalesce(v_app_row.compteur, 0));
+
+  if v_compteur >= v_max then
+    v_recidive := (v_ip_row.bloque_jusqua is not null and v_ip_row.bloque_jusqua > now() - interval '24 hours')
+               or (v_compte_row.bloque_jusqua is not null and v_compte_row.bloque_jusqua > now() - interval '24 hours')
+               or (v_app_row.bloque_jusqua is not null and v_app_row.bloque_jusqua > now() - interval '24 hours');
+    v_duree_appliquee := case when v_recidive then v_duree_recid else v_duree end;
+    update connexion_tentatives_ip set bloque_jusqua = now() + (v_duree_appliquee || ' minutes')::interval, compteur = 0
+      where ip = p_ip and espace = p_espace;
+    update connexion_tentatives_compte set bloque_jusqua = now() + (v_duree_appliquee || ' minutes')::interval, compteur = 0
+      where (identifiant = p_identifiant and espace = p_espace)
+         or (v_app_id is not null and identifiant = v_app_id and espace = '*');
+    insert into blocages_connexion (ip, identifiant, espace, duree_minutes, recidive)
+      values (p_ip, left(p_identifiant, 2) || '***', p_espace, v_duree_appliquee, v_recidive);
+    return query select true, false, 0, v_duree_appliquee;
+  elsif v_compteur >= v_avert then
+    return query select false, true, (v_max - v_compteur), 0;
+  else
+    return query select false, false, (v_max - v_compteur), 0;
+  end if;
+end;
+$$;
+
+-- Succès : remet à zéro les compteurs de CET espace seulement (pas le
+-- compteur commun du téléphone, voir en-tête).
+create or replace function connexion_enregistrer_succes(p_ip text, p_identifiant text, p_espace text, p_appareil text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  delete from connexion_tentatives_ip where ip = p_ip and espace = p_espace;
+  delete from connexion_tentatives_compte where identifiant = p_identifiant and espace = p_espace;
+end;
+$$;
+
+-- Anciennes signatures (3 paramètres) : redirigées vers les nouvelles.
+create or replace function connexion_verifier_blocage(p_ip text, p_identifiant text, p_espace text)
+returns table(bloque boolean, minutes_restantes int)
+language sql security definer set search_path = public
+as $$ select * from connexion_verifier_blocage(p_ip, p_identifiant, p_espace, null::text); $$;
+create or replace function connexion_enregistrer_echec(p_ip text, p_identifiant text, p_espace text)
+returns table(bloque boolean, avertissement boolean, essais_restants int, minutes_blocage int)
+language sql security definer set search_path = public
+as $$ select * from connexion_enregistrer_echec(p_ip, p_identifiant, p_espace, null::text); $$;
+create or replace function connexion_enregistrer_succes(p_ip text, p_identifiant text, p_espace text)
+returns void
+language sql security definer set search_path = public
+as $$ select connexion_enregistrer_succes(p_ip, p_identifiant, p_espace, null::text); $$;
+
+revoke all on function connexion_verifier_blocage(text, text, text, text) from public, anon, authenticated;
+revoke all on function connexion_enregistrer_echec(text, text, text, text) from public, anon, authenticated;
+revoke all on function connexion_enregistrer_succes(text, text, text, text) from public, anon, authenticated;
+revoke all on function connexion_incrementer_compte(text, text, int) from public, anon, authenticated;
+revoke all on function connexion_verifier_blocage(text, text, text) from public, anon, authenticated;
+revoke all on function connexion_enregistrer_echec(text, text, text) from public, anon, authenticated;
+revoke all on function connexion_enregistrer_succes(text, text, text) from public, anon, authenticated;
+grant execute on function connexion_verifier_blocage(text, text, text, text) to service_role;
+grant execute on function connexion_enregistrer_echec(text, text, text, text) to service_role;
+grant execute on function connexion_enregistrer_succes(text, text, text, text) to service_role;
+grant execute on function connexion_incrementer_compte(text, text, int) to service_role;
+grant execute on function connexion_verifier_blocage(text, text, text) to service_role;
+grant execute on function connexion_enregistrer_echec(text, text, text) to service_role;
+grant execute on function connexion_enregistrer_succes(text, text, text) to service_role;
+
+-- Les fonctions qui vérifient un code ne sont plus appelables depuis le
+-- navigateur (sinon un script pourrait contourner le blocage en les
+-- appelant directement) : seul api/code-protege.js (clé service_role) y a
+-- accès. Boucle sur toutes les versions existantes, au cas où.
+do $$
+declare f record;
+begin
+  for f in
+    select p.oid::regprocedure as sig from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'
+      and p.proname in ('verifier_code_inscription', 'soumettre_inscription_mannequin', 'check_invite_code', 'consume_invite_code')
+  loop
+    execute format('revoke all on function %s from public, anon, authenticated', f.sig);
+    execute format('grant execute on function %s to service_role', f.sig);
+  end loop;
+end $$;
+
+NOTIFY pgrst, 'reload schema';

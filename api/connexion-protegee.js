@@ -18,6 +18,9 @@ function extraireIp(req) {
   if (xff) return String(xff).split(',')[0].trim();
   return req.headers['x-real-ip'] || '0.0.0.0';
 }
+function nettoyerAppareil(v) {
+  return typeof v === 'string' && /^[A-Za-z0-9-]{8,64}$/.test(v) ? v : null;
+}
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -42,6 +45,7 @@ module.exports = async function handler(req, res) {
   }
 
   const ip = extraireIp(req);
+  const appareil = nettoyerAppareil(corps && corps.appareil);
   const identifiant = String(email).trim().toLowerCase();
   const entetes = { apikey: cleSecrete, Authorization: 'Bearer ' + cleSecrete, 'Content-Type': 'application/json' };
 
@@ -49,7 +53,7 @@ module.exports = async function handler(req, res) {
     // 1. Déjà bloqué ? On refuse sans même regarder le mot de passe (S-6).
     const repBlocage = await fetch(SUPABASE_URL + '/rest/v1/rpc/connexion_verifier_blocage', {
       method: 'POST', headers: entetes,
-      body: JSON.stringify({ p_ip: ip, p_identifiant: identifiant, p_espace: espace })
+      body: JSON.stringify({ p_ip: ip, p_identifiant: identifiant, p_espace: espace, p_appareil: appareil })
     });
     const lignesBlocage = repBlocage.ok ? await repBlocage.json() : [];
     const etatBlocage = lignesBlocage[0];
@@ -70,7 +74,7 @@ module.exports = async function handler(req, res) {
     if (!repAuth.ok) {
       const repEchec = await fetch(SUPABASE_URL + '/rest/v1/rpc/connexion_enregistrer_echec', {
         method: 'POST', headers: entetes,
-        body: JSON.stringify({ p_ip: ip, p_identifiant: identifiant, p_espace: espace })
+        body: JSON.stringify({ p_ip: ip, p_identifiant: identifiant, p_espace: espace, p_appareil: appareil })
       });
       const lignesEchec = repEchec.ok ? await repEchec.json() : [];
       const etat = lignesEchec[0] || { bloque: false, avertissement: false, essais_restants: null };
@@ -98,7 +102,7 @@ module.exports = async function handler(req, res) {
 
     await fetch(SUPABASE_URL + '/rest/v1/rpc/connexion_enregistrer_succes', {
       method: 'POST', headers: entetes,
-      body: JSON.stringify({ p_ip: ip, p_identifiant: identifiant, p_espace: espace })
+      body: JSON.stringify({ p_ip: ip, p_identifiant: identifiant, p_espace: espace, p_appareil: appareil })
     });
 
     res.status(200).json({

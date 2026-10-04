@@ -55,7 +55,7 @@ function construireNotification(table, record) {
     };
   }
   if (table === 'blocages_connexion') {
-    const lieu = record.espace === 'admin' ? 'connexion admin' : record.espace === 'admin-code' ? 'code de validation admin' : 'connexion espace mannequin';
+    const lieu = ({ admin: 'connexion admin', 'admin-code': 'code de validation admin', mannequin: 'connexion espace mannequin', 'inscription-code': "code d'inscription", 'portail-code': "code d'invitation mannequin" })[record.espace] || 'connexion';
     return {
       cle: 'evenement_blocage_connexion',
       titre: '🔒 Accès bloqué',

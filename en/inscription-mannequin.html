@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-D8J8r2Yn7wRPCcbyJbrJwew1umHRUeogds/vSSIo6HY='; style-src 'self' https://fonts.googleapis.com 'sha256-tFcy5AGgtBPoC5kXJZsbtpg3iMcSamS5C0fbatbaxhs='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-CFNJE+nf1WgMqCy18HPboKBxgLySWsmnaJ0dHzYnLbI='; style-src 'self' https://fonts.googleapis.com 'sha256-tFcy5AGgtBPoC5kXJZsbtpg3iMcSamS5C0fbatbaxhs='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -440,17 +440,46 @@ document.getElementById('ins-naissance').addEventListener('change', () => {
 remplirIndicatifs(document.getElementById('ins-indicatif'));
 remplirIndicatifs(document.getElementById('ins-parent-indicatif'));
 
+function idAppareilMa2m() {
+  try {
+    let v = localStorage.getItem('ma2m_appareil');
+    if (!v || !/^[A-Za-z0-9-]{8,64}$/.test(v)) {
+      v = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now().toString(16) + Math.random().toString(16).slice(2));
+      localStorage.setItem('ma2m_appareil', v);
+    }
+    return v;
+  } catch (e) { return null; }
+}
+function messageTentativeCode(rep, r) {
+  if (rep.status === 429) {
+    const h = Math.ceil(r.minutesRestantes / 60);
+    return r.dejaBloque ? `Too many attempts. Access temporarily blocked. Please come back in ${r.minutesRestantes} min.` : `Too many attempts. Access blocked. Please come back in ${h >= 1 ? h + ' hour' + (h > 1 ? 's' : '') : r.minutesRestantes + ' min'}.`;
+  }
+  return "This code is not recognized. Please check it with the agency." + (r.essaisRestants === 2 ? " Warning: you have 2 attempts left." : r.essaisRestants === 1 ? " You have 1 attempt left." : '');
+}
+
 document.getElementById('valider-code-btn').addEventListener('click', async () => {
   const code = document.getElementById('code-inscription').value.trim();
   const msg = document.getElementById('code-msg');
   if (!code) return;
-  const { data, error } = await sb.rpc('verifier_code_inscription', { code_input: code });
-  if (error || !data) {
+  let rep, r;
+  try {
+    rep = await fetch('/api/code-protege', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'inscription', code, appareil: idAppareilMa2m() })
+    });
+    r = await rep.json().catch(() => ({}));
+  } catch (e) {
+    msg.className = 'form-msg err'; msg.textContent = "Connection error — please try again."; msg.style.display = 'block';
+    return;
+  }
+  if (!rep.ok) {
     msg.className = 'form-msg err';
-    msg.textContent = "This code is not recognized. Please check it with the agency.";
+    msg.textContent = messageTentativeCode(rep, r);
     msg.style.display = 'block';
     return;
   }
+  msg.style.display = 'none';
   codeValide = code;
   document.getElementById('bloc-code').style.display = 'none';
   document.getElementById('form-inscription').style.display = 'block';
@@ -489,23 +518,39 @@ document.getElementById('form-inscription').addEventListener('submit', async (e)
   // code stays intact and can be retried, without exposing a separate
   // function to "release" it (such a function could be exploited to reuse
   // any already-used code).
-  const { data: idInscription, error } = await sb.rpc('soumettre_inscription_mannequin', {
-    p_code: dossier.code_utilise,
-    p_full_name: dossier.full_name,
-    p_date_naissance: dossier.date_naissance,
-    p_genre: dossier.genre,
-    p_height_cm: dossier.height_cm,
-    p_clothing_size: dossier.clothing_size,
-    p_phone: dossier.phone,
-    p_reference_paiement: dossier.reference_paiement,
-    p_parent_nom: dossier.parent_nom,
-    p_parent_telephone: dossier.parent_telephone
-  });
+  let idInscription = null, error = null, repEnvoi = null, resEnvoi = {};
+  try {
+    repEnvoi = await fetch('/api/code-protege', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'inscription-soumettre', code: dossier.code_utilise, appareil: idAppareilMa2m(),
+        dossier: {
+          p_full_name: dossier.full_name,
+          p_date_naissance: dossier.date_naissance,
+          p_genre: dossier.genre,
+          p_height_cm: dossier.height_cm,
+          p_clothing_size: dossier.clothing_size,
+          p_phone: dossier.phone,
+          p_reference_paiement: dossier.reference_paiement,
+          p_parent_nom: dossier.parent_nom,
+          p_parent_telephone: dossier.parent_telephone
+        }
+      })
+    });
+    resEnvoi = await repEnvoi.json().catch(() => ({}));
+    if (repEnvoi.ok) idInscription = resEnvoi.id;
+    else if (repEnvoi.status === 401 || repEnvoi.status === 429) error = { tentative: true };
+    else error = { code: resEnvoi.code, message: resEnvoi.message || '' };
+  } catch (e) {
+    error = { message: '' };
+  }
 
   if (error) {
     boutonEnvoyer.disabled = false;
     msg.className = 'form-msg err';
-    if (error.message && error.message.includes('code_invalide_ou_deja_utilise')) {
+    if (error.tentative && repEnvoi.status === 429) {
+      msg.textContent = messageTentativeCode(repEnvoi, resEnvoi);
+    } else if (error.tentative || (error.message && error.message.includes('code_invalide_ou_deja_utilise'))) {
       msg.textContent = "This code is no longer valid (it may already have been used by someone else). Contact the agency for a new code.";
     } else if (error.code === '23505') {
       msg.textContent = "This Wave payment reference has already been used for another registration. Make sure you copied YOUR OWN reference, then try again.";

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-GR5DmaFaylQQ9Gre6c17bVX90WiLQoCCdDnT/loTjLM=' 'sha256-iYduWIMjdIkMaWx15GjZLHGyFXGCZDoCqpRtwyFAya4=' 'sha256-MK1G5JEWc88EOM8k0WKoGU/GasD7ldyaHBZs54Wovng='; style-src 'self' https://fonts.googleapis.com 'sha256-2RaJjkt0dwCPrM/WQd2sjLywmysdtxLwAh6UXghu0HQ=' 'sha256-l6fymG/9VFModmkt4+Cju+Misw/e9E3nOMRhpZL+0so=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-GR5DmaFaylQQ9Gre6c17bVX90WiLQoCCdDnT/loTjLM=' 'sha256-iYduWIMjdIkMaWx15GjZLHGyFXGCZDoCqpRtwyFAya4=' 'sha256-4dTXq6n3Ee1aiPBDJsAzpmBPtXnCajS618Wi5IJX2lE='; style-src 'self' https://fonts.googleapis.com 'sha256-2RaJjkt0dwCPrM/WQd2sjLywmysdtxLwAh6UXghu0HQ=' 'sha256-l6fymG/9VFModmkt4+Cju+Misw/e9E3nOMRhpZL+0so=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <meta charset="UTF-8">
@@ -742,6 +742,37 @@ function afficherPanneauAuth(id){
   }
 }
 
+function idAppareilMa2m() {
+  try {
+    let v = localStorage.getItem('ma2m_appareil');
+    if (!v || !/^[A-Za-z0-9-]{8,64}$/.test(v)) {
+      v = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now().toString(16) + Math.random().toString(16).slice(2));
+      localStorage.setItem('ma2m_appareil', v);
+    }
+    return v;
+  } catch (e) { return null; }
+}
+async function verifierCodePortail(code) {
+  try {
+    const rep = await fetch('/api/code-protege', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'portail', code, appareil: idAppareilMa2m() })
+    });
+    const r = await rep.json().catch(() => ({}));
+    if (rep.ok) return { ok: true };
+    if (rep.status === 429) {
+      const h = Math.ceil(r.minutesRestantes / 60);
+      return { ok: false, message: r.dejaBloque
+        ? `Trop de tentatives. Accès temporairement bloqué. Revenez dans ${r.minutesRestantes} min.`
+        : `Trop de tentatives. Accès bloqué. Revenez dans ${h >= 1 ? h + ' heure' + (h > 1 ? 's' : '') : r.minutesRestantes + ' min'}.` };
+    }
+    const reste = r.essaisRestants;
+    return { ok: false, message: "Ce code d'invitation est invalide." + (reste === 2 ? ' Attention : il vous reste 2 tentatives.' : reste === 1 ? ' Il vous reste 1 tentative.' : '') };
+  } catch (e) {
+    return { ok: false, message: 'Erreur de connexion — réessayez.' };
+  }
+}
+
 function bindAuthGate(){
   document.getElementById('auth-tab-connexion')?.addEventListener('click', function(){ afficherPanneauAuth('auth-panneau-connexion'); });
   document.getElementById('auth-tab-inscription')?.addEventListener('click', function(){ afficherPanneauAuth('auth-panneau-inscription'); });
@@ -756,7 +787,7 @@ function bindAuthGate(){
     try {
       const reponse = await fetch('/api/connexion-protegee', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password: mdp, espace: 'mannequin' })
+        body: JSON.stringify({ email, password: mdp, espace: 'mannequin', appareil: idAppareilMa2m() })
       });
       const resultat = await reponse.json().catch(() => ({}));
       if (reponse.status === 429) {
@@ -789,8 +820,8 @@ function bindAuthGate(){
     if (mdp.length < 8) { msg.textContent = 'Le mot de passe doit contenir au moins 8 caractères.'; return; }
     msg.textContent = 'Vérification du code…';
 
-    const { data: codeValide, error: erreurCode } = await sb.rpc('check_invite_code', { code_input: code });
-    if (erreurCode || !codeValide) { msg.textContent = "Ce code d'invitation est invalide ou déjà utilisé."; return; }
+    const verif = await verifierCodePortail(code);
+    if (!verif.ok) { msg.textContent = verif.message; return; }
 
     const { data: signUpData, error: erreurSignUp } = await sb.auth.signUp({ email, password: mdp });
     if (erreurSignUp) { msg.textContent = "Erreur lors de la création du compte : " + erreurSignUp.message; return; }
@@ -800,8 +831,8 @@ function bindAuthGate(){
       return;
     }
 
-    const { data: consomme, error: erreurConsomme } = await sb.rpc('consume_invite_code', { code_input: code });
-    if (erreurConsomme || !consomme) {
+    const verifFinale = await verifierCodePortail(code);
+    if (!verifFinale.ok) {
       msg.textContent = "Ce code vient d'être utilisé par quelqu'un d'autre. Contactez l'agence pour un nouveau code.";
       await sb.auth.signOut();
       return;
