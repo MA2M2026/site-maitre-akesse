@@ -2716,3 +2716,8 @@ html.selection-vide #liste-vide { display: block; }
 .mf-wa select, .mf-wa input { width: 100%; box-sizing: border-box; }
 .mf-wa-rdv { grid-template-columns: 1fr 1fr; gap: 0 0.8rem; }
 .mf-wa-rdv .mf-wa-lieu { grid-column: 1 / -1; }
+
+/* Brouillon retrouvé (js/brouillon.js) */
+.brouillon-bandeau { display: flex; flex-wrap: wrap; align-items: center; gap: 0.8rem 1rem; margin: 0 0 1.4rem; padding: 0.9rem 1.1rem; border: 1px solid var(--gris-clair); border-left: 3px solid var(--bordeaux-clair); background: var(--anthracite); font-size: 0.86rem; line-height: 1.5; color: var(--texte-corps); }
+.brouillon-bandeau span { flex: 1 1 16rem; }
+.brouillon-bandeau .brouillon-effacer { padding: 0.55rem 1.1rem; font-size: 0.72rem; min-height: 40px; }
