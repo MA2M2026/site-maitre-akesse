@@ -789,6 +789,27 @@ section { padding: 5rem 0; }
   .logo-img-header img { height: 28px; }
 }
 
+/* Animation du logo (04/10/2026) : apparition douce au chargement, puis un reflet de
+   lumière très discret qui traverse les lettres toutes les 9 secondes environ. Le reflet
+   est découpé à la forme exacte du logo (masque), il ne déborde jamais autour.
+   Désactivée pour les personnes qui ont demandé « moins d'animations » sur leur appareil. */
+.logo-img-header { position: relative; }
+.logo-img-header img { animation: logo-apparition 1.1s cubic-bezier(.2,.7,.2,1) both; }
+.logo-img-header::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(105deg, transparent 38%, rgba(213,84,104,.75) 50%, transparent 62%) no-repeat;
+  background-size: 250% 100%; background-position: -30% 0;
+  -webkit-mask: url(../assets/logo-header.png) center / contain no-repeat;
+          mask: url(../assets/logo-header.png) center / contain no-repeat;
+  animation: logo-reflet 9s ease-in-out 1.3s infinite;
+}
+@keyframes logo-apparition { from { opacity: 0; transform: translateY(4px); filter: blur(3px); } to { opacity: 1; transform: none; filter: none; } }
+@keyframes logo-reflet { 0% { background-position: -30% 0; } 16%, 100% { background-position: 130% 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .logo-img-header img { animation: none; }
+  .logo-img-header::after { display: none; }
+}
+
 .header-v2-droite { display: flex; align-items: center; gap: 1.4rem; }
 .lang-switch {
   font-family: var(--texte); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em;
