@@ -148,7 +148,9 @@ module.exports = async function handler(req, res) {
       for (let essai = 0; essai < 3 && !envoye; essai++) {
         try {
           if (essai > 0) await new Promise((r) => setTimeout(r, 300 * essai));
-          await webpush.sendNotification(sub, payload);
+          // Priorité haute : Android délivre tout de suite, même téléphone en
+          // veille (sinon il peut retarder la notification de plusieurs minutes).
+          await webpush.sendNotification(sub, payload, { urgency: 'high', TTL: 3600 });
           envoye = true;
         } catch (err) {
           derniereErreur = (err && (err.statusCode ? 'HTTP ' + err.statusCode + ' ' : '') + (err.body || err.message || '')) || 'inconnue';
