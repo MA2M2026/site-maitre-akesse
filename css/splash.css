@@ -83,21 +83,3 @@ html.intro-a-venir #logo-splash { display: flex; }
 .splash.intro-anime { background: #050304; }
 .splash.intro-anime .splash-logo-wrap { display: none; }
 .splash-passer { z-index: 1; }
-
-/* Couverture animée en haut de l'accueil (js/couverture-faisceau.js, 04/10/2026) :
-   format couverture Facebook sur ordinateur (820 × 312), 16:9 sur téléphone. */
-.couverture-faisceau { position: relative; width: 100%; aspect-ratio: 820 / 312; max-height: 72vh; background: #050304; overflow: hidden; }
-.couverture-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-.couverture-secours { position: absolute; left: 50%; top: 50%; width: min(72%, 640px); height: auto; transform: translate(-50%, -50%); }
-.couverture-faisceau.anime .couverture-secours { display: none; }
-@media (max-width: 700px) { .couverture-faisceau { aspect-ratio: 16 / 9; } }
-
-/* Couverture fixe (demande du 04/10/2026) : la couverture reste en haut de l'écran, la
-   barre du menu reste fixée juste en dessous, et tout le reste de la page défile sous
-   les deux. Hauteur : format Facebook sur ordinateur, limité à 40 % de l'écran pour
-   laisser de la place à la lecture ; 16:9 sur téléphone. */
-:root { --couv-h: min(calc(100vw * 312 / 820), 40vh); }
-@media (max-width: 700px) { :root { --couv-h: calc(100vw * 9 / 16); } }
-.couverture-faisceau { position: sticky; top: 0; z-index: 401; aspect-ratio: auto; height: var(--couv-h); max-height: none; }
-.site-header-v2.entete-sous-couverture { top: var(--couv-h); }
-html:has(#couverture-faisceau) { scroll-padding-top: calc(var(--couv-h) + 90px); }

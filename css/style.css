@@ -2742,3 +2742,21 @@ html.selection-vide #liste-vide { display: block; }
 .brouillon-bandeau { display: flex; flex-wrap: wrap; align-items: center; gap: 0.8rem 1rem; margin: 0 0 1.4rem; padding: 0.9rem 1.1rem; border: 1px solid var(--gris-clair); border-left: 3px solid var(--bordeaux-clair); background: var(--anthracite); font-size: 0.86rem; line-height: 1.5; color: var(--texte-corps); }
 .brouillon-bandeau span { flex: 1 1 16rem; }
 .brouillon-bandeau .brouillon-effacer { padding: 0.55rem 1.1rem; font-size: 0.72rem; min-height: 40px; }
+
+/* Couverture animée en haut de toutes les pages publiques (js/couverture-faisceau.js,
+   04/10/2026) : format couverture Facebook sur ordinateur (820 × 312), 16:9 sur téléphone. */
+.couverture-faisceau { position: relative; width: 100%; aspect-ratio: 820 / 312; max-height: 72vh; background: #050304; overflow: hidden; }
+.couverture-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.couverture-secours { position: absolute; left: 50%; top: 50%; width: min(72%, 640px); height: auto; transform: translate(-50%, -50%); }
+.couverture-faisceau.anime .couverture-secours { display: none; }
+@media (max-width: 700px) { .couverture-faisceau { aspect-ratio: 16 / 9; } }
+
+/* Couverture fixe (demande du 04/10/2026) : la couverture reste en haut de l'écran, la
+   barre du menu reste fixée juste en dessous, et tout le reste de la page défile sous
+   les deux. Hauteur : format Facebook sur ordinateur, limité à 40 % de l'écran pour
+   laisser de la place à la lecture ; 16:9 sur téléphone. */
+:root { --couv-h: min(calc(100vw * 312 / 820), 40vh); }
+@media (max-width: 700px) { :root { --couv-h: calc(100vw * 9 / 16); } }
+.couverture-faisceau { position: sticky; top: 0; z-index: 401; aspect-ratio: auto; height: var(--couv-h); max-height: none; }
+.site-header-v2.entete-sous-couverture { top: var(--couv-h); }
+html:has(#couverture-faisceau) { scroll-padding-top: calc(var(--couv-h) + 90px); }

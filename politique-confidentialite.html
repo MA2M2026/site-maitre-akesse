@@ -38,7 +38,15 @@ setTimeout(() => {
 </script>
 
 
-<header class="site-header-v2">
+<!-- Couverture animée (logo « faisceau de lumière »), fixée en haut ; la barre du menu reste juste dessous -->
+<section class="couverture-faisceau" id="couverture-faisceau" aria-label="Maître Akesse Model Management">
+  <canvas class="couverture-canvas" aria-hidden="true"></canvas>
+  <img class="couverture-secours" src="assets/logo-intro.png" alt="Maître Akesse Model Management">
+</section>
+<script src="js/faisceau.js"></script>
+<script src="js/couverture-faisceau.js"></script>
+
+<header class="site-header-v2 entete-sous-couverture">
   <div class="container header-v2-inner">
     <a href="index.html" class="logo-img-header"><img src="assets/logo-header.png" alt="Maître Akesse Model Management"></a>
     <div class="header-v2-droite">
