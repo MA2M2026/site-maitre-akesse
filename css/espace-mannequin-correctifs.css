@@ -82,3 +82,20 @@
 /* Curseurs « compétences » (étape Photos) : couleurs de l'agence au lieu du bleu du
    navigateur (30/09). */
 input[type=range] { accent-color: #c21d36; }
+
+/* Bouton « retour en haut » (ajouté par js/confort.js) : cette page ne charge pas
+   css/style.css, le bouton s'affichait donc comme un petit carré blanc brut en bas
+   à gauche (test du 04/10/2026). Même apparence que sur le reste du site. */
+.retour-haut {
+  position: fixed; right: 1.4rem; bottom: calc(1.4rem + env(safe-area-inset-bottom, 0px)); z-index: 190;
+  width: 48px; height: 48px; display: grid; place-items: center; padding: 0;
+  background: rgba(6,5,4,0.82); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border: 1px solid rgba(245,239,231,.22); border-radius: 999px; color: #f5efe7; cursor: pointer;
+  opacity: 0; visibility: hidden; transform: translateY(10px);
+  transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s, border-color 0.2s ease, color 0.2s ease;
+}
+.retour-haut.visible { opacity: 1; visibility: visible; transform: none; }
+.retour-haut:hover, .retour-haut:focus-visible { border-color: #d55468; color: #d55468; }
+.retour-haut svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+@media (max-width: 700px) { .retour-haut { right: 1rem; bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); width: 44px; height: 44px; } }
+@media print { .retour-haut { display: none !important; } }

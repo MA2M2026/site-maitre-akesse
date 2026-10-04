@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-GR5DmaFaylQQ9Gre6c17bVX90WiLQoCCdDnT/loTjLM=' 'sha256-iYduWIMjdIkMaWx15GjZLHGyFXGCZDoCqpRtwyFAya4=' 'sha256-hV1pjJxGbK0yDNh+bdast6+qUbzTVzZapXvcH2c/2II='; style-src 'self' https://fonts.googleapis.com 'sha256-2RaJjkt0dwCPrM/WQd2sjLywmysdtxLwAh6UXghu0HQ=' 'sha256-l6fymG/9VFModmkt4+Cju+Misw/e9E3nOMRhpZL+0so=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-AEbh78QB22ljMEiamqHNVYVifkywOcEueIbc+mk/mh0='; style-src 'self' https://fonts.googleapis.com 'sha256-74xXKVtiAJEAca9qMBm1kB3qFEnE9yShy89lv0tZBJw=' 'sha256-95tyu5pwa5RZ8I04E5+0Iw0artWxlCY0nXK79jf1iaI=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <meta charset="UTF-8">
@@ -179,12 +179,12 @@ a{color:inherit}
   border:1px solid rgba(244,237,225,.15);border-radius:var(--radius);
   padding:16px 18px;margin-bottom:12px;display:flex;justify-content:space-between;gap:14px;align-items:center;
 }
-.exp-fields{display:grid;grid-template-columns:150px 1fr 130px 90px;gap:10px;flex:1}
-@media(max-width:680px){.exp-fields{grid-template-columns:1fr 1fr}}
+.exp-fields{display:grid;grid-template-columns:150px minmax(0,1fr) 130px 90px;gap:10px;flex:1;min-width:0}
+@media(max-width:680px){.exp-fields{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.exp-fields [data-expf=nom]{grid-column:1/-1}}
 .exp-fields select,.exp-fields input{
   background:rgba(244,237,225,.04);border:1px solid rgba(244,237,225,.18);border-radius:var(--radius);
   color:var(--ivoire);padding:9px 10px;font-family:var(--sans);font-size:.84rem;font-weight:300;outline:none;
-  transition:border-color .2s, background .2s;
+  transition:border-color .2s, background .2s;min-width:0;width:100%;box-sizing:border-box;
 }
 .exp-fields select:focus,.exp-fields input:focus{border-color:var(--or);background:rgba(213,84,104,.06)}
 .exp-fields input::placeholder{color:var(--texte-tres-clair)}
@@ -482,7 +482,7 @@ html{scroll-behavior:smooth}body{background:radial-gradient(900px 500px at 5% -5
 .btn-pill:active{transform:translateY(1px) scale(.97)}
 @media(max-width:480px){.btn-pill{padding:8px 14px;font-size:.6rem}}
 @media(max-width:900px){.shell{padding:24px 18px 70px}.mcv-main{padding:27px}}
-@media(max-width:700px){.shell{padding:18px 13px 55px}.stepper{grid-template-columns:repeat(3,1fr)}.panel{padding:25px 18px}.grid,.grid.g3{grid-template-columns:1fr}.blocks-grid{grid-template-columns:1fr}.book-grid{grid-template-columns:repeat(3,1fr)}.exp-card{align-items:stretch;flex-direction:column}.exp-fields{grid-template-columns:1fr 1fr}.mcv-wrap{flex-direction:column}.mcv-side{width:100%}.mcv-main{padding:22px 18px}.mcv-bottom-row{grid-template-columns:1fr}}
+@media(max-width:700px){.shell{padding:18px 13px 55px}.stepper{grid-template-columns:repeat(3,1fr)}.panel{padding:25px 18px}.grid,.grid.g3{grid-template-columns:1fr}.blocks-grid{grid-template-columns:1fr}.book-grid{grid-template-columns:repeat(3,1fr)}.exp-card{align-items:stretch;flex-direction:column}.exp-fields{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.mcv-wrap{flex-direction:column}.mcv-side{width:100%}.mcv-main{padding:22px 18px}.mcv-bottom-row{grid-template-columns:1fr}}
 @media(max-width:480px){.espace-tag{display:none}.greet{padding:25px 21px}.greet h1{font-size:1.85rem}.stepper{grid-template-columns:repeat(2,1fr)}.step-tab{padding:12px 5px;font-size:.54rem}.actions-row{flex-direction:column-reverse;align-items:stretch}.actions-row .btn{width:100%}.upload-grid{grid-template-columns:1fr 1fr;gap:9px}.book-grid{grid-template-columns:repeat(2,1fr)}.mcv-profil-row,.mcv-two-col{display:flex;flex-direction:column}.mcv-side-tag{width:100%;display:grid;grid-template-columns:repeat(3,1fr)}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.001ms!important;transition-duration:.001ms!important;scroll-behavior:auto!important}}
 
@@ -1518,7 +1518,7 @@ function stepExperience(){
     '</div></div>' +
     '<div class="actions-row p20-17"><button class="btn ghost small" id="saveProfilPro">Enregistrer</button></div>' +
     '<p class="sub p20-20">Défilés, shootings, publicités, castings… Un seul projet suffit pour publier votre profil — vous pourrez toujours en ajouter d’autres plus tard.</p>' +
-    '<button class="btn ghost small" id="addExp" class="p20-12">+ Ajouter une expérience</button>' +
+    '<button class="btn ghost small p20-12" id="addExp">+ Ajouter une expérience</button>' +
     '<div id="expList">'+listHtml+'</div>' +
     '<div class="actions-row"><button class="btn ghost" data-goto="3">← Retour</button><button class="btn primary" id="save4">Continuer</button></div>';
 }
@@ -1728,6 +1728,22 @@ function bindProfilProHandlers(){
 }
 
 /* ------------------------------------------------------- PHOTOS : handlers */
+// Après un retrait de la compcard, Store.setCompcardOrdre(null) renumérote en base les
+// photos suivantes (2→1, 3→2…) : on fait exactement la même chose à l'écran, sinon
+// l'écran garde l'ancienne numérotation et la photo ajoutée ensuite prend un numéro
+// déjà occupé en base (deux photos sur la même case).
+function retirerDeCompcardLocal(photo){
+  photo.compcardOrdre = null;
+  state.photos.book.filter(function(ph){ return ph.compcardOrdre; })
+    .sort(function(a,b){ return a.compcardOrdre-b.compcardOrdre; })
+    .forEach(function(ph, i){ ph.compcardOrdre = i+1; });
+}
+
+// Le clic sur une photo de la fenêtre « Choisir dans mon Book » est écouté une seule
+// fois pour toute la page : bindPhotoHandlers() est rappelée à chaque affichage, et
+// l'écouteur était auparavant ajouté à chaque fois (un clic = plusieurs enregistrements).
+let ecouteChoixBookPose = false;
+
 function bindPhotoHandlers(){
   const s = state;
   const fBook = document.getElementById('fBook');
@@ -1781,7 +1797,7 @@ function bindPhotoHandlers(){
     if (!photo) return;
     if (photo.compcardOrdre) {
       const ok = await Store.setCompcardOrdre(photo.id, null);
-      if (ok) { photo.compcardOrdre = null; render(); reopenDashboardBlock('photos'); toast('Retirée de la compcard'); }
+      if (ok) { retirerDeCompcardLocal(photo); render(); reopenDashboardBlock('photos'); toast('Retirée de la compcard'); }
       return;
     }
     const occupes = s.photos.book.map(function(ph){ return ph.compcardOrdre; }).filter(Boolean);
@@ -1854,7 +1870,7 @@ function bindPhotoHandlers(){
     const photo = s.photos.book.find(function(ph){ return ph.compcardOrdre===slot; });
     if (!photo) return;
     const ok = await Store.setCompcardOrdre(photo.id, null);
-    if (ok) { render(); reopenDashboardBlock('photos'); toast('Emplacement '+slot+' libéré — la photo reste dans le Book'); }
+    if (ok) { retirerDeCompcardLocal(photo); render(); reopenDashboardBlock('photos'); toast('Emplacement '+slot+' libéré — la photo reste dans le Book'); }
   }); });
 
   // Téléversement direct par rôle : la photo est ajoutée au Book (comme toute
@@ -1887,13 +1903,17 @@ function bindPhotoHandlers(){
     });
   });
 
+  if (ecouteChoixBookPose) return;
+  ecouteChoixBookPose = true;
   document.addEventListener('click', function(e){
     if (e.target.closest('[data-cc-book-close]') || e.target.id==='ccBookModal') fermerChoixBook();
     const choix = e.target.closest('[data-choix-id]');
     if (choix) {
       const modal = document.getElementById('ccBookModal');
-      const photo = s.photos.book.find(function(ph){ return String(ph.id)===String(choix.dataset.choixId); });
-      if (photo && modal && modal._onChoisir) { modal._onChoisir(photo); }
+      const photo = state.photos.book.find(function(ph){ return String(ph.id)===String(choix.dataset.choixId); });
+      const surChoix = modal && modal._onChoisir;
+      if (modal) modal._onChoisir = null;
+      if (photo && surChoix) { surChoix(photo); }
       fermerChoixBook();
     }
   });
@@ -1981,7 +2001,7 @@ function viewBlockEditor(k){
   const sousTitre = prenom ? messageBlocPersonnalise(k, prenom) : 'Ce bloc s’enregistre indépendamment des autres.';
   return header('Modification du profil') +
     '<div class="block-editor-page"><div class="block-editor-top"><div><span class="editor-kicker">VOTRE ESPACE</span><h1>'+echapperHtml(prenom ? (prenom+' · '+(titles[k]||'')) : (titles[k]||'Modification'))+'</h1><p>'+echapperHtml(sousTitre)+'</p></div>' +
-    '<button type="button" class="btn ghost small" id="fermerEditeurBloc" class="p20-19">← Retour au tableau de bord</button></div>' +
+    '<button type="button" class="btn ghost small p20-19" id="fermerEditeurBloc">← Retour au tableau de bord</button></div>' +
     '<div class="panel block-editor-panel">'+editorPageBody(k)+'</div></div>';
 }
 
@@ -2204,7 +2224,9 @@ async function demarrerApresConnexion(){
       new Promise(resolve => setTimeout(() => resolve(delaiDepasse), 10000))
     ]);
     if (resultat === delaiDepasse) {
-      document.getElementById('app').innerHTML = '<div class="auth-loading"><span>La connexion prend plus de temps que prévu. </span><button class="btn ghost small" onclick="location.reload()">Réessayer</button></div>';
+      // Pas de onclick="" en ligne : le CSP strict de cette page le bloquerait en silence.
+      document.getElementById('app').innerHTML = '<div class="auth-loading"><span>La connexion prend plus de temps que prévu. </span><button class="btn ghost small" id="btn-reessayer">Réessayer</button></div>';
+      document.getElementById('btn-reessayer').addEventListener('click', function(){ location.reload(); });
       return;
     }
     const { data: { session } } = resultat;
