@@ -22,8 +22,8 @@ self.addEventListener('push', (event) => {
   const titre = donnees.titre || 'Maître Akesse Model Management';
   const options = {
     body: donnees.texte || '',
-    icon: '/assets/icons/icone-192.png',
-    badge: '/assets/icons/icone-192.png',
+    icon: '/icons/icon-192.png',
+    badge: '/icons/icon-192.png',
     vibrate: [200, 100, 200],
     tag: donnees.tag || undefined,
     renotify: !!donnees.tag,
