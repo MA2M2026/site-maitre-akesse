@@ -5766,3 +5766,34 @@ create policy "Photos model-photos : liste par le mannequin et les admins"
   );
 
 NOTIFY pgrst, 'reload schema';
+
+-- =====================================================================
+-- Extension 113 — Couverture du site (04/10/2026) : réglages simples du
+-- site, modifiables depuis le tableau de bord. Première utilisation : la
+-- couverture fixe en haut de toutes les pages (cle = 'couverture') —
+-- soit l'animation du logo (par défaut), soit une vidéo envoyée par
+-- l'agence ({ "type": "video", "url": ..., "chemin": ... }).
+-- Lecture publique (les pages doivent savoir quoi afficher, rien de
+-- secret) ; écriture réservée aux admins.
+-- =====================================================================
+create table if not exists reglages_site (
+  cle text primary key,
+  valeur jsonb not null default '{}'::jsonb,
+  maj timestamptz not null default now()
+);
+alter table reglages_site enable row level security;
+
+drop policy if exists "Tout le monde lit les réglages du site" on reglages_site;
+create policy "Tout le monde lit les réglages du site"
+  on reglages_site for select using (true);
+
+drop policy if exists "Les admins modifient les réglages du site" on reglages_site;
+create policy "Les admins modifient les réglages du site"
+  on reglages_site for all
+  using (exists (select 1 from admins where user_id = auth.uid()))
+  with check (exists (select 1 from admins where user_id = auth.uid()));
+
+grant select on reglages_site to anon, authenticated;
+grant insert, update, delete on reglages_site to authenticated;
+
+NOTIFY pgrst, 'reload schema';

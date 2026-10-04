@@ -436,3 +436,10 @@ html body.tdb-v2 .db-main .dc-nom, html body.tdb-v2 .db-main h2, html body.tdb-v
 /* « Messages groupés » et « Nouveau casting » : seulement sur la vue d'ensemble, comme sur la maquette
    (ils se répétaient en haut de chaque page — remarque du 04/10). */
 html body.tdb-v2:not(.v2-page-v2-ensemble) .v2-entete-actions { display: none !important; }
+
+/* Couverture du site (vidéo) — js/couverture-admin.js */
+.couv-apercu { margin: 0.8rem 0 1rem; max-width: 560px; }
+.couv-apercu video { display: block; width: 100%; aspect-ratio: 820 / 312; object-fit: cover; border-radius: 6px; background: #050304; }
+.couv-case { display: flex; align-items: center; gap: 0.5rem; margin: 0.6rem 0 0.9rem; font-size: 0.86rem; cursor: pointer; }
+.couv-barre { height: 6px; border-radius: 3px; background: rgba(255,255,255,0.08); overflow: hidden; margin: 0 0 0.9rem; max-width: 560px; }
+.couv-barre span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #7a1220, #d55468); transition: width 0.3s ease; }

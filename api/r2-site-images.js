@@ -20,7 +20,8 @@ const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 
 const SUPABASE_URL = 'https://dfhghgmwmxiguhtxtsle.supabase.co';
 // 'boutique' : photos des produits de la Marketplace (29/09/2026).
-const CATEGORIES_AUTORISEES = ['actualites', 'evenements', 'partenaires', 'responsable', 'boutique'];
+// 'couverture' : vidéo de couverture en haut de toutes les pages (04/10/2026).
+const CATEGORIES_AUTORISEES = ['actualites', 'evenements', 'partenaires', 'responsable', 'boutique', 'couverture'];
 
 function creerClientR2() {
   return new S3Client({
@@ -61,6 +62,9 @@ async function estAdmin(userId) {
 // (octet-stream toléré : jamais exécuté par un navigateur, et renvoyé par certains
 // téléchargements lors des migrations).
 const TYPES_AUTORISES = /^(image\/(jpeg|jpg|pjpeg|png|webp|gif|heic|heif|avif)|application\/octet-stream)$/i;
+// Vidéos (MP4 / WebM) : uniquement pour la couverture du site — jamais exécutées par un
+// navigateur, servies avec leur propre type par le relais /book-photos.
+const TYPES_VIDEO = /^video\/(mp4|webm)$/i;
 function cheminSur(chemin) {
   // Refuse les remontées de dossier (« .. » comme segment), les antislashs, les
   // doubles barres et les caractères de contrôle ; « photo..jpg » reste accepté.
@@ -101,8 +105,9 @@ module.exports = async function handler(req, res) {
     return;
   }
   const typeFichier = contentType || 'image/jpeg';
-  if (typeof typeFichier !== 'string' || !TYPES_AUTORISES.test(typeFichier)) {
-    res.status(400).json({ error: 'Format de fichier non accepté (photos JPEG, PNG, WebP, GIF, HEIC uniquement).' });
+  const videoPermise = categorie === 'couverture' && typeof typeFichier === 'string' && TYPES_VIDEO.test(typeFichier);
+  if (typeof typeFichier !== 'string' || (!TYPES_AUTORISES.test(typeFichier) && !videoPermise)) {
+    res.status(400).json({ error: categorie === 'couverture' ? 'Format non accepté (vidéo MP4 ou WebM, ou photo).' : 'Format de fichier non accepté (photos JPEG, PNG, WebP, GIF, HEIC uniquement).' });
     return;
   }
 

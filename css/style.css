@@ -2760,3 +2760,8 @@ html.selection-vide #liste-vide { display: block; }
 .couverture-faisceau { position: sticky; top: 0; z-index: 401; aspect-ratio: auto; height: var(--couv-h); max-height: none; }
 .site-header-v2.entete-sous-couverture { top: var(--couv-h); }
 html:has(#couverture-faisceau) { scroll-padding-top: calc(var(--couv-h) + 90px); }
+/* Vidéo de couverture choisie dans le tableau de bord : remplace l'animation en fondu. */
+.couverture-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.9s ease; }
+.couverture-faisceau.video-prete .couverture-video { opacity: 1; }
+.couverture-faisceau.video-prete .couverture-canvas,
+.couverture-faisceau.video-prete .couverture-secours { visibility: hidden; transition: visibility 0s 0.9s; }
