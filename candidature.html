@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-KWoG52RevPpdh1Cp9G82ywc7sHbI/hSTNBMJsr3P/AI=' 'sha256-WTZ/vQtWbf0OItw9C655Et3rpRSMMc5Eckyyzhs05Cs='; style-src 'self' https://fonts.googleapis.com 'sha256-lAujTgC9U0NCyjDT7ti2N4olkJXP+Yzug1d3VIqDXd8='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-KWoG52RevPpdh1Cp9G82ywc7sHbI/hSTNBMJsr3P/AI=' 'sha256-CofWOFr1RAK6x/eV6nOiRsqFNKE7uRXwqdjVjf3C8f0='; style-src 'self' https://fonts.googleapis.com 'sha256-8LrkXFbl2Lw61VWxDceGfjjHAwWVR1EX/L2RObVO+sY='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -32,7 +32,7 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <style>
-.ca-1 { max-width:640px; }
+.ca-1 { max-width:640px; min-height:60vh; }
 .ca-2 { display:none; margin:0 0 1.2rem; padding:1.2rem 1.4rem; background:var(--anthracite, var(--noir)); border-left:3px solid var(--bordeaux-clair, var(--rouge)); font-size:0.88rem; line-height:1.65; }
 .ca-3 { margin:0 0 0.8rem; }
 .ca-4 { margin:0 0 0.4rem; }
@@ -115,7 +115,8 @@ setTimeout(() => {
     <div id="ca-aucun-casting" class="ca-24 u-hidden" role="status">
       Aucun casting n'est ouvert pour le moment. Revenez bientôt, ou <a href="integrer-agence.html">intégrez l'agence</a> si vous souhaitez nous rejoindre durablement.
     </div>
-    <form id="form-casting">
+    <p id="ca-chargement" class="ca-6" role="status">Chargement des castings ouverts…</p>
+    <form id="form-casting" class="u-hidden">
       <div class="form-champ">
         <label for="ca-projet">Projet / casting concerné *</label>
         <select id="ca-projet" required>
@@ -484,7 +485,11 @@ function afficherMsg(el, texte, type) {
 let DESCRIPTIONS_PROJETS = {};
 async function chargerProjetsActifs() {
   const selectProjet = document.getElementById('ca-projet');
-  if (!sb) return;
+  // Le formulaire reste caché le temps de savoir s'il y a des castings ouverts : avant,
+  // il s'affichait puis disparaissait d'un coup au profit du message « Aucun casting… »,
+  // faisant sauter la page (journal du 04/10). Le bloc garde une hauteur minimale.
+  const finChargement = () => { const c = document.getElementById('ca-chargement'); if (c) c.remove(); };
+  if (!sb) { finChargement(); document.getElementById('form-casting').classList.remove('u-hidden'); return; }
   const { data: projets } = await sb.from('casting_projets').select('id, nom, description').eq('actif', true).order('ordre_affichage', { ascending: true }).order('nom');
   const liste = projets || [];
   DESCRIPTIONS_PROJETS = {};
@@ -496,6 +501,7 @@ async function chargerProjetsActifs() {
   const aucunCasting = liste.length === 0;
   document.getElementById('ca-aucun-casting').classList.toggle('u-hidden', !aucunCasting);
   document.getElementById('form-casting').classList.toggle('u-hidden', aucunCasting);
+  finChargement();
 }
 chargerProjetsActifs();
 

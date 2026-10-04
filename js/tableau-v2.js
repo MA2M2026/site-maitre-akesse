@@ -562,6 +562,8 @@
 
   // Après connexion : ouvrir la page gardée dans l'adresse (#…), celle d'une notification,
   // ou à défaut la vue d'ensemble (l'écran « 3 blocs » d'origine reste masqué).
+  // Appelée dès que le tableau de bord s'affiche, avant que l'écran ne soit dessiné : le menu
+  // et la page arrivent déjà en place (avant : 50 ms plus tard, la page « sautait », journal du 04/10).
   function apresAffichage() {
     appliquer();
     if (!estV2()) return;
@@ -596,10 +598,10 @@
     construire();
     appliquer();
     var bloc = document.getElementById('bloc-tableau');
-    if (bloc) new MutationObserver(function () { appliquer(); if (blocVisible()) setTimeout(apresAffichage, 50); })
+    if (bloc) new MutationObserver(function () { appliquer(); if (blocVisible()) apresAffichage(); })
       .observe(bloc, { attributes: true, attributeFilter: ['style', 'class'] });
     var landing = document.getElementById('tdb-landing');
-    if (landing) new MutationObserver(function () { setTimeout(apresAffichage, 50); })
+    if (landing) new MutationObserver(function () { apresAffichage(); })
       .observe(landing, { attributes: true, attributeFilter: ['style'] });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', demarrer);

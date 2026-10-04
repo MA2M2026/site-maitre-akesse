@@ -229,7 +229,10 @@
       return fetchOriginal(entree, options).then(function (rep) {
         // Réponse « opaque » (envoi sans lecture de la réponse, statut 0) : normal,
         // ce n'est pas un échec (ex. statistiques Google).
-        if (!rep.ok && rep.type !== 'opaque' && [401, 403, 404, 406, 409].indexOf(rep.status) === -1 && url.indexOf('journal_erreurs') === -1 && !IGNORES.test(url)) {
+        // 429 des accès protégés (codes / connexion) = blocage voulu après trop d'essais
+        // (déjà signalé par une notification « Accès bloqué ») : pas une panne du site.
+        const blocageVoulu = rep.status === 429 && /\/api\/(code-protege|connexion-protegee|code-validation-protege)/.test(url);
+        if (!rep.ok && rep.type !== 'opaque' && !blocageVoulu && [401, 403, 404, 406, 409].indexOf(rep.status) === -1 && url.indexOf('journal_erreurs') === -1 && !IGNORES.test(url)) {
           // On joint la raison renvoyée par le serveur (ex. Supabase : « la colonne
           // genre n'existe pas »), lue sur une COPIE de la réponse pour ne pas priver
           // le code du site de sa lecture. Sans elle, un « 400 » ne dit pas quoi corriger.
