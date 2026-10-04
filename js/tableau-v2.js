@@ -5,9 +5,10 @@
 //     recherche (mannequin, candidature, casting), titre de page + 2 raccourcis ;
 //   - « Vue d'ensemble » : 8 cartes de chiffres + « Alertes & rappels », calculés sur les vraies données.
 // Les rubriques elles-mêmes restent celles du tableau de bord (sections [data-section]) : ce
-// fichier les range autrement. L'ancienne présentation reste disponible (clé ma2m_tdb_v2).
+// fichier les range autrement. Depuis le 04/10, c'est la seule présentation (l'ancienne,
+// sombre, n'est plus proposée) ; elle ne s'applique qu'une fois connecté, l'écran de
+// connexion gardant son habillage.
 (function () {
-  var CLE = 'ma2m_tdb_v2';
   var ACCUEIL = 'v2-ensemble';
 
   // ---------- Icônes au trait ----------
@@ -100,7 +101,8 @@
       ] },
       { titre: 'Sécurité & accès', items: [
         ['b3b-codes-inscription', 'Codes d’inscription', 'cle'],
-        ['b3b-code-permanent', 'Code « Créer mon compte »', 'cadenas'],
+        ['b3b-acces-bloques', 'Accès bloqués', 'cadenas'],
+        ['b3b-code-permanent', 'Code « Créer mon compte »', 'cle'],
         ['b3b-code-validation', 'Code de validation', 'bouclier'],
         ['b3b-creer-admin', 'Créer un compte admin', 'personne']
       ] },
@@ -133,8 +135,8 @@
 
   // ---------- Outils ----------
   function estV2() { return document.body.classList.contains('tdb-v2'); }
-  function memoire() { try { return localStorage.getItem(CLE) !== '0'; } catch (e) { return true; } }
-  function appliquer(on) { document.body.classList.toggle('tdb-v2', on); }
+  function blocVisible() { var b = document.getElementById('bloc-tableau'); return !!b && getComputedStyle(b).display !== 'none'; }
+  function appliquer() { document.body.classList.toggle('tdb-v2', blocVisible()); }
   function itemOrigine(cle) { return document.querySelector('#tdb-menu-panel .tdb-menu-item[data-tdb-cible="' + cle + '"]'); }
   function client() { try { return sb || null; } catch (e) { return null; } }
   function el(tag, cls, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
@@ -147,7 +149,7 @@
     courant = page.cle;
     var origine = itemOrigine(page.principal);
     if (origine) origine.click();
-    if (page.cle !== page.principal) {
+    if (page.cle !== page.principal || !origine) {
       try { history.replaceState(history.state, '', location.pathname + location.search + '#' + page.cle); } catch (e) {}
     }
     rendrePage();
@@ -173,6 +175,41 @@
     if (titre) titre.textContent = courant === ACCUEIL ? 'Tableau de bord' : page.libelle;
     if (sous) sous.textContent = courant === ACCUEIL ? 'Bonjour Maître Akesse — voici l’activité de l’agence aujourd’hui.' : page.groupe.replace(/^Bloc \d — /, '');
     if (courant === ACCUEIL) chargerVue(false);
+    // « Accès bloqués » est rangé dans un volet repliable qui charge la liste à l'ouverture.
+    if (courant === 'b3b-acces-bloques') {
+      var volet = document.querySelector('[data-section="b3b-acces-bloques"] details');
+      if (volet && !volet.open) volet.open = true;
+    }
+  }
+  // Ouvre la rubrique qui contient l'élément demandé, puis s'y rend (boutons « Actions rapides »,
+  // « Choisir un mannequin à la une »… qui visaient des listes cachées depuis le menu par blocs).
+  function allerVers(id) {
+    var cible = document.getElementById(id);
+    if (!cible) return;
+    var section = cible.closest('[data-section]');
+    if (section) {
+      var cle = section.dataset.section, page = PAGES[cle] ? cle : null;
+      if (!page) Object.keys(COMPOSEES).forEach(function (k) { if (!page && COMPOSEES[k].indexOf(cle) !== -1) page = k; });
+      if (page) ouvrir(page);
+    }
+    setTimeout(function () {
+      cible.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (/^(INPUT|SELECT|TEXTAREA|BUTTON)$/.test(cible.tagName)) cible.focus({ preventScroll: true });
+    }, 120);
+  }
+  window.ma2mAllerVers = allerVers;
+
+  // Clic sur une notification du téléphone (?notif=candidature&id=…) : ouvrir la bonne page et la fiche.
+  function ouvrirDepuisNotification() {
+    var params = new URLSearchParams(location.search);
+    var type = params.get('notif'), id = params.get('id');
+    if (!type) return false;
+    try { history.replaceState(history.state, '', location.pathname + location.hash); } catch (e) {}
+    var conf = { candidature: ['b2-candidatures', 'casting'], recruteur: ['b2-recruteurs', 'recruteur'], contact: ['b2-contacts', null], blocage: ['b3b-acces-bloques', null] }[type];
+    if (!conf) return false;
+    ouvrir(conf[0]);
+    if (conf[1] && id && typeof window.ouvrirFicheDossier === 'function') window.ouvrirFicheDossier(conf[1], id);
+    return true;
   }
   // Quand une autre partie du tableau de bord ouvre une rubrique (cloche, liens internes…).
   function suivreOrigine() {
@@ -440,7 +477,6 @@
       + '<nav class="v2-menu-liste" id="v2-menu-liste"></nav>'
       + '<div class="v2-cote-bas">'
       + '<a class="v2-lien v2-lien-discret" href="index.html">' + svg('globe') + '<span class="v2-lien-texte">Retour au site public</span></a>'
-      + '<button type="button" class="v2-lien v2-lien-discret" data-action="ancienne">' + svg('retour') + '<span class="v2-lien-texte">Ancienne présentation</span></button>'
       + '<button type="button" class="v2-lien v2-lien-discret" data-action="deconnexion">' + svg('sortie') + '<span class="v2-lien-texte">Se déconnecter</span></button>'
       + '</div>';
     shell.insertBefore(cote, main);
@@ -453,7 +489,6 @@
       var b = e.target.closest('[data-page], [data-action]');
       if (!b) return;
       if (b.dataset.page) { ouvrir(b.dataset.page); return; }
-      if (b.dataset.action === 'ancienne') basculer();
       if (b.dataset.action === 'deconnexion') { var d = document.getElementById('tdb-menu-deconnexion-rapide'); if (d) d.click(); }
     });
 
@@ -510,16 +545,10 @@
       ouvrir(b.dataset.page);
       if (b.dataset.focus) { var f = document.getElementById(b.dataset.focus); if (f) setTimeout(function () { f.focus(); }, 80); }
     });
-    // Bouton « Nouvelle présentation » dans le menu de l'ancienne présentation.
-    var repere = document.getElementById('tdb-menu-deconnexion-rapide');
-    if (repere && !document.getElementById('v2-bascule-menu')) {
-      var dansMenu = el('button', 'tdb-menu-accueil v2-bascule-menu');
-      dansMenu.type = 'button';
-      dansMenu.id = 'v2-bascule-menu';
-      dansMenu.textContent = '✨ Nouvelle présentation (version blanche)';
-      dansMenu.addEventListener('click', basculer);
-      repere.parentNode.insertBefore(dansMenu, repere.nextSibling);
-    }
+    // « Voir tout » de l'activité récente (à côté du mannequin à la une) : ouvre les statistiques.
+    document.addEventListener('click', function (e) {
+      if (estV2() && e.target.closest && e.target.closest('.ref-header-activity .see')) ouvrir('b1-stats');
+    });
 
     var menuOrigine = document.getElementById('tdb-menu-panel');
     if (menuOrigine) new MutationObserver(suivreOrigine).observe(menuOrigine, { subtree: true, attributes: true, attributeFilter: ['class'] });
@@ -527,38 +556,27 @@
     if (total) new MutationObserver(majPastilles).observe(total, { childList: true, characterData: true, subtree: true });
   }
 
-  function basculer() {
-    var on = !estV2();
-    var fermer = document.getElementById('tdb-menu-fermer');
-    var panneau = document.getElementById('tdb-menu-panel');
-    if (panneau && panneau.classList.contains('ouvert') && fermer) fermer.click();
-    fermerMenuMobile();
-    try { localStorage.setItem(CLE, on ? '1' : '0'); } catch (e) {}
-    appliquer(on);
-    if (on) {
-      var actif = document.querySelector('#tdb-menu-panel .tdb-menu-item.actif[data-tdb-cible]');
-      ouvrir(actif && PAGES[actif.dataset.tdbCible] ? actif.dataset.tdbCible : ACCUEIL);
-    } else if (courant && PAGES[courant]) {
-      var origine = itemOrigine(PAGES[courant].principal);
-      if (origine) origine.click();
+  // Après connexion : ouvrir la page gardée dans l'adresse (#…), celle d'une notification,
+  // ou à défaut la vue d'ensemble (l'écran « 3 blocs » d'origine reste masqué).
+  function apresAffichage() {
+    appliquer();
+    if (!estV2()) return;
+    if (ouvrirDepuisNotification()) return;
+    var landing = document.getElementById('tdb-landing');
+    if (landing && landing.style.display !== 'none') {
+      var h = decodeURIComponent(location.hash.slice(1));
+      ouvrir(PAGES[h] ? h : ACCUEIL);
+    } else if (!courant) {
+      suivreOrigine();
     }
   }
 
-  // Après connexion, l'ancienne présentation affiche l'écran « 3 blocs » ; ici on ouvre la page
-  // gardée dans l'adresse (#…) ou, à défaut, la vue d'ensemble.
-  function apresAffichage() {
-    if (!estV2()) return;
-    var landing = document.getElementById('tdb-landing');
-    if (!landing || landing.style.display === 'none') return;
-    var h = decodeURIComponent(location.hash.slice(1));
-    ouvrir(PAGES[h] ? h : ACCUEIL);
-  }
-
   function demarrer() {
+    try { localStorage.removeItem('ma2m_tdb_v2'); } catch (e) {}
     construire();
-    appliquer(memoire());
+    appliquer();
     var bloc = document.getElementById('bloc-tableau');
-    if (bloc) new MutationObserver(function () { if (bloc.style.display !== 'none') setTimeout(apresAffichage, 50); })
+    if (bloc) new MutationObserver(function () { appliquer(); if (blocVisible()) setTimeout(apresAffichage, 50); })
       .observe(bloc, { attributes: true, attributeFilter: ['style', 'class'] });
     var landing = document.getElementById('tdb-landing');
     if (landing) new MutationObserver(function () { setTimeout(apresAffichage, 50); })

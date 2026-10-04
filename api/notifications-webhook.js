@@ -61,7 +61,7 @@ function construireNotification(table, record) {
       cle: 'evenement_blocage_connexion',
       titre: '🔒 Accès bloqué',
       texte: 'Trop de tentatives — ' + lieu + (record.recidive ? ' (récidive)' : ''),
-      url: '/tableau-de-bord.html'
+      url: '/tableau-de-bord.html?notif=blocage'
     };
   }
   return null;

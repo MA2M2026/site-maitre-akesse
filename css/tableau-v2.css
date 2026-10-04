@@ -204,7 +204,6 @@ html body.tdb-v2 .db-main .dossier-carte.tdb-53 .dc-meta { flex: 0 1 auto !impor
 html body.tdb-v2 .db-main .dossier-carte.tdb-53 .statut-pill { margin-right: auto !important; }
 html body.tdb-v2 .db-main .dossier-carte.tdb-53 .btn { font-size: 11.5px !important; padding: 6px 11px !important; letter-spacing: .04em !important; }
 html body.tdb-v2 .db-main input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]), html body.tdb-v2 .db-main select { min-height: 40px !important; padding: 8px 12px !important; }
-html body.tdb-v2 .tdb-menu-panel .v2-bascule-menu { display: none !important; }
 
 /* ================== Disposition de la maquette blanche (restructuration du 04/10) ================== */
 .v2-blocs, .v2-cote, .v2-entete, .v2-vue, .v2-burger, .v2-recherche, .v2-voile { display: none; }
@@ -212,7 +211,6 @@ html body.tdb-v2 { font-size: 15px; }
 html body.tdb-v2 .tdb-menu-panel, html body.tdb-v2 .tdb-menu-toggle, html body.tdb-v2 #tdb-menu-overlay,
 html body.tdb-v2 .db-overview-head, html body.tdb-v2 .db-statut-site, html body.tdb-v2 .db-topbar > div:not(.db-topbar-droite) { display: none !important; }
 html body.tdb-v2 .db-topbar::before, html body.tdb-v2 .db-topbar::after { display: none !important; content: none !important; }
-html body.tdb-v2 .tdb-menu-panel .v2-bascule-menu { display: none !important; }
 
 html body.tdb-v2 #bloc-tableau { background-color: var(--v2-fond) !important; background-image: none !important; }
 html body.tdb-v2 #db-chrome-header, html body.tdb-v2 .tdb-landing { display: none !important; }
@@ -395,18 +393,6 @@ html body.tdb-v2 .db-main .btn--principal, html body.tdb-v2 .db-main .filtre-pil
   html body.tdb-v2 .v2-carte small { font-size: 12.5px; }
   html body.tdb-v2 .v2-alerte { padding: 13px 14px; font-size: 14.5px; }
 }
-
-/* ================== Ancienne présentation (sombre) : textes secondaires plus clairs et plus grands ================== */
-html body:not(.tdb-v2) #bloc-tableau .stat-carte .micro, html body:not(.tdb-v2) #bloc-tableau .stat-live,
-html body:not(.tdb-v2) #bloc-tableau .stats-secondaires, html body:not(.tdb-v2) #bloc-tableau .timeline-date,
-html body:not(.tdb-v2) #bloc-tableau .activite-souslabel, html body:not(.tdb-v2) #bloc-tableau .db-action-btn small,
-html body:not(.tdb-v2) #bloc-tableau .dc-meta, html body:not(.tdb-v2) #bloc-tableau .liste-recente > p,
-html body:not(.tdb-v2) #bloc-tableau .db-overview-head p, html body:not(.tdb-v2) #bloc-tableau .ref-header-activity .time {
-  color: #c4c9ce !important; font-size: max(12.5px, 1em) !important;
-}
-html body:not(.tdb-v2) #bloc-tableau .stat-carte .label, html body:not(.tdb-v2) #bloc-tableau .timeline-texte,
-html body:not(.tdb-v2) #bloc-tableau .a-traiter-item .at-label, html body:not(.tdb-v2) #bloc-tableau .db-action-btn b,
-html body:not(.tdb-v2) #bloc-tableau .ref-legend { color: #f3f1ef !important; font-size: max(13px, 1em) !important; }
 
 /* ================== Rendu plus net (04/10 : « on dirait un film transparent dessus ») ==================
    Ombres floues retirées, bordures franches, écriture plus épaisse, couleurs plus saturées. */
