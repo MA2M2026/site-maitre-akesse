@@ -2648,3 +2648,60 @@ html.selection-vide #liste-vide { display: block; }
 .form-champ input:focus, .form-champ textarea:focus, .form-champ select:focus {
   box-shadow: inset 0 3px 8px rgba(0,0,0,0.75), inset 0 1px 3px rgba(0,0,0,0.9), 0 0 0 3px rgba(207,59,82,0.22);
 }
+
+/* =====================================================================
+   Menu plein écran : chaque entrée devient un vrai bouton, identique au
+   reste du site — même police, même taille, même relief (demande de la
+   propriétaire, 04/10/2026). Remplace l'ancienne liste de liens texte
+   séparés par des filets.
+   ===================================================================== */
+.menu-overlay .nav-links { display: flex; flex-direction: column; gap: 0.7rem; }
+.menu-overlay .nav-links li { border-bottom: none; }
+
+.menu-overlay .nav-links a {
+  font-family: var(--texte) !important;
+  font-size: 0.74rem !important;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #f4efe9;
+  display: block;
+  padding: 0.95rem 1.6rem;
+  border-radius: 999px !important;
+  border: 1px solid var(--touche-n-contour) !important;
+  background: var(--touche-n-fond) !important;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.08) inset, 0 4px 0 #000, 0 9px 16px -8px rgba(0,0,0,0.85) !important;
+  transform: translateY(0);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease !important;
+}
+@media (hover: hover) {
+  .menu-overlay .nav-links a:hover {
+    background: var(--touche-n-fond-survol) !important;
+    border-color: var(--touche-n-contour-survol) !important;
+    color: #fff;
+  }
+}
+.menu-overlay .nav-links a:active {
+  transform: translateY(4px) !important;
+  background: var(--touche-appui-fond) !important;
+  border-color: var(--touche-appui-contour) !important;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.7) inset, 0 0 16px rgba(213,84,104,0.4) !important;
+}
+/* Page actuelle : allumée en clair, même logique que les filtres actifs. */
+.menu-overlay .nav-links a.actif {
+  background: linear-gradient(180deg, #34343a 0%, #1a1a1d 100%) !important;
+  border-color: rgba(255,255,255,0.55) !important;
+  color: #fff;
+}
+
+/* L'entrée "Espace mannequin de l'agence" garde la même taille que les
+   autres — avant, sa police était plus petite que le reste du menu. */
+.menu-overlay .nav-links .item-cta { margin-top: 0.4rem; }
+.menu-overlay .nav-links .item-cta a {
+  font-family: var(--texte) !important;
+  font-size: 0.74rem !important;
+  letter-spacing: 0.14em;
+  padding: 0.95rem 1.6rem;
+  font-weight: 500;
+}
