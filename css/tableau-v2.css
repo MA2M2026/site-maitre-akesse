@@ -1,0 +1,409 @@
+/* ================== Tableau de bord — nouvelle présentation, version blanche ==================
+   Active uniquement quand <body> a la classe .tdb-v2 (voir js/tableau-v2.js). L'ancienne
+   présentation reste intacte : retirer la classe suffit à y revenir.
+   Le tableau de bord empile plusieurs couches de styles sombres avec !important : chaque
+   règle ici est donc préfixée par « html body.tdb-v2 » pour passer devant. */
+
+html body.tdb-v2 {
+  --noir: #f6f2ee; --noir-doux: #ffffff; --anthracite: #ffffff;
+  --texte-corps: #3a3330; --texte-doux: #857c76; --titre-clair: #1d1716;
+  --gris: #857c76; --gris-clair: #e6ded7;
+  --v2-fond: #f6f2ee; --v2-carte: #ffffff; --v2-bord: #ebe4de; --v2-texte: #3a3330;
+  --v2-doux: #857c76; --v2-titre: #1d1716; --v2-accent: #8c1a2c; --v2-accent-clair: #a3243a;
+  --v2-chip: rgba(163, 36, 58, .09);
+  --v2-ombre: 0 1px 2px rgba(60, 30, 20, .05), 0 10px 26px -18px rgba(60, 30, 20, .22);
+  background: var(--v2-fond) !important;
+  color: var(--v2-texte) !important;
+}
+
+/* ---------- Coquille : menu à gauche + contenu ---------- */
+html body.tdb-v2 #bloc-tableau, html body.tdb-v2 .db-shell, html body.tdb-v2 .db-main {
+  background: var(--v2-fond) !important;
+  color: var(--v2-texte) !important;
+}
+html body.tdb-v2 #db-chrome-header, html body.tdb-v2 .tdb-landing, html body.tdb-v2 .tdb-menu-entete,
+html body.tdb-v2 .tdb-menu-tous-blocs, html body.tdb-v2 #tdb-menu-overlay:not(.ouvert) { display: none !important; }
+html body.tdb-v2 .db-shell { display: flex !important; align-items: stretch !important; }
+html body.tdb-v2 .db-main { flex: 1 !important; min-width: 0 !important; max-width: none !important; padding: 22px 30px 60px !important; }
+
+html body.tdb-v2 .tdb-menu-panel {
+  position: sticky !important; top: 0 !important; left: auto !important; transform: none !important;
+  flex: 0 0 262px !important; width: 262px !important; height: 100vh !important; max-height: 100vh !important;
+  overflow-y: auto !important; background: var(--v2-carte) !important; border: none !important;
+  border-right: 1px solid var(--v2-bord) !important; box-shadow: none !important;
+  padding: 18px 14px 24px !important; z-index: 5 !important; border-radius: 0 !important;
+}
+html body.tdb-v2 .v2-marque { display: block; padding: 4px 8px 18px; margin-bottom: 10px; border-bottom: 1px solid var(--v2-bord); }
+html body.tdb-v2 .v2-marque img { height: 44px; width: auto; filter: invert(1) hue-rotate(180deg); }
+html body.tdb-v2 .tdb-menu-panel .tdb-menu-accueil {
+  display: flex !important; align-items: center !important; gap: 8px !important; width: 100% !important;
+  background: transparent !important; border: none !important; box-shadow: none !important; border-radius: 9px !important;
+  color: var(--v2-doux) !important; font: 400 13px var(--texte, 'Jost', sans-serif) !important;
+  letter-spacing: 0 !important; text-transform: none !important; padding: 8px 10px !important; margin: 0 !important;
+  justify-content: flex-start !important; text-decoration: none !important; transform: none !important;
+}
+html body.tdb-v2 .tdb-menu-panel .tdb-menu-accueil:hover { background: var(--v2-fond) !important; color: var(--v2-titre) !important; }
+html body.tdb-v2 .tdb-menu-panel details, html body.tdb-v2 .tdb-menu-panel .tdb-menu-bloc,
+html body.tdb-v2 .tdb-menu-panel .tdb-menu-sousbloc { background: transparent !important; border: none !important; box-shadow: none !important; padding: 0 !important; margin: 10px 0 0 !important; }
+html body.tdb-v2 .tdb-menu-panel summary {
+  list-style: none !important; cursor: pointer; background: transparent !important; border: none !important; box-shadow: none !important;
+  color: var(--v2-doux) !important; font: 500 10.5px var(--texte, 'Jost', sans-serif) !important;
+  letter-spacing: .16em !important; text-transform: uppercase !important; padding: 12px 10px 6px !important; transform: none !important;
+}
+html body.tdb-v2 .tdb-menu-panel summary::-webkit-details-marker { display: none; }
+html body.tdb-v2 .tdb-menu-panel .tdb-menu-item {
+  display: flex !important; align-items: center !important; width: 100% !important; text-align: left !important;
+  background: transparent !important; border: none !important; box-shadow: none !important; border-radius: 9px !important;
+  color: var(--v2-texte) !important; font: 400 14px var(--texte, 'Jost', sans-serif) !important;
+  letter-spacing: 0 !important; text-transform: none !important; padding: 9px 12px !important; margin: 1px 0 !important;
+  text-decoration: none !important; transform: none !important; min-height: 0 !important; justify-content: flex-start !important;
+}
+html body.tdb-v2 .tdb-menu-panel .tdb-menu-item:hover { background: var(--v2-fond) !important; }
+html body.tdb-v2 .tdb-menu-panel .tdb-menu-item.actif { background: var(--v2-chip) !important; color: var(--v2-accent-clair) !important; font-weight: 500 !important; }
+
+/* ---------- Les 3 blocs en haut ---------- */
+.v2-blocs { display: none; }
+html body.tdb-v2 .v2-blocs { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin: 0 0 20px; }
+html body.tdb-v2 .v2-bloc {
+  display: flex; align-items: center; gap: 10px; padding: 11px 22px 11px 12px; border-radius: 999px;
+  border: 1px solid var(--v2-bord); background: var(--v2-carte); color: var(--v2-titre); cursor: pointer;
+  font: 500 14.5px var(--texte, 'Jost', sans-serif); box-shadow: var(--v2-ombre); transition: transform .12s ease, background .15s ease;
+}
+html body.tdb-v2 .v2-bloc:active { transform: translateY(2px); }
+html body.tdb-v2 .v2-num { width: 27px; height: 27px; border-radius: 50%; display: grid; place-items: center; background: var(--v2-chip); color: var(--v2-accent-clair); font-weight: 600; font-size: 13px; }
+html body.tdb-v2 .v2-bloc.actif { background: linear-gradient(180deg, #a3243a, #7a1220); border-color: #8c1a2c; color: #fff; }
+html body.tdb-v2 .v2-bloc.actif .v2-num { background: rgba(255, 255, 255, .22); color: #fff; }
+
+/* ---------- Barre du haut ---------- */
+html body.tdb-v2 .db-topbar {
+  background: var(--v2-carte) !important; border: 1px solid var(--v2-bord) !important; border-radius: 14px !important;
+  box-shadow: var(--v2-ombre) !important; margin: 0 0 22px !important; padding: 12px 18px !important; min-height: 0 !important;
+  display: flex !important; align-items: center !important; gap: 16px !important; position: relative !important; top: auto !important;
+}
+html body.tdb-v2 .db-greeting { color: var(--v2-titre) !important; font-family: 'Cormorant Garamond', serif !important; font-size: 1.55rem !important; text-transform: none !important; letter-spacing: 0 !important; }
+html body.tdb-v2 .db-sous-titre { color: var(--v2-doux) !important; }
+html body.tdb-v2 .db-statut-site { color: #2f8a57 !important; background: rgba(47, 138, 87, .09) !important; border-color: rgba(47, 138, 87, .25) !important; }
+html body.tdb-v2 .db-cloche { background: var(--v2-fond) !important; border: 1px solid var(--v2-bord) !important; color: var(--v2-titre) !important; box-shadow: none !important; }
+html body.tdb-v2 .db-profil .nom { color: var(--v2-titre) !important; }
+html body.tdb-v2 .db-profil .role { color: var(--v2-doux) !important; }
+html body.tdb-v2 .db-profil-avatar-vide { background: linear-gradient(180deg, #a3243a, #7a1220) !important; color: #fff !important; border: none !important; }
+.v2-recherche, .v2-bascule { display: none; }
+html body.tdb-v2 .v2-recherche {
+  display: flex; align-items: center; gap: 8px; flex: 1; max-width: 440px; position: relative;
+  background: var(--v2-fond); border: 1px solid var(--v2-bord); border-radius: 10px; padding: 0 12px; color: var(--v2-doux);
+}
+html body.tdb-v2 .v2-recherche input { flex: 1; border: none !important; background: transparent !important; box-shadow: none !important; padding: 9px 0 !important; color: var(--v2-titre) !important; font: 400 13.5px var(--texte, 'Jost', sans-serif) !important; outline: none; }
+html body.tdb-v2 .v2-resultats { display: none; position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: var(--v2-carte); border: 1px solid var(--v2-bord); border-radius: 12px; box-shadow: 0 18px 40px -20px rgba(60, 30, 20, .35); padding: 6px; z-index: 30; }
+html body.tdb-v2 .v2-resultats.ouvert { display: block; }
+html body.tdb-v2 .v2-resultats button { display: block; width: 100%; text-align: left; border: none; background: transparent; padding: 9px 10px; border-radius: 8px; font: 400 13.5px var(--texte, 'Jost', sans-serif); color: var(--v2-texte); cursor: pointer; }
+html body.tdb-v2 .v2-resultats button:hover { background: var(--v2-chip); color: var(--v2-accent-clair); }
+html body.tdb-v2 .v2-vide { display: block; padding: 9px 10px; font-size: 13px; color: var(--v2-doux); }
+#bloc-tableau .v2-bascule { display: inline-flex; align-items: center; border-radius: 999px; padding: 8px 14px; font: 500 12px var(--texte, 'Jost', sans-serif); cursor: pointer; border: 1px solid rgba(255, 255, 255, .25); background: transparent; color: #f4efe9; white-space: nowrap; }
+html body.tdb-v2 #bloc-tableau .v2-bascule { border-color: var(--v2-bord); color: var(--v2-doux); background: var(--v2-carte); }
+
+/* ---------- Titres et textes ---------- */
+html body.tdb-v2 .db-main h1, html body.tdb-v2 .db-main h2, html body.tdb-v2 .db-main h3, html body.tdb-v2 .db-main h4 {
+  color: var(--v2-titre) !important; text-shadow: none !important;
+}
+html body.tdb-v2 .db-main h2::after { background: linear-gradient(90deg, var(--v2-accent-clair), transparent) !important; }
+html body.tdb-v2 .db-main p, html body.tdb-v2 .db-main li, html body.tdb-v2 .db-main td, html body.tdb-v2 .db-main label,
+html body.tdb-v2 .db-main small, html body.tdb-v2 .db-main dd, html body.tdb-v2 .db-main dt { color: var(--v2-texte) !important; }
+html body.tdb-v2 .db-main a:not(.btn):not(.tdb-menu-item) { color: var(--v2-accent-clair) !important; }
+html body.tdb-v2 .db-overview-kicker, html body.tdb-v2 .ma2m-top3-kicker { color: var(--v2-accent-clair) !important; }
+html body.tdb-v2 .db-live-chip { background: rgba(47, 138, 87, .08) !important; color: #2f8a57 !important; border-color: rgba(47, 138, 87, .25) !important; }
+
+/* ---------- Cartes / panneaux ---------- */
+html body.tdb-v2 .db-main .liste-recente, html body.tdb-v2 .db-main .activite-carte, html body.tdb-v2 .db-main .a-traiter-bloc,
+html body.tdb-v2 .db-main .ma2m-top3-card, html body.tdb-v2 .db-main .db-hero, html body.tdb-v2 .db-main .dossier-carte,
+html body.tdb-v2 .db-main .ref-core-activity > div, html body.tdb-v2 .db-main .relief, html body.tdb-v2 .db-main .db-overview-head,
+html body.tdb-v2 .db-main .stats-secondaires > *, html body.tdb-v2 .db-main .db-action-btn, html body.tdb-v2 .db-main .mf-notification {
+  background: var(--v2-carte) !important; background-image: none !important; border: 1px solid var(--v2-bord) !important;
+  box-shadow: var(--v2-ombre) !important; color: var(--v2-texte) !important; border-radius: 14px !important;
+}
+html body.tdb-v2 .db-main .db-overview-head { padding: 18px 20px !important; }
+html body.tdb-v2 .db-main .mf-notification { border-left: 3px solid var(--v2-accent-clair) !important; }
+
+/* Cartes de chiffres façon « Dashboard Pro » : libellé en haut, icône colorée à droite, gros chiffre */
+html body.tdb-v2 .stats-grille[data-section].tdb-actif { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)) !important; gap: 14px !important; }
+html body.tdb-v2 .stat-carte {
+  display: grid !important; grid-template-columns: 1fr auto !important; grid-template-areas: "label icone" "chiffre chiffre" "micro micro" !important;
+  align-items: start !important; background: var(--v2-carte) !important; background-image: none !important;
+  border: 1px solid var(--v2-bord) !important; border-radius: 14px !important; box-shadow: var(--v2-ombre) !important;
+  padding: 16px 16px 14px !important; color: var(--v2-texte) !important; min-height: 0 !important; overflow: hidden !important;
+}
+html body.tdb-v2 .stat-carte::before, html body.tdb-v2 .stat-carte::after, html body.tdb-v2 .stat-line, html body.tdb-v2 .stat-live { display: none !important; }
+html body.tdb-v2 .stat-carte .stat-head { display: contents !important; }
+html body.tdb-v2 .stat-carte .stat-icone {
+  grid-area: icone; width: 36px !important; height: 36px !important; border-radius: 10px !important; display: grid !important; place-items: center !important;
+  font-size: 17px !important; background: rgba(163, 36, 58, .1) !important; color: #a3243a !important; border: none !important; box-shadow: none !important;
+}
+html body.tdb-v2 .stat-carte:nth-child(4n+2) .stat-icone { background: rgba(47, 138, 87, .11) !important; color: #2f8a57 !important; }
+html body.tdb-v2 .stat-carte:nth-child(4n+3) .stat-icone { background: rgba(201, 140, 40, .13) !important; color: #b07a1c !important; }
+html body.tdb-v2 .stat-carte:nth-child(4n+4) .stat-icone { background: rgba(80, 110, 210, .11) !important; color: #4f6cc9 !important; }
+html body.tdb-v2 .stat-carte .label { grid-area: label; order: -1; color: var(--v2-doux) !important; font: 400 13px var(--texte, 'Jost', sans-serif) !important; letter-spacing: 0 !important; text-transform: none !important; margin: 0 !important; }
+html body.tdb-v2 .stat-carte .chiffre { grid-area: chiffre; color: var(--v2-titre) !important; font: 600 30px var(--texte, 'Jost', sans-serif) !important; margin: 8px 0 2px !important; text-shadow: none !important; -webkit-text-fill-color: currentColor !important; background: none !important; }
+html body.tdb-v2 .stat-carte .micro { grid-area: micro; color: var(--v2-doux) !important; font-size: 12px !important; letter-spacing: 0 !important; text-transform: none !important; }
+html body.tdb-v2 .stats-secondaires { grid-column: 1 / -1 !important; }
+
+/* ---------- Boutons : blancs bordés, le principal en bordeaux ---------- */
+html body.tdb-v2 .db-main .btn, html body.tdb-v2 .db-main button.btn, html body.tdb-v2 .db-main .btn-mini-admin,
+html body.tdb-v2 .db-main .filtre-pill, html body.tdb-v2 .db-main .pill, html body.tdb-v2 .modal-overlay .btn {
+  background: var(--v2-carte) !important; background-image: none !important; color: var(--v2-titre) !important;
+  border: 1px solid var(--v2-bord) !important; box-shadow: 0 1px 2px rgba(60, 30, 20, .06) !important; text-shadow: none !important;
+}
+html body.tdb-v2 .db-main .btn:hover, html body.tdb-v2 .db-main .btn-mini-admin:hover, html body.tdb-v2 .db-main .filtre-pill:hover { border-color: #d9cdc4 !important; background: #fbf8f6 !important; }
+html body.tdb-v2 .db-main .btn--principal, html body.tdb-v2 .db-main .btn.btn--principal, html body.tdb-v2 .modal-overlay .btn--principal,
+html body.tdb-v2 .db-main .filtre-pill.actif, html body.tdb-v2 .db-main .pill.on {
+  background: linear-gradient(180deg, #a3243a, #7a1220) !important; color: #fff !important; border-color: #8c1a2c !important;
+}
+html body.tdb-v2 .db-main .btn:disabled, html body.tdb-v2 .db-main .btn[disabled] { opacity: .5 !important; }
+html body.tdb-v2 .db-main .filtre-pill .compte { background: rgba(0, 0, 0, .06) !important; color: inherit !important; }
+
+/* ---------- Champs de formulaire ---------- */
+html body.tdb-v2 .db-main input:not([type=checkbox]):not([type=radio]):not([type=range]), html body.tdb-v2 .db-main textarea, html body.tdb-v2 .db-main select,
+html body.tdb-v2 .modal-overlay input:not([type=checkbox]):not([type=radio]), html body.tdb-v2 .modal-overlay textarea, html body.tdb-v2 .modal-overlay select {
+  background: #fff !important; color: var(--v2-titre) !important; border: 1px solid #e0d6ce !important;
+  box-shadow: inset 0 1px 2px rgba(60, 30, 20, .05) !important; border-radius: 10px !important;
+}
+html body.tdb-v2 .db-main input:focus, html body.tdb-v2 .db-main textarea:focus, html body.tdb-v2 .db-main select:focus {
+  border-color: var(--v2-accent-clair) !important; box-shadow: 0 0 0 3px rgba(163, 36, 58, .1) !important;
+}
+html body.tdb-v2 .db-main ::placeholder { color: #b0a59d !important; }
+
+/* ---------- Listes, tableaux, pastilles ---------- */
+html body.tdb-v2 .db-main table, html body.tdb-v2 .db-main th, html body.tdb-v2 .db-main td { border-color: var(--v2-bord) !important; background: transparent !important; }
+html body.tdb-v2 .db-main th { color: var(--v2-doux) !important; }
+html body.tdb-v2 .db-main tr:nth-child(even) td { background: #fbf8f6 !important; }
+html body.tdb-v2 .db-main .dossiers-compteur { background: var(--v2-chip) !important; color: var(--v2-accent-clair) !important; border: none !important; }
+html body.tdb-v2 .db-main .dc-nom, html body.tdb-v2 .db-main .mg-nom { color: var(--v2-titre) !important; }
+html body.tdb-v2 .db-main .dc-nom span, html body.tdb-v2 .db-main .dc-meta, html body.tdb-v2 .db-main .mg-infos, html body.tdb-v2 .db-main .mg-resume,
+html body.tdb-v2 .db-main .mg-consigne, html body.tdb-v2 .db-main .tdb-9, html body.tdb-v2 .db-main .tdb-5 { color: var(--v2-doux) !important; }
+html body.tdb-v2 .db-main .mg-personne, html body.tdb-v2 .db-main .timeline-liste > *, html body.tdb-v2 .db-main .a-traiter-liste > * {
+  background: #fbf8f6 !important; border-color: var(--v2-bord) !important; color: var(--v2-texte) !important;
+}
+html body.tdb-v2 .db-main .mg-apercu { background: #fbf8f6 !important; color: var(--v2-texte) !important; border: 1px dashed #dcd1c8 !important; }
+html body.tdb-v2 .db-main .mg-liste { background: transparent !important; border-color: var(--v2-bord) !important; }
+html body.tdb-v2 .db-main .dossiers-vide { color: var(--v2-doux) !important; }
+
+/* ---------- Fenêtres (fiche dossier, photos…) ---------- */
+html body.tdb-v2 .modal-overlay { background: rgba(40, 25, 20, .45) !important; }
+html body.tdb-v2 .modal-overlay .modal-fiche {
+  background: var(--v2-carte) !important; background-image: none !important; color: var(--v2-texte) !important;
+  border: 1px solid var(--v2-bord) !important; box-shadow: 0 40px 80px -30px rgba(40, 20, 15, .45) !important;
+}
+html body.tdb-v2 .modal-overlay .modal-fiche h2, html body.tdb-v2 .modal-overlay .modal-fiche h3 { color: var(--v2-titre) !important; }
+html body.tdb-v2 .modal-overlay .mf-label { color: var(--v2-doux) !important; }
+html body.tdb-v2 .modal-overlay .mf-valeur, html body.tdb-v2 .modal-overlay .mf-sous-titre, html body.tdb-v2 .modal-overlay label { color: var(--v2-texte) !important; }
+html body.tdb-v2 .modal-overlay .mf-champ { border-color: var(--v2-bord) !important; background: transparent !important; }
+html body.tdb-v2 .modal-overlay .mf-notification { background: #fbf8f6 !important; border: 1px solid var(--v2-bord) !important; border-left: 3px solid var(--v2-accent-clair) !important; }
+html body.tdb-v2 .modal-overlay .mf-notification-titre { color: var(--v2-titre) !important; }
+html body.tdb-v2 .modal-overlay .modal-fermer { background: var(--v2-fond) !important; color: var(--v2-titre) !important; border: 1px solid var(--v2-bord) !important; }
+
+/* ---------- Téléphone et tablette ---------- */
+html body.tdb-v2 .tdb-menu-toggle { display: none !important; }
+@media (max-width: 900px) {
+  html body.tdb-v2 .db-main { padding: 14px 12px 50px !important; }
+  html body.tdb-v2 .tdb-menu-panel {
+    position: fixed !important; top: 0 !important; left: 0 !important; bottom: 0 !important; height: 100% !important;
+    width: 86% !important; max-width: 320px !important; transform: translateX(-105%) !important; transition: transform .25s ease !important;
+    z-index: 1001 !important; box-shadow: 20px 0 60px -20px rgba(40, 20, 15, .4) !important;
+  }
+  html body.tdb-v2 .tdb-menu-panel.ouvert { transform: translateX(0) !important; }
+  html body.tdb-v2 .tdb-menu-entete { display: flex !important; }
+  html body.tdb-v2 .tdb-menu-entete strong { color: var(--v2-titre) !important; }
+  html body.tdb-v2 .tdb-menu-fermer { background: var(--v2-fond) !important; color: var(--v2-titre) !important; border: 1px solid var(--v2-bord) !important; box-shadow: none !important; }
+  html body.tdb-v2 #tdb-menu-overlay.ouvert { display: block !important; background: rgba(40, 25, 20, .4) !important; }
+  html body.tdb-v2 .tdb-menu-toggle {
+    display: inline-flex !important; background: var(--v2-carte) !important; color: var(--v2-titre) !important;
+    border: 1px solid var(--v2-bord) !important; box-shadow: var(--v2-ombre) !important; margin: 0 0 12px !important;
+  }
+  html body.tdb-v2 .v2-blocs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-bottom: 12px; }
+  html body.tdb-v2 .v2-bloc { flex-direction: column; gap: 5px; padding: 9px 6px; border-radius: 16px; font-size: 11.5px; line-height: 1.2; text-align: center; justify-content: center; }
+  html body.tdb-v2 .v2-num { width: 22px; height: 22px; font-size: 11px; }
+  html body.tdb-v2 .db-topbar { flex-wrap: wrap !important; padding: 10px 12px !important; gap: 10px !important; }
+  html body.tdb-v2 .v2-recherche { order: 3; flex: 1 1 100%; max-width: none; }
+  html body.tdb-v2 .db-statut-site, html body.tdb-v2 .db-profil > div:not(.db-profil-avatar-vide) { display: none !important; }
+  html body.tdb-v2 .stats-grille[data-section].tdb-actif { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+  html body.tdb-v2 .stat-carte { padding: 13px !important; }
+  html body.tdb-v2 .stat-carte .chiffre { font-size: 24px !important; }
+}
+
+/* ---------- Compléments : derniers panneaux sombres de l'ancienne présentation ---------- */
+html body.tdb-v2 .db-topbar::before, html body.tdb-v2 .db-topbar::after { display: none !important; content: none !important; }
+html body.tdb-v2 .tdb-menu-panel .tdb-menu-tous-blocs { display: none !important; }
+html body.tdb-v2 .db-main .ref-header-activity, html body.tdb-v2 .db-main .ref-distribution, html body.tdb-v2 .db-main .db-actions-rapides,
+html body.tdb-v2 .db-main .ref-card, html body.tdb-v2 .db-main .ref-core-pending .a-traiter-bloc, html body.tdb-v2 .db-main .validation-carte,
+html body.tdb-v2 .db-main .drive-carte {
+  background: var(--v2-carte) !important; background-image: none !important; border: 1px solid var(--v2-bord) !important;
+  box-shadow: var(--v2-ombre) !important; color: var(--v2-texte) !important; border-radius: 14px !important;
+}
+html body.tdb-v2 .db-main .timeline-liste { background: transparent !important; background-image: none !important; border: none !important; box-shadow: none !important; }
+html body.tdb-v2 .db-main .liste-recente:not(.ref-card), html body.tdb-v2 .db-main .activite-carte, html body.tdb-v2 .db-main .a-traiter-bloc,
+html body.tdb-v2 .db-main .ref-card, html body.tdb-v2 .db-main .ref-distribution, html body.tdb-v2 .db-main .db-actions-rapides,
+html body.tdb-v2 .db-main .ref-header-activity { padding: 18px 20px !important; }
+html body.tdb-v2 .db-main .ref-header-activity h3, html body.tdb-v2 .db-main .ref-distribution h3, html body.tdb-v2 .db-main .db-actions-rapides h3,
+html body.tdb-v2 .db-main .activite-carte h3, html body.tdb-v2 .db-main .liste-recente > h2, html body.tdb-v2 .db-main .liste-recente .dossiers-entete h2,
+html body.tdb-v2 .db-main .a-traiter-titre h2 {
+  color: var(--v2-titre) !important; font: 600 14px var(--texte, 'Jost', sans-serif) !important; letter-spacing: .02em !important; text-transform: none !important;
+}
+html body.tdb-v2 .db-main .ref-header-activity .activity-row, html body.tdb-v2 .db-main .timeline-item, html body.tdb-v2 .db-main .a-traiter-item {
+  border-bottom-color: var(--v2-bord) !important; color: var(--v2-texte) !important; font-size: 13px !important;
+}
+html body.tdb-v2 .db-main .timeline-liste > * { background: transparent !important; }
+html body.tdb-v2 .db-main .timeline-texte { color: var(--v2-texte) !important; font-size: 13px !important; }
+html body.tdb-v2 .db-main .timeline-date, html body.tdb-v2 .db-main .ref-header-activity .time, html body.tdb-v2 .db-main .activite-souslabel { color: var(--v2-doux) !important; font-size: 11.5px !important; }
+html body.tdb-v2 .db-main .a-traiter-item .at-label { font-size: 13px !important; color: var(--v2-texte) !important; }
+html body.tdb-v2 .db-main .a-traiter-item .at-compte { color: var(--v2-accent-clair) !important; background: var(--v2-chip) !important; border-radius: 999px !important; padding: 2px 10px !important; font-size: 13px !important; }
+html body.tdb-v2 .db-main .ref-donut:after { background: var(--v2-carte) !important; }
+html body.tdb-v2 .db-main .ref-donut .donut-center, html body.tdb-v2 .db-main .ref-donut .donut-center strong { color: var(--v2-titre) !important; }
+html body.tdb-v2 .db-main .ref-legend { font-size: 13px !important; color: var(--v2-texte) !important; }
+html body.tdb-v2 .db-main .db-action-btn { min-height: 70px !important; padding: 12px !important; }
+html body.tdb-v2 .db-main .db-action-btn .qa-icon { background: var(--v2-chip) !important; border: none !important; color: var(--v2-accent-clair) !important; border-radius: 10px !important; }
+html body.tdb-v2 .db-main .db-action-btn b { color: var(--v2-titre) !important; font-size: 13px !important; letter-spacing: 0 !important; }
+html body.tdb-v2 .db-main .db-action-btn small { color: var(--v2-doux) !important; font-size: 11.5px !important; }
+html body.tdb-v2 .db-main .db-action-btn:hover { border-color: rgba(163, 36, 58, .35) !important; transform: translateY(-2px) !important; }
+html body.tdb-v2 .db-main .activite-svg-wrap svg polyline { stroke: var(--v2-accent-clair) !important; }
+html body.tdb-v2 .db-main .activite-svg-wrap svg polygon { fill: rgba(163, 36, 58, .1) !important; }
+html body.tdb-v2 .db-main .activite-svg-wrap svg text { fill: var(--v2-doux) !important; }
+html body.tdb-v2 .db-main .activite-svg-wrap svg line { stroke: var(--v2-bord) !important; }
+/* Mannequin à la une : la photo se fond dans une carte blanche, texte foncé. */
+html body.tdb-v2 .db-main .db-hero::after { background: linear-gradient(90deg, rgba(255,255,255,0) 22%, rgba(255,255,255,.7) 46%, #fff 62%) !important; }
+html body.tdb-v2 .db-main .db-hero-eyebrow { color: var(--v2-accent-clair) !important; }
+html body.tdb-v2 .db-main .db-hero-nom { color: var(--v2-titre) !important; }
+html body.tdb-v2 .db-main .db-hero-signature, html body.tdb-v2 .db-main .db-hero-note, html body.tdb-v2 .db-main .db-hero-vide { color: var(--v2-doux) !important; }
+@media (max-width: 680px) {
+  html body.tdb-v2 .db-main .db-hero::after { background: linear-gradient(180deg, rgba(255,255,255,0) 30%, rgba(255,255,255,.85) 55%, #fff 68%) !important; }
+}
+html body.tdb-v2 .db-main .stat-carte.accent .stat-icone, html body.tdb-v2 .db-main .stat-carte:nth-child(4n+1) .stat-icone { background: rgba(163, 36, 58, .1) !important; color: #a3243a !important; }
+html body.tdb-v2 .db-main .stat-carte.accent { border-top: 3px solid var(--v2-accent-clair) !important; }
+html body.tdb-v2 .db-main .stats-secondaires { font-size: 12.5px !important; color: var(--v2-doux) !important; display: flex !important; flex-wrap: wrap !important; gap: 8px !important; }
+html body.tdb-v2 .db-main .stats-secondaires > * { padding: 6px 12px !important; border-radius: 999px !important; box-shadow: none !important; font-size: 12.5px !important; letter-spacing: 0 !important; }
+html body.tdb-v2 .db-main .stats-secondaires * { color: var(--v2-texte) !important; }
+html body.tdb-v2 .db-main .ref-core-activity h2, html body.tdb-v2 .db-main .ref-core-pending h2 { color: var(--v2-titre) !important; font: 600 14px var(--texte, 'Jost', sans-serif) !important; letter-spacing: .02em !important; text-transform: none !important; padding: 16px 20px 0 !important; }
+html body.tdb-v2 .db-main .db-hero::before { background: radial-gradient(420px 220px at 78% 40%, rgba(163, 36, 58, .06), transparent 70%) !important; }
+html body.tdb-v2 .db-main .db-hero-vide-marque { background: var(--v2-chip) !important; border-color: rgba(163, 36, 58, .2) !important; color: var(--v2-accent-clair) !important; }
+html body.tdb-v2 .db-main .db-hero-link { color: var(--v2-accent-clair) !important; border-color: rgba(163, 36, 58, .35) !important; background: var(--v2-carte) !important; }
+html body.tdb-v2 .db-main .db-hero-link:hover { background: var(--v2-chip) !important; }
+/* Une rubrique à la fois : les grilles prévues pour plusieurs panneaux côte à côte prennent toute la largeur. */
+html body.tdb-v2 .db-main .ref-core-grid, html body.tdb-v2 .db-main .ref-lower-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)) !important; }
+html body.tdb-v2 .db-main .ref-core-grid > *, html body.tdb-v2 .db-main .ref-lower-grid > * { grid-column: auto !important; grid-row: auto !important; }
+html body.tdb-v2 .db-main .ref-lower-grid { grid-template-columns: 1fr !important; }
+
+/* ================== Mise en page « maquette » (04/10) : grand cadre blanc ================== */
+.v2-lib, .v2-ico, .v2-badge, .v2-entete, .tdb-menu-item.v2-seulement { display: none; }
+html body.tdb-v2 .v1-lib { display: none !important; }
+html body.tdb-v2 .tdb-menu-panel .tdb-menu-item.v2-seulement { display: flex !important; }
+html body.tdb-v2 #bloc-tableau { padding: 26px 28px 50px !important; }
+html body.tdb-v2 .v2-blocs { margin: 0 auto 22px !important; }
+html body.tdb-v2 .db-shell {
+  max-width: 1440px !important; margin: 0 auto !important; background: var(--v2-carte) !important;
+  border: 1px solid var(--v2-bord) !important; border-radius: 22px !important;
+  box-shadow: 0 30px 70px -40px rgba(60, 30, 20, .35), 0 2px 6px rgba(60, 30, 20, .04) !important;
+}
+html body.tdb-v2 .db-main { background: var(--v2-carte) !important; padding: 0 0 50px !important; border-radius: 0 22px 22px 0 !important; }
+html body.tdb-v2 .db-main > *:not(.db-topbar) { margin-left: 26px !important; margin-right: 26px !important; }
+html body.tdb-v2 .tdb-menu-panel {
+  align-self: flex-start !important; height: auto !important; min-height: 70vh !important; max-height: 100vh !important;
+  border-radius: 22px 0 0 22px !important; background: transparent !important; padding: 22px 14px 24px !important;
+}
+html body.tdb-v2 .db-shell { position: relative !important; }
+html body.tdb-v2 .db-shell::before { content: ""; position: absolute; top: 0; bottom: 0; left: 262px; border-left: 1px solid var(--v2-bord); pointer-events: none; }
+html body.tdb-v2 .tdb-menu-panel { border-right: none !important; }
+html body.tdb-v2 .v2-marque { padding: 6px 10px 20px !important; margin: 0 0 8px !important; }
+
+/* Barre du haut : recherche à gauche, cloche + profil à droite, simple filet en bas */
+html body.tdb-v2 .db-topbar {
+  border: none !important; border-bottom: 1px solid var(--v2-bord) !important; border-radius: 0 22px 0 0 !important;
+  box-shadow: none !important; margin: 0 0 24px !important; padding: 14px 26px !important; background: var(--v2-carte) !important;
+}
+html body.tdb-v2 .db-topbar > div:not(.db-topbar-droite) { display: none !important; }
+html body.tdb-v2 .db-topbar-droite { margin-left: auto !important; display: flex !important; align-items: center !important; gap: 12px !important; }
+html body.tdb-v2 .db-statut-site { display: none !important; }
+html body.tdb-v2 .v2-recherche { max-width: 470px !important; padding: 0 14px !important; border-radius: 10px !important; }
+html body.tdb-v2 .v2-recherche .v2-ico { display: block; width: 16px; height: 16px; flex: none; color: var(--v2-doux); }
+html body.tdb-v2 .db-cloche { width: 40px !important; height: 40px !important; border-radius: 10px !important; background: var(--v2-carte) !important; }
+html body.tdb-v2 .db-profil { display: flex !important; flex-direction: row-reverse !important; align-items: center !important; gap: 10px !important; text-align: right !important; }
+html body.tdb-v2 .db-profil-avatar-vide { border-radius: 10px !important; width: 38px !important; height: 38px !important; }
+html body.tdb-v2 #bloc-tableau .v2-bascule { padding: 7px 12px !important; font-size: 11.5px !important; }
+
+/* Titre de la page */
+html body.tdb-v2 .v2-entete { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 22px !important; }
+html body.tdb-v2 .v2-entete h1 { margin: 0; font: 500 2.1rem/1.1 'Cormorant Garamond', Georgia, serif; color: var(--v2-titre); letter-spacing: 0; text-transform: none; }
+html body.tdb-v2 .v2-entete p { margin: 6px 0 0; font: 400 13.5px var(--texte, 'Jost', sans-serif); color: var(--v2-doux); }
+html body.tdb-v2 .v2-entete-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+html body.tdb-v2 .v2-action { border: 1px solid var(--v2-bord); background: var(--v2-carte); color: var(--v2-titre); border-radius: 999px; padding: 10px 18px; font: 500 13.5px var(--texte, 'Jost', sans-serif); cursor: pointer; box-shadow: 0 1px 2px rgba(60, 30, 20, .06); }
+html body.tdb-v2 .v2-action:hover { background: #fbf8f6; }
+html body.tdb-v2 .v2-action-principale { background: linear-gradient(180deg, #a3243a, #7a1220); border-color: #8c1a2c; color: #fff; }
+html body.tdb-v2 .v2-action-principale:hover { background: linear-gradient(180deg, #ad2a41, #82152a); }
+html body.tdb-v2 .db-overview-head { display: none !important; }
+
+/* Menu : icônes, pastille, titres de bloc courts */
+html body.tdb-v2 .tdb-menu-panel .tdb-menu-item { gap: 11px !important; font-size: 14px !important; padding: 9px 12px !important; }
+html body.tdb-v2 .tdb-menu-panel .v2-ico { display: block; width: 18px; height: 18px; flex: none; color: var(--v2-doux); }
+html body.tdb-v2 .tdb-menu-panel .tdb-menu-item.actif .v2-ico { color: var(--v2-accent-clair); }
+html body.tdb-v2 .tdb-menu-panel .v2-lib { display: block; flex: 1; min-width: 0; }
+html body.tdb-v2 .tdb-menu-panel .v2-badge { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; background: #a3243a; color: #fff; font: 600 11px var(--texte, 'Jost', sans-serif); margin-left: auto; }
+html body.tdb-v2 .tdb-menu-panel .v2-badge[hidden] { display: none; }
+html body.tdb-v2 .tdb-menu-panel .tdb-menu-accueil { font-size: 13px !important; }
+
+/* Vue d'ensemble : chiffres en 4 colonnes + alertes façon liste */
+html body.tdb-v2.v2-mode-ensemble .stats-grille[data-section].tdb-actif { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+html body.tdb-v2.v2-mode-ensemble .ref-core-grid { display: block !important; margin-top: 18px !important; }
+html body.tdb-v2 .db-main .a-traiter-bloc { padding: 0 !important; overflow: hidden !important; }
+html body.tdb-v2 .db-main .a-traiter-titre { display: flex !important; align-items: center !important; justify-content: space-between !important; padding: 16px 20px !important; border-bottom: 1px solid var(--v2-bord) !important; margin: 0 !important; }
+html body.tdb-v2 .db-main .a-traiter-titre h2 { margin: 0 !important; padding: 0 !important; }
+html body.tdb-v2 .db-main .a-traiter-titre .dossiers-compteur { font-size: 12px !important; padding: 4px 10px !important; border-radius: 999px !important; }
+html body.tdb-v2 .db-main .a-traiter-liste { padding: 0 !important; background: transparent !important; }
+html body.tdb-v2 .db-main .a-traiter-liste > .a-traiter-item {
+  display: flex !important; align-items: center !important; gap: 12px !important; width: 100% !important; text-align: left !important;
+  background: transparent !important; border: none !important; border-bottom: 1px solid var(--v2-bord) !important; border-radius: 0 !important;
+  padding: 13px 20px !important; min-height: 0 !important; cursor: pointer !important; box-shadow: none !important;
+}
+html body.tdb-v2 .db-main .a-traiter-liste > .a-traiter-item:last-child { border-bottom: none !important; }
+html body.tdb-v2 .db-main .a-traiter-liste > .a-traiter-item:hover { background: #fbf8f6 !important; padding-left: 20px !important; }
+html body.tdb-v2 .db-main .a-traiter-item::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #c98c28; flex: none; order: -2; }
+html body.tdb-v2 .db-main .a-traiter-item:nth-child(4n+2)::before { background: #a3243a; }
+html body.tdb-v2 .db-main .a-traiter-item:nth-child(4n+3)::before { background: #4f6cc9; }
+html body.tdb-v2 .db-main .a-traiter-item:nth-child(4n+4)::before { background: #2f8a57; }
+html body.tdb-v2 .db-main .a-traiter-item .at-compte { order: -1; min-width: 0 !important; text-align: left !important; }
+html body.tdb-v2 .db-main .a-traiter-item .at-label { flex: 1 !important; }
+html body.tdb-v2 .db-main .a-traiter-item::after { content: "Voir →"; color: var(--v2-accent-clair); font: 400 12.5px var(--texte, 'Jost', sans-serif); flex: none; }
+html body.tdb-v2 .db-main .a-traiter-vide { padding: 16px 20px !important; color: var(--v2-doux) !important; }
+
+@media (max-width: 1100px) {
+  html body.tdb-v2.v2-mode-ensemble .stats-grille[data-section].tdb-actif { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+@media (max-width: 900px) {
+  html body.tdb-v2 #bloc-tableau { padding: 12px 10px 40px !important; }
+  html body.tdb-v2 .db-shell { border-radius: 18px !important; display: block !important; }
+  html body.tdb-v2 .db-shell::before { display: none; }
+  html body.tdb-v2 .db-main { border-radius: 18px !important; }
+  html body.tdb-v2 .db-main > *:not(.db-topbar) { margin-left: 14px !important; margin-right: 14px !important; }
+  html body.tdb-v2 .db-topbar { border-radius: 18px 18px 0 0 !important; padding: 12px 14px !important; margin-bottom: 16px !important; }
+  html body.tdb-v2 .tdb-menu-panel { background: var(--v2-carte) !important; border-radius: 0 !important; min-height: 0 !important; max-height: none !important; height: 100% !important; }
+  html body.tdb-v2 .tdb-menu-toggle { margin: 0 14px 14px !important; }
+  html body.tdb-v2 .v2-entete h1 { font-size: 1.7rem; }
+  html body.tdb-v2 .v2-entete-actions { width: 100%; }
+  html body.tdb-v2 .v2-action { flex: 1; padding: 10px 12px; font-size: 13px; }
+  html body.tdb-v2 .db-profil > div:not(.db-profil-avatar-vide) { display: none !important; }
+}
+html body.tdb-v2 .db-main .v2-recherche input#v2-recherche { border: none !important; background: transparent !important; box-shadow: none !important; border-radius: 0 !important; padding: 10px 0 !important; }
+@media (min-width: 1281px) {
+  html body.tdb-v2.v2-mode-ensemble .stats-grille[data-section].tdb-actif { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }
+}
+@media (min-width: 1101px) and (max-width: 1280px) {
+  html body.tdb-v2.v2-mode-ensemble .stats-grille[data-section].tdb-actif { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+}
+/* Les rubriques ont parfois une largeur forcée à 100 % : avec les marges du cadre, elles débordaient. */
+html body.tdb-v2 .db-main > *:not(.db-topbar) { width: auto !important; max-width: none !important; box-sizing: border-box !important; }
+@media (min-width: 1281px) {
+  html body.tdb-v2 .stats-grille[data-section].tdb-actif { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }
+}
+/* Projets & castings : nom/infos sur une ligne, boutons dessous (ils débordaient du cadre). */
+html body.tdb-v2 .db-main .dossier-carte.tdb-53 { display: flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 6px 8px !important; padding: 14px 16px !important; }
+html body.tdb-v2 .db-main .dossier-carte.tdb-53 .dc-nom { flex: 1 1 100% !important; font: 600 15px var(--texte, 'Jost', sans-serif) !important; }
+html body.tdb-v2 .db-main .dossier-carte.tdb-53 .dc-meta { flex: 0 1 auto !important; margin: 0 10px 0 0 !important; font-size: 12.5px !important; }
+html body.tdb-v2 .db-main .dossier-carte.tdb-53 .statut-pill { margin-right: auto !important; }
+html body.tdb-v2 .db-main .dossier-carte.tdb-53 .btn { font-size: 11.5px !important; padding: 6px 11px !important; letter-spacing: .04em !important; }
+html body.tdb-v2 .db-main input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]), html body.tdb-v2 .db-main select { min-height: 40px !important; padding: 8px 12px !important; }
+html body.tdb-v2 .tdb-menu-panel .v2-bascule-menu { display: none !important; }
