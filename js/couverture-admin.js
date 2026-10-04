@@ -26,11 +26,15 @@
   function apercu(chemin) {
     var zone = $('couv-apercu'); zone.textContent = '';
     if (!chemin) return;
-    var v = document.createElement('video');
-    v.muted = true; v.loop = true; v.autoplay = true; v.playsInline = true; v.setAttribute('playsinline', '');
-    v.src = '/book-photos/' + chemin;
-    zone.appendChild(v);
-    var p = v.play(); if (p && p.catch) p.catch(function () {});
+    // même rendu que sur le site : vidéo en entier, fond flou sur les côtés
+    ['couv-apercu-fond', 'couv-apercu-video'].forEach(function (classe) {
+      var v = document.createElement('video');
+      v.className = classe;
+      v.muted = true; v.loop = true; v.autoplay = true; v.playsInline = true; v.setAttribute('playsinline', '');
+      v.src = '/book-photos/' + chemin;
+      zone.appendChild(v);
+      var p = v.play(); if (p && p.catch) p.catch(function () {});
+    });
   }
 
   async function chargerReglage() {
@@ -72,7 +76,7 @@
     if (besoinCompression(fichierChoisi, inf)) {
       txt += 'Elle sera compressée avant l’envoi' + (inf.duree > DUREE_MAX + 0.5 ? ' et limitée aux ' + DUREE_MAX + ' premières secondes' : '') + ' (cela prend à peu près la durée de la vidéo — gardez cette page ouverte).';
     } else txt += 'Elle est assez légère : elle sera envoyée telle quelle.';
-    if (inf.hauteur > inf.largeur) txt += ' Attention : vidéo verticale — le haut et le bas seront coupés dans la couverture, une vidéo en paysage rendra mieux.';
+    if (inf.hauteur > inf.largeur) txt += ' Vidéo verticale : elle passera en entier, au centre, avec un fond flou sur les côtés — une vidéo horizontale remplira mieux la couverture.';
     $('couv-infos').textContent = txt;
   }
 

@@ -42,14 +42,29 @@
     if (!valeur || valeur.type !== 'video' || typeof valeur.chemin !== 'string') return;
     // uniquement un fichier du dossier de la couverture, servi par le site lui-même
     if (!/^site\/couverture\/[A-Za-z0-9._-]+\.(mp4|webm)$/.test(valeur.chemin)) return;
-    var v = document.createElement('video');
-    v.className = 'couverture-video';
-    v.muted = true; v.defaultMuted = true; v.loop = true; v.autoplay = true; v.playsInline = true;
-    v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('aria-hidden', 'true');
-    v.preload = 'auto';
-    v.src = '/book-photos/' + valeur.chemin;
+    // La vidéo s'affiche toujours EN ENTIER (aucun recadrage), quelle que soit sa forme
+    // (16:9 YouTube, 4:3, verticale…) ; si elle n'a pas la forme de la couverture, une copie
+    // floutée et assombrie de la même vidéo remplit les côtés (comme Instagram / YouTube).
+    function creer(classe) {
+      var v = document.createElement('video');
+      v.className = classe;
+      v.muted = true; v.defaultMuted = true; v.loop = true; v.autoplay = true; v.playsInline = true;
+      v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('aria-hidden', 'true');
+      v.preload = 'auto';
+      v.src = '/book-photos/' + valeur.chemin;
+      return v;
+    }
+    var v = creer('couverture-video'), fond = null;
+    v.addEventListener('loadedmetadata', function () {
+      var formeVideo = v.videoWidth / v.videoHeight, formeCadre = sec.clientWidth / sec.clientHeight;
+      // forme presque identique : pas besoin du fond flou
+      if (!isFinite(formeVideo) || Math.abs(formeVideo / formeCadre - 1) < .04) return;
+      fond = creer('couverture-video-fond');
+      sec.insertBefore(fond, v);
+      var p2 = fond.play(); if (p2 && p2.catch) p2.catch(function () {});
+    }, { once: true });
     v.addEventListener('playing', function () { videoActive = true; sec.classList.add('video-prete'); }, { once: true });
-    v.addEventListener('error', function () { v.remove(); });
+    v.addEventListener('error', function () { v.remove(); if (fond) fond.remove(); });
     sec.appendChild(v);
     var p = v.play(); if (p && p.catch) p.catch(function () {});
   }

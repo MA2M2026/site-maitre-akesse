@@ -2761,7 +2761,12 @@ html.selection-vide #liste-vide { display: block; }
 .site-header-v2.entete-sous-couverture { top: var(--couv-h); }
 html:has(#couverture-faisceau) { scroll-padding-top: calc(var(--couv-h) + 90px); }
 /* Vidéo de couverture choisie dans le tableau de bord : remplace l'animation en fondu. */
-.couverture-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.9s ease; }
-.couverture-faisceau.video-prete .couverture-video { opacity: 1; }
+/* Vidéo toujours affichée en entier (contain) ; le fond flou remplit les côtés si sa forme
+   diffère de celle de la couverture. */
+.couverture-video, .couverture-video-fond { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.9s ease; }
+.couverture-video { object-fit: contain; z-index: 1; }
+.couverture-video-fond { object-fit: cover; filter: blur(22px) brightness(0.45) saturate(1.1); transform: scale(1.15); }
+.couverture-faisceau.video-prete .couverture-video,
+.couverture-faisceau.video-prete .couverture-video-fond { opacity: 1; }
 .couverture-faisceau.video-prete .couverture-canvas,
 .couverture-faisceau.video-prete .couverture-secours { visibility: hidden; transition: visibility 0s 0.9s; }
