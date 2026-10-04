@@ -142,7 +142,9 @@ module.exports = async function handler(req, res) {
 
     for (const abo of abonnements) {
       const sub = { endpoint: abo.endpoint, keys: { p256dh: abo.p256dh, auth: abo.auth } };
-      const payload = JSON.stringify({ titre: notif.titre, texte: notif.texte, url: notif.url, tag: notif.cle });
+      // Étiquette propre à chaque événement : avec une étiquette commune, une
+      // nouvelle notification remplaçait en silence la précédente non lue.
+      const payload = JSON.stringify({ titre: notif.titre, texte: notif.texte, url: notif.url, tag: notif.cle + '-' + (record.id || Date.now()) });
 
       let envoye = false;
       for (let essai = 0; essai < 3 && !envoye; essai++) {
