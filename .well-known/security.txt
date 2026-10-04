@@ -1,0 +1,7 @@
+# Signaler une faille de sécurité sur le site de Maître Akesse Model Management.
+# To report a security vulnerability on the Maître Akesse Model Management website.
+Contact: mailto:infos.ma2m@gmail.com
+Expires: 2027-10-04T00:00:00.000Z
+Preferred-Languages: fr, en
+Canonical: https://www.maitreakessemodelmanagement.com/.well-known/security.txt
+Policy: https://www.maitreakessemodelmanagement.com/politique-confidentialite.html

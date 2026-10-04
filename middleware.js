@@ -1,4 +1,7 @@
-// ================== Aperçu des liens partagés (actualités / événements) ==================
+// ================== Aperçu des liens partagés (actualités / événements / The Book / mannequins) ==================
+// 04/10/2026 : étendu à The Book (photo du mannequin à la une) et à la fiche de CHAQUE
+// mannequin publié (sa photo, son nom, catégorie · ville · taille) — jamais ses
+// coordonnées personnelles.
 // Demande de la propriétaire (29/09/2026) : quand on colle le lien d'UNE actualité
 // ou d'UN événement dans WhatsApp, Facebook, Instagram, Telegram…, l'aperçu doit
 // montrer SA photo, SON titre et SON texte — pas le logo général de l'agence.
@@ -18,7 +21,9 @@
 export const config = {
   matcher: [
     '/actualites', '/actualites.html', '/evenements', '/evenements.html',
-    '/en/actualites', '/en/actualites.html', '/en/evenements', '/en/evenements.html'
+    '/en/actualites', '/en/actualites.html', '/en/evenements', '/en/evenements.html',
+    '/mannequin', '/mannequin.html', '/en/mannequin', '/en/mannequin.html',
+    '/mannequins', '/mannequins.html', '/en/mannequins', '/en/mannequins.html'
   ]
 };
 
@@ -73,12 +78,80 @@ function imageApercu(url) {
   return SITE + '/_vercel/image?url=' + encodeURIComponent(absolue) + '&w=1080&q=75';
 }
 
+// Petite page d'aperçu : uniquement les balises lues par WhatsApp, Facebook, Instagram…
+function pageApercu({ titre, description, photo, lien, anglais, type }) {
+  const nomSite = 'Maître Akesse Model Management';
+  const html = '<!DOCTYPE html><html lang="' + (anglais ? 'en' : 'fr') + '"><head><meta charset="utf-8">' +
+    '<title>' + echapper(titre + ' — ' + nomSite) + '</title>' +
+    '<meta name="description" content="' + echapper(description) + '">' +
+    '<meta property="og:type" content="' + (type || 'website') + '">' +
+    '<meta property="og:site_name" content="' + echapper(nomSite) + '">' +
+    '<meta property="og:title" content="' + echapper(titre) + '">' +
+    '<meta property="og:description" content="' + echapper(description) + '">' +
+    '<meta property="og:image" content="' + echapper(photo) + '">' +
+    '<meta property="og:image:alt" content="' + echapper(titre) + '">' +
+    '<meta property="og:url" content="' + echapper(lien) + '">' +
+    '<meta property="og:locale" content="' + (anglais ? 'en_US' : 'fr_FR') + '">' +
+    '<meta name="twitter:card" content="summary_large_image">' +
+    '<meta name="twitter:title" content="' + echapper(titre) + '">' +
+    '<meta name="twitter:description" content="' + echapper(description) + '">' +
+    '<meta name="twitter:image" content="' + echapper(photo) + '">' +
+    '<link rel="canonical" href="' + echapper(lien) + '">' +
+    '</head><body><h1>' + echapper(titre) + '</h1><p>' + echapper(description) + '</p>' +
+    '<p><a href="' + echapper(lien) + '">' + echapper(nomSite) + '</a></p></body></html>';
+  return new Response(html, {
+    status: 200,
+    headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=600' }
+  });
+}
+
+// Meilleure photo d'un mannequin pour l'aperçu : photo principale, sinon couverture, sinon la première.
+async function photoMannequin(id) {
+  const photos = await lireSupabase('model_photos?model_id=eq.' + id + '&select=url,url_moyenne,principale,photo_couverture&order=created_at.asc&limit=40');
+  if (!photos || !photos.length) return '';
+  const p = photos.find(x => x.principale) || photos.find(x => x.photo_couverture) || photos[0];
+  return p.url_moyenne || p.url || '';
+}
+
+// The Book (liste) et fiche d'UN mannequin publié.
+async function apercuMannequin(url, anglais) {
+  const fiche = /\/mannequin(\.html)?$/.test(url.pathname);
+  if (fiche) {
+    const id = url.searchParams.get('id');
+    if (!id || !ID_VALIDE.test(id)) return;
+    const lignes = await lireSupabase('model_profiles?id=eq.' + id + '&published=eq.true&select=id,full_name,city,category,height_cm,niveau_mannequin');
+    const m = lignes && lignes[0];
+    if (!m || !m.full_name) return;
+    const categorie = m.category === 'femme' ? (anglais ? 'Female model' : 'Mannequin femme')
+      : m.category === 'homme' ? (anglais ? 'Male model' : 'Mannequin homme') : 'New Face';
+    const details = [categorie, m.city, m.height_cm ? (m.height_cm / 100).toFixed(2).replace('.', anglais ? '.' : ',') + ' m' : ''].filter(Boolean).join(' · ');
+    const description = details + ' — ' + (anglais
+      ? 'Discover the full book on Maître Akesse Model Management.'
+      : 'Découvrez son book complet sur Maître Akesse Model Management.');
+    const lien = SITE + (anglais ? '/en' : '') + '/mannequin.html?id=' + id;
+    return pageApercu({ titre: m.full_name, description, photo: imageApercu(await photoMannequin(id)), lien, anglais, type: 'profile' });
+  }
+  // The Book : photo du mannequin à la une (sinon du plus récent)
+  let lignes = await lireSupabase('model_profiles?published=eq.true&featured=eq.true&select=id&limit=1');
+  if (!lignes || !lignes.length) lignes = await lireSupabase('model_profiles?published=eq.true&select=id&order=created_at.desc&limit=1');
+  const vedette = lignes && lignes[0];
+  const photo = imageApercu(vedette ? await photoMannequin(vedette.id) : '');
+  return pageApercu({
+    titre: anglais ? 'The Book — Our models' : 'The Book — Nos mannequins',
+    description: anglais
+      ? 'Browse the models of Maître Akesse Model Management, Abidjan: books, measurements and casting requests.'
+      : 'Découvrez les mannequins de Maître Akesse Model Management, à Abidjan : books, mensurations et demandes de casting.',
+    photo, lien: SITE + (anglais ? '/en' : '') + '/mannequins.html', anglais
+  });
+}
+
 export default async function middleware(requete) {
   try {
     const agent = requete.headers.get('user-agent') || '';
     if (!ROBOTS_APERCU.test(agent)) return; // visiteur normal : rien ne change
     const url = new URL(requete.url);
     const anglais = url.pathname.indexOf('/en/') === 0;
+    if (/\/mannequins?(\.html)?$/.test(url.pathname)) return await apercuMannequin(url, anglais);
     const estEvenement = url.pathname.indexOf('evenements') !== -1;
     const id = url.searchParams.get(estEvenement ? 'evenement' : 'actu');
     if (!id || !ID_VALIDE.test(id)) return;
