@@ -75,3 +75,11 @@ html.intro-a-venir #logo-splash { display: flex; }
 @media (max-width: 700px) {
   .splash-passer { bottom: 1.8rem; right: 1.8rem; padding: 0.65rem 1.3rem; font-size: 0.6rem; }
 }
+
+/* Intro animée « faisceau de lumière » (js/intro-faisceau.js, 04/10/2026) : le canvas
+   occupe tout l'écran et remplace le logo fixe, qui reste en secours si l'animation ne
+   peut pas démarrer (moins d'animations demandé, image introuvable…). */
+.splash-canvas { position: absolute; inset: 0; display: block; }
+.splash.intro-anime { background: #050304; }
+.splash.intro-anime .splash-logo-wrap { display: none; }
+.splash-passer { z-index: 1; }

@@ -31,7 +31,8 @@ document.getElementById('entrer-btn').addEventListener('click', async () => {
   }
 
   document.getElementById('splash-passer').addEventListener('click', terminerIntro);
-  setTimeout(terminerIntro, 5800);
+  // Durée donnée par js/intro-faisceau.js quand l'intro animée tourne (sinon logo fixe : 5,8 s).
+  setTimeout(terminerIntro, window.MA2M_INTRO_DUREE || 5800);
 })();
 
 // --- Photo de fond de la porte d'entrée ---

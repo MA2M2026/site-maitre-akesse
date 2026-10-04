@@ -29,7 +29,8 @@ document.getElementById('entrer-btn').addEventListener('click', async () => {
   }
 
   document.getElementById('splash-passer').addEventListener('click', terminerIntro);
-  setTimeout(terminerIntro, 5800);
+  // Duration set by js/intro-faisceau.js when the animated intro runs (otherwise static logo: 5.8 s).
+  setTimeout(terminerIntro, window.MA2M_INTRO_DUREE || 5800);
 })();
 
 // --- Entry door background photos ---
