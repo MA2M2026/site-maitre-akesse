@@ -571,6 +571,22 @@
     }
   }
 
+  // Verrouillage après 15 min d'inactivité : certains gestes ne comptaient pas comme une
+  // activité (défilement à l'intérieur d'une fiche ouverte, molette, saisie dans un champ
+  // dont un script arrête la propagation…) — le tableau de bord pouvait alors se verrouiller
+  // en plein travail (« la page saute pour revenir sur le site », 04/10). On écoute ces gestes
+  // en phase de capture, pour qu'aucun ne passe inaperçu.
+  var derniereRelance = 0;
+  function relancerMinuteur() {
+    var t = Date.now();
+    if (t - derniereRelance < 1000) return;
+    derniereRelance = t;
+    try { if (minuteurInactivite) demarrerMinuteurInactivite(); } catch (e) {}
+  }
+  ['pointerdown', 'touchstart', 'touchmove', 'wheel', 'scroll', 'keydown', 'input', 'change', 'click'].forEach(function (evt) {
+    document.addEventListener(evt, relancerMinuteur, { capture: true, passive: true });
+  });
+
   function demarrer() {
     try { localStorage.removeItem('ma2m_tdb_v2'); } catch (e) {}
     construire();

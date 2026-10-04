@@ -432,3 +432,7 @@ html body.tdb-v2 .db-main .btn, html body.tdb-v2 .db-main .filtre-pill { border-
 html body.tdb-v2 .db-main .statut-pill { color: #1a1513 !important; font-weight: 700 !important; border-color: #c9bcb1 !important; }
 html body.tdb-v2 .db-main .dc-nom span, html body.tdb-v2 .db-main .dc-meta, html body.tdb-v2 .db-main .dc-date { color: #2e2724 !important; font-size: 13.5px !important; font-family: var(--texte, 'Jost', sans-serif) !important; }
 html body.tdb-v2 .db-main .dc-nom, html body.tdb-v2 .db-main h2, html body.tdb-v2 .db-main h3 { color: #000 !important; }
+
+/* « Messages groupés » et « Nouveau casting » : seulement sur la vue d'ensemble, comme sur la maquette
+   (ils se répétaient en haut de chaque page — remarque du 04/10). */
+html body.tdb-v2:not(.v2-page-v2-ensemble) .v2-entete-actions { display: none !important; }
