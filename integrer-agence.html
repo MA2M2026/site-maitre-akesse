@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-epSoqLxyAtmp6FqQF6gByNjGo2Hy526arFevOnPU8oM='; style-src 'self' https://fonts.googleapis.com 'sha256-h6Sdq0oyaiA/0u97nXOai+NLeqkDUrKN7C72/YjPopk='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-RmEE3Yg/HqbZf+tkLqjagdF9Jf1HiDt5l0d/R0BBPPE='; style-src 'self' https://fonts.googleapis.com 'sha256-h6Sdq0oyaiA/0u97nXOai+NLeqkDUrKN7C72/YjPopk='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -799,6 +799,9 @@ majParcours();
 document.getElementById('form-casting').addEventListener('submit', async (e) => {
   e.preventDefault();
   const msg = document.getElementById('ca-msg');
+  // Évite les envois multiples (plusieurs appuis rapides sur « Envoyer ») — même
+  // protection que candidature.html.
+  if (document.getElementById('btn-envoyer').disabled) return;
 
   const genre = document.getElementById('ca-genre').value;
   const taille = parseInt(document.getElementById('ca-taille').value) || 0;
