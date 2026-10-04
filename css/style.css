@@ -2770,3 +2770,23 @@ html:has(#couverture-faisceau) { scroll-padding-top: calc(var(--couv-h) + 90px);
 .couverture-faisceau.video-prete .couverture-video-fond { opacity: 1; }
 .couverture-faisceau.video-prete .couverture-canvas,
 .couverture-faisceau.video-prete .couverture-secours { visibility: hidden; transition: visibility 0s 0.9s; }
+
+/* Couverture qui se replie sur ordinateur (04/10/2026, js/couverture-faisceau.js) : grande
+   en haut de page (16:9, jusqu'à 85 % de l'écran), elle se réduit en défilant jusqu'au
+   bandeau (--couv-h), puis reste fixe avec la barre du menu dessous. Le canvas et la vidéo
+   gardent la taille de la grande couverture, centrés : quand elle se replie, seule la bande
+   du milieu reste visible (le logo reste entier). .couverture-espace réserve la place. */
+:root { --couv-h-max: min(calc(100vw * 9 / 16), 85vh); --couv-h-anim: var(--couv-h-max); }
+.couverture-espace { display: none; }
+.couverture-video.remplir { object-fit: cover; }
+@media (min-width: 701px) {
+  .couverture-faisceau { position: fixed; top: 0; left: 0; right: 0; height: var(--couv-h-anim); }
+  .couverture-faisceau .couverture-canvas,
+  .couverture-faisceau .couverture-video,
+  .couverture-faisceau .couverture-video-fond { inset: auto; left: 0; top: 50%; width: 100%; height: var(--couv-h-max); transform: translateY(-50%); }
+  .couverture-faisceau .couverture-video-fond { transform: translateY(-50%) scale(1.15); }
+  .site-header-v2.entete-sous-couverture { position: fixed; top: var(--couv-h-anim); left: 0; right: 0; }
+  .couverture-espace { display: block; height: calc(var(--couv-h-max) + 85px); }
+}
+/* Accueil : tant que la porte d'entrée est affichée, ni couverture ni espace réservé. */
+body.porte-verrouillee .couverture-faisceau, body.porte-verrouillee .couverture-espace { display: none; }
