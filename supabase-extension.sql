@@ -5710,3 +5710,35 @@ begin
 end $$;
 
 NOTIFY pgrst, 'reload schema';
+
+-- =====================================================================
+-- Extension 111 — WhatsApp (projet du 04/10/2026) : journal des
+-- informations envoyées par Meta à api/whatsapp-webhook.js — état de
+-- chaque message envoyé par l'agence (sent / delivered / read / failed +
+-- raison de l'échec) et messages reçus en réponse. Seule la fonction
+-- serveur (clé service_role) écrit ; seuls les admins lisent.
+-- =====================================================================
+create table if not exists whatsapp_evenements (
+  id uuid primary key default gen_random_uuid(),
+  recu_le timestamptz not null default now(),
+  type text not null,
+  message_id text,
+  statut text,
+  numero text,
+  texte text,
+  erreur_code text,
+  erreur_titre text,
+  erreur_detail text,
+  brut jsonb,
+  signature_verifiee boolean not null default false
+);
+create index if not exists whatsapp_evenements_recu_le on whatsapp_evenements (recu_le desc);
+create index if not exists whatsapp_evenements_message_id on whatsapp_evenements (message_id);
+alter table whatsapp_evenements enable row level security;
+
+drop policy if exists "Les admins lisent les événements WhatsApp" on whatsapp_evenements;
+create policy "Les admins lisent les événements WhatsApp"
+  on whatsapp_evenements for select
+  using (exists (select 1 from admins where user_id = auth.uid()));
+
+NOTIFY pgrst, 'reload schema';
