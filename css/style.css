@@ -696,6 +696,11 @@ section { padding: 5rem 0; }
 .footer-bas a:hover { color: var(--bordeaux-clair); }
 
 @media (max-width: 720px) { .footer-grille { grid-template-columns: 1fr; } }
+/* Téléphone : liens du pied de page et bouton Menu assez grands pour le doigt (audit du 04/10) */
+@media (max-width: 720px) {
+  .footer-grille > div > a { padding: 0.5rem 0; margin-bottom: 0; }
+  .menu-trigger { min-height: 44px; padding: 0 0.15rem; }
+}
 
 /* ---------- Panier de sélection recruteur ---------- */
 

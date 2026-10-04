@@ -223,8 +223,8 @@ function mcvIcon(name, size) {
 }
 
 const LIBELLES_COMPETENCES = {
-  runway: 'Runway / Défilé', pose: 'Pose photographique', editorial: 'Editorial', campagne: 'Fashion campaign',
-  fitting: 'Fitting', presentation: 'Présentation de collection', expression: 'Expression corporelle',
+  runway: 'Défilé', pose: 'Pose photographique', editorial: 'Éditorial', campagne: 'Campagne de mode',
+  fitting: 'Essayage', presentation: 'Présentation de collection', expression: 'Expression corporelle',
   equipe: 'Travail en équipe', discipline: 'Discipline professionnelle'
 };
 const ORDRE_COMPETENCES = ['runway', 'pose', 'editorial', 'campagne', 'fitting', 'presentation', 'expression', 'equipe', 'discipline'];

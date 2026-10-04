@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-l8TIN1PuwT6k2cw27QpokCbyRfwH5sz8Qs6B/Inift4='; style-src 'self' https://fonts.googleapis.com 'sha256-7qzTX2fbWhcoN8NR8B0qP2PjgfCnkK2/b2LeciSYanY=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-Xo9TtsJce7OQfa8thEpQ/qF2Z5LHB7UF7m8pul3ugG0='; style-src 'self' https://fonts.googleapis.com 'sha256-7qzTX2fbWhcoN8NR8B0qP2PjgfCnkK2/b2LeciSYanY=';">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -128,6 +128,7 @@ setTimeout(() => {
         <a href="actualites.html">Actualités</a>
         <a href="evenements.html">Nos événements</a>
         <a href="partenaires.html">Nos partenaires</a>
+        <a href="integrer-agence.html">Intégrer l'agence</a>
         <a href="candidature.html">Postuler à un casting</a>
         <a href="inscription-mannequin.html">Inscription</a>
       </div>
@@ -184,7 +185,7 @@ function iconeMensuration(cle) {
 }
 
 function libelleTypeModele(t) {
-  const libelles = { catwalk: 'Défilé / Catwalk', photo: 'Photo', publicite: 'Publicité', commercial: 'Commercial', autre: 'Autre' };
+  const libelles = { catwalk: 'Défilé', photo: 'Photo', publicite: 'Publicité', commercial: 'Commercial', autre: 'Autre' };
   return libelles[t] || t;
 }
 
