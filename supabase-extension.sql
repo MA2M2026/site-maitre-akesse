@@ -5742,3 +5742,27 @@ create policy "Les admins lisent les événements WhatsApp"
   using (exists (select 1 from admins where user_id = auth.uid()));
 
 NOTIFY pgrst, 'reload schema';
+
+-- =====================================================================
+-- Extension 112 — Test de sécurité externe (04/10/2026) : l'ancien
+-- stockage des photos des mannequins chez Supabase (bucket model-photos,
+-- d'avant le passage à Cloudflare R2) pouvait être LISTÉ par n'importe
+-- qui avec la clé publique du site : liste des dossiers, puis des photos
+-- de chaque dossier — y compris celles de mannequins non publiés.
+-- Lister n'est utile qu'au mannequin (son propre dossier) et aux admins.
+-- Les photos déjà affichées sur le site gardent leur adresse publique :
+-- dans un bucket public, l'affichage d'une photo dont on connaît l'adresse
+-- ne dépend pas de cette règle — seule l'énumération disparaît.
+-- =====================================================================
+drop policy if exists "Photos visibles publiquement" on storage.objects;
+drop policy if exists "Photos model-photos : liste par le mannequin et les admins" on storage.objects;
+create policy "Photos model-photos : liste par le mannequin et les admins"
+  on storage.objects for select
+  using (
+    bucket_id = 'model-photos' and (
+      (storage.foldername(name))[1] = auth.uid()::text
+      or exists (select 1 from admins where user_id = auth.uid())
+    )
+  );
+
+NOTIFY pgrst, 'reload schema';

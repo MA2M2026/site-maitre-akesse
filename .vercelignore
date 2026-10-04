@@ -1,0 +1,12 @@
+# Fichiers internes au projet : ils restent dans le dépôt mais ne sont jamais publiés
+# sur le site (test de sécurité du 04/10/2026 — le plan complet de la base de données,
+# les notes techniques et les scripts étaient téléchargeables par n'importe qui).
+*.sql
+README-TECHNIQUE.md
+CLAUDE.md
+SECURITY.md
+scripts/
+.github/
+.agents/
+.claude/
+skills-lock.json

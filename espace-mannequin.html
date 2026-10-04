@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-AEbh78QB22ljMEiamqHNVYVifkywOcEueIbc+mk/mh0='; style-src 'self' https://fonts.googleapis.com 'sha256-74xXKVtiAJEAca9qMBm1kB3qFEnE9yShy89lv0tZBJw=' 'sha256-95tyu5pwa5RZ8I04E5+0Iw0artWxlCY0nXK79jf1iaI=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-Xu2QWxYe/TyCYDFPxZvdBrMtQhaKUqwmVNGtT9hbu08='; style-src 'self' https://fonts.googleapis.com 'sha256-74xXKVtiAJEAca9qMBm1kB3qFEnE9yShy89lv0tZBJw=' 'sha256-95tyu5pwa5RZ8I04E5+0Iw0artWxlCY0nXK79jf1iaI=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-VTFjKJoosvUHJwUEBfSuoB4m5qYD0j+kM8YMTnuF4Gk=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <meta charset="UTF-8">
@@ -752,25 +752,16 @@ function idAppareilMa2m() {
     return v;
   } catch (e) { return null; }
 }
-async function verifierCodePortail(code) {
-  try {
-    const rep = await fetch('/api/code-protege', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'portail', code, appareil: idAppareilMa2m() })
-    });
-    const r = await rep.json().catch(() => ({}));
-    if (rep.ok) return { ok: true };
-    if (rep.status === 429) {
-      const h = Math.ceil(r.minutesRestantes / 60);
-      return { ok: false, message: r.dejaBloque
-        ? `Trop de tentatives. Accès temporairement bloqué. Revenez dans ${r.minutesRestantes} min.`
-        : `Trop de tentatives. Accès bloqué. Revenez dans ${h >= 1 ? h + ' heure' + (h > 1 ? 's' : '') : r.minutesRestantes + ' min'}.` };
-    }
-    const reste = r.essaisRestants;
-    return { ok: false, message: "Ce code d'invitation est invalide." + (reste === 2 ? ' Attention : il vous reste 2 tentatives.' : reste === 1 ? ' Il vous reste 1 tentative.' : '') };
-  } catch (e) {
-    return { ok: false, message: 'Erreur de connexion — réessayez.' };
+// Message affiché quand le code d'invitation est refusé (ou bloqué après trop d'essais).
+function messageRefusCode(statut, r){
+  if (statut === 429) {
+    const h = Math.ceil(r.minutesRestantes / 60);
+    return r.dejaBloque
+      ? `Trop de tentatives. Accès temporairement bloqué. Revenez dans ${r.minutesRestantes} min.`
+      : `Trop de tentatives. Accès bloqué. Revenez dans ${h >= 1 ? h + ' heure' + (h > 1 ? 's' : '') : r.minutesRestantes + ' min'}.`;
   }
+  const reste = r.essaisRestants;
+  return "Ce code d'invitation est invalide." + (reste === 2 ? ' Attention : il vous reste 2 tentatives.' : reste === 1 ? ' Il vous reste 1 tentative.' : '');
 }
 
 function bindAuthGate(){
@@ -818,37 +809,43 @@ function bindAuthGate(){
     const code = val('au-in-code').trim(), nom = val('au-in-nom').trim(), email = val('au-in-email').trim(), mdp = val('au-in-mdp');
     if (!code || !nom || !email) { msg.textContent = 'Merci de remplir tous les champs.'; return; }
     if (mdp.length < 8) { msg.textContent = 'Le mot de passe doit contenir au moins 8 caractères.'; return; }
-    msg.textContent = 'Vérification du code…';
+    msg.textContent = 'Création du compte…';
 
-    const verif = await verifierCodePortail(code);
-    if (!verif.ok) { msg.textContent = verif.message; return; }
-
-    const { data: signUpData, error: erreurSignUp } = await sb.auth.signUp({ email, password: mdp });
-    if (erreurSignUp) { msg.textContent = "Erreur lors de la création du compte : " + erreurSignUp.message; return; }
-
-    if (!signUpData.session) {
-      msg.textContent = "Compte créé. Vérifiez votre boîte e-mail pour confirmer votre adresse avant de vous connecter.";
+    // Le code est vérifié ET le compte créé côté serveur, en une seule étape (test de
+    // sécurité du 04/10/2026) : la page ne crée plus jamais de compte elle-même.
+    try {
+      const rep = await fetch('/api/code-protege', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'portail-creer-compte', code, nom, email, password: mdp, appareil: idAppareilMa2m() })
+      });
+      const r = await rep.json().catch(() => ({}));
+      if (!rep.ok) {
+        if (rep.status === 409) msg.textContent = 'Un compte existe déjà avec cet e-mail. Utilisez « Se connecter » (ou « Mot de passe oublié ? »).';
+        else if (r.error === 'champs') msg.textContent = 'Merci de vérifier votre nom et votre adresse e-mail.';
+        else if (r.error === 'mot_de_passe') msg.textContent = 'Ce mot de passe n’est pas accepté : choisissez-en un d’au moins 8 caractères, plus difficile à deviner.';
+        else if (rep.status === 429 || rep.status === 401) msg.textContent = messageRefusCode(rep.status, r);
+        else msg.textContent = 'La création du compte a échoué — réessayez dans quelques instants.';
+        return;
+      }
+    } catch (e) {
+      msg.textContent = 'Erreur de connexion — réessayez.';
       return;
     }
 
-    const verifFinale = await verifierCodePortail(code);
-    if (!verifFinale.ok) {
-      msg.textContent = "Ce code vient d'être utilisé par quelqu'un d'autre. Contactez l'agence pour un nouveau code.";
-      await sb.auth.signOut();
-      return;
-    }
-
-    // Filet de sécurité identique à l'ancien système : s'assurer que la fiche
-    // model_profiles existe bien avant de continuer, avec quelques tentatives.
-    let erreurProfil = null;
-    for (let essai = 0; essai < 3; essai++) {
-      const { error } = await sb.from('model_profiles').upsert({ id: signUpData.user.id, full_name: nom, published: false });
-      erreurProfil = error;
-      if (!error) break;
-      await new Promise(function(r){ setTimeout(r, 1000); });
-    }
-    if (erreurProfil) {
-      msg.textContent = "Compte créé, mais la fiche profil n'a pas pu être créée (" + erreurProfil.message + "). Reconnectez-vous pour réessayer, ou contactez l'agence.";
+    // Compte créé : connexion immédiate, par le même chemin que « Se connecter ».
+    try {
+      const reponse = await fetch('/api/connexion-protegee', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: mdp, espace: 'mannequin', appareil: idAppareilMa2m() })
+      });
+      const resultat = await reponse.json().catch(() => ({}));
+      if (!reponse.ok) throw new Error('connexion');
+      const { error } = await sb.auth.setSession({ access_token: resultat.access_token, refresh_token: resultat.refresh_token });
+      if (error) throw error;
+    } catch (e) {
+      afficherPanneauAuth('auth-panneau-connexion');
+      document.getElementById('au-co-email').value = email;
+      document.getElementById('au-co-msg').textContent = 'Votre compte est créé. Connectez-vous avec votre e-mail et votre mot de passe.';
       return;
     }
 
