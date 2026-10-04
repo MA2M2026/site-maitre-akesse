@@ -2705,3 +2705,9 @@ html.selection-vide #liste-vide { display: block; }
   padding: 0.95rem 1.6rem;
   font-weight: 500;
 }
+
+/* Fiche dossier (tableau de bord) : message WhatsApp tout prêt — champs du rendez-vous */
+.mf-wa .form-champ { margin-bottom: 0.7rem; }
+.mf-wa select, .mf-wa input { width: 100%; box-sizing: border-box; }
+.mf-wa-rdv { grid-template-columns: 1fr 1fr; gap: 0 0.8rem; }
+.mf-wa-rdv .mf-wa-lieu { grid-column: 1 / -1; }
