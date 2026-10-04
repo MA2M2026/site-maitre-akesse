@@ -193,6 +193,7 @@ setTimeout(() => {
   <div class="splash-logo-wrap"><img src="../assets/logo-dark-bg.png" alt="Maître Akesse Model Management"></div>
   <button class="splash-passer" id="splash-passer" type="button">Skip intro</button>
 </div>
+<script src="../js/faisceau.js"></script>
 <script src="../js/intro-faisceau.js"></script>
 
 <section class="hero-v2 bord-dechire-bas" id="porte-entree">
@@ -241,6 +242,13 @@ setTimeout(() => {
     <span class="entrer-icone">↓</span>
   </button>
 </section>
+
+<!-- Couverture animée (logo « faisceau de lumière ») -->
+<section class="couverture-faisceau" id="couverture-faisceau" aria-label="Maître Akesse Model Management">
+  <canvas class="couverture-canvas" aria-hidden="true"></canvas>
+  <img class="couverture-secours" src="../assets/logo-intro.png" alt="Maître Akesse Model Management">
+</section>
+<script src="../js/couverture-faisceau.js"></script>
 
 <div class="marquee-bande" id="marqueeBande" aria-hidden="true">
   <div class="marquee-label u-hidden" id="marqueeLabel">Today's News</div>
