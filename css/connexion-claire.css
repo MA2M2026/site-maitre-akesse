@@ -1,0 +1,63 @@
+/* ================== Tableau de bord — écrans de connexion en version blanche ==================
+   Demande de la propriétaire (04/10/2026) : garder le blanc partout, y compris sur les écrans
+   e-mail / mot de passe / code de validation (avant : noirs). Chargé dans le <head> pour éviter
+   un éclair noir au chargement. Une fois connecté, js/tableau-v2.js ajoute .tdb-v2 au <body>
+   et css/tableau-v2.css prend le relais. */
+html { background: #ece6e0 !important; }
+html body:not(.tdb-v2) {
+  --c-fond: #ece6e0; --c-carte: #ffffff; --c-bord: #d6cbc1; --c-texte: #1f1a18; --c-doux: #4a423e; --c-titre: #000;
+  background: var(--c-fond) !important; color: var(--c-texte) !important; min-height: 100vh;
+}
+html body:not(.tdb-v2)::before, html body:not(.tdb-v2)::after { display: none !important; }
+
+/* En-tête : bande blanche, logo foncé */
+html body:not(.tdb-v2) #db-chrome-header {
+  background: #ffffff !important; background-image: none !important; border-bottom: 1px solid var(--c-bord) !important;
+  box-shadow: 0 1px 2px rgba(30, 15, 10, .05) !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+}
+html body:not(.tdb-v2) #db-chrome-header .logo-img-header img { filter: invert(1) hue-rotate(180deg) !important; }
+html body:not(.tdb-v2) #db-chrome-header .menu-trigger, html body:not(.tdb-v2) #db-chrome-header .ma2m-header-nav a,
+html body:not(.tdb-v2) #db-chrome-header .ma2m-header-nav .sep { color: var(--c-titre) !important; }
+html body:not(.tdb-v2) #db-chrome-header .ma2m-header-bell { color: var(--c-titre) !important; background: transparent !important; }
+
+/* Titre « Tableau de bord » */
+html body:not(.tdb-v2) #db-chrome-titre, html body:not(.tdb-v2) #db-chrome-titre .container { background: transparent !important; background-image: none !important; }
+html body:not(.tdb-v2) #db-chrome-titre h1 { color: var(--c-titre) !important; text-shadow: none !important; font-weight: 600 !important; }
+html body:not(.tdb-v2) #db-chrome-titre .eyebrow { color: #8a1228 !important; }
+
+/* Les cartes de connexion */
+html body:not(.tdb-v2) #bloc-login, html body:not(.tdb-v2) #bloc-mdp-oublie, html body:not(.tdb-v2) #bloc-nouveau-mdp,
+html body:not(.tdb-v2) #bloc-code-validation, html body:not(.tdb-v2) #bloc-code-oublie, html body:not(.tdb-v2) #bloc-code-nouveau {
+  background: transparent !important; background-image: none !important; color: var(--c-texte) !important; padding-bottom: 4rem !important;
+}
+html body:not(.tdb-v2) #bloc-login .container, html body:not(.tdb-v2) #bloc-mdp-oublie .container, html body:not(.tdb-v2) #bloc-nouveau-mdp .container,
+html body:not(.tdb-v2) #bloc-code-validation .container, html body:not(.tdb-v2) #bloc-code-oublie .container, html body:not(.tdb-v2) #bloc-code-nouveau .container {
+  background: var(--c-carte) !important; background-image: none !important; border: 1px solid var(--c-bord) !important; border-radius: 18px !important;
+  box-shadow: 0 2px 10px rgba(30, 15, 10, .08) !important; padding: 28px 28px 22px !important; max-width: 460px !important; color: var(--c-texte) !important;
+}
+html body:not(.tdb-v2) [id^="bloc-"] .container label { color: var(--c-titre) !important; font-weight: 600 !important; font-size: 13px !important; letter-spacing: .1em !important; }
+html body:not(.tdb-v2) [id^="bloc-"] .container p, html body:not(.tdb-v2) [id^="bloc-"] .tdb-2 { color: var(--c-texte) !important; font-size: 15px !important; font-weight: 500 !important; }
+html body:not(.tdb-v2) [id^="bloc-"] .container input {
+  background: #ffffff !important; background-image: none !important; color: var(--c-titre) !important; border: 1px solid #c9bcb1 !important;
+  border-radius: 10px !important; box-shadow: inset 0 1px 2px rgba(30, 15, 10, .06) !important; min-height: 46px !important; font-size: 16px !important;
+}
+html body:not(.tdb-v2) [id^="bloc-"] .container input:focus { border-color: #a3243a !important; box-shadow: 0 0 0 3px rgba(163, 36, 58, .14) !important; outline: none !important; }
+html body:not(.tdb-v2) [id^="bloc-"] .container .btn--principal {
+  background: linear-gradient(180deg, #b01f3b, #8a1228) !important; background-image: linear-gradient(180deg, #b01f3b, #8a1228) !important;
+  color: #fff !important; border: 1px solid #7d0f23 !important; box-shadow: 0 2px 6px rgba(138, 18, 40, .25) !important; text-shadow: none !important;
+}
+html body:not(.tdb-v2) [id^="bloc-"] .container a, html body:not(.tdb-v2) [id^="bloc-"] .u-texte-doux { color: #3a3330 !important; text-decoration: underline !important; text-underline-offset: 3px; }
+html body:not(.tdb-v2) [id^="bloc-"] .container a:hover { color: #8a1228 !important; }
+html body:not(.tdb-v2) [id^="bloc-"] .container button[aria-label], html body:not(.tdb-v2) [id^="bloc-"] .container .oeil-mdp { color: #3a3330 !important; }
+html body:not(.tdb-v2) #tdb-verif-msg { color: #3a3330 !important; }
+
+/* Pied de page clair, jusqu'en bas de l'écran */
+html body:not(.tdb-v2) .site-footer { background: #f7f3ef !important; color: var(--c-doux) !important; border-top: 1px solid var(--c-bord) !important; }
+html body:not(.tdb-v2) .site-footer * { color: var(--c-doux) !important; border-color: var(--c-bord) !important; }
+
+/* Le pied de page descend tout en bas de l'écran (plus de zone vide sous lui). */
+html body:not(.tdb-v2) { display: flex !important; flex-direction: column !important; }
+html body:not(.tdb-v2) > .site-footer { margin-top: auto !important; }
+@media (max-width: 600px) {
+  html body:not(.tdb-v2) [id^="bloc-"] > .container { width: auto !important; margin-left: 16px !important; margin-right: 16px !important; padding: 22px 18px 18px !important; }
+}
