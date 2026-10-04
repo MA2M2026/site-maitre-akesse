@@ -437,3 +437,8 @@ html body.tdb-v2 .db-main .dc-nom, html body.tdb-v2 .db-main h2, html body.tdb-v
    (ils se répétaient en haut de chaque page — remarque du 04/10). */
 html body.tdb-v2:not(.v2-page-v2-ensemble) .v2-entete-actions { display: none !important; }
 html body.tdb-v2 .v2-externe { flex: none; font-size: 14px; color: #5e5550; }
+
+/* Publier une actualité / un événement, dans le tableau de bord (page du site en mode intégré). */
+html body.tdb-v2 .v2-integre { border: 1px solid #d3c7bd; border-radius: 16px; overflow: hidden; background: #0f0d0c; }
+html body.tdb-v2 .v2-cadre { display: block; width: 100%; height: max(640px, calc(100vh - 230px)); border: 0; background: #0f0d0c; }
+@media (max-width: 699px) { html body.tdb-v2 .v2-cadre { height: calc(100vh - 160px); } }

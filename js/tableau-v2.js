@@ -96,8 +96,8 @@
         ['b3c-bandeau', 'Bandeau d’information', 'drapeau'],
         ['b3c-mot-fondateur', 'Mot du fondateur', 'plume'],
         ['b3c-instagram', 'Flux Instagram', 'appareil'],
-        ['lien:actualites.html', 'Publier une actualité', 'journal'],
-        ['lien:evenements.html', 'Publier un événement', 'calendrier']
+        ['v2-actualites', 'Publier une actualité', 'journal'],
+        ['v2-evenements', 'Publier un événement', 'calendrier']
       ] },
       { titre: 'Sécurité & accès', items: [
         ['b3b-codes-inscription', 'Codes d’inscription', 'cle'],
@@ -119,6 +119,12 @@
   var COMPOSEES = {
     'v2-ensemble': ['b1-stats'],
     'v2-top3': ['b1-top3', 'b1-classement']
+  };
+  // Pages du site affichées à l'intérieur du tableau de bord (mode intégré, js/mode-integre.js) :
+  // on rédige et publie sans quitter le tableau de bord (demande du 04/10).
+  var INTEGREES = {
+    'v2-actualites': { url: 'actualites.html?integre=1', titre: 'Publier une actualité' },
+    'v2-evenements': { url: 'evenements.html?integre=1', titre: 'Publier un événement' }
   };
   var PAGES = {};
   MENU.forEach(function (b) {
@@ -175,6 +181,11 @@
     if (titre) titre.textContent = courant === ACCUEIL ? 'Tableau de bord' : page.libelle;
     if (sous) sous.textContent = courant === ACCUEIL ? 'Bonjour Maître Akesse — voici l’activité de l’agence aujourd’hui.' : page.groupe.replace(/^Bloc \d — /, '');
     if (courant === ACCUEIL) chargerVue(false);
+    // Le cadre n'est chargé qu'à la première ouverture de la rubrique (pas au démarrage).
+    if (INTEGREES[courant]) {
+      var cadre = document.querySelector('[data-section="' + courant + '"] iframe');
+      if (cadre && !cadre.getAttribute('src')) cadre.setAttribute('src', INTEGREES[courant].url);
+    }
     // « Accès bloqués » est rangé dans un volet repliable qui charge la liste à l'ouverture.
     if (courant === 'b3b-acces-bloques') {
       var volet = document.querySelector('[data-section="b3b-acces-bloques"] details');
@@ -540,6 +551,17 @@
     var vue = el('div', 'v2-vue');
     vue.id = 'v2-vue';
     entete.parentNode.insertBefore(vue, entete.nextSibling);
+
+    // Rubriques « Publier une actualité / un événement » : la page du site dans un cadre.
+    Object.keys(INTEGREES).forEach(function (cle) {
+      var zone = el('div', 'v2-integre');
+      zone.dataset.section = cle;
+      var cadre = el('iframe', 'v2-cadre');
+      cadre.title = INTEGREES[cle].titre;
+      cadre.setAttribute('loading', 'lazy');
+      zone.appendChild(cadre);
+      vue.parentNode.insertBefore(zone, vue.nextSibling);
+    });
 
     // Clics dans le contenu (raccourcis, cartes, alertes) : ouvrir la page indiquée.
     main.addEventListener('click', function (e) {
