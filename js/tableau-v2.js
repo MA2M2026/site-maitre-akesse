@@ -234,12 +234,8 @@
         g.items.forEach(function (it) {
           var lien = it[0].indexOf('lien:') === 0;
           var a = el(lien ? 'a' : 'button', 'v2-lien', svg(it[2]));
-          // « Publier une actualité / un événement » : ces pages du site s'ouvrent dans un nouvel
-          // onglet, le tableau de bord reste ouvert derrière (demande du 04/10).
-          if (lien) { a.href = it[0].slice(5); a.target = '_blank'; a.rel = 'noopener'; a.title = 'S\u2019ouvre dans un nouvel onglet'; }
-          else { a.type = 'button'; a.dataset.page = it[0]; }
+          if (lien) a.href = it[0].slice(5); else { a.type = 'button'; a.dataset.page = it[0]; }
           a.appendChild(texte('span', 'v2-lien-texte', it[1]));
-          if (lien) a.appendChild(texte('span', 'v2-externe', '↗'));
           if (it[3]) { var p = el('span', 'v2-pastille'); p.dataset.compteur = it[3]; p.hidden = true; a.appendChild(p); }
           liste.appendChild(a);
         });

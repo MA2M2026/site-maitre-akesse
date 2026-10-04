@@ -436,4 +436,3 @@ html body.tdb-v2 .db-main .dc-nom, html body.tdb-v2 .db-main h2, html body.tdb-v
 /* « Messages groupés » et « Nouveau casting » : seulement sur la vue d'ensemble, comme sur la maquette
    (ils se répétaient en haut de chaque page — remarque du 04/10). */
 html body.tdb-v2:not(.v2-page-v2-ensemble) .v2-entete-actions { display: none !important; }
-html body.tdb-v2 .v2-externe { flex: none; font-size: 14px; color: #5e5550; }
