@@ -70,9 +70,15 @@ document.addEventListener('DOMContentLoaded', () => {
 // Lien "Admin" directement dans la barre d'en-tête (à côté du bouton Menu),
 // visible sans avoir à ouvrir le menu plein écran. Remplace l'ancien lien
 // "Tableau de bord" du menu hamburger, retiré pour éviter le doublon.
+// Caché aux visiteurs (demande de la propriétaire, 04/10/2026) : il n'apparaît que sur
+// un appareil qui a déjà ouvert le tableau de bord (repère posé par js/tableau-v2.js).
+// Ailleurs, le tableau de bord reste accessible par son adresse directe.
 document.addEventListener('DOMContentLoaded', () => {
   const menuBtn = document.getElementById('menuBtn');
   if (!menuBtn || !menuBtn.parentNode || document.querySelector('.header-admin-lien')) return;
+  let appareilAdmin = false;
+  try { appareilAdmin = localStorage.getItem('ma2m_appareil_admin') === '1' || sessionStorage.getItem('ma2m_est_admin') === '1'; } catch (e) {}
+  if (!appareilAdmin) return;
   if (window.location.pathname.replace(/\/$/, '').endsWith('tableau-de-bord.html') || window.location.pathname.replace(/\/$/, '').endsWith('tableau-de-bord')) return;
 
   const lien = document.createElement('a');
