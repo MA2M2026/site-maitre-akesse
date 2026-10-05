@@ -2873,7 +2873,6 @@ html:has(#couverture-faisceau) { scroll-padding-top: calc(var(--couv-h) + 90px);
   .menu-overlay { padding-top: 4.6rem; }
   .menu-overlay .nav-links li a { padding: 0.45rem 12px !important; }
 }
-=======
 /* Couverture qui se replie sur ordinateur (04/10/2026, js/couverture-faisceau.js) : grande
    en haut de page (16:9, jusqu'à 85 % de l'écran), elle se réduit en défilant jusqu'au
    bandeau (--couv-h), puis reste fixe avec la barre du menu dessous. Le canvas et la vidéo
