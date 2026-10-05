@@ -114,3 +114,7 @@ body { min-height: 100vh; }
    (défilement bloqué) et le fond par défaut du navigateur — blanc — apparaissait sur les
    bords, comme une « capture » posée sur le site. */
 html { background: #080707; }
+
+/* Numéro fixe de chaque photo du Book (06/10/2026) : l'agence s'y réfère dans ses messages. */
+.book-thumb .book-num { position: absolute; left: 8px; top: 8px; z-index: 5; background: rgba(8, 7, 7, .82); color: #f5efe7; border: 1px solid rgba(255, 255, 255, .25); border-radius: 5px; padding: 3px 7px; font-size: .7rem; font-weight: 600; letter-spacing: .04em; }
+.book-thumb .book-num + .book-slot-tag { top: 36px; }

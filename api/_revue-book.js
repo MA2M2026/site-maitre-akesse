@@ -26,7 +26,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const CONSIGNES = [
   "Tu es directrice du booking d'une agence de mannequins internationale (MA2M, Abidjan). Tu prépares le book en ligne d'un mannequin avant de le présenter à des recruteurs professionnels (Paris, Milan, Londres, New York, Asie). Sois STRICTE, comme les grandes agences : un book court et fort vaut mieux qu'un book long et inégal.",
   "",
-  "Tu reçois toutes les photos du mannequin, numérotées. Pour CHAQUE photo, décide :",
+  "Tu reçois toutes les photos du mannequin, chacune avec son numéro (« Photo n° X ») ; le mannequin voit ces mêmes numéros sur ses photos. Utilise toujours ces numéros quand tu parles d'une photo. Pour CHAQUE photo, décide :",
   "- book : photo professionnelle ou artistique forte (séance photo, éditorial, campagne, défilé, portrait travaillé), nette, où le mannequin est seul sujet ou clairement le sujet principal. Une photo artistique assumée (visage partiellement caché par choix créatif, noir et blanc, contre-jour maîtrisé) peut être gardée si elle est de qualité.",
   "- digital : photo naturelle et simple qui montre le mannequin tel qu'il est (visage et/ou silhouette bien visibles, net, peu ou pas de maquillage, tenue simple, fond simple), utile aux recruteurs. Garde au maximum 6 digitals, les meilleurs.",
   "- supprimer : tout le reste (l\'agence validera), en particulier :",
@@ -47,7 +47,7 @@ const CONSIGNES = [
   "- a_ameliorer : 2 à 5 problèmes concrets du book (par exemple trop de photos semblables, regard caché par des lunettes, pas de digitals).",
   "- fiche_technique : la liste des photos que le mannequin doit faire ou refaire pour compléter son book (3 à 8 photos). Pour chacune : titre (ex. « Digital de face, en pied »), cadrage, pose, tenue, lieu_lumiere. Consignes concrètes et faciles à suivre avec un téléphone.",
   "- regles : 4 à 7 règles générales pour ces photos (ex. pas de lunettes, pas de filtre, téléphone à hauteur de poitrine, photo nette).",
-  "- message_mannequin : le message que l'agence enverra au mannequin par WhatsApp, au nom de « L'équipe MA2M ». Vouvoiement, ton chaleureux et professionnel, encourageant. Commence par « Bonjour » suivi du prénom. Explique en 2 ou 3 phrases ce que l'agence a revu et pourquoi certaines photos vont être retirées (sans lister chaque photo), puis donne la fiche technique sous forme de liste courte et numérotée, puis les règles. Termine en demandant d'envoyer les nouvelles photos depuis l'Espace mannequin du site. Pas de mot « IA ». 1 800 caractères au maximum. Accorde au féminin ou au masculin selon le mannequin indiqué."
+  "- message_mannequin : le message que l'agence enverra au mannequin par WhatsApp, au nom de « L'équipe MA2M ». Vouvoiement, ton chaleureux et professionnel, encourageant. Commence par « Bonjour » suivi du prénom. Explique en 2 ou 3 phrases ce que l'agence a revu, puis donne les numéros des photos qui vont être retirées avec la raison en quelques mots (ex. « n° 12, 13 et 14 : trop semblables à la n° 11 »), puis donne la fiche technique sous forme de liste courte et numérotée, puis les règles. Termine en demandant d'envoyer les nouvelles photos depuis l'Espace mannequin du site. Pas de mot « IA ». 1 800 caractères au maximum. Accorde au féminin ou au masculin selon le mannequin indiqué."
 ].join('\n');
 
 const SCHEMA = {
@@ -147,7 +147,7 @@ module.exports = async function handler(req, res) {
 
     const lecture = await fetch(
       SUPABASE_URL + '/rest/v1/model_photos?model_id=eq.' + modelId +
-      '&select=id,model_id,chemin,chemin_miniature,chemin_moyenne,principale,photo_couverture,photo_cv,photo_pleinpied,compcard_ordre,tri_statut,tri_manuel',
+      '&select=id,model_id,numero,chemin,chemin_miniature,chemin_moyenne,principale,photo_couverture,photo_cv,photo_pleinpied,compcard_ordre,tri_statut,tri_manuel',
       { headers: enTetesService() }
     );
     if (!lecture.ok) throw new Error('Lecture des photos impossible (' + lecture.status + ').');
@@ -165,11 +165,13 @@ module.exports = async function handler(req, res) {
     const profil = (prof.ok ? (await prof.json())[0] : null) || {};
     const genre = profil.category === 'homme' ? 'un homme' : profil.category === 'femme' ? 'une femme' : 'non précisé';
     const contenu = [{ type: 'text', text: 'Mannequin : ' + String(profil.full_name || 'Mannequin').slice(0, 80) + ' (' + genre + ').' }];
+    // Chaque photo porte son numéro fixe (celui que le mannequin voit dans son Espace).
+    const numeros = aRevoir.map(function (im, i) { return parId[im.id].numero || (i + 1); });
     aRevoir.forEach(function (im, i) {
-      contenu.push({ type: 'text', text: 'Photo ' + (i + 1) + ' :' });
+      contenu.push({ type: 'text', text: 'Photo n° ' + numeros[i] + ' :' });
       contenu.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: im.data } });
     });
-    contenu.push({ type: 'text', text: 'Voici les ' + aRevoir.length + ' photos du book. Donne ta décision pour chacune (numéros 1 à ' + aRevoir.length + ').' });
+    contenu.push({ type: 'text', text: 'Voici les ' + aRevoir.length + ' photos du book. Donne ta décision pour chacune, avec son numéro.' });
 
     const client = new Anthropic.Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
     const flux = client.beta.messages.stream({
@@ -187,7 +189,7 @@ module.exports = async function handler(req, res) {
     const avis = JSON.parse(bloc ? bloc.text : '{}');
     const decisions = {};
     (avis.photos || []).forEach(function (d) {
-      const im = aRevoir[d.numero - 1];
+      const im = aRevoir[numeros.indexOf(d.numero)];
       if (im && ['book', 'digital', 'supprimer'].indexOf(d.decision) !== -1) decisions[im.id] = d;
     });
 

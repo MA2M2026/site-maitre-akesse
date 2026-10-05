@@ -5947,7 +5947,8 @@ NOTIFY pgrst, 'reload schema';
 --     modifiable par les seuls admins (écrit par la fonction serveur) ;
 --  2) contacts_mannequins_admin() : le numéro de téléphone des mannequins,
 --     pour le bouton « Envoyer par WhatsApp » — réservé aux admins (le numéro
---     reste invisible pour tous les autres, Extensions 10 et 26).
+--     reste invisible pour tous les autres, Extensions 10 et 26) ;
+--  3) un numéro fixe sur chaque photo (voir plus bas).
 -- =====================================================================
 create table if not exists revues_book (
   model_id uuid primary key references model_profiles(id) on delete cascade,
@@ -5972,5 +5973,35 @@ as $$
 $$;
 revoke all on function contacts_mannequins_admin() from public;
 grant execute on function contacts_mannequins_admin() to authenticated;
+
+-- 3) Numéro fixe pour chaque photo (N° 1, 2, 3… dans l'ordre d'envoi, par
+--    mannequin), affiché dans l'Espace mannequin et le tableau de bord, et
+--    utilisé dans les rapports : « la photo n° 12 ». Le numéro ne change jamais,
+--    même quand d'autres photos sont supprimées.
+alter table model_photos add column if not exists numero int;
+update model_photos m set numero = t.n
+from (select id, row_number() over (partition by model_id order by created_at, id) as n from model_photos) t
+where m.id = t.id and m.numero is null;
+
+create or replace function numeroter_photo()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if TG_OP = 'INSERT' then
+    perform pg_advisory_xact_lock(hashtext(NEW.model_id::text));
+    select coalesce(max(numero), 0) + 1 into NEW.numero from model_photos where model_id = NEW.model_id;
+  else
+    NEW.numero := OLD.numero;
+  end if;
+  return NEW;
+end;
+$$;
+drop trigger if exists trg_numeroter_photo on model_photos;
+create trigger trg_numeroter_photo
+  before insert or update on model_photos
+  for each row execute function numeroter_photo();
 
 NOTIFY pgrst, 'reload schema';
