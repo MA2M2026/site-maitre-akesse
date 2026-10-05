@@ -108,48 +108,94 @@
       ? '<p class="tri-tout"><button class="btn tri-btn" type="button" data-statut="supprimer-tout">Supprimer définitivement toutes ces photos</button></p>' +
         ecartees.map(function (p) { return vignette(p, noms[p.model_id] || 'Mannequin', [['book', 'Remettre'], ['supprimer', 'Supprimer']]); }).join('')
       : '<div class="dossiers-vide">Aucune photo écartée.</div>';
+    // Regroupées par mannequin : l'agence valide la suppression d'un clic par mannequin.
+    var groupes = {};
+    aVerifier.forEach(function (p) { (groupes[p.model_id] = groupes[p.model_id] || []).push(p); });
     zoneV.innerHTML = aVerifier.length
-      ? aVerifier.map(function (p) { return vignette(p, noms[p.model_id] || 'Mannequin', [['book', 'Garder'], ['supprimer', 'Supprimer']]); }).join('')
+      ? Object.keys(groupes).map(function (mid) {
+          var liste = groupes[mid], nom = noms[mid] || 'Mannequin';
+          var proposees = liste.filter(function (p) { return /^Proposée à la suppression/.test(p.tri_raison || ''); }).length;
+          return '<div class="tri-groupe"><h4 class="tri-groupe-nom">' + echapper(nom) + ' — ' + liste.length + ' photo(s)</h4>' +
+            (proposees ? '<button class="btn tri-btn" type="button" data-statut="supprimer-modele" data-model="' + echapper(mid) + '">Supprimer les ' + proposees + ' photo(s) proposée(s)</button>' : '') +
+            '</div>' + liste.map(function (p) { return vignette(p, nom, [['book', 'Garder'], ['supprimer', 'Supprimer']]); }).join('');
+        }).join('')
       : '<div class="dossiers-vide">Aucune photo à vérifier.</div>';
 
-    var anc = await sb.from('model_photos').select('id', { count: 'exact', head: true }).is('tri_statut', null).eq('tri_manuel', false);
-    var n = anc.count || 0;
-    zoneA.innerHTML = n
-      ? '<p class="tdb-9">' + n + ' photo(s) pas encore triée(s) (envoyées avant la mise en place du tri). Coût estimé : ' + (n * 0.02 < 1 ? 'moins d’1 $' : 'environ ' + Math.ceil(n * 0.02) + ' $') + ' au total.</p><button class="btn" type="button" id="tri-anciennes-btn">Trier ces photos</button><div class="form-msg" id="tri-anciennes-msg"></div>'
-      : '<p class="tdb-9">Toutes les photos sont triées.</p>';
-    var btn = document.getElementById('tri-anciennes-btn');
-    if (btn) btn.addEventListener('click', trierAnciennes);
+    zoneA.innerHTML = '<p class="tdb-9">L’IA regarde le book complet de chaque mannequin, comme un recruteur : elle garde les meilleures photos (Book et Digitals) et propose de supprimer les photos floues, de groupe, trop semblables ou pas assez professionnelles. <strong>Rien n’est supprimé sans votre clic</strong> : les photos proposées apparaissent ci-dessus, dans « À vérifier ». Coût : environ 0,10 $ par mannequin.</p>' +
+      '<button class="btn" type="button" id="tri-revue-btn">Lancer la revue stricte des books</button><div class="form-msg" id="tri-revue-msg"></div><div id="tri-revue-resultats" class="tri-revue-resultats"></div>';
+    document.getElementById('tri-revue-btn').addEventListener('click', revueBooks);
   }
 
-  async function trierAnciennes() {
-    var btn = document.getElementById('tri-anciennes-btn');
-    var msg = document.getElementById('tri-anciennes-msg');
-    if (!confirm('Faire trier par l’IA toutes les photos pas encore triées ? Cela peut prendre plusieurs minutes ; gardez cette page ouverte.')) return;
+  function blobEnBase64(blob) {
+    return new Promise(function (ok, ko) {
+      var l = new FileReader();
+      l.onload = function () { ok(String(l.result).split(',')[1] || ''); };
+      l.onerror = ko;
+      l.readAsDataURL(blob);
+    });
+  }
+
+  // Mannequins déjà revus dans les dernières 24 h (pour reprendre sans repayer après une coupure).
+  function dejaRevus() {
+    try { var o = JSON.parse(localStorage.getItem('ma2m_revue_books') || '{}'); var n = Date.now(), r = {}; Object.keys(o).forEach(function (k) { if (n - o[k] < 86400000) r[k] = o[k]; }); return r; } catch (e) { return {}; }
+  }
+  function noterRevu(id) {
+    try { var o = dejaRevus(); o[id] = Date.now(); localStorage.setItem('ma2m_revue_books', JSON.stringify(o)); } catch (e) {}
+  }
+
+  async function revueBooks() {
+    var btn = document.getElementById('tri-revue-btn');
+    var msg = document.getElementById('tri-revue-msg');
+    var zone = document.getElementById('tri-revue-resultats');
+    var res = await sb.from('model_photos').select('id, model_id, url, url_miniature, tri_statut, created_at').order('created_at', { ascending: true }).limit(5000);
+    if (res.error) { alert('Erreur : ' + res.error.message); return; }
+    var parModele = {};
+    (res.data || []).forEach(function (p) { if (p.tri_statut !== 'ecartee') (parModele[p.model_id] = parModele[p.model_id] || []).push(p); });
+    var faits = dejaRevus();
+    var ids = Object.keys(parModele).filter(function (id) { return !faits[id]; });
+    if (!ids.length) { msg.style.display = 'block'; msg.className = 'form-msg ok'; msg.textContent = 'Tous les books ont déjà été revus aujourd’hui.'; return; }
+    if (!confirm('Lancer la revue stricte de ' + ids.length + ' book(s) ? Coût estimé : environ ' + (ids.length * 0.1).toFixed(2).replace('.', ',') + ' $. Gardez cette page ouverte pendant la revue.')) return;
+    var pr = await sb.from('model_profiles').select('id, full_name').in('id', ids);
+    var noms = {}; (pr.data || []).forEach(function (m) { noms[m.id] = m.full_name || 'Mannequin'; });
     btn.disabled = true; msg.style.display = 'block'; msg.className = 'form-msg';
-    var res = await sb.from('model_photos').select('id').is('tri_statut', null).eq('tri_manuel', false).order('created_at', { ascending: true }).limit(1000);
-    var liste = res.data || [];
-    var j = await jeton();
-    if (!j) { msg.className = 'form-msg err'; msg.textContent = 'Session expirée — reconnectez-vous.'; btn.disabled = false; return; }
-    // Garder l'écran allumé pendant le tri (sinon la tablette se met en veille et le tri s'arrête).
     var verrou = null;
     try { if (navigator.wakeLock) verrou = await navigator.wakeLock.request('screen'); } catch (e) {}
-    var faites = 0, supprimees = 0, echecs = 0, ratesDeSuite = 0, arret = '';
-    for (var i = 0; i < liste.length; i++) {
-      msg.textContent = 'Tri en cours : ' + (i + 1) + ' / ' + liste.length + '… (gardez cette page ouverte)';
-      var resultat = await trierUne(liste[i].id, j);
-      if (resultat === 'ok' || resultat === 'supprimee') { faites++; if (resultat === 'supprimee') supprimees++; ratesDeSuite = 0; continue; }
-      if (resultat === 'credit') { arret = 'Le crédit de l’IA est épuisé : rechargez le compte Anthropic, puis relancez. Les photos déjà triées ne seront pas refaites.'; break; }
-      if (resultat === 'non-configure') { arret = 'Le tri automatique n’est pas configuré (clé de l’IA absente sur Vercel).'; break; }
-      echecs++; ratesDeSuite++;
-      if (ratesDeSuite >= 8) { arret = 'Le tri s’est arrêté (connexion coupée ?). Relancez plus tard : les photos déjà triées ne seront pas refaites.'; break; }
+    var totalProposees = 0, echecs = 0, arret = '';
+    for (var i = 0; i < ids.length; i++) {
+      var mid = ids[i], nom = noms[mid] || 'Mannequin', photos = parModele[mid];
+      msg.textContent = 'Revue ' + (i + 1) + ' / ' + ids.length + ' : ' + nom + ' (' + photos.length + ' photos)… gardez cette page ouverte.';
+      var images = [];
+      for (var k = 0; k < photos.length && images.length < 90; k++) {
+        try { images.push({ id: photos[k].id, data: await blobEnBase64(await genererMiniatureDepuisUrl(photos[k].url_miniature || photos[k].url, 560, 0.6)) }); } catch (e) {}
+      }
+      var ligne = document.createElement('div'); ligne.className = 'tri-revue-ligne';
+      var resultat = null;
+      for (var essai = 1; essai <= 2 && !resultat; essai++) {
+        try {
+          var r = await fetch('/api/revue-book', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (await jeton()) }, body: JSON.stringify({ modelId: mid, images: images }) });
+          var corps = await r.json().catch(function () { return {}; });
+          if (r.status === 402) { arret = 'Le crédit de l’IA est épuisé : rechargez le compte Anthropic, puis relancez (les books déjà revus ne seront pas refaits).'; break; }
+          if (r.status === 503) { arret = 'Le tri automatique n’est pas configuré (clé de l’IA absente sur Vercel).'; break; }
+          if (r.ok && corps.ok) resultat = corps;
+        } catch (e) { /* coupure : nouvel essai */ }
+      }
+      if (arret) break;
+      if (resultat) {
+        noterRevu(mid); totalProposees += resultat.proposees || 0;
+        ligne.innerHTML = '<strong>' + echapper(nom) + '</strong> : ' + (resultat.gardees || 0) + ' photo(s) gardée(s), ' + (resultat.proposees || 0) + ' proposée(s) à la suppression.' + (resultat.conseils ? '<br><em>Conseils : ' + echapper(resultat.conseils) + '</em>' : '');
+      } else {
+        echecs++; ligne.innerHTML = '<strong>' + echapper(nom) + '</strong> : la revue a échoué (vous pourrez relancer).';
+      }
+      zone.appendChild(ligne);
     }
     try { if (verrou) verrou.release(); } catch (e) {}
+    btn.disabled = false;
+    msg.className = arret || echecs ? 'form-msg err' : 'form-msg ok';
+    msg.textContent = arret || ('Revue terminée : ' + totalProposees + ' photo(s) proposée(s) à la suppression' + (echecs ? ', ' + echecs + ' book(s) à relancer' : '') + '. Vérifiez-les dans « À vérifier » ci-dessus.');
+    var resultats = zone.innerHTML;
     await charger();
-    var bilan = document.createElement('div');
-    bilan.className = echecs ? 'form-msg err' : 'form-msg ok'; bilan.style.display = 'block';
-    bilan.textContent = faites + ' photo(s) triée(s)' + (supprimees ? ', dont ' + supprimees + ' inutilisable(s) supprimée(s)' : '') + (echecs ? ', ' + echecs + ' non triée(s) — vous pourrez relancer plus tard.' : '.') + (arret ? ' ' + arret : '');
-    if (arret) bilan.className = 'form-msg err';
-    document.getElementById('tri-anciennes').prepend(bilan);
+    document.getElementById('tri-revue-resultats').innerHTML = resultats;
+    var m2 = document.getElementById('tri-revue-msg'); m2.style.display = 'block'; m2.className = msg.className; m2.textContent = msg.textContent;
   }
 
   details.addEventListener('toggle', function () { if (details.open && !charge) charger(); });
@@ -157,7 +203,16 @@
     var b = e.target.closest && e.target.closest('.tri-btn');
     if (!b) return;
     var r;
-    if (b.dataset.statut === 'supprimer-tout') {
+    if (b.dataset.statut === 'supprimer-modele') {
+      var duModele = Object.keys(parId).map(function (k) { return parId[k]; }).filter(function (p) { return p.model_id === b.dataset.model && p.tri_statut === 'a_verifier' && /^Proposée à la suppression/.test(p.tri_raison || ''); });
+      if (!confirm('Supprimer définitivement ces ' + duModele.length + ' photo(s) ? Elles ne pourront pas être récupérées.')) return;
+      b.disabled = true;
+      for (var n = 0; n < duModele.length; n++) {
+        b.textContent = 'Suppression ' + (n + 1) + ' / ' + duModele.length + '…';
+        r = await supprimer(duModele[n]);
+        if (r.error) break;
+      }
+    } else if (b.dataset.statut === 'supprimer-tout') {
       var toutes = Object.keys(parId).map(function (k) { return parId[k]; }).filter(function (p) { return p.tri_statut === 'ecartee'; });
       if (!confirm('Supprimer définitivement ces ' + toutes.length + ' photo(s) ? Elles ne pourront pas être récupérées.')) return;
       b.disabled = true;
