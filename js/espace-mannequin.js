@@ -451,7 +451,8 @@ const Store = {
   },
 
   /* Pipeline identique à l'ancien système : conversion HEIC, compression
-     modérée de l'original, upload, puis génération miniature (500px) et
+     modérée de l'original, upload, puis génération miniature (800px depuis le
+     06/10/2026, nette sur les écrans de téléphone très fins) et
      version moyenne (1600px) à côté — jamais de nouvelle bibliothèque de
      photos, tout reste dans model_photos / bucket model-photos. */
   async uploadPhoto(file){
@@ -472,7 +473,7 @@ const Store = {
       let cheminMiniature=null, urlMiniature=null;
       const blobMiniature = await genererMiniature(fichier);
       if (blobMiniature) {
-        cheminMiniature = currentUser.id + '/miniatures/' + Date.now() + '-' + Math.random().toString(36).slice(2,8) + '.jpg';
+        cheminMiniature = currentUser.id + '/miniatures/' + Date.now() + '-' + Math.random().toString(36).slice(2,8) + '-n800.jpg';
         try { urlMiniature = await uploaderVersR2(currentUser.id, cheminMiniature, blobMiniature, 'image/jpeg'); }
         catch(e) { console.warn('Miniature non envoyée :', e); cheminMiniature=null; }
       }
@@ -653,8 +654,11 @@ function compresserPhotoOrigine(fichier, coteMax, qualite){
     img.src = URL.createObjectURL(fichier);
   });
 }
+// Miniature (grille du Book) : 800 px de côté depuis le 06/10/2026 (500 px avant — un peu
+// floue sur les téléphones à écran très fin) ; le nom finit par « -n800.jpg » pour que
+// l'outil du tableau de bord sache qu'elle est déjà au nouveau format.
 function genererMiniature(fichier, coteMax, qualite){
-  coteMax = coteMax || 500; qualite = qualite || 0.70;
+  coteMax = coteMax || 800; qualite = qualite || 0.75;
   return new Promise(function(resolve){
     const img = new Image();
     img.onload = function(){
