@@ -27,27 +27,14 @@
   window.addEventListener('scroll', demanderRepli, { passive: true });
   window.addEventListener('resize', demanderRepli);
 
-  // --- Que montrer : la vidéo choisie dans le tableau de bord, ou l'animation du logo ? ---
-  // Le choix est gardé sur l'appareil (localStorage) : à la visite suivante, la vidéo part
-  // tout de suite, sans passer par l'animation. Il est vérifié aussitôt auprès de la base
-  // (requête lancée dès maintenant, sans attendre la fin de la page). Première visite : on
-  // attend la réponse (1,5 s au plus) avant de lancer quoi que ce soit — écran sombre.
-  var SUPA = 'https://dfhghgmwmxiguhtxtsle.supabase.co';
-  // clé publique « anon » (la même que js/supabase-config.js, publique par nature)
-  var CLE_PUBLIQUE = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmaGdoZ213bXhpZ3VodHh0c2xlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg2NzI1ODQsImV4cCI6MjEwNDI0ODU4NH0.S-JftGJNtPMLZdK6Jy9AUwwOl56JzyllkEJ0GN0eZ-M';
-  var MEMO = 'ma2m_couverture_v2';
+  if (!window.ma2mFaisceau) return;
   try { if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return; } catch (e) {}
-  sec.classList.add('attente');      // le logo fixe de secours reste caché pendant la décision
+  var cv = sec.querySelector('canvas');
+  if (!cv || !cv.getContext || !cv.getContext('2d')) return;
 
-  function videoValide(v) {
-    return !!(v && v.type === 'video' && typeof v.chemin === 'string' && /^site\/couverture\/[A-Za-z0-9._-]+\.(mp4|webm)$/.test(v.chemin));
-  }
-  function memoLire() { try { return JSON.parse(localStorage.getItem(MEMO) || 'null'); } catch (e) { return null; } }
-  function memoEcrire(v) { try { localStorage.setItem(MEMO, JSON.stringify({ t: Date.now(), v: v || null })); } catch (e) {} }
-
-  // ---------- animation du logo ----------
-  var cv = sec.querySelector('canvas'), anim = null, animLancee = false;
+  var anim = window.ma2mFaisceau(cv, { mode: 'couverture', mesurer: function () { return { W: cv.clientWidth || sec.clientWidth, H: cv.clientHeight || sec.clientHeight }; } });
   var t = 0, precedent = null, visible = false, enCours = false, videoActive = false;
+
   function image(ms) {
     if (!visible || videoActive) { enCours = false; precedent = null; return; }
     // le temps n'avance que pendant que la couverture est visible
@@ -56,41 +43,33 @@
     anim.dessiner(t);
     requestAnimationFrame(image);
   }
-  function relancer() { if (anim && visible && !enCours && !videoActive) { enCours = true; requestAnimationFrame(image); } }
-  function lancerAnimation() {
-    if (animLancee) return; animLancee = true;
-    if (!window.ma2mFaisceau || !cv || !cv.getContext || !cv.getContext('2d')) { sec.classList.remove('attente'); return; }
-    anim = window.ma2mFaisceau(cv, { mode: 'couverture', mesurer: function () { return { W: cv.clientWidth || sec.clientWidth, H: cv.clientHeight || sec.clientHeight }; } });
-    anim.pret.then(function () {
-      sec.classList.add('anime'); sec.classList.remove('attente');
-      anim.dimensionner(); anim.dessiner(0);
-      if ('IntersectionObserver' in window) {
-        new IntersectionObserver(function (entrees) { visible = entrees[0].isIntersecting; relancer(); }, { threshold: .25 }).observe(sec);
-      } else { visible = true; relancer(); }
-      window.addEventListener('resize', function () { anim.dimensionner(); anim.dessiner(t); });
-    }, function () { sec.classList.remove('attente'); /* image introuvable : logo fixe */ });
-  }
+  function relancer() { if (visible && !enCours) { enCours = true; requestAnimationFrame(image); } }
 
-  // ---------- vidéo ----------
-  var videoCourante = null;
-  function retirerVideo() {
-    sec.querySelectorAll('.couverture-video, .couverture-video-fond').forEach(function (e) { e.remove(); });
-    sec.classList.remove('video-prete'); videoActive = false; videoCourante = null;
-  }
+  anim.pret.then(function () {
+    sec.classList.add('anime');
+    anim.dimensionner(); anim.dessiner(0);
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (entrees) {
+        visible = entrees[0].isIntersecting; relancer();
+      }, { threshold: .25 }).observe(sec);
+    } else { visible = true; relancer(); }
+    window.addEventListener('resize', function () { anim.dimensionner(); anim.dessiner(t); });
+  }, function () { /* image introuvable : le logo fixe reste affiché */ });
+
+  // --- vidéo choisie dans le tableau de bord ---
   function afficherVideo(valeur) {
-    // La vidéo s'affiche toujours EN ENTIER (aucun recadrage), quelle que soit sa forme ;
-    // si elle n'a pas la forme de la couverture, une copie floutée et assombrie de la même
-    // vidéo remplit les côtés (comme Instagram / YouTube). L'image d'attente (première
-    // image de la vidéo, créée par le tableau de bord) s'affiche pendant le chargement.
-    videoCourante = valeur.chemin;
-    var affiche = typeof valeur.affiche === 'string' && /^site\/couverture\/[A-Za-z0-9._-]+\.jpg$/.test(valeur.affiche) ? '/book-photos/' + valeur.affiche : '';
+    if (!valeur || valeur.type !== 'video' || typeof valeur.chemin !== 'string') return;
+    // uniquement un fichier du dossier de la couverture, servi par le site lui-même
+    if (!/^site\/couverture\/[A-Za-z0-9._-]+\.(mp4|webm)$/.test(valeur.chemin)) return;
+    // La vidéo s'affiche toujours EN ENTIER (aucun recadrage), quelle que soit sa forme
+    // (16:9 YouTube, 4:3, verticale…) ; si elle n'a pas la forme de la couverture, une copie
+    // floutée et assombrie de la même vidéo remplit les côtés (comme Instagram / YouTube).
     function creer(classe) {
       var v = document.createElement('video');
       v.className = classe;
       v.muted = true; v.defaultMuted = true; v.loop = true; v.autoplay = true; v.playsInline = true;
       v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('aria-hidden', 'true');
       v.preload = 'auto';
-      if (affiche) v.poster = affiche;
       v.src = '/book-photos/' + valeur.chemin;
       return v;
     }
@@ -105,33 +84,27 @@
       sec.insertBefore(fond, v);
       var p2 = fond.play(); if (p2 && p2.catch) p2.catch(function () {});
     }, { once: true });
-    function prete() { videoActive = true; sec.classList.add('video-prete'); sec.classList.remove('attente'); }
-    if (affiche) prete();                         // l'image d'attente s'affiche tout de suite
-    v.addEventListener('playing', prete, { once: true });
-    v.addEventListener('error', function () { retirerVideo(); lancerAnimation(); });
+    v.addEventListener('playing', function () { videoActive = true; sec.classList.add('video-prete'); }, { once: true });
+    v.addEventListener('error', function () { v.remove(); if (fond) fond.remove(); });
     sec.appendChild(v);
     var p = v.play(); if (p && p.catch) p.catch(function () {});
   }
-
-  // ---------- décision ----------
-  var memo = memoLire(), decide = false;
-  if (memo && videoValide(memo.v)) { decide = true; afficherVideo(memo.v); }
-  else if (memo) { decide = true; lancerAnimation(); }
-  var delai = setTimeout(function () { if (!decide) { decide = true; lancerAnimation(); } }, 1500);
-  fetch(SUPA + '/rest/v1/reglages_site?cle=eq.couverture&select=valeur', { headers: { apikey: CLE_PUBLIQUE, Authorization: 'Bearer ' + CLE_PUBLIQUE } })
-    .then(function (r) { return r.ok ? r.json() : null; })
-    .then(function (lignes) {
-      if (!lignes) throw new Error('réglage illisible');
-      var v = lignes[0] ? lignes[0].valeur : null;
-      memoEcrire(v);
-      clearTimeout(delai);
-      if (videoValide(v)) {
-        if (videoCourante !== v.chemin) { retirerVideo(); afficherVideo(v); }
-        decide = true;
-      } else {
-        if (videoCourante) retirerVideo();
-        decide = true; lancerAnimation();
-      }
-    })
-    .catch(function () { clearTimeout(delai); if (!decide) { decide = true; lancerAnimation(); } });
+  function lireReglage() {
+    var CLE = 'ma2m_couverture';
+    try {
+      var c = JSON.parse(sessionStorage.getItem(CLE) || 'null');
+      if (c && Date.now() - c.t < 5 * 60 * 1000) { afficherVideo(c.v); return; }
+    } catch (e) {}
+    if (typeof SUPABASE_URL === 'undefined' || typeof SUPABASE_ANON_KEY === 'undefined') return;
+    fetch(SUPABASE_URL + '/rest/v1/reglages_site?cle=eq.couverture&select=valeur', { headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY } })
+      .then(function (r) { return r.ok ? r.json() : []; })
+      .then(function (lignes) {
+        var v = lignes && lignes[0] ? lignes[0].valeur : null;
+        try { sessionStorage.setItem(CLE, JSON.stringify({ t: Date.now(), v: v })); } catch (e) {}
+        afficherVideo(v);
+      })
+      .catch(function () {});
+  }
+  // supabase-config.js est chargé plus bas dans la page : on attend qu'elle soit prête.
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', lireReglage); else lireReglage();
 })();
