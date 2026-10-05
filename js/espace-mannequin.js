@@ -398,7 +398,7 @@ const Store = {
 
     const { data: photos } = await sb.from('model_photos').select('*').eq('model_id', currentUser.id).order('created_at', { ascending:true });
     (photos||[]).forEach(function(p){
-      const item = { id:p.id, path:p.chemin, url:p.url_miniature||p.url, urlPleine:p.url, compcardOrdre:p.compcard_ordre, couverturePosition:p.couverture_position||'center' };
+      const item = { id:p.id, numero:p.numero||null, path:p.chemin, url:p.url_miniature||p.url, urlPleine:p.url, compcardOrdre:p.compcard_ordre, couverturePosition:p.couverture_position||'center' };
       s.photos.book.push(item);
       if (p.principale) s.photos.principale = item;
       if (p.photo_cv) s.photos.photoCv = item;
@@ -490,7 +490,7 @@ const Store = {
       }).select().single();
       if (dbErr) throw dbErr;
       trierPhotoEnArrierePlan(row.id);
-      return { id: row.id, path: chemin, url: urlMiniature||url, urlPleine:url, compcardOrdre:null };
+      return { id: row.id, numero: row.numero||null, path: chemin, url: urlMiniature||url, urlPleine:url, compcardOrdre:null };
     }catch(e){
       // e.message porte le vrai motif quand il vient d'un refus explicite du
       // serveur (ex. limite de photos atteinte) — l'afficher plutôt qu'un
@@ -988,7 +988,9 @@ function stepPhotos(){
   '<section class="book-section"><div class="section-title-row"><div><span class="editor-kicker">GALERIE</span><h3>Photos du Book</h3><p>Ajoutez vos photos ici — c’est parmi elles que vous choisirez ensuite vos photos principales et votre compcard.</p></div>' +
     '<label class="book-multi-upload" for="fBook">＋ Ajouter des photos<input class="hidden-input" type="file" accept="image/*" id="fBook" multiple></label></div>' +
     '<div class="book-grid">'+p.book.map(function(ph){
+      // Numéro fixe de la photo (Extension 117) : l'agence s'y réfère dans ses messages.
       return '<div class="book-thumb '+(ph.compcardOrdre?'cc-selected':'')+'" data-book-id="'+ph.id+'">'+photoThumb(ph,'Book')+
+        (ph.numero?('<div class="book-num">N° '+Number(ph.numero)+'</div>'):'') +
         (ph.compcardOrdre?('<div class="book-slot-tag">COMPCARD '+ph.compcardOrdre+'</div>'):'') +
         '<button class="book-thumb-remove" data-rmbook="'+ph.id+'" title="Supprimer">✕</button>' +
         '<button class="book-select-btn" data-book-cc-toggle="'+ph.id+'">'+(ph.compcardOrdre?'Retirer de la compcard':'+ Compcard')+'</button>' +

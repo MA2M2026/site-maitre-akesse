@@ -74,7 +74,7 @@
     var url = p.url_miniature || p.url;
     return '<div class="tri-vignette">' +
       '<a href="' + echapper(p.url_moyenne || p.url) + '" target="_blank" rel="noopener"><img src="' + echapper(url) + '" alt="Photo de ' + echapper(nom) + '" loading="lazy"></a>' +
-      '<div class="tri-nom">' + echapper(nom) + '</div>' +
+      '<div class="tri-nom">' + echapper(nom) + (p.numero ? ' — photo n° ' + Number(p.numero) : '') + '</div>' +
       '<div class="tri-raison">' + echapper(p.tri_raison || '') + '</div>' +
       '<div class="tri-actions">' + boutons.map(function (b) {
         return '<button class="btn tri-btn" type="button" data-id="' + echapper(p.id) + '" data-statut="' + b[0] + '">' + b[1] + '</button>';
@@ -87,7 +87,7 @@
     var zoneV = document.getElementById('tri-a-verifier');
     var zoneA = document.getElementById('tri-anciennes');
     zoneE.textContent = 'Chargement…'; zoneV.textContent = ''; zoneA.textContent = '';
-    var res = await sb.from('model_photos').select('id, model_id, url, url_miniature, url_moyenne, chemin, chemin_miniature, chemin_moyenne, tri_statut, tri_raison, created_at')
+    var res = await sb.from('model_photos').select('id, model_id, numero, url, url_miniature, url_moyenne, chemin, chemin_miniature, chemin_moyenne, tri_statut, tri_raison, created_at')
       .in('tri_statut', ['ecartee', 'a_verifier']).order('created_at', { ascending: false }).limit(300);
     if (res.error) {
       zoneE.textContent = 'Le tri automatique n’est pas encore activé : il reste à exécuter l’Extension 116 dans Supabase.';
@@ -135,6 +135,15 @@
     if ((n.length === 10 && n.charAt(0) === '0') || n.length === 8) n = '225' + n; // numéro ivoirien sans indicatif
     return n.length >= 8 ? n : '';
   }
+  // Liens ajoutés automatiquement au message : le book public et l'Espace mannequin
+  // (où les photos portent leur numéro). Liens https simples : WhatsApp les rend
+  // cliquables et ils s'ouvrent directement sur iPhone comme sur Android.
+  var SITE = 'https://www.maitreakessemodelmanagement.com';
+  function avecLiens(message, modelId, publie) {
+    var liens = (publie ? '\n\n📸 Votre book en ligne : ' + SITE + '/mannequin?id=' + modelId : '') +
+      '\n\n🔐 Votre Espace mannequin (photos numérotées, envoi des nouvelles photos) : ' + SITE + '/espace-mannequin';
+    return String(message).trim() + liens;
+  }
   function listeHtml(t) { return (t && t.length) ? '<ul>' + t.map(function (x) { return '<li>' + echapper(x) + '</li>'; }).join('') + '</ul>' : '<p>—</p>'; }
 
   async function chargerRapports() {
@@ -146,8 +155,9 @@
     if (!lignes.length) { zone.innerHTML = '<p class="tdb-9">Aucun rapport pour le moment : lancez la revue stricte des books ci-dessous.</p>'; return; }
     var ids = lignes.map(function (l) { return l.model_id; });
     var noms = {};
-    var pr = await sb.from('model_profiles').select('id, full_name').in('id', ids);
-    (pr.data || []).forEach(function (m) { noms[m.id] = m.full_name || 'Mannequin'; });
+    var publies = {};
+    var pr = await sb.from('model_profiles').select('id, full_name, published').in('id', ids);
+    (pr.data || []).forEach(function (m) { noms[m.id] = m.full_name || 'Mannequin'; publies[m.id] = !!m.published; });
     var tel = await sb.rpc('contacts_mannequins_admin');
     telephones = {}; (tel.data || []).forEach(function (t) { telephones[t.model_id] = t.phone; });
     rapports = {};
@@ -165,7 +175,7 @@
         }).join('') + '</ol>' : '<p>—</p>') +
         '<h5>Règles pour toutes les photos</h5>' + listeHtml(rp.regles) +
         '<h5>Message pour le mannequin (vous pouvez le modifier avant l’envoi)</h5>' +
-        '<textarea class="tri-message" rows="12" data-model="' + echapper(l.model_id) + '">' + echapper(rp.message_mannequin || '') + '</textarea>' +
+        '<textarea class="tri-message" rows="12" data-model="' + echapper(l.model_id) + '">' + echapper(avecLiens(rp.message_mannequin || '', l.model_id, publies[l.model_id])) + '</textarea>' +
         '<div class="tri-actions">' +
           (wa ? '<button class="btn tri-btn" type="button" data-statut="envoyer-wa" data-model="' + echapper(l.model_id) + '">💬 Envoyer par WhatsApp</button>' : '<span class="tdb-9">Pas de numéro de téléphone pour ce mannequin.</span>') +
           '<button class="btn tri-btn" type="button" data-statut="copier-message" data-model="' + echapper(l.model_id) + '">Copier le message</button>' +
