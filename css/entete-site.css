@@ -1,0 +1,385 @@
+/* Barre du haut, menu plein écran et couverture animée — copie exacte des règles de
+   css/style.css, pour les pages qui ont leur propre habillage et ne chargent pas
+   style.css (espace-mannequin.html, 04/10/2026). Toute modification de la barre, du
+   menu ou de la couverture dans style.css doit être reportée ici. */
+.site-header-v2, .menu-overlay, .couverture-faisceau {
+  --blanc: #ffffff;
+  --bordeaux: #7a1220;
+  --bordeaux-clair: #d55468;
+  --display: 'Cormorant Garamond', serif;
+  --glow-bordeaux: 0 0 26px rgba(207,59,82,0.4);
+  --gris-clair: rgba(255,255,255,0.16);
+  --marge: clamp(1.25rem, 5vw, 4rem);
+  --noir: #060504;
+  --texte: 'Jost', sans-serif;
+  --texte-corps: #cdc5be;
+  --transition-douce: cubic-bezier(0.19, 1, 0.22, 1);
+}
+.site-header-v2 .container { max-width: 1200px; margin: 0 auto; padding: 0 var(--marge); }
+.site-header-v2 a, .menu-overlay a { text-decoration: none; }
+/* Lien « Aller au contenu » (ajouté par js/confort.js) : invisible, apparaît seulement au clavier. */
+.lien-evitement {
+  position: fixed; top: 0.6rem; left: 0.6rem; z-index: 3000; transform: translateY(-160%);
+  padding: 0.6rem 1.1rem; border-radius: 999px; background: var(--noir); color: var(--titre-clair);
+  border: 1px solid var(--bordeaux-clair); font-family: var(--texte); font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase;
+  transition: transform 0.2s ease;
+}
+.lien-evitement:focus { transform: none; outline: none; }
+.site-header-v2 button, .menu-overlay button { font: inherit; }
+
+.site-header-v2 {
+  position: sticky;
+  top: 0;
+  z-index: 400;
+  background: rgba(6,5,4,0.72);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--gris-clair);
+}
+
+.header-v2-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 84px;
+}
+
+.logo-img-header { display: flex; align-items: center; }
+.logo-img-header img { height: 34px; width: auto; display: block; }
+@media (max-width: 480px) {
+  .logo-img-header img { height: 28px; }
+}
+
+/* Animation du logo (04/10/2026) : apparition douce au chargement, puis un reflet de
+   lumière très discret qui traverse les lettres toutes les 9 secondes environ. Le reflet
+   est découpé à la forme exacte du logo (masque), il ne déborde jamais autour.
+   Désactivée pour les personnes qui ont demandé « moins d'animations » sur leur appareil. */
+.logo-img-header { position: relative; }
+.logo-img-header img { animation: logo-apparition 1.1s cubic-bezier(.2,.7,.2,1) both; }
+.logo-img-header::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(105deg, transparent 38%, rgba(213,84,104,.75) 50%, transparent 62%) no-repeat;
+  background-size: 250% 100%; background-position: -30% 0;
+  -webkit-mask: url(../assets/logo-header.png) center / contain no-repeat;
+          mask: url(../assets/logo-header.png) center / contain no-repeat;
+  animation: logo-reflet 9s ease-in-out 1.3s infinite;
+}
+@keyframes logo-apparition { from { opacity: 0; transform: translateY(4px); filter: blur(3px); } to { opacity: 1; transform: none; filter: none; } }
+@keyframes logo-reflet { 0% { background-position: -30% 0; } 16%, 100% { background-position: 130% 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .logo-img-header img { animation: none; }
+  .logo-img-header::after { display: none; }
+}
+
+.header-v2-droite { display: flex; align-items: center; gap: 1.4rem; }
+.lang-switch {
+  font-family: var(--texte); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em;
+  color: var(--texte-corps); border: 1px solid var(--gris-clair); border-radius: 999px;
+  padding: 0.3rem 0.7rem; transition: border-color 0.2s ease, color 0.2s ease;
+}
+.lang-switch:hover { color: var(--bordeaux-clair); border-color: var(--bordeaux-clair); }
+
+.menu-trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  background: none;
+  border: none;
+  color: var(--blanc);
+  cursor: pointer;
+  font-family: var(--texte);
+  font-size: 0.66rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  transition: color 0.25s ease;
+}
+.menu-trigger:hover { color: var(--bordeaux-clair); }
+
+.menu-trigger .dots { display: flex; flex-direction: column; gap: 3px; }
+.menu-trigger .dots span { width: 4px; height: 4px; background: currentColor; border-radius: 50%; display: block; }
+
+/* ---------- Menu — overlay plein écran ---------- */
+
+.menu-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background-color: var(--noir);
+  background-image:
+    radial-gradient(ellipse 90% 70% at 50% 30%, rgba(122,18,32,0.14), transparent 65%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 5.5rem var(--marge) 3rem;
+  max-height: none;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-14px);
+  box-shadow: none;
+  border: none;
+  transition: opacity 0.5s var(--transition-douce),
+              transform 0.5s var(--transition-douce),
+              visibility 0.5s;
+}
+
+.menu-overlay.active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.menu-overlay .close-menu {
+  display: block;
+  position: absolute;
+  top: 1.7rem;
+  right: var(--marge);
+  background: none;
+  border: 1px solid var(--gris-clair);
+  color: var(--texte-corps);
+  font-family: var(--texte);
+  font-size: 0.64rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 0.6rem 1.1rem;
+  cursor: pointer;
+  transition: border-color 0.25s ease, color 0.25s ease;
+}
+.menu-overlay .close-menu:hover { border-color: var(--bordeaux-clair); color: #fff; }
+
+.menu-overlay .nav-links { list-style: none; margin: 0; padding: 0; text-align: center; width: 100%; max-width: 620px; }
+.menu-overlay .nav-links li {
+  margin: 0;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  border-bottom: 1px solid var(--gris-clair);
+}
+.menu-overlay .nav-links li:last-child { border-bottom: none; }
+.menu-overlay.active .nav-links li { opacity: 1; transform: translateY(0); }
+.menu-overlay.active .nav-links li:nth-child(1) { transition-delay: 0.05s; }
+.menu-overlay.active .nav-links li:nth-child(2) { transition-delay: 0.09s; }
+.menu-overlay.active .nav-links li:nth-child(3) { transition-delay: 0.13s; }
+.menu-overlay.active .nav-links li:nth-child(4) { transition-delay: 0.17s; }
+.menu-overlay.active .nav-links li:nth-child(5) { transition-delay: 0.21s; }
+.menu-overlay.active .nav-links li:nth-child(6) { transition-delay: 0.25s; }
+.menu-overlay.active .nav-links li:nth-child(7) { transition-delay: 0.29s; }
+.menu-overlay.active .nav-links li:nth-child(8) { transition-delay: 0.33s; }
+.menu-overlay.active .nav-links li:nth-child(9) { transition-delay: 0.37s; }
+
+.menu-overlay .nav-links a {
+  font-family: var(--display);
+  font-size: clamp(1.3rem, 4.2vw, 2.1rem);
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--texte-corps);
+  display: block;
+  padding: 0.7rem 1rem;
+  position: relative;
+  transition: color 0.25s ease, letter-spacing 0.25s ease;
+}
+.menu-overlay .nav-links a:hover,
+.menu-overlay .nav-links a.actif { color: var(--bordeaux-clair); letter-spacing: 0.08em; }
+
+.menu-overlay .nav-links .item-cta { border-bottom: none; margin-top: 1.6rem; }
+.menu-overlay .nav-links .item-cta a {
+  font-family: var(--texte);
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  border: 1px solid var(--bordeaux);
+  background: none;
+  color: var(--bordeaux-clair);
+  padding: 0.95rem 2.2rem;
+  font-weight: 500;
+  display: inline-block;
+  transition: background 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
+}
+.menu-overlay .nav-links .item-cta a:hover { background: var(--bordeaux); color: #fff; box-shadow: var(--glow-bordeaux); letter-spacing: 0.22em; }
+
+.menu-contact {
+  margin-top: 2.6rem;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.4s ease 0.4s, transform 0.4s ease 0.4s;
+}
+.menu-overlay.active .menu-contact { opacity: 1; transform: translateY(0); }
+.menu-contact a.menu-tel {
+  font-family: var(--display); font-size: 1.1rem; letter-spacing: 0.03em; color: var(--texte-corps);
+  transition: color 0.25s ease;
+}
+.menu-contact a.menu-tel:hover { color: var(--bordeaux-clair); }
+.menu-reseaux { display: flex; gap: 0.7rem; justify-content: center; margin-top: 1.1rem; }
+.menu-reseaux a {
+  width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--gris-clair);
+  display: flex; align-items: center; justify-content: center; color: var(--texte-corps);
+  transition: border-color 0.25s ease, color 0.25s ease;
+}
+.menu-reseaux a svg { width: 15px; height: 15px; fill: currentColor; }
+.menu-reseaux a:hover { border-color: var(--bordeaux-clair); color: var(--bordeaux-clair); }
+
+@media (max-height: 640px) {
+  .menu-overlay { padding-top: 4.5rem; justify-content: flex-start; }
+  .menu-overlay .nav-links a { font-size: 1.3rem; padding: 0.5rem 1rem; }
+}
+
+@media (max-width:720px){.menu-trigger{min-height:44px;padding:0 0.15rem}}
+
+/* Couverture animée en haut de toutes les pages publiques (js/couverture-faisceau.js,
+   04/10/2026) : format couverture Facebook sur ordinateur (820 × 312), 16:9 sur téléphone. */
+.couverture-faisceau { position: relative; width: 100%; aspect-ratio: 820 / 312; max-height: 72vh; background: #050304; overflow: hidden; }
+.couverture-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.couverture-secours { position: absolute; left: 50%; top: 50%; width: min(72%, 640px); height: auto; transform: translate(-50%, -50%); }
+.couverture-faisceau.anime .couverture-secours { display: none; }
+@media (max-width: 700px) { .couverture-faisceau { aspect-ratio: 16 / 9; } }
+
+/* Couverture fixe (demande du 04/10/2026) : la couverture reste en haut de l'écran, la
+   barre du menu reste fixée juste en dessous, et tout le reste de la page défile sous
+   les deux. Hauteur : format Facebook sur ordinateur, limité à 40 % de l'écran pour
+   laisser de la place à la lecture ; 16:9 sur téléphone. */
+:root { --couv-h: min(calc(100vw * 312 / 820), 40vh); }
+@media (max-width: 700px) { :root { --couv-h: calc(100vw * 9 / 16); } }
+.couverture-faisceau { position: sticky; top: 0; z-index: 401; aspect-ratio: auto; height: var(--couv-h); max-height: none; }
+.site-header-v2.entete-sous-couverture { top: var(--couv-h); }
+html:has(#couverture-faisceau) { scroll-padding-top: calc(var(--couv-h) + 90px); }
+/* Vidéo de couverture choisie dans le tableau de bord : remplace l'animation en fondu. */
+.couverture-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.9s ease; }
+.couverture-faisceau.video-prete .couverture-video { opacity: 1; }
+.couverture-faisceau.video-prete .couverture-canvas,
+.couverture-faisceau.video-prete .couverture-secours { visibility: hidden; transition: visibility 0s 0.9s; }
+
+/* Couverture qui se replie sur ordinateur (04/10/2026, js/couverture-faisceau.js) : grande
+   en haut de page (16:9, jusqu'à 85 % de l'écran), elle se réduit en défilant jusqu'au
+   bandeau (--couv-h), puis reste fixe avec la barre du menu dessous. Le canvas et la vidéo
+   gardent la taille de la grande couverture, centrés : quand elle se replie, seule la bande
+   du milieu reste visible (le logo reste entier). .couverture-espace réserve la place. */
+:root { --couv-h-max: min(calc(100vw * 9 / 16), 85vh); --couv-h-anim: var(--couv-h-max); }
+.couverture-espace { display: none; }
+.couverture-video.remplir { object-fit: cover; }
+@media (min-width: 701px) {
+  .couverture-faisceau { position: fixed; top: 0; left: 0; right: 0; height: var(--couv-h-anim); }
+  .couverture-faisceau .couverture-canvas,
+  .couverture-faisceau .couverture-video,
+  .couverture-faisceau .couverture-video-fond { inset: auto; left: 0; top: 50%; width: 100%; height: var(--couv-h-max); transform: translateY(-50%); }
+  .couverture-faisceau .couverture-video-fond { transform: translateY(-50%) scale(1.15); }
+  .site-header-v2.entete-sous-couverture { position: fixed; top: var(--couv-h-anim); left: 0; right: 0; }
+  .couverture-espace { display: block; height: calc(var(--couv-h-max) + 85px); }
+}
+/* Accueil : tant que la porte d'entrée est affichée, ni couverture ni espace réservé. */
+body.porte-verrouillee .couverture-faisceau, body.porte-verrouillee .couverture-espace { display: none; }
+
+/* ==============================================================
+   Menu — modèle 2 « Tiroir latéral » (choisi par la propriétaire, 05/10/2026).
+   Le menu s'ouvre en tiroir sur la droite de l'écran, le reste de la page est
+   assombri derrière (voile ajouté par js/menu.js, qui ajoute aussi les titres
+   de groupes « Découvrir », « Rejoindre l'agence », « Nous écrire »).
+   Remplace les règles « boutons » du menu plus haut.
+   ===================================================================== */
+.menu-voile {
+  position: fixed; inset: 0; z-index: 499;
+  background: rgba(0,0,0,0.55);
+  opacity: 0; visibility: hidden;
+  transition: opacity 0.35s ease, visibility 0.35s;
+}
+.menu-voile.active { opacity: 1; visibility: visible; }
+
+.menu-overlay {
+  inset: 0 0 0 auto;
+  width: min(84vw, 420px);
+  background: linear-gradient(180deg, #141011, #0b0909);
+  border-left: 1px solid rgba(213,84,104,0.35);
+  box-shadow: -30px 0 60px rgba(0,0,0,0.6) !important;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 5.2rem 22px 1.6rem;
+  opacity: 1;
+  transform: translateX(105%);
+  transition: transform 0.42s cubic-bezier(.22,.8,.24,1), visibility 0.42s;
+}
+.menu-overlay.active { transform: translateX(0); }
+
+/* logo en haut à gauche du tiroir */
+.menu-overlay::before {
+  content: "";
+  position: absolute; top: 1.55rem; left: 22px;
+  width: 140px; height: 30px;
+  background: url("../assets/logo-header.png") no-repeat left center / contain;
+}
+/* bouton de fermeture : un rond avec une croix */
+.menu-overlay .close-menu {
+  top: 1.2rem; right: 18px;
+  width: 44px; height: 44px; padding: 0;
+  border-radius: 50% !important;
+  border: 1px solid rgba(255,255,255,0.22);
+  font-size: 0 !important; letter-spacing: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.menu-overlay .close-menu::after { content: "✕"; font-size: 0.85rem; color: #f4efe9; }
+
+.menu-overlay .nav-links { display: block; max-width: none; text-align: left; }
+.menu-overlay .nav-links li { border: none; margin: 0; transform: translateX(14px); }
+.menu-overlay.active .nav-links li { transform: translateX(0); }
+.menu-overlay.active .nav-links li:nth-child(n+10) { transition-delay: 0.41s; }
+.menu-overlay .nav-links li.menu-groupe {
+  font-family: var(--texte);
+  font-size: 0.62rem; font-weight: 500;
+  letter-spacing: 0.3em; text-transform: uppercase;
+  color: #d55468;
+  margin: 1.1rem 0 0.3rem;
+}
+.menu-overlay .nav-links li.menu-groupe:first-child { margin-top: 0; }
+
+.menu-overlay .nav-links li a {
+  display: flex !important; align-items: center; justify-content: space-between; gap: 1rem;
+  position: relative;
+  font-family: var(--texte) !important;
+  font-size: 1rem !important; font-weight: 400;
+  letter-spacing: 0.03em !important; text-transform: none;
+  line-height: 1.3;
+  color: #f4efe9 !important;
+  padding: 0.62rem 12px !important;
+  border: none !important; border-radius: 8px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+.menu-overlay .nav-links li a::after { content: "›"; font-size: 1.15rem; color: rgba(255,255,255,0.35); }
+@media (hover: hover) { .menu-overlay .nav-links li a:hover { background: rgba(255,255,255,0.05) !important; } }
+.menu-overlay .nav-links li a:active { background: rgba(213,84,104,0.16) !important; }
+.menu-overlay .nav-links li a.actif { background: rgba(213,84,104,0.1) !important; }
+.menu-overlay .nav-links li a.actif::before {
+  content: ""; position: absolute; left: 0; top: 8px; bottom: 8px;
+  width: 2px; border-radius: 2px; background: #d55468;
+}
+
+/* « Espace mannequin » : grand bouton bordeaux */
+.menu-overlay .nav-links .item-cta { margin-top: 1.5rem; }
+.menu-overlay .nav-links .item-cta a {
+  justify-content: center;
+  padding: 1rem 1.2rem !important;
+  border-radius: 999px !important;
+  background: linear-gradient(180deg, #9c1c2c, #6d1222) !important;
+  box-shadow: 0 8px 22px -10px rgba(213,84,104,0.8) !important;
+  font-size: 0.74rem !important; font-weight: 500;
+  letter-spacing: 0.24em !important; text-transform: uppercase;
+  text-align: center;
+  color: #fff !important;
+}
+.menu-overlay .nav-links .item-cta a::after { content: none; }
+.menu-overlay .nav-links .item-cta a.actif::before { content: none; }
+.menu-overlay .menu-contact { margin-top: 1.4rem; }
+.menu-overlay .menu-contact a.menu-tel { font-size: 1rem; }
+.menu-overlay .menu-reseaux { margin-top: 0.9rem; gap: 9px; }
+
+@media (max-height: 640px) {
+  .menu-overlay { padding-top: 4.6rem; }
+  .menu-overlay .nav-links li a { padding: 0.45rem 12px !important; }
+}
+=======
