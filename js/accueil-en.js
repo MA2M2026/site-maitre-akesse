@@ -261,28 +261,5 @@ async function chargerBandeauConfiance() {
 }
 chargerBandeauConfiance();
 
-// --- Stats strip: real numbers, computed live from the database ---
-async function chargerStatsAccueil() {
-  if (!sb) return;
-  const [{ count: nbMannequins }, { count: nbProjets }, { count: nbPartenaires }, { count: nbActualites }] = await Promise.all([
-    sb.from('model_profiles').select('id', { count: 'exact', head: true }).eq('published', true),
-    sb.from('model_projects').select('id', { count: 'exact', head: true }),
-    sb.from('partenaires').select('id', { count: 'exact', head: true }),
-    sb.from('actualites').select('id', { count: 'exact', head: true })
-  ]);
-
-  const stats = [
-    { chiffre: (nbMannequins || 0) + '+', libelle: 'Models Represented' },
-    { chiffre: (nbProjets || 0) + '+', libelle: 'Completed Projects' },
-    { chiffre: (nbPartenaires || 0) + '+', libelle: 'Partners & Institutions' },
-    { chiffre: 'Abidjan', libelle: 'Based in Côte d\'Ivoire' }
-  ];
-
-  document.getElementById('stats-grille-accueil').innerHTML = stats.map(s => `
-    <div class="stat-item">
-      <span class="chiffre">${s.chiffre}</span>
-      <span class="libelle">${s.libelle}</span>
-    </div>
-  `).join('');
-}
-chargerStatsAccueil();
+// Bande de chiffres retirée le 06/10/2026 (remplacée par l'entrée « Femmes · Hommes ·
+// New Faces » écrite directement dans la page, section #stat-strip).
