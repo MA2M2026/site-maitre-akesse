@@ -709,6 +709,17 @@ section { padding: 5rem 0; }
 
 /* ---------- Footer ---------- */
 
+/* Bandeau « Intégrer l'agence » juste au-dessus du pied de page (06/10/2026, js/menu.js) :
+   même écriture que les liens du menu, en rouge. */
+.bandeau-integrer { padding: 2.2rem 0 2.4rem; text-align: center; border-top: 1px solid var(--gris-clair); background: var(--noir); }
+.bandeau-integrer p { margin: 0 auto; max-width: none; font-size: 0.74rem; letter-spacing: 0.24em; text-transform: uppercase; color: var(--texte-doux); }
+.bandeau-integrer a {
+  display: inline-flex; align-items: center; gap: 0.7rem; margin-top: 0.7rem;
+  font-family: var(--texte); font-size: 1.15rem; letter-spacing: 0.03em; color: #e0475f; text-decoration: none;
+  padding: 0.55rem 1.2rem; border-radius: 8px; transition: background 0.25s ease, color 0.25s ease;
+}
+.bandeau-integrer a::after { content: "›"; font-size: 1.3rem; }
+.bandeau-integrer a:hover, .bandeau-integrer a:focus-visible { background: rgba(213,84,104,0.12); color: #ff5f78; }
 .site-footer { background: var(--noir); color: var(--texte-corps); padding: 3.5rem 0 2rem; border-top: 1px solid var(--gris-clair); }
 
 .footer-grille { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 2rem; margin-bottom: 2rem; }
