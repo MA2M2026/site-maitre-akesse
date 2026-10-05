@@ -359,21 +359,25 @@ body.porte-verrouillee .couverture-faisceau, body.porte-verrouillee .couverture-
   width: 2px; border-radius: 2px; background: #d55468;
 }
 
-/* « Espace mannequin » : grand bouton bordeaux */
-.menu-overlay .nav-links .item-cta { margin-top: 1.5rem; }
+/* « Espace mannequin de l'agence » : écrit exactement comme les autres liens du menu
+   (demande de la propriétaire, 05/10/2026 — plus de bouton rouge). */
+.menu-overlay .nav-links .item-cta { margin-top: 0; border-bottom: none; }
 .menu-overlay .nav-links .item-cta a {
-  justify-content: center;
-  padding: 1rem 1.2rem !important;
-  border-radius: 999px !important;
-  background: linear-gradient(180deg, #9c1c2c, #6d1222) !important;
-  box-shadow: 0 8px 22px -10px rgba(213,84,104,0.8) !important;
-  font-size: 0.74rem !important; font-weight: 500;
-  letter-spacing: 0.24em !important; text-transform: uppercase;
-  text-align: center;
-  color: #fff !important;
+  justify-content: space-between;
+  padding: 0.62rem 12px !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-family: var(--texte) !important;
+  font-size: 1rem !important; font-weight: 400;
+  letter-spacing: 0.03em !important; text-transform: none;
+  text-align: left;
+  color: #f4efe9 !important;
 }
-.menu-overlay .nav-links .item-cta a::after { content: none; }
-.menu-overlay .nav-links .item-cta a.actif::before { content: none; }
+@media (hover: hover) { .menu-overlay .nav-links .item-cta a:hover { background: rgba(255,255,255,0.05) !important; letter-spacing: 0.03em !important; } }
+.menu-overlay .nav-links .item-cta a::after { content: "›"; font-size: 1.15rem; color: rgba(255,255,255,0.35); }
+.menu-overlay .nav-links .item-cta a.actif { background: rgba(213,84,104,0.1) !important; }
+.menu-overlay .nav-links .item-cta a.actif::before { content: ""; }
 .menu-overlay .menu-contact { margin-top: 1.4rem; }
 .menu-overlay .menu-contact a.menu-tel { font-size: 1rem; }
 .menu-overlay .menu-reseaux { margin-top: 0.9rem; gap: 9px; }
