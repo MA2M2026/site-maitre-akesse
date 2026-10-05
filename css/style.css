@@ -3045,3 +3045,7 @@ body.porte-verrouillee .couverture-faisceau, body.porte-verrouillee .couverture-
 /* Version anglaise : mesures impériales (pieds/pouces, lbs, pointure US) à côté des mesures
    métriques, pour les recruteurs américains et britanniques (06/10/2026). */
 .fiche-imperial { display: block; margin-top: 0.15rem; font-size: 0.78em; color: var(--texte-doux); letter-spacing: 0.02em; }
+
+/* Fiche mannequin : rubrique « Digitals » sous le Book (tri automatique des photos, 06/10/2026). */
+.fiche-digitals-titre { margin-top: 2.6rem; }
+.fiche-digitals-sous { margin: -0.4rem 0 1.2rem; font-size: 0.95rem; color: var(--gris, #6b625d); }
