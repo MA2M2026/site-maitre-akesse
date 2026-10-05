@@ -2912,6 +2912,15 @@ body.porte-verrouillee .couverture-faisceau, body.porte-verrouillee .couverture-
 .video-accueil { position: relative; width: 100%; overflow: hidden; background: #050304; aspect-ratio: 16 / 9; max-height: 82vh; }
 .video-accueil.u-hidden { display: none; }
 @media (max-width: 700px) { .video-accueil { aspect-ratio: 4 / 3; max-height: 70vh; } }
+/* Vidéo verticale (06/10/2026) : sur téléphone, elle occupe l'écran en hauteur ; sur
+   ordinateur, elle est montrée entière au centre, sur un fond sombre, à la hauteur de la
+   partie visible sous la couverture et le menu. */
+.video-accueil.video-verticale { aspect-ratio: auto; max-height: none; height: max(420px, calc(72vh - 85px)); background: radial-gradient(ellipse at center, #1c0a0e 0%, #050304 68%); }
+.video-accueil.video-verticale video { object-fit: contain; }
+@media (max-width: 700px) {
+  .video-accueil.video-verticale { aspect-ratio: 9 / 16; height: auto; max-height: max(360px, calc(100vh - 190px)); background: #050304; }
+  .video-accueil.video-verticale video { object-fit: cover; }
+}
 .video-accueil video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1.2s ease; }
 .video-accueil.video-prete video { opacity: 1; }
 .video-accueil-voile { position: absolute; inset: 0; pointer-events: none;
