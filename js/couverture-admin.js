@@ -3,13 +3,16 @@
 // revient à l'animation. La vidéo est envoyée chez Cloudflare R2 (comme les images du site,
 // api/r2-site-images.js, catégorie « couverture ») et le choix est enregistré dans la table
 // reglages_site (cle 'couverture', extension 113 de supabase-extension.sql).
-// Vidéo trop lourde, trop grande, trop longue ou dans un format peu compatible : elle est
-// compressée dans le navigateur avant l'envoi (redessinée en plus petit puis réenregistrée),
+// Chaque vidéo est compressée dans le navigateur avant l'envoi (redessinée en plus petit puis réenregistrée),
 // sans le son, et limitée à 30 secondes (la couverture tourne en boucle).
 (function () {
   if (!document.getElementById('couv-fichier') || typeof sb === 'undefined') return;
 
-  var LIMITE_DIRECTE = 8 * 1024 * 1024;   // au-delà, compression automatique
+  // Toutes les vidéos sont compressées automatiquement (demande de la propriétaire,
+  // 05/10/2026 : site léger, sans case à cocher) : 1280 pixels de large au plus et
+  // 1 Mbit/s — environ 3,7 Mo pour 30 secondes, image encore nette.
+  var DEBIT = 1000000, LARGEUR_MAX = 1280;
+  var LIMITE_SANS_COMPRESSION = 8 * 1024 * 1024; // seulement si le navigateur ne sait pas compresser
   var LIMITE_FINALE = 15 * 1024 * 1024;   // au-delà, refus (même après compression)
   var DUREE_MAX = 30;
   var $ = function (id) { return document.getElementById(id); };
@@ -62,35 +65,34 @@
     });
   }
 
-  function besoinCompression(f, inf) {
-    return $('couv-max').checked || f.size > LIMITE_DIRECTE || inf.largeur > 1920 || inf.duree > DUREE_MAX + 0.5 || !/^video\/(mp4|webm)$/.test(f.type);
+  // L'original peut-il être envoyé tel quel (s'il est déjà plus léger que la version
+  // compressée, ou si le navigateur ne sait pas compresser) ?
+  function originalUtilisable(f, inf) {
+    return /^video\/(mp4|webm)$/.test(f.type) && inf.duree <= DUREE_MAX + 0.5 && inf.largeur <= LARGEUR_MAX;
   }
 
   function afficherInfos() {
     if (!fichierChoisi || !infosChoisies) return;
     var inf = infosChoisies, txt = '« ' + fichierChoisi.name + ' » — ' + mo(fichierChoisi.size) + ', ' + Math.round(inf.duree) + ' s, ' + inf.largeur + ' × ' + inf.hauteur + '. ';
-    if (besoinCompression(fichierChoisi, inf)) {
-      txt += 'Elle sera compressée avant l’envoi' + (inf.duree > DUREE_MAX + 0.5 ? ' et limitée aux ' + DUREE_MAX + ' premières secondes' : '') + ' (cela prend à peu près la durée de la vidéo — gardez cette page ouverte).';
-    } else txt += 'Elle est assez légère : elle sera envoyée telle quelle.';
+    txt += 'Elle sera compressée automatiquement avant l’envoi' + (inf.duree > DUREE_MAX + 0.5 ? ' et limitée aux ' + DUREE_MAX + ' premières secondes' : '') + ' (cela prend à peu près la durée de la vidéo — gardez cette page ouverte).';
     if (inf.hauteur > inf.largeur) txt += ' Attention : vidéo verticale — le haut et le bas seront coupés dans la couverture, une vidéo en paysage rendra mieux.';
     $('couv-infos').textContent = txt;
   }
 
   // Compression : la vidéo est lue, redessinée en plus petit dans un canvas, et réenregistrée.
-  async function compresser(fichier, maximale, progression) {
-    var largeurMax = maximale ? 960 : 1280, debit = maximale ? 900000 : 2000000;
+  async function compresser(fichier, progression) {
     var types = ['video/mp4;codecs=avc1.42E01F', 'video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
     var mime = window.MediaRecorder ? types.find(function (t) { return MediaRecorder.isTypeSupported(t); }) : null;
-    if (!mime) throw new Error('La compression n’est pas possible sur ce navigateur. Essayez avec Chrome sur ordinateur, ou envoyez une vidéo MP4 de moins de 8 Mo.');
+    if (!mime) return null;
     var url = URL.createObjectURL(fichier), v = document.createElement('video');
     v.muted = true; v.playsInline = true; v.src = url;
     await new Promise(function (ok, ko) { v.onloadedmetadata = ok; v.onerror = function () { ko(new Error('Cette vidéo ne peut pas être lue par ce navigateur.')); }; });
-    var w = Math.min(largeurMax, v.videoWidth); w -= w % 2;
+    var w = Math.min(LARGEUR_MAX, v.videoWidth); w -= w % 2;
     var h = Math.round(w * v.videoHeight / v.videoWidth); h -= h % 2;
     var c = document.createElement('canvas'); c.width = w; c.height = h;
     var x = c.getContext('2d');
     var flux = c.captureStream(30);
-    var rec = new MediaRecorder(flux, { mimeType: mime, videoBitsPerSecond: debit });
+    var rec = new MediaRecorder(flux, { mimeType: mime, videoBitsPerSecond: DEBIT });
     var morceaux = [];
     rec.ondataavailable = function (e) { if (e.data && e.data.size) morceaux.push(e.data); };
     var fini = new Promise(function (ok) { rec.onstop = ok; });
@@ -126,18 +128,19 @@
     try { infosChoisies = await lireInfos(fichierChoisi); afficherInfos(); $('couv-publier-btn').disabled = false; }
     catch (e) { message(e.message, true); }
   });
-  $('couv-max').addEventListener('change', afficherInfos);
 
   $('couv-publier-btn').addEventListener('click', async function () {
     if (!fichierChoisi || !infosChoisies) return;
     var bouton = this; bouton.disabled = true; $('couv-animation-btn').disabled = true;
     try {
       var envoi = fichierChoisi;
-      if (besoinCompression(fichierChoisi, infosChoisies)) {
-        message('Compression en cours… gardez cette page ouverte.');
-        envoi = await compresser(fichierChoisi, $('couv-max').checked, function (p) { barre(p); message('Compression en cours… ' + Math.round(p * 100) + ' % — gardez cette page ouverte.'); });
-        if (envoi.size > LIMITE_FINALE) throw new Error('Même compressée, la vidéo fait ' + mo(envoi.size) + ' (maximum ' + mo(LIMITE_FINALE) + '). Cochez « Compression maximale » ou choisissez une vidéo plus courte.');
-      }
+      message('Compression en cours… gardez cette page ouverte.');
+      var compressee = await compresser(fichierChoisi, function (p) { barre(p); message('Compression en cours… ' + Math.round(p * 100) + ' % — gardez cette page ouverte.'); });
+      var originalOk = originalUtilisable(fichierChoisi, infosChoisies);
+      if (!compressee) {
+        if (!originalOk || fichierChoisi.size > LIMITE_SANS_COMPRESSION) throw new Error('La compression n’est pas possible sur ce navigateur. Essayez avec Chrome (ordinateur ou téléphone Android).');
+      } else if (!(originalOk && fichierChoisi.size <= compressee.size)) envoi = compressee;
+      if (envoi.size > LIMITE_FINALE) throw new Error('Même compressée, la vidéo fait ' + mo(envoi.size) + ' (maximum ' + mo(LIMITE_FINALE) + '). Choisissez une vidéo plus courte.');
       barre(1); message('Envoi de la vidéo (' + mo(envoi.size) + ')…');
       var ext = envoi.type === 'video/webm' ? 'webm' : 'mp4';
       var chemin = 'site/couverture/' + Date.now() + '.' + ext;
