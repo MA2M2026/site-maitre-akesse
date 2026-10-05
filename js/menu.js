@@ -52,6 +52,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Bandeau « Intégrer l'agence » en bas des pages (demande de la propriétaire, 06/10/2026) :
+  // un mannequin qui arrive en bas d'une page trouve tout de suite où s'inscrire. Écrit
+  // comme les liens du menu, mais en rouge. Pas sur la page d'inscription elle-même ni sur
+  // l'inscription des mannequins déjà retenus, ni dans le tableau de bord.
+  (function () {
+    const page = (location.pathname.split('/').pop() || '').replace(/\.html$/, '');
+    const pied = document.querySelector('footer.site-footer');
+    const cible = overlay.querySelector('a[href$="integrer-agence.html"], a[href$="integrer-agence"]');
+    if (!pied || !cible || ['integrer-agence', 'inscription-mannequin', 'tableau-de-bord'].indexOf(page) !== -1) return;
+    const en = document.documentElement.lang === 'en';
+    const bandeau = document.createElement('section');
+    bandeau.className = 'bandeau-integrer';
+    bandeau.setAttribute('aria-label', en ? 'Join the agency' : 'Intégrer l\'agence');
+    const question = document.createElement('p');
+    question.textContent = en ? 'You are a model?' : 'Vous êtes mannequin ?';
+    const lien = document.createElement('a');
+    lien.href = cible.getAttribute('href');
+    lien.textContent = en ? 'Join the agency' : 'Intégrer l\'agence';
+    bandeau.appendChild(question); bandeau.appendChild(lien);
+    pied.parentNode.insertBefore(bandeau, pied);
+  })();
+
   let menuEstOuvert = false;
   function ouvrirMenu() {
     overlay.classList.add('active');
