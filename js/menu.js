@@ -8,15 +8,44 @@ document.addEventListener('DOMContentLoaded', () => {
   // Verrouille le défilement du corps de la page tant que le menu est ouvert —
   // sinon, sur mobile, faire défiler jusqu'aux limites du menu peut faire défiler
   // la page en dessous sans que ça se voie, ce qui donne un rendu décalé à la fermeture.
+  // Menu « tiroir » (modèle 2) : voile sombre derrière le tiroir — un appui dessus ferme
+  // le menu — et titres des groupes de rubriques.
+  const voile = document.createElement('div');
+  voile.className = 'menu-voile';
+  voile.setAttribute('aria-hidden', 'true');
+  overlay.parentNode.insertBefore(voile, overlay);
+  voile.addEventListener('click', () => fermerMenu());
+  if (closeBtn) closeBtn.setAttribute('aria-label', document.documentElement.lang === 'en' ? 'Close the menu' : 'Fermer le menu');
+  const liste = overlay.querySelector('.nav-links');
+  if (liste) {
+    const en = document.documentElement.lang === 'en';
+    const groupes = [
+      ['index.html', en ? 'Discover' : 'Découvrir'],
+      ['integrer-agence.html', en ? 'Join the agency' : 'Rejoindre l\'agence'],
+      ['contact.html', en ? 'Write to us' : 'Nous écrire']
+    ];
+    groupes.forEach(([page, titre]) => {
+      const lien = [...liste.querySelectorAll('li > a')].find(a => (a.getAttribute('href') || '').split('/').pop() === page);
+      if (!lien) return;
+      const li = document.createElement('li');
+      li.className = 'menu-groupe';
+      li.setAttribute('aria-hidden', 'true');
+      li.textContent = titre;
+      liste.insertBefore(li, lien.parentNode);
+    });
+  }
+
   let menuEstOuvert = false;
   function ouvrirMenu() {
     overlay.classList.add('active');
+    voile.classList.add('active');
     if (window.jouerSon) window.jouerSon('menu');
     menuEstOuvert = true;
     window.verrouillerDefilement();
   }
   function fermerMenu() {
     overlay.classList.remove('active');
+    voile.classList.remove('active');
     // Le drapeau évite de déverrouiller un verrou qu'on n'a pas posé (ex. le filet
     // de sécurité retour arrière ci-dessous appelle fermerMenu() systématiquement,
     // même quand le menu n'était pas ouvert).

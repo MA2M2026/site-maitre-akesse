@@ -2765,3 +2765,111 @@ html:has(#couverture-faisceau) { scroll-padding-top: calc(var(--couv-h) + 90px);
 .couverture-faisceau.video-prete .couverture-video { opacity: 1; }
 .couverture-faisceau.video-prete .couverture-canvas,
 .couverture-faisceau.video-prete .couverture-secours { visibility: hidden; transition: visibility 0s 0.9s; }
+
+/* =====================================================================
+   Menu — modèle 2 « Tiroir latéral » (choisi par la propriétaire, 05/10/2026).
+   Le menu s'ouvre en tiroir sur la droite de l'écran, le reste de la page est
+   assombri derrière (voile ajouté par js/menu.js, qui ajoute aussi les titres
+   de groupes « Découvrir », « Rejoindre l'agence », « Nous écrire »).
+   Remplace les règles « boutons » du menu plus haut.
+   ===================================================================== */
+.menu-voile {
+  position: fixed; inset: 0; z-index: 499;
+  background: rgba(0,0,0,0.55);
+  opacity: 0; visibility: hidden;
+  transition: opacity 0.35s ease, visibility 0.35s;
+}
+.menu-voile.active { opacity: 1; visibility: visible; }
+
+.menu-overlay {
+  inset: 0 0 0 auto;
+  width: min(84vw, 420px);
+  background: linear-gradient(180deg, #141011, #0b0909);
+  border-left: 1px solid rgba(213,84,104,0.35);
+  box-shadow: -30px 0 60px rgba(0,0,0,0.6) !important;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 5.2rem 22px 1.6rem;
+  opacity: 1;
+  transform: translateX(105%);
+  transition: transform 0.42s cubic-bezier(.22,.8,.24,1), visibility 0.42s;
+}
+.menu-overlay.active { transform: translateX(0); }
+
+/* logo en haut à gauche du tiroir */
+.menu-overlay::before {
+  content: "";
+  position: absolute; top: 1.55rem; left: 22px;
+  width: 140px; height: 30px;
+  background: url("../assets/logo-header.png") no-repeat left center / contain;
+}
+/* bouton de fermeture : un rond avec une croix */
+.menu-overlay .close-menu {
+  top: 1.2rem; right: 18px;
+  width: 44px; height: 44px; padding: 0;
+  border-radius: 50% !important;
+  border: 1px solid rgba(255,255,255,0.22);
+  font-size: 0 !important; letter-spacing: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.menu-overlay .close-menu::after { content: "✕"; font-size: 0.85rem; color: #f4efe9; }
+
+.menu-overlay .nav-links { display: block; max-width: none; text-align: left; }
+.menu-overlay .nav-links li { border: none; margin: 0; transform: translateX(14px); }
+.menu-overlay.active .nav-links li { transform: translateX(0); }
+.menu-overlay.active .nav-links li:nth-child(n+10) { transition-delay: 0.41s; }
+.menu-overlay .nav-links li.menu-groupe {
+  font-family: var(--texte);
+  font-size: 0.62rem; font-weight: 500;
+  letter-spacing: 0.3em; text-transform: uppercase;
+  color: #d55468;
+  margin: 1.1rem 0 0.3rem;
+}
+.menu-overlay .nav-links li.menu-groupe:first-child { margin-top: 0; }
+
+.menu-overlay .nav-links li a {
+  display: flex !important; align-items: center; justify-content: space-between; gap: 1rem;
+  position: relative;
+  font-family: var(--texte) !important;
+  font-size: 1rem !important; font-weight: 400;
+  letter-spacing: 0.03em !important; text-transform: none;
+  line-height: 1.3;
+  color: #f4efe9 !important;
+  padding: 0.62rem 12px !important;
+  border: none !important; border-radius: 8px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+.menu-overlay .nav-links li a::after { content: "›"; font-size: 1.15rem; color: rgba(255,255,255,0.35); }
+@media (hover: hover) { .menu-overlay .nav-links li a:hover { background: rgba(255,255,255,0.05) !important; } }
+.menu-overlay .nav-links li a:active { background: rgba(213,84,104,0.16) !important; }
+.menu-overlay .nav-links li a.actif { background: rgba(213,84,104,0.1) !important; }
+.menu-overlay .nav-links li a.actif::before {
+  content: ""; position: absolute; left: 0; top: 8px; bottom: 8px;
+  width: 2px; border-radius: 2px; background: #d55468;
+}
+
+/* « Espace mannequin » : grand bouton bordeaux */
+.menu-overlay .nav-links .item-cta { margin-top: 1.5rem; }
+.menu-overlay .nav-links .item-cta a {
+  justify-content: center;
+  padding: 1rem 1.2rem !important;
+  border-radius: 999px !important;
+  background: linear-gradient(180deg, #9c1c2c, #6d1222) !important;
+  box-shadow: 0 8px 22px -10px rgba(213,84,104,0.8) !important;
+  font-size: 0.74rem !important; font-weight: 500;
+  letter-spacing: 0.24em !important; text-transform: uppercase;
+  text-align: center;
+  color: #fff !important;
+}
+.menu-overlay .nav-links .item-cta a::after { content: none; }
+.menu-overlay .nav-links .item-cta a.actif::before { content: none; }
+.menu-overlay .menu-contact { margin-top: 1.4rem; }
+.menu-overlay .menu-contact a.menu-tel { font-size: 1rem; }
+.menu-overlay .menu-reseaux { margin-top: 0.9rem; gap: 9px; }
+
+@media (max-height: 640px) {
+  .menu-overlay { padding-top: 4.6rem; }
+  .menu-overlay .nav-links li a { padding: 0.45rem 12px !important; }
+}
