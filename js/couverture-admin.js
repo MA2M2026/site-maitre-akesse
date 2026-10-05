@@ -1,19 +1,14 @@
-// Tableau de bord — vidéos du site gérées par l'agence (un seul outil pour deux zones) :
-//  - « Couverture du site » (04/10/2026) : remplace l'animation du logo en haut de toutes
-//    les pages ; sans le son, 30 s au plus (elle tourne en boucle) ;
+// Tableau de bord — vidéo du site gérée par l'agence. (La zone « Couverture du site »,
+//  vidéo en haut de toutes les pages, a été retirée le 06/10/2026 à la demande de la
+//  propriétaire ; les règles « sans le son » du code ne servent plus qu'en secours.)
 //  - « Vidéo de l'accueil » (05/10/2026, audit) : grand film dans le corps de la page
 //    d'accueil (js/video-accueil.js) ; le son est gardé (le visiteur l'active d'un appui),
-//    60 s au plus.
+//    10 minutes au plus depuis le 06/10/2026.
 // Les vidéos sont envoyées chez Cloudflare R2 (api/r2-site-images.js) et le choix est
-// enregistré dans la table reglages_site (cle 'couverture' ou 'video_accueil').
+// enregistré dans la table reglages_site (cle 'video_accueil').
 (function () {
   if (typeof sb === 'undefined') return;
   [
-    { prefixe: 'couv', cle: 'couverture', categorie: 'couverture', cache: 'ma2m_couverture', son: false, dureeMax: 30,
-      nomZone: 'la couverture', etatSans: 'Actuellement : l’animation du logo (faisceau de lumière).',
-      succes: '✓ Votre vidéo est maintenant la couverture du site (toutes les pages, en français et en anglais).',
-      retirerQuestion: 'Revenir à l’animation du logo en couverture ? Votre vidéo actuelle sera supprimée.',
-      retirerFait: '✓ La couverture affiche de nouveau l’animation du logo.', dejaSans: 'La couverture affiche déjà l’animation du logo.' },
     { prefixe: 'va', cle: 'video_accueil', categorie: 'video-accueil', cache: 'ma2m_video_accueil', son: true, dureeMax: 600,
       nomZone: 'la vidéo de l’accueil', etatSans: 'Actuellement : aucune vidéo (l’espace vidéo reste caché sur l’accueil).',
       succes: '✓ Votre vidéo est maintenant affichée sur la page d’accueil (en français et en anglais).',

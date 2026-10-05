@@ -23,7 +23,7 @@ const SUPABASE_URL = 'https://dfhghgmwmxiguhtxtsle.supabase.co';
 // 'couverture' : vidéo de couverture en haut de toutes les pages (04/10/2026).
 // 'video-accueil' : grand espace vidéo dans le corps de la page d'accueil (05/10/2026).
 const CATEGORIES_AUTORISEES = ['actualites', 'evenements', 'partenaires', 'responsable', 'boutique', 'couverture', 'video-accueil'];
-const CATEGORIES_VIDEO = ['couverture', 'video-accueil'];
+const CATEGORIES_VIDEO = ['video-accueil']; // vidéo de couverture retirée le 06/10/2026
 
 function creerClientR2() {
   return new S3Client({
