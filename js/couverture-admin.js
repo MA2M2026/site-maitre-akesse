@@ -75,7 +75,6 @@
     if (!fichierChoisi || !infosChoisies) return;
     var inf = infosChoisies, txt = '« ' + fichierChoisi.name + ' » — ' + mo(fichierChoisi.size) + ', ' + Math.round(inf.duree) + ' s, ' + inf.largeur + ' × ' + inf.hauteur + '. ';
     txt += 'Elle sera compressée automatiquement avant l’envoi' + (inf.duree > DUREE_MAX + 0.5 ? ' et limitée aux ' + DUREE_MAX + ' premières secondes' : '') + ' (cela prend à peu près la durée de la vidéo — gardez cette page ouverte).';
-    if (inf.hauteur > inf.largeur) txt += ' Attention : vidéo verticale — le haut et le bas seront coupés dans la couverture, une vidéo en paysage rendra mieux.';
     $('couv-infos').textContent = txt;
   }
 
@@ -186,7 +185,18 @@
     fichierChoisi = this.files && this.files[0]; infosChoisies = null;
     $('couv-publier-btn').disabled = true; $('couv-infos').textContent = ''; message('');
     if (!fichierChoisi) return;
-    try { infosChoisies = await lireInfos(fichierChoisi); afficherInfos(); $('couv-publier-btn').disabled = false; }
+    try {
+      infosChoisies = await lireInfos(fichierChoisi);
+      // Vidéos horizontales seulement (décision du 05/10/2026) : la couverture est une bande
+      // large qui va d'un bord à l'autre de l'écran ; une vidéo verticale ou carrée y serait
+      // coupée en haut et en bas au point de ne plus rien montrer d'utile.
+      if (infosChoisies.largeur && infosChoisies.hauteur && infosChoisies.largeur / infosChoisies.hauteur < 1.25) {
+        message('Cette vidéo est ' + (infosChoisies.hauteur > infosChoisies.largeur ? 'verticale' : 'presque carrée') + ' (' + infosChoisies.largeur + ' × ' + infosChoisies.hauteur + '). La couverture n’accepte que les vidéos horizontales : filmez en tenant le téléphone couché (en paysage), puis choisissez cette nouvelle vidéo.', true);
+        $('couv-fichier').value = ''; fichierChoisi = null; infosChoisies = null;
+        return;
+      }
+      afficherInfos(); $('couv-publier-btn').disabled = false;
+    }
     catch (e) { message(e.message, true); }
   });
 
