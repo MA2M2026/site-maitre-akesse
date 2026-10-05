@@ -461,3 +461,11 @@ html body.tdb-v2:not(.v2-page-v2-ensemble) .v2-entete-actions { display: none !i
 .tri-groupe-nom { margin: 0; font-size: 0.95rem; }
 .tri-revue-resultats { display: grid; gap: 0.6rem; margin-top: 0.8rem; }
 .tri-revue-ligne { font-size: 0.88rem; line-height: 1.5; padding: 0.5rem 0.7rem; border-left: 3px solid #c9bcb1; background: #faf7f4; overflow-wrap: anywhere; }
+.tri-rapport { border: 1px solid #d3c7bd; border-radius: 6px; padding: 0.6rem 0.9rem; margin: 0 0 0.7rem; background: #fff; font-size: 0.9rem; line-height: 1.5; overflow-wrap: anywhere; }
+.tri-rapport summary { cursor: pointer; }
+.tri-rapport h5 { margin: 0.9rem 0 0.3rem; font-size: 0.9rem; }
+.tri-rapport ul, .tri-rapport ol { margin: 0; padding-left: 1.2rem; }
+.tri-fiche li { margin-bottom: 0.5rem; }
+.tri-message { width: 100%; box-sizing: border-box; font: inherit; font-size: 0.88rem; padding: 0.5rem; margin-bottom: 0.5rem; }
+.tri-envoye { color: #1f7a3a; }
+.tri-non-envoye { color: #8a5a00; }

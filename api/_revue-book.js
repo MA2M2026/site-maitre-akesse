@@ -40,7 +40,14 @@ const CONSIGNES = [
   "- Vise un book final d'environ 12 à 20 photos (book + digitals), selon la qualité disponible. Garde toujours au moins 8 photos au total : si le book est faible, garde les 8 moins mauvaises.",
   "- Ne juge jamais le physique, la couleur de peau, la morphologie, l'âge ou la beauté de la personne : seulement les photos.",
   "- raison : une phrase courte en français, simple, destinée à l'agence.",
-  "- conseils : 2 à 4 phrases courtes en français pour l'agence : ce qui manque à ce book (par exemple des digitals de face et en pied, une meilleure photo de profil) et ce qu'il faut demander au mannequin."
+  "- conseils : 2 à 4 phrases courtes en français pour l'agence : ce qui manque à ce book (par exemple des digitals de face et en pied, une meilleure photo de profil) et ce qu'il faut demander au mannequin.",
+  "",
+  "Rapport détaillé (en français simple, sans jargon) :",
+  "- points_forts : 2 à 4 points forts du book.",
+  "- a_ameliorer : 2 à 5 problèmes concrets du book (par exemple trop de photos semblables, regard caché par des lunettes, pas de digitals).",
+  "- fiche_technique : la liste des photos que le mannequin doit faire ou refaire pour compléter son book (3 à 8 photos). Pour chacune : titre (ex. « Digital de face, en pied »), cadrage, pose, tenue, lieu_lumiere. Consignes concrètes et faciles à suivre avec un téléphone.",
+  "- regles : 4 à 7 règles générales pour ces photos (ex. pas de lunettes, pas de filtre, téléphone à hauteur de poitrine, photo nette).",
+  "- message_mannequin : le message que l'agence enverra au mannequin par WhatsApp, au nom de « L'équipe MA2M ». Vouvoiement, ton chaleureux et professionnel, encourageant. Commence par « Bonjour » suivi du prénom. Explique en 2 ou 3 phrases ce que l'agence a revu et pourquoi certaines photos vont être retirées (sans lister chaque photo), puis donne la fiche technique sous forme de liste courte et numérotée, puis les règles. Termine en demandant d'envoyer les nouvelles photos depuis l'Espace mannequin du site. Pas de mot « IA ». 1 800 caractères au maximum. Accorde au féminin ou au masculin selon le mannequin indiqué."
 ].join('\n');
 
 const SCHEMA = {
@@ -59,9 +66,25 @@ const SCHEMA = {
         additionalProperties: false
       }
     },
-    conseils: { type: 'string' }
+    conseils: { type: 'string' },
+    points_forts: { type: 'array', items: { type: 'string' } },
+    a_ameliorer: { type: 'array', items: { type: 'string' } },
+    fiche_technique: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          titre: { type: 'string' }, cadrage: { type: 'string' }, pose: { type: 'string' },
+          tenue: { type: 'string' }, lieu_lumiere: { type: 'string' }
+        },
+        required: ['titre', 'cadrage', 'pose', 'tenue', 'lieu_lumiere'],
+        additionalProperties: false
+      }
+    },
+    regles: { type: 'array', items: { type: 'string' } },
+    message_mannequin: { type: 'string' }
   },
-  required: ['photos', 'conseils'],
+  required: ['photos', 'conseils', 'points_forts', 'a_ameliorer', 'fiche_technique', 'regles', 'message_mannequin'],
   additionalProperties: false
 };
 
@@ -138,7 +161,10 @@ module.exports = async function handler(req, res) {
       .slice(0, MAX_IMAGES);
     if (!aRevoir.length) { res.status(200).json({ ok: true, gardees: 0, proposees: 0, conseils: '' }); return; }
 
-    const contenu = [];
+    const prof = await fetch(SUPABASE_URL + '/rest/v1/model_profiles?id=eq.' + modelId + '&select=full_name,category', { headers: enTetesService() });
+    const profil = (prof.ok ? (await prof.json())[0] : null) || {};
+    const genre = profil.category === 'homme' ? 'un homme' : profil.category === 'femme' ? 'une femme' : 'non précisé';
+    const contenu = [{ type: 'text', text: 'Mannequin : ' + String(profil.full_name || 'Mannequin').slice(0, 80) + ' (' + genre + ').' }];
     aRevoir.forEach(function (im, i) {
       contenu.push({ type: 'text', text: 'Photo ' + (i + 1) + ' :' });
       contenu.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: im.data } });
@@ -176,7 +202,25 @@ module.exports = async function handler(req, res) {
         if (await majPhoto(p.id, { tri_statut: 'a_verifier', tri_raison: (prefixe + String(d.raison)).slice(0, 300), tri_date: date })) proposees++;
       } else if (await majPhoto(p.id, { tri_statut: d.decision, tri_raison: String(d.raison).slice(0, 300), tri_date: date })) gardees++;
     }
-    res.status(200).json({ ok: true, gardees: gardees, proposees: proposees, conseils: String(avis.conseils || '').slice(0, 1200) });
+    // 4) Rapport détaillé + message WhatsApp, gardés pour l'agence (Extension 117).
+    const liste = function (t, n) { return (Array.isArray(t) ? t : []).slice(0, n).map(function (x) { return String(x).slice(0, 300); }); };
+    const rapport = {
+      gardees: gardees, proposees: proposees,
+      conseils: String(avis.conseils || '').slice(0, 1200),
+      points_forts: liste(avis.points_forts, 6),
+      a_ameliorer: liste(avis.a_ameliorer, 8),
+      fiche_technique: (Array.isArray(avis.fiche_technique) ? avis.fiche_technique : []).slice(0, 10).map(function (f) {
+        return { titre: String(f.titre || '').slice(0, 120), cadrage: String(f.cadrage || '').slice(0, 300), pose: String(f.pose || '').slice(0, 300), tenue: String(f.tenue || '').slice(0, 300), lieu_lumiere: String(f.lieu_lumiere || '').slice(0, 300) };
+      }),
+      regles: liste(avis.regles, 10),
+      message_mannequin: String(avis.message_mannequin || '').slice(0, 3000)
+    };
+    await fetch(SUPABASE_URL + '/rest/v1/revues_book?on_conflict=model_id', {
+      method: 'POST',
+      headers: Object.assign({ 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' }, enTetesService()),
+      body: JSON.stringify({ model_id: modelId, rapport: rapport, revu_le: date, envoye_le: null })
+    }).catch(function () {});
+    res.status(200).json(Object.assign({ ok: true }, rapport));
   } catch (e) {
     console.error('revue-book :', e);
     if (e && /credit balance/i.test(e.message || '')) { res.status(402).json({ error: 'Crédit de l’IA épuisé.' }); return; }
