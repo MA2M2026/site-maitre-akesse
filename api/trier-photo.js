@@ -36,6 +36,7 @@ const CONSIGNES = [
   "Règles :",
   "- En cas de doute entre book et digital, choisis celle qui correspond le mieux ; les deux restent visibles.",
   "- N'écarte une photo que si elle est clairement inutilisable. Si tu hésites, baisse ta confiance : une personne de l'agence vérifiera.",
+  "- Ne jamais écarter une photo de défilé ou de shooting professionnel bien cadrée, même avec le logo de l'événement ou des partenaires, d'autres mannequins à l'arrière-plan, des lunettes de soleil ou la signature du photographe.",
   "- Ne juge jamais le physique, la couleur de peau, la morphologie, l'âge ou la beauté de la personne : seulement la photo elle-même.",
   "- raison : une phrase courte en français, simple et polie, destinée à l'agence (par exemple « Photo floue, visage peu visible »).",
   "- confiance : nombre entre 0 et 1 (ta certitude sur la catégorie choisie)."
