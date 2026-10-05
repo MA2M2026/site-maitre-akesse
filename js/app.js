@@ -1279,7 +1279,7 @@ async function envoyerImageSite(categorie, chemin, fichier) {
       const reponsePresign = await fetch('/api/r2-site-images', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
-        body: JSON.stringify({ categorie, chemin, contentType: fichier.type || 'image/jpeg' })
+        body: JSON.stringify({ categorie, chemin, contentType: fichier.type || 'image/jpeg', taille: fichier.size })
       });
       const resultat = await reponsePresign.json().catch(() => ({}));
       if (!reponsePresign.ok) throw new Error(resultat.error || "Échec de la préparation de l'envoi.");

@@ -586,7 +586,7 @@ async function uploaderVersR2(modelId, chemin, blob, contentType){
       const reponse = await fetch('/api/r2-presigner', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jeton },
-        body: JSON.stringify({ modelId: modelId, chemin: chemin, contentType: contentType || 'image/jpeg' })
+        body: JSON.stringify({ modelId: modelId, chemin: chemin, contentType: contentType || 'image/jpeg', taille: blob.size })
       });
       const resultat = await reponse.json().catch(function(){ return {}; });
       if (!reponse.ok) throw new Error(resultat.error || "Échec de l'obtention de l'URL d'envoi.");

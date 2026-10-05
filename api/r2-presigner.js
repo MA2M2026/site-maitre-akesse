@@ -69,6 +69,13 @@ async function autoriser(jeton, modelId) {
 // (octet-stream toléré : jamais exécuté par un navigateur, et renvoyé par certains
 // téléchargements lors des migrations).
 const TYPES_AUTORISES = /^(image\/(jpeg|jpg|pjpeg|png|webp|gif|heic|heif|avif)|application\/octet-stream)$/i;
+// Taille maximale d'un envoi (audit du 05/10/2026, accord de la propriétaire le 06/10) :
+// les photos sont réduites par l'appareil avant l'envoi (1 à 2 Mo), cette limite ne gêne
+// donc jamais un envoi normal. La taille annoncée est inscrite dans la signature de
+// l'adresse d'envoi : le stockage refuse tout fichier d'une autre taille. Personne ne peut
+// donc remplir le stockage en contournant le site.
+const TAILLE_MAX = 15 * 1024 * 1024;
+function tailleValide(taille) { return Number.isInteger(taille) && taille > 0 && taille <= TAILLE_MAX; }
 function cheminSur(chemin) {
   // Refuse les remontées de dossier (« .. » comme segment), les antislashs, les
   // doubles barres et les caractères de contrôle ; « photo..jpg » reste accepté.
@@ -93,7 +100,7 @@ module.exports = async function handler(req, res) {
 
   let corps = req.body;
   if (typeof corps === 'string') { try { corps = JSON.parse(corps); } catch (e) { corps = {}; } }
-  const { action, modelId, chemin, contentType } = corps || {};
+  const { action, modelId, chemin, contentType, taille } = corps || {};
 
   if (!modelId || typeof modelId !== 'string' || !chemin || typeof chemin !== 'string') {
     res.status(400).json({ error: 'Paramètres manquants (modelId, chemin).' });
@@ -137,10 +144,17 @@ module.exports = async function handler(req, res) {
     }
 
     // Par défaut : demande d'envoi (upload).
+    if (!tailleValide(taille)) {
+      res.status(400).json({ error: Number.isInteger(taille) && taille > TAILLE_MAX
+        ? 'Fichier trop lourd (' + (taille / 1048576).toFixed(1).replace('.', ',') + ' Mo, maximum 15 Mo).'
+        : 'Taille du fichier manquante — rechargez la page puis réessayez.' });
+      return;
+    }
     const commande = new PutObjectCommand({
       Bucket: bucket,
       Key: chemin,
-      ContentType: typeFichier
+      ContentType: typeFichier,
+      ContentLength: taille
     });
     const uploadUrl = await getSignedUrl(client, commande, { expiresIn: 300 });
     const publicUrl = process.env.R2_PUBLIC_URL.replace(/\/$/, '') + '/' + chemin;
