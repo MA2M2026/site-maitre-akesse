@@ -2234,6 +2234,7 @@ a.tdb-menu-item { text-decoration: none; }
       <button class="tdb-menu-item" data-tdb-cible="b3c-vedette-admin" type="button">Mannequin à la une — Administration</button>
       <button class="tdb-menu-item" data-tdb-cible="b3c-bandeau" type="button">Bandeau d'information</button>
       <button class="tdb-menu-item" data-tdb-cible="b3c-mot-fondateur" type="button">Mot du fondateur</button>
+      <button class="tdb-menu-item" data-tdb-cible="b3c-couverture" type="button">Couverture du site (vidéo)</button>
       <button class="tdb-menu-item" data-tdb-cible="b3d-video-accueil" type="button">Vidéo de la page d'accueil</button>
       <a class="tdb-menu-item" href="actualites.html">Publier une actualité</a>
       <a class="tdb-menu-item" href="evenements.html">Publier un événement</a>
@@ -2684,6 +2685,20 @@ document.addEventListener('DOMContentLoaded', function () {
 <div class="form-champ"><label for="mr-message">Message</label><textarea id="mr-message" rows="6"></textarea></div>
 <button class="btn btn--principal" id="mr-enregistrer-btn">Enregistrer le mot du fondateur</button>
 <div class="form-msg" id="mr-msg"></div>
+</div>
+<div class="liste-recente" data-section="b3c-couverture">
+<h2 class="tdb-4">Couverture du site (en haut de toutes les pages)</h2>
+<p class="tdb-5">Par défaut, la couverture montre l'animation du logo (faisceau de lumière). Vous pouvez la remplacer par votre propre vidéo : elle passera en boucle, sans le son, en haut de toutes les pages du site, en français et en anglais. Conseil : une vidéo large (format paysage), de 10 à 30 secondes. Les bords peuvent être légèrement recadrés pour remplir la couverture.</p>
+<div id="couv-etat" class="tdb-31">Chargement…</div>
+<div class="couv-apercu" id="couv-apercu"></div>
+<div class="form-champ"><label for="couv-fichier">1. Choisissez une vidéo horizontale, filmée téléphone couché (MP4, MOV, WebM…)</label><input accept="video/*" id="couv-fichier" type="file"/></div>
+<div id="couv-infos" class="tdb-31"></div>
+<div class="couv-barre u-hidden" id="couv-barre"><span id="couv-barre-rempli"></span></div>
+<div class="tdb-28">
+<button class="btn btn--principal" id="couv-publier-btn" disabled>2. Mettre cette vidéo en couverture</button>
+<button class="btn" id="couv-animation-btn">Revenir à l'animation du logo</button>
+</div>
+<div class="form-msg" id="couv-msg"></div>
 </div>
 <div class="liste-recente" data-section="b3d-video-accueil">
 <h2 class="tdb-4">Vidéo de la page d'accueil</h2>
