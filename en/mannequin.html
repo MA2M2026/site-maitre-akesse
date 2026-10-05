@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-xrZT11AsLIcF7ARYS1XqedBuUj2j2lDOwOFO7t7BjKg='; style-src 'self' https://fonts.googleapis.com 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-fKxUsNLOoSUrYqFUDUs1GDI5SVpevMPKac5XZ8xMJtk='; style-src 'self' https://fonts.googleapis.com 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -495,7 +495,7 @@ function chargerJsPdfEn() {
   promesseJsPdfEn = new Promise((resolve, reject) => {
     const script = document.createElement('script');
     script.crossOrigin = 'anonymous';
-    script.src = '/js/vendor/jspdf-2.5.2.umd.min.js';
+    script.src = '/js/vendor/jspdf-4.2.1.umd.min.js';
     script.onload = () => resolve();
     script.onerror = () => reject(new Error('jsPDF could not be loaded'));
     document.body.appendChild(script);
