@@ -189,6 +189,21 @@ section { padding: 5rem 0; }
 
 /* ---------- Services : mise en page asymétrique ---------- */
 
+/* Page Services en 4 rubriques (06/10/2026, comparaison avec les grandes agences : des
+   divisions courtes plutôt qu'une longue liste numérotée). Les 11 services sont rangés
+   dans leur rubrique (Talents, Opportunités, Événementiel, Production). */
+.divisions-services { display: grid; grid-template-columns: 1fr; gap: 0; border-top: 1px solid var(--gris-clair); }
+.division-service { padding: clamp(1.8rem, 4vw, 2.8rem) 0; border-bottom: 1px solid var(--gris-clair); }
+.division-num { font-family: var(--texte); font-size: 0.74rem; letter-spacing: 0.24em; font-weight: 500; color: var(--bordeaux-clair); }
+.division-service h2 { margin-top: 0.4rem; font-size: clamp(1.9rem, 4.4vw, 2.8rem); }
+.division-intro { margin-top: 0.5rem; color: var(--texte-corps); max-width: 34rem; }
+.division-service ul { list-style: none; margin: 1.4rem 0 0; padding: 0; display: grid; gap: 1.1rem; }
+.division-service li { padding-left: 1rem; border-left: 1px solid rgba(207,59,82,0.45); }
+.division-service li h3 { font-size: 1.05rem; letter-spacing: 0.03em; }
+.division-service li p { margin-top: 0.25rem; font-size: 0.94rem; color: var(--texte-doux); }
+@media (min-width: 860px) {
+  .divisions-services { grid-template-columns: 1fr 1fr; column-gap: clamp(2.5rem, 6vw, 5rem); }
+}
 .services-liste { display: grid; grid-template-columns: repeat(12, 1fr); gap: 0; border-top: 1px solid var(--gris-clair); }
 
 .service-ligne {
