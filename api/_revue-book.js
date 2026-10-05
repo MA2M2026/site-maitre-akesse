@@ -9,7 +9,11 @@
 // (« Proposée à la suppression : … »). C'est l'agence qui valide la suppression,
 // mannequin par mannequin, depuis le tableau de bord (js/tri-photos-admin.js).
 //
-// Appel (admin uniquement) : POST { modelId, images: [{ id, data }] } où data est
+// Fichier préfixé « _ » : ce n'est pas une fonction Vercel à part (l'offre gratuite
+// en limite le nombre) ; il est appelé par api/trier-photo.js quand la demande
+// contient action: 'revue'.
+//
+// Appel (admin uniquement) : POST /api/trier-photo { action: 'revue', modelId, images: [{ id, data }] } où data est
 // une petite version JPEG (640 px) en base64 préparée par le tableau de bord —
 // c'est ce qui rend la revue peu coûteuse (~0,10 $ par mannequin).
 
@@ -180,4 +184,3 @@ module.exports = async function handler(req, res) {
   }
 };
 
-module.exports.config = { maxDuration: 300 };
