@@ -1,16 +1,16 @@
 // Tableau de bord — tri automatique des photos par IA (06/10/2026).
-// À chaque envoi, api/trier-photo.js range la photo en « book », « digital » ou
-// « écartée ». Ici, l'agence voit :
-//  - les photos écartées (cachées sur le site et dans l'espace de la mannequin,
-//    jamais supprimées) avec un bouton « Remettre » ;
-//  - les photos « à vérifier » (l'IA hésite ; elles restent visibles) ;
+// À chaque envoi, api/trier-photo.js range la photo en « book » ou « digital » ;
+// une photo inutilisable est supprimée définitivement (choix de la propriétaire).
+// Ici, l'agence voit :
+//  - les photos écartées avant ce choix (cachées) : remettre ou supprimer ;
+//  - les photos « à vérifier » (l'IA hésite ; elles restent visibles) : garder ou supprimer ;
 //  - les photos envoyées avant la mise en place du tri, qu'on peut faire trier.
 // Les photos envoyées ces 3 derniers jours et pas encore triées (envoi coupé,
 // téléphone fermé trop tôt…) sont rattrapées automatiquement à l'ouverture.
 (function () {
   var details = document.getElementById('tri-photos-details');
   if (!details || typeof sb === 'undefined' || !sb) return;
-  var charge = false;
+  var charge = false, parId = {};
 
   function echapper(t) { return typeof echapperHtml === 'function' ? echapperHtml(t) : String(t == null ? '' : t).replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); }
 
@@ -30,7 +30,7 @@
           headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (await jeton() || j) },
           body: JSON.stringify({ photoId: String(photoId) })
         });
-        if (r.ok) return 'ok';
+        if (r.ok) { var rep = await r.json().catch(function () { return {}; }); return rep.statut === 'supprimee' ? 'supprimee' : 'ok'; }
         var corps = await r.json().catch(function () { return {}; });
         if (r.status === 402) return 'credit';
         if (r.status === 503 && /non configur/i.test(corps.error || '')) return 'non-configure';
@@ -56,6 +56,16 @@
   }
   setTimeout(function () { rattraperRecentes().catch(function () {}); }, 15000);
 
+  // Suppression définitive : la fiche en base d'abord, puis les fichiers.
+  async function supprimer(p) {
+    var r = await sb.from('model_photos').delete().eq('id', p.id);
+    if (r.error) return r;
+    if (typeof supprimerDeR2 === 'function') {
+      for (var c of [p.chemin, p.chemin_miniature, p.chemin_moyenne]) if (c) await supprimerDeR2(p.model_id, c);
+    }
+    return r;
+  }
+
   async function marquer(photoId, statut) {
     return sb.from('model_photos').update({ tri_statut: statut, tri_manuel: true, tri_date: new Date().toISOString() }).eq('id', photoId);
   }
@@ -77,13 +87,14 @@
     var zoneV = document.getElementById('tri-a-verifier');
     var zoneA = document.getElementById('tri-anciennes');
     zoneE.textContent = 'Chargement…'; zoneV.textContent = ''; zoneA.textContent = '';
-    var res = await sb.from('model_photos').select('id, model_id, url, url_miniature, url_moyenne, tri_statut, tri_raison, created_at')
+    var res = await sb.from('model_photos').select('id, model_id, url, url_miniature, url_moyenne, chemin, chemin_miniature, chemin_moyenne, tri_statut, tri_raison, created_at')
       .in('tri_statut', ['ecartee', 'a_verifier']).order('created_at', { ascending: false }).limit(300);
     if (res.error) {
       zoneE.textContent = 'Le tri automatique n’est pas encore activé : il reste à exécuter l’Extension 116 dans Supabase.';
       return;
     }
     var photos = res.data || [];
+    parId = {}; photos.forEach(function (p) { parId[p.id] = p; });
     var ids = Array.from(new Set(photos.map(function (p) { return p.model_id; })));
     var noms = {};
     if (ids.length) {
@@ -94,10 +105,11 @@
     var aVerifier = photos.filter(function (p) { return p.tri_statut === 'a_verifier'; });
     document.getElementById('tri-photos-compteur').textContent = ecartees.length + ' écartée(s) · ' + aVerifier.length + ' à vérifier';
     zoneE.innerHTML = ecartees.length
-      ? ecartees.map(function (p) { return vignette(p, noms[p.model_id] || 'Mannequin', [['book', 'Remettre']]); }).join('')
+      ? '<p class="tri-tout"><button class="btn tri-btn" type="button" data-statut="supprimer-tout">Supprimer définitivement toutes ces photos</button></p>' +
+        ecartees.map(function (p) { return vignette(p, noms[p.model_id] || 'Mannequin', [['book', 'Remettre'], ['supprimer', 'Supprimer']]); }).join('')
       : '<div class="dossiers-vide">Aucune photo écartée.</div>';
     zoneV.innerHTML = aVerifier.length
-      ? aVerifier.map(function (p) { return vignette(p, noms[p.model_id] || 'Mannequin', [['book', 'Garder'], ['ecartee', 'Cacher']]); }).join('')
+      ? aVerifier.map(function (p) { return vignette(p, noms[p.model_id] || 'Mannequin', [['book', 'Garder'], ['supprimer', 'Supprimer']]); }).join('')
       : '<div class="dossiers-vide">Aucune photo à vérifier.</div>';
 
     var anc = await sb.from('model_photos').select('id', { count: 'exact', head: true }).is('tri_statut', null).eq('tri_manuel', false);
@@ -121,11 +133,11 @@
     // Garder l'écran allumé pendant le tri (sinon la tablette se met en veille et le tri s'arrête).
     var verrou = null;
     try { if (navigator.wakeLock) verrou = await navigator.wakeLock.request('screen'); } catch (e) {}
-    var faites = 0, echecs = 0, ratesDeSuite = 0, arret = '';
+    var faites = 0, supprimees = 0, echecs = 0, ratesDeSuite = 0, arret = '';
     for (var i = 0; i < liste.length; i++) {
       msg.textContent = 'Tri en cours : ' + (i + 1) + ' / ' + liste.length + '… (gardez cette page ouverte)';
       var resultat = await trierUne(liste[i].id, j);
-      if (resultat === 'ok') { faites++; ratesDeSuite = 0; continue; }
+      if (resultat === 'ok' || resultat === 'supprimee') { faites++; if (resultat === 'supprimee') supprimees++; ratesDeSuite = 0; continue; }
       if (resultat === 'credit') { arret = 'Le crédit de l’IA est épuisé : rechargez le compte Anthropic, puis relancez. Les photos déjà triées ne seront pas refaites.'; break; }
       if (resultat === 'non-configure') { arret = 'Le tri automatique n’est pas configuré (clé de l’IA absente sur Vercel).'; break; }
       echecs++; ratesDeSuite++;
@@ -135,7 +147,7 @@
     await charger();
     var bilan = document.createElement('div');
     bilan.className = echecs ? 'form-msg err' : 'form-msg ok'; bilan.style.display = 'block';
-    bilan.textContent = faites + ' photo(s) triée(s)' + (echecs ? ', ' + echecs + ' non triée(s) — vous pourrez relancer plus tard.' : '.') + (arret ? ' ' + arret : '');
+    bilan.textContent = faites + ' photo(s) triée(s)' + (supprimees ? ', dont ' + supprimees + ' inutilisable(s) supprimée(s)' : '') + (echecs ? ', ' + echecs + ' non triée(s) — vous pourrez relancer plus tard.' : '.') + (arret ? ' ' + arret : '');
     if (arret) bilan.className = 'form-msg err';
     document.getElementById('tri-anciennes').prepend(bilan);
   }
@@ -144,8 +156,25 @@
   details.addEventListener('click', async function (e) {
     var b = e.target.closest && e.target.closest('.tri-btn');
     if (!b) return;
-    b.disabled = true;
-    var r = await marquer(b.dataset.id, b.dataset.statut);
+    var r;
+    if (b.dataset.statut === 'supprimer-tout') {
+      var toutes = Object.keys(parId).map(function (k) { return parId[k]; }).filter(function (p) { return p.tri_statut === 'ecartee'; });
+      if (!confirm('Supprimer définitivement ces ' + toutes.length + ' photo(s) ? Elles ne pourront pas être récupérées.')) return;
+      b.disabled = true;
+      for (var i = 0; i < toutes.length; i++) {
+        b.textContent = 'Suppression ' + (i + 1) + ' / ' + toutes.length + '…';
+        r = await supprimer(toutes[i]);
+        if (r.error) break;
+      }
+    } else if (b.dataset.statut === 'supprimer') {
+      if (!confirm('Supprimer définitivement cette photo ? Elle ne pourra pas être récupérée.')) return;
+      b.disabled = true;
+      r = await supprimer(parId[b.dataset.id] || { id: b.dataset.id });
+    } else {
+      b.disabled = true;
+      r = await marquer(b.dataset.id, b.dataset.statut);
+    }
+    r = r || {};
     if (r.error) { alert('Erreur : ' + r.error.message); b.disabled = false; return; }
     charger();
   });

@@ -456,3 +456,4 @@ html body.tdb-v2:not(.v2-page-v2-ensemble) .v2-entete-actions { display: none !i
 .tri-raison { font-size: 0.8rem; color: #4a403b; overflow-wrap: anywhere; }
 .tri-actions { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: auto; }
 .tri-actions .btn { padding: 0.35rem 0.7rem; font-size: 0.8rem; }
+.tri-tout { grid-column: 1 / -1; margin: 0; }
