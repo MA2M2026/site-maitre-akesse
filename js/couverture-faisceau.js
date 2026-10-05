@@ -8,12 +8,31 @@
 // 'couverture'), la vidéo remplace l'animation en fondu, en boucle et sans le son.
 (function () {
   var sec = document.getElementById('couverture-faisceau');
-  if (!sec || !window.ma2mFaisceau) return;
+  if (!sec) return;
+
+  // --- Sur ordinateur : couverture qui se replie ---
+  // En haut de la page, la couverture est grande (format 16:9, jusqu'à 85 % de l'écran) ;
+  // en faisant défiler, elle se réduit jusqu'au bandeau fixe (format Facebook, 40 % de
+  // l'écran au plus), puis la page passe dessous. Sur téléphone, elle reste en 16:9.
+  var racine = document.documentElement, attente = false;
+  function majRepli() {
+    attente = false;
+    if (window.innerWidth <= 700) { racine.style.removeProperty('--couv-h-anim'); return; }
+    var max = Math.min(window.innerWidth * 9 / 16, window.innerHeight * .85);
+    var min = Math.min(window.innerWidth * 312 / 820, window.innerHeight * .4);
+    racine.style.setProperty('--couv-h-anim', Math.max(min, max - (window.scrollY || 0)) + 'px');
+  }
+  function demanderRepli() { if (!attente) { attente = true; requestAnimationFrame(majRepli); } }
+  majRepli();
+  window.addEventListener('scroll', demanderRepli, { passive: true });
+  window.addEventListener('resize', demanderRepli);
+
+  if (!window.ma2mFaisceau) return;
   try { if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return; } catch (e) {}
   var cv = sec.querySelector('canvas');
   if (!cv || !cv.getContext || !cv.getContext('2d')) return;
 
-  var anim = window.ma2mFaisceau(cv, { mode: 'couverture', mesurer: function () { return { W: sec.clientWidth, H: sec.clientHeight }; } });
+  var anim = window.ma2mFaisceau(cv, { mode: 'couverture', mesurer: function () { return { W: cv.clientWidth || sec.clientWidth, H: cv.clientHeight || sec.clientHeight }; } });
   var t = 0, precedent = null, visible = false, enCours = false, videoActive = false;
 
   function image(ms) {
