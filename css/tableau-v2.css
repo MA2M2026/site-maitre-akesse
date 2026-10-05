@@ -444,8 +444,5 @@ html body.tdb-v2:not(.v2-page-v2-ensemble) .v2-entete-actions { display: none !i
 .couv-barre { height: 6px; border-radius: 3px; background: rgba(255,255,255,0.08); overflow: hidden; margin: 0 0 0.9rem; max-width: 560px; }
 .couv-barre span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #7a1220, #d55468); transition: width 0.3s ease; }
 
-/* Miniatures plus nettes (06/10/2026) : un peu d'air entre les deux outils de la section. */
-html body.tdb-v2 .db-main #miniatures-msg + .tdb-9 { margin-top: 1.8rem; }
-
 /* Vidéo de l'accueil (06/10/2026) : l'aperçu garde la forme de la vidéo (verticale possible). */
 #va-apercu video { aspect-ratio: auto; width: auto; max-width: 100%; max-height: 420px; object-fit: contain; }

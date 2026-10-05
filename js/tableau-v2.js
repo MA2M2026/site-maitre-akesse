@@ -110,8 +110,6 @@
       ] },
       { titre: 'Médias & stockage', items: [
         ['b3a-drive', 'Drive & transferts', 'nuage'],
-        ['b3a-miniatures', 'Miniatures des photos', 'image'],
-        ['b3a-migration-r2', 'Migration vers R2', 'envoi'],
         ['b3a-nettoyage', 'Nettoyage des photos', 'corbeille'],
         ['b3a-erreurs', 'Erreurs du site', 'alerte']
       ] }
