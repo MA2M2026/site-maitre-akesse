@@ -17,6 +17,10 @@
     if (!/^site\/video-accueil\/[A-Za-z0-9._-]+\.(mp4|webm)$/.test(valeur.chemin)) return;
     var v = sec.querySelector('video');
     var bouton = sec.querySelector('.video-accueil-son');
+    // Verticale ou horizontale (06/10/2026) : la forme de l'espace suit celle de la vidéo,
+    // connue dès le réglage (ou, pour une vidéo envoyée avant, dès sa première image).
+    function forme(l, h) { if (l && h) sec.classList.toggle('video-verticale', h > l); }
+    forme(valeur.largeur, valeur.hauteur);
     sec.classList.remove('u-hidden');
 
     function charger() {
@@ -24,6 +28,7 @@
       v.src = '/book-photos/' + valeur.chemin;
       var p = v.play(); if (p && p.catch) p.catch(function () {});
     }
+    v.addEventListener('loadedmetadata', function () { forme(v.videoWidth, v.videoHeight); }, { once: true });
     v.addEventListener('playing', function () { sec.classList.add('video-prete'); }, { once: true });
     v.addEventListener('error', function () { sec.classList.add('u-hidden'); });
 

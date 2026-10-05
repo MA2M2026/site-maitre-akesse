@@ -446,3 +446,6 @@ html body.tdb-v2:not(.v2-page-v2-ensemble) .v2-entete-actions { display: none !i
 
 /* Miniatures plus nettes (06/10/2026) : un peu d'air entre les deux outils de la section. */
 html body.tdb-v2 .db-main #miniatures-msg + .tdb-9 { margin-top: 1.8rem; }
+
+/* Vidéo de l'accueil (06/10/2026) : l'aperçu garde la forme de la vidéo (verticale possible). */
+#va-apercu video { aspect-ratio: auto; width: auto; max-width: 100%; max-height: 420px; object-fit: contain; }

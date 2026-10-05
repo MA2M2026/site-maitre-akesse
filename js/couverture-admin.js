@@ -18,7 +18,10 @@
       nomZone: 'la vidéo de l’accueil', etatSans: 'Actuellement : aucune vidéo (l’espace vidéo reste caché sur l’accueil).',
       succes: '✓ Votre vidéo est maintenant affichée sur la page d’accueil (en français et en anglais).',
       retirerQuestion: 'Retirer la vidéo de la page d’accueil ? Elle sera supprimée.',
-      retirerFait: '✓ La vidéo est retirée : l’espace vidéo est de nouveau caché sur l’accueil.', dejaSans: 'Il n’y a pas de vidéo sur l’accueil.' }
+      retirerFait: '✓ La vidéo est retirée : l’espace vidéo est de nouveau caché sur l’accueil.', dejaSans: 'Il n’y a pas de vidéo sur l’accueil.',
+      // Verticale ou horizontale (demande de la propriétaire, 06/10/2026) : l'espace vidéo
+      // prend la forme de la vidéo (js/video-accueil.js).
+      tousFormats: true }
   ].forEach(function (zone) { if (document.getElementById(zone.prefixe + '-fichier')) brancherZone(zone); });
 
   function brancherZone(Z) {
@@ -36,6 +39,9 @@
   var DUREE_MAX = Z.dureeMax;
   var LIMITE_FINALE_ZONE = Z.son ? 25 * 1024 * 1024 : LIMITE_FINALE;
   var $ = function (id) { return document.getElementById(Z.prefixe + '-' + id); };
+  // Mesure de taille : la largeur pour la couverture (toujours horizontale) ; le plus grand
+  // côté pour la vidéo de l'accueil, qui peut aussi être verticale (1080 × 1920 → 720 × 1280).
+  function cote(l, h) { return Z.tousFormats ? Math.max(l, h) : l; }
   var fichierChoisi = null, infosChoisies = null, reglage = null;
 
   function message(texte, erreur) { var m = $('msg'); m.textContent = texte || ''; m.style.color = erreur ? '#e57373' : ''; }
@@ -88,7 +94,7 @@
   // L'original peut-il être envoyé tel quel (s'il est déjà plus léger que la version
   // compressée, ou si le navigateur ne sait pas compresser) ?
   function originalUtilisable(f, inf) {
-    return /^video\/(mp4|webm)$/.test(f.type) && inf.duree <= DUREE_MAX + 0.5 && inf.largeur <= LARGEUR_MAX;
+    return /^video\/(mp4|webm)$/.test(f.type) && inf.duree <= DUREE_MAX + 0.5 && cote(inf.largeur, inf.hauteur) <= LARGEUR_MAX;
   }
 
   function afficherInfos() {
@@ -121,8 +127,8 @@
     var piste = await entree.getPrimaryVideoTrack();
     if (!piste || !(await piste.canDecode())) return null;
     var l = piste.displayWidth, h = piste.displayHeight;
-    if (l / h < 1.25) throw new Error('Cette vidéo est verticale (' + l + ' × ' + h + ') : ' + Z.nomZone + ' n’accepte que les vidéos horizontales, filmées téléphone couché.');
-    var echelle = Math.min(1, LARGEUR_MAX / l);
+    if (!Z.tousFormats && l / h < 1.25) throw new Error('Cette vidéo est verticale (' + l + ' × ' + h + ') : ' + Z.nomZone + ' n’accepte que les vidéos horizontales, filmées téléphone couché.');
+    var echelle = Math.min(1, LARGEUR_MAX / cote(l, h));
     l = Math.max(2, Math.round(l * echelle / 2) * 2); h = Math.max(2, Math.round(h * echelle / 2) * 2);
     var codec = null, liste = ['avc', 'vp9'];
     for (var i = 0; i < liste.length && !codec; i++) {
@@ -173,7 +179,7 @@
     var url = URL.createObjectURL(fichier), v = document.createElement('video');
     v.muted = true; v.playsInline = true; v.src = url;
     await new Promise(function (ok, ko) { v.onloadedmetadata = ok; v.onerror = function () { ko(new Error('Cette vidéo ne peut pas être lue par ce navigateur.')); }; });
-    var w = Math.min(LARGEUR_MAX, v.videoWidth); w -= w % 2;
+    var w = Math.round(v.videoWidth * Math.min(1, LARGEUR_MAX / cote(v.videoWidth, v.videoHeight))); w -= w % 2;
     var h = Math.round(w * v.videoHeight / v.videoWidth); h -= h % 2;
     var c = document.createElement('canvas'); c.width = w; c.height = h;
     var x = c.getContext('2d');
@@ -216,12 +222,13 @@
       // Vidéos horizontales seulement (décision du 05/10/2026) : la couverture est une bande
       // large qui va d'un bord à l'autre de l'écran ; une vidéo verticale ou carrée y serait
       // coupée en haut et en bas au point de ne plus rien montrer d'utile.
-      if (infosChoisies.largeur && infosChoisies.largeur < LARGEUR_MIN && infosChoisies.largeur / infosChoisies.hauteur >= 1.25) {
+      // (vidéo de l'accueil : verticale acceptée, la taille se mesure alors sur le plus grand côté)
+      if (infosChoisies.largeur && cote(infosChoisies.largeur, infosChoisies.hauteur) < LARGEUR_MIN && (Z.tousFormats || infosChoisies.largeur / infosChoisies.hauteur >= 1.25)) {
         message('Cette vidéo est trop petite (' + infosChoisies.largeur + ' × ' + infosChoisies.hauteur + ') : sur le site, elle serait floue. Choisissez la vidéo d’origine filmée en HD (1280 × 720 ou plus), pas une copie reçue par WhatsApp ou téléchargée d’un réseau social.', true);
         $('fichier').value = ''; fichierChoisi = null; infosChoisies = null;
         return;
       }
-      if (infosChoisies.largeur && infosChoisies.hauteur && infosChoisies.largeur / infosChoisies.hauteur < 1.25) {
+      if (!Z.tousFormats && infosChoisies.largeur && infosChoisies.hauteur && infosChoisies.largeur / infosChoisies.hauteur < 1.25) {
         message('Cette vidéo est ' + (infosChoisies.hauteur > infosChoisies.largeur ? 'verticale' : 'presque carrée') + ' (' + infosChoisies.largeur + ' × ' + infosChoisies.hauteur + '). ' + Z.nomZone.charAt(0).toUpperCase() + Z.nomZone.slice(1) + ' n’accepte que les vidéos horizontales : filmez en tenant le téléphone couché (en paysage), puis choisissez cette nouvelle vidéo.', true);
         $('fichier').value = ''; fichierChoisi = null; infosChoisies = null;
         return;
@@ -263,7 +270,12 @@
       var chemin = 'site/' + Z.categorie + '/' + Date.now() + '.' + ext;
       await envoyerImageSite(Z.categorie, chemin, envoi);
       var ancien = reglage && reglage.type === 'video' ? reglage.chemin : null;
-      await enregistrer({ type: 'video', chemin: chemin, taille: envoi.size, maj: new Date().toISOString() });
+      // Format de l'image gardé avec le réglage : le site prépare la bonne forme (verticale ou
+      // horizontale) avant même que la vidéo ne se charge.
+      var dims = null; try { dims = await lireInfos(envoi); } catch (e) {}
+      var valeur = { type: 'video', chemin: chemin, taille: envoi.size, maj: new Date().toISOString() };
+      if (dims && dims.largeur && dims.hauteur) { valeur.largeur = dims.largeur; valeur.hauteur = dims.hauteur; }
+      await enregistrer(valeur);
       if (ancien && ancien !== chemin) supprimerImageSite(Z.categorie, ancien);
       message(Z.succes);
       $('fichier').value = ''; fichierChoisi = null; $('infos').textContent = '';
@@ -273,7 +285,7 @@
   // Original envoyable sans recompression : MP4 en H.264 (lisible sur tous les téléphones),
   // 30 s au plus, horizontal, 1920 pixels de large au plus et 12 Mo au plus.
   async function originalSansPerte(f, inf) {
-    if (f.type !== 'video/mp4' || f.size > ORIGINAL_MAX || inf.duree > DUREE_MAX + 0.5 || inf.largeur > ORIGINAL_LARGEUR_MAX) return false;
+    if (f.type !== 'video/mp4' || f.size > ORIGINAL_MAX || inf.duree > DUREE_MAX + 0.5 || cote(inf.largeur, inf.hauteur) > ORIGINAL_LARGEUR_MAX) return false;
     try {
       var MB = await chargerMediabunny();
       var entree = new MB.Input({ source: new MB.BlobSource(f), formats: MB.ALL_FORMATS });
