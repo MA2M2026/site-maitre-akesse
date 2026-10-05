@@ -714,7 +714,7 @@ function chargerJsPdf() {
   if (promesseJsPdf) return promesseJsPdf;
   promesseJsPdf = new Promise((resolve, reject) => {
     const script = document.createElement('script');
-    script.src = '/js/vendor/jspdf-2.5.2.umd.min.js'; // copie locale (jsdelivr trop lent depuis certains réseaux ivoiriens)
+    script.src = '/js/vendor/jspdf-4.2.1.umd.min.js'; // copie locale (jsdelivr trop lent depuis certains réseaux ivoiriens)
     script.onload = () => resolve();
     script.onerror = () => reject(new Error('jsPDF n\'a pas pu être chargé'));
     document.body.appendChild(script);
