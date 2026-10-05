@@ -67,6 +67,10 @@ const TYPES_AUTORISES = /^(image\/(jpeg|jpg|pjpeg|png|webp|gif|heic|heif|avif)|a
 // Vidéos (MP4 / WebM) : uniquement pour la couverture et la vidéo de l'accueil — jamais exécutées par un
 // navigateur, servies avec leur propre type par le relais /book-photos.
 const TYPES_VIDEO = /^video\/(mp4|webm)$/i;
+// Taille maximale d'un envoi, inscrite dans la signature de l'adresse d'envoi (même
+// principe que api/r2-presigner.js) : 15 Mo pour une image, 25 Mo pour une vidéo
+// (limites déjà appliquées par le tableau de bord avant l'envoi).
+const TAILLE_MAX_IMAGE = 15 * 1024 * 1024, TAILLE_MAX_VIDEO = 25 * 1024 * 1024;
 function cheminSur(chemin) {
   // Refuse les remontées de dossier (« .. » comme segment), les antislashs, les
   // doubles barres et les caractères de contrôle ; « photo..jpg » reste accepté.
@@ -91,7 +95,7 @@ module.exports = async function handler(req, res) {
 
   let corps = req.body;
   if (typeof corps === 'string') { try { corps = JSON.parse(corps); } catch (e) { corps = {}; } }
-  const { action, categorie, chemin, contentType } = corps || {};
+  const { action, categorie, chemin, contentType, taille } = corps || {};
 
   if (!categorie || CATEGORIES_AUTORISEES.indexOf(categorie) === -1) {
     res.status(400).json({ error: 'Catégorie invalide.' });
@@ -133,10 +137,18 @@ module.exports = async function handler(req, res) {
       return;
     }
 
+    const tailleMax = videoPermise ? TAILLE_MAX_VIDEO : TAILLE_MAX_IMAGE;
+    if (!Number.isInteger(taille) || taille <= 0 || taille > tailleMax) {
+      res.status(400).json({ error: Number.isInteger(taille) && taille > tailleMax
+        ? 'Fichier trop lourd (' + (taille / 1048576).toFixed(1).replace('.', ',') + ' Mo, maximum ' + (tailleMax / 1048576) + ' Mo).'
+        : 'Taille du fichier manquante — rechargez la page puis réessayez.' });
+      return;
+    }
     const commande = new PutObjectCommand({
       Bucket: bucket,
       Key: chemin,
-      ContentType: typeFichier
+      ContentType: typeFichier,
+      ContentLength: taille
     });
     const uploadUrl = await getSignedUrl(client, commande, { expiresIn: 300 });
     const publicUrl = process.env.R2_PUBLIC_URL.replace(/\/$/, '') + '/' + chemin;
