@@ -21,7 +21,9 @@ const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const SUPABASE_URL = 'https://dfhghgmwmxiguhtxtsle.supabase.co';
 // 'boutique' : photos des produits de la Marketplace (29/09/2026).
 // 'couverture' : vidéo de couverture en haut de toutes les pages (04/10/2026).
-const CATEGORIES_AUTORISEES = ['actualites', 'evenements', 'partenaires', 'responsable', 'boutique', 'couverture'];
+// 'video-accueil' : grand espace vidéo dans le corps de la page d'accueil (05/10/2026).
+const CATEGORIES_AUTORISEES = ['actualites', 'evenements', 'partenaires', 'responsable', 'boutique', 'couverture', 'video-accueil'];
+const CATEGORIES_VIDEO = ['couverture', 'video-accueil'];
 
 function creerClientR2() {
   return new S3Client({
@@ -62,7 +64,7 @@ async function estAdmin(userId) {
 // (octet-stream toléré : jamais exécuté par un navigateur, et renvoyé par certains
 // téléchargements lors des migrations).
 const TYPES_AUTORISES = /^(image\/(jpeg|jpg|pjpeg|png|webp|gif|heic|heif|avif)|application\/octet-stream)$/i;
-// Vidéos (MP4 / WebM) : uniquement pour la couverture du site — jamais exécutées par un
+// Vidéos (MP4 / WebM) : uniquement pour la couverture et la vidéo de l'accueil — jamais exécutées par un
 // navigateur, servies avec leur propre type par le relais /book-photos.
 const TYPES_VIDEO = /^video\/(mp4|webm)$/i;
 function cheminSur(chemin) {
@@ -105,9 +107,9 @@ module.exports = async function handler(req, res) {
     return;
   }
   const typeFichier = contentType || 'image/jpeg';
-  const videoPermise = categorie === 'couverture' && typeof typeFichier === 'string' && TYPES_VIDEO.test(typeFichier);
+  const videoPermise = CATEGORIES_VIDEO.indexOf(categorie) !== -1 && typeof typeFichier === 'string' && TYPES_VIDEO.test(typeFichier);
   if (typeof typeFichier !== 'string' || (!TYPES_AUTORISES.test(typeFichier) && !videoPermise)) {
-    res.status(400).json({ error: categorie === 'couverture' ? 'Format non accepté (vidéo MP4 ou WebM, ou photo).' : 'Format de fichier non accepté (photos JPEG, PNG, WebP, GIF, HEIC uniquement).' });
+    res.status(400).json({ error: CATEGORIES_VIDEO.indexOf(categorie) !== -1 ? 'Format non accepté (vidéo MP4 ou WebM, ou photo).' : 'Format de fichier non accepté (photos JPEG, PNG, WebP, GIF, HEIC uniquement).' });
     return;
   }
 

@@ -278,6 +278,17 @@ setTimeout(() => {
   </a>
 </section>
 
+<!-- Espace vidéo (audit du 05/10/2026) : caché tant qu'aucune vidéo n'est choisie dans le
+     tableau de bord (« Vidéo de la page d'accueil »), voir js/video-accueil.js. -->
+<section id="video-accueil" class="video-accueil u-hidden" aria-label="Agency film">
+  <video muted loop playsinline preload="none" aria-hidden="true"></video>
+  <div class="video-accueil-voile"></div>
+  <div class="container video-accueil-legende">
+    <span class="eyebrow eyebrow--clair">The film</span>
+  </div>
+  <button type="button" class="video-accueil-son" aria-pressed="false"><span>Turn sound on</span></button>
+</section>
+
 <!-- 02 — Our Vision -->
 <section>
   <div class="container">
@@ -492,5 +503,6 @@ setTimeout(() => {
 <script src="../js/confort.js"></script>
 <script src="../js/menu.js"></script>
 <script src="../js/accueil-en.js"></script>
+<script src="../js/video-accueil.js"></script>
 </body>
 </html>

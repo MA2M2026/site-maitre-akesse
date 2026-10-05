@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-UdNwoKbUE0NthjmPuLo3prBxnf1FBw1huLzLxXH7fxU='; style-src 'self' https://fonts.googleapis.com 'sha256-SdRYxWKqm5ftdqMeUdvybdnuqWRV6FlA7r2YdjWdsXA=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-+0Jq0IGN+xcDWac7JSIWZC78pUWp90547xubBZuR7Ks='; style-src 'self' https://fonts.googleapis.com 'sha256-SdRYxWKqm5ftdqMeUdvybdnuqWRV6FlA7r2YdjWdsXA=';">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -327,7 +327,10 @@ document.getElementById('form-recruteur').addEventListener('submit', async (e) =
     model_name_snapshot: m.full_name,
     model_height_snapshot: m.height_cm || null
   }));
-  await sb.from('recruiter_request_models').insert(lignes);
+  // La demande elle-même est enregistrée ; si la liste des mannequins ne l'est pas, on le
+  // signale au Journal MA2M (audit du 05/10/2026 : l'échec passait inaperçu).
+  const { error: erreurLignes } = await sb.from('recruiter_request_models').insert(lignes);
+  if (erreurLignes && window.signalerErreur) window.signalerErreur('Demande recruteur : liste des mannequins non enregistrée', erreurLignes.message || String(erreurLignes), 'demande ' + idDemande);
 
   const nomsMannequins = liste.map(m => m.full_name).join(', ');
   envoyerNotificationEmail({
@@ -342,7 +345,7 @@ document.getElementById('form-recruteur').addEventListener('submit', async (e) =
   document.getElementById('bloc-selection').innerHTML = `
     <div class="se-8">
       <h2>Merci !</h2>
-      <p class="u-m-1-auto">Votre demande a bien été envoyée avec ${liste.length} mannequin(s) sélectionné(s). L'agence vous recontacte rapidement.</p>
+      <p class="u-m-1-auto">Votre demande a bien été envoyée avec ${liste.length > 1 ? liste.length + ' mannequins sélectionnés' : '1 mannequin sélectionné'}. L'agence vous recontacte rapidement.</p>
       <a href="mannequins.html" class="btn">Retour aux mannequins</a>
     </div>
   `;

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-iERoifMXCprGX0/7w2WFuzAMS3Z9l7z/INSMCxJSVuU='; style-src 'self' https://fonts.googleapis.com 'sha256-SCQggsnrEpOAEmOZ3AazKXnQCalP+3heYJ7jkPyqbhQ=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-wXgP37ciJ5EySmGA+gUs/vdQV9bYN7e6+MnEUIQhd7Q='; style-src 'self' https://fonts.googleapis.com 'sha256-SCQggsnrEpOAEmOZ3AazKXnQCalP+3heYJ7jkPyqbhQ=';">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -323,7 +323,10 @@ document.getElementById('form-recruteur').addEventListener('submit', async (e) =
     model_name_snapshot: m.full_name,
     model_height_snapshot: m.height_cm || null
   }));
-  await sb.from('recruiter_request_models').insert(lignes);
+  // The request itself is saved; if the list of models is not, report it to the
+  // MA2M log (audit 05/10/2026: the failure went unnoticed).
+  const { error: erreurLignes } = await sb.from('recruiter_request_models').insert(lignes);
+  if (erreurLignes && window.signalerErreur) window.signalerErreur('Demande recruteur : liste des mannequins non enregistrée', erreurLignes.message || String(erreurLignes), 'demande ' + idDemande);
 
   const nomsMannequins = liste.map(m => m.full_name).join(', ');
   envoyerNotificationEmail({
@@ -338,7 +341,7 @@ document.getElementById('form-recruteur').addEventListener('submit', async (e) =
   document.getElementById('bloc-selection').innerHTML = `
     <div class="ense-8">
       <h2>Thank You!</h2>
-      <p class="u-m-1-auto">Your request has been sent with ${liste.length} model(s) selected. The agency will get back to you shortly.</p>
+      <p class="u-m-1-auto">Your request has been sent with ${liste.length > 1 ? liste.length + ' models' : '1 model'} selected. The agency will get back to you shortly.</p>
       <a href="mannequins.html" class="btn">Back to Models</a>
     </div>
   `;

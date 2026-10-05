@@ -191,31 +191,8 @@ export default async function middleware(requete) {
     }
     if (!titre) return;
 
-    const nomSite = 'Maître Akesse Model Management';
     const lien = SITE + url.pathname + '?' + (estEvenement ? 'evenement' : 'actu') + '=' + id;
-    const photo = imageApercu(image);
-    const html = '<!DOCTYPE html><html lang="' + (anglais ? 'en' : 'fr') + '"><head><meta charset="utf-8">' +
-      '<title>' + echapper(titre + ' — ' + nomSite) + '</title>' +
-      '<meta name="description" content="' + echapper(description) + '">' +
-      '<meta property="og:type" content="article">' +
-      '<meta property="og:site_name" content="' + echapper(nomSite) + '">' +
-      '<meta property="og:title" content="' + echapper(titre) + '">' +
-      '<meta property="og:description" content="' + echapper(description) + '">' +
-      '<meta property="og:image" content="' + echapper(photo) + '">' +
-      '<meta property="og:image:alt" content="' + echapper(titre) + '">' +
-      '<meta property="og:url" content="' + echapper(lien) + '">' +
-      '<meta property="og:locale" content="' + (anglais ? 'en_US' : 'fr_FR') + '">' +
-      '<meta name="twitter:card" content="summary_large_image">' +
-      '<meta name="twitter:title" content="' + echapper(titre) + '">' +
-      '<meta name="twitter:description" content="' + echapper(description) + '">' +
-      '<meta name="twitter:image" content="' + echapper(photo) + '">' +
-      '<link rel="canonical" href="' + echapper(lien) + '">' +
-      '</head><body><h1>' + echapper(titre) + '</h1><p>' + echapper(description) + '</p>' +
-      '<p><a href="' + echapper(lien) + '">' + echapper(nomSite) + '</a></p></body></html>';
-    return new Response(html, {
-      status: 200,
-      headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=600' }
-    });
+    return pageApercu({ titre, description, photo: imageApercu(image), lien, anglais, type: 'article' });
   } catch (e) {
     return; // au moindre souci : la page normale, comme avant
   }
