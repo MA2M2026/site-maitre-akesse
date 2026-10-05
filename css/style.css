@@ -417,7 +417,13 @@ section { padding: 5rem 0; }
    width:100% (élément de 390 px dépassant de 14 px, signalé par le
    journal du site le 01-02/10/2026) — max-width le force à rester dans
    l'écran quoi qu'il arrive. */
-.form-champ input[type="date"] { max-width: 100%; }
+/* 06/10/2026 : max-width ne suffisait pas (journal : 407 px sur un écran de 414 px,
+   iPhone iOS 18). Safari donne au champ date une largeur minimale propre à son
+   apparence native : « appearance: none » la supprime (le calendrier du téléphone
+   s'ouvre toujours au toucher) ; la date reste alignée à gauche et le champ garde la
+   hauteur des autres. */
+.form-champ input[type="date"] { max-width: 100%; min-width: 0; width: 100%; box-sizing: border-box; display: block; -webkit-appearance: none; appearance: none; min-height: 2.94rem; line-height: 1.2; }
+.form-champ input[type="date"]::-webkit-date-and-time-value { text-align: left; }
 .form-champ input:focus, .form-champ textarea:focus, .form-champ select:focus {
   outline: none; border-color: var(--bordeaux-clair); background: rgba(255,255,255,0.05);
   box-shadow: 0 0 0 3px rgba(207,59,82,0.16);
