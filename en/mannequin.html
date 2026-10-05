@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-2M6sGbK6lDU9gHbUHnUw5O5LIOArQRkV2mNr4q6wSl8='; style-src 'self' https://fonts.googleapis.com 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-khzuBmPdB5gTEjxNRdn+3dnvUlDQr/3PEefuL2nxDpQ='; style-src 'self' https://fonts.googleapis.com 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -101,6 +101,11 @@ setTimeout(() => {
   <div class="container">
     <h2 class="reveal enmq-2">Book</h2>
     <div id="galerie" class="book-grille-ig reveal reveal-delay-1"></div>
+    <div id="bloc-digitals" class="u-hidden">
+      <h2 class="enmq-2 fiche-digitals-titre">Digitals</h2>
+      <p class="fiche-digitals-sous">Natural, unstaged photos</p>
+      <div id="galerie-digitals" class="book-grille-ig"></div>
+    </div>
   </div>
 </section>
 
@@ -605,7 +610,7 @@ async function chargerProfilInterne() {
 
   const { data: photos } = await sb
     .from('model_photos')
-    .select('id, url, url_miniature, url_moyenne, compcard_ordre, principale, photo_couverture, couverture_position')
+    .select('id, url, url_miniature, url_moyenne, compcard_ordre, principale, photo_couverture, couverture_position, tri_statut')
     .eq('model_id', id)
     .order('principale', { ascending: false })
     .order('created_at', { ascending: true });
@@ -834,13 +839,19 @@ async function chargerProfilInterne() {
   });
 
   galerie.innerHTML = '';
-  const urlsPhotos = (photos || []).map(p => p.url);
+  // Book et Digitals séparés (tri automatique des photos, 06/10/2026) : la galerie
+  // plein écran parcourt d'abord le Book, puis les Digitals.
+  const photosDigitals = (photos || []).filter(p => p.tri_statut === 'digital');
+  const photosBook = (photos || []).filter(p => p.tri_statut !== 'digital');
+  const ordreGalerie = photosBook.concat(photosDigitals);
+  const urlsPhotos = ordreGalerie.map(p => p.url);
   window.photosLightbox = urlsPhotos;
 
   const photoPrincipale = document.getElementById('compsheet-photo-clic');
-  if (photoPrincipale) photoPrincipale.addEventListener('click', () => ouvrirLightbox(0));
+  const indexPrincipale = (photos && photos[0]) ? Math.max(0, ordreGalerie.indexOf(photos[0])) : 0;
+  if (photoPrincipale) photoPrincipale.addEventListener('click', () => ouvrirLightbox(indexPrincipale));
   if (photoPrincipale) photoPrincipale.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); ouvrirLightbox(0); }
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); ouvrirLightbox(indexPrincipale); }
   });
 
   // Photo de couverture cliquable (demande de la propriétaire, 28 sept. 2026) :
@@ -848,20 +859,24 @@ async function chargerProfilInterne() {
   // on balaie le reste du Book comme depuis la grille.
   const couverture = document.getElementById('couverture-clic');
   if (couverture && urlsPhotos.length) {
-    const indexCouv = photoCouverture ? Math.max(0, photos.indexOf(photoCouverture)) : 0;
+    const indexCouv = Math.max(0, ordreGalerie.indexOf(photoCouverture || photos[0]));
     couverture.addEventListener('click', () => ouvrirLightbox(indexCouv));
     couverture.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); ouvrirLightbox(indexCouv); }
     });
   }
 
-  (photos || []).forEach((p, index) => {
+  const galerieDigitals = document.getElementById('galerie-digitals');
+  ordreGalerie.forEach((p, index) => {
+    const digital = p.tri_statut === 'digital';
     const div = document.createElement('div');
     div.className = 'book-photo-carte cliquable';
-    div.innerHTML = `<img src="${echapperHtml(p.url_miniature || p.url)}" loading="lazy" alt="Book photo">`;
+    div.innerHTML = `<img src="${echapperHtml(p.url_miniature || p.url)}" loading="lazy" alt="${digital ? 'Digital photo' : 'Book photo'}">`;
     div.querySelector('img').addEventListener('click', () => ouvrirLightbox(index));
-    galerie.appendChild(div);
+    (digital && galerieDigitals ? galerieDigitals : galerie).appendChild(div);
   });
+  const blocDigitals = document.getElementById('bloc-digitals');
+  if (blocDigitals) blocDigitals.classList.toggle('u-hidden', !photosDigitals.length);
 }
 
 function ouvrirLightbox(index) {
