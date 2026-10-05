@@ -230,6 +230,11 @@ module.exports = async function handler(req, res) {
     res.status(200).json(admin ? { ok: true, statut: statut, raison: raison, confiance: confiance } : { ok: true });
   } catch (e) {
     console.error('trier-photo :', e);
+    // Crédit de l'IA épuisé : le tableau de bord s'arrête et le dit clairement.
+    if (e && /credit balance/i.test(e.message || '')) {
+      res.status(402).json({ error: 'Crédit de l’IA épuisé.' });
+      return;
+    }
     res.status(500).json({ error: 'Le tri automatique a échoué.' });
   }
 };

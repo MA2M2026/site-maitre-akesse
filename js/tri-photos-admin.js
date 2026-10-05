@@ -20,14 +20,25 @@
     return s && s.data && s.data.session ? s.data.session.access_token : null;
   }
 
+  // Renvoie 'ok', 'echec', 'credit' (crédit de l'IA épuisé) ou 'non-configure'.
+  // Une coupure de connexion passagère est retentée (jusqu'à 3 essais).
   async function trierUne(photoId, j) {
-    var r = await fetch('/api/trier-photo', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + j },
-      body: JSON.stringify({ photoId: String(photoId) })
-    });
-    if (r.status === 503) throw new Error('non-configure');
-    return r.ok;
+    for (var essai = 1; essai <= 3; essai++) {
+      try {
+        var r = await fetch('/api/trier-photo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (await jeton() || j) },
+          body: JSON.stringify({ photoId: String(photoId) })
+        });
+        if (r.ok) return 'ok';
+        var corps = await r.json().catch(function () { return {}; });
+        if (r.status === 402) return 'credit';
+        if (r.status === 503 && /non configur/i.test(corps.error || '')) return 'non-configure';
+        if (r.status === 401 || r.status === 403 || r.status === 404) return 'echec';
+      } catch (e) { /* connexion coupée : nouvel essai */ }
+      await new Promise(function (ok) { setTimeout(ok, 1500 * essai); });
+    }
+    return 'echec';
   }
 
   // Rattrapage discret : photos récentes jamais triées (une fois par session).
@@ -39,7 +50,8 @@
     if (res.error || !res.data || !res.data.length) return; // tri pas encore installé, ou rien à faire
     var j = await jeton(); if (!j) return;
     for (var i = 0; i < res.data.length; i++) {
-      try { await trierUne(res.data[i].id, j); } catch (e) { return; }
+      var r = await trierUne(res.data[i].id, j);
+      if (r === 'credit' || r === 'non-configure') return;
     }
   }
   setTimeout(function () { rattraperRecentes().catch(function () {}); }, 15000);
@@ -106,17 +118,25 @@
     var liste = res.data || [];
     var j = await jeton();
     if (!j) { msg.className = 'form-msg err'; msg.textContent = 'Session expirée — reconnectez-vous.'; btn.disabled = false; return; }
-    var faites = 0, echecs = 0;
+    // Garder l'écran allumé pendant le tri (sinon la tablette se met en veille et le tri s'arrête).
+    var verrou = null;
+    try { if (navigator.wakeLock) verrou = await navigator.wakeLock.request('screen'); } catch (e) {}
+    var faites = 0, echecs = 0, ratesDeSuite = 0, arret = '';
     for (var i = 0; i < liste.length; i++) {
-      msg.textContent = 'Tri en cours : ' + (i + 1) + ' / ' + liste.length + '…';
-      try { if (await trierUne(liste[i].id, j)) faites++; else echecs++; }
-      catch (e) { msg.className = 'form-msg err'; msg.textContent = 'Le tri automatique n’est pas configuré (clé de l’IA absente sur Vercel).'; btn.disabled = false; return; }
-      if (echecs >= 5 && faites === 0) break;
+      msg.textContent = 'Tri en cours : ' + (i + 1) + ' / ' + liste.length + '… (gardez cette page ouverte)';
+      var resultat = await trierUne(liste[i].id, j);
+      if (resultat === 'ok') { faites++; ratesDeSuite = 0; continue; }
+      if (resultat === 'credit') { arret = 'Le crédit de l’IA est épuisé : rechargez le compte Anthropic, puis relancez. Les photos déjà triées ne seront pas refaites.'; break; }
+      if (resultat === 'non-configure') { arret = 'Le tri automatique n’est pas configuré (clé de l’IA absente sur Vercel).'; break; }
+      echecs++; ratesDeSuite++;
+      if (ratesDeSuite >= 8) { arret = 'Le tri s’est arrêté (connexion coupée ?). Relancez plus tard : les photos déjà triées ne seront pas refaites.'; break; }
     }
+    try { if (verrou) verrou.release(); } catch (e) {}
     await charger();
     var bilan = document.createElement('div');
     bilan.className = echecs ? 'form-msg err' : 'form-msg ok'; bilan.style.display = 'block';
-    bilan.textContent = faites + ' photo(s) triée(s)' + (echecs ? ', ' + echecs + ' échec(s) — vous pourrez relancer plus tard.' : '.');
+    bilan.textContent = faites + ' photo(s) triée(s)' + (echecs ? ', ' + echecs + ' non triée(s) — vous pourrez relancer plus tard.' : '.') + (arret ? ' ' + arret : '');
+    if (arret) bilan.className = 'form-msg err';
     document.getElementById('tri-anciennes').prepend(bilan);
   }
 
