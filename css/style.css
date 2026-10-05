@@ -1336,28 +1336,35 @@ section { padding: 5rem 0; }
 }
 .medaillon-carte .btn-selection:hover { background: var(--bordeaux); color: #fff; }
 
-/* Aperçu "Nos visages" de l'accueil uniquement : médaillons ronds, plus grands
+/* Aperçu "Nos visages" de l'accueil uniquement (portraits rectangulaires depuis le 06/10/2026), plus grands
    que l'ancienne version (220px) et resserrés — The Book (mannequins.html)
    garde lui les grands portraits rectangulaires. */
 #medaillons-accueil.medaillon-grille {
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-  gap: 1.8rem 1.3rem;
-  justify-items: center;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 2.2rem 1.2rem;
+  justify-items: stretch;
 }
 /* La carte prend toute la largeur de sa colonne : centrée sans largeur fixée, elle
    prenait la largeur d'origine de la photo pendant son chargement (jusqu'à deux fois
    l'écran d'un téléphone). */
 #medaillons-accueil .medaillon-carte { width: 100%; }
+/* 06/10/2026 (comparaison avec les grandes agences, accord de la propriétaire) : portraits
+   rectangulaires verticaux, la silhouette entière visible, comme une page de magazine —
+   les cercles coupaient la tête ou les pieds. Seul le médaillon de profil de la fiche
+   mannequin reste rond (choix de la propriétaire). */
 #medaillons-accueil .medaillon-photo {
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 3 / 4;
   width: 100%;
-  max-width: 260px;
-  border-radius: 50%;
+  border-radius: 0;
+  animation: none;
 }
 
 @media (max-width: 640px) {
-  #medaillons-accueil.medaillon-grille { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.6rem 1rem; }
-  #medaillons-accueil .medaillon-photo { max-width: 100%; }
+  #medaillons-accueil.medaillon-grille { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.6rem 0.8rem; }
+}
+/* Ordinateur : 3 portraits par ligne, bloc centré (6 mannequins = 2 lignes complètes). */
+@media (min-width: 900px) {
+  #medaillons-accueil.medaillon-grille { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 980px; margin-left: auto; margin-right: auto; gap: 2.6rem 1.6rem; }
 }
 
 @media (max-width: 640px) {
@@ -1593,6 +1600,12 @@ html.porte-verrouillee { overflow: hidden; height: 100%; }
 #actus-grille.news-grille, #evenements-grille.news-grille { gap: 2.2rem; }
 @media (min-width: 640px) { #actus-grille.news-grille, #evenements-grille.news-grille { gap: 2.4rem; } }
 @media (min-width: 960px) { #actus-grille.news-grille, #evenements-grille.news-grille { gap: 2.2rem; } }
+/* Partenaires (06/10/2026) : logos sur des cartes blanches rectangulaires au lieu de
+   cercles — plus sobre, et les logos larges ne sont plus rognés sur les côtés. */
+#partenaires-grille .news-img { width: 100%; max-width: 300px; height: auto; aspect-ratio: 3 / 2; border-radius: 4px; margin: 0 auto; }
+#partenaires-grille .news-img img { border-radius: 0; border: none; filter: none; }
+#partenaires-grille .news-carte:hover .news-img, #partenaires-grille .news-carte:focus-within .news-img { border-radius: 4px; }
+@media (max-width: 639px) { #partenaires-grille .news-img { width: 132px; aspect-ratio: 4 / 3; } }
 
 .news-modal {
   position: fixed; inset: 0; z-index: 900; background: rgba(3,2,2,0.94);
