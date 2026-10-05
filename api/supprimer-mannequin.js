@@ -42,8 +42,8 @@ module.exports = async function handler(req, res) {
   let corps = req.body;
   if (typeof corps === 'string') { try { corps = JSON.parse(corps); } catch (e) { corps = {}; } }
   const modelId = corps && corps.modelId;
-  if (!modelId || typeof modelId !== 'string') {
-    res.status(400).json({ error: 'Identifiant de mannequin manquant.' });
+  if (!modelId || typeof modelId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(modelId)) {
+    res.status(400).json({ error: 'Identifiant de mannequin manquant ou invalide.' });
     return;
   }
 
@@ -68,6 +68,19 @@ module.exports = async function handler(req, res) {
     const lignesAdmin = reponseAdmin.ok ? await reponseAdmin.json() : [];
     if (!Array.isArray(lignesAdmin) || !lignesAdmin.length) {
       res.status(403).json({ error: "Ce compte n'est pas administrateur." });
+      return;
+    }
+
+    // 2 bis. Garde-fou (audit du 05/10/2026) : cette fonction ne supprime QUE des comptes de
+    // mannequins — jamais un compte administrateur (y compris le sien), même si son
+    // identifiant lui était envoyé par erreur ou volontairement.
+    const reponseCible = await fetch(
+      SUPABASE_URL + '/rest/v1/admins?user_id=eq.' + encodeURIComponent(modelId) + '&select=user_id',
+      { headers: { apikey: cleSecrete, Authorization: 'Bearer ' + cleSecrete } }
+    );
+    const cibleAdmin = reponseCible.ok ? await reponseCible.json() : null;
+    if (!Array.isArray(cibleAdmin) || cibleAdmin.length) {
+      res.status(403).json({ error: 'Ce compte est un compte administrateur : il ne peut pas être supprimé ici.' });
       return;
     }
 

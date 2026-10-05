@@ -17,6 +17,14 @@
 //     3 déclencheurs SQL de l'Extension 107)
 
 const webpush = require('web-push');
+const crypto = require('crypto');
+
+// Comparaison à durée constante (audit du 05/10/2026) : une comparaison ordinaire répond
+// un peu plus vite quand le début du secret est faux, ce qui peut aider à le deviner.
+function memeSecret(recu, attendu) {
+  const a = Buffer.from(String(recu || '')), b = Buffer.from(String(attendu));
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
 
 const SUPABASE_URL = 'https://dfhghgmwmxiguhtxtsle.supabase.co';
 const VAPID_CONTACT = 'mailto:infos.ma2m@gmail.com';
@@ -74,7 +82,7 @@ module.exports = async function handler(req, res) {
   }
 
   const secretAttendu = process.env.NOTIF_WEBHOOK_SECRET;
-  if (!secretAttendu || req.headers['x-webhook-secret'] !== secretAttendu) {
+  if (!secretAttendu || !memeSecret(req.headers['x-webhook-secret'], secretAttendu)) {
     res.status(401).json({ error: 'Non autorisé.' });
     return;
   }

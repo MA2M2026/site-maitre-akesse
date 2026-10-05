@@ -1,12 +1,27 @@
-// Tableau de bord — « Couverture du site (vidéo) » (demande de la propriétaire, 04/10/2026).
-// Remplace l'animation du logo en haut de toutes les pages par une vidéo de l'agence, ou
-// revient à l'animation. La vidéo est envoyée chez Cloudflare R2 (comme les images du site,
-// api/r2-site-images.js, catégorie « couverture ») et le choix est enregistré dans la table
-// reglages_site (cle 'couverture', extension 113 de supabase-extension.sql).
-// Chaque vidéo est compressée dans le navigateur avant l'envoi (redessinée en plus petit puis réenregistrée),
-// sans le son, et limitée à 30 secondes (la couverture tourne en boucle).
+// Tableau de bord — vidéos du site gérées par l'agence (un seul outil pour deux zones) :
+//  - « Couverture du site » (04/10/2026) : remplace l'animation du logo en haut de toutes
+//    les pages ; sans le son, 30 s au plus (elle tourne en boucle) ;
+//  - « Vidéo de l'accueil » (05/10/2026, audit) : grand film dans le corps de la page
+//    d'accueil (js/video-accueil.js) ; le son est gardé (le visiteur l'active d'un appui),
+//    60 s au plus.
+// Les vidéos sont envoyées chez Cloudflare R2 (api/r2-site-images.js) et le choix est
+// enregistré dans la table reglages_site (cle 'couverture' ou 'video_accueil').
 (function () {
-  if (!document.getElementById('couv-fichier') || typeof sb === 'undefined') return;
+  if (typeof sb === 'undefined') return;
+  [
+    { prefixe: 'couv', cle: 'couverture', categorie: 'couverture', cache: 'ma2m_couverture', son: false, dureeMax: 30,
+      nomZone: 'la couverture', etatSans: 'Actuellement : l’animation du logo (faisceau de lumière).',
+      succes: '✓ Votre vidéo est maintenant la couverture du site (toutes les pages, en français et en anglais).',
+      retirerQuestion: 'Revenir à l’animation du logo en couverture ? Votre vidéo actuelle sera supprimée.',
+      retirerFait: '✓ La couverture affiche de nouveau l’animation du logo.', dejaSans: 'La couverture affiche déjà l’animation du logo.' },
+    { prefixe: 'va', cle: 'video_accueil', categorie: 'video-accueil', cache: 'ma2m_video_accueil', son: true, dureeMax: 60,
+      nomZone: 'la vidéo de l’accueil', etatSans: 'Actuellement : aucune vidéo (l’espace vidéo reste caché sur l’accueil).',
+      succes: '✓ Votre vidéo est maintenant affichée sur la page d’accueil (en français et en anglais).',
+      retirerQuestion: 'Retirer la vidéo de la page d’accueil ? Elle sera supprimée.',
+      retirerFait: '✓ La vidéo est retirée : l’espace vidéo est de nouveau caché sur l’accueil.', dejaSans: 'Il n’y a pas de vidéo sur l’accueil.' }
+  ].forEach(function (zone) { if (document.getElementById(zone.prefixe + '-fichier')) brancherZone(zone); });
+
+  function brancherZone(Z) {
 
   // Toutes les vidéos sont compressées automatiquement (demande de la propriétaire,
   // 05/10/2026 : site léger, sans case à cocher) : 1280 pixels de large au plus et
@@ -18,20 +33,21 @@
   var LARGEUR_MIN = 854; // en dessous (vidéo réseaux sociaux / WhatsApp), floue en couverture
   var LIMITE_SANS_COMPRESSION = 8 * 1024 * 1024; // seulement si le navigateur ne sait pas compresser
   var LIMITE_FINALE = 15 * 1024 * 1024;   // au-delà, refus (même après compression)
-  var DUREE_MAX = 30;
-  var $ = function (id) { return document.getElementById(id); };
+  var DUREE_MAX = Z.dureeMax;
+  var LIMITE_FINALE_ZONE = Z.son ? 25 * 1024 * 1024 : LIMITE_FINALE;
+  var $ = function (id) { return document.getElementById(Z.prefixe + '-' + id); };
   var fichierChoisi = null, infosChoisies = null, reglage = null;
 
-  function message(texte, erreur) { var m = $('couv-msg'); m.textContent = texte || ''; m.style.color = erreur ? '#e57373' : ''; }
+  function message(texte, erreur) { var m = $('msg'); m.textContent = texte || ''; m.style.color = erreur ? '#e57373' : ''; }
   function mo(octets) { return (octets / 1024 / 1024).toFixed(1).replace('.', ',') + ' Mo'; }
   function barre(part) {
-    var b = $('couv-barre');
+    var b = $('barre');
     if (part === null) { b.classList.add('u-hidden'); return; }
-    b.classList.remove('u-hidden'); $('couv-barre-rempli').style.width = Math.round(part * 100) + '%';
+    b.classList.remove('u-hidden'); $('barre-rempli').style.width = Math.round(part * 100) + '%';
   }
 
   function apercu(chemin) {
-    var zone = $('couv-apercu'); zone.textContent = '';
+    var zone = $('apercu'); zone.textContent = '';
     if (!chemin) return;
     var v = document.createElement('video');
     v.muted = true; v.loop = true; v.autoplay = true; v.playsInline = true; v.setAttribute('playsinline', '');
@@ -41,19 +57,19 @@
   }
 
   async function chargerReglage() {
-    var r = await sb.from('reglages_site').select('valeur').eq('cle', 'couverture').maybeSingle();
+    var r = await sb.from('reglages_site').select('valeur').eq('cle', Z.cle).maybeSingle();
     if (r.error) {
-      $('couv-etat').textContent = /reglages_site|relation|schema cache/i.test(r.error.message || '')
+      $('etat').textContent = /reglages_site|relation|schema cache/i.test(r.error.message || '')
         ? '⚠ Il manque un réglage dans la base de données : exécutez l’extension 113 dans Supabase (SQL Editor), puis rechargez cette page.'
         : 'Impossible de lire le réglage actuel : ' + r.error.message;
       return;
     }
     reglage = r.data ? r.data.valeur : null;
     if (reglage && reglage.type === 'video' && reglage.chemin) {
-      $('couv-etat').textContent = 'Actuellement : votre vidéo (' + (reglage.taille ? mo(reglage.taille) + ', ' : '') + 'mise en ligne le ' + new Date(reglage.maj).toLocaleDateString('fr-FR') + ').';
+      $('etat').textContent = 'Actuellement : votre vidéo (' + (reglage.taille ? mo(reglage.taille) + ', ' : '') + 'mise en ligne le ' + new Date(reglage.maj).toLocaleDateString('fr-FR') + ').';
       apercu(reglage.chemin);
     } else {
-      $('couv-etat').textContent = 'Actuellement : l’animation du logo (faisceau de lumière).';
+      $('etat').textContent = Z.etatSans;
       apercu(null);
     }
   }
@@ -79,7 +95,7 @@
     if (!fichierChoisi || !infosChoisies) return;
     var inf = infosChoisies, txt = '« ' + fichierChoisi.name + ' » — ' + mo(fichierChoisi.size) + ', ' + Math.round(inf.duree) + ' s, ' + inf.largeur + ' × ' + inf.hauteur + '. ';
     txt += 'Elle sera compressée automatiquement avant l’envoi' + (inf.duree > DUREE_MAX + 0.5 ? ' et limitée aux ' + DUREE_MAX + ' premières secondes' : '') + ' (cela prend à peu près la durée de la vidéo — gardez cette page ouverte).';
-    $('couv-infos').textContent = txt;
+    $('infos').textContent = txt;
   }
 
   // Compression (05/10/2026) : d'abord avec l'outil Mediabunny (js/vendor/, déjà utilisé
@@ -105,7 +121,7 @@
     var piste = await entree.getPrimaryVideoTrack();
     if (!piste || !(await piste.canDecode())) return null;
     var l = piste.displayWidth, h = piste.displayHeight;
-    if (l / h < 1.25) throw new Error('Cette vidéo est verticale (' + l + ' × ' + h + ') : la couverture n’accepte que les vidéos horizontales, filmées téléphone couché.');
+    if (l / h < 1.25) throw new Error('Cette vidéo est verticale (' + l + ' × ' + h + ') : ' + Z.nomZone + ' n’accepte que les vidéos horizontales, filmées téléphone couché.');
     var echelle = Math.min(1, LARGEUR_MAX / l);
     l = Math.max(2, Math.round(l * echelle / 2) * 2); h = Math.max(2, Math.round(h * echelle / 2) * 2);
     var codec = null, liste = ['avc', 'vp9'];
@@ -122,16 +138,18 @@
     var conversion = await MB.Conversion.init({
       input: entree, output: sortie, tracks: 'primary',
       video: { width: l, height: h, fit: 'contain', codec: codec, bitrate: DEBIT, frameRate: 30, forceTranscode: true },
-      audio: { discard: true },
+      audio: Z.son ? { numberOfChannels: 2 } : { discard: true },
       trim: { start: 0, end: Math.min(isFinite(duree) ? duree : DUREE_MAX, DUREE_MAX) }
     });
     if (!conversion.isValid) return null;
+    // Le son ne doit jamais disparaître de la vidéo de l'accueil.
+    if (Z.son && conversion.discardedTracks.some(function (d) { return d.track && d.track.type === 'audio'; })) return null;
     conversion.onProgress = function (p) { progression(Math.min(1, p)); };
     await conversion.execute();
     var octets = sortie.target.buffer;
     if (!octets || !octets.byteLength) return null;
     var type = enMp4 ? 'video/mp4' : 'video/webm';
-    return new File([octets], 'couverture.' + (enMp4 ? 'mp4' : 'webm'), { type: type });
+    return new File([octets], Z.cle + '.' + (enMp4 ? 'mp4' : 'webm'), { type: type });
   }
 
   async function compresser(fichier, progression) {
@@ -140,9 +158,11 @@
       if (propre) return propre;
     } catch (e) {
       if (/verticale/.test((e && e.message) || '')) throw e;
-      if (window.signalerErreur) window.signalerErreur('Couverture : compression Mediabunny impossible', (e && e.message) || String(e), mo(fichier.size) + ', ' + (fichier.type || '?'));
+      if (window.signalerErreur) window.signalerErreur('Vidéo du site (' + Z.cle + ') : compression Mediabunny impossible', (e && e.message) || String(e), mo(fichier.size) + ', ' + (fichier.type || '?'));
     }
-    return compresserCanvas(fichier, progression);
+    // Secours sans son : inutilisable pour la vidéo de l'accueil (l'original sera envoyé
+    // s'il est assez léger).
+    return Z.son ? null : compresserCanvas(fichier, progression);
   }
 
   // Secours : la vidéo est lue, redessinée en plus petit dans un canvas, et réenregistrée.
@@ -178,18 +198,18 @@
     await fini;
     URL.revokeObjectURL(url);
     var type = mime.split(';')[0];
-    return new File([new Blob(morceaux, { type: type })], 'couverture.' + (type === 'video/mp4' ? 'mp4' : 'webm'), { type: type });
+    return new File([new Blob(morceaux, { type: type })], Z.cle + '.' + (type === 'video/mp4' ? 'mp4' : 'webm'), { type: type });
   }
 
   async function enregistrer(valeur) {
-    var r = await sb.from('reglages_site').upsert({ cle: 'couverture', valeur: valeur, maj: new Date().toISOString() });
+    var r = await sb.from('reglages_site').upsert({ cle: Z.cle, valeur: valeur, maj: new Date().toISOString() });
     if (r.error) throw new Error(/reglages_site|relation|schema cache/i.test(r.error.message || '') ? 'Il manque un réglage dans la base : exécutez l’extension 113 dans Supabase.' : r.error.message);
-    try { sessionStorage.removeItem('ma2m_couverture'); } catch (e) {}
+    try { sessionStorage.removeItem(Z.cache); } catch (e) {}
   }
 
-  $('couv-fichier').addEventListener('change', async function () {
+  $('fichier').addEventListener('change', async function () {
     fichierChoisi = this.files && this.files[0]; infosChoisies = null;
-    $('couv-publier-btn').disabled = true; $('couv-infos').textContent = ''; message('');
+    $('publier-btn').disabled = true; $('infos').textContent = ''; message('');
     if (!fichierChoisi) return;
     try {
       infosChoisies = await lireInfos(fichierChoisi);
@@ -197,23 +217,23 @@
       // large qui va d'un bord à l'autre de l'écran ; une vidéo verticale ou carrée y serait
       // coupée en haut et en bas au point de ne plus rien montrer d'utile.
       if (infosChoisies.largeur && infosChoisies.largeur < LARGEUR_MIN && infosChoisies.largeur / infosChoisies.hauteur >= 1.25) {
-        message('Cette vidéo est trop petite (' + infosChoisies.largeur + ' × ' + infosChoisies.hauteur + ') : en couverture, elle serait floue. Choisissez la vidéo d’origine filmée en HD (1280 × 720 ou plus), pas une copie reçue par WhatsApp ou téléchargée d’un réseau social.', true);
-        $('couv-fichier').value = ''; fichierChoisi = null; infosChoisies = null;
+        message('Cette vidéo est trop petite (' + infosChoisies.largeur + ' × ' + infosChoisies.hauteur + ') : sur le site, elle serait floue. Choisissez la vidéo d’origine filmée en HD (1280 × 720 ou plus), pas une copie reçue par WhatsApp ou téléchargée d’un réseau social.', true);
+        $('fichier').value = ''; fichierChoisi = null; infosChoisies = null;
         return;
       }
       if (infosChoisies.largeur && infosChoisies.hauteur && infosChoisies.largeur / infosChoisies.hauteur < 1.25) {
-        message('Cette vidéo est ' + (infosChoisies.hauteur > infosChoisies.largeur ? 'verticale' : 'presque carrée') + ' (' + infosChoisies.largeur + ' × ' + infosChoisies.hauteur + '). La couverture n’accepte que les vidéos horizontales : filmez en tenant le téléphone couché (en paysage), puis choisissez cette nouvelle vidéo.', true);
-        $('couv-fichier').value = ''; fichierChoisi = null; infosChoisies = null;
+        message('Cette vidéo est ' + (infosChoisies.hauteur > infosChoisies.largeur ? 'verticale' : 'presque carrée') + ' (' + infosChoisies.largeur + ' × ' + infosChoisies.hauteur + '). ' + Z.nomZone.charAt(0).toUpperCase() + Z.nomZone.slice(1) + ' n’accepte que les vidéos horizontales : filmez en tenant le téléphone couché (en paysage), puis choisissez cette nouvelle vidéo.', true);
+        $('fichier').value = ''; fichierChoisi = null; infosChoisies = null;
         return;
       }
-      afficherInfos(); $('couv-publier-btn').disabled = false;
+      afficherInfos(); $('publier-btn').disabled = false;
     }
     catch (e) { message(e.message, true); }
   });
 
-  $('couv-publier-btn').addEventListener('click', async function () {
+  $('publier-btn').addEventListener('click', async function () {
     if (!fichierChoisi || !infosChoisies) return;
-    var bouton = this; bouton.disabled = true; $('couv-animation-btn').disabled = true;
+    var bouton = this; bouton.disabled = true; $('animation-btn').disabled = true;
     try {
       var envoi = fichierChoisi;
       // Déjà légère et lisible partout : envoyée sans recompression (aucune perte).
@@ -227,26 +247,26 @@
       if (!compressee) {
         if (!originalOk || fichierChoisi.size > LIMITE_SANS_COMPRESSION) throw new Error('La compression n’est pas possible sur ce navigateur. Essayez avec Chrome (ordinateur ou téléphone Android).');
       } else if (!(originalOk && fichierChoisi.size <= compressee.size)) envoi = compressee;
-      if (envoi.size > LIMITE_FINALE) throw new Error('Même compressée, la vidéo fait ' + mo(envoi.size) + ' (maximum ' + mo(LIMITE_FINALE) + '). Choisissez une vidéo plus courte.');
+      if (envoi.size > LIMITE_FINALE_ZONE) throw new Error('Même compressée, la vidéo fait ' + mo(envoi.size) + ' (maximum ' + mo(LIMITE_FINALE_ZONE) + '). Choisissez une vidéo plus courte.');
       await envoyerFichier(envoi);
     } catch (e) {
       message(e.message || 'L’envoi a échoué — réessayez.', true);
       bouton.disabled = false;
     } finally {
-      barre(null); $('couv-animation-btn').disabled = false;
+      barre(null); $('animation-btn').disabled = false;
     }
   });
 
   async function envoyerFichier(envoi) {
       barre(1); message('Envoi de la vidéo (' + mo(envoi.size) + ')…');
       var ext = envoi.type === 'video/webm' ? 'webm' : 'mp4';
-      var chemin = 'site/couverture/' + Date.now() + '.' + ext;
-      await envoyerImageSite('couverture', chemin, envoi);
+      var chemin = 'site/' + Z.categorie + '/' + Date.now() + '.' + ext;
+      await envoyerImageSite(Z.categorie, chemin, envoi);
       var ancien = reglage && reglage.type === 'video' ? reglage.chemin : null;
       await enregistrer({ type: 'video', chemin: chemin, taille: envoi.size, maj: new Date().toISOString() });
-      if (ancien && ancien !== chemin) supprimerImageSite('couverture', ancien);
-      message('✓ Votre vidéo est maintenant la couverture du site (toutes les pages, en français et en anglais).');
-      $('couv-fichier').value = ''; fichierChoisi = null; $('couv-infos').textContent = '';
+      if (ancien && ancien !== chemin) supprimerImageSite(Z.categorie, ancien);
+      message(Z.succes);
+      $('fichier').value = ''; fichierChoisi = null; $('infos').textContent = '';
       await chargerReglage();
   }
 
@@ -262,19 +282,20 @@
     } catch (e) { return false; }
   }
 
-  $('couv-animation-btn').addEventListener('click', async function () {
-    if (!reglage || reglage.type !== 'video') { message('La couverture affiche déjà l’animation du logo.'); return; }
-    if (!confirm('Revenir à l’animation du logo en couverture ? Votre vidéo actuelle sera supprimée.')) return;
+  $('animation-btn').addEventListener('click', async function () {
+    if (!reglage || reglage.type !== 'video') { message(Z.dejaSans); return; }
+    if (!confirm(Z.retirerQuestion)) return;
     var bouton = this; bouton.disabled = true;
     try {
       var ancien = reglage.chemin;
-      await enregistrer({ type: 'animation', maj: new Date().toISOString() });
-      if (ancien) supprimerImageSite('couverture', ancien);
-      message('✓ La couverture affiche de nouveau l’animation du logo.');
+      await enregistrer({ type: Z.son ? 'aucune' : 'animation', maj: new Date().toISOString() });
+      if (ancien) supprimerImageSite(Z.categorie, ancien);
+      message(Z.retirerFait);
       await chargerReglage();
     } catch (e) { message(e.message, true); }
     finally { bouton.disabled = false; }
   });
 
   chargerReglage();
+  }
 })();
