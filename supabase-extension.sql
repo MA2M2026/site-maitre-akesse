@@ -5797,3 +5797,32 @@ grant select on reglages_site to anon, authenticated;
 grant insert, update, delete on reglages_site to authenticated;
 
 NOTIFY pgrst, 'reload schema';
+
+-- =====================================================================
+-- Extension 114 — Âge des mannequins sans la date de naissance (décision
+-- de la propriétaire, 06/10/2026) : sur la fiche publique, seul l'âge
+-- doit apparaître ; la date de naissance complète ne doit plus pouvoir
+-- être lue par un visiteur, même en interrogeant la base directement.
+--  1) la base calcule l'âge elle-même (fonction ages_mannequins), pour les
+--     seuls mannequins publiés ;
+--  2) la colonne date_naissance n'est plus lisible par les visiteurs
+--     (rôle « anon »). Le tableau de bord et l'espace mannequin (comptes
+--     connectés) ne sont pas touchés.
+-- À exécuter APRÈS la mise en ligne des fiches qui utilisent
+-- ages_mannequins (06/10/2026) — sinon l'âge disparaît des fiches.
+-- =====================================================================
+create or replace function ages_mannequins(ids uuid[])
+returns table(model_id uuid, age int)
+language sql stable security definer
+set search_path = public
+as $$
+  select id, extract(year from age(current_date, date_naissance))::int
+  from model_profiles
+  where id = any(ids) and published = true and date_naissance is not null;
+$$;
+revoke all on function ages_mannequins(uuid[]) from public;
+grant execute on function ages_mannequins(uuid[]) to anon, authenticated;
+
+revoke select (date_naissance) on model_profiles from anon;
+
+NOTIFY pgrst, 'reload schema';
