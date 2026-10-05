@@ -163,6 +163,13 @@
       if (!url || !attr || url.indexOf('data:') === 0 || url.split('#')[0] === location.href.split('#')[0] || pageQuittee || /googletagmanager\.com|google-analytics\.com/.test(url)) return;
       const type = cible.tagName === 'IMG' ? 'Image non chargée' : cible.tagName === 'SCRIPT' ? 'Script non chargé' : cible.tagName === 'LINK' ? 'Style non chargé' : 'Média non chargé';
       if (cible.tagName === 'IMG') {
+        // Photo du stockage (/book-photos/) qui échoue (erreur 502 passagère du relais,
+        // vérification du 06/10/2026) : le navigateur la redemande une fois, 1,2 s plus
+        // tard, pour que le visiteur ne voie pas un cadre vide.
+        if (/\/book-photos\//.test(url) && !cible.dataset.reessai) {
+          cible.dataset.reessai = '1';
+          setTimeout(function () { if (!pageQuittee) cible.src = url + (url.indexOf('?') === -1 ? '?' : '&') + 'r=1'; }, 1200);
+        }
         // Fausses alertes du 29/09 : 9 miniatures « non chargées » dans la même seconde
         // (4G, page quittée ou chargement interrompu), alors que les photos
         // s'ouvraient normalement. On ne signale donc une image qu'après un second
