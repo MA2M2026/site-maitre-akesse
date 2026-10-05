@@ -32,6 +32,9 @@
       v.className = classe;
       v.muted = true; v.loop = true; v.autoplay = true; v.playsInline = true; v.setAttribute('playsinline', '');
       v.src = '/book-photos/' + chemin;
+      // boutons de lecture sur l'aperçu : si l'appareil ne lance pas la vidéo tout seul,
+      // on peut appuyer sur lecture pour vérifier qu'elle passe bien
+      if (classe === 'couv-apercu-video') v.controls = true;
       zone.appendChild(v);
       var p = v.play(); if (p && p.catch) p.catch(function () {});
     });
@@ -67,7 +70,48 @@
   }
 
   function besoinCompression(f, inf) {
-    return $('couv-max').checked || f.size > LIMITE_DIRECTE || inf.largeur > 1920 || inf.duree > DUREE_MAX + 0.5 || !/^video\/(mp4|webm)$/.test(f.type);
+    return $('couv-max').checked || f.size > LIMITE_DIRECTE || Math.max(inf.largeur, inf.hauteur) > 1920 || inf.duree > DUREE_MAX + 0.5 || inf.hevc || !/^video\/(mp4|webm)$/.test(f.type);
+  }
+
+  // Vidéo au format HEVC (H.265, fréquent sur iPhone) : beaucoup de navigateurs ne savent
+  // pas la lire et la couverture resterait noire. On cherche sa signature dans le début et
+  // la fin du fichier (l'index d'un MP4 peut être à l'un ou l'autre bout).
+  async function estHevc(fichier) {
+    var bout = 2 * 1024 * 1024;
+    var parts = [fichier.slice(0, bout), fichier.slice(Math.max(0, fichier.size - bout))];
+    for (var i = 0; i < parts.length; i++) {
+      var o = new Uint8Array(await parts[i].arrayBuffer());
+      for (var j = 0; j + 4 <= o.length; j++) {
+        if (o[j] === 0x68 && (o[j + 1] === 0x76 || o[j + 1] === 0x65) && (o[j + 2] === 0x63 || o[j + 2] === 0x76) && (o[j + 3] === 0x31)) {
+          var sig = String.fromCharCode(o[j], o[j + 1], o[j + 2], o[j + 3]);
+          if (sig === 'hvc1' || sig === 'hev1') return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  // Avant de publier, on vérifie que la vidéo se lit vraiment (image visible, lecture qui
+  // avance) : sinon la couverture du site resterait noire.
+  function verifierLisible(fichier) {
+    return new Promise(function (ok, ko) {
+      var v = document.createElement('video'), url = URL.createObjectURL(fichier), fini = false;
+      function fin(erreur) {
+        if (fini) return; fini = true; clearTimeout(minuteur);
+        v.pause(); v.removeAttribute('src'); v.load(); URL.revokeObjectURL(url);
+        if (erreur) ko(new Error('La vidéo préparée ne se lit pas correctement : elle n’a pas été publiée. Réessayez en cochant « Compression maximale », ou avec une autre vidéo.')); else ok();
+      }
+      var minuteur = setTimeout(function () { fin(true); }, 15000);
+      v.muted = true; v.playsInline = true; v.setAttribute('playsinline', '');
+      v.onerror = function () { fin(true); };
+      // il faut que de vraies images soient affichées (pas seulement une horloge qui avance)
+      function images() { var q = v.getVideoPlaybackQuality && v.getVideoPlaybackQuality(); return q ? q.totalVideoFrames - q.droppedVideoFrames : 10; }
+      v.ontimeupdate = function () { if (v.currentTime > 1) fin(!(v.videoWidth > 0 && v.videoHeight > 0 && images() >= 5)); };
+      v.onended = function () { fin(!(v.videoWidth > 0 && images() >= 5)); };
+      if (fichier.size < 20000) { fin(true); return; }
+      v.src = url;
+      var p = v.play(); if (p && p.catch) p.catch(function () { fin(true); });
+    });
   }
 
   function afficherInfos() {
@@ -89,8 +133,14 @@
     var url = URL.createObjectURL(fichier), v = document.createElement('video');
     v.muted = true; v.playsInline = true; v.src = url;
     await new Promise(function (ok, ko) { v.onloadedmetadata = ok; v.onerror = function () { ko(new Error('Cette vidéo ne peut pas être lue par ce navigateur.')); }; });
-    var w = Math.min(largeurMax, v.videoWidth); w -= w % 2;
-    var h = Math.round(w * v.videoHeight / v.videoWidth); h -= h % 2;
+    // Taille limitée sur les DEUX côtés (le grand et le petit) : une vidéo verticale de
+    // téléphone (1080 × 1920) devient 720 × 1280, comme une horizontale devient 1280 × 720.
+    // Sans cela, une verticale gardait toute sa hauteur, trop grande pour l'encodeur vidéo
+    // du navigateur : le fichier produit restait noir.
+    var grand = Math.max(v.videoWidth, v.videoHeight), petit = Math.min(v.videoWidth, v.videoHeight);
+    var k = Math.min(1, largeurMax / grand, (maximale ? 540 : 720) / petit);
+    var w = Math.round(v.videoWidth * k); w -= w % 2;
+    var h = Math.round(v.videoHeight * k); h -= h % 2;
     var c = document.createElement('canvas'); c.width = w; c.height = h;
     var x = c.getContext('2d');
     var flux = c.captureStream(30);
@@ -127,8 +177,11 @@
     fichierChoisi = this.files && this.files[0]; infosChoisies = null;
     $('couv-publier-btn').disabled = true; $('couv-infos').textContent = ''; message('');
     if (!fichierChoisi) return;
-    try { infosChoisies = await lireInfos(fichierChoisi); afficherInfos(); $('couv-publier-btn').disabled = false; }
-    catch (e) { message(e.message, true); }
+    try {
+      infosChoisies = await lireInfos(fichierChoisi);
+      try { infosChoisies.hevc = await estHevc(fichierChoisi); } catch (e) { infosChoisies.hevc = false; }
+      afficherInfos(); $('couv-publier-btn').disabled = false;
+    } catch (e) { message(e.message, true); }
   });
   $('couv-max').addEventListener('change', afficherInfos);
 
@@ -142,6 +195,8 @@
         envoi = await compresser(fichierChoisi, $('couv-max').checked, function (p) { barre(p); message('Compression en cours… ' + Math.round(p * 100) + ' % — gardez cette page ouverte.'); });
         if (envoi.size > LIMITE_FINALE) throw new Error('Même compressée, la vidéo fait ' + mo(envoi.size) + ' (maximum ' + mo(LIMITE_FINALE) + '). Cochez « Compression maximale » ou choisissez une vidéo plus courte.');
       }
+      message('Vérification de la vidéo…');
+      await verifierLisible(envoi);
       barre(1); message('Envoi de la vidéo (' + mo(envoi.size) + ')…');
       var ext = envoi.type === 'video/webm' ? 'webm' : 'mp4';
       var chemin = 'site/couverture/' + Date.now() + '.' + ext;
