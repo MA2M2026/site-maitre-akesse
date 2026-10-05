@@ -123,4 +123,16 @@ document.querySelectorAll('.filtre-btn').forEach(btn => {
   document.getElementById(id).addEventListener('input', appliquerFiltres);
 });
 
+// Catégorie demandée dans l'adresse (?categorie=femme|homme|new-faces) — liens
+// « Femmes / Hommes / New Faces » de l'accueil et du menu (06/10/2026).
+(function () {
+  let cat = null;
+  try { cat = new URLSearchParams(location.search).get('categorie'); } catch (e) {}
+  const btn = cat && document.querySelector('.filtre-btn[data-cat="' + cat.replace(/[^a-z-]/g, '') + '"]');
+  if (!btn) return;
+  document.querySelectorAll('.filtre-btn').forEach(b => b.classList.remove('actif'));
+  btn.classList.add('actif');
+  categorieActive = btn.dataset.cat;
+})();
+
 chargerMannequins();
