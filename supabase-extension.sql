@@ -6085,3 +6085,53 @@ alter table model_profiles enable trigger trg_proteger_proprietaire_profil;
 commit;
 
 NOTIFY pgrst, 'reload schema';
+
+-- =====================================================================
+-- Extension 119 — Profils dépubliés par les mises à jour de la base
+-- (signalé par la propriétaire le 06/10/2026 : Mélina et Enoa repassaient
+-- « en attente de validation » après chaque grosse modification). Cause : le
+-- déclencheur gerer_validation_publication() (Extension 60) traitait TOUTE
+-- mise à jour d'un profil publié comme une demande de publication par le
+-- mannequin ; pour un mannequin mineur, ou dont la première publication n'a
+-- jamais été marquée, il remettait la fiche en attente — y compris lors des
+-- mises à jour faites par l'agence dans l'éditeur SQL (Extensions 115, 118).
+-- Correctif : sans utilisateur connecté (éditeur SQL, serveur), le
+-- déclencheur ne touche plus à la publication. Exécutée le 06/10/2026.
+-- =====================================================================
+create or replace function gerer_validation_publication()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  est_admin boolean;
+  age_ans int;
+  est_mineur boolean := false;
+begin
+  if auth.uid() is null then
+    return NEW;
+  end if;
+
+  select exists(select 1 from admins where user_id = auth.uid()) into est_admin;
+
+  if NEW.date_naissance is not null then
+    age_ans := extract(year from age(NEW.date_naissance));
+    est_mineur := age_ans < 18;
+  end if;
+
+  if NEW.published is true then
+    if est_admin then
+      NEW.en_attente_validation := false;
+      NEW.premiere_publication_faite := true;
+    elsif est_mineur or not coalesce(OLD.premiere_publication_faite, false) then
+      NEW.published := false;
+      NEW.en_attente_validation := true;
+    end if;
+  end if;
+
+  return NEW;
+end;
+$$;
+
+NOTIFY pgrst, 'reload schema';
