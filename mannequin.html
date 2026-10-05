@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-Xo9TtsJce7OQfa8thEpQ/qF2Z5LHB7UF7m8pul3ugG0='; style-src 'self' https://fonts.googleapis.com 'sha256-7qzTX2fbWhcoN8NR8B0qP2PjgfCnkK2/b2LeciSYanY=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-Imvbo6jow0+kZM1xgFD16jWjRCPVhQ3uZUkkJmj+i7M='; style-src 'self' https://fonts.googleapis.com 'sha256-7qzTX2fbWhcoN8NR8B0qP2PjgfCnkK2/b2LeciSYanY=';">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -14,9 +14,9 @@
 <meta property="og:type" content="profile">
 <meta property="og:title" content="Profil mannequin — Maître Akesse Model Management">
 <meta property="og:description" content="Découvrez le book complet de ce mannequin de l'agence Maître Akesse Model Management.">
-<link rel="alternate" hreflang="fr" href="https://www.maitreakessemodelmanagement.com/mannequin.html">
-<link rel="alternate" hreflang="en" href="https://www.maitreakessemodelmanagement.com/en/mannequin.html">
-<link rel="alternate" hreflang="x-default" href="https://www.maitreakessemodelmanagement.com/mannequin.html">
+<link rel="alternate" hreflang="fr" href="https://www.maitreakessemodelmanagement.com/mannequin">
+<link rel="alternate" hreflang="en" href="https://www.maitreakessemodelmanagement.com/en/mannequin">
+<link rel="alternate" hreflang="x-default" href="https://www.maitreakessemodelmanagement.com/mannequin">
 <meta property="og:image" content="https://www.maitreakessemodelmanagement.com/assets/logo-dark-bg.png">
 <meta property="og:locale" content="fr_FR">
 <meta name="twitter:card" content="summary_large_image">
@@ -278,7 +278,7 @@ async function chargerProfilInterne() {
   // page une fois le profil connu — utile pour Google (qui exécute le JavaScript)
   // et pour l'onglet du navigateur ; les aperçus de partage (WhatsApp/Facebook, qui
   // n'exécutent pas le JavaScript) restent sur les balises génériques ci-dessous.
-  const urlActuelle = 'https://www.maitreakessemodelmanagement.com/mannequin.html?id=' + id;
+  const urlActuelle = 'https://www.maitreakessemodelmanagement.com/mannequin?id=' + id;
   const titrePage = (profil.full_name || 'Mannequin') + ' — Maître Akesse Model Management';
   const descriptionPage = [profil.full_name, profil.city, profil.height_cm ? profil.height_cm + ' cm' : null].filter(Boolean).join(' · ') + ' — Book complet sur le site de l\'agence Maître Akesse Model Management.';
   document.title = titrePage;

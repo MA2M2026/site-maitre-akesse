@@ -128,7 +128,7 @@ async function apercuMannequin(url, anglais) {
     const description = details + ' — ' + (anglais
       ? 'Discover the full book on Maître Akesse Model Management.'
       : 'Découvrez son book complet sur Maître Akesse Model Management.');
-    const lien = SITE + (anglais ? '/en' : '') + '/mannequin.html?id=' + id;
+    const lien = SITE + (anglais ? '/en' : '') + '/mannequin?id=' + id;
     return pageApercu({ titre: m.full_name, description, photo: imageApercu(await photoMannequin(id)), lien, anglais, type: 'profile' });
   }
   // The Book : photo du mannequin à la une (sinon du plus récent)
@@ -141,7 +141,7 @@ async function apercuMannequin(url, anglais) {
     description: anglais
       ? 'Browse the models of Maître Akesse Model Management, Abidjan: books, measurements and casting requests.'
       : 'Découvrez les mannequins de Maître Akesse Model Management, à Abidjan : books, mensurations et demandes de casting.',
-    photo, lien: SITE + (anglais ? '/en' : '') + '/mannequins.html', anglais
+    photo, lien: SITE + (anglais ? '/en' : '') + '/mannequins', anglais
   });
 }
 
@@ -191,7 +191,7 @@ export default async function middleware(requete) {
     }
     if (!titre) return;
 
-    const lien = SITE + url.pathname + '?' + (estEvenement ? 'evenement' : 'actu') + '=' + id;
+    const lien = SITE + url.pathname.replace(/\.html$/, '') + '?' + (estEvenement ? 'evenement' : 'actu') + '=' + id;
     return pageApercu({ titre, description, photo: imageApercu(image), lien, anglais, type: 'article' });
   } catch (e) {
     return; // au moindre souci : la page normale, comme avant

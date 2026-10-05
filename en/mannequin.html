@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-VKb+zfMMZmnF5aJaOftT74IDy4IKGxET4/6hipWXCr4='; style-src 'self' https://fonts.googleapis.com 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-xrZT11AsLIcF7ARYS1XqedBuUj2j2lDOwOFO7t7BjKg='; style-src 'self' https://fonts.googleapis.com 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -576,7 +576,7 @@ async function chargerProfilInterne() {
 
   if (error || !profil) { contenu.textContent = 'This profile is not available.'; return; }
 
-  const urlActuelle = 'https://www.maitreakessemodelmanagement.com/en/mannequin.html?id=' + id;
+  const urlActuelle = 'https://www.maitreakessemodelmanagement.com/en/mannequin?id=' + id;
   const titrePage = (profil.full_name || 'Model') + ' — Maître Akesse Model Management';
   const descriptionPage = [profil.full_name, profil.city, profil.height_cm ? profil.height_cm + ' cm' : null].filter(Boolean).join(' · ') + ' — Full book on the Maître Akesse Model Management agency website.';
   document.title = titrePage;
