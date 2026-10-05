@@ -4,6 +4,8 @@
 // css/splash.css). Elle se joue quand la couverture apparaît à l'écran, puis le logo reste
 // en place et un reflet repasse de temps en temps. Elle ne tourne que lorsqu'elle est
 // visible. Moins d'animations demandé ou image introuvable : logo fixe (image de secours).
+// Si l'agence a choisi une vidéo dans le tableau de bord (table reglages_site, cle
+// 'couverture'), la vidéo remplace l'animation en fondu, en boucle et sans le son.
 (function () {
   var sec = document.getElementById('couverture-faisceau');
   if (!sec) return;
@@ -34,10 +36,10 @@
   if (!cv || !cv.getContext || !cv.getContext('2d')) return;
 
   var anim = window.ma2mFaisceau(cv, { mode: 'couverture', mesurer: function () { return { W: cv.clientWidth || sec.clientWidth, H: cv.clientHeight || sec.clientHeight }; } });
-  var t = 0, precedent = null, visible = false, enCours = false;
+  var t = 0, precedent = null, visible = false, enCours = false, videoActive = false;
 
   function image(ms) {
-    if (!visible) { enCours = false; precedent = null; return; }
+    if (!visible || videoActive) { enCours = false; precedent = null; return; }
     // le temps n'avance que pendant que la couverture est visible
     if (precedent !== null) t += Math.min(.1, (ms - precedent) / 1000);
     precedent = ms;
@@ -64,7 +66,38 @@
     }
   }, function () { /* image introuvable : le logo fixe reste affiché */ });
 
-  // Vidéo de couverture retirée le 06/10/2026 (décision de la propriétaire : elle distrayait
-  // les visiteurs, et l'accueil a désormais son propre espace vidéo, js/video-accueil.js).
-  // La couverture montre uniquement l'animation du logo.
+  // --- vidéo choisie dans le tableau de bord ---
+  function afficherVideo(valeur) {
+    if (!valeur || valeur.type !== 'video' || typeof valeur.chemin !== 'string') return;
+    // uniquement un fichier du dossier de la couverture, servi par le site lui-même
+    if (!/^site\/couverture\/[A-Za-z0-9._-]+\.(mp4|webm)$/.test(valeur.chemin)) return;
+    var v = document.createElement('video');
+    v.className = 'couverture-video';
+    v.muted = true; v.defaultMuted = true; v.loop = true; v.autoplay = true; v.playsInline = true;
+    v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('aria-hidden', 'true');
+    v.preload = 'auto';
+    v.src = '/book-photos/' + valeur.chemin;
+    v.addEventListener('playing', function () { videoActive = true; sec.classList.add('video-prete'); }, { once: true });
+    v.addEventListener('error', function () { v.remove(); });
+    sec.appendChild(v);
+    var p = v.play(); if (p && p.catch) p.catch(function () {});
+  }
+  function lireReglage() {
+    var CLE = 'ma2m_couverture';
+    try {
+      var c = JSON.parse(sessionStorage.getItem(CLE) || 'null');
+      if (c && Date.now() - c.t < 5 * 60 * 1000) { afficherVideo(c.v); return; }
+    } catch (e) {}
+    if (typeof SUPABASE_URL === 'undefined' || typeof SUPABASE_ANON_KEY === 'undefined') return;
+    fetch(SUPABASE_URL + '/rest/v1/reglages_site?cle=eq.couverture&select=valeur', { headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY } })
+      .then(function (r) { return r.ok ? r.json() : []; })
+      .then(function (lignes) {
+        var v = lignes && lignes[0] ? lignes[0].valeur : null;
+        try { sessionStorage.setItem(CLE, JSON.stringify({ t: Date.now(), v: v })); } catch (e) {}
+        afficherVideo(v);
+      })
+      .catch(function () {});
+  }
+  // supabase-config.js est chargé plus bas dans la page : on attend qu'elle soit prête.
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', lireReglage); else lireReglage();
 })();
