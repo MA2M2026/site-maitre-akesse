@@ -57,6 +57,23 @@ if (typeof window.heic2any === 'undefined') {
   };
 }
 
+// Conversion d'une photo HEIC (iPhone) en JPEG avant envoi — fonction unique pour
+// tout le site (06/10/2026 : elle était recopiée dans 14 pages et scripts, ce qui
+// obligeait à corriger 14 fois le moindre problème). En cas d'échec, le fichier
+// d'origine est renvoyé tel quel (comportement inchangé).
+async function convertirSiHeic(fichier, qualite) {
+  const estHeic = /image\/hei(c|f)/i.test(fichier.type) || /\.(heic|heif)$/i.test(fichier.name);
+  if (!estHeic || typeof heic2any === 'undefined') return fichier;
+  try {
+    const resultat = await heic2any({ blob: fichier, toType: 'image/jpeg', quality: qualite || 0.85 });
+    const blobFinal = Array.isArray(resultat) ? resultat[0] : resultat;
+    return new File([blobFinal], fichier.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' });
+  } catch (e) {
+    console.error('Conversion HEIC échouée, envoi du fichier original :', e);
+    return fichier;
+  }
+}
+
 // ================== Verrou de défilement fiable, y compris sur iPhone ==================
 // `overflow: hidden` seul (utilisé auparavant) ne bloque PAS le défilement tactile sur
 // iOS Safari — limitation connue et documentée d'iOS, pas un bug ponctuel. La seule
@@ -2073,19 +2090,26 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Clé par page ET par fiche : avant, toutes les fiches mannequin partageaient la
   // même clé (/mannequin) — seule la première fiche vue dans la session était
   // comptée, ce qui faussait le classement des mannequins les plus vus.
-  const idPourCle = new URLSearchParams(window.location.search).get('id');
-  const cle = 'ma2m_vue_' + window.location.pathname + (idPourCle ? '?id=' + idPourCle : '');
+  // Adresse lisible /book/nom (06/10/2026) : comptée comme la fiche du mannequin,
+  // retrouvé par son nom d'adresse (js/adresse-fiche.js).
+  let chemin = window.location.pathname;
+  let idMannequin = new URLSearchParams(window.location.search).get('id');
+  const joli = chemin.match(/^\/(en\/)?book\/[a-z0-9-]{1,80}\/?$/);
+  if (joli) {
+    chemin = (joli[1] ? '/en' : '') + '/mannequin';
+    idMannequin = typeof window.ma2mIdFiche === 'function' ? await window.ma2mIdFiche() : null;
+  }
+  const cle = 'ma2m_vue_' + chemin + (idMannequin ? '?id=' + idMannequin : '');
   try {
     if (sessionStorage.getItem(cle)) return;
     sessionStorage.setItem(cle, '1');
   } catch (e) {}
 
-  const idMannequin = new URLSearchParams(window.location.search).get('id');
-  const surPageMannequin = /\/mannequin(\.html)?$/.test(window.location.pathname);
+  const surPageMannequin = /\/mannequin(\.html)?$/.test(chemin);
   const modelId = (surPageMannequin && idMannequin) ? idMannequin : null;
   const ipHash = await empreinteVisiteur();
 
-  sb.from('page_views').insert({ page: window.location.pathname, ip_hash: ipHash, model_id: modelId }).then(() => {}).catch(() => {});
+  sb.from('page_views').insert({ page: chemin, ip_hash: ipHash, model_id: modelId }).then(() => {}).catch(() => {});
 });
 
 // Protection des images : empêche le clic-droit/enregistrer, le glisser-déposer et

@@ -631,15 +631,6 @@ async function supprimerDeR2(modelId, chemin){
 /* ---------------------------------------------------------- UTILS PHOTOS ---
    Repris à l'identique de espace-mannequin-ancien.html (même comportement, même
    pipeline HEIC/compression/miniatures) — voir README-TECHNIQUE.md. */
-async function convertirSiHeic(fichier){
-  const estHeic = /image\/hei(c|f)/i.test(fichier.type) || /\.(heic|heif)$/i.test(fichier.name);
-  if (!estHeic || typeof heic2any === 'undefined') return fichier;
-  try{
-    const resultat = await heic2any({ blob: fichier, toType: 'image/jpeg', quality: 0.85 });
-    const blobFinal = Array.isArray(resultat) ? resultat[0] : resultat;
-    return new File([blobFinal], fichier.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' });
-  }catch(e){ console.error('Conversion HEIC échouée, envoi du fichier original :', e); return fichier; }
-}
 function compresserPhotoOrigine(fichier, coteMax, qualite){
   coteMax = coteMax || 2200; qualite = qualite || 0.85;
   return new Promise(function(resolve){

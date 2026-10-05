@@ -23,7 +23,8 @@ export const config = {
     '/actualites', '/actualites.html', '/evenements', '/evenements.html',
     '/en/actualites', '/en/actualites.html', '/en/evenements', '/en/evenements.html',
     '/mannequin', '/mannequin.html', '/en/mannequin', '/en/mannequin.html',
-    '/mannequins', '/mannequins.html', '/en/mannequins', '/en/mannequins.html'
+    '/mannequins', '/mannequins.html', '/en/mannequins', '/en/mannequins.html',
+    '/book/:slug', '/en/book/:slug'
   ]
 };
 
@@ -36,6 +37,9 @@ const SITE = 'https://www.maitreakessemodelmanagement.com';
 // ce sont de vraies personnes, qui doivent voir la vraie page. Ni Google/Bing, qui
 // lisent déjà la vraie page.
 const ROBOTS_APERCU = /^WhatsApp\/|facebookexternalhit|facebot|twitterbot|telegrambot|linkedinbot|slackbot|discordbot|pinterestbot|skypeuripreview|redditbot|vkshare|embedly|iframely|mastodon/i;
+// Adresse lisible d'une fiche (06/10/2026) : /book/roxane-ouattara ou /en/book/roxane-ouattara
+// (colonne slug, Extension 118).
+const CHEMIN_JOLI = /^\/(en\/)?book\/([a-z0-9-]{1,80})\/?$/;
 const ID_VALIDE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function echapper(texte) {
@@ -114,10 +118,18 @@ async function photoMannequin(id) {
 }
 
 // The Book (liste) et fiche d'UN mannequin publié.
-async function apercuMannequin(url, anglais) {
-  const fiche = /\/mannequin(\.html)?$/.test(url.pathname);
+async function slugMannequin(id) {
+  try {
+    const lignes = await lireSupabase('model_profiles?id=eq.' + id + '&published=eq.true&select=slug');
+    const slug = lignes && lignes[0] && lignes[0].slug;
+    return slug && /^[a-z0-9-]{1,80}$/.test(slug) ? slug : '';
+  } catch (e) { return ''; }
+}
+
+async function apercuMannequin(url, anglais, idFiche) {
+  const fiche = /\/mannequin(\.html)?$/.test(url.pathname) || CHEMIN_JOLI.test(url.pathname);
   if (fiche) {
-    const id = url.searchParams.get('id');
+    const id = idFiche || url.searchParams.get('id');
     if (!id || !ID_VALIDE.test(id)) return;
     const lignes = await lireSupabase('model_profiles?id=eq.' + id + '&published=eq.true&select=id,full_name,city,category,height_cm,niveau_mannequin');
     const m = lignes && lignes[0];
@@ -128,7 +140,8 @@ async function apercuMannequin(url, anglais) {
     const description = details + ' — ' + (anglais
       ? 'Discover the full book on Maître Akesse Model Management.'
       : 'Découvrez son book complet sur Maître Akesse Model Management.');
-    const lien = SITE + (anglais ? '/en' : '') + '/mannequin?id=' + id;
+    const slug = await slugMannequin(id);
+    const lien = SITE + (anglais ? '/en' : '') + (slug ? '/book/' + slug : '/mannequin?id=' + id);
     return pageApercu({ titre: m.full_name, description, photo: imageApercu(await photoMannequin(id)), lien, anglais, type: 'profile' });
   }
   // The Book : photo du mannequin à la une (sinon du plus récent)
@@ -148,9 +161,27 @@ async function apercuMannequin(url, anglais) {
 export default async function middleware(requete) {
   try {
     const agent = requete.headers.get('user-agent') || '';
-    if (!ROBOTS_APERCU.test(agent)) return; // visiteur normal : rien ne change
     const url = new URL(requete.url);
     const anglais = url.pathname.indexOf('/en/') === 0;
+    // Adresse lisible /book/nom : on retrouve le mannequin, puis on sert sa fiche
+    // à cette même adresse (la barre d'adresse garde /book/nom). Nom inconnu :
+    // direction The Book.
+    const joli = url.pathname.match(CHEMIN_JOLI);
+    if (joli) {
+      const ficheSansId = () => new Response(null, { headers: { 'x-middleware-rewrite': new URL((anglais ? '/en' : '') + '/mannequin', url).toString() } });
+      let lignes = null;
+      try { lignes = await lireSupabase('model_profiles?slug=eq.' + joli[2] + '&published=eq.true&select=id'); } catch (x) { lignes = null; }
+      // Base lente ou en panne : la fiche retrouve elle-même le mannequin (js/adresse-fiche.js).
+      if (lignes === null) return ROBOTS_APERCU.test(agent) ? undefined : ficheSansId();
+      const id = lignes[0] && lignes[0].id;
+      if (!id || !ID_VALIDE.test(id)) return Response.redirect(SITE + (anglais ? '/en' : '') + '/mannequins', 302);
+      if (ROBOTS_APERCU.test(agent)) {
+        const apercu = await apercuMannequin(url, anglais, id);
+        if (apercu) return apercu;
+      }
+      return new Response(null, { headers: { 'x-middleware-rewrite': new URL((anglais ? '/en' : '') + '/mannequin?id=' + id, url).toString() } });
+    }
+    if (!ROBOTS_APERCU.test(agent)) return; // visiteur normal : rien ne change
     if (/\/mannequins?(\.html)?$/.test(url.pathname)) return await apercuMannequin(url, anglais);
     const estEvenement = url.pathname.indexOf('evenements') !== -1;
     const id = url.searchParams.get(estEvenement ? 'evenement' : 'actu');
@@ -194,6 +225,11 @@ export default async function middleware(requete) {
     const lien = SITE + url.pathname.replace(/\.html$/, '') + '?' + (estEvenement ? 'evenement' : 'actu') + '=' + id;
     return pageApercu({ titre, description, photo: imageApercu(image), lien, anglais, type: 'article' });
   } catch (e) {
-    return; // au moindre souci : la page normale, comme avant
+    // au moindre souci : la page normale, comme avant (adresse lisible : The Book)
+    try {
+      const u = new URL(requete.url);
+      if (CHEMIN_JOLI.test(u.pathname)) return Response.redirect(SITE + (u.pathname.indexOf('/en/') === 0 ? '/en' : '') + '/mannequins', 302);
+    } catch (x) {}
+    return;
   }
 }
