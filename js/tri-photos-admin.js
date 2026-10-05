@@ -122,7 +122,7 @@
       : '<div class="dossiers-vide">Aucune photo à vérifier.</div>';
 
     chargerRapports();
-    zoneA.innerHTML = '<p class="tdb-9">L’IA regarde le book complet de chaque mannequin, comme un recruteur : elle garde les meilleures photos (Book et Digitals) et propose de supprimer seulement les photos floues, amateurs ou de groupe. Les photos de défilé et de shooting professionnel sont toujours gardées. <strong>Rien n’est supprimé sans votre clic</strong> : les photos proposées apparaissent ci-dessus, dans « À vérifier ». Coût : environ 0,10 $ par mannequin.</p>' +
+    zoneA.innerHTML = '<p class="tdb-9">L’IA regarde le book complet de chaque mannequin, comme un recruteur : elle range les photos en Book (shootings, défilés, campagnes) et Digitals &amp; Lifestyle (polaroïds, événements, castings bien pris) et propose de supprimer seulement les photos floues, prises à la légère ou de groupe. <strong>Rien n’est supprimé sans votre clic</strong> : les photos proposées apparaissent ci-dessus, dans « À vérifier ». Coût : environ 0,10 $ par mannequin.</p>' +
       '<button class="btn" type="button" id="tri-revue-btn">Lancer la revue stricte des books</button><div class="form-msg" id="tri-revue-msg"></div><div id="tri-revue-resultats" class="tri-revue-resultats"></div>';
     document.getElementById('tri-revue-btn').addEventListener('click', revueBooks);
   }
