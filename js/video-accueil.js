@@ -30,6 +30,21 @@
     }
     v.addEventListener('loadedmetadata', function () { forme(v.videoWidth, v.videoHeight); }, { once: true });
     v.addEventListener('playing', function () { sec.classList.add('video-prete'); }, { once: true });
+    // Fond flouté pour une vidéo verticale sur écran large (06/10/2026) : une toute petite
+    // copie de l'image (48 × 27 points) redessinée à chaque image, agrandie et floutée par
+    // le navigateur — les côtés sont remplis par la vidéo elle-même, sans second
+    // téléchargement et pour un calcul négligeable.
+    var flou = document.createElement('canvas');
+    flou.className = 'video-accueil-flou'; flou.width = 48; flou.height = 27; flou.setAttribute('aria-hidden', 'true');
+    sec.insertBefore(flou, v);
+    var ctx = flou.getContext && flou.getContext('2d');
+    function peindre() {
+      if (ctx && !v.paused && sec.classList.contains('video-verticale') && flou.offsetParent !== null) {
+        try { ctx.drawImage(v, 0, 0, 48, 27); } catch (e) {}
+      }
+      if (v.requestVideoFrameCallback) v.requestVideoFrameCallback(peindre); else setTimeout(peindre, 100);
+    }
+    if (ctx) v.addEventListener('playing', peindre, { once: true });
     v.addEventListener('error', function () { sec.classList.add('u-hidden'); });
 
     if ('IntersectionObserver' in window) {

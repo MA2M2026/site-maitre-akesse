@@ -86,15 +86,37 @@
     }
   }
 
-  // Lit la durée et la taille d'image d'une vidéo choisie sur l'appareil.
-  function lireInfos(fichier) {
-    return new Promise(function (ok, ko) {
-      var v = document.createElement('video'), url = URL.createObjectURL(fichier);
+  // Lit la durée et la taille d'image d'une vidéo choisie sur l'appareil. 06/10/2026 : si le
+  // lecteur du navigateur ne sait pas l'ouvrir (HEVC/H.265 d'iPhone, de DJI ou de caméra,
+  // fichiers .mov, .mkv…), l'outil Mediabunny lit directement le fichier au lieu de refuser.
+  function lireInfosLecteur(fichier) {
+    return new Promise(function (ok) {
+      var v = document.createElement('video'), url = URL.createObjectURL(fichier), fini = false;
+      function fin(r) { if (fini) return; fini = true; URL.revokeObjectURL(url); ok(r); }
       v.preload = 'metadata'; v.muted = true;
-      v.onloadedmetadata = function () { ok({ duree: v.duration, largeur: v.videoWidth, hauteur: v.videoHeight }); URL.revokeObjectURL(url); };
-      v.onerror = function () { URL.revokeObjectURL(url); ko(new Error('Cette vidéo ne peut pas être lue par ce navigateur. Essayez une vidéo MP4.')); };
+      v.onloadedmetadata = function () { fin(v.videoWidth && v.videoHeight && isFinite(v.duration) ? { duree: v.duration, largeur: v.videoWidth, hauteur: v.videoHeight } : null); };
+      v.onerror = function () { fin(null); };
+      setTimeout(function () { fin(null); }, 10000);
       v.src = url;
     });
+  }
+  async function lireInfos(fichier) {
+    var inf = await lireInfosLecteur(fichier);
+    if (inf) return inf;
+    try {
+      var MB = await chargerMediabunny();
+      var entree = new MB.Input({ source: new MB.BlobSource(fichier), formats: MB.ALL_FORMATS });
+      var piste = await entree.getPrimaryVideoTrack();
+      if (piste) return { duree: await entree.computeDuration(), largeur: piste.displayWidth, hauteur: piste.displayHeight, codec: piste.codec };
+    } catch (e) {}
+    signaler('format illisible', '');
+    throw new Error('Le format de cette vidéo n’est pas reconnu (« ' + fichierChoisi.name + ' »). Essayez avec Chrome sur un ordinateur ; si le problème continue, envoyez-moi le nom de l’appareil qui l’a filmée.');
+  }
+  // Journal du tableau de bord (« Erreurs réelles du site ») : détails utiles pour comprendre
+  // pourquoi une vidéo ne passe pas (format, taille, appareil).
+  function signaler(quoi, detail) {
+    if (!window.signalerErreur || !fichierChoisi) return;
+    window.signalerErreur('Vidéo de l’accueil : ' + quoi, (detail || '') + ' — « ' + fichierChoisi.name + ' », ' + mo(fichierChoisi.size) + ', ' + (fichierChoisi.type || 'type inconnu') + (infosChoisies ? ', ' + infosChoisies.largeur + '×' + infosChoisies.hauteur + ', ' + Math.round(infosChoisies.duree) + ' s' + (infosChoisies.codec ? ', ' + infosChoisies.codec : '') : ''), navigator.userAgent);
   }
 
   // L'original peut-il être envoyé tel quel (s'il est déjà plus léger que la version
@@ -127,44 +149,90 @@
       document.head.appendChild(s);
     });
   }
+  // Résultat : un File, avec .sansSon = true si le son n'a pas pu être gardé, .tel = true si
+  // l'image a été recopiée sans recompression (format que ce navigateur ne sait pas décoder).
   async function compresserMediabunny(fichier, progression) {
     if (typeof VideoEncoder === 'undefined' || typeof VideoDecoder === 'undefined') return null;
     var MB = await chargerMediabunny();
     var entree = new MB.Input({ source: new MB.BlobSource(fichier), formats: MB.ALL_FORMATS });
     var piste = await entree.getPrimaryVideoTrack();
-    if (!piste || !(await piste.canDecode())) return null;
+    if (!piste) throw new Error('aucune image dans ce fichier');
     var l = piste.displayWidth, h = piste.displayHeight;
     if (!Z.tousFormats && l / h < 1.25) throw new Error('Cette vidéo est verticale (' + l + ' × ' + h + ') : ' + Z.nomZone + ' n’accepte que les vidéos horizontales, filmées téléphone couché.');
-    var echelle = Math.min(1, LARGEUR_MAX / cote(l, h));
     var dureeSource = await entree.computeDuration();
-    var debit = debitPour(Math.min(isFinite(dureeSource) ? dureeSource : DUREE_MAX, DUREE_MAX));
+    var fin = Math.min(isFinite(dureeSource) ? dureeSource : DUREE_MAX, DUREE_MAX);
+    if (!(await piste.canDecode())) return recopier(MB, entree, piste, fin, progression);
+    var echelle = Math.min(1, LARGEUR_MAX / cote(l, h));
+    var debit = debitPour(fin);
     l = Math.max(2, Math.round(l * echelle / 2) * 2); h = Math.max(2, Math.round(h * echelle / 2) * 2);
-    var codec = null, liste = ['avc', 'vp9'];
+    var codec = null, liste = ['avc', 'vp9', 'av1'];
     for (var i = 0; i < liste.length && !codec; i++) {
       try { if (await MB.canEncodeVideo(liste[i], { width: l, height: h, bitrate: debit })) codec = liste[i]; } catch (e) {}
     }
-    if (!codec) return null;
+    if (!codec) return recopier(MB, entree, piste, fin, progression);
     var enMp4 = codec === 'avc';
-    var sortie = new MB.Output({
-      format: enMp4 ? new MB.Mp4OutputFormat({ fastStart: 'in-memory' }) : new MB.WebMOutputFormat(),
-      target: new MB.BufferTarget()
-    });
-    var duree = await entree.computeDuration();
+    // Son : AAC si possible, sinon Opus ; si ce navigateur ne sait rien en faire, la vidéo
+    // part sans le son plutôt que d'être refusée (06/10/2026).
+    var audio = { discard: true }, sansSon = false;
+    var pisteSon = Z.son ? await entree.getPrimaryAudioTrack() : null;
+    if (pisteSon) {
+      var codecSon = null, sons = enMp4 ? ['aac', 'opus'] : ['opus'];
+      if (await pisteSon.canDecode()) {
+        for (var k = 0; k < sons.length && !codecSon; k++) {
+          try { if (await MB.canEncodeAudio(sons[k], { numberOfChannels: 2, sampleRate: 48000, bitrate: 128000 })) codecSon = sons[k]; } catch (e) {}
+        }
+      }
+      if (codecSon) audio = { codec: codecSon, numberOfChannels: 2, sampleRate: 48000, bitrate: 128000 };
+      else sansSon = true;
+    }
+    async function essayer(optAudio) {
+      var sortie = new MB.Output({
+        format: enMp4 ? new MB.Mp4OutputFormat({ fastStart: 'in-memory' }) : new MB.WebMOutputFormat(),
+        target: new MB.BufferTarget()
+      });
+      var conversion = await MB.Conversion.init({
+        input: entree, output: sortie, tracks: 'primary',
+        video: { width: l, height: h, fit: 'contain', codec: codec, bitrate: debit, frameRate: 30, forceTranscode: true },
+        audio: optAudio,
+        trim: { start: 0, end: fin }
+      });
+      return { sortie: sortie, conversion: conversion };
+    }
+    var essai = await essayer(audio);
+    if (!essai.conversion.isValid && !audio.discard) { essai = await essayer({ discard: true }); sansSon = true; }
+    if (!essai.conversion.isValid) return recopier(MB, entree, piste, fin, progression);
+    if (pisteSon && essai.conversion.discardedTracks.some(function (d) { return d.track && d.track.type === 'audio'; })) sansSon = true;
+    essai.conversion.onProgress = function (p) { progression(Math.min(1, p)); };
+    await essai.conversion.execute();
+    var octets = essai.sortie.target.buffer;
+    if (!octets || !octets.byteLength) return null;
+    var resultat = new File([octets], Z.cle + '.' + (enMp4 ? 'mp4' : 'webm'), { type: enMp4 ? 'video/mp4' : 'video/webm' });
+    resultat.sansSon = sansSon;
+    return resultat;
+  }
+
+  // Secours : ce navigateur ne sait pas décoder l'image (ex. HEVC sur certains ordinateurs) —
+  // les images sont recopiées telles quelles dans un MP4 (aucune perte, aucun calcul), le son
+  // aussi s'il est en AAC/Opus. Le fichier reste lourd : il doit tenir dans la limite d'envoi.
+  async function recopier(MB, entree, piste, fin, progression) {
+    if (['avc', 'hevc', 'vp9', 'av1'].indexOf(piste.codec) === -1) throw new Error('format d’image « ' + piste.codec + ' » non pris en charge');
+    var sortie = new MB.Output({ format: new MB.Mp4OutputFormat({ fastStart: 'in-memory' }), target: new MB.BufferTarget() });
+    var pisteSon = Z.son ? await entree.getPrimaryAudioTrack() : null;
+    var gardeSon = !!(pisteSon && ['aac', 'opus'].indexOf(pisteSon.codec) !== -1);
     var conversion = await MB.Conversion.init({
       input: entree, output: sortie, tracks: 'primary',
-      video: { width: l, height: h, fit: 'contain', codec: codec, bitrate: debit, frameRate: 30, forceTranscode: true },
-      audio: Z.son ? { numberOfChannels: 2 } : { discard: true },
-      trim: { start: 0, end: Math.min(isFinite(duree) ? duree : DUREE_MAX, DUREE_MAX) }
+      video: {}, audio: gardeSon ? {} : { discard: true },
+      trim: (await entree.computeDuration()) > fin + 0.5 ? { start: 0, end: fin } : undefined
     });
-    if (!conversion.isValid) return null;
-    // Le son ne doit jamais disparaître de la vidéo de l'accueil.
-    if (Z.son && conversion.discardedTracks.some(function (d) { return d.track && d.track.type === 'audio'; })) return null;
+    if (!conversion.isValid) throw new Error('recopie impossible : ' + conversion.discardedTracks.map(function (d) { return d.reason; }).join(', '));
     conversion.onProgress = function (p) { progression(Math.min(1, p)); };
     await conversion.execute();
     var octets = sortie.target.buffer;
     if (!octets || !octets.byteLength) return null;
-    var type = enMp4 ? 'video/mp4' : 'video/webm';
-    return new File([octets], Z.cle + '.' + (enMp4 ? 'mp4' : 'webm'), { type: type });
+    var resultat = new File([octets], Z.cle + '.mp4', { type: 'video/mp4' });
+    resultat.sansSon = !!pisteSon && !gardeSon;
+    resultat.tel = true;
+    return resultat;
   }
 
   async function compresser(fichier, progression) {
@@ -173,7 +241,8 @@
       if (propre) return propre;
     } catch (e) {
       if (/verticale/.test((e && e.message) || '')) throw e;
-      if (window.signalerErreur) window.signalerErreur('Vidéo du site (' + Z.cle + ') : compression Mediabunny impossible', (e && e.message) || String(e), mo(fichier.size) + ', ' + (fichier.type || '?'));
+      signaler('compression impossible', (e && e.message) || String(e));
+      if (Z.son) throw new Error('Ce navigateur n’arrive pas à préparer cette vidéo (' + ((e && e.message) || 'erreur inconnue') + '). Essayez avec Chrome sur un ordinateur.');
     }
     // Secours sans son : inutilisable pour la vidéo de l'accueil (l'original sera envoyé
     // s'il est assez léger).
@@ -232,7 +301,14 @@
       // large qui va d'un bord à l'autre de l'écran ; une vidéo verticale ou carrée y serait
       // coupée en haut et en bas au point de ne plus rien montrer d'utile.
       // (vidéo de l'accueil : verticale acceptée, la taille se mesure alors sur le plus grand côté)
-      if (infosChoisies.largeur && cote(infosChoisies.largeur, infosChoisies.hauteur) < LARGEUR_MIN && (Z.tousFormats || infosChoisies.largeur / infosChoisies.hauteur >= 1.25)) {
+      var petite = infosChoisies.largeur && cote(infosChoisies.largeur, infosChoisies.hauteur) < LARGEUR_MIN;
+      if (petite && Z.tousFormats) {
+        // vidéo de l'accueil : toutes les vidéos sont acceptées (06/10/2026), avec un conseil
+        afficherInfos(); $('publier-btn').disabled = false;
+        message('Attention : cette vidéo est petite (' + infosChoisies.largeur + ' × ' + infosChoisies.hauteur + '), elle risque d’être un peu floue en grand. Si vous avez la version d’origine filmée en HD, préférez-la.');
+        return;
+      }
+      if (petite && infosChoisies.largeur / infosChoisies.hauteur >= 1.25) {
         message('Cette vidéo est trop petite (' + infosChoisies.largeur + ' × ' + infosChoisies.hauteur + ') : sur le site, elle serait floue. Choisissez la vidéo d’origine filmée en HD (1280 × 720 ou plus), pas une copie reçue par WhatsApp ou téléchargée d’un réseau social.', true);
         $('fichier').value = ''; fichierChoisi = null; infosChoisies = null;
         return;
@@ -261,10 +337,16 @@
       var compressee = await compresser(fichierChoisi, function (p) { barre(p); message('Compression en cours… ' + Math.round(p * 100) + ' % — gardez cette page ouverte.'); });
       var originalOk = originalUtilisable(fichierChoisi, infosChoisies);
       if (!compressee) {
-        if (!originalOk || fichierChoisi.size > LIMITE_SANS_COMPRESSION) throw new Error('La compression n’est pas possible sur ce navigateur. Essayez avec Chrome (ordinateur ou téléphone Android).');
+        if (!originalOk || fichierChoisi.size > (Z.son ? LIMITE_FINALE_ZONE : LIMITE_SANS_COMPRESSION)) { signaler('aucune compression possible', ''); throw new Error('La compression n’est pas possible sur ce navigateur. Essayez avec Chrome sur un ordinateur.'); }
       } else if (!(originalOk && fichierChoisi.size <= compressee.size)) envoi = compressee;
-      if (envoi.size > LIMITE_FINALE_ZONE) throw new Error('Même compressée, la vidéo fait ' + mo(envoi.size) + ' (maximum ' + mo(LIMITE_FINALE_ZONE) + '). Choisissez une vidéo plus courte.');
+      if (envoi.size > LIMITE_FINALE_ZONE) {
+        signaler('trop lourde après préparation', mo(envoi.size) + (compressee && compressee.tel ? ' (recopiée sans compression)' : ''));
+        throw new Error(compressee && compressee.tel
+          ? 'Ce navigateur ne sait pas compresser ce format de vidéo, et elle est trop lourde pour partir telle quelle (' + mo(envoi.size) + '). Ouvrez le tableau de bord dans Chrome sur un ordinateur récent et réessayez : la compression y fonctionne.'
+          : 'Même compressée, la vidéo fait ' + mo(envoi.size) + ' (maximum ' + mo(LIMITE_FINALE_ZONE) + ').');
+      }
       await envoyerFichier(envoi);
+      if (envoi.sansSon) message(Z.succes + ' Remarque : ce navigateur n’a pas pu garder le son de cette vidéo. Pour l’avoir avec le son, renvoyez-la depuis Chrome sur un ordinateur.');
     } catch (e) {
       message(e.message || 'L’envoi a échoué — réessayez.', true);
       bouton.disabled = false;
