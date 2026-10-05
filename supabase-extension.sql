@@ -6005,3 +6005,83 @@ create trigger trg_numeroter_photo
   for each row execute function numeroter_photo();
 
 NOTIFY pgrst, 'reload schema';
+
+-- =====================================================================
+-- Extension 118 — Adresses lisibles des fiches (demande de la propriétaire,
+-- 06/10/2026) : …/book/roxane-ouattara au lieu de …/mannequin?id=077ac8a8-….
+--  1) colonne slug : le nom d'adresse de chaque mannequin, unique, fabriqué
+--     à partir de son nom (accents retirés, tirets), « -2 », « -3 »… en cas
+--     d'homonyme ; il ne change plus ensuite (les liens partagés restent bons),
+--     seul un admin peut le modifier ;
+--  2) lisible par les visiteurs (comme le nom) ;
+--  3) rattrapage des mannequins déjà inscrites (déclencheur de protection du
+--     profil suspendu le temps de cette seule mise à jour, comme l'Extension 115).
+-- Les anciennes adresses avec le numéro continuent de fonctionner.
+-- =====================================================================
+alter table model_profiles add column if not exists slug text;
+create unique index if not exists model_profiles_slug_unique on model_profiles (slug);
+
+create or replace function slug_depuis_nom(nom text)
+returns text
+language sql immutable
+as $$
+  select trim(both '-' from regexp_replace(
+    translate(lower(coalesce(nom, '')),
+      'àâäáãåçéèêëíìîïñóòôöõúùûüýÿœæ’''',
+      'aaaaaaceeeeiiiinooooouuuuyyoa--'),
+    '[^a-z0-9]+', '-', 'g'));
+$$;
+
+create or replace function attribuer_slug_mannequin()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  base text;
+  candidat text;
+  n int := 1;
+begin
+  -- Seuls un admin ou le serveur choisissent un nom d'adresse ; une mannequin ne
+  -- peut ni le choisir ni le changer (il est fabriqué à partir de son nom, puis fixe).
+  if auth.uid() is not null and not exists (select 1 from admins where user_id = auth.uid()) then
+    if TG_OP = 'INSERT' then NEW.slug := null; else NEW.slug := OLD.slug; end if;
+  elsif NEW.slug is not null then
+    NEW.slug := left(slug_depuis_nom(NEW.slug), 60);  -- toujours au bon format
+  end if;
+  if (NEW.slug is null or NEW.slug = '') and coalesce(trim(NEW.full_name), '') <> '' then
+    base := left(slug_depuis_nom(NEW.full_name), 60);
+    if base = '' then return NEW; end if;
+    candidat := base;
+    while exists (select 1 from model_profiles where slug = candidat and id <> NEW.id) loop
+      n := n + 1;
+      candidat := base || '-' || n;
+    end loop;
+    NEW.slug := candidat;
+  end if;
+  return NEW;
+end;
+$$;
+
+drop trigger if exists trg_attribuer_slug_mannequin on model_profiles;
+create trigger trg_attribuer_slug_mannequin
+  before insert or update on model_profiles
+  for each row execute function attribuer_slug_mannequin();
+
+grant select (slug) on model_profiles to anon;
+
+begin;
+alter table model_profiles disable trigger trg_proteger_proprietaire_profil;
+-- une ligne à la fois, dans l'ordre d'inscription : la plus ancienne garde le nom sans numéro
+do $$
+declare r record;
+begin
+  for r in select id from model_profiles where slug is null and coalesce(trim(full_name), '') <> '' order by created_at, id loop
+    update model_profiles set slug = null where id = r.id;
+  end loop;
+end $$;
+alter table model_profiles enable trigger trg_proteger_proprietaire_profil;
+commit;
+
+NOTIFY pgrst, 'reload schema';

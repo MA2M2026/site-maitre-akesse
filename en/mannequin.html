@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-khzuBmPdB5gTEjxNRdn+3dnvUlDQr/3PEefuL2nxDpQ='; style-src 'self' https://fonts.googleapis.com 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-xF+6UOq7BZCnDYaDOM3heXwJQsUVTLbczKURuJjkSFE='; style-src 'self' https://fonts.googleapis.com 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
+<!-- Adresse lisible …/book/nom (06/10/2026) : la page peut être servie depuis /book/… ; ses fichiers se chargent toujours depuis la racine du site (voir js/adresse-fiche.js). -->
+<base href="/en/">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -163,6 +165,7 @@ setTimeout(() => {
 <script defer src="../js/confort.js"></script>
 <script defer src="../js/menu.js"></script>
 <script defer src="../js/selection.js"></script>
+<script defer src="../js/adresse-fiche.js"></script>
 <script>
 const ICONES_MENSURATIONS = {
   age: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="3" y="4" width="14" height="13" rx="1"/><line x1="3" y1="8" x2="17" y2="8"/><line x1="7" y1="2.5" x2="7" y2="5.5"/><line x1="13" y1="2.5" x2="13" y2="5.5"/></svg>',
@@ -578,8 +581,7 @@ async function chargerProfil() {
 }
 
 async function chargerProfilInterne() {
-  const params = new URLSearchParams(window.location.search);
-  const id = params.get('id');
+  const id = await window.ma2mIdFiche();
   const contenu = document.getElementById('contenu');
   const galerie = document.getElementById('galerie');
 
@@ -596,8 +598,10 @@ async function chargerProfilInterne() {
     .single();
 
   if (error || !profil) { contenu.textContent = 'This profile is not available.'; return; }
+  const slug = await window.ma2mAdresseFiche(id, true);
+  if (lienLangue && slug) lienLangue.href = '../book/' + slug;
 
-  const urlActuelle = 'https://www.maitreakessemodelmanagement.com/en/mannequin?id=' + id;
+  const urlActuelle = 'https://www.maitreakessemodelmanagement.com/en' + (slug ? '/book/' + slug : '/mannequin?id=' + id);
   const titrePage = (profil.full_name || 'Model') + ' — Maître Akesse Model Management';
   const descriptionPage = [profil.full_name, profil.city, profil.height_cm ? profil.height_cm + ' cm' : null].filter(Boolean).join(' · ') + ' — Full book on the Maître Akesse Model Management agency website.';
   document.title = titrePage;

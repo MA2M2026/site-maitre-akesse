@@ -1452,3 +1452,28 @@ toutes les écritures sont simulées pendant l'enregistrement.
   telle quelle (60 Mo maximum, comme avant).
 - Formulaire FR/EN : jauges « Photos » et « Vidéo » qui se remplissent pendant l'envoi,
   image d'aperçu de la vidéo, photos agrandies au toucher (`css/jauges-envoi.css`).
+
+## 🤖 Tri des photos par IA, revue des books, adresses lisibles (05–06/10/2026)
+
+- **Tri à l'envoi** (`api/trier-photo.js`, Claude Opus 5.5, clé `ANTHROPIC_API_KEY`
+  sur Vercel, crédit prépayé Anthropic) : chaque nouvelle photo est classée `book`
+  ou `digital` (rubrique « Digitals & Lifestyle » de la fiche) ; une photo
+  clairement inutilisable (certitude ≥ 0,8) est supprimée ; en cas de doute
+  `a_verifier`. Colonnes `tri_*` de `model_photos` (Extension 116).
+- **Revue des books** (`api/_revue-book.js`, appelée par `api/trier-photo.js` avec
+  `action: 'revue'` — fichier préfixé `_` car l'offre Vercel limite le nombre de
+  fonctions) : l'IA voit tout le book d'un mannequin (images 560 px envoyées par le
+  tableau de bord), classe les photos, **propose** les suppressions (jamais de
+  suppression sans le clic de l'agence), rédige un rapport, une fiche technique et
+  un message WhatsApp (table `revues_book`, Extension 117). Consignes de l'agence :
+  défilés, shootings professionnels et campagnes toujours gardés.
+- **Numéro fixe des photos** (`model_photos.numero`, Extension 117) : affiché dans
+  l'Espace mannequin et cité dans les rapports.
+- **Adresses lisibles** (Extension 118, colonne `model_profiles.slug`) :
+  `/book/nom-du-mannequin` et `/en/book/…`. `middleware.js` retrouve le mannequin et
+  sert `mannequin.html` à cette adresse (en-tête `x-middleware-rewrite`) ; aperçus
+  WhatsApp/Facebook inchangés. La fiche a un `<base href="/">` (`/en/` en anglais)
+  pour charger ses fichiers depuis n'importe quelle adresse ; `js/adresse-fiche.js`
+  lit le nom d'adresse, garde les liens « # » dans la page et affiche la jolie
+  adresse dans la barre du navigateur. Les anciennes adresses `?id=` restent valables.
+- **Fonction partagée** `convertirSiHeic` dans `js/app.js` (remplace 14 copies).

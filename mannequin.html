@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-tP+Zvd5ntKQiMQWI+MkueRtfTnJgwftN1pr8Yo+O7KA='; style-src 'self' https://fonts.googleapis.com 'sha256-7qzTX2fbWhcoN8NR8B0qP2PjgfCnkK2/b2LeciSYanY=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-CEbNXBpvEDNZeJHYVAsjWFv+qCLutSaUZpFPfx840Ys='; style-src 'self' https://fonts.googleapis.com 'sha256-7qzTX2fbWhcoN8NR8B0qP2PjgfCnkK2/b2LeciSYanY=';">
+<!-- Adresse lisible …/book/nom (06/10/2026) : la page peut être servie depuis /book/… ; ses fichiers se chargent toujours depuis la racine du site (voir js/adresse-fiche.js). -->
+<base href="/">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -172,6 +174,7 @@ setTimeout(() => {
 <script defer src="js/confort.js"></script>
 <script defer src="js/menu.js"></script>
 <script defer src="js/selection.js"></script>
+<script defer src="js/adresse-fiche.js"></script>
 <script>
 // Petites icônes ligne (SVG, currentColor) affichées à côté de chaque mensuration
 // sur la fiche — purement décoratif, aucune donnée, pas besoin d'échappement.
@@ -252,8 +255,7 @@ async function chargerProfil() {
 }
 
 async function chargerProfilInterne() {
-  const params = new URLSearchParams(window.location.search);
-  const id = params.get('id');
+  const id = await window.ma2mIdFiche();
   const contenu = document.getElementById('contenu');
   const galerie = document.getElementById('galerie');
 
@@ -270,12 +272,14 @@ async function chargerProfilInterne() {
     .single();
 
   if (error || !profil) { contenu.textContent = 'Ce profil n\'est pas disponible.'; return; }
+  const slug = await window.ma2mAdresseFiche(id, false);
+  if (lienLangue && slug) lienLangue.href = 'en/book/' + slug;
 
   // Référencement : personnalise le titre, la description et l'URL canonique de la
   // page une fois le profil connu — utile pour Google (qui exécute le JavaScript)
   // et pour l'onglet du navigateur ; les aperçus de partage (WhatsApp/Facebook, qui
   // n'exécutent pas le JavaScript) restent sur les balises génériques ci-dessous.
-  const urlActuelle = 'https://www.maitreakessemodelmanagement.com/mannequin?id=' + id;
+  const urlActuelle = 'https://www.maitreakessemodelmanagement.com' + (slug ? '/book/' + slug : '/mannequin?id=' + id);
   const titrePage = (profil.full_name || 'Mannequin') + ' — Maître Akesse Model Management';
   const descriptionPage = [profil.full_name, profil.city, profil.height_cm ? profil.height_cm + ' cm' : null].filter(Boolean).join(' · ') + ' — Book complet sur le site de l\'agence Maître Akesse Model Management.';
   document.title = titrePage;

@@ -139,8 +139,8 @@
   // (où les photos portent leur numéro). Liens https simples : WhatsApp les rend
   // cliquables et ils s'ouvrent directement sur iPhone comme sur Android.
   var SITE = 'https://www.maitreakessemodelmanagement.com';
-  function avecLiens(message, modelId, publie) {
-    var liens = (publie ? '\n\n📸 Votre book en ligne : ' + SITE + '/mannequin?id=' + modelId : '') +
+  function avecLiens(message, modelId, publie, slug) {
+    var liens = (publie ? '\n\n📸 Votre book en ligne : ' + SITE + (slug ? '/book/' + encodeURIComponent(slug) : '/mannequin?id=' + modelId) : '') +
       '\n\n🔐 Votre Espace mannequin (photos numérotées, envoi des nouvelles photos) : ' + SITE + '/espace-mannequin';
     return String(message).trim() + liens;
   }
@@ -158,6 +158,11 @@
     var publies = {};
     var pr = await sb.from('model_profiles').select('id, full_name, published').in('id', ids);
     (pr.data || []).forEach(function (m) { noms[m.id] = m.full_name || 'Mannequin'; publies[m.id] = !!m.published; });
+    // Nom d'adresse lisible (…/book/nom, Extension 118) — requête à part : sans la
+    // colonne (SQL pas encore exécuté), le reste fonctionne avec l'ancienne adresse.
+    var slugs = {};
+    var sl = await sb.from('model_profiles').select('id, slug').in('id', ids);
+    (sl.data || []).forEach(function (m) { if (m.slug) slugs[m.id] = m.slug; });
     var tel = await sb.rpc('contacts_mannequins_admin');
     telephones = {}; (tel.data || []).forEach(function (t) { telephones[t.model_id] = t.phone; });
     rapports = {};
@@ -175,7 +180,7 @@
         }).join('') + '</ol>' : '<p>—</p>') +
         '<h5>Règles pour toutes les photos</h5>' + listeHtml(rp.regles) +
         '<h5>Message pour le mannequin (vous pouvez le modifier avant l’envoi)</h5>' +
-        '<textarea class="tri-message" rows="12" data-model="' + echapper(l.model_id) + '">' + echapper(avecLiens(rp.message_mannequin || '', l.model_id, publies[l.model_id])) + '</textarea>' +
+        '<textarea class="tri-message" rows="12" data-model="' + echapper(l.model_id) + '">' + echapper(avecLiens(rp.message_mannequin || '', l.model_id, publies[l.model_id], slugs[l.model_id])) + '</textarea>' +
         '<div class="tri-actions">' +
           (wa ? '<button class="btn tri-btn" type="button" data-statut="envoyer-wa" data-model="' + echapper(l.model_id) + '">💬 Envoyer par WhatsApp</button>' : '<span class="tdb-9">Pas de numéro de téléphone pour ce mannequin.</span>') +
           '<button class="btn tri-btn" type="button" data-statut="copier-message" data-model="' + echapper(l.model_id) + '">Copier le message</button>' +
