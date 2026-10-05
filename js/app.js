@@ -169,19 +169,38 @@ function echapperHtml(texte) {
     .replace(/'/g, '&#39;');
 }
 
-// Niveau New Face / Amateur / Professionnel, déduit de years_experience :
-// sert de valeur par défaut suggérée (espace-mannequin.html pré-remplit son
-// champ "Catégorie" avec ce résultat la première fois, mais la mannequin
-// peut ensuite choisir directement) et reste la seule règle utilisée par
-// mannequin.html (fiche publique, où le champ n'existe pas) et par
-// espace-mannequin-ancien.html (figé). Règle : 0 an ou vide -> New Face ;
-// 1-2 ans -> Amateur ; 3 ans et plus -> Professionnel.
+// Niveau des mannequins (décision de la propriétaire, 06/10/2026) : DEUX niveaux seulement,
+// « New Face » et « Professionnel » (le mot « Amateur » n'est plus utilisé ; une ancienne
+// valeur « Amateur » compte comme New Face). Sur le site public, la compcard et le CV,
+// « Professionnel » s'affiche « Main Board », comme dans les grandes agences.
+// Règle d'ancienneté : de 0 à 2 ans → New Face ; plus de 2 ans → Professionnel.
 function deriverNiveauMannequin(anneesExperience) {
   const annees = anneesExperience === '' || anneesExperience === null || anneesExperience === undefined
     ? NaN : parseInt(anneesExperience, 10);
-  if (isNaN(annees) || annees === 0) return 'New Face';
-  if (annees <= 2) return 'Amateur';
-  return 'Professionnel';
+  return !isNaN(annees) && annees > 2 ? 'Professionnel' : 'New Face';
+}
+// Niveau à utiliser pour un profil : la valeur enregistrée (Amateur → New Face), sinon la
+// règle d'ancienneté.
+function niveauNormalise(stocke, anneesExperience) {
+  if (stocke === 'Professionnel') return 'Professionnel';
+  if (stocke === 'New Face' || stocke === 'Amateur') return 'New Face';
+  return deriverNiveauMannequin(anneesExperience);
+}
+function libelleNiveauPublic(niveau) { return niveau === 'Professionnel' ? 'Main Board' : 'New Face'; }
+// Années couvertes par les expériences saisies (de la plus ancienne année à aujourd'hui).
+function anneesDepuisPremiereExperience(experiences) {
+  const annees = (experiences || []).map(function (e) { const m = String((e && e.annee) || '').match(/(19|20)\d{2}/); return m ? parseInt(m[0], 10) : NaN; })
+    .filter(function (a) { return !isNaN(a) && a <= new Date().getFullYear(); });
+  return annees.length ? new Date().getFullYear() - Math.min.apply(null, annees) : 0;
+}
+// Contrôle en coulisses : « Professionnel » coché n'est gardé que si le parcours le justifie
+// (plus de 2 ans entre la première expérience et aujourd'hui, ou ancienneté déjà déclarée
+// de plus de 2 ans) ; sinon la mannequin reste New Face, même avec dix expériences la même
+// année.
+function niveauControle(choix, experiences, anneesExperience) {
+  if (choix !== 'Professionnel') return 'New Face';
+  const annees = Math.max(anneesDepuisPremiereExperience(experiences), parseInt(anneesExperience, 10) || 0);
+  return annees > 2 ? 'Professionnel' : 'New Face';
 }
 
 // ================== CV mannequin ("Model CV") ==================
@@ -304,7 +323,7 @@ function construireHtmlCv(d) {
         '<li>' + mcvIcon('home') + '<div><span class="k">Ville de résidence</span><span class="v">' + echapperHtml([d.ville, d.quartier].filter(Boolean).join(', ') || '—') + '</span></div></li>' +
         '<li>' + mcvIcon('phone') + '<div><span class="k">Contact agence</span><span class="v">+225 27 22 23 11 76<br>+225 05 45 65 66 87<br>infos.ma2m@gmail.com</span></div></li>' +
       '</ul>' +
-      '<div class="mcv-cat"><span class="lbl">Catégorie</span><span class="val">' + echapperHtml(d.niveauMannequin || '') + '</span></div>' +
+      '<div class="mcv-cat"><span class="lbl">Catégorie</span><span class="val">' + echapperHtml(d.niveauMannequin ? libelleNiveauPublic(d.niveauMannequin) : '') + '</span></div>' +
       (d.citation ? '<blockquote class="mcv-quote">« ' + echapperHtml(d.citation) + ' »</blockquote>' : '') +
       '<div class="mcv-agency"><img src="assets/logo-header.png" alt="Maître Akesse Model Management"></div>' +
     '</aside><div class="mcv-right"><div class="mcv-main"><div class="mcv-topline">Model CV</div>' +
@@ -629,10 +648,10 @@ async function construireCanvasCompcard(ficheData) {
   ctx.font = `bold ${fpx(27)}px Arial, sans-serif`;
   ctx.fillText((profil.full_name || 'Mannequin').toUpperCase(), px(15), px(y));
   y += 9;
-  const niveauMannequin = profil.niveau_mannequin || deriverNiveauMannequin(profil.years_experience);
+  const niveauMannequin = libelleNiveauPublic(niveauNormalise(profil.niveau_mannequin, profil.years_experience));
   ctx.fillStyle = ROUGECLAIR;
   ctx.font = `${fpx(13)}px Arial, sans-serif`;
-  ctx.fillText(['Mannequin', niveauMannequin, profil.city].filter(Boolean).join(' '), px(15), px(y));
+  ctx.fillText([niveauMannequin, profil.city].filter(Boolean).join(' · '), px(15), px(y));
 
   // --- Mensurations (grille 3 colonnes) ---
   y += 11;
@@ -1004,7 +1023,7 @@ async function construireCanvasCv(d) {
     y += 5;
     ctx.fillStyle = IVOIRE;
     ctx.font = `500 ${fpx(11)}px Jost, sans-serif`;
-    ctx.fillText(d.niveauMannequin || '—', px(PAD_SIDEBAR), px(y));
+    ctx.fillText(d.niveauMannequin ? libelleNiveauPublic(d.niveauMannequin) : '—', px(PAD_SIDEBAR), px(y));
 
     if (d.citation) {
       y += 6;

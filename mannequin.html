@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-fOa2v5llsBnWBdv38ZJ5OM0fxXlredazST6EnKcOQoI='; style-src 'self' https://fonts.googleapis.com 'sha256-7qzTX2fbWhcoN8NR8B0qP2PjgfCnkK2/b2LeciSYanY=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-fNfbAWzd6Eg2HV/rUa2t27gNFSKPHU8b4sZ1TNqV534='; style-src 'self' https://fonts.googleapis.com 'sha256-7qzTX2fbWhcoN8NR8B0qP2PjgfCnkK2/b2LeciSYanY=';">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -351,12 +351,11 @@ async function chargerProfilInterne() {
         : `<a href="${echapperHtml(urlVideoSure)}" target="_blank" rel="noopener" class="mq-6">▶ Voir la vidéo de présentation</a>`}
     </section>` : '';
 
-  const blocProfil = (profil.bio || profil.years_experience || (profil.model_types && profil.model_types.length) || profil.languages || profil.availability) ? `
+  const blocProfil = (profil.bio || (profil.model_types && profil.model_types.length) || profil.languages || profil.availability) ? `
     <section class="fiche-carte fiche-ancre" id="fiche-apropos">
       <h3 class="fiche-carte-titre">À propos</h3>
       ${profil.bio ? `<p class="mannequin-bio fiche-bio">${echapperHtml(profil.bio)}</p>` : ''}
       <ul class="fiche-infos">
-        ${profil.years_experience ? `<li><span class="fiche-ico"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg></span>${profil.years_experience} an${profil.years_experience > 1 ? 's' : ''} d'expérience</li>` : ''}
         ${profil.availability && libellesDispo[profil.availability] ? `<li><span class="fiche-ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span>${libellesDispo[profil.availability]}</li>` : ''}
         ${profil.languages ? `<li><span class="fiche-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></span>Langues : ${echapperHtml(profil.languages)}</li>` : ''}
       </ul>
@@ -374,7 +373,7 @@ async function chargerProfilInterne() {
         <div class="profil-hero-contenu">
           <div class="eyebrow eyebrow--clair">${profil.category === 'homme' ? 'Homme' : profil.category === 'femme' ? 'Femme' : 'New Face'}</div>
           <h1>${echapperHtml(profil.full_name || 'Mannequin')}</h1>
-          <p>${echapperHtml(['Mannequin ' + (profil.niveau_mannequin || deriverNiveauMannequin(profil.years_experience)), profil.city].filter(Boolean).join(' · '))}</p>
+          <p>${echapperHtml([libelleNiveauPublic(niveauNormalise(profil.niveau_mannequin, profil.years_experience)), profil.city].filter(Boolean).join(' · '))}</p>
         </div>
       </div>
       <div class="fiche-entete">

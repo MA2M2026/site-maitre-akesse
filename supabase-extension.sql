@@ -5826,3 +5826,18 @@ grant execute on function ages_mannequins(uuid[]) to anon, authenticated;
 revoke select (date_naissance) on model_profiles from anon;
 
 NOTIFY pgrst, 'reload schema';
+
+-- =====================================================================
+-- Extension 115 — Niveau des mannequins en deux catégories (décision de la
+-- propriétaire, 06/10/2026) : « New Face » et « Professionnel » (affiché
+-- « Main Board » sur le site public, la compcard et le CV). Le mot
+-- « Amateur » n'est plus utilisé. Reclassement des mannequins déjà
+-- inscrites selon les années d'expérience qu'elles avaient déclarées :
+-- de 0 à 2 ans (ou non renseigné) → New Face ; plus de 2 ans → Professionnel.
+-- Les nouvelles inscrites cochent leur niveau ; le site le contrôle ensuite
+-- (« Professionnel » seulement avec plus de 2 ans d'expériences).
+-- =====================================================================
+update model_profiles
+set niveau_mannequin = case when coalesce(years_experience, 0) > 2 then 'Professionnel' else 'New Face' end;
+
+NOTIFY pgrst, 'reload schema';

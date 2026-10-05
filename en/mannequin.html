@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-po1BeDt0o/6oFY9RILBOEKKKAZmCGQLcfh3vBt0Fu+o='; style-src 'self' https://fonts.googleapis.com 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-jHL8Ios/g30o5HEIxdaRzmcQXrA8BtT2TeWN4Ih/I6s='; style-src 'self' https://fonts.googleapis.com 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -415,7 +415,7 @@ async function construireCanvasCompcardEn() {
   ctx.font = `bold ${fpx(27)}px Arial, sans-serif`;
   ctx.fillText((profil.full_name || 'Model').toUpperCase(), px(15), px(y));
   y += 9;
-  const libelleCat = profil.category === 'homme' ? 'Man' : profil.category === 'femme' ? 'Woman' : 'New Face';
+  const libelleCat = libelleNiveauPublic(niveauNormalise(profil.niveau_mannequin, profil.years_experience)); // New Face / Main Board (06/10/2026)
   ctx.fillStyle = ROUGECLAIR;
   ctx.font = `${fpx(13)}px Arial, sans-serif`;
   ctx.fillText([libelleCat, profil.city].filter(Boolean).join('  ·  '), px(15), px(y));
@@ -647,12 +647,11 @@ async function chargerProfilInterne() {
         : `<a href="${echapperHtml(urlVideoSure)}" target="_blank" rel="noopener" class="enmq-6">▶ Watch Introduction Video</a>`}
     </section>` : '';
 
-  const blocProfil = (profil.bio || profil.years_experience || (profil.model_types && profil.model_types.length) || profil.languages || profil.availability) ? `
+  const blocProfil = (profil.bio || (profil.model_types && profil.model_types.length) || profil.languages || profil.availability) ? `
     <section class="fiche-carte fiche-ancre" id="fiche-apropos">
       <h3 class="fiche-carte-titre">About</h3>
       ${profil.bio ? `<p class="mannequin-bio fiche-bio">${echapperHtml(profil.bio)}</p>` : ''}
       <ul class="fiche-infos">
-        ${profil.years_experience ? `<li><span class="fiche-ico"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg></span>${profil.years_experience} year${profil.years_experience > 1 ? 's' : ''} of experience</li>` : ''}
         ${profil.availability && libellesDispo[profil.availability] ? `<li><span class="fiche-ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span>${libellesDispo[profil.availability]}</li>` : ''}
         ${profil.languages ? `<li><span class="fiche-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></span>Languages: ${echapperHtml(profil.languages)}</li>` : ''}
       </ul>
@@ -670,7 +669,7 @@ async function chargerProfilInterne() {
         <div class="profil-hero-contenu">
           <div class="eyebrow eyebrow--clair">${profil.category === 'homme' ? 'Man' : profil.category === 'femme' ? 'Woman' : 'New Face'}</div>
           <h1>${echapperHtml(profil.full_name || 'Model')}</h1>
-          <p>${echapperHtml([(profil.niveau_mannequin || deriverNiveauMannequin(profil.years_experience)) === 'Professionnel' ? 'Professional Model' : (profil.niveau_mannequin || deriverNiveauMannequin(profil.years_experience)) + ' Model', profil.city].filter(Boolean).join(' · '))}</p>
+          <p>${echapperHtml([libelleNiveauPublic(niveauNormalise(profil.niveau_mannequin, profil.years_experience)), profil.city].filter(Boolean).join(' · '))}</p>
         </div>
       </div>
       <div class="fiche-entete">
