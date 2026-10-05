@@ -10,8 +10,12 @@
 
   // Toutes les vidéos sont compressées automatiquement (demande de la propriétaire,
   // 05/10/2026 : site léger, sans case à cocher) : 1280 pixels de large au plus et
-  // 1,2 Mbit/s — environ 4,5 Mo pour 30 secondes, image nette à 30 images/s.
-  var DEBIT = 1200000, LARGEUR_MAX = 1280;
+  // 2,5 Mbit/s — environ 9 Mo pour 30 secondes, image nette à 30 images/s (05/10 : 1,2 Mbit/s
+  // abîmait trop l'image). Une vidéo déjà légère et lisible partout (MP4 H.264, 30 s,
+  // 1920 pixels au plus, 12 Mo au plus) est envoyée TELLE QUELLE, sans perte de qualité.
+  var DEBIT = 2500000, LARGEUR_MAX = 1280;
+  var ORIGINAL_MAX = 12 * 1024 * 1024, ORIGINAL_LARGEUR_MAX = 1920;
+  var LARGEUR_MIN = 854; // en dessous (vidéo réseaux sociaux / WhatsApp), floue en couverture
   var LIMITE_SANS_COMPRESSION = 8 * 1024 * 1024; // seulement si le navigateur ne sait pas compresser
   var LIMITE_FINALE = 15 * 1024 * 1024;   // au-delà, refus (même après compression)
   var DUREE_MAX = 30;
@@ -101,6 +105,7 @@
     var piste = await entree.getPrimaryVideoTrack();
     if (!piste || !(await piste.canDecode())) return null;
     var l = piste.displayWidth, h = piste.displayHeight;
+    if (l / h < 1.25) throw new Error('Cette vidéo est verticale (' + l + ' × ' + h + ') : la couverture n’accepte que les vidéos horizontales, filmées téléphone couché.');
     var echelle = Math.min(1, LARGEUR_MAX / l);
     l = Math.max(2, Math.round(l * echelle / 2) * 2); h = Math.max(2, Math.round(h * echelle / 2) * 2);
     var codec = null, liste = ['avc', 'vp9'];
@@ -134,6 +139,7 @@
       var propre = await compresserMediabunny(fichier, progression);
       if (propre) return propre;
     } catch (e) {
+      if (/verticale/.test((e && e.message) || '')) throw e;
       if (window.signalerErreur) window.signalerErreur('Couverture : compression Mediabunny impossible', (e && e.message) || String(e), mo(fichier.size) + ', ' + (fichier.type || '?'));
     }
     return compresserCanvas(fichier, progression);
@@ -190,6 +196,11 @@
       // Vidéos horizontales seulement (décision du 05/10/2026) : la couverture est une bande
       // large qui va d'un bord à l'autre de l'écran ; une vidéo verticale ou carrée y serait
       // coupée en haut et en bas au point de ne plus rien montrer d'utile.
+      if (infosChoisies.largeur && infosChoisies.largeur < LARGEUR_MIN && infosChoisies.largeur / infosChoisies.hauteur >= 1.25) {
+        message('Cette vidéo est trop petite (' + infosChoisies.largeur + ' × ' + infosChoisies.hauteur + ') : en couverture, elle serait floue. Choisissez la vidéo d’origine filmée en HD (1280 × 720 ou plus), pas une copie reçue par WhatsApp ou téléchargée d’un réseau social.', true);
+        $('couv-fichier').value = ''; fichierChoisi = null; infosChoisies = null;
+        return;
+      }
       if (infosChoisies.largeur && infosChoisies.hauteur && infosChoisies.largeur / infosChoisies.hauteur < 1.25) {
         message('Cette vidéo est ' + (infosChoisies.hauteur > infosChoisies.largeur ? 'verticale' : 'presque carrée') + ' (' + infosChoisies.largeur + ' × ' + infosChoisies.hauteur + '). La couverture n’accepte que les vidéos horizontales : filmez en tenant le téléphone couché (en paysage), puis choisissez cette nouvelle vidéo.', true);
         $('couv-fichier').value = ''; fichierChoisi = null; infosChoisies = null;
@@ -205,6 +216,11 @@
     var bouton = this; bouton.disabled = true; $('couv-animation-btn').disabled = true;
     try {
       var envoi = fichierChoisi;
+      // Déjà légère et lisible partout : envoyée sans recompression (aucune perte).
+      if (await originalSansPerte(fichierChoisi, infosChoisies)) {
+        await envoyerFichier(fichierChoisi);
+        return;
+      }
       message('Compression en cours… gardez cette page ouverte.');
       var compressee = await compresser(fichierChoisi, function (p) { barre(p); message('Compression en cours… ' + Math.round(p * 100) + ' % — gardez cette page ouverte.'); });
       var originalOk = originalUtilisable(fichierChoisi, infosChoisies);
@@ -212,6 +228,16 @@
         if (!originalOk || fichierChoisi.size > LIMITE_SANS_COMPRESSION) throw new Error('La compression n’est pas possible sur ce navigateur. Essayez avec Chrome (ordinateur ou téléphone Android).');
       } else if (!(originalOk && fichierChoisi.size <= compressee.size)) envoi = compressee;
       if (envoi.size > LIMITE_FINALE) throw new Error('Même compressée, la vidéo fait ' + mo(envoi.size) + ' (maximum ' + mo(LIMITE_FINALE) + '). Choisissez une vidéo plus courte.');
+      await envoyerFichier(envoi);
+    } catch (e) {
+      message(e.message || 'L’envoi a échoué — réessayez.', true);
+      bouton.disabled = false;
+    } finally {
+      barre(null); $('couv-animation-btn').disabled = false;
+    }
+  });
+
+  async function envoyerFichier(envoi) {
       barre(1); message('Envoi de la vidéo (' + mo(envoi.size) + ')…');
       var ext = envoi.type === 'video/webm' ? 'webm' : 'mp4';
       var chemin = 'site/couverture/' + Date.now() + '.' + ext;
@@ -222,13 +248,19 @@
       message('✓ Votre vidéo est maintenant la couverture du site (toutes les pages, en français et en anglais).');
       $('couv-fichier').value = ''; fichierChoisi = null; $('couv-infos').textContent = '';
       await chargerReglage();
-    } catch (e) {
-      message(e.message || 'L’envoi a échoué — réessayez.', true);
-      bouton.disabled = false;
-    } finally {
-      barre(null); $('couv-animation-btn').disabled = false;
-    }
-  });
+  }
+
+  // Original envoyable sans recompression : MP4 en H.264 (lisible sur tous les téléphones),
+  // 30 s au plus, horizontal, 1920 pixels de large au plus et 12 Mo au plus.
+  async function originalSansPerte(f, inf) {
+    if (f.type !== 'video/mp4' || f.size > ORIGINAL_MAX || inf.duree > DUREE_MAX + 0.5 || inf.largeur > ORIGINAL_LARGEUR_MAX) return false;
+    try {
+      var MB = await chargerMediabunny();
+      var entree = new MB.Input({ source: new MB.BlobSource(f), formats: MB.ALL_FORMATS });
+      var piste = await entree.getPrimaryVideoTrack();
+      return !!piste && piste.codec === 'avc';
+    } catch (e) { return false; }
+  }
 
   $('couv-animation-btn').addEventListener('click', async function () {
     if (!reglage || reglage.type !== 'video') { message('La couverture affiche déjà l’animation du logo.'); return; }
