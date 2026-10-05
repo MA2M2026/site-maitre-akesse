@@ -457,3 +457,7 @@ html body.tdb-v2:not(.v2-page-v2-ensemble) .v2-entete-actions { display: none !i
 .tri-actions { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: auto; }
 .tri-actions .btn { padding: 0.35rem 0.7rem; font-size: 0.8rem; }
 .tri-tout { grid-column: 1 / -1; margin: 0; }
+.tri-groupe { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1rem; margin-top: 0.8rem; }
+.tri-groupe-nom { margin: 0; font-size: 0.95rem; }
+.tri-revue-resultats { display: grid; gap: 0.6rem; margin-top: 0.8rem; }
+.tri-revue-ligne { font-size: 0.88rem; line-height: 1.5; padding: 0.5rem 0.7rem; border-left: 3px solid #c9bcb1; background: #faf7f4; overflow-wrap: anywhere; }
