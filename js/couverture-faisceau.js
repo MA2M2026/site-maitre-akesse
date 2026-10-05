@@ -8,31 +8,12 @@
 // 'couverture'), la vidéo remplace l'animation en fondu, en boucle et sans le son.
 (function () {
   var sec = document.getElementById('couverture-faisceau');
-  if (!sec) return;
-
-  // --- Sur ordinateur : couverture qui se replie ---
-  // En haut de la page, la couverture est grande (format 16:9, jusqu'à 85 % de l'écran) ;
-  // en faisant défiler, elle se réduit jusqu'au bandeau fixe (format Facebook, 40 % de
-  // l'écran au plus), puis la page passe dessous. Sur téléphone, elle reste en 16:9.
-  var racine = document.documentElement, attente = false;
-  function majRepli() {
-    attente = false;
-    if (window.innerWidth <= 700) { racine.style.removeProperty('--couv-h-anim'); return; }
-    var max = Math.min(window.innerWidth * 9 / 16, window.innerHeight * .85);
-    var min = Math.min(window.innerWidth * 312 / 820, window.innerHeight * .4);
-    racine.style.setProperty('--couv-h-anim', Math.max(min, max - (window.scrollY || 0)) + 'px');
-  }
-  function demanderRepli() { if (!attente) { attente = true; requestAnimationFrame(majRepli); } }
-  majRepli();
-  window.addEventListener('scroll', demanderRepli, { passive: true });
-  window.addEventListener('resize', demanderRepli);
-
-  if (!window.ma2mFaisceau) return;
+  if (!sec || !window.ma2mFaisceau) return;
   try { if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return; } catch (e) {}
   var cv = sec.querySelector('canvas');
   if (!cv || !cv.getContext || !cv.getContext('2d')) return;
 
-  var anim = window.ma2mFaisceau(cv, { mode: 'couverture', mesurer: function () { return { W: cv.clientWidth || sec.clientWidth, H: cv.clientHeight || sec.clientHeight }; } });
+  var anim = window.ma2mFaisceau(cv, { mode: 'couverture', mesurer: function () { return { W: sec.clientWidth, H: sec.clientHeight }; } });
   var t = 0, precedent = null, visible = false, enCours = false, videoActive = false;
 
   function image(ms) {
@@ -61,31 +42,14 @@
     if (!valeur || valeur.type !== 'video' || typeof valeur.chemin !== 'string') return;
     // uniquement un fichier du dossier de la couverture, servi par le site lui-même
     if (!/^site\/couverture\/[A-Za-z0-9._-]+\.(mp4|webm)$/.test(valeur.chemin)) return;
-    // La vidéo s'affiche toujours EN ENTIER (aucun recadrage), quelle que soit sa forme
-    // (16:9 YouTube, 4:3, verticale…) ; si elle n'a pas la forme de la couverture, une copie
-    // floutée et assombrie de la même vidéo remplit les côtés (comme Instagram / YouTube).
-    function creer(classe) {
-      var v = document.createElement('video');
-      v.className = classe;
-      v.muted = true; v.defaultMuted = true; v.loop = true; v.autoplay = true; v.playsInline = true;
-      v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('aria-hidden', 'true');
-      v.preload = 'auto';
-      v.src = '/book-photos/' + valeur.chemin;
-      return v;
-    }
-    var v = creer('couverture-video'), fond = null;
-    v.addEventListener('loadedmetadata', function () {
-      var formeVideo = v.videoWidth / v.videoHeight, formeCadre = (v.clientWidth || sec.clientWidth) / (v.clientHeight || sec.clientHeight);
-      if (!isFinite(formeVideo)) return;
-      // forme proche de celle du cadre (ex. 16:9 dans la grande couverture) : la vidéo le
-      // remplit entièrement (très léger recadrage), sans fond flou
-      if (Math.abs(formeVideo / formeCadre - 1) < .2) { v.classList.add('remplir'); return; }
-      fond = creer('couverture-video-fond');
-      sec.insertBefore(fond, v);
-      var p2 = fond.play(); if (p2 && p2.catch) p2.catch(function () {});
-    }, { once: true });
+    var v = document.createElement('video');
+    v.className = 'couverture-video';
+    v.muted = true; v.defaultMuted = true; v.loop = true; v.autoplay = true; v.playsInline = true;
+    v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('aria-hidden', 'true');
+    v.preload = 'auto';
+    v.src = '/book-photos/' + valeur.chemin;
     v.addEventListener('playing', function () { videoActive = true; sec.classList.add('video-prete'); }, { once: true });
-    v.addEventListener('error', function () { v.remove(); if (fond) fond.remove(); });
+    v.addEventListener('error', function () { v.remove(); });
     sec.appendChild(v);
     var p = v.play(); if (p && p.catch) p.catch(function () {});
   }

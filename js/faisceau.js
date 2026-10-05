@@ -36,8 +36,7 @@ window.ma2mFaisceau = function (cv, opts) {
     dpr = Math.min(window.devicePixelRatio || 1, 2);
     var dim = opts.mesurer(); W = Math.max(1, dim.W); H = Math.max(1, dim.H);
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
-    // intro : le canvas suit la fenêtre ; couverture : sa taille est donnée par le CSS
-    if (!couverture) { cv.style.width = W + 'px'; cv.style.height = H + 'px'; }
+    cv.style.width = W + 'px'; cv.style.height = H + 'px';
     var largeur = couverture ? Math.min(W * .72, 640, H * .42 * LW / LH) : Math.min(W * .82, 600, H * .9 * LW / LH);
     S = largeur / LW; OX = W / 2; OY = H / 2; f = largeur / 620;
     // Rayon lumineux pré-dessiné une fois (traînée douce), sans filtre de flou :

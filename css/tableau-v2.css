@@ -439,11 +439,7 @@ html body.tdb-v2:not(.v2-page-v2-ensemble) .v2-entete-actions { display: none !i
 
 /* Couverture du site (vidéo) — js/couverture-admin.js */
 .couv-apercu { margin: 0.8rem 0 1rem; max-width: 560px; }
-.couv-apercu { position: relative; aspect-ratio: 820 / 312; border-radius: 6px; overflow: hidden; background: #050304; }
-.couv-apercu:empty { display: none; }
-.couv-apercu video { position: absolute; inset: 0; width: 100%; height: 100%; }
-.couv-apercu .couv-apercu-video { object-fit: contain; }
-.couv-apercu .couv-apercu-fond { object-fit: cover; filter: blur(18px) brightness(0.45); transform: scale(1.15); }
+.couv-apercu video { display: block; width: 100%; aspect-ratio: 820 / 312; object-fit: cover; border-radius: 6px; background: #050304; }
 .couv-case { display: flex; align-items: center; gap: 0.5rem; margin: 0.6rem 0 0.9rem; font-size: 0.86rem; cursor: pointer; }
 .couv-barre { height: 6px; border-radius: 3px; background: rgba(255,255,255,0.08); overflow: hidden; margin: 0 0 0.9rem; max-width: 560px; }
 .couv-barre span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #7a1220, #d55468); transition: width 0.3s ease; }

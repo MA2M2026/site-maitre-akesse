@@ -2707,11 +2707,12 @@ document.addEventListener('DOMContentLoaded', function () {
 </div>
 <div class="liste-recente" data-section="b3c-couverture">
 <h2 class="tdb-4">Couverture du site (en haut de toutes les pages)</h2>
-<p class="tdb-5">Par défaut, la couverture montre l'animation du logo (faisceau de lumière). Vous pouvez la remplacer par votre propre vidéo : elle passera en boucle, sans le son, en haut de toutes les pages du site, en français et en anglais. Toutes les vidéos passent en entier, sans être coupées : la couverture s'ajuste automatiquement, avec un fond flou sur les côtés si la forme de la vidéo est différente. Idéal : une vidéo horizontale (format YouTube), de 10 à 30 secondes.</p>
+<p class="tdb-5">Par défaut, la couverture montre l'animation du logo (faisceau de lumière). Vous pouvez la remplacer par votre propre vidéo : elle passera en boucle, sans le son, en haut de toutes les pages du site, en français et en anglais. Conseil : une vidéo large (format paysage), de 10 à 30 secondes. Les bords peuvent être légèrement recadrés pour remplir la couverture.</p>
 <div id="couv-etat" class="tdb-31">Chargement…</div>
 <div class="couv-apercu" id="couv-apercu"></div>
 <div class="form-champ"><label for="couv-fichier">1. Choisissez une vidéo (MP4, MOV, WebM…)</label><input accept="video/*" id="couv-fichier" type="file"/></div>
 <div id="couv-infos" class="tdb-31"></div>
+<label class="couv-case"><input id="couv-max" type="checkbox"/> Compression maximale (vidéo la plus légère possible, idéale pour les connexions lentes)</label>
 <div class="couv-barre u-hidden" id="couv-barre"><span id="couv-barre-rempli"></span></div>
 <div class="tdb-28">
 <button class="btn btn--principal" id="couv-publier-btn" disabled>2. Mettre cette vidéo en couverture</button>

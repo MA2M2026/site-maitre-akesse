@@ -99,13 +99,3 @@ input[type=range] { accent-color: #c21d36; }
 .retour-haut svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 @media (max-width: 700px) { .retour-haut { right: 1rem; bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); width: 44px; height: 44px; } }
 @media print { .retour-haut { display: none !important; } }
-
-/* La barre du site (logo, Menu) est désormais en haut de l'espace mannequin (couverture
-   + menu, 04/10/2026) : le petit logo interne ferait doublon. Les boutons « Retour au
-   site » et « Se déconnecter » restent. */
-.shell .top .wordmark { display: none; }
-.shell .top:not(:has(.top-right)) { display: none; }
-/* La couverture et la barre du menu restent fixées en haut (position sticky) : le corps de
-   la page ne doit pas être bloqué à la hauteur de l'écran, sinon elles décrochent. */
-html, body { height: auto; }
-body { min-height: 100vh; }
