@@ -122,7 +122,7 @@
       : '<div class="dossiers-vide">Aucune photo à vérifier.</div>';
 
     chargerRapports();
-    zoneA.innerHTML = '<p class="tdb-9">L’IA regarde le book complet de chaque mannequin, comme un recruteur : elle garde les meilleures photos (Book et Digitals) et propose de supprimer les photos floues, de groupe, trop semblables ou pas assez professionnelles. <strong>Rien n’est supprimé sans votre clic</strong> : les photos proposées apparaissent ci-dessus, dans « À vérifier ». Coût : environ 0,10 $ par mannequin.</p>' +
+    zoneA.innerHTML = '<p class="tdb-9">L’IA regarde le book complet de chaque mannequin, comme un recruteur : elle garde les meilleures photos (Book et Digitals) et propose de supprimer seulement les photos floues, amateurs ou de groupe. Les photos de défilé et de shooting professionnel sont toujours gardées. <strong>Rien n’est supprimé sans votre clic</strong> : les photos proposées apparaissent ci-dessus, dans « À vérifier ». Coût : environ 0,10 $ par mannequin.</p>' +
       '<button class="btn" type="button" id="tri-revue-btn">Lancer la revue stricte des books</button><div class="form-msg" id="tri-revue-msg"></div><div id="tri-revue-resultats" class="tri-revue-resultats"></div>';
     document.getElementById('tri-revue-btn').addEventListener('click', revueBooks);
   }
@@ -194,10 +194,10 @@
 
   // Mannequins déjà revus dans les dernières 24 h (pour reprendre sans repayer après une coupure).
   function dejaRevus() {
-    try { var o = JSON.parse(localStorage.getItem('ma2m_revue_books_v2') || '{}'); var n = Date.now(), r = {}; Object.keys(o).forEach(function (k) { if (n - o[k] < 86400000) r[k] = o[k]; }); return r; } catch (e) { return {}; }
+    try { var o = JSON.parse(localStorage.getItem('ma2m_revue_books_v3') || '{}'); var n = Date.now(), r = {}; Object.keys(o).forEach(function (k) { if (n - o[k] < 86400000) r[k] = o[k]; }); return r; } catch (e) { return {}; }
   }
   function noterRevu(id) {
-    try { var o = dejaRevus(); o[id] = Date.now(); localStorage.setItem('ma2m_revue_books_v2', JSON.stringify(o)); } catch (e) {}
+    try { var o = dejaRevus(); o[id] = Date.now(); localStorage.setItem('ma2m_revue_books_v3', JSON.stringify(o)); } catch (e) {}
   }
 
   async function revueBooks() {
