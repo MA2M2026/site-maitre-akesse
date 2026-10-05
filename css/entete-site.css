@@ -348,6 +348,9 @@ body.porte-verrouillee .couverture-faisceau, body.porte-verrouillee .couverture-
   margin: 1.1rem 0 0.3rem;
 }
 .menu-overlay .nav-links li.menu-groupe:first-child { margin-top: 0; }
+/* Catégories du Book sous « The Book » (06/10/2026, js/menu.js). */
+.menu-overlay .nav-links li.menu-sous a { padding: 0.36rem 12px 0.36rem 1.9rem !important; font-size: 0.9rem !important; color: rgba(244,239,233,0.72) !important; }
+.menu-overlay .nav-links li.menu-sous a::after { content: ""; }
 
 .menu-overlay .nav-links li a {
   display: flex !important; align-items: center; justify-content: space-between; gap: 1rem;

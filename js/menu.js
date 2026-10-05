@@ -33,6 +33,23 @@ document.addEventListener('DOMContentLoaded', () => {
       li.textContent = titre;
       liste.insertBefore(li, lien.parentNode);
     });
+    // Catégories du Book directement dans le menu (06/10/2026, comme sur les sites des
+    // grandes agences) : « Femmes » et « Hommes » sous « The Book », chacune ouvre le Book
+    // déjà filtré. New Faces sera ajouté quand des mannequins y seront classés.
+    const book = [...liste.querySelectorAll('li > a')].find(a => /(^|\/)mannequins(\.html)?$/.test(a.getAttribute('href') || ''));
+    if (book) {
+      let apres = book.parentNode;
+      [['femme', en ? 'Women' : 'Femmes'], ['homme', en ? 'Men' : 'Hommes']].forEach(([cat, nom]) => {
+        const li = document.createElement('li');
+        li.className = 'menu-sous';
+        const a = document.createElement('a');
+        a.href = book.getAttribute('href') + '?categorie=' + cat;
+        a.textContent = nom;
+        li.appendChild(a);
+        liste.insertBefore(li, apres.nextSibling);
+        apres = li;
+      });
+    }
   }
 
   let menuEstOuvert = false;
