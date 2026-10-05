@@ -9,9 +9,9 @@
   if (!document.getElementById('couv-fichier') || typeof sb === 'undefined') return;
 
   // Toutes les vidéos sont compressées automatiquement (demande de la propriétaire,
-  // 05/10/2026 : site léger, sans case à cocher) : 1280 × 720 au plus (720 × 1280 pour
-  // une verticale) et 1 Mbit/s — environ 3,7 Mo pour 30 secondes, image encore nette.
-  var DEBIT = 1000000, GRAND_MAX = 1280, PETIT_MAX = 720;
+  // 05/10/2026 : site léger, sans case à cocher) : 1280 pixels de large au plus et
+  // 1 Mbit/s — environ 3,7 Mo pour 30 secondes, image encore nette.
+  var DEBIT = 1000000, LARGEUR_MAX = 1280;
   var LIMITE_SANS_COMPRESSION = 8 * 1024 * 1024; // seulement si le navigateur ne sait pas compresser
   var LIMITE_FINALE = 15 * 1024 * 1024;   // au-delà, refus (même après compression)
   var DUREE_MAX = 30;
@@ -76,7 +76,7 @@
   // ou si le navigateur ne sait pas compresser) ?
   function originalUtilisable(f, inf) {
     return /^video\/(mp4|webm)$/.test(f.type) && !inf.hevc && inf.duree <= DUREE_MAX + 0.5 &&
-      Math.max(inf.largeur, inf.hauteur) <= GRAND_MAX && Math.min(inf.largeur, inf.hauteur) <= PETIT_MAX;
+      inf.largeur <= LARGEUR_MAX;
   }
 
   // Vidéo au format HEVC (H.265, fréquent sur iPhone) : beaucoup de navigateurs ne savent
@@ -136,14 +136,8 @@
     var url = URL.createObjectURL(fichier), v = document.createElement('video');
     v.muted = true; v.playsInline = true; v.src = url;
     await new Promise(function (ok, ko) { v.onloadedmetadata = ok; v.onerror = function () { ko(new Error('Cette vidéo ne peut pas être lue par ce navigateur.')); }; });
-    // Taille limitée sur les DEUX côtés (le grand et le petit) : une vidéo verticale de
-    // téléphone (1080 × 1920) devient 720 × 1280, comme une horizontale devient 1280 × 720.
-    // Sans cela, une verticale gardait toute sa hauteur, trop grande pour l'encodeur vidéo
-    // du navigateur : le fichier produit restait noir.
-    var grand = Math.max(v.videoWidth, v.videoHeight), petit = Math.min(v.videoWidth, v.videoHeight);
-    var k = Math.min(1, GRAND_MAX / grand, PETIT_MAX / petit);
-    var w = Math.round(v.videoWidth * k); w -= w % 2;
-    var h = Math.round(v.videoHeight * k); h -= h % 2;
+    var w = Math.min(LARGEUR_MAX, v.videoWidth); w -= w % 2;
+    var h = Math.round(w * v.videoHeight / v.videoWidth); h -= h % 2;
     var c = document.createElement('canvas'); c.width = w; c.height = h;
     var x = c.getContext('2d');
     var flux = c.captureStream(30);
