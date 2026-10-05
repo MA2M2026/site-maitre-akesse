@@ -3,9 +3,14 @@
 // at the very start of <body>, see the comment there — so neither the door nor the
 // ability to scroll past it appear for a moment before this end-of-page script runs.)
 document.getElementById('entrer-btn').addEventListener('click', async () => {
+  // Immediate feedback, then at most 1.5 s waiting for the featured model (05/10/2026).
+  const bouton = document.getElementById('entrer-btn');
+  if (bouton.dataset.ouverture) return;
+  bouton.dataset.ouverture = '1';
+  bouton.classList.add('entrer-en-cours');
   if (window.jouerSon) window.jouerSon('entree');
   if (window.promesseVedette) {
-    try { await Promise.race([window.promesseVedette, new Promise((r) => setTimeout(r, 4000))]); } catch (e) {}
+    try { await Promise.race([window.promesseVedette, new Promise((r) => setTimeout(r, 1500))]); } catch (e) {}
   }
   document.body.classList.remove('porte-verrouillee');
   document.documentElement.classList.remove('porte-verrouillee');
@@ -90,7 +95,7 @@ async function chargerBandeauAnnonce() {
     document.querySelectorAll('#marqueePiste span').forEach(span => { span.textContent = texte; });
     document.getElementById('marqueeLabel').style.display = 'flex';
     document.getElementById('marqueeBande').classList.add('marquee-annonce-active');
-    document.getElementById('carte-a-venir-texte').textContent = data.texte.trim();
+    // The « Upcoming castings » card keeps its own text (the banner is also used for other news).
   }
 }
 chargerBandeauAnnonce();
@@ -192,6 +197,9 @@ async function chargerMannequinVedette() {
   document.getElementById('vedette-img').src = photoUrl;
   document.getElementById('vedette-img').alt = echapperHtml(profil.full_name || '');
   document.getElementById('vedette-nom').textContent = profil.full_name || 'Model';
+  const longueurNom = (profil.full_name || '').length;
+  document.getElementById('vedette-nom').classList.toggle('nom-long', longueurNom > 18 && longueurNom <= 28);
+  document.getElementById('vedette-nom').classList.toggle('nom-tres-long', longueurNom > 28);
   document.getElementById('vedette-info').textContent = [libelleCategorie, profil.city, profil.height_cm ? profil.height_cm + ' cm' : null].filter(Boolean).join(' · ');
   document.getElementById('vedette-lien').href = 'mannequin.html?id=' + profil.id;
   document.getElementById('mannequin-vedette').style.display = 'block';

@@ -4,9 +4,15 @@
 // HTML — pour éviter qu'elle n'apparaisse, ou reste défilable, un instant avant que ce
 // script, chargé en fin de page, ne s'exécute.)
 document.getElementById('entrer-btn').addEventListener('click', async () => {
+  // Réaction immédiate à l'appui, puis 1,5 s d'attente au plus pour le mannequin à la une
+  // (05/10/2026 : jusqu'à 4 s sans aucun signe sur une connexion lente).
+  const bouton = document.getElementById('entrer-btn');
+  if (bouton.dataset.ouverture) return;
+  bouton.dataset.ouverture = '1';
+  bouton.classList.add('entrer-en-cours');
   if (window.jouerSon) window.jouerSon('entree');
   if (window.promesseVedette) {
-    try { await Promise.race([window.promesseVedette, new Promise((r) => setTimeout(r, 4000))]); } catch (e) {}
+    try { await Promise.race([window.promesseVedette, new Promise((r) => setTimeout(r, 1500))]); } catch (e) {}
   }
   document.body.classList.remove('porte-verrouillee');
   document.documentElement.classList.remove('porte-verrouillee');
@@ -192,10 +198,8 @@ async function chargerBandeauAnnonce() {
       .getElementById('marqueeBande')
       .classList.add('marquee-annonce-active');
 
-
-    document
-      .getElementById('carte-a-venir-texte')
-      .textContent = data.texte.trim();
+    // (30/09 → 05/10) La case « Prochains castings » garde son propre texte : le
+    // bandeau « Infos du jour » sert aussi à d'autres annonces (ex. un anniversaire).
 
   }
 
@@ -538,6 +542,9 @@ async function chargerMannequinVedette() {
     'vedette-nom'
   ).textContent =
     profil.full_name || 'Mannequin';
+  const longueurNom = (profil.full_name || '').length;
+  document.getElementById('vedette-nom').classList.toggle('nom-long', longueurNom > 18 && longueurNom <= 28);
+  document.getElementById('vedette-nom').classList.toggle('nom-tres-long', longueurNom > 28);
 
 
   document.getElementById(

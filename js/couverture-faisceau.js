@@ -11,15 +11,16 @@
   if (!sec) return;
 
   // --- Sur ordinateur : couverture qui se replie ---
-  // En haut de la page, la couverture est grande (format 16:9, jusqu'à 85 % de l'écran) ;
-  // en faisant défiler, elle se réduit jusqu'au bandeau fixe (format Facebook, 40 % de
-  // l'écran au plus), puis la page passe dessous. Sur téléphone, elle reste en 16:9.
+  // En haut de la page, la couverture est grande (format 16:9, jusqu'à 55 % de l'écran) ;
+  // en faisant défiler, elle se réduit jusqu'au bandeau fixe (format Facebook, 28 % de
+  // l'écran au plus), puis la page passe dessous. Sur téléphone : 16:9, au plus 26 % de
+  // l'écran (05/10/2026 : elle prenait trop de place — 85 % / 40 % / 33 % avant).
   var racine = document.documentElement, attente = false;
   function majRepli() {
     attente = false;
     if (window.innerWidth <= 700) { racine.style.removeProperty('--couv-h-anim'); return; }
-    var max = Math.min(window.innerWidth * 9 / 16, window.innerHeight * .85);
-    var min = Math.min(window.innerWidth * 312 / 820, window.innerHeight * .4);
+    var max = Math.min(window.innerWidth * 9 / 16, window.innerHeight * .55);
+    var min = Math.min(window.innerWidth * 312 / 820, window.innerHeight * .28);
     racine.style.setProperty('--couv-h-anim', Math.max(min, max - (window.scrollY || 0)) + 'px');
   }
   function demanderRepli() { if (!attente) { attente = true; requestAnimationFrame(majRepli); } }
@@ -54,6 +55,13 @@
       }, { threshold: .25 }).observe(sec);
     } else { visible = true; relancer(); }
     window.addEventListener('resize', function () { anim.dimensionner(); anim.dessiner(t); });
+    // L'animation doit aussi se remettre à la bonne taille quand la couverture apparaît
+    // (accueil : elle est cachée derrière la porte d'entrée jusqu'au clic sur « Entrer »,
+    // et elle restait alors vide — visite du 05/10/2026) ou change de taille sans que la
+    // fenêtre change (couverture qui se replie sur ordinateur).
+    if ('ResizeObserver' in window) {
+      new ResizeObserver(function () { anim.dimensionner(); anim.dessiner(t); relancer(); }).observe(cv);
+    }
   }, function () { /* image introuvable : le logo fixe reste affiché */ });
 
   // --- vidéo choisie dans le tableau de bord ---
