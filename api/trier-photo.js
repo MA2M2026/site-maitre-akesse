@@ -3,9 +3,10 @@
 // photo (Espace mannequin ou tableau de bord) : l'IA regarde la photo et la
 // range en « book » (photo professionnelle), « digital » (photo naturelle au
 // téléphone, valable pour les recruteurs) ou « ecartee » (inutilisable).
-// Une photo écartée n'est jamais supprimée : elle est cachée par la base
-// (Extension 116) et reste visible dans le tableau de bord, où un admin peut
-// la remettre. Quand l'IA hésite, la photo reste visible (« a_verifier »).
+// Une photo jugée inutilisable avec une certitude élevée est SUPPRIMÉE
+// définitivement (fiche + fichiers), choix de la propriétaire du 06/10/2026.
+// Quand l'IA hésite, la photo reste visible (« a_verifier ») et l'agence décide
+// depuis le tableau de bord.
 //
 // Appel : POST { photoId } avec le jeton de connexion de la mannequin
 // propriétaire de la photo ou d'un admin. Une photo déjà triée (ou remise à la
@@ -16,7 +17,7 @@
 // déjà en place pour api/r2-presigner.js.
 
 const Anthropic = require('@anthropic-ai/sdk');
-const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
+const { S3Client, GetObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 
 const SUPABASE_URL = 'https://dfhghgmwmxiguhtxtsle.supabase.co';
 // En dessous de ce degré de certitude, une photo jugée inutilisable n'est pas
@@ -87,16 +88,27 @@ function typeImage(octets) {
 // Récupère la photo : d'abord directement dans R2 (version moyenne 1400 px,
 // puis miniature, puis originale), sinon par son adresse publique — seulement
 // sur les adresses de stockage du site (jamais une adresse quelconque).
-async function lireImage(photo) {
+function r2Configure() {
+  return !!(process.env.R2_ACCOUNT_ID && process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY && process.env.R2_BUCKET_NAME);
+}
+function creerClientR2() {
+  return new S3Client({
+    region: 'auto',
+    endpoint: 'https://' + process.env.R2_ACCOUNT_ID + '.r2.cloudflarestorage.com',
+    credentials: { accessKeyId: process.env.R2_ACCESS_KEY_ID, secretAccessKey: process.env.R2_SECRET_ACCESS_KEY }
+  });
+}
+// Fichiers de la photo, uniquement dans le dossier de sa mannequin.
+function cheminsPhoto(photo) {
   const dossier = photo.model_id + '/';
-  const chemins = [photo.chemin_moyenne, photo.chemin_miniature, photo.chemin]
+  return [photo.chemin_moyenne, photo.chemin_miniature, photo.chemin]
     .filter(function (c) { return typeof c === 'string' && c.startsWith(dossier) && !/(^|\/)\.\.(\/|$)/.test(c); });
-  if (process.env.R2_ACCOUNT_ID && process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY && process.env.R2_BUCKET_NAME) {
-    const client = new S3Client({
-      region: 'auto',
-      endpoint: 'https://' + process.env.R2_ACCOUNT_ID + '.r2.cloudflarestorage.com',
-      credentials: { accessKeyId: process.env.R2_ACCESS_KEY_ID, secretAccessKey: process.env.R2_SECRET_ACCESS_KEY }
-    });
+}
+
+async function lireImage(photo) {
+  const chemins = cheminsPhoto(photo);
+  if (r2Configure()) {
+    const client = creerClientR2();
     for (const chemin of chemins) {
       try {
         const objet = await client.send(new GetObjectCommand({ Bucket: process.env.R2_BUCKET_NAME, Key: chemin }));
@@ -214,6 +226,28 @@ module.exports = async function handler(req, res) {
         raison = String(avis.raison || '').slice(0, 300);
         statut = avis.categorie === 'ecartee' && confiance < CONFIANCE_MIN_ECARTEE ? 'a_verifier' : avis.categorie;
       }
+    }
+
+    // Photo inutilisable (certitude élevée) : suppression définitive, sans retour
+    // possible (décision de la propriétaire, 06/10/2026). D'abord la fiche en base
+    // (seulement si personne ne l'a triée ou remise entre-temps), puis les fichiers.
+    if (statut === 'ecartee') {
+      const suppr = await fetch(
+        SUPABASE_URL + '/rest/v1/model_photos?id=eq.' + photoId + '&tri_statut=is.null&tri_manuel=is.false',
+        { method: 'DELETE', headers: Object.assign({ Prefer: 'return=representation' }, enTetesService()) }
+      );
+      if (!suppr.ok) throw new Error('Suppression de la photo impossible (' + suppr.status + ').');
+      const supprimees = await suppr.json().catch(function () { return []; });
+      if (Array.isArray(supprimees) && supprimees.length && r2Configure()) {
+        const client = creerClientR2();
+        for (const chemin of cheminsPhoto(photo)) {
+          try { await client.send(new DeleteObjectCommand({ Bucket: process.env.R2_BUCKET_NAME, Key: chemin })); }
+          catch (e) { console.warn('trier-photo : fichier non supprimé', chemin, e && e.message); }
+        }
+      }
+      console.info('trier-photo : photo supprimée', photoId, '—', raison);
+      res.status(200).json(admin ? { ok: true, statut: 'supprimee', raison: raison, confiance: confiance } : { ok: true });
+      return;
     }
 
     // Mise à jour seulement si personne n'a trié la photo entre-temps (admin).
