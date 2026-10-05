@@ -244,8 +244,8 @@
    barre du menu reste fixée juste en dessous, et tout le reste de la page défile sous
    les deux. Hauteur : format Facebook sur ordinateur, limité à 40 % de l'écran pour
    laisser de la place à la lecture ; 16:9 sur téléphone. */
-:root { --couv-h: min(calc(100vw * 312 / 820), 40vh); }
-@media (max-width: 700px) { :root { --couv-h: calc(100vw * 9 / 16); } }
+:root { --couv-h: min(calc(100vw * 312 / 820), 28vh); } /* 05/10 : 40vh → 28vh, plus de place pour lire */
+@media (max-width: 700px) { :root { --couv-h: min(calc(100vw * 9 / 16), 26vh); } } /* 05/10 : au plus un quart de l’écran du téléphone */
 .couverture-faisceau { position: sticky; top: 0; z-index: 401; aspect-ratio: auto; height: var(--couv-h); max-height: none; }
 .site-header-v2.entete-sous-couverture { top: var(--couv-h); }
 html:has(#couverture-faisceau) { scroll-padding-top: calc(var(--couv-h) + 90px); }
@@ -260,7 +260,7 @@ html:has(#couverture-faisceau) { scroll-padding-top: calc(var(--couv-h) + 90px);
    bandeau (--couv-h), puis reste fixe avec la barre du menu dessous. Le canvas et la vidéo
    gardent la taille de la grande couverture, centrés : quand elle se replie, seule la bande
    du milieu reste visible (le logo reste entier). .couverture-espace réserve la place. */
-:root { --couv-h-max: min(calc(100vw * 9 / 16), 85vh); --couv-h-anim: var(--couv-h-max); }
+:root { --couv-h-max: min(calc(100vw * 9 / 16), 55vh); /* 05/10 : 85vh → 55vh */ --couv-h-anim: var(--couv-h-max); }
 .couverture-espace { display: none; }
 .couverture-video.remplir { object-fit: cover; }
 @media (min-width: 701px) {

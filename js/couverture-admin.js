@@ -10,8 +10,8 @@
 
   // Toutes les vidéos sont compressées automatiquement (demande de la propriétaire,
   // 05/10/2026 : site léger, sans case à cocher) : 1280 pixels de large au plus et
-  // 1 Mbit/s — environ 3,7 Mo pour 30 secondes, image encore nette.
-  var DEBIT = 1000000, LARGEUR_MAX = 1280;
+  // 1,2 Mbit/s — environ 4,5 Mo pour 30 secondes, image nette à 30 images/s.
+  var DEBIT = 1200000, LARGEUR_MAX = 1280;
   var LIMITE_SANS_COMPRESSION = 8 * 1024 * 1024; // seulement si le navigateur ne sait pas compresser
   var LIMITE_FINALE = 15 * 1024 * 1024;   // au-delà, refus (même après compression)
   var DUREE_MAX = 30;
@@ -79,8 +79,69 @@
     $('couv-infos').textContent = txt;
   }
 
-  // Compression : la vidéo est lue, redessinée en plus petit dans un canvas, et réenregistrée.
+  // Compression (05/10/2026) : d'abord avec l'outil Mediabunny (js/vendor/, déjà utilisé
+  // pour les vidéos de candidature). Il produit un vrai MP4 « classique » (H.264, 30 images
+  // par seconde, sommaire en tête de fichier) que tous les navigateurs savent lire, iPhone
+  // compris. L'ancienne méthode (enregistrement d'un canvas) donnait un MP4 « en morceaux »
+  // à 15 images/s que certains téléphones n'affichaient pas en couverture : elle ne sert
+  // plus que de secours si le navigateur ne connaît pas Mediabunny/WebCodecs.
+  function chargerMediabunny() {
+    if (window.Mediabunny) return Promise.resolve(window.Mediabunny);
+    return new Promise(function (ok, ko) {
+      var s = document.createElement('script');
+      s.src = 'js/vendor/mediabunny-1.61.0.min.js';
+      s.onload = function () { window.Mediabunny ? ok(window.Mediabunny) : ko(new Error('outil vidéo absent')); };
+      s.onerror = function () { ko(new Error('outil vidéo non chargé')); };
+      document.head.appendChild(s);
+    });
+  }
+  async function compresserMediabunny(fichier, progression) {
+    if (typeof VideoEncoder === 'undefined' || typeof VideoDecoder === 'undefined') return null;
+    var MB = await chargerMediabunny();
+    var entree = new MB.Input({ source: new MB.BlobSource(fichier), formats: MB.ALL_FORMATS });
+    var piste = await entree.getPrimaryVideoTrack();
+    if (!piste || !(await piste.canDecode())) return null;
+    var l = piste.displayWidth, h = piste.displayHeight;
+    var echelle = Math.min(1, LARGEUR_MAX / l);
+    l = Math.max(2, Math.round(l * echelle / 2) * 2); h = Math.max(2, Math.round(h * echelle / 2) * 2);
+    var codec = null, liste = ['avc', 'vp9'];
+    for (var i = 0; i < liste.length && !codec; i++) {
+      try { if (await MB.canEncodeVideo(liste[i], { width: l, height: h, bitrate: DEBIT })) codec = liste[i]; } catch (e) {}
+    }
+    if (!codec) return null;
+    var enMp4 = codec === 'avc';
+    var sortie = new MB.Output({
+      format: enMp4 ? new MB.Mp4OutputFormat({ fastStart: 'in-memory' }) : new MB.WebMOutputFormat(),
+      target: new MB.BufferTarget()
+    });
+    var duree = await entree.computeDuration();
+    var conversion = await MB.Conversion.init({
+      input: entree, output: sortie, tracks: 'primary',
+      video: { width: l, height: h, fit: 'contain', codec: codec, bitrate: DEBIT, frameRate: 30, forceTranscode: true },
+      audio: { discard: true },
+      trim: { start: 0, end: Math.min(isFinite(duree) ? duree : DUREE_MAX, DUREE_MAX) }
+    });
+    if (!conversion.isValid) return null;
+    conversion.onProgress = function (p) { progression(Math.min(1, p)); };
+    await conversion.execute();
+    var octets = sortie.target.buffer;
+    if (!octets || !octets.byteLength) return null;
+    var type = enMp4 ? 'video/mp4' : 'video/webm';
+    return new File([octets], 'couverture.' + (enMp4 ? 'mp4' : 'webm'), { type: type });
+  }
+
   async function compresser(fichier, progression) {
+    try {
+      var propre = await compresserMediabunny(fichier, progression);
+      if (propre) return propre;
+    } catch (e) {
+      if (window.signalerErreur) window.signalerErreur('Couverture : compression Mediabunny impossible', (e && e.message) || String(e), mo(fichier.size) + ', ' + (fichier.type || '?'));
+    }
+    return compresserCanvas(fichier, progression);
+  }
+
+  // Secours : la vidéo est lue, redessinée en plus petit dans un canvas, et réenregistrée.
+  async function compresserCanvas(fichier, progression) {
     var types = ['video/mp4;codecs=avc1.42E01F', 'video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
     var mime = window.MediaRecorder ? types.find(function (t) { return MediaRecorder.isTypeSupported(t); }) : null;
     if (!mime) return null;
