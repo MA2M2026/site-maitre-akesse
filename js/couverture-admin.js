@@ -9,11 +9,11 @@
 (function () {
   if (!document.getElementById('couv-fichier') || typeof sb === 'undefined') return;
 
-  var LIMITE_DIRECTE = 8 * 1024 * 1024;   // au-delà, compression automatique
+  var LIMITE_DIRECTE = 5 * 1024 * 1024;   // au-delà, compression automatique (couverture rapide à charger)
   var LIMITE_FINALE = 15 * 1024 * 1024;   // au-delà, refus (même après compression)
   var DUREE_MAX = 30;
   var $ = function (id) { return document.getElementById(id); };
-  var fichierChoisi = null, infosChoisies = null, reglage = null;
+  var fichierChoisi = null, infosChoisies = null, reglage = null, creationAffiche = false;
 
   function message(texte, erreur) { var m = $('couv-msg'); m.textContent = texte || ''; m.style.color = erreur ? '#e57373' : ''; }
   function mo(octets) { return (octets / 1024 / 1024).toFixed(1).replace('.', ',') + ' Mo'; }
@@ -49,6 +49,15 @@
     if (reglage && reglage.type === 'video' && reglage.chemin) {
       $('couv-etat').textContent = 'Actuellement : votre vidéo (' + (reglage.taille ? mo(reglage.taille) + ', ' : '') + 'mise en ligne le ' + new Date(reglage.maj).toLocaleDateString('fr-FR') + ').';
       apercu(reglage.chemin);
+      // vidéo envoyée avant l'ajout de l'image d'attente : on la crée une fois pour toutes
+      if (!reglage.affiche && !creationAffiche) {
+        creationAffiche = true;
+        var chemin = await envoyerAffiche('/book-photos/' + reglage.chemin);
+        if (chemin) {
+          reglage.affiche = chemin;
+          try { await enregistrer(reglage); message('✓ Image d’attente ajoutée : la vidéo s’affiche désormais tout de suite sur le site.'); } catch (e) {}
+        }
+      }
     } else {
       $('couv-etat').textContent = 'Actuellement : l’animation du logo (faisceau de lumière).';
       apercu(null);
@@ -82,7 +91,7 @@
 
   // Compression : la vidéo est lue, redessinée en plus petit dans un canvas, et réenregistrée.
   async function compresser(fichier, maximale, progression) {
-    var largeurMax = maximale ? 960 : 1280, debit = maximale ? 900000 : 2000000;
+    var largeurMax = maximale ? 960 : 1280, debit = maximale ? 800000 : 1500000;
     var types = ['video/mp4;codecs=avc1.42E01F', 'video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
     var mime = window.MediaRecorder ? types.find(function (t) { return MediaRecorder.isTypeSupported(t); }) : null;
     if (!mime) throw new Error('La compression n’est pas possible sur ce navigateur. Essayez avec Chrome sur ordinateur, ou envoyez une vidéo MP4 de moins de 8 Mo.');
@@ -117,10 +126,39 @@
     return new File([new Blob(morceaux, { type: type })], 'couverture.' + (type === 'video/mp4' ? 'mp4' : 'webm'), { type: type });
   }
 
+  // Image d'attente : une image de la vidéo (vers 1 s), affichée instantanément sur le site
+  // pendant que la vidéo se charge — plus d'animation du logo avant la vidéo.
+  function capturerAffiche(source) {
+    return new Promise(function (ok, ko) {
+      var v = document.createElement('video'), url = typeof source === 'string' ? source : URL.createObjectURL(source);
+      v.muted = true; v.playsInline = true; v.preload = 'auto';
+      var fini = false;
+      function finir(err, res) { if (fini) return; fini = true; if (typeof source !== 'string') URL.revokeObjectURL(url); err ? ko(err) : ok(res); }
+      v.onloadedmetadata = function () { v.currentTime = Math.min(1, (isFinite(v.duration) ? v.duration : 2) / 3); };
+      v.onseeked = function () {
+        var w = Math.min(1280, v.videoWidth), h = Math.round(w * v.videoHeight / v.videoWidth);
+        var c = document.createElement('canvas'); c.width = w; c.height = h;
+        c.getContext('2d').drawImage(v, 0, 0, w, h);
+        c.toBlob(function (b) { b ? finir(null, new File([b], 'affiche.jpg', { type: 'image/jpeg' })) : finir(new Error('image')); }, 'image/jpeg', .82);
+      };
+      v.onerror = function () { finir(new Error('Vidéo illisible')); };
+      setTimeout(function () { finir(new Error('délai')); }, 20000);
+      v.src = url;
+    });
+  }
+  async function envoyerAffiche(source) {
+    try {
+      var image = await capturerAffiche(source);
+      var chemin = 'site/couverture/' + Date.now() + '-affiche.jpg';
+      await envoyerImageSite('couverture', chemin, image);
+      return chemin;
+    } catch (e) { return null; }
+  }
+
   async function enregistrer(valeur) {
     var r = await sb.from('reglages_site').upsert({ cle: 'couverture', valeur: valeur, maj: new Date().toISOString() });
     if (r.error) throw new Error(/reglages_site|relation|schema cache/i.test(r.error.message || '') ? 'Il manque un réglage dans la base : exécutez l’extension 113 dans Supabase.' : r.error.message);
-    try { sessionStorage.removeItem('ma2m_couverture'); } catch (e) {}
+    try { sessionStorage.removeItem('ma2m_couverture'); localStorage.removeItem('ma2m_couverture_v2'); } catch (e) {}
   }
 
   $('couv-fichier').addEventListener('change', async function () {
@@ -146,9 +184,12 @@
       var ext = envoi.type === 'video/webm' ? 'webm' : 'mp4';
       var chemin = 'site/couverture/' + Date.now() + '.' + ext;
       await envoyerImageSite('couverture', chemin, envoi);
-      var ancien = reglage && reglage.type === 'video' ? reglage.chemin : null;
-      await enregistrer({ type: 'video', chemin: chemin, taille: envoi.size, maj: new Date().toISOString() });
-      if (ancien && ancien !== chemin) supprimerImageSite('couverture', ancien);
+      message('Préparation de l’image d’attente…');
+      var affiche = await envoyerAffiche(envoi);
+      var ancien = reglage && reglage.type === 'video' ? reglage : null;
+      await enregistrer({ type: 'video', chemin: chemin, affiche: affiche, taille: envoi.size, maj: new Date().toISOString() });
+      if (ancien && ancien.chemin !== chemin) supprimerImageSite('couverture', ancien.chemin);
+      if (ancien && ancien.affiche) supprimerImageSite('couverture', ancien.affiche);
       message('✓ Votre vidéo est maintenant la couverture du site (toutes les pages, en français et en anglais).');
       $('couv-fichier').value = ''; fichierChoisi = null; $('couv-infos').textContent = '';
       await chargerReglage();
@@ -165,9 +206,10 @@
     if (!confirm('Revenir à l’animation du logo en couverture ? Votre vidéo actuelle sera supprimée.')) return;
     var bouton = this; bouton.disabled = true;
     try {
-      var ancien = reglage.chemin;
+      var ancien = reglage;
       await enregistrer({ type: 'animation', maj: new Date().toISOString() });
-      if (ancien) supprimerImageSite('couverture', ancien);
+      if (ancien.chemin) supprimerImageSite('couverture', ancien.chemin);
+      if (ancien.affiche) supprimerImageSite('couverture', ancien.affiche);
       message('✓ La couverture affiche de nouveau l’animation du logo.');
       await chargerReglage();
     } catch (e) { message(e.message, true); }

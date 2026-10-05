@@ -279,3 +279,5 @@ html:has(#couverture-faisceau) { scroll-padding-top: calc(var(--couv-h) + 90px);
 }
 /* Accueil : tant que la porte d'entrée est affichée, ni couverture ni espace réservé. */
 body.porte-verrouillee .couverture-faisceau, body.porte-verrouillee .couverture-espace { display: none; }
+/* En attendant de savoir s'il faut montrer la vidéo ou l'animation : couverture sombre. */
+.couverture-faisceau.attente .couverture-secours { visibility: hidden; }
