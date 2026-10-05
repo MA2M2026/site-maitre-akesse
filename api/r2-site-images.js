@@ -69,8 +69,9 @@ const TYPES_AUTORISES = /^(image\/(jpeg|jpg|pjpeg|png|webp|gif|heic|heif|avif)|a
 const TYPES_VIDEO = /^video\/(mp4|webm)$/i;
 // Taille maximale d'un envoi, inscrite dans la signature de l'adresse d'envoi (même
 // principe que api/r2-presigner.js) : 15 Mo pour une image, 25 Mo pour une vidéo
-// (limites déjà appliquées par le tableau de bord avant l'envoi).
-const TAILLE_MAX_IMAGE = 15 * 1024 * 1024, TAILLE_MAX_VIDEO = 25 * 1024 * 1024;
+// (limites déjà appliquées par le tableau de bord avant l'envoi). La vidéo de l'accueil peut
+// être longue (défilés de 5 à 10 minutes, 06/10/2026) : jusqu'à 250 Mo.
+const TAILLE_MAX_IMAGE = 15 * 1024 * 1024, TAILLE_MAX_VIDEO = 25 * 1024 * 1024, TAILLE_MAX_VIDEO_ACCUEIL = 250 * 1024 * 1024;
 function cheminSur(chemin) {
   // Refuse les remontées de dossier (« .. » comme segment), les antislashs, les
   // doubles barres et les caractères de contrôle ; « photo..jpg » reste accepté.
@@ -137,7 +138,7 @@ module.exports = async function handler(req, res) {
       return;
     }
 
-    const tailleMax = videoPermise ? TAILLE_MAX_VIDEO : TAILLE_MAX_IMAGE;
+    const tailleMax = videoPermise ? (categorie === 'video-accueil' ? TAILLE_MAX_VIDEO_ACCUEIL : TAILLE_MAX_VIDEO) : TAILLE_MAX_IMAGE;
     if (!Number.isInteger(taille) || taille <= 0 || taille > tailleMax) {
       res.status(400).json({ error: Number.isInteger(taille) && taille > tailleMax
         ? 'Fichier trop lourd (' + (taille / 1048576).toFixed(1).replace('.', ',') + ' Mo, maximum ' + (tailleMax / 1048576) + ' Mo).'
