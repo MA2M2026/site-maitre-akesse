@@ -11,7 +11,7 @@
   [
     { prefixe: 'couv', cle: 'couverture', categorie: 'couverture', cache: 'ma2m_couverture', son: false, dureeMax: 30,
       nomZone: 'la couverture', etatSans: 'Actuellement : l’animation du logo (faisceau de lumière).',
-      succes: '✓ Votre vidéo est maintenant la couverture du site (toutes les pages, en français et en anglais).',
+      succes: '✓ Votre vidéo est maintenant la couverture du site (accueil, Services, Intégrer l’agence, Postuler à un casting, Contact… en français et en anglais).',
       retirerQuestion: 'Revenir à l’animation du logo en couverture ? Votre vidéo actuelle sera supprimée.',
       retirerFait: '✓ La couverture affiche de nouveau l’animation du logo.', dejaSans: 'La couverture affiche déjà l’animation du logo.' },
     { prefixe: 'va', cle: 'video_accueil', categorie: 'video-accueil', cache: 'ma2m_video_accueil', son: true, dureeMax: 600,
@@ -41,7 +41,7 @@
   function debitPour(duree) { return Z.son && duree > 90 ? 1500000 : DEBIT; }
   var LARGEUR_MIN = 854; // en dessous (vidéo réseaux sociaux / WhatsApp), floue en couverture
   var LIMITE_SANS_COMPRESSION = 8 * 1024 * 1024; // seulement si le navigateur ne sait pas compresser
-  var LIMITE_FINALE = 15 * 1024 * 1024;   // au-delà, refus (même après compression)
+  var LIMITE_FINALE = 25 * 1024 * 1024;   // au-delà, refus (même après compression) — 15 → 25 Mo le 06/10/2026
   var DUREE_MAX = Z.dureeMax;
   var LIMITE_FINALE_ZONE = Z.son ? 250 * 1024 * 1024 : LIMITE_FINALE;
   var $ = function (id) { return document.getElementById(Z.prefixe + '-' + id); };
@@ -116,7 +116,7 @@
   // pourquoi une vidéo ne passe pas (format, taille, appareil).
   function signaler(quoi, detail) {
     if (!window.signalerErreur || !fichierChoisi) return;
-    window.signalerErreur('Vidéo de l’accueil : ' + quoi, (detail || '') + ' — « ' + fichierChoisi.name + ' », ' + mo(fichierChoisi.size) + ', ' + (fichierChoisi.type || 'type inconnu') + (infosChoisies ? ', ' + infosChoisies.largeur + '×' + infosChoisies.hauteur + ', ' + Math.round(infosChoisies.duree) + ' s' + (infosChoisies.codec ? ', ' + infosChoisies.codec : '') : ''), navigator.userAgent);
+    window.signalerErreur('Vidéo du site (' + Z.nomZone + ') : ' + quoi, (detail || '') + ' — « ' + fichierChoisi.name + ' », ' + mo(fichierChoisi.size) + ', ' + (fichierChoisi.type || 'type inconnu') + (infosChoisies ? ', ' + infosChoisies.largeur + '×' + infosChoisies.hauteur + ', ' + Math.round(infosChoisies.duree) + ' s' + (infosChoisies.codec ? ', ' + infosChoisies.codec : '') : ''), navigator.userAgent);
   }
 
   // L'original peut-il être envoyé tel quel (s'il est déjà plus léger que la version
@@ -301,24 +301,17 @@
       // large qui va d'un bord à l'autre de l'écran ; une vidéo verticale ou carrée y serait
       // coupée en haut et en bas au point de ne plus rien montrer d'utile.
       // (vidéo de l'accueil : verticale acceptée, la taille se mesure alors sur le plus grand côté)
-      var petite = infosChoisies.largeur && cote(infosChoisies.largeur, infosChoisies.hauteur) < LARGEUR_MIN;
-      if (petite && Z.tousFormats) {
-        // vidéo de l'accueil : toutes les vidéos sont acceptées (06/10/2026), avec un conseil
-        afficherInfos(); $('publier-btn').disabled = false;
-        message('Attention : cette vidéo est petite (' + infosChoisies.largeur + ' × ' + infosChoisies.hauteur + '), elle risque d’être un peu floue en grand. Si vous avez la version d’origine filmée en HD, préférez-la.');
-        return;
-      }
-      if (petite && infosChoisies.largeur / infosChoisies.hauteur >= 1.25) {
-        message('Cette vidéo est trop petite (' + infosChoisies.largeur + ' × ' + infosChoisies.hauteur + ') : sur le site, elle serait floue. Choisissez la vidéo d’origine filmée en HD (1280 × 720 ou plus), pas une copie reçue par WhatsApp ou téléchargée d’un réseau social.', true);
-        $('fichier').value = ''; fichierChoisi = null; infosChoisies = null;
-        return;
-      }
       if (!Z.tousFormats && infosChoisies.largeur && infosChoisies.hauteur && infosChoisies.largeur / infosChoisies.hauteur < 1.25) {
-        message('Cette vidéo est ' + (infosChoisies.hauteur > infosChoisies.largeur ? 'verticale' : 'presque carrée') + ' (' + infosChoisies.largeur + ' × ' + infosChoisies.hauteur + '). ' + Z.nomZone.charAt(0).toUpperCase() + Z.nomZone.slice(1) + ' n’accepte que les vidéos horizontales : filmez en tenant le téléphone couché (en paysage), puis choisissez cette nouvelle vidéo.', true);
+        message('Cette vidéo est ' + (infosChoisies.hauteur > infosChoisies.largeur ? 'verticale' : 'presque carrée') + ' (' + infosChoisies.largeur + ' × ' + infosChoisies.hauteur + '). ' + Z.nomZone.charAt(0).toUpperCase() + Z.nomZone.slice(1) + ' n’accepte que les vidéos horizontales : filmez en tenant le téléphone couché (en paysage), puis choisissez cette nouvelle vidéo. (Les vidéos verticales vont dans « Vidéo de la page d’accueil ».)', true);
         $('fichier').value = ''; fichierChoisi = null; infosChoisies = null;
         return;
       }
+      // Petites vidéos : acceptées partout, avec un simple conseil (06/10/2026 — demande de la
+      // propriétaire : toutes les vidéos doivent passer).
       afficherInfos(); $('publier-btn').disabled = false;
+      if (infosChoisies.largeur && cote(infosChoisies.largeur, infosChoisies.hauteur) < LARGEUR_MIN) {
+        message('Attention : cette vidéo est petite (' + infosChoisies.largeur + ' × ' + infosChoisies.hauteur + '), elle risque d’être un peu floue en grand. Si vous avez la version d’origine filmée en HD, préférez-la.');
+      }
     }
     catch (e) { message(e.message, true); }
   });
