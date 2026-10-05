@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-xOHEZLeKMXxDZfNZ6i0IXK3VoMPQfXd7TgbEQwTZzmg='; style-src 'self' https://fonts.googleapis.com 'sha256-IAm29wMK+UGV3lwLkMc4EAHslPzK8bjM/yZbq4WNCRE='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-YBAY9iAtIKjRy6BqOrtm3ZGYUf5tIzv/8pvsxyxeqb0='; style-src 'self' https://fonts.googleapis.com 'sha256-IAm29wMK+UGV3lwLkMc4EAHslPzK8bjM/yZbq4WNCRE='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -11,15 +11,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Inscription Nouveaux Mannequins — Maître Akesse Model Management</title>
 <meta name="description" content="Finalisez votre inscription officielle à l'agence Maître Akesse Model Management.">
-<link rel="canonical" href="https://www.maitreakessemodelmanagement.com/inscription-mannequin.html">
-<link rel="alternate" hreflang="fr" href="https://www.maitreakessemodelmanagement.com/inscription-mannequin.html">
-<link rel="alternate" hreflang="en" href="https://www.maitreakessemodelmanagement.com/en/inscription-mannequin.html">
-<link rel="alternate" hreflang="x-default" href="https://www.maitreakessemodelmanagement.com/inscription-mannequin.html">
+<link rel="canonical" href="https://www.maitreakessemodelmanagement.com/inscription-mannequin">
+<link rel="alternate" hreflang="fr" href="https://www.maitreakessemodelmanagement.com/inscription-mannequin">
+<link rel="alternate" hreflang="en" href="https://www.maitreakessemodelmanagement.com/en/inscription-mannequin">
+<link rel="alternate" hreflang="x-default" href="https://www.maitreakessemodelmanagement.com/inscription-mannequin">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Inscription Nouveaux Mannequins — Maître Akesse Model Management">
 <meta property="og:description" content="Finalisez votre inscription officielle à l'agence Maître Akesse Model Management.">
 <meta property="og:image" content="https://www.maitreakessemodelmanagement.com/assets/logo-dark-bg.png">
-<meta property="og:url" content="https://www.maitreakessemodelmanagement.com/inscription-mannequin.html">
+<meta property="og:url" content="https://www.maitreakessemodelmanagement.com/inscription-mannequin">
 <meta property="og:locale" content="fr_FR">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -450,7 +450,7 @@ function rafraichirApercuPhotosSupp() {
   const apercu = document.getElementById('ins-photos-supp-apercu');
   apercu.innerHTML = photosSupplementaires.map((f, i) => `
     <div class="im-30">
-      <img src="${URL.createObjectURL(f)}" class="im-31">
+      <img src="${URL.createObjectURL(f)}" class="im-31" alt="Photo ${i + 1}">
       <button type="button" class="ins-photo-supp-remplacer im-32" data-index="${i}" title="Remplacer cette photo">⇄</button>
       <button type="button" class="ins-photo-supp-suppr im-33" data-index="${i}" title="Supprimer cette photo">✕</button>
     </div>

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-KWoG52RevPpdh1Cp9G82ywc7sHbI/hSTNBMJsr3P/AI=' 'sha256-CofWOFr1RAK6x/eV6nOiRsqFNKE7uRXwqdjVjf3C8f0='; style-src 'self' https://fonts.googleapis.com 'sha256-8LrkXFbl2Lw61VWxDceGfjjHAwWVR1EX/L2RObVO+sY='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-G3gy1oiMbMqlMfyshSsE+cPg08Si/JKCIEl9HHWUx4U='; style-src 'self' https://fonts.googleapis.com 'sha256-8LrkXFbl2Lw61VWxDceGfjjHAwWVR1EX/L2RObVO+sY='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -11,15 +11,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Postuler à un casting — Maître Akesse Model Management</title>
 <meta name="description" content="Postulez pour un projet/casting précis lancé par Maître Akesse Model Management : photos, mensurations et présentation.">
-<link rel="canonical" href="https://www.maitreakessemodelmanagement.com/candidature.html">
-<link rel="alternate" hreflang="fr" href="https://www.maitreakessemodelmanagement.com/candidature.html">
-<link rel="alternate" hreflang="en" href="https://www.maitreakessemodelmanagement.com/en/candidature.html">
-<link rel="alternate" hreflang="x-default" href="https://www.maitreakessemodelmanagement.com/candidature.html">
+<link rel="canonical" href="https://www.maitreakessemodelmanagement.com/candidature">
+<link rel="alternate" hreflang="fr" href="https://www.maitreakessemodelmanagement.com/candidature">
+<link rel="alternate" hreflang="en" href="https://www.maitreakessemodelmanagement.com/en/candidature">
+<link rel="alternate" hreflang="x-default" href="https://www.maitreakessemodelmanagement.com/candidature">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Postuler à un casting — Maître Akesse Model Management">
 <meta property="og:description" content="Postulez pour un projet/casting précis lancé par Maître Akesse Model Management : photos, mensurations et présentation.">
 <meta property="og:image" content="https://www.maitreakessemodelmanagement.com/assets/logo-dark-bg.png">
-<meta property="og:url" content="https://www.maitreakessemodelmanagement.com/candidature.html">
+<meta property="og:url" content="https://www.maitreakessemodelmanagement.com/candidature">
 <meta property="og:locale" content="fr_FR">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -693,7 +693,7 @@ function rafraichirApercuPhotos() {
 
   apercu.innerHTML = photosSelectionnees.map((f, i) => `
     <div class="ca-photo-vignette ca-20">
-      <img src="${URL.createObjectURL(f)}" class="ca-21">
+      <img src="${URL.createObjectURL(f)}" class="ca-21" alt="Photo ${i + 1}">
       <button type="button" class="ca-photo-remplacer ca-22" data-index="${i}" title="Remplacer cette photo">⇄</button>
       <button type="button" class="ca-photo-suppr ca-23" data-index="${i}" title="Supprimer cette photo">✕</button>
     </div>
