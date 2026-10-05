@@ -489,6 +489,7 @@ const Store = {
         url_moyenne:urlMoyenne, chemin_moyenne:cheminMoyenne, originale_optimisee:true
       }).select().single();
       if (dbErr) throw dbErr;
+      trierPhotoEnArrierePlan(row.id);
       return { id: row.id, path: chemin, url: urlMiniature||url, urlPleine:url, compcardOrdre:null };
     }catch(e){
       // e.message porte le vrai motif quand il vient d'un refus explicite du
@@ -571,6 +572,21 @@ async function jetonSessionCourante(){
   const { data: { session } } = await sb.auth.getSession();
   return session ? session.access_token : null;
 }
+// Tri automatique de la photo par IA (06/10/2026) : lancé en arrière-plan,
+// sans attendre ni rien afficher — la mannequin n'est pas informée du résultat.
+// Une photo jugée inutilisable est seulement cachée (jamais supprimée) ; si cet
+// appel échoue, le tableau de bord rattrape la photo plus tard.
+function trierPhotoEnArrierePlan(photoId){
+  jetonSessionCourante().then(function(jeton){
+    if (!jeton || !photoId) return;
+    return fetch('/api/trier-photo', {
+      method: 'POST', keepalive: true,
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jeton },
+      body: JSON.stringify({ photoId: String(photoId) })
+    });
+  }).catch(function(){});
+}
+
 async function uploaderVersR2(modelId, chemin, blob, contentType){
   const jeton = await jetonSessionCourante();
   if (!jeton) throw new Error('Session expirée — reconnectez-vous.');

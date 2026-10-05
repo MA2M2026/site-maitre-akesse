@@ -446,3 +446,13 @@ html body.tdb-v2:not(.v2-page-v2-ensemble) .v2-entete-actions { display: none !i
 
 /* Vidéo de l'accueil (06/10/2026) : l'aperçu garde la forme de la vidéo (verticale possible). */
 #va-apercu video { aspect-ratio: auto; width: auto; max-width: 100%; max-height: 420px; object-fit: contain; }
+
+/* Photos triées par l'IA (06/10/2026) — js/tri-photos-admin.js */
+.tri-titre { margin: 1.2rem 0 0.6rem; font-size: 1rem; }
+.tri-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.8rem; }
+.tri-vignette { border: 1px solid #d3c7bd; border-radius: 6px; padding: 0.4rem; background: #fff; display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; }
+.tri-vignette img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 4px; background: #eee; }
+.tri-nom { font-weight: 600; font-size: 0.85rem; overflow-wrap: anywhere; }
+.tri-raison { font-size: 0.8rem; color: #4a403b; overflow-wrap: anywhere; }
+.tri-actions { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: auto; }
+.tri-actions .btn { padding: 0.35rem 0.7rem; font-size: 0.8rem; }
