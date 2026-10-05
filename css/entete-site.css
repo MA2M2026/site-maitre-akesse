@@ -267,9 +267,11 @@ html:has(#couverture-faisceau) { scroll-padding-top: calc(var(--couv-h) + 90px);
   .couverture-faisceau { position: fixed; top: 0; left: 0; right: 0; height: var(--couv-h-anim); }
   .couverture-faisceau .couverture-canvas,
   .couverture-faisceau .couverture-video,
-  .couverture-faisceau .couverture-video-fond { inset: auto; left: 0; top: 50%; width: 100%; height: var(--couv-h-max); transform: translateY(-50%); }
-  .couverture-faisceau .couverture-video-fond { transform: translateY(-50%) scale(1.15); }
-  .site-header-v2.entete-sous-couverture { position: fixed; top: var(--couv-h-anim); left: 0; right: 0; }
+  .couverture-faisceau .couverture-video-fond { inset: auto; left: 0; top: 0; width: 100%; height: var(--couv-h-max); transform: translateY(calc((var(--couv-h-anim) - var(--couv-h-max)) / 2)); }
+  .couverture-faisceau .couverture-video-fond { transform: translateY(calc((var(--couv-h-anim) - var(--couv-h-max)) / 2)) scale(1.15); }
+  /* Déplacement par « transform » (et non « top ») : même rendu, mais le navigateur ne le
+     compte pas comme un saut de la page pendant le défilement (audit du 05/10/2026). */
+  .site-header-v2.entete-sous-couverture { position: fixed; top: 0; left: 0; right: 0; transform: translateY(var(--couv-h-anim)); }
   .couverture-espace { display: block; height: calc(var(--couv-h-max) + 85px); }
 }
 /* Accueil : tant que la porte d'entrée est affichée, ni couverture ni espace réservé. */
