@@ -279,3 +279,126 @@ html:has(#couverture-faisceau) { scroll-padding-top: calc(var(--couv-h) + 90px);
 }
 /* Accueil : tant que la porte d'entrée est affichée, ni couverture ni espace réservé. */
 body.porte-verrouillee .couverture-faisceau, body.porte-verrouillee .couverture-espace { display: none; }
+
+/* =====================================================================
+   Menu plein écran — modèle 3 « Mosaïque » (choisi par la propriétaire,
+   05/10/2026) : une tuile photo par rubrique, sur deux colonnes au
+   téléphone et cinq sur ordinateur ; « Espace mannequin » en grand bouton
+   bordeaux en dessous. Les photos (assets/menu/) ne sont chargées qu'à la
+   première ouverture du menu (classe menu-photos posée par js/menu.js).
+   Remplace les règles « bouton » du menu plus haut.
+   ===================================================================== */
+.menu-overlay {
+  background: #060504;
+  justify-content: flex-start;
+  padding: 4.4rem 14px 2rem;
+}
+/* logo en haut à gauche, à côté de « Fermer » */
+.menu-overlay::before {
+  content: "";
+  position: absolute;
+  top: 1.15rem;
+  left: 18px;
+  width: 150px;
+  height: 30px;
+  background: url("../assets/logo-header.png") no-repeat left center / contain;
+}
+.menu-overlay .close-menu { top: 1rem; right: 14px; border-radius: 999px; border-color: rgba(255,255,255,0.22); }
+.menu-overlay .nav-links {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  max-width: 760px;
+  text-align: left;
+}
+.menu-overlay .nav-links li { border: none; }
+.menu-overlay.active .nav-links li:nth-child(10) { transition-delay: 0.41s; }
+.menu-overlay.active .nav-links li:nth-child(11) { transition-delay: 0.45s; }
+.menu-overlay.active .nav-links li:nth-child(12) { transition-delay: 0.49s; }
+.menu-overlay .nav-links li a {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  height: clamp(92px, 14vh, 128px);
+  padding: 0 12px 10px !important;
+  border-radius: 12px !important;
+  border: none !important;
+  overflow: hidden;
+  background: linear-gradient(135deg, #2a0d14, #110b0b) !important;
+  background-size: cover !important;
+  background-position: 50% 22% !important;
+  box-shadow: none !important;
+  font-family: var(--display) !important;
+  font-size: clamp(1.05rem, 4.4vw, 1.35rem) !important;
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: 0.01em !important;
+  text-transform: none;
+  text-align: left;
+  color: #f4efe9 !important;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.75);
+  transition: transform 0.15s ease, filter 0.2s ease !important;
+}
+/* les anciennes règles « bouton » (survol, appui, page actuelle) ne doivent pas
+   remplacer le cadrage de la photo */
+.menu-overlay .nav-links li a:is(:hover, :active, .actif) {
+  background-size: cover !important;
+  background-position: 50% 22% !important;
+  background-repeat: no-repeat !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+.menu-overlay .nav-links li a { background-repeat: no-repeat !important; }
+.menu-overlay .nav-links li a:active { transform: scale(0.97) !important; }
+@media (hover: hover) { .menu-overlay .nav-links li a:hover { filter: brightness(1.25); } }
+.menu-overlay .nav-links li a.actif { outline: 1.5px solid #d55468; outline-offset: -1.5px; }
+
+/* photos des tuiles (assombries pour que le titre reste lisible) */
+.menu-overlay.menu-photos .nav-links li a { background-image: var(--tuile-voile), var(--tuile-photo, linear-gradient(135deg, #2a0d14, #110b0b)) !important; }
+.menu-overlay { --tuile-voile: linear-gradient(180deg, rgba(6,5,4,0.12) 30%, rgba(6,5,4,0.72)); }
+.menu-overlay .nav-links a[href$="index.html"] { --tuile-photo: url("../assets/menu/accueil.jpg"); }
+.menu-overlay .nav-links a[href$="services.html"] { --tuile-photo: url("../assets/menu/services.jpg"); }
+.menu-overlay .nav-links a[href$="mannequins.html"] { --tuile-photo: url("../assets/menu/book.jpg"); }
+.menu-overlay .nav-links a[href$="actualites.html"] { --tuile-photo: url("../assets/menu/actualites.jpg"); }
+.menu-overlay .nav-links a[href$="evenements.html"] { --tuile-photo: url("../assets/menu/evenements.jpg"); }
+.menu-overlay .nav-links a[href$="partenaires.html"] { --tuile-photo: url("../assets/menu/partenaires.jpg"); }
+.menu-overlay .nav-links a[href$="integrer-agence.html"] { --tuile-photo: url("../assets/menu/integrer.jpg"); }
+.menu-overlay .nav-links a[href$="candidature.html"] { --tuile-photo: url("../assets/menu/casting.jpg"); }
+.menu-overlay .nav-links a[href$="inscription-mannequin.html"] { --tuile-photo: url("../assets/menu/inscription.jpg"); }
+.menu-overlay .nav-links a[href$="contact.html"] { --tuile-photo: url("../assets/menu/contact.jpg"); }
+
+/* « Espace mannequin » : grand bouton bordeaux sur toute la largeur */
+.menu-overlay .nav-links .item-cta { grid-column: 1 / -1; margin-top: 0.5rem; }
+.menu-overlay .nav-links .item-cta a,
+.menu-overlay.menu-photos .nav-links .item-cta a {
+  height: auto;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem 1.2rem !important;
+  border-radius: 999px !important;
+  background: linear-gradient(180deg, #9c1c2c, #6d1222) !important;
+  box-shadow: 0 8px 22px -10px rgba(213,84,104,0.8) !important;
+  font-family: var(--texte) !important;
+  font-size: 0.78rem !important;
+  letter-spacing: 0.22em !important;
+  text-transform: uppercase;
+  text-align: center;
+  text-shadow: none;
+  color: #fff !important;
+}
+.menu-overlay .nav-links .item-cta a.actif { outline: 1.5px solid #fff; }
+.menu-overlay .menu-contact { margin-top: 1.8rem; }
+
+/* ordinateur : cinq tuiles par ligne, plus hautes */
+@media (min-width: 900px) {
+  .menu-overlay { padding: 5.2rem 2rem 2rem; justify-content: center; }
+  .menu-overlay::before { top: 1.6rem; left: 2rem; width: 180px; height: 34px; }
+  .menu-overlay .close-menu { top: 1.5rem; right: 2rem; }
+  .menu-overlay .nav-links { grid-template-columns: repeat(5, 1fr); gap: 12px; max-width: 1100px; }
+  .menu-overlay .nav-links li a { height: clamp(150px, 27vh, 250px); font-size: 1.45rem !important; padding: 0 14px 12px !important; }
+  .menu-overlay .nav-links .item-cta { justify-self: center; width: min(100%, 420px); }
+}
+@media (min-width: 900px) and (max-height: 700px) {
+  .menu-overlay { justify-content: flex-start; }
+  .menu-overlay .nav-links li a { height: 140px; }
+}

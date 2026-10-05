@@ -9,7 +9,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // sinon, sur mobile, faire défiler jusqu'aux limites du menu peut faire défiler
   // la page en dessous sans que ça se voie, ce qui donne un rendu décalé à la fermeture.
   let menuEstOuvert = false;
+  // Photos des tuiles du menu (modèle « Mosaïque ») : chargées seulement quand le visiteur
+  // s'apprête à ouvrir le menu, pour ne pas alourdir les pages.
+  function chargerPhotos() { overlay.classList.add('menu-photos'); }
+  menuBtn.addEventListener('pointerenter', chargerPhotos, { once: true });
+  menuBtn.addEventListener('touchstart', chargerPhotos, { once: true, passive: true });
   function ouvrirMenu() {
+    chargerPhotos();
     overlay.classList.add('active');
     if (window.jouerSon) window.jouerSon('menu');
     menuEstOuvert = true;
