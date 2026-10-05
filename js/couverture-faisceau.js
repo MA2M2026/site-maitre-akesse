@@ -12,15 +12,17 @@
 
   // --- Sur ordinateur : couverture qui se replie ---
   // En haut de la page, la couverture est grande (format 16:9, jusqu'à 55 % de l'écran) ;
-  // en faisant défiler, elle se réduit jusqu'au bandeau fixe (format Facebook, 28 % de
-  // l'écran au plus), puis la page passe dessous. Sur téléphone : 16:9, au plus 26 % de
+  // en faisant défiler, elle se réduit jusqu'à disparaître (06/10/2026 ; avant : bandeau
+  // fixe de 28 % de l'écran), seule la barre du menu reste en haut. Sur téléphone : 16:9, au plus 26 % de
   // l'écran (05/10/2026 : elle prenait trop de place — 85 % / 40 % / 33 % avant).
   var racine = document.documentElement, attente = false;
   function majRepli() {
     attente = false;
     if (window.innerWidth <= 700) { racine.style.removeProperty('--couv-h-anim'); return; }
     var max = Math.min(window.innerWidth * 9 / 16, window.innerHeight * .55);
-    var min = Math.min(window.innerWidth * 312 / 820, window.innerHeight * .28);
+    // 06/10/2026 : repli complet (0) — la couverture laisse toute la place à la page et
+    // seule la barre du menu reste fixée en haut (avant : bandeau de 28 % de l'écran).
+    var min = 0;
     racine.style.setProperty('--couv-h-anim', Math.max(min, max - (window.scrollY || 0)) + 'px');
   }
   function demanderRepli() { if (!attente) { attente = true; requestAnimationFrame(majRepli); } }
