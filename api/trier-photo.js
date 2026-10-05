@@ -162,7 +162,13 @@ async function demanderAvisIA(octets) {
   } catch (e) { return null; }
 }
 
+const revueBook = require('./_revue-book.js');
+
 module.exports = async function handler(req, res) {
+  // Revue du book complet d'un mannequin (voir api/_revue-book.js).
+  let corpsRevue = req.body;
+  if (typeof corpsRevue === 'string') { try { corpsRevue = JSON.parse(corpsRevue); } catch (e) { corpsRevue = {}; } }
+  if (corpsRevue && corpsRevue.action === 'revue') { req.body = corpsRevue; return revueBook(req, res); }
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Méthode non autorisée.' });
     return;
@@ -273,4 +279,4 @@ module.exports = async function handler(req, res) {
   }
 };
 
-module.exports.config = { maxDuration: 60 };
+module.exports.config = { maxDuration: 300 };

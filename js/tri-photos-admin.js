@@ -172,7 +172,7 @@
       var resultat = null;
       for (var essai = 1; essai <= 2 && !resultat; essai++) {
         try {
-          var r = await fetch('/api/revue-book', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (await jeton()) }, body: JSON.stringify({ modelId: mid, images: images }) });
+          var r = await fetch('/api/trier-photo', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (await jeton()) }, body: JSON.stringify({ action: 'revue', modelId: mid, images: images }) });
           var corps = await r.json().catch(function () { return {}; });
           if (r.status === 402) { arret = 'Le crédit de l’IA est épuisé : rechargez le compte Anthropic, puis relancez (les books déjà revus ne seront pas refaits).'; break; }
           if (r.status === 503) { arret = 'Le tri automatique n’est pas configuré (clé de l’IA absente sur Vercel).'; break; }
