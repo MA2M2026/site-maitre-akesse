@@ -5936,3 +5936,41 @@ end;
 $$;
 
 NOTIFY pgrst, 'reload schema';
+
+-- =====================================================================
+-- Extension 117 — Rapports de revue des books (demande de la propriétaire,
+-- 06/10/2026) : la revue stricte du book par l'IA (api/_revue-book.js) produit,
+-- pour chaque mannequin, un rapport détaillé (points forts, points à améliorer)
+-- et une fiche technique (les photos à refaire, comment les faire), ainsi
+-- qu'un message prêt à envoyer au mannequin par WhatsApp.
+--  1) table revues_book : le dernier rapport de chaque mannequin, lisible et
+--     modifiable par les seuls admins (écrit par la fonction serveur) ;
+--  2) contacts_mannequins_admin() : le numéro de téléphone des mannequins,
+--     pour le bouton « Envoyer par WhatsApp » — réservé aux admins (le numéro
+--     reste invisible pour tous les autres, Extensions 10 et 26).
+-- =====================================================================
+create table if not exists revues_book (
+  model_id uuid primary key references model_profiles(id) on delete cascade,
+  rapport jsonb not null,
+  revu_le timestamptz not null default now(),
+  envoye_le timestamptz
+);
+alter table revues_book enable row level security;
+drop policy if exists "Les admins gèrent les revues de book" on revues_book;
+create policy "Les admins gèrent les revues de book"
+  on revues_book for all
+  using (exists (select 1 from admins where user_id = auth.uid()))
+  with check (exists (select 1 from admins where user_id = auth.uid()));
+
+create or replace function contacts_mannequins_admin()
+returns table(model_id uuid, phone text)
+language sql stable security definer
+set search_path = public
+as $$
+  select id, phone from model_profiles
+  where exists (select 1 from admins where user_id = auth.uid());
+$$;
+revoke all on function contacts_mannequins_admin() from public;
+grant execute on function contacts_mannequins_admin() to authenticated;
+
+NOTIFY pgrst, 'reload schema';

@@ -121,9 +121,56 @@
         }).join('')
       : '<div class="dossiers-vide">Aucune photo à vérifier.</div>';
 
+    chargerRapports();
     zoneA.innerHTML = '<p class="tdb-9">L’IA regarde le book complet de chaque mannequin, comme un recruteur : elle garde les meilleures photos (Book et Digitals) et propose de supprimer les photos floues, de groupe, trop semblables ou pas assez professionnelles. <strong>Rien n’est supprimé sans votre clic</strong> : les photos proposées apparaissent ci-dessus, dans « À vérifier ». Coût : environ 0,10 $ par mannequin.</p>' +
       '<button class="btn" type="button" id="tri-revue-btn">Lancer la revue stricte des books</button><div class="form-msg" id="tri-revue-msg"></div><div id="tri-revue-resultats" class="tri-revue-resultats"></div>';
     document.getElementById('tri-revue-btn').addEventListener('click', revueBooks);
+  }
+
+  // ---- Rapports détaillés + fiche technique + envoi WhatsApp (Extension 117) ----
+  var rapports = {}, telephones = {};
+  function numeroWa(tel) {
+    var n = String(tel || '').replace(/[^\d]/g, '');
+    if (n.indexOf('00') === 0) n = n.slice(2);
+    if ((n.length === 10 && n.charAt(0) === '0') || n.length === 8) n = '225' + n; // numéro ivoirien sans indicatif
+    return n.length >= 8 ? n : '';
+  }
+  function listeHtml(t) { return (t && t.length) ? '<ul>' + t.map(function (x) { return '<li>' + echapper(x) + '</li>'; }).join('') + '</ul>' : '<p>—</p>'; }
+
+  async function chargerRapports() {
+    var zone = document.getElementById('tri-rapports');
+    if (!zone) return;
+    var r = await sb.from('revues_book').select('model_id, rapport, revu_le, envoye_le').order('revu_le', { ascending: false });
+    if (r.error) { zone.innerHTML = '<p class="tdb-9">Les rapports seront disponibles après l’exécution de l’Extension 117 dans Supabase.</p>'; return; }
+    var lignes = r.data || [];
+    if (!lignes.length) { zone.innerHTML = '<p class="tdb-9">Aucun rapport pour le moment : lancez la revue stricte des books ci-dessous.</p>'; return; }
+    var ids = lignes.map(function (l) { return l.model_id; });
+    var noms = {};
+    var pr = await sb.from('model_profiles').select('id, full_name').in('id', ids);
+    (pr.data || []).forEach(function (m) { noms[m.id] = m.full_name || 'Mannequin'; });
+    var tel = await sb.rpc('contacts_mannequins_admin');
+    telephones = {}; (tel.data || []).forEach(function (t) { telephones[t.model_id] = t.phone; });
+    rapports = {};
+    zone.innerHTML = lignes.map(function (l) {
+      var rp = l.rapport || {}, nom = noms[l.model_id] || 'Mannequin';
+      rapports[l.model_id] = rp;
+      var wa = numeroWa(telephones[l.model_id]);
+      return '<details class="tri-rapport"><summary><strong>' + echapper(nom) + '</strong> — revu le ' + new Date(l.revu_le).toLocaleDateString('fr-FR') +
+        (l.envoye_le ? ' · <span class="tri-envoye">✓ envoyé le ' + new Date(l.envoye_le).toLocaleDateString('fr-FR') + '</span>' : ' · <span class="tri-non-envoye">pas encore envoyé</span>') + '</summary>' +
+        '<p>' + (rp.gardees || 0) + ' photo(s) gardée(s), ' + (rp.proposees || 0) + ' proposée(s) à la suppression (voir « À vérifier »).</p>' +
+        '<h5>Points forts</h5>' + listeHtml(rp.points_forts) +
+        '<h5>À améliorer</h5>' + listeHtml(rp.a_ameliorer) +
+        '<h5>Fiche technique — photos à faire</h5>' + ((rp.fiche_technique || []).length ? '<ol class="tri-fiche">' + rp.fiche_technique.map(function (f) {
+          return '<li><strong>' + echapper(f.titre) + '</strong><br>Cadrage : ' + echapper(f.cadrage) + '<br>Pose : ' + echapper(f.pose) + '<br>Tenue : ' + echapper(f.tenue) + '<br>Lieu et lumière : ' + echapper(f.lieu_lumiere) + '</li>';
+        }).join('') + '</ol>' : '<p>—</p>') +
+        '<h5>Règles pour toutes les photos</h5>' + listeHtml(rp.regles) +
+        '<h5>Message pour le mannequin (vous pouvez le modifier avant l’envoi)</h5>' +
+        '<textarea class="tri-message" rows="12" data-model="' + echapper(l.model_id) + '">' + echapper(rp.message_mannequin || '') + '</textarea>' +
+        '<div class="tri-actions">' +
+          (wa ? '<button class="btn tri-btn" type="button" data-statut="envoyer-wa" data-model="' + echapper(l.model_id) + '">💬 Envoyer par WhatsApp</button>' : '<span class="tdb-9">Pas de numéro de téléphone pour ce mannequin.</span>') +
+          '<button class="btn tri-btn" type="button" data-statut="copier-message" data-model="' + echapper(l.model_id) + '">Copier le message</button>' +
+        '</div></details>';
+    }).join('');
   }
 
   function blobEnBase64(blob) {
@@ -137,10 +184,10 @@
 
   // Mannequins déjà revus dans les dernières 24 h (pour reprendre sans repayer après une coupure).
   function dejaRevus() {
-    try { var o = JSON.parse(localStorage.getItem('ma2m_revue_books') || '{}'); var n = Date.now(), r = {}; Object.keys(o).forEach(function (k) { if (n - o[k] < 86400000) r[k] = o[k]; }); return r; } catch (e) { return {}; }
+    try { var o = JSON.parse(localStorage.getItem('ma2m_revue_books_v2') || '{}'); var n = Date.now(), r = {}; Object.keys(o).forEach(function (k) { if (n - o[k] < 86400000) r[k] = o[k]; }); return r; } catch (e) { return {}; }
   }
   function noterRevu(id) {
-    try { var o = dejaRevus(); o[id] = Date.now(); localStorage.setItem('ma2m_revue_books', JSON.stringify(o)); } catch (e) {}
+    try { var o = dejaRevus(); o[id] = Date.now(); localStorage.setItem('ma2m_revue_books_v2', JSON.stringify(o)); } catch (e) {}
   }
 
   async function revueBooks() {
@@ -182,7 +229,7 @@
       if (arret) break;
       if (resultat) {
         noterRevu(mid); totalProposees += resultat.proposees || 0;
-        ligne.innerHTML = '<strong>' + echapper(nom) + '</strong> : ' + (resultat.gardees || 0) + ' photo(s) gardée(s), ' + (resultat.proposees || 0) + ' proposée(s) à la suppression.' + (resultat.conseils ? '<br><em>Conseils : ' + echapper(resultat.conseils) + '</em>' : '');
+        ligne.innerHTML = '<strong>' + echapper(nom) + '</strong> : ' + (resultat.gardees || 0) + ' photo(s) gardée(s), ' + (resultat.proposees || 0) + ' proposée(s) à la suppression. Rapport détaillé ci-dessous.';
       } else {
         echecs++; ligne.innerHTML = '<strong>' + echapper(nom) + '</strong> : la revue a échoué (vous pourrez relancer).';
       }
@@ -203,6 +250,19 @@
     var b = e.target.closest && e.target.closest('.tri-btn');
     if (!b) return;
     var r;
+    if (b.dataset.statut === 'envoyer-wa' || b.dataset.statut === 'copier-message') {
+      var zoneTexte = details.querySelector('.tri-message[data-model="' + b.dataset.model + '"]');
+      var texte = zoneTexte ? zoneTexte.value.trim() : '';
+      if (!texte) return;
+      if (b.dataset.statut === 'copier-message') {
+        try { await navigator.clipboard.writeText(texte); b.textContent = '✓ Copié'; } catch (err) { zoneTexte.select(); }
+        return;
+      }
+      window.open('https://wa.me/' + numeroWa(telephones[b.dataset.model]) + '?text=' + encodeURIComponent(texte), '_blank', 'noopener');
+      await sb.from('revues_book').update({ envoye_le: new Date().toISOString() }).eq('model_id', b.dataset.model);
+      b.textContent = '✓ WhatsApp ouvert';
+      return;
+    }
     if (b.dataset.statut === 'supprimer-modele') {
       var duModele = Object.keys(parId).map(function (k) { return parId[k]; }).filter(function (p) { return p.model_id === b.dataset.model && p.tri_statut === 'a_verifier' && /^Proposée à la suppression/.test(p.tri_raison || ''); });
       if (!confirm('Supprimer définitivement ces ' + duModele.length + ' photo(s) ? Elles ne pourront pas être récupérées.')) return;
