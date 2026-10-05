@@ -57,6 +57,23 @@ if (typeof window.heic2any === 'undefined') {
   };
 }
 
+// Conversion d'une photo HEIC (iPhone) en JPEG avant envoi — fonction unique pour
+// tout le site (06/10/2026 : elle était recopiée dans 14 pages et scripts, ce qui
+// obligeait à corriger 14 fois le moindre problème). En cas d'échec, le fichier
+// d'origine est renvoyé tel quel (comportement inchangé).
+async function convertirSiHeic(fichier, qualite) {
+  const estHeic = /image\/hei(c|f)/i.test(fichier.type) || /\.(heic|heif)$/i.test(fichier.name);
+  if (!estHeic || typeof heic2any === 'undefined') return fichier;
+  try {
+    const resultat = await heic2any({ blob: fichier, toType: 'image/jpeg', quality: qualite || 0.85 });
+    const blobFinal = Array.isArray(resultat) ? resultat[0] : resultat;
+    return new File([blobFinal], fichier.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' });
+  } catch (e) {
+    console.error('Conversion HEIC échouée, envoi du fichier original :', e);
+    return fichier;
+  }
+}
+
 // ================== Verrou de défilement fiable, y compris sur iPhone ==================
 // `overflow: hidden` seul (utilisé auparavant) ne bloque PAS le défilement tactile sur
 // iOS Safari — limitation connue et documentée d'iOS, pas un bug ponctuel. La seule

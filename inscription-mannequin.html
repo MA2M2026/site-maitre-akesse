@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-YBAY9iAtIKjRy6BqOrtm3ZGYUf5tIzv/8pvsxyxeqb0='; style-src 'self' https://fonts.googleapis.com 'sha256-IAm29wMK+UGV3lwLkMc4EAHslPzK8bjM/yZbq4WNCRE='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-oi2xxQulX54OO7NpS8VPCWcAulbnVQiK7YMZvTbTIbU='; style-src 'self' https://fonts.googleapis.com 'sha256-IAm29wMK+UGV3lwLkMc4EAHslPzK8bjM/yZbq4WNCRE='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -412,16 +412,6 @@ function redimensionnerImage(fichier, coteMax = 2800, qualite = 0.88) {
     img.onerror = () => resolve(fichier);
     img.src = URL.createObjectURL(fichier);
   });
-}
-
-async function convertirSiHeic(fichier) {
-  const estHeic = /image\/hei(c|f)/i.test(fichier.type) || /\.(heic|heif)$/i.test(fichier.name);
-  if (!estHeic || typeof heic2any === 'undefined') return fichier;
-  try {
-    const resultat = await heic2any({ blob: fichier, toType: 'image/jpeg', quality: 0.85 });
-    const blobFinal = Array.isArray(resultat) ? resultat[0] : resultat;
-    return new File([blobFinal], fichier.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' });
-  } catch (e) { return fichier; }
 }
 
 function fichierEnBase64(fichier) {

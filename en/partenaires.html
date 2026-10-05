@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-f7ZmeJSylUI2njDZmnEwZyt3ga+xvxtAu4vpREKs/QM='; style-src 'self' https://fonts.googleapis.com 'sha256-5swmU+FhRp+a5xrislkkrZoxuTbf7Aw67IqD9ArCA2I='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-gsksdnnziVSfLq3E99RhTAX3wVOdqaWwtAllnNY7cvc='; style-src 'self' https://fonts.googleapis.com 'sha256-5swmU+FhRp+a5xrislkkrZoxuTbf7Aw67IqD9ArCA2I='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -252,16 +252,6 @@ setTimeout(() => {
 <script src="../js/confort.js"></script>
 <script src="../js/menu.js"></script>
 <script>
-async function convertirSiHeic(fichier) {
-  const estHeic = /image\/hei(c|f)/i.test(fichier.type) || /\.(heic|heif)$/i.test(fichier.name);
-  if (!estHeic || typeof heic2any === 'undefined') return fichier;
-  try {
-    const resultat = await heic2any({ blob: fichier, toType: 'image/jpeg', quality: 0.9 });
-    const blobFinal = Array.isArray(resultat) ? resultat[0] : resultat;
-    return new File([blobFinal], fichier.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' });
-  } catch (e) { return fichier; }
-}
-
 window.partenairesData = [];
 
 const quillPDescription = creerEditeurRiche('p-description-editeur', 'Write here… (you can paste text already formatted from Word)');
@@ -401,7 +391,7 @@ document.getElementById('edit-p-enregistrer-btn').addEventListener('click', asyn
 
   const logoInput = document.getElementById('edit-p-logo');
   if (logoInput.files[0]) {
-    const fichier = await convertirSiHeic(logoInput.files[0]);
+    const fichier = await convertirSiHeic(logoInput.files[0], 0.9);
     const chemin = `site/partenaires/${id}/${Date.now()}-${nomFichierSur(fichier.name)}`;
     try {
       maj.logo_url = await envoyerImageSite('partenaires', chemin, fichier);
@@ -441,7 +431,7 @@ document.getElementById('p-publier-btn').addEventListener('click', async () => {
   let logo_url = null, logo_chemin = null;
   const logoInput = document.getElementById('p-logo');
   if (logoInput.files[0]) {
-    const fichier = await convertirSiHeic(logoInput.files[0]);
+    const fichier = await convertirSiHeic(logoInput.files[0], 0.9);
     const chemin = `site/partenaires/${idPartenaire}/${Date.now()}-${nomFichierSur(fichier.name)}`;
     try {
       logo_url = await envoyerImageSite('partenaires', chemin, fichier);

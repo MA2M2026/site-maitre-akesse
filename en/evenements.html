@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-qfpMxlxJ1n9L7JaINm/uD6pOLq4eW01j4T3O3ecKLrE=' 'sha256-/lAGcdeVixXhLpua6o+4YS6C3xhAbBQcYNNgvTjMWfs=' 'sha256-oASQL5ALfognKk5S1Y7L2a5W04ix9bQ5iIhhNI7RMrQ='; style-src 'self' https://fonts.googleapis.com ;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-/lAGcdeVixXhLpua6o+4YS6C3xhAbBQcYNNgvTjMWfs=' 'sha256-qfpMxlxJ1n9L7JaINm/uD6pOLq4eW01j4T3O3ecKLrE=' 'sha256-/gFfwCgU/G++X0MfU4HMjTCXIL3SPUktGB607qEI+Zo='; style-src 'self' https://fonts.googleapis.com ;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -227,16 +227,6 @@ setTimeout(() => {
 <script src="../js/confort.js"></script>
 <script src="../js/menu.js"></script>
 <script>
-async function convertirSiHeic(fichier) {
-  const estHeic = /image\/hei(c|f)/i.test(fichier.type) || /\.(heic|heif)$/i.test(fichier.name);
-  if (!estHeic || typeof heic2any === 'undefined') return fichier;
-  try {
-    const resultat = await heic2any({ blob: fichier, toType: 'image/jpeg', quality: 0.85 });
-    const blobFinal = Array.isArray(resultat) ? resultat[0] : resultat;
-    return new File([blobFinal], fichier.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' });
-  } catch (e) { return fichier; }
-}
-
 const quillRedaction = creerEditeurRiche('red-editeur', 'Tell the story of this event here… (optional)');
 
 function formatDateEvenement(dateStr) {

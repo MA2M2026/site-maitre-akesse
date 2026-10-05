@@ -1,13 +1,3 @@
-async function convertirSiHeic(fichier) {
-  const estHeic = /image\/hei(c|f)/i.test(fichier.type) || /\.(heic|heif)$/i.test(fichier.name);
-  if (!estHeic || typeof heic2any === 'undefined') return fichier;
-  try {
-    const resultat = await heic2any({ blob: fichier, toType: 'image/jpeg', quality: 0.85 });
-    const blobFinal = Array.isArray(resultat) ? resultat[0] : resultat;
-    return new File([blobFinal], fichier.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' });
-  } catch (e) { return fichier; }
-}
-
 const quillRedaction = creerEditeurRiche('red-editeur', 'Racontez cet événement ici… (facultatif)');
 
 // "date" (sans heure) : new Date('2026-05-01') est interprété en UTC, ce qui peut

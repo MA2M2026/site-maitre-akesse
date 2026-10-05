@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-1e+gtN5andAqE4dVcrUd8H0NZhVIBZaBIsEbFaJ+nMY=' 'sha256-mJK7svUjKCBKIXmZgzr3sDk0ULSKkLSxR1lsHb/iUQM='; style-src 'self' https://fonts.googleapis.com 'sha256-xFz8jkXJLKQkAoroOcoQzkprI7PuV4VRqBd9JwD3/UI='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-1e+gtN5andAqE4dVcrUd8H0NZhVIBZaBIsEbFaJ+nMY=' 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-WAbOOhVIQCqjx6Xq4ioCJafJwa1GV7d99ffeYknjFwc='; style-src 'self' https://fonts.googleapis.com 'sha256-xFz8jkXJLKQkAoroOcoQzkprI7PuV4VRqBd9JwD3/UI='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -244,16 +244,6 @@ setTimeout(() => {
 <script src="../js/confort.js"></script>
 <script src="../js/menu.js"></script>
 <script>
-async function convertirSiHeic(fichier) {
-  const estHeic = /image\/hei(c|f)/i.test(fichier.type) || /\.(heic|heif)$/i.test(fichier.name);
-  if (!estHeic || typeof heic2any === 'undefined') return fichier;
-  try {
-    const resultat = await heic2any({ blob: fichier, toType: 'image/jpeg', quality: 0.85 });
-    const blobFinal = Array.isArray(resultat) ? resultat[0] : resultat;
-    return new File([blobFinal], fichier.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' });
-  } catch (e) { return fichier; }
-}
-
 function urlVideoIntegree(url) {
   if (!url) return null;
   try {

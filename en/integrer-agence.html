@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-ziigyUco0tVld3XuzBdWo3um/jzo4VbBmmsXtP5+f+s='; style-src 'self' https://fonts.googleapis.com 'sha256-h6Sdq0oyaiA/0u97nXOai+NLeqkDUrKN7C72/YjPopk='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-3VSOlamujscgenvUbY/3Rwa3/pkbzQTvNG1T30+uH00='; style-src 'self' https://fonts.googleapis.com 'sha256-h6Sdq0oyaiA/0u97nXOai+NLeqkDUrKN7C72/YjPopk='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -457,19 +457,6 @@ function redimensionnerImage(fichier, coteMax = 2800, qualite = 0.88) {
     img.onerror = () => resolve(fichier);
     img.src = URL.createObjectURL(fichier);
   });
-}
-
-async function convertirSiHeic(fichier) {
-  const estHeic = /image\/hei(c|f)/i.test(fichier.type) || /\.(heic|heif)$/i.test(fichier.name);
-  if (!estHeic || typeof heic2any === 'undefined') return fichier;
-  try {
-    const resultat = await heic2any({ blob: fichier, toType: 'image/jpeg', quality: 0.85 });
-    const blobFinal = Array.isArray(resultat) ? resultat[0] : resultat;
-    return new File([blobFinal], fichier.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' });
-  } catch (e) {
-    console.error('Conversion HEIC échouée, envoi du fichier original :', e);
-    return fichier;
-  }
 }
 
 function fichierEnBase64(fichier) {
