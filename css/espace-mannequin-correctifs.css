@@ -109,3 +109,8 @@ input[type=range] { accent-color: #c21d36; }
    la page ne doit pas être bloqué à la hauteur de l'écran, sinon elles décrochent. */
 html, body { height: auto; }
 body { min-height: 100vh; }
+
+/* 05/10/2026 : fond noir aussi derrière la page. Quand le menu s'ouvre, la page est figée
+   (défilement bloqué) et le fond par défaut du navigateur — blanc — apparaissait sur les
+   bords, comme une « capture » posée sur le site. */
+html { background: #080707; }
