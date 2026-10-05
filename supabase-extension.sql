@@ -5837,7 +5837,17 @@ NOTIFY pgrst, 'reload schema';
 -- Les nouvelles inscrites cochent leur niveau ; le site le contrôle ensuite
 -- (« Professionnel » seulement avec plus de 2 ans d'expériences).
 -- =====================================================================
+-- Le déclencheur proteger_proprietaire_profil (Extension 60) refuse toute
+-- modification faite hors connexion de la mannequin (cas de l'éditeur SQL) :
+-- il est suspendu le temps de cette seule mise à jour, dans une transaction
+-- (en cas d'erreur, rien n'est modifié et il reste actif).
+begin;
+alter table model_profiles disable trigger trg_proteger_proprietaire_profil;
+
 update model_profiles
 set niveau_mannequin = case when coalesce(years_experience, 0) > 2 then 'Professionnel' else 'New Face' end;
+
+alter table model_profiles enable trigger trg_proteger_proprietaire_profil;
+commit;
 
 NOTIFY pgrst, 'reload schema';
