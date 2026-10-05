@@ -11,3 +11,32 @@
   ça" sans que ça se traduise réellement dans le comportement — le
   changement doit être visible dans la façon de travailler, pas juste
   annoncé.
+- Toujours répondre en français.
+
+# Règles de qualité du code (décision de la propriétaire, 06/10/2026)
+
+Aucun développeur humain ne relit le code : ces règles remplacent cette
+relecture et s'appliquent à chaque modification, sans exception.
+
+1. **Une modification à la fois, une mise en ligne par jour au plus**
+   quand c'est possible (regrouper). L'offre gratuite Vercel limite le
+   nombre de mises en ligne par jour (blocage du 05/10/2026), et chaque
+   envoi sur la branche en compte une.
+2. **Relecture avant chaque mise en ligne** : relire soi-même tout le
+   changement comme le ferait un relecteur exigeant (bugs, sécurité,
+   cas oubliés) — utiliser `/code-review` sur le changement — et corriger
+   avant de publier.
+3. **Tester avant de publier** : syntaxe (`node --check`), empreintes CSP
+   (`scripts/verifier-csp.py`), et essai dans un vrai navigateur des pages
+   touchées, sur téléphone et ordinateur, sans écriture réelle.
+4. **Vérifier après la mise en ligne** que le site en ligne contient bien
+   le changement et fonctionne.
+5. **Ne jamais recopier du code** : une fonction utile à plusieurs pages
+   va dans un fichier partagé (ex. `convertirSiHeic` dans `js/app.js`).
+   Nettoyage de l'existant en cours, étape par étape (étape 1 faite le
+   05/10/2026 ; étape 2 : préparation des photos et vérification des
+   administrateurs).
+6. **Jamais de suppression de photos de mannequins sans le clic de
+   l'agence.**
+7. **Tenir `README-TECHNIQUE.md` à jour**, pour qu'une autre personne
+   puisse reprendre le site un jour.
