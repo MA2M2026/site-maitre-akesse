@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-HmcHy9XL5mzolfjgRLroCs66hZebotg7MuuV8sJ91mE='; style-src 'self' https://fonts.googleapis.com 'sha256-7qzTX2fbWhcoN8NR8B0qP2PjgfCnkK2/b2LeciSYanY=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-fOa2v5llsBnWBdv38ZJ5OM0fxXlredazST6EnKcOQoI='; style-src 'self' https://fonts.googleapis.com 'sha256-7qzTX2fbWhcoN8NR8B0qP2PjgfCnkK2/b2LeciSYanY=';">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -305,19 +305,11 @@ async function chargerProfilInterne() {
   const libellesDispo = { immediate: 'Disponible immédiatement', rdv: 'Sur rendez-vous', mobile: 'Mobile pour déplacements' };
   // Âge seulement, jamais la date de naissance (décision de la propriétaire, 06/10/2026) :
   // la base calcule l'âge (fonction ages_mannequins, extension 114) et la date n'est plus
-  // lisible par les visiteurs. Tant que l'extension n'est pas installée, l'ancien calcul
-  // sert de relais (il ne fonctionnera plus une fois la date fermée aux visiteurs).
+  // lisible par les visiteurs (extension 114 installée le 06/10/2026).
   let age = '';
   try {
-    const { data: ages, error: erreurAge } = await sb.rpc('ages_mannequins', { ids: [id] });
-    if (!erreurAge && Array.isArray(ages)) { if (ages[0] && ages[0].age != null) age = ages[0].age; }
-    else {
-      const { data: d } = await sb.from('model_profiles').select('date_naissance').eq('id', id).maybeSingle();
-      if (d && d.date_naissance) {
-        const naissance = new Date(d.date_naissance), aujourdhui = new Date();
-        age = aujourdhui.getFullYear() - naissance.getFullYear() - (aujourdhui < new Date(aujourdhui.getFullYear(), naissance.getMonth(), naissance.getDate()) ? 1 : 0);
-      }
-    }
+    const { data: ages } = await sb.rpc('ages_mannequins', { ids: [id] });
+    if (Array.isArray(ages) && ages[0] && ages[0].age != null) age = ages[0].age;
   } catch (e) {}
 
   const NB_PROJETS_APERCU = 5;
