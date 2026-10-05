@@ -29,10 +29,10 @@ function emptyState(){
       tailleVet:'', yeux:'', cheveux:'', carnation:''
     },
     formation:{ niveau:'', etablissement:'', particuliere:'', mannequin:'' },
-    // Catégorie (New Face/Amateur/Professionnel) : choisie directement par
-    // la mannequin (niveauMannequin) — deriverNiveauMannequin() ne sert plus
-    // que de suggestion par défaut, à partir des années d'expérience, la
-    // première fois qu'elle ouvre ce bloc.
+    // Niveau (New Face / Professionnel, 06/10/2026) : coché par la mannequin
+    // (niveauMannequin), puis contrôlé en coulisses par niveauControle() (js/app.js) :
+    // « Professionnel » n'est gardé qu'avec plus de 2 ans d'expériences.
+    // anneesExperience n'est plus demandé (ancienne donnée gardée telle quelle).
     profilPro:{ anneesExperience:'', disponibilite:'', modelTypes:[], langues:[], niveauMannequin:'' },
     experiences:[],
     photos:{ principale:null, photoCv:null, pleinPied:null, couverture:null, book:[] },
@@ -331,16 +331,15 @@ function formationToDb(f){
 }
 function profilProToDb(pp){
   return {
-    years_experience: pp.anneesExperience!=='' ? parseInt(pp.anneesExperience,10) : null,
     availability: pp.disponibilite || null,
     model_types: pp.modelTypes, languages: pp.langues.join(', '),
-    niveau_mannequin: pp.niveauMannequin || null
+    niveau_mannequin: pp.niveauMannequin ? niveauControle(pp.niveauMannequin, state.experiences, pp.anneesExperience) : null
   };
 }
 
 /* Champ "sexe" (femme/homme) déjà utilisé par tout le reste du site pour
    déterminer Hanches vs Entrejambe — on garde son vocabulaire (category),
-   distinct de "niveau_mannequin" (New Face/Amateur/Professionnel), choisi
+   distinct de "niveau_mannequin" (New Face / Professionnel), choisi
    par la mannequin elle-même dans le bloc Expérience. */
 function mapProfileFromDb(row, contactPrive){
   const s = emptyState();
@@ -365,7 +364,7 @@ function mapProfileFromDb(row, contactPrive){
   Object.assign(s.profilPro, {
     anneesExperience: (row.years_experience == null ? '' : row.years_experience), disponibilite: row.availability || '',
     modelTypes: row.model_types || [], langues: (row.languages || '').split(',').map(function(l){return l.trim();}).filter(Boolean),
-    niveauMannequin: row.niveau_mannequin || deriverNiveauMannequin(row.years_experience)
+    niveauMannequin: niveauNormalise(row.niveau_mannequin, row.years_experience)
   });
   s.competences = row.competences || {};
   s.citation = row.citation || '';
@@ -898,7 +897,7 @@ function stepFormation(){
 
 const MODEL_TYPES = [['catwalk','Défilé'],['photo','Photo'],['publicite','Publicité'],['commercial','Commercial'],['autre','Autre']];
 const LANGUES_DISPONIBLES = ['Français','Anglais','Espagnol','Autre'];
-const NIVEAUX_MANNEQUIN = ['New Face','Amateur','Professionnel'];
+const NIVEAUX_MANNEQUIN = ['New Face','Professionnel']; // « Amateur » retiré le 06/10/2026
 
 function stepExperience(){
   const pp = state.profilPro;
@@ -917,7 +916,6 @@ function stepExperience(){
     NIVEAUX_MANNEQUIN.map(function(n){ return '<label class="radio-opt '+(pp.niveauMannequin===n?'selected':'')+'"><input type="radio" name="niveauMannequin" value="'+n+'" '+(pp.niveauMannequin===n?'checked':'')+'> '+n+'</label>'; }).join('') +
     '</div></div>' +
     '<div class="grid">' +
-    field('Années d’expérience','f-anneesExp',pp.anneesExperience,{tag:'select',options:[{value:'',label:'—'}].concat(Array.from({length:21},function(_,i){return {value:String(i),label:i+' an(s)'};})).concat([{value:'21',label:'Plus de 20 ans'}])}) +
     field('Disponibilité','f-dispo',pp.disponibilite,{tag:'select',options:[{value:'',label:'—'},{value:'immediate',label:'Disponible immédiatement'},{value:'rdv',label:'Sur rendez-vous'},{value:'mobile',label:'Mobile pour déplacements'}]}) +
     '</div>' +
     '<div class="field full p20-15"><label>Type de modèle (cochez tout ce qui s’applique)</label><div class="check-row">' +
@@ -988,7 +986,7 @@ function stepPhotos(){
 function stepRecap(){
   const d = state.identite, ph = state.physique, f = state.formation;
   const rows = [
-    ['Identité', (d.nomComplet||'—')+' · '+(state.profilPro.niveauMannequin || deriverNiveauMannequin(state.profilPro.anneesExperience))+' · '+(d.sexe==='femme'?'Femme':d.sexe==='homme'?'Homme':'—'), 1],
+    ['Identité', (d.nomComplet||'—')+' · '+niveauNormalise(state.profilPro.niveauMannequin, state.profilPro.anneesExperience)+' · '+(d.sexe==='femme'?'Femme':d.sexe==='homme'?'Homme':'—'), 1],
     ['Informations physiques', (ph.taille||'—')+' cm · '+(ph.poids||'—')+' kg', 2],
     ['Formation', f.niveau||'—', 3],
     ['Expérience professionnelle', state.experiences.length+' expérience(s) enregistrée(s)', 4],
@@ -1114,8 +1112,8 @@ function bindExperienceHandlers(){
   });
 }
 
-/* --- Profil professionnel (catégorie, années d'expérience, type de modèle,
-   langues, disponibilité). La catégorie New Face/Amateur/Professionnel est
+/* --- Profil professionnel (niveau, type de modèle, langues, disponibilité — les
+   années d'expérience ne sont plus demandées depuis le 06/10/2026). Le niveau est
    choisie directement par la mannequin via 3 cases exclusives (radio,
    name="niveauMannequin"), sans indication d'années (pour éviter toute
    contradiction visible avec le champ "Années d'expérience", qui reste
@@ -1127,11 +1125,12 @@ function bindProfilProHandlers(){
     const btn = this;
     Object.assign(s.profilPro, {
       niveauMannequin: (document.querySelector('input[name=niveauMannequin]:checked')||{}).value || '',
-      anneesExperience: val('f-anneesExp'), disponibilite: val('f-dispo'),
+      disponibilite: val('f-dispo'),
       modelTypes: Array.from(document.querySelectorAll('[data-modeltype]:checked')).map(function(c){ return c.dataset.modeltype; }),
       langues: Array.from(document.querySelectorAll('[data-langue]:checked')).map(function(c){ return c.dataset.langue; })
     });
     btn.disabled = true; btn.textContent = 'Enregistrement…';
+    if (s.profilPro.niveauMannequin) s.profilPro.niveauMannequin = niveauControle(s.profilPro.niveauMannequin, s.experiences, s.profilPro.anneesExperience);
     const ok = await Store.saveBlock(profilProToDb(s.profilPro));
     if (ok) { toast('Enregistré'); render(); } else { btn.disabled=false; btn.textContent='Enregistrer'; }
   });
@@ -1520,7 +1519,7 @@ function donneesCvDepuisEtat(){
     nomComplet: d.nomComplet, dateNaissance: d.dateNaissance, villeNaissance: d.villeNaissance,
     lieuNaissance: d.lieuNaissance, nationalite: d.nationalite, ville: d.ville, quartier: d.quartier,
     citation: state.citation, bio: state.bio, instagram: state.instagram,
-    niveauMannequin: state.profilPro.niveauMannequin || deriverNiveauMannequin(state.profilPro.anneesExperience),
+    niveauMannequin: niveauControle(state.profilPro.niveauMannequin, state.experiences, state.profilPro.anneesExperience),
     mannequinId: currentUser.id,
     photoCvUrl: state.photos.photoCv && state.photos.photoCv.urlPleine || '',
     compcardPhotos: [1,2,3,4,5].map(function(n){
@@ -1555,7 +1554,7 @@ function ficheDataDepuisEtat(){
     profil: {
       full_name: d.nomComplet, city: d.ville || 'Abidjan', category: d.sexe,
       years_experience: state.profilPro.anneesExperience,
-      niveau_mannequin: state.profilPro.niveauMannequin || deriverNiveauMannequin(state.profilPro.anneesExperience),
+      niveau_mannequin: niveauControle(state.profilPro.niveauMannequin, state.experiences, state.profilPro.anneesExperience),
       height_cm: p.taille, weight_kg: p.poids, chest_cm: p.poitrine, waist_cm: p.tourTaille,
       hips_cm: p.hanches, inseam_cm: p.entrejambe, shoe_size: p.pointure,
       carnation: p.carnation, clothing_size: p.tailleVet, eye_color: p.yeux, hair_color: p.cheveux
@@ -1580,7 +1579,7 @@ function openCompcard(){
     '<div class="compcard-model">' +
       '<div class="ccm-header"><img class="ccm-logo" src="assets/logo-header.png" alt="Maître Akesse Model Management"><div class="ccm-title">COMPCARD</div></div>' +
       '<div class="ccm-photo-grid"><div class="ccm-cover">'+(cover?'<img src="'+(cover.urlPleine||cover.url)+'" alt="Photo plein pied compcard">':'<div class="cc-empty-photo">PHOTO PLEIN PIED</div>')+'</div><div class="ccm-side-grid">'+sidePhotos+'</div></div>' +
-      '<div class="ccm-body"><h1>'+echapperHtml(d.nomComplet||'')+'</h1><div class="ccm-meta">'+echapperHtml('Mannequin '+(state.profilPro.niveauMannequin || deriverNiveauMannequin(state.profilPro.anneesExperience)))+'  ·  '+echapperHtml(d.ville||'Abidjan')+'</div>' +
+      '<div class="ccm-body"><h1>'+echapperHtml(d.nomComplet||'')+'</h1><div class="ccm-meta">'+echapperHtml(libelleNiveauPublic(niveauControle(state.profilPro.niveauMannequin, state.experiences, state.profilPro.anneesExperience)))+'  ·  '+echapperHtml(d.ville||'Abidjan')+'</div>' +
       '<div class="ccm-measures">' +
         '<div><span>TAILLE</span><b>'+(p.taille||'—')+' cm</b></div><div><span>POIDS</span><b>'+(p.poids||'—')+' kg</b></div><div><span>POITRINE</span><b>'+(p.poitrine||'—')+' cm</b></div>' +
         '<div><span>TOUR DE TAILLE</span><b>'+(p.tourTaille||'—')+' cm</b></div><div><span>HANCHES</span><b>'+(p.hanches||p.entrejambe||'—')+' cm</b></div><div><span>POINTURE</span><b>'+(p.pointure||'—')+'</b></div>' +

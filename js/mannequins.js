@@ -1,5 +1,6 @@
 let tousLesProfils = [];
 let categorieActive = 'tous';
+let niveauActif = 'tous'; // New Face / Professionnel (affiché « Main Board »), 06/10/2026
 
 async function chargerMannequins() {
   const vide = document.getElementById('vide');
@@ -14,7 +15,7 @@ async function chargerMannequins() {
 
   const { data: profils, error } = await sb
     .from('model_profiles')
-    .select('id, full_name, city, category, height_cm, carnation, clothing_size, availability')
+    .select('id, full_name, city, category, height_cm, carnation, clothing_size, availability, niveau_mannequin, years_experience')
     .eq('published', true)
     .order('created_at', { ascending: false })
     .limit(300);
@@ -63,7 +64,8 @@ function appliquerFiltres() {
   const recherche = document.getElementById('f-recherche').value.trim().toLowerCase();
 
   const resultats = tousLesProfils.filter(p => {
-    if (categorieActive !== 'tous' && (p.category || 'new-faces') !== categorieActive) return false;
+    if (categorieActive !== 'tous' && p.category !== categorieActive) return false;
+    if (niveauActif !== 'tous' && niveauNormalise(p.niveau_mannequin, p.years_experience) !== niveauActif) return false;
     if (p.height_cm && (p.height_cm < tailleMin || p.height_cm > tailleMax)) return false;
     if (carnation && p.carnation !== carnation) return false;
     if (vetements && !(p.clothing_size || '').toLowerCase().includes(vetements)) return false;
@@ -110,11 +112,20 @@ function appliquerFiltres() {
   });
 }
 
-document.querySelectorAll('.filtre-btn').forEach(btn => {
+document.querySelectorAll('.filtre-btn:not(.filtre-niveau-btn)').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.filtre-btn').forEach(b => b.classList.remove('actif'));
+    document.querySelectorAll('.filtre-btn:not(.filtre-niveau-btn)').forEach(b => b.classList.remove('actif'));
     btn.classList.add('actif');
     categorieActive = btn.dataset.cat;
+    appliquerFiltres();
+  });
+});
+
+document.querySelectorAll('.filtre-niveau-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filtre-niveau-btn').forEach(b => b.classList.remove('actif'));
+    btn.classList.add('actif');
+    niveauActif = btn.dataset.niveau;
     appliquerFiltres();
   });
 });
@@ -126,11 +137,17 @@ document.querySelectorAll('.filtre-btn').forEach(btn => {
 // Catégorie demandée dans l'adresse (?categorie=femme|homme|new-faces) — liens
 // « Femmes / Hommes / New Faces » de l'accueil et du menu (06/10/2026).
 (function () {
-  let cat = null;
-  try { cat = new URLSearchParams(location.search).get('categorie'); } catch (e) {}
+  let cat = null, niv = null;
+  try { cat = new URLSearchParams(location.search).get('categorie'); niv = new URLSearchParams(location.search).get('niveau'); } catch (e) {}
+  if (cat === 'new-faces') { cat = null; niv = 'new-face'; }
+  const boutonNiveau = { 'new-face': 'New Face', 'main-board': 'Professionnel' }[niv];
+  if (boutonNiveau) {
+    document.querySelectorAll('.filtre-niveau-btn').forEach(b => b.classList.toggle('actif', b.dataset.niveau === boutonNiveau));
+    niveauActif = boutonNiveau;
+  }
   const btn = cat && document.querySelector('.filtre-btn[data-cat="' + cat.replace(/[^a-z-]/g, '') + '"]');
   if (!btn) return;
-  document.querySelectorAll('.filtre-btn').forEach(b => b.classList.remove('actif'));
+  document.querySelectorAll('.filtre-btn:not(.filtre-niveau-btn)').forEach(b => b.classList.remove('actif'));
   btn.classList.add('actif');
   categorieActive = btn.dataset.cat;
 })();
