@@ -3041,3 +3041,7 @@ body.porte-verrouillee .couverture-faisceau, body.porte-verrouillee .couverture-
 .introuvable-liens { display: flex; flex-wrap: wrap; gap: 0.8rem; justify-content: center; margin: 2rem 0 1.6rem; }
 .introuvable-en { font-size: 0.85rem; color: var(--texte-doux); }
 .introuvable-en a { color: var(--bordeaux-clair); }
+
+/* Version anglaise : mesures impériales (pieds/pouces, lbs, pointure US) à côté des mesures
+   métriques, pour les recruteurs américains et britanniques (06/10/2026). */
+.fiche-imperial { display: block; margin-top: 0.15rem; font-size: 0.78em; color: var(--texte-doux); letter-spacing: 0.02em; }
