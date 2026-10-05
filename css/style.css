@@ -2989,14 +2989,20 @@ body.porte-verrouillee .couverture-faisceau, body.porte-verrouillee .couverture-
 .video-accueil { position: relative; width: 100%; overflow: hidden; background: #050304; aspect-ratio: 16 / 9; max-height: 82vh; }
 .video-accueil.u-hidden { display: none; }
 @media (max-width: 700px) { .video-accueil { aspect-ratio: 4 / 3; max-height: 70vh; } }
-/* Vidéo verticale (06/10/2026) : sur téléphone, elle occupe l'écran en hauteur ; sur
-   ordinateur, elle est montrée entière au centre, sur un fond sombre, à la hauteur de la
-   partie visible sous la couverture et le menu. */
-.video-accueil.video-verticale { aspect-ratio: auto; max-height: none; height: max(420px, calc(72vh - 85px)); background: radial-gradient(ellipse at center, #1c0a0e 0%, #050304 68%); }
+/* Vidéo verticale (06/10/2026, retouché à la demande de la propriétaire : « plein écran »).
+   - Écran en hauteur (téléphone, tablette tenue droite) : la vidéo remplit toute la largeur
+     et la hauteur visible sous la barre du menu.
+   - Écran en largeur (ordinateur, tablette couchée) : toute la hauteur visible ; la vidéo
+     entière au centre, et les côtés remplis par la même vidéo agrandie et floutée
+     (canvas .video-accueil-flou, js/video-accueil.js) — plus de bandes noires. */
+.video-accueil.video-verticale { aspect-ratio: auto; max-height: none; height: max(420px, calc(100vh - 90px)); background: #050304; }
 .video-accueil.video-verticale video { object-fit: contain; }
-@media (max-width: 700px) {
-  .video-accueil.video-verticale { aspect-ratio: 9 / 16; height: auto; max-height: max(360px, calc(100vh - 190px)); background: #050304; }
+.video-accueil-flou { position: absolute; inset: 0; width: 100%; height: 100%; display: none; filter: blur(34px) brightness(0.55) saturate(1.2); transform: scale(1.25); }
+.video-accueil.video-verticale.video-prete .video-accueil-flou { display: block; }
+@media (orientation: portrait) {
+  .video-accueil.video-verticale { aspect-ratio: 9 / 16; width: 100%; height: auto; max-height: calc(100vh - 90px); }
   .video-accueil.video-verticale video { object-fit: cover; }
+  .video-accueil.video-verticale.video-prete .video-accueil-flou { display: none; }
 }
 .video-accueil video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1.2s ease; }
 .video-accueil.video-prete video { opacity: 1; }
