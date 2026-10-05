@@ -5851,3 +5851,88 @@ alter table model_profiles enable trigger trg_proteger_proprietaire_profil;
 commit;
 
 NOTIFY pgrst, 'reload schema';
+
+-- =====================================================================
+-- Extension 116 — Tri automatique des photos par IA (demande de la
+-- propriétaire, 06/10/2026) : à chaque envoi, une IA (Claude, fonction
+-- serveur api/trier-photo.js) range la photo en « book » (photo
+-- professionnelle), « digital » (photo naturelle au téléphone, valable pour
+-- les recruteurs) ou « ecartee » (photo inutilisable). Une photo écartée
+-- n'est JAMAIS supprimée : elle est seulement cachée — au public comme à la
+-- mannequin elle-même — et reste visible dans le tableau de bord, où un
+-- admin peut la remettre d'un clic.
+--  1) colonnes du tri (vides tant que la photo n'est pas triée) ;
+--     « a_verifier » = l'IA hésite : la photo reste visible et l'admin la voit ;
+--  2) lecture : une photo écartée n'est visible que par un admin ;
+--  3) seuls un admin ou la fonction serveur peuvent écrire ces colonnes
+--     (une mannequin ne peut pas « dé-écarter » sa photo elle-même) ;
+--  4) la limite de 60 photos ne compte plus les photos écartées.
+-- À exécuter APRÈS la mise en ligne du site du 06/10/2026 (tri des photos).
+-- =====================================================================
+alter table model_photos add column if not exists tri_statut text
+  check (tri_statut in ('book', 'digital', 'ecartee', 'a_verifier'));
+alter table model_photos add column if not exists tri_raison text;
+alter table model_photos add column if not exists tri_confiance real;
+alter table model_photos add column if not exists tri_date timestamptz;
+alter table model_photos add column if not exists tri_manuel boolean not null default false;
+
+drop policy if exists "Photos écartées cachées (tri IA)" on model_photos;
+create policy "Photos écartées cachées (tri IA)"
+  on model_photos as restrictive for select
+  using (
+    tri_statut is distinct from 'ecartee'
+    or exists (select 1 from admins where user_id = auth.uid())
+  );
+
+create or replace function proteger_tri_photo()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  -- fonction serveur (clé de service, sans connexion) ou admin : libre
+  if auth.uid() is null or exists (select 1 from admins where user_id = auth.uid()) then
+    return NEW;
+  end if;
+  if TG_OP = 'INSERT' then
+    NEW.tri_statut := null; NEW.tri_raison := null; NEW.tri_confiance := null;
+    NEW.tri_date := null; NEW.tri_manuel := false;
+  else
+    NEW.tri_statut := OLD.tri_statut; NEW.tri_raison := OLD.tri_raison;
+    NEW.tri_confiance := OLD.tri_confiance; NEW.tri_date := OLD.tri_date;
+    NEW.tri_manuel := OLD.tri_manuel;
+  end if;
+  return NEW;
+end;
+$$;
+
+drop trigger if exists trg_proteger_tri_photo on model_photos;
+create trigger trg_proteger_tri_photo
+  before insert or update on model_photos
+  for each row execute function proteger_tri_photo();
+
+create or replace function limiter_nombre_photos()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  nb_photos int;
+  est_admin boolean;
+begin
+  select exists(select 1 from admins where user_id = auth.uid()) into est_admin;
+  if est_admin then
+    return NEW;
+  end if;
+  select count(*) into nb_photos from model_photos
+    where model_id = NEW.model_id and tri_statut is distinct from 'ecartee';
+  if nb_photos >= 60 then
+    raise exception 'Limite de 60 photos atteinte pour ce book. Supprimez une photo avant d''en ajouter une nouvelle.';
+  end if;
+  return NEW;
+end;
+$$;
+
+NOTIFY pgrst, 'reload schema';
