@@ -14,7 +14,7 @@
       succes: '✓ Votre vidéo est maintenant la couverture du site (toutes les pages, en français et en anglais).',
       retirerQuestion: 'Revenir à l’animation du logo en couverture ? Votre vidéo actuelle sera supprimée.',
       retirerFait: '✓ La couverture affiche de nouveau l’animation du logo.', dejaSans: 'La couverture affiche déjà l’animation du logo.' },
-    { prefixe: 'va', cle: 'video_accueil', categorie: 'video-accueil', cache: 'ma2m_video_accueil', son: true, dureeMax: 60,
+    { prefixe: 'va', cle: 'video_accueil', categorie: 'video-accueil', cache: 'ma2m_video_accueil', son: true, dureeMax: 600,
       nomZone: 'la vidéo de l’accueil', etatSans: 'Actuellement : aucune vidéo (l’espace vidéo reste caché sur l’accueil).',
       succes: '✓ Votre vidéo est maintenant affichée sur la page d’accueil (en français et en anglais).',
       retirerQuestion: 'Retirer la vidéo de la page d’accueil ? Elle sera supprimée.',
@@ -33,11 +33,17 @@
   // 1920 pixels au plus, 12 Mo au plus) est envoyée TELLE QUELLE, sans perte de qualité.
   var DEBIT = 2500000, LARGEUR_MAX = 1280;
   var ORIGINAL_MAX = 12 * 1024 * 1024, ORIGINAL_LARGEUR_MAX = 1920;
+  // Vidéo de l'accueil : longues vidéos acceptées (défilés de 5 à 10 minutes, demande de la
+  // propriétaire, 06/10/2026). Au-delà de 90 s, débit un peu plus bas (1,5 Mbit/s, toujours
+  // en 720p) : 8 minutes ≈ 95 Mo au lieu de 150. Le visiteur ne télécharge jamais tout
+  // d'un coup : la vidéo se lit au fur et à mesure.
+  if (Z.son) ORIGINAL_MAX = 250 * 1024 * 1024;
+  function debitPour(duree) { return Z.son && duree > 90 ? 1500000 : DEBIT; }
   var LARGEUR_MIN = 854; // en dessous (vidéo réseaux sociaux / WhatsApp), floue en couverture
   var LIMITE_SANS_COMPRESSION = 8 * 1024 * 1024; // seulement si le navigateur ne sait pas compresser
   var LIMITE_FINALE = 15 * 1024 * 1024;   // au-delà, refus (même après compression)
   var DUREE_MAX = Z.dureeMax;
-  var LIMITE_FINALE_ZONE = Z.son ? 25 * 1024 * 1024 : LIMITE_FINALE;
+  var LIMITE_FINALE_ZONE = Z.son ? 250 * 1024 * 1024 : LIMITE_FINALE;
   var $ = function (id) { return document.getElementById(Z.prefixe + '-' + id); };
   // Mesure de taille : la largeur pour la couverture (toujours horizontale) ; le plus grand
   // côté pour la vidéo de l'accueil, qui peut aussi être verticale (1080 × 1920 → 720 × 1280).
@@ -100,7 +106,8 @@
   function afficherInfos() {
     if (!fichierChoisi || !infosChoisies) return;
     var inf = infosChoisies, txt = '« ' + fichierChoisi.name + ' » — ' + mo(fichierChoisi.size) + ', ' + Math.round(inf.duree) + ' s, ' + inf.largeur + ' × ' + inf.hauteur + '. ';
-    txt += 'Elle sera compressée automatiquement avant l’envoi' + (inf.duree > DUREE_MAX + 0.5 ? ' et limitée aux ' + DUREE_MAX + ' premières secondes' : '') + ' (cela prend à peu près la durée de la vidéo — gardez cette page ouverte).';
+    txt += 'Elle sera compressée automatiquement avant l’envoi' + (inf.duree > DUREE_MAX + 0.5 ? ' et limitée aux ' + (DUREE_MAX >= 120 ? (DUREE_MAX / 60) + ' premières minutes' : DUREE_MAX + ' premières secondes') : '') + ' (cela prend à peu près la durée de la vidéo — gardez cette page ouverte).';
+    if (Z.son && inf.duree > 120) txt += ' Pour une longue vidéo, utilisez de préférence un ordinateur.';
     $('infos').textContent = txt;
   }
 
@@ -129,10 +136,12 @@
     var l = piste.displayWidth, h = piste.displayHeight;
     if (!Z.tousFormats && l / h < 1.25) throw new Error('Cette vidéo est verticale (' + l + ' × ' + h + ') : ' + Z.nomZone + ' n’accepte que les vidéos horizontales, filmées téléphone couché.');
     var echelle = Math.min(1, LARGEUR_MAX / cote(l, h));
+    var dureeSource = await entree.computeDuration();
+    var debit = debitPour(Math.min(isFinite(dureeSource) ? dureeSource : DUREE_MAX, DUREE_MAX));
     l = Math.max(2, Math.round(l * echelle / 2) * 2); h = Math.max(2, Math.round(h * echelle / 2) * 2);
     var codec = null, liste = ['avc', 'vp9'];
     for (var i = 0; i < liste.length && !codec; i++) {
-      try { if (await MB.canEncodeVideo(liste[i], { width: l, height: h, bitrate: DEBIT })) codec = liste[i]; } catch (e) {}
+      try { if (await MB.canEncodeVideo(liste[i], { width: l, height: h, bitrate: debit })) codec = liste[i]; } catch (e) {}
     }
     if (!codec) return null;
     var enMp4 = codec === 'avc';
@@ -143,7 +152,7 @@
     var duree = await entree.computeDuration();
     var conversion = await MB.Conversion.init({
       input: entree, output: sortie, tracks: 'primary',
-      video: { width: l, height: h, fit: 'contain', codec: codec, bitrate: DEBIT, frameRate: 30, forceTranscode: true },
+      video: { width: l, height: h, fit: 'contain', codec: codec, bitrate: debit, frameRate: 30, forceTranscode: true },
       audio: Z.son ? { numberOfChannels: 2 } : { discard: true },
       trim: { start: 0, end: Math.min(isFinite(duree) ? duree : DUREE_MAX, DUREE_MAX) }
     });
@@ -265,10 +274,12 @@
   });
 
   async function envoyerFichier(envoi) {
-      barre(1); message('Envoi de la vidéo (' + mo(envoi.size) + ')…');
+      barre(0); message('Envoi de la vidéo (' + mo(envoi.size) + ')… gardez cette page ouverte.');
       var ext = envoi.type === 'video/webm' ? 'webm' : 'mp4';
       var chemin = 'site/' + Z.categorie + '/' + Date.now() + '.' + ext;
-      await envoyerImageSite(Z.categorie, chemin, envoi);
+      await envoyerImageSite(Z.categorie, chemin, envoi, function (p) {
+        barre(p); message('Envoi de la vidéo (' + mo(envoi.size) + ')… ' + Math.round(p * 100) + ' % — gardez cette page ouverte.');
+      });
       var ancien = reglage && reglage.type === 'video' ? reglage.chemin : null;
       // Format de l'image gardé avec le réglage : le site prépare la bonne forme (verticale ou
       // horizontale) avant même que la vidéo ne se charge.
@@ -286,6 +297,8 @@
   // 30 s au plus, horizontal, 1920 pixels de large au plus et 12 Mo au plus.
   async function originalSansPerte(f, inf) {
     if (f.type !== 'video/mp4' || f.size > ORIGINAL_MAX || inf.duree > DUREE_MAX + 0.5 || cote(inf.largeur, inf.hauteur) > ORIGINAL_LARGEUR_MAX) return false;
+    // longue vidéo : envoyée telle quelle seulement si elle est déjà légère (4 Mbit/s au plus)
+    if (Z.son && isFinite(inf.duree) && inf.duree > 0 && f.size * 8 / inf.duree > 4000000) return false;
     try {
       var MB = await chargerMediabunny();
       var entree = new MB.Input({ source: new MB.BlobSource(f), formats: MB.ALL_FORMATS });

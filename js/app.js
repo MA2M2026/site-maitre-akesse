@@ -1270,7 +1270,20 @@ function nomFichierSur(nom) {
 // (voir README-TECHNIQUE.md, diagnostic du 28 septembre 2026). Même
 // principe de nouvelle tentative (3 essais) que uploaderVersR2() dans
 // espace-mannequin.html/tableau-de-bord.html pour les photos du Book. ==================
-async function envoyerImageSite(categorie, chemin, fichier) {
+// progression (facultatif) : fonction appelée avec la part envoyée (0 à 1) — utile pour les
+// longues vidéos de l'accueil (plusieurs dizaines de Mo, 06/10/2026).
+function envoyerAvecProgression(url, fichier, progression) {
+  return new Promise((ok, ko) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('PUT', url);
+    xhr.setRequestHeader('Content-Type', fichier.type || 'image/jpeg');
+    xhr.upload.onprogress = (e) => { if (e.lengthComputable) progression(e.loaded / e.total); };
+    xhr.onload = () => ok({ ok: xhr.status >= 200 && xhr.status < 300 });
+    xhr.onerror = () => ko(new Error("Échec de l'envoi du fichier (connexion)."));
+    xhr.send(fichier);
+  });
+}
+async function envoyerImageSite(categorie, chemin, fichier, progression) {
   const { data: { session } } = await sbAdmin.auth.getSession();
   if (!session) throw new Error('Session expirée — reconnectez-vous.');
   let derniereErreur;
@@ -1283,11 +1296,13 @@ async function envoyerImageSite(categorie, chemin, fichier) {
       });
       const resultat = await reponsePresign.json().catch(() => ({}));
       if (!reponsePresign.ok) throw new Error(resultat.error || "Échec de la préparation de l'envoi.");
-      const reponseUpload = await fetch(resultat.uploadUrl, {
-        method: 'PUT',
-        headers: { 'Content-Type': fichier.type || 'image/jpeg' },
-        body: fichier
-      });
+      const reponseUpload = progression
+        ? await envoyerAvecProgression(resultat.uploadUrl, fichier, progression)
+        : await fetch(resultat.uploadUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': fichier.type || 'image/jpeg' },
+          body: fichier
+        });
       if (!reponseUpload.ok) throw new Error("Échec de l'envoi du fichier.");
       return resultat.publicUrl;
     } catch (e) {
