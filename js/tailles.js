@@ -42,9 +42,18 @@
   }
   // Option A (décision de la propriétaire, 06/10/2026) : la taille retenue est celle de
   // la PLUS GRANDE des mesures concernées — le vêtement doit fermer partout.
-  function plusGrande(table, mesures) {
-    var r = null;
-    mesures.forEach(function (m) { var x = ligne(table, m[0], m[1]); if (x && (!r || ORDRE.indexOf(x.l) > ORDRE.indexOf(r.l))) r = x; });
+  // base : taille de la mesure principale ; extras : [cle, mesure, champ] (tour de taille,
+  // bassin des hommes). Un extra plus grand de plus de 2 tailles que la base est
+  // sûrement une erreur de saisie : il n'est pas retenu et il est noté dans suspects.
+  function plusGrande(table, base, extras, suspects) {
+    var r = base;
+    if (!base) return null;
+    extras.forEach(function (m) {
+      var x = ligne(table, m[0], m[1]);
+      if (!x) return;
+      if (ORDRE.indexOf(x.l) - ORDRE.indexOf(base.l) > 2) { if (suspects.indexOf(m[2]) === -1) suspects.push(m[2]); return; }
+      if (ORDRE.indexOf(x.l) > ORDRE.indexOf(r.l)) r = x;
+    });
     return r;
   }
   // Taille maximum d'un mannequin (décision du 06/10/2026) : au-delà, « mensurations
@@ -55,6 +64,13 @@
     return t.filter(function (x) { return ['S', 'M', 'L', 'XL'].indexOf(x.l) !== -1 && ORDRE.indexOf(x.l) <= ORDRE.indexOf(homme ? MAX_HOMMES : MAX_FEMMES); }).map(function (x) {
       return x.l + ' : poitrine ' + fmt(x.poitrine) + ', taille ' + fmt(x.taille) + ', bassin ' + fmt(homme ? x.bassin : x.hanches);
     });
+  };
+
+  // Texte de l'alerte « mensurations excessives » (Espace et message WhatsApp du
+  // rapport des profils) : lignes de texte simple, sans HTML.
+  window.ma2mTexteExces = function (t) {
+    return ['Mensurations excessives : votre taille calculée (' + t.generale + ') dépasse la taille maximum d’un mannequin ' + (t.homme ? 'homme' : 'femme') + ' (' + t.maximum + '). Vérifiez vos mesures avec un mètre ruban, à plat, sans serrer et sans vêtement épais. Repères :']
+      .concat(window.ma2mReperesTailles(t.homme));
   };
 
   function generale(a, b) {
@@ -91,10 +107,11 @@
     // Contrôle de cohérence sur les mesures principales (même règle que la base) ;
     // tailles affichées : la plus grande des mesures (option A).
     var hautBrut, basBrut;
+    r.aVerifier = []; // mesure secondaire écartée car invraisemblable (erreur de saisie probable)
     if (homme) {
       hautBrut = haut = ligne(HOMMES, 'poitrine', p.chest_cm);
       basBrut = ligne(HOMMES, 'taille', p.waist_cm);
-      bas = plusGrande(HOMMES, [['taille', p.waist_cm], ['bassin', p.hips_cm]]);
+      bas = plusGrande(HOMMES, basBrut, [['bassin', p.hips_cm, 'hips_cm']], r.aVerifier);
       r.haut = haut && { lettre: haut.l, eu: haut.eu, it: haut.eu, uk: haut.us, us: haut.us, br: haut.br, kr: haut.kr, cn: haut.cn };
       r.bas = bas && { lettre: bas.l, eu: bas.pantalon, it: bas.pantalon, uk: 'W' + bas.w, us: 'W' + bas.w, br: bas.pantalon - 2, kr: bas.w, cn: bas.cn };
       var cou = nombre(p.neck_cm);
@@ -104,8 +121,8 @@
     } else {
       hautBrut = ligne(FEMMES, 'poitrine', p.chest_cm);
       basBrut = ligne(FEMMES, 'hanches', p.hips_cm);
-      haut = hautBrut && plusGrande(FEMMES, [['poitrine', p.chest_cm], ['taille', p.waist_cm]]);
-      bas = basBrut && plusGrande(FEMMES, [['hanches', p.hips_cm], ['taille', p.waist_cm]]);
+      haut = plusGrande(FEMMES, hautBrut, [['taille', p.waist_cm, 'waist_cm']], r.aVerifier);
+      bas = plusGrande(FEMMES, basBrut, [['taille', p.waist_cm, 'waist_cm']], r.aVerifier);
       var vers = function (x) { return x && { lettre: x.l, eu: x.fr, it: x.it, uk: x.uk, us: x.us, br: x.br, jp: x.jp, kr: x.kr, cn: x.cn }; };
       r.haut = vers(haut); r.bas = vers(bas);
     }
@@ -176,10 +193,13 @@
     if (t.haut) rangee(anglais ? 'Top' : 'Haut', t.haut.lettre, Object.assign({}, t.haut));
     if (t.bas) rangee(anglais ? 'Bottom' : 'Bas', t.bas.lettre, Object.assign({}, t.bas));
     // Taille générale : celle du haut et du bas réunies (ex. M-XL → 38-42 en France)
-    if (t.haut && t.bas) {
-      var gen = {};
+    // (femmes seulement : chez les hommes, veste et pantalon n'ont pas la même
+    // numérotation ; leur taille générale est dans le compartiment « Vêtements »)
+    if (!t.homme && t.haut && t.bas) {
+      var gen = {}, petit = t.haut, grand = t.bas;
+      if (ORDRE.indexOf(petit.lettre) > ORDRE.indexOf(grand.lettre)) { petit = t.bas; grand = t.haut; }
       ['eu', 'it', 'uk', 'us', 'br', 'jp', 'kr', 'cn'].forEach(function (c) {
-        var h = t.haut[c], b = t.bas[c];
+        var h = petit[c], b = grand[c];
         gen[c] = (h === undefined || b === undefined) ? '' : (String(h) === String(b) ? h : h + '-' + b);
       });
       rangee(anglais ? 'Overall' : 'Générale', t.generale, gen);
