@@ -101,7 +101,7 @@
     ligne('Pointure', t.pointure ? 'EU ' + t.pointure.eu + '  (UK ' + t.pointure.uk + ' · US ' + t.pointure.us + ')' : d.shoe_size);
     ligne('Taille haut', equiv(t.haut));
     ligne('Taille bas', equiv(t.bas));
-    ligne('Taille générale', ma2mTailleVetements(d));
+    ligne('Taille générale', t.aReprendre.length ? 'Mensurations à reprendre (incohérentes)' : ma2mTailleVetements(d));
     if (homme && t.chemise) ligne('Chemise (col)', t.chemise.eu + ' cm  (US ' + t.chemise.us + ')');
     ligne('Yeux / cheveux', [d.eye_color, d.hair_color].filter(Boolean).join(' / '));
 

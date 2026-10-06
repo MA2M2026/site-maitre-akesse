@@ -1091,6 +1091,20 @@ function afficherTaillesCalculees(){
   const zone = document.getElementById('tailles-calculees');
   if (!zone || typeof ma2mTailles !== 'function') return;
   const t = ma2mTailles({ category: state.identite.sexe, chest_cm: val('f-poitrine'), waist_cm: val('f-tourTaille'), hips_cm: val('f-hanches'), neck_cm: document.getElementById('f-cou') ? val('f-cou') : '' });
+  // Mesures incohérentes : cases en rouge + message, et pas de taille (js/tailles.js)
+  const champs = { chest_cm: 'f-poitrine', waist_cm: 'f-tourTaille', hips_cm: 'f-hanches' };
+  Object.keys(champs).forEach(function(cle){
+    const el = document.getElementById(champs[cle]); if (!el) return;
+    const bloc = el.closest('.field'), aReprendre = t.aReprendre.indexOf(cle) !== -1;
+    bloc.classList.toggle('mesure-a-reprendre', aReprendre);
+    let msg = bloc.querySelector('.mesure-msg');
+    if (aReprendre && !msg) { msg = document.createElement('div'); msg.className = 'mesure-msg'; msg.textContent = 'Mensuration pas exacte, à reprendre'; bloc.appendChild(msg); }
+    if (!aReprendre && msg) msg.remove();
+  });
+  if (t.aReprendre.length) {
+    zone.innerHTML = '<div class="tc-titre">Vos tailles (calculées)</div><p class="tc-alerte">⚠️ Vos mesures en rouge ne vont pas ensemble (votre haut et votre bas s’écartent de plus d’une taille). Reprenez-les avec un mètre ruban, sans serrer, pour obtenir vos tailles.</p>';
+    return;
+  }
   const c = function(x){ return x ? echapperHtml(ma2mTailleCourte(x)) : '—'; };
   zone.innerHTML = '<div class="tc-titre">Vos tailles (calculées)</div><div class="tc-grille">' +
     '<div><span>Haut</span><b>'+c(t.haut)+'</b></div><div><span>Bas</span><b>'+c(t.bas)+'</b></div><div><span>Générale</span><b>'+echapperHtml(t.generale||'—')+'</b></div>' +

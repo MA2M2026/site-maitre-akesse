@@ -126,3 +126,8 @@ html { background: #080707; }
 .tailles-calculees .tc-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 0.6rem; }
 .tailles-calculees .tc-grille span { display: block; font-size: 0.75rem; color: var(--texte-clair); }
 .tailles-calculees .tc-grille b { font-size: 1.05rem; color: var(--ivoire); font-weight: 600; }
+/* Mesure incohérente : case en rouge + « Mensuration pas exacte, à reprendre ». */
+.field.mesure-a-reprendre select, .field.mesure-a-reprendre input { border-color: #e0475e !important; box-shadow: 0 0 0 1px #e0475e; }
+.field.mesure-a-reprendre label { color: #ff8a9a; }
+.mesure-msg { color: #ff8a9a; font-size: 0.8rem; font-weight: 600; }
+.tailles-calculees .tc-alerte { margin: 0; color: #ffb3bd; font-size: 0.9rem; line-height: 1.5; }

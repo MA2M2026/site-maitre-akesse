@@ -84,6 +84,15 @@
       var vers = function (x) { return x && { lettre: x.l, eu: x.fr, it: x.it, uk: x.uk, us: x.us, br: x.br, jp: x.jp, kr: x.kr, cn: x.cn }; };
       r.haut = vers(haut); r.bas = vers(bas);
     }
+    // Contrôle de cohérence (décision de la propriétaire, 06/10/2026) : si le haut et le
+    // bas s'écartent de plus d'une taille (ex. M en haut, XL en bas), une mesure est
+    // sûrement fausse. Les mesures en cause sont signalées « à reprendre » et AUCUNE
+    // taille n'est donnée tant qu'elles ne sont pas corrigées.
+    r.aReprendre = [];
+    if (haut && bas && Math.abs(ORDRE.indexOf(haut.l) - ORDRE.indexOf(bas.l)) > 1) {
+      r.aReprendre = ['chest_cm', homme ? 'waist_cm' : 'hips_cm'];
+      r.haut = null; r.bas = null; r.costume = null;
+    }
     r.generale = generale(r.haut && r.haut.lettre, r.bas && r.bas.lettre);
     r.pointure = pointures(p.shoe_size, homme);
     r.hauteur = nombre(p.height_cm) ? { cm: nombre(p.height_cm), pieds: piedsPouces(nombre(p.height_cm)) } : null;
@@ -97,8 +106,11 @@
 
   // Taille vêtements affichée partout (fiche, compcard, CV) : calculée d'après les
   // mensurations ; à défaut, l'ancienne taille déclarée (profil pas encore mis à jour).
+  // Mesures à reprendre : aucune taille (pas même l'ancienne taille déclarée).
   window.ma2mTailleVetements = function (p) {
-    return window.ma2mTailles(p).generale || (p && p.clothing_size) || '';
+    var t = window.ma2mTailles(p);
+    if (t.aReprendre.length) return '';
+    return t.generale || (p && p.clothing_size) || '';
   };
 
   // Mensurations de l'Extension 121 (épaules, bras, cou, tête), lues à part : si la
