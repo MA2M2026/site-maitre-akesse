@@ -19,6 +19,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const liste = overlay.querySelector('.nav-links');
   if (liste) {
     const en = document.documentElement.lang === 'en';
+    // « Qui sommes-nous » juste après « Accueil » (06/10/2026), ajouté ici une seule fois
+    // pour toutes les pages au lieu d'être recopié dans chaque menu.
+    const accueil = [...liste.querySelectorAll('li > a')].find(a => /(^|\/)index(\.html)?$/.test(a.getAttribute('href') || ''));
+    const dejaQsn = [...liste.querySelectorAll('li > a')].some(a => /qui-sommes-nous/.test(a.getAttribute('href') || ''));
+    if (accueil && !dejaQsn) {
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.href = accueil.getAttribute('href').replace(/index(\.html)?$/, 'qui-sommes-nous.html');
+      a.textContent = en ? 'About us' : 'Qui sommes-nous';
+      li.appendChild(a);
+      liste.insertBefore(li, accueil.parentNode.nextSibling);
+    }
     const groupes = [
       ['index.html', en ? 'Discover' : 'Découvrir'],
       ['integrer-agence.html', en ? 'Join the agency' : 'Rejoindre l\'agence'],
