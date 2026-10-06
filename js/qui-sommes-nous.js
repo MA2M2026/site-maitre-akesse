@@ -10,7 +10,6 @@
 (function () {
   const moinsDeMouvement = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const enAnglais = document.documentElement.lang === 'en';
-  const prefixe = enAnglais ? '../' : '';
 
   function melange(liste) {
     const t = liste.slice();
@@ -156,7 +155,7 @@
     [0, 1].forEach(tour => {
       visages.forEach(([id, url]) => {
         const a = document.createElement('a');
-        a.href = prefixe + 'mannequin.html?id=' + encodeURIComponent(id);
+        a.href = 'mannequin.html?id=' + encodeURIComponent(id);
         const img = image(url, enAnglais ? 'Model of the agency' : 'Mannequin de l\'agence');
         img.loading = 'lazy';
         a.appendChild(img);
