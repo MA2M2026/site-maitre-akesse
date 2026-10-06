@@ -8,14 +8,14 @@
 (function () {
   const enAnglais = document.documentElement.lang === 'en';
   const T = enAnglais ? {
-    photographe: 'Photographer', partenaires: 'Partners', mannequins: 'Models',
+    intervenants: 'With', horaires: 'Times', partenaires: 'Partners', mannequins: 'Models',
     vide: 'Our upcoming projects will appear here very soon.',
     videPasses: 'Our completed projects will appear here.',
     erreur: 'The agenda could not be loaded. Please try again later.',
     precedent: 'Previous month', suivant: 'Next month', aujourdhui: 'Today',
     aVenir: 'Upcoming', programmeDu: 'Schedule for ', rienCeJour: 'No project on this day.', jour: 'day', jours: 'days', enCours: 'today'
   } : {
-    photographe: 'Photographe', partenaires: 'Partenaires', mannequins: 'Mannequins',
+    intervenants: 'Avec', horaires: 'Horaires', partenaires: 'Partenaires', mannequins: 'Mannequins',
     vide: 'Nos prochains projets seront affichés ici très bientôt.',
     videPasses: 'Nos projets réalisés seront affichés ici.',
     erreur: 'L’agenda n’a pas pu être chargé. Réessayez dans un instant.',
@@ -30,6 +30,11 @@
     if (txt != null) e.textContent = txt;
     return e;
   }
+
+  // « Noom Hôtel, Abidjan » : le lieu visible puis la ville.
+  const endroit = p => [p.lieu, p.ville].filter(Boolean).join(', ');
+  // « mer. 21 oct. · 10:00 – 12:00 » (une séance d'une activité sur plusieurs jours).
+  const texteSeance = x => dateAgenda(x.jour, null, enAnglais) + ' · ' + [x.debut, x.fin].filter(Boolean).join(' – ');
 
   // Grand bloc de date : jour en chiffres, mois abrégé.
   function blocDate(p) {
@@ -74,12 +79,15 @@
     const corps = el('div', 'agenda-corps');
     const meta = el('p', 'agenda-meta');
     meta.appendChild(el('span', 'agenda-type-public', libelleTypeAgenda(p.type, enAnglais)));
-    meta.appendChild(document.createTextNode(' · ' + dateAgenda(p.date_debut, p.date_fin, enAnglais) + (p.ville ? ' · ' + p.ville : '')));
+    meta.appendChild(document.createTextNode(' · ' + dateAgenda(p.date_debut, p.date_fin, enAnglais) + (endroit(p) ? ' · ' + endroit(p) : '')));
     corps.appendChild(meta);
     corps.appendChild(el('h3', 'agenda-titre', p.titre));
     if (!compacte) {
       if (p.description) corps.appendChild(el('p', 'agenda-description', p.description));
-      if (p.photographe) corps.appendChild(groupe(T.photographe, [el('span', 'agenda-puce agenda-puce-simple', p.photographe)]));
+      const seances = Array.isArray(p.seances) ? p.seances.filter(x => x && (x.debut || x.fin)) : [];
+      if (seances.length) corps.appendChild(groupe(T.horaires, seances.map(x => el('span', 'agenda-puce agenda-puce-simple', texteSeance(x)))));
+      const intervenants = Array.isArray(p.intervenants) ? p.intervenants.filter(x => x && x.nom) : [];
+      if (intervenants.length) corps.appendChild(groupe(T.intervenants, intervenants.map(x => el('span', 'agenda-puce agenda-puce-simple', (x.role ? x.role + ' : ' : '') + x.nom))));
       const partenaires = Array.isArray(p.partenaires) ? p.partenaires : [];
       if (partenaires.length) corps.appendChild(groupe(T.partenaires, partenaires.map(lienPartenaire)));
     }
@@ -137,7 +145,7 @@
 
   function pastille(p, complete) {
     const e = el('span', 'cal-evt cal-evt-' + typeDe(p), p.titre);
-    if (complete && p.ville) e.appendChild(el('small', null, p.ville));
+    if (complete && endroit(p)) e.appendChild(el('small', null, endroit(p)));
     return e;
   }
 
@@ -289,7 +297,7 @@
       b.type = 'button';
       const txt = el('span', 'cal-panneau-texte');
       txt.appendChild(el('strong', 'cal-panneau-titre', p.titre));
-      txt.appendChild(el('span', 'cal-panneau-meta', libelleTypeAgenda(p.type, enAnglais) + ' | ' + dateAgenda(p.date_debut, p.date_fin, enAnglais) + (p.ville ? ' | ' + p.ville : '')));
+      txt.appendChild(el('span', 'cal-panneau-meta', libelleTypeAgenda(p.type, enAnglais) + ' | ' + dateAgenda(p.date_debut, p.date_fin, enAnglais) + (endroit(p) ? ' | ' + endroit(p) : '')));
       b.appendChild(el('i', 'cal-panneau-couleur cal-evt-' + typeDe(p)));
       b.appendChild(txt);
       if (dans != null) {

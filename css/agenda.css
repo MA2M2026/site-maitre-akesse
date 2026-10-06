@@ -112,6 +112,10 @@ a.agenda-puce:hover, a.agenda-puce:focus-visible { border-color: var(--bordeaux-
 .cal .cal-evt-casting { background: #1f6b6b; }
 .cal .cal-evt-formation { background: #8a6a1f; }
 .cal .cal-evt-evenement { background: #2f4f8a; }
+.cal .cal-evt-show { background: #a03a1c; }
+.cal .cal-evt-essayage { background: #5a6b2f; }
+.cal .cal-evt-masterclass { background: #7a5c14; }
+.cal .cal-evt-rencontre { background: #2f6b4f; }
 .cal .cal-evt-autre { background: #555; }
 
 /* Année */

@@ -790,13 +790,20 @@ async function lireToutesLignes(fabrique) {
 // date lisible (« jeu. 15 oct. 2026 », ou « 15 – 17 oct. 2026 » sur plusieurs jours),
 // partagés par le tableau de bord et la page Agenda.
 const MA2M_TYPES_AGENDA = {
-  shooting: ['Shooting', 'Photo shoot'],
   defile: ['Défilé', 'Fashion show'],
+  show: ['Show', 'Show'],
+  shooting: ['Shooting', 'Photo shoot'],
   casting: ['Casting', 'Casting'],
+  essayage: ['Essayages', 'Fittings'],
+  masterclass: ['Masterclass', 'Masterclass'],
   formation: ['Formation', 'Training'],
+  rencontre: ['Rencontre', 'Meeting'],
   evenement: ['Événement', 'Event'],
   autre: ['Projet', 'Project']
 };
+// Rôles proposés pour les intervenants d'un projet (la liste reste libre).
+const MA2M_ROLES_INTERVENANTS = ['Photographe', 'Vidéaste', 'Chorégraphe', 'Styliste', 'Créateur / créatrice',
+  'Maquilleur / maquilleuse', 'Coiffeur / coiffeuse', 'Directeur artistique', 'Organisateur', 'Présentateur', 'Formateur'];
 function libelleTypeAgenda(type, enAnglais) {
   const l = MA2M_TYPES_AGENDA[type] || MA2M_TYPES_AGENDA.autre;
   return l[enAnglais ? 1 : 0];

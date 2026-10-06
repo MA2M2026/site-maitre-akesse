@@ -2727,27 +2727,43 @@ document.addEventListener('DOMContentLoaded', function () {
 </div>
 <div class="liste-recente" data-section="b3c-agenda">
 <h2 class="tdb-4">📅 Agenda du site</h2>
-<p class="tdb-5">Le programme de l'agence, montré aux clients sur la page « Agenda » : shootings, défilés, castings, formations, événements. Sur le site, on voit seulement le jour, la ville, le photographe, les partenaires et les mannequins (seulement ceux dont le profil est visible). L'heure, l'adresse et les notes restent ici, jamais sur le site, pour la sécurité des mannequins.</p>
+<p class="tdb-5">Le programme de l'agence, montré aux clients sur la page « Agenda » : défilés, shows, shootings, castings, essayages, masterclass, rencontres, événements… Sur le site, on voit les jours, la ville, le lieu, les intervenants, les partenaires et les mannequins (seulement ceux dont le profil est visible). Les horaires n'apparaissent que si vous cochez la case prévue. L'adresse exacte et les notes restent ici, jamais sur le site.</p>
 <form id="agenda-form" class="agenda-form" novalidate>
 <input type="hidden" id="agenda-id">
 <div class="agenda-grille">
 <div class="form-champ"><label for="agenda-type">Type de projet</label>
-<select id="agenda-type"><option value="shooting">Shooting</option><option value="defile">Défilé</option><option value="casting">Casting</option><option value="formation">Formation / masterclass</option><option value="evenement">Événement</option><option value="autre">Autre</option></select></div>
+<select id="agenda-type"></select></div>
 <div class="form-champ"><label for="agenda-titre">Titre (visible)</label><input id="agenda-titre" type="text" maxlength="160" placeholder="ex : Shooting campagne Cha Kane" required></div>
 <div class="form-champ"><label for="agenda-date">Date (visible)</label><input id="agenda-date" type="date" required></div>
 <div class="form-champ"><label for="agenda-date-fin">Date de fin, si plusieurs jours</label><input id="agenda-date-fin" type="date"></div>
 <div class="form-champ"><label for="agenda-ville">Ville (visible)</label><input id="agenda-ville" type="text" maxlength="80" placeholder="ex : Abidjan"></div>
-<div class="form-champ"><label for="agenda-photographe">Photographe (visible)</label><input id="agenda-photographe" type="text" maxlength="120" placeholder="ex : Studio Lumière"></div>
+<div class="form-champ"><label for="agenda-lieu">Lieu (visible)</label><input id="agenda-lieu" type="text" maxlength="160" placeholder="ex : Noom Hôtel, Parc des Expositions"></div>
 </div>
 <div class="form-champ"><label for="agenda-description">Quelques mots pour les clients (visible)</label><textarea id="agenda-description" rows="3" maxlength="1200" placeholder="ex : Nos mannequins portent la nouvelle collection de la marque."></textarea></div>
-<fieldset class="agenda-choix"><legend>Partenaires (visibles)</legend><div id="agenda-partenaires" class="agenda-cases">Chargement…</div></fieldset>
+<fieldset class="agenda-choix"><legend>Horaires, jour par jour</legend>
+<p class="agenda-aide">Une ligne par jour de l'activité : les heures peuvent changer d'un jour à l'autre. Laissez vide si vous ne les connaissez pas encore.</p>
+<div id="agenda-seances" class="agenda-seances"></div>
+<label class="agenda-visible"><input id="agenda-horaires-publics" type="checkbox"> Montrer les horaires sur le site (sinon, ils restent ici seulement)</label>
+</fieldset>
+<fieldset class="agenda-choix"><legend>Intervenants (visibles)</legend>
+<p class="agenda-aide">Photographe, chorégraphe, styliste, créateur, organisateur… autant que nécessaire.</p>
+<div id="agenda-intervenants" class="agenda-intervenants"></div>
+<datalist id="agenda-roles"></datalist>
+<button type="button" class="btn-mini-admin" id="agenda-ajouter-intervenant">＋ Ajouter un intervenant</button>
+</fieldset>
+<fieldset class="agenda-choix"><legend>Partenaires (visibles)</legend><div id="agenda-partenaires" class="agenda-cases">Chargement…</div>
+<div class="agenda-nouveau-partenaire">
+<input id="agenda-nouveau-partenaire" type="text" maxlength="120" placeholder="Nouveau partenaire : son nom" aria-label="Nom du nouveau partenaire">
+<button type="button" class="btn-mini-admin" id="agenda-ajouter-partenaire">＋ Enregistrer ce partenaire</button>
+</div>
+<p class="agenda-aide">Le nouveau partenaire est ajouté à vos partenaires (il apparaît aussi sur la page Partenaires du site ; vous pourrez y ajouter son logo).</p>
+</fieldset>
 <fieldset class="agenda-choix"><legend>Mannequins (visibles si leur profil est publié)</legend>
 <input id="agenda-recherche" type="search" aria-label="Rechercher une mannequin" placeholder="Rechercher un nom…" class="agenda-recherche">
 <div id="agenda-mannequins" class="agenda-cases agenda-cases-mannequins">Chargement…</div>
 <p class="agenda-compte" id="agenda-compte"></p></fieldset>
 <fieldset class="agenda-choix agenda-interne"><legend>🔒 Interne — jamais affiché sur le site</legend>
 <div class="agenda-grille">
-<div class="form-champ"><label for="agenda-heure">Heure</label><input id="agenda-heure" type="text" maxlength="40" placeholder="ex : 9 h – 14 h"></div>
 <div class="form-champ"><label for="agenda-adresse">Adresse exacte</label><input id="agenda-adresse" type="text" maxlength="300"></div>
 </div>
 <div class="form-champ"><label for="agenda-notes">Notes internes</label><textarea id="agenda-notes" rows="2" maxlength="2000"></textarea></div>

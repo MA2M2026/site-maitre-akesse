@@ -1627,6 +1627,13 @@ toutes les écritures sont simulées pendant l'enregistrement.
   nouveau dessin (attributs `data-cle`), et une zone invisible annonce le mois aux lecteurs d'écran.
 - Menu : `js/menu.js` ajoute « Agenda » après « Événements » (et « Qui sommes-nous » après
   « Accueil ») pour toutes les pages, une seule fois.
+- **Extension 125 (agenda généraliste)** : types élargis (défilé, show, shooting, casting,
+  essayages, masterclass, formation, rencontre, événement, autre — liste partagée
+  `MA2M_TYPES_AGENDA`), **intervenants** libres (`intervenants` jsonb : rôle + nom, rôles
+  proposés dans `MA2M_ROLES_INTERVENANTS` ; l'ancien champ `photographe` est repris), **lieu**
+  visible, **horaires jour par jour** (`seances` jsonb : jour, début, fin) montrés au public
+  seulement si `horaires_publics` est coché. Un nouveau partenaire peut être enregistré depuis
+  le formulaire de l'agenda (il rejoint la table `partenaires`, donc la page Partenaires).
 - Ordre de mise en service : exécuter l'Extension 124 dans Supabase **avant** la mise en
   ligne ; sinon la page affiche simplement « Nos prochains projets seront affichés ici très bientôt ».
 
