@@ -786,6 +786,46 @@ async function lireToutesLignes(fabrique) {
   }
 }
 
+// Agenda MA2M (Extension 124) : libellés des types de projet [français, anglais] et
+// date lisible (« jeu. 15 oct. 2026 », ou « 15 – 17 oct. 2026 » sur plusieurs jours),
+// partagés par le tableau de bord et la page Agenda.
+const MA2M_TYPES_AGENDA = {
+  shooting: ['Shooting', 'Photo shoot'],
+  defile: ['Défilé', 'Fashion show'],
+  casting: ['Casting', 'Casting'],
+  formation: ['Formation', 'Training'],
+  evenement: ['Événement', 'Event'],
+  autre: ['Projet', 'Project']
+};
+function libelleTypeAgenda(type, enAnglais) {
+  const l = MA2M_TYPES_AGENDA[type] || MA2M_TYPES_AGENDA.autre;
+  return l[enAnglais ? 1 : 0];
+}
+function dateAgenda(debut, fin, enAnglais) {
+  const langue = enAnglais ? 'en-GB' : 'fr-FR';
+  const d = new Date(debut + 'T12:00:00');
+  if (isNaN(d)) return '';
+  const complet = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' };
+  if (!fin || fin === debut) return d.toLocaleDateString(langue, complet);
+  const f = new Date(fin + 'T12:00:00');
+  return d.toLocaleDateString(langue, { day: 'numeric', month: 'short' }) + ' – ' + f.toLocaleDateString(langue, { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+// Date du jour au format AAAA-MM-JJ (heure de l'appareil), et projets d'agenda séparés
+// en « à venir » (du plus proche au plus lointain) et « réalisés » (du plus récent au
+// plus ancien) ; un projet sur plusieurs jours reste « à venir » jusqu'à son dernier jour.
+function dateDuJour(d = new Date()) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function separerAgenda(projets) {
+  const jour = dateDuJour();
+  const tries = (projets || []).slice().sort((x, y) => (x.date_debut < y.date_debut ? -1 : x.date_debut > y.date_debut ? 1 : 0));
+  return {
+    avenir: tries.filter(p => (p.date_fin || p.date_debut) >= jour),
+    passes: tries.filter(p => (p.date_fin || p.date_debut) < jour).reverse()
+  };
+}
+
 // Copie mélangée d'une liste (mélange de Fisher-Yates) : photos de l'accueil, visages et
 // photos d'événements de la page « Qui sommes-nous »…
 function melanger(liste) {

@@ -35,10 +35,12 @@
       const presentes = imgs.filter(img => img.isConnected);
       if (!presentes.length) return;
       const img = presentes[n % presentes.length];
-      presentes.forEach(x => { x.classList.remove('precedent'); if (x.classList.contains('actif') && x !== img) x.classList.add('precedent'); x.classList.remove('actif'); });
-      // relance l'effet de zoom à chaque passage
-      void img.offsetWidth;
-      img.classList.add('actif');
+      presentes.forEach(x => {
+        x.classList.toggle('precedent', x.classList.contains('actif') && x !== img);
+        x.classList.remove('actif');
+      });
+      // image suivante : l'effet de volet et de zoom repart de zéro
+      requestAnimationFrame(() => img.classList.add('actif'));
       n++;
     };
     // On démarre avec la première photo qui arrive (une photo en erreur ne bloque rien).
@@ -223,6 +225,20 @@
     maj();
   }
 
+  // Un mot découpé en lettres animées, numérotées à partir de « depart ».
+  function motEnLettres(mot, depart) {
+    const m = document.createElement('span');
+    m.className = 'qsn-mot-entier';
+    [...mot].forEach((c, k) => {
+      const l = document.createElement('span');
+      l.className = 'qsn-lettre';
+      l.textContent = c;
+      l.style.setProperty('--i', depart + k);
+      m.appendChild(l);
+    });
+    return m;
+  }
+
   // Titre d'ouverture lettre par lettre (chaque mot reste insécable).
   function decouperLettres(el) {
     let i = 0;
@@ -234,16 +250,8 @@
         n.textContent.split(/(\s+)/).forEach(mot => {
           if (!mot) return;
           if (/^\s+$/.test(mot)) { frag.appendChild(document.createTextNode(' ')); return; }
-          const m = document.createElement('span');
-          m.className = 'qsn-mot-entier';
-          [...mot].forEach(c => {
-            const l = document.createElement('span');
-            l.className = 'qsn-lettre';
-            l.textContent = c;
-            l.style.setProperty('--i', i++);
-            m.appendChild(l);
-          });
-          frag.appendChild(m);
+          frag.appendChild(motEnLettres(mot, i));
+          i += [...mot].length;
         });
         n.replaceWith(frag);
       });

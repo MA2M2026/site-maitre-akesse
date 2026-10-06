@@ -6388,3 +6388,85 @@ commit;
 -- Vérification (résultat affiché) : les mannequins dont les mesures sont à reprendre.
 select full_name, mesures_a_reprendre_depuis from model_profiles
 where mesures_a_reprendre_depuis is not null order by full_name;
+
+-- =====================================================================
+-- Extension 124 — Agenda MA2M (idée de la propriétaire, 06/10/2026) :
+-- le programme de l'agence (shootings, défilés, castings, formations,
+-- événements) saisi dans le tableau de bord et montré aux clients sur le
+-- site. Sécurité : la table n'est lisible que par les admins ; le public
+-- passe par agenda_public(), qui ne renvoie JAMAIS l'adresse, l'heure ni
+-- les notes internes (personne ne doit savoir où trouver une mannequin à
+-- un moment précis), et ne cite que les mannequins dont le profil est
+-- visible sur le site (mêmes règles que le Book).
+-- =====================================================================
+create table if not exists agenda_projets (
+  id uuid primary key default gen_random_uuid(),
+  type text not null default 'shooting'
+    check (type in ('shooting', 'defile', 'casting', 'formation', 'evenement', 'autre')),
+  titre text not null check (length(trim(titre)) between 1 and 160),
+  date_debut date not null,
+  date_fin date check (date_fin is null or date_fin >= date_debut),
+  ville text check (ville is null or length(ville) <= 80),
+  description text check (description is null or length(description) <= 1200),
+  photographe text check (photographe is null or length(photographe) <= 120),
+  partenaire_ids uuid[] not null default '{}',
+  mannequin_ids uuid[] not null default '{}',
+  visible boolean not null default true,
+  -- informations internes, jamais montrées au public
+  adresse text check (adresse is null or length(adresse) <= 300),
+  heure text check (heure is null or length(heure) <= 40),
+  notes_internes text check (notes_internes is null or length(notes_internes) <= 2000),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+alter table agenda_projets enable row level security;
+create index if not exists agenda_projets_date_idx on agenda_projets (date_debut);
+
+drop policy if exists "Agenda : admins seulement" on agenda_projets;
+create policy "Agenda : admins seulement"
+  on agenda_projets for all
+  using (exists (select 1 from admins where user_id = auth.uid()))
+  with check (exists (select 1 from admins where user_id = auth.uid()));
+revoke all on agenda_projets from anon;
+
+-- Règle unique « profil visible du public » (publié, et pas en sourdine depuis plus de
+-- 7 jours pour mesures à reprendre) : utilisée par la règle de lecture du Book ET par
+-- l'agenda public, pour qu'elles ne puissent jamais diverger.
+create or replace function profil_visible_public(publie boolean, a_reprendre_depuis timestamptz)
+returns boolean language sql stable as $$
+  select coalesce(publie, false) and (a_reprendre_depuis is null or a_reprendre_depuis > now() - interval '7 days');
+$$;
+drop policy if exists "Profils publiés visibles de tous" on model_profiles;
+create policy "Profils publiés visibles de tous"
+  on model_profiles for select
+  using (profil_visible_public(published, mesures_a_reprendre_depuis));
+
+-- Version publique : projets visibles des 12 derniers mois et à venir, par date.
+-- seulement_a_venir + limite : pour l'encart de l'accueil (3 prochains projets).
+drop function if exists agenda_public();
+create or replace function agenda_public(seulement_a_venir boolean default false, limite int default 300)
+returns table(
+  id uuid, type text, titre text, date_debut date, date_fin date, ville text,
+  description text, photographe text, partenaires jsonb, mannequins jsonb
+)
+language sql stable security definer
+set search_path = public
+as $$
+  select a.id, a.type, a.titre, a.date_debut, a.date_fin, a.ville, a.description, a.photographe,
+    coalesce((select jsonb_agg(jsonb_build_object('id', pa.id, 'nom', pa.nom, 'logo_url', pa.logo_url) order by pa.nom)
+              from partenaires pa where pa.id = any(a.partenaire_ids)), '[]'::jsonb),
+    coalesce((select jsonb_agg(jsonb_build_object('id', p.id, 'nom', p.full_name, 'slug', p.slug) order by p.full_name)
+              from model_profiles p
+              where p.id = any(a.mannequin_ids)
+                and profil_visible_public(p.published, p.mesures_a_reprendre_depuis)), '[]'::jsonb)
+  from agenda_projets a
+  where a.visible
+    and coalesce(a.date_fin, a.date_debut) >= case when seulement_a_venir then current_date
+                                                  else current_date - interval '12 months' end
+  order by a.date_debut
+  limit least(greatest(coalesce(limite, 300), 1), 300);
+$$;
+revoke all on function agenda_public(boolean, int) from public;
+grant execute on function agenda_public(boolean, int) to anon, authenticated;
+
+NOTIFY pgrst, 'reload schema';

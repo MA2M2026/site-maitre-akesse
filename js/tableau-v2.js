@@ -98,6 +98,7 @@
         ['b3c-vedette-admin', 'Choisir le mannequin à la une', 'etoile'],
         ['b3c-bandeau', 'Bandeau d’information', 'drapeau'],
         ['b3c-mot-fondateur', 'Mot du fondateur', 'plume'],
+        ['b3c-agenda', 'Agenda du site', 'calendrier'],
         ['b3c-couverture', 'Couverture du site (vidéo)', 'appareil'],
         ['b3d-video-accueil', "Vidéo de la page d'accueil", 'appareil'],
         ['b3c-instagram', 'Flux Instagram', 'appareil'],

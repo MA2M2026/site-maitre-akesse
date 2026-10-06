@@ -69,6 +69,7 @@
 
 <link rel="stylesheet" href="css/splash.css">
 <link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/agenda.css">
 
 <link rel="manifest" href="manifest.json">
 
@@ -540,6 +541,17 @@ setTimeout(() => {
 
 
 <!-- 04 — Le management -->
+<!-- Agenda MA2M : les 3 prochains projets (js/agenda.js), caché s'il n'y en a pas -->
+<section class="agenda-accueil" data-agenda-accueil hidden>
+  <div class="container">
+    <div class="agenda-accueil-tete">
+      <div><div class="eyebrow">Agenda MA2M</div><h2>À venir<span class="oeil">.</span></h2></div>
+      <a href="agenda.html" class="agenda-accueil-lien">Tout l'agenda →</a>
+    </div>
+    <div id="agenda-accueil" class="agenda-liste-publique"></div>
+  </div>
+</section>
+
 <section>
 
   <div class="container">
@@ -1098,6 +1110,7 @@ setTimeout(() => {
 
 <script src="js/accueil.js"></script>
 <script src="js/video-accueil.js"></script>
+<script src="js/agenda.js"></script>
 
 </body>
 </html>

@@ -1590,8 +1590,10 @@ toutes les écritures sont simulées pendant l'enregistrement.
   affiche), portrait du fondateur (`mot_responsable`), une photo par mannequin publié
   (`model_photos`, profils masqués exclus par la base). Chaque événement enregistré dans le
   tableau de bord reçoit automatiquement sa carte (un même titre sur plusieurs dates = une carte).
-- **Aucun montant** sur cette page (décision de la propriétaire) : l'inscription dit seulement
-  que les droits se règlent par Wave.
+- **Aucun montant ni moyen de paiement** sur cette page (décision de la propriétaire) : l'inscription dit seulement
+  que l'agence confirme l'inscription (ni montant ni moyen de paiement cités, demande du 06/10/2026).
+- Pas de couverture animée (faisceau ou vidéo de couverture) sur ces deux pages, retirée à la
+  demande de la propriétaire : les photos des défilés ouvrent directement la page.
 - Animations : toutes sous la classe `.qsn-mouvement`, posée par le JS uniquement si
   l'appareil accepte les animations (`prefers-reduced-motion`). Sans JS ou en mode
   « réduire les animations », la page est fixe et entièrement lisible.
@@ -1599,3 +1601,31 @@ toutes les écritures sont simulées pendant l'enregistrement.
   `IntersectionObserver` dans Chrome ; le JS observe donc le **parent** des `.qsn-rideau`.
 - Polices : on garde Cormorant Garamond + Jost (un essai Bodoni Moda + Hanken Grotesk a été
   montré puis refusé par la propriétaire le 06/10/2026).
+
+## 📅 Agenda MA2M (06/10/2026)
+
+- Idée de la propriétaire : montrer aux clients le programme de l'agence (shootings, défilés,
+  castings, formations, événements) avec le photographe, les partenaires et les mannequins.
+- Base : **Extension 124** (`agenda_projets`, lisible et modifiable par les admins seulement ;
+  fonction publique `agenda_public()`). Le public ne reçoit **jamais** l'heure, l'adresse ni les
+  notes internes (sécurité des mannequins, dont des mineures) ; seuls les mannequins dont le
+  profil est visible sur le site sont cités (mêmes règles que le Book). Projets de plus de
+  12 mois et projets « cachés du site » exclus.
+- Tableau de bord : Bloc 3 → « Agenda du site » (`js/agenda-admin.js`, section
+  `data-section="b3c-agenda"`). Chargement au premier affichage de la rubrique.
+- Site : pages `agenda.html` / `en/agenda.html` et encart « À venir » de l'accueil FR/EN
+  (`data-agenda-accueil`, caché s'il n'y a rien à venir), tous remplis par `js/agenda.js`,
+  style `css/agenda.css`. Libellés des types et format des dates partagés dans `js/app.js`
+  (`MA2M_TYPES_AGENDA`, `libelleTypeAgenda`, `dateAgenda`).
+- Page Agenda = **agenda en ligne** d'après le modèle montré par la propriétaire (calendrier
+  de sa tablette) : `#agenda-calendrier`, vues Année / Mois / Semaine / Jour, numéros de semaine
+  ISO (semaine du lundi au dimanche), projets écrits dans les cases avec une couleur par type
+  (points de couleur sur téléphone), panneau du jour choisi en grand + prochains projets avec
+  compte à rebours (« dans 2 jours »). Un clic sur un jour remplit la liste détaillée
+  (`#agenda-avenir`, bouton « Voir tous les projets à venir » pour revenir). Les projets sont
+  indexés par jour une seule fois (`indexParJour`) ; le focus clavier est conservé à chaque
+  nouveau dessin (attributs `data-cle`), et une zone invisible annonce le mois aux lecteurs d'écran.
+- Menu : `js/menu.js` ajoute « Agenda » après « Événements » (et « Qui sommes-nous » après
+  « Accueil ») pour toutes les pages, une seule fois.
+- Ordre de mise en service : exécuter l'Extension 124 dans Supabase **avant** la mise en
+  ligne ; sinon la page affiche simplement « Nos prochains projets seront affichés ici très bientôt ».
