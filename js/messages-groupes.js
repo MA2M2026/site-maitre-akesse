@@ -34,12 +34,6 @@
     return texte.replace(/\{pr[ée]nom\}/gi, prenom(d) || 'Madame, Monsieur').replace(/\{casting\}/gi, casting(d));
   }
   function echapper(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
-  function numeroWa(tel) {
-    let n = String(tel || '').replace(/[^\d]/g, '');
-    if (n.startsWith('00')) n = n.slice(2);
-    if ((n.length === 10 && n.startsWith('0')) || n.length === 8) n = '225' + n; // numéro ivoirien sans indicatif
-    return n;
-  }
 
   // Suivi des envois déjà faits pour CE message (même texte = même envoi), sur cet appareil.
   function cleSuivi(canal) {
@@ -242,7 +236,7 @@ L'équipe Maître Akesse Model Management`;
     // Toujours dire clairement pourquoi un bouton ne marche pas (constaté le 30/09 :
     // message vide = boutons bloqués, sans aucune explication visible).
     if (destinataires.length) {
-      $('mg-resume').textContent = `${liste.length} personne(s) cochée(s) sur ${destinataires.length} — ${liste.filter(d => d.email).length} avec e-mail, ${liste.filter(d => numeroWa(d.phone)).length} avec numéro WhatsApp. Décochez celles à qui vous ne voulez pas écrire.`;
+      $('mg-resume').textContent = `${liste.length} personne(s) cochée(s) sur ${destinataires.length} — ${liste.filter(d => d.email).length} avec e-mail, ${liste.filter(d => numeroWhatsApp(d.phone)).length} avec numéro WhatsApp. Décochez celles à qui vous ne voulez pas écrire.`;
     }
     $('mg-consigne').textContent = !destinataires.length ? ''
       : !liste.length ? '☝️ Cochez au moins une personne dans la liste.'
@@ -250,15 +244,15 @@ L'équipe Maître Akesse Model Management`;
       : '';
     const faitsMail = dejaFaits('email'), faitsWa = dejaFaits('wa');
     const restantMail = liste.filter(d => d.email && !faitsMail.has(d.id)).length;
-    const restantWa = liste.filter(d => numeroWa(d.phone) && !faitsWa.has(d.id));
+    const restantWa = liste.filter(d => numeroWhatsApp(d.phone) && !faitsWa.has(d.id));
     $('mg-email').disabled = !t || !restantMail;
     $('mg-email').textContent = restantMail ? `📧 Envoyer par e-mail à ${restantMail} personne(s)` : '📧 Envoyer par e-mail';
-    $('mg-wa-copier').disabled = !liste.some(d => numeroWa(d.phone));
+    $('mg-wa-copier').disabled = !liste.some(d => numeroWhatsApp(d.phone));
     const suivant = restantWa[0];
     $('mg-wa-suivant').disabled = !t || !suivant;
     $('mg-wa-suivant').textContent = suivant
-      ? `💬 Ouvrir WhatsApp pour ${suivant.full_name || suivant.phone} — personne ${liste.filter(d => numeroWa(d.phone)).length - restantWa.length + 1} sur ${liste.filter(d => numeroWa(d.phone)).length}`
-      : (liste.some(d => numeroWa(d.phone)) && t ? '✓ WhatsApp : tout le monde a été fait' : '💬 Ouvrir WhatsApp pour la personne suivante');
+      ? `💬 Ouvrir WhatsApp pour ${suivant.full_name || suivant.phone} — personne ${liste.filter(d => numeroWhatsApp(d.phone)).length - restantWa.length + 1} sur ${liste.filter(d => numeroWhatsApp(d.phone)).length}`
+      : (liste.some(d => numeroWhatsApp(d.phone)) && t ? '✓ WhatsApp : tout le monde a été fait' : '💬 Ouvrir WhatsApp pour la personne suivante');
   }
 
   function resteACompleter() {
@@ -300,9 +294,9 @@ L'équipe Maître Akesse Model Management`;
     if (resteACompleter()) return;
     const t = $('mg-message').value.trim();
     const faits = dejaFaits('wa');
-    const d = choisis().find(x => numeroWa(x.phone) && !faits.has(x.id));
+    const d = choisis().find(x => numeroWhatsApp(x.phone) && !faits.has(x.id));
     if (!d || !t) return;
-    window.open('https://wa.me/' + numeroWa(d.phone) + '?text=' + encodeURIComponent(personnaliser(t, d)), '_blank', 'noopener');
+    window.open('https://wa.me/' + numeroWhatsApp(d.phone) + '?text=' + encodeURIComponent(personnaliser(t, d)), '_blank', 'noopener');
     noterFait('wa', d.id);
     afficherListe();
     $('mg-wa-etat').textContent = `Ouvert pour ${d.full_name || d.phone}. Appuyez sur « Envoyer » dans WhatsApp, puis revenez ici pour la personne suivante.`;
@@ -310,7 +304,7 @@ L'équipe Maître Akesse Model Management`;
   }
 
   async function copierNumeros() {
-    const nums = choisis().map(d => d.phone).filter(p => numeroWa(p));
+    const nums = choisis().map(d => d.phone).filter(p => numeroWhatsApp(p));
     try { await navigator.clipboard.writeText(nums.join('\n')); $('mg-wa-etat').textContent = `${nums.length} numéro(s) copié(s).`; }
     catch (e) { $('mg-wa-etat').textContent = nums.join(', '); }
   }

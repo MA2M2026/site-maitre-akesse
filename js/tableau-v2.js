@@ -80,6 +80,7 @@
         ['b2-validations', 'Validations en attente', 'bouclier', 'validations'],
         ['b2-mannequins-publies', 'Mannequins publiés', 'image'],
         ['b2-tri-photos', 'Photos triées par l’IA', 'image'],
+        ['b2-rapport-profils', 'Rapport des profils', 'fichierOk'],
         ['b2-fiches-evenement', 'Fiches événement', 'fichier']
       ] },
       { titre: 'Castings', items: [
@@ -184,7 +185,7 @@
     if (sous) sous.textContent = courant === ACCUEIL ? 'Bonjour Maître Akesse — voici l’activité de l’agence aujourd’hui.' : page.groupe.replace(/^Bloc \d — /, '');
     if (courant === ACCUEIL) chargerVue(false);
     // « Accès bloqués » est rangé dans un volet repliable qui charge la liste à l'ouverture.
-    if (courant === 'b3b-acces-bloques' || courant === 'b2-tri-photos' || courant === 'b2-fiches-evenement') {
+    if (courant === 'b3b-acces-bloques' || courant === 'b2-tri-photos' || courant === 'b2-fiches-evenement' || courant === 'b2-rapport-profils') {
       var volet = document.querySelector('[data-section="' + courant + '"] details');
       if (volet && !volet.open) volet.open = true;
     }

@@ -2203,6 +2203,7 @@ a.tdb-menu-item { text-decoration: none; }
     <button class="tdb-menu-item" data-tdb-cible="b2-validations" type="button">Validations en attente</button>
     <button class="tdb-menu-item" data-tdb-cible="b2-mannequins-publies" type="button">Mannequins publiés — gérer les photos</button>
     <button class="tdb-menu-item" data-tdb-cible="b2-tri-photos" type="button">Photos triées par l'IA</button>
+    <button class="tdb-menu-item" data-tdb-cible="b2-rapport-profils" type="button">Rapport des profils</button>
     <button class="tdb-menu-item" data-tdb-cible="b2-fiches-evenement" type="button">Fiches événement (défilés)</button>
     <button class="tdb-menu-item" data-tdb-cible="b2-candidatures" type="button">Candidatures / Castings</button>
     <button class="tdb-menu-item" data-tdb-cible="b2-messages-groupes" type="button">📣 Messages groupés (e-mail / WhatsApp)</button>
@@ -2489,6 +2490,15 @@ document.addEventListener('DOMContentLoaded', function () {
 </summary>
 <p class="tdb-17">Une fois un profil publié, seul le mannequin pouvait jusqu'ici modifier ses propres photos depuis son espace personnel. Vous pouvez maintenant intervenir directement ici si besoin (photo floue, doublon, remplacement...).</p>
 <div id="liste-mannequins-publies">Ouvrez cette section pour charger la liste.</div>
+</details>
+</div>
+<div class="liste-recente" data-section="b2-rapport-profils">
+<details id="rapport-profils-details">
+<summary class="dossiers-entete tdb-16">
+<h2 class="tdb-10">🩺 Rapport des profils</h2>
+</summary>
+<p class="tdb-17">Le site passe en revue chaque mannequin : mensurations manquantes ou incohérentes, photo de profil, couverture, compcard, book trop petit, et photos à remplacer signalées par la revue des books. Pour chaque profil à compléter, un message personnel est prêt : cochez les mannequins et envoyez-le par WhatsApp, chacune reçoit le sien.</p>
+<div id="rapport-profils-liste">Ouvrez cette section pour lancer l’analyse.</div>
 </details>
 </div>
 <div class="liste-recente" data-section="b2-fiches-evenement">
@@ -2843,6 +2853,7 @@ document.addEventListener('DOMContentLoaded', function () {
 <script src="js/couverture-admin.js"></script>
 <script src="js/tri-photos-admin.js"></script>
 <script src="js/fiches-evenement-admin.js"></script>
+<script src="js/rapport-profils-admin.js"></script>
 <script>
 // La sidebar du centre de contrôle (Étape 12) a son propre logo et sa propre
 // navigation : une fois connecté, le header public et le titre "Administration"

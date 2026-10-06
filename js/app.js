@@ -764,6 +764,16 @@ function chargerJsPdf() {
 const MA2M_SITE = 'https://www.maitreakessemodelmanagement.com';
 const MA2M_CONTACT_PDF = 'CONTACT OFFICIEL MA2M  ·  +225 27 22 23 11 76  ·  +225 05 45 65 66 87  ·  infos.ma2m@gmail.com';
 
+// Numéro au format WhatsApp (wa.me) : chiffres seuls, indicatif ivoirien ajouté s'il
+// manque. Chaîne vide si le numéro est inutilisable. Partagé par le tableau de bord
+// (messages groupés, rapports de revue, rapport des profils).
+function numeroWhatsApp(tel) {
+  let n = String(tel || '').replace(/[^\d]/g, '');
+  if (n.indexOf('00') === 0) n = n.slice(2);
+  if ((n.length === 10 && n.charAt(0) === '0') || n.length === 8) n = '225' + n; // numéro ivoirien sans indicatif
+  return n.length >= 8 ? n : '';
+}
+
 // Place une photo sur une case (1 à 5) de la compcard d'un mannequin, ou l'en retire
 // (caseN = null). Fonction partagée par l'Espace mannequin et le tableau de bord
 // (06/10/2026). La photo qui occupait déjà la case la quitte — APRÈS la pose de la

@@ -1516,3 +1516,14 @@ toutes les écritures sont simulées pendant l'enregistrement.
   que `js/tailles.js` : toute modification se fait aux deux endroits** —, nouvelle
   version de `fiche_evenement_admin` (sans téléphone ni e-mail du mannequin) et de
   la règle « Profils publiés visibles de tous ».
+
+## 🩺 Rapport des profils (tableau de bord, 06/10/2026)
+
+- **`js/rapport-profils-admin.js`**, rubrique « Rapport des profils » (Bloc 2) :
+  pour chaque mannequin, mensurations manquantes ou incohérentes (`js/tailles.js`),
+  photo de profil, couverture, compcard (5 cases), book (6 photos minimum), photos
+  « à remplacer » laissées par la revue stricte des books (aucun nouvel appel à
+  l'IA). Message personnel prêt (modifiable), envoi WhatsApp une personne après
+  l'autre (un appui chacune) ; date du dernier envoi notée sur l'appareil.
+- **`numeroWhatsApp(tel)`** (dans `js/app.js`) : mise au format WhatsApp partagée
+  par les messages groupés, les rapports de revue et ce rapport.
