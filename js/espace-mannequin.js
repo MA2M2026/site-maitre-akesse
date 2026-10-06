@@ -26,7 +26,9 @@ function emptyState(){
     identite:{ nomComplet:'', dateNaissance:'', villeNaissance:'', lieuNaissance:'', nationalite:'', ville:'', quartier:'', telephone:'', email:'', sexe:'' },
     physique:{
       taille:'', poids:'', poitrine:'', tourTaille:'', hanches:'', entrejambe:'', pointure:'',
-      tailleVet:'', yeux:'', cheveux:'', carnation:''
+      tailleVet:'', yeux:'', cheveux:'', carnation:'',
+      // Extension 121 (06/10/2026) : épaules, bras, cou (hommes), tête
+      epaules:'', bras:'', cou:'', tete:''
     },
     formation:{ niveau:'', etablissement:'', particuliere:'', mannequin:'' },
     // Niveau (New Face / Professionnel, 06/10/2026) : coché par la mannequin
@@ -325,9 +327,23 @@ function physiqueToDb(p){
   return {
     height_cm: toNum(p.taille), weight_kg: toNum(p.poids), chest_cm: toNum(p.poitrine),
     waist_cm: toNum(p.tourTaille), hips_cm: toNum(p.hanches), inseam_cm: toNum(p.entrejambe),
-    shoe_size: p.pointure || null, clothing_size: p.tailleVet || null,
+    // Taille vêtements : calculée d'après les mensurations (js/tailles.js), jamais saisie
+    shoe_size: p.pointure || null, clothing_size: tailleGeneraleCalculee(p) || p.tailleVet || null,
     eye_color: p.yeux || null, hair_color: p.cheveux || null, carnation: p.carnation || null
   };
+}
+function tailleGeneraleCalculee(p){
+  if (typeof ma2mTailles !== 'function') return null;
+  return ma2mTailles({ category: state.identite.sexe, chest_cm: p.poitrine, waist_cm: p.tourTaille, hips_cm: p.hanches }).generale;
+}
+// Mensurations ajoutées le 06/10/2026 (Extension 121) : enregistrées à part, pour que
+// l'étape ne soit jamais bloquée si la base n'a pas encore ces colonnes.
+async function enregistrerMesuresSupp(p){
+  const { error } = await sb.from('model_profiles').update({
+    shoulder_cm: toNum(p.epaules), arm_cm: toNum(p.bras), neck_cm: toNum(p.cou), head_cm: toNum(p.tete)
+  }).eq('id', currentUser.id);
+  if (error) console.warn('Mensurations complémentaires non enregistrées :', error.message);
+  return true;
 }
 function formationToDb(f){
   return { niveau_etude: f.niveau || null, etablissement: f.etablissement || null, formation_particuliere: f.particuliere || null, formation_mannequin: f.mannequin || null };
@@ -395,6 +411,11 @@ const Store = {
     const contactPrive = contactPriveRows && contactPriveRows[0] ? contactPriveRows[0] : null;
 
     const s = mapProfileFromDb(profile, contactPrive);
+
+    try {
+      const { data: supp, error: eSupp } = await sb.from('model_profiles').select('shoulder_cm, arm_cm, neck_cm, head_cm').eq('id', currentUser.id).maybeSingle();
+      if (!eSupp && supp) Object.assign(s.physique, { epaules: supp.shoulder_cm ?? '', bras: supp.arm_cm ?? '', cou: supp.neck_cm ?? '', tete: supp.head_cm ?? '' });
+    } catch(e) { /* colonnes pas encore créées */ }
 
     const { data: exps } = await sb.from('model_projects').select('*').eq('model_id', currentUser.id).order('created_at', { ascending:true });
     s.experiences = (exps||[]).map(function(e){ return { id:e.id, type:e.type_projet, nom:e.titre, lieu:e.ville, annee:e.periode }; });
@@ -889,6 +910,7 @@ function bindStepIdentite(){
 
 function stepPhysique(){
   const d = state.physique;
+  const homme = state.identite.sexe === 'homme';
   return '<h2>Informations physiques</h2><p class="sub">Étape 2 sur 6</p><div class="grid g3">' +
     field('Taille (cm)','f-taille',d.taille,{tag:'select',req:true,options:plageNombres(140,210,1,' cm')}) +
     field('Poids (kg)','f-poids',d.poids,{tag:'select',req:true,options:plageNombres(35,130,1,' kg')}) +
@@ -896,17 +918,21 @@ function stepPhysique(){
       {value:'',label:'—'},{value:'Claire',label:'Claire'},{value:'Métisse claire',label:'Métisse claire'},
       {value:'Métisse foncée',label:'Métisse foncée'},{value:'Foncée',label:'Foncée'},{value:'Très foncée',label:'Très foncée'}
     ]}) +
-    field('Poitrine (cm)','f-poitrine',d.poitrine,{tag:'select',options:plageNombres(70,130,1,' cm')}) +
-    field('Tour de taille (cm)','f-tourTaille',d.tourTaille,{tag:'select',options:plageNombres(55,110,1,' cm')}) +
-    field('Hanches (cm)','f-hanches',d.hanches,{tag:'select',options:plageNombres(70,130,1,' cm')}) +
-    field('Entrejambe (cm)','f-entrejambe',d.entrejambe,{tag:'select',options:plageNombres(60,100,1,' cm')}) +
-    field('Pointure','f-pointure',d.pointure,{tag:'select',options:plageNombres(34,46,1,'')}) +
-    field('Taille vêtements','f-tailleVet',d.tailleVet,{tag:'select-autre',options:['XS','S','M','L','XL','XXL']}) +
+    field('Tour de poitrine (cm)','f-poitrine',d.poitrine,{tag:'select',options:plageNombres(70,135,1,' cm')}) +
+    field('Tour de taille (cm)','f-tourTaille',d.tourTaille,{tag:'select',options:plageNombres(55,115,1,' cm')}) +
+    field(homme ? 'Tour de bassin (cm)' : 'Tour de hanches (cm)','f-hanches',d.hanches,{tag:'select',options:plageNombres(70,135,1,' cm')}) +
+    (homme ? field('Tour de cou (cm)','f-cou',d.cou,{tag:'select',options:plageNombres(32,50,1,' cm')}) : '') +
+    field('Largeur d’épaules (cm)','f-epaules',d.epaules,{tag:'select',options:plageNombres(30,60,1,' cm')}) +
+    field('Longueur de bras (cm)','f-bras',d.bras,{tag:'select',options:plageNombres(50,75,1,' cm')}) +
+    field('Entrejambe / longueur de pantalon (cm)','f-entrejambe',d.entrejambe,{tag:'select',options:plageNombres(60,100,1,' cm')}) +
+    field('Tour de tête (cm)','f-tete',d.tete,{tag:'select',options:plageNombres(50,64,1,' cm')}) +
+    field('Pointure (EU)','f-pointure',d.pointure,{tag:'select',options:plageNombres(34,48,1,'')}) +
     field('Couleur des yeux','f-yeux',d.yeux,{tag:'select-autre',options:['Marron','Noir','Vert','Bleu','Gris','Noisette']}) +
     field('Couleur des cheveux','f-cheveux',d.cheveux,{tag:'select-autre',options:['Noir','Brun','Châtain','Blond','Roux','Gris / Blanc']}) +
     '<div></div>' +
     '</div>' +
-    '<p class="sub p20-14">Hanches pour les femmes, entrejambe pour les hommes — renseignez le champ qui vous concerne.</p>' +
+    '<div class="tailles-calculees" id="tailles-calculees"></div>' +
+    '<p class="sub p20-14">📏 Mesurez-vous sans serrer le mètre ruban, en sous-vêtements ou vêtements fins. Vos tailles (haut, bas, générale) sont calculées automatiquement d’après vos mensurations, selon les barèmes internationaux : pour les changer, corrigez vos mesures.</p>' +
     blocFicheEvenement() +
     '<div class="actions-row"><button class="btn ghost" data-goto="1">← Retour</button><button class="btn primary" id="save2">Enregistrer</button></div>';
 }
@@ -1053,8 +1079,6 @@ function blocFicheEvenement(){
   return '<h3 class="p20-17">Informations pour les événements</h3>' +
     '<p class="sub">🔒 Réservées à l’agence MA2M (défilés, castings) — jamais affichées sur votre fiche publique. Votre Instagram se renseigne à l’étape « Identité ».</p>' +
     '<div class="grid">' +
-    field('Taille haut','f-tailleHaut',f.tailleHaut,{tag:'select-autre',options:['XS','S','M','L','XL','XXL']}) +
-    field('Taille bas','f-tailleBas',f.tailleBas,{placeholder:'Ex. 38, M, 30'}) +
     field('Régime / allergies','f-regime',f.regime,{full:true,placeholder:'Ex. végétarien, allergie aux arachides… ou « aucune »'}) +
     field('TikTok (lien ou nom)','f-tiktok',f.tiktok,{placeholder:'@votre_compte ou lien'}) +
     field('Facebook (lien ou nom)','f-facebook',f.facebook,{placeholder:'Nom du profil ou lien'}) +
@@ -1063,10 +1087,26 @@ function blocFicheEvenement(){
     [['oui','Oui, j’accepte',true],['non','Non',false]].map(function(c){ return '<label class="radio-opt '+(f.droitImage===c[2]?'selected':'')+'"><input type="radio" name="droit-image" value="'+c[0]+'" '+(f.droitImage===c[2]?'checked':'')+'> '+c[1]+'</label>'; }).join('') +
     '</div></div>';
 }
+// Encadré « Vos tailles » de l'étape physique : recalculé à chaque changement de mesure.
+function afficherTaillesCalculees(){
+  const zone = document.getElementById('tailles-calculees');
+  if (!zone || typeof ma2mTailles !== 'function') return;
+  const t = ma2mTailles({ category: state.identite.sexe, chest_cm: val('f-poitrine'), waist_cm: val('f-tourTaille'), hips_cm: val('f-hanches'), neck_cm: document.getElementById('f-cou') ? val('f-cou') : '' });
+  const c = function(x){ return x ? echapperHtml(ma2mTailleCourte(x)) : '—'; };
+  zone.innerHTML = '<div class="tc-titre">Vos tailles (calculées)</div><div class="tc-grille">' +
+    '<div><span>Haut</span><b>'+c(t.haut)+'</b></div><div><span>Bas</span><b>'+c(t.bas)+'</b></div><div><span>Générale</span><b>'+echapperHtml(t.generale||'—')+'</b></div>' +
+    (t.homme ? '<div><span>Chemise (col)</span><b>'+(t.chemise ? t.chemise.eu+' / '+t.chemise.us+'″' : '—')+'</b></div>' : '') +
+    '</div>';
+}
+function brancherTaillesCalculees(){
+  if (!document.getElementById('tailles-calculees')) return;
+  ['f-poitrine','f-tourTaille','f-hanches','f-cou'].forEach(function(id){ const el = document.getElementById(id); if (el) el.addEventListener('change', afficherTaillesCalculees); });
+  afficherTaillesCalculees();
+}
 function lireFicheEvenementFormulaire(){
   const choix = document.querySelector('input[name="droit-image"]:checked');
   return {
-    tailleHaut: valeurSelectOuAutre('f-tailleHaut', 'f-tailleHaut-autre'), tailleBas: val('f-tailleBas'),
+    tailleHaut: '', tailleBas: '', // tailles désormais calculées (js/tailles.js)
     regime: val('f-regime'), tiktok: val('f-tiktok'), facebook: val('f-facebook'),
     droitImage: choix ? choix.value === 'oui' : null
   };
@@ -1089,7 +1129,8 @@ function lirePhysiqueFormulaire(){
   return {
     taille: val('f-taille'), poids: val('f-poids'), poitrine: val('f-poitrine'), tourTaille: val('f-tourTaille'),
     hanches: val('f-hanches'), entrejambe: val('f-entrejambe'), pointure: val('f-pointure'),
-    tailleVet: valeurSelectOuAutre('f-tailleVet', 'f-tailleVet-autre'),
+    tailleVet: state.physique.tailleVet,
+    epaules: val('f-epaules'), bras: val('f-bras'), cou: document.getElementById('f-cou') ? val('f-cou') : '', tete: val('f-tete'),
     yeux: valeurSelectOuAutre('f-yeux', 'f-yeux-autre'),
     cheveux: valeurSelectOuAutre('f-cheveux', 'f-cheveux-autre'),
     carnation: val('f-carnation')
@@ -1103,6 +1144,7 @@ function bindWizard(){
   document.querySelectorAll('.progress-fill[data-largeur]').forEach(function(el){ el.style.width = el.dataset.largeur + '%'; });
   document.querySelectorAll('[data-goto]').forEach(function(b){ b.addEventListener('click', function(){ goto(parseInt(b.dataset.goto,10)); }); });
   initSelectsAvecAutre();
+  brancherTaillesCalculees();
   bindStepIdentite();
   const s = state;
 
@@ -1121,7 +1163,7 @@ function bindWizard(){
     const btn = this;
     Object.assign(s.physique, lirePhysiqueFormulaire());
     btn.disabled = true; btn.textContent = 'Enregistrement…';
-    const ok = await Store.saveBlock(physiqueToDb(s.physique)) && await enregistrerFicheEvenementDepuisFormulaire();
+    const ok = await Store.saveBlock(physiqueToDb(s.physique)) && await enregistrerMesuresSupp(s.physique) && await enregistrerFicheEvenementDepuisFormulaire();
     if (ok) { toast('Enregistré'); goto(3); } else { btn.disabled=false; btn.textContent='Enregistrer'; }
   });
 
@@ -1496,6 +1538,7 @@ function bindBlockPage(k){
   bindPhotoHandlers();
   bindCompetencesHandlers();
   initSelectsAvecAutre();
+  brancherTaillesCalculees();
   bindStepIdentite();
 
   const btn = document.querySelector('[data-editor-save="1"]');
@@ -1529,7 +1572,7 @@ function bindBlockPage(k){
       payload = formationToDb(s.formation);
     }
     ok = await Store.saveBlock(payload);
-    if (ok && k==='physique') ok = await enregistrerFicheEvenementDepuisFormulaire();
+    if (ok && k==='physique') ok = await enregistrerMesuresSupp(s.physique) && await enregistrerFicheEvenementDepuisFormulaire();
     if (ok) { btn.textContent='✓ Enregistré'; btn.classList.add('saved'); setTimeout(function(){ toast('Bloc « '+k+' » enregistré'); }, 400); }
     else { btn.disabled=false; btn.textContent='Enregistrer'; }
   });

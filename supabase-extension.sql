@@ -6192,3 +6192,19 @@ revoke all on function fiche_evenement_admin(uuid) from public;
 grant execute on function fiche_evenement_admin(uuid) to authenticated;
 
 NOTIFY pgrst, 'reload schema';
+
+-- =====================================================================
+-- Extension 121 — Mensurations complètes (demande de la propriétaire,
+-- 06/10/2026) : largeur d'épaules, longueur de bras, tour de cou (hommes) et
+-- tour de tête, en plus des mesures existantes. Publiques comme les autres
+-- mensurations (utiles aux recruteurs). Les tailles (haut, bas, générale,
+-- chemise, costume) et leurs équivalences internationales sont CALCULÉES à
+-- partir des mensurations (js/tailles.js), jamais saisies : toujours cohérentes.
+-- =====================================================================
+alter table model_profiles add column if not exists shoulder_cm int;
+alter table model_profiles add column if not exists arm_cm int;
+alter table model_profiles add column if not exists neck_cm int;
+alter table model_profiles add column if not exists head_cm int;
+grant select (shoulder_cm, arm_cm, neck_cm, head_cm) on model_profiles to anon;
+
+NOTIFY pgrst, 'reload schema';
