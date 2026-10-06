@@ -1504,10 +1504,10 @@ toutes les écritures sont simulées pendant l'enregistrement.
   Femmes : haut = tour de poitrine, bas = tour de hanches. Hommes : haut = tour
   de poitrine, bas = tour de taille. Taille générale = haut et bas (ex. « M-L »).
   Équivalences FR/EU, IT, UK, US, BR, JP, KR, CN (tableau sur la fiche publique).
-- **Option A et taille maximum** (décision du 06/10/2026, soir) : la taille retenue est
+- **Option A et taille maximum** (décision du 06/10/2026, soir ; hommes jusqu'à XL) : la taille retenue est
   celle de la plus grande des mesures (femmes : haut = poitrine + taille, bas = bassin +
   taille ; hommes : haut = poitrine, bas = taille + bassin). Au-delà de M (femmes) ou
-  L (hommes) — `MAX_FEMMES` / `MAX_HOMMES` dans `js/tailles.js` — « Mensurations
+  XL (hommes) — `MAX_FEMMES` / `MAX_HOMMES` dans `js/tailles.js` — « Mensurations
   excessives » en rouge dans l'Espace (accueil et étape physique) et dans le Rapport des
   profils, avec les repères S/M(/L) ; rien n'est caché au public pour autant.
 - **Mesures incohérentes** : femmes, bas plus grand que le haut de plus de 2

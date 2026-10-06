@@ -4,7 +4,7 @@
 // cohérent. Option A : la taille retenue est celle de la plus grande des mesures
 // (femmes : haut = poitrine et taille, bas = bassin et taille ; hommes : haut =
 // poitrine, bas = taille et bassin) ; si haut et bas diffèrent, la taille générale
-// l'indique (ex. « S-M »). Au-delà de M (femmes) / L (hommes) : « mensurations
+// l'indique (ex. « S-M »). Au-delà de M (femmes) / XL (hommes) : « mensurations
 // excessives » signalées.
 // Fichier partagé : Espace mannequin, fiche publique FR/EN, compcard, CV, fiche
 // événement. Barèmes standard du prêt-à-porter (fourchettes en cm).
@@ -49,10 +49,10 @@
   }
   // Taille maximum d'un mannequin (décision du 06/10/2026) : au-delà, « mensurations
   // excessives » (signalées à la mannequin et à l'agence, sans rien cacher).
-  var MAX_FEMMES = 'M', MAX_HOMMES = 'L';
+  var MAX_FEMMES = 'M', MAX_HOMMES = 'XL';
   window.ma2mReperesTailles = function (homme) {
     var t = homme ? HOMMES : FEMMES, fmt = function (x) { return x[0] + ' à ' + (x[1] >= 999 ? '…' : x[1]) + ' cm'; };
-    return t.filter(function (x) { return ['S', 'M', 'L'].indexOf(x.l) !== -1 && ORDRE.indexOf(x.l) <= ORDRE.indexOf(homme ? MAX_HOMMES : MAX_FEMMES); }).map(function (x) {
+    return t.filter(function (x) { return ['S', 'M', 'L', 'XL'].indexOf(x.l) !== -1 && ORDRE.indexOf(x.l) <= ORDRE.indexOf(homme ? MAX_HOMMES : MAX_FEMMES); }).map(function (x) {
       return x.l + ' : poitrine ' + fmt(x.poitrine) + ', taille ' + fmt(x.taille) + ', bassin ' + fmt(homme ? x.bassin : x.hanches);
     });
   };
