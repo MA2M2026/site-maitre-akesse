@@ -132,10 +132,9 @@
   // Liens ajoutés automatiquement au message : le book public et l'Espace mannequin
   // (où les photos portent leur numéro). Liens https simples : WhatsApp les rend
   // cliquables et ils s'ouvrent directement sur iPhone comme sur Android.
-  var SITE = 'https://www.maitreakessemodelmanagement.com';
   function avecLiens(message, modelId, publie, slug) {
-    var liens = (publie ? '\n\n📸 Votre book en ligne : ' + SITE + (slug ? '/book/' + encodeURIComponent(slug) : '/mannequin?id=' + modelId) : '') +
-      '\n\n🔐 Votre Espace mannequin (photos numérotées, envoi des nouvelles photos) : ' + SITE + '/espace-mannequin';
+    var liens = (publie ? '\n\n📸 Votre book en ligne : ' + MA2M_SITE + (slug ? '/book/' + encodeURIComponent(slug) : '/mannequin?id=' + modelId) : '') +
+      '\n\n🔐 Votre Espace mannequin (photos numérotées, envoi des nouvelles photos) : ' + MA2M_SITE + '/espace-mannequin';
     return String(message).trim() + liens;
   }
   function listeHtml(t) { return (t && t.length) ? '<ul>' + t.map(function (x) { return '<li>' + echapper(x) + '</li>'; }).join('') + '</ul>' : '<p>—</p>'; }

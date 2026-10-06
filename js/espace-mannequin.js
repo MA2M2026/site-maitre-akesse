@@ -320,7 +320,9 @@ function identiteToDb(d){
     quartier: d.quartier || null,
     phone: d.telephone || null,
     contact_email: d.email || null,
-    category: d.sexe || null
+    category: d.sexe || null,
+    // le barème (femmes / hommes) dépend du sexe : taille vêtements recalculée
+    clothing_size: tailleGeneraleCalculee(state.physique, d.sexe) || null
   };
 }
 function physiqueToDb(p){
@@ -342,7 +344,8 @@ async function enregistrerMesuresSupp(p){
   const { error } = await sb.from('model_profiles').update({
     shoulder_cm: toNum(p.epaules), arm_cm: toNum(p.bras), neck_cm: toNum(p.cou), head_cm: toNum(p.tete)
   }).eq('id', currentUser.id);
-  if (error) console.warn('Mensurations complémentaires non enregistrées :', error.message);
+  // On ne bloque pas le reste de l'étape, mais la mannequin est prévenue.
+  if (error) { console.warn('Mensurations complémentaires non enregistrées :', error.message); toast('Épaules, bras, cou et tête : pas encore enregistrés, réessayez un peu plus tard', true); }
   return true;
 }
 function formationToDb(f){
@@ -1660,7 +1663,7 @@ function donneesCvDepuisEtat(){
       return ph ? (ph.urlPleine||ph.url) : null;
     }),
     photosBook: (state.photos.principale ? [state.photos.principale] : []).concat(state.photos.book).map(function(ph){ return ph.urlPleine||ph.url; }),
-    physique: p, formation: f, competences: state.competences, experiences: state.experiences
+    physique: p, formation: f, competences: state.competences, experiences: state.experiences, sexe: d.sexe
   };
 }
 
@@ -1707,6 +1710,8 @@ function openCompcard(){
   const cover = slots[0];
   const sidePhotos = slots.slice(1).map(function(ph){ return ph ? '<img src="'+(ph.urlPleine||ph.url)+'" alt="Photo compcard">' : '<div class="cc-empty-photo"></div>'; }).join('');
   const d = state.identite, p = state.physique;
+  // mesures incohérentes : non affichées, comme sur la compcard téléchargée (js/tailles.js)
+  const masquer = ma2mMesuresAReprendre({ category: d.sexe, chest_cm: p.poitrine, waist_cm: p.tourTaille, hips_cm: p.hanches });
   document.getElementById('overlayContent').innerHTML =
     '<div class="overlay-close"><button id="closeOv">✕</button></div>' +
     '<div class="compcard-model">' +
@@ -1714,11 +1719,11 @@ function openCompcard(){
       '<div class="ccm-photo-grid"><div class="ccm-cover">'+(cover?'<img src="'+(cover.urlPleine||cover.url)+'" alt="Photo plein pied compcard">':'<div class="cc-empty-photo">PHOTO PLEIN PIED</div>')+'</div><div class="ccm-side-grid">'+sidePhotos+'</div></div>' +
       '<div class="ccm-body"><h1>'+echapperHtml(d.nomComplet||'')+'</h1><div class="ccm-meta">'+echapperHtml(libelleNiveauPublic(niveauControle(state.profilPro.niveauMannequin, state.experiences, state.profilPro.anneesExperience)))+'  ·  '+echapperHtml(d.ville||'Abidjan')+'</div>' +
       '<div class="ccm-measures">' +
-        '<div><span>TAILLE</span><b>'+(p.taille||'—')+' cm</b></div><div><span>POIDS</span><b>'+(p.poids||'—')+' kg</b></div><div><span>POITRINE</span><b>'+(p.poitrine||'—')+' cm</b></div>' +
-        '<div><span>TOUR DE TAILLE</span><b>'+(p.tourTaille||'—')+' cm</b></div><div><span>HANCHES</span><b>'+(p.hanches||p.entrejambe||'—')+' cm</b></div><div><span>POINTURE</span><b>'+(p.pointure||'—')+'</b></div>' +
+        '<div><span>TAILLE</span><b>'+(p.taille||'—')+' cm</b></div><div><span>POIDS</span><b>'+(p.poids||'—')+' kg</b></div><div><span>POITRINE</span><b>'+(masquer?'—':(p.poitrine||'—')+' cm')+'</b></div>' +
+        '<div><span>TOUR DE TAILLE</span><b>'+(masquer?'—':(p.tourTaille||'—')+' cm')+'</b></div><div><span>HANCHES</span><b>'+(masquer?'—':(p.hanches||p.entrejambe||'—')+' cm')+'</b></div><div><span>POINTURE</span><b>'+(p.pointure||'—')+'</b></div>' +
         '<div><span>CARNATION</span><b>'+echapperHtml(p.carnation||'—')+'</b></div><div><span>TAILLE VÊTEMENTS</span><b>'+echapperHtml(p.tailleVet||'—')+'</b></div><div><span>YEUX</span><b>'+echapperHtml(p.yeux||'—')+'</b></div><div><span>CHEVEUX</span><b>'+echapperHtml(p.cheveux||'—')+'</b></div>' +
       '</div></div>' +
-      '<div class="ccm-footer"><b>CONTACT OFFICIEL MA2M</b><div>+225 27 22 23 11 76 · +225 05 45 65 66 87</div><div>infos.ma2m@gmail.com</div><div>Instagram · Facebook · TikTok · YouTube  @maitreakessemodelmanagement</div><small>Document officiel généré depuis maitreakessemodelmanagement.com — toute demande de booking passe exclusivement par l’agence.</small></div>' +
+      '<div class="ccm-footer"><b>CONTACT OFFICIEL MA2M</b><div>'+MA2M_TELEPHONES.join(' · ')+'</div><div>'+MA2M_EMAIL+'</div><div>Instagram · Facebook · TikTok · YouTube  @maitreakessemodelmanagement</div><small>Document officiel généré depuis maitreakessemodelmanagement.com — toute demande de booking passe exclusivement par l’agence.</small></div>' +
     '</div>' +
     '<div class="cv-actions"><button class="btn ghost small" id="closeOv2">Fermer</button><button class="btn ghost small" id="p20BtnJpeg">Télécharger en JPEG</button><button class="btn primary small" id="p20BtnPdf">Télécharger en PDF</button></div>';
   showOverlay();

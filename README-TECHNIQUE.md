@@ -1480,13 +1480,15 @@ toutes les écritures sont simulées pendant l'enregistrement.
 
 ## 📋 Fiches événement et compcard depuis le tableau de bord (06/10/2026)
 
-- **Fiche événement** (Extension 120) : table privée `fiche_evenement` (taille haut /
-  bas, régime et allergies, TikTok, Facebook, droit à l'image), remplie par la
+- **Fiche événement** (Extension 120) : table privée `fiche_evenement` (régime et
+  allergies, TikTok, Facebook, droit à l'image ; les colonnes taille haut / bas ne
+  servent plus depuis les tailles calculées de l'Extension 121), remplie par la
   mannequin à l'étape « physique » de son Espace (chaque mannequin ne lit que sa
   ligne). Le tableau de bord (Bloc 2 → « Fiches événement », `js/fiches-evenement-admin.js`)
-  télécharge un PDF complet via `fiche_evenement_admin(id)` (réservée aux admins,
-  téléphone et e-mail compris). Jamais de pièce d'identité. Les mannequins ne peuvent
-  pas télécharger cette fiche.
+  télécharge un PDF via `fiche_evenement_admin(id)` (réservée aux admins ; depuis
+  l'Extension 121, sans téléphone ni e-mail du mannequin : le PDF n'affiche que les
+  contacts de l'agence, `MA2M_TELEPHONES` / `MA2M_EMAIL` dans `js/app.js`). Jamais de
+  pièce d'identité. Les mannequins ne peuvent pas télécharger cette fiche.
 - **Compcard choisie par l'agence** : liste « Compcard 1 à 5 » sous chaque photo dans
   la fenêtre photos d'un mannequin publié. Fonction commune `affecterCaseCompcard`
   (`js/app.js`) avec l'Espace mannequin : l'ancienne photo d'une case la quitte
@@ -1521,9 +1523,13 @@ toutes les écritures sont simulées pendant l'enregistrement.
 
 - **`js/rapport-profils-admin.js`**, rubrique « Rapport des profils » (Bloc 2) :
   pour chaque mannequin, mensurations manquantes ou incohérentes (`js/tailles.js`),
-  photo de profil, couverture, compcard (5 cases), book (6 photos minimum), photos
+  photo de profil, couverture, book (6 photos minimum ; les cases de compcard non
+  choisies se complètent seules avec le book), photos
   « à remplacer » laissées par la revue stricte des books (aucun nouvel appel à
   l'IA). Message personnel prêt (modifiable), envoi WhatsApp une personne après
   l'autre (un appui chacune) ; date du dernier envoi notée sur l'appareil.
-- **`numeroWhatsApp(tel)`** (dans `js/app.js`) : mise au format WhatsApp partagée
-  par les messages groupés, les rapports de revue et ce rapport.
+- **Fonctions partagées ajoutées dans `js/app.js`** : `numeroWhatsApp(tel)` (format
+  wa.me), `prenomDe(nom)`, `lireToutesLignes(fabrique)` (lecture par paquets de 1000),
+  `texteMensurationsCv(p, sexe)`, constantes `MA2M_TELEPHONES` / `MA2M_EMAIL`.
+- **Règle de cohérence écrite deux fois** (JS pour l'affichage immédiat dans l'Espace,
+  SQL pour le délai de 7 jours) : voir la section Mensurations ci-dessus.

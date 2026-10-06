@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-lr7J1hAb89y276Z85wXk7z24sELUFjVeZIkfrlIa/nk='; style-src 'self' https://fonts.googleapis.com 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-M11XYB6+zKFKPwykcEZjbENBV4vsqdi+UTG+sMq0oAE='; style-src 'self' https://fonts.googleapis.com 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
 <!-- Adresse lisible …/book/nom (06/10/2026) : la page peut être servie depuis /book/… ; ses fichiers se chargent toujours depuis la racine du site (voir js/adresse-fiche.js). -->
 <base href="/en/">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
@@ -472,7 +472,7 @@ async function construireCanvasCompcardEn() {
   ctx.font = `bold ${fpx(12)}px Arial, sans-serif`;
   ctx.fillText('OFFICIAL MA2M CONTACT', px(15), px(yPiedPage + 9));
   ctx.font = `${fpx(11)}px Arial, sans-serif`;
-  ctx.fillText('+225 27 22 23 11 76   ·   +225 05 45 65 66 87', px(15), px(yPiedPage + 16.5));
+  ctx.fillText(MA2M_TELEPHONES.join('   ·   '), px(15), px(yPiedPage + 16.5));
   ctx.fillText('scoutmodel.ma2m@gmail.com', px(15), px(yPiedPage + 23.5));
 
   const reseaux = ['instagram', 'facebook', 'tiktok', 'youtube'];
@@ -600,8 +600,9 @@ async function chargerProfilInterne() {
     .single();
 
   if (error || !profil) { contenu.textContent = 'This profile is not available.'; return; }
-  Object.assign(profil, await window.ma2mMesuresSupp(id)); // épaules, bras, cou, tête (js/tailles.js)
-  const slug = await window.ma2mAdresseFiche(id, true);
+  // épaules, bras, cou, tête (js/tailles.js) lus en même temps que le nom d'adresse
+  const [mesuresSupp, slug] = await Promise.all([window.ma2mMesuresSupp(id), window.ma2mAdresseFiche(id, true)]);
+  Object.assign(profil, mesuresSupp);
   if (lienLangue && slug) lienLangue.href = '../book/' + slug;
 
   const urlActuelle = 'https://www.maitreakessemodelmanagement.com/en' + (slug ? '/book/' + slug : '/mannequin?id=' + id);

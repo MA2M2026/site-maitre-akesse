@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-FZB9SDg+Nlgo6JM5e1ZNIeY31fU+wgE9kVaxh6trAqE='; style-src 'self' https://fonts.googleapis.com 'sha256-7qzTX2fbWhcoN8NR8B0qP2PjgfCnkK2/b2LeciSYanY=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-V8gjJcpJT0fyRzFAAOJCvvLix/3vkO07F9ouyZwZLus='; style-src 'self' https://fonts.googleapis.com 'sha256-7qzTX2fbWhcoN8NR8B0qP2PjgfCnkK2/b2LeciSYanY=';">
 <!-- Adresse lisible …/book/nom (06/10/2026) : la page peut être servie depuis /book/… ; ses fichiers se chargent toujours depuis la racine du site (voir js/adresse-fiche.js). -->
 <base href="/">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
@@ -273,8 +273,9 @@ async function chargerProfilInterne() {
     .single();
 
   if (error || !profil) { contenu.textContent = 'Ce profil n\'est pas disponible.'; return; }
-  Object.assign(profil, await window.ma2mMesuresSupp(id)); // épaules, bras, cou, tête (js/tailles.js)
-  const slug = await window.ma2mAdresseFiche(id, false);
+  // épaules, bras, cou, tête (js/tailles.js) lus en même temps que le nom d'adresse
+  const [mesuresSupp, slug] = await Promise.all([window.ma2mMesuresSupp(id), window.ma2mAdresseFiche(id, false)]);
+  Object.assign(profil, mesuresSupp);
   if (lienLangue && slug) lienLangue.href = 'en/book/' + slug;
 
   // Référencement : personnalise le titre, la description et l'URL canonique de la

@@ -6279,9 +6279,16 @@ create trigger trg_suivre_mesures_a_reprendre
   before insert or update on model_profiles
   for each row execute function suivre_mesures_a_reprendre();
 
--- Profils actuels : le délai de 7 jours démarre aujourd'hui.
+-- Profils actuels : le délai de 7 jours démarre aujourd'hui. Le déclencheur
+-- proteger_proprietaire_profil refuse les modifications faites depuis l'éditeur SQL :
+-- suspendu le temps de cette seule mise à jour, dans une transaction (même méthode
+-- que pour les noms d'adresse, Extension 118).
+begin;
+alter table model_profiles disable trigger trg_proteger_proprietaire_profil;
 update model_profiles set mesures_a_reprendre_depuis = now()
 where mesures_incoherentes(category, chest_cm, waist_cm, hips_cm) and mesures_a_reprendre_depuis is null;
+alter table model_profiles enable trigger trg_proteger_proprietaire_profil;
+commit;
 
 -- Visibilité publique : publiée ET pas en sourdine (mesures à reprendre depuis plus
 -- de 7 jours). La mannequin voit toujours sa fiche (sa propre règle) ; les admins aussi.

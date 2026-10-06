@@ -24,14 +24,13 @@
   // « Qui ? » : agence et casting précis sont deux sortes de candidatures (même table).
   function table() { return $('mg-source').value === 'inscription' ? 'inscription' : 'casting'; }
   function conf() { return DOSSIERS[table()]; }
-  function prenom(d) { return String(d.full_name || '').trim().split(/\s+/)[0] || ''; }
   function casting(d) {
     if (d.type_candidature === 'projet') return d.projet_nom || 'notre casting';
     if (d.type_candidature === 'agence') return "l'intégration de l'agence";
     return 'notre agence';
   }
   function personnaliser(texte, d) {
-    return texte.replace(/\{pr[ée]nom\}/gi, prenom(d) || 'Madame, Monsieur').replace(/\{casting\}/gi, casting(d));
+    return texte.replace(/\{pr[ée]nom\}/gi, prenomDe(d.full_name) || 'Madame, Monsieur').replace(/\{casting\}/gi, casting(d));
   }
   function echapper(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
@@ -276,7 +275,7 @@ L'équipe Maître Akesse Model Management`;
       etat.className = 'form-msg ok';
       etat.textContent = `Envoi ${i + 1} / ${liste.length}… (gardez la page ouverte)`;
       try {
-        await envoyerEmailCandidat({ to_email: d.email, to_name: prenom(d), message: personnaliser(t, d) });
+        await envoyerEmailCandidat({ to_email: d.email, to_name: prenomDe(d.full_name), message: personnaliser(t, d) });
         noterFait('email', d.id); ok++;
       } catch (e) {
         echecs.push((d.full_name || d.email) + (e && e.text ? ' (' + e.text + ')' : ''));

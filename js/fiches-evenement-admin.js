@@ -53,7 +53,7 @@
       if (y > 262) { doc.addPage(); y = 20; }
       doc.setFillColor(BORDEAUX[0], BORDEAUX[1], BORDEAUX[2]); doc.rect(M, y, L - 2 * M, 8, 'F');
       doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
-      doc.text(titre, M + 3, y + 5.5); y += 12;
+      doc.text(titre, M + 3, y + 5.5); y += 12.5;
     }
     function ligne(libelle, valeur, lien) {
       var texte = (valeur === null || valeur === undefined || valeur === '') ? '—' : String(valeur);
@@ -62,14 +62,14 @@
       var lignes = doc.splitTextToSize(texte, 106);
       // saut de page AVANT d'écrire, en tenant compte de la hauteur réelle (texte long) :
       // rien ne doit passer sous le pied de page
-      if (y + 4.8 * lignes.length > 276) { doc.addPage(); y = 20; }
+      if (y + 4.2 * lignes.length > 276) { doc.addPage(); y = 20; }
       doc.setFont('helvetica', 'bold'); doc.setTextColor(NOIR[0], NOIR[1], NOIR[2]);
       doc.text(libelle, M + 2, y);
       doc.setFont('helvetica', 'normal');
       if (lien) { doc.setTextColor(BORDEAUX[0], BORDEAUX[1], BORDEAUX[2]); doc.textWithLink(lignes[0], 86, y, { url: lien }); }
       else { doc.setTextColor(50, 46, 43); doc.text(lignes, 86, y); }
-      y += 4.8 * Math.max(1, lien ? 1 : lignes.length) + 1.6;
-      doc.setDrawColor(220, 214, 208); doc.line(M, y - 3.6, L - M, y - 3.6);
+      y += 4.2 * Math.max(1, lien ? 1 : lignes.length) + 1.2;
+      doc.setDrawColor(220, 214, 208); doc.line(M, y - 3.2, L - M, y - 3.2);
     }
     var cm = function (v) { return v ? v + ' cm' : ''; };
 
@@ -80,8 +80,8 @@
     ligne('Nationalité', d.nationalite);
     // Contacts : toujours ceux de l'agence sur les documents officiels (décision de la
     // propriétaire, 06/10/2026) — jamais le téléphone ni l'e-mail du mannequin.
-    ligne('Contact (agence MA2M)', '+225 27 22 23 11 76 · +225 05 45 65 66 87');
-    ligne('E-mail (agence MA2M)', 'infos.ma2m@gmail.com');
+    ligne('Contact (agence MA2M)', MA2M_TELEPHONES.join(' · '));
+    ligne('E-mail (agence MA2M)', MA2M_EMAIL);
     ligne('Adresse', [d.quartier, d.city].filter(Boolean).join(', '));
 
     // Tailles calculées d'après les mensurations (js/tailles.js), jamais saisies
@@ -90,9 +90,11 @@
     section('2. MENSURATIONS & TAILLES');
     ligne('Taille', t.hauteur ? t.hauteur.cm + ' cm (' + t.hauteur.pieds + ')' : '');
     ligne('Poids', d.weight_kg ? d.weight_kg + ' kg' : '');
-    ligne('Tour de poitrine', cm(d.chest_cm));
-    ligne('Tour de taille', cm(d.waist_cm));
-    ligne(homme ? 'Tour de bassin' : 'Tour de hanches', cm(d.hips_cm));
+    // mesures incohérentes : non transmises aux organisateurs (comme sur la fiche publique)
+    var aReprendre = t.aReprendre.length ? 'à reprendre (incohérentes)' : null;
+    ligne('Tour de poitrine', aReprendre || cm(d.chest_cm));
+    ligne('Tour de taille', aReprendre || cm(d.waist_cm));
+    ligne(homme ? 'Tour de bassin' : 'Tour de hanches', aReprendre || cm(d.hips_cm));
     if (homme) ligne('Tour de cou', cm(d.neck_cm));
     ligne('Largeur d’épaules', cm(d.shoulder_cm));
     ligne('Longueur de bras', cm(d.arm_cm));

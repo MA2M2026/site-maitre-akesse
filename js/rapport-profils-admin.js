@@ -10,12 +10,12 @@
   var details = document.getElementById('rapport-profils-details');
   if (!details || typeof sb === 'undefined' || !sb) return;
   var charge = false, profils = [], telephones = {};
+  var suppDisponibles = true; // colonnes de l'Extension 121 lisibles ?
   var envoyesCetteFois = {}; // file d'envoi : on passe à la suivante (la date reste notée pour la prochaine fois)
   var BOOK_MINIMUM = 6;
   var CLE_ENVOIS = 'ma2m_rapport_profils_envois';
 
   function echapper(t) { return echapperHtml(t); }
-  function prenom(p) { return String(p.full_name || '').trim().split(/\s+/)[0] || ''; }
   function envois() { try { return JSON.parse(localStorage.getItem(CLE_ENVOIS) || '{}') || {}; } catch (e) { return {}; } }
   function noterEnvoi(id) { var o = envois(); o[id] = new Date().toISOString(); try { localStorage.setItem(CLE_ENVOIS, JSON.stringify(o)); } catch (e) {} }
 
@@ -25,9 +25,10 @@
     return [
       ['height_cm', 'taille'], ['weight_kg', 'poids'], ['chest_cm', 'tour de poitrine'], ['waist_cm', 'tour de taille'],
       ['hips_cm', homme ? 'tour de bassin' : 'tour de hanches']
-    ].concat(homme ? [['neck_cm', 'tour de cou']] : []).concat([
-      ['shoulder_cm', 'largeur d’épaules'], ['arm_cm', 'longueur de bras'], ['inseam_cm', 'entrejambe'],
-      ['head_cm', 'tour de tête'], ['shoe_size', 'pointure'], ['eye_color', 'couleur des yeux'], ['hair_color', 'couleur des cheveux']
+    ].concat(suppDisponibles ? (homme ? [['neck_cm', 'tour de cou']] : []).concat([['shoulder_cm', 'largeur d’épaules'], ['arm_cm', 'longueur de bras']]) : []).concat([
+      ['inseam_cm', 'entrejambe']
+    ]).concat(suppDisponibles ? [['head_cm', 'tour de tête']] : []).concat([
+      ['shoe_size', 'pointure'], ['eye_color', 'couleur des yeux'], ['hair_color', 'couleur des cheveux']
     ]);
   }
 
@@ -37,12 +38,11 @@
     var t = ma2mTailles(p), libelles = { chest_cm: 'tour de poitrine', waist_cm: 'tour de taille', hips_cm: 'tour de hanches' };
     var aReprendre = t.aReprendre.map(function (c) { return libelles[c]; });
     var book = photos.filter(function (ph) { return ph.tri_statut !== 'ecartee'; });
-    var casesCompcard = {}; book.forEach(function (ph) { if (ph.compcard_ordre) casesCompcard[ph.compcard_ordre] = true; });
-    var vides = 5 - Object.keys(casesCompcard).length;
     var photosPb = [];
     if (!book.some(function (ph) { return ph.principale; })) photosPb.push('ajoutez une photo de profil');
     if (!book.some(function (ph) { return ph.photo_couverture; })) photosPb.push('choisissez une photo de couverture');
-    if (vides > 0) photosPb.push('complétez votre compcard (' + vides + ' case' + (vides > 1 ? 's' : '') + ' vide' + (vides > 1 ? 's' : '') + ')');
+    // Compcard : les cases non choisies sont complétées automatiquement avec les photos
+    // du book (completerEmplacementsPhotos) ; un book suffisant suffit donc.
     if (book.length < BOOK_MINIMUM) photosPb.push('ajoutez des photos à votre book (' + book.length + ' sur ' + BOOK_MINIMUM + ' minimum)');
     // Remarques de la revue stricte des books (IA) : photos à remplacer ou proposées à la suppression
     book.forEach(function (ph) {
@@ -54,7 +54,7 @@
   }
 
   function message(p, a) {
-    var l = ['Bonjour ' + (prenom(p) || '') + ',', '', 'Votre profil MA2M n’est pas encore complet. Voici ce qu’il vous reste à faire :'];
+    var l = ['Bonjour ' + prenomDe(p.full_name) + ',', '', 'Votre profil MA2M n’est pas encore complet. Voici ce qu’il vous reste à faire :'];
     if (a.manquantes.length) l.push('', '📏 Mensurations à compléter : ' + a.manquantes.join(', ') + '.');
     if (a.aReprendre.length) l.push('', '⚠️ Mensurations à reprendre (elles ne vont pas ensemble) : ' + a.aReprendre.join(', ') + '. Mesurez-vous avec un mètre ruban, sans serrer. Tant qu’elles ne sont pas corrigées, vos mensurations sont cachées sur votre fiche, et après 7 jours votre fiche est retirée du site.');
     if (a.photos.length) l.push('', '📸 Photos :', a.photos.map(function (x) { return '• ' + x.charAt(0).toUpperCase() + x.slice(1); }).join('\n'));
@@ -109,21 +109,25 @@
     charge = true;
     var zone = document.getElementById('rapport-profils-liste');
     zone.textContent = 'Analyse des profils…';
-    var pr = await sb.from('model_profiles').select('id, full_name, category, published, height_cm, weight_kg, chest_cm, waist_cm, hips_cm, inseam_cm, shoe_size, eye_color, hair_color').not('full_name', 'is', null).order('full_name');
-    if (pr.error) { zone.textContent = 'Erreur : ' + pr.error.message; return; }
-    // Mensurations de l'Extension 121 : requête à part (vide si le SQL n'est pas encore exécuté).
-    var supp = {};
-    var rs = await sb.from('model_profiles').select('id, shoulder_cm, arm_cm, neck_cm, head_cm');
-    if (!rs.error) (rs.data || []).forEach(function (m) { supp[m.id] = m; });
-    var ph = await sb.from('model_photos').select('model_id, numero, principale, photo_couverture, compcard_ordre, tri_statut, tri_raison').limit(10000);
-    var parModele = {}; (ph.data || []).forEach(function (x) { (parModele[x.model_id] = parModele[x.model_id] || []).push(x); });
-    var tel = await sb.rpc('contacts_mannequins_admin');
+    var r = await Promise.all([
+      lireToutesLignes(function () { return sb.from('model_profiles').select('id, full_name, category, published, height_cm, weight_kg, chest_cm, waist_cm, hips_cm, inseam_cm, shoe_size, eye_color, hair_color').not('full_name', 'is', null).order('id'); }),
+      // Mensurations de l'Extension 121 : requête à part (en erreur tant que le SQL n'est pas exécuté)
+      lireToutesLignes(function () { return sb.from('model_profiles').select('id, shoulder_cm, arm_cm, neck_cm, head_cm').order('id'); }),
+      lireToutesLignes(function () { return sb.from('model_photos').select('id, model_id, numero, principale, photo_couverture, compcard_ordre, tri_statut, tri_raison').order('id'); }),
+      sb.rpc('contacts_mannequins_admin')
+    ]);
+    var pr = r[0], rs = r[1], ph = r[2], tel = r[3];
+    // Sans la liste complète des profils ou des photos, le rapport serait faux : on s'arrête.
+    if (pr.error || ph.error) { charge = false; zone.textContent = 'Impossible de lire les profils ou les photos : ' + (pr.error || ph.error).message + '. Fermez et rouvrez la section pour réessayer.'; return; }
+    suppDisponibles = !rs.error;
+    var supp = {}; rs.data.forEach(function (m) { supp[m.id] = m; });
+    var parModele = {}; ph.data.forEach(function (x) { (parModele[x.model_id] = parModele[x.model_id] || []).push(x); });
     telephones = {}; (tel.data || []).forEach(function (t) { telephones[t.model_id] = t.phone; });
-    profils = (pr.data || []).filter(function (p) { return String(p.full_name).trim(); }).map(function (p) {
-      p = Object.assign(p, supp[p.id] || { shoulder_cm: '', arm_cm: '', neck_cm: '', head_cm: '' });
+    profils = pr.data.filter(function (p) { return String(p.full_name).trim(); }).map(function (p) {
+      p = Object.assign(p, supp[p.id] || {});
       p.analyse = analyser(p, parModele[p.id] || []);
       return p;
-    });
+    }).sort(function (a, b) { return String(a.full_name).localeCompare(String(b.full_name), 'fr'); });
     afficher();
   }
 

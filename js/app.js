@@ -315,6 +315,13 @@ function photosCvCompletees(d) {
 // Renvoie le HTML à placer à l'intérieur d'un conteneur .cv-sheet — n'inclut pas
 // le conteneur lui-même ni les boutons d'action (fermer/imprimer), propres à
 // chaque page.
+// « Poitrine / taille / hanches » du CV (HTML et image) ; mesures incohérentes
+// (js/tailles.js) : non affichées, comme sur la fiche publique.
+function texteMensurationsCv(p, sexe) {
+  if (typeof ma2mMesuresAReprendre === 'function' && ma2mMesuresAReprendre({ category: sexe, chest_cm: p.poitrine, waist_cm: p.tourTaille, hips_cm: p.hanches })) return 'À reprendre';
+  return [p.poitrine, p.tourTaille, p.hanches || p.entrejambe].some(Boolean) ? [p.poitrine || '–', p.tourTaille || '–', p.hanches || p.entrejambe || '–'].join(' / ') : '—';
+}
+
 function construireHtmlCv(d) {
   const p = d.physique || {}, f = d.formation || {};
   const groups = groupExperiences(d.experiences);
@@ -338,7 +345,7 @@ function construireHtmlCv(d) {
         '<li>' + mcvIcon('pin') + '<div><span class="k">Lieu de naissance</span><span class="v">' + echapperHtml([d.villeNaissance, d.lieuNaissance].filter(Boolean).join(', ') || '—') + '</span></div></li>' +
         '<li>' + mcvIcon('globe') + '<div><span class="k">Nationalité</span><span class="v">' + echapperHtml(d.nationalite || '—') + '</span></div></li>' +
         '<li>' + mcvIcon('home') + '<div><span class="k">Ville de résidence</span><span class="v">' + echapperHtml([d.ville, d.quartier].filter(Boolean).join(', ') || '—') + '</span></div></li>' +
-        '<li>' + mcvIcon('phone') + '<div><span class="k">Contact agence</span><span class="v">+225 27 22 23 11 76<br>+225 05 45 65 66 87<br>infos.ma2m@gmail.com</span></div></li>' +
+        '<li>' + mcvIcon('phone') + '<div><span class="k">Contact agence</span><span class="v">' + MA2M_TELEPHONES.concat(MA2M_EMAIL).join('<br>') + '</span></div></li>' +
       '</ul>' +
       '<div class="mcv-cat"><span class="lbl">Catégorie</span><span class="val">' + echapperHtml(d.niveauMannequin ? libelleNiveauPublic(d.niveauMannequin) : '') + '</span></div>' +
       (d.citation ? '<blockquote class="mcv-quote">« ' + echapperHtml(d.citation) + ' »</blockquote>' : '') +
@@ -347,7 +354,7 @@ function construireHtmlCv(d) {
       '<section class="mcv-sec mcv-sec-subtile"><h4>' + mcvIcon('user') + ' Profil</h4><p class="mcv-profile-text">' + echapperHtml(d.bio || 'Profil à compléter.') + '</p></section>' +
       '<section class="mcv-sec"><h4>' + mcvIcon('body') + ' Informations physiques</h4><div class="mcv-two-col">' +
         '<ul class="mcv-kv"><li><span>Taille</span><b>' + (p.taille ? p.taille + ' cm' : '—') + '</b></li><li><span>Poids</span><b>' + (p.poids ? p.poids + ' kg' : '—') + '</b></li>' +
-        '<li><span>Mensurations</span><b>' + ([p.poitrine, p.tourTaille, p.hanches || p.entrejambe].some(Boolean) ? [p.poitrine || '–', p.tourTaille || '–', p.hanches || p.entrejambe || '–'].join(' / ') : '—') + '</b></li>' +
+        '<li><span>Mensurations</span><b>' + echapperHtml(texteMensurationsCv(p, d.sexe)) + '</b></li>' +
         '<li><span>Pointure</span><b>' + (p.pointure || '—') + '</b></li></ul>' +
         '<ul class="mcv-kv"><li><span>Taille vêtements</span><b>' + echapperHtml(p.tailleVet || '—') + '</b></li><li><span>Couleur des yeux</span><b>' + (p.yeux || '—') + '</b></li>' +
         '<li><span>Couleur des cheveux</span><b>' + (p.cheveux || '—') + '</b></li><li><span>Carnation</span><b>' + (p.carnation || '—') + '</b></li></ul>' +
@@ -724,7 +731,7 @@ async function construireCanvasCompcard(ficheData) {
   ctx.font = `bold ${fpx(12)}px Arial, sans-serif`;
   ctx.fillText('CONTACT OFFICIEL MA2M', px(15), px(yPiedPage + 9));
   ctx.font = `${fpx(11)}px Arial, sans-serif`;
-  ctx.fillText('+225 27 22 23 11 76   ·   +225 05 45 65 66 87', px(15), px(yPiedPage + 16.5));
+  ctx.fillText(MA2M_TELEPHONES.join('   ·   '), px(15), px(yPiedPage + 16.5));
   ctx.fillText('scoutmodel.ma2m@gmail.com', px(15), px(yPiedPage + 23.5));
 
   // Réseaux sociaux : icônes vectorielles blanches + le pseudo, sur la même ligne.
@@ -762,7 +769,25 @@ function chargerJsPdf() {
 
 // Coordonnées officielles de l'agence pour les documents générés (PDF), à un seul endroit.
 const MA2M_SITE = 'https://www.maitreakessemodelmanagement.com';
-const MA2M_CONTACT_PDF = 'CONTACT OFFICIEL MA2M  ·  +225 27 22 23 11 76  ·  +225 05 45 65 66 87  ·  infos.ma2m@gmail.com';
+const MA2M_TELEPHONES = ['+225 27 22 23 11 76', '+225 05 45 65 66 87'];
+const MA2M_EMAIL = 'infos.ma2m@gmail.com';
+const MA2M_CONTACT_PDF = 'CONTACT OFFICIEL MA2M  ·  ' + MA2M_TELEPHONES.join('  ·  ') + '  ·  ' + MA2M_EMAIL;
+
+// Lit TOUTES les lignes d'une requête Supabase, par paquets de 1000 (la base ne
+// renvoie jamais plus de 1000 lignes d'un coup). fabrique() renvoie une requête
+// neuve (sb.from(…).select(…)…) avec un ordre stable. Renvoie { data, error }.
+async function lireToutesLignes(fabrique) {
+  const toutes = [];
+  for (let depart = 0; ; depart += 1000) {
+    const { data, error } = await fabrique().range(depart, depart + 999);
+    if (error) return { data: toutes, error };
+    toutes.push(...(data || []));
+    if (!data || data.length < 1000) return { data: toutes, error: null };
+  }
+}
+
+// Prénom (premier mot du nom complet), pour personnaliser les messages.
+function prenomDe(nomComplet) { return String(nomComplet || '').trim().split(/\s+/)[0] || ''; }
 
 // Numéro au format WhatsApp (wa.me) : chiffres seuls, indicatif ivoirien ajouté s'il
 // manque. Chaîne vide si le numéro est inutilisable. Partagé par le tableau de bord
@@ -1049,7 +1074,7 @@ async function construireCanvasCv(d) {
       ['pin', 'Lieu de naissance', [[d.villeNaissance, d.lieuNaissance].filter(Boolean).join(', ') || '—']],
       ['globe', 'Nationalité', [d.nationalite || '—']],
       ['home', 'Ville de résidence', [[d.ville, d.quartier].filter(Boolean).join(', ') || '—']],
-      ['phone', 'Contact agence', ['+225 27 22 23 11 76', '+225 05 45 65 66 87', 'infos.ma2m@gmail.com']]
+      ['phone', 'Contact agence', MA2M_TELEPHONES.concat(MA2M_EMAIL)]
     ];
     infosCv.forEach(function (ligne) {
       dessinerIconeMcvCanvas(ctx, ligne[0], px(PAD_SIDEBAR), px(y - 3.2), px(4.2), OR);
@@ -1129,7 +1154,7 @@ async function construireCanvasCv(d) {
     titreSection('body', 'Informations physiques');
     const colInfosPhysiques = [
       [['Taille', p.taille ? p.taille + ' cm' : '—'], ['Poids', p.poids ? p.poids + ' kg' : '—'],
-       ['Mensurations', [p.poitrine, p.tourTaille, p.hanches || p.entrejambe].some(Boolean) ? [p.poitrine || '–', p.tourTaille || '–', p.hanches || p.entrejambe || '–'].join(' / ') : '—'],
+       ['Mensurations', texteMensurationsCv(p, d.sexe)],
        ['Pointure', p.pointure || '—']],
       [['Taille vêtements', p.tailleVet || '—'], ['Couleur des yeux', p.yeux || '—'], ['Couleur des cheveux', p.cheveux || '—'], ['Carnation', p.carnation || '—']]
     ];
