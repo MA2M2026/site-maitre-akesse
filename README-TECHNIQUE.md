@@ -1374,6 +1374,19 @@ fiches) et formulaires remplis jusqu'au bout — **sans aucune écriture** : tou
 
 Liste de tout ce qui reste à faire ou à surveiller, pour la propriétaire et pour Claude.
 
+**Chantiers « zéro critique » décidés le 06/10/2026 (dans cet ordre, une mise en ligne par chantier)**
+1. **Essais automatiques à chaque modification** : ranger les essais Playwright (sans
+   écriture réelle) dans le dépôt et les faire tourner par GitHub Actions sur chaque
+   pull request, avec `node --check` et `scripts/verifier-csp.py` (déjà
+   `.github/workflows/verifier-csp.yml`) ; la fusion est refusée si un essai échoue.
+   Programmé : nuit du 7 au 8 octobre, 1 h.
+2. **Sauvegarde des photos des mannequins** (Cloudflare R2) : aujourd'hui seule la base
+   est sauvegardée (`.github/workflows/sauvegarde-base.yml`). Choix du lieu de copie à
+   faire avec la propriétaire (deuxième espace R2, Google Drive…).
+3. **Pages HTML en double** (paires FR/EN, en-têtes et pieds de page recopiés) : environ
+   5 000 lignes à mettre en commun.
+4. Un jour : relecture complète par un développeur humain.
+
 **Rappels programmés**
 - **Dimanche 4 octobre 2026** : documents légaux (CGU, page cookies, politique de
   remboursement dont les 45 000 FCFA d'inscription, relecture des CGV de la boutique,
