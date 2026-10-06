@@ -1617,6 +1617,14 @@ toutes les écritures sont simulées pendant l'enregistrement.
   (`data-agenda-accueil`, caché s'il n'y a rien à venir), tous remplis par `js/agenda.js`,
   style `css/agenda.css`. Libellés des types et format des dates partagés dans `js/app.js`
   (`MA2M_TYPES_AGENDA`, `libelleTypeAgenda`, `dateAgenda`).
+- Page Agenda = **agenda en ligne** d'après le modèle montré par la propriétaire (calendrier
+  de sa tablette) : `#agenda-calendrier`, vues Année / Mois / Semaine / Jour, numéros de semaine
+  ISO (semaine du lundi au dimanche), projets écrits dans les cases avec une couleur par type
+  (points de couleur sur téléphone), panneau du jour choisi en grand + prochains projets avec
+  compte à rebours (« dans 2 jours »). Un clic sur un jour remplit la liste détaillée
+  (`#agenda-avenir`, bouton « Voir tous les projets à venir » pour revenir). Les projets sont
+  indexés par jour une seule fois (`indexParJour`) ; le focus clavier est conservé à chaque
+  nouveau dessin (attributs `data-cle`), et une zone invisible annonce le mois aux lecteurs d'écran.
 - Menu : `js/menu.js` ajoute « Agenda » après « Événements » (et « Qui sommes-nous » après
   « Accueil ») pour toutes les pages, une seule fois.
 - Ordre de mise en service : exécuter l'Extension 124 dans Supabase **avant** la mise en

@@ -814,8 +814,7 @@ function dateAgenda(debut, fin, enAnglais) {
 // Date du jour au format AAAA-MM-JJ (heure de l'appareil), et projets d'agenda séparés
 // en « à venir » (du plus proche au plus lointain) et « réalisés » (du plus récent au
 // plus ancien) ; un projet sur plusieurs jours reste « à venir » jusqu'à son dernier jour.
-function dateDuJour() {
-  const d = new Date();
+function dateDuJour(d = new Date()) {
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
 function separerAgenda(projets) {

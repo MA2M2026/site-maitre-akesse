@@ -13,14 +13,14 @@
     videPasses: 'Our completed projects will appear here.',
     erreur: 'The agenda could not be loaded. Please try again later.',
     precedent: 'Previous month', suivant: 'Next month', aujourdhui: 'Today',
-    aVenir: 'Upcoming', programmeDu: 'Schedule for ', rienCeJour: 'No project on this day.', jour: 'day', jours: 'days'
+    aVenir: 'Upcoming', programmeDu: 'Schedule for ', rienCeJour: 'No project on this day.', jour: 'day', jours: 'days', enCours: 'today'
   } : {
     photographe: 'Photographe', partenaires: 'Partenaires', mannequins: 'Mannequins',
     vide: 'Nos prochains projets seront affichés ici très bientôt.',
     videPasses: 'Nos projets réalisés seront affichés ici.',
     erreur: 'L’agenda n’a pas pu être chargé. Réessayez dans un instant.',
     precedent: 'Mois précédent', suivant: 'Mois suivant', aujourdhui: 'Aujourd’hui',
-    aVenir: 'À venir', programmeDu: 'Programme du ', rienCeJour: 'Aucun projet ce jour-là.', jour: 'jour', jours: 'jours'
+    aVenir: 'À venir', programmeDu: 'Programme du ', rienCeJour: 'Aucun projet ce jour-là.', jour: 'jour', jours: 'jours', enCours: 'aujourd’hui'
   };
   const LANGUE = enAnglais ? 'en-GB' : 'fr-FR';
 
@@ -100,11 +100,13 @@
   // ---------- Agenda en ligne (modèle fourni par la propriétaire, 06/10/2026) ----------
   // Vues Année / Mois / Semaine / Jour, numéros de semaine, projets écrits dans les cases,
   // et un panneau avec le jour choisi en grand et les prochains projets (« dans 2 jours »).
-  const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const iso = d => dateDuJour(d);
   const majuscule = t => t.charAt(0).toUpperCase() + t.slice(1);
   const dateDe = t => new Date(t + 'T12:00:00');
   const ajouterJours = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n, 12);
-  const debutSemaine = d => ajouterJours(d, -d.getDay()); // la semaine commence le dimanche, comme le modèle
+  const debutSemaine = d => ajouterJours(d, -((d.getDay() + 6) % 7)); // semaine du lundi au dimanche (norme européenne)
+  // Type connu, sinon « autre » (même couleur et même libellé « Projet » partout).
+  const typeDe = p => (MA2M_TYPES_AGENDA[p.type] ? p.type : 'autre');
   const VUES = enAnglais ? [['annee', 'Year'], ['mois', 'Month'], ['semaine', 'Week'], ['jour', 'Day']]
     : [['annee', 'Année'], ['mois', 'Mois'], ['semaine', 'Semaine'], ['jour', 'Jour']];
 
@@ -117,31 +119,57 @@
     return Math.ceil(((t - debutAnnee) / 86400000 + 1) / 7);
   }
 
-  // Projets du jour donné (un projet sur plusieurs jours apparaît chaque jour).
-  function projetsDuJour(projets, jour) {
-    return projets.filter(p => p.date_debut <= jour && (p.date_fin || p.date_debut) >= jour);
+  // Index jour → projets, calculé une seule fois (un projet sur plusieurs jours apparaît
+  // chaque jour, 60 jours au plus).
+  function indexParJour(projets) {
+    const index = new Map();
+    projets.forEach(p => {
+      let d = dateDe(p.date_debut);
+      const fin = p.date_fin || p.date_debut;
+      for (let n = 0; n < 60 && iso(d) <= fin; n++, d = ajouterJours(d, 1)) {
+        const cle = iso(d);
+        if (!index.has(cle)) index.set(cle, []);
+        index.get(cle).push(p);
+      }
+    });
+    return index;
   }
 
   function pastille(p, complete) {
-    const e = el('span', 'cal-evt cal-evt-' + (p.type || 'autre'), p.titre);
+    const e = el('span', 'cal-evt cal-evt-' + typeDe(p), p.titre);
     if (complete && p.ville) e.appendChild(el('small', null, p.ville));
     return e;
   }
 
   function calendrier(boite, projets, montrerJour) {
-    const aujIso = iso(new Date());
+    const aujIso = dateDuJour();
+    const index = indexParJour(projets);
+    const projetsDuJour = jour => index.get(jour) || [];
     let vue = 'mois';
     let choisi = aujIso;
-    // Sans projet ce mois-ci, on ouvre sur le mois du prochain projet.
+    // Sans projet ce mois-ci (même commencé avant et encore en cours), on ouvre sur le
+    // mois du prochain projet.
+    const moisDebut = aujIso.slice(0, 7) + '-01', moisFin = aujIso.slice(0, 7) + '-31';
     const prochain = projets.find(p => (p.date_fin || p.date_debut) >= aujIso);
     let repere = dateDe(aujIso);
-    if (prochain && !projets.some(p => p.date_debut.slice(0, 7) === aujIso.slice(0, 7))) repere = dateDe(prochain.date_debut);
+    if (prochain && !projets.some(p => p.date_debut <= moisFin && (p.date_fin || p.date_debut) >= moisDebut)) repere = dateDe(prochain.date_debut);
+    // Annonce des changements pour les lecteurs d'écran (zone fixe, jamais redessinée).
+    const annonce = el('p', 'cal-annonce');
+    annonce.setAttribute('aria-live', 'polite');
+    boite.after(annonce);
+
+    // En vue « Jour », le programme est déjà en grand dans le calendrier : la liste du
+    // dessous revient à « À venir » au lieu de le répéter (jour = null).
+    function signaler(jour) {
+      if (vue === 'jour') montrerJour(null, []);
+      else montrerJour(jour, projetsDuJour(jour));
+    }
 
     function choisir(jour) {
       choisi = jour;
       repere = dateDe(jour);
       dessiner();
-      montrerJour(jour, projetsDuJour(projets, jour));
+      signaler(jour);
       // Sur téléphone, le panneau est sous le calendrier : on l'amène à l'écran.
       if (window.matchMedia('(max-width: 900px)').matches) {
         const cote = boite.querySelector('.cal-panneau');
@@ -151,7 +179,7 @@
 
     function cellule(d, classeMois) {
       const jour = iso(d);
-      const ceJour = projetsDuJour(projets, jour);
+      const ceJour = projetsDuJour(jour);
       const c = el('button', 'cal-jour');
       c.type = 'button';
       if (classeMois && d.getMonth() !== repere.getMonth()) c.classList.add('hors-mois');
@@ -163,6 +191,7 @@
       c.setAttribute('aria-label', d.toLocaleDateString(LANGUE, { weekday: 'long', day: 'numeric', month: 'long' })
         + (ceJour.length ? ' : ' + ceJour.map(p => p.titre).join(', ') : ''));
       c.appendChild(el('span', 'cal-num', String(d.getDate())));
+      c.dataset.cle = 'jour-' + jour;
       c.addEventListener('click', () => choisir(jour));
       return { c, ceJour };
     }
@@ -170,18 +199,18 @@
     function vueMois(zone) {
       const grille = el('div', 'cal-grille cal-grille-mois');
       grille.appendChild(el('div', 'cal-entete cal-num-semaine'));
-      for (let i = 0; i < 7; i++) grille.appendChild(el('div', 'cal-entete', ajouterJours(new Date(2024, 0, 7), i).toLocaleDateString(LANGUE, { weekday: 'short' }).replace('.', '')));
+      for (let i = 0; i < 7; i++) grille.appendChild(el('div', 'cal-entete', ajouterJours(new Date(2024, 0, 1), i).toLocaleDateString(LANGUE, { weekday: 'short' }).replace('.', '')));
       const premier = new Date(repere.getFullYear(), repere.getMonth(), 1, 12);
       let d = debutSemaine(premier);
       while (d.getMonth() === premier.getMonth() || d < premier) {
-        grille.appendChild(el('div', 'cal-num-semaine', String(numeroSemaine(ajouterJours(d, 1)))));
+        grille.appendChild(el('div', 'cal-num-semaine', String(numeroSemaine(d))));
         for (let i = 0; i < 7; i++) {
           const { c, ceJour } = cellule(ajouterJours(d, i), true);
           ceJour.slice(0, 3).forEach(p => c.appendChild(pastille(p)));
           if (ceJour.length > 3) c.appendChild(el('span', 'cal-plus', '+' + (ceJour.length - 3)));
           if (ceJour.length) {
             const points = el('span', 'cal-points');
-            ceJour.slice(0, 3).forEach(p => points.appendChild(el('i', 'cal-evt-' + (p.type || 'autre'))));
+            ceJour.slice(0, 3).forEach(p => points.appendChild(el('i', 'cal-evt-' + typeDe(p))));
             c.appendChild(points);
           }
           grille.appendChild(c);
@@ -205,7 +234,7 @@
     }
 
     function vueJour(zone) {
-      const ceJour = projetsDuJour(projets, iso(repere));
+      const ceJour = projetsDuJour(iso(repere));
       const liste = el('div', 'cal-vue-jour');
       if (!ceJour.length) liste.appendChild(el('p', 'agenda-vide', T.rienCeJour));
       ceJour.forEach(p => liste.appendChild(carte(p, false)));
@@ -220,14 +249,15 @@
         bloc.type = 'button';
         bloc.appendChild(el('span', 'cal-mini-titre', majuscule(premier.toLocaleDateString(LANGUE, { month: 'long' }))));
         const mini = el('span', 'cal-mini-grille');
-        for (let i = 0; i < premier.getDay(); i++) mini.appendChild(el('i'));
+        for (let i = 0; i < (premier.getDay() + 6) % 7; i++) mini.appendChild(el('i'));
         for (let j = 1; j <= new Date(repere.getFullYear(), m + 1, 0).getDate(); j++) {
           const jour = iso(new Date(repere.getFullYear(), m, j, 12));
-          const n = projetsDuJour(projets, jour);
+          const n = projetsDuJour(jour);
           const e = el('i', (n.length ? 'occupe cal-evt-' + (n[0].type || 'autre') : '') + (jour === aujIso ? ' aujourdhui' : ''), String(j));
           mini.appendChild(e);
         }
         bloc.appendChild(mini);
+        bloc.dataset.cle = 'mini-' + m;
         bloc.addEventListener('click', () => { repere = premier; vue = 'mois'; dessiner(); });
         grille.appendChild(bloc);
       }
@@ -240,16 +270,16 @@
       tete.appendChild(el('span', 'cal-panneau-num', String(d.getDate())));
       tete.appendChild(el('span', 'cal-panneau-jour', d.toLocaleDateString(LANGUE, { weekday: 'long' }) + ' · ' + d.toLocaleDateString(LANGUE, { month: 'long', year: 'numeric' })));
       zone.appendChild(tete);
-      const ceJour = projetsDuJour(projets, choisi);
+      const ceJour = projetsDuJour(choisi);
       const liste = el('div', 'cal-panneau-liste');
       if (!ceJour.length) liste.appendChild(el('p', 'cal-panneau-rien', T.rienCeJour));
       ceJour.forEach(p => liste.appendChild(lignePanneau(p, null)));
       zone.appendChild(liste);
-      const suivants = projets.filter(p => p.date_debut > aujIso && !ceJour.includes(p)).slice(0, 4);
+      const suivants = projets.filter(p => (p.date_fin || p.date_debut) >= aujIso && !ceJour.includes(p)).slice(0, 4);
       if (suivants.length) {
         zone.appendChild(el('h3', 'cal-panneau-sous-titre', T.aVenir));
         const l2 = el('div', 'cal-panneau-liste');
-        suivants.forEach(p => l2.appendChild(lignePanneau(p, Math.round((dateDe(p.date_debut) - dateDe(aujIso)) / 86400000))));
+        suivants.forEach(p => l2.appendChild(lignePanneau(p, Math.max(0, Math.round((dateDe(p.date_debut) - dateDe(aujIso)) / 86400000)))));
         zone.appendChild(l2);
       }
     }
@@ -260,11 +290,11 @@
       const txt = el('span', 'cal-panneau-texte');
       txt.appendChild(el('strong', 'cal-panneau-titre', p.titre));
       txt.appendChild(el('span', 'cal-panneau-meta', libelleTypeAgenda(p.type, enAnglais) + ' | ' + dateAgenda(p.date_debut, p.date_fin, enAnglais) + (p.ville ? ' | ' + p.ville : '')));
-      b.appendChild(el('i', 'cal-panneau-couleur cal-evt-' + (p.type || 'autre')));
+      b.appendChild(el('i', 'cal-panneau-couleur cal-evt-' + typeDe(p)));
       b.appendChild(txt);
       if (dans != null) {
         const c = el('span', 'cal-compte');
-        if (dans <= 0) c.appendChild(el('span', 'cal-compte-mot', T.aujourdhui));
+        if (dans === 0) c.appendChild(el('span', 'cal-compte-mot', T.enCours));
         else {
           c.appendChild(el('span', 'cal-compte-num', String(dans)));
           c.appendChild(el('span', 'cal-compte-mot', dans > 1 ? T.jours : T.jour));
@@ -280,7 +310,7 @@
       if (vue === 'jour') return majuscule(repere.toLocaleDateString(LANGUE, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }));
       if (vue === 'semaine') {
         const d0 = debutSemaine(repere), d6 = ajouterJours(d0, 6);
-        return (enAnglais ? 'Week ' : 'Semaine ') + numeroSemaine(ajouterJours(d0, 1)) + ' · ' + d0.getDate() + ' – ' + d6.toLocaleDateString(LANGUE, { day: 'numeric', month: 'short' });
+        return (enAnglais ? 'Week ' : 'Semaine ') + numeroSemaine(d0) + ' · ' + d0.getDate() + ' – ' + d6.toLocaleDateString(LANGUE, { day: 'numeric', month: 'short' });
       }
       return (repere.getMonth() + 1) + ' / ' + repere.getFullYear();
     }
@@ -291,13 +321,16 @@
       else if (vue === 'semaine') repere = ajouterJours(repere, 7 * sens);
       else { repere = ajouterJours(repere, sens); choisi = iso(repere); }
       dessiner();
+      if (vue === 'jour') signaler(choisi);
     }
 
     function dessiner() {
+      // Le bouton qui avait le focus est retrouvé après le nouveau dessin (clavier).
+      const actif = document.activeElement && boite.contains(document.activeElement) ? document.activeElement.dataset.cle : null;
       boite.textContent = '';
       const tete = el('div', 'cal-tete');
       const t = el('h2', 'cal-titre', titre());
-      t.setAttribute('aria-live', 'polite');
+      if (annonce.textContent !== t.textContent) annonce.textContent = t.textContent;
       const vues = el('div', 'cal-vues');
       vues.setAttribute('role', 'tablist');
       VUES.forEach(([cle, nom]) => {
@@ -305,13 +338,20 @@
         b.type = 'button';
         b.setAttribute('role', 'tab');
         b.setAttribute('aria-selected', vue === cle ? 'true' : 'false');
-        b.addEventListener('click', () => { vue = cle; if (cle === 'jour' || cle === 'semaine') repere = dateDe(choisi); dessiner(); });
+        b.dataset.cle = 'vue-' + cle;
+        b.addEventListener('click', () => {
+          vue = cle;
+          if (cle === 'jour' || cle === 'semaine') repere = dateDe(choisi);
+          dessiner();
+          if (cle === 'jour') signaler(choisi);
+        });
         vues.appendChild(b);
       });
       const nav = el('div', 'cal-actions');
       const prec = el('button', 'cal-nav', '‹'); prec.type = 'button'; prec.setAttribute('aria-label', T.precedent);
       const ajd = el('button', 'cal-aujourdhui', T.aujourdhui); ajd.type = 'button';
       const suiv = el('button', 'cal-nav', '›'); suiv.type = 'button'; suiv.setAttribute('aria-label', T.suivant);
+      prec.dataset.cle = 'prec'; ajd.dataset.cle = 'ajd'; suiv.dataset.cle = 'suiv';
       prec.addEventListener('click', () => deplacer(-1));
       suiv.addEventListener('click', () => deplacer(1));
       ajd.addEventListener('click', () => choisir(aujIso));
@@ -328,7 +368,7 @@
       corps.appendChild(cote);
       boite.appendChild(corps);
 
-      const types = [...new Set(projets.map(p => p.type || 'autre'))];
+      const types = [...new Set(projets.map(typeDe))];
       if (types.length) {
         const legende = el('div', 'cal-legende');
         types.forEach(ty => {
@@ -338,6 +378,10 @@
           legende.appendChild(l);
         });
         boite.appendChild(legende);
+      }
+      if (actif) {
+        const retrouve = boite.querySelector('[data-cle="' + actif + '"]');
+        if (retrouve) retrouve.focus({ preventScroll: true });
       }
     }
     dessiner();
@@ -369,19 +413,20 @@
     if (boiteCal) {
       const titreListe = document.getElementById('agenda-liste-titre');
       const toutVoir = document.getElementById('agenda-tout-voir');
-      const tous = (data || []).slice().sort((x, y) => (x.date_debut < y.date_debut ? -1 : x.date_debut > y.date_debut ? 1 : 0));
+      const tous = passes.slice().reverse().concat(avenir);
+      const toutAfficher = () => {
+        if (titreListe) titreListe.textContent = T.aVenir;
+        remplir(avenirBoite, avenir, T.vide, false);
+        if (toutVoir) toutVoir.hidden = true;
+      };
       const cal = calendrier(boiteCal, tous, (jour, ceJour) => {
-        const d = new Date(jour + 'T12:00:00');
+        if (!jour) { toutAfficher(); return; }
+        const d = dateDe(jour);
         if (titreListe) titreListe.textContent = T.programmeDu + d.toLocaleDateString(LANGUE, { weekday: 'long', day: 'numeric', month: 'long' });
         remplir(avenirBoite, ceJour, T.rienCeJour, false);
         if (toutVoir) toutVoir.hidden = false;
       });
-      if (toutVoir) toutVoir.addEventListener('click', () => {
-        if (titreListe) titreListe.textContent = T.aVenir;
-        remplir(avenirBoite, avenir, T.vide, false);
-        toutVoir.hidden = true;
-        cal.effacerChoix();
-      });
+      if (toutVoir) toutVoir.addEventListener('click', () => { toutAfficher(); cal.effacerChoix(); });
     }
     remplir(passesBoite, passes, T.videPasses, false);
     if (accueil) {
