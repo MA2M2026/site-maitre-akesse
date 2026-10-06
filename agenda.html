@@ -93,9 +93,17 @@ setTimeout(() => {
     <p class="agenda-intro reveal reveal-delay-2">Shootings, défilés, castings, formations : voici les projets de l'agence, avec les partenaires et les mannequins qui les font vivre.</p>
   </div>
 </section>
+<section class="agenda-section agenda-section-calendrier">
+  <div class="container">
+    <div id="agenda-calendrier" class="cal" aria-label="Calendrier des projets"></div>
+  </div>
+</section>
 <section class="agenda-section">
   <div class="container">
-    <h2 class="agenda-section-titre reveal">À venir</h2>
+    <div class="agenda-liste-tete">
+      <h2 class="agenda-section-titre reveal" id="agenda-liste-titre">À venir</h2>
+      <button type="button" class="btn agenda-tout-voir" id="agenda-tout-voir" hidden>Voir tous les projets à venir</button>
+    </div>
     <div id="agenda-avenir" class="agenda-liste-publique"><p class="agenda-vide">Chargement de l'agenda…</p></div>
   </div>
 </section>
