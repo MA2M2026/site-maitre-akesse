@@ -11,15 +11,6 @@
   const moinsDeMouvement = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const enAnglais = document.documentElement.lang === 'en';
 
-  function melange(liste) {
-    const t = liste.slice();
-    for (let i = t.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [t[i], t[j]] = [t[j], t[i]];
-    }
-    return t;
-  }
-
   function image(url, alt) {
     const img = document.createElement('img');
     img.src = url;
@@ -39,7 +30,7 @@
       cadre.appendChild(img);
       return img;
     });
-    let n = 0;
+    let n = 0, demarre = false, aLEcran = true;
     const montrer = () => {
       const presentes = imgs.filter(img => img.isConnected);
       if (!presentes.length) return;
@@ -50,23 +41,35 @@
       img.classList.add('actif');
       n++;
     };
-    const premiere = imgs[0];
-    if (premiere.complete) montrer(); else premiere.addEventListener('load', montrer, { once: true });
-    if (!moinsDeMouvement && imgs.length > 1) setInterval(() => { if (!document.hidden) montrer(); }, delai);
+    // On démarre avec la première photo qui arrive (une photo en erreur ne bloque rien).
+    const demarrer = () => { if (!demarre) { demarre = true; montrer(); } };
+    imgs.forEach(img => { if (img.complete && img.naturalWidth) demarrer(); else img.addEventListener('load', demarrer, { once: true }); });
+    if (moinsDeMouvement || imgs.length < 2) return;
+    // Pas de changement de photo quand le cadre n'est pas à l'écran (batterie des téléphones).
+    if ('IntersectionObserver' in window) new IntersectionObserver(e => { aLEcran = e[0].isIntersecting; }).observe(cadre);
+    setInterval(() => { if (demarre && aLEcran && !document.hidden) montrer(); }, delai);
   }
 
-  // « CACAO FASHION SHOW » → « Cacao Fashion Show » (titres saisis en capitales).
+  // « CACAO FASHION SHOW » → « Cacao Fashion Show » (titres saisis en capitales). Les mots
+  // avec un chiffre (MA2M, 2026…) et les sigles courts (CI, MA) gardent leurs capitales.
   function enMajusculesDouces(t) {
     const s = String(t || '').trim();
     if (s !== s.toUpperCase()) return s;
-    return s.toLowerCase().replace(/(^|[\s'’(-])(\S)/g, (m, a, b) => a + b.toUpperCase());
+    return s.split(/(\s+)/).map(mot => {
+      if (/\d/.test(mot) || /^[A-Z]{1,2}$/.test(mot)) return mot;
+      return mot.toLowerCase().replace(/(^|['’(-])(\S)/g, (m, a, b) => a + b.toUpperCase());
+    }).join('');
   }
+
+  const cleTitre = t => String(t || '').toLowerCase().replace(/\s+/g, ' ').trim();
 
   async function lirePhotosEvenements() {
     const [ev, ph] = await Promise.all([
       sb.from('evenements').select('id, titre, lieu, image_url').order('date_evenement', { ascending: false }),
-      sb.from('evenement_photos').select('evenement_id, url').order('created_at', { ascending: true }).limit(400)
+      lireToutesLignes(() => sb.from('evenement_photos').select('id, evenement_id, url').order('id', { ascending: true }))
     ]);
+    if (ev.error) throw ev.error;
+    if (ph.error) console.warn('Qui sommes-nous : photos d\'événements incomplètes', ph.error);
     const evenements = ev.data || [];
     const photos = ph.data || [];
     return evenements.map(e => {
@@ -81,12 +84,12 @@
     const evenements = await lirePhotosEvenements();
     const toutes = [];
     evenements.forEach(e => e.urls.forEach(u => toutes.push(u)));
-    diaporama(document.getElementById('qsn-diaporama'), melange(toutes).slice(0, 8), '', 6000);
+    diaporama(document.getElementById('qsn-diaporama'), melanger(toutes).slice(0, 8), '', 6000);
 
     // Photo du bloc « marques » : une photo de défilé, en léger décalage au défilement.
     const fond = document.getElementById('qsn-marques-fond');
     if (fond && toutes.length) {
-      const img = image(melange(toutes)[0], '');
+      const img = image(melanger(toutes)[0], '');
       img.loading = 'lazy';
       fond.appendChild(img);
     }
@@ -95,11 +98,11 @@
     // (un même titre sur plusieurs dates ne donne qu'une carte).
     const grille = document.getElementById('qsn-evenements');
     if (grille) {
-      const cles = [...grille.querySelectorAll('[data-evenement]')].map(c => c.dataset.evenement);
-      const vus = new Set();
+      const vus = new Set([...grille.querySelectorAll('[data-evenement]')].map(c => c.dataset.evenement));
       evenements.forEach(e => {
-        const t = e.titre.toLowerCase().trim();
-        if (!t || vus.has(t) || cles.some(c => t.indexOf(c) !== -1)) return;
+        const t = cleTitre(e.titre);
+        // pas de carte vide : un événement sans aucune photo n'est pas affiché
+        if (!t || vus.has(t) || !e.urls.length) return;
         vus.add(t);
         const carte = document.createElement('article');
         carte.className = 'qsn-evenement reveal';
@@ -118,14 +121,16 @@
     document.querySelectorAll('.qsn-evenement[data-evenement]').forEach(carte => {
       const cle = carte.dataset.evenement;
       const urls = [];
-      evenements.filter(e => e.titre.toLowerCase().indexOf(cle) !== -1).forEach(e => e.urls.forEach(u => urls.push(u)));
+      evenements.filter(e => cleTitre(e.titre) === cle).forEach(e => e.urls.forEach(u => urls.push(u)));
       const titre = carte.querySelector('h3');
-      diaporama(carte.querySelector('.qsn-evenement-photo'), melange(urls).slice(0, 6), titre ? titre.textContent : '', 4500);
+      if (!urls.length) { carte.querySelector('.qsn-evenement-photo').hidden = true; return; }
+      diaporama(carte.querySelector('.qsn-evenement-photo'), melanger(urls).slice(0, 6), titre ? titre.textContent : '', 4500);
     });
   }
 
   async function chargerPortrait() {
-    const { data } = await sb.from('mot_responsable').select('nom, photo_url').eq('id', 'principal').maybeSingle();
+    const { data, error } = await sb.from('mot_responsable').select('nom, photo_url').eq('id', 'principal').maybeSingle();
+    if (error) throw error;
     if (!data || !data.photo_url) return;
     const img = document.getElementById('qsn-portrait-img');
     const fig = img && img.closest('.qsn-portrait');
@@ -139,17 +144,18 @@
     const piste = document.getElementById('qsn-visages-piste');
     const bloc = piste && piste.closest('.qsn-visages');
     if (!piste || !bloc) return;
-    const { data } = await sb
+    // Toutes les photos (par paquets) pour que chaque mannequin publié ait sa chance.
+    const { data, error } = await lireToutesLignes(() => sb
       .from('model_photos')
-      .select('url, url_moyenne, model_id, model_profiles!inner(published)')
+      .select('id, url, url_moyenne, model_id, model_profiles!inner(published)')
       .eq('model_profiles.published', true)
-      .order('created_at', { ascending: false })
-      .limit(300);
+      .order('id', { ascending: true }));
+    if (error && !(data && data.length)) throw error;
     const parMannequin = new Map();
-    melange(data || []).forEach(p => {
+    melanger(data || []).forEach(p => {
       if (!parMannequin.has(p.model_id)) parMannequin.set(p.model_id, p.url_moyenne || p.url);
     });
-    const visages = melange(Array.from(parMannequin.entries())).slice(0, 16);
+    const visages = melanger(Array.from(parMannequin.entries())).slice(0, 16);
     if (visages.length < 4) return;
     // La liste est posée deux fois de suite : le défilement boucle sans à-coup.
     [0, 1].forEach(tour => {
@@ -184,39 +190,36 @@
     const bandeaux = [...document.querySelectorAll('.qsn-bandeau-texte')];
     const valeurs = [...document.querySelectorAll('.qsn-valeurs-liste li')];
     let attente = false;
+    // Toutes les mesures d'abord, toutes les écritures ensuite : le navigateur ne recalcule
+    // la mise en page qu'une fois par image, même sur un petit téléphone.
     const maj = () => {
       attente = false;
       const h = window.innerHeight;
       const total = document.documentElement.scrollHeight - h;
+      const rOuv = ouverture && ouverture.getBoundingClientRect();
+      const rEtapes = etapes && etapes.getBoundingClientRect();
+      const rFond = fond && fond.parentNode.getBoundingClientRect();
+      const rBandeaux = bandeaux.map(el => el.getBoundingClientRect());
+      const rValeurs = valeurs.map(li => li.getBoundingClientRect());
+
       if (barre) barre.style.setProperty('--qsn-lu', total > 0 ? Math.min(1, window.scrollY / total).toFixed(4) : '0');
-      if (ouverture) {
-        const r = ouverture.getBoundingClientRect();
-        const p = Math.min(1, Math.max(0, -r.top / r.height));
-        ouverture.style.setProperty('--qsn-sortie', p.toFixed(3));
-      }
-      if (etapes) {
-        const r = etapes.getBoundingClientRect();
-        const p = Math.min(1, Math.max(0, (h * 0.7 - r.top) / r.height));
-        etapes.style.setProperty('--qsn-progres', p.toFixed(3));
-      }
-      if (fond) {
-        const r = fond.parentNode.getBoundingClientRect();
-        if (r.bottom > 0 && r.top < h) fond.style.setProperty('--qsn-decalage', Math.round((r.top + r.height / 2 - h / 2) * -0.25) + 'px');
-      }
-      bandeaux.forEach(b => {
-        const r = b.getBoundingClientRect();
+      if (rOuv) ouverture.style.setProperty('--qsn-sortie', Math.min(1, Math.max(0, -rOuv.top / rOuv.height)).toFixed(3));
+      if (rEtapes) etapes.style.setProperty('--qsn-progres', Math.min(1, Math.max(0, (h * 0.7 - rEtapes.top) / rEtapes.height)).toFixed(3));
+      if (rFond && rFond.bottom > 0 && rFond.top < h) fond.style.setProperty('--qsn-decalage', Math.round((rFond.top + rFond.height / 2 - h / 2) * -0.25) + 'px');
+      bandeaux.forEach((el, i) => {
+        const r = rBandeaux[i];
         if (r.bottom < -200 || r.top > h + 200) return;
-        const sens = Number(b.dataset.sens) || 1;
-        b.style.setProperty('--qsn-glisse', Math.round((r.top - h) * 0.45 * sens) + 'px');
+        el.style.setProperty('--qsn-glisse', Math.round((r.top - h) * 0.45 * (Number(el.dataset.sens) || 1)) + 'px');
       });
       valeurs.forEach((li, i) => {
-        const r = li.getBoundingClientRect();
+        const r = rValeurs[i];
         const ecart = (r.top + r.height / 2 - h / 2) / h; // -0,5 à 0,5 autour du milieu de l'écran
         li.style.setProperty('--qsn-avance', Math.round(ecart * (i % 2 ? -70 : 70)) + 'px');
       });
     };
-    window.addEventListener('scroll', () => { if (!attente) { attente = true; requestAnimationFrame(maj); } }, { passive: true });
-    window.addEventListener('resize', maj);
+    const demander = () => { if (!attente) { attente = true; requestAnimationFrame(maj); } };
+    window.addEventListener('scroll', demander, { passive: true });
+    window.addEventListener('resize', demander);
     maj();
   }
 

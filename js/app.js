@@ -786,6 +786,17 @@ async function lireToutesLignes(fabrique) {
   }
 }
 
+// Copie mélangée d'une liste (mélange de Fisher-Yates) : photos de l'accueil, visages et
+// photos d'événements de la page « Qui sommes-nous »…
+function melanger(liste) {
+  const copie = liste.slice();
+  for (let i = copie.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copie[i], copie[j]] = [copie[j], copie[i]];
+  }
+  return copie;
+}
+
 // Prénom (premier mot du nom complet), pour personnaliser les messages.
 function prenomDe(nomComplet) { return String(nomComplet || '').trim().split(/\s+/)[0] || ''; }
 

@@ -43,14 +43,6 @@ async function chargerPhotosHero() {
   const imagesHero = Array.from(document.querySelectorAll('.hero-slide .hero-v2-bg'));
   const CLE_CACHE = 'ma2m_hero_photos';
 
-  const melanger = (liste) => {
-    const copie = liste.slice();
-    for (let i = copie.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [copie[i], copie[j]] = [copie[j], copie[i]];
-    }
-    return copie;
-  };
 
   const afficher = (img, url) => {
     if (!url) return;
