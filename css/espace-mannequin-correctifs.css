@@ -132,3 +132,6 @@ html { background: #080707; }
 .mesure-msg { color: #ff8a9a; font-size: 0.8rem; font-weight: 600; }
 .tailles-calculees .tc-alerte { margin: 0; color: #ffb3bd; font-size: 0.9rem; line-height: 1.5; }
 .tailles-calculees .tc-alerte + .tc-alerte { margin-top: 0.6rem; }
+/* Mensurations excessives (au-delà de M femmes / L hommes) : alerte rouge. */
+.tailles-calculees .tc-exces { margin-top: 0.7rem; padding: 0.6rem 0.7rem; border: 1px solid #e0475e; border-radius: 8px; background: rgba(224, 71, 94, 0.12); }
+.panel > .tailles-calculees { margin: 0 0 1.2rem; }

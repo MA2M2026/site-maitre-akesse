@@ -686,7 +686,7 @@ async function construireCanvasCompcard(ficheData) {
     ['Poids', profil.weight_kg ? profil.weight_kg + ' kg' : null],
     ['Poitrine', !masquer && profil.chest_cm ? profil.chest_cm + ' cm' : null],
     ['Tour de taille', !masquer && profil.waist_cm ? profil.waist_cm + ' cm' : null],
-    [profil.category === 'homme' ? 'Entrejambe' : 'Hanches', masquer ? null : profil.category === 'homme' ? (profil.inseam_cm ? profil.inseam_cm + ' cm' : null) : (profil.hips_cm ? profil.hips_cm + ' cm' : null)],
+    [profil.category === 'homme' ? 'Entrejambe' : 'Bassin', masquer ? null : profil.category === 'homme' ? (profil.inseam_cm ? profil.inseam_cm + ' cm' : null) : (profil.hips_cm ? profil.hips_cm + ' cm' : null)],
     ['Pointure', profil.shoe_size || null],
     ['Carnation', profil.carnation || null],
     ['Taille vêtements', (typeof ma2mTailleVetements === 'function' ? ma2mTailleVetements(profil) : profil.clothing_size) || null],
