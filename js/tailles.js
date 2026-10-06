@@ -1,9 +1,9 @@
 // Tailles calculées à partir des mensurations + équivalences internationales
 // (décision de la propriétaire, 06/10/2026). Les tailles ne sont JAMAIS saisies :
 // elles découlent des mensurations, pour qu'un recruteur voie toujours un profil
-// cohérent. Option A : la taille retenue est celle de la plus grande des mesures
-// (femmes : haut = poitrine et taille, bas = bassin et taille ; hommes : haut =
-// poitrine, bas = taille et bassin) ; si haut et bas diffèrent, la taille générale
+// cohérent. Règle de la norme du prêt-à-porter (décision du 06/10/2026, soir) :
+// haut = tour de poitrine seul ; bas = le plus grand entre tour de bassin et tour de
+// taille (le vêtement doit passer au bassin ET fermer à la taille) ; si haut et bas diffèrent, la taille générale
 // l'indique (ex. « S-M »). Au-delà de L (grille MA2M) : « mensurations
 // excessives » signalées.
 // Fichier partagé : Espace mannequin, fiche publique FR/EN, compcard, CV, fiche
@@ -41,8 +41,8 @@
     for (var i = 0; i < table.length; i++) if (m >= table[i][cle][0] && m <= table[i][cle][1]) return table[i];
     return null;
   }
-  // Option A (décision de la propriétaire, 06/10/2026) : la taille retenue est celle de
-  // la PLUS GRANDE des mesures concernées — le vêtement doit fermer partout.
+  // Bas (décision de la propriétaire, 06/10/2026) : la taille retenue est celle de la
+  // PLUS GRANDE des mesures du bas (bassin et taille) — le vêtement doit passer partout.
   // base : taille de la mesure principale ; extras : [cle, mesure, champ] (tour de taille,
   // bassin des hommes). Un extra plus grand de plus de 2 tailles que la base est
   // sûrement une erreur de saisie : il n'est pas retenu et il est noté dans suspects.
@@ -106,7 +106,7 @@
     var homme = p.category === 'homme';
     var haut, bas, r = { homme: homme };
     // Contrôle de cohérence sur les mesures principales (même règle que la base) ;
-    // tailles affichées : la plus grande des mesures (option A).
+    // tailles affichées : haut = poitrine, bas = la plus grande des mesures du bas.
     var hautBrut, basBrut;
     r.aVerifier = []; // mesure secondaire écartée car invraisemblable (erreur de saisie probable)
     if (homme) {
@@ -122,7 +122,7 @@
     } else {
       hautBrut = ligne(FEMMES, 'poitrine', p.chest_cm);
       basBrut = ligne(FEMMES, 'hanches', p.hips_cm);
-      haut = plusGrande(FEMMES, hautBrut, [['taille', p.waist_cm, 'waist_cm']], r.aVerifier);
+      haut = hautBrut; // norme du prêt-à-porter : le haut se choisit d'après la poitrine seule
       bas = plusGrande(FEMMES, basBrut, [['taille', p.waist_cm, 'waist_cm']], r.aVerifier);
       var vers = function (x) { return x && { lettre: x.l, eu: x.fr, it: x.it, uk: x.uk, us: x.us, br: x.br, jp: x.jp, kr: x.kr, cn: x.cn }; };
       r.haut = vers(haut); r.bas = vers(bas);
