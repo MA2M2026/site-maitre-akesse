@@ -6429,9 +6429,22 @@ create policy "Agenda : admins seulement"
   with check (exists (select 1 from admins where user_id = auth.uid()));
 revoke all on agenda_projets from anon;
 
--- Version publique : projets visibles, du plus proche au plus lointain pour
--- « à venir », et les 12 derniers mois pour « réalisés ».
-create or replace function agenda_public()
+-- Règle unique « profil visible du public » (publié, et pas en sourdine depuis plus de
+-- 7 jours pour mesures à reprendre) : utilisée par la règle de lecture du Book ET par
+-- l'agenda public, pour qu'elles ne puissent jamais diverger.
+create or replace function profil_visible_public(publie boolean, a_reprendre_depuis timestamptz)
+returns boolean language sql stable as $$
+  select coalesce(publie, false) and (a_reprendre_depuis is null or a_reprendre_depuis > now() - interval '7 days');
+$$;
+drop policy if exists "Profils publiés visibles de tous" on model_profiles;
+create policy "Profils publiés visibles de tous"
+  on model_profiles for select
+  using (profil_visible_public(published, mesures_a_reprendre_depuis));
+
+-- Version publique : projets visibles des 12 derniers mois et à venir, par date.
+-- seulement_a_venir + limite : pour l'encart de l'accueil (3 prochains projets).
+drop function if exists agenda_public();
+create or replace function agenda_public(seulement_a_venir boolean default false, limite int default 300)
 returns table(
   id uuid, type text, titre text, date_debut date, date_fin date, ville text,
   description text, photographe text, partenaires jsonb, mannequins jsonb
@@ -6445,14 +6458,15 @@ as $$
     coalesce((select jsonb_agg(jsonb_build_object('id', p.id, 'nom', p.full_name, 'slug', p.slug) order by p.full_name)
               from model_profiles p
               where p.id = any(a.mannequin_ids)
-                and p.published = true
-                and (p.mesures_a_reprendre_depuis is null or p.mesures_a_reprendre_depuis > now() - interval '7 days')), '[]'::jsonb)
+                and profil_visible_public(p.published, p.mesures_a_reprendre_depuis)), '[]'::jsonb)
   from agenda_projets a
   where a.visible
-    and coalesce(a.date_fin, a.date_debut) >= current_date - interval '12 months'
-  order by a.date_debut;
+    and coalesce(a.date_fin, a.date_debut) >= case when seulement_a_venir then current_date
+                                                  else current_date - interval '12 months' end
+  order by a.date_debut
+  limit least(greatest(coalesce(limite, 300), 1), 300);
 $$;
-revoke all on function agenda_public() from public;
-grant execute on function agenda_public() to anon, authenticated;
+revoke all on function agenda_public(boolean, int) from public;
+grant execute on function agenda_public(boolean, int) to anon, authenticated;
 
 NOTIFY pgrst, 'reload schema';

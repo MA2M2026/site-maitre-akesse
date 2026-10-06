@@ -811,6 +811,22 @@ function dateAgenda(debut, fin, enAnglais) {
   return d.toLocaleDateString(langue, { day: 'numeric', month: 'short' }) + ' – ' + f.toLocaleDateString(langue, { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+// Date du jour au format AAAA-MM-JJ (heure de l'appareil), et projets d'agenda séparés
+// en « à venir » (du plus proche au plus lointain) et « réalisés » (du plus récent au
+// plus ancien) ; un projet sur plusieurs jours reste « à venir » jusqu'à son dernier jour.
+function dateDuJour() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function separerAgenda(projets) {
+  const jour = dateDuJour();
+  const tries = (projets || []).slice().sort((x, y) => (x.date_debut < y.date_debut ? -1 : x.date_debut > y.date_debut ? 1 : 0));
+  return {
+    avenir: tries.filter(p => (p.date_fin || p.date_debut) >= jour),
+    passes: tries.filter(p => (p.date_fin || p.date_debut) < jour).reverse()
+  };
+}
+
 // Copie mélangée d'une liste (mélange de Fisher-Yates) : photos de l'accueil, visages et
 // photos d'événements de la page « Qui sommes-nous »…
 function melanger(liste) {

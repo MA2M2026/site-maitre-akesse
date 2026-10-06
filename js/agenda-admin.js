@@ -9,14 +9,9 @@
   if (!section || !form || typeof sb === 'undefined' || !sb) return;
 
   var $ = function (id) { return document.getElementById(id); };
-  var charge = false, enCours = false;
+  var charge = false, enCours = false, listesOk = false;
   var projets = [], mannequins = [], partenaires = [];
 
-  function echapper(t) { return echapperHtml(t); }
-  function aujourdhui() {
-    var d = new Date();
-    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-  }
   function message(t, erreur) {
     var m = $('agenda-msg');
     m.textContent = t || '';
@@ -25,13 +20,13 @@
   function cochees(idConteneur) {
     return Array.prototype.map.call($(idConteneur).querySelectorAll('input[type=checkbox]:checked'), function (c) { return c.value; });
   }
-  function caseACocher(valeur, libelle, nom) {
+  function caseACocher(valeur, libelle, nom, recherche) {
     var l = document.createElement('label');
     var c = document.createElement('input');
     c.type = 'checkbox'; c.value = valeur; c.name = nom;
     l.appendChild(c);
     l.appendChild(document.createTextNode(libelle));
-    l.dataset.nom = libelle.toLowerCase();
+    l.dataset.nom = String(recherche || libelle).toLowerCase();
     return l;
   }
   function majCompte() {
@@ -44,17 +39,21 @@
       lireToutesLignes(function () { return sb.from('model_profiles').select('id, full_name, published').order('id'); }),
       sb.from('partenaires').select('id, nom').order('nom')
     ]);
+    // Sans les listes complètes, enregistrer effacerait les mannequins et partenaires
+    // d'un projet modifié : on bloque l'enregistrement tant qu'elles manquent.
+    if (r[0].error || r[1].error) throw (r[0].error || r[1].error);
     mannequins = (r[0].data || []).filter(function (p) { return p.full_name; })
       .sort(function (a, b) { return a.full_name.localeCompare(b.full_name, 'fr'); });
     partenaires = r[1].data || [];
     var boiteM = $('agenda-mannequins'); boiteM.textContent = '';
     mannequins.forEach(function (p) {
-      boiteM.appendChild(caseACocher(p.id, p.full_name + (p.published ? '' : ' (profil non publié)'), 'agenda-mannequin'));
+      boiteM.appendChild(caseACocher(p.id, p.full_name + (p.published ? '' : ' (profil non publié)'), 'agenda-mannequin', p.full_name));
     });
     if (!mannequins.length) boiteM.textContent = 'Aucun mannequin trouvé.';
     var boiteP = $('agenda-partenaires'); boiteP.textContent = '';
     partenaires.forEach(function (p) { boiteP.appendChild(caseACocher(p.id, p.nom, 'agenda-partenaire')); });
     if (!partenaires.length) boiteP.textContent = 'Aucun partenaire enregistré (page Partenaires).';
+    listesOk = true;
   }
 
   function nomsDe(ids, liste, cle) {
@@ -71,26 +70,24 @@
     var parts = nomsDe(p.partenaire_ids, partenaires, 'nom');
     var prive = [p.heure, p.adresse].filter(Boolean).join(' · ');
     div.innerHTML =
-      '<div class="agenda-date">' + echapper(dateAgenda(p.date_debut, p.date_fin)) + '</div>'
-      + '<div><span class="agenda-type">' + echapper(libelleTypeAgenda(p.type)) + (p.visible ? '' : ' · caché du site') + '</span>'
-      + '<h4>' + echapper(p.titre) + '</h4>'
-      + (p.ville ? '<p>' + echapper(p.ville) + '</p>' : '')
-      + (p.photographe ? '<p>Photographe : ' + echapper(p.photographe) + '</p>' : '')
-      + (parts.length ? '<p>Partenaires : ' + echapper(parts.join(', ')) + '</p>' : '')
-      + (noms.length ? '<p>Mannequins : ' + echapper(noms.join(', ')) + '</p>' : '')
-      + (prive ? '<p class="agenda-prive">🔒 ' + echapper(prive) + '</p>' : '')
+      '<div class="agenda-date">' + echapperHtml(dateAgenda(p.date_debut, p.date_fin)) + '</div>'
+      + '<div><span class="agenda-type">' + echapperHtml(libelleTypeAgenda(p.type)) + (p.visible ? '' : ' · caché du site') + '</span>'
+      + '<h4>' + echapperHtml(p.titre) + '</h4>'
+      + (p.ville ? '<p>' + echapperHtml(p.ville) + '</p>' : '')
+      + (p.photographe ? '<p>Photographe : ' + echapperHtml(p.photographe) + '</p>' : '')
+      + (parts.length ? '<p>Partenaires : ' + echapperHtml(parts.join(', ')) + '</p>' : '')
+      + (noms.length ? '<p>Mannequins : ' + echapperHtml(noms.join(', ')) + '</p>' : '')
+      + (prive ? '<p class="agenda-prive">🔒 ' + echapperHtml(prive) + '</p>' : '')
       + '</div>'
-      + '<div class="agenda-boutons"><button type="button" class="btn-mini-admin" data-modifier="' + echapper(p.id) + '">Modifier</button>'
-      + '<button type="button" class="btn-mini-admin" data-supprimer="' + echapper(p.id) + '">Supprimer</button></div>';
+      + '<div class="agenda-boutons"><button type="button" class="btn-mini-admin" data-modifier="' + echapperHtml(p.id) + '">Modifier</button>'
+      + '<button type="button" class="btn-mini-admin" data-supprimer="' + echapperHtml(p.id) + '">Supprimer</button></div>';
     return div;
   }
 
   function afficherListe() {
-    var jour = aujourdhui();
-    var avenir = projets.filter(function (p) { return (p.date_fin || p.date_debut) >= jour; });
-    var passes = projets.filter(function (p) { return (p.date_fin || p.date_debut) < jour; }).reverse();
-    [['agenda-liste-avenir', avenir, 'Aucun projet à venir. Ajoutez le premier avec le formulaire ci-dessus.'],
-     ['agenda-liste-passes', passes, 'Aucun projet réalisé pour le moment.']].forEach(function (z) {
+    var parts = separerAgenda(projets);
+    [['agenda-liste-avenir', parts.avenir, 'Aucun projet à venir. Ajoutez le premier avec le formulaire ci-dessus.'],
+     ['agenda-liste-passes', parts.passes, 'Aucun projet réalisé pour le moment.']].forEach(function (z) {
       var boite = $(z[0]); boite.textContent = '';
       if (!z[1].length) { boite.textContent = z[2]; return; }
       z[1].forEach(function (p) { boite.appendChild(ligneProjet(p)); });
@@ -112,7 +109,10 @@
 
   async function charger() {
     charge = true;
-    try { await chargerChoix(); } catch (e) { console.warn('Agenda : listes non chargées', e); }
+    try { await chargerChoix(); } catch (e) {
+      console.warn('Agenda : listes non chargées', e);
+      message('Les listes des mannequins et des partenaires n’ont pas pu être chargées. Rechargez la page avant d’enregistrer.', true);
+    }
     await chargerProjets();
   }
 
@@ -159,6 +159,7 @@
   form.addEventListener('submit', async function (e) {
     e.preventDefault();
     if (enCours) return;
+    if (!listesOk) { message('Rechargez la page : les listes des mannequins et des partenaires ne sont pas chargées.', true); return; }
     var titre = $('agenda-titre').value.trim(), debut = $('agenda-date').value, fin = $('agenda-date-fin').value || null;
     if (!titre || !debut) { message('Indiquez au moins un titre et une date.', true); return; }
     if (fin && fin < debut) { message('La date de fin doit être après la date de début.', true); return; }
@@ -183,9 +184,11 @@
     message('Enregistrement…');
     try {
       var r = id
-        ? await sb.from('agenda_projets').update(Object.assign({ updated_at: new Date().toISOString() }, ligne)).eq('id', id)
-        : await sb.from('agenda_projets').insert(ligne);
+        ? await sb.from('agenda_projets').update(Object.assign({ updated_at: new Date().toISOString() }, ligne)).eq('id', id).select('id')
+        : await sb.from('agenda_projets').insert(ligne).select('id');
       if (r.error) { message('Erreur : ' + r.error.message, true); return; }
+      // Aucune ligne touchée = session expirée ou compte non admin : rien n'a été enregistré.
+      if (!r.data || !r.data.length) { message('Rien n’a été enregistré : reconnectez-vous au tableau de bord puis réessayez.', true); return; }
       viderFormulaire();
       message(id ? 'Projet modifié.' : 'Projet ajouté à l’agenda.' + (ligne.visible ? ' Il est visible sur la page Agenda du site.' : ''));
       await chargerProjets();
@@ -207,8 +210,12 @@
     if (b.dataset.modifier) { remplirFormulaire(p); return; }
     if (!confirm('Supprimer « ' + p.titre + ' » de l’agenda ?')) return;
     b.disabled = true;
-    var r = await sb.from('agenda_projets').delete().eq('id', p.id);
-    if (r.error) { b.disabled = false; message('Erreur : ' + r.error.message, true); return; }
+    var r = await sb.from('agenda_projets').delete().eq('id', p.id).select('id');
+    if (r.error || !r.data || !r.data.length) {
+      b.disabled = false;
+      message(r.error ? 'Erreur : ' + r.error.message : 'Rien n’a été supprimé : reconnectez-vous au tableau de bord puis réessayez.', true);
+      return;
+    }
     if ($('agenda-id').value === p.id) viderFormulaire();
     message('Projet supprimé.');
     await chargerProjets();

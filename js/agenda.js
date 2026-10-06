@@ -18,11 +18,6 @@
     erreur: 'L’agenda n’a pas pu être chargé. Réessayez dans un instant.'
   };
 
-  function aujourdhui() {
-    const d = new Date();
-    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-  }
-
   function el(tag, cls, txt) {
     const e = document.createElement(tag);
     if (cls) e.className = cls;
@@ -101,17 +96,17 @@
     const accueil = document.getElementById('agenda-accueil');
     if (!avenirBoite && !passesBoite && !accueil) return;
     if (typeof sb === 'undefined' || !sb) return;
-    const { data, error } = await sb.rpc('agenda_public');
+    // L'accueil ne demande que les 3 prochains projets (moins de données sur mobile).
+    const seulAccueil = !avenirBoite && !passesBoite;
+    const { data, error } = await sb.rpc('agenda_public', seulAccueil ? { seulement_a_venir: true, limite: 3 } : {});
     if (error) {
-      // Agenda pas encore activé (Extension 124) ou souci réseau : message neutre pour le client.
+      // PGRST202 : fonction introuvable, l'agenda n'est pas encore activé (Extension 124).
       console.warn('Agenda non chargé', error);
-      remplir(avenirBoite, [], /PGRST202|agenda_public/.test(error.code + ' ' + error.message) ? T.vide : T.erreur, false);
+      remplir(avenirBoite, [], error.code === 'PGRST202' ? T.vide : T.erreur, false);
+      remplir(passesBoite, [], error.code === 'PGRST202' ? T.videPasses : '', false);
       return;
     }
-    const jour = aujourdhui();
-    const projets = data || [];
-    const avenir = projets.filter(p => (p.date_fin || p.date_debut) >= jour);
-    const passes = projets.filter(p => (p.date_fin || p.date_debut) < jour).reverse();
+    const { avenir, passes } = separerAgenda(data);
     remplir(avenirBoite, avenir, T.vide, false);
     remplir(passesBoite, passes, T.videPasses, false);
     if (accueil) {
