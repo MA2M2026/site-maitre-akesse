@@ -1578,3 +1578,24 @@ toutes les écritures sont simulées pendant l'enregistrement.
   installée le 06/10 au soir : la première ; la version améliorée du dépôt est à recoller
   dans le script Google (même clé) à l'occasion.
 - La base Supabase reste sauvegardée chaque semaine par `.github/workflows/sauvegarde-base.yml`.
+
+## 🎬 Page « Qui sommes-nous » animée (06/10/2026)
+
+- Pages : `qui-sommes-nous.html` et `en/qui-sommes-nous.html` (« About us »), style dans
+  `css/qui-sommes-nous.css`, comportement dans `js/qui-sommes-nous.js` (partagé FR/EN).
+- Lien du menu ajouté **une seule fois** par `js/menu.js` (juste après « Accueil / Home »),
+  pour toutes les pages ; les deux pages elles-mêmes l'ont en dur (classe `actif`).
+- Photos lues dans la base (lecture publique) : photos des événements (`evenement_photos`,
+  la photo de couverture `image_url` ne sert qu'en dernier recours car c'est souvent une
+  affiche), portrait du fondateur (`mot_responsable`), une photo par mannequin publié
+  (`model_photos`, profils masqués exclus par la base). Chaque événement enregistré dans le
+  tableau de bord reçoit automatiquement sa carte (un même titre sur plusieurs dates = une carte).
+- **Aucun montant** sur cette page (décision de la propriétaire) : l'inscription dit seulement
+  que les droits se règlent par Wave.
+- Animations : toutes sous la classe `.qsn-mouvement`, posée par le JS uniquement si
+  l'appareil accepte les animations (`prefers-reduced-motion`). Sans JS ou en mode
+  « réduire les animations », la page est fixe et entièrement lisible.
+- Piège connu : un élément caché par son propre `clip-path` n'est jamais signalé visible par
+  `IntersectionObserver` dans Chrome ; le JS observe donc le **parent** des `.qsn-rideau`.
+- Polices : on garde Cormorant Garamond + Jost (un essai Bodoni Moda + Hanken Grotesk a été
+  montré puis refusé par la propriétaire le 06/10/2026).

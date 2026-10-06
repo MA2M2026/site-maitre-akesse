@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A='; style-src 'self' https://fonts.googleapis.com;">
+<script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
+<script src="../js/surveillance.js"></script>
+<!-- Google tag (gtag.js) -->
+<script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
+<script src="../js/analytics-config.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About us — Maître Akesse Model Management</title>
+<meta name="description" content="About Maître Akesse Model Management, model agency and academy in Abidjan: our story, our four divisions, the path for beginners, support for experienced models and our services for brands.">
+<link rel="canonical" href="https://www.maitreakessemodelmanagement.com/en/qui-sommes-nous">
+<link rel="alternate" hreflang="fr" href="https://www.maitreakessemodelmanagement.com/qui-sommes-nous">
+<link rel="alternate" hreflang="en" href="https://www.maitreakessemodelmanagement.com/en/qui-sommes-nous">
+<link rel="alternate" hreflang="x-default" href="https://www.maitreakessemodelmanagement.com/qui-sommes-nous">
+<meta property="og:type" content="website">
+<meta property="og:title" content="About us — Maître Akesse Model Management">
+<meta property="og:description" content="Model agency and academy in Abidjan: train, reveal, promote.">
+<meta property="og:image" content="https://www.maitreakessemodelmanagement.com/assets/logo-dark-bg.png">
+<meta property="og:url" content="https://www.maitreakessemodelmanagement.com/en/qui-sommes-nous">
+<meta property="og:locale" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/qui-sommes-nous.css">
+<link rel="manifest" href="../manifest.json">
+<meta name="theme-color" content="#1e1d1c">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
+</head>
+<body>
+<script>
+// Safety net: on an unstable connection, a third-party script (Supabase, EmailJS,
+// heic2any...) can be very slow or fail to load — in that case js/app.js never runs and
+// ".reveal" elements (scroll-in animation) stay invisible forever, even though the rest
+// of the page (forms, buttons) works normally. This net force-reveals them after 2.5s if
+// the normal animation hasn't happened, so content never stays hidden over a network hiccup.
+setTimeout(() => {
+  document.querySelectorAll('.reveal:not(.visible)').forEach(el => el.classList.add('visible'));
+}, 2500);
+</script>
+
+
+<!-- Couverture animée (logo « faisceau de lumière »), fixée en haut ; la barre du menu reste juste dessous -->
+<section class="couverture-faisceau" id="couverture-faisceau" aria-label="Maître Akesse Model Management">
+  <canvas class="couverture-canvas" aria-hidden="true"></canvas>
+  <img class="couverture-secours" src="../assets/logo-intro.png" alt="Maître Akesse Model Management">
+</section>
+<script src="../js/faisceau.js"></script>
+<script src="../js/couverture-faisceau.js"></script>
+
+<header class="site-header-v2 entete-sous-couverture">
+  <div class="container header-v2-inner">
+    <a href="index.html" class="logo-img-header"><img src="../assets/logo-header.png" alt="Maître Akesse Model Management"></a>
+    <div class="header-v2-droite">
+      <a href="../qui-sommes-nous.html" class="lang-switch" aria-label="Switch to French">FR</a>
+      <button class="menu-trigger" id="menuBtn">
+        <span>Menu</span>
+        <span class="dots"><span></span><span></span><span></span></span>
+      </button>
+    </div>
+  </div>
+</header>
+<div class="couverture-espace" aria-hidden="true"></div>
+
+<div class="menu-overlay" id="menuOverlay">
+  <button class="close-menu" id="closeMenuBtn">Close ✕</button>
+  <ul class="nav-links">
+    <li><a href="index.html" class="">Home</a></li>
+    <li><a href="qui-sommes-nous.html" class="actif">About us</a></li>
+    <li><a href="services.html">Services</a></li>
+    <li><a href="mannequins.html" class="">The Book</a></li>
+    <li><a href="actualites.html">News</a></li>
+    <li><a href="evenements.html">Our Events</a></li>
+    <li><a href="partenaires.html">Our Partners</a></li>
+    <li><a href="integrer-agence.html">Join the Agency</a></li>
+    <li><a href="candidature.html" class="">Apply for a Casting</a></li>
+    <li><a href="inscription-mannequin.html">Registration</a></li>
+    <li><a href="contact.html" class="">Contact</a></li>
+    <li class="item-cta"><a href="../espace-mannequin.html">Agency's Model Space</a></li>
+  </ul>
+</div>
+
+<main class="qsn">
+<div class="qsn-progression" id="qsn-progression" aria-hidden="true"></div>
+
+<!-- 1. Opening: photos from our shows, animated motto -->
+<section class="qsn-ouverture" aria-labelledby="qsn-titre">
+  <div class="qsn-diaporama" id="qsn-diaporama" aria-hidden="true"></div>
+  <div class="qsn-voile" aria-hidden="true"></div>
+  <div class="container qsn-ouverture-texte">
+    <div class="eyebrow qsn-apparait">About us</div>
+    <h1 id="qsn-titre" class="qsn-apparait qsn-d1 qsn-lettres">Maître Akesse <em>Model Management</em></h1>
+    <p class="qsn-devise" aria-label="Train, reveal, promote">
+      <span class="qsn-mot">Train</span><span class="qsn-point" aria-hidden="true">·</span><span class="qsn-mot">Reveal</span><span class="qsn-point" aria-hidden="true">·</span><span class="qsn-mot">Promote</span>
+    </p>
+    <p class="qsn-sous-titre qsn-apparait qsn-d3">Model agency and academy, in Abidjan.</p>
+  </div>
+  <a href="#qsn-histoire" class="qsn-defiler" aria-label="Discover our story"><span></span></a>
+</section>
+
+<!-- 2. Our story -->
+<section class="qsn-histoire" id="qsn-histoire">
+  <div class="container qsn-histoire-grille">
+    <figure class="qsn-portrait reveal qsn-rideau">
+      <img id="qsn-portrait-img" alt="Maître Akesse, founder of the agency" hidden>
+      <figcaption id="qsn-portrait-nom">Maître Akesse</figcaption>
+    </figure>
+    <div class="qsn-histoire-texte">
+      <div class="eyebrow reveal">Our story</div>
+      <h2 class="reveal">It all began in Abidjan<span class="oeil">.</span></h2>
+      <p class="reveal">It all began in Abidjan, with one belief: Ivorian modelling deserves real guidance, serious, demanding and human. Maître Akesse founded the agency so that every talent can build a career, not just land a show from time to time. Here, a model is not a number in a catalogue. She is prepared, followed, protected and pushed towards the best of herself.</p>
+      <blockquote class="qsn-citation reveal">
+        <p>We write “Model Management” in the singular, on purpose: every person has their own silhouette, their own character and their own way of wearing a garment.</p>
+        <footer>Our job is to spot what makes them unique, then build their path on it.</footer>
+      </blockquote>
+    </div>
+  </div>
+</section>
+
+<!-- 3. The four divisions -->
+<section class="fond-anthracite qsn-poles">
+  <div class="container">
+    <div class="section-tete reveal">
+      <div class="eyebrow">How the agency works</div>
+      <h2>Four divisions, one team<span class="oeil">.</span></h2>
+      <p>The agency rests on four divisions that work together.</p>
+    </div>
+    <ol class="qsn-poles-grille">
+      <li class="qsn-pole reveal"><span class="qsn-pole-num">01</span><h3>The Academy</h3><p>Discover the profession and learn the basics.</p></li>
+      <li class="qsn-pole reveal reveal-delay-1"><span class="qsn-pole-num">02</span><h3>The Agency</h3><p>We represent models, manage their careers and find them contracts.</p></li>
+      <li class="qsn-pole reveal reveal-delay-2"><span class="qsn-pole-num">03</span><h3>Events</h3><p>We design and organise fashion shows, shows and contests.</p></li>
+      <li class="qsn-pole reveal"><span class="qsn-pole-num">04</span><h3>Production</h3><p>We produce photo and video shoots, for models and brands alike.</p></li>
+    </ol>
+  </div>
+</section>
+
+<div class="qsn-bandeau-texte" data-sens="1" aria-hidden="true"><div class="qsn-bandeau-piste"><span>Train</span><span>Reveal</span><span>Promote</span><span>Train</span><span>Reveal</span><span>Promote</span><span>Train</span><span>Reveal</span><span>Promote</span></div></div>
+
+<!-- 4. Faces (photos of published models) -->
+<section class="qsn-visages" aria-label="Our models" hidden>
+  <div class="qsn-visages-piste" id="qsn-visages-piste"></div>
+  <p class="qsn-visages-lien"><a href="mannequins.html">See all our models in The Book →</a></p>
+</section>
+
+<!-- 5. Beginners -->
+<section class="qsn-debutant" id="debutant">
+  <div class="container">
+    <div class="section-tete reveal">
+      <div class="eyebrow">Never modelled before?</div>
+      <h2>Everyone starts somewhere<span class="oeil">.</span></h2>
+      <p>No problem: many of our models started just like you. Here is exactly how it works.</p>
+    </div>
+
+    <h3 class="qsn-sous-titre-bloc reveal">Before applying, check our criteria</h3>
+    <div class="qsn-criteres">
+      <div class="qsn-critere reveal"><span class="qsn-critere-qui">Women</span><strong>1.75 m</strong><span>minimum, aged 16 to 25</span></div>
+      <div class="qsn-critere reveal reveal-delay-1"><span class="qsn-critere-qui">Men</span><strong>1.85 m</strong><span>minimum, aged 16 to 26</span></div>
+      <div class="qsn-critere reveal reveal-delay-2"><span class="qsn-critere-qui">Minors</span><strong>Welcome</strong><span>with the consent of a parent or guardian, whom we contact before anything else</span></div>
+    </div>
+
+    <ol class="qsn-etapes" id="qsn-etapes">
+      <li class="qsn-etape reveal">
+        <span class="qsn-etape-num">1</span>
+        <div><h3>The online casting</h3>
+        <p>On the “Join the Agency” page, you fill in a form: your details, your measurements, at least 3 photos (a portrait, a full-length photo and one of your choice) and a short one-minute video, facing the camera, in which you introduce yourself. No need for a photographer: natural, well-lit photos are enough. Our team looks at every application.</p></div>
+      </li>
+      <li class="qsn-etape reveal">
+        <span class="qsn-etape-num">2</span>
+        <div><h3>The in-person casting</h3>
+        <p>If your application is selected, we write to you on WhatsApp or by e-mail, with the date and the outfit to wear. On the day, we watch you walk and pose, and above all, we get to know you.</p></div>
+      </li>
+      <li class="qsn-etape reveal">
+        <span class="qsn-etape-num">3</span>
+        <div><h3>Registration</h3>
+        <p>After a successful casting, you receive a <strong>registration code</strong>. You complete your file on the website and pay the registration fee by Wave. You receive a receipt.</p></div>
+      </li>
+      <li class="qsn-etape reveal">
+        <span class="qsn-etape-num">4</span>
+        <div><h3>Training at the Academy</h3>
+        <p>Runway walk, posture, photo posing, presence on camera, attitude backstage and with clients. Professionals also come to share their experience during masterclasses.</p></div>
+      </li>
+      <li class="qsn-etape reveal">
+        <span class="qsn-etape-num">5</span>
+        <div><h3>Your place in The Book</h3>
+        <p>You receive your access to the <strong>Model Space</strong>. There you complete your profile and add your photos. Your profile then appears in <strong>The Book</strong>, the online catalogue that brands and organisers browse. You start as a <strong>New Face</strong>, then move up to the <strong>Main Board</strong> with experience.</p></div>
+      </li>
+    </ol>
+    <p class="qsn-actions reveal"><a href="integrer-agence.html" class="btn btn--principal">Join the Agency</a></p>
+  </div>
+</section>
+
+<!-- 6. Experienced models -->
+<section class="fond-anthracite qsn-confirme">
+  <div class="container">
+    <div class="section-tete reveal">
+      <div class="eyebrow">Already a model?</div>
+      <h2>Go further with us<span class="oeil">.</span></h2>
+      <p>You already know how to walk and pose. What matters now is going further. Here is what the agency brings you.</p>
+    </div>
+    <ul class="qsn-atouts">
+      <li class="reveal"><h3>A real showcase</h3><p>Your professional profile in The Book: photo book, measurements, international sizes calculated automatically, comp card and CV ready to download, and a personal link to share.</p></li>
+      <li class="reveal reveal-delay-1"><h3>Contracts</h3><p>Fashion shows, events, campaigns, catalogues, shoots… We introduce you to brands, designers and organisers, and we negotiate for you.</p></li>
+      <li class="reveal reveal-delay-2"><h3>Follow-up</h3><p>We choose projects with you, prepare you before each job and stay by your side during and after.</p></li>
+      <li class="reveal"><h3>Advice</h3><p>Image, style, book, photos to redo: we tell you honestly what will help you move forward.</p></li>
+      <li class="reveal reveal-delay-1"><h3>Beyond Côte d'Ivoire</h3><p>When your profile is right for it, we steer you towards castings, contests and projects abroad.</p></li>
+      <li class="reveal reveal-delay-2"><h3>A safe setting</h3><p>Your phone number and e-mail are never displayed: clients always go through the agency. You are protected.</p></li>
+    </ul>
+    <p class="qsn-note reveal">To join us, the path is the same: the “Join the Agency” form, then the in-person casting. For a specific project already under way, use “Apply for a Casting”.</p>
+    <p class="qsn-actions reveal"><a href="integrer-agence.html" class="btn btn--principal">Join the Agency</a> <a href="candidature.html" class="btn">Apply for a Casting</a></p>
+  </div>
+</section>
+
+<!-- 7. Brands, designers, organisers -->
+<section class="qsn-marques">
+  <div class="qsn-marques-fond" id="qsn-marques-fond" aria-hidden="true"></div>
+  <div class="container qsn-marques-contenu">
+    <div class="section-tete reveal">
+      <div class="eyebrow">A brand, a designer or an organiser?</div>
+      <h2>Your project, from A to Z<span class="oeil">.</span></h2>
+      <p>Have a project? We have the talent and the know-how to bring it to life, from the simplest to the most complete.</p>
+    </div>
+    <ul class="qsn-services">
+      <li class="reveal"><h3>Models for your projects</h3><p>Fashion show, event, catalogue, advertising campaign, shoot, trade fair, product launch. Browse The Book, select your profiles, then send us your selection.</p></li>
+      <li class="reveal"><h3>Casting</h3><p>You describe your idea, we search for and select the profiles that match it.</p></li>
+      <li class="reveal"><h3>A choreographer at your service</h3><p>Entrances, passages, sequences, finale: we design the choreography and rehearse it.</p></li>
+      <li class="reveal"><h3>Full organisation of your fashion show</h3><p>Concept, programme, venue, schedule, teams, models, rehearsals, coordination on the day. You can hand it all over to us.</p></li>
+      <li class="reveal"><h3>Art direction and staging</h3><p>We create the visual world of your event or campaign, from the brief to the final presentation.</p></li>
+      <li class="reveal"><h3>Image production</h3><p>Photo and video shoots for your campaigns, catalogues and social media.</p></li>
+      <li class="reveal"><h3>Advice</h3><p>An idea still unclear? We help you clarify it and choose the right talent.</p></li>
+    </ul>
+    <p class="qsn-note reveal">You can entrust us with a single service, or the whole project from A to Z. Every project gets a tailored quote.</p>
+    <p class="qsn-actions reveal"><a href="contact.html" class="btn btn--principal">Request a quote</a> <a href="mannequins.html" class="btn">Browse The Book</a></p>
+  </div>
+</section>
+
+<div class="qsn-bandeau-texte" data-sens="-1" aria-hidden="true"><div class="qsn-bandeau-piste"><span>Shows</span><span>Events</span><span>Castings</span><span>Shoots</span><span>Shows</span><span>Events</span><span>Castings</span><span>Shoots</span><span>Shows</span><span>Events</span><span>Castings</span><span>Shoots</span></div></div>
+
+<!-- 8. We have done it -->
+<section class="fond-anthracite qsn-realisations">
+  <div class="container">
+    <div class="section-tete reveal">
+      <div class="eyebrow">We have done it</div>
+      <h2>On the runway<span class="oeil">.</span></h2>
+      <p>Fashion shows, events, trade fairs, gala evenings: our models have already taken part in many events. Here are a few of them.</p>
+    </div>
+    <div class="qsn-evenements" id="qsn-evenements">
+      <article class="qsn-evenement reveal" data-evenement="cacao fashion show">
+        <div class="qsn-evenement-photo qsn-rideau"></div>
+        <h3>Cacao Fashion Show</h3>
+        <p>At the Parc des Expositions in Abidjan, during the National Cocoa and Chocolate Day: our models wore the creations of Gilles Touré.</p>
+      </article>
+      <article class="qsn-evenement reveal reveal-delay-1" data-evenement="africa in rythm">
+        <div class="qsn-evenement-photo qsn-rideau"></div>
+        <h3>Africa in Rythm</h3>
+        <p>At the Noom Hotel.</p>
+      </article>
+    </div>
+    <p class="qsn-note reveal">And many more: every season, our models walk for designers, brands and organisers.</p>
+    <div class="qsn-partenaires reveal">
+      <span class="qsn-partenaires-titre">Our partners</span>
+      <ul><li>ACMCI</li><li>Cha Kane</li><li>Djigui-Ya Agence</li><li>Gilles Touré</li><li>Jolideh</li></ul>
+    </div>
+    <p class="qsn-actions reveal"><a href="evenements.html" class="btn">All our events</a></p>
+  </div>
+</section>
+
+<!-- 9. Our values -->
+<section class="qsn-valeurs">
+  <div class="container">
+    <div class="eyebrow reveal">Our values</div>
+    <ul class="qsn-valeurs-liste">
+      <li class="reveal"><strong>High standards</strong><span>because a good career is prepared.</span></li>
+      <li class="reveal"><strong>Listening</strong><span>because every talent is different.</span></li>
+      <li class="reveal"><strong>Rigour</strong><span>because every detail counts on the day.</span></li>
+      <li class="reveal"><strong>Opportunities</strong><span>because our role is to open doors.</span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- 10. Let's talk -->
+<section class="fond-anthracite qsn-contact">
+  <div class="container u-tc">
+    <h2 class="reveal">Let's talk<span class="oeil">.</span></h2>
+    <ul class="qsn-contact-liste reveal">
+      <li><a href="tel:+2252722231176">+225 27 22 23 11 76</a></li>
+      <li><a href="https://wa.me/message/HJAMXGXHCL46I1" target="_blank" rel="noopener">WhatsApp +225 05 45 65 66 87</a></li>
+      <li><a href="mailto:infos.ma2m@gmail.com">infos.ma2m@gmail.com</a></li>
+      <li><a href="https://www.instagram.com/maitreakessemodelmanagement" target="_blank" rel="noopener">Instagram @maitreakessemodelmanagement</a></li>
+      <li>Abidjan, Côte d'Ivoire</li>
+    </ul>
+    <p class="qsn-actions reveal"><a href="contact.html" class="btn btn--principal">Write to us</a></p>
+  </div>
+</section>
+
+</main>
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grille">
+      <div>
+        <h3>Maître Akesse Model Management</h3>
+        <p>Every great journey begins with a dream. Ours begins in Abidjan.</p>
+      </div>
+      <div>
+        <h3>Navigation</h3>
+        <a href="index.html">Home</a>
+        <a href="qui-sommes-nous.html">About us</a>
+        <a href="services.html">Services</a>
+        <a href="mannequins.html">The Book</a>
+        <a href="actualites.html">News</a>
+        <a href="evenements.html">Our Events</a>
+        <a href="partenaires.html">Our Partners</a>
+        <a href="integrer-agence.html">Join the Agency</a>
+        <a href="candidature.html">Apply for a Casting</a>
+        <a href="inscription-mannequin.html">Registration</a>
+      </div>
+      <div>
+        <h3>Contact</h3>
+        <a href="tel:+2250545656687">+225 05 45 65 66 87</a>
+        <a href="tel:+2252722231176">+225 27 22 23 11 76</a>
+        <a href="mailto:infos.ma2m@gmail.com">infos.ma2m@gmail.com</a>
+        <div class="footer-reseaux">
+          <a href="https://www.instagram.com/maitreakessemodelmanagement" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram"><svg viewBox="0 0 24 24"><defs><linearGradient id="ig-grad-9" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="#FFC107"/><stop offset="50%" stop-color="#F44336"/><stop offset="100%" stop-color="#9C27B0"/></linearGradient></defs><path fill="url(#ig-grad-9)" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98C.014 8.333 0 8.741 0 12s.014 3.667.072 4.948c.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24s3.667-.014 4.948-.072c4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.667.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
+          <a href="https://www.tiktok.com/@agencemaitreakessemodel" target="_blank" rel="noopener" aria-label="TikTok" title="TikTok"><svg viewBox="0 0 24 24"><path fill="#25F4EE" transform="translate(-0.9,-0.9)" d="M16.6 5.82c-1.36-1.57-3.24-1.48-3.24-1.48h-3.09v12.4a2.592 2.592 0 01-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 004.3 1.38V7.3s-1.88.09-3.24-1.48z"/><path fill="#FE2C55" transform="translate(0.9,0.9)" d="M16.6 5.82c-1.36-1.57-3.24-1.48-3.24-1.48h-3.09v12.4a2.592 2.592 0 01-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 004.3 1.38V7.3s-1.88.09-3.24-1.48z"/><path fill="#000000" d="M16.6 5.82c-1.36-1.57-3.24-1.48-3.24-1.48h-3.09v12.4a2.592 2.592 0 01-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 004.3 1.38V7.3s-1.88.09-3.24-1.48z"/></svg></a>
+          <a href="https://www.facebook.com/share/1BzPN69rhE/" target="_blank" rel="noopener" aria-label="Facebook" title="Facebook" class="u-ic-facebook"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12.06C22 6.505 17.523 2 12 2S2 6.505 2 12.06c0 5.022 3.657 9.184 8.438 9.94v-7.03H7.898v-2.91h2.54V9.845c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.459h-1.26c-1.243 0-1.63.771-1.63 1.562v1.875h2.773l-.443 2.91h-2.33V22c4.78-.756 8.437-4.918 8.437-9.94z"/></svg></a>
+          <a href="https://youtube.com/@maitreakessemodelmanagement" target="_blank" rel="noopener" aria-label="YouTube" title="YouTube" class="u-ic-youtube"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a2.994 2.994 0 00-2.107-2.12C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.391.521A2.994 2.994 0 00.502 6.186 31.25 31.25 0 000 12a31.25 31.25 0 00.502 5.814 2.994 2.994 0 002.107 2.12c1.886.521 9.391.521 9.391.521s7.505 0 9.391-.521a2.994 2.994 0 002.107-2.12A31.25 31.25 0 0024 12a31.25 31.25 0 00-.502-5.814zM9.6 15.6V8.4l6.4 3.6-6.4 3.6z"/></svg></a>
+          <a href="https://wa.me/message/HJAMXGXHCL46I1" target="_blank" rel="noopener" aria-label="WhatsApp" title="WhatsApp" class="u-ic-whatsapp"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.472-.148-.67.15-.198.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0a12 12 0 00-10.288 18.06L0 24l6.084-1.688A12 12 0 1012 0zm0 21.938a9.917 9.917 0 01-5.052-1.383l-.362-.215-3.752 1.041 1.004-3.665-.235-.375A9.938 9.938 0 1112 21.938z"/></svg></a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bas">
+      <span>© <span id="an"></span> Maître Akesse Model Management</span>
+      <span>Abidjan, Côte d'Ivoire</span>
+      <span><a href="mentions-legales.html">Legal Notice</a> · <a href="politique-confidentialite.html">Privacy Policy</a></span>
+    </div>
+  </div>
+</footer>
+
+<script src="../js/copyright-annee.js"></script>
+<script src="../js/vendor/supabase-js-2.110.6.js"></script>
+<script src="../js/supabase-config.js"></script>
+<script src="../js/app.js"></script>
+<script src="../js/confort.js"></script>
+<script src="../js/menu.js"></script>
+<script src="../js/qui-sommes-nous.js"></script>
+</body>
+</html>
