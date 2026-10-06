@@ -1493,3 +1493,26 @@ toutes les écritures sont simulées pendant l'enregistrement.
   toujours (corrige les doubles photos sur une case signalées le 06/10/2026).
 - Constantes partagées `MA2M_SITE` et `MA2M_CONTACT_PDF` (`js/app.js`) pour les PDF.
 - Noms des fichiers téléchargés horodatés (`horodatageFichier`, `js/app.js`).
+
+## 📏 Mensurations complètes et tailles calculées (06/10/2026)
+
+- **`js/tailles.js`** (fichier partagé : espace mannequin, fiche publique FR/EN,
+  compcard, CV, fiche événement) : les tailles ne sont **jamais saisies**, elles
+  sont calculées d'après les mensurations (barèmes standard du prêt-à-porter).
+  Femmes : haut = tour de poitrine, bas = tour de hanches. Hommes : haut = tour
+  de poitrine, bas = tour de taille. Taille générale = haut et bas (ex. « M-L »).
+  Équivalences FR/EU, IT, UK, US, BR, JP, KR, CN (tableau sur la fiche publique).
+- **Mesures incohérentes** : femmes, bas plus grand que le haut de plus de 2
+  tailles (ou plus petit de plus d'1) ; hommes, haut plus grand que le bas de plus
+  de 2 tailles (ou plus petit de plus d'1). Écarts adaptés aux morphologies
+  africaines (décision de la propriétaire). Effets : cases en rouge « Mensuration
+  pas exacte, à reprendre » dans l'espace, aucune taille donnée, mensurations
+  cachées sur la fiche publique et la compcard ; **après 7 jours sans correction,
+  la fiche est invisible du public** (règle de lecture de la base) ; tout revient
+  automatiquement dès la correction.
+- **Extension 121** : colonnes `shoulder_cm`, `arm_cm`, `neck_cm`, `head_cm`,
+  `mesures_a_reprendre_depuis` (posée par la base, jamais par la mannequin),
+  fonctions `rang_taille` / `mesures_incoherentes` — **même barème et même règle
+  que `js/tailles.js` : toute modification se fait aux deux endroits** —, nouvelle
+  version de `fiche_evenement_admin` (sans téléphone ni e-mail du mannequin) et de
+  la règle « Profils publiés visibles de tous ».

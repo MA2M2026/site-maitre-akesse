@@ -672,12 +672,14 @@ async function construireCanvasCompcard(ficheData) {
 
   // --- Mensurations (grille 3 colonnes) ---
   y += 11;
+  // Mesures incohérentes (« à reprendre », js/tailles.js) : mensurations non affichées
+  const masquer = typeof ma2mMesuresAReprendre === 'function' && ma2mMesuresAReprendre(profil);
   const champs = [
     ['Taille', profil.height_cm ? profil.height_cm + ' cm' : null],
     ['Poids', profil.weight_kg ? profil.weight_kg + ' kg' : null],
-    ['Poitrine', profil.chest_cm ? profil.chest_cm + ' cm' : null],
-    ['Tour de taille', profil.waist_cm ? profil.waist_cm + ' cm' : null],
-    [profil.category === 'homme' ? 'Entrejambe' : 'Hanches', profil.category === 'homme' ? (profil.inseam_cm ? profil.inseam_cm + ' cm' : null) : (profil.hips_cm ? profil.hips_cm + ' cm' : null)],
+    ['Poitrine', !masquer && profil.chest_cm ? profil.chest_cm + ' cm' : null],
+    ['Tour de taille', !masquer && profil.waist_cm ? profil.waist_cm + ' cm' : null],
+    [profil.category === 'homme' ? 'Entrejambe' : 'Hanches', masquer ? null : profil.category === 'homme' ? (profil.inseam_cm ? profil.inseam_cm + ' cm' : null) : (profil.hips_cm ? profil.hips_cm + ' cm' : null)],
     ['Pointure', profil.shoe_size || null],
     ['Carnation', profil.carnation || null],
     ['Taille vêtements', (typeof ma2mTailleVetements === 'function' ? ma2mTailleVetements(profil) : profil.clothing_size) || null],

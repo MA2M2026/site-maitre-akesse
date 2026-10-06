@@ -1102,7 +1102,7 @@ function afficherTaillesCalculees(){
     if (!aReprendre && msg) msg.remove();
   });
   if (t.aReprendre.length) {
-    zone.innerHTML = '<div class="tc-titre">Vos tailles (calculées)</div><p class="tc-alerte">⚠️ Vos mesures en rouge ne vont pas ensemble (votre haut et votre bas s’écartent de plus d’une taille). Reprenez-les avec un mètre ruban, sans serrer, pour obtenir vos tailles.</p>';
+    zone.innerHTML = '<div class="tc-titre">Vos tailles (calculées)</div><p class="tc-alerte">⚠️ Vos mesures en rouge ne vont pas ensemble (votre haut et votre bas s’écartent de plus d’une taille). Reprenez-les avec un mètre ruban, sans serrer, pour obtenir vos tailles.</p><p class="tc-alerte">Tant qu’elles ne sont pas corrigées, vos mensurations sont cachées sur votre fiche publique. Sans correction sous 7 jours, votre fiche est retirée du site ; elle revient automatiquement dès que vous corrigez.</p>';
     return;
   }
   const c = function(x){ return x ? echapperHtml(ma2mTailleCourte(x)) : '—'; };

@@ -88,8 +88,14 @@
     // bas s'écartent de plus d'une taille (ex. M en haut, XL en bas), une mesure est
     // sûrement fausse. Les mesures en cause sont signalées « à reprendre » et AUCUNE
     // taille n'est donnée tant qu'elles ne sont pas corrigées.
+    // Morphologies africaines (décision du 06/10/2026) : chez les femmes, des hanches
+    // plus fortes que la poitrine sont fréquentes (jusqu'à 2 tailles d'écart admises,
+    // l'inverse 1 seule) ; chez les hommes, une poitrine plus forte que le tour de
+    // taille (silhouette athlétique) : 2 tailles admises, l'inverse 1 seule.
+    // MÊME RÈGLE côté base : fonction mesures_incoherentes (Extension 121).
     r.aReprendre = [];
-    if (haut && bas && Math.abs(ORDRE.indexOf(haut.l) - ORDRE.indexOf(bas.l)) > 1) {
+    var ecart = haut && bas ? ORDRE.indexOf(bas.l) - ORDRE.indexOf(haut.l) : 0;
+    if (homme ? (ecart < -2 || ecart > 1) : (ecart > 2 || ecart < -1)) {
       r.aReprendre = ['chest_cm', homme ? 'waist_cm' : 'hips_cm'];
       r.haut = null; r.bas = null; r.costume = null;
     }
@@ -106,6 +112,9 @@
 
   // Taille vêtements affichée partout (fiche, compcard, CV) : calculée d'après les
   // mensurations ; à défaut, l'ancienne taille déclarée (profil pas encore mis à jour).
+  // Mesures à reprendre : la fiche publique et la compcard cachent les mensurations.
+  window.ma2mMesuresAReprendre = function (p) { return window.ma2mTailles(p).aReprendre.length > 0; };
+
   // Mesures à reprendre : aucune taille (pas même l'ancienne taille déclarée).
   window.ma2mTailleVetements = function (p) {
     var t = window.ma2mTailles(p);
@@ -126,6 +135,7 @@
   // Chaîne vide si aucune taille ne peut être calculée.
   window.ma2mBlocEquivalences = function (p, anglais) {
     var t = window.ma2mTailles(p);
+    if (t.aReprendre.length) return '';
     var cols = t.homme ? ['eu', 'it', 'uk', 'us', 'br', 'kr', 'cn'] : ['eu', 'it', 'uk', 'us', 'br', 'jp', 'kr', 'cn'];
     var titres = { eu: anglais ? 'EU' : 'FR / EU', it: 'IT', uk: 'UK', us: 'US', br: 'BR', jp: 'JP', kr: 'KR', cn: 'CN' };
     var lignes = [];

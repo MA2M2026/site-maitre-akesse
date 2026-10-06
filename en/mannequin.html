@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-PXIJ+bz5Lsk/S8/5xSRrc/18l03MXUToO+tY/G1PEpY='; style-src 'self' https://fonts.googleapis.com 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-mX2HsXKok6KoTI8A+yiOAZfLzDA3/18ghpNXDCUWy74='; style-src 'self' https://fonts.googleapis.com 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
 <!-- Adresse lisible …/book/nom (06/10/2026) : la page peut être servie depuis /book/… ; ses fichiers se chargent toujours depuis la racine du site (voir js/adresse-fiche.js). -->
 <base href="/en/">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
@@ -430,12 +430,13 @@ async function construireCanvasCompcardEn() {
   ctx.fillText([libelleCat, profil.city].filter(Boolean).join('  ·  '), px(15), px(y));
 
   y += 11;
+  const masquer = ma2mMesuresAReprendre(profil); // mesures « à reprendre » : non affichées (js/tailles.js)
   const champs = [
     ['Height', profil.height_cm ? avecImperial(profil.height_cm + ' cm', enPieds(profil.height_cm)) : null],
     ['Weight', profil.weight_kg ? avecImperial(profil.weight_kg + ' kg', enLivres(profil.weight_kg)) : null],
-    ['Chest', profil.chest_cm ? avecImperial(profil.chest_cm + ' cm', enPouces(profil.chest_cm)) : null],
-    ['Waist', profil.waist_cm ? avecImperial(profil.waist_cm + ' cm', enPouces(profil.waist_cm)) : null],
-    [profil.category === 'homme' ? 'Inseam' : 'Hips', profil.category === 'homme' ? (profil.inseam_cm ? avecImperial(profil.inseam_cm + ' cm', enPouces(profil.inseam_cm)) : null) : (profil.hips_cm ? avecImperial(profil.hips_cm + ' cm', enPouces(profil.hips_cm)) : null)],
+    ['Chest', !masquer && profil.chest_cm ? avecImperial(profil.chest_cm + ' cm', enPouces(profil.chest_cm)) : null],
+    ['Waist', !masquer && profil.waist_cm ? avecImperial(profil.waist_cm + ' cm', enPouces(profil.waist_cm)) : null],
+    [profil.category === 'homme' ? 'Inseam' : 'Hips', masquer ? null : profil.category === 'homme' ? (profil.inseam_cm ? avecImperial(profil.inseam_cm + ' cm', enPouces(profil.inseam_cm)) : null) : (profil.hips_cm ? avecImperial(profil.hips_cm + ' cm', enPouces(profil.hips_cm)) : null)],
     ['Shoe Size', profil.shoe_size ? avecImperial('EU ' + profil.shoe_size, pointureUS(profil.shoe_size, profil.category)) : null],
     ['Skin Tone', profil.carnation ? enAnglais(profil.carnation) : null],
     ['Clothing Size', ma2mTailleVetements(profil) || null],
@@ -696,6 +697,8 @@ async function chargerProfilInterne() {
         </div>` : ''}
     </section>` : '';
 
+  // Mesures incohérentes (« à reprendre ») : mensurations cachées au public (js/tailles.js)
+  const masquer = ma2mMesuresAReprendre(profil);
   contenu.innerHTML = `
     <div class="reveal">
       <div class="profil-hero-fullbleed profil-hero--avatar${(photos && photos.length) ? ' cliquable' : ''}" id="couverture-clic"${(photos && photos.length) ? ' role="button" tabindex="0" aria-label="Open the photo gallery"' : ''}>
@@ -713,14 +716,14 @@ async function chargerProfilInterne() {
           ${age ? `<div class="fiche-mesure"><dt>${iconeMensuration('age')}Age</dt><dd>${age} years</dd></div>` : ''}
           ${profil.height_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('taille')}Height</dt><dd>${profil.height_cm} cm <span class="fiche-imperial">${enPieds(profil.height_cm)}</span></dd></div>` : ''}
           ${profil.weight_kg ? `<div class="fiche-mesure"><dt>${iconeMensuration('poids')}Weight</dt><dd>${profil.weight_kg} kg <span class="fiche-imperial">${enLivres(profil.weight_kg)}</span></dd></div>` : ''}
-          ${profil.chest_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Chest</dt><dd>${profil.chest_cm} cm <span class="fiche-imperial">${enPouces(profil.chest_cm)}</span></dd></div>` : ''}
-          ${profil.waist_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Waist</dt><dd>${profil.waist_cm} cm <span class="fiche-imperial">${enPouces(profil.waist_cm)}</span></dd></div>` : ''}
-          ${profil.hips_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Hips</dt><dd>${profil.hips_cm} cm <span class="fiche-imperial">${enPouces(profil.hips_cm)}</span></dd></div>` : ''}
-          ${profil.inseam_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Inseam</dt><dd>${profil.inseam_cm} cm <span class="fiche-imperial">${enPouces(profil.inseam_cm)}</span></dd></div>` : ''}
-          ${profil.shoulder_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Shoulders</dt><dd>${profil.shoulder_cm} cm <span class="fiche-imperial">${enPouces(profil.shoulder_cm)}</span></dd></div>` : ''}
-          ${profil.arm_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Arm length</dt><dd>${profil.arm_cm} cm <span class="fiche-imperial">${enPouces(profil.arm_cm)}</span></dd></div>` : ''}
-          ${profil.neck_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Neck</dt><dd>${profil.neck_cm} cm <span class="fiche-imperial">${enPouces(profil.neck_cm)}</span></dd></div>` : ''}
-          ${profil.head_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Head</dt><dd>${profil.head_cm} cm <span class="fiche-imperial">${enPouces(profil.head_cm)}</span></dd></div>` : ''}
+          ${!masquer && profil.chest_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Chest</dt><dd>${profil.chest_cm} cm <span class="fiche-imperial">${enPouces(profil.chest_cm)}</span></dd></div>` : ''}
+          ${!masquer && profil.waist_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Waist</dt><dd>${profil.waist_cm} cm <span class="fiche-imperial">${enPouces(profil.waist_cm)}</span></dd></div>` : ''}
+          ${!masquer && profil.hips_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Hips</dt><dd>${profil.hips_cm} cm <span class="fiche-imperial">${enPouces(profil.hips_cm)}</span></dd></div>` : ''}
+          ${!masquer && profil.inseam_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Inseam</dt><dd>${profil.inseam_cm} cm <span class="fiche-imperial">${enPouces(profil.inseam_cm)}</span></dd></div>` : ''}
+          ${!masquer && profil.shoulder_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Shoulders</dt><dd>${profil.shoulder_cm} cm <span class="fiche-imperial">${enPouces(profil.shoulder_cm)}</span></dd></div>` : ''}
+          ${!masquer && profil.arm_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Arm length</dt><dd>${profil.arm_cm} cm <span class="fiche-imperial">${enPouces(profil.arm_cm)}</span></dd></div>` : ''}
+          ${!masquer && profil.neck_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Neck</dt><dd>${profil.neck_cm} cm <span class="fiche-imperial">${enPouces(profil.neck_cm)}</span></dd></div>` : ''}
+          ${!masquer && profil.head_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Head</dt><dd>${profil.head_cm} cm <span class="fiche-imperial">${enPouces(profil.head_cm)}</span></dd></div>` : ''}
           ${profil.shoe_size ? `<div class="fiche-mesure"><dt>${iconeMensuration('pointure')}Shoe Size</dt><dd>EU ${echapperHtml(profil.shoe_size)}${pointureUS(profil.shoe_size, profil.category) ? ` <span class="fiche-imperial">${pointureUS(profil.shoe_size, profil.category)}</span>` : ''}</dd></div>` : ''}
           ${profil.carnation ? `<div class="fiche-mesure"><dt>${iconeMensuration('carnation')}Skin Tone</dt><dd>${echapperHtml(enAnglais(profil.carnation))}</dd></div>` : ''}
           ${ma2mTailleVetements(profil) ? `<div class="fiche-mesure"><dt>${iconeMensuration('vetements')}Clothing</dt><dd>${echapperHtml(ma2mTailleVetements(profil))}</dd></div>` : ''}

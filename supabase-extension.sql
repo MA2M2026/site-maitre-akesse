@@ -6233,4 +6233,66 @@ $$;
 revoke all on function fiche_evenement_admin(uuid) from public;
 grant execute on function fiche_evenement_admin(uuid) to authenticated;
 
+-- Mesures incohérentes (décision de la propriétaire, 06/10/2026) : si le haut et le
+-- bas ne vont pas ensemble, la fiche publique cache les mensurations (site) ; sans
+-- correction sous 7 jours, la fiche est mise en sourdine (invisible du public) ;
+-- dès que la mannequin corrige, tout revient automatiquement.
+-- MÊME BARÈME ET MÊME RÈGLE que js/tailles.js (à modifier aux deux endroits) :
+-- rang 0 = XXS … 7 = XXXL ; femmes : haut = poitrine, bas = hanches, le bas peut
+-- dépasser le haut de 2 tailles (morphologies africaines), l'inverse de 1 ;
+-- hommes : haut = poitrine, bas = tour de taille, le haut peut dépasser le bas de
+-- 2 tailles (silhouette athlétique), l'inverse de 1.
+alter table model_profiles add column if not exists mesures_a_reprendre_depuis timestamptz;
+
+create or replace function rang_taille(mesure numeric, bornes int[])
+returns int language sql immutable as $$
+  select case when mesure is null or mesure <= 0 then null
+    else (select count(*) from unnest(bornes) b where round(mesure) > b)::int end;
+$$;
+
+create or replace function mesures_incoherentes(categorie text, poitrine numeric, tour_taille numeric, hanches numeric)
+returns boolean language sql immutable as $$
+  select case when categorie = 'homme' then
+    coalesce((rang_taille(tour_taille, array[67,72,77,83,89,95,101])
+            - rang_taille(poitrine, array[81,87,93,99,105,111,117])) not between -2 and 1, false)
+  else
+    coalesce((rang_taille(hanches, array[85,89,93,97,101,107,113])
+            - rang_taille(poitrine, array[77,81,85,89,93,99,105])) not between -1 and 2, false)
+  end;
+$$;
+
+-- Date de début du problème : posée par la base, jamais par la mannequin (elle ne
+-- peut ni l'effacer ni la repousser) ; effacée dès que les mesures sont cohérentes.
+create or replace function suivre_mesures_a_reprendre()
+returns trigger language plpgsql as $$
+begin
+  if mesures_incoherentes(new.category, new.chest_cm, new.waist_cm, new.hips_cm) then
+    new.mesures_a_reprendre_depuis := case when tg_op = 'UPDATE' then coalesce(old.mesures_a_reprendre_depuis, now()) else now() end;
+  else
+    new.mesures_a_reprendre_depuis := null;
+  end if;
+  return new;
+end;
+$$;
+drop trigger if exists trg_suivre_mesures_a_reprendre on model_profiles;
+create trigger trg_suivre_mesures_a_reprendre
+  before insert or update on model_profiles
+  for each row execute function suivre_mesures_a_reprendre();
+
+-- Profils actuels : le délai de 7 jours démarre aujourd'hui.
+update model_profiles set mesures_a_reprendre_depuis = now()
+where mesures_incoherentes(category, chest_cm, waist_cm, hips_cm) and mesures_a_reprendre_depuis is null;
+
+-- Visibilité publique : publiée ET pas en sourdine (mesures à reprendre depuis plus
+-- de 7 jours). La mannequin voit toujours sa fiche (sa propre règle) ; les admins aussi.
+drop policy if exists "Profils publiés visibles de tous" on model_profiles;
+create policy "Profils publiés visibles de tous"
+  on model_profiles for select
+  using (published = true and (mesures_a_reprendre_depuis is null or mesures_a_reprendre_depuis > now() - interval '7 days'));
+
 NOTIFY pgrst, 'reload schema';
+
+-- Vérification (résultat affiché) : les règles de lecture des profils, pour
+-- s'assurer qu'aucune autre règle ne laisse voir une fiche en sourdine.
+select policyname, cmd, roles, qual from pg_policies
+where tablename = 'model_profiles' and cmd in ('SELECT', 'ALL') order by policyname;
