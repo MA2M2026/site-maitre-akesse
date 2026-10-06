@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-APLwyDw36sAjyQcdUQ5UGGldVZBDMg7M7zvJCpI8qHE='; style-src 'self' https://fonts.googleapis.com 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-M11XYB6+zKFKPwykcEZjbENBV4vsqdi+UTG+sMq0oAE='; style-src 'self' https://fonts.googleapis.com 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
 <!-- Adresse lisible …/book/nom (06/10/2026) : la page peut être servie depuis /book/… ; ses fichiers se chargent toujours depuis la racine du site (voir js/adresse-fiche.js). -->
 <base href="/en/">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
@@ -162,6 +162,7 @@ setTimeout(() => {
 <script defer src="../js/vendor/supabase-js-2.110.6.js"></script>
 <script defer src="../js/supabase-config.js"></script>
 <script defer src="../js/app.js"></script>
+<script defer src="../js/tailles.js"></script>
 <script defer src="../js/confort.js"></script>
 <script defer src="../js/menu.js"></script>
 <script defer src="../js/selection.js"></script>
@@ -429,15 +430,16 @@ async function construireCanvasCompcardEn() {
   ctx.fillText([libelleCat, profil.city].filter(Boolean).join('  ·  '), px(15), px(y));
 
   y += 11;
+  const masquer = ma2mMesuresAReprendre(profil); // mesures « à reprendre » : non affichées (js/tailles.js)
   const champs = [
     ['Height', profil.height_cm ? avecImperial(profil.height_cm + ' cm', enPieds(profil.height_cm)) : null],
     ['Weight', profil.weight_kg ? avecImperial(profil.weight_kg + ' kg', enLivres(profil.weight_kg)) : null],
-    ['Chest', profil.chest_cm ? avecImperial(profil.chest_cm + ' cm', enPouces(profil.chest_cm)) : null],
-    ['Waist', profil.waist_cm ? avecImperial(profil.waist_cm + ' cm', enPouces(profil.waist_cm)) : null],
-    [profil.category === 'homme' ? 'Inseam' : 'Hips', profil.category === 'homme' ? (profil.inseam_cm ? avecImperial(profil.inseam_cm + ' cm', enPouces(profil.inseam_cm)) : null) : (profil.hips_cm ? avecImperial(profil.hips_cm + ' cm', enPouces(profil.hips_cm)) : null)],
+    ['Chest', !masquer && profil.chest_cm ? avecImperial(profil.chest_cm + ' cm', enPouces(profil.chest_cm)) : null],
+    ['Waist', !masquer && profil.waist_cm ? avecImperial(profil.waist_cm + ' cm', enPouces(profil.waist_cm)) : null],
+    [profil.category === 'homme' ? 'Inseam' : 'Hips', masquer ? null : profil.category === 'homme' ? (profil.inseam_cm ? avecImperial(profil.inseam_cm + ' cm', enPouces(profil.inseam_cm)) : null) : (profil.hips_cm ? avecImperial(profil.hips_cm + ' cm', enPouces(profil.hips_cm)) : null)],
     ['Shoe Size', profil.shoe_size ? avecImperial('EU ' + profil.shoe_size, pointureUS(profil.shoe_size, profil.category)) : null],
     ['Skin Tone', profil.carnation ? enAnglais(profil.carnation) : null],
-    ['Clothing Size', profil.clothing_size || null],
+    ['Clothing Size', ma2mTailleVetements(profil) || null],
     ['Eyes', profil.eye_color ? enAnglais(profil.eye_color) : null],
     ['Hair', profil.hair_color ? enAnglais(profil.hair_color) : null]
   ].filter(([, v]) => v);
@@ -470,7 +472,7 @@ async function construireCanvasCompcardEn() {
   ctx.font = `bold ${fpx(12)}px Arial, sans-serif`;
   ctx.fillText('OFFICIAL MA2M CONTACT', px(15), px(yPiedPage + 9));
   ctx.font = `${fpx(11)}px Arial, sans-serif`;
-  ctx.fillText('+225 27 22 23 11 76   ·   +225 05 45 65 66 87', px(15), px(yPiedPage + 16.5));
+  ctx.fillText(MA2M_TELEPHONES.join('   ·   '), px(15), px(yPiedPage + 16.5));
   ctx.fillText('scoutmodel.ma2m@gmail.com', px(15), px(yPiedPage + 23.5));
 
   const reseaux = ['instagram', 'facebook', 'tiktok', 'youtube'];
@@ -598,7 +600,9 @@ async function chargerProfilInterne() {
     .single();
 
   if (error || !profil) { contenu.textContent = 'This profile is not available.'; return; }
-  const slug = await window.ma2mAdresseFiche(id, true);
+  // épaules, bras, cou, tête (js/tailles.js) lus en même temps que le nom d'adresse
+  const [mesuresSupp, slug] = await Promise.all([window.ma2mMesuresSupp(id), window.ma2mAdresseFiche(id, true)]);
+  Object.assign(profil, mesuresSupp);
   if (lienLangue && slug) lienLangue.href = '../book/' + slug;
 
   const urlActuelle = 'https://www.maitreakessemodelmanagement.com/en' + (slug ? '/book/' + slug : '/mannequin?id=' + id);
@@ -694,6 +698,8 @@ async function chargerProfilInterne() {
         </div>` : ''}
     </section>` : '';
 
+  // Mesures incohérentes (« à reprendre ») : mensurations cachées au public (js/tailles.js)
+  const masquer = ma2mMesuresAReprendre(profil);
   contenu.innerHTML = `
     <div class="reveal">
       <div class="profil-hero-fullbleed profil-hero--avatar${(photos && photos.length) ? ' cliquable' : ''}" id="couverture-clic"${(photos && photos.length) ? ' role="button" tabindex="0" aria-label="Open the photo gallery"' : ''}>
@@ -711,17 +717,21 @@ async function chargerProfilInterne() {
           ${age ? `<div class="fiche-mesure"><dt>${iconeMensuration('age')}Age</dt><dd>${age} years</dd></div>` : ''}
           ${profil.height_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('taille')}Height</dt><dd>${profil.height_cm} cm <span class="fiche-imperial">${enPieds(profil.height_cm)}</span></dd></div>` : ''}
           ${profil.weight_kg ? `<div class="fiche-mesure"><dt>${iconeMensuration('poids')}Weight</dt><dd>${profil.weight_kg} kg <span class="fiche-imperial">${enLivres(profil.weight_kg)}</span></dd></div>` : ''}
-          ${profil.chest_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Chest</dt><dd>${profil.chest_cm} cm <span class="fiche-imperial">${enPouces(profil.chest_cm)}</span></dd></div>` : ''}
-          ${profil.waist_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Waist</dt><dd>${profil.waist_cm} cm <span class="fiche-imperial">${enPouces(profil.waist_cm)}</span></dd></div>` : ''}
-          ${profil.hips_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Hips</dt><dd>${profil.hips_cm} cm <span class="fiche-imperial">${enPouces(profil.hips_cm)}</span></dd></div>` : ''}
-          ${profil.inseam_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Inseam</dt><dd>${profil.inseam_cm} cm <span class="fiche-imperial">${enPouces(profil.inseam_cm)}</span></dd></div>` : ''}
+          ${!masquer && profil.chest_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Chest</dt><dd>${profil.chest_cm} cm <span class="fiche-imperial">${enPouces(profil.chest_cm)}</span></dd></div>` : ''}
+          ${!masquer && profil.waist_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Waist</dt><dd>${profil.waist_cm} cm <span class="fiche-imperial">${enPouces(profil.waist_cm)}</span></dd></div>` : ''}
+          ${!masquer && profil.hips_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Hips</dt><dd>${profil.hips_cm} cm <span class="fiche-imperial">${enPouces(profil.hips_cm)}</span></dd></div>` : ''}
+          ${!masquer && profil.inseam_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Inseam</dt><dd>${profil.inseam_cm} cm <span class="fiche-imperial">${enPouces(profil.inseam_cm)}</span></dd></div>` : ''}
+          ${!masquer && profil.shoulder_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Shoulders</dt><dd>${profil.shoulder_cm} cm <span class="fiche-imperial">${enPouces(profil.shoulder_cm)}</span></dd></div>` : ''}
+          ${!masquer && profil.arm_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Arm length</dt><dd>${profil.arm_cm} cm <span class="fiche-imperial">${enPouces(profil.arm_cm)}</span></dd></div>` : ''}
+          ${!masquer && profil.neck_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Neck</dt><dd>${profil.neck_cm} cm <span class="fiche-imperial">${enPouces(profil.neck_cm)}</span></dd></div>` : ''}
+          ${!masquer && profil.head_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Head</dt><dd>${profil.head_cm} cm <span class="fiche-imperial">${enPouces(profil.head_cm)}</span></dd></div>` : ''}
           ${profil.shoe_size ? `<div class="fiche-mesure"><dt>${iconeMensuration('pointure')}Shoe Size</dt><dd>EU ${echapperHtml(profil.shoe_size)}${pointureUS(profil.shoe_size, profil.category) ? ` <span class="fiche-imperial">${pointureUS(profil.shoe_size, profil.category)}</span>` : ''}</dd></div>` : ''}
           ${profil.carnation ? `<div class="fiche-mesure"><dt>${iconeMensuration('carnation')}Skin Tone</dt><dd>${echapperHtml(enAnglais(profil.carnation))}</dd></div>` : ''}
-          ${profil.clothing_size ? `<div class="fiche-mesure"><dt>${iconeMensuration('vetements')}Clothing</dt><dd>${echapperHtml(profil.clothing_size)}</dd></div>` : ''}
           ${profil.eye_color ? `<div class="fiche-mesure"><dt>${iconeMensuration('yeux')}Eyes</dt><dd>${echapperHtml(enAnglais(profil.eye_color))}</dd></div>` : ''}
           ${profil.hair_color ? `<div class="fiche-mesure"><dt>${iconeMensuration('cheveux')}Hair</dt><dd>${echapperHtml(enAnglais(profil.hair_color))}</dd></div>` : ''}
         </dl>
       </div>
+      ${ma2mBlocEquivalences(profil, true)}
 
       <div class="fiche-actions no-print">
         <button id="btn-select-fiche" class="btn btn--principal"></button>

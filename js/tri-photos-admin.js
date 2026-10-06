@@ -129,19 +129,12 @@
 
   // ---- Rapports détaillés + fiche technique + envoi WhatsApp (Extension 117) ----
   var rapports = {}, telephones = {};
-  function numeroWa(tel) {
-    var n = String(tel || '').replace(/[^\d]/g, '');
-    if (n.indexOf('00') === 0) n = n.slice(2);
-    if ((n.length === 10 && n.charAt(0) === '0') || n.length === 8) n = '225' + n; // numéro ivoirien sans indicatif
-    return n.length >= 8 ? n : '';
-  }
   // Liens ajoutés automatiquement au message : le book public et l'Espace mannequin
   // (où les photos portent leur numéro). Liens https simples : WhatsApp les rend
   // cliquables et ils s'ouvrent directement sur iPhone comme sur Android.
-  var SITE = 'https://www.maitreakessemodelmanagement.com';
   function avecLiens(message, modelId, publie, slug) {
-    var liens = (publie ? '\n\n📸 Votre book en ligne : ' + SITE + (slug ? '/book/' + encodeURIComponent(slug) : '/mannequin?id=' + modelId) : '') +
-      '\n\n🔐 Votre Espace mannequin (photos numérotées, envoi des nouvelles photos) : ' + SITE + '/espace-mannequin';
+    var liens = (publie ? '\n\n📸 Votre book en ligne : ' + MA2M_SITE + (slug ? '/book/' + encodeURIComponent(slug) : '/mannequin?id=' + modelId) : '') +
+      '\n\n🔐 Votre Espace mannequin (photos numérotées, envoi des nouvelles photos) : ' + MA2M_SITE + '/espace-mannequin';
     return String(message).trim() + liens;
   }
   function listeHtml(t) { return (t && t.length) ? '<ul>' + t.map(function (x) { return '<li>' + echapper(x) + '</li>'; }).join('') + '</ul>' : '<p>—</p>'; }
@@ -169,7 +162,7 @@
     zone.innerHTML = lignes.map(function (l) {
       var rp = l.rapport || {}, nom = noms[l.model_id] || 'Mannequin';
       rapports[l.model_id] = rp;
-      var wa = numeroWa(telephones[l.model_id]);
+      var wa = numeroWhatsApp(telephones[l.model_id]);
       return '<details class="tri-rapport"><summary><strong>' + echapper(nom) + '</strong> — revu le ' + new Date(l.revu_le).toLocaleDateString('fr-FR') +
         (l.envoye_le ? ' · <span class="tri-envoye">✓ envoyé le ' + new Date(l.envoye_le).toLocaleDateString('fr-FR') + '</span>' : ' · <span class="tri-non-envoye">pas encore envoyé</span>') + '</summary>' +
         '<p>' + (rp.gardees || 0) + ' photo(s) gardée(s), ' + (rp.proposees || 0) + ' proposée(s) à la suppression (voir « À vérifier »).</p>' +
@@ -273,7 +266,7 @@
         try { await navigator.clipboard.writeText(texte); b.textContent = '✓ Copié'; } catch (err) { zoneTexte.select(); }
         return;
       }
-      window.open('https://wa.me/' + numeroWa(telephones[b.dataset.model]) + '?text=' + encodeURIComponent(texte), '_blank', 'noopener');
+      window.open('https://wa.me/' + numeroWhatsApp(telephones[b.dataset.model]) + '?text=' + encodeURIComponent(texte), '_blank', 'noopener');
       await sb.from('revues_book').update({ envoye_le: new Date().toISOString() }).eq('model_id', b.dataset.model);
       b.textContent = '✓ WhatsApp ouvert';
       return;

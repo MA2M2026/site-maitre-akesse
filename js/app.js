@@ -307,6 +307,13 @@ function photosCvCompletees(d) {
   return { hero: hero, compcard: completerEmplacementsPhotos(d.compcardPhotos, reserve, 5) };
 }
 
+// « Poitrine / taille / hanches » du CV (HTML et image) ; mesures incohérentes
+// (js/tailles.js) : non affichées (« — »), comme sur la fiche publique.
+function texteMensurationsCv(p, sexe) {
+  if (typeof ma2mMesuresAReprendre === 'function' && ma2mMesuresAReprendre({ category: sexe, chest_cm: p.poitrine, waist_cm: p.tourTaille, hips_cm: p.hanches })) return '—';
+  return [p.poitrine, p.tourTaille, p.hanches || p.entrejambe].some(Boolean) ? [p.poitrine || '–', p.tourTaille || '–', p.hanches || p.entrejambe || '–'].join(' / ') : '—';
+}
+
 // d = { nomComplet, dateNaissance, villeNaissance, lieuNaissance, nationalite, ville,
 //   quartier, citation, bio, instagram, niveauMannequin, mannequinId, photoCvUrl,
 //   compcardPhotos: [url|null, ...] (jusqu'à 5), photosBook: [url, ...] (complète les
@@ -338,7 +345,7 @@ function construireHtmlCv(d) {
         '<li>' + mcvIcon('pin') + '<div><span class="k">Lieu de naissance</span><span class="v">' + echapperHtml([d.villeNaissance, d.lieuNaissance].filter(Boolean).join(', ') || '—') + '</span></div></li>' +
         '<li>' + mcvIcon('globe') + '<div><span class="k">Nationalité</span><span class="v">' + echapperHtml(d.nationalite || '—') + '</span></div></li>' +
         '<li>' + mcvIcon('home') + '<div><span class="k">Ville de résidence</span><span class="v">' + echapperHtml([d.ville, d.quartier].filter(Boolean).join(', ') || '—') + '</span></div></li>' +
-        '<li>' + mcvIcon('phone') + '<div><span class="k">Contact agence</span><span class="v">+225 27 22 23 11 76<br>+225 05 45 65 66 87<br>infos.ma2m@gmail.com</span></div></li>' +
+        '<li>' + mcvIcon('phone') + '<div><span class="k">Contact agence</span><span class="v">' + MA2M_TELEPHONES.concat(MA2M_EMAIL).join('<br>') + '</span></div></li>' +
       '</ul>' +
       '<div class="mcv-cat"><span class="lbl">Catégorie</span><span class="val">' + echapperHtml(d.niveauMannequin ? libelleNiveauPublic(d.niveauMannequin) : '') + '</span></div>' +
       (d.citation ? '<blockquote class="mcv-quote">« ' + echapperHtml(d.citation) + ' »</blockquote>' : '') +
@@ -347,9 +354,9 @@ function construireHtmlCv(d) {
       '<section class="mcv-sec mcv-sec-subtile"><h4>' + mcvIcon('user') + ' Profil</h4><p class="mcv-profile-text">' + echapperHtml(d.bio || 'Profil à compléter.') + '</p></section>' +
       '<section class="mcv-sec"><h4>' + mcvIcon('body') + ' Informations physiques</h4><div class="mcv-two-col">' +
         '<ul class="mcv-kv"><li><span>Taille</span><b>' + (p.taille ? p.taille + ' cm' : '—') + '</b></li><li><span>Poids</span><b>' + (p.poids ? p.poids + ' kg' : '—') + '</b></li>' +
-        '<li><span>Mensurations</span><b>' + ([p.poitrine, p.tourTaille, p.hanches || p.entrejambe].some(Boolean) ? [p.poitrine || '–', p.tourTaille || '–', p.hanches || p.entrejambe || '–'].join(' / ') : '—') + '</b></li>' +
+        '<li><span>Mensurations</span><b>' + echapperHtml(texteMensurationsCv(p, d.sexe)) + '</b></li>' +
         '<li><span>Pointure</span><b>' + (p.pointure || '—') + '</b></li></ul>' +
-        '<ul class="mcv-kv"><li><span>Taille vêtements</span><b>' + (p.tailleVet || '—') + '</b></li><li><span>Couleur des yeux</span><b>' + (p.yeux || '—') + '</b></li>' +
+        '<ul class="mcv-kv"><li><span>Taille vêtements</span><b>' + echapperHtml(p.tailleVet || '—') + '</b></li><li><span>Couleur des yeux</span><b>' + (p.yeux || '—') + '</b></li>' +
         '<li><span>Couleur des cheveux</span><b>' + (p.cheveux || '—') + '</b></li><li><span>Carnation</span><b>' + (p.carnation || '—') + '</b></li></ul>' +
       '</div></section>' +
       '<section class="mcv-sec"><h4>' + mcvIcon('grad') + ' Formation</h4><ul class="mcv-kv">' +
@@ -672,15 +679,17 @@ async function construireCanvasCompcard(ficheData) {
 
   // --- Mensurations (grille 3 colonnes) ---
   y += 11;
+  // Mesures incohérentes (« à reprendre », js/tailles.js) : mensurations non affichées
+  const masquer = typeof ma2mMesuresAReprendre === 'function' && ma2mMesuresAReprendre(profil);
   const champs = [
     ['Taille', profil.height_cm ? profil.height_cm + ' cm' : null],
     ['Poids', profil.weight_kg ? profil.weight_kg + ' kg' : null],
-    ['Poitrine', profil.chest_cm ? profil.chest_cm + ' cm' : null],
-    ['Tour de taille', profil.waist_cm ? profil.waist_cm + ' cm' : null],
-    [profil.category === 'homme' ? 'Entrejambe' : 'Hanches', profil.category === 'homme' ? (profil.inseam_cm ? profil.inseam_cm + ' cm' : null) : (profil.hips_cm ? profil.hips_cm + ' cm' : null)],
+    ['Poitrine', !masquer && profil.chest_cm ? profil.chest_cm + ' cm' : null],
+    ['Tour de taille', !masquer && profil.waist_cm ? profil.waist_cm + ' cm' : null],
+    [profil.category === 'homme' ? 'Entrejambe' : 'Hanches', masquer ? null : profil.category === 'homme' ? (profil.inseam_cm ? profil.inseam_cm + ' cm' : null) : (profil.hips_cm ? profil.hips_cm + ' cm' : null)],
     ['Pointure', profil.shoe_size || null],
     ['Carnation', profil.carnation || null],
-    ['Taille vêtements', profil.clothing_size || null],
+    ['Taille vêtements', (typeof ma2mTailleVetements === 'function' ? ma2mTailleVetements(profil) : profil.clothing_size) || null],
     ['Yeux', profil.eye_color || null],
     ['Cheveux', profil.hair_color || null]
   ].filter(([, v]) => v);
@@ -722,7 +731,7 @@ async function construireCanvasCompcard(ficheData) {
   ctx.font = `bold ${fpx(12)}px Arial, sans-serif`;
   ctx.fillText('CONTACT OFFICIEL MA2M', px(15), px(yPiedPage + 9));
   ctx.font = `${fpx(11)}px Arial, sans-serif`;
-  ctx.fillText('+225 27 22 23 11 76   ·   +225 05 45 65 66 87', px(15), px(yPiedPage + 16.5));
+  ctx.fillText(MA2M_TELEPHONES.join('   ·   '), px(15), px(yPiedPage + 16.5));
   ctx.fillText('scoutmodel.ma2m@gmail.com', px(15), px(yPiedPage + 23.5));
 
   // Réseaux sociaux : icônes vectorielles blanches + le pseudo, sur la même ligne.
@@ -756,6 +765,49 @@ function chargerJsPdf() {
     document.body.appendChild(script);
   });
   return promesseJsPdf;
+}
+
+// Coordonnées officielles de l'agence pour les documents générés (PDF), à un seul endroit.
+const MA2M_SITE = 'https://www.maitreakessemodelmanagement.com';
+const MA2M_TELEPHONES = ['+225 27 22 23 11 76', '+225 05 45 65 66 87'];
+const MA2M_EMAIL = 'infos.ma2m@gmail.com';
+const MA2M_CONTACT_PDF = 'CONTACT OFFICIEL MA2M  ·  ' + MA2M_TELEPHONES.join('  ·  ') + '  ·  ' + MA2M_EMAIL;
+
+// Lit TOUTES les lignes d'une requête Supabase, par paquets de 1000 (la base ne
+// renvoie jamais plus de 1000 lignes d'un coup). fabrique() renvoie une requête
+// neuve (sb.from(…).select(…)…) avec un ordre stable. Renvoie { data, error }.
+async function lireToutesLignes(fabrique) {
+  const toutes = [];
+  for (let depart = 0; ; depart += 1000) {
+    const { data, error } = await fabrique().range(depart, depart + 999);
+    if (error) return { data: toutes, error };
+    toutes.push(...(data || []));
+    if (!data || data.length < 1000) return { data: toutes, error: null };
+  }
+}
+
+// Prénom (premier mot du nom complet), pour personnaliser les messages.
+function prenomDe(nomComplet) { return String(nomComplet || '').trim().split(/\s+/)[0] || ''; }
+
+// Numéro au format WhatsApp (wa.me) : chiffres seuls, indicatif ivoirien ajouté s'il
+// manque. Chaîne vide si le numéro est inutilisable. Partagé par le tableau de bord
+// (messages groupés, rapports de revue, rapport des profils).
+function numeroWhatsApp(tel) {
+  let n = String(tel || '').replace(/[^\d]/g, '');
+  if (n.indexOf('00') === 0) n = n.slice(2);
+  if ((n.length === 10 && n.charAt(0) === '0') || n.length === 8) n = '225' + n; // numéro ivoirien sans indicatif
+  return n.length >= 8 ? n : '';
+}
+
+// Place une photo sur une case (1 à 5) de la compcard d'un mannequin, ou l'en retire
+// (caseN = null). Fonction partagée par l'Espace mannequin et le tableau de bord
+// (06/10/2026). La photo qui occupait déjà la case la quitte — APRÈS la pose de la
+// nouvelle, pour qu'un échec ne laisse jamais la case vide. Renvoie l'erreur ou null.
+async function affecterCaseCompcard(modelId, photoId, caseN) {
+  const r = await sb.from('model_photos').update({ compcard_ordre: caseN }).eq('id', photoId).eq('model_id', modelId);
+  if (r.error || caseN == null) return r.error || null;
+  const l = await sb.from('model_photos').update({ compcard_ordre: null }).eq('model_id', modelId).eq('compcard_ordre', caseN).neq('id', photoId);
+  return l.error || null;
 }
 
 // Date et heure ajoutées au nom des fichiers téléchargés (compcard, CV) : avec un nom
@@ -1022,7 +1074,7 @@ async function construireCanvasCv(d) {
       ['pin', 'Lieu de naissance', [[d.villeNaissance, d.lieuNaissance].filter(Boolean).join(', ') || '—']],
       ['globe', 'Nationalité', [d.nationalite || '—']],
       ['home', 'Ville de résidence', [[d.ville, d.quartier].filter(Boolean).join(', ') || '—']],
-      ['phone', 'Contact agence', ['+225 27 22 23 11 76', '+225 05 45 65 66 87', 'infos.ma2m@gmail.com']]
+      ['phone', 'Contact agence', MA2M_TELEPHONES.concat(MA2M_EMAIL)]
     ];
     infosCv.forEach(function (ligne) {
       dessinerIconeMcvCanvas(ctx, ligne[0], px(PAD_SIDEBAR), px(y - 3.2), px(4.2), OR);
@@ -1102,7 +1154,7 @@ async function construireCanvasCv(d) {
     titreSection('body', 'Informations physiques');
     const colInfosPhysiques = [
       [['Taille', p.taille ? p.taille + ' cm' : '—'], ['Poids', p.poids ? p.poids + ' kg' : '—'],
-       ['Mensurations', [p.poitrine, p.tourTaille, p.hanches || p.entrejambe].some(Boolean) ? [p.poitrine || '–', p.tourTaille || '–', p.hanches || p.entrejambe || '–'].join(' / ') : '—'],
+       ['Mensurations', texteMensurationsCv(p, d.sexe)],
        ['Pointure', p.pointure || '—']],
       [['Taille vêtements', p.tailleVet || '—'], ['Couleur des yeux', p.yeux || '—'], ['Couleur des cheveux', p.cheveux || '—'], ['Carnation', p.carnation || '—']]
     ];

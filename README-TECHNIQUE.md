@@ -1477,3 +1477,59 @@ toutes les écritures sont simulées pendant l'enregistrement.
   lit le nom d'adresse, garde les liens « # » dans la page et affiche la jolie
   adresse dans la barre du navigateur. Les anciennes adresses `?id=` restent valables.
 - **Fonction partagée** `convertirSiHeic` dans `js/app.js` (remplace 14 copies).
+
+## 📋 Fiches événement et compcard depuis le tableau de bord (06/10/2026)
+
+- **Fiche événement** (Extension 120) : table privée `fiche_evenement` (régime et
+  allergies, TikTok, Facebook, droit à l'image ; les colonnes taille haut / bas ne
+  servent plus depuis les tailles calculées de l'Extension 121), remplie par la
+  mannequin à l'étape « physique » de son Espace (chaque mannequin ne lit que sa
+  ligne). Le tableau de bord (Bloc 2 → « Fiches événement », `js/fiches-evenement-admin.js`)
+  télécharge un PDF via `fiche_evenement_admin(id)` (réservée aux admins ; depuis
+  l'Extension 121, sans téléphone ni e-mail du mannequin : le PDF n'affiche que les
+  contacts de l'agence, `MA2M_TELEPHONES` / `MA2M_EMAIL` dans `js/app.js`). Jamais de
+  pièce d'identité. Les mannequins ne peuvent pas télécharger cette fiche.
+- **Compcard choisie par l'agence** : liste « Compcard 1 à 5 » sous chaque photo dans
+  la fenêtre photos d'un mannequin publié. Fonction commune `affecterCaseCompcard`
+  (`js/app.js`) avec l'Espace mannequin : l'ancienne photo d'une case la quitte
+  toujours (corrige les doubles photos sur une case signalées le 06/10/2026).
+- Constantes partagées `MA2M_SITE` et `MA2M_CONTACT_PDF` (`js/app.js`) pour les PDF.
+- Noms des fichiers téléchargés horodatés (`horodatageFichier`, `js/app.js`).
+
+## 📏 Mensurations complètes et tailles calculées (06/10/2026)
+
+- **`js/tailles.js`** (fichier partagé : espace mannequin, fiche publique FR/EN,
+  compcard, CV, fiche événement) : les tailles ne sont **jamais saisies**, elles
+  sont calculées d'après les mensurations (barèmes standard du prêt-à-porter).
+  Femmes : haut = tour de poitrine, bas = tour de hanches. Hommes : haut = tour
+  de poitrine, bas = tour de taille. Taille générale = haut et bas (ex. « M-L »).
+  Équivalences FR/EU, IT, UK, US, BR, JP, KR, CN (tableau sur la fiche publique).
+- **Mesures incohérentes** : femmes, bas plus grand que le haut de plus de 2
+  tailles (ou plus petit de plus d'1) ; hommes, haut plus grand que le bas de plus
+  de 2 tailles (ou plus petit de plus d'1). Écarts adaptés aux morphologies
+  africaines (décision de la propriétaire). Effets : cases en rouge « Mensuration
+  pas exacte, à reprendre » dans l'espace, aucune taille donnée, mensurations
+  cachées sur la fiche publique et la compcard ; **après 7 jours sans correction,
+  la fiche est invisible du public** (règle de lecture de la base) ; tout revient
+  automatiquement dès la correction.
+- **Extension 121** : colonnes `shoulder_cm`, `arm_cm`, `neck_cm`, `head_cm`,
+  `mesures_a_reprendre_depuis` (posée par la base, jamais par la mannequin),
+  fonctions `rang_taille` / `mesures_incoherentes` — **même barème et même règle
+  que `js/tailles.js` : toute modification se fait aux deux endroits** —, nouvelle
+  version de `fiche_evenement_admin` (sans téléphone ni e-mail du mannequin) et de
+  la règle « Profils publiés visibles de tous ».
+
+## 🩺 Rapport des profils (tableau de bord, 06/10/2026)
+
+- **`js/rapport-profils-admin.js`**, rubrique « Rapport des profils » (Bloc 2) :
+  pour chaque mannequin, mensurations manquantes ou incohérentes (`js/tailles.js`),
+  photo de profil, couverture, book (6 photos minimum ; les cases de compcard non
+  choisies se complètent seules avec le book), photos
+  « à remplacer » laissées par la revue stricte des books (aucun nouvel appel à
+  l'IA). Message personnel prêt (modifiable), envoi WhatsApp une personne après
+  l'autre (un appui chacune) ; date du dernier envoi notée sur l'appareil.
+- **Fonctions partagées ajoutées dans `js/app.js`** : `numeroWhatsApp(tel)` (format
+  wa.me), `prenomDe(nom)`, `lireToutesLignes(fabrique)` (lecture par paquets de 1000),
+  `texteMensurationsCv(p, sexe)`, constantes `MA2M_TELEPHONES` / `MA2M_EMAIL`.
+- **Règle de cohérence écrite deux fois** (JS pour l'affichage immédiat dans l'Espace,
+  SQL pour le délai de 7 jours) : voir la section Mensurations ci-dessus.

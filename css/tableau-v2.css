@@ -469,3 +469,29 @@ html body.tdb-v2:not(.v2-page-v2-ensemble) .v2-entete-actions { display: none !i
 .tri-message { width: 100%; box-sizing: border-box; font: inherit; font-size: 0.88rem; padding: 0.5rem; margin-bottom: 0.5rem; }
 .tri-envoye { color: #1f7a3a; }
 .tri-non-envoye { color: #8a5a00; }
+
+/* Compcard choisie par l'agence dans la fenêtre « photos » d'un mannequin (06/10/2026) */
+.mf-photo-bloc { display: flex; flex-direction: column; gap: 6px; width: 90px; }
+.mf-cc-select { width: 90px; font-size: 0.72rem; padding: 3px 2px; }
+.mf-cc-aide { flex-basis: 100%; font-size: 0.8rem; margin: 0 0 0.2rem; color: #6b625d; }
+
+/* Fiches événement (06/10/2026) — js/fiches-evenement-admin.js */
+.fe-ligne { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; padding: 0.7rem 0; border-bottom: 1px solid #e4dbd3; flex-wrap: wrap; }
+.fe-etat { font-size: 0.8rem; color: #8a5a00; }
+.fe-etat.ok { color: #1f7a3a; }
+.fe-non-publie { font-size: 0.8rem; color: #6b625d; }
+
+/* Rapport des profils (js/rapport-profils-admin.js, 06/10/2026) */
+.rp-resume { margin: 0 0 0.8rem; }
+.rp-boutons { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 0.4rem; }
+.rp-profil { padding: 0.8rem 0; border-bottom: 1px solid #e4dbd3; }
+.rp-entete { display: flex; align-items: center; flex-wrap: wrap; gap: 0.4rem; cursor: pointer; }
+.rp-entete input { width: 18px; height: 18px; }
+.rp-etat { font-size: 0.78rem; font-weight: 600; color: #8a5a00; background: #fff3d6; border-radius: 999px; padding: 0.1rem 0.6rem; }
+.rp-ok .rp-etat { color: #1f7a3a; background: #e3f4e8; }
+.rp-gris { font-size: 0.8rem; color: #6b625d; }
+.rp-envoye { font-size: 0.8rem; color: #1f7a3a; font-weight: 600; }
+.rp-points { margin: 0.5rem 0 0.4rem 1.6rem; padding: 0; font-size: 0.9rem; line-height: 1.5; }
+.rp-points .rp-rouge { color: #b0172e; }
+.rp-message summary { cursor: pointer; font-size: 0.85rem; color: #7a1220; }
+.rp-message textarea { width: 100%; box-sizing: border-box; margin-top: 0.4rem; font: inherit; font-size: 0.88rem; padding: 0.6rem; border: 1px solid #d8cec5; border-radius: 8px; }

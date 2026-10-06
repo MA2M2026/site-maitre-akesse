@@ -26,7 +26,9 @@ function emptyState(){
     identite:{ nomComplet:'', dateNaissance:'', villeNaissance:'', lieuNaissance:'', nationalite:'', ville:'', quartier:'', telephone:'', email:'', sexe:'' },
     physique:{
       taille:'', poids:'', poitrine:'', tourTaille:'', hanches:'', entrejambe:'', pointure:'',
-      tailleVet:'', yeux:'', cheveux:'', carnation:''
+      tailleVet:'', yeux:'', cheveux:'', carnation:'',
+      // Extension 121 (06/10/2026) : épaules, bras, cou (hommes), tête
+      epaules:'', bras:'', cou:'', tete:''
     },
     formation:{ niveau:'', etablissement:'', particuliere:'', mannequin:'' },
     // Niveau (New Face / Professionnel, 06/10/2026) : coché par la mannequin
@@ -39,7 +41,10 @@ function emptyState(){
     competences:{},
     citation:'',
     bio:'',
-    instagram:''
+    instagram:'',
+    // Fiche événement (06/10/2026, table fiche_evenement) : jamais publique, seule
+    // l'agence télécharge la fiche complète depuis le tableau de bord.
+    ficheEvenement:{ tailleHaut:'', tailleBas:'', regime:'', tiktok:'', facebook:'', droitImage:null }
   };
 }
 let state = emptyState();
@@ -305,6 +310,9 @@ sb && sb.auth.onAuthStateChange(function(event){
    les vraies colonnes de model_profiles. Rien n'est jamais écrit avec un nom
    de colonne inventé. */
 function identiteToDb(d){
+  // le barème (femmes / hommes) dépend du sexe : taille vêtements recalculée, et gardée
+  // dans l'état pour que l'étape physique, la compcard et le CV restent d'accord
+  state.physique.tailleVet = tailleGeneraleCalculee(state.physique, d.sexe);
   return {
     full_name: d.nomComplet || null,
     date_naissance: d.dateNaissance || null,
@@ -315,16 +323,32 @@ function identiteToDb(d){
     quartier: d.quartier || null,
     phone: d.telephone || null,
     contact_email: d.email || null,
-    category: d.sexe || null
+    category: d.sexe || null,
+    clothing_size: state.physique.tailleVet || null
   };
 }
 function physiqueToDb(p){
   return {
     height_cm: toNum(p.taille), weight_kg: toNum(p.poids), chest_cm: toNum(p.poitrine),
     waist_cm: toNum(p.tourTaille), hips_cm: toNum(p.hanches), inseam_cm: toNum(p.entrejambe),
+    // Taille vêtements : calculée d'après les mensurations (js/tailles.js), jamais saisie
     shoe_size: p.pointure || null, clothing_size: p.tailleVet || null,
     eye_color: p.yeux || null, hair_color: p.cheveux || null, carnation: p.carnation || null
   };
+}
+function tailleGeneraleCalculee(p, sexe){
+  if (typeof ma2mTailleVetements !== 'function') return p.tailleVet || '';
+  return ma2mTailleVetements({ category: sexe, chest_cm: p.poitrine, waist_cm: p.tourTaille, hips_cm: p.hanches, clothing_size: p.tailleVet });
+}
+// Mensurations ajoutées le 06/10/2026 (Extension 121) : enregistrées à part, pour que
+// l'étape ne soit jamais bloquée si la base n'a pas encore ces colonnes.
+async function enregistrerMesuresSupp(p){
+  const { error } = await sb.from('model_profiles').update({
+    shoulder_cm: toNum(p.epaules), arm_cm: toNum(p.bras), neck_cm: toNum(p.cou), head_cm: toNum(p.tete)
+  }).eq('id', currentUser.id);
+  // On ne bloque pas le reste de l'étape, mais la mannequin est prévenue.
+  if (error) { console.warn('Mensurations complémentaires non enregistrées :', error.message); toast('Épaules, bras, cou et tête : pas encore enregistrés, réessayez un peu plus tard', true); }
+  return true;
 }
 function formationToDb(f){
   return { niveau_etude: f.niveau || null, etablissement: f.etablissement || null, formation_particuliere: f.particuliere || null, formation_mannequin: f.mannequin || null };
@@ -393,6 +417,10 @@ const Store = {
 
     const s = mapProfileFromDb(profile, contactPrive);
 
+    const supp = await ma2mMesuresSupp(currentUser.id); // vide si l'Extension 121 n'est pas encore exécutée
+    Object.assign(s.physique, { epaules: supp.shoulder_cm ?? '', bras: supp.arm_cm ?? '', cou: supp.neck_cm ?? '', tete: supp.head_cm ?? '' });
+    s.physique.tailleVet = tailleGeneraleCalculee(s.physique, s.identite.sexe);
+
     const { data: exps } = await sb.from('model_projects').select('*').eq('model_id', currentUser.id).order('created_at', { ascending:true });
     s.experiences = (exps||[]).map(function(e){ return { id:e.id, type:e.type_projet, nom:e.titre, lieu:e.ville, annee:e.periode }; });
 
@@ -406,7 +434,22 @@ const Store = {
       if (p.photo_couverture) s.photos.couverture = item;
     });
 
+    try {
+      const { data: fe } = await sb.from('fiche_evenement').select('*').eq('model_id', currentUser.id).maybeSingle();
+      if (fe) s.ficheEvenement = { tailleHaut: fe.taille_haut||'', tailleBas: fe.taille_bas||'', regime: fe.regime_allergies||'', tiktok: fe.tiktok||'', facebook: fe.facebook||'', droitImage: fe.droit_image };
+    } catch(e) { /* table pas encore créée : champs vides */ }
+
     return s;
+  },
+
+  async saveFicheEvenement(fe){
+    const { error } = await sb.from('fiche_evenement').upsert({
+      model_id: currentUser.id, taille_haut: fe.tailleHaut||null, taille_bas: fe.tailleBas||null,
+      regime_allergies: fe.regime||null, tiktok: fe.tiktok||null, facebook: fe.facebook||null,
+      droit_image: fe.droitImage, mis_a_jour: new Date().toISOString()
+    }, { onConflict: 'model_id' });
+    if (error) { console.error(error); toast('Informations « événements » non enregistrées — réessayez', true); return false; }
+    return true;
   },
 
   async ensureProfileRow(){
@@ -558,14 +601,10 @@ const Store = {
       }
       return true;
     }
-    const { error } = await sb.from('model_photos').update({ compcard_ordre: ordre }).eq('id', photoId).eq('model_id', currentUser.id);
-    if (error) { console.error(error); toast('Échec de la sélection compcard', true); return false; }
-    // L'emplacement était déjà pris (« Choisir dans mon Book » sur une case pleine) :
-    // l'ancienne photo le quitte, sinon deux photos se retrouvaient sur la même case
-    // et la compcard téléchargée gardait l'ancienne (signalé le 06/10/2026). Fait
-    // APRÈS la pose de la nouvelle photo : en cas d'échec, la case n'est jamais vide.
-    const { error: eLib } = await sb.from('model_photos').update({ compcard_ordre: null }).eq('model_id', currentUser.id).eq('compcard_ordre', ordre).neq('id', photoId);
-    if (eLib) { console.error(eLib); toast('Échec de la sélection compcard — réessayez', true); return false; }
+    // L'ancienne photo de la case la quitte (js/app.js — sinon deux photos sur la même
+    // case et la compcard téléchargée gardait l'ancienne, signalé le 06/10/2026).
+    const error = await affecterCaseCompcard(currentUser.id, photoId, ordre);
+    if (error) { console.error(error); toast('Échec de la sélection compcard — réessayez', true); return false; }
     return true;
   },
 };
@@ -875,6 +914,7 @@ function bindStepIdentite(){
 
 function stepPhysique(){
   const d = state.physique;
+  const homme = state.identite.sexe === 'homme';
   return '<h2>Informations physiques</h2><p class="sub">Étape 2 sur 6</p><div class="grid g3">' +
     field('Taille (cm)','f-taille',d.taille,{tag:'select',req:true,options:plageNombres(140,210,1,' cm')}) +
     field('Poids (kg)','f-poids',d.poids,{tag:'select',req:true,options:plageNombres(35,130,1,' kg')}) +
@@ -882,17 +922,22 @@ function stepPhysique(){
       {value:'',label:'—'},{value:'Claire',label:'Claire'},{value:'Métisse claire',label:'Métisse claire'},
       {value:'Métisse foncée',label:'Métisse foncée'},{value:'Foncée',label:'Foncée'},{value:'Très foncée',label:'Très foncée'}
     ]}) +
-    field('Poitrine (cm)','f-poitrine',d.poitrine,{tag:'select',options:plageNombres(70,130,1,' cm')}) +
-    field('Tour de taille (cm)','f-tourTaille',d.tourTaille,{tag:'select',options:plageNombres(55,110,1,' cm')}) +
-    field('Hanches (cm)','f-hanches',d.hanches,{tag:'select',options:plageNombres(70,130,1,' cm')}) +
-    field('Entrejambe (cm)','f-entrejambe',d.entrejambe,{tag:'select',options:plageNombres(60,100,1,' cm')}) +
-    field('Pointure','f-pointure',d.pointure,{tag:'select',options:plageNombres(34,46,1,'')}) +
-    field('Taille vêtements','f-tailleVet',d.tailleVet,{tag:'select-autre',options:['XS','S','M','L','XL','XXL']}) +
+    field('Tour de poitrine (cm)','f-poitrine',d.poitrine,{tag:'select',options:plageNombres(70,135,1,' cm')}) +
+    field('Tour de taille (cm)','f-tourTaille',d.tourTaille,{tag:'select',options:plageNombres(55,115,1,' cm')}) +
+    field(homme ? 'Tour de bassin (cm)' : 'Tour de hanches (cm)','f-hanches',d.hanches,{tag:'select',options:plageNombres(70,135,1,' cm')}) +
+    (homme ? field('Tour de cou (cm)','f-cou',d.cou,{tag:'select',options:plageNombres(32,50,1,' cm')}) : '') +
+    field('Largeur d’épaules (cm)','f-epaules',d.epaules,{tag:'select',options:plageNombres(30,60,1,' cm')}) +
+    field('Longueur de bras (cm)','f-bras',d.bras,{tag:'select',options:plageNombres(50,75,1,' cm')}) +
+    field('Entrejambe / longueur de pantalon (cm)','f-entrejambe',d.entrejambe,{tag:'select',options:plageNombres(60,100,1,' cm')}) +
+    field('Tour de tête (cm)','f-tete',d.tete,{tag:'select',options:plageNombres(50,64,1,' cm')}) +
+    field('Pointure (EU)','f-pointure',d.pointure,{tag:'select',options:plageNombres(34,48,1,'')}) +
     field('Couleur des yeux','f-yeux',d.yeux,{tag:'select-autre',options:['Marron','Noir','Vert','Bleu','Gris','Noisette']}) +
     field('Couleur des cheveux','f-cheveux',d.cheveux,{tag:'select-autre',options:['Noir','Brun','Châtain','Blond','Roux','Gris / Blanc']}) +
     '<div></div>' +
     '</div>' +
-    '<p class="sub p20-14">Hanches pour les femmes, entrejambe pour les hommes — renseignez le champ qui vous concerne.</p>' +
+    '<div class="tailles-calculees" id="tailles-calculees"></div>' +
+    '<p class="sub p20-14">📏 Mesurez-vous sans serrer le mètre ruban, en sous-vêtements ou vêtements fins. Vos tailles (haut, bas, générale) sont calculées automatiquement d’après vos mensurations, selon les barèmes internationaux : pour les changer, corrigez vos mesures.</p>' +
+    blocFicheEvenement() +
     '<div class="actions-row"><button class="btn ghost" data-goto="1">← Retour</button><button class="btn primary" id="save2">Enregistrer</button></div>';
 }
 
@@ -1031,15 +1076,86 @@ function lireIdentiteFormulaire(){
     sexe: (document.querySelector('input[name=sexe]:checked')||{}).value || ''
   };
 }
-function lirePhysiqueFormulaire(){
+// Informations demandées par les organisateurs de défilés (06/10/2026) : réservées
+// à l'agence, jamais affichées sur la fiche publique.
+function blocFicheEvenement(){
+  const f = state.ficheEvenement;
+  return '<h3 class="p20-17">Informations pour les événements</h3>' +
+    '<p class="sub">🔒 Réservées à l’agence MA2M (défilés, castings) — jamais affichées sur votre fiche publique. Votre Instagram se renseigne à l’étape « Identité ».</p>' +
+    '<div class="grid">' +
+    field('Régime / allergies','f-regime',f.regime,{full:true,placeholder:'Ex. végétarien, allergie aux arachides… ou « aucune »'}) +
+    field('TikTok (lien ou nom)','f-tiktok',f.tiktok,{placeholder:'@votre_compte ou lien'}) +
+    field('Facebook (lien ou nom)','f-facebook',f.facebook,{placeholder:'Nom du profil ou lien'}) +
+    '</div>' +
+    '<div class="field full p20-17"><label>Droit à l’image (photos et vidéos des événements)</label><div class="radio-row">' +
+    [['oui','Oui, j’accepte',true],['non','Non',false]].map(function(c){ return '<label class="radio-opt '+(f.droitImage===c[2]?'selected':'')+'"><input type="radio" name="droit-image" value="'+c[0]+'" '+(f.droitImage===c[2]?'checked':'')+'> '+c[1]+'</label>'; }).join('') +
+    '</div></div>';
+}
+// Encadré « Vos tailles » de l'étape physique : recalculé à chaque changement de mesure.
+function afficherTaillesCalculees(){
+  const zone = document.getElementById('tailles-calculees');
+  if (!zone || typeof ma2mTailles !== 'function') return;
+  const t = ma2mTailles({ category: state.identite.sexe, chest_cm: val('f-poitrine'), waist_cm: val('f-tourTaille'), hips_cm: val('f-hanches'), neck_cm: document.getElementById('f-cou') ? val('f-cou') : '' });
+  // Mesures incohérentes : cases en rouge + message, et pas de taille (js/tailles.js)
+  const champs = { chest_cm: 'f-poitrine', waist_cm: 'f-tourTaille', hips_cm: 'f-hanches' };
+  Object.keys(champs).forEach(function(cle){
+    const el = document.getElementById(champs[cle]); if (!el) return;
+    const bloc = el.closest('.field'), aReprendre = t.aReprendre.indexOf(cle) !== -1;
+    bloc.classList.toggle('mesure-a-reprendre', aReprendre);
+    let msg = bloc.querySelector('.mesure-msg');
+    if (aReprendre && !msg) { msg = document.createElement('div'); msg.className = 'mesure-msg'; msg.textContent = 'Mensuration pas exacte, à reprendre'; bloc.appendChild(msg); }
+    if (!aReprendre && msg) msg.remove();
+  });
+  if (t.aReprendre.length) {
+    zone.innerHTML = '<div class="tc-titre">Vos tailles (calculées)</div><p class="tc-alerte">⚠️ Vos mesures en rouge ne vont pas ensemble (votre haut et votre bas s’écartent de plus d’une taille). Reprenez-les avec un mètre ruban, sans serrer, pour obtenir vos tailles.</p><p class="tc-alerte">Tant qu’elles ne sont pas corrigées, vos mensurations sont cachées sur votre fiche publique. Sans correction sous 7 jours, votre fiche est retirée du site ; elle revient automatiquement dès que vous corrigez.</p>';
+    return;
+  }
+  const c = function(x){ return x ? echapperHtml(ma2mTailleCourte(x)) : '—'; };
+  zone.innerHTML = '<div class="tc-titre">Vos tailles (calculées)</div><div class="tc-grille">' +
+    '<div><span>Haut</span><b>'+c(t.haut)+'</b></div><div><span>Bas</span><b>'+c(t.bas)+'</b></div><div><span>Générale</span><b>'+echapperHtml(t.generale||'—')+'</b></div>' +
+    (t.homme ? '<div><span>Chemise (col)</span><b>'+(t.chemise ? t.chemise.eu+' / '+t.chemise.us+'″' : '—')+'</b></div>' : '') +
+    '</div>';
+}
+function brancherTaillesCalculees(){
+  if (!document.getElementById('tailles-calculees')) return;
+  ['f-poitrine','f-tourTaille','f-hanches','f-cou'].forEach(function(id){ const el = document.getElementById(id); if (el) el.addEventListener('change', afficherTaillesCalculees); });
+  afficherTaillesCalculees();
+}
+function lireFicheEvenementFormulaire(){
+  const choix = document.querySelector('input[name="droit-image"]:checked');
   return {
+    tailleHaut: '', tailleBas: '', // tailles désormais calculées (js/tailles.js)
+    regime: val('f-regime'), tiktok: val('f-tiktok'), facebook: val('f-facebook'),
+    droitImage: choix ? choix.value === 'oui' : null
+  };
+}
+// Enregistre aussi les informations « événements » saisies à l'étape physique. Ne bloque
+// jamais l'étape : en cas d'échec, un message le signale et la suite reste possible.
+async function enregistrerFicheEvenementDepuisFormulaire(){
+  if (!document.getElementById('f-tiktok')) return true;
+  const fe = lireFicheEvenementFormulaire();
+  const vide = !fe.tailleHaut && !fe.tailleBas && !fe.regime && !fe.tiktok && !fe.facebook && fe.droitImage == null;
+  const avant = state.ficheEvenement;
+  const dejaVide = !avant.tailleHaut && !avant.tailleBas && !avant.regime && !avant.tiktok && !avant.facebook && avant.droitImage == null;
+  state.ficheEvenement = fe;
+  if (vide && dejaVide) return true; // rien de saisi : pas de ligne vide en base
+  await Store.saveFicheEvenement(fe);
+  return true;
+}
+
+function lirePhysiqueFormulaire(){
+  const p = {
     taille: val('f-taille'), poids: val('f-poids'), poitrine: val('f-poitrine'), tourTaille: val('f-tourTaille'),
     hanches: val('f-hanches'), entrejambe: val('f-entrejambe'), pointure: val('f-pointure'),
-    tailleVet: valeurSelectOuAutre('f-tailleVet', 'f-tailleVet-autre'),
+    tailleVet: state.physique.tailleVet,
+    epaules: val('f-epaules'), bras: val('f-bras'), cou: document.getElementById('f-cou') ? val('f-cou') : '', tete: val('f-tete'),
     yeux: valeurSelectOuAutre('f-yeux', 'f-yeux-autre'),
     cheveux: valeurSelectOuAutre('f-cheveux', 'f-cheveux-autre'),
     carnation: val('f-carnation')
   };
+  // Taille vêtements : jamais saisie, calculée d'après les mensurations (js/tailles.js)
+  p.tailleVet = tailleGeneraleCalculee(p, state.identite.sexe);
+  return p;
 }
 
 function bindWizard(){
@@ -1049,6 +1165,7 @@ function bindWizard(){
   document.querySelectorAll('.progress-fill[data-largeur]').forEach(function(el){ el.style.width = el.dataset.largeur + '%'; });
   document.querySelectorAll('[data-goto]').forEach(function(b){ b.addEventListener('click', function(){ goto(parseInt(b.dataset.goto,10)); }); });
   initSelectsAvecAutre();
+  brancherTaillesCalculees();
   bindStepIdentite();
   const s = state;
 
@@ -1067,7 +1184,7 @@ function bindWizard(){
     const btn = this;
     Object.assign(s.physique, lirePhysiqueFormulaire());
     btn.disabled = true; btn.textContent = 'Enregistrement…';
-    const ok = await Store.saveBlock(physiqueToDb(s.physique));
+    const ok = await Store.saveBlock(physiqueToDb(s.physique)) && await enregistrerMesuresSupp(s.physique) && await enregistrerFicheEvenementDepuisFormulaire();
     if (ok) { toast('Enregistré'); goto(3); } else { btn.disabled=false; btn.textContent='Enregistrer'; }
   });
 
@@ -1425,7 +1542,7 @@ function messageBlocPersonnalise(k, prenom){
 }
 function viewBlockEditor(k){
   const titles = {identite:'Identité', physique:'Physique', formation:'Formation', experiences:'Expérience professionnelle', photos:'Photos & compcard'};
-  const prenom = (state.identite.nomComplet||'').trim().split(/\s+/)[0] || '';
+  const prenom = prenomDe(state.identite.nomComplet);
   const sousTitre = prenom ? messageBlocPersonnalise(k, prenom) : 'Ce bloc s’enregistre indépendamment des autres.';
   return header('Modification du profil') +
     '<div class="block-editor-page"><div class="block-editor-top"><div><span class="editor-kicker">VOTRE ESPACE</span><h1>'+echapperHtml(prenom ? (prenom+' · '+(titles[k]||'')) : (titles[k]||'Modification'))+'</h1><p>'+echapperHtml(sousTitre)+'</p></div>' +
@@ -1442,6 +1559,7 @@ function bindBlockPage(k){
   bindPhotoHandlers();
   bindCompetencesHandlers();
   initSelectsAvecAutre();
+  brancherTaillesCalculees();
   bindStepIdentite();
 
   const btn = document.querySelector('[data-editor-save="1"]');
@@ -1475,6 +1593,7 @@ function bindBlockPage(k){
       payload = formationToDb(s.formation);
     }
     ok = await Store.saveBlock(payload);
+    if (ok && k==='physique') ok = await enregistrerMesuresSupp(s.physique) && await enregistrerFicheEvenementDepuisFormulaire();
     if (ok) { btn.textContent='✓ Enregistré'; btn.classList.add('saved'); setTimeout(function(){ toast('Bloc « '+k+' » enregistré'); }, 400); }
     else { btn.disabled=false; btn.textContent='Enregistrer'; }
   });
@@ -1546,7 +1665,7 @@ function donneesCvDepuisEtat(){
       return ph ? (ph.urlPleine||ph.url) : null;
     }),
     photosBook: (state.photos.principale ? [state.photos.principale] : []).concat(state.photos.book).map(function(ph){ return ph.urlPleine||ph.url; }),
-    physique: p, formation: f, competences: state.competences, experiences: state.experiences
+    physique: p, formation: f, competences: state.competences, experiences: state.experiences, sexe: d.sexe
   };
 }
 
@@ -1593,6 +1712,8 @@ function openCompcard(){
   const cover = slots[0];
   const sidePhotos = slots.slice(1).map(function(ph){ return ph ? '<img src="'+(ph.urlPleine||ph.url)+'" alt="Photo compcard">' : '<div class="cc-empty-photo"></div>'; }).join('');
   const d = state.identite, p = state.physique;
+  // mesures incohérentes : non affichées, comme sur la compcard téléchargée (js/tailles.js)
+  const masquer = typeof ma2mMesuresAReprendre === 'function' && ma2mMesuresAReprendre({ category: d.sexe, chest_cm: p.poitrine, waist_cm: p.tourTaille, hips_cm: p.hanches });
   document.getElementById('overlayContent').innerHTML =
     '<div class="overlay-close"><button id="closeOv">✕</button></div>' +
     '<div class="compcard-model">' +
@@ -1600,11 +1721,11 @@ function openCompcard(){
       '<div class="ccm-photo-grid"><div class="ccm-cover">'+(cover?'<img src="'+(cover.urlPleine||cover.url)+'" alt="Photo plein pied compcard">':'<div class="cc-empty-photo">PHOTO PLEIN PIED</div>')+'</div><div class="ccm-side-grid">'+sidePhotos+'</div></div>' +
       '<div class="ccm-body"><h1>'+echapperHtml(d.nomComplet||'')+'</h1><div class="ccm-meta">'+echapperHtml(libelleNiveauPublic(niveauControle(state.profilPro.niveauMannequin, state.experiences, state.profilPro.anneesExperience)))+'  ·  '+echapperHtml(d.ville||'Abidjan')+'</div>' +
       '<div class="ccm-measures">' +
-        '<div><span>TAILLE</span><b>'+(p.taille||'—')+' cm</b></div><div><span>POIDS</span><b>'+(p.poids||'—')+' kg</b></div><div><span>POITRINE</span><b>'+(p.poitrine||'—')+' cm</b></div>' +
-        '<div><span>TOUR DE TAILLE</span><b>'+(p.tourTaille||'—')+' cm</b></div><div><span>HANCHES</span><b>'+(p.hanches||p.entrejambe||'—')+' cm</b></div><div><span>POINTURE</span><b>'+(p.pointure||'—')+'</b></div>' +
-        '<div><span>CARNATION</span><b>'+(p.carnation||'—')+'</b></div><div><span>TAILLE VÊTEMENTS</span><b>'+(p.tailleVet||'—')+'</b></div><div><span>YEUX</span><b>'+(p.yeux||'—')+'</b></div><div><span>CHEVEUX</span><b>'+(p.cheveux||'—')+'</b></div>' +
+        '<div><span>TAILLE</span><b>'+(p.taille||'—')+' cm</b></div><div><span>POIDS</span><b>'+(p.poids||'—')+' kg</b></div><div><span>POITRINE</span><b>'+(masquer?'—':(p.poitrine||'—')+' cm')+'</b></div>' +
+        '<div><span>TOUR DE TAILLE</span><b>'+(masquer?'—':(p.tourTaille||'—')+' cm')+'</b></div><div><span>HANCHES</span><b>'+(masquer?'—':(p.hanches||p.entrejambe||'—')+' cm')+'</b></div><div><span>POINTURE</span><b>'+(p.pointure||'—')+'</b></div>' +
+        '<div><span>CARNATION</span><b>'+echapperHtml(p.carnation||'—')+'</b></div><div><span>TAILLE VÊTEMENTS</span><b>'+echapperHtml(p.tailleVet||'—')+'</b></div><div><span>YEUX</span><b>'+echapperHtml(p.yeux||'—')+'</b></div><div><span>CHEVEUX</span><b>'+echapperHtml(p.cheveux||'—')+'</b></div>' +
       '</div></div>' +
-      '<div class="ccm-footer"><b>CONTACT OFFICIEL MA2M</b><div>+225 27 22 23 11 76 · +225 05 45 65 66 87</div><div>infos.ma2m@gmail.com</div><div>Instagram · Facebook · TikTok · YouTube  @maitreakessemodelmanagement</div><small>Document officiel généré depuis maitreakessemodelmanagement.com — toute demande de booking passe exclusivement par l’agence.</small></div>' +
+      '<div class="ccm-footer"><b>CONTACT OFFICIEL MA2M</b><div>'+MA2M_TELEPHONES.join(' · ')+'</div><div>'+MA2M_EMAIL+'</div><div>Instagram · Facebook · TikTok · YouTube  @maitreakessemodelmanagement</div><small>Document officiel généré depuis maitreakessemodelmanagement.com — toute demande de booking passe exclusivement par l’agence.</small></div>' +
     '</div>' +
     '<div class="cv-actions"><button class="btn ghost small" id="closeOv2">Fermer</button><button class="btn ghost small" id="p20BtnJpeg">Télécharger en JPEG</button><button class="btn primary small" id="p20BtnPdf">Télécharger en PDF</button></div>';
   showOverlay();

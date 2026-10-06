@@ -118,3 +118,17 @@ html { background: #080707; }
 /* Numéro fixe de chaque photo du Book (06/10/2026) : l'agence s'y réfère dans ses messages. */
 .book-thumb .book-num { position: absolute; left: 8px; top: 8px; z-index: 5; background: rgba(8, 7, 7, .82); color: #f5efe7; border: 1px solid rgba(255, 255, 255, .25); border-radius: 5px; padding: 3px 7px; font-size: .7rem; font-weight: 600; letter-spacing: .04em; }
 .book-thumb .book-num + .book-slot-tag { top: 36px; }
+
+/* Encadré « Vos tailles (calculées) » de l'étape physique (06/10/2026) :
+   tailles déduites des mensurations (js/tailles.js), non modifiables à la main. */
+.tailles-calculees { margin: 1.2rem 0 0.4rem; padding: 0.9rem 1rem; border: 1px solid rgba(213, 84, 104, 0.45); border-radius: 12px; background: rgba(122, 18, 32, 0.12); }
+.tailles-calculees .tc-titre { font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--or-clair); margin-bottom: 0.6rem; }
+.tailles-calculees .tc-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 0.6rem; }
+.tailles-calculees .tc-grille span { display: block; font-size: 0.75rem; color: var(--texte-clair); }
+.tailles-calculees .tc-grille b { font-size: 1.05rem; color: var(--ivoire); font-weight: 600; }
+/* Mesure incohérente : case en rouge + « Mensuration pas exacte, à reprendre ». */
+.field.mesure-a-reprendre select, .field.mesure-a-reprendre input { border-color: #e0475e !important; box-shadow: 0 0 0 1px #e0475e; }
+.field.mesure-a-reprendre label { color: #ff8a9a; }
+.mesure-msg { color: #ff8a9a; font-size: 0.8rem; font-weight: 600; }
+.tailles-calculees .tc-alerte { margin: 0; color: #ffb3bd; font-size: 0.9rem; line-height: 1.5; }
+.tailles-calculees .tc-alerte + .tc-alerte { margin-top: 0.6rem; }
