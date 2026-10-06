@@ -388,6 +388,28 @@
     return { effacerChoix: () => { choisi = aujIso; dessiner(); } };
   }
 
+  // Calendrier de la page Agenda : un clic sur un jour remplit la liste détaillée.
+  function brancherCalendrier(avenirBoite, avenir, passes) {
+    const boiteCal = document.getElementById('agenda-calendrier');
+    if (!boiteCal) return;
+    const titreListe = document.getElementById('agenda-liste-titre');
+    const toutVoir = document.getElementById('agenda-tout-voir');
+    const tous = passes.slice().reverse().concat(avenir);
+    const toutAfficher = () => {
+      if (titreListe) titreListe.textContent = T.aVenir;
+      remplir(avenirBoite, avenir, T.vide, false);
+      if (toutVoir) toutVoir.hidden = true;
+    };
+    const cal = calendrier(boiteCal, tous, (jour, ceJour) => {
+      if (!jour) { toutAfficher(); return; }
+      const d = dateDe(jour);
+      if (titreListe) titreListe.textContent = T.programmeDu + d.toLocaleDateString(LANGUE, { weekday: 'long', day: 'numeric', month: 'long' });
+      remplir(avenirBoite, ceJour, T.rienCeJour, false);
+      if (toutVoir) toutVoir.hidden = false;
+    });
+    if (toutVoir) toutVoir.addEventListener('click', () => { toutAfficher(); cal.effacerChoix(); });
+  }
+
   async function charger() {
     const avenirBoite = document.getElementById('agenda-avenir');
     const passesBoite = document.getElementById('agenda-passes');
@@ -409,25 +431,7 @@
     }
     const { avenir, passes } = separerAgenda(data);
     remplir(avenirBoite, avenir, T.vide, false);
-    const boiteCal = document.getElementById('agenda-calendrier');
-    if (boiteCal) {
-      const titreListe = document.getElementById('agenda-liste-titre');
-      const toutVoir = document.getElementById('agenda-tout-voir');
-      const tous = passes.slice().reverse().concat(avenir);
-      const toutAfficher = () => {
-        if (titreListe) titreListe.textContent = T.aVenir;
-        remplir(avenirBoite, avenir, T.vide, false);
-        if (toutVoir) toutVoir.hidden = true;
-      };
-      const cal = calendrier(boiteCal, tous, (jour, ceJour) => {
-        if (!jour) { toutAfficher(); return; }
-        const d = dateDe(jour);
-        if (titreListe) titreListe.textContent = T.programmeDu + d.toLocaleDateString(LANGUE, { weekday: 'long', day: 'numeric', month: 'long' });
-        remplir(avenirBoite, ceJour, T.rienCeJour, false);
-        if (toutVoir) toutVoir.hidden = false;
-      });
-      if (toutVoir) toutVoir.addEventListener('click', () => { toutAfficher(); cal.effacerChoix(); });
-    }
+    brancherCalendrier(avenirBoite, avenir, passes);
     remplir(passesBoite, passes, T.videPasses, false);
     if (accueil) {
       // Sur l'accueil, l'encart n'apparaît que s'il y a des projets à venir.

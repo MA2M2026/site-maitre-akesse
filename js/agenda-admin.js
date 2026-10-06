@@ -31,7 +31,8 @@
   }
   function majCompte() {
     var n = cochees('agenda-mannequins').length;
-    $('agenda-compte').textContent = n ? n + (n > 1 ? ' mannequins choisis' : ' mannequin choisi') : '';
+    var libelle = n > 1 ? ' mannequins choisis' : ' mannequin choisi';
+    $('agenda-compte').textContent = n ? n + libelle : '';
   }
 
   async function chargerChoix() {
@@ -140,7 +141,7 @@
     $('agenda-notes').value = p.notes_internes || '';
     $('agenda-visible').checked = !!p.visible;
     [['agenda-mannequins', p.mannequin_ids], ['agenda-partenaires', p.partenaire_ids]].forEach(function (z) {
-      $(z[0]).querySelectorAll('input[type=checkbox]').forEach(function (c) { c.checked = (z[1] || []).indexOf(c.value) !== -1; });
+      $(z[0]).querySelectorAll('input[type=checkbox]').forEach(function (c) { c.checked = (z[1] || []).includes(c.value); });
     });
     majCompte();
     $('agenda-enregistrer').textContent = 'Enregistrer les modifications';
@@ -152,7 +153,7 @@
   function filtrer(t) {
     var q = String(t || '').trim().toLowerCase();
     $('agenda-mannequins').querySelectorAll('label').forEach(function (l) {
-      l.hidden = !!q && l.dataset.nom.indexOf(q) === -1;
+      l.hidden = !!q && !l.dataset.nom.includes(q);
     });
   }
 
@@ -184,13 +185,14 @@
     message('Enregistrement…');
     try {
       var r = id
-        ? await sb.from('agenda_projets').update(Object.assign({ updated_at: new Date().toISOString() }, ligne)).eq('id', id).select('id')
+        ? await sb.from('agenda_projets').update({ updated_at: new Date().toISOString(), ...ligne }).eq('id', id).select('id')
         : await sb.from('agenda_projets').insert(ligne).select('id');
       if (r.error) { message('Erreur : ' + r.error.message, true); return; }
       // Aucune ligne touchée = session expirée ou compte non admin : rien n'a été enregistré.
       if (!r.data || !r.data.length) { message('Rien n’a été enregistré : reconnectez-vous au tableau de bord puis réessayez.', true); return; }
       viderFormulaire();
-      message(id ? 'Projet modifié.' : 'Projet ajouté à l’agenda.' + (ligne.visible ? ' Il est visible sur la page Agenda du site.' : ''));
+      var visibleSite = ligne.visible ? ' Il est visible sur la page Agenda du site.' : '';
+      message(id ? 'Projet modifié.' : 'Projet ajouté à l’agenda.' + visibleSite);
       await chargerProjets();
     } finally {
       enCours = false;
@@ -223,7 +225,7 @@
 
   // Chargement au premier affichage de la rubrique (la session admin est alors ouverte).
   function siVisible() {
-    if (!charge && section.classList.contains('tdb-actif')) charger();
+    if (!charge && section.classList.contains('tdb-actif')) charger().catch(function (e) { message('Impossible de charger l’agenda : ' + (e && e.message), true); });
   }
   new MutationObserver(siVisible).observe(section, { attributes: true, attributeFilter: ['class'] });
   siVisible();
