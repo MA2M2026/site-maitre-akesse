@@ -142,11 +142,20 @@
     var lignes = [];
     function rangee(libelle, lettre, valeurs) {
       valeurs.tr = valeurs.eu;
-      lignes.push('<tr><th scope="row">' + libelle + '</th><td class="eq-lettre">' + (lettre || '—') + '</td>' +
+      lignes.push('<tr><th scope="row">' + libelle + '</th><td class="eq-lettre">' + (lettre || '') + '</td>' +
         cols.map(function (c) { var v = valeurs[c]; return '<td>' + (v === undefined || v === null || v === '' ? '—' : String(v)) + '</td>'; }).join('') + '</tr>');
     }
     if (t.haut) rangee(anglais ? 'Top' : 'Haut', t.haut.lettre, Object.assign({}, t.haut));
     if (t.bas) rangee(anglais ? 'Bottom' : 'Bas', t.bas.lettre, Object.assign({}, t.bas));
+    // Taille générale : celle du haut et du bas réunies (ex. M-XL → 38-42 en France)
+    if (t.haut && t.bas) {
+      var gen = {};
+      ['eu', 'it', 'uk', 'us', 'br', 'jp', 'kr', 'cn'].forEach(function (c) {
+        var h = t.haut[c], b = t.bas[c];
+        gen[c] = (h === undefined || b === undefined) ? '' : (String(h) === String(b) ? h : h + '-' + b);
+      });
+      rangee(anglais ? 'Overall' : 'Générale', t.generale, gen);
+    }
     if (t.pointure) {
       var pt = t.pointure, cmPied = pt.asie / 10;
       rangee(anglais ? 'Shoes' : 'Pointure', '', { eu: pt.eu, it: pt.eu, uk: pt.uk, us: pt.us, br: pt.eu - 2, jp: cmPied, kr: pt.asie, cn: pt.asie });
