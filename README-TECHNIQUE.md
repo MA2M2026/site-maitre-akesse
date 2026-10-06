@@ -1517,10 +1517,16 @@ toutes les écritures sont simulées pendant l'enregistrement.
   Femmes : haut = tour de poitrine, bas = tour de hanches. Hommes : haut = tour
   de poitrine, bas = tour de taille. Taille générale = haut et bas (ex. « M-L »).
   Équivalences FR/EU, IT, UK, US, BR, JP, KR, CN (tableau sur la fiche publique).
-- **Option A et taille maximum** (décision du 06/10/2026, soir ; hommes jusqu'à XL) : la taille retenue est
+- **Grille des mensurations MA2M** (décision du 06/10/2026, soir, Extension 123) : les
+  tailles XS à L suivent la grille de l'agence (femmes : poitrine XS 78–83, S 84–87,
+  M 88–93, L 94–100 ; taille 58–63 / 64–67 / 68–73 / 74–80 ; bassin 84–89 / 90–93 /
+  94–99 / 100–106 — hommes : poitrine 86–91 / 92–95 / 96–101 / 102–108 ; taille
+  68–73 / 74–77 / 78–83 / 84–90 ; bassin comme les femmes). Pile sur une limite = la
+  taille du dessus. La pointure n'entre pas dans le calcul. Maximum L pour tous.
+- **Option A et taille maximum** (décision du 06/10/2026, soir ; maximum L pour tous depuis la grille MA2M) : la taille retenue est
   celle de la plus grande des mesures (femmes : haut = poitrine + taille, bas = bassin +
-  taille ; hommes : haut = poitrine, bas = taille + bassin). Au-delà de M (femmes) ou
-  XL (hommes) — `MAX_FEMMES` / `MAX_HOMMES` dans `js/tailles.js` — « Mensurations
+  taille ; hommes : haut = poitrine, bas = taille + bassin). Au-delà de L
+  — `MAX_FEMMES` / `MAX_HOMMES` dans `js/tailles.js` — « Mensurations
   excessives » en rouge dans l'Espace (accueil et étape physique) et dans le Rapport des
   profils, avec les repères S/M(/L) ; rien n'est caché au public pour autant.
 - **Mesures incohérentes** : femmes, bas plus grand que le haut de plus de 2

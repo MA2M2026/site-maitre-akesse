@@ -6356,3 +6356,35 @@ with nouvelle as (
   returning 1
 )
 select nouvelle.cle as "Clé à coller dans le script Google" from nouvelle, enregistree;
+
+-- =====================================================================
+-- Extension 123 — Grille des mensurations MA2M (décision de la propriétaire,
+-- 06/10/2026, soir) : nouvelles bornes de tailles, les mêmes que js/tailles.js
+-- (femmes : poitrine XS 78–83, S 84–87, M 88–93, L 94–100 ; bassin XS 84–89,
+-- S 90–93, M 94–99, L 100–106 — hommes : poitrine XS 86–91, S 92–95, M 96–101,
+-- L 102–108 ; taille XS 68–73, S 74–77, M 78–83, L 84–90 ; au-delà, pas de 6 cm).
+-- La règle de cohérence (écarts admis) ne change pas. Les dates « mesures à
+-- reprendre » sont recalculées pour tous les profils avec la nouvelle grille.
+-- =====================================================================
+create or replace function mesures_incoherentes(categorie text, poitrine numeric, tour_taille numeric, hanches numeric)
+returns boolean language sql immutable as $$
+  select case when categorie = 'homme' then
+    coalesce((rang_taille(tour_taille, array[67,73,77,83,90,96,102])
+            - rang_taille(poitrine, array[85,91,95,101,108,114,120])) not between -2 and 1, false)
+  else
+    coalesce((rang_taille(hanches, array[83,89,93,99,106,112,118])
+            - rang_taille(poitrine, array[77,83,87,93,100,106,112])) not between -1 and 2, false)
+  end;
+$$;
+
+begin;
+alter table model_profiles disable trigger trg_proteger_proprietaire_profil;
+update model_profiles set mesures_a_reprendre_depuis =
+  case when mesures_incoherentes(category, chest_cm, waist_cm, hips_cm) then coalesce(mesures_a_reprendre_depuis, now()) else null end
+where (mesures_a_reprendre_depuis is not null) <> mesures_incoherentes(category, chest_cm, waist_cm, hips_cm);
+alter table model_profiles enable trigger trg_proteger_proprietaire_profil;
+commit;
+
+-- Vérification (résultat affiché) : les mannequins dont les mesures sont à reprendre.
+select full_name, mesures_a_reprendre_depuis from model_profiles
+where mesures_a_reprendre_depuis is not null order by full_name;
