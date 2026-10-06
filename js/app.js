@@ -826,9 +826,10 @@ function titreLisible(t) {
   const s = String(t || '').trim();
   if (s !== s.toUpperCase()) return s;
   return s.split(/(\s+)/).map((mot, i) => {
-    if (/\d/.test(mot)) return mot;
     const bas = mot.toLowerCase();
-    if (i > 0 && MOTS_COURTS.includes(bas)) return bas;
+    const motCourt = MOTS_COURTS.includes(bas);
+    if (i > 0 && motCourt) return bas;
+    if (/\d/.test(mot) || (!motCourt && /^[A-Z]{1,2}$/.test(mot))) return mot; // MA2M, 2026, sigles (CI, MA)
     const capitale = bas.replace(/(^|['’(-])(\S)/g, (m, x, y) => x + y.toUpperCase());
     return i > 0 && /^[dl]['’]/.test(bas) ? capitale.charAt(0).toLowerCase() + capitale.slice(1) : capitale; // « d'Abidjan »
   }).join('');

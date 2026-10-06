@@ -111,7 +111,8 @@
     if (!boite) return;
     boite.textContent = '';
     let suite = boite.nextElementSibling && boite.nextElementSibling.classList.contains('agenda-plus') ? boite.nextElementSibling : null;
-    if (suite) suite.hidden = true;
+    if (suite) suite.remove();
+    suite = null;
     if (!projets.length) { boite.appendChild(el('p', 'agenda-vide', vide)); return; }
     const taille = parPaquet || projets.length;
     let montres = 0;
@@ -120,15 +121,16 @@
       montres = Math.min(projets.length, montres + taille);
       const reste = projets.length - montres;
       if (!reste) { if (suite) suite.hidden = true; return; }
+      // Un seul bouton, gardé d'un clic à l'autre : le focus clavier ne saute pas.
       if (!suite) {
         suite = el('div', 'agenda-plus');
+        const b = el('button', 'btn');
+        b.type = 'button';
+        b.addEventListener('click', encore);
+        suite.appendChild(b);
         boite.after(suite);
       }
-      suite.textContent = '';
-      const b = el('button', 'btn', T.voirPlus + ' (' + reste + ')');
-      b.type = 'button';
-      b.addEventListener('click', encore);
-      suite.appendChild(b);
+      suite.firstChild.textContent = T.voirPlus + ' (' + reste + ')';
       suite.hidden = false;
     };
     encore();
@@ -137,14 +139,21 @@
   // Événements déjà enregistrés sur la page « Événements » : repris dans l'agenda (sans les
   // photos). Les jours consécutifs d'un même événement forment une seule entrée ; un
   // événement déjà saisi dans l'agenda (même titre, mêmes dates) n'est pas doublé.
-  async function evenementsDuSite(projets) {
-    const { data, error } = await sb.from('evenements').select('id, titre, date_evenement, lieu').not('date_evenement', 'is', null).order('date_evenement');
-    if (error || !data) return [];
+  // Lecture lancée en même temps que l'agenda (12 derniers mois, comme agenda_public).
+  function lireEvenementsDuSite() {
+    const depuis = dateDuJour(ajouterJours(new Date(), -365));
+    return lireToutesLignes(() => sb.from('evenements').select('id, titre, date_evenement, lieu')
+      .gte('date_evenement', depuis).order('date_evenement').order('id'));
+  }
+  function evenementsDuSite(lecture, projets) {
+    const data = lecture && !lecture.error ? lecture.data : [];
     const groupes = [];
     data.forEach(e => {
       const cle = String(e.titre || '').trim().toLowerCase();
-      const dernier = groupes.find(g => g.cle === cle && dateDuJour(ajouterJours(dateDe(g.date_fin || g.date_debut), 1)) === e.date_evenement);
-      if (dernier) { dernier.date_fin = e.date_evenement; return; }
+      // même titre : même jour (doublon) ou jour suivant (événement sur plusieurs jours)
+      const dernier = groupes.find(g => g.cle === cle && e.date_evenement >= g.date_debut
+        && e.date_evenement <= dateDuJour(ajouterJours(dateDe(g.date_fin || g.date_debut), 1)));
+      if (dernier) { if (e.date_evenement > (dernier.date_fin || dernier.date_debut)) dernier.date_fin = e.date_evenement; return; }
       groupes.push({ cle, id: 'ev-' + e.id, type: 'evenement', titre: titreLisible(e.titre), date_debut: e.date_evenement, date_fin: null, ville: null, lieu: e.lieu ? titreLisible(e.lieu) : null, deSite: true });
     });
     return groupes.filter(g => !projets.some(p => String(p.titre || '').trim().toLowerCase() === g.cle
@@ -462,17 +471,20 @@
     if (typeof sb === 'undefined' || !sb) return;
     // L'accueil ne demande que les 3 prochains projets (moins de données sur mobile).
     const seulAccueil = !avenirBoite && !passesBoite;
-    const { data, error } = await sb.rpc('agenda_public', seulAccueil ? { seulement_a_venir: true, limite: 3 } : {});
+    const [{ data, error }, lectureEvenements] = await Promise.all([
+      sb.rpc('agenda_public', seulAccueil ? { seulement_a_venir: true, limite: 3 } : {}),
+      seulAccueil ? Promise.resolve(null) : lireEvenementsDuSite().catch(() => null)
+    ]);
     // PGRST202 : fonction introuvable, l'agenda n'est pas encore activé (Extension 124) ;
     // la page s'affiche quand même, avec les événements de la page « Événements ».
     if (error) console.warn('Agenda non chargé', error);
     const enPanne = error && error.code !== 'PGRST202';
     let projets = data || [];
-    if (!seulAccueil) projets = projets.concat(await evenementsDuSite(projets));
+    if (!seulAccueil) projets = projets.concat(evenementsDuSite(lectureEvenements, projets));
     const { avenir, passes } = separerAgenda(projets);
     remplir(avenirBoite, avenir, enPanne ? T.erreur : T.vide, false, PAQUET);
     brancherCalendrier(avenirBoite, avenir, passes);
-    remplir(passesBoite, passes, T.videPasses, true, PAQUET);
+    remplir(passesBoite, passes, T.videPasses, false, PAQUET);
     if (accueil) {
       // Sur l'accueil, l'encart n'apparaît que s'il y a des projets à venir.
       const bloc = accueil.closest('[data-agenda-accueil]');

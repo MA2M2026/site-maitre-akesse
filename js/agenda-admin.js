@@ -14,6 +14,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var charge = false, enCours = false, listesOk = false;
   var projets = [], mannequins = [], partenaires = [];
+  var projetEnCours = null; // projet ouvert avec « Modifier »
 
   function message(t, erreur) {
     var m = $('agenda-msg');
@@ -58,6 +59,12 @@
     boite.textContent = '';
     var jours = joursEntre($('agenda-date').value, $('agenda-date-fin').value);
     if (!jours.length) { boite.textContent = 'Choisissez d’abord la date (et la date de fin si l’activité dure plusieurs jours).'; return; }
+    if (jours.length === 60 && $('agenda-date-fin').value > jours[59]) {
+      var note = document.createElement('p');
+      note.className = 'agenda-aide';
+      note.textContent = 'Activité très longue : les horaires se saisissent pour les 60 premiers jours ; précisez la suite dans les notes.';
+      boite.appendChild(note);
+    }
     jours.forEach(function (j) {
       var l = document.createElement('div');
       l.className = 'agenda-seance';
@@ -141,7 +148,7 @@
     var parts = nomsDe(p.partenaire_ids, partenaires, 'nom');
     var horaires = (p.seances || []).map(function (x) { return dateAgenda(x.jour) + ' ' + (x.debut || '?') + '–' + (x.fin || '?'); }).join(' ; ');
     var intervenants = (p.intervenants || []).map(function (x) { return (x.role ? x.role + ' : ' : '') + x.nom; });
-    var prive = [p.heure, p.adresse, horaires && !p.horaires_publics ? horaires : ''].filter(Boolean).join(' · ');
+    var prive = [horaires ? '' : p.heure, p.adresse, horaires && !p.horaires_publics ? horaires : ''].filter(Boolean).join(' · ');
     div.innerHTML =
       '<div class="agenda-date">' + echapperHtml(dateAgenda(p.date_debut, p.date_fin)) + '</div>'
       + '<div><span class="agenda-type">' + echapperHtml(libelleTypeAgenda(p.type)) + (p.visible ? '' : ' · caché du site') + '</span>'
@@ -193,6 +200,7 @@
   function viderFormulaire() {
     form.reset();
     $('agenda-id').value = '';
+    projetEnCours = null;
     $('agenda-visible').checked = true;
     $('agenda-intervenants').textContent = '';
     dessinerSeances([]);
@@ -203,6 +211,7 @@
   }
 
   function remplirFormulaire(p) {
+    projetEnCours = p;
     $('agenda-id').value = p.id;
     $('agenda-type').value = p.type;
     $('agenda-titre').value = p.titre || '';
@@ -243,8 +252,6 @@
     var titre = $('agenda-titre').value.trim(), debut = $('agenda-date').value, fin = $('agenda-date-fin').value || null;
     if (!titre || !debut) { message('Indiquez au moins un titre et une date.', true); return; }
     if (fin && fin < debut) { message('La date de fin doit être après la date de début.', true); return; }
-    var heuresInversees = lireSeances().some(function (x) { return x.debut && x.fin && x.fin < x.debut; });
-    if (heuresInversees) { message('Une heure de fin est avant l’heure de début : vérifiez les horaires.', true); return; }
     var ligne = {
       type: $('agenda-type').value,
       titre: titre,
@@ -256,6 +263,8 @@
       intervenants: lireIntervenants(),
       seances: lireSeances(),
       horaires_publics: $('agenda-horaires-publics').checked,
+      // les horaires jour par jour remplacent l'ancien champ « Heure » (Extension 124)
+      heure: lireSeances().length ? null : (projetEnCours && projetEnCours.heure) || null,
       adresse: $('agenda-adresse').value.trim() || null,
       notes_internes: $('agenda-notes').value.trim() || null,
       visible: $('agenda-visible').checked,
@@ -292,7 +301,9 @@
   $('agenda-ajouter-partenaire').addEventListener('click', async function () {
     var champ = $('agenda-nouveau-partenaire'), nom = champ.value.trim();
     if (!nom) { champ.focus(); return; }
-    var existant = partenaires.find(function (x) { return x.nom.toLowerCase() === nom.toLowerCase(); });
+    // Sans la liste des partenaires, on ne peut pas éviter un doublon sur la page Partenaires.
+    if (!listesOk) { message('Patientez : la liste des partenaires n’est pas encore chargée (ou rechargez la page).', true); return; }
+    var existant = partenaires.find(function (x) { return String(x.nom || '').toLowerCase() === nom.toLowerCase(); });
     if (existant) {
       var c = $('agenda-partenaires').querySelector('input[value="' + existant.id + '"]');
       if (c) c.checked = true;
