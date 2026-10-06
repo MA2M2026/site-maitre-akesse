@@ -558,14 +558,10 @@ const Store = {
       }
       return true;
     }
-    const { error } = await sb.from('model_photos').update({ compcard_ordre: ordre }).eq('id', photoId).eq('model_id', currentUser.id);
-    if (error) { console.error(error); toast('Échec de la sélection compcard', true); return false; }
-    // L'emplacement était déjà pris (« Choisir dans mon Book » sur une case pleine) :
-    // l'ancienne photo le quitte, sinon deux photos se retrouvaient sur la même case
-    // et la compcard téléchargée gardait l'ancienne (signalé le 06/10/2026). Fait
-    // APRÈS la pose de la nouvelle photo : en cas d'échec, la case n'est jamais vide.
-    const { error: eLib } = await sb.from('model_photos').update({ compcard_ordre: null }).eq('model_id', currentUser.id).eq('compcard_ordre', ordre).neq('id', photoId);
-    if (eLib) { console.error(eLib); toast('Échec de la sélection compcard — réessayez', true); return false; }
+    // L'ancienne photo de la case la quitte (js/app.js — sinon deux photos sur la même
+    // case et la compcard téléchargée gardait l'ancienne, signalé le 06/10/2026).
+    const error = await affecterCaseCompcard(currentUser.id, photoId, ordre);
+    if (error) { console.error(error); toast('Échec de la sélection compcard — réessayez', true); return false; }
     return true;
   },
 };

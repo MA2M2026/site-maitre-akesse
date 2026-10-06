@@ -758,6 +758,17 @@ function chargerJsPdf() {
   return promesseJsPdf;
 }
 
+// Place une photo sur une case (1 à 5) de la compcard d'un mannequin, ou l'en retire
+// (caseN = null). Fonction partagée par l'Espace mannequin et le tableau de bord
+// (06/10/2026). La photo qui occupait déjà la case la quitte — APRÈS la pose de la
+// nouvelle, pour qu'un échec ne laisse jamais la case vide. Renvoie l'erreur ou null.
+async function affecterCaseCompcard(modelId, photoId, caseN) {
+  const r = await sb.from('model_photos').update({ compcard_ordre: caseN }).eq('id', photoId).eq('model_id', modelId);
+  if (r.error || caseN == null) return r.error || null;
+  const l = await sb.from('model_photos').update({ compcard_ordre: null }).eq('model_id', modelId).eq('compcard_ordre', caseN).neq('id', photoId);
+  return l.error || null;
+}
+
 // Date et heure ajoutées au nom des fichiers téléchargés (compcard, CV) : avec un nom
 // toujours identique, le téléphone ouvrait l'ANCIEN fichier déjà enregistré (signalé
 // le 06/10/2026 : compcard JPEG avec les anciennes photos). Ex. « -2026-10-06-14h32-05 ».

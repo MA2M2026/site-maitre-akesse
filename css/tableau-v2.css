@@ -469,3 +469,8 @@ html body.tdb-v2:not(.v2-page-v2-ensemble) .v2-entete-actions { display: none !i
 .tri-message { width: 100%; box-sizing: border-box; font: inherit; font-size: 0.88rem; padding: 0.5rem; margin-bottom: 0.5rem; }
 .tri-envoye { color: #1f7a3a; }
 .tri-non-envoye { color: #8a5a00; }
+
+/* Compcard choisie par l'agence dans la fenêtre « photos » d'un mannequin (06/10/2026) */
+.mf-photo-bloc { display: flex; flex-direction: column; gap: 6px; width: 90px; }
+.mf-cc-select { width: 90px; font-size: 0.72rem; padding: 3px 2px; }
+.mf-cc-aide { flex-basis: 100%; font-size: 0.8rem; margin: 0 0 0.2rem; color: #6b625d; }
