@@ -68,30 +68,44 @@
     if (a.manquantes.length) points.push('<li><strong>Mensurations manquantes :</strong> ' + echapper(a.manquantes.join(', ')) + '</li>');
     if (a.aReprendre.length) points.push('<li class="rp-rouge"><strong>Mensurations à reprendre :</strong> ' + echapper(a.aReprendre.join(', ')) + '</li>');
     a.photos.forEach(function (x) { points.push('<li><strong>Photo :</strong> ' + echapper(x) + '</li>'); });
-    return '<div class="rp-profil' + (a.aJour ? ' rp-ok' : '') + '">' +
-      '<label class="rp-entete">' + (a.aJour ? '' : '<input type="checkbox" class="rp-choix" data-id="' + echapper(p.id) + '"' + (wa ? '' : ' disabled') + '>') +
+    return '<div class="rp-profil' + (a.aJour ? ' rp-ok' : '') + '" data-profil="' + echapper(p.id) + '">' +
+      '<label class="rp-entete">' + (a.aJour ? '' : '<input type="checkbox" class="rp-choix" data-id="' + echapper(p.id) + '">') +
       '<strong>' + echapper(p.full_name) + '</strong>' + (p.published ? '' : ' <span class="rp-gris">(non publiée)</span>') +
       ' <span class="rp-etat">' + (a.aJour ? '✓ À jour' : 'À compléter') + '</span>' +
-      (deja ? ' <span class="rp-gris">· message envoyé le ' + new Date(deja).toLocaleDateString('fr-FR') + '</span>' : '') +
-      (!a.aJour && !wa ? ' <span class="rp-gris">· pas de numéro WhatsApp</span>' : '') + '</label>' +
+      (deja ? ' <span class="rp-gris">· dernier message le ' + new Date(deja).toLocaleDateString('fr-FR') + '</span>' : '') +
+      (!a.aJour && !wa ? ' <span class="rp-gris">· pas de numéro WhatsApp : le message sera copié, à coller où vous voulez</span>' : '') + '</label>' +
       (a.aJour ? '' : '<ul class="rp-points">' + points.join('') + '</ul>' +
         '<details class="rp-message"><summary>Voir / modifier le message</summary><textarea rows="10" data-id="' + echapper(p.id) + '">' + echapper(message(p, a)) + '</textarea></details>') +
       '</div>';
   }
 
+  // Message envoyé AUJOURD'HUI : le profil passe dans « Messages envoyés » (replié).
+  // Le lendemain, s'il n'est toujours pas à jour, il revient dans la liste.
+  function envoyeAujourdhui(id) {
+    var d = envois()[id];
+    return !!d && new Date(d).toDateString() === new Date().toDateString();
+  }
+
   function afficher() {
     var zone = document.getElementById('rapport-profils-liste');
     var aCompleter = profils.filter(function (p) { return !p.analyse.aJour; });
-    zone.innerHTML = '<p class="rp-resume"><strong>' + profils.length + '</strong> profils passés en revue : <strong>' + (profils.length - aCompleter.length) + '</strong> à jour, <strong>' + aCompleter.length + '</strong> à compléter.</p>' +
-      '<div class="rp-boutons"><button class="btn" type="button" id="rp-tout">Cocher tous les profils à compléter</button>' +
+    var aEnvoyer = aCompleter.filter(function (p) { return !envoyeAujourdhui(p.id); });
+    var envoyes = aCompleter.filter(function (p) { return envoyeAujourdhui(p.id); });
+    var aJour = profils.filter(function (p) { return p.analyse.aJour; });
+    zone.innerHTML = '<p class="rp-resume"><strong>' + profils.length + '</strong> profils passés en revue : <strong>' + aJour.length + '</strong> à jour, <strong>' + aCompleter.length + '</strong> à compléter' +
+      (envoyes.length ? ' (dont <strong>' + envoyes.length + '</strong> déjà prévenue' + (envoyes.length > 1 ? 's' : '') + ' aujourd’hui)' : '') + '.</p>' +
+      '<div class="rp-boutons"><button class="btn" type="button" id="rp-actualiser">🔄 Actualiser le rapport</button>' +
+      '<button class="btn" type="button" id="rp-tout">Cocher toutes les mannequins à prévenir</button>' +
       '<button class="btn btn--principal" type="button" id="rp-envoyer" disabled>💬 Envoyer sur WhatsApp</button></div>' +
-      '<p class="tdb-9" id="rp-aide">Cochez les mannequins, puis appuyez sur « Envoyer » : WhatsApp s’ouvre avec le message de la première, appuyez sur Envoyer dans WhatsApp, revenez ici et appuyez à nouveau pour la suivante. Chacune reçoit son propre message.</p>' +
-      aCompleter.concat(profils.filter(function (p) { return p.analyse.aJour; })).map(ligneHtml).join('');
+      '<p class="tdb-9" id="rp-aide">Cochez les mannequins, puis appuyez sur « Envoyer » : WhatsApp s’ouvre avec le message de la première, appuyez sur Envoyer dans WhatsApp, revenez ici et appuyez à nouveau pour la suivante. Chacune reçoit son propre message, puis passe dans « Messages envoyés ». « Actualiser » refait l’analyse pour voir qui a corrigé.</p>' +
+      '<div id="rp-a-envoyer">' + aEnvoyer.map(ligneHtml).join('') + '</div>' +
+      '<details class="rp-groupe" id="rp-envoyes"' + (envoyes.length ? '' : ' hidden') + '><summary>Messages envoyés aujourd’hui (<span id="rp-nb-envoyes">' + envoyes.length + '</span>)</summary>' + envoyes.map(ligneHtml).join('') + '</details>' +
+      '<details class="rp-groupe"><summary>Profils à jour (' + aJour.length + ')</summary>' + aJour.map(ligneHtml).join('') + '</details>';
     majBouton();
   }
 
   function choisis() {
-    return Array.prototype.map.call(details.querySelectorAll('.rp-choix:checked'), function (c) { return c.dataset.id; });
+    return Array.prototype.map.call(details.querySelectorAll('#rp-a-envoyer .rp-choix:checked'), function (c) { return c.dataset.id; });
   }
   function suivant() {
     return choisis().filter(function (id) { return !envoyesCetteFois[id]; })[0] || null;
@@ -101,8 +115,8 @@
     var liste = choisis(), id = suivant();
     var p = id && profils.find(function (x) { return x.id === id; });
     b.disabled = !p;
-    b.textContent = p ? '💬 Envoyer à ' + p.full_name + ' (' + (liste.indexOf(id) + 1) + ' sur ' + liste.length + ')'
-      : (liste.length ? '✓ Tout le monde a été fait' : '💬 Envoyer sur WhatsApp');
+    b.textContent = p ? (numeroWhatsApp(telephones[id]) ? '💬 Envoyer à ' : '📋 Copier le message de ') + p.full_name + (liste.length > 1 ? ' (encore ' + (liste.length - 1) + ' après)' : '')
+      : (Object.keys(envoyesCetteFois).length ? '✓ Tout le monde a été fait' : '💬 Envoyer sur WhatsApp');
   }
 
   // Profils avec les mensurations de l'Extension 121 ; tant que le SQL n'est pas
@@ -139,16 +153,27 @@
   details.addEventListener('toggle', function () { if (details.open && !charge) charger(); });
   details.addEventListener('change', function (e) { if (e.target.classList && e.target.classList.contains('rp-choix')) majBouton(); });
   details.addEventListener('click', function (e) {
-    if (e.target.id === 'rp-tout') {
-      details.querySelectorAll('.rp-choix:not(:disabled)').forEach(function (c) { c.checked = true; });
+    if (e.target.id === 'rp-actualiser') {
+      envoyesCetteFois = {};
+      charger();
+    } else if (e.target.id === 'rp-tout') {
+      details.querySelectorAll('#rp-a-envoyer .rp-choix').forEach(function (c) { c.checked = true; });
       majBouton();
     } else if (e.target.id === 'rp-envoyer') {
       var id = suivant(); if (!id) return;
       var zoneTexte = details.querySelector('textarea[data-id="' + id + '"]');
-      window.open('https://wa.me/' + numeroWhatsApp(telephones[id]) + '?text=' + encodeURIComponent(zoneTexte ? zoneTexte.value : ''), '_blank', 'noopener');
+      var texte = zoneTexte ? zoneTexte.value : '', numero = numeroWhatsApp(telephones[id]);
+      if (numero) window.open('https://wa.me/' + numero + '?text=' + encodeURIComponent(texte), '_blank', 'noopener');
+      else if (navigator.clipboard) navigator.clipboard.writeText(texte).catch(function () {});
       noterEnvoi(id); envoyesCetteFois[id] = true;
-      var entete = details.querySelector('.rp-choix[data-id="' + id + '"]');
-      if (entete) entete.parentNode.insertAdjacentHTML('beforeend', ' <span class="rp-envoye">✓ WhatsApp ouvert</span>');
+      // le profil quitte la liste « à prévenir » et passe dans « Messages envoyés »
+      var ligne = details.querySelector('#rp-a-envoyer [data-profil="' + id + '"]'), groupe = document.getElementById('rp-envoyes');
+      if (ligne && groupe) {
+        var c = ligne.querySelector('.rp-choix'); if (c) c.checked = false;
+        ligne.querySelector('.rp-entete').insertAdjacentHTML('beforeend', ' <span class="rp-envoye">' + (numero ? '✓ WhatsApp ouvert' : '✓ Message copié') + '</span>');
+        groupe.appendChild(ligne); groupe.hidden = false;
+        document.getElementById('rp-nb-envoyes').textContent = groupe.querySelectorAll('.rp-profil').length;
+      }
       majBouton();
     }
   });

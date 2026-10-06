@@ -1527,7 +1527,9 @@ toutes les écritures sont simulées pendant l'enregistrement.
   choisies se complètent seules avec le book), photos
   « à remplacer » laissées par la revue stricte des books (aucun nouvel appel à
   l'IA). Message personnel prêt (modifiable), envoi WhatsApp une personne après
-  l'autre (un appui chacune) ; date du dernier envoi notée sur l'appareil.
+  l'autre (un appui chacune ; sans numéro, le message est copié) ; date du dernier
+  envoi notée sur l'appareil. Un profil prévenu le jour même passe dans « Messages
+  envoyés aujourd'hui » ; bouton « Actualiser » pour refaire l'analyse.
 - **Fonctions partagées ajoutées dans `js/app.js`** : `numeroWhatsApp(tel)` (format
   wa.me), `prenomDe(nom)`, `lireToutesLignes(fabrique)` (lecture par paquets de 1000),
   `texteMensurationsCv(p, sexe)`, constantes `MA2M_TELEPHONES` / `MA2M_EMAIL`.
