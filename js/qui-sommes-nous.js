@@ -4,7 +4,8 @@
 //  - portrait du fondateur (mot du responsable) ;
 //  - bandeau de visages : une photo par mannequin publié, chacune mène à sa fiche ;
 //  - « Nous l'avons déjà fait » : photos de chaque événement ;
-//  - ligne des étapes qui se remplit au défilement, léger décalage de la photo des marques.
+//  - mise en mouvement : titres lettre par lettre et mot par mot, photos qui entrent en
+//    volet, grands mots et valeurs qui glissent au défilement, cartes qui s'inclinent.
 // Sans réseau ou sans photos, la page reste entièrement lisible (textes fixes dans le HTML).
 (function () {
   const moinsDeMouvement = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -28,7 +29,8 @@
     return img;
   }
 
-  // Fondu enchaîné entre plusieurs photos dans un même cadre.
+  // Enchaînement de photos dans un même cadre : la nouvelle entre en volet par-dessus
+  // la précédente, puis zoome lentement.
   function diaporama(cadre, urls, alt, delai) {
     if (!cadre || !urls.length) return;
     const imgs = urls.map((u, i) => {
@@ -42,8 +44,8 @@
     const montrer = () => {
       const presentes = imgs.filter(img => img.isConnected);
       if (!presentes.length) return;
-      presentes.forEach(img => img.classList.remove('actif'));
       const img = presentes[n % presentes.length];
+      presentes.forEach(x => { x.classList.remove('precedent'); if (x.classList.contains('actif') && x !== img) x.classList.add('precedent'); x.classList.remove('actif'); });
       // relance l'effet de zoom à chaque passage
       void img.offsetWidth;
       img.classList.add('actif');
@@ -104,7 +106,7 @@
         carte.className = 'qsn-evenement reveal';
         carte.dataset.evenement = t;
         const photo = document.createElement('div');
-        photo.className = 'qsn-evenement-photo';
+        photo.className = 'qsn-evenement-photo qsn-rideau';
         const h3 = document.createElement('h3');
         h3.textContent = enMajusculesDouces(e.titre);
         carte.appendChild(photo); carte.appendChild(h3);
@@ -162,18 +164,37 @@
         piste.appendChild(a);
       });
     });
+    // Deuxième rangée, dans l'ordre inverse, qui défile dans l'autre sens.
+    const inverse = piste.cloneNode(true);
+    inverse.removeAttribute('id');
+    inverse.classList.add('qsn-visages-inverse');
+    [...inverse.children].reverse().forEach(a => { a.setAttribute('aria-hidden', 'true'); a.tabIndex = -1; inverse.appendChild(a); });
+    piste.after(inverse);
     bloc.hidden = false;
   }
 
-  // Ligne des étapes qui se remplit + décalage de la photo des marques, au défilement.
+  // Tout ce qui bouge avec le défilement : barre de lecture en haut, titre d'ouverture qui
+  // s'efface, ligne des étapes qui se remplit, photo des marques en décalage, grands mots
+  // qui glissent, valeurs qui avancent chacune à leur vitesse.
   function suivreDefilement() {
     if (moinsDeMouvement) return;
+    const barre = document.getElementById('qsn-progression');
+    const ouverture = document.querySelector('.qsn-ouverture');
     const etapes = document.getElementById('qsn-etapes');
     const fond = document.getElementById('qsn-marques-fond');
+    const bandeaux = [...document.querySelectorAll('.qsn-bandeau-texte')];
+    const valeurs = [...document.querySelectorAll('.qsn-valeurs-liste li')];
     let attente = false;
     const maj = () => {
       attente = false;
       const h = window.innerHeight;
+      const total = document.documentElement.scrollHeight - h;
+      if (barre) barre.style.setProperty('--qsn-lu', total > 0 ? Math.min(1, window.scrollY / total).toFixed(4) : '0');
+      if (ouverture) {
+        const r = ouverture.getBoundingClientRect();
+        const p = Math.min(1, Math.max(0, -r.top / r.height));
+        ouverture.style.setProperty('--qsn-sortie', p.toFixed(3));
+      }
       if (etapes) {
         const r = etapes.getBoundingClientRect();
         const p = Math.min(1, Math.max(0, (h * 0.7 - r.top) / r.height));
@@ -181,15 +202,136 @@
       }
       if (fond) {
         const r = fond.parentNode.getBoundingClientRect();
-        if (r.bottom > 0 && r.top < h) fond.style.setProperty('--qsn-decalage', Math.round((r.top + r.height / 2 - h / 2) * -0.12) + 'px');
+        if (r.bottom > 0 && r.top < h) fond.style.setProperty('--qsn-decalage', Math.round((r.top + r.height / 2 - h / 2) * -0.25) + 'px');
       }
+      bandeaux.forEach(b => {
+        const r = b.getBoundingClientRect();
+        if (r.bottom < -200 || r.top > h + 200) return;
+        const sens = Number(b.dataset.sens) || 1;
+        b.style.setProperty('--qsn-glisse', Math.round((r.top - h) * 0.45 * sens) + 'px');
+      });
+      valeurs.forEach((li, i) => {
+        const r = li.getBoundingClientRect();
+        const ecart = (r.top + r.height / 2 - h / 2) / h; // -0,5 à 0,5 autour du milieu de l'écran
+        li.style.setProperty('--qsn-avance', Math.round(ecart * (i % 2 ? -70 : 70)) + 'px');
+      });
     };
     window.addEventListener('scroll', () => { if (!attente) { attente = true; requestAnimationFrame(maj); } }, { passive: true });
     window.addEventListener('resize', maj);
     maj();
   }
 
+  // Titre d'ouverture lettre par lettre (chaque mot reste insécable).
+  function decouperLettres(el) {
+    let i = 0;
+    const parcourir = noeud => {
+      [...noeud.childNodes].forEach(n => {
+        if (n.nodeType === 1) { parcourir(n); return; }
+        if (n.nodeType !== 3 || !n.textContent.trim()) return;
+        const frag = document.createDocumentFragment();
+        n.textContent.split(/(\s+)/).forEach(mot => {
+          if (!mot) return;
+          if (/^\s+$/.test(mot)) { frag.appendChild(document.createTextNode(' ')); return; }
+          const m = document.createElement('span');
+          m.className = 'qsn-mot-entier';
+          [...mot].forEach(c => {
+            const l = document.createElement('span');
+            l.className = 'qsn-lettre';
+            l.textContent = c;
+            l.style.setProperty('--i', i++);
+            m.appendChild(l);
+          });
+          frag.appendChild(m);
+        });
+        n.replaceWith(frag);
+      });
+    };
+    el.setAttribute('aria-label', el.textContent.replace(/\s+/g, ' ').trim());
+    parcourir(el);
+    [...el.querySelectorAll('.qsn-mot-entier')].forEach(m => m.setAttribute('aria-hidden', 'true'));
+  }
+
+  // Titres de section : les mots montent un à un derrière un cache.
+  function decouperMots(el) {
+    let i = 0;
+    [...el.childNodes].forEach(n => {
+      if (n.nodeType !== 3 || !n.textContent.trim()) return;
+      const frag = document.createDocumentFragment();
+      n.textContent.split(/(\s+)/).forEach(mot => {
+        if (!mot) return;
+        if (/^\s+$/.test(mot)) { frag.appendChild(document.createTextNode(' ')); return; }
+        const cache = document.createElement('span');
+        cache.className = 'qsn-cache';
+        const s = document.createElement('span');
+        s.textContent = mot;
+        s.style.setProperty('--i', i++);
+        cache.appendChild(s);
+        frag.appendChild(cache);
+      });
+      n.replaceWith(frag);
+    });
+    el.classList.add('qsn-mots');
+  }
+
+  // Mise en mouvement de la page : découpe des titres, apparitions au défilement,
+  // inclinaison des cartes des pôles et parallaxe de l'ouverture au mouvement de la souris.
+  function mettreEnMouvement() {
+    if (moinsDeMouvement || !('IntersectionObserver' in window)) return;
+    const page = document.querySelector('main.qsn');
+    if (!page) return;
+    const titre = document.querySelector('.qsn-lettres');
+    if (titre) decouperLettres(titre);
+    page.querySelectorAll('h2').forEach(decouperMots);
+    page.classList.add('qsn-mouvement');
+
+    // Un élément caché par son propre rideau (clip-path) n'est jamais « vu » par le
+    // navigateur : on observe donc son parent, puis on lève le rideau de l'enfant.
+    const cibles = new Map();
+    const vus = new IntersectionObserver(entrees => entrees.forEach(e => {
+      if (!e.isIntersecting) return;
+      (cibles.get(e.target) || []).forEach(el => el.classList.add('qsn-vu'));
+      cibles.delete(e.target);
+      vus.unobserve(e.target);
+    }), { threshold: 0.15, rootMargin: '0px 0px -8% 0px' });
+    const observer = el => {
+      const t = el.classList.contains('qsn-rideau') ? el.parentElement : el;
+      if (!cibles.has(t)) { cibles.set(t, []); vus.observe(t); }
+      cibles.get(t).push(el);
+    };
+    page.querySelectorAll('.qsn-mots, .qsn-rideau').forEach(observer);
+    // cartes d'événements ajoutées après coup
+    new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => {
+      if (n.nodeType === 1 && n.querySelectorAll) n.querySelectorAll('.qsn-rideau').forEach(observer);
+    }))).observe(page, { childList: true, subtree: true });
+    // filet de sécurité : rien ne doit rester caché si l'observation échoue
+    setTimeout(() => page.querySelectorAll('.qsn-mots:not(.qsn-vu), .qsn-rideau:not(.qsn-vu)').forEach(el => {
+      const r = el.getBoundingClientRect();
+      if (r.top < window.innerHeight) el.classList.add('qsn-vu');
+    }), 3000);
+
+    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+    page.querySelectorAll('.qsn-pole').forEach(carte => {
+      carte.addEventListener('pointermove', e => {
+        const r = carte.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+        carte.classList.add('qsn-incline');
+        carte.style.setProperty('--qsn-ry', (x * 14).toFixed(2) + 'deg');
+        carte.style.setProperty('--qsn-rx', (y * -14).toFixed(2) + 'deg');
+      });
+      carte.addEventListener('pointerleave', () => {
+        carte.style.setProperty('--qsn-ry', '0deg');
+        carte.style.setProperty('--qsn-rx', '0deg');
+      });
+    });
+    const ouverture = document.querySelector('.qsn-ouverture');
+    if (ouverture) ouverture.addEventListener('pointermove', e => {
+      ouverture.style.setProperty('--qsn-mx', (e.clientX / window.innerWidth - 0.5).toFixed(3));
+      ouverture.style.setProperty('--qsn-my', (e.clientY / window.innerHeight - 0.5).toFixed(3));
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
+    mettreEnMouvement();
     suivreDefilement();
     if (typeof sb === 'undefined' || !sb) return;
     [chargerEvenements, chargerPortrait, chargerVisages].forEach(f => {

@@ -87,6 +87,7 @@ setTimeout(() => {
 </div>
 
 <main class="qsn">
+<div class="qsn-progression" id="qsn-progression" aria-hidden="true"></div>
 
 <!-- 1. Ouverture : photos de nos défilés en fondu, devise animée -->
 <section class="qsn-ouverture" aria-labelledby="qsn-titre">
@@ -94,7 +95,7 @@ setTimeout(() => {
   <div class="qsn-voile" aria-hidden="true"></div>
   <div class="container qsn-ouverture-texte">
     <div class="eyebrow qsn-apparait">Qui sommes-nous</div>
-    <h1 id="qsn-titre" class="qsn-apparait qsn-d1">Maître Akesse <em>Model Management</em></h1>
+    <h1 id="qsn-titre" class="qsn-apparait qsn-d1 qsn-lettres">Maître Akesse <em>Model Management</em></h1>
     <p class="qsn-devise" aria-label="Former, révéler, valoriser">
       <span class="qsn-mot">Former</span><span class="qsn-point" aria-hidden="true">·</span><span class="qsn-mot">Révéler</span><span class="qsn-point" aria-hidden="true">·</span><span class="qsn-mot">Valoriser</span>
     </p>
@@ -106,7 +107,7 @@ setTimeout(() => {
 <!-- 2. Notre histoire -->
 <section class="qsn-histoire" id="qsn-histoire">
   <div class="container qsn-histoire-grille">
-    <figure class="qsn-portrait reveal">
+    <figure class="qsn-portrait reveal qsn-rideau">
       <img id="qsn-portrait-img" alt="Maître Akesse, fondateur de l'agence" hidden>
       <figcaption id="qsn-portrait-nom">Maître Akesse</figcaption>
     </figure>
@@ -138,6 +139,8 @@ setTimeout(() => {
     </ol>
   </div>
 </section>
+
+<div class="qsn-bandeau-texte" data-sens="1" aria-hidden="true"><div class="qsn-bandeau-piste"><span>Former</span><span>Révéler</span><span>Valoriser</span><span>Former</span><span>Révéler</span><span>Valoriser</span><span>Former</span><span>Révéler</span><span>Valoriser</span></div></div>
 
 <!-- 4. Bandeau de visages (photos des mannequins publiés) -->
 <section class="qsn-visages" aria-label="Nos mannequins" hidden>
@@ -236,6 +239,8 @@ setTimeout(() => {
   </div>
 </section>
 
+<div class="qsn-bandeau-texte" data-sens="-1" aria-hidden="true"><div class="qsn-bandeau-piste"><span>Défilés</span><span>Shows</span><span>Castings</span><span>Shootings</span><span>Défilés</span><span>Shows</span><span>Castings</span><span>Shootings</span><span>Défilés</span><span>Shows</span><span>Castings</span><span>Shootings</span></div></div>
+
 <!-- 8. Nous l'avons déjà fait -->
 <section class="fond-anthracite qsn-realisations">
   <div class="container">
@@ -246,12 +251,12 @@ setTimeout(() => {
     </div>
     <div class="qsn-evenements" id="qsn-evenements">
       <article class="qsn-evenement reveal" data-evenement="cacao">
-        <div class="qsn-evenement-photo"></div>
+        <div class="qsn-evenement-photo qsn-rideau"></div>
         <h3>Cacao Fashion Show</h3>
         <p>Au Parc des Expositions d'Abidjan, pendant la Journée nationale du cacao et du chocolat : nos mannequins ont porté les créations de Gilles Touré.</p>
       </article>
       <article class="qsn-evenement reveal reveal-delay-1" data-evenement="africa">
-        <div class="qsn-evenement-photo"></div>
+        <div class="qsn-evenement-photo qsn-rideau"></div>
         <h3>Africa in Rythm</h3>
         <p>Au Noom Hôtel.</p>
       </article>

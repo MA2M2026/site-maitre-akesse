@@ -224,3 +224,174 @@
   .qsn-etapes::after { transform: none; }
   .qsn-marques-fond img { transform: none; }
 }
+
+/* =====================================================================
+   Mise en mouvement (06/10/2026, « on doit sentir les animations »).
+   Tout est placé sous .qsn-mouvement, classe posée par le JS seulement si
+   l'appareil accepte les animations : sans JS, la page reste lisible et fixe.
+   ===================================================================== */
+
+/* Barre de lecture en haut de l'écran */
+.qsn-progression {
+  position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 2000;
+  background: linear-gradient(90deg, var(--bordeaux), var(--bordeaux-clair));
+  transform-origin: left; transform: scaleX(var(--qsn-lu, 0));
+  box-shadow: 0 0 12px rgba(213,84,104,0.7);
+  pointer-events: none;
+}
+
+/* Photos : la nouvelle entre en volet par-dessus la précédente */
+.qsn-diaporama img.precedent, .qsn-evenement-photo img.precedent { opacity: 1; z-index: 1; }
+.qsn-diaporama img.actif, .qsn-evenement-photo img.actif {
+  opacity: 1; z-index: 2;
+  animation: qsn-volet 1.5s cubic-bezier(0.77, 0, 0.18, 1) both, qsn-zoom 9s linear both;
+}
+@keyframes qsn-volet {
+  from { clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%); }
+  to   { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }
+}
+.qsn-diaporama img, .qsn-evenement-photo img { transition: none; }
+
+/* Ouverture : parallaxe à la souris, sortie en douceur au défilement */
+.qsn-mouvement .qsn-diaporama {
+  inset: -40px;
+  transform: translate3d(calc(var(--qsn-mx, 0) * -36px), calc(var(--qsn-my, 0) * -24px + var(--qsn-sortie, 0) * 180px), 0);
+  transition: transform 0.6s ease-out;
+}
+.qsn-mouvement .qsn-ouverture-texte {
+  transform: translate3d(calc(var(--qsn-mx, 0) * 14px), calc(var(--qsn-sortie, 0) * -120px), 0);
+  opacity: calc(1 - var(--qsn-sortie, 0) * 1.6);
+  transition: transform 0.6s ease-out;
+}
+/* Faisceau de lumière qui balaie l'ouverture */
+.qsn-mouvement .qsn-voile::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(213,84,104,0.18) 48%, rgba(255,255,255,0.08) 50%, transparent 62%);
+  transform: translateX(-100%);
+  animation: qsn-balayage 7s ease-in-out 2.4s infinite;
+}
+@keyframes qsn-balayage { 0% { transform: translateX(-100%); } 45%, 100% { transform: translateX(100%); } }
+
+/* Titre d'ouverture lettre par lettre */
+.qsn-mouvement .qsn-lettres { opacity: 1; animation: none; }
+.qsn-mot-entier { display: inline-block; white-space: nowrap; }
+.qsn-mouvement .qsn-lettre {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(0.7em) rotate(8deg) scale(0.9);
+  filter: blur(6px);
+  animation: qsn-lettre 1.1s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+  animation-delay: calc(0.25s + var(--i) * 0.045s);
+}
+@keyframes qsn-lettre { to { opacity: 1; transform: none; filter: blur(0); } }
+
+/* Titres de section : mots qui montent derrière un cache */
+.qsn-cache { display: inline-block; overflow: hidden; vertical-align: bottom; padding-bottom: 0.1em; margin-bottom: -0.1em; }
+.qsn-cache > span { display: inline-block; }
+.qsn-mouvement .qsn-mots .qsn-cache > span {
+  transform: translateY(105%) skewY(6deg);
+  transition: transform 1.1s cubic-bezier(0.19, 1, 0.22, 1);
+  transition-delay: calc(var(--i) * 0.08s);
+}
+.qsn-mouvement .qsn-mots.qsn-vu .qsn-cache > span { transform: none; }
+
+/* Photos (portrait, événements) dévoilées en rideau */
+.qsn-mouvement .qsn-rideau { clip-path: inset(100% 0 0 0); transition: clip-path 1.5s cubic-bezier(0.77, 0, 0.18, 1); }
+.qsn-mouvement .qsn-rideau.qsn-vu { clip-path: inset(0 0 0 0); }
+.qsn-mouvement .qsn-portrait img { transform: scale(1.25); transition: transform 2.2s cubic-bezier(0.19, 1, 0.22, 1); }
+.qsn-mouvement .qsn-portrait.qsn-vu img { transform: scale(1); }
+.qsn-mouvement .qsn-portrait::before { transform: translate(-1.2rem, -1.2rem); opacity: 0; transition: transform 1.4s cubic-bezier(0.19, 1, 0.22, 1) 0.6s, opacity 1s ease 0.6s; }
+.qsn-mouvement .qsn-portrait.qsn-vu::before { transform: none; opacity: 1; }
+/* le cadre décoratif dépasse : le rideau ne doit pas le couper */
+.qsn-mouvement .qsn-portrait.qsn-rideau.qsn-vu { clip-path: inset(-2rem -2rem -2rem -2rem); }
+.qsn-evenement-photo img { transition: transform 1.2s cubic-bezier(0.19, 1, 0.22, 1); }
+.qsn-evenement:hover .qsn-evenement-photo { box-shadow: 0 30px 60px -30px rgba(213,84,104,0.55); }
+
+/* Pôles : arrivée en bascule, inclinaison 3D sous la souris */
+.qsn-mouvement .qsn-poles-grille { perspective: 1000px; background: transparent; border: 0; gap: 1rem; }
+.qsn-mouvement .qsn-pole { border: 1px solid var(--gris-clair); }
+.qsn-mouvement .qsn-pole.reveal { transform: translateY(80px) rotateX(-35deg); transform-origin: 50% 100%; transition: opacity 0.9s ease, transform 1.2s cubic-bezier(0.19, 1, 0.22, 1), background 0.5s ease, box-shadow 0.5s ease; }
+.qsn-mouvement .qsn-pole.reveal.visible { transform: rotateX(var(--qsn-rx, 0deg)) rotateY(var(--qsn-ry, 0deg)); }
+.qsn-mouvement .qsn-pole.qsn-incline { transition: opacity 0.9s ease, transform 0.25s ease-out, background 0.5s ease, box-shadow 0.5s ease; }
+.qsn-mouvement .qsn-pole:hover { box-shadow: 0 30px 60px -25px rgba(122,18,32,0.8); }
+.qsn-mouvement .qsn-pole-num { transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.4s ease; }
+.qsn-mouvement .qsn-pole:hover .qsn-pole-num { transform: translateX(0.4rem) scale(1.15); color: var(--titre-clair); }
+.qsn-mouvement .qsn-pole.reveal-delay-1.visible { transition-delay: 0.12s; }
+.qsn-mouvement .qsn-pole.reveal-delay-2.visible { transition-delay: 0.24s; }
+.qsn-mouvement .qsn-pole.qsn-incline.visible { transition-delay: 0s; }
+
+/* Grands mots qui glissent au défilement */
+.qsn-bandeau-texte { overflow: hidden; padding: 1.4rem 0; border-block: 1px solid var(--gris-clair); }
+.qsn-bandeau-piste {
+  display: flex; gap: 3rem; width: max-content; white-space: nowrap;
+  transform: translate3d(var(--qsn-glisse, 0px), 0, 0);
+  will-change: transform;
+}
+.qsn-bandeau-texte[data-sens="-1"] .qsn-bandeau-piste { margin-left: -100vw; }
+.qsn-bandeau-piste span {
+  font-family: var(--display); font-style: italic; font-weight: 500;
+  font-size: clamp(3.2rem, 11vw, 9rem); line-height: 1;
+  color: transparent; -webkit-text-stroke: 1px rgba(245,239,231,0.55);
+  text-transform: uppercase; letter-spacing: 0.02em;
+}
+.qsn-bandeau-piste span:nth-child(3n+2) { color: var(--bordeaux-clair); -webkit-text-stroke: 0; }
+.qsn-bandeau-piste span::after { content: "·"; margin-left: 3rem; color: var(--bordeaux-clair); -webkit-text-stroke: 0; }
+
+/* Visages : deux rangées en sens contraires */
+.qsn-visages-inverse { margin-top: 0.8rem; animation-direction: reverse; animation-duration: 75s; }
+.qsn-visages:hover .qsn-visages-inverse { animation-play-state: paused; }
+
+/* Étapes : chaque étape arrive de la droite, le numéro « saute » */
+.qsn-mouvement .qsn-etape.reveal { transform: translateX(70px); transition: opacity 0.9s ease, transform 1.1s cubic-bezier(0.19, 1, 0.22, 1); }
+.qsn-mouvement .qsn-etape.reveal.visible { transform: none; }
+.qsn-mouvement .qsn-etape.visible .qsn-etape-num { animation: qsn-saut 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both; box-shadow: 0 0 0 0 rgba(213,84,104,0.6); }
+@keyframes qsn-saut {
+  0% { transform: scale(0.3); box-shadow: 0 0 0 0 rgba(213,84,104,0.7); }
+  60% { transform: scale(1.18); box-shadow: 0 0 0 14px rgba(213,84,104,0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(213,84,104,0); }
+}
+.qsn-mouvement .qsn-critere.reveal { transform: translateY(40px) scale(0.94); transition: opacity 0.9s ease, transform 1s cubic-bezier(0.19, 1, 0.22, 1), border-color 0.4s ease; }
+.qsn-mouvement .qsn-critere.reveal.visible { transform: none; }
+.qsn-critere:hover { border-color: var(--bordeaux-clair); }
+
+/* Atouts et services : arrivées croisées */
+.qsn-mouvement .qsn-atouts li.reveal { transform: translateY(50px); transition: opacity 0.9s ease, transform 1.1s cubic-bezier(0.19, 1, 0.22, 1); }
+.qsn-mouvement .qsn-atouts li.reveal.visible { transform: none; }
+.qsn-atouts li { position: relative; }
+.qsn-atouts li::before { content: ""; position: absolute; left: 0; top: -1px; height: 1px; width: 0; background: var(--bordeaux-clair); transition: width 1.2s cubic-bezier(0.19, 1, 0.22, 1) 0.3s; }
+.qsn-atouts li.visible::before { width: 100%; }
+.qsn-mouvement .qsn-services li.reveal:nth-child(odd) { transform: translateX(-80px); }
+.qsn-mouvement .qsn-services li.reveal:nth-child(even) { transform: translateX(80px); }
+.qsn-mouvement .qsn-services li.reveal { transition: opacity 0.9s ease, transform 1.2s cubic-bezier(0.19, 1, 0.22, 1); }
+.qsn-mouvement .qsn-services li.reveal.visible { transform: none; }
+.qsn-services li { transition: background 0.4s ease; }
+.qsn-services li:hover { background: linear-gradient(90deg, rgba(122,18,32,0.25), transparent 70%); }
+
+/* Valeurs : chaque mot avance à sa propre vitesse */
+.qsn-valeurs-liste li > * { display: inline-block; transform: translate3d(var(--qsn-avance, 0px), 0, 0); transition: transform 0.4s ease-out, color 0.4s ease; }
+
+/* Partenaires : apparition en cascade */
+.qsn-mouvement .qsn-partenaires li { opacity: 0; transform: translateY(20px); transition: opacity 0.8s ease, transform 0.9s cubic-bezier(0.19, 1, 0.22, 1); }
+.qsn-mouvement .qsn-partenaires.visible li { opacity: 1; transform: none; }
+.qsn-mouvement .qsn-partenaires.visible li:nth-child(2) { transition-delay: 0.12s; }
+.qsn-mouvement .qsn-partenaires.visible li:nth-child(3) { transition-delay: 0.24s; }
+.qsn-mouvement .qsn-partenaires.visible li:nth-child(4) { transition-delay: 0.36s; }
+.qsn-mouvement .qsn-partenaires.visible li:nth-child(5) { transition-delay: 0.48s; }
+
+/* Boutons : légère pulsation du bouton principal */
+.qsn-mouvement .qsn-actions .btn--principal { animation: qsn-pulse 3.2s ease-in-out infinite; }
+@keyframes qsn-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(213,84,104,0); } 50% { box-shadow: 0 0 0 10px rgba(213,84,104,0.12), 0 0 28px rgba(213,84,104,0.35); } }
+
+@media (max-width: 720px) {
+  .qsn-mouvement .qsn-services li.reveal:nth-child(odd), .qsn-mouvement .qsn-services li.reveal:nth-child(even) { transform: translateX(-40px); }
+  .qsn-mouvement .qsn-etape.reveal { transform: translateX(40px); }
+  .qsn-bandeau-piste span::after { margin-left: 1.6rem; }
+  .qsn-bandeau-piste { gap: 1.6rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qsn-progression, .qsn-voile::after { display: none; }
+  .qsn-diaporama img.actif, .qsn-evenement-photo img.actif { animation: none; clip-path: none; }
+  .qsn-bandeau-piste, .qsn-valeurs-liste li > * { transform: none; }
+  .qsn-visages-inverse { display: none; }
+}
