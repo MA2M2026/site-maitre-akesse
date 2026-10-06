@@ -758,6 +758,14 @@ function chargerJsPdf() {
   return promesseJsPdf;
 }
 
+// Date et heure ajoutées au nom des fichiers téléchargés (compcard, CV) : avec un nom
+// toujours identique, le téléphone ouvrait l'ANCIEN fichier déjà enregistré (signalé
+// le 06/10/2026 : compcard JPEG avec les anciennes photos). Ex. « -2026-10-06-14h32-05 ».
+function horodatageFichier() {
+  const d = new Date(), deux = (n) => String(n).padStart(2, '0');
+  return '-' + d.getFullYear() + '-' + deux(d.getMonth() + 1) + '-' + deux(d.getDate()) + '-' + deux(d.getHours()) + 'h' + deux(d.getMinutes()) + '-' + deux(d.getSeconds());
+}
+
 // Génère et télécharge la fiche (PDF ou JPEG) à partir de ficheData ({ profil, photos,
 // projets }), en désactivant/réactivant pendant la génération les deux boutons désignés
 // par leur id (idBtnPdf/idBtnJpeg — chaque page peut leur donner l'id de son choix).
@@ -774,7 +782,7 @@ async function genererFiche(format, ficheData, idBtnPdf, idBtnJpeg) {
   try {
     if (format !== 'jpeg') await chargerJsPdf();
     const canvas = await construireCanvasCompcard(ficheData);
-    const nomFichier = 'fiche-' + (ficheData.profil.full_name || 'mannequin').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase();
+    const nomFichier = 'fiche-' + (ficheData.profil.full_name || 'mannequin').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase() + horodatageFichier();
 
     if (format === 'jpeg') {
       const lien = document.createElement('a');
@@ -1262,7 +1270,7 @@ async function genererCvFichier(format, donneesCv, idBtnPdf, idBtnJpeg) {
   try {
     if (format !== 'jpeg') await chargerJsPdf();
     const canvas = await construireCanvasCv(donneesCv);
-    const nomFichier = 'cv-' + (donneesCv.nomComplet || 'mannequin').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase();
+    const nomFichier = 'cv-' + (donneesCv.nomComplet || 'mannequin').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase() + horodatageFichier();
 
     if (format === 'jpeg') {
       const lien = document.createElement('a');
