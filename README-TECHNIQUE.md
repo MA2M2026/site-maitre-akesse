@@ -1590,8 +1590,10 @@ toutes les écritures sont simulées pendant l'enregistrement.
   affiche), portrait du fondateur (`mot_responsable`), une photo par mannequin publié
   (`model_photos`, profils masqués exclus par la base). Chaque événement enregistré dans le
   tableau de bord reçoit automatiquement sa carte (un même titre sur plusieurs dates = une carte).
-- **Aucun montant** sur cette page (décision de la propriétaire) : l'inscription dit seulement
-  que les droits se règlent par Wave.
+- **Aucun montant ni moyen de paiement** sur cette page (décision de la propriétaire) : l'inscription dit seulement
+  que l'agence confirme l'inscription (ni montant ni moyen de paiement cités, demande du 06/10/2026).
+- Pas de couverture animée (faisceau ou vidéo de couverture) sur ces deux pages, retirée à la
+  demande de la propriétaire : les photos des défilés ouvrent directement la page.
 - Animations : toutes sous la classe `.qsn-mouvement`, posée par le JS uniquement si
   l'appareil accepte les animations (`prefers-reduced-motion`). Sans JS ou en mode
   « réduire les animations », la page est fixe et entièrement lisible.
