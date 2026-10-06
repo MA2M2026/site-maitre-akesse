@@ -209,6 +209,7 @@
     const aujIso = dateDuJour();
     const index = indexParJour(projets);
     const projetsDuJour = jour => index.get(jour) || [];
+    const typesPresents = Object.keys(MA2M_TYPES_AGENDA).filter(t => projets.some(p => typeDe(p) === t));
     let vue = 'mois';
     let choisi = aujIso;
     // Sans projet ce mois-ci (même commencé avant et encore en cours), on ouvre sur le
@@ -274,6 +275,7 @@
           if (ceJour.length > 3) c.appendChild(el('span', 'cal-plus', '+' + (ceJour.length - 3)));
           if (ceJour.length) {
             const points = el('span', 'cal-points');
+            points.setAttribute('aria-hidden', 'true');
             ceJour.slice(0, 3).forEach(p => points.appendChild(el('i', 'cal-evt-' + typeDe(p))));
             c.appendChild(points);
           }
@@ -317,7 +319,7 @@
         for (let j = 1; j <= new Date(repere.getFullYear(), m + 1, 0).getDate(); j++) {
           const jour = iso(new Date(repere.getFullYear(), m, j, 12));
           const n = projetsDuJour(jour);
-          const e = el('i', (n.length ? 'occupe cal-evt-' + (n[0].type || 'autre') : '') + (jour === aujIso ? ' aujourdhui' : ''), String(j));
+          const e = el('i', (n.length ? 'occupe cal-evt-' + typeDe(n[0]) : '') + (jour === aujIso ? ' aujourdhui' : ''), String(j));
           mini.appendChild(e);
         }
         bloc.appendChild(mini);
@@ -432,6 +434,19 @@
       corps.appendChild(cote);
       boite.appendChild(corps);
 
+      // Légende : une couleur par type de projet présent dans l'agenda (ordre fixe).
+      if (typesPresents.length) {
+        const legende = el('div', 'cal-legende');
+        typesPresents.forEach(ty => {
+          const l = el('span', 'cal-legende-item');
+          const pastilleLegende = el('i', 'cal-evt-' + ty);
+          pastilleLegende.setAttribute('aria-hidden', 'true');
+          l.appendChild(pastilleLegende);
+          l.appendChild(document.createTextNode(libelleTypeAgenda(ty, enAnglais)));
+          legende.appendChild(l);
+        });
+        boite.appendChild(legende);
+      }
       if (actif) {
         const retrouve = boite.querySelector('[data-cle="' + actif + '"]');
         if (retrouve) retrouve.focus({ preventScroll: true });

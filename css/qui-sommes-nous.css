@@ -236,7 +236,7 @@
   position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 2000;
   background: linear-gradient(90deg, var(--bordeaux), var(--bordeaux-clair));
   transform-origin: left; transform: scaleX(var(--qsn-lu, 0));
-  box-shadow: 0 0 12px rgba(213,84,104,0.7);
+  box-shadow: none;
   pointer-events: none;
 }
 
@@ -266,7 +266,7 @@
 /* Faisceau de lumière qui balaie l'ouverture */
 .qsn-mouvement .qsn-voile::after {
   content: ""; position: absolute; inset: 0;
-  background: linear-gradient(105deg, transparent 35%, rgba(213,84,104,0.18) 48%, rgba(255,255,255,0.08) 50%, transparent 62%);
+  background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.05) 48%, rgba(255,255,255,0.09) 50%, transparent 62%);
   transform: translateX(-100%);
   animation: qsn-balayage 7s ease-in-out 2.4s infinite;
 }
@@ -304,7 +304,7 @@
 .qsn-mouvement .qsn-portrait.qsn-vu::before { transform: none; opacity: 1; }
 /* le cadre décoratif dépasse : le rideau ne doit pas le couper */
 .qsn-mouvement .qsn-portrait.qsn-rideau.qsn-vu { clip-path: inset(-2rem -2rem -2rem -2rem); }
-.qsn-evenement:hover .qsn-evenement-photo { box-shadow: 0 30px 60px -30px rgba(213,84,104,0.55); }
+.qsn-evenement:hover .qsn-evenement-photo { box-shadow: 0 30px 60px -30px rgba(0,0,0,0.9); }
 
 /* Pôles : arrivée en bascule, inclinaison 3D sous la souris */
 .qsn-mouvement .qsn-poles-grille { perspective: 1000px; background: transparent; border: 0; gap: 1rem; }
@@ -312,7 +312,7 @@
 .qsn-mouvement .qsn-pole.reveal { transform: translateY(80px) rotateX(-35deg); transform-origin: 50% 100%; transition: opacity 0.9s ease, transform 1.2s cubic-bezier(0.19, 1, 0.22, 1), background 0.5s ease, box-shadow 0.5s ease; }
 .qsn-mouvement .qsn-pole.reveal.visible { transform: rotateX(var(--qsn-rx, 0deg)) rotateY(var(--qsn-ry, 0deg)); }
 .qsn-mouvement .qsn-pole.qsn-incline { transition: opacity 0.9s ease, transform 0.25s ease-out, background 0.5s ease, box-shadow 0.5s ease; }
-.qsn-mouvement .qsn-pole:hover { box-shadow: 0 30px 60px -25px rgba(122,18,32,0.8); }
+.qsn-mouvement .qsn-pole:hover { box-shadow: 0 30px 60px -25px rgba(0,0,0,0.9); }
 .qsn-mouvement .qsn-pole-num { transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.4s ease; }
 .qsn-mouvement .qsn-pole:hover .qsn-pole-num { transform: translateX(0.4rem) scale(1.15); color: var(--titre-clair); }
 .qsn-mouvement .qsn-pole.reveal-delay-1.visible { transition-delay: 0.12s; }
@@ -377,7 +377,7 @@
 
 /* Boutons : légère pulsation du bouton principal */
 .qsn-mouvement .qsn-actions .btn--principal { animation: qsn-pulse 3.2s ease-in-out infinite; }
-@keyframes qsn-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(213,84,104,0); } 50% { box-shadow: 0 0 0 10px rgba(213,84,104,0.12), 0 0 28px rgba(213,84,104,0.35); } }
+@keyframes qsn-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); } 50% { box-shadow: 0 0 0 10px rgba(255,255,255,0.06), 0 0 28px rgba(255,255,255,0.12); } }
 
 @media (max-width: 720px) {
   .qsn-mouvement .qsn-services li.reveal:nth-child(odd), .qsn-mouvement .qsn-services li.reveal:nth-child(even) { transform: translateX(-40px); }

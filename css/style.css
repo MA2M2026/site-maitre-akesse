@@ -220,10 +220,10 @@ section { padding: 5rem 0; }
   align-items: baseline; padding: 1.8rem 0; border-bottom: 1px solid var(--gris-clair);
   transition: background 0.3s ease, padding-left 0.3s ease;
 }
-.service-ligne:hover { background: rgba(122,18,32,0.06); padding-left: 0.6rem; }
+.service-ligne:hover { background: rgba(255,255,255,0.03); padding-left: 0.6rem; }
 
 .service-num { font-family: var(--display); font-size: 1.8rem; color: var(--texte-doux); transition: color 0.3s ease, text-shadow 0.3s ease; }
-.service-ligne:hover .service-num { color: var(--bordeaux-clair); text-shadow: 0 0 18px rgba(207,59,82,0.4); }
+.service-ligne:hover .service-num { color: var(--bordeaux-clair); text-shadow: none; }
 .service-nom h3 { margin-bottom: 0.4rem; }
 .service-nom p { color: var(--texte-doux); margin: 0; font-size: 0.96rem; }
 .service-tag {
@@ -2267,7 +2267,7 @@ html.porte-deja-vue #porte-entree { display: none; }
 .fiche-contact-bas {
   margin: 1rem 0 clamp(2.5rem, 6vw, 4.5rem);
   border: 1px solid rgba(255,255,255,0.08); border-radius: 16px;
-  background: linear-gradient(150deg, rgba(122,18,32,0.16), rgba(255,255,255,0.015) 55%);
+  background: linear-gradient(150deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015) 55%);
   padding: clamp(1.4rem, 4vw, 2.4rem);
 }
 .fiche-contact-entete { display: flex; align-items: center; gap: 1rem; margin-bottom: clamp(1.2rem, 3vw, 1.8rem); }
@@ -2292,7 +2292,7 @@ html.porte-deja-vue #porte-entree { display: none; }
 .fiche-contact-tuile .fiche-contact-rond { grid-row: 1 / 3; }
 .fiche-contact-label { font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--texte-doux); align-self: end; }
 .fiche-contact-valeur { font-size: 0.92rem; color: var(--titre-clair); align-self: start; overflow-wrap: anywhere; }
-.fiche-contact-tuile:hover { border-color: rgba(213,84,104,0.5); background: rgba(122,18,32,0.15); }
+.fiche-contact-tuile:hover { border-color: rgba(213,84,104,0.5); background: rgba(255,255,255,0.05); }
 .fiche-contact-tuile:hover .fiche-contact-valeur { color: var(--bordeaux-clair); }
 @media (max-width: 480px) {
   .fiche-contact-bas { padding: 1.2rem 0.9rem; }
@@ -2695,8 +2695,8 @@ html.selection-vide #liste-vide { display: block; }
 .menu-overlay { box-shadow: inset 0 0 180px rgba(0,0,0,0.55); }
 .menu-overlay .nav-links a { border-radius: 6px; transition: color 0.25s ease, letter-spacing 0.25s ease, background 0.25s ease, box-shadow 0.25s ease; }
 .menu-overlay .nav-links a:hover, .menu-overlay .nav-links a.actif {
-  background: rgba(122,18,32,0.08);
-  box-shadow: inset 0 0 0 1px rgba(207,59,82,0.25), 0 0 24px -6px rgba(207,59,82,0.35);
+  background: rgba(255,255,255,0.05);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12);
 }
 
 /* =====================================================================
@@ -2934,8 +2934,8 @@ html:has(#couverture-faisceau) { scroll-padding-top: 95px; }
 }
 .menu-overlay .nav-links li a::after { content: "›"; font-size: 1.15rem; color: rgba(255,255,255,0.35); }
 @media (hover: hover) { .menu-overlay .nav-links li a:hover { background: rgba(255,255,255,0.05) !important; } }
-.menu-overlay .nav-links li a:active { background: rgba(213,84,104,0.16) !important; }
-.menu-overlay .nav-links li a.actif { background: rgba(213,84,104,0.1) !important; }
+.menu-overlay .nav-links li a:active { background: rgba(255,255,255,0.1) !important; }
+.menu-overlay .nav-links li a.actif { background: rgba(255,255,255,0.06) !important; }
 .menu-overlay .nav-links li a.actif::before {
   content: ""; position: absolute; left: 0; top: 8px; bottom: 8px;
   width: 2px; border-radius: 2px; background: #d55468;
@@ -2958,7 +2958,7 @@ html:has(#couverture-faisceau) { scroll-padding-top: 95px; }
 }
 @media (hover: hover) { .menu-overlay .nav-links .item-cta a:hover { background: rgba(255,255,255,0.05) !important; letter-spacing: 0.03em !important; } }
 .menu-overlay .nav-links .item-cta a::after { content: "›"; font-size: 1.15rem; color: rgba(255,255,255,0.35); }
-.menu-overlay .nav-links .item-cta a.actif { background: rgba(213,84,104,0.1) !important; }
+.menu-overlay .nav-links .item-cta a.actif { background: rgba(255,255,255,0.06) !important; }
 .menu-overlay .nav-links .item-cta a.actif::before { content: ""; }
 .menu-overlay .menu-contact { margin-top: 1.4rem; }
 .menu-overlay .menu-contact a.menu-tel { font-size: 1rem; }
