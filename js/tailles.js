@@ -50,7 +50,7 @@
   function piedsPouces(cm) {
     if (!cm) return null;
     var p = Math.round(cm / 2.54), pieds = Math.floor(p / 12);
-    return pieds + '′' + (p - pieds * 12) + '″';
+    return pieds + "'" + (p - pieds * 12) + '"';
   }
   // Pointure : correspondances standard (femmes et hommes diffèrent au Royaume-Uni et aux États-Unis).
   var POINTURES_F = { 35: [2.5, 5], 36: [3.5, 6], 37: [4, 6.5], 38: [5, 7.5], 39: [6, 8.5], 40: [6.5, 9], 41: [7.5, 10], 42: [8, 10.5], 43: [9, 11.5], 44: [9.5, 12] };
@@ -94,4 +94,46 @@
 
   // Texte court d'une taille : « S / 36 » (lettre + taille européenne).
   window.ma2mTailleCourte = function (t) { return t ? t.lettre + ' / ' + t.eu : ''; };
+
+  // Taille vêtements affichée partout (fiche, compcard, CV) : calculée d'après les
+  // mensurations ; à défaut, l'ancienne taille déclarée (profil pas encore mis à jour).
+  window.ma2mTailleVetements = function (p) {
+    return window.ma2mTailles(p).generale || (p && p.clothing_size) || '';
+  };
+
+  // Mensurations de l'Extension 121 (épaules, bras, cou, tête), lues à part : si la
+  // base ne les a pas encore, la page s'affiche quand même, sans elles.
+  window.ma2mMesuresSupp = async function (id) {
+    try {
+      var r = await sb.from('model_profiles').select('shoulder_cm, arm_cm, neck_cm, head_cm').eq('id', id).maybeSingle();
+      return (r && !r.error && r.data) || {};
+    } catch (e) { return {}; }
+  };
+
+  // Tableau « Tailles & équivalences internationales » de la fiche publique (FR/EN).
+  // Chaîne vide si aucune taille ne peut être calculée.
+  window.ma2mBlocEquivalences = function (p, anglais) {
+    var t = window.ma2mTailles(p);
+    var cols = t.homme ? ['eu', 'it', 'uk', 'us', 'br', 'kr', 'cn'] : ['eu', 'it', 'uk', 'us', 'br', 'jp', 'kr', 'cn'];
+    var titres = { eu: anglais ? 'EU' : 'FR / EU', it: 'IT', uk: 'UK', us: 'US', br: 'BR', jp: 'JP', kr: 'KR', cn: 'CN' };
+    var lignes = [];
+    function rangee(libelle, lettre, valeurs) {
+      lignes.push('<tr><th scope="row">' + libelle + '</th><td class="eq-lettre">' + (lettre || '—') + '</td>' +
+        cols.map(function (c) { var v = valeurs[c]; return '<td>' + (v === undefined || v === null || v === '' ? '—' : String(v)) + '</td>'; }).join('') + '</tr>');
+    }
+    if (t.haut) rangee(anglais ? 'Top' : 'Haut', t.haut.lettre, t.haut);
+    if (t.bas) rangee(anglais ? 'Bottom' : 'Bas', t.bas.lettre, t.bas);
+    if (t.pointure) {
+      var pt = t.pointure, cmPied = pt.asie / 10;
+      rangee(anglais ? 'Shoes' : 'Pointure', '', { eu: pt.eu, it: pt.eu, uk: pt.uk, us: pt.us, br: pt.eu - 2, jp: cmPied, kr: pt.asie, cn: pt.asie });
+    }
+    if (t.chemise) rangee(anglais ? 'Shirt (collar)' : 'Chemise (col)', '', { eu: t.chemise.eu, it: t.chemise.eu, uk: t.chemise.us, us: t.chemise.us });
+    if (!lignes.length) return '';
+    return '<section class="fiche-equivalences" aria-label="' + (anglais ? 'International sizes' : 'Tailles internationales') + '">' +
+      '<h3>' + (anglais ? 'Sizes &amp; international conversions' : 'Tailles &amp; équivalences internationales') + '</h3>' +
+      '<div class="eq-defilement"><table><thead><tr><th></th><th>' + (anglais ? 'Size' : 'Taille') + '</th>' +
+      cols.map(function (c) { return '<th scope="col">' + titres[c] + '</th>'; }).join('') + '</tr></thead><tbody>' + lignes.join('') + '</tbody></table></div>' +
+      '<p class="eq-note">' + (anglais ? 'Calculated from the measurements (standard ready-to-wear charts). Shoes: JP in cm, KR / CN in mm.' : 'Calculées d’après les mensurations (barèmes standard du prêt-à-porter). Pointure : JP en cm, KR / CN en mm.') + '</p>' +
+      '</section>';
+  };
 })();

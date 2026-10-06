@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-CEbNXBpvEDNZeJHYVAsjWFv+qCLutSaUZpFPfx840Ys='; style-src 'self' https://fonts.googleapis.com 'sha256-7qzTX2fbWhcoN8NR8B0qP2PjgfCnkK2/b2LeciSYanY=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-y6LiEQzBDyNagjp9+rFe7mtqzTYmmqoHmbsq9Gdwlvc='; style-src 'self' https://fonts.googleapis.com 'sha256-7qzTX2fbWhcoN8NR8B0qP2PjgfCnkK2/b2LeciSYanY=';">
 <!-- Adresse lisible …/book/nom (06/10/2026) : la page peut être servie depuis /book/… ; ses fichiers se chargent toujours depuis la racine du site (voir js/adresse-fiche.js). -->
 <base href="/">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
@@ -273,6 +273,7 @@ async function chargerProfilInterne() {
     .single();
 
   if (error || !profil) { contenu.textContent = 'Ce profil n\'est pas disponible.'; return; }
+  Object.assign(profil, await window.ma2mMesuresSupp(id)); // épaules, bras, cou, tête (js/tailles.js)
   const slug = await window.ma2mAdresseFiche(id, false);
   if (lienLangue && slug) lienLangue.href = 'en/book/' + slug;
 
@@ -394,15 +395,20 @@ async function chargerProfilInterne() {
           ${profil.weight_kg ? `<div class="fiche-mesure"><dt>${iconeMensuration('poids')}Poids</dt><dd>${profil.weight_kg} kg</dd></div>` : ''}
           ${profil.chest_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Poitrine</dt><dd>${profil.chest_cm} cm</dd></div>` : ''}
           ${profil.waist_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Tour de taille</dt><dd>${profil.waist_cm} cm</dd></div>` : ''}
-          ${profil.hips_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Hanches</dt><dd>${profil.hips_cm} cm</dd></div>` : ''}
+          ${profil.hips_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}${profil.category === 'homme' ? 'Tour de bassin' : 'Hanches'}</dt><dd>${profil.hips_cm} cm</dd></div>` : ''}
           ${profil.inseam_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Entrejambe</dt><dd>${profil.inseam_cm} cm</dd></div>` : ''}
+          ${profil.shoulder_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Épaules</dt><dd>${profil.shoulder_cm} cm</dd></div>` : ''}
+          ${profil.arm_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Longueur de bras</dt><dd>${profil.arm_cm} cm</dd></div>` : ''}
+          ${profil.neck_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Tour de cou</dt><dd>${profil.neck_cm} cm</dd></div>` : ''}
+          ${profil.head_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Tour de tête</dt><dd>${profil.head_cm} cm</dd></div>` : ''}
           ${profil.shoe_size ? `<div class="fiche-mesure"><dt>${iconeMensuration('pointure')}Pointure</dt><dd>${echapperHtml(profil.shoe_size)}</dd></div>` : ''}
           ${profil.carnation ? `<div class="fiche-mesure"><dt>${iconeMensuration('carnation')}Carnation</dt><dd>${echapperHtml(profil.carnation)}</dd></div>` : ''}
-          ${profil.clothing_size ? `<div class="fiche-mesure"><dt>${iconeMensuration('vetements')}Vêtements</dt><dd>${echapperHtml(profil.clothing_size)}</dd></div>` : ''}
+          ${ma2mTailleVetements(profil) ? `<div class="fiche-mesure"><dt>${iconeMensuration('vetements')}Vêtements</dt><dd>${echapperHtml(ma2mTailleVetements(profil))}</dd></div>` : ''}
           ${profil.eye_color ? `<div class="fiche-mesure"><dt>${iconeMensuration('yeux')}Yeux</dt><dd>${echapperHtml(profil.eye_color)}</dd></div>` : ''}
           ${profil.hair_color ? `<div class="fiche-mesure"><dt>${iconeMensuration('cheveux')}Cheveux</dt><dd>${echapperHtml(profil.hair_color)}</dd></div>` : ''}
         </dl>
       </div>
+      ${ma2mBlocEquivalences(profil, false)}
 
       <div class="fiche-actions no-print">
         <button id="btn-select-fiche" class="btn btn--principal"></button>

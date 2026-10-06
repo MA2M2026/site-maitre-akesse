@@ -328,13 +328,13 @@ function physiqueToDb(p){
     height_cm: toNum(p.taille), weight_kg: toNum(p.poids), chest_cm: toNum(p.poitrine),
     waist_cm: toNum(p.tourTaille), hips_cm: toNum(p.hanches), inseam_cm: toNum(p.entrejambe),
     // Taille vêtements : calculée d'après les mensurations (js/tailles.js), jamais saisie
-    shoe_size: p.pointure || null, clothing_size: tailleGeneraleCalculee(p) || p.tailleVet || null,
+    shoe_size: p.pointure || null, clothing_size: p.tailleVet || null,
     eye_color: p.yeux || null, hair_color: p.cheveux || null, carnation: p.carnation || null
   };
 }
-function tailleGeneraleCalculee(p){
-  if (typeof ma2mTailles !== 'function') return null;
-  return ma2mTailles({ category: state.identite.sexe, chest_cm: p.poitrine, waist_cm: p.tourTaille, hips_cm: p.hanches }).generale;
+function tailleGeneraleCalculee(p, sexe){
+  if (typeof ma2mTailleVetements !== 'function') return p.tailleVet || '';
+  return ma2mTailleVetements({ category: sexe, chest_cm: p.poitrine, waist_cm: p.tourTaille, hips_cm: p.hanches, clothing_size: p.tailleVet });
 }
 // Mensurations ajoutées le 06/10/2026 (Extension 121) : enregistrées à part, pour que
 // l'étape ne soit jamais bloquée si la base n'a pas encore ces colonnes.
@@ -412,10 +412,9 @@ const Store = {
 
     const s = mapProfileFromDb(profile, contactPrive);
 
-    try {
-      const { data: supp, error: eSupp } = await sb.from('model_profiles').select('shoulder_cm, arm_cm, neck_cm, head_cm').eq('id', currentUser.id).maybeSingle();
-      if (!eSupp && supp) Object.assign(s.physique, { epaules: supp.shoulder_cm ?? '', bras: supp.arm_cm ?? '', cou: supp.neck_cm ?? '', tete: supp.head_cm ?? '' });
-    } catch(e) { /* colonnes pas encore créées */ }
+    const supp = await ma2mMesuresSupp(currentUser.id); // vide si l'Extension 121 n'est pas encore exécutée
+    Object.assign(s.physique, { epaules: supp.shoulder_cm ?? '', bras: supp.arm_cm ?? '', cou: supp.neck_cm ?? '', tete: supp.head_cm ?? '' });
+    s.physique.tailleVet = tailleGeneraleCalculee(s.physique, s.identite.sexe);
 
     const { data: exps } = await sb.from('model_projects').select('*').eq('model_id', currentUser.id).order('created_at', { ascending:true });
     s.experiences = (exps||[]).map(function(e){ return { id:e.id, type:e.type_projet, nom:e.titre, lieu:e.ville, annee:e.periode }; });
@@ -1126,7 +1125,7 @@ async function enregistrerFicheEvenementDepuisFormulaire(){
 }
 
 function lirePhysiqueFormulaire(){
-  return {
+  const p = {
     taille: val('f-taille'), poids: val('f-poids'), poitrine: val('f-poitrine'), tourTaille: val('f-tourTaille'),
     hanches: val('f-hanches'), entrejambe: val('f-entrejambe'), pointure: val('f-pointure'),
     tailleVet: state.physique.tailleVet,
@@ -1135,6 +1134,9 @@ function lirePhysiqueFormulaire(){
     cheveux: valeurSelectOuAutre('f-cheveux', 'f-cheveux-autre'),
     carnation: val('f-carnation')
   };
+  // Taille vêtements : jamais saisie, calculée d'après les mensurations (js/tailles.js)
+  p.tailleVet = tailleGeneraleCalculee(p, state.identite.sexe);
+  return p;
 }
 
 function bindWizard(){
@@ -1700,7 +1702,7 @@ function openCompcard(){
       '<div class="ccm-measures">' +
         '<div><span>TAILLE</span><b>'+(p.taille||'—')+' cm</b></div><div><span>POIDS</span><b>'+(p.poids||'—')+' kg</b></div><div><span>POITRINE</span><b>'+(p.poitrine||'—')+' cm</b></div>' +
         '<div><span>TOUR DE TAILLE</span><b>'+(p.tourTaille||'—')+' cm</b></div><div><span>HANCHES</span><b>'+(p.hanches||p.entrejambe||'—')+' cm</b></div><div><span>POINTURE</span><b>'+(p.pointure||'—')+'</b></div>' +
-        '<div><span>CARNATION</span><b>'+(p.carnation||'—')+'</b></div><div><span>TAILLE VÊTEMENTS</span><b>'+(p.tailleVet||'—')+'</b></div><div><span>YEUX</span><b>'+(p.yeux||'—')+'</b></div><div><span>CHEVEUX</span><b>'+(p.cheveux||'—')+'</b></div>' +
+        '<div><span>CARNATION</span><b>'+echapperHtml(p.carnation||'—')+'</b></div><div><span>TAILLE VÊTEMENTS</span><b>'+echapperHtml(p.tailleVet||'—')+'</b></div><div><span>YEUX</span><b>'+echapperHtml(p.yeux||'—')+'</b></div><div><span>CHEVEUX</span><b>'+echapperHtml(p.cheveux||'—')+'</b></div>' +
       '</div></div>' +
       '<div class="ccm-footer"><b>CONTACT OFFICIEL MA2M</b><div>+225 27 22 23 11 76 · +225 05 45 65 66 87</div><div>infos.ma2m@gmail.com</div><div>Instagram · Facebook · TikTok · YouTube  @maitreakessemodelmanagement</div><small>Document officiel généré depuis maitreakessemodelmanagement.com — toute demande de booking passe exclusivement par l’agence.</small></div>' +
     '</div>' +

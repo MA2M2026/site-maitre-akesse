@@ -84,15 +84,25 @@
     ligne('E-mail (agence MA2M)', 'infos.ma2m@gmail.com');
     ligne('Adresse', [d.quartier, d.city].filter(Boolean).join(', '));
 
-    section('2. MENSURATIONS');
-    ligne('Taille', cm(d.height_cm));
+    // Tailles calculées d'après les mensurations (js/tailles.js), jamais saisies
+    var t = ma2mTailles(d), homme = d.category === 'homme';
+    var equiv = function (x) { return x ? ma2mTailleCourte(x) + '  (IT ' + x.it + ' · UK ' + x.uk + ' · US ' + x.us + ')' : ''; };
+    section('2. MENSURATIONS & TAILLES');
+    ligne('Taille', t.hauteur ? t.hauteur.cm + ' cm (' + t.hauteur.pieds + ')' : '');
     ligne('Poids', d.weight_kg ? d.weight_kg + ' kg' : '');
     ligne('Tour de poitrine', cm(d.chest_cm));
     ligne('Tour de taille', cm(d.waist_cm));
-    ligne('Tour de hanches', cm(d.hips_cm));
-    ligne('Pointure (EU)', d.shoe_size);
-    ligne('Taille haut', d.taille_haut || d.clothing_size);
-    ligne('Taille bas', d.taille_bas);
+    ligne(homme ? 'Tour de bassin' : 'Tour de hanches', cm(d.hips_cm));
+    if (homme) ligne('Tour de cou', cm(d.neck_cm));
+    ligne('Largeur d’épaules', cm(d.shoulder_cm));
+    ligne('Longueur de bras', cm(d.arm_cm));
+    ligne('Entrejambe', cm(d.inseam_cm));
+    ligne('Tour de tête', cm(d.head_cm));
+    ligne('Pointure', t.pointure ? 'EU ' + t.pointure.eu + '  (UK ' + t.pointure.uk + ' · US ' + t.pointure.us + ')' : d.shoe_size);
+    ligne('Taille haut', equiv(t.haut));
+    ligne('Taille bas', equiv(t.bas));
+    ligne('Taille générale', ma2mTailleVetements(d));
+    if (homme && t.chemise) ligne('Chemise (col)', t.chemise.eu + ' cm  (US ' + t.chemise.us + ')');
     ligne('Yeux / cheveux', [d.eye_color, d.hair_color].filter(Boolean).join(' / '));
 
     section('3. ÉVÉNEMENTS');
@@ -140,11 +150,11 @@
     zone.textContent = 'Chargement…';
     var pr = await sb.from('model_profiles').select('id, full_name, published').not('full_name', 'is', null).order('full_name');
     if (pr.error) { zone.textContent = 'Erreur : ' + pr.error.message; return; }
-    var fe = await sb.from('fiche_evenement').select('model_id, mis_a_jour, taille_haut, taille_bas, regime_allergies, tiktok, facebook, droit_image');
+    var fe = await sb.from('fiche_evenement').select('model_id, mis_a_jour, regime_allergies, tiktok, facebook, droit_image');
     if (fe.error) { zone.innerHTML = '<p class="tdb-9">Les fiches événement seront disponibles après l’exécution de l’Extension 120 dans Supabase.</p>'; return; }
     // « remplies » seulement si au moins une information a vraiment été donnée
     var remplies = {}; (fe.data || []).forEach(function (f) {
-      if (f.taille_haut || f.taille_bas || f.regime_allergies || f.tiktok || f.facebook || f.droit_image != null) remplies[f.model_id] = f.mis_a_jour;
+      if (f.regime_allergies || f.tiktok || f.facebook || f.droit_image != null) remplies[f.model_id] = f.mis_a_jour;
     });
     var liste = (pr.data || []).filter(function (m) { return (m.full_name || '').trim(); });
     zone.innerHTML = liste.length ? liste.map(function (m) {

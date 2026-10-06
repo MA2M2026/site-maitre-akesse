@@ -349,7 +349,7 @@ function construireHtmlCv(d) {
         '<ul class="mcv-kv"><li><span>Taille</span><b>' + (p.taille ? p.taille + ' cm' : '—') + '</b></li><li><span>Poids</span><b>' + (p.poids ? p.poids + ' kg' : '—') + '</b></li>' +
         '<li><span>Mensurations</span><b>' + ([p.poitrine, p.tourTaille, p.hanches || p.entrejambe].some(Boolean) ? [p.poitrine || '–', p.tourTaille || '–', p.hanches || p.entrejambe || '–'].join(' / ') : '—') + '</b></li>' +
         '<li><span>Pointure</span><b>' + (p.pointure || '—') + '</b></li></ul>' +
-        '<ul class="mcv-kv"><li><span>Taille vêtements</span><b>' + (p.tailleVet || '—') + '</b></li><li><span>Couleur des yeux</span><b>' + (p.yeux || '—') + '</b></li>' +
+        '<ul class="mcv-kv"><li><span>Taille vêtements</span><b>' + echapperHtml(p.tailleVet || '—') + '</b></li><li><span>Couleur des yeux</span><b>' + (p.yeux || '—') + '</b></li>' +
         '<li><span>Couleur des cheveux</span><b>' + (p.cheveux || '—') + '</b></li><li><span>Carnation</span><b>' + (p.carnation || '—') + '</b></li></ul>' +
       '</div></section>' +
       '<section class="mcv-sec"><h4>' + mcvIcon('grad') + ' Formation</h4><ul class="mcv-kv">' +
@@ -680,7 +680,7 @@ async function construireCanvasCompcard(ficheData) {
     [profil.category === 'homme' ? 'Entrejambe' : 'Hanches', profil.category === 'homme' ? (profil.inseam_cm ? profil.inseam_cm + ' cm' : null) : (profil.hips_cm ? profil.hips_cm + ' cm' : null)],
     ['Pointure', profil.shoe_size || null],
     ['Carnation', profil.carnation || null],
-    ['Taille vêtements', profil.clothing_size || null],
+    ['Taille vêtements', (typeof ma2mTailleVetements === 'function' ? ma2mTailleVetements(profil) : profil.clothing_size) || null],
     ['Yeux', profil.eye_color || null],
     ['Cheveux', profil.hair_color || null]
   ].filter(([, v]) => v);

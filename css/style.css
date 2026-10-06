@@ -3049,3 +3049,16 @@ body.porte-verrouillee .couverture-faisceau, body.porte-verrouillee .couverture-
 /* Fiche mannequin : rubrique « Digitals » sous le Book (tri automatique des photos, 06/10/2026). */
 .fiche-digitals-titre { margin-top: 2.6rem; }
 .fiche-digitals-sous { margin: -0.4rem 0 1.2rem; font-size: 0.95rem; color: var(--gris, #6b625d); }
+
+/* Fiche publique — tableau « Tailles & équivalences internationales » (06/10/2026),
+   construit par js/tailles.js. Défile dans son cadre sur téléphone, jamais la page. */
+.fiche-equivalences { margin: 1.4rem 0 0.4rem; }
+.fiche-equivalences h3 { font-family: var(--display); font-size: 1.15rem; font-weight: 500; color: var(--titre-clair); margin: 0 0 0.7rem; }
+.fiche-equivalences .eq-defilement { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; }
+.fiche-equivalences table { width: 100%; border-collapse: collapse; font-size: 0.86rem; white-space: nowrap; }
+.fiche-equivalences th, .fiche-equivalences td { padding: 0.55rem 0.7rem; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.07); }
+.fiche-equivalences thead th { font-size: 0.72rem; letter-spacing: 0.1em; color: var(--bordeaux-clair); font-weight: 600; }
+.fiche-equivalences tbody th { text-align: left; color: var(--texte-doux); font-weight: 500; }
+.fiche-equivalences tbody tr:last-child th, .fiche-equivalences tbody tr:last-child td { border-bottom: 0; }
+.fiche-equivalences .eq-lettre { color: var(--titre-clair); font-weight: 600; }
+.fiche-equivalences .eq-note { margin: 0.5rem 0 0; font-size: 0.78rem; color: var(--texte-doux); }

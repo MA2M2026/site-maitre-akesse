@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-APLwyDw36sAjyQcdUQ5UGGldVZBDMg7M7zvJCpI8qHE='; style-src 'self' https://fonts.googleapis.com 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-PXIJ+bz5Lsk/S8/5xSRrc/18l03MXUToO+tY/G1PEpY='; style-src 'self' https://fonts.googleapis.com 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
 <!-- Adresse lisible …/book/nom (06/10/2026) : la page peut être servie depuis /book/… ; ses fichiers se chargent toujours depuis la racine du site (voir js/adresse-fiche.js). -->
 <base href="/en/">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
@@ -438,7 +438,7 @@ async function construireCanvasCompcardEn() {
     [profil.category === 'homme' ? 'Inseam' : 'Hips', profil.category === 'homme' ? (profil.inseam_cm ? avecImperial(profil.inseam_cm + ' cm', enPouces(profil.inseam_cm)) : null) : (profil.hips_cm ? avecImperial(profil.hips_cm + ' cm', enPouces(profil.hips_cm)) : null)],
     ['Shoe Size', profil.shoe_size ? avecImperial('EU ' + profil.shoe_size, pointureUS(profil.shoe_size, profil.category)) : null],
     ['Skin Tone', profil.carnation ? enAnglais(profil.carnation) : null],
-    ['Clothing Size', profil.clothing_size || null],
+    ['Clothing Size', ma2mTailleVetements(profil) || null],
     ['Eyes', profil.eye_color ? enAnglais(profil.eye_color) : null],
     ['Hair', profil.hair_color ? enAnglais(profil.hair_color) : null]
   ].filter(([, v]) => v);
@@ -599,6 +599,7 @@ async function chargerProfilInterne() {
     .single();
 
   if (error || !profil) { contenu.textContent = 'This profile is not available.'; return; }
+  Object.assign(profil, await window.ma2mMesuresSupp(id)); // épaules, bras, cou, tête (js/tailles.js)
   const slug = await window.ma2mAdresseFiche(id, true);
   if (lienLangue && slug) lienLangue.href = '../book/' + slug;
 
@@ -716,13 +717,18 @@ async function chargerProfilInterne() {
           ${profil.waist_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Waist</dt><dd>${profil.waist_cm} cm <span class="fiche-imperial">${enPouces(profil.waist_cm)}</span></dd></div>` : ''}
           ${profil.hips_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Hips</dt><dd>${profil.hips_cm} cm <span class="fiche-imperial">${enPouces(profil.hips_cm)}</span></dd></div>` : ''}
           ${profil.inseam_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Inseam</dt><dd>${profil.inseam_cm} cm <span class="fiche-imperial">${enPouces(profil.inseam_cm)}</span></dd></div>` : ''}
+          ${profil.shoulder_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Shoulders</dt><dd>${profil.shoulder_cm} cm <span class="fiche-imperial">${enPouces(profil.shoulder_cm)}</span></dd></div>` : ''}
+          ${profil.arm_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Arm length</dt><dd>${profil.arm_cm} cm <span class="fiche-imperial">${enPouces(profil.arm_cm)}</span></dd></div>` : ''}
+          ${profil.neck_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Neck</dt><dd>${profil.neck_cm} cm <span class="fiche-imperial">${enPouces(profil.neck_cm)}</span></dd></div>` : ''}
+          ${profil.head_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Head</dt><dd>${profil.head_cm} cm <span class="fiche-imperial">${enPouces(profil.head_cm)}</span></dd></div>` : ''}
           ${profil.shoe_size ? `<div class="fiche-mesure"><dt>${iconeMensuration('pointure')}Shoe Size</dt><dd>EU ${echapperHtml(profil.shoe_size)}${pointureUS(profil.shoe_size, profil.category) ? ` <span class="fiche-imperial">${pointureUS(profil.shoe_size, profil.category)}</span>` : ''}</dd></div>` : ''}
           ${profil.carnation ? `<div class="fiche-mesure"><dt>${iconeMensuration('carnation')}Skin Tone</dt><dd>${echapperHtml(enAnglais(profil.carnation))}</dd></div>` : ''}
-          ${profil.clothing_size ? `<div class="fiche-mesure"><dt>${iconeMensuration('vetements')}Clothing</dt><dd>${echapperHtml(profil.clothing_size)}</dd></div>` : ''}
+          ${ma2mTailleVetements(profil) ? `<div class="fiche-mesure"><dt>${iconeMensuration('vetements')}Clothing</dt><dd>${echapperHtml(ma2mTailleVetements(profil))}</dd></div>` : ''}
           ${profil.eye_color ? `<div class="fiche-mesure"><dt>${iconeMensuration('yeux')}Eyes</dt><dd>${echapperHtml(enAnglais(profil.eye_color))}</dd></div>` : ''}
           ${profil.hair_color ? `<div class="fiche-mesure"><dt>${iconeMensuration('cheveux')}Hair</dt><dd>${echapperHtml(enAnglais(profil.hair_color))}</dd></div>` : ''}
         </dl>
       </div>
+      ${ma2mBlocEquivalences(profil, true)}
 
       <div class="fiche-actions no-print">
         <button id="btn-select-fiche" class="btn btn--principal"></button>

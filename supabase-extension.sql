@@ -6207,4 +6207,30 @@ alter table model_profiles add column if not exists neck_cm int;
 alter table model_profiles add column if not exists head_cm int;
 grant select (shoulder_cm, arm_cm, neck_cm, head_cm) on model_profiles to anon;
 
+-- Fiche événement : les nouvelles mensurations en plus ; le téléphone et l'e-mail du
+-- mannequin ne sont plus transmis (la fiche n'affiche que les contacts de l'agence).
+create or replace function fiche_evenement_admin(id_mannequin uuid)
+returns json
+language sql stable security definer
+set search_path = public
+as $$
+  select case when exists (select 1 from admins where user_id = auth.uid()) then
+    json_build_object(
+      'full_name', p.full_name, 'category', p.category,
+      'age', case when p.date_naissance is null then null else extract(year from age(current_date, p.date_naissance))::int end,
+      'nationalite', p.nationalite, 'city', p.city, 'quartier', p.quartier,
+      'height_cm', p.height_cm, 'weight_kg', p.weight_kg, 'chest_cm', p.chest_cm, 'waist_cm', p.waist_cm,
+      'hips_cm', p.hips_cm, 'inseam_cm', p.inseam_cm, 'shoe_size', p.shoe_size, 'clothing_size', p.clothing_size,
+      'shoulder_cm', p.shoulder_cm, 'arm_cm', p.arm_cm, 'neck_cm', p.neck_cm, 'head_cm', p.head_cm,
+      'eye_color', p.eye_color, 'hair_color', p.hair_color, 'instagram', p.instagram, 'slug', p.slug,
+      'regime_allergies', f.regime_allergies, 'tiktok', f.tiktok, 'facebook', f.facebook,
+      'droit_image', f.droit_image, 'mis_a_jour', f.mis_a_jour
+    )
+  end
+  from model_profiles p left join fiche_evenement f on f.model_id = p.id
+  where p.id = id_mannequin;
+$$;
+revoke all on function fiche_evenement_admin(uuid) from public;
+grant execute on function fiche_evenement_admin(uuid) to authenticated;
+
 NOTIFY pgrst, 'reload schema';
