@@ -191,8 +191,8 @@
       // Aucune ligne touchée = session expirée ou compte non admin : rien n'a été enregistré.
       if (!r.data || !r.data.length) { message('Rien n’a été enregistré : reconnectez-vous au tableau de bord puis réessayez.', true); return; }
       viderFormulaire();
-      var visibleSite = ligne.visible ? ' Il est visible sur la page Agenda du site.' : '';
-      message(id ? 'Projet modifié.' : 'Projet ajouté à l’agenda.' + visibleSite);
+      var visibleSite = ligne.visible ? ' Il est visible sur la page Agenda du site.' : ' Il est caché du site.';
+      message((id ? 'Projet modifié.' : 'Projet ajouté à l’agenda.') + visibleSite);
       await chargerProjets();
     } finally {
       enCours = false;
@@ -225,7 +225,10 @@
 
   // Chargement au premier affichage de la rubrique (la session admin est alors ouverte).
   function siVisible() {
-    if (!charge && section.classList.contains('tdb-actif')) charger().catch(function (e) { message('Impossible de charger l’agenda : ' + (e && e.message), true); });
+    if (!charge && section.classList.contains('tdb-actif')) charger().catch(function (e) {
+      charge = false; // nouvel essai à la prochaine ouverture de la rubrique
+      message('Impossible de charger l’agenda : ' + ((e && e.message) || String(e)), true);
+    });
   }
   new MutationObserver(siVisible).observe(section, { attributes: true, attributeFilter: ['class'] });
   siVisible();

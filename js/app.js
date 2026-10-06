@@ -819,7 +819,11 @@ function dateDuJour(d = new Date()) {
 }
 function separerAgenda(projets) {
   const jour = dateDuJour();
-  const tries = (projets || []).slice().sort((x, y) => x.date_debut.localeCompare(y.date_debut));
+  const cle = p => String(p.date_debut || '');
+  const tries = (projets || []).slice().sort((x, y) => {
+    if (cle(x) === cle(y)) return 0;
+    return cle(x) < cle(y) ? -1 : 1;
+  });
   return {
     avenir: tries.filter(p => (p.date_fin || p.date_debut) >= jour),
     passes: tries.filter(p => (p.date_fin || p.date_debut) < jour).reverse()

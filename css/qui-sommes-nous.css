@@ -13,7 +13,7 @@
   align-items: flex-end;
   padding: 0 0 clamp(4rem, 10vh, 7rem);
   overflow: hidden;
-  background: radial-gradient(ellipse at 30% 20%, #1a1a1b 0%, var(--noir) 70%);
+  background: radial-gradient(ellipse at 30% 20%, var(--noir-doux) 0%, var(--noir) 70%);
 }
 .qsn-diaporama { position: absolute; inset: 0; }
 .qsn-diaporama img {
@@ -177,7 +177,7 @@
 
 /* ---------- 8. Réalisations ---------- */
 .qsn-evenements { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; }
-.qsn-evenement-photo { position: relative; overflow: hidden; aspect-ratio: 4 / 3; background: linear-gradient(135deg, #161617, var(--noir)); margin-bottom: 1.2rem; }
+.qsn-evenement-photo { position: relative; overflow: hidden; aspect-ratio: 4 / 3; background: linear-gradient(135deg, var(--noir-doux), var(--noir)); margin-bottom: 1.2rem; }
 .qsn-evenement-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1.4s ease; }
 .qsn-evenement-photo img.actif { opacity: 1; animation: qsn-zoom 9s linear forwards; }
 .qsn-evenement h3 { font-family: var(--display); font-weight: 500; font-size: 1.8rem; color: var(--titre-clair); margin: 0 0 0.4rem; }
