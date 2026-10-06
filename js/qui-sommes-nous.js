@@ -54,9 +54,16 @@
     if (!moinsDeMouvement && imgs.length > 1) setInterval(() => { if (!document.hidden) montrer(); }, delai);
   }
 
+  // « CACAO FASHION SHOW » → « Cacao Fashion Show » (titres saisis en capitales).
+  function enMajusculesDouces(t) {
+    const s = String(t || '').trim();
+    if (s !== s.toUpperCase()) return s;
+    return s.toLowerCase().replace(/(^|[\s'’(-])(\S)/g, (m, a, b) => a + b.toUpperCase());
+  }
+
   async function lirePhotosEvenements() {
     const [ev, ph] = await Promise.all([
-      sb.from('evenements').select('id, titre, image_url').order('date_evenement', { ascending: false }),
+      sb.from('evenements').select('id, titre, lieu, image_url').order('date_evenement', { ascending: false }),
       sb.from('evenement_photos').select('evenement_id, url').order('created_at', { ascending: true }).limit(400)
     ]);
     const evenements = ev.data || [];
@@ -65,7 +72,7 @@
       const urls = photos.filter(p => p.evenement_id === e.id).map(p => p.url);
       // la photo de couverture (souvent une affiche) ne sert que s'il n'y a rien d'autre
       if (!urls.length && e.image_url) urls.push(e.image_url);
-      return { titre: String(e.titre || ''), urls: urls.filter(Boolean) };
+      return { titre: String(e.titre || ''), lieu: String(e.lieu || ''), urls: urls.filter(Boolean) };
     });
   }
 
@@ -81,6 +88,29 @@
       const img = image(melange(toutes)[0], '');
       img.loading = 'lazy';
       fond.appendChild(img);
+    }
+
+    // Les autres événements enregistrés dans le tableau de bord ont aussi leur carte
+    // (un même titre sur plusieurs dates ne donne qu'une carte).
+    const grille = document.getElementById('qsn-evenements');
+    if (grille) {
+      const cles = [...grille.querySelectorAll('[data-evenement]')].map(c => c.dataset.evenement);
+      const vus = new Set();
+      evenements.forEach(e => {
+        const t = e.titre.toLowerCase().trim();
+        if (!t || vus.has(t) || cles.some(c => t.indexOf(c) !== -1)) return;
+        vus.add(t);
+        const carte = document.createElement('article');
+        carte.className = 'qsn-evenement reveal';
+        carte.dataset.evenement = t;
+        const photo = document.createElement('div');
+        photo.className = 'qsn-evenement-photo';
+        const h3 = document.createElement('h3');
+        h3.textContent = enMajusculesDouces(e.titre);
+        carte.appendChild(photo); carte.appendChild(h3);
+        if (e.lieu) { const p = document.createElement('p'); p.textContent = enMajusculesDouces(e.lieu); carte.appendChild(p); }
+        grille.appendChild(carte);
+      });
     }
 
     // Cartes « Nous l'avons déjà fait » : toutes les photos des événements du même nom.
