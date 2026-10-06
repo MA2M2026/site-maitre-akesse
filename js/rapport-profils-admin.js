@@ -24,7 +24,7 @@
     var homme = p.category === 'homme';
     return [
       ['height_cm', 'taille'], ['weight_kg', 'poids'], ['chest_cm', 'tour de poitrine'], ['waist_cm', 'tour de taille'],
-      ['hips_cm', homme ? 'tour de bassin' : 'tour de hanches']
+      ['hips_cm', 'tour de bassin']
     ].concat(suppDisponibles ? (homme ? [['neck_cm', 'tour de cou']] : []).concat([['shoulder_cm', 'largeur d’épaules'], ['arm_cm', 'longueur de bras']]) : []).concat([
       ['inseam_cm', 'entrejambe']
     ]).concat(suppDisponibles ? [['head_cm', 'tour de tête']] : []).concat([
@@ -35,7 +35,7 @@
   // Liste des points à corriger pour un profil.
   function analyser(p, photos) {
     var manquantes = mesuresAttendues(p).filter(function (m) { return p[m[0]] === null || p[m[0]] === undefined || p[m[0]] === ''; }).map(function (m) { return m[1]; });
-    var t = ma2mTailles(p), libelles = { chest_cm: 'tour de poitrine', waist_cm: 'tour de taille', hips_cm: 'tour de hanches' };
+    var t = ma2mTailles(p), libelles = { chest_cm: 'tour de poitrine', waist_cm: 'tour de taille', hips_cm: 'tour de bassin' };
     var aReprendre = t.aReprendre.map(function (c) { return libelles[c]; });
     var book = photos.filter(function (ph) { return ph.tri_statut !== 'ecartee'; });
     var photosPb = [];

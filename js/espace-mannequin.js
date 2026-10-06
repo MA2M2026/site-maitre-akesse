@@ -924,7 +924,7 @@ function stepPhysique(){
     ]}) +
     field('Tour de poitrine (cm)','f-poitrine',d.poitrine,{tag:'select',options:plageNombres(70,135,1,' cm')}) +
     field('Tour de taille (cm)','f-tourTaille',d.tourTaille,{tag:'select',options:plageNombres(55,115,1,' cm')}) +
-    field(homme ? 'Tour de bassin (cm)' : 'Tour de hanches (cm)','f-hanches',d.hanches,{tag:'select',options:plageNombres(70,135,1,' cm')}) +
+    field('Tour de bassin (cm)','f-hanches',d.hanches,{tag:'select',options:plageNombres(70,135,1,' cm')}) +
     (homme ? field('Tour de cou (cm)','f-cou',d.cou,{tag:'select',options:plageNombres(32,50,1,' cm')}) : '') +
     field('Largeur d’épaules (cm)','f-epaules',d.epaules,{tag:'select',options:plageNombres(30,60,1,' cm')}) +
     field('Longueur de bras (cm)','f-bras',d.bras,{tag:'select',options:plageNombres(50,75,1,' cm')}) +
@@ -1722,7 +1722,7 @@ function openCompcard(){
       '<div class="ccm-body"><h1>'+echapperHtml(d.nomComplet||'')+'</h1><div class="ccm-meta">'+echapperHtml(libelleNiveauPublic(niveauControle(state.profilPro.niveauMannequin, state.experiences, state.profilPro.anneesExperience)))+'  ·  '+echapperHtml(d.ville||'Abidjan')+'</div>' +
       '<div class="ccm-measures">' +
         '<div><span>TAILLE</span><b>'+(p.taille||'—')+' cm</b></div><div><span>POIDS</span><b>'+(p.poids||'—')+' kg</b></div><div><span>POITRINE</span><b>'+(masquer?'—':(p.poitrine||'—')+' cm')+'</b></div>' +
-        '<div><span>TOUR DE TAILLE</span><b>'+(masquer?'—':(p.tourTaille||'—')+' cm')+'</b></div><div><span>HANCHES</span><b>'+(masquer?'—':(p.hanches||p.entrejambe||'—')+' cm')+'</b></div><div><span>POINTURE</span><b>'+(p.pointure||'—')+'</b></div>' +
+        '<div><span>TOUR DE TAILLE</span><b>'+(masquer?'—':(p.tourTaille||'—')+' cm')+'</b></div><div><span>BASSIN</span><b>'+(masquer?'—':(p.hanches||p.entrejambe||'—')+' cm')+'</b></div><div><span>POINTURE</span><b>'+(p.pointure||'—')+'</b></div>' +
         '<div><span>CARNATION</span><b>'+echapperHtml(p.carnation||'—')+'</b></div><div><span>TAILLE VÊTEMENTS</span><b>'+echapperHtml(p.tailleVet||'—')+'</b></div><div><span>YEUX</span><b>'+echapperHtml(p.yeux||'—')+'</b></div><div><span>CHEVEUX</span><b>'+echapperHtml(p.cheveux||'—')+'</b></div>' +
       '</div></div>' +
       '<div class="ccm-footer"><b>CONTACT OFFICIEL MA2M</b><div>'+MA2M_TELEPHONES.join(' · ')+'</div><div>'+MA2M_EMAIL+'</div><div>Instagram · Facebook · TikTok · YouTube  @maitreakessemodelmanagement</div><small>Document officiel généré depuis maitreakessemodelmanagement.com — toute demande de booking passe exclusivement par l’agence.</small></div>' +

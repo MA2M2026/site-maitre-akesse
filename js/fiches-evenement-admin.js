@@ -94,7 +94,7 @@
     var masquer = t.aReprendre.length > 0;
     ligne('Tour de poitrine', masquer ? '' : cm(d.chest_cm));
     ligne('Tour de taille', masquer ? '' : cm(d.waist_cm));
-    ligne(homme ? 'Tour de bassin' : 'Tour de hanches', masquer ? '' : cm(d.hips_cm));
+    ligne('Tour de bassin', masquer ? '' : cm(d.hips_cm));
     if (homme) ligne('Tour de cou', cm(d.neck_cm));
     ligne('Largeur d’épaules', cm(d.shoulder_cm));
     ligne('Longueur de bras', cm(d.arm_cm));
