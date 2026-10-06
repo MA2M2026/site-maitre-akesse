@@ -786,6 +786,31 @@ async function lireToutesLignes(fabrique) {
   }
 }
 
+// Agenda MA2M (Extension 124) : libellés des types de projet [français, anglais] et
+// date lisible (« jeu. 15 oct. 2026 », ou « 15 – 17 oct. 2026 » sur plusieurs jours),
+// partagés par le tableau de bord et la page Agenda.
+const MA2M_TYPES_AGENDA = {
+  shooting: ['Shooting', 'Photo shoot'],
+  defile: ['Défilé', 'Fashion show'],
+  casting: ['Casting', 'Casting'],
+  formation: ['Formation', 'Training'],
+  evenement: ['Événement', 'Event'],
+  autre: ['Projet', 'Project']
+};
+function libelleTypeAgenda(type, enAnglais) {
+  const l = MA2M_TYPES_AGENDA[type] || MA2M_TYPES_AGENDA.autre;
+  return l[enAnglais ? 1 : 0];
+}
+function dateAgenda(debut, fin, enAnglais) {
+  const langue = enAnglais ? 'en-GB' : 'fr-FR';
+  const d = new Date(debut + 'T12:00:00');
+  if (isNaN(d)) return '';
+  const complet = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' };
+  if (!fin || fin === debut) return d.toLocaleDateString(langue, complet);
+  const f = new Date(fin + 'T12:00:00');
+  return d.toLocaleDateString(langue, { day: 'numeric', month: 'short' }) + ' – ' + f.toLocaleDateString(langue, { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
 // Copie mélangée d'une liste (mélange de Fisher-Yates) : photos de l'accueil, visages et
 // photos d'événements de la page « Qui sommes-nous »…
 function melanger(liste) {

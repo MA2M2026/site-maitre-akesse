@@ -61,6 +61,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap">
 <link rel="stylesheet" href="../css/splash.css">
 <link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/agenda.css">
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#1e1d1c">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
@@ -341,6 +342,17 @@ setTimeout(() => {
 </section>
 
 <!-- 04 — Management -->
+<!-- MA2M Agenda: the next 3 projects (js/agenda.js), hidden when there are none -->
+<section class="agenda-accueil" data-agenda-accueil hidden>
+  <div class="container">
+    <div class="agenda-accueil-tete">
+      <div><div class="eyebrow">MA2M Agenda</div><h2>Coming up<span class="oeil">.</span></h2></div>
+      <a href="agenda.html" class="agenda-accueil-lien">Full agenda →</a>
+    </div>
+    <div id="agenda-accueil" class="agenda-liste-publique"></div>
+  </div>
+</section>
+
 <section>
   <div class="container">
     <div class="section-tete reveal">
@@ -508,5 +520,6 @@ setTimeout(() => {
 <script src="../js/menu.js"></script>
 <script src="../js/accueil-en.js"></script>
 <script src="../js/video-accueil.js"></script>
+<script src="../js/agenda.js"></script>
 </body>
 </html>

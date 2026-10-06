@@ -1599,3 +1599,23 @@ toutes les écritures sont simulées pendant l'enregistrement.
   `IntersectionObserver` dans Chrome ; le JS observe donc le **parent** des `.qsn-rideau`.
 - Polices : on garde Cormorant Garamond + Jost (un essai Bodoni Moda + Hanken Grotesk a été
   montré puis refusé par la propriétaire le 06/10/2026).
+
+## 📅 Agenda MA2M (06/10/2026)
+
+- Idée de la propriétaire : montrer aux clients le programme de l'agence (shootings, défilés,
+  castings, formations, événements) avec le photographe, les partenaires et les mannequins.
+- Base : **Extension 124** (`agenda_projets`, lisible et modifiable par les admins seulement ;
+  fonction publique `agenda_public()`). Le public ne reçoit **jamais** l'heure, l'adresse ni les
+  notes internes (sécurité des mannequins, dont des mineures) ; seuls les mannequins dont le
+  profil est visible sur le site sont cités (mêmes règles que le Book). Projets de plus de
+  12 mois et projets « cachés du site » exclus.
+- Tableau de bord : Bloc 3 → « Agenda du site » (`js/agenda-admin.js`, section
+  `data-section="b3c-agenda"`). Chargement au premier affichage de la rubrique.
+- Site : pages `agenda.html` / `en/agenda.html` et encart « À venir » de l'accueil FR/EN
+  (`data-agenda-accueil`, caché s'il n'y a rien à venir), tous remplis par `js/agenda.js`,
+  style `css/agenda.css`. Libellés des types et format des dates partagés dans `js/app.js`
+  (`MA2M_TYPES_AGENDA`, `libelleTypeAgenda`, `dateAgenda`).
+- Menu : `js/menu.js` ajoute « Agenda » après « Événements » (et « Qui sommes-nous » après
+  « Accueil ») pour toutes les pages, une seule fois.
+- Ordre de mise en service : exécuter l'Extension 124 dans Supabase **avant** la mise en
+  ligne ; sinon la page affiche simplement « Nos prochains projets seront affichés ici très bientôt ».

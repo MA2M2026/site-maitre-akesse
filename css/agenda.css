@@ -1,0 +1,59 @@
+/* Agenda MA2M (06/10/2026) : page « Agenda » et encart « À venir » de l'accueil.
+   Cartes remplies par js/agenda.js. */
+
+.agenda-ouverture { padding-bottom: 1rem; }
+.agenda-ouverture h1 { font-size: clamp(2.4rem, 7vw, 5rem); }
+.agenda-intro { color: var(--texte-corps); font-size: 1.05rem; }
+.agenda-section-titre { margin-bottom: 1.6rem; }
+
+.agenda-liste-publique { display: grid; gap: 1rem; }
+.agenda-vide { color: var(--texte-doux); font-style: italic; margin: 0; }
+
+.agenda-carte {
+  display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); gap: 1.4rem;
+  padding: 1.4rem 1.4rem 1.5rem; border: 1px solid var(--gris-clair);
+  background: linear-gradient(120deg, rgba(122,18,32,0.10), transparent 55%);
+  transition: border-color 0.4s ease, transform 0.5s var(--transition-douce), box-shadow 0.5s ease;
+}
+.agenda-carte:hover { border-color: var(--bordeaux-clair); transform: translateY(-3px); box-shadow: 0 24px 50px -30px rgba(213,84,104,0.6); }
+
+.agenda-jour {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  aspect-ratio: 1; max-width: 100%; border: 1px solid var(--bordeaux); background: var(--noir);
+}
+.agenda-jour-num { font-family: var(--display); font-size: 2.4rem; line-height: 1; color: var(--titre-clair); }
+.agenda-jour-mois { font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--bordeaux-clair); margin-top: 0.3rem; }
+
+.agenda-corps { min-width: 0; }
+.agenda-meta { margin: 0 0 0.3rem; font-size: 0.82rem; color: var(--texte-doux); max-width: none; }
+.agenda-type-public { color: var(--bordeaux-clair); letter-spacing: 0.16em; text-transform: uppercase; font-size: 0.72rem; font-weight: 500; }
+.agenda-titre { margin: 0 0 0.6rem; font-size: clamp(1.25rem, 3vw, 1.7rem); }
+.agenda-description { color: var(--texte-corps); margin: 0 0 0.9rem; }
+
+.agenda-groupe { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.4rem 0.8rem; margin-top: 0.6rem; }
+.agenda-groupe-titre { font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--texte-doux); min-width: 7.5rem; }
+.agenda-puces { display: flex; flex-wrap: wrap; gap: 0.4rem; min-width: 0; }
+.agenda-puce {
+  display: inline-flex; align-items: center; gap: 0.45rem;
+  padding: 0.3rem 0.75rem; border: 1px solid var(--gris-clair); border-radius: 999px;
+  color: var(--titre-clair); font-size: 0.86rem; text-decoration: none;
+  transition: border-color 0.3s ease, background 0.3s ease;
+}
+a.agenda-puce:hover, a.agenda-puce:focus-visible { border-color: var(--bordeaux-clair); background: rgba(122,18,32,0.35); }
+.agenda-puce img { width: 1.4rem; height: 1.4rem; border-radius: 50%; object-fit: cover; background: #fff; }
+.agenda-puce-simple { border-style: dashed; }
+
+/* Encart « À venir » de l'accueil */
+.agenda-accueil-tete { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 1rem; margin-bottom: 1.6rem; }
+.agenda-accueil-tete h2 { margin: 0; }
+.agenda-accueil-lien { color: var(--bordeaux-clair); text-decoration: none; letter-spacing: 0.08em; }
+.agenda-accueil-lien:hover { text-decoration: underline; }
+
+@media (max-width: 600px) {
+  .agenda-carte { grid-template-columns: 4.2rem minmax(0, 1fr); gap: 1rem; padding: 1.1rem; }
+  .agenda-jour-num { font-size: 1.9rem; }
+  .agenda-groupe-titre { min-width: 0; width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .agenda-carte, .agenda-carte:hover { transition: none; transform: none; }
+}

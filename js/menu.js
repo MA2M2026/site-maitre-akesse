@@ -19,18 +19,23 @@ document.addEventListener('DOMContentLoaded', () => {
   const liste = overlay.querySelector('.nav-links');
   if (liste) {
     const en = document.documentElement.lang === 'en';
-    // « Qui sommes-nous » juste après « Accueil » (06/10/2026), ajouté ici une seule fois
-    // pour toutes les pages au lieu d'être recopié dans chaque menu.
-    const accueil = [...liste.querySelectorAll('li > a')].find(a => /(^|\/)index(\.html)?$/.test(a.getAttribute('href') || ''));
-    const dejaQsn = [...liste.querySelectorAll('li > a')].some(a => /qui-sommes-nous/.test(a.getAttribute('href') || ''));
-    if (accueil && !dejaQsn) {
+    // Rubriques ajoutées ici une seule fois pour toutes les pages, au lieu d'être recopiées
+    // dans chaque menu : « Qui sommes-nous » après « Accueil », « Agenda » après
+    // « Événements » (06/10/2026). La rubrique de la page ouverte est mise en évidence.
+    const pageOuverte = (location.pathname.split('/').pop() || 'index').replace(/\.html$/, '');
+    [['index', 'qui-sommes-nous', 'Qui sommes-nous', 'About us'],
+     ['evenements', 'agenda', 'Agenda', 'Agenda']].forEach(([apres, page, fr, anglais]) => {
+      const liens = [...liste.querySelectorAll('li > a')];
+      const repere = liens.find(a => new RegExp('(^|/)' + apres + '(\\.html)?$').test(a.getAttribute('href') || ''));
+      if (!repere || liens.some(a => new RegExp('(^|/)' + page + '(\\.html)?$').test(a.getAttribute('href') || ''))) return;
       const li = document.createElement('li');
       const a = document.createElement('a');
-      a.href = accueil.getAttribute('href').replace(/index(\.html)?$/, 'qui-sommes-nous.html');
-      a.textContent = en ? 'About us' : 'Qui sommes-nous';
+      a.href = repere.getAttribute('href').replace(new RegExp(apres + '(\\.html)?$'), page + '.html');
+      a.textContent = en ? anglais : fr;
+      if (pageOuverte === page) a.className = 'actif';
       li.appendChild(a);
-      liste.insertBefore(li, accueil.parentNode.nextSibling);
-    }
+      liste.insertBefore(li, repere.parentNode.nextSibling);
+    });
     const groupes = [
       ['index.html', en ? 'Discover' : 'Découvrir'],
       ['integrer-agence.html', en ? 'Join the agency' : 'Rejoindre l\'agence'],
