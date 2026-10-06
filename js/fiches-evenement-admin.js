@@ -2,7 +2,7 @@
 // fiche PDF prête à envoyer aux organisateurs de défilés (identité, contacts,
 // mensurations, informations événements, réseaux sociaux). Données lues au moment
 // du téléchargement (fonction fiche_evenement_admin, Extension 120, réservée aux
-// admins) : la fiche est donc toujours à jour. Jamais de pièce d'identité. Les
+// admins) : la fiche est donc toujours à jour. Contacts affichés : ceux de l'agence. Jamais de pièce d'identité. Les
 // mannequins ne peuvent pas la télécharger.
 (function () {
   var details = document.getElementById('fiches-evenement-details');
@@ -78,8 +78,10 @@
     ligne('Genre', d.category === 'femme' ? 'Féminin' : d.category === 'homme' ? 'Masculin' : '');
     ligne('Âge', d.age != null ? d.age + ' ans' : '');
     ligne('Nationalité', d.nationalite);
-    ligne('Téléphone (WhatsApp)', d.phone);
-    ligne('E-mail', d.email);
+    // Contacts : toujours ceux de l'agence sur les documents officiels (décision de la
+    // propriétaire, 06/10/2026) — jamais le téléphone ni l'e-mail du mannequin.
+    ligne('Contact (agence MA2M)', '+225 27 22 23 11 76 · +225 05 45 65 66 87');
+    ligne('E-mail (agence MA2M)', 'infos.ma2m@gmail.com');
     ligne('Adresse', [d.quartier, d.city].filter(Boolean).join(', '));
 
     section('2. MENSURATIONS');
