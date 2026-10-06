@@ -560,6 +560,12 @@ const Store = {
     }
     const { error } = await sb.from('model_photos').update({ compcard_ordre: ordre }).eq('id', photoId).eq('model_id', currentUser.id);
     if (error) { console.error(error); toast('Échec de la sélection compcard', true); return false; }
+    // L'emplacement était déjà pris (« Choisir dans mon Book » sur une case pleine) :
+    // l'ancienne photo le quitte, sinon deux photos se retrouvaient sur la même case
+    // et la compcard téléchargée gardait l'ancienne (signalé le 06/10/2026). Fait
+    // APRÈS la pose de la nouvelle photo : en cas d'échec, la case n'est jamais vide.
+    const { error: eLib } = await sb.from('model_photos').update({ compcard_ordre: null }).eq('model_id', currentUser.id).eq('compcard_ordre', ordre).neq('id', photoId);
+    if (eLib) { console.error(eLib); toast('Échec de la sélection compcard — réessayez', true); return false; }
     return true;
   },
 };
@@ -1248,7 +1254,11 @@ function bindPhotoHandlers(){
   async function assignerCompcardSlot(photo, slot){
     if (photo.compcardOrdre) { toast('Cette photo occupe déjà l’emplacement '+photo.compcardOrdre, true); return false; }
     const ok = await Store.setCompcardOrdre(photo.id, slot);
-    if (ok) { photo.compcardOrdre = slot; toast('Photo affectée à l’emplacement '+slot); }
+    if (ok) {
+      // même chose à l'écran : l'ancienne photo de cette case la quitte
+      state.photos.book.forEach(function(ph){ if (ph !== photo && ph.compcardOrdre === slot) ph.compcardOrdre = null; });
+      photo.compcardOrdre = slot; toast('Photo affectée à l’emplacement '+slot);
+    }
     return ok;
   }
 
