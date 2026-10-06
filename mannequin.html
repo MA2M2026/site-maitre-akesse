@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-0jJrT/bA9FF7MsnZ46ilTqoZGNfht2kqdS1v0AhxroQ='; style-src 'self' https://fonts.googleapis.com 'sha256-7qzTX2fbWhcoN8NR8B0qP2PjgfCnkK2/b2LeciSYanY=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-FZB9SDg+Nlgo6JM5e1ZNIeY31fU+wgE9kVaxh6trAqE='; style-src 'self' https://fonts.googleapis.com 'sha256-7qzTX2fbWhcoN8NR8B0qP2PjgfCnkK2/b2LeciSYanY=';">
 <!-- Adresse lisible …/book/nom (06/10/2026) : la page peut être servie depuis /book/… ; ses fichiers se chargent toujours depuis la racine du site (voir js/adresse-fiche.js). -->
 <base href="/">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
@@ -405,7 +405,6 @@ async function chargerProfilInterne() {
           ${!masquer && profil.head_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}Tour de tête</dt><dd>${profil.head_cm} cm</dd></div>` : ''}
           ${profil.shoe_size ? `<div class="fiche-mesure"><dt>${iconeMensuration('pointure')}Pointure</dt><dd>${echapperHtml(profil.shoe_size)}</dd></div>` : ''}
           ${profil.carnation ? `<div class="fiche-mesure"><dt>${iconeMensuration('carnation')}Carnation</dt><dd>${echapperHtml(profil.carnation)}</dd></div>` : ''}
-          ${ma2mTailleVetements(profil) ? `<div class="fiche-mesure"><dt>${iconeMensuration('vetements')}Vêtements</dt><dd>${echapperHtml(ma2mTailleVetements(profil))}</dd></div>` : ''}
           ${profil.eye_color ? `<div class="fiche-mesure"><dt>${iconeMensuration('yeux')}Yeux</dt><dd>${echapperHtml(profil.eye_color)}</dd></div>` : ''}
           ${profil.hair_color ? `<div class="fiche-mesure"><dt>${iconeMensuration('cheveux')}Cheveux</dt><dd>${echapperHtml(profil.hair_color)}</dd></div>` : ''}
         </dl>

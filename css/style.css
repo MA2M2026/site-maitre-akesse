@@ -3053,7 +3053,13 @@ body.porte-verrouillee .couverture-faisceau, body.porte-verrouillee .couverture-
 /* Fiche publique — tableau « Tailles & équivalences internationales » (06/10/2026),
    construit par js/tailles.js. Défile dans son cadre sur téléphone, jamais la page. */
 .fiche-equivalences { margin: 1.4rem 0 0.4rem; }
-.fiche-equivalences h3 { font-family: var(--display); font-size: 1.15rem; font-weight: 500; color: var(--titre-clair); margin: 0 0 0.7rem; }
+.fiche-tailles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.6rem; margin: 0 0 0.8rem; }
+.fiche-tailles > div { padding: 0.7rem 0.8rem; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; background: rgba(255,255,255,0.02); min-width: 0; }
+.fiche-tailles dt { font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--bordeaux-clair); }
+.fiche-tailles dd { margin: 0.25rem 0 0; font-family: var(--display); font-size: 1.2rem; color: var(--titre-clair); }
+.fiche-tailles dd span { font-size: 0.75em; color: var(--texte-doux); }
+.fiche-equivalences summary { cursor: pointer; font-size: 0.85rem; letter-spacing: 0.04em; color: var(--titre-clair); padding: 0.4rem 0; }
+.fiche-equivalences details[open] summary { margin-bottom: 0.6rem; }
 .fiche-equivalences .eq-defilement { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; }
 .fiche-equivalences table { width: 100%; border-collapse: collapse; font-size: 0.86rem; white-space: nowrap; }
 .fiche-equivalences th, .fiche-equivalences td { padding: 0.55rem 0.7rem; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.07); }

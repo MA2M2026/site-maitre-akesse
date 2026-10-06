@@ -136,26 +136,35 @@
   window.ma2mBlocEquivalences = function (p, anglais) {
     var t = window.ma2mTailles(p);
     if (t.aReprendre.length) return '';
-    var cols = t.homme ? ['eu', 'it', 'uk', 'us', 'br', 'kr', 'cn'] : ['eu', 'it', 'uk', 'us', 'br', 'jp', 'kr', 'cn'];
-    var titres = { eu: anglais ? 'EU' : 'FR / EU', it: 'IT', uk: 'UK', us: 'US', br: 'BR', jp: 'JP', kr: 'KR', cn: 'CN' };
+    // TR : la Turquie suit la numérotation européenne (vêtements et chaussures).
+    var cols = t.homme ? ['eu', 'it', 'uk', 'us', 'tr', 'br', 'kr', 'cn'] : ['eu', 'it', 'uk', 'us', 'tr', 'br', 'jp', 'kr', 'cn'];
+    var titres = { eu: anglais ? 'EU' : 'FR / EU', it: 'IT', uk: 'UK', us: 'US', tr: 'TR', br: 'BR', jp: 'JP', kr: 'KR', cn: 'CN' };
     var lignes = [];
     function rangee(libelle, lettre, valeurs) {
+      valeurs.tr = valeurs.eu;
       lignes.push('<tr><th scope="row">' + libelle + '</th><td class="eq-lettre">' + (lettre || '—') + '</td>' +
         cols.map(function (c) { var v = valeurs[c]; return '<td>' + (v === undefined || v === null || v === '' ? '—' : String(v)) + '</td>'; }).join('') + '</tr>');
     }
-    if (t.haut) rangee(anglais ? 'Top' : 'Haut', t.haut.lettre, t.haut);
-    if (t.bas) rangee(anglais ? 'Bottom' : 'Bas', t.bas.lettre, t.bas);
+    if (t.haut) rangee(anglais ? 'Top' : 'Haut', t.haut.lettre, Object.assign({}, t.haut));
+    if (t.bas) rangee(anglais ? 'Bottom' : 'Bas', t.bas.lettre, Object.assign({}, t.bas));
     if (t.pointure) {
       var pt = t.pointure, cmPied = pt.asie / 10;
       rangee(anglais ? 'Shoes' : 'Pointure', '', { eu: pt.eu, it: pt.eu, uk: pt.uk, us: pt.us, br: pt.eu - 2, jp: cmPied, kr: pt.asie, cn: pt.asie });
     }
     if (t.chemise) rangee(anglais ? 'Shirt (collar)' : 'Chemise (col)', '', { eu: t.chemise.eu, it: t.chemise.eu, uk: t.chemise.us, us: t.chemise.us });
     if (!lignes.length) return '';
-    return '<section class="fiche-equivalences" aria-label="' + (anglais ? 'International sizes' : 'Tailles internationales') + '">' +
-      '<h3>' + (anglais ? 'Sizes &amp; international conversions' : 'Tailles &amp; équivalences internationales') + '</h3>' +
+    // Compartiment court (haut, bas, vêtements) toujours visible ; le grand tableau
+    // ne s'ouvre que sur demande (<details>, sans script) pour ne pas allonger la page.
+    var court = function (x) { return x ? x.lettre + ' <span>' + (anglais ? 'EU ' : '') + x.eu + '</span>' : '—'; };
+    var compartiment = (t.haut || t.bas) ? '<dl class="fiche-tailles">' +
+      '<div><dt>' + (anglais ? 'Top' : 'Taille haut') + '</dt><dd>' + court(t.haut) + '</dd></div>' +
+      '<div><dt>' + (anglais ? 'Bottom' : 'Taille bas') + '</dt><dd>' + court(t.bas) + '</dd></div>' +
+      '<div><dt>' + (anglais ? 'Clothing' : 'Vêtements') + '</dt><dd>' + (t.generale || '—') + '</dd></div></dl>' : '';
+    return '<section class="fiche-equivalences" aria-label="' + (anglais ? 'Sizes' : 'Tailles') + '">' + compartiment +
+      '<details><summary>' + (anglais ? 'See international size conversions' : 'Voir les équivalences internationales') + '</summary>' +
       '<div class="eq-defilement"><table><thead><tr><th></th><th>' + (anglais ? 'Size' : 'Taille') + '</th>' +
       cols.map(function (c) { return '<th scope="col">' + titres[c] + '</th>'; }).join('') + '</tr></thead><tbody>' + lignes.join('') + '</tbody></table></div>' +
       '<p class="eq-note">' + (anglais ? 'Calculated from the measurements (standard ready-to-wear charts). Shoes: JP in cm, KR / CN in mm.' : 'Calculées d’après les mensurations (barèmes standard du prêt-à-porter). Pointure : JP en cm, KR / CN en mm.') + '</p>' +
-      '</section>';
+      '</details></section>';
   };
 })();
