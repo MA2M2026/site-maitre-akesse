@@ -1,33 +1,35 @@
 // Tailles calculées à partir des mensurations + équivalences internationales
 // (décision de la propriétaire, 06/10/2026). Les tailles ne sont JAMAIS saisies :
 // elles découlent des mensurations, pour qu'un recruteur voie toujours un profil
-// cohérent. Chaque taille correspond à UNE mensuration (haut : poitrine ; bas :
-// hanches pour les femmes, tour de taille pour les hommes) ; si haut et bas
-// diffèrent, la taille générale l'indique (ex. « S-M »).
+// cohérent. Option A : la taille retenue est celle de la plus grande des mesures
+// (femmes : haut = poitrine et taille, bas = bassin et taille ; hommes : haut =
+// poitrine, bas = taille et bassin) ; si haut et bas diffèrent, la taille générale
+// l'indique (ex. « S-M »). Au-delà de M (femmes) / L (hommes) : « mensurations
+// excessives » signalées.
 // Fichier partagé : Espace mannequin, fiche publique FR/EN, compcard, CV, fiche
 // événement. Barèmes standard du prêt-à-porter (fourchettes en cm).
 (function () {
   // Femmes — fourchettes de tour de poitrine (haut) et de hanches (bas), bornes incluses.
   var FEMMES = [
-    { l: 'XXS', poitrine: [0, 77], hanches: [0, 85], fr: 32, it: 36, uk: 4, us: 0, br: 34, jp: 3, kr: 33, cn: '150/76A' },
-    { l: 'XS', poitrine: [78, 81], hanches: [86, 89], fr: 34, it: 38, uk: 6, us: 2, br: 36, jp: 5, kr: 44, cn: '155/80A' },
-    { l: 'S', poitrine: [82, 85], hanches: [90, 93], fr: 36, it: 40, uk: 8, us: 4, br: 38, jp: 7, kr: 55, cn: '160/84A' },
-    { l: 'M', poitrine: [86, 89], hanches: [94, 97], fr: 38, it: 42, uk: 10, us: 6, br: 40, jp: 9, kr: 66, cn: '165/88A' },
-    { l: 'L', poitrine: [90, 93], hanches: [98, 101], fr: 40, it: 44, uk: 12, us: 8, br: 42, jp: 11, kr: 77, cn: '170/92A' },
-    { l: 'XL', poitrine: [94, 99], hanches: [102, 107], fr: 42, it: 46, uk: 14, us: 10, br: 44, jp: 13, kr: 88, cn: '175/96A' },
-    { l: 'XXL', poitrine: [100, 105], hanches: [108, 113], fr: 44, it: 48, uk: 16, us: 12, br: 46, jp: 15, kr: 99, cn: '180/100A' },
-    { l: 'XXXL', poitrine: [106, 999], hanches: [114, 999], fr: 46, it: 50, uk: 18, us: 14, br: 48, jp: 17, kr: 110, cn: '185/104A' }
+    { l: 'XXS', poitrine: [0, 77], taille: [0, 59], hanches: [0, 85], fr: 32, it: 36, uk: 4, us: 0, br: 34, jp: 3, kr: 33, cn: '150/76A' },
+    { l: 'XS', poitrine: [78, 81], taille: [60, 63], hanches: [86, 89], fr: 34, it: 38, uk: 6, us: 2, br: 36, jp: 5, kr: 44, cn: '155/80A' },
+    { l: 'S', poitrine: [82, 85], taille: [64, 67], hanches: [90, 93], fr: 36, it: 40, uk: 8, us: 4, br: 38, jp: 7, kr: 55, cn: '160/84A' },
+    { l: 'M', poitrine: [86, 89], taille: [68, 71], hanches: [94, 97], fr: 38, it: 42, uk: 10, us: 6, br: 40, jp: 9, kr: 66, cn: '165/88A' },
+    { l: 'L', poitrine: [90, 93], taille: [72, 75], hanches: [98, 101], fr: 40, it: 44, uk: 12, us: 8, br: 42, jp: 11, kr: 77, cn: '170/92A' },
+    { l: 'XL', poitrine: [94, 99], taille: [76, 81], hanches: [102, 107], fr: 42, it: 46, uk: 14, us: 10, br: 44, jp: 13, kr: 88, cn: '175/96A' },
+    { l: 'XXL', poitrine: [100, 105], taille: [82, 87], hanches: [108, 113], fr: 44, it: 48, uk: 16, us: 12, br: 46, jp: 15, kr: 99, cn: '180/100A' },
+    { l: 'XXXL', poitrine: [106, 999], taille: [88, 999], hanches: [114, 999], fr: 46, it: 50, uk: 18, us: 14, br: 48, jp: 17, kr: 110, cn: '185/104A' }
   ];
-  // Hommes — fourchettes de tour de poitrine (haut) et de tour de taille (bas).
+  // Hommes — fourchettes de tour de poitrine, tour de taille et tour de bassin.
   var HOMMES = [
-    { l: 'XXS', poitrine: [0, 81], taille: [0, 67], eu: 42, pantalon: 36, us: 32, w: 26, br: 'PP', kr: 85, cn: '160/80A' },
-    { l: 'XS', poitrine: [82, 87], taille: [68, 72], eu: 44, pantalon: 38, us: 34, w: 28, br: 'PP', kr: 90, cn: '165/84A' },
-    { l: 'S', poitrine: [88, 93], taille: [73, 77], eu: 46, pantalon: 40, us: 36, w: 30, br: 'P', kr: 95, cn: '170/88A' },
-    { l: 'M', poitrine: [94, 99], taille: [78, 83], eu: 48, pantalon: 42, us: 38, w: 32, br: 'M', kr: 100, cn: '175/92A' },
-    { l: 'L', poitrine: [100, 105], taille: [84, 89], eu: 50, pantalon: 44, us: 40, w: 34, br: 'G', kr: 105, cn: '180/96A' },
-    { l: 'XL', poitrine: [106, 111], taille: [90, 95], eu: 52, pantalon: 46, us: 42, w: 36, br: 'GG', kr: 110, cn: '185/100A' },
-    { l: 'XXL', poitrine: [112, 117], taille: [96, 101], eu: 54, pantalon: 48, us: 44, w: 38, br: 'XGG', kr: 115, cn: '190/104A' },
-    { l: 'XXXL', poitrine: [118, 999], taille: [102, 999], eu: 56, pantalon: 50, us: 46, w: 40, br: 'XGG', kr: 120, cn: '195/108A' }
+    { l: 'XXS', poitrine: [0, 81], taille: [0, 67], bassin: [0, 83], eu: 42, pantalon: 36, us: 32, w: 26, br: 'PP', kr: 85, cn: '160/80A' },
+    { l: 'XS', poitrine: [82, 87], taille: [68, 72], bassin: [84, 88], eu: 44, pantalon: 38, us: 34, w: 28, br: 'PP', kr: 90, cn: '165/84A' },
+    { l: 'S', poitrine: [88, 93], taille: [73, 77], bassin: [89, 93], eu: 46, pantalon: 40, us: 36, w: 30, br: 'P', kr: 95, cn: '170/88A' },
+    { l: 'M', poitrine: [94, 99], taille: [78, 83], bassin: [94, 99], eu: 48, pantalon: 42, us: 38, w: 32, br: 'M', kr: 100, cn: '175/92A' },
+    { l: 'L', poitrine: [100, 105], taille: [84, 89], bassin: [100, 105], eu: 50, pantalon: 44, us: 40, w: 34, br: 'G', kr: 105, cn: '180/96A' },
+    { l: 'XL', poitrine: [106, 111], taille: [90, 95], bassin: [106, 111], eu: 52, pantalon: 46, us: 42, w: 36, br: 'GG', kr: 110, cn: '185/100A' },
+    { l: 'XXL', poitrine: [112, 117], taille: [96, 101], bassin: [112, 117], eu: 54, pantalon: 48, us: 44, w: 38, br: 'XGG', kr: 115, cn: '190/104A' },
+    { l: 'XXXL', poitrine: [118, 999], taille: [102, 999], bassin: [118, 999], eu: 56, pantalon: 50, us: 46, w: 40, br: 'XGG', kr: 120, cn: '195/108A' }
   ];
   var ORDRE = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
 
@@ -38,6 +40,23 @@
     for (var i = 0; i < table.length; i++) if (m >= table[i][cle][0] && m <= table[i][cle][1]) return table[i];
     return null;
   }
+  // Option A (décision de la propriétaire, 06/10/2026) : la taille retenue est celle de
+  // la PLUS GRANDE des mesures concernées — le vêtement doit fermer partout.
+  function plusGrande(table, mesures) {
+    var r = null;
+    mesures.forEach(function (m) { var x = ligne(table, m[0], m[1]); if (x && (!r || ORDRE.indexOf(x.l) > ORDRE.indexOf(r.l))) r = x; });
+    return r;
+  }
+  // Taille maximum d'un mannequin (décision du 06/10/2026) : au-delà, « mensurations
+  // excessives » (signalées à la mannequin et à l'agence, sans rien cacher).
+  var MAX_FEMMES = 'M', MAX_HOMMES = 'L';
+  window.ma2mReperesTailles = function (homme) {
+    var t = homme ? HOMMES : FEMMES, fmt = function (x) { return x[0] + ' à ' + (x[1] >= 999 ? '…' : x[1]) + ' cm'; };
+    return t.filter(function (x) { return ['S', 'M', 'L'].indexOf(x.l) !== -1 && ORDRE.indexOf(x.l) <= ORDRE.indexOf(homme ? MAX_HOMMES : MAX_FEMMES); }).map(function (x) {
+      return x.l + ' : poitrine ' + fmt(x.poitrine) + ', taille ' + fmt(x.taille) + ', bassin ' + fmt(homme ? x.bassin : x.hanches);
+    });
+  };
+
   function generale(a, b) {
     if (a && b) {
       if (a === b) return a;
@@ -69,9 +88,13 @@
     p = p || {};
     var homme = p.category === 'homme';
     var haut, bas, r = { homme: homme };
+    // Contrôle de cohérence sur les mesures principales (même règle que la base) ;
+    // tailles affichées : la plus grande des mesures (option A).
+    var hautBrut, basBrut;
     if (homme) {
-      haut = ligne(HOMMES, 'poitrine', p.chest_cm);
-      bas = ligne(HOMMES, 'taille', p.waist_cm);
+      hautBrut = haut = ligne(HOMMES, 'poitrine', p.chest_cm);
+      basBrut = ligne(HOMMES, 'taille', p.waist_cm);
+      bas = plusGrande(HOMMES, [['taille', p.waist_cm], ['bassin', p.hips_cm]]);
       r.haut = haut && { lettre: haut.l, eu: haut.eu, it: haut.eu, uk: haut.us, us: haut.us, br: haut.br, kr: haut.kr, cn: haut.cn };
       r.bas = bas && { lettre: bas.l, eu: bas.pantalon, it: bas.pantalon, uk: 'W' + bas.w, us: 'W' + bas.w, br: bas.pantalon - 2, kr: bas.w, cn: bas.cn };
       var cou = nombre(p.neck_cm);
@@ -79,8 +102,10 @@
       var poitrine = nombre(p.chest_cm);
       r.costume = poitrine ? { eu: Math.round(poitrine / 4) * 2, us: Math.round(poitrine / 4) * 2 - 10 } : null;
     } else {
-      haut = ligne(FEMMES, 'poitrine', p.chest_cm);
-      bas = ligne(FEMMES, 'hanches', p.hips_cm);
+      hautBrut = ligne(FEMMES, 'poitrine', p.chest_cm);
+      basBrut = ligne(FEMMES, 'hanches', p.hips_cm);
+      haut = hautBrut && plusGrande(FEMMES, [['poitrine', p.chest_cm], ['taille', p.waist_cm]]);
+      bas = basBrut && plusGrande(FEMMES, [['hanches', p.hips_cm], ['taille', p.waist_cm]]);
       var vers = function (x) { return x && { lettre: x.l, eu: x.fr, it: x.it, uk: x.uk, us: x.us, br: x.br, jp: x.jp, kr: x.kr, cn: x.cn }; };
       r.haut = vers(haut); r.bas = vers(bas);
     }
@@ -94,12 +119,15 @@
     // taille (silhouette athlétique) : 2 tailles admises, l'inverse 1 seule.
     // MÊME RÈGLE côté base : fonction mesures_incoherentes (Extension 121).
     r.aReprendre = [];
-    var ecart = haut && bas ? ORDRE.indexOf(bas.l) - ORDRE.indexOf(haut.l) : 0;
+    var ecart = hautBrut && basBrut ? ORDRE.indexOf(basBrut.l) - ORDRE.indexOf(hautBrut.l) : 0;
     if (homme ? (ecart < -2 || ecart > 1) : (ecart > 2 || ecart < -1)) {
       r.aReprendre = ['chest_cm', homme ? 'waist_cm' : 'hips_cm'];
       r.haut = null; r.bas = null; r.costume = null;
     }
     r.generale = generale(r.haut && r.haut.lettre, r.bas && r.bas.lettre);
+    var plusGrandeLettre = [r.haut, r.bas].filter(Boolean).map(function (x) { return x.lettre; }).sort(function (a, b) { return ORDRE.indexOf(b) - ORDRE.indexOf(a); })[0];
+    r.maximum = homme ? MAX_HOMMES : MAX_FEMMES;
+    r.exces = !!plusGrandeLettre && ORDRE.indexOf(plusGrandeLettre) > ORDRE.indexOf(r.maximum);
     r.pointure = pointures(p.shoe_size, homme);
     r.hauteur = nombre(p.height_cm) ? { cm: nombre(p.height_cm), pieds: piedsPouces(nombre(p.height_cm)) } : null;
     r.poids = nombre(p.weight_kg) ? { kg: nombre(p.weight_kg), lb: Math.round(nombre(p.weight_kg) * 2.2046) } : null;

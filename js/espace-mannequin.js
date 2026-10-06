@@ -1095,7 +1095,7 @@ function blocFicheEvenement(){
 function afficherTaillesCalculees(){
   const zone = document.getElementById('tailles-calculees');
   if (!zone || typeof ma2mTailles !== 'function') return;
-  const t = ma2mTailles({ category: state.identite.sexe, chest_cm: val('f-poitrine'), waist_cm: val('f-tourTaille'), hips_cm: val('f-hanches'), neck_cm: document.getElementById('f-cou') ? val('f-cou') : '' });
+  const t = ma2mTailles({ category: state.identite.sexe, chest_cm: val('f-poitrine'), waist_cm: val('f-tourTaille'), hips_cm: val('f-hanches'), neck_cm: document.getElementById('f-cou') ? val('f-cou') : '', shoe_size: val('f-pointure') });
   // Mesures incohérentes : cases en rouge + message, et pas de taille (js/tailles.js)
   const champs = { chest_cm: 'f-poitrine', waist_cm: 'f-tourTaille', hips_cm: 'f-hanches' };
   Object.keys(champs).forEach(function(cle){
@@ -1106,19 +1106,32 @@ function afficherTaillesCalculees(){
     if (aReprendre && !msg) { msg = document.createElement('div'); msg.className = 'mesure-msg'; msg.textContent = 'Mensuration pas exacte, à reprendre'; bloc.appendChild(msg); }
     if (!aReprendre && msg) msg.remove();
   });
+  zone.innerHTML = htmlSyntheseTailles(t);
+}
+// Synthèse « Vos tailles » : haut, bas, générale, pointure (+ chemise pour les hommes),
+// avec les alertes « à reprendre » et « mensurations excessives ». Étape physique et
+// page d'accueil de l'Espace (js/tailles.js).
+function htmlSyntheseTailles(t){
+  const titre = '<div class="tc-titre">Vos tailles (calculées)</div>';
   if (t.aReprendre.length) {
-    zone.innerHTML = '<div class="tc-titre">Vos tailles (calculées)</div><p class="tc-alerte">⚠️ Vos mesures en rouge ne vont pas ensemble (votre haut et votre bas s’écartent de plus d’une taille). Reprenez-les avec un mètre ruban, sans serrer, pour obtenir vos tailles.</p><p class="tc-alerte">Tant qu’elles ne sont pas corrigées, vos mensurations sont cachées sur votre fiche publique. Sans correction sous 7 jours, votre fiche est retirée du site ; elle revient automatiquement dès que vous corrigez.</p>';
-    return;
+    return titre + '<p class="tc-alerte">⚠️ Vos mesures en rouge ne vont pas ensemble (votre haut et votre bas s’écartent de plus d’une taille). Reprenez-les avec un mètre ruban, sans serrer, pour obtenir vos tailles.</p><p class="tc-alerte">Tant qu’elles ne sont pas corrigées, vos mensurations sont cachées sur votre fiche publique. Sans correction sous 7 jours, votre fiche est retirée du site ; elle revient automatiquement dès que vous corrigez.</p>';
   }
   const c = function(x){ return x ? echapperHtml(ma2mTailleCourte(x)) : '—'; };
-  zone.innerHTML = '<div class="tc-titre">Vos tailles (calculées)</div><div class="tc-grille">' +
+  return titre + '<div class="tc-grille">' +
     '<div><span>Haut</span><b>'+c(t.haut)+'</b></div><div><span>Bas</span><b>'+c(t.bas)+'</b></div><div><span>Générale</span><b>'+echapperHtml(t.generale||'—')+'</b></div>' +
+    '<div><span>Pointure</span><b>'+(t.pointure ? 'EU '+t.pointure.eu : '—')+'</b></div>' +
     (t.homme ? '<div><span>Chemise (col)</span><b>'+(t.chemise ? t.chemise.eu+' / '+t.chemise.us+'″' : '—')+'</b></div>' : '') +
-    '</div>';
+    '</div>' +
+    (t.exces ? '<p class="tc-alerte tc-exces">❌ <strong>Mensurations excessives.</strong> Votre taille calculée dépasse la taille maximum d’un mannequin ' + (t.homme ? 'homme' : 'femme') + ' (' + t.maximum + '). Vérifiez vos mesures avec un mètre ruban, à plat, sans serrer et sans vêtement épais. Repères :<br>' +
+      ma2mReperesTailles(t.homme).map(echapperHtml).join('<br>') + '</p>' : '');
+}
+function taillesDepuisEtat(){
+  const p = state.physique;
+  return ma2mTailles({ category: state.identite.sexe, chest_cm: p.poitrine, waist_cm: p.tourTaille, hips_cm: p.hanches, neck_cm: p.cou, shoe_size: p.pointure });
 }
 function brancherTaillesCalculees(){
   if (!document.getElementById('tailles-calculees')) return;
-  ['f-poitrine','f-tourTaille','f-hanches','f-cou'].forEach(function(id){ const el = document.getElementById(id); if (el) el.addEventListener('change', afficherTaillesCalculees); });
+  ['f-poitrine','f-tourTaille','f-hanches','f-cou','f-pointure'].forEach(function(id){ const el = document.getElementById(id); if (el) el.addEventListener('change', afficherTaillesCalculees); });
   afficherTaillesCalculees();
 }
 function lireFicheEvenementFormulaire(){
@@ -1622,6 +1635,7 @@ function viewDashboard(){
   return header('Espace validé') + '<div class="panel">' + bandeau + alerteIncomplet +
     '<h1 class="p20-10">Bonjour '+echapperHtml((d.nomComplet||'').split(' ')[0]||'')+'</h1>' +
     '<p class="sub p20-13">Modifiez un bloc à la fois — chaque bloc s’enregistre indépendamment des autres.</p>' +
+    (typeof ma2mTailles === 'function' ? '<div class="tailles-calculees">' + htmlSyntheseTailles(taillesDepuisEtat()) + '</div>' : '') +
     '<div class="blocks-grid">' + BLOCKS.map(function(b){
       return '<div class="block-card" data-block="'+b.k+'"><span class="ic">'+b.ic+'</span><h3>'+b.title+'</h3><p>'+b.desc+'</p><button class="btn ghost small block-btn" data-edit="'+b.k+'">Modifier</button></div>';
     }).join('') + '</div>' +

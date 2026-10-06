@@ -50,13 +50,15 @@
       var raison = String(ph.tri_raison).replace(/^(Proposée à la suppression|À remplacer \([^)]*\))\s*:\s*/, '');
       photosPb.push('photo n°' + (ph.numero || '?') + ' à remplacer : ' + raison);
     });
-    return { manquantes: manquantes, aReprendre: aReprendre, photos: photosPb, aJour: !manquantes.length && !aReprendre.length && !photosPb.length };
+    var exces = !aReprendre.length && t.exces ? { taille: t.generale, maximum: t.maximum, reperes: ma2mReperesTailles(t.homme) } : null;
+    return { manquantes: manquantes, aReprendre: aReprendre, exces: exces, photos: photosPb, aJour: !manquantes.length && !aReprendre.length && !exces && !photosPb.length };
   }
 
   function message(p, a) {
     var l = ['Bonjour ' + prenomDe(p.full_name) + ',', '', 'Votre profil MA2M n’est pas encore complet. Voici ce qu’il vous reste à faire :'];
     if (a.manquantes.length) l.push('', '📏 Mensurations à compléter : ' + a.manquantes.join(', ') + '.');
     if (a.aReprendre.length) l.push('', '⚠️ Mensurations à reprendre (elles ne vont pas ensemble) : ' + a.aReprendre.join(', ') + '. Mesurez-vous avec un mètre ruban, sans serrer. Tant qu’elles ne sont pas corrigées, vos mensurations sont cachées sur votre fiche, et après 7 jours votre fiche est retirée du site.');
+    if (a.exces) l.push('', '❌ Mensurations excessives : votre taille calculée (' + a.exces.taille + ') dépasse la taille maximum d’un mannequin (' + a.exces.maximum + '). Vérifiez vos mesures avec un mètre ruban, à plat, sans serrer et sans vêtement épais. Repères :', a.exces.reperes.map(function (x) { return '• ' + x; }).join('\n'));
     if (a.photos.length) l.push('', '📸 Photos :', a.photos.map(function (x) { return '• ' + x.charAt(0).toUpperCase() + x.slice(1); }).join('\n'));
     l.push('', 'Merci de vous rendre dans votre Espace mannequin pour compléter votre profil : ' + MA2M_SITE + '/espace-mannequin', '', 'L’agence Maître Akesse Model Management');
     return l.join('\n');
@@ -67,6 +69,7 @@
     var points = [];
     if (a.manquantes.length) points.push('<li><strong>Mensurations manquantes :</strong> ' + echapper(a.manquantes.join(', ')) + '</li>');
     if (a.aReprendre.length) points.push('<li class="rp-rouge"><strong>Mensurations à reprendre :</strong> ' + echapper(a.aReprendre.join(', ')) + '</li>');
+    if (a.exces) points.push('<li class="rp-rouge"><strong>❌ Mensurations excessives :</strong> taille ' + echapper(a.exces.taille) + ' (maximum ' + echapper(a.exces.maximum) + ')</li>');
     a.photos.forEach(function (x) { points.push('<li><strong>Photo :</strong> ' + echapper(x) + '</li>'); });
     return '<div class="rp-profil' + (a.aJour ? ' rp-ok' : '') + '" data-profil="' + echapper(p.id) + '">' +
       '<label class="rp-entete">' + (a.aJour ? '' : '<input type="checkbox" class="rp-choix" data-id="' + echapper(p.id) + '">') +
