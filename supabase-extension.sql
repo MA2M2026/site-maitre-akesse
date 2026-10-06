@@ -6135,3 +6135,60 @@ end;
 $$;
 
 NOTIFY pgrst, 'reload schema';
+
+-- =====================================================================
+-- Extension 120 — Fiche événement (demande de la propriétaire, 06/10/2026) :
+-- les mannequins complètent dans leur Espace des informations utiles aux
+-- organisateurs de défilés (taille haut / bas, régime et allergies, TikTok,
+-- Facebook, droit à l'image) ; seule l'agence télécharge, depuis le tableau de
+-- bord, une fiche PDF complète (identité, contacts, mensurations, réseaux).
+-- Jamais de pièce d'identité. Ces informations ne sont jamais publiques :
+--  1) table fiche_evenement à part (pas dans model_profiles, lisible par tous
+--     les comptes connectés) : chaque mannequin lit et modifie SA ligne, les
+--     admins toutes ;
+--  2) fiche_evenement_admin(id) : toutes les données de la fiche en une fois
+--     (téléphone et e-mail compris), réservée aux admins.
+-- =====================================================================
+create table if not exists fiche_evenement (
+  model_id uuid primary key references model_profiles(id) on delete cascade,
+  taille_haut text,
+  taille_bas text,
+  regime_allergies text,
+  tiktok text,
+  facebook text,
+  droit_image boolean,
+  mis_a_jour timestamptz not null default now()
+);
+alter table fiche_evenement enable row level security;
+drop policy if exists "Le mannequin gère sa fiche événement" on fiche_evenement;
+create policy "Le mannequin gère sa fiche événement"
+  on fiche_evenement for all
+  using (model_id = auth.uid() or exists (select 1 from admins where user_id = auth.uid()))
+  with check (model_id = auth.uid() or exists (select 1 from admins where user_id = auth.uid()));
+revoke all on fiche_evenement from anon;
+
+create or replace function fiche_evenement_admin(id_mannequin uuid)
+returns json
+language sql stable security definer
+set search_path = public
+as $$
+  select case when exists (select 1 from admins where user_id = auth.uid()) then
+    json_build_object(
+      'full_name', p.full_name, 'category', p.category,
+      'age', case when p.date_naissance is null then null else extract(year from age(current_date, p.date_naissance))::int end,
+      'nationalite', p.nationalite, 'phone', p.phone, 'email', p.contact_email,
+      'city', p.city, 'quartier', p.quartier,
+      'height_cm', p.height_cm, 'weight_kg', p.weight_kg, 'chest_cm', p.chest_cm, 'waist_cm', p.waist_cm,
+      'hips_cm', p.hips_cm, 'inseam_cm', p.inseam_cm, 'shoe_size', p.shoe_size, 'clothing_size', p.clothing_size,
+      'eye_color', p.eye_color, 'hair_color', p.hair_color, 'instagram', p.instagram, 'slug', p.slug,
+      'taille_haut', f.taille_haut, 'taille_bas', f.taille_bas, 'regime_allergies', f.regime_allergies,
+      'tiktok', f.tiktok, 'facebook', f.facebook, 'droit_image', f.droit_image, 'mis_a_jour', f.mis_a_jour
+    )
+  end
+  from model_profiles p left join fiche_evenement f on f.model_id = p.id
+  where p.id = id_mannequin;
+$$;
+revoke all on function fiche_evenement_admin(uuid) from public;
+grant execute on function fiche_evenement_admin(uuid) to authenticated;
+
+NOTIFY pgrst, 'reload schema';

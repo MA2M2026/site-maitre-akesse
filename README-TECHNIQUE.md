@@ -1477,3 +1477,19 @@ toutes les écritures sont simulées pendant l'enregistrement.
   lit le nom d'adresse, garde les liens « # » dans la page et affiche la jolie
   adresse dans la barre du navigateur. Les anciennes adresses `?id=` restent valables.
 - **Fonction partagée** `convertirSiHeic` dans `js/app.js` (remplace 14 copies).
+
+## 📋 Fiches événement et compcard depuis le tableau de bord (06/10/2026)
+
+- **Fiche événement** (Extension 120) : table privée `fiche_evenement` (taille haut /
+  bas, régime et allergies, TikTok, Facebook, droit à l'image), remplie par la
+  mannequin à l'étape « physique » de son Espace (chaque mannequin ne lit que sa
+  ligne). Le tableau de bord (Bloc 2 → « Fiches événement », `js/fiches-evenement-admin.js`)
+  télécharge un PDF complet via `fiche_evenement_admin(id)` (réservée aux admins,
+  téléphone et e-mail compris). Jamais de pièce d'identité. Les mannequins ne peuvent
+  pas télécharger cette fiche.
+- **Compcard choisie par l'agence** : liste « Compcard 1 à 5 » sous chaque photo dans
+  la fenêtre photos d'un mannequin publié. Fonction commune `affecterCaseCompcard`
+  (`js/app.js`) avec l'Espace mannequin : l'ancienne photo d'une case la quitte
+  toujours (corrige les doubles photos sur une case signalées le 06/10/2026).
+- Constantes partagées `MA2M_SITE` et `MA2M_CONTACT_PDF` (`js/app.js`) pour les PDF.
+- Noms des fichiers téléchargés horodatés (`horodatageFichier`, `js/app.js`).

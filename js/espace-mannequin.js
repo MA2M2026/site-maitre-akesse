@@ -39,7 +39,10 @@ function emptyState(){
     competences:{},
     citation:'',
     bio:'',
-    instagram:''
+    instagram:'',
+    // Fiche événement (06/10/2026, table fiche_evenement) : jamais publique, seule
+    // l'agence télécharge la fiche complète depuis le tableau de bord.
+    ficheEvenement:{ tailleHaut:'', tailleBas:'', regime:'', tiktok:'', facebook:'', droitImage:null }
   };
 }
 let state = emptyState();
@@ -406,7 +409,22 @@ const Store = {
       if (p.photo_couverture) s.photos.couverture = item;
     });
 
+    try {
+      const { data: fe } = await sb.from('fiche_evenement').select('*').eq('model_id', currentUser.id).maybeSingle();
+      if (fe) s.ficheEvenement = { tailleHaut: fe.taille_haut||'', tailleBas: fe.taille_bas||'', regime: fe.regime_allergies||'', tiktok: fe.tiktok||'', facebook: fe.facebook||'', droitImage: fe.droit_image };
+    } catch(e) { /* table pas encore créée : champs vides */ }
+
     return s;
+  },
+
+  async saveFicheEvenement(fe){
+    const { error } = await sb.from('fiche_evenement').upsert({
+      model_id: currentUser.id, taille_haut: fe.tailleHaut||null, taille_bas: fe.tailleBas||null,
+      regime_allergies: fe.regime||null, tiktok: fe.tiktok||null, facebook: fe.facebook||null,
+      droit_image: fe.droitImage, mis_a_jour: new Date().toISOString()
+    }, { onConflict: 'model_id' });
+    if (error) { console.error(error); toast('Informations « événements » non enregistrées — réessayez', true); return false; }
+    return true;
   },
 
   async ensureProfileRow(){
@@ -889,6 +907,7 @@ function stepPhysique(){
     '<div></div>' +
     '</div>' +
     '<p class="sub p20-14">Hanches pour les femmes, entrejambe pour les hommes — renseignez le champ qui vous concerne.</p>' +
+    blocFicheEvenement() +
     '<div class="actions-row"><button class="btn ghost" data-goto="1">← Retour</button><button class="btn primary" id="save2">Enregistrer</button></div>';
 }
 
@@ -1027,6 +1046,45 @@ function lireIdentiteFormulaire(){
     sexe: (document.querySelector('input[name=sexe]:checked')||{}).value || ''
   };
 }
+// Informations demandées par les organisateurs de défilés (06/10/2026) : réservées
+// à l'agence, jamais affichées sur la fiche publique.
+function blocFicheEvenement(){
+  const f = state.ficheEvenement;
+  return '<h3 class="p20-17">Informations pour les événements</h3>' +
+    '<p class="sub">🔒 Réservées à l’agence MA2M (défilés, castings) — jamais affichées sur votre fiche publique. Votre Instagram se renseigne à l’étape « Identité ».</p>' +
+    '<div class="grid">' +
+    field('Taille haut','f-tailleHaut',f.tailleHaut,{tag:'select-autre',options:['XS','S','M','L','XL','XXL']}) +
+    field('Taille bas','f-tailleBas',f.tailleBas,{placeholder:'Ex. 38, M, 30'}) +
+    field('Régime / allergies','f-regime',f.regime,{full:true,placeholder:'Ex. végétarien, allergie aux arachides… ou « aucune »'}) +
+    field('TikTok (lien ou nom)','f-tiktok',f.tiktok,{placeholder:'@votre_compte ou lien'}) +
+    field('Facebook (lien ou nom)','f-facebook',f.facebook,{placeholder:'Nom du profil ou lien'}) +
+    '</div>' +
+    '<div class="field full p20-17"><label>Droit à l’image (photos et vidéos des événements)</label><div class="radio-row">' +
+    [['oui','Oui, j’accepte',true],['non','Non',false]].map(function(c){ return '<label class="radio-opt '+(f.droitImage===c[2]?'selected':'')+'"><input type="radio" name="droit-image" value="'+c[0]+'" '+(f.droitImage===c[2]?'checked':'')+'> '+c[1]+'</label>'; }).join('') +
+    '</div></div>';
+}
+function lireFicheEvenementFormulaire(){
+  const choix = document.querySelector('input[name="droit-image"]:checked');
+  return {
+    tailleHaut: valeurSelectOuAutre('f-tailleHaut', 'f-tailleHaut-autre'), tailleBas: val('f-tailleBas'),
+    regime: val('f-regime'), tiktok: val('f-tiktok'), facebook: val('f-facebook'),
+    droitImage: choix ? choix.value === 'oui' : null
+  };
+}
+// Enregistre aussi les informations « événements » saisies à l'étape physique. Ne bloque
+// jamais l'étape : en cas d'échec, un message le signale et la suite reste possible.
+async function enregistrerFicheEvenementDepuisFormulaire(){
+  if (!document.getElementById('f-tiktok')) return true;
+  const fe = lireFicheEvenementFormulaire();
+  const vide = !fe.tailleHaut && !fe.tailleBas && !fe.regime && !fe.tiktok && !fe.facebook && fe.droitImage == null;
+  const avant = state.ficheEvenement;
+  const dejaVide = !avant.tailleHaut && !avant.tailleBas && !avant.regime && !avant.tiktok && !avant.facebook && avant.droitImage == null;
+  state.ficheEvenement = fe;
+  if (vide && dejaVide) return true; // rien de saisi : pas de ligne vide en base
+  await Store.saveFicheEvenement(fe);
+  return true;
+}
+
 function lirePhysiqueFormulaire(){
   return {
     taille: val('f-taille'), poids: val('f-poids'), poitrine: val('f-poitrine'), tourTaille: val('f-tourTaille'),
@@ -1063,7 +1121,7 @@ function bindWizard(){
     const btn = this;
     Object.assign(s.physique, lirePhysiqueFormulaire());
     btn.disabled = true; btn.textContent = 'Enregistrement…';
-    const ok = await Store.saveBlock(physiqueToDb(s.physique));
+    const ok = await Store.saveBlock(physiqueToDb(s.physique)) && await enregistrerFicheEvenementDepuisFormulaire();
     if (ok) { toast('Enregistré'); goto(3); } else { btn.disabled=false; btn.textContent='Enregistrer'; }
   });
 
@@ -1471,6 +1529,7 @@ function bindBlockPage(k){
       payload = formationToDb(s.formation);
     }
     ok = await Store.saveBlock(payload);
+    if (ok && k==='physique') ok = await enregistrerFicheEvenementDepuisFormulaire();
     if (ok) { btn.textContent='✓ Enregistré'; btn.classList.add('saved'); setTimeout(function(){ toast('Bloc « '+k+' » enregistré'); }, 400); }
     else { btn.disabled=false; btn.textContent='Enregistrer'; }
   });

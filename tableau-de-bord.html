@@ -2203,6 +2203,7 @@ a.tdb-menu-item { text-decoration: none; }
     <button class="tdb-menu-item" data-tdb-cible="b2-validations" type="button">Validations en attente</button>
     <button class="tdb-menu-item" data-tdb-cible="b2-mannequins-publies" type="button">Mannequins publiés — gérer les photos</button>
     <button class="tdb-menu-item" data-tdb-cible="b2-tri-photos" type="button">Photos triées par l'IA</button>
+    <button class="tdb-menu-item" data-tdb-cible="b2-fiches-evenement" type="button">Fiches événement (défilés)</button>
     <button class="tdb-menu-item" data-tdb-cible="b2-candidatures" type="button">Candidatures / Castings</button>
     <button class="tdb-menu-item" data-tdb-cible="b2-messages-groupes" type="button">📣 Messages groupés (e-mail / WhatsApp)</button>
     <button class="tdb-menu-item" data-tdb-cible="b2-projets" type="button">Projets &amp; Castings</button>
@@ -2488,6 +2489,15 @@ document.addEventListener('DOMContentLoaded', function () {
 </summary>
 <p class="tdb-17">Une fois un profil publié, seul le mannequin pouvait jusqu'ici modifier ses propres photos depuis son espace personnel. Vous pouvez maintenant intervenir directement ici si besoin (photo floue, doublon, remplacement...).</p>
 <div id="liste-mannequins-publies">Ouvrez cette section pour charger la liste.</div>
+</details>
+</div>
+<div class="liste-recente" data-section="b2-fiches-evenement">
+<details id="fiches-evenement-details">
+<summary class="dossiers-entete tdb-16">
+<h2 class="tdb-10">📋 Fiches événement (défilés)</h2>
+</summary>
+<p class="tdb-17">Pour chaque mannequin, une fiche PDF prête à envoyer aux organisateurs d'un défilé : identité, contacts, mensurations, taille haut et bas, régime et allergies, droit à l'image, Instagram, TikTok, Facebook et lien du book. Elle est préparée au moment du téléchargement, donc toujours à jour. Réservée à l'agence : les mannequins ne peuvent pas la télécharger. Aucune pièce d'identité.</p>
+<div id="fiches-evenement-liste">Ouvrez cette section pour charger la liste.</div>
 </details>
 </div>
 <div class="liste-recente" data-section="b2-tri-photos">
@@ -2831,6 +2841,7 @@ document.addEventListener('DOMContentLoaded', function () {
 <script src="js/messages-groupes.js"></script>
 <script src="js/couverture-admin.js"></script>
 <script src="js/tri-photos-admin.js"></script>
+<script src="js/fiches-evenement-admin.js"></script>
 <script>
 // La sidebar du centre de contrôle (Étape 12) a son propre logo et sa propre
 // navigation : une fois connecté, le header public et le titre "Administration"

@@ -758,6 +758,10 @@ function chargerJsPdf() {
   return promesseJsPdf;
 }
 
+// Coordonnées officielles de l'agence pour les documents générés (PDF), à un seul endroit.
+const MA2M_SITE = 'https://www.maitreakessemodelmanagement.com';
+const MA2M_CONTACT_PDF = 'CONTACT OFFICIEL MA2M  ·  +225 27 22 23 11 76  ·  +225 05 45 65 66 87  ·  infos.ma2m@gmail.com';
+
 // Place une photo sur une case (1 à 5) de la compcard d'un mannequin, ou l'en retire
 // (caseN = null). Fonction partagée par l'Espace mannequin et le tableau de bord
 // (06/10/2026). La photo qui occupait déjà la case la quitte — APRÈS la pose de la

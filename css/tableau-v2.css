@@ -474,3 +474,9 @@ html body.tdb-v2:not(.v2-page-v2-ensemble) .v2-entete-actions { display: none !i
 .mf-photo-bloc { display: flex; flex-direction: column; gap: 6px; width: 90px; }
 .mf-cc-select { width: 90px; font-size: 0.72rem; padding: 3px 2px; }
 .mf-cc-aide { flex-basis: 100%; font-size: 0.8rem; margin: 0 0 0.2rem; color: #6b625d; }
+
+/* Fiches événement (06/10/2026) — js/fiches-evenement-admin.js */
+.fe-ligne { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; padding: 0.7rem 0; border-bottom: 1px solid #e4dbd3; flex-wrap: wrap; }
+.fe-etat { font-size: 0.8rem; color: #8a5a00; }
+.fe-etat.ok { color: #1f7a3a; }
+.fe-non-publie { font-size: 0.8rem; color: #6b625d; }
