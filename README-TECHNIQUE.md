@@ -1629,3 +1629,10 @@ toutes les écritures sont simulées pendant l'enregistrement.
   « Accueil ») pour toutes les pages, une seule fois.
 - Ordre de mise en service : exécuter l'Extension 124 dans Supabase **avant** la mise en
   ligne ; sinon la page affiche simplement « Nos prochains projets seront affichés ici très bientôt ».
+
+## ⬛ Fond noir partout (06/10/2026, décision de la propriétaire)
+
+- Les fonds du site sont **noirs**, sans teinte rouge bordeaux : `--noir` (#060606), `--noir-doux`
+  (#0f0f10) et `--anthracite` (#0e0e0f) sont neutres ; les sections `.fond-anthracite` ont un
+  léger reflet « noir brillant » (`--noir-brillant`). Le bordeaux reste réservé aux accents
+  (boutons, liens, petits survols, filets), jamais aux grands fonds de section.

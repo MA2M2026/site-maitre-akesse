@@ -12,7 +12,7 @@
 .agenda-carte {
   display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); gap: 1.4rem;
   padding: 1.4rem 1.4rem 1.5rem; border: 1px solid var(--gris-clair);
-  background: linear-gradient(120deg, rgba(122,18,32,0.10), transparent 55%);
+  background: linear-gradient(120deg, rgba(255,255,255,0.04), transparent 55%);
   transition: border-color 0.4s ease, transform 0.5s var(--transition-douce), box-shadow 0.5s ease;
 }
 .agenda-carte:hover { border-color: var(--bordeaux-clair); transform: translateY(-3px); box-shadow: 0 24px 50px -30px rgba(213,84,104,0.6); }
@@ -90,7 +90,7 @@ a.agenda-puce:hover, a.agenda-puce:focus-visible { border-color: var(--bordeaux-
 }
 .cal-grille-semaine .cal-jour { min-height: 22rem; border-top: 0; }
 .cal-grille-semaine .cal-jour:first-child { border-left: 0; }
-.cal-jour:hover, .cal-jour:focus-visible { background: rgba(122,18,32,0.18); outline: none; }
+.cal-jour:hover, .cal-jour:focus-visible { background: rgba(255,255,255,0.06); outline: none; }
 .cal-jour.hors-mois .cal-num { opacity: 0.3; }
 .cal-jour.passe .cal-num { opacity: 0.6; }
 .cal-num { font-family: var(--texte); font-size: 1.55rem; font-weight: 400; line-height: 1; color: var(--titre-clair); align-self: center; padding: 0.35rem 0.5rem; border-radius: 10px; min-width: 2.6rem; text-align: center; margin-bottom: 0.35rem; }
