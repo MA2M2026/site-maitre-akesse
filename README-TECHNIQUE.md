@@ -1374,6 +1374,18 @@ fiches) et formulaires remplis jusqu'au bout — **sans aucune écriture** : tou
 
 Liste de tout ce qui reste à faire ou à surveiller, pour la propriétaire et pour Claude.
 
+**Chantiers « zéro critique » décidés le 06/10/2026 (dans cet ordre, une mise en ligne par chantier)**
+1. **Essais automatiques à chaque modification** : ranger les essais Playwright (sans
+   écriture réelle) dans le dépôt et les faire tourner par GitHub Actions sur chaque
+   pull request, avec `node --check` et `scripts/verifier-csp.py` (déjà
+   `.github/workflows/verifier-csp.yml`) ; la fusion est refusée si un essai échoue.
+   Programmé : nuit du 7 au 8 octobre, 1 h.
+2. ~~Sauvegarde des photos des mannequins~~ : FAIT le 06/10/2026 au soir, sur Google
+   Drive (voir « Sauvegarde des photos des mannequins sur Google Drive » plus bas).
+3. **Pages HTML en double** (paires FR/EN, en-têtes et pieds de page recopiés) : environ
+   5 000 lignes à mettre en commun.
+4. Un jour : relecture complète par un développeur humain.
+
 **Rappels programmés**
 - **Dimanche 4 octobre 2026** : documents légaux (CGU, page cookies, politique de
   remboursement dont les 45 000 FCFA d'inscription, relecture des CGV de la boutique,
@@ -1504,10 +1516,16 @@ toutes les écritures sont simulées pendant l'enregistrement.
   Femmes : haut = tour de poitrine, bas = tour de hanches. Hommes : haut = tour
   de poitrine, bas = tour de taille. Taille générale = haut et bas (ex. « M-L »).
   Équivalences FR/EU, IT, UK, US, BR, JP, KR, CN (tableau sur la fiche publique).
-- **Option A et taille maximum** (décision du 06/10/2026, soir ; hommes jusqu'à XL) : la taille retenue est
+- **Grille des mensurations MA2M** (décision du 06/10/2026, soir, Extension 123) : les
+  tailles XS à L suivent la grille de l'agence (femmes : poitrine XS 78–83, S 84–87,
+  M 88–93, L 94–100 ; taille 58–63 / 64–67 / 68–73 / 74–80 ; bassin 84–89 / 90–93 /
+  94–99 / 100–106 — hommes : poitrine 86–91 / 92–95 / 96–101 / 102–108 ; taille
+  68–73 / 74–77 / 78–83 / 84–90 ; bassin comme les femmes). Pile sur une limite = la
+  taille du dessus. La pointure n'entre pas dans le calcul. Maximum L pour tous.
+- **Option A et taille maximum** (décision du 06/10/2026, soir ; maximum L pour tous depuis la grille MA2M) : la taille retenue est
   celle de la plus grande des mesures (femmes : haut = poitrine + taille, bas = bassin +
-  taille ; hommes : haut = poitrine, bas = taille + bassin). Au-delà de M (femmes) ou
-  XL (hommes) — `MAX_FEMMES` / `MAX_HOMMES` dans `js/tailles.js` — « Mensurations
+  taille ; hommes : haut = poitrine, bas = taille + bassin). Au-delà de L
+  — `MAX_FEMMES` / `MAX_HOMMES` dans `js/tailles.js` — « Mensurations
   excessives » en rouge dans l'Espace (accueil et étape physique) et dans le Rapport des
   profils, avec les repères S/M(/L) ; rien n'est caché au public pour autant.
 - **Mesures incohérentes** : femmes, bas plus grand que le haut de plus de 2
@@ -1541,3 +1559,22 @@ toutes les écritures sont simulées pendant l'enregistrement.
   `texteMensurationsCv(p, sexe)`, constantes `MA2M_TELEPHONES` / `MA2M_EMAIL`.
 - **Règle de cohérence écrite deux fois** (JS pour l'affichage immédiat dans l'Espace,
   SQL pour le délai de 7 jours) : voir la section Mensurations ci-dessus.
+
+## 💾 Sauvegarde des photos des mannequins sur Google Drive (06/10/2026)
+
+- **Extension 122** : table privée `cle_sauvegarde_photos` (empreinte sha256 d'une clé
+  secrète, jamais la clé elle-même) et fonction `photos_a_sauvegarder(cle)` qui, avec la
+  bonne clé, renvoie la liste de toutes les photos (mannequin, numéro, adresse). Relancer
+  le dernier bloc de l'Extension 122 crée une nouvelle clé et annule l'ancienne.
+- **`scripts/sauvegarde-photos-google-drive.gs`** : script Google Apps Script installé
+  dans le compte Google de l'agence (script.google.com), avec la clé collée à la ligne
+  `CLE_SAUVEGARDE`. Fonction `installer()` lancée une fois : passage automatique toutes
+  les heures. Dossier Drive « Sauvegarde photos MA2M », un sous-dossier par mannequin ;
+  seules les nouvelles photos sont copiées (index `_index-sauvegarde.json`, enregistré
+  toutes les 10 photos ; photo introuvable sur le site = notée « absente », plus
+  réessayée), liste lue par paquets de 1000, un seul passage à la fois (verrou), dossier
+  d'une mannequin retrouvé par son identifiant même si son nom change ; rien n'est jamais
+  effacé du Drive ; bilan du dernier passage dans `_dernier-passage.txt`. Version
+  installée le 06/10 au soir : la première ; la version améliorée du dépôt est à recoller
+  dans le script Google (même clé) à l'occasion.
+- La base Supabase reste sauvegardée chaque semaine par `.github/workflows/sauvegarde-base.yml`.

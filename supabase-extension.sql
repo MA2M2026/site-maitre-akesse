@@ -6303,3 +6303,88 @@ NOTIFY pgrst, 'reload schema';
 -- s'assurer qu'aucune autre règle ne laisse voir une fiche en sourdine.
 select policyname, cmd, roles, qual from pg_policies
 where tablename = 'model_profiles' and cmd in ('SELECT', 'ALL') order by policyname;
+
+-- =====================================================================
+-- Extension 122 — Sauvegarde des photos des mannequins sur Google Drive
+-- (décision de la propriétaire, 06/10/2026). Un script Google Apps Script,
+-- installé dans SON compte Google, demande chaque heure la liste des photos et
+-- copie les nouvelles dans son Drive (rien n'est jamais effacé du Drive).
+-- La liste n'est donnée qu'avec la clé secrète créée ci-dessous : la base n'en
+-- garde que l'empreinte (sha256) ; la clé s'affiche UNE fois, à coller
+-- directement dans le script Google (jamais dans une conversation). Relancer
+-- ce bloc crée une nouvelle clé et annule l'ancienne.
+-- =====================================================================
+create table if not exists cle_sauvegarde_photos (
+  id int primary key default 1 check (id = 1),
+  cle_empreinte text not null,
+  cree_le timestamptz not null default now()
+);
+alter table cle_sauvegarde_photos enable row level security;
+revoke all on cle_sauvegarde_photos from anon, authenticated;
+
+create or replace function photos_a_sauvegarder(cle text)
+returns table(mannequin text, model_id uuid, photo_id uuid, numero int, url text, ajoutee_le timestamptz)
+language plpgsql stable security definer
+set search_path = public
+as $$
+#variable_conflict use_column
+begin
+  if cle is null or length(cle) < 32 or not exists (
+    select 1 from cle_sauvegarde_photos c where c.cle_empreinte = encode(sha256(convert_to(cle, 'UTF8')), 'hex')
+  ) then
+    raise exception 'Clé de sauvegarde invalide';
+  end if;
+  return query
+    select coalesce(nullif(trim(p.full_name), ''), 'Sans nom'), ph.model_id, ph.id, ph.numero, ph.url, ph.created_at
+    from model_photos ph left join model_profiles p on p.id = ph.model_id
+    where ph.url is not null
+    order by ph.created_at;
+end;
+$$;
+revoke all on function photos_a_sauvegarder(text) from public;
+grant execute on function photos_a_sauvegarder(text) to anon, authenticated;
+
+NOTIFY pgrst, 'reload schema';
+
+-- Nouvelle clé (affichée une seule fois dans le résultat ci-dessous).
+with nouvelle as (
+  select replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', '') as cle
+), enregistree as (
+  insert into cle_sauvegarde_photos (id, cle_empreinte)
+  select 1, encode(sha256(convert_to(cle, 'UTF8')), 'hex') from nouvelle
+  on conflict (id) do update set cle_empreinte = excluded.cle_empreinte, cree_le = now()
+  returning 1
+)
+select nouvelle.cle as "Clé à coller dans le script Google" from nouvelle, enregistree;
+
+-- =====================================================================
+-- Extension 123 — Grille des mensurations MA2M (décision de la propriétaire,
+-- 06/10/2026, soir) : nouvelles bornes de tailles, les mêmes que js/tailles.js
+-- (femmes : poitrine XS 78–83, S 84–87, M 88–93, L 94–100 ; bassin XS 84–89,
+-- S 90–93, M 94–99, L 100–106 — hommes : poitrine XS 86–91, S 92–95, M 96–101,
+-- L 102–108 ; taille XS 68–73, S 74–77, M 78–83, L 84–90 ; au-delà, pas de 6 cm).
+-- La règle de cohérence (écarts admis) ne change pas. Les dates « mesures à
+-- reprendre » sont recalculées pour tous les profils avec la nouvelle grille.
+-- =====================================================================
+create or replace function mesures_incoherentes(categorie text, poitrine numeric, tour_taille numeric, hanches numeric)
+returns boolean language sql immutable as $$
+  select case when categorie = 'homme' then
+    coalesce((rang_taille(tour_taille, array[67,73,77,83,90,96,102])
+            - rang_taille(poitrine, array[85,91,95,101,108,114,120])) not between -2 and 1, false)
+  else
+    coalesce((rang_taille(hanches, array[83,89,93,99,106,112,118])
+            - rang_taille(poitrine, array[77,83,87,93,100,106,112])) not between -1 and 2, false)
+  end;
+$$;
+
+begin;
+alter table model_profiles disable trigger trg_proteger_proprietaire_profil;
+update model_profiles set mesures_a_reprendre_depuis =
+  case when mesures_incoherentes(category, chest_cm, waist_cm, hips_cm) then coalesce(mesures_a_reprendre_depuis, now()) else null end
+where (mesures_a_reprendre_depuis is not null) <> mesures_incoherentes(category, chest_cm, waist_cm, hips_cm);
+alter table model_profiles enable trigger trg_proteger_proprietaire_profil;
+commit;
+
+-- Vérification (résultat affiché) : les mannequins dont les mesures sont à reprendre.
+select full_name, mesures_a_reprendre_depuis from model_profiles
+where mesures_a_reprendre_depuis is not null order by full_name;

@@ -936,7 +936,7 @@ function stepPhysique(){
     '<div></div>' +
     '</div>' +
     '<div class="tailles-calculees" id="tailles-calculees"></div>' +
-    '<p class="sub p20-14">📏 Mesurez-vous sans serrer le mètre ruban, en sous-vêtements ou vêtements fins. Vos tailles (haut, bas, générale) sont calculées automatiquement d’après vos mensurations, selon les barèmes internationaux : pour les changer, corrigez vos mesures.</p>' +
+    '<p class="sub p20-14">📏 Mesurez-vous sans serrer le mètre ruban, en sous-vêtements ou vêtements fins. Vos tailles (haut, bas, générale) sont calculées automatiquement d’après vos mensurations, selon la grille des mensurations MA2M : pour les changer, corrigez vos mesures.</p>' +
     blocFicheEvenement() +
     '<div class="actions-row"><button class="btn ghost" data-goto="1">← Retour</button><button class="btn primary" id="save2">Enregistrer</button></div>';
 }

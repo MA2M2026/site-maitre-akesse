@@ -40,3 +40,10 @@ relecture et s'appliquent à chaque modification, sans exception.
    l'agence.**
 7. **Tenir `README-TECHNIQUE.md` à jour**, pour qu'une autre personne
    puisse reprendre le site un jour.
+8. **Contrôle extérieur SonarQube Cloud** (décision de la propriétaire,
+   06/10/2026) : après chaque mise en ligne, attendre la nouvelle analyse
+   automatique du projet `MA2M2026_site-maitre-akesse` sur sonarcloud.io
+   (API publique, par ex. `api/measures/component` et `api/issues/search`),
+   vérifier que les notes ne baissent pas et qu'aucun nouveau problème de
+   sécurité ou de fiabilité n'apparaît, et corriger les vrais problèmes
+   (en expliquant simplement les fausses alertes).
