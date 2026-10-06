@@ -26,11 +26,11 @@ document.addEventListener('DOMContentLoaded', () => {
     [['index', 'qui-sommes-nous', 'Qui sommes-nous', 'About us'],
      ['evenements', 'agenda', 'Agenda', 'Agenda']].forEach(([apres, page, fr, anglais]) => {
       const liens = [...liste.querySelectorAll('li > a')];
-      const repere = liens.find(a => new RegExp('(^|/)' + apres + '(\\.html)?$').test(a.getAttribute('href') || ''));
-      if (!repere || liens.some(a => new RegExp('(^|/)' + page + '(\\.html)?$').test(a.getAttribute('href') || ''))) return;
+      const repere = liens.find(a => new RegExp(String.raw`(^|/)` + apres + String.raw`(\.html)?$`).test(a.getAttribute('href') || ''));
+      if (!repere || liens.some(a => new RegExp(String.raw`(^|/)` + page + String.raw`(\.html)?$`).test(a.getAttribute('href') || ''))) return;
       const li = document.createElement('li');
       const a = document.createElement('a');
-      a.href = repere.getAttribute('href').replace(new RegExp(apres + '(\\.html)?$'), page + '.html');
+      a.href = repere.getAttribute('href').replace(new RegExp(apres + String.raw`(\.html)?$`), page + '.html');
       a.textContent = en ? anglais : fr;
       if (pageOuverte === page) a.className = 'actif';
       li.appendChild(a);

@@ -804,7 +804,7 @@ function libelleTypeAgenda(type, enAnglais) {
 function dateAgenda(debut, fin, enAnglais) {
   const langue = enAnglais ? 'en-GB' : 'fr-FR';
   const d = new Date(debut + 'T12:00:00');
-  if (isNaN(d)) return '';
+  if (Number.isNaN(d.getTime())) return '';
   const complet = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' };
   if (!fin || fin === debut) return d.toLocaleDateString(langue, complet);
   const f = new Date(fin + 'T12:00:00');
@@ -819,7 +819,11 @@ function dateDuJour(d = new Date()) {
 }
 function separerAgenda(projets) {
   const jour = dateDuJour();
-  const tries = (projets || []).slice().sort((x, y) => (x.date_debut < y.date_debut ? -1 : x.date_debut > y.date_debut ? 1 : 0));
+  const cle = p => String(p.date_debut || '');
+  const tries = (projets || []).slice().sort((x, y) => {
+    if (cle(x) === cle(y)) return 0;
+    return cle(x) < cle(y) ? -1 : 1;
+  });
   return {
     avenir: tries.filter(p => (p.date_fin || p.date_debut) >= jour),
     passes: tries.filter(p => (p.date_fin || p.date_debut) < jour).reverse()
