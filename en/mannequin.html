@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-xF+6UOq7BZCnDYaDOM3heXwJQsUVTLbczKURuJjkSFE='; style-src 'self' https://fonts.googleapis.com 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-APLwyDw36sAjyQcdUQ5UGGldVZBDMg7M7zvJCpI8qHE='; style-src 'self' https://fonts.googleapis.com 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
 <!-- Adresse lisible …/book/nom (06/10/2026) : la page peut être servie depuis /book/… ; ses fichiers se chargent toujours depuis la racine du site (voir js/adresse-fiche.js). -->
 <base href="/en/">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
@@ -540,7 +540,7 @@ async function genererFicheEn(format) {
   try {
     if (format !== 'jpeg') await chargerJsPdfEn();
     const canvas = await construireCanvasCompcardEn();
-    const nomFichier = 'card-' + (ficheData.profil.full_name || 'model').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase();
+    const nomFichier = 'card-' + (ficheData.profil.full_name || 'model').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase() + horodatageFichier();
 
     if (format === 'jpeg') {
       const lien = document.createElement('a');
