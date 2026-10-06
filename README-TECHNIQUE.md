@@ -1380,9 +1380,8 @@ Liste de tout ce qui reste à faire ou à surveiller, pour la propriétaire et p
    pull request, avec `node --check` et `scripts/verifier-csp.py` (déjà
    `.github/workflows/verifier-csp.yml`) ; la fusion est refusée si un essai échoue.
    Programmé : nuit du 7 au 8 octobre, 1 h.
-2. **Sauvegarde des photos des mannequins** (Cloudflare R2) : aujourd'hui seule la base
-   est sauvegardée (`.github/workflows/sauvegarde-base.yml`). Choix du lieu de copie à
-   faire avec la propriétaire (deuxième espace R2, Google Drive…).
+2. ~~Sauvegarde des photos des mannequins~~ : FAIT le 06/10/2026 au soir, sur Google
+   Drive (voir « Sauvegarde des photos des mannequins sur Google Drive » plus bas).
 3. **Pages HTML en double** (paires FR/EN, en-têtes et pieds de page recopiés) : environ
    5 000 lignes à mettre en commun.
 4. Un jour : relecture complète par un développeur humain.
@@ -1571,6 +1570,11 @@ toutes les écritures sont simulées pendant l'enregistrement.
   dans le compte Google de l'agence (script.google.com), avec la clé collée à la ligne
   `CLE_SAUVEGARDE`. Fonction `installer()` lancée une fois : passage automatique toutes
   les heures. Dossier Drive « Sauvegarde photos MA2M », un sous-dossier par mannequin ;
-  seules les nouvelles photos sont copiées (index `_index-sauvegarde.json`), rien n'est
-  jamais effacé du Drive ; bilan du dernier passage dans `_dernier-passage.txt`.
+  seules les nouvelles photos sont copiées (index `_index-sauvegarde.json`, enregistré
+  toutes les 10 photos ; photo introuvable sur le site = notée « absente », plus
+  réessayée), liste lue par paquets de 1000, un seul passage à la fois (verrou), dossier
+  d'une mannequin retrouvé par son identifiant même si son nom change ; rien n'est jamais
+  effacé du Drive ; bilan du dernier passage dans `_dernier-passage.txt`. Version
+  installée le 06/10 au soir : la première ; la version améliorée du dépôt est à recoller
+  dans le script Google (même clé) à l'occasion.
 - La base Supabase reste sauvegardée chaque semaine par `.github/workflows/sauvegarde-base.yml`.

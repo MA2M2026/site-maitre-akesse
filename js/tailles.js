@@ -62,7 +62,7 @@
   var MAX_FEMMES = 'L', MAX_HOMMES = 'L'; // la grille MA2M s'arrête à L
   window.ma2mReperesTailles = function (homme) {
     var t = homme ? HOMMES : FEMMES, fmt = function (x) { return x[0] + ' à ' + (x[1] >= 999 ? '…' : x[1]) + ' cm'; };
-    return t.filter(function (x) { return ['S', 'M', 'L', 'XL'].indexOf(x.l) !== -1 && ORDRE.indexOf(x.l) <= ORDRE.indexOf(homme ? MAX_HOMMES : MAX_FEMMES); }).map(function (x) {
+    return t.filter(function (x) { var r = ORDRE.indexOf(x.l); return r >= ORDRE.indexOf('S') && r <= ORDRE.indexOf(homme ? MAX_HOMMES : MAX_FEMMES); }).map(function (x) {
       return x.l + ' : poitrine ' + fmt(x.poitrine) + ', taille ' + fmt(x.taille) + ', bassin ' + fmt(homme ? x.bassin : x.hanches);
     });
   };
