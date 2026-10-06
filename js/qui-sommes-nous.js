@@ -52,16 +52,6 @@
     setInterval(() => { if (demarre && aLEcran && !document.hidden) montrer(); }, delai);
   }
 
-  // « CACAO FASHION SHOW » → « Cacao Fashion Show » (titres saisis en capitales). Les mots
-  // avec un chiffre (MA2M, 2026…) et les sigles courts (CI, MA) gardent leurs capitales.
-  function enMajusculesDouces(t) {
-    const s = String(t || '').trim();
-    if (s !== s.toUpperCase()) return s;
-    return s.split(/(\s+)/).map(mot => {
-      if (/\d/.test(mot) || /^[A-Z]{1,2}$/.test(mot)) return mot;
-      return mot.toLowerCase().replace(/(^|['’(-])(\S)/g, (m, a, b) => a + b.toUpperCase());
-    }).join('');
-  }
 
   const cleTitre = t => String(t || '').toLowerCase().replace(/\s+/g, ' ').trim();
 
@@ -112,9 +102,9 @@
         const photo = document.createElement('div');
         photo.className = 'qsn-evenement-photo qsn-rideau';
         const h3 = document.createElement('h3');
-        h3.textContent = enMajusculesDouces(e.titre);
+        h3.textContent = titreLisible(e.titre);
         carte.appendChild(photo); carte.appendChild(h3);
-        if (e.lieu) { const p = document.createElement('p'); p.textContent = enMajusculesDouces(e.lieu); carte.appendChild(p); }
+        if (e.lieu) { const p = document.createElement('p'); p.textContent = titreLisible(e.lieu); carte.appendChild(p); }
         grille.appendChild(carte);
       });
     }

@@ -818,6 +818,22 @@ function dateAgenda(debut, fin, enAnglais) {
   return d.toLocaleDateString(langue, { day: 'numeric', month: 'short' }) + ' – ' + f.toLocaleDateString(langue, { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+// « CACAO FASHION SHOW » → « Cacao Fashion Show », « AFRICA IN RYTHM » → « Africa in Rythm »
+// (titres saisis en capitales). Les mots avec un chiffre (MA2M, 2026…) gardent leurs
+// capitales ; les petits mots (de, la, in, of…) restent en minuscules sauf en tête.
+const MOTS_COURTS = ['de', 'du', 'des', 'la', 'le', 'les', 'et', 'à', 'au', 'aux', 'en', 'in', 'of', 'the', 'and', 'on'];
+function titreLisible(t) {
+  const s = String(t || '').trim();
+  if (s !== s.toUpperCase()) return s;
+  return s.split(/(\s+)/).map((mot, i) => {
+    if (/\d/.test(mot)) return mot;
+    const bas = mot.toLowerCase();
+    if (i > 0 && MOTS_COURTS.includes(bas)) return bas;
+    const capitale = bas.replace(/(^|['’(-])(\S)/g, (m, x, y) => x + y.toUpperCase());
+    return i > 0 && /^[dl]['’]/.test(bas) ? capitale.charAt(0).toLowerCase() + capitale.slice(1) : capitale; // « d'Abidjan »
+  }).join('');
+}
+
 // Date du jour au format AAAA-MM-JJ (heure de l'appareil), et projets d'agenda séparés
 // en « à venir » (du plus proche au plus lointain) et « réalisés » (du plus récent au
 // plus ancien) ; un projet sur plusieurs jours reste « à venir » jusqu'à son dernier jour.
