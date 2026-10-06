@@ -6303,3 +6303,56 @@ NOTIFY pgrst, 'reload schema';
 -- s'assurer qu'aucune autre règle ne laisse voir une fiche en sourdine.
 select policyname, cmd, roles, qual from pg_policies
 where tablename = 'model_profiles' and cmd in ('SELECT', 'ALL') order by policyname;
+
+-- =====================================================================
+-- Extension 122 — Sauvegarde des photos des mannequins sur Google Drive
+-- (décision de la propriétaire, 06/10/2026). Un script Google Apps Script,
+-- installé dans SON compte Google, demande chaque heure la liste des photos et
+-- copie les nouvelles dans son Drive (rien n'est jamais effacé du Drive).
+-- La liste n'est donnée qu'avec la clé secrète créée ci-dessous : la base n'en
+-- garde que l'empreinte (sha256) ; la clé s'affiche UNE fois, à coller
+-- directement dans le script Google (jamais dans une conversation). Relancer
+-- ce bloc crée une nouvelle clé et annule l'ancienne.
+-- =====================================================================
+create table if not exists cle_sauvegarde_photos (
+  id int primary key default 1 check (id = 1),
+  cle_empreinte text not null,
+  cree_le timestamptz not null default now()
+);
+alter table cle_sauvegarde_photos enable row level security;
+revoke all on cle_sauvegarde_photos from anon, authenticated;
+
+create or replace function photos_a_sauvegarder(cle text)
+returns table(mannequin text, model_id uuid, photo_id uuid, numero int, url text, ajoutee_le timestamptz)
+language plpgsql stable security definer
+set search_path = public
+as $$
+#variable_conflict use_column
+begin
+  if cle is null or length(cle) < 32 or not exists (
+    select 1 from cle_sauvegarde_photos c where c.cle_empreinte = encode(sha256(convert_to(cle, 'UTF8')), 'hex')
+  ) then
+    raise exception 'Clé de sauvegarde invalide';
+  end if;
+  return query
+    select coalesce(nullif(trim(p.full_name), ''), 'Sans nom'), ph.model_id, ph.id, ph.numero, ph.url, ph.created_at
+    from model_photos ph left join model_profiles p on p.id = ph.model_id
+    where ph.url is not null
+    order by ph.created_at;
+end;
+$$;
+revoke all on function photos_a_sauvegarder(text) from public;
+grant execute on function photos_a_sauvegarder(text) to anon, authenticated;
+
+NOTIFY pgrst, 'reload schema';
+
+-- Nouvelle clé (affichée une seule fois dans le résultat ci-dessous).
+with nouvelle as (
+  select replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', '') as cle
+), enregistree as (
+  insert into cle_sauvegarde_photos (id, cle_empreinte)
+  select 1, encode(sha256(convert_to(cle, 'UTF8')), 'hex') from nouvelle
+  on conflict (id) do update set cle_empreinte = excluded.cle_empreinte, cree_le = now()
+  returning 1
+)
+select nouvelle.cle as "Clé à coller dans le script Google" from nouvelle, enregistree;

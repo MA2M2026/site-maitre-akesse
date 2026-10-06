@@ -1554,3 +1554,17 @@ toutes les écritures sont simulées pendant l'enregistrement.
   `texteMensurationsCv(p, sexe)`, constantes `MA2M_TELEPHONES` / `MA2M_EMAIL`.
 - **Règle de cohérence écrite deux fois** (JS pour l'affichage immédiat dans l'Espace,
   SQL pour le délai de 7 jours) : voir la section Mensurations ci-dessus.
+
+## 💾 Sauvegarde des photos des mannequins sur Google Drive (06/10/2026)
+
+- **Extension 122** : table privée `cle_sauvegarde_photos` (empreinte sha256 d'une clé
+  secrète, jamais la clé elle-même) et fonction `photos_a_sauvegarder(cle)` qui, avec la
+  bonne clé, renvoie la liste de toutes les photos (mannequin, numéro, adresse). Relancer
+  le dernier bloc de l'Extension 122 crée une nouvelle clé et annule l'ancienne.
+- **`scripts/sauvegarde-photos-google-drive.gs`** : script Google Apps Script installé
+  dans le compte Google de l'agence (script.google.com), avec la clé collée à la ligne
+  `CLE_SAUVEGARDE`. Fonction `installer()` lancée une fois : passage automatique toutes
+  les heures. Dossier Drive « Sauvegarde photos MA2M », un sous-dossier par mannequin ;
+  seules les nouvelles photos sont copiées (index `_index-sauvegarde.json`), rien n'est
+  jamais effacé du Drive ; bilan du dernier passage dans `_dernier-passage.txt`.
+- La base Supabase reste sauvegardée chaque semaine par `.github/workflows/sauvegarde-base.yml`.
