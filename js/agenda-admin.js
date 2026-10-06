@@ -1,8 +1,11 @@
-// Tableau de bord — « Agenda du site » (06/10/2026, Extension 124) : la propriétaire
-// programme les projets de l'agence (shooting, défilé, casting, formation, événement)
-// avec le photographe, les partenaires et les mannequins. La page publique « Agenda »
-// en montre seulement le jour, la ville, le photographe, les partenaires et les
-// mannequins dont le profil est visible ; l'heure, l'adresse et les notes restent ici.
+// Tableau de bord — « Agenda du site » (06/10/2026, Extensions 124 et 125) : la
+// propriétaire programme les projets de l'agence (défilé, show, shooting, casting,
+// essayages, masterclass, rencontre…) avec leurs horaires jour par jour, le lieu, les
+// intervenants (photographe, chorégraphe, styliste…), les partenaires (un nouveau
+// partenaire s'enregistre sur place) et les mannequins. La page publique « Agenda » montre
+// les jours, la ville, le lieu, les intervenants, les partenaires et les mannequins dont le
+// profil est visible ; les horaires seulement si la case est cochée ; l'adresse exacte et
+// les notes restent ici.
 (function () {
   var section = document.querySelector('[data-section="b3c-agenda"]');
   var form = document.getElementById('agenda-form');
@@ -11,6 +14,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var charge = false, enCours = false, listesOk = false;
   var projets = [], mannequins = [], partenaires = [];
+  var projetEnCours = null; // projet ouvert avec « Modifier »
 
   function message(t, erreur) {
     var m = $('agenda-msg');
@@ -29,6 +33,79 @@
     l.dataset.nom = String(recherche || libelle).toLowerCase();
     return l;
   }
+  // ---------- Horaires jour par jour ----------
+  function joursEntre(debut, fin) {
+    var jours = [];
+    if (!debut) return jours;
+    var d = new Date(debut + 'T12:00:00'), dernier = fin && fin > debut ? fin : debut;
+    for (var n = 0; n < 60; n++) {
+      var j = dateDuJour(d);
+      if (j > dernier) break;
+      jours.push(j);
+      d.setDate(d.getDate() + 1);
+    }
+    return jours;
+  }
+  function lireSeances() {
+    return Array.prototype.map.call($('agenda-seances').querySelectorAll('.agenda-seance'), function (l) {
+      return { jour: l.dataset.jour, debut: l.querySelector('[data-debut]').value, fin: l.querySelector('[data-fin]').value };
+    }).filter(function (x) { return x.debut || x.fin; });
+  }
+  // Une ligne par jour de l'activité ; les heures déjà tapées sont gardées si les dates changent.
+  function dessinerSeances(existantes) {
+    var connues = {};
+    (existantes || lireSeances()).forEach(function (x) { connues[x.jour] = x; });
+    var boite = $('agenda-seances');
+    boite.textContent = '';
+    var jours = joursEntre($('agenda-date').value, $('agenda-date-fin').value);
+    if (!jours.length) { boite.textContent = 'Choisissez d’abord la date (et la date de fin si l’activité dure plusieurs jours).'; return; }
+    if (jours.length === 60 && $('agenda-date-fin').value > jours[59]) {
+      var note = document.createElement('p');
+      note.className = 'agenda-aide';
+      note.textContent = 'Activité très longue : les horaires se saisissent pour les 60 premiers jours ; précisez la suite dans les notes.';
+      boite.appendChild(note);
+    }
+    jours.forEach(function (j) {
+      var l = document.createElement('div');
+      l.className = 'agenda-seance';
+      l.dataset.jour = j;
+      var nom = document.createElement('span');
+      nom.className = 'agenda-seance-jour';
+      nom.textContent = dateAgenda(j);
+      var debut = document.createElement('input'); debut.type = 'time'; debut.dataset.debut = '1';
+      debut.setAttribute('aria-label', 'Début le ' + dateAgenda(j));
+      var fin = document.createElement('input'); fin.type = 'time'; fin.dataset.fin = '1';
+      fin.setAttribute('aria-label', 'Fin le ' + dateAgenda(j));
+      if (connues[j]) { debut.value = connues[j].debut || ''; fin.value = connues[j].fin || ''; }
+      var a = document.createElement('span'); a.textContent = 'à';
+      l.appendChild(nom); l.appendChild(debut); l.appendChild(a); l.appendChild(fin);
+      boite.appendChild(l);
+    });
+  }
+
+  // ---------- Intervenants (rôle + nom, liste libre) ----------
+  function ajouterIntervenant(role, nom) {
+    var l = document.createElement('div');
+    l.className = 'agenda-intervenant';
+    var r = document.createElement('input');
+    r.type = 'text'; r.maxLength = 60; r.setAttribute('list', 'agenda-roles'); r.placeholder = 'Rôle (ex : Photographe)';
+    r.setAttribute('aria-label', 'Rôle de l’intervenant'); r.value = role || ''; r.dataset.role = '1';
+    var n = document.createElement('input');
+    n.type = 'text'; n.maxLength = 120; n.placeholder = 'Nom'; n.setAttribute('aria-label', 'Nom de l’intervenant');
+    n.value = nom || ''; n.dataset.nom = '1';
+    var x = document.createElement('button');
+    x.type = 'button'; x.className = 'btn-mini-admin'; x.textContent = 'Retirer';
+    x.addEventListener('click', function () { l.remove(); });
+    l.appendChild(r); l.appendChild(n); l.appendChild(x);
+    $('agenda-intervenants').appendChild(l);
+    return n;
+  }
+  function lireIntervenants() {
+    return Array.prototype.map.call($('agenda-intervenants').querySelectorAll('.agenda-intervenant'), function (l) {
+      return { role: l.querySelector('[data-role]').value.trim(), nom: l.querySelector('[data-nom]').value.trim() };
+    }).filter(function (x) { return x.nom; });
+  }
+
   function majCompte() {
     var n = cochees('agenda-mannequins').length;
     var libelle = n > 1 ? ' mannequins choisis' : ' mannequin choisi';
@@ -69,13 +146,16 @@
     div.className = 'agenda-ligne' + (p.visible ? '' : ' cache');
     var noms = nomsDe(p.mannequin_ids, mannequins, 'full_name');
     var parts = nomsDe(p.partenaire_ids, partenaires, 'nom');
-    var prive = [p.heure, p.adresse].filter(Boolean).join(' · ');
+    var horaires = (p.seances || []).map(function (x) { return dateAgenda(x.jour) + ' ' + (x.debut || '?') + '–' + (x.fin || '?'); }).join(' ; ');
+    var intervenants = (p.intervenants || []).map(function (x) { return (x.role ? x.role + ' : ' : '') + x.nom; });
+    var prive = [horaires ? '' : p.heure, p.adresse, horaires && !p.horaires_publics ? horaires : ''].filter(Boolean).join(' · ');
     div.innerHTML =
       '<div class="agenda-date">' + echapperHtml(dateAgenda(p.date_debut, p.date_fin)) + '</div>'
       + '<div><span class="agenda-type">' + echapperHtml(libelleTypeAgenda(p.type)) + (p.visible ? '' : ' · caché du site') + '</span>'
       + '<h4>' + echapperHtml(p.titre) + '</h4>'
-      + (p.ville ? '<p>' + echapperHtml(p.ville) + '</p>' : '')
-      + (p.photographe ? '<p>Photographe : ' + echapperHtml(p.photographe) + '</p>' : '')
+      + (p.ville || p.lieu ? '<p>' + echapperHtml([p.lieu, p.ville].filter(Boolean).join(', ')) + '</p>' : '')
+      + (horaires && p.horaires_publics ? '<p>Horaires : ' + echapperHtml(horaires) + '</p>' : '')
+      + (intervenants.length ? '<p>' + echapperHtml(intervenants.join(' · ')) + '</p>' : '')
       + (parts.length ? '<p>Partenaires : ' + echapperHtml(parts.join(', ')) + '</p>' : '')
       + (noms.length ? '<p>Mannequins : ' + echapperHtml(noms.join(', ')) + '</p>' : '')
       + (prive ? '<p class="agenda-prive">🔒 ' + echapperHtml(prive) + '</p>' : '')
@@ -120,7 +200,10 @@
   function viderFormulaire() {
     form.reset();
     $('agenda-id').value = '';
+    projetEnCours = null;
     $('agenda-visible').checked = true;
+    $('agenda-intervenants').textContent = '';
+    dessinerSeances([]);
     $('agenda-enregistrer').textContent = 'Ajouter à l’agenda';
     $('agenda-annuler').hidden = true;
     filtrer('');
@@ -128,15 +211,20 @@
   }
 
   function remplirFormulaire(p) {
+    projetEnCours = p;
     $('agenda-id').value = p.id;
     $('agenda-type').value = p.type;
     $('agenda-titre').value = p.titre || '';
     $('agenda-date').value = p.date_debut || '';
     $('agenda-date-fin').value = p.date_fin || '';
     $('agenda-ville').value = p.ville || '';
-    $('agenda-photographe').value = p.photographe || '';
+    $('agenda-lieu').value = p.lieu || '';
     $('agenda-description').value = p.description || '';
-    $('agenda-heure').value = p.heure || '';
+    $('agenda-horaires-publics').checked = !!p.horaires_publics;
+    dessinerSeances(p.seances || []);
+    $('agenda-intervenants').textContent = '';
+    (p.intervenants || []).forEach(function (x) { ajouterIntervenant(x.role, x.nom); });
+    if (!(p.intervenants || []).length && p.photographe) ajouterIntervenant('Photographe', p.photographe);
     $('agenda-adresse').value = p.adresse || '';
     $('agenda-notes').value = p.notes_internes || '';
     $('agenda-visible').checked = !!p.visible;
@@ -170,9 +258,13 @@
       date_debut: debut,
       date_fin: fin && fin !== debut ? fin : null,
       ville: $('agenda-ville').value.trim() || null,
-      photographe: $('agenda-photographe').value.trim() || null,
+      lieu: $('agenda-lieu').value.trim() || null,
       description: $('agenda-description').value.trim() || null,
-      heure: $('agenda-heure').value.trim() || null,
+      intervenants: lireIntervenants(),
+      seances: lireSeances(),
+      horaires_publics: $('agenda-horaires-publics').checked,
+      // les horaires jour par jour remplacent l'ancien champ « Heure » (Extension 124)
+      heure: lireSeances().length ? null : (projetEnCours && projetEnCours.heure) || null,
       adresse: $('agenda-adresse').value.trim() || null,
       notes_internes: $('agenda-notes').value.trim() || null,
       visible: $('agenda-visible').checked,
@@ -201,6 +293,50 @@
   });
 
   $('agenda-annuler').addEventListener('click', function () { viderFormulaire(); message(''); });
+  $('agenda-date').addEventListener('change', function () { dessinerSeances(); });
+  $('agenda-date-fin').addEventListener('change', function () { dessinerSeances(); });
+  $('agenda-ajouter-intervenant').addEventListener('click', function () { ajouterIntervenant('', '').focus(); });
+
+  // Nouveau partenaire enregistré sur place, puis coché pour ce projet.
+  $('agenda-ajouter-partenaire').addEventListener('click', async function () {
+    var champ = $('agenda-nouveau-partenaire'), nom = champ.value.trim();
+    if (!nom) { champ.focus(); return; }
+    // Sans la liste des partenaires, on ne peut pas éviter un doublon sur la page Partenaires.
+    if (!listesOk) { message('Patientez : la liste des partenaires n’est pas encore chargée (ou rechargez la page).', true); return; }
+    var existant = partenaires.find(function (x) { return String(x.nom || '').toLowerCase() === nom.toLowerCase(); });
+    if (existant) {
+      var c = $('agenda-partenaires').querySelector('input[value="' + existant.id + '"]');
+      if (c) c.checked = true;
+      champ.value = '';
+      message('« ' + existant.nom + ' » était déjà enregistré : il est coché.');
+      return;
+    }
+    this.disabled = true;
+    var r = await sb.from('partenaires').insert({ nom: nom }).select('id, nom');
+    this.disabled = false;
+    if (r.error || !r.data || !r.data.length) { message('Le partenaire n’a pas pu être enregistré' + (r.error ? ' : ' + r.error.message : '.'), true); return; }
+    var nouveau = r.data[0];
+    partenaires.push(nouveau);
+    var boite = $('agenda-partenaires');
+    if (!boite.querySelector('input')) boite.textContent = '';
+    var l = caseACocher(nouveau.id, nouveau.nom, 'agenda-partenaire');
+    l.querySelector('input').checked = true;
+    boite.appendChild(l);
+    champ.value = '';
+    message('Partenaire « ' + nouveau.nom + ' » enregistré et coché.');
+  });
+
+  // Listes fixes : types de projet et rôles proposés (partagés dans js/app.js).
+  Object.keys(MA2M_TYPES_AGENDA).forEach(function (cle) {
+    var o = document.createElement('option');
+    o.value = cle; o.textContent = libelleTypeAgenda(cle);
+    $('agenda-type').appendChild(o);
+  });
+  MA2M_ROLES_INTERVENANTS.forEach(function (r) {
+    var o = document.createElement('option'); o.value = r;
+    $('agenda-roles').appendChild(o);
+  });
+  dessinerSeances([]);
   $('agenda-recherche').addEventListener('input', function () { filtrer(this.value); });
   $('agenda-mannequins').addEventListener('change', majCompte);
 

@@ -6470,3 +6470,59 @@ revoke all on function agenda_public(boolean, int) from public;
 grant execute on function agenda_public(boolean, int) to anon, authenticated;
 
 NOTIFY pgrst, 'reload schema';
+
+-- =====================================================================
+-- Extension 125 — Agenda généraliste (demande de la propriétaire, 06/10/2026) :
+--  - plus de types de projet (show, essayages, masterclass, rencontre…) ;
+--  - « intervenants » libres (rôle + nom : photographe, chorégraphe, styliste…)
+--    à la place du seul « photographe » (les photographes déjà saisis sont repris) ;
+--  - lieu visible (ex. « Noom Hôtel »), l'adresse exacte restant interne ;
+--  - horaires jour par jour (une activité sur plusieurs jours peut avoir des heures
+--    différentes chaque jour), montrés sur le site seulement si la case
+--    « horaires visibles » est cochée pour ce projet.
+-- =====================================================================
+alter table agenda_projets add column if not exists lieu text check (lieu is null or length(lieu) <= 160);
+alter table agenda_projets add column if not exists intervenants jsonb not null default '[]'::jsonb
+  check (jsonb_typeof(intervenants) = 'array' and jsonb_array_length(intervenants) <= 30);
+alter table agenda_projets add column if not exists seances jsonb not null default '[]'::jsonb
+  check (jsonb_typeof(seances) = 'array' and jsonb_array_length(seances) <= 60);
+alter table agenda_projets add column if not exists horaires_publics boolean not null default false;
+
+alter table agenda_projets drop constraint if exists agenda_projets_type_check;
+alter table agenda_projets add constraint agenda_projets_type_check check (type in (
+  'shooting', 'defile', 'show', 'casting', 'essayage', 'masterclass', 'formation', 'rencontre', 'evenement', 'autre'));
+
+update agenda_projets
+set intervenants = jsonb_build_array(jsonb_build_object('role', 'Photographe', 'nom', photographe))
+where photographe is not null and trim(photographe) <> '' and intervenants = '[]'::jsonb;
+
+drop function if exists agenda_public();
+drop function if exists agenda_public(boolean, int);
+create or replace function agenda_public(seulement_a_venir boolean default false, limite int default 300)
+returns table(
+  id uuid, type text, titre text, date_debut date, date_fin date, ville text, lieu text,
+  description text, intervenants jsonb, seances jsonb, partenaires jsonb, mannequins jsonb
+)
+language sql stable security definer
+set search_path = public
+as $$
+  select a.id, a.type, a.titre, a.date_debut, a.date_fin, a.ville, a.lieu, a.description,
+    a.intervenants,
+    case when a.horaires_publics then a.seances else '[]'::jsonb end,
+    coalesce((select jsonb_agg(jsonb_build_object('id', pa.id, 'nom', pa.nom, 'logo_url', pa.logo_url) order by pa.nom)
+              from partenaires pa where pa.id = any(a.partenaire_ids)), '[]'::jsonb),
+    coalesce((select jsonb_agg(jsonb_build_object('id', p.id, 'nom', p.full_name, 'slug', p.slug) order by p.full_name)
+              from model_profiles p
+              where p.id = any(a.mannequin_ids)
+                and profil_visible_public(p.published, p.mesures_a_reprendre_depuis)), '[]'::jsonb)
+  from agenda_projets a
+  where a.visible
+    and coalesce(a.date_fin, a.date_debut) >= case when seulement_a_venir then current_date
+                                                  else current_date - interval '12 months' end
+  order by a.date_debut
+  limit least(greatest(coalesce(limite, 300), 1), 300);
+$$;
+revoke all on function agenda_public(boolean, int) from public;
+grant execute on function agenda_public(boolean, int) to anon, authenticated;
+
+NOTIFY pgrst, 'reload schema';

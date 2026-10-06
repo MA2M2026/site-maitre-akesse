@@ -8,14 +8,14 @@
 (function () {
   const enAnglais = document.documentElement.lang === 'en';
   const T = enAnglais ? {
-    photographe: 'Photographer', partenaires: 'Partners', mannequins: 'Models',
+    intervenants: 'With', horaires: 'Times', voirPlus: 'See more', voirPhotos: 'See the photos on the Events page →', partenaires: 'Partners', mannequins: 'Models',
     vide: 'Our upcoming projects will appear here very soon.',
     videPasses: 'Our completed projects will appear here.',
     erreur: 'The agenda could not be loaded. Please try again later.',
     precedent: 'Previous month', suivant: 'Next month', aujourdhui: 'Today',
     aVenir: 'Upcoming', programmeDu: 'Schedule for ', rienCeJour: 'No project on this day.', jour: 'day', jours: 'days', enCours: 'today'
   } : {
-    photographe: 'Photographe', partenaires: 'Partenaires', mannequins: 'Mannequins',
+    intervenants: 'Avec', horaires: 'Horaires', voirPlus: 'Voir plus', voirPhotos: 'Voir les photos sur la page Événements →', partenaires: 'Partenaires', mannequins: 'Mannequins',
     vide: 'Nos prochains projets seront affichés ici très bientôt.',
     videPasses: 'Nos projets réalisés seront affichés ici.',
     erreur: 'L’agenda n’a pas pu être chargé. Réessayez dans un instant.',
@@ -23,6 +23,7 @@
     aVenir: 'À venir', programmeDu: 'Programme du ', rienCeJour: 'Aucun projet ce jour-là.', jour: 'jour', jours: 'jours', enCours: 'aujourd’hui'
   };
   const LANGUE = enAnglais ? 'en-GB' : 'fr-FR';
+  const PAQUET = 6; // cartes affichées à la fois dans les listes (bouton « Voir plus » ensuite)
 
   function el(tag, cls, txt) {
     const e = document.createElement(tag);
@@ -30,6 +31,11 @@
     if (txt != null) e.textContent = txt;
     return e;
   }
+
+  // « Noom Hôtel, Abidjan » : le lieu visible puis la ville.
+  const endroit = p => [p.lieu, p.ville].filter(Boolean).join(', ');
+  // « mer. 21 oct. · 10:00 – 12:00 » (une séance d'une activité sur plusieurs jours).
+  const texteSeance = x => dateAgenda(x.jour, null, enAnglais) + ' · ' + [x.debut, x.fin].filter(Boolean).join(' – ');
 
   // Grand bloc de date : jour en chiffres, mois abrégé.
   function blocDate(p) {
@@ -74,26 +80,84 @@
     const corps = el('div', 'agenda-corps');
     const meta = el('p', 'agenda-meta');
     meta.appendChild(el('span', 'agenda-type-public', libelleTypeAgenda(p.type, enAnglais)));
-    meta.appendChild(document.createTextNode(' · ' + dateAgenda(p.date_debut, p.date_fin, enAnglais) + (p.ville ? ' · ' + p.ville : '')));
+    meta.appendChild(document.createTextNode(' · ' + dateAgenda(p.date_debut, p.date_fin, enAnglais) + (endroit(p) ? ' · ' + endroit(p) : '')));
     corps.appendChild(meta);
     corps.appendChild(el('h3', 'agenda-titre', p.titre));
     if (!compacte) {
       if (p.description) corps.appendChild(el('p', 'agenda-description', p.description));
-      if (p.photographe) corps.appendChild(groupe(T.photographe, [el('span', 'agenda-puce agenda-puce-simple', p.photographe)]));
+      const seances = Array.isArray(p.seances) ? p.seances.filter(x => x && (x.debut || x.fin)) : [];
+      if (seances.length) corps.appendChild(groupe(T.horaires, seances.map(x => el('span', 'agenda-puce agenda-puce-simple', texteSeance(x)))));
+      const intervenants = Array.isArray(p.intervenants) ? p.intervenants.filter(x => x && x.nom) : [];
+      if (intervenants.length) corps.appendChild(groupe(T.intervenants, intervenants.map(x => el('span', 'agenda-puce agenda-puce-simple', (x.role ? x.role + ' : ' : '') + x.nom))));
       const partenaires = Array.isArray(p.partenaires) ? p.partenaires : [];
       if (partenaires.length) corps.appendChild(groupe(T.partenaires, partenaires.map(lienPartenaire)));
     }
     const mannequins = Array.isArray(p.mannequins) ? p.mannequins : [];
     if (mannequins.length) corps.appendChild(groupe(T.mannequins, mannequins.map(lienMannequin)));
+    if (p.deSite) {
+      const lien = el('a', null, T.voirPhotos);
+      lien.href = 'evenements.html';
+      const ligne = el('p', 'agenda-provenance');
+      ligne.appendChild(lien);
+      corps.appendChild(ligne);
+    }
     art.appendChild(corps);
     return art;
   }
 
-  function remplir(boite, projets, vide, compacte) {
+  // Liste de cartes, affichée par paquets (parPaquet) avec un bouton « Voir plus » :
+  // la page reste courte même avec des centaines de projets.
+  function remplir(boite, projets, vide, compacte, parPaquet) {
     if (!boite) return;
     boite.textContent = '';
+    let suite = boite.nextElementSibling && boite.nextElementSibling.classList.contains('agenda-plus') ? boite.nextElementSibling : null;
+    if (suite) suite.remove();
+    suite = null;
     if (!projets.length) { boite.appendChild(el('p', 'agenda-vide', vide)); return; }
-    projets.forEach(p => boite.appendChild(carte(p, compacte)));
+    const taille = parPaquet || projets.length;
+    let montres = 0;
+    const encore = () => {
+      projets.slice(montres, montres + taille).forEach(p => boite.appendChild(carte(p, compacte)));
+      montres = Math.min(projets.length, montres + taille);
+      const reste = projets.length - montres;
+      if (!reste) { if (suite) suite.hidden = true; return; }
+      // Un seul bouton, gardé d'un clic à l'autre : le focus clavier ne saute pas.
+      if (!suite) {
+        suite = el('div', 'agenda-plus');
+        const b = el('button', 'btn');
+        b.type = 'button';
+        b.addEventListener('click', encore);
+        suite.appendChild(b);
+        boite.after(suite);
+      }
+      suite.firstChild.textContent = T.voirPlus + ' (' + reste + ')';
+      suite.hidden = false;
+    };
+    encore();
+  }
+
+  // Événements déjà enregistrés sur la page « Événements » : repris dans l'agenda (sans les
+  // photos). Les jours consécutifs d'un même événement forment une seule entrée ; un
+  // événement déjà saisi dans l'agenda (même titre, mêmes dates) n'est pas doublé.
+  // Lecture lancée en même temps que l'agenda (12 derniers mois, comme agenda_public).
+  function lireEvenementsDuSite() {
+    const depuis = dateDuJour(ajouterJours(new Date(), -365));
+    return lireToutesLignes(() => sb.from('evenements').select('id, titre, date_evenement, lieu')
+      .gte('date_evenement', depuis).order('date_evenement').order('id'));
+  }
+  function evenementsDuSite(lecture, projets) {
+    const data = lecture && !lecture.error ? lecture.data : [];
+    const groupes = [];
+    data.forEach(e => {
+      const cle = String(e.titre || '').trim().toLowerCase();
+      // même titre : même jour (doublon) ou jour suivant (événement sur plusieurs jours)
+      const dernier = groupes.find(g => g.cle === cle && e.date_evenement >= g.date_debut
+        && e.date_evenement <= dateDuJour(ajouterJours(dateDe(g.date_fin || g.date_debut), 1)));
+      if (dernier) { if (e.date_evenement > (dernier.date_fin || dernier.date_debut)) dernier.date_fin = e.date_evenement; return; }
+      groupes.push({ cle, id: 'ev-' + e.id, type: 'evenement', titre: titreLisible(e.titre), date_debut: e.date_evenement, date_fin: null, ville: null, lieu: e.lieu ? titreLisible(e.lieu) : null, deSite: true });
+    });
+    return groupes.filter(g => !projets.some(p => String(p.titre || '').trim().toLowerCase() === g.cle
+      && p.date_debut <= (g.date_fin || g.date_debut) && (p.date_fin || p.date_debut) >= g.date_debut));
   }
 
 
@@ -137,7 +201,7 @@
 
   function pastille(p, complete) {
     const e = el('span', 'cal-evt cal-evt-' + typeDe(p), p.titre);
-    if (complete && p.ville) e.appendChild(el('small', null, p.ville));
+    if (complete && endroit(p)) e.appendChild(el('small', null, endroit(p)));
     return e;
   }
 
@@ -289,7 +353,7 @@
       b.type = 'button';
       const txt = el('span', 'cal-panneau-texte');
       txt.appendChild(el('strong', 'cal-panneau-titre', p.titre));
-      txt.appendChild(el('span', 'cal-panneau-meta', libelleTypeAgenda(p.type, enAnglais) + ' | ' + dateAgenda(p.date_debut, p.date_fin, enAnglais) + (p.ville ? ' | ' + p.ville : '')));
+      txt.appendChild(el('span', 'cal-panneau-meta', libelleTypeAgenda(p.type, enAnglais) + ' | ' + dateAgenda(p.date_debut, p.date_fin, enAnglais) + (endroit(p) ? ' | ' + endroit(p) : '')));
       b.appendChild(el('i', 'cal-panneau-couleur cal-evt-' + typeDe(p)));
       b.appendChild(txt);
       if (dans != null) {
@@ -368,17 +432,6 @@
       corps.appendChild(cote);
       boite.appendChild(corps);
 
-      const types = [...new Set(projets.map(typeDe))];
-      if (types.length) {
-        const legende = el('div', 'cal-legende');
-        types.forEach(ty => {
-          const l = el('span', 'cal-legende-item');
-          l.appendChild(el('i', 'cal-evt-' + ty));
-          l.appendChild(document.createTextNode(libelleTypeAgenda(ty, enAnglais)));
-          legende.appendChild(l);
-        });
-        boite.appendChild(legende);
-      }
       if (actif) {
         const retrouve = boite.querySelector('[data-cle="' + actif + '"]');
         if (retrouve) retrouve.focus({ preventScroll: true });
@@ -397,7 +450,7 @@
     const tous = passes.slice().reverse().concat(avenir);
     const toutAfficher = () => {
       if (titreListe) titreListe.textContent = T.aVenir;
-      remplir(avenirBoite, avenir, T.vide, false);
+      remplir(avenirBoite, avenir, T.vide, false, PAQUET);
       if (toutVoir) toutVoir.hidden = true;
     };
     const cal = calendrier(boiteCal, tous, (jour, ceJour) => {
@@ -418,21 +471,20 @@
     if (typeof sb === 'undefined' || !sb) return;
     // L'accueil ne demande que les 3 prochains projets (moins de données sur mobile).
     const seulAccueil = !avenirBoite && !passesBoite;
-    const { data, error } = await sb.rpc('agenda_public', seulAccueil ? { seulement_a_venir: true, limite: 3 } : {});
-    if (error) {
-      // PGRST202 : fonction introuvable, l'agenda n'est pas encore activé (Extension 124).
-      console.warn('Agenda non chargé', error);
-      remplir(avenirBoite, [], error.code === 'PGRST202' ? T.vide : T.erreur, false);
-      remplir(passesBoite, [], error.code === 'PGRST202' ? T.videPasses : '', false);
-      // Le calendrier reste affiché (vide) pour que la page garde son aspect d'agenda.
-      const boiteVide = document.getElementById('agenda-calendrier');
-      if (boiteVide) calendrier(boiteVide, [], () => {});
-      return;
-    }
-    const { avenir, passes } = separerAgenda(data);
-    remplir(avenirBoite, avenir, T.vide, false);
+    const [{ data, error }, lectureEvenements] = await Promise.all([
+      sb.rpc('agenda_public', seulAccueil ? { seulement_a_venir: true, limite: 3 } : {}),
+      seulAccueil ? Promise.resolve(null) : lireEvenementsDuSite().catch(() => null)
+    ]);
+    // PGRST202 : fonction introuvable, l'agenda n'est pas encore activé (Extension 124) ;
+    // la page s'affiche quand même, avec les événements de la page « Événements ».
+    if (error) console.warn('Agenda non chargé', error);
+    const enPanne = error && error.code !== 'PGRST202';
+    let projets = data || [];
+    if (!seulAccueil) projets = projets.concat(evenementsDuSite(lectureEvenements, projets));
+    const { avenir, passes } = separerAgenda(projets);
+    remplir(avenirBoite, avenir, enPanne ? T.erreur : T.vide, false, PAQUET);
     brancherCalendrier(avenirBoite, avenir, passes);
-    remplir(passesBoite, passes, T.videPasses, false);
+    remplir(passesBoite, passes, T.videPasses, false, PAQUET);
     if (accueil) {
       // Sur l'accueil, l'encart n'apparaît que s'il y a des projets à venir.
       const bloc = accueil.closest('[data-agenda-accueil]');

@@ -104,15 +104,7 @@ a.agenda-puce:hover, a.agenda-puce:focus-visible { border-color: var(--bordeaux-
 .cal-evt small { display: block; font-size: 0.7rem; opacity: 0.8; }
 .cal-plus { font-size: 0.75rem; color: var(--texte-doux); text-align: center; }
 .cal-points { display: none; gap: 3px; justify-content: center; margin-top: auto; }
-.cal-points i, .cal-legende-item i, .cal-panneau-couleur { display: inline-block; width: 0.55rem; height: 0.55rem; border-radius: 50%; flex: 0 0 auto; }
-
-/* Une couleur par type de projet */
-.cal .cal-evt-shooting { background: #6b2f8a; }
-.cal .cal-evt-defile { background: var(--bordeaux); }
-.cal .cal-evt-casting { background: #1f6b6b; }
-.cal .cal-evt-formation { background: #8a6a1f; }
-.cal .cal-evt-evenement { background: #2f4f8a; }
-.cal .cal-evt-autre { background: #555; }
+.cal-points i, .cal-panneau-couleur { display: inline-block; width: 0.55rem; height: 0.55rem; border-radius: 50%; flex: 0 0 auto; }
 
 /* Année */
 .cal-annee { display: grid; grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); gap: 1rem; }
@@ -144,8 +136,6 @@ a.agenda-puce:hover, a.agenda-puce:focus-visible { border-color: var(--bordeaux-
 .cal-compte-num { font-size: 2rem; line-height: 1; color: var(--titre-clair); }
 .cal-compte-mot { font-size: 0.82rem; color: var(--texte-doux); margin-left: 0.15rem; }
 
-.cal-legende { display: flex; flex-wrap: wrap; gap: 0.5rem 1.2rem; margin-top: 1rem; font-size: 0.8rem; color: var(--texte-doux); }
-.cal-legende-item { display: inline-flex; align-items: center; gap: 0.4rem; }
 
 .agenda-liste-tete { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.8rem; }
 .agenda-tout-voir[hidden] { display: none !important; }
@@ -177,3 +167,41 @@ a.agenda-puce:hover, a.agenda-puce:focus-visible { border-color: var(--bordeaux-
 }
 /* Annonce invisible des changements de mois/semaine pour les lecteurs d'écran */
 .cal-annonce { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* =====================================================================
+   Agenda en noir et blanc (décision de la propriétaire, 06/10/2026) : « tout noir,
+   seulement les écritures, avec des séparations » — aucune couleur rouge ni teinte
+   dans l'agenda. Les types de projet se lisent à leur nom, pas à une couleur.
+   ===================================================================== */
+.agenda-page, .agenda-accueil { --accent-agenda: var(--titre-clair); }
+.agenda-page .eyebrow, .agenda-accueil .eyebrow { color: var(--texte-doux); }
+.agenda-page .eyebrow::before, .agenda-accueil .eyebrow::before { background: var(--texte-doux); }
+.agenda-page .oeil, .agenda-accueil .oeil { color: var(--titre-clair); }
+.agenda-page .btn--principal { background: var(--titre-clair); border-color: var(--titre-clair); color: var(--noir); box-shadow: none; }
+.agenda-page .btn--principal:hover { background: #fff; border-color: #fff; color: var(--noir); box-shadow: none; }
+
+.agenda-carte, .agenda-carte:hover { background: transparent; box-shadow: none; }
+.agenda-carte:hover { border-color: rgba(255,255,255,0.45); }
+.agenda-jour { border-color: rgba(255,255,255,0.28); background: transparent; }
+.agenda-jour-mois, .agenda-type-public, .agenda-accueil-lien { color: var(--texte-doux); }
+a.agenda-puce:hover, a.agenda-puce:focus-visible { border-color: var(--titre-clair); background: rgba(255,255,255,0.08); }
+
+.cal-grille { border-color: rgba(255,255,255,0.22); }
+.cal-jour, .cal-num-semaine { border-color: rgba(255,255,255,0.14); }
+.cal-nav:hover, .cal-aujourdhui:hover, .cal-nav:focus-visible, .cal-aujourdhui:focus-visible { border-color: var(--titre-clair); background: rgba(255,255,255,0.08); }
+.cal-jour.week-end .cal-num { color: var(--titre-clair); }
+.cal-jour.aujourdhui .cal-num { background: var(--titre-clair); color: var(--noir); }
+.cal-jour.choisi:not(.aujourdhui) .cal-num { box-shadow: inset 0 0 0 1px var(--titre-clair); }
+.cal .cal-evt, .cal .cal-panneau-couleur, .cal .cal-points i, .cal .cal-mini-grille i.occupe {
+  background: rgba(255,255,255,0.09); color: var(--titre-clair);
+}
+.cal .cal-evt { border-left: 2px solid var(--titre-clair); border-radius: 2px; }
+.cal .cal-points i, .cal .cal-panneau-couleur { background: var(--titre-clair); }
+.cal .cal-mini-grille i.occupe { background: var(--titre-clair); color: var(--noir); }
+.cal-mini:hover, .cal-mini:focus-visible { border-color: var(--titre-clair); }
+.cal-mini-grille i.aujourdhui { box-shadow: inset 0 0 0 1px var(--titre-clair); }
+.cal-panneau-ligne:hover .cal-panneau-titre, .cal-panneau-ligne:focus-visible .cal-panneau-titre { color: #fff; text-decoration: underline; }
+.agenda-plus { display: flex; justify-content: center; margin-top: 1.4rem; }
+.agenda-plus[hidden] { display: none !important; }
+.agenda-provenance { font-size: 0.78rem; color: var(--texte-doux); margin: 0.3rem 0 0; }
+.agenda-provenance a { color: var(--titre-clair); }

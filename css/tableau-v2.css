@@ -526,3 +526,15 @@ html body.tdb-v2:not(.v2-page-v2-ensemble) .v2-entete-actions { display: none !i
   .agenda-ligne { grid-template-columns: 1fr; }
   .agenda-boutons { flex-direction: row; }
 }
+.agenda-aide { margin: 0 0 0.7rem; font-size: 0.84rem; color: var(--texte-doux); }
+.agenda-seances { display: grid; gap: 0.5rem; margin-bottom: 0.8rem; }
+.agenda-seance { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.7rem; }
+.agenda-seance-jour { min-width: 9.5rem; font-weight: 500; }
+.agenda-seance input, .agenda-intervenant input, .agenda-nouveau-partenaire input { padding: 0.5rem 0.7rem; border: 1px solid var(--gris-clair); border-radius: 8px; font: inherit; min-width: 0; }
+.agenda-intervenants { display: grid; gap: 0.5rem; margin-bottom: 0.7rem; }
+.agenda-intervenant { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto; gap: 0.5rem; align-items: center; }
+.agenda-nouveau-partenaire { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.9rem; }
+.agenda-nouveau-partenaire input { flex: 1 1 14rem; }
+@media (max-width: 640px) {
+  .agenda-intervenant { grid-template-columns: 1fr; }
+}

@@ -1627,6 +1627,13 @@ toutes les écritures sont simulées pendant l'enregistrement.
   nouveau dessin (attributs `data-cle`), et une zone invisible annonce le mois aux lecteurs d'écran.
 - Menu : `js/menu.js` ajoute « Agenda » après « Événements » (et « Qui sommes-nous » après
   « Accueil ») pour toutes les pages, une seule fois.
+- **Extension 125 (agenda généraliste)** : types élargis (défilé, show, shooting, casting,
+  essayages, masterclass, formation, rencontre, événement, autre — liste partagée
+  `MA2M_TYPES_AGENDA`), **intervenants** libres (`intervenants` jsonb : rôle + nom, rôles
+  proposés dans `MA2M_ROLES_INTERVENANTS` ; l'ancien champ `photographe` est repris), **lieu**
+  visible, **horaires jour par jour** (`seances` jsonb : jour, début, fin) montrés au public
+  seulement si `horaires_publics` est coché. Un nouveau partenaire peut être enregistré depuis
+  le formulaire de l'agenda (il rejoint la table `partenaires`, donc la page Partenaires).
 - Ordre de mise en service : exécuter l'Extension 124 dans Supabase **avant** la mise en
   ligne ; sinon la page affiche simplement « Nos prochains projets seront affichés ici très bientôt ».
 
@@ -1636,3 +1643,18 @@ toutes les écritures sont simulées pendant l'enregistrement.
   (#0f0f10) et `--anthracite` (#0e0e0f) sont neutres ; les sections `.fond-anthracite` ont un
   léger reflet « noir brillant » (`--noir-brillant`). Le bordeaux reste réservé aux accents
   (boutons, liens, petits survols, filets), jamais aux grands fonds de section.
+
+## 📅 Agenda : noir et blanc, événements repris, listes courtes (06/10/2026, soir)
+
+- L'agenda (page Agenda et encart de l'accueil) est **en noir et blanc** : seulement les
+  écritures et des filets de séparation, aucune couleur par type (les types se lisent à leur
+  nom). Règles en fin de `css/agenda.css`.
+- Les **événements de la page « Événements »** (table `evenements`) sont repris
+  automatiquement dans le calendrier et dans « Réalisés » (`evenementsDuSite` dans
+  `js/agenda.js`) : jours consécutifs d'un même titre regroupés, pas de doublon avec un projet
+  déjà saisi dans l'agenda, lien « Voir les photos sur la page Événements ».
+- Listes affichées **par paquets de 6** avec un bouton « Voir plus » (`PAQUET`), pour que la
+  page reste lisible avec des dizaines ou des centaines de projets ; « Réalisés » en cartes
+  compactes.
+- `titreLisible()` (js/app.js, partagée avec « Qui sommes-nous ») met en forme les titres
+  saisis en capitales (« Africa in Rythm », « Parc des Expositions d'Abidjan »).

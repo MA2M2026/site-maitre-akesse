@@ -790,13 +790,20 @@ async function lireToutesLignes(fabrique) {
 // date lisible (« jeu. 15 oct. 2026 », ou « 15 – 17 oct. 2026 » sur plusieurs jours),
 // partagés par le tableau de bord et la page Agenda.
 const MA2M_TYPES_AGENDA = {
-  shooting: ['Shooting', 'Photo shoot'],
   defile: ['Défilé', 'Fashion show'],
+  show: ['Show', 'Show'],
+  shooting: ['Shooting', 'Photo shoot'],
   casting: ['Casting', 'Casting'],
+  essayage: ['Essayages', 'Fittings'],
+  masterclass: ['Masterclass', 'Masterclass'],
   formation: ['Formation', 'Training'],
+  rencontre: ['Rencontre', 'Meeting'],
   evenement: ['Événement', 'Event'],
   autre: ['Projet', 'Project']
 };
+// Rôles proposés pour les intervenants d'un projet (la liste reste libre).
+const MA2M_ROLES_INTERVENANTS = ['Photographe', 'Vidéaste', 'Chorégraphe', 'Styliste', 'Créateur / créatrice',
+  'Maquilleur / maquilleuse', 'Coiffeur / coiffeuse', 'Directeur artistique', 'Organisateur', 'Présentateur', 'Formateur'];
 function libelleTypeAgenda(type, enAnglais) {
   const l = MA2M_TYPES_AGENDA[type] || MA2M_TYPES_AGENDA.autre;
   return l[enAnglais ? 1 : 0];
@@ -809,6 +816,23 @@ function dateAgenda(debut, fin, enAnglais) {
   if (!fin || fin === debut) return d.toLocaleDateString(langue, complet);
   const f = new Date(fin + 'T12:00:00');
   return d.toLocaleDateString(langue, { day: 'numeric', month: 'short' }) + ' – ' + f.toLocaleDateString(langue, { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+// « CACAO FASHION SHOW » → « Cacao Fashion Show », « AFRICA IN RYTHM » → « Africa in Rythm »
+// (titres saisis en capitales). Les mots avec un chiffre (MA2M, 2026…) gardent leurs
+// capitales ; les petits mots (de, la, in, of…) restent en minuscules sauf en tête.
+const MOTS_COURTS = ['de', 'du', 'des', 'la', 'le', 'les', 'et', 'à', 'au', 'aux', 'en', 'in', 'of', 'the', 'and', 'on'];
+function titreLisible(t) {
+  const s = String(t || '').trim();
+  if (s !== s.toUpperCase()) return s;
+  return s.split(/(\s+)/).map((mot, i) => {
+    const bas = mot.toLowerCase();
+    const motCourt = MOTS_COURTS.includes(bas);
+    if (i > 0 && motCourt) return bas;
+    if (/\d/.test(mot) || (!motCourt && /^[A-Z]{1,2}$/.test(mot))) return mot; // MA2M, 2026, sigles (CI, MA)
+    const capitale = bas.replace(/(^|['’(-])(\S)/g, (m, x, y) => x + y.toUpperCase());
+    return i > 0 && /^[dl]['’]/.test(bas) ? capitale.charAt(0).toLowerCase() + capitale.slice(1) : capitale; // « d'Abidjan »
+  }).join('');
 }
 
 // Date du jour au format AAAA-MM-JJ (heure de l'appareil), et projets d'agenda séparés
