@@ -15,7 +15,7 @@
   background: linear-gradient(120deg, rgba(255,255,255,0.04), transparent 55%);
   transition: border-color 0.4s ease, transform 0.5s var(--transition-douce), box-shadow 0.5s ease;
 }
-.agenda-carte:hover { border-color: var(--bordeaux-clair); transform: translateY(-3px); box-shadow: 0 24px 50px -30px rgba(213,84,104,0.6); }
+.agenda-carte:hover { border-color: rgba(255,255,255,0.4); transform: translateY(-3px); box-shadow: 0 24px 50px -30px rgba(0,0,0,0.9); }
 
 .agenda-jour {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -39,7 +39,7 @@
   color: var(--titre-clair); font-size: 0.86rem; text-decoration: none;
   transition: border-color 0.3s ease, background 0.3s ease;
 }
-a.agenda-puce:hover, a.agenda-puce:focus-visible { border-color: var(--bordeaux-clair); background: rgba(122,18,32,0.35); }
+a.agenda-puce:hover, a.agenda-puce:focus-visible { border-color: var(--titre-clair); background: rgba(255,255,255,0.08); }
 .agenda-puce img { width: 1.4rem; height: 1.4rem; border-radius: 50%; object-fit: cover; background: #fff; }
 .agenda-puce-simple { border-style: dashed; }
 
@@ -71,7 +71,7 @@ a.agenda-puce:hover, a.agenda-puce:focus-visible { border-color: var(--bordeaux-
 .cal-nav, .cal-aujourdhui { background: transparent; color: var(--titre-clair); border: 1px solid var(--gris-clair); font-family: var(--texte); cursor: pointer; transition: border-color 0.3s ease, background 0.3s ease; }
 .cal-nav { width: 2.6rem; height: 2.6rem; border-radius: 50%; font-size: 1.4rem; line-height: 1; }
 .cal-aujourdhui { padding: 0.55rem 1rem; border-radius: 999px; font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; }
-.cal-nav:hover, .cal-aujourdhui:hover, .cal-nav:focus-visible, .cal-aujourdhui:focus-visible { border-color: var(--bordeaux-clair); background: rgba(122,18,32,0.35); }
+.cal-nav:hover, .cal-aujourdhui:hover, .cal-nav:focus-visible, .cal-aujourdhui:focus-visible { border-color: var(--titre-clair); background: rgba(255,255,255,0.08); }
 
 .cal-corps { display: grid; grid-template-columns: minmax(0, 1fr) minmax(15rem, 22rem); gap: 1.2rem; align-items: start; }
 .cal-principal { min-width: 0; }
@@ -112,9 +112,9 @@ a.agenda-puce:hover, a.agenda-puce:focus-visible { border-color: var(--bordeaux-
 .cal .cal-evt-casting { background: #1f6b6b; }
 .cal .cal-evt-formation { background: #8a6a1f; }
 .cal .cal-evt-evenement { background: #2f4f8a; }
-.cal .cal-evt-show { background: #a03a1c; }
+.cal .cal-evt-show { background: #b35a00; }
 .cal .cal-evt-essayage { background: #5a6b2f; }
-.cal .cal-evt-masterclass { background: #7a5c14; }
+.cal .cal-evt-masterclass { background: #8a3f6b; }
 .cal .cal-evt-rencontre { background: #2f6b4f; }
 .cal .cal-evt-autre { background: #555; }
 

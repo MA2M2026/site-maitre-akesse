@@ -1644,7 +1644,7 @@ toutes les écritures sont simulées pendant l'enregistrement.
   léger reflet « noir brillant » (`--noir-brillant`). Le bordeaux reste réservé aux accents
   (boutons, liens, petits survols, filets), jamais aux grands fonds de section.
 
-## 📅 Agenda : noir et blanc, événements repris, listes courtes (06/10/2026, soir)
+## 📅 Agenda : couleurs par type, fonds noirs, événements repris, listes courtes (06/10/2026, soir)
 
 - L'agenda garde **une couleur par type de projet** (défilé, shooting, casting…), voulue par la
   propriétaire pour reconnaître les événements d'un coup d'œil. Ce qui doit rester **noir**,
