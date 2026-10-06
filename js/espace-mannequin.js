@@ -310,6 +310,9 @@ sb && sb.auth.onAuthStateChange(function(event){
    les vraies colonnes de model_profiles. Rien n'est jamais écrit avec un nom
    de colonne inventé. */
 function identiteToDb(d){
+  // le barème (femmes / hommes) dépend du sexe : taille vêtements recalculée, et gardée
+  // dans l'état pour que l'étape physique, la compcard et le CV restent d'accord
+  state.physique.tailleVet = tailleGeneraleCalculee(state.physique, d.sexe);
   return {
     full_name: d.nomComplet || null,
     date_naissance: d.dateNaissance || null,
@@ -321,8 +324,7 @@ function identiteToDb(d){
     phone: d.telephone || null,
     contact_email: d.email || null,
     category: d.sexe || null,
-    // le barème (femmes / hommes) dépend du sexe : taille vêtements recalculée
-    clothing_size: tailleGeneraleCalculee(state.physique, d.sexe) || null
+    clothing_size: state.physique.tailleVet || null
   };
 }
 function physiqueToDb(p){
@@ -1540,7 +1542,7 @@ function messageBlocPersonnalise(k, prenom){
 }
 function viewBlockEditor(k){
   const titles = {identite:'Identité', physique:'Physique', formation:'Formation', experiences:'Expérience professionnelle', photos:'Photos & compcard'};
-  const prenom = (state.identite.nomComplet||'').trim().split(/\s+/)[0] || '';
+  const prenom = prenomDe(state.identite.nomComplet);
   const sousTitre = prenom ? messageBlocPersonnalise(k, prenom) : 'Ce bloc s’enregistre indépendamment des autres.';
   return header('Modification du profil') +
     '<div class="block-editor-page"><div class="block-editor-top"><div><span class="editor-kicker">VOTRE ESPACE</span><h1>'+echapperHtml(prenom ? (prenom+' · '+(titles[k]||'')) : (titles[k]||'Modification'))+'</h1><p>'+echapperHtml(sousTitre)+'</p></div>' +
@@ -1711,7 +1713,7 @@ function openCompcard(){
   const sidePhotos = slots.slice(1).map(function(ph){ return ph ? '<img src="'+(ph.urlPleine||ph.url)+'" alt="Photo compcard">' : '<div class="cc-empty-photo"></div>'; }).join('');
   const d = state.identite, p = state.physique;
   // mesures incohérentes : non affichées, comme sur la compcard téléchargée (js/tailles.js)
-  const masquer = ma2mMesuresAReprendre({ category: d.sexe, chest_cm: p.poitrine, waist_cm: p.tourTaille, hips_cm: p.hanches });
+  const masquer = typeof ma2mMesuresAReprendre === 'function' && ma2mMesuresAReprendre({ category: d.sexe, chest_cm: p.poitrine, waist_cm: p.tourTaille, hips_cm: p.hanches });
   document.getElementById('overlayContent').innerHTML =
     '<div class="overlay-close"><button id="closeOv">✕</button></div>' +
     '<div class="compcard-model">' +

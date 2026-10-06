@@ -187,16 +187,13 @@ L'équipe Maître Akesse Model Management`;
     const qui = $('mg-source').value;
     if (qui === 'casting' && !$('mg-casting').value) { $('mg-resume').textContent = 'Choisissez d’abord le casting.'; return; }
     $('mg-resume').textContent = 'Chargement…';
-    const lignes = [];
-    for (let depart = 0; ; depart += 1000) {
+    const { data: lignes, error } = await lireToutesLignes(() => {
       let q = sb.from(c.table).select(CHAMPS[table()]).eq(c.statutChamp, $('mg-statut').value);
       if (qui === 'agence') q = q.eq('type_candidature', 'agence');
       if (qui === 'casting') q = q.eq('type_candidature', 'projet').eq('projet_nom', $('mg-casting').value);
-      const { data, error } = await q.order('created_at', { ascending: true }).range(depart, depart + 999);
-      if (error) { $('mg-resume').textContent = 'Erreur : ' + error.message; return; }
-      lignes.push(...(data || []));
-      if (!data || data.length < 1000) break;
-    }
+      return q.order('created_at', { ascending: true }).order('id');
+    });
+    if (error) { $('mg-resume').textContent = 'Erreur : ' + error.message; return; }
     destinataires = lignes.map(d => Object.assign(d, { choisi: true }));
     afficherListe();
   }

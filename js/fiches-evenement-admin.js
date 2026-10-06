@@ -50,7 +50,7 @@
     y += 16;
 
     function section(titre) {
-      if (y > 262) { doc.addPage(); y = 20; }
+      if (y > 255) { doc.addPage(); y = 20; } // jamais un titre seul en bas de page
       doc.setFillColor(BORDEAUX[0], BORDEAUX[1], BORDEAUX[2]); doc.rect(M, y, L - 2 * M, 8, 'F');
       doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
       doc.text(titre, M + 3, y + 5.5); y += 12.5;
@@ -90,11 +90,11 @@
     section('2. MENSURATIONS & TAILLES');
     ligne('Taille', t.hauteur ? t.hauteur.cm + ' cm (' + t.hauteur.pieds + ')' : '');
     ligne('Poids', d.weight_kg ? d.weight_kg + ' kg' : '');
-    // mesures incohérentes : non transmises aux organisateurs (comme sur la fiche publique)
-    var aReprendre = t.aReprendre.length ? 'à reprendre (incohérentes)' : null;
-    ligne('Tour de poitrine', aReprendre || cm(d.chest_cm));
-    ligne('Tour de taille', aReprendre || cm(d.waist_cm));
-    ligne(homme ? 'Tour de bassin' : 'Tour de hanches', aReprendre || cm(d.hips_cm));
+    // mesures incohérentes : non transmises aux organisateurs (« — », comme sur la fiche publique)
+    var masquer = t.aReprendre.length > 0;
+    ligne('Tour de poitrine', masquer ? '' : cm(d.chest_cm));
+    ligne('Tour de taille', masquer ? '' : cm(d.waist_cm));
+    ligne(homme ? 'Tour de bassin' : 'Tour de hanches', masquer ? '' : cm(d.hips_cm));
     if (homme) ligne('Tour de cou', cm(d.neck_cm));
     ligne('Largeur d’épaules', cm(d.shoulder_cm));
     ligne('Longueur de bras', cm(d.arm_cm));
@@ -103,7 +103,7 @@
     ligne('Pointure', t.pointure ? 'EU ' + t.pointure.eu + '  (UK ' + t.pointure.uk + ' · US ' + t.pointure.us + ')' : d.shoe_size);
     ligne('Taille haut', equiv(t.haut));
     ligne('Taille bas', equiv(t.bas));
-    ligne('Taille générale', t.aReprendre.length ? 'Mensurations à reprendre (incohérentes)' : ma2mTailleVetements(d));
+    ligne('Taille générale', ma2mTailleVetements(d));
     if (homme && t.chemise) ligne('Chemise (col)', t.chemise.eu + ' cm  (US ' + t.chemise.us + ')');
     ligne('Yeux / cheveux', [d.eye_color, d.hair_color].filter(Boolean).join(' / '));
 

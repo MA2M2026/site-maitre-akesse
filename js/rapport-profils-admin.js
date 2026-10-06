@@ -105,26 +105,31 @@
       : (liste.length ? '✓ Tout le monde a été fait' : '💬 Envoyer sur WhatsApp');
   }
 
+  // Profils avec les mensurations de l'Extension 121 ; tant que le SQL n'est pas
+  // exécuté, relecture sans elles (et elles ne sont pas réclamées aux mannequins).
+  var CHAMPS_PROFIL = 'id, full_name, category, published, height_cm, weight_kg, chest_cm, waist_cm, hips_cm, inseam_cm, shoe_size, eye_color, hair_color';
+  async function lireProfils() {
+    var lire = function (champs) { return lireToutesLignes(function () { return sb.from('model_profiles').select(champs).not('full_name', 'is', null).order('id'); }); };
+    var r = await lire(CHAMPS_PROFIL + ', shoulder_cm, arm_cm, neck_cm, head_cm');
+    suppDisponibles = !r.error;
+    return r.error ? lire(CHAMPS_PROFIL) : r;
+  }
+
   async function charger() {
     charge = true;
     var zone = document.getElementById('rapport-profils-liste');
     zone.textContent = 'Analyse des profils…';
     var r = await Promise.all([
-      lireToutesLignes(function () { return sb.from('model_profiles').select('id, full_name, category, published, height_cm, weight_kg, chest_cm, waist_cm, hips_cm, inseam_cm, shoe_size, eye_color, hair_color').not('full_name', 'is', null).order('id'); }),
-      // Mensurations de l'Extension 121 : requête à part (en erreur tant que le SQL n'est pas exécuté)
-      lireToutesLignes(function () { return sb.from('model_profiles').select('id, shoulder_cm, arm_cm, neck_cm, head_cm').order('id'); }),
+      lireProfils(),
       lireToutesLignes(function () { return sb.from('model_photos').select('id, model_id, numero, principale, photo_couverture, compcard_ordre, tri_statut, tri_raison').order('id'); }),
       sb.rpc('contacts_mannequins_admin')
     ]);
-    var pr = r[0], rs = r[1], ph = r[2], tel = r[3];
+    var pr = r[0], ph = r[1], tel = r[2];
     // Sans la liste complète des profils ou des photos, le rapport serait faux : on s'arrête.
     if (pr.error || ph.error) { charge = false; zone.textContent = 'Impossible de lire les profils ou les photos : ' + (pr.error || ph.error).message + '. Fermez et rouvrez la section pour réessayer.'; return; }
-    suppDisponibles = !rs.error;
-    var supp = {}; rs.data.forEach(function (m) { supp[m.id] = m; });
     var parModele = {}; ph.data.forEach(function (x) { (parModele[x.model_id] = parModele[x.model_id] || []).push(x); });
     telephones = {}; (tel.data || []).forEach(function (t) { telephones[t.model_id] = t.phone; });
     profils = pr.data.filter(function (p) { return String(p.full_name).trim(); }).map(function (p) {
-      p = Object.assign(p, supp[p.id] || {});
       p.analyse = analyser(p, parModele[p.id] || []);
       return p;
     }).sort(function (a, b) { return String(a.full_name).localeCompare(String(b.full_name), 'fr'); });

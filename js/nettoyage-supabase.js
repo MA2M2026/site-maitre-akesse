@@ -38,14 +38,9 @@
 
   // Une table entière (par pages de 1000 : Supabase n'en renvoie pas plus d'un coup).
   async function lireTable(table) {
-    const lignes = [];
-    for (let depart = 0; ; depart += 1000) {
-      const { data, error } = await sb.from(table).select('*').range(depart, depart + 999);
-      if (error) throw new Error('lecture impossible des fiches « ' + table + ' » (' + error.message + ') — rien n’a été supprimé');
-      lignes.push.apply(lignes, data || []);
-      if (!data || data.length < 1000) break;
-    }
-    return lignes;
+    const { data, error } = await lireToutesLignes(() => sb.from(table).select('*').order('id'));
+    if (error) throw new Error('lecture impossible des fiches « ' + table + ' » (' + error.message + ') — rien n’a été supprimé');
+    return data;
   }
 
   async function lireFiches() {

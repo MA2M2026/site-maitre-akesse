@@ -307,6 +307,13 @@ function photosCvCompletees(d) {
   return { hero: hero, compcard: completerEmplacementsPhotos(d.compcardPhotos, reserve, 5) };
 }
 
+// « Poitrine / taille / hanches » du CV (HTML et image) ; mesures incohérentes
+// (js/tailles.js) : non affichées (« — »), comme sur la fiche publique.
+function texteMensurationsCv(p, sexe) {
+  if (typeof ma2mMesuresAReprendre === 'function' && ma2mMesuresAReprendre({ category: sexe, chest_cm: p.poitrine, waist_cm: p.tourTaille, hips_cm: p.hanches })) return '—';
+  return [p.poitrine, p.tourTaille, p.hanches || p.entrejambe].some(Boolean) ? [p.poitrine || '–', p.tourTaille || '–', p.hanches || p.entrejambe || '–'].join(' / ') : '—';
+}
+
 // d = { nomComplet, dateNaissance, villeNaissance, lieuNaissance, nationalite, ville,
 //   quartier, citation, bio, instagram, niveauMannequin, mannequinId, photoCvUrl,
 //   compcardPhotos: [url|null, ...] (jusqu'à 5), photosBook: [url, ...] (complète les
@@ -315,13 +322,6 @@ function photosCvCompletees(d) {
 // Renvoie le HTML à placer à l'intérieur d'un conteneur .cv-sheet — n'inclut pas
 // le conteneur lui-même ni les boutons d'action (fermer/imprimer), propres à
 // chaque page.
-// « Poitrine / taille / hanches » du CV (HTML et image) ; mesures incohérentes
-// (js/tailles.js) : non affichées, comme sur la fiche publique.
-function texteMensurationsCv(p, sexe) {
-  if (typeof ma2mMesuresAReprendre === 'function' && ma2mMesuresAReprendre({ category: sexe, chest_cm: p.poitrine, waist_cm: p.tourTaille, hips_cm: p.hanches })) return 'À reprendre';
-  return [p.poitrine, p.tourTaille, p.hanches || p.entrejambe].some(Boolean) ? [p.poitrine || '–', p.tourTaille || '–', p.hanches || p.entrejambe || '–'].join(' / ') : '—';
-}
-
 function construireHtmlCv(d) {
   const p = d.physique || {}, f = d.formation || {};
   const groups = groupExperiences(d.experiences);
