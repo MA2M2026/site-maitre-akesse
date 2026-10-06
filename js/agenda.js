@@ -432,6 +432,18 @@
       corps.appendChild(cote);
       boite.appendChild(corps);
 
+      // Légende : une couleur par type de projet présent dans l'agenda.
+      const types = [...new Set(projets.map(typeDe))];
+      if (types.length) {
+        const legende = el('div', 'cal-legende');
+        types.forEach(ty => {
+          const l = el('span', 'cal-legende-item');
+          l.appendChild(el('i', 'cal-evt-' + ty));
+          l.appendChild(document.createTextNode(libelleTypeAgenda(ty, enAnglais)));
+          legende.appendChild(l);
+        });
+        boite.appendChild(legende);
+      }
       if (actif) {
         const retrouve = boite.querySelector('[data-cle="' + actif + '"]');
         if (retrouve) retrouve.focus({ preventScroll: true });

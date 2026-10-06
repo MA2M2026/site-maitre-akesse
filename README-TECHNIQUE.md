@@ -1646,9 +1646,10 @@ toutes les écritures sont simulées pendant l'enregistrement.
 
 ## 📅 Agenda : noir et blanc, événements repris, listes courtes (06/10/2026, soir)
 
-- L'agenda (page Agenda et encart de l'accueil) est **en noir et blanc** : seulement les
-  écritures et des filets de séparation, aucune couleur par type (les types se lisent à leur
-  nom). Règles en fin de `css/agenda.css`.
+- L'agenda garde **une couleur par type de projet** (défilé, shooting, casting…), voulue par la
+  propriétaire pour reconnaître les événements d'un coup d'œil. Ce qui doit rester **noir**,
+  partout sur le site, ce sont les **fonds** et les **survols** (aucune lueur ni fond bordeaux) ;
+  le bordeaux reste pour les écritures d'accent, les filets et les boutons.
 - Les **événements de la page « Événements »** (table `evenements`) sont repris
   automatiquement dans le calendrier et dans « Réalisés » (`evenementsDuSite` dans
   `js/agenda.js`) : jours consécutifs d'un même titre regroupés, pas de doublon avec un projet
