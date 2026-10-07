@@ -2202,7 +2202,7 @@ a.tdb-menu-item { text-decoration: none; }
     <button class="tdb-menu-item" data-tdb-cible="b2-inscriptions" type="button">Inscriptions mannequins</button>
     <button class="tdb-menu-item" data-tdb-cible="b2-validations" type="button">Validations en attente</button>
     <button class="tdb-menu-item" data-tdb-cible="b2-mannequins-publies" type="button">Mannequins publiés — gérer les photos</button>
-    <button class="tdb-menu-item" data-tdb-cible="b2-tri-photos" type="button">Photos triées par l'IA</button>
+    <button class="tdb-menu-item" data-tdb-cible="b2-tri-photos" type="button">Photos mises de côté</button>
     <button class="tdb-menu-item" data-tdb-cible="b2-rapport-profils" type="button">Rapport des profils</button>
     <button class="tdb-menu-item" data-tdb-cible="b2-fiches-evenement" type="button">Fiches événement (défilés)</button>
     <button class="tdb-menu-item" data-tdb-cible="b2-candidatures" type="button">Candidatures / Castings</button>
@@ -2498,7 +2498,7 @@ document.addEventListener('DOMContentLoaded', function () {
 <summary class="dossiers-entete tdb-16">
 <h2 class="tdb-10">🩺 Rapport des profils</h2>
 </summary>
-<p class="tdb-17">Le site passe en revue chaque mannequin : mensurations manquantes ou incohérentes, photo de profil, couverture, compcard, book trop petit, et photos à remplacer signalées par la revue des books. Pour chaque profil à compléter, un message personnel est prêt : cochez les mannequins et envoyez-le par WhatsApp, chacune reçoit le sien.</p>
+<p class="tdb-17">Le site passe en revue chaque mannequin : identité, parcours, mensurations manquantes ou incohérentes, photo de profil, couverture et nombre de photos (10 au moins). Pour chaque profil à compléter, un message personnel est prêt : cochez les mannequins et envoyez-le par WhatsApp, chacune reçoit le sien.</p>
 <div id="rapport-profils-liste">Ouvrez cette section pour lancer l’analyse.</div>
 </details>
 </div>
@@ -2514,18 +2514,14 @@ document.addEventListener('DOMContentLoaded', function () {
 <div class="liste-recente" data-section="b2-tri-photos">
 <details id="tri-photos-details">
 <summary class="dossiers-entete tdb-16">
-<h2 class="tdb-10">🤖 Photos triées par l'IA</h2>
+<h2 class="tdb-10">🗂️ Photos mises de côté</h2>
 <span class="dossiers-compteur" id="tri-photos-compteur"></span>
 </summary>
-<p class="tdb-17">Chaque photo est examinée par l'IA : photo professionnelle (Book) ou photo naturelle (Digital). Les photos que l'IA juge mauvaises vous sont proposées ci-dessous : c'est vous qui validez la suppression, définitive.</p>
-<h3 class="tri-titre">Photos écartées avant la suppression automatique (cachées)</h3>
+<p class="tdb-17">Il n'y a plus de tri des photos par l'IA. Restent ici les photos que l'ancienne IA avait mises de côté : c'est vous qui décidez de les remettre ou de les supprimer (définitif).</p>
+<h3 class="tri-titre">Photos cachées sur la fiche publique</h3>
 <div class="tri-grille" id="tri-ecartees">Ouvrez cette section pour charger les photos.</div>
-<h3 class="tri-titre">À vérifier — photos proposées à la suppression (encore en ligne)</h3>
+<h3 class="tri-titre">À vérifier (encore en ligne)</h3>
 <div class="tri-grille" id="tri-a-verifier"></div>
-<h3 class="tri-titre">Revue stricte des books</h3>
-<div id="tri-anciennes"></div>
-<h3 class="tri-titre">Rapports détaillés et fiches techniques</h3>
-<div id="tri-rapports"></div>
 </details>
 </div>
 <!-- ===== AJOUT Étape 20 : Drive / transferts — structure honnête, en attente du fichier d'intégration Drive ===== -->
@@ -2908,7 +2904,7 @@ document.addEventListener('DOMContentLoaded', function () {
 <script src="js/nettoyage-supabase.js"></script>
 <script src="js/messages-groupes.js"></script>
 <script src="js/couverture-admin.js"></script>
-<script src="js/tri-photos-admin.js"></script>
+<script src="js/photos-mises-de-cote.js"></script>
 <script src="js/fiches-evenement-admin.js"></script>
 <script src="js/rapport-profils-admin.js"></script>
 <script src="js/agenda-admin.js"></script>

@@ -1467,6 +1467,13 @@ toutes les écritures sont simulées pendant l'enregistrement.
 
 ## 🤖 Tri des photos par IA, revue des books, adresses lisibles (05–06/10/2026)
 
+> **Retiré le 07/10/2026** (décision de la propriétaire) : `api/trier-photo.js` et
+> `api/_revue-book.js` sont supprimés, plus aucun appel à l'IA. Les deux premiers points
+> ci-dessous ne sont plus qu'un historique ; la table `revues_book` et les colonnes `tri_*`
+> restent en base sans être utilisées (sauf `tri_statut = 'ecartee'`, toujours filtré).
+> Section du tableau de bord remplacée par « Photos mises de côté »
+> (`js/photos-mises-de-cote.js`) : remettre / garder / supprimer d'un clic, avec confirmation.
+
 - **Tri à l'envoi** (`api/trier-photo.js`, Claude Opus 5.5, clé `ANTHROPIC_API_KEY`
   sur Vercel, crédit prépayé Anthropic) : chaque nouvelle photo est classée `book`
   ou `digital` (rubrique « Digitals & Lifestyle » de la fiche) ; une photo
@@ -1673,7 +1680,7 @@ plus qu'à un seul endroit.
   refus si la base ne répond pas), la lecture du jeton et du corps de la requête,
   les en-têtes de la clé serveur (`enTetesService`), la connexion au stockage photos R2 (`creerClientR2`), le contrôle des chemins de
   fichier (`cheminSur`), l'adresse IP et l'identifiant d'appareil. Utilisé par
-  r2-presigner, r2-site-images, trier-photo, _revue-book, code-protege,
+  r2-presigner, r2-site-images, code-protege,
   code-validation-protege, connexion-protegee, connexion-admin, creer-admin,
   supprimer-mannequin.
 - **Envoi d'une photo de Book** : une seule chaîne dans `js/app.js`,
@@ -1778,8 +1785,7 @@ aux deux endroits » au lieu de « ajoutez une photo de profil » (cas réel du 
   (`CATEGORIES_PHOTOS_ACTIVES = true`).
 - **Plus de tri par l'IA à l'envoi** (`trierPhotoEnArrierePlan` retiré) : décision de la
   propriétaire (logos des organisateurs et même tenue sous plusieurs angles signalés à tort).
-  `api/trier-photo.js` reste disponible pour plus tard, seulement sur demande de l'agence
-  (le rattrapage automatique à l'ouverture du tableau de bord est supprimé).
+  `api/trier-photo.js` a ensuite été supprimé (07/10/2026, voir plus haut).
 
 ## Espace mannequin : téléphone (07/10/2026)
 
