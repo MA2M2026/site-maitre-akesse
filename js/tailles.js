@@ -4,8 +4,8 @@
 // cohérent. Règle de la norme du prêt-à-porter (décision du 06/10/2026, soir) :
 // haut = tour de poitrine seul ; bas = le plus grand entre tour de bassin et tour de
 // taille (le vêtement doit passer au bassin ET fermer à la taille) ; si haut et bas diffèrent, la taille générale
-// l'indique (ex. « S-M »). Au-delà de L (grille MA2M) : « mensurations
-// excessives » signalées.
+// l'indique (ex. « S-M »). Au-delà de la taille tolérée (L pour les femmes, XL pour les
+// hommes, décision du 07/10/2026) : « mensurations excessives » signalées.
 // Fichier partagé : Espace mannequin, fiche publique FR/EN, compcard, CV, fiche
 // événement. Tailles selon la grille des mensurations MA2M ; équivalences étrangères
 // selon les correspondances standard du prêt-à-porter.
@@ -59,7 +59,9 @@
   }
   // Taille maximum d'un mannequin (décision du 06/10/2026) : au-delà, « mensurations
   // excessives » (signalées à la mannequin et à l'agence, sans rien cacher).
-  var MAX_FEMMES = 'L', MAX_HOMMES = 'L'; // la grille MA2M s'arrête à L
+  // Femmes : S ou M recommandé, L toléré. Hommes (décision de la propriétaire, 07/10/2026 :
+  // une taille d'homme n'est pas une taille de femme) : M ou L recommandé, XL toléré.
+  var MAX_FEMMES = 'L', MAX_HOMMES = 'XL';
   window.ma2mReperesTailles = function (homme) {
     var t = homme ? HOMMES : FEMMES, fmt = function (x) { return x[0] + ' à ' + (x[1] >= 999 ? '…' : x[1]) + ' cm'; };
     return t.filter(function (x) { var r = ORDRE.indexOf(x.l); return r >= ORDRE.indexOf('S') && r <= ORDRE.indexOf(homme ? MAX_HOMMES : MAX_FEMMES); }).map(function (x) {

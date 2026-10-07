@@ -2,7 +2,8 @@
 // nouvelle version le 07/10/2026). Le site passe en revue chaque mannequin et rédige
 // pour elle un rapport de SENSIBILISATION (jamais de menace) : civilité et nom, points
 // forts, profil complet à x %, 3 priorités, puis identité, expérience et parcours,
-// mensurations (tailles calculées haut / bas / générale : S ou M recommandé, L toléré),
+// mensurations (tailles calculées haut / bas / générale : femmes S ou M recommandé, L toléré ;
+// hommes M ou L recommandé, XL toléré),
 // et les photos en dernier. Calculé par le site lui-même : AUCUNE remarque de l'IA
 // (une même tenue sous plusieurs angles ou le logo d'un organisateur ne sont pas des
 // erreurs). On coche plusieurs mannequins et chacune reçoit SON message, séparément,
@@ -81,7 +82,8 @@
     a.exces = !!t.exces;
     total++; if (!a.aReprendre.length && !a.aVerifier.length && !a.exces) points++;
     a.tailles = t.aReprendre.length ? null : { haut: t.haut && t.haut.lettre, bas: t.bas && t.bas.lettre, generale: t.generale };
-    a.tolere = !a.exces && [t.haut, t.bas].some(function (x) { return x && x.lettre === 'L'; });
+    a.homme = t.homme; a.tolereLettre = t.maximum; // L (femmes) ou XL (hommes)
+    a.tolere = !a.exces && [t.haut, t.bas].some(function (x) { return x && x.lettre === t.maximum; });
     if (a.manquantes.length) a.mesures.push('À compléter : ' + a.manquantes.join(', '));
     if (a.aReprendre.length) a.mesures.push('À reprendre : ' + a.aReprendre.join(' et '));
     if (a.aVerifier.length) a.mesures.push('À vérifier : ' + a.aVerifier.join(', '));
@@ -172,10 +174,10 @@
     if (a.tailles && (a.tailles.haut || a.tailles.bas)) {
       l.push('_Calculées automatiquement par le site d’après vos mesures :_ taille haut *' + (a.tailles.haut || 'non calculée') + '*, taille bas *' + (a.tailles.bas || 'non calculée') + '*, taille générale *' + (a.tailles.generale || 'non calculée') + '*.');
     }
-    l.push('L’agence recommande les tailles *S ou M*. La taille *L* est tolérée. Connaître vos tailles exactes vous aide à garder votre silhouette et à ne pas dépasser ces repères.');
+    l.push((a.homme ? 'Pour les hommes, l’agence recommande les tailles *M ou L*. La taille *XL* est tolérée.' : 'L’agence recommande les tailles *S ou M*. La taille *L* est tolérée.') + ' Connaître vos tailles exactes vous aide à garder votre silhouette et à ne pas dépasser ces repères.');
     if (a.aReprendre.length) l.push('⚠️ Votre ' + joindre(a.aReprendre) + ' ne vont pas ensemble : une mesure est sûrement fausse. Mesurez-vous avec un mètre ruban, sans serrer. _En attendant, vos mensurations restent cachées sur votre fiche._');
-    else if (a.exces) l.push('💬 Votre taille calculée dépasse aujourd’hui la taille L. Commencez par vérifier vos mesures _(mètre ruban à plat, sans serrer, sans vêtement épais)_ : une erreur de saisie est vite arrivée. Si elles sont justes, l’agence est là pour en parler avec vous et vous conseiller.');
-    else if (a.tolere) l.push('👌 Vous êtes en taille L : elle est acceptée. Veillez simplement à ne pas aller au-delà.');
+    else if (a.exces) l.push('💬 Votre taille calculée dépasse aujourd’hui la taille ' + a.tolereLettre + '. Commencez par vérifier vos mesures _(mètre ruban à plat, sans serrer, sans vêtement épais)_ : une erreur de saisie est vite arrivée. Si elles sont justes, l’agence est là pour en parler avec vous et vous conseiller.');
+    else if (a.tolere) l.push('👌 Vous êtes en taille ' + a.tolereLettre + ' : elle est acceptée. Veillez simplement à ne pas aller au-delà.');
     else if (a.tailles && (a.tailles.haut || a.tailles.bas)) l.push('✅ Vous êtes dans les tailles recommandées : bravo, continuez ainsi.');
     if (a.aVerifier.length) l.push('🔎 À vérifier : votre ' + joindre(a.aVerifier) + ' _(beaucoup plus grand que vos autres mesures, sans doute une erreur de saisie)_.');
     if (a.manquantes.length) l.push('📝 À compléter : ' + joindre(a.manquantes) + '.');
@@ -200,7 +202,7 @@
   function ligneHtml(p, dates) {
     var a = p.analyse, deja = dates[p.id], wa = numeroWhatsApp(telephones[p.id]);
     var points = [];
-    if (a.exces) points.push('<li class="rp-rouge"><strong>Mensurations :</strong> taille calculée au-delà de L</li>');
+    if (a.exces) points.push('<li class="rp-rouge"><strong>Mensurations :</strong> taille calculée au-delà de ' + echapper(a.tolereLettre) + '</li>');
     a.mesures.forEach(function (x) { points.push('<li' + (/^À reprendre|^À vérifier/.test(x) ? ' class="rp-rouge"' : '') + '><strong>Mensurations :</strong> ' + echapper(x) + '</li>'); });
     var lib = function (liste) { return echapper(liste.map(function (k) { return LIBELLES[k]; }).join(' ; ')); };
     if (a.identite.length) points.push('<li><strong>Identité :</strong> ' + lib(a.identite) + '</li>');
