@@ -1467,6 +1467,13 @@ toutes les écritures sont simulées pendant l'enregistrement.
 
 ## 🤖 Tri des photos par IA, revue des books, adresses lisibles (05–06/10/2026)
 
+> **Retiré le 07/10/2026** (décision de la propriétaire) : `api/trier-photo.js` et
+> `api/_revue-book.js` sont supprimés, plus aucun appel à l'IA. Les deux premiers points
+> ci-dessous ne sont plus qu'un historique ; la table `revues_book` et les colonnes `tri_*`
+> restent en base sans être utilisées (sauf `tri_statut = 'ecartee'`, toujours filtré).
+> Section du tableau de bord remplacée par « Photos mises de côté »
+> (`js/photos-mises-de-cote.js`) : remettre / garder / supprimer d'un clic, avec confirmation.
+
 - **Tri à l'envoi** (`api/trier-photo.js`, Claude Opus 5.5, clé `ANTHROPIC_API_KEY`
   sur Vercel, crédit prépayé Anthropic) : chaque nouvelle photo est classée `book`
   ou `digital` (rubrique « Digitals & Lifestyle » de la fiche) ; une photo
@@ -1673,7 +1680,7 @@ plus qu'à un seul endroit.
   refus si la base ne répond pas), la lecture du jeton et du corps de la requête,
   les en-têtes de la clé serveur (`enTetesService`), la connexion au stockage photos R2 (`creerClientR2`), le contrôle des chemins de
   fichier (`cheminSur`), l'adresse IP et l'identifiant d'appareil. Utilisé par
-  r2-presigner, r2-site-images, trier-photo, _revue-book, code-protege,
+  r2-presigner, r2-site-images, code-protege,
   code-validation-protege, connexion-protegee, connexion-admin, creer-admin,
   supprimer-mannequin.
 - **Envoi d'une photo de Book** : une seule chaîne dans `js/app.js`,
@@ -1748,11 +1755,11 @@ hommes M ou L recommandé, XL toléré ; au-delà : conseil bienveillant), et le
 10 photos : « il vous reste N photos à publier »). **Aucune remarque de l'IA** n'est reprise (`tri_raison` ignoré). Lien
 New Face sans expérience : jamais réclamée (message encourageant). Lien Espace mannequin en fin de message ; WhatsApp de l'agence cité sans lien (le message part de ce numéro). Constante `MA2M_WHATSAPP` (js/app.js) pour le bouton flottant. Historique des envois remis à
 zéro (clé `ma2m_rapport_profils_envois_v2`) + bouton « Réinitialiser l'historique ».
-**Messages suivants** (décision du 07/10/2026) : dès qu'un message a déjà été envoyé à une
-mannequin (historique de l'appareil), le message suivant ne garde que ce qui reste à régler :
-plus de points forts, d'expérience « bravo », de New Face, de « Bon à savoir », ni de
-mensurations quand elles sont réglées (aucun « bravo, c'est réglé »). Score et priorités
-restent. « Réinitialiser l'historique » refait un rapport complet.
+**Message WhatsApp** (décision du 07/10/2026, soir) : toujours et seulement ce qui reste à
+régler, bloc par bloc (Identité, Physique, Formation, Expérience, Photos), avec les mêmes
+chiffres que les ronds rouges de l'Espace (`ma2mPointsParBloc`, js/analyse-profil.js). Plus
+de points forts, de priorités, de « bravo » ni de « Bon à savoir ». L'historique des envois
+ne sert plus qu'à ranger les mannequins déjà prévenues aujourd'hui.
 Le paragraphe sur les deux catégories de photos s'active avec `CATEGORIES_PHOTOS_ACTIVES`.
 Photos : le diagnostic suit **la logique de la fiche publique**, fonction partagée `photosAffichees()` (js/app.js, utilisée aussi par mannequin.html FR/EN) : sans photo de
 profil choisie, la fiche montre la plus ancienne photo ; sans couverture choisie, elle reprend la
@@ -1778,8 +1785,7 @@ aux deux endroits » au lieu de « ajoutez une photo de profil » (cas réel du 
   (`CATEGORIES_PHOTOS_ACTIVES = true`).
 - **Plus de tri par l'IA à l'envoi** (`trierPhotoEnArrierePlan` retiré) : décision de la
   propriétaire (logos des organisateurs et même tenue sous plusieurs angles signalés à tort).
-  `api/trier-photo.js` reste disponible pour plus tard, seulement sur demande de l'agence
-  (le rattrapage automatique à l'ouverture du tableau de bord est supprimé).
+  `api/trier-photo.js` a ensuite été supprimé (07/10/2026, voir plus haut).
 
 ## Espace mannequin : téléphone (07/10/2026)
 

@@ -150,6 +150,20 @@
     return /iabjs:\/\/|Java object is gone|chrome-extension:\/\/|moz-extension:\/\/|safari-(web-)?extension:\/\/|__firefox__|__gCrWeb|\bethereum\b/i.test(texte || '');
   }
 
+  let nbLignesPage = 0;
+  function lignesDeLaPage() {
+    if (!nbLignesPage) { try { nbLignesPage = document.documentElement.outerHTML.split('\n').length + 20; } catch (x) { nbLignesPage = 1e9; } }
+    return nbLignesPage;
+  }
+  // Page modifiée par le navigateur lui-même : traduction automatique (Chrome, Safari,
+  // Brave : balises <font style=…> et classe translated-…), extension Dark Reader.
+  function pageModifieeParLeNavigateur() {
+    const h = document.documentElement;
+    return /translated-(ltr|rtl)/.test(h.className || '') ||
+      !!document.querySelector('font[style], .darkreader, style.darkreader, meta[name="darkreader"], [data-darkreader-inline-bgcolor], [data-darkreader-inline-color]') ||
+      h.hasAttribute('data-darkreader-mode') || h.hasAttribute('data-darkreader-scheme');
+  }
+
   // --- Erreurs JavaScript + fichiers (images, scripts, styles) qui ne chargent pas ---
   // Écoute en phase de capture : c'est la seule façon de voir l'échec d'une <img>,
   // d'un <script> ou d'un <link>, qui ne remonte pas jusqu'à window autrement.
@@ -183,6 +197,18 @@
         }, 4000);
         return;
       }
+      if (cible.tagName === 'VIDEO' || cible.tagName === 'SOURCE') {
+        // Journal du 07/10 : « Média non chargé » pour des vidéos qui existent (lecture
+        // coupée par une connexion faible ou par le départ du visiteur). On ne signale
+        // que si le serveur répond vraiment que le fichier manque ou est en erreur.
+        setTimeout(function () {
+          if (pageQuittee || !fetchOriginal) return;
+          fetchOriginal(url, { method: 'HEAD', cache: 'no-store' }).then(function (rep) {
+            if (!pageQuittee && rep.status >= 400) signaler(type, nomCourt(url) + ' → ' + rep.status, url);
+          }, function () { /* connexion du visiteur : pas une panne du site */ });
+        }, 3000);
+        return;
+      }
       signaler(type, nomCourt(url), url);
       return;
     }
@@ -192,6 +218,10 @@
     if (/^Script error\.?$/i.test(e.message || '') && !e.filename && !e.error) return;
     const pileJs = (e.error && e.error.stack) || (e.filename ? e.filename + ':' + e.lineno : '');
     if (codeEtranger(pileJs + ' ' + (e.filename || '') + ' ' + (e.message || ''))) return;
+    // Journal du 07/10 (« La », /en/mannequins ligne 479 alors que la page en a 194) :
+    // une erreur « dans la page » à une ligne qui n'existe pas vient d'un code ajouté par
+    // le navigateur (traduction automatique, extension), pas du site.
+    if (e.filename && e.filename.split('#')[0] === location.href.split('#')[0] && e.lineno > lignesDeLaPage()) return;
     signaler('Erreur JavaScript', e.message || 'Erreur inconnue', pileJs);
   }, true);
 
@@ -202,7 +232,21 @@
   });
 
   // --- Ce que les règles de sécurité (CSP) bloquent — c'était le cas du QR code ---
+  // Fausses alertes du 07/10 : feuille de style de la traduction de Chrome
+  // (gstatic / translate), statistiques Google envoyées à www.google.com/g/collect
+  // (Google Analytics fonctionne quand même), styles ajoutés par la traduction ou par
+  // l'extension Dark Reader, code d'une extension.
+  const CSP_ETRANGER = /translate\.google|translate\.googleapis|gstatic\.com\/_\/translate|www\.google\.com\/(g|ccm)\/collect|google\.[a-z.]+\/ads|doubleclick\.net|darkreader/i;
   document.addEventListener('securitypolicyviolation', function (e) {
+    const directive = e.effectiveDirective || e.violatedDirective || '';
+    if (CSP_ETRANGER.test((e.blockedURI || '') + ' ' + (e.sourceFile || '')) || codeEtranger(e.sourceFile || '')) return;
+    if (/^style-src/.test(directive) && (e.blockedURI === 'inline' || !e.blockedURI)) {
+      // un style en ligne : attendre un instant que la traduction / l'extension se montre
+      setTimeout(function () {
+        if (!pageModifieeParLeNavigateur()) signaler('Bloqué par la sécurité', directive + ' → script/style en ligne', (e.sourceFile ? e.sourceFile + ':' + e.lineNumber : '') + (e.sample ? ' · ' + e.sample.slice(0, 60) : ''));
+      }, 1500);
+      return;
+    }
     signaler('Bloqué par la sécurité', (e.effectiveDirective || e.violatedDirective) + ' → ' + (e.blockedURI || 'script/style en ligne'), (e.sourceFile ? e.sourceFile + ':' + e.lineNumber : ''));
   });
 
@@ -229,6 +273,7 @@
   // Services de mesure d'audience, souvent bloqués par les bloqueurs de publicité des
   // visiteurs : leur échec n'est pas un dysfonctionnement du site (le code s'en passe).
   const IGNORES = /api\.ipify\.org|google-analytics\.com|googletagmanager\.com|analytics\.google\.com|sentry\.io|sentry-cdn\.com/;
+  let reseauDejaSignale = false;
   if (fetchOriginal) {
     window.fetch = function (entree, options) {
       const url = typeof entree === 'string' ? entree : (entree && entree.url) || '';
@@ -252,7 +297,10 @@
         }
         return rep;
       }, function (err) {
-        if (!pageQuittee && !(err && err.name === 'AbortError') && url.indexOf('journal_erreurs') === -1 && !IGNORES.test(url)) {
+        // Journal du 07/10 : un visiteur hors ligne envoyait une ligne par appel (Supabase,
+        // Google, photos). Une seule par page suffit : c'est sa connexion, pas le site.
+        if (!pageQuittee && !reseauDejaSignale && !(err && err.name === 'AbortError') && url.indexOf('journal_erreurs') === -1 && !IGNORES.test(url)) {
+          reseauDejaSignale = true;
           signaler('Réseau injoignable', methode + ' ' + nomCourt(url) + ' → ' + (err && err.message ? err.message : err), url);
         }
         throw err;
@@ -283,7 +331,10 @@
       if (cs.position === 'fixed') return true; // un élément fixe ne peut pas élargir la page
       if (cs.overflowX !== 'visible') {
         const r = p.getBoundingClientRect();
-        if (r.left >= -2 && r.right <= largeur + 2) return true;
+        // un bloc plein écran (100vw) inclut la barre de défilement : il coupe quand même
+        // (journal du 07/10 : photo de couverture de la fiche agrandie au survol)
+        const marge = Math.max(0, window.innerWidth - largeur) + 2;
+        if (r.left >= -marge && r.right <= largeur + marge) return true;
       }
     }
     return false;
@@ -382,7 +433,9 @@
         echelle = s;
         if (pincement || s <= 1.05) return;
         const actif = document.activeElement;
-        if (actif && /^(INPUT|TEXTAREA|SELECT)$/.test(actif.tagName)) {
+        // Une case à cocher / un bouton radio ne fait pas zoomer l'iPhone (journal du
+        // 07/10 : #f-sans-instagram accusé à tort) : seuls les champs de saisie comptent.
+        if (actif && /^(INPUT|TEXTAREA|SELECT)$/.test(actif.tagName) && !/^(checkbox|radio|range|file|button|submit|reset|color|image|hidden)$/i.test(actif.type || '')) {
           const taille = parseFloat(getComputedStyle(actif).fontSize) || 0;
           if (taille && taille < 16) {
             signaler('Zoom automatique', location.pathname + ' : ' + decrireElement(actif) + ' (texte ' + Math.round(taille) + ' px)',

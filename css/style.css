@@ -239,7 +239,8 @@ section { padding: 5rem 0; }
 
 .filtres { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 2.2rem; }
 .filtres + .filtres-niveau { margin-top: -1.4rem; } /* 2e rangée (niveau) collée à la 1re */
-@media (max-width: 480px) { .filtres-niveau { gap: 0.4rem; flex-wrap: nowrap; } .filtres-niveau .filtre-btn { padding-left: 0.75rem !important; padding-right: 0.75rem !important; letter-spacing: 0.05em !important; white-space: nowrap; } }
+/* 07/10/2026 : en 320 px, « Main Board » sortait de 12 px → retour à la ligne permis */
+@media (max-width: 480px) { .filtres-niveau { gap: 0.4rem; flex-wrap: wrap; justify-content: center; } .filtres-niveau .filtre-btn { padding-left: 0.75rem !important; padding-right: 0.75rem !important; letter-spacing: 0.05em !important; white-space: nowrap; } }
 
 .filtre-btn {
   font-family: var(--texte); font-size: 0.7rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase;

@@ -102,3 +102,22 @@ function ma2mAnalyserProfil(p, photos, nbProjets, avecSupp) {
   return a;
 }
 
+
+// Éléments à remplir ou à corriger, bloc par bloc, dans l'ordre des blocs de l'Espace
+// mannequin (décision de la propriétaire, 07/10/2026 : le rapport WhatsApp suit les ronds
+// rouges de l'Espace, avec les mêmes chiffres). Chaque élément est une clé de l'analyse
+// (identité, parcours, photos) ou une colonne de mensuration. Le chiffre d'un bloc est son
+// nombre d'éléments ; pour les photos, chaque photo qui manque pour arriver au minimum
+// compte en plus.
+var MA2M_BLOCS = ['identite', 'physique', 'formation', 'experiences', 'photos'];
+function ma2mPointsParBloc(a) {
+  var b = { identite: a.identite.slice(), physique: [], formation: [], experiences: [], photos: [] };
+  a.manquantesCols.concat(a.aReprendreCols, a.aVerifierCols).forEach(function (c) { if (b.physique.indexOf(c) === -1) b.physique.push(c); });
+  if (a.parcours.indexOf('etudes') !== -1) b.formation.push('etudes');
+  ['experiences', 'langues'].forEach(function (k) { if (a.parcours.indexOf(k) !== -1) b.experiences.push(k); });
+  a.photos.forEach(function (k) { if (k !== 'book') b.photos.push(k); });
+  var nb = {};
+  MA2M_BLOCS.forEach(function (k) { nb[k] = b[k].length; });
+  if (a.photos.indexOf('book') !== -1) { b.photos.push('book'); nb.photos += MA2M_PHOTOS_MINIMUM - a.nbPhotos; }
+  return { elements: b, nb: nb };
+}
