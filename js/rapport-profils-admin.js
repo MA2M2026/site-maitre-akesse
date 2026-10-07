@@ -12,7 +12,7 @@
 (function () {
   var details = document.getElementById('rapport-profils-details');
   if (!details || typeof sb === 'undefined' || !sb) return;
-  var charge = false, profils = [], telephones = {};
+  var charge = false, profils = [], telephones = {}, parents = {};
   var suppDisponibles = true; // colonnes de l'Extension 121 lisibles ?
   var envoyesCetteFois = {}; // file d'envoi : on passe à la suivante (la date reste notée pour la prochaine fois)
   var BOOK_MINIMUM = MA2M_PHOTOS_MINIMUM; // js/analyse-profil.js
@@ -193,6 +193,13 @@
     // Les photos écartées du book (masquées sur la fiche publique) ne comptent pas.
     var parModele = {}; ph.data.filter(function (x) { return x.tri_statut !== 'ecartee'; }).forEach(function (x) { (parModele[x.model_id] = parModele[x.model_id] || []).push(x); });
     telephones = {}; (tel.data || []).forEach(function (t) { telephones[t.model_id] = t.phone; });
+    // Mannequin mineure (07/10/2026) : le WhatsApp part vers son parent (table contacts_parents).
+    var cp = await sb.from('contacts_parents').select('model_id, parent_nom, parent_telephone');
+    parents = {};
+    (cp.data || []).forEach(function (c) {
+      var m = pr.data.find(function (x) { return x.id === c.model_id; });
+      if (m && c.parent_telephone && estMineurDossier(m)) { parents[c.model_id] = c; telephones[c.model_id] = c.parent_telephone; }
+    });
     profils = pr.data.filter(function (p) { return String(p.full_name).trim(); }).map(function (p) {
       p.analyse = ma2mAnalyserProfil(p, parModele[p.id] || [], projets[p.id] || 0, suppDisponibles);
       return p;
@@ -228,6 +235,10 @@
       var id = suivant(); if (!id) return;
       var zoneTexte = details.querySelector('textarea[data-id="' + id + '"]');
       var texte = zoneTexte ? zoneTexte.value : '', numero = numeroWhatsApp(telephones[id]);
+      if (parents[id]) {
+        var mannequin = profils.find(function (x) { return x.id === id; }) || {};
+        texte = 'Bonjour ' + salutationParent(parents[id].parent_nom) + ', voici un message de l’agence pour votre enfant ' + (mannequin.full_name || '') + ' :\n\n' + texte;
+      }
       if (numero) window.open('https://wa.me/' + numero + '?text=' + encodeURIComponent(texte), '_blank', 'noopener');
       else {
         // sans numéro : copie du message ; si la copie échoue, le message est montré
