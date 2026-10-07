@@ -6550,5 +6550,7 @@ NOTIFY pgrst, 'reload schema';
 -- =====================================================================
 alter table model_photos add column if not exists categorie text not null default 'book'
   check (categorie in ('book', 'lifestyle'));
+-- Photos que l'agence avait elle-même rangées dans les Digitals (choix manuel) : gardées.
+update model_photos set categorie = 'lifestyle' where tri_statut = 'digital' and tri_manuel = true;
 
 NOTIFY pgrst, 'reload schema';

@@ -1760,8 +1760,8 @@ aux deux endroits » au lieu de « ajoutez une photo de profil » (cas réel du 
   de la photo d'origine AVANT compression (`lireInfosAppareil`) : logiciel de retouche pro
   (Photoshop, Lightroom, Capture One…) ou appareil photo (Canon, Nikon, Sony Alpha, Fujifilm…)
   → `book` ; téléphone (Apple, Samsung, Tecno, Infinix, Xiaomi…, caméra avant, fichier HEIC)
-  → `lifestyle` ; **doute (pas d'EXIF, WhatsApp, capture) → `book`**. Seules les Lifestyle
-  sont écrites (`enregistrerCategoriePhoto`), un échec ne bloque jamais l'envoi.
+  → `lifestyle` ; **doute (pas d'EXIF, HEIC, WhatsApp, capture) → `book`**. La catégorie est
+  enregistrée dès l'insertion de la photo (Extension 127 obligatoire AVANT la mise en ligne).
 - Correction d'un clic : étiquette « 📒 Book / 🌿 Lifestyle » sur chaque photo de l'Espace
   mannequin, liste déroulante dans la fenêtre photos du tableau de bord.
 - Fiche publique FR/EN : section « Book » puis « Digitals & Lifestyle » d'après `categorie`
@@ -1769,4 +1769,5 @@ aux deux endroits » au lieu de « ajoutez une photo de profil » (cas réel du 
   (`CATEGORIES_PHOTOS_ACTIVES = true`).
 - **Plus de tri par l'IA à l'envoi** (`trierPhotoEnArrierePlan` retiré) : décision de la
   propriétaire (logos des organisateurs et même tenue sous plusieurs angles signalés à tort).
-  `api/trier-photo.js` reste disponible pour plus tard.
+  `api/trier-photo.js` reste disponible pour plus tard, seulement sur demande de l'agence
+  (le rattrapage automatique à l'ouverture du tableau de bord est supprimé).

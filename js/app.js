@@ -1680,24 +1680,21 @@ const LOGICIELS_PRO = /photoshop|lightroom|capture one|luminar|affinity|darktabl
 const MARQUES_APPAREILS_PHOTO = /canon|nikon|fujifilm|olympus|om digital|panasonic|leica camera|pentax|ricoh|hasselblad|sigma|phase one|mamiya|kodak|minolta/i;
 const MARQUES_TELEPHONES = /apple|samsung|tecno|infinix|itel|xiaomi|redmi|poco|oppo|vivo|realme|huawei|honor|oneplus|google|motorola|nokia|hmd|zte|lenovo|alcatel|tcl|meizu|asus|lge|lg electronics|nothing|wiko|umidigi|blackview|cubot|doogee|oukitel/i;
 async function categoriePhoto(fichier) {
-  const nom = String((fichier && fichier.name) || '').toLowerCase();
-  if (/heic|heif/.test(String(fichier && fichier.type)) || /\.(heic|heif)$/.test(nom)) return 'lifestyle'; // photo d'iPhone
-  const i = await lireInfosAppareil(fichier);
+  const i = await lireInfosAppareil(fichier); // HEIC/HEIF, PNG… : pas lus → doute → Book
   if (LOGICIELS_PRO.test(i.logiciel)) return 'book';
   if (/front|avant|selfie/i.test(i.objectif)) return 'lifestyle';
-  if (/^sony/i.test(i.marque)) return /^(ilce|ilca|dsc|slt|nex|zv-)/i.test(i.modele) ? 'book' : 'lifestyle';
+  if (/^sony/i.test(i.marque)) return /^(xq-|so-|xperia|[ghjef]\d{4})/i.test(i.modele) ? 'lifestyle' : 'book'; // Xperia = téléphone
   if (MARQUES_APPAREILS_PHOTO.test(i.marque)) return 'book';
   if (MARQUES_TELEPHONES.test(i.marque)) return 'lifestyle';
   return 'book'; // doute : toujours Book
 }
 
-// Range une photo du Book dans sa catégorie (colonne categorie, Extension 127). Les photos
-// sont créées en « book » par défaut : on n'écrit que les Lifestyle, et un échec (colonne
-// absente) ne bloque jamais l'envoi.
+// Change la catégorie d'une photo (colonne categorie, Extension 127) : étiquette de
+// l'Espace mannequin et liste du tableau de bord.
 async function enregistrerCategoriePhoto(photoId, categorie) {
   if (categorie !== 'lifestyle' && categorie !== 'book') return false;
-  const { error } = await sb.from('model_photos').update({ categorie: categorie }).eq('id', photoId);
-  if (error) { console.warn('Catégorie de photo non enregistrée :', error.message); return false; }
+  const { data, error } = await sb.from('model_photos').update({ categorie: categorie }).eq('id', photoId).select('id');
+  if (error || !data || !data.length) { console.warn('Catégorie de photo non enregistrée :', error ? error.message : 'photo introuvable'); return false; }
   return true;
 }
 

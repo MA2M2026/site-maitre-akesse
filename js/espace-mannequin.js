@@ -527,12 +527,11 @@ const Store = {
 
       const { data: row, error: dbErr } = await sb.from('model_photos').insert({
         model_id: currentUser.id, url, chemin, url_miniature:urlMiniature, chemin_miniature:cheminMiniature,
-        url_moyenne:urlMoyenne, chemin_moyenne:cheminMoyenne, originale_optimisee:true
+        url_moyenne:urlMoyenne, chemin_moyenne:cheminMoyenne, originale_optimisee:true, categorie
       }).select().single();
       if (dbErr) throw dbErr;
       // Catégorie Book / Lifestyle décidée par le site (plus de tri par l'IA, 07/10/2026).
-      const categorieEnregistree = categorie === 'lifestyle' && await enregistrerCategoriePhoto(row.id, categorie);
-      return { id: row.id, numero: row.numero||null, path: chemin, url: urlMiniature||url, urlPleine:url, compcardOrdre:null, categorie: categorieEnregistree ? 'lifestyle' : 'book' };
+      return { id: row.id, numero: row.numero||null, path: chemin, url: urlMiniature||url, urlPleine:url, compcardOrdre:null, categorie: row.categorie==='lifestyle'?'lifestyle':'book' };
     }catch(e){
       // e.message porte le vrai motif quand il vient d'un refus explicite du
       // serveur (ex. limite de photos atteinte) — l'afficher plutôt qu'un
@@ -1241,11 +1240,6 @@ function bindPhotoHandlers(){
     }
   }); });
 
-  // Sélection directe depuis le Book : chaque photo affiche son propre
-  // bouton "+ Compcard" — pas besoin de passer par le sélecteur de chaque
-  // case une par une. Se place automatiquement dans le premier emplacement
-  // libre (1 à 5) ; un second clic la retire (le badge "COMPCARD n" indique
-  // sa place actuelle).
   // Catégorie Book / Lifestyle : la mannequin corrige d'un clic le classement automatique.
   document.querySelectorAll('[data-book-cat]').forEach(function(btn){ btn.addEventListener('click', async function(e){
     e.stopPropagation();
@@ -1258,6 +1252,11 @@ function bindPhotoHandlers(){
       toast(nouvelle==='lifestyle' ? 'Photo rangée dans Lifestyle' : 'Photo rangée dans le Book');
     } else { btn.disabled = false; toast('Changement de catégorie impossible pour le moment, réessayez plus tard', true); }
   }); });
+  // Sélection directe depuis le Book : chaque photo affiche son propre
+  // bouton "+ Compcard" — pas besoin de passer par le sélecteur de chaque
+  // case une par une. Se place automatiquement dans le premier emplacement
+  // libre (1 à 5) ; un second clic la retire (le badge "COMPCARD n" indique
+  // sa place actuelle).
   document.querySelectorAll('[data-book-cc-toggle]').forEach(function(btn){ btn.addEventListener('click', async function(e){
     e.stopPropagation();
     const id = btn.dataset.bookCcToggle;
