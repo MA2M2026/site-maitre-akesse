@@ -11,9 +11,22 @@
   const principal = document.getElementById('mp-principal');
   let etat = { produits: [], categories: [], zones: [], reglages: null, commandes: [] };
   let editeurDescription = null;
-  // Code de billet attendu (ex. MA2M-1A2B3-C4D5E) : seul un code de cette forme est gardé en
-  // mémoire d'onglet le temps de valider le code admin (rien d'autre venu de l'adresse).
-  const CODE_BILLET = /^[A-Za-z0-9-]{4,40}$/;
+  // Code de billet venu de l'adresse (ex. MA2M-1A2B3-C4D5E), avant de le garder en mémoire
+  // d'onglet le temps de valider le code admin : espaces retirés et majuscules (comme le fait
+  // la base), puis code RECONSTRUIT caractère par caractère à partir des seuls caractères
+  // permis — rien d'autre venu de l'adresse n'est enregistré. Chaîne vide si invalide.
+  const CARACTERES_BILLET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-';
+  function codeBilletPropre(brut) {
+    const texte = String(brut || '').replace(/\s/g, '').toUpperCase();
+    if (texte.length < 4 || texte.length > 40) return '';
+    let propre = '';
+    for (const c of texte) {
+      const i = CARACTERES_BILLET.indexOf(c);
+      if (i < 0) return '';
+      propre += CARACTERES_BILLET.charAt(i);
+    }
+    return propre;
+  }
 
   const nouvelId = () => (window.crypto && crypto.randomUUID)
     ? crypto.randomUUID()
@@ -845,7 +858,7 @@
         '<p>Pour protéger la boutique, validez d’abord votre code dans le tableau de bord de l’agence, puis revenez ici par le lien « Marketplace » en haut de page.</p>' +
         '<a class="btn btn--principal" href="/tableau-de-bord.html">Valider mon code</a></div></section>';
       // Billet scanné dans un nouvel onglet : on garde le code pour après la validation.
-      try { const code = new URLSearchParams(location.search).get('billet'); if (code && CODE_BILLET.test(code.trim())) sessionStorage.setItem('ma2m_billet_a_controler', code.trim()); } catch (e) {}
+      try { const code = codeBilletPropre(new URLSearchParams(location.search).get('billet')); if (code) sessionStorage.setItem('ma2m_billet_a_controler', code); } catch (e) {}
       return;
     }
     try {
