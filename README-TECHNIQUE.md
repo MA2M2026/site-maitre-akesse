@@ -1755,11 +1755,11 @@ hommes M ou L recommandé, XL toléré ; au-delà : conseil bienveillant), et le
 10 photos : « il vous reste N photos à publier »). **Aucune remarque de l'IA** n'est reprise (`tri_raison` ignoré). Lien
 New Face sans expérience : jamais réclamée (message encourageant). Lien Espace mannequin en fin de message ; WhatsApp de l'agence cité sans lien (le message part de ce numéro). Constante `MA2M_WHATSAPP` (js/app.js) pour le bouton flottant. Historique des envois remis à
 zéro (clé `ma2m_rapport_profils_envois_v2`) + bouton « Réinitialiser l'historique ».
-**Messages suivants** (décision du 07/10/2026) : dès qu'un message a déjà été envoyé à une
-mannequin (historique de l'appareil), le message suivant ne garde que ce qui reste à régler :
-plus de points forts, d'expérience « bravo », de New Face, de « Bon à savoir », ni de
-mensurations quand elles sont réglées (aucun « bravo, c'est réglé »). Score et priorités
-restent. « Réinitialiser l'historique » refait un rapport complet.
+**Message WhatsApp** (décision du 07/10/2026, soir) : toujours et seulement ce qui reste à
+régler, bloc par bloc (Identité, Physique, Formation, Expérience, Photos), avec les mêmes
+chiffres que les ronds rouges de l'Espace (`ma2mPointsParBloc`, js/analyse-profil.js). Plus
+de points forts, de priorités, de « bravo » ni de « Bon à savoir ». L'historique des envois
+ne sert plus qu'à ranger les mannequins déjà prévenues aujourd'hui.
 Le paragraphe sur les deux catégories de photos s'active avec `CATEGORIES_PHOTOS_ACTIVES`.
 Photos : le diagnostic suit **la logique de la fiche publique**, fonction partagée `photosAffichees()` (js/app.js, utilisée aussi par mannequin.html FR/EN) : sans photo de
 profil choisie, la fiche montre la plus ancienne photo ; sans couverture choisie, elle reprend la

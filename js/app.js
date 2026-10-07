@@ -444,38 +444,54 @@ function definirSelectOuAutre(idSelect, idAutre, valeur) {
 // pour certaines photos — d'où des fiches Compcard où seules une ou deux photos
 // apparaissaient sans message d'erreur. Le passage par fetch+blob évite ce problème
 // d'origine croisée.
-async function chargerImageHauteRes(url) {
-  let blob;
+// Journal du 07/10/2026 : une photo pourtant intacte (2069 × 3000) était parfois
+// « illisible » à la création de la compcard / du CV (réception coupée sur une connexion
+// faible), et le dessin de très grandes photos figeait les téléphones Android plusieurs
+// secondes. Désormais : deuxième essai sans cache si la photo ne se décode pas, et photo
+// réduite à 2000 px de côté au plus (largement assez pour une fiche A4).
+const COTE_MAX_FICHE = 2000;
+async function telechargerImage(url, cache) {
   try {
-    const reponse = await fetch(url);
+    const reponse = await fetch(url, cache ? { cache: cache } : undefined);
     if (!reponse.ok) return null; // déjà signalé par la surveillance des requêtes
-    blob = await reponse.blob();
+    const blob = await reponse.blob();
+    return blob && blob.size ? blob : null;
   } catch (e) {
     return null; // idem (réseau injoignable)
   }
+}
+function decoderImage(blob) {
   const urlLocale = URL.createObjectURL(blob);
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
       try {
+        const echelle = Math.min(1, COTE_MAX_FICHE / Math.max(img.width, img.height));
         const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        canvas.getContext('2d').drawImage(img, 0, 0);
-        URL.revokeObjectURL(urlLocale);
+        canvas.width = Math.round(img.width * echelle);
+        canvas.height = Math.round(img.height * echelle);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
         resolve({ canvas, largeur: canvas.width, hauteur: canvas.height });
       } catch (e) {
-        URL.revokeObjectURL(urlLocale);
         resolve(null);
+      } finally {
+        URL.revokeObjectURL(urlLocale);
       }
     };
-    img.onerror = () => {
-      URL.revokeObjectURL(urlLocale);
-      signalerProbleme('Photo illisible pour la fiche/CV', url);
-      resolve(null);
-    };
+    img.onerror = () => { URL.revokeObjectURL(urlLocale); resolve(false); };
     img.src = urlLocale;
   });
+}
+async function chargerImageHauteRes(url) {
+  let blob = await telechargerImage(url);
+  if (!blob) return null;
+  let resultat = await decoderImage(blob);
+  if (resultat === false) {
+    blob = await telechargerImage(url, 'reload');
+    resultat = blob ? await decoderImage(blob) : null;
+    if (resultat === false) signalerProbleme('Photo illisible pour la fiche/CV', url);
+  }
+  return resultat || null;
 }
 
 // Charge une image du site (même origine, ex. le logo), sans filigrane.

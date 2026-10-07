@@ -18,8 +18,6 @@
   var BOOK_MINIMUM = MA2M_PHOTOS_MINIMUM; // js/analyse-profil.js
   // Historique des envois remis à zéro avec la nouvelle version du rapport (07/10/2026).
   var CLE_ENVOIS = 'ma2m_rapport_profils_envois_v2';
-  // Deux catégories de photos (Book / Lifestyle) : expliquées dans le rapport une fois en service.
-  var CATEGORIES_PHOTOS_ACTIVES = true;
 
   function echapper(t) { return echapperHtml(t); }
   function envois() { try { return JSON.parse(localStorage.getItem(CLE_ENVOIS) || '{}') || {}; } catch (e) { return {}; } }
@@ -38,17 +36,13 @@
   function barre(score) { var n = Math.round(score / 10); return '▰'.repeat(n) + '▱'.repeat(10 - n); }
   function joindre(liste) { return liste.length > 1 ? liste.slice(0, -1).join(', ') + ' et ' + liste[liste.length - 1] : liste[0] || ''; }
 
-  // Message WhatsApp (*gras*, _italique_) — version choisie par la propriétaire le
-  // 07/10/2026 (la première proposée) : points forts, score, priorités, puis chaque
-  // rubrique à compléter, les mensurations toujours expliquées, les photos en dernier
-  // avec les deux catégories (Book / Lifestyle).
+  // Textes du message WhatsApp, élément par élément.
   var TEXTES = {
     naissance: 'Votre date de naissance', nationalite: 'Votre nationalité', ville: 'Votre ville de résidence',
     presentation: 'Une présentation de quelques phrases _(votre parcours, votre style, ce qui vous distingue)_',
     presentationCourte: 'Une présentation un peu plus détaillée : _quelques phrases sur votre parcours, votre style, ce qui vous distingue_',
     instagram: 'Votre compte Instagram _(ou cochez « Je n’ai pas Instagram »)_',
     experiences: 'Vos expériences : défilés, shootings, castings, événements. _Même les plus petites comptent !_',
-    formation: 'Vos formations de mannequinat, ateliers ou coachings, _si vous en avez suivi_',
     etudes: 'Votre niveau d’études', langues: 'Les langues que vous parlez'
   };
   // Diagnostic des photos, tel que la fiche publique les montre.
@@ -67,60 +61,34 @@
     return r;
   }
 
-  // suivi = un message a déjà été envoyé à cette mannequin (historique de cet appareil) :
-  // décision de la propriétaire (07/10/2026), le message suivant ne garde QUE ce qui reste à
-  // régler. Ce qui est réglé disparaît sans « bravo » ; plus de points forts, d'explication
-  // des tailles quand elles sont bonnes, ni de « Bon à savoir ». « Réinitialiser
-  // l'historique » refait un rapport complet.
-  function message(p, a, suivi) {
-    var l = ['Bonjour *' + civilite(p) + '*,', '', suivi
-      ? 'Merci pour vos mises à jour. Voici ce qu’il reste à compléter sur votre profil.'
-      : 'Merci pour votre engagement aux côtés de *Maître Akesse Model Management*. Voici le point sur votre profil, pour vous aider à le rendre encore plus attractif auprès des recruteurs et des organisateurs.'];
-    if (!suivi && a.forts.length) { var f = joindre(a.forts); l.push('', '✨ *Vos points forts :* ' + f + '.'); }
-    l.push('', '📊 *Votre profil est complet à ' + a.score + ' %*', barre(a.score));
-    if (a.priorites.length) l.push('', '🎯 *Vos priorités :*', a.priorites.map(function (x, i) { return ['1️⃣', '2️⃣', '3️⃣'][i] + ' ' + x; }).join('\n'));
-    if (a.identite.length) l.push('', '👤 *À ajouter à votre identité :*', a.identite.map(function (k) { return '• ' + TEXTES[k]; }).join('\n'));
-    if (!suivi && a.newFace && !a.nbProjets) l.push('', '🌱 *Vous débutez en tant que New Face :* c’est tout à fait normal de ne pas encore avoir d’expérience. _Dès votre premier casting, shooting ou défilé, pensez à l’ajouter dans votre Espace._');
-    // Expérience : réclamée seulement à qui n'en a encore aucune (et jamais aux New Face).
-    var aCompleter = a.parcours.slice();
-    if (a.sansFormation && aCompleter.length) aCompleter.push('formation');
-    if (aCompleter.length) l.push('', '🏆 *À compléter dans votre parcours :*', aCompleter.map(function (k) { return '• ' + TEXTES[k]; }).join('\n'));
-    if (!suivi && a.nbProjets > 0) l.push('', '🏆 *Votre expérience :* ' + (a.nbProjets > 1 ? a.nbProjets + ' expériences renseignées' : '1 expérience renseignée') + ', bravo. _Pensez à ajouter chaque nouveau casting, shooting ou défilé au fil du temps._');
-
-    // Mensurations : toujours expliquées dans le premier rapport, pour que la mannequin
-    // connaisse ses tailles exactes ; ensuite, seulement s'il reste un point à régler.
-    if (!suivi || a.mesures.length || a.exces) mensurations(l, a, suivi);
-
-    // Photos (en dernier)
-    var photosTexte = lignesPhotos(a);
-    if (photosTexte.length) {
-      l.push('', '📸 *Vos photos :*');
-      l.push.apply(l, photosTexte);
-    }
-    if (CATEGORIES_PHOTOS_ACTIVES && !suivi) l.push('', '💡 *Bon à savoir :* vos photos sont désormais rangées automatiquement en deux catégories, _vous n’avez rien à faire_ :',
-      '📒 *Book* : les photos professionnelles _(shootings, défilés, campagnes)_',
-      '🌿 *Lifestyle / digitales* : les polaroïds, les photos que vous aimez, vos castings et vos sorties',
-      'Plusieurs photos dans la même tenue sous différents angles, ou avec le logo d’un organisateur, sont tout à fait normales.');
-
+  // Message WhatsApp (*gras*, _italique_). Décision de la propriétaire (07/10/2026, soir) :
+  // seulement ce qui reste à régler, bloc par bloc, avec les mêmes chiffres que les ronds
+  // rouges de l'Espace mannequin (ma2mPointsParBloc, js/analyse-profil.js). Ce qui est réglé
+  // disparaît, sans « bravo » ; plus de points forts, de priorités ni de « Bon à savoir ».
+  var BLOCS_MESSAGE = { identite: ['👤', 'Identité'], physique: ['📏', 'Physique (mensurations)'], formation: ['🎓', 'Formation'], experiences: ['👠', 'Expérience'], photos: ['📸', 'Photos'] };
+  function titreBloc(k, n) { return BLOCS_MESSAGE[k][0] + ' *' + BLOCS_MESSAGE[k][1] + (n ? ' : ' + n + ' élément' + (n > 1 ? 's' : '') : '') + '*'; }
+  function message(p, a) {
+    var pts = ma2mPointsParBloc(a);
+    var l = ['Bonjour *' + civilite(p) + '*,', '',
+      'Voici ce qu’il reste à compléter sur votre profil. Dans votre Espace mannequin, chaque bloc concerné porte un *rond rouge* 🔴 avec le même chiffre, et les cases à remplir sont encadrées en rouge.',
+      '', '📊 *Votre profil est complet à ' + a.score + ' %*', barre(a.score)];
+    if (pts.nb.identite) l.push('', titreBloc('identite', pts.nb.identite), a.identite.map(function (k) { return '• ' + TEXTES[k]; }).join('\n'));
+    if (pts.nb.physique || a.exces) { l.push('', titreBloc('physique', pts.nb.physique)); mensurations(l, a); }
+    if (pts.nb.formation) l.push('', titreBloc('formation', pts.nb.formation), '• ' + TEXTES.etudes);
+    if (pts.nb.experiences) l.push('', titreBloc('experiences', pts.nb.experiences), pts.elements.experiences.map(function (k) { return '• ' + TEXTES[k]; }).join('\n'));
+    if (pts.nb.photos) l.push('', titreBloc('photos', pts.nb.photos), lignesPhotos(a).join('\n'));
     l.push('', '👉 *Pour mettre votre profil à jour*, rendez-vous dans votre Espace mannequin :', MA2M_SITE + '/espace-mannequin',
       '', '🤝 _L’agence reste à vos côtés : pour toute question, écrivez-nous sur WhatsApp._',
       '', '*Maître Akesse Model Management*', 'Le ' + new Date().toLocaleDateString('fr-FR'));
     return l.join('\n');
   }
 
-  function mensurations(l, a, suivi) {
-    l.push('', '📏 *Vos mensurations*');
-    if ((!suivi || a.exces) && a.tailles && (a.tailles.haut || a.tailles.bas)) {
-      l.push('_Calculées automatiquement par le site d’après vos mesures :_ taille haut *' + (a.tailles.haut || 'non calculée') + '*, taille bas *' + (a.tailles.bas || 'non calculée') + '*, taille générale *' + (a.tailles.generale || 'non calculée') + '*.');
-    }
-    if (!suivi || a.exces) l.push((a.homme ? 'Pour les hommes, l’agence recommande les tailles *M ou L*. La taille *XL* est tolérée.' : 'L’agence recommande les tailles *S ou M*. La taille *L* est tolérée.') + ' Connaître vos tailles exactes vous aide à garder votre silhouette et à ne pas dépasser ces repères.');
-    if (a.aReprendre.length) l.push('⚠️ Votre ' + joindre(a.aReprendre) + ' ne vont pas ensemble : une mesure est sûrement fausse. Mesurez-vous avec un mètre ruban, sans serrer. _En attendant, vos mensurations restent cachées sur votre fiche._');
-    else if (a.exces) l.push('💬 Votre taille calculée dépasse aujourd’hui la taille ' + a.tolereLettre + '. Commencez par vérifier vos mesures _(mètre ruban à plat, sans serrer, sans vêtement épais)_ : une erreur de saisie est vite arrivée. Si elles sont justes, l’agence est là pour en parler avec vous et vous conseiller.');
-    else if (suivi) { /* réglé : rien à redire */ }
-    else if (a.tolere) l.push('👌 Vous êtes en taille ' + a.tolereLettre + ' : elle est acceptée. Veillez simplement à ne pas aller au-delà.');
-    else if (a.tailles && (a.tailles.haut || a.tailles.bas)) l.push('✅ Vous êtes dans les tailles recommandées : bravo, continuez ainsi.');
-    if (a.aVerifier.length) l.push('🔎 À vérifier : votre ' + joindre(a.aVerifier) + ' _(beaucoup plus grand que vos autres mesures, sans doute une erreur de saisie)_.');
+  // Mensurations : seulement ce qui reste à régler (manquantes, incohérentes, trop grandes).
+  function mensurations(l, a) {
     if (a.manquantes.length) l.push('📝 À compléter : ' + joindre(a.manquantes) + '.');
+    if (a.aReprendre.length) l.push('⚠️ Votre ' + joindre(a.aReprendre) + ' ne vont pas ensemble : une mesure est sûrement fausse. Mesurez-vous avec un mètre ruban, sans serrer. _En attendant, vos mensurations restent cachées sur votre fiche._');
+    else if (a.exces) l.push('💬 Votre taille calculée dépasse aujourd’hui la taille ' + a.tolereLettre + ' ' + (a.homme ? '_(pour les hommes, l’agence recommande M ou L, XL tolérée)_' : '_(l’agence recommande S ou M, L tolérée)_') + '. Commencez par vérifier vos mesures _(mètre ruban à plat, sans serrer, sans vêtement épais)_ : une erreur de saisie est vite arrivée. Si elles sont justes, l’agence est là pour en parler avec vous et vous conseiller.');
+    if (a.aVerifier.length) l.push('🔎 À vérifier : votre ' + joindre(a.aVerifier) + ' _(beaucoup plus grand que vos autres mesures, sans doute une erreur de saisie)_.');
   }
 
   function ligneHtml(p, dates) {
@@ -139,7 +107,7 @@
       (deja ? ' <span class="rp-gris rp-date-envoi">· dernier message le ' + new Date(deja).toLocaleDateString('fr-FR') + '</span>' : '') +
       (!a.aJour && !wa ? ' <span class="rp-gris">· pas de numéro WhatsApp : le message sera copié, à coller où vous voulez</span>' : '') + '</label>' +
       (a.aJour ? '' : '<ul class="rp-points">' + points.join('') + '</ul>' +
-        '<details class="rp-message"><summary>Voir / modifier le message</summary><textarea rows="16" data-id="' + echapper(p.id) + '">' + echapper(message(p, a, !!deja)) + '</textarea></details>') +
+        '<details class="rp-message"><summary>Voir / modifier le message</summary><textarea rows="16" data-id="' + echapper(p.id) + '">' + echapper(message(p, a)) + '</textarea></details>') +
       '</div>';
   }
 

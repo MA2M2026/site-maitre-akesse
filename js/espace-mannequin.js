@@ -1440,7 +1440,7 @@ const CHAMPS_ANALYSE = {
   height_cm:'f-taille', weight_kg:'f-poids', chest_cm:'f-poitrine', waist_cm:'f-tourTaille', hips_cm:'f-hanches', neck_cm:'f-cou',
   shoulder_cm:'f-epaules', arm_cm:'f-bras', inseam_cm:'f-entrejambe', shoe_size:'f-pointure', eye_color:'f-yeux', hair_color:'f-cheveux'
 };
-const BLOCS_ETAPES = ['identite','physique','formation','experiences','photos'];
+const BLOCS_ETAPES = MA2M_BLOCS; // js/analyse-profil.js
 function pointsARemplir(){
   if (typeof ma2mAnalyserProfil !== 'function') return null;
   const d = state.identite, f = state.formation, pp = state.profilPro, ph = state.photos, p = state.physique;
@@ -1454,20 +1454,14 @@ function pointsARemplir(){
   const photos = ph.book.filter(function(x){ return !x.ecartee; }).map(function(x, i){
     return { id: x.id, principale: meme(x, ph.principale), photo_couverture: meme(x, ph.couverture), created_at: new Date(Date.UTC(2000, 0, 1) + i * 1000).toISOString() };
   });
-  const a = ma2mAnalyserProfil(ligne, photos, state.experiences.length, true);
-  const champs = { identite: [], physique: [], formation: [], experiences: [], photos: [] };
-  a.identite.forEach(function(k){ if (champs.identite.indexOf(CHAMPS_ANALYSE[k]) === -1) champs.identite.push(CHAMPS_ANALYSE[k]); });
-  a.manquantesCols.concat(a.aReprendreCols, a.aVerifierCols).forEach(function(c){ if (champs.physique.indexOf(CHAMPS_ANALYSE[c]) === -1) champs.physique.push(CHAMPS_ANALYSE[c]); });
-  if (a.parcours.indexOf('etudes') !== -1) champs.formation.push('f-niveau');
-  if (a.parcours.indexOf('langues') !== -1) champs.experiences.push('langues');
-  if (a.parcours.indexOf('experiences') !== -1) champs.experiences.push('addExp');
-  if (a.photos.indexOf('profil') !== -1) champs.photos.push('uPrincipale');
-  if (a.photos.indexOf('couverture') !== -1 || a.photos.indexOf('identiques') !== -1) champs.photos.push('uCouverture');
-  const nb = {};
-  BLOCS_ETAPES.forEach(function(k){ nb[k] = champs[k].length; });
-  // Photos : chaque photo qui manque pour arriver au minimum compte pour un élément.
-  if (a.photos.indexOf('book') !== -1) { champs.photos.push('book'); nb.photos += MA2M_PHOTOS_MINIMUM - a.nbPhotos; }
-  return { champs: champs, nb: nb };
+  const pts = ma2mPointsParBloc(ma2mAnalyserProfil(ligne, photos, state.experiences.length, true));
+  const ids = { etudes: 'f-niveau', langues: 'langues', experiences: 'addExp', profil: 'uPrincipale', couverture: 'uCouverture', identiques: 'uCouverture', book: 'book' };
+  const champs = {};
+  MA2M_BLOCS.forEach(function(k){
+    champs[k] = [];
+    pts.elements[k].forEach(function(e){ const id = CHAMPS_ANALYSE[e] || ids[e]; if (id && champs[k].indexOf(id) === -1) champs[k].push(id); });
+  });
+  return { champs: champs, nb: pts.nb };
 }
 function pastilleRouge(n){
   return n > 0 ? '<span class="pastille-rouge" title="'+n+' élément'+(n>1?'s':'')+' à remplir ou à corriger">'+n+'</span>' : '';
