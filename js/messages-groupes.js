@@ -13,7 +13,8 @@
 //     « {date} », « {heure} » et « {lieu} » par les cases au-dessus du message (convocation
 //     au casting en présentiel de l'agence, demande de la propriétaire du 07/10/2026).
 //   - Le message est écrit pour WhatsApp (*gras*, _italique_) : l'e-mail reçoit le même
-//     texte sans ces signes, et sans la phrase « Un e-mail de confirmation… ».
+//     texte sans ces signes, et sans la phrase « Un e-mail de confirmation… » (retirée aussi
+//     du WhatsApp des personnes sans e-mail). Convocation et outils : js/convocation-agence.js.
 //   - Les envois déjà faits sont notés sur cet appareil (on peut s'arrêter et reprendre
 //     plus tard sans renvoyer en double).
 (function () {
@@ -36,18 +37,11 @@
   // {date}, {heure}, {lieu} : mêmes pour tout le groupe (cases au-dessus du message).
   const INFOS_RDV = /\{(date|heure|lieu)\}/i;
   function remplirInfos(texte) {
-    const v = { date: dateLongue($('mg-date').value), heure: $('mg-heure').value.trim(), lieu: $('mg-lieu').value.trim() };
+    const v = { date: dateLongueFr($('mg-date').value), heure: $('mg-heure').value.trim(), lieu: $('mg-lieu').value.trim() };
     return texte.replace(/\{(date|heure|lieu)\}/gi, (m, k) => v[k.toLowerCase()] || A_COMPLETER);
   }
   function personnaliser(texte, d) {
-    return remplirInfos(texte).replace(/\{pr[ée]nom\}/gi, prenomDe(d.full_name) || 'Madame, Monsieur').replace(/\{casting\}/gi, casting(d));
-  }
-  // Version e-mail : sans la phrase qui annonce l'e-mail, sans *gras* ni _italique_ WhatsApp.
-  function pourEmail(texte) {
-    return texte
-      .split('\n').filter(l => !/Un e-mail de confirmation vous a également été envoyé/i.test(l)).join('\n')
-      .replace(/\*([^*\n]+)\*/g, '$1')
-      .replace(/(^|[\s(«])_([^_\n]+)_(?=$|[\s.,;:!?)»])/gm, '$1$2');
+    return remplirInfos(d.email ? texte : sansPhraseEmail(texte)).replace(/\{pr[ée]nom\}/gi, prenomDe(d.full_name) || 'Madame, Monsieur').replace(/\{casting\}/gi, casting(d));
   }
   function echapper(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
@@ -71,60 +65,18 @@
   function noterFait(canal, id) { const o = datesEnvoi(canal); o[id] = new Date().toISOString(); try { localStorage.setItem(cleSuivi(canal), JSON.stringify(o)); } catch (e) {} }
   function dateCourte(iso) { return iso ? new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : ''; }
 
-  // Dimanche qui suit (jamais aujourd'hui), au format de la case date : 'AAAA-MM-JJ'.
-  function dimancheSuivant() {
-    const d = new Date(); d.setHours(12, 0, 0, 0);
-    d.setDate(d.getDate() + ((7 - d.getDay()) % 7 || 7));
-    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-  }
-  // 'AAAA-MM-JJ' -> « Dimanche 12 octobre 2026 » ('' si la case est vide).
-  function dateLongue(v) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(v || '')) return '';
-    const t = new Date(v + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-    return t.charAt(0).toUpperCase() + t.slice(1);
-  }
-  // Heure et lieu : retenus sur cet appareil pour les prochains envois.
-  const MEMOIRE = { heure: ['mg-heure', 'ma2m_mg_heure', '15 h 00'], lieu: ['mg-lieu', 'ma2m_mg_lieu', 'Riviera Faya, Cité ATCI'] };
-  function lireMemoire(cle, defaut) { try { return localStorage.getItem(cle) || defaut; } catch (e) { return defaut; } }
+  // Date, heure et lieu proposés : dimanche suivant, puis les dernières valeurs saisies.
   function initialiserInfos() {
-    $('mg-date').value = dimancheSuivant();
-    Object.values(MEMOIRE).forEach(([id, cle, defaut]) => { $(id).value = lireMemoire(cle, defaut); });
+    const m = infosRdvMemorisees();
+    $('mg-date').value = dimancheSuivantISO(); $('mg-heure').value = m.heure; $('mg-lieu').value = m.lieu;
   }
-  function retenirInfos() {
-    Object.values(MEMOIRE).forEach(([id, cle]) => { try { localStorage.setItem(cle, $(id).value.trim()); } catch (e) {} });
-  }
+  function retenirInfos() { memoriserInfosRdv($('mg-heure').value, $('mg-lieu').value); }
   // Les cases n'apparaissent que si le message les utilise.
   function majInfos() { $('mg-infos-rdv').style.display = INFOS_RDV.test($('mg-message').value) ? '' : 'none'; }
 
-  // Deuxième message proposé d'office aux candidates retenues pour intégrer l'agence
-  // (nouvelle version de la propriétaire, 07/10/2026, mise en forme pour WhatsApp).
-  // {date}, {heure}, {lieu} viennent des cases au-dessus du message. Modifiable avant envoi.
-  function modeleAgence() {
-    return `✨ *MAÎTRE AKESSE MODEL MANAGEMENT* ✨
-
-Bonjour {prénom},
-
-Félicitations ! 🎉 Suite à votre candidature sur notre site, nous avons le plaisir de vous annoncer que _votre candidature a été retenue_ pour la prochaine étape de notre sélection.
-
-Nous vous invitons à notre _casting en présentiel_ :
-
-📅 _{date}_
-🕒 _{heure}_
-📍 _{lieu}_
-
-👗 *Dress code*
-👠 _Filles :_ talons, legging long noir et top noir
-👞 _Hommes :_ pantalon noir et chaussures noires
-
-💡 _Bon à savoir :_ ce casting prend la forme d'une _séance de formation et de mise en situation_. Débutant(e) ou expérimenté(e), et même si vous ne maîtrisez pas encore la marche en talons, ce n'est pas un obstacle : nous vous accompagnerons pas à pas.
-
-✅ Merci de _confirmer votre présence_ en répondant à ce message.
-📧 Un e-mail de confirmation vous a également été envoyé.
-
-Au plaisir de vous rencontrer !
-
-_L'équipe Maître Akesse Model Management_`;
-  }
+  // Deuxième message proposé d'office aux candidates retenues pour intégrer l'agence :
+  // la convocation commune (js/convocation-agence.js). Modifiable avant envoi.
+  function modeleAgence() { return CONVOCATION_AGENCE; }
   // Deuxième message pour un casting précis : même esprit, avec les informations
   // pratiques à compléter (elles changent d'un casting à l'autre).
   const A_COMPLETER = '[à compléter]';
@@ -308,7 +260,7 @@ L'équipe Maître Akesse Model Management`;
       etat.className = 'form-msg ok';
       etat.textContent = `Envoi ${i + 1} / ${liste.length}… (gardez la page ouverte)`;
       try {
-        await envoyerEmailCandidat({ to_email: d.email, to_name: prenomDe(d.full_name), message: pourEmail(personnaliser(t, d)) });
+        await envoyerEmailCandidat({ to_email: d.email, to_name: prenomDe(d.full_name), message: messagePourEmail(personnaliser(t, d)) });
         noterFait('email', d.id); ok++;
       } catch (e) {
         echecs.push((d.full_name || d.email) + (e && e.text ? ' (' + e.text + ')' : ''));

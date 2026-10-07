@@ -1084,6 +1084,14 @@ les classes ajoutées dynamiquement (`classList.add(...)`, `className =
   `pourEmail()` (signes WhatsApp retirés, phrase « Un e-mail de confirmation…
   » retirée). Le suivi « déjà envoyé » tient compte de date/heure/lieu : une
   nouvelle date = un nouvel envoi possible pour tout le monde.
+  **Texte unique** dans `js/convocation-agence.js` (`CONVOCATION_AGENCE`,
+  `dimancheSuivantISO`, `dateLongueFr`, `infosRdvMemorisees`/`memoriserInfosRdv`,
+  `sansPhraseEmail`, `messagePourEmail`) : utilisé aussi par la fiche d'une
+  personne (« Écrire sur WhatsApp » → Convocation, candidat(e)s « agence »
+  seulement ; casting précis et inscriptions gardent l'ancienne convocation).
+  La fiche propose les mêmes date/heure/lieu et a un bouton « ✉️ Envoyer aussi
+  par e-mail ». Sans adresse e-mail, la phrase « Un e-mail de confirmation… »
+  est retirée du WhatsApp (fiche et messages groupés).
 
 ## Diagnostic sécurité du 28 septembre 2026 (nuit)
 
