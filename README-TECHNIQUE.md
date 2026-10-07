@@ -1524,7 +1524,8 @@ toutes les écritures sont simulées pendant l'enregistrement.
   taille du dessus. La pointure n'entre pas dans le calcul. Maximum L pour tous.
 - **Haut, bas et taille maximum** (décisions du 06/10/2026, soir) : selon la norme du
   prêt-à-porter, **haut = tour de poitrine seul** ; **bas = le plus grand entre tour de
-  bassin et tour de taille** (femmes comme hommes). Maximum L pour tous. Au-delà de L
+  bassin et tour de taille** (femmes comme hommes). Femmes : S ou M recommandé, L toléré ;
+  hommes (07/10/2026) : M ou L recommandé, XL toléré. Au-delà
   — `MAX_FEMMES` / `MAX_HOMMES` dans `js/tailles.js` — « Mensurations
   excessives » en rouge dans l'Espace (accueil et étape physique) et dans le Rapport des
   profils, avec les repères S/M(/L) ; rien n'est caché au public pour autant.
@@ -1547,7 +1548,8 @@ toutes les écritures sont simulées pendant l'enregistrement.
 
 - **`js/rapport-profils-admin.js`**, rubrique « Rapport des profils » (Bloc 2) :
   pour chaque mannequin, mensurations manquantes ou incohérentes (`js/tailles.js`),
-  photo de profil, couverture, book (6 photos minimum ; les cases de compcard non
+  photo de profil, couverture, book (10 photos minimum, Book et Lifestyle ensemble, décision du 07/10/2026 ; le
+  message dit combien il en reste à publier ; les cases de compcard non
   choisies se complètent seules avec le book), photos
   « à remplacer » laissées par la revue stricte des books (aucun nouvel appel à
   l'IA). Message personnel prêt (modifiable), envoi WhatsApp une personne après
@@ -1741,9 +1743,9 @@ plus qu'à un seul endroit.
 **sensibilisation** (jamais de menace) : « Mlle » / « Monsieur » + nom, points forts, profil
 complet à x % (barre), 3 priorités classées (mensurations > identité > parcours > photos),
 puis identité, expérience et parcours (projets `model_projects`, études, formation, langues),
-mensurations avec les tailles calculées haut / bas / générale (S ou M recommandé, L toléré,
-au-delà : conseil bienveillant), et les photos en dernier (photo de profil = couverture, book
-de moins de 6 photos). **Aucune remarque de l'IA** n'est reprise (`tri_raison` ignoré). Lien
+mensurations avec les tailles calculées haut / bas / générale (femmes S ou M recommandé, L toléré ;
+hommes M ou L recommandé, XL toléré ; au-delà : conseil bienveillant), et les photos en dernier (photo de profil = couverture, moins de
+10 photos : « il vous reste N photos à publier »). **Aucune remarque de l'IA** n'est reprise (`tri_raison` ignoré). Lien
 New Face sans expérience : jamais réclamée (message encourageant). Lien Espace mannequin en fin de message ; WhatsApp de l'agence cité sans lien (le message part de ce numéro). Constante `MA2M_WHATSAPP` (js/app.js) pour le bouton flottant. Historique des envois remis à
 zéro (clé `ma2m_rapport_profils_envois_v2`) + bouton « Réinitialiser l'historique ».
 Le paragraphe sur les deux catégories de photos s'active avec `CATEGORIES_PHOTOS_ACTIVES`.
@@ -1773,3 +1775,12 @@ aux deux endroits » au lieu de « ajoutez une photo de profil » (cas réel du 
   propriétaire (logos des organisateurs et même tenue sous plusieurs angles signalés à tort).
   `api/trier-photo.js` reste disponible pour plus tard, seulement sur demande de l'agence
   (le rattrapage automatique à l'ouverture du tableau de bord est supprimé).
+
+## Espace mannequin : téléphone (07/10/2026)
+
+`css/espace-mannequin-correctifs.css` : la liste des pays (`#f-tel-indicatif`) et la case du
+numéro (`#f-tel-numero`) passent l'une sous l'autre quand la place manque (téléphone,
+tablette) et restent côte à côte sur ordinateur. Avant, la liste prenait toute la largeur
+et la case du numéro faisait 30 px, hors de l'écran. Contrôle de tous les formulaires
+(script de mesure : case trop étroite, hors écran, chevauchement) sur 5 largeurs : aucun
+autre cas.

@@ -15,7 +15,9 @@
   var charge = false, profils = [], telephones = {};
   var suppDisponibles = true; // colonnes de l'Extension 121 lisibles ?
   var envoyesCetteFois = {}; // file d'envoi : on passe à la suivante (la date reste notée pour la prochaine fois)
-  var BOOK_MINIMUM = 6;
+  // Décision de la propriétaire (07/10/2026) : 10 photos au moins, Book et Lifestyle
+  // ensemble ; à partir de 10, le book est considéré comme riche.
+  var BOOK_MINIMUM = 10;
   // Historique des envois remis à zéro avec la nouvelle version du rapport (07/10/2026).
   var CLE_ENVOIS = 'ma2m_rapport_profils_envois_v2';
   // Deux catégories de photos (Book / Lifestyle) : expliquées dans le rapport une fois en service.
@@ -45,7 +47,7 @@
     naissance: 'date de naissance', nationalite: 'nationalité', ville: 'ville de résidence',
     presentation: 'présentation', presentationCourte: 'présentation trop courte', instagram: 'Instagram (ou « Je n’ai pas Instagram »)',
     experiences: 'expériences', etudes: 'niveau d’études', formation: 'formations', langues: 'langues parlées',
-    profil: 'photo de profil non choisie', couverture: 'couverture non choisie', identiques: 'même photo en profil et en couverture', book: 'book trop léger'
+    profil: 'photo de profil non choisie', couverture: 'couverture non choisie', identiques: 'même photo en profil et en couverture', book: 'moins de 10 photos'
   };
 
   // Analyse d'un profil : chaque rubrique liste ses points à compléter (des clés) ; le
@@ -117,7 +119,8 @@
     else if (a.manquantes.length) a.priorites.push('Compléter vos mensurations');
     if (a.identite.length) a.priorites.push('Compléter votre identité (' + a.identite.length + ' élément' + (a.identite.length > 1 ? 's' : '') + ')');
     if (a.parcours.length) a.priorites.push(a.parcours.indexOf('experiences') !== -1 ? 'Ajouter vos expériences' : 'Compléter votre parcours');
-    if (a.photos.length) a.priorites.push('Enrichir vos photos');
+    var reste = Math.max(0, BOOK_MINIMUM - photos.length);
+    if (a.photos.length) a.priorites.push('Enrichir vos photos' + (reste ? ' (encore ' + reste + ' photo' + (reste > 1 ? 's' : '') + ' à publier)' : ''));
     a.priorites = a.priorites.slice(0, 3);
     a.aJour = !a.identite.length && !a.parcours.length && !a.mesures.length && !a.exces && !a.photos.length;
     return a;
@@ -150,8 +153,8 @@
       if (!v.couvertureChoisie) r.push('• Choisissez votre *photo de couverture* : pour l’instant, votre fiche reprend votre photo de profil.');
       else if (v.identiques) r.push('• Votre photo de profil et votre photo de couverture sont *la même photo* : remplacez l’une des deux par une autre photo de votre book.');
     }
-    if (a.nbPhotos > 1 && a.photos.indexOf('book') !== -1) r.push('• Votre book compte ' + a.nbPhotos + ' photos : ajoutez-en pour arriver à *' + BOOK_MINIMUM + ' au moins*, avec des tenues et des ambiances variées.');
-    else if (a.nbPhotos >= BOOK_MINIMUM && a.nbPhotos < 2 * BOOK_MINIMUM) r.push('• Votre book compte ' + a.nbPhotos + ' photos : continuez à l’enrichir avec de nouvelles photos, des tenues et des ambiances différentes.');
+    var reste = BOOK_MINIMUM - a.nbPhotos;
+    if (reste > 0) r.push('• ' + (a.nbPhotos ? 'Vous avez publié ' + a.nbPhotos + ' photo' + (a.nbPhotos > 1 ? 's' : '') + '. Il' : 'Il') + ' vous reste *' + reste + ' photo' + (reste > 1 ? 's' : '') + ' à publier* pour arriver au minimum de *' + BOOK_MINIMUM + ' photos*, dans le Book ou dans Lifestyle, avec des tenues et des ambiances variées.');
     return r;
   }
 
