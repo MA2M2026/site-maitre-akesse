@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-wXgP37ciJ5EySmGA+gUs/vdQV9bYN7e6+MnEUIQhd7Q='; style-src 'self' https://fonts.googleapis.com 'sha256-SCQggsnrEpOAEmOZ3AazKXnQCalP+3heYJ7jkPyqbhQ=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-Op4ycMd2CyP/mJPhTExIF7gycNN6IDDDB+YgXGGnl8k='; style-src 'self' https://fonts.googleapis.com 'sha256-SCQggsnrEpOAEmOZ3AazKXnQCalP+3heYJ7jkPyqbhQ=';">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -97,6 +97,10 @@ setTimeout(() => {
           <div class="form-champ">
             <label for="re-entreprise">Company / Brand</label>
             <input type="text" id="re-entreprise">
+          </div>
+          <div class="form-champ">
+            <label for="re-civilite">Title *</label>
+            <select id="re-civilite" required><option value="">Select</option><option value="Madame">Mrs</option><option value="Mademoiselle">Miss</option><option value="Monsieur">Mr</option></select>
           </div>
           <div class="form-champ">
             <label for="re-nom">Your Name *</label>
@@ -290,7 +294,8 @@ document.getElementById('form-recruteur').addEventListener('submit', async (e) =
   const demande = {
     id: idDemande,
     company: document.getElementById('re-entreprise').value.trim(),
-    contact_name: document.getElementById('re-nom').value.trim(),
+    // Civilité devant le nom (décision de la propriétaire, 07/10/2026 : la civilité partout).
+    contact_name: [document.getElementById('re-civilite').value, document.getElementById('re-nom').value.trim()].filter(Boolean).join(' '),
     email: document.getElementById('re-email').value.trim(),
     phone: composerTelephone(document.getElementById('re-indicatif'), document.getElementById('re-telephone-numero')),
     whatsapp: composerTelephone(document.getElementById('re-indicatif-whatsapp'), document.getElementById('re-whatsapp-numero')),

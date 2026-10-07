@@ -6734,12 +6734,17 @@ end $$;
 NOTIFY pgrst, 'reload schema';
 
 -- =====================================================================
--- Extension 132 — Civilité choisie par la candidate (décision de la propriétaire,
--- 07/10/2026 : « être professionnel ») : Madame ou Mademoiselle pour une femme,
--- Monsieur pour un homme. Les messages commencent par « Bonjour Madame Awa Koné ».
+-- Extension 132 — Civilité partout (décision de la propriétaire, 07/10/2026 : « être
+-- professionnel », « la civilité à tout ») : candidatures, inscriptions, Espace mannequin
+-- (Madame / Mademoiselle / Monsieur). Contact, demandes des recruteurs et boutique : la
+-- civilité est rangée devant le nom, sans nouvelle colonne. Les messages commencent par « Bonjour Madame Awa Koné ».
 -- =====================================================================
 alter table casting_applications add column if not exists civilite text;
 alter table inscriptions_mannequins add column if not exists civilite text;
+-- Espace mannequin : civilité de la mannequin. Lisible par les comptes connectés (ce n'est
+-- pas une information sensible) : à ouvrir colonne par colonne (règle des Extensions 130/131).
+alter table model_profiles add column if not exists civilite text;
+grant select (civilite) on model_profiles to authenticated;
 
 drop function if exists soumettre_inscription_mannequin(text, text, date, text, int, text, text, text, text, text, text, text);
 create or replace function soumettre_inscription_mannequin(

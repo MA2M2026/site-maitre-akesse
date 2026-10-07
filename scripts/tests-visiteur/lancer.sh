@@ -14,7 +14,7 @@ for i in range(5):
     im = Image.new('RGB', (900, 1200), (60 + i * 30, 40, 80)); ImageDraw.Draw(im).ellipse((250, 200, 650, 700), fill=(200, 160, 120)); im.save('medias/photo%d.jpg' % i, quality=85)"
 [ -f medias/video.mp4 ] || ffmpeg -loglevel error -y -f lavfi -i testsrc=size=480x854:rate=25 -f lavfi -i sine=frequency=440 -t 6 -c:v libx264 -pix_fmt yuv420p -c:a aac -shortest medias/video.mp4
 export NODE_PATH="${NODE_PATH:-$(npm root -g)}"
-for t in test-visiteur.js test-inscription.js test-admin.js; do
+for t in test-visiteur.js test-inscription.js test-contact-recruteur.js test-admin.js; do
   echo "########## $t"
   timeout 400 node "$t"
 done

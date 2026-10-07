@@ -41,6 +41,9 @@
           '<form id="mp-form-commande" class="mp-commande-form" novalidate>' +
             '<div class="eyebrow">Étape 1 sur 3</div>' +
             '<h1>Vos coordonnées<span class="oeil">.</span></h1>' +
+            // Civilité devant le nom (décision de la propriétaire, 07/10/2026 : la civilité partout).
+            '<div class="form-champ"><label for="mp-civilite">Civilité *</label><select id="mp-civilite" required>' +
+              '<option value="">Sélectionner</option><option value="Madame">Madame</option><option value="Mademoiselle">Mademoiselle</option><option value="Monsieur">Monsieur</option></select></div>' +
             '<div class="mpg-grille2">' +
               champ('mp-nom', 'Nom et prénom *', 'type="text" autocomplete="name" maxlength="120" required') +
               champ('mp-tel', 'Téléphone *', 'type="tel" autocomplete="tel" inputmode="tel" maxlength="20" required placeholder="07 00 00 00 00"', 'Pour vous joindre au sujet de la commande.') +
@@ -102,6 +105,7 @@
       e.preventDefault();
       erreur.textContent = '';
       const manque = [];
+      if (!valeur('mp-civilite')) manque.push('votre civilité');
       if (valeur('mp-nom').length < 2) manque.push('votre nom');
       if (valeur('mp-tel').replace(/[^0-9]/g, '').length < 8) manque.push('votre téléphone');
       if (avecLivraison && (!valeur('mp-zone') || !valeur('mp-commune') || !valeur('mp-quartier'))) manque.push('la zone, la commune et le quartier de livraison');
@@ -114,7 +118,7 @@
         const { data, error } = await sbAdmin.rpc('boutique_passer_commande', {
           p_articles: MP.lirePanier().map(l => ({ variante_id: l.variante_id, quantite: l.quantite })),
           p_client: {
-            nom: valeur('mp-nom'), telephone: valeur('mp-tel'), email: valeur('mp-email'),
+            nom: [valeur('mp-civilite'), valeur('mp-nom')].filter(Boolean).join(' '), telephone: valeur('mp-tel'), email: valeur('mp-email'),
             commune: valeur('mp-commune'), quartier: valeur('mp-quartier'), repere: valeur('mp-repere'), note: valeur('mp-note')
           },
           p_zone_id: avecLivraison ? valeur('mp-zone') || null : null,

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-+0Jq0IGN+xcDWac7JSIWZC78pUWp90547xubBZuR7Ks='; style-src 'self' https://fonts.googleapis.com 'sha256-SdRYxWKqm5ftdqMeUdvybdnuqWRV6FlA7r2YdjWdsXA=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-HrEyZUhG5C6B8Y/KuQHOwx3BLmBC6FfvniDfch1yp/Q='; style-src 'self' https://fonts.googleapis.com 'sha256-SdRYxWKqm5ftdqMeUdvybdnuqWRV6FlA7r2YdjWdsXA=';">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -99,6 +99,10 @@ setTimeout(() => {
           <div class="form-champ">
             <label for="re-entreprise">Entreprise / marque</label>
             <input type="text" id="re-entreprise">
+          </div>
+          <div class="form-champ">
+            <label for="re-civilite">Civilité *</label>
+            <select id="re-civilite" required><option value="">Sélectionner</option><option value="Madame">Madame</option><option value="Mademoiselle">Mademoiselle</option><option value="Monsieur">Monsieur</option></select>
           </div>
           <div class="form-champ">
             <label for="re-nom">Votre nom *</label>
@@ -294,7 +298,8 @@ document.getElementById('form-recruteur').addEventListener('submit', async (e) =
   const demande = {
     id: idDemande,
     company: document.getElementById('re-entreprise').value.trim(),
-    contact_name: document.getElementById('re-nom').value.trim(),
+    // Civilité devant le nom (décision de la propriétaire, 07/10/2026 : la civilité partout).
+    contact_name: [document.getElementById('re-civilite').value, document.getElementById('re-nom').value.trim()].filter(Boolean).join(' '),
     email: document.getElementById('re-email').value.trim(),
     phone: composerTelephone(document.getElementById('re-indicatif'), document.getElementById('re-telephone-numero')),
     whatsapp: composerTelephone(document.getElementById('re-indicatif-whatsapp'), document.getElementById('re-whatsapp-numero')),

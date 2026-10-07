@@ -1176,6 +1176,11 @@ les classes ajoutées dynamiquement (`classList.add(...)`, `className =
   les 6 formulaires ; « Monsieur » d'office pour un homme. Colonne `civilite`
   (candidatures et inscriptions, `p_civilite` dans `soumettre_inscription_mannequin`).
   `nomAvecCivilite` l'utilise en priorité. ⚠️ Mettre en ligne APRÈS l'Extension 132.
+  Civilité partout (même jour) : formulaire de contact, demande des recruteurs
+  (`selection.html`) et commande de la boutique → civilité rangée DEVANT le nom
+  (« Madame Kouassi Marie »), sans colonne ; Espace mannequin → colonne
+  `model_profiles.civilite` (ouverte en lecture à `authenticated`), lue et
+  enregistrée à part (rien ne bloque si la colonne manque).
 
 ## Diagnostic sécurité du 28 septembre 2026 (nuit)
 

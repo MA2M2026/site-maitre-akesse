@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-Ugk2M8NIV5pZXIl5prZ2HJ/jRTg1K0uT9O3rxn5cYlc='; style-src 'self' https://fonts.googleapis.com 'sha256-OTfHT1lrDEpPzNsdPp4OjhDqKTSZ5t8SQEpw+9+WoV4=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-YEweoquonhvFQJMFgmDGllzIGeVBK/dFURNENNq+DI8='; style-src 'self' https://fonts.googleapis.com 'sha256-OTfHT1lrDEpPzNsdPp4OjhDqKTSZ5t8SQEpw+9+WoV4=';">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -123,6 +123,10 @@ setTimeout(() => {
       <div>
         <h3>Write to Us</h3>
         <form id="form-contact">
+          <div class="form-champ">
+            <label for="civilite">Title *</label>
+            <select id="civilite" required><option value="">Select</option><option value="Madame">Mrs</option><option value="Mademoiselle">Miss</option><option value="Monsieur">Mr</option></select>
+          </div>
           <div class="form-champ">
             <label for="nom">Name</label>
             <input type="text" id="nom" required>
@@ -266,7 +270,8 @@ remplirIndicatifs(document.getElementById('indicatif'));
 
 document.getElementById('form-contact').addEventListener('submit', async function(e){
   e.preventDefault();
-  const nom = document.getElementById('nom').value.trim();
+  // Civilité devant le nom (décision de la propriétaire, 07/10/2026 : la civilité partout).
+  const nom = [document.getElementById('civilite').value, document.getElementById('nom').value.trim()].filter(Boolean).join(' ');
   const telephone = composerTelephone(document.getElementById('indicatif'), document.getElementById('telephone-numero'));
   const email = document.getElementById('email').value.trim();
   const typeContact = document.getElementById('type-contact').value;

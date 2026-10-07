@@ -26,6 +26,8 @@ function emptyState(){
     identite:{ nomComplet:'', dateNaissance:'', villeNaissance:'', lieuNaissance:'', nationalite:'', ville:'', quartier:'', telephone:'', email:'', sexe:'' },
     // Mannequin mineure : contacts de son parent / tuteur (table contacts_parents, Extension 129).
     parent:{ civilite:'', nom:'', telephone:'', email:'' },
+    // Civilité de la mannequin (Madame / Mademoiselle / Monsieur, Extension 132).
+    civilite:'',
     physique:{
       taille:'', poids:'', poitrine:'', tourTaille:'', hanches:'', entrejambe:'', pointure:'',
       tailleVet:'', yeux:'', cheveux:'', carnation:'',
@@ -359,6 +361,12 @@ function majBlocParent(){
   if (bloc) bloc.style.display = estMineureLe(val('f-dob')) ? '' : 'none';
 }
 // Renvoie false (et prévient la mannequin) s'il manque un contact du parent pour une mineure.
+function lireCiviliteFormulaire(){
+  if (!document.getElementById('f-civilite') || val('f-civilite')) return true;
+  toast('Choisissez votre civilité : Madame, Mademoiselle ou Monsieur.', true);
+  document.getElementById('f-civilite').focus();
+  return false;
+}
 function lireParentFormulaire(){
   if (!document.getElementById('f-bloc-parent') || !estMineureLe(val('f-dob'))) return true;
   const p = {
@@ -395,6 +403,13 @@ function lireInstagramFormulaire(){
     return false;
   }
   state.instagram = compte; state.sansInstagram = sans;
+  return true;
+}
+// Civilité (Extension 132), enregistrée à part pour ne jamais bloquer le reste de l'étape.
+async function enregistrerCivilite(){
+  state.civilite = val('f-civilite') || state.civilite;
+  const { error } = await sb.from('model_profiles').update({ civilite: state.civilite || null }).eq('id', currentUser.id);
+  if (error) console.warn('Civilité non enregistrée :', error.message);
   return true;
 }
 // Case « Je n'ai pas Instagram » : colonne sans_instagram (Extension 126), enregistrée à part
@@ -482,6 +497,9 @@ const Store = {
       s.parent = { civilite: civ, nom: civ ? nomComplet.slice(civ.length + 1) : nomComplet, telephone: parent.parent_telephone || '', email: parent.parent_email || '' };
     }
 
+    // Civilité lue à part : vide tant que l'Extension 132 n'est pas exécutée, sans rien bloquer.
+    const { data: rowCiv, error: eCiv } = await sb.from('model_profiles').select('civilite').eq('id', currentUser.id).maybeSingle();
+    s.civilite = (!eCiv && rowCiv && rowCiv.civilite) || '';
     const { data: rowSansInsta, error: eSansInsta } = await sb.from('model_profiles').select('sans_instagram').eq('id', currentUser.id).maybeSingle();
     s.sansInstagram = !eSansInsta && !!(rowSansInsta && rowSansInsta.sans_instagram); // faux tant que l'Extension 126 n'est pas exécutée
 
@@ -805,6 +823,7 @@ function stepIdentite(){
   const d = state.identite;
   const villeSelect = (d.ville === 'Abidjan' || COMMUNES_ABIDJAN.includes(d.ville)) ? 'Abidjan' : d.ville;
   return '<h2>Identité</h2><p class="sub">Étape 1 sur 6</p><div class="grid">' +
+    field('Civilité','f-civilite',state.civilite,{tag:'select',req:true,options:[{value:'',label:'Sélectionner'},{value:'Madame',label:'Madame'},{value:'Mademoiselle',label:'Mademoiselle'},{value:'Monsieur',label:'Monsieur'}]}) +
     field('Nom complet','f-nom',d.nomComplet,{req:true,full:true}) +
     field('Date de naissance','f-dob',d.dateNaissance,{type:'date',req:true}) +
     field('Ville de naissance','f-ville-naissance',d.villeNaissance,{placeholder:'ex : Abidjan'}) +
@@ -1160,13 +1179,13 @@ function bindWizard(){
 
   document.getElementById('save1')?.addEventListener('click', async function(){
     const btn = this;
-    if (!lireInstagramFormulaire() || !lireParentFormulaire()) return;
+    if (!lireCiviliteFormulaire() || !lireInstagramFormulaire() || !lireParentFormulaire()) return;
     const identiteFormulaire = lireIdentiteFormulaire();
     identiteFormulaire.sexe = identiteFormulaire.sexe || s.identite.sexe;
     Object.assign(s.identite, identiteFormulaire);
     s.bio = val('f-bio'); s.citation = val('f-citation');
     btn.disabled = true; btn.textContent = 'Enregistrement…';
-    const ok = await Store.saveBlock(Object.assign(identiteToDb(s.identite), { bio: s.bio||null, instagram: s.instagram||null, citation: s.citation||null })) && await enregistrerSansInstagram() && await enregistrerParent();
+    const ok = await Store.saveBlock(Object.assign(identiteToDb(s.identite), { bio: s.bio||null, instagram: s.instagram||null, citation: s.citation||null })) && await enregistrerSansInstagram() && await enregistrerParent() && await enregistrerCivilite();
     if (ok) { toast('Enregistré'); goto(2); } else { btn.disabled=false; btn.textContent='Enregistrer'; }
   });
 
@@ -1640,7 +1659,7 @@ function bindBlockPage(k){
   }
 
   btn.addEventListener('click', async function(){
-    if (k==='identite' && (!lireInstagramFormulaire() || !lireParentFormulaire())) return;
+    if (k==='identite' && (!lireCiviliteFormulaire() || !lireInstagramFormulaire() || !lireParentFormulaire())) return;
     btn.disabled = true; btn.textContent = 'Enregistrement…';
     let ok = false, payload = {};
     if (k==='identite') {
@@ -1658,7 +1677,7 @@ function bindBlockPage(k){
     }
     ok = await Store.saveBlock(payload);
     if (ok && k==='physique') ok = await enregistrerMesuresSupp(s.physique) && await enregistrerFicheEvenementDepuisFormulaire();
-    if (ok && k==='identite') ok = await enregistrerSansInstagram() && await enregistrerParent();
+    if (ok && k==='identite') ok = await enregistrerSansInstagram() && await enregistrerParent() && await enregistrerCivilite();
     if (ok) { btn.textContent='✓ Enregistré'; btn.classList.add('saved'); setTimeout(function(){ toast('Bloc « '+k+' » enregistré'); }, 400); }
     else { btn.disabled=false; btn.textContent='Enregistrer'; }
   });
