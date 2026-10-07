@@ -14,6 +14,11 @@
 }
 .grid > *, .field { min-width: 0; }
 .field input, .field select, .field textarea { max-width: 100%; box-sizing: border-box; }
+/* Téléphone (07/10/2026) : la liste des pays prenait toute la largeur et la case du
+   numéro était écrasée (30 px, hors de l'écran). Pays et numéro côte à côte quand il y a
+   la place, l'un sous l'autre sinon — chacun garde une largeur utilisable. */
+.field .tel-row { flex-wrap: wrap; }
+.field .tel-row select, .field .tel-row input { flex: 1 1 170px; width: auto; max-width: 100%; min-width: 0; }
 
 /* Lien vers la candidature, en haut de l'écran de connexion (30/09). */
 .em-vers-candidature {

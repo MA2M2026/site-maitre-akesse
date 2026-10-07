@@ -921,7 +921,7 @@ function stepPhotos(){
     (p.couverture ? ('<div class="cc-couv-position"><button type="button" class="cc-couv-pos-btn '+(p.couverture.couverturePosition==='top'?'active':'')+'" data-couv-pos="top">Haut</button><button type="button" class="cc-couv-pos-btn '+((!p.couverture.couverturePosition||p.couverture.couverturePosition==='center')?'active':'')+'" data-couv-pos="center">Centre</button><button type="button" class="cc-couv-pos-btn '+(p.couverture.couverturePosition==='bottom'?'active':'')+'" data-couv-pos="bottom">Bas</button></div>') : '') +
       '<label class="cc-upload-btn" data-cc-upload-label="couverture"><input class="hidden-input" type="file" accept="image/*" id="fCouverture">Téléverser une nouvelle photo</label></div>' +
   '</div>' +
-  '<section class="book-section"><div class="section-title-row"><div><span class="editor-kicker">GALERIE</span><h3>Photos du Book</h3><p>Ajoutez vos photos ici — c’est parmi elles que vous choisirez ensuite vos photos principales et votre compcard.</p><p>Le site range automatiquement chaque photo : <strong>📒 Book</strong> pour les photos professionnelles (shootings, défilés, campagnes), <strong>🌿 Lifestyle</strong> pour les photos de téléphone, polaroïds et sorties. Touchez l’étiquette d’une photo pour la changer de catégorie.</p></div>' +
+  '<section class="book-section"><div class="section-title-row"><div><span class="editor-kicker">GALERIE</span><h3>Photos du Book</h3><p>Ajoutez vos photos ici — c’est parmi elles que vous choisirez ensuite vos photos principales et votre compcard.</p><p>Le site range automatiquement chaque photo : <strong>📒 Book</strong> pour les photos professionnelles (shootings, défilés, campagnes), <strong>🌿 Lifestyle</strong> pour les photos de téléphone, polaroïds et sorties. Touchez l’étiquette « Book » d’une photo pour la ranger dans Lifestyle. Seule l’agence peut remettre une photo dans le Book.</p></div>' +
     '<label class="book-multi-upload" for="fBook">＋ Ajouter des photos<input class="hidden-input" type="file" accept="image/*" id="fBook" multiple></label></div>' +
     '<div class="book-grid">'+p.book.map(function(ph){
       // Numéro fixe de la photo (Extension 117) : l'agence s'y réfère dans ses messages.
@@ -929,7 +929,9 @@ function stepPhotos(){
         (ph.numero?('<div class="book-num">N° '+Number(ph.numero)+'</div>'):'') +
         (ph.compcardOrdre?('<div class="book-slot-tag">COMPCARD '+ph.compcardOrdre+'</div>'):'') +
         '<button class="book-thumb-remove" data-rmbook="'+ph.id+'" title="Supprimer">✕</button>' +
-        '<button class="book-cat-btn'+(ph.categorie==='lifestyle'?' lifestyle':'')+'" data-book-cat="'+ph.id+'" title="Changer de catégorie">'+(ph.categorie==='lifestyle'?'🌿 Lifestyle':'📒 Book')+'</button>' +
+        (ph.categorie==='lifestyle'
+          ? '<span class="book-cat-btn lifestyle" title="Seule l’agence peut remettre cette photo dans le Book">🌿 Lifestyle</span>'
+          : '<button class="book-cat-btn" data-book-cat="'+ph.id+'" title="Ranger cette photo dans Lifestyle">📒 Book</button>') +
         '<button class="book-select-btn" data-book-cc-toggle="'+ph.id+'">'+(ph.compcardOrdre?'Retirer de la compcard':'+ Compcard')+'</button>' +
       '</div>';
     }).join('')+'</div></section>' +
@@ -1240,16 +1242,17 @@ function bindPhotoHandlers(){
     }
   }); });
 
-  // Catégorie Book / Lifestyle : la mannequin corrige d'un clic le classement automatique.
+  // Catégorie : la mannequin peut seulement passer une photo du Book vers Lifestyle ;
+  // seule l'agence remet une photo dans le Book (décision de la propriétaire, 07/10/2026,
+  // aussi imposée par la base : Extension 128).
   document.querySelectorAll('[data-book-cat]').forEach(function(btn){ btn.addEventListener('click', async function(e){
     e.stopPropagation();
     const photo = s.photos.book.find(function(ph){ return String(ph.id)===String(btn.dataset.bookCat); });
-    if (!photo) return;
-    const nouvelle = photo.categorie==='lifestyle' ? 'book' : 'lifestyle';
+    if (!photo || photo.categorie==='lifestyle') return;
+    if (!confirm('Ranger cette photo dans Lifestyle ? Seule l’agence pourra la remettre dans le Book.')) return;
     btn.disabled = true;
-    if (await enregistrerCategoriePhoto(photo.id, nouvelle)) {
-      photo.categorie = nouvelle; render(); reopenDashboardBlock('photos');
-      toast(nouvelle==='lifestyle' ? 'Photo rangée dans Lifestyle' : 'Photo rangée dans le Book');
+    if (await enregistrerCategoriePhoto(photo.id, 'lifestyle')) {
+      photo.categorie = 'lifestyle'; render(); reopenDashboardBlock('photos'); toast('Photo rangée dans Lifestyle');
     } else { btn.disabled = false; toast('Changement de catégorie impossible pour le moment, réessayez plus tard', true); }
   }); });
   // Sélection directe depuis le Book : chaque photo affiche son propre

@@ -6554,3 +6554,31 @@ alter table model_photos add column if not exists categorie text not null defaul
 update model_photos set categorie = 'lifestyle' where tri_statut = 'digital' and tri_manuel = true;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 128 — Catégorie des photos : une mannequin peut passer une photo du Book vers
+-- Lifestyle, jamais l'inverse ; seule l'agence (admin) remet une photo dans le Book
+-- (décision de la propriétaire, 07/10/2026 : éviter qu'une mannequin « gonfle » son Book).
+-- Une photo envoyée par la mannequin garde la catégorie décidée par le site (EXIF).
+-- =====================================================================
+create or replace function proteger_categorie_photo()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.uid() is null or exists (select 1 from admins where user_id = auth.uid()) then
+    return NEW;
+  end if;
+  if OLD.categorie = 'lifestyle' and NEW.categorie = 'book' then
+    NEW.categorie := 'lifestyle';
+  end if;
+  return NEW;
+end;
+$$;
+
+drop trigger if exists trg_proteger_categorie_photo on model_photos;
+create trigger trg_proteger_categorie_photo
+  before update of categorie on model_photos
+  for each row execute function proteger_categorie_photo();
