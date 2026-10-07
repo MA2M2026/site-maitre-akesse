@@ -140,3 +140,25 @@ html { background: #080707; }
 /* Mensurations excessives (au-delà de M femmes / L hommes) : alerte rouge. */
 .tailles-calculees .tc-exces { margin-top: 0.7rem; padding: 0.6rem 0.7rem; border: 1px solid #e0475e; border-radius: 8px; background: rgba(224, 71, 94, 0.12); }
 .panel > .tailles-calculees { margin: 0 0 1.2rem; }
+
+/* Pastilles rouges (07/10/2026) : nombre d'éléments à remplir ou à corriger sur chaque
+   onglet / bloc, et cases concernées encadrées en rouge (js/espace-mannequin.js). */
+.pastille-rouge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 20px; height: 20px; padding: 0 6px; margin-left: 6px; border-radius: 999px;
+  background: #e0182d; color: #fff; font-size: 12px; font-weight: 700; line-height: 1;
+  letter-spacing: 0; vertical-align: middle; box-shadow: 0 0 0 2px rgba(224, 24, 45, 0.28);
+}
+.block-card { position: relative; }
+.block-card > .pastille-rouge { position: absolute; top: 10px; right: 10px; margin: 0; min-width: 24px; height: 24px; font-size: 13px; }
+.champ-a-remplir input, .champ-a-remplir select, .champ-a-remplir textarea,
+.principal-photo-card.champ-a-remplir, .book-multi-upload.champ-a-remplir, #addExp.champ-a-remplir {
+  border-color: #ff2a40 !important; box-shadow: 0 0 0 2px rgba(255, 42, 64, 0.38) !important;
+}
+.champ-a-remplir > label { color: #ff5a6a !important; }
+.champ-a-remplir .check-row { outline: 2px solid #ff2a40; outline-offset: 4px; border-radius: 4px; }
+#addExp.champ-a-remplir { color: #ff5a6a !important; }
+.notice-a-remplir {
+  margin: 0.4rem 0 1rem; padding: 0.6rem 0.8rem; border-left: 3px solid #ff2a40;
+  background: rgba(224, 24, 45, 0.1); color: #ffd6da; font-size: 0.9rem;
+}

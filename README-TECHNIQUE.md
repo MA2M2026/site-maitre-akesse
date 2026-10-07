@@ -1748,6 +1748,11 @@ hommes M ou L recommandé, XL toléré ; au-delà : conseil bienveillant), et le
 10 photos : « il vous reste N photos à publier »). **Aucune remarque de l'IA** n'est reprise (`tri_raison` ignoré). Lien
 New Face sans expérience : jamais réclamée (message encourageant). Lien Espace mannequin en fin de message ; WhatsApp de l'agence cité sans lien (le message part de ce numéro). Constante `MA2M_WHATSAPP` (js/app.js) pour le bouton flottant. Historique des envois remis à
 zéro (clé `ma2m_rapport_profils_envois_v2`) + bouton « Réinitialiser l'historique ».
+**Messages suivants** (décision du 07/10/2026) : dès qu'un message a déjà été envoyé à une
+mannequin (historique de l'appareil), le message suivant ne garde que ce qui reste à régler :
+plus de points forts, d'expérience « bravo », de New Face, de « Bon à savoir », ni de
+mensurations quand elles sont réglées (aucun « bravo, c'est réglé »). Score et priorités
+restent. « Réinitialiser l'historique » refait un rapport complet.
 Le paragraphe sur les deux catégories de photos s'active avec `CATEGORIES_PHOTOS_ACTIVES`.
 Photos : le diagnostic suit **la logique de la fiche publique**, fonction partagée `photosAffichees()` (js/app.js, utilisée aussi par mannequin.html FR/EN) : sans photo de
 profil choisie, la fiche montre la plus ancienne photo ; sans couverture choisie, elle reprend la
@@ -1784,3 +1789,16 @@ tablette) et restent côte à côte sur ordinateur. Avant, la liste prenait tout
 et la case du numéro faisait 30 px, hors de l'écran. Contrôle de tous les formulaires
 (script de mesure : case trop étroite, hors écran, chevauchement) sur 5 largeurs : aucun
 autre cas.
+
+## Pastilles rouges de l'Espace mannequin (07/10/2026)
+
+Règle unique **`js/analyse-profil.js`** (`ma2mAnalyserProfil`, `MA2M_PHOTOS_MINIMUM = 10`),
+chargée par `tableau-de-bord.html` (Rapport des profils) et `espace-mannequin.html`.
+Dans l'Espace, `pointsARemplir()` (js/espace-mannequin.js) refait cette analyse sur l'état
+du formulaire : un rond rouge chiffré sur chaque onglet (assistant) et chaque bloc
+(tableau de bord) — éléments manquants **et** mensurations incohérentes (à reprendre / à
+vérifier) ; photos = photos manquantes pour arriver à 10 + profil + couverture. En ouvrant
+le bloc, `marquerChampsARemplir()` encadre les cases en rouge (classe `champ-a-remplir`,
+styles dans `css/espace-mannequin-correctifs.css`) et affiche une phrase d'explication ;
+le rouge d'une case s'efface dès qu'elle est remplie, le chiffre se met à jour à
+l'enregistrement. L'alerte « Votre profil n'est pas complet » suit la même règle.
