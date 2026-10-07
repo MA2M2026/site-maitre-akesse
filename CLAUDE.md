@@ -1,3 +1,14 @@
+# ⚠️ RÈGLE OBLIGATOIRE N° 1 : TOUJOURS ÉCRIRE EN FRANÇAIS
+
+**Chaque phrase écrite à la propriétaire est en français. Sans aucune exception.**
+Cela vaut pour TOUT ce qu'elle peut lire : les réponses finales, mais aussi les
+petites phrases écrites entre deux outils pendant le travail (« je teste… »,
+« tout marche… »), les questions, les comptes rendus, les légendes de fichiers.
+Jamais un seul mot d'anglais dans une phrase qui lui est adressée.
+Rappelée trois fois le 07/10/2026 : des messages intermédiaires étaient encore
+partis en anglais alors que la règle était déjà écrite. Avant d'envoyer, relire :
+« est-ce bien du français ? ».
+
 # Consignes de communication avec la propriétaire du site
 
 - **Une seule chose à la fois.** Ne pas enchaîner plusieurs actions ou
