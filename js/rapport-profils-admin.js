@@ -18,7 +18,7 @@
   // Historique des envois remis à zéro avec la nouvelle version du rapport (07/10/2026).
   var CLE_ENVOIS = 'ma2m_rapport_profils_envois_v2';
   // Deux catégories de photos (Book / Lifestyle) : expliquées dans le rapport une fois en service.
-  var CATEGORIES_PHOTOS_ACTIVES = false;
+  var CATEGORIES_PHOTOS_ACTIVES = true;
 
   function echapper(t) { return echapperHtml(t); }
   function envois() { try { return JSON.parse(localStorage.getItem(CLE_ENVOIS) || '{}') || {}; } catch (e) { return {}; } }

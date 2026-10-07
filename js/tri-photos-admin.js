@@ -1,12 +1,10 @@
-// Tableau de bord — tri automatique des photos par IA (06/10/2026).
-// À chaque envoi, api/trier-photo.js range la photo en « book » ou « digital » ;
-// une photo inutilisable est supprimée définitivement (choix de la propriétaire).
+// Tableau de bord — tri des photos par IA (06/10/2026), désormais UNIQUEMENT à la demande
+// de l'agence : depuis le 07/10/2026, plus aucun tri automatique (ni à l'envoi, ni en
+// rattrapage) ; le Book / Lifestyle est décidé par le site (categoriePhoto, js/app.js).
 // Ici, l'agence voit :
 //  - les photos écartées avant ce choix (cachées) : remettre ou supprimer ;
 //  - les photos « à vérifier » (l'IA hésite ; elles restent visibles) : garder ou supprimer ;
 //  - les photos envoyées avant la mise en place du tri, qu'on peut faire trier.
-// Les photos envoyées ces 3 derniers jours et pas encore triées (envoi coupé,
-// téléphone fermé trop tôt…) sont rattrapées automatiquement à l'ouverture.
 (function () {
   var details = document.getElementById('tri-photos-details');
   if (!details || typeof sb === 'undefined' || !sb) return;
@@ -41,20 +39,6 @@
     return 'echec';
   }
 
-  // Rattrapage discret : photos récentes jamais triées (une fois par session).
-  async function rattraperRecentes() {
-    try { if (sessionStorage.getItem('ma2m_rattrapage_tri')) return; sessionStorage.setItem('ma2m_rattrapage_tri', '1'); } catch (e) {}
-    var depuis = new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString();
-    var res = await sb.from('model_photos').select('id').is('tri_statut', null).eq('tri_manuel', false)
-      .gte('created_at', depuis).lt('created_at', new Date(Date.now() - 2 * 60 * 1000).toISOString()).limit(40);
-    if (res.error || !res.data || !res.data.length) return; // tri pas encore installé, ou rien à faire
-    var j = await jeton(); if (!j) return;
-    for (var i = 0; i < res.data.length; i++) {
-      var r = await trierUne(res.data[i].id, j);
-      if (r === 'credit' || r === 'non-configure') return;
-    }
-  }
-  setTimeout(function () { rattraperRecentes().catch(function () {}); }, 15000);
 
   // Suppression définitive : la fiche en base d'abord, puis les fichiers.
   async function supprimer(p) {

@@ -441,7 +441,7 @@ const Store = {
 
     const { data: photos } = await sb.from('model_photos').select('*').eq('model_id', currentUser.id).order('created_at', { ascending:true });
     (photos||[]).forEach(function(p){
-      const item = { id:p.id, numero:p.numero||null, path:p.chemin, url:p.url_miniature||p.url, urlPleine:p.url, compcardOrdre:p.compcard_ordre, couverturePosition:p.couverture_position||'center' };
+      const item = { id:p.id, numero:p.numero||null, path:p.chemin, url:p.url_miniature||p.url, urlPleine:p.url, compcardOrdre:p.compcard_ordre, couverturePosition:p.couverture_position||'center', categorie:p.categorie==='lifestyle'?'lifestyle':'book' };
       s.photos.book.push(item);
       if (p.principale) s.photos.principale = item;
       if (p.photo_cv) s.photos.photoCv = item;
@@ -523,15 +523,15 @@ const Store = {
     }, 90000);
     try{
       // Préparation et envoi partagés avec le tableau de bord (js/app.js).
-      const { chemin, url, cheminMiniature, urlMiniature, cheminMoyenne, urlMoyenne } = await envoyerPhotoBook(currentUser.id, file);
+      const { chemin, url, cheminMiniature, urlMiniature, cheminMoyenne, urlMoyenne, categorie } = await envoyerPhotoBook(currentUser.id, file);
 
       const { data: row, error: dbErr } = await sb.from('model_photos').insert({
         model_id: currentUser.id, url, chemin, url_miniature:urlMiniature, chemin_miniature:cheminMiniature,
-        url_moyenne:urlMoyenne, chemin_moyenne:cheminMoyenne, originale_optimisee:true
+        url_moyenne:urlMoyenne, chemin_moyenne:cheminMoyenne, originale_optimisee:true, categorie
       }).select().single();
       if (dbErr) throw dbErr;
-      trierPhotoEnArrierePlan(row.id);
-      return { id: row.id, numero: row.numero||null, path: chemin, url: urlMiniature||url, urlPleine:url, compcardOrdre:null };
+      // Catégorie Book / Lifestyle décidée par le site (plus de tri par l'IA, 07/10/2026).
+      return { id: row.id, numero: row.numero||null, path: chemin, url: urlMiniature||url, urlPleine:url, compcardOrdre:null, categorie: row.categorie==='lifestyle'?'lifestyle':'book' };
     }catch(e){
       // e.message porte le vrai motif quand il vient d'un refus explicite du
       // serveur (ex. limite de photos atteinte) — l'afficher plutôt qu'un
@@ -921,7 +921,7 @@ function stepPhotos(){
     (p.couverture ? ('<div class="cc-couv-position"><button type="button" class="cc-couv-pos-btn '+(p.couverture.couverturePosition==='top'?'active':'')+'" data-couv-pos="top">Haut</button><button type="button" class="cc-couv-pos-btn '+((!p.couverture.couverturePosition||p.couverture.couverturePosition==='center')?'active':'')+'" data-couv-pos="center">Centre</button><button type="button" class="cc-couv-pos-btn '+(p.couverture.couverturePosition==='bottom'?'active':'')+'" data-couv-pos="bottom">Bas</button></div>') : '') +
       '<label class="cc-upload-btn" data-cc-upload-label="couverture"><input class="hidden-input" type="file" accept="image/*" id="fCouverture">Téléverser une nouvelle photo</label></div>' +
   '</div>' +
-  '<section class="book-section"><div class="section-title-row"><div><span class="editor-kicker">GALERIE</span><h3>Photos du Book</h3><p>Ajoutez vos photos ici — c’est parmi elles que vous choisirez ensuite vos photos principales et votre compcard.</p></div>' +
+  '<section class="book-section"><div class="section-title-row"><div><span class="editor-kicker">GALERIE</span><h3>Photos du Book</h3><p>Ajoutez vos photos ici — c’est parmi elles que vous choisirez ensuite vos photos principales et votre compcard.</p><p>Le site range automatiquement chaque photo : <strong>📒 Book</strong> pour les photos professionnelles (shootings, défilés, campagnes), <strong>🌿 Lifestyle</strong> pour les photos de téléphone, polaroïds et sorties. Touchez l’étiquette d’une photo pour la changer de catégorie.</p></div>' +
     '<label class="book-multi-upload" for="fBook">＋ Ajouter des photos<input class="hidden-input" type="file" accept="image/*" id="fBook" multiple></label></div>' +
     '<div class="book-grid">'+p.book.map(function(ph){
       // Numéro fixe de la photo (Extension 117) : l'agence s'y réfère dans ses messages.
@@ -929,6 +929,7 @@ function stepPhotos(){
         (ph.numero?('<div class="book-num">N° '+Number(ph.numero)+'</div>'):'') +
         (ph.compcardOrdre?('<div class="book-slot-tag">COMPCARD '+ph.compcardOrdre+'</div>'):'') +
         '<button class="book-thumb-remove" data-rmbook="'+ph.id+'" title="Supprimer">✕</button>' +
+        '<button class="book-cat-btn'+(ph.categorie==='lifestyle'?' lifestyle':'')+'" data-book-cat="'+ph.id+'" title="Changer de catégorie">'+(ph.categorie==='lifestyle'?'🌿 Lifestyle':'📒 Book')+'</button>' +
         '<button class="book-select-btn" data-book-cc-toggle="'+ph.id+'">'+(ph.compcardOrdre?'Retirer de la compcard':'+ Compcard')+'</button>' +
       '</div>';
     }).join('')+'</div></section>' +
@@ -1239,6 +1240,18 @@ function bindPhotoHandlers(){
     }
   }); });
 
+  // Catégorie Book / Lifestyle : la mannequin corrige d'un clic le classement automatique.
+  document.querySelectorAll('[data-book-cat]').forEach(function(btn){ btn.addEventListener('click', async function(e){
+    e.stopPropagation();
+    const photo = s.photos.book.find(function(ph){ return String(ph.id)===String(btn.dataset.bookCat); });
+    if (!photo) return;
+    const nouvelle = photo.categorie==='lifestyle' ? 'book' : 'lifestyle';
+    btn.disabled = true;
+    if (await enregistrerCategoriePhoto(photo.id, nouvelle)) {
+      photo.categorie = nouvelle; render(); reopenDashboardBlock('photos');
+      toast(nouvelle==='lifestyle' ? 'Photo rangée dans Lifestyle' : 'Photo rangée dans le Book');
+    } else { btn.disabled = false; toast('Changement de catégorie impossible pour le moment, réessayez plus tard', true); }
+  }); });
   // Sélection directe depuis le Book : chaque photo affiche son propre
   // bouton "+ Compcard" — pas besoin de passer par le sélecteur de chaque
   // case une par une. Se place automatiquement dans le premier emplacement
