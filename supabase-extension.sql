@@ -6538,3 +6538,17 @@ NOTIFY pgrst, 'reload schema';
 alter table model_profiles add column if not exists sans_instagram boolean not null default false;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 127 — Deux catégories de photos, classées par le site SANS IA (décision de
+-- la propriétaire, 07/10/2026) : « book » (photos professionnelles : appareil photo
+-- ou retouche pro) et « lifestyle » (photos de téléphone, polaroïds, sorties). La
+-- catégorie est décidée à l'envoi d'après les informations de l'appareil (EXIF, voir
+-- categoriePhoto dans js/app.js) ; en cas de doute : book. Toutes les photos déjà en
+-- ligne sont rangées dans le Book (rien n'est supprimé ni caché). La mannequin (ses
+-- photos) et l'agence peuvent changer la catégorie d'un clic.
+-- =====================================================================
+alter table model_photos add column if not exists categorie text not null default 'book'
+  check (categorie in ('book', 'lifestyle'));
+
+NOTIFY pgrst, 'reload schema';

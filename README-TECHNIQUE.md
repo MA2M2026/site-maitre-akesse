@@ -1751,3 +1751,22 @@ Photos : le diagnostic suit **la logique de la fiche publique**, fonction partag
 profil choisie, la fiche montre la plus ancienne photo ; sans couverture choisie, elle reprend la
 photo de profil. Le rapport dit donc « vous n'avez pas choisi… votre fiche affiche la même photo
 aux deux endroits » au lieu de « ajoutez une photo de profil » (cas réel du 07/10/2026).
+
+## 📒🌿 Photos : Book et Lifestyle, classées par le site sans IA (07/10/2026)
+
+- Colonne `model_photos.categorie` (`book` | `lifestyle`, défaut `book`) — **Extension 127**.
+  Toutes les photos existantes sont dans le Book.
+- À l'envoi d'une photo (`envoyerPhotoBook`, js/app.js), `categoriePhoto(fichier)` lit l'EXIF
+  de la photo d'origine AVANT compression (`lireInfosAppareil`) : logiciel de retouche pro
+  (Photoshop, Lightroom, Capture One…) ou appareil photo (Canon, Nikon, Sony Alpha, Fujifilm…)
+  → `book` ; téléphone (Apple, Samsung, Tecno, Infinix, Xiaomi…, caméra avant, fichier HEIC)
+  → `lifestyle` ; **doute (pas d'EXIF, WhatsApp, capture) → `book`**. Seules les Lifestyle
+  sont écrites (`enregistrerCategoriePhoto`), un échec ne bloque jamais l'envoi.
+- Correction d'un clic : étiquette « 📒 Book / 🌿 Lifestyle » sur chaque photo de l'Espace
+  mannequin, liste déroulante dans la fenêtre photos du tableau de bord.
+- Fiche publique FR/EN : section « Book » puis « Digitals & Lifestyle » d'après `categorie`
+  (et non plus `tri_statut` de l'IA). Le rapport des profils explique les deux catégories
+  (`CATEGORIES_PHOTOS_ACTIVES = true`).
+- **Plus de tri par l'IA à l'envoi** (`trierPhotoEnArrierePlan` retiré) : décision de la
+  propriétaire (logos des organisateurs et même tenue sous plusieurs angles signalés à tort).
+  `api/trier-photo.js` reste disponible pour plus tard.

@@ -1626,29 +1626,93 @@ async function compresserPhotoOrigine(fichier, coteMax = 2200, qualite = 0.85) {
 function genererMiniature(fichier, coteMax = 800, qualite = 0.75) {
   return redessinerPhoto(fichier, coteMax, (canvas, fin) => canvas.toBlob(blob => fin(blob || null), 'image/jpeg', qualite));
 }
-// Préparation complète d'une photo du Book puis envoi : conversion HEIC, compression,
-// original + miniature 800 px + version moyenne 1400 px, dans le dossier du mannequin.
-// Une miniature ou une version moyenne qui échoue n'empêche pas l'envoi de la photo.
-// Tri automatique par IA (06/10/2026) d'une photo du Book qui vient d'être enregistrée,
-// lancé en arrière-plan (api/trier-photo.js) : Espace mannequin et tableau de bord.
-function trierPhotoEnArrierePlan(photoId){
-  jetonSessionCourante().then(function(jeton){
-    if (!jeton || !photoId) return;
-    return fetch('/api/trier-photo', {
-      method: 'POST', keepalive: true,
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jeton },
-      body: JSON.stringify({ photoId: String(photoId) })
-    });
-  }).catch(function(){});
+// ================== Catégorie d'une photo : Book ou Lifestyle (07/10/2026) ==================
+// Décision de la propriétaire : classement fait par le site lui-même, SANS IA. On lit la
+// « carte d'identité » (EXIF) de la photo d'origine, avant toute compression (qui l'efface) :
+// appareil photo professionnel ou logiciel de retouche pro → Book ; téléphone → Lifestyle
+// (digitales). En cas de doute (photo transférée par WhatsApp, capture…) → toujours Book :
+// un shooting pro ne doit jamais se retrouver en Lifestyle par erreur. La mannequin et
+// l'agence peuvent changer la catégorie d'un clic.
+async function lireInfosAppareil(fichier) {
+  const infos = { marque: '', modele: '', logiciel: '', objectif: '' };
+  try {
+    const vue = new DataView(await fichier.slice(0, 262144).arrayBuffer());
+    if (vue.byteLength < 4 || vue.getUint16(0) !== 0xFFD8) return infos; // pas un JPEG
+    let pos = 2;
+    while (pos + 4 <= vue.byteLength) {
+      const marqueur = vue.getUint16(pos), taille = vue.getUint16(pos + 2);
+      if ((marqueur & 0xFF00) !== 0xFF00 || marqueur === 0xFFDA) break; // début de l'image : plus d'en-têtes
+      if (marqueur === 0xFFE1 && pos + 10 <= vue.byteLength && vue.getUint32(pos + 4) === 0x45786966) { // « Exif »
+        lireTiff(vue, pos + 10, infos);
+        break;
+      }
+      pos += 2 + taille;
+    }
+  } catch (e) { /* fichier illisible : catégorie par défaut */ }
+  return infos;
+}
+function lireTiff(vue, debut, infos) {
+  const le = vue.getUint16(debut) === 0x4949; // ordre des octets (II = Intel)
+  const u16 = function (o) { return vue.getUint16(debut + o, le); };
+  const u32 = function (o) { return vue.getUint32(debut + o, le); };
+  const texte = function (entree) {
+    const nb = u32(entree + 4), o = nb > 4 ? u32(entree + 8) : entree + 8;
+    let t = '';
+    for (let i = 0; i < nb && debut + o + i < vue.byteLength; i++) { const c = vue.getUint8(debut + o + i); if (c) t += String.fromCharCode(c); }
+    return t.trim();
+  };
+  const parcourir = function (ifd, champs) {
+    if (!ifd || debut + ifd + 2 > vue.byteLength) return null;
+    const nb = u16(ifd); let exif = null;
+    for (let i = 0; i < nb; i++) {
+      const entree = ifd + 2 + i * 12;
+      if (debut + entree + 12 > vue.byteLength) break;
+      const tag = u16(entree);
+      if (tag === 0x8769) exif = u32(entree + 8);
+      else if (champs[tag]) infos[champs[tag]] = texte(entree);
+    }
+    return exif;
+  };
+  const exif = parcourir(u32(4), { 0x010F: 'marque', 0x0110: 'modele', 0x0131: 'logiciel' });
+  parcourir(exif, { 0xA434: 'objectif' });
+}
+const LOGICIELS_PRO = /photoshop|lightroom|capture one|luminar|affinity|darktable|dxo|camera raw|phocus/i;
+const MARQUES_APPAREILS_PHOTO = /canon|nikon|fujifilm|olympus|om digital|panasonic|leica camera|pentax|ricoh|hasselblad|sigma|phase one|mamiya|kodak|minolta/i;
+const MARQUES_TELEPHONES = /apple|samsung|tecno|infinix|itel|xiaomi|redmi|poco|oppo|vivo|realme|huawei|honor|oneplus|google|motorola|nokia|hmd|zte|lenovo|alcatel|tcl|meizu|asus|lge|lg electronics|nothing|wiko|umidigi|blackview|cubot|doogee|oukitel/i;
+async function categoriePhoto(fichier) {
+  const nom = String((fichier && fichier.name) || '').toLowerCase();
+  if (/heic|heif/.test(String(fichier && fichier.type)) || /\.(heic|heif)$/.test(nom)) return 'lifestyle'; // photo d'iPhone
+  const i = await lireInfosAppareil(fichier);
+  if (LOGICIELS_PRO.test(i.logiciel)) return 'book';
+  if (/front|avant|selfie/i.test(i.objectif)) return 'lifestyle';
+  if (/^sony/i.test(i.marque)) return /^(ilce|ilca|dsc|slt|nex|zv-)/i.test(i.modele) ? 'book' : 'lifestyle';
+  if (MARQUES_APPAREILS_PHOTO.test(i.marque)) return 'book';
+  if (MARQUES_TELEPHONES.test(i.marque)) return 'lifestyle';
+  return 'book'; // doute : toujours Book
 }
 
+// Range une photo du Book dans sa catégorie (colonne categorie, Extension 127). Les photos
+// sont créées en « book » par défaut : on n'écrit que les Lifestyle, et un échec (colonne
+// absente) ne bloque jamais l'envoi.
+async function enregistrerCategoriePhoto(photoId, categorie) {
+  if (categorie !== 'lifestyle' && categorie !== 'book') return false;
+  const { error } = await sb.from('model_photos').update({ categorie: categorie }).eq('id', photoId);
+  if (error) { console.warn('Catégorie de photo non enregistrée :', error.message); return false; }
+  return true;
+}
+
+// Préparation complète d'une photo du Book puis envoi : conversion HEIC, compression,
+// original + miniature 800 px + version moyenne 1400 px, dans le dossier du mannequin, et
+// catégorie Book / Lifestyle (categoriePhoto).
+// Une miniature ou une version moyenne qui échoue n'empêche pas l'envoi de la photo.
 async function envoyerPhotoBook(modelId, fichierOriginal) {
+  const categorie = await categoriePhoto(fichierOriginal); // avant compression (qui efface l'EXIF)
   const fichierConverti = await convertirSiHeic(fichierOriginal);
   const fichier = await compresserPhotoOrigine(fichierConverti);
   const chemin = modelId + '/' + Date.now() + '-' + suffixeAleatoire() + '-' + nomFichierSur(fichier.name);
   const url = await uploaderVersR2(modelId, chemin, fichier, fichier.type || 'image/jpeg');
   const versions = [['miniature', 'miniatures', '-n800.jpg', 800, 0.75], ['moyenne', 'moyennes', '.jpg', 1400, 0.78]];
-  const resultat = { chemin, url, cheminMiniature: null, urlMiniature: null, cheminMoyenne: null, urlMoyenne: null };
+  const resultat = { chemin, url, cheminMiniature: null, urlMiniature: null, cheminMoyenne: null, urlMoyenne: null, categorie };
   for (const [nom, dossier, fin, cote, qualite] of versions) {
     const blob = await genererMiniature(fichier, cote, qualite);
     if (!blob) continue;

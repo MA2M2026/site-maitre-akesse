@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-0gOyQdAoSN1ZDPpDpAZjKHdvf1tHukPMP2uy9hLQ6Ow='; style-src 'self' https://fonts.googleapis.com 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-e/+9ODdhspdQDfSATkID0B5t0RBsg+nGQDKCB+U11eY='; style-src 'self' https://fonts.googleapis.com 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
 <!-- Adresse lisible …/book/nom (06/10/2026) : la page peut être servie depuis /book/… ; ses fichiers se chargent toujours depuis la racine du site (voir js/adresse-fiche.js). -->
 <base href="/en/">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
@@ -271,7 +271,7 @@ async function chargerProfilInterne() {
 
   const { data: photos } = await sb
     .from('model_photos')
-    .select('id, url, url_miniature, url_moyenne, compcard_ordre, principale, photo_couverture, couverture_position, tri_statut, created_at')
+    .select('id, url, url_miniature, url_moyenne, compcard_ordre, principale, photo_couverture, couverture_position, tri_statut, created_at, categorie')
     .eq('model_id', id)
     .order('principale', { ascending: false })
     .order('created_at', { ascending: true });
@@ -506,10 +506,11 @@ async function chargerProfilInterne() {
   });
 
   galerie.innerHTML = '';
-  // Book et Digitals séparés (tri automatique des photos, 06/10/2026) : la galerie
+  // Book et Lifestyle / Digitals séparés : la galerie
   // plein écran parcourt d'abord le Book, puis les Digitals.
-  const photosDigitals = (photos || []).filter(p => p.tri_statut === 'digital');
-  const photosBook = (photos || []).filter(p => p.tri_statut !== 'digital');
+  // Catégorie décidée par le site (Book / Lifestyle, colonne categorie, 07/10/2026) — plus par l'IA.
+  const photosDigitals = (photos || []).filter(p => p.categorie === 'lifestyle');
+  const photosBook = (photos || []).filter(p => p.categorie !== 'lifestyle');
   const ordreGalerie = photosBook.concat(photosDigitals);
   const urlsPhotos = ordreGalerie.map(p => p.url);
   window.photosLightbox = urlsPhotos;
@@ -535,7 +536,7 @@ async function chargerProfilInterne() {
 
   const galerieDigitals = document.getElementById('galerie-digitals');
   ordreGalerie.forEach((p, index) => {
-    const digital = p.tri_statut === 'digital';
+    const digital = p.categorie === 'lifestyle';
     const div = document.createElement('div');
     div.className = 'book-photo-carte cliquable';
     div.innerHTML = `<img src="${echapperHtml(p.url_miniature || p.url)}" loading="lazy" alt="${digital ? 'Digital photo' : 'Book photo'}">`;
