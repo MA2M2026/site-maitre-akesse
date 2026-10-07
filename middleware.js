@@ -36,7 +36,7 @@ const SITE = 'https://www.maitreakessemodelmanagement.com';
 // navigateurs intégrés des applis (Instagram, Facebook « FBAN », Snapchat, LINE…) :
 // ce sont de vraies personnes, qui doivent voir la vraie page. Ni Google/Bing, qui
 // lisent déjà la vraie page.
-const ROBOTS_APERCU = /^WhatsApp\/|facebookexternalhit|facebot|twitterbot|telegrambot|linkedinbot|slackbot|discordbot|pinterestbot|skypeuripreview|redditbot|vkshare|embedly|iframely|mastodon/i;
+const ROBOTS_APERCU = /(?:^WhatsApp\/)|facebookexternalhit|facebot|twitterbot|telegrambot|linkedinbot|slackbot|discordbot|pinterestbot|skypeuripreview|redditbot|vkshare|embedly|iframely|mastodon/i;
 // Adresse lisible d'une fiche (06/10/2026) : /book/roxane-ouattara ou /en/book/roxane-ouattara
 // (colonne slug, Extension 118).
 const CHEMIN_JOLI = /^\/(en\/)?book\/([a-z0-9-]{1,80})\/?$/;

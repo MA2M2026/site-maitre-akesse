@@ -1696,3 +1696,28 @@ plus qu'à un seul endroit.
   identiques au pixel près avant/après.
 - Reste à faire plus tard (prudence) : les paires de scripts FR/EN encore recopiées
   (accueil, mannequins, actualités/événements) et les pages HTML en double.
+
+## ✅ Remarques de fiabilité SonarQube traitées (07/10/2026, matin — demande de la propriétaire)
+
+- **Étiquettes de formulaires** (95 remarques) : chaque champ a une étiquette lue par les
+  lecteurs d'écran — `<label for="id">` quand un libellé visible existe juste au-dessus,
+  sinon `aria-label` (repris du texte d'exemple ou du libellé du sélecteur d'indicatif pour
+  les numéros de téléphone). À respecter pour tout nouveau champ.
+- **Actions lancées en arrière-plan** (`chargerActualites()`, `demarrer()`,
+  `supprimerDeR2()`…) : marquées `void appel();` pour dire « on n'attend pas la réponse,
+  volontairement ». Leur éventuel échec n'est pas perdu : il est capté par la surveillance
+  globale (`js/surveillance.js`, `unhandledrejection` → journal d'erreurs + Sentry).
+- Lecture des vidéos : `Promise.resolve(v.play()).catch(...)` (plus de test « si p » sur une
+  promesse). Polices de la Compcard : `await document.fonts.ready`.
+- Hasard : `aleatoire()` utilise toujours `crypto.getRandomValues` (plus de `Math.random`) ;
+  le souffle des effets sonores est tiré par `remplirBruitBlanc(donnees)` (js/app.js), par
+  paquets de 16 384 valeurs (limite du navigateur).
+- Boutique : un code de billet venant de l'adresse (`?billet=`) n'est gardé en mémoire
+  d'onglet que s'il a la forme attendue (`CODE_BILLET`, lettres, chiffres, tirets, 4 à 40).
+- CSS : propriétés écrasées ou inconnues retirées sans changement visible ; la barre du
+  nouveau code d'inscription (`.tdb-20`) reste cachée tant qu'aucun code n'est généré
+  (avant, une barre vide s'affichait).
+- `supabase-extension.sql` : l'ancienne mise à jour de tous les niveaux porte `where true`
+  (toutes les fiches, voulu) et le déclencheur des adresses de fiche compare des longueurs
+  au lieu de chaînes vides (même résultat ; avertissement SonarQube pensé pour Oracle).
+  Rien à exécuter dans Supabase : comportement identique.

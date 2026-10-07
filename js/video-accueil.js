@@ -26,7 +26,7 @@
     function charger() {
       if (v.src) return;
       v.src = '/book-photos/' + valeur.chemin;
-      var p = v.play(); if (p && p.catch) p.catch(function () {});
+      Promise.resolve(v.play()).catch(function () {});
     }
     v.addEventListener('loadedmetadata', function () { forme(v.videoWidth, v.videoHeight); }, { once: true });
     v.addEventListener('playing', function () { sec.classList.add('video-prete'); }, { once: true });
@@ -50,7 +50,7 @@
     if ('IntersectionObserver' in window) {
       new IntersectionObserver(function (entrees) {
         var visible = entrees[0].isIntersecting;
-        if (visible) { charger(); if (v.src && v.paused) { var p = v.play(); if (p && p.catch) p.catch(function () {}); } }
+        if (visible) { charger(); if (v.src && v.paused) { Promise.resolve(v.play()).catch(function () {}); } }
         else if (v.src && !v.paused) v.pause();
       }, { rootMargin: '300px 0px' }).observe(sec);
     } else { charger(); }
@@ -58,7 +58,7 @@
     bouton.addEventListener('click', function () {
       charger();
       v.muted = !v.muted;
-      if (!v.muted) { v.volume = 1; var p = v.play(); if (p && p.catch) p.catch(function () {}); }
+      if (!v.muted) { v.volume = 1; Promise.resolve(v.play()).catch(function () {}); }
       bouton.setAttribute('aria-pressed', v.muted ? 'false' : 'true');
       bouton.querySelector('span').textContent = v.muted
         ? (anglais ? 'Turn sound on' : 'Activer le son')

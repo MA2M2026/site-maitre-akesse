@@ -163,7 +163,7 @@
     afficher();
   }
 
-  details.addEventListener('toggle', function () { if (details.open && !charge) charger(); });
+  details.addEventListener('toggle', function () { if (details.open && !charge) void charger(); });
   details.addEventListener('change', function (e) {
     if (!e.target.classList || !e.target.classList.contains('rp-choix')) return;
     // recocher un profil déjà prévenu = le renvoyer (ex. WhatsApp n'est pas parti)
@@ -174,7 +174,7 @@
     if (e.target.id === 'rp-actualiser') {
       if (enCours) return;
       envoyesCetteFois = {};
-      charger();
+      void charger();
     } else if (e.target.id === 'rp-tout') {
       details.querySelectorAll('#rp-a-envoyer .rp-choix').forEach(function (c) { c.checked = true; });
       majBouton();
@@ -187,7 +187,7 @@
         // sans numéro : copie du message ; si la copie échoue, le message est montré
         // sélectionné (à copier à la main) et le profil n'est PAS noté comme prévenu
         var copie = navigator.clipboard ? navigator.clipboard.writeText(texte).then(function () { return true; }, function () { return false; }) : Promise.resolve(false);
-        copie.then(function (ok) {
+        void copie.then(function (ok) {
           if (ok) { marquerEnvoye(id, false); return; }
           var det = zoneTexte && zoneTexte.closest('details'); if (det) det.open = true;
           if (zoneTexte) { zoneTexte.focus(); zoneTexte.select(); }

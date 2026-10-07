@@ -152,4 +152,4 @@ document.querySelectorAll('.filtre-niveau-btn').forEach(btn => {
   categorieActive = btn.dataset.cat;
 })();
 
-chargerMannequins();
+void chargerMannequins();

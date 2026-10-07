@@ -640,7 +640,7 @@ async function construireCanvasCompcard(ficheData, langue) {
     document.fonts.load('700 100px Arial'),
     document.fonts.load('500 100px Arial')
   ]);
-  if (document.fonts.ready) await document.fonts.ready;
+  await document.fonts.ready;
 
   // Chaque case garde la photo choisie pour elle ; les cases vides sont complétées
   // avec les autres photos du Book (voir completerEmplacementsPhotos).
@@ -1124,7 +1124,7 @@ async function construireCanvasCv(d) {
     document.fonts.load('600 100px Jost'), document.fonts.load('400 100px Jost'), document.fonts.load('italic 400 100px Jost'),
     document.fonts.load('600 100px "Cormorant Garamond"')
   ]);
-  if (document.fonts.ready) await document.fonts.ready;
+  await document.fonts.ready;
 
   const lienFichePublique = 'https://www.maitreakessemodelmanagement.com/mannequin.html?id=' + encodeURIComponent(d.mannequinId || '');
   const photosAuto = photosCvCompletees(d);
@@ -1498,10 +1498,10 @@ function nomFichierSur(nom) {
 
 // ================== Photos du Book (07/10/2026 : regroupé ici, c'était recopié dans
 // js/espace-mannequin.js et tableau-de-bord.html) ==================
-// Nombre au hasard entre 0 et 1, tiré par le générateur sûr du navigateur quand il existe.
+// Nombre au hasard entre 0 et 1, tiré par le générateur sûr du navigateur (crypto, présent
+// sur tous les navigateurs depuis 2014 : iOS 6.1, Android 4.4).
 function aleatoire() {
-  if (window.crypto && crypto.getRandomValues) return crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296;
-  return Math.random();
+  return crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296;
 }
 // Petit suffixe au hasard (6 caractères a-z0-9) pour des noms de fichiers uniques.
 function suffixeAleatoire() {
@@ -2016,6 +2016,16 @@ function lireContenuEditeur(quill) {
 }
 
 // ================== Effets sonores ==================
+// Bruit blanc (souffle des effets « Rideau » et « Menu ») tiré par le générateur sûr du
+// navigateur, par paquets (getRandomValues accepte au plus 65 536 octets à la fois).
+function remplirBruitBlanc(donnees) {
+  const paquet = new Uint32Array(16384);
+  for (let i = 0; i < donnees.length; i += paquet.length) {
+    crypto.getRandomValues(paquet);
+    const n = Math.min(paquet.length, donnees.length - i);
+    for (let k = 0; k < n; k++) donnees[i + k] = paquet[k] / 2147483648 - 1;
+  }
+}
 // Demande de la propriétaire (29/09/2026) : un son discret au clic sur
 // « Entrer » (porte d'entrée de l'accueil), pour commencer. Le son est fabriqué par le
 // navigateur (Web Audio) : aucun fichier à télécharger, rien qui ralentisse le site.
@@ -2040,7 +2050,7 @@ window.jouerSon = function (nom) {
       const taille = Math.floor(ctx.sampleRate * 2);
       const tampon = ctx.createBuffer(1, taille, ctx.sampleRate);
       const donnees = tampon.getChannelData(0);
-      for (let i = 0; i < taille; i++) donnees[i] = Math.random() * 2 - 1;
+      remplirBruitBlanc(donnees);
       const souffle = ctx.createBufferSource();
       souffle.buffer = tampon;
       const filtre = ctx.createBiquadFilter();
@@ -2060,7 +2070,7 @@ window.jouerSon = function (nom) {
       const taille = Math.floor(ctx.sampleRate * 0.5);
       const tampon = ctx.createBuffer(1, taille, ctx.sampleRate);
       const donnees = tampon.getChannelData(0);
-      for (let i = 0; i < taille; i++) donnees[i] = Math.random() * 2 - 1;
+      remplirBruitBlanc(donnees);
       const souffle = ctx.createBufferSource();
       souffle.buffer = tampon;
       const filtre = ctx.createBiquadFilter();
@@ -2194,7 +2204,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (action === 'whatsapp') {
       window.open('https://wa.me/?text=' + encodeURIComponent((titre ? titre + '\n' : '') + lien), '_blank', 'noopener');
     } else {
-      copierLien(lien, bouton);
+      void copierLien(lien, bouton);
     }
   }
   window.ficheOuverte = function (param, id, titre) {

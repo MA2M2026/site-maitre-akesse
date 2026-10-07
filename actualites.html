@@ -149,8 +149,8 @@ setTimeout(() => {
     </div>
     <div class="redaction-corps">
       <div class="redaction-colonne-edition">
-        <div class="form-champ"><label>Titre</label><input type="text" id="red-titre"></div>
-        <div class="form-champ"><label>Catégorie</label>
+        <div class="form-champ"><label for="red-titre">Titre</label><input type="text" id="red-titre"></div>
+        <div class="form-champ"><label for="red-categorie">Catégorie</label>
           <select id="red-categorie">
             <option value="">—</option>
             <option value="Casting">Casting</option>
@@ -160,8 +160,8 @@ setTimeout(() => {
           </select>
         </div>
         <div class="form-champ"><label>Texte de l'article</label><div id="red-editeur" class="editeur-riche redaction-editeur"></div></div>
-        <div class="form-champ"><label>Vidéo (lien YouTube ou Vimeo, facultatif)</label><input type="text" id="red-video" placeholder="https://youtube.com/watch?v=..."></div>
-        <div class="form-champ"><label id="red-images-label">Images (tu peux en sélectionner plusieurs à la fois)</label><input type="file" id="red-images" accept="image/*" multiple></div>
+        <div class="form-champ"><label for="red-video">Vidéo (lien YouTube ou Vimeo, facultatif)</label><input type="text" id="red-video" placeholder="https://youtube.com/watch?v=..."></div>
+        <div class="form-champ"><label for="red-images" id="red-images-label">Images (tu peux en sélectionner plusieurs à la fois)</label><input type="file" id="red-images" accept="image/*" multiple></div>
         <div id="red-images-apercu" class="redaction-images-apercu"></div>
 
         <div class="redaction-actions">

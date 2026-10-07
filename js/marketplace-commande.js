@@ -135,5 +135,5 @@
       }
     });
   }
-  demarrer();
+  void demarrer();
 })();

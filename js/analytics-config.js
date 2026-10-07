@@ -28,7 +28,7 @@ function gtag(){dataLayer.push(arguments);}
     bandeau.id = 'bandeau-cookies';
     bandeau.className = 'bandeau-cookies';
     bandeau.setAttribute('role', 'dialog');
-    bandeau.setAttribute('aria-label', anglais ? 'Cookies' : 'Cookies');
+    bandeau.setAttribute('aria-label', 'Cookies');
     bandeau.innerHTML = anglais
       ? '<p>We use audience measurement cookies (Google Analytics) to improve the site. No advertising. <a href="/en/politique-confidentialite.html#cookies">Learn more</a></p>' +
         '<div class="bandeau-cookies-boutons"><button type="button" class="btn" data-cookies="non">Decline</button><button type="button" class="btn btn--principal" data-cookies="oui">Accept</button></div>'

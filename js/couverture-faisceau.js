@@ -80,7 +80,7 @@
     v.addEventListener('playing', function () { videoActive = true; sec.classList.add('video-prete'); }, { once: true });
     v.addEventListener('error', function () { v.remove(); });
     sec.appendChild(v);
-    var p = v.play(); if (p && p.catch) p.catch(function () {});
+    Promise.resolve(v.play()).catch(function () {});
   }
   function lireReglage() {
     var CLE = 'ma2m_couverture';

@@ -534,9 +534,9 @@ const Store = {
       // fichiers (sinon la photo resterait listée mais cassée).
       const { error } = await sb.from('model_photos').delete().eq('id', id).eq('model_id', currentUser.id);
       if (error) throw error;
-      if (path) supprimerDeR2(currentUser.id, path);
-      if (cheminMiniature) supprimerDeR2(currentUser.id, cheminMiniature);
-      if (cheminMoyenne) supprimerDeR2(currentUser.id, cheminMoyenne);
+      if (path) void supprimerDeR2(currentUser.id, path);
+      if (cheminMiniature) void supprimerDeR2(currentUser.id, cheminMiniature);
+      if (cheminMoyenne) void supprimerDeR2(currentUser.id, cheminMoyenne);
       return true;
     }catch(e){ console.error(e); toast('Échec de la suppression', true); return false; }
   },
@@ -1120,7 +1120,7 @@ function bindExperienceHandlers(){
       const i = parseInt(el.dataset.i,10);
       s.experiences[i][el.dataset.expf] = el.value;
       clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(function(){ Store.updateExperience(s.experiences[i].id, s.experiences[i]); }, 500);
+      debounceTimer = setTimeout(function(){ void Store.updateExperience(s.experiences[i].id, s.experiences[i]); }, 500);
     });
   });
 }
@@ -1352,7 +1352,7 @@ function bindCompetencesHandlers(){
   document.querySelectorAll('input[data-competence]').forEach(function(el){
     el.addEventListener('change', function(){
       state.competences[el.dataset.competence] = parseInt(el.value, 10);
-      Store.saveBlock({ competences: state.competences });
+      void Store.saveBlock({ competences: state.competences });
     });
   });
 }
@@ -1560,8 +1560,8 @@ function openCv(){
     '<div class="cv-actions"><button class="btn ghost small" id="closeOv2">Fermer</button><button class="btn ghost small" id="btnCvJpeg">🖼️ Télécharger en JPEG</button><button class="btn primary small" id="btnCvPdf">🖨️ Télécharger en PDF</button></div>' +
     '</div>';
   showOverlay();
-  document.getElementById('btnCvPdf').addEventListener('click', function(){ genererCvFichier('pdf', donneesCv, 'btnCvPdf', 'btnCvJpeg'); });
-  document.getElementById('btnCvJpeg').addEventListener('click', function(){ genererCvFichier('jpeg', donneesCv, 'btnCvPdf', 'btnCvJpeg'); });
+  document.getElementById('btnCvPdf').addEventListener('click', function(){ void genererCvFichier('pdf', donneesCv, 'btnCvPdf', 'btnCvJpeg'); });
+  document.getElementById('btnCvJpeg').addEventListener('click', function(){ void genererCvFichier('jpeg', donneesCv, 'btnCvPdf', 'btnCvJpeg'); });
 }
 
 // Reconstruit, à partir de l'état réel du profil, l'objet { profil, photos, projets }
@@ -1611,8 +1611,8 @@ function openCompcard(){
     '</div>' +
     '<div class="cv-actions"><button class="btn ghost small" id="closeOv2">Fermer</button><button class="btn ghost small" id="p20BtnJpeg">Télécharger en JPEG</button><button class="btn primary small" id="p20BtnPdf">Télécharger en PDF</button></div>';
   showOverlay();
-  document.getElementById('p20BtnPdf').addEventListener('click', function(){ genererFiche('pdf', ficheDataDepuisEtat(), 'p20BtnPdf', 'p20BtnJpeg'); });
-  document.getElementById('p20BtnJpeg').addEventListener('click', function(){ genererFiche('jpeg', ficheDataDepuisEtat(), 'p20BtnPdf', 'p20BtnJpeg'); });
+  document.getElementById('p20BtnPdf').addEventListener('click', function(){ void genererFiche('pdf', ficheDataDepuisEtat(), 'p20BtnPdf', 'p20BtnJpeg'); });
+  document.getElementById('p20BtnJpeg').addEventListener('click', function(){ void genererFiche('jpeg', ficheDataDepuisEtat(), 'p20BtnPdf', 'p20BtnJpeg'); });
 }
 
 function showOverlay(){
@@ -1637,7 +1637,7 @@ async function demarrerApresConnexion(){
   render();
 }
 
-(async function init(){
+void (async function init(){
   if (!sb) {
     document.getElementById('app').innerHTML = '<div class="auth-loading"><span>Connexion au service indisponible pour le moment — réessayez dans quelques instants.</span></div>';
     return;

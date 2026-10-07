@@ -421,7 +421,7 @@
     afficherResultats(res, groupes, !enLigne);
     if (!enLigne) return;
     var like = '%' + motif + '%';
-    Promise.all([
+    void Promise.all([
       s.from('model_profiles').select('id, full_name, city').ilike('full_name', like).limit(4),
       s.from('casting_applications').select('id, full_name, status').ilike('full_name', like).order('created_at', { ascending: false }).limit(4),
       s.from('inscriptions_mannequins').select('id, full_name, statut').ilike('full_name', like).order('created_at', { ascending: false }).limit(4),

@@ -139,11 +139,11 @@ setTimeout(() => {
       </div>
 
       <div id="part-modal-edition" class="enpt-6">
-        <div class="form-champ"><label>Name (person or institution) *</label><input type="text" id="edit-p-nom"></div>
-        <div class="form-champ"><label>Represented Organization</label><input type="text" id="edit-p-structure"></div>
-        <div class="form-champ"><label>Associated Event</label><input type="text" id="edit-p-evenement"></div>
+        <div class="form-champ"><label for="edit-p-nom">Name (person or institution) *</label><input type="text" id="edit-p-nom"></div>
+        <div class="form-champ"><label for="edit-p-structure">Represented Organization</label><input type="text" id="edit-p-structure"></div>
+        <div class="form-champ"><label for="edit-p-evenement">Associated Event</label><input type="text" id="edit-p-evenement"></div>
         <div class="form-champ">
-          <label>Role</label>
+          <label for="edit-p-role">Role</label>
           <select id="edit-p-role">
             <option value="">—</option>
             <option value="DA">DA (Artistic Director)</option>
@@ -156,7 +156,7 @@ setTimeout(() => {
           </select>
         </div>
         <div class="form-champ"><label>Description / Notes</label><div id="edit-p-description-editeur" class="editeur-riche"></div></div>
-        <div class="form-champ"><label>Replace Logo (optional)</label><input type="file" id="edit-p-logo" accept="image/*"></div>
+        <div class="form-champ"><label for="edit-p-logo">Replace Logo (optional)</label><input type="file" id="edit-p-logo" accept="image/*"></div>
         <button class="btn btn--principal" id="edit-p-enregistrer-btn">Save</button>
         <button class="btn u-ml-0-5" id="edit-p-annuler-btn">Cancel</button>
         <div id="edit-p-msg" class="form-msg"></div>
@@ -175,11 +175,11 @@ setTimeout(() => {
       <p class="enpt-7">To edit or delete an already published partner, simply open its detail view by clicking on it in the page.</p>
 
       <h3 class="u-mb-1">Add a Partner</h3>
-      <div class="form-champ"><label>Name (person or institution) *</label><input type="text" id="p-nom" placeholder="e.g. Gilles Touré"></div>
-      <div class="form-champ"><label>Represented Organization</label><input type="text" id="p-structure" placeholder="e.g. Conseil du Café-Cacao"></div>
-      <div class="form-champ"><label>Associated Event</label><input type="text" id="p-evenement" placeholder="e.g. Cacao Fashion Show — JNCC 2026"></div>
+      <div class="form-champ"><label for="p-nom">Name (person or institution) *</label><input type="text" id="p-nom" placeholder="e.g. Gilles Touré"></div>
+      <div class="form-champ"><label for="p-structure">Represented Organization</label><input type="text" id="p-structure" placeholder="e.g. Conseil du Café-Cacao"></div>
+      <div class="form-champ"><label for="p-evenement">Associated Event</label><input type="text" id="p-evenement" placeholder="e.g. Cacao Fashion Show — JNCC 2026"></div>
       <div class="form-champ">
-        <label>Role</label>
+        <label for="p-role">Role</label>
         <select id="p-role">
           <option value="">—</option>
           <option value="DA">DA (Artistic Director)</option>
@@ -192,7 +192,7 @@ setTimeout(() => {
         </select>
       </div>
       <div class="form-champ"><label>Description / Notes (optional)</label><div id="p-description-editeur" class="editeur-riche"></div></div>
-      <div class="form-champ"><label>Logo or Poster (large size, good resolution)</label><input type="file" id="p-logo" accept="image/*"></div>
+      <div class="form-champ"><label for="p-logo">Logo or Poster (large size, good resolution)</label><input type="file" id="p-logo" accept="image/*"></div>
 
       <button class="btn btn--principal u-mt-1-2" id="p-publier-btn">Add This Partner</button>
       <button class="btn u-ml-0-5" id="admin-logout-btn">Logout</button>

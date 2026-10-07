@@ -83,7 +83,6 @@ body:not(.zone-admin) img {
   -webkit-user-select: none;
   user-select: none;
   -webkit-user-drag: none;
-  user-drag: none;
 }
 
 
@@ -2471,7 +2470,7 @@ html.vide-mot-responsable #mot-responsable.section-reservee.u-hidden { display: 
   background: var(--anthracite); color: var(--texte-corps);
 }
 #part-modal-media {
-  position: relative; overflow: hidden; padding: 0; background: var(--noir);
+  position: relative; overflow: hidden; background: var(--noir);
   min-height: 100vh; min-height: 100dvh;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   padding: 4.5rem 0 2.5rem; text-align: center;

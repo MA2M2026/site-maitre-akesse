@@ -139,7 +139,7 @@ async function chargerPhotosHero() {
 
 }
 
-chargerPhotosHero();
+void chargerPhotosHero();
 
 
 // --- Bande d'annonce défilante ---
@@ -189,7 +189,7 @@ async function chargerBandeauAnnonce() {
 
 }
 
-chargerBandeauAnnonce();
+void chargerBandeauAnnonce();
 
 
 // --- Flux Instagram ---
@@ -245,7 +245,7 @@ async function chargerFluxInstagram() {
 
 }
 
-chargerFluxInstagram();
+void chargerFluxInstagram();
 
 
 // --- Carrousel du hero ---
@@ -436,7 +436,7 @@ async function chargerMedaillonsAccueil() {
 
 }
 
-chargerMedaillonsAccueil();
+void chargerMedaillonsAccueil();
 
 
 // --- Mannequin à la une ---
@@ -573,7 +573,7 @@ function libererSectionReservee(id, chargementTermine) {
   if (!chargementTermine) return;
   try { localStorage.setItem('ma2m_bloc_vide_' + id, section.style.display === 'block' ? '0' : '1'); } catch (e) {}
 }
-Promise.resolve(window.promesseVedette).catch(() => {}).then(() => libererSectionReservee('mannequin-vedette', true));
+void Promise.resolve(window.promesseVedette).catch(() => {}).then(() => libererSectionReservee('mannequin-vedette', true));
 setTimeout(() => libererSectionReservee('mannequin-vedette'), 15000);
 
 
@@ -647,7 +647,7 @@ async function chargerMotResponsable() {
 
 }
 
-Promise.resolve(chargerMotResponsable()).catch(() => {}).then(() => libererSectionReservee('mot-responsable', true));
+void Promise.resolve(chargerMotResponsable()).catch(() => {}).then(() => libererSectionReservee('mot-responsable', true));
 setTimeout(() => libererSectionReservee('mot-responsable'), 15000);
 
 
@@ -708,7 +708,7 @@ async function chargerBandeauConfiance() {
 
 }
 
-chargerBandeauConfiance();
+void chargerBandeauConfiance();
 
 
 // Bande de chiffres retirée le 06/10/2026 (remplacée par l'entrée « Femmes · Hommes ·

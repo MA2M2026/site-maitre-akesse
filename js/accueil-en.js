@@ -76,7 +76,7 @@ async function chargerPhotosHero() {
     if (!cache.length) melanger(urls).slice(0, imagesHero.length).forEach((url, i) => afficher(imagesHero[i], url));
   }
 }
-chargerPhotosHero();
+void chargerPhotosHero();
 
 // --- Scrolling announcement banner ---
 async function chargerBandeauAnnonce() {
@@ -90,7 +90,7 @@ async function chargerBandeauAnnonce() {
     // The « Upcoming castings » card keeps its own text (the banner is also used for other news).
   }
 }
-chargerBandeauAnnonce();
+void chargerBandeauAnnonce();
 
 // --- Instagram feed: displays publications cached from the dashboard ---
 async function chargerFluxInstagram() {
@@ -107,7 +107,7 @@ async function chargerFluxInstagram() {
   `).join('');
   document.getElementById('flux-instagram').style.display = 'block';
 }
-chargerFluxInstagram();
+void chargerFluxInstagram();
 
 // --- Hero carousel ---
 (function initCarrouselHero() {
@@ -165,7 +165,7 @@ async function chargerMedaillonsAccueil() {
     conteneur.appendChild(carte);
   }
 }
-chargerMedaillonsAccueil();
+void chargerMedaillonsAccueil();
 
 // --- Featured model ---
 async function chargerMannequinVedette() {
@@ -210,7 +210,7 @@ function libererSectionReservee(id, chargementTermine) {
   if (!chargementTermine) return;
   try { localStorage.setItem('ma2m_bloc_vide_' + id, section.style.display === 'block' ? '0' : '1'); } catch (e) {}
 }
-Promise.resolve(window.promesseVedette).catch(() => {}).then(() => libererSectionReservee('mannequin-vedette', true));
+void Promise.resolve(window.promesseVedette).catch(() => {}).then(() => libererSectionReservee('mannequin-vedette', true));
 setTimeout(() => libererSectionReservee('mannequin-vedette'), 15000);
 
 // --- Founder's word: photo and message editable from the dashboard ---
@@ -232,7 +232,7 @@ async function chargerMotResponsable() {
   }
   document.getElementById('mot-responsable').style.display = 'block';
 }
-Promise.resolve(chargerMotResponsable()).catch(() => {}).then(() => libererSectionReservee('mot-responsable', true));
+void Promise.resolve(chargerMotResponsable()).catch(() => {}).then(() => libererSectionReservee('mot-responsable', true));
 setTimeout(() => libererSectionReservee('mot-responsable'), 15000);
 
 // --- "Trusted By" banner ---
@@ -251,7 +251,7 @@ async function chargerBandeauConfiance() {
   `).join('');
   document.getElementById('ils-nous-font-confiance').style.display = 'block';
 }
-chargerBandeauConfiance();
+void chargerBandeauConfiance();
 
 // Bande de chiffres retirée le 06/10/2026 (remplacée par l'entrée « Femmes · Hommes ·
 // New Faces » écrite directement dans la page, section #stat-strip).
