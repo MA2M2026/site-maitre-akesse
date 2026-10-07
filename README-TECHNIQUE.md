@@ -1733,3 +1733,16 @@ plus qu'à un seul endroit.
 - **Tour de tête** : n'est plus demandé (Espace), ni affiché (fiches FR/EN, fiche événement),
   ni réclamé par le rapport des profils. La colonne `head_cm` reste en base (rien d'effacé) et
   n'est plus jamais réécrite.
+
+## 📝 Rapport des profils — nouvelle version (07/10/2026, demande de la propriétaire)
+
+`js/rapport-profils-admin.js` (tableau de bord, « Rapport des profils ») rédige un message de
+**sensibilisation** (jamais de menace) : « Mlle » / « Monsieur » + nom, points forts, profil
+complet à x % (barre), 3 priorités classées (mensurations > identité > parcours > photos),
+puis identité, expérience et parcours (projets `model_projects`, études, formation, langues),
+mensurations avec les tailles calculées haut / bas / générale (S ou M recommandé, L toléré,
+au-delà : conseil bienveillant), et les photos en dernier (photo de profil = couverture, book
+de moins de 6 photos). **Aucune remarque de l'IA** n'est reprise (`tri_raison` ignoré). Lien
+WhatsApp de l'agence : constante `MA2M_WHATSAPP` (js/app.js). Historique des envois remis à
+zéro (clé `ma2m_rapport_profils_envois_v2`) + bouton « Réinitialiser l'historique ».
+Le paragraphe sur les deux catégories de photos s'active avec `CATEGORIES_PHOTOS_ACTIVES`.

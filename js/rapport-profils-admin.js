@@ -1,11 +1,13 @@
-// Tableau de bord — « Rapport des profils » (demande de la propriétaire, 06/10/2026).
-// Le site passe en revue chaque mannequin et dit ce qui manque : mensurations non
-// remplies ou incohérentes (js/tailles.js), photo de profil, couverture, compcard,
-// book trop petit, photos à remplacer signalées par la revue stricte des books (IA,
-// déjà faite : aucun coût en plus). Pour chaque profil « à compléter », un message
-// personnel est rédigé ; on coche plusieurs mannequins et chacune reçoit SON message,
-// séparément, par WhatsApp (un appui par personne : l'envoi automatique n'existe
-// qu'avec l'offre payante de WhatsApp). Les envois sont notés sur cet appareil.
+// Tableau de bord — « Rapport des profils » (demande de la propriétaire, 06/10/2026 ;
+// nouvelle version le 07/10/2026). Le site passe en revue chaque mannequin et rédige
+// pour elle un rapport de SENSIBILISATION (jamais de menace) : civilité et nom, points
+// forts, profil complet à x %, 3 priorités, puis identité, expérience et parcours,
+// mensurations (tailles calculées haut / bas / générale : S ou M recommandé, L toléré),
+// et les photos en dernier. Calculé par le site lui-même : AUCUNE remarque de l'IA
+// (une même tenue sous plusieurs angles ou le logo d'un organisateur ne sont pas des
+// erreurs). On coche plusieurs mannequins et chacune reçoit SON message, séparément,
+// par WhatsApp (un appui par personne : l'envoi automatique n'existe qu'avec l'offre
+// payante de WhatsApp). Les envois sont notés sur cet appareil.
 (function () {
   var details = document.getElementById('rapport-profils-details');
   if (!details || typeof sb === 'undefined' || !sb) return;
@@ -13,7 +15,10 @@
   var suppDisponibles = true; // colonnes de l'Extension 121 lisibles ?
   var envoyesCetteFois = {}; // file d'envoi : on passe à la suivante (la date reste notée pour la prochaine fois)
   var BOOK_MINIMUM = 6;
-  var CLE_ENVOIS = 'ma2m_rapport_profils_envois';
+  // Historique des envois remis à zéro avec la nouvelle version du rapport (07/10/2026).
+  var CLE_ENVOIS = 'ma2m_rapport_profils_envois_v2';
+  // Deux catégories de photos (Book / Lifestyle) : expliquées dans le rapport une fois en service.
+  var CATEGORIES_PHOTOS_ACTIVES = false;
 
   function echapper(t) { return echapperHtml(t); }
   function envois() { try { return JSON.parse(localStorage.getItem(CLE_ENVOIS) || '{}') || {}; } catch (e) { return {}; } }
@@ -31,56 +36,118 @@
     ]);
   }
 
-  // Liste des points à corriger pour un profil.
-  function analyser(p, photos) {
-    var manquantes = mesuresAttendues(p).filter(function (m) { return p[m[0]] === null || p[m[0]] === undefined || p[m[0]] === ''; }).map(function (m) { return m[1]; });
+  function vide(v) { return v === null || v === undefined || String(v).trim() === ''; }
+  function civilite(p) { return (p.category === 'homme' ? 'Monsieur ' : 'Mlle ') + String(p.full_name || '').trim(); }
+
+  // Analyse d'un profil : chaque rubrique liste ses points à améliorer ; le score compte
+  // les éléments déjà en place. Rien n'est calculé par l'IA.
+  function analyser(p, photos, nbProjets) {
+    var points = 0, total = 0;
+    function compter(ok) { total++; if (ok) points++; return ok; }
+    var a = { identite: [], parcours: [], mesures: [], photos: [], forts: [], priorites: [] };
+
+    // Identité
+    if (!compter(!vide(p.date_naissance))) a.identite.push('votre date de naissance');
+    if (!compter(!vide(p.nationalite))) a.identite.push('votre nationalité');
+    if (!compter(!vide(p.city))) a.identite.push('votre ville de résidence');
+    if (!compter(String(p.bio || '').trim().length >= 80)) a.identite.push(vide(p.bio) ? 'une présentation de quelques phrases (votre parcours, votre style, ce qui vous distingue)' : 'une présentation un peu plus détaillée (quelques phrases)');
+    if (!compter(!vide(p.instagram) || p.sans_instagram === true)) a.identite.push('votre compte Instagram (ou cochez « Je n’ai pas Instagram »)');
+
+    // Expérience et parcours
+    if (!compter(nbProjets > 0)) a.parcours.push('vos expériences : défilés, shootings, castings, événements — même les plus petits comptent');
+    if (!compter(!vide(p.niveau_etude))) a.parcours.push('votre niveau d’études');
+    if (!compter(!vide(p.formation_mannequin))) a.parcours.push('vos formations de mannequinat (ou « aucune » si vous débutez)');
+    if (!compter(!vide(p.languages))) a.parcours.push('les langues que vous parlez');
+
+    // Mensurations
+    var manquantes = mesuresAttendues(p).filter(function (m) { return vide(p[m[0]]); }).map(function (m) { return m[1]; });
+    compter(!manquantes.length);
+    if (manquantes.length) a.mesures.push('À compléter : ' + manquantes.join(', ') + '.');
     var t = ma2mTailles(p), libelles = { chest_cm: 'tour de poitrine', waist_cm: 'tour de taille', hips_cm: 'tour de bassin' };
     var aReprendre = t.aReprendre.map(function (c) { return libelles[c]; });
-    var book = photos.filter(function (ph) { return ph.tri_statut !== 'ecartee'; });
-    var photosPb = [];
-    if (!book.some(function (ph) { return ph.principale; })) photosPb.push('ajoutez une photo de profil');
-    if (!book.some(function (ph) { return ph.photo_couverture; })) photosPb.push('choisissez une photo de couverture');
-    // Compcard : les cases non choisies sont complétées automatiquement avec les photos
-    // du book (completerEmplacementsPhotos) ; un book suffisant suffit donc.
-    if (book.length < BOOK_MINIMUM) photosPb.push('ajoutez des photos à votre book (' + book.length + ' sur ' + BOOK_MINIMUM + ' minimum)');
-    // Remarques de la revue stricte des books (IA) : photos à remplacer ou proposées à la suppression
-    book.forEach(function (ph) {
-      if (ph.tri_statut !== 'a_verifier' || !ph.tri_raison) return;
-      var raison = String(ph.tri_raison).replace(/^(Proposée à la suppression|À remplacer \([^)]*\))\s*:\s*/, '');
-      photosPb.push('photo n°' + (ph.numero || '?') + ' à remplacer : ' + raison);
-    });
     var aVerifier = t.aVerifier.map(function (c) { return libelles[c]; });
-    var exces = t.exces ? { taille: t.generale, maximum: t.maximum, texte: ma2mTexteExces(t) } : null;
-    return { manquantes: manquantes, aReprendre: aReprendre, aVerifier: aVerifier, exces: exces, photos: photosPb, aJour: !manquantes.length && !aReprendre.length && !aVerifier.length && !exces && !photosPb.length };
+    compter(!aReprendre.length && !aVerifier.length && !t.exces);
+    a.tailles = t.aReprendre.length ? null : { haut: t.haut && t.haut.lettre, bas: t.bas && t.bas.lettre, generale: t.generale };
+    if (aReprendre.length) a.mesures.push('À reprendre : ' + aReprendre.join(' et ') + ' ne vont pas ensemble, une mesure est sûrement fausse. Mesurez-vous avec un mètre ruban, sans serrer. En attendant, vos mensurations restent cachées sur votre fiche.');
+    if (aVerifier.length) a.mesures.push('À vérifier : ' + aVerifier.join(', ') + ' (beaucoup plus grand que vos autres mesures — sans doute une erreur de saisie).');
+    a.exces = !!t.exces;
+    a.tolere = !t.exces && [t.haut, t.bas].some(function (x) { return x && x.lettre === 'L'; });
+
+    // Photos (en dernier)
+    var principale = photos.filter(function (ph) { return ph.principale; })[0];
+    var couverture = photos.filter(function (ph) { return ph.photo_couverture; })[0];
+    if (!compter(!!principale)) a.photos.push('ajoutez une photo de profil');
+    if (!compter(!!couverture)) a.photos.push('choisissez une photo de couverture');
+    else if (!compter(!principale || principale.id !== couverture.id)) a.photos.push('votre photo de profil et votre photo de couverture sont la même photo : choisissez une autre photo pour la couverture, votre book n’en sera que plus riche');
+    if (!compter(photos.length >= BOOK_MINIMUM)) a.photos.push('votre book n’est pas encore assez riche (' + photos.length + ' photo' + (photos.length > 1 ? 's' : '') + ') : ajoutez-en pour arriver à ' + BOOK_MINIMUM + ' au moins, avec des tenues et des ambiances variées');
+
+    a.score = total ? Math.round(points * 100 / total) : 0;
+
+    // Points forts (3 au plus)
+    if (p.published) a.forts.push('votre fiche est en ligne sur le site de l’agence');
+    if (nbProjets > 0) a.forts.push(nbProjets + ' expérience' + (nbProjets > 1 ? 's' : '') + ' déjà renseignée' + (nbProjets > 1 ? 's' : ''));
+    if (!manquantes.length && !aReprendre.length && !t.exces) a.forts.push('des mensurations complètes');
+    if (photos.length >= BOOK_MINIMUM) a.forts.push('un book de ' + photos.length + ' photos');
+    if (!vide(p.bio) && String(p.bio).trim().length >= 80) a.forts.push('une présentation soignée');
+    a.forts = a.forts.slice(0, 3);
+
+    // 3 priorités, de la plus importante à la moins importante
+    if (t.exces) a.priorites.push('vérifier vos mensurations (votre taille calculée dépasse la taille L)');
+    if (aReprendre.length) a.priorites.push('reprendre votre ' + aReprendre.join(' et votre '));
+    if (manquantes.length) a.priorites.push('compléter vos mensurations');
+    if (aVerifier.length) a.priorites.push('vérifier votre ' + aVerifier.join(' et votre '));
+    if (a.identite.length) a.priorites.push('compléter votre identité (' + a.identite.length + ' élément' + (a.identite.length > 1 ? 's' : '') + ')');
+    if (a.parcours.length) a.priorites.push(nbProjets > 0 ? 'compléter votre parcours' : 'ajouter vos expériences');
+    if (a.photos.length) a.priorites.push('enrichir vos photos');
+    a.priorites = a.priorites.slice(0, 3);
+    a.aJour = !a.identite.length && !a.parcours.length && !a.mesures.length && !a.exces && !a.photos.length;
+    return a;
   }
 
+  function barre(score) { var n = Math.round(score / 10); return '▰'.repeat(n) + '▱'.repeat(10 - n); }
+
   function message(p, a) {
-    var l = ['Bonjour ' + prenomDe(p.full_name) + ',', '', 'Votre profil MA2M n’est pas encore complet. Voici ce qu’il vous reste à faire :'];
-    if (a.manquantes.length) l.push('', '📏 Mensurations à compléter : ' + a.manquantes.join(', ') + '.');
-    if (a.aReprendre.length) l.push('', '⚠️ Mensurations à reprendre (elles ne vont pas ensemble) : ' + a.aReprendre.join(', ') + '. Mesurez-vous avec un mètre ruban, sans serrer. Tant qu’elles ne sont pas corrigées, vos mensurations sont cachées sur votre fiche, et après 7 jours votre fiche est retirée du site.');
-    if (a.aVerifier.length) l.push('', '⚠️ Mesure à vérifier (beaucoup trop grande par rapport aux autres) : ' + a.aVerifier.join(', ') + '.');
-    if (a.exces) l.push('', '❌ ' + a.exces.texte[0], a.exces.texte.slice(1).map(function (x) { return '• ' + x; }).join('\n'));
-    if (a.photos.length) l.push('', '📸 Photos :', a.photos.map(function (x) { return '• ' + x.charAt(0).toUpperCase() + x.slice(1); }).join('\n'));
-    l.push('', 'Merci de vous rendre dans votre Espace mannequin pour compléter votre profil : ' + MA2M_SITE + '/espace-mannequin', '', 'L’agence Maître Akesse Model Management');
+    var l = ['Bonjour ' + civilite(p) + ',', '',
+      'Merci pour votre engagement aux côtés de Maître Akesse Model Management. Voici le point sur votre profil, pour vous aider à le rendre encore plus attractif auprès des recruteurs et des organisateurs.'];
+    if (a.forts.length) l.push('', '✨ Vos points forts : ' + a.forts.join(', ') + '.');
+    l.push('', '📊 Votre profil est complet à ' + a.score + ' %', barre(a.score));
+    if (a.priorites.length) l.push('', '🎯 Vos priorités :', a.priorites.map(function (x, i) { return (i + 1) + '. ' + x.charAt(0).toUpperCase() + x.slice(1); }).join('\n'));
+    if (a.identite.length) l.push('', '👤 Votre identité — à ajouter :', a.identite.map(function (x) { return '• ' + x.charAt(0).toUpperCase() + x.slice(1); }).join('\n'));
+    if (a.parcours.length) l.push('', '🏆 Votre expérience et votre parcours — à ajouter :', a.parcours.map(function (x) { return '• ' + x.charAt(0).toUpperCase() + x.slice(1); }).join('\n'));
+    // Mensurations : toujours expliquées, pour que la mannequin connaisse ses tailles exactes
+    l.push('', '📏 Vos mensurations');
+    if (a.tailles && (a.tailles.haut || a.tailles.bas)) {
+      l.push('Calculées automatiquement par le site d’après vos mesures : taille haut ' + (a.tailles.haut || '—') + ', taille bas ' + (a.tailles.bas || '—') + ', taille générale ' + (a.tailles.generale || '—') + '.');
+      l.push('L’agence recommande les tailles S ou M ; la taille L est tolérée. Connaître vos tailles exactes vous aide à garder votre silhouette et à ne pas dépasser ces repères.');
+      if (a.exces) l.push('Votre taille calculée dépasse aujourd’hui la taille L. Commencez par vérifier vos mesures (mètre ruban à plat, sans serrer, sans vêtement épais) : une erreur de saisie est vite arrivée. Si elles sont justes, l’agence est là pour en parler avec vous et vous conseiller.');
+      else if (a.tolere) l.push('Vous êtes en taille L : elle est acceptée. Veillez simplement à ne pas aller au-delà.');
+      else l.push('Vous êtes dans les tailles recommandées : bravo, continuez ainsi.');
+    }
+    a.mesures.forEach(function (x) { l.push(x); });
+    if (a.photos.length) l.push('', '📸 Vos photos :', a.photos.map(function (x) { return '• ' + x.charAt(0).toUpperCase() + x.slice(1) + (/\.$/.test(x) ? '' : '.'); }).join('\n'));
+    if (CATEGORIES_PHOTOS_ACTIVES) l.push('', 'Bon à savoir : vos photos sont désormais rangées automatiquement en deux catégories, vous n’avez rien à faire. « Book » pour les photos professionnelles (shootings, défilés, campagnes) et « Lifestyle / digitales » pour les polaroïds, les photos que vous aimez, vos castings et vos sorties. Plusieurs photos dans la même tenue sous différents angles, ou avec le logo d’un organisateur, sont tout à fait normales.');
+    l.push('', 'Rendez-vous dans votre Espace mannequin pour mettre votre profil à jour : ' + MA2M_SITE + '/espace-mannequin',
+      '', 'L’agence reste à vos côtés : pour toute question, écrivez-nous sur WhatsApp : ' + MA2M_WHATSAPP,
+      '', 'Rapport du ' + new Date().toLocaleDateString('fr-FR') + ' — Maître Akesse Model Management');
     return l.join('\n');
   }
 
   function ligneHtml(p, dates) {
     var a = p.analyse, deja = dates[p.id], wa = numeroWhatsApp(telephones[p.id]);
     var points = [];
-    if (a.manquantes.length) points.push('<li><strong>Mensurations manquantes :</strong> ' + echapper(a.manquantes.join(', ')) + '</li>');
-    if (a.aReprendre.length) points.push('<li class="rp-rouge"><strong>Mensurations à reprendre :</strong> ' + echapper(a.aReprendre.join(', ')) + '</li>');
-    if (a.aVerifier.length) points.push('<li class="rp-rouge"><strong>Mesure à vérifier :</strong> ' + echapper(a.aVerifier.join(', ')) + '</li>');
-    if (a.exces) points.push('<li class="rp-rouge"><strong>❌ Mensurations excessives :</strong> taille ' + echapper(a.exces.taille) + ' (maximum ' + echapper(a.exces.maximum) + ')</li>');
-    a.photos.forEach(function (x) { points.push('<li><strong>Photo :</strong> ' + echapper(x) + '</li>'); });
+    if (a.exces) points.push('<li class="rp-rouge"><strong>Mensurations :</strong> taille calculée au-delà de L</li>');
+    a.mesures.forEach(function (x) { points.push('<li' + (/^À reprendre|^À vérifier/.test(x) ? ' class="rp-rouge"' : '') + '><strong>Mensurations :</strong> ' + echapper(x) + '</li>'); });
+    if (a.identite.length) points.push('<li><strong>Identité :</strong> ' + echapper(a.identite.join(' ; ')) + '</li>');
+    if (a.parcours.length) points.push('<li><strong>Parcours :</strong> ' + echapper(a.parcours.join(' ; ')) + '</li>');
+    a.photos.forEach(function (x) { points.push('<li><strong>Photos :</strong> ' + echapper(x) + '</li>'); });
     return '<div class="rp-profil' + (a.aJour ? ' rp-ok' : '') + '" data-profil="' + echapper(p.id) + '">' +
       '<label class="rp-entete">' + (a.aJour ? '' : '<input type="checkbox" class="rp-choix" data-id="' + echapper(p.id) + '">') +
-      '<strong>' + echapper(p.full_name) + '</strong>' + (p.published ? '' : ' <span class="rp-gris">(non publiée)</span>') +
-      ' <span class="rp-etat">' + (a.aJour ? '✓ À jour' : 'À compléter') + '</span>' +
+      '<strong>' + echapper(civilite(p)) + '</strong>' + (p.published ? '' : ' <span class="rp-gris">(non publiée)</span>') +
+      ' <span class="rp-etat">' + (a.aJour ? '✓ À jour' : 'Complet à ' + a.score + ' %') + '</span>' +
       (deja ? ' <span class="rp-gris">· dernier message le ' + new Date(deja).toLocaleDateString('fr-FR') + '</span>' : '') +
       (!a.aJour && !wa ? ' <span class="rp-gris">· pas de numéro WhatsApp : le message sera copié, à coller où vous voulez</span>' : '') + '</label>' +
       (a.aJour ? '' : '<ul class="rp-points">' + points.join('') + '</ul>' +
-        '<details class="rp-message"><summary>Voir / modifier le message</summary><textarea rows="10" data-id="' + echapper(p.id) + '">' + echapper(message(p, a)) + '</textarea></details>') +
+        '<details class="rp-message"><summary>Voir / modifier le message</summary><textarea rows="14" data-id="' + echapper(p.id) + '">' + echapper(message(p, a)) + '</textarea></details>') +
       '</div>';
   }
 
@@ -102,6 +169,7 @@
       (envoyes.length ? ' (dont <strong>' + envoyes.length + '</strong> déjà prévenue' + (envoyes.length > 1 ? 's' : '') + ' aujourd’hui)' : '') + '.</p>' +
       '<div class="rp-boutons"><button class="btn" type="button" id="rp-actualiser">🔄 Actualiser le rapport</button>' +
       '<button class="btn" type="button" id="rp-tout">Cocher toutes les mannequins à prévenir</button>' +
+      '<button class="btn" type="button" id="rp-reinitialiser">↺ Réinitialiser l’historique des envois</button>' +
       '<button class="btn btn--principal" type="button" id="rp-envoyer" disabled>💬 Envoyer sur WhatsApp</button></div>' +
       '<p class="tdb-9" id="rp-aide">Cochez les mannequins, puis appuyez sur « Envoyer » : WhatsApp s’ouvre avec le message de la première, appuyez sur Envoyer dans WhatsApp, revenez ici et appuyez à nouveau pour la suivante. Chacune reçoit son propre message, puis passe dans « Messages envoyés ». « Actualiser » refait l’analyse pour voir qui a corrigé.</p>' +
       '<div id="rp-a-envoyer">' + aEnvoyer.map(function (p) { return ligneHtml(p, dates); }).join('') + '</div>' +
@@ -125,12 +193,13 @@
       : (Object.keys(envoyesCetteFois).length ? '✓ Tout le monde a été fait' : '💬 Envoyer sur WhatsApp');
   }
 
-  // Profils avec les mensurations de l'Extension 121 ; tant que le SQL n'est pas
-  // exécuté, relecture sans elles (et elles ne sont pas réclamées aux mannequins).
-  var CHAMPS_PROFIL = 'id, full_name, category, published, height_cm, weight_kg, chest_cm, waist_cm, hips_cm, inseam_cm, shoe_size, eye_color, hair_color';
+  // Profils avec les mensurations de l'Extension 121 et la case « pas d'Instagram »
+  // (Extension 126) ; si une de ces colonnes manque, relecture sans elles.
+  var CHAMPS_PROFIL = 'id, full_name, category, published, height_cm, weight_kg, chest_cm, waist_cm, hips_cm, inseam_cm, shoe_size, eye_color, hair_color, ' +
+    'date_naissance, nationalite, city, bio, instagram, niveau_etude, formation_mannequin, languages';
   async function lireProfils() {
     var lire = function (champs) { return lireToutesLignes(function () { return sb.from('model_profiles').select(champs).not('full_name', 'is', null).order('id'); }); };
-    var r = await lire(CHAMPS_PROFIL + ', shoulder_cm, arm_cm, neck_cm');
+    var r = await lire(CHAMPS_PROFIL + ', shoulder_cm, arm_cm, neck_cm, sans_instagram');
     suppDisponibles = !r.error;
     return r.error ? lire(CHAMPS_PROFIL) : r;
   }
@@ -147,16 +216,18 @@
     zone.textContent = 'Analyse des profils…';
     var r = await Promise.all([
       lireProfils(),
-      lireToutesLignes(function () { return sb.from('model_photos').select('id, model_id, numero, principale, photo_couverture, compcard_ordre, tri_statut, tri_raison').order('id'); }),
-      sb.rpc('contacts_mannequins_admin')
+      lireToutesLignes(function () { return sb.from('model_photos').select('id, model_id, principale, photo_couverture').order('id'); }),
+      sb.rpc('contacts_mannequins_admin'),
+      lireToutesLignes(function () { return sb.from('model_projects').select('id, model_id').order('id'); })
     ]);
-    var pr = r[0], ph = r[1], tel = r[2];
+    var pr = r[0], ph = r[1], tel = r[2], pj = r[3];
+    var projets = {}; (pj.data || []).forEach(function (x) { projets[x.model_id] = (projets[x.model_id] || 0) + 1; });
     // Sans la liste complète des profils ou des photos, le rapport serait faux : on s'arrête.
     if (pr.error || ph.error) { charge = false; zone.textContent = 'Impossible de lire les profils ou les photos : ' + (pr.error || ph.error).message + '. Fermez et rouvrez la section pour réessayer.'; return; }
     var parModele = {}; ph.data.forEach(function (x) { (parModele[x.model_id] = parModele[x.model_id] || []).push(x); });
     telephones = {}; (tel.data || []).forEach(function (t) { telephones[t.model_id] = t.phone; });
     profils = pr.data.filter(function (p) { return String(p.full_name).trim(); }).map(function (p) {
-      p.analyse = analyser(p, parModele[p.id] || []);
+      p.analyse = analyser(p, parModele[p.id] || [], projets[p.id] || 0);
       return p;
     }).sort(function (a, b) { return String(a.full_name).localeCompare(String(b.full_name), 'fr'); });
     afficher();
@@ -174,6 +245,11 @@
       if (enCours) return;
       envoyesCetteFois = {};
       void charger();
+    } else if (e.target.id === 'rp-reinitialiser') {
+      if (!confirm('Effacer l’historique des messages envoyés (sur cet appareil) ? Toutes les mannequins à compléter reviendront dans la liste.')) return;
+      try { localStorage.removeItem(CLE_ENVOIS); } catch (err) {}
+      envoyesCetteFois = {};
+      afficher();
     } else if (e.target.id === 'rp-tout') {
       details.querySelectorAll('#rp-a-envoyer .rp-choix').forEach(function (c) { c.checked = true; });
       majBouton();

@@ -825,6 +825,8 @@ function chargerJsPdf() {
 // Coordonnées officielles de l'agence pour les documents générés (PDF), à un seul endroit.
 const MA2M_SITE = 'https://www.maitreakessemodelmanagement.com';
 const MA2M_TELEPHONES = ['+225 27 22 23 11 76', '+225 05 45 65 66 87'];
+// Lien WhatsApp officiel de l'agence (bouton flottant, menu, messages aux mannequins).
+const MA2M_WHATSAPP = 'https://wa.me/message/HJAMXGXHCL46I1';
 const MA2M_EMAIL = 'infos.ma2m@gmail.com';
 const MA2M_CONTACT_PDF = 'CONTACT OFFICIEL MA2M  ·  ' + MA2M_TELEPHONES.join('  ·  ') + '  ·  ' + MA2M_EMAIL;
 
@@ -2246,7 +2248,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Pastille WhatsApp flottante, injectée sur toutes les pages
 document.addEventListener('DOMContentLoaded', () => {
   const bouton = document.createElement('a');
-  bouton.href = 'https://wa.me/message/HJAMXGXHCL46I1';
+  bouton.href = MA2M_WHATSAPP;
   bouton.target = '_blank';
   bouton.rel = 'noopener';
   bouton.className = 'whatsapp-flottant';
