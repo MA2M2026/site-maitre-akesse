@@ -1747,7 +1747,7 @@ de moins de 6 photos). **Aucune remarque de l'IA** n'est reprise (`tri_raison` i
 New Face sans expérience : jamais réclamée (message encourageant). Lien Espace mannequin en fin de message ; WhatsApp de l'agence cité sans lien (le message part de ce numéro). Constante `MA2M_WHATSAPP` (js/app.js) pour le bouton flottant. Historique des envois remis à
 zéro (clé `ma2m_rapport_profils_envois_v2`) + bouton « Réinitialiser l'historique ».
 Le paragraphe sur les deux catégories de photos s'active avec `CATEGORIES_PHOTOS_ACTIVES`.
-Photos : le diagnostic suit **la logique de la fiche publique** (mannequin.html) : sans photo de
+Photos : le diagnostic suit **la logique de la fiche publique**, fonction partagée `photosAffichees()` (js/app.js, utilisée aussi par mannequin.html FR/EN) : sans photo de
 profil choisie, la fiche montre la plus ancienne photo ; sans couverture choisie, elle reprend la
 photo de profil. Le rapport dit donc « vous n'avez pas choisi… votre fiche affiche la même photo
 aux deux endroits » au lieu de « ajoutez une photo de profil » (cas réel du 07/10/2026).

@@ -922,6 +922,22 @@ function melanger(liste) {
   return copie;
 }
 
+// Photos affichées sur la fiche publique d'un mannequin (règle unique, partagée par la
+// fiche FR/EN et le rapport des profils, 07/10/2026) : photo de profil = celle choisie
+// (« principale »), sinon la plus ancienne ; couverture = celle choisie, sinon la photo de
+// profil. Renvoie aussi les photos choisies (null si aucune).
+function photosAffichees(photos) {
+  const triees = (photos || []).slice().sort(function (x, y) {
+    if (!!x.principale !== !!y.principale) return x.principale ? -1 : 1;
+    const dx = String(x.created_at || ''), dy = String(y.created_at || '');
+    if (dx !== dy) return dx < dy ? -1 : 1;
+    return String(x.id) < String(y.id) ? -1 : 1;
+  });
+  const profil = triees[0] || null;
+  const couvertureChoisie = triees.find(function (p) { return p.photo_couverture; }) || null;
+  return { profil: profil, couverture: couvertureChoisie || profil, profilChoisi: !!(profil && profil.principale), couvertureChoisie: couvertureChoisie };
+}
+
 // Prénom (premier mot du nom complet), pour personnaliser les messages.
 function prenomDe(nomComplet) { return String(nomComplet || '').trim().split(/\s+/)[0] || ''; }
 
