@@ -11,7 +11,10 @@
   ça" sans que ça se traduise réellement dans le comportement — le
   changement doit être visible dans la façon de travailler, pas juste
   annoncé.
-- Toujours répondre en français.
+- **Toujours répondre en français, sans exception** — chaque message, même
+  court, même après une longue tâche ou une reprise de conversation. Jamais
+  d'anglais (rappel ferme de la propriétaire le 07/10/2026, après plusieurs
+  réponses envoyées en anglais par erreur).
 
 # Règles de qualité du code (décision de la propriétaire, 06/10/2026)
 
