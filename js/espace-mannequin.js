@@ -592,17 +592,6 @@ const Store = {
 // sans attendre ni rien afficher — la mannequin n'est pas informée du résultat.
 // Une photo jugée inutilisable est seulement cachée (jamais supprimée) ; si cet
 // appel échoue, le tableau de bord rattrape la photo plus tard.
-function trierPhotoEnArrierePlan(photoId){
-  jetonSessionCourante().then(function(jeton){
-    if (!jeton || !photoId) return;
-    return fetch('/api/trier-photo', {
-      method: 'POST', keepalive: true,
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jeton },
-      body: JSON.stringify({ photoId: String(photoId) })
-    });
-  }).catch(function(){});
-}
-
 /* ------------------------------------------------------------- UTILS UI --- */
 const STEP_LABELS = ['Identité','Physique','Formation','Expérience','Photos','Récapitulatif'];
 const EXP_TYPES = ['Défilé','Campagne','Éditorial','Shooting','Lookbook','Publicité','Fitting','Showroom','Vidéo','Autre'];

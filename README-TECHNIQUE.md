@@ -1669,7 +1669,7 @@ plus qu'à un seul endroit.
   limite de 12 fonctions) regroupe la vérification du jeton de connexion
   (`verifierUtilisateur`), la vérification administrateur (`lignesAdmin` / `estAdmin`,
   refus si la base ne répond pas), la lecture du jeton et du corps de la requête,
-  la connexion au stockage photos R2 (`creerClientR2`), le contrôle des chemins de
+  les en-têtes de la clé serveur (`enTetesService`), la connexion au stockage photos R2 (`creerClientR2`), le contrôle des chemins de
   fichier (`cheminSur`), l'adresse IP et l'identifiant d'appareil. Utilisé par
   r2-presigner, r2-site-images, trier-photo, _revue-book, code-protege,
   code-validation-protege, connexion-protegee, connexion-admin, creer-admin,
@@ -1681,7 +1681,13 @@ plus qu'à un seul endroit.
   `supprimerDeR2`, `jetonSessionCourante`, `idAppareilMa2m`, `aleatoire()` /
   `suffixeAleatoire()` (hasard sûr `crypto.getRandomValues`, plus de `Math.random`).
   Remplacement d'une photo au tableau de bord : la base est mise à jour d'abord, les
-  anciens fichiers effacés ensuite (jamais de photo « orpheline »).
+  anciens fichiers effacés ensuite ; si la base refuse, les fichiers tout juste envoyés
+  sont retirés (pas de fichier « orphelin »). Le mannequin concerné est mémorisé au début
+  de l'envoi (fermer la fenêtre pendant l'envoi ne mélange plus rien). Seul petit
+  changement : au tableau de bord aussi, une capture PNG/WebP de plus de 900 Ko est
+  désormais allégée en JPEG (comme dans l'Espace mannequin depuis le 28/09/2026).
+  Le tri automatique par IA après un envoi passe par `trierPhotoEnArrierePlan(photoId)`
+  (js/app.js), commun aux deux pages.
 - **Compcard** : une seule fonction de dessin `construireCanvasCompcard(ficheData, langue)`
   et `genererFiche(format, ficheData, idPdf, idJpeg, langue)` ; `langue = 'en'` pour la fiche
   anglaise (libellés anglais, mesures impériales `enPieds`/`enPouces`/`enLivres`/`pointureUS`,

@@ -11,7 +11,7 @@
 // Variable d'environnement requise : SUPABASE_SERVICE_ROLE_KEY (déjà en
 // place sur Vercel pour les autres fonctions api/).
 
-const { SUPABASE_URL, extraireIp, nettoyerAppareil, estAdmin } = require('./_commun.js');
+const { SUPABASE_URL, estAdmin, extraireIp, nettoyerAppareil } = require('./_commun.js');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {

@@ -19,7 +19,7 @@
 
 const Anthropic = require('@anthropic-ai/sdk');
 
-const { SUPABASE_URL, enTetesService, verifierUtilisateur, estAdmin } = require('./_commun.js');
+const { SUPABASE_URL, enTetesService, jetonDe, corpsDe, verifierUtilisateur, estAdmin } = require('./_commun.js');
 const MAX_IMAGES = 90;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -113,10 +113,8 @@ module.exports = async function handler(req, res) {
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY) { res.status(500).json({ error: 'Configuration serveur incomplète.' }); return; }
   if (!process.env.ANTHROPIC_API_KEY) { res.status(503).json({ error: 'Tri automatique non configuré.' }); return; }
 
-  const enTeteAuth = req.headers.authorization || '';
-  const jeton = enTeteAuth.startsWith('Bearer ') ? enTeteAuth.slice(7) : '';
-  let corps = req.body;
-  if (typeof corps === 'string') { try { corps = JSON.parse(corps); } catch (e) { corps = {}; } }
+  const jeton = jetonDe(req);
+  const corps = corpsDe(req);
   const modelId = corps && corps.modelId;
   const images = corps && Array.isArray(corps.images) ? corps.images : null;
   if (typeof modelId !== 'string' || !UUID.test(modelId) || !images) {

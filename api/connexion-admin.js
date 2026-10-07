@@ -5,7 +5,7 @@
 // policy publique) : seul ce point d'entrée, authentifié admin, peut les
 // lire ou les modifier.
 
-const { SUPABASE_URL, jetonDe, corpsDe, verifierUtilisateur, estAdmin } = require('./_commun.js');
+const { SUPABASE_URL, enTetesService, jetonDe, corpsDe, verifierUtilisateur, estAdmin } = require('./_commun.js');
 
 // Compte connecté ET administrateur, sinon null.
 async function verifierAdmin(jeton) {
@@ -20,7 +20,7 @@ module.exports = async function handler(req, res) {
   const jeton = jetonDe(req);
   if (!jeton) { res.status(401).json({ error: 'Non authentifié.' }); return; }
 
-  const entetes = { apikey: cleSecrete, Authorization: 'Bearer ' + cleSecrete, 'Content-Type': 'application/json' };
+  const entetes = { ...enTetesService(), 'Content-Type': 'application/json' };
 
   const utilisateur = await verifierAdmin(jeton);
   if (!utilisateur) { res.status(403).json({ error: "Ce compte n'est pas administrateur." }); return; }

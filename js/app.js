@@ -1608,6 +1608,19 @@ function genererMiniature(fichier, coteMax = 800, qualite = 0.75) {
 // Préparation complète d'une photo du Book puis envoi : conversion HEIC, compression,
 // original + miniature 800 px + version moyenne 1400 px, dans le dossier du mannequin.
 // Une miniature ou une version moyenne qui échoue n'empêche pas l'envoi de la photo.
+// Tri automatique par IA (06/10/2026) d'une photo du Book qui vient d'être enregistrée,
+// lancé en arrière-plan (api/trier-photo.js) : Espace mannequin et tableau de bord.
+function trierPhotoEnArrierePlan(photoId){
+  jetonSessionCourante().then(function(jeton){
+    if (!jeton || !photoId) return;
+    return fetch('/api/trier-photo', {
+      method: 'POST', keepalive: true,
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jeton },
+      body: JSON.stringify({ photoId: String(photoId) })
+    });
+  }).catch(function(){});
+}
+
 async function envoyerPhotoBook(modelId, fichierOriginal) {
   const fichierConverti = await convertirSiHeic(fichierOriginal);
   const fichier = await compresserPhotoOrigine(fichierConverti);

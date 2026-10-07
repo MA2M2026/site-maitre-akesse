@@ -16,7 +16,7 @@
 // Les fonctions SQL correspondantes ne sont plus appelables depuis le
 // navigateur : tout passe par ici, avec la clé service_role.
 
-const { SUPABASE_URL, extraireIp, nettoyerAppareil } = require('./_commun.js');
+const { SUPABASE_URL, enTetesService, corpsDe, extraireIp, nettoyerAppareil } = require('./_commun.js');
 
 const EMAIL_VALIDE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -56,9 +56,7 @@ module.exports = async function handler(req, res) {
   const cleSecrete = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!cleSecrete) { res.status(500).json({ error: 'Configuration serveur incomplète.' }); return; }
 
-  let corps = req.body;
-  if (typeof corps === 'string') { try { corps = JSON.parse(corps); } catch (e) { corps = {}; } }
-  corps = corps || {};
+  const corps = corpsDe(req);
   const type = corps.type;
   const code = typeof corps.code === 'string' ? corps.code.trim() : '';
   if (!code || code.length > 100 || !['inscription', 'inscription-soumettre', 'portail', 'portail-creer-compte'].includes(type)) {
@@ -78,7 +76,7 @@ module.exports = async function handler(req, res) {
   const appareil = nettoyerAppareil(corps.appareil);
   const espace = (type === 'portail' || type === 'portail-creer-compte') ? 'portail-code' : 'inscription-code';
   const identifiant = appareil ? 'appareil:' + appareil : 'ip:' + ip;
-  const entetes = { apikey: cleSecrete, Authorization: 'Bearer ' + cleSecrete, 'Content-Type': 'application/json' };
+  const entetes = { ...enTetesService(), 'Content-Type': 'application/json' };
   const rpc = (nom, args) => fetch(SUPABASE_URL + '/rest/v1/rpc/' + nom, { method: 'POST', headers: entetes, body: JSON.stringify(args) });
   const cle = { p_ip: ip, p_identifiant: identifiant, p_espace: espace, p_appareil: appareil };
 

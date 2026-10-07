@@ -11,7 +11,7 @@
 //
 // Variable d'environnement requise sur Vercel : SUPABASE_SERVICE_ROLE_KEY.
 
-const { SUPABASE_URL, jetonDe, corpsDe, verifierUtilisateur, estAdmin } = require('./_commun.js');
+const { SUPABASE_URL, enTetesService, jetonDe, corpsDe, verifierUtilisateur, estAdmin } = require('./_commun.js');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -62,7 +62,7 @@ module.exports = async function handler(req, res) {
     // personne concernée).
     const reponseCreation = await fetch(SUPABASE_URL + '/auth/v1/admin/users', {
       method: 'POST',
-      headers: { apikey: cleSecrete, Authorization: 'Bearer ' + cleSecrete, 'Content-Type': 'application/json' },
+      headers: { ...enTetesService(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: email, password: motDePasse, email_confirm: true })
     });
     const resultatCreation = await reponseCreation.json().catch(function () { return {}; });
@@ -81,13 +81,13 @@ module.exports = async function handler(req, res) {
     // tout juste créé plutôt que de laisser un compte orphelin sans rôle.
     const reponseInsertion = await fetch(SUPABASE_URL + '/rest/v1/admins', {
       method: 'POST',
-      headers: { apikey: cleSecrete, Authorization: 'Bearer ' + cleSecrete, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      headers: { ...enTetesService(), 'Content-Type': 'application/json', Prefer: 'return=minimal' },
       body: JSON.stringify({ user_id: nouvelId })
     });
     if (!reponseInsertion.ok) {
       await fetch(SUPABASE_URL + '/auth/v1/admin/users/' + encodeURIComponent(nouvelId), {
         method: 'DELETE',
-        headers: { apikey: cleSecrete, Authorization: 'Bearer ' + cleSecrete }
+        headers: enTetesService()
       }).catch(function () {});
       const detail = await reponseInsertion.text().catch(function () { return ''; });
       res.status(502).json({ error: "Échec de l'ajout du rôle admin, compte annulé : " + detail });

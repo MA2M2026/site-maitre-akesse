@@ -18,7 +18,7 @@
 
 const { DeleteObjectsCommand } = require('@aws-sdk/client-s3');
 
-const { SUPABASE_URL, jetonDe, corpsDe, verifierUtilisateur, estAdmin, lignesAdmin, creerClientR2 } = require('./_commun.js');
+const { SUPABASE_URL, enTetesService, jetonDe, corpsDe, verifierUtilisateur, lignesAdmin, estAdmin, creerClientR2 } = require('./_commun.js');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -77,7 +77,7 @@ module.exports = async function handler(req, res) {
     // Storage, qui doivent être retirés séparément.
     const reponsePhotos = await fetch(
       SUPABASE_URL + '/rest/v1/model_photos?model_id=eq.' + encodeURIComponent(modelId) + '&select=chemin,chemin_miniature,chemin_moyenne',
-      { headers: { apikey: cleSecrete, Authorization: 'Bearer ' + cleSecrete } }
+      { headers: enTetesService() }
     );
     const photos = reponsePhotos.ok ? await reponsePhotos.json() : [];
     const chemins = [];
@@ -89,7 +89,7 @@ module.exports = async function handler(req, res) {
     // vers model_profiles, model_photos, model_projects, page_views.
     const reponseSuppression = await fetch(SUPABASE_URL + '/auth/v1/admin/users/' + encodeURIComponent(modelId), {
       method: 'DELETE',
-      headers: { apikey: cleSecrete, Authorization: 'Bearer ' + cleSecrete }
+      headers: enTetesService()
     });
     if (!reponseSuppression.ok) {
       const detail = await reponseSuppression.text().catch(function () { return ''; });

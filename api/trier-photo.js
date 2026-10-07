@@ -19,7 +19,7 @@
 const Anthropic = require('@anthropic-ai/sdk');
 const { GetObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 
-const { SUPABASE_URL, enTetesService, verifierUtilisateur, estAdmin, creerClientR2 } = require('./_commun.js');
+const { SUPABASE_URL, enTetesService, jetonDe, corpsDe, verifierUtilisateur, estAdmin, creerClientR2 } = require('./_commun.js');
 // En dessous de ce degré de certitude, une photo jugée inutilisable n'est pas
 // cachée : elle reste visible et part dans « À vérifier » du tableau de bord.
 const CONFIANCE_MIN_ECARTEE = 0.8;
@@ -137,9 +137,8 @@ const revueBook = require('./_revue-book.js');
 
 module.exports = async function handler(req, res) {
   // Revue du book complet d'un mannequin (voir api/_revue-book.js).
-  let corpsRevue = req.body;
-  if (typeof corpsRevue === 'string') { try { corpsRevue = JSON.parse(corpsRevue); } catch (e) { corpsRevue = {}; } }
-  if (corpsRevue && corpsRevue.action === 'revue') { req.body = corpsRevue; return revueBook(req, res); }
+  const corpsRevue = corpsDe(req);
+  if (corpsRevue.action === 'revue') { req.body = corpsRevue; return revueBook(req, res); }
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Méthode non autorisée.' });
     return;
@@ -153,10 +152,8 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const enTeteAuth = req.headers.authorization || '';
-  const jeton = enTeteAuth.startsWith('Bearer ') ? enTeteAuth.slice(7) : '';
-  let corps = req.body;
-  if (typeof corps === 'string') { try { corps = JSON.parse(corps); } catch (e) { corps = {}; } }
+  const jeton = jetonDe(req);
+  const corps = corpsDe(req);
   const photoId = corps && corps.photoId;
   if (typeof photoId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(photoId)) {
     res.status(400).json({ error: 'Photo invalide.' });
