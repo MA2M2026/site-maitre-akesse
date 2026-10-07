@@ -1659,3 +1659,34 @@ toutes les écritures sont simulées pendant l'enregistrement.
   compactes.
 - `titreLisible()` (js/app.js, partagée avec « Qui sommes-nous ») met en forme les titres
   saisis en capitales (« Africa in Rythm », « Parc des Expositions d'Abidjan »).
+
+## 🧹 Regroupement du code recopié (nuit du 07/10/2026)
+
+Aucun changement visible : le même code était recopié dans plusieurs fichiers, il n'existe
+plus qu'à un seul endroit.
+
+- **Fonctions serveur** : `api/_commun.js` (le « _ » évite que Vercel le compte dans la
+  limite de 12 fonctions) regroupe la vérification du jeton de connexion
+  (`verifierUtilisateur`), la vérification administrateur (`lignesAdmin` / `estAdmin`,
+  refus si la base ne répond pas), la lecture du jeton et du corps de la requête,
+  la connexion au stockage photos R2 (`creerClientR2`), le contrôle des chemins de
+  fichier (`cheminSur`), l'adresse IP et l'identifiant d'appareil. Utilisé par
+  r2-presigner, r2-site-images, trier-photo, _revue-book, code-protege,
+  code-validation-protege, connexion-protegee, connexion-admin, creer-admin,
+  supprimer-mannequin.
+- **Envoi d'une photo de Book** : une seule chaîne dans `js/app.js`,
+  `envoyerPhotoBook(modelId, fichier)` (conversion HEIC, compression de l'originale,
+  miniature 800 px, moyenne 1400 px, envoi R2 avec 3 essais), utilisée par l'Espace
+  mannequin et le tableau de bord. Outils associés au même endroit : `uploaderVersR2`,
+  `supprimerDeR2`, `jetonSessionCourante`, `idAppareilMa2m`, `aleatoire()` /
+  `suffixeAleatoire()` (hasard sûr `crypto.getRandomValues`, plus de `Math.random`).
+  Remplacement d'une photo au tableau de bord : la base est mise à jour d'abord, les
+  anciens fichiers effacés ensuite (jamais de photo « orpheline »).
+- **Compcard** : une seule fonction de dessin `construireCanvasCompcard(ficheData, langue)`
+  et `genererFiche(format, ficheData, idPdf, idJpeg, langue)` ; `langue = 'en'` pour la fiche
+  anglaise (libellés anglais, mesures impériales `enPieds`/`enPouces`/`enLivres`/`pointureUS`,
+  couleurs traduites `enAnglais`). Les mensurations viennent de `champsCompcard()` : masquage
+  « à reprendre » et libellé « Bassin » en français conservés. Vérifié : fiches FR et EN
+  identiques au pixel près avant/après.
+- Reste à faire plus tard (prudence) : les paires de scripts FR/EN encore recopiées
+  (accueil, mannequins, actualités/événements) et les pages HTML en double.
