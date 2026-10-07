@@ -1713,7 +1713,8 @@ plus qu'à un seul endroit.
   le souffle des effets sonores est tiré par `remplirBruitBlanc(donnees)` (js/app.js), par
   paquets de 16 384 valeurs (limite du navigateur).
 - Boutique : un code de billet venant de l'adresse (`?billet=`) n'est gardé en mémoire
-  d'onglet que s'il a la forme attendue (`CODE_BILLET`, lettres, chiffres, tirets, 4 à 40).
+  d'onglet après nettoyage par `codeBilletPropre()` (espaces retirés, majuscules, code
+  reconstruit à partir des seuls lettres, chiffres et tirets, 4 à 40 caractères ; sinon ignoré).
 - CSS : propriétés écrasées ou inconnues retirées sans changement visible ; la barre du
   nouveau code d'inscription (`.tdb-20`) reste cachée tant qu'aucun code n'est généré
   (avant, une barre vide s'affichait).
