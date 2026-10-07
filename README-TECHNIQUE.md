@@ -1789,3 +1789,16 @@ tablette) et restent côte à côte sur ordinateur. Avant, la liste prenait tout
 et la case du numéro faisait 30 px, hors de l'écran. Contrôle de tous les formulaires
 (script de mesure : case trop étroite, hors écran, chevauchement) sur 5 largeurs : aucun
 autre cas.
+
+## Pastilles rouges de l'Espace mannequin (07/10/2026)
+
+Règle unique **`js/analyse-profil.js`** (`ma2mAnalyserProfil`, `MA2M_PHOTOS_MINIMUM = 10`),
+chargée par `tableau-de-bord.html` (Rapport des profils) et `espace-mannequin.html`.
+Dans l'Espace, `pointsARemplir()` (js/espace-mannequin.js) refait cette analyse sur l'état
+du formulaire : un rond rouge chiffré sur chaque onglet (assistant) et chaque bloc
+(tableau de bord) — éléments manquants **et** mensurations incohérentes (à reprendre / à
+vérifier) ; photos = photos manquantes pour arriver à 10 + profil + couverture. En ouvrant
+le bloc, `marquerChampsARemplir()` encadre les cases en rouge (classe `champ-a-remplir`,
+styles dans `css/espace-mannequin-correctifs.css`) et affiche une phrase d'explication ;
+le rouge d'une case s'efface dès qu'elle est remplie, le chiffre se met à jour à
+l'enregistrement. L'alerte « Votre profil n'est pas complet » suit la même règle.

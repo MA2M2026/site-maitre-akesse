@@ -15,9 +15,7 @@
   var charge = false, profils = [], telephones = {};
   var suppDisponibles = true; // colonnes de l'Extension 121 lisibles ?
   var envoyesCetteFois = {}; // file d'envoi : on passe à la suivante (la date reste notée pour la prochaine fois)
-  // Décision de la propriétaire (07/10/2026) : 10 photos au moins, Book et Lifestyle
-  // ensemble ; à partir de 10, le book est considéré comme riche.
-  var BOOK_MINIMUM = 10;
+  var BOOK_MINIMUM = MA2M_PHOTOS_MINIMUM; // js/analyse-profil.js
   // Historique des envois remis à zéro avec la nouvelle version du rapport (07/10/2026).
   var CLE_ENVOIS = 'ma2m_rapport_profils_envois_v2';
   // Deux catégories de photos (Book / Lifestyle) : expliquées dans le rapport une fois en service.
@@ -27,19 +25,6 @@
   function envois() { try { return JSON.parse(localStorage.getItem(CLE_ENVOIS) || '{}') || {}; } catch (e) { return {}; } }
   function noterEnvoi(id) { var o = envois(); o[id] = new Date().toISOString(); try { localStorage.setItem(CLE_ENVOIS, JSON.stringify(o)); } catch (e) {} }
 
-  // Mensurations attendues (mêmes champs que l'étape « Informations physiques »).
-  function mesuresAttendues(p) {
-    var homme = p.category === 'homme';
-    return [
-      ['height_cm', 'taille'], ['weight_kg', 'poids'], ['chest_cm', 'tour de poitrine'], ['waist_cm', 'tour de taille'],
-      ['hips_cm', 'tour de bassin']
-    ].concat(suppDisponibles ? (homme ? [['neck_cm', 'tour de cou']] : []).concat([['shoulder_cm', 'largeur d’épaules'], ['arm_cm', 'longueur de bras']]) : []).concat([
-      ['inseam_cm', 'entrejambe'],
-      ['shoe_size', 'pointure'], ['eye_color', 'couleur des yeux'], ['hair_color', 'couleur des cheveux']
-    ]);
-  }
-
-  function vide(v) { return v === null || v === undefined || String(v).trim() === ''; }
   function civilite(p) { return (p.category === 'homme' ? 'Monsieur ' : 'Mlle ') + String(p.full_name || '').trim(); }
 
   // Libellés courts (liste du tableau de bord) des points à compléter.
@@ -49,82 +34,6 @@
     experiences: 'expériences', etudes: 'niveau d’études', formation: 'formations', langues: 'langues parlées',
     profil: 'photo de profil non choisie', couverture: 'couverture non choisie', identiques: 'même photo en profil et en couverture', book: 'moins de 10 photos'
   };
-
-  // Analyse d'un profil : chaque rubrique liste ses points à compléter (des clés) ; le
-  // score compte les éléments déjà en place. Rien n'est calculé par l'IA.
-  function analyser(p, photos, nbProjets) {
-    var points = 0, total = 0;
-    function manque(liste, cle, ok) { total++; if (ok) points++; else liste.push(cle); }
-    var a = { identite: [], parcours: [], mesures: [], photos: [], forts: [], priorites: [], nbPhotos: photos.length, nbProjets: nbProjets };
-
-    manque(a.identite, 'naissance', !vide(p.date_naissance));
-    manque(a.identite, 'nationalite', !vide(p.nationalite));
-    manque(a.identite, 'ville', !vide(p.city));
-    // Présentation : absente, ou trop courte (moins de 80 caractères, une phrase à peine)
-    if (vide(p.bio)) manque(a.identite, 'presentation', false);
-    else manque(a.identite, 'presentationCourte', String(p.bio).trim().length >= 80);
-    manque(a.identite, 'instagram', !vide(p.instagram) || p.sans_instagram === true);
-
-    // New Face (débutante) : ne pas encore avoir d'expérience est normal — ni compté, ni réclamé.
-    a.newFace = niveauNormalise(p.niveau_mannequin, p.years_experience) === 'New Face';
-    if (!a.newFace || nbProjets > 0) manque(a.parcours, 'experiences', nbProjets > 0);
-    manque(a.parcours, 'etudes', !vide(p.niveau_etude));
-    manque(a.parcours, 'langues', !vide(p.languages));
-    // Formations de mannequinat : facultatives (beaucoup n'en ont pas suivi) ; simple
-    // suggestion ajoutée à la rubrique « parcours » quand celle-ci a déjà autre chose à
-    // compléter (pour ne pas allonger le message d'un profil complet), jamais comptée.
-    a.sansFormation = vide(p.formation_mannequin);
-
-    // Mensurations
-    a.manquantes = mesuresAttendues(p).filter(function (m) { return vide(p[m[0]]); }).map(function (m) { return m[1]; });
-    total++; if (!a.manquantes.length) points++;
-    var t = ma2mTailles(p), libelles = { chest_cm: 'tour de poitrine', waist_cm: 'tour de taille', hips_cm: 'tour de bassin' };
-    a.aReprendre = t.aReprendre.map(function (c) { return libelles[c]; });
-    a.aVerifier = t.aVerifier.map(function (c) { return libelles[c]; });
-    a.exces = !!t.exces;
-    total++; if (!a.aReprendre.length && !a.aVerifier.length && !a.exces) points++;
-    a.tailles = t.aReprendre.length ? null : { haut: t.haut && t.haut.lettre, bas: t.bas && t.bas.lettre, generale: t.generale };
-    a.homme = t.homme; a.tolereLettre = t.maximum; // L (femmes) ou XL (hommes)
-    a.tolere = !a.exces && [t.haut, t.bas].some(function (x) { return x && x.lettre === t.maximum; });
-    if (a.manquantes.length) a.mesures.push('À compléter : ' + a.manquantes.join(', '));
-    if (a.aReprendre.length) a.mesures.push('À reprendre : ' + a.aReprendre.join(' et '));
-    if (a.aVerifier.length) a.mesures.push('À vérifier : ' + a.aVerifier.join(', '));
-
-    // Photos (en dernier)
-    // Même logique que la fiche publique (mannequin.html) : sans photo de profil choisie,
-    // la fiche affiche la plus ancienne photo ; sans couverture choisie, elle reprend la
-    // photo de profil. Le rapport décrit donc ce que les recruteurs voient vraiment.
-    // Règle partagée photosAffichees (js/app.js).
-    var vues = photosAffichees(photos);
-    a.photosVues = { profilChoisi: vues.profilChoisi, couvertureChoisie: !!vues.couvertureChoisie, identiques: !!vues.profil && vues.profil === vues.couverture };
-    manque(a.photos, 'profil', vues.profilChoisi);
-    // Un seul point pour la couverture : choisie ET différente de la photo de profil
-    total++;
-    if (!vues.couvertureChoisie) a.photos.push('couverture');
-    else if (a.photosVues.identiques) a.photos.push('identiques');
-    else points++;
-    manque(a.photos, 'book', photos.length >= BOOK_MINIMUM);
-
-    a.score = total ? Math.round(points * 100 / total) : 0;
-
-    // Points forts (3 au plus)
-    if (p.published) a.forts.push('votre fiche est en ligne sur le site de l’agence');
-    if (!a.manquantes.length && !a.aReprendre.length && !a.exces) a.forts.push('vos mensurations sont complètes');
-    if (nbProjets > 0) a.forts.push(nbProjets > 1 ? nbProjets + ' expériences sont déjà renseignées' : 'une première expérience est déjà renseignée');
-    if (photos.length >= BOOK_MINIMUM) a.forts.push('votre book compte déjà ' + photos.length + ' photos');
-    a.forts = a.forts.slice(0, 3);
-
-    // 3 priorités, de la plus importante à la moins importante
-    if (a.exces || a.aReprendre.length || a.aVerifier.length) a.priorites.push('Vérifier vos mensurations');
-    else if (a.manquantes.length) a.priorites.push('Compléter vos mensurations');
-    if (a.identite.length) a.priorites.push('Compléter votre identité (' + a.identite.length + ' élément' + (a.identite.length > 1 ? 's' : '') + ')');
-    if (a.parcours.length) a.priorites.push(a.parcours.indexOf('experiences') !== -1 ? 'Ajouter vos expériences' : 'Compléter votre parcours');
-    var reste = Math.max(0, BOOK_MINIMUM - photos.length);
-    if (a.photos.length) a.priorites.push('Enrichir vos photos' + (reste ? ' (encore ' + reste + ' photo' + (reste > 1 ? 's' : '') + ' à publier)' : ''));
-    a.priorites = a.priorites.slice(0, 3);
-    a.aJour = !a.identite.length && !a.parcours.length && !a.mesures.length && !a.exces && !a.photos.length;
-    return a;
-  }
 
   function barre(score) { var n = Math.round(score / 10); return '▰'.repeat(n) + '▱'.repeat(10 - n); }
   function joindre(liste) { return liste.length > 1 ? liste.slice(0, -1).join(', ') + ' et ' + liste[liste.length - 1] : liste[0] || ''; }
@@ -315,7 +224,7 @@
     var parModele = {}; ph.data.filter(function (x) { return x.tri_statut !== 'ecartee'; }).forEach(function (x) { (parModele[x.model_id] = parModele[x.model_id] || []).push(x); });
     telephones = {}; (tel.data || []).forEach(function (t) { telephones[t.model_id] = t.phone; });
     profils = pr.data.filter(function (p) { return String(p.full_name).trim(); }).map(function (p) {
-      p.analyse = analyser(p, parModele[p.id] || [], projets[p.id] || 0);
+      p.analyse = ma2mAnalyserProfil(p, parModele[p.id] || [], projets[p.id] || 0, suppDisponibles);
       return p;
     }).sort(function (a, b) { return String(a.full_name).localeCompare(String(b.full_name), 'fr'); });
     afficher();

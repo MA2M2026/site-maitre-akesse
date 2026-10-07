@@ -441,7 +441,7 @@ const Store = {
 
     const { data: photos } = await sb.from('model_photos').select('*').eq('model_id', currentUser.id).order('created_at', { ascending:true });
     (photos||[]).forEach(function(p){
-      const item = { id:p.id, numero:p.numero||null, path:p.chemin, url:p.url_miniature||p.url, urlPleine:p.url, compcardOrdre:p.compcard_ordre, couverturePosition:p.couverture_position||'center', categorie:p.categorie==='lifestyle'?'lifestyle':'book' };
+      const item = { id:p.id, numero:p.numero||null, path:p.chemin, url:p.url_miniature||p.url, urlPleine:p.url, compcardOrdre:p.compcard_ordre, couverturePosition:p.couverture_position||'center', categorie:p.categorie==='lifestyle'?'lifestyle':'book', ecartee:p.tri_statut==='ecartee' };
       s.photos.book.push(item);
       if (p.principale) s.photos.principale = item;
       if (p.photo_cv) s.photos.photoCv = item;
@@ -646,13 +646,14 @@ function render(){
     if (state.meta.statutAffichage === 'refuse') { app.innerHTML = viewRefuse(); bindRefuse(); return; }
     app.innerHTML = viewWizard();
     bindWizard();
+    marquerChampsARemplir(BLOCS_ETAPES[state.meta.currentStep - 1]);
     return;
   }
   // Mode autonome : le tableau de bord reste toujours accessible une fois la
   // première publication faite, même si le profil repasse en attente/refusé
   // par la suite — seuls les bandeaux d'état changent (identique à l'ancien
   // système, voir appliquerModeGuide()/gerer_validation_publication()).
-  if (state.meta.editBlock) { app.innerHTML = viewBlockEditor(state.meta.editBlock); bindBlockPage(state.meta.editBlock); return; }
+  if (state.meta.editBlock) { app.innerHTML = viewBlockEditor(state.meta.editBlock); bindBlockPage(state.meta.editBlock); marquerChampsARemplir(state.meta.editBlock); return; }
   app.innerHTML = viewDashboard();
   bindDashboard();
 }
@@ -670,6 +671,7 @@ function stepComplete(n){
 function viewWizard(){
   const pct = Math.round(((state.meta.currentStep-1)/6)*100 + (stepComplete(state.meta.currentStep)?100/6:0));
   const clamped = Math.min(100, Math.max(0,pct));
+  const pts = pointsARemplir();
   return header() +
   '<div class="greet"><h1>Bonjour ' + echapperHtml((state.identite.nomComplet||'').split(' ')[0]||'') + '</h1>' +
   '<p>Complétez votre profil professionnel pour permettre à l’agence de créer votre dossier mannequin. Chaque étape s’enregistre au fur et à mesure — vous pouvez y revenir à tout moment avant l’envoi final.</p>' +
@@ -677,7 +679,7 @@ function viewWizard(){
   '<div class="progress-pct">'+clamped+'%</div></div></div>' +
   '<div class="stepper">' + STEP_LABELS.map(function(l,i){
     const n=i+1; const cls = n===state.meta.currentStep?'active':(stepComplete(n)?'done':'');
-    return '<button type="button" class="step-tab '+cls+'" data-goto="'+n+'"><span class="n">'+['①','②','③','④','⑤','⑥'][i]+'</span>'+l+'</button>';
+    return '<button type="button" class="step-tab '+cls+'" data-goto="'+n+'"><span class="n">'+['①','②','③','④','⑤','⑥'][i]+'</span>'+l+(pts && BLOCS_ETAPES[i] ? pastilleRouge(pts.nb[BLOCS_ETAPES[i]]) : '')+'</button>';
   }).join('') + '</div>' +
   '<div class="panel">' + stepContent(state.meta.currentStep) + '</div>';
 }
@@ -1429,6 +1431,72 @@ function viewConfirmation(){
 }
 
 /* ------------------------------------------------------------ TABLEAU DE BORD */
+/* Pastilles rouges (décision de la propriétaire, 07/10/2026) : sur chaque onglet et chaque
+   bloc, le nombre d'éléments à remplir ou à corriger (mensurations incohérentes comprises),
+   et ces cases encadrées en rouge quand la mannequin ouvre l'onglet. Même règle que le
+   Rapport des profils envoyé par WhatsApp (js/analyse-profil.js). */
+const CHAMPS_ANALYSE = {
+  naissance:'f-dob', nationalite:'f-nat', ville:'f-ville', presentation:'f-bio', presentationCourte:'f-bio', instagram:'f-instagram',
+  height_cm:'f-taille', weight_kg:'f-poids', chest_cm:'f-poitrine', waist_cm:'f-tourTaille', hips_cm:'f-hanches', neck_cm:'f-cou',
+  shoulder_cm:'f-epaules', arm_cm:'f-bras', inseam_cm:'f-entrejambe', shoe_size:'f-pointure', eye_color:'f-yeux', hair_color:'f-cheveux'
+};
+const BLOCS_ETAPES = ['identite','physique','formation','experiences','photos'];
+function pointsARemplir(){
+  if (typeof ma2mAnalyserProfil !== 'function') return null;
+  const d = state.identite, f = state.formation, pp = state.profilPro, ph = state.photos, p = state.physique;
+  const ligne = Object.assign(physiqueToDb(p), {
+    category: d.sexe, date_naissance: d.dateNaissance, nationalite: d.nationalite, city: d.ville,
+    bio: state.bio, instagram: state.instagram, sans_instagram: state.sansInstagram,
+    niveau_mannequin: pp.niveauMannequin, years_experience: pp.anneesExperience, languages: pp.langues.join(', '),
+    niveau_etude: f.niveau, formation_mannequin: f.mannequin, shoulder_cm: p.epaules, arm_cm: p.bras, neck_cm: p.cou
+  });
+  const meme = function(x, y){ return !!x && !!y && String(x.id) === String(y.id); };
+  const photos = ph.book.filter(function(x){ return !x.ecartee; }).map(function(x, i){
+    return { id: x.id, principale: meme(x, ph.principale), photo_couverture: meme(x, ph.couverture), created_at: new Date(Date.UTC(2000, 0, 1) + i * 1000).toISOString() };
+  });
+  const a = ma2mAnalyserProfil(ligne, photos, state.experiences.length, true);
+  const champs = { identite: [], physique: [], formation: [], experiences: [], photos: [] };
+  a.identite.forEach(function(k){ if (champs.identite.indexOf(CHAMPS_ANALYSE[k]) === -1) champs.identite.push(CHAMPS_ANALYSE[k]); });
+  a.manquantesCols.concat(a.aReprendreCols, a.aVerifierCols).forEach(function(c){ if (champs.physique.indexOf(CHAMPS_ANALYSE[c]) === -1) champs.physique.push(CHAMPS_ANALYSE[c]); });
+  if (a.parcours.indexOf('etudes') !== -1) champs.formation.push('f-niveau');
+  if (a.parcours.indexOf('langues') !== -1) champs.experiences.push('langues');
+  if (a.parcours.indexOf('experiences') !== -1) champs.experiences.push('addExp');
+  if (a.photos.indexOf('profil') !== -1) champs.photos.push('uPrincipale');
+  if (a.photos.indexOf('couverture') !== -1 || a.photos.indexOf('identiques') !== -1) champs.photos.push('uCouverture');
+  const nb = {};
+  BLOCS_ETAPES.forEach(function(k){ nb[k] = champs[k].length; });
+  // Photos : chaque photo qui manque pour arriver au minimum compte pour un élément.
+  if (a.photos.indexOf('book') !== -1) { champs.photos.push('book'); nb.photos += MA2M_PHOTOS_MINIMUM - a.nbPhotos; }
+  return { champs: champs, nb: nb };
+}
+function pastilleRouge(n){
+  return n > 0 ? '<span class="pastille-rouge" title="'+n+' élément'+(n>1?'s':'')+' à remplir ou à corriger">'+n+'</span>' : '';
+}
+// Encadre en rouge les cases à remplir du bloc affiché ; le rouge d'une case s'en va dès
+// qu'elle est remplie (le chiffre de la pastille se met à jour à l'enregistrement).
+function marquerChampsARemplir(bloc){
+  const pts = pointsARemplir(); if (!pts || !bloc) return;
+  const cibles = pts.champs[bloc] || [];
+  cibles.forEach(function(id){
+    let el;
+    if (id === 'langues') el = document.querySelector('[data-langue]') && document.querySelector('[data-langue]').closest('.field');
+    else if (id === 'book') el = document.querySelector('.book-multi-upload');
+    else { const c = document.getElementById(id); el = c && (c.closest('.field') || c); }
+    if (!el) return;
+    el.classList.add('champ-a-remplir');
+    el.addEventListener('change', function(){ el.classList.remove('champ-a-remplir'); });
+    el.addEventListener('input', function(){ el.classList.remove('champ-a-remplir'); });
+  });
+  const n = pts.nb[bloc] || 0, panneau = document.querySelector('.panel');
+  if (n && panneau && !panneau.querySelector('.notice-a-remplir')) {
+    const p = document.createElement('p');
+    p.className = 'notice-a-remplir';
+    p.textContent = n + ' élément' + (n>1?'s':'') + ' à remplir ou à corriger dans ce bloc : '+(n>1?'ils sont encadrés':'il est encadré')+' en rouge.';
+    const titre = panneau.querySelector('h2');
+    if (titre) titre.insertAdjacentElement('afterend', p); else panneau.prepend(p);
+  }
+}
+
 const BLOCKS = [
   {k:'identite', ic:'👤', title:'Identité', desc:'Nom, contact, sexe, naissance'},
   {k:'physique', ic:'📏', title:'Physique', desc:'Mensurations'},
@@ -1534,6 +1602,7 @@ function reopenDashboardBlock(k){ setTimeout(function(){ const btn=document.quer
 
 function viewDashboard(){
   const d = state.identite;
+  const pts = pointsARemplir();
   let bandeau = '';
   if (state.meta.statutAffichage === 'en_attente') bandeau = '<div class="online-banner p20-7"><span class="dot p20-4"></span> Modifications en cours de revalidation par l’agence</div>';
   else if (state.meta.statutAffichage === 'refuse') bandeau = '<div class="online-banner p20-5"><span class="dot p20-2"></span> Correction demandée'+(state.meta.commentaireAdmin?' — « '+echapperHtml(state.meta.commentaireAdmin)+' »':'')+'</div>';
@@ -1542,7 +1611,8 @@ function viewDashboard(){
   // Rappel (non bloquant) des blocs encore incomplets — le profil reste en
   // ligne tel quel, mais un book/fiche plus complet est plus attrayant pour
   // les recruteurs. Demande explicite de la propriétaire, 28 septembre 2026.
-  const blocsIncomplets = BLOCKS.filter(function(b, i){ return !stepComplete(i + 1); });
+  // Même règle que les pastilles rouges (js/analyse-profil.js) quand elle est disponible.
+  const blocsIncomplets = BLOCKS.filter(function(b, i){ return pts ? pts.nb[b.k] > 0 : !stepComplete(i + 1); });
   let alerteIncomplet = '';
   if (blocsIncomplets.length) {
     alerteIncomplet = '<div class="alerte-incomplet">⚠ <strong>Votre profil n’est pas complet.</strong> Un profil complet est bien plus attrayant pour les recruteurs — complétez : ' +
@@ -1555,7 +1625,7 @@ function viewDashboard(){
     '<p class="sub p20-13">Modifiez un bloc à la fois — chaque bloc s’enregistre indépendamment des autres.</p>' +
     (typeof ma2mTailles === 'function' ? '<div class="tailles-calculees">' + htmlSyntheseTailles(taillesDepuisEtat(), true) + '</div>' : '') +
     '<div class="blocks-grid">' + BLOCKS.map(function(b){
-      return '<div class="block-card" data-block="'+b.k+'"><span class="ic">'+b.ic+'</span><h3>'+b.title+'</h3><p>'+b.desc+'</p><button class="btn ghost small block-btn" data-edit="'+b.k+'">Modifier</button></div>';
+      return '<div class="block-card" data-block="'+b.k+'">'+(pts ? pastilleRouge(pts.nb[b.k]) : '')+'<span class="ic">'+b.ic+'</span><h3>'+b.title+'</h3><p>'+b.desc+'</p><button class="btn ghost small block-btn" data-edit="'+b.k+'">Modifier</button></div>';
     }).join('') + '</div>' +
     '<div class="cv-cta"><div class="txt"><h3>CV mannequin — privé</h3><p>Généré à partir de votre profil. Visible uniquement par vous et l’administrateur MA2M.</p></div>' +
     '<button class="btn primary" id="openCv">Voir mon CV</button></div>' +
