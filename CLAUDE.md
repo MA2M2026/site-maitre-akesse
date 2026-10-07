@@ -43,6 +43,15 @@ relecture et s'appliquent à chaque modification, sans exception.
 3. **Tester avant de publier** : syntaxe (`node --check`), empreintes CSP
    (`scripts/verifier-csp.py`), et essai dans un vrai navigateur des pages
    touchées, sur téléphone et ordinateur, sans écriture réelle.
+   **Obligatoire depuis le 07/10/2026 : tester COMME UN VISITEUR**, pas morceau
+   par morceau : `bash scripts/tests-visiteur/lancer.sh` remplit les
+   formulaires et clique dans le tableau de bord (connexion, liste, fiche,
+   changement de statut, WhatsApp, e-mail, Messages groupés) comme une vraie
+   personne, sur téléphone et ordinateur, FR et EN, avec une base simulée
+   (rien n'est écrit pour de vrai). Si le changement touche un parcours que
+   ces tests ne couvrent pas encore, AJOUTER ce parcours aux tests avant de
+   publier. (Le lien WhatsApp de l'enfant mineur sur la fiche avait échappé
+   aux tests « par morceaux » : la propriétaire l'a trouvé elle-même.)
 4. **Vérifier après la mise en ligne** que le site en ligne contient bien
    le changement et fonctionne.
 5. **Ne jamais recopier du code** : une fonction utile à plusieurs pages

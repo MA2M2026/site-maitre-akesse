@@ -221,6 +221,17 @@ navigateur.
   jamais le supprimer, c'est la preuve de propriété du site) et le
   sitemap (`sitemap.xml`) y est soumis.
 
+## Tests « comme un visiteur » (07/10/2026) — à lancer avant chaque mise en ligne
+
+`bash scripts/tests-visiteur/lancer.sh` (dossier non publié, voir `.vercelignore`).
+`faux-serveur.js` remplace Supabase, EmailJS, Google Drive et les fonctions `/api/`
+par des réponses simulées (rien n'est écrit pour de vrai) et note tout ce que le
+site envoie. Parcours couverts : formulaire « Intégrer l'agence » (FR téléphone,
+EN ordinateur) d'une mineure ; inscription mannequin avec code (FR/EN) ; tableau
+de bord (connexion, liste des candidatures, fiche d'un mineur, changement de
+statut, 1er message automatique, convocation, e-mail, Messages groupés). Ajouter
+un parcours dès qu'une modification en touche un qui n'est pas couvert.
+
 ## Avant toute modification
 
 1. Lire `SECURITY.md` en entier. Les règles qui y figurent ne sont pas
