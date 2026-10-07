@@ -95,9 +95,9 @@
 
     // Points forts (3 au plus)
     if (p.published) a.forts.push('votre fiche est en ligne sur le site de l’agence');
-    if (!a.manquantes.length && !a.aReprendre.length && !a.exces) a.forts.push('des mensurations complètes');
-    if (nbProjets > 0) a.forts.push(nbProjets > 1 ? nbProjets + ' expériences déjà renseignées' : 'une première expérience déjà renseignée');
-    if (photos.length >= BOOK_MINIMUM) a.forts.push('un book de ' + photos.length + ' photos');
+    if (!a.manquantes.length && !a.aReprendre.length && !a.exces) a.forts.push('vos mensurations sont complètes');
+    if (nbProjets > 0) a.forts.push(nbProjets > 1 ? nbProjets + ' expériences sont déjà renseignées' : 'une première expérience est déjà renseignée');
+    if (photos.length >= BOOK_MINIMUM) a.forts.push('votre book compte déjà ' + photos.length + ' photos');
     a.forts = a.forts.slice(0, 3);
 
     // 3 priorités, de la plus importante à la moins importante
@@ -123,7 +123,7 @@
     presentation: 'Une présentation de quelques phrases _(votre parcours, votre style, ce qui vous distingue)_',
     presentationCourte: 'Une présentation un peu plus détaillée : _quelques phrases sur votre parcours, votre style, ce qui vous distingue_',
     instagram: 'Votre compte Instagram _(ou cochez « Je n’ai pas Instagram »)_',
-    experiences: 'Vos expériences : défilés, shootings, castings, événements — _même les plus petits comptent_',
+    experiences: 'Vos expériences : défilés, shootings, castings, événements. _Même les plus petites comptent !_',
     formation: 'Vos formations de mannequinat _(ou « aucune » si vous débutez)_',
     etudes: 'Votre niveau d’études', langues: 'Les langues que vous parlez'
   };
@@ -133,21 +133,21 @@
     if (a.forts.length) { var f = joindre(a.forts); l.push('', '✨ *Vos points forts :* ' + f + '.'); }
     l.push('', '📊 *Votre profil est complet à ' + a.score + ' %*', barre(a.score));
     if (a.priorites.length) l.push('', '🎯 *Vos priorités :*', a.priorites.map(function (x, i) { return ['1️⃣', '2️⃣', '3️⃣'][i] + ' ' + x; }).join('\n'));
-    if (a.identite.length) l.push('', '👤 *Votre identité — à ajouter :*', a.identite.map(function (k) { return '• ' + TEXTES[k]; }).join('\n'));
+    if (a.identite.length) l.push('', '👤 *À ajouter à votre identité :*', a.identite.map(function (k) { return '• ' + TEXTES[k]; }).join('\n'));
     if (a.newFace && !a.nbProjets) l.push('', '🌱 *Vous débutez en tant que New Face :* c’est tout à fait normal de ne pas encore avoir d’expérience. _Dès votre premier casting, shooting ou défilé, pensez à l’ajouter dans votre Espace._');
-    if (a.parcours.length) l.push('', '🏆 *Votre ' + (a.newFace && !a.nbProjets ? 'parcours' : 'expérience et votre parcours') + ' — à ajouter :*', a.parcours.map(function (k) { return '• ' + TEXTES[k]; }).join('\n'));
+    if (a.parcours.length) l.push('', '🏆 *À ajouter à votre ' + (a.newFace && !a.nbProjets ? 'parcours' : 'expérience et à votre parcours') + ' :*', a.parcours.map(function (k) { return '• ' + TEXTES[k]; }).join('\n'));
 
     // Mensurations : toujours expliquées, pour que la mannequin connaisse ses tailles exactes
     l.push('', '📏 *Vos mensurations*');
     if (a.tailles && (a.tailles.haut || a.tailles.bas)) {
-      l.push('_Calculées automatiquement par le site d’après vos mesures :_ taille haut *' + (a.tailles.haut || '—') + '*, taille bas *' + (a.tailles.bas || '—') + '*, taille générale *' + (a.tailles.generale || '—') + '*.');
+      l.push('_Calculées automatiquement par le site d’après vos mesures :_ taille haut *' + (a.tailles.haut || 'non calculée') + '*, taille bas *' + (a.tailles.bas || 'non calculée') + '*, taille générale *' + (a.tailles.generale || 'non calculée') + '*.');
     }
-    l.push('L’agence recommande les tailles *S ou M* ; la taille *L* est tolérée. Connaître vos tailles exactes vous aide à garder votre silhouette et à ne pas dépasser ces repères.');
+    l.push('L’agence recommande les tailles *S ou M*. La taille *L* est tolérée. Connaître vos tailles exactes vous aide à garder votre silhouette et à ne pas dépasser ces repères.');
     if (a.aReprendre.length) l.push('⚠️ Votre ' + joindre(a.aReprendre) + ' ne vont pas ensemble : une mesure est sûrement fausse. Mesurez-vous avec un mètre ruban, sans serrer. _En attendant, vos mensurations restent cachées sur votre fiche._');
     else if (a.exces) l.push('💬 Votre taille calculée dépasse aujourd’hui la taille L. Commencez par vérifier vos mesures _(mètre ruban à plat, sans serrer, sans vêtement épais)_ : une erreur de saisie est vite arrivée. Si elles sont justes, l’agence est là pour en parler avec vous et vous conseiller.');
     else if (a.tolere) l.push('👌 Vous êtes en taille L : elle est acceptée. Veillez simplement à ne pas aller au-delà.');
     else if (a.tailles && (a.tailles.haut || a.tailles.bas)) l.push('✅ Vous êtes dans les tailles recommandées : bravo, continuez ainsi.');
-    if (a.aVerifier.length) l.push('🔎 À vérifier : votre ' + joindre(a.aVerifier) + ' _(beaucoup plus grand que vos autres mesures — sans doute une erreur de saisie)_.');
+    if (a.aVerifier.length) l.push('🔎 À vérifier : votre ' + joindre(a.aVerifier) + ' _(beaucoup plus grand que vos autres mesures, sans doute une erreur de saisie)_.');
     if (a.manquantes.length) l.push('📝 À compléter : ' + joindre(a.manquantes) + '.');
 
     // Photos (en dernier)
@@ -159,13 +159,13 @@
       if (a.photos.indexOf('book') !== -1) l.push('• Votre book n’est pas encore assez riche _(' + a.nbPhotos + ' photo' + (a.nbPhotos > 1 ? 's' : '') + ')_ : ajoutez-en pour arriver à *' + BOOK_MINIMUM + ' au moins*, avec des tenues et des ambiances variées.');
     }
     if (CATEGORIES_PHOTOS_ACTIVES) l.push('', '💡 *Bon à savoir :* vos photos sont désormais rangées automatiquement en deux catégories, _vous n’avez rien à faire_ :',
-      '📒 *Book* — les photos professionnelles _(shootings, défilés, campagnes)_',
-      '🌿 *Lifestyle / digitales* — les polaroïds, les photos que vous aimez, vos castings et vos sorties',
+      '📒 *Book* : les photos professionnelles _(shootings, défilés, campagnes)_',
+      '🌿 *Lifestyle / digitales* : les polaroïds, les photos que vous aimez, vos castings et vos sorties',
       'Plusieurs photos dans la même tenue sous différents angles, ou avec le logo d’un organisateur, sont tout à fait normales.');
 
     l.push('', '👉 *Pour mettre votre profil à jour*, rendez-vous dans votre Espace mannequin :', MA2M_SITE + '/espace-mannequin',
       '', '🤝 _L’agence reste à vos côtés : pour toute question, écrivez-nous sur WhatsApp._',
-      '', 'Rapport du ' + new Date().toLocaleDateString('fr-FR') + ' — *Maître Akesse Model Management*');
+      '', '*Maître Akesse Model Management*', 'Le ' + new Date().toLocaleDateString('fr-FR'));
     return l.join('\n');
   }
 
