@@ -1092,6 +1092,10 @@ les classes ajoutées dynamiquement (`classList.add(...)`, `className =
   La fiche propose les mêmes date/heure/lieu et a un bouton « ✉️ Envoyer aussi
   par e-mail ». Sans adresse e-mail, la phrase « Un e-mail de confirmation… »
   est retirée du WhatsApp (fiche et messages groupés).
+  **Premiers messages** (changement de statut d'une candidature sur la fiche,
+  `MODELES_NOTIFICATION.casting` dans `tableau-de-bord.html`) : réécrits le
+  07/10/2026 (en étude, en attente, retenue, refusée) au même format WhatsApp ;
+  l'e-mail (automatique et bouton) passe par `messagePourEmail`.
 
 ## Diagnostic sécurité du 28 septembre 2026 (nuit)
 
