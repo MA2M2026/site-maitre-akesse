@@ -172,7 +172,7 @@
   // base ne les a pas encore, la page s'affiche quand même, sans elles.
   window.ma2mMesuresSupp = async function (id) {
     try {
-      var r = await sb.from('model_profiles').select('shoulder_cm, arm_cm, neck_cm, head_cm').eq('id', id).maybeSingle();
+      var r = await sb.from('model_profiles').select('shoulder_cm, arm_cm, neck_cm').eq('id', id).maybeSingle();
       return (r && !r.error && r.data) || {};
     } catch (e) { return {}; }
   };

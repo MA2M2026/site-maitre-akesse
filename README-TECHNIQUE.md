@@ -1722,3 +1722,28 @@ plus qu'à un seul endroit.
   (toutes les fiches, voulu) et le déclencheur des adresses de fiche compare des longueurs
   au lieu de chaînes vides (même résultat ; avertissement SonarQube pensé pour Oracle).
   Rien à exécuter dans Supabase : comportement identique.
+
+## 📸 Instagram obligatoire, tour de tête retiré (07/10/2026, décision de la propriétaire)
+
+- **Instagram** : obligatoire à l'étape « Identité » de l'Espace mannequin — soit un compte,
+  soit la case « Je n'ai pas Instagram » (colonne `sans_instagram`, **Extension 126**, lue et
+  enregistrée à part pour ne jamais bloquer l'étape si la colonne manque). Fonctions
+  `lireInstagramFormulaire()` / `enregistrerSansInstagram()` (js/espace-mannequin.js).
+  L'étape 1 n'est « complète » qu'avec l'un des deux.
+- **Tour de tête** : n'est plus demandé (Espace), ni affiché (fiches FR/EN, fiche événement),
+  ni réclamé par le rapport des profils. La colonne `head_cm` reste en base (rien d'effacé) et
+  n'est plus jamais réécrite.
+
+## 📝 Rapport des profils — nouvelle version (07/10/2026, demande de la propriétaire)
+
+`js/rapport-profils-admin.js` (tableau de bord, « Rapport des profils ») rédige un message WhatsApp
+(*gras*, _italique_, symboles ; premier texte proposé, choisi par la propriétaire) de
+**sensibilisation** (jamais de menace) : « Mlle » / « Monsieur » + nom, points forts, profil
+complet à x % (barre), 3 priorités classées (mensurations > identité > parcours > photos),
+puis identité, expérience et parcours (projets `model_projects`, études, formation, langues),
+mensurations avec les tailles calculées haut / bas / générale (S ou M recommandé, L toléré,
+au-delà : conseil bienveillant), et les photos en dernier (photo de profil = couverture, book
+de moins de 6 photos). **Aucune remarque de l'IA** n'est reprise (`tri_raison` ignoré). Lien
+New Face sans expérience : jamais réclamée (message encourageant). Lien Espace mannequin en fin de message ; WhatsApp de l'agence cité sans lien (le message part de ce numéro). Constante `MA2M_WHATSAPP` (js/app.js) pour le bouton flottant. Historique des envois remis à
+zéro (clé `ma2m_rapport_profils_envois_v2`) + bouton « Réinitialiser l'historique ».
+Le paragraphe sur les deux catégories de photos s'active avec `CATEGORIES_PHOTOS_ACTIVES`.

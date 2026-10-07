@@ -99,7 +99,6 @@
     ligne('Largeur d’épaules', cm(d.shoulder_cm));
     ligne('Longueur de bras', cm(d.arm_cm));
     ligne('Entrejambe', cm(d.inseam_cm));
-    ligne('Tour de tête', cm(d.head_cm));
     ligne('Pointure', t.pointure ? 'EU ' + t.pointure.eu + '  (UK ' + t.pointure.uk + ' · US ' + t.pointure.us + ')' : d.shoe_size);
     ligne('Taille haut', equiv(t.haut));
     ligne('Taille bas', equiv(t.bas));
