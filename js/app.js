@@ -550,6 +550,67 @@ function dessinerIconeReseau(ctx, cle, cx, cy, taille, couleurGlyphe) {
   ctx.restore();
 }
 
+// Mesures impériales pour les recruteurs américains / britanniques (06/10/2026, fiche et
+// Compcard en anglais) : taille en pieds et pouces, mensurations en pouces, poids en livres,
+// pointure US — à côté des valeurs métriques, calculées automatiquement (rien à saisir).
+function enPieds(cm) {
+  const pouces = cm / 2.54; let pieds = Math.floor(pouces / 12); let reste = Math.round((pouces - pieds * 12) * 2) / 2;
+  if (reste >= 12) { pieds += 1; reste -= 12; }
+  return pieds + "'" + String(reste).replace('.5', '½') + '"';
+}
+function enPouces(cm) { return String(Math.round(cm / 2.54 * 2) / 2).replace('.5', '½') + '"'; }
+function enLivres(kg) { return Math.round(kg * 2.2046) + ' lbs'; }
+function pointureUS(eu, categorie) {
+  const n = parseFloat(String(eu || '').replace(',', '.'));
+  if (!n || n < 34 || n > 50) return '';
+  const us = categorie === 'homme' ? n - 33 : n - 30.5;
+  return 'US ' + String(Math.round(us * 2) / 2).replace('.5', '½');
+}
+// Carnation, yeux et cheveux sont saisis en français par les mannequins : traduits ici pour
+// les recruteurs internationaux (une valeur inconnue reste telle quelle).
+const TRADUCTIONS_EN = { 'claire': 'Light', 'métisse claire': 'Light medium', 'métisse foncée': 'Medium dark', 'foncée': 'Dark', 'très foncée': 'Very dark',
+  'marron': 'Brown', 'marron foncé': 'Dark brown', 'noir': 'Black', 'noire': 'Black', 'vert': 'Green', 'bleu': 'Blue', 'gris': 'Grey', 'noisette': 'Hazel',
+  'brun': 'Brown', 'châtain': 'Chestnut', 'blond': 'Blonde', 'roux': 'Red', 'gris / blanc': 'Grey / White', 'la tête rasée': 'Shaved', 'rasé': 'Shaved', 'tête rasée': 'Shaved' };
+function enAnglais(v) { const k = String(v || '').trim().toLowerCase(); return TRADUCTIONS_EN[k] || v; }
+function avecImperial(metrique, imperial) { return imperial ? metrique + ' · ' + imperial : metrique; }
+
+// Mensurations de la Compcard, libellées selon la langue (en anglais : valeurs impériales
+// ajoutées et couleurs traduites). Mesures incohérentes (« à reprendre », js/tailles.js) :
+// poitrine, tour de taille et bassin/entrejambe non affichés.
+function champsCompcard(profil, langue) {
+  const masquer = typeof ma2mMesuresAReprendre === 'function' && ma2mMesuresAReprendre(profil);
+  const homme = profil.category === 'homme';
+  const tailleVetements = (typeof ma2mTailleVetements === 'function' ? ma2mTailleVetements(profil) : profil.clothing_size) || null;
+  if (langue === 'en') {
+    const cmPouces = v => v ? avecImperial(v + ' cm', enPouces(v)) : null;
+    return [
+      ['Height', profil.height_cm ? avecImperial(profil.height_cm + ' cm', enPieds(profil.height_cm)) : null],
+      ['Weight', profil.weight_kg ? avecImperial(profil.weight_kg + ' kg', enLivres(profil.weight_kg)) : null],
+      ['Chest', masquer ? null : cmPouces(profil.chest_cm)],
+      ['Waist', masquer ? null : cmPouces(profil.waist_cm)],
+      [homme ? 'Inseam' : 'Hips', masquer ? null : cmPouces(homme ? profil.inseam_cm : profil.hips_cm)],
+      ['Shoe Size', profil.shoe_size ? avecImperial('EU ' + profil.shoe_size, pointureUS(profil.shoe_size, profil.category)) : null],
+      ['Skin Tone', profil.carnation ? enAnglais(profil.carnation) : null],
+      ['Clothing Size', tailleVetements],
+      ['Eyes', profil.eye_color ? enAnglais(profil.eye_color) : null],
+      ['Hair', profil.hair_color ? enAnglais(profil.hair_color) : null]
+    ].filter(([, v]) => v);
+  }
+  const cm = v => v ? v + ' cm' : null;
+  return [
+    ['Taille', cm(profil.height_cm)],
+    ['Poids', profil.weight_kg ? profil.weight_kg + ' kg' : null],
+    ['Poitrine', masquer ? null : cm(profil.chest_cm)],
+    ['Tour de taille', masquer ? null : cm(profil.waist_cm)],
+    [homme ? 'Entrejambe' : 'Bassin', masquer ? null : cm(homme ? profil.inseam_cm : profil.hips_cm)],
+    ['Pointure', profil.shoe_size || null],
+    ['Carnation', profil.carnation || null],
+    ['Taille vêtements', tailleVetements],
+    ['Yeux', profil.eye_color || null],
+    ['Cheveux', profil.hair_color || null]
+  ].filter(([, v]) => v);
+}
+
 // Construit la fiche Compcard sur un grand canvas (qualité impression professionnelle,
 // 400 dpi sur une page A4 — net même de très près sur un écran géant) à partir de
 // { profil, photos, projets } :
@@ -558,8 +619,11 @@ function dessinerIconeReseau(ctx, cle, cx, cy, taille, couleurGlyphe) {
 //   shoe_size, carnation, clothing_size, eye_color, hair_color)
 // - photos : tableau de { url, compcard_ordre } (url = pleine résolution)
 // - projets : tableau quelconque, seule sa longueur sert (résumé du parcours en pied de page)
-async function construireCanvasCompcard(ficheData) {
+// langue : 'fr' (par défaut) ou 'en' (fiche anglaise en/mannequin.html — même dessin,
+// textes traduits et mesures impériales en plus).
+async function construireCanvasCompcard(ficheData, langue) {
   const { profil, photos, projets } = ficheData;
+  const en = langue === 'en';
   const NOIR = '#060504', BORDEAUX = '#7a1220', BLANC = '#ffffff', GRIS = '#a79f96', ROUGECLAIR = '#cf3b52';
   const LARGEUR_MM = 210, HAUTEUR_MM = 297;
   const DPI = 400;
@@ -583,7 +647,7 @@ async function construireCanvasCompcard(ficheData) {
   const choisiesParCase = [1, 2, 3, 4, 5].map(n => { const ph = photos.find(p => p.compcard_ordre === n); return ph ? ph.url : null; });
   const urlsPhotos = completerEmplacementsPhotos(choisiesParCase, photos.map(p => p.url), 5).filter(Boolean);
   const [logo, ...imagesPhotos] = await Promise.all([
-    chargerImageLocale('assets/logo-dark-bg.png'),
+    chargerImageLocale('/assets/logo-dark-bg.png'),
     ...urlsPhotos.map(u => chargerImageHauteRes(u))
   ]);
 
@@ -670,29 +734,16 @@ async function construireCanvasCompcard(ficheData) {
   ctx.textAlign = 'left';
   ctx.fillStyle = BLANC;
   ctx.font = `bold ${fpx(27)}px Arial, sans-serif`;
-  ctx.fillText((profil.full_name || 'Mannequin').toUpperCase(), px(15), px(y));
+  ctx.fillText((profil.full_name || (en ? 'Model' : 'Mannequin')).toUpperCase(), px(15), px(y));
   y += 9;
   const niveauMannequin = libelleNiveauPublic(niveauNormalise(profil.niveau_mannequin, profil.years_experience));
   ctx.fillStyle = ROUGECLAIR;
   ctx.font = `${fpx(13)}px Arial, sans-serif`;
-  ctx.fillText([niveauMannequin, profil.city].filter(Boolean).join(' · '), px(15), px(y));
+  ctx.fillText([niveauMannequin, profil.city].filter(Boolean).join(en ? '  ·  ' : ' · '), px(15), px(y));
 
   // --- Mensurations (grille 3 colonnes) ---
   y += 11;
-  // Mesures incohérentes (« à reprendre », js/tailles.js) : mensurations non affichées
-  const masquer = typeof ma2mMesuresAReprendre === 'function' && ma2mMesuresAReprendre(profil);
-  const champs = [
-    ['Taille', profil.height_cm ? profil.height_cm + ' cm' : null],
-    ['Poids', profil.weight_kg ? profil.weight_kg + ' kg' : null],
-    ['Poitrine', !masquer && profil.chest_cm ? profil.chest_cm + ' cm' : null],
-    ['Tour de taille', !masquer && profil.waist_cm ? profil.waist_cm + ' cm' : null],
-    [profil.category === 'homme' ? 'Entrejambe' : 'Bassin', masquer ? null : profil.category === 'homme' ? (profil.inseam_cm ? profil.inseam_cm + ' cm' : null) : (profil.hips_cm ? profil.hips_cm + ' cm' : null)],
-    ['Pointure', profil.shoe_size || null],
-    ['Carnation', profil.carnation || null],
-    ['Taille vêtements', (typeof ma2mTailleVetements === 'function' ? ma2mTailleVetements(profil) : profil.clothing_size) || null],
-    ['Yeux', profil.eye_color || null],
-    ['Cheveux', profil.hair_color || null]
-  ].filter(([, v]) => v);
+  const champs = champsCompcard(profil, en ? 'en' : 'fr');
 
   const yGrilleDebut = y;
   const PITCH = 13;
@@ -722,14 +773,16 @@ async function construireCanvasCompcard(ficheData) {
   if (projets && projets.length && yFinGrille + 3 + 5 < yPiedPage) {
     ctx.fillStyle = GRIS;
     ctx.font = `italic ${fpx(9.5)}px Arial, sans-serif`;
-    ctx.fillText(`${projets.length} projet${projets.length > 1 ? 's' : ''} réalisé${projets.length > 1 ? 's' : ''} — book complet sur maitreakessemodelmanagement.com`, px(15), px(yFinGrille + 3));
+    const pluriel = projets.length > 1 ? 's' : '';
+    ctx.fillText(en ? `${projets.length} completed project${pluriel} — full book on maitreakessemodelmanagement.com`
+      : `${projets.length} projet${pluriel} réalisé${pluriel} — book complet sur maitreakessemodelmanagement.com`, px(15), px(yFinGrille + 3));
   }
   const hPiedPage = HAUTEUR_MM - yPiedPage;
   ctx.fillStyle = BORDEAUX;
   ctx.fillRect(0, px(yPiedPage), canvas.width, px(hPiedPage));
   ctx.fillStyle = BLANC;
   ctx.font = `bold ${fpx(12)}px Arial, sans-serif`;
-  ctx.fillText('CONTACT OFFICIEL MA2M', px(15), px(yPiedPage + 9));
+  ctx.fillText(en ? 'OFFICIAL MA2M CONTACT' : 'CONTACT OFFICIEL MA2M', px(15), px(yPiedPage + 9));
   ctx.font = `${fpx(11)}px Arial, sans-serif`;
   ctx.fillText(MA2M_TELEPHONES.join('   ·   '), px(15), px(yPiedPage + 16.5));
   ctx.fillText('scoutmodel.ma2m@gmail.com', px(15), px(yPiedPage + 23.5));
@@ -745,7 +798,9 @@ async function construireCanvasCompcard(ficheData) {
   ctx.fillText('@maitreakessemodelmanagement', px(xIcone + 3), px(yPiedPage + 30.5));
 
   ctx.font = `italic ${fpx(7)}px Arial, sans-serif`;
-  ctx.fillText(`Document officiel généré le ${new Date().toLocaleDateString('fr-FR')} depuis maitreakessemodelmanagement.com — toute demande de booking passe exclusivement par l'agence.`, px(15), px(yPiedPage + hPiedPage - 6));
+  ctx.fillText(en
+    ? `Official document generated on ${new Date().toLocaleDateString('en-US')} from maitreakessemodelmanagement.com — all booking requests must go exclusively through the agency.`
+    : `Document officiel généré le ${new Date().toLocaleDateString('fr-FR')} depuis maitreakessemodelmanagement.com — toute demande de booking passe exclusivement par l'agence.`, px(15), px(yPiedPage + hPiedPage - 6));
 
   return canvas;
 }
@@ -859,7 +914,7 @@ function separerAgenda(projets) {
 function melanger(liste) {
   const copie = liste.slice();
   for (let i = copie.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(aleatoire() * (i + 1));
     [copie[i], copie[j]] = [copie[j], copie[i]];
   }
   return copie;
@@ -900,7 +955,9 @@ function horodatageFichier() {
 // Génère et télécharge la fiche (PDF ou JPEG) à partir de ficheData ({ profil, photos,
 // projets }), en désactivant/réactivant pendant la génération les deux boutons désignés
 // par leur id (idBtnPdf/idBtnJpeg — chaque page peut leur donner l'id de son choix).
-async function genererFiche(format, ficheData, idBtnPdf, idBtnJpeg) {
+// langue 'en' : fiche et messages en anglais (en/mannequin.html).
+async function genererFiche(format, ficheData, idBtnPdf, idBtnJpeg, langue) {
+  const en = langue === 'en';
   if (!ficheData || !ficheData.profil) return;
   const btnPdf = idBtnPdf ? document.getElementById(idBtnPdf) : null;
   const btnJpeg = idBtnJpeg ? document.getElementById(idBtnJpeg) : null;
@@ -908,12 +965,12 @@ async function genererFiche(format, ficheData, idBtnPdf, idBtnJpeg) {
   const texteOriginal = btnActif ? btnActif.textContent : '';
   if (btnPdf) btnPdf.disabled = true;
   if (btnJpeg) btnJpeg.disabled = true;
-  if (btnActif) btnActif.textContent = 'Génération…';
+  if (btnActif) btnActif.textContent = en ? 'Generating…' : 'Génération…';
 
   try {
     if (format !== 'jpeg') await chargerJsPdf();
-    const canvas = await construireCanvasCompcard(ficheData);
-    const nomFichier = 'fiche-' + (ficheData.profil.full_name || 'mannequin').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase() + horodatageFichier();
+    const canvas = await construireCanvasCompcard(ficheData, langue);
+    const nomFichier = (en ? 'card-' : 'fiche-') + (ficheData.profil.full_name || (en ? 'model' : 'mannequin')).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase() + horodatageFichier();
 
     if (format === 'jpeg') {
       const lien = document.createElement('a');
@@ -930,7 +987,7 @@ async function genererFiche(format, ficheData, idBtnPdf, idBtnJpeg) {
     }
   } catch (e) {
     signalerProbleme('Génération de fichier échouée', (e && e.message) || String(e), e && e.stack);
-    alert('Une erreur est survenue pendant la génération du fichier. Réessayez.');
+    alert(en ? 'An error occurred while generating the file. Please try again.' : 'Une erreur est survenue pendant la génération du fichier. Réessayez.');
   } finally {
     if (btnPdf) btnPdf.disabled = false;
     if (btnJpeg) btnJpeg.disabled = false;
@@ -1437,6 +1494,151 @@ function nomFichierSur(nom) {
   if (!nom) return 'fichier';
   try { nom = nom.normalize('NFKD'); } catch (e) {}
   return nom.replace(/[^a-zA-Z0-9._-]/g, '_').slice(-80) || 'fichier';
+}
+
+// ================== Photos du Book (07/10/2026 : regroupé ici, c'était recopié dans
+// js/espace-mannequin.js et tableau-de-bord.html) ==================
+// Nombre au hasard entre 0 et 1, tiré par le générateur sûr du navigateur quand il existe.
+function aleatoire() {
+  if (window.crypto && crypto.getRandomValues) return crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296;
+  return Math.random();
+}
+// Petit suffixe au hasard (6 caractères a-z0-9) pour des noms de fichiers uniques.
+function suffixeAleatoire() {
+  let s = '';
+  while (s.length < 6) s += Math.floor(aleatoire() * 36).toString(36);
+  return s;
+}
+// Identifiant de cet appareil pour la connexion protégée (blocage après trop d'erreurs) :
+// créé une fois, gardé dans le navigateur ; null si le stockage est indisponible.
+function idAppareilMa2m() {
+  try {
+    let v = localStorage.getItem('ma2m_appareil');
+    if (!v || !/^[A-Za-z0-9-]{8,64}$/.test(v)) {
+      v = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now().toString(16) + suffixeAleatoire() + suffixeAleatoire());
+      localStorage.setItem('ma2m_appareil', v);
+    }
+    return v;
+  } catch (e) { return null; }
+}
+// Jeton de la session ouverte (mannequin ou admin), ou null.
+async function jetonSessionCourante() {
+  const { data: { session } } = await sb.auth.getSession();
+  return session ? session.access_token : null;
+}
+// Envoi vers Cloudflare R2 par une adresse signée temporaire, délivrée par
+// api/r2-presigner.js (au propriétaire de la photo ou à un admin) : les clés R2 ne
+// sont jamais dans le navigateur. Sur une connexion mobile instable, ce trajet échoue
+// parfois une fois puis réussit : 3 essais avant de faire remonter l'échec.
+async function uploaderVersR2(modelId, chemin, blob, contentType) {
+  const jeton = await jetonSessionCourante();
+  if (!jeton) throw new Error('Session expirée — reconnectez-vous.');
+  let derniereErreur;
+  for (let essai = 1; essai <= 3; essai++) {
+    try {
+      const reponse = await fetch('/api/r2-presigner', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jeton },
+        body: JSON.stringify({ modelId, chemin, contentType: contentType || 'image/jpeg', taille: blob.size })
+      });
+      const resultat = await reponse.json().catch(() => ({}));
+      if (!reponse.ok) throw new Error(resultat.error || "Échec de l'obtention de l'URL d'envoi.");
+      const envoi = await fetch(resultat.uploadUrl, { method: 'PUT', headers: { 'Content-Type': contentType || 'image/jpeg' }, body: blob });
+      if (!envoi.ok) throw new Error("Échec de l'envoi vers le stockage.");
+      return resultat.publicUrl;
+    } catch (e) {
+      derniereErreur = e;
+      if (essai < 3) await new Promise(r => setTimeout(r, 700 * essai));
+    }
+  }
+  throw derniereErreur;
+}
+async function supprimerDeR2(modelId, chemin) {
+  if (!chemin) return;
+  try {
+    const jeton = await jetonSessionCourante();
+    if (!jeton) return;
+    await fetch('/api/r2-presigner', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jeton },
+      body: JSON.stringify({ action: 'suppression', modelId, chemin })
+    });
+  } catch (e) { console.warn('Suppression R2 non confirmée :', e); }
+}
+// Photo redessinée dans un cadre de « coteMax » pixels, sur fond blanc (transparence PNG → blanc).
+function redessinerPhoto(fichier, coteMax, rendu) {
+  return new Promise(resolve => {
+    const img = new Image();
+    const adresse = URL.createObjectURL(fichier);
+    const fin = valeur => { URL.revokeObjectURL(adresse); resolve(valeur); };
+    img.onload = () => {
+      try {
+        const coteActuel = Math.max(img.width, img.height);
+        const ratio = coteActuel > coteMax ? coteMax / coteActuel : 1;
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * ratio);
+        canvas.height = Math.round(img.height * ratio);
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        rendu(canvas, fin);
+      } catch (e) { fin(null); }
+    };
+    img.onerror = () => fin(null);
+    img.src = adresse;
+  });
+}
+// Compresse toute photo lourde (> 900 Ko) en JPEG de 2200 px au plus ; les GIF (animés)
+// et les photos déjà légères restent intactes ; jamais plus lourde qu'au départ.
+async function compresserPhotoOrigine(fichier, coteMax = 2200, qualite = 0.85) {
+  const compressible = /^image\/(jpeg|jpg|pjpeg|png|webp)$/i.test(fichier.type || '');
+  if (!compressible || fichier.size < 900 * 1024) return fichier;
+  const resultat = await redessinerPhoto(fichier, coteMax, (canvas, fin) => canvas.toBlob(blob => {
+    if (!blob || blob.size >= fichier.size) { fin(null); return; }
+    fin(new File([blob], fichier.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' }));
+  }, 'image/jpeg', qualite));
+  return resultat || fichier;
+}
+// Miniature (grille du Book) : 800 px depuis le 06/10/2026, nom en « -n800.jpg » ;
+// aussi utilisée pour la version moyenne (1400 px).
+function genererMiniature(fichier, coteMax = 800, qualite = 0.75) {
+  return redessinerPhoto(fichier, coteMax, (canvas, fin) => canvas.toBlob(blob => fin(blob || null), 'image/jpeg', qualite));
+}
+// Préparation complète d'une photo du Book puis envoi : conversion HEIC, compression,
+// original + miniature 800 px + version moyenne 1400 px, dans le dossier du mannequin.
+// Une miniature ou une version moyenne qui échoue n'empêche pas l'envoi de la photo.
+// Tri automatique par IA (06/10/2026) d'une photo du Book qui vient d'être enregistrée,
+// lancé en arrière-plan (api/trier-photo.js) : Espace mannequin et tableau de bord.
+function trierPhotoEnArrierePlan(photoId){
+  jetonSessionCourante().then(function(jeton){
+    if (!jeton || !photoId) return;
+    return fetch('/api/trier-photo', {
+      method: 'POST', keepalive: true,
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jeton },
+      body: JSON.stringify({ photoId: String(photoId) })
+    });
+  }).catch(function(){});
+}
+
+async function envoyerPhotoBook(modelId, fichierOriginal) {
+  const fichierConverti = await convertirSiHeic(fichierOriginal);
+  const fichier = await compresserPhotoOrigine(fichierConverti);
+  const chemin = modelId + '/' + Date.now() + '-' + suffixeAleatoire() + '-' + nomFichierSur(fichier.name);
+  const url = await uploaderVersR2(modelId, chemin, fichier, fichier.type || 'image/jpeg');
+  const versions = [['miniature', 'miniatures', '-n800.jpg', 800, 0.75], ['moyenne', 'moyennes', '.jpg', 1400, 0.78]];
+  const resultat = { chemin, url, cheminMiniature: null, urlMiniature: null, cheminMoyenne: null, urlMoyenne: null };
+  for (const [nom, dossier, fin, cote, qualite] of versions) {
+    const blob = await genererMiniature(fichier, cote, qualite);
+    if (!blob) continue;
+    const cheminVersion = modelId + '/' + dossier + '/' + Date.now() + '-' + suffixeAleatoire() + fin;
+    const cle = nom === 'miniature' ? 'Miniature' : 'Moyenne';
+    try {
+      resultat['url' + cle] = await uploaderVersR2(modelId, cheminVersion, blob, 'image/jpeg');
+      resultat['chemin' + cle] = cheminVersion;
+    } catch (e) { console.warn('Version ' + nom + ' non envoyée :', e); }
+  }
+  return resultat;
 }
 
 // ================== Images du site (actualités/événements/partenaires) sur

@@ -10,46 +10,10 @@
 // Variables d'environnement requises sur Vercel : R2_ACCOUNT_ID,
 // R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, R2_PUBLIC_URL.
 
-const { S3Client, DeleteObjectCommand, PutObjectCommand } = require('@aws-sdk/client-s3');
+const { DeleteObjectCommand, PutObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 
-const SUPABASE_URL = 'https://dfhghgmwmxiguhtxtsle.supabase.co';
-
-function creerClientR2() {
-  return new S3Client({
-    region: 'auto',
-    endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-    credentials: {
-      accessKeyId: process.env.R2_ACCESS_KEY_ID,
-      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY
-    }
-  });
-}
-
-// Vérifie le jeton fourni et renvoie l'utilisateur — même principe que
-// api/supprimer-mannequin.js. Utilise la clé secrète Supabase uniquement
-// pour valider le jeton et consulter la table admins, jamais pour agir sur
-// des données de mannequin arbitraires.
-async function verifierUtilisateur(jeton) {
-  const cleSecrete = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!cleSecrete || !jeton) return null;
-  const reponse = await fetch(SUPABASE_URL + '/auth/v1/user', {
-    headers: { apikey: cleSecrete, Authorization: 'Bearer ' + jeton }
-  });
-  if (!reponse.ok) return null;
-  return reponse.json();
-}
-
-async function estAdmin(userId) {
-  const cleSecrete = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const reponse = await fetch(
-    SUPABASE_URL + '/rest/v1/admins?user_id=eq.' + encodeURIComponent(userId) + '&select=user_id',
-    { headers: { apikey: cleSecrete, Authorization: 'Bearer ' + cleSecrete } }
-  );
-  if (!reponse.ok) return false;
-  const lignes = await reponse.json();
-  return Array.isArray(lignes) && lignes.length > 0;
-}
+const { jetonDe, corpsDe, verifierUtilisateur, estAdmin, creerClientR2, cheminSur } = require('./_commun.js');
 
 // Autorisation : le propriétaire de la photo (mannequin agissant sur son
 // propre model_id) OU un admin — même règle que le déclencheur SQL
@@ -76,11 +40,6 @@ const TYPES_AUTORISES = /^(image\/(jpeg|jpg|pjpeg|png|webp|gif|heic|heif|avif)|a
 // donc remplir le stockage en contournant le site.
 const TAILLE_MAX = 15 * 1024 * 1024;
 function tailleValide(taille) { return Number.isInteger(taille) && taille > 0 && taille <= TAILLE_MAX; }
-function cheminSur(chemin) {
-  // Refuse les remontées de dossier (« .. » comme segment), les antislashs, les
-  // doubles barres et les caractères de contrôle ; « photo..jpg » reste accepté.
-  return !/(^|\/)\.\.(\/|$)|\\|\/\/|[\u0000-\u001f]/.test(chemin);
-}
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -95,12 +54,8 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const enTeteAuth = req.headers.authorization || '';
-  const jeton = enTeteAuth.startsWith('Bearer ') ? enTeteAuth.slice(7) : '';
-
-  let corps = req.body;
-  if (typeof corps === 'string') { try { corps = JSON.parse(corps); } catch (e) { corps = {}; } }
-  const { action, modelId, chemin, contentType, taille } = corps || {};
+  const jeton = jetonDe(req);
+  const { action, modelId, chemin, contentType, taille } = corpsDe(req);
 
   if (!modelId || typeof modelId !== 'string' || !chemin || typeof chemin !== 'string') {
     res.status(400).json({ error: 'Paramètres manquants (modelId, chemin).' });

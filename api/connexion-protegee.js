@@ -11,16 +11,7 @@
 // Variable d'environnement requise : SUPABASE_SERVICE_ROLE_KEY (déjà en
 // place sur Vercel pour les autres fonctions api/).
 
-const SUPABASE_URL = 'https://dfhghgmwmxiguhtxtsle.supabase.co';
-
-function extraireIp(req) {
-  const xff = req.headers['x-forwarded-for'];
-  if (xff) return String(xff).split(',')[0].trim();
-  return req.headers['x-real-ip'] || '0.0.0.0';
-}
-function nettoyerAppareil(v) {
-  return typeof v === 'string' && /^[A-Za-z0-9-]{8,64}$/.test(v) ? v : null;
-}
+const { SUPABASE_URL, estAdmin, extraireIp, nettoyerAppareil } = require('./_commun.js');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -89,12 +80,7 @@ module.exports = async function handler(req, res) {
 
     // 3. Pour l'espace admin, vérifier aussi l'appartenance à la table admins.
     if (espace === 'admin') {
-      const repAdmin = await fetch(
-        SUPABASE_URL + '/rest/v1/admins?user_id=eq.' + encodeURIComponent(resultatAuth.user.id) + '&select=user_id',
-        { headers: entetes }
-      );
-      const lignesAdmin = repAdmin.ok ? await repAdmin.json() : [];
-      if (!Array.isArray(lignesAdmin) || !lignesAdmin.length) {
+      if (!(await estAdmin(resultatAuth.user.id))) {
         res.status(403).json({ error: "Ce compte n'a pas accès au tableau de bord." });
         return;
       }

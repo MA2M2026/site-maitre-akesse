@@ -4,16 +4,7 @@
 // (l'appelant est déjà authentifié) — identifie le compte par son jeton
 // Supabase, jamais par une valeur fournie par le navigateur.
 
-const SUPABASE_URL = 'https://dfhghgmwmxiguhtxtsle.supabase.co';
-
-function extraireIp(req) {
-  const xff = req.headers['x-forwarded-for'];
-  if (xff) return String(xff).split(',')[0].trim();
-  return req.headers['x-real-ip'] || '0.0.0.0';
-}
-function nettoyerAppareil(v) {
-  return typeof v === 'string' && /^[A-Za-z0-9-]{8,64}$/.test(v) ? v : null;
-}
+const { SUPABASE_URL, enTetesService, jetonDe, corpsDe, verifierUtilisateur, extraireIp, nettoyerAppareil } = require('./_commun.js');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -27,35 +18,30 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const enTeteAuth = req.headers.authorization || '';
-  const jeton = enTeteAuth.startsWith('Bearer ') ? enTeteAuth.slice(7) : '';
+  const jeton = jetonDe(req);
   if (!jeton) {
     res.status(401).json({ error: 'Non authentifié.' });
     return;
   }
 
-  let corps = req.body;
-  if (typeof corps === 'string') { try { corps = JSON.parse(corps); } catch (e) { corps = {}; } }
+  const corps = corpsDe(req);
   const code = corps && corps.code;
   if (!code) {
     res.status(400).json({ error: 'Code manquant.' });
     return;
   }
 
-  const entetes = { apikey: cleSecrete, Authorization: 'Bearer ' + cleSecrete, 'Content-Type': 'application/json' };
+  const entetes = { ...enTetesService(), 'Content-Type': 'application/json' };
   const ip = extraireIp(req);
   const appareil = nettoyerAppareil(corps && corps.appareil);
   const espace = 'admin-code';
 
   try {
-    const repUser = await fetch(SUPABASE_URL + '/auth/v1/user', {
-      headers: { apikey: cleSecrete, Authorization: 'Bearer ' + jeton }
-    });
-    if (!repUser.ok) {
+    const utilisateur = await verifierUtilisateur(jeton);
+    if (!utilisateur) {
       res.status(401).json({ error: 'Session invalide ou expirée — reconnectez-vous.' });
       return;
     }
-    const utilisateur = await repUser.json();
     const identifiant = utilisateur.id;
 
     const repBlocage = await fetch(SUPABASE_URL + '/rest/v1/rpc/connexion_verifier_blocage', {

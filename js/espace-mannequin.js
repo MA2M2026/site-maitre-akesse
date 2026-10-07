@@ -156,16 +156,7 @@ function afficherPanneauAuth(id){
   }
 }
 
-function idAppareilMa2m() {
-  try {
-    let v = localStorage.getItem('ma2m_appareil');
-    if (!v || !/^[A-Za-z0-9-]{8,64}$/.test(v)) {
-      v = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now().toString(16) + Math.random().toString(16).slice(2));
-      localStorage.setItem('ma2m_appareil', v);
-    }
-    return v;
-  } catch (e) { return null; }
-}
+// idAppareilMa2m() : partagée dans js/app.js.
 // Message affiché quand le code d'invitation est refusé (ou bloqué après trop d'essais).
 function messageRefusCode(statut, r){
   if (statut === 429) {
@@ -507,25 +498,8 @@ const Store = {
       if (window.signalerErreur) window.signalerErreur('Envoi de photo très lent', qui + ' : une photo met plus de 90 secondes à partir', infosFichier);
     }, 90000);
     try{
-      const fichierConverti = await convertirSiHeic(file);
-      const fichier = await compresserPhotoOrigine(fichierConverti);
-      const chemin = currentUser.id + '/' + Date.now() + '-' + Math.random().toString(36).slice(2,8) + '-' + nomFichierSur(fichier.name);
-      const url = await uploaderVersR2(currentUser.id, chemin, fichier, fichier.type || 'image/jpeg');
-
-      let cheminMiniature=null, urlMiniature=null;
-      const blobMiniature = await genererMiniature(fichier);
-      if (blobMiniature) {
-        cheminMiniature = currentUser.id + '/miniatures/' + Date.now() + '-' + Math.random().toString(36).slice(2,8) + '-n800.jpg';
-        try { urlMiniature = await uploaderVersR2(currentUser.id, cheminMiniature, blobMiniature, 'image/jpeg'); }
-        catch(e) { console.warn('Miniature non envoyée :', e); cheminMiniature=null; }
-      }
-      let cheminMoyenne=null, urlMoyenne=null;
-      const blobMoyenne = await genererMiniature(fichier, 1400, 0.78);
-      if (blobMoyenne) {
-        cheminMoyenne = currentUser.id + '/moyennes/' + Date.now() + '-' + Math.random().toString(36).slice(2,8) + '.jpg';
-        try { urlMoyenne = await uploaderVersR2(currentUser.id, cheminMoyenne, blobMoyenne, 'image/jpeg'); }
-        catch(e) { console.warn('Version moyenne non envoyée :', e); cheminMoyenne=null; }
-      }
+      // Préparation et envoi partagés avec le tableau de bord (js/app.js).
+      const { chemin, url, cheminMiniature, urlMiniature, cheminMoyenne, urlMoyenne } = await envoyerPhotoBook(currentUser.id, file);
 
       const { data: row, error: dbErr } = await sb.from('model_photos').insert({
         model_id: currentUser.id, url, chemin, url_miniature:urlMiniature, chemin_miniature:cheminMiniature,
@@ -613,122 +587,11 @@ const Store = {
    Les photos du Book ne passent plus par Supabase Storage (bande passante
    trop coûteuse) mais par Cloudflare R2, via une URL signée temporaire que
    seule api/r2-presigner.js peut délivrer (clés R2 jamais côté navigateur). */
-async function jetonSessionCourante(){
-  const { data: { session } } = await sb.auth.getSession();
-  return session ? session.access_token : null;
-}
+// jetonSessionCourante(), uploaderVersR2(), supprimerDeR2() : partagés dans js/app.js.
 // Tri automatique de la photo par IA (06/10/2026) : lancé en arrière-plan,
 // sans attendre ni rien afficher — la mannequin n'est pas informée du résultat.
 // Une photo jugée inutilisable est seulement cachée (jamais supprimée) ; si cet
 // appel échoue, le tableau de bord rattrape la photo plus tard.
-function trierPhotoEnArrierePlan(photoId){
-  jetonSessionCourante().then(function(jeton){
-    if (!jeton || !photoId) return;
-    return fetch('/api/trier-photo', {
-      method: 'POST', keepalive: true,
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jeton },
-      body: JSON.stringify({ photoId: String(photoId) })
-    });
-  }).catch(function(){});
-}
-
-async function uploaderVersR2(modelId, chemin, blob, contentType){
-  const jeton = await jetonSessionCourante();
-  if (!jeton) throw new Error('Session expirée — reconnectez-vous.');
-  // L'envoi part directement vers Cloudflare R2 (pas via notre propre serveur) :
-  // sur une connexion mobile instable, ce trajet plus long échoue parfois une
-  // fois puis réussit au second essai — on retente automatiquement avant de
-  // faire remonter l'échec, plutôt que de faire porter cette fragilité réseau
-  // à la mannequin dès le premier raté.
-  let derniereErreur;
-  for (let essai = 1; essai <= 3; essai++) {
-    try {
-      const reponse = await fetch('/api/r2-presigner', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jeton },
-        body: JSON.stringify({ modelId: modelId, chemin: chemin, contentType: contentType || 'image/jpeg', taille: blob.size })
-      });
-      const resultat = await reponse.json().catch(function(){ return {}; });
-      if (!reponse.ok) throw new Error(resultat.error || "Échec de l'obtention de l'URL d'envoi.");
-      const envoi = await fetch(resultat.uploadUrl, { method: 'PUT', headers: { 'Content-Type': contentType || 'image/jpeg' }, body: blob });
-      if (!envoi.ok) throw new Error("Échec de l'envoi vers le stockage.");
-      return resultat.publicUrl;
-    } catch (e) {
-      derniereErreur = e;
-      if (essai < 3) await new Promise(function(r){ setTimeout(r, 700 * essai); });
-    }
-  }
-  throw derniereErreur;
-}
-async function supprimerDeR2(modelId, chemin){
-  if (!chemin) return;
-  try{
-    const jeton = await jetonSessionCourante();
-    if (!jeton) return;
-    await fetch('/api/r2-presigner', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jeton },
-      body: JSON.stringify({ action: 'suppression', modelId: modelId, chemin: chemin })
-    });
-  }catch(e){ console.warn('Suppression R2 non confirmée :', e); }
-}
-
-/* ---------------------------------------------------------- UTILS PHOTOS ---
-   Repris à l'identique de espace-mannequin-ancien.html (même comportement, même
-   pipeline HEIC/compression/miniatures) — voir README-TECHNIQUE.md. */
-function compresserPhotoOrigine(fichier, coteMax, qualite){
-  coteMax = coteMax || 2200; qualite = qualite || 0.85;
-  return new Promise(function(resolve){
-    // Compresse toute photo lourde (> 900 Ko), pas seulement les JPEG : les captures
-    // d'écran PNG ou les WebP de plusieurs Mo partaient telles quelles, très lentes à
-    // envoyer sur une connexion mobile (audit du 28 septembre 2026). Les GIF sont
-    // laissés intacts (animation). Sortie toujours en JPEG, sur fond blanc.
-    const compressible = /^image\/(jpeg|jpg|pjpeg|png|webp)$/i.test(fichier.type || '');
-    if (!compressible || fichier.size < 900*1024) { resolve(fichier); return; }
-    const img = new Image();
-    img.onload = function(){
-      try{
-        const coteActuel = Math.max(img.width, img.height);
-        const ratio = coteActuel > coteMax ? coteMax/coteActuel : 1;
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.round(img.width*ratio); canvas.height = Math.round(img.height*ratio);
-        const ctxC = canvas.getContext('2d');
-        ctxC.fillStyle = '#fff'; ctxC.fillRect(0,0,canvas.width,canvas.height); // transparence PNG → blanc
-        ctxC.drawImage(img,0,0,canvas.width,canvas.height);
-        canvas.toBlob(function(blob){
-          if (!blob || blob.size >= fichier.size) { resolve(fichier); return; }
-          resolve(new File([blob], fichier.name.replace(/\.\w+$/, '.jpg'), { type:'image/jpeg' }));
-        }, 'image/jpeg', qualite);
-      }catch(e){ resolve(fichier); }
-    };
-    img.onerror = function(){ resolve(fichier); };
-    img.src = URL.createObjectURL(fichier);
-  });
-}
-// Miniature (grille du Book) : 800 px de côté depuis le 06/10/2026 (500 px avant — un peu
-// floue sur les téléphones à écran très fin) ; le nom finit par « -n800.jpg » pour que
-// l'outil du tableau de bord sache qu'elle est déjà au nouveau format.
-function genererMiniature(fichier, coteMax, qualite){
-  coteMax = coteMax || 800; qualite = qualite || 0.75;
-  return new Promise(function(resolve){
-    const img = new Image();
-    img.onload = function(){
-      try{
-        const coteActuel = Math.max(img.width, img.height);
-        const ratio = coteActuel > coteMax ? coteMax/coteActuel : 1;
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.round(img.width*ratio); canvas.height = Math.round(img.height*ratio);
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#fff'; ctx.fillRect(0,0,canvas.width,canvas.height);
-        ctx.drawImage(img,0,0,canvas.width,canvas.height);
-        canvas.toBlob(function(blob){ resolve(blob||null); }, 'image/jpeg', qualite);
-      }catch(e){ resolve(null); }
-    };
-    img.onerror = function(){ resolve(null); };
-    img.src = URL.createObjectURL(fichier);
-  });
-}
-
 /* ------------------------------------------------------------- UTILS UI --- */
 const STEP_LABELS = ['Identité','Physique','Formation','Expérience','Photos','Récapitulatif'];
 const EXP_TYPES = ['Défilé','Campagne','Éditorial','Shooting','Lookbook','Publicité','Fitting','Showroom','Vidéo','Autre'];

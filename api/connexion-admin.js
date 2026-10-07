@@ -5,33 +5,24 @@
 // policy publique) : seul ce point d'entrée, authentifié admin, peut les
 // lire ou les modifier.
 
-const SUPABASE_URL = 'https://dfhghgmwmxiguhtxtsle.supabase.co';
+const { SUPABASE_URL, enTetesService, jetonDe, corpsDe, verifierUtilisateur, estAdmin } = require('./_commun.js');
 
-async function verifierAdmin(cleSecrete, jeton) {
-  const repUser = await fetch(SUPABASE_URL + '/auth/v1/user', {
-    headers: { apikey: cleSecrete, Authorization: 'Bearer ' + jeton }
-  });
-  if (!repUser.ok) return null;
-  const utilisateur = await repUser.json();
-  const repAdmin = await fetch(
-    SUPABASE_URL + '/rest/v1/admins?user_id=eq.' + encodeURIComponent(utilisateur.id) + '&select=user_id',
-    { headers: { apikey: cleSecrete, Authorization: 'Bearer ' + cleSecrete } }
-  );
-  const lignes = repAdmin.ok ? await repAdmin.json() : [];
-  return Array.isArray(lignes) && lignes.length ? utilisateur : null;
+// Compte connecté ET administrateur, sinon null.
+async function verifierAdmin(jeton) {
+  const utilisateur = await verifierUtilisateur(jeton);
+  return utilisateur && (await estAdmin(utilisateur.id)) ? utilisateur : null;
 }
 
 module.exports = async function handler(req, res) {
   const cleSecrete = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!cleSecrete) { res.status(500).json({ error: 'Configuration serveur incomplète.' }); return; }
 
-  const enTeteAuth = req.headers.authorization || '';
-  const jeton = enTeteAuth.startsWith('Bearer ') ? enTeteAuth.slice(7) : '';
+  const jeton = jetonDe(req);
   if (!jeton) { res.status(401).json({ error: 'Non authentifié.' }); return; }
 
-  const entetes = { apikey: cleSecrete, Authorization: 'Bearer ' + cleSecrete, 'Content-Type': 'application/json' };
+  const entetes = { ...enTetesService(), 'Content-Type': 'application/json' };
 
-  const utilisateur = await verifierAdmin(cleSecrete, jeton);
+  const utilisateur = await verifierAdmin(jeton);
   if (!utilisateur) { res.status(403).json({ error: "Ce compte n'est pas administrateur." }); return; }
 
   try {
@@ -51,8 +42,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
-      let corps = req.body;
-      if (typeof corps === 'string') { try { corps = JSON.parse(corps); } catch (e) { corps = {}; } }
+      const corps = corpsDe(req);
       const action = corps && corps.action;
 
       if (action === 'debloquer_ip') {

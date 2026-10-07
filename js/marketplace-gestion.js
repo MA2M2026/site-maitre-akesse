@@ -15,7 +15,7 @@
   const nouvelId = () => (window.crypto && crypto.randomUUID)
     ? crypto.randomUUID()
     : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-        const r = Math.random() * 16 | 0;
+        const r = Math.floor(aleatoire() * 16);
         return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
       });
 
@@ -141,7 +141,7 @@
     }
     const img = await chargerImage(source);
     const [grande, miniature] = await Promise.all([reduire(img, 1800, 0.86), reduire(img, 640, 0.82)]);
-    const base = 'site/boutique/' + produitId + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+    const base = 'site/boutique/' + produitId + '/' + Date.now() + '-' + suffixeAleatoire();
     const url = await envoyerImageSite('boutique', base + '.jpg', new File([grande], 'photo.jpg', { type: 'image/jpeg' }));
     const urlMiniature = await envoyerImageSite('boutique', base + '-mini.jpg', new File([miniature], 'mini.jpg', { type: 'image/jpeg' }));
     return { url: url, url_miniature: urlMiniature, chemin: base + '.jpg' };

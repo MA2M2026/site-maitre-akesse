@@ -16,9 +16,9 @@
 // jamais la clé publique déjà utilisée dans js/supabase-config.js) et
 // R2_ACCOUNT_ID / R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY / R2_BUCKET_NAME.
 
-const { S3Client, DeleteObjectsCommand } = require('@aws-sdk/client-s3');
+const { DeleteObjectsCommand } = require('@aws-sdk/client-s3');
 
-const SUPABASE_URL = 'https://dfhghgmwmxiguhtxtsle.supabase.co';
+const { SUPABASE_URL, enTetesService, jetonDe, corpsDe, verifierUtilisateur, lignesAdmin, estAdmin, creerClientR2 } = require('./_commun.js');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -32,15 +32,13 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const enTeteAuth = req.headers.authorization || '';
-  const jeton = enTeteAuth.startsWith('Bearer ') ? enTeteAuth.slice(7) : '';
+  const jeton = jetonDe(req);
   if (!jeton) {
     res.status(401).json({ error: 'Non authentifié.' });
     return;
   }
 
-  let corps = req.body;
-  if (typeof corps === 'string') { try { corps = JSON.parse(corps); } catch (e) { corps = {}; } }
+  const corps = corpsDe(req);
   const modelId = corps && corps.modelId;
   if (!modelId || typeof modelId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(modelId)) {
     res.status(400).json({ error: 'Identifiant de mannequin manquant ou invalide.' });
@@ -49,24 +47,16 @@ module.exports = async function handler(req, res) {
 
   try {
     // 1. Le jeton fourni correspond-il bien à un compte connecté ?
-    const reponseUtilisateur = await fetch(SUPABASE_URL + '/auth/v1/user', {
-      headers: { apikey: cleSecrete, Authorization: 'Bearer ' + jeton }
-    });
-    if (!reponseUtilisateur.ok) {
+    const utilisateur = await verifierUtilisateur(jeton);
+    if (!utilisateur) {
       res.status(401).json({ error: 'Session invalide ou expirée — reconnectez-vous.' });
       return;
     }
-    const utilisateur = await reponseUtilisateur.json();
 
     // 2. Ce compte figure-t-il dans la table admins ? (même contrôle que
     // celui déjà appliqué par le déclencheur gerer_validation_publication()
     // côté base de données.)
-    const reponseAdmin = await fetch(
-      SUPABASE_URL + '/rest/v1/admins?user_id=eq.' + encodeURIComponent(utilisateur.id) + '&select=user_id',
-      { headers: { apikey: cleSecrete, Authorization: 'Bearer ' + cleSecrete } }
-    );
-    const lignesAdmin = reponseAdmin.ok ? await reponseAdmin.json() : [];
-    if (!Array.isArray(lignesAdmin) || !lignesAdmin.length) {
+    if (!(await estAdmin(utilisateur.id))) {
       res.status(403).json({ error: "Ce compte n'est pas administrateur." });
       return;
     }
@@ -74,12 +64,9 @@ module.exports = async function handler(req, res) {
     // 2 bis. Garde-fou (audit du 05/10/2026) : cette fonction ne supprime QUE des comptes de
     // mannequins — jamais un compte administrateur (y compris le sien), même si son
     // identifiant lui était envoyé par erreur ou volontairement.
-    const reponseCible = await fetch(
-      SUPABASE_URL + '/rest/v1/admins?user_id=eq.' + encodeURIComponent(modelId) + '&select=user_id',
-      { headers: { apikey: cleSecrete, Authorization: 'Bearer ' + cleSecrete } }
-    );
-    const cibleAdmin = reponseCible.ok ? await reponseCible.json() : null;
-    if (!Array.isArray(cibleAdmin) || cibleAdmin.length) {
+    // (si la base ne répond pas, on refuse : null)
+    const cibleAdmin = await lignesAdmin(modelId);
+    if (!cibleAdmin || cibleAdmin.length) {
       res.status(403).json({ error: 'Ce compte est un compte administrateur : il ne peut pas être supprimé ici.' });
       return;
     }
@@ -90,7 +77,7 @@ module.exports = async function handler(req, res) {
     // Storage, qui doivent être retirés séparément.
     const reponsePhotos = await fetch(
       SUPABASE_URL + '/rest/v1/model_photos?model_id=eq.' + encodeURIComponent(modelId) + '&select=chemin,chemin_miniature,chemin_moyenne',
-      { headers: { apikey: cleSecrete, Authorization: 'Bearer ' + cleSecrete } }
+      { headers: enTetesService() }
     );
     const photos = reponsePhotos.ok ? await reponsePhotos.json() : [];
     const chemins = [];
@@ -102,7 +89,7 @@ module.exports = async function handler(req, res) {
     // vers model_profiles, model_photos, model_projects, page_views.
     const reponseSuppression = await fetch(SUPABASE_URL + '/auth/v1/admin/users/' + encodeURIComponent(modelId), {
       method: 'DELETE',
-      headers: { apikey: cleSecrete, Authorization: 'Bearer ' + cleSecrete }
+      headers: enTetesService()
     });
     if (!reponseSuppression.ok) {
       const detail = await reponseSuppression.text().catch(function () { return ''; });
@@ -115,11 +102,7 @@ module.exports = async function handler(req, res) {
     // suppression elle-même).
     if (chemins.length && process.env.R2_ACCOUNT_ID && process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY && process.env.R2_BUCKET_NAME) {
       try {
-        const clientR2 = new S3Client({
-          region: 'auto',
-          endpoint: 'https://' + process.env.R2_ACCOUNT_ID + '.r2.cloudflarestorage.com',
-          credentials: { accessKeyId: process.env.R2_ACCESS_KEY_ID, secretAccessKey: process.env.R2_SECRET_ACCESS_KEY }
-        });
+        const clientR2 = creerClientR2();
         await clientR2.send(new DeleteObjectsCommand({
           Bucket: process.env.R2_BUCKET_NAME,
           Delete: { Objects: chemins.map(function (c) { return { Key: c }; }) }
