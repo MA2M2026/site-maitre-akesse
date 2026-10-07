@@ -265,7 +265,9 @@ section { padding: 5rem 0; }
    l'orientation de chaque photo (portrait, carrée, rectangulaire). ---------- */
 .book-grille-ig { column-count: 3; column-gap: 2px; }
 .book-photo-carte { position: relative; display: block; break-inside: avoid; margin-bottom: 2px; background: var(--noir-doux); overflow: hidden; }
-.book-photo-carte img { width: 100%; height: auto; display: block; opacity: 0.94; transition: transform 0.5s var(--transition-douce), opacity 0.4s ease; }
+/* aspect-ratio « auto 2/3 » : place d'une photo portrait réservée avant son chargement
+   (photos chargées au fil du défilement : la grille ne saute plus), puis vraies proportions */
+.book-photo-carte img { aspect-ratio: auto 2 / 3; width: 100%; height: auto; display: block; opacity: 0.94; transition: transform 0.5s var(--transition-douce), opacity 0.4s ease; }
 .book-photo-carte:hover img { transform: scale(1.03); opacity: 1; }
 @media (max-width: 700px) { .book-grille-ig { column-count: 2; } }
 
@@ -2385,7 +2387,10 @@ html.vide-mot-responsable #mot-responsable.section-reservee.u-hidden { display: 
    haut avant d'être repoussés d'un coup (« affichage qui saute » signalé le 29/09 au
    soir, fiche d'Osiris N'Goran). Dès que la fiche s'affiche, le texte « Chargement… »
    disparaît et la réservation avec lui — aucun script à modifier. */
-#contenu:has(> .fiche-en-chargement) { min-height: calc(100svh - 120px); }
+/* 07/10/2026 : réserve d'au moins un écran entier pendant le chargement de la fiche, pour
+   que le Book, le contact et le pied de page restent hors de l'écran et ne « sautent » pas
+   à l'arrivée du profil (journal : 0,57 et 0,37 sur téléphone). */
+#contenu:has(> .fiche-en-chargement) { min-height: calc(100svh + 120px); }
 
 /* ==========================================================================
    Confort de navigation (29/09/2026, validé par la propriétaire) — js/confort.js

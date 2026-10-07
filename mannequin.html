@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-A15hr/7mLjZ5sdN2WM4pSASX0WHcObXtmwljtSMHTQk='; style-src 'self' https://fonts.googleapis.com 'sha256-7qzTX2fbWhcoN8NR8B0qP2PjgfCnkK2/b2LeciSYanY=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-Tk9+ttgHNXMNb5txNoH86HVTeyuSooudcdtfQt4ZvPA='; style-src 'self' https://fonts.googleapis.com 'sha256-7qzTX2fbWhcoN8NR8B0qP2PjgfCnkK2/b2LeciSYanY=';">
 <!-- Adresse lisible …/book/nom (06/10/2026) : la page peut être servie depuis /book/… ; ses fichiers se chargent toujours depuis la racine du site (voir js/adresse-fiche.js). -->
 <base href="/">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
@@ -240,12 +240,14 @@ let ficheData = null;
 // pendant le chargement (mauvaise connexion mobile, bibliothèque Supabase qui n'a
 // pas pu se charger, requête qui reste bloquée...), on l'affiche clairement au lieu
 // de laisser la page bloquée indéfiniment sur "Chargement…" sans aucune explication.
-async function chargerProfil() {
+async function chargerProfil(essai = 1) {
   const contenu = document.getElementById('contenu');
   const delaiDepasse = new Promise((_, reject) => setTimeout(() => reject(new Error('délai dépassé')), 20000));
   try {
     await Promise.race([chargerProfilInterne(), delaiDepasse]);
   } catch (e) {
+    // Journal du 07/10/2026 : second essai automatique (js/app.js) avant le bouton.
+    if (essai === 1) { relancerChargementFiche(contenu, 'Chargement…', () => { void chargerProfil(2); }); return; }
     console.error('Échec du chargement du profil :', e);
     contenu.innerHTML = `
       <p>Le chargement de ce profil prend trop de temps ou a échoué (connexion instable ?).</p>
@@ -578,7 +580,7 @@ function ouvrirLightbox(index) {
   if (!window.photosLightbox || !window.photosLightbox.length) return;
   ouvrirGalerieLightbox(window.photosLightbox, index);
 }
-document.addEventListener('DOMContentLoaded', chargerProfil);
+document.addEventListener('DOMContentLoaded', () => { void chargerProfil(1); });
 </script>
 </body>
 </html>

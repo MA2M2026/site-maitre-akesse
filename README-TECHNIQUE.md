@@ -1808,3 +1808,19 @@ le bloc, `marquerChampsARemplir()` encadre les cases en rouge (classe `champ-a-r
 styles dans `css/espace-mannequin-correctifs.css`) et affiche une phrase d'explication ;
 le rouge d'une case s'efface dès qu'elle est remplie, le chiffre se met à jour à
 l'enregistrement. L'alerte « Votre profil n'est pas complet » suit la même règle.
+
+## Journal du 07/10/2026 : corrections (mise en ligne du 07/10, fin d'après-midi)
+
+- `js/surveillance.js` : fausses alertes filtrées (traduction automatique et Dark Reader :
+  styles en ligne ; feuilles de traduction Google ; `www.google.com/g/collect` ; erreurs à
+  une ligne qui n'existe pas dans la page = code ajouté par le navigateur) ; « Média non
+  chargé » seulement si le serveur répond une erreur ; « Réseau injoignable » une fois par
+  page ; zoom des cases à cocher ignoré ; blocs plein écran (100vw) considérés comme coupant.
+- `js/app.js` : photos de compcard / CV re-téléchargées une fois si elles ne se décodent
+  pas, et réduites à 2000 px (`COTE_MAX_FICHE`) ; `relancerChargementFiche` = second essai
+  automatique de la fiche mannequin FR/EN (rechargement unique si la base n'est pas chargée).
+- CSS : filtres de niveau des mannequins qui passent à la ligne en 320 px ; place réservée
+  au calendrier de l'agenda (`#agenda-calendrier:empty`) et à la fiche pendant son
+  chargement ; photos du book avec `aspect-ratio: auto 2 / 3` (la grille ne saute plus).
+- Non modifié : la vidéo de couverture des pages Espace / candidature / tableau de bord
+  (c'est la bannière visible en haut de ces pages) ; ses échecs passagers ne sont plus signalés.

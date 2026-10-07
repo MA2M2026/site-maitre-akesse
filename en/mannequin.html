@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-e/+9ODdhspdQDfSATkID0B5t0RBsg+nGQDKCB+U11eY='; style-src 'self' https://fonts.googleapis.com 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-lIeo6grJH7yHy4t0s5E2w9jdb8ikqj1YnAcOYiCX9z0='; style-src 'self' https://fonts.googleapis.com 'sha256-nF8g2AOex1eXX24kPncoRxLlTI8Tj6OIz+UNfVgVtzs=';">
 <!-- Adresse lisible …/book/nom (06/10/2026) : la page peut être servie depuis /book/… ; ses fichiers se chargent toujours depuis la racine du site (voir js/adresse-fiche.js). -->
 <base href="/en/">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
@@ -220,12 +220,14 @@ let ficheData = null;
 // Compcard (PDF / JPEG) : dessin, mesures impériales et traductions partagés avec la
 // fiche française dans js/app.js (construireCanvasCompcard / genererFiche, langue 'en').
 
-async function chargerProfil() {
+async function chargerProfil(essai = 1) {
   const contenu = document.getElementById('contenu');
   const delaiDepasse = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 20000));
   try {
     await Promise.race([chargerProfilInterne(), delaiDepasse]);
   } catch (e) {
+    // Journal du 07/10/2026 : second essai automatique (js/app.js) avant le bouton.
+    if (essai === 1) { relancerChargementFiche(contenu, 'Loading…', () => { void chargerProfil(2); }); return; }
     console.error('Failed to load profile:', e);
     contenu.innerHTML = `
       <p>Loading this profile is taking too long or has failed (unstable connection?).</p>
@@ -551,7 +553,7 @@ function ouvrirLightbox(index) {
   if (!window.photosLightbox || !window.photosLightbox.length) return;
   ouvrirGalerieLightbox(window.photosLightbox, index);
 }
-document.addEventListener('DOMContentLoaded', chargerProfil);
+document.addEventListener('DOMContentLoaded', () => { void chargerProfil(1); });
 </script>
 </body>
 </html>

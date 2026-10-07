@@ -187,3 +187,9 @@ a.agenda-puce:hover, a.agenda-puce:focus-visible { border-color: var(--titre-cla
 .agenda-plus[hidden] { display: none !important; }
 .agenda-provenance { font-size: 0.78rem; color: var(--texte-doux); margin: 0.3rem 0 0; }
 .agenda-provenance a { color: var(--titre-clair); }
+
+/* 07/10/2026 : place réservée au calendrier tant qu'il n'est pas dessiné (journal : la
+   page « sautait » de 0,67 à l'arrivée du calendrier). Hauteurs mesurées par largeur. */
+#agenda-calendrier:empty { min-height: 860px; }
+@media (min-width: 600px) { #agenda-calendrier:empty { min-height: 1080px; } }
+@media (min-width: 1024px) { #agenda-calendrier:empty { min-height: 740px; } }
