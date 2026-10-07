@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-Ephetrg8BEuTXDiADl8fbmjlN4Kuj+4ksW2hVS3uQ9U='; style-src 'self' https://fonts.googleapis.com 'sha256-7qzTX2fbWhcoN8NR8B0qP2PjgfCnkK2/b2LeciSYanY=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-3fBpk9BcgYcv4cMv8L7wXYOZWlU1jQQSmle2L335KPM='; style-src 'self' https://fonts.googleapis.com 'sha256-7qzTX2fbWhcoN8NR8B0qP2PjgfCnkK2/b2LeciSYanY=';">
 <!-- Adresse lisible …/book/nom (06/10/2026) : la page peut être servie depuis /book/… ; ses fichiers se chargent toujours depuis la racine du site (voir js/adresse-fiche.js). -->
 <base href="/">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
@@ -541,7 +541,7 @@ async function chargerProfilInterne() {
   window.photosLightbox = urlsPhotos;
 
   const photoPrincipale = document.getElementById('compsheet-photo-clic');
-  const indexPrincipale = (photos && photos[0]) ? Math.max(0, ordreGalerie.indexOf(photos[0])) : 0;
+  const indexPrincipale = vues.profil ? Math.max(0, ordreGalerie.indexOf(vues.profil)) : 0;
   if (photoPrincipale) photoPrincipale.addEventListener('click', () => ouvrirLightbox(indexPrincipale));
   if (photoPrincipale) photoPrincipale.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); ouvrirLightbox(indexPrincipale); }
@@ -552,7 +552,7 @@ async function chargerProfilInterne() {
   // on balaie le reste du Book comme depuis la grille.
   const couverture = document.getElementById('couverture-clic');
   if (couverture && urlsPhotos.length) {
-    const indexCouv = Math.max(0, ordreGalerie.indexOf(photoCouverture || photos[0]));
+    const indexCouv = Math.max(0, ordreGalerie.indexOf(vues.couverture));
     couverture.addEventListener('click', () => ouvrirLightbox(indexCouv));
     couverture.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); ouvrirLightbox(indexCouv); }

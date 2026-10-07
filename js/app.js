@@ -925,13 +925,16 @@ function melanger(liste) {
 // Photos affichées sur la fiche publique d'un mannequin (règle unique, partagée par la
 // fiche FR/EN et le rapport des profils, 07/10/2026) : photo de profil = celle choisie
 // (« principale »), sinon la plus ancienne ; couverture = celle choisie, sinon la photo de
-// profil. Renvoie aussi les photos choisies (null si aucune).
+// profil. Les photos écartées du book ne comptent pas (le public ne les voit pas). Renvoie
+// aussi les photos choisies (null si aucune). L'aperçu des liens partagés (middleware.js)
+// a sa propre règle côté serveur.
 function photosAffichees(photos) {
-  const triees = (photos || []).slice().sort(function (x, y) {
+  const date = function (p) { const t = Date.parse(p.created_at); return isNaN(t) ? Infinity : t; };
+  const triees = (photos || []).filter(function (p) { return p.tri_statut !== 'ecartee'; }).sort(function (x, y) {
     if (!!x.principale !== !!y.principale) return x.principale ? -1 : 1;
-    const dx = String(x.created_at || ''), dy = String(y.created_at || '');
-    if (dx !== dy) return dx < dy ? -1 : 1;
-    return String(x.id) < String(y.id) ? -1 : 1;
+    if (date(x) !== date(y)) return date(x) - date(y);
+    const ix = String(x.id), iy = String(y.id);
+    return ix === iy ? 0 : (ix < iy ? -1 : 1);
   });
   const profil = triees[0] || null;
   const couvertureChoisie = triees.find(function (p) { return p.photo_couverture; }) || null;

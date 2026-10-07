@@ -138,14 +138,14 @@
   function lignesPhotos(a) {
     var v = a.photosVues, r = [];
     if (!a.nbPhotos) r.push('• Votre book est vide : ajoutez vos photos dans votre Espace, puis choisissez une *photo de profil* (un portrait) et une *autre photo* pour la couverture.');
-    else if (a.nbPhotos === 1) r.push('• Vous n’avez qu’*une seule photo* : ajoutez-en d’autres, puis choisissez une *photo de profil* (un portrait) et une *autre photo* pour la couverture.');
+    else if (a.nbPhotos === 1) r.push('• Vous n’avez qu’*une seule photo* : ajoutez-en d’autres, puis ' + (v.profilChoisi ? 'choisissez une *autre photo* pour la couverture.' : 'choisissez une *photo de profil* (un portrait) et une *autre photo* pour la couverture.'));
     else if (!v.profilChoisi && !v.couvertureChoisie) r.push('• Vous n’avez pas encore choisi votre *photo de profil* ni votre *photo de couverture*. Votre fiche affiche donc *la même photo aux deux endroits*. Choisissez un portrait pour le profil et *une autre photo* pour la couverture, par exemple une photo en plein pied.');
     else {
       if (!v.profilChoisi) r.push('• Choisissez votre *photo de profil* (un portrait) : pour l’instant, le site prend automatiquement votre plus ancienne photo.');
       if (!v.couvertureChoisie) r.push('• Choisissez votre *photo de couverture* : pour l’instant, votre fiche reprend votre photo de profil.');
       else if (v.identiques) r.push('• Votre photo de profil et votre photo de couverture sont *la même photo* : remplacez l’une des deux par une autre photo de votre book.');
     }
-    if (a.nbPhotos > 1 && a.photos.indexOf('book') !== -1) r.push('• Votre book compte ' + a.nbPhotos + ' photo' + (a.nbPhotos > 1 ? 's' : '') + ' : ajoutez-en pour arriver à *' + BOOK_MINIMUM + ' au moins*, avec des tenues et des ambiances variées.');
+    if (a.nbPhotos > 1 && a.photos.indexOf('book') !== -1) r.push('• Votre book compte ' + a.nbPhotos + ' photos : ajoutez-en pour arriver à *' + BOOK_MINIMUM + ' au moins*, avec des tenues et des ambiances variées.');
     else if (a.nbPhotos >= BOOK_MINIMUM && a.nbPhotos < 2 * BOOK_MINIMUM) r.push('• Votre book compte ' + a.nbPhotos + ' photos : continuez à l’enrichir avec de nouvelles photos, des tenues et des ambiances différentes.');
     return r;
   }
