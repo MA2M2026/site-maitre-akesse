@@ -1736,7 +1736,8 @@ plus qu'à un seul endroit.
 
 ## 📝 Rapport des profils — nouvelle version (07/10/2026, demande de la propriétaire)
 
-`js/rapport-profils-admin.js` (tableau de bord, « Rapport des profils ») rédige un message de
+`js/rapport-profils-admin.js` (tableau de bord, « Rapport des profils ») rédige un message WhatsApp
+(*gras*, _italique_, symboles ; texte validé par la propriétaire, version courte) de
 **sensibilisation** (jamais de menace) : « Mlle » / « Monsieur » + nom, points forts, profil
 complet à x % (barre), 3 priorités classées (mensurations > identité > parcours > photos),
 puis identité, expérience et parcours (projets `model_projects`, études, formation, langues),
