@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-F08fTmou1vV1eDdjRlY4FAobjVJFrdadEJBVpMEThME='; style-src 'self' https://fonts.googleapis.com 'sha256-tFcy5AGgtBPoC5kXJZsbtpg3iMcSamS5C0fbatbaxhs='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-LrRQAe8u6+0KD+MRsUL+IbTAvgjc2szMjcE7Gpg7AYQ='; style-src 'self' https://fonts.googleapis.com 'sha256-tFcy5AGgtBPoC5kXJZsbtpg3iMcSamS5C0fbatbaxhs='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -193,6 +193,10 @@ setTimeout(() => {
         <h3 class="enim-6">Parent or Legal Guardian Information</h3>
         <p class="enim-7">The agency accepts registrations from minors with the approval of a parent or legal guardian — please provide their contact details, they will be reached before any further action is taken.</p>
         <div class="form-grille">
+          <div class="form-champ">
+            <label for="ins-parent-civilite">Parent / guardian title</label>
+            <select id="ins-parent-civilite"><option value="">Select</option><option value="Madame">Mrs</option><option value="Monsieur">Mr</option><option value="Mademoiselle">Miss</option></select>
+          </div>
           <div class="form-champ">
             <label for="ins-parent-nom">Parent / Guardian Name</label>
             <input type="text" id="ins-parent-nom">
@@ -444,6 +448,7 @@ document.getElementById('ins-naissance').addEventListener('change', () => {
   const mineur = estMineurInscription();
   document.getElementById('ins-bloc-parent').style.display = mineur ? 'block' : 'none';
   document.getElementById('ins-parent-nom').required = mineur;
+  document.getElementById('ins-parent-civilite').required = mineur;
   document.getElementById('ins-parent-telephone-numero').required = mineur;
   document.getElementById('ins-parent-email').required = mineur;
 });
@@ -510,7 +515,7 @@ document.getElementById('form-inscription').addEventListener('submit', async (e)
     phone: composerTelephone(document.getElementById('ins-indicatif'), document.getElementById('ins-telephone-numero')),
     code_utilise: codeValide,
     reference_paiement: document.getElementById('ins-reference-paiement').value.trim(),
-    parent_nom: mineur ? document.getElementById('ins-parent-nom').value.trim() : null,
+    parent_nom: mineur ? [document.getElementById('ins-parent-civilite').value, document.getElementById('ins-parent-nom').value.trim()].filter(Boolean).join(' ') : null,
     parent_telephone: mineur ? composerTelephone(document.getElementById('ins-parent-indicatif'), document.getElementById('ins-parent-telephone-numero')) : null,
     email: document.getElementById('ins-email').value.trim().toLowerCase(),
     parent_email: mineur ? (document.getElementById('ins-parent-email').value.trim().toLowerCase() || null) : null

@@ -1143,6 +1143,16 @@ les classes ajoutées dynamiquement (`classList.add(...)`, `className =
   L'accusé de réception « Nouvelle » a été retiré (07/10/2026) ; Messages groupés
   ne montre que les statuts qui ont un message à envoyer. Libellés sans tiret long
   (demande de la propriétaire : pas de « traces d'IA » dans les textes).
+- **Mineurs : les messages partent vers le parent (07/10/2026)** — `contactsEnvoi(d)`
+  (`js/messages-candidats.js`) : moins de 18 ans + contacts du parent ⇒ WhatsApp et
+  e-mail du parent, texte « parent » du catalogue (`parent:` sur chaque message,
+  `messageParent`, repère `{parent}` = `salutationParent(parent_nom)`). La civilité
+  (Madame / Monsieur / Mademoiselle) est choisie dans les formulaires et l'Espace
+  mannequin et rangée DEVANT le nom dans `parent_nom` (« Madame Kouassi Marie ») ;
+  sans civilité : « Madame, Monsieur Kouassi Marie ». Messages groupés : case
+  « Version pour les parents (mineurs) » (`#mg-message-parent`), visible seulement si
+  la liste contient un mineur joint par son parent. Fiche : `contactsFiche()`.
+  Inscriptions : pas encore (textes à réécrire, point 2).
 
 ## Diagnostic sécurité du 28 septembre 2026 (nuit)
 

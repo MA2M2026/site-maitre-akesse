@@ -26,8 +26,9 @@
   if (!$('mg-source')) return;
 
   const CHAMPS = {
-    casting: 'id, full_name, email, phone, status, type_candidature, projet_nom, created_at',
-    inscription: 'id, full_name, email, phone, statut, created_at'
+    // date de naissance et contacts du parent : un mineur est joint par son parent.
+    casting: 'id, full_name, email, phone, status, type_candidature, projet_nom, created_at, date_naissance, parent_nom, parent_telephone, parent_email',
+    inscription: 'id, full_name, email, phone, statut, created_at, date_naissance, parent_nom, parent_telephone, parent_email'
   };
   let destinataires = [];
   // « Qui ? » : agence et casting précis sont deux sortes de candidatures (même table).
@@ -39,13 +40,15 @@
   function rdv() { return { date: $('mg-date').value, heure: $('mg-heure').value, lieu: $('mg-lieu').value }; }
   function remplirInfos(texte) { return remplirRdv(texte, rdv(), () => A_COMPLETER); }
   // Message prêt pour une personne : fonction commune à la fiche (js/messages-candidats.js).
-  function personnaliser(texte, d) { return personnaliserMessage(texte, d, rdv(), () => A_COMPLETER); }
+  // Mineur joint par son parent : texte de la case « version parents ».
+  function texteDe(d) { return (contactsEnvoi(d).parent && $('mg-message-parent').value.trim()) || $('mg-message').value.trim(); }
+  function personnaliser(d) { return personnaliserMessage(texteDe(d), d, rdv(), () => A_COMPLETER); }
   function echapper(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
   // Suivi des envois déjà faits pour CE message (même texte = même envoi), sur cet appareil.
   // Date, heure et lieu comptent : la convocation de la semaine suivante est un nouvel envoi.
   function cleSuivi(canal) {
-    const t = remplirInfos($('mg-message').value.trim());
+    const t = remplirInfos($('mg-message').value.trim() + '\n' + $('mg-message-parent').value.trim());
     let h = 0; for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0;
     return 'ma2m_mg_' + canal + '_' + h;
   }
@@ -92,6 +95,16 @@
     const m = messageCandidatParCle($('mg-type').value);
     return m && m.statut === statut ? m.modele(qui === 'casting' ? 'projet' : 'agence') : '';
   }
+  function modeleParentPour(qui, statut) {
+    if (qui === 'inscription') return '';
+    const m = messageCandidatParCle($('mg-type').value);
+    return m && m.statut === statut && m.parent ? m.parent(qui === 'casting' ? 'projet' : 'agence') : '';
+  }
+  // La case « version parents » n'apparaît que si un mineur de la liste sera joint par son parent.
+  function majCaseParent() {
+    const utile = !!$('mg-message-parent').value.trim() && destinataires.some(d => contactsEnvoi(d).parent);
+    $('mg-champ-message-parent').style.display = utile ? '' : 'none';
+  }
   let dernierModele = '';
   function proposerModele() {
     const zone = $('mg-message');
@@ -101,7 +114,8 @@
     if (actuel && actuel !== dernierModele.trim() && actuel !== modele.trim()
       && !confirm('Remplacer le message que vous avez modifié par le message choisi ?')) return;
     zone.value = modele; dernierModele = modele;
-    majInfos(); majApercu(); majBoutons();
+    $('mg-message-parent').value = modeleParentPour($('mg-source').value, $('mg-statut').value);
+    majCaseParent(); majInfos(); majApercu(); majBoutons();
   }
 
   // « Quel message ? » (candidatures) : tous les messages du statut choisi, les mêmes que
@@ -144,7 +158,7 @@
     (cands || []).forEach(c => c.projet_nom && noms.add(c.projet_nom.trim()));
     const liste = [...noms].sort((a, b) => a.localeCompare(b, 'fr'));
     $('mg-casting').innerHTML = liste.length
-      ? '<option value="">— Choisissez le casting —</option>' + liste.map(n => `<option value="${echapper(n)}">${echapper(n)}</option>`).join('')
+      ? '<option value="">Choisissez le casting</option>' + liste.map(n => `<option value="${echapper(n)}">${echapper(n)}</option>`).join('')
       : '<option value="">Aucun casting pour l’instant</option>';
   }
 
@@ -183,11 +197,11 @@
       <label class="mg-personne">
         <input type="checkbox" data-i="${i}" ${d.choisi ? 'checked' : ''}>
         <span class="mg-nom">${echapper(d.full_name || '—')}</span>
-        <span class="mg-infos">${echapper([d.email, d.phone].filter(Boolean).join(' · ') || 'aucun contact')}
+        <span class="mg-infos">${contactsEnvoi(d).parent ? '👨‍👩‍👧 Parent : ' + echapper(salutationParent(d.parent_nom)) + ' · ' : ''}${echapper([contactsEnvoi(d).email, contactsEnvoi(d).phone].filter(Boolean).join(' · ') || 'aucun contact')}
           <span class="mg-date">Postulé le ${dateCourte(d.created_at)}</span>${envois ? `<span class="mg-envoye">${envois}</span>` : ''}</span>
       </label>`;
     }).join('');
-    majApercu(); majBoutons();
+    majCaseParent(); majApercu(); majBoutons();
   }
 
   function choisis() { return destinataires.filter(d => d.choisi); }
@@ -195,7 +209,7 @@
   function majApercu() {
     const t = $('mg-message').value.trim();
     const premier = choisis()[0];
-    $('mg-apercu').textContent = t && premier ? 'Aperçu pour ' + (premier.full_name || '') + ' :\n\n' + personnaliser(t, premier) : '';
+    $('mg-apercu').textContent = t && premier ? 'Aperçu pour ' + (premier.full_name || '') + (contactsEnvoi(premier).parent ? ' (envoyé à son parent)' : '') + ' :\n\n' + personnaliser(premier) : '';
     $('mg-apercu').style.display = $('mg-apercu').textContent ? 'block' : 'none';
   }
 
@@ -205,36 +219,36 @@
     // Toujours dire clairement pourquoi un bouton ne marche pas (constaté le 30/09 :
     // message vide = boutons bloqués, sans aucune explication visible).
     if (destinataires.length) {
-      $('mg-resume').textContent = `${liste.length} personne(s) cochée(s) sur ${destinataires.length} — ${liste.filter(d => d.email).length} avec e-mail, ${liste.filter(d => numeroWhatsApp(d.phone)).length} avec numéro WhatsApp. Décochez celles à qui vous ne voulez pas écrire.`;
+      $('mg-resume').textContent = `${liste.length} personne(s) cochée(s) sur ${destinataires.length} : ${liste.filter(d => contactsEnvoi(d).email).length} avec e-mail, ${liste.filter(d => numeroWhatsApp(contactsEnvoi(d).phone)).length} avec numéro WhatsApp${liste.some(d => contactsEnvoi(d).parent) ? ' (mineurs : contacts du parent)' : ''}. Décochez celles à qui vous ne voulez pas écrire.`;
     }
     $('mg-consigne').textContent = !destinataires.length ? ''
       : !liste.length ? '☝️ Cochez au moins une personne dans la liste.'
       : !t ? '✍️ La case « Message » est vide : écrivez votre message, les boutons d’envoi s’activeront.'
       : '';
     const faitsMail = dejaFaits('email'), faitsWa = dejaFaits('wa');
-    const restantMail = liste.filter(d => d.email && !faitsMail.has(d.id)).length;
-    const restantWa = liste.filter(d => numeroWhatsApp(d.phone) && !faitsWa.has(d.id));
+    const restantMail = liste.filter(d => contactsEnvoi(d).email && !faitsMail.has(d.id)).length;
+    const restantWa = liste.filter(d => numeroWhatsApp(contactsEnvoi(d).phone) && !faitsWa.has(d.id));
+    const avecWa = liste.filter(d => numeroWhatsApp(contactsEnvoi(d).phone)).length;
     $('mg-email').disabled = !t || !restantMail;
     $('mg-email').textContent = restantMail ? `📧 Envoyer par e-mail à ${restantMail} personne(s)` : '📧 Envoyer par e-mail';
-    $('mg-wa-copier').disabled = !liste.some(d => numeroWhatsApp(d.phone));
+    $('mg-wa-copier').disabled = !avecWa;
     const suivant = restantWa[0];
     $('mg-wa-suivant').disabled = !t || !suivant;
     $('mg-wa-suivant').textContent = suivant
-      ? `💬 Ouvrir WhatsApp pour ${suivant.full_name || suivant.phone} — personne ${liste.filter(d => numeroWhatsApp(d.phone)).length - restantWa.length + 1} sur ${liste.filter(d => numeroWhatsApp(d.phone)).length}`
-      : (liste.some(d => numeroWhatsApp(d.phone)) && t ? '✓ WhatsApp : tout le monde a été fait' : '💬 Ouvrir WhatsApp pour la personne suivante');
+      ? `💬 Ouvrir WhatsApp pour ${suivant.full_name || suivant.phone}${contactsEnvoi(suivant).parent ? ' (son parent)' : ''} : personne ${avecWa - restantWa.length + 1} sur ${avecWa}`
+      : (avecWa && t ? '✓ WhatsApp : tout le monde a été fait' : '💬 Ouvrir WhatsApp pour la personne suivante');
   }
 
   function resteACompleter() {
-    if (remplirInfos($('mg-message').value).indexOf(A_COMPLETER) === -1) return false;
+    if (remplirInfos($('mg-message').value + $('mg-message-parent').value).indexOf(A_COMPLETER) === -1) return false;
     alert('Le message contient encore « ' + A_COMPLETER + ' » : remplissez les cases date, heure et lieu, ou remplacez ces passages par les vraies informations, avant d\'envoyer.');
     return true;
   }
 
   async function envoyerEmails() {
     if (resteACompleter()) return;
-    const t = $('mg-message').value.trim();
     const faits = dejaFaits('email');
-    const liste = choisis().filter(d => d.email && !faits.has(d.id));
+    const liste = choisis().filter(d => contactsEnvoi(d).email && !faits.has(d.id));
     if (!liste.length) return;
     if (!confirm(`Envoyer ce message par e-mail à ${liste.length} personne(s) ?\n\nChacune le recevra séparément.`)) return;
     const etat = $('mg-email-etat');
@@ -245,7 +259,8 @@
       etat.className = 'form-msg ok';
       etat.textContent = `Envoi ${i + 1} / ${liste.length}… (gardez la page ouverte)`;
       try {
-        await envoyerEmailCandidat({ to_email: d.email, to_name: prenomDe(d.full_name), message: messagePourEmail(personnaliser(t, d)) });
+        const c = contactsEnvoi(d);
+        await envoyerEmailCandidat({ to_email: c.email, to_name: c.parent ? salutationParent(d.parent_nom) : prenomDe(d.full_name), message: messagePourEmail(personnaliser(d)) });
         noterFait('email', d.id); ok++;
       } catch (e) {
         echecs.push((d.full_name || d.email) + (e && e.text ? ' (' + e.text + ')' : ''));
@@ -255,7 +270,7 @@
     etat.className = echecs.length ? 'form-msg err' : 'form-msg ok';
     etat.style.whiteSpace = 'pre-line';
     afficherListe();
-    etat.textContent = `✓ ${ok} e-mail(s) envoyé(s).` + (echecs.length ? `\n${echecs.length} échec(s) — vous pouvez rappuyer pour réessayer uniquement ceux-là :\n` + echecs.join('\n') : '');
+    etat.textContent = `✓ ${ok} e-mail(s) envoyé(s).` + (echecs.length ? `\n${echecs.length} échec(s). Vous pouvez rappuyer pour réessayer uniquement ceux-là :\n` + echecs.join('\n') : '');
     majBoutons();
   }
 
@@ -263,9 +278,9 @@
     if (resteACompleter()) return;
     const t = $('mg-message').value.trim();
     const faits = dejaFaits('wa');
-    const d = choisis().find(x => numeroWhatsApp(x.phone) && !faits.has(x.id));
+    const d = choisis().find(x => numeroWhatsApp(contactsEnvoi(x).phone) && !faits.has(x.id));
     if (!d || !t) return;
-    window.open('https://wa.me/' + numeroWhatsApp(d.phone) + '?text=' + encodeURIComponent(personnaliser(t, d)), '_blank', 'noopener');
+    window.open('https://wa.me/' + numeroWhatsApp(contactsEnvoi(d).phone) + '?text=' + encodeURIComponent(personnaliser(d)), '_blank', 'noopener');
     noterFait('wa', d.id);
     afficherListe();
     $('mg-wa-etat').textContent = `Ouvert pour ${d.full_name || d.phone}. Appuyez sur « Envoyer » dans WhatsApp, puis revenez ici pour la personne suivante.`;
@@ -273,7 +288,7 @@
   }
 
   async function copierNumeros() {
-    const nums = choisis().map(d => d.phone).filter(p => numeroWhatsApp(p));
+    const nums = choisis().map(d => contactsEnvoi(d).phone).filter(p => numeroWhatsApp(p));
     try { await navigator.clipboard.writeText(nums.join('\n')); $('mg-wa-etat').textContent = `${nums.length} numéro(s) copié(s).`; }
     catch (e) { $('mg-wa-etat').textContent = nums.join(', '); }
   }
@@ -285,6 +300,7 @@
   $('mg-charger').addEventListener('click', () => void charger());
   $('mg-liste').addEventListener('change', (e) => { const i = e.target.dataset.i; if (i !== undefined) { destinataires[i].choisi = e.target.checked; majApercu(); majBoutons(); } });
   $('mg-message').addEventListener('input', () => { majInfos(); majApercu(); majBoutons(); });
+  $('mg-message-parent').addEventListener('input', () => { majApercu(); majBoutons(); });
   ['mg-date', 'mg-heure', 'mg-lieu'].forEach(id => $(id).addEventListener('input', () => { retenirInfos(); if (destinataires.length) afficherListe(); else { majApercu(); majBoutons(); } }));
   $('mg-email').addEventListener('click', envoyerEmails);
   $('mg-wa-suivant').addEventListener('click', whatsappSuivant);

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-NjEJnIT9/tWgfgiAec6JZFCpWwQDAdidU95QoZMHIqE='; style-src 'self' https://fonts.googleapis.com 'sha256-8LrkXFbl2Lw61VWxDceGfjjHAwWVR1EX/L2RObVO+sY='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-Rv8X9cxTSq/8J1WconnAhDZr2AUbfp90728+sgc2w24='; style-src 'self' https://fonts.googleapis.com 'sha256-8LrkXFbl2Lw61VWxDceGfjjHAwWVR1EX/L2RObVO+sY='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -205,6 +205,10 @@ setTimeout(() => {
         <h3 class="ca-11">Parent or legal guardian information</h3>
         <p class="ca-12">The agency accepts applications from minors with the approval of a parent or legal guardian — please provide their contact details; they will be contacted before any next step.</p>
         <div class="form-grille">
+          <div class="form-champ">
+            <label for="ca-parent-civilite">Parent / guardian title</label>
+            <select id="ca-parent-civilite"><option value="">Select</option><option value="Madame">Mrs</option><option value="Monsieur">Mr</option><option value="Mademoiselle">Miss</option></select>
+          </div>
           <div class="form-champ">
             <label for="ca-parent-nom">Parent / guardian name</label>
             <input type="text" id="ca-parent-nom">
@@ -784,6 +788,7 @@ document.getElementById('ca-naissance').addEventListener('change', () => {
   const mineur = estMineur();
   blocParent.style.display = mineur ? 'block' : 'none';
   document.getElementById('ca-parent-nom').required = mineur;
+  document.getElementById('ca-parent-civilite').required = mineur;
   document.getElementById('ca-parent-telephone-numero').required = mineur;
   document.getElementById('ca-parent-email').required = mineur;
   remplirTailleSelonGenre();
@@ -886,7 +891,7 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
     waist_cm: parseInt(document.getElementById('ca-tourtaille').value) || null,
     hips_cm: parseInt(document.getElementById('ca-hanches').value) || null,
     message: document.getElementById('ca-message').value.trim(),
-    parent_nom: mineur ? document.getElementById('ca-parent-nom').value.trim() : null,
+    parent_nom: mineur ? [document.getElementById('ca-parent-civilite').value, document.getElementById('ca-parent-nom').value.trim()].filter(Boolean).join(' ') : null,
     parent_telephone: mineur ? composerTelephone(document.getElementById('ca-parent-indicatif'), document.getElementById('ca-parent-telephone-numero')) : null,
     parent_email: mineur ? (document.getElementById('ca-parent-email').value.trim().toLowerCase() || null) : null,
     type_candidature: 'projet',

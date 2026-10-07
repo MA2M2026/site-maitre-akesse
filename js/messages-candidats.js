@@ -8,13 +8,42 @@
 //     personne, quelques-unes ou tout le monde.
 // Changer un texte ici le change partout.
 //
-// Repères remplis au moment de l'envoi : {prénom}, {candidature} (« pour intégrer
+// Repères remplis au moment de l'envoi : {prénom}, {parent} (civilité et nom du parent), {candidature} (« pour intégrer
 // l'agence » / « au casting « X » »), {casting}, {date}, {heure}, {lieu}. Textes mis en
 // forme pour WhatsApp (*gras*, _italique_) ; messagePourEmail() en fait la version e-mail.
 
 const ENTETE_MESSAGE = '✨ *MAÎTRE AKESSE MODEL MANAGEMENT* ✨';
 const SIGNATURE_MESSAGE = "_L'équipe Maître Akesse Model Management_";
 function messageCandidat(corps) { return `${ENTETE_MESSAGE}\n\nBonjour {prénom},\n\n${corps}\n\n${SIGNATURE_MESSAGE}`; }
+// Mineur (décision de la propriétaire, 07/10/2026) : le message part vers le parent, qu'on
+// salue par sa civilité et son nom complet ({parent} : « Madame Kouassi Marie »).
+function messageParent(corps) { return `${ENTETE_MESSAGE}\n\nBonjour {parent},\n\n${corps}\n\n${SIGNATURE_MESSAGE}`; }
+const CIVILITES = ['Madame', 'Monsieur', 'Mademoiselle'];
+// « Madame Kouassi Marie » tel quel ; sans civilité (anciens dossiers) : « Madame, Monsieur Kouassi Marie ».
+function salutationParent(nom) {
+  const n = String(nom || '').trim();
+  if (!n) return 'Madame, Monsieur';
+  return CIVILITES.some(c => n.indexOf(c + ' ') === 0) ? n : 'Madame, Monsieur ' + n;
+}
+// Moins de 18 ans à la date d'aujourd'hui (date de naissance 'AAAA-MM-JJ').
+function estMineurDossier(d) {
+  if (!d || !d.date_naissance) return false;
+  const n = new Date(String(d.date_naissance).slice(0, 10) + 'T12:00:00'), a = new Date();
+  let age = a.getFullYear() - n.getFullYear();
+  if (a.getMonth() < n.getMonth() || (a.getMonth() === n.getMonth() && a.getDate() < n.getDate())) age--;
+  return age < 18;
+}
+// À qui écrire : au parent pour un mineur dont on a les contacts, sinon à la personne.
+function contactsEnvoi(d) {
+  if (estMineurDossier(d) && (d.parent_telephone || d.parent_email)) {
+    return { parent: true, email: d.parent_email || '', phone: d.parent_telephone || '', nom: d.parent_nom || '' };
+  }
+  return { parent: false, email: (d && d.email) || '', phone: (d && d.phone) || '', nom: (d && d.full_name) || '' };
+}
+// Le bon texte d'un message du catalogue pour cette personne (version parent si mineur).
+function texteMessageCandidat(m, d, type) {
+  return m.parent && contactsEnvoi(d).parent ? m.parent(type) : m.modele(type);
+}
 
 const DRESS_CODE = `👗 *Dress code*
 👠 _Filles :_ talons, legging long noir et top noir
@@ -64,6 +93,38 @@ Au plaisir de vous rencontrer !
 
 ${SIGNATURE_MESSAGE}`;
 
+// Convocations envoyées au parent d'un mineur.
+const CONVOCATION_AGENCE_PARENT = messageParent(`Félicitations ! 🎉 La candidature de votre enfant {prénom} a été _retenue_ pour la prochaine étape de notre sélection.
+
+Nous l'invitons à notre _casting en présentiel_, accompagné(e) de vous ou d'un adulte de confiance :
+
+📅 _{date}_
+🕒 _{heure}_
+📍 _{lieu}_
+
+${DRESS_CODE}
+
+💡 _Bon à savoir :_ ce casting est aussi une _séance de formation_. Même si {prénom} débute ou ne sait pas encore marcher en talons, nous l'accompagnerons pas à pas.
+
+✅ Merci de nous _confirmer sa présence_ en répondant à ce message.
+📧 Un e-mail de confirmation vous a également été envoyé.
+
+Au plaisir de vous rencontrer !`);
+const CONVOCATION_CASTING_PARENT = messageParent(`Félicitations ! 🎉 La candidature de votre enfant {prénom} au casting « {casting} » a été _retenue_ pour la prochaine étape.
+
+Nous l'invitons à se présenter, accompagné(e) de vous ou d'un adulte de confiance :
+
+📅 _{date}_
+🕒 _{heure}_
+📍 _{lieu}_
+
+${DRESS_CODE}
+
+✅ Merci de nous _confirmer sa présence_ en répondant à ce message.
+📧 Un e-mail de confirmation vous a également été envoyé.
+
+Au plaisir de vous rencontrer !`);
+
 // Rappel avant le casting (demande de la propriétaire, 07/10/2026 : « relancer les mannequins »).
 function rappelCasting(type) {
   const ou = type === 'projet' ? 'notre casting « {casting} »' : 'notre _casting en présentiel_';
@@ -81,6 +142,22 @@ ${DRESS_CODE}
 
 À très vite !`);
 }
+function rappelCastingParent(type) {
+  const ou = type === 'projet' ? 'au casting « {casting} »' : 'à notre _casting en présentiel_';
+  return messageParent(`⏰ *Petit rappel* : nous attendons votre enfant {prénom} ${ou}, accompagné(e) d'un adulte :
+
+📅 _{date}_
+🕒 _{heure}_
+📍 _{lieu}_
+
+${DRESS_CODE}
+
+🕐 Merci d'arriver _15 minutes en avance_.
+✅ Si ce n'est pas encore fait, merci de nous _confirmer sa présence_ en répondant à ce message.
+📧 Un e-mail de rappel vous a également été envoyé.
+
+À très vite !`);
+}
 
 // Catalogue : chaque message, le statut auquel il correspond et son nom dans les listes.
 // « premier » : message envoyé automatiquement quand on change le statut sur la fiche ;
@@ -90,21 +167,28 @@ ${DRESS_CODE}
 // type = 'agence' ou 'projet' (casting précis).
 const MESSAGES_CANDIDATS = [
   { cle: 'etude', statut: 'en étude', premier: true, libelle: '🔎 En étude : 1er message',
-    modele: () => messageCandidat(`Suite à votre candidature sur notre site {candidature}, nous vous informons que _votre dossier est en cours d'étude_ par notre équipe.\n\nNous examinons chaque profil avec attention (photos, mensurations, motivations). Vous recevrez notre réponse très prochainement.\n\nMerci pour votre patience et votre confiance. 🙏`) },
+    modele: () => messageCandidat(`Suite à votre candidature sur notre site {candidature}, nous vous informons que _votre dossier est en cours d'étude_ par notre équipe.\n\nNous examinons chaque profil avec attention (photos, mensurations, motivations). Vous recevrez notre réponse très prochainement.\n\nMerci pour votre patience et votre confiance. 🙏`),
+    parent: () => messageParent(`Suite à la candidature de votre enfant {prénom} sur notre site {candidature}, nous vous informons que _son dossier est en cours d'étude_ par notre équipe.\n\nNous vous donnerons notre réponse très bientôt. Merci pour votre patience. 🙏`) },
   { cle: 'relance_etude', statut: 'en étude', groupe: true, libelle: '🔎 En étude : relance',
-    modele: () => messageCandidat(`Nous revenons vers vous au sujet de votre candidature {candidature}. _Votre dossier est toujours en cours d'étude_ : nous recevons de nombreuses candidatures et prenons le temps d'examiner chacune avec attention.\n\nNous vous donnerons notre réponse très prochainement. Merci pour votre patience ! 🙏`) },
+    modele: () => messageCandidat(`Nous revenons vers vous au sujet de votre candidature {candidature}. _Votre dossier est toujours en cours d'étude_ : nous recevons de nombreuses candidatures et prenons le temps d'examiner chacune avec attention.\n\nNous vous donnerons notre réponse très prochainement. Merci pour votre patience ! 🙏`),
+    parent: () => messageParent(`Nous revenons vers vous au sujet de la candidature de votre enfant {prénom} {candidature}. _Son dossier est toujours en cours d'étude_ : nous prenons le temps d'examiner chaque candidature avec attention.\n\nNous vous donnerons notre réponse très bientôt. Merci pour votre patience. 🙏`) },
   { cle: 'attente', statut: 'en attente', premier: true, libelle: '⏳ En attente : 1er message',
-    modele: () => messageCandidat(`Suite à votre candidature sur notre site {candidature}, nous vous informons que _votre dossier a retenu notre attention_ et se trouve actuellement _en liste d'attente_.\n\nNotre équipe finalise sa sélection. Nous reviendrons vers vous dès qu'une décision sera prise : gardez votre téléphone à portée de main ! 📱`) },
+    modele: () => messageCandidat(`Suite à votre candidature sur notre site {candidature}, nous vous informons que _votre dossier a retenu notre attention_ et se trouve actuellement _en liste d'attente_.\n\nNotre équipe finalise sa sélection. Nous reviendrons vers vous dès qu'une décision sera prise : gardez votre téléphone à portée de main ! 📱`),
+    parent: () => messageParent(`Suite à la candidature de votre enfant {prénom} sur notre site {candidature}, nous vous informons que _son dossier a retenu notre attention_ et se trouve pour l'instant _en liste d'attente_.\n\nNotre sélection n'est pas encore terminée. Nous revenons vers vous dès que possible.`) },
   { cle: 'relance_attente', statut: 'en attente', groupe: true, libelle: '⏳ En attente : relance',
-    modele: () => messageCandidat(`Nous revenons vers vous au sujet de votre candidature {candidature}. _Votre dossier est toujours en liste d'attente_ : notre sélection n'est pas terminée et une place peut se libérer à tout moment.\n\nNous vous contacterons dès que possible. Restez disponible ! 📱`) },
+    modele: () => messageCandidat(`Nous revenons vers vous au sujet de votre candidature {candidature}. _Votre dossier est toujours en liste d'attente_ : notre sélection n'est pas terminée et une place peut se libérer à tout moment.\n\nNous vous contacterons dès que possible. Restez disponible ! 📱`),
+    parent: () => messageParent(`Nous revenons vers vous au sujet de la candidature de votre enfant {prénom} {candidature}. _Son dossier est toujours en liste d'attente_ : notre sélection n'est pas terminée et une place peut se libérer à tout moment.\n\nNous vous contacterons dès que possible.`) },
   { cle: 'retenue', statut: 'retenue', premier: true, libelle: '✅ Retenue : 1er message',
-    modele: () => messageCandidat(`Félicitations ! 🎉 Suite à votre candidature sur notre site {candidature}, nous avons le plaisir de vous annoncer que _votre profil a été retenu_.\n\n📩 Vous recevrez très prochainement un second message avec toutes les informations pratiques : _date, heure et lieu_.\n\nMerci pour votre confiance !`) },
+    modele: () => messageCandidat(`Félicitations ! 🎉 Suite à votre candidature sur notre site {candidature}, nous avons le plaisir de vous annoncer que _votre profil a été retenu_.\n\n📩 Vous recevrez très prochainement un second message avec toutes les informations pratiques : _date, heure et lieu_.\n\nMerci pour votre confiance !`),
+    parent: () => messageParent(`Félicitations ! 🎉 Suite à la candidature de votre enfant {prénom} sur notre site {candidature}, nous avons le plaisir de vous annoncer que _son profil a été retenu_.\n\n📩 Vous recevrez très bientôt un second message avec la date, l'heure et le lieu.\n\nMerci pour votre confiance !`) },
   { cle: 'convocation', statut: 'retenue', groupe: true, rdv: true, libelle: '📅 Retenue : convocation (date, heure, lieu)',
-    modele: (type) => type === 'projet' ? CONVOCATION_CASTING : CONVOCATION_AGENCE },
+    modele: (type) => type === 'projet' ? CONVOCATION_CASTING : CONVOCATION_AGENCE,
+    parent: (type) => type === 'projet' ? CONVOCATION_CASTING_PARENT : CONVOCATION_AGENCE_PARENT },
   { cle: 'rappel', statut: 'retenue', rdv: true, libelle: '⏰ Retenue : rappel du casting',
-    modele: (type) => rappelCasting(type) },
+    modele: (type) => rappelCasting(type), parent: (type) => rappelCastingParent(type) },
   { cle: 'refusee', statut: 'refusée', premier: true, groupe: true, libelle: '✉️ Non retenue : 1er message',
-    modele: () => messageCandidat(`Nous vous remercions sincèrement pour votre candidature sur notre site {candidature} et pour le temps que vous nous avez consacré.\n\nAprès étude attentive, _votre profil n'a pas été retenu_ pour cette sélection.\n\n🌟 Cette décision ne remet pas en cause votre potentiel : nos besoins changent d'un casting à l'autre. Nous vous souhaitons beaucoup de réussite.`) }
+    modele: () => messageCandidat(`Nous vous remercions sincèrement pour votre candidature sur notre site {candidature} et pour le temps que vous nous avez consacré.\n\nAprès étude attentive, _votre profil n'a pas été retenu_ pour cette sélection.\n\n🌟 Cette décision ne remet pas en cause votre potentiel : nos besoins changent d'un casting à l'autre. Nous vous souhaitons beaucoup de réussite.`),
+    parent: () => messageParent(`Merci pour la candidature de votre enfant {prénom} sur notre site {candidature}, et pour l'intérêt que vous portez à notre agence.\n\nAprès étude attentive, _son profil n'a pas été retenu_ pour cette sélection.\n\n🌟 Nos besoins changent d'un casting à l'autre. Nous souhaitons à {prénom} beaucoup de réussite.`) }
 ];
 function messageCandidatParCle(cle) { return MESSAGES_CANDIDATS.find(m => m.cle === cle) || null; }
 function typeCandidature(d) { return d && d.type_candidature === 'projet' ? 'projet' : 'agence'; }
@@ -119,7 +203,9 @@ function remplirRdv(texte, rdv, manquant) {
 function personnaliserMessage(texte, d, rdv, manquant) {
   const candidature = d.type_candidature === 'agence' ? "pour intégrer l'agence"
     : d.type_candidature === 'projet' && d.projet_nom ? `au casting « ${d.projet_nom} »` : 'à notre casting';
-  return remplirRdv(d.email ? texte : sansPhraseEmail(texte), rdv, manquant)
+  const contacts = contactsEnvoi(d);
+  return remplirRdv(contacts.email ? texte : sansPhraseEmail(texte), rdv, manquant)
+    .replace(/\{parent\}/gi, salutationParent(d.parent_nom))
     .replace(/\{pr[ée]nom\}/gi, prenomDe(d.full_name) || 'Madame, Monsieur')
     .replace(/\{candidature\}/gi, candidature)
     .replace(/\{casting\}/gi, d.projet_nom || 'notre casting');

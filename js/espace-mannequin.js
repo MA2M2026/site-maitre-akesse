@@ -25,7 +25,7 @@ function emptyState(){
     },
     identite:{ nomComplet:'', dateNaissance:'', villeNaissance:'', lieuNaissance:'', nationalite:'', ville:'', quartier:'', telephone:'', email:'', sexe:'' },
     // Mannequin mineure : contacts de son parent / tuteur (table contacts_parents, Extension 129).
-    parent:{ nom:'', telephone:'', email:'' },
+    parent:{ civilite:'', nom:'', telephone:'', email:'' },
     physique:{
       taille:'', poids:'', poitrine:'', tourTaille:'', hanches:'', entrejambe:'', pointure:'',
       tailleVet:'', yeux:'', cheveux:'', carnation:'',
@@ -362,12 +362,13 @@ function majBlocParent(){
 function lireParentFormulaire(){
   if (!document.getElementById('f-bloc-parent') || !estMineureLe(val('f-dob'))) return true;
   const p = {
+    civilite: val('f-parent-civilite'),
     nom: val('f-parent-nom').trim(),
     telephone: composerTelephone(document.getElementById('f-parent-indicatif'), document.getElementById('f-parent-numero')),
     email: val('f-parent-email').trim().toLowerCase()
   };
-  if (!p.nom || !val('f-parent-numero').trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email)) {
-    toast('Vous avez moins de 18 ans : indiquez le nom, le WhatsApp et l’e-mail de votre parent ou tuteur.', true);
+  if (!p.civilite || !p.nom || !val('f-parent-numero').trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email)) {
+    toast('Vous avez moins de 18 ans : indiquez la civilité, le nom, le WhatsApp et l’e-mail de votre parent ou tuteur.', true);
     document.getElementById('f-parent-nom')?.focus();
     return false;
   }
@@ -379,7 +380,7 @@ function lireParentFormulaire(){
 async function enregistrerParent(){
   if (!estMineureLe(state.identite.dateNaissance)) return true;
   const { error } = await sb.from('contacts_parents').upsert({
-    model_id: currentUser.id, parent_nom: state.parent.nom || null, parent_telephone: state.parent.telephone || null,
+    model_id: currentUser.id, parent_nom: [state.parent.civilite, state.parent.nom].filter(Boolean).join(' ') || null, parent_telephone: state.parent.telephone || null,
     parent_email: state.parent.email || null, mis_a_jour: new Date().toISOString()
   });
   if (error) { console.warn('Contacts du parent non enregistrés :', error.message); toast('Les contacts de votre parent n’ont pas pu être enregistrés : réessayez un peu plus tard', true); }
@@ -474,7 +475,12 @@ const Store = {
 
     // Contacts du parent (vide tant que l'Extension 129 n'est pas exécutée).
     const { data: parent } = await sb.from('contacts_parents').select('parent_nom, parent_telephone, parent_email').eq('model_id', currentUser.id).maybeSingle();
-    if (parent) s.parent = { nom: parent.parent_nom || '', telephone: parent.parent_telephone || '', email: parent.parent_email || '' };
+    if (parent) {
+      // « Madame Kouassi Marie » : la civilité est rangée devant le nom (comme dans les formulaires).
+      const nomComplet = parent.parent_nom || '';
+      const civ = ['Madame', 'Monsieur', 'Mademoiselle'].find(c => nomComplet.indexOf(c + ' ') === 0) || '';
+      s.parent = { civilite: civ, nom: civ ? nomComplet.slice(civ.length + 1) : nomComplet, telephone: parent.parent_telephone || '', email: parent.parent_email || '' };
+    }
 
     const { data: rowSansInsta, error: eSansInsta } = await sb.from('model_profiles').select('sans_instagram').eq('id', currentUser.id).maybeSingle();
     s.sansInstagram = !eSansInsta && !!(rowSansInsta && rowSansInsta.sans_instagram); // faux tant que l'Extension 126 n'est pas exécutée
@@ -815,6 +821,7 @@ function stepIdentite(){
     '<p class="sub p20-21">🔒 Téléphone et e-mail ne sont jamais affichés publiquement — seul le contact officiel de l’agence apparaît sur votre fiche.</p>' +
     '<div id="f-bloc-parent"><h3 class="p20-17">Parent ou tuteur légal</h3>' +
       '<p class="sub">Vous avez moins de 18 ans : merci d’indiquer les contacts de votre parent ou tuteur. L’agence le contactera avant toute suite donnée.</p><div class="grid">' +
+      field('Civilité du parent / tuteur','f-parent-civilite',state.parent.civilite,{tag:'select',req:true,options:[{value:'',label:'Sélectionner'},{value:'Madame',label:'Madame'},{value:'Monsieur',label:'Monsieur'},{value:'Mademoiselle',label:'Mademoiselle'}]}) +
       field('Nom du parent / tuteur','f-parent-nom',state.parent.nom,{req:true}) +
       '<div class="field"><label>WhatsApp du parent / tuteur<span class="req">*</span></label><div class="tel-row">' +
         '<select id="f-parent-indicatif"></select><input type="tel" id="f-parent-numero" placeholder="07 00 00 00 00" pattern="[0-9 ]{6,14}"></div></div>' +
