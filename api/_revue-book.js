@@ -19,7 +19,7 @@
 
 const Anthropic = require('@anthropic-ai/sdk');
 
-const SUPABASE_URL = 'https://dfhghgmwmxiguhtxtsle.supabase.co';
+const { SUPABASE_URL, enTetesService, verifierUtilisateur, estAdmin } = require('./_commun.js');
 const MAX_IMAGES = 90;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -94,30 +94,6 @@ const SCHEMA = {
   required: ['photos', 'conseils', 'points_forts', 'a_ameliorer', 'fiche_technique', 'regles', 'message_mannequin'],
   additionalProperties: false
 };
-
-function enTetesService() {
-  const cle = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  return { apikey: cle, Authorization: 'Bearer ' + cle };
-}
-
-async function verifierUtilisateur(jeton) {
-  if (!jeton) return null;
-  const reponse = await fetch(SUPABASE_URL + '/auth/v1/user', {
-    headers: { apikey: process.env.SUPABASE_SERVICE_ROLE_KEY, Authorization: 'Bearer ' + jeton }
-  });
-  if (!reponse.ok) return null;
-  return reponse.json();
-}
-
-async function estAdmin(userId) {
-  const reponse = await fetch(
-    SUPABASE_URL + '/rest/v1/admins?user_id=eq.' + encodeURIComponent(userId) + '&select=user_id',
-    { headers: enTetesService() }
-  );
-  if (!reponse.ok) return false;
-  const lignes = await reponse.json();
-  return Array.isArray(lignes) && lignes.length > 0;
-}
 
 function aUnRole(p) {
   return !!(p.principale || p.photo_couverture || p.photo_cv || p.photo_pleinpied || p.compcard_ordre != null);

@@ -16,16 +16,7 @@
 // Les fonctions SQL correspondantes ne sont plus appelables depuis le
 // navigateur : tout passe par ici, avec la clé service_role.
 
-const SUPABASE_URL = 'https://dfhghgmwmxiguhtxtsle.supabase.co';
-
-function extraireIp(req) {
-  const xff = req.headers['x-forwarded-for'];
-  if (xff) return String(xff).split(',')[0].trim();
-  return req.headers['x-real-ip'] || '0.0.0.0';
-}
-function nettoyerAppareil(v) {
-  return typeof v === 'string' && /^[A-Za-z0-9-]{8,64}$/.test(v) ? v : null;
-}
+const { SUPABASE_URL, extraireIp, nettoyerAppareil } = require('./_commun.js');
 
 const EMAIL_VALIDE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 

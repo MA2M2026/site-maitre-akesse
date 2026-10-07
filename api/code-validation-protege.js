@@ -4,16 +4,7 @@
 // (l'appelant est déjà authentifié) — identifie le compte par son jeton
 // Supabase, jamais par une valeur fournie par le navigateur.
 
-const SUPABASE_URL = 'https://dfhghgmwmxiguhtxtsle.supabase.co';
-
-function extraireIp(req) {
-  const xff = req.headers['x-forwarded-for'];
-  if (xff) return String(xff).split(',')[0].trim();
-  return req.headers['x-real-ip'] || '0.0.0.0';
-}
-function nettoyerAppareil(v) {
-  return typeof v === 'string' && /^[A-Za-z0-9-]{8,64}$/.test(v) ? v : null;
-}
+const { SUPABASE_URL, extraireIp, nettoyerAppareil } = require('./_commun.js');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {

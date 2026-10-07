@@ -17,9 +17,9 @@
 // déjà en place pour api/r2-presigner.js.
 
 const Anthropic = require('@anthropic-ai/sdk');
-const { S3Client, GetObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const { GetObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 
-const SUPABASE_URL = 'https://dfhghgmwmxiguhtxtsle.supabase.co';
+const { SUPABASE_URL, enTetesService, verifierUtilisateur, estAdmin, creerClientR2 } = require('./_commun.js');
 // En dessous de ce degré de certitude, une photo jugée inutilisable n'est pas
 // cachée : elle reste visible et part dans « À vérifier » du tableau de bord.
 const CONFIANCE_MIN_ECARTEE = 0.8;
@@ -54,30 +54,6 @@ const SCHEMA = {
   additionalProperties: false
 };
 
-function enTetesService() {
-  const cle = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  return { apikey: cle, Authorization: 'Bearer ' + cle };
-}
-
-async function verifierUtilisateur(jeton) {
-  if (!jeton) return null;
-  const reponse = await fetch(SUPABASE_URL + '/auth/v1/user', {
-    headers: { apikey: process.env.SUPABASE_SERVICE_ROLE_KEY, Authorization: 'Bearer ' + jeton }
-  });
-  if (!reponse.ok) return null;
-  return reponse.json();
-}
-
-async function estAdmin(userId) {
-  const reponse = await fetch(
-    SUPABASE_URL + '/rest/v1/admins?user_id=eq.' + encodeURIComponent(userId) + '&select=user_id',
-    { headers: enTetesService() }
-  );
-  if (!reponse.ok) return false;
-  const lignes = await reponse.json();
-  return Array.isArray(lignes) && lignes.length > 0;
-}
-
 function typeImage(octets) {
   if (octets.length < 12) return null;
   if (octets[0] === 0xff && octets[1] === 0xd8) return 'image/jpeg';
@@ -92,13 +68,6 @@ function typeImage(octets) {
 // sur les adresses de stockage du site (jamais une adresse quelconque).
 function r2Configure() {
   return !!(process.env.R2_ACCOUNT_ID && process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY && process.env.R2_BUCKET_NAME);
-}
-function creerClientR2() {
-  return new S3Client({
-    region: 'auto',
-    endpoint: 'https://' + process.env.R2_ACCOUNT_ID + '.r2.cloudflarestorage.com',
-    credentials: { accessKeyId: process.env.R2_ACCESS_KEY_ID, secretAccessKey: process.env.R2_SECRET_ACCESS_KEY }
-  });
 }
 // Fichiers de la photo, uniquement dans le dossier de sa mannequin.
 function cheminsPhoto(photo) {
