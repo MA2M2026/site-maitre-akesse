@@ -6662,3 +6662,34 @@ revoke all on function soumettre_inscription_mannequin(text, text, date, text, i
 grant execute on function soumettre_inscription_mannequin(text, text, date, text, int, text, text, text, text, text, text, text) to anon, authenticated;
 
 NOTIFY pgrst, 'reload schema';
+
+-- =====================================================================
+-- Extension 130 — Téléphone et e-mail des mannequins VRAIMENT verrouillés
+-- (demande de la propriétaire, 07/10/2026 : « aucun élément ne doit être visible pour
+-- quelqu'un qui fait un appel »).
+-- Faille : les Extensions 10 et 26 retiraient la lecture de phone / contact_email
+-- « colonne par colonne », mais le rôle authenticated (tout compte connecté :
+-- mannequin, recruteur…) gardait la lecture de TOUTE la table, ce qui annule un retrait
+-- colonne par colonne. Avec la règle « Profils publiés visibles de tous », un compte
+-- connecté pouvait donc lire le téléphone et l'e-mail privés de toutes les mannequins
+-- publiées en interrogeant la base directement.
+-- Correction : on retire la lecture de la table entière à authenticated et on lui rend
+-- toutes les colonnes SAUF phone et contact_email (liste calculée automatiquement).
+-- La mannequin lit les siens par mon_contact_prive(), l'agence par
+-- contacts_mannequins_admin() / fiche_evenement_admin() (fonctions sécurisées).
+-- ⚠️ Toute NOUVELLE colonne de model_profiles doit ensuite être ouverte à la lecture :
+--    grant select (nouvelle_colonne) on model_profiles to authenticated;
+--    (et to anon si elle s'affiche sur les pages publiques) — ou relancer ce bloc.
+-- =====================================================================
+do $$
+declare colonnes text;
+begin
+  select string_agg(quote_ident(column_name), ', ' order by ordinal_position) into colonnes
+  from information_schema.columns
+  where table_schema = 'public' and table_name = 'model_profiles'
+    and column_name not in ('phone', 'contact_email');
+  execute 'revoke select on model_profiles from authenticated';
+  execute format('grant select (%s) on model_profiles to authenticated', colonnes);
+end $$;
+
+NOTIFY pgrst, 'reload schema';

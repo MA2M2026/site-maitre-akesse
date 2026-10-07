@@ -530,7 +530,9 @@ const Store = {
   async submit(fields, publier){
     const { data: resultat, error } = await sb.from('model_profiles')
       .update(Object.assign({}, fields, { published: !!publier }))
-      .eq('id', currentUser.id).select().single();
+      // Colonnes nommées : le téléphone et l'e-mail ne sont plus lisibles directement
+      // (Extension 130), un select() « toutes colonnes » serait refusé.
+      .eq('id', currentUser.id).select('id, published, en_attente_validation, raison_refus, premiere_publication_faite').single();
     if (error) { console.error(error); toast('Échec de la soumission', true); return null; }
     return resultat;
   },

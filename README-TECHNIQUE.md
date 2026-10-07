@@ -1121,6 +1121,14 @@ les classes ajoutées dynamiquement (`classList.add(...)`, `className =
   APRÈS l'Extension 129 : sinon la candidature d'un mineur (colonne
   `parent_email` absente) et toute inscription (fonction à 12 paramètres
   absente) échouent.
+- **Téléphone / e-mail des mannequins verrouillés (07/10/2026, Extension 130)** —
+  le rôle `authenticated` n'a plus la lecture de TOUTE la table `model_profiles`,
+  seulement de toutes les colonnes sauf `phone` et `contact_email` (avant, un
+  compte connecté pouvait les lire pour toutes les fiches publiées). Conséquences
+  pour le code : jamais de `select()` / `select('*')` sur `model_profiles` côté
+  navigateur (toujours nommer les colonnes) ; ⚠️ toute NOUVELLE colonne doit être
+  ouverte : `grant select (col) on model_profiles to authenticated;` (et `to anon`
+  si publique), sinon les pages qui la lisent échouent.
 
 ## Diagnostic sécurité du 28 septembre 2026 (nuit)
 
