@@ -309,7 +309,7 @@ L'équipe Maître Akesse Model Management`;
   $('mg-casting').addEventListener('change', proposerModele);
   $('mg-statut').addEventListener('change', () => { proposerModele(); viderListe(); });
   $('mg-casting').addEventListener('change', () => { if ($('mg-casting').value) void charger(); else viderListe(); });
-  $('mg-charger').addEventListener('click', charger);
+  $('mg-charger').addEventListener('click', () => void charger());
   $('mg-liste').addEventListener('change', (e) => { const i = e.target.dataset.i; if (i !== undefined) { destinataires[i].choisi = e.target.checked; majApercu(); majBoutons(); } });
   $('mg-message').addEventListener('input', () => { majApercu(); majBoutons(); });
   $('mg-email').addEventListener('click', envoyerEmails);

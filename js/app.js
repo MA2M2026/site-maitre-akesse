@@ -1498,7 +1498,8 @@ function nomFichierSur(nom) {
 
 // ================== Photos du Book (07/10/2026 : regroupé ici, c'était recopié dans
 // js/espace-mannequin.js et tableau-de-bord.html) ==================
-// Nombre au hasard entre 0 et 1, tiré par le générateur sûr du navigateur quand il existe.
+// Nombre au hasard entre 0 et 1, tiré par le générateur sûr du navigateur (crypto, présent
+// sur tous les navigateurs depuis 2014 : iOS 6.1, Android 4.4).
 function aleatoire() {
   return crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296;
 }

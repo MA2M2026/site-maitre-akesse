@@ -11,7 +11,8 @@
   const principal = document.getElementById('mp-principal');
   let etat = { produits: [], categories: [], zones: [], reglages: null, commandes: [] };
   let editeurDescription = null;
-  // Code de billet attendu (ex. MA2M-1A2B3-C4D5E) : rien d'autre n'est gardé depuis l'adresse.
+  // Code de billet attendu (ex. MA2M-1A2B3-C4D5E) : seul un code de cette forme est gardé en
+  // mémoire d'onglet le temps de valider le code admin (rien d'autre venu de l'adresse).
   const CODE_BILLET = /^[A-Za-z0-9-]{4,40}$/;
 
   const nouvelId = () => (window.crypto && crypto.randomUUID)
@@ -663,7 +664,7 @@
         '<p>' + echapperHtml(data.nom_evenement) + (data.libelle ? ' · ' + echapperHtml(data.libelle) : '') + '<br>' + echapperHtml(data.client_nom) + ' — commande ' + echapperHtml(data.commande) + '<br><code>' + echapperHtml(data.code) + '</code></p>' +
         (ok ? '<button type="button" class="btn btn--principal" id="mpg-valider-entree">Valider l’entrée</button>' : '') + '</div>';
       const bouton = document.getElementById('mpg-valider-entree');
-      if (bouton) bouton.addEventListener('click', () => verifier(true));
+      if (bouton) bouton.addEventListener('click', () => void verifier(true));
       if (vientDEtreValide && window.jouerSon) window.jouerSon('envoi');
     }
     form.addEventListener('submit', e => { e.preventDefault(); void verifier(false); });
@@ -844,7 +845,7 @@
         '<p>Pour protéger la boutique, validez d’abord votre code dans le tableau de bord de l’agence, puis revenez ici par le lien « Marketplace » en haut de page.</p>' +
         '<a class="btn btn--principal" href="/tableau-de-bord.html">Valider mon code</a></div></section>';
       // Billet scanné dans un nouvel onglet : on garde le code pour après la validation.
-      try { const code = new URLSearchParams(location.search).get('billet'); if (code && CODE_BILLET.test(code)) sessionStorage.setItem('ma2m_billet_a_controler', code); } catch (e) {}
+      try { const code = new URLSearchParams(location.search).get('billet'); if (code && CODE_BILLET.test(code.trim())) sessionStorage.setItem('ma2m_billet_a_controler', code.trim()); } catch (e) {}
       return;
     }
     try {
@@ -852,7 +853,7 @@
       afficherStructure();
       let code = new URLSearchParams(location.search).get('billet');
       try { if (!code) code = sessionStorage.getItem('ma2m_billet_a_controler'); sessionStorage.removeItem('ma2m_billet_a_controler'); } catch (e) {}
-      if (code && CODE_BILLET.test(code)) { ouvrirOnglet('billets'); afficherControleBillets(code); }
+      if (code) { ouvrirOnglet('billets'); afficherControleBillets(code); }
       else if (etat.commandes.some(c => c.statut === 'paiement_declare')) ouvrirOnglet('commandes');
     } catch (e) {
       console.error('Boutique : chargement du tableau de bord impossible', e);
