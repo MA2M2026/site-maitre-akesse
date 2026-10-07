@@ -180,14 +180,14 @@ setTimeout(() => {
             <option value="XXL">XXL</option>
             <option value="Autre">Autre</option>
           </select>
-          <input type="text" id="ins-tailleveternents-autre" placeholder="Précisez la taille" class="im-3">
+          <input aria-label="Précisez la taille" type="text" id="ins-tailleveternents-autre" placeholder="Précisez la taille" class="im-3">
         </div>
       </div>
 
       <div class="form-champ">
         <label for="ins-indicatif">Votre numéro de téléphone *</label>
         <select id="ins-indicatif" required class="im-4"></select>
-        <input type="tel" id="ins-telephone-numero" placeholder="07 00 00 00 00" required pattern="[0-9 ]{6,14}">
+        <input aria-label="Votre numéro de téléphone" type="tel" id="ins-telephone-numero" placeholder="07 00 00 00 00" required pattern="[0-9 ]{6,14}">
       </div>
 
       <div id="ins-bloc-parent" class="im-5">
@@ -201,32 +201,32 @@ setTimeout(() => {
           <div class="form-champ">
             <label for="ins-parent-indicatif">Téléphone du parent / tuteur</label>
             <select id="ins-parent-indicatif" class="im-4"></select>
-            <input type="tel" id="ins-parent-telephone-numero" placeholder="07 00 00 00 00" pattern="[0-9 ]{6,14}">
+            <input aria-label="Téléphone du parent / tuteur — numéro" type="tel" id="ins-parent-telephone-numero" placeholder="07 00 00 00 00" pattern="[0-9 ]{6,14}">
           </div>
         </div>
       </div>
 
       <div class="form-champ">
-        <label>Photo 1 — Portrait *</label>
+        <label for="ins-photo1">Photo 1 — Portrait *</label>
         <input type="file" id="ins-photo1" accept="image/*" required>
       </div>
       <div class="form-champ">
-        <label>Photo 2 — Plein pied *</label>
+        <label for="ins-photo2">Photo 2 — Plein pied *</label>
         <input type="file" id="ins-photo2" accept="image/*" required>
       </div>
       <div class="form-champ">
-        <label>Photo 3 — Profil *</label>
+        <label for="ins-photo3">Photo 3 — Profil *</label>
         <input type="file" id="ins-photo3" accept="image/*" required>
       </div>
       <div class="form-champ">
-        <label>Photo 4 — Sans maquillage *</label>
+        <label for="ins-photo4">Photo 4 — Sans maquillage *</label>
         <input type="file" id="ins-photo4" accept="image/*" required>
       </div>
 
       <div class="form-champ">
         <label for="ins-photos-supp">Photos supplémentaires (facultatif)</label>
         <input type="file" id="ins-photos-supp" accept="image/*" multiple>
-        <input type="file" id="ins-photo-supp-remplacement" accept="image/*" class="u-hidden">
+        <input aria-label="Photo de remplacement" type="file" id="ins-photo-supp-remplacement" accept="image/*" class="u-hidden">
         <div id="ins-photos-supp-apercu" class="im-8"></div>
       </div>
 

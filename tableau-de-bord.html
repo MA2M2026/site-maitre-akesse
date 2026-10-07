@@ -2457,10 +2457,10 @@ document.addEventListener('DOMContentLoaded', function () {
 </div>
 <p class="tdb-12">Ajoutez ici les projets/castings précis pour lesquels les candidats peuvent postuler (proposés dans le formulaire "Postuler à un casting"). Désactivez un projet une fois terminé pour qu'il disparaisse du formulaire — les candidatures déjà reçues restent intactes.</p>
 <form id="form-nouveau-projet" class="tdb-13">
-<input id="nouveau-projet-nom" placeholder="Nom du projet ou casting" required="" class="tdb-14" type="text"/>
-<input id="nouveau-projet-description" placeholder="Brève description (facultatif, visible par les candidats)" class="tdb-15" type="text"/>
+<input aria-label="Nom du projet ou casting" id="nouveau-projet-nom" placeholder="Nom du projet ou casting" required="" class="tdb-14" type="text"/>
+<input aria-label="Brève description (facultatif, visible par les candidats)" id="nouveau-projet-description" placeholder="Brève description (facultatif, visible par les candidats)" class="tdb-15" type="text"/>
 <input id="nouveau-projet-date" aria-label="Date du casting (facultatif)" class="tdb-15" type="date"/>
-<input id="nouveau-projet-lieu" placeholder="Lieu (facultatif)" class="tdb-15" type="text"/>
+<input aria-label="Lieu (facultatif)" id="nouveau-projet-lieu" placeholder="Lieu (facultatif)" class="tdb-15" type="text"/>
 <button class="btn" type="submit">+ Ajouter</button>
 </form>
 <div class="form-msg" id="projets-msg"></div>
@@ -2651,7 +2651,7 @@ document.addEventListener('DOMContentLoaded', function () {
 <h2 class="tdb-4">Code permanent — "Créer mon compte" (espace mannequin)</h2>
 <p class="tdb-5">Contrairement aux codes d'inscription ci-dessus, celui-ci est unique et permanent : le même code sert à tous les mannequins qui créent leur compte dans l'espace mannequin, jusqu'à ce que vous le changiez ici. Il n'est jamais stocké en clair — en cas de doute qu'il ait trop circulé, changez-le simplement.</p>
 <div class="tdb-23">
-<input id="portail-nouveau-code" placeholder="Nouveau code (6 caractères minimum)" class="tdb-24" type="text"/>
+<input aria-label="Nouveau code (6 caractères minimum)" id="portail-nouveau-code" placeholder="Nouveau code (6 caractères minimum)" class="tdb-24" type="text"/>
 <button class="btn" id="portail-generer-btn" type="button">Générer aléatoirement</button>
 <button class="btn btn--principal" id="portail-definir-btn" type="button">Définir ce code</button>
 </div>
@@ -2661,8 +2661,8 @@ document.addEventListener('DOMContentLoaded', function () {
 <h2 class="tdb-4">Créer un compte admin</h2>
 <p class="tdb-5">Réservé aux administrateurs déjà connectés — la personne créée aura les mêmes droits que vous sur ce tableau de bord (gestion des mannequins, publications, autres réglages). Transmettez-lui l'e-mail et le mot de passe choisis ici par un canal sûr (elle pourra le changer ensuite via "Mot de passe oublié").</p>
 <div class="tdb-23">
-<input id="ca-email" placeholder="E-mail du nouvel admin" class="tdb-24" type="email"/>
-<input id="ca-mdp" placeholder="Mot de passe (8 caractères minimum)" class="tdb-24" type="password"/>
+<input aria-label="E-mail du nouvel admin" id="ca-email" placeholder="E-mail du nouvel admin" class="tdb-24" type="email"/>
+<input aria-label="Mot de passe (8 caractères minimum)" id="ca-mdp" placeholder="Mot de passe (8 caractères minimum)" class="tdb-24" type="password"/>
 <button class="btn btn--principal" id="ca-creer-btn" type="button">Créer le compte</button>
 </div>
 <div class="form-msg" id="ca-msg"></div>
@@ -2676,10 +2676,10 @@ document.addEventListener('DOMContentLoaded', function () {
       </p>
 <div id="instagram-statut" class="tdb-25"></div>
 <div class="tdb-26">
-<input id="instagram-ig-user-id" placeholder="Identifiant du compte professionnel (ig-user-id)" class="tdb-24" type="text"/>
+<input aria-label="Identifiant du compte professionnel (ig-user-id)" id="instagram-ig-user-id" placeholder="Identifiant du compte professionnel (ig-user-id)" class="tdb-24" type="text"/>
 </div>
 <div class="tdb-23">
-<input id="instagram-token" placeholder="Jeton d'accès (access token)" class="tdb-24" type="text"/>
+<input aria-label="Jeton d&#x27;accès (access token)" id="instagram-token" placeholder="Jeton d'accès (access token)" class="tdb-24" type="text"/>
 <button class="btn btn--principal" id="instagram-enregistrer-btn" type="button">Enregistrer</button>
 <button class="btn" id="instagram-rafraichir-btn" type="button">Rafraîchir les publications</button>
 </div>
@@ -2690,7 +2690,7 @@ document.addEventListener('DOMContentLoaded', function () {
 <h2 class="u-mb-1">Mannequin à la une</h2>
 <p class="tdb-27">Ce mannequin sera mis en avant sur la page d'accueil du site. Sans sélection, une photo aléatoire s'affiche à la place.</p>
 <div class="tdb-28">
-<select id="tb-select-vedette" class="tdb-29"><option value="">Chargement…</option></select>
+<select aria-label="Mannequin à la une" id="tb-select-vedette" class="tdb-29"><option value="">Chargement…</option></select>
 <button class="btn" id="tb-definir-vedette-btn">Définir comme mannequin à la une</button>
 <button class="btn tdb-30" id="tb-retirer-vedette-btn">Retirer la mise en avant</button>
 </div>
@@ -2715,7 +2715,7 @@ document.addEventListener('DOMContentLoaded', function () {
 <img alt="" id="mr-photo-apercu" src="" class="tdb-33"/>
 <div>
 <p class="tdb-34">1. Choisissez une photo  →  2. Cliquez sur « Enregistrer la photo » ci-dessous.</p>
-<input accept="image/*" id="mr-photo-input" class="tdb-35" type="file"/>
+<input aria-label="Photo à enregistrer" accept="image/*" id="mr-photo-input" class="tdb-35" type="file"/>
 <button class="btn btn--principal" id="mr-photo-btn">Enregistrer la photo</button>
 </div>
 </div>
@@ -2828,7 +2828,7 @@ document.addEventListener('DOMContentLoaded', function () {
 <div class="mf-ajout-photo tdb-38" id="mf-ajout-photo">
 <label class="btn tdb-39" for="mf-photo-input">＋ Ajouter une photo</label>
 <input accept="image/*" id="mf-photo-input" class="u-hidden" type="file"/>
-<input accept="image/*" id="mf-photo-remplacement-input" class="u-hidden" type="file"/>
+<input aria-label="Photo de remplacement" accept="image/*" id="mf-photo-remplacement-input" class="u-hidden" type="file"/>
 <span class="form-msg tdb-40" id="mf-photo-ajout-msg"></span>
 </div>
 <div id="mf-mannequins" class="u-hidden"></div>
@@ -2839,7 +2839,7 @@ document.addEventListener('DOMContentLoaded', function () {
 </div>
 <div id="mf-notification" class="mf-notification u-hidden">
 <div class="mf-notification-titre" id="mf-notification-titre"></div>
-<textarea id="mf-notification-texte" rows="5"></textarea>
+<textarea aria-label="Texte de la notification" id="mf-notification-texte" rows="5"></textarea>
 <div class="mf-notification-actions">
 <button class="btn btn--principal" id="mf-notification-envoyer-email" type="button">✉️ Envoyer l'e-mail</button>
 <a class="btn" id="mf-notification-whatsapp" href="#" target="_blank" rel="noopener">💬 Envoyer par WhatsApp</a>
@@ -2854,7 +2854,7 @@ document.addEventListener('DOMContentLoaded', function () {
 <div class="form-champ"><label for="mf-wa-heure">Heure</label><input id="mf-wa-heure" type="time"/></div>
 <div class="form-champ mf-wa-lieu"><label for="mf-wa-lieu">Lieu</label><input id="mf-wa-lieu" type="text" placeholder="Ex. : siège de l'agence, Cocody"/></div>
 </div>
-<textarea id="mf-wa-texte" rows="7"></textarea>
+<textarea aria-label="Message WhatsApp à envoyer" id="mf-wa-texte" rows="7"></textarea>
 <div class="mf-notification-actions">
 <a class="btn btn--principal" id="mf-wa-ouvrir" href="#" target="_blank" rel="noopener">💬 Ouvrir WhatsApp avec ce message</a>
 <span class="mf-notification-statut">WhatsApp s'ouvre avec le message déjà écrit : il ne reste qu'à appuyer sur « Envoyer ».</span>
@@ -2871,7 +2871,7 @@ document.addEventListener('DOMContentLoaded', function () {
 <div class="mf-ajout-photo tdb-43">
 <label class="btn tdb-39" for="mpm-photo-input">＋ Ajouter une ou plusieurs photos</label>
 <input accept="image/*" id="mpm-photo-input" multiple="" class="u-hidden" type="file"/>
-<input accept="image/*" id="mpm-photo-remplacement-input" class="u-hidden" type="file"/>
+<input aria-label="Photo de remplacement" accept="image/*" id="mpm-photo-remplacement-input" class="u-hidden" type="file"/>
 <div class="form-msg u-hidden u-mt-0-6" id="mpm-photo-ajout-msg"></div>
 </div>
 </div>

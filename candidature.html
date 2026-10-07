@@ -153,17 +153,17 @@ setTimeout(() => {
         <div class="form-champ">
           <label for="ca-indicatif">Téléphone / WhatsApp *</label>
           <select id="ca-indicatif" required class="ca-8"></select>
-          <input type="tel" id="ca-telephone-numero" placeholder="07 00 00 00 00" required pattern="[0-9 ]{6,14}">
+          <input aria-label="Téléphone / WhatsApp — numéro" type="tel" id="ca-telephone-numero" placeholder="07 00 00 00 00" required pattern="[0-9 ]{6,14}">
         </div>
         <div class="form-champ">
           <label for="ca-ville">Ville *</label>
           <select id="ca-ville" required></select>
-          <input type="text" id="ca-ville-autre" placeholder="Précisez la ville" class="ca-9">
+          <input aria-label="Précisez la ville" type="text" id="ca-ville-autre" placeholder="Précisez la ville" class="ca-9">
         </div>
         <div class="form-champ u-hidden" id="ca-commune-wrap">
           <label for="ca-commune">Commune (Abidjan) *</label>
           <select id="ca-commune"></select>
-          <input type="text" id="ca-commune-autre" placeholder="Précisez la commune" class="ca-9">
+          <input aria-label="Précisez la commune" type="text" id="ca-commune-autre" placeholder="Précisez la commune" class="ca-9">
         </div>
         <div class="form-champ" id="ca-quartier-wrap">
           <label for="ca-quartier">Quartier *</label>
@@ -211,7 +211,7 @@ setTimeout(() => {
           <div class="form-champ">
             <label for="ca-parent-indicatif">Téléphone du parent / tuteur</label>
             <select id="ca-parent-indicatif" class="ca-8"></select>
-            <input type="tel" id="ca-parent-telephone-numero" placeholder="07 00 00 00 00" pattern="[0-9 ]{6,14}">
+            <input aria-label="Téléphone du parent / tuteur — numéro" type="tel" id="ca-parent-telephone-numero" placeholder="07 00 00 00 00" pattern="[0-9 ]{6,14}">
           </div>
         </div>
       </div>
@@ -267,7 +267,7 @@ setTimeout(() => {
       <div class="form-champ">
         <label for="ca-photos" id="ca-photos-label">Photos (4 minimum : portrait, plein pied, sans maquillage, autre...) *</label>
         <input type="file" id="ca-photos" accept="image/*" multiple>
-        <input type="file" id="ca-photo-remplacement" accept="image/*" class="u-hidden">
+        <input aria-label="Photo de remplacement" type="file" id="ca-photo-remplacement" accept="image/*" class="u-hidden">
         <span id="ca-photos-compteur" class="ca-14"></span>
         <p id="ca-photos-consigne" class="ca-14 u-hidden">Vérifiez vos photos : touchez-en une pour la voir en grand. ⇄ pour la remplacer, ✕ pour la retirer.</p>
         <div id="ca-photos-apercu" class="ca-15"></div>
