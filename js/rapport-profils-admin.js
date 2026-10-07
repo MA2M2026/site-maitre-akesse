@@ -60,7 +60,9 @@
     manque(a.identite, 'presentation', String(p.bio || '').trim().length >= 80);
     manque(a.identite, 'instagram', !vide(p.instagram) || p.sans_instagram === true);
 
-    manque(a.parcours, 'experiences', nbProjets > 0);
+    // New Face (débutante) : ne pas encore avoir d'expérience est normal — ni compté, ni réclamé.
+    a.newFace = niveauNormalise(p.niveau_mannequin, p.years_experience) === 'New Face';
+    if (!a.newFace || nbProjets > 0) manque(a.parcours, 'experiences', nbProjets > 0);
     manque(a.parcours, 'formation', !vide(p.formation_mannequin));
     manque(a.parcours, 'etudes', !vide(p.niveau_etude));
     manque(a.parcours, 'langues', !vide(p.languages));
@@ -100,7 +102,7 @@
     if (a.exces || a.aReprendre.length || a.aVerifier.length) a.priorites.push('Vérifier vos mensurations');
     else if (a.manquantes.length) a.priorites.push('Compléter vos mensurations');
     if (a.identite.length) a.priorites.push('Compléter votre identité (' + a.identite.length + ' élément' + (a.identite.length > 1 ? 's' : '') + ')');
-    if (a.parcours.length) a.priorites.push(nbProjets > 0 ? 'Compléter votre parcours' : 'Ajouter vos expériences');
+    if (a.parcours.length) a.priorites.push(a.parcours.indexOf('experiences') !== -1 ? 'Ajouter vos expériences' : 'Compléter votre parcours');
     if (a.photos.length) a.priorites.push('Enrichir vos photos');
     a.priorites = a.priorites.slice(0, 3);
     a.aJour = !a.identite.length && !a.parcours.length && !a.mesures.length && !a.exces && !a.photos.length;
@@ -129,7 +131,8 @@
     l.push('', '📊 *Votre profil est complet à ' + a.score + ' %*', barre(a.score));
     if (a.priorites.length) l.push('', '🎯 *Vos priorités :*', a.priorites.map(function (x, i) { return ['1️⃣', '2️⃣', '3️⃣'][i] + ' ' + x; }).join('\n'));
     if (a.identite.length) l.push('', '👤 *Votre identité — à ajouter :*', a.identite.map(function (k) { return '• ' + TEXTES[k]; }).join('\n'));
-    if (a.parcours.length) l.push('', '🏆 *Votre expérience et votre parcours — à ajouter :*', a.parcours.map(function (k) { return '• ' + TEXTES[k]; }).join('\n'));
+    if (a.newFace && !a.nbProjets) l.push('', '🌱 *Vous débutez en tant que New Face :* c’est tout à fait normal de ne pas encore avoir d’expérience. _Dès votre premier casting, shooting ou défilé, pensez à l’ajouter dans votre Espace._');
+    if (a.parcours.length) l.push('', '🏆 *Votre ' + (a.newFace && !a.nbProjets ? 'parcours' : 'expérience et votre parcours') + ' — à ajouter :*', a.parcours.map(function (k) { return '• ' + TEXTES[k]; }).join('\n'));
 
     // Mensurations : toujours expliquées, pour que la mannequin connaisse ses tailles exactes
     l.push('', '📏 *Vos mensurations*');
@@ -157,8 +160,8 @@
       '🌿 *Lifestyle / digitales* — les polaroïds, les photos que vous aimez, vos castings et vos sorties',
       'Plusieurs photos dans la même tenue sous différents angles, ou avec le logo d’un organisateur, sont tout à fait normales.');
 
-    l.push('', '👉 Rendez-vous dans votre *Espace mannequin* pour mettre votre profil à jour : ' + MA2M_SITE + '/espace-mannequin',
-      '', '🤝 _L’agence reste à vos côtés : pour toute question, écrivez-nous sur WhatsApp :_ ' + MA2M_WHATSAPP,
+    l.push('', '👉 *Pour mettre votre profil à jour*, rendez-vous dans votre Espace mannequin :', MA2M_SITE + '/espace-mannequin',
+      '', '🤝 _L’agence reste à vos côtés : pour toute question, écrivez-nous sur WhatsApp._',
       '', 'Rapport du ' + new Date().toLocaleDateString('fr-FR') + ' — *Maître Akesse Model Management*');
     return l.join('\n');
   }
@@ -228,7 +231,7 @@
   // Profils avec les mensurations de l'Extension 121 et la case « pas d'Instagram »
   // (Extension 126) ; si une de ces colonnes manque, relecture sans elles.
   var CHAMPS_PROFIL = 'id, full_name, category, published, height_cm, weight_kg, chest_cm, waist_cm, hips_cm, inseam_cm, shoe_size, eye_color, hair_color, ' +
-    'date_naissance, nationalite, city, bio, instagram, niveau_etude, formation_mannequin, languages';
+    'date_naissance, nationalite, city, bio, instagram, niveau_etude, formation_mannequin, languages, niveau_mannequin, years_experience';
   async function lireProfils() {
     var lire = function (champs) { return lireToutesLignes(function () { return sb.from('model_profiles').select(champs).not('full_name', 'is', null).order('id'); }); };
     var r = await lire(CHAMPS_PROFIL + ', shoulder_cm, arm_cm, neck_cm, sans_instagram');

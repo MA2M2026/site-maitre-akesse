@@ -1744,6 +1744,6 @@ puis identité, expérience et parcours (projets `model_projects`, études, form
 mensurations avec les tailles calculées haut / bas / générale (S ou M recommandé, L toléré,
 au-delà : conseil bienveillant), et les photos en dernier (photo de profil = couverture, book
 de moins de 6 photos). **Aucune remarque de l'IA** n'est reprise (`tri_raison` ignoré). Lien
-WhatsApp de l'agence : constante `MA2M_WHATSAPP` (js/app.js). Historique des envois remis à
+New Face sans expérience : jamais réclamée (message encourageant). Lien Espace mannequin en fin de message ; WhatsApp de l'agence cité sans lien (le message part de ce numéro). Constante `MA2M_WHATSAPP` (js/app.js) pour le bouton flottant. Historique des envois remis à
 zéro (clé `ma2m_rapport_profils_envois_v2`) + bouton « Réinitialiser l'historique ».
 Le paragraphe sur les deux catégories de photos s'active avec `CATEGORIES_PHOTOS_ACTIVES`.
