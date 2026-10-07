@@ -24,6 +24,8 @@ function emptyState(){
       statutAffichage:'brouillon', premierePublicationFaite:false, commentaireAdmin:''
     },
     identite:{ nomComplet:'', dateNaissance:'', villeNaissance:'', lieuNaissance:'', nationalite:'', ville:'', quartier:'', telephone:'', email:'', sexe:'' },
+    // Mannequin mineure : contacts de son parent / tuteur (table contacts_parents, Extension 129).
+    parent:{ nom:'', telephone:'', email:'' },
     physique:{
       taille:'', poids:'', poitrine:'', tourTaille:'', hanches:'', entrejambe:'', pointure:'',
       tailleVet:'', yeux:'', cheveux:'', carnation:'',
@@ -343,6 +345,46 @@ async function enregistrerMesuresSupp(p){
 }
 // Instagram obligatoire (décision de la propriétaire, 07/10/2026) : un compte, ou la case
 // « Je n'ai pas Instagram » cochée. Renvoie false (et prévient la mannequin) si rien n'est indiqué.
+// Mannequin mineure (décision de la propriétaire, 07/10/2026) : elle garde ses propres
+// contacts, et on demande en plus le nom, le WhatsApp et l'e-mail de son parent / tuteur.
+function estMineureLe(dateNaissance){
+  if (!dateNaissance) return false;
+  const n = new Date(dateNaissance + 'T12:00:00'), a = new Date();
+  let age = a.getFullYear() - n.getFullYear();
+  if (a.getMonth() < n.getMonth() || (a.getMonth() === n.getMonth() && a.getDate() < n.getDate())) age--;
+  return age < 18;
+}
+function majBlocParent(){
+  const bloc = document.getElementById('f-bloc-parent');
+  if (bloc) bloc.style.display = estMineureLe(val('f-dob')) ? '' : 'none';
+}
+// Renvoie false (et prévient la mannequin) s'il manque un contact du parent pour une mineure.
+function lireParentFormulaire(){
+  if (!document.getElementById('f-bloc-parent') || !estMineureLe(val('f-dob'))) return true;
+  const p = {
+    nom: val('f-parent-nom').trim(),
+    telephone: composerTelephone(document.getElementById('f-parent-indicatif'), document.getElementById('f-parent-numero')),
+    email: val('f-parent-email').trim().toLowerCase()
+  };
+  if (!p.nom || !val('f-parent-numero').trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email)) {
+    toast('Vous avez moins de 18 ans : indiquez le nom, le WhatsApp et l’e-mail de votre parent ou tuteur.', true);
+    document.getElementById('f-parent-nom')?.focus();
+    return false;
+  }
+  state.parent = p;
+  return true;
+}
+// Enregistré à part (table contacts_parents) pour ne jamais bloquer le reste de l'étape
+// si la base ne l'a pas encore (Extension 129).
+async function enregistrerParent(){
+  if (!estMineureLe(state.identite.dateNaissance)) return true;
+  const { error } = await sb.from('contacts_parents').upsert({
+    model_id: currentUser.id, parent_nom: state.parent.nom || null, parent_telephone: state.parent.telephone || null,
+    parent_email: state.parent.email || null, mis_a_jour: new Date().toISOString()
+  });
+  if (error) { console.warn('Contacts du parent non enregistrés :', error.message); toast('Les contacts de votre parent n’ont pas pu être enregistrés : réessayez un peu plus tard', true); }
+  return true;
+}
 function lireInstagramFormulaire(){
   const sans = !!(document.getElementById('f-sans-instagram') || {}).checked;
   const compte = sans ? '' : val('f-instagram').trim();
@@ -428,6 +470,10 @@ const Store = {
     const contactPrive = contactPriveRows && contactPriveRows[0] ? contactPriveRows[0] : null;
 
     const s = mapProfileFromDb(profile, contactPrive);
+
+    // Contacts du parent (vide tant que l'Extension 129 n'est pas exécutée).
+    const { data: parent } = await sb.from('contacts_parents').select('parent_nom, parent_telephone, parent_email').eq('model_id', currentUser.id).maybeSingle();
+    if (parent) s.parent = { nom: parent.parent_nom || '', telephone: parent.parent_telephone || '', email: parent.parent_email || '' };
 
     const { data: rowSansInsta, error: eSansInsta } = await sb.from('model_profiles').select('sans_instagram').eq('id', currentUser.id).maybeSingle();
     s.sansInstagram = !eSansInsta && !!(rowSansInsta && rowSansInsta.sans_instagram); // faux tant que l'Extension 126 n'est pas exécutée
@@ -763,6 +809,13 @@ function stepIdentite(){
       '<select id="f-tel-indicatif"></select><input type="tel" id="f-tel-numero" placeholder="07 00 00 00 00" pattern="[0-9 ]{6,14}"></div></div>' +
     field('E-mail (usage interne agence)','f-email',d.email,{type:'email'}) + '</div>' +
     '<p class="sub p20-21">🔒 Téléphone et e-mail ne sont jamais affichés publiquement — seul le contact officiel de l’agence apparaît sur votre fiche.</p>' +
+    '<div id="f-bloc-parent"><h3 class="p20-17">Parent ou tuteur légal</h3>' +
+      '<p class="sub">Vous avez moins de 18 ans : merci d’indiquer les contacts de votre parent ou tuteur. L’agence le contactera avant toute suite donnée.</p><div class="grid">' +
+      field('Nom du parent / tuteur','f-parent-nom',state.parent.nom,{req:true}) +
+      '<div class="field"><label>WhatsApp du parent / tuteur<span class="req">*</span></label><div class="tel-row">' +
+        '<select id="f-parent-indicatif"></select><input type="tel" id="f-parent-numero" placeholder="07 00 00 00 00" pattern="[0-9 ]{6,14}"></div></div>' +
+      field('E-mail du parent / tuteur','f-parent-email',state.parent.email,{type:'email',req:true}) +
+    '</div></div>' +
     '<div class="field full p20-17"><label>Sexe<span class="req">*</span></label><div class="radio-row">' +
     [['femme','Femme'],['homme','Homme']].map(function(c){ return '<label class="radio-opt '+(d.sexe===c[0]?'selected':'')+'"><input type="radio" name="sexe" value="'+c[0]+'" '+(d.sexe===c[0]?'checked':'')+'> '+c[1]+'</label>'; }).join('') +
     '</div></div>' +
@@ -799,6 +852,14 @@ function bindStepIdentite(){
 
   remplirIndicatifs(selectTel);
   preRemplirTelephone(state.identite.telephone, selectTel, document.getElementById('f-tel-numero'));
+
+  const selectTelParent = document.getElementById('f-parent-indicatif');
+  if (selectTelParent) {
+    remplirIndicatifs(selectTelParent);
+    preRemplirTelephone(state.parent.telephone, selectTelParent, document.getElementById('f-parent-numero'));
+    document.getElementById('f-dob').addEventListener('input', majBlocParent);
+    majBlocParent();
+  }
 
   const selectPays = document.getElementById('f-pays-naissance');
   if (selectPays) selectPays.addEventListener('change', function(){
@@ -1088,13 +1149,13 @@ function bindWizard(){
 
   document.getElementById('save1')?.addEventListener('click', async function(){
     const btn = this;
-    if (!lireInstagramFormulaire()) return;
+    if (!lireInstagramFormulaire() || !lireParentFormulaire()) return;
     const identiteFormulaire = lireIdentiteFormulaire();
     identiteFormulaire.sexe = identiteFormulaire.sexe || s.identite.sexe;
     Object.assign(s.identite, identiteFormulaire);
     s.bio = val('f-bio'); s.citation = val('f-citation');
     btn.disabled = true; btn.textContent = 'Enregistrement…';
-    const ok = await Store.saveBlock(Object.assign(identiteToDb(s.identite), { bio: s.bio||null, instagram: s.instagram||null, citation: s.citation||null })) && await enregistrerSansInstagram();
+    const ok = await Store.saveBlock(Object.assign(identiteToDb(s.identite), { bio: s.bio||null, instagram: s.instagram||null, citation: s.citation||null })) && await enregistrerSansInstagram() && await enregistrerParent();
     if (ok) { toast('Enregistré'); goto(2); } else { btn.disabled=false; btn.textContent='Enregistrer'; }
   });
 
@@ -1568,7 +1629,7 @@ function bindBlockPage(k){
   }
 
   btn.addEventListener('click', async function(){
-    if (k==='identite' && !lireInstagramFormulaire()) return;
+    if (k==='identite' && (!lireInstagramFormulaire() || !lireParentFormulaire())) return;
     btn.disabled = true; btn.textContent = 'Enregistrement…';
     let ok = false, payload = {};
     if (k==='identite') {
@@ -1586,7 +1647,7 @@ function bindBlockPage(k){
     }
     ok = await Store.saveBlock(payload);
     if (ok && k==='physique') ok = await enregistrerMesuresSupp(s.physique) && await enregistrerFicheEvenementDepuisFormulaire();
-    if (ok && k==='identite') ok = await enregistrerSansInstagram();
+    if (ok && k==='identite') ok = await enregistrerSansInstagram() && await enregistrerParent();
     if (ok) { btn.textContent='✓ Enregistré'; btn.classList.add('saved'); setTimeout(function(){ toast('Bloc « '+k+' » enregistré'); }, 400); }
     else { btn.disabled=false; btn.textContent='Enregistrer'; }
   });

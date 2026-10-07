@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-uxqCNB3yFOBFqwdeKcpJ4j72nORxbGS7PkoMP4g+qjo='; style-src 'self' https://fonts.googleapis.com 'sha256-8LrkXFbl2Lw61VWxDceGfjjHAwWVR1EX/L2RObVO+sY='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-NjEJnIT9/tWgfgiAec6JZFCpWwQDAdidU95QoZMHIqE='; style-src 'self' https://fonts.googleapis.com 'sha256-8LrkXFbl2Lw61VWxDceGfjjHAwWVR1EX/L2RObVO+sY='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -210,9 +210,13 @@ setTimeout(() => {
             <input type="text" id="ca-parent-nom">
           </div>
           <div class="form-champ">
-            <label for="ca-parent-indicatif">Parent / guardian phone</label>
+            <label for="ca-parent-indicatif">Parent / guardian WhatsApp</label>
             <select id="ca-parent-indicatif" class="ca-8"></select>
-            <input aria-label="Parent / guardian phone — number" type="tel" id="ca-parent-telephone-numero" placeholder="07 00 00 00 00" pattern="[0-9 ]{6,14}">
+            <input aria-label="Parent / guardian WhatsApp — number" type="tel" id="ca-parent-telephone-numero" placeholder="07 00 00 00 00" pattern="[0-9 ]{6,14}">
+          </div>
+          <div class="form-champ">
+            <label for="ca-parent-email">Parent / guardian email</label>
+            <input type="email" id="ca-parent-email" autocomplete="off">
           </div>
         </div>
       </div>
@@ -781,6 +785,7 @@ document.getElementById('ca-naissance').addEventListener('change', () => {
   blocParent.style.display = mineur ? 'block' : 'none';
   document.getElementById('ca-parent-nom').required = mineur;
   document.getElementById('ca-parent-telephone-numero').required = mineur;
+  document.getElementById('ca-parent-email').required = mineur;
   remplirTailleSelonGenre();
   majConsentement();
 });
@@ -883,6 +888,7 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
     message: document.getElementById('ca-message').value.trim(),
     parent_nom: mineur ? document.getElementById('ca-parent-nom').value.trim() : null,
     parent_telephone: mineur ? composerTelephone(document.getElementById('ca-parent-indicatif'), document.getElementById('ca-parent-telephone-numero')) : null,
+    parent_email: mineur ? (document.getElementById('ca-parent-email').value.trim().toLowerCase() || null) : null,
     type_candidature: 'projet',
     projet_nom: projetNom,
     experience_mannequin: 'oui',

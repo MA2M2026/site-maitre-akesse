@@ -1109,6 +1109,18 @@ les classes ajoutées dynamiquement (`classList.add(...)`, `className =
   Les premiers messages du changement de statut (`MODELES_NOTIFICATION.casting`)
   viennent aussi du catalogue. « Refusée » revient dans Messages groupés avec son
   seul 1er message (inscriptions : « annulée » toujours exclue).
+- **L'e-mail partout + contacts du parent (07/10/2026, Extension 129)** —
+  formulaire d'inscription : e-mail obligatoire (`ins-email`, passé par
+  `api/code-protege.js` → `p_email`), téléphone renommé « WhatsApp ». Les trois
+  formulaires (FR/EN) : « WhatsApp du parent » + `parent_email` (obligatoires
+  pour un mineur). Espace mannequin : bloc « Parent ou tuteur » pour une
+  mineure, enregistré dans la table **`contacts_parents`** (une ligne par
+  mannequin, RLS : la mannequin ne voit que la sienne, l'agence tout) — et non
+  dans `model_profiles`, dont les droits colonne par colonne ne cachent rien aux
+  comptes connectés (ils ont la lecture de toute la table). ⚠️ Mettre en ligne
+  APRÈS l'Extension 129 : sinon la candidature d'un mineur (colonne
+  `parent_email` absente) et toute inscription (fonction à 12 paramètres
+  absente) échouent.
 
 ## Diagnostic sécurité du 28 septembre 2026 (nuit)
 

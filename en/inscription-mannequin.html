@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-mbK4fbJWfzJgz0ZkEQiNN/6wJr7Blk1iqdzspIstXSo='; style-src 'self' https://fonts.googleapis.com 'sha256-tFcy5AGgtBPoC5kXJZsbtpg3iMcSamS5C0fbatbaxhs='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-F08fTmou1vV1eDdjRlY4FAobjVJFrdadEJBVpMEThME='; style-src 'self' https://fonts.googleapis.com 'sha256-tFcy5AGgtBPoC5kXJZsbtpg3iMcSamS5C0fbatbaxhs='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -179,9 +179,14 @@ setTimeout(() => {
       </div>
 
       <div class="form-champ">
-        <label for="ins-indicatif">Your Phone Number *</label>
+        <label for="ins-indicatif">Your WhatsApp Number *</label>
         <select id="ins-indicatif" required class="enim-4"></select>
-        <input aria-label="Your Phone Number" type="tel" id="ins-telephone-numero" placeholder="07 00 00 00 00" required>
+        <input aria-label="Your WhatsApp Number" type="tel" id="ins-telephone-numero" placeholder="07 00 00 00 00" required>
+      </div>
+
+      <div class="form-champ">
+        <label for="ins-email">Your Email *</label>
+        <input type="email" id="ins-email" required autocomplete="email">
       </div>
 
       <div id="ins-bloc-parent" class="enim-5">
@@ -193,9 +198,13 @@ setTimeout(() => {
             <input type="text" id="ins-parent-nom">
           </div>
           <div class="form-champ">
-            <label for="ins-parent-indicatif">Parent / Guardian Phone Number</label>
+            <label for="ins-parent-indicatif">Parent / Guardian WhatsApp Number</label>
             <select id="ins-parent-indicatif" class="enim-4"></select>
-            <input aria-label="Parent / Guardian Phone Number — number" type="tel" id="ins-parent-telephone-numero">
+            <input aria-label="Parent / Guardian WhatsApp Number — number" type="tel" id="ins-parent-telephone-numero">
+          </div>
+          <div class="form-champ">
+            <label for="ins-parent-email">Parent / Guardian Email</label>
+            <input type="email" id="ins-parent-email" autocomplete="off">
           </div>
         </div>
       </div>
@@ -436,6 +445,7 @@ document.getElementById('ins-naissance').addEventListener('change', () => {
   document.getElementById('ins-bloc-parent').style.display = mineur ? 'block' : 'none';
   document.getElementById('ins-parent-nom').required = mineur;
   document.getElementById('ins-parent-telephone-numero').required = mineur;
+  document.getElementById('ins-parent-email').required = mineur;
 });
 
 remplirIndicatifs(document.getElementById('ins-indicatif'));
@@ -501,7 +511,9 @@ document.getElementById('form-inscription').addEventListener('submit', async (e)
     code_utilise: codeValide,
     reference_paiement: document.getElementById('ins-reference-paiement').value.trim(),
     parent_nom: mineur ? document.getElementById('ins-parent-nom').value.trim() : null,
-    parent_telephone: mineur ? composerTelephone(document.getElementById('ins-parent-indicatif'), document.getElementById('ins-parent-telephone-numero')) : null
+    parent_telephone: mineur ? composerTelephone(document.getElementById('ins-parent-indicatif'), document.getElementById('ins-parent-telephone-numero')) : null,
+    email: document.getElementById('ins-email').value.trim().toLowerCase(),
+    parent_email: mineur ? (document.getElementById('ins-parent-email').value.trim().toLowerCase() || null) : null
   };
 
   // Consuming the code AND creating the record happen in a single atomic
@@ -525,7 +537,9 @@ document.getElementById('form-inscription').addEventListener('submit', async (e)
           p_phone: dossier.phone,
           p_reference_paiement: dossier.reference_paiement,
           p_parent_nom: dossier.parent_nom,
-          p_parent_telephone: dossier.parent_telephone
+          p_parent_telephone: dossier.parent_telephone,
+          p_email: dossier.email,
+          p_parent_email: dossier.parent_email
         }
       })
     });
@@ -556,7 +570,7 @@ document.getElementById('form-inscription').addEventListener('submit', async (e)
   envoyerNotificationEmail({
     name: dossier.full_name,
     telephone: dossier.phone,
-    email: '',
+    email: dossier.email,
     message: `New model registration (status: pending payment).\nDate of birth: ${dossier.date_naissance || '-'}\nHeight: ${dossier.height_cm || '-'} cm\nClothing size: ${dossier.clothing_size || '-'}\nCode used: ${dossier.code_utilise}\nWave payment reference: ${dossier.reference_paiement || '-'}${mineur ? `\n⚠️ MINOR — Parent/guardian: ${dossier.parent_nom || '-'} — ${dossier.parent_telephone || '-'}` : ''}`
   });
 

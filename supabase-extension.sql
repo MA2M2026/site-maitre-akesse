@@ -6582,3 +6582,83 @@ drop trigger if exists trg_proteger_categorie_photo on model_photos;
 create trigger trg_proteger_categorie_photo
   before update of categorie on model_photos
   for each row execute function proteger_categorie_photo();
+
+-- =====================================================================
+-- Extension 129 — L'e-mail partout, et les contacts du parent pour les mineurs
+-- (décision de la propriétaire, 07/10/2026 : « on doit habituer les mannequins au
+-- mail » ; pour un mineur, ce sont l'e-mail et le WhatsApp du parent).
+--  1) Inscription mannequin : l'e-mail est désormais demandé dans le formulaire
+--     (la colonne inscriptions_mannequins.email existait déjà, Extension 7).
+--  2) Candidatures et inscriptions : e-mail du parent / tuteur (le téléphone du
+--     parent existait déjà : parent_telephone, désormais son WhatsApp).
+--  3) Espace mannequin : une mannequin mineure garde ses propres contacts, et on
+--     ajoute le nom, le WhatsApp et l'e-mail de son parent, dans une TABLE À PART
+--     (contacts_parents) et non dans model_profiles : les droits « colonne par
+--     colonne » de model_profiles ne suffisent pas à cacher une colonne aux comptes
+--     connectés (ils ont la lecture de toute la table). Ici, la règle est simple :
+--     chaque mannequin ne voit et ne modifie QUE sa ligne ; l'agence voit tout.
+-- =====================================================================
+alter table casting_applications add column if not exists parent_email text;
+alter table inscriptions_mannequins add column if not exists parent_email text;
+
+create table if not exists contacts_parents (
+  model_id uuid primary key references model_profiles(id) on delete cascade,
+  parent_nom text,
+  parent_telephone text,
+  parent_email text,
+  mis_a_jour timestamptz not null default now()
+);
+alter table contacts_parents enable row level security;
+revoke all on contacts_parents from anon;
+drop policy if exists "La mannequin gère le contact de son parent" on contacts_parents;
+create policy "La mannequin gère le contact de son parent"
+  on contacts_parents for all
+  using (model_id = auth.uid() or exists (select 1 from admins where user_id = auth.uid()))
+  with check (model_id = auth.uid() or exists (select 1 from admins where user_id = auth.uid()));
+
+-- Le dossier d'inscription reçoit l'e-mail et l'e-mail du parent.
+drop function if exists soumettre_inscription_mannequin(text, text, date, text, int, text, text, text, text, text);
+create or replace function soumettre_inscription_mannequin(
+  p_code text,
+  p_full_name text,
+  p_date_naissance date,
+  p_genre text,
+  p_height_cm int,
+  p_clothing_size text,
+  p_phone text,
+  p_reference_paiement text,
+  p_parent_nom text default null,
+  p_parent_telephone text default null,
+  p_email text default null,
+  p_parent_email text default null
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  nb_lignes int;
+  nouvel_id uuid;
+begin
+  update codes_inscription set utilise = true, utilise_le = now()
+  where code = p_code and utilise = false;
+  get diagnostics nb_lignes = row_count;
+  if nb_lignes = 0 then
+    raise exception 'code_invalide_ou_deja_utilise';
+  end if;
+
+  insert into inscriptions_mannequins
+    (full_name, date_naissance, genre, height_cm, clothing_size, phone, code_utilise, reference_paiement, parent_nom, parent_telephone, email, parent_email)
+  values
+    (p_full_name, p_date_naissance, p_genre, p_height_cm, p_clothing_size, p_phone, p_code, nullif(p_reference_paiement, ''), p_parent_nom, p_parent_telephone,
+     nullif(lower(trim(p_email)), ''), nullif(lower(trim(p_parent_email)), ''))
+  returning id into nouvel_id;
+
+  return nouvel_id;
+end;
+$$;
+revoke all on function soumettre_inscription_mannequin(text, text, date, text, int, text, text, text, text, text, text, text) from public;
+grant execute on function soumettre_inscription_mannequin(text, text, date, text, int, text, text, text, text, text, text, text) to anon, authenticated;
+
+NOTIFY pgrst, 'reload schema';
