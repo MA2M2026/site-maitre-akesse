@@ -44,7 +44,7 @@
     naissance: 'date de naissance', nationalite: 'nationalité', ville: 'ville de résidence',
     presentation: 'présentation', presentationCourte: 'présentation trop courte', instagram: 'Instagram (ou « Je n’ai pas Instagram »)',
     experiences: 'expériences', etudes: 'niveau d’études', formation: 'formations', langues: 'langues parlées',
-    profil: 'photo de profil', couverture: 'photo de couverture', identiques: 'profil et couverture identiques', book: 'book trop léger'
+    profil: 'photo de profil non choisie', couverture: 'couverture non choisie', identiques: 'même photo en profil et en couverture', book: 'book trop léger'
   };
 
   // Analyse d'un profil : chaque rubrique liste ses points à compléter (des clés) ; le
@@ -84,11 +84,18 @@
     if (a.aVerifier.length) a.mesures.push('À vérifier : ' + a.aVerifier.join(', '));
 
     // Photos (en dernier)
-    var principale = photos.filter(function (ph) { return ph.principale; })[0];
-    var couverture = photos.filter(function (ph) { return ph.photo_couverture; })[0];
-    manque(a.photos, 'profil', !!principale);
-    manque(a.photos, 'couverture', !!couverture);
-    if (principale && couverture) manque(a.photos, 'identiques', principale.id !== couverture.id);
+    // Même logique que la fiche publique (mannequin.html) : sans photo de profil choisie,
+    // la fiche affiche la plus ancienne photo ; sans couverture choisie, elle reprend la
+    // photo de profil. Le rapport décrit donc ce que les recruteurs voient vraiment.
+    // Règle partagée photosAffichees (js/app.js).
+    var vues = photosAffichees(photos);
+    a.photosVues = { profilChoisi: vues.profilChoisi, couvertureChoisie: !!vues.couvertureChoisie, identiques: !!vues.profil && vues.profil === vues.couverture };
+    manque(a.photos, 'profil', vues.profilChoisi);
+    // Un seul point pour la couverture : choisie ET différente de la photo de profil
+    total++;
+    if (!vues.couvertureChoisie) a.photos.push('couverture');
+    else if (a.photosVues.identiques) a.photos.push('identiques');
+    else points++;
     manque(a.photos, 'book', photos.length >= BOOK_MINIMUM);
 
     a.score = total ? Math.round(points * 100 / total) : 0;
@@ -127,6 +134,22 @@
     formation: 'Vos formations de mannequinat _(ou « aucune » si vous débutez)_',
     etudes: 'Votre niveau d’études', langues: 'Les langues que vous parlez'
   };
+  // Diagnostic des photos, tel que la fiche publique les montre.
+  function lignesPhotos(a) {
+    var v = a.photosVues, r = [];
+    if (!a.nbPhotos) r.push('• Votre book est vide : ajoutez vos photos dans votre Espace, puis choisissez une *photo de profil* (un portrait) et une *autre photo* pour la couverture.');
+    else if (a.nbPhotos === 1) r.push('• Vous n’avez qu’*une seule photo* : ajoutez-en d’autres, puis ' + (v.profilChoisi ? 'choisissez une *autre photo* pour la couverture.' : 'choisissez une *photo de profil* (un portrait) et une *autre photo* pour la couverture.'));
+    else if (!v.profilChoisi && !v.couvertureChoisie) r.push('• Vous n’avez pas encore choisi votre *photo de profil* ni votre *photo de couverture*. Votre fiche affiche donc *la même photo aux deux endroits*. Choisissez un portrait pour le profil et *une autre photo* pour la couverture, par exemple une photo en plein pied.');
+    else {
+      if (!v.profilChoisi) r.push('• Choisissez votre *photo de profil* (un portrait) : pour l’instant, le site prend automatiquement votre plus ancienne photo.');
+      if (!v.couvertureChoisie) r.push('• Choisissez votre *photo de couverture* : pour l’instant, votre fiche reprend votre photo de profil.');
+      else if (v.identiques) r.push('• Votre photo de profil et votre photo de couverture sont *la même photo* : remplacez l’une des deux par une autre photo de votre book.');
+    }
+    if (a.nbPhotos > 1 && a.photos.indexOf('book') !== -1) r.push('• Votre book compte ' + a.nbPhotos + ' photos : ajoutez-en pour arriver à *' + BOOK_MINIMUM + ' au moins*, avec des tenues et des ambiances variées.');
+    else if (a.nbPhotos >= BOOK_MINIMUM && a.nbPhotos < 2 * BOOK_MINIMUM) r.push('• Votre book compte ' + a.nbPhotos + ' photos : continuez à l’enrichir avec de nouvelles photos, des tenues et des ambiances différentes.');
+    return r;
+  }
+
   function message(p, a) {
     var l = ['Bonjour *' + civilite(p) + '*,', '',
       'Merci pour votre engagement aux côtés de *Maître Akesse Model Management*. Voici le point sur votre profil, pour vous aider à le rendre encore plus attractif auprès des recruteurs et des organisateurs.'];
@@ -151,12 +174,10 @@
     if (a.manquantes.length) l.push('📝 À compléter : ' + joindre(a.manquantes) + '.');
 
     // Photos (en dernier)
-    if (a.photos.length) {
+    var photosTexte = lignesPhotos(a);
+    if (photosTexte.length) {
       l.push('', '📸 *Vos photos :*');
-      if (a.photos.indexOf('profil') !== -1) l.push('• Ajoutez une *photo de profil*.');
-      if (a.photos.indexOf('couverture') !== -1) l.push('• Choisissez une *photo de couverture*.');
-      if (a.photos.indexOf('identiques') !== -1) l.push('• Votre photo de profil et votre photo de couverture sont *la même photo* : choisissez une autre photo pour la couverture, votre book n’en sera que plus riche.');
-      if (a.photos.indexOf('book') !== -1) l.push('• Votre book n’est pas encore assez riche _(' + a.nbPhotos + ' photo' + (a.nbPhotos > 1 ? 's' : '') + ')_ : ajoutez-en pour arriver à *' + BOOK_MINIMUM + ' au moins*, avec des tenues et des ambiances variées.');
+      l.push.apply(l, photosTexte);
     }
     if (CATEGORIES_PHOTOS_ACTIVES) l.push('', '💡 *Bon à savoir :* vos photos sont désormais rangées automatiquement en deux catégories, _vous n’avez rien à faire_ :',
       '📒 *Book* : les photos professionnelles _(shootings, défilés, campagnes)_',
@@ -258,7 +279,7 @@
     zone.textContent = 'Analyse des profils…';
     var r = await Promise.all([
       lireProfils(),
-      lireToutesLignes(function () { return sb.from('model_photos').select('id, model_id, principale, photo_couverture, tri_statut').order('id'); }),
+      lireToutesLignes(function () { return sb.from('model_photos').select('id, model_id, principale, photo_couverture, tri_statut, created_at').order('id'); }),
       sb.rpc('contacts_mannequins_admin'),
       lireToutesLignes(function () { return sb.from('model_projects').select('id, model_id').order('id'); })
     ]);
