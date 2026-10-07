@@ -976,6 +976,31 @@ function relancerChargementFiche(contenu, texteChargement, relancer) {
   setTimeout(relancer, 1500);
 }
 
+// Informations personnelles des mannequins (Extension 131, décision de la propriétaire du
+// 07/10/2026 : « tout ce qui est information personnelle doit être verrouillé ») : plus
+// lisibles directement dans model_profiles ; seules la mannequin (sa propre fiche) et
+// l'agence les obtiennent, par la fonction sécurisée profils_prives(). Le téléphone et
+// l'e-mail passent toujours par mon_contact_prive() / contacts_mannequins_admin().
+const CHAMPS_PRIVES_PROFIL = ['date_naissance', 'ville_naissance', 'lieu_naissance', 'nationalite', 'quartier', 'raison_refus', 'etablissement'];
+// Retire les champs privés d'une liste de colonnes « a, b, c » (sinon la lecture est refusée).
+function sansChampsPrives(colonnes) {
+  return colonnes.split(',').map(c => c.trim()).filter(c => c && CHAMPS_PRIVES_PROFIL.indexOf(c) === -1).join(', ');
+}
+// Complète des fiches lues (avec leur id) par leurs champs privés. Tant que l'Extension 131
+// n'est pas exécutée, la fonction n'existe pas : lecture directe, comme avant.
+async function completerProfilsPrives(lignes) {
+  const liste = (Array.isArray(lignes) ? lignes : [lignes]).filter(Boolean);
+  if (!liste.length) return lignes;
+  const ids = liste.map(l => l.id);
+  let { data, error } = await sb.rpc('profils_prives', { ids: ids });
+  if (error) ({ data, error } = await sb.from('model_profiles').select('id, ' + CHAMPS_PRIVES_PROFIL.join(', ')).in('id', ids));
+  if (error) { console.warn('Informations personnelles non chargées :', error.message); return lignes; }
+  const parId = {};
+  (data || []).forEach(p => { parId[p.id] = p; });
+  liste.forEach(l => { const p = parId[l.id]; if (p) CHAMPS_PRIVES_PROFIL.forEach(c => { l[c] = p[c]; }); });
+  return lignes;
+}
+
 // Prénom (premier mot du nom complet), pour personnaliser les messages.
 function prenomDe(nomComplet) { return String(nomComplet || '').trim().split(/\s+/)[0] || ''; }
 

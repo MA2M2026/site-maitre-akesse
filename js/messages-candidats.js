@@ -83,7 +83,9 @@ ${DRESS_CODE}
 }
 
 // Catalogue : chaque message, le statut auquel il correspond et son nom dans les listes.
-// « premier » : message proposé quand on change le statut sur la fiche.
+// « premier » : message envoyé automatiquement quand on change le statut sur la fiche ;
+//   il n'apparaît PAS dans les listes « Message tout prêt » ni « Quel message ? »
+//   (décision de la propriétaire, 07/10/2026 : on n'a pas à le revoir ensuite).
 // « groupe » : message proposé d'office dans « Messages groupés » pour ce statut.
 // type = 'agence' ou 'projet' (casting précis).
 const MESSAGES_CANDIDATS = [

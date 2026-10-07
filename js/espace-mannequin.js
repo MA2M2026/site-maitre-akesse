@@ -462,9 +462,10 @@ const LIMITE_PHOTOS_BOOK = 60;
 const Store = {
   async load(){
     const { data: profile, error: e1 } = await sb.from('model_profiles')
-      .select('id, full_name, bio, height_cm, weight_kg, city, quartier, instagram, published, created_at, category, chest_cm, waist_cm, hips_cm, shoe_size, carnation, clothing_size, date_naissance, eye_color, hair_color, years_experience, niveau_mannequin, model_types, languages, availability, inseam_cm, featured, premiere_publication_faite, en_attente_validation, raison_refus, niveau_etude, etablissement, formation_particuliere, formation_mannequin, competences, citation, ville_naissance, lieu_naissance, nationalite')
+      .select(sansChampsPrives('id, full_name, bio, height_cm, weight_kg, city, quartier, instagram, published, created_at, category, chest_cm, waist_cm, hips_cm, shoe_size, carnation, clothing_size, date_naissance, eye_color, hair_color, years_experience, niveau_mannequin, model_types, languages, availability, inseam_cm, featured, premiere_publication_faite, en_attente_validation, raison_refus, niveau_etude, etablissement, formation_particuliere, formation_mannequin, competences, citation, ville_naissance, lieu_naissance, nationalite'))
       .eq('id', currentUser.id).maybeSingle();
     if (e1) { console.error(e1); toast('Erreur de chargement du profil', true); return emptyState(); }
+    await completerProfilsPrives(profile); // date de naissance, quartier… (Extension 131)
 
     const { data: contactPriveRows } = await sb.rpc('mon_contact_prive');
     const contactPrive = contactPriveRows && contactPriveRows[0] ? contactPriveRows[0] : null;
@@ -532,8 +533,9 @@ const Store = {
       .update(Object.assign({}, fields, { published: !!publier }))
       // Colonnes nommées : le téléphone et l'e-mail ne sont plus lisibles directement
       // (Extension 130), un select() « toutes colonnes » serait refusé.
-      .eq('id', currentUser.id).select('id, published, en_attente_validation, raison_refus, premiere_publication_faite').single();
+      .eq('id', currentUser.id).select('id, published, en_attente_validation, premiere_publication_faite').single();
     if (error) { console.error(error); toast('Échec de la soumission', true); return null; }
+    await completerProfilsPrives(resultat); // raison_refus (Extension 131)
     return resultat;
   },
 

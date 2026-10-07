@@ -9,8 +9,8 @@
 //   - WhatsApp : l'envoi entièrement automatique n'existe qu'avec l'offre payante de
 //     WhatsApp pour les entreprises. Ici, gratuit : chaque appui ouvre WhatsApp avec le
 //     message déjà écrit pour la personne suivante ; il reste à appuyer sur « Envoyer ».
-//   - Candidatures : « Quel message ? » propose TOUS les messages du statut choisi (1er
-//     message, relance, convocation, rappel…), les mêmes que sur la fiche d'une personne
+//   - Candidatures : « Quel message ? » propose les messages du statut choisi (relance,
+//     convocation, rappel… ; le 1er message part tout seul au changement de statut), les mêmes que sur la fiche d'une personne
 //     (catalogue commun : js/messages-candidats.js). On coche une, plusieurs ou toutes
 //     les personnes.
 //   - « {prénom} », « {candidature} » et « {casting} » sont remplacés pour chaque personne ;
@@ -110,15 +110,15 @@
     const candidatures = $('mg-source').value !== 'inscription';
     $('mg-champ-type').style.display = candidatures ? '' : 'none';
     if (!candidatures) { $('mg-type').innerHTML = ''; return; }
-    const liste = MESSAGES_CANDIDATS.filter(m => m.statut === $('mg-statut').value);
+    const liste = MESSAGES_CANDIDATS.filter(m => m.statut === $('mg-statut').value && !m.premier);
     $('mg-type').innerHTML = liste.map(m => `<option value="${m.cle}">${echapper(m.libelle)}</option>`).join('');
     const defaut = liste.find(m => m.groupe) || liste[0];
     if (defaut) $('mg-type').value = defaut.cle;
   }
 
-  // Inscriptions : pas de second message après un refus (décision de la propriétaire,
-  // 07/10/2026). Candidatures : « Non retenue » ne propose que le 1er message.
-  const SANS_SECOND_MESSAGE = ['annulée'];
+  // Pas de second message après un refus (décision de la propriétaire, 07/10/2026) ; le
+  // 1er message part tout seul au changement de statut, il n'est pas proposé ici.
+  const SANS_SECOND_MESSAGE = ['refusée', 'annulée'];
   function remplirStatuts() {
     const c = conf();
     $('mg-statut').innerHTML = c.statuts.filter(s => !SANS_SECOND_MESSAGE.includes(s)).map(s => `<option value="${echapper(s)}">${echapper(c.libellesStatut[s] || s)}</option>`).join('');

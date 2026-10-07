@@ -6693,3 +6693,42 @@ begin
 end $$;
 
 NOTIFY pgrst, 'reload schema';
+
+-- =====================================================================
+-- Extension 131 — Toutes les informations personnelles des mannequins verrouillées
+-- (décision de la propriétaire, 07/10/2026 : « tout ce qui est information personnelle
+-- doit être verrouillé » ; les administrateurs gardent l'accès pour envoyer les messages).
+-- Comme pour le téléphone et l'e-mail (Extension 130), un compte connecté (autre
+-- mannequin, recruteur…) ne peut plus lire directement : date de naissance, ville et
+-- pays de naissance, nationalité, quartier, établissement scolaire, commentaire de refus.
+-- La mannequin (sa propre fiche) et l'agence les obtiennent par profils_prives().
+-- (Les visiteurs non connectés ne les ont jamais eus : Extension 47.)
+-- ⚠️ Même règle qu'en Extension 130 pour toute NOUVELLE colonne de model_profiles.
+-- =====================================================================
+create or replace function profils_prives(ids uuid[] default null)
+returns table(id uuid, date_naissance date, ville_naissance text, lieu_naissance text, nationalite text,
+              quartier text, raison_refus text, etablissement text)
+language sql stable security definer
+set search_path = public
+as $$
+  select p.id, p.date_naissance, p.ville_naissance, p.lieu_naissance, p.nationalite, p.quartier, p.raison_refus, p.etablissement
+  from model_profiles p
+  where (p.id = auth.uid() or exists (select 1 from admins where user_id = auth.uid()))
+    and (ids is null or p.id = any(ids));
+$$;
+revoke all on function profils_prives(uuid[]) from public;
+grant execute on function profils_prives(uuid[]) to authenticated;
+
+do $$
+declare colonnes text;
+begin
+  select string_agg(quote_ident(column_name), ', ' order by ordinal_position) into colonnes
+  from information_schema.columns
+  where table_schema = 'public' and table_name = 'model_profiles'
+    and column_name not in ('phone', 'contact_email', 'date_naissance', 'ville_naissance', 'lieu_naissance',
+                            'nationalite', 'quartier', 'raison_refus', 'etablissement');
+  execute 'revoke select on model_profiles from authenticated';
+  execute format('grant select (%s) on model_profiles to authenticated', colonnes);
+end $$;
+
+NOTIFY pgrst, 'reload schema';

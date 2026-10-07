@@ -1129,6 +1129,17 @@ les classes ajoutées dynamiquement (`classList.add(...)`, `className =
   navigateur (toujours nommer les colonnes) ; ⚠️ toute NOUVELLE colonne doit être
   ouverte : `grant select (col) on model_profiles to authenticated;` (et `to anon`
   si publique), sinon les pages qui la lisent échouent.
+- **Toutes les informations personnelles verrouillées (07/10/2026, Extension 131)** —
+  date et lieu de naissance, nationalité, quartier, établissement, commentaire de
+  refus : plus lisibles directement par un compte connecté. La mannequin (sa fiche)
+  et l'agence les obtiennent par `profils_prives(ids)` ; côté code, toujours lire
+  `model_profiles` avec `sansChampsPrives('…')` puis `completerProfilsPrives(lignes)`
+  (`js/app.js`, `CHAMPS_PRIVES_PROFIL`). Tant que l'extension n'est pas exécutée,
+  `completerProfilsPrives` relit ces champs directement (pas de panne).
+- **Messages : le 1er message n'est plus dans les listes (07/10/2026)** — il part
+  tout seul au changement de statut (`premier: true` dans `MESSAGES_CANDIDATS`) ;
+  « Message tout prêt » (fiche) et « Quel message ? » (groupés) ne proposent que les
+  messages suivants (relances, convocation, rappel, libre). « Refusée » : rien.
 
 ## Diagnostic sécurité du 28 septembre 2026 (nuit)
 
