@@ -1762,7 +1762,9 @@ aux deux endroits » au lieu de « ajoutez une photo de profil » (cas réel du 
   → `book` ; téléphone (Apple, Samsung, Tecno, Infinix, Xiaomi…, caméra avant, fichier HEIC)
   → `lifestyle` ; **doute (pas d'EXIF, HEIC, WhatsApp, capture) → `book`**. La catégorie est
   enregistrée dès l'insertion de la photo (Extension 127 obligatoire AVANT la mise en ligne).
-- Correction d'un clic : étiquette « 📒 Book / 🌿 Lifestyle » sur chaque photo de l'Espace
+- Correction : la mannequin peut seulement passer une photo du Book vers Lifestyle (étiquette
+  « 📒 Book » dans son Espace) ; seule l'agence remet une photo dans le Book (règle aussi
+  imposée par la base, **Extension 128**, déclencheur `proteger_categorie_photo`). Étiquette sur chaque photo de l'Espace
   mannequin, liste déroulante dans la fenêtre photos du tableau de bord.
 - Fiche publique FR/EN : section « Book » puis « Digitals & Lifestyle » d'après `categorie`
   (et non plus `tri_statut` de l'IA). Le rapport des profils explique les deux catégories
