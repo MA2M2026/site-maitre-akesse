@@ -9,7 +9,11 @@
 //   - WhatsApp : l'envoi entièrement automatique n'existe qu'avec l'offre payante de
 //     WhatsApp pour les entreprises. Ici, gratuit : chaque appui ouvre WhatsApp avec le
 //     message déjà écrit pour la personne suivante ; il reste à appuyer sur « Envoyer ».
-//   - « {prénom} » et « {casting} » dans le message sont remplacés pour chaque personne.
+//   - « {prénom} » et « {casting} » dans le message sont remplacés pour chaque personne ;
+//     « {date} », « {heure} » et « {lieu} » par les cases au-dessus du message (convocation
+//     au casting en présentiel de l'agence, demande de la propriétaire du 07/10/2026).
+//   - Le message est écrit pour WhatsApp (*gras*, _italique_) : l'e-mail reçoit le même
+//     texte sans ces signes, et sans la phrase « Un e-mail de confirmation… ».
 //   - Les envois déjà faits sont notés sur cet appareil (on peut s'arrêter et reprendre
 //     plus tard sans renvoyer en double).
 (function () {
@@ -29,14 +33,28 @@
     if (d.type_candidature === 'agence') return "l'intégration de l'agence";
     return 'notre agence';
   }
+  // {date}, {heure}, {lieu} : mêmes pour tout le groupe (cases au-dessus du message).
+  const INFOS_RDV = /\{(date|heure|lieu)\}/i;
+  function remplirInfos(texte) {
+    const v = { date: dateLongue($('mg-date').value), heure: $('mg-heure').value.trim(), lieu: $('mg-lieu').value.trim() };
+    return texte.replace(/\{(date|heure|lieu)\}/gi, (m, k) => v[k.toLowerCase()] || A_COMPLETER);
+  }
   function personnaliser(texte, d) {
-    return texte.replace(/\{pr[ée]nom\}/gi, prenomDe(d.full_name) || 'Madame, Monsieur').replace(/\{casting\}/gi, casting(d));
+    return remplirInfos(texte).replace(/\{pr[ée]nom\}/gi, prenomDe(d.full_name) || 'Madame, Monsieur').replace(/\{casting\}/gi, casting(d));
+  }
+  // Version e-mail : sans la phrase qui annonce l'e-mail, sans *gras* ni _italique_ WhatsApp.
+  function pourEmail(texte) {
+    return texte
+      .split('\n').filter(l => !/Un e-mail de confirmation vous a également été envoyé/i.test(l)).join('\n')
+      .replace(/\*([^*\n]+)\*/g, '$1')
+      .replace(/(^|[\s(«])_([^_\n]+)_(?=$|[\s.,;:!?)»])/gm, '$1$2');
   }
   function echapper(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
   // Suivi des envois déjà faits pour CE message (même texte = même envoi), sur cet appareil.
+  // Date, heure et lieu comptent : la convocation de la semaine suivante est un nouvel envoi.
   function cleSuivi(canal) {
-    const t = $('mg-message').value.trim();
+    const t = remplirInfos($('mg-message').value.trim());
     let h = 0; for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0;
     return 'ma2m_mg_' + canal + '_' + h;
   }
@@ -53,42 +71,59 @@
   function noterFait(canal, id) { const o = datesEnvoi(canal); o[id] = new Date().toISOString(); try { localStorage.setItem(cleSuivi(canal), JSON.stringify(o)); } catch (e) {} }
   function dateCourte(iso) { return iso ? new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : ''; }
 
-  // Dimanche qui suit (jamais aujourd'hui) : date du casting en présentiel de l'agence.
+  // Dimanche qui suit (jamais aujourd'hui), au format de la case date : 'AAAA-MM-JJ'.
   function dimancheSuivant() {
     const d = new Date(); d.setHours(12, 0, 0, 0);
     d.setDate(d.getDate() + ((7 - d.getDay()) % 7 || 7));
-    const t = d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  // 'AAAA-MM-JJ' -> « Dimanche 12 octobre 2026 » ('' si la case est vide).
+  function dateLongue(v) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(v || '')) return '';
+    const t = new Date(v + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     return t.charAt(0).toUpperCase() + t.slice(1);
   }
+  // Heure et lieu : retenus sur cet appareil pour les prochains envois.
+  const MEMOIRE = { heure: ['mg-heure', 'ma2m_mg_heure', '15 h 00'], lieu: ['mg-lieu', 'ma2m_mg_lieu', 'Riviera Faya, Cité ATCI'] };
+  function lireMemoire(cle, defaut) { try { return localStorage.getItem(cle) || defaut; } catch (e) { return defaut; } }
+  function initialiserInfos() {
+    $('mg-date').value = dimancheSuivant();
+    Object.values(MEMOIRE).forEach(([id, cle, defaut]) => { $(id).value = lireMemoire(cle, defaut); });
+  }
+  function retenirInfos() {
+    Object.values(MEMOIRE).forEach(([id, cle]) => { try { localStorage.setItem(cle, $(id).value.trim()); } catch (e) {} });
+  }
+  // Les cases n'apparaissent que si le message les utilise.
+  function majInfos() { $('mg-infos-rdv').style.display = INFOS_RDV.test($('mg-message').value) ? '' : 'none'; }
 
   // Deuxième message proposé d'office aux candidates retenues pour intégrer l'agence
-  // (modèle de la propriétaire, 30/09/2026, légèrement retravaillé). Modifiable avant envoi.
+  // (nouvelle version de la propriétaire, 07/10/2026, mise en forme pour WhatsApp).
+  // {date}, {heure}, {lieu} viennent des cases au-dessus du message. Modifiable avant envoi.
   function modeleAgence() {
-    return `✨ MAÎTRE AKESSE MODEL MANAGEMENT ✨
+    return `✨ *MAÎTRE AKESSE MODEL MANAGEMENT* ✨
 
 Bonjour {prénom},
 
-Félicitations ! 🎉 Comme annoncé dans notre premier message de confirmation, votre candidature a été retenue : vous êtes sélectionné(e) pour la prochaine étape.
+Félicitations ! 🎉 Suite à votre candidature sur notre site, nous avons le plaisir de vous annoncer que _votre candidature a été retenue_ pour la prochaine étape de notre sélection.
 
-Nous avons le plaisir de vous inviter à notre casting en présentiel :
+Nous vous invitons à notre _casting en présentiel_ :
 
-📅 ${dimancheSuivant()}
-🕒 15 h 00
-📍 Riviera Faya – Cité ATCI
+📅 _{date}_
+🕒 _{heure}_
+📍 _{lieu}_
 
-👗 Tenue exigée
-• Filles : talons, legging long noir et top noir
-• Garçons : pantalon noir et chaussures noires
+👗 *Dress code*
+👠 _Filles :_ talons, legging long noir et top noir
+👞 _Hommes :_ pantalon noir et chaussures noires
 
-💡 Bon à savoir : ce casting est aussi une séance de formation et de mise en situation. Débutant(e) ou expérimenté(e), et même si vous ne maîtrisez pas encore la marche en talons, venez : nous vous accompagnerons pas à pas.
+💡 _Bon à savoir :_ ce casting prend la forme d'une _séance de formation et de mise en situation_. Débutant(e) ou expérimenté(e), et même si vous ne maîtrisez pas encore la marche en talons, ce n'est pas un obstacle : nous vous accompagnerons pas à pas.
 
-Merci de confirmer votre présence en répondant à ce message.
+✅ Merci de _confirmer votre présence_ en répondant à ce message.
+📧 Un e-mail de confirmation vous a également été envoyé.
 
-À dimanche !
+Au plaisir de vous rencontrer !
 
-📞 Une question ? Écrivez-nous sur WhatsApp au 05 45 65 66 87.
-
-L'équipe Maître Akesse Model Management`;
+_L'équipe Maître Akesse Model Management_`;
   }
   // Deuxième message pour un casting précis : même esprit, avec les informations
   // pratiques à compléter (elles changent d'un casting à l'autre).
@@ -148,6 +183,7 @@ L'équipe Maître Akesse Model Management`;
     const modele = modelePour($('mg-source').value, $('mg-statut').value);
     // Ne jamais écraser un message déjà écrit à la main.
     if (!actuel || actuel === dernierModele.trim()) { zone.value = modele; dernierModele = modele; }
+    majInfos();
   }
 
   function remplirStatuts() {
@@ -252,8 +288,8 @@ L'équipe Maître Akesse Model Management`;
   }
 
   function resteACompleter() {
-    if ($('mg-message').value.indexOf(A_COMPLETER) === -1) return false;
-    alert('Le message contient encore « ' + A_COMPLETER + ' » : remplacez ces passages par les vraies informations (date, heure, lieu, tenue) avant d\'envoyer.');
+    if (remplirInfos($('mg-message').value).indexOf(A_COMPLETER) === -1) return false;
+    alert('Le message contient encore « ' + A_COMPLETER + ' » : remplissez les cases date, heure et lieu, ou remplacez ces passages par les vraies informations, avant d\'envoyer.');
     return true;
   }
 
@@ -272,7 +308,7 @@ L'équipe Maître Akesse Model Management`;
       etat.className = 'form-msg ok';
       etat.textContent = `Envoi ${i + 1} / ${liste.length}… (gardez la page ouverte)`;
       try {
-        await envoyerEmailCandidat({ to_email: d.email, to_name: prenomDe(d.full_name), message: personnaliser(t, d) });
+        await envoyerEmailCandidat({ to_email: d.email, to_name: prenomDe(d.full_name), message: pourEmail(personnaliser(t, d)) });
         noterFait('email', d.id); ok++;
       } catch (e) {
         echecs.push((d.full_name || d.email) + (e && e.text ? ' (' + e.text + ')' : ''));
@@ -311,12 +347,13 @@ L'équipe Maître Akesse Model Management`;
   $('mg-casting').addEventListener('change', () => { if ($('mg-casting').value) void charger(); else viderListe(); });
   $('mg-charger').addEventListener('click', () => void charger());
   $('mg-liste').addEventListener('change', (e) => { const i = e.target.dataset.i; if (i !== undefined) { destinataires[i].choisi = e.target.checked; majApercu(); majBoutons(); } });
-  $('mg-message').addEventListener('input', () => { majApercu(); majBoutons(); });
+  $('mg-message').addEventListener('input', () => { majInfos(); majApercu(); majBoutons(); });
+  ['mg-date', 'mg-heure', 'mg-lieu'].forEach(id => $(id).addEventListener('input', () => { retenirInfos(); if (destinataires.length) afficherListe(); else { majApercu(); majBoutons(); } }));
   $('mg-email').addEventListener('click', envoyerEmails);
   $('mg-wa-suivant').addEventListener('click', whatsappSuivant);
   $('mg-wa-copier').addEventListener('click', copierNumeros);
   $('mg-tout').addEventListener('click', () => { const tous = !choisis().length || choisis().length < destinataires.length; destinataires.forEach(d => { d.choisi = tous; }); afficherListe(); });
 
-  function demarrer() { if (typeof DOSSIERS === 'undefined' || typeof sb === 'undefined') return setTimeout(demarrer, 300); remplirStatuts(); void chargerCastings(); }
+  function demarrer() { if (typeof DOSSIERS === 'undefined' || typeof sb === 'undefined') return setTimeout(demarrer, 300); initialiserInfos(); remplirStatuts(); void chargerCastings(); }
   demarrer();
 })();

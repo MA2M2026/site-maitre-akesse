@@ -1074,6 +1074,16 @@ les classes ajoutées dynamiquement (`classList.add(...)`, `className =
 - **Refonte de la navigation du tableau de bord** en 3 blocs + menu mobile
   dédié (`.tdb-menu-panel`/`.tdb-menu-toggle`) — voir aussi la section
   verrou de défilement plus haut, ce tiroir en fait partie.
+- **Messages groupés : convocation au casting de l'agence (7 octobre 2026)**
+  — `js/messages-groupes.js`. Le message « Retenue » d'« Intégrer l'agence »
+  est écrit pour WhatsApp (`*gras*`, `_italique_`) avec `{date}`, `{heure}`,
+  `{lieu}` remplis par trois cases au-dessus du message (`#mg-infos-rdv`,
+  visibles seulement si le message contient ces mots). Date : dimanche
+  suivant par défaut ; heure et lieu retenus dans `localStorage`
+  (`ma2m_mg_heure`, `ma2m_mg_lieu`). L'e-mail reçoit le même texte passé par
+  `pourEmail()` (signes WhatsApp retirés, phrase « Un e-mail de confirmation…
+  » retirée). Le suivi « déjà envoyé » tient compte de date/heure/lieu : une
+  nouvelle date = un nouvel envoi possible pour tout le monde.
 
 ## Diagnostic sécurité du 28 septembre 2026 (nuit)
 
