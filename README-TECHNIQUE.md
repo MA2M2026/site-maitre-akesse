@@ -1140,6 +1140,9 @@ les classes ajoutées dynamiquement (`classList.add(...)`, `className =
   tout seul au changement de statut (`premier: true` dans `MESSAGES_CANDIDATS`) ;
   « Message tout prêt » (fiche) et « Quel message ? » (groupés) ne proposent que les
   messages suivants (relances, convocation, rappel, libre). « Refusée » : rien.
+  L'accusé de réception « Nouvelle » a été retiré (07/10/2026) ; Messages groupés
+  ne montre que les statuts qui ont un message à envoyer. Libellés sans tiret long
+  (demande de la propriétaire : pas de « traces d'IA » dans les textes).
 
 ## Diagnostic sécurité du 28 septembre 2026 (nuit)
 

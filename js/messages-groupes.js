@@ -121,7 +121,10 @@
   const SANS_SECOND_MESSAGE = ['refusée', 'annulée'];
   function remplirStatuts() {
     const c = conf();
-    $('mg-statut').innerHTML = c.statuts.filter(s => !SANS_SECOND_MESSAGE.includes(s)).map(s => `<option value="${echapper(s)}">${echapper(c.libellesStatut[s] || s)}</option>`).join('');
+    // Candidatures : seulement les statuts qui ont un message à envoyer ensuite.
+    const candidatures = $('mg-source').value !== 'inscription';
+    $('mg-statut').innerHTML = c.statuts.filter(s => !SANS_SECOND_MESSAGE.includes(s)
+      && (!candidatures || MESSAGES_CANDIDATS.some(m => m.statut === s && !m.premier))).map(s => `<option value="${echapper(s)}">${echapper(c.libellesStatut[s] || s)}</option>`).join('');
     $('mg-statut').value = c.statuts.includes('retenue') ? 'retenue' : c.statuts.includes('payée') ? 'payée' : c.statuts[0];
     $('mg-champ-casting').style.display = $('mg-source').value === 'casting' ? '' : 'none';
     remplirTypes();

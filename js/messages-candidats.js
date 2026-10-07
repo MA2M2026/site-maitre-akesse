@@ -89,23 +89,21 @@ ${DRESS_CODE}
 // « groupe » : message proposé d'office dans « Messages groupés » pour ce statut.
 // type = 'agence' ou 'projet' (casting précis).
 const MESSAGES_CANDIDATS = [
-  { cle: 'nouvelle', statut: 'nouvelle', groupe: true, libelle: '🆕 Nouvelle — accusé de réception',
-    modele: () => messageCandidat(`Nous avons bien reçu votre candidature {candidature}. Merci pour votre confiance ! 🙏\n\n📋 Notre équipe va étudier votre dossier avec attention dans les prochains jours. Inutile de renvoyer votre candidature : nous vous recontacterons dès qu'une décision sera prise.`) },
-  { cle: 'etude', statut: 'en étude', premier: true, libelle: '🔎 En étude — 1er message',
+  { cle: 'etude', statut: 'en étude', premier: true, libelle: '🔎 En étude : 1er message',
     modele: () => messageCandidat(`Suite à votre candidature sur notre site {candidature}, nous vous informons que _votre dossier est en cours d'étude_ par notre équipe.\n\nNous examinons chaque profil avec attention (photos, mensurations, motivations). Vous recevrez notre réponse très prochainement.\n\nMerci pour votre patience et votre confiance. 🙏`) },
-  { cle: 'relance_etude', statut: 'en étude', groupe: true, libelle: '🔎 En étude — relance',
+  { cle: 'relance_etude', statut: 'en étude', groupe: true, libelle: '🔎 En étude : relance',
     modele: () => messageCandidat(`Nous revenons vers vous au sujet de votre candidature {candidature}. _Votre dossier est toujours en cours d'étude_ : nous recevons de nombreuses candidatures et prenons le temps d'examiner chacune avec attention.\n\nNous vous donnerons notre réponse très prochainement. Merci pour votre patience ! 🙏`) },
-  { cle: 'attente', statut: 'en attente', premier: true, libelle: '⏳ En attente — 1er message',
+  { cle: 'attente', statut: 'en attente', premier: true, libelle: '⏳ En attente : 1er message',
     modele: () => messageCandidat(`Suite à votre candidature sur notre site {candidature}, nous vous informons que _votre dossier a retenu notre attention_ et se trouve actuellement _en liste d'attente_.\n\nNotre équipe finalise sa sélection. Nous reviendrons vers vous dès qu'une décision sera prise : gardez votre téléphone à portée de main ! 📱`) },
-  { cle: 'relance_attente', statut: 'en attente', groupe: true, libelle: '⏳ En attente — relance',
+  { cle: 'relance_attente', statut: 'en attente', groupe: true, libelle: '⏳ En attente : relance',
     modele: () => messageCandidat(`Nous revenons vers vous au sujet de votre candidature {candidature}. _Votre dossier est toujours en liste d'attente_ : notre sélection n'est pas terminée et une place peut se libérer à tout moment.\n\nNous vous contacterons dès que possible. Restez disponible ! 📱`) },
-  { cle: 'retenue', statut: 'retenue', premier: true, libelle: '✅ Retenue — 1er message',
+  { cle: 'retenue', statut: 'retenue', premier: true, libelle: '✅ Retenue : 1er message',
     modele: () => messageCandidat(`Félicitations ! 🎉 Suite à votre candidature sur notre site {candidature}, nous avons le plaisir de vous annoncer que _votre profil a été retenu_.\n\n📩 Vous recevrez très prochainement un second message avec toutes les informations pratiques : _date, heure et lieu_.\n\nMerci pour votre confiance !`) },
-  { cle: 'convocation', statut: 'retenue', groupe: true, rdv: true, libelle: '📅 Retenue — convocation (date, heure, lieu)',
+  { cle: 'convocation', statut: 'retenue', groupe: true, rdv: true, libelle: '📅 Retenue : convocation (date, heure, lieu)',
     modele: (type) => type === 'projet' ? CONVOCATION_CASTING : CONVOCATION_AGENCE },
-  { cle: 'rappel', statut: 'retenue', rdv: true, libelle: '⏰ Retenue — rappel du casting',
+  { cle: 'rappel', statut: 'retenue', rdv: true, libelle: '⏰ Retenue : rappel du casting',
     modele: (type) => rappelCasting(type) },
-  { cle: 'refusee', statut: 'refusée', premier: true, groupe: true, libelle: '✉️ Non retenue — 1er message',
+  { cle: 'refusee', statut: 'refusée', premier: true, groupe: true, libelle: '✉️ Non retenue : 1er message',
     modele: () => messageCandidat(`Nous vous remercions sincèrement pour votre candidature sur notre site {candidature} et pour le temps que vous nous avez consacré.\n\nAprès étude attentive, _votre profil n'a pas été retenu_ pour cette sélection.\n\n🌟 Cette décision ne remet pas en cause votre potentiel : nos besoins changent d'un casting à l'autre. Nous vous souhaitons beaucoup de réussite.`) }
 ];
 function messageCandidatParCle(cle) { return MESSAGES_CANDIDATS.find(m => m.cle === cle) || null; }
