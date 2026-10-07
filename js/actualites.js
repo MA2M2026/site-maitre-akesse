@@ -137,10 +137,10 @@ async function chargerActualites() {
   const idDepuisUrl = new URLSearchParams(window.location.search).get('actu');
   if (idDepuisUrl) {
     const index = data.findIndex(a => a.id === idDepuisUrl);
-    if (index > -1) ouvrirActuModal(index);
+    if (index > -1) void ouvrirActuModal(index);
   }
 }
-chargerActualites();
+void chargerActualites();
 
 async function ouvrirActuModal(index) {
   const a = window.actualitesData[index];
@@ -222,7 +222,7 @@ async function verifierAdmin() {
     }
   } catch (e) {}
 }
-verifierAdmin();
+void verifierAdmin();
 
 // --- Modification / suppression directement depuis la fiche ouverte (admin) ---
 document.getElementById('news-modal-modifier-btn').addEventListener('click', () => {
@@ -242,7 +242,7 @@ document.getElementById('news-modal-supprimer-btn').addEventListener('click', as
   if (erreurSuppression) { alert('La suppression a échoué. Réessayez.'); return; }
   if (chemins.length) await supprimerCheminsImagesSite('actualites', 'actualites-images', chemins);
   fermerNewsModal();
-  chargerActualites();
+  void chargerActualites();
 });
 
 document.getElementById('admin-logout-btn').addEventListener('click', async () => {
@@ -382,5 +382,5 @@ document.getElementById('red-supprimer-btn').addEventListener('click', async () 
   if (erreurSuppression) { alert('La suppression a échoué. Réessayez.'); return; }
   if (chemins.length) await supprimerCheminsImagesSite('actualites', 'actualites-images', chemins);
   fermerRedaction();
-  chargerActualites();
+  void chargerActualites();
 });

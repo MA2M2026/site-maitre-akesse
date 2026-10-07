@@ -5845,7 +5845,8 @@ begin;
 alter table model_profiles disable trigger trg_proteger_proprietaire_profil;
 
 update model_profiles
-set niveau_mannequin = case when coalesce(years_experience, 0) > 2 then 'Professionnel' else 'New Face' end;
+set niveau_mannequin = case when coalesce(years_experience, 0) > 2 then 'Professionnel' else 'New Face' end
+where true; -- toutes les fiches, volontairement
 
 alter table model_profiles enable trigger trg_proteger_proprietaire_profil;
 commit;
@@ -6050,9 +6051,9 @@ begin
   elsif NEW.slug is not null then
     NEW.slug := left(slug_depuis_nom(NEW.slug), 60);  -- toujours au bon format
   end if;
-  if (NEW.slug is null or NEW.slug = '') and coalesce(trim(NEW.full_name), '') <> '' then
+  if coalesce(length(NEW.slug), 0) = 0 and length(trim(coalesce(NEW.full_name, ''))) > 0 then
     base := left(slug_depuis_nom(NEW.full_name), 60);
-    if base = '' then return NEW; end if;
+    if length(base) = 0 then return NEW; end if;
     candidat := base;
     while exists (select 1 from model_profiles where slug = candidat and id <> NEW.id) loop
       n := n + 1;

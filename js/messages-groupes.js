@@ -308,7 +308,7 @@ L'équipe Maître Akesse Model Management`;
   $('mg-source').addEventListener('change', remplirStatuts);
   $('mg-casting').addEventListener('change', proposerModele);
   $('mg-statut').addEventListener('change', () => { proposerModele(); viderListe(); });
-  $('mg-casting').addEventListener('change', () => { if ($('mg-casting').value) charger(); else viderListe(); });
+  $('mg-casting').addEventListener('change', () => { if ($('mg-casting').value) void charger(); else viderListe(); });
   $('mg-charger').addEventListener('click', charger);
   $('mg-liste').addEventListener('change', (e) => { const i = e.target.dataset.i; if (i !== undefined) { destinataires[i].choisi = e.target.checked; majApercu(); majBoutons(); } });
   $('mg-message').addEventListener('input', () => { majApercu(); majBoutons(); });
@@ -317,6 +317,6 @@ L'équipe Maître Akesse Model Management`;
   $('mg-wa-copier').addEventListener('click', copierNumeros);
   $('mg-tout').addEventListener('click', () => { const tous = !choisis().length || choisis().length < destinataires.length; destinataires.forEach(d => { d.choisi = tous; }); afficherListe(); });
 
-  function demarrer() { if (typeof DOSSIERS === 'undefined' || typeof sb === 'undefined') return setTimeout(demarrer, 300); remplirStatuts(); chargerCastings(); }
+  function demarrer() { if (typeof DOSSIERS === 'undefined' || typeof sb === 'undefined') return setTimeout(demarrer, 300); remplirStatuts(); void chargerCastings(); }
   demarrer();
 })();

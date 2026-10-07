@@ -412,5 +412,5 @@
       principal.innerHTML = '<section class="mp-introuvable"><div><h1>Un instant…</h1><p>La boutique n’a pas pu se charger (connexion instable ?). Rechargez la page.</p></div></section>';
     }
   }
-  demarrer();
+  void demarrer();
 })();

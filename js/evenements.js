@@ -89,10 +89,10 @@ async function chargerEvenements() {
   const idDepuisUrl = new URLSearchParams(window.location.search).get('evenement');
   if (idDepuisUrl) {
     const index = data.findIndex(e => e.id === idDepuisUrl);
-    if (index > -1) ouvrirEvenementModal(index);
+    if (index > -1) void ouvrirEvenementModal(index);
   }
 }
-chargerEvenements();
+void chargerEvenements();
 
 async function ouvrirEvenementModal(index) {
   const e = window.evenementsData[index];
@@ -163,7 +163,7 @@ async function verifierAdmin() {
     }
   } catch (e) {}
 }
-verifierAdmin();
+void verifierAdmin();
 
 // --- Modification / suppression directement depuis la fiche ouverte (admin) ---
 document.getElementById('news-modal-modifier-btn').addEventListener('click', () => {
@@ -183,7 +183,7 @@ document.getElementById('news-modal-supprimer-btn').addEventListener('click', as
   if (erreurSuppression) { alert('La suppression a échoué. Réessayez.'); return; }
   if (chemins.length) await supprimerCheminsImagesSite('evenements', 'evenements-images', chemins);
   fermerNewsModal();
-  chargerEvenements();
+  void chargerEvenements();
 });
 
 document.getElementById('admin-logout-btn').addEventListener('click', async () => {
@@ -326,5 +326,5 @@ document.getElementById('red-supprimer-btn').addEventListener('click', async () 
   if (erreurSuppression) { alert('La suppression a échoué. Réessayez.'); return; }
   if (chemins.length) await supprimerCheminsImagesSite('evenements', 'evenements-images', chemins);
   fermerRedaction();
-  chargerEvenements();
+  void chargerEvenements();
 });

@@ -65,7 +65,7 @@
     v.muted = true; v.loop = true; v.autoplay = true; v.playsInline = true; v.setAttribute('playsinline', '');
     v.src = '/book-photos/' + chemin;
     zone.appendChild(v);
-    var p = v.play(); if (p && p.catch) p.catch(function () {});
+    Promise.resolve(v.play()).catch(function () {});
   }
 
   async function chargerReglage() {
@@ -362,7 +362,7 @@
       var valeur = { type: 'video', chemin: chemin, taille: envoi.size, maj: new Date().toISOString() };
       if (dims && dims.largeur && dims.hauteur) { valeur.largeur = dims.largeur; valeur.hauteur = dims.hauteur; }
       await enregistrer(valeur);
-      if (ancien && ancien !== chemin) supprimerImageSite(Z.categorie, ancien);
+      if (ancien && ancien !== chemin) void supprimerImageSite(Z.categorie, ancien);
       message(Z.succes);
       $('fichier').value = ''; fichierChoisi = null; $('infos').textContent = '';
       await chargerReglage();
@@ -389,13 +389,13 @@
     try {
       var ancien = reglage.chemin;
       await enregistrer({ type: Z.son ? 'aucune' : 'animation', maj: new Date().toISOString() });
-      if (ancien) supprimerImageSite(Z.categorie, ancien);
+      if (ancien) void supprimerImageSite(Z.categorie, ancien);
       message(Z.retirerFait);
       await chargerReglage();
     } catch (e) { message(e.message, true); }
     finally { bouton.disabled = false; }
   });
 
-  chargerReglage();
+  void chargerReglage();
   }
 })();

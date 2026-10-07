@@ -167,9 +167,9 @@
     }).join('') : '<div class="dossiers-vide">Aucun mannequin.</div>';
   }
 
-  details.addEventListener('toggle', function () { if (details.open && !charge) charger(); });
+  details.addEventListener('toggle', function () { if (details.open && !charge) void charger(); });
   details.addEventListener('click', function (e) {
     var b = e.target.closest && e.target.closest('.fe-btn');
-    if (b) telecharger(b);
+    if (b) void telecharger(b);
   });
 })();

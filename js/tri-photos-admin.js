@@ -121,7 +121,7 @@
         }).join('')
       : '<div class="dossiers-vide">Aucune photo à vérifier.</div>';
 
-    chargerRapports();
+    void chargerRapports();
     zoneA.innerHTML = '<p class="tdb-9">L’IA regarde le book complet de chaque mannequin, comme un recruteur : elle range les photos en Book (shootings, défilés, campagnes) et Digitals &amp; Lifestyle (polaroïds, événements, castings bien pris) et propose de supprimer seulement les photos floues, prises à la légère ou de groupe. <strong>Rien n’est supprimé sans votre clic</strong> : les photos proposées apparaissent ci-dessus, dans « À vérifier ». Coût : environ 0,10 $ par mannequin.</p>' +
       '<button class="btn" type="button" id="tri-revue-btn">Lancer la revue stricte des books</button><div class="form-msg" id="tri-revue-msg"></div><div id="tri-revue-resultats" class="tri-revue-resultats"></div>';
     document.getElementById('tri-revue-btn').addEventListener('click', revueBooks);
@@ -243,7 +243,7 @@
       }
       zone.appendChild(ligne);
     }
-    try { if (verrou) verrou.release(); } catch (e) {}
+    if (verrou) verrou.release().catch(function () {});
     btn.disabled = false;
     msg.className = arret || echecs ? 'form-msg err' : 'form-msg ok';
     msg.textContent = arret || ('Revue terminée : ' + totalProposees + ' photo(s) proposée(s) à la suppression' + (echecs ? ', ' + echecs + ' book(s) à relancer' : '') + '. Vérifiez-les dans « À vérifier » ci-dessus.');
@@ -253,7 +253,7 @@
     var m2 = document.getElementById('tri-revue-msg'); m2.style.display = 'block'; m2.className = msg.className; m2.textContent = msg.textContent;
   }
 
-  details.addEventListener('toggle', function () { if (details.open && !charge) charger(); });
+  details.addEventListener('toggle', function () { if (details.open && !charge) void charger(); });
   details.addEventListener('click', async function (e) {
     var b = e.target.closest && e.target.closest('.tri-btn');
     if (!b) return;
@@ -299,6 +299,6 @@
     }
     r = r || {};
     if (r.error) { alert('Erreur : ' + r.error.message); b.disabled = false; return; }
-    charger();
+    void charger();
   });
 })();

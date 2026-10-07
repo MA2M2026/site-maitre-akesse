@@ -72,5 +72,5 @@
       document.getElementById('mp-imprimer').classList.add('mp-cache');
     }
   }
-  demarrer();
+  void demarrer();
 })();

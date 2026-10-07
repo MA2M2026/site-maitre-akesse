@@ -179,7 +179,7 @@
         const { error } = await sbAdmin.rpc('boutique_declarer_paiement', { p_numero: c.numero, p_jeton: c.jeton_suivi, p_moyen: moyen, p_reference: reference });
         if (error) throw error;
         if (window.jouerSon) window.jouerSon('envoi');
-        charger(c.numero, c.jeton_suivi, null);
+        void charger(c.numero, c.jeton_suivi, null);
       } catch (err) {
         erreur.textContent = MP.messageErreur(err);
         bouton.disabled = false;
@@ -210,7 +210,7 @@
       const numero = document.getElementById('mp-r-numero').value.trim().toUpperCase();
       const tel = document.getElementById('mp-r-tel').value.trim();
       if (!numero || tel.replace(/[^0-9]/g, '').length < 8) { document.getElementById('mp-erreur-recherche').textContent = 'Indiquez le numéro de commande et le téléphone.'; return; }
-      charger(numero, null, tel);
+      void charger(numero, null, tel);
     });
   }
 
@@ -231,8 +231,8 @@
     if (!MP.autorise(acces)) { MP.afficherIntrouvable(); return; }
     MP.afficherBandeauApercu(acces);
     const params = new URLSearchParams(location.search);
-    if (params.get('n') && params.get('j')) charger(params.get('n'), params.get('j'), null);
+    if (params.get('n') && params.get('j')) void charger(params.get('n'), params.get('j'), null);
     else afficherRecherche('');
   }
-  demarrer();
+  void demarrer();
 })();

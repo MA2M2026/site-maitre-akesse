@@ -11,6 +11,8 @@
   const principal = document.getElementById('mp-principal');
   let etat = { produits: [], categories: [], zones: [], reglages: null, commandes: [] };
   let editeurDescription = null;
+  // Code de billet attendu (ex. MA2M-1A2B3-C4D5E) : rien d'autre n'est gardé depuis l'adresse.
+  const CODE_BILLET = /^[A-Za-z0-9-]{4,40}$/;
 
   const nouvelId = () => (window.crypto && crypto.randomUUID)
     ? crypto.randomUUID()
@@ -417,7 +419,7 @@
             : await sbAdmin.from('boutique_photos').insert({ produit_id: id, url: ph.url, url_miniature: ph.url_miniature, chemin: ph.chemin, ordre: i });
           if (error) throw error;
         }
-        photosRetirees.forEach(ph => { if (ph.chemin) { supprimerImageSite('boutique', ph.chemin); supprimerImageSite('boutique', ph.chemin.replace(/\.jpg$/, '-mini.jpg')); } });
+        photosRetirees.forEach(ph => { if (ph.chemin) { void supprimerImageSite('boutique', ph.chemin); void supprimerImageSite('boutique', ph.chemin.replace(/\.jpg$/, '-mini.jpg')); } });
         photosRetirees.length = 0;
 
         // Versions : suppression des retirées, mise à jour des existantes, ajout des nouvelles.
@@ -454,7 +456,7 @@
       try {
         const { error } = await sbAdmin.from('boutique_produits').delete().eq('id', id);
         if (error) throw error;
-        (produit.photos || []).forEach(ph => { if (ph.chemin) { supprimerImageSite('boutique', ph.chemin); supprimerImageSite('boutique', ph.chemin.replace(/\.jpg$/, '-mini.jpg')); } });
+        (produit.photos || []).forEach(ph => { if (ph.chemin) { void supprimerImageSite('boutique', ph.chemin); void supprimerImageSite('boutique', ph.chemin.replace(/\.jpg$/, '-mini.jpg')); } });
         await chargerTout();
         afficherListeProduits();
         MP.toast('Produit supprimé.');
@@ -544,7 +546,7 @@
     zone.querySelectorAll('.mpg-commande').forEach(el => {
       const ouvrir = () => ouvrirCommande(etat.commandes.find(c => c.id === el.dataset.id));
       el.addEventListener('click', ouvrir);
-      el.addEventListener('keydown', e => { if (e.key === 'Enter') ouvrir(); });
+      el.addEventListener('keydown', e => { if (e.key === 'Enter') void ouvrir(); });
     });
   }
 
@@ -631,7 +633,7 @@
       }
       await chargerTout();
       afficherListeProduits();
-      ouvrirCommande(etat.commandes.find(x => x.id === c.id));
+      void ouvrirCommande(etat.commandes.find(x => x.id === c.id));
       document.getElementById('mpg-nb-commandes').textContent = etat.commandes.filter(x => x.statut === 'paiement_declare').length || '';
       MP.toast('Commande : ' + STATUTS[a[0]].toLowerCase() + '.');
     }));
@@ -664,8 +666,8 @@
       if (bouton) bouton.addEventListener('click', () => verifier(true));
       if (vientDEtreValide && window.jouerSon) window.jouerSon('envoi');
     }
-    form.addEventListener('submit', e => { e.preventDefault(); verifier(false); });
-    if (codeDepart) verifier(false);
+    form.addEventListener('submit', e => { e.preventDefault(); void verifier(false); });
+    if (codeDepart) void verifier(false);
   }
 
   // ------------------------------------------------------------ Catégories
@@ -842,7 +844,7 @@
         '<p>Pour protéger la boutique, validez d’abord votre code dans le tableau de bord de l’agence, puis revenez ici par le lien « Marketplace » en haut de page.</p>' +
         '<a class="btn btn--principal" href="/tableau-de-bord.html">Valider mon code</a></div></section>';
       // Billet scanné dans un nouvel onglet : on garde le code pour après la validation.
-      try { const code = new URLSearchParams(location.search).get('billet'); if (code) sessionStorage.setItem('ma2m_billet_a_controler', code); } catch (e) {}
+      try { const code = new URLSearchParams(location.search).get('billet'); if (code && CODE_BILLET.test(code)) sessionStorage.setItem('ma2m_billet_a_controler', code); } catch (e) {}
       return;
     }
     try {
@@ -850,7 +852,7 @@
       afficherStructure();
       let code = new URLSearchParams(location.search).get('billet');
       try { if (!code) code = sessionStorage.getItem('ma2m_billet_a_controler'); sessionStorage.removeItem('ma2m_billet_a_controler'); } catch (e) {}
-      if (code) { ouvrirOnglet('billets'); afficherControleBillets(code); }
+      if (code && CODE_BILLET.test(code)) { ouvrirOnglet('billets'); afficherControleBillets(code); }
       else if (etat.commandes.some(c => c.statut === 'paiement_declare')) ouvrirOnglet('commandes');
     } catch (e) {
       console.error('Boutique : chargement du tableau de bord impossible', e);
@@ -858,5 +860,5 @@
         '</p><p>Si le message parle d’une table inconnue, la commande de la boutique n’a pas encore été lancée dans Supabase.</p></div></section>';
     }
   }
-  demarrer();
+  void demarrer();
 })();
