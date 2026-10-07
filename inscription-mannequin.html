@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-oi2xxQulX54OO7NpS8VPCWcAulbnVQiK7YMZvTbTIbU='; style-src 'self' https://fonts.googleapis.com 'sha256-IAm29wMK+UGV3lwLkMc4EAHslPzK8bjM/yZbq4WNCRE='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-bavAbrHeJvAwAM9BPlR6M5BZxhnrEYhaQJwSjYuNhZQ='; style-src 'self' https://fonts.googleapis.com 'sha256-IAm29wMK+UGV3lwLkMc4EAHslPzK8bjM/yZbq4WNCRE='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -501,16 +501,7 @@ document.getElementById('ins-naissance').addEventListener('change', () => {
 remplirIndicatifs(document.getElementById('ins-indicatif'));
 remplirIndicatifs(document.getElementById('ins-parent-indicatif'));
 
-function idAppareilMa2m() {
-  try {
-    let v = localStorage.getItem('ma2m_appareil');
-    if (!v || !/^[A-Za-z0-9-]{8,64}$/.test(v)) {
-      v = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now().toString(16) + Math.random().toString(16).slice(2));
-      localStorage.setItem('ma2m_appareil', v);
-    }
-    return v;
-  } catch (e) { return null; }
-}
+// idAppareilMa2m() : partagée dans js/app.js.
 function messageTentativeCode(rep, r) {
   if (rep.status === 429) {
     const h = Math.ceil(r.minutesRestantes / 60);
