@@ -65,9 +65,11 @@
     // New Face (débutante) : ne pas encore avoir d'expérience est normal — ni compté, ni réclamé.
     a.newFace = niveauNormalise(p.niveau_mannequin, p.years_experience) === 'New Face';
     if (!a.newFace || nbProjets > 0) manque(a.parcours, 'experiences', nbProjets > 0);
-    manque(a.parcours, 'formation', !vide(p.formation_mannequin));
     manque(a.parcours, 'etudes', !vide(p.niveau_etude));
     manque(a.parcours, 'langues', !vide(p.languages));
+    // Formations de mannequinat : facultatives (beaucoup n'en ont pas suivi) ; simple
+    // suggestion dans le message, jamais comptée comme un manque.
+    a.sansFormation = vide(p.formation_mannequin);
 
     // Mensurations
     a.manquantes = mesuresAttendues(p).filter(function (m) { return vide(p[m[0]]); }).map(function (m) { return m[1]; });
@@ -131,7 +133,7 @@
     presentationCourte: 'Une présentation un peu plus détaillée : _quelques phrases sur votre parcours, votre style, ce qui vous distingue_',
     instagram: 'Votre compte Instagram _(ou cochez « Je n’ai pas Instagram »)_',
     experiences: 'Vos expériences : défilés, shootings, castings, événements. _Même les plus petites comptent !_',
-    formation: 'Vos formations de mannequinat _(ou « aucune » si vous débutez)_',
+    formation: 'Vos formations de mannequinat, ateliers ou coachings, _si vous en avez suivi_',
     etudes: 'Votre niveau d’études', langues: 'Les langues que vous parlez'
   };
   // Diagnostic des photos, tel que la fiche publique les montre.
@@ -158,7 +160,11 @@
     if (a.priorites.length) l.push('', '🎯 *Vos priorités :*', a.priorites.map(function (x, i) { return ['1️⃣', '2️⃣', '3️⃣'][i] + ' ' + x; }).join('\n'));
     if (a.identite.length) l.push('', '👤 *À ajouter à votre identité :*', a.identite.map(function (k) { return '• ' + TEXTES[k]; }).join('\n'));
     if (a.newFace && !a.nbProjets) l.push('', '🌱 *Vous débutez en tant que New Face :* c’est tout à fait normal de ne pas encore avoir d’expérience. _Dès votre premier casting, shooting ou défilé, pensez à l’ajouter dans votre Espace._');
-    if (a.parcours.length) l.push('', '🏆 *À ajouter à votre ' + (a.newFace && !a.nbProjets ? 'parcours' : 'expérience et à votre parcours') + ' :*', a.parcours.map(function (k) { return '• ' + TEXTES[k]; }).join('\n'));
+    // Expérience : réclamée seulement à qui n'en a encore aucune (et jamais aux New Face).
+    var aCompleter = a.parcours.slice();
+    if (a.sansFormation && aCompleter.length) aCompleter.push('formation');
+    if (aCompleter.length) l.push('', '🏆 *À compléter dans votre parcours :*', aCompleter.map(function (k) { return '• ' + TEXTES[k]; }).join('\n'));
+    if (a.nbProjets > 0) l.push('', '🏆 *Votre expérience :* ' + (a.nbProjets > 1 ? a.nbProjets + ' expériences renseignées' : '1 expérience renseignée') + ', bravo. _Pensez à ajouter chaque nouveau casting, shooting ou défilé au fil du temps._');
 
     // Mensurations : toujours expliquées, pour que la mannequin connaisse ses tailles exactes
     l.push('', '📏 *Vos mensurations*');
