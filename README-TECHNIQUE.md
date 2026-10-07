@@ -1722,3 +1722,14 @@ plus qu'à un seul endroit.
   (toutes les fiches, voulu) et le déclencheur des adresses de fiche compare des longueurs
   au lieu de chaînes vides (même résultat ; avertissement SonarQube pensé pour Oracle).
   Rien à exécuter dans Supabase : comportement identique.
+
+## 📸 Instagram obligatoire, tour de tête retiré (07/10/2026, décision de la propriétaire)
+
+- **Instagram** : obligatoire à l'étape « Identité » de l'Espace mannequin — soit un compte,
+  soit la case « Je n'ai pas Instagram » (colonne `sans_instagram`, **Extension 126**, lue et
+  enregistrée à part pour ne jamais bloquer l'étape si la colonne manque). Fonctions
+  `lireInstagramFormulaire()` / `enregistrerSansInstagram()` (js/espace-mannequin.js).
+  L'étape 1 n'est « complète » qu'avec l'un des deux.
+- **Tour de tête** : n'est plus demandé (Espace), ni affiché (fiches FR/EN, fiche événement),
+  ni réclamé par le rapport des profils. La colonne `head_cm` reste en base (rien d'effacé) et
+  n'est plus jamais réécrite.

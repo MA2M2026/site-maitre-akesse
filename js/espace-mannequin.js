@@ -41,7 +41,7 @@ function emptyState(){
     competences:{},
     citation:'',
     bio:'',
-    instagram:'',
+    instagram:'', sansInstagram:false,
     // Fiche événement (06/10/2026, table fiche_evenement) : jamais publique, seule
     // l'agence télécharge la fiche complète depuis le tableau de bord.
     ficheEvenement:{ tailleHaut:'', tailleBas:'', regime:'', tiktok:'', facebook:'', droitImage:null }
@@ -335,10 +335,30 @@ function tailleGeneraleCalculee(p, sexe){
 // l'étape ne soit jamais bloquée si la base n'a pas encore ces colonnes.
 async function enregistrerMesuresSupp(p){
   const { error } = await sb.from('model_profiles').update({
-    shoulder_cm: toNum(p.epaules), arm_cm: toNum(p.bras), neck_cm: toNum(p.cou), head_cm: toNum(p.tete)
+    shoulder_cm: toNum(p.epaules), arm_cm: toNum(p.bras), neck_cm: toNum(p.cou)
   }).eq('id', currentUser.id);
   // On ne bloque pas le reste de l'étape, mais la mannequin est prévenue.
-  if (error) { console.warn('Mensurations complémentaires non enregistrées :', error.message); toast('Épaules, bras, cou et tête : pas encore enregistrés, réessayez un peu plus tard', true); }
+  if (error) { console.warn('Mensurations complémentaires non enregistrées :', error.message); toast('Épaules, bras et cou : pas encore enregistrés, réessayez un peu plus tard', true); }
+  return true;
+}
+// Instagram obligatoire (décision de la propriétaire, 07/10/2026) : un compte, ou la case
+// « Je n'ai pas Instagram » cochée. Renvoie false (et prévient la mannequin) si rien n'est indiqué.
+function lireInstagramFormulaire(){
+  const sans = !!(document.getElementById('f-sans-instagram') || {}).checked;
+  const compte = sans ? '' : val('f-instagram').trim();
+  if (!compte && !sans) {
+    toast('Indiquez votre compte Instagram, ou cochez « Je n’ai pas Instagram ».', true);
+    document.getElementById('f-instagram')?.focus();
+    return false;
+  }
+  state.instagram = compte; state.sansInstagram = sans;
+  return true;
+}
+// Case « Je n'ai pas Instagram » : colonne sans_instagram (Extension 126), enregistrée à part
+// pour ne jamais bloquer le reste de l'étape si la base ne l'a pas encore.
+async function enregistrerSansInstagram(){
+  const { error } = await sb.from('model_profiles').update({ sans_instagram: !!state.sansInstagram }).eq('id', currentUser.id);
+  if (error) console.warn('Case « pas d’Instagram » non enregistrée :', error.message);
   return true;
 }
 function formationToDb(f){
@@ -408,8 +428,11 @@ const Store = {
 
     const s = mapProfileFromDb(profile, contactPrive);
 
+    const { data: rowSansInsta, error: eSansInsta } = await sb.from('model_profiles').select('sans_instagram').eq('id', currentUser.id).maybeSingle();
+    s.sansInstagram = !eSansInsta && !!(rowSansInsta && rowSansInsta.sans_instagram); // faux tant que l'Extension 126 n'est pas exécutée
+
     const supp = await ma2mMesuresSupp(currentUser.id); // vide si l'Extension 121 n'est pas encore exécutée
-    Object.assign(s.physique, { epaules: supp.shoulder_cm ?? '', bras: supp.arm_cm ?? '', cou: supp.neck_cm ?? '', tete: supp.head_cm ?? '' });
+    Object.assign(s.physique, { epaules: supp.shoulder_cm ?? '', bras: supp.arm_cm ?? '', cou: supp.neck_cm ?? '' });
     s.physique.tailleVet = tailleGeneraleCalculee(s.physique, s.identite.sexe);
 
     const { data: exps } = await sb.from('model_projects').select('*').eq('model_id', currentUser.id).order('created_at', { ascending:true });
@@ -635,7 +658,7 @@ function render(){
 
 /* --------------------------------------------------------------- WIZARD */
 function stepComplete(n){
-  if (n===1) return !!(state.identite.nomComplet && state.identite.dateNaissance && state.identite.sexe);
+  if (n===1) return !!(state.identite.nomComplet && state.identite.dateNaissance && state.identite.sexe && (state.instagram || state.sansInstagram));
   if (n===2) return !!(state.physique.taille && state.physique.poids);
   if (n===3) return !!state.formation.niveau;
   if (n===4) return state.experiences.length>0;
@@ -742,7 +765,9 @@ function stepIdentite(){
     '</div></div>' +
     '<div class="grid p20-17">' +
     field('Présentation / profil','f-bio',state.bio,{tag:'textarea',full:true,req:true,placeholder:'Quelques phrases sur vous : votre parcours, votre style, ce qui vous distingue…'}) +
-    field('Instagram (facultatif)','f-instagram',state.instagram,{placeholder:'@votre_compte'}) +
+    '<div class="field"><label for="f-instagram">Instagram<span class="req">*</span></label>' +
+      '<input type="text" id="f-instagram" placeholder="@votre_compte" value="'+echapperHtml(state.sansInstagram ? '' : (state.instagram||''))+'"'+(state.sansInstagram?' disabled':'')+'>' +
+      '<label class="check-opt p20-17'+(state.sansInstagram?' selected':'')+'"><input type="checkbox" id="f-sans-instagram"'+(state.sansInstagram?' checked':'')+'> Je n’ai pas Instagram</label></div>' +
     field('Citation personnelle (facultatif)','f-citation',state.citation,{placeholder:'Une phrase courte qui vous représente',maxlength:120}) +
     '</div>' +
     '<div class="actions-row end"><button class="btn primary" id="save1">Enregistrer</button></div>';
@@ -753,6 +778,12 @@ function stepIdentite(){
 // automatique de la nationalité à partir du pays de naissance choisi (reste
 // modifiable librement ensuite : née au Mali mais ivoirienne, par exemple).
 function bindStepIdentite(){
+  const caseSansInsta = document.getElementById('f-sans-instagram');
+  if (caseSansInsta) caseSansInsta.addEventListener('change', function(){
+    const champ = document.getElementById('f-instagram');
+    if (champ) { champ.disabled = caseSansInsta.checked; if (caseSansInsta.checked) champ.value = ''; }
+    caseSansInsta.parentNode.classList.toggle('selected', caseSansInsta.checked);
+  });
   // Appelée à chaque rendu du wizard quelle que soit l'étape affichée (voir
   // bindWizard()) — ces champs n'existent que sur l'étape 1 (ou l'éditeur de
   // bloc « identité »), on sort donc immédiatement s'ils sont absents du DOM.
@@ -792,7 +823,6 @@ function stepPhysique(){
     field('Largeur d’épaules (cm)','f-epaules',d.epaules,{tag:'select',options:plageNombres(30,60,1,' cm')}) +
     field('Longueur de bras (cm)','f-bras',d.bras,{tag:'select',options:plageNombres(50,75,1,' cm')}) +
     field('Entrejambe / longueur de pantalon (cm)','f-entrejambe',d.entrejambe,{tag:'select',options:plageNombres(60,100,1,' cm')}) +
-    field('Tour de tête (cm)','f-tete',d.tete,{tag:'select',options:plageNombres(50,64,1,' cm')}) +
     field('Pointure (EU)','f-pointure',d.pointure,{tag:'select',options:plageNombres(34,48,1,'')}) +
     field('Couleur des yeux','f-yeux',d.yeux,{tag:'select-autre',options:['Marron','Noir','Vert','Bleu','Gris','Noisette']}) +
     field('Couleur des cheveux','f-cheveux',d.cheveux,{tag:'select-autre',options:['Noir','Brun','Châtain','Blond','Roux','Gris / Blanc']}) +
@@ -1029,7 +1059,7 @@ function lirePhysiqueFormulaire(){
     taille: val('f-taille'), poids: val('f-poids'), poitrine: val('f-poitrine'), tourTaille: val('f-tourTaille'),
     hanches: val('f-hanches'), entrejambe: val('f-entrejambe'), pointure: val('f-pointure'),
     tailleVet: state.physique.tailleVet,
-    epaules: val('f-epaules'), bras: val('f-bras'), cou: document.getElementById('f-cou') ? val('f-cou') : '', tete: val('f-tete'),
+    epaules: val('f-epaules'), bras: val('f-bras'), cou: document.getElementById('f-cou') ? val('f-cou') : '',
     yeux: valeurSelectOuAutre('f-yeux', 'f-yeux-autre'),
     cheveux: valeurSelectOuAutre('f-cheveux', 'f-cheveux-autre'),
     carnation: val('f-carnation')
@@ -1055,9 +1085,10 @@ function bindWizard(){
     const identiteFormulaire = lireIdentiteFormulaire();
     identiteFormulaire.sexe = identiteFormulaire.sexe || s.identite.sexe;
     Object.assign(s.identite, identiteFormulaire);
-    s.bio = val('f-bio'); s.instagram = val('f-instagram'); s.citation = val('f-citation');
+    if (!lireInstagramFormulaire()) return;
+    s.bio = val('f-bio'); s.citation = val('f-citation');
     btn.disabled = true; btn.textContent = 'Enregistrement…';
-    const ok = await Store.saveBlock(Object.assign(identiteToDb(s.identite), { bio: s.bio||null, instagram: s.instagram||null, citation: s.citation||null }));
+    const ok = await Store.saveBlock(Object.assign(identiteToDb(s.identite), { bio: s.bio||null, instagram: s.instagram||null, citation: s.citation||null })) && await enregistrerSansInstagram();
     if (ok) { toast('Enregistré'); goto(2); } else { btn.disabled=false; btn.textContent='Enregistrer'; }
   });
 
@@ -1458,13 +1489,14 @@ function bindBlockPage(k){
   }
 
   btn.addEventListener('click', async function(){
+    if (k==='identite' && !lireInstagramFormulaire()) return;
     btn.disabled = true; btn.textContent = 'Enregistrement…';
     let ok = false, payload = {};
     if (k==='identite') {
       const identiteFormulaire = lireIdentiteFormulaire();
       identiteFormulaire.sexe = identiteFormulaire.sexe || s.identite.sexe;
       Object.assign(s.identite, identiteFormulaire);
-      s.bio = val('f-bio'); s.instagram = val('f-instagram'); s.citation = val('f-citation');
+      s.bio = val('f-bio'); s.citation = val('f-citation');
       payload = Object.assign(identiteToDb(s.identite), { bio: s.bio||null, instagram: s.instagram||null, citation: s.citation||null });
     } else if (k==='physique') {
       Object.assign(s.physique, lirePhysiqueFormulaire());
@@ -1475,6 +1507,7 @@ function bindBlockPage(k){
     }
     ok = await Store.saveBlock(payload);
     if (ok && k==='physique') ok = await enregistrerMesuresSupp(s.physique) && await enregistrerFicheEvenementDepuisFormulaire();
+    if (ok && k==='identite') ok = await enregistrerSansInstagram();
     if (ok) { btn.textContent='✓ Enregistré'; btn.classList.add('saved'); setTimeout(function(){ toast('Bloc « '+k+' » enregistré'); }, 400); }
     else { btn.disabled=false; btn.textContent='Enregistrer'; }
   });

@@ -26,8 +26,7 @@
       ['height_cm', 'taille'], ['weight_kg', 'poids'], ['chest_cm', 'tour de poitrine'], ['waist_cm', 'tour de taille'],
       ['hips_cm', 'tour de bassin']
     ].concat(suppDisponibles ? (homme ? [['neck_cm', 'tour de cou']] : []).concat([['shoulder_cm', 'largeur d’épaules'], ['arm_cm', 'longueur de bras']]) : []).concat([
-      ['inseam_cm', 'entrejambe']
-    ]).concat(suppDisponibles ? [['head_cm', 'tour de tête']] : []).concat([
+      ['inseam_cm', 'entrejambe'],
       ['shoe_size', 'pointure'], ['eye_color', 'couleur des yeux'], ['hair_color', 'couleur des cheveux']
     ]);
   }
@@ -131,7 +130,7 @@
   var CHAMPS_PROFIL = 'id, full_name, category, published, height_cm, weight_kg, chest_cm, waist_cm, hips_cm, inseam_cm, shoe_size, eye_color, hair_color';
   async function lireProfils() {
     var lire = function (champs) { return lireToutesLignes(function () { return sb.from('model_profiles').select(champs).not('full_name', 'is', null).order('id'); }); };
-    var r = await lire(CHAMPS_PROFIL + ', shoulder_cm, arm_cm, neck_cm, head_cm');
+    var r = await lire(CHAMPS_PROFIL + ', shoulder_cm, arm_cm, neck_cm');
     suppDisponibles = !r.error;
     return r.error ? lire(CHAMPS_PROFIL) : r;
   }

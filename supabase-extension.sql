@@ -6527,3 +6527,14 @@ revoke all on function agenda_public(boolean, int) from public;
 grant execute on function agenda_public(boolean, int) to anon, authenticated;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 126 — Instagram obligatoire dans l'Espace mannequin (décision de la
+-- propriétaire, 07/10/2026) : chaque mannequin indique son compte Instagram, ou
+-- coche « Je n'ai pas Instagram » (enregistré ici). Information interne : pas
+-- d'accès public (anon). Le tour de tête n'est plus demandé ni affiché ; la
+-- colonne head_cm est gardée telle quelle (aucune donnée effacée).
+-- =====================================================================
+alter table model_profiles add column if not exists sans_instagram boolean not null default false;
+
+NOTIFY pgrst, 'reload schema';
