@@ -9,12 +9,16 @@
 //   - WhatsApp : l'envoi entièrement automatique n'existe qu'avec l'offre payante de
 //     WhatsApp pour les entreprises. Ici, gratuit : chaque appui ouvre WhatsApp avec le
 //     message déjà écrit pour la personne suivante ; il reste à appuyer sur « Envoyer ».
-//   - « {prénom} » et « {casting} » dans le message sont remplacés pour chaque personne ;
+//   - Candidatures : « Quel message ? » propose TOUS les messages du statut choisi (1er
+//     message, relance, convocation, rappel…), les mêmes que sur la fiche d'une personne
+//     (catalogue commun : js/messages-candidats.js). On coche une, plusieurs ou toutes
+//     les personnes.
+//   - « {prénom} », « {candidature} » et « {casting} » sont remplacés pour chaque personne ;
 //     « {date} », « {heure} » et « {lieu} » par les cases au-dessus du message (convocation
 //     au casting en présentiel de l'agence, demande de la propriétaire du 07/10/2026).
 //   - Le message est écrit pour WhatsApp (*gras*, _italique_) : l'e-mail reçoit le même
 //     texte sans ces signes, et sans la phrase « Un e-mail de confirmation… » (retirée aussi
-//     du WhatsApp des personnes sans e-mail). Convocation et outils : js/convocation-agence.js.
+//     du WhatsApp des personnes sans e-mail). Textes et outils : js/messages-candidats.js.
 //   - Les envois déjà faits sont notés sur cet appareil (on peut s'arrêter et reprendre
 //     plus tard sans renvoyer en double).
 (function () {
@@ -29,20 +33,13 @@
   // « Qui ? » : agence et casting précis sont deux sortes de candidatures (même table).
   function table() { return $('mg-source').value === 'inscription' ? 'inscription' : 'casting'; }
   function conf() { return DOSSIERS[table()]; }
-  function casting(d) {
-    if (d.type_candidature === 'projet') return d.projet_nom || 'notre casting';
-    if (d.type_candidature === 'agence') return "l'intégration de l'agence";
-    return 'notre agence';
-  }
   // {date}, {heure}, {lieu} : mêmes pour tout le groupe (cases au-dessus du message).
+  const A_COMPLETER = '[à compléter]';
   const INFOS_RDV = /\{(date|heure|lieu)\}/i;
-  function remplirInfos(texte) {
-    const v = { date: dateLongueFr($('mg-date').value), heure: $('mg-heure').value.trim(), lieu: $('mg-lieu').value.trim() };
-    return texte.replace(/\{(date|heure|lieu)\}/gi, (m, k) => v[k.toLowerCase()] || A_COMPLETER);
-  }
-  function personnaliser(texte, d) {
-    return remplirInfos(d.email ? texte : sansPhraseEmail(texte)).replace(/\{pr[ée]nom\}/gi, prenomDe(d.full_name) || 'Madame, Monsieur').replace(/\{casting\}/gi, casting(d));
-  }
+  function rdv() { return { date: $('mg-date').value, heure: $('mg-heure').value, lieu: $('mg-lieu').value }; }
+  function remplirInfos(texte) { return remplirRdv(texte, rdv(), () => A_COMPLETER); }
+  // Message prêt pour une personne : fonction commune à la fiche (js/messages-candidats.js).
+  function personnaliser(texte, d) { return personnaliserMessage(texte, d, rdv(), () => A_COMPLETER); }
   function echapper(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
   // Suivi des envois déjà faits pour CE message (même texte = même envoi), sur cet appareil.
@@ -74,13 +71,6 @@
   // Les cases n'apparaissent que si le message les utilise.
   function majInfos() { $('mg-infos-rdv').style.display = INFOS_RDV.test($('mg-message').value) ? '' : 'none'; }
 
-  // Deuxième message proposé d'office aux candidates retenues pour intégrer l'agence :
-  // la convocation commune (js/convocation-agence.js). Modifiable avant envoi.
-  function modeleAgence() { return CONVOCATION_AGENCE; }
-  // Deuxième message pour un casting précis : la convocation commune, avec dress code
-  // (js/convocation-agence.js). Date, heure et lieu viennent des mêmes cases.
-  const A_COMPLETER = '[à compléter]';
-  function modeleCasting() { return CONVOCATION_CASTING; }
   // Messages proposés d'office pour CHAQUE groupe (demande de la propriétaire, 04/10/2026 :
   // « il faut bien structurer, bien rédiger »). Même présentation partout : en-tête de
   // l'agence, une idée par paragraphe, contact, signature. Toujours modifiables avant envoi.
@@ -88,11 +78,8 @@
   const CONTACT = '📞 Une question ? Écrivez-nous sur WhatsApp au 05 45 65 66 87.';
   const SIGNATURE = "Bien cordialement,\nL'équipe Maître Akesse Model Management";
   function message(corps) { return `${ENTETE}\n\nBonjour {prénom},\n\n${corps}\n\n${CONTACT}\n\n${SIGNATURE}`; }
-  // « pour intégrer l'agence » ou « au casting « X » » selon le groupe choisi.
-  // Seconds messages des candidatures (validés le 07/10/2026) : même présentation que
-  // la convocation (en-tête en gras, signature en italique).
-  function messageCandidature(corps) { return `✨ *MAÎTRE AKESSE MODEL MANAGEMENT* ✨\n\nBonjour {prénom},\n\n${corps}\n\n_L'équipe Maître Akesse Model Management_`; }
-  function objet() { return $('mg-source').value === 'agence' ? "pour intégrer Maître Akesse Model Management" : 'au casting « {casting} »'; }
+  // Inscriptions : un message par statut (les candidatures utilisent le catalogue commun,
+  // js/messages-candidats.js, avec le choix « Quel message ? »).
   function modelePour(qui, statut) {
     if (qui === 'inscription') {
       return ({
@@ -102,31 +89,42 @@
         'annulée': message(`Nous vous remercions pour l'intérêt que vous portez à Maître Akesse Model Management.\n\nAprès étude, nous ne sommes malheureusement pas en mesure de valider votre inscription pour le moment.\n\nSi vous pensez qu'il s'agit d'une erreur, ou pour connaître les raisons de cette décision, n'hésitez pas à nous contacter.`)
       })[statut] || '';
     }
-    if (statut === 'retenue') return qui === 'agence' ? modeleAgence() : modeleCasting();
-    return ({
-      'nouvelle': messageCandidature(`Nous avons bien reçu votre candidature ${objet()}. Merci pour votre confiance ! 🙏\n\n📋 Notre équipe va étudier votre dossier avec attention dans les prochains jours. Inutile de renvoyer votre candidature : nous vous recontacterons dès qu'une décision sera prise.`),
-      'en étude': messageCandidature(`Nous revenons vers vous au sujet de votre candidature ${objet()}. _Votre dossier est toujours en cours d'étude_ : nous recevons de nombreuses candidatures et prenons le temps d'examiner chacune avec attention.\n\nNous vous donnerons notre réponse très prochainement. Merci pour votre patience ! 🙏`),
-      'en attente': messageCandidature(`Nous revenons vers vous au sujet de votre candidature ${objet()}. _Votre dossier est toujours en liste d'attente_ : notre sélection n'est pas terminée et une place peut se libérer à tout moment.\n\nNous vous contacterons dès que possible. Restez disponible ! 📱`)
-    })[statut] || '';
+    const m = messageCandidatParCle($('mg-type').value);
+    return m && m.statut === statut ? m.modele(qui === 'casting' ? 'projet' : 'agence') : '';
   }
   let dernierModele = '';
   function proposerModele() {
     const zone = $('mg-message');
     const actuel = zone.value.trim();
     const modele = modelePour($('mg-source').value, $('mg-statut').value);
-    // Ne jamais écraser un message déjà écrit à la main.
-    if (!actuel || actuel === dernierModele.trim()) { zone.value = modele; dernierModele = modele; }
-    majInfos();
+    // Un message écrit à la main n'est jamais remplacé sans accord.
+    if (actuel && actuel !== dernierModele.trim() && actuel !== modele.trim()
+      && !confirm('Remplacer le message que vous avez modifié par le message choisi ?')) return;
+    zone.value = modele; dernierModele = modele;
+    majInfos(); majApercu(); majBoutons();
   }
 
-  // Pas de second message après un refus (décision de la propriétaire, 07/10/2026) :
-  // le refus est officiel avec le premier message, on n'écrit plus à la personne.
-  const SANS_SECOND_MESSAGE = ['refusée', 'annulée'];
+  // « Quel message ? » (candidatures) : tous les messages du statut choisi, les mêmes que
+  // sur la fiche d'une personne. Proposé d'office : celui marqué « groupe ».
+  function remplirTypes() {
+    const candidatures = $('mg-source').value !== 'inscription';
+    $('mg-champ-type').style.display = candidatures ? '' : 'none';
+    if (!candidatures) { $('mg-type').innerHTML = ''; return; }
+    const liste = MESSAGES_CANDIDATS.filter(m => m.statut === $('mg-statut').value);
+    $('mg-type').innerHTML = liste.map(m => `<option value="${m.cle}">${echapper(m.libelle)}</option>`).join('');
+    const defaut = liste.find(m => m.groupe) || liste[0];
+    if (defaut) $('mg-type').value = defaut.cle;
+  }
+
+  // Inscriptions : pas de second message après un refus (décision de la propriétaire,
+  // 07/10/2026). Candidatures : « Non retenue » ne propose que le 1er message.
+  const SANS_SECOND_MESSAGE = ['annulée'];
   function remplirStatuts() {
     const c = conf();
     $('mg-statut').innerHTML = c.statuts.filter(s => !SANS_SECOND_MESSAGE.includes(s)).map(s => `<option value="${echapper(s)}">${echapper(c.libellesStatut[s] || s)}</option>`).join('');
     $('mg-statut').value = c.statuts.includes('retenue') ? 'retenue' : c.statuts.includes('payée') ? 'payée' : c.statuts[0];
     $('mg-champ-casting').style.display = $('mg-source').value === 'casting' ? '' : 'none';
+    remplirTypes();
     proposerModele();
     viderListe();
   }
@@ -278,8 +276,8 @@
   }
 
   $('mg-source').addEventListener('change', remplirStatuts);
-  $('mg-casting').addEventListener('change', proposerModele);
-  $('mg-statut').addEventListener('change', () => { proposerModele(); viderListe(); });
+  $('mg-statut').addEventListener('change', () => { remplirTypes(); proposerModele(); viderListe(); });
+  $('mg-type').addEventListener('change', proposerModele);
   $('mg-casting').addEventListener('change', () => { if ($('mg-casting').value) void charger(); else viderListe(); });
   $('mg-charger').addEventListener('click', () => void charger());
   $('mg-liste').addEventListener('change', (e) => { const i = e.target.dataset.i; if (i !== undefined) { destinataires[i].choisi = e.target.checked; majApercu(); majBoutons(); } });

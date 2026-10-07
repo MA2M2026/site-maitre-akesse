@@ -1084,7 +1084,7 @@ les classes ajoutées dynamiquement (`classList.add(...)`, `className =
   `pourEmail()` (signes WhatsApp retirés, phrase « Un e-mail de confirmation…
   » retirée). Le suivi « déjà envoyé » tient compte de date/heure/lieu : une
   nouvelle date = un nouvel envoi possible pour tout le monde.
-  **Texte unique** dans `js/convocation-agence.js` (`CONVOCATION_AGENCE`,
+  **Texte unique** dans `js/messages-candidats.js` (ex-`convocation-agence.js`) (`CONVOCATION_AGENCE`,
   `dimancheSuivantISO`, `dateLongueFr`, `infosRdvMemorisees`/`memoriserInfosRdv`,
   `sansPhraseEmail`, `messagePourEmail`) : utilisé aussi par la fiche d'une
   personne (« Écrire sur WhatsApp » → Convocation, candidat(e)s « agence »
@@ -1101,6 +1101,14 @@ les classes ajoutées dynamiquement (`classList.add(...)`, `className =
   l'agence ; aussi sur la fiche) ; nouvelle / en étude / en attente = relances
   (`messageCandidature`). « Refusée » et « annulée » ne sont plus proposées
   (`SANS_SECOND_MESSAGE`) : pas de second message après un refus.
+  **Tous les messages, seul OU en groupe (07/10/2026)** : catalogue
+  `MESSAGES_CANDIDATS` dans `js/messages-candidats.js` (1er message de chaque
+  statut, relances, convocation, rappel). La fiche (« Écrire sur WhatsApp »,
+  valeurs `c:<clé>`) et Messages groupés (case « Quel message ? » `#mg-type`)
+  proposent exactement les mêmes textes ; `personnaliserMessage()` les remplit.
+  Les premiers messages du changement de statut (`MODELES_NOTIFICATION.casting`)
+  viennent aussi du catalogue. « Refusée » revient dans Messages groupés avec son
+  seul 1er message (inscriptions : « annulée » toujours exclue).
 
 ## Diagnostic sécurité du 28 septembre 2026 (nuit)
 
