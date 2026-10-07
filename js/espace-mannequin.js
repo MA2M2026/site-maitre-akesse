@@ -28,7 +28,7 @@ function emptyState(){
       taille:'', poids:'', poitrine:'', tourTaille:'', hanches:'', entrejambe:'', pointure:'',
       tailleVet:'', yeux:'', cheveux:'', carnation:'',
       // Extension 121 (06/10/2026) : épaules, bras, cou (hommes), tête
-      epaules:'', bras:'', cou:'', tete:''
+      epaules:'', bras:'', cou:''
     },
     formation:{ niveau:'', etablissement:'', particuliere:'', mannequin:'' },
     // Niveau (New Face / Professionnel, 06/10/2026) : coché par la mannequin
@@ -358,7 +358,8 @@ function lireInstagramFormulaire(){
 // pour ne jamais bloquer le reste de l'étape si la base ne l'a pas encore.
 async function enregistrerSansInstagram(){
   const { error } = await sb.from('model_profiles').update({ sans_instagram: !!state.sansInstagram }).eq('id', currentUser.id);
-  if (error) console.warn('Case « pas d’Instagram » non enregistrée :', error.message);
+  // On ne bloque pas le reste de l'étape, mais la mannequin est prévenue.
+  if (error) { console.warn('Case « pas d’Instagram » non enregistrée :', error.message); toast('La case « Je n’ai pas Instagram » n’a pas pu être enregistrée : réessayez un peu plus tard', true); }
   return true;
 }
 function formationToDb(f){
@@ -1082,10 +1083,10 @@ function bindWizard(){
 
   document.getElementById('save1')?.addEventListener('click', async function(){
     const btn = this;
+    if (!lireInstagramFormulaire()) return;
     const identiteFormulaire = lireIdentiteFormulaire();
     identiteFormulaire.sexe = identiteFormulaire.sexe || s.identite.sexe;
     Object.assign(s.identite, identiteFormulaire);
-    if (!lireInstagramFormulaire()) return;
     s.bio = val('f-bio'); s.citation = val('f-citation');
     btn.disabled = true; btn.textContent = 'Enregistrement…';
     const ok = await Store.saveBlock(Object.assign(identiteToDb(s.identite), { bio: s.bio||null, instagram: s.instagram||null, citation: s.citation||null })) && await enregistrerSansInstagram();

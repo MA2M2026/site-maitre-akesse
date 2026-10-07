@@ -42,7 +42,7 @@
   // Libellés courts (liste du tableau de bord) des points à compléter.
   var LIBELLES = {
     naissance: 'date de naissance', nationalite: 'nationalité', ville: 'ville de résidence',
-    presentation: 'présentation', instagram: 'Instagram (ou « Je n’ai pas Instagram »)',
+    presentation: 'présentation', presentationCourte: 'présentation trop courte', instagram: 'Instagram (ou « Je n’ai pas Instagram »)',
     experiences: 'expériences', etudes: 'niveau d’études', formation: 'formations', langues: 'langues parlées',
     profil: 'photo de profil', couverture: 'photo de couverture', identiques: 'profil et couverture identiques', book: 'book trop léger'
   };
@@ -57,7 +57,9 @@
     manque(a.identite, 'naissance', !vide(p.date_naissance));
     manque(a.identite, 'nationalite', !vide(p.nationalite));
     manque(a.identite, 'ville', !vide(p.city));
-    manque(a.identite, 'presentation', String(p.bio || '').trim().length >= 80);
+    // Présentation : absente, ou trop courte (moins de 80 caractères, une phrase à peine)
+    if (vide(p.bio)) manque(a.identite, 'presentation', false);
+    else manque(a.identite, 'presentationCourte', String(p.bio).trim().length >= 80);
     manque(a.identite, 'instagram', !vide(p.instagram) || p.sans_instagram === true);
 
     // New Face (débutante) : ne pas encore avoir d'expérience est normal — ni compté, ni réclamé.
@@ -119,6 +121,7 @@
   var TEXTES = {
     naissance: 'Votre date de naissance', nationalite: 'Votre nationalité', ville: 'Votre ville de résidence',
     presentation: 'Une présentation de quelques phrases _(votre parcours, votre style, ce qui vous distingue)_',
+    presentationCourte: 'Une présentation un peu plus détaillée : _quelques phrases sur votre parcours, votre style, ce qui vous distingue_',
     instagram: 'Votre compte Instagram _(ou cochez « Je n’ai pas Instagram »)_',
     experiences: 'Vos expériences : défilés, shootings, castings, événements — _même les plus petits comptent_',
     formation: 'Vos formations de mannequinat _(ou « aucune » si vous débutez)_',
@@ -179,7 +182,7 @@
       '<label class="rp-entete">' + (a.aJour ? '' : '<input type="checkbox" class="rp-choix" data-id="' + echapper(p.id) + '">') +
       '<strong>' + echapper(civilite(p)) + '</strong>' + (p.published ? '' : ' <span class="rp-gris">(non publiée)</span>') +
       ' <span class="rp-etat">' + (a.aJour ? '✓ À jour' : 'Complet à ' + a.score + ' %') + '</span>' +
-      (deja ? ' <span class="rp-gris">· dernier message le ' + new Date(deja).toLocaleDateString('fr-FR') + '</span>' : '') +
+      (deja ? ' <span class="rp-gris rp-date-envoi">· dernier message le ' + new Date(deja).toLocaleDateString('fr-FR') + '</span>' : '') +
       (!a.aJour && !wa ? ' <span class="rp-gris">· pas de numéro WhatsApp : le message sera copié, à coller où vous voulez</span>' : '') + '</label>' +
       (a.aJour ? '' : '<ul class="rp-points">' + points.join('') + '</ul>' +
         '<details class="rp-message"><summary>Voir / modifier le message</summary><textarea rows="16" data-id="' + echapper(p.id) + '">' + echapper(message(p, a)) + '</textarea></details>') +
@@ -234,9 +237,13 @@
     'date_naissance, nationalite, city, bio, instagram, niveau_etude, formation_mannequin, languages, niveau_mannequin, years_experience';
   async function lireProfils() {
     var lire = function (champs) { return lireToutesLignes(function () { return sb.from('model_profiles').select(champs).not('full_name', 'is', null).order('id'); }); };
-    var r = await lire(CHAMPS_PROFIL + ', shoulder_cm, arm_cm, neck_cm, sans_instagram');
+    var r = await lire(CHAMPS_PROFIL + ', shoulder_cm, arm_cm, neck_cm');
     suppDisponibles = !r.error;
-    return r.error ? lire(CHAMPS_PROFIL) : r;
+    if (r.error) r = await lire(CHAMPS_PROFIL);
+    // Case « Je n'ai pas Instagram » (Extension 126), lue à part : si la colonne manque, rien d'autre n'est perdu.
+    var si = await lire('id, sans_instagram');
+    if (!r.error && !si.error) { var sans = {}; si.data.forEach(function (x) { sans[x.id] = x.sans_instagram; }); r.data.forEach(function (x) { x.sans_instagram = sans[x.id] === true; }); }
+    return r;
   }
 
   var enCours = false;
@@ -251,15 +258,16 @@
     zone.textContent = 'Analyse des profils…';
     var r = await Promise.all([
       lireProfils(),
-      lireToutesLignes(function () { return sb.from('model_photos').select('id, model_id, principale, photo_couverture').order('id'); }),
+      lireToutesLignes(function () { return sb.from('model_photos').select('id, model_id, principale, photo_couverture, tri_statut').order('id'); }),
       sb.rpc('contacts_mannequins_admin'),
       lireToutesLignes(function () { return sb.from('model_projects').select('id, model_id').order('id'); })
     ]);
     var pr = r[0], ph = r[1], tel = r[2], pj = r[3];
     var projets = {}; (pj.data || []).forEach(function (x) { projets[x.model_id] = (projets[x.model_id] || 0) + 1; });
     // Sans la liste complète des profils ou des photos, le rapport serait faux : on s'arrête.
-    if (pr.error || ph.error) { charge = false; zone.textContent = 'Impossible de lire les profils ou les photos : ' + (pr.error || ph.error).message + '. Fermez et rouvrez la section pour réessayer.'; return; }
-    var parModele = {}; ph.data.forEach(function (x) { (parModele[x.model_id] = parModele[x.model_id] || []).push(x); });
+    if (pr.error || ph.error || pj.error) { charge = false; zone.textContent = 'Impossible de lire les profils, les photos ou les expériences : ' + (pr.error || ph.error || pj.error).message + '. Fermez et rouvrez la section pour réessayer.'; return; }
+    // Les photos écartées du book (masquées sur la fiche publique) ne comptent pas.
+    var parModele = {}; ph.data.filter(function (x) { return x.tri_statut !== 'ecartee'; }).forEach(function (x) { (parModele[x.model_id] = parModele[x.model_id] || []).push(x); });
     telephones = {}; (tel.data || []).forEach(function (t) { telephones[t.model_id] = t.phone; });
     profils = pr.data.filter(function (p) { return String(p.full_name).trim(); }).map(function (p) {
       p.analyse = analyser(p, parModele[p.id] || [], projets[p.id] || 0);
@@ -282,9 +290,13 @@
       void charger();
     } else if (e.target.id === 'rp-reinitialiser') {
       if (!confirm('Effacer l’historique des messages envoyés (sur cet appareil) ? Toutes les mannequins à compléter reviendront dans la liste.')) return;
-      try { localStorage.removeItem(CLE_ENVOIS); } catch (err) {}
+      try { localStorage.removeItem(CLE_ENVOIS); localStorage.removeItem('ma2m_rapport_profils_envois'); } catch (err) {}
       envoyesCetteFois = {};
-      afficher();
+      // Sans tout reconstruire : les messages modifiés et les cases cochées restent tels quels.
+      var aEnvoyer = document.getElementById('rp-a-envoyer'), groupe = document.getElementById('rp-envoyes');
+      if (groupe) { groupe.querySelectorAll('.rp-profil').forEach(function (x) { aEnvoyer.appendChild(x); }); groupe.hidden = true; document.getElementById('rp-nb-envoyes').textContent = '0'; }
+      details.querySelectorAll('.rp-envoye, .rp-date-envoi').forEach(function (x) { x.remove(); });
+      majBouton();
     } else if (e.target.id === 'rp-tout') {
       details.querySelectorAll('#rp-a-envoyer .rp-choix').forEach(function (c) { c.checked = true; });
       majBouton();
