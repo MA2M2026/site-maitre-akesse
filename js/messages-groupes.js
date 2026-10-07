@@ -77,31 +77,10 @@
   // Deuxième message proposé d'office aux candidates retenues pour intégrer l'agence :
   // la convocation commune (js/convocation-agence.js). Modifiable avant envoi.
   function modeleAgence() { return CONVOCATION_AGENCE; }
-  // Deuxième message pour un casting précis : même esprit, avec les informations
-  // pratiques à compléter (elles changent d'un casting à l'autre).
+  // Deuxième message pour un casting précis : la convocation commune, avec dress code
+  // (js/convocation-agence.js). Date, heure et lieu viennent des mêmes cases.
   const A_COMPLETER = '[à compléter]';
-  function modeleCasting() {
-    return `✨ MAÎTRE AKESSE MODEL MANAGEMENT ✨
-
-Bonjour {prénom},
-
-Félicitations ! 🎉 Comme annoncé dans notre premier message de confirmation, votre candidature au casting « {casting} » a été retenue : vous êtes sélectionné(e) pour la prochaine étape.
-
-Voici les informations pratiques :
-
-📅 Date : ${A_COMPLETER}
-🕒 Heure : ${A_COMPLETER}
-📍 Lieu : ${A_COMPLETER}
-👗 Tenue : ${A_COMPLETER}
-
-Merci de confirmer votre présence en répondant à ce message.
-
-Au plaisir de vous retrouver !
-
-📞 Une question ? Écrivez-nous sur WhatsApp au 05 45 65 66 87.
-
-L'équipe Maître Akesse Model Management`;
-  }
+  function modeleCasting() { return CONVOCATION_CASTING; }
   // Messages proposés d'office pour CHAQUE groupe (demande de la propriétaire, 04/10/2026 :
   // « il faut bien structurer, bien rédiger »). Même présentation partout : en-tête de
   // l'agence, une idée par paragraphe, contact, signature. Toujours modifiables avant envoi.
@@ -110,6 +89,9 @@ L'équipe Maître Akesse Model Management`;
   const SIGNATURE = "Bien cordialement,\nL'équipe Maître Akesse Model Management";
   function message(corps) { return `${ENTETE}\n\nBonjour {prénom},\n\n${corps}\n\n${CONTACT}\n\n${SIGNATURE}`; }
   // « pour intégrer l'agence » ou « au casting « X » » selon le groupe choisi.
+  // Seconds messages des candidatures (validés le 07/10/2026) : même présentation que
+  // la convocation (en-tête en gras, signature en italique).
+  function messageCandidature(corps) { return `✨ *MAÎTRE AKESSE MODEL MANAGEMENT* ✨\n\nBonjour {prénom},\n\n${corps}\n\n_L'équipe Maître Akesse Model Management_`; }
   function objet() { return $('mg-source').value === 'agence' ? "pour intégrer Maître Akesse Model Management" : 'au casting « {casting} »'; }
   function modelePour(qui, statut) {
     if (qui === 'inscription') {
@@ -122,10 +104,9 @@ L'équipe Maître Akesse Model Management`;
     }
     if (statut === 'retenue') return qui === 'agence' ? modeleAgence() : modeleCasting();
     return ({
-      'nouvelle': message(`Nous avons bien reçu votre candidature ${objet()}. Merci pour votre confiance ! 🙏\n\n📋 Notre équipe va étudier votre dossier avec attention dans les prochains jours.\n\nNous vous recontacterons dès qu'une décision sera prise. Inutile de renvoyer votre candidature.`),
-      'en étude': message(`Votre candidature ${objet()} est actuellement en cours d'étude par notre équipe 🔎\n\nNous prenons le temps d'examiner chaque dossier avec attention : profil, photos et informations.\n\nVous recevrez notre réponse très prochainement. Merci pour votre patience.`),
-      'en attente': message(`Merci d'avoir postulé ${objet()}.\n\n⏳ Votre dossier a retenu notre attention et se trouve actuellement en liste d'attente : notre équipe finalise sa sélection.\n\nNous reviendrons vers vous dès qu'une place se libère ou qu'une décision définitive sera prise. Gardez votre téléphone à portée de main !`),
-      'refusée': message(`Merci sincèrement d'avoir postulé ${objet()}, et pour le temps que vous nous avez consacré.\n\nAprès étude attentive, votre profil n'a pas été retenu pour cette sélection.\n\n🌟 Cette décision ne remet pas en cause votre potentiel : nos besoins changent d'un casting à l'autre. Nous conservons votre dossier et vous encourageons à postuler de nouveau lors de nos prochains castings.`)
+      'nouvelle': messageCandidature(`Nous avons bien reçu votre candidature ${objet()}. Merci pour votre confiance ! 🙏\n\n📋 Notre équipe va étudier votre dossier avec attention dans les prochains jours. Inutile de renvoyer votre candidature : nous vous recontacterons dès qu'une décision sera prise.`),
+      'en étude': messageCandidature(`Nous revenons vers vous au sujet de votre candidature ${objet()}. _Votre dossier est toujours en cours d'étude_ : nous recevons de nombreuses candidatures et prenons le temps d'examiner chacune avec attention.\n\nNous vous donnerons notre réponse très prochainement. Merci pour votre patience ! 🙏`),
+      'en attente': messageCandidature(`Nous revenons vers vous au sujet de votre candidature ${objet()}. _Votre dossier est toujours en liste d'attente_ : notre sélection n'est pas terminée et une place peut se libérer à tout moment.\n\nNous vous contacterons dès que possible. Restez disponible ! 📱`)
     })[statut] || '';
   }
   let dernierModele = '';
@@ -138,9 +119,12 @@ L'équipe Maître Akesse Model Management`;
     majInfos();
   }
 
+  // Pas de second message après un refus (décision de la propriétaire, 07/10/2026) :
+  // le refus est officiel avec le premier message, on n'écrit plus à la personne.
+  const SANS_SECOND_MESSAGE = ['refusée', 'annulée'];
   function remplirStatuts() {
     const c = conf();
-    $('mg-statut').innerHTML = c.statuts.map(s => `<option value="${echapper(s)}">${echapper(c.libellesStatut[s] || s)}</option>`).join('');
+    $('mg-statut').innerHTML = c.statuts.filter(s => !SANS_SECOND_MESSAGE.includes(s)).map(s => `<option value="${echapper(s)}">${echapper(c.libellesStatut[s] || s)}</option>`).join('');
     $('mg-statut').value = c.statuts.includes('retenue') ? 'retenue' : c.statuts.includes('payée') ? 'payée' : c.statuts[0];
     $('mg-champ-casting').style.display = $('mg-source').value === 'casting' ? '' : 'none';
     proposerModele();

@@ -1,12 +1,17 @@
-// ================== Convocation au casting de l'agence (texte unique) ==================
-// Un seul texte pour la convocation des candidat(e)s retenu(e)s pour intégrer l'agence,
+// ================== Convocations (textes uniques) ==================
+// Un seul texte pour la convocation des candidat(e)s retenu(e)s (intégrer l'agence, et
+// casting précis depuis le 07/10/2026 : même présentation, avec le dress code),
 // utilisé à la fois par « Messages groupés » (js/messages-groupes.js) et par la fiche
 // d'une personne (« Écrire sur WhatsApp », tableau-de-bord.html). Demande de la
 // propriétaire (07/10/2026) : le même message, qu'on écrive à une personne ou à un groupe.
 // Le changer ici le change partout.
 //
-// {prénom}, {date}, {heure}, {lieu} sont remplis au moment de l'envoi. Le texte est mis en
+// {prénom}, {casting}, {date}, {heure}, {lieu} sont remplis au moment de l'envoi. Le texte est mis en
 // forme pour WhatsApp (*gras*, _italique_) ; messagePourEmail() en fait la version e-mail.
+
+const DRESS_CODE = `👗 *Dress code*
+👠 _Filles :_ talons, legging long noir et top noir
+👞 _Hommes :_ pantalon noir et chaussures noires`;
 
 const CONVOCATION_AGENCE = `✨ *MAÎTRE AKESSE MODEL MANAGEMENT* ✨
 
@@ -20,11 +25,30 @@ Nous vous invitons à notre _casting en présentiel_ :
 🕒 _{heure}_
 📍 _{lieu}_
 
-👗 *Dress code*
-👠 _Filles :_ talons, legging long noir et top noir
-👞 _Hommes :_ pantalon noir et chaussures noires
+${DRESS_CODE}
 
 💡 _Bon à savoir :_ ce casting prend la forme d'une _séance de formation et de mise en situation_. Débutant(e) ou expérimenté(e), et même si vous ne maîtrisez pas encore la marche en talons, ce n'est pas un obstacle : nous vous accompagnerons pas à pas.
+
+✅ Merci de _confirmer votre présence_ en répondant à ce message.
+📧 Un e-mail de confirmation vous a également été envoyé.
+
+Au plaisir de vous rencontrer !
+
+_L'équipe Maître Akesse Model Management_`;
+
+const CONVOCATION_CASTING = `✨ *MAÎTRE AKESSE MODEL MANAGEMENT* ✨
+
+Bonjour {prénom},
+
+Félicitations ! 🎉 Suite à votre candidature sur notre site au casting « {casting} », nous avons le plaisir de vous annoncer que _vous êtes sélectionné(e)_ pour la prochaine étape.
+
+Nous vous invitons à vous présenter :
+
+📅 _{date}_
+🕒 _{heure}_
+📍 _{lieu}_
+
+${DRESS_CODE}
 
 ✅ Merci de _confirmer votre présence_ en répondant à ce message.
 📧 Un e-mail de confirmation vous a également été envoyé.

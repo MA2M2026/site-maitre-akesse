@@ -1096,6 +1096,11 @@ les classes ajoutées dynamiquement (`classList.add(...)`, `className =
   `MODELES_NOTIFICATION.casting` dans `tableau-de-bord.html`) : réécrits le
   07/10/2026 (en étude, en attente, retenue, refusée) au même format WhatsApp ;
   l'e-mail (automatique et bouton) passe par `messagePourEmail`.
+  **Seconds messages** (Messages groupés, 07/10/2026) : casting précis retenu =
+  `CONVOCATION_CASTING` (même cases date/heure/lieu, même `DRESS_CODE` que
+  l'agence ; aussi sur la fiche) ; nouvelle / en étude / en attente = relances
+  (`messageCandidature`). « Refusée » et « annulée » ne sont plus proposées
+  (`SANS_SECOND_MESSAGE`) : pas de second message après un refus.
 
 ## Diagnostic sécurité du 28 septembre 2026 (nuit)
 
