@@ -957,6 +957,25 @@ function photosAffichees(photos) {
   return { profil: profil, couverture: couvertureChoisie || profil, profilChoisi: !!(profil && profil.principale), couvertureChoisie: couvertureChoisie };
 }
 
+// Fiche mannequin FR/EN (journal du 07/10/2026 : « délai dépassé », « sb is not defined »
+// sur connexion faible) : second essai automatique avant d'afficher le bouton
+// « Réessayer ». Si la bibliothèque de la base n'a pas pu se charger, la page est
+// rechargée une fois (une seule par session, pour ne jamais boucler).
+function relancerChargementFiche(contenu, texteChargement, relancer) {
+  let dejaRecharge = '1';
+  try { dejaRecharge = sessionStorage.getItem('ma2m_fiche_recharge'); } catch (x) { /* navigation privée */ }
+  if ((typeof sb === 'undefined' || !sb) && !dejaRecharge) {
+    try { sessionStorage.setItem('ma2m_fiche_recharge', '1'); } catch (x) { /* navigation privée */ }
+    window.location.reload();
+    return;
+  }
+  const attente = document.createElement('span');
+  attente.className = 'fiche-en-chargement';
+  attente.textContent = texteChargement;
+  contenu.replaceChildren(attente);
+  setTimeout(relancer, 1500);
+}
+
 // Prénom (premier mot du nom complet), pour personnaliser les messages.
 function prenomDe(nomComplet) { return String(nomComplet || '').trim().split(/\s+/)[0] || ''; }
 
