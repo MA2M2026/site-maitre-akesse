@@ -1152,7 +1152,14 @@ les classes ajoutées dynamiquement (`classList.add(...)`, `className =
   sans civilité : « Madame, Monsieur Kouassi Marie ». Messages groupés : case
   « Version pour les parents (mineurs) » (`#mg-message-parent`), visible seulement si
   la liste contient un mineur joint par son parent. Fiche : `contactsFiche()`.
-  Inscriptions : pas encore (textes à réécrire, point 2).
+  Inscriptions : même chose (07/10/2026).
+- **Civilité et inscriptions dans le catalogue (07/10/2026)** — `{prénom}` devient
+  « Mademoiselle / Monsieur + nom complet » selon le genre (`nomAvecCivilite`). Le
+  catalogue `MESSAGES_CANDIDATS` a une `source` : 'casting' ou 'inscription'
+  (1ers messages vérification / validée / refusée, relances paiement / vérification,
+  convocation à la première formation `CONVOCATION_FORMATION`, versions parent).
+  Fiche et Messages groupés les proposent pour les deux ; les anciens textes
+  d'inscription en dur ont été retirés.
 
 ## Diagnostic sécurité du 28 septembre 2026 (nuit)
 

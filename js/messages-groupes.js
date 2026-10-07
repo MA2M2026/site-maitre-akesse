@@ -27,8 +27,8 @@
 
   const CHAMPS = {
     // date de naissance et contacts du parent : un mineur est joint par son parent.
-    casting: 'id, full_name, email, phone, status, type_candidature, projet_nom, created_at, date_naissance, parent_nom, parent_telephone, parent_email',
-    inscription: 'id, full_name, email, phone, statut, created_at, date_naissance, parent_nom, parent_telephone, parent_email'
+    casting: 'id, full_name, email, phone, status, type_candidature, projet_nom, created_at, date_naissance, genre, parent_nom, parent_telephone, parent_email',
+    inscription: 'id, full_name, email, phone, statut, created_at, date_naissance, genre, parent_nom, parent_telephone, parent_email'
   };
   let destinataires = [];
   // « Qui ? » : agence et casting précis sont deux sortes de candidatures (même table).
@@ -74,32 +74,16 @@
   // Les cases n'apparaissent que si le message les utilise.
   function majInfos() { $('mg-infos-rdv').style.display = INFOS_RDV.test($('mg-message').value) ? '' : 'none'; }
 
-  // Messages proposés d'office pour CHAQUE groupe (demande de la propriétaire, 04/10/2026 :
-  // « il faut bien structurer, bien rédiger »). Même présentation partout : en-tête de
-  // l'agence, une idée par paragraphe, contact, signature. Toujours modifiables avant envoi.
-  const ENTETE = '✨ MAÎTRE AKESSE MODEL MANAGEMENT ✨';
-  const CONTACT = '📞 Une question ? Écrivez-nous sur WhatsApp au 05 45 65 66 87.';
-  const SIGNATURE = "Bien cordialement,\nL'équipe Maître Akesse Model Management";
-  function message(corps) { return `${ENTETE}\n\nBonjour {prénom},\n\n${corps}\n\n${CONTACT}\n\n${SIGNATURE}`; }
-  // Inscriptions : un message par statut (les candidatures utilisent le catalogue commun,
-  // js/messages-candidats.js, avec le choix « Quel message ? »).
-  function modelePour(qui, statut) {
-    if (qui === 'inscription') {
-      return ({
-        'en attente de paiement': message(`Nous avons bien reçu votre inscription auprès de Maître Akesse Model Management. Merci pour votre confiance !\n\n🔎 Votre paiement est en cours de vérification par notre équipe. Cette étape peut prendre un peu de temps.\n\nDès que votre paiement sera confirmé, nous vous enverrons un nouveau message pour la suite de votre inscription.`),
-        'dossier en vérification': message(`Votre paiement a bien été reçu ✅\n\n🔎 Votre dossier d'inscription est maintenant en cours de vérification par notre équipe (informations et photos).\n\nNous reviendrons vers vous très prochainement avec la réponse et les prochaines étapes.`),
-        'payée': message(`Félicitations ! 🎉 Votre inscription auprès de Maître Akesse Model Management est validée.\n\nBienvenue dans l'agence ! Nous sommes ravis de vous compter parmi nos mannequins.\n\n📌 Prochaine étape : nous vous contacterons très prochainement pour vous présenter le déroulement de la suite (formation, séances photo et castings).`),
-        'annulée': message(`Nous vous remercions pour l'intérêt que vous portez à Maître Akesse Model Management.\n\nAprès étude, nous ne sommes malheureusement pas en mesure de valider votre inscription pour le moment.\n\nSi vous pensez qu'il s'agit d'une erreur, ou pour connaître les raisons de cette décision, n'hésitez pas à nous contacter.`)
-      })[statut] || '';
-    }
+  // Tous les messages viennent du catalogue commun (js/messages-candidats.js) :
+  // candidatures (source 'casting') et inscriptions (source 'inscription').
+  function sourceCatalogue() { return $('mg-source').value === 'inscription' ? 'inscription' : 'casting'; }
+  function typeDe(qui) { return qui === 'casting' ? 'projet' : 'agence'; }
+  function messageChoisi(statut) {
     const m = messageCandidatParCle($('mg-type').value);
-    return m && m.statut === statut ? m.modele(qui === 'casting' ? 'projet' : 'agence') : '';
+    return m && m.statut === statut && m.source === sourceCatalogue() ? m : null;
   }
-  function modeleParentPour(qui, statut) {
-    if (qui === 'inscription') return '';
-    const m = messageCandidatParCle($('mg-type').value);
-    return m && m.statut === statut && m.parent ? m.parent(qui === 'casting' ? 'projet' : 'agence') : '';
-  }
+  function modelePour(qui, statut) { const m = messageChoisi(statut); return m ? m.modele(typeDe(qui)) : ''; }
+  function modeleParentPour(qui, statut) { const m = messageChoisi(statut); return m && m.parent ? m.parent(typeDe(qui)) : ''; }
   // La case « version parents » n'apparaît que si un mineur de la liste sera joint par son parent.
   function majCaseParent() {
     const utile = !!$('mg-message-parent').value.trim() && destinataires.some(d => contactsEnvoi(d).parent);
@@ -121,10 +105,7 @@
   // « Quel message ? » (candidatures) : tous les messages du statut choisi, les mêmes que
   // sur la fiche d'une personne. Proposé d'office : celui marqué « groupe ».
   function remplirTypes() {
-    const candidatures = $('mg-source').value !== 'inscription';
-    $('mg-champ-type').style.display = candidatures ? '' : 'none';
-    if (!candidatures) { $('mg-type').innerHTML = ''; return; }
-    const liste = MESSAGES_CANDIDATS.filter(m => m.statut === $('mg-statut').value && !m.premier);
+    const liste = MESSAGES_CANDIDATS.filter(m => m.source === sourceCatalogue() && m.statut === $('mg-statut').value && !m.premier);
     $('mg-type').innerHTML = liste.map(m => `<option value="${m.cle}">${echapper(m.libelle)}</option>`).join('');
     const defaut = liste.find(m => m.groupe) || liste[0];
     if (defaut) $('mg-type').value = defaut.cle;
@@ -135,10 +116,9 @@
   const SANS_SECOND_MESSAGE = ['refusée', 'annulée'];
   function remplirStatuts() {
     const c = conf();
-    // Candidatures : seulement les statuts qui ont un message à envoyer ensuite.
-    const candidatures = $('mg-source').value !== 'inscription';
+    // Seulement les statuts qui ont un message à envoyer ensuite.
     $('mg-statut').innerHTML = c.statuts.filter(s => !SANS_SECOND_MESSAGE.includes(s)
-      && (!candidatures || MESSAGES_CANDIDATS.some(m => m.statut === s && !m.premier))).map(s => `<option value="${echapper(s)}">${echapper(c.libellesStatut[s] || s)}</option>`).join('');
+      && MESSAGES_CANDIDATS.some(m => m.source === sourceCatalogue() && m.statut === s && !m.premier)).map(s => `<option value="${echapper(s)}">${echapper(c.libellesStatut[s] || s)}</option>`).join('');
     $('mg-statut').value = c.statuts.includes('retenue') ? 'retenue' : c.statuts.includes('payée') ? 'payée' : c.statuts[0];
     $('mg-champ-casting').style.display = $('mg-source').value === 'casting' ? '' : 'none';
     remplirTypes();
@@ -260,7 +240,7 @@
       etat.textContent = `Envoi ${i + 1} / ${liste.length}… (gardez la page ouverte)`;
       try {
         const c = contactsEnvoi(d);
-        await envoyerEmailCandidat({ to_email: c.email, to_name: c.parent ? salutationParent(d.parent_nom) : prenomDe(d.full_name), message: messagePourEmail(personnaliser(d)) });
+        await envoyerEmailCandidat({ to_email: c.email, to_name: c.parent ? salutationParent(d.parent_nom) : nomAvecCivilite(d), message: messagePourEmail(personnaliser(d)) });
         noterFait('email', d.id); ok++;
       } catch (e) {
         echecs.push((d.full_name || d.email) + (e && e.text ? ' (' + e.text + ')' : ''));
