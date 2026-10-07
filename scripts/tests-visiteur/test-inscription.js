@@ -14,7 +14,8 @@ const choisir = async (p, sel, pref) => { const v = await p.$eval(sel, (s, pref)
     await p.fill('#code-inscription', 'CODE-TEST'); await p.click('#valider-code-btn'); await p.waitForTimeout(1500);
     const formVisible = await p.isVisible('#ins-nom');
     await p.fill('#ins-nom', 'Moussa Bamba'); await p.fill('#ins-naissance', '2012-02-02'); await p.dispatchEvent('#ins-naissance', 'change'); await p.waitForTimeout(300);
-    await choisir(p, '#ins-genre', 'homme'); await p.waitForTimeout(200); await choisir(p, '#ins-taille', ''); await choisir(p, '#ins-tailleveternents', '');
+    await choisir(p, '#ins-genre', 'homme'); await p.waitForTimeout(200);
+    const caseCivHomme = await p.isVisible('#ins-civilite'); await choisir(p, '#ins-taille', ''); await choisir(p, '#ins-tailleveternents', '');
     await p.fill('#ins-telephone-numero', '0700000006'); await p.fill('#ins-email', 'Moussa@Test.CI');
     const blocParent = await p.isVisible('#ins-bloc-parent');
     await p.selectOption('#ins-parent-civilite', 'Madame'); await p.fill('#ins-parent-nom', 'Bamba Aïcha'); await p.fill('#ins-parent-telephone-numero', '0700000066'); await p.fill('#ins-parent-email', 'aicha@test.ci');
@@ -26,7 +27,7 @@ const choisir = async (p, sel, pref) => { const v = await p.$eval(sel, (s, pref)
     const d = envois[0] || {};
     console.log(`\n===== ${page} (${vp.width}px) =====`);
     console.log('Formulaire ouvert après le code :', formVisible, '| bloc parent pour 14 ans :', blocParent);
-    console.log('Dossier envoyé :', envois.length ? 'OUI' : 'NON', '| e-mail :', d.p_email, '| parent :', d.p_parent_nom, d.p_parent_telephone, d.p_parent_email, '| téléphone :', d.p_phone);
+    console.log('Dossier envoyé :', envois.length ? 'OUI' : 'NON', '| e-mail :', d.p_email, '| parent :', d.p_parent_nom, d.p_parent_telephone, d.p_parent_email, '| téléphone :', d.p_phone, '| civilité :', d.p_civilite, '(case visible pour un homme :', caseCivHomme + ')');
     console.log('Message :', (await p.textContent('#inscription-msg').catch(() => '')).trim().slice(0, 140));
     console.log('Erreurs :', errs);
     await ctx.close();

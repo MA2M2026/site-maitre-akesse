@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-582Ng1wjMm+xGs5zdumeDRy7Oi+mVwxY8h+bF5R0NQQ='; style-src 'self' https://fonts.googleapis.com 'sha256-8LrkXFbl2Lw61VWxDceGfjjHAwWVR1EX/L2RObVO+sY='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-s+sWFKiMQK3OPRz3YRx7KLRvMCPeDYKmi5d5AlcKlww='; style-src 'self' https://fonts.googleapis.com 'sha256-8LrkXFbl2Lw61VWxDceGfjjHAwWVR1EX/L2RObVO+sY='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -232,6 +232,10 @@ setTimeout(() => {
             <option value="femme">Femme</option>
             <option value="homme">Homme</option>
           </select>
+        </div>
+        <div class="form-champ u-hidden" id="ca-civilite-wrap">
+          <label for="ca-civilite">Civilité *</label>
+          <select id="ca-civilite"><option value="">Sélectionner</option><option value="Mademoiselle">Mademoiselle</option><option value="Madame">Madame</option></select>
         </div>
         <div class="form-champ">
           <label for="ca-taille">Taille (cm) *</label>
@@ -761,6 +765,15 @@ function remplirTailleSelonGenre() {
   else { indication.textContent = ''; }
 }
 document.getElementById('ca-genre').addEventListener('change', remplirTailleSelonGenre);
+// Civilité choisie par la candidate (décision de la propriétaire, 07/10/2026) : Madame ou
+// Mademoiselle pour une femme ; « Monsieur » d'office pour un homme. Sert aux messages.
+function majCivilite() {
+  const femme = document.getElementById('ca-genre').value === 'femme';
+  document.getElementById('ca-civilite-wrap').style.display = femme ? 'block' : 'none';
+  document.getElementById('ca-civilite').required = femme;
+}
+document.getElementById('ca-genre').addEventListener('change', majCivilite);
+majCivilite();
 remplirTailleSelonGenre();
 
 // --- Gestion mineur / parent-tuteur ---
@@ -878,6 +891,7 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
     quartier: document.getElementById('ca-quartier').value.trim() || null,
     date_naissance: document.getElementById('ca-naissance').value || null,
     genre: genre,
+    civilite: genre === 'homme' ? 'Monsieur' : (document.getElementById('ca-civilite').value || null),
     height_cm: taille,
     shoe_size: document.getElementById('ca-pointure').value.trim(),
     weight_kg: parseInt(document.getElementById('ca-poids').value) || null,

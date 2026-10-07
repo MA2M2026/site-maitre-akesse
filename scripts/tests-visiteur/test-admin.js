@@ -14,7 +14,8 @@ const PORT = String(8800 + Math.floor(Math.random() * 100));
       date_naissance: '2011-10-05', type_candidature: 'agence', status: 'nouvelle', created_at: '2026-10-07T10:00:00Z', experience_mannequin: 'non',
       parent_nom: 'Monsieur Akesse Franck', parent_telephone: '+225 0777071859', parent_email: 'parent@gmail.com' };
     const yao = { id: 'c2', full_name: 'YAO KOUASSI', email: 'yao@gmail.com', phone: '+225 0102030405', genre: 'homme', date_naissance: '1999-01-01', type_candidature: 'agence', status: 'retenue', created_at: '2026-10-06T10:00:00Z' };
-    await brancher(p, { tables: { admins: [{ user_id: 'admin-1' }], casting_applications: [franck, yao] }, rpc: { code_validation_statut: [{ defini: true }] } }, journal);
+    const bintou = { id: 'c3', full_name: 'BINTOU TRAORÉ', email: 'bintou@gmail.com', phone: '+225 0505050505', genre: 'femme', civilite: 'Madame', date_naissance: '1995-05-05', type_candidature: 'agence', status: 'retenue', created_at: '2026-10-05T10:00:00Z' };
+    await brancher(p, { tables: { admins: [{ user_id: 'admin-1' }], casting_applications: [franck, yao, bintou] }, rpc: { code_validation_statut: [{ defini: true }] } }, journal);
     await p.goto('http://127.0.0.1:' + PORT + '/tableau-de-bord.html'); await p.waitForTimeout(1200);
     if (await p.isVisible('#bandeau-cookies [data-cookies="oui"]')) await p.click('#bandeau-cookies [data-cookies="oui"]');
     // 1. Connexion comme l'administratrice
@@ -61,7 +62,7 @@ const PORT = String(8800 + Math.floor(Math.random() * 100));
     const boite = await p.evaluate(() => { const b = document.getElementById('mg-wa-suivant').getBoundingClientRect(); return { x: Math.round(b.x), largeur: Math.round(b.width), ecran: innerWidth, defilementHorizontal: document.documentElement.scrollWidth > innerWidth }; });
     console.log('Bouton WhatsApp groupé :', JSON.stringify(boite));
     await p.locator('#mg-wa-suivant').scrollIntoViewIfNeeded(); await p.screenshot({ path: __dirname + '/medias/capture-' + Date.now() + '.png' });
-    await p.evaluate(() => { document.getElementById('mg-wa-suivant').click(); document.getElementById('mg-wa-suivant').click(); });
+    await p.evaluate(() => { for (let i = 0; i < 3; i++) document.getElementById('mg-wa-suivant').click(); });
     const wa = await p.evaluate(() => (window.__ouverts || []).map(u => u.split('?')[0] + ' | ' + decodeURIComponent(u.split('?text=')[1] || '').split('\n')[2]));
     console.log('Messages groupés, WhatsApp :', wa);
     console.log('Erreurs :', errs.filter(e => !/Failed to fetch|NetworkError|ERR_/.test(e)));

@@ -1171,6 +1171,11 @@ les classes ajoutées dynamiquement (`classList.add(...)`, `className =
   convocation à la première formation `CONVOCATION_FORMATION`, versions parent).
   Fiche et Messages groupés les proposent pour les deux ; les anciens textes
   d'inscription en dur ont été retirés.
+- **Civilité choisie par la candidate (07/10/2026, Extension 132)** — case
+  « Civilité » (Madame / Mademoiselle) visible quand le genre est « Femme » dans
+  les 6 formulaires ; « Monsieur » d'office pour un homme. Colonne `civilite`
+  (candidatures et inscriptions, `p_civilite` dans `soumettre_inscription_mannequin`).
+  `nomAvecCivilite` l'utilise en priorité. ⚠️ Mettre en ligne APRÈS l'Extension 132.
 
 ## Diagnostic sécurité du 28 septembre 2026 (nuit)
 

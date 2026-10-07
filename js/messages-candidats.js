@@ -27,9 +27,12 @@ function salutationParent(nom) {
 }
 // Civilité de la personne selon son genre (décision de la propriétaire, 07/10/2026 :
 // « Mademoiselle » ou « Monsieur » pour tous les candidats et inscrits) + nom complet.
+// La civilité choisie dans le formulaire (Madame / Mademoiselle / Monsieur, Extension 132)
+// passe en premier ; sinon (anciens dossiers) elle est déduite du genre.
 function nomAvecCivilite(d) {
   const genre = String((d && (d.genre || d.category)) || '').toLowerCase();
-  const civ = genre === 'femme' ? 'Mademoiselle' : genre === 'homme' ? 'Monsieur' : '';
+  const civ = (d && ['Madame', 'Mademoiselle', 'Monsieur'].indexOf(d.civilite) !== -1) ? d.civilite
+    : genre === 'femme' ? 'Mademoiselle' : genre === 'homme' ? 'Monsieur' : '';
   return [civ, String((d && d.full_name) || '').trim()].filter(Boolean).join(' ') || 'Madame, Monsieur';
 }
 // Moins de 18 ans à la date d'aujourd'hui (date de naissance 'AAAA-MM-JJ').

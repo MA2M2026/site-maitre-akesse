@@ -6732,3 +6732,59 @@ begin
 end $$;
 
 NOTIFY pgrst, 'reload schema';
+
+-- =====================================================================
+-- Extension 132 — Civilité choisie par la candidate (décision de la propriétaire,
+-- 07/10/2026 : « être professionnel ») : Madame ou Mademoiselle pour une femme,
+-- Monsieur pour un homme. Les messages commencent par « Bonjour Madame Awa Koné ».
+-- =====================================================================
+alter table casting_applications add column if not exists civilite text;
+alter table inscriptions_mannequins add column if not exists civilite text;
+
+drop function if exists soumettre_inscription_mannequin(text, text, date, text, int, text, text, text, text, text, text, text);
+create or replace function soumettre_inscription_mannequin(
+  p_code text,
+  p_full_name text,
+  p_date_naissance date,
+  p_genre text,
+  p_height_cm int,
+  p_clothing_size text,
+  p_phone text,
+  p_reference_paiement text,
+  p_parent_nom text default null,
+  p_parent_telephone text default null,
+  p_email text default null,
+  p_parent_email text default null,
+  p_civilite text default null
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  nb_lignes int;
+  nouvel_id uuid;
+begin
+  update codes_inscription set utilise = true, utilise_le = now()
+  where code = p_code and utilise = false;
+  get diagnostics nb_lignes = row_count;
+  if nb_lignes = 0 then
+    raise exception 'code_invalide_ou_deja_utilise';
+  end if;
+
+  insert into inscriptions_mannequins
+    (full_name, date_naissance, genre, height_cm, clothing_size, phone, code_utilise, reference_paiement, parent_nom, parent_telephone, email, parent_email, civilite)
+  values
+    (p_full_name, p_date_naissance, p_genre, p_height_cm, p_clothing_size, p_phone, p_code, nullif(p_reference_paiement, ''), p_parent_nom, p_parent_telephone,
+     nullif(lower(trim(p_email)), ''), nullif(lower(trim(p_parent_email)), ''),
+     case when p_civilite in ('Madame', 'Mademoiselle', 'Monsieur') then p_civilite end)
+  returning id into nouvel_id;
+
+  return nouvel_id;
+end;
+$$;
+revoke all on function soumettre_inscription_mannequin(text, text, date, text, int, text, text, text, text, text, text, text, text) from public;
+grant execute on function soumettre_inscription_mannequin(text, text, date, text, int, text, text, text, text, text, text, text, text) to anon, authenticated;
+
+NOTIFY pgrst, 'reload schema';

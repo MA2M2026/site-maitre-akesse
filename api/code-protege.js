@@ -49,8 +49,8 @@ async function creerCompteMannequin(entetes, nom, email, motDePasse) {
   return { status: 200, corps: { ok: true } };
 }
 
-// p_email et p_parent_email : Extension 129 (07/10/2026, l'e-mail demandé partout).
-const CHAMPS_INSCRIPTION = ['p_full_name', 'p_date_naissance', 'p_genre', 'p_height_cm', 'p_clothing_size', 'p_phone', 'p_reference_paiement', 'p_parent_nom', 'p_parent_telephone', 'p_email', 'p_parent_email'];
+// p_email et p_parent_email : Extension 129 ; p_civilite : Extension 132 (07/10/2026).
+const CHAMPS_INSCRIPTION = ['p_full_name', 'p_date_naissance', 'p_genre', 'p_height_cm', 'p_clothing_size', 'p_phone', 'p_reference_paiement', 'p_parent_nom', 'p_parent_telephone', 'p_email', 'p_parent_email', 'p_civilite'];
 // Une adresse e-mail fournie doit avoir une forme valable (vide = non fournie).
 function emailAccepte(v) { return v == null || v === '' || (typeof v === 'string' && v.length <= 200 && EMAIL_VALIDE.test(v.trim())); }
 
@@ -103,6 +103,7 @@ module.exports = async function handler(req, res) {
       const args = { p_code: code };
       const d = corps.dossier || {};
       CHAMPS_INSCRIPTION.forEach(k => { args[k] = d[k] === undefined ? null : d[k]; });
+      if (args.p_civilite != null && ['Madame', 'Mademoiselle', 'Monsieur'].indexOf(args.p_civilite) === -1) args.p_civilite = null;
       if (!emailAccepte(args.p_email) || !emailAccepte(args.p_parent_email)) {
         res.status(400).json({ error: 'dossier', code: 'email', message: 'Adresse e-mail invalide.' });
         return;

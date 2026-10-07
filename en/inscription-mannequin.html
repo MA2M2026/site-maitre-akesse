@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-LrRQAe8u6+0KD+MRsUL+IbTAvgjc2szMjcE7Gpg7AYQ='; style-src 'self' https://fonts.googleapis.com 'sha256-tFcy5AGgtBPoC5kXJZsbtpg3iMcSamS5C0fbatbaxhs='; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-IzeSzAxKbwAEs2q74QBm2j5WNbsJPWYB5hMWa+pE5CA='; style-src 'self' https://fonts.googleapis.com 'sha256-tFcy5AGgtBPoC5kXJZsbtpg3iMcSamS5C0fbatbaxhs='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -154,6 +154,10 @@ setTimeout(() => {
             <option value="femme">Woman</option>
             <option value="homme">Man</option>
           </select>
+        </div>
+        <div class="form-champ u-hidden" id="ins-civilite-wrap">
+          <label for="ins-civilite">Title *</label>
+          <select id="ins-civilite"><option value="">Select</option><option value="Mademoiselle">Miss</option><option value="Madame">Mrs</option></select>
         </div>
         <div class="form-champ">
           <label for="ins-taille">Height (cm) *</label>
@@ -369,6 +373,15 @@ function remplirTailleSelonGenreInscription() {
   else { indication.textContent = ''; }
 }
 document.getElementById('ins-genre').addEventListener('change', remplirTailleSelonGenreInscription);
+// Civilité choisie par la candidate (décision de la propriétaire, 07/10/2026) : Madame ou
+// Mademoiselle pour une femme ; « Monsieur » d'office pour un homme. Sert aux messages.
+function majCivilite() {
+  const femme = document.getElementById('ins-genre').value === 'femme';
+  document.getElementById('ins-civilite-wrap').style.display = femme ? 'block' : 'none';
+  document.getElementById('ins-civilite').required = femme;
+}
+document.getElementById('ins-genre').addEventListener('change', majCivilite);
+majCivilite();
 document.getElementById('ins-naissance').addEventListener('change', remplirTailleSelonGenreInscription);
 remplirTailleSelonGenreInscription();
 
@@ -510,6 +523,7 @@ document.getElementById('form-inscription').addEventListener('submit', async (e)
     full_name: document.getElementById('ins-nom').value.trim(),
     date_naissance: document.getElementById('ins-naissance').value || null,
     genre: genre,
+    civilite: genre === 'homme' ? 'Monsieur' : (document.getElementById('ins-civilite').value || null),
     height_cm: taille || null,
     clothing_size: valeurTailleVetements(),
     phone: composerTelephone(document.getElementById('ins-indicatif'), document.getElementById('ins-telephone-numero')),
@@ -537,6 +551,7 @@ document.getElementById('form-inscription').addEventListener('submit', async (e)
           p_full_name: dossier.full_name,
           p_date_naissance: dossier.date_naissance,
           p_genre: dossier.genre,
+          p_civilite: dossier.civilite,
           p_height_cm: dossier.height_cm,
           p_clothing_size: dossier.clothing_size,
           p_phone: dossier.phone,

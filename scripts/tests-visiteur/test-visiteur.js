@@ -25,6 +25,7 @@ const choisir = async (p, sel, pref) => { const v = await p.$eval(sel, (s, pref)
     await p.selectOption('#ca-parent-civilite', 'Madame'); await p.fill('#ca-parent-nom', 'Kouassi Marie');
     await p.fill('#ca-parent-telephone-numero', '0700000099'); await p.fill('#ca-parent-email', 'parent@test.ci');
     await choisir(p, '#ca-genre', 'femme'); await p.waitForTimeout(200);
+    const caseCivilite = await p.isVisible('#ca-civilite'); await p.selectOption('#ca-civilite', 'Madame');
     await choisir(p, '#ca-taille', '160'); await choisir(p, '#ca-poids', ''); await choisir(p, '#ca-vetements', '');
     await p.setInputFiles('#ca-photos', [0, 1, 2, 3].map(i => __dirname + '/medias/photo' + i + '.jpg')); await p.waitForTimeout(1500);
     await p.setInputFiles('#ca-video', __dirname + '/medias/video.mp4'); await p.waitForTimeout(4000);
@@ -35,8 +36,8 @@ const choisir = async (p, sel, pref) => { const v = await p.$eval(sel, (s, pref)
     const inserts = journal.filter(j => j[0] === 'POST' && j[1] === 'casting_applications').map(j => JSON.parse(j[3]));
     const c = inserts[0] || {};
     console.log(`\n===== ${page} (${vp.width}px) =====`);
-    console.log('Bloc parent visible pour 15 ans :', blocParent);
-    console.log('Candidature enregistrée :', inserts.length ? 'OUI' : 'NON', '| parent_nom :', c.parent_nom, '| parent_telephone :', c.parent_telephone, '| parent_email :', c.parent_email, '| email :', c.email);
+    console.log('Bloc parent visible pour 15 ans :', blocParent, '| case Civilité visible pour une femme :', caseCivilite);
+    console.log('Candidature enregistrée :', inserts.length ? 'OUI' : 'NON', '| parent_nom :', c.parent_nom, '| parent_telephone :', c.parent_telephone, '| parent_email :', c.parent_email, '| email :', c.email, '| civilité :', c.civilite);
     console.log('Message affiché :', (await p.textContent('#ca-msg').catch(() => '')).trim().slice(0, 160));
     console.log('Erreurs :', errs);
     await ctx.close();
