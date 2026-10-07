@@ -68,7 +68,8 @@
     manque(a.parcours, 'etudes', !vide(p.niveau_etude));
     manque(a.parcours, 'langues', !vide(p.languages));
     // Formations de mannequinat : facultatives (beaucoup n'en ont pas suivi) ; simple
-    // suggestion dans le message, jamais comptée comme un manque.
+    // suggestion ajoutée à la rubrique « parcours » quand celle-ci a déjà autre chose à
+    // compléter (pour ne pas allonger le message d'un profil complet), jamais comptée.
     a.sansFormation = vide(p.formation_mannequin);
 
     // Mensurations
