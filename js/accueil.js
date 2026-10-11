@@ -188,7 +188,7 @@ async function chargerMannequinVedette() {
   const libelleCategorie = profil.category === 'homme' ? T('Homme', 'Male') : profil.category === 'femme' ? T('Femme', 'Female') : 'New Face';
 
   document.getElementById('vedette-img').src = photoUrl;
-  document.getElementById('vedette-img').alt = echapperHtml(profil.full_name || '');
+  document.getElementById('vedette-img').alt = profil.full_name || '';
   document.getElementById('vedette-nom').textContent = profil.full_name || T('Mannequin', 'Model');
   const longueurNom = (profil.full_name || '').length;
   document.getElementById('vedette-nom').classList.toggle('nom-long', longueurNom > 18 && longueurNom <= 28);

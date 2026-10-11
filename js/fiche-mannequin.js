@@ -1,7 +1,6 @@
 // Fiche d'une mannequin (mannequin.html et en/mannequin.html) : un seul script pour le
 // français et l'anglais (11/10/2026 : avant, deux copies de ~400 lignes dans les pages).
 // Langue (EN, T) : js/app.js, d'après <html lang="en">. En anglais, les mesures ont aussi leur équivalent impérial.
-const RACINE = EN ? '../' : '';
 const imperial = (txt) => (EN && txt ? ` <span class="fiche-imperial">${txt}</span>` : '');
 
 // Petites icônes ligne (SVG, currentColor) affichées à côté de chaque mensuration
@@ -128,14 +127,14 @@ async function chargerProfilInterne() {
     .order('created_at', { ascending: false });
 
   const vues = photosAffichees(photos); // photo de profil et couverture affichées (js/app.js)
-  const premierePhoto = vues.profil ? vues.profil.url : RACINE + 'assets/logo-dark-bg.png';
+  const premierePhoto = vues.profil ? vues.profil.url : '/assets/logo-dark-bg.png';
   const photoCouverture = vues.couvertureChoisie;
   // Versions allégées pour l'affichage (la fiche était lourde à ouvrir, surtout depuis
   // le navigateur intégré de Facebook) : couverture en taille « moyenne » (~1400px),
   // médaillon en miniature (~500px). L'originale reste utilisée pour la galerie plein
   // écran et la compcard.
   const photoHero = vues.couverture ? (vues.couverture.url_moyenne || vues.couverture.url) : premierePhoto;
-  const photoAvatar = vues.profil ? (vues.profil.url_miniature || vues.profil.url) : RACINE + 'assets/logo-dark-bg.png';
+  const photoAvatar = vues.profil ? (vues.profil.url_miniature || vues.profil.url) : '/assets/logo-dark-bg.png';
   const libellesDispo = EN
     ? { immediate: 'Available immediately', rdv: 'By appointment', mobile: 'Available to travel' }
     : { immediate: 'Disponible immédiatement', rdv: 'Sur rendez-vous', mobile: 'Mobile pour déplacements' };

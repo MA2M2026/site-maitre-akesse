@@ -1989,6 +1989,15 @@ CSS `.couverture-faisceau` / `--couv-h` restent sans effet (nettoyage CSS à fai
 
 ## Scripts partagés FR/EN (nettoyage du code recopié, suite, 11/10/2026)
 - `js/mannequins.js` : « Nos mannequins » FR et EN (`js/mannequins-en.js` supprimé).
+- `js/app.js` : `EN` (page en anglais) et `T('français', 'anglais')` — le traducteur commun à
+  tous les scripts FR/EN ; aussi `remplirSelectListe` (« Autre »/« Other »), `urlHttpSure`,
+  `verifierAdmin` (panneau d'ajout des pages publiques), `urlIndiqueRecuperationMdp`,
+  `URL_SCRIPT_PHOTOS_CASTING`, `redimensionnerImage`, `fichierEnBase64`.
+- `js/filet-reveal.js` : filet d'affichage (33 pages, chargé en `async`).
+- Un seul script FR/EN par page : `js/accueil.js`, `js/inscription-mannequin.js`,
+  `js/contact.js`, `js/demande-recruteur.js` (page Sélection), `js/partenaires.js`,
+  `js/actualites.js`, `js/evenements.js` (+ `js/publications.js`, fonctions communes à ces deux).
+- Essai visiteur `scripts/tests-visiteur/test-pages-publiques.js` : ces pages en FR et EN.
 - `js/fiche-mannequin.js` : fiche d'une mannequin, `mannequin.html` et `en/mannequin.html`
   (avant : deux scripts de ~400 lignes dans les pages). Textes `T('fr', 'en')` ; en anglais,
   équivalents impériaux (`enPieds`, `enPouces`, `enLivres`, `pointureUS` de `js/app.js`).

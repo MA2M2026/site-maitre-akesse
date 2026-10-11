@@ -1,4 +1,5 @@
-// Filet de sécurité (partagé par toutes les pages, 11/10/2026 : avant, recopié dans 31 pages).
+// Filet de sécurité (partagé par les pages publiques et le tableau de bord, 11/10/2026 : avant,
+// recopié dans 33 pages ; chargé en « async » pour ne jamais retarder l'affichage).
 // Sur une connexion instable, un script externe (Supabase, EmailJS, heic2any...) peut être
 // très lent ou échouer à charger — dans ce cas js/app.js ne s'exécute jamais et les éléments
 // ".reveal" (animation d'apparition au défilement) restent invisibles, alors que le reste de

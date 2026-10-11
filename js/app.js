@@ -392,9 +392,6 @@ function remplirSelectNombres(id, min, max, pas, suffixe) {
   }
 }
 
-// Bascule l'affichage du champ "Autre" (texte libre) selon que le select est sur
-// l'option "Autre" ou non — utilisé par tous les selects qui acceptent une valeur
-// hors liste (ville, carnation, yeux, cheveux, taille de vêtements...).
 // Lien cliquable seulement pour une vraie adresse web (http/https) : bloque les liens piégés
 // du type « javascript:… » ou « data:… ». Partagé le 11/10/2026 (Actualités, fiche mannequin).
 function urlHttpSure(url) {
@@ -442,8 +439,11 @@ function remplirSelectListe(id, liste) {
   if (!champ) return;
   champ.appendChild(new Option('—', ''));
   liste.forEach(v => champ.appendChild(new Option(v, v)));
-  champ.appendChild(new Option(document.documentElement.lang === 'en' ? 'Other' : 'Autre', 'Autre'));
+  champ.appendChild(new Option(T('Autre', 'Other'), 'Autre'));
 }
+// Bascule l'affichage du champ "Autre" (texte libre) selon que le select est sur
+// l'option "Autre" ou non — utilisé par tous les selects qui acceptent une valeur
+// hors liste (ville, carnation, yeux, cheveux, taille de vêtements...).
 function configurerSelectAvecAutre(idSelect, idAutre) {
   const select = document.getElementById(idSelect);
   const autre = document.getElementById(idAutre);
@@ -2524,7 +2524,10 @@ function redimensionnerImage(fichier, coteMax = 2800, qualite = 0.88) {
     // qui deviendrait un fond noir en le convertissant en JPEG (pas de canal alpha).
     if (fichier.type !== 'image/jpeg' || fichier.size < 900 * 1024) { resolve(fichier); return; }
     const img = new Image();
+    const adresse = URL.createObjectURL(fichier);
+    const liberer = () => URL.revokeObjectURL(adresse); // évite de garder la photo en mémoire
     img.onload = () => {
+      liberer();
       try {
         const coteActuel = Math.max(img.width, img.height);
         const ratio = coteActuel > coteMax ? coteMax / coteActuel : 1;
@@ -2540,8 +2543,8 @@ function redimensionnerImage(fichier, coteMax = 2800, qualite = 0.88) {
         resolve(fichier);
       }
     };
-    img.onerror = () => resolve(fichier);
-    img.src = URL.createObjectURL(fichier);
+    img.onerror = () => { liberer(); resolve(fichier); };
+    img.src = adresse;
   });
 }
 

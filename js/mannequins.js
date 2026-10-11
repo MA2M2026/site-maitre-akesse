@@ -42,7 +42,7 @@ async function chargerMannequins() {
   });
 
   profils.forEach(profil => {
-    profil.photoUrl = photoParMannequin[profil.id] || (EN ? '../' : '') + 'assets/logo-dark-bg.png';
+    profil.photoUrl = photoParMannequin[profil.id] || '/assets/logo-dark-bg.png';
   });
 
   // Ordre alphabétique des prénoms (choix de la propriétaire, sept. 2026,
