@@ -302,7 +302,7 @@ js/app.js                          Fonctions partagées (voir plus bas), surveil
 js/menu.js                          Ouverture/fermeture du menu plein écran
 js/accueil.js / accueil-en.js         Logique de la page d'accueil (porte d'entrée, carrousel hero,
                                         mannequin à la une, mot du fondateur, stats...)
-js/mannequins.js / mannequins-en.js     Logique de "The Book" (filtres, sélection recruteur)
+js/mannequins.js (FR + EN)              Logique de "The Book" (filtres, sélection recruteur)
 js/actualites.js                    Logique de la page Actualités (admin publication/édition inclus)
 js/evenements.js                      Logique de la page Nos Événements (même schéma que
                                         js/actualites.js — champs date/lieu au lieu de
