@@ -2040,3 +2040,8 @@ contour. Style : `css/menu.css` (importé en tête de `css/style.css` et `css/en
 sélecteurs préfixés `html body` pour passer devant l'ancien tiroir). Ordre et libellés : liste
 `PAGES` de `js/gabarit.js`. Le Parcours MA2M n'affiche que les projets où au moins une de nos
 mannequins publiées est cochée (`ma2mParcours`, js/app.js).
+`js/menu.js` ajoute Femmes / Hommes sous The Book puis pose `--rang` (ordre d'apparition en
+cascade) sur chaque ligne ; le lien « Marketplace » des administratrices reste non numéroté, en
+rouge. L'ancien voile sombre et les titres de groupes du tiroir ont été supprimés. L'ordre du
+bas de page suit `PAGES`. Essais : `test-pages-publiques.js` vérifie l'ordre du menu, le bouton
+« Intégrer l'agence » et qu'un projet sans nos mannequins n'apparaît pas dans le Parcours.

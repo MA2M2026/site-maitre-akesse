@@ -72,8 +72,6 @@
     });
     liens.push('    <li class="item-cta"><a href="' + RACINE_G + 'espace-mannequin.html"' + (actif === 'espace-mannequin' ? ' class="actif"' : '') + '>' + (EN_G ? "Agency's Model Space" : "Espace mannequin de l'agence") + '</a></li>');
     el.innerHTML = '\n  <button class="close-menu" id="closeMenuBtn">' + (EN_G ? 'Close ✕' : 'Fermer ✕') + '</button>\n  <ul class="nav-links">\n' + liens.join('\n') + '\n  </ul>\n';
-    // rang de chaque rubrique : apparition en cascade (css/menu.css)
-    el.querySelectorAll('li').forEach(function (li, n) { li.style.setProperty('--rang', n + 1); });
     el.setAttribute('data-rempli', '');
   });
 

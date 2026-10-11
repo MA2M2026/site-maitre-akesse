@@ -2,9 +2,7 @@
    4 maquettes). Remplace l'ancien tiroir à droite. Importé en tête de css/style.css et de
    css/entete-site.css (Espace mannequin) : une seule copie pour tout le site.
    Le contenu du menu vient de js/gabarit.js ; js/menu.js ajoute Femmes / Hommes sous
-   The Book, le bloc contact (téléphones, réseaux) et des titres de groupes (masqués ici). */
-
-html body .menu-voile { display: none !important; }
+   The Book et le bloc contact (téléphones, réseaux). */
 
 html body .menu-overlay {
   inset: 0 !important; width: 100% !important; max-width: none !important;
@@ -30,10 +28,9 @@ html body .menu-overlay .nav-links {
 html body .menu-overlay .nav-links li { border: 0 !important; margin: 0 !important; opacity: 0; transform: translateY(14px) !important; transition: opacity 0.5s ease, transform 0.6s cubic-bezier(.22,.8,.24,1) !important; }
 html body .menu-overlay.active .nav-links li { opacity: 1; transform: none !important; }
 html body .menu-overlay.active .nav-links li:nth-child(n) { transition-delay: calc(0.03s * var(--rang, 1)) !important; }
-html body .menu-overlay .nav-links li.menu-groupe { display: none !important; }
 
 /* rubriques : grands titres numérotés 01, 02, 03… */
-html body .menu-overlay .nav-links li:not(.menu-sous):not(.item-cta):not(.menu-rejoindre) { counter-increment: rubrique; border-bottom: 1px solid rgba(255,255,255,0.07) !important; }
+html body .menu-overlay .nav-links li:not(.menu-sous):not(.item-cta):not(.menu-rejoindre):not(.item-marketplace) { counter-increment: rubrique; border-bottom: 1px solid rgba(255,255,255,0.07) !important; }
 html body .menu-overlay .nav-links li a {
   display: flex !important; align-items: baseline; gap: 14px; justify-content: flex-start !important;
   padding: 0.55rem 0 !important; border-radius: 0 !important; background: none !important;
@@ -43,7 +40,7 @@ html body .menu-overlay .nav-links li a {
   color: var(--titre-clair, #f5efe7) !important;
   transition: color 0.3s ease, letter-spacing 0.4s ease !important;
 }
-html body .menu-overlay .nav-links li:not(.menu-sous):not(.item-cta):not(.menu-rejoindre) a::before {
+html body .menu-overlay .nav-links li:not(.menu-sous):not(.item-cta):not(.menu-rejoindre):not(.item-marketplace) a::before {
   content: counter(rubrique, decimal-leading-zero) !important; position: static !important;
   width: auto !important; background: none !important;
   font: 500 0.72rem var(--texte); letter-spacing: 0.1em; color: var(--bordeaux-clair, #d55468);
@@ -53,8 +50,11 @@ html body .menu-overlay .nav-links li a::after { content: none !important; }
 @media (hover: hover) { html body .menu-overlay .nav-links li a:hover { color: var(--bordeaux-clair, #d55468) !important; letter-spacing: 0.05em !important; } }
 html body .menu-overlay .nav-links li a.actif { color: var(--bordeaux-clair, #d55468) !important; font-style: italic !important; background: none !important; }
 
+/* « Marketplace » (administratrices seulement, ajouté par js/menu.js) : non numéroté, en rouge */
+html body .menu-overlay .nav-links li.item-marketplace a { color: var(--bordeaux-clair, #d55468) !important; }
+
 /* Femmes / Hommes : petits liens sous The Book */
-html body .menu-overlay .nav-links li.menu-sous { border: 0 !important; display: inline-block; }
+html body .menu-overlay .nav-links li.menu-sous { border: 0 !important; }
 html body .menu-overlay .nav-links li.menu-sous a {
   font-family: var(--texte) !important; font-size: 0.78rem !important; text-transform: uppercase !important;
   letter-spacing: 0.18em !important; color: var(--texte-doux, #948c85) !important;

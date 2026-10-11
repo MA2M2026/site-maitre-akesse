@@ -294,18 +294,10 @@ body.porte-verrouillee .couverture-faisceau, body.porte-verrouillee .couverture-
 /* ==============================================================
    Menu — modèle 2 « Tiroir latéral » (choisi par la propriétaire, 05/10/2026).
    Le menu s'ouvre en tiroir sur la droite de l'écran, le reste de la page est
-   assombri derrière (voile ajouté par js/menu.js, qui ajoute aussi les titres
-   de groupes « Découvrir », « Rejoindre l'agence », « Nous écrire »).
-   Remplace les règles « boutons » du menu plus haut.
+   assombri derrière. Remplace les règles « boutons » du menu plus haut.
+   11/10/2026 : base reprise et transformée en plein écran par css/menu.css
+   (modèle A) ; voile et titres de groupes supprimés.
    ===================================================================== */
-.menu-voile {
-  position: fixed; inset: 0; z-index: 499;
-  background: rgba(0,0,0,0.55);
-  opacity: 0; visibility: hidden;
-  transition: opacity 0.35s ease, visibility 0.35s;
-}
-.menu-voile.active { opacity: 1; visibility: visible; }
-
 .menu-overlay {
   inset: 0 0 0 auto;
   width: min(84vw, 420px);
@@ -343,14 +335,6 @@ body.porte-verrouillee .couverture-faisceau, body.porte-verrouillee .couverture-
 .menu-overlay .nav-links li { border: none; margin: 0; transform: translateX(14px); }
 .menu-overlay.active .nav-links li { transform: translateX(0); }
 .menu-overlay.active .nav-links li:nth-child(n+10) { transition-delay: 0.41s; }
-.menu-overlay .nav-links li.menu-groupe {
-  font-family: var(--texte);
-  font-size: 0.7rem; font-weight: 500;
-  letter-spacing: 0.3em; text-transform: uppercase;
-  color: #d55468;
-  margin: 1.1rem 0 0.3rem;
-}
-.menu-overlay .nav-links li.menu-groupe:first-child { margin-top: 0; }
 /* Catégories du Book sous « The Book » (06/10/2026, js/menu.js). */
 .menu-overlay .nav-links li.menu-sous a { padding: 0.36rem 12px 0.36rem 1.9rem !important; font-size: 0.9rem !important; color: rgba(244,239,233,0.72) !important; }
 .menu-overlay .nav-links li.menu-sous a::after { content: ""; }
