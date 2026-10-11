@@ -1,6 +1,8 @@
 // Programme principal du tableau de bord (11/10/2026 : sorti de tableau-de-bord.html, où il était
 // écrit directement dans la page ; le navigateur lisait parfois ses modèles d'images comme de
 // vraies images et demandait une adresse « ${...} » introuvable). Chargé au même endroit.
+// « void appel() » : chargement lancé sans attendre la fin (volontaire) ; une panne éventuelle
+// est quand même relevée par js/surveillance.js (« unhandledrejection ») et écrite au journal.
 // La sidebar du centre de contrôle (Étape 12) a son propre logo et sa propre
 // navigation : une fois connecté, le header public et le titre "Administration"
 // deviennent redondants. On les masque (jamais supprimés du DOM) pour que les
@@ -53,8 +55,8 @@ function reveleTableauDeBord() {
   masquerBlocsConnexion();
   document.getElementById('bloc-tableau').style.display = 'block';
   afficherChromePublic(false);
-  chargerStatistiques();
-  chargerStatutCodeValidation();
+  void chargerStatistiques();
+  void chargerStatutCodeValidation();
   if (window.tdbRestaurerOuAccueil) window.tdbRestaurerOuAccueil();
   else if (window.tdbRetourAccueil) window.tdbRetourAccueil();
   demarrerMinuteurInactivite();
@@ -323,7 +325,7 @@ document.getElementById('cv-definir-btn').addEventListener('click', async () => 
   msg.className = 'form-msg ok';
   msg.textContent = 'Code de validation enregistré ! Notez-le immédiatement en lieu sûr — il vous sera demandé à chaque prochaine connexion et ne sera plus jamais affiché ici.';
   msg.style.display = 'block';
-  chargerStatutCodeValidation();
+  void chargerStatutCodeValidation();
 });
 
 // Détecté directement depuis l'URL (synchrone, avant tout appel réseau) —
@@ -726,7 +728,7 @@ document.getElementById('liste-erreurs').addEventListener('click', async (e) => 
   const copier = e.target.closest('[data-journal-copier]');
   if (copier) {
     const g = groupesErreursAffiches[+copier.dataset.journalCopier];
-    if (g) copierTexte(ficheTechniqueErreur(g), copier);
+    if (g) void copierTexte(ficheTechniqueErreur(g), copier);
     return;
   }
   const effacer = e.target.closest('[data-journal-effacer]');
@@ -735,7 +737,7 @@ document.getElementById('liste-erreurs').addEventListener('click', async (e) => 
     if (!g || !confirm('Effacer cette erreur du journal ? (Elle réapparaîtra si le problème se reproduit.)')) return;
     effacer.disabled = true;
     await sb.from('journal_erreurs').delete().in('id', g.ids);
-    chargerErreurs();
+    void chargerErreurs();
   }
 });
 
@@ -744,7 +746,7 @@ function copierToutesLesErreurs(e) {
   const titre = filtreGraviteErreurs === 'toutes' ? 'toutes gravités' : GRAVITES_ERREURS[filtreGraviteErreurs].libelle;
   const texte = `=== Journal MA2M — ${visibles.length} erreur(s) (${titre}${filtreFamilleErreurs === 'toutes' ? '' : ', ' + FAMILLES_ERREURS[filtreFamilleErreurs]}) — copié le ${new Date().toLocaleString('fr-FR')} ===\n\n`
     + visibles.map((g, n) => `#${n + 1}\n` + ficheTechniqueErreur(g)).join('\n\n');
-  copierTexte(texte, e.currentTarget);
+  void copierTexte(texte, e.currentTarget);
 }
 document.getElementById('erreurs-copier-tout-btn').addEventListener('click', copierToutesLesErreurs);
 document.getElementById('erreurs-copier-tout-bas-btn').addEventListener('click', copierToutesLesErreurs);
@@ -753,7 +755,7 @@ document.getElementById('erreurs-tout-effacer-btn').addEventListener('click', as
   if (!confirm("Marquer toutes les erreurs actuelles comme vues ? Elles seront supprimées du journal (de nouvelles erreurs réapparaîtront normalement si elles se reproduisent).")) return;
   const depuis7j = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
   await sb.from('journal_erreurs').delete().gte('created_at', depuis7j);
-  chargerErreurs();
+  void chargerErreurs();
 });
 
 async function chargerClassementMannequins() {
@@ -1334,22 +1336,22 @@ async function chargerStatistiques() {
     </div>
   `;
 
-  chargerErreurs();
-  chargerClassementMannequins();
-  chargerCodes();
-  chargerProjets();
-  chargerResumeCandidatures();
-  chargerCandidatures();
-  chargerInscriptions();
-  chargerRecruteurs();
-  chargerRepartitionCategories();
-  chargerATraiter();
-  chargerActiviteGraphique();
-  chargerEvolutionCandidatures();
-  chargerApercuDossiers();
-  chargerDriveBloc();
-  chargerHeroVedette();
-  chargerDernieresActivites();
+  void chargerErreurs();
+  void chargerClassementMannequins();
+  void chargerCodes();
+  void chargerProjets();
+  void chargerResumeCandidatures();
+  void chargerCandidatures();
+  void chargerInscriptions();
+  void chargerRecruteurs();
+  void chargerRepartitionCategories();
+  void chargerATraiter();
+  void chargerActiviteGraphique();
+  void chargerEvolutionCandidatures();
+  void chargerApercuDossiers();
+  void chargerDriveBloc();
+  void chargerHeroVedette();
+  void chargerDernieresActivites();
 
   const { data: derniersContacts } = await sb.from('messages_contact').select('nom, type_contact, telephone, created_at').order('created_at', { ascending: false }).limit(10);
   document.querySelector('#table-contacts tbody').innerHTML = (derniersContacts || []).map(c => {
@@ -1359,11 +1361,11 @@ async function chargerStatistiques() {
   `;
   }).join('') || '<tr><td colspan="5">Aucun message.</td></tr>';
 
-  chargerVedette();
-  chargerBandeau();
-  chargerMotResponsableTableau();
-  chargerCompteurValidations();
-  chargerConfigInstagram();
+  void chargerVedette();
+  void chargerBandeau();
+  void chargerMotResponsableTableau();
+  void chargerCompteurValidations();
+  void chargerConfigInstagram();
 }
 
 
@@ -1407,7 +1409,7 @@ document.getElementById('instagram-enregistrer-btn').addEventListener('click', a
   msg.textContent = error ? "Erreur lors de l'enregistrement : " + error.message : 'Jeton enregistré. Cliquez sur "Rafraîchir les publications" pour les récupérer.';
   msg.style.display = 'block';
   document.getElementById('instagram-token').value = '';
-  if (!error) chargerConfigInstagram();
+  if (!error) void chargerConfigInstagram();
 });
 
 document.getElementById('instagram-rafraichir-btn').addEventListener('click', async () => {
@@ -1460,7 +1462,7 @@ async function chargerCompteurValidations() {
 }
 
 document.getElementById('validation-details').addEventListener('toggle', (e) => {
-  if (e.target.open && !validationsChargees) chargerListeValidations();
+  if (e.target.open && !validationsChargees) void chargerListeValidations();
 });
 
 async function chargerListeValidations() {
@@ -1515,9 +1517,9 @@ document.getElementById('liste-validations').addEventListener('click', async (e)
     const { error } = await sb.from('model_profiles').update({ published: true }).eq('id', idValider);
     if (error) { alert("Erreur lors de la validation : " + error.message); e.target.disabled = false; return; }
     validationsChargees = false;
-    chargerListeValidations();
-    chargerCompteurValidations();
-    chargerATraiter();
+    void chargerListeValidations();
+    void chargerCompteurValidations();
+    void chargerATraiter();
   }
 
   if (idRefuser) {
@@ -1526,9 +1528,9 @@ document.getElementById('liste-validations').addEventListener('click', async (e)
     const { error } = await sb.from('model_profiles').update({ en_attente_validation: false, raison_refus: raison.trim() || null }).eq('id', idRefuser);
     if (error) { alert("Erreur : " + error.message); return; }
     validationsChargees = false;
-    chargerListeValidations();
-    chargerCompteurValidations();
-    chargerATraiter();
+    void chargerListeValidations();
+    void chargerCompteurValidations();
+    void chargerATraiter();
   }
 });
 
@@ -1551,7 +1553,7 @@ document.getElementById('liste-validations').addEventListener('click', async (e)
 
 let mannequinsPubliesCharges = false;
 document.getElementById('mannequins-publies-details').addEventListener('toggle', (e) => {
-  if (e.target.open && !mannequinsPubliesCharges) chargerListeMannequinsPublies();
+  if (e.target.open && !mannequinsPubliesCharges) void chargerListeMannequinsPublies();
 });
 
 async function chargerListeMannequinsPublies() {
@@ -1685,8 +1687,8 @@ async function afficherCvAdmin(modelId) {
 function fermerCvAdmin() { document.getElementById('modal-cv-mannequin').classList.remove('ouvert'); }
 document.getElementById('modal-cv-mannequin-fermer').addEventListener('click', fermerCvAdmin);
 document.getElementById('cvAdminFermer2').addEventListener('click', fermerCvAdmin);
-document.getElementById('cvAdminBtnPdf').addEventListener('click', function () { genererCvFichier('pdf', donneesCvAdminCourantes, 'cvAdminBtnPdf', 'cvAdminBtnJpeg'); });
-document.getElementById('cvAdminBtnJpeg').addEventListener('click', function () { genererCvFichier('jpeg', donneesCvAdminCourantes, 'cvAdminBtnPdf', 'cvAdminBtnJpeg'); });
+document.getElementById('cvAdminBtnPdf').addEventListener('click', function () { void genererCvFichier('pdf', donneesCvAdminCourantes, 'cvAdminBtnPdf', 'cvAdminBtnJpeg'); });
+document.getElementById('cvAdminBtnJpeg').addEventListener('click', function () { void genererCvFichier('jpeg', donneesCvAdminCourantes, 'cvAdminBtnPdf', 'cvAdminBtnJpeg'); });
 document.getElementById('modal-cv-mannequin').addEventListener('click', function (e) {
   if (e.target.id === 'modal-cv-mannequin') fermerCvAdmin();
 });
@@ -1713,7 +1715,7 @@ async function supprimerMannequin(modelId, nom) {
     const resultat = await reponse.json().catch(() => ({}));
     if (!reponse.ok) { alert('Échec de la suppression : ' + (resultat.error || 'erreur inconnue.')); return; }
     alert(`Le profil et le compte de "${nom}" ont été supprimés définitivement.`);
-    chargerListeMannequinsPublies();
+    void chargerListeMannequinsPublies();
   } catch (e) {
     alert('Échec de la suppression : ' + e.message);
   }
@@ -1802,7 +1804,7 @@ async function supprimerPhotoMannequin(bouton) {
   if (cheminMiniature) await supprimerDeR2(mannequinPhotosOuvert, cheminMiniature);
   if (cheminMoyenne) await supprimerDeR2(mannequinPhotosOuvert, cheminMoyenne);
   await rafraichirPhotosMannequin();
-  chargerListeMannequinsPublies(); mannequinsPubliesCharges = false;
+  void chargerListeMannequinsPublies(); mannequinsPubliesCharges = false;
 }
 
 
@@ -2064,20 +2066,20 @@ document.addEventListener('click', (e) => {
     const source = pill.dataset.source;
     ETAT_DOSSIERS[source].filtre = pill.dataset.filtre;
     ETAT_DOSSIERS[source].page = 0;
-    afficherDossiers(source);
+    void afficherDossiers(source);
     return;
   }
   const plusBtn = e.target.closest('.dossiers-plus');
   if (plusBtn) {
     const source = plusBtn.id.startsWith('candidatures') ? 'casting' : (plusBtn.id.startsWith('inscriptions') ? 'inscription' : 'recruteur');
     ETAT_DOSSIERS[source].page += 1;
-    afficherDossiers(source, true);
+    void afficherDossiers(source, true);
     return;
   }
   if (e.target.closest('.dc-whatsapp')) return;
   const carte = e.target.closest('.dossier-carte');
   if (carte && carte.dataset.source) {
-    ouvrirFicheDossier(carte.dataset.source, carte.dataset.id);
+    void ouvrirFicheDossier(carte.dataset.source, carte.dataset.id);
   }
 });
 
@@ -2225,7 +2227,7 @@ async function chargerMannequinsSelection(requestId) {
     btn.addEventListener('click', async () => {
       if (!confirm('Retirer ce mannequin de la sélection de ce recruteur ?')) return;
       await sb.from('recruiter_request_models').delete().eq('id', btn.dataset.selectionId);
-      chargerMannequinsSelection(requestId);
+      void chargerMannequinsSelection(requestId);
     });
   });
 }
@@ -2503,8 +2505,8 @@ document.getElementById('mf-statut-select').addEventListener('change', async (e)
   const { error } = await sb.from(conf.table).update({ [conf.statutChamp]: nouveauStatut }).eq('id', ficheOuverte.id);
   if (error) { alert("Erreur lors du changement de statut : " + error.message); return; }
   ficheOuverte.d[conf.statutChamp] = nouveauStatut;
-  afficherDossiers(ficheOuverte.source);
-  chargerATraiter();
+  void afficherDossiers(ficheOuverte.source);
+  void chargerATraiter();
 
   afficherPanneauNotification(ficheOuverte.source, nouveauStatut, ficheOuverte.d);
   const genere = MODELES_NOTIFICATION[ficheOuverte.source] && MODELES_NOTIFICATION[ficheOuverte.source][nouveauStatut];
@@ -2542,8 +2544,8 @@ document.getElementById('mf-supprimer-dossier-btn').addEventListener('click', as
   if (error) { alert('Erreur lors de la suppression du dossier.'); return; }
 
   fermerFicheDossier();
-  afficherDossiers(ficheOuverte.source);
-  chargerATraiter();
+  void afficherDossiers(ficheOuverte.source);
+  void chargerATraiter();
 });
 
 function genererCode() {
@@ -2578,12 +2580,12 @@ document.getElementById('generer-code-btn').addEventListener('click', async () =
   document.getElementById('nouveau-code-texte').textContent = code;
   document.getElementById('nouveau-code-affiche').style.display = 'flex';
   msg.style.display = 'none';
-  chargerCodes();
+  void chargerCodes();
 });
 
 document.getElementById('copier-code-btn').addEventListener('click', () => {
   const code = document.getElementById('nouveau-code-texte').textContent;
-  navigator.clipboard.writeText(code).then(() => {
+  void navigator.clipboard.writeText(code).then(() => {
     const btn = document.getElementById('copier-code-btn');
     const texteOriginal = btn.textContent;
     btn.textContent = 'Copié !';
@@ -2697,7 +2699,7 @@ document.getElementById('form-nouveau-projet').addEventListener('submit', async 
     champDescription.value = '';
     champDate.value = '';
     champLieu.value = '';
-    chargerProjets();
+    void chargerProjets();
   } else {
     msg.className = 'form-msg err';
     msg.style.display = 'block';
@@ -2744,7 +2746,7 @@ async function echangerOrdreProjets(id, sens) {
   if (i === -1 || j < 0 || j >= liste.length) return;
   [liste[i], liste[j]] = [liste[j], liste[i]];
   await Promise.all(liste.map((p, idx) => sb.from('casting_projets').update({ ordre_affichage: idx }).eq('id', p.id)));
-  chargerProjets();
+  void chargerProjets();
 }
 
 document.getElementById('liste-projets').addEventListener('click', async (e) => {
@@ -2752,14 +2754,14 @@ document.getElementById('liste-projets').addEventListener('click', async (e) => 
   if (btnToggle) {
     const actifActuel = btnToggle.dataset.actif === 'true';
     await sb.from('casting_projets').update({ actif: !actifActuel }).eq('id', btnToggle.dataset.projetToggle);
-    chargerProjets();
+    void chargerProjets();
     return;
   }
   const btnSupprimer = e.target.closest('[data-projet-supprimer]');
   if (btnSupprimer) {
     if (!confirm('Supprimer définitivement ce projet ? Les candidatures déjà reçues pour lui resteront intactes (le nom du projet a été enregistré directement sur chaque candidature).')) return;
     await sb.from('casting_projets').delete().eq('id', btnSupprimer.dataset.projetSupprimer);
-    chargerProjets();
+    void chargerProjets();
     return;
   }
   const btnDescription = e.target.closest('[data-projet-description]');
@@ -2767,7 +2769,7 @@ document.getElementById('liste-projets').addEventListener('click', async (e) => 
     const nouvelleDescription = prompt('Description du projet (courte, visible par les candidats) :', btnDescription.dataset.descriptionActuelle || '');
     if (nouvelleDescription === null) return;
     await sb.from('casting_projets').update({ description: nouvelleDescription.trim() || null }).eq('id', btnDescription.dataset.projetDescription);
-    chargerProjets();
+    void chargerProjets();
     return;
   }
   const btnDateLieu = e.target.closest('[data-projet-date-lieu]');
@@ -2777,13 +2779,13 @@ document.getElementById('liste-projets').addEventListener('click', async (e) => 
     const nouveauLieu = prompt('Lieu du casting (laisser vide si inconnu) :', btnDateLieu.dataset.lieuActuel || '');
     if (nouveauLieu === null) return;
     await sb.from('casting_projets').update({ date_casting: nouvelleDate.trim() || null, lieu: nouveauLieu.trim() || null }).eq('id', btnDateLieu.dataset.projetDateLieu);
-    chargerProjets();
+    void chargerProjets();
     return;
   }
   const btnMonter = e.target.closest('[data-projet-monter]');
-  if (btnMonter) { echangerOrdreProjets(btnMonter.dataset.projetMonter, -1); return; }
+  if (btnMonter) { void echangerOrdreProjets(btnMonter.dataset.projetMonter, -1); return; }
   const btnDescendre = e.target.closest('[data-projet-descendre]');
-  if (btnDescendre) { echangerOrdreProjets(btnDescendre.dataset.projetDescendre, 1); }
+  if (btnDescendre) { void echangerOrdreProjets(btnDescendre.dataset.projetDescendre, 1); }
 });
 
 async function chargerResumeCandidatures() {
@@ -2828,16 +2830,16 @@ document.getElementById('tb-definir-vedette-btn').addEventListener('click', asyn
 
   if (error) { msg.className = 'form-msg err'; msg.textContent = "Erreur lors de l'enregistrement."; return; }
   msg.className = 'form-msg ok'; msg.textContent = 'Mannequin à la une mis à jour !';
-  chargerVedette();
-  chargerHeroVedette();
+  void chargerVedette();
+  void chargerHeroVedette();
 });
 
 document.getElementById('tb-retirer-vedette-btn').addEventListener('click', async () => {
   const msg = document.getElementById('tb-vedette-msg');
   await sb.from('model_profiles').update({ featured: false }).eq('featured', true);
   msg.className = 'form-msg ok'; msg.textContent = 'Mise en avant retirée.'; msg.style.display = 'block';
-  chargerVedette();
-  chargerHeroVedette();
+  void chargerVedette();
+  void chargerHeroVedette();
 });
 
 async function chargerBandeau() {
@@ -2859,13 +2861,13 @@ document.getElementById('bandeau-enregistrer-btn').addEventListener('click', asy
   const { error } = await sb.from('bandeau_annonce').update({ texte, updated_at: new Date().toISOString() }).eq('id', 'principal');
   if (error) { msg.className = 'form-msg err'; msg.textContent = "Erreur lors de l'enregistrement."; return; }
   msg.className = 'form-msg ok'; msg.textContent = 'Message enregistré !';
-  chargerBandeau();
+  void chargerBandeau();
 });
 
 document.getElementById('bandeau-actif-btn').addEventListener('click', async () => {
   const actif = document.getElementById('bandeau-actif-btn').dataset.actif === '1';
   await sb.from('bandeau_annonce').update({ actif: !actif }).eq('id', 'principal');
-  chargerBandeau();
+  void chargerBandeau();
 });
 
 let mrPhotoUrlActuelle = null;
@@ -2957,7 +2959,7 @@ document.getElementById('mr-photo-btn').addEventListener('click', async () => {
 
   msg.className = 'form-msg ok'; msg.textContent = 'Photo mise à jour !';
   input.value = '';
-  chargerMotResponsableTableau();
+  void chargerMotResponsableTableau();
 });
 
 document.getElementById('mr-enregistrer-btn').addEventListener('click', async () => {
@@ -2970,7 +2972,7 @@ document.getElementById('mr-enregistrer-btn').addEventListener('click', async ()
     .update({ nom, titre, message, updated_at: new Date().toISOString() }).eq('id', 'principal');
   if (error) { msg.className = 'form-msg err'; msg.textContent = "Erreur lors de l'enregistrement."; return; }
   msg.className = 'form-msg ok'; msg.textContent = 'Mot du fondateur enregistré !';
-  chargerMotResponsableTableau();
+  void chargerMotResponsableTableau();
 });
 
 initSidebarNav();
@@ -2979,7 +2981,7 @@ initSidebarNav();
 // tokenReinitCodeEnAttente reste simplement en mémoire : l'écran de connexion
 // normal s'affiche, et apresConnexionReussie() le consommera juste après la
 // saisie du mot de passe (voir tb-login-btn ci-dessus).
-(async () => {
+void (async () => {
   try {
     const estAdmin = await verifierAdminTableau();
     if (estAdmin && !recuperationMdpEnCours) {
