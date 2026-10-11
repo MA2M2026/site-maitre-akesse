@@ -303,7 +303,7 @@
         ? await sb.from('agenda_projets').update({ updated_at: new Date().toISOString(), ...ligne }).eq('id', id).select('id')
         : await sb.from('agenda_projets').insert(ligne).select('id');
       if (r.error) {
-        message(/mannequins_libres/.test(r.error.message || '')
+        message(/mannequins_libres/.test(r.error.message || '') && /column|schema cache/i.test(r.error.message || '')
           ? 'La case « Autres mannequins » n’est pas encore activée : collez l’Extension 137 dans Supabase, puis réessayez.'
           : 'Erreur : ' + r.error.message, true);
         return;

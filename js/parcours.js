@@ -98,7 +98,7 @@
     const parId = new Map();
     duMois.forEach(p => (p.mannequins || []).forEach(m => {
       // une mannequin écrite à la main (sans profil, Extension 137) n'a pas d'identifiant
-      const cle = m.id || 'nom:' + m.nom;
+      const cle = m.id || 'nom:' + String(m.nom || '').trim().toLowerCase();
       if (!parId.has(cle)) parId.set(cle, { ...m, projets: [] });
       parId.get(cle).projets.push(p);
     }));

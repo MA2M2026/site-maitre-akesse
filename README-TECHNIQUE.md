@@ -2052,15 +2052,15 @@ sur un projet : champ `#agenda-autres` du tableau de bord (un nom par ligne, 40 
 caractères au plus, doublons retirés par `lireAutres()` dans `js/agenda-admin.js`), enregistré
 dans `agenda_projets.mannequins_libres`. La fonction SQL `mannequins_publics_projet(ids, noms)`
 est la règle unique qui fabrique la liste publique des mannequins d'un projet (profils visibles
-du public + noms écrits, ces derniers avec `id` et `slug` vides) pour `agenda_public` et
+du public + noms écrits, ces derniers avec `id` et `slug` vides, une seule fois chacun et
+jamais en double d'une mannequin cochée) pour `agenda_public` et
 `parcours_public`. Côté site, `lienFicheMannequin(m)` renvoie un lien vide pour ces noms :
 agenda et Parcours les affichent sans lien ni photo (logo par défaut). Tant que l'Extension 137
 n'est pas collée, le formulaire n'envoie le champ que si des noms sont écrits (message clair
 en cas d'erreur). Essais : `test-admin.js` (envoi des noms) et `test-pages-publiques.js`.
 
 ## Menu agrandi et animé (11/10/2026, demande de la propriétaire)
-`css/menu.css` : ouverture en cercle depuis le bouton Menu (`clip-path`), lueur bordeaux qui
-bouge lentement, rubriques qui montent une à une (`--rang`), très grands titres
+`css/menu.css` : ouverture et fermeture en cercle depuis le bouton Menu (`clip-path`), rubriques qui montent une à une (`--rang`), très grands titres
 (`clamp(2rem, 8.6vw, 3.6rem)`), deux colonnes à partir de 1024 px de large pour que tout tienne
 sur une page. Aucune animation si le visiteur a demandé moins de mouvement.
 

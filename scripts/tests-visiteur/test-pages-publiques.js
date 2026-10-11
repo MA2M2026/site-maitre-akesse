@@ -50,6 +50,9 @@ const cas = [
       ordre: [...document.querySelectorAll('#menuOverlay .nav-links > li:not(.menu-sous) > a')].slice(0, 2).map(x => (x.getAttribute('href') || '').replace(/^.*\//, '')).join(','),
       rejoindre: !!document.querySelector('#menuOverlay li.menu-rejoindre a[href$="integrer-agence.html"]'),
       pied: !!document.querySelector('.site-footer .footer-grille'),
+      // bas de page : ordre d'origine gardé (Intégrer l'agence avant Postuler, The Book avant Parcours)
+      ordrePied: (() => { const h = [...document.querySelectorAll('.footer-grille a')].map(x => (x.getAttribute('href') || '').replace(/^.*\//, ''));
+        return h.indexOf('integrer-agence.html') < h.indexOf('candidature.html') && h.indexOf('mannequins.html') < h.indexOf('parcours.html'); })(),
       annee: (document.getElementById('an') || {}).textContent || ''
     }));
     const autreLangue = page.startsWith('en/') ? '/' + page.slice(3).split('?')[0] : '/en/' + page.split('?')[0];
@@ -63,6 +66,7 @@ const cas = [
       const libre = await p.evaluate(() => ({ nom: document.body.innerText.includes('Fatou Bamba'), mauvaisLien: !!document.querySelector('a[href*="null"], a[href*="undefined"], a[href=""]') }));
       if (!libre.nom || libre.mauvaisLien) manquants.push('mannequin écrite à la main (' + JSON.stringify(libre) + ')');
     }
+    if (!gabarit.ordrePied) manquants.push('ordre du bas de page');
     if (!gabarit.pied || gabarit.annee !== String(new Date().getFullYear())) manquants.push('bas de page');
     const ok = !manquants.length && !errs.length;
     console.log(`${ok ? '✓' : '❌ ÉCHEC'} ${page} (${vp.width}px)${manquants.length ? ' | manque : ' + manquants.join(', ') : ''} | erreurs : ${JSON.stringify(errs)}`);

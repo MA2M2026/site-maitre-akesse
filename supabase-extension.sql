@@ -7130,9 +7130,16 @@ as $$
       where p.id = any(ids)
         and profil_visible_public(p.published, p.mesures_a_reprendre_depuis, p.desactive)
     union all
-    select jsonb_build_object('id', null, 'nom', left(trim(n), 80), 'slug', null), trim(n)
-      from unnest(coalesce(noms, '{}')) as n
-      where length(trim(n)) > 0
+    -- noms écrits : une seule fois chacun (majuscules et espaces ignorés), et jamais en double
+    -- d'une mannequin cochée dont le profil est affiché (nom oublié une fois inscrite)
+    select jsonb_build_object('id', null, 'nom', e.nom, 'slug', null), e.nom
+      from (select distinct on (lower(left(trim(n), 80))) left(trim(n), 80) as nom
+              from unnest(coalesce(noms, '{}')) as n
+              where length(trim(n)) > 0
+              order by lower(left(trim(n), 80))) e
+      where not exists (select 1 from model_profiles p
+                        where p.id = any(ids) and lower(trim(p.full_name)) = lower(e.nom)
+                          and profil_visible_public(p.published, p.mesures_a_reprendre_depuis, p.desactive))
   ) x;
 $$;
 -- appelée seulement par les deux fonctions publiques ci-dessous

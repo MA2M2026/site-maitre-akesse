@@ -951,7 +951,8 @@ async function ma2mParcours(debut, fin, idMannequin) {
     return [];
   }
   // La page est réservée à nos mannequins : un projet (ex. un casting ouvert organisé par
-  // l'agence) n'y figure que si au moins une de nos mannequins publiées y est cochée.
+  // l'agence) n'y figure que s'il montre au moins un nom — une de nos mannequins publiées
+  // cochée, ou une mannequin de l'agence écrite à la main (Extension 137).
   return (data || []).filter(p => (p.mannequins || []).length);
 }
 // Date du jour (ou d'une date) au format « AAAA-MM-JJ » dans le fuseau du visiteur

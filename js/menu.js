@@ -169,6 +169,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (liste && !liste.querySelector('.item-marketplace')) {
       const li = document.createElement('li');
       li.className = 'item-marketplace';
+      li.style.setProperty('--rang', 0); // tout en haut : apparaît le premier
       const a = document.createElement('a');
       a.href = '/marketplace/';
       a.textContent = 'Marketplace';

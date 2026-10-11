@@ -6,19 +6,19 @@
 
 html body .menu-overlay {
   inset: 0 !important; width: 100% !important; max-width: none !important;
-  background: radial-gradient(120% 80% at 85% 0%, #3a0c13 0%, #060606 58%) 0 0 / 160% 160% !important;
+  background: radial-gradient(120% 80% at 85% 0%, #3a0c13 0%, #060606 58%) !important;
   border: 0 !important; box-shadow: none !important;
   padding: 6rem clamp(22px, 6vw, 80px) 2.2rem !important;
   overflow-y: auto; overscroll-behavior: contain;
   display: flex !important; flex-direction: column; align-items: stretch; justify-content: flex-start;
   transform: none !important;
-  opacity: 0; visibility: hidden;
-  /* ouverture : un cercle part du bouton Menu (en haut à droite) et couvre tout l'écran */
+  opacity: 1 !important; visibility: hidden;
+  /* ouverture : un cercle part du bouton Menu (en haut à droite) et couvre tout l'écran ;
+     à la fermeture, il se referme vers le bouton */
   clip-path: circle(0 at calc(100% - 52px) 42px);
-  transition: clip-path 0.7s cubic-bezier(.7,0,.2,1), opacity 0.3s ease, visibility 0.7s !important;
+  transition: clip-path 0.7s cubic-bezier(.7,0,.2,1), visibility 0.7s !important;
 }
-html body .menu-overlay.active { opacity: 1; visibility: visible; clip-path: circle(150% at calc(100% - 52px) 42px); animation: menu-lueur 14s ease-in-out infinite alternate; }
-@keyframes menu-lueur { from { background-position: 0 0; } to { background-position: 100% 60%; } }
+html body .menu-overlay.active { visibility: visible; clip-path: circle(150% at calc(100% - 52px) 42px); }
 
 /* logo en haut à gauche, rond de fermeture en haut à droite (repris de l'ancien tiroir) */
 html body .menu-overlay::before { top: 1.6rem !important; left: clamp(22px, 6vw, 80px) !important; }
@@ -98,7 +98,6 @@ html body .menu-overlay .menu-reseaux { justify-content: flex-start !important; 
 
 @media (prefers-reduced-motion: reduce) {
   html body .menu-overlay, html body .menu-overlay .nav-links li { transition: none !important; }
-  html body .menu-overlay.active { animation: none; }
 }
 html body .menu-overlay .nav-links li.item-cta a::before,
 html body .menu-overlay .nav-links li.menu-rejoindre a::before { content: none !important; }
