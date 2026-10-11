@@ -318,7 +318,7 @@ document.getElementById('form-inscription').addEventListener('submit', async (e)
   } catch (e) {
     nbPhotosEchouees = fichiers.length;
   }
-  journaliserPhotosEchouees('inscription', idInscription, nbPhotosEchouees);
+  Promise.resolve(journaliserPhotosEchouees('inscription', idInscription, nbPhotosEchouees)).catch(() => {});
 
   if (window.jouerSon) window.jouerSon('envoi');
   msg.className = 'form-msg ok';
