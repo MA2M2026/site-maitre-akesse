@@ -56,8 +56,10 @@ async function creerCompteMannequin(entetes, nom, email, motDePasse) {
     body: JSON.stringify({ id: id, full_name: nom, published: false })
   });
   if (!repFiche.ok) {
-    await signalerPanne(entetes, 'fiche model_profiles', await repFiche.text().catch(() => repFiche.status));
+    const raison = await repFiche.text().catch(() => repFiche.status);
+    // Nettoyage d'abord : un journal lent ne doit jamais laisser un compte sans fiche.
     await fetch(SUPABASE_URL + '/auth/v1/admin/users/' + encodeURIComponent(id), { method: 'DELETE', headers: entetes }).catch(() => {});
+    await signalerPanne(entetes, 'fiche model_profiles', raison);
     return { status: 502, corps: { error: 'creation' } };
   }
   return { status: 200, corps: { ok: true } };

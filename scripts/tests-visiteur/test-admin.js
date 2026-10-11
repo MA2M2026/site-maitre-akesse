@@ -15,7 +15,8 @@ const PORT = String(8800 + Math.floor(Math.random() * 100));
       parent_nom: 'Monsieur Akesse Franck', parent_telephone: '+225 0777071859', parent_email: 'parent@gmail.com' };
     const yao = { id: 'c2', full_name: 'YAO KOUASSI', email: 'yao@gmail.com', phone: '+225 0102030405', genre: 'homme', date_naissance: '1999-01-01', type_candidature: 'agence', status: 'retenue', created_at: '2026-10-06T10:00:00Z' };
     const bintou = { id: 'c3', full_name: 'BINTOU TRAORÉ', email: 'bintou@gmail.com', phone: '+225 0505050505', genre: 'femme', civilite: 'Madame', date_naissance: '1995-05-05', type_candidature: 'agence', status: 'retenue', created_at: '2026-10-05T10:00:00Z' };
-    await brancher(p, { tables: { admins: [{ user_id: 'admin-1' }], casting_applications: [franck, yao, bintou] }, rpc: { code_validation_statut: [{ defini: true }] } }, journal);
+    await brancher(p, { tables: { admins: [{ user_id: 'admin-1' }], casting_applications: [franck, yao, bintou],
+      model_profiles: [{ id: 'm1', full_name: 'AWA KONÉ', city: 'Abidjan', published: true, desactive: false }, { id: 'm2', full_name: 'MARIAM SANOGO', city: 'Yopougon', published: false, desactive: true }] }, rpc: { code_validation_statut: [{ defini: true }] } }, journal);
     await p.goto('http://127.0.0.1:' + PORT + '/tableau-de-bord.html'); await p.waitForTimeout(1200);
     if (await p.isVisible('#bandeau-cookies [data-cookies="oui"]')) await p.click('#bandeau-cookies [data-cookies="oui"]');
     // 1. Connexion comme l'administratrice
@@ -65,6 +66,16 @@ const PORT = String(8800 + Math.floor(Math.random() * 100));
     await p.evaluate(() => { for (let i = 0; i < 3; i++) document.getElementById('mg-wa-suivant').click(); });
     const wa = await p.evaluate(() => (window.__ouverts || []).map(u => u.split('?')[0] + ' | ' + decodeURIComponent(u.split('?text=')[1] || '').split('\n')[2]));
     console.log('Messages groupés, WhatsApp :', wa);
+    // 7. Mise en sourdine (Extension 135) : bouton sur la carte, question, appel de definir_sourdine
+    await p.evaluate(() => document.querySelector('.tdb-menu-item[data-tdb-cible="b2-mannequins-publies"]').click()); await p.waitForTimeout(500);
+    await p.evaluate(() => { const d = document.getElementById('mannequins-publies-details'); d.open = true; }); await p.waitForTimeout(1200);
+    const questions = []; p.on('dialog', d => { questions.push(d.message().split('\n')[0]); d.accept(); });
+    const boutons = await p.$$eval('#liste-mannequins-publies .btn-sourdine', bs => bs.map(x => x.dataset.nom + ' → ' + x.textContent.trim()));
+    await p.$eval('#liste-mannequins-publies .btn-sourdine[data-id="m1"]', x => x.click()); await p.waitForTimeout(800);
+    await p.$eval('#liste-mannequins-publies .btn-sourdine[data-id="m2"]', x => x.click()); await p.waitForTimeout(800);
+    console.log('Sourdine, boutons :', boutons, '| badge :', await p.$$eval('.tdb-sourdine', e => e.length));
+    console.log('Sourdine, questions :', questions);
+    console.log('Sourdine, appels :', journal.filter(j => j[1] === 'definir_sourdine').map(j => j[2]));
     console.log('Erreurs :', errs.filter(e => !/Failed to fetch|NetworkError|ERR_/.test(e)));
     await ctx.close();
   }
