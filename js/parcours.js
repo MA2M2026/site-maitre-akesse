@@ -10,6 +10,7 @@
   const VISAGES_MAX = 18;
   const MOIS_HISTOIRE = 24; // les deux dernières années
   const $ = (id) => document.getElementById(id);
+  const PHOTO_DEFAUT = '/assets/logo-dark-bg.png';
   const animer = !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
   let projets = [];        // tous les projets réalisés de la période
@@ -18,19 +19,16 @@
   let typeChoisi = '';     // '' = tous
   let tousLesVisages = false;
 
-  const iso = (d) => d.toISOString().slice(0, 10);
   const cleMois = (date) => date.slice(0, 7);
   function libelleMois(cle, court) {
     const d = new Date(cle + '-15T12:00:00');
     return d.toLocaleDateString(EN ? 'en-GB' : 'fr-FR', court ? { month: 'short', year: '2-digit' } : { month: 'long', year: 'numeric' });
   }
-  const lieuDe = (p) => [p.lieu, p.ville, p.pays].filter(Boolean).join(', ');
 
-  // Projets du mois choisi (un projet sur plusieurs mois compte dans chacun), filtrés par type.
-  function projetsDuMois() {
-    return projets.filter(p => cleMois(p.date_debut) <= moisChoisi && cleMois(p.date_fin || p.date_debut) >= moisChoisi)
-      .filter(p => !typeChoisi || p.type === typeChoisi);
-  }
+  // Un projet sur plusieurs mois compte dans chacun de ces mois (frise, contenu, filtres).
+  const dansLeMois = (p, cle) => cleMois(p.date_debut) <= cle && cleMois(p.date_fin || p.date_debut) >= cle;
+  const projetsMois = () => projets.filter(p => dansLeMois(p, moisChoisi));
+  const projetsDuMois = () => projetsMois().filter(p => !typeChoisi || p.type === typeChoisi);
 
   // Compteur animé de 0 à la valeur (« motion design ») ; valeur finale directe sans animation.
   function compter(el, valeur) {
@@ -45,30 +43,29 @@
 
   function dessinerMois() {
     const frise = $('parcours-mois');
-    const presents = new Set(projets.map(p => cleMois(p.date_debut)));
     const aujourdhui = new Date();
     const liste = [];
     for (let i = 0; i < MOIS_HISTOIRE; i++) {
       const d = new Date(aujourdhui.getFullYear(), aujourdhui.getMonth() - i, 15);
-      liste.push(iso(d).slice(0, 7));
+      liste.push(dateLocaleIso(d).slice(0, 7));
     }
     frise.textContent = '';
     liste.reverse().forEach(cle => {
       const b = document.createElement('button');
       b.type = 'button';
-      b.className = 'parcours-mois-btn' + (cle === moisChoisi ? ' actif' : '') + (presents.has(cle) ? ' plein' : '');
+      b.className = 'parcours-mois-btn' + (cle === moisChoisi ? ' actif' : '') + (projets.some(p => dansLeMois(p, cle)) ? ' plein' : '');
       b.textContent = libelleMois(cle, true);
       b.setAttribute('aria-pressed', cle === moisChoisi ? 'true' : 'false');
-      b.addEventListener('click', () => { moisChoisi = cle; tousLesVisages = false; afficher(); });
+      b.addEventListener('click', () => { moisChoisi = cle; typeChoisi = ''; tousLesVisages = false; afficher(); });
       frise.appendChild(b);
     });
     const actif = frise.querySelector('.actif');
-    if (actif) frise.scrollLeft = actif.offsetLeft - frise.clientWidth / 2 + actif.clientWidth / 2;
+    if (actif) frise.scrollLeft = actif.offsetLeft - frise.clientWidth / 2 + actif.clientWidth / 2; // .parcours-mois est positionnée (css)
   }
 
   function dessinerFiltres() {
     const zone = $('parcours-filtres');
-    const types = ma2mCompteParType(projets.filter(p => cleMois(p.date_debut) <= moisChoisi && cleMois(p.date_fin || p.date_debut) >= moisChoisi));
+    const types = ma2mCompteParType(projetsMois());
     zone.textContent = '';
     if (types.length < 2) return;
     [['', T('Tout', 'All')]].concat(types.map(([t]) => [t, libelleTypeAgenda(t, EN)])).forEach(([t, nom]) => {
@@ -111,7 +108,7 @@
     a.type = 'button';
     a.className = 'parcours-visage';
     a.style.setProperty('--delai', Math.min(i, 24) * 45 + 'ms');
-    a.innerHTML = `<span class="parcours-visage-photo"><img src="${echapperHtml(photos[m.id] || '/assets/logo-dark-bg.png')}" alt="" loading="lazy"></span>`
+    a.innerHTML = `<span class="parcours-visage-photo"><img src="${echapperHtml(photos[m.id] || PHOTO_DEFAUT)}" alt="" loading="lazy"></span>`
       + `<span class="parcours-visage-nom">${echapperHtml(m.nom)}</span>`
       + `<span class="parcours-visage-badge" aria-label="${m.projets.length} ${T('activités', 'activities')}">${m.projets.length}</span>`;
     a.addEventListener('click', () => ouvrirDetail(m));
@@ -131,11 +128,11 @@
 
   function ouvrirDetail(m) {
     const d = $('parcours-detail');
-    d.innerHTML = `<div class="parcours-detail-tete"><img src="${echapperHtml(photos[m.id] || '/assets/logo-dark-bg.png')}" alt="">`
+    d.innerHTML = `<div class="parcours-detail-tete"><img src="${echapperHtml(photos[m.id] || PHOTO_DEFAUT)}" alt="">`
       + `<div><h3>${echapperHtml(m.nom)}</h3><p>${m.projets.length} ${m.projets.length > 1 ? T('activités en', 'activities in') : T('activité en', 'activity in')} ${echapperHtml(libelleMois(moisChoisi))}</p></div>`
       + `<button type="button" class="parcours-detail-fermer" aria-label="${T('Fermer', 'Close')}">✕</button></div>`
       + '<ul>' + m.projets.map(p => `<li><span class="parcours-type">${echapperHtml(libelleTypeAgenda(p.type, EN))}</span>`
-        + `<strong>${echapperHtml(p.titre)}</strong><em>${echapperHtml(dateAgenda(p.date_debut, p.date_fin, EN))}${lieuDe(p) ? ' · ' + echapperHtml(lieuDe(p)) : ''}</em></li>`).join('') + '</ul>'
+        + `<strong>${echapperHtml(p.titre)}</strong><em>${echapperHtml(dateLieuProjet(p))}</em></li>`).join('') + '</ul>'
       + `<a class="btn" href="${lienFicheMannequin(m)}">${T('Voir le book', 'View the book')}</a>`;
     d.hidden = false;
     d.querySelector('.parcours-detail-fermer').addEventListener('click', () => { d.hidden = true; });
@@ -149,9 +146,9 @@
       return '<article class="parcours-projet">'
         + `<span class="parcours-type">${echapperHtml(libelleTypeAgenda(p.type, EN))}</span>`
         + `<h3>${echapperHtml(p.titre)}</h3>`
-        + `<p class="parcours-projet-meta">${echapperHtml(dateAgenda(p.date_debut, p.date_fin, EN))}${lieuDe(p) ? ' · ' + echapperHtml(lieuDe(p)) : ''}</p>`
+        + `<p class="parcours-projet-meta">${echapperHtml(dateLieuProjet(p))}</p>`
         + `<div class="parcours-projet-visages">` + visages.slice(0, 6).map(m =>
-          `<a href="${lienFicheMannequin(m)}" title="${echapperHtml(m.nom)}"><img src="${echapperHtml(photos[m.id] || '/assets/logo-dark-bg.png')}" alt="${echapperHtml(m.nom)}" loading="lazy"></a>`).join('')
+          `<a href="${lienFicheMannequin(m)}" title="${echapperHtml(m.nom)}"><img src="${echapperHtml(photos[m.id] || PHOTO_DEFAUT)}" alt="${echapperHtml(m.nom)}" loading="lazy"></a>`).join('')
         + (visages.length > 6 ? `<span class="parcours-projet-plus">+${visages.length - 6}</span>` : '') + '</div></article>';
     }).join('');
     // délai d'apparition en cascade (propriété CSS posée en JavaScript : la sécurité du site
@@ -178,7 +175,7 @@
 
   async function demarrer() {
     const fin = new Date(), debut = new Date(fin.getFullYear(), fin.getMonth() - MOIS_HISTOIRE + 1, 1);
-    projets = await ma2mParcours(iso(debut), iso(fin));
+    projets = await ma2mParcours(dateLocaleIso(debut), dateLocaleIso(fin));
     const ids = [...new Set(projets.flatMap(p => (p.mannequins || []).map(m => m.id)))];
     if (ids.length && typeof sb !== 'undefined' && sb) {
       const { data } = await sb.rpc('photos_couverture_mannequins', { ids });
@@ -186,7 +183,7 @@
     }
     // Mois affiché au départ : le plus récent qui a des activités (sinon le mois en cours).
     const recents = projets.map(p => cleMois(p.date_fin || p.date_debut)).sort();
-    moisChoisi = recents.length ? recents[recents.length - 1] : iso(fin).slice(0, 7);
+    moisChoisi = recents.length ? recents[recents.length - 1] : dateLocaleIso(fin).slice(0, 7);
     $('parcours-plus').addEventListener('click', () => { tousLesVisages = true; afficher(); });
     afficher();
   }

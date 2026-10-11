@@ -942,7 +942,23 @@ function lienFicheMannequin(m) {
 async function ma2mParcours(debut, fin, idMannequin) {
   if (typeof sb === 'undefined' || !sb) return [];
   const { data, error } = await sb.rpc('parcours_public', { p_debut: debut, p_fin: fin, p_model: idMannequin || null });
-  return error ? [] : (data || []);
+  if (error) {
+    // panne signalée au journal (sinon elle ressemblerait à « aucune activité »)
+    if (window.signalerErreur) window.signalerErreur('Parcours MA2M : lecture impossible', error.message || String(error));
+    return [];
+  }
+  return data || [];
+}
+// Date du jour (ou d'une date) au format « AAAA-MM-JJ » dans le fuseau du visiteur
+// (toISOString passe en heure universelle et peut décaler d'un jour).
+function dateLocaleIso(d) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+// « Sofitel, Abidjan, Côte d'Ivoire » et « sam. 20 sept. 2026 · Sofitel, Abidjan, … »
+function lieuProjet(p) { return [p.lieu, p.ville, p.pays].filter(Boolean).join(', '); }
+function dateLieuProjet(p) {
+  const lieu = lieuProjet(p);
+  return dateAgenda(p.date_debut, p.date_fin, EN) + (lieu ? ' · ' + lieu : '');
 }
 // Nombre de projets par type, du plus fréquent au moins fréquent : [['defile', 4], …]
 function ma2mCompteParType(projets) {
@@ -954,7 +970,8 @@ function ma2mCompteParType(projets) {
 // « 3 défilés », « 1 shooting », « 2 fashion shows » : nombre + type, au pluriel si besoin.
 function nombreTypeAgenda(type, n, enAnglais) {
   const l = libelleTypeAgenda(type, enAnglais).toLowerCase();
-  return n + ' ' + (n > 1 && !/[sx]$/.test(l) ? l + 's' : l);
+  if (n < 2 || /[x]$/.test(l) || /[^s]s$/.test(l)) return n + ' ' + l; // déjà au pluriel (essayages, fittings)
+  return n + ' ' + l + (/ss$/.test(l) ? 'es' : 's');                      // masterclass → masterclasses
 }
 
 function dateAgenda(debut, fin, enAnglais) {

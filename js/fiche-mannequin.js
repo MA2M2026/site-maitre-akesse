@@ -412,10 +412,9 @@ async function afficherParcoursAgence(idMannequin) {
   const zone = document.getElementById('fiche-ma2m');
   if (!zone) return;
   const fin = new Date(), debut = new Date(fin.getFullYear() - 10, fin.getMonth(), 1);
-  const projetsAgence = await ma2mParcours(debut.toISOString().slice(0, 10), fin.toISOString().slice(0, 10), idMannequin);
+  const projetsAgence = await ma2mParcours(dateLocaleIso(debut), dateLocaleIso(fin), idMannequin);
   if (!projetsAgence.length) return;
   const totaux = ma2mCompteParType(projetsAgence).map(([t, n]) => nombreTypeAgenda(t, n, EN)).join(' · ');
-  const lieu = (p) => [p.lieu, p.ville, p.pays].filter(Boolean).join(', ');
   zone.innerHTML = `
     <section class="fiche-carte fiche-ancre" id="fiche-avec-ma2m">
       <h3 class="fiche-carte-titre">${T('Avec MA2M', 'With MA2M')} <span>${echapperHtml(totaux)}</span></h3>
@@ -424,7 +423,7 @@ async function afficherParcoursAgence(idMannequin) {
           <li class="fiche-projet">
             <span class="fiche-projet-type">${echapperHtml(libelleTypeAgenda(p.type, EN))}</span>
             <span class="fiche-projet-titre">${echapperHtml(p.titre)}</span>
-            <span class="fiche-projet-meta">${echapperHtml(dateAgenda(p.date_debut, p.date_fin, EN))}${lieu(p) ? ' · ' + echapperHtml(lieu(p)) : ''}</span>
+            <span class="fiche-projet-meta">${echapperHtml(dateLieuProjet(p))}</span>
           </li>`).join('')}
       </ol>
       <a class="fiche-lien-plus" href="parcours.html">${T('Voir le Parcours MA2M →', 'See the MA2M Track Record →')}</a>

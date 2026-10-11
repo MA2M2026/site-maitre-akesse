@@ -9,7 +9,7 @@
 
 /* Frise des mois : défile de gauche à droite, le mois choisi au centre */
 .parcours-mois {
-  display: flex; gap: 0.5rem; overflow-x: auto; padding: 0.4rem 0 1rem;
+  position: relative; display: flex; gap: 0.5rem; overflow-x: auto; padding: 0.4rem 0 1rem;
   scroll-behavior: smooth; scrollbar-width: none; -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
   mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
 }
