@@ -6793,3 +6793,245 @@ revoke all on function soumettre_inscription_mannequin(text, text, date, text, i
 grant execute on function soumettre_inscription_mannequin(text, text, date, text, int, text, text, text, text, text, text, text, text) to anon, authenticated;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 133 — « Créer mon compte » de nouveau possible (11/10/2026).
+-- Depuis le 04/10/2026, le compte d'une nouvelle mannequin est créé par le serveur
+-- (api/code-protege.js, clé service_role). Mais le garde-fou
+-- proteger_proprietaire_profil() refusait toute écriture sans utilisateur connecté
+-- (auth.uid() vide) : la fiche model_profiles ne se créait pas, le compte était
+-- annulé et la mannequin voyait « La création du compte a échoué ». Le serveur
+-- (rôle service_role, clé secrète jamais envoyée au navigateur) est désormais
+-- autorisé ; les règles pour les mannequins et les admins ne changent pas.
+-- ===================================================================
+create or replace function proteger_proprietaire_profil()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  est_admin boolean;
+begin
+  if coalesce(auth.role(), '') = 'service_role' then
+    return NEW;
+  end if;
+  select exists(select 1 from admins where user_id = auth.uid()) into est_admin;
+  if est_admin then
+    return NEW;
+  end if;
+  if auth.uid() is null or NEW.id is distinct from auth.uid() then
+    raise exception 'Modification refusée : ce profil ne vous appartient pas.';
+  end if;
+  if TG_OP = 'UPDATE' and OLD.id is distinct from NEW.id then
+    raise exception 'Modification refusée : identifiant du profil non modifiable.';
+  end if;
+  return NEW;
+end;
+$$;
+
+NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 134 — Règle UNIQUE pour les écritures du serveur (11/10/2026).
+-- Leçon de l'incident « Créer mon compte » (bloqué du 04 au 11/10, Extension 133) :
+-- les garde-fous « ce profil / cette photo ne vous appartient pas » refusaient toute
+-- écriture sans mannequin connectée, y compris celles du serveur du site et de la base
+-- elle-même (suppression en cascade quand l'agence supprime un compte : les photos du
+-- compte auraient bloqué la suppression). Une seule fonction décide désormais :
+-- est_ecriture_serveur() = vrai quand la requête ne vient PAS d'un navigateur
+-- (rôle 'anon' ou 'authenticated' : visiteur ou personne connectée). Tout nouveau
+-- garde-fou doit commencer par « if est_ecriture_serveur() then return … end if; ».
+-- ===================================================================
+create or replace function est_ecriture_serveur()
+returns boolean
+language sql
+stable
+as $$
+  select coalesce(auth.role(), '') not in ('anon', 'authenticated');
+$$;
+revoke all on function est_ecriture_serveur() from public;
+
+create or replace function proteger_proprietaire_profil()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  est_admin boolean;
+begin
+  if est_ecriture_serveur() then
+    return NEW;
+  end if;
+  select exists(select 1 from admins where user_id = auth.uid()) into est_admin;
+  if est_admin then
+    return NEW;
+  end if;
+  if auth.uid() is null or NEW.id is distinct from auth.uid() then
+    raise exception 'Modification refusée : ce profil ne vous appartient pas.';
+  end if;
+  if TG_OP = 'UPDATE' and OLD.id is distinct from NEW.id then
+    raise exception 'Modification refusée : identifiant du profil non modifiable.';
+  end if;
+  return NEW;
+end;
+$$;
+
+create or replace function proteger_proprietaire_photo()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  est_admin boolean;
+begin
+  if est_ecriture_serveur() then
+    return coalesce(NEW, OLD);
+  end if;
+  select exists(select 1 from admins where user_id = auth.uid()) into est_admin;
+  if est_admin then
+    return coalesce(NEW, OLD);
+  end if;
+
+  if TG_OP = 'DELETE' then
+    if auth.uid() is null or OLD.model_id is distinct from auth.uid() then
+      raise exception 'Action refusée : cette photo ne vous appartient pas.';
+    end if;
+    return OLD;
+  end if;
+
+  if auth.uid() is null or NEW.model_id is distinct from auth.uid() then
+    raise exception 'Action refusée : cette photo ne vous appartient pas.';
+  end if;
+  if TG_OP = 'UPDATE' and OLD.model_id is distinct from auth.uid() then
+    raise exception 'Action refusée : cette photo ne vous appartient pas.';
+  end if;
+  return NEW;
+end;
+$$;
+
+NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 135 — Mise en sourdine d'un profil par l'agence (11/10/2026).
+-- Demande de la propriétaire (07/10) : depuis le tableau de bord, l'agence désactive un
+-- profil ; la mannequin ne peut plus utiliser son Espace (message « L'administrateur a
+-- désactivé votre profil ») et son profil public disparaît du site. Rien n'est supprimé :
+-- « Réactiver » remet tout comme avant (la colonne published n'est pas touchée).
+-- Protégé par la base elle-même :
+--  • lecture publique : règle unique profil_visible_public(…, desactive) → la fiche, ses
+--    photos et ses projets (qui passent par la fiche) et l'agenda public la cachent ;
+--  • seule l'agence change la sourdine (fonction definir_sourdine, admins seulement) ;
+--  • tant qu'elle est en sourdine, la mannequin ne peut plus rien modifier (fiche,
+--    photos, projets). Le serveur et l'agence le peuvent toujours (est_ecriture_serveur).
+-- ===================================================================
+alter table model_profiles add column if not exists desactive boolean not null default false;
+alter table model_profiles add column if not exists desactive_le timestamptz;
+alter table model_profiles add column if not exists desactive_par uuid;
+-- Extension 130 : toute nouvelle colonne doit être ouverte en lecture.
+grant select (desactive) on model_profiles to anon, authenticated;
+grant select (desactive_le) on model_profiles to authenticated;
+
+create or replace function profil_visible_public(publie boolean, a_reprendre_depuis timestamptz, desactive boolean)
+returns boolean language sql stable as $$
+  select profil_visible_public(publie, a_reprendre_depuis) and not coalesce(desactive, false);
+$$;
+
+drop policy if exists "Profils publiés visibles de tous" on model_profiles;
+create policy "Profils publiés visibles de tous"
+  on model_profiles for select
+  using (profil_visible_public(published, mesures_a_reprendre_depuis, desactive));
+
+drop function if exists agenda_public(boolean, int);
+create or replace function agenda_public(seulement_a_venir boolean default false, limite int default 300)
+returns table(
+  id uuid, type text, titre text, date_debut date, date_fin date, ville text, lieu text,
+  description text, intervenants jsonb, seances jsonb, partenaires jsonb, mannequins jsonb
+)
+language sql stable security definer
+set search_path = public
+as $$
+  select a.id, a.type, a.titre, a.date_debut, a.date_fin, a.ville, a.lieu, a.description,
+    a.intervenants,
+    case when a.horaires_publics then a.seances else '[]'::jsonb end,
+    coalesce((select jsonb_agg(jsonb_build_object('id', pa.id, 'nom', pa.nom, 'logo_url', pa.logo_url) order by pa.nom)
+              from partenaires pa where pa.id = any(a.partenaire_ids)), '[]'::jsonb),
+    coalesce((select jsonb_agg(jsonb_build_object('id', p.id, 'nom', p.full_name, 'slug', p.slug) order by p.full_name)
+              from model_profiles p
+              where p.id = any(a.mannequin_ids)
+                and profil_visible_public(p.published, p.mesures_a_reprendre_depuis, p.desactive)), '[]'::jsonb)
+  from agenda_projets a
+  where a.visible
+    and coalesce(a.date_fin, a.date_debut) >= case when seulement_a_venir then current_date
+                                                  else current_date - interval '12 months' end
+  order by a.date_debut
+  limit least(greatest(coalesce(limite, 300), 1), 300);
+$$;
+revoke all on function agenda_public(boolean, int) from public;
+grant execute on function agenda_public(boolean, int) to anon, authenticated;
+
+-- Seule l'agence met en sourdine / réactive.
+create or replace function definir_sourdine(p_model uuid, p_desactive boolean)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not exists (select 1 from admins where user_id = auth.uid()) then
+    raise exception 'non_autorise';
+  end if;
+  update model_profiles
+     set desactive = coalesce(p_desactive, false),
+         desactive_le = case when p_desactive then now() end,
+         desactive_par = case when p_desactive then auth.uid() end
+   where id = p_model;
+end;
+$$;
+revoke all on function definir_sourdine(uuid, boolean) from public;
+grant execute on function definir_sourdine(uuid, boolean) to authenticated;
+
+-- La mannequin ne lève jamais sa sourdine et ne modifie plus rien tant qu'elle dure.
+create or replace function bloquer_profil_en_sourdine()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  cible uuid;
+begin
+  if est_ecriture_serveur() or exists (select 1 from admins where user_id = auth.uid()) then
+    return coalesce(NEW, OLD);
+  end if;
+  if TG_TABLE_NAME = 'model_profiles' then
+    if TG_OP = 'UPDATE' and NEW.desactive is distinct from OLD.desactive then
+      raise exception 'Modification refusée : seule l''agence peut changer ce réglage.';
+    end if;
+    if TG_OP = 'INSERT' and coalesce(NEW.desactive, false) then
+      raise exception 'Modification refusée : seule l''agence peut changer ce réglage.';
+    end if;
+    cible := coalesce(OLD.id, NEW.id);
+  else
+    cible := coalesce(OLD.model_id, NEW.model_id);
+  end if;
+  if exists (select 1 from model_profiles where id = cible and desactive) then
+    raise exception 'Profil désactivé par l''administrateur : modification impossible.';
+  end if;
+  return coalesce(NEW, OLD);
+end;
+$$;
+
+drop trigger if exists trg_sourdine_profil on model_profiles;
+create trigger trg_sourdine_profil before insert or update on model_profiles
+  for each row execute function bloquer_profil_en_sourdine();
+drop trigger if exists trg_sourdine_photos on model_photos;
+create trigger trg_sourdine_photos before insert or update or delete on model_photos
+  for each row execute function bloquer_profil_en_sourdine();
+drop trigger if exists trg_sourdine_projets on model_projects;
+create trigger trg_sourdine_projets before insert or update or delete on model_projects
+  for each row execute function bloquer_profil_en_sourdine();
+
+NOTIFY pgrst, 'reload schema';

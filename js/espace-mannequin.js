@@ -503,6 +503,11 @@ const Store = {
     const { data: rowSansInsta, error: eSansInsta } = await sb.from('model_profiles').select('sans_instagram').eq('id', currentUser.id).maybeSingle();
     s.sansInstagram = !eSansInsta && !!(rowSansInsta && rowSansInsta.sans_instagram); // faux tant que l'Extension 126 n'est pas exécutée
 
+    // Mise en sourdine par l'agence (Extension 135) : lue à part, pour qu'une base sans
+    // la colonne ne bloque jamais l'Espace.
+    const { data: rowSourdine, error: eSourdine } = await sb.from('model_profiles').select('desactive').eq('id', currentUser.id).maybeSingle();
+    s.meta.desactive = !eSourdine && !!(rowSourdine && rowSourdine.desactive);
+
     const supp = await ma2mMesuresSupp(currentUser.id); // vide si l'Extension 121 n'est pas encore exécutée
     Object.assign(s.physique, { epaules: supp.shoulder_cm ?? '', bras: supp.arm_cm ?? '', cou: supp.neck_cm ?? '' });
     s.physique.tailleVet = tailleGeneraleCalculee(s.physique, s.identite.sexe);
@@ -714,6 +719,9 @@ document.addEventListener('click', function(e){
 /* =========================================================== RENDU MAIN */
 function render(){
   const app = document.getElementById('app');
+  // Profil mis en sourdine par l'agence : plus aucun formulaire, seulement le message
+  // (la base refuse de toute façon toute modification, Extension 135).
+  if (state.meta.desactive) { app.innerHTML = viewSourdine(); return; }
   const enModeGuide = !state.meta.premierePublicationFaite;
   if (enModeGuide) {
     if (state.meta.statutAffichage === 'en_attente') { app.innerHTML = viewConfirmation(); return; }
@@ -1511,6 +1519,14 @@ function bindRefuse(){
   document.getElementById('reprendreDossier')?.addEventListener('click', function(){
     state.meta.currentStep = 1; state.meta.statutAffichage = 'brouillon'; render();
   });
+}
+
+function viewSourdine(){
+  return header() + '<div class="panel confirm refuse"><div class="check">!</div>' +
+    '<h2>Profil désactivé</h2>' +
+    '<p>L’administrateur a désactivé votre profil. Il n’est plus visible sur le site et vous ne pouvez plus le modifier pour le moment.</p>' +
+    '<p>Pour toute question, contactez l’agence sur WhatsApp.</p>' +
+    '<div class="p20-18"><a class="btn primary" href="'+MA2M_WHATSAPP+'" target="_blank" rel="noopener">Écrire à l’agence sur WhatsApp</a></div></div>';
 }
 
 /* -------------------------------------------------------- CONFIRMATION */

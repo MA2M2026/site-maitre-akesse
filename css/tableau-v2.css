@@ -524,3 +524,6 @@ html body.tdb-v2:not(.v2-page-v2-ensemble) .v2-entete-actions { display: none !i
 @media (max-width: 640px) {
   .agenda-intervenant { grid-template-columns: 1fr; }
 }
+
+/* Mise en sourdine (11/10/2026) */
+.tdb-sourdine { color: #b3261e; font-weight: 600; }

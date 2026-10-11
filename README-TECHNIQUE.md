@@ -1931,3 +1931,38 @@ l'enregistrement. L'alerte « Votre profil n'est pas complet » suit la même r�
   chargement ; photos du book avec `aspect-ratio: auto 2 / 3` (la grille ne saute plus).
 - Non modifié : la vidéo de couverture des pages Espace / candidature / tableau de bord
   (c'est la bannière visible en haut de ces pages) ; ses échecs passagers ne sont plus signalés.
+
+## « Créer mon compte » bloqué (corrigé le 11/10/2026, Extension 133)
+
+Depuis le 04/10/2026, `api/code-protege.js` crée le compte d'une nouvelle mannequin
+côté serveur (clé service_role) puis sa fiche `model_profiles`. Le déclencheur
+`proteger_proprietaire_profil()` (Extension ~93) refusait toute écriture sans
+utilisateur connecté : la fiche échouait, le compte était supprimé et la mannequin
+voyait « La création du compte a échoué ». L'Extension 133 laisse passer le rôle
+`service_role` (serveur seulement) ; rien ne change pour les mannequins et les admins.
+**Extension 134 (règle unique)** : `est_ecriture_serveur()` = la requête ne vient pas d'un
+navigateur (rôle ni `anon` ni `authenticated` : serveur du site, base elle-même, éditeur
+SQL). `proteger_proprietaire_profil()` et `proteger_proprietaire_photo()` la consultent en
+premier ; la seconde aurait aussi bloqué la suppression d'un compte de mannequin ayant
+des photos (suppression en cascade). ⚠️ Tout NOUVEAU garde-fou commence par
+`if est_ecriture_serveur() then return … end if;`.
+`api/code-protege.js` écrit maintenant toute panne de création de compte dans le journal
+des erreurs (`[Création de compte mannequin] échec : …`, avec la raison de la base).
+**Pourquoi l'incident a duré** : le changement de sécurité du 04/10 n'a été essayé qu'avec
+une base simulée, jamais avec un vrai compte ; l'échec était silencieux pour l'agence.
+
+## Mise en sourdine d'un profil (11/10/2026, Extension 135)
+
+Bouton « 🔇 Mettre en sourdine / 🔊 Réactiver » sur chaque carte de la liste des
+mannequins publiés du tableau de bord (`changerSourdine` dans `tableau-de-bord.html`),
+qui appelle la fonction `definir_sourdine(p_model, p_desactive)` (admins seulement).
+Rien n'est supprimé : colonnes `model_profiles.desactive`, `desactive_le`, `desactive_par`.
+- **Site public** : `profil_visible_public(publie, a_reprendre_depuis, desactive)` (3
+  arguments) cache le profil partout (liste, fiche, book, photos, projets, `agenda_public`,
+  middleware) puisque toutes ces lectures passent par la règle de lecture des profils.
+- **Espace mannequin** : `Store.load` lit `desactive` à part (`state.meta.desactive`) ;
+  `render()` n'affiche alors que `viewSourdine()` (message « L'administrateur a désactivé
+  votre profil » + lien WhatsApp de l'agence + bouton de déconnexion).
+- **Base** : déclencheur `bloquer_profil_en_sourdine()` sur `model_profiles`,
+  `model_photos` et `model_projects` : la mannequin ne peut ni changer `desactive`, ni
+  rien modifier tant que son profil est en sourdine (serveur et admins passent).
