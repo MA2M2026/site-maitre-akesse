@@ -10,9 +10,11 @@
 // data-autre-langue (facultatif) : page de l'autre langue quand elle n'existe pas (ex. Espace).
 // Pour ajouter une page au menu : une seule ligne dans PAGES ci-dessous.
 (function () {
+  if (window.ma2mGabarit) { window.ma2mGabarit(); return; } // 2e chargement : bas de page
   var EN_G = document.documentElement.lang === 'en';
   var RACINE_G = EN_G ? '../' : '';
   // [fichier, libellé menu FR, libellé menu EN, libellé bas de page FR, libellé bas de page EN]
+  // (libellé bas de page null = absent du bas de page)
   var PAGES = [
     ['index', 'Accueil', 'Home', 'Accueil', 'Home'],
     ['qui-sommes-nous', 'Qui sommes-nous', 'About us', 'Qui sommes-nous', 'About us'],
@@ -20,6 +22,7 @@
     ['mannequins', 'The Book', 'The Book', 'The Book', 'The Book'],
     ['actualites', 'Actualités', 'News', 'Actualités', 'News'],
     ['evenements', 'Événements', 'Our Events', 'Nos événements', 'Our Events'],
+    ['agenda', 'Agenda', 'Agenda', null, null],
     ['partenaires', 'Partenaires', 'Our Partners', 'Nos partenaires', 'Our Partners'],
     ['integrer-agence', "Intégrer l'agence", 'Join the Agency', "Intégrer l'agence", 'Join the Agency'],
     ['candidature', 'Postuler à un casting', 'Apply for a Casting', 'Postuler à un casting', 'Apply for a Casting'],
@@ -34,16 +37,18 @@
     '<a href="https://wa.me/message/HJAMXGXHCL46I1" target="_blank" rel="noopener" aria-label="WhatsApp" title="WhatsApp" class="u-ic-whatsapp"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.472-.148-.67.15-.198.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0a12 12 0 00-10.288 18.06L0 24l6.084-1.688A12 12 0 1012 0zm0 21.938a9.917 9.917 0 01-5.052-1.383l-.362-.215-3.752 1.041 1.004-3.665-.235-.375A9.938 9.938 0 1112 21.938z"/></svg></a>'
   ];
 
+  function remplir() {
   function placeHolders(nom) { return document.querySelectorAll('[data-gabarit="' + nom + '"]:not([data-rempli])'); }
   var entete = document.querySelector('[data-gabarit="entete"]');
   var page = (entete && entete.dataset.page) || (document.body && document.body.dataset.page) || '';
 
-  // « Qui sommes-nous » n'apparaît que sur sa propre page (page non annoncée ailleurs) ; le
-  // lien « Inscription » n'est pas proposé dans le menu français des deux pages de candidature.
+  // « Qui sommes-nous » : dans le menu partout, dans le bas de page seulement sur sa propre
+  // page ; le lien « Inscription » n'est pas proposé dans le menu français des deux pages de
+  // candidature.
   // La fiche d'une mannequin garde « The Book » allumé dans le menu.
   var actif = page === 'mannequin' ? 'mannequins' : page;
   function visible(p, menu) {
-    if (p[0] === 'qui-sommes-nous') return page === 'qui-sommes-nous';
+    if (!menu && p[0] === 'qui-sommes-nous') return page === 'qui-sommes-nous';
     if (menu && !EN_G && p[0] === 'inscription-mannequin') return page !== 'candidature' && page !== 'integrer-agence';
     return true;
   }
@@ -84,4 +89,7 @@
       '    </div>\n  </div>\n';
     el.setAttribute('data-rempli', '');
   });
+  }
+  window.ma2mGabarit = remplir;
+  remplir();
 })();

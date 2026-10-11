@@ -2001,3 +2001,17 @@ CSS `.couverture-faisceau` / `--couv-h` restent sans effet (nettoyage CSS à fai
 - `js/fiche-mannequin.js` : fiche d'une mannequin, `mannequin.html` et `en/mannequin.html`
   (avant : deux scripts de ~400 lignes dans les pages). Textes `T('fr', 'en')` ; en anglais,
   équivalents impériaux (`enPieds`, `enPouces`, `enLivres`, `pointureUS` de `js/app.js`).
+
+## Structure commune des pages et formulaire de candidature (11/10/2026, suite du nettoyage)
+- `js/gabarit.js` écrit la barre du haut, le menu et le bas de page des 33 pages publiques
+  FR/EN. Chaque page ne contient que des emplacements vides (`data-gabarit="entete" |
+  "menu" | "pied"`, avec `data-page="nom-du-fichier"` sur la barre du haut) et charge le
+  script juste après eux. **Ajouter une page au menu = une ligne dans `PAGES`.**
+  `data-autre-langue` : page de l'autre langue quand elle n'existe pas (Espace mannequin).
+  Pages non concernées : tableau de bord, 404, réinitialisation du mot de passe, boutique.
+- `js/formulaire-candidature-champs.js` : les champs du formulaire de candidature, écrits une
+  seule fois pour les 4 pages (casting / intégrer l'agence, FR / EN), dans la bonne langue.
+- `js/tableau-de-bord.js` : programme principal du tableau de bord (avant écrit dans la page).
+- `.sonarcloud.properties` : le journal SQL (historique des Extensions) est exclu du seul
+  calcul des doublons SonarQube.
+- Essai visiteur `test-pages-publiques.js` : vérifie aussi lien de langue, menu et bas de page.

@@ -51,7 +51,7 @@ async function chargerPartenaires() {
     if (index > -1) ouvrirPartModal(index);
   }
 }
-void chargerPartenaires();
+chargerPartenaires().catch(e => { if (window.signalerErreur) window.signalerErreur('Partenaires : chargement', (e && e.message) || String(e)); });
 
 function ouvrirPartModal(index) {
   const p = window.partenairesData[index];
@@ -170,7 +170,7 @@ document.getElementById('part-modal-supprimer-btn').addEventListener('click', as
   if (erreurSuppression) { alert(T('La suppression a échoué. Réessayez.', 'Deletion failed. Please try again.')); return; }
   if (p && p.logo_chemin) await supprimerCheminsImagesSite('partenaires', 'partenaires-logos', [p.logo_chemin]);
   fermerPartModal();
-  void chargerPartenaires();
+  chargerPartenaires().catch(e => { if (window.signalerErreur) window.signalerErreur('Partenaires : chargement', (e && e.message) || String(e)); });
 });
 
 // --- Ajout d'un nouveau partenaire ---
@@ -211,7 +211,7 @@ document.getElementById('p-publier-btn').addEventListener('click', async () => {
   document.getElementById('p-role').value = '';
   if (quillPDescription) quillPDescription.setText('');
   logoInput.value = '';
-  void chargerPartenaires();
+  chargerPartenaires().catch(e => { if (window.signalerErreur) window.signalerErreur('Partenaires : chargement', (e && e.message) || String(e)); });
 });
 
 // Aucune interface de connexion sur cette page publique : un admin se connecte
@@ -222,4 +222,4 @@ document.getElementById('admin-logout-btn').addEventListener('click', async () =
   window.location.reload();
 });
 
-void verifierAdmin();
+verifierAdmin().catch(() => {});
