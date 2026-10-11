@@ -47,8 +47,10 @@
   }
 
   function lienMannequin(m) {
-    const a = el('a', 'agenda-puce', m.nom);
-    a.href = lienFicheMannequin(m);
+    const lien = lienFicheMannequin(m);
+    // mannequin sans profil sur le site (« Autres mannequins ») : son nom, sans lien
+    const a = el(lien ? 'a' : 'span', 'agenda-puce', m.nom);
+    if (lien) a.href = lien;
     return a;
   }
 

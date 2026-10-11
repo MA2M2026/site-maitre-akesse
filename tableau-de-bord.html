@@ -2760,7 +2760,9 @@ document.addEventListener('DOMContentLoaded', function () {
 <fieldset class="agenda-choix"><legend>Mannequins (visibles si leur profil est publié)</legend>
 <input id="agenda-recherche" type="search" aria-label="Rechercher une mannequin" placeholder="Rechercher un nom…" class="agenda-recherche">
 <div id="agenda-mannequins" class="agenda-cases agenda-cases-mannequins">Chargement…</div>
-<p class="agenda-compte" id="agenda-compte"></p></fieldset>
+<p class="agenda-compte" id="agenda-compte"></p>
+<div class="form-champ"><label for="agenda-autres">Autres mannequins de l'agence, pas encore sur le site (un nom par ligne)</label><textarea id="agenda-autres" rows="3" maxlength="3000" placeholder="ex : Fatou Bamba"></textarea></div>
+<p class="agenda-aide">Ces noms apparaissent sur l'agenda du site et dans le Parcours MA2M, sans photo ni lien. Quand la mannequin aura son profil, cochez-la plutôt dans la liste ci-dessus et effacez son nom ici.</p></fieldset>
 <fieldset class="agenda-choix agenda-interne"><legend>🔒 Interne — jamais affiché sur le site</legend>
 <div class="agenda-grille">
 <div class="form-champ"><label for="agenda-adresse">Adresse exacte</label><input id="agenda-adresse" type="text" maxlength="300"></div>

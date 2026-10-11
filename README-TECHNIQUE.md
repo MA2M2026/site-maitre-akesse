@@ -2032,3 +2032,38 @@ double) : un projet passé, visible et non annulé compte automatiquement.
 - Outils communs dans `js/app.js` : `ma2mParcours`, `ma2mCompteParType`, `nombreTypeAgenda`,
   `lienFicheMannequin` (aussi utilisé par `js/agenda.js`).
 - Essais : `test-pages-publiques.js` (page FR/EN + fiche), `test-admin.js` (pays + annulé).
+
+## Menu « Modèle A » (11/10/2026, choisi par la propriétaire parmi 4 maquettes)
+Menu plein écran, grands titres numérotés 01, 02… (police des titres), rubrique ouverte en
+rouge italique, « Intégrer l'agence » en grand bouton rouge et « Espace mannequin » en bouton
+contour. Style : `css/menu.css` (importé en tête de `css/style.css` et `css/entete-site.css`,
+sélecteurs préfixés `html body` pour passer devant l'ancien tiroir). Ordre et libellés : liste
+`PAGES` de `js/gabarit.js`. Le Parcours MA2M n'affiche que les projets où au moins une de nos
+mannequins publiées est cochée (`ma2mParcours`, js/app.js).
+`js/menu.js` ajoute Femmes / Hommes sous The Book puis pose `--rang` (ordre d'apparition en
+cascade) sur chaque ligne ; le lien « Marketplace » des administratrices reste non numéroté, en
+rouge. L'ancien voile sombre et les titres de groupes du tiroir ont été supprimés. L'ordre du
+bas de page suit `PAGES`. Essais : `test-pages-publiques.js` vérifie l'ordre du menu, le bouton
+« Intégrer l'agence » et qu'un projet sans nos mannequins n'apparaît pas dans le Parcours.
+
+## « Autres mannequins » dans l'agenda (Extension 137, 11/10/2026)
+Une mannequin de l'agence sans profil sur le site (nouvelle recrue) peut être écrite à la main
+sur un projet : champ `#agenda-autres` du tableau de bord (un nom par ligne, 40 noms de 80
+caractères au plus, doublons retirés par `lireAutres()` dans `js/agenda-admin.js`), enregistré
+dans `agenda_projets.mannequins_libres`. La fonction SQL `mannequins_publics_projet(ids, noms)`
+est la règle unique qui fabrique la liste publique des mannequins d'un projet (profils visibles
+du public + noms écrits, ces derniers avec `id` et `slug` vides, une seule fois chacun et
+jamais en double d'une mannequin cochée) pour `agenda_public` et
+`parcours_public`. Côté site, `lienFicheMannequin(m)` renvoie un lien vide pour ces noms :
+agenda et Parcours les affichent sans lien ni photo (logo par défaut). Tant que l'Extension 137
+n'est pas collée, le formulaire n'envoie le champ que si des noms sont écrits (message clair
+en cas d'erreur). Essais : `test-admin.js` (envoi des noms) et `test-pages-publiques.js`.
+
+## Menu agrandi et animé (11/10/2026, demande de la propriétaire)
+`css/menu.css` : ouverture et fermeture en cercle depuis le bouton Menu (`clip-path`), rubriques qui montent une à une (`--rang`), très grands titres
+(`clamp(2rem, 8.6vw, 3.6rem)`), deux colonnes à partir de 1024 px de large pour que tout tienne
+sur une page. Aucune animation si le visiteur a demandé moins de mouvement.
+
+## Bas de page du tableau de bord (11/10/2026)
+`body.zone-admin` en colonne flexible, hauteur minimale de l'écran, bas de page poussé en bas
+(`css/style.css`, fin du fichier) : l'écran de connexion n'a plus l'air coupé en deux.

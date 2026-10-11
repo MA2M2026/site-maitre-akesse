@@ -14,6 +14,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var charge = false, enCours = false, listesOk = false;
   var projets = [], mannequins = [], partenaires = [];
+  var colonneAutres = false; // colonne « Autres mannequins » présente (Extension 137 collée)
   var projetEnCours = null; // projet ouvert avec « Modifier »
 
   function message(t, erreur) {
@@ -144,7 +145,7 @@
   function ligneProjet(p) {
     var div = document.createElement('div');
     div.className = 'agenda-ligne' + (p.visible && !p.annule ? '' : ' cache');
-    var noms = nomsDe(p.mannequin_ids, mannequins, 'full_name');
+    var noms = nomsDe(p.mannequin_ids, mannequins, 'full_name').concat(p.mannequins_libres || []);
     var parts = nomsDe(p.partenaire_ids, partenaires, 'nom');
     var horaires = (p.seances || []).map(function (x) { return dateAgenda(x.jour) + ' ' + (x.debut || '?') + '–' + (x.fin || '?'); }).join(' ; ');
     var intervenants = (p.intervenants || []).map(function (x) { return (x.role ? x.role + ' : ' : '') + x.nom; });
@@ -185,6 +186,7 @@
       return;
     }
     projets = r.data || [];
+    colonneAutres = projets.some(function (p) { return 'mannequins_libres' in p; });
     afficherListe();
   }
 
@@ -231,6 +233,7 @@
     $('agenda-notes').value = p.notes_internes || '';
     $('agenda-visible').checked = !!p.visible;
     $('agenda-annule').checked = !!p.annule;
+    $('agenda-autres').value = (p.mannequins_libres || []).join('\n');
     [['agenda-mannequins', p.mannequin_ids], ['agenda-partenaires', p.partenaire_ids]].forEach(function (z) {
       $(z[0]).querySelectorAll('input[type=checkbox]').forEach(function (c) { c.checked = (z[1] || []).includes(c.value); });
     });
@@ -239,6 +242,15 @@
     $('agenda-annuler').hidden = false;
     message('');
     form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // Noms écrits à la main, un par ligne : espaces retirés, doublons et lignes vides enlevés,
+  // 40 noms de 80 caractères au plus (mêmes limites que la base, Extension 137).
+  function lireAutres() {
+    var vus = {};
+    return $('agenda-autres').value.split('\n').map(function (n) { return n.trim().slice(0, 80); })
+      .filter(function (n) { var k = n.toLowerCase(); if (!n || vus[k]) return false; vus[k] = true; return true; })
+      .slice(0, 40);
   }
 
   function filtrer(t) {
@@ -277,6 +289,11 @@
       mannequin_ids: cochees('agenda-mannequins'),
       partenaire_ids: cochees('agenda-partenaires')
     };
+    // « Autres mannequins » (Extension 137) : envoyé seulement si la colonne existe déjà
+    // (vue dans les projets chargés) ou si des noms sont écrits — sinon un agenda dont
+    // l'Extension 137 n'est pas encore collée resterait utilisable.
+    var autres = lireAutres();
+    if (autres.length || colonneAutres) ligne.mannequins_libres = autres;
     var id = $('agenda-id').value;
     enCours = true;
     $('agenda-enregistrer').disabled = true;
@@ -285,7 +302,12 @@
       var r = id
         ? await sb.from('agenda_projets').update({ updated_at: new Date().toISOString(), ...ligne }).eq('id', id).select('id')
         : await sb.from('agenda_projets').insert(ligne).select('id');
-      if (r.error) { message('Erreur : ' + r.error.message, true); return; }
+      if (r.error) {
+        message(/mannequins_libres/.test(r.error.message || '') && /column|schema cache/i.test(r.error.message || '')
+          ? 'La case « Autres mannequins » n’est pas encore activée : collez l’Extension 137 dans Supabase, puis réessayez.'
+          : 'Erreur : ' + r.error.message, true);
+        return;
+      }
       // Aucune ligne touchée = session expirée ou compte non admin : rien n'a été enregistré.
       if (!r.data || !r.data.length) { message('Rien n’a été enregistré : reconnectez-vous au tableau de bord puis réessayez.', true); return; }
       viderFormulaire();

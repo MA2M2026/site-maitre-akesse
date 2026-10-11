@@ -1,0 +1,103 @@
+/* Menu « Modèle A — plein écran éditorial » (choisi par la propriétaire le 11/10/2026 parmi
+   4 maquettes). Remplace l'ancien tiroir à droite. Importé en tête de css/style.css et de
+   css/entete-site.css (Espace mannequin) : une seule copie pour tout le site.
+   Le contenu du menu vient de js/gabarit.js ; js/menu.js ajoute Femmes / Hommes sous
+   The Book et le bloc contact (téléphones, réseaux). */
+
+html body .menu-overlay {
+  inset: 0 !important; width: 100% !important; max-width: none !important;
+  background: radial-gradient(120% 80% at 85% 0%, #3a0c13 0%, #060606 58%) !important;
+  border: 0 !important; box-shadow: none !important;
+  padding: 6rem clamp(22px, 6vw, 80px) 2.2rem !important;
+  overflow-y: auto; overscroll-behavior: contain;
+  display: flex !important; flex-direction: column; align-items: stretch; justify-content: flex-start;
+  transform: none !important;
+  opacity: 1 !important; visibility: hidden;
+  /* ouverture : un cercle part du bouton Menu (en haut à droite) et couvre tout l'écran ;
+     à la fermeture, il se referme vers le bouton */
+  clip-path: circle(0 at calc(100% - 52px) 42px);
+  transition: clip-path 0.7s cubic-bezier(.7,0,.2,1), visibility 0.7s !important;
+}
+html body .menu-overlay.active { visibility: visible; clip-path: circle(150% at calc(100% - 52px) 42px); }
+
+/* logo en haut à gauche, rond de fermeture en haut à droite (repris de l'ancien tiroir) */
+html body .menu-overlay::before { top: 1.6rem !important; left: clamp(22px, 6vw, 80px) !important; }
+html body .menu-overlay .close-menu { top: 1.3rem !important; right: clamp(18px, 6vw, 76px) !important; }
+
+html body .menu-overlay .nav-links {
+  display: flex !important; flex-direction: column; counter-reset: rubrique;
+  width: 100%; max-width: 760px; margin: 0 auto !important; text-align: left;
+}
+/* rubriques : montent une à une, avec un léger basculement, après l'ouverture du cercle */
+html body .menu-overlay .nav-links li { border: 0 !important; margin: 0 !important; opacity: 0; transform: translateY(46px) rotate(2deg) !important; transform-origin: left bottom; transition: opacity 0.6s ease, transform 0.8s cubic-bezier(.16,1,.3,1) !important; }
+html body .menu-overlay.active .nav-links li { opacity: 1; transform: none !important; }
+html body .menu-overlay.active .nav-links li:nth-child(n) { transition-delay: calc(0.25s + 0.045s * var(--rang, 1)) !important; }
+
+/* rubriques : grands titres numérotés 01, 02, 03… */
+html body .menu-overlay .nav-links li:not(.menu-sous):not(.item-cta):not(.menu-rejoindre):not(.item-marketplace) { counter-increment: rubrique; border-bottom: 1px solid rgba(255,255,255,0.07) !important; }
+html body .menu-overlay .nav-links li a {
+  display: flex !important; align-items: baseline; gap: 14px; justify-content: flex-start !important;
+  padding: 0.55rem 0 !important; border-radius: 0 !important; background: none !important;
+  font-family: var(--display) !important; font-weight: 400 !important;
+  font-size: clamp(2rem, 8.6vw, 3.6rem) !important; line-height: 1.02 !important;
+  text-transform: uppercase !important; letter-spacing: 0.02em !important;
+  color: var(--titre-clair, #f5efe7) !important;
+  transition: color 0.3s ease, letter-spacing 0.4s ease !important;
+}
+html body .menu-overlay .nav-links li:not(.menu-sous):not(.item-cta):not(.menu-rejoindre):not(.item-marketplace) a::before {
+  content: counter(rubrique, decimal-leading-zero) !important; position: static !important;
+  width: auto !important; background: none !important;
+  font: 500 0.8rem var(--texte); letter-spacing: 0.1em; color: var(--bordeaux-clair, #d55468);
+  min-width: 1.8rem; transition: transform 0.4s ease;
+}
+html body .menu-overlay .nav-links li a::after { content: none !important; }
+@media (hover: hover) {
+  html body .menu-overlay .nav-links li a:hover { color: var(--bordeaux-clair, #d55468) !important; letter-spacing: 0.05em !important; }
+  html body .menu-overlay .nav-links li a:hover::before { transform: translateX(6px); }
+}
+html body .menu-overlay .nav-links li a.actif { color: var(--bordeaux-clair, #d55468) !important; font-style: italic !important; background: none !important; }
+
+/* « Marketplace » (administratrices seulement, ajouté par js/menu.js) : non numéroté, en rouge */
+html body .menu-overlay .nav-links li.item-marketplace a { color: var(--bordeaux-clair, #d55468) !important; }
+
+/* Femmes / Hommes : petits liens sous The Book */
+html body .menu-overlay .nav-links li.menu-sous { border: 0 !important; }
+html body .menu-overlay .nav-links li.menu-sous a {
+  font-family: var(--texte) !important; font-size: 0.95rem !important; text-transform: uppercase !important;
+  letter-spacing: 0.18em !important; color: var(--texte-doux, #948c85) !important;
+  padding: 0.4rem 0 0.4rem 3.1rem !important;
+}
+
+/* « Intégrer l'agence » : grand bouton rouge ; « Espace mannequin » : bouton en contour */
+html body .menu-overlay .nav-links li.menu-rejoindre { order: 90; margin-top: 1.6rem !important; }
+html body .menu-overlay .nav-links li.item-cta { order: 91; margin-top: 0.7rem !important; }
+html body .menu-overlay .nav-links li.menu-rejoindre a,
+html body .menu-overlay .nav-links li.item-cta a {
+  justify-content: center !important; border-radius: 999px !important; padding: 1.05rem 1rem !important;
+  font-family: var(--texte) !important; font-size: 0.95rem !important; font-weight: 500 !important;
+  letter-spacing: 0.16em !important; font-style: normal !important;
+}
+html body .menu-overlay .nav-links li.menu-rejoindre a { background: var(--bordeaux, #7a1220) !important; color: #fff !important; }
+html body .menu-overlay .nav-links li.item-cta a { border: 1px solid rgba(255,255,255,0.22) !important; color: var(--titre-clair, #f5efe7) !important; }
+@media (hover: hover) {
+  html body .menu-overlay .nav-links li.menu-rejoindre a:hover { background: var(--bordeaux-vif, #9c1c2c) !important; color: #fff !important; }
+  html body .menu-overlay .nav-links li.item-cta a:hover { border-color: var(--bordeaux-clair, #d55468) !important; }
+}
+
+/* contact et réseaux en bas */
+html body .menu-overlay .menu-contact { width: 100%; max-width: 760px; margin: 2rem auto 0 !important; text-align: left !important; font-size: 0.85rem; color: var(--texte-doux, #948c85); }
+html body .menu-overlay .menu-reseaux { justify-content: flex-start !important; }
+
+/* Grand écran : deux colonnes de très grands titres, le menu tient sur une seule page */
+@media (min-width: 1024px) {
+  html body .menu-overlay .nav-links { display: block !important; columns: 2; column-gap: 5rem; max-width: 1240px; }
+  html body .menu-overlay .nav-links li { break-inside: avoid; }
+  html body .menu-overlay .nav-links li a { font-size: clamp(2.2rem, 3.4vw, 3.4rem) !important; }
+  html body .menu-overlay .menu-contact { max-width: 1240px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body .menu-overlay, html body .menu-overlay .nav-links li { transition: none !important; }
+}
+html body .menu-overlay .nav-links li.item-cta a::before,
+html body .menu-overlay .nav-links li.menu-rejoindre a::before { content: none !important; }
