@@ -395,6 +395,20 @@ function remplirSelectNombres(id, min, max, pas, suffixe) {
 // Bascule l'affichage du champ "Autre" (texte libre) selon que le select est sur
 // l'option "Autre" ou non — utilisé par tous les selects qui acceptent une valeur
 // hors liste (ville, carnation, yeux, cheveux, taille de vêtements...).
+// Langue de la page et petit traducteur partagés (11/10/2026) : T('texte français',
+// 'English text') renvoie le texte de la langue de la page (<html lang="en"> = anglais).
+const EN = document.documentElement.lang === 'en';
+function T(fr, en) { return EN ? en : fr; }
+
+// Liste déroulante remplie depuis une liste, avec « Autre » à la fin (« Other » sur le site
+// anglais). Partagée le 11/10/2026 (avant : recopiée dans 5 pages).
+function remplirSelectListe(id, liste) {
+  const champ = document.getElementById(id);
+  if (!champ) return;
+  champ.appendChild(new Option('—', ''));
+  liste.forEach(v => champ.appendChild(new Option(v, v)));
+  champ.appendChild(new Option(document.documentElement.lang === 'en' ? 'Other' : 'Autre', 'Autre'));
+}
 function configurerSelectAvecAutre(idSelect, idAutre) {
   const select = document.getElementById(idSelect);
   const autre = document.getElementById(idAutre);

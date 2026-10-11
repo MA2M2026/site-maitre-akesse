@@ -1,6 +1,5 @@
 // Page « Nos mannequins » / « Our models » : un seul script pour le français et l'anglais
 // (11/10/2026 : avant, deux copies js/mannequins.js et js/mannequins-en.js).
-const EN_BOOK = document.documentElement.lang === 'en';
 let tousLesProfils = [];
 let categorieActive = 'tous';
 let niveauActif = 'tous'; // New Face / Professionnel (affiché « Main Board »), 06/10/2026
@@ -11,7 +10,7 @@ async function chargerMannequins() {
     // "sb" peut valoir null sur une connexion instable (échec de chargement de
     // la bibliothèque Supabase, servie depuis un CDN) — message clair plutôt
     // que de laisser croire qu'aucun profil ne correspond aux critères.
-    vide.textContent = EN_BOOK ? 'Failed to load the Book (unstable connection?). Please reload the page.' : 'Le chargement du Book a échoué (connexion instable ?). Rechargez la page.';
+    vide.textContent = EN ? 'Failed to load the Book (unstable connection?). Please reload the page.' : 'Le chargement du Book a échoué (connexion instable ?). Rechargez la page.';
     vide.style.display = 'block';
     return;
   }
@@ -43,7 +42,7 @@ async function chargerMannequins() {
   });
 
   profils.forEach(profil => {
-    profil.photoUrl = photoParMannequin[profil.id] || (EN_BOOK ? '../' : '') + 'assets/logo-dark-bg.png';
+    profil.photoUrl = photoParMannequin[profil.id] || (EN ? '../' : '') + 'assets/logo-dark-bg.png';
   });
 
   // Ordre alphabétique des prénoms (choix de la propriétaire, sept. 2026,
@@ -93,9 +92,9 @@ function appliquerFiltres() {
       </button>
       <a href="mannequin.html?id=${profil.id}" class="u-flex-col-centre">
         <div class="medaillon-photo">
-          <img src="${echapperHtml(profil.photoUrl)}" alt="${echapperHtml(profil.full_name || (EN_BOOK ? 'Model' : 'Mannequin'))}" loading="lazy">
+          <img src="${echapperHtml(profil.photoUrl)}" alt="${echapperHtml(profil.full_name || (EN ? 'Model' : 'Mannequin'))}" loading="lazy">
           <div class="book-carte-legende">
-            <div class="medaillon-nom">${echapperHtml(profil.full_name || (EN_BOOK ? 'Model' : 'Mannequin'))}</div>
+            <div class="medaillon-nom">${echapperHtml(profil.full_name || (EN ? 'Model' : 'Mannequin'))}</div>
             <div class="medaillon-info">${echapperHtml(profil.city || '')}${profil.height_cm ? ' · ' + profil.height_cm + ' cm' : ''}</div>
           </div>
         </div>

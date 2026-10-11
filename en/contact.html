@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YEweoquonhvFQJMFgmDGllzIGeVBK/dFURNENNq+DI8='; style-src 'self' https://fonts.googleapis.com 'sha256-OTfHT1lrDEpPzNsdPp4OjhDqKTSZ5t8SQEpw+9+WoV4=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com; style-src 'self' https://fonts.googleapis.com 'sha256-OTfHT1lrDEpPzNsdPp4OjhDqKTSZ5t8SQEpw+9+WoV4=';">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -210,89 +210,7 @@
 <script src="../js/app.js"></script>
 <script src="../js/confort.js"></script>
 <script src="../js/menu.js"></script>
-<script>
-// --- City as a dropdown (with "Other" fallback) instead of free text ---
-function remplirSelectListe(id, liste) {
-  const champ = document.getElementById(id);
-  if (!champ) return;
-  champ.appendChild(new Option('—', ''));
-  liste.forEach(v => champ.appendChild(new Option(v, v)));
-  champ.appendChild(new Option('Other', 'Autre'));
-}
-function configurerSelectAvecAutre(idSelect, idAutre) {
-  const select = document.getElementById(idSelect);
-  const autre = document.getElementById(idAutre);
-  if (!select || !autre) return;
-  select.addEventListener('change', () => {
-    autre.style.display = select.value === 'Autre' ? 'block' : 'none';
-    if (select.value !== 'Autre') autre.value = '';
-  });
-}
-function valeurSelectOuAutre(idSelect, idAutre) {
-  const select = document.getElementById(idSelect);
-  const autre = document.getElementById(idAutre);
-  if (select.value === 'Autre') return (autre.value || '').trim();
-  return select.value;
-}
-const VILLES_CI = [
-  'Abidjan', 'Abengourou', 'Aboisso', 'Adiaké', 'Adzopé', 'Affery', 'Agboville', 'Agnibilékrou',
-  'Akoupé', 'Alépé', 'Anyama', 'Arrah', 'Attiégouakro', 'Bangolo', 'Bettié', 'Biankouma',
-  'Bingerville', 'Bloléquin', 'Bocanda', 'Bondoukou', 'Bongouanou', 'Bouaflé', 'Bouaké', 'Bouna',
-  'Boundiali', 'Dabakala', 'Dabou', 'Daloa', 'Danané', 'Daoukro', 'Dimbokro', 'Divo', 'Duékoué',
-  'Facobly', 'Ferkessédougou', 'Fresco', 'Gagnoa', 'Grand-Bassam', 'Grand-Lahou', 'Guiglo',
-  'Guitry', 'Issia', 'Jacqueville', 'Kani', 'Katiola', 'Kong', 'Korhogo', 'Kouibly', 'Lakota',
-  'Man', 'Mankono', "M'Bahiakro", 'Minignan', 'Nassian', 'Odienné', 'Oumé', 'Ouangolodougou',
-  'Ouragahio', 'Prikro', 'Sakassou', 'San-Pédro', 'Sassandra', 'Séguéla', 'Sikensi', 'Sinfra',
-  'Soubré', 'Tabou', 'Tanda', 'Tengréla', 'Tiassalé', 'Tiébissou', 'Toulepleu', 'Toumodi',
-  'Touba', 'Vavoua', 'Yamoussoukro', 'Zouan-Hounien', 'Zuénoula'
-];
-remplirSelectListe('ville', VILLES_CI);
-configurerSelectAvecAutre('ville', 'ville-autre');
-
-remplirIndicatifs(document.getElementById('indicatif'));
-
-document.getElementById('form-contact').addEventListener('submit', async function(e){
-  e.preventDefault();
-  // Civilité devant le nom (décision de la propriétaire, 07/10/2026 : la civilité partout).
-  const nom = [document.getElementById('civilite').value, document.getElementById('nom').value.trim()].filter(Boolean).join(' ');
-  const telephone = composerTelephone(document.getElementById('indicatif'), document.getElementById('telephone-numero'));
-  const email = document.getElementById('email').value.trim();
-  const typeContact = document.getElementById('type-contact').value;
-  const structure = document.getElementById('structure').value.trim();
-  const ville = valeurSelectOuAutre('ville', 'ville-autre');
-  const message = document.getElementById('message').value.trim();
-  const msg = document.getElementById('msg');
-  const boutonEnvoyer = e.target.querySelector('button[type="submit"]');
-
-  boutonEnvoyer.disabled = true;
-  msg.className = 'form-msg ok';
-  msg.textContent = 'Sending…';
-  msg.style.display = 'block';
-
-  const { error } = await insererAvecPatience('messages_contact', {
-    nom, telephone, email, type_contact: typeContact, structure, ville, message
-  }, (reste) => { msg.textContent = texteAttenteEnvoi(reste); });
-
-  boutonEnvoyer.disabled = false;
-
-  if (error) {
-    msg.className = 'form-msg err';
-    msg.textContent = "An error occurred. Please try again, or contact us directly by phone.";
-    return;
-  }
-
-  envoyerNotificationEmail({
-    name: nom + (typeContact ? ` (${typeContact})` : '') + (structure ? ' — ' + structure : ''),
-    telephone: telephone,
-    email: email,
-    message: (ville ? `City: ${ville}\n\n` : '') + message
-  });
-
-  if (window.jouerSon) window.jouerSon('envoi');
-  msg.className = 'form-msg ok';
-  msg.textContent = 'Message sent! We will get back to you shortly.';
-  e.target.reset();
-});
-</script>
+<script src="../js/villes-cote-ivoire.js"></script>
+<script src="../js/contact.js"></script>
 </body>
 </html>

@@ -3,8 +3,6 @@
 // quatre copies de ~650 lignes à corriger quatre fois). Le parcours vient de la page :
 // <form id="form-casting" data-parcours="projet"> (casting précis) ou "agence" (intégrer
 // l'agence, parcours débutant allégé). La langue vient de <html lang="en">.
-const EN = document.documentElement.lang === 'en';
-const T = (fr, en) => (EN ? en : fr);
 const PARCOURS = document.getElementById('form-casting').dataset.parcours === 'agence' ? 'agence' : 'projet';
 
 // Sans bornes min/max, le calendrier natif du champ "date de naissance" laisse
@@ -21,7 +19,7 @@ const PARCOURS = document.getElementById('form-casting').dataset.parcours === 'a
 
 // --- Mensurations en listes déroulantes plutôt qu'en saisie libre : évite les
 // fautes de frappe (ex. "17O" au lieu de "170") et les valeurs invraisemblables.
-// remplirSelectNombres, configurerSelectAvecAutre et valeurSelectOuAutre : js/app.js. ---
+// remplirSelectNombres, remplirSelectListe, configurerSelectAvecAutre, valeurSelectOuAutre : js/app.js. ---
 remplirSelectNombres('ca-poids', 35, 130, 1, ' kg');
 remplirSelectNombres('ca-poitrine', 70, 130, 1, ' cm');
 remplirSelectNombres('ca-tourtaille', 55, 110, 1, ' cm');
@@ -30,13 +28,6 @@ remplirSelectNombres('ca-pointure', 34, 46, 1, '');
 
 // --- Ville en liste déroulante (avec "Autre" en secours) plutôt qu'en saisie
 // libre : évite les fautes/variantes d'orthographe (Man/Mann, Yakro/Yamoussoukro...). ---
-function remplirSelectListe(id, liste) {
-  const champ = document.getElementById(id);
-  if (!champ) return;
-  champ.appendChild(new Option('—', ''));
-  liste.forEach(v => champ.appendChild(new Option(v, v)));
-  champ.appendChild(new Option(T('Autre', 'Other'), 'Autre'));
-}
 // VILLES_CI vient désormais de js/villes-cote-ivoire.js (partagé avec
 // espace-mannequin.html et espace-mannequin-MA2M-premium-20.html).
 remplirSelectListe('ca-ville', VILLES_CI);

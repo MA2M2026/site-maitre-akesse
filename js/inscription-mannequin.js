@@ -2,8 +2,6 @@
 // un seul script pour le français et l'anglais (11/10/2026 : avant, deux copies dans les
 // pages). Langue : <html lang="en">. Les photos supplémentaires facultatives n'existent que
 // sur la page française (le script ne les branche que si leurs champs sont présents).
-const EN = document.documentElement.lang === 'en';
-const T = (fr, en) => (EN ? en : fr);
 
 // Sans bornes min/max, le calendrier natif du champ "date de naissance" laisse
 // défiler des années totalement absurdes (ex. 2090) et impose souvent de faire

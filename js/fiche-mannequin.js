@@ -1,8 +1,6 @@
 // Fiche d'une mannequin (mannequin.html et en/mannequin.html) : un seul script pour le
 // français et l'anglais (11/10/2026 : avant, deux copies de ~400 lignes dans les pages).
-// Langue : <html lang="en">. En anglais, les mesures ont aussi leur équivalent impérial.
-const EN = document.documentElement.lang === 'en';
-const T = (fr, en) => (EN ? en : fr);
+// Langue (EN, T) : js/app.js, d'après <html lang="en">. En anglais, les mesures ont aussi leur équivalent impérial.
 const RACINE = EN ? '../' : '';
 const imperial = (txt) => (EN && txt ? ` <span class="fiche-imperial">${txt}</span>` : '');
 
