@@ -99,7 +99,6 @@
         ['b3c-bandeau', 'Bandeau d’information', 'drapeau'],
         ['b3c-mot-fondateur', 'Mot du fondateur', 'plume'],
         ['b3c-agenda', 'Agenda du site', 'calendrier'],
-        ['b3c-couverture', 'Couverture du site (vidéo)', 'appareil'],
         ['b3d-video-accueil', "Vidéo de la page d'accueil", 'appareil'],
         ['b3c-instagram', 'Flux Instagram', 'appareil'],
         ['lien:actualites.html', 'Publier une actualité', 'journal'],

@@ -9,7 +9,7 @@
      fin septembre 2026 (voir README-TECHNIQUE.md, section "Porte d'entrée / verrou de
      scroll"), sans qu'aucune erreur ne le laisse deviner. Après toute modification,
      lance : python3 scripts/verifier-csp.py index.html -->
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-IKNkHbE3bkbXVgrymKeofxVxC8mJTL+tQ6rP/OFgdEc=' 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-ScOUIlNThKPw+aEmdZLE2BPzW0k26ho2AOn39MHKPNw='; style-src 'self' https://fonts.googleapis.com;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-ScOUIlNThKPw+aEmdZLE2BPzW0k26ho2AOn39MHKPNw=' 'sha256-IKNkHbE3bkbXVgrymKeofxVxC8mJTL+tQ6rP/OFgdEc=' 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY='; style-src 'self' https://fonts.googleapis.com;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -326,15 +326,9 @@ setTimeout(() => {
 
 </section>
 
-<!-- Couverture animée (logo « faisceau de lumière ») -->
-<section class="couverture-faisceau" id="couverture-faisceau" aria-label="Maître Akesse Model Management">
-  <canvas class="couverture-canvas" aria-hidden="true"></canvas>
-  <img class="couverture-secours" src="assets/logo-intro.png" alt="Maître Akesse Model Management">
-</section>
-<script src="js/couverture-faisceau.js"></script>
 
-<!-- Barre du haut, fixée juste sous la couverture (le reste de la page défile dessous) -->
-<header class="site-header-v2 entete-sous-couverture">
+<!-- Barre du haut (la bande au logo animé a été retirée le 11/10/2026 : décision de la propriétaire) -->
+<header class="site-header-v2">
   <div class="container header-v2-inner">
 
     <a href="index.html" class="logo-img-header">
@@ -356,7 +350,6 @@ setTimeout(() => {
 
   </div>
 </header>
-<div class="couverture-espace" aria-hidden="true"></div>
 
 
 <div class="marquee-bande" id="marqueeBande" aria-hidden="true">
