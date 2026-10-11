@@ -257,12 +257,15 @@ async function chargerProfilInterne() {
           ${blocProfil}
         </div>
         <div class="fiche-col">
+          <div id="fiche-ma2m"></div>
           ${blocProjets}
           ${blocVideo}
         </div>
       </div>
     </div>
   `;
+
+  void afficherParcoursAgence(profil.id);
 
   // Contact officiel : tout en bas de la page, après le Book (demande de la
   // propriétaire, 28 sept. 2026) — on parcourt d'abord les photos, puis on contacte.
@@ -401,3 +404,29 @@ function ouvrirLightbox(index) {
   ouvrirGalerieLightbox(window.photosLightbox, index);
 }
 document.addEventListener('DOMContentLoaded', () => { void chargerProfil(1); });
+
+// « Avec MA2M » (Parcours MA2M, Extension 136) : projets réalisés avec l'agence, tirés de
+// l'agenda — totaux par type et derniers projets (type, titre, date, lieu, ville, pays).
+// Rien n'est affiché tant que la mannequin n'a aucun projet réalisé.
+async function afficherParcoursAgence(idMannequin) {
+  const zone = document.getElementById('fiche-ma2m');
+  if (!zone) return;
+  const fin = new Date(), debut = new Date(fin.getFullYear() - 10, fin.getMonth(), 1);
+  const projetsAgence = await ma2mParcours(debut.toISOString().slice(0, 10), fin.toISOString().slice(0, 10), idMannequin);
+  if (!projetsAgence.length) return;
+  const totaux = ma2mCompteParType(projetsAgence).map(([t, n]) => nombreTypeAgenda(t, n, EN)).join(' · ');
+  const lieu = (p) => [p.lieu, p.ville, p.pays].filter(Boolean).join(', ');
+  zone.innerHTML = `
+    <section class="fiche-carte fiche-ancre" id="fiche-avec-ma2m">
+      <h3 class="fiche-carte-titre">${T('Avec MA2M', 'With MA2M')} <span>${echapperHtml(totaux)}</span></h3>
+      <ol class="fiche-projets">
+        ${projetsAgence.slice(0, 4).map(p => `
+          <li class="fiche-projet">
+            <span class="fiche-projet-type">${echapperHtml(libelleTypeAgenda(p.type, EN))}</span>
+            <span class="fiche-projet-titre">${echapperHtml(p.titre)}</span>
+            <span class="fiche-projet-meta">${echapperHtml(dateAgenda(p.date_debut, p.date_fin, EN))}${lieu(p) ? ' · ' + echapperHtml(lieu(p)) : ''}</span>
+          </li>`).join('')}
+      </ol>
+      <a class="fiche-lien-plus" href="parcours.html">${T('Voir le Parcours MA2M →', 'See the MA2M Track Record →')}</a>
+    </section>`;
+}

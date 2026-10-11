@@ -1,0 +1,106 @@
+/* Parcours MA2M (11/10/2026) : bilan public des activités des mannequins, mois par mois.
+   Contenu dessiné par js/parcours.js. Animations « motion design » : apparition en cascade
+   (--delai posé par le script), compteurs, frise des mois ; aucune animation si le visiteur
+   a demandé moins de mouvement (prefers-reduced-motion). */
+
+.parcours-ouverture { padding-bottom: 1rem; }
+.parcours-ouverture h1 { font-size: clamp(2.4rem, 7vw, 5rem); }
+.parcours-intro { color: var(--texte-corps); font-size: 1.05rem; max-width: 60ch; }
+
+/* Frise des mois : défile de gauche à droite, le mois choisi au centre */
+.parcours-mois {
+  display: flex; gap: 0.5rem; overflow-x: auto; padding: 0.4rem 0 1rem;
+  scroll-behavior: smooth; scrollbar-width: none; -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.parcours-mois::-webkit-scrollbar { display: none; }
+.parcours-mois-btn {
+  flex: 0 0 auto; padding: 0.55rem 1rem; border: 1px solid var(--gris-clair); border-radius: 999px;
+  background: transparent; color: var(--texte-doux); font: 500 0.78rem/1 var(--texte);
+  letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer;
+  transition: color 0.3s ease, border-color 0.3s ease, background 0.3s ease, transform 0.3s ease;
+}
+.parcours-mois-btn.plein { color: var(--titre-clair); }
+.parcours-mois-btn.plein::after { content: ''; display: inline-block; width: 5px; height: 5px; margin-left: 0.45rem; border-radius: 50%; background: var(--bordeaux-clair); vertical-align: middle; }
+.parcours-mois-btn.actif { background: var(--bordeaux); border-color: var(--bordeaux-clair); color: var(--blanc); transform: scale(1.06); }
+
+.parcours-titre-mois { font-size: clamp(1.8rem, 5vw, 3.2rem); margin: 0.6rem 0 1.4rem; text-transform: capitalize; }
+
+/* Chiffres du mois */
+.parcours-chiffres { display: grid; grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)); gap: 1px; background: var(--gris-clair); border: 1px solid var(--gris-clair); margin-bottom: 2.4rem; }
+.parcours-chiffre { background: var(--noir); padding: 1.3rem 1rem; display: flex; flex-direction: column; gap: 0.35rem; }
+.parcours-chiffre strong { font-family: var(--display); font-size: clamp(2.2rem, 6vw, 3.4rem); line-height: 1; color: var(--titre-clair); font-weight: 500; }
+.parcours-chiffre span { font-size: 0.74rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--bordeaux-clair); }
+
+/* Filtres par type */
+.parcours-filtres { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.6rem; }
+.parcours-filtre {
+  padding: 0.45rem 0.95rem; border: 1px solid var(--gris-clair); border-radius: 999px; background: transparent;
+  color: var(--texte-corps); font: 0.85rem var(--texte); cursor: pointer; transition: border-color 0.3s ease, color 0.3s ease;
+}
+.parcours-filtre.actif, .parcours-filtre:hover { border-color: var(--bordeaux-clair); color: var(--titre-clair); }
+
+.parcours-sous-titre { font-size: 0.8rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--texte-doux); margin: 0 0 1rem; font-family: var(--texte); font-weight: 500; }
+
+/* Mur des visages : petites photos carrées, pastille = nombre d'activités du mois */
+.parcours-visages { display: grid; grid-template-columns: repeat(auto-fill, minmax(6.4rem, 1fr)); gap: 0.9rem; }
+.parcours-visage {
+  position: relative; display: flex; flex-direction: column; gap: 0.45rem; padding: 0; border: 0;
+  background: none; color: var(--titre-clair); text-align: left; cursor: pointer; font: inherit;
+}
+.parcours-visage-photo { display: block; aspect-ratio: 1; overflow: hidden; border: 1px solid var(--gris-clair); background: var(--noir-doux); }
+.parcours-visage-photo img { width: 100%; height: 100%; object-fit: cover; object-position: center 20%; transition: transform 0.6s var(--transition-douce), filter 0.6s ease; filter: grayscale(0.25); }
+.parcours-visage:hover img, .parcours-visage:focus-visible img { transform: scale(1.07); filter: none; }
+.parcours-visage-nom { font-size: 0.82rem; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.parcours-visage-badge {
+  position: absolute; top: 0.35rem; right: 0.35rem; min-width: 1.6rem; height: 1.6rem; padding: 0 0.4rem;
+  display: grid; place-items: center; border-radius: 999px; background: var(--bordeaux); color: var(--blanc);
+  font-size: 0.78rem; font-weight: 600; box-shadow: 0 6px 16px -6px rgba(0,0,0,0.8);
+}
+.parcours-plus { margin-top: 1.2rem; }
+
+/* Détail d'une mannequin pour le mois */
+.parcours-detail { margin-top: 1.6rem; padding: 1.4rem; border: 1px solid var(--bordeaux-clair); background: linear-gradient(120deg, rgba(122,18,32,0.18), transparent 60%); }
+.parcours-detail-tete { display: grid; grid-template-columns: 4.2rem minmax(0, 1fr) auto; gap: 1rem; align-items: center; margin-bottom: 1rem; }
+.parcours-detail-tete img { width: 4.2rem; height: 4.2rem; object-fit: cover; object-position: center 20%; }
+.parcours-detail-tete h3 { margin: 0; font-size: 1.4rem; }
+.parcours-detail-tete p { margin: 0.2rem 0 0; color: var(--texte-doux); font-size: 0.86rem; }
+.parcours-detail-fermer { background: none; border: 1px solid var(--gris-clair); color: var(--titre-clair); width: 2.4rem; height: 2.4rem; border-radius: 50%; cursor: pointer; }
+.parcours-detail ul { list-style: none; margin: 0 0 1.2rem; padding: 0; display: grid; gap: 0.7rem; }
+.parcours-detail li { display: grid; gap: 0.15rem; padding-left: 0.9rem; border-left: 2px solid var(--bordeaux); }
+.parcours-detail li em { color: var(--texte-doux); font-style: normal; font-size: 0.85rem; }
+
+.parcours-type { color: var(--bordeaux-clair); letter-spacing: 0.16em; text-transform: uppercase; font-size: 0.7rem; font-weight: 500; }
+
+/* Projets du mois */
+.parcours-projets { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); gap: 1rem; }
+.parcours-projet {
+  padding: 1.3rem 1.3rem 1.4rem; border: 1px solid var(--gris-clair);
+  background: linear-gradient(120deg, rgba(255,255,255,0.04), transparent 55%);
+  transition: border-color 0.4s ease, transform 0.5s var(--transition-douce);
+}
+.parcours-projet:hover { border-color: rgba(255,255,255,0.4); transform: translateY(-3px); }
+.parcours-projet h3 { margin: 0.4rem 0 0.3rem; font-size: clamp(1.2rem, 3vw, 1.5rem); }
+.parcours-projet-meta { margin: 0 0 0.9rem; color: var(--texte-doux); font-size: 0.85rem; }
+.parcours-projet-visages { display: flex; align-items: center; }
+.parcours-projet-visages a { width: 2.6rem; height: 2.6rem; margin-right: -0.5rem; border: 2px solid var(--noir); border-radius: 50%; overflow: hidden; }
+.parcours-projet-visages img { width: 100%; height: 100%; object-fit: cover; object-position: center 20%; }
+.parcours-projet-plus { margin-left: 0.9rem; color: var(--texte-doux); font-size: 0.85rem; }
+
+.parcours-vide { color: var(--texte-doux); font-style: italic; }
+
+/* Motion design : chaque changement de mois rejoue l'apparition en cascade */
+@media (prefers-reduced-motion: no-preference) {
+  .parcours-scene.joue .parcours-chiffre,
+  .parcours-scene.joue .parcours-visage,
+  .parcours-scene.joue .parcours-projet { animation: parcours-entree 0.7s var(--transition-douce, ease) both; animation-delay: var(--delai, 0ms); }
+  .parcours-scene.joue .parcours-titre-mois { animation: parcours-titre 0.6s ease both; }
+  @keyframes parcours-entree { from { opacity: 0; transform: translateY(18px) scale(0.97); } to { opacity: 1; transform: none; } }
+  @keyframes parcours-titre { from { opacity: 0; letter-spacing: 0.08em; } to { opacity: 1; letter-spacing: normal; } }
+}
+
+@media (max-width: 600px) {
+  .parcours-visages { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.7rem; }
+  .parcours-chiffres { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.parcours-espace-haut { margin-top: 3rem; }

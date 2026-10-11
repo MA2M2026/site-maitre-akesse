@@ -76,6 +76,13 @@ const PORT = String(8800 + Math.floor(Math.random() * 100));
     console.log('Sourdine, boutons :', boutons, '| badge :', await p.$$eval('.tdb-sourdine', e => e.length));
     console.log('Sourdine, questions :', questions);
     console.log('Sourdine, appels :', journal.filter(j => j[1] === 'definir_sourdine').map(j => j[2]));
+    // 8. Agenda : pays et case « Annulé » (Extension 136, Parcours MA2M) envoyés avec le projet
+    await p.evaluate(() => document.querySelector('.tdb-menu-item[data-tdb-cible="b3c-agenda"]').click()); await p.waitForTimeout(1200);
+    await p.fill('#agenda-titre', 'Défilé test'); await p.fill('#agenda-date', '2026-09-20'); await p.fill('#agenda-pays', 'Sénégal');
+    await p.$eval('#agenda-annule', x => x.click()); await p.$eval('#agenda-enregistrer', x => x.click()); await p.waitForTimeout(1200);
+    const envoiAgenda = journal.filter(j => j[0] === 'POST' && j[1] === 'agenda_projets').map(j => JSON.parse(j[3])).map(x => Array.isArray(x) ? x[0] : x)[0] || {};
+    console.log('Agenda envoyé : pays =', envoiAgenda.pays, '| annulé =', envoiAgenda.annule);
+    if (envoiAgenda.pays !== 'Sénégal' || envoiAgenda.annule !== true) { console.log('❌ ÉCHEC agenda (pays / annulé)'); process.exitCode = 1; }
     console.log('Erreurs :', errs.filter(e => !/Failed to fetch|NetworkError|ERR_/.test(e)));
     await ctx.close();
   }

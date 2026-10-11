@@ -48,7 +48,7 @@
 
   function lienMannequin(m) {
     const a = el('a', 'agenda-puce', m.nom);
-    a.href = m.slug ? 'book/' + encodeURIComponent(m.slug) : 'mannequin.html?id=' + encodeURIComponent(m.id);
+    a.href = lienFicheMannequin(m);
     return a;
   }
 

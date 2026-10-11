@@ -930,6 +930,33 @@ function libelleTypeAgenda(type, enAnglais) {
   const l = MA2M_TYPES_AGENDA[type] || MA2M_TYPES_AGENDA.autre;
   return l[enAnglais ? 1 : 0];
 }
+// Lien vers la fiche publique d'une mannequin : adresse « book » si elle existe (Agenda,
+// Parcours MA2M). Partagé le 11/10/2026.
+function lienFicheMannequin(m) {
+  return m.slug ? 'book/' + encodeURIComponent(m.slug) : 'mannequin.html?id=' + encodeURIComponent(m.id);
+}
+
+// Parcours MA2M (Extension 136) : projets réalisés de l'agenda entre deux dates (« AAAA-MM-JJ »),
+// pour une seule mannequin si idMannequin est donné. Rien de privé (ni adresse exacte, ni
+// heure, ni notes). Utilisé par la page Parcours et par la fiche de chaque mannequin.
+async function ma2mParcours(debut, fin, idMannequin) {
+  if (typeof sb === 'undefined' || !sb) return [];
+  const { data, error } = await sb.rpc('parcours_public', { p_debut: debut, p_fin: fin, p_model: idMannequin || null });
+  return error ? [] : (data || []);
+}
+// Nombre de projets par type, du plus fréquent au moins fréquent : [['defile', 4], …]
+function ma2mCompteParType(projets) {
+  const compte = {};
+  projets.forEach(p => { compte[p.type] = (compte[p.type] || 0) + 1; });
+  return Object.entries(compte).sort((a, b) => b[1] - a[1]);
+}
+
+// « 3 défilés », « 1 shooting », « 2 fashion shows » : nombre + type, au pluriel si besoin.
+function nombreTypeAgenda(type, n, enAnglais) {
+  const l = libelleTypeAgenda(type, enAnglais).toLowerCase();
+  return n + ' ' + (n > 1 && !/[sx]$/.test(l) ? l + 's' : l);
+}
+
 function dateAgenda(debut, fin, enAnglais) {
   const langue = enAnglais ? 'en-GB' : 'fr-FR';
   const d = new Date(debut + 'T12:00:00');

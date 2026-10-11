@@ -23,6 +23,7 @@
     ['actualites', 'Actualités', 'News', 'Actualités', 'News'],
     ['evenements', 'Événements', 'Our Events', 'Nos événements', 'Our Events'],
     ['agenda', 'Agenda', 'Agenda', null, null],
+    ['parcours', 'Parcours MA2M', 'Track Record', 'Parcours MA2M', 'Track Record'],
     ['partenaires', 'Partenaires', 'Our Partners', 'Nos partenaires', 'Our Partners'],
     ['integrer-agence', "Intégrer l'agence", 'Join the Agency', "Intégrer l'agence", 'Join the Agency'],
     ['candidature', 'Postuler à un casting', 'Apply for a Casting', 'Postuler à un casting', 'Apply for a Casting'],
