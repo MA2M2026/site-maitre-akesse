@@ -2463,6 +2463,48 @@ function texteAttenteEnvoi(secondes) {
     : `Beaucoup d'envois en ce moment — nouvel essai automatique dans ${secondes} s. Merci de garder la page ouverte.`;
 }
 
+// Photos de candidature / d'inscription envoyées vers Google Drive (partagé le 11/10/2026 :
+// avant, recopié dans les formulaires de candidature, l'inscription FR/EN et le tableau de bord).
+// Les photos (parfois des milliers lors d'un gros casting) vont vers Drive plutôt que vers
+// Supabase, pour ne pas charger son stockage gratuit ; seul le lien est enregistré.
+const URL_SCRIPT_PHOTOS_CASTING = 'https://script.google.com/macros/s/AKfycbxzPeaTLvMqZKtBvJJabLeZBh6JJ9ZaggPYUY8XAoh1-tyBq1Byi3lBm3SkhkH8rqNxxg/exec';
+
+function redimensionnerImage(fichier, coteMax = 2800, qualite = 0.88) {
+  return new Promise((resolve) => {
+    // On ne retouche que les JPEG : un PNG/GIF/WebP peut avoir de la transparence,
+    // qui deviendrait un fond noir en le convertissant en JPEG (pas de canal alpha).
+    if (fichier.type !== 'image/jpeg' || fichier.size < 900 * 1024) { resolve(fichier); return; }
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const coteActuel = Math.max(img.width, img.height);
+        const ratio = coteActuel > coteMax ? coteMax / coteActuel : 1;
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * ratio);
+        canvas.height = Math.round(img.height * ratio);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+          if (!blob || blob.size >= fichier.size) { resolve(fichier); return; }
+          resolve(new File([blob], fichier.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' }));
+        }, 'image/jpeg', qualite);
+      } catch (e) {
+        resolve(fichier);
+      }
+    };
+    img.onerror = () => resolve(fichier);
+    img.src = URL.createObjectURL(fichier);
+  });
+}
+
+function fichierEnBase64(fichier) {
+  return new Promise((resolve, reject) => {
+    const lecteur = new FileReader();
+    lecteur.onload = () => resolve(lecteur.result);
+    lecteur.onerror = reject;
+    lecteur.readAsDataURL(fichier);
+  });
+}
+
 async function envoyerPhotosVersDrive(urlScript, payload, tentatives = 2) {
   const payloadAvecCle = { ...payload, cle: CLE_SCRIPT_PHOTOS_DRIVE };
   for (let essai = 1; essai <= tentatives; essai++) {

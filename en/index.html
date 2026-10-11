@@ -9,7 +9,7 @@
      (see README-TECHNIQUE.md, "Porte d'entrée / verrou de scroll" section), with no
      error to hint at why. After any change, run:
      python3 scripts/verifier-csp.py en/index.html -->
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-b+QrdXtiVOaEVLNTW7orZsKUFZUKusqEn6hCQdTT7lY=' 'sha256-zN0F2vkcD2YiuA1cz5LWhPyu77KqQvQyTM8uykAfT04=' 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A='; style-src 'self' https://fonts.googleapis.com;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-b+QrdXtiVOaEVLNTW7orZsKUFZUKusqEn6hCQdTT7lY=' 'sha256-zN0F2vkcD2YiuA1cz5LWhPyu77KqQvQyTM8uykAfT04='; style-src 'self' https://fonts.googleapis.com;">
 <script src="../js/adresse-en.js"></script>
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
@@ -148,16 +148,7 @@ if (!ma2mIntroDejaVue && !ma2mReduitMouvement) {
 }
 </script>
 
-<script>
-// Safety net: on an unstable connection, a third-party script (Supabase, EmailJS,
-// heic2any...) can be very slow or fail to load — in that case js/app.js never runs and
-// ".reveal" elements (scroll-in animation) stay invisible forever, even though the rest
-// of the page (forms, buttons) works normally. This net force-reveals them after 2.5s if
-// the normal animation hasn't happened, so content never stays hidden over a network hiccup.
-setTimeout(() => {
-  document.querySelectorAll('.reveal:not(.visible)').forEach(el => el.classList.add('visible'));
-}, 2500);
-</script>
+<script src="../js/filet-reveal.js"></script>
 
 
 <!-- La barre du haut (logo, EN/FR, Menu) est placée sous la couverture animée : voir plus bas. -->

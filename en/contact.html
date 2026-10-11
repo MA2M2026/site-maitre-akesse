@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-YEweoquonhvFQJMFgmDGllzIGeVBK/dFURNENNq+DI8='; style-src 'self' https://fonts.googleapis.com 'sha256-OTfHT1lrDEpPzNsdPp4OjhDqKTSZ5t8SQEpw+9+WoV4=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-YEweoquonhvFQJMFgmDGllzIGeVBK/dFURNENNq+DI8='; style-src 'self' https://fonts.googleapis.com 'sha256-OTfHT1lrDEpPzNsdPp4OjhDqKTSZ5t8SQEpw+9+WoV4=';">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -37,16 +37,7 @@
 </style>
 </head>
 <body>
-<script>
-// Safety net: on an unstable connection, a third-party script (Supabase, EmailJS,
-// heic2any...) can be very slow or fail to load — in that case js/app.js never runs and
-// ".reveal" elements (scroll-in animation) stay invisible forever, even though the rest
-// of the page (forms, buttons) works normally. This net force-reveals them after 2.5s if
-// the normal animation hasn't happened, so content never stays hidden over a network hiccup.
-setTimeout(() => {
-  document.querySelectorAll('.reveal:not(.visible)').forEach(el => el.classList.add('visible'));
-}, 2500);
-</script>
+<script src="../js/filet-reveal.js"></script>
 
 
 

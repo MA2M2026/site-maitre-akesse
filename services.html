@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY='; style-src 'self' https://fonts.googleapis.com;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com; style-src 'self' https://fonts.googleapis.com;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -32,17 +32,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 </head>
 <body>
-<script>
-// Filet de sécurité : sur une connexion instable, un script externe (Supabase, EmailJS,
-// heic2any...) peut être très lent ou échouer à charger — dans ce cas js/app.js ne
-// s'exécute jamais et les éléments ".reveal" (animation d'apparition au scroll) restent
-// invisibles indéfiniment, alors que le reste de la page (formulaires, boutons) fonctionne
-// normalement. Ce filet les révèle de force après 2,5s si l'animation normale n'a pas eu
-// lieu, pour qu'aucun contenu ne reste caché à cause d'un simple souci réseau.
-setTimeout(() => {
-  document.querySelectorAll('.reveal:not(.visible)').forEach(el => el.classList.add('visible'));
-}, 2500);
-</script>
+<script src="js/filet-reveal.js"></script>
 
 
 

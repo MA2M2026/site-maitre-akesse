@@ -48,48 +48,7 @@ if (EN) [...document.getElementById('ca-commune').options].forEach(o => {
   if (o.value === 'Autre') o.text = 'Other';
 });
 
-function redimensionnerImage(fichier, coteMax = 2800, qualite = 0.88) {
-  return new Promise((resolve) => {
-    // On ne retouche que les JPEG : un PNG/GIF/WebP peut avoir de la transparence,
-    // qui deviendrait un fond noir en le convertissant en JPEG (pas de canal alpha).
-    if (fichier.type !== 'image/jpeg' || fichier.size < 900 * 1024) { resolve(fichier); return; }
-    const img = new Image();
-    img.onload = () => {
-      try {
-        const coteActuel = Math.max(img.width, img.height);
-        const ratio = coteActuel > coteMax ? coteMax / coteActuel : 1;
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.round(img.width * ratio);
-        canvas.height = Math.round(img.height * ratio);
-        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob((blob) => {
-          if (!blob || blob.size >= fichier.size) { resolve(fichier); return; }
-          resolve(new File([blob], fichier.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' }));
-        }, 'image/jpeg', qualite);
-      } catch (e) {
-        resolve(fichier);
-      }
-    };
-    img.onerror = () => resolve(fichier);
-    img.src = URL.createObjectURL(fichier);
-  });
-}
-
-function fichierEnBase64(fichier) {
-  return new Promise((resolve, reject) => {
-    const lecteur = new FileReader();
-    lecteur.onload = () => resolve(lecteur.result);
-    lecteur.onerror = reject;
-    lecteur.readAsDataURL(fichier);
-  });
-}
-
-// Les photos de candidature (potentiellement des milliers lors d'un gros casting)
-// partent directement vers Google Drive via ce script, plutôt que vers Supabase —
-// pour ne pas charger le stockage Supabase (plan gratuit) pendant un casting massif.
-// Seul le lien de chaque photo est ensuite enregistré dans Supabase (casting_photos.url).
-const URL_SCRIPT_PHOTOS_CASTING = 'https://script.google.com/macros/s/AKfycbxzPeaTLvMqZKtBvJJabLeZBh6JJ9ZaggPYUY8XAoh1-tyBq1Byi3lBm3SkhkH8rqNxxg/exec';
-
+// redimensionnerImage, fichierEnBase64 et URL_SCRIPT_PHOTOS_CASTING : js/app.js.
 function afficherMsg(el, texte, type) {
   el.className = 'form-msg ' + type;
   el.textContent = texte;

@@ -9,7 +9,7 @@
      fin septembre 2026 (voir README-TECHNIQUE.md, section "Porte d'entrée / verrou de
      scroll"), sans qu'aucune erreur ne le laisse deviner. Après toute modification,
      lance : python3 scripts/verifier-csp.py index.html -->
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-ScOUIlNThKPw+aEmdZLE2BPzW0k26ho2AOn39MHKPNw=' 'sha256-IKNkHbE3bkbXVgrymKeofxVxC8mJTL+tQ6rP/OFgdEc=' 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY='; style-src 'self' https://fonts.googleapis.com;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-ScOUIlNThKPw+aEmdZLE2BPzW0k26ho2AOn39MHKPNw=' 'sha256-IKNkHbE3bkbXVgrymKeofxVxC8mJTL+tQ6rP/OFgdEc='; style-src 'self' https://fonts.googleapis.com;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -162,17 +162,7 @@ if (!ma2mIntroDejaVue && !ma2mReduitMouvement) {
 }
 </script>
 
-<script>
-// Filet de sécurité : sur une connexion instable, un script externe (Supabase, EmailJS,
-// heic2any...) peut être très lent ou échouer à charger — dans ce cas js/app.js ne
-// s'exécute jamais et les éléments ".reveal" (animation d'apparition au scroll) restent
-// invisibles indéfiniment, alors que le reste de la page (formulaires, boutons) fonctionne
-// normalement. Ce filet les révèle de force après 2,5s si l'animation normale n'a pas eu
-// lieu, pour qu'aucun contenu ne reste caché à cause d'un simple souci réseau.
-setTimeout(() => {
-  document.querySelectorAll('.reveal:not(.visible)').forEach(el => el.classList.add('visible'));
-}, 2500);
-</script>
+<script src="js/filet-reveal.js"></script>
 
 
 <!-- La barre du haut (logo, EN/FR, Menu) est placée sous la couverture animée : voir plus bas. -->
