@@ -7105,3 +7105,84 @@ revoke all on function parcours_public(date, date, uuid) from public;
 grant execute on function parcours_public(date, date, uuid) to anon, authenticated;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===========================================================================
+-- Extension 137 — « Autres mannequins » dans l'agenda (11/10/2026, demande de la
+-- propriétaire) : nos mannequins qui n'ont pas encore de profil sur le site (nouvelle
+-- recrue) peuvent être écrites à la main sur un projet. Leur nom (et seulement leur
+-- nom) apparaît dans l'agenda public et dans le Parcours MA2M, sans photo ni lien.
+--  * agenda_projets.mannequins_libres : liste de noms (40 au plus) ;
+--  * mannequins_publics_projet(ids, noms) : règle UNIQUE qui fabrique la liste
+--    publique des mannequins d'un projet (profils visibles du public + noms écrits),
+--    utilisée par agenda_public ET parcours_public pour qu'elles ne divergent jamais.
+-- ===========================================================================
+alter table agenda_projets add column if not exists mannequins_libres text[] not null default '{}'
+  check (cardinality(mannequins_libres) <= 40 and length(array_to_string(mannequins_libres, '|')) <= 4000);
+
+create or replace function mannequins_publics_projet(ids uuid[], noms text[])
+returns jsonb
+language sql stable security definer
+set search_path = public
+as $$
+  select coalesce(jsonb_agg(x.o order by x.nom), '[]'::jsonb) from (
+    select jsonb_build_object('id', p.id, 'nom', p.full_name, 'slug', p.slug) as o, p.full_name as nom
+      from model_profiles p
+      where p.id = any(ids)
+        and profil_visible_public(p.published, p.mesures_a_reprendre_depuis, p.desactive)
+    union all
+    select jsonb_build_object('id', null, 'nom', left(trim(n), 80), 'slug', null), trim(n)
+      from unnest(coalesce(noms, '{}')) as n
+      where length(trim(n)) > 0
+  ) x;
+$$;
+-- appelée seulement par les deux fonctions publiques ci-dessous
+revoke all on function mannequins_publics_projet(uuid[], text[]) from public, anon, authenticated;
+
+create or replace function agenda_public(seulement_a_venir boolean default false, limite int default 300)
+returns table(
+  id uuid, type text, titre text, date_debut date, date_fin date, ville text, lieu text,
+  description text, intervenants jsonb, seances jsonb, partenaires jsonb, mannequins jsonb
+)
+language sql stable security definer
+set search_path = public
+as $$
+  select a.id, a.type, a.titre, a.date_debut, a.date_fin, a.ville, a.lieu, a.description,
+    a.intervenants,
+    case when a.horaires_publics then a.seances else '[]'::jsonb end,
+    coalesce((select jsonb_agg(jsonb_build_object('id', pa.id, 'nom', pa.nom, 'logo_url', pa.logo_url) order by pa.nom)
+              from partenaires pa where pa.id = any(a.partenaire_ids)), '[]'::jsonb),
+    mannequins_publics_projet(a.mannequin_ids, a.mannequins_libres)
+  from agenda_projets a
+  where a.visible and not a.annule
+    and coalesce(a.date_fin, a.date_debut) >= case when seulement_a_venir then current_date
+                                                  else current_date - interval '12 months' end
+  order by a.date_debut
+  limit least(greatest(coalesce(limite, 300), 1), 300);
+$$;
+revoke all on function agenda_public(boolean, int) from public;
+grant execute on function agenda_public(boolean, int) to anon, authenticated;
+
+create or replace function parcours_public(p_debut date, p_fin date, p_model uuid default null)
+returns table(
+  id uuid, type text, titre text, date_debut date, date_fin date,
+  lieu text, ville text, pays text, mannequins jsonb
+)
+language sql stable security definer
+set search_path = public
+as $$
+  select a.id, a.type, a.titre, a.date_debut, a.date_fin, a.lieu, a.ville, a.pays,
+    mannequins_publics_projet(a.mannequin_ids, a.mannequins_libres)
+  from agenda_projets a
+  where a.visible and not a.annule
+    and coalesce(a.date_fin, a.date_debut) <= current_date
+    and a.date_debut <= p_fin
+    and coalesce(a.date_fin, a.date_debut) >= p_debut
+    and p_fin - p_debut <= 3700
+    and (p_model is null or p_model = any(a.mannequin_ids))
+  order by a.date_debut desc
+  limit 500;
+$$;
+revoke all on function parcours_public(date, date, uuid) from public;
+grant execute on function parcours_public(date, date, uuid) to anon, authenticated;
+
+NOTIFY pgrst, 'reload schema';

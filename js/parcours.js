@@ -97,8 +97,10 @@
   function mannequinsDuMois(duMois) {
     const parId = new Map();
     duMois.forEach(p => (p.mannequins || []).forEach(m => {
-      if (!parId.has(m.id)) parId.set(m.id, { ...m, projets: [] });
-      parId.get(m.id).projets.push(p);
+      // une mannequin écrite à la main (sans profil, Extension 137) n'a pas d'identifiant
+      const cle = m.id || 'nom:' + m.nom;
+      if (!parId.has(cle)) parId.set(cle, { ...m, projets: [] });
+      parId.get(cle).projets.push(p);
     }));
     return [...parId.values()].sort((a, b) => b.projets.length - a.projets.length || a.nom.localeCompare(b.nom));
   }
@@ -133,7 +135,7 @@
       + `<button type="button" class="parcours-detail-fermer" aria-label="${T('Fermer', 'Close')}">✕</button></div>`
       + '<ul>' + m.projets.map(p => `<li><span class="parcours-type">${echapperHtml(libelleTypeAgenda(p.type, EN))}</span>`
         + `<strong>${echapperHtml(p.titre)}</strong><em>${echapperHtml(dateLieuProjet(p))}</em></li>`).join('') + '</ul>'
-      + `<a class="btn" href="${lienFicheMannequin(m)}">${T('Voir le book', 'View the book')}</a>`;
+      + (lienFicheMannequin(m) ? `<a class="btn" href="${lienFicheMannequin(m)}">${T('Voir le book', 'View the book')}</a>` : '');
     d.hidden = false;
     d.querySelector('.parcours-detail-fermer').addEventListener('click', () => { d.hidden = true; });
     d.scrollIntoView({ behavior: animer ? 'smooth' : 'auto', block: 'nearest' });
@@ -147,8 +149,11 @@
         + `<span class="parcours-type">${echapperHtml(libelleTypeAgenda(p.type, EN))}</span>`
         + `<h3>${echapperHtml(p.titre)}</h3>`
         + `<p class="parcours-projet-meta">${echapperHtml(dateLieuProjet(p))}</p>`
-        + `<div class="parcours-projet-visages">` + visages.slice(0, 6).map(m =>
-          `<a href="${lienFicheMannequin(m)}" title="${echapperHtml(m.nom)}"><img src="${echapperHtml(photos[m.id] || PHOTO_DEFAUT)}" alt="${echapperHtml(m.nom)}" loading="lazy"></a>`).join('')
+        + `<div class="parcours-projet-visages">` + visages.slice(0, 6).map(m => {
+          const img = `<img src="${echapperHtml(photos[m.id] || PHOTO_DEFAUT)}" alt="${echapperHtml(m.nom)}" loading="lazy">`;
+          const lien = lienFicheMannequin(m);
+          return lien ? `<a href="${lien}" title="${echapperHtml(m.nom)}">${img}</a>` : `<span title="${echapperHtml(m.nom)}">${img}</span>`;
+        }).join('')
         + (visages.length > 6 ? `<span class="parcours-projet-plus">+${visages.length - 6}</span>` : '') + '</div></article>';
     }).join('');
     // délai d'apparition en cascade (propriété CSS posée en JavaScript : la sécurité du site
@@ -176,7 +181,7 @@
   async function demarrer() {
     const fin = new Date(), debut = new Date(fin.getFullYear(), fin.getMonth() - MOIS_HISTOIRE + 1, 1);
     projets = await ma2mParcours(dateLocaleIso(debut), dateLocaleIso(fin));
-    const ids = [...new Set(projets.flatMap(p => (p.mannequins || []).map(m => m.id)))];
+    const ids = [...new Set(projets.flatMap(p => (p.mannequins || []).map(m => m.id).filter(Boolean)))];
     if (ids.length && typeof sb !== 'undefined' && sb) {
       const { data } = await sb.rpc('photos_couverture_mannequins', { ids });
       (data || []).forEach(c => { photos[c.model_id] = c.url; });

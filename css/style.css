@@ -3061,3 +3061,9 @@ body.porte-verrouillee .couverture-faisceau, body.porte-verrouillee .couverture-
 .fiche-equivalences tbody tr:last-child th, .fiche-equivalences tbody tr:last-child td { border-bottom: 0; }
 .fiche-equivalences .eq-lettre { color: var(--titre-clair); font-weight: 600; }
 .fiche-equivalences .eq-note { margin: 0.5rem 0 0; font-size: 0.78rem; color: var(--texte-doux); }
+
+/* Tableau de bord (11/10/2026) : sur l'écran de connexion, le contenu est court ; le bas de
+   page descend tout en bas de l'écran au lieu de s'arrêter au milieu (l'écran paraissait
+   coupé en deux). Sans effet quand le contenu est plus haut que l'écran. */
+body.zone-admin { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
+body.zone-admin > .site-footer { margin-top: auto; }

@@ -83,7 +83,7 @@
 .parcours-projet h3 { margin: 0.4rem 0 0.3rem; font-size: clamp(1.2rem, 3vw, 1.5rem); }
 .parcours-projet-meta { margin: 0 0 0.9rem; color: var(--texte-doux); font-size: 0.85rem; }
 .parcours-projet-visages { display: flex; align-items: center; }
-.parcours-projet-visages a { width: 2.6rem; height: 2.6rem; margin-right: -0.5rem; border: 2px solid var(--noir); border-radius: 50%; overflow: hidden; }
+.parcours-projet-visages > :not(.parcours-projet-plus) { display: block; width: 2.6rem; height: 2.6rem; margin-right: -0.5rem; border: 2px solid var(--noir); border-radius: 50%; overflow: hidden; }
 .parcours-projet-visages img { width: 100%; height: 100%; object-fit: cover; object-position: center 20%; }
 .parcours-projet-plus { margin-left: 0.9rem; color: var(--texte-doux); font-size: 0.85rem; }
 

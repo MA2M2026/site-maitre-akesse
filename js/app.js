@@ -932,8 +932,11 @@ function libelleTypeAgenda(type, enAnglais) {
 }
 // Lien vers la fiche publique d'une mannequin : adresse « book » si elle existe (Agenda,
 // Parcours MA2M). Partagé le 11/10/2026.
+// Lien vide pour une mannequin écrite à la main dans l'agenda (« Autres mannequins »,
+// Extension 137) : elle n'a pas encore de profil sur le site.
 function lienFicheMannequin(m) {
-  return m.slug ? 'book/' + encodeURIComponent(m.slug) : 'mannequin.html?id=' + encodeURIComponent(m.id);
+  if (m.slug) return 'book/' + encodeURIComponent(m.slug);
+  return m.id ? 'mannequin.html?id=' + encodeURIComponent(m.id) : '';
 }
 
 // Parcours MA2M (Extension 136) : projets réalisés de l'agenda entre deux dates (« AAAA-MM-JJ »),
