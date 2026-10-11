@@ -1966,3 +1966,13 @@ Rien n'est supprimé : colonnes `model_profiles.desactive`, `desactive_le`, `des
 - **Base** : déclencheur `bloquer_profil_en_sourdine()` sur `model_profiles`,
   `model_photos` et `model_projects` : la mannequin ne peut ni changer `desactive`, ni
   rien modifier tant que son profil est en sourdine (serveur et admins passent).
+
+## Formulaire de candidature partagé (11/10/2026, nettoyage du code recopié)
+
+`candidature.html`, `integrer-agence.html` et leurs versions `en/` utilisent un seul script :
+`js/formulaire-candidature.js` (avant : quatre copies de ~650 lignes dans les pages).
+- Parcours : `<form id="form-casting" data-parcours="projet">` (postuler à un casting précis :
+  liste des castings, 4 photos) ou `data-parcours="agence"` (intégrer l'agence : débutant·e
+  = formulaire allégé et 3 photos, déjà mannequin = complet et 4 photos).
+- Langue : `<html lang="en">` ; chaque texte est écrit `T('français', 'anglais')`.
+- Essai visiteur : `scripts/tests-visiteur/test-visiteur.js` couvre les quatre pages.
