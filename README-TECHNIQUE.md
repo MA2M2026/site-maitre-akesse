@@ -1950,3 +1950,19 @@ des photos (suppression en cascade). ⚠️ Tout NOUVEAU garde-fou commence par
 des erreurs (`[Création de compte mannequin] échec : …`, avec la raison de la base).
 **Pourquoi l'incident a duré** : le changement de sécurité du 04/10 n'a été essayé qu'avec
 une base simulée, jamais avec un vrai compte ; l'échec était silencieux pour l'agence.
+
+## Mise en sourdine d'un profil (11/10/2026, Extension 135)
+
+Bouton « 🔇 Mettre en sourdine / 🔊 Réactiver » sur chaque carte de la liste des
+mannequins publiés du tableau de bord (`changerSourdine` dans `tableau-de-bord.html`),
+qui appelle la fonction `definir_sourdine(p_model, p_desactive)` (admins seulement).
+Rien n'est supprimé : colonnes `model_profiles.desactive`, `desactive_le`, `desactive_par`.
+- **Site public** : `profil_visible_public(publie, a_reprendre_depuis, desactive)` (3
+  arguments) cache le profil partout (liste, fiche, book, photos, projets, `agenda_public`,
+  middleware) puisque toutes ces lectures passent par la règle de lecture des profils.
+- **Espace mannequin** : `Store.load` lit `desactive` à part (`state.meta.desactive`) ;
+  `render()` n'affiche alors que `viewSourdine()` (message « L'administrateur a désactivé
+  votre profil » + lien WhatsApp de l'agence + bouton de déconnexion).
+- **Base** : déclencheur `bloquer_profil_en_sourdine()` sur `model_profiles`,
+  `model_photos` et `model_projects` : la mannequin ne peut ni changer `desactive`, ni
+  rien modifier tant que son profil est en sourdine (serveur et admins passent).
