@@ -947,7 +947,9 @@ async function ma2mParcours(debut, fin, idMannequin) {
     if (window.signalerErreur) window.signalerErreur('Parcours MA2M : lecture impossible', error.message || String(error));
     return [];
   }
-  return data || [];
+  // La page est réservée à nos mannequins : un projet (ex. un casting ouvert organisé par
+  // l'agence) n'y figure que si au moins une de nos mannequins publiées y est cochée.
+  return (data || []).filter(p => (p.mannequins || []).length);
 }
 // Date du jour (ou d'une date) au format « AAAA-MM-JJ » dans le fuseau du visiteur
 // (toISOString passe en heure universelle et peut décaler d'un jour).
