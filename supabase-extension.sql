@@ -7035,3 +7035,73 @@ create trigger trg_sourdine_projets before insert or update or delete on model_p
   for each row execute function bloquer_profil_en_sourdine();
 
 NOTIFY pgrst, 'reload schema';
+
+
+-- ===========================================================================
+-- Extension 136 — Parcours MA2M (11/10/2026) : bilan public des activités des
+-- mannequins, calculé à partir de l'agenda (aucune saisie en double).
+--  * agenda_projets.pays (Côte d'Ivoire par défaut) et .annule (un projet annulé
+--    ne compte pas dans le bilan et disparaît de l'agenda public) ;
+--  * parcours_public(début, fin[, mannequin]) : projets PASSÉS, visibles, non
+--    annulés — type, titre, dates, lieu, ville, pays et mannequins publiques
+--    (id, nom, adresse « book » seulement). Jamais l'adresse exacte, l'heure,
+--    les notes internes ni les coordonnées. Période limitée à ~10 ans, 500 lignes.
+-- ===========================================================================
+alter table agenda_projets add column if not exists pays text not null default 'Côte d''Ivoire'
+  check (length(pays) between 1 and 80);
+alter table agenda_projets add column if not exists annule boolean not null default false;
+
+create or replace function agenda_public(seulement_a_venir boolean default false, limite int default 300)
+returns table(
+  id uuid, type text, titre text, date_debut date, date_fin date, ville text, lieu text,
+  description text, intervenants jsonb, seances jsonb, partenaires jsonb, mannequins jsonb
+)
+language sql stable security definer
+set search_path = public
+as $$
+  select a.id, a.type, a.titre, a.date_debut, a.date_fin, a.ville, a.lieu, a.description,
+    a.intervenants,
+    case when a.horaires_publics then a.seances else '[]'::jsonb end,
+    coalesce((select jsonb_agg(jsonb_build_object('id', pa.id, 'nom', pa.nom, 'logo_url', pa.logo_url) order by pa.nom)
+              from partenaires pa where pa.id = any(a.partenaire_ids)), '[]'::jsonb),
+    coalesce((select jsonb_agg(jsonb_build_object('id', p.id, 'nom', p.full_name, 'slug', p.slug) order by p.full_name)
+              from model_profiles p
+              where p.id = any(a.mannequin_ids)
+                and profil_visible_public(p.published, p.mesures_a_reprendre_depuis, p.desactive)), '[]'::jsonb)
+  from agenda_projets a
+  where a.visible and not a.annule
+    and coalesce(a.date_fin, a.date_debut) >= case when seulement_a_venir then current_date
+                                                  else current_date - interval '12 months' end
+  order by a.date_debut
+  limit least(greatest(coalesce(limite, 300), 1), 300);
+$$;
+revoke all on function agenda_public(boolean, int) from public;
+grant execute on function agenda_public(boolean, int) to anon, authenticated;
+
+create or replace function parcours_public(p_debut date, p_fin date, p_model uuid default null)
+returns table(
+  id uuid, type text, titre text, date_debut date, date_fin date,
+  lieu text, ville text, pays text, mannequins jsonb
+)
+language sql stable security definer
+set search_path = public
+as $$
+  select a.id, a.type, a.titre, a.date_debut, a.date_fin, a.lieu, a.ville, a.pays,
+    coalesce((select jsonb_agg(jsonb_build_object('id', p.id, 'nom', p.full_name, 'slug', p.slug) order by p.full_name)
+              from model_profiles p
+              where p.id = any(a.mannequin_ids)
+                and profil_visible_public(p.published, p.mesures_a_reprendre_depuis, p.desactive)), '[]'::jsonb)
+  from agenda_projets a
+  where a.visible and not a.annule
+    and coalesce(a.date_fin, a.date_debut) <= current_date
+    and a.date_debut <= p_fin
+    and coalesce(a.date_fin, a.date_debut) >= p_debut
+    and p_fin - p_debut <= 3700
+    and (p_model is null or p_model = any(a.mannequin_ids))
+  order by a.date_debut desc
+  limit 500;
+$$;
+revoke all on function parcours_public(date, date, uuid) from public;
+grant execute on function parcours_public(date, date, uuid) to anon, authenticated;
+
+NOTIFY pgrst, 'reload schema';
