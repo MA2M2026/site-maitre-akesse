@@ -300,9 +300,9 @@ css/style.css                     Toutes les feuilles de style du site (fichier 
 js/app.js                          Fonctions partagées (voir plus bas), surveillance globale des
                                      erreurs, verrou de défilement (menu/modales), filet retour arrière
 js/menu.js                          Ouverture/fermeture du menu plein écran
-js/accueil.js / accueil-en.js         Logique de la page d'accueil (porte d'entrée, carrousel hero,
+js/accueil.js (FR + EN)                Logique de la page d'accueil (porte d'entrée, carrousel hero,
                                         mannequin à la une, mot du fondateur, stats...)
-js/mannequins.js / mannequins-en.js     Logique de "The Book" (filtres, sélection recruteur)
+js/mannequins.js (FR + EN)              Logique de "The Book" (filtres, sélection recruteur)
 js/actualites.js                    Logique de la page Actualités (admin publication/édition inclus)
 js/evenements.js                      Logique de la page Nos Événements (même schéma que
                                         js/actualites.js — champs date/lieu au lieu de
@@ -1986,3 +1986,18 @@ que la rubrique « Couverture du site (vidéo) » du tableau de bord. La barre d
 maintenant en haut de toutes les pages. Conservés : l'intro de l'accueil (bouton « Entrer »,
 `js/faisceau.js` + `js/intro-faisceau.js`) et la « Vidéo de la page d'accueil ». Les règles
 CSS `.couverture-faisceau` / `--couv-h` restent sans effet (nettoyage CSS à faire).
+
+## Scripts partagés FR/EN (nettoyage du code recopié, suite, 11/10/2026)
+- `js/mannequins.js` : « Nos mannequins » FR et EN (`js/mannequins-en.js` supprimé).
+- `js/app.js` : `EN` (page en anglais) et `T('français', 'anglais')` — le traducteur commun à
+  tous les scripts FR/EN ; aussi `remplirSelectListe` (« Autre »/« Other »), `urlHttpSure`,
+  `verifierAdmin` (panneau d'ajout des pages publiques), `urlIndiqueRecuperationMdp`,
+  `URL_SCRIPT_PHOTOS_CASTING`, `redimensionnerImage`, `fichierEnBase64`.
+- `js/filet-reveal.js` : filet d'affichage (33 pages, chargé en `async`).
+- Un seul script FR/EN par page : `js/accueil.js`, `js/inscription-mannequin.js`,
+  `js/contact.js`, `js/demande-recruteur.js` (page Sélection), `js/partenaires.js`,
+  `js/actualites.js`, `js/evenements.js` (+ `js/publications.js`, fonctions communes à ces deux).
+- Essai visiteur `scripts/tests-visiteur/test-pages-publiques.js` : ces pages en FR et EN.
+- `js/fiche-mannequin.js` : fiche d'une mannequin, `mannequin.html` et `en/mannequin.html`
+  (avant : deux scripts de ~400 lignes dans les pages). Textes `T('fr', 'en')` ; en anglais,
+  équivalents impériaux (`enPieds`, `enPouces`, `enLivres`, `pointureUS` de `js/app.js`).

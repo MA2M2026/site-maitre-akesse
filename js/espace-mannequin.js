@@ -92,9 +92,6 @@ function toast(msg, isErr){
 // réseau du jeton) n'ait eu le temps de poser recuperationMdpEnCours à
 // true, demarrerApresConnexion() fonçait tout droit vers le tableau de
 // bord, sans jamais proposer de changer le mot de passe.
-function urlIndiqueRecuperationMdp(){
-  return /type=recovery/.test(window.location.hash + window.location.search);
-}
 let recuperationMdpEnCours = urlIndiqueRecuperationMdp();
 
 const WORDMARK_HTML = '<a class="wordmark" href="index.html"><img src="assets/logo-header.png" alt="Maître Akesse Model Management"></a>';

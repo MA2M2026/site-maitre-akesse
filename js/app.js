@@ -392,6 +392,55 @@ function remplirSelectNombres(id, min, max, pas, suffixe) {
   }
 }
 
+// Lien cliquable seulement pour une vraie adresse web (http/https) : bloque les liens piégés
+// du type « javascript:… » ou « data:… ». Partagé le 11/10/2026 (Actualités, fiche mannequin).
+function urlHttpSure(url) {
+  if (!url) return null;
+  try {
+    const u = new URL(url, window.location.href);
+    return (u.protocol === 'http:' || u.protocol === 'https:') ? u.href : null;
+  } catch (e) { return null; }
+}
+
+// Pages publiques Actualités, Événements, Partenaires : si l'agence est connectée (session du
+// tableau de bord), révèle le panneau d'ajout (#admin-bloc). Partagé le 11/10/2026.
+async function verifierAdmin() {
+  // Sur une connexion instable, la bibliothèque Supabase (chargée depuis un
+  // CDN) peut échouer à se charger — sans ce filet, "sbAdmin" vaut alors null et
+  // cette vérification silencieuse plante toute la page au chargement pour
+  // un simple visiteur, pour une fonctionnalité qui ne concerne que l'admin.
+  try {
+    if (!sbAdmin) return;
+    const { data: { user } } = await sbAdmin.auth.getUser();
+    if (!user) return;
+    const { data } = await sbAdmin.from('admins').select('user_id').eq('user_id', user.id).single();
+    if (data) {
+      window.estAdminConnecte = true;
+      document.getElementById('admin-bloc').style.display = 'block';
+    }
+  } catch (e) {}
+}
+
+// Lien de « mot de passe oublié » (Supabase ajoute type=recovery à l'adresse) : Espace
+// mannequin et tableau de bord. Partagé le 11/10/2026.
+function urlIndiqueRecuperationMdp() {
+  return /type=recovery/.test(window.location.hash + window.location.search);
+}
+
+// Langue de la page et petit traducteur partagés (11/10/2026) : T('texte français',
+// 'English text') renvoie le texte de la langue de la page (<html lang="en"> = anglais).
+const EN = document.documentElement.lang === 'en';
+function T(fr, en) { return EN ? en : fr; }
+
+// Liste déroulante remplie depuis une liste, avec « Autre » à la fin (« Other » sur le site
+// anglais). Partagée le 11/10/2026 (avant : recopiée dans 5 pages).
+function remplirSelectListe(id, liste) {
+  const champ = document.getElementById(id);
+  if (!champ) return;
+  champ.appendChild(new Option('—', ''));
+  liste.forEach(v => champ.appendChild(new Option(v, v)));
+  champ.appendChild(new Option(T('Autre', 'Other'), 'Autre'));
+}
 // Bascule l'affichage du champ "Autre" (texte libre) selon que le select est sur
 // l'option "Autre" ou non — utilisé par tous les selects qui acceptent une valeur
 // hors liste (ville, carnation, yeux, cheveux, taille de vêtements...).
@@ -2461,6 +2510,51 @@ function texteAttenteEnvoi(secondes) {
   return (document.documentElement.lang || '').indexOf('en') === 0
     ? `Many submissions right now — trying again automatically in ${secondes} s. Please keep this page open.`
     : `Beaucoup d'envois en ce moment — nouvel essai automatique dans ${secondes} s. Merci de garder la page ouverte.`;
+}
+
+// Photos de candidature / d'inscription envoyées vers Google Drive (partagé le 11/10/2026 :
+// avant, recopié dans les formulaires de candidature, l'inscription FR/EN et le tableau de bord).
+// Les photos (parfois des milliers lors d'un gros casting) vont vers Drive plutôt que vers
+// Supabase, pour ne pas charger son stockage gratuit ; seul le lien est enregistré.
+const URL_SCRIPT_PHOTOS_CASTING = 'https://script.google.com/macros/s/AKfycbxzPeaTLvMqZKtBvJJabLeZBh6JJ9ZaggPYUY8XAoh1-tyBq1Byi3lBm3SkhkH8rqNxxg/exec';
+
+function redimensionnerImage(fichier, coteMax = 2800, qualite = 0.88) {
+  return new Promise((resolve) => {
+    // On ne retouche que les JPEG : un PNG/GIF/WebP peut avoir de la transparence,
+    // qui deviendrait un fond noir en le convertissant en JPEG (pas de canal alpha).
+    if (fichier.type !== 'image/jpeg' || fichier.size < 900 * 1024) { resolve(fichier); return; }
+    const img = new Image();
+    const adresse = URL.createObjectURL(fichier);
+    const liberer = () => URL.revokeObjectURL(adresse); // évite de garder la photo en mémoire
+    img.onload = () => {
+      liberer();
+      try {
+        const coteActuel = Math.max(img.width, img.height);
+        const ratio = coteActuel > coteMax ? coteMax / coteActuel : 1;
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * ratio);
+        canvas.height = Math.round(img.height * ratio);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+          if (!blob || blob.size >= fichier.size) { resolve(fichier); return; }
+          resolve(new File([blob], fichier.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' }));
+        }, 'image/jpeg', qualite);
+      } catch (e) {
+        resolve(fichier);
+      }
+    };
+    img.onerror = () => { liberer(); resolve(fichier); };
+    img.src = adresse;
+  });
+}
+
+function fichierEnBase64(fichier) {
+  return new Promise((resolve, reject) => {
+    const lecteur = new FileReader();
+    lecteur.onload = () => resolve(lecteur.result);
+    lecteur.onerror = reject;
+    lecteur.readAsDataURL(fichier);
+  });
 }
 
 async function envoyerPhotosVersDrive(urlScript, payload, tentatives = 2) {

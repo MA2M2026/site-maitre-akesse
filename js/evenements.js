@@ -1,26 +1,18 @@
-const quillRedaction = creerEditeurRiche('red-editeur', 'Racontez cet événement ici… (facultatif)');
+// Événements (evenements.html et en/evenements.html) : un seul script pour le français et
+// l'anglais (11/10/2026 : avant, la version anglaise était recopiée dans la page). EN, T : js/app.js.
+const quillRedaction = creerEditeurRiche('red-editeur', T('Racontez cet événement ici… (facultatif)', 'Tell the story of this event here… (optional)'));
 
 // "date" (sans heure) : new Date('2026-05-01') est interprété en UTC, ce qui peut
 // afficher la veille selon le fuseau du visiteur — on force midi pour l'éviter.
 function formatDateEvenement(dateStr) {
   if (!dateStr) return '';
-  return new Date(dateStr + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  return new Date(dateStr + 'T12:00:00').toLocaleDateString(EN ? 'en-US' : 'fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 function formatDatePublication(dateStr) {
-  return new Date(dateStr).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  return new Date(dateStr).toLocaleDateString(EN ? 'en-US' : 'fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 function dateAffichageEvenement(e) {
   return e.date_evenement ? formatDateEvenement(e.date_evenement) : formatDatePublication(e.created_at);
-}
-
-function extraitTexte(texte, longueur) {
-  if (!texte) return '';
-  if (texte.length <= longueur) return texte;
-  // Coupe entre deux mots (et non au milieu d'un mot : « Cette nouvel… »).
-  let coupe = texte.slice(0, longueur);
-  const espace = coupe.lastIndexOf(' ');
-  if (espace > longueur * 0.6) coupe = coupe.slice(0, espace);
-  return coupe.replace(/[\s,;:.\-–—(]+$/, '') + '…';
 }
 
 async function chargerEvenements() {
@@ -31,7 +23,7 @@ async function chargerEvenements() {
     // "sb" peut valoir null sur une connexion instable (échec de chargement de
     // la bibliothèque Supabase, servie depuis un CDN) — on l'affiche clairement
     // plutôt que de laisser croire qu'il n'y a simplement aucun événement.
-    vide.textContent = 'Le chargement des événements a échoué (connexion instable ?). Rechargez la page.';
+    vide.textContent = T('Le chargement des événements a échoué (connexion instable ?). Rechargez la page.', 'Failed to load events (unstable connection?). Reload the page.');
     vide.style.display = 'block';
     return;
   }
@@ -50,12 +42,12 @@ async function chargerEvenements() {
       <img src="${echapperHtml(une.image_url || '')}" loading="lazy" alt="${echapperHtml(une.titre || '')}">
       <div class="news-une-scrim"></div>
       <div class="news-une-corps">
-        <span class="news-une-badge">★ À la une</span>
+        <span class="news-une-badge">★ ${T('À la une', 'Featured')}</span>
         ${une.lieu ? `<span class="news-categorie">📍 ${echapperHtml(une.lieu)}</span>` : ''}
         <div class="news-date">${dateAffichageEvenement(une)}</div>
         ${une.titre ? `<h2>${echapperHtml(une.titre)}</h2>` : ''}
         ${une.description ? `<p>${echapperHtml(extraitTexte(texteBrutDepuis(une.description), 180))}</p>` : ''}
-        <span class="news-lire">Voir l'événement →</span>
+        <span class="news-lire">${T('Voir l\'événement →', 'View Event →')}</span>
       </div>
     </div>
   `;
@@ -76,7 +68,7 @@ async function chargerEvenements() {
         <div class="news-date">${dateAffichageEvenement(e)}</div>
         ${e.titre ? `<h3>${echapperHtml(e.titre)}</h3>` : ''}
         ${e.description ? `<p class="news-extrait">${echapperHtml(extraitTexte(texteBrutDepuis(e.description), 110))}</p>` : ''}
-        <span class="news-lire">Voir l'album →</span>
+        <span class="news-lire">${T('Voir l\'album →', 'View Album →')}</span>
       </div>
     </div>
   `; }).join('');
@@ -129,40 +121,10 @@ async function ouvrirEvenementModal(index) {
   if (window.ficheOuverte) window.ficheOuverte('evenement', e.id, e.titre);
   document.getElementById('news-modal-admin-actions').style.display = window.estAdminConnecte ? 'block' : 'none';
 }
-// Verrouille le défilement de la page tant que la fiche est ouverte (même mécanisme,
-// compatible iPhone, que celui du menu — voir js/app.js).
-let newsModalEstOuverte = false;
-function ouvrirNewsModal() {
-  document.getElementById('news-modal').classList.add('active');
-  if (!newsModalEstOuverte) { newsModalEstOuverte = true; window.verrouillerDefilement(); }
-}
-function fermerNewsModal() {
-  document.getElementById('news-modal').classList.remove('active');
-  if (window.ficheFermee) window.ficheFermee();
-  if (newsModalEstOuverte) { newsModalEstOuverte = false; window.deverrouillerDefilement(); }
-}
+// Fiche ouverte / fermée (verrouillage du défilement) : js/publications.js.
 document.getElementById('news-modal-fermer').addEventListener('click', fermerNewsModal);
 document.getElementById('news-modal').addEventListener('click', (e) => { if (e.target.id === 'news-modal') fermerNewsModal(); });
 
-// Aucune interface de connexion sur cette page publique : un admin se connecte
-// depuis tableau-de-bord.html, puis sa session est simplement détectée ici pour
-// révéler le panneau de publication — sans aucune trace visible pour un visiteur.
-async function verifierAdmin() {
-  // Sur une connexion instable, la bibliothèque Supabase (chargée depuis un
-  // CDN) peut échouer à se charger — sans ce filet, "sbAdmin" vaut alors null
-  // et cette vérification silencieuse plante toute la page au chargement pour
-  // un simple visiteur, pour une fonctionnalité qui ne concerne que l'admin.
-  try {
-    if (!sbAdmin) return;
-    const { data: { user } } = await sbAdmin.auth.getUser();
-    if (!user) return;
-    const { data } = await sbAdmin.from('admins').select('user_id').eq('user_id', user.id).single();
-    if (data) {
-      window.estAdminConnecte = true;
-      document.getElementById('admin-bloc').style.display = 'block';
-    }
-  } catch (e) {}
-}
 void verifierAdmin();
 
 // --- Modification / suppression directement depuis la fiche ouverte (admin) ---
@@ -175,12 +137,12 @@ document.getElementById('news-modal-modifier-btn').addEventListener('click', () 
 
 document.getElementById('news-modal-supprimer-btn').addEventListener('click', async () => {
   const id = window.evenementModalCourant;
-  if (!confirm("Supprimer définitivement cet événement et toutes ses photos ?")) return;
+  if (!confirm(T("Supprimer définitivement cet événement et toutes ses photos ?", 'Permanently delete this event and all its photos?'))) return;
   const { data: photos } = await sbAdmin.from('evenement_photos').select('chemin').eq('evenement_id', id);
   const chemins = (photos || []).map(p => p.chemin).filter(Boolean);
   // Base d'abord : si la suppression échoue, les images restent intactes.
   const { error: erreurSuppression } = await sbAdmin.from('evenements').delete().eq('id', id);
-  if (erreurSuppression) { alert('La suppression a échoué. Réessayez.'); return; }
+  if (erreurSuppression) { alert(T('La suppression a échoué. Réessayez.', 'Deletion failed. Please try again.')); return; }
   if (chemins.length) await supprimerCheminsImagesSite('evenements', 'evenements-images', chemins);
   fermerNewsModal();
   void chargerEvenements();
@@ -202,14 +164,14 @@ let redactionNouvellesImages = [];
 function ouvrirRedaction(evenementExistant) {
   redactionIdEnCours = evenementExistant ? evenementExistant.id : null;
   redactionNouvellesImages = [];
-  document.getElementById('redaction-titre-mode').textContent = evenementExistant ? 'Modifier l’événement' : 'Publier un nouvel événement';
+  document.getElementById('redaction-titre-mode').textContent = evenementExistant ? T('Modifier l’événement', 'Edit Event') : T('Publier un nouvel événement', 'Publish a New Event');
   document.getElementById('red-titre').value = evenementExistant ? (evenementExistant.titre || '') : '';
   document.getElementById('red-date').value = evenementExistant ? (evenementExistant.date_evenement || '') : '';
   document.getElementById('red-lieu').value = evenementExistant ? (evenementExistant.lieu || '') : '';
   chargerContenuDansEditeur(quillRedaction, evenementExistant ? evenementExistant.description : '');
   document.getElementById('red-images').value = '';
-  document.getElementById('red-images-label').textContent = evenementExistant ? 'Ajouter des photos (s’ajoutent à celles déjà en ligne)' : 'Photos (tu peux en sélectionner plusieurs à la fois)';
-  document.getElementById('red-enregistrer-btn').textContent = evenementExistant ? 'Enregistrer' : 'Publier l’événement';
+  document.getElementById('red-images-label').textContent = evenementExistant ? T('Ajouter des photos (s’ajoutent à celles déjà en ligne)', 'Add photos (added to those already online)') : T('Photos (tu peux en sélectionner plusieurs à la fois)', 'Photos (you can select several at once)');
+  document.getElementById('red-enregistrer-btn').textContent = evenementExistant ? T('Enregistrer', 'Save') : T('Publier l’événement', 'Publish Event');
   document.getElementById('red-supprimer-btn').classList.toggle('u-hidden', !evenementExistant);
   document.getElementById('red-msg').style.display = 'none';
   document.getElementById('red-images-apercu').innerHTML = '';
@@ -219,22 +181,11 @@ function ouvrirRedaction(evenementExistant) {
   window.verrouillerDefilement();
 }
 
-function fermerRedaction() {
-  document.getElementById('redaction-overlay').classList.remove('active');
-  window.deverrouillerDefilement();
-}
-
-function apercuImageCouverture(url) {
-  const img = document.getElementById('red-apercu-img');
-  img.src = url || '';
-  img.classList.toggle('u-hidden', !url);
-}
-
 function mettreAJourApercuRedaction() {
   const titre = document.getElementById('red-titre').value.trim();
   const lieu = document.getElementById('red-lieu').value.trim();
   const dateEvenement = document.getElementById('red-date').value;
-  document.getElementById('red-apercu-titre').textContent = titre || 'Titre de l’événement';
+  document.getElementById('red-apercu-titre').textContent = titre || T('Titre de l’événement', 'Event title');
   const lieuEl = document.getElementById('red-apercu-lieu');
   lieuEl.textContent = lieu ? ('📍 ' + lieu) : '';
   lieuEl.classList.toggle('u-hidden', !lieu);
@@ -269,13 +220,13 @@ document.getElementById('red-enregistrer-btn').addEventListener('click', async (
   const description = lireContenuEditeur(quillRedaction);
   const fichiers = redactionNouvellesImages;
 
-  if (!titre) { msg.className = 'form-msg err'; msg.textContent = 'Le titre est obligatoire.'; msg.style.display = 'block'; return; }
+  if (!titre) { msg.className = 'form-msg err'; msg.textContent = T('Le titre est obligatoire.', 'Title is required.'); msg.style.display = 'block'; return; }
   if (!redactionIdEnCours && !fichiers.length) {
-    msg.className = 'form-msg err'; msg.textContent = 'Choisis au moins une photo.'; msg.style.display = 'block';
+    msg.className = 'form-msg err'; msg.textContent = T('Choisis au moins une photo.', 'Choose at least one photo.'); msg.style.display = 'block';
     return;
   }
 
-  msg.className = 'form-msg ok'; msg.textContent = fichiers.length ? `Envoi de ${fichiers.length} photo(s) en cours…` : 'Enregistrement…'; msg.style.display = 'block';
+  msg.className = 'form-msg ok'; msg.textContent = fichiers.length ? T(`Envoi de ${fichiers.length} photo(s) en cours…`, `Uploading ${fichiers.length} photo(s)…`) : T('Enregistrement…', 'Saving…'); msg.style.display = 'block';
 
   const id = redactionIdEnCours || crypto.randomUUID();
   const urls = [];
@@ -290,7 +241,7 @@ document.getElementById('red-enregistrer-btn').addEventListener('click', async (
 
   if (redactionIdEnCours) {
     const { error: erreurUpdate } = await sbAdmin.from('evenements').update({ titre, date_evenement: dateEvenement, lieu: lieu || null, description: description || null }).eq('id', id);
-    if (erreurUpdate) { msg.className = 'form-msg err'; msg.textContent = "Erreur lors de la modification."; return; }
+    if (erreurUpdate) { msg.className = 'form-msg err'; msg.textContent = T('Erreur lors de la modification.', 'Error while updating.'); return; }
     for (const photo of urls) {
       await sbAdmin.from('evenement_photos').insert({ evenement_id: id, url: photo.url, chemin: photo.chemin });
     }
@@ -298,17 +249,17 @@ document.getElementById('red-enregistrer-btn').addEventListener('click', async (
       const { data: evenementActuel } = await sbAdmin.from('evenements').select('image_url').eq('id', id).single();
       if (!evenementActuel.image_url) await sbAdmin.from('evenements').update({ image_url: urls[0].url }).eq('id', id);
     }
-    msg.className = 'form-msg ok'; msg.textContent = 'Modifications enregistrées !';
+    msg.className = 'form-msg ok'; msg.textContent = T('Modifications enregistrées !', 'Changes saved!');
   } else {
     const { error: erreurInsert } = await sbAdmin.from('evenements').insert({
       id, titre, date_evenement: dateEvenement, lieu: lieu || null, description: description || null,
       image_url: urls.length ? urls[0].url : null
     });
-    if (erreurInsert) { msg.className = 'form-msg err'; msg.textContent = "Erreur d'enregistrement."; msg.style.display = 'block'; return; }
+    if (erreurInsert) { msg.className = 'form-msg err'; msg.textContent = T("Erreur d'enregistrement.", 'Error saving.'); msg.style.display = 'block'; return; }
     for (const photo of urls) {
       await sbAdmin.from('evenement_photos').insert({ evenement_id: id, url: photo.url, chemin: photo.chemin });
     }
-    msg.className = 'form-msg ok'; msg.textContent = `Événement publié avec ${urls.length} photo(s) !`;
+    msg.className = 'form-msg ok'; msg.textContent = T(`Événement publié avec ${urls.length} photo(s) !`, `Event published with ${urls.length} photo(s)!`);
   }
 
   await chargerEvenements();
@@ -317,13 +268,13 @@ document.getElementById('red-enregistrer-btn').addEventListener('click', async (
 
 document.getElementById('red-supprimer-btn').addEventListener('click', async () => {
   if (!redactionIdEnCours) return;
-  if (!confirm("Supprimer définitivement cet événement et toutes ses photos ?")) return;
+  if (!confirm(T("Supprimer définitivement cet événement et toutes ses photos ?", 'Permanently delete this event and all its photos?'))) return;
   const id = redactionIdEnCours;
   const { data: photos } = await sbAdmin.from('evenement_photos').select('chemin').eq('evenement_id', id);
   const chemins = (photos || []).map(p => p.chemin).filter(Boolean);
   // Base d'abord : si la suppression échoue, les images restent intactes.
   const { error: erreurSuppression } = await sbAdmin.from('evenements').delete().eq('id', id);
-  if (erreurSuppression) { alert('La suppression a échoué. Réessayez.'); return; }
+  if (erreurSuppression) { alert(T('La suppression a échoué. Réessayez.', 'Deletion failed. Please try again.')); return; }
   if (chemins.length) await supprimerCheminsImagesSite('evenements', 'evenements-images', chemins);
   fermerRedaction();
   void chargerEvenements();

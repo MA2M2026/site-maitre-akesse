@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-kDevocgsrbdc+veKoipw0IyeI4K1hZ9rcGvU8Ui7QHY=' 'sha256-HrEyZUhG5C6B8Y/KuQHOwx3BLmBC6FfvniDfch1yp/Q='; style-src 'self' https://fonts.googleapis.com 'sha256-SdRYxWKqm5ftdqMeUdvybdnuqWRV6FlA7r2YdjWdsXA=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com; style-src 'self' https://fonts.googleapis.com 'sha256-SdRYxWKqm5ftdqMeUdvybdnuqWRV6FlA7r2YdjWdsXA=';">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js"></script>
 <!-- Google tag (gtag.js) -->
@@ -32,17 +32,7 @@
 </style>
 </head>
 <body>
-<script>
-// Filet de sécurité : sur une connexion instable, un script externe (Supabase, EmailJS,
-// heic2any...) peut être très lent ou échouer à charger — dans ce cas js/app.js ne
-// s'exécute jamais et les éléments ".reveal" (animation d'apparition au scroll) restent
-// invisibles indéfiniment, alors que le reste de la page (formulaires, boutons) fonctionne
-// normalement. Ce filet les révèle de force après 2,5s si l'animation normale n'a pas eu
-// lieu, pour qu'aucun contenu ne reste caché à cause d'un simple souci réseau.
-setTimeout(() => {
-  document.querySelectorAll('.reveal:not(.visible)').forEach(el => el.classList.add('visible'));
-}, 2500);
-</script>
+<script async src="js/filet-reveal.js"></script>
 
 
 
@@ -199,156 +189,7 @@ setTimeout(() => {
 <script src="js/confort.js"></script>
 <script src="js/menu.js"></script>
 <script src="js/selection.js"></script>
-<script>
-// --- Ville en liste déroulante (avec "Autre" en secours) plutôt qu'en saisie
-// libre : évite les fautes/variantes d'orthographe. ---
-function remplirSelectListe(id, liste) {
-  const champ = document.getElementById(id);
-  if (!champ) return;
-  champ.appendChild(new Option('—', ''));
-  liste.forEach(v => champ.appendChild(new Option(v, v)));
-  champ.appendChild(new Option('Autre', 'Autre'));
-}
-function configurerSelectAvecAutre(idSelect, idAutre) {
-  const select = document.getElementById(idSelect);
-  const autre = document.getElementById(idAutre);
-  if (!select || !autre) return;
-  select.addEventListener('change', () => {
-    autre.style.display = select.value === 'Autre' ? 'block' : 'none';
-    if (select.value !== 'Autre') autre.value = '';
-  });
-}
-function valeurSelectOuAutre(idSelect, idAutre) {
-  const select = document.getElementById(idSelect);
-  const autre = document.getElementById(idAutre);
-  if (select.value === 'Autre') return (autre.value || '').trim();
-  return select.value;
-}
-const VILLES_CI = [
-  'Abidjan', 'Abengourou', 'Aboisso', 'Adiaké', 'Adzopé', 'Affery', 'Agboville', 'Agnibilékrou',
-  'Akoupé', 'Alépé', 'Anyama', 'Arrah', 'Attiégouakro', 'Bangolo', 'Bettié', 'Biankouma',
-  'Bingerville', 'Bloléquin', 'Bocanda', 'Bondoukou', 'Bongouanou', 'Bouaflé', 'Bouaké', 'Bouna',
-  'Boundiali', 'Dabakala', 'Dabou', 'Daloa', 'Danané', 'Daoukro', 'Dimbokro', 'Divo', 'Duékoué',
-  'Facobly', 'Ferkessédougou', 'Fresco', 'Gagnoa', 'Grand-Bassam', 'Grand-Lahou', 'Guiglo',
-  'Guitry', 'Issia', 'Jacqueville', 'Kani', 'Katiola', 'Kong', 'Korhogo', 'Kouibly', 'Lakota',
-  'Man', 'Mankono', "M'Bahiakro", 'Minignan', 'Nassian', 'Odienné', 'Oumé', 'Ouangolodougou',
-  'Ouragahio', 'Prikro', 'Sakassou', 'San-Pédro', 'Sassandra', 'Séguéla', 'Sikensi', 'Sinfra',
-  'Soubré', 'Tabou', 'Tanda', 'Tengréla', 'Tiassalé', 'Tiébissou', 'Toulepleu', 'Toumodi',
-  'Touba', 'Vavoua', 'Yamoussoukro', 'Zouan-Hounien', 'Zuénoula'
-];
-remplirSelectListe('re-ville', VILLES_CI);
-configurerSelectAvecAutre('re-ville', 're-ville-autre');
-
-remplirIndicatifs(document.getElementById('re-indicatif'));
-remplirIndicatifs(document.getElementById('re-indicatif-whatsapp'));
-
-function afficher() {
-  const liste = obtenirSelection();
-  const blocVide = document.getElementById('liste-vide');
-  const blocSelection = document.getElementById('bloc-selection');
-  const conteneur = document.getElementById('selection-liste');
-
-  if (liste.length === 0) {
-    blocVide.style.display = 'block';
-    blocSelection.style.display = 'none';
-    return;
-  }
-  blocVide.style.display = 'none';
-  blocSelection.style.display = 'block';
-
-  conteneur.innerHTML = '';
-  liste.forEach(m => {
-    const item = document.createElement('div');
-    item.className = 'selection-item';
-    item.innerHTML = `
-      <img src="${echapperHtml(m.photoUrl)}" alt="${echapperHtml(m.full_name)}" class="se-7">
-      <div class="selection-item-info">
-        <div class="nom">${echapperHtml(m.full_name || 'Mannequin')}</div>
-        <div class="info">${m.height_cm ? m.height_cm + ' cm' : ''}</div>
-      </div>
-      <button data-id="${m.id}">Retirer</button>
-    `;
-    conteneur.appendChild(item);
-    item.querySelector('img').addEventListener('click', () => ouvrirGalerieLightbox([m.photoUrl], 0));
-    item.querySelector('button').addEventListener('click', () => {
-      retirerSelection(m.id);
-      afficher();
-    });
-  });
-}
-
-document.getElementById('form-recruteur').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const msg = document.getElementById('re-msg');
-  const btn = document.getElementById('btn-envoyer-recruteur');
-  const liste = obtenirSelection();
-
-  if (liste.length === 0) {
-    msg.className = 'form-msg err';
-    msg.textContent = 'Votre sélection est vide.';
-    return;
-  }
-
-  btn.disabled = true;
-  msg.className = 'form-msg ok';
-  msg.style.display = 'block';
-  msg.textContent = 'Envoi en cours…';
-
-  const idDemande = crypto.randomUUID();
-  const demande = {
-    id: idDemande,
-    company: document.getElementById('re-entreprise').value.trim(),
-    // Civilité devant le nom (décision de la propriétaire, 07/10/2026 : la civilité partout).
-    contact_name: [document.getElementById('re-civilite').value, document.getElementById('re-nom').value.trim()].filter(Boolean).join(' '),
-    email: document.getElementById('re-email').value.trim(),
-    phone: composerTelephone(document.getElementById('re-indicatif'), document.getElementById('re-telephone-numero')),
-    whatsapp: composerTelephone(document.getElementById('re-indicatif-whatsapp'), document.getElementById('re-whatsapp-numero')),
-    city: valeurSelectOuAutre('re-ville', 're-ville-autre'),
-    project_type: document.getElementById('re-type').value.trim(),
-    event_date: document.getElementById('re-date').value || null,
-    message: document.getElementById('re-message').value.trim()
-  };
-
-  const { error } = await insererAvecPatience('recruiter_requests', demande, (reste) => { msg.className = 'form-msg ok'; msg.textContent = texteAttenteEnvoi(reste); });
-
-  if (error) {
-    msg.className = 'form-msg err';
-    msg.textContent = "Erreur lors de l'envoi. Réessayez ou contactez-nous directement.";
-    btn.disabled = false;
-    return;
-  }
-
-  const lignes = liste.map(m => ({
-    request_id: idDemande,
-    model_id: m.id,
-    model_name_snapshot: m.full_name,
-    model_height_snapshot: m.height_cm || null
-  }));
-  // La demande elle-même est enregistrée ; si la liste des mannequins ne l'est pas, on le
-  // signale au Journal MA2M (audit du 05/10/2026 : l'échec passait inaperçu).
-  const { error: erreurLignes } = await sb.from('recruiter_request_models').insert(lignes);
-  if (erreurLignes && window.signalerErreur) window.signalerErreur('Demande recruteur : liste des mannequins non enregistrée', erreurLignes.message || String(erreurLignes), 'demande ' + idDemande);
-
-  const nomsMannequins = liste.map(m => m.full_name).join(', ');
-  envoyerNotificationEmail({
-    name: demande.contact_name,
-    telephone: demande.phone,
-    email: demande.email,
-    message: `Nouvelle demande de casting recruteur.\nEntreprise : ${demande.company || '-'}\nType de projet : ${demande.project_type || '-'}\nVille : ${demande.city || '-'}\nDate souhaitée : ${demande.event_date || '-'}\nMannequins sélectionnés : ${nomsMannequins || '-'}\nMessage : ${demande.message || '-'}`
-  });
-
-  if (window.jouerSon) window.jouerSon('envoi');
-  try { localStorage.removeItem('ma2m_selection'); } catch (e) {}
-  document.getElementById('bloc-selection').innerHTML = `
-    <div class="se-8">
-      <h2>Merci !</h2>
-      <p class="u-m-1-auto">Votre demande a bien été envoyée avec ${liste.length > 1 ? liste.length + ' mannequins sélectionnés' : '1 mannequin sélectionné'}. L'agence vous recontacte rapidement.</p>
-      <a href="mannequins.html" class="btn">Retour aux mannequins</a>
-    </div>
-  `;
-});
-
-afficher();
-</script>
+<script src="js/villes-cote-ivoire.js"></script>
+<script src="js/demande-recruteur.js"></script>
 </body>
 </html>

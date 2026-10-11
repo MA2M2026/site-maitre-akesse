@@ -3,8 +3,6 @@
 // quatre copies de ~650 lignes à corriger quatre fois). Le parcours vient de la page :
 // <form id="form-casting" data-parcours="projet"> (casting précis) ou "agence" (intégrer
 // l'agence, parcours débutant allégé). La langue vient de <html lang="en">.
-const EN = document.documentElement.lang === 'en';
-const T = (fr, en) => (EN ? en : fr);
 const PARCOURS = document.getElementById('form-casting').dataset.parcours === 'agence' ? 'agence' : 'projet';
 
 // Sans bornes min/max, le calendrier natif du champ "date de naissance" laisse
@@ -21,7 +19,7 @@ const PARCOURS = document.getElementById('form-casting').dataset.parcours === 'a
 
 // --- Mensurations en listes déroulantes plutôt qu'en saisie libre : évite les
 // fautes de frappe (ex. "17O" au lieu de "170") et les valeurs invraisemblables.
-// remplirSelectNombres, configurerSelectAvecAutre et valeurSelectOuAutre : js/app.js. ---
+// remplirSelectNombres, remplirSelectListe, configurerSelectAvecAutre, valeurSelectOuAutre : js/app.js. ---
 remplirSelectNombres('ca-poids', 35, 130, 1, ' kg');
 remplirSelectNombres('ca-poitrine', 70, 130, 1, ' cm');
 remplirSelectNombres('ca-tourtaille', 55, 110, 1, ' cm');
@@ -30,13 +28,6 @@ remplirSelectNombres('ca-pointure', 34, 46, 1, '');
 
 // --- Ville en liste déroulante (avec "Autre" en secours) plutôt qu'en saisie
 // libre : évite les fautes/variantes d'orthographe (Man/Mann, Yakro/Yamoussoukro...). ---
-function remplirSelectListe(id, liste) {
-  const champ = document.getElementById(id);
-  if (!champ) return;
-  champ.appendChild(new Option('—', ''));
-  liste.forEach(v => champ.appendChild(new Option(v, v)));
-  champ.appendChild(new Option(T('Autre', 'Other'), 'Autre'));
-}
 // VILLES_CI vient désormais de js/villes-cote-ivoire.js (partagé avec
 // espace-mannequin.html et espace-mannequin-MA2M-premium-20.html).
 remplirSelectListe('ca-ville', VILLES_CI);
@@ -48,48 +39,7 @@ if (EN) [...document.getElementById('ca-commune').options].forEach(o => {
   if (o.value === 'Autre') o.text = 'Other';
 });
 
-function redimensionnerImage(fichier, coteMax = 2800, qualite = 0.88) {
-  return new Promise((resolve) => {
-    // On ne retouche que les JPEG : un PNG/GIF/WebP peut avoir de la transparence,
-    // qui deviendrait un fond noir en le convertissant en JPEG (pas de canal alpha).
-    if (fichier.type !== 'image/jpeg' || fichier.size < 900 * 1024) { resolve(fichier); return; }
-    const img = new Image();
-    img.onload = () => {
-      try {
-        const coteActuel = Math.max(img.width, img.height);
-        const ratio = coteActuel > coteMax ? coteMax / coteActuel : 1;
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.round(img.width * ratio);
-        canvas.height = Math.round(img.height * ratio);
-        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob((blob) => {
-          if (!blob || blob.size >= fichier.size) { resolve(fichier); return; }
-          resolve(new File([blob], fichier.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' }));
-        }, 'image/jpeg', qualite);
-      } catch (e) {
-        resolve(fichier);
-      }
-    };
-    img.onerror = () => resolve(fichier);
-    img.src = URL.createObjectURL(fichier);
-  });
-}
-
-function fichierEnBase64(fichier) {
-  return new Promise((resolve, reject) => {
-    const lecteur = new FileReader();
-    lecteur.onload = () => resolve(lecteur.result);
-    lecteur.onerror = reject;
-    lecteur.readAsDataURL(fichier);
-  });
-}
-
-// Les photos de candidature (potentiellement des milliers lors d'un gros casting)
-// partent directement vers Google Drive via ce script, plutôt que vers Supabase —
-// pour ne pas charger le stockage Supabase (plan gratuit) pendant un casting massif.
-// Seul le lien de chaque photo est ensuite enregistré dans Supabase (casting_photos.url).
-const URL_SCRIPT_PHOTOS_CASTING = 'https://script.google.com/macros/s/AKfycbxzPeaTLvMqZKtBvJJabLeZBh6JJ9ZaggPYUY8XAoh1-tyBq1Byi3lBm3SkhkH8rqNxxg/exec';
-
+// redimensionnerImage, fichierEnBase64 et URL_SCRIPT_PHOTOS_CASTING : js/app.js.
 function afficherMsg(el, texte, type) {
   el.className = 'form-msg ' + type;
   el.textContent = texte;
@@ -122,7 +72,11 @@ async function chargerProjetsActifs() {
   finChargement();
 }
 if (PARCOURS === 'projet') {
-  chargerProjetsActifs();
+  // En cas de panne réseau, le formulaire s'affiche quand même (il ne doit jamais rester caché).
+  chargerProjetsActifs().catch(() => {
+    const c = document.getElementById('ca-chargement'); if (c) c.remove();
+    document.getElementById('form-casting').classList.remove('u-hidden');
+  });
   document.getElementById('ca-projet').addEventListener('change', (e) => {
     const estAutre = e.target.value === '__autre__';
     document.getElementById('ca-bloc-projet-autre').style.display = estAutre ? 'block' : 'none';
@@ -627,7 +581,7 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
     clearInterval(minuteurPhotos);
     jaugeEnErreur('ca-jauge-photos', T('Photos : non envoyées', 'Photos: not sent'));
   }
-  journaliserPhotosEchouees('candidature', candidature.id, nbPhotosEchouees);
+  Promise.resolve(journaliserPhotosEchouees('candidature', candidature.id, nbPhotosEchouees)).catch(() => {});
 
   // Vidéo de présentation : envoyée APRÈS les photos (elle est plus lourde), dans le
   // même dossier Drive ; son lien est ensuite rattaché à la candidature.
