@@ -395,6 +395,35 @@ function remplirSelectNombres(id, min, max, pas, suffixe) {
 // Bascule l'affichage du champ "Autre" (texte libre) selon que le select est sur
 // l'option "Autre" ou non — utilisé par tous les selects qui acceptent une valeur
 // hors liste (ville, carnation, yeux, cheveux, taille de vêtements...).
+// Lien cliquable seulement pour une vraie adresse web (http/https) : bloque les liens piégés
+// du type « javascript:… » ou « data:… ». Partagé le 11/10/2026 (Actualités, fiche mannequin).
+function urlHttpSure(url) {
+  if (!url) return null;
+  try {
+    const u = new URL(url, window.location.href);
+    return (u.protocol === 'http:' || u.protocol === 'https:') ? u.href : null;
+  } catch (e) { return null; }
+}
+
+// Pages publiques Actualités, Événements, Partenaires : si l'agence est connectée (session du
+// tableau de bord), révèle le panneau d'ajout (#admin-bloc). Partagé le 11/10/2026.
+async function verifierAdmin() {
+  // Sur une connexion instable, la bibliothèque Supabase (chargée depuis un
+  // CDN) peut échouer à se charger — sans ce filet, "sbAdmin" vaut alors null et
+  // cette vérification silencieuse plante toute la page au chargement pour
+  // un simple visiteur, pour une fonctionnalité qui ne concerne que l'admin.
+  try {
+    if (!sbAdmin) return;
+    const { data: { user } } = await sbAdmin.auth.getUser();
+    if (!user) return;
+    const { data } = await sbAdmin.from('admins').select('user_id').eq('user_id', user.id).single();
+    if (data) {
+      window.estAdminConnecte = true;
+      document.getElementById('admin-bloc').style.display = 'block';
+    }
+  } catch (e) {}
+}
+
 // Langue de la page et petit traducteur partagés (11/10/2026) : T('texte français',
 // 'English text') renvoie le texte de la langue de la page (<html lang="en"> = anglais).
 const EN = document.documentElement.lang === 'en';

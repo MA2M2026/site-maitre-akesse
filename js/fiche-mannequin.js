@@ -28,16 +28,6 @@ function libelleTypeModele(t) {
   return libelles[t] || t;
 }
 
-// Sécurité : n'autorise un lien cliquable que s'il s'agit bien d'une vraie adresse web
-// (http/https) — bloque les liens piégés du type "javascript:..." ou "data:...".
-function urlHttpSure(url) {
-  if (!url) return null;
-  try {
-    const u = new URL(url, window.location.href);
-    return (u.protocol === 'http:' || u.protocol === 'https:') ? u.href : null;
-  } catch (e) { return null; }
-}
-
 // Convertit un lien YouTube/Vimeo classique en URL de lecteur intégrable (iframe).
 // Renvoie null si le lien n'est pas reconnu — dans ce cas on affiche un simple lien.
 function urlEmbedVideo(url) {

@@ -15,16 +15,6 @@ function dateAffichageEvenement(e) {
   return e.date_evenement ? formatDateEvenement(e.date_evenement) : formatDatePublication(e.created_at);
 }
 
-function extraitTexte(texte, longueur) {
-  if (!texte) return '';
-  if (texte.length <= longueur) return texte;
-  // Coupe entre deux mots (et non au milieu d'un mot : « Cette nouvel… »).
-  let coupe = texte.slice(0, longueur);
-  const espace = coupe.lastIndexOf(' ');
-  if (espace > longueur * 0.6) coupe = coupe.slice(0, espace);
-  return coupe.replace(/[\s,;:.\-–—(]+$/, '') + '…';
-}
-
 async function chargerEvenements() {
   const grille = document.getElementById('evenements-grille');
   const uneZone = document.getElementById('evenements-une');
@@ -131,40 +121,10 @@ async function ouvrirEvenementModal(index) {
   if (window.ficheOuverte) window.ficheOuverte('evenement', e.id, e.titre);
   document.getElementById('news-modal-admin-actions').style.display = window.estAdminConnecte ? 'block' : 'none';
 }
-// Verrouille le défilement de la page tant que la fiche est ouverte (même mécanisme,
-// compatible iPhone, que celui du menu — voir js/app.js).
-let newsModalEstOuverte = false;
-function ouvrirNewsModal() {
-  document.getElementById('news-modal').classList.add('active');
-  if (!newsModalEstOuverte) { newsModalEstOuverte = true; window.verrouillerDefilement(); }
-}
-function fermerNewsModal() {
-  document.getElementById('news-modal').classList.remove('active');
-  if (window.ficheFermee) window.ficheFermee();
-  if (newsModalEstOuverte) { newsModalEstOuverte = false; window.deverrouillerDefilement(); }
-}
+// Fiche ouverte / fermée (verrouillage du défilement) : js/publications.js.
 document.getElementById('news-modal-fermer').addEventListener('click', fermerNewsModal);
 document.getElementById('news-modal').addEventListener('click', (e) => { if (e.target.id === 'news-modal') fermerNewsModal(); });
 
-// Aucune interface de connexion sur cette page publique : un admin se connecte
-// depuis tableau-de-bord.html, puis sa session est simplement détectée ici pour
-// révéler le panneau de publication — sans aucune trace visible pour un visiteur.
-async function verifierAdmin() {
-  // Sur une connexion instable, la bibliothèque Supabase (chargée depuis un
-  // CDN) peut échouer à se charger — sans ce filet, "sbAdmin" vaut alors null
-  // et cette vérification silencieuse plante toute la page au chargement pour
-  // un simple visiteur, pour une fonctionnalité qui ne concerne que l'admin.
-  try {
-    if (!sbAdmin) return;
-    const { data: { user } } = await sbAdmin.auth.getUser();
-    if (!user) return;
-    const { data } = await sbAdmin.from('admins').select('user_id').eq('user_id', user.id).single();
-    if (data) {
-      window.estAdminConnecte = true;
-      document.getElementById('admin-bloc').style.display = 'block';
-    }
-  } catch (e) {}
-}
 void verifierAdmin();
 
 // --- Modification / suppression directement depuis la fiche ouverte (admin) ---
@@ -219,17 +179,6 @@ function ouvrirRedaction(evenementExistant) {
   mettreAJourApercuRedaction();
   document.getElementById('redaction-overlay').classList.add('active');
   window.verrouillerDefilement();
-}
-
-function fermerRedaction() {
-  document.getElementById('redaction-overlay').classList.remove('active');
-  window.deverrouillerDefilement();
-}
-
-function apercuImageCouverture(url) {
-  const img = document.getElementById('red-apercu-img');
-  img.src = url || '';
-  img.classList.toggle('u-hidden', !url);
 }
 
 function mettreAJourApercuRedaction() {

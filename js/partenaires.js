@@ -222,20 +222,4 @@ document.getElementById('admin-logout-btn').addEventListener('click', async () =
   window.location.reload();
 });
 
-async function verifierAdmin() {
-  // Sur une connexion instable, la bibliothèque Supabase (chargée depuis un
-  // CDN) peut échouer à se charger — sans ce filet, "sb" vaut alors null et
-  // cette vérification silencieuse plante toute la page au chargement pour
-  // un simple visiteur, pour une fonctionnalité qui ne concerne que l'admin.
-  try {
-    if (!sbAdmin) return;
-    const { data: { user } } = await sbAdmin.auth.getUser();
-    if (!user) return;
-    const { data } = await sbAdmin.from('admins').select('user_id').eq('user_id', user.id).single();
-    if (data) {
-      window.estAdminConnecte = true;
-      document.getElementById('admin-bloc').style.display = 'block';
-    }
-  } catch (e) {}
-}
 verifierAdmin();
