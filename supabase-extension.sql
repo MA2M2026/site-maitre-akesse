@@ -6913,3 +6913,125 @@ end;
 $$;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 135 — Mise en sourdine d'un profil par l'agence (11/10/2026).
+-- Demande de la propriétaire (07/10) : depuis le tableau de bord, l'agence désactive un
+-- profil ; la mannequin ne peut plus utiliser son Espace (message « L'administrateur a
+-- désactivé votre profil ») et son profil public disparaît du site. Rien n'est supprimé :
+-- « Réactiver » remet tout comme avant (la colonne published n'est pas touchée).
+-- Protégé par la base elle-même :
+--  • lecture publique : règle unique profil_visible_public(…, desactive) → la fiche, ses
+--    photos et ses projets (qui passent par la fiche) et l'agenda public la cachent ;
+--  • seule l'agence change la sourdine (fonction definir_sourdine, admins seulement) ;
+--  • tant qu'elle est en sourdine, la mannequin ne peut plus rien modifier (fiche,
+--    photos, projets). Le serveur et l'agence le peuvent toujours (est_ecriture_serveur).
+-- ===================================================================
+alter table model_profiles add column if not exists desactive boolean not null default false;
+alter table model_profiles add column if not exists desactive_le timestamptz;
+alter table model_profiles add column if not exists desactive_par uuid;
+-- Extension 130 : toute nouvelle colonne doit être ouverte en lecture.
+grant select (desactive) on model_profiles to anon, authenticated;
+grant select (desactive_le) on model_profiles to authenticated;
+
+create or replace function profil_visible_public(publie boolean, a_reprendre_depuis timestamptz, desactive boolean)
+returns boolean language sql stable as $$
+  select profil_visible_public(publie, a_reprendre_depuis) and not coalesce(desactive, false);
+$$;
+
+drop policy if exists "Profils publiés visibles de tous" on model_profiles;
+create policy "Profils publiés visibles de tous"
+  on model_profiles for select
+  using (profil_visible_public(published, mesures_a_reprendre_depuis, desactive));
+
+drop function if exists agenda_public(boolean, int);
+create or replace function agenda_public(seulement_a_venir boolean default false, limite int default 300)
+returns table(
+  id uuid, type text, titre text, date_debut date, date_fin date, ville text, lieu text,
+  description text, intervenants jsonb, seances jsonb, partenaires jsonb, mannequins jsonb
+)
+language sql stable security definer
+set search_path = public
+as $$
+  select a.id, a.type, a.titre, a.date_debut, a.date_fin, a.ville, a.lieu, a.description,
+    a.intervenants,
+    case when a.horaires_publics then a.seances else '[]'::jsonb end,
+    coalesce((select jsonb_agg(jsonb_build_object('id', pa.id, 'nom', pa.nom, 'logo_url', pa.logo_url) order by pa.nom)
+              from partenaires pa where pa.id = any(a.partenaire_ids)), '[]'::jsonb),
+    coalesce((select jsonb_agg(jsonb_build_object('id', p.id, 'nom', p.full_name, 'slug', p.slug) order by p.full_name)
+              from model_profiles p
+              where p.id = any(a.mannequin_ids)
+                and profil_visible_public(p.published, p.mesures_a_reprendre_depuis, p.desactive)), '[]'::jsonb)
+  from agenda_projets a
+  where a.visible
+    and coalesce(a.date_fin, a.date_debut) >= case when seulement_a_venir then current_date
+                                                  else current_date - interval '12 months' end
+  order by a.date_debut
+  limit least(greatest(coalesce(limite, 300), 1), 300);
+$$;
+revoke all on function agenda_public(boolean, int) from public;
+grant execute on function agenda_public(boolean, int) to anon, authenticated;
+
+-- Seule l'agence met en sourdine / réactive.
+create or replace function definir_sourdine(p_model uuid, p_desactive boolean)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not exists (select 1 from admins where user_id = auth.uid()) then
+    raise exception 'non_autorise';
+  end if;
+  update model_profiles
+     set desactive = coalesce(p_desactive, false),
+         desactive_le = case when p_desactive then now() end,
+         desactive_par = case when p_desactive then auth.uid() end
+   where id = p_model;
+end;
+$$;
+revoke all on function definir_sourdine(uuid, boolean) from public;
+grant execute on function definir_sourdine(uuid, boolean) to authenticated;
+
+-- La mannequin ne lève jamais sa sourdine et ne modifie plus rien tant qu'elle dure.
+create or replace function bloquer_profil_en_sourdine()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  cible uuid;
+begin
+  if est_ecriture_serveur() or exists (select 1 from admins where user_id = auth.uid()) then
+    return coalesce(NEW, OLD);
+  end if;
+  if TG_TABLE_NAME = 'model_profiles' then
+    if TG_OP = 'UPDATE' and NEW.desactive is distinct from OLD.desactive then
+      raise exception 'Modification refusée : seule l''agence peut changer ce réglage.';
+    end if;
+    if TG_OP = 'INSERT' and coalesce(NEW.desactive, false) then
+      raise exception 'Modification refusée : seule l''agence peut changer ce réglage.';
+    end if;
+    cible := coalesce(OLD.id, NEW.id);
+  else
+    cible := coalesce(OLD.model_id, NEW.model_id);
+  end if;
+  if exists (select 1 from model_profiles where id = cible and desactive) then
+    raise exception 'Profil désactivé par l''administrateur : modification impossible.';
+  end if;
+  return coalesce(NEW, OLD);
+end;
+$$;
+
+drop trigger if exists trg_sourdine_profil on model_profiles;
+create trigger trg_sourdine_profil before insert or update on model_profiles
+  for each row execute function bloquer_profil_en_sourdine();
+drop trigger if exists trg_sourdine_photos on model_photos;
+create trigger trg_sourdine_photos before insert or update or delete on model_photos
+  for each row execute function bloquer_profil_en_sourdine();
+drop trigger if exists trg_sourdine_projets on model_projects;
+create trigger trg_sourdine_projets before insert or update or delete on model_projects
+  for each row execute function bloquer_profil_en_sourdine();
+
+NOTIFY pgrst, 'reload schema';
