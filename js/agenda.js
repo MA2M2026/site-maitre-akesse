@@ -55,8 +55,9 @@
   }
 
   function lienPartenaire(pa) {
-    const a = el('a', 'agenda-puce agenda-puce-partenaire');
-    a.href = 'partenaires.html';
+    // partenaire indirect écrit à la main (Extension 138) : pas sur la page Partenaires, pas de lien
+    const a = el(pa.id ? 'a' : 'span', 'agenda-puce agenda-puce-partenaire');
+    if (pa.id) a.href = 'partenaires.html';
     if (pa.logo_url) {
       const img = document.createElement('img');
       img.src = pa.logo_url; img.alt = ''; img.loading = 'lazy'; img.decoding = 'async';

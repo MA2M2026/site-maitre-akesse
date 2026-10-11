@@ -2728,6 +2728,7 @@ document.addEventListener('DOMContentLoaded', function () {
 <p class="tdb-5">Le programme de l'agence, montré aux clients sur la page « Agenda » : défilés, shows, shootings, castings, essayages, masterclass, rencontres, événements… Sur le site, on voit les jours, la ville, le lieu, les intervenants, les partenaires et les mannequins (seulement ceux dont le profil est visible). Les horaires n'apparaissent que si vous cochez la case prévue. L'adresse exacte et les notes restent ici, jamais sur le site.</p>
 <form id="agenda-form" class="agenda-form" novalidate>
 <input type="hidden" id="agenda-id">
+<p class="agenda-en-cours" id="agenda-en-cours" role="status" hidden></p>
 <div class="agenda-grille">
 <div class="form-champ"><label for="agenda-type">Type de projet</label>
 <select id="agenda-type"></select></div>
@@ -2756,6 +2757,8 @@ document.addEventListener('DOMContentLoaded', function () {
 <button type="button" class="btn-mini-admin" id="agenda-ajouter-partenaire">＋ Enregistrer ce partenaire</button>
 </div>
 <p class="agenda-aide">Le nouveau partenaire est ajouté à vos partenaires (il apparaît aussi sur la page Partenaires du site ; vous pourrez y ajouter son logo).</p>
+<div class="form-champ"><label for="agenda-autres-partenaires">Autres partenaires de ce projet, qui ne sont pas nos partenaires directs (un nom par ligne)</label><textarea id="agenda-autres-partenaires" rows="2" maxlength="3000" placeholder="ex : Maison XYZ (via un intermédiaire)"></textarea></div>
+<p class="agenda-aide">Ces noms apparaissent seulement sur ce projet de l'agenda, jamais sur la page Partenaires du site.</p>
 </fieldset>
 <fieldset class="agenda-choix"><legend>Mannequins (visibles si leur profil est publié)</legend>
 <input id="agenda-recherche" type="search" aria-label="Rechercher une mannequin" placeholder="Rechercher un nom…" class="agenda-recherche">

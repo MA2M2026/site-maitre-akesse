@@ -7193,3 +7193,49 @@ revoke all on function parcours_public(date, date, uuid) from public;
 grant execute on function parcours_public(date, date, uuid) to anon, authenticated;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===========================================================================
+-- Extension 138 — « Autres partenaires » dans l'agenda (11/10/2026, demande de la
+-- propriétaire) : un partenaire INDIRECT d'un projet (venu par un intermédiaire) peut être
+-- écrit à la main sur ce projet sans être ajouté à nos partenaires (page Partenaires).
+-- Son nom (et seulement son nom) apparaît sur ce projet dans l'agenda public, sans logo
+-- ni lien. Une seule fois chacun, et jamais en double d'un partenaire coché.
+-- ===========================================================================
+alter table agenda_projets add column if not exists partenaires_libres text[] not null default '{}'
+  check (cardinality(partenaires_libres) <= 40 and length(array_to_string(partenaires_libres, '|')) <= 4000);
+
+create or replace function agenda_public(seulement_a_venir boolean default false, limite int default 300)
+returns table(
+  id uuid, type text, titre text, date_debut date, date_fin date, ville text, lieu text,
+  description text, intervenants jsonb, seances jsonb, partenaires jsonb, mannequins jsonb
+)
+language sql stable security definer
+set search_path = public
+as $$
+  select a.id, a.type, a.titre, a.date_debut, a.date_fin, a.ville, a.lieu, a.description,
+    a.intervenants,
+    case when a.horaires_publics then a.seances else '[]'::jsonb end,
+    coalesce((select jsonb_agg(x.o order by x.nom) from (
+                select jsonb_build_object('id', pa.id, 'nom', pa.nom, 'logo_url', pa.logo_url) as o, pa.nom
+                  from partenaires pa where pa.id = any(a.partenaire_ids)
+                union all
+                select jsonb_build_object('id', null, 'nom', e.nom, 'logo_url', null), e.nom
+                  from (select distinct on (lower(left(trim(n), 80))) left(trim(n), 80) as nom
+                          from unnest(a.partenaires_libres) as n
+                          where length(trim(n)) > 0
+                          order by lower(left(trim(n), 80))) e
+                  where not exists (select 1 from partenaires pa
+                                    where pa.id = any(a.partenaire_ids) and lower(trim(pa.nom)) = lower(e.nom))
+              ) x), '[]'::jsonb),
+    mannequins_publics_projet(a.mannequin_ids, a.mannequins_libres)
+  from agenda_projets a
+  where a.visible and not a.annule
+    and coalesce(a.date_fin, a.date_debut) >= case when seulement_a_venir then current_date
+                                                  else current_date - interval '12 months' end
+  order by a.date_debut
+  limit least(greatest(coalesce(limite, 300), 1), 300);
+$$;
+revoke all on function agenda_public(boolean, int) from public;
+grant execute on function agenda_public(boolean, int) to anon, authenticated;
+
+NOTIFY pgrst, 'reload schema';

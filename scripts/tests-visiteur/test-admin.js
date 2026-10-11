@@ -16,7 +16,11 @@ const PORT = String(8800 + Math.floor(Math.random() * 100));
     const yao = { id: 'c2', full_name: 'YAO KOUASSI', email: 'yao@gmail.com', phone: '+225 0102030405', genre: 'homme', date_naissance: '1999-01-01', type_candidature: 'agence', status: 'retenue', created_at: '2026-10-06T10:00:00Z' };
     const bintou = { id: 'c3', full_name: 'BINTOU TRAORÉ', email: 'bintou@gmail.com', phone: '+225 0505050505', genre: 'femme', civilite: 'Madame', date_naissance: '1995-05-05', type_candidature: 'agence', status: 'retenue', created_at: '2026-10-05T10:00:00Z' };
     await brancher(p, { tables: { admins: [{ user_id: 'admin-1' }], casting_applications: [franck, yao, bintou],
-      model_profiles: [{ id: 'm1', full_name: 'AWA KONÉ', city: 'Abidjan', published: true, desactive: false }, { id: 'm2', full_name: 'MARIAM SANOGO', city: 'Yopougon', published: false, desactive: true }] }, rpc: { code_validation_statut: [{ defini: true }] } }, journal);
+      model_profiles: [{ id: 'm1', full_name: 'AWA KONÉ', city: 'Abidjan', published: true, desactive: false }, { id: 'm2', full_name: 'MARIAM SANOGO', city: 'Yopougon', published: false, desactive: true }],
+      // deux projets de l'agenda : un passé, un à venir (essai du bouton « Modifier »)
+      agenda_projets: [
+        { id: 'pa1', type: 'defile', titre: 'CACAO FASHION SHOW', date_debut: '2026-09-02', date_fin: '2026-09-03', ville: 'Abidjan', pays: "Côte d'Ivoire", visible: true, annule: false, mannequin_ids: ['m1'], partenaire_ids: [], seances: [], intervenants: [], mannequins_libres: [], partenaires_libres: ['Maison XYZ'] },
+        { id: 'pa2', type: 'defile', titre: 'ABIDJAN BORDER FORUM', date_debut: '2030-10-21', date_fin: '2030-10-22', ville: 'Abidjan', pays: "Côte d'Ivoire", visible: true, annule: false, mannequin_ids: [], partenaire_ids: [], seances: [], intervenants: [], mannequins_libres: [], partenaires_libres: [] }] }, rpc: { code_validation_statut: [{ defini: true }] } }, journal);
     await p.goto('http://127.0.0.1:' + PORT + '/tableau-de-bord.html'); await p.waitForTimeout(1200);
     if (await p.isVisible('#bandeau-cookies [data-cookies="oui"]')) await p.click('#bandeau-cookies [data-cookies="oui"]');
     // 1. Connexion comme l'administratrice
@@ -81,11 +85,25 @@ const PORT = String(8800 + Math.floor(Math.random() * 100));
     await p.fill('#agenda-titre', 'Défilé test'); await p.fill('#agenda-date', '2026-09-20'); await p.fill('#agenda-pays', 'Sénégal');
     // « Autres mannequins » (Extension 137) : un nom par ligne, espaces et doublons retirés
     await p.fill('#agenda-autres', '  Fatou Bamba \n\nfatou bamba\nZoé N.');
+    // « Autres partenaires » (Extension 138) : partenaire indirect, pas ajouté à nos partenaires
+    await p.fill('#agenda-autres-partenaires', 'Maison XYZ (via un intermédiaire)');
     await p.$eval('#agenda-annule', x => x.click()); await p.$eval('#agenda-enregistrer', x => x.click()); await p.waitForTimeout(1200);
     const envoiAgenda = journal.filter(j => j[0] === 'POST' && j[1] === 'agenda_projets').map(j => JSON.parse(j[3])).map(x => Array.isArray(x) ? x[0] : x)[0] || {};
     console.log('Agenda envoyé : pays =', envoiAgenda.pays, '| annulé =', envoiAgenda.annule, '| autres mannequins =', JSON.stringify(envoiAgenda.mannequins_libres));
     if (envoiAgenda.pays !== 'Sénégal' || envoiAgenda.annule !== true) { console.log('❌ ÉCHEC agenda (pays / annulé)'); process.exitCode = 1; }
     if (JSON.stringify(envoiAgenda.mannequins_libres) !== '["Fatou Bamba","Zoé N."]') { console.log('❌ ÉCHEC agenda (autres mannequins)'); process.exitCode = 1; }
+    if (JSON.stringify(envoiAgenda.partenaires_libres) !== '["Maison XYZ (via un intermédiaire)"]' || journal.some(j => j[0] === 'POST' && j[1] === 'partenaires')) { console.log('❌ ÉCHEC agenda (autres partenaires)', JSON.stringify(envoiAgenda.partenaires_libres)); process.exitCode = 1; }
+    // 9. « Modifier » sur Cacao Fashion Show : bandeau avec son titre et ses dates, sa ligne encadrée,
+    //    ses propres dates et partenaires dans le formulaire (pas ceux d'Abidjan Border Forum)
+    await p.$eval('[data-modifier="pa1"]', x => x.click()); await p.waitForTimeout(600);
+    const modif = await p.evaluate(() => ({ bandeau: document.getElementById('agenda-en-cours').hidden ? '' : document.getElementById('agenda-en-cours').textContent,
+      debut: document.getElementById('agenda-date').value, fin: document.getElementById('agenda-date-fin').value,
+      partenaires: document.getElementById('agenda-autres-partenaires').value,
+      encadre: (document.querySelector('.agenda-ligne.en-modif h4') || {}).textContent || '' }));
+    console.log('Modifier Cacao :', JSON.stringify(modif));
+    if (!/CACAO FASHION SHOW/.test(modif.bandeau) || !/sept/.test(modif.bandeau) || modif.debut !== '2026-09-02' || modif.fin !== '2026-09-03' || modif.encadre !== 'CACAO FASHION SHOW' || modif.partenaires !== 'Maison XYZ') { console.log('❌ ÉCHEC agenda (modifier un projet)'); process.exitCode = 1; }
+    await p.$eval('#agenda-annuler', x => x.click()); await p.waitForTimeout(300);
+    if (!(await p.evaluate(() => document.getElementById('agenda-en-cours').hidden && !document.querySelector('.agenda-ligne.en-modif')))) { console.log('❌ ÉCHEC agenda (annuler la modification)'); process.exitCode = 1; }
     console.log('Erreurs :', errs.filter(e => !/Failed to fetch|NetworkError|ERR_/.test(e)));
     await ctx.close();
   }

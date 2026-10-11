@@ -20,7 +20,9 @@ const cas = [
   ['partenaires.html', ['Voir la fiche']], ['en/partenaires.html', ['View Details']],
   ['index.html', ['Awa Koné', 'Femme']], ['en/index.html', ['Awa Koné', 'Female']],
   ['parcours.html', ['Défilé Abidjan', 'septembre 2026', 'Awa Koné']], ['en/parcours.html', ['Défilé Abidjan', 'Our models at work', 'Awa Koné']],
-  ['mannequin.html?id=a1', ['Avec MA2M', '1 événement']]
+  ['mannequin.html?id=a1', ['Avec MA2M', '1 événement']],
+  // agenda public : partenaire indirect et mannequin sans profil, écrits à la main (Ext. 137/138)
+  ['agenda.html', ['Forum Test', 'Maison XYZ', 'Fatou Bamba']], ['en/agenda.html', ['Forum Test', 'Maison XYZ', 'Fatou Bamba']]
 ];
 (async () => {
   let srv; process.on('exit', () => srv && srv.kill());
@@ -31,6 +33,8 @@ const cas = [
     const ctx = await b.newContext({ viewport: vp }); const p = await ctx.newPage(); const errs = [];
     p.on('pageerror', e => errs.push(e.message));
     await brancher(p, { tables, rpc: { photos_couverture_mannequins: [{ model_id: 'a1', url: 'https://x/1.jpg' }],
+      agenda_public: [{ id: 'g1', type: 'evenement', titre: 'Forum Test', date_debut: '2030-10-21', date_fin: '2030-10-22', ville: 'Abidjan', lieu: 'Sofitel', description: '', intervenants: [], seances: [],
+        partenaires: [{ id: null, nom: 'Maison XYZ', logo_url: null }], mannequins: [{ id: 'a1', nom: 'Awa Koné', slug: 'awa-kone' }, { id: null, nom: 'Fatou Bamba', slug: null }] }],
       // Parcours MA2M : un projet réalisé de l'agenda (Extension 136)
       parcours_public: [{ id: 'e1', type: 'evenement', titre: 'Défilé Abidjan', date_debut: '2026-09-20', date_fin: null, lieu: 'Sofitel', ville: 'Abidjan', pays: "Côte d'Ivoire", mannequins: [{ id: 'a1', nom: 'Awa Koné', slug: 'awa-kone' }] },
         // casting ouvert de l'agence sans aucune de nos mannequins cochée : ne doit pas apparaître
@@ -62,7 +66,7 @@ const cas = [
     if (gabarit.menu < 10) manquants.push('menu (' + gabarit.menu + ' liens)');
     if (gabarit.ordre !== 'index.html,mannequins.html' || !gabarit.rejoindre) manquants.push('ordre du menu (' + gabarit.ordre + ', bouton Intégrer : ' + gabarit.rejoindre + ')');
     if (page.includes('parcours') && texte.toLowerCase().includes('casting ouvert sans nos mannequins')) manquants.push('projet sans nos mannequins affiché');
-    if (page.includes('parcours')) {
+    if (page.includes('parcours') || page.includes('agenda')) {
       const libre = await p.evaluate(() => ({ nom: document.body.innerText.includes('Fatou Bamba'), mauvaisLien: !!document.querySelector('a[href*="null"], a[href*="undefined"], a[href=""]') }));
       if (!libre.nom || libre.mauvaisLien) manquants.push('mannequin écrite à la main (' + JSON.stringify(libre) + ')');
     }

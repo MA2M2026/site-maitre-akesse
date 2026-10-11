@@ -15,6 +15,7 @@
   var charge = false, enCours = false, listesOk = false;
   var projets = [], mannequins = [], partenaires = [];
   var colonneAutres = false; // colonne « Autres mannequins » présente (Extension 137 collée)
+  var colonnePartenairesLibres = false; // colonne « Autres partenaires » présente (Extension 138 collée)
   var projetEnCours = null; // projet ouvert avec « Modifier »
 
   function message(t, erreur) {
@@ -144,9 +145,9 @@
 
   function ligneProjet(p) {
     var div = document.createElement('div');
-    div.className = 'agenda-ligne' + (p.visible && !p.annule ? '' : ' cache');
+    div.className = 'agenda-ligne' + (p.visible && !p.annule ? '' : ' cache') + (projetEnCours && projetEnCours.id === p.id ? ' en-modif' : '');
     var noms = nomsDe(p.mannequin_ids, mannequins, 'full_name').concat(p.mannequins_libres || []);
-    var parts = nomsDe(p.partenaire_ids, partenaires, 'nom');
+    var parts = nomsDe(p.partenaire_ids, partenaires, 'nom').concat(p.partenaires_libres || []);
     var horaires = (p.seances || []).map(function (x) { return dateAgenda(x.jour) + ' ' + (x.debut || '?') + '–' + (x.fin || '?'); }).join(' ; ');
     var intervenants = (p.intervenants || []).map(function (x) { return (x.role ? x.role + ' : ' : '') + x.nom; });
     var prive = [horaires ? '' : p.heure, p.adresse, horaires && !p.horaires_publics ? horaires : ''].filter(Boolean).join(' · ');
@@ -161,7 +162,7 @@
       + (noms.length ? '<p>Mannequins : ' + echapperHtml(noms.join(', ')) + '</p>' : '')
       + (prive ? '<p class="agenda-prive">🔒 ' + echapperHtml(prive) + '</p>' : '')
       + '</div>'
-      + '<div class="agenda-boutons"><button type="button" class="btn-mini-admin" data-modifier="' + echapperHtml(p.id) + '">Modifier</button>'
+      + '<div class="agenda-boutons"><button type="button" class="btn-mini-admin" data-modifier="' + echapperHtml(p.id) + '" aria-label="Modifier « ' + echapperHtml(p.titre) + ' »">Modifier</button>'
       + '<button type="button" class="btn-mini-admin" data-supprimer="' + echapperHtml(p.id) + '">Supprimer</button></div>';
     return div;
   }
@@ -187,6 +188,7 @@
     }
     projets = r.data || [];
     colonneAutres = projets.some(function (p) { return 'mannequins_libres' in p; });
+    colonnePartenairesLibres = projets.some(function (p) { return 'partenaires_libres' in p; });
     afficherListe();
   }
 
@@ -209,8 +211,20 @@
     dessinerSeances([]);
     $('agenda-enregistrer').textContent = 'Ajouter à l’agenda';
     $('agenda-annuler').hidden = true;
+    $('agenda-en-cours').hidden = true;
+    marquerLigne(null);
     filtrer('');
     majCompte();
+  }
+
+  // Projet en cours de modification : bandeau en haut du formulaire (titre + dates) et ligne
+  // encadrée dans la liste, pour ne jamais modifier un projet à la place d'un autre
+  // (11/10/2026 : « Modifier » d'Abidjan Border Forum pris pour celui de Cacao Fashion Show).
+  function marquerLigne(id) {
+    section.querySelectorAll('.agenda-ligne.en-modif').forEach(function (l) { l.classList.remove('en-modif'); });
+    if (!id) return;
+    var b = section.querySelector('[data-modifier="' + id + '"]');
+    if (b) b.closest('.agenda-ligne').classList.add('en-modif');
   }
 
   function remplirFormulaire(p) {
@@ -234,6 +248,11 @@
     $('agenda-visible').checked = !!p.visible;
     $('agenda-annule').checked = !!p.annule;
     $('agenda-autres').value = (p.mannequins_libres || []).join('\n');
+    $('agenda-autres-partenaires').value = (p.partenaires_libres || []).join('\n');
+    $('agenda-en-cours').textContent = '✏️ Vous modifiez : « ' + p.titre + ' » — ' + dateAgenda(p.date_debut, p.date_fin)
+      + '. Seuls les champs que vous changez seront modifiés.';
+    $('agenda-en-cours').hidden = false;
+    marquerLigne(p.id);
     [['agenda-mannequins', p.mannequin_ids], ['agenda-partenaires', p.partenaire_ids]].forEach(function (z) {
       $(z[0]).querySelectorAll('input[type=checkbox]').forEach(function (c) { c.checked = (z[1] || []).includes(c.value); });
     });
@@ -244,11 +263,11 @@
     form.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  // Noms écrits à la main, un par ligne : espaces retirés, doublons et lignes vides enlevés,
-  // 40 noms de 80 caractères au plus (mêmes limites que la base, Extension 137).
-  function lireAutres() {
+  // Noms écrits à la main (mannequins ou partenaires), un par ligne : espaces retirés, doublons
+  // et lignes vides enlevés, 40 noms de 80 caractères au plus (limites de la base, Ext. 137/138).
+  function lireAutres(idChamp) {
     var vus = {};
-    return $('agenda-autres').value.split('\n').map(function (n) { return n.trim().slice(0, 80); })
+    return $(idChamp).value.split('\n').map(function (n) { return n.trim().slice(0, 80); })
       .filter(function (n) { var k = n.toLowerCase(); if (!n || vus[k]) return false; vus[k] = true; return true; })
       .slice(0, 40);
   }
@@ -292,8 +311,12 @@
     // « Autres mannequins » (Extension 137) : envoyé seulement si la colonne existe déjà
     // (vue dans les projets chargés) ou si des noms sont écrits — sinon un agenda dont
     // l'Extension 137 n'est pas encore collée resterait utilisable.
-    var autres = lireAutres();
+    var autres = lireAutres('agenda-autres');
     if (autres.length || colonneAutres) ligne.mannequins_libres = autres;
+    // « Autres partenaires » (Extension 138) : partenaires indirects, jamais ajoutés à la page
+    // Partenaires ; même précaution tant que la colonne n'existe pas.
+    var autresPartenaires = lireAutres('agenda-autres-partenaires');
+    if (autresPartenaires.length || colonnePartenairesLibres) ligne.partenaires_libres = autresPartenaires;
     var id = $('agenda-id').value;
     enCours = true;
     $('agenda-enregistrer').disabled = true;
@@ -303,9 +326,12 @@
         ? await sb.from('agenda_projets').update({ updated_at: new Date().toISOString(), ...ligne }).eq('id', id).select('id')
         : await sb.from('agenda_projets').insert(ligne).select('id');
       if (r.error) {
-        message(/mannequins_libres/.test(r.error.message || '') && /column|schema cache/i.test(r.error.message || '')
+        var colonneManquante = /column|schema cache/i.test(r.error.message || '');
+        message(colonneManquante && /mannequins_libres/.test(r.error.message || '')
           ? 'La case « Autres mannequins » n’est pas encore activée : collez l’Extension 137 dans Supabase, puis réessayez.'
-          : 'Erreur : ' + r.error.message, true);
+          : colonneManquante && /partenaires_libres/.test(r.error.message || '')
+            ? 'La case « Autres partenaires » n’est pas encore activée : collez l’Extension 138 dans Supabase, puis réessayez.'
+            : 'Erreur : ' + r.error.message, true);
         return;
       }
       // Aucune ligne touchée = session expirée ou compte non admin : rien n'a été enregistré.
