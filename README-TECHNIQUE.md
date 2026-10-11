@@ -1986,3 +1986,9 @@ que la rubrique « Couverture du site (vidéo) » du tableau de bord. La barre d
 maintenant en haut de toutes les pages. Conservés : l'intro de l'accueil (bouton « Entrer »,
 `js/faisceau.js` + `js/intro-faisceau.js`) et la « Vidéo de la page d'accueil ». Les règles
 CSS `.couverture-faisceau` / `--couv-h` restent sans effet (nettoyage CSS à faire).
+
+## Scripts partagés FR/EN (nettoyage du code recopié, suite, 11/10/2026)
+- `js/mannequins.js` : « Nos mannequins » FR et EN (`js/mannequins-en.js` supprimé).
+- `js/fiche-mannequin.js` : fiche d'une mannequin, `mannequin.html` et `en/mannequin.html`
+  (avant : deux scripts de ~400 lignes dans les pages). Textes `T('fr', 'en')` ; en anglais,
+  équivalents impériaux (`enPieds`, `enPouces`, `enLivres`, `pointureUS` de `js/app.js`).
