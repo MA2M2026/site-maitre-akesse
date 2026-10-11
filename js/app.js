@@ -424,6 +424,12 @@ async function verifierAdmin() {
   } catch (e) {}
 }
 
+// Lien de « mot de passe oublié » (Supabase ajoute type=recovery à l'adresse) : Espace
+// mannequin et tableau de bord. Partagé le 11/10/2026.
+function urlIndiqueRecuperationMdp() {
+  return /type=recovery/.test(window.location.hash + window.location.search);
+}
+
 // Langue de la page et petit traducteur partagés (11/10/2026) : T('texte français',
 // 'English text') renvoie le texte de la langue de la page (<html lang="en"> = anglais).
 const EN = document.documentElement.lang === 'en';
