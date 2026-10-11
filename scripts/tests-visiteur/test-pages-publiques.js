@@ -34,6 +34,19 @@ const cas = [
     await p.waitForTimeout(2500);
     const texte = await p.evaluate(() => document.body.innerText);
     const manquants = attendus.filter(t => !texte.toLowerCase().includes(t.toLowerCase()));
+    // Barre du haut, menu et bas de page communs (js/gabarit.js, 11/10/2026)
+    const gabarit = await p.evaluate(() => ({
+      langue: (document.querySelector('.lang-switch') || {}).href || '',
+      menu: document.querySelectorAll('#menuOverlay .nav-links a').length,
+      pied: !!document.querySelector('.site-footer .footer-grille'),
+      annee: (document.getElementById('an') || {}).textContent || ''
+    }));
+    const autreLangue = page.startsWith('en/') ? '/' + page.slice(3).split('?')[0] : '/en/' + page.split('?')[0];
+    // Fiche mannequin : le lien de langue mène à l'adresse « book » de la mannequin (js/fiche-mannequin.js).
+    const attenduLangue = page.includes('mannequin.html?') ? (page.startsWith('en/') ? '/book/awa-kone' : '/en/book/awa-kone') : autreLangue;
+    if (!gabarit.langue.endsWith(attenduLangue)) manquants.push('lien de langue (' + gabarit.langue + ')');
+    if (gabarit.menu < 10) manquants.push('menu (' + gabarit.menu + ' liens)');
+    if (!gabarit.pied || gabarit.annee !== String(new Date().getFullYear())) manquants.push('bas de page');
     const ok = !manquants.length && !errs.length;
     console.log(`${ok ? '✓' : '❌ ÉCHEC'} ${page} (${vp.width}px)${manquants.length ? ' | manque : ' + manquants.join(', ') : ''} | erreurs : ${JSON.stringify(errs)}`);
     if (!ok) process.exitCode = 1;
