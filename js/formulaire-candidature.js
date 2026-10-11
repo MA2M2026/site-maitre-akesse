@@ -122,7 +122,11 @@ async function chargerProjetsActifs() {
   finChargement();
 }
 if (PARCOURS === 'projet') {
-  chargerProjetsActifs();
+  // En cas de panne réseau, le formulaire s'affiche quand même (il ne doit jamais rester caché).
+  chargerProjetsActifs().catch(() => {
+    const c = document.getElementById('ca-chargement'); if (c) c.remove();
+    document.getElementById('form-casting').classList.remove('u-hidden');
+  });
   document.getElementById('ca-projet').addEventListener('change', (e) => {
     const estAutre = e.target.value === '__autre__';
     document.getElementById('ca-bloc-projet-autre').style.display = estAutre ? 'block' : 'none';
@@ -627,7 +631,7 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
     clearInterval(minuteurPhotos);
     jaugeEnErreur('ca-jauge-photos', T('Photos : non envoyées', 'Photos: not sent'));
   }
-  journaliserPhotosEchouees('candidature', candidature.id, nbPhotosEchouees);
+  Promise.resolve(journaliserPhotosEchouees('candidature', candidature.id, nbPhotosEchouees)).catch(() => {});
 
   // Vidéo de présentation : envoyée APRÈS les photos (elle est plus lourde), dans le
   // même dossier Drive ; son lien est ensuite rattaché à la candidature.
