@@ -1,0 +1,88 @@
+/* Menu « Modèle A — plein écran éditorial » (choisi par la propriétaire le 11/10/2026 parmi
+   4 maquettes). Remplace l'ancien tiroir à droite. Importé en tête de css/style.css et de
+   css/entete-site.css (Espace mannequin) : une seule copie pour tout le site.
+   Le contenu du menu vient de js/gabarit.js ; js/menu.js ajoute Femmes / Hommes sous
+   The Book, le bloc contact (téléphones, réseaux) et des titres de groupes (masqués ici). */
+
+html body .menu-voile { display: none !important; }
+
+html body .menu-overlay {
+  inset: 0 !important; width: 100% !important; max-width: none !important;
+  background: radial-gradient(120% 80% at 85% 0%, #2b0a0e 0%, #060606 58%) !important;
+  border: 0 !important; box-shadow: none !important;
+  padding: 6rem clamp(22px, 6vw, 80px) 2.2rem !important;
+  overflow-y: auto; overscroll-behavior: contain;
+  display: flex !important; flex-direction: column; align-items: stretch; justify-content: flex-start;
+  transform: none !important;
+  opacity: 0; visibility: hidden;
+  transition: opacity 0.4s ease, visibility 0.4s !important;
+}
+html body .menu-overlay.active { opacity: 1; visibility: visible; }
+
+/* logo en haut à gauche, rond de fermeture en haut à droite (repris de l'ancien tiroir) */
+html body .menu-overlay::before { top: 1.6rem !important; left: clamp(22px, 6vw, 80px) !important; }
+html body .menu-overlay .close-menu { top: 1.3rem !important; right: clamp(18px, 6vw, 76px) !important; }
+
+html body .menu-overlay .nav-links {
+  display: flex !important; flex-direction: column; counter-reset: rubrique;
+  width: 100%; max-width: 760px; margin: 0 auto !important; text-align: left;
+}
+html body .menu-overlay .nav-links li { border: 0 !important; margin: 0 !important; opacity: 0; transform: translateY(14px) !important; transition: opacity 0.5s ease, transform 0.6s cubic-bezier(.22,.8,.24,1) !important; }
+html body .menu-overlay.active .nav-links li { opacity: 1; transform: none !important; }
+html body .menu-overlay.active .nav-links li:nth-child(n) { transition-delay: calc(0.03s * var(--rang, 1)) !important; }
+html body .menu-overlay .nav-links li.menu-groupe { display: none !important; }
+
+/* rubriques : grands titres numérotés 01, 02, 03… */
+html body .menu-overlay .nav-links li:not(.menu-sous):not(.item-cta):not(.menu-rejoindre) { counter-increment: rubrique; border-bottom: 1px solid rgba(255,255,255,0.07) !important; }
+html body .menu-overlay .nav-links li a {
+  display: flex !important; align-items: baseline; gap: 14px; justify-content: flex-start !important;
+  padding: 0.55rem 0 !important; border-radius: 0 !important; background: none !important;
+  font-family: var(--display) !important; font-weight: 400 !important;
+  font-size: clamp(1.4rem, 6.2vw, 2.6rem) !important; line-height: 1.05 !important;
+  text-transform: uppercase !important; letter-spacing: 0.02em !important;
+  color: var(--titre-clair, #f5efe7) !important;
+  transition: color 0.3s ease, letter-spacing 0.4s ease !important;
+}
+html body .menu-overlay .nav-links li:not(.menu-sous):not(.item-cta):not(.menu-rejoindre) a::before {
+  content: counter(rubrique, decimal-leading-zero) !important; position: static !important;
+  width: auto !important; background: none !important;
+  font: 500 0.72rem var(--texte); letter-spacing: 0.1em; color: var(--bordeaux-clair, #d55468);
+  min-width: 1.6rem;
+}
+html body .menu-overlay .nav-links li a::after { content: none !important; }
+@media (hover: hover) { html body .menu-overlay .nav-links li a:hover { color: var(--bordeaux-clair, #d55468) !important; letter-spacing: 0.05em !important; } }
+html body .menu-overlay .nav-links li a.actif { color: var(--bordeaux-clair, #d55468) !important; font-style: italic !important; background: none !important; }
+
+/* Femmes / Hommes : petits liens sous The Book */
+html body .menu-overlay .nav-links li.menu-sous { border: 0 !important; display: inline-block; }
+html body .menu-overlay .nav-links li.menu-sous a {
+  font-family: var(--texte) !important; font-size: 0.78rem !important; text-transform: uppercase !important;
+  letter-spacing: 0.18em !important; color: var(--texte-doux, #948c85) !important;
+  padding: 0.35rem 0 0.35rem 2.9rem !important;
+}
+
+/* « Intégrer l'agence » : grand bouton rouge ; « Espace mannequin » : bouton en contour */
+html body .menu-overlay .nav-links li.menu-rejoindre { order: 90; margin-top: 1.6rem !important; }
+html body .menu-overlay .nav-links li.item-cta { order: 91; margin-top: 0.7rem !important; }
+html body .menu-overlay .nav-links li.menu-rejoindre a,
+html body .menu-overlay .nav-links li.item-cta a {
+  justify-content: center !important; border-radius: 999px !important; padding: 0.95rem 1rem !important;
+  font-family: var(--texte) !important; font-size: 0.8rem !important; font-weight: 500 !important;
+  letter-spacing: 0.16em !important; font-style: normal !important;
+}
+html body .menu-overlay .nav-links li.menu-rejoindre a { background: var(--bordeaux, #7a1220) !important; color: #fff !important; }
+html body .menu-overlay .nav-links li.item-cta a { border: 1px solid rgba(255,255,255,0.22) !important; color: var(--titre-clair, #f5efe7) !important; }
+@media (hover: hover) {
+  html body .menu-overlay .nav-links li.menu-rejoindre a:hover { background: var(--bordeaux-vif, #9c1c2c) !important; color: #fff !important; }
+  html body .menu-overlay .nav-links li.item-cta a:hover { border-color: var(--bordeaux-clair, #d55468) !important; }
+}
+
+/* contact et réseaux en bas */
+html body .menu-overlay .menu-contact { width: 100%; max-width: 760px; margin: 2rem auto 0 !important; text-align: left !important; font-size: 0.85rem; color: var(--texte-doux, #948c85); }
+html body .menu-overlay .menu-reseaux { justify-content: flex-start !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  html body .menu-overlay, html body .menu-overlay .nav-links li { transition: none !important; }
+}
+html body .menu-overlay .nav-links li.item-cta a::before,
+html body .menu-overlay .nav-links li.menu-rejoindre a::before { content: none !important; }

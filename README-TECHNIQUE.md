@@ -2032,3 +2032,11 @@ double) : un projet passé, visible et non annulé compte automatiquement.
 - Outils communs dans `js/app.js` : `ma2mParcours`, `ma2mCompteParType`, `nombreTypeAgenda`,
   `lienFicheMannequin` (aussi utilisé par `js/agenda.js`).
 - Essais : `test-pages-publiques.js` (page FR/EN + fiche), `test-admin.js` (pays + annulé).
+
+## Menu « Modèle A » (11/10/2026, choisi par la propriétaire parmi 4 maquettes)
+Menu plein écran, grands titres numérotés 01, 02… (police des titres), rubrique ouverte en
+rouge italique, « Intégrer l'agence » en grand bouton rouge et « Espace mannequin » en bouton
+contour. Style : `css/menu.css` (importé en tête de `css/style.css` et `css/entete-site.css`,
+sélecteurs préfixés `html body` pour passer devant l'ancien tiroir). Ordre et libellés : liste
+`PAGES` de `js/gabarit.js`. Le Parcours MA2M n'affiche que les projets où au moins une de nos
+mannequins publiées est cochée (`ma2mParcours`, js/app.js).

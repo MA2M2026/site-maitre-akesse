@@ -15,20 +15,21 @@
   var RACINE_G = EN_G ? '../' : '';
   // [fichier, libellé menu FR, libellé menu EN, libellé bas de page FR, libellé bas de page EN]
   // (libellé bas de page null = absent du bas de page)
+  // Ordre du menu « Modèle A » (11/10/2026) ; « Intégrer l'agence » devient le grand bouton rouge.
   var PAGES = [
     ['index', 'Accueil', 'Home', 'Accueil', 'Home'],
+    ['mannequins', 'The Book', 'The Book', 'The Book', 'The Book'],
+    ['parcours', 'Parcours MA2M', 'Track Record', 'Parcours MA2M', 'Track Record'],
+    ['agenda', 'Agenda', 'Agenda', null, null],
     ['qui-sommes-nous', 'Qui sommes-nous', 'About us', 'Qui sommes-nous', 'About us'],
     ['services', 'Services', 'Services', 'Services', 'Services'],
-    ['mannequins', 'The Book', 'The Book', 'The Book', 'The Book'],
     ['actualites', 'Actualités', 'News', 'Actualités', 'News'],
     ['evenements', 'Événements', 'Our Events', 'Nos événements', 'Our Events'],
-    ['agenda', 'Agenda', 'Agenda', null, null],
-    ['parcours', 'Parcours MA2M', 'Track Record', 'Parcours MA2M', 'Track Record'],
     ['partenaires', 'Partenaires', 'Our Partners', 'Nos partenaires', 'Our Partners'],
-    ['integrer-agence', "Intégrer l'agence", 'Join the Agency', "Intégrer l'agence", 'Join the Agency'],
     ['candidature', 'Postuler à un casting', 'Apply for a Casting', 'Postuler à un casting', 'Apply for a Casting'],
     ['inscription-mannequin', "Inscription nouveau mannequin de l'agence", 'Registration', 'Inscription', 'Registration'],
-    ['contact', 'Contact', 'Contact', null, null]
+    ['contact', 'Contact', 'Contact', null, null],
+    ['integrer-agence', "Intégrer l'agence", 'Join the Agency', "Intégrer l'agence", 'Join the Agency']
   ];
   var RESEAUX = [
     '<a href="https://www.instagram.com/maitreakessemodelmanagement" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram"><svg viewBox="0 0 24 24"><defs><linearGradient id="ig-grad-pied" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="#FFC107"/><stop offset="50%" stop-color="#F44336"/><stop offset="100%" stop-color="#9C27B0"/></linearGradient></defs><path fill="url(#ig-grad-pied)" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98C.014 8.333 0 8.741 0 12s.014 3.667.072 4.948c.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24s3.667-.014 4.948-.072c4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.667.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>',
@@ -67,10 +68,12 @@
 
   placeHolders('menu').forEach(function (el) {
     var liens = PAGES.filter(function (p) { return visible(p, true); }).map(function (p) {
-      return '    <li><a href="' + p[0] + '.html"' + (p[0] === actif ? ' class="actif"' : '') + '>' + (EN_G ? p[2] : p[1]) + '</a></li>';
+      return '    <li' + (p[0] === 'integrer-agence' ? ' class="menu-rejoindre"' : '') + '><a href="' + p[0] + '.html"' + (p[0] === actif ? ' class="actif"' : '') + '>' + (EN_G ? p[2] : p[1]) + '</a></li>';
     });
     liens.push('    <li class="item-cta"><a href="' + RACINE_G + 'espace-mannequin.html"' + (actif === 'espace-mannequin' ? ' class="actif"' : '') + '>' + (EN_G ? "Agency's Model Space" : "Espace mannequin de l'agence") + '</a></li>');
     el.innerHTML = '\n  <button class="close-menu" id="closeMenuBtn">' + (EN_G ? 'Close ✕' : 'Fermer ✕') + '</button>\n  <ul class="nav-links">\n' + liens.join('\n') + '\n  </ul>\n';
+    // rang de chaque rubrique : apparition en cascade (css/menu.css)
+    el.querySelectorAll('li').forEach(function (li, n) { li.style.setProperty('--rang', n + 1); });
     el.setAttribute('data-rempli', '');
   });
 
