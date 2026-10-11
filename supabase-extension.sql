@@ -6793,3 +6793,41 @@ revoke all on function soumettre_inscription_mannequin(text, text, date, text, i
 grant execute on function soumettre_inscription_mannequin(text, text, date, text, int, text, text, text, text, text, text, text, text) to anon, authenticated;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 133 — « Créer mon compte » de nouveau possible (11/10/2026).
+-- Depuis le 04/10/2026, le compte d'une nouvelle mannequin est créé par le serveur
+-- (api/code-protege.js, clé service_role). Mais le garde-fou
+-- proteger_proprietaire_profil() refusait toute écriture sans utilisateur connecté
+-- (auth.uid() vide) : la fiche model_profiles ne se créait pas, le compte était
+-- annulé et la mannequin voyait « La création du compte a échoué ». Le serveur
+-- (rôle service_role, clé secrète jamais envoyée au navigateur) est désormais
+-- autorisé ; les règles pour les mannequins et les admins ne changent pas.
+-- ===================================================================
+create or replace function proteger_proprietaire_profil()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  est_admin boolean;
+begin
+  if coalesce(auth.role(), '') = 'service_role' then
+    return NEW;
+  end if;
+  select exists(select 1 from admins where user_id = auth.uid()) into est_admin;
+  if est_admin then
+    return NEW;
+  end if;
+  if auth.uid() is null or NEW.id is distinct from auth.uid() then
+    raise exception 'Modification refusée : ce profil ne vous appartient pas.';
+  end if;
+  if TG_OP = 'UPDATE' and OLD.id is distinct from NEW.id then
+    raise exception 'Modification refusée : identifiant du profil non modifiable.';
+  end if;
+  return NEW;
+end;
+$$;
+
+NOTIFY pgrst, 'reload schema';

@@ -1931,3 +1931,14 @@ l'enregistrement. L'alerte « Votre profil n'est pas complet » suit la même r�
   chargement ; photos du book avec `aspect-ratio: auto 2 / 3` (la grille ne saute plus).
 - Non modifié : la vidéo de couverture des pages Espace / candidature / tableau de bord
   (c'est la bannière visible en haut de ces pages) ; ses échecs passagers ne sont plus signalés.
+
+## « Créer mon compte » bloqué (corrigé le 11/10/2026, Extension 133)
+
+Depuis le 04/10/2026, `api/code-protege.js` crée le compte d'une nouvelle mannequin
+côté serveur (clé service_role) puis sa fiche `model_profiles`. Le déclencheur
+`proteger_proprietaire_profil()` (Extension ~93) refusait toute écriture sans
+utilisateur connecté : la fiche échouait, le compte était supprimé et la mannequin
+voyait « La création du compte a échoué ». L'Extension 133 laisse passer le rôle
+`service_role` (serveur seulement) ; rien ne change pour les mannequins et les admins.
+⚠️ Toute nouvelle écriture serveur sur une table protégée par un déclencheur du même
+genre doit vérifier `auth.role() = 'service_role'`.
