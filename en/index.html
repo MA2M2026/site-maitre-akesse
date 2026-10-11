@@ -9,7 +9,7 @@
      (see README-TECHNIQUE.md, "Porte d'entrée / verrou de scroll" section), with no
      error to hint at why. After any change, run:
      python3 scripts/verifier-csp.py en/index.html -->
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-zN0F2vkcD2YiuA1cz5LWhPyu77KqQvQyTM8uykAfT04=' 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A=' 'sha256-b+QrdXtiVOaEVLNTW7orZsKUFZUKusqEn6hCQdTT7lY='; style-src 'self' https://fonts.googleapis.com;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-b+QrdXtiVOaEVLNTW7orZsKUFZUKusqEn6hCQdTT7lY=' 'sha256-zN0F2vkcD2YiuA1cz5LWhPyu77KqQvQyTM8uykAfT04=' 'sha256-YyIGLlh6Z9cSXwm6MEP+EysN1ogpmxlDTxA7Xek707A='; style-src 'self' https://fonts.googleapis.com;">
 <script src="../js/adresse-en.js"></script>
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
@@ -233,15 +233,9 @@ setTimeout(() => {
   </button>
 </section>
 
-<!-- Couverture animée (logo « faisceau de lumière ») -->
-<section class="couverture-faisceau" id="couverture-faisceau" aria-label="Maître Akesse Model Management">
-  <canvas class="couverture-canvas" aria-hidden="true"></canvas>
-  <img class="couverture-secours" src="../assets/logo-intro.png" alt="Maître Akesse Model Management">
-</section>
-<script src="../js/couverture-faisceau.js"></script>
 
-<!-- Barre du haut, fixée juste sous la couverture (le reste de la page défile dessous) -->
-<header class="site-header-v2 entete-sous-couverture">
+<!-- Barre du haut (la bande au logo animé a été retirée le 11/10/2026 : décision de la propriétaire) -->
+<header class="site-header-v2">
   <div class="container header-v2-inner">
     <a href="index.html" class="logo-img-header"><img src="../assets/logo-header.png" alt="Maître Akesse Model Management"></a>
     <div class="header-v2-droite">
@@ -253,7 +247,6 @@ setTimeout(() => {
     </div>
   </div>
 </header>
-<div class="couverture-espace" aria-hidden="true"></div>
 
 <div class="marquee-bande" id="marqueeBande" aria-hidden="true">
   <div class="marquee-label u-hidden" id="marqueeLabel">Today's News</div>

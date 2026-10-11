@@ -1,6 +1,6 @@
 // Animation « faisceau de lumière » du logo MA2M (modèle 2 choisi par la propriétaire,
 // 04/10/2026), partagée par l'intro de l'accueil (js/intro-faisceau.js) et la couverture
-// en haut de l'accueil (js/couverture-faisceau.js).
+// en haut des pages (retirée le 11/10/2026, seule l'intro de l'accueil l'utilise encore).
 // Dans le noir, une ligne de lumière naît au centre ; un rayon balaie et révèle
 // « MAÎTRE AKESSE » ; « MODEL MANAGEMENT » apparaît, le trait rouge se dessine depuis le
 // centre, le triangle rouge tombe à sa place, puis un reflet traverse le logo.

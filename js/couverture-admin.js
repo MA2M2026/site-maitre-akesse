@@ -1,6 +1,6 @@
 // Tableau de bord — vidéos du site gérées par l'agence (un seul outil pour deux zones) :
-//  - « Couverture du site » (04/10/2026) : remplace l'animation du logo en haut de toutes
-//    les pages ; sans le son, 30 s au plus (elle tourne en boucle) ;
+//  - « Couverture du site » (04/10/2026) : RETIRÉE le 11/10/2026 avec la bande au logo animé
+//    (décision de la propriétaire) ; la zone reste ici mais sa rubrique n'existe plus ;
 //  - « Vidéo de l'accueil » (05/10/2026, audit) : grand film dans le corps de la page
 //    d'accueil (js/video-accueil.js) ; le son est gardé (le visiteur l'active d'un appui),
 //    60 s au plus.

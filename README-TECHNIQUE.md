@@ -1976,3 +1976,13 @@ Rien n'est supprimé : colonnes `model_profiles.desactive`, `desactive_le`, `des
   = formulaire allégé et 3 photos, déjà mannequin = complet et 4 photos).
 - Langue : `<html lang="en">` ; chaque texte est écrit `T('français', 'anglais')`.
 - Essai visiteur : `scripts/tests-visiteur/test-visiteur.js` couvre les quatre pages.
+
+## Bande au logo animé retirée (11/10/2026, décision de la propriétaire)
+
+La « couverture » (bande noire avec le logo animé ou la vidéo de couverture, au-dessus de la
+barre du menu) faisait doublon avec le logo de la barre et prenait un quart de l'écran du
+téléphone. Retirée des 21 pages qui l'avaient (`js/couverture-faisceau.js` supprimé), ainsi
+que la rubrique « Couverture du site (vidéo) » du tableau de bord. La barre du menu est
+maintenant en haut de toutes les pages. Conservés : l'intro de l'accueil (bouton « Entrer »,
+`js/faisceau.js` + `js/intro-faisceau.js`) et la « Vidéo de la page d'accueil ». Les règles
+CSS `.couverture-faisceau` / `--couv-h` restent sans effet (nettoyage CSS à faire).
