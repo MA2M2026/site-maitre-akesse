@@ -44,6 +44,8 @@ const choisir = async (p, sel, pref) => { const v = await p.$eval(sel, (s, pref)
     console.log('Parcours :', c.type_candidature, '| projet :', c.projet_nom, '| expérience :', c.experience_mannequin, '| e-mail agence :', journal.filter(j => j[0] === 'EMAIL').map(j => String(JSON.parse(j[1]).template_params.message).split('\n').slice(0, 2).join(' / ')));
     console.log('Message affiché :', (await p.textContent('#ca-msg').catch(() => '')).trim().slice(0, 160));
     console.log('Erreurs :', errs);
+    // Échec bloquant (relecture du 11/10/2026) : la candidature doit être enregistrée avec le bon parcours.
+    if (!inserts.length || c.type_candidature !== (page.includes('candidature') ? 'projet' : 'agence') || errs.length) { console.log('❌ ÉCHEC sur', page); process.exitCode = 1; }
     await ctx.close();
   }
   await b.close(); srv.kill();

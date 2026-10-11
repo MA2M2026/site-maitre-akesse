@@ -20,15 +20,8 @@ const PARCOURS = document.getElementById('form-casting').dataset.parcours === 'a
 })();
 
 // --- Mensurations en listes déroulantes plutôt qu'en saisie libre : évite les
-// fautes de frappe (ex. "17O" au lieu de "170") et les valeurs invraisemblables. ---
-function remplirSelectNombres(id, min, max, pas, suffixe) {
-  const champ = document.getElementById(id);
-  if (!champ) return;
-  champ.appendChild(new Option('—', ''));
-  for (let v = min; v <= max; v += pas) {
-    champ.appendChild(new Option(v + (suffixe || ''), v));
-  }
-}
+// fautes de frappe (ex. "17O" au lieu de "170") et les valeurs invraisemblables.
+// remplirSelectNombres, configurerSelectAvecAutre et valeurSelectOuAutre : js/app.js. ---
 remplirSelectNombres('ca-poids', 35, 130, 1, ' kg');
 remplirSelectNombres('ca-poitrine', 70, 130, 1, ' cm');
 remplirSelectNombres('ca-tourtaille', 55, 110, 1, ' cm');
@@ -43,21 +36,6 @@ function remplirSelectListe(id, liste) {
   champ.appendChild(new Option('—', ''));
   liste.forEach(v => champ.appendChild(new Option(v, v)));
   champ.appendChild(new Option(T('Autre', 'Other'), 'Autre'));
-}
-function configurerSelectAvecAutre(idSelect, idAutre) {
-  const select = document.getElementById(idSelect);
-  const autre = document.getElementById(idAutre);
-  if (!select || !autre) return;
-  select.addEventListener('change', () => {
-    autre.style.display = select.value === 'Autre' ? 'block' : 'none';
-    if (select.value !== 'Autre') autre.value = '';
-  });
-}
-function valeurSelectOuAutre(idSelect, idAutre) {
-  const select = document.getElementById(idSelect);
-  const autre = document.getElementById(idAutre);
-  if (select.value === 'Autre') return (autre.value || '').trim();
-  return select.value;
 }
 // VILLES_CI vient désormais de js/villes-cote-ivoire.js (partagé avec
 // espace-mannequin.html et espace-mannequin-MA2M-premium-20.html).
