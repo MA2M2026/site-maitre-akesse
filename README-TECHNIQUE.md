@@ -1940,5 +1940,13 @@ côté serveur (clé service_role) puis sa fiche `model_profiles`. Le déclenche
 utilisateur connecté : la fiche échouait, le compte était supprimé et la mannequin
 voyait « La création du compte a échoué ». L'Extension 133 laisse passer le rôle
 `service_role` (serveur seulement) ; rien ne change pour les mannequins et les admins.
-⚠️ Toute nouvelle écriture serveur sur une table protégée par un déclencheur du même
-genre doit vérifier `auth.role() = 'service_role'`.
+**Extension 134 (règle unique)** : `est_ecriture_serveur()` = la requête ne vient pas d'un
+navigateur (rôle ni `anon` ni `authenticated` : serveur du site, base elle-même, éditeur
+SQL). `proteger_proprietaire_profil()` et `proteger_proprietaire_photo()` la consultent en
+premier ; la seconde aurait aussi bloqué la suppression d'un compte de mannequin ayant
+des photos (suppression en cascade). ⚠️ Tout NOUVEAU garde-fou commence par
+`if est_ecriture_serveur() then return … end if;`.
+`api/code-protege.js` écrit maintenant toute panne de création de compte dans le journal
+des erreurs (`[Création de compte mannequin] échec : …`, avec la raison de la base).
+**Pourquoi l'incident a duré** : le changement de sécurité du 04/10 n'a été essayé qu'avec
+une base simulée, jamais avec un vrai compte ; l'échec était silencieux pour l'agence.

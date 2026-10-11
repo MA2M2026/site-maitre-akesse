@@ -20,6 +20,18 @@ const { SUPABASE_URL, enTetesService, corpsDe, extraireIp, nettoyerAppareil } = 
 
 const EMAIL_VALIDE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// Incident du 04 au 11/10/2026 : la création échouait en silence (« La création du compte
+// a échoué » pour la mannequin, rien pour l'agence). Toute panne de création est désormais
+// écrite dans le journal des erreurs du tableau de bord, avec la raison donnée par la base.
+async function signalerPanne(entetes, etape, detail) {
+  try {
+    await fetch(SUPABASE_URL + '/rest/v1/journal_erreurs', {
+      method: 'POST', headers: { ...entetes, Prefer: 'return=minimal' },
+      body: JSON.stringify({ message: '[Création de compte mannequin] échec : ' + etape, page: '/espace-mannequin', pile: String(detail || '').slice(0, 900), user_agent: 'serveur (api/code-protege)' })
+    });
+  } catch (e) { /* le journal ne doit jamais bloquer la réponse */ }
+}
+
 // Création du compte de connexion (confirmé d'emblée, comme les comptes admin) puis de
 // sa fiche model_profiles. Si la fiche échoue, le compte tout juste créé est supprimé :
 // jamais de compte orphelin sans fiche.
@@ -33,6 +45,7 @@ async function creerCompteMannequin(entetes, nom, email, motDePasse) {
     const texte = String((compte && (compte.msg || compte.message || compte.error_description || compte.error_code)) || '');
     if (/already|registered|exists|email_exists/i.test(texte)) return { status: 409, corps: { error: 'existe' } };
     if (/password/i.test(texte)) return { status: 400, corps: { error: 'mot_de_passe' } };
+    await signalerPanne(entetes, 'compte de connexion', texte || repCompte.status);
     return { status: 502, corps: { error: 'creation' } };
   }
   const id = compte && compte.id;
@@ -43,6 +56,7 @@ async function creerCompteMannequin(entetes, nom, email, motDePasse) {
     body: JSON.stringify({ id: id, full_name: nom, published: false })
   });
   if (!repFiche.ok) {
+    await signalerPanne(entetes, 'fiche model_profiles', await repFiche.text().catch(() => repFiche.status));
     await fetch(SUPABASE_URL + '/auth/v1/admin/users/' + encodeURIComponent(id), { method: 'DELETE', headers: entetes }).catch(() => {});
     return { status: 502, corps: { error: 'creation' } };
   }

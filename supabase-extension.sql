@@ -6831,3 +6831,85 @@ end;
 $$;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===================================================================
+-- Extension 134 — Règle UNIQUE pour les écritures du serveur (11/10/2026).
+-- Leçon de l'incident « Créer mon compte » (bloqué du 04 au 11/10, Extension 133) :
+-- les garde-fous « ce profil / cette photo ne vous appartient pas » refusaient toute
+-- écriture sans mannequin connectée, y compris celles du serveur du site et de la base
+-- elle-même (suppression en cascade quand l'agence supprime un compte : les photos du
+-- compte auraient bloqué la suppression). Une seule fonction décide désormais :
+-- est_ecriture_serveur() = vrai quand la requête ne vient PAS d'un navigateur
+-- (rôle 'anon' ou 'authenticated' : visiteur ou personne connectée). Tout nouveau
+-- garde-fou doit commencer par « if est_ecriture_serveur() then return … end if; ».
+-- ===================================================================
+create or replace function est_ecriture_serveur()
+returns boolean
+language sql
+stable
+as $$
+  select coalesce(auth.role(), '') not in ('anon', 'authenticated');
+$$;
+revoke all on function est_ecriture_serveur() from public;
+
+create or replace function proteger_proprietaire_profil()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  est_admin boolean;
+begin
+  if est_ecriture_serveur() then
+    return NEW;
+  end if;
+  select exists(select 1 from admins where user_id = auth.uid()) into est_admin;
+  if est_admin then
+    return NEW;
+  end if;
+  if auth.uid() is null or NEW.id is distinct from auth.uid() then
+    raise exception 'Modification refusée : ce profil ne vous appartient pas.';
+  end if;
+  if TG_OP = 'UPDATE' and OLD.id is distinct from NEW.id then
+    raise exception 'Modification refusée : identifiant du profil non modifiable.';
+  end if;
+  return NEW;
+end;
+$$;
+
+create or replace function proteger_proprietaire_photo()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  est_admin boolean;
+begin
+  if est_ecriture_serveur() then
+    return coalesce(NEW, OLD);
+  end if;
+  select exists(select 1 from admins where user_id = auth.uid()) into est_admin;
+  if est_admin then
+    return coalesce(NEW, OLD);
+  end if;
+
+  if TG_OP = 'DELETE' then
+    if auth.uid() is null or OLD.model_id is distinct from auth.uid() then
+      raise exception 'Action refusée : cette photo ne vous appartient pas.';
+    end if;
+    return OLD;
+  end if;
+
+  if auth.uid() is null or NEW.model_id is distinct from auth.uid() then
+    raise exception 'Action refusée : cette photo ne vous appartient pas.';
+  end if;
+  if TG_OP = 'UPDATE' and OLD.model_id is distinct from auth.uid() then
+    raise exception 'Action refusée : cette photo ne vous appartient pas.';
+  end if;
+  return NEW;
+end;
+$$;
+
+NOTIFY pgrst, 'reload schema';

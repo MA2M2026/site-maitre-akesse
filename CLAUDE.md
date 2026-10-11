@@ -52,6 +52,10 @@ relecture et s'appliquent à chaque modification, sans exception.
    ces tests ne couvrent pas encore, AJOUTER ce parcours aux tests avant de
    publier. (Le lien WhatsApp de l'enfant mineur sur la fiche avait échappé
    aux tests « par morceaux » : la propriétaire l'a trouvé elle-même.)
+   Toute modification de la création de compte, de la connexion ou des droits
+   de la base (déclencheurs, RLS) doit en plus être essayée **pour de vrai**
+   avec un compte de test, avec l'accord de la propriétaire (incident du 04 au
+   11/10/2026 : « Créer mon compte » bloqué, essayé seulement en simulation).
 4. **Vérifier après la mise en ligne** que le site en ligne contient bien
    le changement et fonctionne.
 5. **Ne jamais recopier du code** : une fonction utile à plusieurs pages
