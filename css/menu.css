@@ -73,7 +73,7 @@ html body .menu-overlay .nav-links li a::after { content: none !important; }
   html body .menu-overlay .nav-links li a:hover { color: var(--bordeaux-clair, #d55468) !important; letter-spacing: 0.05em !important; }
   html body .menu-overlay .nav-links li a:hover::before { transform: translateX(6px); transition: transform 0.3s ease !important; }
 }
-html body .menu-overlay .nav-links li a.actif { color: var(--bordeaux-clair, #d55468) !important; font-style: italic !important; background: none !important; }
+html body .menu-overlay .nav-links li a.actif { color: var(--bordeaux-clair, #d55468) !important; font-style: normal !important; background: none !important; }
 
 /* « Marketplace » (administratrices seulement, ajouté par js/menu.js) : non numéroté, en rouge */
 html body .menu-overlay .nav-links li.item-marketplace a { color: var(--bordeaux-clair, #d55468) !important; }
