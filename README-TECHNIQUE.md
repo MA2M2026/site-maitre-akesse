@@ -2015,3 +2015,20 @@ CSS `.couverture-faisceau` / `--couv-h` restent sans effet (nettoyage CSS à fai
 - `.sonarcloud.properties` : le journal SQL (historique des Extensions) est exclu du seul
   calcul des doublons SonarQube.
 - Essai visiteur `test-pages-publiques.js` : vérifie aussi lien de langue, menu et bas de page.
+
+## Parcours MA2M (11/10/2026, Extension 136)
+Bilan public des activités des mannequins, **calculé à partir de l'agenda** (aucune saisie en
+double) : un projet passé, visible et non annulé compte automatiquement.
+- Tableau de bord, Agenda : champs **Pays** et **Projet annulé** (`agenda_projets.pays`,
+  `.annule` ; un projet annulé disparaît aussi de l'agenda public).
+- Base : `parcours_public(début, fin[, mannequin])` — type, titre, dates, lieu, ville, pays et
+  mannequins publiques (id, nom, slug). Jamais l'adresse exacte, l'heure, les notes, les contacts.
+- Page `parcours.html` / `en/parcours.html` (`js/parcours.js`, `css/parcours.css`) : frise des
+  24 derniers mois, chiffres animés, mur des visages (mannequins actives du mois, 18 puis
+  « Voir les autres »), détail par mannequin, projets du mois par type ; animations coupées si
+  le visiteur demande moins de mouvement.
+- Fiche mannequin : rubrique « Avec MA2M » (`afficherParcoursAgence` dans `js/fiche-mannequin.js`),
+  masquée tant qu'il n'y a aucun projet réalisé.
+- Outils communs dans `js/app.js` : `ma2mParcours`, `ma2mCompteParType`, `nombreTypeAgenda`,
+  `lienFicheMannequin` (aussi utilisé par `js/agenda.js`).
+- Essais : `test-pages-publiques.js` (page FR/EN + fiche), `test-admin.js` (pays + annulé).

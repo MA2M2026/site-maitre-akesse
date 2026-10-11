@@ -18,7 +18,9 @@ const cas = [
   ['actualites.html', ['Casting Orange', 'À la une']], ['en/actualites.html', ['Casting Orange', 'Featured']],
   ['evenements.html', ['Défilé Abidjan', '20 septembre 2026']], ['en/evenements.html', ['Défilé Abidjan', 'September 20, 2026']],
   ['partenaires.html', ['Voir la fiche']], ['en/partenaires.html', ['View Details']],
-  ['index.html', ['Awa Koné', 'Femme']], ['en/index.html', ['Awa Koné', 'Female']]
+  ['index.html', ['Awa Koné', 'Femme']], ['en/index.html', ['Awa Koné', 'Female']],
+  ['parcours.html', ['Défilé Abidjan', 'septembre 2026', 'Awa Koné']], ['en/parcours.html', ['Défilé Abidjan', 'Our models at work', 'Awa Koné']],
+  ['mannequin.html?id=a1', ['Avec MA2M', '1 événement']]
 ];
 (async () => {
   let srv; process.on('exit', () => srv && srv.kill());
@@ -28,7 +30,9 @@ const cas = [
     const vp = i % 2 ? { width: 1280, height: 900 } : { width: 390, height: 844 };
     const ctx = await b.newContext({ viewport: vp }); const p = await ctx.newPage(); const errs = [];
     p.on('pageerror', e => errs.push(e.message));
-    await brancher(p, { tables, rpc: { photos_couverture_mannequins: [{ model_id: 'a1', url: 'https://x/1.jpg' }] } }, []);
+    await brancher(p, { tables, rpc: { photos_couverture_mannequins: [{ model_id: 'a1', url: 'https://x/1.jpg' }],
+      // Parcours MA2M : un projet réalisé de l'agenda (Extension 136)
+      parcours_public: [{ id: 'e1', type: 'evenement', titre: 'Défilé Abidjan', date_debut: '2026-09-20', date_fin: null, lieu: 'Sofitel', ville: 'Abidjan', pays: "Côte d'Ivoire", mannequins: [{ id: 'a1', nom: 'Awa Koné', slug: 'awa-kone' }] }] } }, []);
     await p.goto('http://127.0.0.1:' + PORT + '/' + page); await p.waitForTimeout(1500);
     const entrer = await p.$('text=/^\\s*(Entrer|Enter)\\s*$/i'); if (entrer) await entrer.click().catch(() => {});
     await p.waitForTimeout(2500);

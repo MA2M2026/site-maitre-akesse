@@ -2736,6 +2736,7 @@ document.addEventListener('DOMContentLoaded', function () {
 <div class="form-champ"><label for="agenda-date-fin">Date de fin, si plusieurs jours</label><input id="agenda-date-fin" type="date"></div>
 <div class="form-champ"><label for="agenda-ville">Ville (visible)</label><input id="agenda-ville" type="text" maxlength="80" placeholder="ex : Abidjan"></div>
 <div class="form-champ"><label for="agenda-lieu">Lieu (visible)</label><input id="agenda-lieu" type="text" maxlength="160" placeholder="ex : Noom Hôtel, Parc des Expositions"></div>
+<div class="form-champ"><label for="agenda-pays">Pays (visible dans le Parcours MA2M)</label><input id="agenda-pays" type="text" maxlength="80" value="Côte d'Ivoire" placeholder="ex : Côte d'Ivoire"></div>
 </div>
 <div class="form-champ"><label for="agenda-description">Quelques mots pour les clients (visible)</label><textarea id="agenda-description" rows="3" maxlength="1200" placeholder="ex : Nos mannequins portent la nouvelle collection de la marque."></textarea></div>
 <fieldset class="agenda-choix"><legend>Horaires, jour par jour</legend>
@@ -2767,6 +2768,7 @@ document.addEventListener('DOMContentLoaded', function () {
 <div class="form-champ"><label for="agenda-notes">Notes internes</label><textarea id="agenda-notes" rows="2" maxlength="2000"></textarea></div>
 </fieldset>
 <label class="agenda-visible"><input id="agenda-visible" type="checkbox" checked> Montrer ce projet sur le site</label>
+<label class="agenda-visible"><input id="agenda-annule" type="checkbox"> Projet annulé (il ne compte pas dans le Parcours MA2M et disparaît de l'agenda du site)</label>
 <div class="tdb-28">
 <button class="btn btn--principal" id="agenda-enregistrer" type="submit">Ajouter à l'agenda</button>
 <button class="btn" id="agenda-annuler" type="button" hidden>Annuler la modification</button>

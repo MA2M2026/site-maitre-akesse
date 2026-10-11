@@ -143,7 +143,7 @@
 
   function ligneProjet(p) {
     var div = document.createElement('div');
-    div.className = 'agenda-ligne' + (p.visible ? '' : ' cache');
+    div.className = 'agenda-ligne' + (p.visible && !p.annule ? '' : ' cache');
     var noms = nomsDe(p.mannequin_ids, mannequins, 'full_name');
     var parts = nomsDe(p.partenaire_ids, partenaires, 'nom');
     var horaires = (p.seances || []).map(function (x) { return dateAgenda(x.jour) + ' ' + (x.debut || '?') + '–' + (x.fin || '?'); }).join(' ; ');
@@ -151,9 +151,9 @@
     var prive = [horaires ? '' : p.heure, p.adresse, horaires && !p.horaires_publics ? horaires : ''].filter(Boolean).join(' · ');
     div.innerHTML =
       '<div class="agenda-date">' + echapperHtml(dateAgenda(p.date_debut, p.date_fin)) + '</div>'
-      + '<div><span class="agenda-type">' + echapperHtml(libelleTypeAgenda(p.type)) + (p.visible ? '' : ' · caché du site') + '</span>'
+      + '<div><span class="agenda-type">' + echapperHtml(libelleTypeAgenda(p.type)) + (p.visible ? '' : ' · caché du site') + (p.annule ? ' · ANNULÉ' : '') + '</span>'
       + '<h4>' + echapperHtml(p.titre) + '</h4>'
-      + (p.ville || p.lieu ? '<p>' + echapperHtml([p.lieu, p.ville].filter(Boolean).join(', ')) + '</p>' : '')
+      + (p.ville || p.lieu ? '<p>' + echapperHtml([p.lieu, p.ville, p.pays].filter(Boolean).join(', ')) + '</p>' : '')
       + (horaires && p.horaires_publics ? '<p>Horaires : ' + echapperHtml(horaires) + '</p>' : '')
       + (intervenants.length ? '<p>' + echapperHtml(intervenants.join(' · ')) + '</p>' : '')
       + (parts.length ? '<p>Partenaires : ' + echapperHtml(parts.join(', ')) + '</p>' : '')
@@ -202,6 +202,7 @@
     $('agenda-id').value = '';
     projetEnCours = null;
     $('agenda-visible').checked = true;
+    $('agenda-pays').value = "Côte d'Ivoire";
     $('agenda-intervenants').textContent = '';
     dessinerSeances([]);
     $('agenda-enregistrer').textContent = 'Ajouter à l’agenda';
@@ -219,6 +220,7 @@
     $('agenda-date-fin').value = p.date_fin || '';
     $('agenda-ville').value = p.ville || '';
     $('agenda-lieu').value = p.lieu || '';
+    $('agenda-pays').value = p.pays || "Côte d'Ivoire";
     $('agenda-description').value = p.description || '';
     $('agenda-horaires-publics').checked = !!p.horaires_publics;
     dessinerSeances(p.seances || []);
@@ -228,6 +230,7 @@
     $('agenda-adresse').value = p.adresse || '';
     $('agenda-notes').value = p.notes_internes || '';
     $('agenda-visible').checked = !!p.visible;
+    $('agenda-annule').checked = !!p.annule;
     [['agenda-mannequins', p.mannequin_ids], ['agenda-partenaires', p.partenaire_ids]].forEach(function (z) {
       $(z[0]).querySelectorAll('input[type=checkbox]').forEach(function (c) { c.checked = (z[1] || []).includes(c.value); });
     });
@@ -259,6 +262,9 @@
       date_fin: fin && fin !== debut ? fin : null,
       ville: $('agenda-ville').value.trim() || null,
       lieu: $('agenda-lieu').value.trim() || null,
+      // Pays et « annulé » : Extension 136 (Parcours MA2M, bilan public calculé depuis l'agenda)
+      pays: $('agenda-pays').value.trim() || "Côte d'Ivoire",
+      annule: $('agenda-annule').checked,
       description: $('agenda-description').value.trim() || null,
       intervenants: lireIntervenants(),
       seances: lireSeances(),

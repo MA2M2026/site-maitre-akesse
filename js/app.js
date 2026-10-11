@@ -930,6 +930,50 @@ function libelleTypeAgenda(type, enAnglais) {
   const l = MA2M_TYPES_AGENDA[type] || MA2M_TYPES_AGENDA.autre;
   return l[enAnglais ? 1 : 0];
 }
+// Lien vers la fiche publique d'une mannequin : adresse « book » si elle existe (Agenda,
+// Parcours MA2M). Partagé le 11/10/2026.
+function lienFicheMannequin(m) {
+  return m.slug ? 'book/' + encodeURIComponent(m.slug) : 'mannequin.html?id=' + encodeURIComponent(m.id);
+}
+
+// Parcours MA2M (Extension 136) : projets réalisés de l'agenda entre deux dates (« AAAA-MM-JJ »),
+// pour une seule mannequin si idMannequin est donné. Rien de privé (ni adresse exacte, ni
+// heure, ni notes). Utilisé par la page Parcours et par la fiche de chaque mannequin.
+async function ma2mParcours(debut, fin, idMannequin) {
+  if (typeof sb === 'undefined' || !sb) return [];
+  const { data, error } = await sb.rpc('parcours_public', { p_debut: debut, p_fin: fin, p_model: idMannequin || null });
+  if (error) {
+    // panne signalée au journal (sinon elle ressemblerait à « aucune activité »)
+    if (window.signalerErreur) window.signalerErreur('Parcours MA2M : lecture impossible', error.message || String(error));
+    return [];
+  }
+  return data || [];
+}
+// Date du jour (ou d'une date) au format « AAAA-MM-JJ » dans le fuseau du visiteur
+// (toISOString passe en heure universelle et peut décaler d'un jour).
+function dateLocaleIso(d) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+// « Sofitel, Abidjan, Côte d'Ivoire » et « sam. 20 sept. 2026 · Sofitel, Abidjan, … »
+function lieuProjet(p) { return [p.lieu, p.ville, p.pays].filter(Boolean).join(', '); }
+function dateLieuProjet(p) {
+  const lieu = lieuProjet(p);
+  return dateAgenda(p.date_debut, p.date_fin, EN) + (lieu ? ' · ' + lieu : '');
+}
+// Nombre de projets par type, du plus fréquent au moins fréquent : [['defile', 4], …]
+function ma2mCompteParType(projets) {
+  const compte = {};
+  projets.forEach(p => { compte[p.type] = (compte[p.type] || 0) + 1; });
+  return Object.entries(compte).sort((a, b) => b[1] - a[1]);
+}
+
+// « 3 défilés », « 1 shooting », « 2 fashion shows » : nombre + type, au pluriel si besoin.
+function nombreTypeAgenda(type, n, enAnglais) {
+  const l = libelleTypeAgenda(type, enAnglais).toLowerCase();
+  if (n < 2 || /[x]$/.test(l) || /[^s]s$/.test(l)) return n + ' ' + l; // déjà au pluriel (essayages, fittings)
+  return n + ' ' + l + (/ss$/.test(l) ? 'es' : 's');                      // masterclass → masterclasses
+}
+
 function dateAgenda(debut, fin, enAnglais) {
   const langue = enAnglais ? 'en-GB' : 'fr-FR';
   const d = new Date(debut + 'T12:00:00');

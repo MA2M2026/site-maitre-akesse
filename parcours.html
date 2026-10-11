@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com; style-src 'self' https://fonts.googleapis.com;">
+<script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
+<script src="js/surveillance.js"></script>
+<!-- Google tag (gtag.js) -->
+<script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
+<script src="js/analytics-config.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parcours MA2M — Maître Akesse Model Management</title>
+<meta name="description" content="Le parcours de nos mannequins, mois par mois : défilés, shootings, castings et événements réalisés avec Maître Akesse Model Management.">
+<link rel="canonical" href="https://www.maitreakessemodelmanagement.com/parcours">
+<link rel="alternate" hreflang="fr" href="https://www.maitreakessemodelmanagement.com/parcours">
+<link rel="alternate" hreflang="en" href="https://www.maitreakessemodelmanagement.com/en/parcours">
+<link rel="alternate" hreflang="x-default" href="https://www.maitreakessemodelmanagement.com/parcours">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Parcours MA2M — Maître Akesse Model Management">
+<meta property="og:description" content="Le parcours de nos mannequins, mois par mois : défilés, shootings, castings et événements réalisés avec Maître Akesse Model Management.">
+<meta property="og:image" content="https://www.maitreakessemodelmanagement.com/assets/logo-dark-bg.png">
+<meta property="og:url" content="https://www.maitreakessemodelmanagement.com/parcours">
+<meta property="og:locale" content="fr_FR">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/parcours.css">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1e1d1c">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+</head>
+<body>
+<script async src="js/filet-reveal.js"></script>
+
+
+
+<header class="site-header-v2" data-gabarit="entete" data-page="parcours"></header>
+
+<div class="menu-overlay" id="menuOverlay" data-gabarit="menu"></div>
+<script src="js/gabarit.js"></script>
+
+<main class="parcours-page">
+<section class="parcours-ouverture">
+  <div class="container">
+    <div class="eyebrow reveal">Parcours MA2M</div>
+    <h1 class="reveal reveal-delay-1">Nos mannequins en action<span class="oeil">.</span></h1>
+    <p class="parcours-intro reveal reveal-delay-2">Défilés, shootings, castings, événements : mois après mois, les projets réalisés par nos mannequins, où et avec qui.</p>
+  </div>
+</section>
+<section class="parcours-section">
+  <div class="container parcours-scene" id="parcours-scene">
+    <nav class="parcours-mois" id="parcours-mois" aria-label="Choisir le mois"></nav>
+    <h2 class="parcours-titre-mois" id="parcours-titre-mois"></h2>
+    <p class="parcours-vide" id="parcours-vide" hidden>Aucune activité réalisée ce mois-ci.</p>
+    <div id="parcours-contenu">
+      <div class="parcours-chiffres" id="parcours-chiffres"></div>
+      <div class="parcours-filtres" id="parcours-filtres"></div>
+      <h3 class="parcours-sous-titre">Les mannequins du mois</h3>
+      <div class="parcours-visages" id="parcours-visages"></div>
+      <button type="button" class="btn parcours-plus" id="parcours-plus" hidden></button>
+      <div class="parcours-detail" id="parcours-detail" hidden></div>
+      <h3 class="parcours-sous-titre parcours-espace-haut">Les projets du mois</h3>
+      <div class="parcours-projets" id="parcours-projets"></div>
+    </div>
+  </div>
+</section>
+<section class="fond-anthracite">
+  <div class="container u-tc">
+    <h2>Un projet avec nos mannequins<span class="oeil">?</span></h2>
+    <p class="u-m-1-auto">Shooting, défilé, campagne ou événement : parlons de votre date.</p>
+    <a href="contact.html" class="btn btn--principal">Nous contacter</a>
+  </div>
+</section>
+</main>
+<footer class="site-footer" data-gabarit="pied"></footer>
+<script src="js/gabarit.js"></script>
+
+<script src="js/vendor/supabase-js-2.110.6.js"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/confort.js"></script>
+<script src="js/menu.js"></script>
+<script src="js/parcours.js"></script>
+</body>
+</html>
