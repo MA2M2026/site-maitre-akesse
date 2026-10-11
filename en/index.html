@@ -9,7 +9,7 @@
      (see README-TECHNIQUE.md, "Porte d'entrée / verrou de scroll" section), with no
      error to hint at why. After any change, run:
      python3 scripts/verifier-csp.py en/index.html -->
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-b+QrdXtiVOaEVLNTW7orZsKUFZUKusqEn6hCQdTT7lY=' 'sha256-zN0F2vkcD2YiuA1cz5LWhPyu77KqQvQyTM8uykAfT04='; style-src 'self' https://fonts.googleapis.com;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-b+QrdXtiVOaEVLNTW7orZsKUFZUKusqEn6hCQdTT7lY=' 'sha256-UcH7kEAM9P41oTVyLWEC3+u/afKW1r+605p8jMI5yFM='; style-src 'self' https://fonts.googleapis.com;">
 <script src="../js/adresse-en.js"></script>
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
@@ -72,10 +72,10 @@
 // Prevents a flash of the entry door (the 3 photos) on every return to the homepage
 // once it has already been opened this session: we flag the page right away, before
 // the browser gets any chance to display the section, instead of waiting for the
-// end-of-page script (js/accueil-en.js) to hide it.
+// end-of-page script (js/accueil.js) to hide it.
 //
 // Also locks scrolling HERE, at the very top of the page, if the door hasn't been
-// opened yet — not in js/accueil-en.js (loaded at the very bottom of the page): by the
+// opened yet — not in js/accueil.js (loaded at the very bottom of the page): by the
 // time the browser loads everything else before reaching that script, a fast visitor
 // can swipe before the lock engages, and end up stuck mid-page instead of at the top.
 // Defined here (not in js/app.js) for the same reason: that external file also arrives
@@ -132,7 +132,7 @@ try {
 } catch (e) {}
 
 // Shows the animated logo right now, before the rest of the page (including the entry
-// door) is even parsed — otherwise, by the time js/accueil-en.js (end of page) runs to
+// door) is even parsed — otherwise, by the time js/accueil.js (end of page) runs to
 // show it, the entry door's first slide (the "MA2M" text) briefly appears uncovered.
 // #logo-splash doesn't exist in the DOM yet at this point (further down the page): the
 // class goes on <html> instead, with a CSS rule targeting #logo-splash by id (see
@@ -502,7 +502,7 @@ if (!ma2mIntroDejaVue && !ma2mReduitMouvement) {
 <script src="../js/app.js"></script>
 <script src="../js/confort.js"></script>
 <script src="../js/menu.js"></script>
-<script src="../js/accueil-en.js"></script>
+<script src="../js/accueil.js"></script>
 <script src="../js/video-accueil.js"></script>
 <script src="../js/agenda.js"></script>
 </body>

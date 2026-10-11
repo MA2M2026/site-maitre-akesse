@@ -300,7 +300,7 @@ css/style.css                     Toutes les feuilles de style du site (fichier 
 js/app.js                          Fonctions partagées (voir plus bas), surveillance globale des
                                      erreurs, verrou de défilement (menu/modales), filet retour arrière
 js/menu.js                          Ouverture/fermeture du menu plein écran
-js/accueil.js / accueil-en.js         Logique de la page d'accueil (porte d'entrée, carrousel hero,
+js/accueil.js (FR + EN)                Logique de la page d'accueil (porte d'entrée, carrousel hero,
                                         mannequin à la une, mot du fondateur, stats...)
 js/mannequins.js (FR + EN)              Logique de "The Book" (filtres, sélection recruteur)
 js/actualites.js                    Logique de la page Actualités (admin publication/édition inclus)
