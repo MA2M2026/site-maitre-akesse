@@ -1,3 +1,5 @@
+// Actualités (actualites.html et en/actualites.html) : un seul script pour le français et
+// l'anglais (11/10/2026 : avant, la version anglaise était recopiée dans la page). EN, T : js/app.js.
 function urlVideoIntegree(url) {
   if (!url) return null;
   try {
@@ -30,10 +32,14 @@ function urlHttpSure(url) {
 
 const CATEGORIES_ACTUALITES = ['Casting', 'Mannequinat', 'Conseils', 'Événements'];
 
-const quillRedaction = creerEditeurRiche('red-editeur', 'Racontez votre actualité ici… (vous pouvez coller un texte déjà mis en forme)');
+const quillRedaction = creerEditeurRiche('red-editeur', T('Racontez votre actualité ici… (vous pouvez coller un texte déjà mis en forme)', 'Write here… (you can paste text already formatted from Word)'));
+const LIBELLES_CATEGORIES_EN = { Casting: 'Casting', Mannequinat: 'Modeling', Conseils: 'Tips', Événements: 'Events' };
+function libelleCategorieActu(cat) {
+  return EN ? (LIBELLES_CATEGORIES_EN[cat] || cat) : cat;
+}
 
 function formatDateActu(dateStr) {
-  return new Date(dateStr).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  return new Date(dateStr).toLocaleDateString(EN ? 'en-US' : 'fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
 function extraitTexte(texte, longueur) {
@@ -53,7 +59,7 @@ function afficherFiltresCategories(data) {
 
   conteneur.style.display = 'flex';
   conteneur.innerHTML = ['Toutes', ...categoriesPresentes].map(cat => `
-    <button class="filtre-categorie${cat === 'Toutes' ? ' actif' : ''}" data-categorie="${echapperHtml(cat)}">${echapperHtml(cat)}</button>
+    <button class="filtre-categorie${cat === 'Toutes' ? ' actif' : ''}" data-categorie="${echapperHtml(cat)}">${echapperHtml(cat === 'Toutes' ? T('Toutes', 'All') : libelleCategorieActu(cat))}</button>
   `).join('');
 
   conteneur.querySelectorAll('.filtre-categorie').forEach(bouton => {
@@ -76,7 +82,7 @@ async function chargerActualites() {
     // "sb" peut valoir null sur une connexion instable (échec de chargement de
     // la bibliothèque Supabase, servie depuis un CDN) — on l'affiche clairement
     // plutôt que de laisser croire qu'il n'y a simplement aucune actualité.
-    vide.textContent = 'Le chargement des actualités a échoué (connexion instable ?). Rechargez la page.';
+    vide.textContent = T('Le chargement des actualités a échoué (connexion instable ?). Rechargez la page.', 'Failed to load news (unstable connection?). Reload the page.');
     vide.style.display = 'block';
     return;
   }
@@ -95,12 +101,12 @@ async function chargerActualites() {
       <img src="${echapperHtml(une.image_url)}" loading="lazy" alt="${echapperHtml(une.titre || '')}">
       <div class="news-une-scrim"></div>
       <div class="news-une-corps">
-        <span class="news-une-badge">★ À la une</span>
+        <span class="news-une-badge">★ ${T('À la une', 'Featured')}</span>
         ${une.categorie ? `<span class="news-categorie">${echapperHtml(une.categorie)}</span>` : ''}
         <div class="news-date">${formatDateActu(une.created_at)}</div>
         ${une.titre ? `<h2>${echapperHtml(une.titre)}</h2>` : ''}
         ${une.commentaire ? `<p>${echapperHtml(extraitTexte(texteBrutDepuis(une.commentaire), 180))}</p>` : ''}
-        <span class="news-lire">Lire l'article →</span>
+        <span class="news-lire">${T('Lire l\'article →', 'Read Article →')}</span>
       </div>
     </div>
   `;
@@ -122,7 +128,7 @@ async function chargerActualites() {
         <div class="news-date">${formatDateActu(a.created_at)}</div>
         ${a.titre ? `<h3>${echapperHtml(a.titre)}</h3>` : ''}
         ${a.commentaire ? `<p class="news-extrait">${echapperHtml(extraitTexte(texteBrutDepuis(a.commentaire), 110))}</p>` : ''}
-        <span class="news-lire">Lire la suite →</span>
+        <span class="news-lire">${T('Lire la suite →', 'Read More →')}</span>
       </div>
     </div>
   `; }).join('');
@@ -152,7 +158,7 @@ async function ouvrirActuModal(index) {
 
   let mediaHtml = '';
   if (videoEmbed) {
-    mediaHtml += `<div class="video-runway news-modal-video-embed"><iframe src="${echapperHtml(videoEmbed)}" allowfullscreen loading="lazy"></iframe></div>`;
+    mediaHtml += `<div class="video-runway ${EN ? 'enac-6' : 'news-modal-video-embed'}"><iframe src="${echapperHtml(videoEmbed)}" allowfullscreen loading="lazy"></iframe></div>`;
   }
   if (listePhotos.length > 1) {
     // Composition adaptée au nombre de photos (voir .news-modal-galerie[data-count] dans
@@ -169,7 +175,7 @@ async function ouvrirActuModal(index) {
     img.addEventListener('click', () => ouvrirGalerieLightbox(window.lightboxPhotos, i));
   });
 
-  document.getElementById('news-modal-date').textContent = new Date(a.created_at).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' });
+  document.getElementById('news-modal-date').textContent = new Date(a.created_at).toLocaleDateString(EN ? 'en-US' : 'fr-FR', { day:'numeric', month:'long', year:'numeric' });
   document.getElementById('news-modal-titre').textContent = a.titre || '';
   document.getElementById('news-modal-texte').innerHTML = rendreContenuRiche(a.commentaire);
 
@@ -234,12 +240,12 @@ document.getElementById('news-modal-modifier-btn').addEventListener('click', () 
 
 document.getElementById('news-modal-supprimer-btn').addEventListener('click', async () => {
   const id = window.actualiteModalCourante;
-  if (!confirm('Supprimer définitivement cette actualité et toutes ses photos ?')) return;
+  if (!confirm(T('Supprimer définitivement cette actualité et toutes ses photos ?', 'Permanently delete this news item and all its photos?'))) return;
   const { data: photos } = await sbAdmin.from('actualite_photos').select('chemin').eq('actualite_id', id);
   const chemins = (photos || []).map(p => p.chemin).filter(Boolean);
   // Base d'abord : si la suppression échoue, les images restent intactes.
   const { error: erreurSuppression } = await sbAdmin.from('actualites').delete().eq('id', id);
-  if (erreurSuppression) { alert('La suppression a échoué. Réessayez.'); return; }
+  if (erreurSuppression) { alert(T('La suppression a échoué. Réessayez.', 'Deletion failed. Please try again.')); return; }
   if (chemins.length) await supprimerCheminsImagesSite('actualites', 'actualites-images', chemins);
   fermerNewsModal();
   void chargerActualites();
@@ -261,14 +267,14 @@ let redactionNouvellesImages = [];
 function ouvrirRedaction(actualiteExistante) {
   redactionIdEnCours = actualiteExistante ? actualiteExistante.id : null;
   redactionNouvellesImages = [];
-  document.getElementById('redaction-titre-mode').textContent = actualiteExistante ? 'Modifier l’actualité' : 'Rédiger une actualité';
+  document.getElementById('redaction-titre-mode').textContent = actualiteExistante ? T('Modifier l’actualité', 'Edit News Item') : T('Rédiger une actualité', 'Write a News Item');
   document.getElementById('red-titre').value = actualiteExistante ? (actualiteExistante.titre || '') : '';
   document.getElementById('red-categorie').value = actualiteExistante ? (actualiteExistante.categorie || '') : '';
   chargerContenuDansEditeur(quillRedaction, actualiteExistante ? actualiteExistante.commentaire : '');
   document.getElementById('red-video').value = actualiteExistante ? (actualiteExistante.video_url || '') : '';
   document.getElementById('red-images').value = '';
-  document.getElementById('red-images-label').textContent = actualiteExistante ? 'Ajouter des photos (s’ajoutent à celles déjà en ligne)' : 'Images (tu peux en sélectionner plusieurs à la fois)';
-  document.getElementById('red-enregistrer-btn').textContent = actualiteExistante ? 'Enregistrer' : 'Publier';
+  document.getElementById('red-images-label').textContent = actualiteExistante ? T('Ajouter des photos (s’ajoutent à celles déjà en ligne)', 'Add photos (added to those already online)') : T('Images (tu peux en sélectionner plusieurs à la fois)', 'Images (you can select several at once)');
+  document.getElementById('red-enregistrer-btn').textContent = actualiteExistante ? T('Enregistrer', 'Save') : T('Publier', 'Publish');
   document.getElementById('red-supprimer-btn').classList.toggle('u-hidden', !actualiteExistante);
   document.getElementById('red-msg').style.display = 'none';
   document.getElementById('red-images-apercu').innerHTML = '';
@@ -292,9 +298,9 @@ function apercuImageCouverture(url) {
 function mettreAJourApercuRedaction() {
   const titre = document.getElementById('red-titre').value.trim();
   const categorie = document.getElementById('red-categorie').value;
-  document.getElementById('red-apercu-titre').textContent = titre || 'Titre de l’actualité';
+  document.getElementById('red-apercu-titre').textContent = titre || T('Titre de l’actualité', 'News item title');
   const catEl = document.getElementById('red-apercu-categorie');
-  catEl.textContent = categorie || '';
+  catEl.textContent = categorie ? libelleCategorieActu(categorie) : '';
   catEl.classList.toggle('u-hidden', !categorie);
   document.getElementById('red-apercu-date').textContent = formatDateActu(new Date().toISOString());
   document.getElementById('red-apercu-texte').innerHTML = rendreContenuRiche(lireContenuEditeur(quillRedaction));
@@ -327,11 +333,11 @@ document.getElementById('red-enregistrer-btn').addEventListener('click', async (
   const fichiers = redactionNouvellesImages;
 
   if (!redactionIdEnCours && !fichiers.length && !videoUrl) {
-    msg.className = 'form-msg err'; msg.textContent = 'Choisis au moins une image ou ajoute un lien vidéo.'; msg.style.display = 'block';
+    msg.className = 'form-msg err'; msg.textContent = T('Choisis au moins une image ou ajoute un lien vidéo.', 'Choose at least one image or add a video link.'); msg.style.display = 'block';
     return;
   }
 
-  msg.className = 'form-msg ok'; msg.textContent = fichiers.length ? `Envoi de ${fichiers.length} photo(s) en cours…` : 'Enregistrement…'; msg.style.display = 'block';
+  msg.className = 'form-msg ok'; msg.textContent = fichiers.length ? T(`Envoi de ${fichiers.length} photo(s) en cours…`, `Uploading ${fichiers.length} photo(s)…`) : T('Enregistrement…', 'Saving…'); msg.style.display = 'block';
 
   const id = redactionIdEnCours || crypto.randomUUID();
   const urls = [];
@@ -346,7 +352,7 @@ document.getElementById('red-enregistrer-btn').addEventListener('click', async (
 
   if (redactionIdEnCours) {
     const { error: erreurUpdate } = await sbAdmin.from('actualites').update({ titre, categorie: categorie || null, commentaire, video_url: videoUrl }).eq('id', id);
-    if (erreurUpdate) { msg.className = 'form-msg err'; msg.textContent = "Erreur lors de la modification."; return; }
+    if (erreurUpdate) { msg.className = 'form-msg err'; msg.textContent = T('Erreur lors de la modification.', 'Error while updating.'); return; }
     for (const photo of urls) {
       await sbAdmin.from('actualite_photos').insert({ actualite_id: id, url: photo.url, chemin: photo.chemin });
     }
@@ -354,17 +360,17 @@ document.getElementById('red-enregistrer-btn').addEventListener('click', async (
       const { data: actuActuelle } = await sbAdmin.from('actualites').select('image_url').eq('id', id).single();
       if (!actuActuelle.image_url) await sbAdmin.from('actualites').update({ image_url: urls[0].url }).eq('id', id);
     }
-    msg.className = 'form-msg ok'; msg.textContent = 'Modifications enregistrées !';
+    msg.className = 'form-msg ok'; msg.textContent = T('Modifications enregistrées !', 'Changes saved!');
   } else {
     const { error: erreurInsert } = await sbAdmin.from('actualites').insert({
       id, titre, categorie: categorie || null, commentaire, video_url: videoUrl,
       image_url: urls.length ? urls[0].url : null
     });
-    if (erreurInsert) { msg.className = 'form-msg err'; msg.textContent = "Erreur d'enregistrement."; msg.style.display = 'block'; return; }
+    if (erreurInsert) { msg.className = 'form-msg err'; msg.textContent = T("Erreur d'enregistrement.", 'Error saving.'); msg.style.display = 'block'; return; }
     for (const photo of urls) {
       await sbAdmin.from('actualite_photos').insert({ actualite_id: id, url: photo.url, chemin: photo.chemin });
     }
-    msg.className = 'form-msg ok'; msg.textContent = `Actualité publiée avec ${urls.length} photo(s) !`;
+    msg.className = 'form-msg ok'; msg.textContent = T(`Actualité publiée avec ${urls.length} photo(s) !`, `News item published with ${urls.length} photo(s)!`);
   }
 
   await chargerActualites();
@@ -373,13 +379,13 @@ document.getElementById('red-enregistrer-btn').addEventListener('click', async (
 
 document.getElementById('red-supprimer-btn').addEventListener('click', async () => {
   if (!redactionIdEnCours) return;
-  if (!confirm('Supprimer définitivement cette actualité et toutes ses photos ?')) return;
+  if (!confirm(T('Supprimer définitivement cette actualité et toutes ses photos ?', 'Permanently delete this news item and all its photos?'))) return;
   const id = redactionIdEnCours;
   const { data: photos } = await sbAdmin.from('actualite_photos').select('chemin').eq('actualite_id', id);
   const chemins = (photos || []).map(p => p.chemin).filter(Boolean);
   // Base d'abord : si la suppression échoue, les images restent intactes.
   const { error: erreurSuppression } = await sbAdmin.from('actualites').delete().eq('id', id);
-  if (erreurSuppression) { alert('La suppression a échoué. Réessayez.'); return; }
+  if (erreurSuppression) { alert(T('La suppression a échoué. Réessayez.', 'Deletion failed. Please try again.')); return; }
   if (chemins.length) await supprimerCheminsImagesSite('actualites', 'actualites-images', chemins);
   fermerRedaction();
   void chargerActualites();
