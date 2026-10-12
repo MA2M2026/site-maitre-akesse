@@ -504,17 +504,17 @@
   // fenêtre de confirmation du navigateur (« Envoyer ce message ? »), ou dans une autre
   // appli ouverte depuis la page (WhatsApp), compte comme « page bloquée » pour le
   // navigateur. On note ces moments et on ignore un blocage qui les chevauche.
-  var momentsExcuses = [];
+  const momentsExcuses = [];
   ['alert', 'confirm', 'prompt', 'open'].forEach(function (nom) {
-    var origine = window[nom];
+    const origine = window[nom];
     if (typeof origine !== 'function') return;
     window[nom] = function () {
-      var t0 = performance.now();
+      const t0 = performance.now();
       try { return origine.apply(window, arguments); }
       finally { momentsExcuses.push([t0, performance.now() + (nom === 'open' ? 3000 : 500)]); }
     };
   });
-  var debutCache = null;
+  let debutCache = null;
   document.addEventListener('visibilitychange', function () {
     if (document.visibilityState === 'hidden') debutCache = performance.now();
     else if (debutCache !== null) { momentsExcuses.push([debutCache, performance.now() + 1000]); debutCache = null; }

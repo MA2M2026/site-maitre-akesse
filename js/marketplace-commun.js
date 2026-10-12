@@ -214,7 +214,7 @@
   MP.majCompteurPanier = function (secouer) {
     if (secouer) document.querySelectorAll('[data-mp-compte-panier]').forEach(el => {
       el.classList.remove('mp-secousse');
-      void el.offsetWidth;
+      el.getBoundingClientRect();  // relance l'animation
       el.classList.add('mp-secousse');
     });
     const n = MP.lirePanier().reduce((s, l) => s + l.quantite, 0);
@@ -256,18 +256,29 @@
       'Paiement par Wave, Orange Money ou MTN Mobile Money.';
   }
 
+  // Clavier et lecteurs d'écran (12/10/2026) : panier fermé = « inert » (ses boutons ne
+  // prennent pas le focus) ; à l'ouverture, le focus va sur « Fermer » ; à la fermeture, il
+  // revient sur le bouton qui avait ouvert le panier.
+  let declencheurPanier = null;
   MP.ouvrirPanier = function () {
     rendrePanier();
-    document.getElementById('mp-panier').classList.add('ouvert');
+    const panier = document.getElementById('mp-panier');
+    declencheurPanier = document.activeElement;
+    panier.classList.add('ouvert');
     document.getElementById('mp-voile-panier').classList.add('ouvert');
-    document.getElementById('mp-panier').setAttribute('aria-hidden', 'false');
+    panier.setAttribute('aria-hidden', 'false');
+    panier.removeAttribute('inert');
+    document.getElementById('mp-panier-fermer').focus();
   };
   MP.fermerPanier = function () {
     const panier = document.getElementById('mp-panier');
     if (!panier) return;
+    const focusDedans = panier.classList.contains('ouvert') && panier.contains(document.activeElement);
     panier.classList.remove('ouvert');
     document.getElementById('mp-voile-panier').classList.remove('ouvert');
     panier.setAttribute('aria-hidden', 'true');
+    if (focusDedans && declencheurPanier && document.contains(declencheurPanier)) declencheurPanier.focus();
+    panier.setAttribute('inert', '');
   };
 
   // Hauteur réelle de l'en-tête du site, pour coller la barre de la boutique juste dessous.

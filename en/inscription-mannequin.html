@@ -93,6 +93,7 @@
     </div>
 
     <!-- Step 2: full form (hidden until the code is confirmed) -->
+    <h2 class="u-lecteur-ecran">Registration form</h2>
     <form id="form-inscription" class="u-hidden u-mt-2">
       <div class="form-grille">
         <div class="form-champ">
@@ -119,7 +120,7 @@
         </div>
         <div class="form-champ">
           <label for="ins-taille">Height (cm) *</label>
-          <select id="ins-taille" required></select>
+          <select id="ins-taille" required><option value="">—</option></select>
           <span id="ins-taille-indication" class="enim-2"></span>
         </div>
       </div>
@@ -142,7 +143,7 @@
 
       <div class="form-champ">
         <label for="ins-indicatif">Your WhatsApp Number *</label>
-        <select id="ins-indicatif" required class="enim-4"></select>
+        <select id="ins-indicatif" required class="enim-4"><option value="">+225</option></select>
         <input aria-label="Your WhatsApp Number" type="tel" id="ins-telephone-numero" placeholder="07 00 00 00 00" required>
       </div>
 

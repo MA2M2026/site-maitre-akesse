@@ -2170,3 +2170,41 @@ Regroupements faits pour supprimer les derniers blocs recopiés signalés par So
   stockage) : `debutR2`, `repondreR2`, `TYPES_IMAGES`. Comparaison ancien / nouveau sur 41 cas simulés :
   mêmes réponses et mêmes appels à la base. Seul changement : le message d'erreur 500 de
   creer-admin / supprimer-mannequin ne cite plus le nom de la variable secrète.
+
+## Vidéo de la page d'accueil : entière et jamais d'espace noir (12/10/2026)
+Demande de la propriétaire (« toute la vidéo en entier » ; sur sa tablette Android, la vidéo
+apparaissait puis disparaissait en laissant un espace noir).
+- `css/style.css` : écran en hauteur, vidéo verticale **entière** (`object-fit: contain`, plus
+  de rognage haut/bas) dans un espace 9:16 limité à la hauteur visible (`100svh`) ; le fond
+  flouté remplit les côtés si l'écran est moins haut.
+- `js/video-accueil.js` : la vidéo apparaît dès sa première image (`loadeddata`), pas seulement
+  quand elle joue. Si la lecture automatique est refusée (économie de données ou de batterie),
+  la première image reste visible et le bouton devient « Lire le film » / « Play the film ».
+  En cas d'erreur de chargement, le fichier est relancé une fois ; si l'erreur revient,
+  l'espace est retiré et le code d'erreur part dans le journal des erreurs du tableau de bord
+  (`signalerErreur('video', …)`), pour connaître la cause exacte sur l'appareil concerné.
+- Essai visiteur `scripts/tests-visiteur/test-video-accueil.js` : téléphone, tablette,
+  ordinateur, lecture refusée, erreur passagère, fichier illisible, anglais.
+
+## Diagnostic de nuit du 12/10/2026 (outils extérieurs)
+Contrôles : SonarQube Cloud, Lighthouse (le moteur de Google PageSpeed, lancé en local car le
+quota gratuit de l'API PageSpeed était épuisé), validateur W3C (`vnu.jar`, en local : le site
+validator.w3.org bloque les envois en série), Mozilla Observatory, SSL Labs.
+- **W3C** : plus aucune erreur sur les 48 pages (seul `google5acb001b6b29c80f.html`, fichier de
+  vérification Google, doit rester tel quel). Images sans adresse → GIF transparent `data:` ;
+  titres de structure invisibles `.u-lecteur-ecran` (css/style.css) pour l'ordre h1 → h2 → h3 ;
+  tableau de bord : `meta charset` en tête, blocs `<style>` du `<body>` déplacés dans le `<head>`,
+  cartes d'accueil sans h3/p dans les boutons (`.tdb-landing-titre` / `.tdb-landing-texte`).
+- **Accessibilité** : titre invisible en tête du bas de page commun (js/gabarit.js) ; bouton
+  « sélection » ≥ 32 px sur téléphone ; jours estompés de l'agenda lisibles (css/agenda.css) ;
+  panier de la boutique `inert` quand il est fermé, focus géré à l'ouverture/fermeture
+  (js/marketplace-commun.js, testé dans test-boutique.js) ; liens de la bulle Quill avec `href`.
+- **SonarQube** : remarques bloquantes S3516 (fonctions qui renvoyaient toujours `true` dans
+  js/espace-mannequin.js → `enregistrerComplementsIdentite` / `enregistrerComplementsPhysique`,
+  jamais bloquantes) et critiques S3504/S3735 corrigées. Essai visiteur
+  `test-espace-enregistrement.js` (étapes identité d'une mineure puis mensurations).
+- **Vitesse** : le canvas du reflet de l'intro (js/faisceau.js) n'est plus réalloué à chaque
+  image ; première photo de l'accueil chargée en priorité (`fetchPriority`).
+- **Restent, hors de notre main** : Observatory A+ (110) — l'intégrité SRI est impossible pour les
+  scripts Google Analytics et Sentry (leur contenu change) ; SSL Labs A+ sur une adresse de
+  Vercel et A sur l'autre (réglage de Vercel) ; pages volontairement non indexées (noindex).

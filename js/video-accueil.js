@@ -23,13 +23,34 @@
     forme(valeur.largeur, valeur.hauteur);
     sec.classList.remove('u-hidden');
 
+    // Lecture automatique refusée (mode économie de données ou de batterie, réglage du
+    // navigateur…) : avant le 12/10/2026, l'espace restait noir — « un creux au milieu ».
+    // On montre alors la première image et le bouton devient « Lire le film ».
+    function etiquette() {
+      bouton.setAttribute('aria-pressed', v.muted ? 'false' : 'true');
+      bouton.querySelector('span').textContent = v.muted
+        ? (anglais ? 'Turn sound on' : 'Activer le son')
+        : (anglais ? 'Mute' : 'Couper le son');
+    }
+    function lecture() {
+      Promise.resolve(v.play()).catch(function () {
+        if (!v.paused) return;
+        sec.classList.add('video-bloquee');
+        bouton.querySelector('span').textContent = anglais ? 'Play the film' : 'Lire le film';
+      });
+    }
     function charger() {
       if (v.src) return;
+      v.preload = 'auto';  // la section est proche : la première image s'affiche même sans lecture
       v.src = '/book-photos/' + valeur.chemin;
-      Promise.resolve(v.play()).catch(function () {});
+      lecture();
     }
     v.addEventListener('loadedmetadata', function () { forme(v.videoWidth, v.videoHeight); }, { once: true });
-    v.addEventListener('playing', function () { sec.classList.add('video-prete'); }, { once: true });
+    v.addEventListener('loadeddata', function () { sec.classList.add('video-prete'); }, { once: true });
+    v.addEventListener('playing', function () {
+      sec.classList.add('video-prete');
+      if (sec.classList.contains('video-bloquee')) { sec.classList.remove('video-bloquee'); etiquette(); }
+    });
     // Fond flouté pour une vidéo verticale sur écran large (06/10/2026) : une toute petite
     // copie de l'image (48 × 27 points) redessinée à chaque image, agrandie et floutée par
     // le navigateur — les côtés sont remplis par la vidéo elle-même, sans second
@@ -45,12 +66,32 @@
       if (v.requestVideoFrameCallback) v.requestVideoFrameCallback(peindre); else setTimeout(peindre, 100);
     }
     if (ctx) v.addEventListener('playing', peindre, { once: true });
-    v.addEventListener('error', function () { sec.classList.add('u-hidden'); });
+    // première image aussi sur le fond flouté, même si la lecture automatique est refusée
+    if (ctx) v.addEventListener('loadeddata', function () { try { ctx.drawImage(v, 0, 0, 48, 27); } catch (e) {} }, { once: true });
+    // Erreur de lecture (12/10/2026 : sur une tablette Android de la propriétaire, la vidéo
+    // apparaissait puis disparaissait au bout d'une ou deux secondes, laissant un espace
+    // noir). On relance une fois le fichier ; si l'erreur revient, l'espace est retiré et le
+    // code d'erreur du navigateur part dans le journal des erreurs du tableau de bord, pour
+    // connaître la cause exacte sur cet appareil.
+    var relance = false;
+    v.addEventListener('error', function () {
+      var code = v.error ? v.error.code : 0;
+      if (!relance) {
+        relance = true;
+        var t = v.currentTime || 0;
+        v.src = '/book-photos/' + valeur.chemin + '?relance=1';
+        v.addEventListener('loadedmetadata', function () { try { if (t) v.currentTime = t; } catch (e) {} }, { once: true });
+        lecture();
+        return;
+      }
+      sec.classList.add('u-hidden');
+      if (window.signalerErreur) window.signalerErreur('video', 'Vidéo de l\'accueil illisible (code ' + code + ')', v.error?.message || valeur.chemin);
+    });
 
     if ('IntersectionObserver' in window) {
       new IntersectionObserver(function (entrees) {
         var visible = entrees[0].isIntersecting;
-        if (visible) { charger(); if (v.src && v.paused) { Promise.resolve(v.play()).catch(function () {}); } }
+        if (visible) { charger(); if (v.src && v.paused && !sec.classList.contains('video-bloquee')) lecture(); }
         else if (v.src && !v.paused) v.pause();
       }, { rootMargin: '300px 0px' }).observe(sec);
     } else { charger(); }
@@ -59,10 +100,7 @@
       charger();
       v.muted = !v.muted;
       if (!v.muted) { v.volume = 1; Promise.resolve(v.play()).catch(function () {}); }
-      bouton.setAttribute('aria-pressed', v.muted ? 'false' : 'true');
-      bouton.querySelector('span').textContent = v.muted
-        ? (anglais ? 'Turn sound on' : 'Activer le son')
-        : (anglais ? 'Mute' : 'Couper le son');
+      etiquette();
     });
   }
 

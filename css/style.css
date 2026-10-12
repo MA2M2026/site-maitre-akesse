@@ -1441,7 +1441,8 @@ section { padding: 5rem 0; }
   .medaillon-grille { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem 0.9rem; }
   .medaillon-nom { font-size: 0.92rem; margin-top: 0.7rem; }
   .medaillon-info { font-size: 0.68rem; margin-top: 0.25rem; }
-  .medaillon-carte .btn-selection { top: 0.4rem; right: 0.4rem; padding: 0.3rem 0.6rem; font-size: 0.66rem; }
+  /* zone de toucher d'au moins 32 px (accessibilité, Lighthouse 12/10/2026) */
+  .medaillon-carte .btn-selection { top: 0.4rem; right: 0.4rem; padding: 0.3rem 0.6rem; font-size: 0.66rem; min-width: 2rem; min-height: 2rem; }
 }
 
 /* ---------- THE BOOK (mannequins.html uniquement, #grille) : galerie premium
@@ -2012,6 +2013,8 @@ html.porte-deja-vue #porte-entree { display: none; }
 .u-mt-2 { margin-top: 2rem; }
 .u-pl-liste { padding-left: 1.2rem; }
 .u-hidden { display: none; }
+/* Lu par les lecteurs d'écran, invisible à l'écran (titres de structure, 12/10/2026). */
+.u-lecteur-ecran { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 .u-tc { text-align: center; }
 .u-flex-center { justify-content: center; }
 .u-mt-1 { margin-top: 1rem; }
@@ -3010,10 +3013,12 @@ body.porte-verrouillee .couverture-faisceau, body.porte-verrouillee .couverture-
 .video-accueil.video-verticale video { object-fit: contain; }
 .video-accueil-flou { position: absolute; inset: 0; width: 100%; height: 100%; display: none; filter: blur(34px) brightness(0.55) saturate(1.2); transform: scale(1.25); }
 .video-accueil.video-verticale.video-prete .video-accueil-flou { display: block; }
+/* Écran en hauteur (12/10/2026, demande de la propriétaire : « toute la vidéo en entier ») :
+   la vidéo n'est plus rognée en haut et en bas. L'espace prend sa forme (9:16) sans dépasser
+   la hauteur visible (svh : barre d'adresse du téléphone comprise) ; si l'écran est moins
+   haut, la vidéo reste entière et les côtés sont remplis par le fond flouté. */
 @media (orientation: portrait) {
-  .video-accueil.video-verticale { aspect-ratio: 9 / 16; width: 100%; height: auto; max-height: calc(100vh - 90px); }
-  .video-accueil.video-verticale video { object-fit: cover; }
-  .video-accueil.video-verticale.video-prete .video-accueil-flou { display: none; }
+  .video-accueil.video-verticale { aspect-ratio: 9 / 16; width: 100%; height: auto; max-height: calc(100vh - 90px); max-height: calc(100svh - 70px); }
 }
 .video-accueil video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1.2s ease; }
 .video-accueil.video-prete video { opacity: 1; }

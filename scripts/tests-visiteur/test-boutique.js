@@ -16,7 +16,21 @@ const PORT = String(9000 + Math.floor(Math.random() * 90));
       annee: (document.getElementById('an') || {}).textContent, reste: document.querySelectorAll('[data-gabarit-boutique]').length }));
     await p.click('#menuBtn'); await p.waitForTimeout(900);
     r.menuOuvert = await p.evaluate(() => document.getElementById('menuOverlay').classList.contains('active'));
-    const ok = r.entete && r.menu >= 7 && r.actif === actif && r.panier === panier && r.annee === String(new Date().getFullYear()) && !r.reste && r.menuOuvert && !e.length;
+    // Panier au clavier (12/10/2026) : fermé = inert ; ouvert → focus sur « Fermer » ;
+    // Échap → panier de nouveau inert et focus rendu au bouton qui l'avait ouvert.
+    let clavierOk = true;
+    if (panier) {
+      await p.evaluate(() => document.getElementById('menuOverlay').classList.remove('active'));
+      const k = {};
+      k.fermeInert = await p.evaluate(() => document.getElementById('mp-panier').hasAttribute('inert'));
+      await p.evaluate(() => { const o = document.querySelector('[data-mp-ouvrir-panier]'); o.focus(); o.click(); });
+      await p.waitForTimeout(300);
+      k.ouvert = await p.evaluate(() => !document.getElementById('mp-panier').hasAttribute('inert') && document.activeElement.id === 'mp-panier-fermer');
+      await p.keyboard.press('Escape'); await p.waitForTimeout(300);
+      k.referme = await p.evaluate(() => document.getElementById('mp-panier').hasAttribute('inert') && document.activeElement.hasAttribute('data-mp-ouvrir-panier'));
+      r.clavier = k; clavierOk = k.fermeInert && k.ouvert && k.referme;
+    }
+    const ok = r.entete && r.menu >= 7 && r.actif === actif && r.panier === panier && r.annee === String(new Date().getFullYear()) && !r.reste && r.menuOuvert && clavierOk && !e.length;
     console.log((ok ? '✓' : '❌ ÉCHEC') + ' boutique ' + pg + ' ' + JSON.stringify(r) + ' | erreurs : ' + JSON.stringify(e));
     if (!ok) process.exitCode = 1;
     await c.close();

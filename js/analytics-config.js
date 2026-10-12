@@ -30,7 +30,7 @@ function gtag(){dataLayer.push(arguments);}
     bandeau.setAttribute('role', 'dialog');
     bandeau.setAttribute('aria-label', 'Cookies');
     bandeau.innerHTML = anglais
-      ? '<p>We use audience measurement cookies (Google Analytics) to improve the site. No advertising. <a href="/en/politique-confidentialite.html#cookies">Learn more</a></p>' +
+      ? '<p>We use audience measurement cookies (Google Analytics) to improve the site. No advertising. <a href="/en/politique-confidentialite.html#cookies">Read our cookie policy</a></p>' +
         '<div class="bandeau-cookies-boutons"><button type="button" class="btn" data-cookies="non">Decline</button><button type="button" class="btn btn--principal" data-cookies="oui">Accept</button></div>'
       : '<p>Nous utilisons des cookies de mesure d’audience (Google Analytics) pour améliorer le site. Aucune publicité. <a href="/politique-confidentialite.html#cookies">En savoir plus</a></p>' +
         '<div class="bandeau-cookies-boutons"><button type="button" class="btn" data-cookies="non">Refuser</button><button type="button" class="btn btn--principal" data-cookies="oui">Accepter</button></div>';

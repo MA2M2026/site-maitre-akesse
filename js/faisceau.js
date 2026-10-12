@@ -69,9 +69,13 @@ window.ma2mFaisceau = function (cv, opts) {
   }
   function reflet(u) {
     if (u <= 0 || u >= 1) return;
+    // Le petit canvas du reflet n'est redimensionné que si sa taille change : le
+    // redimensionner à chaque image (60 fois par seconde) le réallouait inutilement et
+    // ralentissait les téléphones (mesure Lighthouse du 12/10/2026).
     var oc = refletCv || (refletCv = document.createElement('canvas'));
-    oc.width = Math.ceil(LW * S * dpr); oc.height = Math.ceil(LH * S * dpr);
-    var o = oc.getContext('2d'); o.clearRect(0, 0, oc.width, oc.height);
+    var rw = Math.ceil(LW * S * dpr), rh = Math.ceil(LH * S * dpr);
+    if (oc.width !== rw || oc.height !== rh) { oc.width = rw; oc.height = rh; }
+    var o = oc.getContext('2d'); o.globalCompositeOperation = 'source-over'; o.clearRect(0, 0, oc.width, oc.height);
     o.drawImage(logo, 0, 0, oc.width, oc.height); o.globalCompositeOperation = 'source-in';
     var bx = (-.3 + 1.6 * eIO(u)) * oc.width, g = o.createLinearGradient(bx - oc.width * .12, 0, bx + oc.width * .12, oc.height * .4);
     g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(.5, 'rgba(255,255,255,.95)'); g.addColorStop(1, 'rgba(255,255,255,0)');

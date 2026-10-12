@@ -13,8 +13,7 @@
   // Suppression définitive : la fiche en base d'abord, puis les fichiers.
   async function supprimer(p) {
     var r = await sb.from('model_photos').delete().eq('id', p.id);
-    if (r.error) return r;
-    if (typeof supprimerDeR2 === 'function') {
+    if (!r.error && typeof supprimerDeR2 === 'function') {
       for (var c of [p.chemin, p.chemin_miniature, p.chemin_moyenne]) if (c) await supprimerDeR2(p.model_id, c);
     }
     return r;
