@@ -2107,3 +2107,16 @@ marque / institution (`promoteur`). Tout est facultatif. Conversion unique
 n'est envoyée que si elle est remplie tant qu'elle n'a pas été vue (avant l'Extension 139).
 La fiche publique affiche lieu, ville et pays ; le CV reste court (nom, ville, date) pour ne
 pas le surcharger ; la compcard ne liste pas les expériences (seulement leur nombre).
+
+## Menu, Parcours, fiche et Espace (12/10/2026, suite)
+- Menu : rubriques à la taille et dans la police du bouton « Espace mannequin de l'agence »
+  (0,95 rem, lettres espacées) ; ouverture : rubriques qui arrivent floues puis nettes, grand
+  filigrane « MA2M » qui traverse le fond ; appui du doigt : voile rouge qui se remplit, puis la
+  page s'ouvre 0,25 s plus tard (`js/menu.js`, classe `appui`).
+- Parcours : motion design au défilement (`mettreEnScene`, IntersectionObserver, classes
+  `pm-entree` / `pm-vu`) : compteurs lancés à leur arrivée, visages qui éclosent avec anneau et
+  pastille, cartes avec filet, titre mot à mot (`decouperTitre`), filigrane qui dérive.
+- Fiche : « Avec MA2M » devient un résumé chiffré (plus de liste) — les projets ne sont plus
+  montrés deux fois au visiteur ; le détail reste dans « Parcours ».
+- Espace mannequin : les lignes qui répètent un projet de l'agence sont masquées, avec un bouton
+  « Supprimer ces doublons » (action de la mannequin, avec confirmation).

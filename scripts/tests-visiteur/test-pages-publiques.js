@@ -29,7 +29,8 @@ const cas = [
   ['partenaires.html', ['Voir la fiche']], ['en/partenaires.html', ['View Details']],
   ['index.html', ['Awa Koné', 'Femme']], ['en/index.html', ['Awa Koné', 'Female']],
   ['parcours.html', ['Défilé Abidjan', 'septembre 2026', 'Awa Koné']], ['en/parcours.html', ['Défilé Abidjan', 'Our models at work', 'Awa Koné']],
-  ['mannequin.html?id=a1', ['Avec MA2M', '1 événement', 'Shooting Marque Perso', 'avec MA2M']],
+  // « Avec MA2M » : résumé chiffré (la base simulée renvoie tous les projets, d'où « activités » sans nombre exact)
+  ['mannequin.html?id=a1', ['Avec MA2M', 'activité', 'Shooting Marque Perso', 'avec MA2M']],
   // agenda public : partenaire indirect et mannequin sans profil, écrits à la main (Ext. 137/138)
   ['agenda.html', ['Forum Test', 'Maison XYZ', 'Fatou Bamba']], ['en/agenda.html', ['Forum Test', 'Maison XYZ', 'Fatou Bamba']]
 ];
@@ -84,6 +85,8 @@ const cas = [
     if (page.startsWith('mannequin.html')) {
       const parcoursFiche = await p.evaluate(() => (document.getElementById('fiche-parcours') || {}).innerText || '');
       const n = (parcoursFiche.match(/d[ée]fil[ée] abidjan/gi) || []).length;
+      // « Avec MA2M » ne répète plus la liste des projets : seulement des chiffres
+      if (await p.evaluate(() => !!document.querySelector('#fiche-avec-ma2m .fiche-projet') || !document.querySelector('#fiche-avec-ma2m .fiche-ma2m-chiffre'))) manquants.push('résumé chiffré « Avec MA2M »');
       if (n !== 2) manquants.push('projet de l’agence dans le parcours de la fiche (' + n + ' fois au lieu de 2 : édition 2026 de l’agence + édition 2023 de la mannequin)');
     }
     if (!gabarit.pied || gabarit.annee !== String(new Date().getFullYear())) manquants.push('bas de page');

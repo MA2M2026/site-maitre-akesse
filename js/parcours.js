@@ -30,6 +30,46 @@
   const projetsMois = () => projets.filter(p => dansLeMois(p, moisChoisi));
   const projetsDuMois = () => projetsMois().filter(p => !typeChoisi || p.type === typeChoisi);
 
+  // Entrée en scène au défilement (12/10/2026) : chaque élément reçoit .pm-entree, puis .pm-vu
+  // quand il arrive à l'écran (css/parcours.css). quandVisible : action lancée à ce moment-là
+  // (ex. le compteur qui défile). Sans IntersectionObserver ou sans animation : tout de suite.
+  const observateur = animer && 'IntersectionObserver' in window ? new IntersectionObserver((entrees) => {
+    entrees.forEach(e => {
+      if (!e.isIntersecting) return;
+      observateur.unobserve(e.target);
+      e.target.classList.add('pm-vu');
+      if (e.target.quandVisible) e.target.quandVisible();
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -8% 0px' }) : null;
+  function mettreEnScene(elements, quandVisible) {
+    elements.forEach(el => {
+      if (quandVisible) el.quandVisible = () => quandVisible(el);
+      if (!observateur) { el.classList.add('pm-vu'); if (el.quandVisible) el.quandVisible(); return; }
+      el.classList.add('pm-entree');
+      observateur.observe(el);
+    });
+  }
+  // Titre de la page : chaque mot se lève derrière un cache (css : .pm-mot).
+  function decouperTitre() {
+    const h1 = document.querySelector('.parcours-ouverture h1');
+    if (!h1 || !animer) return;
+    let i = 0;
+    const frag = document.createDocumentFragment();
+    [...h1.childNodes].forEach(n => {
+      const morceaux = n.nodeType === 3 ? n.textContent.split(/(\s+)/) : [n];
+      morceaux.forEach(m => {
+        if (typeof m === 'string' && !m.trim()) { if (m) frag.appendChild(document.createTextNode(m)); return; }
+        const cache = document.createElement('span'), mot = document.createElement('span');
+        cache.className = 'pm-mot';
+        mot.style.setProperty('--i', i++);
+        mot.appendChild(typeof m === 'string' ? document.createTextNode(m) : m);
+        cache.appendChild(mot); frag.appendChild(cache);
+      });
+    });
+    h1.textContent = '';
+    h1.appendChild(frag);
+  }
+
   // Compteur animé de 0 à la valeur (« motion design ») ; valeur finale directe sans animation.
   function compter(el, valeur) {
     if (!animer || valeur < 2) { el.textContent = valeur; return; }
@@ -87,10 +127,10 @@
       .concat([[mannequins.length, pl(mannequins.length, T('mannequin en action', 'model at work'), T('mannequins en action', 'models at work'))], [villes.size, pl(villes.size, T('ville', 'city'), T('villes', 'cities'))]]);
     zone.innerHTML = cases.map(([n, l], i) =>
       `<div class="parcours-chiffre" data-ordre="${i}"><strong data-valeur="${n}">0</strong><span>${echapperHtml(l)}</span></div>`).join('');
-    zone.querySelectorAll('.parcours-chiffre').forEach((c, i) => {
-      c.style.setProperty('--delai', (i * 90) + 'ms');
-      compter(c.querySelector('strong'), Number(c.querySelector('strong').dataset.valeur));
-    });
+    const tuiles = [...zone.querySelectorAll('.parcours-chiffre')];
+    tuiles.forEach((c, i) => c.style.setProperty('--delai', (i * 90) + 'ms'));
+    // le compteur démarre quand la case arrive à l'écran
+    mettreEnScene(tuiles, c => compter(c.querySelector('strong'), Number(c.querySelector('strong').dataset.valeur)));
   }
 
   // Mannequins actives du mois avec leurs projets, de la plus active à la moins active.
@@ -109,7 +149,7 @@
     const a = document.createElement('button');
     a.type = 'button';
     a.className = 'parcours-visage';
-    a.style.setProperty('--delai', Math.min(i, 24) * 45 + 'ms');
+    a.style.setProperty('--delai', (i % 6) * 70 + 'ms'); // cascade par rangée
     a.innerHTML = `<span class="parcours-visage-photo"><img src="${echapperHtml(photos[m.id] || PHOTO_DEFAUT)}" alt="" loading="lazy"></span>`
       + `<span class="parcours-visage-nom">${echapperHtml(m.nom)}</span>`
       + `<span class="parcours-visage-badge" aria-label="${m.projets.length} ${T('activités', 'activities')}">${m.projets.length}</span>`;
@@ -122,6 +162,7 @@
     mur.textContent = '';
     const montres = tousLesVisages ? mannequins : mannequins.slice(0, VISAGES_MAX);
     montres.forEach((m, i) => mur.appendChild(carteVisage(m, i)));
+    mettreEnScene([...mur.children]);
     const plus = $('parcours-plus');
     const reste = mannequins.length - montres.length;
     plus.hidden = reste <= 0;
@@ -158,7 +199,8 @@
     }).join('');
     // délai d'apparition en cascade (propriété CSS posée en JavaScript : la sécurité du site
     // interdit les attributs style écrits dans le HTML)
-    zone.querySelectorAll('.parcours-projet').forEach((c, i) => c.style.setProperty('--delai', Math.min(i, 12) * 70 + 'ms'));
+    zone.querySelectorAll('.parcours-projet').forEach((c, i) => c.style.setProperty('--delai', (i % 3) * 110 + 'ms'));
+    mettreEnScene([...zone.querySelectorAll('.parcours-projet')]);
   }
 
   function afficher() {
@@ -179,6 +221,8 @@
   }
 
   async function demarrer() {
+    try { decouperTitre(); } catch (e) { /* titre laissé tel quel : l'animation est un plus */ }
+    mettreEnScene([...document.querySelectorAll('.parcours-sous-titre')]);
     const fin = new Date(), debut = new Date(fin.getFullYear(), fin.getMonth() - MOIS_HISTOIRE + 1, 1);
     projets = await ma2mParcours(dateLocaleIso(debut), dateLocaleIso(fin));
     const ids = [...new Set(projets.flatMap(p => (p.mannequins || []).map(m => m.id).filter(Boolean)))];

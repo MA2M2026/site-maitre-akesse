@@ -58,6 +58,7 @@
   font-size: 0.78rem; font-weight: 600; box-shadow: 0 6px 16px -6px rgba(0,0,0,0.8);
 }
 .parcours-plus { margin-top: 1.2rem; }
+.parcours-plus[hidden], .parcours-detail[hidden] { display: none !important; }
 
 /* Détail d'une mannequin pour le mois */
 .parcours-detail { margin-top: 1.6rem; padding: 1.4rem; border: 1px solid var(--bordeaux-clair); background: linear-gradient(120deg, rgba(122,18,32,0.18), transparent 60%); }
@@ -79,7 +80,7 @@
   background: linear-gradient(120deg, rgba(255,255,255,0.04), transparent 55%);
   transition: border-color 0.4s ease, transform 0.5s var(--transition-douce);
 }
-.parcours-projet:hover { border-color: rgba(255,255,255,0.4); transform: translateY(-3px); }
+@media (hover: hover) { .parcours-projet:hover { border-color: rgba(255,255,255,0.4); transform: translateY(-4px); box-shadow: 0 18px 40px -24px rgba(213,84,104,0.6); } .parcours-visage:hover .parcours-visage-photo { box-shadow: 0 0 0 3px var(--bordeaux-clair); } }
 .parcours-projet h3 { margin: 0.4rem 0 0.3rem; font-size: clamp(1.2rem, 3vw, 1.5rem); }
 .parcours-projet-meta { margin: 0 0 0.9rem; color: var(--texte-doux); font-size: 0.85rem; }
 .parcours-projet-visages { display: flex; align-items: center; }
@@ -89,15 +90,67 @@
 
 .parcours-vide { color: var(--texte-doux); font-style: italic; }
 
-/* Motion design : chaque changement de mois rejoue l'apparition en cascade */
+/* ===== Motion design (12/10/2026, « véritable motion design ») =====
+   Tout ce qui est marqué .pm-entree apparaît quand il ARRIVE à l'écran (js/parcours.js,
+   IntersectionObserver → .pm-vu), pas seulement au chargement : en faisant défiler, chaque
+   bloc entre en scène. Chiffres qui comptent à leur arrivée, visages qui éclosent avec un
+   anneau rouge et une pastille qui rebondit, cartes de projets qui montent avec un filet qui
+   se dessine, titre de la page qui se lève mot à mot, filigrane « MA2M » qui dérive.
+   Tout est désactivé si le visiteur a demandé moins de mouvement. */
 @media (prefers-reduced-motion: no-preference) {
-  .parcours-scene.joue .parcours-chiffre,
-  .parcours-scene.joue .parcours-visage,
-  .parcours-scene.joue .parcours-projet { animation: parcours-entree 0.7s var(--transition-douce, ease) both; animation-delay: var(--delai, 0ms); }
-  .parcours-scene.joue .parcours-titre-mois { animation: parcours-titre 0.6s ease both; }
-  @keyframes parcours-entree { from { opacity: 0; transform: translateY(18px) scale(0.97); } to { opacity: 1; transform: none; } }
-  @keyframes parcours-titre { from { opacity: 0; letter-spacing: 0.08em; } to { opacity: 1; letter-spacing: normal; } }
+  /* titre de la page : mots qui se lèvent derrière un cache */
+  .parcours-ouverture h1 .pm-mot { display: inline-block; overflow: hidden; vertical-align: top; }
+  .parcours-ouverture h1 .pm-mot > span { display: inline-block; animation: pm-lever 1.1s cubic-bezier(.16,1,.3,1) both; animation-delay: calc(0.15s + 0.09s * var(--i, 0)); }
+  @keyframes pm-lever { from { transform: translateY(105%) rotate(4deg); } to { transform: none; } }
+
+  /* filigrane qui dérive lentement derrière le titre (transform seulement : léger) */
+  .parcours-ouverture { position: relative; overflow: hidden; }
+  .parcours-ouverture::before {
+    content: 'MA2M'; position: absolute; right: -6vw; top: -2vw; pointer-events: none;
+    font: 400 clamp(7rem, 30vw, 22rem)/0.8 var(--display); color: transparent;
+    -webkit-text-stroke: 1px rgba(213,84,104,0.14);
+    animation: pm-derive 18s ease-in-out infinite alternate;
+  }
+  @keyframes pm-derive { from { transform: translateX(0) rotate(-2deg); } to { transform: translateX(-12%) rotate(1deg); } }
+
+  /* entrée au défilement */
+  .pm-entree { opacity: 0; transform: translateY(34px) scale(0.97); filter: blur(6px); }
+  .pm-entree.pm-vu { opacity: 1; transform: none; filter: none;
+    transition: opacity 0.8s ease, transform 1s cubic-bezier(.16,1,.3,1), filter 0.8s ease; transition-delay: var(--delai, 0ms); }
+
+  /* chiffres : la case s'allume d'un éclat bordeaux à son arrivée */
+  .parcours-chiffre.pm-vu { animation: pm-eclat 1.6s ease-out both; animation-delay: var(--delai, 0ms); }
+  @keyframes pm-eclat { 0% { background: rgba(122,18,32,0.55); } 100% { background: var(--noir); } }
+
+  /* visages : éclosion, anneau rouge qui s'étend, pastille qui rebondit */
+  .parcours-visage.pm-entree { transform: scale(0.6) rotate(-10deg); }
+  .parcours-visage.pm-vu { transform: none; transition: opacity 0.6s ease, transform 0.9s cubic-bezier(.34,1.56,.64,1), filter 0.6s ease; transition-delay: var(--delai, 0ms); }
+  .parcours-visage.pm-vu .parcours-visage-photo { animation: pm-anneau 1.4s ease-out both; animation-delay: calc(var(--delai, 0ms) + 0.35s); }
+  @keyframes pm-anneau { 0% { box-shadow: 0 0 0 0 rgba(213,84,104,0.75); } 100% { box-shadow: 0 0 0 16px rgba(213,84,104,0); } }
+  .parcours-visage .parcours-visage-badge { transform: scale(0); }
+  .parcours-visage.pm-vu .parcours-visage-badge { transform: none; transition: transform 0.6s cubic-bezier(.34,1.8,.64,1); transition-delay: calc(var(--delai, 0ms) + 0.55s); }
+
+  /* cartes de projets : un filet rouge se dessine en haut à leur arrivée */
+  .parcours-projet { position: relative; overflow: hidden; }
+  .parcours-projet::before { content: ''; position: absolute; left: 0; top: 0; height: 2px; width: 100%; background: linear-gradient(90deg, var(--bordeaux-clair), transparent); transform: scaleX(0); transform-origin: left; }
+  .parcours-projet.pm-vu::before { transform: scaleX(1); transition: transform 1.1s cubic-bezier(.65,0,.35,1); transition-delay: calc(var(--delai, 0ms) + 0.3s); }
+
+  /* sous-titres : un trait part de la gauche */
+  .parcours-sous-titre.pm-entree { transform: translateX(-30px); }
+
+  /* titre du mois : rejoué à chaque changement de mois */
+  .parcours-scene.joue .parcours-titre-mois { animation: parcours-titre 0.8s cubic-bezier(.16,1,.3,1) both; }
+  @keyframes parcours-titre { from { opacity: 0; letter-spacing: 0.12em; transform: translateY(14px); } to { opacity: 1; letter-spacing: normal; transform: none; } }
+
+  /* mois choisi : pulsation douce */
+  .parcours-mois-btn.actif { animation: pm-pouls 2.4s ease-in-out infinite; }
+  @keyframes pm-pouls { 0%, 100% { box-shadow: 0 0 0 0 rgba(213,84,104,0.45); } 50% { box-shadow: 0 0 0 6px rgba(213,84,104,0); } }
 }
+/* réponse au doigt et à la souris (même sans animation d'entrée) */
+.parcours-visage:active .parcours-visage-photo, .parcours-visage:focus-visible .parcours-visage-photo { box-shadow: 0 0 0 3px var(--bordeaux-clair); }
+.parcours-visage:active { transform: scale(0.94) !important; transition: transform 0.15s ease !important; }
+.parcours-projet:active { transform: scale(0.98) !important; border-color: var(--bordeaux-clair); transition: transform 0.15s ease !important; }
+.parcours-mois-btn:active, .parcours-filtre:active { transform: scale(0.92); }
 
 @media (max-width: 600px) {
   .parcours-visages { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.7rem; }

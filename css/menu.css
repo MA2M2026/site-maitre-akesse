@@ -33,8 +33,17 @@ html body .menu-overlay .nav-links {
    2. son numéro glisse depuis la gauche ;
    3. le filet rouge sous la rubrique se dessine de gauche à droite.
    À la fermeture, tout repart d'un coup (pas de délai). */
-html body .menu-overlay .nav-links li { position: relative; border: 0 !important; margin: 0 !important; opacity: 0; transform: translateY(70px) skewY(5deg) !important; transform-origin: left bottom; transition: opacity 0.5s ease, transform 0.25s ease !important; }
-html body .menu-overlay.active .nav-links li { opacity: 1; transform: none !important; transition: opacity 0.7s ease, transform 1s cubic-bezier(.16,1,.3,1) !important; transition-delay: calc(0.35s + 0.07s * var(--rang, 1)) !important; }
+html body .menu-overlay .nav-links li { position: relative; border: 0 !important; margin: 0 !important; opacity: 0; filter: blur(10px); transform: translate(-46px, 30px) skewX(-8deg) !important; transform-origin: left bottom; transition: opacity 0.5s ease, transform 0.25s ease, filter 0.25s ease !important; }
+html body .menu-overlay.active .nav-links li { opacity: 1; filter: none; transform: none !important; transition: opacity 0.7s ease, transform 1s cubic-bezier(.16,1,.3,1), filter 0.8s ease !important; transition-delay: calc(0.3s + 0.06s * var(--rang, 1)) !important; }
+/* grand filigrane « MA2M » qui traverse lentement le fond à l'ouverture (12/10/2026) */
+html body .menu-overlay::after {
+  content: 'MA2M'; position: absolute; right: -4vw; bottom: -3vw; z-index: 0; pointer-events: none;
+  font: 400 clamp(8rem, 38vw, 26rem)/0.8 var(--display); letter-spacing: -0.02em;
+  color: transparent; -webkit-text-stroke: 1px rgba(213,84,104,0.16);
+  opacity: 0; transform: translateX(18%); transition: opacity 0.3s ease, transform 0.3s ease;
+}
+html body .menu-overlay.active::after { opacity: 1; transform: none; transition: opacity 1.4s ease 0.25s, transform 2.6s cubic-bezier(.16,1,.3,1) 0.25s; }
+html body .menu-overlay .nav-links, html body .menu-overlay .menu-contact { position: relative; z-index: 1; }
 html body .menu-overlay .nav-links li:not(.menu-sous):not(.item-cta):not(.menu-rejoindre):not(.item-marketplace)::after {
   content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
   background: linear-gradient(90deg, var(--bordeaux-clair, #d55468), rgba(255,255,255,0.08) 60%);
@@ -55,12 +64,24 @@ html body .menu-overlay.active .menu-contact { opacity: 1; transform: none; tran
 html body .menu-overlay .nav-links li:not(.menu-sous):not(.item-cta):not(.menu-rejoindre):not(.item-marketplace) { counter-increment: rubrique; }
 html body .menu-overlay .nav-links li a {
   display: flex !important; align-items: baseline; gap: 14px; justify-content: flex-start !important;
-  padding: 0.55rem 0 !important; border-radius: 0 !important; background: none !important;
-  font-family: var(--display) !important; font-weight: 400 !important;
-  font-size: clamp(1.55rem, 6.6vw, 2.7rem) !important; line-height: 1.05 !important;
-  text-transform: uppercase !important; letter-spacing: 0.02em !important;
+  /* même police et même taille que le bouton « Espace mannequin de l'agence » (12/10/2026) */
+  padding: 1.05rem 0 !important; border-radius: 0 !important;
+  font-family: var(--texte) !important; font-weight: 500 !important;
+  font-size: 0.95rem !important; line-height: 1.3 !important;
+  text-transform: uppercase !important; letter-spacing: 0.16em !important;
   color: var(--titre-clair, #f5efe7) !important;
-  transition: color 0.3s ease, letter-spacing 0.4s ease !important;
+  /* appui : un voile rouge se remplit de gauche à droite et la rubrique glisse */
+  background: linear-gradient(90deg, rgba(122,18,32,0.55), rgba(122,18,32,0)) no-repeat left / 0% 100% !important;
+  transition: color 0.3s ease, letter-spacing 0.4s ease, background-size 0.45s cubic-bezier(.16,1,.3,1), transform 0.35s cubic-bezier(.16,1,.3,1), padding-left 0.35s ease !important;
+}
+html body .menu-overlay .nav-links li:not(.item-cta):not(.menu-rejoindre) a:active,
+html body .menu-overlay .nav-links li:not(.item-cta):not(.menu-rejoindre) a.appui {
+  background-size: 100% 100% !important; padding-left: 0.7rem !important; color: #fff !important;
+  transition-duration: 0.18s !important;
+}
+html body .menu-overlay .nav-links li.item-cta a:active, html body .menu-overlay .nav-links li.item-cta a.appui,
+html body .menu-overlay .nav-links li.menu-rejoindre a:active, html body .menu-overlay .nav-links li.menu-rejoindre a.appui {
+  transform: scale(0.96); box-shadow: 0 0 0 6px rgba(213,84,104,0.25) !important; transition-duration: 0.15s !important;
 }
 html body .menu-overlay .nav-links li:not(.menu-sous):not(.item-cta):not(.menu-rejoindre):not(.item-marketplace) a::before {
   content: counter(rubrique, decimal-leading-zero) !important; position: static !important;
@@ -70,7 +91,7 @@ html body .menu-overlay .nav-links li:not(.menu-sous):not(.item-cta):not(.menu-r
 }
 html body .menu-overlay .nav-links li a::after { content: none !important; }
 @media (hover: hover) {
-  html body .menu-overlay .nav-links li a:hover { color: var(--bordeaux-clair, #d55468) !important; letter-spacing: 0.05em !important; }
+  html body .menu-overlay .nav-links li:not(.item-cta):not(.menu-rejoindre) a:hover { color: var(--bordeaux-clair, #d55468) !important; letter-spacing: 0.2em !important; background-size: 100% 100% !important; }
   html body .menu-overlay .nav-links li a:hover::before { transform: translateX(6px); transition: transform 0.3s ease !important; }
 }
 html body .menu-overlay .nav-links li a.actif { color: var(--bordeaux-clair, #d55468) !important; font-style: normal !important; background: none !important; }
@@ -81,7 +102,7 @@ html body .menu-overlay .nav-links li.item-marketplace a { color: var(--bordeaux
 /* Femmes / Hommes : petits liens sous The Book */
 html body .menu-overlay .nav-links li.menu-sous { border: 0 !important; }
 html body .menu-overlay .nav-links li.menu-sous a {
-  font-family: var(--texte) !important; font-size: 0.95rem !important; text-transform: uppercase !important;
+  font-family: var(--texte) !important; font-size: 0.78rem !important; text-transform: uppercase !important;
   letter-spacing: 0.18em !important; color: var(--texte-doux, #948c85) !important;
   padding: 0.4rem 0 0.4rem 3.1rem !important;
 }
@@ -110,13 +131,12 @@ html body .menu-overlay .menu-reseaux { justify-content: flex-start !important; 
 @media (min-width: 1024px) {
   html body .menu-overlay .nav-links { display: block !important; columns: 2; column-gap: 5rem; max-width: 1240px; }
   html body .menu-overlay .nav-links li { break-inside: avoid; }
-  html body .menu-overlay .nav-links li a { font-size: clamp(1.8rem, 2.5vw, 2.5rem) !important; }
   html body .menu-overlay .menu-contact { max-width: 1240px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   html body .menu-overlay, html body .menu-overlay .nav-links li, html body .menu-overlay .nav-links li::after,
-  html body .menu-overlay .nav-links li a::before, html body .menu-overlay::before,
+  html body .menu-overlay .nav-links li a::before, html body .menu-overlay::before, html body .menu-overlay::after,
   html body .menu-overlay .close-menu, html body .menu-overlay .menu-contact { transition: none !important; }
 }
 html body .menu-overlay .nav-links li.item-cta a::before,

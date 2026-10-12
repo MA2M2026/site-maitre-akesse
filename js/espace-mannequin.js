@@ -971,6 +971,8 @@ function experienceVersBase(exp){
 // Toutes ses expériences : projets de l'agence + les siennes qui ne les répètent pas (js/app.js).
 // Sert au CV, au niveau, au récapitulatif et à l'analyse du profil.
 function toutesExperiences(){ return fusionnerExperiences(state.experiencesAgence, state.experiences); }
+function estDoublonAgence(e){ return state.experiencesAgence.some(function(a){ return memeProjet(e, a); }); }
+function doublonsExperiences(){ return state.experiences.filter(estDoublonAgence); }
 
 // Projets réalisés avec l'agence (agenda) : affichés ici sans pouvoir être modifiés — c'est
 // l'agence qui les tient à jour ; ils apparaissent d'office sur la fiche et le CV.
@@ -984,12 +986,14 @@ function blocExperiencesAgence(){
 
 function stepExperience(){
   const pp = state.profilPro;
-  var listHtml = state.experiences.length===0
-    ? '<p class="exp-empty">Aucune expérience ajoutée pour le moment. Cliquez sur « + Ajouter une expérience ».</p>'
+  // Lignes qui répètent un projet de l'agence : masquées ici aussi (12/10/2026), avec un
+  // bouton pour les supprimer d'un coup — elles ne s'affichent déjà plus nulle part ailleurs.
+  var nbDoublons = doublonsExperiences().length;
+  var listHtml = state.experiences.length===nbDoublons
+    ? (state.experiencesAgence.length ? '' : '<p class="exp-empty">Aucune expérience ajoutée pour le moment. Cliquez sur « + Ajouter une expérience ».</p>')
     : state.experiences.map(function(e,i){
-        var doublon = state.experiencesAgence.some(function(a){ return memeProjet(e, a); });
+        if (estDoublonAgence(e)) return '';
         return '<div class="exp-card" data-exp="'+i+'">' +
-        (doublon ? '<p class="exp-doublon">Ce projet a déjà été ajouté par l’agence : cette ligne n’apparaît plus sur votre fiche ni sur votre CV. Vous pouvez la supprimer.</p>' : '') +
         '<div class="exp-fields">' +
         '<select data-expf="type" data-i="'+i+'">' + EXP_TYPES.map(function(t){ return '<option value="'+t+'" '+(e.type===t?'selected':'')+'>'+t+'</option>'; }).join('') + '</select>' +
         '<input type="text" data-expf="nom" data-i="'+i+'" placeholder="Nom du défilé / de la marque / de la campagne" aria-label="Nom" value="'+echapperHtml(e.nom)+'">' +
@@ -1017,6 +1021,7 @@ function stepExperience(){
     '<p class="sub p20-20">Défilés, shootings, publicités, castings… Un seul projet suffit pour publier votre profil — vous pourrez toujours en ajouter d’autres plus tard. Remplissez seulement ce dont vous vous souvenez : aucune case n’est obligatoire.</p>' +
     '<button class="btn ghost small p20-12" id="addExp">+ Ajouter une expérience</button>' +
     blocExperiencesAgence() +
+    (nbDoublons ? '<p class="exp-doublon">'+nbDoublons+(nbDoublons>1 ? ' lignes que vous aviez écrites répètent' : ' ligne que vous aviez écrite répète')+' un projet ajouté par l’agence : '+(nbDoublons>1 ? 'elles sont masquées et n’apparaissent nulle part. ' : 'elle est masquée et n’apparaît nulle part. ')+'<button type="button" class="exp-remove" id="supprDoublons">Supprimer '+(nbDoublons>1 ? 'ces doublons' : 'ce doublon')+'</button></p>' : '') +
     '<div id="expList">'+listHtml+'</div>' +
     '<div class="actions-row"><button class="btn ghost" data-goto="3">← Retour</button><button class="btn primary" id="save4">Continuer</button></div>';
 }
@@ -1280,6 +1285,15 @@ function bindExperienceHandlers(){
     const draft = { type:'Défilé', nom:'', lieu:'', annee:new Date().getFullYear().toString(), pays:'', salle:'', promoteur:'' };
     const saved = await Store.addExperience(draft);
     if (saved) { s.experiences.push(saved); render(); }
+  });
+  document.getElementById('supprDoublons')?.addEventListener('click', async function(){
+    const doublons = doublonsExperiences();
+    if (!doublons.length || !confirm('Supprimer '+doublons.length+(doublons.length>1 ? ' lignes en double' : ' ligne en double')+' ? Les projets ajoutés par l’agence restent.')) return;
+    this.disabled = true;
+    for (const exp of doublons) {
+      if (await Store.removeExperience(exp.id)) s.experiences.splice(s.experiences.indexOf(exp), 1);
+    }
+    render();
   });
   document.querySelectorAll('[data-rm]').forEach(function(b){ b.addEventListener('click', async function(){
     const i = parseInt(b.dataset.rm,10); const exp = s.experiences[i];
