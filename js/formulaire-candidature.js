@@ -311,6 +311,14 @@ function ouvrirVisionneuse(adresse) {
   v.querySelector('.visionneuse-fermer').focus();
 }
 function fermerVisionneuse() { document.getElementById('ca-visionneuse').classList.add('u-hidden'); }
+// La visionneuse est créée ici (12/10/2026 : avant, recopiée dans les 4 pages de candidature).
+(function creerVisionneuse() {
+  const v = document.createElement('div');
+  v.id = 'ca-visionneuse'; v.className = 'visionneuse u-hidden';
+  v.setAttribute('role', 'dialog'); v.setAttribute('aria-modal', 'true'); v.setAttribute('aria-label', T('Photo en grand', 'Full-size photo'));
+  v.innerHTML = '<img alt=""><button type="button" class="btn visionneuse-fermer">' + T('✕ Fermer', '✕ Close') + '</button>';
+  document.getElementById('form-casting').closest('section').appendChild(v);
+})();
 document.getElementById('ca-visionneuse').addEventListener('click', fermerVisionneuse);
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fermerVisionneuse(); });
 

@@ -9,7 +9,7 @@
      (see README-TECHNIQUE.md, "Porte d'entrée / verrou de scroll" section), with no
      error to hint at why. After any change, run:
      python3 scripts/verifier-csp.py en/index.html -->
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-b+QrdXtiVOaEVLNTW7orZsKUFZUKusqEn6hCQdTT7lY=' 'sha256-UcH7kEAM9P41oTVyLWEC3+u/afKW1r+605p8jMI5yFM='; style-src 'self' https://fonts.googleapis.com;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-b+QrdXtiVOaEVLNTW7orZsKUFZUKusqEn6hCQdTT7lY='; style-src 'self' https://fonts.googleapis.com;">
 <script src="../js/adresse-en.js"></script>
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js"></script>
@@ -68,85 +68,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
 </head>
 <body>
-<script>
-// Prevents a flash of the entry door (the 3 photos) on every return to the homepage
-// once it has already been opened this session: we flag the page right away, before
-// the browser gets any chance to display the section, instead of waiting for the
-// end-of-page script (js/accueil.js) to hide it.
-//
-// Also locks scrolling HERE, at the very top of the page, if the door hasn't been
-// opened yet — not in js/accueil.js (loaded at the very bottom of the page): by the
-// time the browser loads everything else before reaching that script, a fast visitor
-// can swipe before the lock engages, and end up stuck mid-page instead of at the top.
-// Defined here (not in js/app.js) for the same reason: that external file also arrives
-// too late.
-(function () {
-  let positionSauvegardee = 0;
-  let compteur = 0;
-  const ZONES_DEFILEMENT_AUTORISE = '.menu-overlay, .news-modal-contenu, .modal-overlay, .tdb-menu-panel, .projets-liste-scroll';
-  function bloquerGesteTactile(e) {
-    if (e.target.closest(ZONES_DEFILEMENT_AUTORISE)) return;
-    e.preventDefault();
-  }
-  window.verrouillerDefilement = function () {
-    if (compteur === 0) {
-      positionSauvegardee = window.scrollY || window.pageYOffset || 0;
-      document.body.style.position = 'fixed';
-      document.body.style.top = '-' + positionSauvegardee + 'px';
-      document.body.style.left = '0';
-      document.body.style.right = '0';
-      document.addEventListener('touchmove', bloquerGesteTactile, { passive: false });
-    }
-    compteur++;
-  };
-  window.deverrouillerDefilement = function () {
-    compteur = Math.max(0, compteur - 1);
-    if (compteur === 0) {
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.left = '';
-      document.body.style.right = '';
-      window.scrollTo(0, positionSauvegardee);
-      document.removeEventListener('touchmove', bloquerGesteTactile, { passive: false });
-    }
-  };
-})();
-
-let ma2mPorteDejaOuverte = false;
-try { ma2mPorteDejaOuverte = sessionStorage.getItem('ma2m_porte_ouverte'); } catch (e) {}
-
-if (ma2mPorteDejaOuverte) {
-  document.documentElement.classList.add('porte-deja-vue');
-} else {
-  document.body.classList.add('porte-verrouillee');
-  document.documentElement.classList.add('porte-verrouillee');
-  window.verrouillerDefilement();
-}
-
-// Accueil : si « Mannequin à la une » / « Mot de Maître Akesse » étaient vides lors de la
-// dernière visite, on ne leur réserve pas de place (voir .section-reservee, css/style.css).
-try {
-  ['mannequin-vedette', 'mot-responsable'].forEach(function (id) {
-    if (localStorage.getItem('ma2m_bloc_vide_' + id) === '1') document.documentElement.classList.add('vide-' + id);
-  });
-} catch (e) {}
-
-// Shows the animated logo right now, before the rest of the page (including the entry
-// door) is even parsed — otherwise, by the time js/accueil.js (end of page) runs to
-// show it, the entry door's first slide (the "MA2M" text) briefly appears uncovered.
-// #logo-splash doesn't exist in the DOM yet at this point (further down the page): the
-// class goes on <html> instead, with a CSS rule targeting #logo-splash by id (see
-// css/splash.css) — no need to wait for the element to exist for the rule to apply once
-// it does.
-let ma2mIntroDejaVue = false;
-try { ma2mIntroDejaVue = sessionStorage.getItem('ma2m_intro_vue'); } catch (e) {}
-const ma2mReduitMouvement = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-if (!ma2mIntroDejaVue && !ma2mReduitMouvement) {
-  document.documentElement.classList.add('intro-a-venir');
-  document.body.classList.add('splash-active');
-}
-</script>
+<script src="../js/accueil-debut.js"></script>
 
 <script async src="../js/filet-reveal.js"></script>
 

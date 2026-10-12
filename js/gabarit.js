@@ -8,6 +8,7 @@
 //   <script src="js/gabarit.js"></script>
 // data-page : nom du fichier sans « .html » (lien actif du menu, lien vers l'autre langue).
 // data-autre-langue (facultatif) : page de l'autre langue quand elle n'existe pas (ex. Espace).
+// Aussi : <div class="reseaux" data-gabarit="reseaux"></div> (icônes des réseaux sociaux).
 // Pour ajouter une page au menu : une seule ligne dans PAGES ci-dessous.
 (function () {
   if (window.ma2mGabarit) { window.ma2mGabarit(); return; } // 2e chargement : bas de page
@@ -75,6 +76,12 @@
     });
     liens.push('    <li class="item-cta"><a href="' + RACINE_G + 'espace-mannequin.html"' + (actif === 'espace-mannequin' ? ' class="actif"' : '') + '>' + (EN_G ? "Agency's Model Space" : "Espace mannequin de l'agence") + '</a></li>');
     el.innerHTML = '\n  <button class="close-menu" id="closeMenuBtn">' + (EN_G ? 'Close ✕' : 'Fermer ✕') + '</button>\n  <ul class="nav-links">\n' + liens.join('\n') + '\n  </ul>\n';
+    el.setAttribute('data-rempli', '');
+  });
+
+  // Liens vers les réseaux sociaux (page Contact, 12/10/2026 : avant, recopiés dans la page)
+  placeHolders('reseaux').forEach(function (el, n) {
+    el.innerHTML = RESEAUX.join('').replace(/ig-grad-pied/g, 'ig-grad-r' + n);
     el.setAttribute('data-rempli', '');
   });
 
