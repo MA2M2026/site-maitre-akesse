@@ -2218,10 +2218,6 @@ html.porte-deja-vue #porte-entree { display: none; }
 }
 .fiche-projet-type { font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--bordeaux-clair); }
 /* « Avec MA2M » sur la fiche : résumé chiffré par type (12/10/2026) */
-.fiche-ma2m-chiffres { display: flex; flex-wrap: wrap; gap: 0.7rem; margin: 0.4rem 0 0.9rem; }
-.fiche-ma2m-chiffre { display: flex; flex-direction: column; min-width: 5.5rem; padding: 0.7rem 0.9rem; border: 1px solid rgba(213,84,104,0.35); background: rgba(122,18,32,0.12); }
-.fiche-ma2m-chiffre strong { font-family: var(--display); font-size: 2rem; font-weight: 500; line-height: 1; color: var(--titre-clair); }
-.fiche-ma2m-chiffre span { margin-top: 0.3rem; font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--bordeaux-clair); }
 /* projet réalisé avec l'agence (agenda), ajouté automatiquement au parcours (12/10/2026) */
 .fiche-projet-titre { font-size: 0.98rem; color: var(--titre-clair); }
 .fiche-projet-meta { font-size: 0.8rem; color: var(--texte-doux); }

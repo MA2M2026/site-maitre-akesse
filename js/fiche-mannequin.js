@@ -258,7 +258,6 @@ async function chargerProfilInterne() {
           ${blocProfil}
         </div>
         <div class="fiche-col">
-          <div id="fiche-ma2m"></div>
           ${blocProjets}
           ${blocVideo}
         </div>
@@ -266,7 +265,6 @@ async function chargerProfilInterne() {
     </div>
   `;
 
-  void afficherParcoursAgence(profil.id);
 
   // Contact officiel : tout en bas de la page, après le Book (demande de la
   // propriétaire, 28 sept. 2026) — on parcourt d'abord les photos, puis on contacte.
@@ -405,25 +403,3 @@ function ouvrirLightbox(index) {
   ouvrirGalerieLightbox(window.photosLightbox, index);
 }
 document.addEventListener('DOMContentLoaded', () => { void chargerProfil(1); });
-
-// « Avec MA2M » (Parcours MA2M, Extension 136) : projets réalisés avec l'agence, tirés de
-// l'agenda — totaux par type et derniers projets (type, titre, date, lieu, ville, pays).
-// Rien n'est affiché tant que la mannequin n'a aucun projet réalisé.
-async function afficherParcoursAgence(idMannequin) {
-  const zone = document.getElementById('fiche-ma2m');
-  if (!zone) return;
-  const fin = new Date(), debut = new Date(fin.getFullYear() - 10, fin.getMonth(), 1);
-  const projetsAgence = await ma2mParcours(dateLocaleIso(debut), dateLocaleIso(fin), idMannequin);
-  if (!projetsAgence.length) return;
-  // Résumé chiffré seulement (12/10/2026) : le détail de ces projets est déjà dans « Parcours »
-  // juste au-dessus (sans mention « avec MA2M » depuis le 12/10/2026, demande de la propriétaire) — un visiteur ne voit plus deux fois le même projet.
-  const totaux = ma2mCompteParType(projetsAgence);
-  zone.innerHTML = `
-    <section class="fiche-carte fiche-ancre" id="fiche-avec-ma2m">
-      <h3 class="fiche-carte-titre">${T('Avec MA2M', 'With MA2M')} <span>${projetsAgence.length} ${projetsAgence.length > 1 ? T('activités', 'activities') : T('activité', 'activity')}</span></h3>
-      <div class="fiche-ma2m-chiffres">
-        ${totaux.map(([t, n]) => `<div class="fiche-ma2m-chiffre"><strong>${n}</strong><span>${echapperHtml(nombreTypeAgenda(t, n, EN).replace(/^\d+ /, ''))}</span></div>`).join('')}
-      </div>
-      <a class="fiche-lien-plus" href="parcours.html">${T('Voir le Parcours MA2M →', 'See the MA2M Track Record →')}</a>
-    </section>`;
-}
