@@ -143,11 +143,25 @@
     }).filter(Boolean);
   }
 
+  // Même règle que la base (Extensions 137/138) : un nom n'apparaît qu'une fois, majuscules ignorées.
+  function sansDoublon(noms) {
+    var vus = {};
+    return noms.filter(function (n) { var k = String(n).trim().toLowerCase(); if (vus[k]) return false; vus[k] = true; return true; });
+  }
+
+  // Ids d'un projet modifié absents des listes chargées (profil sans nom, partenaire retiré) :
+  // gardés tels quels, pour qu'un enregistrement ne les efface jamais en silence.
+  function idsGardes(coches, anciens, liste) {
+    var connus = {};
+    liste.forEach(function (x) { connus[x.id] = true; });
+    return coches.concat((anciens || []).filter(function (id) { return !connus[id] && coches.indexOf(id) < 0; }));
+  }
+
   function ligneProjet(p) {
     var div = document.createElement('div');
     div.className = 'agenda-ligne' + (p.visible && !p.annule ? '' : ' cache') + (projetEnCours && projetEnCours.id === p.id ? ' en-modif' : '');
-    var noms = nomsDe(p.mannequin_ids, mannequins, 'full_name').concat(p.mannequins_libres || []);
-    var parts = nomsDe(p.partenaire_ids, partenaires, 'nom').concat(p.partenaires_libres || []);
+    var noms = sansDoublon(nomsDe(p.mannequin_ids, mannequins, 'full_name').concat(p.mannequins_libres || []));
+    var parts = sansDoublon(nomsDe(p.partenaire_ids, partenaires, 'nom').concat(p.partenaires_libres || []));
     var horaires = (p.seances || []).map(function (x) { return dateAgenda(x.jour) + ' ' + (x.debut || '?') + '–' + (x.fin || '?'); }).join(' ; ');
     var intervenants = (p.intervenants || []).map(function (x) { return (x.role ? x.role + ' : ' : '') + x.nom; });
     var prive = [horaires ? '' : p.heure, p.adresse, horaires && !p.horaires_publics ? horaires : ''].filter(Boolean).join(' · ');
@@ -163,7 +177,7 @@
       + (prive ? '<p class="agenda-prive">🔒 ' + echapperHtml(prive) + '</p>' : '')
       + '</div>'
       + '<div class="agenda-boutons"><button type="button" class="btn-mini-admin" data-modifier="' + echapperHtml(p.id) + '" aria-label="Modifier « ' + echapperHtml(p.titre) + ' »">Modifier</button>'
-      + '<button type="button" class="btn-mini-admin" data-supprimer="' + echapperHtml(p.id) + '">Supprimer</button></div>';
+      + '<button type="button" class="btn-mini-admin" data-supprimer="' + echapperHtml(p.id) + '" aria-label="Supprimer « ' + echapperHtml(p.titre) + ' »">Supprimer</button></div>';
     return div;
   }
 
@@ -250,7 +264,7 @@
     $('agenda-autres').value = (p.mannequins_libres || []).join('\n');
     $('agenda-autres-partenaires').value = (p.partenaires_libres || []).join('\n');
     $('agenda-en-cours').textContent = '✏️ Vous modifiez : « ' + p.titre + ' » — ' + dateAgenda(p.date_debut, p.date_fin)
-      + '. Seuls les champs que vous changez seront modifiés.';
+      + '. Vérifiez le titre et les dates avant d’enregistrer.';
     $('agenda-en-cours').hidden = false;
     marquerLigne(p.id);
     [['agenda-mannequins', p.mannequin_ids], ['agenda-partenaires', p.partenaire_ids]].forEach(function (z) {
@@ -305,8 +319,8 @@
       adresse: $('agenda-adresse').value.trim() || null,
       notes_internes: $('agenda-notes').value.trim() || null,
       visible: $('agenda-visible').checked,
-      mannequin_ids: cochees('agenda-mannequins'),
-      partenaire_ids: cochees('agenda-partenaires')
+      mannequin_ids: idsGardes(cochees('agenda-mannequins'), projetEnCours && projetEnCours.mannequin_ids, mannequins),
+      partenaire_ids: idsGardes(cochees('agenda-partenaires'), projetEnCours && projetEnCours.partenaire_ids, partenaires)
     };
     // « Autres mannequins » (Extension 137) : envoyé seulement si la colonne existe déjà
     // (vue dans les projets chargés) ou si des noms sont écrits — sinon un agenda dont
@@ -315,7 +329,16 @@
     if (autres.length || colonneAutres) ligne.mannequins_libres = autres;
     // « Autres partenaires » (Extension 138) : partenaires indirects, jamais ajoutés à la page
     // Partenaires ; même précaution tant que la colonne n'existe pas.
-    var autresPartenaires = lireAutres('agenda-autres-partenaires');
+    // Un nom écrit qui est déjà l'un de nos partenaires : on le coche (logo et lien gardés)
+    // au lieu de l'afficher comme partenaire indirect.
+    var dejaPartenaires = [];
+    var autresPartenaires = lireAutres('agenda-autres-partenaires').filter(function (n) {
+      var connu = partenaires.find(function (x) { return String(x.nom || '').trim().toLowerCase() === n.toLowerCase(); });
+      if (!connu) return true;
+      if (ligne.partenaire_ids.indexOf(connu.id) < 0) ligne.partenaire_ids.push(connu.id);
+      dejaPartenaires.push(connu.nom);
+      return false;
+    });
     if (autresPartenaires.length || colonnePartenairesLibres) ligne.partenaires_libres = autresPartenaires;
     var id = $('agenda-id').value;
     enCours = true;
@@ -338,7 +361,8 @@
       if (!r.data || !r.data.length) { message('Rien n’a été enregistré : reconnectez-vous au tableau de bord puis réessayez.', true); return; }
       viderFormulaire();
       var visibleSite = ligne.visible ? ' Il est visible sur la page Agenda du site.' : ' Il est caché du site.';
-      message((id ? 'Projet modifié.' : 'Projet ajouté à l’agenda.') + visibleSite);
+      message((id ? 'Projet modifié.' : 'Projet ajouté à l’agenda.') + visibleSite
+        + (dejaPartenaires.length ? ' « ' + dejaPartenaires.join(', ') + ' » fait déjà partie de vos partenaires : il a été coché.' : ''));
       await chargerProjets();
     } finally {
       enCours = false;

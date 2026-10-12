@@ -2074,6 +2074,10 @@ Un partenaire INDIRECT d'un projet (venu par un intermédiaire) s'écrit à la m
 `agenda_projets.partenaires_libres`, jamais ajouté à la table `partenaires` (page Partenaires).
 `agenda_public` le renvoie dans `partenaires` avec `id` et `logo_url` vides ; `js/agenda.js`
 l'affiche sans lien. Même précaution que l'Extension 137 tant que la colonne manque.
+Règle commune des noms écrits (mannequins et partenaires) : `noms_libres_publics(noms, exclus)`,
+utilisée par `mannequins_publics_projet` et `partenaires_publics_projet`. Un nom écrit qui est
+déjà l'un de nos partenaires est coché automatiquement à l'enregistrement. Les ids d'un projet
+modifié absents des listes chargées sont gardés (`idsGardes`).
 « Modifier » ouvre un bandeau `#agenda-en-cours` (titre + dates du projet) et encadre sa ligne
 (`.agenda-ligne.en-modif`) : le 11/10/2026, la propriétaire avait ouvert Abidjan Border Forum
 (premier bouton « Modifier », liste « À venir ») en croyant ouvrir Cacao Fashion Show.

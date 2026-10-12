@@ -7200,9 +7200,61 @@ NOTIFY pgrst, 'reload schema';
 -- écrit à la main sur ce projet sans être ajouté à nos partenaires (page Partenaires).
 -- Son nom (et seulement son nom) apparaît sur ce projet dans l'agenda public, sans logo
 -- ni lien. Une seule fois chacun, et jamais en double d'un partenaire coché.
+-- La règle des noms écrits devient commune aux mannequins et aux partenaires
+-- (noms_libres_publics), et mannequins_publics_projet l'utilise aussi.
 -- ===========================================================================
 alter table agenda_projets add column if not exists partenaires_libres text[] not null default '{}'
   check (cardinality(partenaires_libres) <= 40 and length(array_to_string(partenaires_libres, '|')) <= 4000);
+
+-- Règle UNIQUE des noms écrits à la main (mannequins ET partenaires) : espaces retirés,
+-- 80 caractères au plus, une seule fois chacun (majuscules ignorées), jamais un nom déjà
+-- présent dans « exclus » (les noms cochés et affichés).
+create or replace function noms_libres_publics(noms text[], exclus text[])
+returns table(nom text)
+language sql immutable
+set search_path = public
+as $$
+  select e.nom from (
+    select distinct on (lower(left(trim(n), 80))) left(trim(n), 80) as nom
+      from unnest(coalesce(noms, '{}')) as n
+      where length(trim(n)) > 0
+      order by lower(left(trim(n), 80))
+  ) e
+  where lower(e.nom) <> all (select lower(trim(x)) from unnest(coalesce(exclus, '{}')) as x);
+$$;
+
+create or replace function mannequins_publics_projet(ids uuid[], noms text[])
+returns jsonb
+language sql stable security definer
+set search_path = public
+as $$
+  with visibles as (
+    select p.id, p.full_name, p.slug from model_profiles p
+    where p.id = any(ids) and profil_visible_public(p.published, p.mesures_a_reprendre_depuis, p.desactive)
+  )
+  select coalesce(jsonb_agg(x.o order by x.nom), '[]'::jsonb) from (
+    select jsonb_build_object('id', v.id, 'nom', v.full_name, 'slug', v.slug) as o, v.full_name as nom from visibles v
+    union all
+    select jsonb_build_object('id', null, 'nom', l.nom, 'slug', null), l.nom
+      from noms_libres_publics(noms, array(select full_name from visibles)) l
+  ) x;
+$$;
+revoke all on function mannequins_publics_projet(uuid[], text[]) from public, anon, authenticated;
+
+create or replace function partenaires_publics_projet(ids uuid[], noms text[])
+returns jsonb
+language sql stable security definer
+set search_path = public
+as $$
+  with coches as (select pa.id, pa.nom, pa.logo_url from partenaires pa where pa.id = any(ids))
+  select coalesce(jsonb_agg(x.o order by x.nom), '[]'::jsonb) from (
+    select jsonb_build_object('id', c.id, 'nom', c.nom, 'logo_url', c.logo_url) as o, c.nom from coches c
+    union all
+    select jsonb_build_object('id', null, 'nom', l.nom, 'logo_url', null), l.nom
+      from noms_libres_publics(noms, array(select nom from coches)) l
+  ) x;
+$$;
+revoke all on function partenaires_publics_projet(uuid[], text[]) from public, anon, authenticated;
 
 create or replace function agenda_public(seulement_a_venir boolean default false, limite int default 300)
 returns table(
@@ -7215,18 +7267,7 @@ as $$
   select a.id, a.type, a.titre, a.date_debut, a.date_fin, a.ville, a.lieu, a.description,
     a.intervenants,
     case when a.horaires_publics then a.seances else '[]'::jsonb end,
-    coalesce((select jsonb_agg(x.o order by x.nom) from (
-                select jsonb_build_object('id', pa.id, 'nom', pa.nom, 'logo_url', pa.logo_url) as o, pa.nom
-                  from partenaires pa where pa.id = any(a.partenaire_ids)
-                union all
-                select jsonb_build_object('id', null, 'nom', e.nom, 'logo_url', null), e.nom
-                  from (select distinct on (lower(left(trim(n), 80))) left(trim(n), 80) as nom
-                          from unnest(a.partenaires_libres) as n
-                          where length(trim(n)) > 0
-                          order by lower(left(trim(n), 80))) e
-                  where not exists (select 1 from partenaires pa
-                                    where pa.id = any(a.partenaire_ids) and lower(trim(pa.nom)) = lower(e.nom))
-              ) x), '[]'::jsonb),
+    partenaires_publics_projet(a.partenaire_ids, a.partenaires_libres),
     mannequins_publics_projet(a.mannequin_ids, a.mannequins_libres)
   from agenda_projets a
   where a.visible and not a.annule
