@@ -4,7 +4,7 @@
 // (l'appelant est déjà authentifié) — identifie le compte par son jeton
 // Supabase, jamais par une valeur fournie par le navigateur.
 
-const { SUPABASE_URL, verifierUtilisateur, extraireIp, nettoyerAppareil, debutRequete, compteurTentatives } = require('./_commun.js');
+const { SUPABASE_URL, verifierUtilisateur, estAdmin, extraireIp, nettoyerAppareil, debutRequete, compteurTentatives, cookieAccesTableau } = require('./_commun.js');
 
 module.exports = async function handler(req, res) {
   const debut = debutRequete(req, res, true); // POST + clé serveur + jeton (api/_commun.js)
@@ -38,6 +38,8 @@ module.exports = async function handler(req, res) {
     }
 
     await tentatives.succes();
+    // code bon : clé d'accès au tableau de bord (cookie signé, voir api/_commun.js)
+    if (await estAdmin(utilisateur.id)) res.setHeader('Set-Cookie', cookieAccesTableau(utilisateur.id));
     res.status(200).json({ ok: true });
   } catch (e) {
     res.status(500).json({ error: 'Erreur serveur.' });

@@ -145,8 +145,33 @@ function compteurTentatives(ip, identifiant, espace, appareil) {
   };
 }
 
+// ---- Clé d'accès au tableau de bord (13/10/2026, demande de la propriétaire) ----
+// Après une connexion admin complète (mot de passe + code de validation), le serveur pose un
+// cookie signé « ma2m_admin » (HttpOnly : invisible pour les scripts de la page). Le filtre
+// middleware.js ne livre le vrai tableau de bord (et ses scripts) qu'avec ce cookie valide ;
+// sinon, seulement l'écran de connexion. Format : v1.<id du compte>.<expiration en s>.<signature>
+// — signature HMAC-SHA256 avec la clé serveur Supabase (jamais envoyée au navigateur).
+// La vérification est réécrite dans middleware.js (moteur différent : Web Crypto).
+// SameSite=Lax : la clé suit aussi un lien ouvert depuis un e-mail ou WhatsApp (lecture seule).
+const DUREE_ACCES_TABLEAU_S = 12 * 3600;
+function signatureAccesTableau(userId, expiration) {
+  return require('crypto').createHmac('sha256', cleService()).update('tableau|' + userId + '|' + expiration).digest('base64url');
+}
+function cookieAccesTableau(userId) {
+  const expiration = Math.floor(Date.now() / 1000) + DUREE_ACCES_TABLEAU_S;
+  return 'ma2m_admin=v1.' + userId + '.' + expiration + '.' + signatureAccesTableau(userId, expiration) + '; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=' + DUREE_ACCES_TABLEAU_S;
+}
+const COOKIE_ACCES_TABLEAU_EFFACE = 'ma2m_admin=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0';
+// La requête porte-t-elle déjà une clé valide pour ce compte ? (prolongation sans redemander le code)
+function cleAccesTableauValide(req, userId) {
+  const m = String(req.headers.cookie || '').match(/(?:^|;\s*)ma2m_admin=v1\.([0-9a-f-]{36})\.(\d{9,12})\.([A-Za-z0-9_-]{20,})/);
+  if (!m || m[1] !== userId || Number(m[2]) < Date.now() / 1000) return false;
+  const attendue = Buffer.from(signatureAccesTableau(m[1], m[2])), recue = Buffer.from(m[3]);
+  return attendue.length === recue.length && require('crypto').timingSafeEqual(attendue, recue);
+}
+
 module.exports = {
   SUPABASE_URL, cleService, enTetesService, jetonDe, corpsDe,
   verifierUtilisateur, lignesAdmin, estAdmin, creerClientR2, cheminSur, extraireIp, nettoyerAppareil,
-  debutRequete, compteurTentatives
+  debutRequete, compteurTentatives, cookieAccesTableau, cleAccesTableauValide, COOKIE_ACCES_TABLEAU_EFFACE
 };

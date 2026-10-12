@@ -2085,6 +2085,7 @@ a.tdb-menu-item { text-decoration: none; }
 <link rel="stylesheet" href="css/cv-mannequin.css">
 <link href="css/tableau-boutons.css" rel="stylesheet"/>
 <link href="css/tableau-v2.css" rel="stylesheet"/>
+<!-- ZONE-ADMIN : livrée seulement après une connexion admin complète (middleware.js) -->
 <section id="bloc-tableau" class="u-hidden u-pt-0">
 <div class="db-shell">
 <div class="db-main">
@@ -2816,6 +2817,7 @@ document.addEventListener('DOMContentLoaded', function () {
 </div>
 </div>
 </div>
+<!-- /ZONE-ADMIN -->
 <footer class="site-footer">
 <div class="container">
 <div class="footer-bas">
@@ -2832,10 +2834,12 @@ document.addEventListener('DOMContentLoaded', function () {
 <script src="js/emailjs-config.js"></script>
 <script src="js/verrou-defilement.js"></script>
 <script src="js/app.js"></script>
-<script src="js/tailles.js"></script>
-<script src="js/analyse-profil.js"></script>
 <script src="js/confort.js"></script>
 <script src="js/menu.js"></script>
+<script src="js/connexion-tableau.js"></script>
+<!-- ZONE-ADMIN : livrée seulement après une connexion admin complète (middleware.js) -->
+<script src="js/tailles.js"></script>
+<script src="js/analyse-profil.js"></script>
 <script src="js/erreurs-corrigees.js"></script>
 <script src="js/nettoyage-supabase.js"></script>
 <script src="js/messages-candidats.js"></script>
@@ -3397,5 +3401,6 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 
 <script src="js/tableau-v2.js"></script>
+<!-- /ZONE-ADMIN -->
 </body>
 </html>
