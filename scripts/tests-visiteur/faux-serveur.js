@@ -21,6 +21,8 @@ function brancher(page, donnees, journal) {
         const table = url.pathname.split('/')[3];
         if (m !== 'GET' && m !== 'HEAD') {
           journal.push([m, table, url.search, req.postData()]);
+          // insert(…).select().single() : la vraie base renvoie la ligne créée
+          if (m === 'POST' && objet) { const cree = JSON.parse(req.postData() || '{}'); return json({ id: 'nouveau-' + journal.length, ...(Array.isArray(cree) ? cree[0] : cree) }, 201); }
           if (m === 'PATCH') { const maj = JSON.parse(req.postData() || '{}'); (donnees.tables[table] || []).forEach(l => { let ok = true; for (const [k, v] of url.searchParams) if (/^eq\./.test(v) && String(l[k]) !== v.slice(3)) ok = false; if (ok) Object.assign(l, maj); }); }
           return route.fulfill({ status: 204, body: '' });
         }

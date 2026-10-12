@@ -117,7 +117,7 @@ document.getElementById('tb-login-btn').addEventListener('click', async () => {
   const email = document.getElementById('tb-email').value.trim();
   const password = document.getElementById('tb-password').value;
   const msg = document.getElementById('tb-msg');
-  msg.className = 'form-msg err'; msg.style.display = 'block';
+  msg.className = 'form-msg err'; msg.textContent = ''; msg.style.display = 'block';
   try {
     const reponse = await fetch('/api/connexion-protegee', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -191,7 +191,7 @@ document.getElementById('tb-code-validation-valider').addEventListener('click', 
   const code = document.getElementById('tb-code-validation').value;
   const msg = document.getElementById('tb-code-validation-msg');
   if (!code) return;
-  msg.className = 'form-msg err'; msg.style.display = 'block';
+  msg.className = 'form-msg err'; msg.textContent = ''; msg.style.display = 'block';
   const { data: { session } } = await sb.auth.getSession();
   if (!session) { msg.textContent = 'Session expirée — reconnectez-vous.'; return; }
   try {
