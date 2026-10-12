@@ -968,8 +968,10 @@ async function lireParcours(debut, fin, idMannequin) {
 // — fiche publique, CV, Espace mannequin, tableau de bord — sans qu'elle ait rien à saisir.
 // Rien n'est écrit ni effacé dans sa base : la fusion se fait à l'affichage. Une ligne
 // qu'elle a écrite elle-même pour le même projet est remplacée par celle de l'agence :
-// même nom (majuscules, accents, ponctuation et années ignorés) et, si elle a indiqué une
-// année, la même année — « Abidjan Fashion Week 2023 » ne remplace pas l'édition 2026.
+// même nom (majuscules, accents, ponctuation et années ignorés) — ou un nom d'au moins trois
+// mots contenu mot pour mot dans l'autre (« JNCC/ cacao fashion show » = « Cacao Fashion
+// Show ») — et, si elle a indiqué une année, la même année : « Abidjan Fashion Week 2023 »
+// ne remplace pas l'édition 2026. Un nom court (« Shooting ») ne remplace jamais rien.
 function cleProjet(titre) {
   return String(titre || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
     .replace(/\b(19|20)\d{2}\b/g, ' ').replace(/[^a-z0-9]+/g, ' ').trim();
@@ -977,7 +979,10 @@ function cleProjet(titre) {
 function anneesDe(texte) { return String(texte || '').match(/\b(19|20)\d{2}\b/g) || []; }
 function memeProjet(a, b) {
   const x = cleProjet(a.titre || a.nom), y = cleProjet(b.titre || b.nom);
-  if (!x || x !== y) return false;
+  if (!x || !y) return false;
+  const [court, long] = x.length <= y.length ? [x, y] : [y, x];
+  const contenu = court.split(' ').length >= 3 && (' ' + long + ' ').includes(' ' + court + ' ');
+  if (x !== y && !contenu) return false;
   const ansA = anneesDe((a.titre || a.nom) + ' ' + (a.periode || a.annee || ''));
   const ansB = anneesDe((b.titre || b.nom) + ' ' + (b.periode || b.annee || ''));
   return !ansA.length || !ansB.length || ansA.some(an => ansB.includes(an));

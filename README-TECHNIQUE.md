@@ -2091,7 +2091,8 @@ l'agence », en lecture seule). Rien n'est écrit ni effacé dans `model_project
 fait à l'affichage, règle unique dans `js/app.js` : `ma2mExperiencesAgence(id)`,
 `fusionnerExperiences(agence, propres)`, `memeProjet(a, b)` (même nom, majuscules, accents,
 ponctuation et années ignorés, et même année si la mannequin en a indiqué une),
-`experiencePourCv(e)`. Seuls les défilés, shows, shootings, événements et projets comptent
+`experiencePourCv(e)`. Un nom d’au moins trois mots contenu mot pour mot dans l’autre compte aussi
+(« JNCC/ cacao fashion show » = « Cacao Fashion Show »). Seuls les défilés, shows, shootings, événements et projets comptent
 (pas les castings, essayages, formations, masterclasses, rencontres). `ma2mParcours` garde
 ses réponses en mémoire : un seul appel au serveur par page et par période. Une ligne écrite par la
 mannequin pour le même projet est remplacée par celle de l'agence (et signalée dans son Espace,
