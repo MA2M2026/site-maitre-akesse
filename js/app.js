@@ -1787,6 +1787,9 @@ async function uploaderVersR2(modelId, chemin, blob, contentType) {
 }
 async function supprimerDeR2(modelId, chemin) {
   if (!chemin) return;
+  // une version « -w.jpg » a une copie WebP au même nom : elle part avec elle
+  const copieWebp = cheminWebp(chemin);
+  if (copieWebp) await supprimerDeR2(modelId, copieWebp);
   try {
     const jeton = await jetonSessionCourante();
     if (!jeton) return;
@@ -1828,10 +1831,53 @@ async function compresserPhotoOrigine(fichier, coteMax = 2200, qualite = 0.85) {
   if (!compressible || fichier.size < 900 * 1024) return fichier;
   return reduireEnJpeg(fichier, coteMax, qualite);
 }
-// Miniature (grille du Book) : 800 px depuis le 06/10/2026, nom en « -n800.jpg » ;
-// aussi utilisée pour la version moyenne (1400 px).
-function genererMiniature(fichier, coteMax = 800, qualite = 0.75) {
-  return redessinerPhoto(fichier, coteMax, (canvas, fin) => canvas.toBlob(blob => fin(blob || null), 'image/jpeg', qualite));
+// ---- Photos légères en WebP (12/10/2026, demande de la propriétaire) ----
+// Chaque version réduite (miniature 800 px, moyenne 1400 px) est envoyée en JPEG ET, quand
+// le navigateur sait écrire le WebP (Chrome, Firefox, Edge… ; pas Safari), en WebP, environ
+// 30 % plus léger. Le nom du JPEG se termine alors par « -w.jpg » et la copie WebP porte le
+// même nom en « .webp » : aucune colonne de plus dans la base. Les photos d'origine ne
+// changent jamais.
+// Seules les versions réduites (dossiers miniatures/ et moyennes/) portent la marque : une
+// photo d'origine dont le nom finirait par « -w.jpg » n'est jamais concernée.
+const MARQUE_WEBP = /\/(miniatures|moyennes)\/[^/?]*-w\.jpg(\?.*)?$/;
+function cheminWebp(chemin) { return typeof chemin === 'string' && /\/(miniatures|moyennes)\/[^/?]*-w\.jpg$/.test(chemin) ? chemin.replace(/\.jpg$/, '.webp') : null; }
+// Adresse JPEG de secours d'une copie WebP (null si ce n'en est pas une).
+function urlJpegDeSecours(url) { return typeof url === 'string' && /\/(miniatures|moyennes)\/[^/?]*-w\.webp(\?|$)/.test(url) ? url.replace(/\.webp(\?|$)/, '.jpg$1') : null; }
+// Ce navigateur sait-il ÉCRIRE du WebP (fabriquer les copies) ? Safari, non : ses envois
+// restent en JPEG seul, et le tableau de bord les rattrapera depuis un autre navigateur.
+function navigateurEcritWebp() {
+  try { return document.createElement('canvas').toDataURL('image/webp').indexOf('data:image/webp') === 0; } catch (e) { return false; }
+}
+// Adresse à afficher : la copie WebP quand elle existe (sinon l'adresse telle quelle).
+function urlLegere(url) { return typeof url === 'string' && MARQUE_WEBP.test(url) ? url.replace(/\.jpg(\?|$)/, '.webp$1') : url; }
+// Secours : navigateur qui ne lit pas le WebP (très vieux iPhone) ou copie absente → JPEG.
+// (images de la page ; une image préchargée avec new Image() doit appeler urlJpegDeSecours)
+document.addEventListener('error', function (e) {
+  const img = e.target;
+  const secours = img && img.tagName === 'IMG' ? urlJpegDeSecours(img.getAttribute('src')) : null;
+  if (secours) img.src = secours;
+}, true);
+// Version réduite d'une photo (fichier ou blob), envoyée dans « dossier » ; fin : fin du nom
+// avant l'extension (« -n800 » pour la miniature). Renvoie { url, chemin } ou null.
+async function envoyerVersionPhoto(modelId, source, dossier, fin, cote, qualite) {
+  const blobs = await redessinerPhoto(source, cote, (canvas, finir) => canvas.toBlob(jpg => {
+    if (!jpg) { finir(null); return; }
+    canvas.toBlob(webp => finir({ jpg, webp: webp && webp.type === 'image/webp' ? webp : null }), 'image/webp', qualite);
+  }, 'image/jpeg', qualite));
+  if (!blobs) return null;
+  const base = modelId + '/' + dossier + '/' + Date.now() + '-' + suffixeAleatoire() + fin;
+  let avecWebp = false;
+  if (blobs.webp) {
+    try { await uploaderVersR2(modelId, base + '-w.webp', blobs.webp, 'image/webp'); avecWebp = true; }
+    catch (e) { console.warn('Copie WebP non envoyée :', e); }
+  }
+  const chemin = base + (avecWebp ? '-w' : '') + '.jpg';
+  try {
+    return { url: await uploaderVersR2(modelId, chemin, blobs.jpg, 'image/jpeg'), chemin };
+  } catch (e) {
+    if (avecWebp) await supprimerDeR2(modelId, base + '-w.webp');  // pas de copie WebP orpheline
+    throw e;
+  }
 }
 // ================== Catégorie d'une photo : Book ou Lifestyle (07/10/2026) ==================
 // Décision de la propriétaire : classement fait par le site lui-même, SANS IA. On lit la
@@ -1995,17 +2041,13 @@ async function envoyerPhotoBook(modelId, fichierOriginal) {
   const fichier = await compresserPhotoOrigine(fichierConverti);
   const chemin = modelId + '/' + Date.now() + '-' + suffixeAleatoire() + '-' + nomFichierSur(fichier.name);
   const url = await uploaderVersR2(modelId, chemin, fichier, fichier.type || 'image/jpeg');
-  const versions = [['miniature', 'miniatures', '-n800.jpg', 800, 0.75], ['moyenne', 'moyennes', '.jpg', 1400, 0.78]];
+  const versions = [['Miniature', 'miniatures', '-n800', 800, 0.75], ['Moyenne', 'moyennes', '', 1400, 0.78]];
   const resultat = { chemin, url, cheminMiniature: null, urlMiniature: null, cheminMoyenne: null, urlMoyenne: null, categorie };
-  for (const [nom, dossier, fin, cote, qualite] of versions) {
-    const blob = await genererMiniature(fichier, cote, qualite);
-    if (!blob) continue;
-    const cheminVersion = modelId + '/' + dossier + '/' + Date.now() + '-' + suffixeAleatoire() + fin;
-    const cle = nom === 'miniature' ? 'Miniature' : 'Moyenne';
+  for (const [cle, dossier, fin, cote, qualite] of versions) {
     try {
-      resultat['url' + cle] = await uploaderVersR2(modelId, cheminVersion, blob, 'image/jpeg');
-      resultat['chemin' + cle] = cheminVersion;
-    } catch (e) { console.warn('Version ' + nom + ' non envoyée :', e); }
+      const v = await envoyerVersionPhoto(modelId, fichier, dossier, fin, cote, qualite);
+      if (v) { resultat['url' + cle] = v.url; resultat['chemin' + cle] = v.chemin; }
+    } catch (e) { console.warn('Version ' + cle + ' non envoyée :', e); }
   }
   return resultat;
 }

@@ -237,7 +237,7 @@
     const ids = [...new Set(projets.flatMap(p => (p.mannequins || []).map(m => m.id).filter(Boolean)))];
     if (ids.length && typeof sb !== 'undefined' && sb) {
       const { data } = await sb.rpc('photos_couverture_mannequins', { ids });
-      (data || []).forEach(c => { photos[c.model_id] = c.url; });
+      (data || []).forEach(c => { photos[c.model_id] = urlLegere(c.url); });
     }
     // Mois affiché au départ : le plus récent qui a des activités (sinon le mois en cours).
     const recents = projets.map(p => cleMois(p.date_fin || p.date_debut)).sort();
