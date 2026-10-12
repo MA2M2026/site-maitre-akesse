@@ -39,8 +39,14 @@
       observateur.unobserve(e.target);
       e.target.classList.add('pm-vu');
       if (e.target.quandVisible) e.target.quandVisible();
+      // entrée terminée : on retire .pm-entree pour rendre aux survols leurs propres transitions
+      setTimeout(() => e.target.classList.remove('pm-entree'), 1800 + (parseInt(getComputedStyle(e.target).getPropertyValue('--delai'), 10) || 0));
     });
   }, { threshold: 0.15, rootMargin: '0px 0px -8% 0px' }) : null;
+  // Avant de redessiner une zone : ses éléments pas encore vus ne sont plus observés.
+  function oublier(zone) {
+    if (observateur) zone.querySelectorAll('.pm-entree:not(.pm-vu)').forEach(el => observateur.unobserve(el));
+  }
   function mettreEnScene(elements, quandVisible) {
     elements.forEach(el => {
       if (quandVisible) el.quandVisible = () => quandVisible(el);
@@ -120,6 +126,7 @@
 
   function dessinerChiffres(duMois, mannequins) {
     const zone = $('parcours-chiffres');
+    oublier(zone);
     const villes = new Set(duMois.map(p => p.ville).filter(Boolean));
     const pl = (n, un, plusieurs) => (n > 1 ? plusieurs : un);
     const cases = [[duMois.length, pl(duMois.length, T('activité', 'activity'), T('activités', 'activities'))]]
@@ -159,6 +166,7 @@
 
   function dessinerVisages(mannequins) {
     const mur = $('parcours-visages');
+    oublier(mur);
     mur.textContent = '';
     const montres = tousLesVisages ? mannequins : mannequins.slice(0, VISAGES_MAX);
     montres.forEach((m, i) => mur.appendChild(carteVisage(m, i)));
@@ -184,6 +192,7 @@
 
   function dessinerProjets(duMois) {
     const zone = $('parcours-projets');
+    oublier(zone);
     zone.innerHTML = duMois.map((p) => {
       const visages = (p.mannequins || []);
       return '<article class="parcours-projet">'

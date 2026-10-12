@@ -86,10 +86,20 @@ const cas = [
       const parcoursFiche = await p.evaluate(() => (document.getElementById('fiche-parcours') || {}).innerText || '');
       const n = (parcoursFiche.match(/d[ée]fil[ée] abidjan/gi) || []).length;
       // « Avec MA2M » ne répète plus la liste des projets : seulement des chiffres
-      if (await p.evaluate(() => !!document.querySelector('#fiche-avec-ma2m .fiche-projet') || !document.querySelector('#fiche-avec-ma2m .fiche-ma2m-chiffre'))) manquants.push('résumé chiffré « Avec MA2M »');
+      const resume = await p.evaluate(() => ({ liste: !!document.querySelector('#fiche-avec-ma2m .fiche-projet'),
+        chiffres: [...document.querySelectorAll('#fiche-avec-ma2m .fiche-ma2m-chiffre')].map(c => [Number(c.querySelector('strong').textContent), c.querySelector('span').textContent.trim()]) }));
+      if (resume.liste || !resume.chiffres.length || resume.chiffres.some(([n, l]) => !(n > 0) || !l)) manquants.push('résumé chiffré « Avec MA2M » (' + JSON.stringify(resume) + ')');
       if (n !== 2) manquants.push('projet de l’agence dans le parcours de la fiche (' + n + ' fois au lieu de 2 : édition 2026 de l’agence + édition 2023 de la mannequin)');
     }
     if (!gabarit.pied || gabarit.annee !== String(new Date().getFullYear())) manquants.push('bas de page');
+    if (page === 'index.html') {
+      await p.click('#menuBtn'); await p.waitForTimeout(1500);
+      await p.click('#menuOverlay .nav-links a[href$="services.html"]');
+      await p.waitForTimeout(80);
+      const pendant = await p.evaluate(() => ({ ouvert: document.getElementById('menuOverlay').classList.contains('active'), appui: !!document.querySelector('#menuOverlay a.appui[href$="services.html"]') }));
+      await p.waitForURL(/services\.html/, { timeout: 3000 }).catch(() => {});
+      if (!pendant.ouvert || !pendant.appui || !/services\.html/.test(p.url())) manquants.push('appui sur une rubrique du menu (' + JSON.stringify(pendant) + ' → ' + p.url() + ')');
+    }
     const ok = !manquants.length && !errs.length;
     console.log(`${ok ? '✓' : '❌ ÉCHEC'} ${page} (${vp.width}px)${manquants.length ? ' | manque : ' + manquants.join(', ') : ''} | erreurs : ${JSON.stringify(errs)}`);
     if (!ok) process.exitCode = 1;

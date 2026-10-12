@@ -971,7 +971,7 @@ function experienceVersBase(exp){
 // Toutes ses expériences : projets de l'agence + les siennes qui ne les répètent pas (js/app.js).
 // Sert au CV, au niveau, au récapitulatif et à l'analyse du profil.
 function toutesExperiences(){ return fusionnerExperiences(state.experiencesAgence, state.experiences); }
-function estDoublonAgence(e){ return state.experiencesAgence.some(function(a){ return memeProjet(e, a); }); }
+function estDoublonAgence(e){ return estDoublonDe(e, state.experiencesAgence); }
 function doublonsExperiences(){ return state.experiences.filter(estDoublonAgence); }
 
 // Projets réalisés avec l'agence (agenda) : affichés ici sans pouvoir être modifiés — c'est
@@ -1021,7 +1021,9 @@ function stepExperience(){
     '<p class="sub p20-20">Défilés, shootings, publicités, castings… Un seul projet suffit pour publier votre profil — vous pourrez toujours en ajouter d’autres plus tard. Remplissez seulement ce dont vous vous souvenez : aucune case n’est obligatoire.</p>' +
     '<button class="btn ghost small p20-12" id="addExp">+ Ajouter une expérience</button>' +
     blocExperiencesAgence() +
-    (nbDoublons ? '<p class="exp-doublon">'+nbDoublons+(nbDoublons>1 ? ' lignes que vous aviez écrites répètent' : ' ligne que vous aviez écrite répète')+' un projet ajouté par l’agence : '+(nbDoublons>1 ? 'elles sont masquées et n’apparaissent nulle part. ' : 'elle est masquée et n’apparaît nulle part. ')+'<button type="button" class="exp-remove" id="supprDoublons">Supprimer '+(nbDoublons>1 ? 'ces doublons' : 'ce doublon')+'</button></p>' : '') +
+    (nbDoublons ? '<div class="exp-doublon">'+nbDoublons+(nbDoublons>1 ? ' lignes que vous aviez écrites répètent' : ' ligne que vous aviez écrite répète')+' un projet ajouté par l’agence : '+(nbDoublons>1 ? 'elles sont masquées et n’apparaissent nulle part' : 'elle est masquée et n’apparaît nulle part')+' :<ul>' +
+      doublonsExperiences().map(function(e){ return '<li>'+echapperHtml([e.type, e.nom, e.annee].filter(Boolean).join(' · '))+'</li>'; }).join('') +
+      '</ul><button type="button" class="exp-remove" id="supprDoublons">Supprimer '+(nbDoublons>1 ? 'ces doublons' : 'ce doublon')+'</button></div>' : '') +
     '<div id="expList">'+listHtml+'</div>' +
     '<div class="actions-row"><button class="btn ghost" data-goto="3">← Retour</button><button class="btn primary" id="save4">Continuer</button></div>';
 }
@@ -1290,10 +1292,15 @@ function bindExperienceHandlers(){
     const doublons = doublonsExperiences();
     if (!doublons.length || !confirm('Supprimer '+doublons.length+(doublons.length>1 ? ' lignes en double' : ' ligne en double')+' ? Les projets ajoutés par l’agence restent.')) return;
     this.disabled = true;
-    for (const exp of doublons) {
-      if (await Store.removeExperience(exp.id)) s.experiences.splice(s.experiences.indexOf(exp), 1);
+    try {
+      for (const exp of doublons) {
+        if (await Store.removeExperience(exp.id)) s.experiences.splice(s.experiences.indexOf(exp), 1);
+      }
+    } catch (e) {
+      toast('Suppression interrompue : vérifiez votre connexion et réessayez.', true);
+    } finally {
+      render(); // l'écran reflète toujours ce qui a vraiment été supprimé
     }
-    render();
   });
   document.querySelectorAll('[data-rm]').forEach(function(b){ b.addEventListener('click', async function(){
     const i = parseInt(b.dataset.rm,10); const exp = s.experiences[i];

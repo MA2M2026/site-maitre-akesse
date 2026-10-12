@@ -37,7 +37,7 @@ html body .menu-overlay .nav-links li { position: relative; border: 0 !important
 html body .menu-overlay.active .nav-links li { opacity: 1; filter: none; transform: none !important; transition: opacity 0.7s ease, transform 1s cubic-bezier(.16,1,.3,1), filter 0.8s ease !important; transition-delay: calc(0.3s + 0.06s * var(--rang, 1)) !important; }
 /* grand filigrane « MA2M » qui traverse lentement le fond à l'ouverture (12/10/2026) */
 html body .menu-overlay::after {
-  content: 'MA2M'; position: absolute; right: -4vw; bottom: -3vw; z-index: 0; pointer-events: none;
+  content: 'MA2M'; position: fixed; right: -4vw; bottom: -3vw; z-index: 0; pointer-events: none;
   font: 400 clamp(8rem, 38vw, 26rem)/0.8 var(--display); letter-spacing: -0.02em;
   color: transparent; -webkit-text-stroke: 1px rgba(213,84,104,0.16);
   opacity: 0; transform: translateX(18%); transition: opacity 0.3s ease, transform 0.3s ease;

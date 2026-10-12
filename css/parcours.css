@@ -124,7 +124,7 @@
 
   /* visages : éclosion, anneau rouge qui s'étend, pastille qui rebondit */
   .parcours-visage.pm-entree { transform: scale(0.6) rotate(-10deg); }
-  .parcours-visage.pm-vu { transform: none; transition: opacity 0.6s ease, transform 0.9s cubic-bezier(.34,1.56,.64,1), filter 0.6s ease; transition-delay: var(--delai, 0ms); }
+  .parcours-visage.pm-entree.pm-vu { transform: none; transition: opacity 0.6s ease, transform 0.9s cubic-bezier(.34,1.56,.64,1), filter 0.6s ease; transition-delay: var(--delai, 0ms); }
   .parcours-visage.pm-vu .parcours-visage-photo { animation: pm-anneau 1.4s ease-out both; animation-delay: calc(var(--delai, 0ms) + 0.35s); }
   @keyframes pm-anneau { 0% { box-shadow: 0 0 0 0 rgba(213,84,104,0.75); } 100% { box-shadow: 0 0 0 16px rgba(213,84,104,0); } }
   .parcours-visage .parcours-visage-badge { transform: scale(0); }
