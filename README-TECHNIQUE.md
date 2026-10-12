@@ -2120,3 +2120,10 @@ pas le surcharger ; la compcard ne liste pas les expériences (seulement leur no
   montrés deux fois au visiteur ; le détail reste dans « Parcours ».
 - Espace mannequin : les lignes qui répètent un projet de l'agence sont masquées, avec un bouton
   « Supprimer ces doublons » (action de la mannequin, avec confirmation).
+
+## SonarQube : programmes d'essai déclarés comme essais (12/10/2026)
+`.sonarcloud.properties` : `scripts/tests-visiteur/**` exclu du code du site et déclaré en
+`sonar.tests`. Leurs alertes (port tiré au hasard, démarrage du serveur local) faisaient
+descendre les notes de fiabilité et de sécurité à C alors qu'ils ne sont jamais envoyés aux
+visiteurs. `js/tableau-v2.js` : `ouvrirFicheSure()` signale au journal une panne d'ouverture
+de fiche au lieu de la laisser passer inaperçue.
