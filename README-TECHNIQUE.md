@@ -2138,10 +2138,12 @@ Regroupements faits pour supprimer les derniers blocs recopiés signalés par So
 - Actualités / Événements : `afficherMediasPublication`, `brancherRedaction`,
   `envoyerPhotosPublication`, `enregistrerPhotosPublication`, `supprimerPublication`
   (`js/publications.js`, constante `PUBLICATION` dans chaque page). Essai : `test-publications.js`.
-- CV de la mannequin : `css/cv-mannequin.css` (Espace + tableau de bord, rendu identique au pixel).
+- CV de la mannequin : `css/cv-mannequin.css` (Espace + tableau de bord, rendu identique au pixel ;
+  règles jamais utilisées retirées).
 - `js/app.js` : `reduireEnJpeg` (sur `redessinerPhoto`), `messageAccesRefuse`,
   `remplirTailleMinimale` ; `js/messages-candidats.js` : `entreeMessage` (textes identiques).
-- `api/_commun.js` : `debutRequete`, `compteurTentatives` (blocage / échec / réussite),
-  `debutR2`, `repondreR2`, `TYPES_IMAGES`. Comparaison ancien / nouveau sur 41 cas simulés :
+- `api/_commun.js` : `debutRequete`, `compteurTentatives` (blocage / échec / réussite).
+  `api/_r2.js` (à part, pour que les fonctions de connexion n'embarquent pas les modules du
+  stockage) : `debutR2`, `repondreR2`, `TYPES_IMAGES`. Comparaison ancien / nouveau sur 41 cas simulés :
   mêmes réponses et mêmes appels à la base. Seul changement : le message d'erreur 500 de
   creer-admin / supprimer-mannequin ne cite plus le nom de la variable secrète.

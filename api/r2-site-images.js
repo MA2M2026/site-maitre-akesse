@@ -16,14 +16,15 @@
 // R2_BUCKET_NAME, R2_PUBLIC_URL, SUPABASE_SERVICE_ROLE_KEY.
 
 
-const { verifierUtilisateur, estAdmin, cheminSur, debutR2, repondreR2, TYPES_IMAGES } = require('./_commun.js');
+const { verifierUtilisateur, estAdmin, cheminSur } = require('./_commun.js');
+const { debutR2, repondreR2, TYPES_IMAGES } = require('./_r2.js');
 // 'boutique' : photos des produits de la Marketplace (29/09/2026).
 // 'couverture' : vidéo de couverture en haut de toutes les pages (04/10/2026).
 // 'video-accueil' : grand espace vidéo dans le corps de la page d'accueil (05/10/2026).
 const CATEGORIES_AUTORISEES = ['actualites', 'evenements', 'partenaires', 'responsable', 'boutique', 'couverture', 'video-accueil'];
 const CATEGORIES_VIDEO = ['couverture', 'video-accueil'];
 
-// Formats d'image acceptés : TYPES_IMAGES (api/_commun.js).
+// Formats d'image acceptés : TYPES_IMAGES (api/_r2.js).
 // Vidéos (MP4 / WebM) : uniquement pour la couverture et la vidéo de l'accueil — jamais exécutées par un
 // navigateur, servies avec leur propre type par le relais /book-photos.
 const TYPES_VIDEO = /^video\/(mp4|webm)$/i;
@@ -34,7 +35,7 @@ const TYPES_VIDEO = /^video\/(mp4|webm)$/i;
 const TAILLE_MAX_IMAGE = 15 * 1024 * 1024, TAILLE_MAX_VIDEO = 25 * 1024 * 1024, TAILLE_MAX_VIDEO_ACCUEIL = 250 * 1024 * 1024;
 
 module.exports = async function handler(req, res) {
-  const debut = debutR2(req, res); // POST + variables d'environnement (api/_commun.js)
+  const debut = debutR2(req, res); // POST + variables d'environnement (api/_r2.js)
   if (!debut) return;
   const jeton = debut.jeton;
   const { action, categorie, chemin, contentType, taille } = debut.corps;
@@ -71,7 +72,7 @@ module.exports = async function handler(req, res) {
     }
 
     const tailleMax = videoPermise ? (categorie === 'video-accueil' ? TAILLE_MAX_VIDEO_ACCUEIL : TAILLE_MAX_VIDEO) : TAILLE_MAX_IMAGE;
-    await repondreR2(res, action, chemin, typeFichier, taille, tailleMax); // api/_commun.js
+    await repondreR2(res, action, chemin, typeFichier, taille, tailleMax); // api/_r2.js
   } catch (e) {
     console.error('r2-site-images :', e);
     res.status(500).json({ error: e && e.message ? e.message : 'Erreur inattendue.' });

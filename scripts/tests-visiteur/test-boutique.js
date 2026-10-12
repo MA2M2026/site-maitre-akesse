@@ -6,7 +6,7 @@ const PORT = String(9000 + Math.floor(Math.random() * 90));
 (async () => {
   const srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..') }); await new Promise(r => setTimeout(r, 800));
   const b = await chromium.launch();
-  const attendu = { index: ['Collection', true], produit: ['', true], cgv: ['', false], commande: ['', false], suivi: ['Suivi', false], gestion: ['Gestion', false] };
+  const attendu = { index: ['Collection', true], produit: ['Collection', true], cgv: ['', false], commande: ['', false], suivi: ['Suivi', false], gestion: ['Gestion', false] };
   for (const [pg, [actif, panier]] of Object.entries(attendu)) {
     const c = await b.newContext({ viewport: { width: 390, height: 844 } }); await c.route(/^https?:\/\/(?!127\.0\.0\.1)/, r => r.abort());
     const p = await c.newPage(); const e = []; p.on('pageerror', x => e.push(x.message));

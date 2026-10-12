@@ -16,8 +16,6 @@
 .mcv-tagline{font-size:.6rem;letter-spacing:.28em;color:var(--or-clair);text-align:center;padding:16px 10px 4px;text-transform:uppercase}
 .mcv-name{padding:2px 22px 6px}
 .mcv-nom{display:block;font-size:1.7rem;font-weight:600;letter-spacing:.04em;color:var(--ivoire)}
-.mcv-prenom{display:block;font-family:var(--serif);font-style:italic;font-weight:500;font-size:2rem;color:var(--or-clair);margin-top:-2px}
-.mcv-role{padding:0 22px 14px;font-size:.68rem;letter-spacing:.18em;color:var(--texte-clair);text-transform:uppercase}
 .mcv-divider{height:1px;background:linear-gradient(90deg,var(--bordeaux-2),transparent);margin:0 22px 16px}
 .mcv-info-list{list-style:none;margin:0;padding:0 22px;display:flex;flex-direction:column;gap:14px}
 .mcv-info-list li{display:flex;gap:11px;align-items:flex-start}
@@ -41,9 +39,7 @@
 .mcv-sec-subtile h4 svg{width:13px;height:13px;color:#8a8378}
 .mcv-sec-subtile h4::after{display:none}
 .mcv-sec-subtile .mcv-profile-text{font-size:.78rem;font-style:italic;color:#8a8378}
-.mcv-profil-row{display:flex;gap:20px;align-items:flex-start}
 .mcv-profile-text{flex:1;font-size:.86rem;line-height:1.7;color:#2a2622;margin:0}
-.mcv-side-tag{border-left:1px solid #ddd0b8;padding-left:14px;display:flex;flex-direction:column;gap:5px;font-size:.6rem;letter-spacing:.16em;color:#6b6560;text-transform:uppercase;white-space:nowrap;flex-shrink:0}
 .mcv-two-col{display:flex;gap:0 26px}
 .mcv-two-col>ul{flex:1;min-width:0}
 @media(max-width:480px){.mcv-two-col{flex-direction:column}}
@@ -71,6 +67,5 @@
 .mcv-qr{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
 .mcv-qr img{width:132px;height:132px;background:#fff;border:1px solid #ddd0b8;padding:6px}
 .mcv-qr span{font-size:.62rem;color:#6b6560;letter-spacing:.03em}
-.mcv-portfolio .cap{font-size:.7rem;color:#6b6560;line-height:1.4;max-width:20ch}
 .mcv-portfolio .soc{display:flex;align-items:center;gap:8px;font-size:.76rem;color:#2a2622}
 .mcv-portfolio .soc svg{width:15px;height:15px;color:var(--bordeaux-2)}

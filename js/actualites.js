@@ -246,7 +246,7 @@ document.getElementById('red-enregistrer-btn').addEventListener('click', async (
   msg.className = 'form-msg ok'; msg.textContent = fichiers.length ? T(`Envoi de ${fichiers.length} photo(s) en cours…`, `Uploading ${fichiers.length} photo(s)…`) : T('Enregistrement…', 'Saving…'); msg.style.display = 'block';
 
   const id = redactionIdEnCours || crypto.randomUUID();
-  const urls = await envoyerPhotosPublication('actualites', id, fichiers);
+  const urls = await envoyerPhotosPublication(PUBLICATION, id, fichiers);
 
   if (redactionIdEnCours) {
     const { error: erreurUpdate } = await sbAdmin.from('actualites').update({ titre, categorie: categorie || null, commentaire, video_url: videoUrl }).eq('id', id);

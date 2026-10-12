@@ -36,11 +36,21 @@ const PORT = String(9100 + Math.floor(Math.random() * 90));
     await p.$eval('#news-modal-modifier-btn', x => x.click()); await p.waitForTimeout(500);
     await p.fill('#red-titre', 'Titre modifié'); await p.$eval('#red-enregistrer-btn', x => x.click()); await p.waitForTimeout(1200);
     r.modifie = journal.some(j => j[0] === 'PATCH' && j[1] === table && /Titre modifi/.test(j[3] || ''));
-    // supprimer depuis la rédaction
-    await p.evaluate(() => (document.querySelector('.news-card, .event-card, [data-index]') || {}).click && document.querySelector('.news-card, .event-card, [data-index]').click()); await p.waitForTimeout(1000);
+    const suppressions = () => journal.filter(j => j[0] === 'DELETE' && j[1] === table).length;
+    const ouvrirCarte = () => p.evaluate(() => (document.querySelector('.news-card, .event-card, [data-index]') || {}).click && document.querySelector('.news-card, .event-card, [data-index]').click());
+    // supprimer depuis la rédaction (bouton « 🗑 Supprimer » de la fenêtre de rédaction)
+    await ouvrirCarte(); await p.waitForTimeout(1000);
+    await p.$eval('#news-modal-modifier-btn', x => x.click()); await p.waitForTimeout(500);
+    let avant = suppressions();
+    await p.$eval('#red-supprimer-btn', x => x.click()); await p.waitForTimeout(1200);
+    r.supprimeRedaction = suppressions() > avant;
+    // supprimer depuis la fenêtre de lecture
+    await p.goto('http://127.0.0.1:' + PORT + '/' + page); await p.waitForTimeout(2500);
+    await ouvrirCarte(); await p.waitForTimeout(1000);
+    avant = suppressions();
     await p.$eval('#news-modal-supprimer-btn', x => x.click()); await p.waitForTimeout(1200);
-    r.supprime = journal.some(j => j[0] === 'DELETE' && j[1] === table);
-    const ok = (creer ? r.publie : true) && r.modifie && r.supprime && !errs.length;
+    r.supprimeLecture = suppressions() > avant;
+    const ok = (creer ? r.publie : true) && r.modifie && r.supprimeRedaction && r.supprimeLecture && !errs.length;
     console.log((ok ? '✓' : '❌ ÉCHEC') + ' rédaction ' + page + ' ' + JSON.stringify(r) + ' | erreurs : ' + JSON.stringify(errs));
     if (!ok) process.exitCode = 1;
     await p.context().close();

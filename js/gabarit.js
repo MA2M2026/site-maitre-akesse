@@ -81,7 +81,8 @@
 
   // Liens vers les réseaux sociaux (page Contact, 12/10/2026 : avant, recopiés dans la page)
   placeHolders('reseaux').forEach(function (el, n) {
-    el.innerHTML = RESEAUX.join('').replace(/ig-grad-pied/g, 'ig-grad-r' + n);
+    // ordre de la page Contact : TikTok, Facebook, Instagram, YouTube, WhatsApp
+    el.innerHTML = [1, 2, 0, 3, 4].map(function (i) { return RESEAUX[i]; }).join('').replace(/ig-grad-pied/g, 'ig-grad-r' + n);
     el.setAttribute('data-rempli', '');
   });
 

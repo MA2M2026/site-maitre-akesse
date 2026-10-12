@@ -11,7 +11,8 @@
 // R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, R2_PUBLIC_URL.
 
 
-const { verifierUtilisateur, estAdmin, cheminSur, debutR2, repondreR2, TYPES_IMAGES } = require('./_commun.js');
+const { verifierUtilisateur, estAdmin, cheminSur } = require('./_commun.js');
+const { debutR2, repondreR2, TYPES_IMAGES } = require('./_r2.js');
 
 // Autorisation : le propriétaire de la photo (mannequin agissant sur son
 // propre model_id) OU un admin — même règle que le déclencheur SQL
@@ -24,7 +25,7 @@ async function autoriser(jeton, modelId) {
   return { ok: false, code: 403, message: "Vous n'avez pas le droit d'agir sur ces photos." };
 }
 
-// Formats d'image acceptés : TYPES_IMAGES (api/_commun.js).
+// Formats d'image acceptés : TYPES_IMAGES (api/_r2.js).
 // Taille maximale d'un envoi (audit du 05/10/2026, accord de la propriétaire le 06/10) :
 // les photos sont réduites par l'appareil avant l'envoi (1 à 2 Mo), cette limite ne gêne
 // donc jamais un envoi normal. La taille annoncée est inscrite dans la signature de
@@ -33,7 +34,7 @@ async function autoriser(jeton, modelId) {
 const TAILLE_MAX = 15 * 1024 * 1024;
 
 module.exports = async function handler(req, res) {
-  const debut = debutR2(req, res); // POST + variables d'environnement (api/_commun.js)
+  const debut = debutR2(req, res); // POST + variables d'environnement (api/_r2.js)
   if (!debut) return;
   const jeton = debut.jeton;
   const { action, modelId, chemin, contentType, taille } = debut.corps;
@@ -70,7 +71,7 @@ module.exports = async function handler(req, res) {
       return;
     }
 
-    await repondreR2(res, action, chemin, typeFichier, taille, TAILLE_MAX); // api/_commun.js
+    await repondreR2(res, action, chemin, typeFichier, taille, TAILLE_MAX); // api/_r2.js
   } catch (e) {
     console.error('r2-presigner :', e);
     res.status(500).json({ error: e && e.message ? e.message : 'Erreur inattendue.' });

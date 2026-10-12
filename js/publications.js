@@ -75,9 +75,10 @@ function brancherRedaction(ouvrirRedaction, choisir) {
   document.getElementById('redaction-overlay').addEventListener('click', (e) => { if (e.target.id === 'redaction-overlay') fermerRedaction(); });
 }
 
-// Envoie les photos choisies (HEIC converties) dans site/<dossier>/<id>/ ; une photo qui
+// Envoie les photos choisies (HEIC converties) dans site/<t.dossier>/<id>/ ; une photo qui
 // échoue est sautée. Renvoie [{ url, chemin }].
-async function envoyerPhotosPublication(dossier, id, fichiers) {
+async function envoyerPhotosPublication(t, id, fichiers) {
+  const dossier = t.dossier;
   const urls = [];
   for (const fichierOriginal of fichiers) {
     const fichier = await convertirSiHeic(fichierOriginal);
@@ -98,8 +99,8 @@ async function enregistrerPhotosPublication(t, id, urls, modification) {
     await sbAdmin.from(t.tablePhotos).insert({ [t.colonne]: id, url: photo.url, chemin: photo.chemin });
   }
   if (modification && urls.length) {
-    const { data: actuelle } = await sbAdmin.from(t.table).select('image_url').eq('id', id).single();
-    if (!actuelle.image_url) await sbAdmin.from(t.table).update({ image_url: urls[0].url }).eq('id', id);
+    const { data: actuelle } = await sbAdmin.from(t.table).select('image_url').eq('id', id).maybeSingle();
+    if (actuelle && !actuelle.image_url) await sbAdmin.from(t.table).update({ image_url: urls[0].url }).eq('id', id);
   }
 }
 
