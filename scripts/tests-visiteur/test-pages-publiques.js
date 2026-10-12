@@ -16,7 +16,9 @@ const tables = {
     { id: 'x1', model_id: 'a1', type_projet: 'Défilé', titre: 'Défilé Abidjan', periode: '2026', created_at: '2026-09-01T10:00:00Z' },
     { id: 'x2', model_id: 'a1', type_projet: 'Défilé', titre: 'DEFILE ABIDJAN', periode: '2026', created_at: '2026-09-02T10:00:00Z' },
     { id: 'x3', model_id: 'a1', type_projet: 'Défilé', titre: 'défilé abidjan 2026', periode: '2026', created_at: '2026-09-03T10:00:00Z' },
-    { id: 'x4', model_id: 'a1', type_projet: 'Shooting', titre: 'Shooting Marque Perso', periode: '2025', created_at: '2026-08-01T10:00:00Z' }],
+    { id: 'x4', model_id: 'a1', type_projet: 'Shooting', titre: 'Shooting Marque Perso', periode: '2025', created_at: '2026-08-01T10:00:00Z' },
+    // même nom mais autre année : une autre édition, gardée
+    { id: 'x5', model_id: 'a1', type_projet: 'Défilé', titre: 'Défilé Abidjan', periode: '2023', created_at: '2026-08-02T10:00:00Z' }],
   bandeau_annonce: [], instagram_posts_cache: [], mot_responsable: [], admins: []
 };
 const cas = [
@@ -82,7 +84,7 @@ const cas = [
     if (page.startsWith('mannequin.html')) {
       const parcoursFiche = await p.evaluate(() => (document.getElementById('fiche-parcours') || {}).innerText || '');
       const n = (parcoursFiche.match(/d[ée]fil[ée] abidjan/gi) || []).length;
-      if (n !== 1) manquants.push('projet de l’agence dans le parcours de la fiche (' + n + ' fois)');
+      if (n !== 2) manquants.push('projet de l’agence dans le parcours de la fiche (' + n + ' fois au lieu de 2 : édition 2026 de l’agence + édition 2023 de la mannequin)');
     }
     if (!gabarit.pied || gabarit.annee !== String(new Date().getFullYear())) manquants.push('bas de page');
     const ok = !manquants.length && !errs.length;

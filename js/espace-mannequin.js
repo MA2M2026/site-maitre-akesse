@@ -425,7 +425,7 @@ function profilProToDb(pp){
   return {
     availability: pp.disponibilite || null,
     model_types: pp.modelTypes, languages: pp.langues.join(', '),
-    niveau_mannequin: pp.niveauMannequin ? niveauControle(pp.niveauMannequin, state.experiences, pp.anneesExperience) : null
+    niveau_mannequin: pp.niveauMannequin ? niveauControle(pp.niveauMannequin, toutesExperiences(), pp.anneesExperience) : null
   };
 }
 
@@ -745,7 +745,7 @@ function stepComplete(n){
   if (n===1) return !!(state.identite.nomComplet && state.identite.dateNaissance && state.identite.sexe && (state.instagram || state.sansInstagram));
   if (n===2) return !!(state.physique.taille && state.physique.poids);
   if (n===3) return !!state.formation.niveau;
-  if (n===4) return state.experiences.length>0 || state.experiencesAgence.length>0;
+  if (n===4) return toutesExperiences().length>0;
   if (n===5) return !!(state.photos.principale && state.photos.book.length);
   return false;
 }
@@ -952,6 +952,10 @@ const MODEL_TYPES = [['catwalk','Défilé'],['photo','Photo'],['publicite','Publ
 const LANGUES_DISPONIBLES = ['Français','Anglais','Espagnol','Autre'];
 const NIVEAUX_MANNEQUIN = ['New Face','Professionnel']; // « Amateur » retiré le 06/10/2026
 
+// Toutes ses expériences : projets de l'agence + les siennes qui ne les répètent pas (js/app.js).
+// Sert au CV, au niveau, au récapitulatif et à l'analyse du profil.
+function toutesExperiences(){ return fusionnerExperiences(state.experiencesAgence, state.experiences); }
+
 // Projets réalisés avec l'agence (agenda) : affichés ici sans pouvoir être modifiés — c'est
 // l'agence qui les tient à jour ; ils apparaissent d'office sur la fiche et le CV.
 function blocExperiencesAgence(){
@@ -967,7 +971,7 @@ function stepExperience(){
   var listHtml = state.experiences.length===0
     ? '<p class="exp-empty">Aucune expérience ajoutée pour le moment. Cliquez sur « + Ajouter une expérience ».</p>'
     : state.experiences.map(function(e,i){
-        var doublon = state.experiencesAgence.some(function(a){ return memeProjet(e.nom, a.nom); });
+        var doublon = state.experiencesAgence.some(function(a){ return memeProjet(e, a); });
         return '<div class="exp-card" data-exp="'+i+'">' +
         (doublon ? '<p class="exp-doublon">Ce projet a déjà été ajouté par l’agence : cette ligne n’apparaît plus sur votre fiche ni sur votre CV. Vous pouvez la supprimer.</p>' : '') +
         '<div class="exp-fields">' +
@@ -1061,7 +1065,7 @@ function stepRecap(){
     ['Identité', (d.nomComplet||'—')+' · '+niveauNormalise(state.profilPro.niveauMannequin, state.profilPro.anneesExperience)+' · '+(d.sexe==='femme'?'Femme':d.sexe==='homme'?'Homme':'—'), 1],
     ['Informations physiques', (ph.taille||'—')+' cm · '+(ph.poids||'—')+' kg', 2],
     ['Formation', f.niveau||'—', 3],
-    ['Expérience professionnelle', state.experiences.length+' expérience(s) enregistrée(s)', 4],
+    ['Expérience professionnelle', toutesExperiences().length+' expérience(s) enregistrée(s)', 4],
     ['Photos', state.photos.book.length+' photo(s) dans le Book', 5],
   ];
   return '<h2>Récapitulatif</h2><p class="sub">Vérifiez vos informations avant l’envoi</p>' +
@@ -1575,7 +1579,7 @@ function pointsARemplir(){
   const photos = ph.book.filter(function(x){ return !x.ecartee; }).map(function(x, i){
     return { id: x.id, principale: meme(x, ph.principale), photo_couverture: meme(x, ph.couverture), created_at: new Date(Date.UTC(2000, 0, 1) + i * 1000).toISOString() };
   });
-  const pts = ma2mPointsParBloc(ma2mAnalyserProfil(ligne, photos, state.experiences.length, true));
+  const pts = ma2mPointsParBloc(ma2mAnalyserProfil(ligne, photos, toutesExperiences().length, true));
   const ids = { etudes: 'f-niveau', langues: 'langues', experiences: 'addExp', profil: 'uPrincipale', couverture: 'uCouverture', identiques: 'uCouverture', book: 'book' };
   const champs = {};
   MA2M_BLOCS.forEach(function(k){
@@ -1774,7 +1778,7 @@ function donneesCvDepuisEtat(){
     nomComplet: d.nomComplet, dateNaissance: d.dateNaissance, villeNaissance: d.villeNaissance,
     lieuNaissance: d.lieuNaissance, nationalite: d.nationalite, ville: d.ville, quartier: d.quartier,
     citation: state.citation, bio: state.bio, instagram: state.instagram,
-    niveauMannequin: niveauControle(state.profilPro.niveauMannequin, state.experiences, state.profilPro.anneesExperience),
+    niveauMannequin: niveauControle(state.profilPro.niveauMannequin, toutesExperiences(), state.profilPro.anneesExperience),
     mannequinId: currentUser.id,
     photoCvUrl: state.photos.photoCv && state.photos.photoCv.urlPleine || '',
     compcardPhotos: [1,2,3,4,5].map(function(n){
@@ -1782,7 +1786,7 @@ function donneesCvDepuisEtat(){
       return ph ? (ph.urlPleine||ph.url) : null;
     }),
     photosBook: (state.photos.principale ? [state.photos.principale] : []).concat(state.photos.book).map(function(ph){ return ph.urlPleine||ph.url; }),
-    physique: p, formation: f, competences: state.competences, experiences: fusionnerExperiences(state.experiencesAgence, state.experiences), sexe: d.sexe
+    physique: p, formation: f, competences: state.competences, experiences: toutesExperiences(), sexe: d.sexe
   };
 }
 
@@ -1809,13 +1813,13 @@ function ficheDataDepuisEtat(){
     profil: {
       full_name: d.nomComplet, city: d.ville || 'Abidjan', category: d.sexe,
       years_experience: state.profilPro.anneesExperience,
-      niveau_mannequin: niveauControle(state.profilPro.niveauMannequin, state.experiences, state.profilPro.anneesExperience),
+      niveau_mannequin: niveauControle(state.profilPro.niveauMannequin, toutesExperiences(), state.profilPro.anneesExperience),
       height_cm: p.taille, weight_kg: p.poids, chest_cm: p.poitrine, waist_cm: p.tourTaille,
       hips_cm: p.hanches, inseam_cm: p.entrejambe, shoe_size: p.pointure,
       carnation: p.carnation, clothing_size: p.tailleVet, eye_color: p.yeux, hair_color: p.cheveux
     },
     photos: state.photos.book.map(function(ph){ return { url: ph.urlPleine||ph.url, compcard_ordre: ph.compcardOrdre }; }),
-    projets: state.experiences || []
+    projets: toutesExperiences()
   };
 }
 
@@ -1836,7 +1840,7 @@ function openCompcard(){
     '<div class="compcard-model">' +
       '<div class="ccm-header"><img class="ccm-logo" src="assets/logo-header.png" alt="Maître Akesse Model Management"><div class="ccm-title">COMPCARD</div></div>' +
       '<div class="ccm-photo-grid"><div class="ccm-cover">'+(cover?'<img src="'+(cover.urlPleine||cover.url)+'" alt="Photo plein pied compcard">':'<div class="cc-empty-photo">PHOTO PLEIN PIED</div>')+'</div><div class="ccm-side-grid">'+sidePhotos+'</div></div>' +
-      '<div class="ccm-body"><h1>'+echapperHtml(d.nomComplet||'')+'</h1><div class="ccm-meta">'+echapperHtml(libelleNiveauPublic(niveauControle(state.profilPro.niveauMannequin, state.experiences, state.profilPro.anneesExperience)))+'  ·  '+echapperHtml(d.ville||'Abidjan')+'</div>' +
+      '<div class="ccm-body"><h1>'+echapperHtml(d.nomComplet||'')+'</h1><div class="ccm-meta">'+echapperHtml(libelleNiveauPublic(niveauControle(state.profilPro.niveauMannequin, toutesExperiences(), state.profilPro.anneesExperience)))+'  ·  '+echapperHtml(d.ville||'Abidjan')+'</div>' +
       '<div class="ccm-measures">' +
         '<div><span>TAILLE</span><b>'+(p.taille||'—')+' cm</b></div><div><span>POIDS</span><b>'+(p.poids||'—')+' kg</b></div><div><span>POITRINE</span><b>'+(masquer?'—':(p.poitrine||'—')+' cm')+'</b></div>' +
         '<div><span>TOUR DE TAILLE</span><b>'+(masquer?'—':(p.tourTaille||'—')+' cm')+'</b></div><div><span>BASSIN</span><b>'+(masquer?'—':(p.hanches||p.entrejambe||'—')+' cm')+'</b></div><div><span>POINTURE</span><b>'+(p.pointure||'—')+'</b></div>' +
