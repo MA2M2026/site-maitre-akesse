@@ -222,12 +222,19 @@
     // une erreur « dans la page » à une ligne qui n'existe pas vient d'un code ajouté par
     // le navigateur (traduction automatique, extension), pas du site.
     if (e.filename && e.filename.split('#')[0] === location.href.split('#')[0] && e.lineno > lignesDeLaPage()) return;
+    // Ni message, ni fichier, ni détail (journal du 12/10, navigateur PHX) : le code du site
+    // donne toujours au moins un message ; cette « erreur inconnue » vient du navigateur.
+    if (!e.message && !e.filename && !e.error) return;
     signaler('Erreur JavaScript', e.message || 'Erreur inconnue', pileJs);
   }, true);
 
   window.addEventListener('unhandledrejection', function (e) {
     const r = e.reason;
     if (codeEtranger((r && r.stack) || '') || codeEtranger(String(r && r.message || r))) return;
+    // Journal du 08/10 : fichier vidéo devenu illisible sur le téléphone pendant son
+    // allègement (iPhone : « The I/O read operation failed »). Le formulaire le rattrape déjà
+    // (vidéo envoyée telle quelle, signalée « Vidéo non allégée ») : pas une 2e alerte.
+    if (/I\/O read operation failed|requested file could not be read/i.test(String(r && r.message || r))) return;
     signaler('Erreur JavaScript', r && r.message ? r.message : String(r), r && r.stack);
   });
 
@@ -236,11 +243,16 @@
   // (gstatic / translate), statistiques Google envoyées à www.google.com/g/collect
   // (Google Analytics fonctionne quand même), styles ajoutés par la traduction ou par
   // l'extension Dark Reader, code d'une extension.
-  const CSP_ETRANGER = /translate\.google|translate\.googleapis|gstatic\.com\/_\/translate|www\.google\.com\/(g|ccm)\/collect|google\.[a-z.]+\/ads|doubleclick\.net|darkreader/i;
+  const CSP_ETRANGER = /translate\.google|translate\.googleapis|gstatic\.com\/_\/translate|www\.google\.com\/(g|ccm)\/collect|google\.[a-z.]+\/ads|doubleclick\.net|darkreader|connect\.facebook\.net/i;
+  // Navigateurs qui ajoutent eux-mêmes des styles et du code aux pages (journal du 12/10 :
+  // Brave sur iPhone, navigateur PHX des téléphones TECNO/Infinix) : leurs styles en ligne
+  // sans fichier d'origine ne viennent pas du site (aucun style en ligne dans son code).
+  const NAVIGATEUR_QUI_INJECTE = /\bBrave\b|\bPHX\//.test(navigator.userAgent || '');
   document.addEventListener('securitypolicyviolation', function (e) {
     const directive = e.effectiveDirective || e.violatedDirective || '';
     if (CSP_ETRANGER.test((e.blockedURI || '') + ' ' + (e.sourceFile || '')) || codeEtranger(e.sourceFile || '')) return;
     if (/^style-src/.test(directive) && (e.blockedURI === 'inline' || !e.blockedURI)) {
+      if (NAVIGATEUR_QUI_INJECTE && !e.sourceFile) return;
       // un style en ligne : attendre un instant que la traduction / l'extension se montre
       setTimeout(function () {
         if (!pageModifieeParLeNavigateur()) signaler('Bloqué par la sécurité', directive + ' → script/style en ligne', (e.sourceFile ? e.sourceFile + ':' + e.lineNumber : '') + (e.sample ? ' · ' + e.sample.slice(0, 60) : ''));

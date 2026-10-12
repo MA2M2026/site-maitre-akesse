@@ -1,0 +1,13 @@
+/* Zoom automatique des iPhone (Journal MA2M) : un champ dont le texte fait moins de 16 px fait
+   zoomer la page toute seule quand on le touche (constaté : recherche et taille minimale de la
+   page Mannequins, champs de l'Espace mannequin). Sur téléphone, tablette et écran tactile, tous
+   les champs passent à 16 px ; un ordinateur sans écran tactile garde les tailles d'origine.
+   Importé par css/style.css ET css/espace-mannequin-correctifs.css (l'Espace ne charge pas
+   style.css) : une seule copie de la règle. */
+@media (max-width: 1024px), (pointer: coarse) {
+  input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}

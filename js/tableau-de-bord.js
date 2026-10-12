@@ -412,6 +412,9 @@ const REGLES_ERREURS = [
   [/^\[(Script|Style|Média) non chargé/, 'connexion', 'info', "un élément du site n'a pas pu être téléchargé (connexion faible ou coupée) : une partie de la page a pu mal fonctionner pour ce visiteur.", 'Rien à faire si c’est isolé.'],
   [/^\[Bibliothèque non chargée/, 'connexion', 'info', "un outil indispensable n'a pas pu se charger : la page n'a affiché aucune donnée (connexion probablement coupée).", 'Rien à faire si c’est isolé ; si plusieurs visiteurs sont touchés, envoyez la fiche à Claude.'],
   [/^\[Réseau injoignable/, 'connexion', 'info', "la connexion du visiteur a coupé pendant un échange avec le serveur.", 'Rien à faire.'],
+  // journal du 12/10 : « status 0 » = la demande n'a jamais atteint le serveur (connexion coupée)
+  [/"status": ?0\b/, 'connexion', 'info', "la connexion du visiteur a coupé pendant un envoi.", 'Rien à faire si c’est isolé.'],
+  [/délai dépassé/i, 'connexion', 'surveiller', "le serveur a mis trop longtemps à répondre (connexion très lente du visiteur, ou serveur surchargé).", 'Si plusieurs visiteurs sont touchés le même jour, envoyez la fiche à Claude.'],
   [/Failed to fetch|NetworkError|Load failed|network error/i, 'connexion', 'info', "la connexion du visiteur a coupé pendant un échange avec le serveur.", 'Rien à faire.'],
   [/^\[Requête en échec\].*→ 400/, 'code', 'corriger', "la base de données a refusé une demande (information manquante ou mal formée).", 'Envoyez la fiche à Claude.'],
   [/^\[Requête en échec\].*→ 429/, 'connexion', 'surveiller', "trop de demandes en peu de temps : le serveur a demandé de patienter.", 'Si ça se répète, envoyez la fiche à Claude.'],
@@ -505,14 +508,19 @@ function erreursVisibles() {
 
 // Nettoyage automatique des erreurs corrigées (liste dans js/erreurs-corrigees.js) :
 // toute occurrence antérieure à la date de correction est effacée du journal.
+// Une ligne du journal est-elle une erreur déjà corrigée ? (motif trouvé, survenue avant la
+// correction, et — si la règle le précise — venant de ce navigateur seulement : « navigateur »)
+function estErreurCorrigee(e, corrigees) {
+  const texte = (e.message || '') + '\n' + (e.pile || '') + '\n' + (e.user_agent || '');
+  return corrigees.some(c => c.motif && texte.indexOf(c.motif) !== -1 && new Date(e.created_at) < new Date(c.corrige_le)
+    && (!c.navigateur || (e.user_agent || '').indexOf(c.navigateur) !== -1));
+}
 async function nettoyerErreursCorrigees(erreurs) {
   const corrigees = window.MA2M_ERREURS_CORRIGEES || [];
   if (!corrigees.length) return { restantes: erreurs, nb: 0 };
   const aEffacer = [];
   const restantes = erreurs.filter(e => {
-    const texte = (e.message || '') + '\n' + (e.pile || '') + '\n' + (e.user_agent || '');
-    const regle = corrigees.find(c => c.motif && texte.indexOf(c.motif) !== -1 && new Date(e.created_at) < new Date(c.corrige_le));
-    if (regle) { aEffacer.push(e.id); return false; }
+    if (estErreurCorrigee(e, corrigees)) { aEffacer.push(e.id); return false; }
     return true;
   });
   for (let i = 0; i < aEffacer.length; i += 100) {
