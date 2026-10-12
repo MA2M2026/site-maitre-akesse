@@ -197,8 +197,8 @@ body .tdb-landing-carte .tdb-landing-num {
   border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 2px 0 #000;
 }
-body .tdb-landing-carte h3 { margin-bottom: 0.7rem; }
-body .tdb-landing-carte p { padding-bottom: 1.2rem; color: #b9aca6; }
+body .tdb-landing-carte .tdb-landing-titre { margin-bottom: 0.7rem; }
+body .tdb-landing-carte .tdb-landing-texte { padding-bottom: 1.2rem; color: #b9aca6; }
 
 @media (prefers-reduced-motion: reduce) {
   body .tdb-landing-carte, body .tdb-menu-item, body #bloc-tableau .btn { transition: none; }

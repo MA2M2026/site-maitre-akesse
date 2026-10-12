@@ -329,7 +329,6 @@ async function enregistrerMesuresSupp(p){
   }).eq('id', currentUser.id);
   // On ne bloque pas le reste de l'étape, mais la mannequin est prévenue.
   if (error) { console.warn('Mensurations complémentaires non enregistrées :', error.message); toast('Épaules, bras et cou : pas encore enregistrés, réessayez un peu plus tard', true); }
-  return true;
 }
 // Instagram obligatoire (décision de la propriétaire, 07/10/2026) : un compte, ou la case
 // « Je n'ai pas Instagram » cochée. Renvoie false (et prévient la mannequin) si rien n'est indiqué.
@@ -372,13 +371,12 @@ function lireParentFormulaire(){
 // Enregistré à part (table contacts_parents) pour ne jamais bloquer le reste de l'étape
 // si la base ne l'a pas encore (Extension 129).
 async function enregistrerParent(){
-  if (!estMineureLe(state.identite.dateNaissance)) return true;
+  if (!estMineureLe(state.identite.dateNaissance)) return;
   const { error } = await sb.from('contacts_parents').upsert({
     model_id: currentUser.id, parent_nom: [state.parent.civilite, state.parent.nom].filter(Boolean).join(' ') || null, parent_telephone: state.parent.telephone || null,
     parent_email: state.parent.email || null, mis_a_jour: new Date().toISOString()
   });
   if (error) { console.warn('Contacts du parent non enregistrés :', error.message); toast('Les contacts de votre parent n’ont pas pu être enregistrés : réessayez un peu plus tard', true); }
-  return true;
 }
 function lireInstagramFormulaire(){
   const sans = !!(document.getElementById('f-sans-instagram') || {}).checked;
@@ -396,7 +394,13 @@ async function enregistrerCivilite(){
   state.civilite = val('f-civilite') || state.civilite;
   const { error } = await sb.from('model_profiles').update({ civilite: state.civilite || null }).eq('id', currentUser.id);
   if (error) console.warn('Civilité non enregistrée :', error.message);
-  return true;
+}
+// Compléments de l'étape « identité », enregistrés à part : ils ne bloquent jamais l'étape
+// (en cas d'échec, la mannequin est prévenue par un message).
+async function enregistrerComplementsIdentite(){
+  await enregistrerSansInstagram();
+  await enregistrerParent();
+  await enregistrerCivilite();
 }
 // Case « Je n'ai pas Instagram » : colonne sans_instagram (Extension 126), enregistrée à part
 // pour ne jamais bloquer le reste de l'étape si la base ne l'a pas encore.
@@ -404,7 +408,6 @@ async function enregistrerSansInstagram(){
   const { error } = await sb.from('model_profiles').update({ sans_instagram: !!state.sansInstagram }).eq('id', currentUser.id);
   // On ne bloque pas le reste de l'étape, mais la mannequin est prévenue.
   if (error) { console.warn('Case « pas d’Instagram » non enregistrée :', error.message); toast('La case « Je n’ai pas Instagram » n’a pas pu être enregistrée : réessayez un peu plus tard', true); }
-  return true;
 }
 function formationToDb(f){
   return { niveau_etude: f.niveau || null, etablissement: f.etablissement || null, formation_particuliere: f.particuliere || null, formation_mannequin: f.mannequin || null };
@@ -976,8 +979,8 @@ function stepExperience(){
   const pp = state.profilPro;
   // Lignes qui répètent un projet de l'agence : masquées ici aussi (12/10/2026), avec un
   // bouton pour les supprimer d'un coup — elles ne s'affichent déjà plus nulle part ailleurs.
-  var nbDoublons = doublonsExperiences().length;
-  var listHtml = state.experiences.length===nbDoublons
+  const nbDoublons = doublonsExperiences().length;
+  const listHtml = state.experiences.length===nbDoublons
     ? (state.experiencesAgence.length ? '' : '<p class="exp-empty">Aucune expérience ajoutée pour le moment. Cliquez sur « + Ajouter une expérience ».</p>')
     : state.experiences.map(function(e,i){
         if (estDoublonAgence(e)) return '';
@@ -1180,15 +1183,19 @@ function lireFicheEvenementFormulaire(){
 // Enregistre aussi les informations « événements » saisies à l'étape physique. Ne bloque
 // jamais l'étape : en cas d'échec, un message le signale et la suite reste possible.
 async function enregistrerFicheEvenementDepuisFormulaire(){
-  if (!document.getElementById('f-tiktok')) return true;
+  if (!document.getElementById('f-tiktok')) return;
   const fe = lireFicheEvenementFormulaire();
   const vide = !fe.tailleHaut && !fe.tailleBas && !fe.regime && !fe.tiktok && !fe.facebook && fe.droitImage == null;
   const avant = state.ficheEvenement;
   const dejaVide = !avant.tailleHaut && !avant.tailleBas && !avant.regime && !avant.tiktok && !avant.facebook && avant.droitImage == null;
   state.ficheEvenement = fe;
-  if (vide && dejaVide) return true; // rien de saisi : pas de ligne vide en base
+  if (vide && dejaVide) return; // rien de saisi : pas de ligne vide en base
   await Store.saveFicheEvenement(fe);
-  return true;
+}
+// Compléments de l'étape « physique », même principe : jamais bloquants.
+async function enregistrerComplementsPhysique(physique){
+  await enregistrerMesuresSupp(physique);
+  await enregistrerFicheEvenementDepuisFormulaire();
 }
 
 function lirePhysiqueFormulaire(){
@@ -1225,7 +1232,8 @@ function bindWizard(){
     Object.assign(s.identite, identiteFormulaire);
     s.bio = val('f-bio'); s.citation = val('f-citation');
     btn.disabled = true; btn.textContent = 'Enregistrement…';
-    const ok = await Store.saveBlock(Object.assign(identiteToDb(s.identite), { bio: s.bio||null, instagram: s.instagram||null, citation: s.citation||null })) && await enregistrerSansInstagram() && await enregistrerParent() && await enregistrerCivilite();
+    const ok = await Store.saveBlock(Object.assign(identiteToDb(s.identite), { bio: s.bio||null, instagram: s.instagram||null, citation: s.citation||null }));
+    if (ok) await enregistrerComplementsIdentite();
     if (ok) { toast('Enregistré'); goto(2); } else { btn.disabled=false; btn.textContent='Enregistrer'; }
   });
 
@@ -1233,7 +1241,8 @@ function bindWizard(){
     const btn = this;
     Object.assign(s.physique, lirePhysiqueFormulaire());
     btn.disabled = true; btn.textContent = 'Enregistrement…';
-    const ok = await Store.saveBlock(physiqueToDb(s.physique)) && await enregistrerMesuresSupp(s.physique) && await enregistrerFicheEvenementDepuisFormulaire();
+    const ok = await Store.saveBlock(physiqueToDb(s.physique));
+    if (ok) await enregistrerComplementsPhysique(s.physique);
     if (ok) { toast('Enregistré'); goto(3); } else { btn.disabled=false; btn.textContent='Enregistrer'; }
   });
 
@@ -1738,8 +1747,8 @@ function bindBlockPage(k){
       payload = formationToDb(s.formation);
     }
     ok = await Store.saveBlock(payload);
-    if (ok && k==='physique') ok = await enregistrerMesuresSupp(s.physique) && await enregistrerFicheEvenementDepuisFormulaire();
-    if (ok && k==='identite') ok = await enregistrerSansInstagram() && await enregistrerParent() && await enregistrerCivilite();
+    if (ok && k==='physique') await enregistrerComplementsPhysique(s.physique);
+    if (ok && k==='identite') await enregistrerComplementsIdentite();
     if (ok) { btn.textContent='✓ Enregistré'; btn.classList.add('saved'); setTimeout(function(){ toast('Bloc « '+k+' » enregistré'); }, 400); }
     else { btn.disabled=false; btn.textContent='Enregistrer'; }
   });

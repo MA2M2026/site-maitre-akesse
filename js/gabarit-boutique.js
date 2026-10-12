@@ -13,12 +13,12 @@
     });
   }
   function lien(href, texte, actif, classe) {
-    var classes = [actif ? 'actif' : '', classe || ''].join(' ').trim();
+    const classes = [actif ? 'actif' : '', classe || ''].join(' ').trim();
     return '<a href="' + href + '"' + (classes ? ' class="' + classes + '"' : '') + '>' + texte + '</a>';
   }
 
   remplacer('haut', function (el) {
-    var actif = el.dataset.actif || '';
+    const actif = el.dataset.actif || '';
     return '<header class="site-header-v2">\n' +
       '  <div class="container header-v2-inner">\n' +
       '    <a href="/index.html" class="logo-img-header"><img src="/assets/logo-header.png" alt="Maître Akesse Model Management"></a>\n' +

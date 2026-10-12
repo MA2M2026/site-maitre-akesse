@@ -91,8 +91,9 @@ a.agenda-puce:hover, a.agenda-puce:focus-visible { border-color: var(--titre-cla
 .cal-grille-semaine .cal-jour { min-height: 22rem; border-top: 0; }
 .cal-grille-semaine .cal-jour:first-child { border-left: 0; }
 .cal-jour:hover, .cal-jour:focus-visible { background: rgba(255,255,255,0.06); outline: none; }
-.cal-jour.hors-mois .cal-num { opacity: 0.3; }
-.cal-jour.passe .cal-num { opacity: 0.6; }
+/* Jours estompés assez lisibles (contraste ≥ 4,5:1, Lighthouse 12/10/2026) */
+.cal-jour.hors-mois .cal-num, .cal-jour.hors-mois.week-end .cal-num { color: #8a8580; }
+.cal-jour.passe .cal-num { opacity: 0.78; }
 .cal-num { font-family: var(--texte); font-size: 1.55rem; font-weight: 400; line-height: 1; color: var(--titre-clair); align-self: center; padding: 0.35rem 0.5rem; border-radius: 10px; min-width: 2.6rem; text-align: center; margin-bottom: 0.35rem; }
 .cal-jour.week-end .cal-num { color: var(--bordeaux-clair); }
 .cal-jour.aujourdhui .cal-num { background: var(--bordeaux); color: #fff; opacity: 1; }

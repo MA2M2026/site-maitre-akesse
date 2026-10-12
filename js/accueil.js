@@ -45,9 +45,11 @@ async function chargerPhotosHero() {
   const CLE_CACHE = 'ma2m_hero_photos';
 
 
-  const afficher = (img, url) => {
+  const afficher = (img, url, rang) => {
     if (!url) return;
     const preload = new Image();
+    // la première photo est la plus grande image visible : chargée en priorité (Lighthouse, 12/10/2026)
+    if (rang === 0) preload.fetchPriority = 'high';
     preload.onload = () => { img.src = url; };
     preload.src = url;
   };
@@ -56,7 +58,7 @@ async function chargerPhotosHero() {
   try { cache = JSON.parse(localStorage.getItem(CLE_CACHE) || '[]'); } catch (e) {}
 
   if (cache.length) {
-    melanger(cache).slice(0, imagesHero.length).forEach((url, i) => afficher(imagesHero[i], url));
+    melanger(cache).slice(0, imagesHero.length).forEach((url, i) => afficher(imagesHero[i], url, i));
   }
 
   if (!sb) return;
@@ -74,7 +76,7 @@ async function chargerPhotosHero() {
   const urls = melanger(Array.from(parMannequin.values()));
   if (urls.length) {
     try { localStorage.setItem(CLE_CACHE, JSON.stringify(urls)); } catch (e) {}
-    if (!cache.length) melanger(urls).slice(0, imagesHero.length).forEach((url, i) => afficher(imagesHero[i], url));
+    if (!cache.length) melanger(urls).slice(0, imagesHero.length).forEach((url, i) => afficher(imagesHero[i], url, i));
   }
 }
 void chargerPhotosHero();

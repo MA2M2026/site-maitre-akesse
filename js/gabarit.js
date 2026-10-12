@@ -92,7 +92,9 @@
     }).map(function (p) {
       return '        <a href="' + p[0] + '.html">' + (EN_G ? p[4] : p[3]) + '</a>';
     }).join('\n');
-    el.innerHTML = '\n  <div class="container">\n    <div class="footer-grille">\n      <div>\n' +
+    // Titre de structure invisible (12/10/2026) : sur les pages sans titre de niveau 2, les
+    // titres h3 du bas de page « sautaient » un niveau (relevé par Lighthouse et le W3C).
+    el.innerHTML = '\n  <div class="container">\n    <h2 class="u-lecteur-ecran">' + (EN_G ? 'Site information' : 'Informations du site') + '</h2>\n    <div class="footer-grille">\n      <div>\n' +
       '        <h3>Maître Akesse Model Management</h3>\n' +
       '        <p>' + (EN_G ? 'Every great journey begins with a dream. Ours begins in Abidjan.' : 'Chaque grand parcours commence par un rêve. Le nôtre commence à Abidjan.') + '</p>\n' +
       '      </div>\n      <div>\n        <h3>Navigation</h3>\n' + nav + '\n      </div>\n      <div>\n        <h3>Contact</h3>\n' +

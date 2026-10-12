@@ -214,7 +214,7 @@
   MP.majCompteurPanier = function (secouer) {
     if (secouer) document.querySelectorAll('[data-mp-compte-panier]').forEach(el => {
       el.classList.remove('mp-secousse');
-      void el.offsetWidth;
+      el.getBoundingClientRect();  // relance l'animation
       el.classList.add('mp-secousse');
     });
     const n = MP.lirePanier().reduce((s, l) => s + l.quantite, 0);

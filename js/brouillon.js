@@ -81,7 +81,7 @@
     // Restauration (dans l'ordre de la page, pour que les listes qui dépendent d'un
     // autre choix — commune, classe, taille… — soient remplies avant d'être relues).
     const brouillon = lire(cle);
-    var dernier = brouillon && brouillon.d;
+    const dernier = brouillon && brouillon.d;
     if (!brouillon || !brouillon.d || Date.now() - brouillon.t > DUREE_MAX) {
       if (brouillon) supprimer(cle);
       restauration = false;

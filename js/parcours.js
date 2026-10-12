@@ -226,7 +226,7 @@
     $('parcours-contenu').hidden = !duMois.length;
     // relance l'animation d'apparition à chaque changement de mois
     const scene = $('parcours-scene');
-    scene.classList.remove('joue'); void scene.offsetWidth; scene.classList.add('joue');
+    scene.classList.remove('joue'); scene.getBoundingClientRect(); scene.classList.add('joue');  // relance l'animation
   }
 
   async function demarrer() {
