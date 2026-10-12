@@ -49,7 +49,7 @@
 
   remplacer('panier', function () {
     return '<div class="mp-voile-panier" id="mp-voile-panier"></div>\n' +
-      '<aside class="mp-panier" id="mp-panier" aria-hidden="true" aria-label="Panier">\n' +
+      '<aside class="mp-panier" id="mp-panier" aria-hidden="true" inert aria-label="Panier">\n' +
       '  <div class="mp-panier-tete">\n' +
       '    <h2>Panier<span class="oeil">.</span></h2>\n' +
       '    <button type="button" class="mp-fermer" id="mp-panier-fermer">Fermer ✕</button>\n' +

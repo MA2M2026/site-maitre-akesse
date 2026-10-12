@@ -2185,3 +2185,26 @@ apparaissait puis disparaissait en laissant un espace noir).
   (`signalerErreur('video', …)`), pour connaître la cause exacte sur l'appareil concerné.
 - Essai visiteur `scripts/tests-visiteur/test-video-accueil.js` : téléphone, tablette,
   ordinateur, lecture refusée, erreur passagère, fichier illisible, anglais.
+
+## Diagnostic de nuit du 12/10/2026 (outils extérieurs)
+Contrôles : SonarQube Cloud, Lighthouse (le moteur de Google PageSpeed, lancé en local car le
+quota gratuit de l'API PageSpeed était épuisé), validateur W3C (`vnu.jar`, en local : le site
+validator.w3.org bloque les envois en série), Mozilla Observatory, SSL Labs.
+- **W3C** : plus aucune erreur sur les 48 pages (seul `google5acb001b6b29c80f.html`, fichier de
+  vérification Google, doit rester tel quel). Images sans adresse → GIF transparent `data:` ;
+  titres de structure invisibles `.u-lecteur-ecran` (css/style.css) pour l'ordre h1 → h2 → h3 ;
+  tableau de bord : `meta charset` en tête, blocs `<style>` du `<body>` déplacés dans le `<head>`,
+  cartes d'accueil sans h3/p dans les boutons (`.tdb-landing-titre` / `.tdb-landing-texte`).
+- **Accessibilité** : titre invisible en tête du bas de page commun (js/gabarit.js) ; bouton
+  « sélection » ≥ 32 px sur téléphone ; jours estompés de l'agenda lisibles (css/agenda.css) ;
+  panier de la boutique `inert` quand il est fermé, focus géré à l'ouverture/fermeture
+  (js/marketplace-commun.js, testé dans test-boutique.js) ; liens de la bulle Quill avec `href`.
+- **SonarQube** : remarques bloquantes S3516 (fonctions qui renvoyaient toujours `true` dans
+  js/espace-mannequin.js → `enregistrerComplementsIdentite` / `enregistrerComplementsPhysique`,
+  jamais bloquantes) et critiques S3504/S3735 corrigées. Essai visiteur
+  `test-espace-enregistrement.js` (étapes identité d'une mineure puis mensurations).
+- **Vitesse** : le canvas du reflet de l'intro (js/faisceau.js) n'est plus réalloué à chaque
+  image ; première photo de l'accueil chargée en priorité (`fetchPriority`).
+- **Restent, hors de notre main** : Observatory A+ (110) — l'intégrité SRI est impossible pour les
+  scripts Google Analytics et Sentry (leur contenu change) ; SSL Labs A+ sur une adresse de
+  Vercel et A sur l'autre (réglage de Vercel) ; pages volontairement non indexées (noindex).
