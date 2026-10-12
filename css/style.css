@@ -551,6 +551,9 @@ section { padding: 5rem 0; }
 .form-msg { font-size: 0.9rem; padding: 0.8rem 1rem; margin-top: 1rem; display: none; border-radius: 2px; }
 .form-msg.ok { display: block; background: rgba(30,91,37,0.16); color: #8fd39a; border: 1px solid rgba(30,91,37,0.4); }
 .form-msg.err { display: block; background: rgba(154,28,44,0.16); color: #f0a1ac; border: 1px solid rgba(154,28,44,0.4); }
+/* Un message encore vide (pendant la vérification de la connexion ou du code) ne montre pas
+   son cadre : avant, un petit trait rouge apparaissait sous le champ (12/10/2026). */
+.form-msg:empty { display: none !important; }
 
 .onglets { display: flex; gap: 0.5rem; margin-bottom: 2rem; }
 
@@ -755,6 +758,10 @@ section { padding: 5rem 0; }
   border-top: 1px solid var(--gris-clair); padding-top: 1.5rem; font-size: 0.78rem; color: var(--texte-doux);
   display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.6rem 1.5rem;
 }
+/* Bas de page réduit à la seule ligne © (tableau de bord, boutique, mot de passe) : un seul
+   trait, celui du haut du bas de page — avant, deux traits l'un au-dessus de l'autre (12/10/2026). */
+.site-footer .container > .footer-bas:first-child { border-top: 0; padding-top: 0; }
+.site-footer:has(.container > .footer-bas:first-child) { padding-top: 1.5rem; }
 .footer-bas a { color: inherit; }
 .footer-bas a:hover { color: var(--bordeaux-clair); }
 
