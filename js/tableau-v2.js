@@ -217,8 +217,15 @@
     var conf = { candidature: ['b2-candidatures', 'casting'], recruteur: ['b2-recruteurs', 'recruteur'], contact: ['b2-contacts', null], blocage: ['b3b-acces-bloques', null] }[type];
     if (!conf) return false;
     ouvrir(conf[0]);
-    if (conf[1] && id && typeof window.ouvrirFicheDossier === 'function') window.ouvrirFicheDossier(conf[1], id);
+    if (conf[1] && id && typeof window.ouvrirFicheDossier === 'function') ouvrirFicheSure(conf[1], id);
     return true;
+  }
+  // Ouvre la fiche d'un dossier ; une panne éventuelle est signalée au journal au lieu de
+  // passer inaperçue (remarque SonarQube, 12/10/2026).
+  function ouvrirFicheSure(source, id) {
+    Promise.resolve(window.ouvrirFicheDossier(source, id)).catch(function (e) {
+      if (window.signalerErreur) window.signalerErreur('Tableau de bord : ouverture d’une fiche', (e && e.message) || String(e));
+    });
   }
   // Quand une autre partie du tableau de bord ouvre une rubrique (cloche, liens internes…).
   function suivreOrigine() {
@@ -528,7 +535,7 @@
       var b = e.target.closest('.v2-res');
       if (!b) return;
       ouvrir(b.dataset.page);
-      if (b.dataset.ficheSource && typeof window.ouvrirFicheDossier === 'function') window.ouvrirFicheDossier(b.dataset.ficheSource, b.dataset.ficheId);
+      if (b.dataset.ficheSource && typeof window.ouvrirFicheDossier === 'function') ouvrirFicheSure(b.dataset.ficheSource, b.dataset.ficheId);
       input.value = ''; res.innerHTML = ''; res.classList.remove('ouvert');
     });
     document.addEventListener('click', function (e) { if (!champ.contains(e.target)) res.classList.remove('ouvert'); });
