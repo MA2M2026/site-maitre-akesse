@@ -46,6 +46,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // rang de chaque rubrique, une fois toutes les rubriques en place : apparition en cascade
     // (css/menu.css)
     liste.querySelectorAll('li').forEach((li, n) => li.style.setProperty('--rang', n + 1));
+    // Appui sur une rubrique (12/10/2026, « on doit sentir de l'animation ») : le voile rouge se
+    // remplit (classe « appui », css/menu.css), puis la page s'ouvre 0,25 s plus tard. Clic avec
+    // Ctrl/Cmd, nouvel onglet ou mouvement réduit demandé : comportement normal, sans attente.
+    const sansMouvement = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // Écouté en phase de capture : passe AVANT la fermeture du menu attachée à chaque lien,
+    // pour que le menu reste ouvert le temps de voir l'effet.
+    liste.addEventListener('click', (e) => {
+      const a = e.target.closest('a[href]');
+      if (!a || sansMouvement || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || a.target === '_blank') return;
+      const cible = new URL(a.href, location.href);
+      if (cible.origin !== location.origin || (cible.pathname === location.pathname && cible.search === location.search)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      a.classList.add('appui');
+      setTimeout(() => { location.href = a.href; }, 250);
+    }, true);
   }
 
   // Bandeau « Intégrer l'agence » en bas des pages (demande de la propriétaire, 06/10/2026) :
@@ -106,7 +122,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // resté ouvert ou mal positionné). On le referme systématiquement à chaque
   // retour sur la page pour repartir d'un état propre.
   window.addEventListener('pageshow', (evenement) => {
-    if (evenement.persisted) fermerMenu();
+    if (!evenement.persisted) return;
+    fermerMenu();
+    overlay.querySelectorAll('a.appui').forEach(a => a.classList.remove('appui')); // effet d'appui effacé
   });
 });
 

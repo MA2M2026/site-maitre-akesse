@@ -1009,8 +1009,9 @@ async function ma2mExperiencesAgence(idMannequin) {
 }
 // Projets de l'agence d'abord, puis les expériences de la mannequin qui ne les répètent pas.
 // Les deux listes peuvent être au format model_projects (titre, periode) ou CV (nom, annee).
+function estDoublonDe(e, agence) { return (agence || []).some(a => memeProjet(e, a)); }
 function fusionnerExperiences(agence, propres) {
-  return (agence || []).concat((propres || []).filter(e => !(agence || []).some(a => memeProjet(e, a))));
+  return (agence || []).concat((propres || []).filter(e => !estDoublonDe(e, agence)));
 }
 // Format attendu par le CV (construireHtmlCv / construireCanvasCv).
 function experiencePourCv(e) {

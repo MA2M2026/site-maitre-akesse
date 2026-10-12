@@ -415,18 +415,15 @@ async function afficherParcoursAgence(idMannequin) {
   const fin = new Date(), debut = new Date(fin.getFullYear() - 10, fin.getMonth(), 1);
   const projetsAgence = await ma2mParcours(dateLocaleIso(debut), dateLocaleIso(fin), idMannequin);
   if (!projetsAgence.length) return;
-  const totaux = ma2mCompteParType(projetsAgence).map(([t, n]) => nombreTypeAgenda(t, n, EN)).join(' · ');
+  // Résumé chiffré seulement (12/10/2026) : le détail de ces projets est déjà dans « Parcours »
+  // juste au-dessus (badge « avec MA2M ») — un visiteur ne voit plus deux fois le même projet.
+  const totaux = ma2mCompteParType(projetsAgence);
   zone.innerHTML = `
     <section class="fiche-carte fiche-ancre" id="fiche-avec-ma2m">
-      <h3 class="fiche-carte-titre">${T('Avec MA2M', 'With MA2M')} <span>${echapperHtml(totaux)}</span></h3>
-      <ol class="fiche-projets">
-        ${projetsAgence.slice(0, 4).map(p => `
-          <li class="fiche-projet">
-            <span class="fiche-projet-type">${echapperHtml(libelleTypeAgenda(p.type, EN))}</span>
-            <span class="fiche-projet-titre">${echapperHtml(p.titre)}</span>
-            <span class="fiche-projet-meta">${echapperHtml(dateLieuProjet(p))}</span>
-          </li>`).join('')}
-      </ol>
+      <h3 class="fiche-carte-titre">${T('Avec MA2M', 'With MA2M')} <span>${projetsAgence.length} ${projetsAgence.length > 1 ? T('activités', 'activities') : T('activité', 'activity')}</span></h3>
+      <div class="fiche-ma2m-chiffres">
+        ${totaux.map(([t, n]) => `<div class="fiche-ma2m-chiffre"><strong>${n}</strong><span>${echapperHtml(nombreTypeAgenda(t, n, EN).replace(/^\d+ /, ''))}</span></div>`).join('')}
+      </div>
       <a class="fiche-lien-plus" href="parcours.html">${T('Voir le Parcours MA2M →', 'See the MA2M Track Record →')}</a>
     </section>`;
 }

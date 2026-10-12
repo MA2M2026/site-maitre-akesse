@@ -178,3 +178,4 @@ html { background: #080707; }
   .exp-fields { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .exp-fields [data-expf=nom], .exp-fields [data-expf=salle], .exp-fields [data-expf=promoteur] { grid-column: 1 / -1; }
 }
+.exp-doublon ul { margin: 6px 0 8px; padding-left: 1.1rem; color: var(--texte-tres-clair, #a59d95); }

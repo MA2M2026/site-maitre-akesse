@@ -19,7 +19,7 @@ const { chromium } = require('playwright'); const { spawn } = require('child_pro
     { id: 'x3', model_id: 'admin-1', type_projet: 'Défilé', titre: 'JNCC/ cacao fashion show', ville: 'Abidjan', periode: '2026-09-03' }] },
     rpc: { parcours_public: [{ id: 'e1', type: 'defile', titre: 'CACAO FASHION SHOW', date_debut: '2026-09-02', date_fin: '2026-09-03', lieu: 'Sofitel', ville: 'Abidjan', pays: "Côte d'Ivoire", mannequins: [] }] } }, journal);
   await p.goto('http://127.0.0.1:' + PORT + '/espace-mannequin.html'); await p.waitForTimeout(4000);
-  const r = await p.evaluate(() => ({ agence: (state.experiencesAgence || []).map(e => e.nom + '|' + e.annee), etape: stepExperience().includes('Ajoutés automatiquement par l’agence'), doublon: (stepExperience().match(/exp-doublon/g) || []).length,
+  const r = await p.evaluate(() => ({ agence: (state.experiencesAgence || []).map(e => e.nom + '|' + e.annee), etape: stepExperience().includes('Ajoutés automatiquement par l’agence'), doublon: doublonsExperiences().length, masques: !stepExperience().includes('value="JNCC/ cacao fashion show"') && stepExperience().includes('id="supprDoublons"'),
     cv: donneesCvDepuisEtat().experiences.map(e => e.nom),
     // formulaire enrichi (12/10/2026) : date, pays, ville, lieu, promoteur — tout facultatif
     champs: ['nom', 'annee', 'pays', 'lieu', 'salle', 'promoteur'].every(c => stepExperience().includes('data-expf="' + c + '"')),
@@ -29,7 +29,15 @@ const { chromium } = require('playwright'); const { spawn } = require('child_pro
   await p.waitForTimeout(500);
   const envoi = journal.filter(j => j[0] === 'PATCH' && j[1] === 'model_projects').map(j => JSON.parse(j[3])).pop() || {};
   r.envoi = [envoi.lieu, envoi.pays, envoi.promoteur, envoi.periode].join(' | ');
-  const ok = r.champs && r.facultatif && r.envoi === "Studio Lumière | Côte d'Ivoire | Styliste Awa | 03/09/2025" && r.agence.length === 1 && r.etape && r.doublon === 2 && JSON.stringify(r.cv) === '["CACAO FASHION SHOW","Shooting perso"]' && !errs.length;
+  // « Supprimer ces doublons » cliqué pour de vrai (confirmation acceptée) : les 2 lignes en double
+  // partent, la ligne à elle reste
+  p.on('dialog', d => d.accept());
+  await p.evaluate(() => { const c = document.querySelector('.panel') || document.getElementById('app'); c.innerHTML = stepExperience(); bindExperienceHandlers(); });
+  r.nomsDoublons = await p.$$eval('.exp-doublon li', l => l.length);
+  await p.click('#supprDoublons'); await p.waitForTimeout(800);
+  r.supprimes = journal.filter(j => j[0] === 'DELETE' && j[1] === 'model_projects').map(j => j[2]).join(' ');
+  r.restants = await p.evaluate(() => state.experiences.map(e => e.nom));
+  const ok = r.champs && r.facultatif && r.envoi === "Studio Lumière | Côte d'Ivoire | Styliste Awa | 03/09/2025" && r.agence.length === 1 && r.etape && r.doublon === 2 && r.masques && r.nomsDoublons === 2 && /x1/.test(r.supprimes) && /x3/.test(r.supprimes) && !/x2/.test(r.supprimes) && JSON.stringify(r.restants) === '["Shooting perso"]' && JSON.stringify(r.cv) === '["CACAO FASHION SHOW","Shooting perso"]' && !errs.length;
   console.log((ok ? '✓' : '❌ ÉCHEC') + ' Espace mannequin, expériences de l’agence : ' + JSON.stringify(r) + ' | erreurs : ' + JSON.stringify(errs.slice(0, 3)));
   if (!ok) process.exitCode = 1; await b.close(); srv.kill();
 })();
