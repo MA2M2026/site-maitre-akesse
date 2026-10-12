@@ -782,35 +782,6 @@ async function compter(table) {
   return count || 0;
 }
 
-async function genererMiniatureDepuisUrl(url, coteMax = 800, qualite = 0.75) {
-  const reponse = await fetch(url);
-  if (!reponse.ok) throw new Error('Téléchargement échoué (HTTP ' + reponse.status + ')');
-  const blobOriginal = await reponse.blob();
-  const urlBlob = URL.createObjectURL(blobOriginal);
-  try {
-    const img = new Image();
-    await new Promise((resolve, reject) => {
-      img.onload = resolve;
-      img.onerror = () => reject(new Error('Image illisible'));
-      img.src = urlBlob;
-    });
-    const coteActuel = Math.max(img.width, img.height);
-    const ratio = coteActuel > coteMax ? coteMax / coteActuel : 1;
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.round(img.width * ratio);
-    canvas.height = Math.round(img.height * ratio);
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    const blobMiniature = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', qualite));
-    if (!blobMiniature) throw new Error('Compression échouée');
-    return blobMiniature;
-  } finally {
-    URL.revokeObjectURL(urlBlob);
-  }
-}
-
 document.getElementById('nettoyer-photos-btn').addEventListener('click', async () => {
   const btn = document.getElementById('nettoyer-photos-btn');
   const msg = document.getElementById('nettoyer-photos-msg');
@@ -842,30 +813,46 @@ document.getElementById('nettoyer-photos-btn').addEventListener('click', async (
 // la photo d'origine (jamais modifiée), puis met à jour la fiche de la photo. Une fois
 // par ouverture ; si la page est fermée avant la fin, il reprend à la suivante. Après 5
 // échecs (réseau faible), il s'arrête et réessaiera la prochaine fois.
+// Une version (miniature ou moyenne) refaite à partir de l'original ; false si la copie
+// WebP attendue n'a pas pu être envoyée.
+async function refaireVersion(photo, original, maj, cle, dossier, fin, cote, qualite) {
+  const v = await envoyerVersionPhoto(photo.model_id, original, dossier, fin, cote, qualite);
+  if (!v) throw new Error('Image illisible');
+  maj['url_' + cle] = v.url; maj['chemin_' + cle] = v.chemin;
+  return !!cheminWebp(v.chemin);
+}
 async function rattraperPhotosEnArrierePlan() {
   try { if (sessionStorage.getItem('ma2m_rattrapage_photos')) return; sessionStorage.setItem('ma2m_rattrapage_photos', '1'); } catch (e) {}
   const { data: photos, error } = await sb.from('model_photos')
-    .select('id, model_id, url, url_miniature, url_moyenne, chemin_miniature');
+    .select('id, model_id, url, url_miniature, url_moyenne, chemin_miniature, chemin_moyenne');
   if (error || !photos) return;
-  const aFaire = photos.filter(p => p.url && (!p.url_miniature || !p.url_moyenne || !/-n800\.jpg$/.test(p.chemin_miniature || '')));
+  // Versions à (re)faire : absente, ancienne miniature (< 800 px), ou sans copie WebP légère
+  // quand ce navigateur sait l'écrire (12/10/2026 ; voir envoyerVersionPhoto dans js/app.js).
+  // Copies WebP : seulement sur un ordinateur (grand écran) hors connexion mobile signalée
+  // — environ 370 photos d'origine à télécharger — et 40 photos au plus par ouverture.
+  // Une photo à la fois (pas en parallèle) pour ménager la connexion.
+  const c = navigator.connection || {};
+  const donneesMobiles = c.saveData || c.type === 'cellular' || /(^|-)(2g|3g)$/.test(c.effectiveType || '');
+  let webp = navigateurEcritWebp() && !donneesMobiles && window.matchMedia('(min-width: 900px)').matches;
+  const miniatureAFaire = p => !p.url_miniature || !/-n800(-w)?\.jpg$/.test(p.chemin_miniature || '') || (webp && !cheminWebp(p.chemin_miniature));
+  const moyenneAFaire = p => !p.url_moyenne || (webp && !cheminWebp(p.chemin_moyenne));
+  const aFaire = photos.filter(p => p.url && (miniatureAFaire(p) || moyenneAFaire(p))).slice(0, 40);
   let echecs = 0, faites = 0;
   for (const photo of aFaire) {
     if (echecs >= 5) break;
+    const mini = miniatureAFaire(photo), moyenne = moyenneAFaire(photo);
+    if (!mini && !moyenne) continue;  // plus rien à faire sans WebP
     try {
+      const reponse = await fetch(photo.url);
+      if (!reponse.ok) throw new Error('Téléchargement échoué (HTTP ' + reponse.status + ')');
+      const original = await reponse.blob();
       const maj = {};
-      if (!photo.url_miniature || !/-n800\.jpg$/.test(photo.chemin_miniature || '')) {
-        const blob = await genererMiniatureDepuisUrl(photo.url);
-        const chemin = `${photo.model_id}/miniatures/${Date.now()}-${suffixeAleatoire()}-n800.jpg`;
-        maj.url_miniature = await uploaderVersR2(photo.model_id, chemin, blob, 'image/jpeg');
-        maj.chemin_miniature = chemin;
-      }
-      if (!photo.url_moyenne) {
-        const blob = await genererMiniatureDepuisUrl(photo.url, 1400, 0.78);
-        const chemin = `${photo.model_id}/moyennes/${Date.now()}-${suffixeAleatoire()}.jpg`;
-        maj.url_moyenne = await uploaderVersR2(photo.model_id, chemin, blob, 'image/jpeg');
-        maj.chemin_moyenne = chemin;
-      }
-      const { error: erreurMaj } = await sb.from('model_photos').update(maj).eq('id', photo.id);
+      let webpOk = true;
+      if (mini) webpOk = await refaireVersion(photo, original, maj, 'miniature', 'miniatures', '-n800', 800, 0.75);
+      if (moyenne) webpOk = (await refaireVersion(photo, original, maj, 'moyenne', 'moyennes', '', 1400, 0.78)) && webpOk;
+      if (!webpOk) webp = false;  // copie WebP refusée : on n'insiste pas pour les suivantes
+      // seulement si la photo n'a pas été remplacée entre-temps (bouton « Remplacer »)
+      const { error: erreurMaj } = await sb.from('model_photos').update(maj).eq('id', photo.id).eq('url', photo.url);
       if (erreurMaj) throw erreurMaj;
       faites++;
     } catch (e) {
@@ -1533,7 +1520,7 @@ document.getElementById('liste-validations').addEventListener('click', async (e)
 // elles-mêmes. Le contrôle d'accès y autorise le propriétaire ET tout
 // admin (table admins) — exactement ce cas d'usage.
 // jetonSessionCourante(), uploaderVersR2(), supprimerDeR2(), compresserPhotoOrigine(),
-// genererMiniature(), envoyerPhotoBook() : partagés avec l'Espace mannequin dans js/app.js.
+// envoyerVersionPhoto(), envoyerPhotoBook() : partagés avec l'Espace mannequin dans js/app.js.
 
 let mannequinsPubliesCharges = false;
 document.getElementById('mannequins-publies-details').addEventListener('toggle', (e) => {

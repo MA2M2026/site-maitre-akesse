@@ -134,8 +134,8 @@ async function chargerProfilInterne() {
   // le navigateur intégré de Facebook) : couverture en taille « moyenne » (~1400px),
   // médaillon en miniature (~500px). L'originale reste utilisée pour la galerie plein
   // écran et la compcard.
-  const photoHero = vues.couverture ? (vues.couverture.url_moyenne || vues.couverture.url) : premierePhoto;
-  const photoAvatar = vues.profil ? (vues.profil.url_miniature || vues.profil.url) : '/assets/logo-dark-bg.png';
+  const photoHero = vues.couverture ? urlLegere(vues.couverture.url_moyenne || vues.couverture.url) : premierePhoto;
+  const photoAvatar = vues.profil ? urlLegere(vues.profil.url_miniature || vues.profil.url) : '/assets/logo-dark-bg.png';
   const libellesDispo = EN
     ? { immediate: 'Available immediately', rdv: 'By appointment', mobile: 'Available to travel' }
     : { immediate: 'Disponible immédiatement', rdv: 'Sur rendez-vous', mobile: 'Mobile pour déplacements' };
@@ -389,7 +389,7 @@ async function chargerProfilInterne() {
     const digital = p.categorie === 'lifestyle';
     const div = document.createElement('div');
     div.className = 'book-photo-carte cliquable';
-    div.innerHTML = `<img src="${echapperHtml(p.url_miniature || p.url)}" loading="lazy" alt="${digital ? T('Photo digitale', 'Digital photo') : T('Photo du book', 'Book photo')}">`;
+    div.innerHTML = `<img src="${echapperHtml(urlLegere(p.url_miniature || p.url))}" loading="lazy" alt="${digital ? T('Photo digitale', 'Digital photo') : T('Photo du book', 'Book photo')}">`;
     div.querySelector('img').addEventListener('click', () => ouvrirLightbox(index));
     (digital && galerieDigitals ? galerieDigitals : galerie).appendChild(div);
   });

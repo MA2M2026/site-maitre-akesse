@@ -2208,3 +2208,19 @@ validator.w3.org bloque les envois en série), Mozilla Observatory, SSL Labs.
 - **Restent, hors de notre main** : Observatory A+ (110) — l'intégrité SRI est impossible pour les
   scripts Google Analytics et Sentry (leur contenu change) ; SSL Labs A+ sur une adresse de
   Vercel et A sur l'autre (réglage de Vercel) ; pages volontairement non indexées (noindex).
+
+## Photos légères en WebP (12/10/2026)
+- `js/app.js` : `envoyerVersionPhoto()` fabrique chaque version réduite (miniature 800 px,
+  moyenne 1400 px) en JPEG et, si le navigateur sait écrire le WebP (pas Safari), en WebP.
+  Convention sans colonne en base : le JPEG se termine alors par `-w.jpg` (`-n800-w.jpg` pour la
+  miniature) et la copie WebP porte le même nom en `.webp`. `urlLegere(url)` donne l'adresse
+  WebP à afficher (accueil, The Book, fiche, Qui sommes-nous, Parcours) ; un écouteur global
+  d'erreur d'image revient au JPEG si la copie manque ou n'est pas lisible. `supprimerDeR2`
+  et `api/supprimer-mannequin.js` suppriment aussi la copie WebP.
+- `js/tableau-de-bord.js` : le rattrapage automatique (8 s après l'ouverture) refait les
+  versions des anciennes photos avec leur copie WebP — 40 photos au plus par ouverture,
+  seulement sur ordinateur (écran ≥ 900 px) hors connexion mobile signalée, et seulement si la
+  photo n'a pas été remplacée entre-temps. Les anciennes versions JPEG restent dans le stockage
+  (non référencées : liens déjà en cache chez des visiteurs, e-mails…). La marque `-w.jpg` ne
+  compte que dans les dossiers `miniatures/` et `moyennes/` (jamais pour une photo d'origine).
+- Essai visiteur `scripts/tests-visiteur/test-photos-webp.js`.

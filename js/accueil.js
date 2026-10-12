@@ -50,6 +50,8 @@ async function chargerPhotosHero() {
     const preload = new Image();
     // la première photo est la plus grande image visible : chargée en priorité (Lighthouse, 12/10/2026)
     if (rang === 0) preload.fetchPriority = 'high';
+    // copie WebP illisible ou absente : la version JPEG
+    preload.onerror = () => { const secours = urlJpegDeSecours(url); if (secours) afficher(img, secours, rang); };
     preload.onload = () => { img.src = url; };
     preload.src = url;
   };
@@ -71,7 +73,7 @@ async function chargerPhotosHero() {
 
   const parMannequin = new Map();
   melanger(data || []).forEach(p => {
-    if (!parMannequin.has(p.model_id)) parMannequin.set(p.model_id, p.url_moyenne || p.url);
+    if (!parMannequin.has(p.model_id)) parMannequin.set(p.model_id, urlLegere(p.url_moyenne || p.url));
   });
   const urls = melanger(Array.from(parMannequin.values()));
   if (urls.length) {
@@ -154,7 +156,7 @@ async function chargerMedaillonsAccueil() {
 
   // Une seule demande groupée pour toutes les photos (la même que dans le Book), au lieu d'une par mannequin.
   const { data: couvertures } = await sb.rpc('photos_couverture_mannequins', { ids: profils.map(p => p.id) });
-  const photoPar = {}; (couvertures || []).forEach(c => { photoPar[c.model_id] = c.url; });
+  const photoPar = {}; (couvertures || []).forEach(c => { photoPar[c.model_id] = urlLegere(c.url); });
   for (const profil of profils) {
     const photoUrl = photoPar[profil.id] || (EN ? '../' : '') + 'assets/logo-dark-bg.png';
     const carte = document.createElement('a');
@@ -186,7 +188,8 @@ async function chargerMannequinVedette() {
   if (!profil) return;
 
   const { data: photos } = await sb.from('model_photos').select('url, url_moyenne').eq('model_id', profil.id).order('created_at', { ascending: true }).limit(1);
-  const photoUrl = (photos && photos[0]) ? (photos[0].url_moyenne || photos[0].url) : (EN ? '../' : '') + 'assets/logo-dark-bg.png';
+  const premiere = photos?.[0];
+  const photoUrl = premiere ? urlLegere(premiere.url_moyenne || premiere.url) : (EN ? '../' : '') + 'assets/logo-dark-bg.png';
   const libelleCategorie = profil.category === 'homme' ? T('Homme', 'Male') : profil.category === 'femme' ? T('Femme', 'Female') : 'New Face';
 
   document.getElementById('vedette-img').src = photoUrl;

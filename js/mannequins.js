@@ -38,7 +38,7 @@ async function chargerMannequins() {
 
   const photoParMannequin = {};
   (photos || []).forEach(p => {
-    photoParMannequin[p.model_id] = p.url;
+    photoParMannequin[p.model_id] = urlLegere(p.url);
   });
 
   profils.forEach(profil => {

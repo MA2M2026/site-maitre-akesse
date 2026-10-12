@@ -67,7 +67,12 @@ module.exports = async function handler(req, res) {
     const photos = reponsePhotos.ok ? await reponsePhotos.json() : [];
     const chemins = [];
     (photos || []).forEach(function (p) {
-      ['chemin', 'chemin_miniature', 'chemin_moyenne'].forEach(function (c) { if (p[c]) chemins.push(p[c]); });
+      ['chemin', 'chemin_miniature', 'chemin_moyenne'].forEach(function (c) {
+        if (!p[c]) return;
+        chemins.push(p[c]);
+        // copie WebP légère d'une version « -w.jpg » (12/10/2026, voir envoyerVersionPhoto dans js/app.js)
+        if (/\/(miniatures|moyennes)\/[^/]*-w\.jpg$/.test(p[c])) chemins.push(p[c].replace(/\.jpg$/, '.webp'));
+      });
     });
 
     // 4. Suppression du compte de connexion — cascade automatique en base

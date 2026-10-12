@@ -145,7 +145,7 @@
     if (error && !(data && data.length)) throw error;
     const parMannequin = new Map();
     melanger(data || []).forEach(p => {
-      if (!parMannequin.has(p.model_id)) parMannequin.set(p.model_id, p.url_moyenne || p.url);
+      if (!parMannequin.has(p.model_id)) parMannequin.set(p.model_id, urlLegere(p.url_moyenne || p.url));
     });
     const visages = melanger(Array.from(parMannequin.entries())).slice(0, 16);
     if (visages.length < 4) return;
