@@ -3010,10 +3010,12 @@ body.porte-verrouillee .couverture-faisceau, body.porte-verrouillee .couverture-
 .video-accueil.video-verticale video { object-fit: contain; }
 .video-accueil-flou { position: absolute; inset: 0; width: 100%; height: 100%; display: none; filter: blur(34px) brightness(0.55) saturate(1.2); transform: scale(1.25); }
 .video-accueil.video-verticale.video-prete .video-accueil-flou { display: block; }
+/* Écran en hauteur (12/10/2026, demande de la propriétaire : « toute la vidéo en entier ») :
+   la vidéo n'est plus rognée en haut et en bas. L'espace prend sa forme (9:16) sans dépasser
+   la hauteur visible (svh : barre d'adresse du téléphone comprise) ; si l'écran est moins
+   haut, la vidéo reste entière et les côtés sont remplis par le fond flouté. */
 @media (orientation: portrait) {
-  .video-accueil.video-verticale { aspect-ratio: 9 / 16; width: 100%; height: auto; max-height: calc(100vh - 90px); }
-  .video-accueil.video-verticale video { object-fit: cover; }
-  .video-accueil.video-verticale.video-prete .video-accueil-flou { display: none; }
+  .video-accueil.video-verticale { aspect-ratio: 9 / 16; width: 100%; height: auto; max-height: calc(100vh - 90px); max-height: calc(100svh - 70px); }
 }
 .video-accueil video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1.2s ease; }
 .video-accueil.video-prete video { opacity: 1; }

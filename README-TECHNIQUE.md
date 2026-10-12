@@ -2170,3 +2170,18 @@ Regroupements faits pour supprimer les derniers blocs recopiés signalés par So
   stockage) : `debutR2`, `repondreR2`, `TYPES_IMAGES`. Comparaison ancien / nouveau sur 41 cas simulés :
   mêmes réponses et mêmes appels à la base. Seul changement : le message d'erreur 500 de
   creer-admin / supprimer-mannequin ne cite plus le nom de la variable secrète.
+
+## Vidéo de la page d'accueil : entière et jamais d'espace noir (12/10/2026)
+Demande de la propriétaire (« toute la vidéo en entier » ; sur sa tablette Android, la vidéo
+apparaissait puis disparaissait en laissant un espace noir).
+- `css/style.css` : écran en hauteur, vidéo verticale **entière** (`object-fit: contain`, plus
+  de rognage haut/bas) dans un espace 9:16 limité à la hauteur visible (`100svh`) ; le fond
+  flouté remplit les côtés si l'écran est moins haut.
+- `js/video-accueil.js` : la vidéo apparaît dès sa première image (`loadeddata`), pas seulement
+  quand elle joue. Si la lecture automatique est refusée (économie de données ou de batterie),
+  la première image reste visible et le bouton devient « Lire le film » / « Play the film ».
+  En cas d'erreur de chargement, le fichier est relancé une fois ; si l'erreur revient,
+  l'espace est retiré et le code d'erreur part dans le journal des erreurs du tableau de bord
+  (`signalerErreur('video', …)`), pour connaître la cause exacte sur l'appareil concerné.
+- Essai visiteur `scripts/tests-visiteur/test-video-accueil.js` : téléphone, tablette,
+  ordinateur, lecture refusée, erreur passagère, fichier illisible, anglais.
