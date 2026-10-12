@@ -2082,3 +2082,18 @@ modifié absents des listes chargées sont gardés (`idsGardes`).
 (`.agenda-ligne.en-modif`) : le 11/10/2026, la propriétaire avait ouvert Abidjan Border Forum
 (premier bouton « Modifier », liste « À venir ») en croyant ouvrir Cacao Fashion Show.
 Essais : `test-admin.js` (étapes 8 et 9) et `test-pages-publiques.js` (page Agenda).
+
+## Expériences des mannequins synchronisées avec l'agenda (12/10/2026)
+Chaque projet réalisé avec l'agence (agenda → `parcours_public`, filtré sur la mannequin)
+apparaît tout seul dans ses expériences : fiche publique (parcours, badge « avec MA2M »), CV
+(Espace mannequin et tableau de bord), Espace mannequin (bloc « Ajoutés automatiquement par
+l'agence », en lecture seule). Rien n'est écrit ni effacé dans `model_projects` : la fusion se
+fait à l'affichage, règle unique dans `js/app.js` : `ma2mExperiencesAgence(id)`,
+`fusionnerExperiences(agence, propres)`, `memeProjet(a, b)` (même nom, majuscules, accents,
+ponctuation et années ignorés, et même année si la mannequin en a indiqué une),
+`experiencePourCv(e)`. Seuls les défilés, shows, shootings, événements et projets comptent
+(pas les castings, essayages, formations, masterclasses, rencontres). `ma2mParcours` garde
+ses réponses en mémoire : un seul appel au serveur par page et par période. Une ligne écrite par la
+mannequin pour le même projet est remplacée par celle de l'agence (et signalée dans son Espace,
+où elle peut la supprimer). Parcours MA2M : visages ronds. Essais : `test-pages-publiques.js`
+(fiche avec doublons) et `test-espace-experiences.js` (Espace + CV).

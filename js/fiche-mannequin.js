@@ -120,11 +120,12 @@ async function chargerProfilInterne() {
     .order('principale', { ascending: false })
     .order('created_at', { ascending: true });
 
-  const { data: projets } = await sb
-    .from('model_projects')
-    .select('*')
-    .eq('model_id', id)
-    .order('created_at', { ascending: false });
+  const [{ data: projetsSaisis }, projetsAgence] = await Promise.all([
+    sb.from('model_projects').select('*').eq('model_id', id).order('created_at', { ascending: false }),
+    ma2mExperiencesAgence(id)
+  ]);
+  // projets réalisés avec l'agence (agenda) inclus automatiquement (js/app.js)
+  const projets = fusionnerExperiences(projetsAgence, projetsSaisis);
 
   const vues = photosAffichees(photos); // photo de profil et couverture affichées (js/app.js)
   const premierePhoto = vues.profil ? vues.profil.url : '/assets/logo-dark-bg.png';
@@ -150,10 +151,10 @@ async function chargerProfilInterne() {
   const NB_PROJETS_APERCU = 5;
   function ligneProjetHtml(p) {
     const lieu = [p.ville, p.pays].filter(Boolean).join(', ');
-    const meta = [p.periode, lieu, p.promoteur].filter(Boolean).map(echapperHtml).join(' · ');
+    const meta = [p.periode, lieu, p.agence ? '' : p.promoteur].filter(Boolean).map(echapperHtml).join(' · ');
     return `
       <li class="fiche-projet">
-        <span class="fiche-projet-type">${echapperHtml(p.type_projet)}</span>
+        <span class="fiche-projet-type">${echapperHtml(p.type_projet)}${p.agence ? ` <em class="fiche-projet-agence">${T('avec MA2M', 'with MA2M')}</em>` : ''}</span>
         ${p.titre ? `<span class="fiche-projet-titre">${echapperHtml(p.titre)}</span>` : ''}
         ${meta ? `<span class="fiche-projet-meta">${meta}</span>` : ''}
       </li>`;

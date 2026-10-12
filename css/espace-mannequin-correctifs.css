@@ -162,3 +162,9 @@ html { background: #080707; }
   margin: 0.4rem 0 1rem; padding: 0.6rem 0.8rem; border-left: 3px solid #ff2a40;
   background: rgba(224, 24, 45, 0.1); color: #ffd6da; font-size: 0.9rem;
 }
+
+/* Projets réalisés avec l'agence (agenda), ajoutés automatiquement aux expériences (12/10/2026) */
+.exp-agence { margin: 0 0 16px; padding: 12px 14px; border-left: 3px solid #d55468; background: rgba(122,18,32,0.16); }
+.exp-agence-titre { margin: 0 0 6px; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: #d55468; }
+.exp-agence ul { margin: 0; padding: 0 0 0 1.1rem; font-size: .9rem; line-height: 1.55; }
+.exp-doublon { margin: 0 0 8px; font-size: .8rem; color: #d55468; }

@@ -942,7 +942,13 @@ function lienFicheMannequin(m) {
 // Parcours MA2M (Extension 136) : projets réalisés de l'agenda entre deux dates (« AAAA-MM-JJ »),
 // pour une seule mannequin si idMannequin est donné. Rien de privé (ni adresse exacte, ni
 // heure, ni notes). Utilisé par la page Parcours et par la fiche de chaque mannequin.
-async function ma2mParcours(debut, fin, idMannequin) {
+const ma2mParcoursCache = new Map();
+function ma2mParcours(debut, fin, idMannequin) {
+  const cle = [debut, fin, idMannequin || ''].join('|');
+  if (!ma2mParcoursCache.has(cle)) ma2mParcoursCache.set(cle, lireParcours(debut, fin, idMannequin));
+  return ma2mParcoursCache.get(cle);
+}
+async function lireParcours(debut, fin, idMannequin) {
   if (typeof sb === 'undefined' || !sb) return [];
   const { data, error } = await sb.rpc('parcours_public', { p_debut: debut, p_fin: fin, p_model: idMannequin || null });
   if (error) {
@@ -952,8 +958,60 @@ async function ma2mParcours(debut, fin, idMannequin) {
   }
   // La page est réservée à nos mannequins : un projet (ex. un casting ouvert organisé par
   // l'agence) n'y figure que s'il montre au moins un nom — une de nos mannequins publiées
-  // cochée, ou une mannequin de l'agence écrite à la main (Extension 137).
-  return (data || []).filter(p => (p.mannequins || []).length);
+  // cochée, ou une mannequin de l'agence écrite à la main (Extension 137). Pour une seule
+  // mannequin (idMannequin), ses projets comptent même si son profil n'est pas public.
+  return idMannequin ? (data || []) : (data || []).filter(p => (p.mannequins || []).length);
+}
+
+// Expériences d'une mannequin synchronisées avec l'agenda (demande de la propriétaire,
+// 12/10/2026) : chaque projet réalisé avec l'agence apparaît tout seul dans ses expériences
+// — fiche publique, CV, Espace mannequin, tableau de bord — sans qu'elle ait rien à saisir.
+// Rien n'est écrit ni effacé dans sa base : la fusion se fait à l'affichage. Une ligne
+// qu'elle a écrite elle-même pour le même projet est remplacée par celle de l'agence :
+// même nom (majuscules, accents, ponctuation et années ignorés) et, si elle a indiqué une
+// année, la même année — « Abidjan Fashion Week 2023 » ne remplace pas l'édition 2026.
+function cleProjet(titre) {
+  return String(titre || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    .replace(/\b(19|20)\d{2}\b/g, ' ').replace(/[^a-z0-9]+/g, ' ').trim();
+}
+function anneesDe(texte) { return String(texte || '').match(/\b(19|20)\d{2}\b/g) || []; }
+function memeProjet(a, b) {
+  const x = cleProjet(a.titre || a.nom), y = cleProjet(b.titre || b.nom);
+  if (!x || x !== y) return false;
+  const ansA = anneesDe((a.titre || a.nom) + ' ' + (a.periode || a.annee || ''));
+  const ansB = anneesDe((b.titre || b.nom) + ' ' + (b.periode || b.annee || ''));
+  return !ansA.length || !ansB.length || ansA.some(an => ansB.includes(an));
+}
+// Types de l'agenda qui comptent comme expérience professionnelle (pas les castings,
+// essayages, formations, masterclasses ni rencontres).
+const TYPES_EXPERIENCE_AGENDA = { defile: 'Défilé', show: 'Show', shooting: 'Shooting', evenement: 'Événement', autre: 'Projet' };
+// Projets de l'agence d'une mannequin, au format des expériences (table model_projects).
+// Une panne de lecture ne bloque jamais la page : la liste est alors simplement vide.
+async function ma2mExperiencesAgence(idMannequin) {
+  if (!idMannequin) return [];
+  try {
+    const fin = new Date(), debut = new Date(fin.getFullYear() - 10, fin.getMonth(), 1);
+    const projets = await ma2mParcours(dateLocaleIso(debut), dateLocaleIso(fin), idMannequin);
+    return projets.filter(p => p.type in TYPES_EXPERIENCE_AGENDA).map(p => {
+      const mois = new Date((p.date_fin || p.date_debut) + 'T12:00:00').toLocaleDateString(EN ? 'en-GB' : 'fr-FR', { month: 'long', year: 'numeric' });
+      return { type_projet: EN ? libelleTypeAgenda(p.type, true) : TYPES_EXPERIENCE_AGENDA[p.type], titre: p.titre,
+        periode: mois.charAt(0).toUpperCase() + mois.slice(1), ville: p.ville || '', pays: p.pays || '', promoteur: 'MA2M', agence: true };
+    });
+  } catch (e) {
+    if (window.signalerErreur) window.signalerErreur('Expériences avec l’agence : lecture', (e && e.message) || String(e));
+    return [];
+  }
+}
+// Projets de l'agence d'abord, puis les expériences de la mannequin qui ne les répètent pas.
+// Les deux listes peuvent être au format model_projects (titre, periode) ou CV (nom, annee).
+function fusionnerExperiences(agence, propres) {
+  return (agence || []).concat((propres || []).filter(e => !(agence || []).some(a => memeProjet(e, a))));
+}
+// Format attendu par le CV (construireHtmlCv / construireCanvasCv).
+function experiencePourCv(e) {
+  return e.titre !== undefined || e.type_projet !== undefined
+    ? { type: e.type_projet, nom: e.titre, lieu: e.ville, annee: e.periode, agence: !!e.agence }
+    : e;
 }
 // Date du jour (ou d'une date) au format « AAAA-MM-JJ » dans le fuseau du visiteur
 // (toISOString passe en heure universelle et peut décaler d'un jour).

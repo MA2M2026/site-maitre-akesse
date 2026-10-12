@@ -1,0 +1,25 @@
+// Espace mannequin : les projets réalisés avec l'agence (agenda) s'ajoutent tout seuls à ses
+// expériences ; une ligne qu'elle a écrite pour le même projet est signalée et n'apparaît
+// qu'une fois sur le CV (12/10/2026). Base simulée, rien n'est écrit.
+const { chromium } = require('playwright'); const { spawn } = require('child_process'); const { brancher } = require('./faux-serveur');
+(async () => {
+  const PORT = String(8900 + Math.floor(Math.random() * 90));
+  const srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..') }); await new Promise(r => setTimeout(r, 800));
+  const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: 390, height: 844 } })).newPage(); const errs = [], journal = [];
+  p.on('pageerror', e => errs.push(e.message));
+  await p.addInitScript(() => {
+    const b64 = o => btoa(JSON.stringify(o)).replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_');
+    const exp = Math.floor(Date.now() / 1000) + 36000;
+    const jeton = b64({ alg: 'HS256', typ: 'JWT' }) + '.' + b64({ sub: 'admin-1', role: 'authenticated', aud: 'authenticated', exp }) + '.c2ln';
+    localStorage.setItem('sb-dfhghgmwmxiguhtxtsle-auth-token', JSON.stringify({ access_token: jeton, token_type: 'bearer', expires_in: 36000, expires_at: exp, refresh_token: 'x', user: { id: 'admin-1', aud: 'authenticated', role: 'authenticated', email: 'awa@test.ci' } }));
+  });
+  await brancher(p, { tables: { model_profiles: [{ id: 'admin-1', full_name: 'AWA KONÉ', published: true, desactive: false, slug: 'awa-kone' }],
+    model_projects: [{ id: 'x1', model_id: 'admin-1', type_projet: 'Défilé', titre: 'Cacao fashion show', ville: 'Abidjan', periode: '2026' }, { id: 'x2', model_id: 'admin-1', type_projet: 'Shooting', titre: 'Shooting perso', periode: '2025' }] },
+    rpc: { parcours_public: [{ id: 'e1', type: 'defile', titre: 'CACAO FASHION SHOW', date_debut: '2026-09-02', date_fin: '2026-09-03', lieu: 'Sofitel', ville: 'Abidjan', pays: "Côte d'Ivoire", mannequins: [] }] } }, journal);
+  await p.goto('http://127.0.0.1:' + PORT + '/espace-mannequin.html'); await p.waitForTimeout(4000);
+  const r = await p.evaluate(() => ({ agence: (state.experiencesAgence || []).map(e => e.nom + '|' + e.annee), etape: stepExperience().includes('Ajoutés automatiquement par l’agence'), doublon: (stepExperience().match(/exp-doublon/g) || []).length,
+    cv: donneesCvDepuisEtat().experiences.map(e => e.nom) }));
+  const ok = r.agence.length === 1 && r.etape && r.doublon === 1 && JSON.stringify(r.cv) === '["CACAO FASHION SHOW","Shooting perso"]' && !errs.length;
+  console.log((ok ? '✓' : '❌ ÉCHEC') + ' Espace mannequin, expériences de l’agence : ' + JSON.stringify(r) + ' | erreurs : ' + JSON.stringify(errs.slice(0, 3)));
+  if (!ok) process.exitCode = 1; await b.close(); srv.kill();
+})();

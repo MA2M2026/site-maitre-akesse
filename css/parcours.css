@@ -48,12 +48,12 @@
   position: relative; display: flex; flex-direction: column; gap: 0.45rem; padding: 0; border: 0;
   background: none; color: var(--titre-clair); text-align: left; cursor: pointer; font: inherit;
 }
-.parcours-visage-photo { display: block; aspect-ratio: 1; overflow: hidden; border: 1px solid var(--gris-clair); background: var(--noir-doux); }
+.parcours-visage-photo { display: block; aspect-ratio: 1; overflow: hidden; border: 1px solid var(--gris-clair); border-radius: 50%; background: var(--noir-doux); }
 .parcours-visage-photo img { width: 100%; height: 100%; object-fit: cover; object-position: center 20%; transition: transform 0.6s var(--transition-douce), filter 0.6s ease; filter: grayscale(0.25); }
 .parcours-visage:hover img, .parcours-visage:focus-visible img { transform: scale(1.07); filter: none; }
-.parcours-visage-nom { font-size: 0.82rem; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.parcours-visage-nom { text-align: center; font-size: 0.82rem; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .parcours-visage-badge {
-  position: absolute; top: 0.35rem; right: 0.35rem; min-width: 1.6rem; height: 1.6rem; padding: 0 0.4rem;
+  position: absolute; top: 0; right: 0; min-width: 1.6rem; height: 1.6rem; padding: 0 0.4rem;
   display: grid; place-items: center; border-radius: 999px; background: var(--bordeaux); color: var(--blanc);
   font-size: 0.78rem; font-weight: 600; box-shadow: 0 6px 16px -6px rgba(0,0,0,0.8);
 }
@@ -62,7 +62,7 @@
 /* Détail d'une mannequin pour le mois */
 .parcours-detail { margin-top: 1.6rem; padding: 1.4rem; border: 1px solid var(--bordeaux-clair); background: linear-gradient(120deg, rgba(122,18,32,0.18), transparent 60%); }
 .parcours-detail-tete { display: grid; grid-template-columns: 4.2rem minmax(0, 1fr) auto; gap: 1rem; align-items: center; margin-bottom: 1rem; }
-.parcours-detail-tete img { width: 4.2rem; height: 4.2rem; object-fit: cover; object-position: center 20%; }
+.parcours-detail-tete img { width: 4.2rem; height: 4.2rem; border-radius: 50%; object-fit: cover; object-position: center 20%; }
 .parcours-detail-tete h3 { margin: 0; font-size: 1.4rem; }
 .parcours-detail-tete p { margin: 0.2rem 0 0; color: var(--texte-doux); font-size: 0.86rem; }
 .parcours-detail-fermer { background: none; border: 1px solid var(--gris-clair); color: var(--titre-clair); width: 2.4rem; height: 2.4rem; border-radius: 50%; cursor: pointer; }
