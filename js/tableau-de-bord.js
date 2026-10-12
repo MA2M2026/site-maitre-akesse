@@ -1644,10 +1644,11 @@ async function afficherCvAdmin(modelId) {
   contenu.innerHTML = 'Chargement…';
   document.getElementById('modal-cv-mannequin').classList.add('ouvert');
 
-  const [{ data: profil, error: erreurProfil }, { data: projets }, { data: photos }] = await Promise.all([
+  const [{ data: profil, error: erreurProfil }, { data: projets }, { data: photos }, projetsAgence] = await Promise.all([
     sb.from('model_profiles').select(sansChampsPrives('id, full_name, category, bio, height_cm, weight_kg, city, quartier, instagram, chest_cm, waist_cm, hips_cm, shoe_size, carnation, clothing_size, date_naissance, eye_color, hair_color, years_experience, niveau_mannequin, inseam_cm, niveau_etude, etablissement, formation_particuliere, formation_mannequin, competences, citation, ville_naissance, lieu_naissance, nationalite')).eq('id', modelId).maybeSingle(),
     sb.from('model_projects').select('*').eq('model_id', modelId).order('created_at', { ascending: true }),
-    sb.from('model_photos').select('*').eq('model_id', modelId).order('created_at', { ascending: true })
+    sb.from('model_photos').select('*').eq('model_id', modelId).order('created_at', { ascending: true }),
+    ma2mExperiencesAgence(modelId) // projets réalisés avec l'agence (agenda), js/app.js
   ]);
 
   if (erreurProfil || !profil) { contenu.innerHTML = 'Impossible de charger le CV de ce mannequin.'; return; }
@@ -1659,7 +1660,7 @@ async function afficherCvAdmin(modelId) {
     if (p.photo_cv) photoCvUrl = p.url || '';
     if (p.compcard_ordre >= 1 && p.compcard_ordre <= 5) compcardPhotos[p.compcard_ordre - 1] = p.url || p.url_miniature;
   });
-  const experiences = (projets || []).map(function (e) { return { type: e.type_projet, nom: e.titre, lieu: e.ville, annee: e.periode }; });
+  const experiences = fusionnerExperiences(projetsAgence, projets).map(experiencePourCv);
 
   const donnees = {
     nomComplet: profil.full_name, dateNaissance: profil.date_naissance, villeNaissance: profil.ville_naissance,

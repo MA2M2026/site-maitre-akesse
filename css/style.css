@@ -2217,6 +2217,8 @@ html.porte-deja-vue #porte-entree { display: none; }
   background: var(--bordeaux-clair); box-shadow: 0 0 0 3px var(--noir);
 }
 .fiche-projet-type { font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--bordeaux-clair); }
+/* projet réalisé avec l'agence (agenda), ajouté automatiquement au parcours (12/10/2026) */
+.fiche-projet-agence { font-style: normal; margin-left: 0.4rem; padding: 0.05rem 0.45rem; border: 1px solid var(--bordeaux-clair); border-radius: 999px; font-size: 0.62rem; letter-spacing: 0.1em; }
 .fiche-projet-titre { font-size: 0.98rem; color: var(--titre-clair); }
 .fiche-projet-meta { font-size: 0.8rem; color: var(--texte-doux); }
 .fiche-lien-plus {

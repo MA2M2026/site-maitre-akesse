@@ -952,8 +952,48 @@ async function ma2mParcours(debut, fin, idMannequin) {
   }
   // La page est réservée à nos mannequins : un projet (ex. un casting ouvert organisé par
   // l'agence) n'y figure que s'il montre au moins un nom — une de nos mannequins publiées
-  // cochée, ou une mannequin de l'agence écrite à la main (Extension 137).
-  return (data || []).filter(p => (p.mannequins || []).length);
+  // cochée, ou une mannequin de l'agence écrite à la main (Extension 137). Pour une seule
+  // mannequin (idMannequin), ses projets comptent même si son profil n'est pas public.
+  return idMannequin ? (data || []) : (data || []).filter(p => (p.mannequins || []).length);
+}
+
+// Expériences d'une mannequin synchronisées avec l'agenda (demande de la propriétaire,
+// 12/10/2026) : chaque projet réalisé avec l'agence apparaît tout seul dans ses expériences
+// — fiche publique, CV, Espace mannequin, tableau de bord — sans qu'elle ait rien à saisir.
+// Rien n'est écrit ni effacé dans sa base : la fusion se fait à l'affichage. Une ligne
+// qu'elle a écrite elle-même pour le même projet (même nom, majuscules, accents et
+// ponctuation ignorés, ou l'un contenu dans l'autre) est remplacée par celle de l'agence.
+function cleProjet(titre) {
+  return String(titre || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+}
+function memeProjet(a, b) {
+  const x = cleProjet(a), y = cleProjet(b);
+  if (!x || !y) return false;
+  return x === y || (Math.min(x.length, y.length) >= 6 && (x.includes(y) || y.includes(x)));
+}
+const TYPE_EXPERIENCE_AGENDA = { defile: 'Défilé', show: 'Défilé', shooting: 'Shooting' };
+// Projets de l'agence d'une mannequin, au format des expériences (table model_projects).
+async function ma2mExperiencesAgence(idMannequin) {
+  if (!idMannequin) return [];
+  const fin = new Date(), debut = new Date(fin.getFullYear() - 10, fin.getMonth(), 1);
+  const projets = await ma2mParcours(dateLocaleIso(debut), dateLocaleIso(fin), idMannequin);
+  return projets.map(p => {
+    const mois = new Date((p.date_fin || p.date_debut) + 'T12:00:00').toLocaleDateString(EN ? 'en-GB' : 'fr-FR', { month: 'long', year: 'numeric' });
+    return { type_projet: TYPE_EXPERIENCE_AGENDA[p.type] || libelleTypeAgenda(p.type, EN), titre: p.titre,
+      periode: mois.charAt(0).toUpperCase() + mois.slice(1), ville: p.ville || '', pays: p.pays || '', promoteur: 'MA2M', agence: true };
+  });
+}
+// Projets de l'agence d'abord, puis les expériences de la mannequin qui ne les répètent pas.
+// Les deux listes peuvent être au format model_projects (titre) ou CV (nom).
+function fusionnerExperiences(agence, propres) {
+  const titre = e => e.titre || e.nom;
+  return (agence || []).concat((propres || []).filter(e => !(agence || []).some(a => memeProjet(titre(e), titre(a)))));
+}
+// Format attendu par le CV (construireHtmlCv / construireCanvasCv).
+function experiencePourCv(e) {
+  return e.titre !== undefined || e.type_projet !== undefined
+    ? { type: e.type_projet, nom: e.titre, lieu: e.ville, annee: e.periode, agence: !!e.agence }
+    : e;
 }
 // Date du jour (ou d'une date) au format « AAAA-MM-JJ » dans le fuseau du visiteur
 // (toISOString passe en heure universelle et peut décaler d'un jour).

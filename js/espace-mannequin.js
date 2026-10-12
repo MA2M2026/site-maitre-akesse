@@ -41,6 +41,7 @@ function emptyState(){
     // anneesExperience n'est plus demandé (ancienne donnée gardée telle quelle).
     profilPro:{ anneesExperience:'', disponibilite:'', modelTypes:[], langues:[], niveauMannequin:'' },
     experiences:[],
+    experiencesAgence:[], // projets réalisés avec l'agence (agenda), en lecture seule
     photos:{ principale:null, photoCv:null, pleinPied:null, couverture:null, book:[] },
     competences:{},
     citation:'',
@@ -511,6 +512,8 @@ const Store = {
 
     const { data: exps } = await sb.from('model_projects').select('*').eq('model_id', currentUser.id).order('created_at', { ascending:true });
     s.experiences = (exps||[]).map(function(e){ return { id:e.id, type:e.type_projet, nom:e.titre, lieu:e.ville, annee:e.periode }; });
+    // Projets réalisés avec l'agence : ajoutés automatiquement à ses expériences (js/app.js)
+    s.experiencesAgence = (await ma2mExperiencesAgence(currentUser.id).catch(function(){ return []; })).map(experiencePourCv);
 
     const { data: photos } = await sb.from('model_photos').select('*').eq('model_id', currentUser.id).order('created_at', { ascending:true });
     (photos||[]).forEach(function(p){
@@ -742,7 +745,7 @@ function stepComplete(n){
   if (n===1) return !!(state.identite.nomComplet && state.identite.dateNaissance && state.identite.sexe && (state.instagram || state.sansInstagram));
   if (n===2) return !!(state.physique.taille && state.physique.poids);
   if (n===3) return !!state.formation.niveau;
-  if (n===4) return state.experiences.length>0;
+  if (n===4) return state.experiences.length>0 || state.experiencesAgence.length>0;
   if (n===5) return !!(state.photos.principale && state.photos.book.length);
   return false;
 }
@@ -949,12 +952,25 @@ const MODEL_TYPES = [['catwalk','Défilé'],['photo','Photo'],['publicite','Publ
 const LANGUES_DISPONIBLES = ['Français','Anglais','Espagnol','Autre'];
 const NIVEAUX_MANNEQUIN = ['New Face','Professionnel']; // « Amateur » retiré le 06/10/2026
 
+// Projets réalisés avec l'agence (agenda) : affichés ici sans pouvoir être modifiés — c'est
+// l'agence qui les tient à jour ; ils apparaissent d'office sur la fiche et le CV.
+function blocExperiencesAgence(){
+  if (!state.experiencesAgence.length) return '';
+  return '<div class="exp-agence"><p class="exp-agence-titre">Ajoutés automatiquement par l’agence — projets réalisés avec MA2M ('+state.experiencesAgence.length+')</p><ul>' +
+    state.experiencesAgence.map(function(e){
+      return '<li><strong>'+echapperHtml(e.type)+'</strong> · '+echapperHtml(e.nom)+(e.lieu ? ' · '+echapperHtml(e.lieu) : '')+(e.annee ? ' · '+echapperHtml(e.annee) : '')+'</li>';
+    }).join('') + '</ul></div>';
+}
+
 function stepExperience(){
   const pp = state.profilPro;
   var listHtml = state.experiences.length===0
     ? '<p class="exp-empty">Aucune expérience ajoutée pour le moment. Cliquez sur « + Ajouter une expérience ».</p>'
     : state.experiences.map(function(e,i){
-        return '<div class="exp-card" data-exp="'+i+'"><div class="exp-fields">' +
+        var doublon = state.experiencesAgence.some(function(a){ return memeProjet(e.nom, a.nom); });
+        return '<div class="exp-card" data-exp="'+i+'">' +
+        (doublon ? '<p class="exp-doublon">Ce projet a déjà été ajouté par l’agence : cette ligne n’apparaît plus sur votre fiche ni sur votre CV. Vous pouvez la supprimer.</p>' : '') +
+        '<div class="exp-fields">' +
         '<select data-expf="type" data-i="'+i+'">' + EXP_TYPES.map(function(t){ return '<option value="'+t+'" '+(e.type===t?'selected':'')+'>'+t+'</option>'; }).join('') + '</select>' +
         '<input type="text" data-expf="nom" data-i="'+i+'" placeholder="Nom du défilé / de la marque / de la campagne" value="'+echapperHtml(e.nom)+'">' +
         '<input type="text" data-expf="lieu" data-i="'+i+'" placeholder="Ville" value="'+echapperHtml(e.lieu)+'">' +
@@ -977,6 +993,7 @@ function stepExperience(){
     '<div class="actions-row p20-17"><button class="btn ghost small" id="saveProfilPro">Enregistrer</button></div>' +
     '<p class="sub p20-20">Défilés, shootings, publicités, castings… Un seul projet suffit pour publier votre profil — vous pourrez toujours en ajouter d’autres plus tard.</p>' +
     '<button class="btn ghost small p20-12" id="addExp">+ Ajouter une expérience</button>' +
+    blocExperiencesAgence() +
     '<div id="expList">'+listHtml+'</div>' +
     '<div class="actions-row"><button class="btn ghost" data-goto="3">← Retour</button><button class="btn primary" id="save4">Continuer</button></div>';
 }
@@ -1765,7 +1782,7 @@ function donneesCvDepuisEtat(){
       return ph ? (ph.urlPleine||ph.url) : null;
     }),
     photosBook: (state.photos.principale ? [state.photos.principale] : []).concat(state.photos.book).map(function(ph){ return ph.urlPleine||ph.url; }),
-    physique: p, formation: f, competences: state.competences, experiences: state.experiences, sexe: d.sexe
+    physique: p, formation: f, competences: state.competences, experiences: fusionnerExperiences(state.experiencesAgence, state.experiences), sexe: d.sexe
   };
 }
 

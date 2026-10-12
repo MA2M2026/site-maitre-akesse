@@ -10,6 +10,13 @@ const tables = {
   actualites: [{ id: 'n1', titre: 'Casting Orange', contenu: '<p>Texte</p>', categorie: 'Casting', created_at: '2026-10-01T10:00:00Z', a_la_une: true }],
   evenements: [{ id: 'e1', titre: 'Défilé Abidjan', contenu: '<p>D</p>', date_evenement: '2026-09-20', created_at: '2026-09-21T10:00:00Z' }],
   partenaires: [{ id: 'pa', nom: 'Orange CI', logo_url: 'https://x/o.png' }],
+  // expériences écrites par la mannequin : « Défilé Abidjan » saisi trois fois (doublons de
+  // l'agenda, remplacés par le projet de l'agence) et un shooting à elle (gardé)
+  model_projects: [
+    { id: 'x1', model_id: 'a1', type_projet: 'Défilé', titre: 'Défilé Abidjan', periode: '2026', created_at: '2026-09-01T10:00:00Z' },
+    { id: 'x2', model_id: 'a1', type_projet: 'Défilé', titre: 'DEFILE ABIDJAN', periode: '2026', created_at: '2026-09-02T10:00:00Z' },
+    { id: 'x3', model_id: 'a1', type_projet: 'Défilé', titre: 'défilé abidjan 2026', periode: '2026', created_at: '2026-09-03T10:00:00Z' },
+    { id: 'x4', model_id: 'a1', type_projet: 'Shooting', titre: 'Shooting Marque Perso', periode: '2025', created_at: '2026-08-01T10:00:00Z' }],
   bandeau_annonce: [], instagram_posts_cache: [], mot_responsable: [], admins: []
 };
 const cas = [
@@ -20,7 +27,7 @@ const cas = [
   ['partenaires.html', ['Voir la fiche']], ['en/partenaires.html', ['View Details']],
   ['index.html', ['Awa Koné', 'Femme']], ['en/index.html', ['Awa Koné', 'Female']],
   ['parcours.html', ['Défilé Abidjan', 'septembre 2026', 'Awa Koné']], ['en/parcours.html', ['Défilé Abidjan', 'Our models at work', 'Awa Koné']],
-  ['mannequin.html?id=a1', ['Avec MA2M', '1 événement']],
+  ['mannequin.html?id=a1', ['Avec MA2M', '1 événement', 'Shooting Marque Perso', 'avec MA2M']],
   // agenda public : partenaire indirect et mannequin sans profil, écrits à la main (Ext. 137/138)
   ['agenda.html', ['Forum Test', 'Maison XYZ', 'Fatou Bamba']], ['en/agenda.html', ['Forum Test', 'Maison XYZ', 'Fatou Bamba']]
 ];
@@ -71,6 +78,12 @@ const cas = [
       if (!libre.nom || libre.mauvaisLien) manquants.push('mannequin écrite à la main (' + JSON.stringify(libre) + ')');
     }
     if (!gabarit.ordrePied) manquants.push('ordre du bas de page');
+    // fiche : les expériences incluent le projet de l'agence une seule fois (doublons remplacés)
+    if (page.startsWith('mannequin.html')) {
+      const parcoursFiche = await p.evaluate(() => (document.getElementById('fiche-parcours') || {}).innerText || '');
+      const n = (parcoursFiche.match(/d[ée]fil[ée] abidjan/gi) || []).length;
+      if (n !== 1) manquants.push('projet de l’agence dans le parcours de la fiche (' + n + ' fois)');
+    }
     if (!gabarit.pied || gabarit.annee !== String(new Date().getFullYear())) manquants.push('bas de page');
     const ok = !manquants.length && !errs.length;
     console.log(`${ok ? '✓' : '❌ ÉCHEC'} ${page} (${vp.width}px)${manquants.length ? ' | manque : ' + manquants.join(', ') : ''} | erreurs : ${JSON.stringify(errs)}`);
