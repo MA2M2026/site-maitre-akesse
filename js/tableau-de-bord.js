@@ -813,6 +813,14 @@ document.getElementById('nettoyer-photos-btn').addEventListener('click', async (
 // la photo d'origine (jamais modifiée), puis met à jour la fiche de la photo. Une fois
 // par ouverture ; si la page est fermée avant la fin, il reprend à la suivante. Après 5
 // échecs (réseau faible), il s'arrête et réessaiera la prochaine fois.
+// Une version (miniature ou moyenne) refaite à partir de l'original ; false si la copie
+// WebP attendue n'a pas pu être envoyée.
+async function refaireVersion(photo, original, maj, cle, dossier, fin, cote, qualite) {
+  const v = await envoyerVersionPhoto(photo.model_id, original, dossier, fin, cote, qualite);
+  if (!v) throw new Error('Image illisible');
+  maj['url_' + cle] = v.url; maj['chemin_' + cle] = v.chemin;
+  return !!cheminWebp(v.chemin);
+}
 async function rattraperPhotosEnArrierePlan() {
   try { if (sessionStorage.getItem('ma2m_rattrapage_photos')) return; sessionStorage.setItem('ma2m_rattrapage_photos', '1'); } catch (e) {}
   const { data: photos, error } = await sb.from('model_photos')
@@ -822,6 +830,7 @@ async function rattraperPhotosEnArrierePlan() {
   // quand ce navigateur sait l'écrire (12/10/2026 ; voir envoyerVersionPhoto dans js/app.js).
   // Copies WebP : seulement sur un ordinateur (grand écran) hors connexion mobile signalée
   // — environ 370 photos d'origine à télécharger — et 40 photos au plus par ouverture.
+  // Une photo à la fois (pas en parallèle) pour ménager la connexion.
   const c = navigator.connection || {};
   const donneesMobiles = c.saveData || c.type === 'cellular' || /(^|-)(2g|3g)$/.test(c.effectiveType || '');
   let webp = navigateurEcritWebp() && !donneesMobiles && window.matchMedia('(min-width: 900px)').matches;
@@ -831,24 +840,17 @@ async function rattraperPhotosEnArrierePlan() {
   let echecs = 0, faites = 0;
   for (const photo of aFaire) {
     if (echecs >= 5) break;
-    if (!miniatureAFaire(photo) && !moyenneAFaire(photo)) continue;  // plus rien à faire sans WebP
+    const mini = miniatureAFaire(photo), moyenne = moyenneAFaire(photo);
+    if (!mini && !moyenne) continue;  // plus rien à faire sans WebP
     try {
       const reponse = await fetch(photo.url);
       if (!reponse.ok) throw new Error('Téléchargement échoué (HTTP ' + reponse.status + ')');
       const original = await reponse.blob();
       const maj = {};
-      if (miniatureAFaire(photo)) {
-        const v = await envoyerVersionPhoto(photo.model_id, original, 'miniatures', '-n800', 800, 0.75);
-        if (!v) throw new Error('Image illisible');
-        if (webp && !cheminWebp(v.chemin)) webp = false;  // copie WebP refusée : on n'insiste pas
-        maj.url_miniature = v.url; maj.chemin_miniature = v.chemin;
-      }
-      if (moyenneAFaire(photo)) {
-        const v = await envoyerVersionPhoto(photo.model_id, original, 'moyennes', '', 1400, 0.78);
-        if (!v) throw new Error('Image illisible');
-        if (webp && !cheminWebp(v.chemin)) webp = false;
-        maj.url_moyenne = v.url; maj.chemin_moyenne = v.chemin;
-      }
+      let webpOk = true;
+      if (mini) webpOk = await refaireVersion(photo, original, maj, 'miniature', 'miniatures', '-n800', 800, 0.75);
+      if (moyenne) webpOk = (await refaireVersion(photo, original, maj, 'moyenne', 'moyennes', '', 1400, 0.78)) && webpOk;
+      if (!webpOk) webp = false;  // copie WebP refusée : on n'insiste pas pour les suivantes
       // seulement si la photo n'a pas été remplacée entre-temps (bouton « Remplacer »)
       const { error: erreurMaj } = await sb.from('model_photos').update(maj).eq('id', photo.id).eq('url', photo.url);
       if (erreurMaj) throw erreurMaj;

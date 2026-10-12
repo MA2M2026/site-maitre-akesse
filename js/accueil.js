@@ -188,7 +188,8 @@ async function chargerMannequinVedette() {
   if (!profil) return;
 
   const { data: photos } = await sb.from('model_photos').select('url, url_moyenne').eq('model_id', profil.id).order('created_at', { ascending: true }).limit(1);
-  const photoUrl = (photos && photos[0]) ? urlLegere(photos[0].url_moyenne || photos[0].url) : (EN ? '../' : '') + 'assets/logo-dark-bg.png';
+  const premiere = photos?.[0];
+  const photoUrl = premiere ? urlLegere(premiere.url_moyenne || premiere.url) : (EN ? '../' : '') + 'assets/logo-dark-bg.png';
   const libelleCategorie = profil.category === 'homme' ? T('Homme', 'Male') : profil.category === 'femme' ? T('Femme', 'Female') : 'New Face';
 
   document.getElementById('vedette-img').src = photoUrl;

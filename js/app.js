@@ -1846,7 +1846,7 @@ function urlJpegDeSecours(url) { return typeof url === 'string' && /\/(miniature
 // Ce navigateur sait-il ÉCRIRE du WebP (fabriquer les copies) ? Safari, non : ses envois
 // restent en JPEG seul, et le tableau de bord les rattrapera depuis un autre navigateur.
 function navigateurEcritWebp() {
-  try { return document.createElement('canvas').toDataURL('image/webp').indexOf('data:image/webp') === 0; } catch (e) { return false; }
+  try { return document.createElement('canvas').toDataURL('image/webp').startsWith('data:image/webp'); } catch (e) { return false; }
 }
 // Adresse à afficher : la copie WebP quand elle existe (sinon l'adresse telle quelle).
 function urlLegere(url) { return typeof url === 'string' && MARQUE_WEBP.test(url) ? url.replace(/\.jpg(\?|$)/, '.webp$1') : url; }
@@ -1854,7 +1854,7 @@ function urlLegere(url) { return typeof url === 'string' && MARQUE_WEBP.test(url
 // (images de la page ; une image préchargée avec new Image() doit appeler urlJpegDeSecours)
 document.addEventListener('error', function (e) {
   const img = e.target;
-  const secours = img && img.tagName === 'IMG' ? urlJpegDeSecours(img.getAttribute('src')) : null;
+  const secours = img?.tagName === 'IMG' ? urlJpegDeSecours(img.getAttribute('src')) : null;
   if (secours) img.src = secours;
 }, true);
 // Version réduite d'une photo (fichier ou blob), envoyée dans « dossier » ; fin : fin du nom
@@ -1862,7 +1862,7 @@ document.addEventListener('error', function (e) {
 async function envoyerVersionPhoto(modelId, source, dossier, fin, cote, qualite) {
   const blobs = await redessinerPhoto(source, cote, (canvas, finir) => canvas.toBlob(jpg => {
     if (!jpg) { finir(null); return; }
-    canvas.toBlob(webp => finir({ jpg, webp: webp && webp.type === 'image/webp' ? webp : null }), 'image/webp', qualite);
+    canvas.toBlob(webp => finir({ jpg, webp: webp?.type === 'image/webp' ? webp : null }), 'image/webp', qualite);
   }, 'image/jpeg', qualite));
   if (!blobs) return null;
   const base = modelId + '/' + dossier + '/' + Date.now() + '-' + suffixeAleatoire() + fin;
