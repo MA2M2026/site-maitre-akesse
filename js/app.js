@@ -1000,7 +1000,7 @@ async function ma2mExperiencesAgence(idMannequin) {
     return projets.filter(p => p.type in TYPES_EXPERIENCE_AGENDA).map(p => {
       const mois = new Date((p.date_fin || p.date_debut) + 'T12:00:00').toLocaleDateString(EN ? 'en-GB' : 'fr-FR', { month: 'long', year: 'numeric' });
       return { type_projet: EN ? libelleTypeAgenda(p.type, true) : TYPES_EXPERIENCE_AGENDA[p.type], titre: p.titre,
-        periode: mois.charAt(0).toUpperCase() + mois.slice(1), ville: p.ville || '', pays: p.pays || '', promoteur: 'MA2M', agence: true };
+        periode: mois.charAt(0).toUpperCase() + mois.slice(1), lieu: p.lieu || '', ville: p.ville || '', pays: p.pays || '', promoteur: 'MA2M', agence: true };
     });
   } catch (e) {
     if (window.signalerErreur) window.signalerErreur('Expériences avec l’agence : lecture', (e && e.message) || String(e));

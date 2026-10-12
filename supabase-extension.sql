@@ -7280,3 +7280,14 @@ revoke all on function agenda_public(boolean, int) from public;
 grant execute on function agenda_public(boolean, int) to anon, authenticated;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===========================================================================
+-- Extension 139 — Expériences des mannequins plus complètes (12/10/2026, demande de
+-- la propriétaire) : en plus du type, du nom, de la date, du pays, de la ville et du
+-- promoteur (colonnes déjà présentes), le LIEU (salle, hôtel, studio…). Tout reste
+-- facultatif. Visible sur la fiche publique comme les autres informations du parcours.
+-- ===========================================================================
+alter table model_projects add column if not exists lieu text
+  check (lieu is null or length(lieu) <= 160);
+
+NOTIFY pgrst, 'reload schema';

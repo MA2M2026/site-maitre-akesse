@@ -511,7 +511,7 @@ const Store = {
     s.physique.tailleVet = tailleGeneraleCalculee(s.physique, s.identite.sexe);
 
     const { data: exps } = await sb.from('model_projects').select('*').eq('model_id', currentUser.id).order('created_at', { ascending:true });
-    s.experiences = (exps||[]).map(function(e){ return { id:e.id, type:e.type_projet, nom:e.titre, lieu:e.ville, annee:e.periode }; });
+    s.experiences = (exps||[]).map(experienceDepuisBase);
     // Projets réalisés avec l'agence : ajoutés automatiquement à ses expériences (js/app.js)
     s.experiencesAgence = (await ma2mExperiencesAgence(currentUser.id).catch(function(){ return []; })).map(experiencePourCv);
 
@@ -570,13 +570,13 @@ const Store = {
 
   async addExperience(exp){
     const { data, error } = await sb.from('model_projects')
-      .insert({ model_id: currentUser.id, type_projet: exp.type, titre: exp.nom, ville: exp.lieu, periode: exp.annee })
+      .insert(Object.assign({ model_id: currentUser.id }, experienceVersBase(exp)))
       .select().single();
     if (error) { console.error(error); toast("Échec de l'ajout de l'expérience", true); return null; }
-    return { id:data.id, type:data.type_projet, nom:data.titre, lieu:data.ville, annee:data.periode };
+    return experienceDepuisBase(data);
   },
   async updateExperience(id, exp){
-    const { error } = await sb.from('model_projects').update({ type_projet:exp.type, titre:exp.nom, ville:exp.lieu, periode:exp.annee }).eq('id', id).eq('model_id', currentUser.id);
+    const { error } = await sb.from('model_projects').update(experienceVersBase(exp)).eq('id', id).eq('model_id', currentUser.id);
     if (error) { console.error(error); toast('Échec de la mise à jour', true); return false; }
     return true;
   },
@@ -952,6 +952,22 @@ const MODEL_TYPES = [['catwalk','Défilé'],['photo','Photo'],['publicite','Publ
 const LANGUES_DISPONIBLES = ['Français','Anglais','Espagnol','Autre'];
 const NIVEAUX_MANNEQUIN = ['New Face','Professionnel']; // « Amateur » retiré le 06/10/2026
 
+// Une expérience : type, nom, date (ou année), pays, ville, lieu (salle, hôtel, studio…),
+// promoteur / styliste / marque / institution. Tout est facultatif (12/10/2026 : une
+// mannequin peut avoir oublié des détails). « lieu » côté CV = la ville (ancien nom gardé).
+let colonneLieuExperience = false; // colonne model_projects.lieu présente (Extension 139)
+function experienceDepuisBase(e){
+  if ('lieu' in e) colonneLieuExperience = true;
+  return { id:e.id, type:e.type_projet, nom:e.titre, lieu:e.ville, annee:e.periode, pays:e.pays||'', salle:e.lieu||'', promoteur:e.promoteur||'' };
+}
+function experienceVersBase(exp){
+  const ligne = { type_projet:exp.type, titre:exp.nom, ville:exp.lieu, periode:exp.annee, pays:exp.pays||null, promoteur:exp.promoteur||null };
+  // colonne « lieu » : Extension 139 ; tant qu'elle n'est pas vue dans les expériences lues,
+  // envoyée seulement si remplie, pour ne rien bloquer avant que l'agence l'ait activée
+  if (exp.salle || colonneLieuExperience) ligne.lieu = exp.salle || null;
+  return ligne;
+}
+
 // Toutes ses expériences : projets de l'agence + les siennes qui ne les répètent pas (js/app.js).
 // Sert au CV, au niveau, au récapitulatif et à l'analyse du profil.
 function toutesExperiences(){ return fusionnerExperiences(state.experiencesAgence, state.experiences); }
@@ -976,9 +992,12 @@ function stepExperience(){
         (doublon ? '<p class="exp-doublon">Ce projet a déjà été ajouté par l’agence : cette ligne n’apparaît plus sur votre fiche ni sur votre CV. Vous pouvez la supprimer.</p>' : '') +
         '<div class="exp-fields">' +
         '<select data-expf="type" data-i="'+i+'">' + EXP_TYPES.map(function(t){ return '<option value="'+t+'" '+(e.type===t?'selected':'')+'>'+t+'</option>'; }).join('') + '</select>' +
-        '<input type="text" data-expf="nom" data-i="'+i+'" placeholder="Nom du défilé / de la marque / de la campagne" value="'+echapperHtml(e.nom)+'">' +
-        '<input type="text" data-expf="lieu" data-i="'+i+'" placeholder="Ville" value="'+echapperHtml(e.lieu)+'">' +
-        '<input type="text" data-expf="annee" data-i="'+i+'" placeholder="Année" value="'+echapperHtml(e.annee)+'">' +
+        '<input type="text" data-expf="nom" data-i="'+i+'" placeholder="Nom du défilé / de la marque / de la campagne" aria-label="Nom" value="'+echapperHtml(e.nom)+'">' +
+        '<input type="text" data-expf="annee" data-i="'+i+'" placeholder="Date (ex : 03/09/2026) ou année" aria-label="Date ou année" value="'+echapperHtml(e.annee)+'">' +
+        '<input type="text" data-expf="pays" data-i="'+i+'" maxlength="80" placeholder="Pays" aria-label="Pays" value="'+echapperHtml(e.pays)+'">' +
+        '<input type="text" data-expf="lieu" data-i="'+i+'" placeholder="Ville" aria-label="Ville" value="'+echapperHtml(e.lieu)+'">' +
+        '<input type="text" data-expf="salle" data-i="'+i+'" maxlength="160" placeholder="Lieu (salle, hôtel, studio…)" aria-label="Lieu" value="'+echapperHtml(e.salle)+'">' +
+        '<input type="text" data-expf="promoteur" data-i="'+i+'" maxlength="120" placeholder="Promoteur, styliste, marque ou institution" aria-label="Promoteur, styliste, marque ou institution" value="'+echapperHtml(e.promoteur)+'">' +
         '</div><button class="exp-remove" data-rm="'+i+'">Supprimer</button></div>';
       }).join('');
   return '<h2>Expérience professionnelle</h2><p class="sub">Étape 4 sur 6</p>' +
@@ -995,7 +1014,7 @@ function stepExperience(){
     LANGUES_DISPONIBLES.map(function(l){ return '<label class="check-opt '+(pp.langues.indexOf(l)!==-1?'selected':'')+'"><input type="checkbox" data-langue="'+l+'" '+(pp.langues.indexOf(l)!==-1?'checked':'')+'> '+l+'</label>'; }).join('') +
     '</div></div>' +
     '<div class="actions-row p20-17"><button class="btn ghost small" id="saveProfilPro">Enregistrer</button></div>' +
-    '<p class="sub p20-20">Défilés, shootings, publicités, castings… Un seul projet suffit pour publier votre profil — vous pourrez toujours en ajouter d’autres plus tard.</p>' +
+    '<p class="sub p20-20">Défilés, shootings, publicités, castings… Un seul projet suffit pour publier votre profil — vous pourrez toujours en ajouter d’autres plus tard. Remplissez seulement ce dont vous vous souvenez : aucune case n’est obligatoire.</p>' +
     '<button class="btn ghost small p20-12" id="addExp">+ Ajouter une expérience</button>' +
     blocExperiencesAgence() +
     '<div id="expList">'+listHtml+'</div>' +
@@ -1258,7 +1277,7 @@ function bindWizard(){
 function bindExperienceHandlers(){
   const s = state;
   document.getElementById('addExp')?.addEventListener('click', async function(){
-    const draft = { type:'Défilé', nom:'', lieu:'', annee:new Date().getFullYear().toString() };
+    const draft = { type:'Défilé', nom:'', lieu:'', annee:new Date().getFullYear().toString(), pays:'', salle:'', promoteur:'' };
     const saved = await Store.addExperience(draft);
     if (saved) { s.experiences.push(saved); render(); }
   });
