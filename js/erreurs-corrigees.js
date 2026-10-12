@@ -13,6 +13,8 @@
 // Robots et copies de test de Vercel : date lointaine (2100) = toujours effacés, car
 // ils peuvent encore utiliser une ancienne version du site gardée en mémoire.
 // Format : { motif: 'texte exact à chercher', corrige_le: 'AAAA-MM-JJTHH:MM:SSZ' (UTC), note: 'quoi' }
+// Facultatif : navigateur: 'texte' — la règle ne vaut que pour les navigateurs dont l'identité
+// contient ce texte (ex. 'Brave') ; une même erreur venue d'un autre navigateur reste visible.
 window.MA2M_ERREURS_CORRIGEES = [
   { motif: 'inscriptions_mannequins.genre does not exist', corrige_le: '2026-09-29T15:02:31Z', note: 'Colonne « genre » ajoutée dans Supabase (Extension 48 lancée par la propriétaire) — formulaire d’inscription réparé' },
   { motif: "la page s'affiche dézoomée", corrige_le: '2026-09-29T15:41:02Z', note: 'Faux signalement : page ouverte dans une fenêtre invisible (écran 0×0, aperçu de lien ou préchargement) — ces fenêtres sont désormais ignorées' },
@@ -44,5 +46,25 @@ window.MA2M_ERREURS_CORRIGEES = [
   { motif: 'auth-tab-connexion', corrige_le: '2026-09-30T17:10:00Z', note: 'Onglet « Se connecter » touché plusieurs fois alors qu’il était déjà ouvert (juste après un mauvais mot de passe) : pas un défaut' },
   { motif: '[Zoom inattendu]', corrige_le: '2026-09-30T18:45:00Z', note: 'Zoom fait par la personne (pincement sur l’écran ou le pavé tactile, Ctrl + molette) ou rétabli par le téléphone au retour du choix d’une vidéo : ces gestes sont maintenant reconnus, et un seul signalement par page. S’il revient, il réapparaîtra ici' },
   { motif: 'missing email or phone', corrige_le: '2026-09-30T18:45:00Z', note: 'Espace mannequin : « Se connecter » touché avec l’e-mail vide — le site le dit maintenant tout de suite, sans interroger le serveur' },
-  { motif: '/tableau-de-bord : div#liste-erreurs', corrige_le: '2026-09-30T18:45:00Z', note: 'Tableau de bord : liste d’erreurs vidée juste après un clic de la propriétaire — une page qui change en réponse à un clic n’est plus comptée comme un « saut »' }
+  { motif: '/tableau-de-bord : div#liste-erreurs', corrige_le: '2026-09-30T18:45:00Z', note: 'Tableau de bord : liste d’erreurs vidée juste après un clic de la propriétaire — une page qui change en réponse à un clic n’est plus comptée comme un « saut »' },
+  { motif: '[Zoom automatique] /mannequins', corrige_le: '2026-10-12T12:17:00Z', note: 'The Book : champs de recherche à 16 px sur téléphone (règle commune à tout le site), l’iPhone ne zoome plus tout seul' },
+  { motif: '[Zoom automatique] /en/mannequins', corrige_le: '2026-10-12T12:17:00Z', note: 'The Book (anglais) : même correction' },
+  { motif: 'input#f-sans-instagram', corrige_le: '2026-10-12T12:17:00Z', note: 'Case à cocher « Je n’ai pas Instagram » : une case ne fait pas zoomer l’iPhone ; fausse alerte (ordinateur zoomé), le détecteur ignore désormais les cases' },
+  { motif: 'button.filtre-btn.filtre-niveau-btn', corrige_le: '2026-10-12T12:17:00Z', note: 'The Book : boutons de niveau qui passent à la ligne sur petit écran (vérifié à 320 px)' },
+  { motif: '/book/bolli : table', corrige_le: '2026-10-12T12:17:00Z', note: 'Tableau des équivalences de tailles : il défile dans son cadre, la page ne dépasse plus (vérifié à 360 et 411 px)' },
+  { motif: ': img dépasse de 25 px', corrige_le: '2026-10-12T12:17:00Z', note: 'Photo de couverture de la fiche légèrement agrandie (effet voulu), coupée par son cadre : fausse alerte corrigée dans le détecteur' },
+  { motif: 'section#couverture-faisceau', corrige_le: '2026-10-12T12:17:00Z', note: 'Espace mannequin : non reproduit (vérifié à 390 px)' },
+  { motif: 'input#f-tel-numero', corrige_le: '2026-10-12T12:17:00Z', note: 'Espace mannequin : pays et numéro côte à côte ou l’un sous l’autre (correction du 07/10, vérifiée à 390 px)' },
+  { motif: 'connect.facebook.net', corrige_le: '2026-10-12T12:17:00Z', note: 'Code ajouté par le navigateur intégré d’Instagram / Facebook : ignoré par le journal' },
+  { motif: 'www.google.com/g/collect', corrige_le: '2026-10-12T12:17:00Z', note: 'Statistiques Google : adresse de secours de Google, sans effet pour les visiteurs ; ignorée par le journal' },
+  { motif: 'gstatic.com/_/translate', corrige_le: '2026-10-12T12:17:00Z', note: 'Traduction automatique de Google Chrome : ignorée par le journal' },
+  { motif: 'DarkReader', corrige_le: '2100-01-01T00:00:00Z', note: 'Extension « Dark Reader » du visiteur : pas un défaut du site (toujours ignorée)' },
+  { motif: 'style-src-attr → script/style en ligne', navigateur: 'Brave', corrige_le: '2026-10-12T12:17:00Z', note: 'Styles ajoutés par le navigateur Brave (iPhone) : aucun style de ce type dans le code du site ; ignorés par le journal' },
+  { motif: 'style-src-elem → script/style en ligne', navigateur: 'PHX/', corrige_le: '2026-10-12T12:17:00Z', note: 'Styles ajoutés par le navigateur PHX (téléphones TECNO / Infinix) : ignorés par le journal' },
+  { motif: '[Erreur JavaScript] Erreur inconnue', navigateur: 'PHX/', corrige_le: '2026-10-12T12:17:00Z', note: '« Erreur inconnue » sans aucun détail, venant du navigateur PHX (TECNO / Infinix) : ignorée par le journal' },
+  { motif: 'refresh_token_not_found', corrige_le: '2100-01-01T00:00:00Z', note: 'Session expirée (connexion trop ancienne) : la personne se reconnecte, pas un défaut du site (toujours ignoré)' },
+  { motif: '/api/trier-photo', corrige_le: '2100-01-01T00:00:00Z', note: 'Tri des photos par IA retiré du site le 07/10 : anciens signalements' },
+  { motif: '/api/code-protege → 502', corrige_le: '2026-10-11T16:52:02Z', note: '« Créer mon compte » réparé le 11/10 (Extensions 133-134)' },
+  { motif: '[Erreur JavaScript] The I/O read operation failed', corrige_le: '2026-10-12T12:17:00Z', note: 'Vidéo illisible sur le téléphone pendant son allègement : déjà rattrapée par le formulaire (signalée « Vidéo non allégée »), plus comptée en double' },
+  { motif: '/en/mannequins:479', corrige_le: '2026-10-07T23:59:00Z', note: 'Code ajouté par la traduction automatique (ligne qui n’existe pas dans la page) : ignoré par le journal depuis le 07/10' },
 ];

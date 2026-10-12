@@ -74,60 +74,7 @@ async function convertirSiHeic(fichier, qualite) {
   }
 }
 
-// ================== Verrou de défilement fiable, y compris sur iPhone ==================
-// `overflow: hidden` seul (utilisé auparavant) ne bloque PAS le défilement tactile sur
-// iOS Safari — limitation connue et documentée d'iOS, pas un bug ponctuel. La seule
-// méthode qui fonctionne réellement sur iPhone consiste à figer la page en
-// position:fixed à sa position de défilement exacte, puis à la restaurer à l'identique
-// une fois déverrouillée. Un compteur permet à plusieurs éléments (porte d'entrée, menu,
-// modales) de verrouiller/déverrouiller sans se marcher dessus si jamais ils se
-// chevauchent. Utilisé par le menu et toutes les superpositions plein écran du site.
-//
-// Sur l'accueil (index.html / en/index.html), ces mêmes fonctions sont déjà définies
-// plus tôt, dans un script tout en haut de <body> (avant ce fichier, chargé en fin de
-// page) — pour verrouiller la porte d'entrée immédiatement, sans laisser le temps à un
-// visiteur rapide de faire défiler avant que le verrou ne s'active. On ne les redéfinit
-// donc ici que si elles n'existent pas déjà, pour ne jamais écraser un verrou déjà posé.
-if (!window.verrouillerDefilement) (function verrouDefilementIOS() {
-  let positionSauvegardee = 0;
-  let compteur = 0;
-
-  // Deuxième ligne de défense : certains navigateurs/WebViews embarqués (in-app
-  // browsers de messageries, réseaux sociaux, etc.) ignorent parfois le simple
-  // position:fixed. On bloque donc aussi directement le geste de balayage tactile
-  // tant que la page est verrouillée — sauf à l'intérieur des zones qui ont
-  // légitimement leur propre défilement interne (menu, fiches, tiroir du tableau
-  // de bord), pour ne pas les casser.
-  const ZONES_DEFILEMENT_AUTORISE = '.menu-overlay, .news-modal-contenu, .modal-overlay, .tdb-menu-panel, .projets-liste-scroll, .redaction-shell';
-  function bloquerGesteTactile(e) {
-    if (e.target.closest(ZONES_DEFILEMENT_AUTORISE)) return;
-    e.preventDefault();
-  }
-
-  window.verrouillerDefilement = function () {
-    if (compteur === 0) {
-      positionSauvegardee = window.scrollY || window.pageYOffset || 0;
-      document.body.style.position = 'fixed';
-      document.body.style.top = '-' + positionSauvegardee + 'px';
-      document.body.style.left = '0';
-      document.body.style.right = '0';
-      document.addEventListener('touchmove', bloquerGesteTactile, { passive: false });
-    }
-    compteur++;
-  };
-
-  window.deverrouillerDefilement = function () {
-    compteur = Math.max(0, compteur - 1);
-    if (compteur === 0) {
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.left = '';
-      document.body.style.right = '';
-      window.scrollTo(0, positionSauvegardee);
-      document.removeEventListener('touchmove', bloquerGesteTactile, { passive: false });
-    }
-  };
-})();
+// Verrou du défilement (verrouillerDefilement / deverrouillerDefilement) : js/verrou-defilement.js.
 
 // ================== Retour arrière fiable, sur toutes les pages ==================
 // Sur mobile/tablette, le bouton "retour" restaure très souvent une page depuis
@@ -419,6 +366,47 @@ async function verifierAdmin() {
       document.getElementById('admin-bloc').style.display = 'block';
     }
   } catch (e) {}
+}
+
+// Liste « Taille » des formulaires (candidature et inscription) : elle commence à la taille
+// minimale requise selon le genre (175 cm femmes, 185 cm hommes) — impossible de choisir en
+// dessous. Mineurs exemptés : liste complète (140 cm et plus). prefixe : 'ca' ou 'ins' (ids
+// <prefixe>-genre, -taille, -taille-indication) ; texteMineur : phrase affichée pour un mineur.
+// Partagé le 12/10/2026 (avant, recopié dans les deux formulaires).
+function remplirTailleMinimale(prefixe, mineur, texteMineur) {
+  const genre = document.getElementById(prefixe + '-genre').value;
+  const indication = document.getElementById(prefixe + '-taille-indication');
+  const champ = document.getElementById(prefixe + '-taille');
+  const valeurActuelle = champ.value;
+  const min = mineur ? 140 : (genre === 'homme' ? 185 : (genre === 'femme' ? 175 : 140));
+
+  champ.innerHTML = '';
+  champ.appendChild(new Option('—', ''));
+  for (let v = min; v <= 210; v++) champ.appendChild(new Option(v + ' cm', v));
+  if ([...champ.options].some(o => o.value === valeurActuelle)) champ.value = valeurActuelle;
+
+  if (mineur) { indication.textContent = texteMineur; }
+  else if (genre === 'homme') { indication.textContent = T('Taille minimale requise : 185 cm', 'Minimum height required: 185 cm'); }
+  else if (genre === 'femme') { indication.textContent = T('Taille minimale requise : 175 cm', 'Minimum height required: 175 cm'); }
+  else { indication.textContent = ''; }
+}
+
+// Réponse refusée d'un accès protégé (connexion de l'Espace et du tableau de bord, code de
+// validation) : message à afficher, ou '' si l'accès est accordé. refus : début de la phrase
+// d'erreur (« E-mail ou mot de passe incorrect », « Code de validation incorrect »…).
+// Partagé le 12/10/2026 (avant, recopié trois fois).
+function messageAccesRefuse(reponse, resultat, refus) {
+  if (reponse.status === 429) {
+    const h = Math.ceil(resultat.minutesRestantes / 60);
+    return resultat.dejaBloque
+      ? `Accès temporairement bloqué. Revenez dans ${resultat.minutesRestantes} min.`
+      : `Trop de tentatives. Accès bloqué. Revenez dans ${h >= 1 ? h + ' heure' + (h > 1 ? 's' : '') : resultat.minutesRestantes + ' min'}.`;
+  }
+  if (reponse.ok) return '';
+  const reste = resultat.essaisRestants;
+  return reste === 2 ? refus + '. Attention : il vous reste 2 tentatives.'
+    : reste === 1 ? refus + '. Il vous reste 1 tentative.'
+    : refus + '.';
 }
 
 // Lien de « mot de passe oublié » (Supabase ajoute type=recovery à l'adresse) : Espace
@@ -1838,11 +1826,7 @@ function redessinerPhoto(fichier, coteMax, rendu) {
 async function compresserPhotoOrigine(fichier, coteMax = 2200, qualite = 0.85) {
   const compressible = /^image\/(jpeg|jpg|pjpeg|png|webp)$/i.test(fichier.type || '');
   if (!compressible || fichier.size < 900 * 1024) return fichier;
-  const resultat = await redessinerPhoto(fichier, coteMax, (canvas, fin) => canvas.toBlob(blob => {
-    if (!blob || blob.size >= fichier.size) { fin(null); return; }
-    fin(new File([blob], fichier.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' }));
-  }, 'image/jpeg', qualite));
-  return resultat || fichier;
+  return reduireEnJpeg(fichier, coteMax, qualite);
 }
 // Miniature (grille du Book) : 800 px depuis le 06/10/2026, nom en « -n800.jpg » ;
 // aussi utilisée pour la version moyenne (1400 px).
@@ -2633,33 +2617,22 @@ function texteAttenteEnvoi(secondes) {
 const URL_SCRIPT_PHOTOS_CASTING = 'https://script.google.com/macros/s/AKfycbxzPeaTLvMqZKtBvJJabLeZBh6JJ9ZaggPYUY8XAoh1-tyBq1Byi3lBm3SkhkH8rqNxxg/exec';
 
 function redimensionnerImage(fichier, coteMax = 2800, qualite = 0.88) {
-  return new Promise((resolve) => {
-    // On ne retouche que les JPEG : un PNG/GIF/WebP peut avoir de la transparence,
-    // qui deviendrait un fond noir en le convertissant en JPEG (pas de canal alpha).
-    if (fichier.type !== 'image/jpeg' || fichier.size < 900 * 1024) { resolve(fichier); return; }
-    const img = new Image();
-    const adresse = URL.createObjectURL(fichier);
-    const liberer = () => URL.revokeObjectURL(adresse); // évite de garder la photo en mémoire
-    img.onload = () => {
-      liberer();
-      try {
-        const coteActuel = Math.max(img.width, img.height);
-        const ratio = coteActuel > coteMax ? coteMax / coteActuel : 1;
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.round(img.width * ratio);
-        canvas.height = Math.round(img.height * ratio);
-        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob((blob) => {
-          if (!blob || blob.size >= fichier.size) { resolve(fichier); return; }
-          resolve(new File([blob], fichier.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' }));
-        }, 'image/jpeg', qualite);
-      } catch (e) {
-        resolve(fichier);
-      }
-    };
-    img.onerror = () => { liberer(); resolve(fichier); };
-    img.src = adresse;
-  });
+  // On ne retouche que les JPEG : un PNG/GIF/WebP peut avoir de la transparence,
+  // qui deviendrait un fond noir en le convertissant en JPEG (pas de canal alpha).
+  if (fichier.type !== 'image/jpeg' || fichier.size < 900 * 1024) return Promise.resolve(fichier);
+  return reduireEnJpeg(fichier, coteMax, qualite);
+}
+
+// Réduit une photo (plus grand côté ≤ coteMax) et la réenregistre en JPEG ; garde l'originale
+// si le résultat n'est pas plus léger ou si le navigateur échoue. Partagé le 12/10/2026
+// (avant, recopié dans js/tableau-de-bord.js pour la photo du responsable) ; s'appuie sur
+// redessinerPhoto(), comme la compression des photos du Book.
+async function reduireEnJpeg(fichier, coteMax, qualite) {
+  const resultat = await redessinerPhoto(fichier, coteMax, (canvas, fin) => canvas.toBlob(blob => {
+    if (!blob || blob.size >= fichier.size) { fin(null); return; }
+    fin(new File([blob], fichier.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' }));
+  }, 'image/jpeg', qualite));
+  return resultat || fichier;
 }
 
 function fichierEnBase64(fichier) {

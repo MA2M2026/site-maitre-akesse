@@ -15,27 +15,9 @@
   champ.min = new Date(aujourdhui.getFullYear() - 100, aujourdhui.getMonth(), aujourdhui.getDate()).toISOString().slice(0, 10);
 })();
 
-// --- La liste "Taille" elle-même commence à la taille minimale requise selon le
-// genre (175 cm femmes, 185 cm hommes) — impossible de choisir en dessous, donc
-// plus besoin de bloquer/refuser une inscription après coup. Mineurs exemptés :
-// liste complète (140 cm et plus) tant que la date de naissance l'indique. ---
+// Liste « Taille » selon le genre (taille minimale, mineurs exemptés) : js/app.js.
 function remplirTailleSelonGenreInscription() {
-  const genre = document.getElementById('ins-genre').value;
-  const indication = document.getElementById('ins-taille-indication');
-  const mineur = estMineurInscription();
-  const champ = document.getElementById('ins-taille');
-  const valeurActuelle = champ.value;
-  const min = mineur ? 140 : (genre === 'homme' ? 185 : (genre === 'femme' ? 175 : 140));
-
-  champ.innerHTML = '';
-  champ.appendChild(new Option('—', ''));
-  for (let v = min; v <= 210; v++) champ.appendChild(new Option(v + ' cm', v));
-  if ([...champ.options].some(o => o.value === valeurActuelle)) champ.value = valeurActuelle;
-
-  if (mineur) { indication.textContent = T('Pas de taille minimale pour les inscriptions de mineurs.', 'No minimum height for minor registrations.'); }
-  else if (genre === 'homme') { indication.textContent = T('Taille minimale requise : 185 cm', 'Minimum height required: 185 cm'); }
-  else if (genre === 'femme') { indication.textContent = T('Taille minimale requise : 175 cm', 'Minimum height required: 175 cm'); }
-  else { indication.textContent = ''; }
+  remplirTailleMinimale('ins', estMineurInscription(), T('Pas de taille minimale pour les inscriptions de mineurs.', 'No minimum height for minor registrations.'));
 }
 document.getElementById('ins-genre').addEventListener('change', remplirTailleSelonGenreInscription);
 // Civilité choisie par la candidate (décision de la propriétaire, 07/10/2026) : Madame ou

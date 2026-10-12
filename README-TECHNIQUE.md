@@ -759,6 +759,13 @@ Anti-doublon par session, 25 signalements max par page. Depuis le code :
 `window.signalerErreur(catégorie, message, détail)` (ou `signalerProbleme()` dans
 `js/app.js`) pour tout échec rattrapé sans planter.
 
+Journal du 12/10/2026 : ne sont plus signalés les styles en ligne ajoutés par les navigateurs
+Brave (iPhone) et PHX (TECNO / Infinix) sans fichier d'origine, une « erreur » sans message ni
+fichier, le code du navigateur intégré d'Instagram (`connect.facebook.net`) et l'erreur de
+lecture d'une vidéo déjà rattrapée par le formulaire. Les erreurs corrigées s'effacent toutes
+seules du journal grâce à `js/erreurs-corrigees.js` ; l'essai `scripts/tests-visiteur/test-journal.js`
+vérifie, avec de vraies lignes du journal, ce qui est effacé et comment le reste est classé.
+
 Table `journal_erreurs` (Extension 44) + capture globale dans `js/app.js`
 + section "🔴 Erreurs réelles du site" dans `tableau-de-bord.html`.
 Écriture ouverte à tout visiteur anonyme (comme pour les autres tables
@@ -2027,8 +2034,8 @@ double) : un projet passé, visible et non annulé compte automatiquement.
   24 derniers mois, chiffres animés, mur des visages (mannequins actives du mois, 18 puis
   « Voir les autres »), détail par mannequin, projets du mois par type ; animations coupées si
   le visiteur demande moins de mouvement.
-- Fiche mannequin : rubrique « Avec MA2M » (`afficherParcoursAgence` dans `js/fiche-mannequin.js`),
-  masquée tant qu'il n'y a aucun projet réalisé.
+- Fiche mannequin : la rubrique « Avec MA2M » a été retirée le 12/10/2026 (demande de la
+  propriétaire) ; les projets de l'agence restent dans les expériences (« Parcours » de la fiche).
 - Outils communs dans `js/app.js` : `ma2mParcours`, `ma2mCompteParType`, `nombreTypeAgenda`,
   `lienFicheMannequin` (aussi utilisé par `js/agenda.js`).
 - Essais : `test-pages-publiques.js` (page FR/EN + fiche), `test-admin.js` (pays + annulé).
@@ -2085,7 +2092,7 @@ Essais : `test-admin.js` (étapes 8 et 9) et `test-pages-publiques.js` (page Age
 
 ## Expériences des mannequins synchronisées avec l'agenda (12/10/2026)
 Chaque projet réalisé avec l'agence (agenda → `parcours_public`, filtré sur la mannequin)
-apparaît tout seul dans ses expériences : fiche publique (parcours, badge « avec MA2M »), CV
+apparaît tout seul dans ses expériences : fiche publique (parcours, sans mention « avec MA2M » depuis le 12/10/2026), CV
 (Espace mannequin et tableau de bord), Espace mannequin (bloc « Ajoutés automatiquement par
 l'agence », en lecture seule). Rien n'est écrit ni effacé dans `model_projects` : la fusion se
 fait à l'affichage, règle unique dans `js/app.js` : `ma2mExperiencesAgence(id)`,
@@ -2117,7 +2124,7 @@ pas le surcharger ; la compcard ne liste pas les expériences (seulement leur no
   `pm-entree` / `pm-vu`) : compteurs lancés à leur arrivée, visages qui éclosent avec anneau et
   pastille, cartes avec filet, titre mot à mot (`decouperTitre`), filigrane qui dérive.
 - Fiche : « Avec MA2M » devient un résumé chiffré (plus de liste) — les projets ne sont plus
-  montrés deux fois au visiteur ; le détail reste dans « Parcours ».
+  montrés deux fois au visiteur ; le détail reste dans « Parcours ». (Résumé retiré le 12/10/2026.)
 - Espace mannequin : les lignes qui répètent un projet de l'agence sont masquées, avec un bouton
   « Supprimer ces doublons » (action de la mannequin, avec confirmation).
 
@@ -2127,3 +2134,25 @@ pas le surcharger ; la compcard ne liste pas les expériences (seulement leur no
 descendre les notes de fiabilité et de sécurité à C alors qu'ils ne sont jamais envoyés aux
 visiteurs. `js/tableau-v2.js` : `ouvrirFicheSure()` signale au journal une panne d'ouverture
 de fiche au lieu de la laisser passer inaperçue.
+
+## Code recopié → 0 % (12/10/2026)
+Regroupements faits pour supprimer les derniers blocs recopiés signalés par SonarQube :
+- Boutique : `js/gabarit-boutique.js` (haut de page, menu, barre, panier, bas de page des 6
+  pages ; emplacements `data-gabarit-boutique`), polices chargées par `css/marketplace.css`.
+- Accueil FR/EN : script de démarrage dans `js/accueil-debut.js` (chargé sans async en haut
+  du `<body>`). Candidature / Intégrer l'agence : `css/candidature.css`, visionneuse créée par
+  `js/formulaire-candidature.js`. Contact : icônes des réseaux via `data-gabarit="reseaux"`.
+- Actualités / Événements : `afficherMediasPublication`, `brancherRedaction`,
+  `envoyerPhotosPublication`, `enregistrerPhotosPublication`, `supprimerPublication`
+  (`js/publications.js`, constante `PUBLICATION` dans chaque page). Essai : `test-publications.js`.
+- Verrou du défilement (porte d'entrée, menu, fenêtres) : `js/verrou-defilement.js`, chargé sans
+  defer juste avant `js/app.js` sur chaque page (tout en haut du body sur l'accueil).
+- CV de la mannequin : `css/cv-mannequin.css` (Espace + tableau de bord, rendu identique au pixel ;
+  règles jamais utilisées retirées).
+- `js/app.js` : `reduireEnJpeg` (sur `redessinerPhoto`), `messageAccesRefuse`,
+  `remplirTailleMinimale` ; `js/messages-candidats.js` : `entreeMessage` (textes identiques).
+- `api/_commun.js` : `debutRequete`, `compteurTentatives` (blocage / échec / réussite).
+  `api/_r2.js` (à part, pour que les fonctions de connexion n'embarquent pas les modules du
+  stockage) : `debutR2`, `repondreR2`, `TYPES_IMAGES`. Comparaison ancien / nouveau sur 41 cas simulés :
+  mêmes réponses et mêmes appels à la base. Seul changement : le message d'erreur 500 de
+  creer-admin / supprimer-mannequin ne cite plus le nom de la variable secrète.

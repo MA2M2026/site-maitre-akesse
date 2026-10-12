@@ -18,27 +18,12 @@
 
 const { DeleteObjectsCommand } = require('@aws-sdk/client-s3');
 
-const { SUPABASE_URL, enTetesService, jetonDe, corpsDe, verifierUtilisateur, lignesAdmin, estAdmin, creerClientR2 } = require('./_commun.js');
+const { SUPABASE_URL, enTetesService, verifierUtilisateur, lignesAdmin, estAdmin, creerClientR2, debutRequete } = require('./_commun.js');
 
 module.exports = async function handler(req, res) {
-  if (req.method !== 'POST') {
-    res.status(405).json({ error: 'Méthode non autorisée.' });
-    return;
-  }
-
-  const cleSecrete = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!cleSecrete) {
-    res.status(500).json({ error: "Configuration serveur incomplète (SUPABASE_SERVICE_ROLE_KEY absente sur Vercel)." });
-    return;
-  }
-
-  const jeton = jetonDe(req);
-  if (!jeton) {
-    res.status(401).json({ error: 'Non authentifié.' });
-    return;
-  }
-
-  const corps = corpsDe(req);
+  const debut = debutRequete(req, res, true); // POST + clé serveur + jeton (api/_commun.js)
+  if (!debut) return;
+  const { jeton, corps } = debut;
   const modelId = corps && corps.modelId;
   if (!modelId || typeof modelId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(modelId)) {
     res.status(400).json({ error: 'Identifiant de mannequin manquant ou invalide.' });

@@ -188,20 +188,8 @@ function bindAuthGate(){
         body: JSON.stringify({ email, password: mdp, espace: 'mannequin', appareil: idAppareilMa2m() })
       });
       const resultat = await reponse.json().catch(() => ({}));
-      if (reponse.status === 429) {
-        const h = Math.ceil(resultat.minutesRestantes / 60);
-        msg.textContent = resultat.dejaBloque
-          ? `Accès temporairement bloqué. Revenez dans ${resultat.minutesRestantes} min.`
-          : `Trop de tentatives. Accès bloqué. Revenez dans ${h >= 1 ? h + ' heure' + (h > 1 ? 's' : '') : resultat.minutesRestantes + ' min'}.`;
-        return;
-      }
-      if (!reponse.ok) {
-        const reste = resultat.essaisRestants;
-        msg.textContent = reste === 2 ? 'E-mail ou mot de passe incorrect. Attention : il vous reste 2 tentatives.'
-          : reste === 1 ? 'E-mail ou mot de passe incorrect. Il vous reste 1 tentative.'
-          : 'E-mail ou mot de passe incorrect.';
-        return;
-      }
+      const refus = messageAccesRefuse(reponse, resultat, 'E-mail ou mot de passe incorrect'); // js/app.js
+      if (refus) { msg.textContent = refus; return; }
       const { error } = await sb.auth.setSession({ access_token: resultat.access_token, refresh_token: resultat.refresh_token });
       if (error) { msg.textContent = 'Erreur de connexion — réessayez.'; return; }
       msg.textContent = '';

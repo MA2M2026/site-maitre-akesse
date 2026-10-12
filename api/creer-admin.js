@@ -11,27 +11,12 @@
 //
 // Variable d'environnement requise sur Vercel : SUPABASE_SERVICE_ROLE_KEY.
 
-const { SUPABASE_URL, enTetesService, jetonDe, corpsDe, verifierUtilisateur, estAdmin } = require('./_commun.js');
+const { SUPABASE_URL, enTetesService, verifierUtilisateur, estAdmin, debutRequete } = require('./_commun.js');
 
 module.exports = async function handler(req, res) {
-  if (req.method !== 'POST') {
-    res.status(405).json({ error: 'Méthode non autorisée.' });
-    return;
-  }
-
-  const cleSecrete = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!cleSecrete) {
-    res.status(500).json({ error: "Configuration serveur incomplète (SUPABASE_SERVICE_ROLE_KEY absente sur Vercel)." });
-    return;
-  }
-
-  const jeton = jetonDe(req);
-  if (!jeton) {
-    res.status(401).json({ error: 'Non authentifié.' });
-    return;
-  }
-
-  const corps = corpsDe(req);
+  const debut = debutRequete(req, res, true); // POST + clé serveur + jeton (api/_commun.js)
+  if (!debut) return;
+  const { jeton, corps } = debut;
   const email = corps && typeof corps.email === 'string' ? corps.email.trim() : '';
   const motDePasse = corps && typeof corps.password === 'string' ? corps.password : '';
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {

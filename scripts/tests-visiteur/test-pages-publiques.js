@@ -29,8 +29,8 @@ const cas = [
   ['partenaires.html', ['Voir la fiche']], ['en/partenaires.html', ['View Details']],
   ['index.html', ['Awa Koné', 'Femme']], ['en/index.html', ['Awa Koné', 'Female']],
   ['parcours.html', ['Défilé Abidjan', 'septembre 2026', 'Awa Koné']], ['en/parcours.html', ['Défilé Abidjan', 'Our models at work', 'Awa Koné']],
-  // « Avec MA2M » : résumé chiffré (la base simulée renvoie tous les projets, d'où « activités » sans nombre exact)
-  ['mannequin.html?id=a1', ['Avec MA2M', 'activité', 'Shooting Marque Perso', 'avec MA2M']],
+  // fiche : expériences (projets de l'agence inclus) ; l'encadré « Avec MA2M » est retiré (12/10/2026)
+  ['mannequin.html?id=a1', ['Shooting Marque Perso']],
   // agenda public : partenaire indirect et mannequin sans profil, écrits à la main (Ext. 137/138)
   ['agenda.html', ['Forum Test', 'Maison XYZ', 'Fatou Bamba']], ['en/agenda.html', ['Forum Test', 'Maison XYZ', 'Fatou Bamba']]
 ];
@@ -85,10 +85,9 @@ const cas = [
     if (page.startsWith('mannequin.html')) {
       const parcoursFiche = await p.evaluate(() => (document.getElementById('fiche-parcours') || {}).innerText || '');
       const n = (parcoursFiche.match(/d[ée]fil[ée] abidjan/gi) || []).length;
-      // « Avec MA2M » ne répète plus la liste des projets : seulement des chiffres
-      const resume = await p.evaluate(() => ({ liste: !!document.querySelector('#fiche-avec-ma2m .fiche-projet'),
-        chiffres: [...document.querySelectorAll('#fiche-avec-ma2m .fiche-ma2m-chiffre')].map(c => [Number(c.querySelector('strong').textContent), c.querySelector('span').textContent.trim()]) }));
-      if (resume.liste || !resume.chiffres.length || resume.chiffres.some(([n, l]) => !(n > 0) || !l)) manquants.push('résumé chiffré « Avec MA2M » (' + JSON.stringify(resume) + ')');
+      // l'encadré « Avec MA2M » et la mention « avec MA2M » sont retirés (demande de la propriétaire, 12/10/2026)
+      const avecMa2m = await p.evaluate(() => !!document.getElementById('fiche-avec-ma2m') || /avec MA2M|with MA2M/i.test(document.body.innerText));
+      if (avecMa2m) manquants.push('« Avec MA2M » encore affiché sur la fiche');
       if (n !== 2) manquants.push('projet de l’agence dans le parcours de la fiche (' + n + ' fois au lieu de 2 : édition 2026 de l’agence + édition 2023 de la mannequin)');
     }
     if (!gabarit.pied || gabarit.annee !== String(new Date().getFullYear())) manquants.push('bas de page');

@@ -311,6 +311,14 @@ function ouvrirVisionneuse(adresse) {
   v.querySelector('.visionneuse-fermer').focus();
 }
 function fermerVisionneuse() { document.getElementById('ca-visionneuse').classList.add('u-hidden'); }
+// La visionneuse est créée ici (12/10/2026 : avant, recopiée dans les 4 pages de candidature).
+(function creerVisionneuse() {
+  const v = document.createElement('div');
+  v.id = 'ca-visionneuse'; v.className = 'visionneuse u-hidden';
+  v.setAttribute('role', 'dialog'); v.setAttribute('aria-modal', 'true'); v.setAttribute('aria-label', T('Photo en grand', 'Full-size photo'));
+  v.innerHTML = '<img alt=""><button type="button" class="btn visionneuse-fermer">' + T('✕ Fermer', '✕ Close') + '</button>';
+  document.getElementById('form-casting').closest('section').appendChild(v);
+})();
 document.getElementById('ca-visionneuse').addEventListener('click', fermerVisionneuse);
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fermerVisionneuse(); });
 
@@ -329,27 +337,9 @@ document.getElementById('ca-photo-remplacement').addEventListener('change', (e) 
   rafraichirApercuPhotos();
 });
 
-// --- La liste "Taille" elle-même commence à la taille minimale requise selon le
-// genre (175 cm femmes, 185 cm hommes) — impossible de choisir en dessous, donc
-// plus besoin de bloquer/refuser une candidature après coup. Mineurs exemptés :
-// liste complète (140 cm et plus) tant que la date de naissance l'indique. ---
+// Liste « Taille » selon le genre (taille minimale, mineurs exemptés) : js/app.js.
 function remplirTailleSelonGenre() {
-  const genre = document.getElementById('ca-genre').value;
-  const indication = document.getElementById('ca-taille-indication');
-  const mineur = estMineur();
-  const champ = document.getElementById('ca-taille');
-  const valeurActuelle = champ.value;
-  const min = mineur ? 140 : (genre === 'homme' ? 185 : (genre === 'femme' ? 175 : 140));
-
-  champ.innerHTML = '';
-  champ.appendChild(new Option('—', ''));
-  for (let v = min; v <= 210; v++) champ.appendChild(new Option(v + ' cm', v));
-  if ([...champ.options].some(o => o.value === valeurActuelle)) champ.value = valeurActuelle;
-
-  if (mineur) { indication.textContent = T('Pas de taille minimale pour les candidatures de mineurs.', 'No minimum height for applications from minors.'); }
-  else if (genre === 'homme') { indication.textContent = T('Taille minimale requise : 185 cm', 'Minimum height required: 185 cm'); }
-  else if (genre === 'femme') { indication.textContent = T('Taille minimale requise : 175 cm', 'Minimum height required: 175 cm'); }
-  else { indication.textContent = ''; }
+  remplirTailleMinimale('ca', estMineur(), T('Pas de taille minimale pour les candidatures de mineurs.', 'No minimum height for applications from minors.'));
 }
 document.getElementById('ca-genre').addEventListener('change', remplirTailleSelonGenre);
 // Civilité choisie par la candidate (décision de la propriétaire, 07/10/2026) : Madame ou

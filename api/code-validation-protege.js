@@ -4,37 +4,17 @@
 // (l'appelant est déjà authentifié) — identifie le compte par son jeton
 // Supabase, jamais par une valeur fournie par le navigateur.
 
-const { SUPABASE_URL, enTetesService, jetonDe, corpsDe, verifierUtilisateur, extraireIp, nettoyerAppareil } = require('./_commun.js');
+const { SUPABASE_URL, verifierUtilisateur, extraireIp, nettoyerAppareil, debutRequete, compteurTentatives } = require('./_commun.js');
 
 module.exports = async function handler(req, res) {
-  if (req.method !== 'POST') {
-    res.status(405).json({ error: 'Méthode non autorisée.' });
-    return;
-  }
-
-  const cleSecrete = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!cleSecrete) {
-    res.status(500).json({ error: 'Configuration serveur incomplète.' });
-    return;
-  }
-
-  const jeton = jetonDe(req);
-  if (!jeton) {
-    res.status(401).json({ error: 'Non authentifié.' });
-    return;
-  }
-
-  const corps = corpsDe(req);
+  const debut = debutRequete(req, res, true); // POST + clé serveur + jeton (api/_commun.js)
+  if (!debut) return;
+  const { jeton, corps } = debut;
   const code = corps && corps.code;
   if (!code) {
     res.status(400).json({ error: 'Code manquant.' });
     return;
   }
-
-  const entetes = { ...enTetesService(), 'Content-Type': 'application/json' };
-  const ip = extraireIp(req);
-  const appareil = nettoyerAppareil(corps && corps.appareil);
-  const espace = 'admin-code';
 
   try {
     const utilisateur = await verifierUtilisateur(jeton);
@@ -42,48 +22,22 @@ module.exports = async function handler(req, res) {
       res.status(401).json({ error: 'Session invalide ou expirée — reconnectez-vous.' });
       return;
     }
-    const identifiant = utilisateur.id;
-
-    const repBlocage = await fetch(SUPABASE_URL + '/rest/v1/rpc/connexion_verifier_blocage', {
-      method: 'POST', headers: entetes,
-      body: JSON.stringify({ p_ip: ip, p_identifiant: identifiant, p_espace: espace, p_appareil: appareil })
-    });
-    const lignesBlocage = repBlocage.ok ? await repBlocage.json() : [];
-    const etatBlocage = lignesBlocage[0];
-    if (etatBlocage && etatBlocage.bloque) {
-      res.setHeader('Retry-After', String(etatBlocage.minutes_restantes * 60));
-      res.status(429).json({ error: 'bloque', dejaBloque: true, minutesRestantes: etatBlocage.minutes_restantes });
-      return;
-    }
+    const tentatives = compteurTentatives(extraireIp(req), utilisateur.id, 'admin-code', nettoyerAppareil(corps && corps.appareil));
+    if (await tentatives.dejaBloque(res)) return;
 
     const repCode = await fetch(SUPABASE_URL + '/rest/v1/rpc/verifier_code_validation', {
       method: 'POST',
-      headers: { apikey: cleSecrete, Authorization: 'Bearer ' + jeton, 'Content-Type': 'application/json' },
+      headers: { apikey: process.env.SUPABASE_SERVICE_ROLE_KEY, Authorization: 'Bearer ' + jeton, 'Content-Type': 'application/json' },
       body: JSON.stringify({ p_code: code })
     });
     const estValide = repCode.ok ? await repCode.json() : false;
 
     if (!estValide) {
-      const repEchec = await fetch(SUPABASE_URL + '/rest/v1/rpc/connexion_enregistrer_echec', {
-        method: 'POST', headers: entetes,
-        body: JSON.stringify({ p_ip: ip, p_identifiant: identifiant, p_espace: espace, p_appareil: appareil })
-      });
-      const lignesEchec = repEchec.ok ? await repEchec.json() : [];
-      const etat = lignesEchec[0] || { bloque: false, essais_restants: null };
-      if (etat.bloque) {
-        res.setHeader('Retry-After', String(etat.minutes_blocage * 60));
-        res.status(429).json({ error: 'bloque', dejaBloque: false, minutesRestantes: etat.minutes_blocage });
-        return;
-      }
-      res.status(401).json({ error: 'refuse', essaisRestants: etat.essais_restants });
+      await tentatives.echec(res);
       return;
     }
 
-    await fetch(SUPABASE_URL + '/rest/v1/rpc/connexion_enregistrer_succes', {
-      method: 'POST', headers: entetes,
-      body: JSON.stringify({ p_ip: ip, p_identifiant: identifiant, p_espace: espace, p_appareil: appareil })
-    });
-
+    await tentatives.succes();
     res.status(200).json({ ok: true });
   } catch (e) {
     res.status(500).json({ error: 'Erreur serveur.' });

@@ -90,7 +90,63 @@ function nettoyerAppareil(v) {
   return typeof v === 'string' && /^[A-Za-z0-9-]{8,64}$/.test(v) ? v : null;
 }
 
+// Début commun des fonctions serveur (12/10/2026 : avant, recopié dans chacune) : refuse
+// tout sauf POST, vérifie que la clé secrète est bien configurée et, si authentifie, qu'un
+// jeton de connexion est fourni. Renvoie { jeton, corps }, ou null après avoir déjà répondu.
+function debutRequete(req, res, authentifie) {
+  if (req.method !== 'POST') {
+    res.status(405).json({ error: 'Méthode non autorisée.' });
+    return null;
+  }
+  if (!cleService()) {
+    res.status(500).json({ error: 'Configuration serveur incomplète.' });
+    return null;
+  }
+  const jeton = jetonDe(req);
+  if (authentifie && !jeton) {
+    res.status(401).json({ error: 'Non authentifié.' });
+    return null;
+  }
+  return { jeton, corps: corpsDe(req) };
+}
+
+// Compteur de tentatives d'un accès protégé (connexion par mot de passe, code de validation) :
+// blocage après trop d'erreurs, stocké en base (jamais dans le navigateur). Partagé le
+// 12/10/2026 (avant, recopié dans connexion-protegee.js et code-validation-protege.js).
+function compteurTentatives(ip, identifiant, espace, appareil) {
+  const entetes = { ...enTetesService(), 'Content-Type': 'application/json' };
+  const appeler = (rpc) => fetch(SUPABASE_URL + '/rest/v1/rpc/' + rpc, {
+    method: 'POST', headers: entetes,
+    body: JSON.stringify({ p_ip: ip, p_identifiant: identifiant, p_espace: espace, p_appareil: appareil })
+  });
+  return {
+    // Déjà bloqué ? Répond 429 et renvoie true (on refuse sans rien vérifier d'autre).
+    async dejaBloque(res) {
+      const rep = await appeler('connexion_verifier_blocage');
+      const etat = (rep.ok ? await rep.json() : [])[0];
+      if (!(etat && etat.bloque)) return false;
+      res.setHeader('Retry-After', String(etat.minutes_restantes * 60));
+      res.status(429).json({ error: 'bloque', dejaBloque: true, minutesRestantes: etat.minutes_restantes });
+      return true;
+    },
+    // Erreur : la compte et répond 429 (blocage déclenché) ou 401 (essais restants).
+    async echec(res) {
+      const rep = await appeler('connexion_enregistrer_echec');
+      const etat = (rep.ok ? await rep.json() : [])[0] || { bloque: false, essais_restants: null };
+      if (etat.bloque) {
+        res.setHeader('Retry-After', String(etat.minutes_blocage * 60));
+        res.status(429).json({ error: 'bloque', dejaBloque: false, minutesRestantes: etat.minutes_blocage });
+        return;
+      }
+      res.status(401).json({ error: 'refuse', essaisRestants: etat.essais_restants });
+    },
+    // Réussite : remet le compteur à zéro.
+    async succes() { await appeler('connexion_enregistrer_succes'); }
+  };
+}
+
 module.exports = {
   SUPABASE_URL, cleService, enTetesService, jetonDe, corpsDe,
-  verifierUtilisateur, lignesAdmin, estAdmin, creerClientR2, cheminSur, extraireIp, nettoyerAppareil
+  verifierUtilisateur, lignesAdmin, estAdmin, creerClientR2, cheminSur, extraireIp, nettoyerAppareil,
+  debutRequete, compteurTentatives
 };
