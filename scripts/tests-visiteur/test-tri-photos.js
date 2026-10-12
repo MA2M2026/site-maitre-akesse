@@ -24,6 +24,8 @@ photo(400, 600).save(d + 'sans-info-32.jpg'); photo(450, 600).save(d + 'sans-inf
 photo(338, 600).save(d + 'sans-info-916.jpg'); photo(480, 600).save(d + 'sans-info-45.jpg')
 pola = Image.new('RGB', (380, 460), (246, 244, 238)); pola.paste(photo(340, 340), (20, 20)); pola.save(d + 'polaroid.jpg', exif=exif('Canon'))
 studio = Image.new('RGB', (400, 600), (248, 248, 248)); studio.paste(photo(120, 560), (140, 40)); studio.save(d + 'studio-blanc.jpg')
+# fond de studio blanc pur, mannequin décalée : ressemble à un cadre, mais photo d'un Canon
+brule = Image.new('RGB', (400, 600), (255, 255, 255)); brule.paste(photo(200, 490), (20, 20)); brule.save(d + 'studio-brule.jpg', exif=exif('Canon'), quality=100)
 `]);
 // [fichier sur le disque, nom donné à la photo, type, catégorie attendue]
 const cas = [
@@ -42,7 +44,10 @@ const cas = [
   ['sans-info-43.jpg', '_MG_1234.jpg', 'image/jpeg', 'book'],
   ['sans-info-32.jpg', 'IMG_4430.HEIC', 'image/heic', 'lifestyle'],
   ['polaroid.jpg', 'scan.jpg', 'image/jpeg', 'lifestyle'],
-  ['studio-blanc.jpg', 'DSC_0042.jpg', 'image/jpeg', 'book']
+  ['studio-blanc.jpg', 'DSC_0042.jpg', 'image/jpeg', 'book'],
+  ['studio-brule.jpg', 'IMG_0004.jpg', 'image/jpeg', 'book'],
+  ['sans-info-43.jpg', 'snap2024.jpg', 'image/jpeg', 'lifestyle'],
+  ['sans-info-43.jpg', 'IMG_0001.HIF', 'image/heif', 'book']
 ];
 const PORT = String(9200 + Math.floor(Math.random() * 90));
 (async () => {
@@ -60,7 +65,36 @@ const PORT = String(9200 + Math.floor(Math.random() * 90));
     }, [octets, nom, type]);
     if (obtenu !== attendu) { ko++; console.log('❌ ÉCHEC tri : ' + fichier + ' (« ' + nom + ' ») → ' + obtenu + ' au lieu de ' + attendu); }
   }
-  console.log((ko || errs.length ? '❌ ÉCHEC' : '✓') + ' tri Book / Lifestyle : ' + (cas.length - ko) + '/' + cas.length + ' photos bien rangées | erreurs : ' + JSON.stringify(errs));
+  // Comme une mannequin : « ＋ Ajouter des photos » dans son Espace (base et stockage simulés) ;
+  // la catégorie part bien avec la photo enregistrée.
+  const { brancher } = require('./faux-serveur'); const journal = [];
+  const q = await (await b.newContext({ viewport: { width: 390, height: 844 } })).newPage();
+  q.on('pageerror', e => errs.push(e.message));
+  await q.addInitScript(() => {
+    const b64 = o => btoa(JSON.stringify(o)).replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_');
+    const exp = Math.floor(Date.now() / 1000) + 36000;
+    const jeton = b64({ alg: 'HS256', typ: 'JWT' }) + '.' + b64({ sub: 'admin-1', role: 'authenticated', aud: 'authenticated', exp }) + '.c2ln';
+    localStorage.setItem('sb-dfhghgmwmxiguhtxtsle-auth-token', JSON.stringify({ access_token: jeton, token_type: 'bearer', expires_in: 36000, expires_at: exp, refresh_token: 'x', user: { id: 'admin-1', aud: 'authenticated', role: 'authenticated', email: 'awa@test.ci' } }));
+  });
+  await brancher(q, { tables: { model_profiles: [{ id: 'admin-1', full_name: 'AWA KONÉ', published: true, desactive: false, slug: 'awa-kone' }] }, rpc: {},
+    api: { '/api/r2-presigner': { uploadUrl: 'http://127.0.0.1:' + PORT + '/__stockage', publicUrl: 'https://photos.test/p.jpg' } } }, journal);
+  await q.route(/__stockage/, r => r.fulfill({ status: 200, body: '' }));
+  await q.goto('http://127.0.0.1:' + PORT + '/espace-mannequin.html'); await q.waitForTimeout(4000);
+  // ouvrir l'étape où se trouve « ＋ Ajouter des photos » (touche l'onglet de chaque étape)
+  for (let n = 1; n <= 6 && !(await q.$('#fBook')); n++) { await q.click('.step-tab[data-goto="' + n + '"]').catch(() => {}); await q.waitForTimeout(400); }
+  const lire = f => fs.readFileSync(path.join(DOSSIER, f));
+  await q.setInputFiles('#fBook', [
+    { name: 'IMG_0001.jpg', mimeType: 'image/jpeg', buffer: lire('apple-32.jpg') },
+    { name: '3O2A9798.jpg', mimeType: 'image/jpeg', buffer: lire('sans-info-43.jpg') },
+    { name: 'IMG-20261010-WA0012.jpg', mimeType: 'image/jpeg', buffer: lire('sans-info-32.jpg') }
+  ]).catch(e => errs.push('envoi : ' + e.message));
+  await q.waitForTimeout(6000);
+  const envoyees = journal.filter(j => j[0] === 'POST' && j[1] === 'model_photos').map(j => JSON.parse(j[3]).categorie);
+  const etiquettes = await q.evaluate(() => state.photos.book.map(p => p.categorie));
+  if (JSON.stringify(envoyees) !== '["lifestyle","book","lifestyle"]' || JSON.stringify(etiquettes) !== JSON.stringify(envoyees)) {
+    ko++; console.log('❌ ÉCHEC tri (Espace) : enregistrées ' + JSON.stringify(envoyees) + ', affichées ' + JSON.stringify(etiquettes));
+  }
+  console.log((ko || errs.length ? '❌ ÉCHEC' : '✓') + ' tri Book / Lifestyle (+ envoi depuis l’Espace) : ' + (cas.length - ko) + '/' + cas.length + ' photos bien rangées | erreurs : ' + JSON.stringify(errs));
   if (ko || errs.length) process.exitCode = 1;
   await b.close(); srv.kill();
 })().catch(e => { console.log('❌ ÉCHEC tri', e.message); process.exitCode = 1; });

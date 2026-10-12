@@ -1898,16 +1898,19 @@ aux deux endroits » au lieu de « ajoutez une photo de profil » (cas réel du 
   (et non plus `tri_statut` de l'IA). Le rapport des profils explique les deux catégories
   (`CATEGORIES_PHOTOS_ACTIVES = true`).
 - **Règles plus minutieuses (12/10/2026, books de Lucrèce Ori et Divine Tama, choix « A » de la
-  propriétaire)**, dans cet ordre : HEIC/HEIF (iPhone) → `lifestyle` ; polaroïd (`estPolaroid` :
-  cadre clair et uni, plus épais en bas, mesuré sur une version de 240 px) → `lifestyle`, même
-  pris avec un appareil pro ; téléphone reconnu → `lifestyle` MÊME retouché (Lightroom…) ;
+  propriétaire)**, dans cet ordre : HEIC/HEIF (iPhone ; « .HIF » des appareils pros exclu) →
+  `lifestyle` ; téléphone reconnu → `lifestyle` MÊME retouché (Lightroom…) ; polaroïd
+  (`estPolaroid` : cadre de papier clair et uni, plus épais en bas, mesuré sur une version de
+  240 px ; JPEG seulement ; avec un appareil pro, un fond blanc pur n'est jamais un cadre) →
+  `lifestyle`, même pris avec un appareil pro ;
   appareil ou logiciel pro → `book` ; nom de fichier de téléphone (WhatsApp, capture,
   FullSizeRender, Pixel, Samsung) → `lifestyle`, d'appareil pro (`_MG_`, `3O2A1234`, `DSC_`,
   `DSCF`, Capture One, RAW) → `book` ; sans aucune information : forme de téléphone
   (`formeDeTelephone` : 4 × 3 ou 9 × 16 et plus étroite) → `lifestyle`, sinon `book`. Limite
   connue : une photo pro recadrée en 4 × 3 ou 9 × 16 et transférée par WhatsApp arrive en
-  Lifestyle (l'agence la remet dans le Book d'un clic) ; les « digitals » prises à l'appareil
-  pro restent à ranger à la main. Essai : `scripts/tests-visiteur/test-tri-photos.js`.
+  Lifestyle (l'agence la remet dans le Book d'un clic), de même qu'une photo d'appareil moyen
+  format ou Micro 4/3 (4 × 3) ; les « digitals » prises à l'appareil pro restent à ranger à la
+  main. Essai : `scripts/tests-visiteur/test-tri-photos.js` (règles + envoi réel depuis l'Espace).
 - **Plus de tri par l'IA à l'envoi** (`trierPhotoEnArrierePlan` retiré) : décision de la
   propriétaire (logos des organisateurs et même tenue sous plusieurs angles signalés à tort).
   `api/trier-photo.js` a ensuite été supprimé (07/10/2026, voir plus haut).

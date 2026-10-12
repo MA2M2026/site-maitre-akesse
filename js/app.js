@@ -1839,9 +1839,9 @@ function genererMiniature(fichier, coteMax = 800, qualite = 0.75) {
 // Règles plus minutieuses depuis le 12/10/2026 (books de Lucrèce Ori et Divine Tama), dans
 // cet ordre :
 //  1. photo d'iPhone (HEIC/HEIF) → Lifestyle ;
-//  2. polaroïd (cadre clair, nettement plus épais en bas) → Lifestyle, même pris avec un
-//     appareil professionnel ;
-//  3. téléphone reconnu (marque, caméra avant, Sony Xperia) → Lifestyle, MÊME retouché ;
+//  2. téléphone reconnu (marque, caméra avant, Sony Xperia) → Lifestyle, MÊME retouché ;
+//  3. polaroïd (cadre de papier clair, nettement plus épais en bas) → Lifestyle, même pris
+//     avec un appareil professionnel ;
 //  4. appareil photo professionnel ou logiciel de retouche pro → Book ;
 //  5. nom du fichier : téléphone (WhatsApp, capture d'écran, FullSizeRender, Pixel, Samsung…)
 //     → Lifestyle ; appareil pro (Canon, Nikon, Sony, Fujifilm, Capture One…) → Book ;
@@ -1895,11 +1895,12 @@ function lireTiff(vue, debut, infos) {
 const LOGICIELS_PRO = /photoshop|lightroom|capture one|luminar|affinity|darktable|dxo|camera raw|phocus/i;
 const MARQUES_APPAREILS_PHOTO = /canon|nikon|fujifilm|olympus|om digital|panasonic|leica camera|pentax|ricoh|hasselblad|sigma|phase one|mamiya|kodak|minolta/i;
 const MARQUES_TELEPHONES = /apple|samsung|tecno|infinix|itel|xiaomi|redmi|poco|oppo|vivo|realme|huawei|honor|oneplus|google|motorola|nokia|hmd|zte|lenovo|alcatel|tcl|meizu|asus|lge|lg electronics|nothing|wiko|umidigi|blackview|cubot|doogee|oukitel/i;
-const NOMS_FICHIERS_TELEPHONE = /fullsizerender|img-\d{8}-wa\d+|whatsapp|screenshot|capture[ _]d.?[ée]cran|snapchat|^pxl_|^img_\d{8}_\d{6}|^\d{8}_\d{6}|\.(heic|heif)$/i;
-// Canon (« _MG_1234 », préfixe personnalisé « 3O2A1234 », « 053A1234 »), Nikon / Sony
-// (« DSC_1234 », « _DSC1234 », « DSC01234 »), Fujifilm (« DSCF1234 »), Panasonic / Olympus
-// (« P1234567 »), Capture One, fichiers bruts (RAW).
-const NOMS_FICHIERS_APPAREIL = /capture one|^_mg_|^_?dsc[f_]?\d|^(?=[a-z0-9]{0,3}[a-z])[a-z0-9]{4}\d{4}\.|^p\d{7}\.|\.(cr2|cr3|nef|arw|dng|raf|orf|rw2)$/i;
+const NOMS_FICHIERS_TELEPHONE = /fullsizerender|img-\d{8}-wa\d+|whatsapp|screenshot|capture[ _]d.?[ée]cran|snapchat|^pxl_|^img_\d{8}_\d{6}|^\d{8}_\d{6}/i;
+// Canon (« _MG_1234 », préfixe personnalisé « 3O2A1234 », « 053A1234 » : un chiffre, deux
+// caractères, une lettre, quatre chiffres), Nikon / Sony (« DSC_1234 », « _DSC1234 »,
+// « DSC01234 »), Fujifilm (« DSCF1234 »), Panasonic / Olympus (« P1234567 »), Capture One,
+// fichiers bruts (RAW) et HEIF des appareils pros Canon / Sony (« .HIF »).
+const NOMS_FICHIERS_APPAREIL = /capture one|^_mg_|^_?dsc[f_]?\d|^\d[a-z0-9]{2}[a-z]\d{4}\.|^p\d{7}\.|\.(cr2|cr3|nef|arw|dng|raf|orf|rw2|hif)$/i;
 
 // Forme de téléphone : 4 × 3 (0,75) ou très allongée (9 × 16 = 0,56 et plus étroite).
 // Les appareils pro font du 3 × 2 (0,67) ; recadrages 4 × 5, carrés… : laissés au Book.
@@ -1910,7 +1911,7 @@ function formeDeTelephone(largeur, hauteur) {
 
 // Polaroïd : un cadre clair et uni sur les quatre côtés, fin sur les côtés, nettement plus
 // épais en bas. image = { width, height, data } (pixels RGBA d'une version réduite).
-function estPolaroid(image) {
+function estPolaroid(image, papierSeulement) {
   const { width: L, height: H, data } = image;
   if (L < 40 || H < 40) return false;
   const clair = (x, y) => {
@@ -1936,6 +1937,13 @@ function estPolaroid(image) {
   // blanc). Une photo de studio sur fond blanc a ses deux côtés bien plus larges (mannequin au
   // centre), et pas de bande claire en bas plus épaisse que le haut.
   const cote = Math.min(gauche, droite);
+  // Photo d'appareil pro : un fond de studio blanc « brûlé » (blanc pur) peut ressembler à un
+  // cadre ; un vrai polaroïd est du papier, jamais d'un blanc parfait.
+  if (papierSeulement) {
+    let somme = 0;
+    for (let y = 0; y < H; y++) somme += lum(0, y);
+    if (somme / H >= 252) return false;
+  }
   return cote >= 0.025 && cote <= 0.16 && haut >= 0.025
     && bas >= 0.09 && bas <= 0.45 && bas >= haut && bas >= 1.6 * cote;
 }
@@ -1949,17 +1957,22 @@ function apercuPhoto(fichier) {
 }
 
 async function categoriePhoto(fichier) {
-  const nom = String((fichier && fichier.name) || '');
-  if (/^image\/hei[cf]/i.test(fichier.type || '') || /\.(heic|heif)$/i.test(nom)) return 'lifestyle';
-  const apercu = await apercuPhoto(fichier).catch(() => null);
-  if (apercu && estPolaroid(apercu.image)) return 'lifestyle';
+  const nom = String(fichier.name || ''), type = fichier.type || '';
+  // HEIC / HEIF d'iPhone (les appareils pros Canon / Sony écrivent « .HIF » : voir plus bas)
+  if ((/^image\/hei[cf]/i.test(type) && !/\.hif$/i.test(nom)) || /\.(heic|heif)$/i.test(nom)) return 'lifestyle';
   const i = await lireInfosAppareil(fichier);
-  if (/front|avant|selfie/i.test(i.objectif)) return 'lifestyle';
-  if (/^sony/i.test(i.marque) && /^(xq-|so-|xperia|[ghjef]\d{4})/i.test(i.modele)) return 'lifestyle'; // Xperia = téléphone
-  if (MARQUES_TELEPHONES.test(i.marque)) return 'lifestyle';
-  if (/^sony/i.test(i.marque) || MARQUES_APPAREILS_PHOTO.test(i.marque) || LOGICIELS_PRO.test(i.logiciel)) return 'book';
+  const telephone = /front|avant|selfie/i.test(i.objectif) || MARQUES_TELEPHONES.test(i.marque)
+    || (/^sony/i.test(i.marque) && /^(xq-|so-|xperia|[ghjef]\d{4})/i.test(i.modele)); // Xperia = téléphone
+  if (telephone) return 'lifestyle'; // même retouchée (Lightroom…)
+  const appareilPro = /^sony/i.test(i.marque) || MARQUES_APPAREILS_PHOTO.test(i.marque) || LOGICIELS_PRO.test(i.logiciel);
+  // Polaroïd : seulement sur les JPEG (un PNG transparent prendrait un faux cadre blanc).
+  const apercu = /png|webp|gif/i.test(type) ? null : await apercuPhoto(fichier);
+  if (apercu && estPolaroid(apercu.image, appareilPro)) return 'lifestyle';
+  if (appareilPro) return 'book';
   if (NOMS_FICHIERS_TELEPHONE.test(nom)) return 'lifestyle';
   if (NOMS_FICHIERS_APPAREIL.test(nom)) return 'book';
+  // Sans aucune information : la forme (choix « A »). Limite connue : un appareil moyen
+  // format ou Micro 4/3 (4 × 3) transféré par WhatsApp arrive en Lifestyle.
   return apercu && formeDeTelephone(apercu.largeur, apercu.hauteur) ? 'lifestyle' : 'book';
 }
 
