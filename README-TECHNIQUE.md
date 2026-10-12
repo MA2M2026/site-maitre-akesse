@@ -2138,6 +2138,8 @@ Regroupements faits pour supprimer les derniers blocs recopiés signalés par So
 - Actualités / Événements : `afficherMediasPublication`, `brancherRedaction`,
   `envoyerPhotosPublication`, `enregistrerPhotosPublication`, `supprimerPublication`
   (`js/publications.js`, constante `PUBLICATION` dans chaque page). Essai : `test-publications.js`.
+- Verrou du défilement (porte d'entrée, menu, fenêtres) : `js/verrou-defilement.js`, chargé sans
+  defer juste avant `js/app.js` sur chaque page (tout en haut du body sur l'accueil).
 - CV de la mannequin : `css/cv-mannequin.css` (Espace + tableau de bord, rendu identique au pixel ;
   règles jamais utilisées retirées).
 - `js/app.js` : `reduireEnJpeg` (sur `redessinerPhoto`), `messageAccesRefuse`,

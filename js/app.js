@@ -74,60 +74,7 @@ async function convertirSiHeic(fichier, qualite) {
   }
 }
 
-// ================== Verrou de défilement fiable, y compris sur iPhone ==================
-// `overflow: hidden` seul (utilisé auparavant) ne bloque PAS le défilement tactile sur
-// iOS Safari — limitation connue et documentée d'iOS, pas un bug ponctuel. La seule
-// méthode qui fonctionne réellement sur iPhone consiste à figer la page en
-// position:fixed à sa position de défilement exacte, puis à la restaurer à l'identique
-// une fois déverrouillée. Un compteur permet à plusieurs éléments (porte d'entrée, menu,
-// modales) de verrouiller/déverrouiller sans se marcher dessus si jamais ils se
-// chevauchent. Utilisé par le menu et toutes les superpositions plein écran du site.
-//
-// Sur l'accueil (index.html / en/index.html), ces mêmes fonctions sont déjà définies
-// plus tôt, dans un script tout en haut de <body> (avant ce fichier, chargé en fin de
-// page) — pour verrouiller la porte d'entrée immédiatement, sans laisser le temps à un
-// visiteur rapide de faire défiler avant que le verrou ne s'active. On ne les redéfinit
-// donc ici que si elles n'existent pas déjà, pour ne jamais écraser un verrou déjà posé.
-if (!window.verrouillerDefilement) (function verrouDefilementIOS() {
-  let positionSauvegardee = 0;
-  let compteur = 0;
-
-  // Deuxième ligne de défense : certains navigateurs/WebViews embarqués (in-app
-  // browsers de messageries, réseaux sociaux, etc.) ignorent parfois le simple
-  // position:fixed. On bloque donc aussi directement le geste de balayage tactile
-  // tant que la page est verrouillée — sauf à l'intérieur des zones qui ont
-  // légitimement leur propre défilement interne (menu, fiches, tiroir du tableau
-  // de bord), pour ne pas les casser.
-  const ZONES_DEFILEMENT_AUTORISE = '.menu-overlay, .news-modal-contenu, .modal-overlay, .tdb-menu-panel, .projets-liste-scroll, .redaction-shell';
-  function bloquerGesteTactile(e) {
-    if (e.target.closest(ZONES_DEFILEMENT_AUTORISE)) return;
-    e.preventDefault();
-  }
-
-  window.verrouillerDefilement = function () {
-    if (compteur === 0) {
-      positionSauvegardee = window.scrollY || window.pageYOffset || 0;
-      document.body.style.position = 'fixed';
-      document.body.style.top = '-' + positionSauvegardee + 'px';
-      document.body.style.left = '0';
-      document.body.style.right = '0';
-      document.addEventListener('touchmove', bloquerGesteTactile, { passive: false });
-    }
-    compteur++;
-  };
-
-  window.deverrouillerDefilement = function () {
-    compteur = Math.max(0, compteur - 1);
-    if (compteur === 0) {
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.left = '';
-      document.body.style.right = '';
-      window.scrollTo(0, positionSauvegardee);
-      document.removeEventListener('touchmove', bloquerGesteTactile, { passive: false });
-    }
-  };
-})();
+// Verrou du défilement (verrouillerDefilement / deverrouillerDefilement) : js/verrou-defilement.js.
 
 // ================== Retour arrière fiable, sur toutes les pages ==================
 // Sur mobile/tablette, le bouton "retour" restaure très souvent une page depuis
