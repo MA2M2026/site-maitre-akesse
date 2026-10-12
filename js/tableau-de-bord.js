@@ -124,21 +124,9 @@ document.getElementById('tb-login-btn').addEventListener('click', async () => {
       body: JSON.stringify({ email, password, espace: 'admin', appareil: idAppareilMa2m() })
     });
     const resultat = await reponse.json().catch(() => ({}));
-    if (reponse.status === 429) {
-      const h = Math.ceil(resultat.minutesRestantes / 60);
-      msg.textContent = resultat.dejaBloque
-        ? `Accès temporairement bloqué. Revenez dans ${resultat.minutesRestantes} min.`
-        : `Trop de tentatives. Accès bloqué. Revenez dans ${h >= 1 ? h + ' heure' + (h > 1 ? 's' : '') : resultat.minutesRestantes + ' min'}.`;
-      return;
-    }
     if (reponse.status === 403) { msg.textContent = "Ce compte n'a pas accès au tableau de bord."; return; }
-    if (!reponse.ok) {
-      const reste = resultat.essaisRestants;
-      msg.textContent = reste === 2 ? 'Connexion refusée. Attention : il vous reste 2 tentatives.'
-        : reste === 1 ? 'Connexion refusée. Il vous reste 1 tentative.'
-        : 'Connexion refusée.';
-      return;
-    }
+    const refus = messageAccesRefuse(reponse, resultat, 'Connexion refusée'); // js/app.js
+    if (refus) { msg.textContent = refus; return; }
     const { error } = await sb.auth.setSession({ access_token: resultat.access_token, refresh_token: resultat.refresh_token });
     if (error) { msg.textContent = 'Erreur de connexion — réessayez.'; return; }
     msg.style.display = 'none';
@@ -213,20 +201,8 @@ document.getElementById('tb-code-validation-valider').addEventListener('click', 
       body: JSON.stringify({ code, appareil: idAppareilMa2m() })
     });
     const resultat = await reponse.json().catch(() => ({}));
-    if (reponse.status === 429) {
-      const h = Math.ceil(resultat.minutesRestantes / 60);
-      msg.textContent = resultat.dejaBloque
-        ? `Accès temporairement bloqué. Revenez dans ${resultat.minutesRestantes} min.`
-        : `Trop de tentatives. Accès bloqué. Revenez dans ${h >= 1 ? h + ' heure' + (h > 1 ? 's' : '') : resultat.minutesRestantes + ' min'}.`;
-      return;
-    }
-    if (!reponse.ok) {
-      const reste = resultat.essaisRestants;
-      msg.textContent = reste === 2 ? 'Code de validation incorrect. Attention : il vous reste 2 tentatives.'
-        : reste === 1 ? 'Code de validation incorrect. Il vous reste 1 tentative.'
-        : 'Code de validation incorrect.';
-      return;
-    }
+    const refus = messageAccesRefuse(reponse, resultat, 'Code de validation incorrect'); // js/app.js
+    if (refus) { msg.textContent = refus; return; }
     marquerCodeValide();
     document.getElementById('tb-code-validation').value = '';
     msg.style.display = 'none';
@@ -2899,28 +2875,8 @@ async function chargerMotResponsableTableau() {
 }
 
 function redimensionnerPhotoResponsable(fichier, coteMax = 2400, qualite = 0.88) {
-  return new Promise((resolve) => {
-    if (!/^image\/(jpeg|png|webp)$/.test(fichier.type) || fichier.size < 1.5 * 1024 * 1024) { resolve(fichier); return; }
-    const img = new Image();
-    img.onload = () => {
-      try {
-        const coteActuel = Math.max(img.width, img.height);
-        const ratio = coteActuel > coteMax ? coteMax / coteActuel : 1;
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.round(img.width * ratio);
-        canvas.height = Math.round(img.height * ratio);
-        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob((blob) => {
-          if (!blob || blob.size >= fichier.size) { resolve(fichier); return; }
-          resolve(new File([blob], fichier.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' }));
-        }, 'image/jpeg', qualite);
-      } catch (e) {
-        resolve(fichier);
-      }
-    };
-    img.onerror = () => resolve(fichier);
-    img.src = URL.createObjectURL(fichier);
-  });
+  if (!/^image\/(jpeg|png|webp)$/.test(fichier.type) || fichier.size < 1.5 * 1024 * 1024) return Promise.resolve(fichier);
+  return reduireEnJpeg(fichier, coteMax, qualite); // js/app.js
 }
 
 document.getElementById('mr-photo-btn').addEventListener('click', async () => {

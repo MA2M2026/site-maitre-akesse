@@ -421,6 +421,47 @@ async function verifierAdmin() {
   } catch (e) {}
 }
 
+// Liste « Taille » des formulaires (candidature et inscription) : elle commence à la taille
+// minimale requise selon le genre (175 cm femmes, 185 cm hommes) — impossible de choisir en
+// dessous. Mineurs exemptés : liste complète (140 cm et plus). prefixe : 'ca' ou 'ins' (ids
+// <prefixe>-genre, -taille, -taille-indication) ; texteMineur : phrase affichée pour un mineur.
+// Partagé le 12/10/2026 (avant, recopié dans les deux formulaires).
+function remplirTailleMinimale(prefixe, mineur, texteMineur) {
+  const genre = document.getElementById(prefixe + '-genre').value;
+  const indication = document.getElementById(prefixe + '-taille-indication');
+  const champ = document.getElementById(prefixe + '-taille');
+  const valeurActuelle = champ.value;
+  const min = mineur ? 140 : (genre === 'homme' ? 185 : (genre === 'femme' ? 175 : 140));
+
+  champ.innerHTML = '';
+  champ.appendChild(new Option('—', ''));
+  for (let v = min; v <= 210; v++) champ.appendChild(new Option(v + ' cm', v));
+  if ([...champ.options].some(o => o.value === valeurActuelle)) champ.value = valeurActuelle;
+
+  if (mineur) { indication.textContent = texteMineur; }
+  else if (genre === 'homme') { indication.textContent = T('Taille minimale requise : 185 cm', 'Minimum height required: 185 cm'); }
+  else if (genre === 'femme') { indication.textContent = T('Taille minimale requise : 175 cm', 'Minimum height required: 175 cm'); }
+  else { indication.textContent = ''; }
+}
+
+// Réponse refusée d'un accès protégé (connexion de l'Espace et du tableau de bord, code de
+// validation) : message à afficher, ou '' si l'accès est accordé. refus : début de la phrase
+// d'erreur (« E-mail ou mot de passe incorrect », « Code de validation incorrect »…).
+// Partagé le 12/10/2026 (avant, recopié trois fois).
+function messageAccesRefuse(reponse, resultat, refus) {
+  if (reponse.status === 429) {
+    const h = Math.ceil(resultat.minutesRestantes / 60);
+    return resultat.dejaBloque
+      ? `Accès temporairement bloqué. Revenez dans ${resultat.minutesRestantes} min.`
+      : `Trop de tentatives. Accès bloqué. Revenez dans ${h >= 1 ? h + ' heure' + (h > 1 ? 's' : '') : resultat.minutesRestantes + ' min'}.`;
+  }
+  if (reponse.ok) return '';
+  const reste = resultat.essaisRestants;
+  return reste === 2 ? refus + '. Attention : il vous reste 2 tentatives.'
+    : reste === 1 ? refus + '. Il vous reste 1 tentative.'
+    : refus + '.';
+}
+
 // Lien de « mot de passe oublié » (Supabase ajoute type=recovery à l'adresse) : Espace
 // mannequin et tableau de bord. Partagé le 11/10/2026.
 function urlIndiqueRecuperationMdp() {
@@ -1838,11 +1879,7 @@ function redessinerPhoto(fichier, coteMax, rendu) {
 async function compresserPhotoOrigine(fichier, coteMax = 2200, qualite = 0.85) {
   const compressible = /^image\/(jpeg|jpg|pjpeg|png|webp)$/i.test(fichier.type || '');
   if (!compressible || fichier.size < 900 * 1024) return fichier;
-  const resultat = await redessinerPhoto(fichier, coteMax, (canvas, fin) => canvas.toBlob(blob => {
-    if (!blob || blob.size >= fichier.size) { fin(null); return; }
-    fin(new File([blob], fichier.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' }));
-  }, 'image/jpeg', qualite));
-  return resultat || fichier;
+  return reduireEnJpeg(fichier, coteMax, qualite);
 }
 // Miniature (grille du Book) : 800 px depuis le 06/10/2026, nom en « -n800.jpg » ;
 // aussi utilisée pour la version moyenne (1400 px).
@@ -2633,33 +2670,22 @@ function texteAttenteEnvoi(secondes) {
 const URL_SCRIPT_PHOTOS_CASTING = 'https://script.google.com/macros/s/AKfycbxzPeaTLvMqZKtBvJJabLeZBh6JJ9ZaggPYUY8XAoh1-tyBq1Byi3lBm3SkhkH8rqNxxg/exec';
 
 function redimensionnerImage(fichier, coteMax = 2800, qualite = 0.88) {
-  return new Promise((resolve) => {
-    // On ne retouche que les JPEG : un PNG/GIF/WebP peut avoir de la transparence,
-    // qui deviendrait un fond noir en le convertissant en JPEG (pas de canal alpha).
-    if (fichier.type !== 'image/jpeg' || fichier.size < 900 * 1024) { resolve(fichier); return; }
-    const img = new Image();
-    const adresse = URL.createObjectURL(fichier);
-    const liberer = () => URL.revokeObjectURL(adresse); // évite de garder la photo en mémoire
-    img.onload = () => {
-      liberer();
-      try {
-        const coteActuel = Math.max(img.width, img.height);
-        const ratio = coteActuel > coteMax ? coteMax / coteActuel : 1;
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.round(img.width * ratio);
-        canvas.height = Math.round(img.height * ratio);
-        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob((blob) => {
-          if (!blob || blob.size >= fichier.size) { resolve(fichier); return; }
-          resolve(new File([blob], fichier.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' }));
-        }, 'image/jpeg', qualite);
-      } catch (e) {
-        resolve(fichier);
-      }
-    };
-    img.onerror = () => { liberer(); resolve(fichier); };
-    img.src = adresse;
-  });
+  // On ne retouche que les JPEG : un PNG/GIF/WebP peut avoir de la transparence,
+  // qui deviendrait un fond noir en le convertissant en JPEG (pas de canal alpha).
+  if (fichier.type !== 'image/jpeg' || fichier.size < 900 * 1024) return Promise.resolve(fichier);
+  return reduireEnJpeg(fichier, coteMax, qualite);
+}
+
+// Réduit une photo (plus grand côté ≤ coteMax) et la réenregistre en JPEG ; garde l'originale
+// si le résultat n'est pas plus léger ou si le navigateur échoue. Partagé le 12/10/2026
+// (avant, recopié dans js/tableau-de-bord.js pour la photo du responsable) ; s'appuie sur
+// redessinerPhoto(), comme la compression des photos du Book.
+async function reduireEnJpeg(fichier, coteMax, qualite) {
+  const resultat = await redessinerPhoto(fichier, coteMax, (canvas, fin) => canvas.toBlob(blob => {
+    if (!blob || blob.size >= fichier.size) { fin(null); return; }
+    fin(new File([blob], fichier.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' }));
+  }, 'image/jpeg', qualite));
+  return resultat || fichier;
 }
 
 function fichierEnBase64(fichier) {
