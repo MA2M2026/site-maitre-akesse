@@ -1835,11 +1835,20 @@ function genererMiniature(fichier, coteMax = 800, qualite = 0.75) {
 }
 // ================== Catégorie d'une photo : Book ou Lifestyle (07/10/2026) ==================
 // Décision de la propriétaire : classement fait par le site lui-même, SANS IA. On lit la
-// « carte d'identité » (EXIF) de la photo d'origine, avant toute compression (qui l'efface) :
-// appareil photo professionnel ou logiciel de retouche pro → Book ; téléphone → Lifestyle
-// (digitales). En cas de doute (photo transférée par WhatsApp, capture…) → toujours Book :
-// un shooting pro ne doit jamais se retrouver en Lifestyle par erreur. La mannequin et
-// l'agence peuvent changer la catégorie d'un clic.
+// « carte d'identité » (EXIF) de la photo d'origine, avant toute compression (qui l'efface).
+// Règles plus minutieuses depuis le 12/10/2026 (books de Lucrèce Ori et Divine Tama), dans
+// cet ordre :
+//  1. photo d'iPhone (HEIC/HEIF) → Lifestyle ;
+//  2. polaroïd (cadre clair, nettement plus épais en bas) → Lifestyle, même pris avec un
+//     appareil professionnel ;
+//  3. téléphone reconnu (marque, caméra avant, Sony Xperia) → Lifestyle, MÊME retouché ;
+//  4. appareil photo professionnel ou logiciel de retouche pro → Book ;
+//  5. nom du fichier : téléphone (WhatsApp, capture d'écran, FullSizeRender, Pixel, Samsung…)
+//     → Lifestyle ; appareil pro (Canon, Nikon, Sony, Fujifilm, Capture One…) → Book ;
+//  6. aucune information (photo transférée par WhatsApp…) : la FORME décide (choix « A » de la
+//     propriétaire) — 4 × 3 ou très allongée (9 × 16 et plus) comme les téléphones → Lifestyle,
+//     sinon Book. Une photo pro recadrée peut ainsi arriver en Lifestyle : l'agence la remet
+//     dans le Book d'un clic. La mannequin et l'agence peuvent toujours changer la catégorie.
 async function lireInfosAppareil(fichier) {
   const infos = { marque: '', modele: '', logiciel: '', objectif: '' };
   try {
@@ -1886,14 +1895,72 @@ function lireTiff(vue, debut, infos) {
 const LOGICIELS_PRO = /photoshop|lightroom|capture one|luminar|affinity|darktable|dxo|camera raw|phocus/i;
 const MARQUES_APPAREILS_PHOTO = /canon|nikon|fujifilm|olympus|om digital|panasonic|leica camera|pentax|ricoh|hasselblad|sigma|phase one|mamiya|kodak|minolta/i;
 const MARQUES_TELEPHONES = /apple|samsung|tecno|infinix|itel|xiaomi|redmi|poco|oppo|vivo|realme|huawei|honor|oneplus|google|motorola|nokia|hmd|zte|lenovo|alcatel|tcl|meizu|asus|lge|lg electronics|nothing|wiko|umidigi|blackview|cubot|doogee|oukitel/i;
+const NOMS_FICHIERS_TELEPHONE = /fullsizerender|img-\d{8}-wa\d+|whatsapp|screenshot|capture[ _]d.?[ée]cran|snapchat|^pxl_|^img_\d{8}_\d{6}|^\d{8}_\d{6}|\.(heic|heif)$/i;
+// Canon (« _MG_1234 », préfixe personnalisé « 3O2A1234 », « 053A1234 »), Nikon / Sony
+// (« DSC_1234 », « _DSC1234 », « DSC01234 »), Fujifilm (« DSCF1234 »), Panasonic / Olympus
+// (« P1234567 »), Capture One, fichiers bruts (RAW).
+const NOMS_FICHIERS_APPAREIL = /capture one|^_mg_|^_?dsc[f_]?\d|^(?=[a-z0-9]{0,3}[a-z])[a-z0-9]{4}\d{4}\.|^p\d{7}\.|\.(cr2|cr3|nef|arw|dng|raf|orf|rw2)$/i;
+
+// Forme de téléphone : 4 × 3 (0,75) ou très allongée (9 × 16 = 0,56 et plus étroite).
+// Les appareils pro font du 3 × 2 (0,67) ; recadrages 4 × 5, carrés… : laissés au Book.
+function formeDeTelephone(largeur, hauteur) {
+  const r = Math.min(largeur, hauteur) / Math.max(largeur, hauteur);
+  return (r >= 0.73 && r <= 0.77) || r < 0.6;
+}
+
+// Polaroïd : un cadre clair et uni sur les quatre côtés, fin sur les côtés, nettement plus
+// épais en bas. image = { width, height, data } (pixels RGBA d'une version réduite).
+function estPolaroid(image) {
+  const { width: L, height: H, data } = image;
+  if (L < 40 || H < 40) return false;
+  const clair = (x, y) => {
+    const i = (y * L + x) * 4, r = data[i], v = data[i + 1], b = data[i + 2];
+    return Math.min(r, v, b) >= 165 && Math.max(r, v, b) - Math.min(r, v, b) <= 45;
+  };
+  // une ligne (ou colonne) du cadre : au moins 94 % de pixels clairs et neutres, et une teinte
+  // très régulière (papier du cadre) — un mur blanc photographié a toujours un peu d'ombre
+  const lum = (x, y) => { const i = (y * L + x) * 4; return 0.3 * data[i] + 0.59 * data[i + 1] + 0.11 * data[i + 2]; };
+  const duCadre = (points) => {
+    let n = 0, somme = 0, carres = 0;
+    for (const [x, y] of points) { if (clair(x, y)) n++; const v = lum(x, y); somme += v; carres += v * v; }
+    const moyenne = somme / points.length;
+    return n >= 0.94 * points.length && carres / points.length - moyenne * moyenne <= 3.5 * 3.5;
+  };
+  const ligneClaire = (y) => duCadre(Array.from({ length: L }, (_, x) => [x, y]));
+  const colonneClaire = (x) => duCadre(Array.from({ length: H }, (_, y) => [x, y]));
+  const epaisseur = (test, debut, pas, max) => { let n = 0; for (let k = debut; n < max && test(k); k += pas) n++; return n; };
+  const haut = epaisseur(ligneClaire, 0, 1, H) / H, bas = epaisseur(ligneClaire, H - 1, -1, H) / H;
+  const gauche = epaisseur(colonneClaire, 0, 1, L) / L, droite = epaisseur(colonneClaire, L - 1, -1, L) / L;
+  // Le côté le plus fin donne la largeur du cadre : l'autre côté, comme le haut, peut paraître
+  // plus épais quand la photo elle-même touche un mur clair (polaroïd d'une « digital » sur fond
+  // blanc). Une photo de studio sur fond blanc a ses deux côtés bien plus larges (mannequin au
+  // centre), et pas de bande claire en bas plus épaisse que le haut.
+  const cote = Math.min(gauche, droite);
+  return cote >= 0.025 && cote <= 0.16 && haut >= 0.025
+    && bas >= 0.09 && bas <= 0.45 && bas >= haut && bas >= 1.6 * cote;
+}
+
+// Dimensions et pixels réduits (240 px) de la photo ; null si elle ne se lit pas (HEIC sur Android…).
+function apercuPhoto(fichier) {
+  return redessinerPhoto(fichier, 240, (canvas, fin) => {
+    const image = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
+    fin({ largeur: canvas.width, hauteur: canvas.height, image });
+  });
+}
+
 async function categoriePhoto(fichier) {
-  const i = await lireInfosAppareil(fichier); // HEIC/HEIF, PNG… : pas lus → doute → Book
-  if (LOGICIELS_PRO.test(i.logiciel)) return 'book';
+  const nom = String((fichier && fichier.name) || '');
+  if (/^image\/hei[cf]/i.test(fichier.type || '') || /\.(heic|heif)$/i.test(nom)) return 'lifestyle';
+  const apercu = await apercuPhoto(fichier).catch(() => null);
+  if (apercu && estPolaroid(apercu.image)) return 'lifestyle';
+  const i = await lireInfosAppareil(fichier);
   if (/front|avant|selfie/i.test(i.objectif)) return 'lifestyle';
-  if (/^sony/i.test(i.marque)) return /^(xq-|so-|xperia|[ghjef]\d{4})/i.test(i.modele) ? 'lifestyle' : 'book'; // Xperia = téléphone
-  if (MARQUES_APPAREILS_PHOTO.test(i.marque)) return 'book';
+  if (/^sony/i.test(i.marque) && /^(xq-|so-|xperia|[ghjef]\d{4})/i.test(i.modele)) return 'lifestyle'; // Xperia = téléphone
   if (MARQUES_TELEPHONES.test(i.marque)) return 'lifestyle';
-  return 'book'; // doute : toujours Book
+  if (/^sony/i.test(i.marque) || MARQUES_APPAREILS_PHOTO.test(i.marque) || LOGICIELS_PRO.test(i.logiciel)) return 'book';
+  if (NOMS_FICHIERS_TELEPHONE.test(nom)) return 'lifestyle';
+  if (NOMS_FICHIERS_APPAREIL.test(nom)) return 'book';
+  return apercu && formeDeTelephone(apercu.largeur, apercu.hauteur) ? 'lifestyle' : 'book';
 }
 
 // Change la catégorie d'une photo (colonne categorie, Extension 127) : étiquette de
