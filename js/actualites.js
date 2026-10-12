@@ -1,3 +1,5 @@
+// Tables et dossiers d'images de cette page (fonctions communes : js/publications.js)
+const PUBLICATION = { table: 'actualites', tablePhotos: 'actualite_photos', colonne: 'actualite_id', dossier: 'actualites', seau: 'actualites-images' };
 // Actualités (actualites.html et en/actualites.html) : un seul script pour le français et
 // l'anglais (11/10/2026 : avant, la version anglaise était recopiée dans la page). EN, T : js/app.js.
 function urlVideoIntegree(url) {
@@ -140,20 +142,7 @@ async function ouvrirActuModal(index) {
   if (videoEmbed) {
     mediaHtml += `<div class="video-runway ${EN ? 'enac-6' : 'news-modal-video-embed'}"><iframe src="${echapperHtml(videoEmbed)}" allowfullscreen loading="lazy"></iframe></div>`;
   }
-  if (listePhotos.length > 1) {
-    // Composition adaptée au nombre de photos (voir .news-modal-galerie[data-count] dans
-    // css/style.css) ; au-delà de 4, on garde une grille régulière classique.
-    const compteGalerie = Math.min(listePhotos.length, 4);
-    mediaHtml += `<div class="news-modal-galerie" data-count="${compteGalerie}">${listePhotos.map(p => `<div class="gal-item"><img src="${echapperHtml(p.url)}" loading="lazy" alt=""></div>`).join('')}</div>`;
-  } else if (listePhotos.length === 1) {
-    mediaHtml += `<img class="news-modal-img" src="${echapperHtml(listePhotos[0].url)}" alt="">`;
-  }
-  zoneMedia.innerHTML = mediaHtml;
-  window.lightboxPhotos = listePhotos.map(p => p.url);
-  zoneMedia.querySelectorAll('img').forEach((img, i) => {
-    img.style.cursor = 'pointer';
-    img.addEventListener('click', () => ouvrirGalerieLightbox(window.lightboxPhotos, i));
-  });
+  afficherMediasPublication(zoneMedia, listePhotos, mediaHtml);
 
   document.getElementById('news-modal-date').textContent = new Date(a.created_at).toLocaleDateString(EN ? 'en-US' : 'fr-FR', { day:'numeric', month:'long', year:'numeric' });
   document.getElementById('news-modal-titre').textContent = a.titre || '';
@@ -188,17 +177,8 @@ document.getElementById('news-modal-modifier-btn').addEventListener('click', () 
   ouvrirRedaction(a);
 });
 
-document.getElementById('news-modal-supprimer-btn').addEventListener('click', async () => {
-  const id = window.actualiteModalCourante;
-  if (!confirm(T('Supprimer définitivement cette actualité et toutes ses photos ?', 'Permanently delete this news item and all its photos?'))) return;
-  const { data: photos } = await sbAdmin.from('actualite_photos').select('chemin').eq('actualite_id', id);
-  const chemins = (photos || []).map(p => p.chemin).filter(Boolean);
-  // Base d'abord : si la suppression échoue, les images restent intactes.
-  const { error: erreurSuppression } = await sbAdmin.from('actualites').delete().eq('id', id);
-  if (erreurSuppression) { alert(T('La suppression a échoué. Réessayez.', 'Deletion failed. Please try again.')); return; }
-  if (chemins.length) await supprimerCheminsImagesSite('actualites', 'actualites-images', chemins);
-  fermerNewsModal();
-  void chargerActualites();
+document.getElementById('news-modal-supprimer-btn').addEventListener('click', () => {
+  void supprimerPublication(PUBLICATION, window.actualiteModalCourante, T('Supprimer définitivement cette actualité et toutes ses photos ?', 'Permanently delete this news item and all its photos?'), chargerActualites, fermerNewsModal); // js/publications.js
 });
 
 document.getElementById('admin-logout-btn').addEventListener('click', async () => {
@@ -248,20 +228,7 @@ document.getElementById('red-titre').addEventListener('input', mettreAJourApercu
 document.getElementById('red-categorie').addEventListener('change', mettreAJourApercuRedaction);
 if (quillRedaction && typeof quillRedaction.on === 'function') quillRedaction.on('text-change', mettreAJourApercuRedaction);
 
-document.getElementById('red-images').addEventListener('change', (e) => {
-  redactionNouvellesImages = Array.from(e.target.files || []);
-  const conteneur = document.getElementById('red-images-apercu');
-  conteneur.innerHTML = '';
-  redactionNouvellesImages.forEach(fichier => {
-    conteneur.insertAdjacentHTML('beforeend', `<div class="ria-item"><img src="${URL.createObjectURL(fichier)}" alt=""></div>`);
-  });
-  if (redactionNouvellesImages.length) apercuImageCouverture(URL.createObjectURL(redactionNouvellesImages[0]));
-});
-
-document.getElementById('ouvrir-redaction-btn').addEventListener('click', () => ouvrirRedaction(null));
-document.getElementById('red-annuler-btn').addEventListener('click', fermerRedaction);
-document.getElementById('redaction-fermer').addEventListener('click', fermerRedaction);
-document.getElementById('redaction-overlay').addEventListener('click', (e) => { if (e.target.id === 'redaction-overlay') fermerRedaction(); });
+brancherRedaction(ouvrirRedaction, (fichiers) => { redactionNouvellesImages = fichiers; }); // js/publications.js
 
 document.getElementById('red-enregistrer-btn').addEventListener('click', async () => {
   const msg = document.getElementById('red-msg');
@@ -279,26 +246,12 @@ document.getElementById('red-enregistrer-btn').addEventListener('click', async (
   msg.className = 'form-msg ok'; msg.textContent = fichiers.length ? T(`Envoi de ${fichiers.length} photo(s) en cours…`, `Uploading ${fichiers.length} photo(s)…`) : T('Enregistrement…', 'Saving…'); msg.style.display = 'block';
 
   const id = redactionIdEnCours || crypto.randomUUID();
-  const urls = [];
-  for (const fichierOriginal of fichiers) {
-    const fichier = await convertirSiHeic(fichierOriginal);
-    const chemin = `site/actualites/${id}/${Date.now()}-${nomFichierSur(fichier.name)}`;
-    try {
-      const url = await envoyerImageSite('actualites', chemin, fichier);
-      urls.push({ url, chemin });
-    } catch (e) { continue; }
-  }
+  const urls = await envoyerPhotosPublication('actualites', id, fichiers);
 
   if (redactionIdEnCours) {
     const { error: erreurUpdate } = await sbAdmin.from('actualites').update({ titre, categorie: categorie || null, commentaire, video_url: videoUrl }).eq('id', id);
     if (erreurUpdate) { msg.className = 'form-msg err'; msg.textContent = T('Erreur lors de la modification.', 'Error while updating.'); return; }
-    for (const photo of urls) {
-      await sbAdmin.from('actualite_photos').insert({ actualite_id: id, url: photo.url, chemin: photo.chemin });
-    }
-    if (urls.length) {
-      const { data: actuActuelle } = await sbAdmin.from('actualites').select('image_url').eq('id', id).single();
-      if (!actuActuelle.image_url) await sbAdmin.from('actualites').update({ image_url: urls[0].url }).eq('id', id);
-    }
+    await enregistrerPhotosPublication(PUBLICATION, id, urls, true);
     msg.className = 'form-msg ok'; msg.textContent = T('Modifications enregistrées !', 'Changes saved!');
   } else {
     const { error: erreurInsert } = await sbAdmin.from('actualites').insert({
@@ -306,9 +259,7 @@ document.getElementById('red-enregistrer-btn').addEventListener('click', async (
       image_url: urls.length ? urls[0].url : null
     });
     if (erreurInsert) { msg.className = 'form-msg err'; msg.textContent = T("Erreur d'enregistrement.", 'Error saving.'); msg.style.display = 'block'; return; }
-    for (const photo of urls) {
-      await sbAdmin.from('actualite_photos').insert({ actualite_id: id, url: photo.url, chemin: photo.chemin });
-    }
+    await enregistrerPhotosPublication(PUBLICATION, id, urls, false);
     msg.className = 'form-msg ok'; msg.textContent = T(`Actualité publiée avec ${urls.length} photo(s) !`, `News item published with ${urls.length} photo(s)!`);
   }
 
@@ -316,16 +267,6 @@ document.getElementById('red-enregistrer-btn').addEventListener('click', async (
   setTimeout(fermerRedaction, 900);
 });
 
-document.getElementById('red-supprimer-btn').addEventListener('click', async () => {
-  if (!redactionIdEnCours) return;
-  if (!confirm(T('Supprimer définitivement cette actualité et toutes ses photos ?', 'Permanently delete this news item and all its photos?'))) return;
-  const id = redactionIdEnCours;
-  const { data: photos } = await sbAdmin.from('actualite_photos').select('chemin').eq('actualite_id', id);
-  const chemins = (photos || []).map(p => p.chemin).filter(Boolean);
-  // Base d'abord : si la suppression échoue, les images restent intactes.
-  const { error: erreurSuppression } = await sbAdmin.from('actualites').delete().eq('id', id);
-  if (erreurSuppression) { alert(T('La suppression a échoué. Réessayez.', 'Deletion failed. Please try again.')); return; }
-  if (chemins.length) await supprimerCheminsImagesSite('actualites', 'actualites-images', chemins);
-  fermerRedaction();
-  void chargerActualites();
+document.getElementById('red-supprimer-btn').addEventListener('click', () => {
+  void supprimerPublication(PUBLICATION, redactionIdEnCours, T('Supprimer définitivement cette actualité et toutes ses photos ?', 'Permanently delete this news item and all its photos?'), chargerActualites);
 });
