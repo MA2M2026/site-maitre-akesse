@@ -2127,3 +2127,21 @@ pas le surcharger ; la compcard ne liste pas les expériences (seulement leur no
 descendre les notes de fiabilité et de sécurité à C alors qu'ils ne sont jamais envoyés aux
 visiteurs. `js/tableau-v2.js` : `ouvrirFicheSure()` signale au journal une panne d'ouverture
 de fiche au lieu de la laisser passer inaperçue.
+
+## Code recopié → 0 % (12/10/2026)
+Regroupements faits pour supprimer les derniers blocs recopiés signalés par SonarQube :
+- Boutique : `js/gabarit-boutique.js` (haut de page, menu, barre, panier, bas de page des 6
+  pages ; emplacements `data-gabarit-boutique`), polices chargées par `css/marketplace.css`.
+- Accueil FR/EN : script de démarrage dans `js/accueil-debut.js` (chargé sans async en haut
+  du `<body>`). Candidature / Intégrer l'agence : `css/candidature.css`, visionneuse créée par
+  `js/formulaire-candidature.js`. Contact : icônes des réseaux via `data-gabarit="reseaux"`.
+- Actualités / Événements : `afficherMediasPublication`, `brancherRedaction`,
+  `envoyerPhotosPublication`, `enregistrerPhotosPublication`, `supprimerPublication`
+  (`js/publications.js`, constante `PUBLICATION` dans chaque page). Essai : `test-publications.js`.
+- CV de la mannequin : `css/cv-mannequin.css` (Espace + tableau de bord, rendu identique au pixel).
+- `js/app.js` : `reduireEnJpeg` (sur `redessinerPhoto`), `messageAccesRefuse`,
+  `remplirTailleMinimale` ; `js/messages-candidats.js` : `entreeMessage` (textes identiques).
+- `api/_commun.js` : `debutRequete`, `compteurTentatives` (blocage / échec / réussite),
+  `debutR2`, `repondreR2`, `TYPES_IMAGES`. Comparaison ancien / nouveau sur 41 cas simulés :
+  mêmes réponses et mêmes appels à la base. Seul changement : le message d'erreur 500 de
+  creer-admin / supprimer-mannequin ne cite plus le nom de la variable secrète.
