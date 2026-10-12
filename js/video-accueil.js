@@ -85,7 +85,7 @@
         return;
       }
       sec.classList.add('u-hidden');
-      if (window.signalerErreur) window.signalerErreur('video', 'Vidéo de l\'accueil illisible (code ' + code + ')', (v.error && v.error.message) || valeur.chemin);
+      if (window.signalerErreur) window.signalerErreur('video', 'Vidéo de l\'accueil illisible (code ' + code + ')', v.error?.message || valeur.chemin);
     });
 
     if ('IntersectionObserver' in window) {

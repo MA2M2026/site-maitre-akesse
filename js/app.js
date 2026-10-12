@@ -3087,7 +3087,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 // qu'on voie le bouton s'enfoncer — on le garde enfoncé (et rouge) un court instant,
 // avec une petite vibration sur Android. Le style est dans css/style.css.
 document.addEventListener('pointerdown', function (e) {
-  const t = e.target.closest && e.target.closest('.btn, .btn-mini-admin, .filtre-btn, .fiche-partage-btn, .journal-btn, .lang-switch, .mp-panier-btn, .mpg-bouton-danger');
+  const t = e.target.closest?.('.btn, .btn-mini-admin, .filtre-btn, .fiche-partage-btn, .journal-btn, .lang-switch, .mp-panier-btn, .mpg-bouton-danger');
   if (!t || t.disabled || t.closest('#bloc-tableau')) return;
   t.classList.add('touche-appuyee');
   setTimeout(function () { t.classList.remove('touche-appuyee'); }, 160);
