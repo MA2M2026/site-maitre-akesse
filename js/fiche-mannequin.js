@@ -154,7 +154,7 @@ async function chargerProfilInterne() {
     const meta = [p.periode, lieu, p.agence ? '' : p.promoteur].filter(Boolean).map(echapperHtml).join(' · ');
     return `
       <li class="fiche-projet">
-        <span class="fiche-projet-type">${echapperHtml(p.type_projet)}${p.agence ? ` <em class="fiche-projet-agence">${T('avec MA2M', 'with MA2M')}</em>` : ''}</span>
+        <span class="fiche-projet-type">${echapperHtml(p.type_projet)}</span>
         ${p.titre ? `<span class="fiche-projet-titre">${echapperHtml(p.titre)}</span>` : ''}
         ${meta ? `<span class="fiche-projet-meta">${meta}</span>` : ''}
       </li>`;
@@ -416,7 +416,7 @@ async function afficherParcoursAgence(idMannequin) {
   const projetsAgence = await ma2mParcours(dateLocaleIso(debut), dateLocaleIso(fin), idMannequin);
   if (!projetsAgence.length) return;
   // Résumé chiffré seulement (12/10/2026) : le détail de ces projets est déjà dans « Parcours »
-  // juste au-dessus (badge « avec MA2M ») — un visiteur ne voit plus deux fois le même projet.
+  // juste au-dessus (sans mention « avec MA2M » depuis le 12/10/2026, demande de la propriétaire) — un visiteur ne voit plus deux fois le même projet.
   const totaux = ma2mCompteParType(projetsAgence);
   zone.innerHTML = `
     <section class="fiche-carte fiche-ancre" id="fiche-avec-ma2m">

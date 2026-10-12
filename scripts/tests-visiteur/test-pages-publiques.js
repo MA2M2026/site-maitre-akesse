@@ -30,7 +30,7 @@ const cas = [
   ['index.html', ['Awa Koné', 'Femme']], ['en/index.html', ['Awa Koné', 'Female']],
   ['parcours.html', ['Défilé Abidjan', 'septembre 2026', 'Awa Koné']], ['en/parcours.html', ['Défilé Abidjan', 'Our models at work', 'Awa Koné']],
   // « Avec MA2M » : résumé chiffré (la base simulée renvoie tous les projets, d'où « activités » sans nombre exact)
-  ['mannequin.html?id=a1', ['Avec MA2M', 'activité', 'Shooting Marque Perso', 'avec MA2M']],
+  ['mannequin.html?id=a1', ['Avec MA2M', 'activité', 'Shooting Marque Perso']],
   // agenda public : partenaire indirect et mannequin sans profil, écrits à la main (Ext. 137/138)
   ['agenda.html', ['Forum Test', 'Maison XYZ', 'Fatou Bamba']], ['en/agenda.html', ['Forum Test', 'Maison XYZ', 'Fatou Bamba']]
 ];
