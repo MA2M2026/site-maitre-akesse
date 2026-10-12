@@ -2098,3 +2098,12 @@ ses réponses en mémoire : un seul appel au serveur par page et par période. U
 mannequin pour le même projet est remplacée par celle de l'agence (et signalée dans son Espace,
 où elle peut la supprimer). Parcours MA2M : visages ronds. Essais : `test-pages-publiques.js`
 (fiche avec doublons) et `test-espace-experiences.js` (Espace + CV).
+
+## Formulaire d'expérience enrichi (Extension 139, 12/10/2026)
+Espace mannequin, étape « Expérience » : type, nom, date (ou année, texte libre), pays, ville,
+lieu (salle, hôtel, studio… — nouvelle colonne `model_projects.lieu`), promoteur / styliste /
+marque / institution (`promoteur`). Tout est facultatif. Conversion unique
+`experienceDepuisBase` / `experienceVersBase` (js/espace-mannequin.js) ; la colonne `lieu`
+n'est envoyée que si elle est remplie tant qu'elle n'a pas été vue (avant l'Extension 139).
+La fiche publique affiche lieu, ville et pays ; le CV reste court (nom, ville, date) pour ne
+pas le surcharger ; la compcard ne liste pas les expériences (seulement leur nombre).

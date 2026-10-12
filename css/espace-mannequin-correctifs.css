@@ -168,3 +168,13 @@ html { background: #080707; }
 .exp-agence-titre { margin: 0 0 6px; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: #d55468; }
 .exp-agence ul { margin: 0; padding: 0 0 0 1.1rem; font-size: .9rem; line-height: 1.55; }
 .exp-doublon { margin: 0 0 8px; font-size: .8rem; color: #d55468; }
+
+/* Formulaire d'expérience enrichi (12/10/2026) : type | nom ; date | pays | ville ;
+   lieu | promoteur. Tout est facultatif. */
+.exp-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.exp-fields [data-expf=nom] { grid-column: span 2; }
+.exp-fields [data-expf=promoteur] { grid-column: span 2; }
+@media (max-width: 700px) {
+  .exp-fields { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .exp-fields [data-expf=nom], .exp-fields [data-expf=salle], .exp-fields [data-expf=promoteur] { grid-column: 1 / -1; }
+}

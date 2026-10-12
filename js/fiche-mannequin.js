@@ -150,7 +150,7 @@ async function chargerProfilInterne() {
 
   const NB_PROJETS_APERCU = 5;
   function ligneProjetHtml(p) {
-    const lieu = [p.ville, p.pays].filter(Boolean).join(', ');
+    const lieu = [p.lieu, p.ville, p.pays].filter(Boolean).join(', '); // lieu : salle, hôtel… (Extension 139)
     const meta = [p.periode, lieu, p.agence ? '' : p.promoteur].filter(Boolean).map(echapperHtml).join(' · ');
     return `
       <li class="fiche-projet">
