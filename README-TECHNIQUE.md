@@ -22,6 +22,44 @@ cas de doute donne toujours l'état le plus récent.
 ## ⚠️ HISTORIQUE DU 27-28 SEPTEMBRE 2026 — architecture photos revue
 ## À LIRE avant de retoucher à R2, au domaine personnalisé ou à `vercel.json`
 
+**Mise à jour du 13/10/2026 — photos des pages publiques servies directement par
+Cloudflare, avec roue de secours.** Le quota Vercel « Fast Data Transfer » (100 Go/mois)
+montait trop vite (25 Go) parce que chaque photo affichée passait par le relais
+`/book-photos/`. Décision de la propriétaire : faire passer les photos par le domaine
+personnalisé R2 `photos.maitreakessemodelmanagement.com` (trafic gratuit chez Cloudflare),
+avec secours automatique, puis quitter le relais une fois le rodage réussi.
+
+- Vérifié le 13/10/2026 : le domaine résout partout (IP Cloudflare), sert une vraie photo
+  (validateur W3C : `image/jpeg`), SSL Labs B (TLS 1.0/1.1 encore acceptés : à monter à
+  1.2 minimum dans Cloudflare → SSL/TLS → Certificats Edge, optionnel). Chez la
+  propriétaire : ordinateur, tablette et téléphone en 4G OK ; téléphone sur sa box Orange
+  CI : `ERR_CONNECTION_CLOSED` pendant quelques minutes, puis OK sans rien changer
+  (cloudflare.com s'ouvrait, pas d'IPv6 sur la box). Cause non élucidée → secours obligatoire.
+- **Rien ne change en base** : les adresses restent `https://www.…/book-photos/…`. Seul
+  l'affichage est converti, dans `js/app.js` : `urlLegere()` (déjà utilisée par l'accueil,
+  The Book, la fiche, Qui sommes-nous, Parcours) renvoie la copie WebP **sur
+  `photos.maitreakessemodelmanagement.com`**. Retour arrière immédiat :
+  `PHOTOS_DIRECTES_ACTIVES = false`.
+- **Roue de secours** (`urlDeSecours`, `prechargerPhoto`, `passerAuRelais`) : une photo
+  directe en échec essaie d'abord le JPEG au même endroit (copie WebP absente ≠ panne),
+  puis la même photo par le relais ; le visiteur ne bascule que si elle s'affiche par le
+  relais (une photo supprimée, absente des deux côtés, ne compte pas). Garde-fou contre le
+  chargement sans fin (aucune erreur n'arrive dans ce cas) : 8 s après une photo directe
+  préparée (ou un défilement), s'il en reste d'attendues à l'écran, petite sonde vers une
+  adresse inexistante de Cloudflare ; réponse (404) en moins de 5 s = connexion lente, on
+  patiente ; pas de réponse = bascule. Après la bascule, le visiteur est mémorisé 12 h
+  (`localStorage` `ma2m_photos_relais`, lu une fois par page), toute photo directe ajoutée
+  ensuite à la page repart par le relais (MutationObserver : filtres, Sélection…), et le
+  basculement est noté UNE fois dans le journal des erreurs (catégorie `photos`) : c'est
+  l'indicateur du rodage. `js/surveillance.js` ignore les échecs des photos directes (déjà
+  rattrapés). La page Sélection repasse aussi ses photos gardées en mémoire par `urlLegere`.
+- Pas concernés (restent sur le relais, peu de trafic ou contrainte CSP) : vidéo de
+  l'accueil (`media-src 'self'` dans `vercel.json`), tableau de bord, Espace mannequin,
+  boutique, compcard/CV (téléchargés par `fetch`, `connect-src` sans ce domaine).
+- Test : `scripts/tests-visiteur/test-photos-directes.js` (Cloudflare OK, connexion
+  coupée, Cloudflare muet, connexion lente, photo supprimée, WebP absent, Sélection,
+  téléphone et ordinateur, FR/EN).
+
 **Nouvelle architecture (28 septembre 2026, nuit) : les photos passent
 maintenant par le domaine du site lui-même, plus jamais directement par un
 domaine Cloudflare.** Après l'échec du domaine personnalisé R2 (incident
