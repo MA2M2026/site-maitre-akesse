@@ -1907,6 +1907,7 @@ function passerAuRelais(raison) {
   try { localStorage.setItem(CLE_PHOTOS_RELAIS, String(Date.now() + DUREE_PHOTOS_RELAIS)); } catch (e) {}
   prechargementsDirects.forEach(pre => { const relais = urlParRelais(pre.getAttribute('src')); if (relais) pre.src = relais; });
   relayerPhotosDirectes();
+  document.dispatchEvent(new Event('ma2m:photos-relais'));  // la vidéo de l'accueil suit (js/video-accueil.js)
   if (window.signalerErreur) window.signalerErreur('photos', 'Photos directes Cloudflare injoignables → relais Vercel', raison);
 }
 // Garde-fou contre le chargement sans fin (aucune erreur n'arrive dans ce cas). Armé à
@@ -1924,20 +1925,22 @@ function photosDirectesEnAttente() {
     return r.bottom > 0 && r.top < innerHeight && r.width > 0;
   });
 }
-function verifierPhotosDirectes() {
-  if (photosParRelais || !photosDirectesEnAttente()) { gardeFouPhotos = null; return; }
-  // Lenteur ou domaine muet ? Une adresse inexistante répond tout de suite (erreur 404)
-  // quand Cloudflare est joignable.
+// Lenteur ou domaine muet ? Une adresse inexistante répond tout de suite (erreur 404)
+// quand Cloudflare est joignable : rappel(true/false) après DELAI_SONDE_PHOTOS.
+function sonderPhotosDirectes(rappel) {
   let repondu = false;
   const sonde = new Image();
   sonde.onload = sonde.onerror = () => { repondu = true; };
   sonde.src = PHOTOS_DIRECTES + 'sonde-connexion?' + Date.now();
-  setTimeout(() => {
-    sonde.onload = sonde.onerror = null;
+  setTimeout(() => { sonde.onload = sonde.onerror = null; rappel(repondu); }, DELAI_SONDE_PHOTOS);
+}
+function verifierPhotosDirectes() {
+  if (photosParRelais || !photosDirectesEnAttente()) { gardeFouPhotos = null; return; }
+  sonderPhotosDirectes(repondu => {
     gardeFouPhotos = null;
     if (!repondu) passerAuRelais('Cloudflare sans réponse (photos attendues depuis ' + ((DELAI_PHOTOS_DIRECTES + DELAI_SONDE_PHOTOS) / 1000) + ' s)');
     else if (++patiencesPhotos <= 6) armerGardeFouPhotos();
-  }, DELAI_SONDE_PHOTOS);
+  });
 }
 addEventListener('scroll', armerGardeFouPhotos, { passive: true });
 // Adresse à afficher : la copie WebP quand elle existe, servie directement par Cloudflare,
@@ -3232,7 +3235,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function afficher() {
-    document.getElementById('lbg-img').src = urls[index];
+    document.getElementById('lbg-img').src = urlLegere(urls[index]);  // Cloudflare, comme la page
     const multi = urls.length > 1;
     document.getElementById('lbg-compteur').textContent = multi ? `${index + 1} / ${urls.length}` : '';
     document.getElementById('lbg-precedent').style.display = multi ? 'flex' : 'none';

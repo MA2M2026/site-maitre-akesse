@@ -128,7 +128,7 @@
     const fig = img && img.closest('.qsn-portrait');
     if (!img || !fig) return;
     img.addEventListener('load', () => { img.hidden = false; fig.classList.add('avec-photo'); }, { once: true });
-    img.src = data.photo_url;
+    img.src = urlLegere(data.photo_url);
     if (data.nom) document.getElementById('qsn-portrait-nom').textContent = data.nom;
   }
 

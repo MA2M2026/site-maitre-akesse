@@ -53,12 +53,27 @@ avec secours automatique, puis quitter le relais une fois le rodage réussi.
   basculement est noté UNE fois dans le journal des erreurs (catégorie `photos`) : c'est
   l'indicateur du rodage. `js/surveillance.js` ignore les échecs des photos directes (déjà
   rattrapés). La page Sélection repasse aussi ses photos gardées en mémoire par `urlLegere`.
-- Pas concernés (restent sur le relais, peu de trafic ou contrainte CSP) : vidéo de
-  l'accueil (`media-src 'self'` dans `vercel.json`), tableau de bord, Espace mannequin,
-  boutique, compcard/CV (téléchargés par `fetch`, `connect-src` sans ce domaine).
-- Test : `scripts/tests-visiteur/test-photos-directes.js` (Cloudflare OK, connexion
+- **Étendu le 13/10/2026 (2e lot, demande de la propriétaire : « tout ce qui est photo et
+  vidéo transite par Cloudflare, Vercel reste l'hébergeur »)** : actualités (liste +
+  galerie `js/publications.js`), événements, partenaires (page + accueil + agenda), photo
+  du mot du responsable (accueil, Qui sommes-nous), boutique (`js/marketplace-vitrine.js`)
+  passent aussi par `urlLegere`. **Vidéo de l'accueil** (`js/video-accueil.js`) : servie
+  directement, avec le même secours : erreur → même vidéo par le relais, au même moment
+  (tout le site ne bascule que si l'échec est arrivé AVANT toute donnée et que le relais
+  marche ; une coupure en pleine lecture n'accuse pas Cloudflare) ; lecture bloquée plus de
+  12 s → la vidéo seule passe par le relais ; rien après 10 s et sonde muette → bascule ;
+  une bascule décidée par les photos (événement `ma2m:photos-relais`) fait suivre la vidéo.
+  Galerie agrandie partagée (`ouvrirGalerieLightbox`) : `urlLegere` aussi ; pour cela, `vercel.json` autorise
+  `https://photos.maitreakessemodelmanagement.com` dans `media-src` (ajout seul, accord
+  écrit de la propriétaire le 13/10/2026). `sonderPhotosDirectes()` est partagée par les
+  photos et la vidéo.
+- Restent sur le relais (peu de trafic, ou contrainte) : tableau de bord, Espace mannequin,
+  gestion de la boutique, compcard/CV (téléchargés par `fetch`, `connect-src` sans ce
+  domaine), sauvegarde Google Drive (lit les adresses de la base, inchangées).
+- Tests : `scripts/tests-visiteur/test-photos-directes.js` (Cloudflare OK, connexion
   coupée, Cloudflare muet, connexion lente, photo supprimée, WebP absent, Sélection,
-  téléphone et ordinateur, FR/EN).
+  actualités, événements, partenaires, téléphone et ordinateur, FR/EN) et
+  `test-video-accueil.js` (vidéo directe, Cloudflare coupé ou muet → relais).
 
 **Nouvelle architecture (28 septembre 2026, nuit) : les photos passent
 maintenant par le domaine du site lui-même, plus jamais directement par un

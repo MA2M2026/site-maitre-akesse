@@ -79,6 +79,70 @@ async function visite(b, page, mode, opts = {}) {
     }
   }
 
+  // 1 bis) Actualités, événements, partenaires (13/10/2026) : mêmes photos directes
+  {
+    const img = n => SITE + 'site/' + n + '.jpg';
+    const autres = { ...tables,
+      actualites: [{ id: 'n1', titre: 'Défilé', categorie: 'mode', commentaire: 'Texte', image_url: img('actu'), created_at: '2026-10-01T10:00:00Z' }],
+      evenements: [{ id: 'e1', titre: 'Casting', date_evenement: '2026-11-01', lieu: 'Abidjan', description: 'x', image_url: img('evt'), created_at: '2026-10-01T10:00:00Z' }],
+      partenaires: [{ id: 'pa1', nom: 'Maison', logo_url: img('logo'), created_at: '2026-10-01T10:00:00Z' }] };
+    for (const page of ['actualites.html', 'evenements.html', 'partenaires.html', 'en/partenaires.html']) {
+      const ctx = await b.newContext({ viewport: { width: 390, height: 844 } }); const p = await ctx.newPage(); const e4 = [], relais = [];
+      p.on('pageerror', e => e4.push(e.message));
+      await brancher(p, { tables: autres, rpc: {} }, []);
+      await p.route(DIRECT, r => r.fulfill({ status: 200, contentType: 'image/jpeg', body: PHOTO }));
+      await p.route(/book-photos\//, r => { relais.push(r.request().url()); r.fulfill({ status: 200, contentType: 'image/jpeg', body: PHOTO }); });
+      await p.goto('http://127.0.0.1:' + PORT + '/' + page, { waitUntil: 'domcontentloaded' }); await p.waitForTimeout(3000);
+      const srcs = await p.evaluate(() => [...document.images].map(i => i.getAttribute('src') || '').filter(s => /book-photos|photos\.maitreakesse/.test(s)));
+      ok(srcs.length > 0 && srcs.every(x => DIRECT.test(x)) && !relais.length, page + ' : images servies par Cloudflare (' + srcs.length + ')');
+      ok(!e4.length, page + ' : aucune erreur ' + e4.join(' | '));
+      await ctx.close();
+    }
+  }
+
+  // 1 ter) Accueil (mot du responsable, logos partenaires), Qui sommes-nous (mot), boutique
+  //        (vitrine, fiche produit, galerie agrandie) et galerie agrandie partagée
+  {
+    const img = n => SITE + 'site/' + n + '.jpg';
+    const photosProduit = [{ url: img('robe1'), url_miniature: img('robe1-min'), ordre: 0 }, { url: img('robe2'), url_miniature: img('robe2-min'), ordre: 1 }];
+    const autres = { ...tables,
+      mot_responsable: [{ id: 'principal', nom: 'Maître Akesse', titre: 'Fondatrice', message: 'Bienvenue', photo_url: img('mot') }],
+      partenaires: [{ id: 'pa1', nom: 'Maison', logo_url: img('logo'), created_at: '2026-10-01T10:00:00Z' }],
+      boutique_reglages: [{ id: 'principal', ouverte: true }],
+      boutique_categories: [{ id: 'c1', nom: 'Robes', slug: 'robes', actif: true, ordre: 0 }],
+      boutique_produits: [{ id: 'b1', nom: 'Robe MA2M', slug: 'robe-ma2m', statut: 'en_vente', type: 'article', mis_en_avant: true, ordre: 0, created_at: '2026-10-01T10:00:00Z', description: 'Robe',
+        photos: photosProduit, variantes: [{ id: 'v1', taille: 'M', couleur: 'Noir', prix_fcfa: 25000, stock: 3, actif: true, ordre: 0 }], categorie: { nom: 'Robes', slug: 'robes' } }] };
+    const cas = [['index.html', /site\/(mot|logo)\.jpg/], ['qui-sommes-nous.html', /site\/mot\.jpg/], ['marketplace/index.html', /site\/robe/], ['marketplace/produit.html?p=robe-ma2m', /site\/robe/]];
+    for (const [page, attendu] of cas) {
+      const ctx = await b.newContext({ viewport: { width: 390, height: 844 } }); const p = await ctx.newPage(); const e5 = [], relais = [];
+      p.on('pageerror', e => e5.push(e.message));
+      await brancher(p, { tables: autres, rpc: { photos_couverture_mannequins: [] } }, []);
+      await p.route(DIRECT, r => r.fulfill({ status: 200, contentType: 'image/jpeg', body: PHOTO }));
+      await p.route(/book-photos\//, r => { relais.push(r.request().url()); r.fulfill({ status: 200, contentType: 'image/jpeg', body: PHOTO }); });
+      await p.goto('http://127.0.0.1:' + PORT + '/' + page, { waitUntil: 'domcontentloaded' }); await p.waitForTimeout(1500);
+      const entrer = await p.$('text=/^\\s*(Entrer|Enter)\\s*$/i'); if (entrer) await entrer.click().catch(() => {});
+      await p.waitForTimeout(2500);
+      const srcs = await p.evaluate(() => [...document.images].map(i => i.getAttribute('src') || '').filter(s => /book-photos|photos\.maitreakesse/.test(s)));
+      ok(srcs.some(x => attendu.test(x)) && srcs.every(x => DIRECT.test(x)) && !relais.length, page + ' : images servies par Cloudflare (' + srcs.length + ')');
+      if (/produit/.test(page)) {
+        // galerie agrandie de la fiche produit : la photo agrandie vient aussi de Cloudflare
+        await p.evaluate(() => { const v = document.querySelector('[data-index]'); if (v) v.click(); });
+        await p.waitForTimeout(800);
+        const grande = await p.evaluate(() => { const i = document.getElementById('lbg-img'); return i ? i.getAttribute('src') : ''; });
+        ok(DIRECT.test(grande || ''), 'boutique : photo agrandie servie par Cloudflare (' + grande + ')');
+      }
+      if (page === 'index.html') {
+        // galerie agrandie partagée (actualités, événements) avec des adresses de la base
+        await p.evaluate(u => ouvrirGalerieLightbox([u], 0), img('actu'));
+        await p.waitForTimeout(500);
+        const grande = await p.evaluate(() => document.getElementById('lbg-img').getAttribute('src'));
+        ok(DIRECT.test(grande || ''), 'galerie agrandie : photo servie par Cloudflare (' + grande + ')');
+      }
+      ok(!e5.length, page + ' : aucune erreur ' + e5.join(' | '));
+      await ctx.close();
+    }
+  }
+
   // 2) Connexion coupée (ERR_CONNECTION_CLOSED du téléphone de la propriétaire) → relais
   for (const page of ['index.html', 'mannequins.html', 'mannequin.html?id=a1']) {
     const v = await visite(b, page, 'coupe', { mobile: true });

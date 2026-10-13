@@ -60,7 +60,7 @@
     if (pa.id) a.href = 'partenaires.html';
     if (pa.logo_url) {
       const img = document.createElement('img');
-      img.src = pa.logo_url; img.alt = ''; img.loading = 'lazy'; img.decoding = 'async';
+      img.src = urlLegere(pa.logo_url); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async';
       img.addEventListener('error', () => img.remove());
       a.appendChild(img);
     }
