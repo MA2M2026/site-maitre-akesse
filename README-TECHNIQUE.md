@@ -2243,3 +2243,6 @@ aux données, protégées par la base). Désormais :
 - ⚠ Tout nouveau script réservé au tableau de bord : le placer dans une ZONE-ADMIN **et** l'ajouter
   à `config.matcher` et à `SCRIPTS_ADMIN` (le test le vérifie).
 - Essai visiteur `scripts/tests-visiteur/test-tableau-protege.js`.
+- Copie de test Vercel (« Preview ») : la variable `SUPABASE_SERVICE_ROLE_KEY` doit aussi être
+  cochée pour *Preview* dans Vercel (Settings → Environment Variables), sinon la connexion y
+  répond « Connexion refusée » (activé par la propriétaire le 13/10/2026).
