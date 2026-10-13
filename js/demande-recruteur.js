@@ -26,7 +26,7 @@ function afficher() {
     const item = document.createElement('div');
     item.className = 'selection-item';
     item.innerHTML = `
-      <img src="${echapperHtml(m.photoUrl)}" alt="${echapperHtml(m.full_name)}" class="${EN ? 'ense-7' : 'se-7'}">
+      <img src="${echapperHtml(urlLegere(m.photoUrl))}" alt="${echapperHtml(m.full_name)}" class="${EN ? 'ense-7' : 'se-7'}">
       <div class="selection-item-info">
         <div class="nom">${echapperHtml(m.full_name || T('Mannequin', 'Model'))}</div>
         <div class="info">${m.height_cm ? m.height_cm + ' cm' : ''}</div>

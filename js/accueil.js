@@ -45,15 +45,10 @@ async function chargerPhotosHero() {
   const CLE_CACHE = 'ma2m_hero_photos';
 
 
+  // la première photo est la plus grande image visible : chargée en priorité (Lighthouse,
+  // 12/10/2026) ; roue de secours (relais, JPEG) gérée par prechargerPhoto (app.js)
   const afficher = (img, url, rang) => {
-    if (!url) return;
-    const preload = new Image();
-    // la première photo est la plus grande image visible : chargée en priorité (Lighthouse, 12/10/2026)
-    if (rang === 0) preload.fetchPriority = 'high';
-    // copie WebP illisible ou absente : la version JPEG
-    preload.onerror = () => { const secours = urlJpegDeSecours(url); if (secours) afficher(img, secours, rang); };
-    preload.onload = () => { img.src = url; };
-    preload.src = url;
+    if (url) prechargerPhoto(urlLegere(url), ok => { img.src = ok; }, rang === 0);
   };
 
   let cache = [];

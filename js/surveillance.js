@@ -177,6 +177,10 @@
       if (!url || !attr || url.indexOf('data:') === 0 || url.split('#')[0] === location.href.split('#')[0] || pageQuittee || /googletagmanager\.com|google-analytics\.com/.test(url)) return;
       const type = cible.tagName === 'IMG' ? 'Image non chargée' : cible.tagName === 'SCRIPT' ? 'Script non chargé' : cible.tagName === 'LINK' ? 'Style non chargé' : 'Média non chargé';
       if (cible.tagName === 'IMG') {
+        // Photo servie directement par Cloudflare : app.js la redemande aussitôt par le relais
+        // (/book-photos/) et note le basculement une seule fois ; c'est ce second essai qui
+        // sera surveillé ci-dessous s'il échoue à son tour.
+        if (typeof estPhotoDirecte === 'function' && estPhotoDirecte(url)) return;
         // Photo du stockage (/book-photos/) qui échoue (erreur 502 passagère du relais,
         // vérification du 06/10/2026) : le navigateur la redemande une fois, 1,2 s plus
         // tard, pour que le visiteur ne voie pas un cadre vide.
