@@ -30,7 +30,7 @@ async function chargerPartenaires() {
     <div class="news-carte reveal" data-index="${i}">
       <div class="news-img ${EN ? 'enpt-9' : 'pt-9'}">
         ${p.logo_url
-          ? `<img src="${echapperHtml(p.logo_url)}" loading="lazy" alt="${echapperHtml(p.nom)}" class="${EN ? 'enpt-10' : 'pt-10'}">`
+          ? `<img src="${echapperHtml(urlLegere(p.logo_url))}" loading="lazy" alt="${echapperHtml(p.nom)}" class="${EN ? 'enpt-10' : 'pt-10'}">`
           : `<span class="${EN ? 'enpt-11' : 'pt-11'}">${echapperHtml((p.nom || '?').charAt(0))}</span>`}
       </div>
       <div class="news-corps">
@@ -58,7 +58,7 @@ function ouvrirPartModal(index) {
   if (!p) return;
   window.partenaireModalCourant = p.id;
 
-  document.getElementById('part-modal-logo').src = p.logo_url || (EN ? '../' : '') + 'assets/logo-dark-bg.png';
+  document.getElementById('part-modal-logo').src = urlLegere(p.logo_url) || (EN ? '../' : '') + 'assets/logo-dark-bg.png';
   document.getElementById('part-modal-fond').src = document.getElementById('part-modal-logo').src;
   document.getElementById('part-une-nom').textContent = p.nom || '';
   document.getElementById('part-une-role').textContent = [p.role, p.structure].filter(x => x && !/^(autre|other)$/i.test(x)).join(' · ');

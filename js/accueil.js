@@ -227,7 +227,7 @@ async function chargerMotResponsable() {
   if (data.photo_url) {
     const photo = document.getElementById('mot-resp-photo');
     photo.onerror = () => { photo.style.display = 'none'; };
-    photo.src = data.photo_url;
+    photo.src = urlLegere(data.photo_url);
     photo.alt = data.nom || 'Maître Akesse';
     photo.style.display = 'block';
   }
@@ -247,7 +247,7 @@ async function chargerBandeauConfiance() {
 
   document.getElementById('confiance-liste').innerHTML = avecLogo.map(p => `
     <a href="partenaires.html?partenaire=${p.id}" class="confiance-carte" title="${echapperHtml(p.nom || '')}">
-      <img src="${echapperHtml(p.logo_url)}" alt="${echapperHtml(p.nom || '')}" loading="lazy">
+      <img src="${echapperHtml(urlLegere(p.logo_url))}" alt="${echapperHtml(p.nom || '')}" loading="lazy">
     </a>
   `).join('');
   document.getElementById('ils-nous-font-confiance').style.display = 'block';

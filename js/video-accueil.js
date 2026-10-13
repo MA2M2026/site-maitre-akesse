@@ -39,12 +39,52 @@
         bouton.querySelector('span').textContent = anglais ? 'Play the film' : 'Lire le film';
       });
     }
+    // Servie directement par Cloudflare quand c'est permis (13/10/2026, comme les photos :
+    // urlLegere et la roue de secours de js/app.js), sinon par le relais /book-photos/.
+    // Tout ennui sur la vidéo directe la fait passer par le relais, au même moment de la
+    // lecture ; mais seul un échec AVANT toute donnée reçue, confirmé par le relais, fait
+    // basculer tout le site (une coupure passagère en pleine lecture n'accuse pas Cloudflare).
+    var relais = '/book-photos/' + valeur.chemin;
+    var parSecoursRelais = false, donneesDirectes = false, attente = null;
+    function directe() { return estPhotoDirecte(v.getAttribute('src')); }
+    function vers(src) {
+      var t = v.currentTime || 0;
+      clearTimeout(attente);
+      v.src = src;
+      v.addEventListener('loadedmetadata', function () { try { if (t) v.currentTime = t; } catch (e) {} }, { once: true });
+      lecture();
+    }
     function charger() {
       if (v.src) return;
       v.preload = 'auto';  // la section est proche : la première image s'affiche même sans lecture
-      v.src = '/book-photos/' + valeur.chemin;
+      v.src = urlLegere(relais);
       lecture();
+      // Chargement sans fin (domaine injoignable sans erreur) : rien après 10 s et la sonde
+      // ne répond pas → bascule de tout le site (passerAuRelais prévient aussi la vidéo).
+      if (!directe()) return;
+      setTimeout(function () {
+        if (v.readyState >= 1 || !directe()) return;
+        sonderPhotosDirectes(function (repondu) {
+          if (repondu || v.readyState >= 1 || !directe()) return;
+          passerAuRelais('vidéo de l\'accueil : Cloudflare sans réponse');
+        });
+      }, 10000);
     }
+    // Bascule décidée ailleurs (photos de la page) : la vidéo directe suit.
+    document.addEventListener('ma2m:photos-relais', function () { if (directe()) vers(relais); });
+    // Lecture bloquée en attente de données depuis plus de 12 s (réseau muet en cours de
+    // lecture) : la vidéo seule passe par le relais.
+    v.addEventListener('waiting', function () {
+      if (!directe()) return;
+      clearTimeout(attente);
+      attente = setTimeout(function () { if (directe() && v.readyState < 3) vers(relais); }, 12000);
+    });
+    v.addEventListener('playing', function () { clearTimeout(attente); });
+    v.addEventListener('loadeddata', function () {
+      if (directe()) donneesDirectes = true;
+      // échec direct avant toute donnée, et la vidéo s'affiche par le relais : Cloudflare en cause
+      if (parSecoursRelais) { parSecoursRelais = false; passerAuRelais('échec de la vidéo directe ' + valeur.chemin); }
+    });
     v.addEventListener('loadedmetadata', function () { forme(v.videoWidth, v.videoHeight); }, { once: true });
     v.addEventListener('loadeddata', function () { sec.classList.add('video-prete'); }, { once: true });
     v.addEventListener('playing', function () {
@@ -73,15 +113,15 @@
     // noir). On relance une fois le fichier ; si l'erreur revient, l'espace est retiré et le
     // code d'erreur du navigateur part dans le journal des erreurs du tableau de bord, pour
     // connaître la cause exacte sur cet appareil.
+    // Vidéo directe en échec : d'abord la même vidéo par le relais (sans compter comme relance).
     var relance = false;
     v.addEventListener('error', function () {
       var code = v.error ? v.error.code : 0;
+      if (directe()) { parSecoursRelais = !donneesDirectes; vers(relais); return; }
+      parSecoursRelais = false;  // le relais échoue aussi : le fichier est en cause, pas Cloudflare
       if (!relance) {
         relance = true;
-        var t = v.currentTime || 0;
-        v.src = '/book-photos/' + valeur.chemin + '?relance=1';
-        v.addEventListener('loadedmetadata', function () { try { if (t) v.currentTime = t; } catch (e) {} }, { once: true });
-        lecture();
+        vers(relais + '?relance=1');
         return;
       }
       sec.classList.add('u-hidden');

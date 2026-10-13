@@ -44,9 +44,9 @@ function afficherMediasPublication(zoneMedia, listePhotos, avant) {
     // Composition adaptée au nombre de photos (voir .news-modal-galerie[data-count] dans
     // css/style.css) ; au-delà de 4, on garde une grille régulière classique.
     const compteGalerie = Math.min(listePhotos.length, 4);
-    mediaHtml += `<div class="news-modal-galerie" data-count="${compteGalerie}">${listePhotos.map(p => `<div class="gal-item"><img src="${echapperHtml(p.url)}" loading="lazy" alt=""></div>`).join('')}</div>`;
+    mediaHtml += `<div class="news-modal-galerie" data-count="${compteGalerie}">${listePhotos.map(p => `<div class="gal-item"><img src="${echapperHtml(urlLegere(p.url))}" loading="lazy" alt=""></div>`).join('')}</div>`;
   } else if (listePhotos.length === 1) {
-    mediaHtml += `<img class="news-modal-img" src="${echapperHtml(listePhotos[0].url)}" alt="">`;
+    mediaHtml += `<img class="news-modal-img" src="${echapperHtml(urlLegere(listePhotos[0].url))}" alt="">`;
   }
   zoneMedia.innerHTML = mediaHtml;
   window.lightboxPhotos = listePhotos.map(p => p.url);

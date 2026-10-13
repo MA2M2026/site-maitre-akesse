@@ -41,7 +41,7 @@ async function chargerEvenements() {
   const une = data[0];
   uneZone.innerHTML = `
     <div class="news-une reveal" data-index="0">
-      <img src="${echapperHtml(une.image_url || '')}" loading="lazy" alt="${echapperHtml(une.titre || '')}">
+      <img src="${echapperHtml(urlLegere(une.image_url || ''))}" loading="lazy" alt="${echapperHtml(une.titre || '')}">
       <div class="news-une-scrim"></div>
       <div class="news-une-corps">
         <span class="news-une-badge">★ ${T('À la une', 'Featured')}</span>
@@ -62,7 +62,7 @@ async function chargerEvenements() {
     return `
     <div class="news-carte reveal" data-index="${indexReel}">
       <div class="news-img">
-        <img src="${echapperHtml(e.image_url || '')}" loading="lazy" alt="${echapperHtml(e.titre || '')}">
+        <img src="${echapperHtml(urlLegere(e.image_url || ''))}" loading="lazy" alt="${echapperHtml(e.titre || '')}">
         ${nbPhotos > 1 ? `<span class="news-compteur-photos">${nbPhotos}</span>` : ''}
       </div>
       <div class="news-corps">

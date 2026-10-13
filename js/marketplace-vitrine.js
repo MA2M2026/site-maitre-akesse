@@ -61,8 +61,8 @@
     else if (nouveau) badges.push('<span class="mp-badge">Nouveau</span>');
     return '<a class="mp-carte mp-apparait" data-delai="' + (index % 4) + '" href="/marketplace/produit?p=' + encodeURIComponent(p.slug) + '">' +
       '<div class="mp-carte-visuel">' +
-        (photos[0] ? '<img class="mp-premiere" src="' + echapperHtml(photos[0].url_miniature || photos[0].url) + '" alt="' + echapperHtml(p.nom) + '" loading="lazy">' : '<div class="mp-carte-vide">MA2M</div>') +
-        (photos[1] ? '<img class="mp-seconde" src="' + echapperHtml(photos[1].url_miniature || photos[1].url) + '" alt="" loading="lazy">' : '') +
+        (photos[0] ? '<img class="mp-premiere" src="' + echapperHtml(urlLegere(photos[0].url_miniature || photos[0].url)) + '" alt="' + echapperHtml(p.nom) + '" loading="lazy">' : '<div class="mp-carte-vide">MA2M</div>') +
+        (photos[1] ? '<img class="mp-seconde" src="' + echapperHtml(urlLegere(photos[1].url_miniature || photos[1].url)) + '" alt="" loading="lazy">' : '') +
         (badges.length ? '<div class="mp-badges">' + badges.join('') + '</div>' : '') +
         '<span class="mp-carte-voir">' + (p.type === 'billet' ? 'Réserver' : p.type === 'service' ? 'Découvrir' : 'Voir la pièce') + ' ' + FLECHE + '</span>' +
       '</div>' +
@@ -119,7 +119,7 @@
           const liste = produits.filter(p => p.type === u.cle);
           const image = liste.map(p => premierePhoto(p)[0]).find(Boolean);
           return '<a class="mp-porte mp-apparait' + (liste.length ? '' : ' mp-porte-vide') + '" data-delai="' + i + '" href="#collection" data-aller-univers="' + u.slug + '">' +
-            '<span class="mp-porte-visuel">' + (image ? '<img src="' + echapperHtml(image.url_miniature || image.url) + '" alt="" loading="lazy">' : '') + '<span class="mp-porte-arche" aria-hidden="true"></span></span>' +
+            '<span class="mp-porte-visuel">' + (image ? '<img src="' + echapperHtml(urlLegere(image.url_miniature || image.url)) + '" alt="" loading="lazy">' : '') + '<span class="mp-porte-arche" aria-hidden="true"></span></span>' +
             '<span class="mp-porte-texte">' +
               '<span class="mp-porte-num">0' + (i + 1) + '</span>' +
               '<strong>' + u.nom + '</strong>' +
@@ -138,7 +138,7 @@
             '<p class="mp-prix">' + MP.htmlPrix(vedette) + '</p>' +
             '<a class="btn btn--principal" href="/marketplace/produit?p=' + encodeURIComponent(vedette.slug) + '"><span>Découvrir</span>' + FLECHE + '</a>' +
           '</div>' +
-          '<a class="mp-banniere-image" href="/marketplace/produit?p=' + encodeURIComponent(vedette.slug) + '"><img src="' + echapperHtml(premierePhoto(vedette)[0].url) + '" alt="' + echapperHtml(vedette.nom) + '" loading="lazy"></a>' +
+          '<a class="mp-banniere-image" href="/marketplace/produit?p=' + encodeURIComponent(vedette.slug) + '"><img src="' + echapperHtml(urlLegere(premierePhoto(vedette)[0].url)) + '" alt="' + echapperHtml(vedette.nom) + '" loading="lazy"></a>' +
         '</section>' : '') +
       // ---- Engagements
       '<section class="mp-engagements"><div class="container"><ul>' +
@@ -268,7 +268,7 @@
             '<div class="mp-galerie-piste" id="mp-galerie-piste">' +
               (photos.length ? photos.map((ph, i) =>
                 '<button type="button" class="mp-galerie-vue" data-index="' + i + '" aria-label="Agrandir la photo ' + (i + 1) + '">' +
-                  '<img src="' + echapperHtml(ph.url) + '" alt="' + (i === 0 ? echapperHtml(produit.nom) : '') + '"' + (i > 1 ? ' loading="lazy"' : '') + '></button>').join('')
+                  '<img src="' + echapperHtml(urlLegere(ph.url)) + '" alt="' + (i === 0 ? echapperHtml(produit.nom) : '') + '"' + (i > 1 ? ' loading="lazy"' : '') + '></button>').join('')
                 : '<div class="mp-galerie-vue"><div class="mp-carte-vide">MA2M</div></div>') +
             '</div>' +
             (photos.length > 1 ? '<div class="mp-galerie-points" id="mp-galerie-points">' + photos.map((ph, i) => '<span' + (i === 0 ? ' class="actif"' : '') + '></span>').join('') + '</div>' : '') +

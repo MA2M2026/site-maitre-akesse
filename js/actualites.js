@@ -80,7 +80,7 @@ async function chargerActualites() {
   const une = data[0];
   uneZone.innerHTML = `
     <div class="news-une reveal" data-index="0">
-      <img src="${echapperHtml(une.image_url)}" loading="lazy" alt="${echapperHtml(une.titre || '')}">
+      <img src="${echapperHtml(urlLegere(une.image_url))}" loading="lazy" alt="${echapperHtml(une.titre || '')}">
       <div class="news-une-scrim"></div>
       <div class="news-une-corps">
         <span class="news-une-badge">★ ${T('À la une', 'Featured')}</span>
@@ -101,7 +101,7 @@ async function chargerActualites() {
     return `
     <div class="news-carte reveal" data-index="${indexReel}" data-categorie="${echapperHtml(a.categorie || '')}">
       <div class="news-img">
-        <img src="${echapperHtml(a.image_url)}" loading="lazy" alt="${echapperHtml(a.titre || '')}">
+        <img src="${echapperHtml(urlLegere(a.image_url))}" loading="lazy" alt="${echapperHtml(a.titre || '')}">
         ${a.video_url ? '<span class="news-play">▶</span>' : ''}
         ${nbPhotos > 1 ? `<span class="news-compteur-photos">${nbPhotos}</span>` : ''}
       </div>
