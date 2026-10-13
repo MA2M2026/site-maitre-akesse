@@ -2224,3 +2224,25 @@ validator.w3.org bloque les envois en série), Mozilla Observatory, SSL Labs.
   (non référencées : liens déjà en cache chez des visiteurs, e-mails…). La marque `-w.jpg` ne
   compte que dans les dossiers `miniatures/` et `moyennes/` (jamais pour une photo d'origine).
 - Essai visiteur `scripts/tests-visiteur/test-photos-webp.js`.
+
+## Tableau de bord protégé côté serveur (13/10/2026)
+Avant, n'importe qui pouvait télécharger la page du tableau de bord et ses scripts (sans accès
+aux données, protégées par la base). Désormais :
+- `js/connexion-tableau.js` (sorti de `js/tableau-de-bord.js`) : connexion, code de validation,
+  mot de passe / code oubliés, déconnexion, verrouillage d'inactivité. Après une connexion admin
+  complète, il demande la **clé d'accès** au serveur, puis recharge la page si elle était réduite.
+- Clé d'accès = cookie `ma2m_admin` (HttpOnly, Secure, SameSite=Lax, 12 h) signé HMAC-SHA256 avec
+  `SUPABASE_SERVICE_ROLE_KEY` (`cookieAccesTableau` / `cleAccesTableauValide` dans `api/_commun.js`).
+  Posée par `api/code-validation-protege.js` quand le code est bon, ou par `api/acces-tableau.js`
+  (POST : compte admin sans code, ou prolongation d'une clé valide ; DELETE : déconnexion).
+- `middleware.js` : sur `/tableau-de-bord(.html)` et les scripts réservés (liste `SCRIPTS_ADMIN`
+  = celle de `config.matcher`), sans clé valide → la page arrive **sans les zones**
+  `<!-- ZONE-ADMIN … -->` … `<!-- /ZONE-ADMIN -->` de `tableau-de-bord.html` (lue par une demande
+  interne signée et datée de 60 s) et les scripts réservés répondent 404. Clé serveur absente ou
+  panne : on laisse passer (comportement d'avant) pour ne jamais enfermer la propriétaire dehors.
+- ⚠ Tout nouveau script réservé au tableau de bord : le placer dans une ZONE-ADMIN **et** l'ajouter
+  à `config.matcher` et à `SCRIPTS_ADMIN` (le test le vérifie).
+- Essai visiteur `scripts/tests-visiteur/test-tableau-protege.js`.
+- Copie de test Vercel (« Preview ») : la variable `SUPABASE_SERVICE_ROLE_KEY` doit aussi être
+  cochée pour *Preview* dans Vercel (Settings → Environment Variables), sinon la connexion y
+  répond « Connexion refusée » (activé par la propriétaire le 13/10/2026).
