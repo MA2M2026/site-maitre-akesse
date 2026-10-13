@@ -35,6 +35,12 @@ const ADMIN = '11111111-2222-3333-4444-555555555555';
   r = await mw(req('/js/agenda-admin.js', perimee)); ok(r && r.status === 404, 'clé périmée : refusée');
   ok((await mw(req('/tableau-de-bord.html', 'autre=1; ' + bonneCle))) === undefined && (await mw(req('/js/tableau-de-bord.js', bonneCle))) === undefined, 'bonne clé : page et scripts livrés');
   ok((await mw(req('/js/app.js'))) === undefined, 'scripts publics : toujours livrés');
+  // lecture interne : les cookies du visiteur suivent ; une page qui n'est pas la nôtre (page de
+  // connexion de Vercel sur la copie de test) → on laisse passer
+  const fetchAvant = global.fetch; let cookieTransmis = null;
+  global.fetch = async (u, opts) => { cookieTransmis = opts.headers.cookie; return new Response('<html><a>Skip to content</a></html>', { status: 200, headers: { 'content-type': 'text/html' } }); };
+  ok((await mw(req('/tableau-de-bord.html', '_vercel_jwt=abc'))) === undefined && cookieTransmis === '_vercel_jwt=abc', 'page inattendue (protection Vercel) : on laisse passer, cookies transmis');
+  global.fetch = fetchAvant;
   ok(interne.length && interne.every(x => /^\d{10}\.[\w-]+$/.test(x)), 'lecture interne de la page signée et datée');
   // le jeton interne n'ouvre jamais les scripts réservés, et ne sert plus une fois périmé
   r = await mw(new Request('https://www.maitreakessemodelmanagement.com/js/tableau-de-bord.js', { headers: { 'x-ma2m-interne': interne[0] } }));

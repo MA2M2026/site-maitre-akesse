@@ -79,9 +79,16 @@ async function tableauProtege(requete, url) {
     return new Response('Introuvable', { status: 404, headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' } });
   }
   const instant = String(Math.floor(Date.now() / 1000));
-  const origine = await fetch(new URL('/tableau-de-bord.html', url), { headers: { 'x-ma2m-interne': instant + '.' + await signer(secret, 'interne|' + instant) } });
+  // les cookies du visiteur suivent (copie de test Vercel protégée : sans eux, Vercel répond par
+  // sa propre page de connexion — page blanche « Skip to content », 13/10/2026)
+  const entetesInternes = { 'x-ma2m-interne': instant + '.' + await signer(secret, 'interne|' + instant) };
+  if (requete.headers.get('cookie')) entetesInternes.cookie = requete.headers.get('cookie');
+  const origine = await fetch(new URL('/tableau-de-bord.html', url), { headers: entetesInternes });
   if (!origine.ok) return;
-  const html = (await origine.text()).replace(/<!-- ZONE-ADMIN[^>]*-->[\s\S]*?<!-- \/ZONE-ADMIN -->/g, '');
+  const brut = await origine.text();
+  // ce n'est pas notre page (autre réponse en chemin) : on laisse passer, comme avant
+  if (brut.indexOf('id="bloc-login"') === -1 || brut.indexOf('<!-- /ZONE-ADMIN -->') === -1) return;
+  const html = brut.replace(/<!-- ZONE-ADMIN[^>]*-->[\s\S]*?<!-- \/ZONE-ADMIN -->/g, '');
   const entetes = new Headers();
   origine.headers.forEach((valeur, nom) => { if (!/^(content-length|content-encoding|transfer-encoding|etag|age|x-vercel-cache)$/i.test(nom)) entetes.set(nom, valeur); });
   entetes.set('Content-Type', 'text/html; charset=utf-8');
