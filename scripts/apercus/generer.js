@@ -8,7 +8,7 @@
 //   2) POLICES=<dossier> NODE_PATH=$(npm root -g) node scripts/apercus/generer.js
 // Après un changement : modifier le numéro ?v= des og:image dans les pages (sinon WhatsApp et
 // Facebook gardent l'ancienne image en mémoire).
-const fs = require('fs'); const path = require('path'); const os = require('os');
+const fs = require('node:fs'); const path = require('node:path'); const os = require('node:os');
 const RACINE = path.resolve(__dirname, '../..');
 const POLICES = process.env.POLICES;
 // [page, [surtitre, titre, sous-titre] FR, [idem] EN]
@@ -57,6 +57,17 @@ h1 { font-family: 'Cormorant Garamond'; font-weight: 500; font-size: ${titre.inc
 <img class="logo" src="file://${RACINE}/assets/logo-intro.png" alt="">
 <div class="sur">${surtitre}</div><h1>${titre}</h1><div class="trait"></div><div class="sous">${sousTitre}</div>
 <div class="adresse">${adresse}</div></body></html>`;
+async function capturer(p, fichierHtml, sortie, { page, langue, t }) {
+  const chemin = [langue === 'en' ? 'en' : '', page === 'index' ? '' : page].filter(Boolean).join('/');
+  fs.writeFileSync(fichierHtml, gabarit(t[0], t[1], t[2], 'maitreakessemodelmanagement.com' + (chemin ? '/' + chemin : '')));
+  await p.goto('file://' + fichierHtml);
+  await p.evaluate(() => document.fonts.ready);
+  // police introuvable : on s'arrête plutôt que de produire des images dans une autre police
+  const polices = await p.evaluate(() => [...document.fonts].filter(f => f.status === 'loaded').map(f => f.family.replaceAll('"', '')));
+  if (!polices.includes('Jost') || !polices.includes('Cormorant Garamond')) throw new Error('Polices non chargées : ' + polices.join(', '));
+  await p.screenshot({ path: path.join(sortie, langue + '-' + page + '.jpg'), type: 'jpeg', quality: 86 });
+  console.log('✓ ' + langue + '-' + page + '.jpg');
+}
 async function generer() {
   if (!POLICES) { console.error('Indiquez le dossier des polices : POLICES=…'); process.exit(1); }
   const { chromium } = require('playwright');
@@ -65,19 +76,9 @@ async function generer() {
   const b = await chromium.launch();
   try {
     const p = await b.newPage({ viewport: { width: 1200, height: 630 } });
-    for (const [page, fr, en] of PAGES) {
-      for (const [langue, t] of [['fr', fr], ['en', en]]) {
-        if (!t) continue;
-        const chemin = [langue === 'en' ? 'en' : '', page === 'index' ? '' : page].filter(Boolean).join('/');
-        fs.writeFileSync(fichierHtml, gabarit(t[0], t[1], t[2], 'maitreakessemodelmanagement.com' + (chemin ? '/' + chemin : '')));
-        await p.goto('file://' + fichierHtml); await p.evaluate(() => document.fonts.ready);
-        // police introuvable : on s'arrête plutôt que de produire des images dans une autre police
-        const polices = await p.evaluate(() => [...document.fonts].filter(f => f.status === 'loaded').map(f => f.family.replace(/"/g, '')));
-        if (!polices.includes('Jost') || !polices.includes('Cormorant Garamond')) throw new Error('Polices non chargées : ' + polices.join(', '));
-        await p.screenshot({ path: path.join(sortie, langue + '-' + page + '.jpg'), type: 'jpeg', quality: 86 });
-        console.log('✓ ' + langue + '-' + page + '.jpg');
-      }
-    }
+    // une image après l'autre : un seul onglet sert pour toutes
+    const travaux = PAGES.flatMap(([page, fr, en]) => [['fr', fr], ['en', en]].filter(([, t]) => t).map(([langue, t]) => ({ page, langue, t })));
+    for (const travail of travaux) await capturer(p, fichierHtml, sortie, travail); // NOSONAR : ordre voulu
   } finally {
     await b.close(); fs.rmSync(path.dirname(fichierHtml), { recursive: true, force: true });
   }
