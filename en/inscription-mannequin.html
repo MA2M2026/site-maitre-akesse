@@ -95,6 +95,12 @@
     <!-- Step 2: full form (hidden until the code is confirmed) -->
     <h2 class="u-lecteur-ecran">Registration form</h2>
     <form id="form-inscription" class="u-hidden u-mt-2">
+      <!-- Onboarding note: shown only after a valid code (secret address given by the server) -->
+      <div id="bloc-note-integration" class="enim-23 u-hidden">
+        <h3 class="enim-24">Information note and onboarding procedure</h3>
+        <p class="enim-27">Before continuing, please read this document (in French): it explains your onboarding, the training, the agency's rules and the fees. By ticking "I have read and accept the agency's registration terms" below, you confirm that you have read it.</p>
+        <a id="note-integration-lire" class="btn btn--principal" href="#" target="_blank" rel="noopener">Read and download the document (PDF)</a>
+      </div>
       <div class="form-grille">
         <div class="form-champ">
           <label for="ins-nom">Full Name *</label>

@@ -100,6 +100,17 @@ if (document.getElementById('ins-photo-supp-remplacement')) document.getElementB
 
 let codeValide = '';
 
+// Note d'information et procédure d'intégration (14/10/2026) : le serveur ne donne son
+// adresse secrète qu'avec un code valable (api/code-protege.js ; format du nom vérifié par
+// api/_r2.js). Servie directement par Cloudflare (PHOTOS_DIRECTES, js/app.js) et jamais par
+// le relais /book-photos/, gardé un an en mémoire par Vercel : un document remplacé ne doit
+// plus rester accessible.
+function afficherNoteIntegration(chemin) {
+  if (typeof chemin !== 'string' || !chemin.startsWith('prive/note-integration/') || !/^[\w/.-]+$/.test(chemin)) return;
+  document.getElementById('note-integration-lire').href = PHOTOS_DIRECTES + chemin;
+  document.getElementById('bloc-note-integration').classList.remove('u-hidden');
+}
+
 // --- Gestion mineur / parent-tuteur ---
 function calculerAgeInscription() {
   const valeur = document.getElementById('ins-naissance').value;
@@ -159,6 +170,7 @@ document.getElementById('valider-code-btn').addEventListener('click', async () =
   }
   msg.style.display = 'none';
   codeValide = code;
+  afficherNoteIntegration(r.note);
   document.getElementById('bloc-code').style.display = 'none';
   document.getElementById('form-inscription').style.display = 'block';
 });

@@ -2240,17 +2240,24 @@ async function envoyerImageSite(categorie, chemin, fichier, progression) {
   throw derniereErreur;
 }
 
+// Autre action sur un fichier du site (suppression ; pour la note d'intégration : 'lire',
+// 'nettoyer'). Renvoie la réponse du serveur, ou lève une erreur.
+async function actionImageSite(corps) {
+  const { data: { session } } = await sbAdmin.auth.getSession();
+  if (!session) throw new Error('Session expirée — reconnectez-vous.');
+  const rep = await fetch('/api/r2-site-images', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+    body: JSON.stringify(corps)
+  });
+  const resultat = await rep.json().catch(() => ({}));
+  if (!rep.ok) throw new Error(resultat.error || 'Le serveur a refusé la demande.');
+  return resultat;
+}
+
 async function supprimerImageSite(categorie, chemin) {
   if (!chemin) return;
-  try {
-    const { data: { session } } = await sbAdmin.auth.getSession();
-    if (!session) return;
-    await fetch('/api/r2-site-images', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
-      body: JSON.stringify({ action: 'suppression', categorie, chemin })
-    });
-  } catch (e) {}
+  try { await actionImageSite({ action: 'suppression', categorie, chemin }); } catch (e) {}
 }
 
 // Pendant la période de transition, certaines lignes ont encore leur

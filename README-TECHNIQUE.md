@@ -1742,6 +1742,34 @@ toutes les écritures sont simulées pendant l'enregistrement.
 - **Règle de cohérence écrite deux fois** (JS pour l'affichage immédiat dans l'Espace,
   SQL pour le délai de 7 jours) : voir la section Mensurations ci-dessus.
 
+## 📄 Note d'intégration et frais d'intégration (14/10/2026)
+
+- **Frais** : 25 000 FCFA (inscription 15 000 + premier mois de formation 10 000), au lieu de
+  45 000 — pages `inscription-mannequin.html` FR/EN, lien Wave `amount=25000`, reçu.
+  Paiement par Wave uniquement (lien, vérification manuelle de la référence). Le paiement
+  intégré Wave (Checkout + confirmation automatique) demanderait un compte Wave Business avec
+  accès API : chantier possible plus tard.
+- **Note d'information et procédure d'intégration (PDF)** : remise aux mannequins seulement
+  après un code d'inscription valable. Jamais dans le dépôt (public). Rangée dans R2 sous
+  `prive/note-integration/<32 caractères hexadécimaux>.pdf` (`CHEMIN_NOTE_INTEGRATION`,
+  `notesIntegration()`, `nettoyerNotesIntegration()` dans `api/_r2.js`) : le stockage public ne
+  permet pas de lister les fichiers, le nom ne se devine pas.
+  - Dépôt : tableau de bord → Sécurité & accès → Codes d'inscription → « Note d'intégration
+    (PDF) » (`js/tableau-de-bord.js`, `actionImageSite()` / `envoyerImageSite()` de `js/app.js`),
+    via `api/r2-site-images.js` catégorie `note-integration` (PDF seul, nom secret obligatoire,
+    actions `lire` et `nettoyer`, admin seulement). Un nouveau dépôt remplace l'ancien.
+  - Remise : `api/code-protege.js`, type `inscription`, ajoute `note` (chemin du document le
+    plus récent, en 3 s au plus, sinon `null`) quand le code est valable ;
+    `js/inscription-mannequin.js` affiche alors l'encadré avec un lien vers l'adresse photos
+    Cloudflare. **Jamais par le relais `/book-photos/`** : Vercel le garde un an en mémoire,
+    un document remplacé y resterait accessible.
+  - Nettoyage : seuls les documents PLUS ANCIENS que le nouveau sont retirés, et rien si le
+    document indiqué n'existe pas (deux dépôts proches ne s'effacent jamais l'un l'autre).
+    Un échec du nettoyage n'annule pas le dépôt (refait au dépôt suivant).
+  - Traitement à part dans `api/r2-site-images.js` (`traiterNoteIntegration()` de
+    `api/_r2.js`), sans toucher aux contrôles des images.
+  - Test : `scripts/tests-visiteur/test-note-integration.js`.
+
 ## 💾 Sauvegarde des photos des mannequins sur Google Drive (06/10/2026)
 
 - **Extension 122** : table privée `cle_sauvegarde_photos` (empreinte sha256 d'une clé
