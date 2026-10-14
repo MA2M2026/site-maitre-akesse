@@ -1772,7 +1772,7 @@ toutes les écritures sont simulées pendant l'enregistrement.
   - Variables Vercel `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`,
     `R2_BUCKET_NAME`, `R2_PUBLIC_URL` : cochées aussi pour **Preview** le 14/10/2026 (sinon la
     version d'essai affiche « Configuration serveur incomplète »). Une variable modifiée ne
-    s'applique qu'aux versions construites ensuite.
+    s'applique qu'aux versions construites ensuite (les 5 cochées et vérifiées le 14/10/2026).
 
 ## 💾 Sauvegarde des photos des mannequins sur Google Drive (06/10/2026)
 
