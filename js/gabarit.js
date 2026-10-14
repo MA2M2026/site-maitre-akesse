@@ -110,3 +110,31 @@
   window.ma2mGabarit = remplir;
   remplir();
 })();
+
+// --- Place réservée pour une liste remplie par la base (The Book : #grille) ---
+// Journal du 14/10/2026 (« Affichage qui saute », téléphone) : au retour en arrière, le
+// navigateur replace le visiteur plus bas AVANT l'arrivée de la liste des mannequins ; la liste
+// arrive ensuite et pousse tout le bas de page d'un coup. On retient la hauteur de la liste
+// (par page et largeur d'écran) et on la réserve à l'ouverture suivante. Fait ici, au 2e
+// chargement de ce script (juste après le bas de page), pour que la place soit prise avant
+// que le navigateur ne replace le visiteur, sans fichier de plus à charger. La page appelle
+// libererPlaceListe() une fois la liste affichée. (L'accueil, lui, a des cartes d'attente
+// dans la page : nombre de mannequins fixe.)
+function cleHauteurListe(el) {
+  // même clé pour /mannequins, /mannequins.html, /, /index.html (adresses « propres » de Vercel)
+  var page = location.pathname.replace(/(index)?(\.html)?$/, '').replace(/\/$/, '');
+  return 'ma2m_hauteur_' + page + '#' + el.id + '@' + Math.round(window.innerWidth / 40);
+}
+function reserverPlaceListe(el) {
+  try { var h = Number(localStorage.getItem(cleHauteurListe(el))); if (h > 0 && h < 200000) el.style.minHeight = h + 'px'; } catch (e) { /* stockage indisponible : pas de place réservée */ }
+}
+// memoriser = false quand la liste affichée est filtrée (recherche gardée par le navigateur) :
+// sa hauteur ne vaut pas pour la liste complète.
+function libererPlaceListe(el, memoriser) {
+  el.style.minHeight = '';
+  if (memoriser === false) return;
+  requestAnimationFrame(function () {
+    try { if (el.offsetHeight > 0) localStorage.setItem(cleHauteurListe(el), String(el.offsetHeight)); else localStorage.removeItem(cleHauteurListe(el)); } catch (e) { /* idem */ }
+  });
+}
+document.querySelectorAll('[data-place-reservee]').forEach(reserverPlaceListe);

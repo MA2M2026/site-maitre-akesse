@@ -144,14 +144,15 @@ void chargerFluxInstagram();
 
 // --- Médaillons d'accueil : quelques mannequins publiés en aperçu ---
 async function chargerMedaillonsAccueil() {
-  if (!sb) return;
   const conteneur = document.getElementById('medaillons-accueil');
+  if (!sb) { conteneur.textContent = ''; return; } // pas de cartes d'attente qui resteraient vides
   const { data: profils } = await sb.from('model_profiles').select('id, full_name, city, height_cm').eq('published', true).order('created_at', { ascending: false }).limit(6);
   if (!profils || !profils.length) { conteneur.innerHTML = `<p class="u-texte-gris">${T('Profils bientôt disponibles.', 'Profiles coming soon.')}</p>`; return; }
 
   // Une seule demande groupée pour toutes les photos (la même que dans le Book), au lieu d'une par mannequin.
   const { data: couvertures } = await sb.rpc('photos_couverture_mannequins', { ids: profils.map(p => p.id) });
   const photoPar = {}; (couvertures || []).forEach(c => { photoPar[c.model_id] = urlLegere(c.url); });
+  conteneur.textContent = ''; // retire les cartes d'attente (même taille : rien ne bouge)
   for (const profil of profils) {
     const photoUrl = photoPar[profil.id] || (EN ? '../' : '') + 'assets/logo-dark-bg.png';
     const carte = document.createElement('a');

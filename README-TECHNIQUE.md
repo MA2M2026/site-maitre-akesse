@@ -2372,3 +2372,22 @@ aux données, protégées par la base). Désormais :
   `js/tableau-de-bord.js`). Le fichier se joint à la conversation (trombone / « + »).
   Le téléchargement passe par `telechargerFichier()` (`js/app.js`), partagé avec les fiches et
   les CV en image. Test : `test-journal-fichier.js` (100 erreurs simulées, filtre, double appui).
+- **Affichage qui saute au retour en arrière** (journal : scores 0,6 à 3,4 sur The Book et
+  l'accueil, téléphone). Deux causes : 1) `content-visibility: auto` sur `.medaillon-carte`
+  (hauteur provisoire 380 px, ≈ 240 px en vrai) : retiré ; 2) au retour, le navigateur replace
+  le visiteur plus bas avant l'arrivée de la liste des mannequins. **Accueil** : 6 cartes
+  d'attente (`.medaillon-attente`) dans `#medaillons-accueil`, à la taille des vraies, remplacées
+  par `accueil.js`. **The Book** (nombre variable) : `#grille` porte `data-place-reservee` ;
+  `js/gabarit.js` (2e chargement, juste après le bas de page) y réserve la hauteur retenue à la
+  visite précédente (localStorage `ma2m_hauteur_…`, même clé avec ou sans « .html », par largeur
+  d'écran) ; `mannequins.js` appelle `libererPlaceListe(grille, listeComplete())` (hauteur
+  retenue seulement sans filtre). Test : `test-affichage-stable.js` (score
+  ≤ 0,22 au lieu de 0,71 à 1,93). Le saut juste après « Entrer » est l'ouverture voulue de la porte.
+- **Aperçus des liens partagés, une image par page** (demande de la propriétaire : en partageant un
+  lien sur WhatsApp, Facebook…, on doit voir de quelle page il s'agit). `assets/apercus/{fr|en}-{page}.jpg`
+  (1200 × 630 : logo, surtitre, NOM DE LA PAGE, phrase, adresse), faites par
+  `scripts/apercus/generer.js` (mode d'emploi en tête du fichier, polices du site). Balises
+  `og:image` (+ `?v=1`, à augmenter après un changement d'image), `og:image:width/height/alt` sur
+  31 pages ; ajoutées à `espace-mannequin.html` et `selection.html` (FR/EN). The Book n'utilise plus
+  la photo du mannequin à la une (`middleware.js`) ; les fiches `/book/…` gardent la photo du
+  mannequin. Test : `test-apercus.js`. WhatsApp garde un ancien aperçu en mémoire quelque temps.

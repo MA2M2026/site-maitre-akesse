@@ -1333,16 +1333,11 @@ section { padding: 5rem 0; }
   min-width: 0;
   display: flex; flex-direction: column; align-items: center;
   text-align: center;
-  /* Le Book (mannequins.html) peut afficher des dizaines de cartes d'un coup,
-     chacune avec une animation perpétuelle sur sa photo (ma2m-flotter) — sans
-     ça, le navigateur continue de faire tourner toutes ces animations même
-     hors de l'écran, ce qui ralentit sensiblement le défilement sur mobile.
-     content-visibility: auto met en pause le rendu (et les animations) des
-     cartes hors viewport ; contain-intrinsic-size évite un saut de la barre
-     de défilement avant leur premier rendu. Reste compatible avec l'animation
-     d'apparition au scroll ci-dessous (IntersectionObserver). */
-  content-visibility: auto;
-  contain-intrinsic-size: auto 380px;
+  /* Plus de « content-visibility: auto » (retiré le 14/10/2026) : les cartes hors de l'écran
+     étaient comptées avec une hauteur provisoire de 380 px (≈ 240 px en vrai sur téléphone),
+     puis rétrécissaient en apparaissant, ce qui faisait sauter toute la page (journal :
+     « Affichage qui saute » sur The Book et l'accueil). Il servait à mettre en pause
+     l'animation des photos hors écran ; le Book n'anime plus ses photos (#grille). */
 }
 
 .medaillon-photo {
@@ -1418,6 +1413,8 @@ section { padding: 5rem 0; }
    prenait la largeur d'origine de la photo pendant son chargement (jusqu'à deux fois
    l'écran d'un téléphone). */
 #medaillons-accueil .medaillon-carte { width: 100%; }
+/* Cartes d'attente de l'accueil (14/10/2026) : même taille que les vraies, fond sombre, immobiles. */
+.medaillon-attente .medaillon-photo { background: var(--noir-doux); animation: none; box-shadow: none; }
 /* 06/10/2026 (comparaison avec les grandes agences, accord de la propriétaire) : portraits
    rectangulaires verticaux, la silhouette entière visible, comme une page de magazine —
    les cercles coupaient la tête ou les pieds. Seul le médaillon de profil de la fiche

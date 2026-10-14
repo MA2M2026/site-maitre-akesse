@@ -6,6 +6,16 @@ let niveauActif = 'tous'; // New Face / Professionnel (affiché « Main Board »
 
 async function chargerMannequins() {
   const vide = document.getElementById('vide');
+  const grille = document.getElementById('grille');
+  try { await afficherMannequins(vide); } finally { libererPlaceListe(grille, listeComplete()); }
+}
+// Aucun filtre actif (le navigateur peut remettre la recherche tapée avant un retour en arrière)
+function listeComplete() {
+  return categorieActive === 'tous' && niveauActif === 'tous'
+    && ['f-taille-min', 'f-taille-max', 'f-carnation', 'f-vetements', 'f-disponibilite', 'f-recherche'].every(id => !document.getElementById(id).value);
+}
+
+async function afficherMannequins(vide) {
   if (!sb) {
     // "sb" peut valoir null sur une connexion instable (échec de chargement de
     // la bibliothèque Supabase, servie depuis un CDN) — message clair plutôt
