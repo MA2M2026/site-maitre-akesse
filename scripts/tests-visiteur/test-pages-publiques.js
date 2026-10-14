@@ -80,6 +80,18 @@ const cas = [
       const libre = await p.evaluate(() => ({ nom: document.body.innerText.includes('Fatou Bamba'), mauvaisLien: !!document.querySelector('a[href*="null"], a[href*="undefined"], a[href=""]') }));
       if (!libre.nom || libre.mauvaisLien) manquants.push('mannequin écrite à la main (' + JSON.stringify(libre) + ')');
     }
+    // Journal du 14/10/2026 : en-tête du calendrier plus large que l'écran du téléphone.
+    // Chaque vue (Année, Mois, Semaine, Jour : titres de longueurs différentes) sur 320 px.
+    if (page.includes('agenda')) {
+      await p.setViewportSize({ width: 320, height: 640 }); await p.waitForTimeout(300); // plus petit téléphone courant
+      for (let v = 0; v < 4; v++) {
+        await p.evaluate(i => document.querySelectorAll('.cal-vue')[i].click(), v); await p.waitForTimeout(200);
+        const r = await p.evaluate(() => ({ vue: (document.querySelector('.cal-vue.actif') || {}).textContent,
+          deborde: [...document.querySelectorAll('.cal-tete, .cal-tete *')].filter(e => e.getBoundingClientRect().right > innerWidth + 1).length,
+          coupe: [...document.querySelectorAll('.cal-vue, .cal-aujourdhui')].filter(e => e.scrollWidth > e.clientWidth + 1).map(e => e.textContent) }));
+        if (r.deborde || r.coupe.length) manquants.push('calendrier « ' + r.vue + ' » trop large pour 320 px (' + r.deborde + ' élément(s), texte coupé : ' + r.coupe.join(', ') + ')');
+      }
+    }
     if (!gabarit.ordrePied) manquants.push('ordre du bas de page');
     // fiche : les expériences incluent le projet de l'agence une seule fois (doublons remplacés)
     if (page.startsWith('mannequin.html')) {

@@ -9,6 +9,9 @@
      (see README-TECHNIQUE.md, "Porte d'entrée / verrou de scroll" section), with no
      error to hint at why. After any change, run:
      python3 scripts/verifier-csp.py en/index.html -->
+<!-- vercel.json security headers: when they change, change this page too. Vercel's
+     "not modified" (304) reply omits them, so browsers keep the old ones (error log of
+     14/10/2026: video blocked on a tablet). -->
 <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-b+QrdXtiVOaEVLNTW7orZsKUFZUKusqEn6hCQdTT7lY='; style-src 'self' https://fonts.googleapis.com;">
 <script src="../js/adresse-en.js"></script>
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>

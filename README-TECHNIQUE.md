@@ -2341,3 +2341,34 @@ aux données, protégées par la base). Désormais :
 - Copie de test Vercel (« Preview ») : la variable `SUPABASE_SERVICE_ROLE_KEY` doit aussi être
   cochée pour *Preview* dans Vercel (Settings → Environment Variables), sinon la connexion y
   répond « Connexion refusée » (activé par la propriétaire le 13/10/2026).
+
+## Journal du 14/10/2026 : corrections
+
+- **Règles de sécurité gardées en mémoire (vidéo bloquée sur une tablette)** : quand une
+  page n'a pas changé, Vercel répond « page inchangée » (304) **sans** les en-têtes de
+  sécurité (CSP) de `vercel.json`. Le navigateur garde alors les anciennes règles : la
+  tablette de la propriétaire bloquait encore la vidéo servie par Cloudflare (`media-src`
+  ajouté le 13/10). **Règle** : quand on change les en-têtes de sécurité de `vercel.json`,
+  modifier aussi le contenu des pages concernées (au moins `index.html` et `en/index.html`),
+  pour que le navigateur les recharge en entier. Un commentaire le rappelle en tête de ces
+  deux pages.
+- **`js/surveillance.js`** : la branche « vidéo non chargée » n'interroge plus (HEAD) une
+  adresse `photos.maitreakessemodelmanagement.com` (interdite par `connect-src`, d'où une
+  fausse alerte « sécurité ») : elle interroge le même fichier par le relais `/book-photos/`
+  (`urlParRelais`). Test : `test-video-accueil.js` (aucune demande HEAD vers Cloudflare).
+- **Limite connue** : la règle du « 304 sans en-têtes » vaut pour **toutes** les pages. Seules
+  les deux pages d'accueil portent le rappel ; si un futur changement d'en-tête concerne
+  surtout une autre page, modifier aussi cette page.
+- **Agenda sur petit téléphone** (`css/agenda.css`) : en français, la 1re ligne
+  « 10 / 2026 » + « ‹ Aujourd'hui › » était plus large que l'écran (jusqu'à 390 px) et
+  élargissait tout l'en-tête, boutons « Année Mois Semaine Jour » compris. Resserrée sous
+  400 px et 340 px ; les longs titres (Semaine, Jour) passent à la ligne. Test :
+  `test-pages-publiques.js` (les 4 vues du calendrier dans un écran de 320 px, sans texte coupé).
+- **Journal des erreurs : « Télécharger le fichier pour Claude »** (demande de la propriétaire :
+  la copie de 38 erreurs arrivait coupée dans la conversation). Bouton au-dessus de la liste
+  (`#erreurs-telecharger-btn`) : crée `journal-ma2m-AAAA-MM-JJ-….md` avec **toutes** les erreurs
+  affichées (filtres compris), rangées en 3 groupes (🔴 À corriger, 🟠 À surveiller, 🟢 Pas
+  d'action). « Copier pour Claude » copie exactement le même texte (`journalPourClaude()` dans
+  `js/tableau-de-bord.js`). Le fichier se joint à la conversation (trombone / « + »).
+  Le téléchargement passe par `telechargerFichier()` (`js/app.js`), partagé avec les fiches et
+  les CV en image. Test : `test-journal-fichier.js` (100 erreurs simulées, filtre, double appui).

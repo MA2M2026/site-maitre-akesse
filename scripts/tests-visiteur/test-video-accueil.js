@@ -16,6 +16,8 @@ let echecs = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '✗ ') + m); i
 async function ouvrir(b, appareil, { lectureRefusee = false, erreurs = 0, page = 'index.html', direct = 'ok', attente = 3500 } = {}) {
   const ctx = await b.newContext(APPAREILS[appareil]); const p = await ctx.newPage(); const errs = [];
   p.on('pageerror', e => errs.push(e.message));
+  // journal du 14/10/2026 : la surveillance interrogeait (HEAD) l'adresse Cloudflare, interdite par la sécurité
+  const heads = []; p.on('request', r => { if (r.method() === 'HEAD' && /photos\.maitreakessemodelmanagement\.com/.test(r.url())) heads.push(r.url()); });
   await brancher(p, { tables, rpc: {} }, []);
   let n = 0;
   const servir = r => (n++ < erreurs ? r.fulfill({ status: 404, body: '' }) : r.fulfill({ status: 200, contentType: 'video/webm', body: VIDEO }));
@@ -32,7 +34,7 @@ async function ouvrir(b, appareil, { lectureRefusee = false, erreurs = 0, page =
   await p.waitForTimeout(800);
   await p.evaluate(() => document.getElementById('video-accueil').scrollIntoView({ block: 'center' }));
   await p.waitForTimeout(attente);
-  return { p, ctx, errs };
+  return { p, ctx, errs, heads };
 }
 const etat = p => p.evaluate(() => {
   const s = document.getElementById('video-accueil'), v = s.querySelector('video'), r = s.getBoundingClientRect();
@@ -63,7 +65,8 @@ const etat = p => p.evaluate(() => {
   ({ p, ctx } = await ouvrir(b, 'téléphone', { erreurs: 5 })); e = await etat(p);
   ok(!e.visible, 'fichier vraiment illisible → l\'espace est retiré (pas de trou noir)'); await ctx.close();
   for (const direct of ['coupe', 'muet']) {
-    ({ p, ctx } = await ouvrir(b, 'téléphone', { direct, attente: direct === 'muet' ? 17000 : 3500 })); e = await etat(p);
+    let heads; ({ p, ctx, heads } = await ouvrir(b, 'téléphone', { direct, attente: direct === 'muet' ? 17000 : 5000 })); e = await etat(p);
+    ok(!heads.length, 'Cloudflare ' + direct + ' : la surveillance n\'interroge pas l\'adresse Cloudflare (' + heads.length + ' demande(s))');
     // coupé avant toute donnée : tout le site bascule (visiteur mémorisé) ; muet : la vidéo seule
     // passe par le relais après 12 s d'attente (les photos ont leur propre garde-fou)
     ok(e.visible && e.lit && /^\/book-photos\//.test(e.source) && (direct === 'muet' || !!e.relais), 'Cloudflare ' + (direct === 'coupe' ? 'coupé' : 'muet') + ' → la vidéo passe par le relais et se lit (' + e.source + ')'); await ctx.close();

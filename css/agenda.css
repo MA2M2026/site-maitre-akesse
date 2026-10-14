@@ -162,7 +162,7 @@ a.agenda-puce:hover, a.agenda-puce:focus-visible { border-color: var(--titre-cla
   .cal-corps { grid-template-columns: 1fr; }
   .cal-tete { grid-template-columns: 1fr auto; }
   .cal-vues { grid-column: 1 / -1; grid-row: 2; justify-self: stretch; }
-  .cal-vue { flex: 1; padding: 0.5rem 0.4rem; }
+  .cal-vue { flex: 1; min-width: 0; padding: 0.5rem 0.4rem; }
 }
 /* Téléphone : cases plus petites, points de couleur à la place des titres */
 @media (max-width: 700px) {
@@ -181,6 +181,23 @@ a.agenda-puce:hover, a.agenda-puce:focus-visible { border-color: var(--titre-cla
   .cal-grille-semaine .cal-evt { flex: 1 1 100%; }
   .cal-actions .cal-aujourdhui { padding: 0.5rem 0.7rem; }
   .cal-titre { font-size: 1.9rem; }
+}
+/* Petit téléphone (journal du 14/10/2026 : « Année Mois Semaine Jour » dépassait de 40 px
+   sur 320 à 390 px, en français seulement) : la 1re ligne « 10 / 2026 » + « ‹ Aujourd'hui › »
+   était plus large que l'écran et élargissait tout l'en-tête. On la resserre, et les longs
+   titres (vues Semaine et Jour) passent à la ligne. Placé APRÈS le bloc 700 px, qui
+   utilise les mêmes sélecteurs. */
+@media (max-width: 400px) {
+  .cal-tete { gap: 0.6rem; }
+  .cal-tete .cal-titre { font-size: 1.5rem; white-space: normal; line-height: 1.15; }
+  .cal-actions { gap: 0.25rem; }
+  .cal-nav { width: 2.2rem; height: 2.2rem; }
+  .cal-actions .cal-aujourdhui { padding: 0.45rem 0.5rem; letter-spacing: 0.06em; }
+  .cal-vue { padding: 0.5rem 0.15rem; font-size: 0.85rem; }
+}
+@media (max-width: 340px) {
+  .cal-tete .cal-titre { font-size: 1.25rem; }
+  .cal-actions .cal-aujourdhui { letter-spacing: 0; }
 }
 /* Annonce invisible des changements de mois/semaine pour les lecteurs d'écran */
 .cal-annonce { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
