@@ -19,6 +19,12 @@ uniquement "dans la tête" de cette conversation — tout ce qui compte est
 Ce fichier est mis à jour à chaque changement important : le relire en
 cas de doute donne toujours l'état le plus récent.
 
+**Page d'accueil du dépôt (13/10/2026, demande de la propriétaire)** : `README.md` affiche en
+rouge, à toute personne ou IA qui ouvre le dépôt, l'obligation de lire `CLAUDE.md`,
+`SECURITY.md` et ce fichier avant toute modification ; `AGENTS.md` dit la même chose aux
+agents de code (Codex, Copilot, Cursor…). `GUIDE-DE-SECOURS.md` est le guide de la
+propriétaire pour se débrouiller sans IA (version PDF imprimable remise le 13/10/2026).
+
 ## ⚠️ HISTORIQUE DU 27-28 SEPTEMBRE 2026 — architecture photos revue
 ## À LIRE avant de retoucher à R2, au domaine personnalisé ou à `vercel.json`
 

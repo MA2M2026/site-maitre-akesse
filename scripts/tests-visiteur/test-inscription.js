@@ -4,7 +4,7 @@ const choisir = async (p, sel, pref) => { const v = await p.$eval(sel, (s, pref)
 (async () => {
   let srv; process.on('exit', () => srv && srv.kill());
   srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..') }); await new Promise(r => setTimeout(r, 800));
-  const b = await chromium.launch();
+  const b = await chromium.launch(); let ko = 0;
   for (const [page, vp] of [['inscription-mannequin.html', { width: 390, height: 844 }], ['en/inscription-mannequin.html', { width: 1280, height: 900 }]]) {
     const ctx = await b.newContext({ viewport: vp }); const p = await ctx.newPage(); const errs = [], journal = [];
     p.on('pageerror', e => errs.push(e.message));
@@ -13,6 +13,12 @@ const choisir = async (p, sel, pref) => { const v = await p.$eval(sel, (s, pref)
     if (await p.isVisible('#bandeau-cookies [data-cookies="oui"]')) await p.click('#bandeau-cookies [data-cookies="oui"]');
     await p.fill('#code-inscription', 'CODE-TEST'); await p.click('#valider-code-btn'); await p.waitForTimeout(1500);
     const formVisible = await p.isVisible('#ins-nom');
+    // Frais d'intégration (14/10/2026) : 25 000 FCFA, lien Wave pré-rempli au même montant
+    const frais = await p.evaluate(() => ({ bloc: document.getElementById('bloc-paiement').textContent, recu: document.getElementById('recu-inscription').textContent,
+      wave: (document.querySelector('#bloc-paiement a[href*="pay.wave.com"]') || {}).href || '' }));
+    const fraisOk = /25[  ,.]?000 FCFA/.test(frais.bloc) && /25[  ,.]?000 FCFA/.test(frais.recu) && /amount=25000$/.test(frais.wave) && !/45/.test(frais.bloc + frais.recu + frais.wave);
+    if (!fraisOk) ko++;
+    console.log((fraisOk ? '✓ ' : '❌ ÉCHEC ') + page + ' : frais d\'intégration 25 000 FCFA (page, reçu, lien Wave ' + frais.wave.split('?')[1] + ')');
     await p.fill('#ins-nom', 'Moussa Bamba'); await p.fill('#ins-naissance', '2012-02-02'); await p.dispatchEvent('#ins-naissance', 'change'); await p.waitForTimeout(300);
     await choisir(p, '#ins-genre', 'homme'); await p.waitForTimeout(200);
     const caseCivHomme = await p.isVisible('#ins-civilite'); await choisir(p, '#ins-taille', ''); await choisir(p, '#ins-tailleveternents', '');
@@ -32,5 +38,5 @@ const choisir = async (p, sel, pref) => { const v = await p.$eval(sel, (s, pref)
     console.log('Erreurs :', errs);
     await ctx.close();
   }
-  await b.close(); srv.kill();
+  await b.close(); srv.kill(); process.exit(ko ? 1 : 0);
 })();
