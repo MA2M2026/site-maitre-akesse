@@ -17,7 +17,7 @@
 
 
 const { verifierUtilisateur, estAdmin, cheminSur } = require('./_commun.js');
-const { debutR2, repondreR2, TYPES_IMAGES } = require('./_r2.js');
+const { debutR2, repondreR2, TYPES_IMAGES, traiterNoteIntegration } = require('./_r2.js');
 // 'boutique' : photos des produits de la Marketplace (29/09/2026).
 // 'couverture' : vidéo de couverture en haut de toutes les pages (04/10/2026).
 // 'video-accueil' : grand espace vidéo dans le corps de la page d'accueil (05/10/2026).
@@ -39,6 +39,21 @@ module.exports = async function handler(req, res) {
   if (!debut) return;
   const jeton = debut.jeton;
   const { action, categorie, chemin, contentType, taille } = debut.corps;
+
+  // Note d'intégration des mannequins (14/10/2026) : un PDF privé au nom secret, traité à
+  // part (api/_r2.js) pour ne rien assouplir des contrôles des images ci-dessous.
+  if (categorie === 'note-integration') {
+    try {
+      const utilisateur = await verifierUtilisateur(jeton);
+      if (!utilisateur) { res.status(401).json({ error: 'Session invalide ou expirée — reconnectez-vous.' }); return; }
+      if (!(await estAdmin(utilisateur.id))) { res.status(403).json({ error: 'Réservé aux administrateurs.' }); return; }
+      await traiterNoteIntegration(res, debut.corps);
+    } catch (e) {
+      console.error('r2-site-images (note) :', e);
+      res.status(500).json({ error: e && e.message ? e.message : 'Erreur inattendue.' });
+    }
+    return;
+  }
 
   if (!categorie || CATEGORIES_AUTORISEES.indexOf(categorie) === -1) {
     res.status(400).json({ error: 'Catégorie invalide.' });

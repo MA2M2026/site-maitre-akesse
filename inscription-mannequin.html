@@ -100,6 +100,12 @@
     <!-- Étape 2 : formulaire complet (masqué tant que le code n'est pas validé) -->
     <h2 class="u-lecteur-ecran">Formulaire d'inscription</h2>
     <form id="form-inscription" class="u-hidden u-mt-2">
+      <!-- Note d'intégration : affichée seulement après un code valable (adresse secrète donnée par le serveur) -->
+      <div id="bloc-note-integration" class="im-24 u-hidden">
+        <h3 class="im-25">Note d'information et procédure d'intégration</h3>
+        <p class="im-28">Avant de continuer, lisez ce document : il présente votre parcours d'intégration, la formation, les règles de l'agence et les frais. En cochant plus bas « J'ai lu et j'approuve les conditions d'inscription », vous confirmez l'avoir lu.</p>
+        <a id="note-integration-lire" class="btn btn--principal" href="#" target="_blank" rel="noopener">Lire et télécharger le document (PDF)</a>
+      </div>
       <div class="form-grille">
         <div class="form-champ">
           <label for="ins-nom">Nom &amp; Prénoms *</label>

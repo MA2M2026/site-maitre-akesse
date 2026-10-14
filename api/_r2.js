@@ -56,5 +56,51 @@ async function repondreR2(res, action, chemin, typeFichier, taille, tailleMax) {
   res.status(200).json({ uploadUrl: uploadUrl, publicUrl: publicUrl });
 }
 
+// Note d'information et procédure d'intégration (14/10/2026, demande de la propriétaire) :
+// PDF réservé aux mannequins qui ont un code d'inscription valable. Jamais dans le dépôt
+// (public sur GitHub) : il est rangé dans R2 sous un nom secret de 32 caractères
+// hexadécimaux. Le stockage public ne permet pas de lister les fichiers ; seul le serveur,
+// avec ses clés, retrouve le document (api/code-protege.js, après vérification du code).
+const CHEMIN_NOTE_INTEGRATION = /^prive\/note-integration\/[0-9a-f]{32}\.pdf$/;
+// Documents déposés, du plus récent au plus ancien : [{ chemin, date }].
+async function notesIntegration() {
+  const { ListObjectsV2Command } = require('@aws-sdk/client-s3');
+  const rep = await creerClientR2().send(new ListObjectsV2Command({ Bucket: process.env.R2_BUCKET_NAME, Prefix: 'prive/note-integration/' }));
+  return (rep.Contents || [])
+    .filter(o => CHEMIN_NOTE_INTEGRATION.test(o.Key))
+    .sort((a, b) => new Date(b.LastModified) - new Date(a.LastModified))
+    .map(o => ({ chemin: o.Key, date: o.LastModified }));
+}
+// Retire les documents PLUS ANCIENS que celui à garder (le nouveau, tout juste déposé).
+// Renvoie false si ce document n'existe pas : rien n'est alors supprimé. Deux dépôts
+// presque simultanés ne s'effacent donc jamais l'un l'autre : le plus récent reste.
+async function nettoyerNotesIntegration(garder) {
+  const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
+  const notes = await notesIntegration();
+  const gardee = notes.find(n => n.chemin === garder);
+  if (!gardee) return false;
+  const client = creerClientR2();
+  for (const n of notes) {
+    if (new Date(n.date) < new Date(gardee.date)) await client.send(new DeleteObjectCommand({ Bucket: process.env.R2_BUCKET_NAME, Key: n.chemin }));
+  }
+  return true;
+}
+// Catégorie 'note-integration' de api/r2-site-images.js, traitée à part pour ne rien
+// assouplir des contrôles des images : admin déjà vérifié par l'appelant. Actions :
+// 'lire' (document en place), 'nettoyer' (retirer les plus anciens), envoi d'un PDF.
+async function traiterNoteIntegration(res, corps) {
+  const { action, chemin, contentType, taille } = corps;
+  if (action === 'lire') { const n = await notesIntegration(); res.status(200).json(n[0] || {}); return; }
+  if (typeof chemin !== 'string' || !CHEMIN_NOTE_INTEGRATION.test(chemin)) {
+    res.status(400).json({ error: 'Nom de document invalide.' }); return;
+  }
+  if (action === 'nettoyer') {
+    if (await nettoyerNotesIntegration(chemin)) res.status(200).json({ ok: true });
+    else res.status(404).json({ error: 'Document introuvable.' });
+    return;
+  }
+  if (action || contentType !== 'application/pdf') { res.status(400).json({ error: 'Format non accepté (document PDF uniquement).' }); return; }
+  await repondreR2(res, undefined, chemin, 'application/pdf', taille, 15 * 1024 * 1024);
+}
 
-module.exports = { debutR2, repondreR2, TYPES_IMAGES };
+module.exports = { debutR2, repondreR2, TYPES_IMAGES, CHEMIN_NOTE_INTEGRATION, notesIntegration, nettoyerNotesIntegration, traiterNoteIntegration };
