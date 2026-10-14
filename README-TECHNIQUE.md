@@ -1774,6 +1774,10 @@ toutes les écritures sont simulées pendant l'enregistrement.
     version d'essai affiche « Configuration serveur incomplète »). Une variable modifiée ne
     s'applique qu'aux versions construites ensuite (les 5 cochées et vérifiées le 14/10/2026).
 
+- **Code permanent « Créer mon compte » (14/10/2026)** : après « Définir ce code », le code reste
+  affiché avec un bouton « Copier le code » (`brancherCopieCode()` de `js/tableau-de-bord.js`,
+  partagé avec les codes d'inscription). Test : `test-code-permanent.js`.
+
 ## 💾 Sauvegarde des photos des mannequins sur Google Drive (06/10/2026)
 
 - **Extension 122** : table privée `cle_sauvegarde_photos` (empreinte sha256 d'une clé

@@ -2224,15 +2224,22 @@ document.getElementById('generer-code-btn').addEventListener('click', async () =
   void chargerCodes();
 });
 
-document.getElementById('copier-code-btn').addEventListener('click', () => {
-  const code = document.getElementById('nouveau-code-texte').textContent;
-  void navigator.clipboard.writeText(code).then(() => {
-    const btn = document.getElementById('copier-code-btn');
+// Bouton « Copier » d'un code affiché (codes d'inscription, code permanent) : « Copié ! »
+// pendant 1,5 s, ou un message si le téléphone refuse l'accès au presse-papiers.
+function brancherCopieCode(idBouton, idTexte) {
+  const btn = document.getElementById(idBouton);
+  btn.addEventListener('click', () => {
     const texteOriginal = btn.textContent;
-    btn.textContent = 'Copié !';
-    setTimeout(() => { btn.textContent = texteOriginal; }, 1500);
+    navigator.clipboard.writeText(document.getElementById(idTexte).textContent).then(() => {
+      btn.textContent = 'Copié !';
+      setTimeout(() => { btn.textContent = texteOriginal; }, 1500);
+    }, () => { btn.textContent = 'Copie impossible : sélectionnez le code'; setTimeout(() => { btn.textContent = texteOriginal; }, 2500); });
   });
-});
+}
+brancherCopieCode('copier-code-btn', 'nouveau-code-texte');
+// Code permanent (14/10/2026, demande de la propriétaire) : une fois validé, il reste affiché
+// avec « Copier le code », pour le transmettre aux mannequins sans l'avoir recopié avant.
+brancherCopieCode('portail-copier-btn', 'portail-code-texte');
 
 document.getElementById('portail-generer-btn').addEventListener('click', () => {
   document.getElementById('portail-nouveau-code').value = genererCode();
@@ -2257,8 +2264,10 @@ document.getElementById('portail-definir-btn').addEventListener('click', async (
     msg.className = 'form-msg err'; msg.textContent = "Erreur : " + error.message; msg.style.display = 'block';
     return;
   }
-  msg.className = 'form-msg ok'; msg.textContent = 'Code permanent mis à jour avec succès.'; msg.style.display = 'block';
+  msg.className = 'form-msg ok'; msg.textContent = 'Code permanent mis à jour avec succès. Copiez-le pour le transmettre aux mannequins.'; msg.style.display = 'block';
   champ.value = '';
+  document.getElementById('portail-code-texte').textContent = nouveauCode;
+  document.getElementById('portail-code-affiche').style.display = 'flex';
 });
 
 document.getElementById('ca-creer-btn').addEventListener('click', async () => {
