@@ -15,7 +15,7 @@ for i in range(5):
 [ -f medias/video.mp4 ] || ffmpeg -loglevel error -y -f lavfi -i testsrc=size=480x854:rate=25 -f lavfi -i sine=frequency=440 -t 6 -c:v libx264 -pix_fmt yuv420p -c:a aac -shortest medias/video.mp4
 [[ -f medias/verticale.webm ]] || ffmpeg -loglevel error -y -f lavfi -i testsrc=size=360x640:rate=25 -f lavfi -i sine=frequency=330 -t 5 -c:v libvpx-vp9 -deadline realtime -c:a libopus -shortest medias/verticale.webm
 export NODE_PATH="${NODE_PATH:-$(npm root -g)}"
-for t in test-visiteur.js test-inscription.js test-contact-recruteur.js test-admin.js test-pages-publiques.js test-espace-experiences.js test-boutique.js test-publications.js test-journal.js test-tri-photos.js test-video-accueil.js test-espace-enregistrement.js test-photos-webp.js test-photos-directes.js test-tableau-protege.js test-note-integration.js test-code-permanent.js test-journal-fichier.js test-affichage-stable.js test-apercus.js test-middleware-apercus.mjs; do
+for t in test-visiteur.js test-inscription.js test-contact-recruteur.js test-admin.js test-pages-publiques.js test-espace-experiences.js test-boutique.js test-publications.js test-journal.js test-tri-photos.js test-video-accueil.js test-espace-enregistrement.js test-photos-webp.js test-photos-directes.js test-tableau-protege.js test-note-integration.js test-code-permanent.js test-journal-fichier.js test-affichage-stable.js test-apercus.js test-middleware-apercus.mjs test-recherche-book.js; do
   echo "########## $t"
   timeout 400 node "$t"
 done

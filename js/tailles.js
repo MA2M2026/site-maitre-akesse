@@ -35,6 +35,7 @@
   var ORDRE = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
 
   function nombre(v) { var n = parseFloat(String(v == null ? '' : v).replace(',', '.')); return isFinite(n) && n > 0 ? n : null; }
+  window.ma2mNombre = nombre; // aussi pour la recherche du Book (js/mannequins.js)
   function ligne(table, cle, mesure) {
     var m = nombre(mesure); if (m == null) return null;
     m = Math.round(m);

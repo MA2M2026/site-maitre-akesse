@@ -55,56 +55,96 @@
 
 <section class="u-pt-1">
   <div class="container">
-    <div class="filtres reveal">
-      <button class="filtre-btn actif" data-cat="tous">Tous</button>
-      <button class="filtre-btn" data-cat="femme">Femmes</button>
-      <button class="filtre-btn" data-cat="homme">Hommes</button>
-    </div>
-    <!-- Niveau (06/10/2026) : New Face / Main Board (= « Professionnel » en interne). -->
-    <div class="filtres filtres-niveau reveal" role="group" aria-label="Niveau">
-      <button class="filtre-btn filtre-niveau-btn actif" data-niveau="tous">Tous niveaux</button>
-      <button class="filtre-btn filtre-niveau-btn" data-niveau="New Face">New Face</button>
-      <button class="filtre-btn filtre-niveau-btn" data-niveau="Professionnel">Main Board</button>
+    <!-- Filtres (14/10/2026, demande de la propriétaire) : catégorie et niveau sur une seule
+         ligne ; recherche par mesures, chaque critère utilisable SEUL (js/mannequins.js). -->
+    <div class="filtres-ligne reveal">
+      <div class="filtres" role="group" aria-label="Catégorie">
+        <button class="filtre-btn actif" data-cat="tous">Tous</button>
+        <button class="filtre-btn" data-cat="femme">Femmes</button>
+        <button class="filtre-btn" data-cat="homme">Hommes</button>
+      </div>
+      <div class="filtres filtres-niveau" role="group" aria-label="Niveau">
+        <button class="filtre-btn filtre-niveau-btn actif" data-niveau="tous">Tous niveaux</button>
+        <button class="filtre-btn filtre-niveau-btn" data-niveau="New Face">New Face</button>
+        <button class="filtre-btn filtre-niveau-btn" data-niveau="Professionnel">Main Board</button>
+      </div>
     </div>
 
     <div class="filtres-avances reveal">
-      <div class="form-champ u-grid-pleine-largeur">
-        <label for="f-recherche">Rechercher un mannequin par nom</label>
-        <input type="text" id="f-recherche" placeholder="ex. : Bolli">
-      </div>
       <div class="form-champ">
         <label for="f-taille-min">Taille min (cm)</label>
-        <input type="number" id="f-taille-min" placeholder="ex. : 170">
+        <input type="number" id="f-taille-min" inputmode="numeric" placeholder="ex. : 170">
       </div>
       <div class="form-champ">
         <label for="f-taille-max">Taille max (cm)</label>
-        <input type="number" id="f-taille-max" placeholder="ex. : 185">
+        <input type="number" id="f-taille-max" inputmode="numeric" placeholder="ex. : 185">
       </div>
       <div class="form-champ">
-        <label for="f-carnation">Carnation</label>
-        <select id="f-carnation">
-          <option value="">Toutes</option>
-          <option value="Claire">Claire</option>
-          <option value="Métisse claire">Métisse claire</option>
-          <option value="Métisse foncée">Métisse foncée</option>
-          <option value="Foncée">Foncée</option>
-          <option value="Très foncée">Très foncée</option>
-        </select>
+        <label for="f-poitrine">Tour de poitrine (cm)</label>
+        <input type="number" id="f-poitrine" inputmode="numeric" placeholder="ex. : 86">
       </div>
       <div class="form-champ">
-        <label for="f-vetements">Taille vêtements</label>
-        <input type="text" id="f-vetements" placeholder="ex. : M, 40">
+        <label for="f-tour-taille">Tour de taille (cm)</label>
+        <input type="number" id="f-tour-taille" inputmode="numeric" placeholder="ex. : 62">
       </div>
       <div class="form-champ">
-        <label for="f-disponibilite">Disponibilité</label>
-        <select id="f-disponibilite">
-          <option value="">Toutes</option>
-          <option value="immediate">Disponible immédiatement</option>
-          <option value="rdv">Sur rendez-vous</option>
-          <option value="mobile">Mobile pour déplacements</option>
-        </select>
+        <label for="f-bassin">Tour de bassin (cm)</label>
+        <input type="number" id="f-bassin" inputmode="numeric" placeholder="ex. : 97">
+      </div>
+      <div class="form-champ">
+        <label for="f-pointure">Pointure (EU)</label>
+        <input type="number" id="f-pointure" inputmode="numeric" placeholder="ex. : 39">
+      </div>
+      <div class="form-champ">
+        <label for="f-taille-haut">Taille haut</label>
+        <select id="f-taille-haut"><option value="">Toutes</option><option value="XXS">XXS</option><option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option><option value="XL">XL</option><option value="XXL">XXL</option><option value="XXXL">XXXL</option></select>
+      </div>
+      <div class="form-champ">
+        <label for="f-taille-bas">Taille bas</label>
+        <select id="f-taille-bas"><option value="">Toutes</option><option value="XXS">XXS</option><option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option><option value="XL">XL</option><option value="XXL">XXL</option><option value="XXXL">XXXL</option></select>
+      </div>
+      <div class="form-champ">
+        <label for="f-taille-complete">Taille complète</label>
+        <select id="f-taille-complete"><option value="">Toutes</option><option value="XXS">XXS</option><option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option><option value="XL">XL</option><option value="XXL">XXL</option><option value="XXXL">XXXL</option></select>
       </div>
     </div>
+
+    <details class="filtres-plus reveal">
+      <summary>Plus de critères : yeux, cheveux, carnation, ville, langue…</summary>
+      <div class="filtres-avances">
+        <div class="form-champ">
+          <label for="f-yeux">Couleur des yeux</label>
+          <select id="f-yeux"><option value="">Toutes</option></select>
+        </div>
+        <div class="form-champ">
+          <label for="f-cheveux">Couleur des cheveux</label>
+          <select id="f-cheveux"><option value="">Toutes</option></select>
+        </div>
+        <div class="form-champ">
+          <label for="f-carnation">Carnation</label>
+          <select id="f-carnation"><option value="">Toutes</option><option value="Claire">Claire</option><option value="Métisse claire">Métisse claire</option><option value="Métisse foncée">Métisse foncée</option><option value="Foncée">Foncée</option><option value="Très foncée">Très foncée</option></select>
+        </div>
+        <div class="form-champ">
+          <label for="f-ville">Ville</label>
+          <select id="f-ville"><option value="">Toutes</option></select>
+        </div>
+        <div class="form-champ">
+          <label for="f-langue">Langue parlée</label>
+          <select id="f-langue"><option value="">Toutes</option></select>
+        </div>
+        <div class="form-champ">
+          <label for="f-disponibilite">Disponibilité</label>
+          <select id="f-disponibilite"><option value="">Toutes</option><option value="immediate">Disponible immédiatement</option><option value="rdv">Sur rendez-vous</option><option value="mobile">Mobile pour déplacements</option></select>
+        </div>
+        <div class="form-champ">
+          <label for="f-recherche">Vous connaissez son nom ?</label>
+          <input type="text" id="f-recherche" placeholder="ex. : Bolli">
+        </div>
+      </div>
+    </details>
+
+    <div class="filtres-bilan" aria-live="polite"><span id="f-compte"></span> <button type="button" class="btn-mini-admin" id="f-effacer" hidden>Effacer les filtres</button></div>
+    <p id="f-proches" class="filtres-proches u-hidden"></p>
 
     <div id="grille" class="medaillon-grille" data-place-reservee></div>
     <p id="vide" class="mannequins-vide u-hidden">Aucun profil ne correspond à ces critères.</p>
@@ -121,6 +161,7 @@
 <script src="js/confort.js"></script>
 <script src="js/menu.js"></script>
 <script src="js/selection.js"></script>
+<script src="js/tailles.js"></script>
 <script src="js/mannequins.js"></script>
 </body>
 </html>
