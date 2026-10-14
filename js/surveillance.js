@@ -205,9 +205,13 @@
         // Journal du 07/10 : « Média non chargé » pour des vidéos qui existent (lecture
         // coupée par une connexion faible ou par le départ du visiteur). On ne signale
         // que si le serveur répond vraiment que le fichier manque ou est en erreur.
+        // Vidéo lue directement chez Cloudflare (journal du 14/10) : la règle de
+        // sécurité interdit d'interroger ce domaine ; on interroge donc le même
+        // fichier par le relais du site (/book-photos/), qui, lui, est autorisé.
+        const aVerifier = typeof estPhotoDirecte === 'function' && estPhotoDirecte(url) ? urlParRelais(url) : url;
         setTimeout(function () {
           if (pageQuittee || !fetchOriginal) return;
-          fetchOriginal(url, { method: 'HEAD', cache: 'no-store' }).then(function (rep) {
+          fetchOriginal(aVerifier, { method: 'HEAD', cache: 'no-store' }).then(function (rep) {
             if (!pageQuittee && rep.status >= 400) signaler(type, nomCourt(url) + ' → ' + rep.status, url);
           }, function () { /* connexion du visiteur : pas une panne du site */ });
         }, 3000);
