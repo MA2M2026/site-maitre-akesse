@@ -1769,6 +1769,10 @@ toutes les écritures sont simulées pendant l'enregistrement.
   - Traitement à part dans `api/r2-site-images.js` (`traiterNoteIntegration()` de
     `api/_r2.js`), sans toucher aux contrôles des images.
   - Test : `scripts/tests-visiteur/test-note-integration.js`.
+  - Variables Vercel `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`,
+    `R2_BUCKET_NAME`, `R2_PUBLIC_URL` : cochées aussi pour **Preview** le 14/10/2026 (sinon la
+    version d'essai affiche « Configuration serveur incomplète »). Une variable modifiée ne
+    s'applique qu'aux versions construites ensuite.
 
 ## 💾 Sauvegarde des photos des mannequins sur Google Drive (06/10/2026)
 
