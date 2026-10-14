@@ -2391,3 +2391,11 @@ aux données, protégées par la base). Désormais :
   31 pages ; ajoutées à `espace-mannequin.html` et `selection.html` (FR/EN). The Book n'utilise plus
   la photo du mannequin à la une (`middleware.js`) ; les fiches `/book/…` gardent la photo du
   mannequin. Test : `test-apercus.js`. WhatsApp garde un ancien aperçu en mémoire quelque temps.
+- **Recherche du Book par mesures** (demande de la propriétaire : un recruteur ne connaît pas les
+  noms). Catégorie et niveau sur une seule ligne (`.filtres-ligne`, deux rangées de 3 sur
+  téléphone). Critères : taille min/max, tour de poitrine, de taille, de bassin, pointure, taille
+  haut / bas / complète (calculées par `js/tailles.js`), puis « Plus de critères » : yeux, cheveux,
+  carnation, ville, langue, disponibilité, nom. **Chaque critère s'utilise seul** (champ vide = pas
+  de filtre ; critère rempli = fiches sans cette mesure écartées). Mesure exacte d'abord ; si aucun
+  profil, profils à 2 cm près (1 pointure) avec un message. Compteur + « Effacer les filtres ».
+  `js/mannequins.js` (`CHAMPS_FILTRES`, `correspond`). Test : `test-recherche-book.js`.

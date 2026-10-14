@@ -240,9 +240,6 @@ section { padding: 5rem 0; }
 /* ---------- Filtres (mannequins) ---------- */
 
 .filtres { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 2.2rem; }
-.filtres + .filtres-niveau { margin-top: -1.4rem; } /* 2e rangée (niveau) collée à la 1re */
-/* 07/10/2026 : en 320 px, « Main Board » sortait de 12 px → retour à la ligne permis */
-@media (max-width: 480px) { .filtres-niveau { gap: 0.4rem; flex-wrap: wrap; justify-content: center; } .filtres-niveau .filtre-btn { padding-left: 0.75rem !important; padding-right: 0.75rem !important; letter-spacing: 0.05em !important; white-space: nowrap; } }
 
 .filtre-btn {
   font-family: var(--texte); font-size: 0.7rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase;
@@ -816,13 +813,41 @@ section { padding: 5rem 0; }
 
 .filtres-avances {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 1.6rem 2rem;
-  margin-bottom: 2.5rem;
-  padding-bottom: 1.6rem;
-  border-bottom: 1px solid var(--gris-clair);
+  margin-bottom: 1.6rem;
 }
-.filtres-avances .form-champ { margin-bottom: 0; gap: 0.5rem; }
+/* The Book (14/10/2026) : catégorie et niveau sur UNE ligne (séparés par un trait), critères
+   secondaires repliés sous « Plus de critères », compteur de résultats. */
+.filtres-ligne { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; margin-bottom: 2.2rem; }
+.filtres-ligne .filtres { margin: 0; flex-wrap: nowrap; }
+.filtres-ligne { column-gap: 1.6rem; } /* écart entre les deux groupes (pas de trait : propre aussi quand ils passent à la ligne) */
+.filtres-plus { margin-bottom: 1.6rem; }
+.filtres-plus summary {
+  cursor: pointer; font-size: 0.72rem; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--texte-corps); padding: 0.6rem 0; list-style: none;
+}
+.filtres-plus summary::-webkit-details-marker { display: none; }
+.filtres-plus summary::before { content: '+ '; color: var(--bordeaux-clair); }
+.filtres-plus[open] summary::before { content: '− '; }
+.filtres-plus[open] .filtres-avances { margin-top: 1.2rem; }
+.filtres-bilan {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+  padding: 1rem 0 1.4rem; margin-bottom: 1.6rem; border-bottom: 1px solid var(--gris-clair);
+  font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--texte-doux);
+}
+.filtres-bilan .btn-mini-admin[hidden] { display: none; }
+.filtres-proches { margin: -0.6rem 0 1.4rem; font-size: 0.9rem; color: var(--bordeaux-clair); }
+/* Téléphone : deux rangées rangées (3 boutons de même largeur chacune) au lieu d'un retour
+   à la ligne désordonné. */
+@media (max-width: 640px) {
+  .filtres-ligne { display: grid; gap: 0.5rem; }
+  .filtres-ligne .filtres { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.4rem; }
+  .filtres-ligne .filtre-btn { padding: 0.65rem 0.2rem; letter-spacing: 0.05em; white-space: nowrap; text-align: center; }
+  .filtres-avances { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.2rem 1rem; }
+}
+@media (max-width: 360px) { .filtres-ligne .filtre-btn { font-size: 0.62rem; letter-spacing: 0.02em; } }
+.filtres-avances .form-champ { margin-bottom: 0; gap: 0.5rem; justify-content: flex-end; } /* cases alignées même si un libellé passe sur 2 lignes */
 .filtres-avances .form-champ label {
   font-size: 0.7rem; font-weight: 500; letter-spacing: 0.16em; color: var(--texte-doux);
 }
