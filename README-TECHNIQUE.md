@@ -2372,3 +2372,14 @@ aux données, protégées par la base). Désormais :
   `js/tableau-de-bord.js`). Le fichier se joint à la conversation (trombone / « + »).
   Le téléchargement passe par `telechargerFichier()` (`js/app.js`), partagé avec les fiches et
   les CV en image. Test : `test-journal-fichier.js` (100 erreurs simulées, filtre, double appui).
+- **Affichage qui saute au retour en arrière** (journal : scores 0,6 à 3,4 sur The Book et
+  l'accueil, téléphone). Deux causes : 1) `content-visibility: auto` sur `.medaillon-carte`
+  (hauteur provisoire 380 px, ≈ 240 px en vrai) : retiré ; 2) au retour, le navigateur replace
+  le visiteur plus bas avant l'arrivée de la liste des mannequins. **Accueil** : 6 cartes
+  d'attente (`.medaillon-attente`) dans `#medaillons-accueil`, à la taille des vraies, remplacées
+  par `accueil.js`. **The Book** (nombre variable) : `#grille` porte `data-place-reservee` ;
+  `js/gabarit.js` (2e chargement, juste après le bas de page) y réserve la hauteur retenue à la
+  visite précédente (localStorage `ma2m_hauteur_…`, même clé avec ou sans « .html », par largeur
+  d'écran) ; `mannequins.js` appelle `libererPlaceListe(grille, listeComplete())` (hauteur
+  retenue seulement sans filtre). Test : `test-affichage-stable.js` (score
+  ≤ 0,22 au lieu de 0,71 à 1,93). Le saut juste après « Entrer » est l'ouverture voulue de la porte.
