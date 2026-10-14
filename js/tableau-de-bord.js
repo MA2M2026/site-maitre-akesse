@@ -202,10 +202,10 @@ function dateCourte(iso) {
   return new Date(iso).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 }
 
-function ficheTechniqueErreur(g) {
+function ficheTechniqueErreur(g, sansEntete) {
   const a = analyserErreur(g.message);
   return [
-    '— Journal MA2M —',
+    sansEntete ? '' : '— Journal MA2M —',
     'Erreur : ' + g.message,
     'Famille / gravité : ' + FAMILLES_ERREURS[a.famille] + ' / ' + GRAVITES_ERREURS[a.gravite].libelle,
     'Page : ' + nomPageLisible(g.page) + (g.nomMannequin ? ' — ' + g.nomMannequin : '') + ' (' + Array.from(g.pages).slice(0, 3).join(' , ') + ')',
@@ -226,11 +226,15 @@ async function copierTexte(texte, bouton) {
       document.body.appendChild(zone); zone.select(); ok = document.execCommand('copy'); zone.remove();
     } catch (x) {}
   }
-  if (bouton) {
-    const avant = bouton.textContent;
-    bouton.textContent = ok ? '✓ Copié — collez-le dans la conversation' : 'Copie impossible';
-    setTimeout(() => { bouton.textContent = avant; }, 2500);
-  }
+  if (bouton) messageTemporaire(bouton, ok ? '✓ Copié — collez-le dans la conversation' : 'Copie impossible', 2500);
+}
+// Texte provisoire sur un bouton, puis retour à son libellé. Le libellé d'origine est gardé
+// sur le bouton : deux appuis rapides ne laissent pas le message provisoire pour de bon.
+function messageTemporaire(bouton, texte, duree) {
+  if (!bouton.dataset.libelle) bouton.dataset.libelle = bouton.textContent;
+  clearTimeout(bouton._minuteur);
+  bouton.textContent = texte;
+  bouton._minuteur = setTimeout(() => { bouton.textContent = bouton.dataset.libelle; delete bouton.dataset.libelle; }, duree);
 }
 
 function afficherErreurs() {
@@ -246,7 +250,12 @@ function afficherErreurs() {
       ? '📋 Copier cette erreur pour Claude'
       : `📋 Copier les ${visibles.length} erreurs d’un coup pour Claude`;
     btn.title = nbOcc + ' signalement(s) au total';
+    clearTimeout(btn._minuteur); delete btn.dataset.libelle; // nouveau libellé : pas de retour à l'ancien
   });
+  const btnFichier = document.getElementById('erreurs-telecharger-btn');
+  clearTimeout(btnFichier._minuteur); delete btnFichier.dataset.libelle;
+  btnFichier.hidden = !visibles.length;
+  btnFichier.textContent = `⬇️ Télécharger le fichier pour Claude (${visibles.length} erreur${visibles.length > 1 ? 's' : ''}, rien n’est coupé)`;
   document.querySelectorAll('#erreurs-resume [data-journal-gravite]').forEach(b => b.classList.toggle('actif', b.dataset.journalGravite === filtreGraviteErreurs));
   document.querySelectorAll('#erreurs-resume [data-journal-famille]').forEach(b => b.classList.toggle('actif', b.dataset.journalFamille === filtreFamilleErreurs));
   liste.innerHTML = visibles.map(g => {
@@ -309,6 +318,7 @@ async function chargerErreurs() {
     btnEffacer.style.display = 'none';
     btnCopierTout.hidden = true;
     document.getElementById('erreurs-copier-tout-bas-btn').hidden = true;
+    document.getElementById('erreurs-telecharger-btn').hidden = true;
     return;
   }
 
@@ -394,15 +404,37 @@ document.getElementById('liste-erreurs').addEventListener('click', async (e) => 
   }
 });
 
-function copierToutesLesErreurs(e) {
+// Toutes les erreurs affichées, rangées par gravité (🔴, 🟠, 🟢), au format Markdown.
+// Même texte pour « Copier pour Claude » et pour le fichier téléchargé : le fichier ne se
+// coupe jamais, même avec 100 erreurs (journal du 14/10/2026 : la copie de 38 erreurs
+// arrivait tronquée dans la conversation).
+function journalPourClaude() {
   const visibles = erreursVisibles();
   const titre = filtreGraviteErreurs === 'toutes' ? 'toutes gravités' : GRAVITES_ERREURS[filtreGraviteErreurs].libelle;
-  const texte = `=== Journal MA2M — ${visibles.length} erreur(s) (${titre}${filtreFamilleErreurs === 'toutes' ? '' : ', ' + FAMILLES_ERREURS[filtreFamilleErreurs]}) — copié le ${new Date().toLocaleString('fr-FR')} ===\n\n`
-    + visibles.map((g, n) => `#${n + 1}\n` + ficheTechniqueErreur(g)).join('\n\n');
-  void copierTexte(texte, e.currentTarget);
+  let n = 0;
+  const parties = Object.keys(GRAVITES_ERREURS).map(k => {
+    const groupe = visibles.filter(g => g.analyse.gravite === k);
+    if (!groupe.length) return '';
+    return `## ${GRAVITES_ERREURS[k].libelle} — ${groupe.length}\n\n` + groupe.map(g => {
+      const fiche = ficheTechniqueErreur(g, true);
+      // barrière plus longue que tout « ``` » présent dans l'erreur : son texte reste intact
+      const barriere = '`'.repeat(Math.max(3, ...(fiche.match(/`+/g) || []).map(x => x.length + 1)));
+      return `### #${++n}\n\n${barriere}\n${fiche}\n${barriere}`;
+    }).join('\n\n');
+  }).filter(Boolean);
+  return { nb: visibles.length, texte: `# Journal MA2M — ${visibles.length} erreur(s) (${titre}${filtreFamilleErreurs === 'toutes' ? '' : ', ' + FAMILLES_ERREURS[filtreFamilleErreurs]}) — ${new Date().toLocaleString('fr-FR')}\n\n`
+    + parties.join('\n\n') + '\n' };
+}
+function copierToutesLesErreurs(e) {
+  void copierTexte(journalPourClaude().texte, e.currentTarget);
 }
 document.getElementById('erreurs-copier-tout-btn').addEventListener('click', copierToutesLesErreurs);
 document.getElementById('erreurs-copier-tout-bas-btn').addEventListener('click', copierToutesLesErreurs);
+document.getElementById('erreurs-telecharger-btn').addEventListener('click', (e) => {
+  const { nb, texte } = journalPourClaude();
+  telechargerFichier(new Blob([texte], { type: 'text/markdown;charset=utf-8' }), 'journal-ma2m' + horodatageFichier() + '.md');
+  messageTemporaire(e.currentTarget, `✓ Fichier créé (${nb} erreur${nb > 1 ? 's' : ''}) : retrouvez-le dans vos Téléchargements, puis joignez-le à la conversation`, 5000);
+});
 
 document.getElementById('erreurs-tout-effacer-btn').addEventListener('click', async () => {
   if (!confirm("Marquer toutes les erreurs actuelles comme vues ? Elles seront supprimées du journal (de nouvelles erreurs réapparaîtront normalement si elles se reproduisent).")) return;

@@ -1179,6 +1179,15 @@ async function affecterCaseCompcard(modelId, photoId, caseN) {
 // Date et heure ajoutées au nom des fichiers téléchargés (compcard, CV) : avec un nom
 // toujours identique, le téléphone ouvrait l'ANCIEN fichier déjà enregistré (signalé
 // le 06/10/2026 : compcard JPEG avec les anciennes photos). Ex. « -2026-10-06-14h32-05 ».
+// Fait enregistrer un fichier par le navigateur (adresse « data: » ou Blob). Un Blob reste
+// disponible 2 minutes : Safari sur iPhone demande d'abord de confirmer le téléchargement.
+function telechargerFichier(contenu, nom) {
+  const adresse = contenu instanceof Blob ? URL.createObjectURL(contenu) : contenu;
+  const lien = document.createElement('a');
+  lien.href = adresse; lien.download = nom;
+  document.body.appendChild(lien); lien.click(); lien.remove();
+  if (adresse !== contenu) setTimeout(() => URL.revokeObjectURL(adresse), 120000);
+}
 function horodatageFichier() {
   const d = new Date(), deux = (n) => String(n).padStart(2, '0');
   return '-' + d.getFullYear() + '-' + deux(d.getMonth() + 1) + '-' + deux(d.getDate()) + '-' + deux(d.getHours()) + 'h' + deux(d.getMinutes()) + '-' + deux(d.getSeconds());
@@ -1205,12 +1214,7 @@ async function genererFiche(format, ficheData, idBtnPdf, idBtnJpeg, langue) {
     const nomFichier = (en ? 'card-' : 'fiche-') + (ficheData.profil.full_name || (en ? 'model' : 'mannequin')).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase() + horodatageFichier();
 
     if (format === 'jpeg') {
-      const lien = document.createElement('a');
-      lien.href = canvas.toDataURL('image/jpeg', 0.98);
-      lien.download = nomFichier + '.jpg';
-      document.body.appendChild(lien);
-      lien.click();
-      lien.remove();
+      telechargerFichier(canvas.toDataURL('image/jpeg', 0.98), nomFichier + '.jpg');
     } else {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ unit: 'mm', format: 'a4' });
@@ -1693,12 +1697,7 @@ async function genererCvFichier(format, donneesCv, idBtnPdf, idBtnJpeg) {
     const nomFichier = 'cv-' + (donneesCv.nomComplet || 'mannequin').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase() + horodatageFichier();
 
     if (format === 'jpeg') {
-      const lien = document.createElement('a');
-      lien.href = canvas.toDataURL('image/jpeg', 0.95);
-      lien.download = nomFichier + '.jpg';
-      document.body.appendChild(lien);
-      lien.click();
-      lien.remove();
+      telechargerFichier(canvas.toDataURL('image/jpeg', 0.95), nomFichier + '.jpg');
     } else {
       const { jsPDF } = window.jspdf;
       const largeurMm = 210;

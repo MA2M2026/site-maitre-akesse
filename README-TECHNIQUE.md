@@ -2364,3 +2364,11 @@ aux données, protégées par la base). Désormais :
   élargissait tout l'en-tête, boutons « Année Mois Semaine Jour » compris. Resserrée sous
   400 px et 340 px ; les longs titres (Semaine, Jour) passent à la ligne. Test :
   `test-pages-publiques.js` (les 4 vues du calendrier dans un écran de 320 px, sans texte coupé).
+- **Journal des erreurs : « Télécharger le fichier pour Claude »** (demande de la propriétaire :
+  la copie de 38 erreurs arrivait coupée dans la conversation). Bouton au-dessus de la liste
+  (`#erreurs-telecharger-btn`) : crée `journal-ma2m-AAAA-MM-JJ-….md` avec **toutes** les erreurs
+  affichées (filtres compris), rangées en 3 groupes (🔴 À corriger, 🟠 À surveiller, 🟢 Pas
+  d'action). « Copier pour Claude » copie exactement le même texte (`journalPourClaude()` dans
+  `js/tableau-de-bord.js`). Le fichier se joint à la conversation (trombone / « + »).
+  Le téléchargement passe par `telechargerFichier()` (`js/app.js`), partagé avec les fiches et
+  les CV en image. Test : `test-journal-fichier.js` (100 erreurs simulées, filtre, double appui).
