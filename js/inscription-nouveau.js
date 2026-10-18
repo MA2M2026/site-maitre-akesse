@@ -89,6 +89,8 @@
   function prenom() { return E.candidat ? E.candidat.nom.split(' ')[0] : ''; }
   function etapes(n) { Array.prototype.forEach.call(barre.children, function (i, k) { i.className = k < n ? 'on' : ''; }); }
   function bandeau(t, type) { return t ? '<div class="inn-bandeau ' + type + '" role="alert">' + esc(t) + '</div>' : ''; }
+  // numéro lisible à l'écran : 0700000001 → 07 00 00 00 01 (la valeur envoyée ne change pas)
+  function telLisible(n) { var c = String(n || '').replace(/\s+/g, ''); return /^\d{10}$/.test(c) ? c.replace(/(\d{2})(?=\d)/g, '$1 ') : (n || ''); }
   function ligne(a, b) { return '<div class="inn-ligne"><span>' + esc(a) + '</span><b>' + esc(b) + '</b></div>'; }
 
   function ecranCode() {
@@ -109,9 +111,9 @@
       '<p class="inn-doux">' + t('Vous avez été retenu(e). Vos informations sont déjà chez nous.') + '</p></div>';
     if (!E.correction) {
       return '<div class="inn-carte">' + tete + '<div>' + ligne(t('Nom'), c.nom) + ligne(t('Date de naissance'), dateFr(c.naissance)) +
-        ligne(t('Téléphone'), c.telephone) + (c.email ? ligne(t('E-mail'), c.email) : '') +
+        ligne(t('Téléphone'), telLisible(c.telephone)) + (c.email ? ligne(t('E-mail'), c.email) : '') +
         (mineur() && c.parent ? ligne(t('Parent ou tuteur'), c.parent.nom) : '') + ligne(t('Origine'), t(c.origine)) + '</div>' +
-        '<p style="font-weight:700;margin:0">' + t('Ces informations sont-elles exactes ?') + '</p>' +
+        '<p class="inn-question">' + t('Ces informations sont-elles exactes ?') + '</p>' +
         '<button class="btn btn--principal" data-a="oui">' + t('Oui, continuer') + '</button><button class="btn" data-a="corriger">' + t('Non, corriger') + '</button></div>';
     }
     return '<div class="inn-carte">' + tete +
@@ -138,7 +140,7 @@
   function ecranReglement() {
     etapes(3);
     return '<div class="inn-carte"><div><div class="inn-surtitre">' + t('Étape 2 sur 3') + '</div><h2>' + t('Règlement et paiement') + '</h2></div>' +
-      '<div><div class="inn-surtitre" style="margin-bottom:0.4rem">' + t('Moyen de paiement') + '</div><div class="inn-operateurs">' +
+      '<div><div class="inn-surtitre inn-surtitre-serre">' + t('Moyen de paiement') + '</div><div class="inn-operateurs">' +
       '<span class="inn-op actif">Wave</span><span class="inn-op bientot">' + t('Orange Money · bientôt') + '</span><span class="inn-op bientot">' + t('MTN Money · bientôt') + '</span><span class="inn-op bientot">' + t('Moov Money · bientôt') + '</span></div></div>' +
       blocNote() +
       '<div class="form-champ"><label for="inn-num">' + t('Numéro Wave qui va payer') + '</label><input id="inn-num" type="tel" inputmode="tel" placeholder="07 00 00 00 00" value="' + esc(E.numero) + '"></div>' +

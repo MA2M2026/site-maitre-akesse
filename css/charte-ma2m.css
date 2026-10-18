@@ -36,7 +36,9 @@ body {
   font-weight: 400;
 }
 
-h1, h2, h3 { font-family: var(--display); font-weight: 700; color: var(--encre); letter-spacing: -0.01em; }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; color: var(--encre); letter-spacing: -0.01em; text-transform: none; }
+/* Titres et libellés comme les maquettes (18/10/2026) : minuscules avec majuscule initiale, en gras —
+   plus de titres tout en capitales. Les petits surtitres rouges (.eyebrow) restent en capitales. */
 
 a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
   outline: none;
@@ -148,7 +150,7 @@ input:focus, textarea:focus, select:focus {
 }
 .form-champ input::placeholder, .form-champ textarea::placeholder { color: var(--encre-douce); opacity: 0.75; }
 .form-champ select option { background: var(--surface); color: var(--encre); }
-.form-champ label { color: var(--encre-douce); font-weight: 600; }
+.form-champ label, .field > label { color: var(--encre); font-weight: 600; text-transform: none; letter-spacing: 0; font-size: 0.85rem; }
 
 /* Encadrés d'information de la page inscription : cartes blanches lisibles */
 .im-9 { background: var(--surface) !important; border: 1px solid var(--lignes) !important; border-radius: 12px; }

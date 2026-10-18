@@ -45,6 +45,8 @@ const problemes = []; let captures = 0;
 async function ouvrir(b, page, ecran, cookies) {
   const ctx = await b.newContext({ viewport: { width: ecran.width, height: ecran.height } });
   const p = await ctx.newPage();
+  // un style écrit dans la page et bloqué par la règle de sécurité (CSP) ne s'affiche pas, en silence
+  p.on('console', (m) => { if (/Refused to apply inline style/.test(m.text())) problemes.push(page + ' (' + ecran.nom + ') : style bloqué par la sécurité de la page'); });
   await p.emulateMedia({ reducedMotion: 'reduce' });
   await p.addInitScript((cookies) => {
     try {
@@ -73,6 +75,7 @@ async function unePage(b, page, ecran) {
   const { ctx, p } = await ouvrir(b, page, ecran, false);
   try {
     await lireTout(p, etiquette);
+    if (await p.evaluate(() => { const f = document.querySelector('footer[data-gabarit="pied"]'); return f && !f.innerText.trim(); })) problemes.push(etiquette + ' : pied de page vide');
     for (const x of await p.evaluate(verifierBoutons)) problemes.push(etiquette + ' : bouton « ' + x.texte + ' » (' + x.element + ') pas au modèle rouge (fond ' + x.fond + ', texte ' + x.couleur + ', coins ' + x.rayon + ')');
     await capturer(p, nomFichier(page, ecran), true);
     // Menu plein écran ouvert

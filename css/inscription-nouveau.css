@@ -11,7 +11,10 @@
 .inn-carte h1, .inn-carte h2 { font-size: 1.45rem; line-height: 1.2; margin: 0; }
 .inn-doux { color: var(--encre-douce); font-size: 0.92rem; margin: 0; }
 .inn-petit { color: var(--encre-douce); font-size: 0.8rem; margin: 0; }
-.inn-surtitre { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--encre-douce); }
+.inn-surtitre { font-size: 0.8rem; font-weight: 700; color: var(--encre-douce); }
+/* (les attributs style="" sont bloqués par la règle de sécurité CSP des pages : classes à la place) */
+.inn-surtitre-serre { margin-bottom: 0.4rem; }
+.inn-question { font-weight: 700; margin: 0; }
 .inn-ligne { display: flex; justify-content: space-between; gap: 1rem; padding: 0.65rem 0; border-top: 1px solid var(--lignes); font-size: 0.9rem; }
 .inn-ligne:first-child { border-top: 0; }
 .inn-ligne span:first-child { color: var(--encre-douce); }
