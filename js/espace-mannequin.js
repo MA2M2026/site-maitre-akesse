@@ -695,6 +695,7 @@ function header(rightLabel){
   return '<div class="top">'+WORDMARK_HTML+
     '<div class="top-right">' +
       '<div class="espace-tag">' + (rightLabel||'Mon espace mannequin') + '<b>' + echapperHtml(state.identite.nomComplet||'').trim() + '</b></div>' +
+      '<a href="mes-paiements.html" class="btn-pill">Mes paiements</a>' +
       '<a href="index.html" class="btn-pill">Retour au site</a>' +
       '<button type="button" class="btn-pill" data-deconnexion="1">Se déconnecter</button>' +
     '</div></div>';

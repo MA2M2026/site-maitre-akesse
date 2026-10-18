@@ -1,0 +1,25 @@
+/* « Mes paiements » du mannequin (maquette « Espace mannequin (téléphone) », cahier v2.3 7.6).
+   Couleurs : uniquement les jetons de css/jetons.css. */
+.mp { padding: 2rem 0 3rem; background: var(--fond); }
+.mp-colonne { max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; padding: 0 16px; }
+.mp-tete h1, .mp-carte h1 { font-size: 1.6rem; font-weight: 800; color: var(--encre); margin: 0; }
+.mp h2 { font-size: 1rem; font-weight: 700; color: var(--encre); margin: 10px 0 0; }
+.mp-carte { background: var(--surface); border: 1px solid var(--lignes); border-radius: var(--rayon-carte); padding: 18px; display: flex; flex-direction: column; gap: 12px; color: var(--encre); }
+.mp-doux { color: var(--encre-douce); }
+.mp-petit { font-size: 0.8rem; color: var(--encre-douce); margin: 0; }
+.mp-ligne { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.mp-montant { font-size: 1.4rem; font-weight: 800; }
+.mp-bandeau { border-radius: 12px; padding: 14px 16px; font-weight: 700; }
+.mp-bandeau.rouge { background: var(--rouge-ma2m); color: var(--sur-rouge); }
+.mp-bandeau.bleu { background: var(--info-fond); color: var(--info-texte); }
+.mp-bandeau.vert { background: var(--ok-fond); color: var(--ok-texte); }
+.mp-histo { padding: 10px 0; border-top: 1px solid var(--lignes); }
+.mp-pastille { font-size: 0.75rem; font-weight: 700; padding: 4px 11px; border-radius: var(--rayon-pastille); white-space: nowrap; }
+.mp-pastille.ok { background: var(--ok-fond); color: var(--ok-texte); }
+.mp-pastille.alerte { background: var(--alerte-fond); color: var(--alerte-texte); }
+.mp-pastille.erreur { background: var(--erreur-fond); color: var(--erreur-texte); }
+.mp-pastille.info { background: var(--info-fond); color: var(--info-texte); }
+.mp-pastille.neutre { background: var(--surface-douce); color: var(--encre); }
+.mp-lien { background: none; border: 0; padding: 0; color: var(--rouge-ma2m-texte); font-weight: 700; font-size: 0.8rem; cursor: pointer; text-decoration: underline; }
+.mp-notif { padding: 12px; gap: 4px; }
+.mp details summary { cursor: pointer; }

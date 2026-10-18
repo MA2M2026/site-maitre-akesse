@@ -1182,6 +1182,56 @@ $$;
 drop trigger if exists wave_liens_sensible on wave_links;
 create trigger wave_liens_sensible before insert or update or delete on wave_links for each row execute function wave_liens_sensible();
 
+-- « Mes paiements » (espace du mannequin connecté) : sa fiche du registre, ses échéances avec le
+-- bon lien Wave, ses reçus, ses notifications. Rattache d'abord son compte s'il ne l'est pas encore.
+create or replace function mannequin_mes_paiements()
+returns json language plpgsql security definer set search_path = public as $$
+declare
+  m agence_mannequins;
+  r portail_reglages;
+begin
+  perform registre_rattacher_compte();
+  select * into m from agence_mannequins where user_id = auth.uid() limit 1;
+  if m.id is null then return json_build_object('inscrit', false); end if;
+  select * into r from portail_reglages limit 1;
+  update notifications_mannequins set lu = true where mannequin_id = m.id and not lu and cree_le < now() - interval '1 minute';
+  return json_build_object(
+    'inscrit', true, 'prenom', split_part(coalesce(m.prenoms, m.nom), ' ', 1), 'nom', m.nom, 'statut', m.statut,
+    'mineur', age(current_date, m.date_naissance) < make_interval(years => r.age_majorite),
+    'jour_limite', r.jour_limite, 'telephone', m.telephone,
+    'echeances', coalesce((select json_agg(json_build_object(
+        'id', f.id, 'type', f.type, 'mois', f.mois, 'montant_du', f.montant_du, 'montant_paye', f.montant_paye,
+        'date_limite', f.date_limite, 'statut', f.statut, 'motif', f.motif,
+        'lien_wave', case when f.statut in ('a_payer', 'refusee', 'non_paye') then lien_wave_pour(case when f.type = 'inscription' then 'inscription' else 'formation' end, f.montant_du - f.montant_paye) end,
+        'recus', (select json_agg(json_build_object('numero', rc.numero, 'emis_le', rc.emis_le, 'montant', p.montant, 'mode', p.mode, 'paye_par', p.paye_par))
+                  from payments p join receipts rc on rc.paiement_id = p.id where p.echeance_id = f.id))
+        order by f.mois desc) from fee_dues f where f.mannequin_id = m.id and f.statut <> 'annulee'), '[]'::json),
+    'notifications', coalesce((select json_agg(json_build_object('texte', n.texte, 'le', n.cree_le) order by n.cree_le desc)
+        from (select * from notifications_mannequins where mannequin_id = m.id order by cree_le desc limit 6) n), '[]'::json));
+end;
+$$;
+grant execute on function mannequin_mes_paiements() to authenticated;
+
+-- Capture facultative (« Joindre la capture ») : déposée dans le stockage privé, empreinte gardée
+-- pour repérer une même capture utilisée pour deux paiements.
+create or replace function mannequin_joindre_preuve(p_echeance uuid, p_chemin text, p_empreinte text)
+returns json language plpgsql security definer set search_path = public as $$
+declare
+  e fee_dues;
+begin
+  select f.* into e from fee_dues f join agence_mannequins m on m.id = f.mannequin_id where f.id = p_echeance and m.user_id = auth.uid();
+  if e.id is null then raise exception 'Échéance introuvable.'; end if;
+  if p_chemin !~ ('^' || e.id::text || '/[0-9a-f-]{36}\.(jpg|png|webp|pdf)$') then raise exception 'Fichier invalide.'; end if;
+  insert into payment_proofs (echeance_id, chemin, empreinte, depose_par) values (e.id, p_chemin, p_empreinte, auth.uid());
+  if e.statut in ('a_payer', 'refusee', 'non_paye') then
+    insert into payment_declarations (echeance_id, montant, declare_par) values (e.id, e.montant_du - e.montant_paye, 'mannequin (capture)');
+    update fee_dues set statut = 'declare' where id = e.id;
+  end if;
+  return json_build_object('ok', true, 'deja_vue', exists (select 1 from payment_proofs where empreinte = p_empreinte and echeance_id <> e.id));
+end;
+$$;
+grant execute on function mannequin_joindre_preuve(uuid, text, text) to authenticated;
+
 -- Création des échéances du mois (le 1er à 06:00, Abidjan) : rejouable sans doublon
 create or replace function portail_creer_echeances(p_mois date)
 returns int language plpgsql security definer set search_path = public as $$
@@ -1691,7 +1741,9 @@ on conflict (id) do nothing;
 drop policy if exists "Preuves : espace 2" on storage.objects;
 create policy "Preuves : espace 2" on storage.objects for select using (bucket_id = 'preuves-paiement' and portail_peut('paiements'));
 drop policy if exists "Preuves : dépôt" on storage.objects;
-create policy "Preuves : dépôt" on storage.objects for insert with check (bucket_id = 'preuves-paiement' and auth.uid() is not null);
+create policy "Preuves : dépôt" on storage.objects for insert with check (bucket_id = 'preuves-paiement' and exists (
+  select 1 from fee_dues f join agence_mannequins m on m.id = f.mannequin_id
+  where m.user_id = auth.uid() and (storage.foldername(name))[1] = f.id::text));
 drop policy if exists "Pièces : espace 3" on storage.objects;
 create policy "Pièces : espace 3" on storage.objects for select using (bucket_id = 'pieces-comptables' and portail_peut('compta'));
 drop policy if exists "Pièces : dépôt" on storage.objects;
