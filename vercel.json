@@ -43,6 +43,19 @@
       ]
     },
     {
+      "source": "/(.*)\\.(js|css)",
+      "has": [{ "type": "query", "key": "v" }],
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/js/(tableau-de-bord|tableau-v2|couverture-admin|photos-mises-de-cote|fiches-evenement-admin|rapport-profils-admin|agenda-admin|messages-candidats|messages-groupes|nettoyage-supabase|erreurs-corrigees)\\.js",
+      "headers": [
+        { "key": "Cache-Control", "value": "private, no-cache, must-revalidate" }
+      ]
+    },
+    {
       "source": "/js/vendor/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }

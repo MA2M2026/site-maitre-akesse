@@ -1,6 +1,6 @@
 /* Menu « Modèle A — plein écran éditorial » (choisi par la propriétaire le 11/10/2026 parmi
-   4 maquettes). Remplace l'ancien tiroir à droite. Importé en tête de css/style.css et de
-   css/entete-site.css (Espace mannequin) : une seule copie pour tout le site.
+   4 maquettes). Remplace l'ancien tiroir à droite. Appelé par un <link> dans chaque page, juste avant
+   css/style.css ou css/entete-site.css (Espace mannequin) : une seule copie pour tout le site.
    Le contenu du menu vient de js/gabarit.js ; js/menu.js ajoute Femmes / Hommes sous
    The Book et le bloc contact (téléphones, réseaux). */
 

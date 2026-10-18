@@ -16,3 +16,6 @@ Rappels essentiels :
   réelle dans la base. Relire avant de publier. Vérifier le site en ligne après.
 - Ne jamais demander ni écrire de mot de passe, de code ou de clé secrète dans une
   conversation.
+- Après toute modification d'un fichier `js/` ou `css/` : `python3 scripts/versionner.py`
+  (numéros de version des fichiers, sinon les visiteurs gardent l'ancienne version) et
+  `python3 scripts/verifier-csp.py`.

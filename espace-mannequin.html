@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws='; style-src 'self' https://fonts.googleapis.com 'sha256-sJrRsYxPOL2cChMaRCrTK/Nl+X7rNL4wig1+AV4aALI=' 'sha256-E/ljy6cfJz9d/B7A+gg8N+PIe8uuiZ9GRa0l8A0/mNg=' 'sha256-enavphhaCq7lTijdniV1q+RgG/49ie7Tx6pNSncRVi0=' 'sha256-6D2Th3h9EGL+b6LXIrxvvzszGa1GUaL1WinrbmhLeKM=' 'sha256-+kq3E3AKmCqvAyAvSY7yPXbv0m3xW7rwNke8TCnh6FM=' 'sha256-2FuIzA/jw592F7ZfpulB+L+cfSJQrktkado/E49v3ZE=' 'sha256-d2Cr+T6akME7ZgN5doYbwMiih1pizW9iPj5yCqayDkw=' 'sha256-a3Gb0nx1B2Ke6ubkKs8+b/cb2dfYvhrPSYBor9C3xs4='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
-<script src="js/surveillance.js"></script>
+<script src="js/surveillance.js?v=8b8ecad1"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="Espace personnel des mannequins de Maître Akesse Model Management : profil, mensurations, photos et expériences.">
@@ -328,7 +328,7 @@ a{color:inherit}
 .private-note{background:#2c1116;color:#f0d3d7;font-size:.72rem;padding:10px 16px;text-align:center;letter-spacing:.03em}
 
 </style>
-<link rel="stylesheet" href="css/cv-mannequin.css">
+<link rel="stylesheet" href="css/cv-mannequin.css?v=4726e874">
 <style>
 /* ---------- compcard print sheet ---------- */
 .compcard-sheet{width:100%;max-width:520px;background:var(--ivoire);color:#2a2622}
@@ -506,8 +506,10 @@ html{scroll-behavior:smooth}body{background:radial-gradient(900px 500px at 5% -5
 .cc-book-modal{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.82);backdrop-filter:blur(10px)}.cc-book-modal.open{display:flex}.cc-book-dialog{width:min(920px,100%);max-height:min(86vh,760px);overflow:auto;background:#0d0b0e;border:1px solid rgba(213,84,104,.25);border-radius:20px;box-shadow:0 30px 100px rgba(0,0,0,.65);padding:22px}.cc-book-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:18px}.cc-book-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}.cc-book-choice{position:relative;border:1px solid rgba(255,255,255,.1);border-radius:13px;overflow:hidden;background:#151318;cursor:pointer;padding:0}.cc-book-choice:hover{border-color:rgba(213,84,104,.7);transform:translateY(-1px)}.cc-book-choice img{width:100%;aspect-ratio:3/4;object-fit:cover;display:block}.cc-book-choice span{display:block;padding:8px;font:600 10px Jost,sans-serif;color:#eee;text-align:center}.cc-book-empty{padding:35px 10px;text-align:center;color:#aaa;border:1px dashed rgba(255,255,255,.12);border-radius:14px}.cc-slot-assigned{color:#d55468!important}.cc-remove-assignment{margin-top:8px;border:0;background:transparent;color:#948c85;font:500 10px Jost,sans-serif;cursor:pointer;text-decoration:underline}.cc-remove-assignment:hover{color:#fff}
 @media(max-width:600px){.cc-source-actions{flex-direction:column}.cc-source-btn{width:100%}.cc-book-dialog{padding:16px;border-radius:16px}.cc-book-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
-<link href="css/espace-mannequin-correctifs.css" rel="stylesheet">
-<link href="css/entete-site.css" rel="stylesheet">
+<link rel="stylesheet" href="css/champs-telephone.css?v=11f5f49f">
+<link href="css/espace-mannequin-correctifs.css?v=b8758d85" rel="stylesheet">
+<link rel="stylesheet" href="css/menu.css?v=0b2ed223">
+<link href="css/entete-site.css?v=597fe869" rel="stylesheet">
 </head>
 <body>
 
@@ -517,7 +519,7 @@ html{scroll-behavior:smooth}body{background:radial-gradient(900px 500px at 5% -5
 <header class="site-header-v2" data-gabarit="entete" data-page="espace-mannequin" data-autre-langue="en/index.html"></header>
 
 <div class="menu-overlay" id="menuOverlay" data-gabarit="menu"></div>
-<script src="js/gabarit.js"></script>
+<script src="js/gabarit.js?v=b0689f73"></script>
 
 <div class="shell" id="app">
   <div class="auth-loading"><div class="spinner"></div><span>Chargement de votre espace…</span></div>
@@ -527,18 +529,18 @@ html{scroll-behavior:smooth}body{background:radial-gradient(900px 500px at 5% -5
 <div class="overlay hidden" id="overlay"><div id="overlayContent"></div></div>
 
 <script>window.MA2M_SESSION_REQUISE = true;</script>
-<script src="js/vendor/supabase-js-2.110.6.js"></script>
-<script src="js/supabase-config.js"></script>
-<script src="js/indicatifs-pays.js"></script>
-<script src="js/villes-cote-ivoire.js"></script>
-<script src="js/pays-naissance.js"></script>
-<script src="js/verrou-defilement.js"></script>
-<script src="js/app.js"></script>
-<script src="js/tailles.js"></script>
-<script src="js/analyse-profil.js"></script>
-<script src="js/confort.js"></script>
-<script src="js/menu.js"></script>
-<script src="js/espace-mannequin.js"></script>
+<script src="js/vendor/supabase-js-2.110.6.js?v=82632987"></script>
+<script src="js/supabase-config.js?v=d0882381"></script>
+<script src="js/indicatifs-pays.js?v=b57d5bdf"></script>
+<script src="js/villes-cote-ivoire.js?v=7f3db54a"></script>
+<script src="js/pays-naissance.js?v=6ba9c03f"></script>
+<script src="js/verrou-defilement.js?v=33c16996"></script>
+<script src="js/app.js?v=0a3d8fbc"></script>
+<script src="js/tailles.js?v=41cf2149"></script>
+<script src="js/analyse-profil.js?v=331cdca4"></script>
+<script src="js/confort.js?v=33474c14"></script>
+<script src="js/menu.js?v=fae89b77"></script>
+<script src="js/espace-mannequin.js?v=2c596822"></script>
 
 <div class="cc-book-modal" id="ccBookModal" aria-hidden="true"><div class="cc-book-dialog" role="dialog" aria-modal="true" aria-labelledby="ccBookTitle"><div class="cc-book-head"><div><span class="editor-kicker">TON BOOK</span><h3 id="ccBookTitle">Choisir une photo pour la compcard</h3><p class="sub">La photo est réutilisée telle quelle. Elle reste dans ton Book.</p></div><button type="button" class="btn ghost small" data-cc-book-close>Fermer</button></div><div class="cc-book-grid" data-cc-book-grid></div></div></div>
 </body>

@@ -2152,7 +2152,7 @@ double) : un projet passé, visible et non annulé compte automatiquement.
 ## Menu « Modèle A » (11/10/2026, choisi par la propriétaire parmi 4 maquettes)
 Menu plein écran, grands titres numérotés 01, 02… (police des titres), rubrique ouverte en
 rouge (écrite droite comme les autres, demande du 11/10/2026), « Intégrer l'agence » en grand bouton rouge et « Espace mannequin » en bouton
-contour. Style : `css/menu.css` (importé en tête de `css/style.css` et `css/entete-site.css`,
+contour. Style : `css/menu.css` (appelé par un `<link>` avant `css/style.css` ou `css/entete-site.css`,
 sélecteurs préfixés `html body` pour passer devant l'ancien tiroir). Ordre et libellés : liste
 `PAGES` de `js/gabarit.js`. Le Parcours MA2M n'affiche que les projets où au moins une de nos
 mannequins publiées est cochée (`ma2mParcours`, js/app.js).
@@ -2399,3 +2399,31 @@ aux données, protégées par la base). Désormais :
   de filtre ; critère rempli = fiches sans cette mesure écartées). Mesure exacte d'abord ; si aucun
   profil, profils à 2 cm près (1 pointure) avec un message. Compteur + « Effacer les filtres ».
   `js/mannequins.js` (`CHAMPS_FILTRES`, `correspond`). Test : `test-recherche-book.js`.
+
+## Rapidité du site (14/10/2026)
+
+Mesures avant correction (page d'accueil, 2e visite) : chaque page redemandait au serveur ses
+~30 scripts et styles (`no-cache, must-revalidate`), un aller-retour par fichier — très lent
+depuis Abidjan (une vérification a bloqué l'accueil 10 s) ; le tableau de bord en a 23.
+
+- **Fichiers numérotés** : toutes les pages appellent `js/…` et `css/…` avec `?v=<empreinte>`
+  (8 caractères du SHA-1 du fichier). `vercel.json` garde ces adresses **un an** dans le
+  navigateur (`immutable`) ; scripts réservés du tableau de bord en `private`. Sans `?v=`, la
+  règle d'avant reste (`no-cache`). **Après TOUTE modification d'un fichier js/ ou css/ :
+  `python3 scripts/versionner.py`** (sinon les visiteurs gardent l'ancienne version). La série
+  de tests le vérifie (`versionner.py --verifier`). Fichiers chargés par un script (jsPDF, QR,
+  outil vidéo) : pas de numéro, revérifiés à chaque fois.
+- **Plus de `@import` en chaîne** : `css/menu.css` et `css/champs-telephone.css` sont appelés
+  par un `<link>` dans chaque page, juste avant le fichier qui les importait (`style.css`,
+  `entete-site.css`, `espace-mannequin-correctifs.css`).
+- **Copies WebP des anciennes photos** (jusqu'à 420 Ko sans elles, sur l'accueil) : le rattrapage
+  automatique du tableau de bord se fait aussi sur tablette (écran ≥ 700 × 600 px, pas un
+  téléphone tenu en largeur, hors données mobiles signalées), plus seulement sur ordinateur.
+- **Boutique** : la police Google n'est plus importée par `css/marketplace.css` mais appelée par
+  un `<link>` dans chaque page `marketplace/`.
+- **Scripts réservés du tableau de bord** : jamais gardés en mémoire longue (`private, no-cache`,
+  règle à part dans `vercel.json`, même liste que `SCRIPTS_ADMIN` de `middleware.js` — vérifié par
+  `test-tableau-protege.js`), pour ne jamais garder une réponse « Introuvable ».
+- **Non modifié** : la protection d'accès du tableau de bord (`middleware.js`) demande la page
+  deux fois quand la clé de 12 h a expiré (≈ 1,7 s) ; à revoir avec un essai réel (règle 3 de
+  CLAUDE.md). La base Supabase répond en 0,3 à 0,8 s par demande (formule gratuite).
