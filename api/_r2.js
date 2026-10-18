@@ -74,6 +74,19 @@ async function notesIntegration() {
 // Retire les documents PLUS ANCIENS que celui à garder (le nouveau, tout juste déposé).
 // Renvoie false si ce document n'existe pas : rien n'est alors supprimé. Deux dépôts
 // presque simultanés ne s'effacent donc jamais l'un l'autre : le plus récent reste.
+// Code d'inscription valable : on remet aussi le chemin secret de la note d'intégration
+// (14/10/2026), ou null s'il n'y en a pas (ou si le stockage ne répond pas : l'inscription doit
+// continuer de marcher sans elle). Au plus 3 s : la note ne doit jamais retarder l'inscription.
+// Utilisé par api/code-protege.js et par l'inscription par code individuel (api/portail.js).
+async function cheminNoteIntegration() {
+  let minuteur;
+  try {
+    const delai = new Promise(ok => { minuteur = setTimeout(() => ok([]), 3000); });
+    const n = await Promise.race([notesIntegration(), delai]);
+    return n[0] ? n[0].chemin : null;
+  } catch (e) { return null; } finally { clearTimeout(minuteur); }
+}
+
 async function nettoyerNotesIntegration(garder) {
   const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
   const notes = await notesIntegration();
@@ -103,4 +116,4 @@ async function traiterNoteIntegration(res, corps) {
   await repondreR2(res, undefined, chemin, 'application/pdf', taille, 15 * 1024 * 1024);
 }
 
-module.exports = { debutR2, repondreR2, TYPES_IMAGES, CHEMIN_NOTE_INTEGRATION, notesIntegration, nettoyerNotesIntegration, traiterNoteIntegration };
+module.exports = { debutR2, repondreR2, TYPES_IMAGES, CHEMIN_NOTE_INTEGRATION, notesIntegration, cheminNoteIntegration, nettoyerNotesIntegration, traiterNoteIntegration };

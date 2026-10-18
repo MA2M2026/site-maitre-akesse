@@ -1469,9 +1469,13 @@ begin
     return json_build_object('ok', false, 'raison', case when rc.essais + 1 >= r.essais_code then 'bloque' else 'inconnu' end,
                              'essais', rc.essais + 1);
   end if;
-  return json_build_object('ok', true, 'candidat', json_build_object(
-    'nom', c.full_name, 'naissance', c.date_naissance, 'telephone', c.phone, 'email', nullif(c.email, ''),
-    'parent', case when c.parent_nom is not null then json_build_object('nom', c.parent_nom, 'telephone', c.parent_telephone) end));
+  return json_build_object('ok', true,
+    'montant', r.droit_inscription + r.premier_mois, 'droit_inscription', r.droit_inscription, 'premier_mois', r.premier_mois,
+    'lien_wave', lien_wave_pour('inscription', r.droit_inscription + r.premier_mois),
+    'candidat', json_build_object(
+      'nom', c.full_name, 'naissance', c.date_naissance, 'telephone', c.phone, 'email', nullif(c.email, ''),
+      'origine', case when c.source = 'direct' then 'Casting direct' else 'Casting en ligne' end,
+      'parent', case when c.parent_nom is not null then json_build_object('nom', c.parent_nom, 'telephone', c.parent_telephone) end));
 end;
 $$;
 revoke all on function verifier_code_inscription(text, date) from public, anon, authenticated;

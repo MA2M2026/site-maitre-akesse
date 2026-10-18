@@ -129,7 +129,11 @@ module.exports = async function handler(req, res) {
       const tentatives = compteurTentatives(extraireIp(req), 'code-inscription', 'inscription', null);
       if (await tentatives.dejaBloque(res)) return;
       let r;
-      if (action === 'inscription_verifier') r = await rpcService('verifier_code_inscription', { p_code: code, p_naissance: naissance });
+      if (action === 'inscription_verifier') {
+        r = await rpcService('verifier_code_inscription', { p_code: code, p_naissance: naissance });
+        // note d'information et procédure d'intégration (adresse secrète, donnée seulement avec un code valable)
+        if (r && r.ok) r.note = await require('./_r2.js').cheminNoteIntegration();
+      }
       else if (action === 'inscription_corriger') {
         const tel = String(corps.telephone || '').trim(), mail = String(corps.email || '').trim();
         if (tel.replace(/\D/g, '').length < 8 || (mail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail))) return res.status(400).json({ error: 'Téléphone ou e-mail invalide.' });

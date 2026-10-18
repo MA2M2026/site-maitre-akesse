@@ -20,19 +20,6 @@ const { SUPABASE_URL, enTetesService, corpsDe, extraireIp, nettoyerAppareil } = 
 
 const EMAIL_VALIDE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// Code d'inscription valable : on remet aussi le chemin secret de la note d'intégration
-// (14/10/2026, api/_r2.js), ou null s'il n'y en a pas (ou si le stockage ne répond pas :
-// l'inscription doit continuer de marcher sans elle).
-// Au plus 3 s : la note ne doit jamais retarder l'ouverture du formulaire.
-async function cheminNoteIntegration() {
-  let minuteur;
-  try {
-    const delai = new Promise(ok => { minuteur = setTimeout(() => ok([]), 3000); });
-    const n = await Promise.race([require('./_r2.js').notesIntegration(), delai]);
-    return n[0] ? n[0].chemin : null;
-  } catch (e) { return null; } finally { clearTimeout(minuteur); }
-}
-
 // Incident du 04 au 11/10/2026 : la création échouait en silence (« La création du compte
 // a échoué » pour la mannequin, rien pour l'agence). Toute panne de création est désormais
 // écrite dans le journal des erreurs du tableau de bord, avec la raison donnée par la base.
@@ -165,7 +152,7 @@ module.exports = async function handler(req, res) {
       res.status(resultat.status).json(resultat.corps);
       return;
     }
-    if (type === 'inscription') { res.status(200).json({ ok: true, note: await cheminNoteIntegration() }); return; }
+    if (type === 'inscription') { res.status(200).json({ ok: true, note: await require('./_r2.js').cheminNoteIntegration() }); return; }
     res.status(200).json(type === 'inscription-soumettre' ? { ok: true, id: idInscription } : { ok: true });
   } catch (e) {
     res.status(500).json({ error: 'Erreur serveur.' });
