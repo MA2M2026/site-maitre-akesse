@@ -52,20 +52,6 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   box-shadow: var(--focus);
 }
 
-/* Boutons : 44 px minimum, coins 8 px */
-.btn, .btn--principal {
-  min-height: 44px;
-  border-radius: 8px;
-  font-family: var(--texte);
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  text-transform: none;
-}
-.btn { background: var(--surface); color: var(--encre); border: 1px solid var(--lignes); }
-.btn:hover { color: var(--rouge-ma2m-texte); border-color: var(--rouge-ma2m); }
-.btn--principal { background: var(--rouge-ma2m); border-color: var(--rouge-ma2m); color: #fff; }
-.btn--principal:hover { background: var(--rouge-ma2m-survol); border-color: var(--rouge-ma2m-survol); color: #fff; }
-
 /* Cartes */
 .carte, .card { background: var(--surface); border: 1px solid var(--lignes); border-radius: 14px; }
 
@@ -98,81 +84,59 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 }
 .bandeau-cookies p { color: var(--encre); }
 .bandeau-cookies a { color: var(--rouge-ma2m-texte); }
-.bandeau-cookies .btn { border-radius: 8px; }
-.bandeau-cookies .btn--principal, .bandeau-cookies .btn:last-child { background: var(--rouge-ma2m); color: #fff; border-color: var(--rouge-ma2m); }
 
-/* Boutons : l'ancien système de « touches » sombres et rondes est remplacé (il utilisait !important) */
-.btn, .btn-mini-admin, .filtre-btn, .fiche-partage-btn, .journal-btn, .mpg-bouton-danger, .mp-panier-btn {
-  border-radius: 8px !important;
-  background: var(--surface) !important;
-  border: 1px solid var(--lignes) !important;
-  color: var(--encre) !important;
-  box-shadow: none !important;
-  text-transform: none !important;
-  letter-spacing: 0.02em !important;
-  font-weight: 600;
-}
-.btn--principal, .mp-corps .btn--principal {
-  border-radius: 8px !important;
+/* ===== UN SEUL BOUTON pour tout le site (demande de la propriétaire, 18/10/2026) =====
+   Rouge #C8102E, texte blanc Montserrat 600, coins arrondis, ombre rouge douce.
+   Tous les boutons d'action, sans variante : action principale, « Refuser », filtres,
+   Menu, EN/FR, Admin, Marketplace, « Passer l'intro », etc.
+   Remplace l'ancien système de « touches » sombres et rondes (css/style.css, !important).
+   Exceptions volontaires : les logos de réseaux et le bouton WhatsApp flottant (couleurs de marque). */
+.btn, .btn--principal, .btn-mini-admin, .filtre-btn, .fiche-partage-btn, .journal-btn,
+.mp-panier-btn, .mpg-bouton-danger, .mp-corps .btn--principal, .lang-switch,
+.header-marketplace-lien, .header-admin-lien, .menu-trigger, .splash-passer, .bouton,
+.close-menu, .entrer-fleche, .retour-haut, .video-accueil-son {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem;
+  min-height: 44px; padding: 0.7rem 1.6rem; box-sizing: border-box;
   background: var(--rouge-ma2m) !important;
   border: 1px solid var(--rouge-ma2m) !important;
   color: #fff !important;
-  box-shadow: 0 6px 16px -8px rgba(200,16,46,0.6) !important;
-  text-transform: none !important;
-  letter-spacing: 0.02em !important;
-}
-.filtre-btn.actif { background: var(--encre) !important; border-color: var(--encre) !important; color: #fff !important; }
-.lang-switch, .header-marketplace-lien {
-  border-radius: 8px !important;
-  background: transparent !important;
-  border: 1px solid rgba(255,255,255,0.4) !important;
-  color: #fff !important;
-  box-shadow: none !important;
+  border-radius: 10px !important;
+  box-shadow: 0 10px 22px -10px rgba(200,16,46,0.55) !important;
+  font-family: var(--texte); font-size: 0.95rem; font-weight: 600; letter-spacing: 0.01em; line-height: 1.2;
+  text-transform: none !important; text-decoration: none; white-space: nowrap; cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 @media (hover: hover) {
-  .btn:hover, .btn-mini-admin:hover, .filtre-btn:hover, .fiche-partage-btn:hover, .journal-btn:hover, .mp-panier-btn:hover {
-    background: var(--surface) !important; border-color: var(--rouge-ma2m) !important; color: var(--rouge-ma2m-texte) !important; transform: translateY(-1px);
+  .btn:hover, .btn--principal:hover, .btn-mini-admin:hover, .filtre-btn:hover, .fiche-partage-btn:hover,
+  .journal-btn:hover, .mp-panier-btn:hover, .mpg-bouton-danger:hover, .mp-corps .btn--principal:hover,
+  .lang-switch:hover, .header-marketplace-lien:hover, .header-admin-lien:hover, .menu-trigger:hover,
+  .splash-passer:hover, .bouton:hover, .close-menu:hover, .entrer-fleche:hover, .retour-haut:hover, .video-accueil-son:hover {
+    background: var(--rouge-ma2m-survol) !important; border-color: var(--rouge-ma2m-survol) !important;
+    color: #fff !important; transform: translateY(-1px);
+    box-shadow: 0 14px 26px -10px rgba(200,16,46,0.65) !important;
   }
-  .btn--principal:hover, .mp-corps .btn--principal:hover {
-    background: var(--rouge-ma2m-survol) !important; border-color: var(--rouge-ma2m-survol) !important; color: #fff !important;
-  }
-  .lang-switch:hover, .header-marketplace-lien:hover { background: rgba(255,255,255,0.12) !important; border-color: #fff !important; color: #fff !important; }
 }
-.btn:active, .btn-mini-admin:active, .filtre-btn:active, .fiche-partage-btn:active, .journal-btn:active, .mp-panier-btn:active, .touche-appuyee {
-  transform: translateY(1px) !important; background: #f3d9dd !important; border-color: var(--rouge-ma2m) !important; color: var(--rouge-ma2m-texte) !important; box-shadow: none !important;
+.btn:active, .btn--principal:active, .btn-mini-admin:active, .filtre-btn:active, .fiche-partage-btn:active,
+.journal-btn:active, .mp-panier-btn:active, .mpg-bouton-danger:active, .lang-switch:active,
+.header-marketplace-lien:active, .header-admin-lien:active, .menu-trigger:active, .splash-passer:active,
+.bouton:active, .close-menu:active, .entrer-fleche:active, .retour-haut:active, .video-accueil-son:active, .touche-appuyee {
+  background: var(--rouge-ma2m-survol) !important; transform: translateY(1px) !important;
+  box-shadow: 0 4px 10px -6px rgba(200,16,46,0.6) !important;
 }
-.btn--principal:active { background: var(--rouge-ma2m-survol) !important; color: #fff !important; }
-.mpg-bouton-danger { color: var(--rouge-ma2m-texte) !important; }
+.btn:disabled, .btn-mini-admin:disabled, .filtre-btn:disabled, .bouton:disabled { opacity: 0.45; cursor: not-allowed; transform: none !important; }
+.filtre-btn.actif { background: var(--rouge-ma2m-survol) !important; box-shadow: 0 0 0 3px rgba(200,16,46,0.3) !important; }
 
-/* Bandeau cookies : bouton « Accepter » en rouge */
-.bandeau-cookies .btn:last-child { background: var(--rouge-ma2m) !important; color: #fff !important; border-color: var(--rouge-ma2m) !important; }
+/* Boutons ronds à icône seule : même rouge, forme ronde */
+.close-menu, .entrer-fleche, .retour-haut, .video-accueil-son { border-radius: 999px !important; padding: 0; min-width: 44px; }
+.video-accueil-son { padding: 0 1rem; }
 
-/* ===== Boutons du haut : Menu, EN/FR, Admin, Marketplace = mêmes blocs, même écriture =====
-   (18/10/2026) Même hauteur (40 px), mêmes coins (8 px), même police Montserrat 600 en capitales.
-   « Menu » est en rouge (action principale), les autres en contour blanc. */
+/* Boutons du haut (Menu, EN/FR, Admin, Marketplace) : même bloc, un peu plus compact */
 .header-v2-droite { gap: 0.6rem; }
-.site-header-v2 .lang-switch,
-.site-header-v2 .menu-trigger {
-  display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem;
-  min-height: 40px; padding: 0 1rem; box-sizing: border-box;
-  border-radius: 8px !important;
-  font-family: var(--texte); font-size: 0.74rem; font-weight: 600; letter-spacing: 0.12em; line-height: 1;
-  text-transform: uppercase; white-space: nowrap; cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-}
-.site-header-v2 .lang-switch {
-  background: transparent !important; color: #fff !important;
-  border: 1px solid rgba(255,255,255,0.4) !important; box-shadow: none !important;
-}
-.site-header-v2 .menu-trigger {
-  background: var(--rouge-ma2m); color: #fff; border: 1px solid var(--rouge-ma2m);
-}
-.site-header-v2 .menu-trigger:hover { background: var(--rouge-ma2m-survol); border-color: var(--rouge-ma2m-survol); color: #fff; }
-.site-header-v2 .menu-trigger .dots { flex-direction: row; gap: 3px; }
-@media (hover: hover) {
-  .site-header-v2 .lang-switch:hover { background: rgba(255,255,255,0.12) !important; border-color: #fff !important; color: #fff !important; transform: none; }
-}
+.site-header-v2 .lang-switch, .site-header-v2 .menu-trigger { min-height: 40px; padding: 0 1.1rem; font-size: 0.85rem; }
+.menu-trigger .dots { flex-direction: row; gap: 3px; }
 @media (max-width: 480px) {
   .header-v2-droite { gap: 0.4rem; }
-  .site-header-v2 .lang-switch, .site-header-v2 .menu-trigger { padding: 0 0.7rem; font-size: 0.7rem; letter-spacing: 0.08em; }
+  .site-header-v2 .lang-switch, .site-header-v2 .menu-trigger { padding: 0 0.8rem; font-size: 0.8rem; }
 }
+@media (max-width: 480px) { .btn, .btn--principal { white-space: normal; } }
