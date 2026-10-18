@@ -52,9 +52,14 @@ const ADMIN = '11111111-2222-3333-4444-555555555555';
   const src = fs.readFileSync(path.join(RACINE, 'middleware.js'), 'utf8');
   const duMatcher = [...src.matchAll(/'\/js\/([\w-]+)\.js'/g)].map(m => m[1]).sort();
   const duRegex = src.match(/const SCRIPTS_ADMIN = \/\^\\\/js\\\/\(([^)]+)\)/)[1].split('|').sort();
-  const deLaZone = [...PAGE.matchAll(/<!-- ZONE-ADMIN[^>]*-->([\s\S]*?)<!-- \/ZONE-ADMIN -->/g)].flatMap(m => [...m[1].matchAll(/src="js\/([\w-]+)\.js"/g)].map(x => x[1]));
+  // (scripts appelés avec leur numéro de version ?v=, 14/10/2026)
+  const deLaZone = [...PAGE.matchAll(/<!-- ZONE-ADMIN[^>]*-->([\s\S]*?)<!-- \/ZONE-ADMIN -->/g)].flatMap(m => [...m[1].matchAll(/src="js\/([\w-]+)\.js(?:\?v=[0-9a-f]+)?"/g)].map(x => x[1]));
   const publics = ['tailles', 'analyse-profil'];  // aussi utilisés par d'autres pages
-  ok(JSON.stringify(duMatcher) === JSON.stringify(duRegex) && deLaZone.every(n => duRegex.includes(n) || publics.includes(n)), 'scripts protégés : même liste dans le filtre et dans la page (' + duRegex.length + ')');
+  // vercel.json : ces scripts ne sont jamais gardés en mémoire longue (règle « no-cache » à part)
+  const regleVercel = JSON.parse(fs.readFileSync(path.join(RACINE, 'vercel.json'), 'utf8')).headers.map(h => h.source.match(/^\/js\/\(([^)]+)\)\\\.js$/)).filter(Boolean);
+  const deVercel = regleVercel.length === 1 ? regleVercel[0][1].split('|').sort() : [];
+  ok(deLaZone.length > 5 && JSON.stringify(duMatcher) === JSON.stringify(duRegex) && JSON.stringify(deVercel) === JSON.stringify(duRegex)
+    && deLaZone.every(n => duRegex.includes(n) || publics.includes(n)), 'scripts protégés : même liste dans le filtre, vercel.json et la page (' + duRegex.length + ', ' + deLaZone.length + ' dans la page)');
   // côté serveur (api/acces-tableau.js) : une clé valide permet de la prolonger sans redemander le code
   const { cleAccesTableauValide } = require(path.join(RACINE, 'api/_commun.js'));
   ok(cleAccesTableauValide({ headers: { cookie: bonneCle } }, ADMIN) && !cleAccesTableauValide({ headers: { cookie: perimee } }, ADMIN) && !cleAccesTableauValide({ headers: { cookie: bonneCle } }, 'aaaaaaaa-2222-3333-4444-555555555555'), 'serveur : clé valide reconnue, périmée ou d\'un autre compte refusée');

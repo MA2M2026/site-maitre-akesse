@@ -529,12 +529,14 @@ async function rattraperPhotosEnArrierePlan() {
   if (error || !photos) return;
   // Versions à (re)faire : absente, ancienne miniature (< 800 px), ou sans copie WebP légère
   // quand ce navigateur sait l'écrire (12/10/2026 ; voir envoyerVersionPhoto dans js/app.js).
-  // Copies WebP : seulement sur un ordinateur (grand écran) hors connexion mobile signalée
-  // — environ 370 photos d'origine à télécharger — et 40 photos au plus par ouverture.
+  // Copies WebP : sur un ordinateur ou une tablette (écran de 700 px et plus ; 14/10/2026 : la
+  // propriétaire travaille surtout sur tablette, les copies ne se faisaient donc jamais) hors
+  // connexion mobile signalée — environ 370 photos d'origine à télécharger — et 40 photos au
+  // plus par ouverture.
   // Une photo à la fois (pas en parallèle) pour ménager la connexion.
   const c = navigator.connection || {};
   const donneesMobiles = c.saveData || c.type === 'cellular' || /(^|-)(2g|3g)$/.test(c.effectiveType || '');
-  let webp = navigateurEcritWebp() && !donneesMobiles && window.matchMedia('(min-width: 900px)').matches;
+  let webp = navigateurEcritWebp() && !donneesMobiles && window.matchMedia('(min-width: 700px) and (min-height: 600px)').matches; // pas un téléphone tenu en largeur
   const miniatureAFaire = p => !p.url_miniature || !/-n800(-w)?\.jpg$/.test(p.chemin_miniature || '') || (webp && !cheminWebp(p.chemin_miniature));
   const moyenneAFaire = p => !p.url_moyenne || (webp && !cheminWebp(p.chemin_moyenne));
   const aFaire = photos.filter(p => p.url && (miniatureAFaire(p) || moyenneAFaire(p))).slice(0, 40);

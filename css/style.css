@@ -1,5 +1,3 @@
-@import url('menu.css'); /* menu « Modèle A », une seule copie (11/10/2026) */
-@import url('champs-telephone.css'); /* champs à 16 px sur téléphone, une seule copie (12/10/2026) */
 /* ===== Maître Akesse Model Management — Design tokens =====
    Couleurs : noir profond + bordeaux signature (accent principal), touche d'or mineure héritée du logo
    Typo : Cormorant Garamond (titres, display) + Jost (texte courant)
@@ -8,6 +6,8 @@
    en série (attendre style.css, puis découvrir l'import, puis le télécharger),
    alors qu'un <link> dans le HTML est détecté et lancé immédiatement par le
    navigateur, en parallèle du reste.
+   Même règle pour css/menu.css et css/champs-telephone.css : appelés par un <link> dans
+   chaque page, juste avant ce fichier (14/10/2026 : ils étaient importés ici en chaîne).
 */
 
 :root {

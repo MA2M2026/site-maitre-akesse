@@ -17,10 +17,10 @@
 <meta charset="utf-8"/>
 <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-Nzzad80MYQ5IQW9F+jHIEplW303XJwonVGJCyzwTb/s=' 'sha256-o9iGHGi6we4iLMKAml6I1Tb/FcJgVUJnVjd+CMr51yM=' 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-4soDx4UwFmS7SA1g/5fHyg/uXiR6mu8rU3AEcKfT/Eo=' 'sha256-jGF0weWk7PxBzuaIA67PhkfdbuiXsmCAwWVh+6eDT3c=' 'sha256-3qgi8DgX1gMedwMitkiFGD28RnCTlKvN07uOUFHlxhI=' 'sha256-3o72dE4ZYM6iuDeH5/26I6RL19v0wzhX6fjzN5RUhhI=' 'sha256-82f0qcfzCs/5DNHA1BwbwJPHKjW7EHSitPDOmQV0uk0=' 'sha256-BeDoC+STsgUauJfb+0RA5aL7+JoiT6VlEKvIgZYv25I=' 'sha256-klm2pdmICNW1nEg5sBPffOcX2Ho7FBD9QltsWkqTpcI='; style-src 'self' https://fonts.googleapis.com 'sha256-AkSLuerWb/Yf5A2qPZQcFtZsipqhXoFOvKxaahyTYWo=' 'sha256-Z+fJHtwF6iAcwu5LiyD7iTOTabGjBfhs23ke6b1SwVw=' 'sha256-+u3+0/Vo28wYzeyT+KsYe2HbHw3y/nxKM5+MqPJcRwk=' 'sha256-/dp0ixjqeszDUaLkxiTLnInPK6ZgIXF3/pYHZvRy6/E=' 'sha256-OaDZmUijdOunxkFh6SnwTEK5EqHPcU3BQgW7hEye/TI=' 'sha256-ZY7lT12YbWRRtAjPNrNHPaMjXCl+i7hU1Kna0hzZ8wI=' 'sha256-snOyKmJRQG9N3mZu/bbBi5v39gyiO0EU7U+XsjZYCMw=' 'sha256-j+aZk+nsNRFOrx/eL4XUSfoOs1q5UaH5rwqxLJw4dlA=' 'sha256-zt+Z2SrX8SO8WHNcCZwpJk6y28M6hnf80CryqKgDy/A=' 'sha256-q6wsC9ishVpIeB3ktinvj4NdYAKBNnqpNU3y1TM3zuM=' 'sha256-5N0agdy2IzkTvrHlgcALxGfV68IB7WvTgiDz6D2Lp/U=' 'sha256-L9ImiAO31+bk5KRYS7ZVQL6wuCTcnf6POkKYAddkVYc=' 'sha256-CdFbAYiXq0zw92MvM1Ge9rw17sGYuW1rgYmQhDWJucQ='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
-<script src="js/surveillance.js"></script>
+<script src="js/surveillance.js?v=8b8ecad1"></script>
 <!-- Google tag (gtag.js) -->
 <script async="" crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
-<script src="js/analytics-config.js"></script>
+<script src="js/analytics-config.js?v=45fb0c30"></script>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <meta content="Tableau de bord de gestion de l'agence Maître Akesse Model Management." name="description"/>
 <title>Tableau de bord — Maître Akesse Model Management</title>
@@ -28,7 +28,9 @@
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&amp;family=Jost:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
-<link href="css/style.css" rel="stylesheet"/>
+<link rel="stylesheet" href="css/menu.css?v=0b2ed223">
+<link rel="stylesheet" href="css/champs-telephone.css?v=11f5f49f">
+<link href="css/style.css?v=f278a881" rel="stylesheet"/>
 <style>
   .stats-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }
   .stat-carte { background: var(--anthracite, var(--noir)); color: var(--blanc); padding: 1.6rem; border-top: 2px solid var(--or); }
@@ -1976,7 +1978,7 @@ a.tdb-menu-item { text-decoration: none; }
   <button class="btn-mini-admin" id="notif-banniere-oui" type="button">Oui, activer</button>
   <button class="btn-mini-admin" id="notif-banniere-non" type="button">Plus tard</button>
 </div>
-<script async src="js/filet-reveal.js"></script>
+<script async src="js/filet-reveal.js?v=0e57f29d"></script>
 <header class="site-header-v2 db-chrome-public" id="db-chrome-header">
 <div class="container header-v2-inner">
 <a class="logo-img-header" href="index.html"><img alt="Maître Akesse Model Management" src="assets/logo-header.png"/></a>
@@ -2082,9 +2084,9 @@ a.tdb-menu-item { text-decoration: none; }
 </div>
 </section>
 <!-- ===== AJOUT : navigation en 3 grands blocs + menu (remplace l'ancienne barre latérale toujours visible) ===== -->
-<link rel="stylesheet" href="css/cv-mannequin.css">
-<link href="css/tableau-boutons.css" rel="stylesheet"/>
-<link href="css/tableau-v2.css" rel="stylesheet"/>
+<link rel="stylesheet" href="css/cv-mannequin.css?v=4726e874">
+<link href="css/tableau-boutons.css?v=e1272328" rel="stylesheet"/>
+<link href="css/tableau-v2.css?v=1091c23c" rel="stylesheet"/>
 <!-- ZONE-ADMIN : livrée seulement après une connexion admin complète (middleware.js) -->
 <section id="bloc-tableau" class="u-hidden u-pt-0">
 <div class="db-shell">
@@ -2837,30 +2839,30 @@ document.addEventListener('DOMContentLoaded', function () {
 </div>
 </div>
 </footer>
-<script src="js/copyright-annee.js"></script>
+<script src="js/copyright-annee.js?v=a398c3bf"></script>
 <script>window.MA2M_SESSION_REQUISE = true;</script>
-<script src="js/vendor/supabase-js-2.110.6.js"></script>
-<script src="js/supabase-config.js"></script>
-<script src="js/vendor/emailjs-browser-3.12.1.min.js"></script>
-<script src="js/emailjs-config.js"></script>
-<script src="js/verrou-defilement.js"></script>
-<script src="js/app.js"></script>
-<script src="js/confort.js"></script>
-<script src="js/menu.js"></script>
-<script src="js/connexion-tableau.js"></script>
+<script src="js/vendor/supabase-js-2.110.6.js?v=82632987"></script>
+<script src="js/supabase-config.js?v=d0882381"></script>
+<script src="js/vendor/emailjs-browser-3.12.1.min.js?v=3d7499d7"></script>
+<script src="js/emailjs-config.js?v=8fcea597"></script>
+<script src="js/verrou-defilement.js?v=33c16996"></script>
+<script src="js/app.js?v=0a3d8fbc"></script>
+<script src="js/confort.js?v=33474c14"></script>
+<script src="js/menu.js?v=fae89b77"></script>
+<script src="js/connexion-tableau.js?v=c2f49ccb"></script>
 <!-- ZONE-ADMIN : livrée seulement après une connexion admin complète (middleware.js) -->
-<script src="js/tailles.js"></script>
-<script src="js/analyse-profil.js"></script>
-<script src="js/erreurs-corrigees.js"></script>
-<script src="js/nettoyage-supabase.js"></script>
-<script src="js/messages-candidats.js"></script>
-<script src="js/messages-groupes.js"></script>
-<script src="js/couverture-admin.js"></script>
-<script src="js/photos-mises-de-cote.js"></script>
-<script src="js/fiches-evenement-admin.js"></script>
-<script src="js/rapport-profils-admin.js"></script>
-<script src="js/agenda-admin.js"></script>
-<script src="js/tableau-de-bord.js"></script>
+<script src="js/tailles.js?v=41cf2149"></script>
+<script src="js/analyse-profil.js?v=331cdca4"></script>
+<script src="js/erreurs-corrigees.js?v=9b5aeac4"></script>
+<script src="js/nettoyage-supabase.js?v=3556a060"></script>
+<script src="js/messages-candidats.js?v=0b3c2ea5"></script>
+<script src="js/messages-groupes.js?v=05068085"></script>
+<script src="js/couverture-admin.js?v=19280ca8"></script>
+<script src="js/photos-mises-de-cote.js?v=2585bdba"></script>
+<script src="js/fiches-evenement-admin.js?v=f6cdd740"></script>
+<script src="js/rapport-profils-admin.js?v=0ddad1e1"></script>
+<script src="js/agenda-admin.js?v=e682d95f"></script>
+<script src="js/tableau-de-bord.js?v=7e352524"></script>
 
 <script id="ma2m-final-visual-guard">
 (function(){
@@ -3411,7 +3413,7 @@ document.addEventListener('DOMContentLoaded', function () {
 })();
 </script>
 
-<script src="js/tableau-v2.js"></script>
+<script src="js/tableau-v2.js?v=55637a3f"></script>
 <!-- /ZONE-ADMIN -->
 </body>
 </html>

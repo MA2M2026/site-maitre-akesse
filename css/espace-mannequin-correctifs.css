@@ -1,4 +1,3 @@
-@import url('champs-telephone.css'); /* champs à 16 px sur téléphone (règle commune au site) */
 /* Espace mannequin — correctifs téléphone (Journal MA2M du 30/09/2026).
    1) Sur iPhone, un champ dont le texte fait moins de 16 px fait zoomer la page
       toute seule quand on le touche (constaté : connexion, création de compte,
