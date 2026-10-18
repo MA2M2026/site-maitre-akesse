@@ -195,9 +195,23 @@
   // ---------- Registre ----------
   async function registre() {
     const r = await chargerReglages();
-    const liste = await P.bd(sb.from('agence_mannequins').select('*, parents:mannequin_guardians(nom, telephone)').order('nom'));
+    const [liste, retenues] = await Promise.all([
+      P.bd(sb.from('agence_mannequins').select('*, parents:mannequin_guardians(nom, telephone)').order('nom')),
+      P.bd(sb.from('v_site_candidatures').select('id, full_name, date_naissance, lieu_casting, source').eq('status', 'retenue').order('full_name'))
+    ]);
     const opt = (v) => '<option value="' + v + '">' + P.fcfa(v) + '</option>';
     return P.entete('Registre des mannequins', '<button class="btn petit" data-action="paiements-export-registre">Exporter (CSV)</button>') +
+      // Inscription réglée directement à l'agence (espèces…), sans passer par le site (18/10/2026)
+      '<details class="carte"' + (retenues.length ? ' open' : '') + '><summary>Inscription payée à l’agence (espèces…) · ' + retenues.length + ' mannequin' + (retenues.length > 1 ? 's' : '') + ' retenu' + (retenues.length > 1 ? 's' : '') + ' en attente</summary>' +
+      (retenues.length ? '<form class="f" data-form="paiements-inscription-agence" style="margin-top:12px">' +
+        '<label class="fl large" for="ia-cand">Mannequin retenu au casting<select id="ia-cand" name="candidature" required>' + retenues.map((c) => '<option value="' + c.id + '">' + P.esc(c.full_name) + ' · ' + P.age(c.date_naissance) + ' ans' + (c.source === 'direct' ? ' · casting direct' : '') + '</option>').join('') + '</select></label>' +
+        '<label class="fl" for="ia-mont">Montant reçu<input id="ia-mont" name="montant" type="number" min="1" value="' + (r.droit_inscription + r.premier_mois) + '" required></label>' +
+        '<label class="fl" for="ia-mode">Mode<select id="ia-mode" name="mode"><option value="especes">Espèces</option><option value="wave">Wave (à l’agence)</option><option value="orange">Orange Money</option><option value="mtn">MTN Money</option><option value="moov">Moov Money</option><option value="virement">Virement</option></select></label>' +
+        '<label class="case large"><input type="checkbox" name="reglement" value="1" required> Le règlement de l’agence a été lu et signé</label>' +
+        '<label class="case large"><input type="checkbox" name="parent" value="1"> Mineur : le parent a donné son accord (obligatoire pour un mineur)</label>' +
+        '<div class="note large">En un geste : entrée au registre (reliée à la candidature), reçu, recette en comptabilité, code d’inscription consommé, et code personnel de l’espace mannequin (ses informations et photos du casting y seront reprises).</div>' +
+        '<button class="btn rouge" type="submit">Enregistrer l’inscription payée</button></form>'
+        : '<p class="doux" style="margin-top:10px">Aucune candidature « Retenue » en attente. Passez d’abord la candidature à « Retenue » (Administration du site, Candidatures), ou créez une fiche de casting direct.</p>') + '</details>' +
       '<details class="carte"><summary>Ajouter un mannequin au registre</summary><form class="f" data-form="paiements-ajouter" style="margin-top:12px">' +
       '<label class="fl" for="rg-nom">Nom<input id="rg-nom" name="nom" required></label><label class="fl" for="rg-pre">Prénoms<input id="rg-pre" name="prenoms"></label>' +
       '<label class="fl" for="rg-nais">Date de naissance<input id="rg-nais" name="naissance" type="date" required></label>' +
@@ -246,6 +260,16 @@
     }));
     P.message(String(f.get('nom')) + ' ajouté au registre.');
     P.afficher();
+  };
+  P.formulaires['paiements-inscription-agence'] = async (f) => {
+    const r = await P.sensible(() => P.rpc('portail_inscription_agence', {
+      p_candidature: f.get('candidature'), p_montant: Number(f.get('montant')), p_mode: f.get('mode'),
+      p_reglement_accepte: f.get('reglement') === '1', p_accord_parent: f.get('parent') === '1'
+    }));
+    P.message('Inscription enregistrée. Reçu ' + r.recu + '.');
+    envoyerFile().catch(() => { /* la file sera reprise plus tard */ });
+    P.afficher();
+    if (r.code_espace) fenetreCodeEspace(r.code_espace, 'Inscription enregistrée');
   };
   P.changements['paiements-mensualite'] = async (el) => {
     try {

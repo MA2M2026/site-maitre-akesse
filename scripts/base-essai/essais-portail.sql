@@ -184,9 +184,33 @@ select essai((mannequin_mes_paiements() -> 'formation' -> 'mois' -> 5 ->> 'statu
 select essai_refuse($$select espace_code_utiliser('ESP-AAAA-AA', auth.uid())$$, 'code espace : la page ne peut pas utiliser un code elle-même');
 reset role;
 select set_config('request.jwt.claims', '', false);
+
 select essai((select count(*) from audit_log where action = 'Paiement validé') = 1, 'test 21 : la validation laisse une ligne d''audit');
 select essai((select count(*) from fee_dues where type = 'mensualite' and mannequin_id = (select id from agence_mannequins where candidature_id = '00000000-0000-0000-0000-00000000c001')
               and mois = date_trunc('month', current_date)::date) = 0, 'test 23 : pas de mensualité en plus pour le mois de l''inscription');
+
+-- Inscription payée en espèces à l'agence, sans passer par le site (18/10/2026)
+insert into casting_applications (id, full_name, email, phone, date_naissance, genre, status, city)
+values ('00000000-0000-0000-0000-00000000c003', 'Mariam Touré', 'mariam@test.ci', '0700000009', '2000-06-01', 'femme', 'retenue', 'Yamoussoukro');
+update casting_applications set status = 'retenue' where id = '00000000-0000-0000-0000-00000000c003'; -- (à l'envoi, la candidature arrive toujours « nouvelle »)
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a3');
+create temp table essai_agence as select portail_inscription_agence('00000000-0000-0000-0000-00000000c003', 25000, 'especes', true, false) as r;
+select essai((select r ->> 'code_espace' from essai_agence) ~ '^ESP-', 'inscription en espèces à l''agence : code personnel de l''espace créé et affiché');
+select essai((select r ->> 'recu' from essai_agence) ~ '^REC-', 'inscription en espèces à l''agence : reçu numéroté');
+select essai_refuse($$select portail_inscription_agence('00000000-0000-0000-0000-00000000c003', 25000, 'especes', true, false)$$, 'inscription à l''agence : pas deux fois');
+reset role;
+select set_config('request.jwt.claims', '', false);
+select essai((select status from casting_applications where id = '00000000-0000-0000-0000-00000000c003') = 'inscrite'
+         and (select candidature_id from agence_mannequins where nom = 'Mariam Touré') = '00000000-0000-0000-0000-00000000c003',
+         'inscription à l''agence : candidature inscrite et reliée au registre (le casting sera repris)');
+select essai((select mode from payments p join fee_dues f on f.id = p.echeance_id join agence_mannequins m on m.id = f.mannequin_id where m.nom = 'Mariam Touré') = 'especes',
+         'inscription à l''agence : paiement enregistré en espèces');
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a2');
+select essai_refuse($$select portail_inscription_agence('00000000-0000-0000-0000-00000000c001', 25000, 'especes', true, false)$$, 'inscription à l''agence : refusée à l''administrateur du site (pas d''argent)');
+reset role;
+select set_config('request.jwt.claims', '', false);
 
 -- 32. validation en double impossible
 set role authenticated;

@@ -1694,24 +1694,21 @@ end;
 $$;
 revoke all on function corriger_inscription(text, date, text, text) from public, anon, authenticated;
 
--- « J'ai payé » à l'inscription : le mannequin entre au registre (en pré-inscription),
--- l'échéance d'inscription (25 000) est créée et la déclaration part au rapprochement.
-create or replace function declarer_paiement_inscription(p_code text, p_naissance date, p_numero text, p_operateur text,
-                                                         p_reglement_accepte boolean, p_accord_parent boolean)
-returns json language plpgsql security definer set search_path = public, extensions as $$
+-- Entrée au registre depuis la candidature retenue (partagé par l'inscription en ligne et par
+-- l'inscription payée à l'agence) : fiche du registre reliée à la candidature (le casting
+-- pourra être repris dans l'espace mannequin), parent si mineur, échéance d'inscription.
+-- Renvoie l'identifiant de l'échéance d'inscription.
+create or replace function inscription_registre(p_candidature uuid, p_accord_parent boolean, p_origine text)
+returns uuid language plpgsql security definer set search_path = public as $$
 declare
-  v json := verifier_code_inscription(p_code, p_naissance);
-  rc registration_codes;
   c casting_applications;
   r portail_reglages;
   mid uuid;
   eid uuid;
   mineur boolean;
 begin
-  if not (v ->> 'ok')::boolean then return v; end if;
-  if not p_reglement_accepte then raise exception 'Le règlement doit être accepté.'; end if;
-  select * into rc from registration_codes where code_hache = encode(digest(upper(trim(p_code)), 'sha256'), 'hex');
-  select * into c from casting_applications where id = rc.candidature_id;
+  select * into c from casting_applications where id = p_candidature;
+  if c.id is null then raise exception 'Candidature introuvable.'; end if;
   select * into r from portail_reglages limit 1;
   mineur := age(current_date, c.date_naissance) < make_interval(years => r.age_majorite);
   if mineur and not p_accord_parent then raise exception 'Mannequin mineur : l''accord du parent est obligatoire.'; end if;
@@ -1721,7 +1718,7 @@ begin
                                    montant_mensuel, notes)
     values (c.full_name, c.genre, c.date_naissance, c.phone, c.phone, nullif(c.email, ''), 'actif', c.id,
             r.mensualite_standard, 'Règlement accepté le ' || to_char(now() at time zone 'Africa/Abidjan', 'DD/MM/YYYY HH24:MI')
-            || case when mineur then ' ; accord du parent donné' else '' end)
+            || ' (' || p_origine || ')' || case when mineur then ' ; accord du parent donné' else '' end)
     returning id into mid;
     if mineur then
       insert into mannequin_guardians (mannequin_id, nom, lien, telephone, email)
@@ -1734,16 +1731,61 @@ begin
     values (mid, 'inscription', date_trunc('month', current_date)::date, r.droit_inscription + r.premier_mois, current_date + 7)
     returning id into eid;
   end if;
+  return eid;
+end;
+$$;
+revoke all on function inscription_registre(uuid, boolean, text) from public, anon, authenticated;
+
+-- « J'ai payé » à l'inscription : le mannequin entre au registre (en pré-inscription),
+-- l'échéance d'inscription (25 000) est créée et la déclaration part au rapprochement.
+create or replace function declarer_paiement_inscription(p_code text, p_naissance date, p_numero text, p_operateur text,
+                                                         p_reglement_accepte boolean, p_accord_parent boolean)
+returns json language plpgsql security definer set search_path = public, extensions as $$
+declare
+  v json := verifier_code_inscription(p_code, p_naissance);
+  rc registration_codes;
+  r portail_reglages;
+  eid uuid;
+begin
+  if not (v ->> 'ok')::boolean then return v; end if;
+  if not p_reglement_accepte then raise exception 'Le règlement doit être accepté.'; end if;
+  select * into rc from registration_codes where code_hache = encode(digest(upper(trim(p_code)), 'sha256'), 'hex');
+  select * into r from portail_reglages limit 1;
+  eid := inscription_registre(rc.candidature_id, p_accord_parent, 'inscription en ligne');
   if exists (select 1 from fee_dues where id = eid and statut in ('declare', 'payee')) then
     return json_build_object('ok', true, 'deja', true);
   end if;
   insert into payment_declarations (echeance_id, candidature_id, numero_payeur, operateur, montant, declare_par)
-  values (eid, c.id, trim(p_numero), coalesce(p_operateur, 'wave'), r.droit_inscription + r.premier_mois, 'inscription');
+  values (eid, rc.candidature_id, trim(p_numero), coalesce(p_operateur, 'wave'), r.droit_inscription + r.premier_mois, 'inscription');
   update fee_dues set statut = 'declare' where id = eid;
   return json_build_object('ok', true);
 end;
 $$;
 revoke all on function declarer_paiement_inscription(text, date, text, text, boolean, boolean) from public, anon, authenticated;
+
+-- Inscription payée directement à l'agence (espèces, ou autre paiement reçu en main propre),
+-- sans passer par le site : la candidature retenue entre au registre et le paiement est validé
+-- dans la foulée — reçu, comptabilité, code d'inscription consommé et code personnel de
+-- l'espace mannequin créé (affiché à l'agent, envoyé par message), exactement comme en ligne.
+create or replace function portail_inscription_agence(p_candidature uuid, p_montant int, p_mode text,
+                                                      p_reglement_accepte boolean, p_accord_parent boolean)
+returns json language plpgsql security definer set search_path = public as $$
+declare
+  c casting_applications;
+  eid uuid;
+begin
+  if not portail_peut('paiements') then raise exception 'Accès refusé.'; end if;
+  if not p_reglement_accepte then raise exception 'Le règlement doit être accepté (signé à l''agence).'; end if;
+  if p_mode not in ('especes', 'wave', 'orange', 'mtn', 'moov', 'virement', 'autre') then raise exception 'Mode de paiement inconnu.'; end if;
+  select * into c from casting_applications where id = p_candidature;
+  if c.id is null then raise exception 'Candidature introuvable.'; end if;
+  if c.status = 'inscrite' then raise exception 'Ce mannequin est déjà inscrit.'; end if;
+  if c.status <> 'retenue' then raise exception 'La candidature doit d''abord être « Retenue ».'; end if;
+  eid := inscription_registre(c.id, p_accord_parent, 'inscription payée à l''agence');
+  return portail_valider_paiement(eid, p_montant, p_mode, null, null, null, false);
+end;
+$$;
+grant execute on function portail_inscription_agence(uuid, int, text, boolean, boolean) to authenticated;
 
 -- Lien personnel sans compte (mannequin non inscrit) : jeton tiré au hasard, haché en base
 create or replace function portail_creer_lien_paiement(p_echeance uuid, p_jours int default 10)

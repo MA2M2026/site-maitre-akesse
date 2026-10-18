@@ -60,7 +60,8 @@ function donnees(role) {
       portail_moi: { role, mfa: true, nom: { principal: 'Maître Akesse', site: 'Gestion du site', caisse: 'Encaissements', compta: 'Comptable' }[role], actif: true, membre: true, espaces, contacts_prives: role !== 'site' && role !== 'compta', noms_payeurs: espaces.paiements },
       portail_enregistrer_appareil: { ok: true, nouveau: false },
       portail_valider_paiement: { recu: 'REC-2026-00002', paiement: 'p1', code_espace: 'ESP-K7P4-92' },
-      portail_code_espace: 'ESP-QW3R-77'
+      portail_code_espace: 'ESP-QW3R-77',
+      portail_inscription_agence: { recu: 'REC-2026-00003', paiement: 'p2', code_espace: 'ESP-ZX8C-44' }
     },
     api: { '/api/portail': (corps) => corps.action === 'codes_secours_creer' ? { codes: ['AAAAA-BBBBB', 'CCCCC-DDDDD', 'EEEEE-FFFFF', 'GGGGG-HHHHH', 'JJJJJ-KKKKK', 'LLLLL-MMMMM', 'NNNNN-PPPPP', 'QQQQQ-RRRRR'] } : { ok: true } }
   };
@@ -133,7 +134,15 @@ function donnees(role) {
     await p.goto(url + '#/paiements/fiche/m2'); await p.waitForSelector('[data-action="paiements-code-espace"]', { timeout: 6000 }).catch(() => {});
     await p.click('[data-action="paiements-code-espace"]').catch(() => {}); await p.waitForTimeout(600);
     ok((await texte(p)).includes('ESP-QW3R-77') && journal.some((j) => j[0] === 'rpc' && j[1] === 'portail_code_espace' && /"p_mannequin":"m2"/.test(j[2])), nomEcran + ' : fiche sans espace → nouveau code donné');
-    ok((await texte(p)).includes('REC-2026-00002'), nomEcran + ' : le numéro de reçu est annoncé');
+    // inscription payée en espèces à l'agence, sans passer par le site
+    await p.click('[data-action="fermer-fenetre"]').catch(() => {});
+    await p.goto(url + '#/paiements/registre'); await p.waitForSelector('#ia-cand', { timeout: 6000 }).catch(() => {});
+    await p.check('form[data-form="paiements-inscription-agence"] input[name=reglement]').catch(() => {});
+    await p.click('form[data-form="paiements-inscription-agence"] [type=submit]').catch(() => {}); await p.waitForTimeout(800);
+    const ia = journal.find((j) => j[0] === 'rpc' && j[1] === 'portail_inscription_agence');
+    ok(ia && /"p_candidature":"c2"/.test(ia[2]) && /"p_mode":"especes"/.test(ia[2]) && /"p_reglement_accepte":true/.test(ia[2]) && (await texte(p)).includes('ESP-ZX8C-44'),
+       nomEcran + ' : inscription payée en espèces à l’agence → registre, reçu et code de l’espace');
+    ok((await texte(p)).includes('REC-2026-00003'), nomEcran + ' : le numéro de reçu est annoncé');
     ok(!errs.length, nomEcran + ' : aucune erreur de page (principal) ' + errs.join(' | '));
     await ctx.close();
 
