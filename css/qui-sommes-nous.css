@@ -33,8 +33,9 @@
 .qsn-voile {
   position: absolute; inset: 0;
   background:
-    linear-gradient(180deg, rgba(6,5,4,0.55) 0%, rgba(6,5,4,0.15) 35%, rgba(6,5,4,0.85) 80%, var(--noir) 100%),
-    linear-gradient(90deg, rgba(0,0,0,0.55) 0%, transparent 60%);
+    /* voile clair (charte claire, 18/10/2026) : texte foncé lisible sur la photo */
+    linear-gradient(180deg, rgba(246,245,243,0.55) 0%, rgba(246,245,243,0.2) 35%, rgba(246,245,243,0.88) 80%, var(--fond) 100%),
+    linear-gradient(90deg, rgba(246,245,243,0.85) 0%, rgba(246,245,243,0) 65%);
 }
 .qsn-ouverture-texte { position: relative; z-index: 1; }
 .qsn-ouverture h1 {

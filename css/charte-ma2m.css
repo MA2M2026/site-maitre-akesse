@@ -48,12 +48,14 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 /* Cartes */
 .carte, .card { background: var(--surface); border: 1px solid var(--lignes); border-radius: 14px; }
 
-/* En-tête, bande défilante, bandeau cookies, pied de page */
-.site-header-v2 { background: #1E1D1C !important; border-bottom: 0; color: #fff; }
-.site-header-v2 a, .site-header-v2 button { color: #fff; }
+/* En-tête, bande défilante, bandeau cookies, pied de page : tout en clair (demande de la
+   propriétaire, 18/10/2026 : « plus de noir », de l'ouverture du site jusqu'au pied de page) */
+.site-header-v2 { background: var(--surface) !important; border-bottom: 1px solid var(--lignes); color: var(--encre); }
+.site-header-v2 a:not(.lang-switch):not(.header-marketplace-lien) { color: var(--encre); }
 #marqueeBande { background: var(--rouge-ma2m) !important; color: #fff; }
-.site-footer { background: #1E1D1C; color: #f4f1ec; }
-.site-footer a { color: #f4f1ec; }
+.site-footer { background: var(--surface); color: var(--encre); border-top: 1px solid var(--lignes); }
+.site-footer a { color: var(--encre); }
+.site-footer .footer-bas { color: var(--encre-douce); }
 /* Pied de page resserré (demande de la propriétaire, 18/10/2026 : « trop large ») : liens de
    navigation sur deux colonnes, marges réduites, sur téléphone comme sur ordinateur. */
 .site-footer { padding: 2.2rem 0 1.2rem; }
@@ -75,13 +77,12 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 }
 
 /* ===== Zones sombres (chantier B du cahier « Architecture ») =====
-   Tout le site est clair, sauf les zones posées sur une photo ou une vidéo, l'en-tête, le pied
-   de page, le menu plein écran et l'écran d'introduction. Une zone sombre déclare simplement la
-   classe « contexte-sombre » dans le HTML ; les classes historiques ci-dessous la reçoivent
-   d'office, pour ne rien casser. À l'intérieur, les mêmes variables valent « texte clair ». */
-.contexte-sombre, .hero-v2, .couverture-faisceau, .site-footer, .splash, .menu-overlay,
-.vedette-fullbleed, .qsn-ouverture, .qsn-marques, .mp-affiche, .mp-porte-visuel, .mp-billet, .mpg-photo-actions,
-.principal-photo-card, .compcard-slot {
+   Depuis le 18/10/2026 TOUT le site est clair, y compris l'écran d'introduction, l'en-tête,
+   le menu plein écran, la grande image d'accueil et le pied de page. Restent sombres seulement
+   les petites étiquettes posées directement sur une photo (billets, boutons sur les vignettes,
+   cartes photo de l'espace mannequin). Une zone sombre déclare la classe « contexte-sombre » ;
+   à l'intérieur, les mêmes variables valent « texte clair ». */
+.contexte-sombre, .mp-billet, .mpg-photo-actions, .principal-photo-card, .compcard-slot {
   --fond: var(--sombre);
   --surface: var(--sombre-survol);
   --surface-douce: var(--sombre-actif);
@@ -102,10 +103,22 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   --gris-clair: rgba(255,255,255,0.22);
   color: var(--sombre-encre);
 }
-/* fond sombre plein sous les photos : le texte reste lisible même avant que la photo arrive */
-.qsn-marques { background-color: var(--sombre); }
-.hero-v2 { background-color: #1E1D1C; }
-.hero-v2 h1, .hero-v2 h2, .hero-v2 h3 { color: #fff; }
+/* ===== Ouverture claire : intro, grande image d'accueil, mannequin à la une, menu =====
+   Sur les photos, un voile clair (couleur du fond) monte du bas : le texte foncé reste lisible. */
+.splash, .splash.intro-anime { background: var(--fond) !important; }
+.hero-v2 { background-color: var(--fond); }
+.hero-v2::before { background: linear-gradient(to top, rgba(246,245,243,0.96) 0%, rgba(246,245,243,0.75) 38%, rgba(246,245,243,0.15) 75%, rgba(246,245,243,0) 100%) !important; }
+.hero-v2-bg { filter: grayscale(60%) contrast(1.05) brightness(1.02) !important; }
+.hero-v2 :is(h1, h2, h3, p, .hero-v2-title, .hero-slide-titre, .ma2m-grand) { color: var(--encre); text-shadow: none !important; }
+.vedette-fullbleed { color: var(--encre); }
+.vedette-scrim { background: linear-gradient(to top, rgba(246,245,243,0.97) 0%, rgba(246,245,243,0.8) 34%, rgba(246,245,243,0.2) 62%, rgba(246,245,243,0) 80%) !important; }
+.vedette-contenu h2 { color: var(--encre); text-shadow: none; }
+.vedette-contenu p { color: var(--encre-douce); }
+.vedette-cta { color: var(--encre); }
+.vedette-fullbleed:hover .vedette-cta { border-color: var(--rouge-ma2m); }
+.eyebrow--clair { color: var(--rouge-ma2m-texte); text-shadow: none; }
+html body .menu-overlay { background: var(--fond) !important; }
+.menu-overlay::before { background-image: url("../assets/logo-header-clair.png") !important; }
 
 /* Bandeau cookies : carte blanche */
 .bandeau-cookies {
@@ -158,3 +171,6 @@ input:focus, textarea:focus, select:focus {
 .im-5, .im-18, .im-24 { background: var(--surface); border: 1px solid var(--lignes) !important; border-radius: 12px; }
 .im-10, .im-13 { color: var(--encre) !important; }
 input[type="checkbox"], input[type="radio"] { accent-color: var(--rouge-ma2m); }
+
+/* Menu clair : téléphones du bloc contact en encre (l'Espace mannequin les avait en clair) */
+html body .menu-overlay .menu-contact, html body .menu-overlay .menu-contact a.menu-tel { color: var(--encre); }

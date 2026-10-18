@@ -2925,7 +2925,7 @@ html { scroll-padding-top: 95px; }
   content: "";
   position: absolute; top: 1.55rem; left: 22px;
   width: 140px; height: 30px;
-  background: url("../assets/logo-header.png") no-repeat left center / contain;
+  background: url("../assets/logo-header-clair.png") no-repeat left center / contain;
 }
 /* bouton de fermeture : un rond avec une croix */
 .menu-overlay .close-menu {

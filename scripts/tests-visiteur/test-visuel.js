@@ -4,7 +4,7 @@
 //     peint dessous (norme WCAG AA, scripts/tests-visiteur/lisibilite.js). Vérifié aussi menu
 //     ouvert, bandeau cookies affiché et formulaires envoyés vides (messages d'erreur).
 //  1b. Boutons (BLOQUANT) : chaque bouton suit le modèle rouge unique (boutons.js).
-//  2. Contrôle du contrôle : un texte sombre posé exprès sur le menu sombre DOIT être signalé,
+//  2. Contrôle du contrôle : un texte très pâle posé exprès sur le menu (clair) DOIT être signalé,
 //     sinon le test lui-même est cassé.
 //  3. Captures d'écran (NON bloquant) : rangées dans captures/actuelles ; si des captures de
 //     référence existent (captures/reference, faites avec « node test-visuel.js --reference »),
@@ -119,11 +119,11 @@ async function unePage(b, page, ecran) {
     await p.click('#menuBtn'); await p.waitForTimeout(300); await finAnimations(p);
     const duMenu = (l) => l.filter(x => x.element.includes('menuOverlay'));
     const avant = duMenu(await p.evaluate(verifierLisibilite)).length;
-    await p.evaluate(() => document.querySelectorAll('#menuOverlay .nav-links a').forEach(a => { a.style.setProperty('color', '#222', 'important'); }));
+    await p.evaluate(() => document.querySelectorAll('#menuOverlay .nav-links a').forEach(a => { a.style.setProperty('color', '#e9e7e3', 'important'); }));
     await p.waitForTimeout(100); await finAnimations(p); // les liens changent de couleur en fondu
     const apres = duMenu(await p.evaluate(verifierLisibilite)).length;
-    console.log(apres > 0 ? '✅ erreur faite exprès (texte sombre sur le menu sombre) bien détectée (' + apres + ' textes)' : '❌ erreur faite exprès NON détectée : le contrôle de lisibilité est cassé');
-    if (!apres || avant) problemes.push('contrôle du contrôle : ' + (apres ? avant + ' problème(s) déjà présents sur le menu' : 'texte sombre sur menu sombre non détecté'));
+    console.log(apres > 0 ? '✅ erreur faite exprès (texte pâle sur le menu clair) bien détectée (' + apres + ' textes)' : '❌ erreur faite exprès NON détectée : le contrôle de lisibilité est cassé');
+    if (!apres || avant) problemes.push('contrôle du contrôle : ' + (apres ? avant + ' problème(s) déjà présents sur le menu' : 'texte pâle sur menu clair non détecté'));
     await ctx.close();
   }
 
