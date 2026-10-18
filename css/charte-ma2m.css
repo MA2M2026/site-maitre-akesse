@@ -2,19 +2,10 @@
    Fond clair, rouge #C8102E, noir, police Montserrat, cartes blanches.
    Chargé APRÈS style.css : il redéfinit les couleurs de base (variables) pour que
    tout le site bascule d'un coup, puis corrige les endroits aux couleurs écrites en dur.
-   Une seule copie des couleurs : ne jamais les recopier dans une autre feuille. */
+   Les couleurs elles-mêmes vivent dans css/jetons.css (chargé juste avant) : ne jamais les
+   recopier ici ni dans une autre feuille. */
 
 :root {
-  --fond: #F6F5F3;
-  --surface: #FFFFFF;
-  --encre: #1E1D1C;
-  --encre-douce: #5E5B57;
-  --lignes: #DDDAD5;
-  --rouge-ma2m: #C8102E;
-  --rouge-ma2m-texte: #B00E28;
-  --rouge-ma2m-survol: #A50D26;
-  --focus: 0 0 0 3px rgba(200,16,46,0.35);
-
   /* Anciennes variables rebranchées sur la nouvelle charte */
   --noir: var(--fond);
   --noir-doux: var(--surface);
@@ -33,8 +24,8 @@
   --or: var(--rouge-ma2m);
   --glow-bordeaux: 0 6px 18px rgba(200,16,46,0.22);
 
-  --display: 'Montserrat', system-ui, sans-serif;
-  --texte: 'Montserrat', system-ui, sans-serif;
+  --display: var(--police);
+  --texte: var(--police);
 }
 
 body {

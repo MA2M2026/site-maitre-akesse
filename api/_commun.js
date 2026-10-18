@@ -140,6 +140,8 @@ function compteurTentatives(ip, identifiant, espace, appareil) {
       }
       res.status(401).json({ error: 'refuse', essaisRestants: etat.essais_restants });
     },
+    // Erreur comptée sans répondre (la fonction répond elle-même, avec un message neutre).
+    async compterEchec() { await appeler('connexion_enregistrer_echec'); },
     // Réussite : remet le compteur à zéro.
     async succes() { await appeler('connexion_enregistrer_succes'); }
   };

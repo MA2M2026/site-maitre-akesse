@@ -141,18 +141,68 @@ begin
 end;
 $$;
 
--- L'application déclare l'appareil où elle est installée (liste visible par l'administrateur principal)
+-- L'application déclare l'appareil où elle est installée (liste visible par l'administrateur
+-- principal). Nouvel appareil : l'application prévient la personne et l'administrateur principal.
 create or replace function portail_enregistrer_appareil(p_appareil text, p_libelle text)
-returns boolean language plpgsql security definer set search_path = public as $$
+returns json language plpgsql security definer set search_path = public as $$
+declare
+  nouveau boolean;
 begin
   if not exists (select 1 from staff_profiles where user_id = auth.uid() and actif) then
-    return false;
+    return json_build_object('ok', false);
   end if;
+  nouveau := not exists (select 1 from staff_devices where user_id = auth.uid() and appareil = left(p_appareil, 64));
   insert into staff_devices (user_id, appareil, libelle) values (auth.uid(), left(p_appareil, 64), left(p_libelle, 120))
   on conflict (user_id, appareil) do update set derniere_activite = now(), libelle = excluded.libelle;
-  return not exists (select 1 from staff_devices where user_id = auth.uid() and appareil = left(p_appareil, 64) and revoque);
+  if nouveau then
+    perform journaliser('Connexion depuis un nouvel appareil', 'staff_devices', left(p_appareil, 64), null, json_build_object('appareil', p_libelle)::jsonb);
+  end if;
+  return json_build_object(
+    'ok', not exists (select 1 from staff_devices where user_id = auth.uid() and appareil = left(p_appareil, 64) and revoque),
+    'nouveau', nouveau and exists (select 1 from staff_devices where user_id = auth.uid() and appareil <> left(p_appareil, 64)),
+    'moi', (select json_build_object('nom', nom, 'email', email) from staff_profiles where user_id = auth.uid()),
+    'principal', case when nouveau then (select email from staff_profiles where role = 'principal') end);
 end;
 $$;
+
+-- Codes de secours (8 par personne, hachés) et outils du serveur du site
+create table if not exists staff_backup_codes (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references staff_profiles(user_id) on delete cascade,
+  code_hache text not null,
+  utilise_le timestamptz,
+  cree_le timestamptz not null default now()
+);
+alter table staff_backup_codes enable row level security;
+revoke all on staff_backup_codes from anon, authenticated;
+
+create or replace function portail_codes_secours_creer(p_user uuid, p_haches text[])
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not est_ecriture_serveur() then raise exception 'Accès refusé.'; end if;
+  delete from staff_backup_codes where user_id = p_user;
+  insert into staff_backup_codes (user_id, code_hache) select p_user, h from unnest(p_haches) h;
+  perform journaliser('Codes de secours créés', 'staff_backup_codes', p_user::text, null, null);
+end;
+$$;
+create or replace function portail_code_secours_utiliser(p_user uuid, p_hache text)
+returns boolean language plpgsql security definer set search_path = public as $$
+declare
+  cid uuid;
+begin
+  if not est_ecriture_serveur() then raise exception 'Accès refusé.'; end if;
+  select id into cid from staff_backup_codes where user_id = p_user and code_hache = p_hache and utilise_le is null for update;
+  if cid is null then return false; end if;
+  update staff_backup_codes set utilise_le = now() where id = cid;
+  perform journaliser('Code de secours utilisé', 'staff_backup_codes', p_user::text, null, null);
+  return true;
+end;
+$$;
+create or replace function portail_utilisateur_par_email(p_email text)
+returns uuid language sql stable security definer set search_path = public, auth as $$
+  select id from auth.users where lower(email) = lower(trim(p_email)) and est_ecriture_serveur() limit 1;
+$$;
+revoke all on function portail_codes_secours_creer(uuid, text[]), portail_code_secours_utiliser(uuid, text), portail_utilisateur_par_email(text) from public, anon, authenticated;
 grant execute on function portail_enregistrer_appareil(text, text) to authenticated;
 
 -- Ce que l'application demande à l'ouverture : mon rôle, mes espaces, mon nom
@@ -818,6 +868,31 @@ create trigger factures_figees before update on invoices for each row execute fu
 drop trigger if exists lignes_figees on invoice_lines;
 create trigger lignes_figees before insert or update or delete on invoice_lines for each row execute function compta_lignes_figees();
 
+-- Rôles, accès, délégations, appareils : changement par l'administrateur principal avec un
+-- code récent ; le compte principal ne se désactive pas et ne change pas de rôle.
+create or replace function staff_garde_fous()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if est_ecriture_serveur() then return coalesce(NEW, OLD); end if;
+  perform portail_exiger_auth_recente();
+  if TG_TABLE_NAME = 'staff_profiles' then
+    if TG_OP = 'DELETE' and OLD.role = 'principal' then raise exception 'Le compte principal n''est pas supprimable.'; end if;
+    if TG_OP = 'UPDATE' and OLD.role = 'principal' and (NEW.role <> 'principal' or not NEW.actif) then
+      raise exception 'Le compte principal ne se désactive pas et ne change pas de rôle.';
+    end if;
+    if TG_OP = 'UPDATE' and NEW.role = 'principal' and OLD.role <> 'principal' then raise exception 'Un seul administrateur principal.'; end if;
+  end if;
+  return coalesce(NEW, OLD);
+end;
+$$;
+drop trigger if exists staff_garde_fous on staff_profiles;
+create trigger staff_garde_fous before insert or update or delete on staff_profiles for each row execute function staff_garde_fous();
+drop trigger if exists grants_garde_fous on staff_module_grants;
+create trigger grants_garde_fous before insert or update or delete on staff_module_grants for each row execute function staff_garde_fous();
+drop trigger if exists appareils_garde_fous on staff_devices;
+create trigger appareils_garde_fous before update on staff_devices for each row
+  when (OLD.revoque is distinct from NEW.revoque) execute function staff_garde_fous();
+
 -- Mensualité : seul l'administrateur principal la change (historique gardé) ; sortie :
 -- proposée par l'encaissement, décidée par l'administrateur principal (code récent).
 create or replace function registre_garde_fous()
@@ -1057,6 +1132,55 @@ begin
 end;
 $$;
 grant execute on function mannequin_declarer_paiement(uuid, text) to authenticated;
+
+-- Message préparé à la demande de l'agent (relance manuelle d'une échéance)
+create or replace function portail_message_echeance(p_echeance uuid, p_modele text)
+returns int language plpgsql security definer set search_path = public as $$
+begin
+  if not portail_peut('paiements') then raise exception 'Accès refusé.'; end if;
+  if not exists (select 1 from message_templates where code = p_modele) then raise exception 'Modèle inconnu.'; end if;
+  return portail_preparer_message(p_echeance, p_modele);
+end;
+$$;
+grant execute on function portail_message_echeance(uuid, text) to authenticated;
+
+-- Réglages des paiements : administrateur principal, avec un code récent
+create or replace function portail_modifier_reglages(p_reglages jsonb)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not portail_est_principal() then raise exception 'Réservé à l''administrateur principal.'; end if;
+  perform portail_exiger_auth_recente();
+  update portail_reglages set
+    droit_inscription = coalesce((p_reglages ->> 'droit_inscription')::int, droit_inscription),
+    premier_mois = coalesce((p_reglages ->> 'premier_mois')::int, premier_mois),
+    mensualite_standard = coalesce((p_reglages ->> 'mensualite_standard')::int, mensualite_standard),
+    mensualite_haute = coalesce((p_reglages ->> 'mensualite_haute')::int, mensualite_haute),
+    jour_limite = coalesce((p_reglages ->> 'jour_limite')::int, jour_limite),
+    jour_relance = coalesce((p_reglages ->> 'jour_relance')::int, jour_relance),
+    jour_derniere_relance = coalesce((p_reglages ->> 'jour_derniere_relance')::int, jour_derniere_relance),
+    age_majorite = coalesce((p_reglages ->> 'age_majorite')::int, age_majorite),
+    mois_impayes_alerte = coalesce((p_reglages ->> 'mois_impayes_alerte')::int, mois_impayes_alerte),
+    seuil_double_validation = coalesce((p_reglages ->> 'seuil_double_validation')::int, seuil_double_validation),
+    validite_code_jours = coalesce((p_reglages ->> 'validite_code_jours')::int, validite_code_jours),
+    essais_code = coalesce((p_reglages ->> 'essais_code')::int, essais_code),
+    heures_alerte_rapprochement = coalesce((p_reglages ->> 'heures_alerte_rapprochement')::int, heures_alerte_rapprochement),
+    modifie_le = now();
+end;
+$$;
+grant execute on function portail_modifier_reglages(jsonb) to authenticated;
+
+-- Liens de paiement : toute modification exige un code récent (action sensible)
+create or replace function wave_liens_sensible()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if not est_ecriture_serveur() then
+    perform portail_exiger_auth_recente();
+  end if;
+  return coalesce(NEW, OLD);
+end;
+$$;
+drop trigger if exists wave_liens_sensible on wave_links;
+create trigger wave_liens_sensible before insert or update or delete on wave_links for each row execute function wave_liens_sensible();
 
 -- Création des échéances du mois (le 1er à 06:00, Abidjan) : rejouable sans doublon
 create or replace function portail_creer_echeances(p_mois date)
@@ -1304,6 +1428,20 @@ begin
 end;
 $$;
 
+-- Statut d'une candidature (espaces 1 et 2) ; « inscrite » est posé par la validation du paiement seulement
+create or replace function portail_statut_candidature(p_id uuid, p_statut text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not (portail_peut('site') or portail_peut('paiements')) then raise exception 'Accès refusé.'; end if;
+  if p_statut not in ('nouvelle', 'vue', 'en étude', 'en attente', 'retenue', 'refusée') then raise exception 'Statut inconnu.'; end if;
+  update casting_applications set status = p_statut where id = p_id and status <> 'inscrite';
+  if p_statut = 'refusée' then
+    update registration_codes set statut = 'annule' where candidature_id = p_id and statut in ('genere', 'bloque');
+  end if;
+end;
+$$;
+grant execute on function portail_statut_candidature(uuid, text) to authenticated;
+
 -- Contrôle du code (appelé par le serveur du site, qui limite aussi les essais par adresse)
 -- Message neutre : il ne dit jamais si c'est le code ou la date qui est faux.
 create or replace function verifier_code_inscription(p_code text, p_naissance date)
@@ -1513,8 +1651,33 @@ create or replace view v_site_candidatures with (security_invoker = false) as
   from casting_applications c
   where portail_peut('site') or portail_peut('paiements');
 
-revoke all on v_site_dossiers, v_compta_encaissements_agreges, v_site_candidatures from anon;
-grant select on v_site_dossiers, v_compta_encaissements_agreges, v_site_candidatures to authenticated;
+-- Mannequins publiés ou non, pour l'espace 1 : sans téléphone ni e-mail (sauf droit accordé)
+create or replace view v_site_mannequins with (security_invoker = false) as
+  select p.id, p.full_name, p.category, p.city, p.height_cm, p.published, p.desactive, p.en_attente_validation,
+         p.date_naissance, p.slug, p.created_at,
+         case when portail_est_principal() or portail_peut('contacts_prives') then p.phone end as phone,
+         case when portail_est_principal() or portail_peut('contacts_prives') then p.contact_email end as contact_email,
+         (select count(*) from model_photos ph where ph.model_id = p.id) as photos
+  from model_profiles p
+  where portail_peut('site');
+
+revoke all on v_site_dossiers, v_compta_encaissements_agreges, v_site_candidatures, v_site_mannequins from anon;
+grant select on v_site_dossiers, v_compta_encaissements_agreges, v_site_candidatures, v_site_mannequins to authenticated;
+
+-- Les comptes « administrateur du site » et « comptable » ne lisent jamais directement les
+-- anciennes tables qui contiennent paiements ou contacts privés (même s'ils figurent dans
+-- « admins » pour gérer le contenu du site) : règles RESTRICTIVES, qui s'ajoutent aux autres.
+create or replace function portail_sans_donnees_privees()
+returns boolean language sql stable security definer set search_path = public as $$
+  select not exists (select 1 from staff_profiles where user_id = auth.uid() and role in ('site', 'compta'))
+      or portail_peut('contacts_prives');
+$$;
+drop policy if exists portail_restreint on inscriptions_mannequins;
+create policy portail_restreint on inscriptions_mannequins as restrictive for all using (portail_sans_donnees_privees());
+drop policy if exists portail_restreint on contacts_parents;
+create policy portail_restreint on contacts_parents as restrictive for all using (portail_sans_donnees_privees());
+drop policy if exists portail_restreint on casting_applications;
+create policy portail_restreint on casting_applications as restrictive for select using (portail_sans_donnees_privees() or auth.uid() is null);
 
 -- Stockage privé : preuves de paiement et pièces comptables (liens signés de courte durée)
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)

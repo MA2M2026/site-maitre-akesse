@@ -1,12 +1,37 @@
 // Faux serveur Supabase / EmailJS pour tester le site comme un visiteur, SANS toucher à la vraie base.
 const SUPA = 'https://dfhghgmwmxiguhtxtsle.supabase.co';
+// Portail d'administration (donnees.portail = { aal, facteurs }) : double authentification imitée.
+// Le code « 000000 » est refusé ; tout autre code à 6 chiffres est accepté.
 function brancher(page, donnees, journal) {
-  const user = { id: 'admin-1', aud: 'authenticated', role: 'authenticated', email: 'admin@test.ci' };
+  const portail = donnees.portail || null;
+  const user = Object.assign({ id: 'admin-1', aud: 'authenticated', role: 'authenticated', email: 'admin@test.ci' },
+    portail ? { factors: portail.facteurs ? [{ id: 'f1', factor_type: 'totp', status: 'verified', friendly_name: 'Portail' }] : [], user_metadata: portail.meta || {} } : {});
+  const b64j = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
+  const jetonPortail = (aal) => b64j({ alg: 'HS256', typ: 'JWT' }) + '.' + b64j({ sub: 'admin-1', role: 'authenticated', aud: 'authenticated', email: 'admin@test.ci',
+    exp: Math.floor(Date.now() / 1000) + 36000, aal, amr: aal === 'aal2' ? [{ method: 'password', timestamp: Math.floor(Date.now() / 1000) }, { method: 'totp', timestamp: Math.floor(Date.now() / 1000) }] : [{ method: 'password', timestamp: Math.floor(Date.now() / 1000) }] }) + '.c2lnbmF0dXJl';
+  const sessionPortail = (aal) => ({ access_token: jetonPortail(aal), token_type: 'bearer', expires_in: 36000, expires_at: Math.floor(Date.now() / 1000) + 36000, refresh_token: 'faux-' + aal, user });
   return page.route(/^https?:\/\/(?!127\.0\.0\.1)(?!dfhghgmwmxiguhtxtsle)/, r => r.abort()).then(() => Promise.all([
     page.route(SUPA + '/**', async (route) => {
       const req = route.request(), url = new URL(req.url()), m = req.method();
       const objet = /vnd\.pgrst\.object/.test(req.headers()['accept'] || '');
       const json = (body, status = 200, extra = {}) => route.fulfill({ status, contentType: 'application/json', headers: { 'content-range': '0-0/' + (Array.isArray(body) ? body.length : 1), ...extra }, body: JSON.stringify(body) });
+      if (portail && url.pathname.startsWith('/auth/v1/token')) {
+        const corps = JSON.parse(req.postData() || '{}');
+        return json(sessionPortail(String(corps.refresh_token || '').includes('aal2') ? 'aal2' : (portail.aal || 'aal1')));
+      }
+      if (portail && url.pathname === '/auth/v1/factors' && m === 'POST') {
+        journal.push(['MFA', 'inscription']);
+        return json({ id: 'f-nouveau', type: 'totp', friendly_name: 'Portail', totp: { qr_code: 'data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg"/>', secret: 'SECRETESSAI', uri: 'otpauth://totp/essai' } });
+      }
+      if (portail && /\/auth\/v1\/factors\/[^/]+\/challenge$/.test(url.pathname)) return json({ id: 'c1', expires_at: Math.floor(Date.now() / 1000) + 300 });
+      if (portail && /\/auth\/v1\/factors\/[^/]+\/verify$/.test(url.pathname)) {
+        const corps = JSON.parse(req.postData() || '{}');
+        journal.push(['MFA', 'code', corps.code]);
+        if (corps.code === '000000') return json({ code: 'mfa_verification_failed', msg: 'Invalid TOTP code entered' }, 422);
+        user.factors = [{ id: 'f1', factor_type: 'totp', status: 'verified', friendly_name: 'Portail' }];
+        return json(sessionPortail('aal2'));
+      }
+      if (portail && /\/auth\/v1\/factors\/[^/]+$/.test(url.pathname) && m === 'DELETE') return json({ id: 'f' });
       if (url.pathname.startsWith('/auth/v1/token')) { const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
         const jeton = b64({ alg: 'HS256', typ: 'JWT' }) + '.' + b64({ sub: 'admin-1', role: 'authenticated', aud: 'authenticated', exp: Math.floor(Date.now() / 1000) + 36000 }) + '.c2lnbmF0dXJl';
         return json({ access_token: jeton, token_type: 'bearer', expires_in: 36000, expires_at: Math.floor(Date.now() / 1000) + 36000, refresh_token: 'faux', user }); }
@@ -15,7 +40,9 @@ function brancher(page, donnees, journal) {
       if (url.pathname.startsWith('/rest/v1/rpc/')) {
         const nom = url.pathname.split('/').pop();
         journal.push(['rpc', nom, req.postData()]);
-        return json(donnees.rpc && nom in donnees.rpc ? donnees.rpc[nom] : []);
+        const valeur = donnees.rpc && nom in donnees.rpc ? donnees.rpc[nom] : [];
+        if (valeur && valeur.erreur) return json({ message: valeur.erreur, code: 'P0001' }, 400);
+        return json(typeof valeur === 'function' ? valeur(JSON.parse(req.postData() || '{}')) : valeur);
       }
       if (url.pathname.startsWith('/rest/v1/')) {
         const table = url.pathname.split('/')[3];
@@ -23,6 +50,11 @@ function brancher(page, donnees, journal) {
           journal.push([m, table, url.search, req.postData()]);
           // insert(…).select().single() : la vraie base renvoie la ligne créée
           if (m === 'POST' && objet) { const cree = JSON.parse(req.postData() || '{}'); return json({ id: 'nouveau-' + journal.length, ...(Array.isArray(cree) ? cree[0] : cree) }, 201); }
+          if (m === 'POST' && /return=representation/.test(req.headers()['prefer'] || '')) {
+            const cree = [].concat(JSON.parse(req.postData() || '{}')).map((l, i) => ({ id: 'nouveau-' + journal.length + '-' + i, ...l }));
+            if (donnees.memoriser) (donnees.tables[table] = donnees.tables[table] || []).push(...cree);
+            return json(cree, 201);
+          }
           if (m === 'PATCH') { const maj = JSON.parse(req.postData() || '{}'); (donnees.tables[table] || []).forEach(l => { let ok = true; for (const [k, v] of url.searchParams) if (/^eq\./.test(v) && String(l[k]) !== v.slice(3)) ok = false; if (ok) Object.assign(l, maj); }); }
           return route.fulfill({ status: 204, body: '' });
         }
@@ -38,7 +70,9 @@ function brancher(page, donnees, journal) {
       journal.push(['API', u.pathname, route.request().postData()]);
       const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
       const jeton = b64({ alg: 'HS256', typ: 'JWT' }) + '.' + b64({ sub: 'admin-1', role: 'authenticated', aud: 'authenticated', exp: Math.floor(Date.now() / 1000) + 36000, email: 'admin@test.ci' }) + '.c2lnbmF0dXJl';
-      const rep = (donnees.api && donnees.api[u.pathname]) || (u.pathname === '/api/connexion-protegee' ? { access_token: jeton, refresh_token: 'faux' } : { ok: true });
+      const repPortail = portail && u.pathname === '/api/connexion-protegee' ? (() => { const x = sessionPortail(portail.aal || 'aal1'); return { access_token: x.access_token, refresh_token: x.refresh_token }; })() : null;
+      let rep = (donnees.api && donnees.api[u.pathname]) || repPortail || (u.pathname === '/api/connexion-protegee' ? { access_token: jeton, refresh_token: 'faux' } : { ok: true });
+      if (typeof rep === 'function') rep = rep(JSON.parse(route.request().postData() || '{}'));
       route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(rep) });
     }),
     page.route(/api\.emailjs\.com/, async (route) => { journal.push(['EMAIL', route.request().postData()]); route.fulfill({ status: 200, body: 'OK' }); })
