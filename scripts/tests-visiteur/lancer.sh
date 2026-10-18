@@ -18,7 +18,7 @@ export NODE_PATH="${NODE_PATH:-$(npm root -g)}"
 # Scripts et styles appelés avec leur dernier numéro de version (?v=), sinon les visiteurs
 # gardent l'ancienne version en mémoire (14/10/2026, rapidité)
 echo "########## versions des fichiers"; python3 ../versionner.py --verifier
-for t in test-visiteur.js test-inscription.js test-contact-recruteur.js test-admin.js test-pages-publiques.js test-espace-experiences.js test-boutique.js test-publications.js test-journal.js test-tri-photos.js test-video-accueil.js test-espace-enregistrement.js test-photos-webp.js test-photos-directes.js test-tableau-protege.js test-note-integration.js test-code-permanent.js test-journal-fichier.js test-affichage-stable.js test-apercus.js test-middleware-apercus.mjs test-recherche-book.js; do
+for t in test-visiteur.js test-inscription.js test-inscription-simplifiee.js test-contact-recruteur.js test-admin.js test-pages-publiques.js test-espace-experiences.js test-boutique.js test-publications.js test-journal.js test-tri-photos.js test-video-accueil.js test-espace-enregistrement.js test-photos-webp.js test-photos-directes.js test-tableau-protege.js test-note-integration.js test-code-permanent.js test-journal-fichier.js test-affichage-stable.js test-apercus.js test-middleware-apercus.mjs test-recherche-book.js; do
   echo "########## $t"
   timeout 400 node "$t"
 done

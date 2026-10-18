@@ -1,0 +1,179 @@
+/* ===== Nouvelle charte graphique Maître Akesse (refonte 2026) =====
+   Fond clair, rouge #C8102E, noir, police Montserrat, cartes blanches.
+   Chargé APRÈS style.css : il redéfinit les couleurs de base (variables) pour que
+   tout le site bascule d'un coup, puis corrige les endroits aux couleurs écrites en dur.
+   Une seule copie des couleurs : ne jamais les recopier dans une autre feuille. */
+
+:root {
+  --fond: #F6F5F3;
+  --surface: #FFFFFF;
+  --encre: #1E1D1C;
+  --encre-douce: #5E5B57;
+  --lignes: #DDDAD5;
+  --rouge-ma2m: #C8102E;
+  --rouge-ma2m-texte: #B00E28;
+  --rouge-ma2m-survol: #A50D26;
+  --focus: 0 0 0 3px rgba(200,16,46,0.35);
+
+  /* Anciennes variables rebranchées sur la nouvelle charte */
+  --noir: var(--fond);
+  --noir-doux: var(--surface);
+  --anthracite: var(--surface);
+  --noir-brillant: var(--surface);
+  --texte-corps: var(--encre);
+  --texte-doux: var(--encre-douce);
+  --titre-clair: var(--encre);
+  --bordeaux: var(--rouge-ma2m);
+  --bordeaux-vif: var(--rouge-ma2m-survol);
+  --bordeaux-clair: var(--rouge-ma2m-texte);
+  --bordeaux-noir: #f3d9dd;
+  --rouge: var(--rouge-ma2m-texte);
+  --gris: var(--encre-douce);
+  --gris-clair: var(--lignes);
+  --or: var(--rouge-ma2m);
+  --glow-bordeaux: 0 6px 18px rgba(200,16,46,0.22);
+
+  --display: 'Montserrat', system-ui, sans-serif;
+  --texte: 'Montserrat', system-ui, sans-serif;
+}
+
+body {
+  background-color: var(--fond);
+  background-image: none;
+  color: var(--encre);
+  font-family: var(--texte);
+  font-weight: 400;
+}
+
+h1, h2, h3 { font-family: var(--display); font-weight: 700; color: var(--encre); letter-spacing: -0.01em; }
+
+a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+
+/* Cartes */
+.carte, .card { background: var(--surface); border: 1px solid var(--lignes); border-radius: 14px; }
+
+/* En-tête, bande défilante, bandeau cookies, pied de page */
+.site-header-v2 { background: #1E1D1C !important; border-bottom: 0; color: #fff; }
+.site-header-v2 a, .site-header-v2 button { color: #fff; }
+#marqueeBande { background: var(--rouge-ma2m) !important; color: #fff; }
+.site-footer { background: #1E1D1C; color: #f4f1ec; }
+.site-footer a { color: #f4f1ec; }
+
+/* Zones qui restent sombres (photo/vidéo, pied de page) : on remet les variables
+   « texte clair sur fond noir » à l'intérieur, tout le reste du site est clair. */
+.hero-v2, .couverture-faisceau, .site-footer, .splash, .menu-overlay {
+  --noir: #060606;
+  --texte-corps: #f1ece6;
+  --texte-doux: #cfc8c1;
+  --titre-clair: #ffffff;
+  --encre: #ffffff;
+  --bordeaux-clair: #ff6b80;
+  --gris-clair: rgba(255,255,255,0.22);
+  color: #f1ece6;
+}
+.hero-v2 { background-color: #1E1D1C; }
+.hero-v2 h1, .hero-v2 h2, .hero-v2 h3 { color: #fff; }
+
+/* Bandeau cookies : carte blanche */
+.bandeau-cookies {
+  background: var(--surface); border: 1px solid var(--lignes); border-radius: 14px;
+  box-shadow: 0 12px 32px -12px rgba(30,29,28,0.35);
+}
+.bandeau-cookies p { color: var(--encre); }
+.bandeau-cookies a { color: var(--rouge-ma2m-texte); }
+
+/* ===== UN SEUL BOUTON pour tout le site (demande de la propriétaire, 18/10/2026) =====
+   Rouge #C8102E, texte blanc Montserrat 600, coins arrondis, ombre rouge douce.
+   Tous les boutons d'action, sans variante : action principale, « Refuser », filtres,
+   Menu, EN/FR, Admin, Marketplace, « Passer l'intro », etc.
+   Remplace l'ancien système de « touches » sombres et rondes (css/style.css, !important).
+   Exceptions volontaires : les logos de réseaux et le bouton WhatsApp flottant (couleurs de marque). */
+.btn, .btn--principal, .btn-mini-admin, .filtre-btn, .fiche-partage-btn, .journal-btn,
+.mp-panier-btn, .mpg-bouton-danger, .mp-corps .btn--principal, .lang-switch,
+.header-marketplace-lien, .header-admin-lien, .menu-trigger, .splash-passer, .bouton,
+.close-menu, .entrer-fleche, .retour-haut, .video-accueil-son {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem;
+  min-height: 44px; padding: 0.7rem 1.6rem; box-sizing: border-box;
+  background: var(--rouge-ma2m) !important;
+  border: 1px solid var(--rouge-ma2m) !important;
+  color: #fff !important;
+  border-radius: 10px !important;
+  box-shadow: 0 10px 22px -10px rgba(200,16,46,0.55) !important;
+  font-family: var(--texte); font-size: 0.95rem; font-weight: 600; letter-spacing: 0.01em; line-height: 1.2;
+  text-transform: none !important; text-decoration: none; white-space: nowrap; cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+@media (hover: hover) {
+  .btn:hover, .btn--principal:hover, .btn-mini-admin:hover, .filtre-btn:hover, .fiche-partage-btn:hover,
+  .journal-btn:hover, .mp-panier-btn:hover, .mpg-bouton-danger:hover, .mp-corps .btn--principal:hover,
+  .lang-switch:hover, .header-marketplace-lien:hover, .header-admin-lien:hover, .menu-trigger:hover,
+  .splash-passer:hover, .bouton:hover, .close-menu:hover, .entrer-fleche:hover, .retour-haut:hover, .video-accueil-son:hover {
+    background: var(--rouge-ma2m-survol) !important; border-color: var(--rouge-ma2m-survol) !important;
+    color: #fff !important; transform: translateY(-1px);
+    box-shadow: 0 14px 26px -10px rgba(200,16,46,0.65) !important;
+  }
+}
+.btn:active, .btn--principal:active, .btn-mini-admin:active, .filtre-btn:active, .fiche-partage-btn:active,
+.journal-btn:active, .mp-panier-btn:active, .mpg-bouton-danger:active, .lang-switch:active,
+.header-marketplace-lien:active, .header-admin-lien:active, .menu-trigger:active, .splash-passer:active,
+.bouton:active, .close-menu:active, .entrer-fleche:active, .retour-haut:active, .video-accueil-son:active, .touche-appuyee {
+  background: var(--rouge-ma2m-survol) !important; transform: translateY(1px) !important;
+  box-shadow: 0 4px 10px -6px rgba(200,16,46,0.6) !important;
+}
+.btn:disabled, .btn-mini-admin:disabled, .filtre-btn:disabled, .bouton:disabled { opacity: 0.45; cursor: not-allowed; transform: none !important; }
+.filtre-btn.actif { background: var(--rouge-ma2m-survol) !important; box-shadow: 0 0 0 3px rgba(200,16,46,0.3) !important; }
+
+/* Boutons ronds à icône seule : même rouge, forme ronde */
+.close-menu, .entrer-fleche, .retour-haut, .video-accueil-son { border-radius: 999px !important; padding: 0; min-width: 44px; }
+.video-accueil-son { padding: 0 1rem; }
+
+/* Boutons du haut (Menu, EN/FR, Admin, Marketplace) : même bloc, un peu plus compact */
+.header-v2-droite { gap: 0.6rem; }
+.site-header-v2 .lang-switch, .site-header-v2 .menu-trigger { min-height: 40px; padding: 0 1.1rem; font-size: 0.85rem; }
+.menu-trigger .dots { flex-direction: row; gap: 3px; }
+@media (max-width: 480px) {
+  .header-v2-droite { gap: 0.4rem; }
+  .site-header-v2 .lang-switch, .site-header-v2 .menu-trigger { padding: 0 0.8rem; font-size: 0.8rem; }
+}
+@media (max-width: 480px) { .btn, .btn--principal { white-space: normal; } }
+
+/* ===== Formulaires : champs blancs, trait fin, coins arrondis (inscription, contact, espace…) ===== */
+.form-champ input, .form-champ textarea, .form-champ select,
+input[type="text"], input[type="email"], input[type="tel"], input[type="password"], input[type="date"],
+input[type="number"], input[type="search"], textarea, select {
+  background: var(--surface) !important;
+  color: var(--encre) !important;
+  border: 1px solid var(--lignes) !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+  font-family: var(--texte);
+  min-height: 44px;
+}
+.form-champ input:focus, .form-champ textarea:focus, .form-champ select:focus,
+input:focus, textarea:focus, select:focus {
+  border-color: var(--rouge-ma2m) !important;
+  box-shadow: var(--focus) !important;
+  outline: none;
+}
+.form-champ input::placeholder, .form-champ textarea::placeholder { color: var(--encre-douce); opacity: 0.75; }
+.form-champ select option { background: var(--surface); color: var(--encre); }
+.form-champ label { color: var(--encre-douce); font-weight: 600; }
+
+/* Bouton « Choisir un fichier » du navigateur : même bouton rouge */
+input[type="file"] { padding: 0.35rem; }
+input[type="file"]::file-selector-button {
+  background: var(--rouge-ma2m); color: #fff; border: 0; border-radius: 8px;
+  padding: 0.6rem 1.1rem; margin-right: 0.8rem; font-family: var(--texte); font-weight: 600; cursor: pointer;
+}
+input[type="file"]::file-selector-button:hover { background: var(--rouge-ma2m-survol); }
+
+/* Encadrés d'information de la page inscription : cartes blanches lisibles */
+.im-9 { background: var(--surface) !important; border: 1px solid var(--lignes) !important; border-radius: 12px; }
+.im-9 a { color: var(--rouge-ma2m-texte) !important; }
+.im-5, .im-18, .im-24 { background: var(--surface); border: 1px solid var(--lignes) !important; border-radius: 12px; }
+.im-10, .im-13 { color: var(--encre) !important; }
+input[type="checkbox"], input[type="radio"] { accent-color: var(--rouge-ma2m); }
