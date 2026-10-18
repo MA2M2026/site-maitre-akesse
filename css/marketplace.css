@@ -26,7 +26,7 @@
 /* ---------- Barre de la boutique (sous l'en-tête du site) ---------- */
 .mp-nav {
   position: sticky; top: var(--mp-haut-entete, 84px); z-index: 300;
-  background: rgba(6,5,4,0.9); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  background: color-mix(in srgb, var(--fond) 92%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--gris-clair);
 }
 .mp-nav-inner { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem 1.2rem; flex-wrap: wrap; padding-top: 0.8rem; padding-bottom: 0.8rem; }
@@ -256,12 +256,12 @@
    ========================================================================== */
 .mp-corps {
   --or: var(--bordeaux-clair);            /* aucun doré dans la boutique */
-  --mp-filet: rgba(255,255,255,0.07);
+  --mp-filet: var(--lignes);
   --mp-rouge-lumiere: rgba(213,84,104,0.9);
-  background-color: #040303;
-  background-image:
-    linear-gradient(180deg, rgba(255,255,255,0.028) 0%, rgba(255,255,255,0) 22%),
-    radial-gradient(90% 60% at 50% 0%, rgba(255,255,255,0.03) 0%, rgba(4,4,4,0) 70%);
+  /* Refonte 2026 (cahier v2.3, section 17) : la boutique suit la charte claire du site ;
+     seules l'affiche d'ouverture et les billets restent des zones sombres (voir charte-ma2m.css). */
+  background-color: var(--fond);
+  background-image: none;
 }
 .mp-corps h1, .mp-corps h2, .mp-corps h3 { font-weight: 400; letter-spacing: 0.06em; }
 
@@ -382,11 +382,11 @@ a:hover > .mp-fleche, button:hover > .mp-fleche, .mp-carte:hover .mp-fleche, .mp
 }
 
 /* ---------- Bandeau défilant ---------- */
-.mp-bande { border-top: 1px solid rgba(255,255,255,0.08); }
+.mp-bande { border-top: 1px solid var(--lignes); }
 .mp-bande .marquee-piste { animation-duration: 36s; }
 
 /* ---------- Univers (catégories) ---------- */
-.mp-univers { background: #030202; border-bottom: 1px solid var(--mp-filet); }
+.mp-univers { background: var(--surface); border-bottom: 1px solid var(--mp-filet); }
 .mp-univers-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); }
 .mp-univers-carte { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 1.1rem; align-items: center; padding: 1.8rem clamp(0.4rem, 2vw, 1.4rem); border-right: 1px solid var(--mp-filet); color: var(--texte-corps); }
 .mp-univers-carte:last-child { border-right: 0; }
@@ -445,7 +445,7 @@ a:hover > .mp-fleche, button:hover > .mp-fleche, .mp-carte:hover .mp-fleche, .mp
 .mp-apparait.mp-vu { opacity: 1; transform: none; }
 
 /* ---------- Mot de la Maison ---------- */
-.mp-manifeste { padding: clamp(4rem, 10vw, 8rem) 0; text-align: center; background: radial-gradient(60% 80% at 50% 50%, rgba(122,18,32,0.18) 0%, rgba(6,5,4,0) 70%); border-top: 1px solid var(--mp-filet); }
+.mp-manifeste { padding: clamp(4rem, 10vw, 8rem) 0; text-align: center; background: var(--surface-douce); border-top: 1px solid var(--mp-filet); }
 .mp-manifeste blockquote { margin: 1.6rem auto 1.2rem; max-width: 22ch; font-family: var(--display); font-style: italic; font-weight: 400; font-size: clamp(1.8rem, 4.6vw, 3.4rem); line-height: 1.2; color: var(--titre-clair); text-wrap: balance; }
 .mp-manifeste cite { font-style: normal; font-size: 0.64rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--bordeaux-clair); }
 .mp-ornement { display: flex; align-items: center; justify-content: center; gap: 0.9rem; }
@@ -494,7 +494,7 @@ a:hover > .mp-fleche, button:hover > .mp-fleche, .mp-carte:hover .mp-fleche, .mp
 .mp-portes { padding: clamp(3.5rem, 8vw, 6rem) 0; border-bottom: 1px solid var(--mp-filet); scroll-margin-top: calc(var(--mp-haut-entete, 84px) + 50px); }
 .mp-portes-tete { margin-bottom: 2.2rem; }
 .mp-portes-grille { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(0.8rem, 2vw, 1.4rem); }
-.mp-porte { position: relative; display: grid; grid-template-rows: auto 1fr; color: var(--texte-corps); border: 1px solid var(--mp-filet); background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0)); transition: border-color 0.35s ease, transform 0.5s var(--transition-douce); }
+.mp-porte { position: relative; display: grid; grid-template-rows: auto 1fr; color: var(--texte-corps); border: 1px solid var(--mp-filet); background: var(--surface); transition: border-color 0.35s ease, transform 0.5s var(--transition-douce); }
 .mp-porte:hover { border-color: rgba(213,84,104,0.55); transform: translateY(-4px); }
 .mp-porte-visuel { position: relative; aspect-ratio: 4 / 3; overflow: hidden; background: radial-gradient(60% 70% at 50% 100%, rgba(122,18,32,0.35), rgba(4,3,3,0) 70%), #070505; }
 .mp-porte-visuel img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.55; transition: opacity 0.5s ease, transform 1.2s var(--transition-douce); }
@@ -543,7 +543,7 @@ a:hover > .mp-fleche, button:hover > .mp-fleche, .mp-carte:hover .mp-fleche, .mp
 .mp-case-cgv input { width: 1.15rem; height: 1.15rem; margin-top: 0.15rem; accent-color: var(--bordeaux-clair); flex: none; }
 .mp-case-cgv a { color: var(--bordeaux-clair); text-decoration: underline; text-underline-offset: 3px; }
 .mp-corps .mp-bouton-large { width: 100%; padding: 0.85rem 1.4rem; margin-top: 0.6rem; }
-.mp-recap { position: sticky; top: calc(var(--mp-haut-entete, 84px) + 80px); border: 1px solid var(--mp-filet); background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.01)); padding: clamp(1.1rem, 3vw, 1.6rem); }
+.mp-recap { position: sticky; top: calc(var(--mp-haut-entete, 84px) + 80px); border: 1px solid var(--mp-filet); background: var(--surface); border-radius: 14px; padding: clamp(1.1rem, 3vw, 1.6rem); }
 @media (max-width: 900px) { .mp-recap { position: static; } }
 .mp-recap h2 { font-size: 1.1rem; margin-bottom: 1rem; }
 .mp-recap-ligne { display: grid; grid-template-columns: 54px minmax(0, 1fr) auto; gap: 0.9rem; align-items: center; padding: 0.8rem 0; border-bottom: 1px solid var(--mp-filet); }
@@ -567,7 +567,7 @@ a:hover > .mp-fleche, button:hover > .mp-fleche, .mp-carte:hover .mp-fleche, .mp
 .mp-frise li.fait { color: var(--titre-clair); }
 .mp-frise li.fait::before { background: var(--bordeaux-clair); border-color: var(--bordeaux-clair); box-shadow: 0 0 10px var(--bordeaux-clair); }
 .mp-frise small { font-size: 0.7rem; color: var(--texte-doux); }
-.mp-bloc-paiement, .mp-info-bloc, .mp-billets { border: 1px solid var(--mp-filet); padding: clamp(1.2rem, 4vw, 2rem); margin-bottom: 1.6rem; background: linear-gradient(180deg, rgba(122,18,32,0.08), rgba(4,3,3,0)); }
+.mp-bloc-paiement, .mp-info-bloc, .mp-billets { border: 1px solid var(--mp-filet); padding: clamp(1.2rem, 4vw, 2rem); margin-bottom: 1.6rem; background: var(--surface); border-radius: 14px; }
 .mp-bloc-paiement h2, .mp-info-bloc h2, .mp-billets h2 { margin: 0.7rem 0 0.8rem; }
 .mp-montant { margin: 0; font-family: var(--display); font-size: clamp(2.2rem, 6vw, 3.4rem); color: var(--titre-clair); line-height: 1.1; }
 .mp-bloc-paiement .filtres { margin: 1.4rem 0 1rem; }
@@ -607,7 +607,7 @@ a:hover > .mp-fleche, button:hover > .mp-fleche, .mp-carte:hover .mp-fleche, .mp
 .mp-document-date { color: var(--texte-doux); font-size: 0.8rem !important; margin-top: 2rem; }
 
 /* ---------- Facture (papier blanc, imprimable) ---------- */
-.mp-page-facture { background: #2a2626; }
+.mp-page-facture { background: var(--surface-douce); }
 .mp-facture-outils { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.7rem; padding: 1.2rem 16px; }
 .mp-page-facture main { min-height: 0; padding: 0 16px 3rem; }
 .mp-facture { max-width: 800px; margin: 0 auto; background: #fff; color: #1a1414; padding: clamp(1.4rem, 5vw, 3rem); font-family: var(--texte); font-size: 0.86rem; line-height: 1.55; box-shadow: 0 30px 80px -30px rgba(0,0,0,0.8); }

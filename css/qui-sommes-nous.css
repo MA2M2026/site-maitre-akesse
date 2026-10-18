@@ -143,11 +143,11 @@
 .qsn-etape-num {
   position: relative; z-index: 1; width: 2.8rem; height: 2.8rem; border-radius: 50%;
   display: grid; place-items: center;
-  font-family: var(--display); font-size: 1.4rem; color: var(--titre-clair);
-  background: var(--noir); border: 1px solid var(--bordeaux-clair);
+  font-family: var(--display); font-size: 1.4rem; color: var(--encre);
+  background: var(--surface); border: 1px solid var(--rouge-ma2m);
   transition: background 0.6s ease;
 }
-.qsn-etape.visible .qsn-etape-num { background: var(--bordeaux); }
+.qsn-etape.visible .qsn-etape-num { background: var(--rouge-ma2m); color: var(--sur-rouge); }
 .qsn-etape h3 { font-family: var(--display); font-weight: 500; font-size: 1.6rem; color: var(--titre-clair); margin: 0.3rem 0 0.5rem; }
 .qsn-etape p { margin: 0; color: var(--texte-corps); line-height: 1.75; }
 .qsn-etape strong { color: var(--titre-clair); font-weight: 500; }
@@ -330,7 +330,7 @@
 .qsn-bandeau-piste span {
   font-family: var(--display); font-style: italic; font-weight: 500;
   font-size: clamp(3.2rem, 11vw, 9rem); line-height: 1;
-  color: transparent; -webkit-text-stroke: 1px rgba(245,239,231,0.55);
+  color: var(--encre); -webkit-text-stroke: 0;
   text-transform: uppercase; letter-spacing: 0.02em;
 }
 .qsn-bandeau-piste span:nth-child(3n+2) { color: var(--bordeaux-clair); -webkit-text-stroke: 0; }

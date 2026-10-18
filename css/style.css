@@ -146,7 +146,7 @@ p { max-width: 62ch; color: var(--texte-corps); }
 }
 .fil-ariane a { color: var(--texte-doux); transition: color 0.2s ease; }
 .fil-ariane a:hover { color: var(--bordeaux-clair); }
-.fil-ariane span { margin: 0 0.5rem; opacity: 0.6; }
+.fil-ariane span { margin: 0 0.5rem; color: var(--encre-douce); }
 
 /* ---------- Boutons ---------- */
 
@@ -546,8 +546,8 @@ section { padding: 5rem 0; }
 .flash-succes-icone { display: block; font-size: 3.2rem; margin-bottom: 0.7rem; }
 
 .form-msg { font-size: 0.9rem; padding: 0.8rem 1rem; margin-top: 1rem; display: none; border-radius: 2px; }
-.form-msg.ok { display: block; background: rgba(30,91,37,0.16); color: #8fd39a; border: 1px solid rgba(30,91,37,0.4); }
-.form-msg.err { display: block; background: rgba(154,28,44,0.16); color: #f0a1ac; border: 1px solid rgba(154,28,44,0.4); }
+.form-msg.ok { display: block; background: var(--ok-fond); color: var(--ok-texte); border: 1px solid var(--ok-texte); }
+.form-msg.err { display: block; background: var(--erreur-fond); color: var(--erreur-texte); border: 1px solid var(--erreur-texte); }
 /* Un message encore vide (pendant la vérification de la connexion ou du code) ne montre pas
    son cadre : avant, un petit trait rouge apparaissait sous le champ (12/10/2026). */
 .form-msg:empty { display: none !important; }
@@ -1491,13 +1491,13 @@ section { padding: 5rem 0; }
 .book-carte-legende {
   position: absolute; left: 0; right: 0; bottom: 0; text-align: left;
   padding: 2.2rem 0.9rem 0.85rem;
-  background: linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.4) 65%, transparent 100%);
+  background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 60%, transparent 100%);
   pointer-events: none;
 }
 #grille .medaillon-nom { margin-top: 0; color: #fff; font-size: 0.95rem; }
 #grille .medaillon-info { color: rgba(255,255,255,0.78); margin-top: 0.25rem; }
 #grille .medaillon-carte .btn-selection {
-  background: var(--blanc); border-color: rgba(255,255,255,0.55); color: var(--noir);
+  background: var(--surface); border-color: var(--lignes); color: var(--encre);
 }
 #grille .medaillon-carte .btn-selection.est-selectionne { background: var(--bordeaux-noir); color: var(--blanc); }
 #grille .medaillon-carte .btn-selection:hover { background: var(--bordeaux); border-color: var(--bordeaux); color: #fff; }
@@ -2282,7 +2282,7 @@ html.porte-deja-vue #porte-entree { display: none; }
 
 .fiche-onglets {
   display: flex; gap: clamp(1.2rem, 4vw, 2.6rem); overflow-x: auto; scrollbar-width: none;
-  border-top: 1px solid rgba(255,255,255,0.08); border-bottom: 1px solid rgba(255,255,255,0.08);
+  border-top: 1px solid var(--lignes); border-bottom: 1px solid var(--lignes);
   margin: 0 0 1.4rem; padding: 0 0.2rem;
 }
 .fiche-onglets::-webkit-scrollbar { display: none; }
@@ -2296,16 +2296,16 @@ html.porte-deja-vue #porte-entree { display: none; }
   content: ""; position: absolute; left: 0; right: 0.28em; bottom: -1px; height: 2px;
   background: var(--bordeaux-clair); transform: scaleX(0); transform-origin: left; transition: transform 0.3s var(--transition-douce);
 }
-.fiche-onglets a:hover { color: var(--blanc); }
+.fiche-onglets a:hover { color: var(--encre); }
 .fiche-onglets a:hover::after, .fiche-onglets a:first-child::after { transform: scaleX(1); }
-.fiche-onglets a:first-child { color: var(--blanc); }
+.fiche-onglets a:first-child { color: var(--encre); }
 .fiche-ancre { scroll-margin-top: 110px; }
 @media (min-width: 900px) { .fiche-grille--une { grid-template-columns: minmax(0, 1fr); } }
 
 .fiche-contact-bas {
   margin: 1rem 0 clamp(2.5rem, 6vw, 4.5rem);
-  border: 1px solid rgba(255,255,255,0.08); border-radius: 16px;
-  background: linear-gradient(150deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015) 55%);
+  border: 1px solid var(--lignes); border-radius: 16px;
+  background: var(--surface);
   padding: clamp(1.4rem, 4vw, 2.4rem);
 }
 .fiche-contact-entete { display: flex; align-items: center; gap: 1rem; margin-bottom: clamp(1.2rem, 3vw, 1.8rem); }
@@ -2324,13 +2324,13 @@ html.porte-deja-vue #porte-entree { display: none; }
 .fiche-contact-tuile {
   display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 0.9rem; row-gap: 0.15rem; align-items: center;
   padding: 1rem 1.1rem; border-radius: 12px; text-decoration: none; min-width: 0;
-  background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.07);
+  background: var(--surface-douce); border: 1px solid var(--lignes);
   transition: border-color 0.2s ease, background 0.2s ease;
 }
 .fiche-contact-tuile .fiche-contact-rond { grid-row: 1 / 3; }
-.fiche-contact-label { font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--texte-doux); align-self: end; }
-.fiche-contact-valeur { font-size: 0.92rem; color: var(--titre-clair); align-self: start; overflow-wrap: anywhere; }
-.fiche-contact-tuile:hover { border-color: rgba(213,84,104,0.5); background: rgba(255,255,255,0.05); }
+.fiche-contact-label { font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--encre-douce); align-self: end; }
+.fiche-contact-valeur { font-size: 0.92rem; color: var(--encre); align-self: start; overflow-wrap: anywhere; }
+.fiche-contact-tuile:hover { border-color: var(--rouge-ma2m); background: var(--surface); }
 .fiche-contact-tuile:hover .fiche-contact-valeur { color: var(--bordeaux-clair); }
 @media (max-width: 480px) {
   .fiche-contact-bas { padding: 1.2rem 0.9rem; }

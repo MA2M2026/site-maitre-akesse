@@ -3,6 +3,7 @@
 //  1. Lisibilité (BLOQUANT) : tout texte visible doit avoir assez de contraste avec ce qui est
 //     peint dessous (norme WCAG AA, scripts/tests-visiteur/lisibilite.js). Vérifié aussi menu
 //     ouvert, bandeau cookies affiché et formulaires envoyés vides (messages d'erreur).
+//  1b. Boutons (BLOQUANT) : chaque bouton suit le modèle rouge unique (boutons.js).
 //  2. Contrôle du contrôle : un texte sombre posé exprès sur le menu sombre DOIT être signalé,
 //     sinon le test lui-même est cassé.
 //  3. Captures d'écran (NON bloquant) : rangées dans captures/actuelles ; si des captures de
@@ -11,6 +12,7 @@
 // Base simulée : rien n'est écrit pour de vrai. Dossier captures/ non publié (.gitignore).
 const { chromium } = require('playwright'); const { spawn, execFileSync } = require('child_process'); const { brancher } = require('./faux-serveur');
 const { verifierLisibilite, lirePageEntiere } = require('./lisibilite');
+const { verifierBoutons } = require('./boutons');
 const fs = require('fs'); const path = require('path');
 const PORT = String(8600 + Math.floor(Math.random() * 100));
 const RACINE = path.resolve(__dirname, '../..');
@@ -71,6 +73,7 @@ async function unePage(b, page, ecran) {
   const { ctx, p } = await ouvrir(b, page, ecran, false);
   try {
     await lireTout(p, etiquette);
+    for (const x of await p.evaluate(verifierBoutons)) problemes.push(etiquette + ' : bouton « ' + x.texte + ' » (' + x.element + ') pas au modèle rouge (fond ' + x.fond + ', texte ' + x.couleur + ', coins ' + x.rayon + ')');
     await capturer(p, nomFichier(page, ecran), true);
     // Menu plein écran ouvert
     const bouton = await p.$('#menuBtn');
@@ -136,6 +139,32 @@ async function unePage(b, page, ecran) {
       await unePage(b, t[0], t[1]).catch(e => problemes.push(t[0] + ' (' + t[1].nom + ') : erreur du test ' + e.message.split('\n')[0]));
     }
   }));
+
+  // 3b. Espace mannequin CONNECTÉE (session simulée) : chaque étape du parcours guidé, puis le
+  // tableau de la mannequin en ligne — lisibilité, boutons au modèle rouge, captures.
+  for (const ecran of ecrans) for (const enLigne of [false, true]) {
+    const ctx = await b.newContext({ viewport: { width: ecran.width, height: ecran.height } }); const p = await ctx.newPage();
+    await p.emulateMedia({ reducedMotion: 'reduce' });
+    await p.addInitScript(() => {
+      const b64 = o => btoa(JSON.stringify(o)).replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_');
+      const exp = Math.floor(Date.now() / 1000) + 36000;
+      const jeton = b64({ alg: 'HS256', typ: 'JWT' }) + '.' + b64({ sub: 'm-1', role: 'authenticated', aud: 'authenticated', exp }) + '.c2ln';
+      localStorage.setItem('sb-dfhghgmwmxiguhtxtsle-auth-token', JSON.stringify({ access_token: jeton, token_type: 'bearer', expires_in: 36000, expires_at: exp, refresh_token: 'x', user: { id: 'm-1', aud: 'authenticated', role: 'authenticated', email: 'awa@test.ci' } }));
+      localStorage.setItem('ma2m_cookies', 'non');
+    });
+    await brancher(p, { tables: { model_profiles: [{ id: 'm-1', full_name: 'AWA KONÉ', published: enLigne, desactive: false, statut: enLigne ? 'publie' : 'brouillon' }] }, rpc: {} }, []);
+    await p.goto('http://127.0.0.1:' + PORT + '/espace-mannequin.html', { waitUntil: 'domcontentloaded' }); await p.waitForTimeout(3000);
+    const etapes = enLigne ? [null] : [1, 2, 3, 4, 5, 6];
+    for (const n of etapes) {
+      const etiquette = 'espace-mannequin connectée ' + (enLigne ? 'en ligne' : 'étape ' + n) + ' (' + ecran.nom + ')';
+      if (n) await p.evaluate((n) => { if (typeof goto === 'function') goto(n); }, n).catch(() => {});
+      await p.waitForTimeout(500);
+      await lireTout(p, etiquette);
+      for (const x of await p.evaluate(verifierBoutons)) problemes.push(etiquette + ' : bouton « ' + x.texte + ' » (' + x.element + ') pas au modèle rouge (fond ' + x.fond + ', texte ' + x.couleur + ', coins ' + x.rayon + ')');
+      await capturer(p, 'espace-connectee-' + (enLigne ? 'en-ligne' : 'etape' + n) + '-' + ecran.nom + '.png', true);
+    }
+    await ctx.close();
+  }
   await b.close();
 
   // 4. Captures : nouvelle référence, ou comparaison avec la référence (rapport non bloquant)

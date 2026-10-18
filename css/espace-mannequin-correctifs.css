@@ -13,73 +13,38 @@
 .field .tel-row { flex-wrap: wrap; }
 .field .tel-row select, .field .tel-row input { flex: 1 1 170px; width: auto; max-width: 100%; min-width: 0; }
 
-/* Lien vers la candidature, en haut de l'écran de connexion (30/09). */
+/* Lien vers la candidature, en haut de l'écran de connexion (30/09 ; charte claire 18/10/2026) :
+   carte blanche, « Postuler ici → » est le bouton rouge commun (css/bouton-ma2m.css). */
 .em-vers-candidature {
   display: block; margin: 0 0 1.4rem; padding: 0.95rem 1.1rem;
-  border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 14px;
-  background: linear-gradient(180deg, #1d1d1f, #0d0d0e);
-  color: #e9e1da; font-size: 0.92rem; line-height: 1.5; text-decoration: none;
+  border: 1px solid var(--lignes); border-radius: var(--rayon-carte);
+  background: var(--surface); color: var(--encre); font-size: 0.92rem; line-height: 1.5; text-decoration: none;
 }
-.em-vers-candidature strong { color: #fff; }
-.em-vers-candidature span {
-  display: inline-block; margin-top: 0.45rem; padding: 0.35rem 0.9rem; border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.3); color: #fff; font-weight: 600; letter-spacing: 0.04em;
-  box-shadow: 0 3px 0 #000;
-}
-.em-vers-candidature:active span { background: linear-gradient(180deg, #a3243a, #6d1222); transform: translateY(3px); box-shadow: none; }
+.em-vers-candidature strong { color: var(--encre); }
+.em-vers-candidature span { display: inline-flex; margin-top: 0.6rem; padding: 0.55rem 1.1rem; }
 
 /* Mot de passe : même champ noir que les autres (il restait blanc, sans style) et
    bouton « œil » bien placé dans le champ (styles repris de css/style.css, que cette
    page ne charge pas). */
 .field input[type=password] {
-  width: 100%; background: rgba(255, 255, 255, 0.025); color: inherit;
-  border: 1px solid rgba(255, 255, 255, 0.13); border-radius: 2px;
+  width: 100%; background: var(--surface); color: inherit;
+  border: 1px solid var(--lignes); border-radius: 10px;
   min-height: 47px; padding: 13px 14px; font: inherit;
 }
-.field input[type=password]:focus { outline: none; border-color: rgba(255, 255, 255, 0.4); }
+.field input[type=password]:focus { outline: none; border-color: var(--rouge-ma2m); }
 .champ-mdp { position: relative; display: block; }
 .champ-mdp > input { padding-right: 3.2rem !important; }
 .champ-mdp-oeil {
   position: absolute; right: 0.4rem; top: 50%; transform: translateY(-50%);
-  background: none; border: none; color: #b9aca6; cursor: pointer; padding: 0.4rem; line-height: 0;
+  cursor: pointer; padding: 0.4rem; line-height: 0;
 }
-.champ-mdp-oeil[aria-pressed="true"] { color: #fff; }
 .champ-mdp-oeil svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 
-/* Boutons « touche » (comme sur tout le site depuis le 30/09) : noirs au repos et au
-   survol, ils s'enfoncent et deviennent rouges seulement à l'appui. */
-.btn, .btn.primary, .btn.ghost {
-  border-radius: 999px !important;
-  border: 1px solid rgba(255, 255, 255, 0.18) !important;
-  background: linear-gradient(180deg, #1d1d1f 0%, #0d0d0e 100%) !important;
-  color: #f4efe9 !important; filter: none !important;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 4px 0 #000, 0 9px 16px -8px rgba(0, 0, 0, 0.85) !important;
-  transform: translateY(0);
-  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.15s ease !important;
-  -webkit-tap-highlight-color: transparent;
-}
-.btn.primary { border-color: rgba(255, 255, 255, 0.34) !important; }
-@media (hover: hover) {
-  .btn:hover, .btn.primary:hover, .btn.ghost:hover {
-    background: linear-gradient(180deg, #27272a 0%, #121213 100%) !important;
-    border-color: rgba(255, 255, 255, 0.34) !important; color: #fff !important; transform: translateY(-1px);
-  }
-}
-.btn:active, .btn.primary:active, .btn.ghost:active, .btn.touche-appuyee {
-  transform: translateY(4px) !important;
-  background: linear-gradient(180deg, #a3243a 0%, #6d1222 100%) !important;
-  border-color: rgba(229, 108, 128, 0.9) !important; color: #fff !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.7) inset, 0 0 16px rgba(213, 84, 104, 0.4) !important;
-}
-/* Onglet choisi (Se connecter / Créer mon compte) : allumé en clair, pas en rouge. */
-#auth-onglets .btn:not(.ghost) { background: linear-gradient(180deg, #34343a 0%, #1a1a1d 100%) !important; border-color: rgba(255, 255, 255, 0.55) !important; }
-/* Bouton « Enregistré » : garde son vert (confirmation). */
-.btn.saved { color: #9fd49f !important; border-color: rgba(127, 174, 127, 0.6) !important; }
-.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+/* Boutons : le bouton rouge unique du site (css/bouton-ma2m.css) depuis le 18/10/2026. */
 
 /* Curseurs « compétences » (étape Photos) : couleurs de l'agence au lieu du bleu du
    navigateur (30/09). */
-input[type=range] { accent-color: #c21d36; }
+input[type=range] { accent-color: var(--rouge-ma2m); }
 
 /* Bouton « retour en haut » (ajouté par js/confort.js) : cette page ne charge pas
    css/style.css, le bouton s'affichait donc comme un petit carré blanc brut en bas
@@ -87,13 +52,11 @@ input[type=range] { accent-color: #c21d36; }
 .retour-haut {
   position: fixed; right: 1.4rem; bottom: calc(1.4rem + env(safe-area-inset-bottom, 0px)); z-index: 190;
   width: 48px; height: 48px; display: grid; place-items: center; padding: 0;
-  background: rgba(6,5,4,0.82); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
-  border: 1px solid rgba(245,239,231,.22); border-radius: 999px; color: #f5efe7; cursor: pointer;
+  cursor: pointer;
   opacity: 0; visibility: hidden; transform: translateY(10px);
   transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s, border-color 0.2s ease, color 0.2s ease;
 }
 .retour-haut.visible { opacity: 1; visibility: visible; transform: none; }
-.retour-haut:hover, .retour-haut:focus-visible { border-color: #d55468; color: #d55468; }
 .retour-haut svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 @media (max-width: 700px) { .retour-haut { right: 1rem; bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); width: 44px; height: 44px; } }
 @media print { .retour-haut { display: none !important; } }
@@ -108,10 +71,9 @@ input[type=range] { accent-color: #c21d36; }
 html, body { height: auto; }
 body { min-height: 100vh; }
 
-/* 05/10/2026 : fond noir aussi derrière la page. Quand le menu s'ouvre, la page est figée
-   (défilement bloqué) et le fond par défaut du navigateur — blanc — apparaissait sur les
-   bords, comme une « capture » posée sur le site. */
-html { background: #080707; }
+/* 05/10/2026 : même fond derrière la page (quand le menu s'ouvre, la page est figée et le
+   fond par défaut du navigateur apparaissait sur les bords). Charte claire depuis le 18/10. */
+html { background: var(--fond); }
 
 /* Numéro fixe de chaque photo du Book (06/10/2026) : l'agence s'y réfère dans ses messages. */
 .book-thumb .book-num { position: absolute; left: 8px; top: 8px; z-index: 5; background: rgba(8, 7, 7, .82); color: #f5efe7; border: 1px solid rgba(255, 255, 255, .25); border-radius: 5px; padding: 3px 7px; font-size: .7rem; font-weight: 600; letter-spacing: .04em; }
@@ -119,19 +81,19 @@ html { background: #080707; }
 
 /* Encadré « Vos tailles (calculées) » de l'étape physique (06/10/2026) :
    tailles déduites des mensurations (js/tailles.js), non modifiables à la main. */
-.tailles-calculees { margin: 1.2rem 0 0.4rem; padding: 0.9rem 1rem; border: 1px solid rgba(213, 84, 104, 0.45); border-radius: 12px; background: rgba(122, 18, 32, 0.12); }
+.tailles-calculees { margin: 1.2rem 0 0.4rem; padding: 0.9rem 1rem; border: 1px solid rgba(213, 84, 104, 0.45); border-radius: 12px; background: rgba(200, 16, 46, 0.05); }
 .tailles-calculees .tc-titre { font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--or-clair); margin-bottom: 0.6rem; }
 .tailles-calculees .tc-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 0.6rem; }
 .tailles-calculees .tc-grille span { display: block; font-size: 0.75rem; color: var(--texte-clair); }
 .tailles-calculees .tc-grille b { font-size: 1.05rem; color: var(--ivoire); font-weight: 600; }
 /* Mesure incohérente : case en rouge + « Mensuration pas exacte, à reprendre ». */
-.field.mesure-a-reprendre select, .field.mesure-a-reprendre input { border-color: #e0475e !important; box-shadow: 0 0 0 1px #e0475e; }
-.field.mesure-a-reprendre label { color: #ff8a9a; }
-.mesure-msg { color: #ff8a9a; font-size: 0.8rem; font-weight: 600; }
-.tailles-calculees .tc-alerte { margin: 0; color: #ffb3bd; font-size: 0.9rem; line-height: 1.5; }
+.field.mesure-a-reprendre select, .field.mesure-a-reprendre input { border-color: var(--rouge-ma2m) !important; box-shadow: 0 0 0 1px var(--rouge-ma2m); }
+.field.mesure-a-reprendre label { color: var(--rouge-ma2m-texte); }
+.mesure-msg { color: var(--rouge-ma2m-texte); font-size: 0.8rem; font-weight: 600; }
+.tailles-calculees .tc-alerte { margin: 0; color: var(--erreur-texte); font-size: 0.9rem; line-height: 1.5; }
 .tailles-calculees .tc-alerte + .tc-alerte { margin-top: 0.6rem; }
 /* Mensurations excessives (au-delà de M femmes / L hommes) : alerte rouge. */
-.tailles-calculees .tc-exces { margin-top: 0.7rem; padding: 0.6rem 0.7rem; border: 1px solid #e0475e; border-radius: 8px; background: rgba(224, 71, 94, 0.12); }
+.tailles-calculees .tc-exces { margin-top: 0.7rem; padding: 0.6rem 0.7rem; border: 1px solid var(--rouge-ma2m); border-radius: 8px; background: rgba(224, 71, 94, 0.12); }
 .panel > .tailles-calculees { margin: 0 0 1.2rem; }
 
 /* Pastilles rouges (07/10/2026) : nombre d'éléments à remplir ou à corriger sur chaque
@@ -139,28 +101,28 @@ html { background: #080707; }
 .pastille-rouge {
   display: inline-flex; align-items: center; justify-content: center;
   min-width: 20px; height: 20px; padding: 0 6px; margin-left: 6px; border-radius: 999px;
-  background: #e0182d; color: #fff; font-size: 12px; font-weight: 700; line-height: 1;
-  letter-spacing: 0; vertical-align: middle; box-shadow: 0 0 0 2px rgba(224, 24, 45, 0.28);
+  background: var(--rouge-ma2m); color: var(--sur-rouge); font-size: 12px; font-weight: 700; line-height: 1;
+  letter-spacing: 0; vertical-align: middle; box-shadow: 0 0 0 2px rgba(200, 16, 46, 0.25);
 }
 .block-card { position: relative; }
 .block-card > .pastille-rouge { position: absolute; top: 10px; right: 10px; margin: 0; min-width: 24px; height: 24px; font-size: 13px; }
 .champ-a-remplir input, .champ-a-remplir select, .champ-a-remplir textarea,
 .principal-photo-card.champ-a-remplir, .book-multi-upload.champ-a-remplir, #addExp.champ-a-remplir {
-  border-color: #ff2a40 !important; box-shadow: 0 0 0 2px rgba(255, 42, 64, 0.38) !important;
+  border-color: var(--rouge-ma2m) !important; box-shadow: 0 0 0 2px rgba(200, 16, 46, 0.3) !important;
 }
-.champ-a-remplir > label { color: #ff5a6a !important; }
-.champ-a-remplir .check-row { outline: 2px solid #ff2a40; outline-offset: 4px; border-radius: 4px; }
-#addExp.champ-a-remplir { color: #ff5a6a !important; }
+.champ-a-remplir > label { color: var(--rouge-ma2m-texte) !important; }
+.champ-a-remplir .check-row { outline: 2px solid var(--rouge-ma2m); outline-offset: 4px; border-radius: 4px; }
+#addExp.champ-a-remplir { color: var(--rouge-ma2m-texte) !important; }
 .notice-a-remplir {
-  margin: 0.4rem 0 1rem; padding: 0.6rem 0.8rem; border-left: 3px solid #ff2a40;
-  background: rgba(224, 24, 45, 0.1); color: #ffd6da; font-size: 0.9rem;
+  margin: 0.4rem 0 1rem; padding: 0.6rem 0.8rem; border-left: 3px solid var(--rouge-ma2m);
+  background: var(--erreur-fond); color: var(--erreur-texte); font-size: 0.9rem;
 }
 
 /* Projets réalisés avec l'agence (agenda), ajoutés automatiquement aux expériences (12/10/2026) */
-.exp-agence { margin: 0 0 16px; padding: 12px 14px; border-left: 3px solid #d55468; background: rgba(122,18,32,0.16); }
-.exp-agence-titre { margin: 0 0 6px; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: #d55468; }
+.exp-agence { margin: 0 0 16px; padding: 12px 14px; border-left: 3px solid var(--rouge-ma2m-texte); background: rgba(200, 16, 46, 0.05); }
+.exp-agence-titre { margin: 0 0 6px; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--rouge-ma2m-texte); }
 .exp-agence ul { margin: 0; padding: 0 0 0 1.1rem; font-size: .9rem; line-height: 1.55; }
-.exp-doublon { margin: 0 0 8px; font-size: .8rem; color: #d55468; }
+.exp-doublon { margin: 0 0 8px; font-size: .8rem; color: var(--rouge-ma2m-texte); }
 
 /* Formulaire d'expérience enrichi (12/10/2026) : type | nom ; date | pays | ville ;
    lieu | promoteur. Tout est facultatif. */
@@ -171,7 +133,7 @@ html { background: #080707; }
   .exp-fields { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .exp-fields [data-expf=nom], .exp-fields [data-expf=salle], .exp-fields [data-expf=promoteur] { grid-column: 1 / -1; }
 }
-.exp-doublon ul { margin: 6px 0 8px; padding-left: 1.1rem; color: var(--texte-tres-clair, #a59d95); }
+.exp-doublon ul { margin: 6px 0 8px; padding-left: 1.1rem; color: var(--encre-douce); }
 /* Lisibilité (test visuel du 18/10/2026) : sous-titres des panneaux (dont « Accédez à votre espace
    mannequin. » à la connexion) trop pâles : contraste 3,5 pour 1, il faut 4,5. Corrigé ici, dans un
    fichier à part, pour ne pas toucher aux styles écrits dans la page (empreintes de sécurité). */
