@@ -7,8 +7,11 @@
 
 // Exécutée DANS la page : renvoie la liste des boutons qui ne suivent pas le modèle.
 function verifierBoutons() {
-  const ROUGES = ['rgb(200, 16, 46)', 'rgb(165, 13, 38)'];
-  const exclu = (e) => e.closest('.cliquable, .mpg-produit, .mpg-commande, .whatsapp-flottant, [data-bouton-libre], .reseaux, .footer-social, .site-footer-reseaux');
+  // rouge MA2M (#C8102E), sa teinte de survol (#A50D26) et tout l'entre-deux (bouton saisi en
+  // pleine transition de couleur)
+  const rouge = (c) => { const m = /^rgb\((\d+), (\d+), (\d+)\)$/.exec(c); return !!m && +m[1] >= 160 && +m[1] <= 205 && +m[2] <= 20 && +m[3] >= 35 && +m[3] <= 50; };
+  // .nav : entrées du menu latéral du portail (un menu, comme le menu du site, pas des boutons)
+  const exclu = (e) => e.closest('.nav, .cliquable, .mpg-produit, .mpg-commande, .whatsapp-flottant, [data-bouton-libre], .reseaux, .footer-social, .site-footer-reseaux');
   const visible = (e) => {
     const q = e.getBoundingClientRect(); const s = getComputedStyle(e);
     return q.width > 4 && q.height > 4 && s.visibility !== 'hidden' && s.display !== 'none' && Number(s.opacity) > 0.05;
@@ -23,7 +26,7 @@ function verifierBoutons() {
   const candidats = new Set([...document.querySelectorAll(SEL)]);
   // lien habillé en bouton (sauf une carte qui contient déjà son propre bouton, ou une image)
   for (const a of document.querySelectorAll('a[href]')) {
-    const contientBouton = [...a.querySelectorAll('*')].some((x) => ROUGES.includes(getComputedStyle(x).backgroundColor));
+    const contientBouton = [...a.querySelectorAll('*')].some((x) => rouge(getComputedStyle(x).backgroundColor));
     if (habille(a) && !contientBouton && !a.querySelector('img, video, svg:only-child')) candidats.add(a);
   }
   const mauvais = [];
@@ -31,7 +34,7 @@ function verifierBoutons() {
     if (!visible(e) || exclu(e)) continue;
     const s = getComputedStyle(e);
     const rayon = Number.parseFloat(s.borderTopLeftRadius);
-    const ok = ROUGES.includes(s.backgroundColor) && s.color === 'rgb(255, 255, 255)' && rayon >= 8;
+    const ok = rouge(s.backgroundColor) && s.color === 'rgb(255, 255, 255)' && rayon >= 8;
     if (!ok) {
       const nom = e.tagName.toLowerCase() + (e.id ? '#' + e.id : '') + [...e.classList].map((c) => '.' + c).join('');
       mauvais.push({ element: nom, texte: (e.innerText || e.value || e.getAttribute('aria-label') || '').trim().replace(/\s+/g, ' ').slice(0, 30), fond: s.backgroundColor, couleur: s.color, rayon: s.borderTopLeftRadius });

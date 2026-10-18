@@ -9,6 +9,10 @@
 //  - lisibilité (contraste) des écrans, aucune erreur de page.
 const { chromium } = require('playwright'); const { spawn } = require('child_process'); const { brancher } = require('./faux-serveur');
 const { lirePageEntiere } = require('./lisibilite');
+const { verifierBoutons } = require('./boutons');
+// captures (non bloquantes) pour comparer avec la maquette du cahier : captures/actuelles/portail-*.png
+const DOSSIER_CAPTURES = require('path').join(__dirname, 'captures', 'actuelles'); require('fs').mkdirSync(DOSSIER_CAPTURES, { recursive: true });
+const capture = (p, nom) => p.screenshot({ path: require('path').join(DOSSIER_CAPTURES, 'portail-' + nom + '.png'), fullPage: true }).catch(() => {});
 const PORT = String(9300 + Math.floor(Math.random() * 90));
 let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m); if (!c) ko++; };
 
@@ -93,6 +97,7 @@ function donnees(role) {
     const libelles = await p.$$eval('.tuile .tt', (l) => l.map((x) => x.textContent));
     ok(libelles.join('|') === 'Administration du site|Suivi des paiements et des inscriptions|Comptabilité', nomEcran + ' : libellés exacts des trois tuiles');
     let mal = await pales(p); ok(!mal.length, nomEcran + ' : écran des tuiles lisible ' + mal.join(' | '));
+    await capture(p, 'tuiles-' + ecran.width);
     // chaque page de chaque espace
     const pages = { site: ['vue', 'mannequins', 'candidatures', 'recruteurs', 'dossiers', 'codes', 'outils'],
       paiements: ['mois', 'rapprocher', 'registre', 'fiche/m1', 'messages', 'matrice', 'recap', 'parametres'],
@@ -103,6 +108,9 @@ function donnees(role) {
         await p.goto(url + '#/' + esp + '/' + pg); await p.waitForSelector('.contenu h1, .contenu .carte h2', { timeout: 6000 }).catch(() => {});
         await p.waitForFunction(() => !document.querySelector('.chargement'), null, { timeout: 6000 }).catch(() => {});
         const t = await texte(p);
+        await capture(p, esp + '-' + pg.replace('/', '-') + '-' + ecran.width);
+        const boutons = (await p.evaluate(verifierBoutons)).map((x) => x.texte + ' (' + x.element + ', fond ' + x.fond + ', texte ' + x.couleur + ', coins ' + x.rayon + ')');
+        ok(!boutons.length, nomEcran + ' : ' + esp + '/' + pg + ' boutons au modèle rouge ' + boutons.join(' | '));
         ok(!t.includes('Impossible d’afficher') && !t.includes('Accès refusé'), nomEcran + ' : ' + esp + '/' + pg + ' s’affiche');
         if (nomEcran === 'ordinateur' && ['site/vue', 'paiements/mois', 'paiements/rapprocher', 'compta/tableau', 'securite/comptes'].includes(esp + '/' + pg)) {
           mal = await pales(p); ok(!mal.length, nomEcran + ' : ' + esp + '/' + pg + ' lisible ' + mal.join(' | '));

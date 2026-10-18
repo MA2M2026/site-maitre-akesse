@@ -18,7 +18,7 @@
     let q = sb.from(table).select('*', { count: 'exact', head: true });
     if (filtre) q = filtre(q);
     const { count, error } = await q;
-    return error ? '—' : count;
+    return error || count == null ? '—' : count;
   };
   const masque = () => !(P.moi.contacts_prives);
 
