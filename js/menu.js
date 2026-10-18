@@ -150,26 +150,9 @@ document.addEventListener('DOMContentLoaded', () => {
   navLinks.parentNode.insertBefore(bloc, navLinks.nextSibling);
 });
 
-// Lien "Admin" directement dans la barre d'en-tête (à côté du bouton Menu),
-// visible sans avoir à ouvrir le menu plein écran. Remplace l'ancien lien
-// "Tableau de bord" du menu hamburger, retiré pour éviter le doublon.
-// Caché aux visiteurs (demande de la propriétaire, 04/10/2026) : il n'apparaît que sur
-// un appareil qui a déjà ouvert le tableau de bord (repère posé par js/tableau-v2.js).
-// Ailleurs, le tableau de bord reste accessible par son adresse directe.
-document.addEventListener('DOMContentLoaded', () => {
-  const menuBtn = document.getElementById('menuBtn');
-  if (!menuBtn || !menuBtn.parentNode || document.querySelector('.header-admin-lien')) return;
-  let appareilAdmin = false;
-  try { appareilAdmin = localStorage.getItem('ma2m_appareil_admin') === '1' || sessionStorage.getItem('ma2m_est_admin') === '1'; } catch (e) {}
-  if (!appareilAdmin) return;
-  if (window.location.pathname.replace(/\/$/, '').endsWith('tableau-de-bord.html') || window.location.pathname.replace(/\/$/, '').endsWith('tableau-de-bord')) return;
-
-  const lien = document.createElement('a');
-  lien.className = 'lang-switch header-admin-lien';
-  lien.href = '/admin/'; // portail d'administration (cahier v2.3) ; l'ancien tableau y mène aussi
-  lien.textContent = 'Admin';
-  menuBtn.parentNode.insertBefore(lien, menuBtn);
-});
+// Plus de bouton « Admin » sur le site public (décision de la propriétaire, 18/10/2026) :
+// l'administration est une application à part, installée depuis son adresse (/admin/),
+// sans passer par le site.
 
 // Lien « Marketplace » dans la barre d'en-tête, à côté de « EN » et « Admin »
 // (29/09/2026). Tant que la boutique est fermée au public, il n'apparaît QUE pour un
@@ -198,8 +181,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     lien.className = 'lang-switch header-marketplace-lien';
     lien.href = '/marketplace/';
     lien.textContent = 'Marketplace';
-    const admin = menuBtn.parentNode.querySelector('.header-admin-lien');
-    menuBtn.parentNode.insertBefore(lien, admin || menuBtn);
+    menuBtn.parentNode.insertBefore(lien, menuBtn);
   }
   try {
     if (sessionStorage.getItem('ma2m_est_admin') === '1') { ajouterLien(); return; }

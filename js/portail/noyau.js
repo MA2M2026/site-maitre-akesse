@@ -94,11 +94,14 @@
   };
   P.rpc = (nom, params) => P.bd(sb.rpc(nom, params || {}));
 
+  // déjà ouverte comme application (écran d'accueil) : plus besoin du bouton
+  P.installee = () => { try { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; } catch (e) { return false; } };
+
   // ---------- connexion ----------
   function ecranConnexion(etape, extra) {
     const gauche = '<div class="g"><div><div class="marque" style="padding:0">M A 2 M</div><div class="petit-texte" style="letter-spacing:2px;text-transform:uppercase;color:var(--sombre-encre-douce);margin-top:8px">Maître Akesse Model Management</div></div>' +
       '<div><div class="trait"></div><h1 style="font-size:32px">Espace d’administration</h1><p class="doux-sombre">Accès réservé à l’équipe de l’agence. Chaque personne a son propre compte et ne voit que ce qui relève de son rôle.</p></div>' +
-      '<div class="petit-texte" style="color:var(--sombre-encre-douce)">Application installable sur téléphone et ordinateur' + (P.installation ? ' · <button class="btn petit clair" data-action="installer">Installer l’application</button>' : '') + '</div></div>';
+      '<div class="petit-texte" style="color:var(--sombre-encre-douce)">Application installable sur téléphone et ordinateur' + (P.installee() ? '' : ' · <button class="btn petit clair" data-action="installer">Installer l’application</button>') + '</div></div>';
     let droite = '';
     if (etape === 'motdepasse') {
       droite = '<form data-form="connexion" class="grille" style="gap:14px"><div><div class="etape">Étape 1 sur 2</div><h2 style="font-size:22px">Connexion</h2></div>' +
@@ -364,7 +367,7 @@
       '<div class="bandeau-portail"><div class="marque" style="padding:0">M A 2 M</div><div class="ligne">' +
       P.pastille(ROLES[P.moi.role], 'neutre') +
       (P.moi.role === 'principal' ? '<a class="btn petit clair" href="#/securite/comptes">Sécurité et journal</a>' : '') +
-      (P.installation ? '<button class="btn petit clair" data-action="installer">Installer l’application</button>' : '') +
+      (P.installee() ? '' : '<button class="btn petit clair" data-action="installer">Installer l’application</button>') +
       '<button class="btn petit clair" data-action="deconnexion">Déconnexion</button></div></div>' +
       '<div style="padding:30px 28px;display:flex;flex-direction:column;gap:22px"><div><h1>Bonjour, ' + P.esc(P.moi.nom) + '</h1><p class="doux" style="max-width:720px">' + P.esc(phrase) + '</p></div>' +
       '<div class="tuiles">' + tuiles.map((t) => '<a class="tuile" href="#/' + t[0] + '/' + P.espaces[t[0]].nav[0][0] + '"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + t[2] + '</svg>' +
@@ -431,7 +434,7 @@
   addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); P.installation = e; });
   P.actions.installer = async () => {
     if (!P.installation) {
-      P.fenetre('<h2>Installer l’application</h2><p>Sur iPhone : touchez le bouton Partager de Safari, puis « Sur l’écran d’accueil ».</p><p>Sur Android ou ordinateur : menu du navigateur, puis « Installer l’application ».</p><button class="btn" data-action="fermer-fenetre">Fermer</button>');
+      P.fenetre('<h2>Installer l’application</h2><p>L’administration s’installe comme une application, sans passer par le site.</p><p><b>iPhone</b> : ouvrez cette adresse dans Safari, touchez le bouton Partager, puis « Sur l’écran d’accueil ».</p><p><b>Android</b> : ouvrez-la dans Chrome, menu ⋮, puis « Installer l’application ».</p><p><b>Ordinateur</b> : dans Chrome ou Edge, cliquez sur l’icône d’installation à droite de la barre d’adresse.</p><button class="btn" data-action="fermer-fenetre">Fermer</button>');
       return;
     }
     P.installation.prompt();

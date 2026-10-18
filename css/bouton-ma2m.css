@@ -72,11 +72,17 @@
       transform: translateY(-1px);
     }
   }
+  /* Appui : le bouton s'enfonce et s'entoure d'un liseré blanc — on voit lequel on a touché
+     (js/bouton-appui.js garde l'effet un court instant après le doigt) */
   :is(button, .btn, .bouton, .btn-mini-admin, .filtre-btn, .filtre-pill, .tuile, .menu-trigger, .lang-switch):not(.cliquable, [data-bouton-libre], :disabled):active, .touche-appuyee {
     background: var(--rouge-ma2m-survol) !important;
-    transform: translateY(1px) !important;
-    box-shadow: 0 4px 10px -6px rgba(200, 16, 46, 0.6) !important;
+    transform: translateY(2px) scale(0.98) !important;
+    box-shadow: inset 0 0 0 3px #fff, 0 0 0 3px var(--rouge-ma2m) !important;
   }
+  /* Formulaire envoyé : le bouton montre que la demande est partie (points qui défilent) */
+  .en-cours { cursor: progress !important; }
+  .en-cours::after { content: ""; display: inline-block; width: 1.2em; text-align: left; animation: bouton-points 1s steps(4, end) infinite; }
+  @keyframes bouton-points { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
   :is(button, input, .btn, .bouton):disabled, [aria-disabled="true"]:is(button, .btn) {
     opacity: 0.45 !important; cursor: not-allowed !important; transform: none !important;
   }
@@ -85,7 +91,7 @@
      avec un liseré blanc intérieur pour qu'on voie lequel est choisi. */
   :is(button, .btn, .filtre-btn, .filtre-pill, .tuile, [role="button"]):is(.actif, .active, .choisi, [aria-pressed="true"], [aria-selected="true"], [aria-current="page"], [aria-current="true"]):not(.cliquable, [data-bouton-libre]) {
     background: var(--rouge-ma2m-survol) !important;
-    box-shadow: inset 0 0 0 2px #fff, 0 0 0 2px var(--rouge-ma2m) !important;
+    box-shadow: inset 0 0 0 3px #fff, 0 0 0 2px var(--rouge-ma2m) !important;
   }
   /* Étape pas encore ouverte : plus pâle mais toujours rouge (les jours passés du calendrier
      restent rouge plein : un rouge pâli rendrait le chiffre blanc illisible) */

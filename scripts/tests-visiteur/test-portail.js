@@ -77,6 +77,7 @@ function donnees(role) {
     const d = donnees(role); if (reglage) reglage(d);
     await brancher(p, d, journal);
     await p.goto(url); await p.waitForSelector('#cx-mail', { timeout: 6000 });
+    ok(await p.isVisible('[data-action=installer]'), 'écran de connexion : bouton « Installer l’application » proposé');
     await p.fill('#cx-mail', 'admin@test.ci'); await p.fill('#cx-mdp', 'motdepasse-tres-long'); await p.click('form[data-form="connexion"] [type=submit]');
     return { ctx, p, errs, journal, d };
   };
