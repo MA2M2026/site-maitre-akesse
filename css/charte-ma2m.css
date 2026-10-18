@@ -140,3 +140,40 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   .site-header-v2 .lang-switch, .site-header-v2 .menu-trigger { padding: 0 0.8rem; font-size: 0.8rem; }
 }
 @media (max-width: 480px) { .btn, .btn--principal { white-space: normal; } }
+
+/* ===== Formulaires : champs blancs, trait fin, coins arrondis (inscription, contact, espace…) ===== */
+.form-champ input, .form-champ textarea, .form-champ select,
+input[type="text"], input[type="email"], input[type="tel"], input[type="password"], input[type="date"],
+input[type="number"], input[type="search"], textarea, select {
+  background: var(--surface) !important;
+  color: var(--encre) !important;
+  border: 1px solid var(--lignes) !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+  font-family: var(--texte);
+  min-height: 44px;
+}
+.form-champ input:focus, .form-champ textarea:focus, .form-champ select:focus,
+input:focus, textarea:focus, select:focus {
+  border-color: var(--rouge-ma2m) !important;
+  box-shadow: var(--focus) !important;
+  outline: none;
+}
+.form-champ input::placeholder, .form-champ textarea::placeholder { color: var(--encre-douce); opacity: 0.75; }
+.form-champ select option { background: var(--surface); color: var(--encre); }
+.form-champ label { color: var(--encre-douce); font-weight: 600; }
+
+/* Bouton « Choisir un fichier » du navigateur : même bouton rouge */
+input[type="file"] { padding: 0.35rem; }
+input[type="file"]::file-selector-button {
+  background: var(--rouge-ma2m); color: #fff; border: 0; border-radius: 8px;
+  padding: 0.6rem 1.1rem; margin-right: 0.8rem; font-family: var(--texte); font-weight: 600; cursor: pointer;
+}
+input[type="file"]::file-selector-button:hover { background: var(--rouge-ma2m-survol); }
+
+/* Encadrés d'information de la page inscription : cartes blanches lisibles */
+.im-9 { background: var(--surface) !important; border: 1px solid var(--lignes) !important; border-radius: 12px; }
+.im-9 a { color: var(--rouge-ma2m-texte) !important; }
+.im-5, .im-18, .im-24 { background: var(--surface); border: 1px solid var(--lignes) !important; border-radius: 12px; }
+.im-10, .im-13 { color: var(--encre) !important; }
+input[type="checkbox"], input[type="radio"] { accent-color: var(--rouge-ma2m); }
