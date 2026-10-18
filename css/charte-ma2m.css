@@ -1,0 +1,148 @@
+/* ===== Nouvelle charte graphique Maître Akesse (refonte 2026) =====
+   Fond clair, rouge #C8102E, noir, police Montserrat, cartes blanches.
+   Chargé APRÈS style.css : il redéfinit les couleurs de base (variables) pour que
+   tout le site bascule d'un coup, puis corrige les endroits aux couleurs écrites en dur.
+   Une seule copie des couleurs : ne jamais les recopier dans une autre feuille. */
+
+:root {
+  --fond: #F6F5F3;
+  --surface: #FFFFFF;
+  --encre: #1E1D1C;
+  --encre-douce: #5E5B57;
+  --lignes: #DDDAD5;
+  --rouge-ma2m: #C8102E;
+  --rouge-ma2m-texte: #B00E28;
+  --rouge-ma2m-survol: #A50D26;
+  --focus: 0 0 0 3px rgba(200,16,46,0.35);
+
+  /* Anciennes variables rebranchées sur la nouvelle charte */
+  --noir: var(--fond);
+  --noir-doux: var(--surface);
+  --anthracite: var(--surface);
+  --noir-brillant: var(--surface);
+  --texte-corps: var(--encre);
+  --texte-doux: var(--encre-douce);
+  --titre-clair: var(--encre);
+  --bordeaux: var(--rouge-ma2m);
+  --bordeaux-vif: var(--rouge-ma2m-survol);
+  --bordeaux-clair: var(--rouge-ma2m-texte);
+  --bordeaux-noir: #f3d9dd;
+  --rouge: var(--rouge-ma2m-texte);
+  --gris: var(--encre-douce);
+  --gris-clair: var(--lignes);
+  --or: var(--rouge-ma2m);
+  --glow-bordeaux: 0 6px 18px rgba(200,16,46,0.22);
+
+  --display: 'Montserrat', system-ui, sans-serif;
+  --texte: 'Montserrat', system-ui, sans-serif;
+}
+
+body {
+  background-color: var(--fond);
+  background-image: none;
+  color: var(--encre);
+  font-family: var(--texte);
+  font-weight: 400;
+}
+
+h1, h2, h3 { font-family: var(--display); font-weight: 700; color: var(--encre); letter-spacing: -0.01em; }
+
+a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+
+/* Boutons : 44 px minimum, coins 8 px */
+.btn, .btn--principal {
+  min-height: 44px;
+  border-radius: 8px;
+  font-family: var(--texte);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+.btn { background: var(--surface); color: var(--encre); border: 1px solid var(--lignes); }
+.btn:hover { color: var(--rouge-ma2m-texte); border-color: var(--rouge-ma2m); }
+.btn--principal { background: var(--rouge-ma2m); border-color: var(--rouge-ma2m); color: #fff; }
+.btn--principal:hover { background: var(--rouge-ma2m-survol); border-color: var(--rouge-ma2m-survol); color: #fff; }
+
+/* Cartes */
+.carte, .card { background: var(--surface); border: 1px solid var(--lignes); border-radius: 14px; }
+
+/* En-tête, bande défilante, bandeau cookies, pied de page */
+.site-header-v2 { background: #1E1D1C !important; border-bottom: 0; color: #fff; }
+.site-header-v2 a, .site-header-v2 button { color: #fff; }
+#marqueeBande { background: var(--rouge-ma2m) !important; color: #fff; }
+.site-footer { background: #1E1D1C; color: #f4f1ec; }
+.site-footer a { color: #f4f1ec; }
+
+/* Zones qui restent sombres (photo/vidéo, pied de page) : on remet les variables
+   « texte clair sur fond noir » à l'intérieur, tout le reste du site est clair. */
+.hero-v2, .couverture-faisceau, .site-footer, .splash {
+  --noir: #060606;
+  --texte-corps: #f1ece6;
+  --texte-doux: #cfc8c1;
+  --titre-clair: #ffffff;
+  --encre: #ffffff;
+  --bordeaux-clair: #ff6b80;
+  --gris-clair: rgba(255,255,255,0.22);
+  color: #f1ece6;
+}
+.hero-v2 { background-color: #1E1D1C; }
+.hero-v2 h1, .hero-v2 h2, .hero-v2 h3 { color: #fff; }
+
+/* Bandeau cookies : carte blanche */
+.bandeau-cookies {
+  background: var(--surface); border: 1px solid var(--lignes); border-radius: 14px;
+  box-shadow: 0 12px 32px -12px rgba(30,29,28,0.35);
+}
+.bandeau-cookies p { color: var(--encre); }
+.bandeau-cookies a { color: var(--rouge-ma2m-texte); }
+.bandeau-cookies .btn { border-radius: 8px; }
+.bandeau-cookies .btn--principal, .bandeau-cookies .btn:last-child { background: var(--rouge-ma2m); color: #fff; border-color: var(--rouge-ma2m); }
+
+/* Boutons : l'ancien système de « touches » sombres et rondes est remplacé (il utilisait !important) */
+.btn, .btn-mini-admin, .filtre-btn, .fiche-partage-btn, .journal-btn, .mpg-bouton-danger, .mp-panier-btn {
+  border-radius: 8px !important;
+  background: var(--surface) !important;
+  border: 1px solid var(--lignes) !important;
+  color: var(--encre) !important;
+  box-shadow: none !important;
+  text-transform: none !important;
+  letter-spacing: 0.02em !important;
+  font-weight: 600;
+}
+.btn--principal, .mp-corps .btn--principal {
+  border-radius: 8px !important;
+  background: var(--rouge-ma2m) !important;
+  border: 1px solid var(--rouge-ma2m) !important;
+  color: #fff !important;
+  box-shadow: 0 6px 16px -8px rgba(200,16,46,0.6) !important;
+  text-transform: none !important;
+  letter-spacing: 0.02em !important;
+}
+.filtre-btn.actif { background: var(--encre) !important; border-color: var(--encre) !important; color: #fff !important; }
+.lang-switch, .header-marketplace-lien {
+  border-radius: 8px !important;
+  background: transparent !important;
+  border: 1px solid rgba(255,255,255,0.4) !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+@media (hover: hover) {
+  .btn:hover, .btn-mini-admin:hover, .filtre-btn:hover, .fiche-partage-btn:hover, .journal-btn:hover, .mp-panier-btn:hover {
+    background: var(--surface) !important; border-color: var(--rouge-ma2m) !important; color: var(--rouge-ma2m-texte) !important; transform: translateY(-1px);
+  }
+  .btn--principal:hover, .mp-corps .btn--principal:hover {
+    background: var(--rouge-ma2m-survol) !important; border-color: var(--rouge-ma2m-survol) !important; color: #fff !important;
+  }
+  .lang-switch:hover, .header-marketplace-lien:hover { background: rgba(255,255,255,0.12) !important; border-color: #fff !important; color: #fff !important; }
+}
+.btn:active, .btn-mini-admin:active, .filtre-btn:active, .fiche-partage-btn:active, .journal-btn:active, .mp-panier-btn:active, .touche-appuyee {
+  transform: translateY(1px) !important; background: #f3d9dd !important; border-color: var(--rouge-ma2m) !important; color: var(--rouge-ma2m-texte) !important; box-shadow: none !important;
+}
+.btn--principal:active { background: var(--rouge-ma2m-survol) !important; color: #fff !important; }
+.mpg-bouton-danger { color: var(--rouge-ma2m-texte) !important; }
+
+/* Bandeau cookies : bouton « Accepter » en rouge */
+.bandeau-cookies .btn:last-child { background: var(--rouge-ma2m) !important; color: #fff !important; border-color: var(--rouge-ma2m) !important; }
