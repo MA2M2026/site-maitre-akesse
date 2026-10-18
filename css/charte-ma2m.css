@@ -84,6 +84,10 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 }
 .bandeau-cookies p { color: var(--encre); }
 .bandeau-cookies a { color: var(--rouge-ma2m-texte); }
+/* Lien « Intégrer l'agence » du bas de page : rouge de la charte (l'ancien rouge clair, fait
+   pour le fond noir, était trop pâle sur fond clair — test visuel du 18/10/2026) */
+.bandeau-integrer a { color: var(--rouge-ma2m-texte); }
+.bandeau-integrer a:hover, .bandeau-integrer a:focus-visible { color: var(--rouge-ma2m-survol); }
 
 /* ===== UN SEUL BOUTON pour tout le site (demande de la propriétaire, 18/10/2026) =====
    Rouge #C8102E, texte blanc Montserrat 600, coins arrondis, ombre rouge douce.

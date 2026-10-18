@@ -2427,3 +2427,27 @@ depuis Abidjan (une vérification a bloqué l'accueil 10 s) ; le tableau de bord
 - **Non modifié** : la protection d'accès du tableau de bord (`middleware.js`) demande la page
   deux fois quand la clé de 12 h a expiré (≈ 1,7 s) ; à revoir avec un essai réel (règle 3 de
   CLAUDE.md). La base Supabase répond en 0,3 à 0,8 s par demande (formule gratuite).
+
+## Test visuel : lisibilité et captures (18/10/2026, chantier D du cahier « Architecture »)
+
+`scripts/tests-visiteur/test-visuel.js` (lancé par `lancer.sh`, environ 2 min 30) ouvre les
+42 pages publiques FR et EN sur téléphone (390 px) et ordinateur (1280 px), avec la base simulée.
+
+- **Lisibilité — bloquant.** `scripts/tests-visiteur/lisibilite.js` mesure, pour chaque texte
+  visible, le contraste entre sa couleur et ce qui est réellement peint dessous (norme WCAG AA :
+  4,5 pour 1, ou 3 pour 1 pour un grand texte). Un dégradé est mesuré à l'endroit du texte ; un
+  texte posé sur une photo ou une vidéo n'est pas jugé ; un texte caché sous le menu non plus.
+  La page est parcourue de haut en bas, puis vérifiée menu ouvert, bandeau cookies affiché et
+  formulaires (contact, intégrer l'agence, connexion) envoyés vides.
+- **Contrôle du contrôle.** Au début, un texte sombre est posé exprès sur le menu sombre : s'il
+  n'est pas signalé, le test échoue (le vérificateur serait cassé).
+- **Captures — non bloquant.** Rangées dans `scripts/tests-visiteur/captures/actuelles` (dossier
+  non publié). `node test-visuel.js --reference` les enregistre comme référence ; aux passages
+  suivants, `comparer-captures.py` écrit `captures/rapport.html` avec la part de chaque capture
+  qui a changé et une image où les changements sont en rouge (utile pour repérer une page
+  déformée par erreur).
+- Premières corrections trouvées par ce test : lien « Intégrer l'agence » du bas de page sur
+  fond clair (nouvelle charte, `css/charte-ma2m.css`) et phrase « Accédez à votre espace
+  mannequin. » (`css/espace-mannequin-correctifs.css`).
+- `lancer.sh` installe aussi les paquets des fonctions serveur (`npm install --no-save`) s'ils
+  manquent, car `test-note-integration.js` en a besoin.

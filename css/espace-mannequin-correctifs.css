@@ -172,3 +172,7 @@ html { background: #080707; }
   .exp-fields [data-expf=nom], .exp-fields [data-expf=salle], .exp-fields [data-expf=promoteur] { grid-column: 1 / -1; }
 }
 .exp-doublon ul { margin: 6px 0 8px; padding-left: 1.1rem; color: var(--texte-tres-clair, #a59d95); }
+/* Lisibilité (test visuel du 18/10/2026) : sous-titres des panneaux (dont « Accédez à votre espace
+   mannequin. » à la connexion) trop pâles : contraste 3,5 pour 1, il faut 4,5. Corrigé ici, dans un
+   fichier à part, pour ne pas toucher aux styles écrits dans la page (empreintes de sécurité). */
+.panel .sub { color: var(--m-muted); }
