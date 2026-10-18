@@ -219,6 +219,12 @@ async function apercuMannequin(url, anglais, idFiche) {
 export default async function middleware(requete) {
   try {
     const url = new URL(requete.url);
+    // Ancienne adresse du tableau de bord (cahier v2.3, section 6.2) : elle mène au portail
+    // d'administration. La gestion détaillée reste ouverte depuis le portail (?depuis=portail)
+    // et par les liens de réinitialisation reçus par e-mail (?reset_code=…).
+    if (PAGE_TABLEAU.test(url.pathname) && !url.searchParams.has('depuis') && !url.searchParams.has('reset_code')) {
+      return Response.redirect(new URL('/admin/', url).toString(), 302);
+    }
     if (PAGE_TABLEAU.test(url.pathname) || SCRIPTS_ADMIN.test(url.pathname)) return await tableauProtege(requete, url);
     const agent = requete.headers.get('user-agent') || '';
     const anglais = url.pathname.indexOf('/en/') === 0;

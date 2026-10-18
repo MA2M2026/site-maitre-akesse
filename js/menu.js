@@ -166,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const lien = document.createElement('a');
   lien.className = 'lang-switch header-admin-lien';
-  lien.href = '/tableau-de-bord.html';
+  lien.href = '/admin/'; // portail d'administration (cahier v2.3) ; l'ancien tableau y mène aussi
   lien.textContent = 'Admin';
   menuBtn.parentNode.insertBefore(lien, menuBtn);
 });

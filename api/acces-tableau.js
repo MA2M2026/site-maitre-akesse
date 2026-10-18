@@ -19,7 +19,11 @@ module.exports = async function handler(req, res) {
     const utilisateur = await verifierUtilisateur(debut.jeton);
     if (!utilisateur) { res.status(401).json({ error: 'Session invalide ou expirée — reconnectez-vous.' }); return; }
     if (!(await estAdmin(utilisateur.id))) { res.status(403).json({ error: "Ce compte n'est pas administrateur." }); return; }
-    if (!cleAccesTableauValide(req, utilisateur.id)) {
+    // session ouverte par le portail avec la double authentification (code de l'application
+    // d'authentification, niveau « aal2 ») : elle vaut le code de validation
+    let doubleAuthentification = false;
+    try { doubleAuthentification = JSON.parse(Buffer.from(debut.jeton.split('.')[1], 'base64url').toString('utf8')).aal === 'aal2'; } catch (e) { doubleAuthentification = false; }
+    if (!doubleAuthentification && !cleAccesTableauValide(req, utilisateur.id)) {
       // statut du code de validation, lu avec la session du compte lui-même
       const rep = await fetch(SUPABASE_URL + '/rest/v1/rpc/code_validation_statut', {
         method: 'POST',
