@@ -10,7 +10,7 @@
 //     les différences sont listées dans captures/rapport.html.
 // Base simulée : rien n'est écrit pour de vrai. Dossier captures/ non publié (.gitignore).
 const { chromium } = require('playwright'); const { spawn, execFileSync } = require('child_process'); const { brancher } = require('./faux-serveur');
-const { verifierLisibilite } = require('./lisibilite');
+const { verifierLisibilite, lirePageEntiere } = require('./lisibilite');
 const fs = require('fs'); const path = require('path');
 const PORT = String(8600 + Math.floor(Math.random() * 100));
 const RACINE = path.resolve(__dirname, '../..');
@@ -55,20 +55,8 @@ async function ouvrir(b, page, ecran, cookies) {
   await p.waitForTimeout(1200);
   return { ctx, p };
 }
-// Parcourt la page écran par écran (les blocs qui apparaissent au défilement sont ainsi vus)
-async function lireTout(p, ecran, etiquette) {
-  const h = await p.evaluate(() => document.documentElement.scrollHeight);
-  const trouves = [];
-  for (let y = 0; y < h; y += Math.round(ecran.height * 0.85)) {
-    await p.evaluate((y) => window.scrollTo({ top: y, behavior: 'instant' }), y);
-    await p.waitForTimeout(250);
-    trouves.push(...await p.evaluate(verifierLisibilite));
-  }
-  const vus = new Set();
-  for (const x of trouves) {
-    const cle = x.element + '|' + x.texte; if (vus.has(cle)) continue; vus.add(cle);
-    problemes.push(etiquette + ' : « ' + x.texte + ' » (' + x.element + ') contraste ' + x.contraste + ' au lieu de ' + x.seuil + ' minimum');
-  }
+async function lireTout(p, etiquette) {
+  for (const x of await lirePageEntiere(p)) problemes.push(etiquette + ' : « ' + x.texte + ' » (' + x.element + ') contraste ' + x.contraste + ' au lieu de ' + x.seuil + ' minimum');
 }
 // attend la fin des apparitions en fondu (menu : rubriques qui arrivent l'une après l'autre)
 const finAnimations = (p) => p.waitForFunction(() => document.getAnimations().every(a => a.playState !== 'running' || (a.effect && a.effect.getComputedTiming().iterations === Infinity)), null, { timeout: 4000 }).catch(() => {});
@@ -82,7 +70,7 @@ async function unePage(b, page, ecran) {
   const etiquette = page + ' (' + ecran.nom + ')';
   const { ctx, p } = await ouvrir(b, page, ecran, false);
   try {
-    await lireTout(p, ecran, etiquette);
+    await lireTout(p, etiquette);
     await capturer(p, nomFichier(page, ecran), true);
     // Menu plein écran ouvert
     const bouton = await p.$('#menuBtn');
@@ -100,7 +88,7 @@ async function unePage(b, page, ecran) {
       const envoi = await p.$('form:not(.u-hidden) [type="submit"]:visible');
       if (envoi) {
         await envoi.click().catch(() => {}); await p.waitForTimeout(600);
-        await lireTout(p, ecran, etiquette + ', formulaire envoyé vide');
+        await lireTout(p, etiquette + ', formulaire envoyé vide');
         await capturer(p, nomFichier(page, ecran, 'erreurs'), true);
       }
     }

@@ -26,7 +26,9 @@
 .inn-operateurs { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 .inn-op { border: 1px solid var(--lignes); border-radius: 20px; padding: 0.35rem 0.8rem; font-weight: 700; font-size: 0.78rem; }
 .inn-op.actif { border-color: var(--rouge-ma2m); color: var(--rouge-ma2m-texte); }
-.inn-op.bientot { opacity: 0.5; }
+/* moyens « bientôt » : gris lisible et bord en pointillés (l’ancien effacement à 50 % rendait
+   le texte trop pâle : contraste 3,3 pour 1 au lieu de 4,5 — test du 18/10/2026) */
+.inn-op.bientot { color: var(--encre-douce); border-style: dashed; font-weight: 500; }
 .inn-total { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; padding-top: 0.7rem; border-top: 1px solid var(--lignes); }
 .inn-total b:last-child { font-size: 1.5rem; font-weight: 800; }
 .inn-carte .btn { width: 100%; }

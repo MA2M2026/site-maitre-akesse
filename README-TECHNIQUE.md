@@ -2451,3 +2451,11 @@ depuis Abidjan (une vérification a bloqué l'accueil 10 s) ; le tableau de bord
   mannequin. » (`css/espace-mannequin-correctifs.css`).
 - `lancer.sh` installe aussi les paquets des fonctions serveur (`npm install --no-save`) s'ils
   manquent, car `test-note-integration.js` en a besoin.
+- Suite (18/10/2026, soir) : inscription simplifiée (`js/inscription-nouveau.js`) — les trois
+  appels à la base passent par `appeler()` : si la connexion coupe, le bouton n'est plus bloqué
+  sur « en cours » et un message invite à réessayer (3 défauts SonarQube). Les moyens de paiement
+  « bientôt » sont en gris lisible (`css/inscription-nouveau.css`). `test-inscription-simplifiee.js`
+  utilise maintenant le contrôle commun `lisibilite.js` (sa copie est supprimée ; la page est lue
+  de haut en bas par `lirePageEntiere`, partagée avec `test-visuel.js`) et essaie la connexion
+  coupée aux trois étapes (code, « Corriger » — ce qui a été tapé est gardé —, « J'ai payé »).
+  Les boutons grisés (désactivés) ne sont pas jugés, comme le prévoit la norme.

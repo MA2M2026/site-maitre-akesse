@@ -14,7 +14,8 @@
   if (!SOURCE.simule) { var d = document.getElementById('inn-demo'); if (d) d.hidden = true; }
 
   var E = { ecran: 'code', code: '', naissance: '', candidat: null, erreur: '', correction: false,
-            reglement: false, parent: false, numero: '', waveOuvert: false, occupe: false };
+            reglement: false, parent: false, numero: '', waveOuvert: false, occupe: false,
+            saisie: null }; // téléphone / e-mail tapés à l'écran « Corriger » (gardés si l'envoi échoue)
   var MONTANT = '25 000 FCFA';
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -54,8 +55,8 @@
         '<button class="btn btn--principal" data-a="oui">Oui, continuer</button><button class="btn" data-a="corriger">Non, corriger</button></div>';
     }
     return '<div class="inn-carte">' + tete +
-      '<div class="form-champ"><label for="inn-tel">Téléphone</label><input id="inn-tel" type="tel" value="' + esc(c.telephone) + '"></div>' +
-      '<div class="form-champ"><label for="inn-mail">E-mail</label><input id="inn-mail" type="email" value="' + esc(c.email) + '"></div>' +
+      '<div class="form-champ"><label for="inn-tel">Téléphone</label><input id="inn-tel" type="tel" value="' + esc(E.saisie ? E.saisie.telephone : c.telephone) + '"></div>' +
+      '<div class="form-champ"><label for="inn-mail">E-mail</label><input id="inn-mail" type="email" value="' + esc(E.saisie ? E.saisie.email : c.email) + '"></div>' +
       '<div class="inn-note">Un nom ou une date de naissance incorrects se corrigent auprès de l\'agence, qui vérifie : cela change le statut mineur ou majeur.</div>' +
       bandeau(E.erreur, 'erreur') +
       '<button class="btn btn--principal" data-a="enregistrer"' + (E.occupe ? ' disabled' : '') + '>Enregistrer et continuer</button></div>';
@@ -99,13 +100,26 @@
     zone.innerHTML = ECRANS[E.ecran]();
     if (actif) { var el = document.getElementById(actif); if (el) { el.focus(); if (el.setSelectionRange && el.type === 'text') { try { el.setSelectionRange(el.value.length, el.value.length); } catch (e) {} } } }
   }
-  function aller(ecran) { E.ecran = ecran; E.erreur = ''; E.correction = false; dessiner(false); window.scrollTo(0, 0); }
+  function aller(ecran) { E.ecran = ecran; E.erreur = ''; E.correction = false; E.saisie = null; dessiner(false); window.scrollTo(0, 0); }
 
   var MESSAGES = {
     inconnu: 'Code ou date de naissance incorrect.',
     bloque: 'Code bloqué après 3 essais. Contactez l\'agence.',
     deja_utilise: 'Ce code a déjà été utilisé. Contactez l\'agence si besoin.'
   };
+
+  // Appel à la base : si la connexion coupe ou qu'une erreur survient, le bouton ne reste pas
+  // bloqué sur « en cours » ; un message invite à réessayer (remarque SonarQube, 18/10/2026).
+  // La cause est notée dans la console (relevée par le journal des erreurs du site).
+  var COUPURE = 'Connexion impossible. Vérifiez votre connexion internet puis réessayez.';
+  function appeler(action, suite, messageCoupure) {
+    Promise.resolve().then(action).then(suite).catch(function (err) {
+      console.error('Inscription simplifiée :', err);
+      E.occupe = false;
+      E.erreur = messageCoupure || COUPURE;
+      dessiner(false);
+    });
+  }
 
   zone.addEventListener('click', function (e) {
     var b = e.target.closest('[data-a]'); if (!b || b.disabled) return;
@@ -115,7 +129,7 @@
       E.code = code.trim().toUpperCase(); E.naissance = nais;
       if (!E.code || !E.naissance) { E.erreur = 'Entrez votre code et votre date de naissance.'; dessiner(false); return; }
       E.occupe = true; dessiner(false);
-      Promise.resolve(SOURCE.verifierCode(E.code, E.naissance)).then(function (r) {
+      appeler(function () { return SOURCE.verifierCode(E.code, E.naissance); }, function (r) {
         E.occupe = false;
         if (r && r.ok) { E.candidat = r.candidat; E.numero = r.candidat.telephone || ''; aller('recap'); return; }
         E.erreur = (MESSAGES[r && r.raison] || MESSAGES.inconnu) + (r && r.essais && r.raison === 'inconnu' ? ' Essai ' + r.essais + ' sur 3.' : '');
@@ -125,9 +139,10 @@
     else if (a === 'corriger') { E.correction = true; dessiner(false); }
     else if (a === 'enregistrer') {
       var tel = document.getElementById('inn-tel').value.trim(), mail = document.getElementById('inn-mail').value.trim();
+      E.saisie = { telephone: tel, email: mail };
       if (tel.replace(/\D/g, '').length < 8) { E.erreur = 'Le numéro de téléphone est trop court.'; dessiner(false); return; }
       E.occupe = true; dessiner(false);
-      Promise.resolve(SOURCE.corriger(E.code, { telephone: tel, email: mail })).then(function (r) {
+      appeler(function () { return SOURCE.corriger(E.code, { telephone: tel, email: mail }); }, function (r) {
         E.occupe = false;
         if (r && r.ok) { E.candidat.telephone = tel; E.candidat.email = mail; E.numero = tel; aller('reglement'); }
         else { E.erreur = 'Impossible d\'enregistrer. Réessayez ou contactez l\'agence.'; dessiner(false); }
@@ -136,11 +151,12 @@
     else if (a === 'wave') { E.waveOuvert = true; dessiner(false); }
     else if (a === 'paye') {
       E.occupe = true; dessiner(false);
-      Promise.resolve(SOURCE.declarerPaiement(E.code, { numero: E.numero, operateur: 'wave' })).then(function (r) {
+      appeler(function () { return SOURCE.declarerPaiement(E.code, { numero: E.numero, operateur: 'wave' }); }, function (r) {
         E.occupe = false;
         if (r && r.ok) aller('merci');
         else { E.erreur = 'Impossible d\'enregistrer votre paiement. Réessayez ou contactez l\'agence.'; dessiner(false); }
-      });
+      }, // la déclaration a pu arriver malgré la coupure : message adapté
+      'Connexion coupée : votre déclaration n\'a peut-être pas été reçue. Réessayez, ou contactez l\'agence si ce message revient.');
     }
   });
   zone.addEventListener('input', function (e) {
