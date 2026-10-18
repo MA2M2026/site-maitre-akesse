@@ -52,6 +52,25 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 #marqueeBande { background: var(--rouge-ma2m) !important; color: #fff; }
 .site-footer { background: #1E1D1C; color: #f4f1ec; }
 .site-footer a { color: #f4f1ec; }
+/* Pied de page resserré (demande de la propriétaire, 18/10/2026 : « trop large ») : liens de
+   navigation sur deux colonnes, marges réduites, sur téléphone comme sur ordinateur. */
+.site-footer { padding: 2.2rem 0 1.2rem; }
+.site-footer .footer-grille { grid-template-columns: 1.1fr 1.4fr 1fr; gap: 1.4rem 2rem; margin-bottom: 1.2rem; }
+.site-footer .footer-grille h3 { margin-bottom: 0.7rem; }
+.site-footer .footer-grille > div:nth-child(2) { display: grid; grid-template-columns: repeat(2, minmax(0, max-content)); column-gap: 2rem; align-content: start; }
+.site-footer .footer-grille > div:nth-child(2) > h3 { grid-column: 1 / -1; }
+.site-footer .footer-grille a { margin-bottom: 0.35rem; font-size: 0.86rem; }
+.site-footer .footer-grille p { font-size: 0.92rem; margin-bottom: 0; }
+.site-footer .footer-reseaux { margin-top: 0.5rem; }
+.site-footer .footer-bas { padding-top: 1rem; }
+@media (max-width: 720px) {
+  .site-footer { padding: 1.6rem 0 5rem; } /* bas dégagé : boutons WhatsApp et « haut de page » flottants */
+  .site-footer .footer-grille { grid-template-columns: 1fr; gap: 1.2rem; margin-bottom: 1rem; }
+  .site-footer .footer-grille > div:nth-child(2) { column-gap: 1.2rem; }
+  /* liens toujours assez hauts pour le doigt (44 px de zone utile en tout), mais sur deux colonnes */
+  .site-footer .footer-grille > div > a { padding: 0.45rem 0; margin-bottom: 0; }
+  .site-footer .footer-bas { flex-direction: column; gap: 0.3rem; }
+}
 
 /* ===== Zones sombres (chantier B du cahier « Architecture ») =====
    Tout le site est clair, sauf les zones posées sur une photo ou une vidéo, l'en-tête, le pied

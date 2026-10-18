@@ -707,6 +707,7 @@ section { padding: 5rem 0; }
 .contact-bloc h3 { margin-bottom: 0.8rem; }
 .contact-bloc a, .contact-bloc p { display: block; margin: 0.2rem 0; color: var(--texte-corps); }
 .contact-bloc a:hover { color: var(--bordeaux-clair); }
+.contact-bloc .contact-bloc-texte { margin: 0 0 0.8rem; font-size: 0.9rem; line-height: 1.6; color: var(--encre-douce); max-width: 46ch; }
 
 @media (max-width: 800px) { .contact-grille { grid-template-columns: 1fr; } }
 

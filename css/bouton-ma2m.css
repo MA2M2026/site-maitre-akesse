@@ -55,6 +55,11 @@
     text-decoration: none; white-space: nowrap;
   }
   @media (max-width: 480px) { :is(.btn, .bouton) { white-space: normal; } }
+  /* Filtres (The Book, boutique, tableau de bord) : même bouton, texte un peu plus petit pour
+     que la rangée de filtres tienne sur une ligne */
+  :is(.filtre-btn, .filtre-pill) { font-size: 0.85rem !important; }
+  @media (min-width: 721px) { :is(.filtre-btn, .filtre-pill) { padding: 0.55rem 0.9rem !important; } }
+  @media (max-width: 360px) { :is(.filtre-btn, .filtre-pill) { font-size: 0.75rem !important; } }
 
   /* Survol, appui, désactivé */
   @media (hover: hover) {
