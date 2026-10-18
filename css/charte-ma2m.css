@@ -78,7 +78,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 
 /* Zones qui restent sombres (photo/vidéo, pied de page) : on remet les variables
    « texte clair sur fond noir » à l'intérieur, tout le reste du site est clair. */
-.hero-v2, .couverture-faisceau, .site-footer, .splash {
+.hero-v2, .couverture-faisceau, .site-footer, .splash, .menu-overlay {
   --noir: #060606;
   --texte-corps: #f1ece6;
   --texte-doux: #cfc8c1;
