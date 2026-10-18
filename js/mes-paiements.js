@@ -13,6 +13,24 @@
   const nomMois = (d) => MOIS[Number(String(d).slice(5, 7)) - 1] + ' ' + String(d).slice(0, 4);
   const STATUT = { a_payer: ['À payer', 'info'], declare: ['Paiement déclaré', 'alerte'], payee: ['Payée', 'ok'], refusee: ['Non retrouvé', 'alerte'],
     non_paye: ['Non payé', 'erreur'], exoneree: ['Exonérée', 'neutre'] };
+  const MODES = { wave: 'Wave', especes: 'espèces', orange: 'Mobile Money', mtn: 'Mobile Money', moov: 'Mobile Money', virement: 'virement', autre: 'autre' };
+  // Calendrier de la formation (2 ans) : une case par mois, comme un diagramme — payé (et comment),
+  // en vérification, à payer, non payé, à venir. Le mannequin suit, l'agence aussi (même base).
+  function calendrier(f) {
+    if (!f || !(f.mois || []).length) return '';
+    const libelle = (m) => {
+      if (m.statut === 'payee') return ['Payé' + (MODES[m.mode] ? ' · ' + MODES[m.mode] : ''), 'ok'];
+      if (m.statut === 'a_venir') return ['À venir', 'neutre'];
+      if (m.statut === 'sans_echeance') return ['—', 'neutre'];
+      return STATUT[m.statut] || [m.statut, 'neutre'];
+    };
+    const payes = f.mois.filter((m) => m.statut === 'payee' || m.statut === 'exoneree').length;
+    return '<h2>Ma formation · ' + f.duree + ' mois</h2><p class="mp-doux">' + payes + ' mois réglé' + (payes > 1 ? 's' : '') + ' sur ' + f.duree + '.</p>' +
+      '<div class="mp-calendrier" role="list">' + f.mois.map((m, i) => {
+        const l = libelle(m);
+        return '<div class="mp-mois ' + l[1] + '" role="listitem"><span class="mp-mois-num">' + (i + 1) + '</span><b>' + esc(nomMois(m.mois)) + '</b><span>' + esc(l[0]) + '</span></div>';
+      }).join('') + '</div>';
+  }
   const jeton = new URLSearchParams(location.search).get('t');
   const parLien = document.body.hasAttribute('data-lien-personnel');
   let donnees = null, waveOuvert = {};
@@ -70,6 +88,7 @@
       (message ? '<div class="mp-bandeau ' + message[1] + '" role="status">' + esc(message[0]) + '</div>' : '') +
       bandeau(courante, donnees.jour_limite) +
       ech.filter((e) => ['a_payer', 'refusee', 'non_paye'].includes(e.statut)).map(carteAPayer).join('') +
+      (!parLien ? calendrier(donnees.formation) : '') +
       (parLien && donnees.echeances[0].statut === 'payee' ? '' : '') +
       ((donnees.notifications || []).length ? '<h2>Notifications</h2>' + donnees.notifications.map((n) => '<div class="mp-carte mp-notif"><div class="mp-petit">' + new Date(n.le).toLocaleDateString('fr-FR') + '</div>' + esc(n.texte) + '</div>').join('') : '') +
       (!parLien ? '<h2>Historique</h2>' + (ech.length ? ech.map((e) => '<div class="mp-ligne mp-histo"><div><b>' + esc(nomMois(e.mois)) + '</b><div class="mp-petit">' + (e.type === 'inscription' ? 'Inscription + 1er mois' : 'Mensualité') + ' · ' + fcfa(e.montant_du) + '</div>' +

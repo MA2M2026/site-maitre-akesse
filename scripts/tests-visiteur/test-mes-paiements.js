@@ -16,6 +16,10 @@ const MESPAIEMENTS = {
     { id: 'd2', type: 'mensualite', mois: '2026-10-01', montant_du: 10000, montant_paye: 0, date_limite: '2026-10-05', statut: 'non_paye', lien_wave: 'https://pay.wave.com/m/essai-10000', recus: null },
     { id: 'd1', type: 'inscription', mois: '2026-09-01', montant_du: 25000, montant_paye: 25000, date_limite: '2026-09-08', statut: 'payee', lien_wave: null,
       recus: [{ numero: 'REC-2026-00007', emis_le: '2026-09-03T10:00:00Z', montant: 25000, mode: 'wave', paye_par: null }] }],
+  formation: { debut: '2026-09-01', duree: 24, mois: Array.from({ length: 24 }, (_, i) => {
+    const d = new Date(Date.UTC(2026, 8 + i, 1)).toISOString().slice(0, 10);
+    return { mois: d, statut: i === 0 ? 'payee' : i === 1 ? 'non_paye' : i === 2 ? 'payee' : 'a_venir', mode: i === 0 ? 'wave' : i === 2 ? 'especes' : null };
+  }) },
   notifications: [{ texte: 'Bonjour Awa, rappel : le paiement d’octobre 2026 (10 000 FCFA) n’est pas encore reçu.', le: '2026-10-03T06:00:00Z' }]
 };
 
@@ -36,6 +40,8 @@ const MESPAIEMENTS = {
       ok(await p.isDisabled('[data-mp=paye]'), nomEcran + ' : « J’ai payé » grisé avant d’ouvrir Wave');
       ok((await p.getAttribute('[data-mp=wave]', 'href')) === 'https://pay.wave.com/m/essai-10000', nomEcran + ' : le bouton Payer porte le lien Wave du bon montant');
       ok((await t()).includes('REC-2026-00007') && (await t()).includes('rappel'), nomEcran + ' : historique, reçu et notifications affichés');
+      ok((await p.$$('.mp-calendrier .mp-mois')).length === 24 && (await t()).includes('2 mois réglés sur 24'), nomEcran + ' : calendrier des 24 mois de formation');
+      ok(/Payé · Wave/.test(await t()) && /Payé · espèces/.test(await t()), nomEcran + ' : le calendrier dit comment chaque mois a été payé (Wave, espèces)');
       const mal = (await lirePageEntiere(p)).map((x) => x.texte.slice(0, 25) + ' (' + x.contraste + ')');
       ok(!mal.length, nomEcran + ' : textes lisibles ' + mal.join(' | '));
       await p.click('[data-mp=wave]'); await p.waitForTimeout(500);

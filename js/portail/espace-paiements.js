@@ -111,6 +111,18 @@
     P.message('Paiement validé. Reçu ' + r.recu + '. Confirmation préparée pour le mannequin.');
     envoyerFile().catch(() => { /* la file sera reprise plus tard */ });
     P.afficher();
+    if (r.code_espace) fenetreCodeEspace(r.code_espace, 'Inscription validée');
+  };
+  // Code personnel de l'espace mannequin (18/10/2026) : créé à la validation de l'inscription,
+  // ou redonné depuis la fiche. Envoyé aussi par message ; il ne s'affiche qu'une fois.
+  function fenetreCodeEspace(code, titre) {
+    P.fenetre('<h2>' + P.esc(titre) + '</h2><p>Code personnel pour créer son espace mannequin :</p><div class="note ok" style="font-size:22px;font-weight:800;letter-spacing:2px">' + P.esc(code) + '</div>' +
+      '<p class="doux">Il est aussi parti par message (e-mail, WhatsApp). Il ne sert qu’une fois et ne s’affichera plus. En créant son compte avec ce code, le mannequin retrouve ses informations et ses photos du casting.</p>' +
+      '<div class="ligne"><button class="btn rouge" data-action="copier" data-texte="' + P.esc(code) + '">Copier le code</button><button class="btn" data-action="fermer-fenetre">Fermer</button></div>');
+  }
+  P.actions['paiements-code-espace'] = async (el) => {
+    const code = await P.rpc('portail_code_espace', { p_mannequin: el.getAttribute('data-id') });
+    fenetreCodeEspace(code, 'Nouveau code de l’espace mannequin');
   };
 
   // Lien personnel (mannequin sans compte) : envoyé par WhatsApp ou SMS
@@ -272,6 +284,8 @@
       '<div class="grille deux"><div class="carte"><h2>Identité et contacts</h2><p>' + P.esc(P.date(m.date_naissance)) + ' (' + P.age(m.date_naissance) + ' ans) · ' + P.esc(m.telephone || '—') + ' · ' + P.esc(m.email || '—') + '</p>' +
       (m.parents || []).map((g) => '<p class="petit-texte">Parent : <b>' + P.esc(g.nom) + '</b> · ' + P.esc(g.telephone) + (g.email ? ' · ' + P.esc(g.email) : '') + '</p>').join('') +
       '<p class="petit-texte doux">Entrée le ' + P.date(m.date_entree) + ' · mensualité ' + P.fcfa(m.montant_mensuel) + '</p>' +
+      (m.user_id ? '<p class="petit-texte">' + P.pastille('Espace mannequin créé', 'ok') + '</p>'
+        : '<p class="petit-texte">' + P.pastille('Pas encore d’espace sur le site', 'neutre') + ' <button class="btn petit" data-action="paiements-code-espace" data-id="' + m.id + '">Donner le code de l’espace</button></p>') +
       '<form data-form="paiements-notes" style="margin-top:12px"><input type="hidden" name="id" value="' + m.id + '"><label class="fl" for="fn-notes">Notes internes<textarea id="fn-notes" name="notes">' + P.esc(m.notes || '') + '</textarea></label><button class="btn petit" type="submit" style="margin-top:8px">Enregistrer les notes</button></form></div>' +
       '<div class="carte"><h2>Messages envoyés</h2>' + (messages.length ? messages.map((g) => '<div style="padding:8px 0;border-top:1px solid var(--lignes)"><div class="petit-texte doux">' + P.dateHeure(g.planifie_le) + ' · ' + P.esc(g.canal) + ' · ' + P.esc(g.statut) + '</div>' + P.esc(g.texte) + '</div>').join('') : '<p class="doux">Aucun message.</p>') + '</div></div>' +
       '<h2>Historique des échéances</h2>' + P.tableau(['Mois', 'Type', '#Dû', '#Payé', 'Statut', 'Reçus', 'Déclarations'], echeances.map((e) =>

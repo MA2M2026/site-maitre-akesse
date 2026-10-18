@@ -59,7 +59,8 @@ function donnees(role) {
     rpc: {
       portail_moi: { role, mfa: true, nom: { principal: 'Maître Akesse', site: 'Gestion du site', caisse: 'Encaissements', compta: 'Comptable' }[role], actif: true, membre: true, espaces, contacts_prives: role !== 'site' && role !== 'compta', noms_payeurs: espaces.paiements },
       portail_enregistrer_appareil: { ok: true, nouveau: false },
-      portail_valider_paiement: { recu: 'REC-2026-00002', paiement: 'p1' }
+      portail_valider_paiement: { recu: 'REC-2026-00002', paiement: 'p1', code_espace: 'ESP-K7P4-92' },
+      portail_code_espace: 'ESP-QW3R-77'
     },
     api: { '/api/portail': (corps) => corps.action === 'codes_secours_creer' ? { codes: ['AAAAA-BBBBB', 'CCCCC-DDDDD', 'EEEEE-FFFFF', 'GGGGG-HHHHH', 'JJJJJ-KKKKK', 'LLLLL-MMMMM', 'NNNNN-PPPPP', 'QQQQQ-RRRRR'] } : { ok: true } }
   };
@@ -126,6 +127,12 @@ function donnees(role) {
     await p.click('form[data-form="paiements-valider"] [type=submit]'); await p.waitForTimeout(800);
     const appel = journal.find((j) => j[0] === 'rpc' && j[1] === 'portail_valider_paiement');
     ok(appel && /"p_declaration":"pd1"/.test(appel[2]) && /"p_montant":10000/.test(appel[2]), nomEcran + ' : validation envoyée à la base (déclaration pd1, 10 000)');
+    ok((await texte(p)).includes('ESP-K7P4-92'), nomEcran + ' : inscription validée → code personnel de l’espace affiché à l’agent');
+    await p.click('[data-action="fermer-fenetre"]').catch(() => {});
+    // fiche d'un mannequin sans espace : « Donner le code de l'espace »
+    await p.goto(url + '#/paiements/fiche/m2'); await p.waitForSelector('[data-action="paiements-code-espace"]', { timeout: 6000 }).catch(() => {});
+    await p.click('[data-action="paiements-code-espace"]').catch(() => {}); await p.waitForTimeout(600);
+    ok((await texte(p)).includes('ESP-QW3R-77') && journal.some((j) => j[0] === 'rpc' && j[1] === 'portail_code_espace' && /"p_mannequin":"m2"/.test(j[2])), nomEcran + ' : fiche sans espace → nouveau code donné');
     ok((await texte(p)).includes('REC-2026-00002'), nomEcran + ' : le numéro de reçu est annoncé');
     ok(!errs.length, nomEcran + ' : aucune erreur de page (principal) ' + errs.join(' | '));
     await ctx.close();

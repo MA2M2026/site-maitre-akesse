@@ -55,6 +55,11 @@ grant execute on function essai_refuse(text, text) to authenticated;
 insert into casting_applications (id, full_name, email, phone, date_naissance, genre)
 values ('00000000-0000-0000-0000-00000000c001', 'Awa Koné', 'awa@test.ci', '0700000001', '2001-03-12', 'femme'),
        ('00000000-0000-0000-0000-00000000c002', 'Yao Bamba', '', '0700000002', '2012-05-03', 'homme');
+-- ce qu'Awa a donné au casting (repris dans son espace mannequin) : ville, taille, deux photos
+update casting_applications set city = 'Abidjan', height_cm = 176, hips_cm = 97 where id = '00000000-0000-0000-0000-00000000c001';
+insert into casting_photos (application_id, url) values
+  ('00000000-0000-0000-0000-00000000c001', 'https://photos.essai/casting-awa-1.jpg'),
+  ('00000000-0000-0000-0000-00000000c001', 'https://photos.essai/casting-awa-2.jpg');
 insert into agence_mannequins (id, nom, date_naissance, telephone, email, user_id, montant_mensuel, date_entree)
 values ('00000000-0000-0000-0000-00000000e001', 'Fanta Sylla', '1999-11-20', '0700000003', 'fanta@test.ci',
         '00000000-0000-0000-0000-0000000000a5', 10000, '2026-01-10');
@@ -150,6 +155,35 @@ select essai((select status from casting_applications where id = '00000000-0000-
          and (select statut from registration_codes where candidature_id = '00000000-0000-0000-0000-00000000c001' and statut <> 'annule') = 'utilise',
          'test 34 : candidature « inscrite » et code consommé, en même temps');
 select essai((select count(*) from message_log where modele = 'confirme') >= 1, 'test 11 : message de confirmation préparé');
+
+-- Code personnel de l'espace mannequin (18/10/2026) : créé et envoyé à la validation de
+-- l'inscription ; le compte créé avec lui reprend les informations et photos du casting.
+create temp table essai_espace as
+  select substring(texte from 'ESP-[A-Z2-9]{4}-[A-Z2-9]{2}') as code from message_log where modele = 'code_espace' limit 1;
+select essai((select code from essai_espace) is not null, 'code espace : envoyé avec la confirmation de l''inscription (format ESP-XXXX-XX)');
+select essai((select count(*) from espace_codes where statut = 'genere') = 1, 'code espace : un seul code valable, gardé haché');
+select essai(espace_code_verifier((select lower(code) from essai_espace)), 'code espace : reconnu (majuscules ou minuscules)');
+select essai(not espace_code_verifier('ESP-AAAA-AA'), 'code espace : un code inventé est refusé');
+insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000b1', 'awa@test.ci');
+insert into model_profiles (id, full_name, published) values ('00000000-0000-0000-0000-0000000000b1', 'Awa Koné', false);
+select essai((espace_code_utiliser((select code from essai_espace), '00000000-0000-0000-0000-0000000000b1') ->> 'photos')::int = 2,
+             'code espace : le compte reprend les 2 photos du casting');
+select essai((select city = 'Abidjan' and height_cm = 176 and hips_cm = 97 and date_naissance = '2001-03-12' and phone = '0700000001'
+              from model_profiles where id = '00000000-0000-0000-0000-0000000000b1'), 'code espace : la fiche reprend les informations du casting');
+select essai((select user_id from agence_mannequins where candidature_id = '00000000-0000-0000-0000-00000000c001') = '00000000-0000-0000-0000-0000000000b1',
+             'code espace : le compte est rattaché au registre (paiements visibles dans son espace)');
+select essai(not ((espace_code_utiliser((select code from essai_espace), '00000000-0000-0000-0000-0000000000b1') ->> 'ok')::boolean)
+         and not espace_code_verifier((select code from essai_espace)), 'code espace : il ne sert qu''une fois');
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000b1');
+select essai((mannequin_mes_paiements() -> 'formation' ->> 'duree')::int = 24
+         and json_array_length(mannequin_mes_paiements() -> 'formation' -> 'mois') = 24, 'Mes paiements : calendrier des 24 mois de formation');
+select essai((mannequin_mes_paiements() -> 'formation' -> 'mois' -> 0 ->> 'statut') = 'payee'
+         and (mannequin_mes_paiements() -> 'formation' -> 'mois' -> 0 ->> 'mode') = 'wave', 'Mes paiements : 1er mois payé avec l''inscription, par Wave');
+select essai((mannequin_mes_paiements() -> 'formation' -> 'mois' -> 5 ->> 'statut') = 'a_venir', 'Mes paiements : les mois suivants « à venir »');
+select essai_refuse($$select espace_code_utiliser('ESP-AAAA-AA', auth.uid())$$, 'code espace : la page ne peut pas utiliser un code elle-même');
+reset role;
+select set_config('request.jwt.claims', '', false);
 select essai((select count(*) from audit_log where action = 'Paiement validé') = 1, 'test 21 : la validation laisse une ligne d''audit');
 select essai((select count(*) from fee_dues where type = 'mensualite' and mannequin_id = (select id from agence_mannequins where candidature_id = '00000000-0000-0000-0000-00000000c001')
               and mois = date_trunc('month', current_date)::date) = 0, 'test 23 : pas de mensualité en plus pour le mois de l''inscription');

@@ -318,6 +318,10 @@ create table if not exists portail_reglages (
   modifie_le timestamptz not null default now()
 );
 insert into portail_reglages (id) values (true) on conflict (id) do nothing;
+-- durée de la formation (calendrier des mois dans « Mes paiements ») et validité du code
+-- personnel de l'espace mannequin (18/10/2026)
+alter table portail_reglages add column if not exists duree_formation_mois int not null default 24 check (duree_formation_mois between 1 and 120);
+alter table portail_reglages add column if not exists validite_code_espace_jours int not null default 60 check (validite_code_espace_jours between 1 and 365);
 
 create table if not exists agence_mannequins (
   id uuid primary key default gen_random_uuid(),
@@ -478,7 +482,8 @@ insert into message_templates (code, libelle, texte) values
   ('derniere_relance', 'Dernière relance', 'Bonjour {prenom}, dernier rappel : le délai de paiement de {mois} ({montant}) se termine le {date_limite}. Lien Wave : {lien_wave}'),
   ('non_recu', 'Paiement non reçu', 'Bonjour {prenom}, le paiement de {mois} n''a pas été reçu dans le délai. Merci de régulariser ou de contacter l''agence.'),
   ('confirme', 'Paiement confirmé', 'Bonjour {prenom}, votre paiement de {mois} ({montant}) est confirmé. Votre reçu est disponible dans votre espace.'),
-  ('refuse', 'Paiement non retrouvé', 'Bonjour {prenom}, votre paiement de {mois} n''a pas été retrouvé. Réessayez ou contactez l''agence.')
+  ('refuse', 'Paiement non retrouvé', 'Bonjour {prenom}, votre paiement de {mois} n''a pas été retrouvé. Réessayez ou contactez l''agence.'),
+  ('code_espace', 'Code de l''espace mannequin', 'Bonjour {prenom}, bienvenue à l''agence ! Créez votre espace mannequin ici : {lien_espace} (« Créer mon compte »), avec votre code personnel : {code_espace}. Il ne sert qu''une fois. Vos informations et vos photos du casting y seront déjà : vous n''aurez qu''à compléter ou corriger.')
 on conflict (code) do nothing;
 
 create table if not exists message_log (
@@ -727,6 +732,24 @@ create table if not exists registration_codes (
   cree_le timestamptz not null default now()
 );
 
+-- Code personnel de l'espace mannequin (demande de la propriétaire, 18/10/2026) : remplace le
+-- code commun de l'agence pour les nouveaux inscrits. Créé à la validation du paiement
+-- d'inscription (ou à la demande de l'agence), il sert une seule fois : le compte créé avec
+-- lui est rattaché au registre et reprend les informations et les photos du casting.
+create table if not exists espace_codes (
+  id uuid primary key default gen_random_uuid(),
+  mannequin_id uuid not null references agence_mannequins(id) on delete cascade,
+  code_hache text not null unique,
+  indice text not null,                        -- 2 derniers caractères, pour que l'agent s'y retrouve
+  expire_le timestamptz not null,
+  utilise_le timestamptz,
+  user_id uuid references auth.users(id) on delete set null,
+  statut text not null default 'genere' check (statut in ('genere', 'utilise', 'expire', 'annule')),
+  cree_par uuid,
+  cree_le timestamptz not null default now()
+);
+alter table espace_codes enable row level security;  -- aucune règle : lu seulement par les fonctions ci-dessous
+
 -- Demandes de correction du nom ou de la date de naissance (vérifiées par l'agence)
 create table if not exists demandes_correction (
   id uuid primary key default gen_random_uuid(),
@@ -972,7 +995,8 @@ returns text language sql stable security definer set search_path = public as $$
 $$;
 
 -- Prépare un message (modèle + variables) sur tous les canaux connus du destinataire
-create or replace function portail_preparer_message(p_echeance uuid, p_modele text)
+drop function if exists portail_preparer_message(uuid, text);
+create or replace function portail_preparer_message(p_echeance uuid, p_modele text, p_code text default null)
 returns int language plpgsql security definer set search_path = public as $$
 declare
   e fee_dues;
@@ -996,6 +1020,7 @@ begin
   txt := replace(txt, '{date_limite}', to_char(e.date_limite, 'DD/MM/YYYY'));
   txt := replace(txt, '{lien_wave}', coalesce(lien_wave_pour(case when e.type = 'inscription' then 'inscription' else 'formation' end, e.montant_du), ''));
   txt := replace(txt, '{lien_espace}', 'https://www.maitreakessemodelmanagement.com/espace-mannequin');
+  txt := replace(txt, '{code_espace}', coalesce(p_code, ''));
   txt := replace(replace(txt, ' ', ' '), '  ', ' ');
   if m.user_id is not null then
     insert into notifications_mannequins (mannequin_id, texte) values (m.id, txt);
@@ -1020,7 +1045,7 @@ begin
   return n;
 end;
 $$;
-revoke all on function portail_preparer_message(uuid, text) from public, anon, authenticated;
+revoke all on function portail_preparer_message(uuid, text, text) from public, anon, authenticated;
 
 -- Valider un paiement : échéance payée, reçu numéroté, recette(s) sans nom pour le
 -- comptable, notification, code d'inscription consommé, registre mis à jour. Tout ou rien.
@@ -1034,6 +1059,7 @@ declare
   pid uuid;
   num text;
   v_compte text;
+  v_code_espace text;
   d date := (now() at time zone 'Africa/Abidjan')::date;
 begin
   if not p_automatique and not portail_peut('paiements') then
@@ -1089,12 +1115,17 @@ begin
     update casting_applications set status = 'inscrite'
     where id = (select candidature_id from agence_mannequins where id = e.mannequin_id);
     update agence_mannequins set statut = 'actif' where id = e.mannequin_id;
+    -- pas encore d'espace sur le site : code personnel créé et envoyé avec la confirmation
+    if (select user_id from agence_mannequins where id = e.mannequin_id) is null then
+      v_code_espace := espace_code_creer(e.mannequin_id);
+    end if;
   end if;
 
   perform portail_preparer_message(e.id, 'confirme');
+  if v_code_espace is not null then perform portail_preparer_message(e.id, 'code_espace', v_code_espace); end if;
   perform journaliser(case when p_automatique then 'Paiement confirmé automatiquement' else 'Paiement validé' end,
                       'fee_dues', e.id::text, null, json_build_object('recu', num, 'montant', p_montant)::jsonb);
-  return json_build_object('recu', num, 'paiement', pid);
+  return json_build_object('recu', num, 'paiement', pid, 'code_espace', v_code_espace);
 end;
 $$;
 revoke all on function portail_valider_paiement(uuid, int, text, uuid, text, text, boolean) from public, anon;
@@ -1199,6 +1230,21 @@ begin
     'inscrit', true, 'prenom', split_part(coalesce(m.prenoms, m.nom), ' ', 1), 'nom', m.nom, 'statut', m.statut,
     'mineur', age(current_date, m.date_naissance) < make_interval(years => r.age_majorite),
     'jour_limite', r.jour_limite, 'telephone', m.telephone,
+    -- calendrier de la formation (2 ans par défaut) : un mois par case, payé (Wave, espèces…),
+    -- déclaré, à payer, non payé ou à venir. Le 1er mois est réglé avec l'inscription.
+    'formation', json_build_object('debut', date_trunc('month', m.date_entree)::date, 'duree', r.duree_formation_mois,
+      'mois', (select json_agg(json_build_object('mois', x.mo, 'statut', x.statut, 'mode', x.mode) order by x.mo) from (
+        select g.mo,
+               case when f.statut is not null then f.statut
+                    when g.mo > date_trunc('month', current_date)::date then 'a_venir'
+                    else 'sans_echeance' end as statut,
+               (select p.mode from payments p where p.echeance_id = f.id order by p.valide_le desc limit 1) as mode
+        from (select (date_trunc('month', m.date_entree) + make_interval(months => i))::date as mo
+              from generate_series(0, r.duree_formation_mois - 1) i) g
+        left join lateral (select ff.* from fee_dues ff where ff.mannequin_id = m.id and ff.statut <> 'annulee'
+                           and ((ff.type = 'mensualite' and ff.mois = g.mo)
+                             or (ff.type = 'inscription' and g.mo = date_trunc('month', m.date_entree)::date))
+                           order by (ff.type = 'mensualite') desc limit 1) f on true) x)),
     'echeances', coalesce((select json_agg(json_build_object(
         'id', f.id, 'type', f.type, 'mois', f.mois, 'montant_du', f.montant_du, 'montant_paye', f.montant_paye,
         'date_limite', f.date_limite, 'statut', f.statut, 'motif', f.motif,
@@ -1452,6 +1498,110 @@ begin
   return code;
 end;
 $$;
+
+-- Code personnel de l'espace mannequin : création (interne), à la demande de l'agence,
+-- vérification et utilisation (serveur seulement, api/code-protege.js).
+create or replace function espace_code_creer(p_mannequin uuid)
+returns text language plpgsql security definer set search_path = public, extensions as $$
+declare
+  alphabet text := 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';  -- sans 0, O, 1, I
+  brut text := '';
+  code text;
+  r portail_reglages;
+begin
+  select * into r from portail_reglages limit 1;
+  for k in 1..6 loop
+    brut := brut || substr(alphabet, 1 + (get_byte(gen_random_bytes(1), 0) % length(alphabet)), 1);
+  end loop;
+  code := 'ESP-' || substr(brut, 1, 4) || '-' || substr(brut, 5, 2);
+  update espace_codes set statut = 'annule' where mannequin_id = p_mannequin and statut = 'genere';
+  insert into espace_codes (mannequin_id, code_hache, indice, expire_le, cree_par)
+  values (p_mannequin, encode(digest(code, 'sha256'), 'hex'), substr(brut, 5, 2), now() + make_interval(days => r.validite_code_espace_jours), auth.uid());
+  return code;
+end;
+$$;
+revoke all on function espace_code_creer(uuid) from public, anon, authenticated;
+
+-- L'agence redonne un code (perdu, expiré) : l'ancien est annulé, le message repart.
+create or replace function portail_code_espace(p_mannequin uuid)
+returns text language plpgsql security definer set search_path = public as $$
+declare
+  m agence_mannequins;
+  code text;
+  e_id uuid;
+begin
+  if not (portail_peut('paiements') or portail_peut('site')) then raise exception 'Accès refusé.'; end if;
+  select * into m from agence_mannequins where id = p_mannequin;
+  if m.id is null then raise exception 'Mannequin introuvable.'; end if;
+  if m.user_id is not null then raise exception 'Ce mannequin a déjà son espace : il se connecte avec son e-mail et son mot de passe.'; end if;
+  code := espace_code_creer(m.id);
+  select id into e_id from fee_dues where mannequin_id = m.id order by (type = 'inscription') desc, mois desc limit 1;
+  if e_id is not null then perform portail_preparer_message(e_id, 'code_espace', code); end if;
+  perform journaliser('Code de l''espace mannequin donné', 'agence_mannequins', m.id::text, null, null);
+  return code;
+end;
+$$;
+grant execute on function portail_code_espace(uuid) to authenticated;
+
+-- Le code est-il valable ? (serveur seulement, avant de créer le compte)
+create or replace function espace_code_verifier(p_code text)
+returns boolean language sql stable security definer set search_path = public, extensions as $$
+  select exists (select 1 from espace_codes c join agence_mannequins m on m.id = c.mannequin_id
+                 where c.code_hache = encode(digest(upper(trim(p_code)), 'sha256'), 'hex')
+                   and c.statut = 'genere' and c.expire_le > now() and m.user_id is null);
+$$;
+revoke all on function espace_code_verifier(text) from public, anon, authenticated;
+
+-- Compte tout juste créé avec le code : rattaché au registre, et la fiche reprend ce que le
+-- mannequin a donné au casting (seulement les cases encore vides) et ses photos du casting.
+-- Il pourra tout corriger ensuite dans son espace.
+create or replace function espace_code_utiliser(p_code text, p_user uuid)
+returns json language plpgsql security definer set search_path = public, extensions as $$
+declare
+  c espace_codes;
+  m agence_mannequins;
+  ca casting_applications;
+  n int := 0;
+begin
+  select * into c from espace_codes where code_hache = encode(digest(upper(trim(p_code)), 'sha256'), 'hex')
+    and statut = 'genere' and expire_le > now() for update;
+  if c.id is null then return json_build_object('ok', false); end if;
+  select * into m from agence_mannequins where id = c.mannequin_id for update;
+  if m.user_id is not null then return json_build_object('ok', false); end if;
+  update espace_codes set statut = 'utilise', utilise_le = now(), user_id = p_user where id = c.id;
+  update agence_mannequins set user_id = p_user, model_id = coalesce(model_id, p_user) where id = m.id;
+  select * into ca from casting_applications where id = m.candidature_id;
+  update model_profiles set
+    date_naissance = coalesce(date_naissance, m.date_naissance, ca.date_naissance),
+    phone = coalesce(nullif(phone, ''), m.telephone, ca.phone),
+    contact_email = coalesce(nullif(contact_email, ''), m.email, ca.email),
+    city = coalesce(nullif(city, ''), ca.city),
+    quartier = coalesce(nullif(quartier, ''), ca.quartier),
+    height_cm = coalesce(height_cm, ca.height_cm),
+    weight_kg = coalesce(weight_kg, ca.weight_kg),
+    chest_cm = coalesce(chest_cm, ca.chest_cm),
+    waist_cm = coalesce(waist_cm, ca.waist_cm),
+    hips_cm = coalesce(hips_cm, ca.hips_cm),
+    shoe_size = coalesce(nullif(shoe_size, ''), ca.shoe_size),
+    clothing_size = coalesce(nullif(clothing_size, ''), ca.clothing_size),
+    niveau_etude = coalesce(nullif(niveau_etude, ''), ca.niveau_etudes),
+    civilite = coalesce(nullif(civilite, ''), ca.civilite),
+    video_url = coalesce(nullif(video_url, ''), ca.video_url),
+    category = coalesce(nullif(category, ''), case lower(coalesce(m.genre, ca.genre, '')) when 'femme' then 'femme' when 'homme' then 'homme' else null end)
+  where id = p_user;
+  if ca.id is not null and not exists (select 1 from model_photos where model_id = p_user) then
+    -- même adresse que la photo du casting (aucune copie de fichier) ; « chemin » laissé vide :
+    -- le fichier appartient au dossier des castings, la fiche ne le supprime jamais
+    insert into model_photos (model_id, url, categorie)
+    select p_user, ph.url, 'book' from casting_photos ph where ph.application_id = ca.id and coalesce(ph.url, '') <> '' order by ph.created_at;
+    get diagnostics n = row_count;
+  end if;
+  perform journaliser('Espace mannequin créé avec le code personnel', 'agence_mannequins', m.id::text, null,
+                      json_build_object('photos_reprises', n)::jsonb);
+  return json_build_object('ok', true, 'photos', n);
+end;
+$$;
+revoke all on function espace_code_utiliser(text, uuid) from public, anon, authenticated;
 
 -- Casting direct : fiche minimale créée par l'agent, retenue d'office, code généré
 create or replace function casting_direct(p_nom text, p_naissance date, p_telephone text, p_lieu text,

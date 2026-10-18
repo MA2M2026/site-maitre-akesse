@@ -5,6 +5,8 @@
 //   type 'inscription'           code d'inscription (inscription-mannequin.html)
 //   type 'inscription-soumettre' envoi du dossier d'inscription (consomme le code)
 //   type 'portail'               code d'invitation « Créer mon compte » (espace-mannequin.html)
+//                                ou code PERSONNEL ESP-XXXX-XX (18/10/2026) : donné à la validation de
+//                                l'inscription ; le compte reprend alors les informations et photos du casting
 //   type 'portail-creer-compte'  même code, puis création du compte mannequin ICI, côté
 //                                serveur (test de sécurité du 04/10/2026 : le compte était
 //                                créé par le navigateur avec sb.auth.signUp(), et le code
@@ -19,6 +21,8 @@
 const { SUPABASE_URL, enTetesService, corpsDe, extraireIp, nettoyerAppareil } = require('./_commun.js');
 
 const EMAIL_VALIDE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Code personnel de l'espace mannequin (18/10/2026) ; les autres codes restent ceux de l'agence
+const CODE_ESPACE = /^\s*ESP-[A-Z2-9]{4}-[A-Z2-9]{2}\s*$/i;
 
 // Incident du 04 au 11/10/2026 : la création échouait en silence (« La création du compte
 // a échoué » pour la mannequin, rien pour l'agence). Toute panne de création est désormais
@@ -62,7 +66,7 @@ async function creerCompteMannequin(entetes, nom, email, motDePasse) {
     await signalerPanne(entetes, 'fiche model_profiles', raison);
     return { status: 502, corps: { error: 'creation' } };
   }
-  return { status: 200, corps: { ok: true } };
+  return { status: 200, corps: { ok: true }, id: id };
 }
 
 // p_email et p_parent_email : Extension 129 ; p_civilite : Extension 132 (07/10/2026).
@@ -112,6 +116,10 @@ module.exports = async function handler(req, res) {
     if (type === 'inscription') {
       const r = await rpc('verifier_code_inscription', { code_input: code });
       valide = r.ok && (await r.json()) === true;
+    } else if ((type === 'portail' || type === 'portail-creer-compte') && CODE_ESPACE.test(code)) {
+      // code personnel de l'espace (ESP-XXXX-XX), donné à la validation de l'inscription
+      const r = await rpc('espace_code_verifier', { p_code: code });
+      valide = r.ok && (await r.json()) === true;
     } else if (type === 'portail' || type === 'portail-creer-compte') {
       const r = await rpc('check_invite_code', { code_input: code });
       valide = r.ok && (await r.json()) === true;
@@ -149,6 +157,15 @@ module.exports = async function handler(req, res) {
     await rpc('connexion_enregistrer_succes', cle);
     if (type === 'portail-creer-compte') {
       const resultat = await creerCompteMannequin(entetes, nom, email, motDePasse);
+      // Code personnel : le compte est rattaché au registre et la fiche reprend le casting
+      // (informations et photos). Un échec ici ne retire pas le compte : l'agence pourra
+      // rattacher la fiche, et le mannequin remplit lui-même ce qui manque.
+      if (resultat.id && CODE_ESPACE.test(code)) {
+        const repReprise = await rpc('espace_code_utiliser', { p_code: code, p_user: resultat.id });
+        const reprise = await repReprise.json().catch(() => null);
+        if (!repReprise.ok || !(reprise && reprise.ok)) await signalerPanne(entetes, 'reprise du casting (code personnel)', JSON.stringify(reprise) || repReprise.status);
+        else resultat.corps.photos = reprise.photos;
+      }
       res.status(resultat.status).json(resultat.corps);
       return;
     }

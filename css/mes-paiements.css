@@ -23,3 +23,14 @@
 .mp-lien { background: none; border: 0; padding: 0; color: var(--rouge-ma2m-texte); font-weight: 700; font-size: 0.8rem; cursor: pointer; text-decoration: underline; }
 .mp-notif { padding: 12px; gap: 4px; }
 .mp details summary { cursor: pointer; }
+
+/* Calendrier de la formation : une case par mois (couleur + mot : la couleur ne porte jamais seule le sens) */
+.mp-calendrier { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; margin: 10px 0 22px; }
+.mp-mois { position: relative; display: flex; flex-direction: column; gap: 2px; padding: 10px 10px 9px; border-radius: 10px; border: 1px solid var(--lignes); background: var(--surface); font-size: 0.78rem; }
+.mp-mois b { font-size: 0.86rem; text-transform: capitalize; }
+.mp-mois-num { position: absolute; top: 6px; right: 8px; font-size: 0.68rem; color: var(--encre-douce); }
+.mp-mois.ok { background: var(--ok-fond); color: var(--ok-texte); border-color: transparent; }
+.mp-mois.alerte { background: var(--alerte-fond); color: var(--alerte-texte); border-color: transparent; }
+.mp-mois.erreur { background: var(--erreur-fond); color: var(--erreur-texte); border-color: transparent; }
+.mp-mois.info { background: var(--info-fond); color: var(--info-texte); border-color: transparent; }
+.mp-mois:is(.ok, .alerte, .erreur, .info) .mp-mois-num { color: inherit; }
