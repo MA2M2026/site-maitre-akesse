@@ -1,0 +1,169 @@
+// Test visuel (chantier D du cahier « Architecture », 18/10/2026) : chaque page publique FR et EN
+// est ouverte sur téléphone (390 px) et ordinateur (1280 px), puis parcourue de haut en bas.
+//  1. Lisibilité (BLOQUANT) : tout texte visible doit avoir assez de contraste avec ce qui est
+//     peint dessous (norme WCAG AA, scripts/tests-visiteur/lisibilite.js). Vérifié aussi menu
+//     ouvert, bandeau cookies affiché et formulaires envoyés vides (messages d'erreur).
+//  2. Contrôle du contrôle : un texte sombre posé exprès sur le menu sombre DOIT être signalé,
+//     sinon le test lui-même est cassé.
+//  3. Captures d'écran (NON bloquant) : rangées dans captures/actuelles ; si des captures de
+//     référence existent (captures/reference, faites avec « node test-visuel.js --reference »),
+//     les différences sont listées dans captures/rapport.html.
+// Base simulée : rien n'est écrit pour de vrai. Dossier captures/ non publié (.gitignore).
+const { chromium } = require('playwright'); const { spawn, execFileSync } = require('child_process'); const { brancher } = require('./faux-serveur');
+const { verifierLisibilite } = require('./lisibilite');
+const fs = require('fs'); const path = require('path');
+const PORT = String(8600 + Math.floor(Math.random() * 100));
+const RACINE = path.resolve(__dirname, '../..');
+const CAPTURES = path.join(__dirname, 'captures');
+const REFERENCE = process.argv.includes('--reference');
+const tables = {
+  model_profiles: [{ id: 'a1', full_name: 'Awa Koné', city: 'Abidjan', height_cm: 178, weight_kg: 55, category: 'femme', genre: 'femme', published: true, featured: true, slug: 'awa-kone' }],
+  model_photos: [{ id: 'p1', model_id: 'a1', url: 'https://x/1.jpg', principale: true, categorie: 'book' }],
+  actualites: [{ id: 'n1', titre: 'Casting Orange', contenu: '<p>Texte</p>', categorie: 'Casting', created_at: '2026-10-01T10:00:00Z', a_la_une: true }],
+  evenements: [{ id: 'e1', titre: 'Défilé Abidjan', contenu: '<p>D</p>', date_evenement: '2026-09-20', created_at: '2026-09-21T10:00:00Z' }],
+  partenaires: [{ id: 'pa', nom: 'Orange CI', logo_url: 'https://x/o.png' }],
+  bandeau_annonce: [], instagram_posts_cache: [], mot_responsable: [], admins: []
+};
+const rpc = { photos_couverture_mannequins: [{ model_id: 'a1', url: 'https://x/1.jpg' }] };
+// Toutes les pages publiques (le tableau de bord et la gestion de la boutique sont protégés et
+// couverts par test-admin.js / test-boutique.js)
+const pages = [
+  'index', 'qui-sommes-nous', 'mannequins', 'mannequin.html?id=a1', 'actualites', 'evenements', 'agenda', 'parcours',
+  'partenaires', 'services', 'selection', 'contact', 'integrer-agence', 'candidature', 'inscription-mannequin',
+  'mentions-legales', 'politique-confidentialite'
+].flatMap(n => [n, 'en/' + n]).concat(['espace-mannequin', 'reinitialiser-mot-de-passe', 'inscription-nouveau', '404',
+  'marketplace/index', 'marketplace/cgv', 'marketplace/suivi', 'marketplace/commande'])
+  .map(n => (n.includes('.html') ? n : n + '.html'));
+const ecrans = [{ nom: 'telephone', width: 390, height: 844 }, { nom: 'ordinateur', width: 1280, height: 900 }];
+const nomFichier = (page, ecran, etat) => page.replace(/\.html.*$/, '').replace(/\//g, '_') + '-' + ecran.nom + (etat ? '-' + etat : '') + '.png';
+
+let srv; process.on('exit', () => srv && srv.kill());
+const problemes = []; let captures = 0;
+
+async function ouvrir(b, page, ecran, cookies) {
+  const ctx = await b.newContext({ viewport: { width: ecran.width, height: ecran.height } });
+  const p = await ctx.newPage();
+  await p.emulateMedia({ reducedMotion: 'reduce' });
+  await p.addInitScript((cookies) => {
+    try {
+      sessionStorage.setItem('ma2m_porte_ouverte', '1'); sessionStorage.setItem('ma2m_intro_vue', '1');
+      if (!cookies) localStorage.setItem('ma2m_cookies', 'non');
+    } catch (e) {}
+  }, cookies);
+  await brancher(p, { tables: JSON.parse(JSON.stringify(tables)), rpc }, []);
+  await p.goto('http://127.0.0.1:' + PORT + '/' + page, { waitUntil: 'domcontentloaded' });
+  await p.waitForTimeout(1200);
+  return { ctx, p };
+}
+// Parcourt la page écran par écran (les blocs qui apparaissent au défilement sont ainsi vus)
+async function lireTout(p, ecran, etiquette) {
+  const h = await p.evaluate(() => document.documentElement.scrollHeight);
+  const trouves = [];
+  for (let y = 0; y < h; y += Math.round(ecran.height * 0.85)) {
+    await p.evaluate((y) => window.scrollTo({ top: y, behavior: 'instant' }), y);
+    await p.waitForTimeout(250);
+    trouves.push(...await p.evaluate(verifierLisibilite));
+  }
+  const vus = new Set();
+  for (const x of trouves) {
+    const cle = x.element + '|' + x.texte; if (vus.has(cle)) continue; vus.add(cle);
+    problemes.push(etiquette + ' : « ' + x.texte + ' » (' + x.element + ') contraste ' + x.contraste + ' au lieu de ' + x.seuil + ' minimum');
+  }
+}
+// attend la fin des apparitions en fondu (menu : rubriques qui arrivent l'une après l'autre)
+const finAnimations = (p) => p.waitForFunction(() => document.getAnimations().every(a => a.playState !== 'running' || (a.effect && a.effect.getComputedTiming().iterations === Infinity)), null, { timeout: 4000 }).catch(() => {});
+async function capturer(p, nom, pleinePage) {
+  await p.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+  await p.waitForTimeout(150);
+  await p.screenshot({ path: path.join(CAPTURES, 'actuelles', nom), fullPage: pleinePage, animations: 'disabled' }).catch(() => {});
+  captures++;
+}
+async function unePage(b, page, ecran) {
+  const etiquette = page + ' (' + ecran.nom + ')';
+  const { ctx, p } = await ouvrir(b, page, ecran, false);
+  try {
+    await lireTout(p, ecran, etiquette);
+    await capturer(p, nomFichier(page, ecran), true);
+    // Menu plein écran ouvert
+    const bouton = await p.$('#menuBtn');
+    if (bouton && await bouton.isVisible()) {
+      await bouton.click(); await p.waitForTimeout(300); await finAnimations(p);
+      problemes.push(...(await p.evaluate(verifierLisibilite)).map(x => etiquette + ', menu ouvert : « ' + x.texte + ' » contraste ' + x.contraste + ' au lieu de ' + x.seuil));
+      if (page === 'index.html' || page === 'en/index.html') await capturer(p, nomFichier(page, ecran, 'menu'), false);
+    }
+    // Formulaires envoyés vides : les messages d'erreur doivent rester lisibles
+    if (/^(en\/)?(contact|integrer-agence|espace-mannequin)\.html/.test(page)) {
+      await p.reload({ waitUntil: 'domcontentloaded' }); await p.waitForTimeout(1000);
+      // sans la bulle du navigateur (invisible pour le test) : ce sont les messages du site qui
+      // s'affichent ; l'envoi éventuel part vers la base simulée
+      await p.evaluate(() => document.querySelectorAll('form').forEach(f => { f.noValidate = true; }));
+      const envoi = await p.$('form:not(.u-hidden) [type="submit"]:visible');
+      if (envoi) {
+        await envoi.click().catch(() => {}); await p.waitForTimeout(600);
+        await lireTout(p, ecran, etiquette + ', formulaire envoyé vide');
+        await capturer(p, nomFichier(page, ecran, 'erreurs'), true);
+      }
+    }
+  } finally { await ctx.close(); }
+}
+
+(async () => {
+  const debut = Date.now();
+  fs.rmSync(path.join(CAPTURES, 'actuelles'), { recursive: true, force: true });
+  fs.mkdirSync(path.join(CAPTURES, 'actuelles'), { recursive: true });
+  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: RACINE, stdio: 'ignore' }); await new Promise(r => setTimeout(r, 1500));
+  const b = await chromium.launch();
+
+  // 1. Contrôle du contrôle : texte sombre posé exprès sur le menu ouvert (fond sombre)
+  {
+    const { ctx, p } = await ouvrir(b, 'en/index.html', ecrans[0], false);
+    await p.click('#menuBtn'); await p.waitForTimeout(300); await finAnimations(p);
+    const duMenu = (l) => l.filter(x => x.element.includes('menuOverlay'));
+    const avant = duMenu(await p.evaluate(verifierLisibilite)).length;
+    await p.evaluate(() => document.querySelectorAll('#menuOverlay .nav-links a').forEach(a => { a.style.setProperty('color', '#222', 'important'); }));
+    await p.waitForTimeout(100); await finAnimations(p); // les liens changent de couleur en fondu
+    const apres = duMenu(await p.evaluate(verifierLisibilite)).length;
+    console.log(apres > 0 ? '✅ erreur faite exprès (texte sombre sur le menu sombre) bien détectée (' + apres + ' textes)' : '❌ erreur faite exprès NON détectée : le contrôle de lisibilité est cassé');
+    if (!apres || avant) problemes.push('contrôle du contrôle : ' + (apres ? avant + ' problème(s) déjà présents sur le menu' : 'texte sombre sur menu sombre non détecté'));
+    await ctx.close();
+  }
+
+  // 2. Bandeau cookies (identique sur toutes les pages) : accueil FR et EN
+  for (const page of ['index.html', 'en/index.html']) for (const ecran of ecrans) {
+    const { ctx, p } = await ouvrir(b, page, ecran, true);
+    const bandeau = await p.$('#bandeau-cookies');
+    if (!bandeau) problemes.push(page + ' (' + ecran.nom + ') : bandeau cookies absent');
+    else {
+      await bandeau.scrollIntoViewIfNeeded().catch(() => {});
+      problemes.push(...(await p.evaluate(verifierLisibilite)).filter(x => x.element.includes('cookies')).map(x => page + ' (' + ecran.nom + '), bandeau cookies : « ' + x.texte + ' » contraste ' + x.contraste));
+      await capturer(p, nomFichier(page, ecran, 'cookies'), false);
+    }
+    await ctx.close();
+  }
+
+  // 3. Toutes les pages, quatre à la fois
+  const travail = pages.flatMap(page => ecrans.map(ecran => [page, ecran]));
+  await Promise.all([0, 1, 2, 3].map(async () => {
+    for (let t = travail.shift(); t; t = travail.shift()) {
+      await unePage(b, t[0], t[1]).catch(e => problemes.push(t[0] + ' (' + t[1].nom + ') : erreur du test ' + e.message.split('\n')[0]));
+    }
+  }));
+  await b.close();
+
+  // 4. Captures : nouvelle référence, ou comparaison avec la référence (rapport non bloquant)
+  if (REFERENCE) {
+    fs.rmSync(path.join(CAPTURES, 'reference'), { recursive: true, force: true });
+    fs.cpSync(path.join(CAPTURES, 'actuelles'), path.join(CAPTURES, 'reference'), { recursive: true });
+    console.log('ℹ️ ' + captures + ' captures enregistrées comme référence (captures/reference)');
+  } else if (fs.existsSync(path.join(CAPTURES, 'reference'))) {
+    try { console.log(execFileSync('python3', [path.join(__dirname, 'comparer-captures.py'), CAPTURES], { encoding: 'utf8' }).trim()); }
+    catch (e) { console.log('⚠️ comparaison des captures impossible (non bloquant) : ' + String(e.stderr || e.message).trim().split('\n').pop()); }
+  } else console.log('ℹ️ ' + captures + ' captures dans captures/actuelles (pas encore de référence : node test-visuel.js --reference)');
+
+  const duree = Math.round((Date.now() - debut) / 1000);
+  console.log((duree < 600 ? '✅' : '❌') + ' durée ' + duree + ' s (' + pages.length + ' pages × 2 écrans), maximum 600 s');
+  if (duree >= 600) problemes.push('test trop long : ' + duree + ' s');
+  if (problemes.length) { console.log('❌ ' + problemes.length + ' problème(s) de lisibilité :\n  ' + problemes.join('\n  ')); process.exit(1); }
+  console.log('✅ tous les textes lisibles (contraste WCAG AA) sur ' + pages.length + ' pages, téléphone et ordinateur, menu, cookies et formulaires');
+  process.exit(0);
+})();
