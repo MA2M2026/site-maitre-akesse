@@ -146,3 +146,33 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 
 /* Bandeau cookies : bouton « Accepter » en rouge */
 .bandeau-cookies .btn:last-child { background: var(--rouge-ma2m) !important; color: #fff !important; border-color: var(--rouge-ma2m) !important; }
+
+/* ===== Boutons du haut : Menu, EN/FR, Admin, Marketplace = mêmes blocs, même écriture =====
+   (18/10/2026) Même hauteur (40 px), mêmes coins (8 px), même police Montserrat 600 en capitales.
+   « Menu » est en rouge (action principale), les autres en contour blanc. */
+.header-v2-droite { gap: 0.6rem; }
+.site-header-v2 .lang-switch,
+.site-header-v2 .menu-trigger {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem;
+  min-height: 40px; padding: 0 1rem; box-sizing: border-box;
+  border-radius: 8px !important;
+  font-family: var(--texte); font-size: 0.74rem; font-weight: 600; letter-spacing: 0.12em; line-height: 1;
+  text-transform: uppercase; white-space: nowrap; cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+.site-header-v2 .lang-switch {
+  background: transparent !important; color: #fff !important;
+  border: 1px solid rgba(255,255,255,0.4) !important; box-shadow: none !important;
+}
+.site-header-v2 .menu-trigger {
+  background: var(--rouge-ma2m); color: #fff; border: 1px solid var(--rouge-ma2m);
+}
+.site-header-v2 .menu-trigger:hover { background: var(--rouge-ma2m-survol); border-color: var(--rouge-ma2m-survol); color: #fff; }
+.site-header-v2 .menu-trigger .dots { flex-direction: row; gap: 3px; }
+@media (hover: hover) {
+  .site-header-v2 .lang-switch:hover { background: rgba(255,255,255,0.12) !important; border-color: #fff !important; color: #fff !important; transform: none; }
+}
+@media (max-width: 480px) {
+  .header-v2-droite { gap: 0.4rem; }
+  .site-header-v2 .lang-switch, .site-header-v2 .menu-trigger { padding: 0 0.7rem; font-size: 0.7rem; letter-spacing: 0.08em; }
+}
