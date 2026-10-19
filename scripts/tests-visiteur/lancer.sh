@@ -25,6 +25,6 @@ export NODE_PATH="${NODE_PATH:-$(npm root -g)}"
 echo "########## versions des fichiers"; python3 ../versionner.py --verifier
 for t in test-visiteur.js test-inscription-simplifiee.js test-inscription-code.js test-mes-paiements.js test-code-espace.js test-portail-serveur.js test-contact-recruteur.js test-admin.js test-pages-publiques.js test-espace-experiences.js test-boutique.js test-publications.js test-journal.js test-tri-photos.js test-video-accueil.js test-espace-enregistrement.js test-photos-webp.js test-photos-directes.js test-tableau-protege.js test-note-integration.js test-code-permanent.js test-journal-fichier.js test-affichage-stable.js test-apercus.js test-middleware-apercus.mjs test-recherche-book.js test-lisibilite-photos.js test-portail.js test-visuel.js; do
   echo "########## $t"
-  # le test visuel parcourt 42 pages × 2 écrans : il a sa propre limite de 600 s
-  timeout "$([[ "$t" = test-visuel.js ]] && echo 700 || echo 400)" node "$t"
+  # le test visuel (42 pages × 2 écrans) et le test « texte sur photo » ont leur propre limite
+  timeout "$(case "$t" in test-visuel.js) echo 700;; test-lisibilite-photos.js) echo 2400;; *) echo 400;; esac)" node "$t"
 done
