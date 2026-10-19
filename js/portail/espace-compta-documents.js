@@ -127,7 +127,9 @@
     const d = trouver(el.getAttribute('data-id'));
     if (!d || !confirm('Créer la facture à partir de « ' + d.numero + ' » (' + P.fcfa(d.total_ht) + ' hors taxes) ?')) return;
     el.disabled = true;  // (la base refuse de toute façon une deuxième facture du même devis)
-    await creer({ type: 'facture', tiers_id: d.tiers_id, origine_id: d.id, lignes: d.lignes, notes: d.notes, categorie: 'prestation' }, 'Facture {n} créée. La somme due est dans « Ce qu’on nous doit ».');
+    try {
+      await creer({ type: 'facture', tiers_id: d.tiers_id, origine_id: d.id, lignes: d.lignes, notes: d.notes, categorie: 'prestation' }, 'Facture {n} créée. La somme due est dans « Ce qu’on nous doit ».');
+    } finally { if (el.isConnected) el.disabled = false; }
   };
   P.actions['compta-doc-avoir'] = (el) => {
     const d = trouver(el.getAttribute('data-id'));
@@ -166,11 +168,11 @@
     const fin = C.bornes(m)[1];
     const [liste, payes, r, cpts, fiscaux] = await Promise.all([
       P.bd(sb.from('compta_impots').select('*').order('echeance')),
-      P.bd(sb.from('compta_ecritures').select('id, annule, date_op').eq('categorie', 'impots')),
+      C.paiementsImpots(),
       reglages(), C.comptes(false),
       P.bd(sb.from('compta_documents').select('type, tva, annule').eq('fiscal', true).gte('date_doc', m).lt('date_doc', fin))
     ]);
-    const paye = (i) => !!i.ecriture_id && payes.some((e) => e.id === i.ecriture_id && !e.annule);
+    const paye = (i) => !!C.paiementImpot(i, payes);
     const retard = (i) => !i.annule && !paye(i) && i.echeance < P.aujourdhui();
     P.etat.comptaImpots = liste.map((i) => Object.assign({}, i, { paye: paye(i) }));
     const aPayer = liste.filter((i) => !i.annule && !paye(i));

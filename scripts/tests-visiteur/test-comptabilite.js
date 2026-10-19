@@ -15,6 +15,7 @@ const { verifierBoutons } = require('./boutons');
 const PORT = String(9400 + Math.floor(Math.random() * 90));
 let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m); if (!c) ko++; };
 const MOIS = new Date().toISOString().slice(0, 7), JOUR = MOIS + '-02';
+const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
 
 function donnees(role) {
   const d = {
@@ -112,23 +113,45 @@ function donnees(role) {
     ok(dep.sens === 'depense' && dep.montant === 12000 && dep.categorie === 'transport' && dep.justificatif && depot[1].endsWith(dep.justificatif), nomEcran + ' : dépense enregistrée avec son justificatif');
     ok((await p.textContent('#calque')).includes('Dépense enregistrée'), nomEcran + ' : message « Dépense enregistrée »');
 
+    // Photo d'iPhone (HEIC) : convertie en JPEG quand le navigateur la lit, sinon gardée telle quelle
+    await p.fill('#cp-montant', '3000'); await p.fill('#cp-libelle', 'Photo iPhone lisible');
+    await p.setInputFiles('#cp-justif', { name: 'recu.heic', mimeType: 'image/heic', buffer: PNG });
+    await p.click('form[data-form="compta-ecrire"] [type=submit]'); await p.waitForTimeout(1000);
+    let depots = journal.filter((j) => j[0] === 'STOCKAGE');
+    ok(/\.jpg$/.test(depots[depots.length - 1][1]), nomEcran + ' : photo HEIC lisible → convertie en JPEG avant l’envoi');
+    await p.fill('#cp-montant', '3000'); await p.fill('#cp-libelle', 'Photo iPhone illisible ici');
+    await p.setInputFiles('#cp-justif', { name: 'recu2.heic', mimeType: 'image/heic', buffer: Buffer.from('pas une photo') });
+    await p.click('form[data-form="compta-ecrire"] [type=submit]'); await p.waitForTimeout(1000);
+    depots = journal.filter((j) => j[0] === 'STOCKAGE');
+    ok(/\.heic$/.test(depots[depots.length - 1][1]), nomEcran + ' : photo HEIC que ce navigateur ne lit pas → gardée telle quelle');
+    ok(!(await p.$('[data-action="compta-justif-joindre"][data-id="e4"]')) && await p.$('[data-action="compta-justif-voir"][data-id="e4"]'),
+      nomEcran + ' : un justificatif déjà joint ne se remplace pas (pas de bouton « Joindre »)');
+
+    // refus de la base (droits) : annoncé, jamais « Justificatif joint »
+    await p.click('[data-action="compta-justif-joindre"][data-id="e3"]'); await p.waitForSelector('#cp-justif2');
+    const e3 = d.tables.compta_ecritures.splice(d.tables.compta_ecritures.findIndex((e) => e.id === 'e3'), 1)[0];
+    await p.setInputFiles('#cp-justif2', { name: 'x.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4') });
+    await p.click('form[data-form="compta-justif"] [type=submit]'); await p.waitForTimeout(800);
+    ok((await p.textContent('#calque')).includes('Action refusée'), nomEcran + ' : justificatif refusé par la base → « Action refusée »');
+    d.tables.compta_ecritures.push(e3); await p.click('[data-action="fermer-fenetre"]');
     // Justificatif joint après coup au loyer, puis ouvert
     await p.click('[data-action="compta-justif-joindre"][data-id="e3"]'); await p.waitForSelector('#cp-justif2');
     await p.setInputFiles('#cp-justif2', { name: 'quittance.jpg', mimeType: 'image/jpeg', buffer: Buffer.from([0xff, 0xd8, 0xff, 0xd9]) });
     await p.click('form[data-form="compta-justif"] [type=submit]'); await p.waitForTimeout(800);
-    const joint = envoi(journal, 'PATCH', 'compta_ecritures')[0] || {};
+    const joint = envoi(journal, 'PATCH', 'compta_ecritures').pop() || {};
     ok(/\.jpg$/.test(joint.justificatif || '') && !(await p.isVisible('#cp-justif2')), nomEcran + ' : justificatif joint au loyer après coup');
     await p.click('[data-action="compta-justif-voir"][data-id="e4"]'); await p.waitForSelector('#fenetre a.btn');
     ok(/token=essai/.test(await p.getAttribute('#fenetre a.btn', 'href')), nomEcran + ' : justificatif ouvert par un lien temporaire');
     await p.click('[data-action="fermer-fenetre"]');
 
     // Annulation : sans motif rien ne se passe ; avec motif, l'écriture reste, barrée
+    const avantAnnul = envoi(journal, 'PATCH', 'compta_ecritures').length;
     p.once('dialog', (dl) => dl.dismiss());
     await p.click('[data-action="compta-annuler"][data-id="e3"]'); await p.waitForTimeout(400);
-    ok(envoi(journal, 'PATCH', 'compta_ecritures').length === 1, nomEcran + ' : annulation abandonnée → rien n’est envoyé');
+    ok(envoi(journal, 'PATCH', 'compta_ecritures').length === avantAnnul, nomEcran + ' : annulation abandonnée → rien n’est envoyé');
     p.once('dialog', (dl) => dl.accept('Saisi deux fois'));
     await p.click('[data-action="compta-annuler"][data-id="e3"]'); await p.waitForTimeout(800);
-    const annul = envoi(journal, 'PATCH', 'compta_ecritures')[1] || {};
+    const annul = envoi(journal, 'PATCH', 'compta_ecritures')[avantAnnul] || {};
     ok(annul.annule === true && annul.motif_annulation === 'Saisi deux fois', nomEcran + ' : annulation envoyée avec son motif');
     ok(await p.isVisible('tr.annulee') && (await texte(p)).includes('Saisi deux fois'), nomEcran + ' : l’écriture annulée reste visible, barrée, avec le motif');
 
@@ -152,6 +175,11 @@ function donnees(role) {
     await p.fill('#cm-solde', '75000'); await p.click('form[data-form="compta-compte-modifier"] [type=submit]'); await p.waitForTimeout(800);
     const modif = envoi(journal, 'PATCH', 'compta_comptes')[0] || {};
     ok(modif.solde_initial === 75000 && modif.actif === true && (await p.textContent('#calque')).includes('Compte enregistré'), nomEcran + ' : solde de départ de la caisse corrigé');
+    d.refus = { compta_comptes: 'Gardez au moins un compte Wave actif : les paiements de l’espace 2 y arrivent.' };
+    await p.click('[data-action="compta-compte-modifier"][data-id="c2"]'); await p.waitForSelector('#cm-actif');
+    await p.uncheck('#cm-actif'); await p.click('form[data-form="compta-compte-modifier"] [type=submit]'); await p.waitForTimeout(800);
+    ok((await p.textContent('#calque')).includes('Gardez au moins un compte Wave actif'), nomEcran + ' : fermer le dernier compte Wave → refusé, avec l’explication');
+    d.refus = null; await p.click('[data-action="fermer-fenetre"]');
 
     // Morceau B — ce qu'on nous doit : reste, retard, encaissement partiel
     await aller(p, 'a-recevoir'); t = await texte(p);

@@ -113,6 +113,7 @@ function donnees(role, fichiers) {
     await aller(p, 'documents'); let t = await texte(p);
     ok(t.includes('Mode non fiscal') && t.includes('NF-FAC-' + AN + '-0001') && t.includes('NF-DEV-' + AN + '-0001'), nomEcran + ' : documents du mois, mode non fiscal annoncé');
     ok(!(await p.$('[data-action="compta-doc-fne"]')), nomEcran + ' : pas de « N° FNE » pour un document non fiscal');
+    ok(await p.getAttribute('#do-date', 'max') === new Date().toLocaleDateString('fr-CA', { timeZone: 'Africa/Abidjan' }), nomEcran + ' : la date d’un document ne peut pas être dans le futur');
     await controler(p, nomEcran + ' : documents');
     await p.selectOption('#do-type', 'facture');
     ok(await p.isVisible('#do-echeance') && !(await p.isVisible('#do-validite')) && !(await p.isVisible('#do-recette')), nomEcran + ' : facture → date limite de paiement, pas de validité');

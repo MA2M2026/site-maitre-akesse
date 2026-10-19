@@ -412,14 +412,26 @@ select compta_document_creer(jsonb_build_object('type', 'recu', 'tiers_id', (sel
 select essai((select count(*) from compta_documents where type = 'recu') = 2, 'reçu annulé : un nouveau reçu se fait pour la même recette');
 select essai_refuse($$select compta_document_creer(jsonb_build_object('type', 'devis', 'date_doc', current_date + 1, 'tiers_id', (select id from compta_tiers where nom = 'Client Sococé'), 'lignes', jsonb_build_array(jsonb_build_object('designation', 'x', 'quantite', 1, 'prix', 1))))$$,
   'document daté dans le futur refusé');
-select essai_refuse($$select compta_document_creer(jsonb_build_object('type', 'devis', 'date_doc', current_date - 400, 'tiers_id', (select id from compta_tiers where nom = 'Client Sococé'), 'lignes', jsonb_build_array(jsonb_build_object('designation', 'x', 'quantite', 1, 'prix', 1))))$$,
+select essai_refuse($$select compta_document_creer(jsonb_build_object('type', 'facture', 'date_doc', current_date - 1, 'tiers_id', (select id from compta_tiers where nom = 'Client Sococé'), 'lignes', jsonb_build_array(jsonb_build_object('designation', 'x', 'quantite', 1, 'prix', 1))))$$,
   'document antidaté avant le dernier de sa série refusé');
+select essai((compta_document_creer(jsonb_build_object('type', 'devis', 'date_doc', current_date - 400, 'tiers_id', (select id from compta_tiers where nom = 'Client Sococé'),
+  'lignes', jsonb_build_array(jsonb_build_object('designation', 'x', 'quantite', 1, 'prix', 1))))) ->> 'numero' = 'NF-DEV-' || extract(year from current_date - 400) || '-0001',
+  'document de l''année d''avant : il prend sa place dans la série de son année');
 update compta_ecritures set justificatif = '2026-10/quittance.pdf' where libelle = 'Loyer octobre';
 select essai_refuse($$update compta_ecritures set justificatif = '2026-10/autre.pdf' where libelle = 'Loyer octobre'$$, 'un justificatif joint ne se remplace pas');
 select essai_refuse($$update compta_comptes set actif = false where type = 'wave'$$, 'le dernier compte Wave ne se ferme pas');
 select essai_refuse($$update compta_comptes set type = 'banque' where type = 'caisse'$$, 'le type d''un compte ne change pas');
 select essai((select fin from compta_tresorerie(date_trunc('month', current_date)::date, (date_trunc('month', current_date) + interval '1 month')::date) where nom like 'Caisse%')
   = (select solde from compta_soldes() where type = 'caisse'), 'trésorerie du mois : solde de fin = solde du jour');
+insert into compta_comptes (nom, type, solde_initial, date_initiale) values ('Banque essai', 'banque', 1000, date_trunc('month', current_date)::date);
+insert into compta_ecritures (sens, montant, compte_id, categorie, libelle) values
+  ('recette', 500, (select id from compta_comptes where nom = 'Banque essai'), 'casting', 'Essai banque +'),
+  ('depense', 200, (select id from compta_comptes where nom = 'Banque essai'), 'loyer', 'Essai banque -');
+insert into compta_ecritures (sens, montant, compte_id, compte_dest_id, categorie, libelle) values
+  ('virement', 300, (select id from compta_comptes where type = 'wave'), (select id from compta_comptes where nom = 'Banque essai'), 'virement', 'Essai vers banque'),
+  ('virement', 100, (select id from compta_comptes where nom = 'Banque essai'), (select id from compta_comptes where type = 'caisse'), 'virement', 'Essai depuis banque');
+select essai((select row(debut, entrees, sorties, fin)::text from compta_tresorerie(date_trunc('month', current_date)::date, (date_trunc('month', current_date) + interval '1 month')::date)
+  where nom = 'Banque essai') = row(1000, 800, 300, 1500)::text, 'trésorerie du mois : départ 1 000, entrées 800, sorties 300, fin 1 500');
 insert into compta_impots (nom, periode, echeance, montant) values ('Patente', '2026', current_date + 10, 120000);
 select compta_impot_payer((select id from compta_impots where nom = 'Patente'), (select id from compta_comptes where type = 'caisse'), current_date, 120000);
 select essai(exists (select 1 from compta_impots i join compta_ecritures e on e.id = i.ecriture_id where i.nom = 'Patente' and e.categorie = 'impots'), 'impôt payé : dépense « Impôts et taxes » liée');

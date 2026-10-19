@@ -12,18 +12,16 @@
   // Tout ce qu'il faut pour le mois m (AAAA-MM-01)
   async function rassembler(m) {
     const fin = C.bornes(m)[1];
-    const [ecritures, tresorerie, comptes, creances, dettes, docs, impots, materiel, tiers, r] = await Promise.all([
+    const [ecritures, tresorerie, comptes, creances, dettes, docs, impots, materiel, tiers, r, paiements] = await Promise.all([
       C.ecritures(m), P.rpc('compta_tresorerie', { p_debut: m, p_fin: fin }), C.comptes(true), C.dettes('creance'), C.dettes('dette'),
       P.bd(sb.from('compta_documents').select('*').gte('date_doc', m).lt('date_doc', fin).order('numero')),
       P.bd(sb.from('compta_impots').select('*').order('echeance')),
       P.bd(sb.from('compta_materiel').select('*').order('date_achat')),
       P.bd(sb.from('compta_tiers').select('id, nom')),
-      P.bd(sb.from('compta_reglages').select('*').eq('id', 1).single())
+      P.bd(sb.from('compta_reglages').select('*').eq('id', 1).single()),
+      C.paiementsImpots()  // (quel que soit leur mois)
     ]);
-    // paiements des impôts, quel que soit leur mois
-    const ids = impots.map((i) => i.ecriture_id).filter(Boolean);
-    const paiements = ids.length ? await P.bd(sb.from('compta_ecritures').select('id, date_op, annule').in('id', ids)) : [];
-    const paiement = (i) => paiements.find((e) => e.id === i.ecriture_id && !e.annule);
+    const paiement = (i) => C.paiementImpot(i, paiements);
     const duMois = ecritures.slice().reverse();  // (ordre des dates, du 1er au dernier jour)
     const noms = {}, nomsTiers = {};
     comptes.forEach((c) => { noms[c.id] = c.nom; });

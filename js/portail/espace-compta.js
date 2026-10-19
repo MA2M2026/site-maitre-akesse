@@ -61,6 +61,9 @@
   // Créances (ce qu'on nous doit) ou dettes (ce qu'on doit) : réglé, avoirs, reste, retard
   // (calculés par la base, compta_dettes_etat)
   const dettes = (sens) => P.rpc('compta_dettes_etat', { p_sens: sens });
+  // Impôts : paiements (dépenses « impots ») et règle « payé » = dépense liée, non annulée
+  const paiementsImpots = () => P.bd(sb.from('compta_ecritures').select('id, date_op, annule').eq('categorie', 'impots'));
+  const paiementImpot = (i, paiements) => (i.ecriture_id && paiements.find((e) => e.id === i.ecriture_id && !e.annule)) || null;
   const totaux = (liste, sens) => liste.filter((e) => e.sens === sens && !e.annule).reduce((s, e) => s + e.montant, 0);
 
   // ---------- Tableau du mois ----------
@@ -133,10 +136,10 @@
   // Dépose le justificatif dans le stockage privé et renvoie son chemin
   async function deposerJustificatif(fichier) {
     if (!fichier || !fichier.size) return null;
-    if (fichier.size > JUSTIF_MAX) throw new Error('Justificatif trop lourd : 10 Mo au plus.');
     // photo d'iPhone (HEIC) convertie en JPEG quand le navigateur le sait (js/conversion-heic.js),
     // sinon gardée telle quelle (certains navigateurs ne donnent pas son type)
-    fichier = await window.convertirSiHeic(fichier);
+    if (window.convertirSiHeic) fichier = await window.convertirSiHeic(fichier);
+    if (fichier.size > JUSTIF_MAX) throw new Error('Justificatif trop lourd : 10 Mo au plus.');
     const type = fichier.type || (/\.hei[cf]$/i.test(fichier.name) ? 'image/heic' : '');
     if (JUSTIF_TYPES.indexOf(type) === -1) throw new Error('Justificatif : une photo (JPEG, PNG, HEIC) ou un PDF.');
     const ext = type === 'application/pdf' ? 'pdf' : type.split('/')[1].replace('jpeg', 'jpg');
@@ -273,7 +276,7 @@
     } catch (e) { P.message(/duplicate|unique/i.test(String(e && e.message)) ? 'Un compte porte déjà ce nom.' : P.erreurTexte(e)); }
   };
 
-  P.compta = { RECETTES, DEPENSES, comptes, ecritures, toutes, dettes, moisChoisi, bornes, choixMois, lignes, optionsComptes, optionsCategories, deposerJustificatif, totaux, champ, actualiser };
+  P.compta = { RECETTES, DEPENSES, comptes, ecritures, toutes, dettes, moisChoisi, bornes, choixMois, lignes, optionsComptes, optionsCategories, deposerJustificatif, totaux, champ, actualiser, paiementsImpots, paiementImpot };
   // (les pages du morceau B sont ajoutées par js/portail/espace-compta-suivi.js)
   P.espaces.compta = {
     nav: [[null, 'Au quotidien'], ['mois', 'Tableau du mois'], ['recettes', 'Recettes'], ['depenses', 'Dépenses'], ['tresorerie', 'Trésorerie']],

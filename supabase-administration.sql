@@ -1124,6 +1124,9 @@ returns trigger language plpgsql security definer set search_path = public as $$
 begin
   if est_ecriture_serveur() then return NEW; end if;
   if NEW.type <> OLD.type then raise exception 'Le type d''un compte ne change pas.'; end if;
+  if OLD.actif and not NEW.actif and OLD.type in ('caisse', 'wave') then
+    perform 1 from compta_comptes where type = OLD.type and id <> OLD.id for update;  -- (deux fermetures en même temps)
+  end if;
   if OLD.actif and not NEW.actif and OLD.type in ('caisse', 'wave') and not exists (select 1 from compta_comptes where type = OLD.type and actif and id <> OLD.id) then
     raise exception 'Gardez au moins un compte % actif : les paiements de l''espace 2 y arrivent.', case when OLD.type = 'caisse' then 'caisse' else 'Wave' end;
   end if;
@@ -1220,7 +1223,8 @@ declare
 begin
   if est_ecriture_serveur() then return NEW; end if;
   -- recette posée ou annulée par compta_depuis_espace2 (déclencheur dans un déclencheur : jamais une saisie)
-  if pg_trigger_depth() > 1 and NEW.source = 'espace2' and (TG_OP = 'INSERT' or OLD.source = 'espace2') then return NEW; end if;
+  if pg_trigger_depth() > 1 and NEW.source = 'espace2' and (TG_OP = 'INSERT' or (OLD.source = 'espace2' and NEW.annule
+      and (to_jsonb(NEW) - 'annule' - 'motif_annulation') = (to_jsonb(OLD) - 'annule' - 'motif_annulation'))) then return NEW; end if;
   if TG_OP = 'INSERT' then
     if NEW.source <> 'manuel' or NEW.paiement_id is not null then raise exception 'Les recettes de l''espace 2 arrivent toutes seules.'; end if;
     if NEW.dette_id is not null then
@@ -1339,7 +1343,12 @@ begin
   if NEW.statut <> 'valide' or NEW.montant is null or NEW.mode = 'avant_systeme' then return NEW; end if;
   -- (compte actif d'abord ; les garde-fous des comptes empêchent de fermer la dernière caisse ou le dernier Wave)
   select id into compte from compta_comptes where type = case when NEW.mode = 'especes' then 'caisse' else 'wave' end order by actif desc, cree_le limit 1;
-  if compte is null then raise exception 'Comptabilité : aucun compte % pour recevoir ce paiement.', case when NEW.mode = 'especes' then 'caisse' else 'Wave' end; end if;
+  if compte is null then
+    -- (ne bloque jamais la validation dans l'espace 2 ; les garde-fous des comptes l'empêchent)
+    perform journaliser('Comptabilité : paiement validé sans compte ' || case when NEW.mode = 'especes' then 'caisse' else 'Wave' end || ' pour le recevoir',
+                        'paiements_mannequins', NEW.id::text, null, null);
+    return NEW;
+  end if;
   insert into compta_ecritures (sens, date_op, montant, compte_id, categorie, libelle, source, paiement_id)
   values ('recette', coalesce(NEW.valide_le, now())::date, NEW.montant, compte,
           case when NEW.objet = 'inscription' then 'inscription' else 'formation' end,
@@ -1636,7 +1645,7 @@ begin
   returning dernier into num;
   -- (après la prise du compteur : la série est verrouillée le temps de la vérification)
   if le_jour > current_date then raise exception 'La date du document ne peut pas être dans le futur.'; end if;
-  if exists (select 1 from compta_documents where type = typ and fiscal = fisc and date_doc > le_jour) then
+  if exists (select 1 from compta_documents where type = typ and fiscal = fisc and annee = extract(year from le_jour)::int and date_doc > le_jour) then
     raise exception 'Date plus ancienne que le dernier document de cette série : les numéros suivent l''ordre des dates.';
   end if;
   if typ = 'facture' then

@@ -67,6 +67,8 @@ function brancher(page, donnees, journal) {
             if (donnees.memoriser) (donnees.tables[table] = donnees.tables[table] || []).push(...cree);
             return json(cree, 201);
           }
+          // donnees.refus[table] = message : la base refuse la modification (garde-fou)
+          if (m === 'PATCH' && donnees.refus && donnees.refus[table]) return json({ message: donnees.refus[table], code: 'P0001' }, 400);
           if (m === 'PATCH') {
             const maj = JSON.parse(req.postData() || '{}'), touchees = [];
             (donnees.tables[table] || []).forEach(l => { let ok = true; for (const [k, v] of url.searchParams) if (/^eq\./.test(v) && String(l[k]) !== v.slice(3)) ok = false; if (ok) { Object.assign(l, maj); touchees.push(l); } });
