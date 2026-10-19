@@ -34,6 +34,13 @@
 > minimale `type_candidature = 'direct'`, retenue, + code) dans « Codes d'inscription » ; plus de code
 > libre. Les anciens codes sans nom encore disponibles seront annulés à la mise en ligne finale.
 >
+> **Espace 2, morceau 1 — registre (19/10/2026, cahier v2.4 5.1/5.5)** : `js/portail/espace-paiements.js`
+> (registre, ajout, fiche). Base (section 6 de `supabase-administration.sql`) : `agence_mannequins`
+> (comptes du site repris + déclencheur `registre_suivre_comptes` sur model_profiles, ajouts à la
+> main) et `paiements_mannequins` (inscription/mensualité ; déclaré = orange, validé = vert, refusé
+> avec motif ; jamais effacé, validé figé sauf principal avec code récent). RLS : `portail_peut('paiements')`
+> seulement ; mensualité changée par le principal seul (`registre_garde_fous`).
+>
 > Codes de secours : affichés à la première activation de la double authentification, et
 > refaits à la demande dans Sécurité › « Mes codes de secours » (code récent demandé ; les
 > anciens sont annulés). Ajouté le 19/10/2026 : un compte dont la double authentification

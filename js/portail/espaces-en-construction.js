@@ -6,9 +6,6 @@
   'use strict';
   const P = window.Portail;
   const A_VENIR = {
-    paiements: ['Registre de tous les mannequins de l’agence, inscrits sur le site ou ajoutés à la main.',
-      'Paiements à valider (« J’ai payé »), espèces, mensualités du 1er au 5, messages groupés ou individuels.',
-      'Code personnel de l’espace mannequin, généré après le paiement de l’inscription.'],
     compta: ['Recettes, dépenses, devis, proformas, factures, trésorerie, impôts.',
       'Dossier du mois pour le comptable, en Excel et en PDF ; interrupteur « mode légal » (FNE).']
   };

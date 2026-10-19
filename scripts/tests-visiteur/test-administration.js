@@ -21,6 +21,10 @@ function donnees(role) {
       staff_profiles: [{ user_id: 'admin-1', nom: 'Maître Akesse', email: 'admin@test.ci', role: 'principal', actif: true, cree_le: '2026-10-19', appareils: [] },
         { user_id: 'u-k', nom: 'Comptable', email: 'k@test.ci', role: 'compta', actif: true, cree_le: '2026-10-19', appareils: [] }],
       staff_module_grants: [], staff_devices: [{ id: 'sd1', appareil: 'abc', libelle: 'Android, Chrome', installe_le: '2026-10-19', derniere_activite: new Date().toISOString(), revoque: false, personne: { nom: 'Maître Akesse' } }],
+      // Espace 2 — registre : un compte du site et un mannequin ajouté à la main
+      agence_mannequins: [{ id: 'r1', full_name: 'ROXANE OUATTARA', telephone: '0102030405', mensualite: 10000, statut: 'actif', user_id: 'm-site', date_entree: '2026-09-01' },
+        { id: 'r2', full_name: 'KONÉ AWA', telephone: '0707070707', mensualite: 10000, statut: 'actif', user_id: null, date_entree: '2026-10-01', date_naissance: '2000-01-01' }],
+      paiements_mannequins: [],
       audit_log: [{ id: 1, acteur_nom: 'Maître Akesse', acteur_role: 'principal', action: 'Compte créé', objet: 'staff_profiles', cree_le: new Date().toISOString() }]
     },
     rpc: {
@@ -68,7 +72,7 @@ function donnees(role) {
     // menu : à gauche sur ordinateur ; sur téléphone et tablette en vertical, bouton « ☰ Menu » qui fait glisser le menu
     for (const largeur of nomEcran === 'téléphone' ? [390, 768] : [1280]) {
       await p.setViewportSize({ width: largeur, height: ecran.height });
-      await p.goto(url + '#/paiements/accueil'); await p.waitForSelector('.lateral .nav', { state: 'attached' });
+      await p.goto(url + '#/compta/accueil'); await p.waitForSelector('.lateral .nav', { state: 'attached' });
       const vu = () => p.evaluate(() => { const r = document.querySelector('.lateral').getBoundingClientRect(); return getComputedStyle(document.querySelector('.lateral')).visibility === 'visible' && r.right > 50; });
       if (largeur >= 1000) {
         ok(await vu() && !(await p.isVisible('[data-action="menu-ouvrir"]')), nomEcran + ' : menu toujours visible à gauche, sans bouton « Menu »');
@@ -77,8 +81,8 @@ function donnees(role) {
         await p.click('[data-action="menu-ouvrir"]'); await p.waitForTimeout(400);
         const r = await p.evaluate(() => document.querySelector('.lateral').getBoundingClientRect().left);
         ok(await vu() && r === 0, largeur + ' px : « ☰ Menu » fait glisser le menu depuis la gauche');
-        await p.click('.lateral .nav[href="#/paiements/accueil"]'); await p.waitForTimeout(500);
-        ok(!(await vu()) && (await p.evaluate(() => location.hash)) === '#/paiements/accueil', largeur + ' px : choisir une rubrique l’ouvre et referme le menu');
+        await p.click('.lateral .nav[href="#/compta/accueil"]'); await p.waitForTimeout(500);
+        ok(!(await vu()) && (await p.evaluate(() => location.hash)) === '#/compta/accueil', largeur + ' px : choisir une rubrique l’ouvre et referme le menu');
         await p.click('[data-action="menu-ouvrir"]'); await p.waitForTimeout(400);
         await p.mouse.click(largeur - 10, 400); await p.waitForTimeout(400);
         ok(!(await vu()), largeur + ' px : toucher à côté du menu le referme');
@@ -86,7 +90,7 @@ function donnees(role) {
     }
     await p.setViewportSize(ecran);
     // chaque espace et chaque page de la sécurité s'ouvre
-    const pages = { paiements: ['accueil'], compta: ['accueil'], securite: ['comptes', 'delegations', 'appareils', 'journal', 'codes'] };
+    const pages = { paiements: ['registre', 'ajouter'], compta: ['accueil'], securite: ['comptes', 'delegations', 'appareils', 'journal', 'codes'] };
     for (const [esp, liste] of Object.entries(pages)) {
       for (const pg of liste) {
         await p.goto(url + '#/' + esp + '/' + pg); await p.waitForSelector('.contenu h1, .contenu .carte h2', { timeout: 6000 }).catch(() => {});
@@ -95,7 +99,7 @@ function donnees(role) {
         const boutons = (await p.evaluate(verifierBoutons)).map((x) => x.texte + ' (' + x.element + ', fond ' + x.fond + ', texte ' + x.couleur + ', coins ' + x.rayon + ')');
         ok(!boutons.length, nomEcran + ' : ' + esp + '/' + pg + ' boutons au modèle rouge ' + boutons.join(' | '));
         ok(!t.includes('Impossible d’afficher') && !t.includes('Accès refusé'), nomEcran + ' : ' + esp + '/' + pg + ' s’affiche');
-        if (esp !== 'securite') ok(t.includes('En construction'), nomEcran + ' : ' + esp + ' annonce ce qui y viendra (en construction)');
+        if (esp === 'compta') ok(t.includes('En construction'), nomEcran + ' : ' + esp + ' annonce ce qui y viendra (en construction)');
         mal = await pales(p); ok(!mal.length, nomEcran + ' : ' + esp + '/' + pg + ' lisible ' + mal.join(' | '));
       }
     }
@@ -317,6 +321,52 @@ function donnees(role) {
     await k.p.waitForURL(/\/admin\//, { timeout: 8000 }).catch(() => {});
     ok(k.p.url().includes('/admin/') && !(await k.p.isVisible('#bloc-tableau')), nomEcran + ' : comptable → l’ancien tableau de bord lui est refusé');
     await k.ctx.close();
+  }
+  // Espace 2 — registre (cahier v2.4, 5.1 et 5.5)
+  for (const [nomEcran, ecran] of [['téléphone', { width: 390, height: 844 }], ['ordinateur', { width: 1280, height: 900 }]]) {
+    for (const role of ['principal', 'caisse']) {
+      const r = await ouvrir(role, ecran);
+      const pr = r.p;
+      await pr.waitForSelector('#cx-code'); await pr.fill('#cx-code', '123456'); await pr.click('form[data-form="code"] [type=submit]');
+      await pr.waitForSelector('.tuile, .lateral', { timeout: 6000 }).catch(() => {});
+      await pr.goto(url + '#/paiements/registre'); await pr.waitForSelector('.tableau tbody tr', { timeout: 6000 }).catch(() => {});
+      const lignes = await pr.$$eval('.tableau tbody tr', (l) => l.map((x) => x.innerText.replace(/\s+/g, ' ')));
+      ok(lignes.length === 2 && lignes.some((x) => /ROXANE OUATTARA.*Inscription déjà effectuée sur le site/.test(x)) && lignes.some((x) => /KONÉ AWA.*Inscription non payée/.test(x)),
+        nomEcran + ' (' + role + ') : registre = comptes du site + ajoutés à la main, couleurs d’inscription');
+      if (role === 'principal') {
+        await pr.click('[data-action="registre-filtre"][data-filtre="non_paye"]'); await pr.waitForTimeout(500);
+        ok((await pr.$$('.tableau tbody tr')).length === 1, nomEcran + ' : filtre « Inscription non payée »');
+        // ajout à la main : un mineur sans parent est refusé
+        await pr.goto(url + '#/paiements/ajouter'); await pr.waitForSelector('#mq-nom');
+        await pr.fill('#mq-nom', 'Petit Franck'); await pr.fill('#mq-naissance', '2014-05-05'); await pr.click('form[data-form="registre-ajouter"] [type=submit]'); await pr.waitForTimeout(600);
+        ok(/parent/.test(await texte(pr)) && !r.journal.some((j) => j[0] === 'POST' && j[1] === 'agence_mannequins'), nomEcran + ' : mineur sans parent refusé');
+        await pr.fill('#mq-pnom', 'Madame Kouassi'); await pr.fill('#mq-ptel', '0505050505'); await pr.click('form[data-form="registre-ajouter"] [type=submit]');
+        await pr.waitForFunction(() => location.hash.startsWith('#/paiements/fiche/'), null, { timeout: 6000 }).catch(() => {});
+        const ajout = r.journal.find((j) => j[0] === 'POST' && j[1] === 'agence_mannequins');
+        ok(ajout && JSON.parse(ajout[3]).full_name === 'PETIT FRANCK' && JSON.parse(ajout[3]).parent_telephone === '0505050505' && pr.url().includes('#/paiements/fiche/'), nomEcran + ' : mannequin ajouté au registre, sa fiche s’ouvre');
+      }
+      // fiche d'un mannequin sans compte : l'agence enregistre le paiement de l'inscription
+      await pr.goto(url + '#/paiements/fiche/r2'); await pr.waitForSelector('[data-action="registre-inscription"]', { timeout: 6000 }).catch(() => {});
+      ok(await pr.isVisible('[data-action="registre-inscription"][data-mode="avant_systeme"]') && await pr.isVisible('[data-action="registre-inscription"][data-mode="especes"]'),
+        nomEcran + ' (' + role + ') : « Inscription déjà payée (avant le nouveau système) » et « Paiement en espèces »');
+      ok(role === 'principal' ? !(await pr.isDisabled('#mq-mensualite')) : await pr.isDisabled('#mq-mensualite'), nomEcran + ' (' + role + ') : mensualité modifiable par le principal seul');
+      pr.once('dialog', (dl) => dl.accept());
+      await pr.click('[data-action="registre-inscription"][data-mode="especes"]'); await pr.waitForTimeout(800);
+      const paye = r.journal.find((j) => j[0] === 'POST' && j[1] === 'paiements_mannequins');
+      ok(paye && JSON.parse(paye[3]).statut === 'valide' && JSON.parse(paye[3]).montant === 25000 && JSON.parse(paye[3]).mode === 'especes', nomEcran + ' (' + role + ') : espèces enregistrées et validées par l’agence (25 000 FCFA)');
+      // fiche d'un compte du site : aucun bouton de paiement d'inscription, aucun code
+      await pr.goto(url + '#/paiements/fiche/r1'); await pr.waitForSelector('.carte h2', { timeout: 6000 }).catch(() => {});
+      ok(/Inscription déjà effectuée sur le site/.test(await texte(pr)) && !(await pr.isVisible('[data-action="registre-inscription"]')), nomEcran + ' (' + role + ') : compte du site → « Inscription déjà effectuée sur le site »');
+      const boutons = (await pr.evaluate(verifierBoutons)).map((x) => JSON.stringify(x));
+      ok(!boutons.length, nomEcran + ' (' + role + ') : boutons au modèle rouge ' + boutons.join(' | '));
+      const mal = await pales(pr); ok(!mal.length, nomEcran + ' (' + role + ') : fiche lisible ' + mal.join(' | '));
+      ok(await pr.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), nomEcran + ' (' + role + ') : pas de défilement de côté');
+      await pr.goto(url + '#/paiements/fiche/r2'); await pr.waitForSelector('.carte h2', { timeout: 6000 }).catch(() => {});
+      const depasse = await pr.$$eval('.contenu .btn', (l) => l.filter((b) => b.getBoundingClientRect().right > innerWidth + 1).map((b) => b.textContent.trim()));
+      ok(!depasse.length, nomEcran + ' (' + role + ') : aucun bouton ne dépasse de l’écran ' + depasse.join(' | '));
+      ok(!r.errs.length, nomEcran + ' (' + role + ') : aucune erreur de page (registre) ' + r.errs.join(' | '));
+      await r.ctx.close();
+    }
   }
   await b.close();
   console.log(ko ? '❌ ' + ko + ' échec(s)' : 'Tout est bon.'); process.exit(ko ? 1 : 0);

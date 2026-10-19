@@ -191,6 +191,34 @@ select essai_refuse($$select code_individuel_creer('00000000-0000-0000-0000-0000
 reset role;
 select set_config('request.jwt.claims', '', false);
 
+-- Espace 2 — registre (cahier v2.4, 5.1 et 5.5)
+reset role;
+select set_config('request.jwt.claims', '', false);
+insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000b1', 'roxane@test.ci');
+insert into model_profiles (id, full_name, phone) values ('00000000-0000-0000-0000-0000000000b1', 'ROXANE OUATTARA', '0102030405');
+select essai(exists (select 1 from agence_mannequins where user_id = '00000000-0000-0000-0000-0000000000b1'), 'nouveau compte sur le site : il entre au registre tout seul');
+update staff_profiles set actif = true where role = 'caisse';
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a3');
+insert into agence_mannequins (id, full_name, genre, date_naissance, telephone) values
+  ('00000000-0000-0000-0000-0000000000d1', 'KONÉ AWA', 'femme', '2001-01-01', '0707070707');
+select essai((select count(*) from agence_mannequins) = 2, 'encaissements : voit tout le registre (site + ajoutés à la main)');
+select essai_refuse($$update agence_mannequins set mensualite = 20000 where id = '00000000-0000-0000-0000-0000000000d1'$$, 'encaissements : ne change pas la mensualité');
+insert into paiements_mannequins (mannequin_id, objet, montant, mode, statut) values ('00000000-0000-0000-0000-0000000000d1', 'inscription', 25000, 'especes', 'valide');
+select essai((select valide_par from paiements_mannequins where mannequin_id = '00000000-0000-0000-0000-0000000000d1') = '00000000-0000-0000-0000-0000000000a3', 'espèces : enregistré et validé par l''agence, au nom de la personne');
+select essai_refuse($$insert into paiements_mannequins (mannequin_id, objet, mode, statut) values ('00000000-0000-0000-0000-0000000000d1', 'inscription', 'avant_systeme', 'valide')$$, 'une seule inscription payée par mannequin');
+select essai_refuse($$update paiements_mannequins set montant = 1 where mannequin_id = '00000000-0000-0000-0000-0000000000d1'$$, 'un paiement validé ne se modifie plus');
+select essai_refuse($$delete from paiements_mannequins$$, 'un paiement ne s''efface pas');
+select essai_qui('00000000-0000-0000-0000-0000000000a1');
+update agence_mannequins set mensualite = 20000 where id = '00000000-0000-0000-0000-0000000000d1';
+select essai((select mensualite from agence_mannequins where id = '00000000-0000-0000-0000-0000000000d1') = 20000, 'principal : change la mensualité');
+select essai_qui('00000000-0000-0000-0000-0000000000a4');
+select essai((select count(*) from agence_mannequins) = 0 and (select count(*) from paiements_mannequins) = 0, 'comptable : ni le registre ni les paiements nominatifs');
+select essai_qui('00000000-0000-0000-0000-0000000000b1', 'aal1');
+select essai((select count(*) from paiements_mannequins) = 0, 'le mannequin ne voit ni ne coche aucun paiement par la base');
+reset role;
+select set_config('request.jwt.claims', '', false);
+
 -- Visiteur anonyme : rien
 set role anon;
 select set_config('request.jwt.claims', '{"role":"anon"}', false);

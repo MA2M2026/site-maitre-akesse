@@ -12,7 +12,8 @@
 --   3. Journal d'audit en écriture seule
 --   4. Règles d'accès (RLS) et garde-fous des comptes
 --   5. Espace 1 : code individuel d'inscription (personne retenue, casting direct)
--- Les espaces 2 et 3 viendront dans les étapes suivantes.
+--   6. Espace 2 : registre des mannequins et paiements (inscription, mensualités)
+-- L'espace 3 viendra dans une étape suivante.
 --
 -- Rôles : principal (Maître Akesse, tout) · site (espace 1) · caisse (espace 2) · compta (espace 3)
 -- ===================================================================================
@@ -631,5 +632,138 @@ $$;
 revoke all on function code_individuel_creer(uuid), casting_direct_creer(text, text, text, date) from public, anon;
 grant execute on function code_individuel_creer(uuid), casting_direct_creer(text, text, text, date) to authenticated;
 
+-- -----------------------------------------------------------------------------------
+-- 6. Espace 2 — registre des mannequins de l'agence (cahier v2.4, 5.1 et 5.5)
+-- -----------------------------------------------------------------------------------
+-- Tous les mannequins de l'agence : ceux qui ont un compte sur le site (repris automatiquement,
+-- « Inscription déjà effectuée sur le site ») et ceux ajoutés à la main. Seul l'espace 2
+-- (administrateur principal, encaissements, délégation) y a accès. Rien ne s'efface : un
+-- mannequin qui quitte l'agence passe au statut « sorti ».
+create table if not exists agence_mannequins (
+  id uuid primary key default gen_random_uuid(),
+  full_name text not null,
+  genre text check (genre in ('femme', 'homme')),
+  date_naissance date,
+  telephone text,
+  email text,
+  parent_nom text,
+  parent_lien text,
+  parent_telephone text,
+  parent_email text,
+  date_entree date not null default current_date,
+  statut text not null default 'actif' check (statut in ('actif', 'suspendu', 'sorti')),
+  mensualite int not null default 10000 check (mensualite in (10000, 20000)),
+  notes text,
+  user_id uuid unique references model_profiles(id) on delete set null,  -- compte sur le site
+  candidature_id uuid references casting_applications(id) on delete set null,
+  cree_le timestamptz not null default now(),
+  cree_par uuid references auth.users(id)
+);
+
+-- Paiements des mannequins (inscription et mensualités) : orange = déclaré (« J'ai payé »,
+-- en attente de validation), vert = validé par l'agence, refusé avec motif. Les paiements en
+-- espèces et les inscriptions payées avant le nouveau système sont enregistrés et validés par
+-- l'agence seule.
+create table if not exists paiements_mannequins (
+  id uuid primary key default gen_random_uuid(),
+  mannequin_id uuid not null references agence_mannequins(id),
+  objet text not null check (objet in ('inscription', 'mensualite')),
+  mois date,                                   -- 1er jour du mois (mensualité)
+  montant int check (montant is null or montant > 0),   -- inconnu pour « avant le nouveau système »
+  mode text not null check (mode in ('wave', 'especes', 'avant_systeme')),
+  statut text not null default 'declare' check (statut in ('declare', 'valide', 'refuse')),
+  motif text,
+  declare_le timestamptz not null default now(),
+  valide_le timestamptz,
+  valide_par uuid references auth.users(id),
+  cree_par uuid references auth.users(id),
+  check (objet <> 'mensualite' or mois is not null)
+);
+-- une seule inscription en cours ou validée par mannequin
+create unique index if not exists paiements_une_inscription on paiements_mannequins (mannequin_id)
+  where objet = 'inscription' and statut <> 'refuse';
+
+-- Registre : comptes déjà créés sur le site → « Inscription déjà effectuée sur le site »
+insert into agence_mannequins (full_name, date_naissance, telephone, email, user_id, date_entree)
+select coalesce(nullif(trim(m.full_name), ''), 'Sans nom'), m.date_naissance, m.phone, m.contact_email, m.id, m.created_at::date
+from model_profiles m
+where not exists (select 1 from agence_mannequins a where a.user_id = m.id);
+
+-- Un nouveau compte mannequin créé sur le site entre aussi au registre
+create or replace function registre_suivre_comptes()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  insert into agence_mannequins (full_name, date_naissance, telephone, email, user_id, date_entree)
+  values (coalesce(nullif(trim(NEW.full_name), ''), 'Sans nom'), NEW.date_naissance, NEW.phone, NEW.contact_email, NEW.id, current_date)
+  on conflict (user_id) do nothing;
+  return NEW;
+end;
+$$;
+revoke all on function registre_suivre_comptes() from public, anon, authenticated;
+drop trigger if exists registre_suivre_comptes on model_profiles;
+create trigger registre_suivre_comptes after insert on model_profiles
+  for each row execute function registre_suivre_comptes();
+
+-- Garde-fous : la mensualité (10 000 ou 20 000) ne change que par l'administrateur principal ;
+-- un paiement validé ne se modifie plus (sauf par l'administrateur principal, code récent)
+create or replace function registre_garde_fous()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if est_ecriture_serveur() then return NEW; end if;
+  if TG_TABLE_NAME = 'agence_mannequins' then
+    if TG_OP = 'UPDATE' and NEW.mensualite is distinct from OLD.mensualite and not portail_est_principal() then
+      raise exception 'Seul l''administrateur principal change la mensualité.';
+    end if;
+    if TG_OP = 'UPDATE' and NEW.user_id is distinct from OLD.user_id then
+      raise exception 'Le lien avec le compte du site ne se change pas à la main.';
+    end if;
+  else
+    if TG_OP = 'UPDATE' and OLD.statut = 'valide' then
+      if not portail_est_principal() then raise exception 'Un paiement validé ne se modifie plus.'; end if;
+      perform portail_exiger_auth_recente();
+    end if;
+    if NEW.statut = 'valide' and (TG_OP = 'INSERT' or OLD.statut <> 'valide') then
+      NEW.valide_le := now();
+      NEW.valide_par := auth.uid();
+    end if;
+    if NEW.statut = 'refuse' and coalesce(trim(NEW.motif), '') = '' then
+      raise exception 'Motif obligatoire pour refuser un paiement.';
+    end if;
+    if TG_OP = 'INSERT' then NEW.cree_par := auth.uid(); end if;
+  end if;
+  return NEW;
+end;
+$$;
+drop trigger if exists registre_garde_fous on agence_mannequins;
+create trigger registre_garde_fous before insert or update on agence_mannequins for each row execute function registre_garde_fous();
+drop trigger if exists paiements_garde_fous on paiements_mannequins;
+create trigger paiements_garde_fous before insert or update on paiements_mannequins for each row execute function registre_garde_fous();
+
+alter table agence_mannequins enable row level security;
+alter table paiements_mannequins enable row level security;
+revoke all on agence_mannequins, paiements_mannequins from anon;
+drop policy if exists registre_espace2 on agence_mannequins;
+create policy registre_espace2 on agence_mannequins for all using (portail_peut('paiements')) with check (portail_peut('paiements'));
+drop policy if exists paiements_espace2_lecture on paiements_mannequins;
+create policy paiements_espace2_lecture on paiements_mannequins for select using (portail_peut('paiements'));
+drop policy if exists paiements_espace2_ajout on paiements_mannequins;
+create policy paiements_espace2_ajout on paiements_mannequins for insert with check (portail_peut('paiements'));
+drop policy if exists paiements_espace2_maj on paiements_mannequins;
+create policy paiements_espace2_maj on paiements_mannequins for update using (portail_peut('paiements')) with check (portail_peut('paiements'));
+-- (aucune suppression : un paiement erroné est refusé avec motif, tout reste au journal)
+revoke delete, truncate on agence_mannequins, paiements_mannequins from authenticated;
+grant select, insert, update on agence_mannequins, paiements_mannequins to authenticated;
+
+do $$
+declare
+  t text;
+begin
+  foreach t in array array['agence_mannequins', 'paiements_mannequins']
+  loop
+    execute format('drop trigger if exists audit_%s on %I', t, t);
+    execute format('create trigger audit_%s after insert or update or delete on %I for each row execute function audit_ecriture()', t, t);
+  end loop;
+end $$;
+
 NOTIFY pgrst, 'reload schema';
-select 'Administration — étape 1 et espace 1 en place' as resultat;
+select 'Administration — étape 1, espace 1 et registre en place' as resultat;
