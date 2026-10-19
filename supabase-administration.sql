@@ -867,5 +867,87 @@ end;
 $$;
 revoke all on function inscription_code_lire(text, date), inscription_simplifiee_payer(text, date, jsonb) from public, anon, authenticated;
 
+-- -----------------------------------------------------------------------------------
+-- 8. Code de l'espace mannequin (cahier v2.4, 5.4) : remplace le code d'invitation général
+-- -----------------------------------------------------------------------------------
+-- Créé dans l'espace 2, seulement après une inscription payée et validée ; personnel, une seule
+-- fois, 7 jours. À la création du compte, le mannequin retrouve ses informations du casting et
+-- le code disparaît. Plus aucun code permanent.
+create table if not exists codes_espace (
+  code text primary key,
+  mannequin_id uuid not null references agence_mannequins(id),
+  cree_le timestamptz not null default now(),
+  expire_le timestamptz not null default now() + interval '7 days',
+  cree_par uuid references auth.users(id),
+  annule boolean not null default false,
+  utilise_le timestamptz
+);
+alter table codes_espace enable row level security;
+revoke all on codes_espace from anon, authenticated;
+drop policy if exists codes_espace_lecture on codes_espace;
+create policy codes_espace_lecture on codes_espace for select using (portail_peut('paiements'));
+grant select on codes_espace to authenticated;
+
+create or replace function code_espace_creer(p_mannequin uuid)
+returns text language plpgsql security definer set search_path = public, extensions as $$
+declare
+  m agence_mannequins;
+  nouveau text;
+  alphabet constant text := 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+begin
+  if not portail_peut('paiements') then raise exception 'Accès refusé'; end if;
+  select * into m from agence_mannequins where id = p_mannequin;
+  if not found then raise exception 'Mannequin introuvable.'; end if;
+  if m.user_id is not null then raise exception 'Ce mannequin a déjà son espace.'; end if;
+  if not exists (select 1 from paiements_mannequins where mannequin_id = p_mannequin and objet = 'inscription' and statut = 'valide') then
+    raise exception 'Pas d''espace mannequin sans inscription payée et validée.';
+  end if;
+  -- un seul code valable à la fois : l'ancien est annulé
+  update codes_espace set annule = true where mannequin_id = p_mannequin and utilise_le is null and not annule;
+  loop
+    nouveau := 'ESP-';
+    for i in 1..6 loop
+      nouveau := nouveau || substr(alphabet, 1 + get_byte(gen_random_bytes(1), 0) % 32, 1);
+    end loop;
+    exit when not exists (select 1 from codes_espace where code = nouveau);
+  end loop;
+  insert into codes_espace (code, mannequin_id, cree_par) values (nouveau, p_mannequin, auth.uid());
+  perform journaliser('Code de l''espace mannequin créé', 'agence_mannequins', p_mannequin::text, null, null);
+  return nouveau;
+end;
+$$;
+revoke all on function code_espace_creer(uuid) from public, anon;
+grant execute on function code_espace_creer(uuid) to authenticated;
+
+-- Serveur du site seulement (api/code-protege.js, tentatives comptées)
+create or replace function code_espace_valable(p_code text)
+returns boolean language sql stable security definer set search_path = public as $$
+  select est_ecriture_serveur() and exists (select 1 from codes_espace c join agence_mannequins m on m.id = c.mannequin_id
+    where c.code = upper(trim(p_code)) and not c.annule and c.utilise_le is null and c.expire_le > now() and m.user_id is null);
+$$;
+-- Compte créé : rattaché à sa fiche du registre (la ligne ajoutée d'office par
+-- registre_suivre_comptes est retirée), informations du casting recopiées, code consommé
+create or replace function code_espace_utiliser(p_code text, p_user uuid)
+returns void language plpgsql security definer set search_path = public as $$
+declare
+  c codes_espace;
+  m agence_mannequins;
+begin
+  if not est_ecriture_serveur() then raise exception 'Accès refusé.'; end if;
+  if not code_espace_valable(p_code) then raise exception 'code_invalide_ou_deja_utilise'; end if;
+  select * into c from codes_espace where code = upper(trim(p_code)) for update;
+  select * into m from agence_mannequins where id = c.mannequin_id for update;
+  delete from agence_mannequins a where a.user_id = p_user and a.id <> m.id
+    and not exists (select 1 from paiements_mannequins p where p.mannequin_id = a.id);
+  update agence_mannequins set user_id = p_user where id = m.id;
+  update model_profiles set full_name = coalesce(nullif(trim(m.full_name), ''), full_name), phone = coalesce(m.telephone, phone),
+    contact_email = coalesce(m.email, contact_email), date_naissance = coalesce(m.date_naissance, date_naissance), city = coalesce(m.ville, city)
+  where id = p_user;
+  update codes_espace set utilise_le = now() where code = c.code;
+  perform journaliser('Espace mannequin créé avec son code', 'agence_mannequins', m.id::text, null, null);
+end;
+$$;
+revoke all on function code_espace_valable(text), code_espace_utiliser(text, uuid) from public, anon, authenticated;
+
 NOTIFY pgrst, 'reload schema';
-select 'Administration — étape 1, espace 1 et espace 2 (registre, validation, inscription) en place' as resultat;
+select 'Administration — étape 1, espace 1 et espace 2 (registre, validation, inscription, code de l''espace) en place' as resultat;

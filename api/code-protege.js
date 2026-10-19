@@ -8,7 +8,9 @@
 //                                date de naissance → informations du casting à confirmer
 //   type 'inscription-payer'     « J'ai payé » : code consommé, mannequin au registre, paiement
 //                                en attente de validation (espace 2)
-//   type 'portail'               code d'invitation « Créer mon compte » (espace-mannequin.html)
+//   type 'portail'               code de l'espace mannequin « Créer mon compte » (espace-mannequin.html) ;
+//                                depuis le 19/10/2026 (cahier v2.4, 5.4) : code PERSONNEL créé dans
+//                                l'Administration (espace 2), une fois, 7 jours — plus de code permanent
 //   type 'portail-creer-compte'  même code, puis création du compte mannequin ICI, côté
 //                                serveur (test de sécurité du 04/10/2026 : le compte était
 //                                créé par le navigateur avec sb.auth.signUp(), et le code
@@ -79,7 +81,7 @@ async function creerCompteMannequin(entetes, nom, email, motDePasse) {
     await signalerPanne(entetes, 'fiche model_profiles', raison);
     return { status: 502, corps: { error: 'creation' } };
   }
-  return { status: 200, corps: { ok: true } };
+  return { status: 200, corps: { ok: true }, id };
 }
 
 // p_email et p_parent_email : Extension 129 ; p_civilite : Extension 132 (07/10/2026).
@@ -156,7 +158,7 @@ module.exports = async function handler(req, res) {
       const r = await rpc('verifier_code_inscription', { code_input: code });
       valide = r.ok && (await r.json()) === true;
     } else if (type === 'portail' || type === 'portail-creer-compte') {
-      const r = await rpc('check_invite_code', { code_input: code });
+      const r = await rpc('code_espace_valable', { p_code: code });
       valide = r.ok && (await r.json()) === true;
     } else {
       const args = { p_code: code };
@@ -192,6 +194,11 @@ module.exports = async function handler(req, res) {
     await rpc('connexion_enregistrer_succes', cle);
     if (type === 'portail-creer-compte') {
       const resultat = await creerCompteMannequin(entetes, nom, email, motDePasse);
+      // compte créé : rattaché à sa fiche du registre, informations du casting recopiées, code consommé
+      if (resultat.id) {
+        const r = await rpc('code_espace_utiliser', { p_code: code, p_user: resultat.id });
+        if (!r.ok) await signalerPanne(entetes, 'rattachement au registre (code de l\'espace)', await r.text().catch(() => r.status));
+      }
       res.status(resultat.status).json(resultat.corps);
       return;
     }

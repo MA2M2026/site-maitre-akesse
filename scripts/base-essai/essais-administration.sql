@@ -254,6 +254,29 @@ select essai_refuse($$select inscription_code_lire('MA2M-YAO234', '2000-01-01')$
 reset role;
 select set_config('request.jwt.claims', '', false);
 
+-- Code de l'espace mannequin (cahier v2.4, 5.4)
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a1');
+select essai_refuse($$select code_espace_creer((select id from agence_mannequins where candidature_id = '00000000-0000-0000-0000-00000000c009'))$$,
+                    'pas de code tant que l''inscription n''est pas validée');
+select paiement_decider((select id from paiements_mannequins p where p.objet = 'inscription' and p.mannequin_id = (select id from agence_mannequins where candidature_id = '00000000-0000-0000-0000-00000000c009')), true);
+select essai(code_espace_creer((select id from agence_mannequins where candidature_id = '00000000-0000-0000-0000-00000000c009')) ~ '^ESP-[A-Z2-9]{6}$', 'inscription validée : code de l''espace créé');
+select code_espace_creer((select id from agence_mannequins where candidature_id = '00000000-0000-0000-0000-00000000c009'));
+select essai((select count(*) from codes_espace where not annule) = 1, 'un seul code valable à la fois (l''ancien est annulé)');
+select essai((select expire_le::date - cree_le::date from codes_espace where not annule) = 7, 'valable une semaine');
+reset role;
+select set_config('request.jwt.claims', '{"role":"service_role"}', false);
+select essai(code_espace_valable((select code from codes_espace where not annule)), 'le serveur reconnaît le code');
+select essai(not code_espace_valable((select code from codes_espace where annule limit 1)), 'l''ancien code annulé ne marche plus');
+insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000b9', 'bintou@test.ci');
+insert into model_profiles (id, full_name) values ('00000000-0000-0000-0000-0000000000b9', 'Bintou');
+select code_espace_utiliser((select code from codes_espace where not annule), '00000000-0000-0000-0000-0000000000b9');
+select essai((select user_id from agence_mannequins where candidature_id = '00000000-0000-0000-0000-00000000c009') = '00000000-0000-0000-0000-0000000000b9'
+             and (select count(*) from agence_mannequins where user_id = '00000000-0000-0000-0000-0000000000b9') = 1, 'compte créé : rattaché à sa fiche du registre, sans doublon');
+select essai((select phone from model_profiles where id = '00000000-0000-0000-0000-0000000000b9') = '0101010101', 'il retrouve ses informations du casting');
+select essai(not code_espace_valable((select code from codes_espace where not annule)), 'code utilisé : il disparaît');
+select set_config('request.jwt.claims', '', false);
+
 -- Visiteur anonyme : rien
 set role anon;
 select set_config('request.jwt.claims', '{"role":"anon"}', false);

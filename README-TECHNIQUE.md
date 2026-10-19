@@ -50,6 +50,12 @@
 > mannequin au registre, 15 000 + 10 000 « déclarés », orange). L'ancien formulaire complet
 > (`js/inscription-mannequin.js`, photos, référence Wave) est retiré.
 >
+> **Code de l'espace mannequin (cahier v2.4 §5.4)** : table `codes_espace` (une fois, 7 jours, un seul
+> valable par mannequin) ; `code_espace_creer` depuis la fiche du registre (inscription validée, pas de
+> compte) ; « Créer mon compte » (`api/code-protege.js` types portail/portail-creer-compte) vérifie
+> `code_espace_valable` puis `code_espace_utiliser` (rattache le compte à sa fiche, recopie les
+> informations, consomme le code). L'ancien code permanent (`check_invite_code`) n'est plus utilisé.
+>
 > Codes de secours : affichés à la première activation de la double authentification, et
 > refaits à la demande dans Sécurité › « Mes codes de secours » (code récent demandé ; les
 > anciens sont annulés). Ajouté le 19/10/2026 : un compte dont la double authentification

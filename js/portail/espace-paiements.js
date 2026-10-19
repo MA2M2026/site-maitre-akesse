@@ -111,9 +111,10 @@
   async function fiche(params) {
     const id = String((params && params[0]) || '');
     if (!/^[\w-]{1,64}$/.test(id)) { location.hash = '#/paiements/registre'; return ''; }
-    const [m, paiements] = await Promise.all([
+    const [m, paiements, codes] = await Promise.all([
       P.bd(sb.from('agence_mannequins').select('*').eq('id', id).single()),
-      P.bd(sb.from('paiements_mannequins').select('*').eq('mannequin_id', id).order('declare_le', { ascending: false }))
+      P.bd(sb.from('paiements_mannequins').select('*').eq('mannequin_id', id).order('declare_le', { ascending: false })),
+      P.bd(sb.from('codes_espace').select('*').eq('mannequin_id', id).eq('annule', false).is('utilise_le', null).order('cree_le', { ascending: false }))
     ]);
     const inscription = paiements.find((p) => p.objet === 'inscription' && p.statut !== 'refuse') || null;
     const e = etatInscription(m, inscription);
@@ -128,7 +129,7 @@
       (inscription ? '<p class="doux petit-texte">' + P.esc(MODES[inscription.mode]) + (inscription.montant ? ' · ' + P.fcfa(inscription.montant) : '') +
         (inscription.valide_le ? ' · validé le ' + P.dateHeure(inscription.valide_le) : '') + '</p>' : '') +
       (m.user_id ? '<p class="doux petit-texte">Ce mannequin a déjà son compte sur le site : aucun code à lui donner, on suit seulement ses mensualités.</p>' : '') +
-      actions + '</div>' +
+      actions + '</div>' + carteCodeEspace(m, inscription, codes[0]) +
       '<form class="carte f" data-form="registre-modifier" data-id="' + m.id + '"><h2>Informations</h2>' + champs(m) +
       '<div class="large ligne"><button class="btn rouge" type="submit">Enregistrer les changements</button></div></form>' +
       '<div class="carte"><h2>Paiements</h2>' + P.tableau(['Objet', 'Mode', '#Montant', 'État', 'Date'], paiements.map((p) =>
@@ -137,6 +138,45 @@
         P.pastille({ valide: 'Payé', declare: 'En attente de validation', refuse: 'Refusé' }[p.statut], { valide: 'ok', declare: 'alerte', refuse: 'erreur' }[p.statut]) +
         '</td><td>' + P.dateHeure(p.valide_le || p.declare_le) + '</td></tr>')) + '</div>';
   }
+  // Code de l'espace mannequin (cahier v2.4, 5.4) : seulement après une inscription payée et
+  // validée, pour un mannequin sans compte ; une fois, 7 jours ; remplace le code général
+  const SITE = 'https://www.maitreakessemodelmanagement.com';
+  function carteCodeEspace(m, inscription, code) {
+    if (m.user_id) return '';
+    const titre = '<h2>Code de l’espace mannequin</h2>';
+    if (!inscription || inscription.statut !== 'valide') {
+      return '<div class="carte">' + titre + '<p class="doux">Le code se génère après la validation du paiement de l’inscription.</p></div>';
+    }
+    const valable = code && new Date(code.expire_le) > new Date();
+    if (!valable) {
+      return '<div class="carte">' + titre + (code ? '<p class="doux">Le code ' + P.esc(code.code) + ' a expiré le ' + P.dateHeure(code.expire_le) + '.</p>' : '') +
+        '<p class="doux">Le mannequin s’en servira pour créer son espace (e-mail, mot de passe et ce code). Il ne sert qu’une fois et reste valable 7 jours.</p>' +
+        '<div class="ligne"><button class="btn rouge" type="button" data-action="code-espace" data-id="' + m.id + '">Générer le code de l’espace</button></div></div>';
+    }
+    const d = destinataire(m);
+    const texte = 'Bonjour ' + d.nom + ',\n\nL’inscription' + (d.mineur ? ' de ' + m.full_name : '') + ' à Maître Akesse Model Management est validée. ' +
+      'Pour créer ' + (d.mineur ? 'son' : 'votre') + ' espace mannequin, ouvrez ' + SITE + '/espace-mannequin.html, choisissez « Créer mon compte » et entrez ce code personnel : ' + code.code +
+      '\n\nIl ne sert qu’une fois et reste valable jusqu’au ' + P.dateHeure(code.expire_le) + '.\n\nL’équipe Maître Akesse Model Management';
+    const wa = lienWhatsApp(d.tel, texte);
+    return '<div class="carte">' + titre + '<p><b id="code-espace-texte" style="font-size:20px;letter-spacing:1px">' + P.esc(code.code) + '</b></p>' +
+      '<p class="doux petit-texte">Valable jusqu’au ' + P.dateHeure(code.expire_le) + ', une seule fois. Il disparaîtra dès que le compte sera créé.</p>' +
+      '<div class="ligne"><button class="btn" type="button" data-action="code-espace-copier">Copier</button>' +
+      (wa ? '<a class="btn rouge" id="code-espace-whatsapp" target="_blank" rel="noopener" href="' + P.esc(wa) + '">Envoyer par WhatsApp</a>' : '') +
+      '<button class="btn" type="button" data-action="code-espace" data-id="' + m.id + '">Générer un nouveau code</button></div></div>';
+  }
+  P.actions['code-espace'] = async (el) => {
+    if (el.textContent.indexOf('nouveau') !== -1 && !confirm('Générer un nouveau code ? L’ancien ne marchera plus.')) return;
+    try {
+      await P.rpc('code_espace_creer', { p_mannequin: el.getAttribute('data-id') });
+      P.message('Code de l’espace créé : envoyez-le au mannequin.');
+      P.afficher();
+    } catch (e) { P.message(P.erreurTexte(e)); }
+  };
+  P.actions['code-espace-copier'] = (el) => {
+    const texte = document.getElementById('code-espace-texte').textContent;
+    navigator.clipboard.writeText(texte).then(() => { el.textContent = 'Copié !'; }, () => { el.textContent = 'Sélectionnez le code pour le copier'; });
+  };
+
   P.formulaires['registre-modifier'] = async (f, form) => {
     try {
       const id = form.getAttribute('data-id');
@@ -188,27 +228,35 @@
           '<button class="btn petit" type="button" data-action="paiement-refuser" data-id="' + p.id + '">Refuser</button></td></tr>';
       }));
   }
+  // Destinataire des messages : le parent pour un mineur, la personne elle-même sinon
+  // (r : ligne du registre, ou réponse de paiement_decider avec « nom »)
+  function destinataire(r) {
+    const mineur = !!(P.age(r.date_naissance) !== null && P.age(r.date_naissance) < 18 && (r.parent_telephone || r.parent_email));
+    return { mineur, nom: mineur ? r.parent_nom || 'Madame, Monsieur' : (r.nom || r.full_name), email: mineur ? r.parent_email : r.email, tel: mineur ? r.parent_telephone : r.telephone };
+  }
+  function lienWhatsApp(tel, texte) {
+    let chiffres = String(tel || '').replace(/\D/g, '');
+    if ((chiffres.length === 10 && chiffres.charAt(0) === '0') || chiffres.length === 8) chiffres = '225' + chiffres;
+    return chiffres ? 'https://wa.me/' + chiffres + '?text=' + encodeURIComponent(texte) : null;
+  }
   // Message au mannequin (au parent s'il est mineur) : e-mail envoyé tout de suite, WhatsApp en un geste
   function prevenir(r, valide, motif) {
-    const mineur = P.age(r.date_naissance) !== null && P.age(r.date_naissance) < 18 && (r.parent_telephone || r.parent_email);
-    const nom = mineur ? r.parent_nom || 'Madame, Monsieur' : r.nom;
+    const d = destinataire(r), mineur = d.mineur, nom = d.nom;
     const quoi = (r.objet === 'inscription' ? 'l’inscription' : 'la mensualité de ' + libelleMois(r.mois)) + (mineur ? ' de ' + r.nom : '');
     const texte = 'Bonjour ' + nom + ',\n\n' + (valide
       ? 'Nous confirmons la réception de votre paiement de ' + P.fcfa(r.montant) + ' pour ' + quoi + '. Merci !'
       : 'Nous n’avons pas pu valider votre paiement pour ' + quoi + ' : ' + motif + '.\nMerci de nous contacter ou de refaire le paiement.') +
       '\n\nL’équipe Maître Akesse Model Management';
-    const email = mineur ? r.parent_email : r.email, tel = mineur ? r.parent_telephone : r.telephone;
+    const email = d.email, wa = lienWhatsApp(d.tel, texte);
     let etatEmail = 'pas d’adresse e-mail';
     if (email && typeof envoyerEmailCandidat === 'function') {
       etatEmail = 'e-mail en cours d’envoi';
       Promise.resolve(envoyerEmailCandidat({ to_email: email, to_name: nom, message: texte }))
         .then(() => P.message('E-mail de ' + (valide ? 'confirmation' : 'refus') + ' envoyé à ' + email + '.'), () => P.message('L’e-mail n’a pas pu partir : envoyez le message par WhatsApp.'));
     }
-    let chiffres = String(tel || '').replace(/\D/g, '');
-    if ((chiffres.length === 10 && chiffres.charAt(0) === '0') || chiffres.length === 8) chiffres = '225' + chiffres;
     P.fenetre('<h2>' + (valide ? 'Paiement validé' : 'Paiement refusé') + '</h2><p class="doux">' + P.esc(r.nom) + ' · ' + P.fcfa(r.montant) + ' (' + P.esc(etatEmail) + ')</p>' +
       '<pre class="journal" style="white-space:pre-wrap">' + P.esc(texte) + '</pre><div class="ligne">' +
-      (chiffres ? '<a class="btn rouge" target="_blank" rel="noopener" href="https://wa.me/' + chiffres + '?text=' + encodeURIComponent(texte) + '">Envoyer par WhatsApp</a>' : '<span class="doux">Pas de numéro WhatsApp dans le registre.</span>') +
+      (wa ? '<a class="btn rouge" target="_blank" rel="noopener" href="' + P.esc(wa) + '">Envoyer par WhatsApp</a>' : '<span class="doux">Pas de numéro WhatsApp dans le registre.</span>') +
       '<button class="btn" type="button" data-action="fermer-fenetre">Fermer</button></div>');
   }
   P.actions['paiement-valider'] = async (el) => {
