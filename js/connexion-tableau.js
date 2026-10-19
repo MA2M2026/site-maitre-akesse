@@ -94,6 +94,8 @@ async function reveleTableauDeBord(cleDejaPosee) {
   if (!document.getElementById('bloc-tableau')) {
     const acces = cleDejaPosee ? 'ok' : await ouvrirAccesServeur();
     if (acces === 'ok' && rechargerPourAcces()) return;
+    // ouvert dans l'Administration : pas de déconnexion ni d'ancien code, on y retourne avec le motif
+    if (window.MA2M_ADMINISTRATION) { window.MA2M_ADMINISTRATION.refuser('ouverture'); return; }
     if (acces === 'code') { demanderCode(); return; }
     await deconnecterTableauDeBord(acces === 'ok'
       ? "Le tableau de bord ne s'ouvre pas : vérifiez que les cookies sont autorisés pour ce site dans votre navigateur, puis reconnectez-vous."

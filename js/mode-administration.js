@@ -21,7 +21,6 @@
   // validation → double authentification ; « Créer un compte admin » → Sécurité › Comptes et
   // rôles ; code permanent « Créer mon compte » → code personnel de l'espace 2).
   const HORS_ESPACE_1 = ['b2-inscriptions', 'b3b-code-validation', 'b3b-creer-admin', 'b3b-code-permanent'];
-  const SESSION_MAX_MS = 8 * 3600 * 1000;
   const tableau = /\/tableau-de-bord(\.html)?$/.test(location.pathname);
   let pinDefini = false;
 
@@ -31,6 +30,7 @@
   }
   async function deconnecter() {
     window.arreterInactivitePortail();
+    try { localStorage.removeItem('ma2m_mode_administration'); } catch (e) { /* stockage bloqué */ }
     try { await sb.auth.signOut(); } catch (e) { /* déjà déconnecté */ }
     await fetch('/api/acces-tableau', { method: 'DELETE', credentials: 'same-origin' }).catch(() => { /* elle expire seule */ });
     location.replace('/admin/');
@@ -43,19 +43,14 @@
     }
     retourAdministration();
   }
-  // Heure (ms) du dernier code de l'application d'authentification, lue dans le jeton
-  function dernierCode(session) {
-    try {
-      const charge = JSON.parse(atob(session.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
-      const t = (charge.amr || []).filter((m) => /totp/.test(m.method)).map((m) => m.timestamp);
-      return t.length ? Math.max.apply(null, t) * 1000 : 0;
-    } catch (e) { return 0; }
-  }
   // Droit d'ouvrir l'espace 1, vérifié par la base (rôle, double authentification, appareil
   // non révoqué, écran non verrouillé, 8 heures au plus)
   async function accesValide() {
     const { data } = await sb.auth.getSession();
-    if (!data.session || Date.now() - dernierCode(data.session) > SESSION_MAX_MS) return false;
+    if (!data.session) return false;
+    // (même règle que l'Administration, js/portail/noyau.js : sans heure de code, la base décide)
+    const code = window.dernierCodeApplicationPortail(data.session);
+    if (code && Date.now() - code > window.SESSION_MAX_PORTAIL_MS) return false;
     const r = await sb.rpc('portail_moi');
     return !r.error && !!r.data && !!r.data.role && !!(r.data.espaces && r.data.espaces.site);
   }
@@ -76,10 +71,11 @@
     masquee: (cle) => HORS_ESPACE_1.indexOf(cle) !== -1,
     deconnecter,
     retour: retourAdministration,
-    // compte sans les droits de l'ancien tableau de bord : l'Administration l'explique (et ne
-    // renvoie pas ici, sinon l'aller-retour ne finirait jamais)
-    refuser: () => {
-      try { sessionStorage.setItem('ma2m_espace1_refuse', '1'); } catch (e) { /* stockage bloqué */ }
+    // ouverture impossible (compte sans les droits de l'ancien tableau de bord, serveur
+    // injoignable…) : l'Administration affiche le motif (et ne renvoie pas ici, sinon
+    // l'aller-retour ne finirait jamais)
+    refuser: (motif) => {
+      try { sessionStorage.setItem('ma2m_espace1_refuse', motif || 'droits'); } catch (e) { /* stockage bloqué */ }
       location.replace('/admin/');
     },
     // vrai une fois l'accès vérifié ; sinon la page repart vers l'Administration

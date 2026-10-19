@@ -536,11 +536,11 @@ begin
 end;
 $$;
 revoke all on function staff_suivre_admins() from public, anon, authenticated;
--- (19/10/2026, espace 1 : l'ancien tableau de bord s'ouvre dans l'Administration — le rôle
--- « site » doit y avoir ses droits dès l'invitation)
+-- (19/10/2026, relecture : PAS de déclencheur pour l'instant. La table admins ouvre aussi les
+-- inscriptions et les paiements dans la base ; un compte « Administrateur du site » ne doit pas
+-- les voir (espace 1 sans argent). Il sera branché avec l'espace 2, quand l'argent aura ses
+-- propres règles d'accès. D'ici là, seul l'administrateur principal ouvre l'espace 1.)
 drop trigger if exists staff_suivre_admins on staff_profiles;
-create trigger staff_suivre_admins after insert or update of role, actif on staff_profiles
-  for each row execute function staff_suivre_admins();
 
 -- Journal : toute écriture sur les comptes, délégations et appareils est tracée
 do $$

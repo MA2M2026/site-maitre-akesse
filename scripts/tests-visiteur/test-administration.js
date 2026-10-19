@@ -185,7 +185,10 @@ function donnees(role) {
   const ESPACE1 = { admins: [{ user_id: 'admin-1' }],
     casting_applications: [{ id: 'c1', full_name: 'AWA KONÉ', email: 'awa@test.ci', phone: '+225 0102030405', genre: 'femme', date_naissance: '2000-01-01', type_candidature: 'agence', status: 'nouvelle', created_at: '2026-10-07T10:00:00Z' },
       { id: 'c2', full_name: 'BINTOU TRAORÉ', email: 'bintou@test.ci', phone: '+225 0505050505', genre: 'femme', date_naissance: '1998-01-01', type_candidature: 'agence', status: 'en étude', created_at: '2026-10-08T10:00:00Z' },
-      { id: 'c3', full_name: 'YAO KOUASSI', email: 'yao@test.ci', phone: '+225 0707070707', genre: 'homme', date_naissance: '1999-01-01', type_candidature: 'agence', status: 'retenue', created_at: '2026-10-09T10:00:00Z' }],
+      { id: 'c3', full_name: 'YAO KOUASSI', email: 'yao@test.ci', phone: '+225 0707070707', genre: 'homme', date_naissance: '1999-01-01', type_candidature: 'agence', status: 'retenue', created_at: '2026-10-09T10:00:00Z' },
+      { id: 'c4', full_name: 'AKESSE FRANCK', email: 'enfant@test.ci', phone: '+225 0198138600', genre: 'homme', date_naissance: '2014-10-05', type_candidature: 'agence', status: 'retenue', created_at: '2026-09-01T10:00:00Z',
+        parent_nom: 'Monsieur Akesse Paul', parent_telephone: '+225 0777071859' }],
+    codes_inscription: [],
     inscriptions_mannequins: [{ id: 'i1', nom: 'YAO', prenoms: 'Kouassi', statut: 'en attente de paiement', created_at: '2026-10-06T10:00:00Z' }],
     model_profiles: [{ id: 'm1', full_name: 'MARIAM SANOGO', city: 'Abidjan', published: true, desactive: false }],
     partenaires: [{ id: 'p1', nom: 'Maison XYZ', ordre: 1 }] };
@@ -195,7 +198,8 @@ function donnees(role) {
       Object.assign(d.tables, ESPACE1);
       d.rpc.code_validation_statut = [{ defini: true }];  // l'ancien code de validation ne doit PAS être demandé
       // code individuel (cahier v2.4, 3.3) : la base crée le code d'une personne retenue
-      d.tables.codes_inscription = [{ code: 'MA2M-ANCIEN', utilise: false, created_at: '2026-10-01T10:00:00Z', candidature: null }];
+      d.tables.codes_inscription = [{ code: 'MA2M-ANCIEN', utilise: false, created_at: '2026-10-01T10:00:00Z', candidature: null },
+        { code: 'MA2M-ENFANT', utilise: false, candidature_id: 'c4', created_at: '2026-10-02T10:00:00Z', candidature: { full_name: 'AKESSE FRANCK' } }];
       d.rpc.code_individuel_creer = (x) => { d.tables.codes_inscription.push({ code: 'MA2M-YAO234', utilise: false, candidature_id: x.p_candidature, created_at: new Date().toISOString(), candidature: { full_name: 'YAO KOUASSI' } }); return 'MA2M-YAO234'; };
       d.rpc.casting_direct_creer = (x) => ({ id: 'cd1', code: 'MA2M-DIRECT', recu: x });
       d.rpc.portail_code_appareil_etat = () => ({ defini: pin.defini, verrouille: pin.verrouille });
@@ -234,7 +238,7 @@ function donnees(role) {
     ok(pastilles.join('|') === 'Toutes|Nouvelle|Retenue|Refusée|À part :|À revoir|En attente', nomEcran + ' : statuts des candidatures, « À revoir » et « En attente » à part ' + pastilles.join('|'));
     await pe.click('#filtres-candidatures [data-filtre="toutes"]'); await pe.waitForTimeout(800);
     const toutes = await pe.$$eval('#liste-candidatures .dossier-carte', (l) => l.map((c) => c.dataset.id));
-    ok(toutes.join(',') === 'c3,c1', nomEcran + ' : « Toutes » sans les dossiers à part, la plus récente en premier ' + toutes.join(','));
+    ok(toutes.join(',') === 'c3,c1,c4', nomEcran + ' : « Toutes » sans les dossiers à part, la plus récente en premier ' + toutes.join(','));
     await pe.click('#filtres-candidatures [data-filtre="en étude"]'); await pe.waitForTimeout(800);
     const arevoir = await pe.$$eval('#liste-candidatures .dossier-carte', (l) => l.map((c) => c.dataset.id));
     ok(arevoir.join(',') === 'c2' && /À revoir/.test(await pe.textContent('#liste-candidatures')), nomEcran + ' : « À revoir » montre ses dossiers');
@@ -246,7 +250,13 @@ function donnees(role) {
     const codeFiche = await pe.textContent('#mf-code-texte').catch(() => '');
     const waCode = decodeURIComponent((await pe.getAttribute('#mf-code-whatsapp', 'href').catch(() => '')) || '');
     ok(codeFiche === 'MA2M-YAO234' && e.journal.some((j) => j[1] === 'code_individuel_creer' && /"p_candidature":"c3"/.test(j[2])), nomEcran + ' : « La personne veut s’inscrire » → son code est créé par la base');
-    ok(/^https:\/\/wa\.me\/2250707070707\?text=/.test(waCode) && waCode.includes('MA2M-YAO234') && waCode.includes('Bonjour KOUASSI'), nomEcran + ' : code envoyé par WhatsApp à la personne ' + waCode.slice(0, 60));
+    ok(/^https:\/\/wa\.me\/2250707070707\?text=/.test(waCode) && waCode.includes('MA2M-YAO234') && waCode.includes('Bonjour Monsieur YAO KOUASSI'), nomEcran + ' : code envoyé par WhatsApp à la personne, salutation habituelle');
+    await pe.click('#modal-dossier-fermer'); await pe.waitForTimeout(300);
+    // enfant mineur retenu : le code part au parent, sur son numéro
+    await pe.click('#filtres-candidatures [data-filtre="retenue"]'); await pe.waitForTimeout(800);
+    await pe.click('#liste-candidatures .dossier-carte[data-id="c4"] .dc-nom'); await pe.waitForSelector('#mf-code-whatsapp', { timeout: 6000 }).catch(() => {});
+    const waEnfant = decodeURIComponent((await pe.getAttribute('#mf-code-whatsapp', 'href').catch(() => '')) || '');
+    ok(/^https:\/\/wa\.me\/2250777071859\?text=/.test(waEnfant) && waEnfant.includes('Bonjour Monsieur Akesse Paul') && waEnfant.includes('MA2M-ENFANT'), nomEcran + ' : enfant mineur → code envoyé au parent, sur son numéro ' + waEnfant.slice(0, 120));
     await pe.click('#modal-dossier-fermer'); await pe.waitForTimeout(300);
     // fiche non retenue : aucune zone de code
     await pe.click('#filtres-candidatures [data-filtre="en étude"]'); await pe.waitForTimeout(800);
@@ -300,6 +310,9 @@ function donnees(role) {
     const k = await ouvrir('compta', ecran, (d) => { Object.assign(d.tables, ESPACE1); });
     await k.p.waitForSelector('#cx-code'); await k.p.fill('#cx-code', '123456'); await k.p.click('form[data-form="code"] [type=submit]');
     await k.p.waitForFunction(() => location.hash.startsWith('#/compta/'), null, { timeout: 6000 }).catch(() => {});
+    await k.p.goto(k.p.url().split('#')[0] + '#/'); await k.p.waitForSelector('.bandeau-portail', { timeout: 6000 }).catch(() => {});
+    await k.p.click('a[href="#/securite/codes"]'); await k.p.waitForSelector('[data-action="securite-codes"]', { timeout: 6000 }).catch(() => {});
+    ok(await k.p.isVisible('[data-action="securite-codes"]') && !(await k.p.isVisible('.lateral .nav[href="#/securite/comptes"]')), nomEcran + ' : comptable → « Mes codes de secours » ouvert, le reste de la sécurité non');
     await k.p.goto(k.p.url().split('/admin/')[0] + '/tableau-de-bord.html');
     await k.p.waitForURL(/\/admin\//, { timeout: 8000 }).catch(() => {});
     ok(k.p.url().includes('/admin/') && !(await k.p.isVisible('#bloc-tableau')), nomEcran + ' : comptable → l’ancien tableau de bord lui est refusé');

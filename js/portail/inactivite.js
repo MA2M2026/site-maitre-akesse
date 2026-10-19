@@ -29,4 +29,15 @@
     relancer();
   };
   window.arreterInactivitePortail = () => { clearTimeout(minuteur); };
+  // Heure (ms) du dernier code de l'application d'authentification, lue dans le jeton de
+  // connexion (0 si absent : la base décide alors, voir portail_appareil_ok)
+  window.dernierCodeApplicationPortail = (session) => {
+    try {
+      const charge = JSON.parse(atob(session.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+      const t = (charge.amr || []).filter((m) => /totp/.test(m.method)).map((m) => m.timestamp);
+      return t.length ? Math.max.apply(null, t) * 1000 : 0;
+    } catch (e) { return 0; }
+  };
+  // Session de 8 heures au plus après ce code
+  window.SESSION_MAX_PORTAIL_MS = 8 * 3600 * 1000;
 })();

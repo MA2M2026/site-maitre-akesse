@@ -10,7 +10,7 @@
   const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
   const ROLES = { principal: 'Administrateur principal', site: 'Administrateur du site', caisse: 'Responsable des encaissements', compta: 'Comptable' };
   const ESPACES = { site: 'Administration du site', paiements: 'Suivi des paiements et des inscriptions', compta: 'Comptabilité' };
-  const SESSION_MAX_MS = 8 * 3600 * 1000; // session de 8 heures au plus
+  const SESSION_MAX_MS = window.SESSION_MAX_PORTAIL_MS; // session de 8 heures au plus (js/portail/inactivite.js)
 
   const P = window.Portail = {
     MOIS, ROLES, ESPACES,
@@ -274,6 +274,7 @@
     try { await sb.auth.signOut(); } catch (e) { /* déjà déconnecté */ }
     sessionStorage.removeItem('ma2m_pin_plus_tard');
     window.arreterInactivitePortail();
+    try { localStorage.removeItem('ma2m_mode_administration'); } catch (e) { /* stockage bloqué */ }
     // clé de l'ancien tableau de bord (espace 1) effacée aussi
     fetch('/api/acces-tableau', { method: 'DELETE', credentials: 'same-origin' }).catch(() => { /* hors ligne : elle expire seule */ });
     P.moi = null;
@@ -359,7 +360,7 @@
     try { localStorage.setItem('ma2m_mode_administration', '1'); } catch (e) { /* stockage bloqué */ }
     const retour = sessionStorage.getItem('ma2m_retour_administration');
     sessionStorage.removeItem('ma2m_retour_administration');
-    if (retour && P.moi.espaces.site && /^\/(tableau-de-bord|actualites|evenements|partenaires)\.html([?#][^\s]*)?$/.test(retour)) {
+    if (retour && P.moi.espaces.site && /^\/(tableau-de-bord|actualites|evenements|partenaires)(\.html)?([?#][^\s]*)?$/.test(retour)) {
       location.replace(retour);
       return;
     }
@@ -401,14 +402,7 @@
     P.fenetre('');
     ecranConnexion('verrou');
   }
-  // Heure (ms) du dernier code de l'application d'authentification, lue dans le jeton de connexion
-  function dernierCodeApplication(session) {
-    try {
-      const charge = JSON.parse(atob(session.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
-      const t = (charge.amr || []).filter((m) => /totp/.test(m.method)).map((m) => m.timestamp);
-      return t.length ? Math.max.apply(null, t) * 1000 : 0;
-    } catch (e) { return 0; }
-  }
+  const dernierCodeApplication = (session) => window.dernierCodeApplicationPortail(session);  // js/portail/inactivite.js
 
   // ---------- coque et pages ----------
   P.coque = (module, page, html) => {
@@ -443,7 +437,7 @@
     return '<div class="coque sans-menu"><main class="contenu" style="padding:0">' +
       '<div class="bandeau-portail"><div class="marque" style="padding:0">M A 2 M</div><div class="ligne">' +
       P.pastille(ROLES[P.moi.role], 'neutre') +
-      (P.moi.role === 'principal' ? '<a class="btn petit clair" href="#/securite/comptes">Sécurité et journal</a>' : '') +
+      (P.moi.role === 'principal' ? '<a class="btn petit clair" href="#/securite/comptes">Sécurité et journal</a>' : '<a class="btn petit clair" href="#/securite/codes">Mes codes de secours</a>') +
       (P.installee() ? '' : '<button class="btn petit clair" data-action="installer">Installer l’application</button>') +
       '<button class="btn petit clair" data-action="deconnexion">Déconnexion</button></div></div>' +
       '<div style="padding:30px 28px;display:flex;flex-direction:column;gap:22px"><div><h1>Bonjour, ' + P.esc(P.moi.nom) + '</h1><p class="doux" style="max-width:720px">' + P.esc(phrase) + '</p></div>' +
@@ -463,7 +457,8 @@
     const esp = P.espaces[module];
     if (!esp) { location.hash = '#/'; return; }
     const pageValide = esp.pages[page] ? page : esp.nav.find((n) => n[0])[0];
-    const autorise = module === 'securite' ? P.moi.role === 'principal' : P.moi.espaces[module];
+    // Sécurité : réservée à l'administrateur principal, sauf « Mes codes de secours » (chacun)
+    const autorise = module === 'securite' ? P.moi.role === 'principal' || pageValide === 'codes' : P.moi.espaces[module];
     if (!autorise) { app().innerHTML = P.coque(module, pageValide, P.refuse()); return; }
     app().innerHTML = P.coque(module, pageValide, '<div class="chargement">Chargement…</div>');
     try {

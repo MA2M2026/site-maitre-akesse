@@ -3,7 +3,9 @@
 (function () {
   'use strict';
   const P = window.Portail;
-  const NAV = [['comptes', 'Comptes et rôles'], ['delegations', 'Délégations'], ['appareils', 'Appareils et sessions'], ['journal', 'Journal d’audit'], ['codes', 'Mes codes de secours']];
+  // (« Mes codes de secours » : ouvert à chacun ; le reste à l'administrateur principal seul)
+  const principal = () => P.moi && P.moi.role === 'principal';
+  const NAV = [['comptes', 'Comptes et rôles', principal], ['delegations', 'Délégations', principal], ['appareils', 'Appareils et sessions', principal], ['journal', 'Journal d’audit', principal], ['codes', 'Mes codes de secours']];
   const MODULES = { site: 'Administration du site', paiements: 'Suivi des paiements', compta: 'Comptabilité', noms_payeurs: 'Noms des payeurs (comptable)', contacts_prives: 'Contacts privés des mannequins' };
 
   async function comptes() {

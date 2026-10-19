@@ -158,15 +158,9 @@ reset role;
 select set_config('request.jwt.claims', '', false);
 
 
--- Espace 1 (ancien tableau de bord) : le rôle « site » reçoit les droits de l'ancien tableau de
--- bord (table admins), les perd s'il change de rôle ou si son accès est coupé
-select essai(exists (select 1 from admins where user_id = '00000000-0000-0000-0000-0000000000a2'), 'rôle « site » : droits de l''ancien tableau de bord donnés');
-update staff_profiles set role = 'compta' where user_id = '00000000-0000-0000-0000-0000000000a2';
-select essai(not exists (select 1 from admins where user_id = '00000000-0000-0000-0000-0000000000a2'), 'changement de rôle : droits de l''ancien tableau de bord retirés');
-update staff_profiles set role = 'site' where user_id = '00000000-0000-0000-0000-0000000000a2';
-update staff_profiles set actif = false where user_id = '00000000-0000-0000-0000-0000000000a2';
-select essai(not exists (select 1 from admins where user_id = '00000000-0000-0000-0000-0000000000a2'), 'accès coupé : droits de l''ancien tableau de bord retirés');
-select essai(not exists (select 1 from admins where user_id = '00000000-0000-0000-0000-0000000000a3'), 'les autres rôles n''ont pas l''ancien tableau de bord');
+-- Espace 1 : un compte « site » n'a PAS (encore) les droits de l'ancien tableau de bord, qui
+-- ouvrent aussi l'argent dans la base (branchés avec l'espace 2)
+select essai(not exists (select 1 from admins where user_id = '00000000-0000-0000-0000-0000000000a2'), 'rôle « site » : pas d''accès à l''argent par la base');
 
 -- Code individuel (cahier v2.4, 3.3) : seulement pour une personne retenue, un seul par personne
 insert into admins (user_id) values ('00000000-0000-0000-0000-0000000000a1') on conflict do nothing;

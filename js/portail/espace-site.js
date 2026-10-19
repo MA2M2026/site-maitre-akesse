@@ -5,18 +5,21 @@
 (function () {
   'use strict';
   const P = window.Portail;
-  P.actions['espace1-reessayer'] = () => { location.assign('/tableau-de-bord.html'); };
+  P.actions['espace1-reessayer'] = () => { location.replace('/tableau-de-bord.html'); };
   P.espaces.site = {
     nav: [['accueil', 'Ouvrir l’espace']],
     pages: {
       accueil: async () => {
-        if (sessionStorage.getItem('ma2m_espace1_refuse')) {
+        const refus = sessionStorage.getItem('ma2m_espace1_refuse');
+        if (refus) {
           sessionStorage.removeItem('ma2m_espace1_refuse');
-          return P.entete(P.ESPACES.site) + '<div class="note erreur">Votre compte n’a pas encore les droits de l’Administration du site. ' +
-            'L’administrateur principal peut vous les donner dans Sécurité › Comptes et rôles (rôle « Administrateur du site »).</div>' +
+          return P.entete(P.ESPACES.site) + '<div class="note erreur">' + (refus === 'ouverture'
+            ? 'L’Administration du site n’a pas pu s’ouvrir (connexion internet coupée ou serveur occupé). Réessayez dans un instant.'
+            : 'Votre compte n’a pas encore accès à l’Administration du site. Demandez à l’administrateur principal.') + '</div>' +
             '<p style="margin-top:12px"><button class="btn" type="button" data-action="espace1-reessayer">Réessayer</button></p>';
         }
-        location.assign('/tableau-de-bord.html');
+        // (replace : le bouton « Retour » ramène ensuite aux tuiles, pas ici)
+        location.replace('/tableau-de-bord.html');
         return P.entete(P.ESPACES.site) + '<div class="carte"><p class="doux">Ouverture de l’Administration du site…</p></div>';
       }
     }

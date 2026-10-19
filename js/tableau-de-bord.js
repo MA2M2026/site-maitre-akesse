@@ -2249,12 +2249,17 @@ function genererCode() {
 // créé par la base (code_individuel_creer, supabase-administration.sql) seulement quand elle veut
 // s'inscrire — plus de code « libre » sans nom. Casting direct : fiche minimale + code.
 const LIEN_INSCRIPTION = 'https://www.maitreakessemodelmanagement.com/inscription-mannequin.html';
-function lienWhatsAppCode(telephone, nom, code) {
-  const lien = lienWhatsApp(telephone);
+// Message WhatsApp du code (en-tête, salutation et signature communes : js/messages-candidats.js ;
+// mineur : au parent, sur son numéro)
+function lienWhatsAppCode(d, code) {
+  const contacts = contactsEnvoi(d);
+  const lien = lienWhatsApp(contacts.phone);
   if (!lien) return null;
-  const prenom = String(nom || '').trim().split(/\s+/).slice(-1)[0] || '';
-  const texte = `Bonjour ${prenom},\n\nVoici votre code personnel pour vous inscrire chez Maître Akesse Model Management : *${code}*\n\nIl ne sert qu'une seule fois. Inscription : ${LIEN_INSCRIPTION}`;
-  return lien + '?text=' + encodeURIComponent(texte);
+  const fin = `\n\nIl ne sert qu'une seule fois. Inscription : ${LIEN_INSCRIPTION}`;
+  const texte = contacts.parent
+    ? messageParent(`Voici le code personnel de votre enfant {prénom} pour son inscription chez Maître Akesse Model Management : *${code}*` + fin)
+    : messageCandidat(`Voici votre code personnel pour vous inscrire chez Maître Akesse Model Management : *${code}*` + fin);
+  return lien + '?text=' + encodeURIComponent(personnaliserMessage(texte, d, null, () => ''));
 }
 document.getElementById('form-casting-direct').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -2272,7 +2277,7 @@ document.getElementById('form-casting-direct').addEventListener('submit', async 
     return;
   }
   document.getElementById('nouveau-code-texte').textContent = data.code;
-  const wa = lienWhatsAppCode(valeur('cd-telephone'), valeur('cd-nom'), data.code);
+  const wa = lienWhatsAppCode({ full_name: valeur('cd-nom').toUpperCase(), phone: valeur('cd-telephone'), genre: valeur('cd-genre'), date_naissance: valeur('cd-naissance'), type_candidature: 'direct' }, data.code);
   const boutonWa = document.getElementById('nouveau-code-whatsapp');
   boutonWa.style.display = wa ? '' : 'none';
   if (wa) boutonWa.href = wa;
@@ -2289,13 +2294,15 @@ async function afficherCodeFiche() {
   const zone = document.getElementById('mf-code');
   if (!ficheOuverte || ficheOuverte.source !== 'casting' || ficheOuverte.d.status !== 'retenue') { zone.style.display = 'none'; zone.innerHTML = ''; return; }
   const { id, d } = ficheOuverte;
+  // (jamais le code de la fiche précédente pendant le chargement)
+  zone.style.display = 'none'; zone.innerHTML = '';
   const { data: codes } = await sb.from('codes_inscription').select('code, utilise, utilise_le').eq('candidature_id', id);
   if (!ficheOuverte || ficheOuverte.id !== id) return;
   const libre = (codes || []).find(c => !c.utilise), utilise = (codes || []).find(c => c.utilise);
   if (utilise && !libre) {
     zone.innerHTML = `<div class="mf-notification-titre">Code d'inscription</div><p>Code ${echapperHtml(utilise.code)} utilisé le ${new Date(utilise.utilise_le || Date.now()).toLocaleDateString('fr-FR')} : l'inscription est faite.</p>`;
   } else if (libre) {
-    const wa = lienWhatsAppCode(contactsFiche('casting', d).phone, d.full_name, libre.code);
+    const wa = lienWhatsAppCode(d, libre.code);
     zone.innerHTML = `<div class="mf-notification-titre">Code d'inscription</div><p class="mf-code-valeur"><strong id="mf-code-texte">${echapperHtml(libre.code)}</strong> — valable une seule fois</p>` +
       `<div class="mf-notification-actions"><button class="btn" type="button" id="mf-code-copier">Copier</button>` +
       (wa ? `<a class="btn" id="mf-code-whatsapp" href="${echapperHtml(wa)}" target="_blank" rel="noopener">💬 Envoyer par WhatsApp</a>` : '') + '</div>';
