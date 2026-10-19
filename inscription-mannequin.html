@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com; style-src 'self' https://fonts.googleapis.com; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com; style-src 'self' https://fonts.googleapis.com 'sha256-IAm29wMK+UGV3lwLkMc4EAHslPzK8bjM/yZbq4WNCRE='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js?v=8b8ecad1"></script>
-<!-- Inscription officielle par code individuel (cahier v2.3, section 14) : remplace l'ancien formulaire long -->
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
 <script src="js/analytics-config.js?v=45fb0c30"></script>
@@ -32,38 +31,263 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&family=Montserrat:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="css/menu.css?v=0b2ed223">
 <link rel="stylesheet" href="css/champs-telephone.css?v=11f5f49f">
-<link rel="stylesheet" href="css/style.css?v=7722e56b">
 <link rel="stylesheet" href="css/jetons.css?v=16b5ece7">
-<link rel="stylesheet" href="css/charte-ma2m.css?v=1d262393">
-<link rel="stylesheet" href="css/inscription-nouveau.css?v=e98b8b86">
 <link rel="stylesheet" href="css/bouton-ma2m.css?v=1d7402b1">
 <script src="js/bouton-appui.js?v=953ca4d8" defer></script>
+<link rel="stylesheet" href="css/style.css?v=7722e56b">
+<link rel="stylesheet" href="css/charte-ma2m.css?v=1d262393">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1e1d1c">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<style>
+.im-1 { max-width:640px; }
+.im-2 { font-size:0.78rem; color:var(--gris); }
+.im-3 { display:none; margin-top:0.5rem; }
+.im-4 { margin-bottom:0.5rem; }
+.im-5 { display:none; margin:1rem 0; padding:1.2rem; border:1px solid var(--gris-clair); }
+.im-6 { margin-top:0; font-size:0.95rem; }
+.im-7 { font-size:0.85rem; color:var(--gris); margin:0.3rem 0 1rem; }
+.im-8 { display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.6rem; }
+.im-9 { background:var(--gris-clair); padding:1rem; border:1px solid var(--gris-clair); }
+.im-10 { color:var(--noir); }
+.im-11 { margin-top:0.6rem; font-size:0.88rem; }
+.im-12 { margin-top:0.3rem; }
+.im-13 { font-weight:600; color:var(--noir); }
+.im-14 { margin-top:0.6rem; font-size:0.8rem; color:var(--gris); }
+.im-15 { display:flex; align-items:flex-start; gap:0.7rem; margin:1.5rem 0; font-size:0.9rem; }
+.im-16 { width:auto; margin-top:0.2rem; }
+.im-17 { color:var(--rouge); }
+.im-18 { display:none; margin-top:1rem; padding:1.4rem; border:1px solid var(--gris-clair); text-align:center; }
+.im-19 { margin:0.8rem 0; }
+.im-20 { margin-bottom:0.8rem; }
+.im-21 { text-align:left; margin-top:1rem; }
+.im-22 { display:none; text-align:center; padding:3rem 0; }
+.im-23 { margin:1rem auto; max-width:50ch; }
+.im-24 { max-width:50ch; margin:2rem auto 0; padding:1.4rem; border:1px solid var(--gris-clair); text-align:left; }
+.im-25 { margin-top:0; }
+.im-26 { margin:0.5rem 0; font-size:0.9rem; }
+.im-27 { display:block; font-size:0.64rem; text-transform:uppercase; letter-spacing:0.07em; color:var(--gris); }
+.im-28 { margin:0.6rem 0; }
+.im-29 { margin-top:0.8rem; }
+.im-30 { position:relative; width:64px; height:64px; }
+.im-31 { width:100%; height:100%; object-fit:cover; border-radius:4px; display:block; }
+.im-32 { position:absolute; bottom:-6px; left:-6px; width:20px; height:20px; border-radius:50%; background:#333; color:#fff; border:2px solid #fff; font-size:0.7rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; }
+.im-33 { position:absolute; top:-6px; right:-6px; width:20px; height:20px; border-radius:50%; background:var(--bordeaux, #7c1730); color:#fff; border:2px solid #fff; font-size:0.7rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; }
+</style>
 </head>
 <body>
+<script async src="js/filet-reveal.js?v=0e57f29d"></script>
+
+
+
 <header class="site-header-v2" data-gabarit="entete" data-page="inscription-mannequin"></header>
+
 <div class="menu-overlay" id="menuOverlay" data-gabarit="menu"></div>
 <script src="js/gabarit.js?v=a26c2fad"></script>
 
-<main class="inn">
-  <div class="container inn-colonne">
-    <div class="inn-etapes" id="inn-etapes" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-    <div id="inn-ecran" aria-live="polite"></div>
+<section class="u-pb-1">
+  <div class="container">
+    <div class="eyebrow reveal">Casting validé</div>
+    <h1 class="reveal reveal-delay-1">Inscription Nouveaux Mannequins<span class="oeil">.</span></h1>
+    <p class="reveal reveal-delay-2 u-maxw-60ch-texte u-mt-1-2">Cette page est réservée aux mannequins dont le casting a été validé par l'agence. Munissez-vous du code d'inscription qui vous a été transmis.</p>
   </div>
-</main>
+</section>
+
+<section class="u-pt-1">
+  <div class="container im-1">
+
+    <!-- Étape 1 : code d'inscription -->
+    <div id="bloc-code">
+      <div class="form-champ">
+        <label for="code-inscription">Code d'inscription (fourni par l'agence)</label>
+        <input type="text" id="code-inscription" placeholder="Code d'agence">
+      </div>
+      <button class="btn btn--principal" id="valider-code-btn">Valider le code</button>
+      <div id="code-msg" class="form-msg"></div>
+    </div>
+
+    <!-- Étape 2 : formulaire complet (masqué tant que le code n'est pas validé) -->
+    <h2 class="u-lecteur-ecran">Formulaire d'inscription</h2>
+    <form id="form-inscription" class="u-hidden u-mt-2">
+      <!-- Note d'intégration : affichée seulement après un code valable (adresse secrète donnée par le serveur) -->
+      <div id="bloc-note-integration" class="im-24 u-hidden">
+        <h3 class="im-25">Note d'information et procédure d'intégration</h3>
+        <p class="im-28">Avant de continuer, lisez ce document : il présente votre parcours d'intégration, la formation, les règles de l'agence et les frais. En cochant plus bas « J'ai lu et j'approuve les conditions d'inscription », vous confirmez l'avoir lu.</p>
+        <a id="note-integration-lire" class="btn btn--principal" href="#" target="_blank" rel="noopener">Lire et télécharger le document (PDF)</a>
+      </div>
+      <div class="form-grille">
+        <div class="form-champ">
+          <label for="ins-nom">Nom &amp; Prénoms *</label>
+          <input type="text" id="ins-nom" required>
+        </div>
+        <div class="form-champ">
+          <label for="ins-naissance">Date de naissance *</label>
+          <input type="date" id="ins-naissance" required>
+        </div>
+      </div>
+      <div class="form-grille">
+        <div class="form-champ">
+          <label for="ins-genre">Genre *</label>
+          <select id="ins-genre" required>
+            <option value="">Sélectionner</option>
+            <option value="femme">Femme</option>
+            <option value="homme">Homme</option>
+          </select>
+        </div>
+        <div class="form-champ u-hidden" id="ins-civilite-wrap">
+          <label for="ins-civilite">Civilité *</label>
+          <select id="ins-civilite"><option value="">Sélectionner</option><option value="Mademoiselle">Mademoiselle</option><option value="Madame">Madame</option></select>
+        </div>
+        <div class="form-champ">
+          <label for="ins-taille">Taille (cm) *</label>
+          <select id="ins-taille" required><option value="">—</option></select>
+          <span id="ins-taille-indication" class="im-2"></span>
+        </div>
+      </div>
+      <div class="form-grille">
+        <div class="form-champ">
+          <label for="ins-tailleveternents">Taille de vêtements *</label>
+          <select id="ins-tailleveternents" required>
+            <option value="">—</option>
+            <option value="XS">XS</option>
+            <option value="S">S</option>
+            <option value="M">M</option>
+            <option value="L">L</option>
+            <option value="XL">XL</option>
+            <option value="XXL">XXL</option>
+            <option value="Autre">Autre</option>
+          </select>
+          <input aria-label="Précisez la taille" type="text" id="ins-tailleveternents-autre" placeholder="Précisez la taille" class="im-3">
+        </div>
+      </div>
+
+      <div class="form-champ">
+        <label for="ins-indicatif">Votre numéro WhatsApp *</label>
+        <select id="ins-indicatif" required class="im-4"><option value="">+225</option></select>
+        <input aria-label="Votre numéro WhatsApp" type="tel" id="ins-telephone-numero" placeholder="07 00 00 00 00" required pattern="[0-9 ]{6,14}">
+      </div>
+
+      <div class="form-champ">
+        <label for="ins-email">Votre e-mail *</label>
+        <input type="email" id="ins-email" required autocomplete="email">
+      </div>
+
+      <div id="ins-bloc-parent" class="im-5">
+        <h3 class="im-6">Informations du parent ou tuteur légal</h3>
+        <p class="im-7">L'agence accepte les inscriptions de mineurs sous validation d'un parent ou tuteur légal — merci de renseigner son contact, il sera joint avant toute suite donnée.</p>
+        <div class="form-grille">
+          <div class="form-champ">
+            <label for="ins-parent-civilite">Civilité du parent / tuteur</label>
+            <select id="ins-parent-civilite"><option value="">Sélectionner</option><option value="Madame">Madame</option><option value="Monsieur">Monsieur</option><option value="Mademoiselle">Mademoiselle</option></select>
+          </div>
+          <div class="form-champ">
+            <label for="ins-parent-nom">Nom du parent / tuteur</label>
+            <input type="text" id="ins-parent-nom">
+          </div>
+          <div class="form-champ">
+            <label for="ins-parent-indicatif">WhatsApp du parent / tuteur</label>
+            <select id="ins-parent-indicatif" class="im-4"></select>
+            <input aria-label="WhatsApp du parent / tuteur — numéro" type="tel" id="ins-parent-telephone-numero" placeholder="07 00 00 00 00" pattern="[0-9 ]{6,14}">
+          </div>
+          <div class="form-champ">
+            <label for="ins-parent-email">E-mail du parent / tuteur</label>
+            <input type="email" id="ins-parent-email" autocomplete="off">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-champ">
+        <label for="ins-photo1">Photo 1 — Portrait *</label>
+        <input type="file" id="ins-photo1" accept="image/*" required>
+      </div>
+      <div class="form-champ">
+        <label for="ins-photo2">Photo 2 — Plein pied *</label>
+        <input type="file" id="ins-photo2" accept="image/*" required>
+      </div>
+      <div class="form-champ">
+        <label for="ins-photo3">Photo 3 — Profil *</label>
+        <input type="file" id="ins-photo3" accept="image/*" required>
+      </div>
+      <div class="form-champ">
+        <label for="ins-photo4">Photo 4 — Sans maquillage *</label>
+        <input type="file" id="ins-photo4" accept="image/*" required>
+      </div>
+
+      <div class="form-champ">
+        <label for="ins-photos-supp">Photos supplémentaires (facultatif)</label>
+        <input type="file" id="ins-photos-supp" accept="image/*" multiple>
+        <input aria-label="Photo de remplacement" type="file" id="ins-photo-supp-remplacement" accept="image/*" class="u-hidden">
+        <div id="ins-photos-supp-apercu" class="im-8"></div>
+      </div>
+
+      <div class="form-champ im-9">
+        <label class="im-10">🔒 Contact officiel de l'agence</label>
+        <div class="im-11">
+          <div class="im-12"><a href="tel:+2252722231176" class="im-13">📞 +225 27 22 23 11 76</a></div>
+          <div class="im-12"><a href="tel:+2250545656687" class="im-13">📱 +225 05 45 65 66 87</a></div>
+          <div class="im-12"><a href="mailto:scoutmodel.ma2m@gmail.com" class="im-13">✉️ scoutmodel.ma2m@gmail.com</a></div>
+          <div class="im-12"><strong>Instagram :</strong> @maitreakessemodelmanagement</div>
+        </div>
+        <p class="im-14">Géré par MA2M — non modifiable.</p>
+      </div>
+
+      <label class="im-15">
+        <input type="checkbox" id="ins-conditions" required class="im-16">
+        <span>J'ai lu et j'approuve les conditions d'inscription de l'agence ainsi que la <a href="politique-confidentialite.html" target="_blank" class="im-17">politique de confidentialité</a>. Si je suis mineur(e), je certifie m'inscrire avec l'accord d'un parent ou tuteur légal.</span>
+      </label>
+
+      <div id="bloc-paiement" class="im-18">
+        <h3>Frais d'intégration — 25 000 FCFA</h3>
+        <p class="im-19">Inscription 15 000 FCFA + premier mois de formation 10 000 FCFA.</p>
+        <p class="im-19">Réglez vos frais d'intégration via Wave, puis cliquez sur « Envoyer mon dossier » — l'agence vérifiera et validera votre paiement.</p>
+        <a href="https://pay.wave.com/m/M_ci_5eXs19LXWW_D/c/ci/?amount=25000" target="_blank" rel="noopener" class="btn btn--principal im-20">Payer avec Wave</a>
+        <div class="form-champ im-21">
+          <label for="ins-reference-paiement">Référence de la transaction Wave (reçue après le paiement) *</label>
+          <input type="text" id="ins-reference-paiement" placeholder="ex : TXN123456789" required>
+        </div>
+        <div class="form-champ form-consentement"><input type="checkbox" id="ins-consentement" required><label for="ins-consentement">J’ai lu la <a href="politique-confidentialite.html" target="_blank" rel="noopener">politique de confidentialité</a> et j’accepte que mes informations soient utilisées pour traiter ma demande. *</label></div>
+        <button type="submit" class="btn">Envoyer mon dossier (j'ai réglé les droits)</button>
+      </div>
+      <div id="inscription-msg" class="form-msg"></div>
+    </form>
+
+    <div id="bloc-succes" class="im-22">
+      <h2>Dossier envoyé<span class="oeil">.</span></h2>
+      <p class="im-23">Merci ! Votre dossier d'inscription et vos photos sont bien reçus par l'agence. Dès que votre paiement Wave sera confirmé, votre compte sera validé.</p>
+
+      <div id="recu-inscription" class="im-24">
+        <h3 class="im-25">Reçu d'inscription</h3>
+        <p class="im-26"><span class="im-27">Nom</span><span id="recu-nom"></span></p>
+        <p class="im-26"><span class="im-27">Date</span><span id="recu-date"></span></p>
+        <p class="im-26"><span class="im-27">Frais d'intégration (inscription 15 000 + premier mois de formation 10 000)</span><span>25 000 FCFA</span></p>
+        <p class="im-26"><span class="im-27">Référence de paiement Wave</span><span id="recu-reference"></span></p>
+        <p class="im-26"><span class="im-27">Statut</span><span>En attente de vérification par l'agence</span></p>
+        <button id="btn-imprimer-recu" class="btn no-print u-mt-1-2">🖨️ Télécharger mon reçu (PDF)</button>
+      </div>
+
+      <div class="no-print im-24">
+        <h3 class="im-25">Prochaine étape : rejoignez The Book</h3>
+        <p class="im-28">Dès validation, l'agence vous enverra un code d'invitation par message. Avec ce code, connectez-vous sur <strong>l'Espace mannequin de l'agence</strong> pour compléter votre profil (mensurations, expérience, projets déjà réalisés) et ajouter vos photos — c'est ce qui apparaîtra dans The Book et sera vu par les recruteurs.</p>
+        <a href="espace-mannequin.html" class="btn btn--principal im-29">Aller vers l'Espace mannequin de l'agence</a>
+      </div>
+    </div>
+  </div>
+</section>
 
 <footer class="site-footer" data-gabarit="pied"></footer>
 <script src="js/gabarit.js?v=a26c2fad"></script>
+
 <script src="js/vendor/supabase-js-2.110.6.js?v=82632987"></script>
-<script src="js/supabase-config.js?v=16708773"></script>
+<script src="js/supabase-config.js?v=d0882381"></script>
+<script src="js/indicatifs-pays.js?v=b57d5bdf"></script>
+<script src="js/vendor/emailjs-browser-3.12.1.min.js?v=3d7499d7"></script>
+<script src="js/emailjs-config.js?v=8fcea597"></script>
 <script src="js/verrou-defilement.js?v=33c16996"></script>
-<script src="js/app.js?v=2f0c5539"></script>
+<script src="js/app.js?v=0a3d8fbc"></script>
 <script src="js/confort.js?v=33474c14"></script>
-<script src="js/menu.js?v=f6d698ef"></script>
-<script src="js/inscription-nouveau-source.js?v=08228a39"></script>
-<script src="js/inscription-nouveau.js?v=0482b96e"></script>
+<script src="js/menu.js?v=fae89b77"></script>
+<script src="js/inscription-mannequin.js?v=e579d90b"></script>
+<script src="js/brouillon.js?v=8c0a08ff"></script>
 </body>
 </html>

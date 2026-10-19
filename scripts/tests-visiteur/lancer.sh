@@ -14,10 +14,6 @@ for i in range(5):
     im = Image.new('RGB', (900, 1200), (60 + i * 30, 40, 80)); ImageDraw.Draw(im).ellipse((250, 200, 650, 700), fill=(200, 160, 120)); im.save('medias/photo%d.jpg' % i, quality=85)"
 [ -f medias/video.mp4 ] || ffmpeg -loglevel error -y -f lavfi -i testsrc=size=480x854:rate=25 -f lavfi -i sine=frequency=440 -t 6 -c:v libx264 -pix_fmt yuv420p -c:a aac -shortest medias/video.mp4
 [[ -f medias/verticale.webm ]] || ffmpeg -loglevel error -y -f lavfi -i testsrc=size=360x640:rate=25 -f lavfi -i sine=frequency=330 -t 5 -c:v libvpx-vp9 -deadline realtime -c:a libopus -shortest medias/verticale.webm
-[[ -f medias/photo-sombre.jpg ]] || ffmpeg -loglevel error -y -f lavfi -i "color=c=0x141414:s=1200x900" -frames:v 1 medias/photo-sombre.jpg
-[[ -f medias/photo-rayures.jpg ]] || ffmpeg -loglevel error -y -f lavfi -i "color=c=black:s=1200x900,geq=lum='if(lt(mod(X\,48)\,24)\,25\,235)':cb=128:cr=128" -frames:v 1 medias/photo-rayures.jpg
-[[ -f medias/photo-claire.jpg ]] || ffmpeg -loglevel error -y -f lavfi -i "color=c=0xE4E4E4:s=1200x900" -frames:v 1 medias/photo-claire.jpg
-[[ -f medias/photo-blanche.jpg ]] || ffmpeg -loglevel error -y -f lavfi -i "color=c=white:s=1200x900" -frames:v 1 medias/photo-blanche.jpg
 export NODE_PATH="${NODE_PATH:-$(npm root -g)}"
 # Paquets des fonctions serveur (api/) utilisés par test-note-integration.js : installés s'ils
 # manquent (nouvelle copie du dépôt), sans rien changer à package.json
@@ -25,8 +21,8 @@ export NODE_PATH="${NODE_PATH:-$(npm root -g)}"
 # Scripts et styles appelés avec leur dernier numéro de version (?v=), sinon les visiteurs
 # gardent l'ancienne version en mémoire (14/10/2026, rapidité)
 echo "########## versions des fichiers"; python3 ../versionner.py --verifier
-for t in test-visiteur.js test-inscription-simplifiee.js test-inscription-code.js test-mes-paiements.js test-code-espace.js test-portail-serveur.js test-contact-recruteur.js test-admin.js test-pages-publiques.js test-espace-experiences.js test-boutique.js test-publications.js test-journal.js test-tri-photos.js test-video-accueil.js test-espace-enregistrement.js test-photos-webp.js test-photos-directes.js test-tableau-protege.js test-note-integration.js test-code-permanent.js test-journal-fichier.js test-affichage-stable.js test-apercus.js test-middleware-apercus.mjs test-recherche-book.js test-lisibilite-photos.js test-portail.js test-visuel.js; do
+for t in test-visiteur.js test-inscription.js test-inscription-simplifiee.js test-contact-recruteur.js test-admin.js test-pages-publiques.js test-espace-experiences.js test-boutique.js test-publications.js test-journal.js test-tri-photos.js test-video-accueil.js test-espace-enregistrement.js test-photos-webp.js test-photos-directes.js test-tableau-protege.js test-note-integration.js test-code-permanent.js test-journal-fichier.js test-affichage-stable.js test-apercus.js test-middleware-apercus.mjs test-recherche-book.js test-visuel.js; do
   echo "########## $t"
-  # le test visuel (42 pages × 2 écrans) et le test « texte sur photo » ont leur propre limite
-  timeout "$(case "$t" in test-visuel.js) echo 700;; test-lisibilite-photos.js) echo 2400;; *) echo 400;; esac)" node "$t"
+  # le test visuel parcourt 42 pages × 2 écrans : il a sa propre limite de 600 s
+  timeout "$([[ "$t" = test-visuel.js ]] && echo 700 || echo 400)" node "$t"
 done

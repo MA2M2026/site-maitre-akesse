@@ -29,12 +29,7 @@ let tokenReinitCodeEnAttente = null;
   const p = new URLSearchParams(window.location.search).get('reset_code');
   if (p) {
     tokenReinitCodeEnAttente = p;
-    // retire seulement le jeton de l'adresse (« ?depuis=portail » doit rester : sans lui, la page
-    // rechargée mènerait au portail, voir middleware.js)
-    const reste = new URLSearchParams(window.location.search);
-    reste.delete('reset_code');
-    reste.set('depuis', reste.get('depuis') || 'portail');
-    window.history.replaceState({}, '', window.location.pathname + '?' + reste);
+    window.history.replaceState({}, '', window.location.pathname);
   }
 })();
 
@@ -139,15 +134,7 @@ async function obtenirStatutCodeValidationAvecRetry() {
 
 // Appelée après toute connexion réussie (mot de passe ou reset mdp) déjà
 // confirmée admin : décide s'il faut encore demander le code de validation.
-// Session ouverte depuis le portail avec la double authentification (niveau « aal2 », code de
-// l'application d'authentification) : elle vaut le code de validation de l'ancien tableau.
-function sessionDoubleAuthentification(session) {
-  try { return JSON.parse(atob(session.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).aal === 'aal2'; } catch (e) { return false; }
-}
-
 async function apresConnexionReussie() {
-  const { data: { session } } = await sb.auth.getSession();
-  if (session && sessionDoubleAuthentification(session)) { marquerCodeValide(); await reveleTableauDeBord(); return; }
   if (tokenReinitCodeEnAttente) {
     masquerBlocsConnexion();
     document.getElementById('bloc-code-nouveau').style.display = 'block';
@@ -199,30 +186,8 @@ document.getElementById('tb-login-btn').addEventListener('click', async () => {
   }
 });
 
-// Ouvert DANS l'administration (/admin, js/tableau-integre.js) : la connexion appartient à
-// l'administration ; ce cadre ne la ferme jamais et ne montre jamais l'ancien écran de connexion.
-const DANS_ADMINISTRATION = document.documentElement.classList.contains('tdb-integre');
-function accesIntegreRefuse(cause) {
-  masquerBlocsConnexion();
-  let bloc = document.getElementById('bloc-integre-refus');
-  if (!bloc) {
-    bloc = document.createElement('section');
-    bloc.id = 'bloc-integre-refus';
-    bloc.className = 'u-pt-1';
-    bloc.innerHTML = '<div class="container"><p class="form-msg err" style="display:block"></p>' +
-      '<button type="button" class="btn">Réessayer</button></div>';
-    bloc.querySelector('button').addEventListener('click', () => location.reload());
-    const login = document.getElementById('bloc-login');
-    login.parentNode.insertBefore(bloc, login);
-  }
-  bloc.querySelector('p').textContent = 'Cette rubrique n’a pas reconnu votre connexion à l’administration (' + cause + '). Touchez « Réessayer » ; si cela continue, revenez au portail et rouvrez la rubrique.';
-  bloc.style.display = 'block';
-  if (window.signalerErreur) window.signalerErreur('Administration : rubrique intégrée refusée', cause);
-}
-
 async function deconnecterTableauDeBord(motif) {
   arreterMinuteurInactivite();
-  if (DANS_ADMINISTRATION) { accesIntegreRefuse(motif || 'déconnexion demandée'); return; }
   await sb.auth.signOut();
   effacerCodeValide();
   fermerAccesServeur();
@@ -264,9 +229,6 @@ const DELAI_INACTIVITE_MS = 15 * 60 * 1000;
 let minuteurInactivite = null;
 function demarrerMinuteurInactivite() {
   if (minuteurInactivite) clearTimeout(minuteurInactivite);
-  // dans l'administration (js/tableau-integre.js), c'est l'administration qui gère l'inactivité :
-  // ici, une déconnexion fermerait aussi la session de l'administration (même appareil)
-  if (document.documentElement.classList.contains('tdb-integre')) return;
   minuteurInactivite = setTimeout(verrouillerParInactivite, DELAI_INACTIVITE_MS);
 }
 function arreterMinuteurInactivite() {
@@ -437,26 +399,6 @@ void (async () => {
   // prêt avant d'ouvrir le tableau de bord : sur un téléphone lent, la vérification de la
   // session pouvait répondre avant la fin de son téléchargement.
   if (document.readyState === 'loading') await new Promise(r => document.addEventListener('DOMContentLoaded', r, { once: true }));
-  if (DANS_ADMINISTRATION) {
-    // la session de l'administration est déjà là (même navigateur) : quelques essais avant de
-    // conclure, et jamais l'ancien écran de connexion (19/10/2026, signalé par la propriétaire)
-    document.getElementById('bloc-login').style.display = 'none';
-    let cause = 'session introuvable';
-    for (let essai = 1; essai <= 4; essai++) {
-      try {
-        const { data: { session } } = await sb.auth.getSession();
-        if (session) {
-          const { data, error } = await sb.from('admins').select('user_id').eq('user_id', session.user.id).maybeSingle();
-          if (data) { await apresConnexionReussie(); cause = ''; break; }
-          cause = error ? 'lecture des droits : ' + error.message : 'compte absent de la liste des administrateurs';
-        }
-      } catch (e) { cause = 'erreur : ' + ((e && e.message) || e); }
-      await new Promise((r) => setTimeout(r, 700 * essai));
-    }
-    if (cause) accesIntegreRefuse(cause);
-    if (window.tdbFinVerifSession) window.tdbFinVerifSession();
-    return;
-  }
   try {
     const estAdmin = await verifierAdminTableau();
     if (estAdmin && !recuperationMdpEnCours) {

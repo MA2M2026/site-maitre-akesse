@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com; style-src 'self' https://fonts.googleapis.com; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com; style-src 'self' https://fonts.googleapis.com 'sha256-tFcy5AGgtBPoC5kXJZsbtpg3iMcSamS5C0fbatbaxhs='; worker-src 'self' blob:;">
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="../js/surveillance.js?v=8b8ecad1"></script>
-<!-- Inscription officielle par code individuel (cahier v2.3, section 14) : remplace l'ancien formulaire long -->
 <!-- Google tag (gtag.js) -->
 <script async crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
 <script src="../js/analytics-config.js?v=45fb0c30"></script>
@@ -32,38 +31,251 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&family=Montserrat:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="../css/menu.css?v=0b2ed223">
 <link rel="stylesheet" href="../css/champs-telephone.css?v=11f5f49f">
-<link rel="stylesheet" href="../css/style.css?v=7722e56b">
 <link rel="stylesheet" href="../css/jetons.css?v=16b5ece7">
-<link rel="stylesheet" href="../css/charte-ma2m.css?v=1d262393">
-<link rel="stylesheet" href="../css/inscription-nouveau.css?v=e98b8b86">
 <link rel="stylesheet" href="../css/bouton-ma2m.css?v=1d7402b1">
 <script src="../js/bouton-appui.js?v=953ca4d8" defer></script>
+<link rel="stylesheet" href="../css/style.css?v=7722e56b">
+<link rel="stylesheet" href="../css/charte-ma2m.css?v=1d262393">
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#1e1d1c">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
+<style>
+.enim-1 { max-width:640px; }
+.enim-2 { font-size:0.78rem; color:var(--gris); }
+.enim-3 { display:none; margin-top:0.5rem; }
+.enim-4 { margin-bottom:0.5rem; }
+.enim-5 { display:none; margin:1rem 0; padding:1.2rem; border:1px solid var(--gris-clair); }
+.enim-6 { margin-top:0; font-size:0.95rem; }
+.enim-7 { font-size:0.85rem; color:var(--gris); margin:0.3rem 0 1rem; }
+.enim-8 { background:var(--gris-clair); padding:1rem; border:1px solid var(--gris-clair); }
+.enim-9 { color:var(--noir); }
+.enim-10 { margin-top:0.6rem; font-size:0.88rem; }
+.enim-11 { margin-top:0.3rem; }
+.enim-12 { font-weight:600; color:var(--noir); }
+.enim-13 { margin-top:0.6rem; font-size:0.8rem; color:var(--gris); }
+.enim-14 { display:flex; align-items:flex-start; gap:0.7rem; margin:1.5rem 0; font-size:0.9rem; }
+.enim-15 { width:auto; margin-top:0.2rem; }
+.enim-16 { color:var(--rouge); }
+.enim-17 { display:none; margin-top:1rem; padding:1.4rem; border:1px solid var(--gris-clair); text-align:center; }
+.enim-18 { margin:0.8rem 0; }
+.enim-19 { margin-bottom:0.8rem; }
+.enim-20 { text-align:left; margin-top:1rem; }
+.enim-21 { display:none; text-align:center; padding:3rem 0; }
+.enim-22 { margin:1rem auto; max-width:50ch; }
+.enim-23 { max-width:50ch; margin:2rem auto 0; padding:1.4rem; border:1px solid var(--gris-clair); text-align:left; }
+.enim-24 { margin-top:0; }
+.enim-25 { margin:0.5rem 0; font-size:0.9rem; }
+.enim-26 { display:block; font-size:0.64rem; text-transform:uppercase; letter-spacing:0.07em; color:var(--gris); }
+.enim-27 { margin:0.6rem 0; }
+.enim-28 { margin-top:0.8rem; }
+</style>
 </head>
 <body>
+<script async src="../js/filet-reveal.js?v=0e57f29d"></script>
+
+
+
 <header class="site-header-v2" data-gabarit="entete" data-page="inscription-mannequin"></header>
+
 <div class="menu-overlay" id="menuOverlay" data-gabarit="menu"></div>
 <script src="../js/gabarit.js?v=a26c2fad"></script>
 
-<main class="inn">
-  <div class="container inn-colonne">
-    <div class="inn-etapes" id="inn-etapes" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-    <div id="inn-ecran" aria-live="polite"></div>
+<section class="u-pb-1">
+  <div class="container">
+    <div class="eyebrow reveal">Casting Approved</div>
+    <h1 class="reveal reveal-delay-1">New Model Registration<span class="oeil">.</span></h1>
+    <p class="reveal reveal-delay-2 u-maxw-60ch-texte u-mt-1-2">This page is reserved for models whose casting has been approved by the agency. Please have the registration code you were given ready.</p>
   </div>
-</main>
+</section>
+
+<section class="u-pt-1">
+  <div class="container enim-1">
+
+    <!-- Step 1: registration code -->
+    <div id="bloc-code">
+      <div class="form-champ">
+        <label for="code-inscription">Registration code (provided by the agency)</label>
+        <input type="text" id="code-inscription" placeholder="Agency code">
+      </div>
+      <button class="btn btn--principal" id="valider-code-btn">Confirm Code</button>
+      <div id="code-msg" class="form-msg"></div>
+    </div>
+
+    <!-- Step 2: full form (hidden until the code is confirmed) -->
+    <h2 class="u-lecteur-ecran">Registration form</h2>
+    <form id="form-inscription" class="u-hidden u-mt-2">
+      <!-- Onboarding note: shown only after a valid code (secret address given by the server) -->
+      <div id="bloc-note-integration" class="enim-23 u-hidden">
+        <h3 class="enim-24">Information note and onboarding procedure</h3>
+        <p class="enim-27">Before continuing, please read this document (in French): it explains your onboarding, the training, the agency's rules and the fees. By ticking "I have read and accept the agency's registration terms" below, you confirm that you have read it.</p>
+        <a id="note-integration-lire" class="btn btn--principal" href="#" target="_blank" rel="noopener">Read and download the document (PDF)</a>
+      </div>
+      <div class="form-grille">
+        <div class="form-champ">
+          <label for="ins-nom">Full Name *</label>
+          <input type="text" id="ins-nom" required>
+        </div>
+        <div class="form-champ">
+          <label for="ins-naissance">Date of Birth *</label>
+          <input type="date" id="ins-naissance" required>
+        </div>
+      </div>
+      <div class="form-grille">
+        <div class="form-champ">
+          <label for="ins-genre">Gender *</label>
+          <select id="ins-genre" required>
+            <option value="">Select</option>
+            <option value="femme">Woman</option>
+            <option value="homme">Man</option>
+          </select>
+        </div>
+        <div class="form-champ u-hidden" id="ins-civilite-wrap">
+          <label for="ins-civilite">Title *</label>
+          <select id="ins-civilite"><option value="">Select</option><option value="Mademoiselle">Miss</option><option value="Madame">Mrs</option></select>
+        </div>
+        <div class="form-champ">
+          <label for="ins-taille">Height (cm) *</label>
+          <select id="ins-taille" required><option value="">—</option></select>
+          <span id="ins-taille-indication" class="enim-2"></span>
+        </div>
+      </div>
+      <div class="form-grille">
+        <div class="form-champ">
+          <label for="ins-tailleveternents">Clothing Size *</label>
+          <select id="ins-tailleveternents" required>
+            <option value="">—</option>
+            <option value="XS">XS</option>
+            <option value="S">S</option>
+            <option value="M">M</option>
+            <option value="L">L</option>
+            <option value="XL">XL</option>
+            <option value="XXL">XXL</option>
+            <option value="Autre">Other</option>
+          </select>
+          <input aria-label="Specify the size" type="text" id="ins-tailleveternents-autre" placeholder="Specify the size" class="enim-3">
+        </div>
+      </div>
+
+      <div class="form-champ">
+        <label for="ins-indicatif">Your WhatsApp Number *</label>
+        <select id="ins-indicatif" required class="enim-4"><option value="">+225</option></select>
+        <input aria-label="Your WhatsApp Number" type="tel" id="ins-telephone-numero" placeholder="07 00 00 00 00" required>
+      </div>
+
+      <div class="form-champ">
+        <label for="ins-email">Your Email *</label>
+        <input type="email" id="ins-email" required autocomplete="email">
+      </div>
+
+      <div id="ins-bloc-parent" class="enim-5">
+        <h3 class="enim-6">Parent or Legal Guardian Information</h3>
+        <p class="enim-7">The agency accepts registrations from minors with the approval of a parent or legal guardian — please provide their contact details, they will be reached before any further action is taken.</p>
+        <div class="form-grille">
+          <div class="form-champ">
+            <label for="ins-parent-civilite">Parent / guardian title</label>
+            <select id="ins-parent-civilite"><option value="">Select</option><option value="Madame">Mrs</option><option value="Monsieur">Mr</option><option value="Mademoiselle">Miss</option></select>
+          </div>
+          <div class="form-champ">
+            <label for="ins-parent-nom">Parent / Guardian Name</label>
+            <input type="text" id="ins-parent-nom">
+          </div>
+          <div class="form-champ">
+            <label for="ins-parent-indicatif">Parent / Guardian WhatsApp Number</label>
+            <select id="ins-parent-indicatif" class="enim-4"></select>
+            <input aria-label="Parent / Guardian WhatsApp Number — number" type="tel" id="ins-parent-telephone-numero">
+          </div>
+          <div class="form-champ">
+            <label for="ins-parent-email">Parent / Guardian Email</label>
+            <input type="email" id="ins-parent-email" autocomplete="off">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-champ">
+        <label for="ins-photo1">Photo 1 — Portrait *</label>
+        <input type="file" id="ins-photo1" accept="image/*" required>
+      </div>
+      <div class="form-champ">
+        <label for="ins-photo2">Photo 2 — Full Length *</label>
+        <input type="file" id="ins-photo2" accept="image/*" required>
+      </div>
+      <div class="form-champ">
+        <label for="ins-photo3">Photo 3 — Profile *</label>
+        <input type="file" id="ins-photo3" accept="image/*" required>
+      </div>
+      <div class="form-champ">
+        <label for="ins-photo4">Photo 4 — Without Makeup *</label>
+        <input type="file" id="ins-photo4" accept="image/*" required>
+      </div>
+
+      <div class="form-champ enim-8">
+        <label class="enim-9">🔒 Official Agency Contact</label>
+        <div class="enim-10">
+          <div class="enim-11"><a href="tel:+2252722231176" class="enim-12">📞 +225 27 22 23 11 76</a></div>
+          <div class="enim-11"><a href="tel:+2250545656687" class="enim-12">📱 +225 05 45 65 66 87</a></div>
+          <div class="enim-11"><a href="mailto:scoutmodel.ma2m@gmail.com" class="enim-12">✉️ scoutmodel.ma2m@gmail.com</a></div>
+          <div class="enim-11"><strong>Instagram:</strong> @maitreakessemodelmanagement</div>
+        </div>
+        <p class="enim-13">Managed by MA2M — not editable.</p>
+      </div>
+
+      <label class="enim-14">
+        <input type="checkbox" id="ins-conditions" required class="enim-15">
+        <span>I have read and accept the agency's registration terms as well as the <a href="politique-confidentialite.html" target="_blank" class="enim-16">privacy policy</a>. If I am a minor, I certify that I am registering with the consent of a parent or legal guardian.</span>
+      </label>
+
+      <div id="bloc-paiement" class="enim-17">
+        <h3>Onboarding Fee — 25,000 FCFA</h3>
+        <p class="enim-18">Registration 15,000 FCFA + first month of training 10,000 FCFA.</p>
+        <p class="enim-18">Pay your onboarding fee via Wave, then click "Submit My Application" — the agency will verify and confirm your payment.</p>
+        <a href="https://pay.wave.com/m/M_ci_5eXs19LXWW_D/c/ci/?amount=25000" target="_blank" rel="noopener" class="btn btn--principal enim-19">Pay with Wave</a>
+        <div class="form-champ enim-20">
+          <label for="ins-reference-paiement">Wave Transaction Reference (received after payment) *</label>
+          <input type="text" id="ins-reference-paiement" placeholder="e.g. TXN123456789" required>
+        </div>
+        <div class="form-champ form-consentement"><input type="checkbox" id="ins-consentement" required><label for="ins-consentement">I have read the <a href="politique-confidentialite.html" target="_blank" rel="noopener">privacy policy</a> and agree that my information will be used to process my request. *</label></div>
+        <button type="submit" class="btn">Submit My Application (fee paid)</button>
+      </div>
+      <div id="inscription-msg" class="form-msg"></div>
+    </form>
+
+    <div id="bloc-succes" class="enim-21">
+      <h2>Application Sent<span class="oeil">.</span></h2>
+      <p class="enim-22">Thank you! Your registration and photos have been received by the agency. Once your Wave payment is confirmed, your account will be approved.</p>
+
+      <div id="recu-inscription" class="enim-23">
+        <h3 class="enim-24">Registration Receipt</h3>
+        <p class="enim-25"><span class="enim-26">Name</span><span id="recu-nom"></span></p>
+        <p class="enim-25"><span class="enim-26">Date</span><span id="recu-date"></span></p>
+        <p class="enim-25"><span class="enim-26">Onboarding fee (registration 15,000 + first month of training 10,000)</span><span>25,000 FCFA</span></p>
+        <p class="enim-25"><span class="enim-26">Wave Payment Reference</span><span id="recu-reference"></span></p>
+        <p class="enim-25"><span class="enim-26">Status</span><span>Pending agency verification</span></p>
+        <button id="btn-imprimer-recu" class="btn no-print u-mt-1-2">🖨️ Download My Receipt (PDF)</button>
+      </div>
+
+      <div class="no-print enim-23">
+        <h3 class="enim-24">Next Step: Join The Book</h3>
+        <p class="enim-27">Once approved, the agency will send you an invitation code by message. With this code, log in to the <strong>Agency's Model Space</strong> to complete your full profile (measurements, experience, past projects) and add your photos — this is what will appear in The Book and be seen by recruiters.</p>
+        <a href="../espace-mannequin.html" class="btn btn--principal enim-28">Go to Agency's Model Space</a>
+      </div>
+    </div>
+  </div>
+</section>
 
 <footer class="site-footer" data-gabarit="pied"></footer>
 <script src="../js/gabarit.js?v=a26c2fad"></script>
+
 <script src="../js/vendor/supabase-js-2.110.6.js?v=82632987"></script>
-<script src="../js/supabase-config.js?v=16708773"></script>
+<script src="../js/supabase-config.js?v=d0882381"></script>
+<script src="../js/indicatifs-pays.js?v=b57d5bdf"></script>
+<script src="../js/vendor/emailjs-browser-3.12.1.min.js?v=3d7499d7"></script>
+<script src="../js/emailjs-config.js?v=8fcea597"></script>
 <script src="../js/verrou-defilement.js?v=33c16996"></script>
-<script src="../js/app.js?v=2f0c5539"></script>
+<script src="../js/app.js?v=0a3d8fbc"></script>
 <script src="../js/confort.js?v=33474c14"></script>
-<script src="../js/menu.js?v=f6d698ef"></script>
-<script src="../js/inscription-nouveau-source.js?v=08228a39"></script>
-<script src="../js/inscription-nouveau.js?v=0482b96e"></script>
+<script src="../js/menu.js?v=fae89b77"></script>
+<script src="../js/inscription-mannequin.js?v=e579d90b"></script>
+<script src="../js/brouillon.js?v=8c0a08ff"></script>
 </body>
 </html>

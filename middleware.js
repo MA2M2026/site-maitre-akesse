@@ -83,9 +83,7 @@ async function tableauProtege(requete, url) {
   // sa propre page de connexion — page blanche « Skip to content », 13/10/2026)
   const entetesInternes = { 'x-ma2m-interne': instant + '.' + await signer(secret, 'interne|' + instant) };
   if (requete.headers.get('cookie')) entetesInternes.cookie = requete.headers.get('cookie');
-  // ?depuis=interne : sans paramètre, l'adresse nue serait renvoyée vers /admin/ (plus bas) et
-  // la page lue ne serait pas le tableau de bord (relecture du 19/10/2026)
-  const origine = await fetch(new URL('/tableau-de-bord.html?depuis=interne', url), { headers: entetesInternes });
+  const origine = await fetch(new URL('/tableau-de-bord.html', url), { headers: entetesInternes });
   if (!origine.ok) return;
   const brut = await origine.text();
   // ce n'est pas notre page (autre réponse en chemin) : on laisse passer, comme avant
@@ -221,14 +219,6 @@ async function apercuMannequin(url, anglais, idFiche) {
 export default async function middleware(requete) {
   try {
     const url = new URL(requete.url);
-    // Ancien tableau de bord (cahier v2.3, section 6.2) : il n'existe plus seul, toute adresse mène
-    // à l'administration (/admin). Ses rubriques ne s'ouvrent que DANS l'administration
-    // (?integre=1, js/tableau-integre.js) ; ?depuis=interne = lecture interne de tableauProtege.
-    // (le navigateur dit lui-même s'il ouvre la page dans un cadre : Sec-Fetch-Dest « iframe »)
-    const dansCadre = (requete.headers.get('sec-fetch-dest') || 'iframe') === 'iframe';
-    if (PAGE_TABLEAU.test(url.pathname) && !(url.searchParams.get('integre') === '1' && dansCadre) && url.searchParams.get('depuis') !== 'interne') {
-      return Response.redirect(new URL('/admin/', url).toString(), 302);
-    }
     if (PAGE_TABLEAU.test(url.pathname) || SCRIPTS_ADMIN.test(url.pathname)) return await tableauProtege(requete, url);
     const agent = requete.headers.get('user-agent') || '';
     const anglais = url.pathname.indexOf('/en/') === 0;
