@@ -108,7 +108,7 @@ module.exports = async function handler(req, res) {
   if (type === 'inscription-payer') {
     const d = corps.infos || {};
     infos = {};
-    ['full_name', 'telephone', 'email', 'ville', 'parent_nom', 'parent_telephone', 'parent_email', 'accord_parent', 'reglement'].forEach((k) => {
+    ['full_name', 'telephone', 'email', 'ville', 'parent_nom', 'parent_telephone', 'parent_email', 'accord_parent', 'reglement', 'moyen', 'numero_payeur'].forEach((k) => {
       if (typeof d[k] === 'string' && d[k].trim()) infos[k] = d[k].trim().slice(0, 200);
     });
     if (!emailAccepte(infos.email) || !emailAccepte(infos.parent_email)) { res.status(400).json({ error: 'dossier', code: 'email', message: 'Adresse e-mail invalide.' }); return; }
@@ -146,7 +146,10 @@ module.exports = async function handler(req, res) {
       casting = r.ok ? await r.json() : null;
       valide = !!casting;
     } else if (type === 'inscription-payer') {
-      const r = await rpc('inscription_simplifiee_payer', { p_code: code, p_naissance: naissance, p_infos: infos });
+      const argsPayer = { p_code: code, p_naissance: naissance, p_infos: infos };
+      // (avec le numéro du payeur ; tant que le SQL des compléments n'est pas en place : ancienne fonction)
+      let r = await rpc('inscription_payer_avec_numero', argsPayer);
+      if (r.status === 404) r = await rpc('inscription_simplifiee_payer', argsPayer);
       const resultat = await r.json().catch(() => null);
       if (r.ok) { valide = true; idInscription = resultat; }
       else if (!(resultat && String(resultat.message || '').includes('code_invalide_ou_deja_utilise'))) {

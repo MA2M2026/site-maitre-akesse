@@ -14,7 +14,8 @@
   if (!zone) return;
   const LIEN_WAVE = 'https://pay.wave.com/m/M_ci_5eXs19LXWW_D/c/ci/?amount=25000';
   const E = { ecran: 'code', code: '', naissance: '', c: null, note: null, erreur: '', correction: false,
-    reglement: false, parent: false, waveOuvert: false, occupe: false };
+    reglement: false, parent: false, waveOuvert: false, occupe: false, numero: null, lien: null };
+  const numeroValide = (n) => /^[0-9+ ]{6,20}$/.test(String(n || '').trim());
 
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (x) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[x]));
   const dateLisible = (iso) => String(iso || '').split('-').reverse().join('/');
@@ -73,14 +74,25 @@
       '<button class="btn btn--principal" type="button" id="inn-vers-paiement" data-a="paiement"' + (reglementPret() ? '' : ' disabled') + '>' + T('Continuer vers le paiement', 'Continue to payment') + '</button></div>';
   }
 
+  // Lien Wave de 25 000 FCFA géré dans les Paramètres de l'agence ; repli sur le lien d'origine
+  async function chargerLien() {
+    try {
+      if (typeof sb === 'undefined') return;
+      const r = await sb.rpc('lien_paiement', { p_type: 'inscription', p_montant: 25000 });
+      E.lien = !r.error && typeof r.data === 'string' && /^https:\/\//.test(r.data) ? r.data : null;
+    } catch (e) { E.lien = null; }
+  }
+
   function ecranPaiement() {
     etapes(4);
+    if (E.numero === null) E.numero = (E.c && E.c.telephone) || '';
     return '<div class="inn-carte"><div><div class="inn-surtitre">' + T('Étape 3 sur 3', 'Step 3 of 3') + '</div><h2>' + T('Paiement de l’inscription', 'Registration payment') + '</h2></div>' +
       '<div>' + ligne(T('Inscription', 'Registration'), '15 000 FCFA') + ligne(T('1er mois de formation', '1st month of training'), '10 000 FCFA') +
       '<div class="inn-total"><b>Total</b><b>25 000 FCFA</b></div></div>' + bandeau(E.erreur, 'erreur') +
-      '<a class="btn btn--principal" data-a="wave" href="' + LIEN_WAVE + '" target="_blank" rel="noopener">' + T('1 · Payer avec Wave', '1 · Pay with Wave') + '</a>' +
-      '<button class="btn" type="button" data-a="paye"' + (E.waveOuvert && !E.occupe ? '' : ' disabled') + '>' + T('2 · J’ai payé', '2 · I have paid') + '</button>' +
-      '<p class="inn-petit">' + T('Après avoir payé dans Wave, revenez ici et appuyez sur « J’ai payé ». Pas de capture d’écran, pas de référence.', 'After paying in Wave, come back here and tap “I have paid”. No screenshot, no reference needed.') + '</p></div>';
+      '<a class="btn btn--principal" data-a="wave" href="' + esc(E.lien || LIEN_WAVE) + '" target="_blank" rel="noopener">' + T('1 · Payer avec Wave', '1 · Pay with Wave') + '</a>' +
+      champ('inn-num', T('Numéro mobile money qui paie', 'Mobile money number that pays'), E.numero, 'tel') +
+      '<button class="btn" type="button" data-a="paye"' + (E.waveOuvert && numeroValide(E.numero) && !E.occupe ? '' : ' disabled') + '>' + T('2 · J’ai payé', '2 · I have paid') + '</button>' +
+      '<p class="inn-petit">' + T('Après avoir payé dans Wave, revenez ici, vérifiez le numéro qui a payé, puis appuyez sur « J’ai payé ». Pas de capture d’écran, pas de référence.', 'After paying in Wave, come back here, check the number that paid, then tap “I have paid”. No screenshot, no reference needed.') + '</p></div>';
   }
 
   function ecranMerci() {
@@ -127,14 +139,14 @@
   async function paye() {
     E.occupe = true; dessiner();
     const c = E.c;
-    const infos = { full_name: c.full_name, telephone: c.telephone, email: c.email, ville: c.ville, reglement: 'accepte' };
+    const infos = { full_name: c.full_name, telephone: c.telephone, email: c.email, ville: c.ville, reglement: 'accepte', moyen: 'wave', numero_payeur: String(E.numero || '').trim() };
     if (mineur()) Object.assign(infos, { parent_nom: c.parent_nom, parent_telephone: c.parent_telephone, parent_email: c.parent_email, accord_parent: c.parent_nom });
     try {
       const { rep, r } = await serveur({ type: 'inscription-payer', infos });
       E.occupe = false;
       if (rep.ok) { aller('merci'); return; }
       // (seuls nos propres messages s'affichent, jamais un message technique de la base)
-      E.erreur = r.error === 'dossier' ? (/obligatoires|règlement/.test(r.message || '') ? r.message : T('Informations incomplètes. Vérifiez puis réessayez.', 'Incomplete information. Check and try again.'))
+      E.erreur = r.error === 'dossier' ? (/obligatoires|règlement|invalide/.test(r.message || '') ? r.message : T('Informations incomplètes. Vérifiez puis réessayez.', 'Incomplete information. Check and try again.'))
         : messageAccesRefuse(rep, r, T('Ce code n’est plus valable', 'This code is no longer valid')) || T('Impossible d’enregistrer votre paiement. Contactez l’agence.', 'Your payment could not be recorded. Please contact the agency.');
     } catch (e) {
       E.occupe = false;
@@ -151,7 +163,7 @@
     else if (a === 'oui') aller('reglement');
     else if (a === 'corriger') { E.correction = true; dessiner(); }
     else if (a === 'enregistrer') enregistrer();
-    else if (a === 'paiement') aller('paiement');
+    else if (a === 'paiement') { aller('paiement'); chargerLien().then(() => { if (E.ecran === 'paiement') dessiner(); }); }
     else if (a === 'wave') { E.waveOuvert = true; setTimeout(dessiner, 300); }  // le lien Wave s'ouvre dans un autre onglet
     else if (a === 'paye') paye();
   });
@@ -160,6 +172,12 @@
     else if (e.target.id === 'inn-parent') E.parent = e.target.checked;
     const b = document.getElementById('inn-vers-paiement');
     if (b) b.disabled = !reglementPret();
+  });
+  zone.addEventListener('input', (e) => {
+    if (e.target.id !== 'inn-num') return;
+    E.numero = e.target.value;
+    const b = zone.querySelector('[data-a="paye"]');
+    if (b) b.disabled = !(E.waveOuvert && numeroValide(E.numero) && !E.occupe);
   });
   zone.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.type !== 'checkbox') {

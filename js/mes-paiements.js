@@ -12,20 +12,39 @@
   const fcfa = (n) => String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' FCFA';
   const nomMois = (d) => MOIS[Number(String(d).slice(5, 7)) - 1] + ' ' + String(d).slice(0, 4);
   const ETATS = { paye: ['Payé', 'ok'], attente: ['En attente de validation', 'alerte'], non_paye: ['Non payé', 'erreur'], a_payer: ['À payer avant le 5', 'info'], a_venir: ['À venir', 'neutre'] };
-  let donnees = null, waveOuvert = {};
+  let donnees = null, waveOuvert = {}, lienWave = null, recus = [], numeros = {};
+  const numeroValide = (n) => /^[0-9+ ]{6,20}$/.test(String(n || '').trim());
 
   async function charger() {
     const { data: s } = await sb.auth.getSession();
     if (!s.session) return { connexion: true };
     const { data, error } = await sb.rpc('mes_mensualites');
     if (error) throw error;
+    if (data && data.inscrit) await complements(data);
     return data;
   }
+  // Lien Wave géré dans les Paramètres de l'agence et historique des reçus : si la base ne les
+  // fournit pas encore, la page garde le lien de secours et simplement n'affiche pas les reçus.
+  async function complements(d) {
+    try {
+      const r = await sb.rpc('lien_paiement', { p_type: 'mensualite', p_montant: Number(d.mensualite) });
+      lienWave = !r.error && typeof r.data === 'string' && /^https:\/\//.test(r.data) ? r.data : null;
+    } catch (e) { lienWave = null; }
+    try {
+      const r = await sb.rpc('mes_recus');
+      recus = r.error || !Array.isArray(r.data) ? [] : r.data;
+    } catch (e) { recus = []; }
+  }
+  const adresseWave = (montant) => lienWave || (LIEN_WAVE + Number(montant));
   function carteAPayer(m) {
     return '<div class="mp-carte"><div class="mp-ligne"><span><b>Mensualité · ' + esc(nomMois(m.mois)) + '</b></span><b class="mp-montant">' + fcfa(donnees.mensualite) + '</b></div>' +
-      '<a class="btn btn--principal" data-mp="wave" data-mois="' + esc(m.mois) + '" href="' + LIEN_WAVE + Number(donnees.mensualite) + '" target="_blank" rel="noopener">1 · Payer avec Wave</a>' +
-      '<button class="btn" type="button" data-mp="paye" data-mois="' + esc(m.mois) + '"' + (waveOuvert[m.mois] ? '' : ' disabled') + '>2 · J’ai payé</button>' +
-      '<p class="mp-petit">Après avoir payé dans Wave, revenez ici et appuyez sur « J’ai payé ». Pas de capture, pas de référence : l’agence vérifie dans Wave Business.</p></div>';
+      '<p class="mp-petit">Moyen de paiement : <b>Wave</b> · Orange Money, MTN Money et Moov Money : bientôt.</p>' +
+      '<a class="btn btn--principal" data-mp="wave" data-mois="' + esc(m.mois) + '" href="' + esc(adresseWave(donnees.mensualite)) + '" target="_blank" rel="noopener">1 · Payer avec Wave</a>' +
+      '<label class="mp-petit" for="mp-num-' + esc(m.mois) + '">Numéro mobile money qui paie</label>' +
+      '<input class="mp-num" id="mp-num-' + esc(m.mois) + '" data-num="' + esc(m.mois) + '" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="+225 07 00 00 00 00" value="' + esc(numeros[m.mois] || '') + '">' +
+      '<button class="btn" type="button" data-mp="paye" data-mois="' + esc(m.mois) + '"' + (waveOuvert[m.mois] && numeroValide(numeros[m.mois]) ? '' : ' disabled') + '>2 · J’ai payé</button>' +
+      '<p class="mp-petit">Après avoir payé dans Wave, revenez ici, indiquez le numéro qui a payé, puis appuyez sur « J’ai payé ». Pas de capture : l’agence vérifie dans Wave Business.</p>' +
+      '<p class="mp-petit">Paiement en espèces ? Remettez-le à l’agence : il apparaîtra ici dès que l’agence l’aura validé.</p></div>';
   }
   function afficher(message) {
     if (!donnees) { zone.innerHTML = '<div class="mp-carte mp-doux">Chargement…</div>'; return; }
@@ -46,8 +65,22 @@
       '<div class="mp-calendrier" role="list">' + mois.map((m, i) => {
         const e = ETATS[m.etat] || [m.etat, 'neutre'];
         return '<div class="mp-mois ' + e[1] + '" role="listitem"><span class="mp-mois-num">' + (i + 1) + '</span><b>' + esc(nomMois(m.mois)) + '</b><span>' + esc(e[0]) + '</span></div>';
-      }).join('') + '</div>';
+      }).join('') + '</div>' + historique();
   }
+  function historique() {
+    if (!recus.length) return '';
+    return '<h2>Mes paiements validés</h2>' + '<div class="mp-carte">' + recus.map((r) =>
+      '<div class="mp-histo mp-ligne"><span><b>' + esc(r.objet === 'inscription' ? 'Inscription' : r.mois ? nomMois(r.mois) : 'Mensualité') + '</b><br><span class="mp-petit">' +
+      esc(r.montant ? fcfa(r.montant) : 'Avant le nouveau système') + '</span></span>' +
+      '<span class="mp-petit">' + (r.numero ? 'Reçu ' + esc(r.numero) : '—') + '</span></div>').join('') + '</div>';
+  }
+  zone.addEventListener('input', (ev) => {
+    const c = ev.target.closest('[data-num]');
+    if (!c) return;
+    numeros[c.getAttribute('data-num')] = c.value;
+    const b = zone.querySelector('[data-mp="paye"][data-mois="' + c.getAttribute('data-num') + '"]');
+    if (b) b.disabled = !(waveOuvert[c.getAttribute('data-num')] && numeroValide(c.value));
+  });
   zone.addEventListener('click', async (ev) => {
     const el = ev.target.closest('[data-mp]');
     if (!el) return;
@@ -55,7 +88,8 @@
     if (el.getAttribute('data-mp') === 'wave') { waveOuvert[mois] = true; setTimeout(() => afficher(), 300); return; }
     el.disabled = true;
     try {
-      const { error } = await sb.rpc('mensualite_declarer', { p_mois: mois });
+      let { error } = await sb.rpc('mensualite_declarer_avec_numero', { p_mois: mois, p_numero: String(numeros[mois] || '').trim() });
+      if (error && error.code === 'PGRST202') ({ error } = await sb.rpc('mensualite_declarer', { p_mois: mois }));
       if (error) throw error;
       donnees = await charger();
       afficher(['Merci ! L’agence vérifie votre paiement. Vous serez prévenu(e) par e-mail et WhatsApp dès qu’il est confirmé.', 'bleu']);

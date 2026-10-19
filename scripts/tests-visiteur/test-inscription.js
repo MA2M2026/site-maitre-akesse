@@ -20,7 +20,7 @@ const CASTINGS = {
       const ctx = await b.newContext({ viewport: vp }); const p = await ctx.newPage(); const errs = [], journal = [];
       p.on('pageerror', e => errs.push(e.message));
       let essais = 3;
-      await brancher(p, { tables: {}, api: { '/api/code-protege': (c) => {
+      await brancher(p, { tables: {}, rpc: { lien_paiement: () => 'https://pay.wave.com/m/PARAMETRES/c/ci/?amount=25000' }, api: { '/api/code-protege': (c) => {
         const k = CASTINGS[c.code];
         if (!k || c.naissance !== k.naissance) return { statut: 401, error: 'refuse', essaisRestants: --essais };
         if (c.type === 'inscription-code') return { ok: true, casting: k.casting, note: 'prive/note-integration/note-1.pdf' };
@@ -53,17 +53,22 @@ const CASTINGS = {
       await p.click('#inn-vers-paiement'); await p.waitForSelector('[data-a="paye"]');
       const pay = await t();
       ok(/25 000 FCFA/.test(pay) && /15 000 FCFA/.test(pay) && /10 000 FCFA/.test(pay) && await p.isDisabled('[data-a="paye"]'), nom + ' ' + code + ' : 25 000 = 15 000 + 10 000, « J’ai payé » attend le paiement Wave');
-      ok(/amount=25000$/.test(await p.getAttribute('[data-a="wave"]', 'href')), nom + ' ' + code + ' : lien Wave de 25 000 FCFA');
+      await p.waitForFunction(() => /PARAMETRES/.test(document.querySelector('[data-a="wave"]').href), null, { timeout: 4000 }).catch(() => {});
+      ok(/PARAMETRES.*amount=25000$/.test(await p.getAttribute('[data-a="wave"]', 'href')), nom + ' ' + code + ' : lien Wave de 25 000 FCFA (celui des Paramètres)');
+      ok((await p.inputValue('#inn-num')).replace(/\D/g, '').length >= 8, nom + ' ' + code + ' : numéro du payeur prérempli');
       const boutons = (await p.evaluate(verifierBoutons)).map((x) => x.texte);
       ok(!boutons.length, nom + ' ' + code + ' : boutons au modèle rouge ' + boutons.join(' | '));
       const pales = (await lirePageEntiere(p)).map((x) => x.texte.slice(0, 25)); ok(!pales.length, nom + ' ' + code + ' : écran lisible ' + pales.join(' | '));
       await p.evaluate(() => { window.open = () => null; });
       await p.locator('[data-a="wave"]').evaluate((a) => { a.removeAttribute('target'); a.href = '#'; });
       await p.click('[data-a="wave"]'); await p.waitForTimeout(500);
+      await p.fill('#inn-num', 'abc'); ok(await p.isDisabled('[data-a="paye"]'), nom + ' ' + code + ' : numéro invalide, « J’ai payé » fermé');
+      await p.fill('#inn-num', '+225 05 05 05 05 05'); ok(!(await p.isDisabled('[data-a="paye"]')), nom + ' ' + code + ' : numéro valide, « J’ai payé » ouvert');
       await p.click('[data-a="paye"]'); await p.waitForSelector('.inn-bandeau.info', { timeout: 6000 }).catch(() => {});
       const envoi = journal.find((j) => j[1] === '/api/code-protege' && /inscription-payer/.test(j[2]));
       const infos = envoi ? JSON.parse(envoi[2]).infos : {};
       ok(/(Merci|Thank you)/.test(await t()), nom + ' ' + code + ' : « J’ai payé » → merci, l’agence vérifie');
+      ok(infos.numero_payeur === '+225 05 05 05 05 05' && infos.moyen === 'wave', nom + ' ' + code + ' : numéro du payeur et moyen envoyés');
       ok(code === 'MA2M-ENFANT' ? infos.parent_nom === 'Monsieur Akesse Paul' && infos.accord_parent === 'Monsieur Akesse Paul' && infos.reglement === 'accepte'
         : infos.telephone === '0101010101' && infos.reglement === 'accepte' && !infos.capture, nom + ' ' + code + ' : informations corrigées et règlement envoyés, sans capture ni référence');
       ok(!errs.length, nom + ' ' + code + ' : aucune erreur de page ' + errs.join(' | '));

@@ -34,3 +34,7 @@
 .mp-mois.erreur { background: var(--erreur-fond); color: var(--erreur-texte); border-color: transparent; }
 .mp-mois.info { background: var(--info-fond); color: var(--info-texte); border-color: transparent; }
 .mp-mois:is(.ok, .alerte, .erreur, .info) .mp-mois-num { color: inherit; }
+
+/* Numéro mobile money du payeur */
+.mp-num { width: 100%; box-sizing: border-box; padding: 12px 14px; font-size: 1rem; border: 1px solid var(--lignes); border-radius: 10px; background: var(--surface); color: var(--encre); }
+.mp-num:focus-visible { outline: 2px solid var(--rouge-ma2m-texte); outline-offset: 2px; }
