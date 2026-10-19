@@ -164,8 +164,10 @@ select essai(not exists (select 1 from admins where user_id = '00000000-0000-000
 
 -- Code individuel (cahier v2.4, 3.3) : seulement pour une personne retenue, un seul par personne
 insert into admins (user_id) values ('00000000-0000-0000-0000-0000000000a1') on conflict do nothing;
+insert into casting_applications (id, full_name, email, phone, type_candidature, date_naissance) values
+  ('00000000-0000-0000-0000-00000000c001', 'AWA KONÉ', 'awa@test.ci', '0102030405', 'agence', '2000-01-01');
 insert into casting_applications (id, full_name, email, phone, type_candidature) values
-  ('00000000-0000-0000-0000-00000000c001', 'AWA KONÉ', 'awa@test.ci', '0102030405', 'agence');
+  ('00000000-0000-0000-0000-00000000c002', 'SANS DATE', 'x@test.ci', '0102030405', 'agence');
 set role authenticated;
 select essai_qui('00000000-0000-0000-0000-0000000000a1');
 select essai_refuse($$select code_individuel_creer('00000000-0000-0000-0000-00000000c001')$$, 'pas de code pour une candidature non retenue');
@@ -174,6 +176,11 @@ update casting_applications set status = 'retenue' where id = '00000000-0000-000
 set role authenticated;
 select essai_qui('00000000-0000-0000-0000-0000000000a1');
 select essai(code_individuel_creer('00000000-0000-0000-0000-00000000c001') ~ '^MA2M-[A-Z2-9]{6}$', 'personne retenue : code créé à son nom');
+reset role;
+update casting_applications set status = 'retenue' where id = '00000000-0000-0000-0000-00000000c002';
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a1');
+select essai_refuse($$select code_individuel_creer('00000000-0000-0000-0000-00000000c002')$$, 'pas de code sans date de naissance (sinon un mineur se déclarerait majeur)');
 select essai(code_individuel_creer('00000000-0000-0000-0000-00000000c001') = (select code from codes_inscription where candidature_id = '00000000-0000-0000-0000-00000000c001'),
              'redemander le code redonne le même (un seul code par personne)');
 select essai((casting_direct_creer('kouassi yao', '0707070707', 'homme', '2000-05-05') ->> 'code') ~ '^MA2M-',
@@ -218,6 +225,9 @@ insert into agence_mannequins (id, full_name, telephone) values ('00000000-0000-
 insert into paiements_mannequins (mannequin_id, objet, mois, montant, mode) values
   ('00000000-0000-0000-0000-0000000000d2', 'inscription', null, 15000, 'wave'),
   ('00000000-0000-0000-0000-0000000000d2', 'mensualite', date_trunc('month', now())::date, 10000, 'wave');
+select essai_qui('00000000-0000-0000-0000-0000000000a3');
+select essai_refuse($$update paiements_mannequins set statut = 'valide' where mannequin_id = '00000000-0000-0000-0000-0000000000d2'$$, 'encaissements : un paiement ne se valide pas en le modifiant directement (seulement « Valider »)');
+select essai_refuse($$update paiements_mannequins set montant = 1 where mannequin_id = '00000000-0000-0000-0000-0000000000d2'$$, 'le montant d''un paiement déclaré ne se change pas');
 select essai_refuse($$select paiement_decider((select id from paiements_mannequins where mannequin_id = '00000000-0000-0000-0000-0000000000d2' and objet = 'inscription'), false, '')$$, 'refus sans motif impossible');
 select essai((paiement_decider((select id from paiements_mannequins where mannequin_id = '00000000-0000-0000-0000-0000000000d2' and objet = 'inscription'), true) ->> 'montant')::int = 25000,
              'valider l''inscription : 25 000 FCFA d''un seul geste');
@@ -267,6 +277,8 @@ select essai((select expire_le::date - cree_le::date from codes_espace where not
 reset role;
 select set_config('request.jwt.claims', '{"role":"service_role"}', false);
 select essai(code_espace_valable((select code from codes_espace where not annule)), 'le serveur reconnaît le code');
+select essai(code_espace_reserver((select code from codes_espace where not annule), true), 'code réservé le temps de créer le compte');
+select essai(not code_espace_reserver((select code from codes_espace where not annule), true), 'un second envoi simultané est refusé');
 select essai(not code_espace_valable((select code from codes_espace where annule limit 1)), 'l''ancien code annulé ne marche plus');
 insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000b9', 'bintou@test.ci');
 insert into model_profiles (id, full_name) values ('00000000-0000-0000-0000-0000000000b9', 'Bintou');
@@ -289,7 +301,10 @@ select set_config('request.jwt.claims', '{"role":"service_role"}', false);
 select essai(json_array_length(mensualites_relances(3)) = 0, 'relance du 3 : pas pour qui a déjà payé');
 delete from paiements_mannequins where mannequin_id = '00000000-0000-0000-0000-0000000000d2' and objet = 'mensualite';
 select essai(json_array_length(mensualites_relances(3)) = 1, 'relance du 3 : appelé et pas encore payé → relancé');
-select essai(json_array_length(mensualites_relances(3)) = 0, 'relance du 3 : une seule fois');
+select essai((mensualites_relances(3) -> 0)::jsonb ? 'parent_telephone', 'relance : contacts du parent transmis (mineur → parent)');
+select essai(json_array_length(mensualites_relances(3)) = 1, 'relance pas encore envoyée : toujours dans la liste');
+select mensualites_relance_faite(3, '00000000-0000-0000-0000-0000000000d2');
+select essai(json_array_length(mensualites_relances(3)) = 0, 'relance du 3 envoyée : une seule fois');
 select essai_refuse($$select mensualites_relances(4)$$, 'relances seulement le 3 et le 5');
 select set_config('request.jwt.claims', '', false);
 -- côté mannequin : 24 mois, « J'ai payé » une fois par mois, jamais validé par lui-même

@@ -133,7 +133,8 @@
       const { rep, r } = await serveur({ type: 'inscription-payer', infos });
       E.occupe = false;
       if (rep.ok) { aller('merci'); return; }
-      E.erreur = r.error === 'dossier' ? (r.message && !/^[a-z_]+$/.test(r.message) ? r.message : T('Informations incomplètes. Vérifiez puis réessayez.', 'Incomplete information. Check and try again.'))
+      // (seuls nos propres messages s'affichent, jamais un message technique de la base)
+      E.erreur = r.error === 'dossier' ? (/obligatoires|règlement/.test(r.message || '') ? r.message : T('Informations incomplètes. Vérifiez puis réessayez.', 'Incomplete information. Check and try again.'))
         : messageAccesRefuse(rep, r, T('Ce code n’est plus valable', 'This code is no longer valid')) || T('Impossible d’enregistrer votre paiement. Contactez l’agence.', 'Your payment could not be recorded. Please contact the agency.');
     } catch (e) {
       E.occupe = false;

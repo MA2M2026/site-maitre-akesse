@@ -50,16 +50,18 @@ async function supprimerFacteurs(userId) {
 const ROLES = ['site', 'caisse', 'compta'];
 
 // Relances automatiques des mensualités, le 3 et le 5 du mois (cahier v2.4, 5.6 ; choix du
-// 19/10/2026) : appelées par la tâche planifiée de Vercel (vercel.json, « crons »). Seulement les
-// personnes appelées le 1er et pas encore payées, une seule fois chacune (la base le garantit).
+// 19/10/2026) : appelées par la tâche planifiée de Vercel (vercel.json, « crons » ; réglage Vercel
+// CRON_SECRET obligatoire). Seulement les personnes appelées le 1er et pas encore payées, une seule
+// fois chacune (marquées après l'envoi réussi).
 // E-mail envoyé par EmailJS depuis le serveur : clé privée EMAILJS_PRIVATE_KEY (réglage Vercel),
 // et « API calls for non-browser applications » autorisé dans EmailJS. Sans clé : rien ne part,
 // la panne est notée au journal, la liste WhatsApp reste dans l'espace 2.
 const { messageMensualite } = require('../js/messages-mensualites.js');
 const EMAILJS = { service_id: 'service_771y6u7', template_id: 'template_q3qpg4p', user_id: 'iRmm0sDj_w3MBx3SK' };  // = js/emailjs-config.js
 async function relancesDuJour(req, res) {
+  // seule la tâche planifiée de Vercel (variable CRON_SECRET, envoyée par Vercel) peut les lancer
   const secret = process.env.CRON_SECRET;
-  if (secret && req.headers.authorization !== 'Bearer ' + secret) return res.status(401).json({ error: 'Non autorisé.' });
+  if (!secret || req.headers.authorization !== 'Bearer ' + secret) return res.status(401).json({ error: 'Non autorisé.' });
   const jour = new Date().getUTCDate();  // (Abidjan : heure UTC)
   if (jour !== 3 && jour !== 5) return res.status(200).json({ ok: true, rien: 'pas un jour de relance' });
   try {
@@ -73,7 +75,8 @@ async function relancesDuJour(req, res) {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(Object.assign({}, EMAILJS, { accessToken: cle, template_params: { to_email: msg.email, to_name: msg.nom, message: msg.texte } }))
       }).catch(() => null);
-      if (rep && rep.ok) envoyes++;
+      // marquée « relancée » seulement si l'e-mail est parti (sinon la liste WhatsApp la montre encore)
+      if (rep && rep.ok) { envoyes++; await rpcService('mensualites_relance_faite', { p_jour: jour, p_mannequin: m.id }).catch(() => {}); }
     }
     if ((liste || []).length && envoyes < liste.length) {
       await fetch(SUPABASE_URL + '/rest/v1/journal_erreurs', { method: 'POST', headers: { ...enTetesService(), 'Content-Type': 'application/json', Prefer: 'return=minimal' },

@@ -157,8 +157,12 @@ module.exports = async function handler(req, res) {
     } else if (type === 'inscription') {
       const r = await rpc('verifier_code_inscription', { code_input: code });
       valide = r.ok && (await r.json()) === true;
-    } else if (type === 'portail' || type === 'portail-creer-compte') {
+    } else if (type === 'portail') {
       const r = await rpc('code_espace_valable', { p_code: code });
+      valide = r.ok && (await r.json()) === true;
+    } else if (type === 'portail-creer-compte') {
+      // code RÉSERVÉ le temps de créer le compte : deux envois simultanés ne font jamais deux comptes
+      const r = await rpc('code_espace_reserver', { p_code: code, p_reserver: true });
       valide = r.ok && (await r.json()) === true;
     } else {
       const args = { p_code: code };
@@ -194,10 +198,13 @@ module.exports = async function handler(req, res) {
     await rpc('connexion_enregistrer_succes', cle);
     if (type === 'portail-creer-compte') {
       const resultat = await creerCompteMannequin(entetes, nom, email, motDePasse);
-      // compte créé : rattaché à sa fiche du registre, informations du casting recopiées, code consommé
+      // compte créé : rattaché à sa fiche du registre, informations du casting recopiées, code consommé ;
+      // compte non créé (e-mail déjà pris…) : le code est rendu, il resservira
       if (resultat.id) {
         const r = await rpc('code_espace_utiliser', { p_code: code, p_user: resultat.id });
         if (!r.ok) await signalerPanne(entetes, 'rattachement au registre (code de l\'espace)', await r.text().catch(() => r.status));
+      } else {
+        await rpc('code_espace_reserver', { p_code: code, p_reserver: false }).catch(() => {});
       }
       res.status(resultat.status).json(resultat.corps);
       return;

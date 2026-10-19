@@ -27,11 +27,7 @@
   P.esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   P.fcfa = (n) => String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' FCFA';
   // Âge en années à partir d'une date 'AAAA-MM-JJ' (null si absente)
-  P.age = (d) => {
-    if (!/^\d{4}-\d{2}-\d{2}/.test(d || '')) return null;
-    const n = new Date(String(d).slice(0, 10) + 'T12:00:00'), a = new Date();
-    return a.getFullYear() - n.getFullYear() - ((a.getMonth() < n.getMonth() || (a.getMonth() === n.getMonth() && a.getDate() < n.getDate())) ? 1 : 0);
-  };
+  P.age = (d) => window.ageMannequin(d);  // js/messages-mensualites.js
   P.date = (d) => { if (!d) return '—'; const s = String(d).slice(0, 10).split('-'); return s[2] + '/' + s[1] + '/' + s[0]; };
   P.dateHeure = (d) => d ? new Date(d).toLocaleString('fr-FR', { timeZone: 'Africa/Abidjan', dateStyle: 'short', timeStyle: 'short' }) : '—';
   P.mois = (d) => { const s = String(d).slice(0, 7).split('-'); return MOIS[Number(s[1]) - 1] + ' ' + s[0]; };

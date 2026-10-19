@@ -63,18 +63,22 @@ async function serveur() {
     return { statut, corps };
   };
   relances = [{ nom: 'YAO KOUASSI', email: 'yao@test.ci', mensualite: 10000 }, { nom: 'AKESSE FRANCK', date_naissance: '2014-01-01', parent_nom: 'Monsieur Paul', parent_email: 'paul@test.ci', parent_telephone: '07', mensualite: 10000 }];
-  let r = await appeler(4);
+  process.env.CRON_SECRET = 'secret-essai';
+  const VERCEL = { authorization: 'Bearer secret-essai' };
+  let r = await appeler(4, VERCEL);
   ok(r.statut === 200 && r.corps.rien && !envois.length, 'serveur : le 4, aucune relance');
   delete process.env.EMAILJS_PRIVATE_KEY;
-  r = await appeler(3);
+  r = await appeler(3, VERCEL);
   ok(r.corps.relances === 2 && !envois.length, 'serveur : sans clé EmailJS, rien ne part (noté au journal)');
   process.env.EMAILJS_PRIVATE_KEY = 'cle-privee-essai';
-  r = await appeler(5);
+  r = await appeler(5, VERCEL);
   ok(r.corps.envoyes === 2 && envois.length === 2 && envois.every((e) => e.accessToken === 'cle-privee-essai'), 'serveur : le 5, dernière relance envoyée à chacun par e-mail');
   ok(envois[1].template_params.to_email === 'paul@test.ci' && /Bonjour Monsieur Paul/.test(envois[1].template_params.message) && /Dernier rappel/.test(envois[1].template_params.message), 'serveur : mineur → message au parent');
-  process.env.CRON_SECRET = 'secret-essai';
   r = await appeler(3, { authorization: 'Bearer faux' });
   ok(r.statut === 401, 'serveur : appel sans le secret de la tâche planifiée refusé');
+  delete process.env.CRON_SECRET;
+  r = await appeler(3, {});
+  ok(r.statut === 401, 'serveur : secret non réglé sur Vercel → relances fermées (personne ne peut les déclencher)');
 }
 
 (async () => {

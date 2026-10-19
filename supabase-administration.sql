@@ -589,6 +589,11 @@ begin
   if c.status <> 'retenue' then
     raise exception 'Le code n''est créé que pour une personne retenue.';
   end if;
+  -- la date de naissance protège le code et décide de l'accord du parent : sans elle, pas de code
+  -- (relecture du 19/10/2026 : un mineur pouvait se déclarer majeur)
+  if c.date_naissance is null then
+    raise exception 'Date de naissance absente de cette candidature : enregistrez la personne avec « Casting direct ».';
+  end if;
   select code into existant from codes_inscription where candidature_id = p_candidature and not utilise;
   if existant is not null then
     return existant;
@@ -718,8 +723,11 @@ begin
       raise exception 'Le lien avec le compte du site ne se change pas à la main.';
     end if;
   else
-    if TG_OP = 'UPDATE' and OLD.statut = 'valide' then
-      if not portail_est_principal() then raise exception 'Un paiement validé ne se modifie plus.'; end if;
+    -- un paiement ne se modifie que par « Valider » / « Refuser » (paiement_decider) ; sinon,
+    -- seulement par l'administrateur principal avec un code récent (relecture du 19/10/2026)
+    if TG_OP = 'UPDATE' and coalesce(current_setting('ma2m.decision', true), '') <> '1' then
+      if OLD.statut = 'valide' and not portail_est_principal() then raise exception 'Un paiement validé ne se modifie plus.'; end if;
+      if not portail_est_principal() then raise exception 'Un paiement se valide ou se refuse avec les boutons « Valider » et « Refuser ».'; end if;
       perform portail_exiger_auth_recente();
     end if;
     if NEW.statut = 'valide' and (TG_OP = 'INSERT' or OLD.statut <> 'valide') then
@@ -776,6 +784,7 @@ declare
   total int;
 begin
   if not portail_peut('paiements') then raise exception 'Accès refusé'; end if;
+  perform set_config('ma2m.decision', '1', true);  -- (seul chemin de validation : registre_garde_fous)
   select * into p from paiements_mannequins where id = p_id for update;
   if not found or p.statut <> 'declare' then raise exception 'Ce paiement n''est plus en attente de validation.'; end if;
   if not p_valider and coalesce(trim(p_motif), '') = '' then raise exception 'Motif obligatoire pour refuser un paiement.'; end if;
@@ -785,6 +794,7 @@ begin
    where mannequin_id = p.mannequin_id and statut = 'declare' and declare_le = p.declare_le;
   select coalesce(sum(montant), 0) into total from paiements_mannequins
    where mannequin_id = p.mannequin_id and declare_le = p.declare_le;
+  perform set_config('ma2m.decision', '', true);
   select * into m from agence_mannequins where id = p.mannequin_id;
   return json_build_object('nom', m.full_name, 'telephone', m.telephone, 'email', m.email,
     'parent_nom', m.parent_nom, 'parent_telephone', m.parent_telephone, 'parent_email', m.parent_email,
@@ -815,7 +825,7 @@ begin
   if not est_ecriture_serveur() then raise exception 'Accès refusé.'; end if;
   select a.* into c from codes_inscription k join casting_applications a on a.id = k.candidature_id
    where k.code = upper(trim(p_code)) and not k.utilise and a.status = 'retenue';
-  if not found or p_naissance is null or (c.date_naissance is not null and c.date_naissance <> p_naissance) then
+  if not found or p_naissance is null or c.date_naissance is null or c.date_naissance <> p_naissance then
     return null;
   end if;
   civ := case when c.civilite in ('Madame', 'Mademoiselle', 'Monsieur') then c.civilite
@@ -839,6 +849,8 @@ declare
   v_id uuid;
 begin
   if not est_ecriture_serveur() then raise exception 'Accès refusé.'; end if;
+  -- verrou d'abord : deux « J'ai payé » simultanés, le second voit le code déjà utilisé
+  select * into k from codes_inscription where code = upper(trim(p_code)) for update;
   infos := inscription_code_lire(p_code, p_naissance);
   if infos is null then raise exception 'code_invalide_ou_deja_utilise'; end if;
   if coalesce(trim(p_infos ->> 'full_name'), '') = '' or t is null then
@@ -849,7 +861,6 @@ begin
     raise exception 'Mineur : nom, téléphone et accord du parent obligatoires.';
   end if;
   if coalesce(p_infos ->> 'reglement', '') <> 'accepte' then raise exception 'Le règlement doit être accepté.'; end if;
-  select * into k from codes_inscription where code = upper(trim(p_code)) for update;
   update codes_inscription set utilise = true, utilise_le = now() where code = k.code;
   insert into agence_mannequins (full_name, genre, date_naissance, telephone, email, ville, parent_nom, parent_telephone, parent_email,
                                  candidature_id, reglement_accepte_le, accord_parent_nom)
@@ -882,6 +893,7 @@ create table if not exists codes_espace (
   annule boolean not null default false,
   utilise_le timestamptz
 );
+alter table codes_espace add column if not exists reserve_le timestamptz;
 alter table codes_espace enable row level security;
 revoke all on codes_espace from anon, authenticated;
 drop policy if exists codes_espace_lecture on codes_espace;
@@ -923,7 +935,22 @@ grant execute on function code_espace_creer(uuid) to authenticated;
 create or replace function code_espace_valable(p_code text)
 returns boolean language sql stable security definer set search_path = public as $$
   select est_ecriture_serveur() and exists (select 1 from codes_espace c join agence_mannequins m on m.id = c.mannequin_id
-    where c.code = upper(trim(p_code)) and not c.annule and c.utilise_le is null and c.expire_le > now() and m.user_id is null);
+    where c.code = upper(trim(p_code)) and not c.annule and c.utilise_le is null and c.expire_le > now() and m.user_id is null
+      and (c.reserve_le is null or c.reserve_le < now() - interval '10 minutes'));
+$$;
+-- Réserver le code le temps de créer le compte : un second envoi simultané est refusé
+create or replace function code_espace_reserver(p_code text, p_reserver boolean)
+returns boolean language plpgsql security definer set search_path = public as $$
+begin
+  if not est_ecriture_serveur() then raise exception 'Accès refusé.'; end if;
+  if not p_reserver then
+    update codes_espace set reserve_le = null where code = upper(trim(p_code)) and utilise_le is null;
+    return true;
+  end if;
+  if not code_espace_valable(p_code) then return false; end if;
+  update codes_espace set reserve_le = now() where code = upper(trim(p_code));
+  return true;
+end;
 $$;
 -- Compte créé : rattaché à sa fiche du registre (la ligne ajoutée d'office par
 -- registre_suivre_comptes est retirée), informations du casting recopiées, code consommé
@@ -934,8 +961,8 @@ declare
   m agence_mannequins;
 begin
   if not est_ecriture_serveur() then raise exception 'Accès refusé.'; end if;
-  if not code_espace_valable(p_code) then raise exception 'code_invalide_ou_deja_utilise'; end if;
   select * into c from codes_espace where code = upper(trim(p_code)) for update;
+  if not found or c.annule or c.utilise_le is not null or c.reserve_le is null then raise exception 'code_invalide_ou_deja_utilise'; end if;
   select * into m from agence_mannequins where id = c.mannequin_id for update;
   delete from agence_mannequins a where a.user_id = p_user and a.id <> m.id
     and not exists (select 1 from paiements_mannequins p where p.mannequin_id = a.id);
@@ -947,7 +974,7 @@ begin
   perform journaliser('Espace mannequin créé avec son code', 'agence_mannequins', m.id::text, null, null);
 end;
 $$;
-revoke all on function code_espace_valable(text), code_espace_utiliser(text, uuid) from public, anon, authenticated;
+revoke all on function code_espace_valable(text), code_espace_reserver(text, boolean), code_espace_utiliser(text, uuid) from public, anon, authenticated;
 
 -- -----------------------------------------------------------------------------------
 -- 9. Mensualités de formation (cahier v2.4, 5.6 et 5.7 ; choix du 19/10/2026)
@@ -1009,31 +1036,29 @@ revoke all on function mensualites_appeler(date, uuid[]) from public, anon;
 grant execute on function mensualites_appeler(date, uuid[]) to authenticated;
 
 -- Relances du 3 et du 5 (serveur du site, une seule fois chacune) : personnes appelées ce mois,
--- toujours actives, sans paiement déclaré ni validé ; marquées relancées
+-- toujours actives, sans paiement déclaré ni validé, pas encore relancées ce jour-là. Marquées
+-- relancées SEULEMENT après l'envoi réussi de l'e-mail (mensualites_relance_faite).
 create or replace function mensualites_relances(p_jour int)
-returns json language plpgsql security definer set search_path = public as $$
+returns json language plpgsql stable security definer set search_path = public as $$
 declare
   m date := date_trunc('month', now())::date;
-  liste json;
 begin
   if not est_ecriture_serveur() then raise exception 'Accès refusé.'; end if;
   if p_jour not in (3, 5) then raise exception 'Jour de relance : 3 ou 5.'; end if;
-  with cibles as (
-    select c.mannequin_id from mensualites_appels c join agence_mannequins a on a.id = c.mannequin_id
+  return (select coalesce(json_agg(json_build_object('id', a.id, 'nom', a.full_name, 'telephone', a.telephone, 'email', a.email, 'date_naissance', a.date_naissance,
+      'parent_nom', a.parent_nom, 'parent_telephone', a.parent_telephone, 'parent_email', a.parent_email, 'mensualite', a.mensualite)), '[]'::json)
+    from mensualites_appels c join agence_mannequins a on a.id = c.mannequin_id
     where c.mois = m and a.statut = 'actif' and mensualite_etat(a.id, m) in ('a_payer', 'non_paye')
-      and (case when p_jour = 3 then c.relance3_le else c.relance5_le end) is null
-    for update of c skip locked
-  ), marques as (
-    update mensualites_appels c set relance3_le = case when p_jour = 3 then now() else relance3_le end,
-                                     relance5_le = case when p_jour = 5 then now() else relance5_le end
-    from cibles where c.mois = m and c.mannequin_id = cibles.mannequin_id returning c.mannequin_id
-  )
-  select coalesce(json_agg(json_build_object('nom', a.full_name, 'telephone', a.telephone, 'email', a.email, 'date_naissance', a.date_naissance,
-    'parent_nom', a.parent_nom, 'parent_email', a.parent_email, 'mensualite', a.mensualite)), '[]'::json) into liste
-  from marques join agence_mannequins a on a.id = marques.mannequin_id;
-  return liste;
+      and (case when p_jour = 3 then c.relance3_le else c.relance5_le end) is null);
 end;
 $$;
+create or replace function mensualites_relance_faite(p_jour int, p_mannequin uuid)
+returns void language sql security definer set search_path = public as $$
+  update mensualites_appels set relance3_le = case when p_jour = 3 then now() else relance3_le end,
+                                relance5_le = case when p_jour = 5 then now() else relance5_le end
+  where mois = date_trunc('month', now())::date and mannequin_id = p_mannequin and est_ecriture_serveur();
+$$;
+revoke all on function mensualites_relance_faite(int, uuid) from public, anon, authenticated;
 revoke all on function mensualites_relances(int) from public, anon, authenticated;
 
 -- Côté mannequin (son espace) : ses 24 mois de formation et « J'ai payé » pour un mois
@@ -1045,7 +1070,9 @@ declare
 begin
   select * into a from agence_mannequins where user_id = auth.uid();
   if not found then return json_build_object('inscrit', false); end if;
-  debut := date_trunc('month', coalesce((select min(mois) from paiements_mannequins where mannequin_id = a.id and objet = 'mensualite'), a.date_entree))::date;
+  -- (comptes repris : à partir de leur entrée au registre, jamais des mois d'avant le nouveau système)
+  debut := date_trunc('month', coalesce((select min(mois) from paiements_mannequins where mannequin_id = a.id and objet = 'mensualite'),
+                                        greatest(a.date_entree, a.cree_le::date)))::date;
   return json_build_object('inscrit', true, 'nom', a.full_name, 'mensualite', a.mensualite, 'statut', a.statut,
     'mineur', a.date_naissance is not null and extract(year from age(a.date_naissance)) < 18,
     'mois', (select json_agg(json_build_object('mois', g::date, 'etat', mensualite_etat(a.id, g::date)) order by g)
@@ -1060,7 +1087,7 @@ declare
 begin
   select * into a from agence_mannequins where user_id = auth.uid() and statut = 'actif';
   if not found then raise exception 'Espace non rattaché à l''agence : contactez l''agence.'; end if;
-  if m > date_trunc('month', now())::date + interval '3 months' or m < a.date_entree - interval '1 month' then
+  if m > date_trunc('month', now())::date + interval '3 months' or m < date_trunc('month', greatest(a.date_entree, a.cree_le::date)) then
     raise exception 'Mois hors de votre formation.';
   end if;
   if mensualite_etat(a.id, m) in ('paye', 'attente') then raise exception 'Ce mois est déjà payé ou en cours de vérification.'; end if;

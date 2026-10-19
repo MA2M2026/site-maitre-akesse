@@ -260,9 +260,8 @@
     return { mineur, nom: mineur ? r.parent_nom || 'Madame, Monsieur' : (r.nom || r.full_name), email: mineur ? r.parent_email : r.email, tel: mineur ? r.parent_telephone : r.telephone };
   }
   function lienWhatsApp(tel, texte) {
-    let chiffres = String(tel || '').replace(/\D/g, '');
-    if ((chiffres.length === 10 && chiffres.charAt(0) === '0') || chiffres.length === 8) chiffres = '225' + chiffres;
-    return chiffres ? 'https://wa.me/' + chiffres + '?text=' + encodeURIComponent(texte) : null;
+    const n = window.numeroWhatsAppMa2m(tel);  // js/messages-mensualites.js
+    return n ? 'https://wa.me/' + n + '?text=' + encodeURIComponent(texte) : null;
   }
   // Message au mannequin (au parent s'il est mineur) : e-mail envoyé tout de suite, WhatsApp en un geste
   function prevenir(r, valide, motif) {

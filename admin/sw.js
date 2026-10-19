@@ -2,9 +2,9 @@
 // admin.maitreakessemodelmanagement.com) : limité au dossier /admin/, il ne touche pas le site public. Il ne garde
 // que les fichiers de l'INTERFACE (écrans, styles, icônes) : jamais de données nominatives ni
 // de montants (les requêtes vers la base et vers /api ne passent pas par lui).
-const VERSION = 'administration-v3';
+const VERSION = 'administration-v4';
 const INTERFACE = ['/admin/', '/css/jetons.css', '/css/portail.css', '/js/supabase-config.js',
-  '/js/vendor/supabase-js-2.110.6.js', '/js/portail/inactivite.js', '/js/portail/noyau.js', '/js/portail/espace-site.js', '/js/portail/espace-paiements.js',
+  '/js/vendor/supabase-js-2.110.6.js', '/js/portail/inactivite.js', '/js/messages-mensualites.js', '/js/portail/noyau.js', '/js/portail/espace-site.js', '/js/portail/espace-paiements.js',
   '/js/portail/espaces-en-construction.js',
   '/js/portail/securite.js', '/css/bouton-ma2m.css', '/js/bouton-appui.js', '/icons/admin-192.png'];
 
