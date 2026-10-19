@@ -136,8 +136,8 @@ function donnees(role) {
     for (const [role, esp] of [['site', 'site'], ['compta', 'compta']]) {
       const s = await ouvrir(role, ecran);
       await s.p.waitForSelector('#cx-code'); await s.p.fill('#cx-code', '123456'); await s.p.click('form[data-form="code"] [type=submit]');
-      // (espace 1 : l'ancien tableau de bord, ouvert dans l'Administration — essayé plus bas)
-      const attendu = esp === 'site' ? '/tableau-de-bord.html' : '#/' + esp + '/';
+      // (espace 1 : ouvert dans le cadre du portail — essayé dans test-espace1-cadre.js)
+      const attendu = '#/' + esp + '/';
       await s.p.waitForFunction((a) => location.href.includes(a), attendu, { timeout: 6000 }).catch(() => {});
       ok(s.p.url().includes(attendu), nomEcran + ' : rôle « ' + role + ' » → arrive directement dans son espace');
       await s.p.goto(url + '#/paiements/accueil'); await s.p.waitForTimeout(500);
@@ -226,10 +226,10 @@ function donnees(role) {
     await pe.clock.install();
     await pe.waitForSelector('#cx-code'); await pe.fill('#cx-code', '123456'); await pe.click('form[data-form="code"] [type=submit]');
     await pe.waitForSelector('.tuile');
-    await pe.click('.tuile[href="#/site/accueil"]');
-    await pe.waitForURL(/tableau-de-bord\.html/, { timeout: 8000 }).catch(() => {});
+    // (la page seule — adresse ouverte directement, signets d'avant ; dans le portail : test-espace1-cadre.js)
+    await pe.goto(pe.url().split('/admin/')[0] + '/tableau-de-bord.html');
     await pe.waitForSelector('#bloc-tableau', { state: 'visible', timeout: 10000 }).catch(() => {});
-    ok(pe.url().includes('/tableau-de-bord.html') && await pe.isVisible('#bloc-tableau'), nomEcran + ' : tuile « Administration du site » → l’ancien tableau de bord s’ouvre');
+    ok(pe.url().includes('/tableau-de-bord.html') && await pe.isVisible('#bloc-tableau'), nomEcran + ' : ancien tableau de bord ouvert seul → il s’affiche');
     ok(!(await pe.isVisible('#bloc-login')) && !(await pe.isVisible('#bloc-code-validation')), nomEcran + ' : aucune deuxième connexion, aucun code de validation demandé');
     ok(!e.journal.some((j) => j[1] === '/api/connexion-protegee' && /"espace":"admin"/.test(j[2] || '')), nomEcran + ' : pas de nouvelle connexion au serveur');
     await pe.waitForSelector('.v2-carte', { timeout: 8000 }).catch(() => {});

@@ -457,6 +457,17 @@
     // Sécurité : réservée à l'administrateur principal, sauf « Mes codes de secours » (chacun)
     const autorise = module === 'securite' ? P.moi.role === 'principal' || pageValide === 'codes' : P.moi.espaces[module];
     if (!autorise) { app().innerHTML = P.coque(module, pageValide, P.refuse()); return; }
+    // Espace dont la page vit dans un cadre (espace 1) : changer de rubrique ne recharge ni le menu ni le cadre
+    if (esp.garder && document.getElementById('cadre-ancien') && app().dataset.module === module) {
+      document.querySelectorAll('#menu-lateral a.nav').forEach((a) => {
+        const actif = a.getAttribute('href') === '#/' + module + '/' + pageValide;
+        a.classList.toggle('actif', actif);
+        if (actif) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+      });
+      esp.garder(pageValide);
+      return;
+    }
+    app().dataset.module = module;
     app().innerHTML = P.coque(module, pageValide, '<div class="chargement">Chargement…</div>');
     try {
       if (esp.avant) await esp.avant();

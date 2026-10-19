@@ -15,6 +15,11 @@
   if (!actif) return;
   document.documentElement.setAttribute('data-portail', '');
   document.documentElement.classList.add('mode-administration');
+  // Ouvert DANS le cadre de l'Administration (js/portail/espace-site.js) : même menu, même bouton
+  // « Retour au portail » que les autres espaces ; cette page n'affiche plus que son contenu.
+  let dansCadre = false;
+  try { dansCadre = window.top !== window && new URLSearchParams(location.search).get('cadre') === '1'; } catch (e) { /* page isolée */ }
+  if (dansCadre) document.documentElement.classList.add('cadre-admin');
 
   // Rubriques de l'ancien tableau de bord qui ne sont pas dans l'espace 1 : l'argent (inscriptions
   // et paiements Wave → espace 2) et les anciens accès remplacés par l'Administration (code de
@@ -25,15 +30,16 @@
   let pinDefini = false;
 
   function retourAdministration() {
-    try { sessionStorage.setItem('ma2m_retour_administration', location.pathname + location.search + location.hash); } catch (e) { /* stockage bloqué */ }
-    location.replace('/admin/');
+    // (dans le cadre : après le code, on revient aux tuiles du portail, pas à une page isolée)
+    if (!dansCadre) { try { sessionStorage.setItem('ma2m_retour_administration', location.pathname + location.search + location.hash); } catch (e) { /* stockage bloqué */ } }
+    (dansCadre ? window.top : window).location.replace('/admin/');
   }
   async function deconnecter() {
     window.arreterInactivitePortail();
     try { localStorage.removeItem('ma2m_mode_administration'); } catch (e) { /* stockage bloqué */ }
     try { await sb.auth.signOut(); } catch (e) { /* déjà déconnecté */ }
     await fetch('/api/acces-tableau', { method: 'DELETE', credentials: 'same-origin' }).catch(() => { /* elle expire seule */ });
-    location.replace('/admin/');
+    (dansCadre ? window.top : window).location.replace('/admin/');
   }
   async function verrouiller() {
     if (pinDefini) await sb.rpc('portail_code_appareil_verrouiller', { p_appareil: identifiantAppareilPortail() }).then(() => { /* verrouillé */ }, () => { /* le serveur verrouille de lui-même */ });
@@ -76,7 +82,7 @@
     // l'aller-retour ne finirait jamais)
     refuser: (motif) => {
       try { sessionStorage.setItem('ma2m_espace1_refuse', motif || 'droits'); } catch (e) { /* stockage bloqué */ }
-      location.replace('/admin/');
+      (dansCadre ? window.top : window).location.replace('/admin/');
     },
     // vrai une fois l'accès vérifié ; sinon la page repart vers l'Administration
     pret: new Promise((resolve) => {
@@ -86,7 +92,11 @@
         if (!ok) { resolve(false); retourAdministration(); return; }
         const etat = await sb.rpc('portail_code_appareil_etat', { p_appareil: identifiantAppareilPortail() });
         pinDefini = !!(etat.data && etat.data.defini);
-        if (!tableau) barre();
+        if (!tableau && !dansCadre) barre();
+        if (dansCadre) {
+          // un geste dans le cadre compte aussi pour le verrouillage de la coque (15 minutes)
+          ['pointerdown', 'keydown', 'scroll'].forEach((t) => addEventListener(t, () => { try { window.parent.dispatchEvent(new Event(t)); } catch (e) { /* pas de coque */ } }, { passive: true, capture: true }));
+        }
         window.surveillerInactivitePortail({ actif: () => true, pinDefini: () => pinDefini, verrouiller });
         // page laissée ouverte : la base est redemandée toutes les 5 minutes et au retour sur
         // l'écran (téléphone révoqué, accès coupé, 8 heures passées…)

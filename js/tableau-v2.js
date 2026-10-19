@@ -214,6 +214,8 @@
     }, 120);
   }
   window.ma2mAllerVers = allerVers;
+  // Ouvre une page du menu (utilisée par le cadre de l'Administration, js/portail/espace-site.js)
+  window.ma2mOuvrirPage = function (cle) { if (PAGES[cle]) ouvrir(cle); };
 
   // Clic sur une notification du téléphone (?notif=candidature&id=…) : ouvrir la bonne page et la fiche.
   function ouvrirDepuisNotification() {

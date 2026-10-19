@@ -201,3 +201,8 @@ details summary { cursor: pointer; font-weight: 700; }
 
 /* Un bouton au long libellé ne dépasse jamais de sa carte : il passe à la ligne (téléphone) */
 .contenu .btn { max-width: 100%; }
+
+/* Espace 1 : l'ancien tableau de bord s'affiche dans la zone centrale (js/portail/espace-site.js) */
+.contenu:has(#cadre-ancien) { padding: 0; gap: 0; }
+.cadre-ancien { display: block; width: 100%; border: 0; background: var(--fond); min-height: calc(100vh - 34px); height: calc(100vh - 34px); }
+@media (max-width: 860px) { .cadre-ancien { min-height: calc(100vh - 56px); height: calc(100vh - 56px); } }

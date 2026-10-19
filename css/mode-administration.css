@@ -44,3 +44,16 @@
 }
 .adm-barre .adm-retour:focus-visible, .adm-barre .adm-sortie:focus-visible { outline: none; box-shadow: var(--focus); }
 @media (max-width: 520px) { .adm-barre .adm-titre { display: none; } .adm-barre { justify-content: space-between; } }
+
+/* Page ouverte DANS le cadre du portail (?cadre=1) : le menu, l'en-tête et les barres sont ceux du
+   portail ; il ne reste que le contenu de la page */
+.cadre-admin .adm-barre,
+.cadre-admin .tdb-menu-panel,
+.cadre-admin .tdb-menu-toggle,
+.cadre-admin #tdb-menu-overlay,
+.cadre-admin .tdb-landing,
+.cadre-admin #db-chrome-header,
+.cadre-admin #v2-blocs,
+.cadre-admin #v2-cote,
+.cadre-admin .v2-burger,
+.cadre-admin #v2-voile { display: none !important; }
