@@ -23,56 +23,8 @@ function signalerProbleme(categorie, message, detail) {
   if (window.signalerErreur) window.signalerErreur(categorie, message, detail);
 }
 
-// ================== Conversion des photos HEIC (iPhone) en JPEG ==================
-// Remplace la bibliothèque heic2any (retirée le 28 septembre 2026) : elle utilise
-// « new Function » (évaluation de code), interdit par nos règles de sécurité (CSP,
-// pas de 'unsafe-eval') — d'où une erreur « EvalError » à CHAQUE chargement des pages
-// d'envoi de photos (l'essentiel du journal d'erreurs ce jour-là), sans jamais
-// réussir à convertir quoi que ce soit, en plus de peser 1,3 Mo par page.
-// Même signature que heic2any({ blob, toType, quality }) pour ne rien changer aux
-// pages qui l'appellent. La conversion est faite par le navigateur lui-même : ça
-// marche là où il sait lire le HEIC (Safari sur iPhone/Mac, d'où viennent ces
-// photos — et l'iPhone convertit d'ailleurs souvent tout seul en JPEG à l'envoi).
-// Ailleurs la promesse échoue : les pages gardent alors leur comportement habituel
-// (envoi du fichier d'origine), et la surveillance le signale.
-if (typeof window.heic2any === 'undefined') {
-  window.heic2any = async function (options) {
-    const url = URL.createObjectURL(options.blob);
-    try {
-      const img = await new Promise(function (ok, ko) {
-        const i = new Image();
-        i.onload = function () { ok(i); };
-        i.onerror = function () { ko(new Error('Photo HEIC illisible par ce navigateur')); };
-        i.src = url;
-      });
-      const canvas = document.createElement('canvas');
-      canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
-      canvas.getContext('2d').drawImage(img, 0, 0);
-      return await new Promise(function (ok, ko) {
-        canvas.toBlob(function (b) { b ? ok(b) : ko(new Error('Conversion JPEG impossible')); }, options.toType || 'image/jpeg', options.quality || 0.85);
-      });
-    } finally {
-      URL.revokeObjectURL(url);
-    }
-  };
-}
-
-// Conversion d'une photo HEIC (iPhone) en JPEG avant envoi — fonction unique pour
-// tout le site (06/10/2026 : elle était recopiée dans 14 pages et scripts, ce qui
-// obligeait à corriger 14 fois le moindre problème). En cas d'échec, le fichier
-// d'origine est renvoyé tel quel (comportement inchangé).
-async function convertirSiHeic(fichier, qualite) {
-  const estHeic = /image\/hei(c|f)/i.test(fichier.type) || /\.(heic|heif)$/i.test(fichier.name);
-  if (!estHeic || typeof heic2any === 'undefined') return fichier;
-  try {
-    const resultat = await heic2any({ blob: fichier, toType: 'image/jpeg', quality: qualite || 0.85 });
-    const blobFinal = Array.isArray(resultat) ? resultat[0] : resultat;
-    return new File([blobFinal], fichier.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' });
-  } catch (e) {
-    console.error('Conversion HEIC échouée, envoi du fichier original :', e);
-    return fichier;
-  }
-}
+// Conversion des photos HEIC (iPhone) en JPEG (heic2any, convertirSiHeic) : js/conversion-heic.js,
+// chargé juste avant ce fichier (partagé avec l'Administration, 19/10/2026).
 
 // Verrou du défilement (verrouillerDefilement / deverrouillerDefilement) : js/verrou-defilement.js.
 
@@ -396,16 +348,18 @@ function remplirTailleMinimale(prefixe, mineur, texteMineur) {
 // d'erreur (« E-mail ou mot de passe incorrect », « Code de validation incorrect »…).
 // Partagé le 12/10/2026 (avant, recopié trois fois).
 function messageAccesRefuse(reponse, resultat, refus) {
+  // (pages anglaises : même message en anglais, T() plus bas — 19/10/2026)
   if (reponse.status === 429) {
     const h = Math.ceil(resultat.minutesRestantes / 60);
     return resultat.dejaBloque
-      ? `Accès temporairement bloqué. Revenez dans ${resultat.minutesRestantes} min.`
-      : `Trop de tentatives. Accès bloqué. Revenez dans ${h >= 1 ? h + ' heure' + (h > 1 ? 's' : '') : resultat.minutesRestantes + ' min'}.`;
+      ? T(`Accès temporairement bloqué. Revenez dans ${resultat.minutesRestantes} min.`, `Access temporarily blocked. Please come back in ${resultat.minutesRestantes} min.`)
+      : T(`Trop de tentatives. Accès bloqué. Revenez dans ${h >= 1 ? h + ' heure' + (h > 1 ? 's' : '') : resultat.minutesRestantes + ' min'}.`,
+        `Too many attempts. Access blocked. Please come back in ${h >= 1 ? h + ' hour' + (h > 1 ? 's' : '') : resultat.minutesRestantes + ' min'}.`);
   }
   if (reponse.ok) return '';
   const reste = resultat.essaisRestants;
-  return reste === 2 ? refus + '. Attention : il vous reste 2 tentatives.'
-    : reste === 1 ? refus + '. Il vous reste 1 tentative.'
+  return reste === 2 ? refus + T('. Attention : il vous reste 2 tentatives.', '. Warning: you have 2 attempts left.')
+    : reste === 1 ? refus + T('. Il vous reste 1 tentative.', '. You have 1 attempt left.')
     : refus + '.';
 }
 

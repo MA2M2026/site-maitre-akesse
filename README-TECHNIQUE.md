@@ -1,5 +1,115 @@
 # README-TECHNIQUE.md — Maître Akesse Model Management (MA2M)
 
+> **19/10/2026 (après-midi) — Administration v2.4, étape 1 en construction** (cahier v2.3 + mise à
+> jour v2.4 validée par la propriétaire, document confidentiel hors du dépôt). Adresse séparée
+> **admin.maitreakessemodelmanagement.com** (même projet Vercel ; redirections par hôte dans
+> `vercel.json` : `/` → `/admin/` sur l'adresse admin, `/admin/*` de www → adresse admin). Fichiers :
+> `admin/` (page, manifeste `id: /admin/`, service worker limité à /admin/), `css/portail.css`,
+> `js/portail/noyau.js` (connexion mot de passe + code TOTP, code à 4 chiffres par appareil,
+> verrouillage 15 min, 8 h max, menu « ☰ Menu » < 860 px), `js/portail/securite.js` (comptes,
+> délégations, appareils, journal), `js/portail/espace-compta.js` (espace 3,
+> comptabilité), `api/portail.js` (invitations, codes de secours, « Créer un compte
+> admin » de l'ancien tableau de bord via `api/_creer-admin.js` : 11 fonctions au plus).
+> Base : `supabase-administration.sql` (comptes, appareils, codes, journal ; rejouable, n'efface
+> rien), essais `bash scripts/base-essai/lancer.sh` ; essai visiteur `test-administration.js`.
+>
+> **Espace 1 (19/10/2026, cahier v2.4 3.1)** : la tuile « Administration du site » ouvre
+> `tableau-de-bord.html` DANS l'Administration (manifeste `scope: /`, même session : aucune
+> deuxième connexion). `js/mode-administration.js` (chargé en tête, avant supabase-config) s'active
+> sur l'hôte `admin.` ou si l'Administration a été ouverte sur l'appareil (localStorage
+> `ma2m_mode_administration`) : `<html data-portail>`, accès vérifié par `portail_moi` (espace
+> site), verrouillage partagé `js/portail/inactivite.js` (15 min → retour à /admin/ pour le code à
+> 4 chiffres, puis retour à la page via sessionStorage `ma2m_retour_administration`), contrôle
+> toutes les 5 min (révocation, 8 h). Rubriques cachées (`HORS_ESPACE_1`) : inscriptions/paiements
+> Wave (→ espace 2), code de validation, « Créer un compte admin », code permanent ; CSS
+> `css/mode-administration.css`. Actualités, événements, partenaires : pages publiques en mode
+> Administration (barre `.adm-barre`, sans en-tête du site). `api/acces-tableau.js` accepte un jeton
+> `aal2` (code TOTP < 8 h) à la place du code de validation. Base : déclencheur
+> `staff_suivre_admins` (rôle « site » ↔ table `admins`). Essai : fin de `test-administration.js`.
+>
+> Candidatures (cahier v2.4 3.2) : « En étude » s'affiche « À revoir » (valeur en base inchangée),
+> « À revoir » et « En attente » rangés à part (`aPart` dans DOSSIERS.casting, « Toutes » les exclut).
+> Code individuel (3.3) : `code_individuel_creer(candidature)` (personne retenue, un code libre à la
+> fois, lié par `codes_inscription.candidature_id`) depuis la fiche ; `casting_direct_creer` (fiche
+> minimale `type_candidature = 'direct'`, retenue, + code) dans « Codes d'inscription » ; plus de code
+> libre. Les anciens codes sans nom encore disponibles seront annulés à la mise en ligne finale.
+>
+> **Espace 2, morceau 1 — registre (19/10/2026, cahier v2.4 5.1/5.5)** : `js/portail/espace-paiements.js`
+> (registre, ajout, fiche). Base (section 6 de `supabase-administration.sql`) : `agence_mannequins`
+> (comptes du site repris + déclencheur `registre_suivre_comptes` sur model_profiles, ajouts à la
+> main) et `paiements_mannequins` (inscription/mensualité ; déclaré = orange, validé = vert, refusé
+> avec motif ; jamais effacé, validé figé sauf principal avec code récent). RLS : `portail_peut('paiements')`
+> seulement ; mensualité changée par le principal seul (`registre_garde_fous`).
+>
+> **Espace 2, morceaux 2-3 (19/10/2026)** : « Paiements à valider » (`paiement_decider` : valide ou
+> refuse avec motif, d'un geste, l'inscription et son 1er mois ; e-mail EmailJS + lien WhatsApp ;
+> parent si mineur). **Inscription simplifiée** (cahier v2.4 §4) : `inscription-mannequin.html` FR/EN
+> = 4 écrans (`js/inscription-simplifiee.js`, `css/inscription-simplifiee.css`), serveur
+> `api/code-protege.js` types `inscription-code` (code individuel + date de naissance →
+> `inscription_code_lire`) et `inscription-payer` (`inscription_simplifiee_payer` : code consommé,
+> mannequin au registre, 15 000 + 10 000 « déclarés », orange). L'ancien formulaire complet
+> (`js/inscription-mannequin.js`, photos, référence Wave) est retiré.
+>
+> **Code de l'espace mannequin (cahier v2.4 §5.4)** : table `codes_espace` (une fois, 7 jours, un seul
+> valable par mannequin) ; `code_espace_creer` depuis la fiche du registre (inscription validée, pas de
+> compte) ; « Créer mon compte » (`api/code-protege.js` types portail/portail-creer-compte) vérifie
+> `code_espace_valable` puis `code_espace_utiliser` (rattache le compte à sa fiche, recopie les
+> informations, consomme le code). L'ancien code permanent (`check_invite_code`) n'est plus utilisé.
+>
+> **Mensualités (cahier v2.4 §5.6-5.7, choix du 19/10/2026)** : espace 2 « Mensualités du mois »
+> (actifs cochés, `mensualites_appeler`, e-mail EmailJS + file WhatsApp), relances du 3 et du 5 :
+> tâche planifiée Vercel (`vercel.json` « crons » → GET `/api/portail`, `mensualites_relances`,
+> e-mail EmailJS côté serveur : variables `EMAILJS_PRIVATE_KEY` et, conseillé, `CRON_SECRET` ; sans
+> clé, rien ne part et c'est noté au journal). Textes communs : `js/messages-mensualites.js`
+> (navigateur + serveur). Mannequin : `mes-paiements.html` (`mes_mensualites`, 24 mois,
+> `mensualite_declarer`). Fiche du registre : mensualité reçue par l'agence (Wave hors site, espèces).
+>
+> **Espace 3, morceau A — recettes, dépenses, trésorerie (cahier v2.4 §6)** : `js/portail/espace-compta.js`
+> (tableau du mois, recettes, dépenses avec justificatif, trésorerie). Base, section 10 :
+> `compta_comptes` (Caisse et Wave créés d'office, solde de départ à une date), `compta_ecritures`
+> (recette / dépense / virement ; rien ne s'efface ni ne se modifie : annulation avec motif, seul le
+> justificatif s'ajoute après coup — déclencheur `compta_garde_fous`), `compta_soldes()`. Un paiement
+> validé dans l'espace 2 devient tout seul une recette sans nom de mannequin (déclencheur
+> `compta_depuis_espace2`, une seule fois par paiement ; « avant le nouveau système » exclu).
+> Justificatifs : stockage privé `compta-justificatifs` (photo ou PDF, 10 Mo), lus par lien
+> temporaire de 5 minutes. Droits : `portail_peut('compta')`. Essai visiteur : `test-comptabilite.js`.
+>
+> **Espace 3, morceau B — suivi (cahier v2.4 §6, points 5, 7, 8)** : `js/portail/espace-compta-suivi.js`
+> (se sert des outils `P.compta` de espace-compta.js, chargé avant). « Ce qu'on nous doit » /
+> « Ce qu'on doit » : `compta_dettes` (créance d'un client, dette envers un fournisseur ; réglée en
+> une ou plusieurs fois par des écritures liées `dette_id` — la base refuse un règlement plus grand
+> que le reste ou de mauvais sens ; annulation avec motif seulement sans règlement). Personnel et
+> prestataires : dépenses « personnel » liées à `compta_tiers` (pas de calcul de paie). Matériel
+> durable : `compta_materiel`, acheté par `compta_materiel_acheter()` (dépense « Matériel » + ligne
+> d'inventaire ensemble) ; achat figé, sortie définitive avec motif, dépense non annulable tant que
+> le matériel est à l'inventaire. Carnet : `compta_tiers` (jamais les mannequins).
+>
+> **Espace 3, morceaux C, D, E (cahier v2.4 §6)** — base section 11. **Documents**
+> (`js/portail/espace-compta-documents.js`) : `compta_documents`, créés seulement par
+> `compta_document_creer(p)` (numéro suivant de la série `compta_numeros` type/année/fiscal, pris
+> dans la même transaction → aucun trou ; totaux et TVA calculés par la base ; préfixe `NF-` tant
+> que le mode légal est éteint). Facture → somme due (`compta_dettes`) ; devis/proforma → « Facturer » ;
+> avoir ≤ reste dû (réduit la somme due : `compta_dette_reste`, `compta_dettes_etat`) ; reçu d'une
+> recette saisie ; une facture/un avoir ne s'annule jamais. PDF : `js/portail/compta-pdf.js`
+> (pdf-lib `js/vendor/pdf-lib-1.17.1.min.js`, chargé au premier PDF). **Impôts** : `compta_impots`
+> (échéancier, répétition mois/trimestre/année), `compta_impot_payer` → dépense « impots ».
+> **Mode légal** : `compta_reglages` (une ligne : identité, TVA, interrupteur) — administrateur
+> principal seulement, code récent exigé, définitif ; FNE : numéro saisi à la main par facture
+> (`fne_reference`) en attendant le branchement DGI. **Dossier du mois**
+> (`js/portail/espace-compta-dossier.js`) : Excel 11 feuilles (`js/portail/compta-xlsx.js`, .xlsx écrit
+> sans outil extérieur) et PDF résumé + justificatifs (PDF ajoutés, photos mises en page, formats
+> illisibles listés ; trésorerie du mois calculée par la base, `compta_tresorerie`). Relecture du
+> 19/10/2026 : paiement de l'espace 2 corrigé/refusé après validation → ancienne recette annulée et
+> remplacée ; toujours une caisse et un Wave actifs ; justificatif jamais remplacé ; un document ne
+> se date ni dans le futur ni avant le dernier de sa série ; nouveau reçu possible après annulation.
+> Essai visiteur : `test-comptabilite-documents.js` (relit l'Excel avec openpyxl
+> et le PDF avec pypdf, installés par `lancer.sh` s'ils manquent).
+>
+> Codes de secours : affichés à la première activation de la double authentification, et
+> refaits à la demande dans Sécurité › « Mes codes de secours » (code récent demandé ; les
+> anciens sont annulés). Ajouté le 19/10/2026 : un compte dont la double authentification
+> existait déjà avant le portail ne passait jamais par l'activation, donc n'en avait aucun.
+
 > **19/10/2026 — Administration (/admin) retirée, retour à l'ancien tableau de bord** (décision de la
 > propriétaire). Tout ce qui concernait le portail /admin, les paiements, la comptabilité et
 > l'inscription par code a été supprimé du site ; `tableau-de-bord.html`, ses scripts, `middleware.js`,
@@ -560,7 +670,9 @@ Définies dans `js/app.js`, chargées sur (presque) chaque page :
   photo partagé (avec balayage tactile), réutilisé sur toutes les pages
   qui affichent des photos.
 - **`convertirSiHeic(fichier)`** — convertit une photo iPhone (HEIC) en
-  JPEG avant l'envoi, quand nécessaire (dupliquée dans plusieurs pages).
+  JPEG avant l'envoi, quand nécessaire. Depuis le 19/10/2026 dans
+  `js/conversion-heic.js` (chargé juste avant `js/app.js` sur chaque page, et par
+  l'Administration pour les justificatifs de la comptabilité).
 - **`construireHtmlCv(donnees)`** — gabarit du "Model CV" (icônes, libellés
   de compétences, regroupement des expériences par catégorie), partagé
   entre l'aperçu personnel du mannequin (`espace-mannequin.html`, bouton

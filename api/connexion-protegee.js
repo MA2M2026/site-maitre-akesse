@@ -5,13 +5,13 @@
 // (jamais dans le navigateur) — vider les cookies ou passer en navigation
 // privée ne contourne rien (S-6).
 //
-// Protège deux espaces : 'admin' (tableau-de-bord.html) et 'mannequin'
-// (espace-mannequin.html).
+// Protège trois espaces : 'admin' (tableau-de-bord.html), 'mannequin'
+// (espace-mannequin.html) et 'portail' (Administration, comptes de l'équipe).
 //
 // Variable d'environnement requise : SUPABASE_SERVICE_ROLE_KEY (déjà en
 // place sur Vercel pour les autres fonctions api/).
 
-const { SUPABASE_URL, estAdmin, extraireIp, nettoyerAppareil, debutRequete, compteurTentatives } = require('./_commun.js');
+const { SUPABASE_URL, enTetesService, estAdmin, extraireIp, nettoyerAppareil, debutRequete, compteurTentatives } = require('./_commun.js');
 
 module.exports = async function handler(req, res) {
   const debut = debutRequete(req, res, false); // POST + clé serveur (js : api/_commun.js)
@@ -20,7 +20,7 @@ module.exports = async function handler(req, res) {
   const email = corps && corps.email;
   const password = corps && corps.password;
   const espace = corps && corps.espace;
-  if (!email || !password || (espace !== 'admin' && espace !== 'mannequin')) {
+  if (!email || !password || !['admin', 'mannequin', 'portail'].includes(espace)) {
     res.status(400).json({ error: 'Requête invalide.' });
     return;
   }
@@ -49,6 +49,16 @@ module.exports = async function handler(req, res) {
     if (espace === 'admin') {
       if (!(await estAdmin(resultatAuth.user.id))) {
         res.status(403).json({ error: "Ce compte n'a pas accès au tableau de bord." });
+        return;
+      }
+    }
+
+    // 3 bis. Administration : compte de l'équipe, actif.
+    if (espace === 'portail') {
+      const rep = await fetch(SUPABASE_URL + '/rest/v1/staff_profiles?user_id=eq.' + encodeURIComponent(resultatAuth.user.id) + '&select=actif', { headers: enTetesService() });
+      const lignes = rep.ok ? await rep.json() : null;
+      if (!lignes || !lignes.length || !lignes[0].actif) {
+        res.status(403).json({ error: lignes && lignes.length ? 'Votre accès à l’Administration a été coupé.' : "Ce compte n'a pas accès à l'Administration." });
         return;
       }
     }

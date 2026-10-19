@@ -115,9 +115,10 @@ function viewAuthGate(){
       '<p class="p20-15"><a href="#" id="au-mdp-oublie-lien" class="p20-7">Mot de passe oublié ?</a></p>' +
     '</div>' +
     '<div id="auth-panneau-inscription" class="p20-9">' +
-      '<h2>Créer mon compte</h2><p class="sub">Un code d’invitation vous a été fourni par l’agence.</p>' +
+      // code personnel créé par l'agence après l'inscription payée (une fois, 7 jours — cahier v2.4, 5.4)
+      '<h2>Créer mon compte</h2><p class="sub">Entrez le code personnel donné par l’agence après votre inscription. Il ne sert qu’une fois et reste valable 7 jours.</p>' +
       '<div class="grid">' +
-        field('Code d’invitation','au-in-code','',{req:true}) + field('Nom complet','au-in-nom','',{req:true}) +
+        field('Code donné par l’agence','au-in-code','',{req:true}) + field('Nom complet','au-in-nom','',{req:true}) +
         field('E-mail','au-in-email','',{type:'email',req:true}) + field('Mot de passe (8 caractères minimum)','au-in-mdp','',{type:'password',req:true}) +
       '</div>' +
       '<div class="actions-row end"><button class="btn primary" id="au-in-valider">Créer mon compte</button></div>' +
@@ -695,6 +696,8 @@ function header(rightLabel){
   return '<div class="top">'+WORDMARK_HTML+
     '<div class="top-right">' +
       '<div class="espace-tag">' + (rightLabel||'Mon espace mannequin') + '<b>' + echapperHtml(state.identite.nomComplet||'').trim() + '</b></div>' +
+      // mensualités de formation : 24 mois, Wave puis « J'ai payé » (cahier v2.4, 5.7)
+      '<a href="mes-paiements.html" class="btn-pill">Mes paiements</a>' +
       '<a href="index.html" class="btn-pill">Retour au site</a>' +
       '<button type="button" class="btn-pill" data-deconnexion="1">Se déconnecter</button>' +
     '</div></div>';

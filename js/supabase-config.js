@@ -13,9 +13,25 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 // ne nécessitent aucune connexion — symptôme observé : profils invisibles sur un
 // ordinateur ayant déjà servi à se connecter au tableau de bord, alors qu'ils
 // restent visibles sur un appareil n'ayant jamais ouvert de session.
-const optionsAuthSupabase = window.MA2M_SESSION_REQUISE
-  ? undefined
-  : { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } };
+// Portail d'administration (/admin, cahier v2.3) : <html data-portail> → session gardée, lien
+// d'invitation lu dans l'adresse, et identifiant de l'appareil envoyé à chaque requête
+// (en-tête « x-appareil ») pour que la base refuse un appareil révoqué.
+if (document.documentElement.hasAttribute('data-portail')) window.MA2M_SESSION_REQUISE = true;
+function identifiantAppareilPortail() {
+  let id = '';
+  try { id = localStorage.getItem('ma2m_portail_appareil') || ''; } catch (e) { /* stockage bloqué */ }
+  if (!/^[a-z0-9-]{16,64}$/.test(id)) {
+    id = Array.from(crypto.getRandomValues(new Uint8Array(16)), o => o.toString(16).padStart(2, '0')).join('');
+    try { localStorage.setItem('ma2m_portail_appareil', id); } catch (e) { /* stockage bloqué */ }
+  }
+  return id;
+}
+const optionsAuthSupabase = document.documentElement.hasAttribute('data-portail')
+  ? { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+      global: { headers: { 'x-appareil': identifiantAppareilPortail() } } }
+  : window.MA2M_SESSION_REQUISE
+    ? undefined
+    : { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } };
 
 // `sb` reste toujours défini (jamais en zone morte temporelle), même si le script
 // Supabase (CDN) n'a pas pu charger — un simple `typeof sb` ailleurs sur le site

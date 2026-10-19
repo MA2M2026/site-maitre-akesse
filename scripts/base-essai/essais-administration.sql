@@ -1,0 +1,472 @@
+-- Essais de l'Administration — étape 1 (comptes, connexion, sécurité) sur la base
+-- LOCALE jetable. Chaque essai échoue bruyamment (exception) si le résultat n'est pas le bon.
+-- Personnes fictives : P = principal, S = admin du site, C = encaissements, K = comptable,
+-- M = mannequin avec compte, X = compte sans rôle.
+\set ON_ERROR_STOP 1
+set search_path = public, extensions;
+
+insert into auth.users (id, email) values
+  ('00000000-0000-0000-0000-0000000000a1', 'principal@test.ci'),
+  ('00000000-0000-0000-0000-0000000000a2', 'site@test.ci'),
+  ('00000000-0000-0000-0000-0000000000a3', 'caisse@test.ci'),
+  ('00000000-0000-0000-0000-0000000000a4', 'compta@test.ci'),
+  ('00000000-0000-0000-0000-0000000000a5', 'awa@test.ci'),
+  ('00000000-0000-0000-0000-0000000000a6', 'inconnu@test.ci');
+insert into staff_profiles (user_id, nom, email, role) values
+  ('00000000-0000-0000-0000-0000000000a1', 'Maître Akesse', 'principal@test.ci', 'principal'),
+  ('00000000-0000-0000-0000-0000000000a2', 'Gestion du site', 'site@test.ci', 'site'),
+  ('00000000-0000-0000-0000-0000000000a3', 'Encaissements', 'caisse@test.ci', 'caisse'),
+  ('00000000-0000-0000-0000-0000000000a4', 'Comptable', 'compta@test.ci', 'compta')
+on conflict (user_id) do nothing;
+
+-- Fonction d'essai : se mettre dans la peau de quelqu'un (jeton imité)
+-- (le portail envoie aussi l'identifiant de son appareil : en-tête « x-appareil »)
+create or replace function essai_qui(p_uid text, p_aal text default 'aal2', p_totp_il_y_a int default 30, p_appareil text default 'appareil-essai-0001')
+returns void language sql as $$
+  select set_config('request.headers', json_build_object('x-appareil', p_appareil)::text, false);
+  select set_config('request.jwt.claims', json_build_object(
+    'sub', p_uid, 'role', 'authenticated', 'aal', p_aal,
+    'amr', json_build_array(json_build_object('method', 'totp', 'timestamp', extract(epoch from now())::bigint - p_totp_il_y_a)))::text, false);
+$$;
+grant execute on function essai_qui(text, text, int, text) to authenticated;
+create or replace function essai(p_ok boolean, p_libelle text) returns text language plpgsql as $$
+begin
+  if not coalesce(p_ok, false) then raise exception '❌ ÉCHEC : %', p_libelle; end if;
+  return '✅ ' || p_libelle;
+end;
+$$;
+grant execute on function essai(boolean, text) to authenticated;
+create or replace function essai_refuse(p_sql text, p_libelle text) returns text language plpgsql as $$
+begin
+  begin
+    execute p_sql;
+  exception when others then
+    return '✅ ' || p_libelle || ' (refusé : ' || left(sqlerrm, 70) || ')';
+  end;
+  raise exception '❌ ÉCHEC : % — accepté alors qu''il devait être refusé', p_libelle;
+end;
+$$;
+grant execute on function essai_refuse(text, text) to authenticated;
+
+
+set role authenticated;
+-- Connexion sans double authentification : aucun rôle
+select essai_qui('00000000-0000-0000-0000-0000000000a1', 'aal1');
+select essai(portail_role() is null, 'sans double authentification, aucun espace (même le principal)');
+-- Compte sans rôle : rien (moindre privilège)
+select essai_qui('00000000-0000-0000-0000-0000000000a6');
+select essai(portail_role() is null and not portail_peut('site'), 'un compte sans rôle n''a accès à rien');
+-- Sans identifiant d'appareil, aucun accès
+select essai_qui('00000000-0000-0000-0000-0000000000a2', 'aal2', 30, '');
+select essai(portail_role() is null, 'sans identifiant d''appareil, aucun espace');
+-- Chaque rôle voit son seul espace
+select essai_qui('00000000-0000-0000-0000-0000000000a1');
+select essai(portail_peut('site') and portail_peut('paiements') and portail_peut('compta'), 'principal : les trois espaces');
+select essai_qui('00000000-0000-0000-0000-0000000000a2');
+select essai(portail_peut('site') and not portail_peut('paiements') and not portail_peut('compta'), 'administrateur du site : espace 1 seulement');
+select essai_qui('00000000-0000-0000-0000-0000000000a3');
+select essai(portail_peut('paiements') and not portail_peut('site') and not portail_peut('compta'), 'encaissements : espace 2 seulement');
+select essai_qui('00000000-0000-0000-0000-0000000000a4');
+select essai(portail_peut('compta') and not portail_peut('paiements') and not portail_peut('site'), 'comptable : espace 3 seulement');
+select essai((portail_moi() ->> 'nom') = 'Comptable', 'l''application connaît le nom et le rôle de la personne');
+select essai((select count(*) from staff_profiles) = 1, 'chacun ne lit que sa propre fiche');
+-- (la règle RLS ne laisse rien modifier : vérifié ci-dessous)
+update staff_profiles set role = 'principal' where user_id = auth.uid();
+reset role;
+select essai((select role from staff_profiles where user_id = '00000000-0000-0000-0000-0000000000a4') = 'compta', 'personne ne se donne lui-même un rôle');
+select set_config('request.jwt.claims', '', false);
+
+-- Délégation : le comptable reçoit l'espace 2 → il y a accès ; révoquée → plus rien
+insert into staff_module_grants (user_id, module, accorde_par) values ('00000000-0000-0000-0000-0000000000a4', 'paiements', '00000000-0000-0000-0000-0000000000a1');
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a4');
+select essai(portail_peut('paiements'), 'délégation : le comptable a l''espace 2 après accord du principal');
+reset role;
+select set_config('request.jwt.claims', '', false);
+update staff_module_grants set revoque_le = now();
+set role authenticated;
+select essai(not portail_peut('paiements'), 'délégation révoquée : accès coupé');
+
+-- Compte désactivé : coupure immédiate
+reset role;
+select set_config('request.jwt.claims', '', false);
+update staff_profiles set actif = false where role = 'caisse';
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a3');
+select essai(portail_role() is null, 'compte désactivé : coupure immédiate');
+
+-- Le journal d'audit est en écriture seule, lu par le principal seul
+select essai((select count(*) from audit_log) = 0, 'seul le principal lit le journal d''audit');
+reset role;
+select set_config('request.jwt.claims', '', false);
+select essai((select count(*) from audit_log) > 0, 'les changements de comptes sont inscrits au journal');
+select essai_refuse($$delete from audit_log$$, 'le journal d''audit ne s''efface pas');
+select essai_refuse($$update audit_log set action = 'x'$$, 'le journal d''audit ne se modifie pas');
+
+-- Relecture du 19/10/2026 : téléphone révoqué → les sessions déjà ouvertes cessent de servir
+insert into staff_devices (user_id, appareil, libelle) values ('00000000-0000-0000-0000-0000000000a4', 'tel-vole-0001', 'Téléphone volé');
+insert into admins (user_id) values ('00000000-0000-0000-0000-0000000000a4') on conflict do nothing;  -- (droits de l'ancien tableau de bord, pour l'essai)
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a4', 'aal2', 30, 'tel-vole-0001');
+select essai(portail_role() = 'compta', 'avant la révocation, le téléphone ouvre l''espace');
+reset role;
+select set_config('request.jwt.claims', '', false);
+update staff_devices set revoque = true where appareil = 'tel-vole-0001';
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a4', 'aal2', 30, 'tel-vole-0001');
+select essai(portail_role() is null, 'téléphone révoqué : refusé');
+reset role;
+select essai(not exists (select 1 from admins where user_id = '00000000-0000-0000-0000-0000000000a4'), 'téléphone révoqué : l''ancien tableau de bord se ferme aussi');
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a4', 'aal2', 30, 'nouvel-identifiant-0002');
+select essai(portail_role() is null, 'téléphone révoqué : changer d''identifiant ne rend pas l''accès à la session déjà ouverte');
+select essai_qui('00000000-0000-0000-0000-0000000000a4', 'aal2', -5, 'ordinateur-bureau-0003');
+select essai(portail_role() = 'compta', 'après la révocation, une nouvelle connexion avec le code fonctionne');
+reset role;
+select set_config('request.jwt.claims', '', false);
+
+-- Code à 4 chiffres de l'appareil (19/10/2026) : verrouillage après 15 minutes, 8 heures au plus
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a1', 'aal2', 30, 'tablette-pin-0001');
+select portail_code_appareil_definir('tablette-pin-0001', '4826');
+select essai_refuse($$select portail_code_appareil_definir('tablette-pin-0001', '1234')$$, 'code trop simple refusé');
+select essai_refuse($$select * from staff_codes_appareil$$, 'le code haché n''est lisible par personne');
+select essai((portail_code_appareil_etat('tablette-pin-0001') ->> 'defini')::boolean, 'code choisi après la connexion complète');
+select essai(portail_role() = 'principal', 'appareil actif : accès normal');
+select portail_code_appareil_verrouiller('tablette-pin-0001');
+select essai(portail_role() is null, 'appareil verrouillé : plus aucun accès aux données');
+select essai(not (portail_code_appareil_verifier('tablette-pin-0001', '1111') ->> 'ok')::boolean, 'mauvais code refusé');
+select essai(portail_role() is null, 'après un mauvais code : toujours verrouillé');
+select essai((portail_code_appareil_verifier('tablette-pin-0001', '4826') ->> 'ok')::boolean, 'bon code : déverrouillé');
+select essai(portail_role() = 'principal', 'après le bon code : accès rendu');
+reset role;
+update staff_codes_appareil set derniere_activite = now() - interval '20 minutes' where appareil = 'tablette-pin-0001';
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a1', 'aal2', 3600, 'tablette-pin-0001');
+select essai(portail_role() is null, '20 minutes sans activité : verrouillé par le serveur, même si l''écran ne l''a pas fait');
+select portail_code_appareil_verifier('tablette-pin-0001', '0001'), portail_code_appareil_verifier('tablette-pin-0001', '0002'),
+       portail_code_appareil_verifier('tablette-pin-0001', '0003'), portail_code_appareil_verifier('tablette-pin-0001', '0004');
+select essai((portail_code_appareil_verifier('tablette-pin-0001', '0005') ->> 'bloque')::boolean, '5 erreurs : code bloqué');
+select essai(not (portail_code_appareil_verifier('tablette-pin-0001', '4826') ->> 'ok')::boolean, 'code bloqué : même le bon code ne suffit plus');
+select essai(portail_role() is null, 'code bloqué : toujours aucun accès');
+select essai_qui('00000000-0000-0000-0000-0000000000a1', 'aal2', -5, 'tablette-pin-0001');
+select essai(not (portail_code_appareil_etat('tablette-pin-0001') ->> 'verrouille')::boolean and portail_role() = 'principal',
+             'connexion complète (mot de passe + code de l''application) : appareil déverrouillé');
+select essai_qui('00000000-0000-0000-0000-0000000000a1', 'aal2', 9 * 3600, 'ordinateur-sans-pin-0002');
+select essai(portail_role() is null, 'plus de 8 heures après le dernier code de l''application : session finie');
+reset role;
+select set_config('request.jwt.claims', '', false);
+
+
+-- Espace 1 : un compte « site » n'a PAS (encore) les droits de l'ancien tableau de bord, qui
+-- ouvrent aussi l'argent dans la base (branchés avec l'espace 2)
+select essai(not exists (select 1 from admins where user_id = '00000000-0000-0000-0000-0000000000a2'), 'rôle « site » : pas d''accès à l''argent par la base');
+
+-- Code individuel (cahier v2.4, 3.3) : seulement pour une personne retenue, un seul par personne
+insert into admins (user_id) values ('00000000-0000-0000-0000-0000000000a1') on conflict do nothing;
+insert into casting_applications (id, full_name, email, phone, type_candidature, date_naissance) values
+  ('00000000-0000-0000-0000-00000000c001', 'AWA KONÉ', 'awa@test.ci', '0102030405', 'agence', '2000-01-01');
+insert into casting_applications (id, full_name, email, phone, type_candidature) values
+  ('00000000-0000-0000-0000-00000000c002', 'SANS DATE', 'x@test.ci', '0102030405', 'agence');
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a1');
+select essai_refuse($$select code_individuel_creer('00000000-0000-0000-0000-00000000c001')$$, 'pas de code pour une candidature non retenue');
+reset role;
+update casting_applications set status = 'retenue' where id = '00000000-0000-0000-0000-00000000c001';
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a1');
+select essai(code_individuel_creer('00000000-0000-0000-0000-00000000c001') ~ '^MA2M-[A-Z2-9]{6}$', 'personne retenue : code créé à son nom');
+reset role;
+update casting_applications set status = 'retenue' where id = '00000000-0000-0000-0000-00000000c002';
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a1');
+select essai_refuse($$select code_individuel_creer('00000000-0000-0000-0000-00000000c002')$$, 'pas de code sans date de naissance (sinon un mineur se déclarerait majeur)');
+select essai(code_individuel_creer('00000000-0000-0000-0000-00000000c001') = (select code from codes_inscription where candidature_id = '00000000-0000-0000-0000-00000000c001'),
+             'redemander le code redonne le même (un seul code par personne)');
+select essai((casting_direct_creer('kouassi yao', '0707070707', 'homme', '2000-05-05') ->> 'code') ~ '^MA2M-',
+             'casting direct : fiche minimale retenue et code tout de suite');
+select essai((select status from casting_applications where type_candidature = 'direct') = 'retenue', 'casting direct : la fiche est « Retenue »');
+select essai_refuse($$select casting_direct_creer('', '07', 'homme', '2000-01-01')$$, 'casting direct sans nom refusé');
+select essai_qui('00000000-0000-0000-0000-0000000000a6');
+select essai_refuse($$select code_individuel_creer('00000000-0000-0000-0000-00000000c001')$$, 'un compte non administrateur ne crée pas de code');
+reset role;
+select set_config('request.jwt.claims', '', false);
+update codes_inscription set utilise = true where candidature_id = '00000000-0000-0000-0000-00000000c001';
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a1');
+select essai_refuse($$select code_individuel_creer('00000000-0000-0000-0000-00000000c001')$$, 'code déjà utilisé : pas de second code');
+reset role;
+select set_config('request.jwt.claims', '', false);
+
+-- Espace 2 — registre (cahier v2.4, 5.1 et 5.5)
+reset role;
+select set_config('request.jwt.claims', '', false);
+insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000b1', 'roxane@test.ci');
+insert into model_profiles (id, full_name, phone) values ('00000000-0000-0000-0000-0000000000b1', 'ROXANE OUATTARA', '0102030405');
+select essai(exists (select 1 from agence_mannequins where user_id = '00000000-0000-0000-0000-0000000000b1'), 'nouveau compte sur le site : il entre au registre tout seul');
+update staff_profiles set actif = true where role = 'caisse';
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a3');
+insert into agence_mannequins (id, full_name, genre, date_naissance, telephone) values
+  ('00000000-0000-0000-0000-0000000000d1', 'KONÉ AWA', 'femme', '2001-01-01', '0707070707');
+select essai((select count(*) from agence_mannequins) = 2, 'encaissements : voit tout le registre (site + ajoutés à la main)');
+select essai_refuse($$update agence_mannequins set mensualite = 20000 where id = '00000000-0000-0000-0000-0000000000d1'$$, 'encaissements : ne change pas la mensualité');
+insert into paiements_mannequins (mannequin_id, objet, montant, mode, statut) values ('00000000-0000-0000-0000-0000000000d1', 'inscription', 25000, 'especes', 'valide');
+select essai((select valide_par from paiements_mannequins where mannequin_id = '00000000-0000-0000-0000-0000000000d1') = '00000000-0000-0000-0000-0000000000a3', 'espèces : enregistré et validé par l''agence, au nom de la personne');
+select essai_refuse($$insert into paiements_mannequins (mannequin_id, objet, mode, statut) values ('00000000-0000-0000-0000-0000000000d1', 'inscription', 'avant_systeme', 'valide')$$, 'une seule inscription payée par mannequin');
+select essai_refuse($$update paiements_mannequins set montant = 1 where mannequin_id = '00000000-0000-0000-0000-0000000000d1'$$, 'un paiement validé ne se modifie plus');
+select essai_refuse($$delete from paiements_mannequins$$, 'un paiement ne s''efface pas');
+select essai_qui('00000000-0000-0000-0000-0000000000a1');
+update agence_mannequins set mensualite = 20000 where id = '00000000-0000-0000-0000-0000000000d1';
+select essai((select mensualite from agence_mannequins where id = '00000000-0000-0000-0000-0000000000d1') = 20000, 'principal : change la mensualité');
+-- Validation (cahier v2.4, 5.2) : « J'ai payé » (inscription 15 000 + 1er mois 10 000) → orange,
+-- l'agence valide d'un seul geste → vert ; un refus exige un motif
+insert into agence_mannequins (id, full_name, telephone) values ('00000000-0000-0000-0000-0000000000d2', 'YAO KOUASSI', '0505050505');
+insert into paiements_mannequins (mannequin_id, objet, mois, montant, mode) values
+  ('00000000-0000-0000-0000-0000000000d2', 'inscription', null, 15000, 'wave'),
+  ('00000000-0000-0000-0000-0000000000d2', 'mensualite', date_trunc('month', now())::date, 10000, 'wave');
+select essai_qui('00000000-0000-0000-0000-0000000000a3');
+select essai_refuse($$update paiements_mannequins set statut = 'valide' where mannequin_id = '00000000-0000-0000-0000-0000000000d2'$$, 'encaissements : un paiement ne se valide pas en le modifiant directement (seulement « Valider »)');
+select essai_refuse($$update paiements_mannequins set montant = 1 where mannequin_id = '00000000-0000-0000-0000-0000000000d2'$$, 'le montant d''un paiement déclaré ne se change pas');
+select essai_refuse($$select paiement_decider((select id from paiements_mannequins where mannequin_id = '00000000-0000-0000-0000-0000000000d2' and objet = 'inscription'), false, '')$$, 'refus sans motif impossible');
+select essai((paiement_decider((select id from paiements_mannequins where mannequin_id = '00000000-0000-0000-0000-0000000000d2' and objet = 'inscription'), true) ->> 'montant')::int = 25000,
+             'valider l''inscription : 25 000 FCFA d''un seul geste');
+select essai((select count(*) from paiements_mannequins where mannequin_id = '00000000-0000-0000-0000-0000000000d2' and statut = 'valide') = 2, 'inscription et 1er mois passent au vert ensemble');
+select essai_refuse($$select paiement_decider((select id from paiements_mannequins where mannequin_id = '00000000-0000-0000-0000-0000000000d2' and objet = 'inscription'), true)$$, 'un paiement déjà validé ne se revalide pas');
+select essai_qui('00000000-0000-0000-0000-0000000000a4');
+select essai((select count(*) from agence_mannequins) = 0 and (select count(*) from paiements_mannequins) = 0, 'comptable : ni le registre ni les paiements nominatifs');
+select essai_refuse($$select paiement_decider('00000000-0000-0000-0000-000000000000', true)$$, 'comptable : ne valide aucun paiement');
+select essai_qui('00000000-0000-0000-0000-0000000000b1', 'aal1');
+select essai((select count(*) from paiements_mannequins) = 0, 'le mannequin ne voit ni ne coche aucun paiement par la base');
+reset role;
+select set_config('request.jwt.claims', '', false);
+
+-- Inscription simplifiée (cahier v2.4, section 4), comme le serveur du site (clé service)
+reset role;
+select set_config('request.jwt.claims', '{"role":"service_role"}', false);
+insert into casting_applications (id, full_name, email, phone, genre, date_naissance, type_candidature) values
+  ('00000000-0000-0000-0000-00000000c009', 'TRAORÉ BINTOU', 'bintou@test.ci', '0909090909', 'femme', '2001-03-04', 'agence');
+update casting_applications set status = 'retenue' where id = '00000000-0000-0000-0000-00000000c009';
+insert into codes_inscription (code, candidature_id) values ('MA2M-BINTOU', '00000000-0000-0000-0000-00000000c009');
+select essai(inscription_code_lire('MA2M-BINTOU', '2001-03-05') is null, 'mauvaise date de naissance : refusé');
+select essai(inscription_code_lire('ma2m-bintou ', '2001-03-04') ->> 'salutation' = 'Mademoiselle TRAORÉ BINTOU', 'bon code + bonne date : « Bonjour Mademoiselle TRAORÉ BINTOU »');
+select essai_refuse($$select inscription_simplifiee_payer('MA2M-BINTOU', '2001-03-04', '{"full_name":"Traoré Bintou","telephone":"0909090909"}')$$, 'règlement non accepté : refusé');
+select inscription_simplifiee_payer('MA2M-BINTOU', '2001-03-04', '{"full_name":"Traoré Bintou","telephone":"0101010101","reglement":"accepte"}');
+select essai((select telephone from agence_mannequins where candidature_id = '00000000-0000-0000-0000-00000000c009') = '0101010101', '« J''ai payé » : au registre, avec le téléphone corrigé');
+select essai((select count(*) from paiements_mannequins p join agence_mannequins a on a.id = p.mannequin_id
+              where a.candidature_id = '00000000-0000-0000-0000-00000000c009' and p.statut = 'declare' and p.mode = 'wave') = 2, '« J''ai payé » : 15 000 + 10 000 en orange (en attente de validation)');
+select essai((select utilise from codes_inscription where code = 'MA2M-BINTOU'), 'le code est consommé');
+select essai_refuse($$select inscription_simplifiee_payer('MA2M-BINTOU', '2001-03-04', '{"full_name":"x","telephone":"1","reglement":"accepte"}')$$, 'le même code ne sert pas deux fois');
+select set_config('request.jwt.claims', '', false);
+set role anon;
+select set_config('request.jwt.claims', '{"role":"anon"}', false);
+select essai_refuse($$select inscription_code_lire('MA2M-YAO234', '2000-01-01')$$, 'le navigateur n''appelle pas ces fonctions directement');
+reset role;
+select set_config('request.jwt.claims', '', false);
+
+-- Code de l'espace mannequin (cahier v2.4, 5.4)
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a1');
+select essai_refuse($$select code_espace_creer((select id from agence_mannequins where candidature_id = '00000000-0000-0000-0000-00000000c009'))$$,
+                    'pas de code tant que l''inscription n''est pas validée');
+select paiement_decider((select id from paiements_mannequins p where p.objet = 'inscription' and p.mannequin_id = (select id from agence_mannequins where candidature_id = '00000000-0000-0000-0000-00000000c009')), true);
+select essai(code_espace_creer((select id from agence_mannequins where candidature_id = '00000000-0000-0000-0000-00000000c009')) ~ '^ESP-[A-Z2-9]{6}$', 'inscription validée : code de l''espace créé');
+select code_espace_creer((select id from agence_mannequins where candidature_id = '00000000-0000-0000-0000-00000000c009'));
+select essai((select count(*) from codes_espace where not annule) = 1, 'un seul code valable à la fois (l''ancien est annulé)');
+select essai((select expire_le::date - cree_le::date from codes_espace where not annule) = 7, 'valable une semaine');
+reset role;
+select set_config('request.jwt.claims', '{"role":"service_role"}', false);
+select essai(code_espace_valable((select code from codes_espace where not annule)), 'le serveur reconnaît le code');
+select essai(code_espace_reserver((select code from codes_espace where not annule), true), 'code réservé le temps de créer le compte');
+select essai(not code_espace_reserver((select code from codes_espace where not annule), true), 'un second envoi simultané est refusé');
+select essai(not code_espace_valable((select code from codes_espace where annule limit 1)), 'l''ancien code annulé ne marche plus');
+insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000b9', 'bintou@test.ci');
+insert into model_profiles (id, full_name) values ('00000000-0000-0000-0000-0000000000b9', 'Bintou');
+select code_espace_utiliser((select code from codes_espace where not annule), '00000000-0000-0000-0000-0000000000b9');
+select essai((select user_id from agence_mannequins where candidature_id = '00000000-0000-0000-0000-00000000c009') = '00000000-0000-0000-0000-0000000000b9'
+             and (select count(*) from agence_mannequins where user_id = '00000000-0000-0000-0000-0000000000b9') = 1, 'compte créé : rattaché à sa fiche du registre, sans doublon');
+select essai((select phone from model_profiles where id = '00000000-0000-0000-0000-0000000000b9') = '0101010101', 'il retrouve ses informations du casting');
+select essai(not code_espace_valable((select code from codes_espace where not annule)), 'code utilisé : il disparaît');
+select set_config('request.jwt.claims', '', false);
+
+-- Mensualités (cahier v2.4, 5.6 et 5.7)
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a1');
+update agence_mannequins set statut = 'sorti' where id = '00000000-0000-0000-0000-0000000000d1';
+select essai(json_array_length(mensualites_appeler(now()::date, array['00000000-0000-0000-0000-0000000000d1', '00000000-0000-0000-0000-0000000000d2']::uuid[])) = 1,
+             'appel du 1er : seules les personnes actives cochées sont appelées');
+reset role;
+select set_config('request.jwt.claims', '{"role":"service_role"}', false);
+-- YAO (d2) a son mois en cours payé (inscription validée) → pas de relance
+select essai(json_array_length(mensualites_relances(3)) = 0, 'relance du 3 : pas pour qui a déjà payé');
+-- (nettoyage d'essai uniquement : en vrai, un paiement ne s'efface jamais)
+delete from compta_ecritures where paiement_id in (select id from paiements_mannequins where mannequin_id = '00000000-0000-0000-0000-0000000000d2' and objet = 'mensualite');
+delete from paiements_mannequins where mannequin_id = '00000000-0000-0000-0000-0000000000d2' and objet = 'mensualite';
+select essai(json_array_length(mensualites_relances(3)) = 1, 'relance du 3 : appelé et pas encore payé → relancé');
+select essai((mensualites_relances(3) -> 0)::jsonb ? 'parent_telephone', 'relance : contacts du parent transmis (mineur → parent)');
+select essai(json_array_length(mensualites_relances(3)) = 1, 'relance pas encore envoyée : toujours dans la liste');
+select mensualites_relance_faite(3, '00000000-0000-0000-0000-0000000000d2');
+select essai(json_array_length(mensualites_relances(3)) = 0, 'relance du 3 envoyée : une seule fois');
+select essai_refuse($$select mensualites_relances(4)$$, 'relances seulement le 3 et le 5');
+select set_config('request.jwt.claims', '', false);
+-- côté mannequin : 24 mois, « J'ai payé » une fois par mois, jamais validé par lui-même
+delete from agence_mannequins where user_id = '00000000-0000-0000-0000-0000000000b1';
+update agence_mannequins set user_id = '00000000-0000-0000-0000-0000000000b1' where id = '00000000-0000-0000-0000-0000000000d2';
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000b1', 'aal1');
+select essai(json_array_length(mes_mensualites() -> 'mois') = 24, 'espace du mannequin : tableau de 24 mois');
+select mensualite_declarer(now()::date);
+select essai(mes_mensualites() -> 'mois' -> 0 ->> 'etat' = 'attente' or exists (select 1 from json_array_elements(mes_mensualites() -> 'mois') x where x ->> 'etat' = 'attente'),
+             '« J''ai payé » : le mois passe en orange');
+select essai_refuse($$select mensualite_declarer(now()::date)$$, 'le même mois ne se déclare pas deux fois');
+update paiements_mannequins set statut = 'valide';  -- (refusé en silence par les règles d'accès : vérifié juste après)
+reset role;
+select set_config('request.jwt.claims', '', false);
+select essai((select statut from paiements_mannequins where mannequin_id = '00000000-0000-0000-0000-0000000000d2' and objet = 'mensualite') = 'declare', 'le mois reste à valider par l''agence');
+
+-- Comptabilité, morceau A (cahier v2.4, section 6)
+select essai((select count(*) from compta_ecritures where source = 'espace2') >= 2, 'paiements validés de l''espace 2 repris en recettes');
+select essai(not exists (select 1 from compta_ecritures where libelle ~ 'YAO|KONÉ|BINTOU'), 'recettes sans nom de mannequin (le comptable ne voit que des montants)');
+-- relecture : paiement corrigé après validation → l'ancienne recette est annulée, la bonne enregistrée
+select paiement_id as pid_essai from compta_ecritures where source = 'espace2' and not annule order by cree_le limit 1 \gset
+update paiements_mannequins set montant = montant - 1000 where id = :'pid_essai';
+select essai((select count(*) from compta_ecritures where paiement_id = :'pid_essai' and annule) = 1
+  and (select montant from compta_ecritures where paiement_id = :'pid_essai' and not annule) = (select montant from paiements_mannequins where id = :'pid_essai'),
+  'paiement corrigé dans l''espace 2 : ancienne recette annulée, nouvelle au bon montant');
+update paiements_mannequins set statut = 'refuse' where id = :'pid_essai';
+select essai(not exists (select 1 from compta_ecritures where paiement_id = :'pid_essai' and not annule), 'paiement refusé après validation : plus de recette en vigueur');
+set role authenticated;
+-- (connexion après la révocation de son téléphone, plus haut)
+select essai_qui('00000000-0000-0000-0000-0000000000a4', 'aal2', -5, 'ordinateur-bureau-0003');
+select essai((select count(*) from compta_comptes) = 2, 'comptable : comptes Caisse et Wave');
+insert into compta_ecritures (sens, montant, compte_id, categorie, libelle, tiers)
+values ('depense', 50000, (select id from compta_comptes where type = 'caisse'), 'loyer', 'Loyer octobre', 'Propriétaire');
+insert into compta_ecritures (sens, montant, compte_id, compte_dest_id, categorie, libelle)
+values ('virement', 20000, (select id from compta_comptes where type = 'wave'), (select id from compta_comptes where type = 'caisse'), 'virement', 'Retrait Wave → caisse');
+select essai((select solde from compta_soldes() where type = 'caisse') =
+             coalesce((select sum(montant) from compta_ecritures where sens = 'recette' and not annule and compte_id = (select id from compta_comptes where type = 'caisse')), 0) - 50000 + 20000,
+             'solde de la caisse : recettes − dépenses + virements');
+select essai_refuse($$update compta_ecritures set montant = 1 where libelle = 'Loyer octobre'$$, 'une écriture ne se modifie pas');
+select essai_refuse($$update compta_ecritures set annule = true where libelle = 'Loyer octobre'$$, 'annulation sans motif refusée');
+update compta_ecritures set annule = true, motif_annulation = 'Saisi deux fois' where libelle = 'Loyer octobre';
+select essai((select annule from compta_ecritures where libelle = 'Loyer octobre'), 'annulation avec motif');
+select essai_refuse($$update compta_ecritures set annule = true, motif_annulation = 'x' where source = 'espace2'$$, 'une recette de l''espace 2 ne s''annule pas d''ici');
+select essai_refuse($$insert into compta_ecritures (sens, montant, compte_id, categorie, libelle, source) values ('recette', 1, (select id from compta_comptes limit 1), 'x', 'x', 'espace2')$$, 'on ne fabrique pas une recette « espace 2 » à la main');
+select essai_refuse($$delete from compta_ecritures$$, 'une écriture ne s''efface pas');
+-- Morceau B : ce qu'on nous doit, ce qu'on doit, personnel, matériel durable
+insert into compta_tiers (nom, type) values ('Client Sococé', 'client'), ('Imprimerie Plateau', 'fournisseur'), ('Assistante', 'personnel');
+insert into compta_dettes (sens, tiers_id, montant, categorie, libelle, echeance)
+values ('creance', (select id from compta_tiers where nom = 'Client Sococé'), 300000, 'casting', 'Casting défilé', current_date - 1);
+insert into compta_ecritures (sens, montant, compte_id, categorie, libelle, dette_id)
+values ('recette', 100000, (select id from compta_comptes where type = 'wave'), 'casting', 'Acompte casting', (select id from compta_dettes where libelle = 'Casting défilé'));
+select essai((select tiers from compta_ecritures where libelle = 'Acompte casting') = 'Client Sococé', 'règlement : le client est repris de la créance');
+select essai_refuse($$insert into compta_ecritures (sens, montant, compte_id, categorie, libelle, dette_id) values ('recette', 250000, (select id from compta_comptes where type = 'wave'), 'casting', 'Trop', (select id from compta_dettes where libelle = 'Casting défilé'))$$, 'règlement plus grand que le reste dû refusé');
+select essai_refuse($$insert into compta_ecritures (sens, montant, compte_id, categorie, libelle, dette_id) values ('depense', 1000, (select id from compta_comptes where type = 'wave'), 'casting', 'Sens', (select id from compta_dettes where libelle = 'Casting défilé'))$$, 'une créance se règle par une recette, pas une dépense');
+select essai_refuse($$update compta_dettes set montant = 1 where libelle = 'Casting défilé'$$, 'une créance ne se modifie pas');
+select essai_refuse($$update compta_dettes set annule = true, motif_annulation = 'x' where libelle = 'Casting défilé'$$, 'créance avec un règlement : pas d''annulation');
+update compta_dettes set echeance = current_date + 30 where libelle = 'Casting défilé';
+select essai((select echeance from compta_dettes where libelle = 'Casting défilé') = current_date + 30, 'l''échéance se repousse');
+select compta_materiel_acheter('Ordinateur portable', current_date, 450000, (select id from compta_comptes where type = 'caisse'), 'Boutique Info', 'SN-123', 'Bureau');
+select essai(exists (select 1 from compta_materiel m join compta_ecritures e on e.id = m.ecriture_id where m.designation = 'Ordinateur portable' and e.categorie = 'materiel' and e.montant = 450000),
+             'matériel acheté : inventaire + dépense « Matériel » ensemble');
+select essai_refuse($$update compta_materiel set montant = 1 where designation = 'Ordinateur portable'$$, 'l''achat du matériel ne se modifie pas');
+select essai_refuse($$update compta_materiel set etat = 'sorti' where designation = 'Ordinateur portable'$$, 'sortie sans date ni motif refusée');
+select essai_refuse($$update compta_ecritures set annule = true, motif_annulation = 'x' where libelle = 'Achat : Ordinateur portable'$$, 'achat de matériel encore en service : pas d''annulation');
+update compta_materiel set etat = 'sorti', date_sortie = current_date, motif_sortie = 'Volé' where designation = 'Ordinateur portable';
+select essai_refuse($$update compta_materiel set etat = 'en_service' where designation = 'Ordinateur portable'$$, 'matériel sorti : il le reste');
+select essai_refuse($$delete from compta_materiel$$, 'le matériel ne s''efface pas');
+-- Morceaux C et D : documents numérotés sans trou, avoirs, reçus, impôts, mode légal
+select essai((compta_document_creer(jsonb_build_object('type', 'devis', 'tiers_id', (select id from compta_tiers where nom = 'Client Sococé'),
+  'lignes', jsonb_build_array(jsonb_build_object('designation', 'Défilé', 'quantite', 2, 'prix', 100000))))) ->> 'numero' = 'NF-DEV-' || extract(year from now()) || '-0001',
+  'premier devis : NF-DEV-année-0001 (non fiscal)');
+select essai_refuse($$select compta_document_creer(jsonb_build_object('type', 'facture', 'tiers_id', (select id from compta_tiers where nom = 'Client Sococé'), 'lignes', jsonb_build_array(jsonb_build_object('designation', '', 'quantite', 1, 'prix', 1))))$$,
+  'ligne sans désignation refusée');
+select compta_document_creer(jsonb_build_object('type', 'facture', 'tiers_id', (select id from compta_tiers where nom = 'Client Sococé'), 'origine_id', (select id from compta_documents where type = 'devis'),
+  'categorie', 'casting', 'lignes', jsonb_build_array(jsonb_build_object('designation', 'Défilé', 'quantite', 2, 'prix', 100000))));
+select essai((select numero from compta_documents where type = 'facture') = 'NF-FAC-' || extract(year from now()) || '-0001'
+  and (select total_ttc from compta_documents where type = 'facture') = 200000 and (select tva from compta_documents where type = 'facture') = 0,
+  'facture non fiscale : numéro 0001 (le refus n''a pas consommé de numéro), 200 000 sans TVA');
+select essai((select etat from compta_documents where type = 'devis') = 'facture', 'le devis passe en « facturé »');
+select essai((select reste from compta_dettes_etat('creance') where facture like 'NF-FAC-%') = 200000, 'la facture crée la somme due par le client');
+select essai_refuse($$insert into compta_documents (type, numero, annee, rang, fiscal, date_doc, tiers_id, destinataire, lignes, total_ht, total_ttc) values ('facture', 'X', 2026, 99, false, current_date, (select id from compta_tiers limit 1), '{}', '[]', 0, 0)$$,
+  'un document ne se fabrique pas à la main');
+select essai_refuse($$update compta_documents set total_ttc = 1 where type = 'facture'$$, 'une facture ne se modifie pas');
+select essai_refuse($$update compta_documents set annule = true, motif_annulation = 'x' where type = 'facture'$$, 'une facture ne s''annule pas (avoir)');
+select essai_refuse($$update compta_dettes set annule = true, motif_annulation = 'x' where libelle like 'Facture NF-FAC-%'$$, 'la somme due d''une facture ne s''annule pas');
+select essai_refuse($$select compta_document_creer(jsonb_build_object('type', 'avoir', 'tiers_id', (select id from compta_tiers where nom = 'Client Sococé'), 'origine_id', (select id from compta_documents where type = 'facture'), 'lignes', jsonb_build_array(jsonb_build_object('designation', 'Trop', 'quantite', 1, 'prix', 250000))))$$,
+  'avoir plus grand que le reste dû refusé');
+select compta_document_creer(jsonb_build_object('type', 'avoir', 'tiers_id', (select id from compta_tiers where nom = 'Client Sococé'), 'origine_id', (select id from compta_documents where type = 'facture'),
+  'lignes', jsonb_build_array(jsonb_build_object('designation', 'Remise', 'quantite', 1, 'prix', 50000))));
+select essai((select reste from compta_dettes_etat('creance') where facture like 'NF-FAC-%') = 150000, 'l''avoir réduit la somme due (200 000 − 50 000)');
+select essai_refuse($$insert into compta_ecritures (sens, montant, compte_id, categorie, libelle, dette_id) values ('recette', 160000, (select id from compta_comptes where type = 'wave'), 'casting', 'x', (select id from compta_dettes where libelle like 'Facture NF-FAC-%'))$$,
+  'encaissement plus grand que le reste après avoir refusé');
+select compta_document_creer(jsonb_build_object('type', 'recu', 'tiers_id', (select id from compta_tiers where nom = 'Client Sococé'), 'ecriture_id', (select id from compta_ecritures where libelle = 'Acompte casting'),
+  'lignes', jsonb_build_array(jsonb_build_object('designation', 'Acompte casting', 'quantite', 1, 'prix', 100000))));
+select essai_refuse($$update compta_ecritures set annule = true, motif_annulation = 'x' where libelle = 'Acompte casting'$$, 'recette avec un reçu : annuler d''abord le reçu');
+select essai_refuse($$select compta_document_creer(jsonb_build_object('type', 'recu', 'tiers_id', (select id from compta_tiers where nom = 'Client Sococé'), 'ecriture_id', (select id from compta_ecritures where libelle = 'Loyer octobre'), 'lignes', jsonb_build_array(jsonb_build_object('designation', 'x', 'quantite', 1, 'prix', 50000))))$$,
+  'un reçu ne se fait que pour une recette');
+update compta_documents set annule = true, motif_annulation = 'Erreur de client' where type = 'recu';
+select essai((select annule from compta_documents where type = 'recu'), 'un reçu s''annule avec un motif (son numéro reste pris)');
+select compta_document_creer(jsonb_build_object('type', 'recu', 'tiers_id', (select id from compta_tiers where nom = 'Client Sococé'), 'ecriture_id', (select id from compta_ecritures where libelle = 'Acompte casting'),
+  'lignes', jsonb_build_array(jsonb_build_object('designation', 'Acompte casting', 'quantite', 1, 'prix', 100000))));
+select essai((select count(*) from compta_documents where type = 'recu') = 2, 'reçu annulé : un nouveau reçu se fait pour la même recette');
+select essai_refuse($$select compta_document_creer(jsonb_build_object('type', 'devis', 'date_doc', current_date + 1, 'tiers_id', (select id from compta_tiers where nom = 'Client Sococé'), 'lignes', jsonb_build_array(jsonb_build_object('designation', 'x', 'quantite', 1, 'prix', 1))))$$,
+  'document daté dans le futur refusé');
+select essai_refuse($$select compta_document_creer(jsonb_build_object('type', 'facture', 'date_doc', current_date - 1, 'tiers_id', (select id from compta_tiers where nom = 'Client Sococé'), 'lignes', jsonb_build_array(jsonb_build_object('designation', 'x', 'quantite', 1, 'prix', 1))))$$,
+  'document antidaté avant le dernier de sa série refusé');
+select essai((compta_document_creer(jsonb_build_object('type', 'devis', 'date_doc', current_date - 400, 'tiers_id', (select id from compta_tiers where nom = 'Client Sococé'),
+  'lignes', jsonb_build_array(jsonb_build_object('designation', 'x', 'quantite', 1, 'prix', 1))))) ->> 'numero' = 'NF-DEV-' || extract(year from current_date - 400) || '-0001',
+  'document de l''année d''avant : il prend sa place dans la série de son année');
+update compta_ecritures set justificatif = '2026-10/quittance.pdf' where libelle = 'Loyer octobre';
+select essai_refuse($$update compta_ecritures set justificatif = '2026-10/autre.pdf' where libelle = 'Loyer octobre'$$, 'un justificatif joint ne se remplace pas');
+select essai_refuse($$update compta_comptes set actif = false where type = 'wave'$$, 'le dernier compte Wave ne se ferme pas');
+select essai_refuse($$update compta_comptes set type = 'banque' where type = 'caisse'$$, 'le type d''un compte ne change pas');
+select essai((select fin from compta_tresorerie(date_trunc('month', current_date)::date, (date_trunc('month', current_date) + interval '1 month')::date) where nom like 'Caisse%')
+  = (select solde from compta_soldes() where type = 'caisse'), 'trésorerie du mois : solde de fin = solde du jour');
+insert into compta_comptes (nom, type, solde_initial, date_initiale) values ('Banque essai', 'banque', 1000, date_trunc('month', current_date)::date);
+insert into compta_ecritures (sens, montant, compte_id, categorie, libelle) values
+  ('recette', 500, (select id from compta_comptes where nom = 'Banque essai'), 'casting', 'Essai banque +'),
+  ('depense', 200, (select id from compta_comptes where nom = 'Banque essai'), 'loyer', 'Essai banque -');
+insert into compta_ecritures (sens, montant, compte_id, compte_dest_id, categorie, libelle) values
+  ('virement', 300, (select id from compta_comptes where type = 'wave'), (select id from compta_comptes where nom = 'Banque essai'), 'virement', 'Essai vers banque'),
+  ('virement', 100, (select id from compta_comptes where nom = 'Banque essai'), (select id from compta_comptes where type = 'caisse'), 'virement', 'Essai depuis banque');
+select essai((select row(debut, entrees, sorties, fin)::text from compta_tresorerie(date_trunc('month', current_date)::date, (date_trunc('month', current_date) + interval '1 month')::date)
+  where nom = 'Banque essai') = row(1000, 800, 300, 1500)::text, 'trésorerie du mois : départ 1 000, entrées 800, sorties 300, fin 1 500');
+insert into compta_impots (nom, periode, echeance, montant) values ('Patente', '2026', current_date + 10, 120000);
+select compta_impot_payer((select id from compta_impots where nom = 'Patente'), (select id from compta_comptes where type = 'caisse'), current_date, 120000);
+select essai(exists (select 1 from compta_impots i join compta_ecritures e on e.id = i.ecriture_id where i.nom = 'Patente' and e.categorie = 'impots'), 'impôt payé : dépense « Impôts et taxes » liée');
+select essai_refuse($$update compta_impots set montant = 1 where nom = 'Patente'$$, 'impôt payé : il ne se modifie plus');
+select essai_refuse($$update compta_reglages set mode_legal = true$$, 'comptable : pas d''interrupteur du mode légal');
+reset role;
+select set_config('request.jwt.claims', '', false);
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a1', 'aal2', 30, 'tablette-pin-0001');
+select essai_refuse($$update compta_reglages set mode_legal = true$$, 'mode légal : identité légale obligatoire avant de basculer');
+update compta_reglages set raison_sociale = 'MA2M SARL', rccm = 'CI-ABJ-2027-B-1', ncc = '2700001A', mode_legal = true;
+select essai((select mode_legal from compta_reglages), 'mode légal activé par l''administrateur principal');
+select compta_document_creer(jsonb_build_object('type', 'facture', 'tiers_id', (select id from compta_tiers where nom = 'Client Sococé'),
+  'lignes', jsonb_build_array(jsonb_build_object('designation', 'Shooting', 'quantite', 1, 'prix', 100000))));
+select essai((select numero from compta_documents where type = 'facture' and fiscal) = 'FAC-' || extract(year from now()) || '-0001'
+  and (select tva from compta_documents where type = 'facture' and fiscal) = 18000 and (select total_ttc from compta_documents where type = 'facture' and fiscal) = 118000,
+  'vraie facture : nouvelle série FAC-année-0001, TVA 18 % (118 000)');
+select essai((select fiscal from compta_documents where numero like 'NF-FAC-%') = false, 'les anciennes factures restent « non fiscal »');
+select essai_refuse($$update compta_reglages set mode_legal = false$$, 'le mode légal ne se désactive pas');
+update compta_documents set fne_reference = 'FNE-000123' where type = 'facture' and fiscal;
+select essai_refuse($$update compta_documents set fne_reference = 'FNE-1' where numero like 'NF-FAC-%'$$, 'pas de numéro FNE pour une facture non fiscale');
+reset role;
+select set_config('request.jwt.claims', '', false);
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a3');
+select essai((select count(*) from compta_ecritures) = 0, 'encaissements : pas d''accès à la comptabilité');
+select essai((select count(*) from compta_documents) + (select count(*) from compta_impots) = 0, 'encaissements : ni documents ni impôts');
+select essai((select count(*) from compta_tiers) + (select count(*) from compta_dettes) + (select count(*) from compta_materiel) = 0, 'encaissements : ni clients, ni dettes, ni matériel');
+reset role;
+select set_config('request.jwt.claims', '', false);
+
+-- Visiteur anonyme : rien
+set role anon;
+select set_config('request.jwt.claims', '{"role":"anon"}', false);
+select essai_refuse($$select count(*) from staff_profiles$$, 'visiteur anonyme : aucune table de l''Administration');
+reset role;
+select set_config('request.jwt.claims', '', false);
+select '✅ essais de l''Administration (étape 1) terminés' as resultat;

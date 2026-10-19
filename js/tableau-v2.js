@@ -118,6 +118,13 @@
       ] }
     ] }
   ];
+  // Ouvert dans l'Administration (espace 1, cahier v2.4 — js/mode-administration.js) : ni argent
+  // ni anciens accès dans le menu, et les partenaires se gèrent aussi d'ici.
+  var ADM = window.MA2M_ADMINISTRATION || null;
+  if (ADM) {
+    MENU.forEach(function (b) { b.groupes.forEach(function (g) { g.items = g.items.filter(function (it) { return !ADM.masquee(it[0]); }); }); });
+    MENU[2].groupes[0].items.push(['lien:partenaires.html', 'Gérer les partenaires', 'groupe']);
+  }
   // Pages composées de plusieurs rubriques existantes (la première sert de rubrique « principale »).
   var COMPOSEES = {
     'v2-ensemble': ['b1-stats'],
@@ -366,6 +373,7 @@
       ['Messages de contact', 'message', 'c1', d.messagesSemaine, 'cette semaine', '', 'b2-contacts'],
       ['Validations en attente', 'alerte', 'c3', d.validations, 'profils à valider', d.validations ? 'baisse' : '', 'b2-validations']
     ];
+    if (ADM) cartes = cartes.filter(function (c) { return !ADM.masquee(c[6]); });
     var grille = el('div', 'v2-cartes');
     cartes.forEach(function (c) {
       var carte = el('button', 'v2-carte');
@@ -383,7 +391,7 @@
     var alertes = el('div', 'v2-alertes');
     alertes.appendChild(el('h2', null, '🔔 Alertes &amp; rappels'));
     var lignes = [];
-    if (d.inscriptionsAVerifier) lignes.push({ c: '#c98c28', gras: pluriel(d.inscriptionsAVerifier, 'inscription', 'inscriptions'), apres: d.inscriptionsAVerifier > 1 ? ' attendent la vérification de leur paiement' : ' attend la vérification de son paiement', voir: 'Voir →', page: 'b2-inscriptions' });
+    if (d.inscriptionsAVerifier && !ADM) lignes.push({ c: '#c98c28', gras: pluriel(d.inscriptionsAVerifier, 'inscription', 'inscriptions'), apres: d.inscriptionsAVerifier > 1 ? ' attendent la vérification de leur paiement' : ' attend la vérification de son paiement', voir: 'Voir →', page: 'b2-inscriptions' });
     if (d.validations) lignes.push({ c: '#d55468', gras: pluriel(d.validations, 'profil mannequin', 'profils mannequins'), apres: d.validations > 1 ? ' attendent votre validation avant publication' : ' attend votre validation avant publication', voir: 'Voir →', page: 'b2-validations' });
     if (d.prochainCasting && prochain) {
       var pc = d.prochainCasting;
@@ -488,11 +496,14 @@
     var cote = el('aside', 'v2-cote');
     cote.id = 'v2-cote';
     cote.setAttribute('aria-label', 'Menu du tableau de bord');
-    cote.innerHTML = '<div class="v2-cote-haut"><a class="v2-marque" href="index.html"><img src="assets/logo-header.png" alt="Maître Akesse Model Management"></a>'
+    // dans l'Administration, le logo et le lien du bas ramènent aux tuiles de l'Administration
+    var accueil = ADM ? '/admin/' : 'index.html';
+    cote.innerHTML = '<div class="v2-cote-haut"><a class="v2-marque" href="' + accueil + '"><img src="assets/logo-header.png" alt="Maître Akesse Model Management"></a>'
       + '<button type="button" class="v2-fermer" aria-label="Fermer le menu">' + svg('croix') + '</button></div>'
       + '<nav class="v2-menu-liste" id="v2-menu-liste"></nav>'
       + '<div class="v2-cote-bas">'
-      + '<a class="v2-lien v2-lien-discret" href="index.html">' + svg('globe') + '<span class="v2-lien-texte">Retour au site public</span></a>'
+      + (ADM ? '<a class="v2-lien v2-lien-discret" href="/admin/">' + svg('retour') + '<span class="v2-lien-texte">Accueil de l’Administration</span></a>'
+        : '<a class="v2-lien v2-lien-discret" href="index.html">' + svg('globe') + '<span class="v2-lien-texte">Retour au site public</span></a>')
       + '<button type="button" class="v2-lien v2-lien-discret" data-action="deconnexion">' + svg('sortie') + '<span class="v2-lien-texte">Se déconnecter</span></button>'
       + '</div>';
     shell.insertBefore(cote, main);

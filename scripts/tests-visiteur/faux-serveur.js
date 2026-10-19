@@ -37,6 +37,18 @@ function brancher(page, donnees, journal) {
         return json({ access_token: jeton, token_type: 'bearer', expires_in: 36000, expires_at: Math.floor(Date.now() / 1000) + 36000, refresh_token: 'faux', user }); }
       if (url.pathname.startsWith('/auth/v1/user')) return json(user);
       if (url.pathname.startsWith('/auth/v1/')) return json({});
+      // stockage privé : dépôt d'un fichier (noté au journal), lien de lecture temporaire
+      if (url.pathname.startsWith('/storage/v1/object/sign/')) return json({ signedURL: '/object/sign/' + url.pathname.slice(25) + '?token=essai' });
+      // téléchargement d'un fichier privé : donnees.fichiers[chemin] = { type, octets } (sinon 404)
+      if (url.pathname.startsWith('/storage/v1/object/') && m === 'GET') {
+        const f = (donnees.fichiers || {})[decodeURIComponent(url.pathname.slice(19))];
+        journal.push(['TELECHARGE', decodeURIComponent(url.pathname.slice(19))]);
+        return f ? route.fulfill({ status: 200, contentType: f.type, body: f.octets }) : json({ statusCode: '404', error: 'not_found', message: 'Object not found' }, 400);
+      }
+      if (url.pathname.startsWith('/storage/v1/object/') && m === 'POST') {
+        journal.push(['STOCKAGE', url.pathname.slice(19), req.headers()['content-type'] || '']);
+        return json({ Key: url.pathname.slice(19), Id: 'f-' + journal.length });
+      }
       if (url.pathname.startsWith('/rest/v1/rpc/')) {
         const nom = url.pathname.split('/').pop();
         journal.push(['rpc', nom, req.postData()]);
@@ -55,11 +67,26 @@ function brancher(page, donnees, journal) {
             if (donnees.memoriser) (donnees.tables[table] = donnees.tables[table] || []).push(...cree);
             return json(cree, 201);
           }
-          if (m === 'PATCH') { const maj = JSON.parse(req.postData() || '{}'); (donnees.tables[table] || []).forEach(l => { let ok = true; for (const [k, v] of url.searchParams) if (/^eq\./.test(v) && String(l[k]) !== v.slice(3)) ok = false; if (ok) Object.assign(l, maj); }); }
+          // donnees.refus[table] = message : la base refuse la modification (garde-fou)
+          if (m === 'PATCH' && donnees.refus && donnees.refus[table]) return json({ message: donnees.refus[table], code: 'P0001' }, 400);
+          if (m === 'PATCH') {
+            const maj = JSON.parse(req.postData() || '{}'), touchees = [];
+            (donnees.tables[table] || []).forEach(l => { let ok = true; for (const [k, v] of url.searchParams) if (/^eq\./.test(v) && String(l[k]) !== v.slice(3)) ok = false; if (ok) { Object.assign(l, maj); touchees.push(l); } });
+            // update(…).select() : la vraie base renvoie les lignes modifiées (aucune si refusé)
+            if (/return=representation/.test(req.headers()['prefer'] || '')) return json(touchees);
+          }
           return route.fulfill({ status: 204, body: '' });
         }
         let lignes = (donnees.tables[table] || []).slice();
         for (const [k, v] of url.searchParams) { if (/^eq\./.test(v)) lignes = lignes.filter(l => String(l[k]) === v.slice(3)); }
+        // order=colonne.desc : tri comme la vraie base (une seule colonne)
+        const ordre = (url.searchParams.get('order') || '').match(/^(\w+)\.(asc|desc)/);
+        if (ordre) lignes.sort((a, b) => (String(a[ordre[1]] ?? '') < String(b[ordre[1]] ?? '') ? -1 : String(a[ordre[1]] ?? '') > String(b[ordre[1]] ?? '') ? 1 : 0) * (ordre[2] === 'desc' ? -1 : 1));
+        // not.in.("a","b") : exclure ces valeurs (candidatures rangées à part)
+        for (const [k, v] of url.searchParams) {
+          const exclus = v.match(/^not\.in\.\((.*)\)$/);
+          if (exclus) { const liste = exclus[1].split(',').map(x => x.replace(/^"|"$/g, '')); lignes = lignes.filter(l => !liste.includes(String(l[k]))); }
+        }
         // or=(a.eq.x,b.ilike.y,and(c.eq.z,d.eq.w)) : conditions simples (recherche de doublons)
         if (url.searchParams.get('or')) {
           const morceaux = (t) => { const r = []; let n = 0, cur = ''; for (const ch of t) { if (ch === '(') n++; if (ch === ')') n--; if (ch === ',' && !n) { r.push(cur); cur = ''; } else cur += ch; } if (cur) r.push(cur); return r; };
@@ -81,7 +108,9 @@ function brancher(page, donnees, journal) {
       const repPortail = portail && u.pathname === '/api/connexion-protegee' ? (() => { const x = sessionPortail(portail.aal || 'aal1'); return { access_token: x.access_token, refresh_token: x.refresh_token }; })() : null;
       let rep = (donnees.api && donnees.api[u.pathname]) || repPortail || (u.pathname === '/api/connexion-protegee' ? { access_token: jeton, refresh_token: 'faux' } : { ok: true });
       if (typeof rep === 'function') rep = rep(JSON.parse(route.request().postData() || '{}'));
-      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(rep) });
+      // « statut » : imiter un refus du serveur (ex. 403 « confirmez votre code »)
+      const statut = (rep && rep.statut) || 200; if (rep && rep.statut) { rep = Object.assign({}, rep); delete rep.statut; }
+      route.fulfill({ status: statut, contentType: 'application/json', body: JSON.stringify(rep) });
     }),
     page.route(/api\.emailjs\.com/, async (route) => { journal.push(['EMAIL', route.request().postData()]); route.fulfill({ status: 200, body: 'OK' }); })
   ]));
