@@ -169,6 +169,14 @@
   // Code de l'espace mannequin (cahier v2.4, 5.4) : seulement après une inscription payée et
   // validée, pour un mannequin sans compte ; une fois, 7 jours ; remplace le code général
   const SITE = 'https://www.maitreakessemodelmanagement.com';
+  // Message au mannequin (au parent s'il est mineur) avec son code personnel + lien WhatsApp prêt
+  function messageCodeEspace(m, code) {
+    const d = destinataire(m);
+    const texte = 'Bonjour ' + d.nom + ',\n\nL’inscription' + (d.mineur ? ' de ' + m.full_name : '') + ' à Maître Akesse Model Management est validée. ' +
+      'Pour créer ' + (d.mineur ? 'son' : 'votre') + ' espace mannequin, ouvrez ' + SITE + '/espace-mannequin.html, choisissez « Créer mon compte » et entrez ce code personnel : ' + code.code +
+      '\n\nIl ne sert qu’une fois et reste valable jusqu’au ' + P.dateHeure(code.expire_le) + '.\n\nL’équipe Maître Akesse Model Management';
+    return { texte, wa: lienWhatsApp(d.tel, texte), d };
+  }
   function carteCodeEspace(m, inscription, code) {
     if (m.user_id) return '';
     const titre = '<h2>Code de l’espace mannequin</h2>';
@@ -181,19 +189,15 @@
         '<p class="doux">Le mannequin s’en servira pour créer son espace (e-mail, mot de passe et ce code). Il ne sert qu’une fois et reste valable 7 jours.</p>' +
         '<div class="ligne"><button class="btn rouge" type="button" data-action="code-espace" data-id="' + m.id + '">Générer le code de l’espace</button></div></div>';
     }
-    const d = destinataire(m);
-    const texte = 'Bonjour ' + d.nom + ',\n\nL’inscription' + (d.mineur ? ' de ' + m.full_name : '') + ' à Maître Akesse Model Management est validée. ' +
-      'Pour créer ' + (d.mineur ? 'son' : 'votre') + ' espace mannequin, ouvrez ' + SITE + '/espace-mannequin.html, choisissez « Créer mon compte » et entrez ce code personnel : ' + code.code +
-      '\n\nIl ne sert qu’une fois et reste valable jusqu’au ' + P.dateHeure(code.expire_le) + '.\n\nL’équipe Maître Akesse Model Management';
-    const wa = lienWhatsApp(d.tel, texte);
+    const wa = messageCodeEspace(m, code).wa;
     return '<div class="carte">' + titre + '<p><b id="code-espace-texte" style="font-size:20px;letter-spacing:1px">' + P.esc(code.code) + '</b></p>' +
       '<p class="doux petit-texte">Valable jusqu’au ' + P.dateHeure(code.expire_le) + ', une seule fois. Il disparaîtra dès que le compte sera créé.</p>' +
-      '<div class="ligne"><button class="btn" type="button" data-action="code-espace-copier">Copier</button>' +
+      '<div class="ligne"><button class="btn" type="button" data-action="code-espace-copier" data-code="' + P.esc(code.code) + '">Copier</button>' +
       (wa ? '<a class="btn rouge" id="code-espace-whatsapp" target="_blank" rel="noopener" href="' + P.esc(wa) + '">Envoyer par WhatsApp</a>' : '') +
       '<button class="btn" type="button" data-action="code-espace" data-id="' + m.id + '">Générer un nouveau code</button></div></div>';
   }
   P.actions['code-espace'] = async (el) => {
-    if (el.textContent.indexOf('nouveau') !== -1 && !confirm('Générer un nouveau code ? L’ancien ne marchera plus.')) return;
+    if (/nouveau/i.test(el.textContent) && !confirm('Générer un nouveau code ? L’ancien ne marchera plus.')) return;
     try {
       await P.rpc('code_espace_creer', { p_mannequin: el.getAttribute('data-id') });
       P.message('Code de l’espace créé : envoyez-le au mannequin.');
@@ -201,7 +205,7 @@
     } catch (e) { P.message(P.erreurTexte(e)); }
   };
   P.actions['code-espace-copier'] = (el) => {
-    const texte = document.getElementById('code-espace-texte').textContent;
+    const texte = el.getAttribute('data-code') || document.getElementById('code-espace-texte').textContent;
     navigator.clipboard.writeText(texte).then(() => { el.textContent = 'Copié !'; }, () => { el.textContent = 'Sélectionnez le code pour le copier'; });
   };
 
@@ -410,6 +414,41 @@
     fileWhatsApp(type === 'relance5' ? 'Dernière relance — WhatsApp' : 'Relance du 3 — WhatsApp',
       e.actifs.filter((m) => e.appele(m) && ['a_payer', 'non_paye'].includes(e.etat(m))), type);
   };
+
+  // ---------- Codes de l'espace mannequin (cahier V3, 7.2) ----------
+  // Tous les mannequins sans compte sur le site, au même endroit : qui a payé son inscription, qui a un code,
+  // lequel expire. Générer, copier, envoyer par WhatsApp (au parent si mineur), sans ouvrir chaque fiche.
+  // Origine : « Casting en ligne » (candidature du site) ou « Ajouté par l'agence » (casting direct, registre).
+  async function codesEspace() {
+    const [mannequins, paiements, codes] = await Promise.all([
+      P.bd(sb.from('agence_mannequins').select('*').eq('statut', 'actif').order('full_name')),
+      P.bd(sb.from('paiements_mannequins').select('mannequin_id').eq('objet', 'inscription').eq('statut', 'valide')),
+      P.bd(sb.from('codes_espace').select('*').eq('annule', false).is('utilise_le', null).order('cree_le', { ascending: false })).catch(() => [])
+    ]);
+    const payes = new Set(paiements.map((x) => x.mannequin_id));
+    const sansCompte = mannequins.filter((m) => !m.user_id);
+    const lignes = sansCompte.map((m) => {
+      const code = codes.find((c) => c.mannequin_id === m.id && !c.annule && !c.utilise_le) || null, valable = !!(code && new Date(code.expire_le) > new Date());
+      const etat = !payes.has(m.id) ? 'non_paye' : valable ? 'actif' : code ? 'expire' : 'a_generer';
+      return { m, code, etat, origine: m.candidature_id ? 'Casting en ligne' : 'Ajouté par l’agence' };
+    });
+    const ordre = { a_generer: 0, expire: 1, actif: 2, non_paye: 3 };
+    lignes.sort((a, b) => ordre[a.etat] - ordre[b.etat]);
+    const ETAT = { a_generer: ['Code à générer', 'alerte'], expire: ['Code expiré', 'erreur'], actif: ['Code actif', 'ok'], non_paye: ['Inscription non payée', 'neutre'] };
+    return P.entete('Codes de l’espace mannequin') +
+      '<div class="note info">Le code (ESP-…) permet au mannequin de créer son espace avec son e-mail et son mot de passe ; ses informations du casting sont alors reprises. Il ne sert qu’une fois et reste valable 7 jours. Il ne se génère qu’après une inscription payée et validée.</div>' +
+      '<div class="grille chiffres">' + P.chiffre('À générer', lignes.filter((x) => x.etat === 'a_generer').length, 'orange') + P.chiffre('Actifs', lignes.filter((x) => x.etat === 'actif').length, 'vert') +
+      P.chiffre('Expirés', lignes.filter((x) => x.etat === 'expire').length, 'rouge') + '</div>' +
+      '<div class="carte">' + (lignes.length ? P.tableau(['Mannequin', 'Origine', 'Destinataire', 'État', 'Code', ''], lignes.map((x) => {
+        const d = destinataire(x.m), actif = x.etat === 'actif', wa = actif ? messageCodeEspace(x.m, x.code).wa : null;
+        return '<tr><td><a href="#/paiements/fiche/' + x.m.id + '"><b>' + P.esc(x.m.full_name) + '</b></a></td><td>' + P.esc(x.origine) + '</td><td>' + P.esc(d.mineur ? d.nom + ' (parent)' : d.nom) + '</td>' +
+          '<td>' + P.pastille(ETAT[x.etat][0], ETAT[x.etat][1]) + (actif ? '<div class="petit-texte doux">jusqu’au ' + P.esc(P.dateHeure(x.code.expire_le)) + '</div>' : '') + '</td>' +
+          '<td>' + (actif ? '<b style="letter-spacing:1px">' + P.esc(x.code.code) + '</b>' : '—') + '</td>' +
+          '<td><div class="ligne">' + (x.etat === 'non_paye' ? '<a class="btn petit" href="#/paiements/fiche/' + x.m.id + '">Voir la fiche</a>'
+            : actif ? '<button class="btn petit" type="button" data-action="code-espace-copier" data-code="' + P.esc(x.code.code) + '">Copier</button>' + (wa ? '<a class="btn petit rouge" target="_blank" rel="noopener" href="' + P.esc(wa) + '">WhatsApp</a>' : '<span class="doux petit-texte">pas de numéro</span>') + '<button class="btn petit" type="button" data-action="code-espace" data-id="' + x.m.id + '">Nouveau code</button>'
+            : '<button class="btn petit rouge" type="button" data-action="code-espace" data-id="' + x.m.id + '">Générer le code</button>') + '</div></td></tr>';
+      })) : '<p class="doux">Tous les mannequins actifs ont déjà leur espace.</p>') + '</div>';
+  }
 
   // ---------- Tableau du mois (cahier V3, 7.2) ----------
   // Page d'accueil de l'espace : attendu, validé, en attente, non payé, taux de recouvrement,
@@ -701,8 +740,8 @@
   };
 
   P.espaces.paiements = {
-    nav: [['tableau', 'Tableau du mois'], ['matrice', 'Matrice mannequins × mois'], ['recapitulatif', 'Récapitulatif de fin de mois'], ['messages', 'Messages et relances'], ['parametres', 'Paramètres'], ['a-valider', 'Paiements à valider'], ['mensualites', 'Mensualités du mois'], ['registre', 'Registre des mannequins'], ['ajouter', 'Ajouter un mannequin']],
-    pages: { tableau: tableauDuMois, matrice, recapitulatif, messages, parametres, 'a-valider': aValider, mensualites, registre, ajouter, fiche },
+    nav: [['tableau', 'Tableau du mois'], ['matrice', 'Matrice mannequins × mois'], ['recapitulatif', 'Récapitulatif de fin de mois'], ['messages', 'Messages et relances'], ['codes', 'Codes de l’espace mannequin'], ['parametres', 'Paramètres'], ['a-valider', 'Paiements à valider'], ['mensualites', 'Mensualités du mois'], ['registre', 'Registre des mannequins'], ['ajouter', 'Ajouter un mannequin']],
+    pages: { tableau: tableauDuMois, matrice, recapitulatif, messages, codes: codesEspace, parametres, 'a-valider': aValider, mensualites, registre, ajouter, fiche },
     compteur: {},
     // nombre de paiements en attente, affiché dans le menu
     avant: async () => {
