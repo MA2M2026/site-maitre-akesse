@@ -206,3 +206,7 @@ details summary { cursor: pointer; font-weight: 700; }
 .contenu:has(#cadre-ancien) { padding: 0; gap: 0; }
 .cadre-ancien { display: block; width: 100%; border: 0; background: var(--fond); min-height: calc(100vh - 34px); height: calc(100vh - 34px); }
 @media (max-width: 860px) { .cadre-ancien { min-height: calc(100vh - 56px); height: calc(100vh - 56px); } }
+
+/* Tableau du mois (espace 2) : mannequin non payé après le 5 = ligne rouge pâle */
+.tableau tr.ligne-retard td { background: #FBE3E3; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tableau tr.ligne-retard td { background: #3A1A1A; } }

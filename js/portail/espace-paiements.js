@@ -370,9 +370,50 @@
       e.actifs.filter((m) => e.appele(m) && ['a_payer', 'non_paye'].includes(e.etat(m))), type);
   };
 
+  // ---------- Tableau du mois (cahier V3, 7.2) ----------
+  // Page d'accueil de l'espace : attendu, validé, en attente, non payé, taux de recouvrement,
+  // puis une ligne par mannequin actif (lignes non payées en rouge pâle). Même règle de statut que
+  // « Mensualités du mois » : non payé seulement après le 5.
+  async function tableauDuMois() {
+    const mois = moisCourant();
+    const [actifs, paiements] = await Promise.all([
+      P.bd(sb.from('agence_mannequins').select('*').eq('statut', 'actif').order('full_name')),
+      P.bd(sb.from('paiements_mannequins').select('id, mannequin_id, statut, montant').eq('objet', 'mensualite').eq('mois', mois).neq('statut', 'refuse'))
+    ]);
+    const jour = new Date().getDate();
+    const filtre = P.etat.filtreTableau || 'tous';
+    const lignes = actifs.map((m) => {
+      const p = paiements.find((x) => x.mannequin_id === m.id);
+      const e = p ? (p.statut === 'valide' ? 'paye' : 'attente') : jour > 5 ? 'non_paye' : 'a_payer';
+      const mineur = P.age(m.date_naissance) !== null && P.age(m.date_naissance) < 18;
+      return { m, e, montant: m.mensualite || 0, inscrit: !!m.user_id, destinataire: mineur && m.parent_nom ? m.parent_nom + ' (parent)' : m.full_name };
+    });
+    const somme = (l) => l.reduce((t, x) => t + x.montant, 0);
+    const attendu = somme(lignes), valide = somme(lignes.filter((x) => x.e === 'paye')), attente = somme(lignes.filter((x) => x.e === 'attente'));
+    const nonPaye = somme(lignes.filter((x) => x.e === 'non_paye')), aPayer = somme(lignes.filter((x) => x.e === 'a_payer'));
+    const taux = attendu ? Math.round(valide * 100 / attendu) : 0;
+    const nb = (e) => lignes.filter((x) => x.e === e).length;
+    const montrees = lignes.filter((x) => filtre === 'tous' || (filtre === 'inscrits' ? x.inscrit : !x.inscrit));
+    const FILTRES_GROUPE = [['tous', 'Tous'], ['inscrits', 'Inscrits sur le site'], ['non_inscrits', 'Non inscrits']];
+    return P.entete('Tableau du mois · ' + libelleMois(mois)) +
+      '<div class="grille chiffres">' + P.chiffre('Attendu', P.fcfa(attendu)) + P.chiffre('Validé', P.fcfa(valide), 'vert') +
+      P.chiffre('En attente de validation', P.fcfa(attente), 'orange') + P.chiffre(jour > 5 ? 'Non payé' : 'À payer avant le 5', P.fcfa(nonPaye + aPayer), 'rouge') +
+      P.chiffre('Taux de recouvrement', taux + ' %') + '</div>' +
+      '<div class="ligne">' + P.pastille('À jour : ' + nb('paye'), 'ok') + P.pastille('Preuve reçue : ' + nb('attente'), 'alerte') +
+      P.pastille('Non payé : ' + (nb('non_paye') + nb('a_payer')), 'erreur') + '</div>' +
+      '<div class="segments" role="group" aria-label="Groupe">' + FILTRES_GROUPE.map((f) => '<button class="btn petit' + (f[0] === filtre ? ' actif' : '') + '" type="button" data-action="tableau-filtre" data-filtre="' + f[0] + '">' + P.esc(f[1]) + '</button>').join('') + '</div>' +
+      '<div class="carte">' + (montrees.length ? P.tableau(['Mannequin', 'Groupe', 'Destinataire', '#Montant', 'Statut', 'Action'], montrees.map((x) =>
+        '<tr' + (x.e === 'non_paye' ? ' class="ligne-retard"' : '') + '><td><a href="#/paiements/fiche/' + x.m.id + '"><b>' + P.esc(x.m.full_name) + '</b></a></td>' +
+        '<td>' + (x.inscrit ? 'Inscrit sur le site' : 'Non inscrit') + '</td><td>' + P.esc(x.destinataire) + '</td><td class="nombre">' + P.fcfa(x.montant) + '</td>' +
+        '<td>' + P.pastille(ETATS[x.e][0], ETATS[x.e][1]) + '</td>' +
+        '<td>' + (x.e === 'attente' ? '<a class="btn petit" href="#/paiements/a-valider">Valider</a>' : x.e === 'paye' ? '<span class="doux">Reçu émis</span>' : '<a class="btn petit" href="#/paiements/mensualites">Relancer</a>') + '</td></tr>'))
+        : '<p class="doux">Aucun mannequin actif dans ce groupe.</p>') + '</div>';
+  }
+  P.actions['tableau-filtre'] = (el) => { P.etat.filtreTableau = el.getAttribute('data-filtre'); P.afficher(); };
+
   P.espaces.paiements = {
-    nav: [['a-valider', 'Paiements à valider'], ['mensualites', 'Mensualités du mois'], ['registre', 'Registre des mannequins'], ['ajouter', 'Ajouter un mannequin']],
-    pages: { 'a-valider': aValider, mensualites, registre, ajouter, fiche },
+    nav: [['tableau', 'Tableau du mois'], ['a-valider', 'Paiements à valider'], ['mensualites', 'Mensualités du mois'], ['registre', 'Registre des mannequins'], ['ajouter', 'Ajouter un mannequin']],
+    pages: { tableau: tableauDuMois, 'a-valider': aValider, mensualites, registre, ajouter, fiche },
     compteur: {},
     // nombre de paiements en attente, affiché dans le menu
     avant: async () => {
