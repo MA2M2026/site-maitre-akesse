@@ -2,8 +2,10 @@
 
 > **19/10/2026 (après-midi) — Administration v2.4, étape 1 en construction** (cahier v2.3 + mise à
 > jour v2.4 validée par la propriétaire, document confidentiel hors du dépôt). Adresse séparée
-> **admin.maitreakessemodelmanagement.com** (même projet Vercel ; redirections par hôte dans
-> `vercel.json` : `/` → `/admin/` sur l'adresse admin, `/admin/*` de www → adresse admin). Fichiers :
+> **admin.maitreakessemodelmanagement.com** (même projet Vercel ; `vercel.json` : `/` → `/admin/` sur
+> l'adresse admin). **Mise en ligne du 19/10/2026 : l'adresse admin.… n'existant pas encore chez
+> Vercel, l'Administration s'ouvre à www…/admin** (redirections www/admin → admin.… retirées,
+> `api/portail.js` ADMINISTRATION = www ; à rétablir quand l'adresse sera créée). Fichiers :
 > `admin/` (page, manifeste `id: /admin/`, service worker limité à /admin/), `css/portail.css`,
 > `js/portail/noyau.js` (connexion mot de passe + code TOTP, code à 4 chiffres par appareil,
 > verrouillage 15 min, 8 h max, menu « ☰ Menu » < 860 px), `js/portail/securite.js` (comptes,
