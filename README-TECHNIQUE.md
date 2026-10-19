@@ -56,6 +56,14 @@
 > `code_espace_valable` puis `code_espace_utiliser` (rattache le compte à sa fiche, recopie les
 > informations, consomme le code). L'ancien code permanent (`check_invite_code`) n'est plus utilisé.
 >
+> **Mensualités (cahier v2.4 §5.6-5.7, choix du 19/10/2026)** : espace 2 « Mensualités du mois »
+> (actifs cochés, `mensualites_appeler`, e-mail EmailJS + file WhatsApp), relances du 3 et du 5 :
+> tâche planifiée Vercel (`vercel.json` « crons » → GET `/api/portail`, `mensualites_relances`,
+> e-mail EmailJS côté serveur : variables `EMAILJS_PRIVATE_KEY` et, conseillé, `CRON_SECRET` ; sans
+> clé, rien ne part et c'est noté au journal). Textes communs : `js/messages-mensualites.js`
+> (navigateur + serveur). Mannequin : `mes-paiements.html` (`mes_mensualites`, 24 mois,
+> `mensualite_declarer`). Fiche du registre : mensualité reçue par l'agence (Wave hors site, espèces).
+>
 > Codes de secours : affichés à la première activation de la double authentification, et
 > refaits à la demande dans Sécurité › « Mes codes de secours » (code récent demandé ; les
 > anciens sont annulés). Ajouté le 19/10/2026 : un compte dont la double authentification

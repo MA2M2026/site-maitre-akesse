@@ -696,6 +696,8 @@ function header(rightLabel){
   return '<div class="top">'+WORDMARK_HTML+
     '<div class="top-right">' +
       '<div class="espace-tag">' + (rightLabel||'Mon espace mannequin') + '<b>' + echapperHtml(state.identite.nomComplet||'').trim() + '</b></div>' +
+      // mensualités de formation : 24 mois, Wave puis « J'ai payé » (cahier v2.4, 5.7)
+      '<a href="mes-paiements.html" class="btn-pill">Mes paiements</a>' +
       '<a href="index.html" class="btn-pill">Retour au site</a>' +
       '<button type="button" class="btn-pill" data-deconnexion="1">Se déconnecter</button>' +
     '</div></div>';

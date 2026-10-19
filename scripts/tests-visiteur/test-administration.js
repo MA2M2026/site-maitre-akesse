@@ -98,7 +98,7 @@ function donnees(role) {
     }
     await p.setViewportSize(ecran);
     // chaque espace et chaque page de la sécurité s'ouvre
-    const pages = { paiements: ['a-valider', 'registre', 'ajouter'], compta: ['accueil'], securite: ['comptes', 'delegations', 'appareils', 'journal', 'codes'] };
+    const pages = { paiements: ['a-valider', 'mensualites', 'registre', 'ajouter'], compta: ['accueil'], securite: ['comptes', 'delegations', 'appareils', 'journal', 'codes'] };
     for (const [esp, liste] of Object.entries(pages)) {
       for (const pg of liste) {
         await p.goto(url + '#/' + esp + '/' + pg); await p.waitForSelector('.contenu h1, .contenu .carte h2', { timeout: 6000 }).catch(() => {});
@@ -401,6 +401,20 @@ function donnees(role) {
       pr.once('dialog', (dl) => dl.accept());
       await pr.click('[data-action="code-espace"]'); await pr.waitForTimeout(800);
       ok(r.journal.some((j) => j[0] === 'rpc' && j[1] === 'code_espace_creer' && /"p_mannequin":"r4"/.test(j[2])), nomEcran + ' (' + role + ') : « Générer un nouveau code » → créé par la base');
+      // mensualités du mois (cahier v2.4, 5.6) : actifs cochés, appel envoyé, WhatsApp prêt
+      r.d.tables.mensualites_appels = [];
+      r.d.rpc.mensualites_appeler = (x) => x.p_ids.map((id) => ({ id, nom: id === 'r2' ? 'KONÉ AWA' : 'X', telephone: '0707070707', email: 'awa@test.ci', mensualite: 10000 }));
+      await pr.goto(url + '#/paiements/mensualites'); await pr.waitForSelector('form[data-form="mensualites-appel"]', { timeout: 6000 }).catch(() => {});
+      const coches = await pr.$$eval('input[name="ids"]:checked', (l) => l.map((x) => x.value));
+      ok(coches.includes('r2') && !coches.includes('r3'), nomEcran + ' (' + role + ') : appel du mois — actifs non payés cochés, ceux en attente de validation non');
+      await pr.uncheck('input[name="ids"][value="r1"]').catch(() => {});
+      pr.once('dialog', (dl) => dl.accept());
+      await pr.click('form[data-form="mensualites-appel"] [type=submit]'); await pr.waitForSelector('#fenetre a[href^="https://wa.me/"]', { timeout: 6000 }).catch(() => {});
+      const appelMois = r.journal.find((j) => j[0] === 'rpc' && j[1] === 'mensualites_appeler');
+      ok(appelMois && JSON.parse(appelMois[2]).p_ids.includes('r2') && !JSON.parse(appelMois[2]).p_ids.includes('r1'), nomEcran + ' : seules les personnes cochées sont appelées');
+      const waAppel = decodeURIComponent((await pr.getAttribute('#fenetre a[href^="https://wa.me/"]', 'href').catch(() => '')) || '');
+      ok(/est à régler avant le 5/.test(waAppel) && r.journal.some((j) => j[0] === 'EMAIL' && /est à régler avant le 5/.test(j[1])), nomEcran + ' (' + role + ') : appel envoyé par e-mail, WhatsApp prêt');
+      await pr.click('#fenetre [data-action="fermer-fenetre"]').catch(() => {});
       // fiche d'un compte du site : aucun bouton de paiement d'inscription, aucun code
       await pr.goto(url + '#/paiements/fiche/r1'); await pr.waitForSelector('.carte h2', { timeout: 6000 }).catch(() => {});
       ok(/Inscription déjà effectuée sur le site/.test(await texte(pr)) && !(await pr.isVisible('[data-action="registre-inscription"]')) && !(await pr.$$eval('.contenu h2', (l) => l.some((h) => /Code de l’espace/.test(h.textContent)))), nomEcran + ' (' + role + ') : compte du site → « Inscription déjà effectuée sur le site »');
