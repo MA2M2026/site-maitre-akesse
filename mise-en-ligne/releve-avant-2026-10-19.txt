@@ -1,0 +1,16 @@
+Relevé du nombre de lignes AVANT la mise à jour (19/10/2026, envoyé par la propriétaire)
+actualite_partenaires=1 actualite_photos=21 actualites=10 admin_securite=1 admins=1 agenda_projets=4
+bandeau_annonce=1 blocages_connexion=17 boutique_billets=0 boutique_categories=11 boutique_commandes=0
+boutique_compteurs=0 boutique_journal=0 boutique_lignes=0 boutique_photos=0 boutique_produits=0
+boutique_reglages=1 boutique_variantes=0 boutique_zones_livraison=0 candidats=0 casting_applications=15
+casting_photos=10 casting_projets=0 cle_sauvegarde_photos=1 code_portail_mannequin=1 codes_inscription=8
+connexion_liste_blanche=0 connexion_reglages=5 connexion_tentatives_compte=53 connexion_tentatives_ip=59
+contacts_parents=2 contenu_a_la_une=0 debug_journal_validation_publication=348 demandes_casting=0
+evenement_photos=61 evenements=3 fiche_evenement=18 inscriptions=0 inscriptions_mannequins=2
+inscriptions_photos=0 instagram_config=1 instagram_posts_cache=1 invite_codes=1 journal_erreurs=109
+mannequins_officiels=0 messages_contact=1 model_photos=424 model_profiles=28 model_projects=58
+mot_responsable=1 notifications_journal=24 notifications_reglages=6 page_views=7207 partenaires=5
+photo_likes=52 photos_upload_echouees=6 push_abonnements=3 recruiter_request_models=0 recruiter_requests=0
+reglages_site=2 revues_book=0 soumissions_formulaires_publics=8 soumissions_formulaires_publics_ip=8
+tentatives_code_validation_admin=1 tentatives_verification_code=2 tentatives_verification_code_portail=1
+whatsapp_evenements=0
