@@ -346,7 +346,10 @@ insert into portail_reglages (id) values (true) on conflict (id) do nothing;
 -- durée de la formation (calendrier des mois dans « Mes paiements ») et validité du code
 -- personnel de l'espace mannequin (18/10/2026)
 alter table portail_reglages add column if not exists duree_formation_mois int not null default 24 check (duree_formation_mois between 1 and 120);
-alter table portail_reglages add column if not exists validite_code_espace_jours int not null default 60 check (validite_code_espace_jours between 1 and 365);
+alter table portail_reglages add column if not exists validite_code_espace_jours int not null default 7 check (validite_code_espace_jours between 1 and 365);
+-- une semaine (décision de la propriétaire, 19/10/2026) ; l'ancienne valeur par défaut (60) est remplacée
+alter table portail_reglages alter column validite_code_espace_jours set default 7;
+update portail_reglages set validite_code_espace_jours = 7 where validite_code_espace_jours = 60;
 
 create table if not exists agence_mannequins (
   id uuid primary key default gen_random_uuid(),
@@ -1252,6 +1255,84 @@ end;
 $$;
 grant execute on function portail_message_echeance(uuid, text) to authenticated;
 
+-- Messages par sélection (cahier 7.5) : personnes cochées, envoi groupé ou individuel, immédiat
+-- ou planifié, groupes enregistrés (ex. « Formation mensuelle »)
+create table if not exists message_groupes (
+  id uuid primary key default gen_random_uuid(),
+  nom text not null unique,
+  membres uuid[] not null default '{}',
+  cree_par uuid default auth.uid(),
+  cree_le timestamptz not null default now()
+);
+create table if not exists message_planifies (
+  id uuid primary key default gen_random_uuid(),
+  mannequins uuid[] not null,
+  modele text not null,
+  mois date not null,
+  envoi_le date not null,
+  statut text not null default 'prevu' check (statut in ('prevu', 'fait', 'annule')),
+  resultat jsonb,
+  cree_par uuid default auth.uid(),
+  cree_le timestamptz not null default now()
+);
+alter table message_groupes enable row level security;
+alter table message_planifies enable row level security;
+revoke all on message_groupes, message_planifies from anon;
+drop policy if exists message_groupes_paiements on message_groupes;
+create policy message_groupes_paiements on message_groupes for all using (portail_peut('paiements')) with check (portail_peut('paiements'));
+drop policy if exists message_planifies_lecture on message_planifies;
+create policy message_planifies_lecture on message_planifies for select using (portail_peut('paiements'));
+drop policy if exists message_planifies_annuler on message_planifies;
+create policy message_planifies_annuler on message_planifies for update using (portail_peut('paiements')) with check (portail_peut('paiements') and statut = 'annule');
+
+-- Prépare le modèle pour chaque mannequin choisi, sur son échéance du mois (mensualité d'abord).
+-- Sans échéance ce mois-là : compté à part (les variables {montant}, {date_limite} en dépendent).
+create or replace function message_preparer_selection(p_mannequins uuid[], p_modele text, p_mois date)
+returns json language plpgsql security definer set search_path = public as $$
+declare
+  mid uuid;
+  eid uuid;
+  ok int := 0;
+  sans int := 0;
+  messages int := 0;
+begin
+  foreach mid in array coalesce(p_mannequins, '{}') loop
+    -- seulement une échéance encore à payer : personne déjà à jour (payée, déclarée, exonérée)
+    -- ne reçoit jamais un appel ou une relance (relecture du 19/10/2026)
+    select id into eid from fee_dues
+    where mannequin_id = mid and mois = date_trunc('month', p_mois)::date and statut in ('a_payer', 'refusee', 'non_paye')
+    order by (type = 'mensualite') desc, cree_le desc limit 1;
+    if eid is null then sans := sans + 1; continue; end if;
+    messages := messages + portail_preparer_message(eid, p_modele);
+    ok := ok + 1;
+  end loop;
+  return json_build_object('personnes', ok, 'sans_echeance', sans, 'messages', messages);  -- sans_echeance : rien à payer ce mois-ci
+end;
+$$;
+revoke all on function message_preparer_selection(uuid[], text, date) from public, anon, authenticated;
+
+create or replace function portail_message_selection(p_mannequins uuid[], p_modele text, p_mois date, p_envoi_le date default null)
+returns json language plpgsql security definer set search_path = public as $$
+declare
+  r json;
+begin
+  if not portail_peut('paiements') then raise exception 'Accès refusé.'; end if;
+  if not exists (select 1 from message_templates where code = p_modele) then raise exception 'Modèle inconnu.'; end if;
+  if coalesce(array_length(p_mannequins, 1), 0) = 0 then raise exception 'Cochez au moins une personne.'; end if;
+  if array_length(p_mannequins, 1) > 1000 then raise exception 'Trop de personnes en une fois.'; end if;
+  if p_envoi_le is not null and p_envoi_le > (now() at time zone 'Africa/Abidjan')::date then
+    insert into message_planifies (mannequins, modele, mois, envoi_le) values (p_mannequins, p_modele, date_trunc('month', p_mois)::date, p_envoi_le);
+    perform journaliser('Message planifié', 'message_planifies', p_modele, null, json_build_object('personnes', array_length(p_mannequins, 1), 'le', p_envoi_le)::jsonb);
+    return json_build_object('planifie', true, 'envoi_le', p_envoi_le, 'personnes', array_length(p_mannequins, 1));
+  end if;
+  r := message_preparer_selection(p_mannequins, p_modele, p_mois);
+  perform journaliser('Messages préparés', 'message_log', p_modele, null, r::jsonb);
+  return r;
+end;
+$$;
+revoke all on function portail_message_selection(uuid[], text, date, date) from public, anon;
+grant execute on function portail_message_selection(uuid[], text, date, date) to authenticated;
+
 -- Réglages des paiements : administrateur principal, avec un code récent
 create or replace function portail_modifier_reglages(p_reglages jsonb)
 returns void language plpgsql security definer set search_path = public as $$
@@ -1424,6 +1505,10 @@ begin
   if j = (date_trunc('month', j) + interval '1 month - 1 day')::date then
     perform portail_figer_recap(v_mois);
   end if;
+  -- messages planifiés pour aujourd'hui (ou oubliés) : préparés à 6 h
+  for e in select * from message_planifies where statut = 'prevu' and envoi_le <= j loop
+    update message_planifies set statut = 'fait', resultat = message_preparer_selection(e.mannequins, e.modele, e.mois)::jsonb where id = e.id;
+  end loop;
   return json_build_object('jour', j, 'echeances', creees, 'relances', relances, 'non_payes', impayes);
 end;
 $$;
@@ -1558,6 +1643,8 @@ begin
   if not (portail_peut('site') or portail_peut('paiements')) then raise exception 'Accès refusé.'; end if;
   select * into c from casting_applications where id = p_candidature;
   if c.id is null then raise exception 'Candidature introuvable.'; end if;
+  -- seulement pour une personne retenue (décision de la propriétaire, 19/10/2026)
+  if c.status <> 'retenue' then raise exception 'Passez d''abord la candidature en « Retenue » pour générer son code.'; end if;
   select * into r from portail_reglages limit 1;
   if c.date_naissance is null then raise exception 'Date de naissance manquante sur la candidature.'; end if;
   if age(current_date, c.date_naissance) < make_interval(years => r.age_majorite)
@@ -1571,7 +1658,6 @@ begin
   update registration_codes set statut = 'annule' where candidature_id = c.id and statut in ('genere', 'bloque', 'expire');
   insert into registration_codes (candidature_id, code_hache, indice, expire_le, cree_par)
   values (c.id, encode(digest(code, 'sha256'), 'hex'), substr(brut, 5, 2), now() + make_interval(days => r.validite_code_jours), auth.uid());
-  update casting_applications set status = 'retenue' where id = c.id and status <> 'inscrite';
   return code;
 end;
 $$;
@@ -1701,6 +1787,8 @@ begin
   values (trim(p_nom), '', trim(p_telephone), p_naissance, nullif(trim(p_parent_nom), ''), nullif(trim(p_parent_tel), ''),
           p_genre, 'retenue', 'direct', nullif(trim(p_lieu), ''), 'agence')
   returning id into cid;
+  -- (un déclencheur remet toute nouvelle candidature à « nouvelle » : on la retient ensuite)
+  update casting_applications set status = 'retenue' where id = cid;
   return json_build_object('candidature', cid, 'code', generer_code_inscription(cid), 'doublon_possible', doublon);
 end;
 $$;
@@ -1712,7 +1800,8 @@ begin
   if not (portail_peut('site') or portail_peut('paiements')) then raise exception 'Accès refusé.'; end if;
   if p_statut not in ('nouvelle', 'vue', 'en étude', 'en attente', 'retenue', 'refusée') then raise exception 'Statut inconnu.'; end if;
   update casting_applications set status = p_statut where id = p_id and status <> 'inscrite';
-  if p_statut = 'refusée' then
+  -- plus « Retenue » : le code d'inscription déjà donné ne sert plus (19/10/2026)
+  if p_statut <> 'retenue' then
     update registration_codes set statut = 'annule' where candidature_id = p_id and statut in ('genere', 'bloque');
   end if;
 end;

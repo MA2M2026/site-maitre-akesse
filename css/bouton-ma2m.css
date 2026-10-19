@@ -88,10 +88,11 @@
   }
 
   /* Bouton « choisi » (filtre actif, onglet ouvert, page en cours, jour sélectionné) : même rouge,
-     avec un liseré blanc intérieur pour qu'on voie lequel est choisi. */
+     entouré d'un liseré pour qu'on voie lequel est choisi. */
   :is(button, .btn, .filtre-btn, .filtre-pill, .tuile, [role="button"]):is(.actif, .active, .choisi, [aria-pressed="true"], [aria-selected="true"], [aria-current="page"], [aria-current="true"]):not(.cliquable, [data-bouton-libre]) {
     background: var(--rouge-ma2m-survol) !important;
-    box-shadow: inset 0 0 0 3px #fff, 0 0 0 2px var(--rouge-ma2m) !important;
+    /* liseré AUTOUR du bouton (19/10/2026 : à l'intérieur, il mordait sur le texte) */
+    box-shadow: 0 0 0 3px var(--fond, #fff), 0 0 0 5px var(--rouge-ma2m) !important;
   }
   /* Étape pas encore ouverte : plus pâle mais toujours rouge (les jours passés du calendrier
      restent rouge plein : un rouge pâli rendrait le chiffre blanc illisible) */

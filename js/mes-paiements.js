@@ -89,7 +89,6 @@
       bandeau(courante, donnees.jour_limite) +
       ech.filter((e) => ['a_payer', 'refusee', 'non_paye'].includes(e.statut)).map(carteAPayer).join('') +
       (!parLien ? calendrier(donnees.formation) : '') +
-      (parLien && donnees.echeances[0].statut === 'payee' ? '' : '') +
       ((donnees.notifications || []).length ? '<h2>Notifications</h2>' + donnees.notifications.map((n) => '<div class="mp-carte mp-notif"><div class="mp-petit">' + new Date(n.le).toLocaleDateString('fr-FR') + '</div>' + esc(n.texte) + '</div>').join('') : '') +
       (!parLien ? '<h2>Historique</h2>' + (ech.length ? ech.map((e) => '<div class="mp-ligne mp-histo"><div><b>' + esc(nomMois(e.mois)) + '</b><div class="mp-petit">' + (e.type === 'inscription' ? 'Inscription + 1er mois' : 'Mensualité') + ' · ' + fcfa(e.montant_du) + '</div>' +
         (e.recus || []).map((r, i) => '<button class="mp-lien" data-mp="recu" data-id="' + esc(e.id) + '" data-i="' + i + '">Reçu ' + esc(r.numero) + '</button>').join(' ') + '</div>' +

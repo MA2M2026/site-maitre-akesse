@@ -242,6 +242,9 @@ const DELAI_INACTIVITE_MS = 15 * 60 * 1000;
 let minuteurInactivite = null;
 function demarrerMinuteurInactivite() {
   if (minuteurInactivite) clearTimeout(minuteurInactivite);
+  // dans l'administration (js/tableau-integre.js), c'est l'administration qui gère l'inactivité :
+  // ici, une déconnexion fermerait aussi la session de l'administration (même appareil)
+  if (document.documentElement.classList.contains('tdb-integre')) return;
   minuteurInactivite = setTimeout(verrouillerParInactivite, DELAI_INACTIVITE_MS);
 }
 function arreterMinuteurInactivite() {

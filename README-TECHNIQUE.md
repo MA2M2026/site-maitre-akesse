@@ -59,13 +59,19 @@ seule fois** (décision de la propriétaire). Ce qui change par rapport aux sect
   `api/_creer-admin.js`). **Limite réelle : 11 fichiers `api/*.js` sans « _ » + `middleware.js`** —
   une 12e fonction fait échouer TOUTES les mises en ligne (05/10 et 19/10/2026) ; vérifié par
   `scripts/tests-visiteur/test-portail-serveur.js`.
-- `middleware.js` renvoie l'adresse **nue** `/tableau-de-bord(.html)` vers `/admin/`. Toute adresse
-  avec des paramètres reste sur la gestion détaillée : `?depuis=portail` (« Outils et gestion
-  détaillée », menu du tableau de bord, boutique), `?notif=…` (notifications du téléphone), liens de
-  réinitialisation, et la lecture interne de la page protégée (`?depuis=interne` — sans elle, la
-  lecture interne recevait le portail et la protection laissait tout passer : relecture du
-  19/10/2026, verrouillé par test-tableau-protege.js). Plus de bouton « Admin » sur le site
-  public ; `/admin` est exclu de `robots.txt` et porte `noindex`.
+- **L'ancien tableau de bord n'existe plus seul** (19/10/2026) : `middleware.js` renvoie toute
+  adresse `/tableau-de-bord(.html)` vers `/admin/`, sauf `?integre=1` chargé DANS un cadre
+  (en-tête `Sec-Fetch-Dest: iframe`) et la lecture interne `?depuis=interne`. Ses rubriques
+  s'ouvrent dans l'administration (menu « Administration du site », groupes Mannequins, Castings et
+  contacts, Contenu du site, Maintenance) : `js/portail/espace-site.js` (tableau `RUBRIQUES`) affiche
+  un cadre `/tableau-de-bord.html?depuis=portail&integre=1#<rubrique>` après avoir demandé la clé
+  d'accès (`api/acces-tableau.js`, double authentification du portail obligatoire pour un compte du
+  portail — l'ancien code de validation ne suffit plus, `api/code-validation-protege.js` ne donne
+  plus la clé à un compte du portail). `js/tableau-integre.js` + `css/tableau-integre.css` retirent
+  l'en-tête, le menu et le pied de l'ancien tableau de bord ; son minuteur d'inactivité est coupé
+  (celui de l'administration suffit). `vercel.json` : `frame-src 'self'` (cadre du site lui-même).
+  Notifications du téléphone → `/admin/#/site/…`. Boutique : la connexion de l'administration
+  (aal2) vaut la « vérification de sécurité ».
 - **Appareils** : le portail envoie l'identifiant de son appareil (en-tête `x-appareil`) à la base
   ET à `api/portail.js`, qui le transmet. Sans cet en-tête, `portail_role()` ne donne aucun rôle.
   Révoquer un appareil remplit `staff_profiles.sessions_valides_apres` : toutes les sessions de la
@@ -96,6 +102,24 @@ seule fois** (décision de la propriétaire). Ce qui change par rapport aux sect
   - `api/_creer-admin.js` (appelé par `api/portail.js`, action `creer_admin`) : une personne du portail autre que le principal ne crée pas de compte
     admin. Nouveaux codes de secours : code saisi il y a moins de 10 minutes.
   - Page d'inscription : « mineur » vient de la base (`candidat.mineur`, âge de majorité réglable).
+- **Registre et messages (cahier 7.1 et 7.5, 19/10/2026)** :
+  - Registre : « Mannequins de l'agence déjà sur le site » (fiches lues par `contacts_mannequins_admin`
+    et `profils_prives`, colonnes privées non lisibles directement) → registre avec la mensualité du
+    mois et l'espace relié ; import CSV (modèle téléchargeable) ; la nouvelle inscription payée en
+    espèces (25 000) est dans un volet à part. Saisie, import et reprise passent par `ajouterAuRegistre`.
+  - Messages : cases à cocher (tout le monde, inscrits, non inscrits, non payés, catégorie, groupe
+    enregistré `message_groupes`), envoi groupé ou à une personne, aperçu, envoi planifié
+    (`message_planifies`, préparé par la tâche de 6 h). `portail_message_selection` →
+    `message_preparer_selection` : seulement les échéances encore à payer (jamais une relance à une
+    personne à jour). Les e-mails de CET envoi partent aussitôt (`envoyerFile(filtre)`). Sans la
+    fonction en base, l'écran retombe sur `portail_message_echeance`.
+  - Codes : « Générer le code » seulement pour une candidature « Retenue » (refus aussi en base) ;
+    quitter « Retenue » annule le code donné. Code de l'espace mannequin valable 7 jours.
+  - Candidatures en groupes : À traiter, Retenues (par défaut), Inscrites, Refusées (archivées).
+- **Lisibilité sur photo** : `scripts/tests-visiteur/test-lisibilite-photos.js` cache chaque texte posé
+  sur une photo, capture le dessous et mesure le contraste pixel par pixel (photo sombre et à
+  rayures, toutes les pages publiques, téléphone et tablette ; `PAGES=index.html` pour aller vite) ;
+  une capture de chaque défaut va dans `captures/illisible-*.png`.
 - Rôles : principal, site (aucun montant ni contact privé), caisse (paiements), compta (totaux sans
   nom). Les droits sont dans la base (RLS + fonctions `portail_peut`, `portail_est_principal`).
 

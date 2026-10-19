@@ -179,3 +179,9 @@ details summary { cursor: pointer; font-weight: 700; }
   body { padding: 0; } .lateral, .entete .ligne, .message-ephemere { display: none !important; }
   .coque { display: block; border: 0; }
 }
+
+/* Titres de groupe dans le menu de gauche (Administration du site) */
+.sous-titre-menu { margin-top: 14px; font-size: 10px; opacity: 0.85; }
+/* Rubrique de l'ancien tableau de bord ouverte dans l'administration (19/10/2026) */
+.cadre-rubrique { width: 100%; min-height: calc(100vh - 150px); border: 1px solid var(--lignes); border-radius: 14px; background: var(--fond); }
+@media (max-width: 900px) { .cadre-rubrique { min-height: calc(100vh - 210px); } }

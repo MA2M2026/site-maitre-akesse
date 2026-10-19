@@ -60,6 +60,14 @@ function brancher(page, donnees, journal) {
         }
         let lignes = (donnees.tables[table] || []).slice();
         for (const [k, v] of url.searchParams) { if (/^eq\./.test(v)) lignes = lignes.filter(l => String(l[k]) === v.slice(3)); }
+        // or=(a.eq.x,b.ilike.y,and(c.eq.z,d.eq.w)) : conditions simples (recherche de doublons)
+        if (url.searchParams.get('or')) {
+          const morceaux = (t) => { const r = []; let n = 0, cur = ''; for (const ch of t) { if (ch === '(') n++; if (ch === ')') n--; if (ch === ',' && !n) { r.push(cur); cur = ''; } else cur += ch; } if (cur) r.push(cur); return r; };
+          const vrai = (l, c) => { if (/^and\(/.test(c)) return morceaux(c.slice(4, -1)).every((x) => vrai(l, x)); const m = c.match(/^([\w]+)\.(eq|ilike)\.(.*)$/); if (!m) return false;
+            return m[2] === 'eq' ? String(l[m[1]]) === m[3] : String(l[m[1]] || '').toLowerCase() === m[3].toLowerCase(); };
+          const conds = morceaux(url.searchParams.get('or').replace(/^\(|\)$/g, ''));
+          lignes = lignes.filter((l) => conds.some((c) => vrai(l, c)));
+        }
         if (objet) return lignes[0] ? json(lignes[0]) : json({ code: 'PGRST116', message: 'aucune ligne' }, 406);
         return json(lignes);
       }

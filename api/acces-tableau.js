@@ -30,6 +30,12 @@ module.exports = async function handler(req, res) {
       return;
     }
     const doubleAuthentification = chargeJeton(debut.jeton).aal === 'aal2';
+    // compte du portail : la double authentification du portail est obligatoire (l'ancien code
+    // de validation ne suffit plus, l'ancien tableau de bord ne s'ouvre que dans l'administration)
+    if (fiche && !doubleAuthentification) {
+      res.status(403).json({ error: 'Ouvrez cette rubrique depuis l’administration (/admin), après votre code à 6 chiffres.' });
+      return;
+    }
     if (!doubleAuthentification && !cleAccesTableauValide(req, utilisateur.id)) {
       // statut du code de validation, lu avec la session du compte lui-même
       const rep = await fetch(SUPABASE_URL + '/rest/v1/rpc/code_validation_statut', {

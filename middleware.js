@@ -221,11 +221,12 @@ async function apercuMannequin(url, anglais, idFiche) {
 export default async function middleware(requete) {
   try {
     const url = new URL(requete.url);
-    // Ancienne adresse du tableau de bord (cahier v2.3, section 6.2) : l'adresse nue mène au
-    // portail d'administration. Toute adresse avec des paramètres reste sur la gestion détaillée :
-    // portail (?depuis=portail), notifications (?notif=…), liens de réinitialisation reçus par
-    // e-mail, et la lecture interne de tableauProtege (?depuis=interne).
-    if (PAGE_TABLEAU.test(url.pathname) && !url.search) {
+    // Ancien tableau de bord (cahier v2.3, section 6.2) : il n'existe plus seul, toute adresse mène
+    // à l'administration (/admin). Ses rubriques ne s'ouvrent que DANS l'administration
+    // (?integre=1, js/tableau-integre.js) ; ?depuis=interne = lecture interne de tableauProtege.
+    // (le navigateur dit lui-même s'il ouvre la page dans un cadre : Sec-Fetch-Dest « iframe »)
+    const dansCadre = (requete.headers.get('sec-fetch-dest') || 'iframe') === 'iframe';
+    if (PAGE_TABLEAU.test(url.pathname) && !(url.searchParams.get('integre') === '1' && dansCadre) && url.searchParams.get('depuis') !== 'interne') {
       return Response.redirect(new URL('/admin/', url).toString(), 302);
     }
     if (PAGE_TABLEAU.test(url.pathname) || SCRIPTS_ADMIN.test(url.pathname)) return await tableauProtege(requete, url);

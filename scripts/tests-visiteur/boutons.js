@@ -13,6 +13,9 @@ function verifierBoutons() {
   // .nav : entrées du menu latéral du portail (un menu, comme le menu du site, pas des boutons)
   const exclu = (e) => e.closest('.nav, .cliquable, .mpg-produit, .mpg-commande, .whatsapp-flottant, [data-bouton-libre], .reseaux, .footer-social, .site-footer-reseaux');
   const visible = (e) => {
+    // dans un volet replié (<details> fermé), hors de son titre : pas affiché
+    const volet = e.closest('details:not([open])');
+    if (volet && !e.closest('summary')) return false;
     const q = e.getBoundingClientRect(); const s = getComputedStyle(e);
     return q.width > 4 && q.height > 4 && s.visibility !== 'hidden' && s.display !== 'none' && Number(s.opacity) > 0.05;
   };
@@ -34,10 +37,12 @@ function verifierBoutons() {
     if (!visible(e) || exclu(e)) continue;
     const s = getComputedStyle(e);
     const rayon = Number.parseFloat(s.borderTopLeftRadius);
-    const ok = rouge(s.backgroundColor) && s.color === 'rgb(255, 255, 255)' && rayon >= 8;
+    // le texte ne doit pas déborder du bouton (signalé par la propriétaire le 19/10/2026)
+    const deborde = e.scrollWidth > e.clientWidth + 2 || e.scrollHeight > e.clientHeight + 2;
+    const ok = rouge(s.backgroundColor) && s.color === 'rgb(255, 255, 255)' && rayon >= 8 && !deborde;
     if (!ok) {
       const nom = e.tagName.toLowerCase() + (e.id ? '#' + e.id : '') + [...e.classList].map((c) => '.' + c).join('');
-      mauvais.push({ element: nom, texte: (e.innerText || e.value || e.getAttribute('aria-label') || '').trim().replace(/\s+/g, ' ').slice(0, 30), fond: s.backgroundColor, couleur: s.color, rayon: s.borderTopLeftRadius });
+      mauvais.push({ deborde, element: nom, texte: (e.innerText || e.value || e.getAttribute('aria-label') || '').trim().replace(/\s+/g, ' ').slice(0, 30), fond: s.backgroundColor, couleur: s.color, rayon: s.borderTopLeftRadius });
     }
   }
   return mauvais;

@@ -181,7 +181,7 @@
     try {
       const anciens = await P.bd(sb.auth.mfa.listFactors());
       for (const x of (anciens.all || []).filter((y) => y.status !== 'verified')) await sb.auth.mfa.unenroll({ factorId: x.id });
-      const r = await P.bd(sb.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Portail MA2M ' + new Date().toISOString().slice(0, 10) }));
+      const r = await P.bd(sb.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Administration MA2M ' + new Date().toISOString().slice(0, 10) }));
       P.etat.facteurEnCours = r.id;
       document.getElementById('qr-zone').innerHTML = '<img class="qr" alt="Code QR à scanner avec l’application d’authentification" src="' + P.esc(r.totp.qr_code) + '">' +
         '<details><summary class="petit-texte">Impossible de scanner ?</summary><p class="petit-texte">Saisissez cette clé dans l’application : <b style="word-break:break-all">' + P.esc(r.totp.secret) + '</b></p></details>';
@@ -199,10 +199,10 @@
         '<button class="btn rouge" data-action="fermer-fenetre-demarrer">Je les ai notés</button>');
     } catch (e) {
       ecranConnexion('inscrire-code', 'Code incorrect. Vérifiez l’heure du téléphone puis réessayez.');
-      preparerInscriptionCode();
+      preparerInscriptionCode().catch((e) => P.message(P.erreurTexte(e)));
     }
   };
-  P.actions['fermer-fenetre-demarrer'] = () => { P.fenetre(''); demarrer(); };
+  P.actions['fermer-fenetre-demarrer'] = () => { P.fenetre(''); return demarrer(); };
   P.formulaires['nouveau-mdp'] = async (f) => {
     const m1 = String(f.get('m1')), m2 = String(f.get('m2'));
     if (m1 !== m2) return ecranConnexion('nouveau-mdp', 'Les deux mots de passe ne sont pas identiques.');
@@ -306,7 +306,7 @@
       location.hash = '#/' + permis[0] + '/' + P.espaces[permis[0]].nav[0][0];
       return;
     }
-    afficher();
+    afficher().catch((e) => P.message(P.erreurTexte(e)));
   }
   // Alerte de connexion depuis un nouvel appareil : e-mail à la personne et à l'administrateur principal
   function alerteNouvelAppareil(a) {
@@ -342,7 +342,8 @@
   // ---------- coque et pages ----------
   P.coque = (module, page, html) => {
     const esp = P.espaces[module];
-    const nav = esp.nav.filter((n) => !n[2] || n[2]()).map((n) =>
+    // une entrée sans adresse (null) est un titre de groupe dans le menu
+    const nav = esp.nav.filter((n) => !n[2] || n[2]()).map((n) => !n[0] ? '<div class="titre-menu sous-titre-menu">' + P.esc(n[1]) + '</div>' :
       '<a class="nav' + (n[0] === page ? ' actif' : '') + '" href="#/' + module + '/' + n[0] + '"' + (n[0] === page ? ' aria-current="page"' : '') + '><span>' + P.esc(n[1]) + '</span>' +
       (esp.compteur && esp.compteur[n[0]] ? '<span class="compteur">' + esp.compteur[n[0]] + '</span>' : '') + '</a>').join('');
     return '<div class="coque"><nav class="lateral" aria-label="' + P.esc(ESPACES[module]) + '"><div class="marque">M A 2 M<small>Maître Akesse Model Management</small></div>' +
@@ -385,7 +386,7 @@
     if (!module) { app().innerHTML = vuePortail(); return; }
     const esp = P.espaces[module];
     if (!esp) { location.hash = '#/'; return; }
-    const pageValide = esp.pages[page] ? page : esp.nav[0][0];
+    const pageValide = esp.pages[page] ? page : esp.nav.find((n) => n[0])[0];
     const autorise = module === 'securite' ? P.moi.role === 'principal' : P.moi.espaces[module];
     if (!autorise) { app().innerHTML = P.coque(module, pageValide, P.refuse()); return; }
     app().innerHTML = P.coque(module, pageValide, '<div class="chargement">Chargement…</div>');
@@ -429,7 +430,7 @@
     const f = P.changements[el.getAttribute('data-change')];
     if (f) Promise.resolve(f(el, e)).catch((err) => P.message(P.erreurTexte(err)));
   });
-  addEventListener('hashchange', () => { if (P.moi && P.moi.role) afficher(); });
+  addEventListener('hashchange', () => { if (P.moi && P.moi.role) afficher().catch((e) => P.message(P.erreurTexte(e))); });
 
   // ---------- application installable ----------
   addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); P.installation = e; });

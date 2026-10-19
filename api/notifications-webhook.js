@@ -36,14 +36,14 @@ function construireNotification(table, record) {
         cle: 'evenement_candidature_casting',
         titre: '📸 Nouvelle candidature casting',
         texte: (record.full_name || 'Candidat') + (record.projet_nom ? ' — ' + record.projet_nom : ''),
-        url: '/tableau-de-bord.html?notif=candidature&id=' + record.id
+        url: '/admin/#/site/fiches-candidatures'
       };
     }
     return {
       cle: 'evenement_integration_agence',
       titre: "⭐ Nouvelle demande d'intégration",
       texte: record.full_name || 'Candidat',
-      url: '/tableau-de-bord.html?notif=candidature&id=' + record.id
+      url: '/admin/#/site/fiches-candidatures'
     };
   }
   if (table === 'recruiter_requests') {
@@ -52,7 +52,7 @@ function construireNotification(table, record) {
       cle: 'evenement_message_recruteur',
       titre: '💼 Nouveau message recruteur',
       texte: qui + (record.message ? ' — ' + String(record.message).slice(0, 70) : ''),
-      url: '/tableau-de-bord.html?notif=recruteur&id=' + record.id
+      url: '/admin/#/site/recruteurs'
     };
   }
   if (table === 'messages_contact') {
@@ -60,7 +60,7 @@ function construireNotification(table, record) {
       cle: 'evenement_message_visiteur',
       titre: '💬 Nouveau message visiteur',
       texte: (record.nom || 'Visiteur') + (record.message ? ' — ' + String(record.message).slice(0, 70) : ''),
-      url: '/tableau-de-bord.html?notif=contact&id=' + record.id
+      url: '/admin/#/site/contacts'
     };
   }
   if (table === 'blocages_connexion') {
@@ -69,7 +69,7 @@ function construireNotification(table, record) {
       cle: 'evenement_blocage_connexion',
       titre: '🔒 Accès bloqué',
       texte: 'Trop de tentatives — ' + lieu + (record.recidive ? ' (récidive)' : ''),
-      url: '/tableau-de-bord.html?notif=blocage'
+      url: '/admin/#/site/acces-bloques'
     };
   }
   return null;

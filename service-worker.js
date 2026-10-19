@@ -26,7 +26,7 @@ self.addEventListener('push', (event) => {
     vibrate: [200, 100, 200],
     tag: donnees.tag || undefined,
     renotify: !!donnees.tag,
-    data: { url: donnees.url || '/tableau-de-bord.html' },
+    data: { url: donnees.url || '/admin/' },
     requireInteraction: true
   };
 
@@ -37,15 +37,14 @@ self.addEventListener('push', (event) => {
 // plan si un onglet du tableau de bord est déjà ouvert).
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const url = (event.notification.data && event.notification.data.url) || '/tableau-de-bord.html';
+  const url = (event.notification.data && event.notification.data.url) || '/admin/';
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((listeClients) => {
       for (const client of listeClients) {
-        if (client.url.includes('/tableau-de-bord.html') && 'focus' in client) {
-          client.navigate(url);
-          return client.focus();
-        }
+        // l'administration a son propre service worker (/admin/sw.js) : navigate() y est refusé ;
+        // on ouvre alors la bonne page dans une nouvelle fenêtre
+        if (client.url.includes('/admin/') && 'focus' in client && client.url.endsWith(url.split('/admin/')[1] || '/admin/')) return client.focus();
       }
       if (self.clients.openWindow) {
         return self.clients.openWindow(url);

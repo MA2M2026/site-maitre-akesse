@@ -98,6 +98,9 @@ select essai_refuse($$insert into ledger_entries (date_ecriture, sens, montant, 
 -- 26. Candidature retenue → code individuel
 create temporary table essai_codes (qui text, code text) on commit preserve rows;
 grant all on essai_codes to authenticated;
+select essai_refuse($$select generer_code_inscription('00000000-0000-0000-0000-00000000c001')$$, 'candidature pas encore retenue : aucun code (décision du 19/10/2026)');
+select portail_statut_candidature('00000000-0000-0000-0000-00000000c001', 'retenue');
+select portail_statut_candidature('00000000-0000-0000-0000-00000000c002', 'retenue');
 insert into essai_codes values ('awa', generer_code_inscription('00000000-0000-0000-0000-00000000c001'));
 select essai((select code from essai_codes where qui = 'awa') ~ '^MA2M-[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{2}$', 'test 26 : code individuel unique de la forme MA2M-XXXX-XX, sans caractère ambigu');
 select essai((select status from v_site_candidatures where id = '00000000-0000-0000-0000-00000000c001') = 'retenue', 'test 26 : la candidature passe à Retenue');
@@ -419,6 +422,31 @@ reset role;
 select set_config('request.jwt.claims', '', false);
 select essai((select count(*) from espace_codes e join agence_mannequins m on m.id = e.mannequin_id
               where m.candidature_id = '00000000-0000-0000-0000-00000000c004') = 1, 'un seul code d''espace créé pour cette inscription');
+
+-- Cahier 7.5 : messages aux personnes cochées, immédiat ou planifié, groupes enregistrés
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a1');
+create temp table essai_msg as select portail_message_selection(array['00000000-0000-0000-0000-00000000e077'::uuid, '00000000-0000-0000-0000-00000000e001'::uuid], 'relance', current_date) as r;
+select essai(((select r from essai_msg) ->> 'personnes')::int + ((select r from essai_msg) ->> 'sans_echeance')::int = 2,
+             'cahier 7.5 : message préparé pour les personnes cochées (celles à jour ou sans échéance comptées à part)');
+-- une personne dont le paiement du mois est déjà déclaré ou payé ne reçoit pas de relance
+select essai(((portail_message_selection(array['00000000-0000-0000-0000-00000000e077'::uuid], 'relance', current_date)) ->> 'messages')::int = 0
+             or (select statut from fee_dues where id = '00000000-0000-0000-0000-00000000f771') in ('a_payer', 'refusee', 'non_paye'),
+             'relance : personne déjà à jour ce mois-ci → aucun message');
+select essai((portail_message_selection(array['00000000-0000-0000-0000-00000000e077'::uuid], 'appel', current_date, current_date + 2) ->> 'planifie')::boolean,
+             'cahier 7.5 : envoi planifié enregistré');
+insert into message_groupes (nom, membres) values ('Formation mensuelle', array['00000000-0000-0000-0000-00000000e077'::uuid]);
+select essai((select array_length(membres, 1) from message_groupes where nom = 'Formation mensuelle') = 1, 'cahier 7.5 : groupe enregistré');
+select essai_refuse($$select portail_message_selection('{}'::uuid[], 'relance', current_date)$$, 'aucune personne cochée : refusé');
+reset role;
+select set_config('request.jwt.claims', '', false);
+select portail_tache_quotidienne(current_date + 2);
+select essai((select statut from message_planifies limit 1) = 'fait', 'cahier 7.5 : l''envoi planifié est préparé le jour venu (tâche de 6 h)');
+set role anon;
+select set_config('request.jwt.claims', '{"role":"anon"}', false);
+select essai_refuse($$select count(*) from message_groupes$$, 'visiteur : aucun accès aux groupes de messages');
+reset role;
+select set_config('request.jwt.claims', '', false);
 
 -- Relecture du 19/10/2026 : code d'inscription déjà utilisé + mauvaise date → message neutre
 update registration_codes set statut = 'utilise'

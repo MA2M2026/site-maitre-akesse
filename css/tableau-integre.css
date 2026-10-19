@@ -1,0 +1,9 @@
+/* Rubrique de l'ancien tableau de bord affichée dans l'administration (js/tableau-integre.js) :
+   l'administration fournit déjà le menu, le titre et la déconnexion. */
+html.tdb-integre #db-chrome-header, html.tdb-integre .site-footer, html.tdb-integre .whatsapp-flottant,
+html.tdb-integre #v2-blocs, html.tdb-integre #v2-cote, html.tdb-integre .v2-voile, html.tdb-integre .db-topbar,
+html.tdb-integre .bandeau-cookies, html.tdb-integre .retour-haut { display: none !important; }
+html.tdb-integre body { padding-top: 0 !important; background: var(--fond) !important; }
+html.tdb-integre .db-shell { display: block !important; grid-template-columns: none !important; max-width: none !important; margin: 0 !important; border: 0 !important; box-shadow: none !important; }
+html.tdb-integre .db-main { padding: 0 !important; }
+html.tdb-integre #bloc-tableau { padding: 0 !important; margin: 0 !important; }
