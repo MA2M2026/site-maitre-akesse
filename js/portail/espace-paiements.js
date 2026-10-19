@@ -535,21 +535,25 @@
   };
   const FILTRES_MSG = [['tous', 'Tous les actifs'], ['inscrits', 'Inscrits sur le site'], ['non_inscrits', 'Non inscrits'], ['non_payes', 'Pas encore payé ce mois-ci']];
   const LIEN_ESPACE = 'https://www.maitreakessemodelmanagement.com/mes-paiements';
+  // Lien Wave Business actif du montant de ce mannequin (page Paramètres) ; à défaut, son espace « Mes paiements »
+  const lienWaveDe = (m) => { const l = (P.etat.liensWave || []).find((x) => x.actif && x.type === 'mensualite' && x.montant === m.mensualite); return l ? l.adresse : LIEN_ESPACE; };
   function remplir(modele, m) {
     const d = destinataire(m), ici = new Date(), nomMois = P.MOIS[ici.getMonth()];
     const prenom = String(d.nom || '').trim().split(/\s+/)[0] || 'Madame, Monsieur';
     const v = { prenom: prenom.charAt(0).toUpperCase() + prenom.slice(1).toLowerCase(), mois: nomMois + ' ' + ici.getFullYear(), montant: P.fcfa(m.mensualite),
-      date_limite: '5 ' + nomMois + ' ' + ici.getFullYear(), lien_wave: LIEN_ESPACE, lien_espace: 'votre espace mannequin (' + LIEN_ESPACE + ')' };
+      date_limite: '5 ' + nomMois + ' ' + ici.getFullYear(), lien_wave: lienWaveDe(m), lien_espace: 'votre espace mannequin (' + LIEN_ESPACE + ')' };
     return { texte: String(modele).replace(/\{(\w+)\}/g, (t, k) => (k in v ? v[k] : t)), d };
   }
   async function messages() {
     const e = P.etat.msg = Object.assign({ modele: 'appel', filtre: 'non_payes', journal: [] }, P.etat.msg || {});
     if (e.texte === undefined) e.texte = MODELES[e.modele][1];
     const mois = moisCourant();
-    const [actifs, paiements] = await Promise.all([
+    const [actifs, paiements, liens] = await Promise.all([
       P.bd(sb.from('agence_mannequins').select('*').eq('statut', 'actif').order('full_name')),
-      P.bd(sb.from('paiements_mannequins').select('mannequin_id, statut').eq('objet', 'mensualite').eq('mois', mois).neq('statut', 'refuse'))
+      P.bd(sb.from('paiements_mannequins').select('mannequin_id, statut').eq('objet', 'mensualite').eq('mois', mois).neq('statut', 'refuse')),
+      P.bd(sb.from('liens_wave').select('*').eq('actif', true)).catch(() => [])  // (table pas encore créée : lien de l'espace mannequin)
     ]);
+    P.etat.liensWave = liens;
     const aPaye = (m) => paiements.some((x) => x.mannequin_id === m.id && x.statut === 'valide');
     const choisis = actifs.filter((m) => e.filtre === 'tous' || (e.filtre === 'inscrits' && m.user_id) || (e.filtre === 'non_inscrits' && !m.user_id) || (e.filtre === 'non_payes' && !aPaye(m)));
     e.liste = choisis;
@@ -600,9 +604,64 @@
     })) + '<div class="ligne" style="margin-top:12px"><button class="btn" type="button" data-action="fermer-fenetre">Fermer</button></div>');
   };
 
+  // ---------- Paramètres (cahier V3, 7.2) ----------
+  // Liens Wave Business (écriture : administrateur principal, avec un code récent ; lecture : encaissements),
+  // montants et calendrier en lecture. Table : liens_wave (supabase-parametres.sql, à exécuter par la propriétaire).
+  const TYPES_LIEN = { inscription: 'Inscription + 1er mois', mensualite: 'Mensualité', autre: 'Autre' };
+  async function parametres() {
+    let liens = null, absente = false;
+    try { liens = await P.bd(sb.from('liens_wave').select('*').order('actif', { ascending: false }).order('montant')); } catch (e) { absente = true; }
+    const principal = P.moi.role === 'principal';
+    const montants = P.tableau(['Paiement', '#Montant', 'Détail'], [
+      ['<tr><td>Inscription</td><td class="nombre">' + P.fcfa(INSCRIPTION_FCFA) + '</td><td class="petit-texte">' + P.fcfa(DROIT_INSCRIPTION) + ' de droit d’inscription + ' + P.fcfa(PREMIER_MOIS) + ' pour le 1er mois de formation</td></tr>'],
+      ['<tr><td>Mensualité standard</td><td class="nombre">' + P.fcfa(10000) + '</td><td class="petit-texte">Par mois ; le montant de chaque mannequin se choisit dans le registre</td></tr>'],
+      ['<tr><td>Mensualité majorée</td><td class="nombre">' + P.fcfa(20000) + '</td><td class="petit-texte">Par mois ; réservé aux mannequins concernés (registre)</td></tr>']
+    ].map((x) => x[0]));
+    const calendrier = P.tableau(['Jour', 'Action automatique'], [
+      '<tr><td>Le 1er, 06:00 (Abidjan)</td><td>Création des échéances du mois et appel aux mannequins cochés</td></tr>',
+      '<tr><td>Le 3</td><td>Relance par e-mail à ceux qui n’ont pas payé</td></tr>',
+      '<tr><td>Le 5</td><td>Dernière relance ; date limite de paiement</td></tr>',
+      '<tr><td>Le 6</td><td>Les mensualités non payées passent en rouge (« Non payé »)</td></tr>']);
+    const liste = absente ? '<div class="note erreur">Les liens de paiement ne sont pas encore activés : le fichier <b>supabase-parametres.sql</b> n’a pas encore été exécuté dans Supabase.</div>'
+      : (liens.length ? P.tableau(['Libellé', 'Type', '#Montant', 'Lien', 'État', ''], liens.map((l) =>
+        '<tr' + (l.actif ? '' : ' class="annulee"') + '><td><b>' + P.esc(l.libelle) + '</b></td><td>' + P.esc(TYPES_LIEN[l.type] || l.type) + '</td><td class="nombre">' + P.fcfa(l.montant) + '</td>' +
+        '<td class="petit-texte"><a href="' + P.esc(l.adresse) + '" target="_blank" rel="noopener noreferrer">' + P.esc(l.adresse.replace(/^https:\/\//, '').slice(0, 38)) + '</a></td>' +
+        '<td>' + P.pastille(l.actif ? 'Actif' : 'Désactivé', l.actif ? 'ok' : 'neutre') + '</td>' +
+        '<td>' + (principal ? '<button class="btn petit" type="button" data-action="lien-etat" data-id="' + l.id + '" data-actif="' + (l.actif ? '0' : '1') + '">' + (l.actif ? 'Désactiver' : 'Réactiver') + '</button>' : '') + '</td></tr>'))
+        : '<p class="doux">Aucun lien enregistré pour l’instant.</p>');
+    const ajout = absente || !principal ? (principal ? '' : '<div class="note info">Seul l’administrateur principal peut ajouter ou désactiver un lien.</div>') :
+      '<form class="carte f" data-form="lien-ajouter"><h2>Ajouter un lien Wave Business</h2>' +
+      '<label class="fl" for="lw-type">Type<select id="lw-type" name="type"><option value="inscription">Inscription + 1er mois</option><option value="mensualite" selected>Mensualité</option><option value="autre">Autre</option></select></label>' +
+      '<label class="fl" for="lw-libelle">Libellé<input id="lw-libelle" name="libelle" required maxlength="120" placeholder="Mensualité 10 000"></label>' +
+      '<label class="fl" for="lw-montant">Montant (FCFA)<input id="lw-montant" name="montant" type="number" min="1" step="1" required></label>' +
+      '<label class="fl large" for="lw-adresse">Adresse du lien (https://…)<input id="lw-adresse" name="adresse" type="url" required placeholder="https://pay.wave.com/…"></label>' +
+      '<div class="large ligne"><button class="btn rouge" type="submit">Ajouter le lien</button></div></form>';
+    return P.entete('Paramètres') +
+      '<div class="carte"><h2>Liens de paiement Wave Business</h2><p class="doux">Dans « Messages et relances », la variable {lien_wave} utilise le lien actif du montant du mannequin.</p>' + liste + '</div>' + ajout +
+      '<div class="carte"><h2>Montants en vigueur</h2>' + montants + '<p class="doux">Ces montants sont fixes pour l’instant. La mensualité de chaque mannequin se choisit dans le registre ; un changement ne touche que les échéances à venir.</p></div>' +
+      '<div class="carte"><h2>Calendrier du mois</h2>' + calendrier + '</div>';
+  }
+  P.formulaires['lien-ajouter'] = async (f) => {
+    const adresse = String(f.get('adresse') || '').trim(), montant = Math.round(Number(f.get('montant')));
+    if (!/^https:\/\/[^\s]+$/i.test(adresse)) return P.message('L’adresse doit commencer par https://');
+    if (!(montant > 0)) return P.message('Indiquez un montant.');
+    try {
+      await P.sensible(() => P.bd(sb.from('liens_wave').insert({ type: f.get('type'), libelle: String(f.get('libelle') || '').trim(), montant, adresse }).select('id')));
+      P.message('Lien ajouté.');
+      await P.afficher();
+    } catch (e) { P.message(/liens_wave_un_actif|duplicate/i.test(String(e && e.message)) ? 'Il y a déjà un lien actif pour ce type et ce montant : désactivez-le d’abord.' : P.erreurTexte(e)); }
+  };
+  P.actions['lien-etat'] = async (el) => {
+    const actif = el.getAttribute('data-actif') === '1';
+    try {
+      await P.sensible(() => P.bd(sb.from('liens_wave').update({ actif }).eq('id', el.getAttribute('data-id')).select('id')));
+      await P.afficher();
+    } catch (e) { P.message(/liens_wave_un_actif|duplicate/i.test(String(e && e.message)) ? 'Il y a déjà un lien actif pour ce type et ce montant : désactivez-le d’abord.' : P.erreurTexte(e)); }
+  };
+
   P.espaces.paiements = {
-    nav: [['tableau', 'Tableau du mois'], ['matrice', 'Matrice mannequins × mois'], ['recapitulatif', 'Récapitulatif de fin de mois'], ['messages', 'Messages et relances'], ['a-valider', 'Paiements à valider'], ['mensualites', 'Mensualités du mois'], ['registre', 'Registre des mannequins'], ['ajouter', 'Ajouter un mannequin']],
-    pages: { tableau: tableauDuMois, matrice, recapitulatif, messages, 'a-valider': aValider, mensualites, registre, ajouter, fiche },
+    nav: [['tableau', 'Tableau du mois'], ['matrice', 'Matrice mannequins × mois'], ['recapitulatif', 'Récapitulatif de fin de mois'], ['messages', 'Messages et relances'], ['parametres', 'Paramètres'], ['a-valider', 'Paiements à valider'], ['mensualites', 'Mensualités du mois'], ['registre', 'Registre des mannequins'], ['ajouter', 'Ajouter un mannequin']],
+    pages: { tableau: tableauDuMois, matrice, recapitulatif, messages, parametres, 'a-valider': aValider, mensualites, registre, ajouter, fiche },
     compteur: {},
     // nombre de paiements en attente, affiché dans le menu
     avant: async () => {
