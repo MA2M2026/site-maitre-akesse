@@ -28,7 +28,7 @@ function donnees() {
 (async () => {
   const srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: RACINE }); await new Promise((r) => setTimeout(r, 800));
   const b = await chromium.launch();
-  for (const photo of process.env.PAGES ? [] : ['photo-sombre.jpg', 'photo-rayures.jpg', 'photo-claire.jpg']) {
+  for (const photo of process.env.PAGES ? [] : ['photo-sombre.jpg', 'photo-rayures.jpg', 'photo-claire.jpg', 'photo-blanche.jpg']) {
     const image = fs.readFileSync(path.join(__dirname, 'medias', photo));
     for (const page of ['index.html', 'en/index.html']) {
       for (const ecran of ecrans) {
