@@ -17,6 +17,15 @@
 -- ===================================================================================
 
 -- -----------------------------------------------------------------------------------
+-- 0. Correction : « principal ? » répond toujours oui ou non (jamais « inconnu »), pour qu'un
+--    compte sans fiche du personnel ne passe aucun contrôle par erreur
+-- -----------------------------------------------------------------------------------
+create or replace function portail_est_principal()
+returns boolean language sql stable as $$
+  select coalesce(portail_role() = 'principal', false);
+$$;
+
+-- -----------------------------------------------------------------------------------
 -- 1. Récapitulatif mensuel figé
 -- -----------------------------------------------------------------------------------
 create table if not exists recaps_mensuels (
@@ -139,6 +148,7 @@ create or replace function sortie_decider(p_id uuid, p_accepter boolean, p_motif
 returns void language plpgsql security definer set search_path = public as $$
 declare
   s sorties_mannequins;
+  nb int;
 begin
   if not portail_est_principal() then raise exception 'Seul l''administrateur principal décide.'; end if;
   perform portail_exiger_auth_recente();
@@ -151,8 +161,10 @@ begin
    where id = p_id;
   if p_accepter then
     perform set_config('ma2m.sortie', '1', true);
-    update agence_mannequins set statut = s.type where id = s.mannequin_id;
+    update agence_mannequins set statut = s.type where id = s.mannequin_id and statut = 'actif';
+    get diagnostics nb = row_count;
     perform set_config('ma2m.sortie', '', true);
+    if nb = 0 then raise exception 'Ce mannequin n''est plus actif : la proposition ne peut plus être acceptée.'; end if;
   end if;
 end;
 $$;
@@ -474,10 +486,14 @@ grant execute on function compta_cloturer(date, text) to authenticated;
 -- 8. Espace du mannequin : numéro du payeur, lien de paiement des Paramètres, reçus
 --    (Wave seul aujourd'hui : Orange, MTN et Moov demandent d'abord un compte comptable à eux)
 -- -----------------------------------------------------------------------------------
--- Lien de paiement actif d'un montant (public par nature : c'est ce qu'on remet au payeur)
+-- Lien de paiement actif d'un montant (celui d'inscription est public par nature ; les autres : connecté)
 create or replace function lien_paiement(p_type text, p_montant int)
-returns text language sql stable security definer set search_path = public as $$
-  select adresse from liens_wave where type = p_type and montant = p_montant and actif limit 1;
+returns text language plpgsql stable security definer set search_path = public as $$
+begin
+  -- (visiteur non connecté : seulement le lien d'inscription, celui de la page publique)
+  if auth.uid() is null and p_type <> 'inscription' then return null; end if;
+  return (select adresse from liens_wave where type = p_type and montant = p_montant and actif limit 1);
+end;
 $$;
 revoke all on function lien_paiement(text, int) from public;
 grant execute on function lien_paiement(text, int) to anon, authenticated;

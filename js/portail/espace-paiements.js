@@ -72,7 +72,7 @@
       // (la mensualité ne change que par l'administrateur principal ; la base le vérifie aussi)
       '<label class="fl" for="mq-mensualite">Mensualité de formation<select id="mq-mensualite" name="mensualite"' + (principal || !m ? '' : ' disabled') + '>' +
       [10000, 20000].map((n) => '<option value="' + n + '"' + ((m ? m.mensualite : 10000) === n ? ' selected' : '') + '>' + P.fcfa(n) + '</option>').join('') + '</select></label>' +
-      (m ? '<label class="fl" for="mq-statut">Statut<select id="mq-statut" name="statut">' + Object.keys(STATUTS).map((k) => '<option value="' + k + '"' + (m.statut === k ? ' selected' : '') + '>' + STATUTS[k] + '</option>').join('') + '</select></label>' : '') +
+      (m ? '<label class="fl" for="mq-statut">Statut (pour suspendre ou faire sortir : page « Sorties et suspensions »)<select id="mq-statut" name="statut" disabled>' + Object.keys(STATUTS).map((k) => '<option value="' + k + '"' + (m.statut === k ? ' selected' : '') + '>' + STATUTS[k] + '</option>').join('') + '</select></label>' : '') +
       '<h2>Parent ou responsable (obligatoire pour un mineur)</h2>' +
       '<label class="fl" for="mq-pnom">Nom du parent<input id="mq-pnom" name="parent_nom" value="' + v('parent_nom') + '"></label>' +
       '<label class="fl" for="mq-plien">Lien (mère, père, tuteur…)<input id="mq-plien" name="parent_lien" value="' + v('parent_lien') + '"></label>' +
@@ -699,9 +699,9 @@
         etat = await Promise.resolve(envoyerEmailCandidat({ to_email: r.d.email, to_name: r.d.nom, message: r.texte })).then(() => { envoyes++; return 'envoyé'; }, () => 'échec');
       }
       e.journal.unshift([heure, m.full_name, etat]);
-      lignes.push({ m, r });
+      lignes.push({ m, r, etat });
     }));
-    await noterEnvois(lignes.filter((x) => e.journal.some((j) => j[1] === x.m.full_name && j[0] === heure && j[2] === 'envoyé')).map((x) => ({ mannequin_id: x.m.id, mois: moisCourant(), modele: e.modele, canal: 'email' })));
+    await noterEnvois(lignes.filter((x) => x.etat === 'envoyé').map((x) => ({ mannequin_id: x.m.id, mois: moisCourant(), modele: e.modele, canal: 'email' })));
     await P.afficher();
     P.message(envoyes + ' e-mail(s) envoyé(s) sur ' + l.length + '. Envoyez maintenant les messages WhatsApp.');
     P.fenetre('<h2>Messages WhatsApp</h2>' + P.tableau(['Mannequin', 'WhatsApp'], lignes.map((x) => {
