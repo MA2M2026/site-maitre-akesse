@@ -520,9 +520,89 @@
     } catch (e) { P.message(P.erreurTexte(e)); }
   };
 
+  // ---------- Messages et relances (cahier V3, 7.2) ----------
+  // Modèles à variables, destinataires cochés (le parent pour un mineur), aperçu, envoi par e-mail puis
+  // file WhatsApp. Les relances automatiques du 3 et du 5 restent celles du serveur (e-mail).
+  // Pour l'instant les modifications d'un modèle et le journal des envois ne sont gardés que pendant
+  // la session : leur enregistrement durable arrive avec la table des messages (étape suivante).
+  const MODELES = {
+    appel: ['Appel du 1er', 'Bonjour {prenom},\n\nLa mensualité de formation du mois de {mois} ({montant}) est à régler avant le {date_limite}.\nPaiement par Wave : {lien_wave}\nPuis appuyez sur « J’ai payé » dans {lien_espace}.\n\nMerci !\nL’équipe Maître Akesse Model Management'],
+    relance3: ['Relance du 3', 'Bonjour {prenom},\n\nPetit rappel : nous n’avons pas encore reçu la mensualité de {mois} ({montant}). La date limite est le {date_limite}.\nPaiement par Wave : {lien_wave}\n\nMerci !\nL’équipe Maître Akesse Model Management'],
+    relance5: ['Dernière relance du 5', 'Bonjour {prenom},\n\nDernier rappel : la date limite pour la mensualité de {mois} ({montant}) est le {date_limite}.\nPaiement par Wave : {lien_wave}\n\nMerci !\nL’équipe Maître Akesse Model Management'],
+    non_recu: ['Paiement non reçu', 'Bonjour {prenom},\n\nNous n’avons pas reçu la mensualité de {mois} ({montant}), dont la date limite était le {date_limite}. Merci de régulariser dès que possible : {lien_wave}\nSi vous avez déjà payé, répondez-nous à ce message.\n\nL’équipe Maître Akesse Model Management'],
+    confirme: ['Paiement confirmé', 'Bonjour {prenom},\n\nNous confirmons la réception de votre paiement de {montant} pour {mois}. Merci !\n\nL’équipe Maître Akesse Model Management'],
+    libre: ['Message libre', 'Bonjour {prenom},\n\n\n\nL’équipe Maître Akesse Model Management']
+  };
+  const FILTRES_MSG = [['tous', 'Tous les actifs'], ['inscrits', 'Inscrits sur le site'], ['non_inscrits', 'Non inscrits'], ['non_payes', 'Pas encore payé ce mois-ci']];
+  const LIEN_ESPACE = 'https://www.maitreakessemodelmanagement.com/mes-paiements';
+  function remplir(modele, m) {
+    const d = destinataire(m), ici = new Date(), nomMois = P.MOIS[ici.getMonth()];
+    const prenom = String(d.nom || '').trim().split(/\s+/)[0] || 'Madame, Monsieur';
+    const v = { prenom: prenom.charAt(0).toUpperCase() + prenom.slice(1).toLowerCase(), mois: nomMois + ' ' + ici.getFullYear(), montant: P.fcfa(m.mensualite),
+      date_limite: '5 ' + nomMois + ' ' + ici.getFullYear(), lien_wave: LIEN_ESPACE, lien_espace: 'votre espace mannequin (' + LIEN_ESPACE + ')' };
+    return { texte: String(modele).replace(/\{(\w+)\}/g, (t, k) => (k in v ? v[k] : t)), d };
+  }
+  async function messages() {
+    const e = P.etat.msg = Object.assign({ modele: 'appel', filtre: 'non_payes', journal: [] }, P.etat.msg || {});
+    if (e.texte === undefined) e.texte = MODELES[e.modele][1];
+    const mois = moisCourant();
+    const [actifs, paiements] = await Promise.all([
+      P.bd(sb.from('agence_mannequins').select('*').eq('statut', 'actif').order('full_name')),
+      P.bd(sb.from('paiements_mannequins').select('mannequin_id, statut').eq('objet', 'mensualite').eq('mois', mois).neq('statut', 'refuse'))
+    ]);
+    const aPaye = (m) => paiements.some((x) => x.mannequin_id === m.id && x.statut === 'valide');
+    const choisis = actifs.filter((m) => e.filtre === 'tous' || (e.filtre === 'inscrits' && m.user_id) || (e.filtre === 'non_inscrits' && !m.user_id) || (e.filtre === 'non_payes' && !aPaye(m)));
+    e.liste = choisis;
+    return P.entete('Messages et relances') +
+      '<div class="note info">Appels et relances automatiques : le 1er, appel ; le 3 et le 5, relance par e-mail aux personnes appelées qui n’ont pas payé (le serveur s’en charge). Ici : messages à la demande.</div>' +
+      '<div class="carte"><h2>1. Modèle</h2><div class="segments">' + Object.keys(MODELES).map((k) => '<button class="btn petit' + (k === e.modele ? ' actif' : '') + '" type="button" data-action="msg-modele" data-modele="' + k + '">' + P.esc(MODELES[k][0]) + '</button>').join('') + '</div>' +
+      '<label class="fl" for="msg-texte" style="margin-top:12px">Texte (variables : {prenom} {mois} {montant} {date_limite} {lien_wave} {lien_espace})<textarea id="msg-texte" rows="9">' + P.esc(e.texte) + '</textarea></label></div>' +
+      '<div class="carte"><h2>2. Destinataires</h2><div class="segments">' + FILTRES_MSG.map((f) => '<button class="btn petit' + (f[0] === e.filtre ? ' actif' : '') + '" type="button" data-action="msg-filtre" data-filtre="' + f[0] + '">' + P.esc(f[1]) + '</button>').join('') + '</div>' +
+      (choisis.length ? P.tableau(['', 'Mannequin', 'Destinataire', 'Contact'], choisis.map((m) => { const d = destinataire(m); return '<tr><td><input type="checkbox" name="msg-ids" value="' + m.id + '" checked aria-label="Écrire à ' + P.esc(m.full_name) + '"></td><td><b>' + P.esc(m.full_name) + '</b></td><td>' + P.esc(d.mineur ? d.nom + ' (parent)' : d.nom) + '</td><td class="petit-texte">' + P.esc([d.tel, d.email].filter(Boolean).join(' · ') || 'aucun contact') + '</td></tr>'; })) : '<p class="doux">Personne dans ce groupe.</p>') + '</div>' +
+      '<div class="ligne"><button class="btn" type="button" data-action="msg-apercu">Aperçu</button><button class="btn rouge" type="button" data-action="msg-envoyer">Envoyer aux personnes cochées</button></div>' +
+      (e.journal.length ? '<div class="carte"><h2>Envois de cette session</h2>' + P.tableau(['Heure', 'Mannequin', 'E-mail'], e.journal.map((j) => '<tr><td>' + P.esc(j[0]) + '</td><td>' + P.esc(j[1]) + '</td><td>' + P.esc(j[2]) + '</td></tr>')) + '</div>' : '');
+  }
+  const cochees = () => { const ids = Array.from(document.querySelectorAll('input[name="msg-ids"]:checked')).map((x) => x.value); return (P.etat.msg.liste || []).filter((m) => ids.includes(m.id)); };
+  const garderTexte = () => { const t = document.getElementById('msg-texte'); if (t) P.etat.msg.texte = t.value; };
+  P.actions['msg-modele'] = (el) => { const e = P.etat.msg; e.modele = el.getAttribute('data-modele'); e.texte = MODELES[e.modele][1]; P.afficher(); };
+  P.actions['msg-filtre'] = (el) => { garderTexte(); P.etat.msg.filtre = el.getAttribute('data-filtre'); P.afficher(); };
+  P.actions['msg-apercu'] = () => {
+    garderTexte();
+    const l = cochees();
+    if (!l.length) return P.message('Cochez au moins une personne.');
+    const r = remplir(P.etat.msg.texte, l[0]);
+    P.fenetre('<h2>Aperçu — ' + P.esc(l[0].full_name) + '</h2><p class="doux">Envoyé à : ' + P.esc(r.d.mineur ? r.d.nom + ' (parent)' : r.d.nom) + '</p><pre class="journal" style="white-space:pre-wrap">' + P.esc(r.texte) +
+      '</pre><div class="ligne"><button class="btn" type="button" data-action="fermer-fenetre">Fermer</button></div>');
+  };
+  P.actions['msg-envoyer'] = async () => {
+    garderTexte();
+    const l = cochees(), e = P.etat.msg;
+    if (!l.length) return P.message('Cochez au moins une personne.');
+    if (!/\S{3}/.test(e.texte.replace(/\{\w+\}/g, '')) ) return P.message('Le message est vide.');
+    if (!confirm('Envoyer ce message à ' + l.length + ' personne(s) ?')) return;
+    let envoyes = 0;
+    const heure = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Abidjan' });
+    const lignes = [];
+    await Promise.all(l.map(async (m) => {
+      const r = remplir(e.texte, m);
+      let etat = 'pas d’adresse e-mail';
+      if (r.d.email && typeof envoyerEmailCandidat === 'function') {
+        etat = await Promise.resolve(envoyerEmailCandidat({ to_email: r.d.email, to_name: r.d.nom, message: r.texte })).then(() => { envoyes++; return 'envoyé'; }, () => 'échec');
+      }
+      e.journal.unshift([heure, m.full_name, etat]);
+      lignes.push({ m, r });
+    }));
+    await P.afficher();
+    P.message(envoyes + ' e-mail(s) envoyé(s) sur ' + l.length + '. Envoyez maintenant les messages WhatsApp.');
+    P.fenetre('<h2>Messages WhatsApp</h2>' + P.tableau(['Mannequin', 'WhatsApp'], lignes.map((x) => {
+      const wa = lienWhatsApp(x.r.d.tel, x.r.texte);
+      return '<tr><td><b>' + P.esc(x.m.full_name) + '</b></td><td>' + (wa ? '<a class="btn rouge petit" target="_blank" rel="noopener" href="' + P.esc(wa) + '">Envoyer</a>' : '<span class="doux">pas de numéro</span>') + '</td></tr>';
+    })) + '<div class="ligne" style="margin-top:12px"><button class="btn" type="button" data-action="fermer-fenetre">Fermer</button></div>');
+  };
+
   P.espaces.paiements = {
-    nav: [['tableau', 'Tableau du mois'], ['matrice', 'Matrice mannequins × mois'], ['recapitulatif', 'Récapitulatif de fin de mois'], ['a-valider', 'Paiements à valider'], ['mensualites', 'Mensualités du mois'], ['registre', 'Registre des mannequins'], ['ajouter', 'Ajouter un mannequin']],
-    pages: { tableau: tableauDuMois, matrice, recapitulatif, 'a-valider': aValider, mensualites, registre, ajouter, fiche },
+    nav: [['tableau', 'Tableau du mois'], ['matrice', 'Matrice mannequins × mois'], ['recapitulatif', 'Récapitulatif de fin de mois'], ['messages', 'Messages et relances'], ['a-valider', 'Paiements à valider'], ['mensualites', 'Mensualités du mois'], ['registre', 'Registre des mannequins'], ['ajouter', 'Ajouter un mannequin']],
+    pages: { tableau: tableauDuMois, matrice, recapitulatif, messages, 'a-valider': aValider, mensualites, registre, ajouter, fiche },
     compteur: {},
     // nombre de paiements en attente, affiché dans le menu
     avant: async () => {
