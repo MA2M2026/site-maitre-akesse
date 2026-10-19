@@ -11,7 +11,7 @@
 //   individuel, section 14) ; lien_lire, lien_declarer (page de paiement sans compte, 7.2)
 
 const crypto = require('crypto');
-const { SUPABASE_URL, enTetesService, verifierUtilisateur, extraireIp, debutRequete, compteurTentatives } = require('./_commun.js');
+const { SUPABASE_URL, enTetesService, verifierUtilisateur, extraireIp, debutRequete, chargeJeton, compteurTentatives } = require('./_commun.js');
 
 const SITE = 'https://www.maitreakessemodelmanagement.com';
 const hacher = (t) => crypto.createHash('sha256').update(String(t)).digest('hex');
@@ -25,14 +25,17 @@ async function rpcService(nom, params) {
   return corps;
 }
 // rôle dans le portail, lu avec le jeton de la personne (la base vérifie aussi la double authentification)
-async function moiPortail(jeton) {
+// (avec l'identifiant de l'appareil envoyé par le portail : la base refuse un appareil révoqué)
+async function moiPortail(jeton, appareil) {
   const rep = await fetch(SUPABASE_URL + '/rest/v1/rpc/portail_moi', {
-    method: 'POST', headers: { apikey: enTetesService().apikey, Authorization: 'Bearer ' + jeton, 'Content-Type': 'application/json' }, body: '{}'
+    method: 'POST', headers: { apikey: enTetesService().apikey, Authorization: 'Bearer ' + jeton, 'x-appareil': appareil, 'Content-Type': 'application/json' }, body: '{}'
   });
   return rep.ok ? rep.json() : null;
 }
-function chargeJeton(jeton) {
-  try { return JSON.parse(Buffer.from(jeton.split('.')[1], 'base64url').toString('utf8')); } catch (e) { return {}; }
+// date réelle AAAA-MM-JJ (pas seulement la forme : 2026-13-45 est refusé)
+function dateValide(texte) {
+  const d = new Date(texte + 'T00:00:00Z');
+  return /^\d{4}-\d{2}-\d{2}$/.test(texte) && !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === texte;
 }
 // code de double authentification saisi il y a moins de 10 minutes
 function authRecente(jeton) {
@@ -53,7 +56,6 @@ async function supprimerFacteurs(userId) {
   for (const f of (Array.isArray(r) ? r : r.factors || [])) await adminAuth('admin/users/' + userId + '/factors/' + f.id, 'DELETE');
 }
 const ROLES = ['site', 'caisse', 'compta'];
-const RAISONS_ECHEC = ['inconnu', 'bloque'];
 
 module.exports = async function handler(req, res) {
   const debut = debutRequete(req, res, false);
@@ -63,7 +65,8 @@ module.exports = async function handler(req, res) {
   try {
     // ---------- administrateur principal ----------
     if (['inviter', 'reinitialiser_mfa', 'acces'].includes(action)) {
-      const moi = jeton && await moiPortail(jeton);
+      const appareil = String(req.headers['x-appareil'] || '');
+      const moi = jeton && /^[a-z0-9-]{16,64}$/.test(appareil) && await moiPortail(jeton, appareil);
       if (!moi || moi.role !== 'principal') return res.status(403).json({ error: 'Réservé à l’administrateur principal.' });
       if (!authRecente(jeton)) return res.status(403).json({ error: 'AUTH_RECENTE: confirmez votre code.' });
       const auteur = await verifierUtilisateur(jeton);
@@ -72,6 +75,14 @@ module.exports = async function handler(req, res) {
         const email = String(corps.email || '').trim().toLowerCase(), nom = String(corps.nom || '').trim(), role = String(corps.role || '');
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !nom || !ROLES.includes(role)) return res.status(400).json({ error: 'Nom, e-mail et rôle obligatoires.' });
         let userId = await rpcService('portail_utilisateur_par_email', { p_email: email });
+        // une personne déjà dans le portail (ou soi-même) : son rôle ne s'écrase pas par une
+        // invitation, il se change dans la liste (relecture du 19/10/2026)
+        if (userId === auteur.id) return res.status(400).json({ error: 'Vous ne pouvez pas vous inviter vous-même.' });
+        if (userId) {
+          const dejaLa = await fetch(SUPABASE_URL + '/rest/v1/staff_profiles?select=user_id&user_id=eq.' + encodeURIComponent(userId), { headers: enTetesService() });
+          if (!dejaLa.ok) throw new Error('Vérification impossible pour le moment.');
+          if ((await dejaLa.json()).length) return res.status(400).json({ error: 'Cette personne a déjà un compte du portail : changez son rôle dans la liste.' });
+        }
         if (!userId) {
           const invite = await adminAuth('invite?redirect_to=' + encodeURIComponent(SITE + '/admin/'), 'POST', { email, data: { portail_invite: true, nom } });
           userId = invite.id;
@@ -81,13 +92,8 @@ module.exports = async function handler(req, res) {
           body: JSON.stringify({ user_id: userId, nom, email, role, actif: true, cree_par: auteur.id })
         });
         if (!rep.ok) throw new Error('Compte invité, mais rôle non enregistré.');
-        // l'administrateur du site gère aussi le contenu du site (anciennes règles fondées sur « admins »)
-        if (role === 'site') {
-          await fetch(SUPABASE_URL + '/rest/v1/admins?on_conflict=user_id', {
-            method: 'POST', headers: { ...enTetesService(), 'Content-Type': 'application/json', Prefer: 'resolution=ignore-duplicates' },
-            body: JSON.stringify({ user_id: userId })
-          });
-        }
+        // (rôle « site » : la base ajoute elle-même les droits de l'ancien tableau de bord, table
+        // admins, et les retire au changement de rôle ou à la coupure — staff_suivre_admins)
         return res.status(200).json({ ok: true });
       }
       const cible = String(corps.user_id || '');
@@ -125,8 +131,10 @@ module.exports = async function handler(req, res) {
     // ---------- inscription par code individuel (sans compte) ----------
     if (action.startsWith('inscription_')) {
       const code = String(corps.code || '').trim().toUpperCase(), naissance = String(corps.naissance || '');
-      if (!/^MA2M-[A-Z0-9]{4}-[A-Z0-9]{2}$/.test(code) || !/^\d{4}-\d{2}-\d{2}$/.test(naissance)) return res.status(200).json({ ok: false, raison: 'inconnu' });
-      const tentatives = compteurTentatives(extraireIp(req), 'code-inscription', 'inscription', null);
+      if (!/^MA2M-[A-Z0-9]{4}-[A-Z0-9]{2}$/.test(code) || !dateValide(naissance)) return res.status(200).json({ ok: false, raison: 'inconnu' });
+      // compteur par adresse (comme api/code-protege.js), jamais commun à tout le monde
+      // (relecture du 19/10/2026 : 5 essais faux bloquaient tous les mannequins)
+      const tentatives = compteurTentatives(extraireIp(req), 'ip:' + extraireIp(req), 'inscription', null);
       if (await tentatives.dejaBloque(res)) return;
       let r;
       if (action === 'inscription_verifier') {
@@ -144,8 +152,9 @@ module.exports = async function handler(req, res) {
           p_reglement_accepte: corps.reglement === true, p_accord_parent: corps.parent === true
         });
       } else return res.status(400).json({ error: 'Action inconnue.' });
-      if (r && r.ok === false && RAISONS_ECHEC.includes(r.raison)) await tentatives.compterEchec();
-      else if (r && r.ok) await tentatives.succes();
+      // tout refus compte ; une réussite ne remet pas le compteur à zéro (sinon, avec un seul
+      // bon code, on pourrait essayer les autres sans fin) — il s'efface seul avec le temps
+      if (r && r.ok === false) await tentatives.compterEchec();
       return res.status(200).json(r);
     }
 
@@ -153,7 +162,7 @@ module.exports = async function handler(req, res) {
     if (action === 'lien_lire' || action === 'lien_declarer') {
       const t = String(corps.t || '');
       if (!/^[A-Za-z0-9_-]{20,64}$/.test(t)) return res.status(200).json({ ok: false });
-      const tentatives = compteurTentatives(extraireIp(req), 'lien-paiement', 'paiement', null);
+      const tentatives = compteurTentatives(extraireIp(req), 'ip:' + extraireIp(req), 'paiement', null);
       if (await tentatives.dejaBloque(res)) return;
       const r = action === 'lien_lire' ? await rpcService('lien_paiement_lire', { p_jeton: t })
         : await rpcService('lien_paiement_declarer', { p_jeton: t, p_numero: String(corps.numero || '').trim().slice(0, 30) });
@@ -163,6 +172,8 @@ module.exports = async function handler(req, res) {
 
     return res.status(400).json({ error: 'Action inconnue.' });
   } catch (e) {
-    return res.status(500).json({ error: e.message || 'Erreur serveur.' });
+    // pages publiques (inscription, lien de paiement) : jamais le message brut de la base
+    const publique = action.startsWith('inscription_') || action.startsWith('lien_');
+    return res.status(500).json({ error: publique ? 'Erreur serveur, réessayez dans un instant.' : (e.message || 'Erreur serveur.') });
   }
 };

@@ -4,7 +4,7 @@
 //    - sinon 403 { code: 'requis' } : c'est api/code-validation-protege.js qui la pose, une fois
 //      le code bon.
 //  DELETE : efface la clé (déconnexion).
-const { SUPABASE_URL, cleService, debutRequete, verifierUtilisateur, estAdmin, cookieAccesTableau, cleAccesTableauValide, COOKIE_ACCES_TABLEAU_EFFACE } = require('./_commun.js');
+const { SUPABASE_URL, cleService, debutRequete, chargeJeton, verifierUtilisateur, estAdmin, cookieAccesTableau, cleAccesTableauValide, COOKIE_ACCES_TABLEAU_EFFACE } = require('./_commun.js');
 
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
@@ -21,8 +21,7 @@ module.exports = async function handler(req, res) {
     if (!(await estAdmin(utilisateur.id))) { res.status(403).json({ error: "Ce compte n'est pas administrateur." }); return; }
     // session ouverte par le portail avec la double authentification (code de l'application
     // d'authentification, niveau « aal2 ») : elle vaut le code de validation
-    let doubleAuthentification = false;
-    try { doubleAuthentification = JSON.parse(Buffer.from(debut.jeton.split('.')[1], 'base64url').toString('utf8')).aal === 'aal2'; } catch (e) { doubleAuthentification = false; }
+    const doubleAuthentification = chargeJeton(debut.jeton).aal === 'aal2';
     if (!doubleAuthentification && !cleAccesTableauValide(req, utilisateur.id)) {
       // statut du code de validation, lu avec la session du compte lui-même
       const rep = await fetch(SUPABASE_URL + '/rest/v1/rpc/code_validation_statut', {

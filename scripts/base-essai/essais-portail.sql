@@ -25,13 +25,15 @@ insert into wave_links (type_droit, montant, url) values
   ('formation', 20000, 'https://pay.wave.com/m/essai-20000');
 
 -- Fonction d'essai : se mettre dans la peau de quelqu'un (jeton imité)
-create or replace function essai_qui(p_uid text, p_aal text default 'aal2', p_totp_il_y_a int default 30)
+-- (le portail envoie aussi l'identifiant de son appareil : en-tête « x-appareil »)
+create or replace function essai_qui(p_uid text, p_aal text default 'aal2', p_totp_il_y_a int default 30, p_appareil text default 'appareil-essai-0001')
 returns void language sql as $$
+  select set_config('request.headers', json_build_object('x-appareil', p_appareil)::text, false);
   select set_config('request.jwt.claims', json_build_object(
     'sub', p_uid, 'role', 'authenticated', 'aal', p_aal,
     'amr', json_build_array(json_build_object('method', 'totp', 'timestamp', extract(epoch from now())::bigint - p_totp_il_y_a)))::text, false);
 $$;
-grant execute on function essai_qui(text, text, int) to authenticated;
+grant execute on function essai_qui(text, text, int, text) to authenticated;
 create or replace function essai(p_ok boolean, p_libelle text) returns text language plpgsql as $$
 begin
   if not coalesce(p_ok, false) then raise exception '❌ ÉCHEC : %', p_libelle; end if;
@@ -74,6 +76,10 @@ select essai((select count(*) from agence_mannequins) = 0, 'test 5 : sans double
 -- Compte sans rôle : rien (moindre privilège)
 select essai_qui('00000000-0000-0000-0000-0000000000a6');
 select essai(portail_role() is null and not portail_peut('site'), 'un compte sans rôle n''a accès à rien');
+
+-- Appareil (relecture du 19/10/2026) : sans identifiant d'appareil, aucun accès
+select essai_qui('00000000-0000-0000-0000-0000000000a2', 'aal2', 30, '');
+select essai(portail_role() is null, 'sans identifiant d''appareil, aucun espace');
 
 -- 1 et 2. Administrateur du site : ni espace 2 ni espace 3, aucun montant, aucun contact privé
 select essai_qui('00000000-0000-0000-0000-0000000000a2');
@@ -330,6 +336,10 @@ create temp table essai_lien as select portail_creer_lien_paiement('00000000-000
 reset role;
 select set_config('request.jwt.claims', '', false);
 select essai((lien_paiement_lire((select jeton from essai_lien)) ->> 'montant')::int = 10000, 'test 13 : non inscrit → son lien personnel montre le bon montant, sans compte');
+-- relecture du 19/10/2026 : mois déjà payé en partie → le lien Wave demande le reste, pas le total
+update fee_dues set montant_du = 20000, montant_paye = 10000 where id = '00000000-0000-0000-0000-00000000f771';
+select essai((lien_paiement_lire((select jeton from essai_lien)) ->> 'lien_wave') = 'https://pay.wave.com/m/essai-10000', 'mois payé en partie : le lien Wave demande le reste (10 000), pas le total');
+update fee_dues set montant_du = 10000, montant_paye = 0 where id = '00000000-0000-0000-0000-00000000f771';
 select essai((lien_paiement_declarer((select jeton from essai_lien), '0700000077') ->> 'ok')::boolean, 'test 13 : « J''ai payé » par le lien accepté');
 select essai((select statut from fee_dues where id = '00000000-0000-0000-0000-00000000f771') = 'declare', 'test 13 : l''échéance passe à « Paiement déclaré »');
 update pay_tokens set revoque = true;
@@ -362,6 +372,41 @@ select set_config('request.jwt.claims', '', false);
 select portail_figer_recap(current_date);
 select essai((select jsonb_array_length(contenu -> 'non_payes') >= 1 and contenu ? 'payes' and contenu ? 'attendu' from month_snapshots where mois = date_trunc('month', current_date)::date),
              'test 16 : récapitulatif du mois figé (payés, non payés, attendu, encaissé)');
+
+-- Relecture du 19/10/2026 : code d'inscription déjà utilisé + mauvaise date → message neutre
+update registration_codes set statut = 'utilise'
+  where code_hache = encode(digest((select code from essai_codes where qui = 'awa'), 'sha256'), 'hex');
+select essai((verifier_code_inscription((select code from essai_codes where qui = 'awa'), '1990-01-01') ->> 'raison') = 'inconnu',
+             'code déjà utilisé + mauvaise date : rien ne dit que le code existe');
+select essai((verifier_code_inscription((select code from essai_codes where qui = 'awa'), '2001-03-12') ->> 'raison') = 'deja_utilise',
+             'code déjà utilisé + bonne date : « déjà utilisé »');
+
+-- Relecture du 19/10/2026 : téléphone révoqué → les sessions déjà ouvertes cessent de servir
+insert into staff_devices (user_id, appareil, libelle) values ('00000000-0000-0000-0000-0000000000a4', 'tel-vole-0001', 'Téléphone volé');
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a4', 'aal2', 30, 'tel-vole-0001');
+select essai(portail_role() = 'compta', 'avant la révocation, le téléphone ouvre l''espace');
+reset role;
+select set_config('request.jwt.claims', '', false);
+update staff_devices set revoque = true where appareil = 'tel-vole-0001';
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a4', 'aal2', 30, 'tel-vole-0001');
+select essai(portail_role() is null, 'téléphone révoqué : refusé');
+select essai_qui('00000000-0000-0000-0000-0000000000a4', 'aal2', 30, 'nouvel-identifiant-0002');
+select essai(portail_role() is null, 'téléphone révoqué : changer d''identifiant ne rend pas l''accès à la session déjà ouverte');
+select essai_qui('00000000-0000-0000-0000-0000000000a4', 'aal2', -5, 'ordinateur-bureau-0003');
+select essai(portail_role() = 'compta', 'après la révocation, une nouvelle connexion avec le code fonctionne');
+reset role;
+select set_config('request.jwt.claims', '', false);
+
+-- Relecture du 19/10/2026 : les droits de l'ancien tableau de bord (table admins) suivent le rôle
+select essai(exists (select 1 from admins where user_id = '00000000-0000-0000-0000-0000000000a2'), 'rôle « site » : droits de l''ancien tableau de bord');
+update staff_profiles set role = 'caisse' where user_id = '00000000-0000-0000-0000-0000000000a2';
+select essai(not exists (select 1 from admins where user_id = '00000000-0000-0000-0000-0000000000a2'), 'rôle changé : droits de l''ancien tableau de bord retirés');
+update staff_profiles set role = 'site', actif = false where user_id = '00000000-0000-0000-0000-0000000000a2';
+select essai(not exists (select 1 from admins where user_id = '00000000-0000-0000-0000-0000000000a2'), 'accès coupé : droits de l''ancien tableau de bord retirés');
+select essai(exists (select 1 from admins where user_id = '00000000-0000-0000-0000-0000000000a1') or not exists (select 1 from admins),
+             'le compte principal n''est jamais retiré');
 
 -- Visiteur anonyme : rien
 set role anon;

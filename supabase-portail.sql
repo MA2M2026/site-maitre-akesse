@@ -78,6 +78,20 @@ returns boolean language sql stable as $$
   select coalesce(auth.jwt() ->> 'aal', '') = 'aal2';
 $$;
 
+-- Heure (en secondes) du dernier code de l'application d'authentification saisi pour cette session
+create or replace function portail_dernier_code()
+returns bigint language sql stable as $$
+  select max((m ->> 'timestamp')::bigint)
+  from jsonb_array_elements(coalesce(auth.jwt() -> 'amr', '[]'::jsonb)) m
+  where m ->> 'method' in ('totp', 'mfa/totp');
+$$;
+
+-- Appareil révoqué (téléphone perdu ou volé) : toutes les sessions ouvertes AVANT la révocation
+-- cessent de servir, sur tous les appareils de la personne ; elle se reconnecte avec mot de
+-- passe et code (relecture du 19/10/2026 : vider le stockage du navigateur suffisait à
+-- reprendre la main avec une session déjà ouverte).
+alter table staff_profiles add column if not exists sessions_valides_apres timestamptz;
+
 -- Appareil révoqué : l'application envoie son identifiant dans l'en-tête « x-appareil »
 create or replace function portail_appareil_ok()
 returns boolean language plpgsql stable security definer set search_path = public as $$
@@ -91,8 +105,14 @@ begin
     entetes := null;
   end;
   app := coalesce(entetes ->> 'x-appareil', '');
+  -- sans identifiant d'appareil, pas d'accès (ne pas l'envoyer contournait une révocation) ;
+  -- le portail et son serveur l'envoient toujours
   if app = '' then
-    return true;
+    return false;
+  end if;
+  if exists (select 1 from staff_profiles where user_id = auth.uid() and sessions_valides_apres is not null
+             and coalesce(portail_dernier_code(), 0) < extract(epoch from sessions_valides_apres)) then
+    return false;
   end if;
   return not exists (select 1 from staff_devices where user_id = auth.uid() and appareil = app and revoque);
 end;
@@ -132,9 +152,7 @@ returns void language plpgsql stable as $$
 declare
   dernier bigint;
 begin
-  select max((m ->> 'timestamp')::bigint) into dernier
-  from jsonb_array_elements(coalesce(auth.jwt() -> 'amr', '[]'::jsonb)) m
-  where m ->> 'method' in ('totp', 'mfa/totp');
+  dernier := portail_dernier_code();
   if dernier is null or dernier < extract(epoch from now()) - 600 then
     raise exception 'AUTH_RECENTE: confirmez votre code de l''application d''authentification pour cette action.';
   end if;
@@ -916,6 +934,40 @@ drop trigger if exists appareils_garde_fous on staff_devices;
 create trigger appareils_garde_fous before update on staff_devices for each row
   when (OLD.revoque is distinct from NEW.revoque) execute function staff_garde_fous();
 
+-- Appareil révoqué : les sessions déjà ouvertes de la personne cessent de servir (voir
+-- portail_appareil_ok)
+create or replace function staff_appareil_revoque()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  update staff_profiles set sessions_valides_apres = now() where user_id = NEW.user_id;
+  return NEW;
+end;
+$$;
+revoke all on function staff_appareil_revoque() from public, anon, authenticated;
+drop trigger if exists appareils_revoques on staff_devices;
+create trigger appareils_revoques after update on staff_devices for each row
+  when (NEW.revoque and not OLD.revoque) execute function staff_appareil_revoque();
+
+-- Rôle « site » = droits de l'ancien tableau de bord (table admins). Changement de rôle ou accès
+-- coupé : la ligne admins suit (relecture du 19/10/2026 : elle restait après une coupure).
+-- Le compte principal n'est jamais touché.
+create or replace function staff_suivre_admins()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if NEW.role = 'principal' then return NEW; end if;
+  if NEW.role = 'site' and NEW.actif then
+    insert into admins (user_id) values (NEW.user_id) on conflict (user_id) do nothing;
+  else
+    delete from admins where user_id = NEW.user_id;
+  end if;
+  return NEW;
+end;
+$$;
+revoke all on function staff_suivre_admins() from public, anon, authenticated;
+drop trigger if exists staff_suivre_admins on staff_profiles;
+create trigger staff_suivre_admins after insert or update of role, actif on staff_profiles
+  for each row execute function staff_suivre_admins();
+
 -- Mensualité : seul l'administrateur principal la change (historique gardé) ; sortie :
 -- proposée par l'encaissement, décidée par l'administrateur principal (code récent).
 create or replace function registre_garde_fous()
@@ -1016,9 +1068,10 @@ begin
   select texte into txt from message_templates where code = p_modele;
   txt := replace(txt, '{prenom}', coalesce(nullif(split_part(coalesce(m.prenoms, m.nom), ' ', 1), ''), m.nom));
   txt := replace(txt, '{mois}', mois_txt);
-  txt := replace(txt, '{montant}', trim(to_char(e.montant_du, 'FM999G999G999')) || ' FCFA');
+  -- montant encore dû (mois déjà payé en partie : on ne redemande que le reste)
+  txt := replace(txt, '{montant}', trim(to_char(e.montant_du - e.montant_paye, 'FM999G999G999')) || ' FCFA');
   txt := replace(txt, '{date_limite}', to_char(e.date_limite, 'DD/MM/YYYY'));
-  txt := replace(txt, '{lien_wave}', coalesce(lien_wave_pour(case when e.type = 'inscription' then 'inscription' else 'formation' end, e.montant_du), ''));
+  txt := replace(txt, '{lien_wave}', coalesce(lien_wave_pour(case when e.type = 'inscription' then 'inscription' else 'formation' end, e.montant_du - e.montant_paye), ''));
   txt := replace(txt, '{lien_espace}', 'https://www.maitreakessemodelmanagement.com/espace-mannequin');
   txt := replace(txt, '{code_espace}', coalesce(p_code, ''));
   txt := replace(replace(txt, ' ', ' '), '  ', ' ');
@@ -1655,19 +1708,21 @@ begin
   select * into r from portail_reglages limit 1;
   select * into rc from registration_codes where code_hache = encode(digest(upper(trim(p_code)), 'sha256'), 'hex') for update;
   if rc.id is null then return json_build_object('ok', false, 'raison', 'inconnu'); end if;
-  if rc.statut = 'utilise' then return json_build_object('ok', false, 'raison', 'deja_utilise'); end if;
   if rc.statut = 'bloque' then return json_build_object('ok', false, 'raison', 'bloque'); end if;
-  if rc.statut <> 'genere' or rc.expire_le < now() then
-    update registration_codes set statut = 'expire' where id = rc.id and statut = 'genere';
-    return json_build_object('ok', false, 'raison', 'expire');
-  end if;
+  -- la date d'abord : sans la bonne date, rien ne dit si le code a servi ou a expiré
+  -- (relecture du 19/10/2026 : on pouvait sinon repérer les codes existants)
   select * into c from casting_applications where id = rc.candidature_id;
   if c.date_naissance is distinct from p_naissance then
     update registration_codes set essais = essais + 1,
-      statut = case when essais + 1 >= r.essais_code then 'bloque' else statut end where id = rc.id;
+      statut = case when essais + 1 >= r.essais_code and statut = 'genere' then 'bloque' else statut end where id = rc.id;
     perform journaliser('Code d''inscription : essai raté', 'registration_codes', rc.id::text, null, null);
-    return json_build_object('ok', false, 'raison', case when rc.essais + 1 >= r.essais_code then 'bloque' else 'inconnu' end,
+    return json_build_object('ok', false, 'raison', case when rc.essais + 1 >= r.essais_code and rc.statut = 'genere' then 'bloque' else 'inconnu' end,
                              'essais', rc.essais + 1);
+  end if;
+  if rc.statut = 'utilise' then return json_build_object('ok', false, 'raison', 'deja_utilise'); end if;
+  if rc.statut <> 'genere' or rc.expire_le < now() then
+    update registration_codes set statut = 'expire' where id = rc.id and statut = 'genere';
+    return json_build_object('ok', false, 'raison', 'expire');
   end if;
   return json_build_object('ok', true,
     'montant', r.droit_inscription + r.premier_mois, 'droit_inscription', r.droit_inscription, 'premier_mois', r.premier_mois,
@@ -1816,7 +1871,7 @@ begin
   select * into m from agence_mannequins where id = e.mannequin_id;
   return json_build_object('ok', true, 'prenom', split_part(coalesce(m.prenoms, m.nom), ' ', 1),
     'mois', e.mois, 'type', e.type, 'montant', e.montant_du - e.montant_paye, 'statut', e.statut,
-    'lien_wave', lien_wave_pour(case when e.type = 'inscription' then 'inscription' else 'formation' end, e.montant_du),
+    'lien_wave', lien_wave_pour(case when e.type = 'inscription' then 'inscription' else 'formation' end, e.montant_du - e.montant_paye),
     'numero', coalesce(m.telephone, ''));
 end;
 $$;

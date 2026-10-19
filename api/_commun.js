@@ -110,6 +110,13 @@ function debutRequete(req, res, authentifie) {
   return { jeton, corps: corpsDe(req) };
 }
 
+// Contenu d'un jeton de connexion Supabase (niveau « aal », méthodes « amr »…). Lecture seule,
+// SANS vérifier la signature : toujours après verifierUtilisateur ou un appel à la base avec ce
+// jeton. Partagé le 19/10/2026 (avant, recopié dans portail.js et acces-tableau.js).
+function chargeJeton(jeton) {
+  try { return JSON.parse(Buffer.from(String(jeton).split('.')[1], 'base64url').toString('utf8')); } catch (e) { return {}; }
+}
+
 // Compteur de tentatives d'un accès protégé (connexion par mot de passe, code de validation) :
 // blocage après trop d'erreurs, stocké en base (jamais dans le navigateur). Partagé le
 // 12/10/2026 (avant, recopié dans connexion-protegee.js et code-validation-protege.js).
@@ -175,5 +182,5 @@ function cleAccesTableauValide(req, userId) {
 module.exports = {
   SUPABASE_URL, cleService, enTetesService, jetonDe, corpsDe,
   verifierUtilisateur, lignesAdmin, estAdmin, creerClientR2, cheminSur, extraireIp, nettoyerAppareil,
-  debutRequete, compteurTentatives, cookieAccesTableau, cleAccesTableauValide, COOKIE_ACCES_TABLEAU_EFFACE
+  debutRequete, chargeJeton, compteurTentatives, cookieAccesTableau, cleAccesTableauValide, COOKIE_ACCES_TABLEAU_EFFACE
 };

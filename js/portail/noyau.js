@@ -263,7 +263,8 @@
     const session = (await sb.auth.getSession()).data.session;
     const rep = await fetch('/api/portail', {
       method: 'POST',
-      headers: Object.assign({ 'Content-Type': 'application/json' }, session ? { Authorization: 'Bearer ' + session.access_token } : {}),
+      // identifiant de l'appareil (js/supabase-config.js) : le serveur le transmet à la base
+      headers: Object.assign({ 'Content-Type': 'application/json', 'x-appareil': identifiantAppareilPortail() }, session ? { Authorization: 'Bearer ' + session.access_token } : {}),
       body: JSON.stringify(Object.assign({ action }, donnees || {}))
     });
     const corps = await rep.json().catch(() => ({}));

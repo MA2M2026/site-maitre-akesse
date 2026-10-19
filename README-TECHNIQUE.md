@@ -56,9 +56,26 @@ seule fois** (décision de la propriétaire). Ce qui change par rapport aux sect
   `espace-paiements.js`, `espace-compta.js`, `securite.js`. Styles : `css/portail.css`.
 - Fonction serveur multi-actions : `api/portail.js` (invitations, codes de secours, inscription par
   code, lien de paiement personnel…). 12 fonctions Vercel au total = la limite de l'offre gratuite.
-- `middleware.js` renvoie `/tableau-de-bord` vers `/admin/` (sauf `?depuis=portail`, utilisé par
-  « Outils et gestion détaillée »). Plus de bouton « Admin » sur le site public ; `/admin` est exclu
-  de `robots.txt` et porte `noindex`.
+- `middleware.js` renvoie l'adresse **nue** `/tableau-de-bord(.html)` vers `/admin/`. Toute adresse
+  avec des paramètres reste sur la gestion détaillée : `?depuis=portail` (« Outils et gestion
+  détaillée », menu du tableau de bord, boutique), `?notif=…` (notifications du téléphone), liens de
+  réinitialisation, et la lecture interne de la page protégée (`?depuis=interne` — sans elle, la
+  lecture interne recevait le portail et la protection laissait tout passer : relecture du
+  19/10/2026, verrouillé par test-tableau-protege.js). Plus de bouton « Admin » sur le site
+  public ; `/admin` est exclu de `robots.txt` et porte `noindex`.
+- **Appareils** : le portail envoie l'identifiant de son appareil (en-tête `x-appareil`) à la base
+  ET à `api/portail.js`, qui le transmet. Sans cet en-tête, `portail_role()` ne donne aucun rôle.
+  Révoquer un appareil remplit `staff_profiles.sessions_valides_apres` : toutes les sessions de la
+  personne ouvertes avant (code saisi avant, lu dans `amr`) cessent de servir, sur tous ses
+  appareils ; elle se reconnecte avec mot de passe + code.
+- **Rôle « site » et table `admins`** (droits de l'ancien tableau de bord) : tenus à jour par la
+  base (déclencheur `staff_suivre_admins`) au changement de rôle ou à la coupure ; le compte
+  principal n'est jamais touché. L'invitation refuse une personne déjà dans le portail (son rôle
+  se change dans la liste) et refuse de s'inviter soi-même.
+- **Pages publiques** (inscription par code, lien de paiement) : compteur d'essais par adresse
+  (`ip:…`), tout refus compte, une réussite ne remet pas à zéro ; la date de naissance est vérifiée
+  AVANT de dire si un code a servi ou expiré ; jamais le message brut de la base en cas de panne.
+  Le lien Wave et les messages demandent le **reste dû** d'un mois payé en partie.
 - Rôles : principal, site (aucun montant ni contact privé), caisse (paiements), compta (totaux sans
   nom). Les droits sont dans la base (RLS + fonctions `portail_peut`, `portail_est_principal`).
 

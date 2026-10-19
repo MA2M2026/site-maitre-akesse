@@ -37,9 +37,13 @@
   P.actions['securite-actif'] = async (el) => {
     const actif = el.getAttribute('data-actif') !== '1';
     await P.sensible(() => P.bd(sb.from('staff_profiles').update({ actif, desactive_le: actif ? null : new Date().toISOString() }).eq('user_id', el.getAttribute('data-id'))));
-    // coupe aussi les sessions ouvertes (la base refuse déjà tout dès maintenant)
-    await P.serveur('acces', { user_id: el.getAttribute('data-id'), actif }).catch(() => { /* la base refuse déjà tout */ });
-    P.message(actif ? 'Accès rétabli.' : 'Accès coupé immédiatement.');
+    // coupe aussi les sessions ouvertes (la base refuse déjà tout dès maintenant) ; un échec se
+    // dit, au lieu d'être tu (relecture du 19/10/2026)
+    let sessions = true;
+    await P.serveur('acces', { user_id: el.getAttribute('data-id'), actif }).catch(() => { sessions = false; });
+    P.message(!sessions ? (actif ? 'Accès rétabli dans le portail, mais la connexion n’a pas pu être débloquée : recommencez dans un instant.'
+      : 'Accès coupé dans le portail, mais ses sessions ouvertes n’ont pas pu être fermées : recommencez dans un instant.')
+      : (actif ? 'Accès rétabli.' : 'Accès coupé immédiatement.'));
     P.afficher();
   };
   P.actions['securite-mfa'] = async (el) => {
