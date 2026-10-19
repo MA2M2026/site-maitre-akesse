@@ -64,6 +64,25 @@
 > (navigateur + serveur). Mannequin : `mes-paiements.html` (`mes_mensualites`, 24 mois,
 > `mensualite_declarer`). Fiche du registre : mensualité reçue par l'agence (Wave hors site, espèces).
 >
+> **Branche `administration-v23` (19/10/2026, cahier V3)** — administration reprise sur une branche à part
+> (rien de mis en ligne sans accord écrit de la propriétaire). **Espace 1 dans le portail** : `js/portail/espace-site.js`
+> affiche l'ancien tableau de bord dans un cadre de même origine (`/tableau-de-bord.html?cadre=1#cle`) ;
+> `js/mode-administration.js` détecte le cadre (classe `cadre-admin`, relais d'activité pour la déconnexion
+> à 15 min) ; `vercel.json` : `frame-src 'self'` seul changement de sécurité (accord écrit). **Espace 2** :
+> `espace-paiements.js` (tableau du mois, matrice mannequins × mois, récapitulatif PDF/xlsx, messages et relances,
+> codes de l'espace mannequin, paramètres = liens Wave, correction/annulation d'un paiement) et
+> `espace-paiements-suivi.js` (rapprochement Wave, sorties et suspensions, mois figés). **Espace mannequin** :
+> `mes-paiements.js` (24 mois, lien Wave des Paramètres, numéro du payeur, historique avec reçus) et
+> `inscription-simplifiee.js` (numéro du payeur). SQL, à exécuter dans cet ordre, rejouable :
+> `supabase-administration.sql`, `supabase-parametres.sql` (table `liens_wave`),
+> `supabase-bloc2-complements.sql` (récapitulatifs figés, sorties, reçus REC-AAAA-NNNNN automatiques à la validation,
+> rapprochements, modèles et historique des messages, réglages, clôture comptable, `lien_paiement`,
+> `mensualite_declarer_avec_numero`, `inscription_payer_avec_numero`, `mes_recus`). Les pages gardent un repli
+> tant que le SQL n'est pas exécuté (`api/code-protege.js` retombe sur l'ancienne fonction). Orange, MTN et Moov :
+> non activés, il faut d'abord un compte comptable par opérateur (aujourd'hui tout ce qui n'est pas « espèces »
+> va au compte Wave). Tests : `test-espace1-cadre`, `test-tableau-du-mois`, `test-matrice-mois`, `test-recapitulatif`,
+> `test-messages`, `test-parametres`, `test-correction-paiement`, `test-codes-espace`, `test-suivi-paiements`, `test-mensualites`.
+>
 > **Espace 3, morceau A — recettes, dépenses, trésorerie (cahier v2.4 §6)** : `js/portail/espace-compta.js`
 > (tableau du mois, recettes, dépenses avec justificatif, trésorerie). Base, section 10 :
 > `compta_comptes` (Caisse et Wave créés d'office, solde de départ à une date), `compta_ecritures`
