@@ -355,8 +355,14 @@ function donnees(role) {
       }
       // fiche d'un mannequin sans compte : l'agence enregistre le paiement de l'inscription
       await pr.goto(url + '#/paiements/fiche/r2'); await pr.waitForSelector('[data-action="registre-inscription"]', { timeout: 6000 }).catch(() => {});
-      ok(await pr.isVisible('[data-action="registre-inscription"][data-mode="avant_systeme"]') && await pr.isVisible('[data-action="registre-inscription"][data-mode="especes"]'),
-        nomEcran + ' (' + role + ') : « Inscription déjà payée (avant le nouveau système) » et « Paiement en espèces »');
+      ok(await pr.isVisible('[data-action="registre-inscription"][data-mode="avant_systeme"]') && await pr.isVisible('[data-action="registre-inscription"][data-mode="especes"]') && await pr.isVisible('[data-action="registre-inscription"][data-mode="wave"]'),
+        nomEcran + ' (' + role + ') : « avant le nouveau système », « Wave reçu en dehors du site » et « espèces »');
+      pr.once('dialog', (dl) => dl.accept());
+      await pr.click('[data-action="registre-inscription"][data-mode="wave"]'); await pr.waitForTimeout(800);
+      const waveHors = r.journal.find((j) => j[0] === 'POST' && j[1] === 'paiements_mannequins');
+      ok(waveHors && [].concat(JSON.parse(waveHors[3])).every((l) => l.mode === 'wave' && l.statut === 'valide') && [].concat(JSON.parse(waveHors[3])).length === 2,
+        nomEcran + ' (' + role + ') : Wave reçu en dehors du site → 15 000 + 10 000, mode Wave, validé par l’agence');
+      r.journal.length = 0;
       ok(role === 'principal' ? !(await pr.isDisabled('#mq-mensualite')) : await pr.isDisabled('#mq-mensualite'), nomEcran + ' (' + role + ') : mensualité modifiable par le principal seul');
       pr.once('dialog', (dl) => dl.accept());
       await pr.click('[data-action="registre-inscription"][data-mode="especes"]'); await pr.waitForTimeout(800);

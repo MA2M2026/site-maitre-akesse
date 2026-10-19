@@ -122,6 +122,7 @@
     // (cahier v2.4, 5.5) ; le bouton « Générer le code de l'espace » viendra ensuite (morceau 4).
     const actions = !m.user_id && !inscription
       ? '<div class="ligne"><button class="btn rouge" type="button" data-action="registre-inscription" data-mode="avant_systeme" data-id="' + m.id + '">Inscription déjà payée (avant le nouveau système)</button>' +
+        '<button class="btn" type="button" data-action="registre-inscription" data-mode="wave" data-id="' + m.id + '">Paiement Wave reçu en dehors du site (' + P.fcfa(INSCRIPTION_FCFA) + ')</button>' +
         '<button class="btn" type="button" data-action="registre-inscription" data-mode="especes" data-id="' + m.id + '">Paiement en espèces (' + P.fcfa(INSCRIPTION_FCFA) + ')</button></div>'
       : '';
     return P.entete(m.full_name, '<a class="btn" href="#/paiements/registre">Registre</a>') +
@@ -188,16 +189,19 @@
       P.afficher();
     } catch (e) { P.message(P.erreurTexte(e)); }
   };
+  // Inscription payée sans passer par le site : avant le nouveau système, en espèces, ou par Wave
+  // directement à l'agence (paiement reçu par l'agence, donc validé tout de suite)
   P.actions['registre-inscription'] = async (el) => {
-    const especes = el.getAttribute('data-mode') === 'especes';
-    if (!confirm(especes ? 'Enregistrer le paiement de l’inscription en espèces (' + P.fcfa(INSCRIPTION_FCFA) + '), reçu par l’agence ?'
-      : 'Confirmer que ce mannequin a déjà payé son inscription avant le nouveau système ?')) return;
+    const mode = el.getAttribute('data-mode');
+    if (!confirm({ especes: 'Enregistrer le paiement de l’inscription en espèces (' + P.fcfa(INSCRIPTION_FCFA) + '), reçu par l’agence ?',
+      wave: 'Enregistrer le paiement Wave de l’inscription (' + P.fcfa(INSCRIPTION_FCFA) + '), reçu par l’agence en dehors du site ?',
+      avant_systeme: 'Confirmer que ce mannequin a déjà payé son inscription avant le nouveau système ?' }[mode])) return;
     try {
       const id = el.getAttribute('data-id');
-      await P.bd(sb.from('paiements_mannequins').insert(especes
-        ? [{ mannequin_id: id, objet: 'inscription', mode: 'especes', montant: DROIT_INSCRIPTION, statut: 'valide' },
-          { mannequin_id: id, objet: 'mensualite', mois: moisCourant(), mode: 'especes', montant: PREMIER_MOIS, statut: 'valide' }]
-        : { mannequin_id: id, objet: 'inscription', mode: 'avant_systeme', montant: null, statut: 'valide' }));
+      await P.bd(sb.from('paiements_mannequins').insert(mode === 'avant_systeme'
+        ? { mannequin_id: id, objet: 'inscription', mode, montant: null, statut: 'valide' }
+        : [{ mannequin_id: id, objet: 'inscription', mode, montant: DROIT_INSCRIPTION, statut: 'valide' },
+          { mannequin_id: id, objet: 'mensualite', mois: moisCourant(), mode, montant: PREMIER_MOIS, statut: 'valide' }]));
       P.message('Paiement de l’inscription enregistré.');
       P.afficher();
     } catch (e) { P.message(P.erreurTexte(e)); }
