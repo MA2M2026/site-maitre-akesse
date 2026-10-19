@@ -2328,10 +2328,10 @@ document.getElementById('ca-creer-btn').addEventListener('click', async () => {
   btn.disabled = true;
   msg.className = 'form-msg'; msg.textContent = 'Création…'; msg.style.display = 'block';
   try {
-    const reponse = await fetch('/api/creer-admin', {
+    const reponse = await fetch('/api/portail', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
-      body: JSON.stringify({ email, password: motDePasse })
+      body: JSON.stringify({ action: 'creer_admin', email, password: motDePasse })
     });
     const resultat = await reponse.json().catch(() => ({}));
     if (!reponse.ok) { msg.className = 'form-msg err'; msg.textContent = 'Échec : ' + (resultat.error || 'erreur inconnue.'); return; }

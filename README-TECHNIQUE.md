@@ -1,5 +1,18 @@
 # README-TECHNIQUE.md — Maître Akesse Model Management (MA2M)
 
+> **19/10/2026 (après-midi) — Administration v2.4, étape 1 en construction** (cahier v2.3 + mise à
+> jour v2.4 validée par la propriétaire, document confidentiel hors du dépôt). Adresse séparée
+> **admin.maitreakessemodelmanagement.com** (même projet Vercel ; redirections par hôte dans
+> `vercel.json` : `/` → `/admin/` sur l'adresse admin, `/admin/*` de www → adresse admin). Fichiers :
+> `admin/` (page, manifeste `id: /admin/`, service worker limité à /admin/), `css/portail.css`,
+> `js/portail/noyau.js` (connexion mot de passe + code TOTP, code à 4 chiffres par appareil,
+> verrouillage 15 min, 8 h max, menu « ☰ Menu » < 860 px), `js/portail/securite.js` (comptes,
+> délégations, appareils, journal), `js/portail/espaces-en-construction.js` (les 3 tuiles, en
+> attendant les espaces), `api/portail.js` (invitations, codes de secours, « Créer un compte
+> admin » de l'ancien tableau de bord via `api/_creer-admin.js` : 11 fonctions au plus).
+> Base : `supabase-administration.sql` (comptes, appareils, codes, journal ; rejouable, n'efface
+> rien), essais `bash scripts/base-essai/lancer.sh` ; essai visiteur `test-administration.js`.
+
 > **19/10/2026 — Administration (/admin) retirée, retour à l'ancien tableau de bord** (décision de la
 > propriétaire). Tout ce qui concernait le portail /admin, les paiements, la comptabilité et
 > l'inscription par code a été supprimé du site ; `tableau-de-bord.html`, ses scripts, `middleware.js`,

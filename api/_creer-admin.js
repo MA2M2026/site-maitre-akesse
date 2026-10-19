@@ -1,4 +1,5 @@
-// Fonction serverless Vercel — crée un nouveau compte administrateur
+// Appelé par api/portail.js (action « creer_admin ») depuis le 19/10/2026 : ce n'est plus une
+// fonction Vercel à part (limite de l'offre gratuite). Crée un nouveau compte administrateur
 // (compte de connexion + entrée dans la table `admins`), réservée aux
 // admins déjà connectés. Remplace la manipulation manuelle dans Supabase
 // (Authentication > Add user, puis Table Editor > admins > Insert row)
@@ -11,7 +12,7 @@
 //
 // Variable d'environnement requise sur Vercel : SUPABASE_SERVICE_ROLE_KEY.
 
-const { SUPABASE_URL, enTetesService, verifierUtilisateur, estAdmin, debutRequete } = require('./_commun.js');
+const { SUPABASE_URL, enTetesService, verifierUtilisateur, estAdmin, ficheStaff, debutRequete } = require('./_commun.js');
 
 module.exports = async function handler(req, res) {
   const debut = debutRequete(req, res, true); // POST + clé serveur + jeton (api/_commun.js)
@@ -39,6 +40,14 @@ module.exports = async function handler(req, res) {
     // 2. Ce compte figure-t-il dans la table admins ?
     if (!(await estAdmin(utilisateur.id))) {
       res.status(403).json({ error: "Ce compte n'est pas administrateur." });
+      return;
+    }
+    // 2 bis. Une personne invitée par le portail (rôle « site »…) ne crée pas d'autres comptes
+    // admin : ce serait un compte hors du portail, que la coupure d'accès ne toucherait pas.
+    // Seul l'administrateur principal (ou l'ancien compte admin, sans fiche) le peut.
+    const fiche = await ficheStaff(utilisateur.id);
+    if (fiche && fiche.role !== 'principal') {
+      res.status(403).json({ error: "Réservé à l'administrateur principal : les comptes se créent par invitation dans le portail." });
       return;
     }
 
