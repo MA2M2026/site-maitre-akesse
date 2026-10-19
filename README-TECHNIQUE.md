@@ -50,7 +50,8 @@ seule fois** (décision de la propriétaire). Ce qui change par rapport aux sect
 
 ### Portail d'administration `/admin/` (application installable, remplace le tableau de bord)
 - `admin/index.html` + `admin/manifest.webmanifest` + `admin/sw.js` (portée `/admin/` seulement ;
-  monter `VERSION` à chaque changement des fichiers listés). Scripts : `js/portail/noyau.js`
+  monter `VERSION` à chaque changement des fichiers listés ; logo propre `icons/admin-*.png`, noir sur
+  fond blanc, pour ne pas confondre avec l'application du site au logo blanc sur noir). Scripts : `js/portail/noyau.js`
   (connexion, double authentification TOTP obligatoire, 8 codes de secours, appareils, 15 min
   d'inactivité / 8 h de session, actions sensibles ré-authentifiées), `espace-site.js`,
   `espace-paiements.js`, `espace-compta.js`, `securite.js`. Styles : `css/portail.css`.
