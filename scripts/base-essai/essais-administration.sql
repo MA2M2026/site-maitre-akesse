@@ -292,6 +292,12 @@ select code_espace_creer((select id from agence_mannequins where candidature_id 
 select essai((select count(*) from codes_espace where not annule) = 1, 'un seul code valable à la fois (l''ancien est annulé)');
 select essai((select expire_le::date - cree_le::date from codes_espace where not annule) = 7, 'valable une semaine');
 reset role;
+-- (retour du 19/10/2026) inscription enregistrée par erreur puis annulée : son code est annulé aussi
+insert into agence_mannequins (id, full_name) values ('00000000-0000-0000-0000-0000000000f1', 'ESSAI ERREUR');
+insert into paiements_mannequins (mannequin_id, objet, mode, montant, statut) values ('00000000-0000-0000-0000-0000000000f1', 'inscription', 'especes', 15000, 'valide');
+insert into codes_espace (code, mannequin_id) values ('ESP-ESSAI1', '00000000-0000-0000-0000-0000000000f1');
+update paiements_mannequins set statut = 'refuse', motif = 'Annulé : essai' where mannequin_id = '00000000-0000-0000-0000-0000000000f1';
+select essai((select annule from codes_espace where code = 'ESP-ESSAI1'), 'inscription annulée : son code de l''espace est annulé aussi');
 select set_config('request.jwt.claims', '{"role":"service_role"}', false);
 select essai(code_espace_valable((select code from codes_espace where not annule)), 'le serveur reconnaît le code');
 select essai(code_espace_reserver((select code from codes_espace where not annule), true), 'code réservé le temps de créer le compte');

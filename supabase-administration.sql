@@ -707,7 +707,12 @@ begin
     full_name = case when agence_mannequins.full_name in ('', 'Sans nom') and nullif(trim(NEW.full_name), '') is not null then trim(NEW.full_name) else agence_mannequins.full_name end,
     date_naissance = coalesce(agence_mannequins.date_naissance, NEW.date_naissance),
     telephone = coalesce(nullif(agence_mannequins.telephone, ''), NEW.phone),
-    email = coalesce(nullif(agence_mannequins.email, ''), NEW.contact_email);
+    email = coalesce(nullif(agence_mannequins.email, ''), NEW.contact_email)
+  -- (seulement s'il y a vraiment une case à remplir : pas d'écriture inutile au journal d'audit)
+  where (agence_mannequins.full_name in ('', 'Sans nom') and nullif(trim(NEW.full_name), '') is not null)
+     or (agence_mannequins.date_naissance is null and NEW.date_naissance is not null)
+     or (nullif(agence_mannequins.telephone, '') is null and nullif(NEW.phone, '') is not null)
+     or (nullif(agence_mannequins.email, '') is null and nullif(NEW.contact_email, '') is not null);
   return NEW;
 end;
 $$;
@@ -725,7 +730,10 @@ begin
     parent_nom = coalesce(nullif(parent_nom, ''), nullif(trim(NEW.parent_nom), '')),
     parent_telephone = coalesce(nullif(parent_telephone, ''), nullif(trim(NEW.parent_telephone), '')),
     parent_email = coalesce(nullif(parent_email, ''), nullif(trim(NEW.parent_email), ''))
-  where user_id = NEW.model_id;
+  where user_id = NEW.model_id
+    and ((nullif(parent_nom, '') is null and nullif(trim(NEW.parent_nom), '') is not null)
+      or (nullif(parent_telephone, '') is null and nullif(trim(NEW.parent_telephone), '') is not null)
+      or (nullif(parent_email, '') is null and nullif(trim(NEW.parent_email), '') is not null));
   return NEW;
 end;
 $$;
@@ -739,12 +747,36 @@ update agence_mannequins a set
   date_naissance = coalesce(a.date_naissance, m.date_naissance),
   telephone = coalesce(nullif(a.telephone, ''), m.phone),
   email = coalesce(nullif(a.email, ''), m.contact_email)
-from model_profiles m where m.id = a.user_id;
+from model_profiles m where m.id = a.user_id
+  and ((a.full_name in ('', 'Sans nom') and nullif(trim(m.full_name), '') is not null)
+    or (a.date_naissance is null and m.date_naissance is not null)
+    or (nullif(a.telephone, '') is null and nullif(m.phone, '') is not null)
+    or (nullif(a.email, '') is null and nullif(m.contact_email, '') is not null));
 update agence_mannequins a set
   parent_nom = coalesce(nullif(a.parent_nom, ''), nullif(trim(c.parent_nom), '')),
   parent_telephone = coalesce(nullif(a.parent_telephone, ''), nullif(trim(c.parent_telephone), '')),
   parent_email = coalesce(nullif(a.parent_email, ''), nullif(trim(c.parent_email), ''))
-from contacts_parents c where c.model_id = a.user_id;
+from contacts_parents c where c.model_id = a.user_id
+  and ((nullif(a.parent_nom, '') is null and nullif(trim(c.parent_nom), '') is not null)
+    or (nullif(a.parent_telephone, '') is null and nullif(trim(c.parent_telephone), '') is not null)
+    or (nullif(a.parent_email, '') is null and nullif(trim(c.parent_email), '') is not null));
+
+-- Inscription annulée (paiement enregistré par erreur) : le code de l'espace pas encore utilisé
+-- est annulé aussi (il ne se donne qu'après une inscription validée)
+create or replace function codes_suivre_inscription()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if NEW.objet = 'inscription' and OLD.statut = 'valide' and NEW.statut = 'refuse' then
+    update codes_espace set annule = true where mannequin_id = NEW.mannequin_id and not annule and utilise_le is null;
+  end if;
+  return NEW;
+end;
+$$;
+revoke all on function codes_suivre_inscription() from public, anon, authenticated;
+drop trigger if exists codes_suivre_inscription on paiements_mannequins;
+create trigger codes_suivre_inscription after update of statut on paiements_mannequins
+  for each row execute function codes_suivre_inscription();
+-- (fin des retours du 19/10/2026 au soir)
 
 -- Garde-fous : la mensualité (10 000 ou 20 000) ne change que par l'administrateur principal ;
 -- un paiement validé ne se modifie plus (sauf par l'administrateur principal, code récent)

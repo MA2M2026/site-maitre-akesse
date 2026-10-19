@@ -9,7 +9,7 @@
   'use strict';
   const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
   const ROLES = { principal: 'Administrateur principal', site: 'Administrateur du site', caisse: 'Responsable des encaissements', compta: 'Comptable' };
-  const ESPACES = { site: 'Administration du site', paiements: 'Suivi des paiements et des inscriptions', compta: 'Comptabilité' };
+  const ESPACES = window.ESPACES_PORTAIL;  // js/portail/inactivite.js
   const SESSION_MAX_MS = window.SESSION_MAX_PORTAIL_MS; // session de 8 heures au plus (js/portail/inactivite.js)
 
   const P = window.Portail = {

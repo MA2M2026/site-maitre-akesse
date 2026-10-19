@@ -511,9 +511,10 @@
     if (ADM) {
       ADM.pret.then(function (ok) {
         if (!ok) return;
-        var e = ADM.espaces(), bas = cote.querySelector('.v2-cote-bas'), liens = '';
-        if (e.paiements) liens += '<a class="v2-lien v2-lien-discret" href="/admin/#/paiements/a-valider">' + svg('mallette') + '<span class="v2-lien-texte">Suivi des paiements et des inscriptions</span></a>';
-        if (e.compta) liens += '<a class="v2-lien v2-lien-discret" href="/admin/#/compta/mois">' + svg('fichier') + '<span class="v2-lien-texte">Comptabilité</span></a>';
+        // (noms : js/portail/inactivite.js ; sans page précisée, l'Administration ouvre la première de l'espace)
+        var e = ADM.espaces(), noms = window.ESPACES_PORTAIL, bas = cote.querySelector('.v2-cote-bas'), liens = '';
+        if (e.paiements) liens += '<a class="v2-lien v2-lien-discret" href="/admin/#/paiements">' + svg('mallette') + '<span class="v2-lien-texte">' + noms.paiements + '</span></a>';
+        if (e.compta) liens += '<a class="v2-lien v2-lien-discret" href="/admin/#/compta">' + svg('fichier') + '<span class="v2-lien-texte">' + noms.compta + '</span></a>';
         if (liens) bas.insertAdjacentHTML('afterbegin', liens);
       });
     }

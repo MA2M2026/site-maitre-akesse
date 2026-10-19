@@ -96,12 +96,18 @@
       const lancer = async () => {
         attente();
         let ok = false, etat = null;
-        // (les deux questions à la base partent en même temps : ouverture plus rapide)
-        try { [ok, etat] = await Promise.all([accesValide(), sb.rpc('portail_code_appareil_etat', { p_appareil: identifiantAppareilPortail() })]); } catch (e) { ok = false; }
-        if (!ok) { resolve(false); retourAdministration(); return; }
-        pinDefini = !!(etat && etat.data && etat.data.defini);
-        if (!tableau) barre();
-        window.surveillerInactivitePortail({ actif: () => true, pinDefini: () => pinDefini, verrouiller });
+        try {
+          // (session présente : les deux questions à la base partent en même temps, ouverture plus rapide)
+          const s = await sb.auth.getSession();
+          if (s.data && s.data.session) [ok, etat] = await Promise.all([accesValide(), sb.rpc('portail_code_appareil_etat', { p_appareil: identifiantAppareilPortail() })]);
+          if (ok) {
+            pinDefini = !!(etat && etat.data && etat.data.defini);
+            if (!tableau) barre();
+            window.surveillerInactivitePortail({ actif: () => true, pinDefini: () => pinDefini, verrouiller });
+          }
+        } catch (e) { ok = false; }
+        // (refus ou incident : jamais bloqué sur le message d'attente)
+        if (!ok) { window.MA2M_ADMINISTRATION.fini(); resolve(false); retourAdministration(); return; }
         // page laissée ouverte : la base est redemandée toutes les 5 minutes et au retour sur
         // l'écran (téléphone révoqué, accès coupé, 8 heures passées…)
         const controler = () => { accesValide().then((v) => { if (!v) retourAdministration(); }, () => { /* réseau : réessayé plus tard */ }); };

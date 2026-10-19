@@ -23,7 +23,7 @@
   }
   async function charger() {
     const [registre, paiements] = await Promise.all([
-      P.bd(sb.from('agence_mannequins').select('*').order('full_name')),
+      P.bd(sb.from('agence_mannequins').select('*')),  // (trié dans registre())
       P.bd(sb.from('paiements_mannequins').select('*').eq('objet', 'inscription').neq('statut', 'refuse'))
     ]);
     const parMannequin = {};
@@ -35,12 +35,14 @@
   const FILTRES = [['tous', 'Tous'], ['site', 'Inscrits sur le site'], ['main', 'Ajoutés à la main'], ['non_paye', 'Inscription non payée'], ['sans_nom', 'Comptes sans nom']];
   // compte du site dont le nom n'a jamais été rempli (il se complète tout seul quand la mannequin le remplit)
   const sansNom = (m) => !m.full_name || m.full_name === 'Sans nom';
+  // texte où l'on cherche (nom, téléphone, e-mail) : le même pour « Rechercher » et pendant la frappe
+  const texteRecherche = (m) => [m.full_name, m.telephone, m.email].join(' ').toLowerCase();
   async function registre() {
     const tous = await charger();
     const filtre = P.etat.filtreRegistre || 'tous', cherche = (P.etat.chercheRegistre || '').toLowerCase();
     const garde = (m) => (filtre === 'tous' || (filtre === 'site' && m.user_id) || (filtre === 'main' && !m.user_id) ||
       (filtre === 'non_paye' && etatInscription(m, m.inscription)[1] === 'erreur') || (filtre === 'sans_nom' && sansNom(m))) &&
-      (!cherche || [m.full_name, m.telephone, m.email].join(' ').toLowerCase().includes(cherche));
+      (!cherche || texteRecherche(m).includes(cherche));
     // ordre alphabétique, les comptes sans nom à la fin
     const liste = tous.filter(garde).sort((a, b) => (sansNom(a) - sansNom(b)) || String(a.full_name).localeCompare(String(b.full_name), 'fr', { sensitivity: 'base' }));
     const site = tous.filter((m) => m.user_id).length;
@@ -48,13 +50,13 @@
       '<form class="ligne recherche-registre" data-form="registre-chercher"><label class="fl" for="rg-cherche" style="flex:1;min-width:200px">Retrouver un mannequin (nom, téléphone ou e-mail)' +
       '<input id="rg-cherche" name="cherche" type="search" autocomplete="off" placeholder="Ex. : Diarra" value="' + P.esc(P.etat.chercheRegistre || '') + '"></label><button class="btn rouge" type="submit">Rechercher</button>' +
       (cherche ? '<button class="btn" type="button" data-action="registre-tout">Tout afficher</button>' : '') + '</form>' +
-      (cherche || filtre !== 'tous' ? '<p class="doux">' + liste.length + ' résultat(s)</p>' : '') +
+      '<p class="doux" id="rg-nombre">' + liste.length + ' mannequin(s) affiché(s)</p>' +
       '<div class="grille chiffres">' + P.chiffre('Mannequins de l’agence', tous.length) + P.chiffre('Inscrits sur le site', site) +
       P.chiffre('Ajoutés à la main', tous.length - site) + P.chiffre('Inscription non payée', tous.filter((m) => etatInscription(m, m.inscription)[1] === 'erreur').length, 'rouge') + '</div>' +
       '<div class="segments">' + FILTRES.map((f) => '<button class="btn petit' + (f[0] === filtre ? ' actif' : '') + '" type="button" data-action="registre-filtre" data-filtre="' + f[0] + '">' + P.esc(f[1]) + '</button>').join('') + '</div>' +
       P.tableau(['Mannequin', 'Téléphone', 'Inscription', '#Mensualité', 'Statut', ''], liste.map((m) => {
         const e = etatInscription(m, m.inscription);
-        return '<tr><td><b>' + P.esc(m.full_name) + '</b>' + (P.age(m.date_naissance) !== null && P.age(m.date_naissance) < 18 ? ' ' + P.pastille('Mineur', 'info') : '') +
+        return '<tr data-cherche="' + P.esc(texteRecherche(m)) + '"><td><b>' + P.esc(m.full_name) + '</b>' + (P.age(m.date_naissance) !== null && P.age(m.date_naissance) < 18 ? ' ' + P.pastille('Mineur', 'info') : '') +
           '<div class="petit-texte doux">' + (sansNom(m) ? 'Compte du site sans nom (il se complétera quand la mannequin remplira son espace) · ' + P.esc(m.email || '') : m.user_id ? 'Compte sur le site' : 'Ajouté à la main') + '</div></td>' +
           '<td>' + P.esc(m.telephone || '—') + '</td><td>' + P.pastille(e[0], e[1]) + '</td><td class="nombre">' + P.fcfa(m.mensualite) + '</td>' +
           '<td>' + P.pastille(STATUTS[m.statut], m.statut === 'actif' ? 'neutre' : 'alerte') + '</td>' +
@@ -66,7 +68,10 @@
   document.addEventListener('input', (e) => {
     if (e.target.id !== 'rg-cherche') return;
     const q = e.target.value.trim().toLowerCase();
-    document.querySelectorAll('#contenu .tableau tbody tr').forEach((tr) => { tr.hidden = !!q && !tr.textContent.toLowerCase().includes(q); });
+    let n = 0;
+    document.querySelectorAll('#contenu .tableau tbody tr[data-cherche]').forEach((tr) => { tr.hidden = !!q && !tr.getAttribute('data-cherche').includes(q); if (!tr.hidden) n++; });
+    const nombre = document.getElementById('rg-nombre');
+    if (nombre) nombre.textContent = n + ' mannequin(s) affiché(s)';
   });
   P.actions['registre-tout'] = () => { P.etat.chercheRegistre = ''; P.etat.filtreRegistre = 'tous'; P.afficher(); };
   P.actions['registre-filtre'] = (el) => { P.etat.filtreRegistre = el.getAttribute('data-filtre'); P.afficher(); };
@@ -322,9 +327,17 @@
     const motif = (prompt('Annuler ce paiement enregistré par erreur ? Il restera visible, barré.\nMotif (obligatoire) :') || '').trim();
     if (!motif) return;
     try {
-      await P.sensible(() => P.bd(sb.from('paiements_mannequins').update({ statut: 'refuse', motif: 'Annulé : ' + motif }).eq('id', el.getAttribute('data-id')).select('id')));
+      const p = await P.bd(sb.from('paiements_mannequins').select('id, objet, mannequin_id, declare_le').eq('id', el.getAttribute('data-id')).single());
+      // une inscription enregistrée par l'agence l'est avec son 1er mois (même instant) : les deux
+      // s'annulent ensemble, sinon le bon enregistrement serait refusé (mois déjà payé)
+      const requete = () => {
+        const q = sb.from('paiements_mannequins').update({ statut: 'refuse', motif: 'Annulé : ' + motif }).eq('statut', 'valide');
+        return (p.objet === 'inscription' ? q.eq('mannequin_id', p.mannequin_id).eq('declare_le', p.declare_le) : q.eq('id', p.id)).select('id');
+      };
+      const r = await P.sensible(() => P.bd(requete()));
+      if (!r || !r.length) return P.message('Action refusée : ce paiement a peut-être déjà changé. Rechargez la fiche.');
       await P.afficher();
-      P.message('Paiement annulé. Vous pouvez enregistrer le bon.');
+      P.message(r.length > 1 ? 'Inscription et 1er mois annulés. Vous pouvez enregistrer le bon.' : 'Paiement annulé. Vous pouvez enregistrer le bon.');
     } catch (e) { P.message(P.erreurTexte(e)); }
   };
   P.actions['paiement-refuser'] = async (el) => {

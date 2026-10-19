@@ -252,7 +252,7 @@ function donnees(role) {
     ok(m3.includes('Gérer les partenaires') && m3.includes('Publier une actualité'), nomEcran + ' : actualités, événements et partenaires dans le menu');
     const bas = await pe.$$eval('.v2-cote-bas a', (l) => l.map((a) => a.getAttribute('href') + ' ' + a.textContent.trim()));
     ok(bas.some((x) => /^\/admin\/ Accueil de l’Administration/.test(x)) && !bas.some((x) => /site public/.test(x)), nomEcran + ' : « Accueil de l’Administration » remplace « Retour au site public »');
-    ok(bas.some((x) => /^\/admin\/#\/paiements\/.* Suivi des paiements/.test(x)) && bas.some((x) => /^\/admin\/#\/compta\/.* Comptabilité/.test(x)),
+    ok(bas.some((x) => /^\/admin\/#\/paiements.* Suivi des paiements/.test(x)) && bas.some((x) => /^\/admin\/#\/compta.* Comptabilité/.test(x)),
       nomEcran + ' : depuis le tableau de bord, liens directs vers les espaces 2 et 3 ' + bas.join(' | '));
     // fiche d'une candidature : s'ouvre comme avant
     await pe.click('.v2-bloc[data-bloc="2"]'); await pe.waitForTimeout(300);

@@ -40,4 +40,6 @@
   };
   // Session de 8 heures au plus après ce code
   window.SESSION_MAX_PORTAIL_MS = 8 * 3600 * 1000;
+  // Noms des trois espaces (tuiles, menus, liens du tableau de bord vers les espaces 2 et 3)
+  window.ESPACES_PORTAIL = { site: 'Administration du site', paiements: 'Suivi des paiements et des inscriptions', compta: 'Comptabilité' };
 })();
