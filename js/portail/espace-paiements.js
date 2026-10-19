@@ -32,31 +32,43 @@
   }
 
   // ---------- Registre ----------
-  const FILTRES = [['tous', 'Tous'], ['site', 'Inscrits sur le site'], ['main', 'Ajoutés à la main'], ['non_paye', 'Inscription non payée']];
+  const FILTRES = [['tous', 'Tous'], ['site', 'Inscrits sur le site'], ['main', 'Ajoutés à la main'], ['non_paye', 'Inscription non payée'], ['sans_nom', 'Comptes sans nom']];
+  // compte du site dont le nom n'a jamais été rempli (il se complète tout seul quand la mannequin le remplit)
+  const sansNom = (m) => !m.full_name || m.full_name === 'Sans nom';
   async function registre() {
     const tous = await charger();
     const filtre = P.etat.filtreRegistre || 'tous', cherche = (P.etat.chercheRegistre || '').toLowerCase();
     const garde = (m) => (filtre === 'tous' || (filtre === 'site' && m.user_id) || (filtre === 'main' && !m.user_id) ||
-      (filtre === 'non_paye' && etatInscription(m, m.inscription)[1] === 'erreur')) &&
+      (filtre === 'non_paye' && etatInscription(m, m.inscription)[1] === 'erreur') || (filtre === 'sans_nom' && sansNom(m))) &&
       (!cherche || [m.full_name, m.telephone, m.email].join(' ').toLowerCase().includes(cherche));
-    const liste = tous.filter(garde);
+    // ordre alphabétique, les comptes sans nom à la fin
+    const liste = tous.filter(garde).sort((a, b) => (sansNom(a) - sansNom(b)) || String(a.full_name).localeCompare(String(b.full_name), 'fr', { sensitivity: 'base' }));
     const site = tous.filter((m) => m.user_id).length;
     return P.entete('Registre des mannequins', '<a class="btn rouge" href="#/paiements/ajouter">＋ Ajouter un mannequin</a>') +
+      '<form class="ligne recherche-registre" data-form="registre-chercher"><label class="fl" for="rg-cherche" style="flex:1;min-width:200px">Retrouver un mannequin (nom, téléphone ou e-mail)' +
+      '<input id="rg-cherche" name="cherche" type="search" autocomplete="off" placeholder="Ex. : Diarra" value="' + P.esc(P.etat.chercheRegistre || '') + '"></label><button class="btn rouge" type="submit">Rechercher</button>' +
+      (cherche ? '<button class="btn" type="button" data-action="registre-tout">Tout afficher</button>' : '') + '</form>' +
+      (cherche || filtre !== 'tous' ? '<p class="doux">' + liste.length + ' résultat(s)</p>' : '') +
       '<div class="grille chiffres">' + P.chiffre('Mannequins de l’agence', tous.length) + P.chiffre('Inscrits sur le site', site) +
       P.chiffre('Ajoutés à la main', tous.length - site) + P.chiffre('Inscription non payée', tous.filter((m) => etatInscription(m, m.inscription)[1] === 'erreur').length, 'rouge') + '</div>' +
-      '<form class="ligne" data-form="registre-chercher"><label class="fl" for="rg-cherche" style="flex:1;min-width:200px">Rechercher (nom, téléphone, e-mail)' +
-      '<input id="rg-cherche" name="cherche" value="' + P.esc(P.etat.chercheRegistre || '') + '"></label><button class="btn" type="submit">Rechercher</button></form>' +
       '<div class="segments">' + FILTRES.map((f) => '<button class="btn petit' + (f[0] === filtre ? ' actif' : '') + '" type="button" data-action="registre-filtre" data-filtre="' + f[0] + '">' + P.esc(f[1]) + '</button>').join('') + '</div>' +
       P.tableau(['Mannequin', 'Téléphone', 'Inscription', '#Mensualité', 'Statut', ''], liste.map((m) => {
         const e = etatInscription(m, m.inscription);
         return '<tr><td><b>' + P.esc(m.full_name) + '</b>' + (P.age(m.date_naissance) !== null && P.age(m.date_naissance) < 18 ? ' ' + P.pastille('Mineur', 'info') : '') +
-          '<div class="petit-texte doux">' + (m.user_id ? 'Compte sur le site' : 'Ajouté à la main') + '</div></td>' +
+          '<div class="petit-texte doux">' + (sansNom(m) ? 'Compte du site sans nom (il se complétera quand la mannequin remplira son espace) · ' + P.esc(m.email || '') : m.user_id ? 'Compte sur le site' : 'Ajouté à la main') + '</div></td>' +
           '<td>' + P.esc(m.telephone || '—') + '</td><td>' + P.pastille(e[0], e[1]) + '</td><td class="nombre">' + P.fcfa(m.mensualite) + '</td>' +
           '<td>' + P.pastille(STATUTS[m.statut], m.statut === 'actif' ? 'neutre' : 'alerte') + '</td>' +
           '<td><a class="btn petit" href="#/paiements/fiche/' + m.id + '">Ouvrir</a></td></tr>';
       }));
   }
   P.formulaires['registre-chercher'] = (f) => { P.etat.chercheRegistre = String(f.get('cherche')).trim(); P.afficher(); };
+  // la liste se filtre pendant la frappe (« Rechercher » garde la recherche d'une page à l'autre)
+  document.addEventListener('input', (e) => {
+    if (e.target.id !== 'rg-cherche') return;
+    const q = e.target.value.trim().toLowerCase();
+    document.querySelectorAll('#contenu .tableau tbody tr').forEach((tr) => { tr.hidden = !!q && !tr.textContent.toLowerCase().includes(q); });
+  });
+  P.actions['registre-tout'] = () => { P.etat.chercheRegistre = ''; P.etat.filtreRegistre = 'tous'; P.afficher(); };
   P.actions['registre-filtre'] = (el) => { P.etat.filtreRegistre = el.getAttribute('data-filtre'); P.afficher(); };
 
   // ---------- Ajouter / modifier un mannequin ----------
@@ -133,11 +145,13 @@
       actions + '</div>' + carteCodeEspace(m, inscription, codes[0]) +
       '<form class="carte f" data-form="registre-modifier" data-id="' + m.id + '"><h2>Informations</h2>' + champs(m) +
       '<div class="large ligne"><button class="btn rouge" type="submit">Enregistrer les changements</button></div></form>' +
-      '<div class="carte"><h2>Paiements</h2>' + P.tableau(['Objet', 'Mode', '#Montant', 'État', 'Date'], paiements.map((p) =>
+      '<div class="carte"><h2>Paiements</h2>' + P.tableau(['Objet', 'Mode', '#Montant', 'État', 'Date', ''], paiements.map((p) =>
         '<tr><td>' + (p.objet === 'inscription' ? 'Inscription' : 'Mensualité ' + P.esc(P.date(p.mois).slice(3))) + '</td><td>' + P.esc(MODES[p.mode]) + '</td>' +
         '<td class="nombre">' + (p.montant ? P.fcfa(p.montant) : '—') + '</td><td>' +
-        P.pastille({ valide: 'Payé', declare: 'En attente de validation', refuse: 'Refusé' }[p.statut], { valide: 'ok', declare: 'alerte', refuse: 'erreur' }[p.statut]) +
-        '</td><td>' + P.dateHeure(p.valide_le || p.declare_le) + '</td></tr>')) +
+        P.pastille({ valide: 'Payé', declare: 'En attente de validation', refuse: 'Refusé ou annulé' }[p.statut], { valide: 'ok', declare: 'alerte', refuse: 'erreur' }[p.statut]) +
+        (p.statut === 'refuse' && p.motif ? '<div class="petit-texte doux">' + P.esc(p.motif) + '</div>' : '') +
+        '</td><td>' + P.dateHeure(p.valide_le || p.declare_le) + '</td><td>' +
+        (P.moi.role === 'principal' && p.statut === 'valide' ? '<button class="btn petit" type="button" data-action="paiement-annuler" data-id="' + p.id + '">Annuler (erreur)</button>' : '') + '</td></tr>')) +
       // mensualité reçue par l'agence (Wave en dehors du site ou espèces) : validée tout de suite
       (m.statut === 'actif' ? '<form class="f" data-form="mensualite-enregistrer" data-id="' + m.id + '" style="margin-top:14px"><h2>Enregistrer une mensualité reçue par l’agence</h2>' +
         '<label class="fl" for="mz-mois">Mois<select id="mz-mois" name="mois">' + listeMois().map((x) => '<option value="' + x + '"' + (x === moisCourant() ? ' selected' : '') + '>' + P.esc(libelleMois(x)) + '</option>').join('') + '</select></label>' +
@@ -234,8 +248,13 @@
   const libelleMois = (d) => { const p = String(d || '').split('-'); return p.length > 1 ? P.MOIS[Number(p[1]) - 1] + ' ' + p[0] : ''; };
   const objetPaiement = (p) => p.objet === 'inscription' ? 'Inscription' : 'Mensualité de ' + libelleMois(p.mois);
   async function aValider() {
-    const liste = await P.bd(sb.from('paiements_mannequins').select('*, mannequin:agence_mannequins(full_name, telephone)')
-      .eq('statut', 'declare').order('declare_le', { ascending: true }));
+    const [liste, recents] = await Promise.all([
+      P.bd(sb.from('paiements_mannequins').select('*, mannequin:agence_mannequins(full_name, telephone)')
+        .eq('statut', 'declare').order('declare_le', { ascending: true })),
+      // (19/10/2026) un paiement enregistré par l'agence est validé tout de suite : on le montre ici aussi
+      P.bd(sb.from('paiements_mannequins').select('*, mannequin:agence_mannequins(full_name)').eq('statut', 'valide')
+        .gte('valide_le', new Date(Date.now() - 7 * 864e5).toISOString()).order('valide_le', { ascending: false }).limit(50))
+    ]);
     // une inscription déclarée (15 000) et son 1er mois (10 000) : une seule ligne, 25 000
     const groupes = [];
     liste.forEach((p) => {
@@ -251,7 +270,12 @@
           '<td class="nombre">' + P.fcfa(g.total) + '</td><td>' + P.dateHeure(p.declare_le) + '</td>' +
           '<td class="ligne"><button class="btn rouge petit" type="button" data-action="paiement-valider" data-id="' + p.id + '">Valider</button>' +
           '<button class="btn petit" type="button" data-action="paiement-refuser" data-id="' + p.id + '">Refuser</button></td></tr>';
-      }));
+      })) +
+      '<div class="carte" style="margin-top:18px"><h2>Paiements validés ces 7 derniers jours</h2>' +
+      '<p class="doux petit-texte">Ceux que vous enregistrez vous-même (Wave reçu en dehors du site, espèces, avant le nouveau système) sont validés tout de suite : ils apparaissent ici et en vert sur la fiche.</p>' +
+      P.tableau(['Mannequin', 'Objet', 'Mode', '#Montant', 'Validé le'], recents.map((p) =>
+        '<tr><td><a href="#/paiements/fiche/' + p.mannequin_id + '"><b>' + P.esc(p.mannequin ? p.mannequin.full_name : '—') + '</b></a></td><td>' + P.esc(objetPaiement(p)) + '</td>' +
+        '<td>' + P.esc(MODES[p.mode] || p.mode) + '</td><td class="nombre">' + (p.montant ? P.fcfa(p.montant) : '—') + '</td><td>' + P.dateHeure(p.valide_le) + '</td></tr>')) + '</div>';
   }
   // Destinataire des messages : le parent pour un mineur, la personne elle-même sinon
   // (r : ligne du registre, ou réponse de paiement_decider avec « nom »)
@@ -289,6 +313,18 @@
       const r = await P.rpc('paiement_decider', { p_id: el.getAttribute('data-id'), p_valider: true });
       await P.afficher();
       prevenir(r, true);
+    } catch (e) { P.message(P.erreurTexte(e)); }
+  };
+  // Paiement enregistré par erreur (mauvais mois, mauvais mannequin…) : annulé avec un motif par
+  // l'administrateur principal (code récent demandé) ; il reste visible, et sa recette en
+  // comptabilité est annulée toute seule. On peut ensuite enregistrer le bon.
+  P.actions['paiement-annuler'] = async (el) => {
+    const motif = (prompt('Annuler ce paiement enregistré par erreur ? Il restera visible, barré.\nMotif (obligatoire) :') || '').trim();
+    if (!motif) return;
+    try {
+      await P.sensible(() => P.bd(sb.from('paiements_mannequins').update({ statut: 'refuse', motif: 'Annulé : ' + motif }).eq('id', el.getAttribute('data-id')).select('id')));
+      await P.afficher();
+      P.message('Paiement annulé. Vous pouvez enregistrer le bon.');
     } catch (e) { P.message(P.erreurTexte(e)); }
   };
   P.actions['paiement-refuser'] = async (el) => {

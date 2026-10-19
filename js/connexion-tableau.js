@@ -413,6 +413,7 @@ void (async () => {
       if (await verifierAdminTableau()) await reveleTableauDeBord();
       else window.MA2M_ADMINISTRATION.refuser();
     } catch (e) { window.MA2M_ADMINISTRATION.retour(); }
+    window.MA2M_ADMINISTRATION.fini();
     if (window.tdbFinVerifSession) window.tdbFinVerifSession();
     return;
   }

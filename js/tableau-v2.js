@@ -507,6 +507,16 @@
       + '<button type="button" class="v2-lien v2-lien-discret" data-action="deconnexion">' + svg('sortie') + '<span class="v2-lien-texte">Se déconnecter</span></button>'
       + '</div>';
     shell.insertBefore(cote, main);
+    // (19/10/2026) depuis l'espace 1, aller directement aux deux autres espaces de l'Administration
+    if (ADM) {
+      ADM.pret.then(function (ok) {
+        if (!ok) return;
+        var e = ADM.espaces(), bas = cote.querySelector('.v2-cote-bas'), liens = '';
+        if (e.paiements) liens += '<a class="v2-lien v2-lien-discret" href="/admin/#/paiements/a-valider">' + svg('mallette') + '<span class="v2-lien-texte">Suivi des paiements et des inscriptions</span></a>';
+        if (e.compta) liens += '<a class="v2-lien v2-lien-discret" href="/admin/#/compta/mois">' + svg('fichier') + '<span class="v2-lien-texte">Comptabilité</span></a>';
+        if (liens) bas.insertAdjacentHTML('afterbegin', liens);
+      });
+    }
     var voile = el('div', 'v2-voile');
     voile.id = 'v2-voile';
     document.body.appendChild(voile);

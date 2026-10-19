@@ -173,6 +173,9 @@ details summary { cursor: pointer; font-weight: 700; }
   /* (19/10/2026, demande de la propriétaire) : plus de menu en ligne en haut ; barre « ☰ Menu »
      et menu qui glisse depuis la gauche, refermé dès qu'une rubrique est choisie */
   .coque { grid-template-columns: minmax(0, 1fr); }
+  /* (19/10/2026) la barre « ☰ Menu » garde sa hauteur ; avant, elle s'étirait sur un tiers de
+     l'écran quand la page était courte */
+  .coque:not(.sans-menu) { grid-template-rows: auto minmax(0, 1fr); }
   .barre-menu { display: flex; justify-content: space-between; align-items: center; gap: 12px; background: var(--sombre); color: var(--sombre-encre); padding: 10px 12px 10px 0; position: sticky; top: 0; z-index: 30; }
   .lateral { position: fixed; top: 0; left: 0; bottom: 0; width: min(300px, 85vw); z-index: 45; overflow-y: auto; transform: translateX(-105%); visibility: hidden; transition: transform 0.22s ease, visibility 0.22s; padding-bottom: 22px; }
   .menu-ouvert .lateral { transform: none; visibility: visible; }

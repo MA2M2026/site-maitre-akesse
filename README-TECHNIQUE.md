@@ -105,6 +105,17 @@
 > Essai visiteur : `test-comptabilite-documents.js` (relit l'Excel avec openpyxl
 > et le PDF avec pypdf, installés par `lancer.sh` s'ils manquent).
 >
+> **Retours de la propriétaire (19/10/2026, soir)** : barre « ☰ Menu » qui ne s'étire plus
+> (`.coque:not(.sans-menu) { grid-template-rows }`) ; menu « Aller à » vers les autres espaces dans
+> chaque espace (`autresEspaces`, noyau.js) et liens vers les espaces 2 et 3 dans le menu du tableau
+> de bord (`tableau-v2.js`, `MA2M_ADMINISTRATION.espaces()`) ; message d'attente à l'ouverture de
+> l'espace 1 (`#adm-attente`, retiré par `MA2M_ADMINISTRATION.fini()`) ; registre filtré pendant la
+> frappe, comptes « Sans nom » à part ; « Paiements à valider » montre aussi les paiements validés
+> des 7 derniers jours ; « Annuler (erreur) » sur un paiement (principal, code récent ; statut
+> `refuse` + motif, la recette en comptabilité s'annule seule). Base : `registre_suivre_comptes`
+> suit aussi les mises à jour du compte (nom, date de naissance, téléphone, e-mail : cases vides
+> seulement), `registre_suivre_parents` recopie le parent d'une mineure (`contacts_parents`).
+>
 > Codes de secours : affichés à la première activation de la double authentification, et
 > refaits à la demande dans Sécurité › « Mes codes de secours » (code récent demandé ; les
 > anciens sont annulés). Ajouté le 19/10/2026 : un compte dont la double authentification

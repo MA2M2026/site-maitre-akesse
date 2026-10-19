@@ -22,7 +22,7 @@
   // rôles ; code permanent « Créer mon compte » → code personnel de l'espace 2).
   const HORS_ESPACE_1 = ['b2-inscriptions', 'b3b-code-validation', 'b3b-creer-admin', 'b3b-code-permanent'];
   const tableau = /\/tableau-de-bord(\.html)?$/.test(location.pathname);
-  let pinDefini = false;
+  let pinDefini = false, espaces = {};
 
   function retourAdministration() {
     try { sessionStorage.setItem('ma2m_retour_administration', location.pathname + location.search + location.hash); } catch (e) { /* stockage bloqué */ }
@@ -52,6 +52,7 @@
     const code = window.dernierCodeApplicationPortail(data.session);
     if (code && Date.now() - code > window.SESSION_MAX_PORTAIL_MS) return false;
     const r = await sb.rpc('portail_moi');
+    if (!r.error && r.data && r.data.espaces) espaces = r.data.espaces;
     return !r.error && !!r.data && !!r.data.role && !!(r.data.espaces && r.data.espaces.site);
   }
 
@@ -67,7 +68,19 @@
     document.body.insertBefore(b, document.body.firstChild);
   }
 
+  // Pendant les vérifications (quelques secondes sur mobile), un message plutôt qu'un écran vide
+  function attente() {
+    if (!tableau || document.getElementById('adm-attente')) return;
+    const d = document.createElement('div');
+    d.id = 'adm-attente'; d.className = 'adm-attente'; d.setAttribute('role', 'status');
+    d.innerHTML = '<div class="adm-attente-marque">M A 2 M</div><div>Ouverture de l’Administration du site…</div>';
+    document.body.appendChild(d);
+  }
   window.MA2M_ADMINISTRATION = {
+    // tableau de bord affiché (ou refusé) : le message d'attente disparaît
+    fini: () => { const d = document.getElementById('adm-attente'); if (d) d.remove(); },
+    // espaces ouverts à cette personne (liens vers les espaces 2 et 3 dans le menu du tableau de bord)
+    espaces: () => espaces,
     masquee: (cle) => HORS_ESPACE_1.indexOf(cle) !== -1,
     deconnecter,
     retour: retourAdministration,
@@ -81,11 +94,12 @@
     // vrai une fois l'accès vérifié ; sinon la page repart vers l'Administration
     pret: new Promise((resolve) => {
       const lancer = async () => {
-        let ok = false;
-        try { ok = await accesValide(); } catch (e) { ok = false; }
+        attente();
+        let ok = false, etat = null;
+        // (les deux questions à la base partent en même temps : ouverture plus rapide)
+        try { [ok, etat] = await Promise.all([accesValide(), sb.rpc('portail_code_appareil_etat', { p_appareil: identifiantAppareilPortail() })]); } catch (e) { ok = false; }
         if (!ok) { resolve(false); retourAdministration(); return; }
-        const etat = await sb.rpc('portail_code_appareil_etat', { p_appareil: identifiantAppareilPortail() });
-        pinDefini = !!(etat.data && etat.data.defini);
+        pinDefini = !!(etat && etat.data && etat.data.defini);
         if (!tableau) barre();
         window.surveillerInactivitePortail({ actif: () => true, pinDefini: () => pinDefini, verrouiller });
         // page laissée ouverte : la base est redemandée toutes les 5 minutes et au retour sur

@@ -32,7 +32,7 @@ function donnees(role) {
       paiements_mannequins: [
         { id: 'pi3', mannequin_id: 'r3', objet: 'inscription', mois: null, montant: 15000, mode: 'wave', statut: 'declare', declare_le: '2026-10-19T09:00:00Z', mannequin: { full_name: 'YAO KOUASSI', telephone: '0505050505' } },
         { id: 'pm3', mannequin_id: 'r3', objet: 'mensualite', mois: '2026-10-01', montant: 10000, mode: 'wave', statut: 'declare', declare_le: '2026-10-19T09:00:00Z', mannequin: { full_name: 'YAO KOUASSI', telephone: '0505050505' } },
-        { id: 'pi4', mannequin_id: 'r4', objet: 'inscription', mois: null, montant: 15000, mode: 'wave', statut: 'valide', declare_le: '2026-10-15T09:00:00Z', valide_le: '2026-10-15T10:00:00Z' }],
+        { id: 'pi4', mannequin_id: 'r4', objet: 'inscription', mois: null, montant: 15000, mode: 'wave', statut: 'valide', declare_le: '2026-10-15T09:00:00Z', valide_le: '2026-10-15T10:00:00Z', mannequin: { full_name: 'SANOGO MARIAM' } }],
       // Espace 3 (le parcours complet est dans test-comptabilite.js)
       compta_comptes: [{ id: 'c1', nom: 'Caisse (espèces)', type: 'caisse', solde_initial: 0, date_initiale: '2026-10-01', actif: true }],
       compta_ecritures: [],
@@ -90,6 +90,10 @@ function donnees(role) {
         ok(await vu() && !(await p.isVisible('[data-action="menu-ouvrir"]')), nomEcran + ' : menu toujours visible à gauche, sans bouton « Menu »');
       } else {
         ok(!(await vu()) && await p.isVisible('[data-action="menu-ouvrir"]'), largeur + ' px : menu caché, bouton « ☰ Menu » en haut');
+        // (19/10/2026) la barre noire reste fine, même quand la page est courte
+        await p.waitForFunction(() => !document.querySelector('#contenu .chargement'), null, { timeout: 6000 }).catch(() => {});
+        const hBarre = await p.evaluate(() => document.querySelector('.barre-menu').getBoundingClientRect().height);
+        ok(hBarre < 90, largeur + ' px : barre noire du haut fine (' + Math.round(hBarre) + ' px)');
         await p.click('[data-action="menu-ouvrir"]'); await p.waitForTimeout(400);
         const r = await p.evaluate(() => document.querySelector('.lateral').getBoundingClientRect().left);
         ok(await vu() && r === 0, largeur + ' px : « ☰ Menu » fait glisser le menu depuis la gauche');
@@ -228,8 +232,11 @@ function donnees(role) {
     await pe.waitForSelector('.tuile');
     await pe.click('.tuile[href="#/site/accueil"]');
     await pe.waitForURL(/tableau-de-bord\.html/, { timeout: 8000 }).catch(() => {});
+    // (19/10/2026) pendant l'ouverture, un message d'attente au lieu d'un écran noir
+    const attente = await pe.waitForSelector('#adm-attente', { timeout: 3000 }).then(() => true, () => false);
     await pe.waitForSelector('#bloc-tableau', { state: 'visible', timeout: 10000 }).catch(() => {});
     ok(pe.url().includes('/tableau-de-bord.html') && await pe.isVisible('#bloc-tableau'), nomEcran + ' : tuile « Administration du site » → l’ancien tableau de bord s’ouvre');
+    ok(attente && !(await pe.$('#adm-attente')), nomEcran + ' : message « Ouverture de l’Administration du site… » pendant l’attente, retiré ensuite');
     ok(!(await pe.isVisible('#bloc-login')) && !(await pe.isVisible('#bloc-code-validation')), nomEcran + ' : aucune deuxième connexion, aucun code de validation demandé');
     ok(!e.journal.some((j) => j[1] === '/api/connexion-protegee' && /"espace":"admin"/.test(j[2] || '')), nomEcran + ' : pas de nouvelle connexion au serveur');
     await pe.waitForSelector('.v2-carte', { timeout: 8000 }).catch(() => {});
@@ -243,7 +250,10 @@ function donnees(role) {
     const m3 = await menu();
     ok(!m3.some((x) => /Code de validation|Créer un compte admin|Créer mon compte/.test(x)), nomEcran + ' : anciens accès retirés (code de validation, compte admin, code permanent)');
     ok(m3.includes('Gérer les partenaires') && m3.includes('Publier une actualité'), nomEcran + ' : actualités, événements et partenaires dans le menu');
-    ok(await pe.$eval('.v2-cote-bas a', (a) => a.getAttribute('href') === '/admin/' && /Accueil de l’Administration/.test(a.textContent)), nomEcran + ' : « Accueil de l’Administration » remplace « Retour au site public »');
+    const bas = await pe.$$eval('.v2-cote-bas a', (l) => l.map((a) => a.getAttribute('href') + ' ' + a.textContent.trim()));
+    ok(bas.some((x) => /^\/admin\/ Accueil de l’Administration/.test(x)) && !bas.some((x) => /site public/.test(x)), nomEcran + ' : « Accueil de l’Administration » remplace « Retour au site public »');
+    ok(bas.some((x) => /^\/admin\/#\/paiements\/.* Suivi des paiements/.test(x)) && bas.some((x) => /^\/admin\/#\/compta\/.* Comptabilité/.test(x)),
+      nomEcran + ' : depuis le tableau de bord, liens directs vers les espaces 2 et 3 ' + bas.join(' | '));
     // fiche d'une candidature : s'ouvre comme avant
     await pe.click('.v2-bloc[data-bloc="2"]'); await pe.waitForTimeout(300);
     await pe.evaluate(() => document.querySelector('.v2-lien[data-page="b2-candidatures"]').click()); await pe.waitForTimeout(1200);
@@ -347,6 +357,20 @@ function donnees(role) {
       if (role === 'principal') {
         await pr.click('[data-action="registre-filtre"][data-filtre="non_paye"]'); await pr.waitForTimeout(500);
         ok((await pr.$$('.tableau tbody tr')).length === 1, nomEcran + ' : filtre « Inscription non payée »');
+        // retours du 19/10/2026 : recherche pendant la frappe, passage direct aux autres espaces,
+        // annulation d'un paiement enregistré par erreur (administrateur principal)
+        await pr.click('[data-action="registre-filtre"][data-filtre="tous"]'); await pr.waitForTimeout(500);
+        await pr.fill('#rg-cherche', 'kon'); await pr.waitForTimeout(200);
+        const visibles = await pr.$$eval('.tableau tbody tr', (l) => l.filter((x) => !x.hidden).map((x) => x.innerText));
+        ok(visibles.length === 1 && /KONÉ AWA/.test(visibles[0]), nomEcran + ' : registre filtré pendant la frappe (« kon » → KONÉ AWA)');
+        const aller = await pr.$$eval('.lateral .nav', (l) => l.map((a) => a.textContent.trim()));
+        ok(aller.includes('Administration du site') && aller.includes('Comptabilité') && aller.includes('Sécurité et journal'), nomEcran + ' : menu « Aller à » vers les autres espaces ' + aller.join(' | '));
+        await pr.goto(url + '#/paiements/fiche/r4'); await pr.waitForSelector('[data-action="paiement-annuler"]', { timeout: 6000 }).catch(() => {});
+        pr.once('dialog', (dl) => dl.accept('Mauvais mannequin'));
+        await pr.click('[data-action="paiement-annuler"]'); await pr.waitForTimeout(800);
+        const annul = r.journal.filter((j) => j[0] === 'PATCH' && j[1] === 'paiements_mannequins').map((j) => JSON.parse(j[3])).pop() || {};
+        ok(annul.statut === 'refuse' && /Mauvais mannequin/.test(annul.motif) && (await pr.textContent('#calque')).includes('Paiement annulé'), nomEcran + ' : paiement enregistré par erreur → annulé avec son motif');
+        r.d.tables.paiements_mannequins.find((x) => x.id === 'pi4').statut = 'valide';
         // ajout à la main : un mineur sans parent est refusé
         await pr.goto(url + '#/paiements/ajouter'); await pr.waitForSelector('#mq-nom');
         await pr.fill('#mq-nom', 'Petit Franck'); await pr.fill('#mq-naissance', '2014-05-05'); await pr.click('form[data-form="registre-ajouter"] [type=submit]'); await pr.waitForTimeout(600);
@@ -367,6 +391,7 @@ function donnees(role) {
         nomEcran + ' (' + role + ') : Wave reçu en dehors du site → 15 000 + 10 000, mode Wave, validé par l’agence');
       r.journal.length = 0;
       ok(role === 'principal' ? !(await pr.isDisabled('#mq-mensualite')) : await pr.isDisabled('#mq-mensualite'), nomEcran + ' (' + role + ') : mensualité modifiable par le principal seul');
+      if (role === 'caisse') ok(!(await pr.$('[data-action="paiement-annuler"]')), nomEcran + ' (caisse) : pas de bouton « Annuler (erreur) » sur les paiements');
       pr.once('dialog', (dl) => dl.accept());
       await pr.click('[data-action="registre-inscription"][data-mode="especes"]'); await pr.waitForTimeout(800);
       const paye = r.journal.find((j) => j[0] === 'POST' && j[1] === 'paiements_mannequins');
@@ -375,7 +400,9 @@ function donnees(role) {
         lignesPaye[1].objet === 'mensualite' && lignesPaye[1].montant === 10000 && /^\d{4}-\d{2}-01$/.test(lignesPaye[1].mois), nomEcran + ' (' + role + ') : espèces validées par l’agence : 15 000 d’inscription + 10 000 du 1er mois');
       // paiements à valider (cahier v2.4, 5.2) : orange, l'agence valide ou refuse avec motif
       await pr.goto(url + '#/paiements/a-valider'); await pr.waitForSelector('[data-action="paiement-valider"]', { timeout: 6000 }).catch(() => {});
-      const aValider = await pr.$$eval('.tableau tbody tr', (l) => l.map((x) => x.innerText.replace(/\s+/g, ' ')));
+      const aValider = await pr.evaluate(() => Array.from(document.querySelector('#contenu .tableau').querySelectorAll('tbody tr')).map((x) => x.innerText.replace(/\s+/g, ' ')));
+      const recents = await pr.evaluate(() => (document.querySelectorAll('#contenu .tableau')[1] || { innerText: '' }).innerText);
+      ok(/SANOGO MARIAM/.test(recents), nomEcran + ' (' + role + ') : les paiements validés des 7 derniers jours sont listés sous ceux à valider');
       ok(aValider.length === 1 && /YAO KOUASSI.*Inscription.*En attente de validation.*25 000 FCFA/.test(aValider[0]), nomEcran + ' (' + role + ') : « J’ai payé » → une ligne orange de 25 000 FCFA à valider');
       ok((await pr.textContent('.lateral .nav[href="#/paiements/a-valider"]')).includes('1'), nomEcran + ' (' + role + ') : compteur des paiements à valider dans le menu');
       r.d.rpc.paiement_decider = (x) => ({ nom: 'YAO KOUASSI', telephone: '0505050505', email: 'yao@test.ci', objet: 'inscription', mois: null, montant: 25000, recu: x });

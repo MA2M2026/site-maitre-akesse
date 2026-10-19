@@ -695,19 +695,56 @@ from model_profiles m
 where not exists (select 1 from agence_mannequins a where a.user_id = m.id);
 
 -- Un nouveau compte mannequin créé sur le site entre aussi au registre
+-- (19/10/2026, retour de la propriétaire) : le registre suit aussi les CHANGEMENTS du compte —
+-- un compte créé sans nom (« Sans nom ») prend son nom quand la mannequin le remplit ; téléphone,
+-- e-mail et date de naissance complètent les cases vides. Ce que l'agence a saisi n'est jamais écrasé.
 create or replace function registre_suivre_comptes()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
   insert into agence_mannequins (full_name, date_naissance, telephone, email, user_id, date_entree)
   values (coalesce(nullif(trim(NEW.full_name), ''), 'Sans nom'), NEW.date_naissance, NEW.phone, NEW.contact_email, NEW.id, current_date)
-  on conflict (user_id) do nothing;
+  on conflict (user_id) do update set
+    full_name = case when agence_mannequins.full_name in ('', 'Sans nom') and nullif(trim(NEW.full_name), '') is not null then trim(NEW.full_name) else agence_mannequins.full_name end,
+    date_naissance = coalesce(agence_mannequins.date_naissance, NEW.date_naissance),
+    telephone = coalesce(nullif(agence_mannequins.telephone, ''), NEW.phone),
+    email = coalesce(nullif(agence_mannequins.email, ''), NEW.contact_email);
   return NEW;
 end;
 $$;
 revoke all on function registre_suivre_comptes() from public, anon, authenticated;
 drop trigger if exists registre_suivre_comptes on model_profiles;
-create trigger registre_suivre_comptes after insert on model_profiles
+create trigger registre_suivre_comptes after insert or update of full_name, date_naissance, phone, contact_email on model_profiles
   for each row execute function registre_suivre_comptes();
+
+-- Parent d'une mineure, saisi par elle dans son espace (table contacts_parents) : recopié dans
+-- sa fiche du registre quand les cases du parent y sont vides
+create or replace function registre_suivre_parents()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  update agence_mannequins set
+    parent_nom = coalesce(nullif(parent_nom, ''), nullif(trim(NEW.parent_nom), '')),
+    parent_telephone = coalesce(nullif(parent_telephone, ''), nullif(trim(NEW.parent_telephone), '')),
+    parent_email = coalesce(nullif(parent_email, ''), nullif(trim(NEW.parent_email), ''))
+  where user_id = NEW.model_id;
+  return NEW;
+end;
+$$;
+revoke all on function registre_suivre_parents() from public, anon, authenticated;
+drop trigger if exists registre_suivre_parents on contacts_parents;
+create trigger registre_suivre_parents after insert or update on contacts_parents
+  for each row execute function registre_suivre_parents();
+-- rattrapage des comptes déjà là (rejouable : ne remplit que les cases vides)
+update agence_mannequins a set
+  full_name = case when a.full_name in ('', 'Sans nom') and nullif(trim(m.full_name), '') is not null then trim(m.full_name) else a.full_name end,
+  date_naissance = coalesce(a.date_naissance, m.date_naissance),
+  telephone = coalesce(nullif(a.telephone, ''), m.phone),
+  email = coalesce(nullif(a.email, ''), m.contact_email)
+from model_profiles m where m.id = a.user_id;
+update agence_mannequins a set
+  parent_nom = coalesce(nullif(a.parent_nom, ''), nullif(trim(c.parent_nom), '')),
+  parent_telephone = coalesce(nullif(a.parent_telephone, ''), nullif(trim(c.parent_telephone), '')),
+  parent_email = coalesce(nullif(a.parent_email, ''), nullif(trim(c.parent_email), ''))
+from contacts_parents c where c.model_id = a.user_id;
 
 -- Garde-fous : la mensualité (10 000 ou 20 000) ne change que par l'administrateur principal ;
 -- un paiement validé ne se modifie plus (sauf par l'administrateur principal, code récent)

@@ -204,6 +204,23 @@ select set_config('request.jwt.claims', '', false);
 insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000b1', 'roxane@test.ci');
 insert into model_profiles (id, full_name, phone) values ('00000000-0000-0000-0000-0000000000b1', 'ROXANE OUATTARA', '0102030405');
 select essai(exists (select 1 from agence_mannequins where user_id = '00000000-0000-0000-0000-0000000000b1'), 'nouveau compte sur le site : il entre au registre tout seul');
+-- retour du 19/10/2026 : compte sans nom complété plus tard, parent d'une mineure recopié
+insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000b7', 'sansnom@test.ci');
+insert into model_profiles (id, full_name) values ('00000000-0000-0000-0000-0000000000b7', '');
+select essai((select full_name from agence_mannequins where user_id = '00000000-0000-0000-0000-0000000000b7') = 'Sans nom', 'compte sans nom : « Sans nom » au registre');
+update model_profiles set full_name = 'Diarra Viviane', date_naissance = '2011-06-26', phone = '0564594536' where id = '00000000-0000-0000-0000-0000000000b7';
+select essai((select full_name || '|' || date_naissance || '|' || telephone from agence_mannequins where user_id = '00000000-0000-0000-0000-0000000000b7') = 'Diarra Viviane|2011-06-26|0564594536',
+  'nom, date de naissance et téléphone remplis plus tard : recopiés au registre');
+insert into contacts_parents (model_id, parent_nom, parent_telephone, parent_email) values ('00000000-0000-0000-0000-0000000000b7', 'Diarra Abraham', '0700000000', 'parent@test.ci');
+select essai((select parent_nom || '|' || parent_telephone || '|' || parent_email from agence_mannequins where user_id = '00000000-0000-0000-0000-0000000000b7') = 'Diarra Abraham|0700000000|parent@test.ci',
+  'parent d''une mineure saisi dans son espace : recopié dans sa fiche du registre');
+update agence_mannequins set parent_nom = 'Nom saisi par l''agence' where user_id = '00000000-0000-0000-0000-0000000000b7';
+update contacts_parents set parent_nom = 'Autre nom' where model_id = '00000000-0000-0000-0000-0000000000b7';
+select essai((select parent_nom from agence_mannequins where user_id = '00000000-0000-0000-0000-0000000000b7') = 'Nom saisi par l''agence', 'ce que l''agence a saisi n''est jamais écrasé');
+-- (nettoyage d'essai : la suite compte les fiches du registre)
+delete from agence_mannequins where user_id = '00000000-0000-0000-0000-0000000000b7';
+delete from contacts_parents where model_id = '00000000-0000-0000-0000-0000000000b7';
+delete from model_profiles where id = '00000000-0000-0000-0000-0000000000b7';
 update staff_profiles set actif = true where role = 'caisse';
 set role authenticated;
 select essai_qui('00000000-0000-0000-0000-0000000000a3');

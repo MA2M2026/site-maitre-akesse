@@ -44,3 +44,10 @@
 }
 .adm-barre .adm-retour:focus-visible, .adm-barre .adm-sortie:focus-visible { outline: none; box-shadow: var(--focus); }
 @media (max-width: 520px) { .adm-barre .adm-titre { display: none; } .adm-barre { justify-content: space-between; } }
+
+/* Message d'attente pendant l'ouverture du tableau de bord (19/10/2026 : écran noir trop long) */
+.adm-attente {
+  position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  background: var(--fond, #F6F4F1); color: var(--encre, #1E1D1C); font-family: 'Montserrat', system-ui, sans-serif; font-size: 16px; text-align: center; padding: 24px;
+}
+.adm-attente-marque { font-weight: 800; letter-spacing: .5em; font-size: 22px; }

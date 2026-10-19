@@ -400,6 +400,14 @@
   const dernierCodeApplication = (session) => window.dernierCodeApplicationPortail(session);  // js/portail/inactivite.js
 
   // ---------- coque et pages ----------
+  // (19/10/2026) passer d'un espace à l'autre sans revenir aux tuiles : liens vers les autres
+  // espaces ouverts à cette personne, en bas du menu de chaque espace
+  function autresEspaces(module) {
+    const liens = ['site', 'paiements', 'compta'].filter((m) => m !== module && P.moi.espaces[m] && P.espaces[m])
+      .map((m) => '<a class="nav" href="#/' + m + '/' + premierePage(P.espaces[m]) + '"><span>' + P.esc(ESPACES[m]) + '</span></a>');
+    if (P.moi.role === 'principal' && module !== 'securite') liens.push('<a class="nav" href="#/securite/comptes"><span>Sécurité et journal</span></a>');
+    return liens.length ? '<div class="titre-menu">Aller à</div>' + liens.join('') : '';
+  }
   // première rubrique d'un espace (le menu peut commencer par un titre de groupe)
   const premierePage = (esp) => esp.nav.find((n) => n[0])[0];
   P.coque = (module, page, html) => {
@@ -414,7 +422,7 @@
       '<div class="voile-menu" data-action="menu-fermer"></div>' +
       '<nav class="lateral" id="menu-lateral" aria-label="' + P.esc(ESPACES[module]) + '"><div class="marque">M A 2 M<small>Maître Akesse Model Management</small></div>' +
       '<div class="qui"><b>' + P.esc(P.moi.nom) + '</b>' + P.esc(ROLES[P.moi.role]) + '</div>' +
-      '<div class="titre-menu">' + P.esc(ESPACES[module]) + '</div>' + nav +
+      '<div class="titre-menu">' + P.esc(ESPACES[module]) + '</div>' + nav + autresEspaces(module) +
       '<div class="lateral-pied"><a class="btn petit clair" href="#/">Retour au portail</a><button class="btn petit clair" data-action="deconnexion">Déconnexion</button></div></nav>' +
       '<main class="contenu" id="contenu">' + html + '</main></div>';
   };
