@@ -2,7 +2,7 @@
   "name": "Administration MA2M",
   "short_name": "Administration",
   "description": "Administration de l'agence Maître Akesse Model Management : site, paiements, comptabilité.",
-  "id": "/admin/",
+  "id": "/admin/?application=administration-ma2m",
   "start_url": "/admin/",
   "scope": "/admin/",
   "display": "standalone",

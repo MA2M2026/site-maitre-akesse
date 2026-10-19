@@ -25,6 +25,8 @@ p { margin: 0; }
   min-height: calc(100vh - 32px); border: 1px solid var(--lignes); border-radius: 14px; overflow: hidden; background: var(--fond);
 }
 .coque.sans-menu { grid-template-columns: minmax(0, 1fr); }
+.barre-menu, .voile-menu { display: none; }
+.voile-menu { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 44; }
 .lateral { background: var(--sombre); color: var(--sombre-encre); padding: 22px 0; display: flex; flex-direction: column; gap: 2px; }
 .marque { font-weight: 800; letter-spacing: 6px; font-size: 16px; padding: 0 22px; }
 .marque small { display: block; letter-spacing: 2px; font-weight: 600; font-size: 10px; color: var(--sombre-encre-douce); text-transform: uppercase; margin-top: 6px; }
@@ -162,12 +164,14 @@ details summary { cursor: pointer; font-weight: 700; }
 .chargement { padding: 40px; text-align: center; color: var(--encre-douce); }
 
 @media (max-width: 860px) {
+  /* (19/10/2026, demande de la propriétaire) : plus de menu en ligne en haut ; barre « ☰ Menu »
+     et menu qui glisse depuis la gauche, refermé dès qu'une rubrique est choisie */
   .coque { grid-template-columns: minmax(0, 1fr); }
-  .lateral { flex-direction: row; overflow-x: auto; padding: 12px 0; align-items: center; }
-  .lateral .marque small, .lateral .qui, .lateral .titre-menu, .lateral-pied { display: none; }
-  .marque { padding: 0 16px; white-space: nowrap; }
-  .nav { width: auto; white-space: nowrap; padding: 10px 14px; border-left: 0; border-bottom: 4px solid transparent; }
-  .nav.actif { border-left: 0; border-bottom-color: var(--rouge-ma2m); }
+  .barre-menu { display: flex; justify-content: space-between; align-items: center; gap: 12px; background: var(--sombre); color: var(--sombre-encre); padding: 10px 12px 10px 0; position: sticky; top: 0; z-index: 30; }
+  .lateral { position: fixed; top: 0; left: 0; bottom: 0; width: min(300px, 85vw); z-index: 45; overflow-y: auto; transform: translateX(-105%); visibility: hidden; transition: transform 0.22s ease, visibility 0.22s; padding-bottom: 22px; }
+  .menu-ouvert .lateral { transform: none; visibility: visible; }
+  .menu-ouvert .voile-menu { display: block; }
+  .menu-ouvert body { overflow: hidden; }
   .contenu { padding: 18px 14px; }
   .connexion { grid-template-columns: minmax(0, 1fr); min-height: 0; }
   .connexion .g, .connexion .d { padding: 26px; }
@@ -176,7 +180,7 @@ details summary { cursor: pointer; font-weight: 700; }
 @media (max-width: 400px) { body { padding-left: 8px; padding-right: 8px; } }
 @media (prefers-reduced-motion: no-preference) { .tuile { transition: transform 0.15s; } .tuile:hover { transform: translateY(-3px); } }
 @media print {
-  body { padding: 0; } .lateral, .entete .ligne, .message-ephemere { display: none !important; }
+  body { padding: 0; } .lateral, .barre-menu, .voile-menu, .entete .ligne, .message-ephemere { display: none !important; }
   .coque { display: block; border: 0; }
 }
 
