@@ -54,11 +54,11 @@
         '<button class="btn petit' + (tout ? ' actif' : '') + '" type="button" data-action="compta-dettes-tout" data-sens="' + sens + '" data-tout="1">Tout l’historique</button></div>' +
         P.tableau([creance ? 'Client' : 'Fournisseur', 'Libellé', 'Échéance', '#Montant', '#Reste', 'État', ''], visibles.map((d) =>
           '<tr' + (d.annule ? ' class="annulee"' : d.retard ? ' class="en-retard"' : '') + '><td><b>' + P.esc(noms[d.tiers_id] || '—') + '</b></td>' +
-          '<td>' + P.esc(d.libelle) + '<div class="petit-texte doux">' + P.date(d.date_op) + (d.annule ? ' · ' + P.esc(d.motif_annulation) : '') + '</div></td>' +
+          '<td>' + P.esc(d.libelle) + '<div class="petit-texte doux">' + P.date(d.date_op) + (d.avoirs ? ' · avoirs ' + P.fcfa(d.avoirs) : '') + (d.annule ? ' · ' + P.esc(d.motif_annulation) : '') + '</div></td>' +
           '<td>' + P.date(d.echeance) + '</td><td class="nombre">' + P.fcfa(d.montant) + '</td><td class="nombre">' + P.fcfa(d.reste) + '</td><td>' + statut(d) + '</td>' +
           '<td><div class="ligne">' + (d.reste > 0 ? '<button class="btn petit rouge" type="button" data-action="compta-regler" data-id="' + d.id + '">' + (creance ? 'Encaisser' : 'Payer') + '</button>' + bouton('compta-echeance', d, 'Échéance') : '') +
           (d.justificatif ? bouton('compta-justif-voir', d, 'Justificatif') : !d.annule ? bouton('compta-justif-joindre', d, 'Joindre') : '') +
-          (!d.annule && !d.regle ? bouton('compta-annuler', d, 'Annuler') : '') + '</div></td></tr>'));
+          (!d.annule && !d.regle && !d.facture ? bouton('compta-annuler', d, 'Annuler') : '') + '</div></td></tr>'));
     };
   }
   P.actions['compta-dettes-tout'] = (el) => { P.etat['dettesTout' + el.getAttribute('data-sens')] = !!el.getAttribute('data-tout'); P.afficher(); };

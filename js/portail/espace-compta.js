@@ -12,7 +12,8 @@
   const RECETTES = { inscription: 'Inscriptions', formation: 'Mensualités de formation', casting: 'Castings', prestation: 'Prestations',
     masterclass: 'Masterclass', autre_recette: 'Autre recette' };
   const DEPENSES = { loyer: 'Loyer', materiel: 'Matériel', transport: 'Transport', communication: 'Communication', frais_wave: 'Frais Wave',
-    honoraires: 'Honoraires', personnel: 'Personnel et prestataires', cachets: 'Cachets reversés aux mannequins', autre_depense: 'Autre dépense' };
+    honoraires: 'Honoraires', personnel: 'Personnel et prestataires', cachets: 'Cachets reversés aux mannequins', impots: 'Impôts et taxes',
+    autre_depense: 'Autre dépense' };
   const TYPES_COMPTE = { caisse: 'Caisse', wave: 'Wave', banque: 'Banque', mobile_money: 'Autre mobile money', autre: 'Autre' };
   const JUSTIF_MAX = 10 * 1024 * 1024;
   const JUSTIF_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'application/pdf'];
@@ -42,17 +43,9 @@
     if (sens) r = r.eq('sens', sens);
     return P.bd(r.order('date_op', { ascending: false }).order('cree_le', { ascending: false }));
   }
-  // Créances (ce qu'on nous doit) ou dettes (ce qu'on doit), avec ce qui est déjà réglé et le reste
-  async function dettes(sens) {
-    const [liste, reglements] = await Promise.all([
-      P.bd(sb.from('compta_dettes').select('*').eq('sens', sens).order('date_op', { ascending: false })),
-      P.bd(sb.from('compta_ecritures').select('id, dette_id, montant, annule, date_op').not('dette_id', 'is', null))
-    ]);
-    return liste.map((d) => {
-      const regle = reglements.filter((r) => r.dette_id === d.id && !r.annule).reduce((t, r) => t + r.montant, 0);
-      return Object.assign({}, d, { regle, reste: d.annule ? 0 : d.montant - regle, retard: !d.annule && d.montant > regle && !!d.echeance && d.echeance < P.aujourdhui() });
-    });
-  }
+  // Créances (ce qu'on nous doit) ou dettes (ce qu'on doit) : réglé, avoirs, reste, retard
+  // (calculés par la base, compta_dettes_etat)
+  const dettes = (sens) => P.rpc('compta_dettes_etat', { p_sens: sens });
   const totaux = (liste, sens) => liste.filter((e) => e.sens === sens && !e.annule).reduce((s, e) => s + e.montant, 0);
 
   // ---------- Tableau du mois ----------

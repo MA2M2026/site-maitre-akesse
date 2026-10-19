@@ -68,6 +68,9 @@ th { background: var(--sombre); color: var(--sombre-encre); font-size: 11px; let
 td { padding: 12px 14px; border-top: 1px solid var(--lignes); vertical-align: middle; }
 td.nombre, th.nombre { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 td.nombre.rouge { color: var(--erreur-texte); }
+/* lignes d'un devis ou d'une facture : désignation, quantité, prix */
+.grille-lignes { display: grid; grid-template-columns: minmax(0, 3fr) minmax(70px, 1fr) minmax(110px, 1.4fr); gap: 10px; margin-bottom: 10px; align-items: end; }
+@media (max-width: 560px) { .grille-lignes { grid-template-columns: 1fr 1fr; } .grille-lignes > :first-child { grid-column: 1 / -1; } }
 /* écriture comptable annulée : visible, barrée (rien ne s'efface) */
 tr.annulee td { color: var(--encre-douce); } tr.annulee td b, tr.annulee td.nombre { text-decoration: line-through; }
 tr.en-retard td { background: var(--erreur-fond); }

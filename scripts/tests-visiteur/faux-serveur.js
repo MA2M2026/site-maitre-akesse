@@ -39,6 +39,12 @@ function brancher(page, donnees, journal) {
       if (url.pathname.startsWith('/auth/v1/')) return json({});
       // stockage privé : dépôt d'un fichier (noté au journal), lien de lecture temporaire
       if (url.pathname.startsWith('/storage/v1/object/sign/')) return json({ signedURL: '/object/sign/' + url.pathname.slice(25) + '?token=essai' });
+      // téléchargement d'un fichier privé : donnees.fichiers[chemin] = { type, octets } (sinon 404)
+      if (url.pathname.startsWith('/storage/v1/object/') && m === 'GET') {
+        const f = (donnees.fichiers || {})[decodeURIComponent(url.pathname.slice(19))];
+        journal.push(['TELECHARGE', decodeURIComponent(url.pathname.slice(19))]);
+        return f ? route.fulfill({ status: 200, contentType: f.type, body: f.octets }) : json({ statusCode: '404', error: 'not_found', message: 'Object not found' }, 400);
+      }
       if (url.pathname.startsWith('/storage/v1/object/') && m === 'POST') {
         journal.push(['STOCKAGE', url.pathname.slice(19), req.headers()['content-type'] || '']);
         return json({ Key: url.pathname.slice(19), Id: 'f-' + journal.length });

@@ -1209,7 +1209,7 @@ begin
       select * into d from compta_dettes where id = NEW.dette_id for update;
       if not found or d.annule then raise exception 'Créance ou dette introuvable ou annulée.'; end if;
       if NEW.sens <> (case when d.sens = 'creance' then 'recette' else 'depense' end) then raise exception 'Règlement incohérent.'; end if;
-      if NEW.montant > d.montant - coalesce((select sum(montant) from compta_ecritures where dette_id = d.id and not annule), 0) then
+      if NEW.montant > compta_dette_reste(d.id) then
         raise exception 'Le règlement dépasse ce qui reste à payer.';
       end if;
       NEW.tiers_id := d.tiers_id;
@@ -1224,6 +1224,9 @@ begin
   if OLD.annule and not NEW.annule then raise exception 'Une écriture annulée le reste.'; end if;
   if NEW.annule and not OLD.annule and OLD.source = 'espace2' then
     raise exception 'Une recette de l''espace 2 ne s''annule pas d''ici.';
+  end if;
+  if NEW.annule and not OLD.annule and exists (select 1 from compta_documents where ecriture_id = OLD.id and not annule) then
+    raise exception 'Un reçu a été remis pour cette recette : annulez d''abord le reçu.';
   end if;
   if NEW.annule and not OLD.annule and exists (select 1 from compta_materiel where ecriture_id = OLD.id and etat <> 'sorti') then
     raise exception 'Achat de matériel : sortez d''abord le matériel de l''inventaire (avec le motif).';
@@ -1245,6 +1248,9 @@ begin
     raise exception 'Ne se modifie pas : annulez avec un motif, puis saisissez la bonne.';
   end if;
   if OLD.annule and not NEW.annule then raise exception 'Une ligne annulée le reste.'; end if;
+  if NEW.annule and not OLD.annule and exists (select 1 from compta_documents where dette_id = OLD.id) then
+    raise exception 'Somme due d''une facture : elle se corrige par un avoir.';
+  end if;
   if NEW.annule and not OLD.annule and exists (select 1 from compta_ecritures where dette_id = OLD.id and not annule) then
     raise exception 'Des règlements sont enregistrés : annulez-les d''abord.';
   end if;
@@ -1370,5 +1376,316 @@ create policy "Justificatifs : espace 3 lit" on storage.objects for select using
 drop policy if exists "Justificatifs : espace 3 dépose" on storage.objects;
 create policy "Justificatifs : espace 3 dépose" on storage.objects for insert with check (bucket_id = 'compta-justificatifs' and portail_peut('compta'));
 
+-- -----------------------------------------------------------------------------------
+-- 11. Espace 3 — Comptabilité : morceau C documents (devis, proformas, factures, avoirs, reçus
+--     numérotés sans trou), morceau D impôts et taxes + interrupteur « mode légal »
+-- -----------------------------------------------------------------------------------
+-- Identité de l'agence imprimée sur les documents, et mode légal (une seule ligne). Aujourd'hui :
+-- documents « non fiscal », TVA et FNE désactivées. Le jour où l'agence est constituée,
+-- l'administrateur principal remplit l'identité légale et bascule l'interrupteur (définitif) :
+-- les NOUVELLES factures deviennent de vraies factures, avec TVA ; rien d'ancien ne change.
+create table if not exists compta_reglages (
+  id int primary key default 1 check (id = 1),
+  nom_commercial text not null default 'Maître Akesse Model Management',
+  adresse text,
+  telephone text,
+  email text,
+  raison_sociale text,
+  forme_juridique text,
+  rccm text,                       -- registre du commerce
+  ncc text,                        -- numéro de compte contribuable (DGI)
+  regime_fiscal text,
+  tva_taux numeric(4,2) not null default 18 check (tva_taux >= 0 and tva_taux < 100),
+  pied_de_page text,
+  mode_legal boolean not null default false,
+  mode_legal_le timestamptz,
+  modifie_le timestamptz not null default now()
+);
+insert into compta_reglages (id) values (1) on conflict (id) do nothing;
+
+create or replace function compta_reglages_garde_fous()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if est_ecriture_serveur() then return NEW; end if;
+  if not portail_est_principal() then raise exception 'Réservé à l''administrateur principal.'; end if;
+  if OLD.mode_legal and not NEW.mode_legal then raise exception 'Le mode légal, une fois activé, le reste.'; end if;
+  if NEW.mode_legal and not OLD.mode_legal then
+    perform portail_exiger_auth_recente();
+    if coalesce(trim(NEW.raison_sociale), '') = '' or coalesce(trim(NEW.rccm), '') = '' or coalesce(trim(NEW.ncc), '') = '' then
+      raise exception 'Remplissez d''abord la raison sociale, le RCCM et le numéro de compte contribuable.';
+    end if;
+    NEW.mode_legal_le := now();
+  end if;
+  if OLD.mode_legal then NEW.mode_legal_le := OLD.mode_legal_le; end if;
+  NEW.id := 1;
+  NEW.modifie_le := now();
+  return NEW;
+end;
+$$;
+drop trigger if exists compta_reglages_garde_fous on compta_reglages;
+create trigger compta_reglages_garde_fous before update on compta_reglages for each row execute function compta_reglages_garde_fous();
+
+-- Compteurs : un par type de document, par année et par série (non fiscale / fiscale). Pris dans
+-- la même transaction que le document : si l'enregistrement échoue, le numéro n'est pas consommé.
+create table if not exists compta_numeros (
+  type text not null,
+  annee int not null,
+  fiscal boolean not null,
+  dernier int not null default 0,
+  primary key (type, annee, fiscal)
+);
+
+create table if not exists compta_documents (
+  id uuid primary key default gen_random_uuid(),
+  type text not null check (type in ('devis', 'proforma', 'facture', 'avoir', 'recu')),
+  numero text not null unique,
+  annee int not null,
+  rang int not null,
+  fiscal boolean not null,
+  date_doc date not null,
+  validite date,                                   -- devis, proforma
+  tiers_id uuid not null references compta_tiers(id),
+  destinataire jsonb not null,                     -- nom, téléphone, e-mail au jour du document
+  lignes jsonb not null,                           -- [{ designation, quantite, prix }]
+  total_ht int not null check (total_ht >= 0),
+  tva_taux numeric(4,2) not null default 0,
+  tva int not null default 0,
+  total_ttc int not null check (total_ttc >= 0),
+  categorie text,                                  -- catégorie de recette (facture)
+  notes text,
+  origine_id uuid references compta_documents(id), -- avoir → facture ; facture → devis/proforma ; reçu → facture
+  dette_id uuid unique references compta_dettes(id),  -- facture → somme due par le client
+  ecriture_id uuid unique references compta_ecritures(id), -- reçu → recette encaissée
+  etat text not null default 'emis' check (etat in ('emis', 'en_attente', 'accepte', 'refuse', 'facture')),
+  fne_reference text,                              -- numéro FNE de la DGI (vraies factures)
+  annule boolean not null default false,
+  motif_annulation text,
+  cree_par uuid references auth.users(id),
+  cree_le timestamptz not null default now(),
+  unique (type, annee, fiscal, rang),
+  check (not annule or coalesce(trim(motif_annulation), '') <> '')
+);
+create index if not exists compta_documents_date on compta_documents (date_doc);
+
+-- Reste dû d'une créance ou d'une dette : montant − règlements − avoirs (factures)
+create or replace function compta_dette_reste(p_id uuid)
+returns bigint language sql stable security definer set search_path = public as $$
+  select d.montant
+    - coalesce((select sum(e.montant) from compta_ecritures e where e.dette_id = d.id and not e.annule), 0)
+    - coalesce((select sum(a.total_ttc) from compta_documents a join compta_documents f on f.id = a.origine_id
+                where a.type = 'avoir' and not a.annule and f.dette_id = d.id), 0)
+  from compta_dettes d where d.id = p_id;
+$$;
+revoke all on function compta_dette_reste(uuid) from public, anon, authenticated;
+-- Créances ou dettes avec ce qui est réglé, les avoirs et le reste (droits de la personne qui appelle)
+create or replace function compta_dettes_etat(p_sens text)
+returns table (id uuid, sens text, tiers_id uuid, date_op date, echeance date, montant int, categorie text, libelle text, justificatif text,
+               annule boolean, motif_annulation text, regle bigint, avoirs bigint, reste bigint, retard boolean, facture text)
+language sql stable security invoker set search_path = public as $$
+  select d.id, d.sens, d.tiers_id, d.date_op, d.echeance, d.montant, d.categorie, d.libelle, d.justificatif, d.annule, d.motif_annulation, x.regle, x.avoirs,
+         case when d.annule then 0 else d.montant - x.regle - x.avoirs end,
+         not d.annule and d.montant - x.regle - x.avoirs > 0 and d.echeance < current_date,
+         (select f.numero from compta_documents f where f.dette_id = d.id)
+  from compta_dettes d
+  cross join lateral (select
+    coalesce((select sum(e.montant) from compta_ecritures e where e.dette_id = d.id and not e.annule), 0)::bigint as regle,
+    coalesce((select sum(a.total_ttc) from compta_documents a join compta_documents f on f.id = a.origine_id
+              where a.type = 'avoir' and not a.annule and f.dette_id = d.id), 0)::bigint as avoirs) x
+  where d.sens = p_sens
+  order by d.date_op desc, d.cree_le desc;
+$$;
+revoke all on function compta_dettes_etat(text) from public, anon;
+grant execute on function compta_dettes_etat(text) to authenticated;
+
+-- Un document ne s'efface ni ne se modifie : seuls l'état d'un devis / proforma, le numéro FNE
+-- (une fois) et l'annulation avec motif (devis, proforma, reçu ; une facture se corrige par un avoir)
+create or replace function compta_documents_garde_fous()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if est_ecriture_serveur() then return NEW; end if;
+  if TG_OP = 'INSERT' then
+    if coalesce(current_setting('ma2m.document', true), '') <> '1' then raise exception 'Un document se crée par « Nouveau document ».'; end if;
+    return NEW;
+  end if;
+  if coalesce(current_setting('ma2m.document', true), '') = '1' then return NEW; end if;  -- facture tirée d'un devis
+  if (to_jsonb(NEW) - 'etat' - 'fne_reference' - 'annule' - 'motif_annulation') <> (to_jsonb(OLD) - 'etat' - 'fne_reference' - 'annule' - 'motif_annulation') then
+    raise exception 'Un document numéroté ne se modifie pas.';
+  end if;
+  if NEW.etat <> OLD.etat and (OLD.type not in ('devis', 'proforma') or NEW.etat not in ('en_attente', 'accepte', 'refuse') or OLD.etat = 'facture') then
+    raise exception 'État impossible pour ce document.';
+  end if;
+  if OLD.fne_reference is not null and NEW.fne_reference is distinct from OLD.fne_reference then raise exception 'Le numéro FNE est déjà enregistré.'; end if;
+  if NEW.fne_reference is not null and OLD.fne_reference is null and not (OLD.fiscal and OLD.type in ('facture', 'avoir')) then
+    raise exception 'Le numéro FNE ne concerne que les vraies factures et avoirs.';
+  end if;
+  if OLD.annule and not NEW.annule then raise exception 'Un document annulé le reste.'; end if;
+  if NEW.annule and not OLD.annule and OLD.type in ('facture', 'avoir') then
+    raise exception 'Une facture ou un avoir ne s''annule pas : faites un avoir.';
+  end if;
+  return NEW;
+end;
+$$;
+drop trigger if exists compta_documents_garde_fous on compta_documents;
+create trigger compta_documents_garde_fous before insert or update on compta_documents for each row execute function compta_documents_garde_fous();
+
+-- Nouveau document : numéro suivant de sa série, totaux calculés ici (jamais par l'écran).
+-- p : { type, tiers_id, date_doc, validite, lignes, notes, categorie, echeance, origine_id, ecriture_id }
+create or replace function compta_document_creer(p jsonb)
+returns json language plpgsql security definer set search_path = public as $$
+declare
+  r compta_reglages;
+  t compta_tiers;
+  o compta_documents;
+  e compta_ecritures;
+  doc compta_documents;
+  typ text := p ->> 'type';
+  le_jour date := coalesce((p ->> 'date_doc')::date, current_date);
+  l jsonb;
+  lignes jsonb := '[]'::jsonb;
+  ht bigint := 0;
+  q numeric;
+  prix bigint;
+  fisc boolean;
+  taux numeric := 0;
+  num int;
+  dette uuid;
+begin
+  if not portail_peut('compta') then raise exception 'Accès refusé.'; end if;
+  if typ not in ('devis', 'proforma', 'facture', 'avoir', 'recu') then raise exception 'Type de document inconnu.'; end if;
+  select * into r from compta_reglages where id = 1;
+  select * into t from compta_tiers where id = (p ->> 'tiers_id')::uuid;
+  if not found then raise exception 'Choisissez le client.'; end if;
+  if jsonb_typeof(p -> 'lignes') <> 'array' or jsonb_array_length(p -> 'lignes') not between 1 and 50 then raise exception 'Une à cinquante lignes.'; end if;
+  for l in select * from jsonb_array_elements(p -> 'lignes') loop
+    q := (l ->> 'quantite')::numeric;
+    prix := (l ->> 'prix')::bigint;
+    if coalesce(trim(l ->> 'designation'), '') = '' or q is null or q <= 0 or q > 100000 or prix is null or prix < 0 or prix > 1000000000 then
+      raise exception 'Ligne incomplète : désignation, quantité et prix.';
+    end if;
+    lignes := lignes || jsonb_build_array(jsonb_build_object('designation', left(trim(l ->> 'designation'), 300), 'quantite', q, 'prix', prix));
+    ht := ht + round(q * prix);
+  end loop;
+  fisc := r.mode_legal;
+  if fisc and typ <> 'recu' then taux := r.tva_taux; end if;
+  if typ = 'avoir' then
+    select * into o from compta_documents where id = (p ->> 'origine_id')::uuid and type = 'facture' and not annule;
+    if not found then raise exception 'Un avoir corrige une facture : choisissez-la.'; end if;
+    if o.tiers_id <> t.id then raise exception 'L''avoir va au client de la facture.'; end if;
+    fisc := o.fiscal; taux := o.tva_taux;   -- même série et même TVA que la facture corrigée
+    if ht + round(ht * taux / 100) > compta_dette_reste(o.dette_id) then raise exception 'L''avoir dépasse ce qui reste dû sur la facture.'; end if;
+  elsif p ->> 'origine_id' is not null then
+    select * into o from compta_documents where id = (p ->> 'origine_id')::uuid and not annule;
+    if not found or not ((typ = 'facture' and o.type in ('devis', 'proforma') and o.etat <> 'facture') or (typ = 'recu' and o.type = 'facture')) then
+      raise exception 'Document d''origine impossible.';
+    end if;
+  end if;
+  if typ = 'recu' and p ->> 'ecriture_id' is not null then
+    select * into e from compta_ecritures where id = (p ->> 'ecriture_id')::uuid and sens = 'recette' and not annule;
+    if not found then raise exception 'Recette introuvable.'; end if;
+    if e.montant <> ht then raise exception 'Le reçu doit être du montant de la recette.'; end if;
+  end if;
+  insert into compta_numeros (type, annee, fiscal, dernier) values (typ, extract(year from le_jour)::int, fisc, 1)
+  on conflict (type, annee, fiscal) do update set dernier = compta_numeros.dernier + 1
+  returning dernier into num;
+  if typ = 'facture' then
+    insert into compta_dettes (sens, tiers_id, date_op, echeance, montant, categorie, libelle)
+    values ('creance', t.id, le_jour, (p ->> 'echeance')::date, ht + round(ht * taux / 100), coalesce(p ->> 'categorie', 'prestation'),
+            'Facture ' || case when fisc then '' else 'NF-' end || 'FAC-' || extract(year from le_jour) || '-' || lpad(num::text, 4, '0'))
+    returning id into dette;
+  end if;
+  perform set_config('ma2m.document', '1', true);
+  insert into compta_documents (type, numero, annee, rang, fiscal, date_doc, validite, tiers_id, destinataire, lignes, total_ht, tva_taux, tva, total_ttc,
+                                categorie, notes, origine_id, dette_id, ecriture_id, etat, cree_par)
+  values (typ, case when fisc then '' else 'NF-' end || upper(case typ when 'devis' then 'DEV' when 'proforma' then 'PRO' when 'facture' then 'FAC' when 'avoir' then 'AV' else 'REC' end)
+               || '-' || extract(year from le_jour) || '-' || lpad(num::text, 4, '0'),
+          extract(year from le_jour)::int, num, fisc, le_jour, (p ->> 'validite')::date, t.id,
+          jsonb_build_object('nom', t.nom, 'telephone', t.telephone, 'email', t.email), lignes, ht, taux, round(ht * taux / 100), ht + round(ht * taux / 100),
+          case when typ = 'facture' then coalesce(p ->> 'categorie', 'prestation') end, nullif(trim(p ->> 'notes'), ''), o.id, dette, e.id,
+          case when typ in ('devis', 'proforma') then 'en_attente' else 'emis' end, auth.uid())
+  returning * into doc;
+  if typ = 'facture' and o.id is not null then update compta_documents set etat = 'facture' where id = o.id; end if;
+  perform set_config('ma2m.document', '', true);
+  return json_build_object('id', doc.id, 'numero', doc.numero);
+end;
+$$;
+revoke all on function compta_document_creer(jsonb) from public, anon;
+grant execute on function compta_document_creer(jsonb) to authenticated;
+
+-- Impôts et taxes : échéancier (patente, impôt synthétique, CNPS, TVA…) et paiement = dépense
+-- « Impôts et taxes » liée. Avant paiement, échéance et montant prévu se corrigent ; après, plus rien.
+create table if not exists compta_impots (
+  id uuid primary key default gen_random_uuid(),
+  nom text not null check (trim(nom) <> ''),
+  periode text,
+  echeance date not null,
+  montant int not null check (montant >= 0),
+  ecriture_id uuid unique references compta_ecritures(id),
+  annule boolean not null default false,
+  motif_annulation text,
+  cree_par uuid references auth.users(id),
+  cree_le timestamptz not null default now(),
+  check (not annule or coalesce(trim(motif_annulation), '') <> '')
+);
+create or replace function compta_impots_garde_fous()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  paye boolean;
+begin
+  if est_ecriture_serveur() then return NEW; end if;
+  if TG_OP = 'INSERT' then NEW.cree_par := auth.uid(); NEW.ecriture_id := null; NEW.annule := false; return NEW; end if;
+  paye := OLD.ecriture_id is not null and exists (select 1 from compta_ecritures where id = OLD.ecriture_id and not annule);
+  if NEW.nom <> OLD.nom or NEW.periode is distinct from OLD.periode or NEW.cree_par is distinct from OLD.cree_par then raise exception 'Supprimez par une annulation, puis recréez.'; end if;
+  if paye and (NEW.echeance <> OLD.echeance or NEW.montant <> OLD.montant or NEW.ecriture_id is distinct from OLD.ecriture_id or NEW.annule) then
+    raise exception 'Impôt déjà payé : il ne se modifie plus.';
+  end if;
+  if NEW.ecriture_id is distinct from OLD.ecriture_id and coalesce(current_setting('ma2m.impot', true), '') <> '1' then
+    raise exception 'Un impôt se paie par « Payer ».';
+  end if;
+  if OLD.annule and not NEW.annule then raise exception 'Une ligne annulée le reste.'; end if;
+  return NEW;
+end;
+$$;
+drop trigger if exists compta_impots_garde_fous on compta_impots;
+create trigger compta_impots_garde_fous before insert or update on compta_impots for each row execute function compta_impots_garde_fous();
+create or replace function compta_impot_payer(p_id uuid, p_compte uuid, p_date date, p_montant int, p_justificatif text default null)
+returns uuid language plpgsql security invoker set search_path = public as $$
+declare
+  i compta_impots;
+  e uuid;
+begin
+  select * into i from compta_impots where id = p_id and not annule for update;
+  if not found then raise exception 'Impôt introuvable.'; end if;
+  insert into compta_ecritures (sens, date_op, montant, compte_id, categorie, libelle, justificatif)
+  values ('depense', p_date, p_montant, p_compte, 'impots', i.nom || coalesce(' · ' || i.periode, ''), p_justificatif)
+  returning id into e;
+  perform set_config('ma2m.impot', '1', true);
+  update compta_impots set ecriture_id = e where id = p_id;
+  perform set_config('ma2m.impot', '', true);
+  return e;
+end;
+$$;
+revoke all on function compta_impot_payer(uuid, uuid, date, int, text) from public, anon;
+grant execute on function compta_impot_payer(uuid, uuid, date, int, text) to authenticated;
+
+do $$
+declare
+  t text;
+begin
+  foreach t in array array['compta_reglages', 'compta_documents', 'compta_impots', 'compta_numeros']
+  loop
+    execute format('alter table %I enable row level security', t);
+    execute format('revoke all on %I from anon', t);
+    execute format('revoke insert, delete, truncate on %I from authenticated', t);
+    execute format('drop policy if exists %s_acces on %I', t, t);
+    execute format('create policy %s_acces on %I for all using (portail_peut(''compta'')) with check (portail_peut(''compta''))', t, t);
+    execute format('drop trigger if exists audit_%s on %I', t, t);
+    execute format('create trigger audit_%s after insert or update or delete on %I for each row execute function audit_ecriture()', t, t);
+  end loop;
+end $$;
+-- documents : créés par compta_document_creer seulement ; numéros : jamais touchés à la main
+grant select, update on compta_reglages, compta_documents to authenticated;
+grant select, insert, update on compta_impots to authenticated;
+revoke all on compta_numeros from authenticated;
+
 NOTIFY pgrst, 'reload schema';
-select 'Administration — étape 1, espaces 1 et 2, comptabilité (recettes, dépenses, trésorerie, clients et fournisseurs, personnel, matériel) en place' as resultat;
+select 'Administration — étape 1, espaces 1 et 2, comptabilité complète (journaux, suivi, documents, impôts, mode légal) en place' as resultat;

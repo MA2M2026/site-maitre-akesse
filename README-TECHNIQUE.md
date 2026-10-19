@@ -84,6 +84,23 @@
 > d'inventaire ensemble) ; achat figé, sortie définitive avec motif, dépense non annulable tant que
 > le matériel est à l'inventaire. Carnet : `compta_tiers` (jamais les mannequins).
 >
+> **Espace 3, morceaux C, D, E (cahier v2.4 §6)** — base section 11. **Documents**
+> (`js/portail/espace-compta-documents.js`) : `compta_documents`, créés seulement par
+> `compta_document_creer(p)` (numéro suivant de la série `compta_numeros` type/année/fiscal, pris
+> dans la même transaction → aucun trou ; totaux et TVA calculés par la base ; préfixe `NF-` tant
+> que le mode légal est éteint). Facture → somme due (`compta_dettes`) ; devis/proforma → « Facturer » ;
+> avoir ≤ reste dû (réduit la somme due : `compta_dette_reste`, `compta_dettes_etat`) ; reçu d'une
+> recette saisie ; une facture/un avoir ne s'annule jamais. PDF : `js/portail/compta-pdf.js`
+> (pdf-lib `js/vendor/pdf-lib-1.17.1.min.js`, chargé au premier PDF). **Impôts** : `compta_impots`
+> (échéancier, répétition mois/trimestre/année), `compta_impot_payer` → dépense « impots ».
+> **Mode légal** : `compta_reglages` (une ligne : identité, TVA, interrupteur) — administrateur
+> principal seulement, code récent exigé, définitif ; FNE : numéro saisi à la main par facture
+> (`fne_reference`) en attendant le branchement DGI. **Dossier du mois**
+> (`js/portail/espace-compta-dossier.js`) : Excel 11 feuilles (`js/portail/compta-xlsx.js`, .xlsx écrit
+> sans outil extérieur) et PDF résumé + justificatifs (PDF ajoutés, photos mises en page, formats
+> illisibles listés). Essai visiteur : `test-comptabilite-documents.js` (relit l'Excel avec openpyxl
+> et le PDF avec pypdf, installés par `lancer.sh` s'ils manquent).
+>
 > Codes de secours : affichés à la première activation de la double authentification, et
 > refaits à la demande dans Sécurité › « Mes codes de secours » (code récent demandé ; les
 > anciens sont annulés). Ajouté le 19/10/2026 : un compte dont la double authentification

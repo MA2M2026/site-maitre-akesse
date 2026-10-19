@@ -17,7 +17,7 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
 const MOIS = new Date().toISOString().slice(0, 7), JOUR = MOIS + '-02';
 
 function donnees(role) {
-  return {
+  const d = {
     portail: { aal: 'aal1', facteurs: true },
     tables: {
       compta_comptes: [{ id: 'c1', nom: 'Caisse (espèces)', type: 'caisse', solde_initial: 0, date_initiale: MOIS + '-01', actif: true, cree_le: '2026-10-01' },
@@ -40,9 +40,16 @@ function donnees(role) {
       portail_moi: { role, mfa: true, nom: role === 'compta' ? 'Comptable' : 'Encaissements', actif: true, membre: true, espaces: { site: false, paiements: role === 'caisse', compta: role === 'compta' }, contacts_prives: false, noms_payeurs: role === 'caisse' },
       portail_enregistrer_appareil: { ok: true, nouveau: false },
       portail_code_appareil_etat: { defini: true, verrouille: false },
-      compta_soldes: [{ compte_id: 'c1', nom: 'Caisse (espèces)', type: 'caisse', solde: 40000 }, { compte_id: 'c2', nom: 'Wave Business', type: 'wave', solde: 90000 }]
+      compta_soldes: [{ compte_id: 'c1', nom: 'Caisse (espèces)', type: 'caisse', solde: 40000 }, { compte_id: 'c2', nom: 'Wave Business', type: 'wave', solde: 90000 }],
+      // (la vraie base calcule réglé / reste / retard : compta_dettes_etat)
+      compta_dettes_etat: (q) => d.tables.compta_dettes.filter((x) => x.sens === q.p_sens).map((x) => {
+        const regle = d.tables.compta_ecritures.filter((e) => e.dette_id === x.id && !e.annule).reduce((s, e) => s + e.montant, 0);
+        const reste = x.annule ? 0 : x.montant - regle;
+        return Object.assign({}, x, { regle, avoirs: 0, reste, retard: reste > 0 && x.echeance < new Date().toISOString().slice(0, 10), facture: null });
+      })
     }
   };
+  return d;
 }
 
 (async () => {

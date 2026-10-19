@@ -18,10 +18,12 @@ export NODE_PATH="${NODE_PATH:-$(npm root -g)}"
 # Paquets des fonctions serveur (api/) utilisés par test-note-integration.js : installés s'ils
 # manquent (nouvelle copie du dépôt), sans rien changer à package.json
 [[ -d ../../node_modules/@aws-sdk/client-s3 ]] || (cd ../.. && npm install --no-audit --no-fund --no-save >/dev/null || echo "⚠️ paquets non installés : test-note-integration.js échouera")
+# Lecture des Excel et PDF téléchargés (test-comptabilite-documents.js)
+python3 -c "import openpyxl, pypdf" 2>/dev/null || pip install --quiet openpyxl pypdf >/dev/null 2>&1 || echo "⚠️ openpyxl/pypdf non installés : test-comptabilite-documents.js échouera"
 # Scripts et styles appelés avec leur dernier numéro de version (?v=), sinon les visiteurs
 # gardent l'ancienne version en mémoire (14/10/2026, rapidité)
 echo "########## versions des fichiers"; python3 ../versionner.py --verifier
-for t in test-visiteur.js test-inscription.js test-contact-recruteur.js test-admin.js test-pages-publiques.js test-espace-experiences.js test-boutique.js test-publications.js test-journal.js test-tri-photos.js test-video-accueil.js test-espace-enregistrement.js test-photos-webp.js test-photos-directes.js test-tableau-protege.js test-note-integration.js test-code-permanent.js test-journal-fichier.js test-affichage-stable.js test-apercus.js test-middleware-apercus.mjs test-recherche-book.js test-administration.js test-mensualites.js test-comptabilite.js test-visuel.js; do
+for t in test-visiteur.js test-inscription.js test-contact-recruteur.js test-admin.js test-pages-publiques.js test-espace-experiences.js test-boutique.js test-publications.js test-journal.js test-tri-photos.js test-video-accueil.js test-espace-enregistrement.js test-photos-webp.js test-photos-directes.js test-tableau-protege.js test-note-integration.js test-code-permanent.js test-journal-fichier.js test-affichage-stable.js test-apercus.js test-middleware-apercus.mjs test-recherche-book.js test-administration.js test-mensualites.js test-comptabilite.js test-comptabilite-documents.js test-visuel.js; do
   echo "########## $t"
   # le test visuel parcourt 42 pages × 2 écrans : il a sa propre limite de 600 s
   timeout "$([[ "$t" = test-visuel.js ]] && echo 700 || echo 400)" node "$t"

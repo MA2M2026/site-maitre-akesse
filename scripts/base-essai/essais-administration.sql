@@ -367,8 +367,65 @@ select essai_refuse($$update compta_ecritures set annule = true, motif_annulatio
 update compta_materiel set etat = 'sorti', date_sortie = current_date, motif_sortie = 'Volé' where designation = 'Ordinateur portable';
 select essai_refuse($$update compta_materiel set etat = 'en_service' where designation = 'Ordinateur portable'$$, 'matériel sorti : il le reste');
 select essai_refuse($$delete from compta_materiel$$, 'le matériel ne s''efface pas');
+-- Morceaux C et D : documents numérotés sans trou, avoirs, reçus, impôts, mode légal
+select essai((compta_document_creer(jsonb_build_object('type', 'devis', 'tiers_id', (select id from compta_tiers where nom = 'Client Sococé'),
+  'lignes', jsonb_build_array(jsonb_build_object('designation', 'Défilé', 'quantite', 2, 'prix', 100000))))) ->> 'numero' = 'NF-DEV-' || extract(year from now()) || '-0001',
+  'premier devis : NF-DEV-année-0001 (non fiscal)');
+select essai_refuse($$select compta_document_creer(jsonb_build_object('type', 'facture', 'tiers_id', (select id from compta_tiers where nom = 'Client Sococé'), 'lignes', jsonb_build_array(jsonb_build_object('designation', '', 'quantite', 1, 'prix', 1))))$$,
+  'ligne sans désignation refusée');
+select compta_document_creer(jsonb_build_object('type', 'facture', 'tiers_id', (select id from compta_tiers where nom = 'Client Sococé'), 'origine_id', (select id from compta_documents where type = 'devis'),
+  'categorie', 'casting', 'lignes', jsonb_build_array(jsonb_build_object('designation', 'Défilé', 'quantite', 2, 'prix', 100000))));
+select essai((select numero from compta_documents where type = 'facture') = 'NF-FAC-' || extract(year from now()) || '-0001'
+  and (select total_ttc from compta_documents where type = 'facture') = 200000 and (select tva from compta_documents where type = 'facture') = 0,
+  'facture non fiscale : numéro 0001 (le refus n''a pas consommé de numéro), 200 000 sans TVA');
+select essai((select etat from compta_documents where type = 'devis') = 'facture', 'le devis passe en « facturé »');
+select essai((select reste from compta_dettes_etat('creance') where facture like 'NF-FAC-%') = 200000, 'la facture crée la somme due par le client');
+select essai_refuse($$insert into compta_documents (type, numero, annee, rang, fiscal, date_doc, tiers_id, destinataire, lignes, total_ht, total_ttc) values ('facture', 'X', 2026, 99, false, current_date, (select id from compta_tiers limit 1), '{}', '[]', 0, 0)$$,
+  'un document ne se fabrique pas à la main');
+select essai_refuse($$update compta_documents set total_ttc = 1 where type = 'facture'$$, 'une facture ne se modifie pas');
+select essai_refuse($$update compta_documents set annule = true, motif_annulation = 'x' where type = 'facture'$$, 'une facture ne s''annule pas (avoir)');
+select essai_refuse($$update compta_dettes set annule = true, motif_annulation = 'x' where libelle like 'Facture NF-FAC-%'$$, 'la somme due d''une facture ne s''annule pas');
+select essai_refuse($$select compta_document_creer(jsonb_build_object('type', 'avoir', 'tiers_id', (select id from compta_tiers where nom = 'Client Sococé'), 'origine_id', (select id from compta_documents where type = 'facture'), 'lignes', jsonb_build_array(jsonb_build_object('designation', 'Trop', 'quantite', 1, 'prix', 250000))))$$,
+  'avoir plus grand que le reste dû refusé');
+select compta_document_creer(jsonb_build_object('type', 'avoir', 'tiers_id', (select id from compta_tiers where nom = 'Client Sococé'), 'origine_id', (select id from compta_documents where type = 'facture'),
+  'lignes', jsonb_build_array(jsonb_build_object('designation', 'Remise', 'quantite', 1, 'prix', 50000))));
+select essai((select reste from compta_dettes_etat('creance') where facture like 'NF-FAC-%') = 150000, 'l''avoir réduit la somme due (200 000 − 50 000)');
+select essai_refuse($$insert into compta_ecritures (sens, montant, compte_id, categorie, libelle, dette_id) values ('recette', 160000, (select id from compta_comptes where type = 'wave'), 'casting', 'x', (select id from compta_dettes where libelle like 'Facture NF-FAC-%'))$$,
+  'encaissement plus grand que le reste après avoir refusé');
+select compta_document_creer(jsonb_build_object('type', 'recu', 'tiers_id', (select id from compta_tiers where nom = 'Client Sococé'), 'ecriture_id', (select id from compta_ecritures where libelle = 'Acompte casting'),
+  'lignes', jsonb_build_array(jsonb_build_object('designation', 'Acompte casting', 'quantite', 1, 'prix', 100000))));
+select essai_refuse($$update compta_ecritures set annule = true, motif_annulation = 'x' where libelle = 'Acompte casting'$$, 'recette avec un reçu : annuler d''abord le reçu');
+select essai_refuse($$select compta_document_creer(jsonb_build_object('type', 'recu', 'tiers_id', (select id from compta_tiers where nom = 'Client Sococé'), 'ecriture_id', (select id from compta_ecritures where libelle = 'Loyer octobre'), 'lignes', jsonb_build_array(jsonb_build_object('designation', 'x', 'quantite', 1, 'prix', 50000))))$$,
+  'un reçu ne se fait que pour une recette');
+update compta_documents set annule = true, motif_annulation = 'Erreur de client' where type = 'recu';
+select essai((select annule from compta_documents where type = 'recu'), 'un reçu s''annule avec un motif (son numéro reste pris)');
+insert into compta_impots (nom, periode, echeance, montant) values ('Patente', '2026', current_date + 10, 120000);
+select compta_impot_payer((select id from compta_impots where nom = 'Patente'), (select id from compta_comptes where type = 'caisse'), current_date, 120000);
+select essai(exists (select 1 from compta_impots i join compta_ecritures e on e.id = i.ecriture_id where i.nom = 'Patente' and e.categorie = 'impots'), 'impôt payé : dépense « Impôts et taxes » liée');
+select essai_refuse($$update compta_impots set montant = 1 where nom = 'Patente'$$, 'impôt payé : il ne se modifie plus');
+select essai_refuse($$update compta_reglages set mode_legal = true$$, 'comptable : pas d''interrupteur du mode légal');
+reset role;
+select set_config('request.jwt.claims', '', false);
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a1', 'aal2', 30, 'tablette-pin-0001');
+select essai_refuse($$update compta_reglages set mode_legal = true$$, 'mode légal : identité légale obligatoire avant de basculer');
+update compta_reglages set raison_sociale = 'MA2M SARL', rccm = 'CI-ABJ-2027-B-1', ncc = '2700001A', mode_legal = true;
+select essai((select mode_legal from compta_reglages), 'mode légal activé par l''administrateur principal');
+select compta_document_creer(jsonb_build_object('type', 'facture', 'tiers_id', (select id from compta_tiers where nom = 'Client Sococé'),
+  'lignes', jsonb_build_array(jsonb_build_object('designation', 'Shooting', 'quantite', 1, 'prix', 100000))));
+select essai((select numero from compta_documents where type = 'facture' and fiscal) = 'FAC-' || extract(year from now()) || '-0001'
+  and (select tva from compta_documents where type = 'facture' and fiscal) = 18000 and (select total_ttc from compta_documents where type = 'facture' and fiscal) = 118000,
+  'vraie facture : nouvelle série FAC-année-0001, TVA 18 % (118 000)');
+select essai((select fiscal from compta_documents where numero like 'NF-FAC-%') = false, 'les anciennes factures restent « non fiscal »');
+select essai_refuse($$update compta_reglages set mode_legal = false$$, 'le mode légal ne se désactive pas');
+update compta_documents set fne_reference = 'FNE-000123' where type = 'facture' and fiscal;
+select essai_refuse($$update compta_documents set fne_reference = 'FNE-1' where numero like 'NF-FAC-%'$$, 'pas de numéro FNE pour une facture non fiscale');
+reset role;
+select set_config('request.jwt.claims', '', false);
+set role authenticated;
 select essai_qui('00000000-0000-0000-0000-0000000000a3');
 select essai((select count(*) from compta_ecritures) = 0, 'encaissements : pas d''accès à la comptabilité');
+select essai((select count(*) from compta_documents) + (select count(*) from compta_impots) = 0, 'encaissements : ni documents ni impôts');
 select essai((select count(*) from compta_tiers) + (select count(*) from compta_dettes) + (select count(*) from compta_materiel) = 0, 'encaissements : ni clients, ni dettes, ni matériel');
 reset role;
 select set_config('request.jwt.claims', '', false);
