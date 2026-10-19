@@ -70,6 +70,7 @@ function donnees(role) {
         { id: 'r1', full_name: 'ROXANE OUATTARA', telephone: '0102030405', email: 'roxane@test.ci', mensualite: 10000, statut: 'actif', user_id: 'm-site', date_naissance: '1999-01-01' },
         { id: 'r2', full_name: 'KONÉ AWA', telephone: '0707070707', email: 'awa@test.ci', mensualite: 20000, statut: 'actif', user_id: null, date_naissance: '2000-01-01' },
         { id: 'r3', full_name: 'KOUAME JEAN', telephone: '0505050505', mensualite: 10000, statut: 'actif', user_id: null, date_naissance: '2012-05-05', parent_nom: 'MADAME KOUAME', parent_telephone: '0101010101', parent_email: 'parent@test.ci' }];
+      d.tables.messages_envoyes = []; d.tables.modeles_messages = [];
       d.tables.paiements_mannequins = [{ id: 'p1', mannequin_id: 'r1', objet: 'mensualite', mois: mm(mc), montant: 10000, statut: 'valide' }];
     });
     const p = e.p; p.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) e.errs.push('console : ' + m.text().slice(0, 140)); });
@@ -105,8 +106,14 @@ function donnees(role) {
     ok(mails.length === 1 && mails[0].to_email === 'parent@test.ci' && /Petit rappel/.test(mails[0].message), nomEcran + ' : un e-mail parti, au parent, avec le texte du modèle ' + mails.length);
     const wa = decodeURIComponent((await p.getAttribute('a[href^="https://wa.me/"]', 'href')) || '');
     ok(/^https:\/\/wa\.me\/2250101010101/.test(wa), nomEcran + ' : lien WhatsApp vers le parent');
+    await p.evaluate(() => { document.querySelectorAll('a[data-wa-id]').forEach((a) => { a.removeAttribute('target'); a.setAttribute('href', '#/paiements/messages'); }); });
+    await p.click('a[data-wa-id]'); await p.waitForTimeout(600);
+    const notes = e.journal.filter((j) => j[0] === 'POST' && j[1] === 'messages_envoyes').map((j) => [].concat(JSON.parse(j[3]))[0]);
+    ok(notes.length === 2 && notes[0].canal === 'email' && notes[0].mannequin_id === 'r3' && notes[0].modele === 'relance3' && !('texte' in notes[0]), nomEcran + ' : l’e-mail laisse une ligne dans l’historique durable, sans le texte ' + JSON.stringify(notes[0]));
+    ok(notes[1] && notes[1].canal === 'whatsapp' && notes[1].mannequin_id === 'r3', nomEcran + ' : le clic sur « Envoyer » WhatsApp laisse sa ligne ' + JSON.stringify(notes[1]));
     await p.click('[data-action="fermer-fenetre"]'); await p.waitForTimeout(300);
-    ok(/Envois de cette session/.test(await t()) && /KOUAME JEAN/.test(await t()), nomEcran + ' : l’envoi apparaît dans la liste de la session');
+    ok(/Messages envoyés/.test(await t()), nomEcran + ' : section « Messages envoyés » ');
+    ok(!(await p.$('[data-action="msg-enregistrer-modele"]')), nomEcran + ' : encaissements → pas d’enregistrement de modèle');
     ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)), nomEcran + ' : pas de défilement de côté de la page');
     await p.screenshot({ path: __dirname + '/medias/messages-' + (ecran.width > 860 ? 'pc' : 'tel') + '.png', fullPage: true });
     ok(!e.errs.length, nomEcran + ' : aucune erreur de page ' + e.errs.join(' | '));

@@ -290,6 +290,7 @@ begin
     alter table rapprochements rename column reference_wave to reference_paiement;
   end if;
 end $$;
+alter table rapprochements add column if not exists montant_recu int check (montant_recu is null or montant_recu > 0);
 create index if not exists rapprochements_reference on rapprochements (reference_paiement) where reference_paiement is not null;
 alter table rapprochements enable row level security;
 revoke all on rapprochements from anon, authenticated;

@@ -603,8 +603,9 @@
   // ---------- Messages et relances (cahier V3, 7.2) ----------
   // Modèles à variables, destinataires cochés (le parent pour un mineur), aperçu, envoi par e-mail puis
   // file WhatsApp. Les relances automatiques du 3 et du 5 restent celles du serveur (e-mail).
-  // Pour l'instant les modifications d'un modèle et le journal des envois ne sont gardés que pendant
-  // la session : leur enregistrement durable arrive avec la table des messages (étape suivante).
+  // Les modèles modifiés par l'administrateur principal (table modeles_messages) et l'historique des
+  // envois (table messages_envoyes) sont gardés durablement ; tant que le SQL « compléments » n'est pas
+  // exécuté, les modèles restent ceux d'origine et le journal ne vaut que pour la session.
   const MODELES = {
     appel: ['Appel du 1er', 'Bonjour {prenom},\n\nLa mensualité de formation du mois de {mois} ({montant}) est à régler avant le {date_limite}.\nPaiement par Wave : {lien_wave}\nPuis appuyez sur « J’ai payé » dans {lien_espace}.\n\nMerci !\nL’équipe Maître Akesse Model Management'],
     relance3: ['Relance du 3', 'Bonjour {prenom},\n\nPetit rappel : nous n’avons pas encore reçu la mensualité de {mois} ({montant}). La date limite est le {date_limite}.\nPaiement par Wave : {lien_wave}\n\nMerci !\nL’équipe Maître Akesse Model Management'],
@@ -613,6 +614,7 @@
     confirme: ['Paiement confirmé', 'Bonjour {prenom},\n\nNous confirmons la réception de votre paiement de {montant} pour {mois}. Merci !\n\nL’équipe Maître Akesse Model Management'],
     libre: ['Message libre', 'Bonjour {prenom},\n\n\n\nL’équipe Maître Akesse Model Management']
   };
+  const CANAUX = { email: 'E-mail', whatsapp: 'WhatsApp', sms: 'SMS' };
   const FILTRES_MSG = [['tous', 'Tous les actifs'], ['inscrits', 'Inscrits sur le site'], ['non_inscrits', 'Non inscrits'], ['non_payes', 'Pas encore payé ce mois-ci']];
   const LIEN_ESPACE = 'https://www.maitreakessemodelmanagement.com/mes-paiements';
   // Lien Wave Business actif du montant de ce mannequin (page Paramètres) ; à défaut, son espace « Mes paiements »
@@ -626,14 +628,17 @@
   }
   async function messages() {
     const e = P.etat.msg = Object.assign({ modele: 'appel', filtre: 'non_payes', journal: [] }, P.etat.msg || {});
-    if (e.texte === undefined) e.texte = MODELES[e.modele][1];
     const mois = moisCourant();
-    const [actifs, paiements, liens] = await Promise.all([
+    const [actifs, paiements, liens, modeles, historique] = await Promise.all([
       P.bd(sb.from('agence_mannequins').select('*').eq('statut', 'actif').order('full_name')),
       P.bd(sb.from('paiements_mannequins').select('mannequin_id, statut').eq('objet', 'mensualite').eq('mois', mois).neq('statut', 'refuse')),
-      P.bd(sb.from('liens_wave').select('*').eq('actif', true)).catch(() => [])  // (table pas encore créée : lien de l'espace mannequin)
+      P.bd(sb.from('liens_wave').select('*').eq('actif', true)).catch(() => []),  // (table pas encore créée : lien de l'espace mannequin)
+      P.bd(sb.from('modeles_messages').select('*')).catch(() => null),
+      P.bd(sb.from('messages_envoyes').select('*, mannequin:agence_mannequins(full_name)').order('envoye_le', { ascending: false }).limit(40)).catch(() => null)
     ]);
     P.etat.liensWave = liens;
+    (modeles || []).forEach((x) => { if (MODELES[x.cle]) MODELES[x.cle][1] = x.texte; });
+    if (e.texte === undefined) e.texte = MODELES[e.modele][1];
     const aPaye = (m) => paiements.some((x) => x.mannequin_id === m.id && x.statut === 'valide');
     const choisis = actifs.filter((m) => e.filtre === 'tous' || (e.filtre === 'inscrits' && m.user_id) || (e.filtre === 'non_inscrits' && !m.user_id) || (e.filtre === 'non_payes' && !aPaye(m)));
     e.liste = choisis;
@@ -643,13 +648,33 @@
       '<label class="fl" for="msg-texte" style="margin-top:12px">Texte (variables : {prenom} {mois} {montant} {date_limite} {lien_wave} {lien_espace})<textarea id="msg-texte" rows="9">' + P.esc(e.texte) + '</textarea></label></div>' +
       '<div class="carte"><h2>2. Destinataires</h2><div class="segments">' + FILTRES_MSG.map((f) => '<button class="btn petit' + (f[0] === e.filtre ? ' actif' : '') + '" type="button" data-action="msg-filtre" data-filtre="' + f[0] + '">' + P.esc(f[1]) + '</button>').join('') + '</div>' +
       (choisis.length ? P.tableau(['', 'Mannequin', 'Destinataire', 'Contact'], choisis.map((m) => { const d = destinataire(m); return '<tr><td><input type="checkbox" name="msg-ids" value="' + m.id + '" checked aria-label="Écrire à ' + P.esc(m.full_name) + '"></td><td><b>' + P.esc(m.full_name) + '</b></td><td>' + P.esc(d.mineur ? d.nom + ' (parent)' : d.nom) + '</td><td class="petit-texte">' + P.esc([d.tel, d.email].filter(Boolean).join(' · ') || 'aucun contact') + '</td></tr>'; })) : '<p class="doux">Personne dans ce groupe.</p>') + '</div>' +
-      '<div class="ligne"><button class="btn" type="button" data-action="msg-apercu">Aperçu</button><button class="btn rouge" type="button" data-action="msg-envoyer">Envoyer aux personnes cochées</button></div>' +
-      (e.journal.length ? '<div class="carte"><h2>Envois de cette session</h2>' + P.tableau(['Heure', 'Mannequin', 'E-mail'], e.journal.map((j) => '<tr><td>' + P.esc(j[0]) + '</td><td>' + P.esc(j[1]) + '</td><td>' + P.esc(j[2]) + '</td></tr>')) + '</div>' : '');
+      '<div class="ligne"><button class="btn" type="button" data-action="msg-apercu">Aperçu</button>' + (P.moi && P.moi.role === 'principal' ? '<button class="btn" type="button" data-action="msg-enregistrer-modele">Enregistrer ce modèle</button>' : '') + '<button class="btn rouge" type="button" data-action="msg-envoyer">Envoyer aux personnes cochées</button></div>' +
+      (historique ? '<div class="carte"><h2>Messages envoyés</h2>' + (historique.length ? P.tableau(['Date', 'Mannequin', 'Message', 'Canal'], historique.map((j) => '<tr><td>' + P.dateHeure(j.envoye_le) + '</td><td>' + P.esc(j.mannequin ? j.mannequin.full_name : '—') + '</td><td>' + P.esc((MODELES[j.modele] || [j.modele])[0]) + '</td><td>' + P.esc(CANAUX[j.canal] || j.canal) + '</td></tr>')) : '<p class="doux">Aucun message envoyé pour l’instant.</p>') + '</div>'
+      : e.journal.length ? '<div class="carte"><h2>Envois de cette session</h2>' + P.tableau(['Heure', 'Mannequin', 'E-mail'], e.journal.map((j) => '<tr><td>' + P.esc(j[0]) + '</td><td>' + P.esc(j[1]) + '</td><td>' + P.esc(j[2]) + '</td></tr>')) + '</div>' : '');
   }
   const cochees = () => { const ids = Array.from(document.querySelectorAll('input[name="msg-ids"]:checked')).map((x) => x.value); return (P.etat.msg.liste || []).filter((m) => ids.includes(m.id)); };
   const garderTexte = () => { const t = document.getElementById('msg-texte'); if (t) P.etat.msg.texte = t.value; };
   P.actions['msg-modele'] = (el) => { const e = P.etat.msg; e.modele = el.getAttribute('data-modele'); e.texte = MODELES[e.modele][1]; P.afficher(); };
   P.actions['msg-filtre'] = (el) => { garderTexte(); P.etat.msg.filtre = el.getAttribute('data-filtre'); P.afficher(); };
+  P.actions['msg-enregistrer-modele'] = async () => {
+    garderTexte();
+    const e = P.etat.msg, texte = String(e.texte || '').trim();
+    if (!texte) return P.message('Le modèle est vide.');
+    if (!confirm('Enregistrer ce texte comme modèle « ' + MODELES[e.modele][0] + ' » ? Il servira à tous les prochains messages.')) return;
+    try {
+      const ex = await P.bd(sb.from('modeles_messages').select('cle').eq('cle', e.modele));
+      if (ex.length) await P.bd(sb.from('modeles_messages').update({ texte }).eq('cle', e.modele).select('cle'));
+      else await P.bd(sb.from('modeles_messages').insert({ cle: e.modele, texte }).select('cle'));
+      MODELES[e.modele][1] = texte;
+      P.message('Modèle enregistré.');
+    } catch (err) { P.message(P.erreurTexte(err)); }
+  };
+  // Historique durable : un message envoyé laisse une ligne (jamais le texte, jamais d'effacement)
+  const noterEnvois = (lignes) => (lignes.length ? P.bd(sb.from('messages_envoyes').insert(lignes)).catch(() => null) : null);
+  document.addEventListener('click', (ev) => {
+    const a = ev.target.closest && ev.target.closest('a[data-wa-id]');
+    if (a) noterEnvois([{ mannequin_id: a.getAttribute('data-wa-id'), mois: moisCourant(), modele: a.getAttribute('data-wa-modele'), canal: 'whatsapp' }]);
+  });
   P.actions['msg-apercu'] = () => {
     garderTexte();
     const l = cochees();
@@ -676,11 +701,12 @@
       e.journal.unshift([heure, m.full_name, etat]);
       lignes.push({ m, r });
     }));
+    await noterEnvois(lignes.filter((x) => e.journal.some((j) => j[1] === x.m.full_name && j[0] === heure && j[2] === 'envoyé')).map((x) => ({ mannequin_id: x.m.id, mois: moisCourant(), modele: e.modele, canal: 'email' })));
     await P.afficher();
     P.message(envoyes + ' e-mail(s) envoyé(s) sur ' + l.length + '. Envoyez maintenant les messages WhatsApp.');
     P.fenetre('<h2>Messages WhatsApp</h2>' + P.tableau(['Mannequin', 'WhatsApp'], lignes.map((x) => {
       const wa = lienWhatsApp(x.r.d.tel, x.r.texte);
-      return '<tr><td><b>' + P.esc(x.m.full_name) + '</b></td><td>' + (wa ? '<a class="btn rouge petit" target="_blank" rel="noopener" href="' + P.esc(wa) + '">Envoyer</a>' : '<span class="doux">pas de numéro</span>') + '</td></tr>';
+      return '<tr><td><b>' + P.esc(x.m.full_name) + '</b></td><td>' + (wa ? '<a class="btn rouge petit" target="_blank" rel="noopener" data-wa-id="' + P.esc(x.m.id) + '" data-wa-modele="' + P.esc(e.modele) + '" href="' + P.esc(wa) + '">Envoyer</a>' : '<span class="doux">pas de numéro</span>') + '</td></tr>';
     })) + '<div class="ligne" style="margin-top:12px"><button class="btn" type="button" data-action="fermer-fenetre">Fermer</button></div>');
   };
 
