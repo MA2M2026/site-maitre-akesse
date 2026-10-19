@@ -168,6 +168,35 @@ update staff_profiles set actif = false where user_id = '00000000-0000-0000-0000
 select essai(not exists (select 1 from admins where user_id = '00000000-0000-0000-0000-0000000000a2'), 'accès coupé : droits de l''ancien tableau de bord retirés');
 select essai(not exists (select 1 from admins where user_id = '00000000-0000-0000-0000-0000000000a3'), 'les autres rôles n''ont pas l''ancien tableau de bord');
 
+-- Code individuel (cahier v2.4, 3.3) : seulement pour une personne retenue, un seul par personne
+insert into admins (user_id) values ('00000000-0000-0000-0000-0000000000a1') on conflict do nothing;
+insert into casting_applications (id, full_name, email, phone, type_candidature) values
+  ('00000000-0000-0000-0000-00000000c001', 'AWA KONÉ', 'awa@test.ci', '0102030405', 'agence');
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a1');
+select essai_refuse($$select code_individuel_creer('00000000-0000-0000-0000-00000000c001')$$, 'pas de code pour une candidature non retenue');
+reset role;
+update casting_applications set status = 'retenue' where id = '00000000-0000-0000-0000-00000000c001';
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a1');
+select essai(code_individuel_creer('00000000-0000-0000-0000-00000000c001') ~ '^MA2M-[A-Z2-9]{6}$', 'personne retenue : code créé à son nom');
+select essai(code_individuel_creer('00000000-0000-0000-0000-00000000c001') = (select code from codes_inscription where candidature_id = '00000000-0000-0000-0000-00000000c001'),
+             'redemander le code redonne le même (un seul code par personne)');
+select essai((casting_direct_creer('kouassi yao', '0707070707', 'homme', '2000-05-05') ->> 'code') ~ '^MA2M-',
+             'casting direct : fiche minimale retenue et code tout de suite');
+select essai((select status from casting_applications where type_candidature = 'direct') = 'retenue', 'casting direct : la fiche est « Retenue »');
+select essai_refuse($$select casting_direct_creer('', '07', 'homme', '2000-01-01')$$, 'casting direct sans nom refusé');
+select essai_qui('00000000-0000-0000-0000-0000000000a6');
+select essai_refuse($$select code_individuel_creer('00000000-0000-0000-0000-00000000c001')$$, 'un compte non administrateur ne crée pas de code');
+reset role;
+select set_config('request.jwt.claims', '', false);
+update codes_inscription set utilise = true where candidature_id = '00000000-0000-0000-0000-00000000c001';
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a1');
+select essai_refuse($$select code_individuel_creer('00000000-0000-0000-0000-00000000c001')$$, 'code déjà utilisé : pas de second code');
+reset role;
+select set_config('request.jwt.claims', '', false);
+
 -- Visiteur anonyme : rien
 set role anon;
 select set_config('request.jwt.claims', '{"role":"anon"}', false);

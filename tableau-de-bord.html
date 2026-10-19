@@ -2582,11 +2582,19 @@ document.addEventListener('DOMContentLoaded', function () {
 </div>
 <div class="liste-recente" data-section="b3b-codes-inscription">
 <h2 class="tdb-4">Codes d'inscription</h2>
-<p class="tdb-5">Chaque code ne peut servir qu'une seule fois. Générez-en un et transmettez-le (WhatsApp, SMS...) à la personne que vous invitez à s'inscrire.</p>
-<button class="btn btn--principal" id="generer-code-btn">+ Générer un nouveau code</button>
+<p class="tdb-5">Un code par personne retenue, valable une seule fois, créé seulement quand elle veut s'inscrire. Candidature reçue sur le site : ouvrez sa fiche (statut « Retenue ») et touchez « La personne veut s'inscrire : créer son code ». Personne venue directement à l'agence : remplissez « Casting direct » ci-dessous.</p>
+<h3 class="tri-titre">Casting direct</h3>
+<form id="form-casting-direct">
+<div class="form-champ"><label for="cd-nom">Nom et prénoms</label><input id="cd-nom" autocomplete="off" required/></div>
+<div class="form-champ"><label for="cd-telephone">Téléphone (WhatsApp)</label><input id="cd-telephone" type="tel" autocomplete="off" required/></div>
+<div class="form-champ"><label for="cd-genre">Genre</label><select id="cd-genre" required><option value="">Choisir…</option><option value="femme">Femme</option><option value="homme">Homme</option></select></div>
+<div class="form-champ"><label for="cd-naissance">Date de naissance</label><input id="cd-naissance" type="date" required/></div>
+<button class="btn btn--principal" type="submit">Créer la fiche et son code</button>
+</form>
 <div id="nouveau-code-affiche" class="tdb-20">
 <span id="nouveau-code-texte" class="tdb-21"></span>
 <button class="btn" id="copier-code-btn">Copier</button>
+<a class="btn" id="nouveau-code-whatsapp" href="#" target="_blank" rel="noopener">💬 Envoyer par WhatsApp</a>
 </div>
 <div class="form-msg" id="codes-msg"></div>
 <div class="dossier-liste u-mt-1-5" id="liste-codes"></div>
@@ -2788,6 +2796,7 @@ document.addEventListener('DOMContentLoaded', function () {
 <select id="mf-statut-select"></select>
 <button class="btn tdb-42" id="mf-supprimer-dossier-btn">🗑 Supprimer ce dossier</button>
 </div>
+<div id="mf-code" class="mf-notification u-hidden"></div>
 <div id="mf-notification" class="mf-notification u-hidden">
 <div class="mf-notification-titre" id="mf-notification-titre"></div>
 <textarea aria-label="Texte de la notification" id="mf-notification-texte" rows="5"></textarea>
@@ -2869,7 +2878,7 @@ document.addEventListener('DOMContentLoaded', function () {
 <script src="js/fiches-evenement-admin.js?v=f6cdd740"></script>
 <script src="js/rapport-profils-admin.js?v=0ddad1e1"></script>
 <script src="js/agenda-admin.js?v=e682d95f"></script>
-<script src="js/tableau-de-bord.js?v=7ba4d058"></script>
+<script src="js/tableau-de-bord.js?v=beefb163"></script>
 
 <script id="ma2m-final-visual-guard">
 (function(){

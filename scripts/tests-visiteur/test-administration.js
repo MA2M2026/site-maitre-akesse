@@ -194,6 +194,10 @@ function donnees(role) {
     const e = await ouvrir('principal', ecran, (d) => {
       Object.assign(d.tables, ESPACE1);
       d.rpc.code_validation_statut = [{ defini: true }];  // l'ancien code de validation ne doit PAS être demandé
+      // code individuel (cahier v2.4, 3.3) : la base crée le code d'une personne retenue
+      d.tables.codes_inscription = [{ code: 'MA2M-ANCIEN', utilise: false, created_at: '2026-10-01T10:00:00Z', candidature: null }];
+      d.rpc.code_individuel_creer = (x) => { d.tables.codes_inscription.push({ code: 'MA2M-YAO234', utilise: false, candidature_id: x.p_candidature, created_at: new Date().toISOString(), candidature: { full_name: 'YAO KOUASSI' } }); return 'MA2M-YAO234'; };
+      d.rpc.casting_direct_creer = (x) => ({ id: 'cd1', code: 'MA2M-DIRECT', recu: x });
       d.rpc.portail_code_appareil_etat = () => ({ defini: pin.defini, verrouille: pin.verrouille });
       d.rpc.portail_code_appareil_verrouiller = () => { pin.verrouille = true; return null; };
       d.rpc.portail_code_appareil_verifier = (x) => { if (x.p_code === '4826') { pin.verrouille = false; return { ok: true }; } return { ok: false, restants: 4 }; };
@@ -234,10 +238,38 @@ function donnees(role) {
     await pe.click('#filtres-candidatures [data-filtre="en étude"]'); await pe.waitForTimeout(800);
     const arevoir = await pe.$$eval('#liste-candidatures .dossier-carte', (l) => l.map((c) => c.dataset.id));
     ok(arevoir.join(',') === 'c2' && /À revoir/.test(await pe.textContent('#liste-candidatures')), nomEcran + ' : « À revoir » montre ses dossiers');
+    // fiche d'une personne retenue : le code n'existe pas encore, il est créé quand elle veut s'inscrire
+    await pe.click('#filtres-candidatures [data-filtre="retenue"]'); await pe.waitForTimeout(800);
+    await pe.click('#liste-candidatures .dossier-carte[data-id="c3"] .dc-nom'); await pe.waitForSelector('#mf-code-creer', { timeout: 6000 }).catch(() => {});
+    ok(await pe.isVisible('#mf-code-creer') && /Pas encore de code/.test(await pe.textContent('#mf-code')), nomEcran + ' : personne retenue → pas de code tant qu’elle n’a pas montré son intérêt');
+    await pe.click('#mf-code-creer'); await pe.waitForSelector('#mf-code-texte', { timeout: 6000 }).catch(() => {});
+    const codeFiche = await pe.textContent('#mf-code-texte').catch(() => '');
+    const waCode = decodeURIComponent((await pe.getAttribute('#mf-code-whatsapp', 'href').catch(() => '')) || '');
+    ok(codeFiche === 'MA2M-YAO234' && e.journal.some((j) => j[1] === 'code_individuel_creer' && /"p_candidature":"c3"/.test(j[2])), nomEcran + ' : « La personne veut s’inscrire » → son code est créé par la base');
+    ok(/^https:\/\/wa\.me\/2250707070707\?text=/.test(waCode) && waCode.includes('MA2M-YAO234') && waCode.includes('Bonjour KOUASSI'), nomEcran + ' : code envoyé par WhatsApp à la personne ' + waCode.slice(0, 60));
+    await pe.click('#modal-dossier-fermer'); await pe.waitForTimeout(300);
+    // fiche non retenue : aucune zone de code
+    await pe.click('#filtres-candidatures [data-filtre="en étude"]'); await pe.waitForTimeout(800);
+    await pe.click('#liste-candidatures .dossier-carte[data-id="c2"] .dc-nom'); await pe.waitForTimeout(1000);
+    ok(!(await pe.isVisible('#mf-code')), nomEcran + ' : pas de code pour une candidature non retenue');
+    await pe.click('#modal-dossier-fermer'); await pe.waitForTimeout(300);
+    // rubrique des codes : plus de code « libre », casting direct
+    await pe.click('.v2-bloc[data-bloc="3"]'); await pe.waitForTimeout(300);
+    await pe.evaluate(() => document.querySelector('.v2-lien[data-page="b3b-codes-inscription"]').click()); await pe.waitForTimeout(1000);
+    ok(!(await pe.$('#generer-code-btn')) && await pe.isVisible('#form-casting-direct'), nomEcran + ' : plus de code sans nom, formulaire « Casting direct » à la place');
+    const listeCodes = await pe.textContent('#liste-codes');
+    ok(/MA2M-YAO234\s*YAO KOUASSI/.test(listeCodes) && /Ancien code sans nom/.test(listeCodes), nomEcran + ' : chaque code porte le nom de sa personne');
+    await pe.fill('#cd-nom', 'Fatou Bamba'); await pe.fill('#cd-telephone', '0101010101'); await pe.selectOption('#cd-genre', 'femme'); await pe.fill('#cd-naissance', '2001-02-03');
+    await pe.click('#form-casting-direct [type=submit]'); await pe.waitForTimeout(1000);
+    const appel = e.journal.find((j) => j[1] === 'casting_direct_creer');
+    ok(appel && JSON.parse(appel[2]).p_genre === 'femme' && JSON.parse(appel[2]).p_naissance === '2001-02-03' && await pe.textContent('#nouveau-code-texte') === 'MA2M-DIRECT', nomEcran + ' : casting direct → fiche minimale et code tout de suite');
+    ok(/wa\.me\/2250101010101/.test(await pe.getAttribute('#nouveau-code-whatsapp', 'href')), nomEcran + ' : casting direct → code envoyé par WhatsApp');
+    await pe.click('.v2-bloc[data-bloc="2"]'); await pe.waitForTimeout(300);
+    await pe.evaluate(() => document.querySelector('.v2-lien[data-page="b2-candidatures"]').click()); await pe.waitForTimeout(800);
     await pe.click('#filtres-candidatures [data-filtre="nouvelle"]'); await pe.waitForTimeout(800);
     await pe.click('#liste-candidatures .dossier-carte[data-id="c1"] .dc-nom').catch(() => {}); await pe.waitForTimeout(1000);
     ok(/AWA KONÉ/.test(await texte(pe)) && await pe.isVisible('#mf-statut-select'), nomEcran + ' : la fiche complète d’une candidature s’ouvre');
-    await pe.keyboard.press('Escape'); await pe.evaluate(() => document.querySelectorAll('.modal-overlay.ouvert').forEach((m) => m.classList.remove('ouvert')));
+    await pe.click('#modal-dossier-fermer'); await pe.waitForTimeout(300);
     // 15 minutes sans geste : retour à l'Administration, code à 4 chiffres, puis retour ici
     await pe.clock.fastForward('15:30');
     await pe.waitForURL(/\/admin\//, { timeout: 8000 }).catch(() => {});

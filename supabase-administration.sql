@@ -11,7 +11,8 @@
 --      appareil (verrouillage après 15 minutes, 8 heures au plus), codes de secours
 --   3. Journal d'audit en écriture seule
 --   4. Règles d'accès (RLS) et garde-fous des comptes
--- Les espaces 1, 2 et 3 viendront dans les étapes suivantes.
+--   5. Espace 1 : code individuel d'inscription (personne retenue, casting direct)
+-- Les espaces 2 et 3 viendront dans les étapes suivantes.
 --
 -- Rôles : principal (Maître Akesse, tout) · site (espace 1) · caisse (espace 2) · compta (espace 3)
 -- ===================================================================================
@@ -554,6 +555,81 @@ begin
 end $$;
 
 grant execute on function portail_moi() to authenticated;
+
+-- -----------------------------------------------------------------------------------
+-- 5. Espace 1 — code individuel d'inscription (cahier v2.4, 3.3, validé le 19/10/2026)
+-- -----------------------------------------------------------------------------------
+-- Un code par personne RETENUE, créé seulement quand elle montre son intérêt, lié à sa
+-- candidature (site) ou à une fiche minimale créée par l'agence (casting direct). Plus de code
+-- « libre » sans nom de personne. Le code reste à usage unique (codes_inscription.utilise).
+alter table codes_inscription add column if not exists candidature_id uuid references casting_applications(id) on delete set null;
+create unique index if not exists codes_inscription_un_par_candidature on codes_inscription (candidature_id)
+  where candidature_id is not null and not utilise;
+alter table casting_applications drop constraint if exists casting_applications_type_check;
+alter table casting_applications add constraint casting_applications_type_check
+  check (type_candidature in ('agence', 'projet', 'direct'));
+
+-- Créer (ou retrouver) le code d'une personne retenue
+create or replace function code_individuel_creer(p_candidature uuid)
+returns text language plpgsql security definer set search_path = public, extensions as $$
+declare
+  c casting_applications;
+  existant text;
+  nouveau text;
+  alphabet constant text := 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+begin
+  if not exists (select 1 from admins where user_id = auth.uid()) then
+    raise exception 'Accès refusé';
+  end if;
+  select * into c from casting_applications where id = p_candidature for update;
+  if not found then
+    raise exception 'Candidature introuvable.';
+  end if;
+  if c.status <> 'retenue' then
+    raise exception 'Le code n''est créé que pour une personne retenue.';
+  end if;
+  select code into existant from codes_inscription where candidature_id = p_candidature and not utilise;
+  if existant is not null then
+    return existant;
+  end if;
+  if exists (select 1 from codes_inscription where candidature_id = p_candidature and utilise) then
+    raise exception 'Cette personne a déjà utilisé son code : son inscription est faite.';
+  end if;
+  loop
+    nouveau := 'MA2M-';
+    for i in 1..6 loop
+      nouveau := nouveau || substr(alphabet, 1 + get_byte(gen_random_bytes(1), 0) % 32, 1);
+    end loop;
+    exit when not exists (select 1 from codes_inscription where code = nouveau);
+  end loop;
+  insert into codes_inscription (code, candidature_id) values (nouveau, p_candidature);
+  return nouveau;
+end;
+$$;
+
+-- Casting direct à l'agence : fiche minimale, déjà retenue, et son code tout de suite
+create or replace function casting_direct_creer(p_nom text, p_telephone text, p_genre text, p_naissance date)
+returns json language plpgsql security definer set search_path = public, extensions as $$
+declare
+  v_id uuid;
+begin
+  if not exists (select 1 from admins where user_id = auth.uid()) then
+    raise exception 'Accès refusé';
+  end if;
+  if coalesce(trim(p_nom), '') = '' or coalesce(trim(p_telephone), '') = '' or p_genre not in ('femme', 'homme') or p_naissance is null
+     or p_naissance > current_date or p_naissance < current_date - interval '100 years' then
+    raise exception 'Nom, téléphone, genre et date de naissance sont obligatoires.';
+  end if;
+  insert into casting_applications (full_name, email, phone, genre, date_naissance, type_candidature)
+  values (upper(left(trim(p_nom), 120)), '', left(trim(p_telephone), 40), p_genre, p_naissance, 'direct')
+  returning id into v_id;
+  -- (toute candidature arrive « nouvelle » : trg_statut_candidature) → retenue
+  update casting_applications set status = 'retenue' where id = v_id;
+  return json_build_object('id', v_id, 'code', code_individuel_creer(v_id));
+end;
+$$;
+revoke all on function code_individuel_creer(uuid), casting_direct_creer(text, text, text, date) from public, anon;
+grant execute on function code_individuel_creer(uuid), casting_direct_creer(text, text, text, date) to authenticated;
 
 NOTIFY pgrst, 'reload schema';
 select 'Administration — étape 1 en place' as resultat;

@@ -27,6 +27,13 @@
 > `aal2` (code TOTP < 8 h) à la place du code de validation. Base : déclencheur
 > `staff_suivre_admins` (rôle « site » ↔ table `admins`). Essai : fin de `test-administration.js`.
 >
+> Candidatures (cahier v2.4 3.2) : « En étude » s'affiche « À revoir » (valeur en base inchangée),
+> « À revoir » et « En attente » rangés à part (`aPart` dans DOSSIERS.casting, « Toutes » les exclut).
+> Code individuel (3.3) : `code_individuel_creer(candidature)` (personne retenue, un code libre à la
+> fois, lié par `codes_inscription.candidature_id`) depuis la fiche ; `casting_direct_creer` (fiche
+> minimale `type_candidature = 'direct'`, retenue, + code) dans « Codes d'inscription » ; plus de code
+> libre. Les anciens codes sans nom encore disponibles seront annulés à la mise en ligne finale.
+>
 > Codes de secours : affichés à la première activation de la double authentification, et
 > refaits à la demande dans Sécurité › « Mes codes de secours » (code récent demandé ; les
 > anciens sont annulés). Ajouté le 19/10/2026 : un compte dont la double authentification

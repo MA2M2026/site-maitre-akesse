@@ -1622,6 +1622,7 @@ function sousLigneAffichee(source, d) {
 function libelleTypeCandidature(d) {
   if (d.type_candidature === 'projet') return d.projet_nom || 'Projet';
   if (d.type_candidature === 'agence') return "Intégrer l'agence";
+  if (d.type_candidature === 'direct') return 'Casting direct (agence)';
   return null;
 }
 function metaAffichee(source, d) {
@@ -1836,6 +1837,7 @@ async function ouvrirFicheDossier(source, id) {
 
   const statutSelect = document.getElementById('mf-statut-select');
   statutSelect.innerHTML = conf.statuts.map(s => `<option value="${s}" ${d[conf.statutChamp] === s ? 'selected' : ''}>${conf.libellesStatut[s]}</option>`).join('');
+  void afficherCodeFiche();
 
   const photosEl = document.getElementById('mf-photos');
   const mannequinsEl = document.getElementById('mf-mannequins');
@@ -2190,6 +2192,7 @@ document.getElementById('mf-statut-select').addEventListener('change', async (e)
   const { error } = await sb.from(conf.table).update({ [conf.statutChamp]: nouveauStatut }).eq('id', ficheOuverte.id);
   if (error) { alert("Erreur lors du changement de statut : " + error.message); return; }
   ficheOuverte.d[conf.statutChamp] = nouveauStatut;
+  void afficherCodeFiche();
   void afficherDossiers(ficheOuverte.source);
   void chargerATraiter();
 
@@ -2242,31 +2245,80 @@ function genererCode() {
   return 'MA2M-' + code;
 }
 
-document.getElementById('generer-code-btn').addEventListener('click', async () => {
-  const btn = document.getElementById('generer-code-btn');
+// Code individuel d'inscription (cahier v2.4, 3.3, 19/10/2026) : un code par personne RETENUE,
+// créé par la base (code_individuel_creer, supabase-administration.sql) seulement quand elle veut
+// s'inscrire — plus de code « libre » sans nom. Casting direct : fiche minimale + code.
+const LIEN_INSCRIPTION = 'https://www.maitreakessemodelmanagement.com/inscription-mannequin.html';
+function lienWhatsAppCode(telephone, nom, code) {
+  const lien = lienWhatsApp(telephone);
+  if (!lien) return null;
+  const prenom = String(nom || '').trim().split(/\s+/).slice(-1)[0] || '';
+  const texte = `Bonjour ${prenom},\n\nVoici votre code personnel pour vous inscrire chez Maître Akesse Model Management : *${code}*\n\nIl ne sert qu'une seule fois. Inscription : ${LIEN_INSCRIPTION}`;
+  return lien + '?text=' + encodeURIComponent(texte);
+}
+document.getElementById('form-casting-direct').addEventListener('submit', async (e) => {
+  e.preventDefault();
   const msg = document.getElementById('codes-msg');
-  btn.disabled = true;
-
-  let code = genererCode();
-  let { data: existant } = await sb.from('codes_inscription').select('code').eq('code', code).maybeSingle();
-  while (existant) {
-    code = genererCode();
-    ({ data: existant } = await sb.from('codes_inscription').select('code').eq('code', code).maybeSingle());
-  }
-
-  const { error } = await sb.from('codes_inscription').insert({ code });
-  btn.disabled = false;
-
-  if (error) {
-    msg.className = 'form-msg err'; msg.textContent = 'Erreur lors de la génération du code.'; msg.style.display = 'block';
+  const valeur = (id) => document.getElementById(id).value.trim();
+  const bouton = e.target.querySelector('[type=submit]');
+  bouton.disabled = true;
+  const { data, error } = await sb.rpc('casting_direct_creer', {
+    p_nom: valeur('cd-nom'), p_telephone: valeur('cd-telephone'), p_genre: valeur('cd-genre'), p_naissance: valeur('cd-naissance') || null
+  });
+  bouton.disabled = false;
+  if (error || !data) {
+    msg.className = 'form-msg err'; msg.style.display = 'block';
+    msg.textContent = (error && /obligatoires/.test(error.message)) ? error.message : 'La fiche n’a pas pu être créée. Réessayez.';
     return;
   }
-
-  document.getElementById('nouveau-code-texte').textContent = code;
+  document.getElementById('nouveau-code-texte').textContent = data.code;
+  const wa = lienWhatsAppCode(valeur('cd-telephone'), valeur('cd-nom'), data.code);
+  const boutonWa = document.getElementById('nouveau-code-whatsapp');
+  boutonWa.style.display = wa ? '' : 'none';
+  if (wa) boutonWa.href = wa;
   document.getElementById('nouveau-code-affiche').style.display = 'flex';
-  msg.style.display = 'none';
+  msg.className = 'form-msg ok'; msg.style.display = 'block';
+  msg.textContent = 'Fiche « Casting direct » créée (statut Retenue) et code prêt à envoyer.';
+  e.target.reset();
   void chargerCodes();
+  void afficherDossiers('casting');
 });
+
+// Zone « Code d'inscription » de la fiche d'une candidature retenue
+async function afficherCodeFiche() {
+  const zone = document.getElementById('mf-code');
+  if (!ficheOuverte || ficheOuverte.source !== 'casting' || ficheOuverte.d.status !== 'retenue') { zone.style.display = 'none'; zone.innerHTML = ''; return; }
+  const { id, d } = ficheOuverte;
+  const { data: codes } = await sb.from('codes_inscription').select('code, utilise, utilise_le').eq('candidature_id', id);
+  if (!ficheOuverte || ficheOuverte.id !== id) return;
+  const libre = (codes || []).find(c => !c.utilise), utilise = (codes || []).find(c => c.utilise);
+  if (utilise && !libre) {
+    zone.innerHTML = `<div class="mf-notification-titre">Code d'inscription</div><p>Code ${echapperHtml(utilise.code)} utilisé le ${new Date(utilise.utilise_le || Date.now()).toLocaleDateString('fr-FR')} : l'inscription est faite.</p>`;
+  } else if (libre) {
+    const wa = lienWhatsAppCode(contactsFiche('casting', d).phone, d.full_name, libre.code);
+    zone.innerHTML = `<div class="mf-notification-titre">Code d'inscription</div><p class="mf-code-valeur"><strong id="mf-code-texte">${echapperHtml(libre.code)}</strong> — valable une seule fois</p>` +
+      `<div class="mf-notification-actions"><button class="btn" type="button" id="mf-code-copier">Copier</button>` +
+      (wa ? `<a class="btn" id="mf-code-whatsapp" href="${echapperHtml(wa)}" target="_blank" rel="noopener">💬 Envoyer par WhatsApp</a>` : '') + '</div>';
+    brancherCopieCode('mf-code-copier', 'mf-code-texte');
+  } else {
+    zone.innerHTML = `<div class="mf-notification-titre">Code d'inscription</div><p>Pas encore de code. Créez-le seulement quand la personne montre son intérêt pour s'inscrire.</p>` +
+      `<div class="mf-notification-actions"><button class="btn btn--principal" type="button" id="mf-code-creer">La personne veut s'inscrire : créer son code</button><span class="form-msg" id="mf-code-msg"></span></div>`;
+    document.getElementById('mf-code-creer').addEventListener('click', async (ev) => {
+      const bouton = ev.currentTarget;
+      bouton.disabled = true;
+      const { error } = await sb.rpc('code_individuel_creer', { p_candidature: id });
+      if (error) {
+        const m = document.getElementById('mf-code-msg');
+        m.className = 'form-msg err'; m.style.display = 'inline'; m.textContent = 'Code non créé : ' + error.message;
+        bouton.disabled = false;
+        return;
+      }
+      void chargerCodes();
+      await afficherCodeFiche();
+    });
+  }
+  zone.style.display = 'block';
+}
 
 // Bouton « Copier » d'un code affiché (codes d'inscription, code permanent) : « Copié ! »
 // pendant 1,5 s, ou un message si le téléphone refuse l'accès au presse-papiers.
@@ -2355,15 +2407,16 @@ document.getElementById('ca-creer-btn').addEventListener('click', async () => {
 });
 
 function carteCode(c) {
+  const personne = c.candidature ? c.candidature.full_name : 'Ancien code sans nom';
   return `
     <div class="dossier-carte tdb-53">
-      <div class="dc-nom tdb-54">${echapperHtml(c.code)}</div>
+      <div class="dc-nom tdb-54">${echapperHtml(c.code)}<span>${echapperHtml(personne)}</span></div>
       <div class="dc-meta">Créé le ${new Date(c.created_at).toLocaleDateString('fr-FR')}${c.utilise_le ? ' · Utilisé le ' + new Date(c.utilise_le).toLocaleDateString('fr-FR') : ''}</div>
       <span class="statut-pill ${c.utilise ? 'statut-refusee' : 'statut-retenue'}">${c.utilise ? 'Utilisé' : 'Disponible'}</span>
     </div>`;
 }
 async function chargerCodes() {
-  const { data: codes } = await sb.from('codes_inscription').select('code, utilise, utilise_le, created_at').order('created_at', { ascending: false }).limit(200);
+  const { data: codes } = await sb.from('codes_inscription').select('code, utilise, utilise_le, created_at, candidature:casting_applications(full_name)').order('created_at', { ascending: false }).limit(200);
   const disponibles = (codes || []).filter(c => !c.utilise);
   const utilises = (codes || []).filter(c => c.utilise);
 
