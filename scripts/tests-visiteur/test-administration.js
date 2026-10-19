@@ -353,7 +353,9 @@ function donnees(role) {
       pr.once('dialog', (dl) => dl.accept());
       await pr.click('[data-action="registre-inscription"][data-mode="especes"]'); await pr.waitForTimeout(800);
       const paye = r.journal.find((j) => j[0] === 'POST' && j[1] === 'paiements_mannequins');
-      ok(paye && JSON.parse(paye[3]).statut === 'valide' && JSON.parse(paye[3]).montant === 25000 && JSON.parse(paye[3]).mode === 'especes', nomEcran + ' (' + role + ') : espèces enregistrées et validées par l’agence (25 000 FCFA)');
+      const lignesPaye = paye ? [].concat(JSON.parse(paye[3])) : [];
+      ok(lignesPaye.length === 2 && lignesPaye.every((l) => l.statut === 'valide' && l.mode === 'especes') && lignesPaye[0].objet === 'inscription' && lignesPaye[0].montant === 15000 &&
+        lignesPaye[1].objet === 'mensualite' && lignesPaye[1].montant === 10000 && /^\d{4}-\d{2}-01$/.test(lignesPaye[1].mois), nomEcran + ' (' + role + ') : espèces validées par l’agence : 15 000 d’inscription + 10 000 du 1er mois');
       // fiche d'un compte du site : aucun bouton de paiement d'inscription, aucun code
       await pr.goto(url + '#/paiements/fiche/r1'); await pr.waitForSelector('.carte h2', { timeout: 6000 }).catch(() => {});
       ok(/Inscription déjà effectuée sur le site/.test(await texte(pr)) && !(await pr.isVisible('[data-action="registre-inscription"]')), nomEcran + ' (' + role + ') : compte du site → « Inscription déjà effectuée sur le site »');

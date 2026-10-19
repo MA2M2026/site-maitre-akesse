@@ -7,7 +7,10 @@
 (function () {
   'use strict';
   const P = window.Portail;
-  const INSCRIPTION_FCFA = 25000;  // 15 000 d'inscription + 10 000 pour le 1er mois de formation
+  // 25 000 FCFA à l'inscription = 15 000 d'inscription + 10 000 pour le 1er mois de formation,
+  // enregistrés sur deux lignes (cahier v2.4, 5.2)
+  const DROIT_INSCRIPTION = 15000, PREMIER_MOIS = 10000, INSCRIPTION_FCFA = DROIT_INSCRIPTION + PREMIER_MOIS;
+  const moisCourant = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-01'; };
   const STATUTS = { actif: 'Actif', suspendu: 'Suspendu', sorti: 'Sorti' };
   const MODES = { wave: 'Wave', especes: 'Espèces', avant_systeme: 'Avant le nouveau système' };
 
@@ -150,8 +153,11 @@
     if (!confirm(especes ? 'Enregistrer le paiement de l’inscription en espèces (' + P.fcfa(INSCRIPTION_FCFA) + '), reçu par l’agence ?'
       : 'Confirmer que ce mannequin a déjà payé son inscription avant le nouveau système ?')) return;
     try {
-      await P.bd(sb.from('paiements_mannequins').insert({ mannequin_id: el.getAttribute('data-id'), objet: 'inscription',
-        mode: especes ? 'especes' : 'avant_systeme', montant: especes ? INSCRIPTION_FCFA : null, statut: 'valide' }));
+      const id = el.getAttribute('data-id');
+      await P.bd(sb.from('paiements_mannequins').insert(especes
+        ? [{ mannequin_id: id, objet: 'inscription', mode: 'especes', montant: DROIT_INSCRIPTION, statut: 'valide' },
+          { mannequin_id: id, objet: 'mensualite', mois: moisCourant(), mode: 'especes', montant: PREMIER_MOIS, statut: 'valide' }]
+        : { mannequin_id: id, objet: 'inscription', mode: 'avant_systeme', montant: null, statut: 'valide' }));
       P.message('Paiement de l’inscription enregistré.');
       P.afficher();
     } catch (e) { P.message(P.erreurTexte(e)); }
