@@ -75,7 +75,24 @@ seule fois** (décision de la propriétaire). Ce qui change par rapport aux sect
 - **Pages publiques** (inscription par code, lien de paiement) : compteur d'essais par adresse
   (`ip:…`), tout refus compte, une réussite ne remet pas à zéro ; la date de naissance est vérifiée
   AVANT de dire si un code a servi ou expiré ; jamais le message brut de la base en cas de panne.
-  Le lien Wave et les messages demandent le **reste dû** d'un mois payé en partie.
+  Le lien Wave et les messages demandent le **reste dû** d'un mois payé en partie (la
+  confirmation, elle, annonce le montant payé).
+- **Deuxième relecture complète (19/10/2026)** :
+  - `portail_valider_paiement(..., p_automatique => true)` est réservé au serveur
+    (`est_ecriture_serveur()`) ; `journaliser` n'est plus appelable par les comptes connectés.
+  - Inscription : la fiche du registre naît **« pré-inscrit »** à la déclaration « J'ai payé » (aucune
+    mensualité), devient « actif » quand l'inscription est **entièrement** payée ; un acompte
+    (espèces en plusieurs fois) ne crée ni « inscrite » ni code d'espace — un seul code, au solde.
+  - Rattachement automatique d'un compte au registre (`registre_rattacher_compte`) : même téléphone
+    **et** même date de naissance (le téléphone de l'espace est saisi par le mannequin, l'e-mail
+    n'est pas vérifié) ; sinon c'est le code personnel ESP qui rattache.
+  - Téléphone révoqué : la ligne `admins` de la personne est retirée (ancien tableau de bord fermé),
+    rendue à la prochaine connexion complète au portail (`portail_enregistrer_appareil`, principal
+    et rôle « site »). `api/acces-tableau.js` refuse aussi un compte du portail coupé ou dont les
+    sessions ont été coupées (`ficheStaff`, `dernierCode` dans `api/_commun.js`).
+  - `api/creer-admin.js` : une personne du portail autre que le principal ne crée pas de compte
+    admin. Nouveaux codes de secours : code saisi il y a moins de 10 minutes.
+  - Page d'inscription : « mineur » vient de la base (`candidat.mineur`, âge de majorité réglable).
 - Rôles : principal, site (aucun montant ni contact privé), caisse (paiements), compta (totaux sans
   nom). Les droits sont dans la base (RLS + fonctions `portail_peut`, `portail_est_principal`).
 

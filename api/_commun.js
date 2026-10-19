@@ -117,6 +117,20 @@ function chargeJeton(jeton) {
   try { return JSON.parse(Buffer.from(String(jeton).split('.')[1], 'base64url').toString('utf8')); } catch (e) { return {}; }
 }
 
+// Fiche du portail d'un compte (rôle, accès, sessions coupées) ou null s'il n'en a pas (ancien
+// compte admin). Utilisée par l'ancien tableau de bord pour appliquer aussi les règles du portail
+// (relecture du 19/10/2026). Erreur de la base → exception (on refuse plutôt que laisser passer).
+async function ficheStaff(userId) {
+  const rep = await fetch(SUPABASE_URL + '/rest/v1/staff_profiles?select=role,actif,sessions_valides_apres&user_id=eq.' + encodeURIComponent(userId), { headers: enTetesService() });
+  if (!rep.ok) throw new Error('Vérification impossible pour le moment.');
+  return (await rep.json())[0] || null;
+}
+// Heure (en secondes) du dernier code de l'application d'authentification saisi pour ce jeton
+function dernierCode(jeton) {
+  const amr = chargeJeton(jeton).amr || [];
+  return Math.max(0, ...amr.filter((m) => m && /totp/.test(m.method)).map((m) => Number(m.timestamp) || 0));
+}
+
 // Compteur de tentatives d'un accès protégé (connexion par mot de passe, code de validation) :
 // blocage après trop d'erreurs, stocké en base (jamais dans le navigateur). Partagé le
 // 12/10/2026 (avant, recopié dans connexion-protegee.js et code-validation-protege.js).
@@ -182,5 +196,5 @@ function cleAccesTableauValide(req, userId) {
 module.exports = {
   SUPABASE_URL, cleService, enTetesService, jetonDe, corpsDe,
   verifierUtilisateur, lignesAdmin, estAdmin, creerClientR2, cheminSur, extraireIp, nettoyerAppareil,
-  debutRequete, chargeJeton, compteurTentatives, cookieAccesTableau, cleAccesTableauValide, COOKIE_ACCES_TABLEAU_EFFACE
+  debutRequete, chargeJeton, ficheStaff, dernierCode, compteurTentatives, cookieAccesTableau, cleAccesTableauValide, COOKIE_ACCES_TABLEAU_EFFACE
 };

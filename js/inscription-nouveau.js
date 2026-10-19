@@ -85,7 +85,8 @@
     if (n.getMonth() + 1 < +p[1] || (n.getMonth() + 1 === +p[1] && n.getDate() < +p[2])) a--;
     return a;
   }
-  function mineur() { return E.candidat && age(E.candidat.naissance) < 18; }
+  // la base le dit (âge de la majorité réglable par l'agence) ; 18 ans si elle ne le dit pas
+  function mineur() { return !!E.candidat && (typeof E.candidat.mineur === 'boolean' ? E.candidat.mineur : age(E.candidat.naissance) < 18); }
   function prenom() { return E.candidat ? E.candidat.nom.split(' ')[0] : ''; }
   function etapes(n) { Array.prototype.forEach.call(barre.children, function (i, k) { i.className = k < n ? 'on' : ''; }); }
   function bandeau(t, type) { return t ? '<div class="inn-bandeau ' + type + '" role="alert">' + esc(t) + '</div>' : ''; }

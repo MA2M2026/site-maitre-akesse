@@ -129,6 +129,8 @@ select essai((declarer_paiement_inscription((select code from essai_codes where 
              'test 31 : « J''ai payé » à l''inscription accepté');
 select essai((select count(*) from payment_declarations d join fee_dues f on f.id = d.echeance_id where f.type = 'inscription' and d.montant = 25000 and d.numero_payeur = '0700000001') = 1,
              'test 31 : une ligne « à rapprocher » avec numéro payeur et montant de 25 000');
+select essai((select statut from agence_mannequins where candidature_id = '00000000-0000-0000-0000-00000000c001') = 'pre_inscrit',
+             'paiement seulement déclaré : « pré-inscrit », aucune mensualité tant qu''il n''est pas vérifié');
 -- 28. trois essais ratés : code bloqué
 insert into essai_codes values ('ibra', null);
 do $$
@@ -161,6 +163,10 @@ select essai((select status from casting_applications where id = '00000000-0000-
          and (select statut from registration_codes where candidature_id = '00000000-0000-0000-0000-00000000c001' and statut <> 'annule') = 'utilise',
          'test 34 : candidature « inscrite » et code consommé, en même temps');
 select essai((select count(*) from message_log where modele = 'confirme') >= 1, 'test 11 : message de confirmation préparé');
+select essai((select bool_and(texte ~ '25.000 FCFA' and texte !~ '\m0 FCFA') from message_log where modele = 'confirme'),
+             'confirmation : annonce le montant payé (25 000), jamais « 0 FCFA »');
+select essai((select statut from agence_mannequins where candidature_id = '00000000-0000-0000-0000-00000000c001') = 'actif',
+             'inscription validée : le mannequin devient actif');
 
 -- Code personnel de l'espace mannequin (18/10/2026) : créé et envoyé à la validation de
 -- l'inscription ; le compte créé avec lui reprend les informations et photos du casting.
@@ -349,9 +355,18 @@ select set_config('request.jwt.claims', '{"role":"anon"}', false);
 select essai_refuse($$select lien_paiement_lire('x')$$, 'test 13 : la page ne lit pas un lien elle-même (tout passe par le serveur)');
 reset role;
 select set_config('request.jwt.claims', '', false);
--- 14 : Koffi crée son compte sur le site (même téléphone) → rattachement automatique, sans doublon
+-- relecture du 19/10/2026 : quelqu'un qui écrit le numéro de Koffi dans son espace, sans sa
+-- date de naissance, ne prend pas sa fiche
+insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000b8', 'intrus@test.ci');
+insert into model_profiles (id, full_name, phone, date_naissance, published) values ('00000000-0000-0000-0000-0000000000b8', 'Intrus', '0700000077', '2000-01-01', false);
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000b8');
+select essai(not (registre_rattacher_compte() ->> 'ok')::boolean, 'le numéro d''une autre personne seul ne rattache pas sa fiche');
+reset role;
+select set_config('request.jwt.claims', '', false);
+-- 14 : Koffi crée son compte sur le site (même téléphone, même date de naissance) → rattachement automatique, sans doublon
 insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000b7', 'autre-adresse@test.ci');
-insert into model_profiles (id, full_name, phone, published) values ('00000000-0000-0000-0000-0000000000b7', 'Koffi Yao', '0700000077', false);
+insert into model_profiles (id, full_name, phone, date_naissance, published) values ('00000000-0000-0000-0000-0000000000b7', 'Koffi Yao', '0700000077', '1998-02-02', false);
 set role authenticated;
 select essai_qui('00000000-0000-0000-0000-0000000000b7');
 select essai((registre_rattacher_compte() ->> 'ok')::boolean, 'test 14 : inscrit après avoir été non inscrit → rattaché (même téléphone)');
@@ -373,6 +388,38 @@ select portail_figer_recap(current_date);
 select essai((select jsonb_array_length(contenu -> 'non_payes') >= 1 and contenu ? 'payes' and contenu ? 'attendu' from month_snapshots where mois = date_trunc('month', current_date)::date),
              'test 16 : récapitulatif du mois figé (payés, non payés, attendu, encaissé)');
 
+-- Relecture du 19/10/2026 : un mannequin connecté ne peut ni se marquer « payé » ni écrire au journal
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000b7');
+select essai_refuse($$select portail_valider_paiement('00000000-0000-0000-0000-00000000f772', 10000, 'wave', null, null, null, true)$$,
+                    'mannequin connecté : confirmation automatique de son paiement refusée');
+select essai_refuse($$select journaliser('Paiement validé', 'fee_dues', 'x', null, null)$$, 'mannequin connecté : écrire dans le journal d''audit refusé');
+reset role;
+select set_config('request.jwt.claims', '', false);
+select essai((select statut from fee_dues where id = '00000000-0000-0000-0000-00000000f772') <> 'payee', 'l''échéance n''a pas bougé');
+
+-- Relecture du 19/10/2026 : acompte sur l'inscription → ni « inscrite » ni code d'espace ; au solde, un seul code
+insert into casting_applications (id, full_name, email, phone, date_naissance, genre)
+values ('00000000-0000-0000-0000-00000000c004', 'Adjoua Brou', '', '0700000044', '2000-04-04', 'femme');
+update casting_applications set status = 'retenue' where id = '00000000-0000-0000-0000-00000000c004';
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a1');
+select essai((portail_inscription_agence('00000000-0000-0000-0000-00000000c004', 10000, 'especes', true, false) ->> 'code_espace') is null,
+             'acompte en espèces sur l''inscription : pas encore de code d''espace');
+reset role;
+select set_config('request.jwt.claims', '', false);
+select essai((select status from casting_applications where id = '00000000-0000-0000-0000-00000000c004') = 'retenue',
+             'acompte : la candidature n''est pas encore « inscrite »');
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a1');
+select essai((portail_valider_paiement((select f.id from fee_dues f join agence_mannequins m on m.id = f.mannequin_id
+                where m.candidature_id = '00000000-0000-0000-0000-00000000c004' and f.type = 'inscription'), 15000, 'especes') ->> 'code_espace') is not null,
+             'solde de l''inscription : candidature inscrite et code d''espace envoyé, une seule fois');
+reset role;
+select set_config('request.jwt.claims', '', false);
+select essai((select count(*) from espace_codes e join agence_mannequins m on m.id = e.mannequin_id
+              where m.candidature_id = '00000000-0000-0000-0000-00000000c004') = 1, 'un seul code d''espace créé pour cette inscription');
+
 -- Relecture du 19/10/2026 : code d'inscription déjà utilisé + mauvaise date → message neutre
 update registration_codes set statut = 'utilise'
   where code_hache = encode(digest((select code from essai_codes where qui = 'awa'), 'sha256'), 'hex');
@@ -383,6 +430,7 @@ select essai((verifier_code_inscription((select code from essai_codes where qui 
 
 -- Relecture du 19/10/2026 : téléphone révoqué → les sessions déjà ouvertes cessent de servir
 insert into staff_devices (user_id, appareil, libelle) values ('00000000-0000-0000-0000-0000000000a4', 'tel-vole-0001', 'Téléphone volé');
+insert into admins (user_id) values ('00000000-0000-0000-0000-0000000000a4') on conflict do nothing;  -- (droits de l'ancien tableau de bord, pour l'essai)
 set role authenticated;
 select essai_qui('00000000-0000-0000-0000-0000000000a4', 'aal2', 30, 'tel-vole-0001');
 select essai(portail_role() = 'compta', 'avant la révocation, le téléphone ouvre l''espace');
@@ -392,6 +440,9 @@ update staff_devices set revoque = true where appareil = 'tel-vole-0001';
 set role authenticated;
 select essai_qui('00000000-0000-0000-0000-0000000000a4', 'aal2', 30, 'tel-vole-0001');
 select essai(portail_role() is null, 'téléphone révoqué : refusé');
+reset role;
+select essai(not exists (select 1 from admins where user_id = '00000000-0000-0000-0000-0000000000a4'), 'téléphone révoqué : l''ancien tableau de bord se ferme aussi');
+set role authenticated;
 select essai_qui('00000000-0000-0000-0000-0000000000a4', 'aal2', 30, 'nouvel-identifiant-0002');
 select essai(portail_role() is null, 'téléphone révoqué : changer d''identifiant ne rend pas l''accès à la session déjà ouverte');
 select essai_qui('00000000-0000-0000-0000-0000000000a4', 'aal2', -5, 'ordinateur-bureau-0003');

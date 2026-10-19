@@ -175,6 +175,11 @@ begin
   if nouveau then
     perform journaliser('Connexion depuis un nouvel appareil', 'staff_devices', left(p_appareil, 64), null, json_build_object('appareil', p_libelle)::jsonb);
   end if;
+  -- connexion complète (code saisi après une éventuelle révocation) : droits de l'ancien tableau
+  -- de bord rendus au principal et au rôle « site » (retirés par staff_appareil_revoque)
+  if portail_role() in ('principal', 'site') then
+    insert into admins (user_id) values (auth.uid()) on conflict (user_id) do nothing;
+  end if;
   return json_build_object(
     'ok', not exists (select 1 from staff_devices where user_id = auth.uid() and appareil = left(p_appareil, 64) and revoque),
     'nouveau', nouveau and exists (select 1 from staff_devices where user_id = auth.uid() and appareil <> left(p_appareil, 64)),
@@ -287,7 +292,9 @@ begin
           p_action, p_objet, p_objet_id, p_avant, p_apres, portail_ip());
 end;
 $$;
-revoke all on function journaliser(text, text, text, jsonb, jsonb) from public, anon;
+-- interne seulement (relecture du 19/10/2026 : un compte connecté pouvait remplir le journal de
+-- fausses lignes) — les fonctions du portail l'appellent avec leurs propres droits
+revoke all on function journaliser(text, text, text, jsonb, jsonb) from public, anon, authenticated;
 
 -- Toute écriture dans une table du portail laisse une ligne d'audit (ancienne et nouvelle valeur)
 create or replace function audit_ecriture()
@@ -351,7 +358,7 @@ create table if not exists agence_mannequins (
   whatsapp text,
   email text,
   categorie text,
-  statut text not null default 'actif' check (statut in ('actif', 'suspendu', 'sortie_proposee', 'sorti')),
+  statut text not null default 'actif' check (statut in ('pre_inscrit', 'actif', 'suspendu', 'sortie_proposee', 'sorti')),
   date_entree date not null default current_date,
   notes text,
   user_id uuid references auth.users(id) on delete set null,     -- compte du site, s'il existe
@@ -364,6 +371,11 @@ create table if not exists agence_mannequins (
 );
 create index if not exists agence_mannequins_user on agence_mannequins (user_id);
 create index if not exists agence_mannequins_tel on agence_mannequins (telephone);
+-- « pré-inscrit » : a déclaré son paiement d'inscription, pas encore vérifié ; ne reçoit aucune
+-- mensualité tant que l'inscription n'est pas validée (relecture du 19/10/2026)
+alter table agence_mannequins drop constraint if exists agence_mannequins_statut_check;
+alter table agence_mannequins add constraint agence_mannequins_statut_check
+  check (statut in ('pre_inscrit', 'actif', 'suspendu', 'sortie_proposee', 'sorti'));
 
 create table if not exists mannequin_guardians (
   id uuid primary key default gen_random_uuid(),
@@ -940,6 +952,9 @@ create or replace function staff_appareil_revoque()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
   update staff_profiles set sessions_valides_apres = now() where user_id = NEW.user_id;
+  -- l'ancien tableau de bord (règles fondées sur la table admins) se ferme aussi ; les droits
+  -- reviennent à la prochaine connexion complète au portail (portail_enregistrer_appareil)
+  delete from admins where user_id = NEW.user_id;
   return NEW;
 end;
 $$;
@@ -1068,8 +1083,9 @@ begin
   select texte into txt from message_templates where code = p_modele;
   txt := replace(txt, '{prenom}', coalesce(nullif(split_part(coalesce(m.prenoms, m.nom), ' ', 1), ''), m.nom));
   txt := replace(txt, '{mois}', mois_txt);
-  -- montant encore dû (mois déjà payé en partie : on ne redemande que le reste)
-  txt := replace(txt, '{montant}', trim(to_char(e.montant_du - e.montant_paye, 'FM999G999G999')) || ' FCFA');
+  -- appel et relances : le reste dû (mois payé en partie) ; confirmation : ce qui a été payé
+  txt := replace(txt, '{montant}', trim(to_char(case when p_modele = 'confirme' then e.montant_paye else e.montant_du - e.montant_paye end,
+                                                'FM999G999G999')) || ' FCFA');
   txt := replace(txt, '{date_limite}', to_char(e.date_limite, 'DD/MM/YYYY'));
   txt := replace(txt, '{lien_wave}', coalesce(lien_wave_pour(case when e.type = 'inscription' then 'inscription' else 'formation' end, e.montant_du - e.montant_paye), ''));
   txt := replace(txt, '{lien_espace}', 'https://www.maitreakessemodelmanagement.com/espace-mannequin');
@@ -1114,12 +1130,19 @@ declare
   v_compte text;
   v_code_espace text;
   d date := (now() at time zone 'Africa/Abidjan')::date;
+  v_complet boolean;
 begin
+  -- confirmation automatique : réservée au serveur du site (relecture du 19/10/2026 : un
+  -- mannequin connecté pouvait marquer son propre paiement « payé »)
+  if p_automatique and not est_ecriture_serveur() then
+    raise exception 'Accès refusé.';
+  end if;
   if not p_automatique and not portail_peut('paiements') then
     raise exception 'Accès refusé.';
   end if;
   select * into e from fee_dues where id = p_echeance for update;
   if e.id is null then raise exception 'Échéance introuvable.'; end if;
+  v_complet := e.montant_paye + coalesce(p_montant, 0) >= e.montant_du;
   if e.statut = 'payee' then raise exception 'Ce paiement est déjà validé.'; end if;
   if p_montant is null or p_montant <= 0 then raise exception 'Montant reçu obligatoire.'; end if;
   select * into r from portail_reglages limit 1;
@@ -1161,8 +1184,9 @@ begin
             case when p_mode in ('especes', 'virement', 'autre') then 'hors_ligne' else 'mannequin' end, num, 'Paiement mannequin');
   end if;
 
-  -- inscription : code consommé, mannequin actif, 1re mensualité au 1er du mois suivant
-  if e.type = 'inscription' then
+  -- inscription ENTIÈREMENT payée : code consommé, mannequin actif, 1re mensualité au 1er du
+  -- mois suivant (un acompte ne fait rien de tout ça : un seul code d'espace, au solde)
+  if e.type = 'inscription' and v_complet then
     update registration_codes set statut = 'utilise', utilise_le = now()
     where candidature_id = (select candidature_id from agence_mannequins where id = e.mannequin_id) and statut = 'genere';
     update casting_applications set status = 'inscrite'
@@ -1730,6 +1754,8 @@ begin
     'candidat', json_build_object(
       'nom', c.full_name, 'naissance', c.date_naissance, 'telephone', c.phone, 'email', nullif(c.email, ''),
       'origine', case when c.source = 'direct' then 'Casting direct' else 'Casting en ligne' end,
+      -- même règle que declarer_paiement_inscription (âge de la majorité réglable)
+      'mineur', age(current_date, c.date_naissance) < make_interval(years => r.age_majorite),
       'parent', case when c.parent_nom is not null then json_build_object('nom', c.parent_nom, 'telephone', c.parent_telephone) end));
 end;
 $$;
@@ -1771,7 +1797,7 @@ begin
   if mid is null then
     insert into agence_mannequins (nom, genre, date_naissance, telephone, whatsapp, email, statut, candidature_id,
                                    montant_mensuel, notes)
-    values (c.full_name, c.genre, c.date_naissance, c.phone, c.phone, nullif(c.email, ''), 'actif', c.id,
+    values (c.full_name, c.genre, c.date_naissance, c.phone, c.phone, nullif(c.email, ''), 'pre_inscrit', c.id,
             r.mensualite_standard, 'Règlement accepté le ' || to_char(now() at time zone 'Africa/Abidjan', 'DD/MM/YYYY HH24:MI')
             || ' (' || p_origine || ')' || case when mineur then ' ; accord du parent donné' else '' end)
     returning id into mid;
@@ -1909,10 +1935,14 @@ begin
   if exists (select 1 from agence_mannequins where user_id = auth.uid()) then return json_build_object('ok', true); end if;
   select * into u from auth.users where id = auth.uid();
   select * into p from model_profiles where id = auth.uid();
+  -- même téléphone ET même date de naissance (relecture du 19/10/2026 : le mannequin écrit
+  -- lui-même son téléphone et l'e-mail n'est pas vérifié — avec le seul numéro d'une autre
+  -- personne, on prenait sa fiche). Sinon, c'est le code personnel ESP qui rattache.
   select id into mid from agence_mannequins
-  where user_id is null and (
-    (coalesce(u.email, '') <> '' and lower(email) = lower(u.email))
-    or (coalesce(p.phone, '') <> '' and regexp_replace(coalesce(telephone, ''), '\D', '', 'g') = regexp_replace(p.phone, '\D', '', 'g')))
+  where user_id is null and statut <> 'sorti'
+    and coalesce(p.phone, '') <> '' and p.date_naissance is not null
+    and regexp_replace(coalesce(telephone, ''), '\D', '', 'g') = regexp_replace(p.phone, '\D', '', 'g')
+    and date_naissance = p.date_naissance
   order by cree_le limit 1;
   if mid is null then return json_build_object('ok', false); end if;
   update agence_mannequins set user_id = auth.uid(), model_id = coalesce(model_id, p.id) where id = mid;

@@ -15,7 +15,7 @@
     non_paye: ['Non payé', 'erreur'], exoneree: ['Exonérée', 'neutre'], annulee: ['Annulée', 'neutre']
   };
   const TYPE = { inscription: 'Inscription + 1er mois', mensualite: 'Mensualité', autre: 'Autre' };
-  const STATUT_REGISTRE = { actif: ['Actif', 'ok'], suspendu: ['Suspendu', 'alerte'], sortie_proposee: ['Sortie proposée', 'alerte'], sorti: ['Sorti', 'erreur'] };
+  const STATUT_REGISTRE = { pre_inscrit: ['Pré-inscrit (paiement à vérifier)', 'info'], actif: ['Actif', 'ok'], suspendu: ['Suspendu', 'alerte'], sortie_proposee: ['Sortie proposée', 'alerte'], sorti: ['Sorti', 'erreur'] };
   const estPrincipal = () => P.moi.role === 'principal';
   const pastilleEcheance = (e) => P.pastille(STATUT[e.statut][0], STATUT[e.statut][1]);
   const groupe = (m) => m.user_id ? P.pastille('Inscrit sur le site', 'info') : P.pastille('Non inscrit', 'neutre');

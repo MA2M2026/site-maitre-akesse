@@ -11,7 +11,7 @@
 //   individuel, section 14) ; lien_lire, lien_declarer (page de paiement sans compte, 7.2)
 
 const crypto = require('crypto');
-const { SUPABASE_URL, enTetesService, verifierUtilisateur, extraireIp, debutRequete, chargeJeton, compteurTentatives } = require('./_commun.js');
+const { SUPABASE_URL, enTetesService, verifierUtilisateur, extraireIp, debutRequete, chargeJeton, dernierCode, compteurTentatives } = require('./_commun.js');
 
 const SITE = 'https://www.maitreakessemodelmanagement.com';
 const hacher = (t) => crypto.createHash('sha256').update(String(t)).digest('hex');
@@ -39,9 +39,7 @@ function dateValide(texte) {
 }
 // code de double authentification saisi il y a moins de 10 minutes
 function authRecente(jeton) {
-  const amr = chargeJeton(jeton).amr || [];
-  const t = Math.max(0, ...amr.filter((m) => m && /totp/.test(m.method)).map((m) => Number(m.timestamp) || 0));
-  return t > Date.now() / 1000 - 600;
+  return dernierCode(jeton) > Date.now() / 1000 - 600;
 }
 async function adminAuth(chemin, methode, corps) {
   const rep = await fetch(SUPABASE_URL + '/auth/v1/' + chemin, {
@@ -115,6 +113,9 @@ module.exports = async function handler(req, res) {
       const tentatives = compteurTentatives(extraireIp(req), u.id, 'portail-secours', null);
       if (action === 'codes_secours_creer') {
         if (chargeJeton(jeton).aal !== 'aal2') return res.status(403).json({ error: 'Activez d’abord la double authentification.' });
+        // code saisi il y a moins de 10 minutes : une session volée ne remplace pas les codes de
+        // secours de la personne (relecture du 19/10/2026)
+        if (!authRecente(jeton)) return res.status(403).json({ error: 'AUTH_RECENTE: confirmez votre code.' });
         const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
         const codes = Array.from({ length: 8 }, () => Array.from(crypto.randomBytes(10), (o) => alphabet[o % alphabet.length]).join('').replace(/(.{5})(.{5})/, '$1-$2'));
         await rpcService('portail_codes_secours_creer', { p_user: u.id, p_haches: codes.map(hacher) });
