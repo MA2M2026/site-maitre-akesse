@@ -187,6 +187,8 @@ document.getElementById('tb-login-btn').addEventListener('click', async () => {
 });
 
 async function deconnecterTableauDeBord(motif) {
+  // ouvert dans l'Administration (js/mode-administration.js) : on se déconnecte de l'Administration
+  if (window.MA2M_ADMINISTRATION) { await window.MA2M_ADMINISTRATION.deconnecter(); return; }
   arreterMinuteurInactivite();
   await sb.auth.signOut();
   effacerCodeValide();
@@ -228,6 +230,7 @@ async function verrouillerParInactivite() {
 const DELAI_INACTIVITE_MS = 15 * 60 * 1000;
 let minuteurInactivite = null;
 function demarrerMinuteurInactivite() {
+  if (window.MA2M_ADMINISTRATION) return;  // verrouillage de l'Administration (code à 4 chiffres)
   if (minuteurInactivite) clearTimeout(minuteurInactivite);
   minuteurInactivite = setTimeout(verrouillerParInactivite, DELAI_INACTIVITE_MS);
 }
@@ -399,6 +402,18 @@ void (async () => {
   // prêt avant d'ouvrir le tableau de bord : sur un téléphone lent, la vérification de la
   // session pouvait répondre avant la fin de son téléchargement.
   if (document.readyState === 'loading') await new Promise(r => document.addEventListener('DOMContentLoaded', r, { once: true }));
+  // Ouvert dans l'Administration (espace 1, cahier v2.4) : la connexion et la double
+  // authentification de l'Administration suffisent — aucune deuxième connexion, pas de code de
+  // validation (le serveur accepte la double authentification, api/acces-tableau.js).
+  if (window.MA2M_ADMINISTRATION) {
+    try {
+      if (!(await window.MA2M_ADMINISTRATION.pret)) return;
+      if (await verifierAdminTableau()) await reveleTableauDeBord();
+      else window.MA2M_ADMINISTRATION.refuser();
+    } catch (e) { window.MA2M_ADMINISTRATION.retour(); }
+    if (window.tdbFinVerifSession) window.tdbFinVerifSession();
+    return;
+  }
   try {
     const estAdmin = await verifierAdminTableau();
     if (estAdmin && !recuperationMdpEnCours) {

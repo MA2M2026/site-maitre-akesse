@@ -68,7 +68,7 @@ function donnees(role) {
     // menu : à gauche sur ordinateur ; sur téléphone et tablette en vertical, bouton « ☰ Menu » qui fait glisser le menu
     for (const largeur of nomEcran === 'téléphone' ? [390, 768] : [1280]) {
       await p.setViewportSize({ width: largeur, height: ecran.height });
-      await p.goto(url + '#/site/accueil'); await p.waitForSelector('.lateral .nav', { state: 'attached' });
+      await p.goto(url + '#/paiements/accueil'); await p.waitForSelector('.lateral .nav', { state: 'attached' });
       const vu = () => p.evaluate(() => { const r = document.querySelector('.lateral').getBoundingClientRect(); return getComputedStyle(document.querySelector('.lateral')).visibility === 'visible' && r.right > 50; });
       if (largeur >= 1000) {
         ok(await vu() && !(await p.isVisible('[data-action="menu-ouvrir"]')), nomEcran + ' : menu toujours visible à gauche, sans bouton « Menu »');
@@ -77,8 +77,8 @@ function donnees(role) {
         await p.click('[data-action="menu-ouvrir"]'); await p.waitForTimeout(400);
         const r = await p.evaluate(() => document.querySelector('.lateral').getBoundingClientRect().left);
         ok(await vu() && r === 0, largeur + ' px : « ☰ Menu » fait glisser le menu depuis la gauche');
-        await p.click('.lateral .nav[href="#/site/accueil"]'); await p.waitForTimeout(500);
-        ok(!(await vu()) && (await p.evaluate(() => location.hash)) === '#/site/accueil', largeur + ' px : choisir une rubrique l’ouvre et referme le menu');
+        await p.click('.lateral .nav[href="#/paiements/accueil"]'); await p.waitForTimeout(500);
+        ok(!(await vu()) && (await p.evaluate(() => location.hash)) === '#/paiements/accueil', largeur + ' px : choisir une rubrique l’ouvre et referme le menu');
         await p.click('[data-action="menu-ouvrir"]'); await p.waitForTimeout(400);
         await p.mouse.click(largeur - 10, 400); await p.waitForTimeout(400);
         ok(!(await vu()), largeur + ' px : toucher à côté du menu le referme');
@@ -86,7 +86,7 @@ function donnees(role) {
     }
     await p.setViewportSize(ecran);
     // chaque espace et chaque page de la sécurité s'ouvre
-    const pages = { site: ['accueil'], paiements: ['accueil'], compta: ['accueil'], securite: ['comptes', 'delegations', 'appareils', 'journal', 'codes'] };
+    const pages = { paiements: ['accueil'], compta: ['accueil'], securite: ['comptes', 'delegations', 'appareils', 'journal', 'codes'] };
     for (const [esp, liste] of Object.entries(pages)) {
       for (const pg of liste) {
         await p.goto(url + '#/' + esp + '/' + pg); await p.waitForSelector('.contenu h1, .contenu .carte h2', { timeout: 6000 }).catch(() => {});
@@ -121,8 +121,10 @@ function donnees(role) {
     for (const [role, esp] of [['site', 'site'], ['compta', 'compta']]) {
       const s = await ouvrir(role, ecran);
       await s.p.waitForSelector('#cx-code'); await s.p.fill('#cx-code', '123456'); await s.p.click('form[data-form="code"] [type=submit]');
-      await s.p.waitForFunction((e) => location.hash.startsWith('#/' + e + '/'), esp, { timeout: 6000 }).catch(() => {});
-      ok(s.p.url().includes('#/' + esp + '/'), nomEcran + ' : rôle « ' + role + ' » → arrive directement dans son espace');
+      // (espace 1 : l'ancien tableau de bord, ouvert dans l'Administration — essayé plus bas)
+      const attendu = esp === 'site' ? '/tableau-de-bord.html' : '#/' + esp + '/';
+      await s.p.waitForFunction((a) => location.href.includes(a), attendu, { timeout: 6000 }).catch(() => {});
+      ok(s.p.url().includes(attendu), nomEcran + ' : rôle « ' + role + ' » → arrive directement dans son espace');
       await s.p.goto(url + '#/paiements/accueil'); await s.p.waitForTimeout(500);
       ok((await texte(s.p)).includes('Accès refusé'), nomEcran + ' : rôle « ' + role + ' » → l’espace paiements est refusé');
       ok(!s.errs.length, nomEcran + ' : aucune erreur de page (' + role + ') ' + s.errs.join(' | '));
@@ -177,6 +179,86 @@ function donnees(role) {
     ok(await c.p.isVisible('#cx-pin'), nomEcran + ' : application rouverte sur un appareil verrouillé → code à 4 chiffres demandé');
     ok(!c.errs.length, nomEcran + ' : aucune erreur de page (code à 4 chiffres) ' + c.errs.join(' | '));
     await c.ctx.close();
+  }
+  // Espace 1 (cahier v2.4, 3.1) : l'ancien tableau de bord DANS l'Administration — même connexion,
+  // sans argent ni anciens accès, partenaires gérés d'ici, verrouillage de l'Administration
+  const ESPACE1 = { admins: [{ user_id: 'admin-1' }],
+    casting_applications: [{ id: 'c1', full_name: 'AWA KONÉ', email: 'awa@test.ci', phone: '+225 0102030405', genre: 'femme', date_naissance: '2000-01-01', type_candidature: 'agence', status: 'nouvelle', created_at: '2026-10-07T10:00:00Z' }],
+    inscriptions_mannequins: [{ id: 'i1', nom: 'YAO', prenoms: 'Kouassi', statut: 'en attente de paiement', created_at: '2026-10-06T10:00:00Z' }],
+    model_profiles: [{ id: 'm1', full_name: 'MARIAM SANOGO', city: 'Abidjan', published: true, desactive: false }],
+    partenaires: [{ id: 'p1', nom: 'Maison XYZ', ordre: 1 }] };
+  for (const [nomEcran, ecran] of [['téléphone', { width: 390, height: 844 }], ['ordinateur', { width: 1280, height: 900 }]]) {
+    const pin = { defini: true, verrouille: false };
+    const e = await ouvrir('principal', ecran, (d) => {
+      Object.assign(d.tables, ESPACE1);
+      d.rpc.code_validation_statut = [{ defini: true }];  // l'ancien code de validation ne doit PAS être demandé
+      d.rpc.portail_code_appareil_etat = () => ({ defini: pin.defini, verrouille: pin.verrouille });
+      d.rpc.portail_code_appareil_verrouiller = () => { pin.verrouille = true; return null; };
+      d.rpc.portail_code_appareil_verifier = (x) => { if (x.p_code === '4826') { pin.verrouille = false; return { ok: true }; } return { ok: false, restants: 4 }; };
+    });
+    const pe = e.p;
+    pe.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) e.errs.push('console : ' + m.text().slice(0, 140)); });
+    await pe.clock.install();
+    await pe.waitForSelector('#cx-code'); await pe.fill('#cx-code', '123456'); await pe.click('form[data-form="code"] [type=submit]');
+    await pe.waitForSelector('.tuile');
+    await pe.click('.tuile[href="#/site/accueil"]');
+    await pe.waitForURL(/tableau-de-bord\.html/, { timeout: 8000 }).catch(() => {});
+    await pe.waitForSelector('#bloc-tableau', { state: 'visible', timeout: 10000 }).catch(() => {});
+    ok(pe.url().includes('/tableau-de-bord.html') && await pe.isVisible('#bloc-tableau'), nomEcran + ' : tuile « Administration du site » → l’ancien tableau de bord s’ouvre');
+    ok(!(await pe.isVisible('#bloc-login')) && !(await pe.isVisible('#bloc-code-validation')), nomEcran + ' : aucune deuxième connexion, aucun code de validation demandé');
+    ok(!e.journal.some((j) => j[1] === '/api/connexion-protegee' && /"espace":"admin"/.test(j[2] || '')), nomEcran + ' : pas de nouvelle connexion au serveur');
+    await pe.waitForSelector('.v2-carte', { timeout: 8000 }).catch(() => {});
+    const tv = await texte(pe);
+    ok(!/Inscriptions à vérifier|paiements à confirmer|Wave/.test(tv), nomEcran + ' : vue d’ensemble sans argent (inscriptions et paiements → espace 2)');
+    const menu = async () => pe.$$eval('#v2-menu-liste .v2-lien-texte', (l) => l.map((x) => x.textContent));
+    await pe.click('.v2-bloc[data-bloc="2"]'); await pe.waitForTimeout(400);
+    const m2 = await menu();
+    ok(!m2.includes('Inscriptions') && m2.includes('Candidatures') && m2.includes('Mannequins publiés'), nomEcran + ' : menu « Mannequins » sans les inscriptions payantes ' + m2.join(', '));
+    await pe.click('.v2-bloc[data-bloc="3"]'); await pe.waitForTimeout(400);
+    const m3 = await menu();
+    ok(!m3.some((x) => /Code de validation|Créer un compte admin|Créer mon compte/.test(x)), nomEcran + ' : anciens accès retirés (code de validation, compte admin, code permanent)');
+    ok(m3.includes('Gérer les partenaires') && m3.includes('Publier une actualité'), nomEcran + ' : actualités, événements et partenaires dans le menu');
+    ok(await pe.$eval('.v2-cote-bas a', (a) => a.getAttribute('href') === '/admin/' && /Accueil de l’Administration/.test(a.textContent)), nomEcran + ' : « Accueil de l’Administration » remplace « Retour au site public »');
+    // fiche d'une candidature : s'ouvre comme avant
+    await pe.click('.v2-bloc[data-bloc="2"]'); await pe.waitForTimeout(300);
+    await pe.evaluate(() => document.querySelector('.v2-lien[data-page="b2-candidatures"]').click()); await pe.waitForTimeout(1200);
+    await pe.click('#liste-candidatures .dossier-carte[data-id="c1"] .dc-nom').catch(() => {}); await pe.waitForTimeout(1000);
+    ok(/AWA KONÉ/.test(await texte(pe)) && await pe.isVisible('#mf-statut-select'), nomEcran + ' : la fiche complète d’une candidature s’ouvre');
+    await pe.keyboard.press('Escape'); await pe.evaluate(() => document.querySelectorAll('.modal-overlay.ouvert').forEach((m) => m.classList.remove('ouvert')));
+    // 15 minutes sans geste : retour à l'Administration, code à 4 chiffres, puis retour ici
+    await pe.clock.fastForward('15:30');
+    await pe.waitForURL(/\/admin\//, { timeout: 8000 }).catch(() => {});
+    await pe.waitForSelector('#cx-pin', { timeout: 8000 }).catch(() => {});
+    ok(pin.verrouille && await pe.isVisible('#cx-pin'), nomEcran + ' : 15 minutes sans activité → écran verrouillé de l’Administration');
+    await pe.fill('#cx-pin', '4826'); await pe.click('form[data-form="deverrouiller"] [type=submit]');
+    await pe.waitForURL(/tableau-de-bord\.html/, { timeout: 8000 }).catch(() => {});
+    await pe.waitForSelector('#bloc-tableau', { state: 'visible', timeout: 10000 }).catch(() => {});
+    ok(pe.url().includes('/tableau-de-bord.html') && await pe.isVisible('#bloc-tableau'), nomEcran + ' : bon code → retour dans l’Administration du site, là où l’on était');
+    // Partenaires : dans l'Administration (barre en haut), sans l'en-tête du site public
+    await pe.goto(pe.url().split('/tableau-de-bord')[0] + '/partenaires.html');
+    await pe.waitForSelector('.adm-barre', { timeout: 8000 }).catch(() => {});
+    ok(await pe.isVisible('.adm-barre .adm-retour') && !(await pe.isVisible('.site-header-v2')), nomEcran + ' : partenaires ouverts dans l’Administration (barre, sans l’en-tête du site)');
+    const largeur = await pe.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1);
+    ok(largeur, nomEcran + ' : barre de l’Administration sans défilement de côté');
+    await pe.click('.adm-retour'); await pe.waitForSelector('#bloc-tableau', { state: 'visible', timeout: 10000 }).catch(() => {});
+    ok(await pe.isVisible('#bloc-tableau'), nomEcran + ' : « Administration du site » ramène au tableau de bord');
+    // Se déconnecter : retour à l'écran de connexion de l'Administration
+    if (ecran.width < 1000) { await pe.click('.v2-burger'); await pe.waitForTimeout(300); }
+    await pe.click('.v2-cote-bas [data-action="deconnexion"]');
+    await pe.waitForURL(/\/admin\//, { timeout: 8000 }).catch(() => {});
+    await pe.waitForSelector('#cx-mail', { timeout: 8000 }).catch(() => {});
+    ok(await pe.isVisible('#cx-mail'), nomEcran + ' : « Se déconnecter » → écran de connexion de l’Administration');
+    ok(e.journal.some((j) => j[1] === '/api/acces-tableau'), nomEcran + ' : la clé de l’ancien tableau de bord est effacée');
+    ok(!e.errs.length, nomEcran + ' : aucune erreur de page (espace 1) ' + e.errs.join(' | '));
+    await e.ctx.close();
+    // Un compte de l'Administration sans l'espace 1 (comptable) ne peut pas ouvrir l'ancien tableau de bord
+    const k = await ouvrir('compta', ecran, (d) => { Object.assign(d.tables, ESPACE1); });
+    await k.p.waitForSelector('#cx-code'); await k.p.fill('#cx-code', '123456'); await k.p.click('form[data-form="code"] [type=submit]');
+    await k.p.waitForFunction(() => location.hash.startsWith('#/compta/'), null, { timeout: 6000 }).catch(() => {});
+    await k.p.goto(k.p.url().split('/admin/')[0] + '/tableau-de-bord.html');
+    await k.p.waitForURL(/\/admin\//, { timeout: 8000 }).catch(() => {});
+    ok(k.p.url().includes('/admin/') && !(await k.p.isVisible('#bloc-tableau')), nomEcran + ' : comptable → l’ancien tableau de bord lui est refusé');
+    await k.ctx.close();
   }
   await b.close();
   console.log(ko ? '❌ ' + ko + ' échec(s)' : 'Tout est bon.'); process.exit(ko ? 1 : 0);

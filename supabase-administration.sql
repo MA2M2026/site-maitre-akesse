@@ -535,6 +535,11 @@ begin
 end;
 $$;
 revoke all on function staff_suivre_admins() from public, anon, authenticated;
+-- (19/10/2026, espace 1 : l'ancien tableau de bord s'ouvre dans l'Administration — le rôle
+-- « site » doit y avoir ses droits dès l'invitation)
+drop trigger if exists staff_suivre_admins on staff_profiles;
+create trigger staff_suivre_admins after insert or update of role, actif on staff_profiles
+  for each row execute function staff_suivre_admins();
 
 -- Journal : toute écriture sur les comptes, délégations et appareils est tracée
 do $$

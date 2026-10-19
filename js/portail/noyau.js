@@ -10,7 +10,6 @@
   const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
   const ROLES = { principal: 'Administrateur principal', site: 'Administrateur du site', caisse: 'Responsable des encaissements', compta: 'Comptable' };
   const ESPACES = { site: 'Administration du site', paiements: 'Suivi des paiements et des inscriptions', compta: 'Comptabilité' };
-  const INACTIVITE_MS = 15 * 60 * 1000;   // verrouillage après 15 minutes sans geste
   const SESSION_MAX_MS = 8 * 3600 * 1000; // session de 8 heures au plus
 
   const P = window.Portail = {
@@ -274,7 +273,9 @@
   P.actions.deconnexion = async () => {
     try { await sb.auth.signOut(); } catch (e) { /* déjà déconnecté */ }
     sessionStorage.removeItem('ma2m_pin_plus_tard');
-    clearTimeout(minuteurInactivite);
+    window.arreterInactivitePortail();
+    // clé de l'ancien tableau de bord (espace 1) effacée aussi
+    fetch('/api/acces-tableau', { method: 'DELETE', credentials: 'same-origin' }).catch(() => { /* hors ligne : elle expire seule */ });
     P.moi = null;
     location.hash = '#/';
     ecranConnexion('motdepasse');
@@ -353,6 +354,15 @@
     if (pin && !pin.defini && dernierCode && Date.now() - dernierCode < 9 * 60 * 1000 && !sessionStorage.getItem('ma2m_pin_plus_tard')) {
       return ecranConnexion('choisir-pin');
     }
+    // écrans de l'espace 1 (ancien tableau de bord…) : ils s'ouvrent dans l'Administration
+    // (js/mode-administration.js) ; après un verrouillage, on revient là où l'on était
+    try { localStorage.setItem('ma2m_mode_administration', '1'); } catch (e) { /* stockage bloqué */ }
+    const retour = sessionStorage.getItem('ma2m_retour_administration');
+    sessionStorage.removeItem('ma2m_retour_administration');
+    if (retour && P.moi.espaces.site && /^\/(tableau-de-bord|actualites|evenements|partenaires)\.html([?#][^\s]*)?$/.test(retour)) {
+      location.replace(retour);
+      return;
+    }
     surveillerInactivite();
     // une personne qui n'a droit qu'à un espace arrive directement dedans
     const permis = Object.keys(ESPACES).filter((k) => P.moi.espaces[k]);
@@ -377,23 +387,9 @@
     const nav = /Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' : /Safari\//.test(ua) ? 'Safari' : /Firefox\//.test(ua) ? 'Firefox' : 'navigateur';
     return sys + ', ' + nav + (matchMedia('(display-mode: standalone)').matches ? ' (application installée)' : '');
   }
-  let minuteurInactivite = 0, dernierSigne = 0;
+  // (15 minutes sans geste : js/portail/inactivite.js, partagé avec les écrans de l'espace 1)
   function surveillerInactivite() {
-    const relancer = () => {
-      if (!P.moi) return;
-      clearTimeout(minuteurInactivite);
-      // le serveur verrouille aussi de lui-même 16 minutes après le dernier signe de vie
-      if (P.etat.pinDefini && Date.now() - dernierSigne > 60000) {
-        dernierSigne = Date.now();
-        P.rpc('portail_code_appareil_activite', { p_appareil: identifiantAppareilPortail() }).catch(() => { /* réessayé au prochain geste */ });
-      }
-      minuteurInactivite = setTimeout(verrouiller, INACTIVITE_MS);
-    };
-    if (!P.etat.inactiviteBranchee) {
-      ['pointerdown', 'keydown', 'scroll'].forEach((t) => addEventListener(t, relancer, { passive: true }));
-      P.etat.inactiviteBranchee = true;
-    }
-    relancer();
+    window.surveillerInactivitePortail({ actif: () => !!P.moi, pinDefini: () => !!P.etat.pinDefini, verrouiller });
   }
 
   async function verrouiller() {

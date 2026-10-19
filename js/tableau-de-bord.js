@@ -597,9 +597,10 @@ async function chargerATraiter() {
   const items = [
     { label: 'Validations THE BOOK en attente', compte: validations || 0, action: ouvrirRubrique('b2-validations') },
     { label: 'Nouvelles candidatures', compte: candidaturesNouvelles || 0, action: ouvrirRubrique('b2-candidatures') },
-    { label: 'Inscriptions à vérifier (paiement)', compte: inscriptionsAttente || 0, action: ouvrirRubrique('b2-inscriptions') },
-    { label: 'Nouvelles demandes recruteurs', compte: recruteursNouveaux || 0, action: ouvrirRubrique('b2-recruteurs') },
-  ].filter(i => i.compte > 0);
+    // (espace 2 dans l'Administration : caché par js/mode-administration.js)
+    { label: 'Inscriptions à vérifier (paiement)', compte: inscriptionsAttente || 0, action: ouvrirRubrique('b2-inscriptions'), cle: 'b2-inscriptions' },
+    { label: 'Nouvelles demandes recruteurs', compte: recruteursNouveaux || 0, action: ouvrirRubrique('b2-recruteurs'), cle: 'b2-recruteurs' },
+  ].filter(i => i.compte > 0 && !(window.MA2M_ADMINISTRATION && window.MA2M_ADMINISTRATION.masquee(i.cle)));
 
   const total = items.reduce((s, i) => s + i.compte, 0);
   totalEl.textContent = total ? `${total} action${total > 1 ? 's' : ''} en attente` : '';

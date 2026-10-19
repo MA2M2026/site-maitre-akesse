@@ -1,10 +1,11 @@
 // Clé d'accès au tableau de bord (13/10/2026) — voir cookieAccesTableau dans api/_commun.js.
 //  POST (jeton du compte) : pose (ou prolonge de 12 h) la clé d'un compte administrateur
-//    - s'il n'a pas de code de validation, ou s'il a déjà une clé valide (prolongation) ;
+//    - s'il n'a pas de code de validation, s'il a déjà une clé valide (prolongation), ou s'il
+//      vient de l'Administration avec sa double authentification (jeton « aal2 ») ;
 //    - sinon 403 { code: 'requis' } : c'est api/code-validation-protege.js qui la pose, une fois
 //      le code bon.
 //  DELETE : efface la clé (déconnexion).
-const { SUPABASE_URL, cleService, debutRequete, verifierUtilisateur, estAdmin, cookieAccesTableau, cleAccesTableauValide, COOKIE_ACCES_TABLEAU_EFFACE } = require('./_commun.js');
+const { SUPABASE_URL, cleService, debutRequete, verifierUtilisateur, estAdmin, cookieAccesTableau, cleAccesTableauValide, COOKIE_ACCES_TABLEAU_EFFACE, chargeJeton, dernierCode } = require('./_commun.js');
 
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
@@ -19,7 +20,12 @@ module.exports = async function handler(req, res) {
     const utilisateur = await verifierUtilisateur(debut.jeton);
     if (!utilisateur) { res.status(401).json({ error: 'Session invalide ou expirée — reconnectez-vous.' }); return; }
     if (!(await estAdmin(utilisateur.id))) { res.status(403).json({ error: "Ce compte n'est pas administrateur." }); return; }
-    if (!cleAccesTableauValide(req, utilisateur.id)) {
+    // Double authentification de l'Administration (code de l'application, jeton « aal2 ») : elle
+    // vaut le code de validation — l'ancien tableau de bord s'ouvre dans l'Administration (espace
+    // 1, cahier v2.4) sans deuxième connexion.
+    // (code saisi il y a moins de 8 heures, durée maximale d'une session de l'Administration)
+    const doubleAuth = chargeJeton(debut.jeton).aal === 'aal2' && dernierCode(debut.jeton) > Date.now() / 1000 - 8 * 3600;
+    if (!cleAccesTableauValide(req, utilisateur.id) && !doubleAuth) {
       // statut du code de validation, lu avec la session du compte lui-même
       const rep = await fetch(SUPABASE_URL + '/rest/v1/rpc/code_validation_statut', {
         method: 'POST',

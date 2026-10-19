@@ -13,6 +13,20 @@
 > Base : `supabase-administration.sql` (comptes, appareils, codes, journal ; rejouable, n'efface
 > rien), essais `bash scripts/base-essai/lancer.sh` ; essai visiteur `test-administration.js`.
 >
+> **Espace 1 (19/10/2026, cahier v2.4 3.1)** : la tuile « Administration du site » ouvre
+> `tableau-de-bord.html` DANS l'Administration (manifeste `scope: /`, même session : aucune
+> deuxième connexion). `js/mode-administration.js` (chargé en tête, avant supabase-config) s'active
+> sur l'hôte `admin.` ou si l'Administration a été ouverte sur l'appareil (localStorage
+> `ma2m_mode_administration`) : `<html data-portail>`, accès vérifié par `portail_moi` (espace
+> site), verrouillage partagé `js/portail/inactivite.js` (15 min → retour à /admin/ pour le code à
+> 4 chiffres, puis retour à la page via sessionStorage `ma2m_retour_administration`), contrôle
+> toutes les 5 min (révocation, 8 h). Rubriques cachées (`HORS_ESPACE_1`) : inscriptions/paiements
+> Wave (→ espace 2), code de validation, « Créer un compte admin », code permanent ; CSS
+> `css/mode-administration.css`. Actualités, événements, partenaires : pages publiques en mode
+> Administration (barre `.adm-barre`, sans en-tête du site). `api/acces-tableau.js` accepte un jeton
+> `aal2` (code TOTP < 8 h) à la place du code de validation. Base : déclencheur
+> `staff_suivre_admins` (rôle « site » ↔ table `admins`). Essai : fin de `test-administration.js`.
+>
 > Codes de secours : affichés à la première activation de la double authentification, et
 > refaits à la demande dans Sécurité › « Mes codes de secours » (code récent demandé ; les
 > anciens sont annulés). Ajouté le 19/10/2026 : un compte dont la double authentification
