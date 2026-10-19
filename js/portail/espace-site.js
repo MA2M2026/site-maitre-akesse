@@ -133,7 +133,7 @@
       'valable 30 jours). Il ne s’affiche qu’une fois : donnez-le au mannequin (ou au parent si mineur).</div>' +
       P.tableau(['Candidat', 'Âge', 'Origine', 'Date du casting', 'Statut', 'Code', 'Action'], liste.map((c) => {
         const age = P.age(c.date_naissance);
-        return '<tr><td><b>' + P.esc(c.full_name) + '</b><div class="petit-texte doux">' + P.esc([c.genre, c.city, c.height_cm ? c.height_cm + ' cm' : ''].filter(Boolean).join(' · ')) + '</div>' +
+        return '<tr><td><b>' + P.esc(c.full_name) + '</b> <a class="lien-fiche" href="#/site/fiche-candidature/' + P.esc(c.id) + '">Voir la fiche complète</a><div class="petit-texte doux">' + P.esc([c.genre, c.city, c.height_cm ? c.height_cm + ' cm' : ''].filter(Boolean).join(' · ')) + '</div>' +
           (masque() ? '' : '<div class="petit-texte">' + P.esc(c.phone || '') + ' ' + P.esc(c.email || '') + '</div>') + '</td>' +
           '<td>' + (age != null ? age + ' ans' + (age < 18 ? ' ' + P.pastille('mineur', 'neutre') : '') : '—') + '</td>' +
           '<td>' + (c.source === 'direct' ? P.pastille('Casting direct', 'info') + (c.lieu_casting ? '<div class="petit-texte doux">' + P.esc(c.lieu_casting) + '</div>' : '') : 'En ligne') + '</td>' +
@@ -241,12 +241,12 @@
   // Ouvre une rubrique de l'ancien tableau de bord dans le cadre de l'administration. La page
   // protégée demande sa clé d'accès (api/acces-tableau.js), accordée à une session du portail
   // avec double authentification ; sans elle, le cadre montrerait l'écran de connexion.
-  async function rubrique(r) {
+  async function rubrique(r, precision) {
     if (r[3] && !principalSeul()) return P.refuse();
     const session = (await sb.auth.getSession()).data.session;
     const rep = await fetch('/api/acces-tableau', { method: 'POST', headers: { Authorization: 'Bearer ' + (session ? session.access_token : '') } });
     if (!rep.ok) throw new Error((await rep.json().catch(() => ({}))).error || 'Accès à la rubrique refusé : reconnectez-vous.');
-    return P.entete(r[1]) + '<iframe class="cadre-rubrique" title="' + P.esc(r[1]) + '" src="/tableau-de-bord.html?depuis=portail&integre=1#' + r[2] + '"></iframe>';
+    return P.entete(r[1]) + '<iframe class="cadre-rubrique" title="' + P.esc(r[1]) + '" src="/tableau-de-bord.html?depuis=portail&integre=1' + (precision || '') + '#' + r[2] + '"></iframe>';
   }
   async function actualites() {
     return P.entete('Actualités et événements') +
@@ -257,5 +257,12 @@
   }
   const pages = { vue, mannequins, candidatures, recruteurs, dossiers, codes, outils, actualites };
   RUBRIQUES.filter((r) => r[0] && r[2]).forEach((r) => { pages[r[0]] = () => rubrique(r); });
+  // Fiche complète d'une candidature (photos, vidéo, mensurations, notes) : la fiche de l'ancien
+  // tableau de bord, ouverte dans l'administration (demande de la propriétaire, 19/10/2026)
+  pages['fiche-candidature'] = (args) => {
+    const id = String((args && args[0]) || '');
+    if (!/^[0-9a-zA-Z-]{1,64}$/.test(id)) return '<div class="carte"><p>Candidature introuvable.</p></div>';
+    return rubrique(['fiche-candidature', 'Fiche de la candidature', 'b2-candidatures'], '&notif=candidature&id=' + id);
+  };
   P.espaces.site = { nav: NAV, pages };
 })();

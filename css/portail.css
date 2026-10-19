@@ -189,3 +189,6 @@ details summary { cursor: pointer; font-weight: 700; }
 /* Rubrique de l'ancien tableau de bord ouverte dans l'administration (19/10/2026) */
 .cadre-rubrique { width: 100%; min-height: calc(100vh - 150px); border: 1px solid var(--lignes); border-radius: 14px; background: var(--fond); }
 @media (max-width: 900px) { .cadre-rubrique { min-height: calc(100vh - 210px); } }
+/* Candidatures : lien vers la fiche complète, menu du statut assez large pour se lire (19/10/2026) */
+.lien-fiche { display: inline-block; margin: 2px 0 4px; font-size: 13px; font-weight: 700; color: var(--rouge-ma2m-texte); text-decoration: underline; text-underline-offset: 3px; }
+.tableau td select { min-width: 9.5rem; }

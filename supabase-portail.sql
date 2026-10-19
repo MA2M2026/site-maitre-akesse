@@ -92,12 +92,38 @@ $$;
 -- reprendre la main avec une session déjà ouverte).
 alter table staff_profiles add column if not exists sessions_valides_apres timestamptz;
 
+-- Verrouillage après 15 minutes d'inactivité (cahier v2.3, « Appareils et sessions ») : code à
+-- 4 chiffres propre à l'appareil, choisi après une connexion complète (19/10/2026). Le code est
+-- haché ; la table n'est lisible par personne (seulement par les fonctions ci-dessous).
+create table if not exists staff_codes_appareil (
+  user_id uuid not null references staff_profiles(user_id) on delete cascade,
+  appareil text not null,
+  code_hash text,                       -- null : code bloqué après 5 erreurs (connexion complète)
+  essais int not null default 0,
+  verrouille boolean not null default false,
+  verrouille_le timestamptz,
+  derniere_activite timestamptz not null default now(),
+  primary key (user_id, appareil)
+);
+alter table staff_codes_appareil enable row level security;
+revoke all on staff_codes_appareil from anon, authenticated;
+
+-- Heure (en secondes) à partir de laquelle l'appareil est verrouillé (null : pas de code sur cet
+-- appareil, donc pas de verrouillage par code ; l'application déconnecte alors complètement)
+create or replace function portail_verrou_depuis(p_user uuid, p_appareil text)
+returns bigint language sql stable security definer set search_path = public as $$
+  select floor(extract(epoch from case when c.verrouille then c.verrouille_le else c.derniere_activite + interval '16 minutes' end))::bigint
+  from staff_codes_appareil c where c.user_id = p_user and c.appareil = p_appareil;
+$$;
+revoke execute on function portail_verrou_depuis(uuid, text) from public, anon, authenticated;
+
 -- Appareil révoqué : l'application envoie son identifiant dans l'en-tête « x-appareil »
 create or replace function portail_appareil_ok()
 returns boolean language plpgsql stable security definer set search_path = public as $$
 declare
   entetes json;
   app text;
+  verrou bigint;
 begin
   begin
     entetes := current_setting('request.headers', true)::json;
@@ -112,6 +138,16 @@ begin
   end if;
   if exists (select 1 from staff_profiles where user_id = auth.uid() and sessions_valides_apres is not null
              and coalesce(portail_dernier_code(), 0) < extract(epoch from sessions_valides_apres)) then
+    return false;
+  end if;
+  -- session de 8 heures au plus après le dernier code de l'application d'authentification
+  if coalesce(portail_dernier_code(), 0) < extract(epoch from now()) - 8 * 3600 then
+    return false;
+  end if;
+  -- appareil verrouillé (15 minutes sans activité) : il faut le code à 4 chiffres, ou une
+  -- connexion complète faite APRÈS le verrouillage
+  verrou := portail_verrou_depuis(auth.uid(), app);
+  if verrou is not null and verrou <= floor(extract(epoch from now())) and coalesce(portail_dernier_code(), 0) < verrou then
     return false;
   end if;
   return not exists (select 1 from staff_devices where user_id = auth.uid() and appareil = app and revoque);
@@ -227,6 +263,110 @@ returns uuid language sql stable security definer set search_path = public, auth
 $$;
 revoke all on function portail_codes_secours_creer(uuid, text[]), portail_code_secours_utiliser(uuid, text), portail_utilisateur_par_email(text) from public, anon, authenticated;
 grant execute on function portail_enregistrer_appareil(text, text) to authenticated;
+
+-- Code à 4 chiffres de l'appareil : état (et remise à zéro après une connexion complète)
+create or replace function portail_code_appareil_etat(p_appareil text)
+returns json language plpgsql security definer set search_path = public as $$
+declare
+  c staff_codes_appareil;
+  verrou bigint;
+begin
+  if auth.uid() is null or not portail_mfa_ok() then
+    raise exception 'Accès refusé';
+  end if;
+  select * into c from staff_codes_appareil where user_id = auth.uid() and appareil = p_appareil;
+  if not found then
+    return json_build_object('defini', false, 'verrouille', false);
+  end if;
+  verrou := portail_verrou_depuis(auth.uid(), p_appareil);
+  -- un code de l'application d'authentification saisi après le verrouillage déverrouille
+  if coalesce(portail_dernier_code(), 0) >= verrou or verrou > floor(extract(epoch from now())) then
+    update staff_codes_appareil set verrouille = false, verrouille_le = null, essais = 0, derniere_activite = now()
+    where user_id = auth.uid() and appareil = p_appareil;
+    return json_build_object('defini', c.code_hash is not null, 'verrouille', false);
+  end if;
+  return json_build_object('defini', c.code_hash is not null, 'verrouille', true, 'bloque', c.code_hash is null);
+end;
+$$;
+
+-- Choisir le code (juste après une connexion complète : code saisi il y a moins de 10 minutes)
+create or replace function portail_code_appareil_definir(p_appareil text, p_code text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if portail_role() is null then
+    raise exception 'Accès refusé';
+  end if;
+  perform portail_exiger_auth_recente();
+  if coalesce(p_code, '') !~ '^[0-9]{4}$' or p_code in ('0000', '1111', '1234', '4321', '2222', '9999') then
+    raise exception 'Choisissez 4 chiffres, pas trop simples (ni 0000, ni 1234).';
+  end if;
+  if coalesce(p_appareil, '') !~ '^[a-z0-9-]{16,64}$' then
+    raise exception 'Appareil inconnu.';
+  end if;
+  insert into staff_codes_appareil (user_id, appareil, code_hash)
+  values (auth.uid(), p_appareil, extensions.crypt(p_code, extensions.gen_salt('bf')))
+  on conflict (user_id, appareil) do update set code_hash = excluded.code_hash, essais = 0,
+    verrouille = false, verrouille_le = null, derniere_activite = now();
+end;
+$$;
+
+-- Activité : repousse le verrouillage (appelée au plus une fois par minute pendant l'utilisation)
+create or replace function portail_code_appareil_activite(p_appareil text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if portail_role() is null then
+    return;  -- appareil déjà verrouillé ou session finie : rien à repousser
+  end if;
+  update staff_codes_appareil set derniere_activite = now() where user_id = auth.uid() and appareil = p_appareil;
+end;
+$$;
+
+-- Verrouiller tout de suite (15 minutes sans geste sur l'écran)
+create or replace function portail_code_appareil_verrouiller(p_appareil text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  update staff_codes_appareil set verrouille = true, verrouille_le = least(now(), derniere_activite + interval '16 minutes')
+  where user_id = auth.uid() and appareil = p_appareil and not verrouille;
+end;
+$$;
+
+-- Déverrouiller avec le code : 5 erreurs → code bloqué, connexion complète obligatoire
+create or replace function portail_code_appareil_verifier(p_appareil text, p_code text)
+returns json language plpgsql security definer set search_path = public as $$
+declare
+  c staff_codes_appareil;
+begin
+  if auth.uid() is null or not portail_mfa_ok()
+     or not exists (select 1 from staff_profiles where user_id = auth.uid() and actif)
+     or exists (select 1 from staff_devices where user_id = auth.uid() and appareil = p_appareil and revoque)
+     or coalesce(portail_dernier_code(), 0) < extract(epoch from now()) - 8 * 3600 then
+    return json_build_object('ok', false, 'bloque', true);
+  end if;
+  select * into c from staff_codes_appareil where user_id = auth.uid() and appareil = p_appareil for update;
+  if not found or c.code_hash is null then
+    return json_build_object('ok', false, 'bloque', true);
+  end if;
+  if extensions.crypt(coalesce(p_code, ''), c.code_hash) = c.code_hash then
+    update staff_codes_appareil set verrouille = false, verrouille_le = null, essais = 0, derniere_activite = now()
+    where user_id = auth.uid() and appareil = p_appareil;
+    return json_build_object('ok', true);
+  end if;
+  if c.essais + 1 >= 5 then
+    update staff_codes_appareil set code_hash = null, essais = c.essais + 1, verrouille = true,
+      verrouille_le = coalesce(c.verrouille_le, least(now(), c.derniere_activite + interval '16 minutes')) where user_id = auth.uid() and appareil = p_appareil;
+    perform journaliser('code_appareil_bloque', 'staff_codes_appareil', auth.uid()::text, null, json_build_object('appareil', p_appareil)::jsonb);
+    return json_build_object('ok', false, 'bloque', true);
+  end if;
+  update staff_codes_appareil set essais = c.essais + 1, verrouille = true,
+    verrouille_le = coalesce(c.verrouille_le, least(now(), c.derniere_activite + interval '16 minutes'))
+  where user_id = auth.uid() and appareil = p_appareil;
+  return json_build_object('ok', false, 'restants', 4 - c.essais);
+end;
+$$;
+revoke execute on function portail_code_appareil_etat(text), portail_code_appareil_definir(text, text),
+  portail_code_appareil_activite(text), portail_code_appareil_verrouiller(text), portail_code_appareil_verifier(text, text) from public, anon;
+grant execute on function portail_code_appareil_etat(text), portail_code_appareil_definir(text, text),
+  portail_code_appareil_activite(text), portail_code_appareil_verrouiller(text), portail_code_appareil_verifier(text, text) to authenticated;
 
 -- Ce que l'application demande à l'ouverture : mon rôle, mes espaces, mon nom
 create or replace function portail_moi()

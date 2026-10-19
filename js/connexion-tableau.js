@@ -199,8 +199,30 @@ document.getElementById('tb-login-btn').addEventListener('click', async () => {
   }
 });
 
+// Ouvert DANS l'administration (/admin, js/tableau-integre.js) : la connexion appartient à
+// l'administration ; ce cadre ne la ferme jamais et ne montre jamais l'ancien écran de connexion.
+const DANS_ADMINISTRATION = document.documentElement.classList.contains('tdb-integre');
+function accesIntegreRefuse(cause) {
+  masquerBlocsConnexion();
+  let bloc = document.getElementById('bloc-integre-refus');
+  if (!bloc) {
+    bloc = document.createElement('section');
+    bloc.id = 'bloc-integre-refus';
+    bloc.className = 'u-pt-1';
+    bloc.innerHTML = '<div class="container"><p class="form-msg err" style="display:block"></p>' +
+      '<button type="button" class="btn">Réessayer</button></div>';
+    bloc.querySelector('button').addEventListener('click', () => location.reload());
+    const login = document.getElementById('bloc-login');
+    login.parentNode.insertBefore(bloc, login);
+  }
+  bloc.querySelector('p').textContent = 'Cette rubrique n’a pas reconnu votre connexion à l’administration (' + cause + '). Touchez « Réessayer » ; si cela continue, revenez au portail et rouvrez la rubrique.';
+  bloc.style.display = 'block';
+  if (window.signalerErreur) window.signalerErreur('Administration : rubrique intégrée refusée', cause);
+}
+
 async function deconnecterTableauDeBord(motif) {
   arreterMinuteurInactivite();
+  if (DANS_ADMINISTRATION) { accesIntegreRefuse(motif || 'déconnexion demandée'); return; }
   await sb.auth.signOut();
   effacerCodeValide();
   fermerAccesServeur();
@@ -415,6 +437,26 @@ void (async () => {
   // prêt avant d'ouvrir le tableau de bord : sur un téléphone lent, la vérification de la
   // session pouvait répondre avant la fin de son téléchargement.
   if (document.readyState === 'loading') await new Promise(r => document.addEventListener('DOMContentLoaded', r, { once: true }));
+  if (DANS_ADMINISTRATION) {
+    // la session de l'administration est déjà là (même navigateur) : quelques essais avant de
+    // conclure, et jamais l'ancien écran de connexion (19/10/2026, signalé par la propriétaire)
+    document.getElementById('bloc-login').style.display = 'none';
+    let cause = 'session introuvable';
+    for (let essai = 1; essai <= 4; essai++) {
+      try {
+        const { data: { session } } = await sb.auth.getSession();
+        if (session) {
+          const { data, error } = await sb.from('admins').select('user_id').eq('user_id', session.user.id).maybeSingle();
+          if (data) { await apresConnexionReussie(); cause = ''; break; }
+          cause = error ? 'lecture des droits : ' + error.message : 'compte absent de la liste des administrateurs';
+        }
+      } catch (e) { cause = 'erreur : ' + ((e && e.message) || e); }
+      await new Promise((r) => setTimeout(r, 700 * essai));
+    }
+    if (cause) accesIntegreRefuse(cause);
+    if (window.tdbFinVerifSession) window.tdbFinVerifSession();
+    return;
+  }
   try {
     const estAdmin = await verifierAdminTableau();
     if (estAdmin && !recuperationMdpEnCours) {

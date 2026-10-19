@@ -125,6 +125,22 @@
         '<form data-form="activer-code" class="grille" style="gap:12px"><label class="fl" for="cx-nouveau">Code à 6 chiffres affiché par l’application<input id="cx-nouveau" name="code" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" required autocomplete="one-time-code"></label>' +
         (extra ? '<div class="note erreur" role="alert">' + P.esc(extra) + '</div>' : '') +
         '<button class="btn rouge" type="submit">Activer</button></form></div>';
+    } else if (etape === 'verrou') {
+      droite = '<form data-form="deverrouiller" class="grille" style="gap:14px"><div><div class="etape">Écran verrouillé</div><h2 style="font-size:22px">Votre code à 4 chiffres</h2></div>' +
+        '<p class="doux">L’écran s’est verrouillé après 15 minutes sans activité. Saisissez le code de cet appareil.</p>' +
+        '<label class="fl" for="cx-pin">Code à 4 chiffres<input id="cx-pin" name="pin" type="password" inputmode="numeric" autocomplete="off" maxlength="4" pattern="[0-9]{4}" required></label>' +
+        (extra ? '<div class="note erreur" role="alert">' + P.esc(extra) + '</div>' : '') +
+        '<button class="btn rouge" type="submit">Déverrouiller</button>' +
+        '<button class="retour" type="button" data-action="deconnexion">Code oublié ? Se reconnecter complètement</button></form>';
+    } else if (etape === 'choisir-pin') {
+      droite = '<form data-form="choisir-pin" class="grille" style="gap:14px"><div><div class="etape">Cet appareil</div><h2 style="font-size:22px">Choisissez un code à 4 chiffres</h2></div>' +
+        '<p class="doux">Après 15 minutes sans activité, l’écran se verrouille. Ce code suffira alors pour revenir, sans l’application d’authentification. ' +
+        'Toutes les 8 heures, ou après 5 codes faux, la connexion complète sera de nouveau demandée.</p>' +
+        '<label class="fl" for="cx-pin1">Code à 4 chiffres<input id="cx-pin1" name="pin1" type="password" inputmode="numeric" autocomplete="off" maxlength="4" pattern="[0-9]{4}" required></label>' +
+        '<label class="fl" for="cx-pin2">Le même, une seconde fois<input id="cx-pin2" name="pin2" type="password" inputmode="numeric" autocomplete="off" maxlength="4" pattern="[0-9]{4}" required></label>' +
+        (extra ? '<div class="note erreur" role="alert">' + P.esc(extra) + '</div>' : '') +
+        '<button class="btn rouge" type="submit">Enregistrer le code</button>' +
+        '<button class="retour" type="button" data-action="pin-plus-tard">Plus tard</button></form>';
     } else if (etape === 'nouveau-mdp') {
       droite = '<form data-form="nouveau-mdp" class="grille" style="gap:14px"><div><div class="etape">Bienvenue</div><h2 style="font-size:22px">Choisissez votre mot de passe</h2></div>' +
         '<p class="doux">12 caractères au moins. Évitez un mot de passe déjà utilisé ailleurs.</p>' +
@@ -157,8 +173,7 @@
       if (rep.status === 403) return ecranConnexion('motdepasse', corps.error || 'Ce compte n’a pas accès au portail.');
       if (!rep.ok) return ecranConnexion('motdepasse', 'E-mail ou mot de passe incorrect.' + (corps.essaisRestants != null ? ' Essais restants : ' + corps.essaisRestants + '.' : ''));
       await P.bd(sb.auth.setSession({ access_token: corps.access_token, refresh_token: corps.refresh_token }));
-      sessionStorage.setItem('ma2m_portail_debut', String(Date.now()));
-      await demarrer();
+          await demarrer();
     } catch (e) {
       ecranConnexion('motdepasse', P.erreurTexte(e));
     }
@@ -203,6 +218,27 @@
     }
   };
   P.actions['fermer-fenetre-demarrer'] = () => { P.fenetre(''); return demarrer(); };
+  // Code à 4 chiffres de l'appareil (verrouillage après 15 minutes, supabase-portail.sql)
+  P.formulaires.deverrouiller = async (f) => {
+    try {
+      const r = await P.rpc('portail_code_appareil_verifier', { p_appareil: identifiantAppareilPortail(), p_code: String(f.get('pin')).trim() });
+      if (r.ok) return demarrer();
+      if (r.bloque) { await P.actions.deconnexion(); return ecranConnexion('motdepasse', 'Trop de codes faux : reconnectez-vous avec votre mot de passe et l’application d’authentification.'); }
+      ecranConnexion('verrou', 'Code incorrect. Essais restants : ' + r.restants + '.');
+    } catch (e) { ecranConnexion('verrou', P.erreurTexte(e)); }
+  };
+  P.formulaires['choisir-pin'] = async (f) => {
+    const a = String(f.get('pin1')).trim(), b = String(f.get('pin2')).trim();
+    if (a !== b) return ecranConnexion('choisir-pin', 'Les deux codes ne sont pas identiques.');
+    try {
+      await P.rpc('portail_code_appareil_definir', { p_appareil: identifiantAppareilPortail(), p_code: a });
+      P.message('Code enregistré pour cet appareil.');
+    } catch (e) {
+      return ecranConnexion('choisir-pin', /AUTH_RECENTE/.test(String(e && e.message)) ? 'Reconnectez-vous complètement pour choisir le code.' : P.erreurTexte(e));
+    }
+    await demarrer();
+  };
+  P.actions['pin-plus-tard'] = () => { sessionStorage.setItem('ma2m_pin_plus_tard', '1'); return demarrer(); };
   P.formulaires['nouveau-mdp'] = async (f) => {
     const m1 = String(f.get('m1')), m2 = String(f.get('m2'));
     if (m1 !== m2) return ecranConnexion('nouveau-mdp', 'Les deux mots de passe ne sont pas identiques.');
@@ -234,7 +270,8 @@
   };
   P.actions.deconnexion = async () => {
     try { await sb.auth.signOut(); } catch (e) { /* déjà déconnecté */ }
-    sessionStorage.removeItem('ma2m_portail_debut');
+    sessionStorage.removeItem('ma2m_pin_plus_tard');
+    clearTimeout(minuteurInactivite);
     P.moi = null;
     location.hash = '#/';
     ecranConnexion('motdepasse');
@@ -278,9 +315,11 @@
   async function demarrer() {
     const { data } = await sb.auth.getSession();
     if (!data.session) return ecranConnexion('motdepasse');
-    const debut = Number(sessionStorage.getItem('ma2m_portail_debut') || Date.now());
-    if (Date.now() - debut > SESSION_MAX_MS) { await P.actions.deconnexion(); return; }
-    sessionStorage.setItem('ma2m_portail_debut', String(debut));
+    const dernierCode = dernierCodeApplication(data.session);
+    if (dernierCode && Date.now() - dernierCode > SESSION_MAX_MS) {
+      await P.actions.deconnexion();
+      return ecranConnexion('motdepasse', 'Session de 8 heures terminée : reconnectez-vous.');
+    }
     const u = data.session.user;
     // lien d'invitation ou de réinitialisation : choisir son mot de passe d'abord
     if (/type=(invite|recovery)/.test(location.hash) || location.hash === '#/nouveau-mot-de-passe' ||
@@ -293,12 +332,24 @@
       ecranConnexion('inscrire-code');
       return preparerInscriptionCode();
     }
+    // écran verrouillé (15 minutes sans activité) : code à 4 chiffres, ou connexion complète
+    const pin = await P.rpc('portail_code_appareil_etat', { p_appareil: identifiantAppareilPortail() }).catch(() => null);
+    P.etat.pinDefini = !!(pin && pin.defini);
+    if (pin && pin.verrouille) {
+      if (pin.defini) return ecranConnexion('verrou');
+      await P.actions.deconnexion();
+      return ecranConnexion('motdepasse', 'Trop de codes faux : reconnectez-vous avec votre mot de passe et l’application d’authentification.');
+    }
     P.moi = await P.rpc('portail_moi');
     if (!P.moi.membre) return ecranConnexion('Compte sans accès', '<p class="doux">Ce compte n’a pas de rôle dans le portail. L’administrateur principal doit vous inviter.</p>');
     if (!P.moi.actif || !P.moi.role) return ecranConnexion('Accès coupé', '<p class="doux">Votre accès a été coupé par l’administrateur principal, ou cet appareil a été révoqué.</p>');
     const appareil = await P.rpc('portail_enregistrer_appareil', { p_appareil: identifiantAppareilPortail(), p_libelle: libelleAppareil() });
     if (!appareil.ok) return ecranConnexion('Appareil révoqué', '<p class="doux">Cet appareil n’a plus accès au portail.</p>');
     if (appareil.nouveau) alerteNouvelAppareil(appareil);
+    // juste après une connexion complète, sur un appareil sans code : proposer le code à 4 chiffres
+    if (pin && !pin.defini && dernierCode && Date.now() - dernierCode < 9 * 60 * 1000 && !sessionStorage.getItem('ma2m_pin_plus_tard')) {
+      return ecranConnexion('choisir-pin');
+    }
     surveillerInactivite();
     // une personne qui n'a droit qu'à un espace arrive directement dedans
     const permis = Object.keys(ESPACES).filter((k) => P.moi.espaces[k]);
@@ -323,20 +374,41 @@
     const nav = /Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' : /Safari\//.test(ua) ? 'Safari' : /Firefox\//.test(ua) ? 'Firefox' : 'navigateur';
     return sys + ', ' + nav + (matchMedia('(display-mode: standalone)').matches ? ' (application installée)' : '');
   }
-  let minuteurInactivite = 0;
+  let minuteurInactivite = 0, dernierSigne = 0;
   function surveillerInactivite() {
     const relancer = () => {
+      if (!P.moi) return;
       clearTimeout(minuteurInactivite);
-      minuteurInactivite = setTimeout(async () => {
-        P.message('Session verrouillée après 15 minutes sans activité.');
-        await P.actions.deconnexion();
-      }, INACTIVITE_MS);
+      // le serveur verrouille aussi de lui-même 16 minutes après le dernier signe de vie
+      if (P.etat.pinDefini && Date.now() - dernierSigne > 60000) {
+        dernierSigne = Date.now();
+        P.rpc('portail_code_appareil_activite', { p_appareil: identifiantAppareilPortail() }).catch(() => { /* réessayé au prochain geste */ });
+      }
+      minuteurInactivite = setTimeout(verrouiller, INACTIVITE_MS);
     };
     if (!P.etat.inactiviteBranchee) {
       ['pointerdown', 'keydown', 'scroll'].forEach((t) => addEventListener(t, relancer, { passive: true }));
       P.etat.inactiviteBranchee = true;
     }
     relancer();
+  }
+
+  async function verrouiller() {
+    if (!P.etat.pinDefini) {
+      P.message('Session fermée après 15 minutes sans activité.');
+      return P.actions.deconnexion();
+    }
+    await P.rpc('portail_code_appareil_verrouiller', { p_appareil: identifiantAppareilPortail() }).catch(() => { /* le serveur verrouille de lui-même */ });
+    P.fenetre('');
+    ecranConnexion('verrou');
+  }
+  // Heure (ms) du dernier code de l'application d'authentification, lue dans le jeton de connexion
+  function dernierCodeApplication(session) {
+    try {
+      const charge = JSON.parse(atob(session.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+      const t = (charge.amr || []).filter((m) => /totp/.test(m.method)).map((m) => m.timestamp);
+      return t.length ? Math.max.apply(null, t) * 1000 : 0;
+    } catch (e) { return 0; }
   }
 
   // ---------- coque et pages ----------

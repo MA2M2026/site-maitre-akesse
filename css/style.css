@@ -848,6 +848,13 @@ section { padding: 5rem 0; }
   .filtres-avances { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.2rem 1rem; }
 }
 @media (max-width: 360px) { .filtres-ligne .filtre-btn { font-size: 0.62rem; letter-spacing: 0.02em; } }
+/* Tablette (19/10/2026, signalé par la propriétaire sur la page anglaise en vertical) : les six
+   boutons tiennent sur UNE ligne, en français comme en anglais. */
+@media (min-width: 641px) and (max-width: 1100px) {
+  .filtres-ligne { flex-wrap: nowrap; column-gap: 0.7rem; }
+  .filtres-ligne .filtres { gap: 0.3rem; }
+  .filtres-ligne .filtre-btn { padding: 0.5rem 0.65rem !important; font-size: 0.78rem !important; letter-spacing: 0.02em; white-space: nowrap; }
+}
 .filtres-avances .form-champ { margin-bottom: 0; gap: 0.5rem; justify-content: flex-end; } /* cases alignées même si un libellé passe sur 2 lignes */
 .filtres-avances .form-champ label {
   font-size: 0.7rem; font-weight: 500; letter-spacing: 0.16em; color: var(--texte-doux);

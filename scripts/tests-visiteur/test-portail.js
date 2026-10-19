@@ -61,6 +61,7 @@ function donnees(role) {
     rpc: {
       portail_moi: { role, mfa: true, nom: { principal: 'Maître Akesse', site: 'Gestion du site', caisse: 'Encaissements', compta: 'Comptable' }[role], actif: true, membre: true, espaces, contacts_prives: role !== 'site' && role !== 'compta', noms_payeurs: espaces.paiements },
       portail_enregistrer_appareil: { ok: true, nouveau: false },
+      portail_code_appareil_etat: { defini: true, verrouille: false },
       portail_valider_paiement: { recu: 'REC-2026-00002', paiement: 'p1', code_espace: 'ESP-K7P4-92' },
       portail_code_espace: 'ESP-QW3R-77',
       portail_inscription_agence: { recu: 'REC-2026-00003', paiement: 'p2', code_espace: 'ESP-ZX8C-44' },
@@ -156,6 +157,13 @@ function donnees(role) {
     await p.click('[data-action="site-groupe-candidatures"][data-g="refusees"]'); await p.waitForTimeout(400);
     tc = await texte(p);
     ok(tc.includes('Paul Refusé') && !tc.includes('Kevin Diallo'), nomEcran + ' : les refusées restent consultables à part (« Refusées (archivées) »)');
+    // fiche complète d'un candidat (photos, mensurations…) : la fiche de l'ancien tableau de bord, dans l'administration
+    await p.click('[data-action="site-groupe-candidatures"][data-g="retenues"]'); await p.waitForTimeout(400);
+    const largeurStatut = await p.evaluate(() => document.querySelector('[data-change="site-statut-candidature"]').getBoundingClientRect().width);
+    ok(largeurStatut >= 140, nomEcran + ' : le menu « Statut » est assez large pour se lire (' + Math.round(largeurStatut) + ' px)');
+    await p.click('a.lien-fiche[href="#/site/fiche-candidature/c2"]'); await p.waitForSelector('iframe.cadre-rubrique', { timeout: 8000 }).catch(() => {});
+    const srcFiche = await p.evaluate(() => { const f = document.querySelector('iframe.cadre-rubrique'); return f ? f.getAttribute('src') : ''; });
+    ok(/notif=candidature&id=c2/.test(srcFiche), nomEcran + ' : « Voir la fiche complète » ouvre la fiche du candidat dans l’administration');
     // rapprochement : « Trouvé, valider » → fonction portail_valider_paiement avec la déclaration
     await p.goto(url + '#/paiements/rapprocher'); await p.waitForSelector('[data-action="paiements-trouve"]');
     ok((await texte(p)).includes('Vérifier le paiement de Awa Koné'), nomEcran + ' : la déclaration la plus ancienne est ouverte');
@@ -272,6 +280,41 @@ function donnees(role) {
     ok(n.p.url().includes('#/paiements/'), nomEcran + ' : l’encaissement arrive dans son seul espace');
     ok(!n.errs.length, nomEcran + ' : aucune erreur de page (première connexion) ' + n.errs.join(' | '));
     await n.ctx.close();
+  }
+  // Code à 4 chiffres de l'appareil (cahier : verrouillage après 15 minutes d'inactivité)
+  for (const [nomEcran, ecran] of [['téléphone', { width: 390, height: 844 }], ['ordinateur', { width: 1280, height: 900 }]]) {
+    // a) juste après la connexion complète, sur un appareil sans code : choisir le code
+    const pin = { defini: false, verrouille: false, code: null, essais: 0 };
+    const c = await ouvrir('principal', ecran, (d) => {
+      d.rpc.portail_code_appareil_etat = () => ({ defini: pin.defini, verrouille: pin.verrouille });
+      d.rpc.portail_code_appareil_definir = (x) => { pin.defini = true; pin.code = x.p_code; return null; };
+      d.rpc.portail_code_appareil_verrouiller = () => { pin.verrouille = true; return null; };
+      d.rpc.portail_code_appareil_verifier = (x) => { if (x.p_code === pin.code) { pin.verrouille = false; return { ok: true }; } pin.essais++; return { ok: false, restants: 5 - pin.essais }; };
+    });
+    await c.p.clock.install();
+    await c.p.waitForSelector('#cx-code'); await c.p.fill('#cx-code', '123456'); await c.p.click('form[data-form="code"] [type=submit]');
+    await c.p.waitForSelector('#cx-pin1', { timeout: 6000 }).catch(() => {});
+    ok(await c.p.isVisible('#cx-pin1'), nomEcran + ' : après la connexion complète, choix d’un code à 4 chiffres pour l’appareil');
+    await c.p.fill('#cx-pin1', '4826'); await c.p.fill('#cx-pin2', '4827'); await c.p.click('form[data-form="choisir-pin"] [type=submit]');
+    ok((await texte(c.p)).includes('pas identiques'), nomEcran + ' : deux codes différents refusés');
+    await c.p.fill('#cx-pin1', '4826'); await c.p.fill('#cx-pin2', '4826'); await c.p.click('form[data-form="choisir-pin"] [type=submit]');
+    await c.p.waitForSelector('.tuile', { timeout: 6000 }).catch(() => {});
+    ok(pin.code === '4826' && await c.p.isVisible('.tuile'), nomEcran + ' : code enregistré, entrée dans l’administration');
+    // b) 15 minutes sans geste : écran verrouillé, le code à 4 chiffres suffit
+    await c.p.clock.fastForward('15:30'); await c.p.waitForSelector('#cx-pin', { timeout: 6000 }).catch(() => {});
+    ok(await c.p.isVisible('#cx-pin') && pin.verrouille, nomEcran + ' : 15 minutes sans activité → écran verrouillé (serveur prévenu)');
+    ok(!(await c.p.isVisible('.tuile')), nomEcran + ' : écran verrouillé : plus rien de l’administration n’est visible');
+    await c.p.fill('#cx-pin', '0000'); await c.p.click('form[data-form="deverrouiller"] [type=submit]');
+    await c.p.waitForSelector('.note.erreur', { timeout: 4000 }).catch(() => {});
+    ok((await texte(c.p)).includes('Essais restants : 4'), nomEcran + ' : mauvais code refusé, essais restants affichés');
+    await c.p.fill('#cx-pin', '4826'); await c.p.click('form[data-form="deverrouiller"] [type=submit]');
+    await c.p.waitForSelector('.tuile', { timeout: 6000 }).catch(() => {});
+    ok(await c.p.isVisible('.tuile') && !pin.verrouille, nomEcran + ' : bon code → retour dans l’administration, sans l’application d’authentification');
+    // c) rouvrir l'application alors que l'appareil est verrouillé : écran du code d'abord
+    pin.verrouille = true; await c.p.reload(); await c.p.waitForSelector('#cx-pin', { timeout: 6000 }).catch(() => {});
+    ok(await c.p.isVisible('#cx-pin'), nomEcran + ' : application rouverte sur un appareil verrouillé → code à 4 chiffres demandé');
+    ok(!c.errs.length, nomEcran + ' : aucune erreur de page (code à 4 chiffres) ' + c.errs.join(' | '));
+    await c.ctx.close();
   }
   await b.close();
   console.log(ko ? '❌ ' + ko + ' échec(s)' : 'Tout est bon.'); process.exit(ko ? 1 : 0);

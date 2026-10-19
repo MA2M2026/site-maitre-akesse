@@ -140,7 +140,7 @@ do $$
 declare
   c text;
 begin
-  perform set_config('request.jwt.claims', json_build_object('sub', '00000000-0000-0000-0000-0000000000a1', 'role', 'authenticated', 'aal', 'aal2')::text, false);
+  perform essai_qui('00000000-0000-0000-0000-0000000000a1');
   c := generer_code_inscription((select id from casting_applications where full_name = 'Ibrahim Cissé' and source = 'direct'));
   perform set_config('request.jwt.claims', '', false);
   update essai_codes set code = c where qui = 'ibra';
@@ -486,6 +486,38 @@ update staff_profiles set role = 'site', actif = false where user_id = '00000000
 select essai(not exists (select 1 from admins where user_id = '00000000-0000-0000-0000-0000000000a2'), 'accès coupé : droits de l''ancien tableau de bord retirés');
 select essai(exists (select 1 from admins where user_id = '00000000-0000-0000-0000-0000000000a1') or not exists (select 1 from admins),
              'le compte principal n''est jamais retiré');
+
+-- Code à 4 chiffres de l'appareil (19/10/2026) : verrouillage après 15 minutes, 8 heures au plus
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a1', 'aal2', 30, 'tablette-pin-0001');
+select portail_code_appareil_definir('tablette-pin-0001', '4826');
+select essai_refuse($$select portail_code_appareil_definir('tablette-pin-0001', '1234')$$, 'code trop simple refusé');
+select essai_refuse($$select * from staff_codes_appareil$$, 'le code haché n''est lisible par personne');
+select essai((portail_code_appareil_etat('tablette-pin-0001') ->> 'defini')::boolean, 'code choisi après la connexion complète');
+select essai(portail_role() = 'principal', 'appareil actif : accès normal');
+select portail_code_appareil_verrouiller('tablette-pin-0001');
+select essai(portail_role() is null, 'appareil verrouillé : plus aucun accès aux données');
+select essai(not (portail_code_appareil_verifier('tablette-pin-0001', '1111') ->> 'ok')::boolean, 'mauvais code refusé');
+select essai(portail_role() is null, 'après un mauvais code : toujours verrouillé');
+select essai((portail_code_appareil_verifier('tablette-pin-0001', '4826') ->> 'ok')::boolean, 'bon code : déverrouillé');
+select essai(portail_role() = 'principal', 'après le bon code : accès rendu');
+reset role;
+update staff_codes_appareil set derniere_activite = now() - interval '20 minutes' where appareil = 'tablette-pin-0001';
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a1', 'aal2', 3600, 'tablette-pin-0001');
+select essai(portail_role() is null, '20 minutes sans activité : verrouillé par le serveur, même si l''écran ne l''a pas fait');
+select portail_code_appareil_verifier('tablette-pin-0001', '0001'), portail_code_appareil_verifier('tablette-pin-0001', '0002'),
+       portail_code_appareil_verifier('tablette-pin-0001', '0003'), portail_code_appareil_verifier('tablette-pin-0001', '0004');
+select essai((portail_code_appareil_verifier('tablette-pin-0001', '0005') ->> 'bloque')::boolean, '5 erreurs : code bloqué');
+select essai(not (portail_code_appareil_verifier('tablette-pin-0001', '4826') ->> 'ok')::boolean, 'code bloqué : même le bon code ne suffit plus');
+select essai(portail_role() is null, 'code bloqué : toujours aucun accès');
+select essai_qui('00000000-0000-0000-0000-0000000000a1', 'aal2', -5, 'tablette-pin-0001');
+select essai(not (portail_code_appareil_etat('tablette-pin-0001') ->> 'verrouille')::boolean and portail_role() = 'principal',
+             'connexion complète (mot de passe + code de l''application) : appareil déverrouillé');
+select essai_qui('00000000-0000-0000-0000-0000000000a1', 'aal2', 9 * 3600, 'ordinateur-sans-pin-0002');
+select essai(portail_role() is null, 'plus de 8 heures après le dernier code de l''application : session finie');
+reset role;
+select set_config('request.jwt.claims', '', false);
 
 -- Visiteur anonyme : rien
 set role anon;
