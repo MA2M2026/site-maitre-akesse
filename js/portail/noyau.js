@@ -199,10 +199,10 @@
         '<button class="btn rouge" data-action="fermer-fenetre-demarrer">Je les ai notés</button>');
     } catch (e) {
       ecranConnexion('inscrire-code', 'Code incorrect. Vérifiez l’heure du téléphone puis réessayez.');
-      preparerInscriptionCode();
+      preparerInscriptionCode().catch((e) => P.message(P.erreurTexte(e)));
     }
   };
-  P.actions['fermer-fenetre-demarrer'] = () => { P.fenetre(''); demarrer(); };
+  P.actions['fermer-fenetre-demarrer'] = () => { P.fenetre(''); return demarrer(); };
   P.formulaires['nouveau-mdp'] = async (f) => {
     const m1 = String(f.get('m1')), m2 = String(f.get('m2'));
     if (m1 !== m2) return ecranConnexion('nouveau-mdp', 'Les deux mots de passe ne sont pas identiques.');
@@ -306,7 +306,7 @@
       location.hash = '#/' + permis[0] + '/' + P.espaces[permis[0]].nav[0][0];
       return;
     }
-    afficher();
+    afficher().catch((e) => P.message(P.erreurTexte(e)));
   }
   // Alerte de connexion depuis un nouvel appareil : e-mail à la personne et à l'administrateur principal
   function alerteNouvelAppareil(a) {
@@ -430,7 +430,7 @@
     const f = P.changements[el.getAttribute('data-change')];
     if (f) Promise.resolve(f(el, e)).catch((err) => P.message(P.erreurTexte(err)));
   });
-  addEventListener('hashchange', () => { if (P.moi && P.moi.role) afficher(); });
+  addEventListener('hashchange', () => { if (P.moi && P.moi.role) afficher().catch((e) => P.message(P.erreurTexte(e))); });
 
   // ---------- application installable ----------
   addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); P.installation = e; });
