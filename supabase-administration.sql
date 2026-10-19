@@ -1097,5 +1097,147 @@ $$;
 revoke all on function mes_mensualites(), mensualite_declarer(date) from public, anon;
 grant execute on function mes_mensualites(), mensualite_declarer(date) to authenticated;
 
+-- -----------------------------------------------------------------------------------
+-- 10. Espace 3 — Comptabilité, morceau A : recettes, dépenses, trésorerie (cahier v2.4, section 6)
+-- -----------------------------------------------------------------------------------
+-- L'agence enregistre, le comptable traite. Chaque paiement validé dans l'espace 2 devient tout
+-- seul une recette (sans le nom du mannequin : le comptable ne voit que des montants). Rien ne
+-- s'efface : une écriture erronée est annulée avec un motif, et tout reste au journal d'audit.
+create table if not exists compta_comptes (
+  id uuid primary key default gen_random_uuid(),
+  nom text not null unique,
+  type text not null check (type in ('caisse', 'wave', 'banque', 'mobile_money', 'autre')),
+  solde_initial int not null default 0,
+  date_initiale date not null default current_date,
+  actif boolean not null default true,
+  cree_le timestamptz not null default now()
+);
+insert into compta_comptes (nom, type) values ('Caisse (espèces)', 'caisse'), ('Wave Business', 'wave')
+on conflict (nom) do nothing;
+
+create table if not exists compta_ecritures (
+  id uuid primary key default gen_random_uuid(),
+  sens text not null check (sens in ('recette', 'depense', 'virement')),
+  date_op date not null default current_date,
+  montant int not null check (montant > 0),
+  compte_id uuid not null references compta_comptes(id),
+  compte_dest_id uuid references compta_comptes(id),         -- virement : compte qui reçoit
+  categorie text not null,
+  libelle text not null,
+  tiers text,                                                  -- client, fournisseur, bénéficiaire
+  justificatif text,                                           -- chemin dans le stockage privé
+  source text not null default 'manuel' check (source in ('manuel', 'espace2')),
+  paiement_id uuid unique references paiements_mannequins(id),
+  annule boolean not null default false,
+  motif_annulation text,
+  cree_par uuid references auth.users(id),
+  cree_le timestamptz not null default now(),
+  check (sens <> 'virement' or (compte_dest_id is not null and compte_dest_id <> compte_id)),
+  check (not annule or coalesce(trim(motif_annulation), '') <> '')
+);
+create index if not exists compta_ecritures_date on compta_ecritures (date_op);
+
+-- Une écriture ne se modifie pas : seuls l'annulation (avec motif) et l'ajout du justificatif
+-- sont permis ; les recettes venues de l'espace 2 ne s'annulent pas d'ici
+create or replace function compta_garde_fous()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if est_ecriture_serveur() then return NEW; end if;
+  -- recette posée par compta_depuis_espace2 (déclencheur dans un déclencheur : jamais une saisie)
+  if TG_OP = 'INSERT' and pg_trigger_depth() > 1 and NEW.source = 'espace2' then return NEW; end if;
+  if TG_OP = 'INSERT' then
+    if NEW.source <> 'manuel' or NEW.paiement_id is not null then raise exception 'Les recettes de l''espace 2 arrivent toutes seules.'; end if;
+    NEW.cree_par := auth.uid();
+    return NEW;
+  end if;
+  if (to_jsonb(NEW) - 'annule' - 'motif_annulation' - 'justificatif') <> (to_jsonb(OLD) - 'annule' - 'motif_annulation' - 'justificatif') then
+    raise exception 'Une écriture ne se modifie pas : annulez-la avec un motif, puis saisissez la bonne.';
+  end if;
+  if OLD.annule and not NEW.annule then raise exception 'Une écriture annulée le reste.'; end if;
+  if NEW.annule and not OLD.annule and OLD.source = 'espace2' then
+    raise exception 'Une recette de l''espace 2 ne s''annule pas d''ici.';
+  end if;
+  return NEW;
+end;
+$$;
+drop trigger if exists compta_garde_fous on compta_ecritures;
+create trigger compta_garde_fous before insert or update on compta_ecritures for each row execute function compta_garde_fous();
+
+-- Espace 2 → comptabilité : un paiement validé (montant connu) devient une recette
+create or replace function compta_depuis_espace2()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  compte uuid;
+begin
+  if NEW.statut <> 'valide' or NEW.montant is null or NEW.mode = 'avant_systeme' then return NEW; end if;
+  if TG_OP = 'UPDATE' and OLD.statut = 'valide' then return NEW; end if;
+  select id into compte from compta_comptes where type = case when NEW.mode = 'especes' then 'caisse' else 'wave' end and actif order by cree_le limit 1;
+  if compte is null then return NEW; end if;
+  insert into compta_ecritures (sens, date_op, montant, compte_id, categorie, libelle, source, paiement_id)
+  values ('recette', coalesce(NEW.valide_le, now())::date, NEW.montant, compte,
+          case when NEW.objet = 'inscription' then 'inscription' else 'formation' end,
+          case when NEW.objet = 'inscription' then 'Droit d''inscription d''un mannequin'
+               else 'Mensualité de formation · ' || to_char(NEW.mois, 'MM/YYYY') end,
+          'espace2', NEW.id)
+  on conflict (paiement_id) do nothing;
+  return NEW;
+end;
+$$;
+revoke all on function compta_depuis_espace2() from public, anon, authenticated;
+drop trigger if exists compta_depuis_espace2 on paiements_mannequins;
+create trigger compta_depuis_espace2 after insert or update of statut on paiements_mannequins
+  for each row execute function compta_depuis_espace2();
+-- paiements déjà validés avant cette étape : repris une fois
+insert into compta_ecritures (sens, date_op, montant, compte_id, categorie, libelle, source, paiement_id)
+select 'recette', coalesce(p.valide_le, p.declare_le)::date, p.montant,
+       (select id from compta_comptes where type = case when p.mode = 'especes' then 'caisse' else 'wave' end order by cree_le limit 1),
+       case when p.objet = 'inscription' then 'inscription' else 'formation' end,
+       case when p.objet = 'inscription' then 'Droit d''inscription d''un mannequin' else 'Mensualité de formation · ' || to_char(p.mois, 'MM/YYYY') end,
+       'espace2', p.id
+from paiements_mannequins p
+where p.statut = 'valide' and p.montant is not null and p.mode <> 'avant_systeme'
+on conflict (paiement_id) do nothing;
+
+-- Soldes de trésorerie : solde de départ + recettes − dépenses ± virements (hors annulées)
+create or replace function compta_soldes()
+returns table (compte_id uuid, nom text, type text, solde bigint) language sql stable security definer set search_path = public as $$
+  select c.id, c.nom, c.type, c.solde_initial
+    + coalesce((select sum(case when e.sens = 'recette' then e.montant when e.sens = 'depense' then -e.montant else -e.montant end)
+                from compta_ecritures e where e.compte_id = c.id and not e.annule and e.date_op >= c.date_initiale), 0)
+    + coalesce((select sum(e.montant) from compta_ecritures e where e.compte_dest_id = c.id and e.sens = 'virement' and not e.annule and e.date_op >= c.date_initiale), 0)
+  from compta_comptes c where portail_peut('compta') order by c.cree_le;
+$$;
+revoke all on function compta_soldes() from public, anon;
+grant execute on function compta_soldes() to authenticated;
+
+alter table compta_comptes enable row level security;
+alter table compta_ecritures enable row level security;
+revoke all on compta_comptes, compta_ecritures from anon;
+revoke delete, truncate on compta_comptes, compta_ecritures from authenticated;
+grant select, insert, update on compta_comptes, compta_ecritures to authenticated;
+drop policy if exists compta_comptes_acces on compta_comptes;
+create policy compta_comptes_acces on compta_comptes for all using (portail_peut('compta')) with check (portail_peut('compta'));
+drop policy if exists compta_ecritures_acces on compta_ecritures;
+create policy compta_ecritures_acces on compta_ecritures for all using (portail_peut('compta')) with check (portail_peut('compta'));
+do $$
+declare
+  t text;
+begin
+  foreach t in array array['compta_comptes', 'compta_ecritures']
+  loop
+    execute format('drop trigger if exists audit_%s on %I', t, t);
+    execute format('create trigger audit_%s after insert or update or delete on %I for each row execute function audit_ecriture()', t, t);
+  end loop;
+end $$;
+
+-- Justificatifs (photo ou PDF) : stockage privé, espace 3 seulement
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('compta-justificatifs', 'compta-justificatifs', false, 10485760, array['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'application/pdf'])
+on conflict (id) do update set public = false, file_size_limit = excluded.file_size_limit, allowed_mime_types = excluded.allowed_mime_types;
+drop policy if exists "Justificatifs : espace 3 lit" on storage.objects;
+create policy "Justificatifs : espace 3 lit" on storage.objects for select using (bucket_id = 'compta-justificatifs' and portail_peut('compta'));
+drop policy if exists "Justificatifs : espace 3 dépose" on storage.objects;
+create policy "Justificatifs : espace 3 dépose" on storage.objects for insert with check (bucket_id = 'compta-justificatifs' and portail_peut('compta'));
+
 NOTIFY pgrst, 'reload schema';
-select 'Administration — étape 1, espace 1 et espace 2 (registre, paiements, inscription, code de l''espace, mensualités) en place' as resultat;
+select 'Administration — étape 1, espaces 1 et 2, comptabilité (recettes, dépenses, trésorerie) en place' as resultat;

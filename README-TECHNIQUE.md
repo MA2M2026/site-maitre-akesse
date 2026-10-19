@@ -7,8 +7,8 @@
 > `admin/` (page, manifeste `id: /admin/`, service worker limité à /admin/), `css/portail.css`,
 > `js/portail/noyau.js` (connexion mot de passe + code TOTP, code à 4 chiffres par appareil,
 > verrouillage 15 min, 8 h max, menu « ☰ Menu » < 860 px), `js/portail/securite.js` (comptes,
-> délégations, appareils, journal), `js/portail/espaces-en-construction.js` (les 3 tuiles, en
-> attendant les espaces), `api/portail.js` (invitations, codes de secours, « Créer un compte
+> délégations, appareils, journal), `js/portail/espace-compta.js` (espace 3,
+> comptabilité), `api/portail.js` (invitations, codes de secours, « Créer un compte
 > admin » de l'ancien tableau de bord via `api/_creer-admin.js` : 11 fonctions au plus).
 > Base : `supabase-administration.sql` (comptes, appareils, codes, journal ; rejouable, n'efface
 > rien), essais `bash scripts/base-essai/lancer.sh` ; essai visiteur `test-administration.js`.
@@ -63,6 +63,16 @@
 > clé, rien ne part et c'est noté au journal). Textes communs : `js/messages-mensualites.js`
 > (navigateur + serveur). Mannequin : `mes-paiements.html` (`mes_mensualites`, 24 mois,
 > `mensualite_declarer`). Fiche du registre : mensualité reçue par l'agence (Wave hors site, espèces).
+>
+> **Espace 3, morceau A — recettes, dépenses, trésorerie (cahier v2.4 §6)** : `js/portail/espace-compta.js`
+> (tableau du mois, recettes, dépenses avec justificatif, trésorerie). Base, section 10 :
+> `compta_comptes` (Caisse et Wave créés d'office, solde de départ à une date), `compta_ecritures`
+> (recette / dépense / virement ; rien ne s'efface ni ne se modifie : annulation avec motif, seul le
+> justificatif s'ajoute après coup — déclencheur `compta_garde_fous`), `compta_soldes()`. Un paiement
+> validé dans l'espace 2 devient tout seul une recette sans nom de mannequin (déclencheur
+> `compta_depuis_espace2`, une seule fois par paiement ; « avant le nouveau système » exclu).
+> Justificatifs : stockage privé `compta-justificatifs` (photo ou PDF, 10 Mo), lus par lien
+> temporaire de 5 minutes. Droits : `portail_peut('compta')`. Essai visiteur : `test-comptabilite.js`.
 >
 > Codes de secours : affichés à la première activation de la double authentification, et
 > refaits à la demande dans Sécurité › « Mes codes de secours » (code récent demandé ; les

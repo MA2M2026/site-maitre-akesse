@@ -33,13 +33,6 @@
   P.mois = (d) => { const s = String(d).slice(0, 7).split('-'); return MOIS[Number(s[1]) - 1] + ' ' + s[0]; };
   P.moisCourant = () => new Date().toLocaleDateString('fr-CA', { timeZone: 'Africa/Abidjan' }).slice(0, 7) + '-01';
   P.aujourdhui = () => new Date().toLocaleDateString('fr-CA', { timeZone: 'Africa/Abidjan' });
-  P.age = (naissance) => {
-    if (!naissance) return null;
-    const p = String(naissance).split('-').map(Number), t = new Date();
-    let a = t.getFullYear() - p[0];
-    if (t.getMonth() + 1 < p[1] || (t.getMonth() + 1 === p[1] && t.getDate() < p[2])) a--;
-    return a;
-  };
   P.pastille = (texte, ton) => '<span class="pastille ' + (ton || 'neutre') + '">' + P.esc(texte) + '</span>';
   P.chiffre = (libelle, valeur, couleur) => '<div class="carte chiffre"><div class="l">' + P.esc(libelle) + '</div><div class="v ' + (couleur || '') + '">' + valeur + '</div></div>';
   P.barre = (libelle, valeur, max, rouge, texte) => '<div class="barre"><div class="t"><span>' + P.esc(libelle) + '</span><span>' + (texte || P.fcfa(valeur)) +

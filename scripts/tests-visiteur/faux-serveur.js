@@ -37,6 +37,12 @@ function brancher(page, donnees, journal) {
         return json({ access_token: jeton, token_type: 'bearer', expires_in: 36000, expires_at: Math.floor(Date.now() / 1000) + 36000, refresh_token: 'faux', user }); }
       if (url.pathname.startsWith('/auth/v1/user')) return json(user);
       if (url.pathname.startsWith('/auth/v1/')) return json({});
+      // stockage privé : dépôt d'un fichier (noté au journal), lien de lecture temporaire
+      if (url.pathname.startsWith('/storage/v1/object/sign/')) return json({ signedURL: '/object/sign/' + url.pathname.slice(25) + '?token=essai' });
+      if (url.pathname.startsWith('/storage/v1/object/') && m === 'POST') {
+        journal.push(['STOCKAGE', url.pathname.slice(19), req.headers()['content-type'] || '']);
+        return json({ Key: url.pathname.slice(19), Id: 'f-' + journal.length });
+      }
       if (url.pathname.startsWith('/rest/v1/rpc/')) {
         const nom = url.pathname.split('/').pop();
         journal.push(['rpc', nom, req.postData()]);
@@ -55,7 +61,12 @@ function brancher(page, donnees, journal) {
             if (donnees.memoriser) (donnees.tables[table] = donnees.tables[table] || []).push(...cree);
             return json(cree, 201);
           }
-          if (m === 'PATCH') { const maj = JSON.parse(req.postData() || '{}'); (donnees.tables[table] || []).forEach(l => { let ok = true; for (const [k, v] of url.searchParams) if (/^eq\./.test(v) && String(l[k]) !== v.slice(3)) ok = false; if (ok) Object.assign(l, maj); }); }
+          if (m === 'PATCH') {
+            const maj = JSON.parse(req.postData() || '{}'), touchees = [];
+            (donnees.tables[table] || []).forEach(l => { let ok = true; for (const [k, v] of url.searchParams) if (/^eq\./.test(v) && String(l[k]) !== v.slice(3)) ok = false; if (ok) { Object.assign(l, maj); touchees.push(l); } });
+            // update(…).select() : la vraie base renvoie les lignes modifiées (aucune si refusé)
+            if (/return=representation/.test(req.headers()['prefer'] || '')) return json(touchees);
+          }
           return route.fulfill({ status: 204, body: '' });
         }
         let lignes = (donnees.tables[table] || []).slice();

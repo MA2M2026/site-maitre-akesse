@@ -299,6 +299,8 @@ reset role;
 select set_config('request.jwt.claims', '{"role":"service_role"}', false);
 -- YAO (d2) a son mois en cours payé (inscription validée) → pas de relance
 select essai(json_array_length(mensualites_relances(3)) = 0, 'relance du 3 : pas pour qui a déjà payé');
+-- (nettoyage d'essai uniquement : en vrai, un paiement ne s'efface jamais)
+delete from compta_ecritures where paiement_id in (select id from paiements_mannequins where mannequin_id = '00000000-0000-0000-0000-0000000000d2' and objet = 'mensualite');
 delete from paiements_mannequins where mannequin_id = '00000000-0000-0000-0000-0000000000d2' and objet = 'mensualite';
 select essai(json_array_length(mensualites_relances(3)) = 1, 'relance du 3 : appelé et pas encore payé → relancé');
 select essai((mensualites_relances(3) -> 0)::jsonb ? 'parent_telephone', 'relance : contacts du parent transmis (mineur → parent)');
@@ -321,6 +323,32 @@ update paiements_mannequins set statut = 'valide';  -- (refusé en silence par l
 reset role;
 select set_config('request.jwt.claims', '', false);
 select essai((select statut from paiements_mannequins where mannequin_id = '00000000-0000-0000-0000-0000000000d2' and objet = 'mensualite') = 'declare', 'le mois reste à valider par l''agence');
+
+-- Comptabilité, morceau A (cahier v2.4, section 6)
+select essai((select count(*) from compta_ecritures where source = 'espace2') >= 2, 'paiements validés de l''espace 2 repris en recettes');
+select essai(not exists (select 1 from compta_ecritures where libelle ~ 'YAO|KONÉ|BINTOU'), 'recettes sans nom de mannequin (le comptable ne voit que des montants)');
+set role authenticated;
+-- (connexion après la révocation de son téléphone, plus haut)
+select essai_qui('00000000-0000-0000-0000-0000000000a4', 'aal2', -5, 'ordinateur-bureau-0003');
+select essai((select count(*) from compta_comptes) = 2, 'comptable : comptes Caisse et Wave');
+insert into compta_ecritures (sens, montant, compte_id, categorie, libelle, tiers)
+values ('depense', 50000, (select id from compta_comptes where type = 'caisse'), 'loyer', 'Loyer octobre', 'Propriétaire');
+insert into compta_ecritures (sens, montant, compte_id, compte_dest_id, categorie, libelle)
+values ('virement', 20000, (select id from compta_comptes where type = 'wave'), (select id from compta_comptes where type = 'caisse'), 'virement', 'Retrait Wave → caisse');
+select essai((select solde from compta_soldes() where type = 'caisse') =
+             coalesce((select sum(montant) from compta_ecritures where sens = 'recette' and compte_id = (select id from compta_comptes where type = 'caisse')), 0) - 50000 + 20000,
+             'solde de la caisse : recettes − dépenses + virements');
+select essai_refuse($$update compta_ecritures set montant = 1 where libelle = 'Loyer octobre'$$, 'une écriture ne se modifie pas');
+select essai_refuse($$update compta_ecritures set annule = true where libelle = 'Loyer octobre'$$, 'annulation sans motif refusée');
+update compta_ecritures set annule = true, motif_annulation = 'Saisi deux fois' where libelle = 'Loyer octobre';
+select essai((select annule from compta_ecritures where libelle = 'Loyer octobre'), 'annulation avec motif');
+select essai_refuse($$update compta_ecritures set annule = true, motif_annulation = 'x' where source = 'espace2'$$, 'une recette de l''espace 2 ne s''annule pas d''ici');
+select essai_refuse($$insert into compta_ecritures (sens, montant, compte_id, categorie, libelle, source) values ('recette', 1, (select id from compta_comptes limit 1), 'x', 'x', 'espace2')$$, 'on ne fabrique pas une recette « espace 2 » à la main');
+select essai_refuse($$delete from compta_ecritures$$, 'une écriture ne s''efface pas');
+select essai_qui('00000000-0000-0000-0000-0000000000a3');
+select essai((select count(*) from compta_ecritures) = 0, 'encaissements : pas d''accès à la comptabilité');
+reset role;
+select set_config('request.jwt.claims', '', false);
 
 -- Visiteur anonyme : rien
 set role anon;

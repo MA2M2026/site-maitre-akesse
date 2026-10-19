@@ -33,12 +33,16 @@ function donnees(role) {
         { id: 'pi3', mannequin_id: 'r3', objet: 'inscription', mois: null, montant: 15000, mode: 'wave', statut: 'declare', declare_le: '2026-10-19T09:00:00Z', mannequin: { full_name: 'YAO KOUASSI', telephone: '0505050505' } },
         { id: 'pm3', mannequin_id: 'r3', objet: 'mensualite', mois: '2026-10-01', montant: 10000, mode: 'wave', statut: 'declare', declare_le: '2026-10-19T09:00:00Z', mannequin: { full_name: 'YAO KOUASSI', telephone: '0505050505' } },
         { id: 'pi4', mannequin_id: 'r4', objet: 'inscription', mois: null, montant: 15000, mode: 'wave', statut: 'valide', declare_le: '2026-10-15T09:00:00Z', valide_le: '2026-10-15T10:00:00Z' }],
+      // Espace 3 (le parcours complet est dans test-comptabilite.js)
+      compta_comptes: [{ id: 'c1', nom: 'Caisse (espèces)', type: 'caisse', solde_initial: 0, date_initiale: '2026-10-01', actif: true }],
+      compta_ecritures: [],
       audit_log: [{ id: 1, acteur_nom: 'Maître Akesse', acteur_role: 'principal', action: 'Compte créé', objet: 'staff_profiles', cree_le: new Date().toISOString() }]
     },
     rpc: {
       portail_moi: { role, mfa: true, nom: { principal: 'Maître Akesse', site: 'Gestion du site', caisse: 'Encaissements', compta: 'Comptable' }[role], actif: true, membre: true, espaces, contacts_prives: role !== 'site' && role !== 'compta', noms_payeurs: espaces.paiements },
       portail_enregistrer_appareil: { ok: true, nouveau: false },
-      portail_code_appareil_etat: { defini: true, verrouille: false }
+      portail_code_appareil_etat: { defini: true, verrouille: false },
+      compta_soldes: [{ compte_id: 'c1', nom: 'Caisse (espèces)', type: 'caisse', solde: 0 }]
     },
     api: { '/api/portail': (corps) => corps.action === 'codes_secours_creer' ? { codes: ['AAAAA-BBBBB', 'CCCCC-DDDDD', 'EEEEE-FFFFF', 'GGGGG-HHHHH', 'JJJJJ-KKKKK', 'LLLLL-MMMMM', 'NNNNN-PPPPP', 'QQQQQ-RRRRR'] } : { ok: true } }
   };
@@ -80,7 +84,7 @@ function donnees(role) {
     // menu : à gauche sur ordinateur ; sur téléphone et tablette en vertical, bouton « ☰ Menu » qui fait glisser le menu
     for (const largeur of nomEcran === 'téléphone' ? [390, 768] : [1280]) {
       await p.setViewportSize({ width: largeur, height: ecran.height });
-      await p.goto(url + '#/compta/accueil'); await p.waitForSelector('.lateral .nav', { state: 'attached' });
+      await p.goto(url + '#/compta/mois'); await p.waitForSelector('.lateral .nav', { state: 'attached' });
       const vu = () => p.evaluate(() => { const r = document.querySelector('.lateral').getBoundingClientRect(); return getComputedStyle(document.querySelector('.lateral')).visibility === 'visible' && r.right > 50; });
       if (largeur >= 1000) {
         ok(await vu() && !(await p.isVisible('[data-action="menu-ouvrir"]')), nomEcran + ' : menu toujours visible à gauche, sans bouton « Menu »');
@@ -89,8 +93,8 @@ function donnees(role) {
         await p.click('[data-action="menu-ouvrir"]'); await p.waitForTimeout(400);
         const r = await p.evaluate(() => document.querySelector('.lateral').getBoundingClientRect().left);
         ok(await vu() && r === 0, largeur + ' px : « ☰ Menu » fait glisser le menu depuis la gauche');
-        await p.click('.lateral .nav[href="#/compta/accueil"]'); await p.waitForTimeout(500);
-        ok(!(await vu()) && (await p.evaluate(() => location.hash)) === '#/compta/accueil', largeur + ' px : choisir une rubrique l’ouvre et referme le menu');
+        await p.click('.lateral .nav[href="#/compta/mois"]'); await p.waitForTimeout(500);
+        ok(!(await vu()) && (await p.evaluate(() => location.hash)) === '#/compta/mois', largeur + ' px : choisir une rubrique l’ouvre et referme le menu');
         await p.click('[data-action="menu-ouvrir"]'); await p.waitForTimeout(400);
         await p.mouse.click(largeur - 10, 400); await p.waitForTimeout(400);
         ok(!(await vu()), largeur + ' px : toucher à côté du menu le referme');
@@ -98,7 +102,7 @@ function donnees(role) {
     }
     await p.setViewportSize(ecran);
     // chaque espace et chaque page de la sécurité s'ouvre
-    const pages = { paiements: ['a-valider', 'mensualites', 'registre', 'ajouter'], compta: ['accueil'], securite: ['comptes', 'delegations', 'appareils', 'journal', 'codes'] };
+    const pages = { paiements: ['a-valider', 'mensualites', 'registre', 'ajouter'], compta: ['mois', 'recettes', 'depenses', 'tresorerie'], securite: ['comptes', 'delegations', 'appareils', 'journal', 'codes'] };
     for (const [esp, liste] of Object.entries(pages)) {
       for (const pg of liste) {
         await p.goto(url + '#/' + esp + '/' + pg); await p.waitForSelector('.contenu h1, .contenu .carte h2', { timeout: 6000 }).catch(() => {});
@@ -107,7 +111,6 @@ function donnees(role) {
         const boutons = (await p.evaluate(verifierBoutons)).map((x) => x.texte + ' (' + x.element + ', fond ' + x.fond + ', texte ' + x.couleur + ', coins ' + x.rayon + ')');
         ok(!boutons.length, nomEcran + ' : ' + esp + '/' + pg + ' boutons au modèle rouge ' + boutons.join(' | '));
         ok(!t.includes('Impossible d’afficher') && !t.includes('Accès refusé'), nomEcran + ' : ' + esp + '/' + pg + ' s’affiche');
-        if (esp === 'compta') ok(t.includes('En construction'), nomEcran + ' : ' + esp + ' annonce ce qui y viendra (en construction)');
         mal = await pales(p); ok(!mal.length, nomEcran + ' : ' + esp + '/' + pg + ' lisible ' + mal.join(' | '));
       }
     }
