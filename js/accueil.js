@@ -227,7 +227,9 @@ async function chargerMotResponsable() {
 
   if (data.photo_url) {
     const photo = document.getElementById('mot-resp-photo');
+    // le secours des photos peut remplacer l'adresse après une erreur : on réaffiche si elle finit par arriver
     photo.onerror = () => { photo.style.display = 'none'; };
+    photo.onload = () => { photo.style.display = 'block'; };
     photo.src = urlLegere(data.photo_url);
     photo.alt = data.nom || 'Maître Akesse';
     photo.style.display = 'block';

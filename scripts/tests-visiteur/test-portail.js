@@ -106,6 +106,26 @@ function donnees(role) {
     ok(libelles.join('|') === 'Administration du site|Suivi des paiements et des inscriptions|Comptabilité', nomEcran + ' : libellés exacts des trois tuiles');
     let mal = await pales(p); ok(!mal.length, nomEcran + ' : écran des tuiles lisible ' + mal.join(' | '));
     await capture(p, 'tuiles-' + ecran.width);
+    // menu : à gauche sur ordinateur ; sur téléphone et tablette en vertical, bouton « ☰ Menu » qui fait glisser le menu
+    for (const largeur of nomEcran === 'téléphone' ? [390, 768] : [1280]) {
+      await p.setViewportSize({ width: largeur, height: ecran.height });
+      await p.goto(url + '#/site/vue'); await p.waitForSelector('.lateral .nav', { state: 'attached' });
+      const vu = () => p.evaluate(() => { const r = document.querySelector('.lateral').getBoundingClientRect(); return getComputedStyle(document.querySelector('.lateral')).visibility === 'visible' && r.right > 50; });
+      if (largeur >= 1000) {
+        ok(await vu() && !(await p.isVisible('[data-action="menu-ouvrir"]')), nomEcran + ' : menu toujours visible à gauche, sans bouton « Menu »');
+      } else {
+        ok(!(await vu()) && await p.isVisible('[data-action="menu-ouvrir"]'), largeur + ' px : menu caché, bouton « ☰ Menu » en haut');
+        await p.click('[data-action="menu-ouvrir"]'); await p.waitForTimeout(400);
+        const r = await p.evaluate(() => document.querySelector('.lateral').getBoundingClientRect().left);
+        ok(await vu() && r === 0, largeur + ' px : « ☰ Menu » fait glisser le menu depuis la gauche');
+        await p.click('.lateral .nav[href="#/site/candidatures"]'); await p.waitForTimeout(500);
+        ok(!(await vu()) && (await p.evaluate(() => location.hash)) === '#/site/candidatures', largeur + ' px : choisir une rubrique l’ouvre et referme le menu');
+        await p.click('[data-action="menu-ouvrir"]'); await p.waitForTimeout(400);
+        await p.mouse.click(largeur - 10, 400); await p.waitForTimeout(400);
+        ok(!(await vu()), largeur + ' px : toucher à côté du menu le referme');
+      }
+    }
+    await p.setViewportSize(ecran);
     // chaque page de chaque espace
     const pages = { site: ['vue', 'mannequins', 'candidatures', 'recruteurs', 'dossiers', 'codes', 'outils'],
       paiements: ['mois', 'rapprocher', 'registre', 'fiche/m1', 'messages', 'matrice', 'recap', 'parametres'],

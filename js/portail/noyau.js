@@ -346,7 +346,11 @@
     const nav = esp.nav.filter((n) => !n[2] || n[2]()).map((n) => !n[0] ? '<div class="titre-menu sous-titre-menu">' + P.esc(n[1]) + '</div>' :
       '<a class="nav' + (n[0] === page ? ' actif' : '') + '" href="#/' + module + '/' + n[0] + '"' + (n[0] === page ? ' aria-current="page"' : '') + '><span>' + P.esc(n[1]) + '</span>' +
       (esp.compteur && esp.compteur[n[0]] ? '<span class="compteur">' + esp.compteur[n[0]] + '</span>' : '') + '</a>').join('');
-    return '<div class="coque"><nav class="lateral" aria-label="' + P.esc(ESPACES[module]) + '"><div class="marque">M A 2 M<small>Maître Akesse Model Management</small></div>' +
+    // écran étroit (téléphone, tablette en vertical) : barre « ☰ Menu », le menu glisse depuis la gauche
+    return '<div class="coque"><div class="barre-menu"><span class="marque">M A 2 M</span>' +
+      '<button class="btn petit clair" data-action="menu-ouvrir" aria-controls="menu-lateral" aria-expanded="false">☰ Menu</button></div>' +
+      '<div class="voile-menu" data-action="menu-fermer"></div>' +
+      '<nav class="lateral" id="menu-lateral" aria-label="' + P.esc(ESPACES[module]) + '"><div class="marque">M A 2 M<small>Maître Akesse Model Management</small></div>' +
       '<div class="qui"><b>' + P.esc(P.moi.nom) + '</b>' + P.esc(ROLES[P.moi.role]) + '</div>' +
       '<div class="titre-menu">' + P.esc(ESPACES[module]) + '</div>' + nav +
       '<div class="lateral-pied"><a class="btn petit clair" href="#/">Retour au portail</a><button class="btn petit clair" data-action="deconnexion">Déconnexion</button></div></nav>' +
@@ -383,6 +387,7 @@
     const morceaux = location.hash.replace(/^#\/?/, '').split('/');
     const module = morceaux[0], page = morceaux[1];
     const n = ++rendu;
+    document.documentElement.classList.remove('menu-ouvert'); // une rubrique choisie referme le menu
     if (!module) { app().innerHTML = vuePortail(); return; }
     const esp = P.espaces[module];
     if (!esp) { location.hash = '#/'; return; }
@@ -405,6 +410,17 @@
   P.afficher = afficher;
   P.actions.recharger = () => afficher();
   P.actions['fermer-fenetre'] = () => P.fenetre('');
+  function menuOuvert(oui) {
+    document.documentElement.classList.toggle('menu-ouvert', oui);
+    const b = document.querySelector('[data-action="menu-ouvrir"]');
+    if (b) b.setAttribute('aria-expanded', String(oui));
+    if (oui) { const actif = document.querySelector('.lateral .nav.actif, .lateral .nav'); if (actif) actif.focus(); }
+  }
+  P.actions['menu-ouvrir'] = () => menuOuvert(true);
+  P.actions['menu-fermer'] = () => menuOuvert(false);
+  addEventListener('keydown', (e) => { if (e.key === 'Escape' && document.documentElement.classList.contains('menu-ouvert')) menuOuvert(false); });
+  // la rubrique déjà ouverte ne change pas l'adresse : on referme quand même le menu
+  document.addEventListener('click', (e) => { if (e.target.closest('.lateral a')) menuOuvert(false); });
 
   // ---------- évènements (un seul écouteur par type) ----------
   document.addEventListener('click', (e) => {
