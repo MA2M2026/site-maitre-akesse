@@ -15,7 +15,7 @@ const pages = [
   'index', 'qui-sommes-nous', 'mannequins', 'mannequin.html?id=a1', 'actualites', 'evenements', 'agenda', 'parcours',
   'partenaires', 'services', 'selection', 'contact', 'integrer-agence', 'candidature', 'inscription-mannequin',
   'mentions-legales', 'politique-confidentialite'
-].flatMap(n => [n, 'en/' + n]).concat(['espace-mannequin', 'reinitialiser-mot-de-passe', 'inscription-nouveau', '404',
+].flatMap(n => [n, 'en/' + n]).concat(['espace-mannequin', 'reinitialiser-mot-de-passe', '404',
   'marketplace/index', 'marketplace/cgv', 'marketplace/suivi', 'marketplace/commande'])
   .map(n => (n.includes('.html') ? n : n + '.html'));
 module.exports = { tables, rpc, pages };

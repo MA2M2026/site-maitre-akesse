@@ -95,7 +95,7 @@ function toast(msg, isErr){
 // bord, sans jamais proposer de changer le mot de passe.
 let recuperationMdpEnCours = urlIndiqueRecuperationMdp();
 
-const WORDMARK_HTML = '<a class="wordmark" href="index.html"><img src="assets/logo-header.png" alt="Maître Akesse Model Management"></a>';
+const WORDMARK_HTML = '<a class="wordmark" href="index.html"><img src="assets/logo-header-clair.png" alt="Maître Akesse Model Management"></a>';
 
 function viewAuthGate(){
   return '<div class="top">'+WORDMARK_HTML+'</div>' +

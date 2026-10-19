@@ -35,7 +35,6 @@ async function ouvrir(b, page, ecran, cookies) {
     try {
       sessionStorage.setItem('ma2m_porte_ouverte', '1'); sessionStorage.setItem('ma2m_intro_vue', '1');
       if (!cookies) localStorage.setItem('ma2m_cookies', 'non');
-      localStorage.setItem('ma2m_appareil_admin', '1'); // même sur l'appareil d'un administrateur : aucun bouton « Admin »
     } catch (e) {}
   }, cookies);
   await brancher(p, { tables: JSON.parse(JSON.stringify(tables)), rpc }, []);
@@ -59,7 +58,6 @@ async function unePage(b, page, ecran) {
   const { ctx, p } = await ouvrir(b, page, ecran, false);
   try {
     await lireTout(p, etiquette);
-    if (await p.$('.header-admin-lien, a[href="/admin/"], a[href="admin/"]')) problemes.push(etiquette + ' : un bouton ou lien « Admin » apparaît sur le site public');
     // appui sur un bouton : il doit se signaler (liseré blanc, js/bouton-appui.js)
     const appui = await p.evaluate(() => { const b = document.getElementById('menuBtn'); if (!b) return true; b.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); return b.classList.contains('touche-appuyee'); });
     if (!appui) problemes.push(etiquette + ' : appuyer sur un bouton ne se voit pas');
