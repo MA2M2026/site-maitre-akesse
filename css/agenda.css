@@ -93,9 +93,9 @@ a.agenda-puce:hover, a.agenda-puce:focus-visible { border-color: var(--titre-cla
 .cal-jour:hover, .cal-jour:focus-visible { background: rgba(255,255,255,0.06); outline: none; }
 /* Jours estompés par une couleur plus douce plutôt que par la transparence : contraste
    ≥ 4,5:1 sur le fond noir (Lighthouse, 12/10/2026). */
-.cal-jour.passe .cal-num { color: #a39d97; }
-.cal-jour.passe.week-end .cal-num { color: #c9727f; }
-.cal-jour.hors-mois .cal-num, .cal-jour.hors-mois.week-end .cal-num { color: #8a8580; }
+.cal-jour.passe .cal-num { color: var(--encre-douce); }
+.cal-jour.passe.week-end .cal-num { color: var(--rouge-ma2m-texte); }
+.cal-jour.hors-mois .cal-num, .cal-jour.hors-mois.week-end .cal-num { color: var(--encre-douce); font-style: italic; }
 .cal-num { font-family: var(--texte); font-size: 1.55rem; font-weight: 400; line-height: 1; color: var(--titre-clair); align-self: center; padding: 0.35rem 0.5rem; border-radius: 10px; min-width: 2.6rem; text-align: center; margin-bottom: 0.35rem; }
 .cal-jour.week-end .cal-num { color: var(--bordeaux-clair); }
 .cal-jour.aujourdhui .cal-num { background: var(--bordeaux); color: #fff; opacity: 1; }

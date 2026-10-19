@@ -1,7 +1,8 @@
 // Animation « faisceau de lumière » du logo MA2M (modèle 2 choisi par la propriétaire,
 // 04/10/2026), partagée par l'intro de l'accueil (js/intro-faisceau.js) et la couverture
 // en haut des pages (retirée le 11/10/2026, seule l'intro de l'accueil l'utilise encore).
-// Dans le noir, une ligne de lumière naît au centre ; un rayon balaie et révèle
+// Sur fond clair (charte claire, 18/10/2026 : « plus de noir »), une ligne rouge naît au
+// centre ; un rayon rouge balaie et révèle
 // « MAÎTRE AKESSE » ; « MODEL MANAGEMENT » apparaît, le trait rouge se dessine depuis le
 // centre, le triangle rouge tombe à sa place, puis un reflet traverse le logo.
 // Dessiné en direct dans un <canvas> : aucune vidéo à télécharger.
@@ -12,7 +13,7 @@ window.ma2mFaisceau = function (cv, opts) {
   var prefixe = /\/en\//.test(location.pathname) ? '../' : '';
   var logo = new Image();
   var pret = new Promise(function (ok, ko) { logo.onload = ok; logo.onerror = ko; });
-  logo.src = prefixe + 'assets/logo-intro.png';
+  logo.src = prefixe + 'assets/logo-intro-clair.png'; // logo noir (même géométrie que logo-intro.png)
 
   // Bandes horizontales du logo (mesurées sur assets/logo-intro.png, 1496 × 400)
   var B = { tri: [0, 77], titre: [77, 270], sous: [290, 350], trait: [355, 400] };
@@ -49,7 +50,7 @@ window.ma2mFaisceau = function (cv, opts) {
       var vy = 1 - Math.pow(Math.abs(y / th * 2 - 1), 2);
       for (var x = 0; x < tw; x++) {
         var u = x / tw, h = u < .9 ? Math.pow(u / .9, 2.2) : 1 - (u - .9) / .1;
-        var o = (y * tw + x) * 4; d[o] = 255; d[o + 1] = 235; d[o + 2] = 230; d[o + 3] = 255 * .35 * h * vy;
+        var o = (y * tw + x) * 4; d[o] = 200; d[o + 1] = 16; d[o + 2] = 46; d[o + 3] = 255 * .22 * h * vy;
       }
     }
     fc.putImageData(img, 0, 0);
@@ -64,7 +65,7 @@ window.ma2mFaisceau = function (cv, opts) {
   function logoNet(alpha, lueur) {
     ctx.save(); ctx.globalAlpha = alpha;
     ctx.translate(OX, OY); ctx.scale(S, S); ctx.translate(-LW / 2, -LH / 2);
-    if (lueur > 0) { ctx.shadowColor = 'rgba(255,220,210,' + lueur + ')'; ctx.shadowBlur = 20 * f * dpr; }
+    if (lueur > 0) { ctx.shadowColor = 'rgba(200,16,46,' + (lueur * .5) + ')'; ctx.shadowBlur = 20 * f * dpr; }
     ctx.drawImage(logo, 0, 0); ctx.restore();
   }
   function reflet(u) {
@@ -87,22 +88,22 @@ window.ma2mFaisceau = function (cv, opts) {
   function dessiner(t) {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     var k = Math.max(W, H), lw = LW * S, gauche = OX - lw / 2, g, h;
-    // fond : noir, halo bordeaux qui respire
-    ctx.fillStyle = '#050304'; ctx.fillRect(0, 0, W, H);
+    // fond : clair (couleur de la charte), halo rouge très léger qui respire
+    ctx.fillStyle = '#F6F5F3'; ctx.fillRect(0, 0, W, H);
     var force = lisse(1.6, 3.6, t);
     if (force > 0) {
       var hx = W * (.5 + .12 * Math.sin(t * .5)), hy = H * (.5 + .05 * Math.cos(t * .4));
       g = ctx.createRadialGradient(hx, hy, 0, hx, hy, k * .55);
-      g.addColorStop(0, 'rgba(122,18,32,' + (.26 * force) + ')'); g.addColorStop(.5, 'rgba(70,8,18,' + (.12 * force) + ')'); g.addColorStop(1, 'rgba(0,0,0,0)');
+      g.addColorStop(0, 'rgba(200,16,46,' + (.08 * force) + ')'); g.addColorStop(.5, 'rgba(200,16,46,' + (.035 * force) + ')'); g.addColorStop(1, 'rgba(200,16,46,0)');
       ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
     }
     // poussière
     var a0 = lisse(1.4, 3, t);
     if (a0 > 0) {
-      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      ctx.save();
       for (var i = 0; i < poussieres.length; i++) {
         var p = poussieres[i], py = (((p.y - t * p.v) % 1) + 1) % 1 * H;
-        ctx.fillStyle = 'rgba(255,228,220,' + Math.max(0, (.15 + .2 * Math.sin(t * 1.7 + p.ph * 3)) * a0 * p.z) + ')';
+        ctx.fillStyle = 'rgba(200,16,46,' + Math.max(0, (.15 + .2 * Math.sin(t * 1.7 + p.ph * 3)) * a0 * p.z * .7) + ')';
         ctx.beginPath(); ctx.arc(p.x * W, py, .9 * p.z * f, 0, 6.283); ctx.fill();
       }
       ctx.restore();
@@ -111,12 +112,12 @@ window.ma2mFaisceau = function (cv, opts) {
     var nait = lisse(.35, 1.3, t), eteint = 1 - lisse(1.5, 2.2, t);
     if (nait > 0 && eteint > 0) {
       var larg = W * .9 * eOut(nait);
-      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      ctx.save();
       g = ctx.createLinearGradient(OX - larg / 2, 0, OX + larg / 2, 0);
-      g.addColorStop(0, 'rgba(255,230,225,0)'); g.addColorStop(.5, 'rgba(255,240,236,' + (.95 * eteint) + ')'); g.addColorStop(1, 'rgba(255,230,225,0)');
+      g.addColorStop(0, 'rgba(200,16,46,0)'); g.addColorStop(.5, 'rgba(200,16,46,' + (.95 * eteint) + ')'); g.addColorStop(1, 'rgba(200,16,46,0)');
       ctx.fillStyle = g; ctx.fillRect(OX - larg / 2, OY - 1.2, larg, 2.4);
       h = ctx.createRadialGradient(OX, OY, 0, OX, OY, Math.max(1, larg * .35));
-      h.addColorStop(0, 'rgba(213,84,104,' + (.35 * eteint) + ')'); h.addColorStop(1, 'rgba(0,0,0,0)');
+      h.addColorStop(0, 'rgba(200,16,46,' + (.12 * eteint) + ')'); h.addColorStop(1, 'rgba(200,16,46,0)');
       ctx.fillStyle = h; ctx.fillRect(0, 0, W, H); ctx.restore();
     }
     // 2) un rayon vertical balaie de gauche à droite et révèle les lettres
@@ -125,10 +126,10 @@ window.ma2mFaisceau = function (cv, opts) {
       ctx.save(); ctx.beginPath(); ctx.rect(0, 0, bx, H); ctx.clip(); bande(B.titre, 0, LW, 0, 0, 1); ctx.restore();
       if (u < 1) {
         var hh = LH * S * 1.5, tr = lw * .16;
-        ctx.save(); ctx.globalCompositeOperation = 'lighter';
+        ctx.save();
         ctx.drawImage(faisceau, bx - tr, OY - hh / 2, tr + 6 * f, hh);
         var c = ctx.createLinearGradient(0, OY - hh * .6, 0, OY + hh * .6);
-        c.addColorStop(0, 'rgba(255,250,248,0)'); c.addColorStop(.5, 'rgba(255,250,248,.95)'); c.addColorStop(1, 'rgba(255,250,248,0)');
+        c.addColorStop(0, 'rgba(200,16,46,0)'); c.addColorStop(.5, 'rgba(200,16,46,.9)'); c.addColorStop(1, 'rgba(200,16,46,0)');
         ctx.fillStyle = c; ctx.fillRect(bx - 1.5 * f, OY - hh * .6, 3 * f, hh * 1.2);
         ctx.restore();
       }
@@ -148,16 +149,14 @@ window.ma2mFaisceau = function (cv, opts) {
     if (t > 5.0) {
       var ha = Math.exp(-(t - 5.0) * 3) + (couverture ? .25 * lisse(6, 8, t) * (.6 + .4 * Math.sin(t * .8)) : 0);
       g = ctx.createRadialGradient(OX, OY, 0, OX, OY, lw * .7);
-      g.addColorStop(0, 'rgba(150,22,40,' + (.45 * ha) + ')'); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      g.addColorStop(0, 'rgba(200,16,46,' + (.12 * ha) + ')'); g.addColorStop(1, 'rgba(200,16,46,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
       logoNet(lisse(5.0, 5.4, t), .35);
     }
     // couverture : une fois le logo formé, il reste en place et un reflet repasse toutes les 9 s
     reflet(couverture && t > 6.6 ? ((t - 5.4) % 9) / 1.2 : (t - 5.4) / 1.2);
-    // vignettage, ouverture et fermeture au noir
-    var v = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .3, W / 2, H / 2, Math.hypot(W, H) * .6);
-    v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.75)'); ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
-    var noir = 1 - lisse(0, .5, t) + (couverture ? 0 : lisse(DUREE - .45, DUREE, t));
-    if (noir > 0) { ctx.fillStyle = 'rgba(0,0,0,' + clamp(noir, 0, 1) + ')'; ctx.fillRect(0, 0, W, H); }
+    // ouverture et fermeture en fondu vers le fond clair
+    var voile = 1 - lisse(0, .5, t) + (couverture ? 0 : lisse(DUREE - .45, DUREE, t));
+    if (voile > 0) { ctx.fillStyle = 'rgba(246,245,243,' + clamp(voile, 0, 1) + ')'; ctx.fillRect(0, 0, W, H); }
   }
 
   return { pret: pret, dimensionner: dimensionner, dessiner: dessiner };

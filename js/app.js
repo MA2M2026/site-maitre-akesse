@@ -3270,13 +3270,4 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
 })();
 
-// Boutons « touche » (30/09) : sur téléphone, le doigt quitte souvent l'écran avant
-// qu'on voie le bouton s'enfoncer — on le garde enfoncé (et rouge) un court instant,
-// avec une petite vibration sur Android. Le style est dans css/style.css.
-document.addEventListener('pointerdown', function (e) {
-  const t = e.target.closest?.('.btn, .btn-mini-admin, .filtre-btn, .fiche-partage-btn, .journal-btn, .lang-switch, .mp-panier-btn, .mpg-bouton-danger');
-  if (!t || t.disabled || t.closest('#bloc-tableau')) return;
-  t.classList.add('touche-appuyee');
-  setTimeout(function () { t.classList.remove('touche-appuyee'); }, 160);
-  try { if (navigator.vibrate) navigator.vibrate(8); } catch (err) {}
-}, { passive: true });
+// Effet d'appui des boutons : js/bouton-appui.js (chargé sur toutes les pages).

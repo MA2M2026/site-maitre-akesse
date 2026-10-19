@@ -1,0 +1,113 @@
+/* ===== UN SEUL BOUTON POUR TOUT LE SITE (décision de la propriétaire, 18/10/2026) =====
+   « Tous les boutons cliquables du site doivent être comme ça, sans exception » : site public,
+   Book, espace mannequin, Mes paiements, inscription, boutique, ancien tableau de bord et portail
+   /admin. Modèle : rouge #C8102E (var(--rouge-ma2m)), texte blanc Montserrat 600, coins arrondis
+   10 px, ombre rouge douce.
+
+   Chargé sur TOUTES les pages, après leurs propres styles. Les règles sont rangées dans une
+   « couche » (@layer) : une règle !important placée dans une couche passe devant toutes les règles
+   !important ordinaires des autres feuilles, quelle que soit leur précision. Aucun style de page
+   ne peut donc redonner une autre couleur à un bouton — il est inutile (et interdit) de recopier
+   ces règles ailleurs. Les couleurs viennent de css/jetons.css.
+
+   Ce qui est concerné : tout <button>, tout bouton de formulaire, tout élément « .btn », les entrées
+   cliquables des menus du tableau de bord et du portail, le bouton « Choisir un fichier ».
+   Ce qui ne l'est pas : les liens dans le texte, les photos cliquables (.cliquable, cartes
+   produit/commande de la boutique), le bouton WhatsApp flottant et les logos de réseaux (couleurs
+   de marque). Taille : les boutons à texte reçoivent la taille commune ; les petits boutons à
+   icône (œil du mot de passe, flèches, jours du calendrier…) gardent la leur. */
+
+@layer bouton-ma2m {
+  :is(button, input[type="submit"], input[type="button"], input[type="reset"], [role="button"],
+      .btn, .bouton, .btn-mini-admin, .filtre-btn, .filtre-pill, .fiche-partage-btn, .journal-btn,
+      .mp-panier-btn, .mpg-bouton-danger, .lang-switch, .header-marketplace-lien, .header-admin-lien,
+      .menu-trigger, .splash-passer, .close-menu, .entrer-fleche, .retour-haut, .video-accueil-son,
+      .tdb-menu-bloc > summary, .tdb-menu-sousbloc > summary, .dc-whatsapp, .tuile, .btn-pill, .cc-upload-btn, .book-multi-upload, .lien-evitement, .em-vers-candidature > span):not(.cliquable, .mpg-produit, .mpg-commande, .whatsapp-flottant, [data-bouton-libre]) {
+    background: var(--rouge-ma2m) !important;
+    border: 1px solid var(--rouge-ma2m) !important;
+    color: #fff !important;
+    -webkit-text-fill-color: #fff !important;
+    border-radius: 10px !important;
+    box-shadow: 0 10px 22px -10px rgba(200, 16, 46, 0.55) !important;
+    font-family: var(--police) !important;
+    font-weight: 600 !important;
+    text-transform: none !important;
+    text-shadow: none !important;
+    letter-spacing: 0.01em !important;
+    filter: none !important;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease !important;
+  }
+  /* le texte et les icônes à l'intérieur suivent le blanc du bouton */
+  :is(button, .btn, .tuile, [role="button"]):not(.cliquable, .mpg-produit, .mpg-commande, [data-bouton-libre]) :is(span, b, strong, em, small, i, svg) {
+    color: inherit !important;
+    -webkit-text-fill-color: currentColor !important;
+  }
+
+  /* Taille commune des boutons à texte */
+  :is(.btn, .bouton, .btn-pill, .btn-mini-admin, .filtre-btn, .filtre-pill, .fiche-partage-btn, .journal-btn,
+      .mp-panier-btn, .mpg-bouton-danger, .lang-switch, .header-marketplace-lien, .header-admin-lien,
+      .menu-trigger, .splash-passer, input[type="submit"], input[type="button"], input[type="reset"]) {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem;
+    min-height: 44px; padding: 0.7rem 1.6rem; box-sizing: border-box;
+    font-size: 0.95rem !important; line-height: 1.2;
+    text-decoration: none; white-space: nowrap;
+  }
+  @media (max-width: 480px) { :is(.btn, .bouton) { white-space: normal; } }
+  /* Filtres (The Book, boutique, tableau de bord) : même bouton, texte un peu plus petit pour
+     que la rangée de filtres tienne sur une ligne */
+  :is(.filtre-btn, .filtre-pill) { font-size: 0.85rem !important; }
+  @media (min-width: 721px) { :is(.filtre-btn, .filtre-pill) { padding: 0.55rem 0.9rem !important; } }
+  @media (max-width: 360px) { :is(.filtre-btn, .filtre-pill) { font-size: 0.75rem !important; } }
+
+  /* Survol, appui, désactivé */
+  @media (hover: hover) {
+    :is(button, input[type="submit"], input[type="button"], .btn, .bouton, .btn-mini-admin, .filtre-btn,
+        .filtre-pill, .lang-switch, .header-marketplace-lien, .header-admin-lien, .menu-trigger, .tuile,
+        .tdb-menu-bloc > summary, .tdb-menu-sousbloc > summary):not(.cliquable, [data-bouton-libre], :disabled):hover {
+      background: var(--rouge-ma2m-survol) !important;
+      border-color: var(--rouge-ma2m-survol) !important;
+      box-shadow: 0 14px 26px -10px rgba(200, 16, 46, 0.65) !important;
+      transform: translateY(-1px);
+    }
+  }
+  /* Appui : le bouton s'enfonce et s'entoure d'un liseré blanc — on voit lequel on a touché
+     (js/bouton-appui.js garde l'effet un court instant après le doigt) */
+  :is(button, .btn, .bouton, .btn-mini-admin, .filtre-btn, .filtre-pill, .tuile, .menu-trigger, .lang-switch):not(.cliquable, [data-bouton-libre], :disabled):active, .touche-appuyee {
+    background: var(--rouge-ma2m-survol) !important;
+    transform: translateY(2px) scale(0.98) !important;
+    box-shadow: inset 0 0 0 3px #fff, 0 0 0 3px var(--rouge-ma2m) !important;
+  }
+  /* Formulaire envoyé : le bouton montre que la demande est partie (points qui défilent) */
+  .en-cours { cursor: progress !important; }
+  .en-cours::after { content: ""; display: inline-block; width: 1.2em; text-align: left; animation: bouton-points 1s steps(4, end) infinite; }
+  @keyframes bouton-points { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
+  :is(button, input, .btn, .bouton):disabled, [aria-disabled="true"]:is(button, .btn) {
+    opacity: 0.45 !important; cursor: not-allowed !important; transform: none !important;
+  }
+
+  /* Bouton « choisi » (filtre actif, onglet ouvert, page en cours, jour sélectionné) : même rouge,
+     avec un liseré blanc intérieur pour qu'on voie lequel est choisi. */
+  :is(button, .btn, .filtre-btn, .filtre-pill, .tuile, [role="button"]):is(.actif, .active, .choisi, [aria-pressed="true"], [aria-selected="true"], [aria-current="page"], [aria-current="true"]):not(.cliquable, [data-bouton-libre]) {
+    background: var(--rouge-ma2m-survol) !important;
+    box-shadow: inset 0 0 0 3px #fff, 0 0 0 2px var(--rouge-ma2m) !important;
+  }
+  /* Étape pas encore ouverte : plus pâle mais toujours rouge (les jours passés du calendrier
+     restent rouge plein : un rouge pâli rendrait le chiffre blanc illisible) */
+  :is(button, [role="button"]).locked { opacity: 0.55 !important; }
+
+  /* Bouton « Choisir un fichier » du navigateur */
+  input[type="file"]::file-selector-button {
+    background: var(--rouge-ma2m) !important; color: #fff !important; border: 0 !important;
+    border-radius: 10px !important; padding: 0.6rem 1.1rem; margin-right: 0.8rem;
+    font-family: var(--police); font-weight: 600; cursor: pointer;
+  }
+  input[type="file"]::file-selector-button:hover { background: var(--rouge-ma2m-survol) !important; }
+
+  /* Boutons ronds à icône seule : même rouge, forme ronde */
+  :is(.close-menu, .entrer-fleche, .retour-haut, .video-accueil-son) {
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 999px !important; min-width: 44px; min-height: 44px;
+  }
+}

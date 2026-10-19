@@ -90,18 +90,24 @@ async function navigateur() {
   let srv; process.on('exit', () => srv && srv.kill());
   srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: RACINE }); await new Promise(r => setTimeout(r, 800));
   const b = await chromium.launch();
-  // 1) Page d'inscription : la note apparaît seulement après un code valable
+  // 1) Page d'inscription (parcours par code individuel, 18/10/2026) : la note apparaît à l'étape
+  //    « Règlement » seulement après un code valable
+  const repondre = (avecNote) => (c) => c.action === 'inscription_verifier'
+    ? (c.code === 'MA2M-BONN-23' ? { ok: true, montant: 25000, droit_inscription: 15000, premier_mois: 10000, lien_wave: 'https://pay.wave.com/m/essai', note: avecNote ? NOTE : null,
+        candidat: { nom: 'Awa Koné', naissance: '2001-03-12', telephone: '0700000001', email: 'awa@test.ci', origine: 'Casting en ligne', parent: null } } : { ok: false, raison: 'inconnu', essais: 1 })
+    : { ok: true };
   for (const [page, avecNote] of [['inscription-mannequin.html', true], ['en/inscription-mannequin.html', true], ['inscription-mannequin.html', false]]) {
     const ctx = await b.newContext({ viewport: { width: 390, height: 844 } }); const p = await ctx.newPage(); const errs = [];
     p.on('pageerror', e => errs.push(e.message));
-    await brancher(p, { tables: {}, api: { '/api/code-protege': { ok: true, note: avecNote ? NOTE : null } } }, []);
-    await p.goto('http://127.0.0.1:' + PORT + '/' + page); await p.waitForTimeout(1200);
+    await brancher(p, { tables: {}, api: { '/api/portail': repondre(avecNote) } }, []);
+    await p.goto('http://127.0.0.1:' + PORT + '/' + page); await p.waitForSelector('#inn-code');
     const avant = await p.isVisible('#bloc-note-integration');
-    await p.fill('#code-inscription', 'BON'); await p.click('#valider-code-btn'); await p.waitForTimeout(1200);
-    const etat = await p.evaluate(() => ({ visible: !!document.getElementById('bloc-note-integration').offsetParent,
-      lire: document.getElementById('note-integration-lire').getAttribute('href') }));
+    await p.fill('#inn-code', 'MA2M-BONN-23'); await p.fill('#inn-naissance', '2001-03-12'); await p.click('[data-a=entrer]');
+    await p.waitForSelector('[data-a=oui]'); await p.click('[data-a=oui]'); await p.waitForSelector('#inn-num');
+    const etat = await p.evaluate(() => { const b = document.getElementById('bloc-note-integration'); const a = document.getElementById('note-integration-lire');
+      return { visible: !!(b && b.offsetParent), lire: a && a.getAttribute('href') }; });
     if (avecNote) {
-      ok(!avant && etat.visible, page + ' : la note apparaît seulement après le code');
+      ok(!avant && etat.visible, page + ' : la note apparaît seulement après le code (étape Règlement)');
       ok(etat.lire === 'https://photos.maitreakessemodelmanagement.com/' + NOTE, page + ' : lien du document servi par Cloudflare (jamais par le relais mis en cache)');
     } else ok(!etat.visible, page + ' : aucun document déposé → pas d\'encadré');
     ok(!errs.length, page + ' : aucune erreur ' + errs.join(' | '));
@@ -110,11 +116,10 @@ async function navigateur() {
   // 2) Code faux : rien n'apparaît
   {
     const ctx = await b.newContext(); const p = await ctx.newPage();
-    await brancher(p, { tables: {}, api: {} }, []);
-    await p.route(/\/api\/code-protege/, r => r.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ error: 'refuse', essaisRestants: 2 }) }));
-    await p.goto('http://127.0.0.1:' + PORT + '/inscription-mannequin.html'); await p.waitForTimeout(1000);
-    await p.fill('#code-inscription', 'FAUX'); await p.click('#valider-code-btn'); await p.waitForTimeout(1000);
-    ok(!(await p.isVisible('#bloc-note-integration')) && !(await p.isVisible('#ins-nom')), 'code faux : ni formulaire ni note');
+    await brancher(p, { tables: {}, api: { '/api/portail': repondre(true) } }, []);
+    await p.goto('http://127.0.0.1:' + PORT + '/inscription-mannequin.html'); await p.waitForSelector('#inn-code');
+    await p.fill('#inn-code', 'MA2M-FAUX-00'); await p.fill('#inn-naissance', '2001-03-12'); await p.click('[data-a=entrer]'); await p.waitForTimeout(800);
+    ok(!(await p.isVisible('#bloc-note-integration')) && !(await p.isVisible('[data-a=oui]')), 'code faux : ni récapitulatif ni note');
     await ctx.close();
   }
   // 3) Tableau de bord : dépôt du document, sur téléphone et ordinateur

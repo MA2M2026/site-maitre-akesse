@@ -28,9 +28,13 @@
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&amp;family=Jost:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="css/jetons.css?v=16b5ece7">
 <link rel="stylesheet" href="css/menu.css?v=0b2ed223">
 <link rel="stylesheet" href="css/champs-telephone.css?v=11f5f49f">
-<link href="css/style.css?v=f278a881" rel="stylesheet"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/bouton-ma2m.css?v=c83e9fd5">
+<script src="js/bouton-appui.js?v=953ca4d8" defer></script>
+<link href="css/style.css?v=ed6270a7" rel="stylesheet"/>
 <style>
   .stats-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }
   .stat-carte { background: var(--anthracite, var(--noir)); color: var(--blanc); padding: 1.6rem; border-top: 2px solid var(--or); }
@@ -1996,7 +2000,7 @@ a.tdb-menu-item { text-decoration: none; }
 <li><a href="actualites.html">Actualités</a></li>
 <li><a href="evenements.html">Événements</a></li>
 <li><a href="partenaires.html">Partenaires</a></li>
-<li><a class="actif" href="tableau-de-bord.html">Tableau de bord</a></li>
+<li><a class="actif" href="tableau-de-bord.html?depuis=portail">Tableau de bord</a></li>
 <li class="item-cta"><a href="espace-mannequin.html">Espace mannequin de l'agence</a></li>
 </ul>
 </div>
@@ -2378,16 +2382,12 @@ document.addEventListener('DOMContentLoaded', function () {
 </div></div><div class="ref-lower-grid"><div class="ref-card ref-registrations" data-section="b2-inscriptions">
 <div class="dossiers-entete">
 <h2 class="tdb-10">Inscriptions mannequins</h2>
-<span class="dossiers-compteur" id="inscriptions-compteur"></span>
 </div>
-<p class="tdb-11">
-        ⚠️ La référence de paiement affichée est fournie par la personne — le site ne peut pas vérifier auprès de Wave qu'elle est authentique.
-        Une même référence ne peut plus être réutilisée deux fois, mais <strong>avant de passer un dossier en "Inscription validée"</strong>, recherchez toujours
-        cette référence dans votre application Wave pour confirmer le montant et la date.
-      </p>
-<div class="filtre-pills" id="filtres-inscriptions"></div>
-<div class="dossier-liste" id="liste-inscriptions"></div>
-<button class="btn dossiers-plus u-hidden" id="inscriptions-plus-btn">Voir plus</button>
+<!-- Cahier v2.3 (section 4.3) : tout ce qui touche à l'argent quitte cette page. Les inscriptions
+     et leurs paiements se suivent dans le portail, espace « Suivi des paiements et des inscriptions ». -->
+<p class="tdb-11">Les inscriptions et leurs paiements se suivent désormais dans le portail d’administration, espace « Suivi des paiements et des inscriptions ». Les inscriptions déjà reçues y restent consultables.</p>
+<a class="btn" href="/admin/#/paiements/mois">Ouvrir le suivi des paiements</a>
+<div hidden><span class="dossiers-compteur" id="inscriptions-compteur"></span><div class="filtre-pills" id="filtres-inscriptions"></div><div class="dossier-liste" id="liste-inscriptions"></div><button class="btn dossiers-plus u-hidden" id="inscriptions-plus-btn">Voir plus</button></div>
 </div><div class="ref-card ref-projects" data-section="b2-projets">
 <div class="dossiers-entete">
 <h2 class="tdb-10">Projets &amp; castings</h2>
@@ -2610,6 +2610,7 @@ document.addEventListener('DOMContentLoaded', function () {
 </div>
 <div class="liste-recente" data-section="b3b-creer-admin">
 <h2 class="tdb-4">Créer un compte admin</h2>
+<p class="tdb-5"><strong>Désormais :</strong> chaque personne de l’équipe reçoit son propre compte, avec un rôle, depuis le portail (<a href="/admin/#/securite/comptes">Sécurité et journal</a>). Ce formulaire reste disponible pour dépanner.</p>
 <p class="tdb-5">Réservé aux administrateurs déjà connectés — la personne créée aura les mêmes droits que vous sur ce tableau de bord (gestion des mannequins, publications, autres réglages). Transmettez-lui l'e-mail et le mot de passe choisis ici par un canal sûr (elle pourra le changer ensuite via "Mot de passe oublié").</p>
 <div class="tdb-23">
 <input aria-label="E-mail du nouvel admin" id="ca-email" placeholder="E-mail du nouvel admin" class="tdb-24" type="email"/>
@@ -2842,14 +2843,14 @@ document.addEventListener('DOMContentLoaded', function () {
 <script src="js/copyright-annee.js?v=a398c3bf"></script>
 <script>window.MA2M_SESSION_REQUISE = true;</script>
 <script src="js/vendor/supabase-js-2.110.6.js?v=82632987"></script>
-<script src="js/supabase-config.js?v=d0882381"></script>
+<script src="js/supabase-config.js?v=16708773"></script>
 <script src="js/vendor/emailjs-browser-3.12.1.min.js?v=3d7499d7"></script>
 <script src="js/emailjs-config.js?v=8fcea597"></script>
 <script src="js/verrou-defilement.js?v=33c16996"></script>
-<script src="js/app.js?v=0a3d8fbc"></script>
+<script src="js/app.js?v=2f0c5539"></script>
 <script src="js/confort.js?v=33474c14"></script>
-<script src="js/menu.js?v=fae89b77"></script>
-<script src="js/connexion-tableau.js?v=c2f49ccb"></script>
+<script src="js/menu.js?v=f6d698ef"></script>
+<script src="js/connexion-tableau.js?v=fa45da16"></script>
 <!-- ZONE-ADMIN : livrée seulement après une connexion admin complète (middleware.js) -->
 <script src="js/tailles.js?v=41cf2149"></script>
 <script src="js/analyse-profil.js?v=331cdca4"></script>

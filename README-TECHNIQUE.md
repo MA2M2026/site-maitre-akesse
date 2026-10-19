@@ -25,6 +25,111 @@ rouge, à toute personne ou IA qui ouvre le dépôt, l'obligation de lire `CLAUD
 agents de code (Codex, Copilot, Cursor…). `GUIDE-DE-SECOURS.md` est le guide de la
 propriétaire pour se débrouiller sans IA (version PDF imprimable remise le 13/10/2026).
 
+## 🆕 REFONTE OCTOBRE 2026 (cahiers v2.3 « Administration » et « Architecture ») — À LIRE EN PREMIER
+
+Travail fait sur la branche `claude/dossier-ma2m-btywwr` du 17 au 19/10/2026, mis en ligne **en une
+seule fois** (décision de la propriétaire). Ce qui change par rapport aux sections plus bas :
+
+### Charte claire, un seul bouton (remplace « Fond noir partout » du 06/10/2026)
+- **Tout le site est clair** (fond `#F6F5F3`, cartes blanches, rouge `#C8102E`, police Montserrat),
+  y compris l'écran d'introduction, l'en-tête, le menu plein écran, la grande image d'accueil et le
+  pied de page. Les couleurs vivent dans **`css/jetons.css`** (seul endroit où elles sont écrites) ;
+  **`css/charte-ma2m.css`** rebranche les anciennes variables (`--noir`, `--bordeaux`…) sur la charte
+  et déclare les rares zones sombres (classe `.contexte-sombre` : étiquettes posées sur une photo).
+- **Un seul bouton pour tout le site** : `css/bouton-ma2m.css`, chargé sur TOUTES les pages (site,
+  boutique, espace mannequin, portail, ancien tableau de bord). Les règles sont dans une couche
+  `@layer bouton-ma2m` avec `!important` : elles passent devant tout autre style, il est inutile de
+  les recopier. Exceptions : `.cliquable` (photos), WhatsApp flottant, logos de réseaux, attribut
+  `data-bouton-libre`. Les liens dans un texte et les lignes de menu ne sont PAS des boutons.
+- **Signal d'appui** : `js/bouton-appui.js` (toutes les pages) — liseré blanc à l'appui, points
+  « en cours » à l'envoi d'un formulaire. Le bouton « choisi » (filtre, onglet) garde un liseré blanc.
+- Logos pour fond clair : `assets/logo-header-clair.png`, `assets/logo-intro-clair.png` (tirés des
+  logos blancs, même géométrie : l'animation `js/faisceau.js` en dépend).
+- Titres h1–h3 et libellés de formulaires sans capitales forcées (maquettes).
+- L'espace mannequin n'a plus de `<style>` : tout est dans `css/espace-mannequin.css`.
+
+### Portail d'administration `/admin/` (application installable, remplace le tableau de bord)
+- `admin/index.html` + `admin/manifest.webmanifest` + `admin/sw.js` (portée `/admin/` seulement ;
+  monter `VERSION` à chaque changement des fichiers listés). Scripts : `js/portail/noyau.js`
+  (connexion, double authentification TOTP obligatoire, 8 codes de secours, appareils, 15 min
+  d'inactivité / 8 h de session, actions sensibles ré-authentifiées), `espace-site.js`,
+  `espace-paiements.js`, `espace-compta.js`, `securite.js`. Styles : `css/portail.css`.
+- Fonction serveur multi-actions : `api/portail.js` (invitations, codes de secours, inscription par
+  code, lien de paiement personnel…). 12 fonctions Vercel au total = la limite de l'offre gratuite.
+- `middleware.js` renvoie l'adresse **nue** `/tableau-de-bord(.html)` vers `/admin/`. Toute adresse
+  avec des paramètres reste sur la gestion détaillée : `?depuis=portail` (« Outils et gestion
+  détaillée », menu du tableau de bord, boutique), `?notif=…` (notifications du téléphone), liens de
+  réinitialisation, et la lecture interne de la page protégée (`?depuis=interne` — sans elle, la
+  lecture interne recevait le portail et la protection laissait tout passer : relecture du
+  19/10/2026, verrouillé par test-tableau-protege.js). Plus de bouton « Admin » sur le site
+  public ; `/admin` est exclu de `robots.txt` et porte `noindex`.
+- **Appareils** : le portail envoie l'identifiant de son appareil (en-tête `x-appareil`) à la base
+  ET à `api/portail.js`, qui le transmet. Sans cet en-tête, `portail_role()` ne donne aucun rôle.
+  Révoquer un appareil remplit `staff_profiles.sessions_valides_apres` : toutes les sessions de la
+  personne ouvertes avant (code saisi avant, lu dans `amr`) cessent de servir, sur tous ses
+  appareils ; elle se reconnecte avec mot de passe + code.
+- **Rôle « site » et table `admins`** (droits de l'ancien tableau de bord) : tenus à jour par la
+  base (déclencheur `staff_suivre_admins`) au changement de rôle ou à la coupure ; le compte
+  principal n'est jamais touché. L'invitation refuse une personne déjà dans le portail (son rôle
+  se change dans la liste) et refuse de s'inviter soi-même.
+- **Pages publiques** (inscription par code, lien de paiement) : compteur d'essais par adresse
+  (`ip:…`), tout refus compte, une réussite ne remet pas à zéro ; la date de naissance est vérifiée
+  AVANT de dire si un code a servi ou expiré ; jamais le message brut de la base en cas de panne.
+  Le lien Wave et les messages demandent le **reste dû** d'un mois payé en partie (la
+  confirmation, elle, annonce le montant payé).
+- **Deuxième relecture complète (19/10/2026)** :
+  - `portail_valider_paiement(..., p_automatique => true)` est réservé au serveur
+    (`est_ecriture_serveur()`) ; `journaliser` n'est plus appelable par les comptes connectés.
+  - Inscription : la fiche du registre naît **« pré-inscrit »** à la déclaration « J'ai payé » (aucune
+    mensualité), devient « actif » quand l'inscription est **entièrement** payée ; un acompte
+    (espèces en plusieurs fois) ne crée ni « inscrite » ni code d'espace — un seul code, au solde.
+  - Rattachement automatique d'un compte au registre (`registre_rattacher_compte`) : même téléphone
+    **et** même date de naissance (le téléphone de l'espace est saisi par le mannequin, l'e-mail
+    n'est pas vérifié) ; sinon c'est le code personnel ESP qui rattache.
+  - Téléphone révoqué : la ligne `admins` de la personne est retirée (ancien tableau de bord fermé),
+    rendue à la prochaine connexion complète au portail (`portail_enregistrer_appareil`, principal
+    et rôle « site »). `api/acces-tableau.js` refuse aussi un compte du portail coupé ou dont les
+    sessions ont été coupées (`ficheStaff`, `dernierCode` dans `api/_commun.js`).
+  - `api/creer-admin.js` : une personne du portail autre que le principal ne crée pas de compte
+    admin. Nouveaux codes de secours : code saisi il y a moins de 10 minutes.
+  - Page d'inscription : « mineur » vient de la base (`candidat.mineur`, âge de majorité réglable).
+- Rôles : principal, site (aucun montant ni contact privé), caisse (paiements), compta (totaux sans
+  nom). Les droits sont dans la base (RLS + fonctions `portail_peut`, `portail_est_principal`).
+
+### Base de données : `supabase-portail.sql` (Extension 140, rejouable)
+- À coller en entier dans Supabase › SQL Editor (aucune suppression de données). Tables du portail,
+  du registre (`agence_mannequins`), des échéances (`fee_dues`), déclarations, paiements, reçus,
+  comptabilité, codes d'inscription (`registration_codes`), **codes personnels de l'espace
+  mannequin (`espace_codes`)**, journal d'audit en écriture seule.
+- Parcours d'inscription : candidature « Retenue » → code `MA2M-XXXX-XX` → 4 écrans
+  (`inscription-mannequin.html`, `js/inscription-nouveau-source.js` + `js/inscription-nouveau.js`) →
+  « J'ai payé » → rapprochement dans le portail → `portail_valider_paiement` (reçu REC-AAAA-NNNNN,
+  2 lignes de recette, code consommé) **et code personnel de l'espace `ESP-XXXX-XX`** envoyé.
+- **Inscription payée à l'agence (espèces…)** : portail › Paiements › Registre ›
+  `portail_inscription_agence` (même résultat qu'en ligne, en un geste).
+- **Création de l'espace mannequin avec le code personnel** : `api/code-protege.js`
+  (`portail-creer-compte`) vérifie `espace_code_verifier`, crée le compte, puis
+  `espace_code_utiliser` reprend le casting (informations + photos, cases vides seulement). L'ancien
+  code commun reste accepté pendant la transition.
+- « Mes paiements » (`mes-paiements.html`, `js/mes-paiements.js`) : bandeau, Payer avec Wave,
+  J'ai payé, **calendrier de la formation** (`portail_reglages.duree_formation_mois`, 24 par défaut),
+  historique, reçus. Lien personnel sans compte : `paiement/?t=…`.
+- Tâche quotidienne `portail_tache_quotidienne` (pg_cron 06:00) : échéances du 1er, relances, Non payé.
+
+### Tests
+- `bash scripts/base-essai/lancer.sh` : base Postgres LOCALE jetable + tous les fichiers SQL +
+  `scripts/base-essai/essais-portail.sql` (droits, paiements, codes, inscription à l'agence…).
+- `bash scripts/tests-visiteur/lancer.sh` : ajoute `test-portail.js`, `test-inscription-code.js`,
+  `test-mes-paiements.js`, `test-code-espace.js` et `test-visuel.js` (lisibilité WCAG AA de 42 pages
+  FR/EN + espace connecté, **contrôle des boutons** `boutons.js`, pied de page vide, styles bloqués
+  par la CSP, aucun lien Admin, captures dans `captures/`).
+
+### Reste à faire (cahier « Architecture », après la mise en ligne)
+- Chantier A : ~1 200 couleurs écrites en dur et ~730 `!important` dans les anciennes feuilles
+  (`python3 scripts/compter-couleurs.py`) à remplacer par les jetons. Chantier E : 14 pages ont
+  encore un `<style>`. Chantier F : découpage de `app.js`, `tableau-de-bord.js`,
+  `espace-mannequin.js`. Page « guide de style ». Voir aussi `CONVENTIONS.md`.
+
 ## ⚠️ HISTORIQUE DU 27-28 SEPTEMBRE 2026 — architecture photos revue
 ## À LIRE avant de retoucher à R2, au domaine personnalisé ou à `vercel.json`
 
@@ -1855,7 +1960,7 @@ toutes les écritures sont simulées pendant l'enregistrement.
 - Ordre de mise en service : exécuter l'Extension 124 dans Supabase **avant** la mise en
   ligne ; sinon la page affiche simplement « Nos prochains projets seront affichés ici très bientôt ».
 
-## ⬛ Fond noir partout (06/10/2026, décision de la propriétaire)
+## ⬛ Fond noir partout (06/10/2026, décision de la propriétaire) — REMPLACÉ le 18/10/2026 par la charte claire (voir « REFONTE OCTOBRE 2026 » en haut)
 
 - Les fonds du site sont **noirs**, sans teinte rouge bordeaux : `--noir` (#060606), `--noir-doux`
   (#0f0f10) et `--anthracite` (#0e0e0f) sont neutres ; les sections `.fond-anthracite` ont un
@@ -2451,3 +2556,11 @@ depuis Abidjan (une vérification a bloqué l'accueil 10 s) ; le tableau de bord
   mannequin. » (`css/espace-mannequin-correctifs.css`).
 - `lancer.sh` installe aussi les paquets des fonctions serveur (`npm install --no-save`) s'ils
   manquent, car `test-note-integration.js` en a besoin.
+- Suite (18/10/2026, soir) : inscription simplifiée (`js/inscription-nouveau.js`) — les trois
+  appels à la base passent par `appeler()` : si la connexion coupe, le bouton n'est plus bloqué
+  sur « en cours » et un message invite à réessayer (3 défauts SonarQube). Les moyens de paiement
+  « bientôt » sont en gris lisible (`css/inscription-nouveau.css`). `test-inscription-simplifiee.js`
+  utilise maintenant le contrôle commun `lisibilite.js` (sa copie est supprimée ; la page est lue
+  de haut en bas par `lirePageEntiere`, partagée avec `test-visuel.js`) et essaie la connexion
+  coupée aux trois étapes (code, « Corriger » — ce qui a été tapé est gardé —, « J'ai payé »).
+  Les boutons grisés (désactivés) ne sont pas jugés, comme le prévoit la norme.

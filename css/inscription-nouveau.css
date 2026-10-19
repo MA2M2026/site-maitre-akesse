@@ -11,7 +11,10 @@
 .inn-carte h1, .inn-carte h2 { font-size: 1.45rem; line-height: 1.2; margin: 0; }
 .inn-doux { color: var(--encre-douce); font-size: 0.92rem; margin: 0; }
 .inn-petit { color: var(--encre-douce); font-size: 0.8rem; margin: 0; }
-.inn-surtitre { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--encre-douce); }
+.inn-surtitre { font-size: 0.8rem; font-weight: 700; color: var(--encre-douce); }
+/* (les attributs style="" sont bloqués par la règle de sécurité CSP des pages : classes à la place) */
+.inn-surtitre-serre { margin-bottom: 0.4rem; }
+.inn-question { font-weight: 700; margin: 0; }
 .inn-ligne { display: flex; justify-content: space-between; gap: 1rem; padding: 0.65rem 0; border-top: 1px solid var(--lignes); font-size: 0.9rem; }
 .inn-ligne:first-child { border-top: 0; }
 .inn-ligne span:first-child { color: var(--encre-douce); }
@@ -26,7 +29,9 @@
 .inn-operateurs { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 .inn-op { border: 1px solid var(--lignes); border-radius: 20px; padding: 0.35rem 0.8rem; font-weight: 700; font-size: 0.78rem; }
 .inn-op.actif { border-color: var(--rouge-ma2m); color: var(--rouge-ma2m-texte); }
-.inn-op.bientot { opacity: 0.5; }
+/* moyens « bientôt » : gris lisible et bord en pointillés (l’ancien effacement à 50 % rendait
+   le texte trop pâle : contraste 3,3 pour 1 au lieu de 4,5 — test du 18/10/2026) */
+.inn-op.bientot { color: var(--encre-douce); border-style: dashed; font-weight: 500; }
 .inn-total { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; padding-top: 0.7rem; border-top: 1px solid var(--lignes); }
 .inn-total b:last-child { font-size: 1.5rem; font-weight: 800; }
 .inn-carte .btn { width: 100%; }

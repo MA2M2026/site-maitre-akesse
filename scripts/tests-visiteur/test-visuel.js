@@ -3,14 +3,16 @@
 //  1. Lisibilité (BLOQUANT) : tout texte visible doit avoir assez de contraste avec ce qui est
 //     peint dessous (norme WCAG AA, scripts/tests-visiteur/lisibilite.js). Vérifié aussi menu
 //     ouvert, bandeau cookies affiché et formulaires envoyés vides (messages d'erreur).
-//  2. Contrôle du contrôle : un texte sombre posé exprès sur le menu sombre DOIT être signalé,
+//  1b. Boutons (BLOQUANT) : chaque bouton suit le modèle rouge unique (boutons.js).
+//  2. Contrôle du contrôle : un texte très pâle posé exprès sur le menu (clair) DOIT être signalé,
 //     sinon le test lui-même est cassé.
 //  3. Captures d'écran (NON bloquant) : rangées dans captures/actuelles ; si des captures de
 //     référence existent (captures/reference, faites avec « node test-visuel.js --reference »),
 //     les différences sont listées dans captures/rapport.html.
 // Base simulée : rien n'est écrit pour de vrai. Dossier captures/ non publié (.gitignore).
 const { chromium } = require('playwright'); const { spawn, execFileSync } = require('child_process'); const { brancher } = require('./faux-serveur');
-const { verifierLisibilite } = require('./lisibilite');
+const { verifierLisibilite, lirePageEntiere } = require('./lisibilite');
+const { verifierBoutons } = require('./boutons');
 const fs = require('fs'); const path = require('path');
 const PORT = String(8600 + Math.floor(Math.random() * 100));
 const RACINE = path.resolve(__dirname, '../..');
@@ -43,11 +45,14 @@ const problemes = []; let captures = 0;
 async function ouvrir(b, page, ecran, cookies) {
   const ctx = await b.newContext({ viewport: { width: ecran.width, height: ecran.height } });
   const p = await ctx.newPage();
+  // un style écrit dans la page et bloqué par la règle de sécurité (CSP) ne s'affiche pas, en silence
+  p.on('console', (m) => { if (/Refused to apply inline style/.test(m.text())) problemes.push(page + ' (' + ecran.nom + ') : style bloqué par la sécurité de la page'); });
   await p.emulateMedia({ reducedMotion: 'reduce' });
   await p.addInitScript((cookies) => {
     try {
       sessionStorage.setItem('ma2m_porte_ouverte', '1'); sessionStorage.setItem('ma2m_intro_vue', '1');
       if (!cookies) localStorage.setItem('ma2m_cookies', 'non');
+      localStorage.setItem('ma2m_appareil_admin', '1'); // même sur l'appareil d'un administrateur : aucun bouton « Admin »
     } catch (e) {}
   }, cookies);
   await brancher(p, { tables: JSON.parse(JSON.stringify(tables)), rpc }, []);
@@ -55,20 +60,8 @@ async function ouvrir(b, page, ecran, cookies) {
   await p.waitForTimeout(1200);
   return { ctx, p };
 }
-// Parcourt la page écran par écran (les blocs qui apparaissent au défilement sont ainsi vus)
-async function lireTout(p, ecran, etiquette) {
-  const h = await p.evaluate(() => document.documentElement.scrollHeight);
-  const trouves = [];
-  for (let y = 0; y < h; y += Math.round(ecran.height * 0.85)) {
-    await p.evaluate((y) => window.scrollTo({ top: y, behavior: 'instant' }), y);
-    await p.waitForTimeout(250);
-    trouves.push(...await p.evaluate(verifierLisibilite));
-  }
-  const vus = new Set();
-  for (const x of trouves) {
-    const cle = x.element + '|' + x.texte; if (vus.has(cle)) continue; vus.add(cle);
-    problemes.push(etiquette + ' : « ' + x.texte + ' » (' + x.element + ') contraste ' + x.contraste + ' au lieu de ' + x.seuil + ' minimum');
-  }
+async function lireTout(p, etiquette) {
+  for (const x of await lirePageEntiere(p)) problemes.push(etiquette + ' : « ' + x.texte + ' » (' + x.element + ') contraste ' + x.contraste + ' au lieu de ' + x.seuil + ' minimum');
 }
 // attend la fin des apparitions en fondu (menu : rubriques qui arrivent l'une après l'autre)
 const finAnimations = (p) => p.waitForFunction(() => document.getAnimations().every(a => a.playState !== 'running' || (a.effect && a.effect.getComputedTiming().iterations === Infinity)), null, { timeout: 4000 }).catch(() => {});
@@ -82,7 +75,13 @@ async function unePage(b, page, ecran) {
   const etiquette = page + ' (' + ecran.nom + ')';
   const { ctx, p } = await ouvrir(b, page, ecran, false);
   try {
-    await lireTout(p, ecran, etiquette);
+    await lireTout(p, etiquette);
+    if (await p.$('.header-admin-lien, a[href="/admin/"], a[href="admin/"]')) problemes.push(etiquette + ' : un bouton ou lien « Admin » apparaît sur le site public');
+    // appui sur un bouton : il doit se signaler (liseré blanc, js/bouton-appui.js)
+    const appui = await p.evaluate(() => { const b = document.getElementById('menuBtn'); if (!b) return true; b.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); return b.classList.contains('touche-appuyee'); });
+    if (!appui) problemes.push(etiquette + ' : appuyer sur un bouton ne se voit pas');
+    if (await p.evaluate(() => { const f = document.querySelector('footer[data-gabarit="pied"]'); return f && !f.innerText.trim(); })) problemes.push(etiquette + ' : pied de page vide');
+    for (const x of await p.evaluate(verifierBoutons)) problemes.push(etiquette + ' : bouton « ' + x.texte + ' » (' + x.element + ') pas au modèle rouge (fond ' + x.fond + ', texte ' + x.couleur + ', coins ' + x.rayon + ')');
     await capturer(p, nomFichier(page, ecran), true);
     // Menu plein écran ouvert
     const bouton = await p.$('#menuBtn');
@@ -100,7 +99,7 @@ async function unePage(b, page, ecran) {
       const envoi = await p.$('form:not(.u-hidden) [type="submit"]:visible');
       if (envoi) {
         await envoi.click().catch(() => {}); await p.waitForTimeout(600);
-        await lireTout(p, ecran, etiquette + ', formulaire envoyé vide');
+        await lireTout(p, etiquette + ', formulaire envoyé vide');
         await capturer(p, nomFichier(page, ecran, 'erreurs'), true);
       }
     }
@@ -120,11 +119,11 @@ async function unePage(b, page, ecran) {
     await p.click('#menuBtn'); await p.waitForTimeout(300); await finAnimations(p);
     const duMenu = (l) => l.filter(x => x.element.includes('menuOverlay'));
     const avant = duMenu(await p.evaluate(verifierLisibilite)).length;
-    await p.evaluate(() => document.querySelectorAll('#menuOverlay .nav-links a').forEach(a => { a.style.setProperty('color', '#222', 'important'); }));
+    await p.evaluate(() => document.querySelectorAll('#menuOverlay .nav-links a').forEach(a => { a.style.setProperty('color', '#e9e7e3', 'important'); }));
     await p.waitForTimeout(100); await finAnimations(p); // les liens changent de couleur en fondu
     const apres = duMenu(await p.evaluate(verifierLisibilite)).length;
-    console.log(apres > 0 ? '✅ erreur faite exprès (texte sombre sur le menu sombre) bien détectée (' + apres + ' textes)' : '❌ erreur faite exprès NON détectée : le contrôle de lisibilité est cassé');
-    if (!apres || avant) problemes.push('contrôle du contrôle : ' + (apres ? avant + ' problème(s) déjà présents sur le menu' : 'texte sombre sur menu sombre non détecté'));
+    console.log(apres > 0 ? '✅ erreur faite exprès (texte pâle sur le menu clair) bien détectée (' + apres + ' textes)' : '❌ erreur faite exprès NON détectée : le contrôle de lisibilité est cassé');
+    if (!apres || avant) problemes.push('contrôle du contrôle : ' + (apres ? avant + ' problème(s) déjà présents sur le menu' : 'texte pâle sur menu clair non détecté'));
     await ctx.close();
   }
 
@@ -148,6 +147,32 @@ async function unePage(b, page, ecran) {
       await unePage(b, t[0], t[1]).catch(e => problemes.push(t[0] + ' (' + t[1].nom + ') : erreur du test ' + e.message.split('\n')[0]));
     }
   }));
+
+  // 3b. Espace mannequin CONNECTÉE (session simulée) : chaque étape du parcours guidé, puis le
+  // tableau de la mannequin en ligne — lisibilité, boutons au modèle rouge, captures.
+  for (const ecran of ecrans) for (const enLigne of [false, true]) {
+    const ctx = await b.newContext({ viewport: { width: ecran.width, height: ecran.height } }); const p = await ctx.newPage();
+    await p.emulateMedia({ reducedMotion: 'reduce' });
+    await p.addInitScript(() => {
+      const b64 = o => btoa(JSON.stringify(o)).replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_');
+      const exp = Math.floor(Date.now() / 1000) + 36000;
+      const jeton = b64({ alg: 'HS256', typ: 'JWT' }) + '.' + b64({ sub: 'm-1', role: 'authenticated', aud: 'authenticated', exp }) + '.c2ln';
+      localStorage.setItem('sb-dfhghgmwmxiguhtxtsle-auth-token', JSON.stringify({ access_token: jeton, token_type: 'bearer', expires_in: 36000, expires_at: exp, refresh_token: 'x', user: { id: 'm-1', aud: 'authenticated', role: 'authenticated', email: 'awa@test.ci' } }));
+      localStorage.setItem('ma2m_cookies', 'non');
+    });
+    await brancher(p, { tables: { model_profiles: [{ id: 'm-1', full_name: 'AWA KONÉ', published: enLigne, desactive: false, statut: enLigne ? 'publie' : 'brouillon' }] }, rpc: {} }, []);
+    await p.goto('http://127.0.0.1:' + PORT + '/espace-mannequin.html', { waitUntil: 'domcontentloaded' }); await p.waitForTimeout(3000);
+    const etapes = enLigne ? [null] : [1, 2, 3, 4, 5, 6];
+    for (const n of etapes) {
+      const etiquette = 'espace-mannequin connectée ' + (enLigne ? 'en ligne' : 'étape ' + n) + ' (' + ecran.nom + ')';
+      if (n) await p.evaluate((n) => { if (typeof goto === 'function') goto(n); }, n).catch(() => {});
+      await p.waitForTimeout(500);
+      await lireTout(p, etiquette);
+      for (const x of await p.evaluate(verifierBoutons)) problemes.push(etiquette + ' : bouton « ' + x.texte + ' » (' + x.element + ') pas au modèle rouge (fond ' + x.fond + ', texte ' + x.couleur + ', coins ' + x.rayon + ')');
+      await capturer(p, 'espace-connectee-' + (enLigne ? 'en-ligne' : 'etape' + n) + '-' + ecran.nom + '.png', true);
+    }
+    await ctx.close();
+  }
   await b.close();
 
   // 4. Captures : nouvelle référence, ou comparaison avec la référence (rapport non bloquant)

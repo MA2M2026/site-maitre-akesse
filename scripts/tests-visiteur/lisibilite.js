@@ -108,6 +108,7 @@ function verifierLisibilite(options) {
     if (!texte || !el || vus.has(el) || /^(SCRIPT|STYLE|NOSCRIPT|TEMPLATE|OPTION|TITLE)$/.test(el.tagName)) continue;
     const s = getComputedStyle(el);
     if (s.visibility !== 'visible' || s.display === 'none') continue;
+    if (el.closest('button:disabled, button[aria-disabled="true"], [role="button"][aria-disabled="true"]')) continue; // bouton grisé : volontairement atténué (exempté par la norme)
     const plage = document.createRange(); plage.selectNodeContents(t);
     const r = [...plage.getClientRects()].find((x) => x.width > 2 && x.height > 2);
     if (!r || r.bottom < 0 || r.top > innerHeight || r.right < 0 || r.left > innerWidth) continue; // hors de l'écran
@@ -131,4 +132,21 @@ function verifierLisibilite(options) {
   }
   return problemes;
 }
-module.exports = { verifierLisibilite };
+// Côté test (Node) : parcourt toute la page écran par écran (les blocs qui apparaissent au
+// défilement sont ainsi vus) et renvoie les textes trop pâles, sans doublon
+async function lirePageEntiere(p) {
+  const hauteurEcran = await p.evaluate(() => innerHeight);
+  const h = await p.evaluate(() => document.documentElement.scrollHeight);
+  const trouves = [], vus = new Set();
+  for (let y = 0; y < h; y += Math.round(hauteurEcran * 0.85)) {
+    await p.evaluate((y) => window.scrollTo({ top: y, behavior: 'instant' }), y);
+    await p.waitForTimeout(250);
+    for (const x of await p.evaluate(verifierLisibilite)) {
+      const cle = x.element + '|' + x.texte;
+      if (!vus.has(cle)) { vus.add(cle); trouves.push(x); }
+    }
+  }
+  await p.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+  return trouves;
+}
+module.exports = { verifierLisibilite, lirePageEntiere };

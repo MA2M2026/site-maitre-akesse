@@ -1,0 +1,64 @@
+/* ===== Jetons de la charte Maître Akesse (cahier des charges v2.3, section 17.1) =====
+   LE seul endroit où les couleurs, polices, rayons et ombres sont écrits. Toutes les autres
+   feuilles (site, portail d'administration, boutique) utilisent ces variables : changer la
+   charte se fait ici, en une ligne. À charger AVANT toute autre feuille de style.
+   Mode sombre automatique (valeurs de la maquette) : actif sur les pages qui portent la
+   classe « theme-auto » sur <html> (portail ; le site public l'adoptera page par page). */
+
+:root {
+  /* couleurs de base */
+  --fond: #F6F5F3;              /* fond de page */
+  --surface: #FFFFFF;           /* cartes, formulaires, tableaux */
+  --surface-douce: #EFEDEA;     /* zones grisées, survol */
+  --encre: #1E1D1C;             /* texte principal, en-têtes de tableaux, menu latéral */
+  --encre-douce: #5E5B57;       /* aides, légendes, libellés */
+  --lignes: #DDDAD5;            /* bordures et séparateurs */
+  --rouge-ma2m: #C8102E;        /* boutons principaux, tuiles, barre active */
+  --rouge-ma2m-texte: #B00E28;  /* texte rouge sur fond clair (contraste) */
+  --rouge-ma2m-survol: #A50D26;
+  --sur-rouge: #FFFFFF;         /* texte posé sur le rouge */
+  --focus: 0 0 0 3px rgba(200, 16, 46, 0.35);
+
+  /* zones sombres (menu latéral du portail, en-tête et pied de page du site) */
+  --sombre: #1E1D1C;
+  --sombre-survol: #2A2927;
+  --sombre-actif: #2F2D2A;
+  --sombre-encre: #F2F0EC;
+  --sombre-encre-douce: #BDB8B0;
+  --sombre-lignes: #3A3835;
+  --sombre-rouge-texte: #FF7186;
+
+  /* états (fond / texte) : la couleur ne porte jamais seule le sens, toujours un mot */
+  --ok-fond: #E3F4E6;      --ok-texte: #1B5A2A;      /* payé, validé, publié */
+  --alerte-fond: #FFF1CC;  --alerte-texte: #5C4400;  /* en attente, déclaré, brouillon */
+  --erreur-fond: #FBE3E3;  --erreur-texte: #8A1C1C;  /* non payé, refusé, bloqué */
+  --info-fond: #E0ECF8;    --info-texte: #17436F;    /* à payer, code généré */
+
+  /* formes et polices */
+  --rayon-carte: 12px;
+  --rayon-bouton: 8px;
+  --rayon-pastille: 20px;
+  --ombre-carte: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --ombre-rouge: 0 10px 22px -10px rgba(200, 16, 46, 0.55);
+  --police: 'Montserrat', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --hauteur-tactile: 44px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root.theme-auto:not([data-theme="light"]) {
+    --fond: #141312; --surface: #1F1E1C; --surface-douce: #2A2927; --encre: #F2F0EC; --encre-douce: #AAA59D;
+    --lignes: #35332F; --rouge-ma2m-texte: #FF7186;
+    --ok-fond: #16301C; --ok-texte: #8FD6A0; --alerte-fond: #3A2F10; --alerte-texte: #F2D27A;
+    --erreur-fond: #3C1A1D; --erreur-texte: #FFA3AD; --info-fond: #14283B; --info-texte: #9CC6F0;
+    --ombre-carte: none;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --fond: #141312; --surface: #1F1E1C; --surface-douce: #2A2927; --encre: #F2F0EC; --encre-douce: #AAA59D;
+  --lignes: #35332F; --rouge-ma2m-texte: #FF7186;
+  --ok-fond: #16301C; --ok-texte: #8FD6A0; --alerte-fond: #3A2F10; --alerte-texte: #F2D27A;
+  --erreur-fond: #3C1A1D; --erreur-texte: #FFA3AD; --info-fond: #14283B; --info-texte: #9CC6F0;
+  --ombre-carte: none;
+  color-scheme: dark;
+}
