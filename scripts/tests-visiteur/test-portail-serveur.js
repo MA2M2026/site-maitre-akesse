@@ -82,5 +82,15 @@ const blocage = (chemin) => {
   r = await appeler({ action: 'inviter', email: 'x@test.ci', nom: 'X', role: 'site' }, { authorization: 'Bearer ' + JETON });
   ok(r.statut === 403, 'sans identifiant d\'appareil : action du principal refusée');
 
+  // 8. « Créer un compte admin » passe par ce serveur (action creer_admin)
+  base((c) => [200, null]);
+  r = await appeler({ action: 'creer_admin', email: 'pas-une-adresse', password: 'x' }, { authorization: 'Bearer ' + JETON });
+  ok(r.statut === 400 && /e-mail/i.test(r.rendu.error), '« Créer un compte admin » : traité par api/_creer-admin.js via ce serveur');
+
+  // 9. limite de l'offre gratuite Vercel : 11 fonctions + middleware (une de plus bloque TOUTES
+  // les mises en ligne, 05/10 et 19/10/2026)
+  const fonctions = require('fs').readdirSync(require('path').join(__dirname, '../../api')).filter((f) => /\.js$/.test(f) && !f.startsWith('_'));
+  ok(fonctions.length <= 11, 'fonctions Vercel : ' + fonctions.length + ' sur 11 au plus (+ middleware)');
+
   console.log(ko ? '❌ ' + ko + ' échec(s)' : 'Tout est bon.'); process.exit(ko ? 1 : 0);
 })().catch((e) => { console.log('❌ ÉCHEC', e.stack); process.exit(1); });

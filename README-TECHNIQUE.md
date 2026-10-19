@@ -55,7 +55,10 @@ seule fois** (décision de la propriétaire). Ce qui change par rapport aux sect
   d'inactivité / 8 h de session, actions sensibles ré-authentifiées), `espace-site.js`,
   `espace-paiements.js`, `espace-compta.js`, `securite.js`. Styles : `css/portail.css`.
 - Fonction serveur multi-actions : `api/portail.js` (invitations, codes de secours, inscription par
-  code, lien de paiement personnel…). 12 fonctions Vercel au total = la limite de l'offre gratuite.
+  code, lien de paiement personnel…, et « Créer un compte admin » de l'ancien tableau de bord via
+  `api/_creer-admin.js`). **Limite réelle : 11 fichiers `api/*.js` sans « _ » + `middleware.js`** —
+  une 12e fonction fait échouer TOUTES les mises en ligne (05/10 et 19/10/2026) ; vérifié par
+  `scripts/tests-visiteur/test-portail-serveur.js`.
 - `middleware.js` renvoie l'adresse **nue** `/tableau-de-bord(.html)` vers `/admin/`. Toute adresse
   avec des paramètres reste sur la gestion détaillée : `?depuis=portail` (« Outils et gestion
   détaillée », menu du tableau de bord, boutique), `?notif=…` (notifications du téléphone), liens de
@@ -90,7 +93,7 @@ seule fois** (décision de la propriétaire). Ce qui change par rapport aux sect
     rendue à la prochaine connexion complète au portail (`portail_enregistrer_appareil`, principal
     et rôle « site »). `api/acces-tableau.js` refuse aussi un compte du portail coupé ou dont les
     sessions ont été coupées (`ficheStaff`, `dernierCode` dans `api/_commun.js`).
-  - `api/creer-admin.js` : une personne du portail autre que le principal ne crée pas de compte
+  - `api/_creer-admin.js` (appelé par `api/portail.js`, action `creer_admin`) : une personne du portail autre que le principal ne crée pas de compte
     admin. Nouveaux codes de secours : code saisi il y a moins de 10 minutes.
   - Page d'inscription : « mineur » vient de la base (`candidat.mineur`, âge de majorité réglable).
 - Rôles : principal, site (aucun montant ni contact privé), caisse (paiements), compta (totaux sans
@@ -491,7 +494,7 @@ api/supprimer-mannequin.js          Fonction serveur Vercel (clé secrète Supab
                                       définitivement le compte de connexion d'un mannequin
 api/r2-presigner.js                  Fonction serveur Vercel (clés R2) — URL signées pour
                                       envoyer/supprimer les photos du Book sur Cloudflare R2
-api/creer-admin.js                  Fonction serveur Vercel (clé secrète Supabase) — crée un
+api/_creer-admin.js                 (via api/portail.js, action creer_admin) (clé secrète Supabase) — crée un
                                       nouveau compte admin, réservé aux admins déjà connectés
 package.json                     Dépendances npm des fonctions api/ (@aws-sdk/*) — Vercel les
                                    installe automatiquement, aucune étape manuelle

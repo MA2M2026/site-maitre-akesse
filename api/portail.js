@@ -60,6 +60,10 @@ module.exports = async function handler(req, res) {
   if (!debut) return;
   const { jeton, corps } = debut;
   const action = String(corps.action || '');
+  // « Créer un compte admin » de l'ancien tableau de bord : code dans api/_creer-admin.js (le « _ »
+  // le sort du compte des fonctions Vercel — l'offre gratuite en refuse une 12e en plus du
+  // middleware, mises en ligne bloquées le 05/10 puis le 19/10/2026)
+  if (action === 'creer_admin') return require('./_creer-admin.js')(req, res);
   try {
     // ---------- administrateur principal ----------
     if (['inviter', 'reinitialiser_mfa', 'acces'].includes(action)) {

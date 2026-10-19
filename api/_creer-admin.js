@@ -1,4 +1,5 @@
-// Fonction serverless Vercel — crée un nouveau compte administrateur
+// Appelé par api/portail.js (action « creer_admin ») depuis le 19/10/2026 : ce n'est plus une
+// fonction Vercel à part (limite de l'offre gratuite). Crée un nouveau compte administrateur
 // (compte de connexion + entrée dans la table `admins`), réservée aux
 // admins déjà connectés. Remplace la manipulation manuelle dans Supabase
 // (Authentication > Add user, puis Table Editor > admins > Insert row)
