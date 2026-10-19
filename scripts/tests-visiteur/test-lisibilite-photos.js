@@ -28,7 +28,7 @@ function donnees() {
 (async () => {
   const srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: RACINE }); await new Promise((r) => setTimeout(r, 800));
   const b = await chromium.launch();
-  for (const photo of ['photo-sombre.jpg', 'photo-rayures.jpg']) {
+  for (const photo of process.env.PAGES ? [] : ['photo-sombre.jpg', 'photo-rayures.jpg']) {
     const image = fs.readFileSync(path.join(__dirname, 'medias', photo));
     for (const page of ['index.html', 'en/index.html']) {
       for (const ecran of ecrans) {
@@ -83,7 +83,8 @@ function donnees() {
   // pire photo (rayures), téléphone et tablette, de haut en bas de chaque page publique
   const { tables, rpc, pages } = require('./pages-publiques');
   const rayures = fs.readFileSync(path.join(__dirname, 'medias', 'photo-rayures.jpg'));
-  for (const page of pages) {
+  // PAGES=index.html,en/index.html : seulement ces pages (pour corriger vite)
+  for (const page of pages.filter((x) => !process.env.PAGES || process.env.PAGES.split(',').includes(x))) {
     for (const ecran of ecrans.slice(0, 2)) {
       const ctx = await b.newContext({ viewport: { width: ecran.width, height: ecran.height } });
       const p = await ctx.newPage();
@@ -100,19 +101,21 @@ function donnees() {
         // textes visibles posés sur une image, une vidéo ou un fond photo
         const cibles = await p.evaluate(() => {
           const res = [];
+          // (un texte recouvert, par exemple par la barre du haut fixe, n'est pas mesuré à cet endroit)
           const surImage = (el, x, y) => { const pile = document.elementsFromPoint(x, y); const i = pile.indexOf(el);
-            return i >= 0 && pile.slice(i + 1).some((d) => /^(IMG|VIDEO|CANVAS)$/.test(d.tagName) || /url\(/.test(getComputedStyle(d).backgroundImage)); };
+            if (i < 0 || (pile[0] !== el && !el.contains(pile[0]))) return false;
+            return pile.slice(i + 1).some((d) => /^(IMG|VIDEO|CANVAS)$/.test(d.tagName) || /url\(/.test(getComputedStyle(d).backgroundImage)); };
           document.querySelectorAll('body *').forEach((el) => {
-            if (res.length > 40 || el.closest('button, .btn, [role=button], .whatsapp-flottant')) return;
+            if (res.length > 40 || el.closest('button, .btn, [role=button], .whatsapp-flottant, .lang-switch')) return;
             const propre = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim().length > 1);
             if (!propre) return;
             const r = el.getBoundingClientRect(), s = getComputedStyle(el);
-            if (r.width < 4 || r.height < 4 || r.bottom < 0 || r.top > innerHeight || s.visibility === 'hidden' || Number(s.opacity) < 0.1) return;
+            if (r.width < 4 || r.height < 4 || r.top < 0 || r.bottom > innerHeight || s.visibility === 'hidden' || Number(s.opacity) < 0.1) return;
             if (!surImage(el, r.left + Math.min(r.width / 2, 40), r.top + r.height / 2)) return;
             const fs = parseFloat(s.fontSize), gras = Number(s.fontWeight) >= 700;
             el.dataset.essaiLisible = String(res.length);
-            res.push({ i: res.length, texte: el.textContent.trim().slice(0, 30), rgb: s.color.match(/[\d.]+/g).map(Number).slice(0, 3), grand: fs >= 24 || (fs >= 18.66 && gras),
-              x: Math.max(0, r.left), y: Math.max(0, r.top), w: Math.min(r.width, innerWidth - Math.max(0, r.left)), h: Math.min(r.height, innerHeight - Math.max(0, r.top)) });
+            res.push({ i: res.length, texte: el.textContent.trim().slice(0, 30) + (el.className && typeof el.className === 'string' ? ' (' + el.className.split(' ')[0] + ')' : ''), rgb: s.color.match(/[\d.]+/g).map(Number).slice(0, 3), grand: fs >= 24 || (fs >= 18.66 && gras),
+              x: Math.max(0, r.left), y: Math.max(0, r.top), w: Math.min(r.right, innerWidth) - Math.max(0, r.left), h: Math.min(r.bottom, innerHeight) - Math.max(0, r.top) });
           });
           document.querySelectorAll('[data-essai-lisible]').forEach((el) => { el.style.setProperty('color', 'transparent', 'important'); el.style.setProperty('text-shadow', 'none', 'important'); });
           return res;
@@ -132,10 +135,17 @@ function donnees() {
             const lt = lum(t.rgb[0], t.rgb[1], t.rgb[2]); const rap = [];
             for (let i = 0; i < d.length; i += 16) { const lb = lum(d[i], d[i + 1], d[i + 2]); rap.push((Math.max(lt, lb) + 0.05) / (Math.min(lt, lb) + 0.05)); }
             rap.sort((a, bb) => a - bb);
-            return { texte: t.texte, contraste: rap[Math.floor(rap.length * 0.1)], seuil: t.grand ? 3 : 4.5 };
+            const contraste = rap[Math.floor(rap.length * 0.1)], seuil = t.grand ? 3 : 4.5;
+            // capture de la zone fautive (dossier captures/), pour voir le défaut comme un visiteur
+            let image = null;
+            if (contraste < seuil) { const z = document.createElement('canvas'); z.width = Math.round(t.w * k); z.height = Math.round(t.h * k); z.getContext('2d').drawImage(c, Math.round(t.x * k), Math.round(t.y * k), z.width, z.height, 0, 0, z.width, z.height); image = z.toDataURL('image/png').split(',')[1]; }
+            return { texte: t.texte, contraste, seuil, image };
           }).filter(Boolean);
         }, { b64: capture, cibles });
-        resultats.filter((r) => r.contraste < r.seuil).forEach((r) => mauvais.set(r.texte, r));
+        resultats.filter((r) => r.contraste < r.seuil).forEach((r) => {
+          mauvais.set(r.texte, r);
+          try { fs.mkdirSync(path.join(__dirname, 'captures'), { recursive: true }); fs.writeFileSync(path.join(__dirname, 'captures', 'illisible-' + page.replace(/[^a-z0-9]+/gi, '_') + '-' + ecran.width + '-' + mauvais.size + '.png'), Buffer.from(r.image, 'base64')); } catch (e) { /* capture facultative */ }
+        });
       }
       ok(!mauvais.size, page + ' · ' + ecran.nom + ' : textes sur photo lisibles' + [...mauvais.values()].map((r) => ' | « ' + r.texte + ' » ' + r.contraste.toFixed(2)).join(''));
       await ctx.close();

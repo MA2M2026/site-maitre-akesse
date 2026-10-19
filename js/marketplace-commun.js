@@ -119,6 +119,11 @@
       resultat.reglages = reglages || null;
       resultat.ouverte = !!(reglages && reglages.ouverte);
       try { resultat.codeValide = sessionStorage.getItem('ma2m_code_valide') === '1'; } catch (e) {}
+      // connexion de l'administration (portail /admin) avec son code à 6 chiffres : elle vaut la
+      // vérification de sécurité (l'ancien tableau de bord n'existe plus seul, 19/10/2026)
+      if (session && !resultat.codeValide) {
+        try { resultat.codeValide = JSON.parse(atob(session.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).aal === 'aal2'; } catch (e) {}
+      }
     } catch (e) {
       resultat.reseau = false;
     }

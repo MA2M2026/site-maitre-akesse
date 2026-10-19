@@ -224,7 +224,9 @@ export default async function middleware(requete) {
     // Ancien tableau de bord (cahier v2.3, section 6.2) : il n'existe plus seul, toute adresse mène
     // à l'administration (/admin). Ses rubriques ne s'ouvrent que DANS l'administration
     // (?integre=1, js/tableau-integre.js) ; ?depuis=interne = lecture interne de tableauProtege.
-    if (PAGE_TABLEAU.test(url.pathname) && url.searchParams.get('integre') !== '1' && url.searchParams.get('depuis') !== 'interne') {
+    // (le navigateur dit lui-même s'il ouvre la page dans un cadre : Sec-Fetch-Dest « iframe »)
+    const dansCadre = (requete.headers.get('sec-fetch-dest') || 'iframe') === 'iframe';
+    if (PAGE_TABLEAU.test(url.pathname) && !(url.searchParams.get('integre') === '1' && dansCadre) && url.searchParams.get('depuis') !== 'interne') {
       return Response.redirect(new URL('/admin/', url).toString(), 302);
     }
     if (PAGE_TABLEAU.test(url.pathname) || SCRIPTS_ADMIN.test(url.pathname)) return await tableauProtege(requete, url);

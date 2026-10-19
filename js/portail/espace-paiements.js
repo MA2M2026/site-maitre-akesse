@@ -199,7 +199,7 @@
       P.bd(sb.from('agence_mannequins').select('*, parents:mannequin_guardians(nom, telephone)').order('nom')),
       P.bd(sb.from('v_site_candidatures').select('id, full_name, date_naissance, lieu_casting, source').eq('status', 'retenue').order('full_name')),
       // mannequins déjà présents sur le site (fiches) : à reprendre dans le registre (cahier 7.1)
-      sb.from('model_profiles').select('id, full_name, phone, date_naissance, category, contact_email').order('full_name').then((r) => r.data || [], () => [])
+      fichesDuSite().catch(() => [])
     ]);
     const dejaRelies = new Set(liste.map((m) => m.user_id).filter(Boolean));
     const aReprendre = fiches.filter((f) => !dejaRelies.has(f.id) && f.full_name);
@@ -285,15 +285,28 @@
     if (!erreur) P.message(t('nom') + ' ajouté au registre.');
     P.afficher();
   };
+  // Fiches des mannequins du site, avec téléphone et date de naissance : ces deux colonnes ne se
+  // lisent pas directement (Extensions 130/131), seulement par les fonctions réservées aux admins
+  async function fichesDuSite() {
+    const [fiches, tels, prives] = await Promise.all([
+      P.bd(sb.from('model_profiles').select('id, full_name, category').order('full_name')),
+      P.bd(sb.rpc('contacts_mannequins_admin')),
+      P.bd(sb.rpc('profils_prives', { ids: null }))
+    ]);
+    const tel = {}, naissance = {};
+    (tels || []).forEach((t) => { tel[t.model_id] = t.phone; });
+    (prives || []).forEach((x) => { naissance[x.id] = x.date_naissance; });
+    return fiches.map((x) => ({ id: x.id, full_name: x.full_name, category: x.category, phone: tel[x.id] || '', date_naissance: naissance[x.id] || null }));
+  }
   // Mannequins déjà présents sur le site (fiches) → registre, comme membres (mensualité du mois)
   P.formulaires['paiements-reprendre-fiches'] = async (f) => {
     const r = await chargerReglages(), ids = f.getAll('fiche');
     if (!ids.length) { P.message('Cochez au moins un mannequin.'); return; }
-    const fiches = await P.bd(sb.from('model_profiles').select('id, full_name, phone, date_naissance, category, contact_email').in('id', ids));
+    const fiches = (await fichesDuSite()).filter((x) => ids.includes(x.id));
     let ajoutes = 0;
     const refus = [];
     for (const x of fiches) {
-      const erreur = await ajouterAuRegistre({ nom: x.full_name, naissance: x.date_naissance || '', telephone: x.phone || '', email: x.contact_email || '',
+      const erreur = await ajouterAuRegistre({ nom: x.full_name, naissance: x.date_naissance || '', telephone: x.phone || '', email: '',
         categorie: x.category || '', mensualite: f.get('mensualite'), user_id: x.id, model_id: x.id, inscription: false }, r, false).catch((e) => P.erreurTexte(e));
       if (erreur) refus.push(x.full_name + ' : ' + erreur); else ajoutes++;
     }
@@ -520,7 +533,7 @@
     const ds = await echeancesDuMois(moisChoisi());
     let personnes = 0, messages = 0;
     for (const id of ids) {
-      const e = ds.filter((x) => x.mannequin_id === id).sort((a, b) => (b.type === 'mensualite') - (a.type === 'mensualite'))[0];
+      const e = ds.filter((x) => x.mannequin_id === id && NON_PAYE.includes(x.statut)).sort((a, b) => (b.type === 'mensualite') - (a.type === 'mensualite'))[0];
       if (!e) continue;
       messages += await P.rpc('portail_message_echeance', { p_echeance: e.id, p_modele: P.etat.modele || 'relance' });
       personnes++;
@@ -529,6 +542,7 @@
   }
   async function envoyerSelection(ids) {
     const params = { p_mannequins: ids, p_modele: P.etat.modele || 'relance', p_mois: moisChoisi(), p_envoi_le: P.etat.dateMessage || null };
+    const debut = new Date(Date.now() - 5 * 60e3).toISOString();  // marge d'horloge
     let r;
     try { r = await P.rpc('portail_message_selection', params); } catch (e) {
       if (!/portail_message_selection|PGRST202|Could not find/i.test(P.erreurTexte(e) + (e && e.code))) throw e;
@@ -537,9 +551,9 @@
     }
     if (r.planifie) { P.message('Envoi planifié le ' + P.date(r.envoi_le) + ' pour ' + r.personnes + ' personne(s).'); P.afficher(); return; }
     // les e-mails partent tout de suite (cahier 7.5 : e-mail automatique) ; WhatsApp : un geste par message
-    const emails = r.messages ? await envoyerFile().catch(() => 0) : 0;
+    const emails = r.messages ? await envoyerFile({ mannequins: ids, modele: params.p_modele, depuis: debut }).catch(() => 0) : 0;
     P.message(r.personnes + ' personne(s) : messages envoyés dans leur espace' + (emails ? ', ' + emails + ' e-mail(s) envoyé(s)' : '') +
-      (r.sans_echeance ? ' · ' + r.sans_echeance + ' sans échéance ce mois-ci (non envoyés)' : '') + '. Les WhatsApp sont prêts ci-dessus : un geste par message.');
+      (r.sans_echeance ? ' · ' + r.sans_echeance + ' déjà à jour ou sans échéance ce mois-ci : rien envoyé' : '') + '. Les WhatsApp sont prêts ci-dessus : un geste par message.');
     P.afficher();
   }
   P.actions['paiements-envoyer'] = async () => {
@@ -580,9 +594,12 @@
     P.afficher();
   };
   // File des e-mails : envoyés depuis le navigateur de l'agent (service EmailJS du site)
-  async function envoyerFile() {
+  // filtre (envoi par sélection) : seulement les e-mails que cet envoi vient de préparer
+  async function envoyerFile(filtre) {
     if (typeof envoyerEmailCandidat !== 'function') return 0;
-    const file = await P.bd(sb.from('message_log').select('*').eq('statut', 'a_envoyer').eq('canal', 'email').order('planifie_le').limit(50));
+    let q = sb.from('message_log').select('*').eq('statut', 'a_envoyer').eq('canal', 'email');
+    if (filtre) q = q.in('mannequin_id', filtre.mannequins).eq('modele', filtre.modele).gte('planifie_le', filtre.depuis);
+    const file = await P.bd(q.order('planifie_le').limit(50));
     let ok = 0;
     for (const x of file) {
       try {

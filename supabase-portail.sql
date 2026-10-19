@@ -1297,14 +1297,16 @@ declare
   messages int := 0;
 begin
   foreach mid in array coalesce(p_mannequins, '{}') loop
+    -- seulement une échéance encore à payer : personne déjà à jour (payée, déclarée, exonérée)
+    -- ne reçoit jamais un appel ou une relance (relecture du 19/10/2026)
     select id into eid from fee_dues
-    where mannequin_id = mid and mois = date_trunc('month', p_mois)::date and statut <> 'annulee'
+    where mannequin_id = mid and mois = date_trunc('month', p_mois)::date and statut in ('a_payer', 'refusee', 'non_paye')
     order by (type = 'mensualite') desc, cree_le desc limit 1;
     if eid is null then sans := sans + 1; continue; end if;
     messages := messages + portail_preparer_message(eid, p_modele);
     ok := ok + 1;
   end loop;
-  return json_build_object('personnes', ok, 'sans_echeance', sans, 'messages', messages);
+  return json_build_object('personnes', ok, 'sans_echeance', sans, 'messages', messages);  -- sans_echeance : rien à payer ce mois-ci
 end;
 $$;
 revoke all on function message_preparer_selection(uuid[], text, date) from public, anon, authenticated;
@@ -1798,7 +1800,8 @@ begin
   if not (portail_peut('site') or portail_peut('paiements')) then raise exception 'Accès refusé.'; end if;
   if p_statut not in ('nouvelle', 'vue', 'en étude', 'en attente', 'retenue', 'refusée') then raise exception 'Statut inconnu.'; end if;
   update casting_applications set status = p_statut where id = p_id and status <> 'inscrite';
-  if p_statut = 'refusée' then
+  -- plus « Retenue » : le code d'inscription déjà donné ne sert plus (19/10/2026)
+  if p_statut <> 'retenue' then
     update registration_codes set statut = 'annule' where candidature_id = p_id and statut in ('genere', 'bloque');
   end if;
 end;

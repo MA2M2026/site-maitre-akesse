@@ -427,8 +427,12 @@ select essai((select count(*) from espace_codes e join agence_mannequins m on m.
 set role authenticated;
 select essai_qui('00000000-0000-0000-0000-0000000000a1');
 create temp table essai_msg as select portail_message_selection(array['00000000-0000-0000-0000-00000000e077'::uuid, '00000000-0000-0000-0000-00000000e001'::uuid], 'relance', current_date) as r;
-select essai(((select r from essai_msg) ->> 'personnes')::int + ((select r from essai_msg) ->> 'sans_echeance')::int = 2 and ((select r from essai_msg) ->> 'messages')::int >= 1,
-             'cahier 7.5 : message préparé pour les personnes cochées (celles sans échéance comptées à part)');
+select essai(((select r from essai_msg) ->> 'personnes')::int + ((select r from essai_msg) ->> 'sans_echeance')::int = 2,
+             'cahier 7.5 : message préparé pour les personnes cochées (celles à jour ou sans échéance comptées à part)');
+-- une personne dont le paiement du mois est déjà déclaré ou payé ne reçoit pas de relance
+select essai(((portail_message_selection(array['00000000-0000-0000-0000-00000000e077'::uuid], 'relance', current_date)) ->> 'messages')::int = 0
+             or (select statut from fee_dues where id = '00000000-0000-0000-0000-00000000f771') in ('a_payer', 'refusee', 'non_paye'),
+             'relance : personne déjà à jour ce mois-ci → aucun message');
 select essai((portail_message_selection(array['00000000-0000-0000-0000-00000000e077'::uuid], 'appel', current_date, current_date + 2) ->> 'planifie')::boolean,
              'cahier 7.5 : envoi planifié enregistré');
 insert into message_groupes (nom, membres) values ('Formation mensuelle', array['00000000-0000-0000-0000-00000000e077'::uuid]);

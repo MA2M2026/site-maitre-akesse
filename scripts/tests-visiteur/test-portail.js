@@ -35,7 +35,7 @@ function donnees(role) {
       page_views: [{ page: '/index.html', created_at: new Date().toISOString() }, { page: '/mannequins.html', created_at: new Date().toISOString() }],
       inscriptions_mannequins: [], actualites: [], model_photos: [], code_portail_mannequin: [], invite_codes: [],
       agence_mannequins: [awa, yao],
-      model_profiles: [{ id: 'u-awa', full_name: 'Awa Koné', phone: '0700000001', date_naissance: '2001-03-12', category: 'femme' }, { id: 'u-bolli', full_name: 'Bolli', phone: '0700000009', date_naissance: '2002-02-02', category: 'femme' }],
+      model_profiles: [{ id: 'u-awa', full_name: 'Awa Koné', category: 'femme' }, { id: 'u-bolli', full_name: 'Bolli', category: 'femme' }],
       fee_dues: [
         { id: 'd1', mannequin_id: 'm1', type: 'mensualite', mois: MOIS, montant_du: 10000, montant_paye: 0, date_limite: MOIS.slice(0, 8) + '05', statut: 'declare', mannequin: awa, paiements: [], declarations: [] },
         { id: 'd2', mannequin_id: 'm2', type: 'mensualite', mois: MOIS, montant_du: 20000, montant_paye: 0, date_limite: MOIS.slice(0, 8) + '05', statut: 'non_paye', mannequin: yao, paiements: [], declarations: [] }],
@@ -64,6 +64,8 @@ function donnees(role) {
       portail_valider_paiement: { recu: 'REC-2026-00002', paiement: 'p1', code_espace: 'ESP-K7P4-92' },
       portail_code_espace: 'ESP-QW3R-77',
       portail_inscription_agence: { recu: 'REC-2026-00003', paiement: 'p2', code_espace: 'ESP-ZX8C-44' },
+      contacts_mannequins_admin: [{ model_id: 'u-awa', phone: '0700000001' }, { model_id: 'u-bolli', phone: '0700000009' }],
+      profils_prives: [{ id: 'u-awa', date_naissance: '2001-03-12' }, { id: 'u-bolli', date_naissance: '2002-02-02' }],
       portail_message_selection: (c) => ({ personnes: c.p_mannequins.length, messages: c.p_mannequins.length * 3, sans_echeance: 0 })
     },
     api: { '/api/acces-tableau': () => ({ ok: true }), '/api/portail': (corps) => corps.action === 'codes_secours_creer' ? { codes: ['AAAAA-BBBBB', 'CCCCC-DDDDD', 'EEEEE-FFFFF', 'GGGGG-HHHHH', 'JJJJJ-KKKKK', 'LLLLL-MMMMM', 'NNNNN-PPPPP', 'QQQQQ-RRRRR'] } : { ok: true } }

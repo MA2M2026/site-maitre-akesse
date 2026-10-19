@@ -29,6 +29,8 @@ const ADMIN = '11111111-2222-3333-4444-555555555555';
   const redirige = await mw(new Request('https://www.maitreakessemodelmanagement.com/tableau-de-bord'));
   ok(redirige && redirige.status === 302 && /\/admin\/$/.test(redirige.headers.get('location')), 'ancienne adresse du tableau de bord → portail /admin (signets conservés)');
   // l'ancien tableau de bord n'existe plus seul (19/10/2026) : toute autre adresse mène au portail
+  const horsCadre = await mw(new Request('https://www.maitreakessemodelmanagement.com/tableau-de-bord.html?depuis=portail&integre=1', { headers: { 'sec-fetch-dest': 'document' } }));
+  ok(horsCadre && horsCadre.status === 302, 'adresse « intégrée » ouverte seule (hors cadre de l’administration) → administration');
   for (const q of ['?depuis=portail', '?notif=candidature&id=1', '?reset_code=abc']) {
     const r0 = await mw(new Request('https://www.maitreakessemodelmanagement.com/tableau-de-bord.html' + q));
     ok(r0 && r0.status === 302 && /\/admin\/$/.test(r0.headers.get('location')), 'tableau de bord seul (' + q + ') → administration');
