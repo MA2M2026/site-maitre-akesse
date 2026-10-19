@@ -195,14 +195,25 @@
   // ---------- Registre ----------
   async function registre() {
     const r = await chargerReglages();
-    const [liste, retenues] = await Promise.all([
+    const [liste, retenues, fiches] = await Promise.all([
       P.bd(sb.from('agence_mannequins').select('*, parents:mannequin_guardians(nom, telephone)').order('nom')),
-      P.bd(sb.from('v_site_candidatures').select('id, full_name, date_naissance, lieu_casting, source').eq('status', 'retenue').order('full_name'))
+      P.bd(sb.from('v_site_candidatures').select('id, full_name, date_naissance, lieu_casting, source').eq('status', 'retenue').order('full_name')),
+      // mannequins déjà présents sur le site (fiches) : à reprendre dans le registre (cahier 7.1)
+      sb.from('model_profiles').select('id, full_name, phone, date_naissance, category, contact_email').order('full_name').then((r) => r.data || [], () => [])
     ]);
+    const dejaRelies = new Set(liste.map((m) => m.user_id).filter(Boolean));
+    const aReprendre = fiches.filter((f) => !dejaRelies.has(f.id) && f.full_name);
     const opt = (v) => '<option value="' + v + '">' + P.fcfa(v) + '</option>';
     return P.entete('Registre des mannequins', '<button class="btn petit" data-action="paiements-export-registre">Exporter (CSV)</button>') +
       // Inscription réglée directement à l'agence (espèces…), sans passer par le site (18/10/2026)
-      '<details class="carte"' + (retenues.length ? ' open' : '') + '><summary>Inscription payée à l’agence (espèces…) · ' + retenues.length + ' mannequin' + (retenues.length > 1 ? 's' : '') + ' retenu' + (retenues.length > 1 ? 's' : '') + ' en attente</summary>' +
+      (aReprendre.length ? '<details class="carte"' + (liste.length ? '' : ' open') + '><summary>Mannequins de l’agence déjà sur le site · ' + aReprendre.length + ' à mettre dans le registre</summary>' +
+        '<p class="doux" style="margin-top:10px">Vos mannequins actuels (fiches du site). Cochez ceux qui sont membres de l’agence : ils entrent au registre avec la <b>mensualité du mois</b> (pas les 25 000 de l’inscription) et leur espace est relié. Une fiche sans date de naissance est signalée.</p>' +
+        '<form class="f" data-form="paiements-reprendre-fiches" style="margin-top:10px"><div class="large">' + aReprendre.map((f) =>
+          '<label class="case"><input type="checkbox" name="fiche" value="' + f.id + '" checked> ' + P.esc(f.full_name) + (f.date_naissance ? ' · ' + P.age(f.date_naissance) + ' ans' : ' · <span class="doux">date de naissance manquante</span>') + '</label>').join('') + '</div>' +
+        '<label class="fl" for="rf-mens">Mensualité<select id="rf-mens" name="mensualite">' + opt(r.mensualite_standard) + opt(r.mensualite_haute) + '</select></label>' +
+        '<button class="btn rouge" type="submit">Mettre les cochés dans le registre</button></form></details>' : '') +
+      '<details class="carte"><summary>Nouvelle inscription payée à l’agence (espèces…) · personne retenue au casting · ' + retenues.length + ' en attente</summary>' +
+      '<p class="doux" style="margin-top:10px">Seulement pour une <b>nouvelle</b> personne retenue au casting qui paie son inscription (25 000 FCFA : inscription + 1er mois) directement à l’agence. Vos mannequins déjà membres ne passent pas par ici.</p>' +
       (retenues.length ? '<form class="f" data-form="paiements-inscription-agence" style="margin-top:12px">' +
         '<label class="fl large" for="ia-cand">Mannequin retenu au casting<select id="ia-cand" name="candidature" required>' + retenues.map((c) => '<option value="' + c.id + '">' + P.esc(c.full_name) + ' · ' + P.age(c.date_naissance) + ' ans' + (c.source === 'direct' ? ' · casting direct' : '') + '</option>').join('') + '</select></label>' +
         '<label class="fl" for="ia-mont">Montant reçu<input id="ia-mont" name="montant" type="number" min="1" value="' + (r.droit_inscription + r.premier_mois) + '" required></label>' +
@@ -246,14 +257,15 @@
   async function ajouterAuRegistre(d, r, demanderDoublon) {
     const age = P.age(d.naissance);
     if (!d.nom || !d.naissance || age == null) return 'nom ou date de naissance manquant';
-    if (!d.telephone) return 'téléphone manquant';
+    if (!d.telephone && !d.user_id) return 'téléphone manquant';
     if (age < r.age_majorite && (!d.parent_nom || !d.parent_tel)) return 'mineur : nom et téléphone du parent obligatoires';
-    const doublons = await P.bd(sb.from('agence_mannequins').select('id, nom').or('telephone.eq.' + d.telephone.replace(/[,()]/g, '') + ',and(nom.ilike.' + d.nom.replace(/[,()%*]/g, '') + ',date_naissance.eq.' + d.naissance + ')'));
+    const doublons = await P.bd(sb.from('agence_mannequins').select('id, nom').or((d.telephone ? 'telephone.eq.' + d.telephone.replace(/[,()]/g, '') + ',' : '') + (d.user_id ? 'user_id.eq.' + d.user_id + ',' : '') + 'and(nom.ilike.' + d.nom.replace(/[,()%*]/g, '') + ',date_naissance.eq.' + d.naissance + ')'));
     if (doublons.length && !(demanderDoublon && confirm('Un mannequin semble déjà enregistré (' + doublons.map((x) => x.nom).join(', ') + '). Ajouter quand même ?'))) return 'déjà dans le registre';
     const mensualite = [r.mensualite_standard, r.mensualite_haute].includes(Number(d.mensualite)) ? Number(d.mensualite) : r.mensualite_standard;
     const m = (await P.bd(sb.from('agence_mannequins').insert({
-      nom: d.nom, prenoms: d.prenoms || null, date_naissance: d.naissance, telephone: d.telephone, whatsapp: d.whatsapp || d.telephone,
-      email: d.email || null, categorie: d.categorie || null, montant_mensuel: mensualite
+      nom: d.nom, prenoms: d.prenoms || null, date_naissance: d.naissance, telephone: d.telephone || null, whatsapp: d.whatsapp || d.telephone || null,
+      email: d.email || null, categorie: d.categorie || null, montant_mensuel: mensualite,
+      user_id: d.user_id || null, model_id: d.model_id || null  // déjà inscrit sur le site : son espace est relié
     }).select('id')))[0];
     if (d.parent_nom) await P.bd(sb.from('mannequin_guardians').insert({ mannequin_id: m.id, nom: d.parent_nom, lien: 'Parent', telephone: d.parent_tel, email: d.parent_email || null }));
     const mois = P.moisCourant(), limite = mois.slice(0, 8) + String(r.jour_limite).padStart(2, '0');
@@ -272,6 +284,22 @@
     if (erreur && erreur !== 'déjà dans le registre') { P.message('Non ajouté : ' + erreur + '.'); return; }
     if (!erreur) P.message(t('nom') + ' ajouté au registre.');
     P.afficher();
+  };
+  // Mannequins déjà présents sur le site (fiches) → registre, comme membres (mensualité du mois)
+  P.formulaires['paiements-reprendre-fiches'] = async (f) => {
+    const r = await chargerReglages(), ids = f.getAll('fiche');
+    if (!ids.length) { P.message('Cochez au moins un mannequin.'); return; }
+    const fiches = await P.bd(sb.from('model_profiles').select('id, full_name, phone, date_naissance, category, contact_email').in('id', ids));
+    let ajoutes = 0;
+    const refus = [];
+    for (const x of fiches) {
+      const erreur = await ajouterAuRegistre({ nom: x.full_name, naissance: x.date_naissance || '', telephone: x.phone || '', email: x.contact_email || '',
+        categorie: x.category || '', mensualite: f.get('mensualite'), user_id: x.id, model_id: x.id, inscription: false }, r, false).catch((e) => P.erreurTexte(e));
+      if (erreur) refus.push(x.full_name + ' : ' + erreur); else ajoutes++;
+    }
+    P.fenetre('<h2>Registre</h2><p>' + ajoutes + ' mannequin(s) ajouté(s) au registre, avec la mensualité du mois.</p>' +
+      (refus.length ? '<div class="note alerte">À compléter (' + refus.length + ') — ajoutez-les à la main avec leur date de naissance :<br>' + refus.map(P.esc).join('<br>') + '</div>' : '') +
+      '<div class="ligne"><button class="btn rouge" data-action="fermer-fenetre-afficher">Fermer</button></div>');
   };
   // Import CSV (Excel : « Enregistrer sous… CSV ») — colonnes du modèle téléchargeable
   const COLONNES_IMPORT = ['Nom', 'Prénoms', 'Date de naissance', 'Téléphone', 'WhatsApp', 'E-mail', 'Catégorie', 'Mensualité', 'Parent', 'Téléphone du parent', 'E-mail du parent'];
@@ -388,8 +416,8 @@
       P.bd(sb.from('message_log').select('*').neq('statut', 'a_envoyer').order('planifie_le', { ascending: false }).limit(25)),
       echeancesDuMois(m),
       P.bd(sb.from('agence_mannequins').select('id, nom, prenoms, date_naissance, categorie, user_id, statut, montant_mensuel').in('statut', ['actif', 'suspendu', 'sortie_proposee']).order('nom')),
-      P.bd(sb.from('message_groupes').select('*').order('nom')),
-      P.bd(sb.from('message_planifies').select('*').eq('statut', 'prevu').order('envoi_le'))
+      sb.from('message_groupes').select('*').order('nom').then((x) => x.data || [], () => []),
+      sb.from('message_planifies').select('*').eq('statut', 'prevu').order('envoi_le').then((x) => x.data || [], () => [])
     ]);
     const choix = P.etat.modele || 'relance';
     const calendrier = [['1er', 'appel', 1], [r.jour_relance, 'relance', r.jour_relance], [r.jour_derniere_relance, 'dernière relance', r.jour_derniere_relance], [r.jour_limite + 1, 'paiement non reçu', r.jour_limite + 1]];
@@ -486,10 +514,32 @@
     P.etat.decoches = new Set(el.getAttribute('data-tout') === '1' ? [] : [...document.querySelectorAll('input[data-change="paiements-coche"]')].map((c) => c.getAttribute('data-id')));
     P.afficher();
   };
+  // Base pas encore à jour (fonction portail_message_selection absente) : même travail, échéance
+  // par échéance, avec la fonction déjà en place
+  async function selectionSansNouvelleFonction(ids) {
+    const ds = await echeancesDuMois(moisChoisi());
+    let personnes = 0, messages = 0;
+    for (const id of ids) {
+      const e = ds.filter((x) => x.mannequin_id === id).sort((a, b) => (b.type === 'mensualite') - (a.type === 'mensualite'))[0];
+      if (!e) continue;
+      messages += await P.rpc('portail_message_echeance', { p_echeance: e.id, p_modele: P.etat.modele || 'relance' });
+      personnes++;
+    }
+    return { personnes, messages, sans_echeance: ids.length - personnes };
+  }
   async function envoyerSelection(ids) {
-    const r = await P.rpc('portail_message_selection', { p_mannequins: ids, p_modele: P.etat.modele || 'relance', p_mois: moisChoisi(), p_envoi_le: P.etat.dateMessage || null });
-    P.message(r.planifie ? 'Envoi planifié le ' + P.date(r.envoi_le) + ' pour ' + r.personnes + ' personne(s).'
-      : r.personnes + ' personne(s) : ' + r.messages + ' message(s) préparé(s)' + (r.sans_echeance ? ' · ' + r.sans_echeance + ' sans échéance ce mois-ci (non envoyés)' : '') + '. Envoyez maintenant les e-mails et les WhatsApp ci-dessus.');
+    const params = { p_mannequins: ids, p_modele: P.etat.modele || 'relance', p_mois: moisChoisi(), p_envoi_le: P.etat.dateMessage || null };
+    let r;
+    try { r = await P.rpc('portail_message_selection', params); } catch (e) {
+      if (!/portail_message_selection|PGRST202|Could not find/i.test(P.erreurTexte(e) + (e && e.code))) throw e;
+      if (params.p_envoi_le) throw new Error('L’envoi planifié sera disponible après la mise à jour de la base. Envoyez maintenant, ou réessayez plus tard.');
+      r = await selectionSansNouvelleFonction(ids);
+    }
+    if (r.planifie) { P.message('Envoi planifié le ' + P.date(r.envoi_le) + ' pour ' + r.personnes + ' personne(s).'); P.afficher(); return; }
+    // les e-mails partent tout de suite (cahier 7.5 : e-mail automatique) ; WhatsApp : un geste par message
+    const emails = r.messages ? await envoyerFile().catch(() => 0) : 0;
+    P.message(r.personnes + ' personne(s) : messages envoyés dans leur espace' + (emails ? ', ' + emails + ' e-mail(s) envoyé(s)' : '') +
+      (r.sans_echeance ? ' · ' + r.sans_echeance + ' sans échéance ce mois-ci (non envoyés)' : '') + '. Les WhatsApp sont prêts ci-dessus : un geste par message.');
     P.afficher();
   }
   P.actions['paiements-envoyer'] = async () => {

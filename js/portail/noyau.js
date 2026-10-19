@@ -342,7 +342,8 @@
   // ---------- coque et pages ----------
   P.coque = (module, page, html) => {
     const esp = P.espaces[module];
-    const nav = esp.nav.filter((n) => !n[2] || n[2]()).map((n) =>
+    // une entrée sans adresse (null) est un titre de groupe dans le menu
+    const nav = esp.nav.filter((n) => !n[2] || n[2]()).map((n) => !n[0] ? '<div class="titre-menu sous-titre-menu">' + P.esc(n[1]) + '</div>' :
       '<a class="nav' + (n[0] === page ? ' actif' : '') + '" href="#/' + module + '/' + n[0] + '"' + (n[0] === page ? ' aria-current="page"' : '') + '><span>' + P.esc(n[1]) + '</span>' +
       (esp.compteur && esp.compteur[n[0]] ? '<span class="compteur">' + esp.compteur[n[0]] + '</span>' : '') + '</a>').join('');
     return '<div class="coque"><nav class="lateral" aria-label="' + P.esc(ESPACES[module]) + '"><div class="marque">M A 2 M<small>Maître Akesse Model Management</small></div>' +
@@ -385,7 +386,7 @@
     if (!module) { app().innerHTML = vuePortail(); return; }
     const esp = P.espaces[module];
     if (!esp) { location.hash = '#/'; return; }
-    const pageValide = esp.pages[page] ? page : esp.nav[0][0];
+    const pageValide = esp.pages[page] ? page : esp.nav.find((n) => n[0])[0];
     const autorise = module === 'securite' ? P.moi.role === 'principal' : P.moi.espaces[module];
     if (!autorise) { app().innerHTML = P.coque(module, pageValide, P.refuse()); return; }
     app().innerHTML = P.coque(module, pageValide, '<div class="chargement">Chargement…</div>');

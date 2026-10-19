@@ -26,7 +26,7 @@ self.addEventListener('push', (event) => {
     vibrate: [200, 100, 200],
     tag: donnees.tag || undefined,
     renotify: !!donnees.tag,
-    data: { url: donnees.url || '/tableau-de-bord.html' },
+    data: { url: donnees.url || '/admin/' },
     requireInteraction: true
   };
 
@@ -37,12 +37,12 @@ self.addEventListener('push', (event) => {
 // plan si un onglet du tableau de bord est déjà ouvert).
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const url = (event.notification.data && event.notification.data.url) || '/tableau-de-bord.html';
+  const url = (event.notification.data && event.notification.data.url) || '/admin/';
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((listeClients) => {
       for (const client of listeClients) {
-        if (client.url.includes('/tableau-de-bord.html') && 'focus' in client) {
+        if (client.url.includes('/admin/') && 'focus' in client) {
           client.navigate(url);
           return client.focus();
         }

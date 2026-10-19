@@ -346,7 +346,10 @@ insert into portail_reglages (id) values (true) on conflict (id) do nothing;
 -- durée de la formation (calendrier des mois dans « Mes paiements ») et validité du code
 -- personnel de l'espace mannequin (18/10/2026)
 alter table portail_reglages add column if not exists duree_formation_mois int not null default 24 check (duree_formation_mois between 1 and 120);
-alter table portail_reglages add column if not exists validite_code_espace_jours int not null default 60 check (validite_code_espace_jours between 1 and 365);
+alter table portail_reglages add column if not exists validite_code_espace_jours int not null default 7 check (validite_code_espace_jours between 1 and 365);
+-- une semaine (décision de la propriétaire, 19/10/2026) ; l'ancienne valeur par défaut (60) est remplacée
+alter table portail_reglages alter column validite_code_espace_jours set default 7;
+update portail_reglages set validite_code_espace_jours = 7 where validite_code_espace_jours = 60;
 
 create table if not exists agence_mannequins (
   id uuid primary key default gen_random_uuid(),

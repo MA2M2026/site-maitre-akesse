@@ -4,11 +4,45 @@
 (function () {
   'use strict';
   const P = window.Portail;
+  // Rubriques de l'ancien tableau de bord, rattachées à l'administration (cahier 6 : « cet espace
+  // reprend tout le tableau de bord actuel ») : elles s'ouvrent ici, dans le cadre du portail
+  // (js/tableau-integre.js retire tout ce qui fait double emploi). [adresse, libellé, rubrique, principal seul]
+  const RUBRIQUES = [
+    [null, 'Mannequins'],
+    ['fiches', 'Fiches, photos, compcard et CV', 'b2-mannequins-publies'],
+    ['validations', 'Validations en attente', 'b2-validations'],
+    ['photos-triees', 'Photos triées', 'b2-tri-photos'],
+    ['rapport-profils', 'Rapport des profils', 'b2-rapport-profils'],
+    ['inscriptions-anciennes', 'Inscriptions (ancien formulaire)', 'b2-inscriptions'],
+    [null, 'Castings et contacts'],
+    ['fiches-candidatures', 'Fiches des candidatures (photos, WhatsApp)', 'b2-candidatures'],
+    ['projets', 'Projets et castings', 'b2-projets'],
+    ['fiches-evenement', 'Fiches événement', 'b2-fiches-evenement'],
+    ['messages-groupes', 'Messages groupés', 'b2-messages-groupes'],
+    ['contacts', 'Messages de contact', 'b2-contacts'],
+    [null, 'Contenu du site'],
+    ['actualites', 'Actualités et événements', null],
+    ['vedette', 'Mannequin à la une', 'b3c-vedette-admin'],
+    ['bandeau', 'Bandeau d’information', 'b3c-bandeau'],
+    ['mot-fondateur', 'Mot du fondateur', 'b3c-mot-fondateur'],
+    ['agenda', 'Agenda du site', 'b3c-agenda'],
+    ['video-accueil', 'Vidéo de l’accueil', 'b3d-video-accueil'],
+    ['instagram', 'Flux Instagram', 'b3c-instagram'],
+    ['statistiques', 'Statistiques et classement', 'v2-top3'],
+    [null, 'Maintenance', null, true],
+    ['code-espace', 'Code « Créer mon compte »', 'b3b-code-permanent', true],
+    ['codes-anciens', 'Anciens codes d’inscription', 'b3b-codes-inscription', true],
+    ['acces-bloques', 'Accès bloqués', 'b3b-acces-bloques', true],
+    ['drive', 'Drive et transferts', 'b3a-drive', true],
+    ['nettoyage', 'Nettoyage des photos', 'b3a-nettoyage', true],
+    ['erreurs', 'Erreurs du site', 'b3a-erreurs', true]
+  ];
+  const principalSeul = () => P.moi.role === 'principal';
   const NAV = [
     ['vue', 'Vue d’ensemble'], ['mannequins', 'Mannequins'], ['candidatures', 'Candidatures casting'],
     ['recruteurs', 'Demandes recruteurs'], ['dossiers', 'Dossiers d’inscription'], ['codes', 'Codes d’accès'],
-    ['outils', 'Outils et gestion détaillée']
-  ];
+    ['outils', 'Outils (QR code, carte de visite)']
+  ].concat(RUBRIQUES.map((r) => [r[0], r[1], r[3] ? principalSeul : null]));
   const STATUTS_CANDIDATURE = { nouvelle: 'Nouvelle', vue: 'Vue', 'en étude': 'En étude', 'en attente': 'En attente', retenue: 'Retenue', 'refusée': 'Refusée', inscrite: 'Inscrite' };
   const TON_CANDIDATURE = { nouvelle: 'info', vue: 'neutre', 'en étude': 'alerte', 'en attente': 'alerte', retenue: 'ok', 'refusée': 'erreur', inscrite: 'ok' };
   const TON_DOSSIER = { 'en cours': 'alerte', 'validé': 'ok', 'refusé': 'erreur' };
@@ -69,7 +103,7 @@
           '</td><td class="nombre">' + m.photos + '</td><td>' + (masque() ? '<span class="doux">•••• ••• •••</span>' : P.esc(m.phone || m.contact_email || '—')) + '</td><td>' + etat + '</td><td class="ligne">' +
           '<button class="btn petit" data-action="site-publier" data-id="' + m.id + '" data-publie="' + (m.published ? '1' : '0') + '">' + (m.published ? 'Retirer' : 'Publier') + '</button>' +
           (m.slug ? '<a class="btn petit" href="/mannequin.html?id=' + m.id + '" target="_blank" rel="noopener">Fiche</a>' : '') + '</td></tr>';
-      })) + '<p class="petit-texte doux">Mensurations, photos et vidéos se modifient dans « Outils et gestion détaillée ».</p>';
+      })) + '<p class="petit-texte doux">Photos, compcard, CV, mise en sourdine : rubrique « Fiches, photos, compcard et CV » dans le menu.</p>';
   }
   P.actions['site-publier'] = async (el) => {
     const publier = el.getAttribute('data-publie') !== '1';
@@ -194,17 +228,34 @@
       '<div class="grille chiffres">' + Object.keys(LIBELLE_CODE).map((k) => P.chiffre('Codes ' + LIBELLE_CODE[k].toLowerCase(), parStatut[k] || 0)).join('') + '</div>' +
       '<div class="carte"><h2>Codes individuels d’inscription</h2><p class="doux">Un code par mannequin retenu, généré depuis « Candidatures casting ». Le code général d’inscription (MA2M2026) est remplacé par ces codes.</p></div>' +
       P.tableau(['Mannequin', 'Code'], individuels.map((c) => '<tr><td>' + P.esc(c.full_name) + '</td><td>' + P.pastille(LIBELLE_CODE[c.code_statut] + (c.code_indice ? ' · …' + c.code_indice : ''), TON_CODE[c.code_statut]) + '</td></tr>')) +
-      '<div class="carte"><h2>Code d’invitation de l’espace mannequin</h2><p class="doux">' + ((portail.data || []).length ? 'Un code est en place. Il se change dans « Outils et gestion détaillée ».' : 'Aucun code en place.') + '</p>' +
+      '<div class="carte"><h2>Code d’invitation de l’espace mannequin</h2><p class="doux">' + ((portail.data || []).length ? 'Un code est en place. Il se change dans la rubrique « Code « Créer mon compte » » du menu.' : 'Aucun code en place.') + '</p>' +
       '<p class="petit-texte doux">' + ((invitations.data || []).length) + ' code(s) d’invitation enregistré(s).</p></div>';
   }
 
   async function outils() {
-    return P.entete('Outils et gestion détaillée') +
-      '<div class="grille deux"><div class="carte"><h2>Gestion détaillée du site</h2><p class="doux">Fiches complètes des mannequins (mensurations, photos, vidéos), actualités et événements, agenda, partenaires, couverture de l’accueil, messages groupés, bandeau d’annonce, réglages. Aucune donnée de paiement n’y figure.</p>' +
-      '<a class="btn rouge" href="/tableau-de-bord?depuis=portail" style="margin-top:12px">Ouvrir la gestion détaillée</a></div>' +
-      '<div class="carte"><h2>QR code avec logo</h2><p class="doux">Générateur de QR code à l’image de l’agence.</p><a class="btn" href="/outils/qr-generateur.html" target="_blank" rel="noopener" style="margin-top:12px">Ouvrir</a></div>' +
+    return P.entete('Outils') +
+      '<div class="grille deux"><div class="carte"><h2>QR code avec logo</h2><p class="doux">Générateur de QR code à l’image de l’agence.</p><a class="btn" href="/outils/qr-generateur.html" target="_blank" rel="noopener" style="margin-top:12px">Ouvrir</a></div>' +
       '<div class="carte"><h2>Carte de visite</h2><p class="doux">Carte de visite de l’agence avec QR code.</p><a class="btn" href="/outils/carte-visite.html" target="_blank" rel="noopener" style="margin-top:12px">Ouvrir</a></div></div>';
   }
 
-  P.espaces.site = { nav: NAV, pages: { vue, mannequins, candidatures, recruteurs, dossiers, codes, outils } };
+  // Ouvre une rubrique de l'ancien tableau de bord dans le cadre de l'administration. La page
+  // protégée demande sa clé d'accès (api/acces-tableau.js), accordée à une session du portail
+  // avec double authentification ; sans elle, le cadre montrerait l'écran de connexion.
+  async function rubrique(r) {
+    if (r[3] && !principalSeul()) return P.refuse();
+    const session = (await sb.auth.getSession()).data.session;
+    const rep = await fetch('/api/acces-tableau', { method: 'POST', headers: { Authorization: 'Bearer ' + (session ? session.access_token : '') } });
+    if (!rep.ok) throw new Error((await rep.json().catch(() => ({}))).error || 'Accès à la rubrique refusé : reconnectez-vous.');
+    return P.entete(r[1]) + '<iframe class="cadre-rubrique" title="' + P.esc(r[1]) + '" src="/tableau-de-bord.html?depuis=portail&integre=1#' + r[2] + '"></iframe>';
+  }
+  async function actualites() {
+    return P.entete('Actualités et événements') +
+      '<div class="grille deux"><div class="carte"><h2>Actualités</h2><p class="doux">Publier, modifier ou retirer une actualité (images, galeries, vidéos) : la page des actualités s’ouvre avec l’éditeur de l’agence.</p>' +
+      '<a class="btn rouge" href="/actualites.html" target="_blank" rel="noopener" style="margin-top:12px">Gérer les actualités</a></div>' +
+      '<div class="carte"><h2>Événements</h2><p class="doux">Même chose pour les événements et leurs photos.</p><a class="btn rouge" href="/evenements.html" target="_blank" rel="noopener" style="margin-top:12px">Gérer les événements</a></div>' +
+      '<div class="carte"><h2>Partenaires</h2><p class="doux">Logos et fiches des partenaires.</p><a class="btn rouge" href="/partenaires.html" target="_blank" rel="noopener" style="margin-top:12px">Gérer les partenaires</a></div></div>';
+  }
+  const pages = { vue, mannequins, candidatures, recruteurs, dossiers, codes, outils, actualites };
+  RUBRIQUES.filter((r) => r[0] && r[2]).forEach((r) => { pages[r[0]] = () => rubrique(r); });
+  P.espaces.site = { nav: NAV, pages };
 })();

@@ -24,14 +24,15 @@ const ADMIN = '11111111-2222-3333-4444-555555555555';
     if (!new URL(String(u)).search) return new Response('<html><body>Portail MA2M</body></html>', { status: 200, headers: { 'content-type': 'text/html' } });
     return new Response(PAGE, { status: 200, headers: { 'content-type': 'text/html', 'strict-transport-security': 'max-age=63072000' } });
   };
-  // la page s'ouvre depuis le portail (?depuis=portail) ; sans ce repère, l'ancienne adresse mène au portail
-  const req = (chemin, cookie) => new Request('https://www.maitreakessemodelmanagement.com' + chemin + (/^\/tableau-de-bord/.test(chemin) ? '?depuis=portail' : ''), { headers: cookie ? { cookie } : {} });
+  // la page ne s'ouvre que DANS l'administration (?integre=1) ; sinon, toute adresse mène au portail
+  const req = (chemin, cookie) => new Request('https://www.maitreakessemodelmanagement.com' + chemin + (/^\/tableau-de-bord/.test(chemin) ? '?depuis=portail&integre=1' : ''), { headers: cookie ? { cookie } : {} });
   const redirige = await mw(new Request('https://www.maitreakessemodelmanagement.com/tableau-de-bord'));
   ok(redirige && redirige.status === 302 && /\/admin\/$/.test(redirige.headers.get('location')), 'ancienne adresse du tableau de bord → portail /admin (signets conservés)');
-  const reinit = await mw(new Request('https://www.maitreakessemodelmanagement.com/tableau-de-bord.html?reset_code=abc'));
-  ok(!reinit || reinit.status !== 302, 'lien de réinitialisation reçu par e-mail : pas de redirection');
-  const notif = await mw(new Request('https://www.maitreakessemodelmanagement.com/tableau-de-bord.html?notif=candidature&id=1'));
-  ok(!notif || notif.status !== 302, 'notification sur le téléphone : ouvre la fiche, pas le portail');
+  // l'ancien tableau de bord n'existe plus seul (19/10/2026) : toute autre adresse mène au portail
+  for (const q of ['?depuis=portail', '?notif=candidature&id=1', '?reset_code=abc']) {
+    const r0 = await mw(new Request('https://www.maitreakessemodelmanagement.com/tableau-de-bord.html' + q));
+    ok(r0 && r0.status === 302 && /\/admin\/$/.test(r0.headers.get('location')), 'tableau de bord seul (' + q + ') → administration');
+  }
   delete process.env.SUPABASE_SERVICE_ROLE_KEY;
   ok((await mw(req('/tableau-de-bord.html'))) === undefined, 'sans clé serveur configurée : page livrée comme avant (jamais enfermée dehors)');
   process.env.SUPABASE_SERVICE_ROLE_KEY = 'cle-de-test-tres-secrete';
@@ -59,7 +60,7 @@ const ADMIN = '11111111-2222-3333-4444-555555555555';
   r = await mw(new Request('https://www.maitreakessemodelmanagement.com/js/tableau-de-bord.js', { headers: { 'x-ma2m-interne': interne[0] } }));
   ok(r && r.status === 404, 'jeton interne : n\'ouvre pas les scripts réservés');
   const vieux = '1000000000.' + interne[0].split('.')[1];
-  r = await mw(new Request('https://www.maitreakessemodelmanagement.com/tableau-de-bord.html?depuis=portail', { headers: { 'x-ma2m-interne': vieux } }));
+  r = await mw(new Request('https://www.maitreakessemodelmanagement.com/tableau-de-bord.html?depuis=portail&integre=1', { headers: { 'x-ma2m-interne': vieux } }));
   ok(r && r.status === 200 && !/id="bloc-tableau"/.test(await r.text()), 'jeton interne périmé : page réduite');
   // la liste des scripts protégés est la même partout
   const src = fs.readFileSync(path.join(RACINE, 'middleware.js'), 'utf8');

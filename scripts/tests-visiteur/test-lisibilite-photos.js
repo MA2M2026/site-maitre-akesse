@@ -79,6 +79,69 @@ function donnees() {
       }
     }
   }
+  // 2. Tout le site : chaque texte posé sur une photo ou une vidéo (repéré sous le texte), sur la
+  // pire photo (rayures), téléphone et tablette, de haut en bas de chaque page publique
+  const { tables, rpc, pages } = require('./pages-publiques');
+  const rayures = fs.readFileSync(path.join(__dirname, 'medias', 'photo-rayures.jpg'));
+  for (const page of pages) {
+    for (const ecran of ecrans.slice(0, 2)) {
+      const ctx = await b.newContext({ viewport: { width: ecran.width, height: ecran.height } });
+      const p = await ctx.newPage();
+      await p.emulateMedia({ reducedMotion: 'reduce' });
+      await p.addInitScript(() => { try { sessionStorage.setItem('ma2m_porte_ouverte', '1'); sessionStorage.setItem('ma2m_intro_vue', '1'); localStorage.setItem('ma2m_cookies', 'non'); } catch (e) { /* stockage bloqué */ } });
+      await brancher(p, { tables: JSON.parse(JSON.stringify(Object.assign({}, tables, donnees().tables, { model_profiles: tables.model_profiles }))), rpc }, []);
+      await p.route(/^https:\/\/x\//, (r) => r.fulfill({ status: 200, contentType: 'image/jpeg', body: rayures }));
+      await p.goto('http://127.0.0.1:' + PORT + '/' + page, { waitUntil: 'domcontentloaded' }).catch(() => {});
+      await p.waitForTimeout(1800);
+      const h = await p.evaluate(() => document.documentElement.scrollHeight);
+      const mauvais = new Map();
+      for (let y = 0; y < h; y += Math.round(ecran.height * 0.8)) {
+        await p.evaluate((y) => window.scrollTo({ top: y, behavior: 'instant' }), y); await p.waitForTimeout(350);
+        // textes visibles posés sur une image, une vidéo ou un fond photo
+        const cibles = await p.evaluate(() => {
+          const res = [];
+          const surImage = (el, x, y) => { const pile = document.elementsFromPoint(x, y); const i = pile.indexOf(el);
+            return i >= 0 && pile.slice(i + 1).some((d) => /^(IMG|VIDEO|CANVAS)$/.test(d.tagName) || /url\(/.test(getComputedStyle(d).backgroundImage)); };
+          document.querySelectorAll('body *').forEach((el) => {
+            if (res.length > 40 || el.closest('button, .btn, [role=button], .whatsapp-flottant')) return;
+            const propre = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim().length > 1);
+            if (!propre) return;
+            const r = el.getBoundingClientRect(), s = getComputedStyle(el);
+            if (r.width < 4 || r.height < 4 || r.bottom < 0 || r.top > innerHeight || s.visibility === 'hidden' || Number(s.opacity) < 0.1) return;
+            if (!surImage(el, r.left + Math.min(r.width / 2, 40), r.top + r.height / 2)) return;
+            const fs = parseFloat(s.fontSize), gras = Number(s.fontWeight) >= 700;
+            el.dataset.essaiLisible = String(res.length);
+            res.push({ i: res.length, texte: el.textContent.trim().slice(0, 30), rgb: s.color.match(/[\d.]+/g).map(Number).slice(0, 3), grand: fs >= 24 || (fs >= 18.66 && gras),
+              x: Math.max(0, r.left), y: Math.max(0, r.top), w: Math.min(r.width, innerWidth - Math.max(0, r.left)), h: Math.min(r.height, innerHeight - Math.max(0, r.top)) });
+          });
+          document.querySelectorAll('[data-essai-lisible]').forEach((el) => { el.style.setProperty('color', 'transparent', 'important'); el.style.setProperty('text-shadow', 'none', 'important'); });
+          return res;
+        });
+        if (!cibles.length) continue;
+        const capture = (await p.screenshot()).toString('base64');
+        const resultats = await p.evaluate(async ({ b64, cibles }) => {
+          document.querySelectorAll('[data-essai-lisible]').forEach((el) => { el.style.removeProperty('color'); el.style.removeProperty('text-shadow'); delete el.dataset.essaiLisible; });
+          const img = new Image(); img.src = 'data:image/png;base64,' + b64; await img.decode();
+          const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const g = c.getContext('2d'); g.drawImage(img, 0, 0);
+          const k = img.width / innerWidth;
+          const lin = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+          const lum = (r, gg, bb) => 0.2126 * lin(r) + 0.7152 * lin(gg) + 0.0722 * lin(bb);
+          return cibles.map((t) => {
+            if (t.w < 2 || t.h < 2) return null;
+            const d = g.getImageData(Math.round(t.x * k), Math.round(t.y * k), Math.max(1, Math.round(t.w * k)), Math.max(1, Math.round(t.h * k))).data;
+            const lt = lum(t.rgb[0], t.rgb[1], t.rgb[2]); const rap = [];
+            for (let i = 0; i < d.length; i += 16) { const lb = lum(d[i], d[i + 1], d[i + 2]); rap.push((Math.max(lt, lb) + 0.05) / (Math.min(lt, lb) + 0.05)); }
+            rap.sort((a, bb) => a - bb);
+            return { texte: t.texte, contraste: rap[Math.floor(rap.length * 0.1)], seuil: t.grand ? 3 : 4.5 };
+          }).filter(Boolean);
+        }, { b64: capture, cibles });
+        resultats.filter((r) => r.contraste < r.seuil).forEach((r) => mauvais.set(r.texte, r));
+      }
+      ok(!mauvais.size, page + ' · ' + ecran.nom + ' : textes sur photo lisibles' + [...mauvais.values()].map((r) => ' | « ' + r.texte + ' » ' + r.contraste.toFixed(2)).join(''));
+      await ctx.close();
+    }
+  }
+
   await b.close(); srv.kill();
   console.log(ko ? '❌ ' + ko + ' échec(s)' : 'Tout est bon.'); process.exit(ko ? 1 : 0);
 })().catch((e) => { console.log('❌ ÉCHEC', e.stack); process.exit(1); });

@@ -35,6 +35,7 @@ function donnees(role) {
       page_views: [{ page: '/index.html', created_at: new Date().toISOString() }, { page: '/mannequins.html', created_at: new Date().toISOString() }],
       inscriptions_mannequins: [], actualites: [], model_photos: [], code_portail_mannequin: [], invite_codes: [],
       agence_mannequins: [awa, yao],
+      model_profiles: [{ id: 'u-awa', full_name: 'Awa Koné', phone: '0700000001', date_naissance: '2001-03-12', category: 'femme' }, { id: 'u-bolli', full_name: 'Bolli', phone: '0700000009', date_naissance: '2002-02-02', category: 'femme' }],
       fee_dues: [
         { id: 'd1', mannequin_id: 'm1', type: 'mensualite', mois: MOIS, montant_du: 10000, montant_paye: 0, date_limite: MOIS.slice(0, 8) + '05', statut: 'declare', mannequin: awa, paiements: [], declarations: [] },
         { id: 'd2', mannequin_id: 'm2', type: 'mensualite', mois: MOIS, montant_du: 20000, montant_paye: 0, date_limite: MOIS.slice(0, 8) + '05', statut: 'non_paye', mannequin: yao, paiements: [], declarations: [] }],
@@ -65,7 +66,7 @@ function donnees(role) {
       portail_inscription_agence: { recu: 'REC-2026-00003', paiement: 'p2', code_espace: 'ESP-ZX8C-44' },
       portail_message_selection: (c) => ({ personnes: c.p_mannequins.length, messages: c.p_mannequins.length * 3, sans_echeance: 0 })
     },
-    api: { '/api/portail': (corps) => corps.action === 'codes_secours_creer' ? { codes: ['AAAAA-BBBBB', 'CCCCC-DDDDD', 'EEEEE-FFFFF', 'GGGGG-HHHHH', 'JJJJJ-KKKKK', 'LLLLL-MMMMM', 'NNNNN-PPPPP', 'QQQQQ-RRRRR'] } : { ok: true } }
+    api: { '/api/acces-tableau': () => ({ ok: true }), '/api/portail': (corps) => corps.action === 'codes_secours_creer' ? { codes: ['AAAAA-BBBBB', 'CCCCC-DDDDD', 'EEEEE-FFFFF', 'GGGGG-HHHHH', 'JJJJJ-KKKKK', 'LLLLL-MMMMM', 'NNNNN-PPPPP', 'QQQQQ-RRRRR'] } : { ok: true } }
   };
 }
 
@@ -147,6 +148,17 @@ function donnees(role) {
     await p.goto(url + '#/paiements/fiche/m2'); await p.waitForSelector('[data-action="paiements-code-espace"]', { timeout: 6000 }).catch(() => {});
     await p.click('[data-action="paiements-code-espace"]').catch(() => {}); await p.waitForTimeout(600);
     ok((await texte(p)).includes('ESP-QW3R-77') && journal.some((j) => j[0] === 'rpc' && j[1] === 'portail_code_espace' && /"p_mannequin":"m2"/.test(j[2])), nomEcran + ' : fiche sans espace → nouveau code donné');
+    // cahier 6 : les rubriques de l'ancien tableau de bord s'ouvrent DANS l'administration
+    await p.goto(url + '#/site/fiches'); await p.waitForSelector('iframe.cadre-rubrique', { timeout: 8000 }).catch(() => {});
+    const cadre = await p.$('iframe.cadre-rubrique');
+    ok(cadre && /integre=1#b2-mannequins-publies$/.test(await cadre.getAttribute('src')) && journal.some((j) => j[0] === 'API' && j[1] === '/api/acces-tableau'),
+       nomEcran + ' : « Fiches, photos, compcard et CV » s’ouvre dans l’administration (clé d’accès demandée)');
+    const f = cadre && await cadre.contentFrame();
+    if (f) { await f.waitForLoadState('domcontentloaded').catch(() => {}); await p.waitForTimeout(1500); }
+    ok(f && await f.evaluate(() => document.documentElement.classList.contains('tdb-integre') && getComputedStyle(document.getElementById('db-chrome-header')).display === 'none'),
+       nomEcran + ' : dans l’administration, l’en-tête et le menu de l’ancien tableau de bord sont retirés');
+    await capture(p, 'site-fiches-integre-' + ecran.width);
+    ok(!(await texte(p)).includes('Gestion détaillée'), nomEcran + ' : plus de bouton « gestion détaillée » vers une autre page');
     // cahier 7.5 : messages aux personnes cochées (groupé ou individuel)
     await p.click('[data-action="fermer-fenetre"]').catch(() => {});
     await p.goto(url + '#/paiements/messages'); await p.waitForSelector('input[data-change="paiements-coche"]', { timeout: 6000 }).catch(() => {});
@@ -169,9 +181,21 @@ function donnees(role) {
     tm = await texte(p);
     ok(tm.includes('Import du registre') && tm.includes('déjà dans le registre'), nomEcran + ' : import CSV du registre : doublon écarté et signalé');
     await p.click('[data-action="fermer-fenetre-afficher"]').catch(() => {});
+    // cahier 7.1 : vos mannequins déjà sur le site entrent au registre (mensualité, pas d'inscription)
+    await p.goto(url + '#/paiements/registre'); await p.waitForSelector('form[data-form="paiements-reprendre-fiches"]', { state: 'attached', timeout: 6000 }).catch(() => {});
+    await p.evaluate(() => { const d = document.querySelector('form[data-form="paiements-reprendre-fiches"]').closest('details'); d.open = true; });
+    tm = await texte(p);
+    ok(tm.includes('1 à mettre dans le registre') && tm.includes('Bolli'), nomEcran + ' : registre → les mannequins du site absents du registre sont proposés (Awa, déjà reliée, ne l’est pas)');
+    await p.click('form[data-form="paiements-reprendre-fiches"] [type=submit]'); await p.waitForTimeout(900);
+    const reprise = journal.filter((j) => j[0] === 'POST' && j[1] === 'agence_mannequins').pop();
+    const echeance = journal.filter((j) => j[0] === 'POST' && j[1] === 'fee_dues').pop();
+    ok(reprise && /"user_id":"u-bolli"/.test(reprise[3]) && echeance && /"type":"mensualite"/.test(echeance[3]) && /"montant_du":10000/.test(echeance[3]),
+       nomEcran + ' : Bolli entre au registre, relié à son espace, avec la mensualité du mois (pas 25 000)');
+    await p.click('[data-action="fermer-fenetre-afficher"]').catch(() => {});
     // inscription payée en espèces à l'agence, sans passer par le site
     await p.click('[data-action="fermer-fenetre"]').catch(() => {});
-    await p.goto(url + '#/paiements/registre'); await p.waitForSelector('#ia-cand', { timeout: 6000 }).catch(() => {});
+    await p.goto(url + '#/paiements/registre'); await p.waitForSelector('#ia-cand', { state: 'attached', timeout: 6000 }).catch(() => {});
+    await p.evaluate(() => { const d = document.getElementById('ia-cand').closest('details'); d.open = true; });
     await p.check('form[data-form="paiements-inscription-agence"] input[name=reglement]').catch(() => {});
     await p.click('form[data-form="paiements-inscription-agence"] [type=submit]').catch(() => {}); await p.waitForTimeout(800);
     const ia = journal.find((j) => j[0] === 'rpc' && j[1] === 'portail_inscription_agence');
