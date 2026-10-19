@@ -315,6 +315,54 @@ select set_config('request.jwt.claims', '', false);
 select essai_refuse($$delete from audit_log$$, 'test 21 : le journal d''audit ne s''efface pas');
 select essai_refuse($$update audit_log set action = 'x'$$, 'test 21 : le journal d''audit ne se modifie pas');
 
+-- 13, 14, 12, 16 (relecture du 18/10/2026 : mannequin non inscrit, lien personnel, rattachement,
+-- capture réutilisée, récapitulatif figé)
+reset role;
+select set_config('request.jwt.claims', '', false);
+insert into agence_mannequins (id, nom, date_naissance, telephone, email, montant_mensuel, date_entree)
+values ('00000000-0000-0000-0000-00000000e077', 'Koffi Yao', '1998-02-02', '07 00 00 00 77', 'koffi@test.ci', 10000, '2026-01-05');
+insert into fee_dues (id, mannequin_id, type, mois, montant_du, date_limite) values
+  ('00000000-0000-0000-0000-00000000f771', '00000000-0000-0000-0000-00000000e077', 'mensualite', date_trunc('month', current_date)::date, 10000, current_date + 5),
+  ('00000000-0000-0000-0000-00000000f772', '00000000-0000-0000-0000-00000000e077', 'mensualite', (date_trunc('month', current_date) - interval '1 month')::date, 10000, current_date - 25);
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a1'); -- (le compte d'encaissement a été désactivé par le test 6)
+create temp table essai_lien as select portail_creer_lien_paiement('00000000-0000-0000-0000-00000000f771', 10) as jeton;
+reset role;
+select set_config('request.jwt.claims', '', false);
+select essai((lien_paiement_lire((select jeton from essai_lien)) ->> 'montant')::int = 10000, 'test 13 : non inscrit → son lien personnel montre le bon montant, sans compte');
+select essai((lien_paiement_declarer((select jeton from essai_lien), '0700000077') ->> 'ok')::boolean, 'test 13 : « J''ai payé » par le lien accepté');
+select essai((select statut from fee_dues where id = '00000000-0000-0000-0000-00000000f771') = 'declare', 'test 13 : l''échéance passe à « Paiement déclaré »');
+update pay_tokens set revoque = true;
+select essai(not (lien_paiement_lire((select jeton from essai_lien)) ->> 'ok')::boolean, 'test 13 : lien révoqué refusé');
+set role anon;
+select set_config('request.jwt.claims', '{"role":"anon"}', false);
+select essai_refuse($$select lien_paiement_lire('x')$$, 'test 13 : la page ne lit pas un lien elle-même (tout passe par le serveur)');
+reset role;
+select set_config('request.jwt.claims', '', false);
+-- 14 : Koffi crée son compte sur le site (même téléphone) → rattachement automatique, sans doublon
+insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000b7', 'autre-adresse@test.ci');
+insert into model_profiles (id, full_name, phone, published) values ('00000000-0000-0000-0000-0000000000b7', 'Koffi Yao', '0700000077', false);
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000b7');
+select essai((registre_rattacher_compte() ->> 'ok')::boolean, 'test 14 : inscrit après avoir été non inscrit → rattaché (même téléphone)');
+reset role;
+select set_config('request.jwt.claims', '', false);
+select essai((select count(*) from agence_mannequins where regexp_replace(telephone, '\D', '', 'g') = '0700000077') = 1
+         and (select user_id from agence_mannequins where id = '00000000-0000-0000-0000-00000000e077') = '00000000-0000-0000-0000-0000000000b7',
+         'test 14 : sans doublon dans le registre');
+-- 12 : la même capture pour deux échéances → alerte à l'agent
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000b7');
+select mannequin_joindre_preuve('00000000-0000-0000-0000-00000000f771', '00000000-0000-0000-0000-00000000f771/11111111-1111-1111-1111-111111111111.jpg', 'empreinte-capture-1');
+select essai((mannequin_joindre_preuve('00000000-0000-0000-0000-00000000f772', '00000000-0000-0000-0000-00000000f772/22222222-2222-2222-2222-222222222222.jpg', 'empreinte-capture-1') ->> 'deja_vue')::boolean,
+             'test 12 : même capture déposée pour deux échéances → signalée');
+reset role;
+select set_config('request.jwt.claims', '', false);
+-- 16 : fin de mois → récapitulatif figé, listes payés et non payés
+select portail_figer_recap(current_date);
+select essai((select jsonb_array_length(contenu -> 'non_payes') >= 1 and contenu ? 'payes' and contenu ? 'attendu' from month_snapshots where mois = date_trunc('month', current_date)::date),
+             'test 16 : récapitulatif du mois figé (payés, non payés, attendu, encaissé)');
+
 -- Visiteur anonyme : rien
 set role anon;
 select set_config('request.jwt.claims', '{"role":"anon"}', false);
