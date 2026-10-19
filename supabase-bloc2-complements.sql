@@ -9,10 +9,11 @@
 --   1. Récapitulatif mensuel figé (photo d'un mois terminé, inchangeable)
 --   2. Sorties de mannequins : proposition par l'encaissement, décision par l'administrateur principal
 --   3. Reçus numérotés REC-AAAA-NNNNN (numéros qui se suivent, sans trou)
---   4. Rapprochement avec Wave (numéro du payeur, référence, « Introuvable », « Précision demandée »)
+--   4. Rapprochement avec Wave / mobile money (numéro du payeur, référence, « Introuvable », « Précision demandée »)
 --   5. Messages : modèles modifiables + historique des messages envoyés
 --   6. Réglages modifiables (montants, jour limite, relances)
 --   7. Comptabilité : clôture mensuelle (photo des chiffres du mois)
+--   8. Espace du mannequin : numéro du payeur, lien de paiement, historique avec reçus
 -- ===================================================================================
 
 -- -----------------------------------------------------------------------------------
@@ -213,19 +214,15 @@ create trigger recus_lecture_seule before update or delete on recus_paiements fo
 drop trigger if exists audit_recus_paiements on recus_paiements;
 create trigger audit_recus_paiements after insert on recus_paiements for each row execute function audit_ecriture();
 
--- Émet (ou renvoie) le reçu d'un paiement VALIDÉ. Appelé deux fois : même numéro.
-create or replace function recu_emettre(p_paiement uuid)
+-- Création interne (sans contrôle d'accès, jamais appelable de l'extérieur) : un seul reçu par
+-- paiement ; un second appel renvoie le même numéro.
+create or replace function recu_creer(p_paiement uuid)
 returns recus_paiements language plpgsql security definer set search_path = public as $$
 declare
-  p paiements_mannequins;
   r recus_paiements;
   a int := extract(year from now() at time zone 'Africa/Abidjan')::int;
   n int;
 begin
-  if not portail_peut('paiements') then raise exception 'Accès refusé'; end if;
-  select * into p from paiements_mannequins where id = p_paiement;
-  if not found then raise exception 'Paiement introuvable.'; end if;
-  if p.statut <> 'valide' then raise exception 'Un reçu ne s''émet que pour un paiement validé.'; end if;
   select * into r from recus_paiements where paiement_id = p_paiement;
   if found then return r; end if;
   insert into recus_compteur (annee, dernier) values (a, 0) on conflict (annee) do nothing;
@@ -236,23 +233,53 @@ begin
   return r;
 end;
 $$;
+revoke all on function recu_creer(uuid) from public, anon, authenticated;
+
+-- Émet (ou renvoie) le reçu d'un paiement VALIDÉ (agence)
+create or replace function recu_emettre(p_paiement uuid)
+returns recus_paiements language plpgsql security definer set search_path = public as $$
+declare
+  p paiements_mannequins;
+begin
+  if not portail_peut('paiements') then raise exception 'Accès refusé'; end if;
+  select * into p from paiements_mannequins where id = p_paiement;
+  if not found then raise exception 'Paiement introuvable.'; end if;
+  if p.statut <> 'valide' then raise exception 'Un reçu ne s''émet que pour un paiement validé.'; end if;
+  return recu_creer(p_paiement);
+end;
+$$;
 revoke all on function recu_emettre(uuid) from public, anon;
 grant execute on function recu_emettre(uuid) to authenticated;
+
+-- Reçu automatique dès qu'un paiement avec montant est validé (jamais pour « avant le système »)
+create or replace function recu_automatique()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if NEW.statut = 'valide' and NEW.montant is not null and NEW.mode <> 'avant_systeme'
+     and (TG_OP = 'INSERT' or OLD.statut is distinct from 'valide') then
+    perform recu_creer(NEW.id);
+  end if;
+  return NEW;
+end;
+$$;
+drop trigger if exists recu_automatique on paiements_mannequins;
+create trigger recu_automatique after insert or update of statut on paiements_mannequins
+  for each row execute function recu_automatique();
 
 -- -----------------------------------------------------------------------------------
 -- 4. Rapprochement avec Wave : numéro du payeur, référence de la transaction, état
 -- -----------------------------------------------------------------------------------
 create table if not exists rapprochements (
   paiement_id uuid primary key references paiements_mannequins(id),
-  numero_wave text check (numero_wave is null or numero_wave ~ '^[0-9+ ]{6,20}$'),
-  reference_wave text check (reference_wave is null or length(trim(reference_wave)) between 3 and 60),
+  numero_payeur text check (numero_payeur is null or numero_payeur ~ '^[0-9+ ]{6,20}$'),
+  reference_paiement text check (reference_paiement is null or length(trim(reference_paiement)) between 3 and 60),
   etat text not null default 'a_verifier' check (etat in ('a_verifier', 'introuvable', 'precision', 'rapproche')),
   note text,
   modifie_le timestamptz not null default now(),
   modifie_par uuid references auth.users(id),
   check (etat not in ('introuvable', 'precision') or coalesce(trim(note), '') <> '')
 );
-create index if not exists rapprochements_reference on rapprochements (reference_wave) where reference_wave is not null;
+create index if not exists rapprochements_reference on rapprochements (reference_paiement) where reference_paiement is not null;
 alter table rapprochements enable row level security;
 revoke all on rapprochements from anon, authenticated;
 drop policy if exists rapprochements_lecture on rapprochements;
@@ -430,6 +457,68 @@ end;
 $$;
 revoke all on function compta_cloturer(date, text) from public, anon;
 grant execute on function compta_cloturer(date, text) to authenticated;
+
+-- -----------------------------------------------------------------------------------
+-- 8. Espace du mannequin : numéro du payeur, lien de paiement des Paramètres, reçus
+--    (Wave seul aujourd'hui : Orange, MTN et Moov demandent d'abord un compte comptable à eux)
+-- -----------------------------------------------------------------------------------
+-- Lien de paiement actif d'un montant (public par nature : c'est ce qu'on remet au payeur)
+create or replace function lien_paiement(p_type text, p_montant int)
+returns text language sql stable security definer set search_path = public as $$
+  select adresse from liens_wave where type = p_type and montant = p_montant and actif limit 1;
+$$;
+revoke all on function lien_paiement(text, int) from public;
+grant execute on function lien_paiement(text, int) to anon, authenticated;
+
+-- « J'ai payé » d'une mensualité, avec le numéro mobile money du payeur (obligatoire)
+create or replace function mensualite_declarer_avec_numero(p_mois date, p_numero text)
+returns void language plpgsql security definer set search_path = public as $$
+declare
+  n text := nullif(trim(coalesce(p_numero, '')), '');
+begin
+  if n is null or n !~ '^[0-9+ ]{6,20}$' then raise exception 'Numéro mobile money invalide.'; end if;
+  perform mensualite_declarer(p_mois);
+  insert into rapprochements (paiement_id, numero_payeur)
+  select p.id, n from paiements_mannequins p join agence_mannequins a on a.id = p.mannequin_id
+   where a.user_id = auth.uid() and p.objet = 'mensualite' and p.mois = date_trunc('month', p_mois)::date and p.statut = 'declare'
+   order by p.declare_le desc limit 1
+  on conflict (paiement_id) do update set numero_payeur = excluded.numero_payeur;
+end;
+$$;
+revoke all on function mensualite_declarer_avec_numero(date, text) from public, anon;
+grant execute on function mensualite_declarer_avec_numero(date, text) to authenticated;
+
+-- « J'ai payé » de l'inscription (appelé par le serveur du site, comme inscription_simplifiee_payer)
+create or replace function inscription_payer_avec_numero(p_code text, p_naissance date, p_infos jsonb)
+returns uuid language plpgsql security definer set search_path = public as $$
+declare
+  n text := nullif(trim(coalesce(p_infos ->> 'numero_payeur', '')), '');
+  v_id uuid;
+begin
+  if not est_ecriture_serveur() then raise exception 'Accès refusé.'; end if;
+  if n is null or n !~ '^[0-9+ ]{6,20}$' then raise exception 'Numéro mobile money invalide.'; end if;
+  v_id := inscription_simplifiee_payer(p_code, p_naissance, p_infos);
+  insert into rapprochements (paiement_id, numero_payeur)
+  select p.id, n from paiements_mannequins p where p.mannequin_id = v_id and p.statut = 'declare'
+  on conflict (paiement_id) do nothing;
+  return v_id;
+end;
+$$;
+revoke all on function inscription_payer_avec_numero(text, date, jsonb) from public, anon, authenticated;
+
+-- Historique du mannequin : ses paiements validés avec le numéro de reçu
+create or replace function mes_recus()
+returns table (objet text, mois date, montant int, mode text, valide_le timestamptz, numero text)
+language sql stable security definer set search_path = public as $$
+  select p.objet, p.mois, p.montant, p.mode, p.valide_le, r.numero
+    from paiements_mannequins p
+    join agence_mannequins a on a.id = p.mannequin_id
+    left join recus_paiements r on r.paiement_id = p.id
+   where a.user_id = auth.uid() and p.statut = 'valide'
+   order by coalesce(p.mois, p.declare_le::date) desc, p.declare_le desc;
+$$;
+revoke all on function mes_recus() from public, anon;
+grant execute on function mes_recus() to authenticated;
 
 NOTIFY pgrst, 'reload schema';
 select 'Compléments espaces 2 et 3 en place' as resultat;
