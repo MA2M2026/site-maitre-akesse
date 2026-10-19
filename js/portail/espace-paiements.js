@@ -117,6 +117,7 @@
       P.bd(sb.from('codes_espace').select('*').eq('mannequin_id', id).eq('annule', false).is('utilise_le', null).order('cree_le', { ascending: false }))
     ]);
     const inscription = paiements.find((p) => p.objet === 'inscription' && p.statut !== 'refuse') || null;
+    const principal = P.moi.role === 'principal';
     const e = etatInscription(m, inscription);
     // Mannequin sans compte et sans paiement : l'agence enregistre le paiement de l'inscription
     // (cahier v2.4, 5.5) ; le bouton « Générer le code de l'espace » viendra ensuite (morceau 4).
@@ -133,11 +134,16 @@
       actions + '</div>' + carteCodeEspace(m, inscription, codes[0]) +
       '<form class="carte f" data-form="registre-modifier" data-id="' + m.id + '"><h2>Informations</h2>' + champs(m) +
       '<div class="large ligne"><button class="btn rouge" type="submit">Enregistrer les changements</button></div></form>' +
-      '<div class="carte"><h2>Paiements</h2>' + P.tableau(['Objet', 'Mode', '#Montant', 'État', 'Date'], paiements.map((p) =>
-        '<tr><td>' + (p.objet === 'inscription' ? 'Inscription' : 'Mensualité ' + P.esc(P.date(p.mois).slice(3))) + '</td><td>' + P.esc(MODES[p.mode]) + '</td>' +
+      '<div class="carte"><h2>Paiements</h2>' + P.tableau(['Objet', 'Mode', '#Montant', 'État', 'Date'].concat(principal ? [''] : []), paiements.map((p) =>
+        '<tr' + (p.statut === 'refuse' ? ' class="annulee"' : '') + '><td>' + (p.objet === 'inscription' ? 'Inscription' : 'Mensualité ' + P.esc(P.date(p.mois).slice(3))) + '</td><td>' + P.esc(MODES[p.mode]) + '</td>' +
         '<td class="nombre">' + (p.montant ? P.fcfa(p.montant) : '—') + '</td><td>' +
-        P.pastille({ valide: 'Payé', declare: 'En attente de validation', refuse: 'Refusé' }[p.statut], { valide: 'ok', declare: 'alerte', refuse: 'erreur' }[p.statut]) +
-        '</td><td>' + P.dateHeure(p.valide_le || p.declare_le) + '</td></tr>')) +
+        P.pastille(p.statut === 'refuse' && /^Annulé/.test(p.motif || '') ? 'Annulé' : { valide: 'Payé', declare: 'En attente de validation', refuse: 'Refusé' }[p.statut], { valide: 'ok', declare: 'alerte', refuse: 'erreur' }[p.statut]) +
+        (p.motif && p.statut === 'refuse' ? '<div class="petit-texte doux">' + P.esc(p.motif) + '</div>' : '') +
+        '</td><td>' + P.dateHeure(p.valide_le || p.declare_le) + '</td>' +
+        (principal ? '<td>' + (p.statut !== 'refuse' ? '<div class="ligne"><button class="btn petit" type="button" data-action="paiement-corriger" data-id="' + p.id + '" data-montant="' + (p.montant || '') + '" data-mode="' + p.mode + '">Corriger</button>' +
+          '<button class="btn petit" type="button" data-action="paiement-annuler" data-id="' + p.id + '">Annuler</button></div>' : '') + '</td>' : '') + '</tr>')) +
+      (principal ? '<p class="doux petit-texte">Une erreur de mois : annulez le paiement du mauvais mois, puis enregistrez-le sur le bon mois ci-dessous. Chaque correction est notée dans le journal ; la comptabilité se met à jour toute seule.</p>'
+        : '<p class="doux petit-texte">Pour corriger ou annuler un paiement déjà enregistré, demandez à l’administrateur principal.</p>') +
       // mensualité reçue par l'agence (Wave en dehors du site ou espèces) : validée tout de suite
       (m.statut === 'actif' ? '<form class="f" data-form="mensualite-enregistrer" data-id="' + m.id + '" style="margin-top:14px"><h2>Enregistrer une mensualité reçue par l’agence</h2>' +
         '<label class="fl" for="mz-mois">Mois<select id="mz-mois" name="mois">' + listeMois().map((x) => '<option value="' + x + '"' + (x === moisCourant() ? ' selected' : '') + '>' + P.esc(libelleMois(x)) + '</option>').join('') + '</select></label>' +
@@ -225,6 +231,41 @@
           { mannequin_id: id, objet: 'mensualite', mois: moisCourant(), mode, montant: PREMIER_MOIS, statut: 'valide' }]));
       P.message('Paiement de l’inscription enregistré.');
       P.afficher();
+    } catch (e) { P.message(P.erreurTexte(e)); }
+  };
+
+  // Corriger ou annuler un paiement déjà enregistré (administrateur principal, code récent : la base
+  // le vérifie). Rien ne s'efface : un paiement annulé reste dans la liste avec son motif ; la recette
+  // de la comptabilité est annulée et remplacée par la base (compta_depuis_espace2).
+  P.actions['paiement-corriger'] = (el) => {
+    const montant = el.getAttribute('data-montant'), mode = el.getAttribute('data-mode');
+    P.fenetre('<h2>Corriger le paiement</h2><form class="f" data-form="paiement-corriger" data-id="' + P.esc(el.getAttribute('data-id')) + '">' +
+      '<label class="fl" for="pc-montant">Montant reçu (FCFA)<input id="pc-montant" name="montant" type="number" min="1" step="1" required value="' + P.esc(montant) + '"></label>' +
+      '<label class="fl" for="pc-mode">Moyen<select id="pc-mode" name="mode"><option value="wave"' + (mode === 'wave' ? ' selected' : '') + '>Wave</option><option value="especes"' + (mode === 'especes' ? ' selected' : '') + '>Espèces</option></select></label>' +
+      '<label class="fl large" for="pc-motif">Pourquoi cette correction ? (obligatoire)<textarea id="pc-motif" name="motif" required rows="3"></textarea></label>' +
+      '<div class="large ligne"><button class="btn rouge" type="submit">Enregistrer la correction</button><button class="btn" type="button" data-action="fermer-fenetre">Fermer</button></div></form>');
+  };
+  P.formulaires['paiement-corriger'] = async (f, form) => {
+    const montant = Math.round(Number(f.get('montant'))), motif = String(f.get('motif') || '').trim();
+    if (!(montant > 0) || !motif) return P.message('Indiquez le montant et le motif de la correction.');
+    try {
+      await P.sensible(() => P.bd(sb.from('paiements_mannequins').update({ montant, mode: f.get('mode'), motif: 'Corrigé : ' + motif }).eq('id', form.getAttribute('data-id')).select('id')));
+      P.fenetre(''); P.message('Paiement corrigé.'); await P.afficher();
+    } catch (e) { P.message(P.erreurTexte(e)); }
+  };
+  P.actions['paiement-annuler'] = async (el) => {
+    const motif = (prompt('Motif de l’annulation (obligatoire), par exemple « saisi sur le mauvais mois » :') || '').trim();
+    if (!motif) return;
+    if (!confirm('Annuler ce paiement ? Il restera dans la liste, marqué « Annulé », et la recette correspondante sera annulée en comptabilité.')) return;
+    try {
+      const id = el.getAttribute('data-id');
+      const p = await P.bd(sb.from('paiements_mannequins').select('*').eq('id', id).single());
+      // une inscription payée en une fois = deux lignes (droit d'inscription + 1er mois) : on annule les deux
+      const lies = p.objet === 'inscription'
+        ? await P.bd(sb.from('paiements_mannequins').select('id').eq('mannequin_id', p.mannequin_id).eq('declare_le', p.declare_le).neq('statut', 'refuse'))
+        : [{ id }];
+      for (const x of lies) await P.sensible(() => P.bd(sb.from('paiements_mannequins').update({ statut: 'refuse', motif: 'Annulé : ' + motif }).eq('id', x.id).select('id')));
+      P.message(lies.length > 1 ? 'Paiement annulé (inscription et 1er mois).' : 'Paiement annulé.'); await P.afficher();
     } catch (e) { P.message(P.erreurTexte(e)); }
   };
 
