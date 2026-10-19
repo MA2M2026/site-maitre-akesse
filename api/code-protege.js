@@ -4,6 +4,10 @@
 //
 //   type 'inscription'           code d'inscription (inscription-mannequin.html)
 //   type 'inscription-soumettre' envoi du dossier d'inscription (consomme le code)
+//   type 'inscription-code'      inscription simplifiée (cahier v2.4, section 4) : code individuel +
+//                                date de naissance → informations du casting à confirmer
+//   type 'inscription-payer'     « J'ai payé » : code consommé, mannequin au registre, paiement
+//                                en attente de validation (espace 2)
 //   type 'portail'               code d'invitation « Créer mon compte » (espace-mannequin.html)
 //   type 'portail-creer-compte'  même code, puis création du compte mannequin ICI, côté
 //                                serveur (test de sécurité du 04/10/2026 : le compte était
@@ -91,8 +95,21 @@ module.exports = async function handler(req, res) {
   const corps = corpsDe(req);
   const type = corps.type;
   const code = typeof corps.code === 'string' ? corps.code.trim() : '';
-  if (!code || code.length > 100 || !['inscription', 'inscription-soumettre', 'portail', 'portail-creer-compte'].includes(type)) {
+  if (!code || code.length > 100 || !['inscription', 'inscription-soumettre', 'inscription-code', 'inscription-payer', 'portail', 'portail-creer-compte'].includes(type)) {
     res.status(400).json({ error: 'Requête invalide.' }); return;
+  }
+  const simplifiee = type === 'inscription-code' || type === 'inscription-payer';
+  const naissance = typeof corps.naissance === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(corps.naissance) ? corps.naissance : '';
+  if (simplifiee && !naissance) { res.status(400).json({ error: 'naissance' }); return; }
+  // Informations confirmées ou corrigées par le mannequin : champs connus seulement, courts
+  let infos = null;
+  if (type === 'inscription-payer') {
+    const d = corps.infos || {};
+    infos = {};
+    ['full_name', 'telephone', 'email', 'ville', 'parent_nom', 'parent_telephone', 'parent_email', 'accord_parent', 'reglement'].forEach((k) => {
+      if (typeof d[k] === 'string' && d[k].trim()) infos[k] = d[k].trim().slice(0, 200);
+    });
+    if (!emailAccepte(infos.email) || !emailAccepte(infos.parent_email)) { res.status(400).json({ error: 'dossier', code: 'email', message: 'Adresse e-mail invalide.' }); return; }
   }
   // Création de compte : champs vérifiés AVANT le code (une faute de frappe dans l'e-mail
   // ne doit pas coûter une tentative).
@@ -121,8 +138,21 @@ module.exports = async function handler(req, res) {
       return;
     }
 
-    let valide = false, idInscription = null;
-    if (type === 'inscription') {
+    let valide = false, idInscription = null, casting = null;
+    if (type === 'inscription-code') {
+      const r = await rpc('inscription_code_lire', { p_code: code, p_naissance: naissance });
+      casting = r.ok ? await r.json() : null;
+      valide = !!casting;
+    } else if (type === 'inscription-payer') {
+      const r = await rpc('inscription_simplifiee_payer', { p_code: code, p_naissance: naissance, p_infos: infos });
+      const resultat = await r.json().catch(() => null);
+      if (r.ok) { valide = true; idInscription = resultat; }
+      else if (!(resultat && String(resultat.message || '').includes('code_invalide_ou_deja_utilise'))) {
+        // informations manquantes (règlement, parent…) : pas comptées comme tentative
+        res.status(400).json({ error: 'dossier', message: resultat && resultat.message });
+        return;
+      }
+    } else if (type === 'inscription') {
       const r = await rpc('verifier_code_inscription', { code_input: code });
       valide = r.ok && (await r.json()) === true;
     } else if (type === 'portail' || type === 'portail-creer-compte') {
@@ -166,6 +196,8 @@ module.exports = async function handler(req, res) {
       return;
     }
     if (type === 'inscription') { res.status(200).json({ ok: true, note: await cheminNoteIntegration() }); return; }
+    if (type === 'inscription-code') { res.status(200).json({ ok: true, casting, note: await cheminNoteIntegration() }); return; }
+    if (type === 'inscription-payer') { res.status(200).json({ ok: true }); return; }
     res.status(200).json(type === 'inscription-soumettre' ? { ok: true, id: idInscription } : { ok: true });
   } catch (e) {
     res.status(500).json({ error: 'Erreur serveur.' });

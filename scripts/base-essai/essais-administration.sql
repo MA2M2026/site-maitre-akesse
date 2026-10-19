@@ -231,6 +231,29 @@ select essai((select count(*) from paiements_mannequins) = 0, 'le mannequin ne v
 reset role;
 select set_config('request.jwt.claims', '', false);
 
+-- Inscription simplifiée (cahier v2.4, section 4), comme le serveur du site (clé service)
+reset role;
+select set_config('request.jwt.claims', '{"role":"service_role"}', false);
+insert into casting_applications (id, full_name, email, phone, genre, date_naissance, type_candidature) values
+  ('00000000-0000-0000-0000-00000000c009', 'TRAORÉ BINTOU', 'bintou@test.ci', '0909090909', 'femme', '2001-03-04', 'agence');
+update casting_applications set status = 'retenue' where id = '00000000-0000-0000-0000-00000000c009';
+insert into codes_inscription (code, candidature_id) values ('MA2M-BINTOU', '00000000-0000-0000-0000-00000000c009');
+select essai(inscription_code_lire('MA2M-BINTOU', '2001-03-05') is null, 'mauvaise date de naissance : refusé');
+select essai(inscription_code_lire('ma2m-bintou ', '2001-03-04') ->> 'salutation' = 'Mademoiselle TRAORÉ BINTOU', 'bon code + bonne date : « Bonjour Mademoiselle TRAORÉ BINTOU »');
+select essai_refuse($$select inscription_simplifiee_payer('MA2M-BINTOU', '2001-03-04', '{"full_name":"Traoré Bintou","telephone":"0909090909"}')$$, 'règlement non accepté : refusé');
+select inscription_simplifiee_payer('MA2M-BINTOU', '2001-03-04', '{"full_name":"Traoré Bintou","telephone":"0101010101","reglement":"accepte"}');
+select essai((select telephone from agence_mannequins where candidature_id = '00000000-0000-0000-0000-00000000c009') = '0101010101', '« J''ai payé » : au registre, avec le téléphone corrigé');
+select essai((select count(*) from paiements_mannequins p join agence_mannequins a on a.id = p.mannequin_id
+              where a.candidature_id = '00000000-0000-0000-0000-00000000c009' and p.statut = 'declare' and p.mode = 'wave') = 2, '« J''ai payé » : 15 000 + 10 000 en orange (en attente de validation)');
+select essai((select utilise from codes_inscription where code = 'MA2M-BINTOU'), 'le code est consommé');
+select essai_refuse($$select inscription_simplifiee_payer('MA2M-BINTOU', '2001-03-04', '{"full_name":"x","telephone":"1","reglement":"accepte"}')$$, 'le même code ne sert pas deux fois');
+select set_config('request.jwt.claims', '', false);
+set role anon;
+select set_config('request.jwt.claims', '{"role":"anon"}', false);
+select essai_refuse($$select inscription_code_lire('MA2M-YAO234', '2000-01-01')$$, 'le navigateur n''appelle pas ces fonctions directement');
+reset role;
+select set_config('request.jwt.claims', '', false);
+
 -- Visiteur anonyme : rien
 set role anon;
 select set_config('request.jwt.claims', '{"role":"anon"}', false);

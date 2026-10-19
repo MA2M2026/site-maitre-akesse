@@ -41,6 +41,15 @@
 > avec motif ; jamais effacé, validé figé sauf principal avec code récent). RLS : `portail_peut('paiements')`
 > seulement ; mensualité changée par le principal seul (`registre_garde_fous`).
 >
+> **Espace 2, morceaux 2-3 (19/10/2026)** : « Paiements à valider » (`paiement_decider` : valide ou
+> refuse avec motif, d'un geste, l'inscription et son 1er mois ; e-mail EmailJS + lien WhatsApp ;
+> parent si mineur). **Inscription simplifiée** (cahier v2.4 §4) : `inscription-mannequin.html` FR/EN
+> = 4 écrans (`js/inscription-simplifiee.js`, `css/inscription-simplifiee.css`), serveur
+> `api/code-protege.js` types `inscription-code` (code individuel + date de naissance →
+> `inscription_code_lire`) et `inscription-payer` (`inscription_simplifiee_payer` : code consommé,
+> mannequin au registre, 15 000 + 10 000 « déclarés », orange). L'ancien formulaire complet
+> (`js/inscription-mannequin.js`, photos, référence Wave) est retiré.
+>
 > Codes de secours : affichés à la première activation de la double authentification, et
 > refaits à la demande dans Sécurité › « Mes codes de secours » (code récent demandé ; les
 > anciens sont annulés). Ajouté le 19/10/2026 : un compte dont la double authentification

@@ -90,20 +90,22 @@ async function navigateur() {
   let srv; process.on('exit', () => srv && srv.kill());
   srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: RACINE }); await new Promise(r => setTimeout(r, 800));
   const b = await chromium.launch();
-  // 1) Page d'inscription : la note apparaît seulement après un code valable
+  // 1) Inscription simplifiée (cahier v2.4) : la note (règlement) n'apparaît qu'après un code et
+  //    une date de naissance valables, à l'écran du règlement
+  const CASTING = { salutation: 'Mademoiselle TRAORÉ BINTOU', full_name: 'TRAORÉ BINTOU', telephone: '0909090909', date_naissance: '2001-03-04', casting: 'Intégrer l\'agence', mineur: false };
   for (const [page, avecNote] of [['inscription-mannequin.html', true], ['en/inscription-mannequin.html', true], ['inscription-mannequin.html', false]]) {
     const ctx = await b.newContext({ viewport: { width: 390, height: 844 } }); const p = await ctx.newPage(); const errs = [];
     p.on('pageerror', e => errs.push(e.message));
-    await brancher(p, { tables: {}, api: { '/api/code-protege': { ok: true, note: avecNote ? NOTE : null } } }, []);
-    await p.goto('http://127.0.0.1:' + PORT + '/' + page); await p.waitForTimeout(1200);
-    const avant = await p.isVisible('#bloc-note-integration');
-    await p.fill('#code-inscription', 'BON'); await p.click('#valider-code-btn'); await p.waitForTimeout(1200);
-    const etat = await p.evaluate(() => ({ visible: !!document.getElementById('bloc-note-integration').offsetParent,
-      lire: document.getElementById('note-integration-lire').getAttribute('href') }));
+    await brancher(p, { tables: {}, api: { '/api/code-protege': { ok: true, casting: CASTING, note: avecNote ? NOTE : null } } }, []);
+    await p.goto('http://127.0.0.1:' + PORT + '/' + page); await p.waitForSelector('#inn-code');
+    const avant = await p.isVisible('a[href*="note-integration"]');
+    await p.fill('#inn-code', 'MA2M-BON'); await p.fill('#inn-naissance', '2001-03-04'); await p.click('[data-a="entrer"]');
+    await p.waitForSelector('[data-a="oui"]'); await p.click('[data-a="oui"]'); await p.waitForSelector('#inn-regl');
+    const lire = await p.getAttribute('a[href*="note-integration"]', 'href').catch(() => null);
     if (avecNote) {
-      ok(!avant && etat.visible, page + ' : la note apparaît seulement après le code');
-      ok(etat.lire === 'https://photos.maitreakessemodelmanagement.com/' + NOTE, page + ' : lien du document servi par Cloudflare (jamais par le relais mis en cache)');
-    } else ok(!etat.visible, page + ' : aucun document déposé → pas d\'encadré');
+      ok(!avant && !!lire, page + ' : la note apparaît seulement après le code');
+      ok(lire === 'https://photos.maitreakessemodelmanagement.com/' + NOTE, page + ' : lien du document servi par Cloudflare (jamais par le relais mis en cache)');
+    } else ok(!lire, page + ' : aucun document déposé → pas de lien');
     ok(!errs.length, page + ' : aucune erreur ' + errs.join(' | '));
     await ctx.close();
   }
@@ -112,9 +114,9 @@ async function navigateur() {
     const ctx = await b.newContext(); const p = await ctx.newPage();
     await brancher(p, { tables: {}, api: {} }, []);
     await p.route(/\/api\/code-protege/, r => r.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ error: 'refuse', essaisRestants: 2 }) }));
-    await p.goto('http://127.0.0.1:' + PORT + '/inscription-mannequin.html'); await p.waitForTimeout(1000);
-    await p.fill('#code-inscription', 'FAUX'); await p.click('#valider-code-btn'); await p.waitForTimeout(1000);
-    ok(!(await p.isVisible('#bloc-note-integration')) && !(await p.isVisible('#ins-nom')), 'code faux : ni formulaire ni note');
+    await p.goto('http://127.0.0.1:' + PORT + '/inscription-mannequin.html'); await p.waitForSelector('#inn-code');
+    await p.fill('#inn-code', 'FAUX'); await p.fill('#inn-naissance', '2001-03-04'); await p.click('[data-a="entrer"]'); await p.waitForSelector('.inn-bandeau.erreur');
+    ok(!(await p.isVisible('a[href*="note-integration"]')) && !(await p.isVisible('[data-a="oui"]')), 'code faux : ni informations ni note');
     await ctx.close();
   }
   // 3) Tableau de bord : dépôt du document, sur téléphone et ordinateur

@@ -794,5 +794,78 @@ $$;
 revoke all on function paiement_decider(uuid, boolean, text) from public, anon;
 grant execute on function paiement_decider(uuid, boolean, text) to authenticated;
 
+-- -----------------------------------------------------------------------------------
+-- 7. Inscription simplifiée (cahier v2.4, section 4) : code individuel + date de naissance,
+--    informations du casting confirmées, règlement, « J'ai payé » (25 000 FCFA par Wave)
+-- -----------------------------------------------------------------------------------
+-- Appelées SEULEMENT par le serveur du site (api/code-protege.js, avec le compteur de tentatives) :
+-- jamais depuis le navigateur.
+alter table agence_mannequins add column if not exists ville text;
+alter table agence_mannequins add column if not exists reglement_accepte_le timestamptz;
+alter table agence_mannequins add column if not exists accord_parent_nom text;
+create unique index if not exists agence_mannequins_une_candidature on agence_mannequins (candidature_id) where candidature_id is not null;
+
+-- Code valable (individuel, non utilisé) + bonne date de naissance → informations du casting
+create or replace function inscription_code_lire(p_code text, p_naissance date)
+returns json language plpgsql stable security definer set search_path = public as $$
+declare
+  c casting_applications;
+  civ text;
+begin
+  if not est_ecriture_serveur() then raise exception 'Accès refusé.'; end if;
+  select a.* into c from codes_inscription k join casting_applications a on a.id = k.candidature_id
+   where k.code = upper(trim(p_code)) and not k.utilise and a.status = 'retenue';
+  if not found or p_naissance is null or (c.date_naissance is not null and c.date_naissance <> p_naissance) then
+    return null;
+  end if;
+  civ := case when c.civilite in ('Madame', 'Mademoiselle', 'Monsieur') then c.civilite
+              when c.genre = 'femme' then 'Mademoiselle' when c.genre = 'homme' then 'Monsieur' end;
+  return json_build_object('salutation', trim(coalesce(civ, '') || ' ' || c.full_name), 'full_name', c.full_name,
+    'telephone', c.phone, 'email', nullif(c.email, ''), 'ville', c.city, 'genre', c.genre, 'date_naissance', p_naissance,
+    'casting', case c.type_candidature when 'projet' then c.projet_nom when 'direct' then 'Casting à l''agence' else 'Intégrer l''agence' end,
+    'parent_nom', c.parent_nom, 'parent_telephone', c.parent_telephone, 'parent_email', c.parent_email,
+    'mineur', extract(year from age(p_naissance)) < 18);
+end;
+$$;
+
+-- « J'ai payé » : le code est consommé, le mannequin entre au registre (informations confirmées
+-- ou corrigées) et son paiement apparaît en orange (15 000 d'inscription + 10 000 du 1er mois)
+create or replace function inscription_simplifiee_payer(p_code text, p_naissance date, p_infos jsonb)
+returns uuid language plpgsql security definer set search_path = public as $$
+declare
+  infos json;
+  k codes_inscription;
+  t text := nullif(trim(p_infos ->> 'telephone'), '');
+  v_id uuid;
+begin
+  if not est_ecriture_serveur() then raise exception 'Accès refusé.'; end if;
+  infos := inscription_code_lire(p_code, p_naissance);
+  if infos is null then raise exception 'code_invalide_ou_deja_utilise'; end if;
+  if coalesce(trim(p_infos ->> 'full_name'), '') = '' or t is null then
+    raise exception 'Nom et téléphone obligatoires.';
+  end if;
+  if (infos ->> 'mineur')::boolean and (coalesce(trim(p_infos ->> 'parent_nom'), '') = '' or coalesce(trim(p_infos ->> 'parent_telephone'), '') = ''
+      or coalesce(trim(p_infos ->> 'accord_parent'), '') = '') then
+    raise exception 'Mineur : nom, téléphone et accord du parent obligatoires.';
+  end if;
+  if coalesce(p_infos ->> 'reglement', '') <> 'accepte' then raise exception 'Le règlement doit être accepté.'; end if;
+  select * into k from codes_inscription where code = upper(trim(p_code)) for update;
+  update codes_inscription set utilise = true, utilise_le = now() where code = k.code;
+  insert into agence_mannequins (full_name, genre, date_naissance, telephone, email, ville, parent_nom, parent_telephone, parent_email,
+                                 candidature_id, reglement_accepte_le, accord_parent_nom)
+  values (upper(left(trim(p_infos ->> 'full_name'), 120)), infos ->> 'genre', p_naissance, left(t, 40),
+          left(nullif(trim(p_infos ->> 'email'), ''), 200), left(nullif(trim(p_infos ->> 'ville'), ''), 80),
+          left(nullif(trim(p_infos ->> 'parent_nom'), ''), 120), left(nullif(trim(p_infos ->> 'parent_telephone'), ''), 40),
+          left(nullif(trim(p_infos ->> 'parent_email'), ''), 200), k.candidature_id, now(),
+          left(nullif(trim(p_infos ->> 'accord_parent'), ''), 120))
+  returning id into v_id;
+  insert into paiements_mannequins (mannequin_id, objet, mois, montant, mode) values
+    (v_id, 'inscription', null, 15000, 'wave'),
+    (v_id, 'mensualite', date_trunc('month', now())::date, 10000, 'wave');
+  return v_id;
+end;
+$$;
+revoke all on function inscription_code_lire(text, date), inscription_simplifiee_payer(text, date, jsonb) from public, anon, authenticated;
+
 NOTIFY pgrst, 'reload schema';
-select 'Administration — étape 1, espace 1 et espace 2 (registre, validation) en place' as resultat;
+select 'Administration — étape 1, espace 1 et espace 2 (registre, validation, inscription) en place' as resultat;

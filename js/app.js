@@ -396,16 +396,18 @@ function remplirTailleMinimale(prefixe, mineur, texteMineur) {
 // d'erreur (« E-mail ou mot de passe incorrect », « Code de validation incorrect »…).
 // Partagé le 12/10/2026 (avant, recopié trois fois).
 function messageAccesRefuse(reponse, resultat, refus) {
+  // (pages anglaises : même message en anglais, T() plus bas — 19/10/2026)
   if (reponse.status === 429) {
     const h = Math.ceil(resultat.minutesRestantes / 60);
     return resultat.dejaBloque
-      ? `Accès temporairement bloqué. Revenez dans ${resultat.minutesRestantes} min.`
-      : `Trop de tentatives. Accès bloqué. Revenez dans ${h >= 1 ? h + ' heure' + (h > 1 ? 's' : '') : resultat.minutesRestantes + ' min'}.`;
+      ? T(`Accès temporairement bloqué. Revenez dans ${resultat.minutesRestantes} min.`, `Access temporarily blocked. Please come back in ${resultat.minutesRestantes} min.`)
+      : T(`Trop de tentatives. Accès bloqué. Revenez dans ${h >= 1 ? h + ' heure' + (h > 1 ? 's' : '') : resultat.minutesRestantes + ' min'}.`,
+        `Too many attempts. Access blocked. Please come back in ${h >= 1 ? h + ' hour' + (h > 1 ? 's' : '') : resultat.minutesRestantes + ' min'}.`);
   }
   if (reponse.ok) return '';
   const reste = resultat.essaisRestants;
-  return reste === 2 ? refus + '. Attention : il vous reste 2 tentatives.'
-    : reste === 1 ? refus + '. Il vous reste 1 tentative.'
+  return reste === 2 ? refus + T('. Attention : il vous reste 2 tentatives.', '. Warning: you have 2 attempts left.')
+    : reste === 1 ? refus + T('. Il vous reste 1 tentative.', '. You have 1 attempt left.')
     : refus + '.';
 }
 
