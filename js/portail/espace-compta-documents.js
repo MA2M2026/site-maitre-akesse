@@ -11,9 +11,9 @@
   const FILTRES = { tous: 'Tous', devis: 'Devis', proforma: 'Proformas', facture: 'Factures', avoir: 'Avoirs', recu: 'Reçus' };
   const ETATS = { emis: ['Émis', 'neutre'], en_attente: ['En attente', 'info'], accepte: ['Accepté', 'ok'], refuse: ['Refusé', 'erreur'], facture: ['Facturé', 'ok'] };
   const IMPOTS = ['Patente', 'Impôt synthétique', 'CNPS (cotisations sociales)', 'ITS (impôt sur les salaires)', 'TVA', 'Taxe communale', 'Impôt foncier'];
-  const t = (f, k) => String(f.get(k) || '').trim() || null;
+  const t = C.champ;
   const reglages = () => P.bd(sb.from('compta_reglages').select('*').eq('id', 1).single());
-  const actualiser = async (texte) => { P.fenetre(''); await P.afficher(); P.message(texte); };
+  const actualiser = C.actualiser;
   const bouton = (action, id, libelle, rouge) => '<button class="btn petit' + (rouge ? ' rouge' : '') + '" type="button" data-action="' + action + '" data-id="' + id + '">' + libelle + '</button>';
   const fermer = '<button class="btn" type="button" data-action="fermer-fenetre">Fermer</button>';
 
@@ -24,7 +24,7 @@
     '<label class="fl" for="dl-p' + i + '">Prix unitaire (FCFA)<input id="dl-p' + i + '" name="prix" type="number" inputmode="numeric" min="0" step="1"></label></div>';
   async function documents() {
     const m = C.moisChoisi(), debut = m;
-    const fin = new Date(Date.UTC(Number(m.slice(0, 4)), Number(m.slice(5, 7)), 1)).toISOString().slice(0, 10);
+    const fin = C.bornes(m)[1];
     const [docs, clients, r, recettes] = await Promise.all([
       P.bd(sb.from('compta_documents').select('*').gte('date_doc', debut).lt('date_doc', fin).order('cree_le', { ascending: false })),
       P.bd(sb.from('compta_tiers').select('*').eq('type', 'client').eq('actif', true).order('nom')),
@@ -40,7 +40,7 @@
       (clients.length ? '<form class="carte f" data-form="compta-document" id="form-document"><h2>Nouveau document</h2>' +
         '<label class="fl" for="do-type">Type<select id="do-type" name="type" data-change="compta-doc-type">' + ['devis', 'proforma', 'facture', 'recu'].map((k) => '<option value="' + k + '">' + TYPES[k] + '</option>').join('') + '</select></label>' +
         '<label class="fl" for="do-client">Client<select id="do-client" name="tiers_id" required>' + clients.map((x) => '<option value="' + x.id + '">' + P.esc(x.nom) + '</option>').join('') + '</select></label>' +
-        '<label class="fl" for="do-date">Date<input id="do-date" name="date_doc" type="date" required value="' + P.aujourdhui() + '"></label>' +
+        '<label class="fl" for="do-date">Date<input id="do-date" name="date_doc" type="date" required max="' + P.aujourdhui() + '" value="' + P.aujourdhui() + '"></label>' +
         '<label class="fl" for="do-validite" data-pour="devis proforma">Valable jusqu’au (facultatif)<input id="do-validite" name="validite" type="date"></label>' +
         '<label class="fl" for="do-echeance" data-pour="facture" hidden>À payer avant le (facultatif)<input id="do-echeance" name="echeance" type="date"></label>' +
         '<label class="fl" for="do-cat" data-pour="facture" hidden>Catégorie de recette<select id="do-cat" name="categorie">' + C.optionsCategories(C.RECETTES) + '</select></label>' +
@@ -126,6 +126,7 @@
   P.actions['compta-doc-facturer'] = async (el) => {
     const d = trouver(el.getAttribute('data-id'));
     if (!d || !confirm('Créer la facture à partir de « ' + d.numero + ' » (' + P.fcfa(d.total_ht) + ' hors taxes) ?')) return;
+    el.disabled = true;  // (la base refuse de toute façon une deuxième facture du même devis)
     await creer({ type: 'facture', tiers_id: d.tiers_id, origine_id: d.id, lignes: d.lignes, notes: d.notes, categorie: 'prestation' }, 'Facture {n} créée. La somme due est dans « Ce qu’on nous doit ».');
   };
   P.actions['compta-doc-avoir'] = (el) => {
@@ -162,7 +163,7 @@
   // ---------- Impôts et taxes ----------
   async function impots() {
     const m = C.moisChoisi();
-    const fin = new Date(Date.UTC(Number(m.slice(0, 4)), Number(m.slice(5, 7)), 1)).toISOString().slice(0, 10);
+    const fin = C.bornes(m)[1];
     const [liste, payes, r, cpts, fiscaux] = await Promise.all([
       P.bd(sb.from('compta_impots').select('*').order('echeance')),
       P.bd(sb.from('compta_ecritures').select('id, annule, date_op').eq('categorie', 'impots')),

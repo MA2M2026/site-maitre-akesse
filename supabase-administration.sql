@@ -1117,6 +1117,22 @@ create table if not exists compta_comptes (
 insert into compta_comptes (nom, type) values ('Caisse (espèces)', 'caisse'), ('Wave Business', 'wave')
 on conflict (nom) do nothing;
 
+-- Comptes : le type ne change pas ; il reste toujours une caisse et un compte Wave actifs (les
+-- paiements de l'espace 2 y arrivent)
+create or replace function compta_comptes_garde_fous()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if est_ecriture_serveur() then return NEW; end if;
+  if NEW.type <> OLD.type then raise exception 'Le type d''un compte ne change pas.'; end if;
+  if OLD.actif and not NEW.actif and OLD.type in ('caisse', 'wave') and not exists (select 1 from compta_comptes where type = OLD.type and actif and id <> OLD.id) then
+    raise exception 'Gardez au moins un compte % actif : les paiements de l''espace 2 y arrivent.', case when OLD.type = 'caisse' then 'caisse' else 'Wave' end;
+  end if;
+  return NEW;
+end;
+$$;
+drop trigger if exists compta_comptes_garde_fous on compta_comptes;
+create trigger compta_comptes_garde_fous before update on compta_comptes for each row execute function compta_comptes_garde_fous();
+
 -- Carnet : clients, fournisseurs, personnel, prestataires (jamais les mannequins : registre de l'espace 2)
 create table if not exists compta_tiers (
   id uuid primary key default gen_random_uuid(),
@@ -1162,7 +1178,7 @@ create table if not exists compta_ecritures (
   dette_id uuid references compta_dettes(id),                  -- règlement d'une créance ou d'une dette
   justificatif text,                                           -- chemin dans le stockage privé
   source text not null default 'manuel' check (source in ('manuel', 'espace2')),
-  paiement_id uuid unique references paiements_mannequins(id),
+  paiement_id uuid references paiements_mannequins(id),       -- une seule recette en vigueur par paiement (index plus bas)
   annule boolean not null default false,
   motif_annulation text,
   cree_par uuid references auth.users(id),
@@ -1173,6 +1189,8 @@ create table if not exists compta_ecritures (
 alter table compta_ecritures add column if not exists tiers_id uuid references compta_tiers(id);
 alter table compta_ecritures add column if not exists dette_id uuid references compta_dettes(id);
 create index if not exists compta_ecritures_date on compta_ecritures (date_op);
+alter table compta_ecritures drop constraint if exists compta_ecritures_paiement_id_key;
+create unique index if not exists compta_ecritures_paiement on compta_ecritures (paiement_id) where not annule;
 create index if not exists compta_ecritures_dette on compta_ecritures (dette_id) where dette_id is not null;
 
 -- Matériel durable acheté (ordinateur, appareil photo, projecteurs…), suivi à part : son achat
@@ -1201,8 +1219,8 @@ declare
   d compta_dettes;
 begin
   if est_ecriture_serveur() then return NEW; end if;
-  -- recette posée par compta_depuis_espace2 (déclencheur dans un déclencheur : jamais une saisie)
-  if TG_OP = 'INSERT' and pg_trigger_depth() > 1 and NEW.source = 'espace2' then return NEW; end if;
+  -- recette posée ou annulée par compta_depuis_espace2 (déclencheur dans un déclencheur : jamais une saisie)
+  if pg_trigger_depth() > 1 and NEW.source = 'espace2' and (TG_OP = 'INSERT' or OLD.source = 'espace2') then return NEW; end if;
   if TG_OP = 'INSERT' then
     if NEW.source <> 'manuel' or NEW.paiement_id is not null then raise exception 'Les recettes de l''espace 2 arrivent toutes seules.'; end if;
     if NEW.dette_id is not null then
@@ -1222,6 +1240,7 @@ begin
     raise exception 'Une écriture ne se modifie pas : annulez-la avec un motif, puis saisissez la bonne.';
   end if;
   if OLD.annule and not NEW.annule then raise exception 'Une écriture annulée le reste.'; end if;
+  if OLD.justificatif is not null and NEW.justificatif is distinct from OLD.justificatif then raise exception 'Le justificatif est déjà joint : il ne se remplace pas.'; end if;
   if NEW.annule and not OLD.annule and OLD.source = 'espace2' then
     raise exception 'Une recette de l''espace 2 ne s''annule pas d''ici.';
   end if;
@@ -1248,6 +1267,7 @@ begin
     raise exception 'Ne se modifie pas : annulez avec un motif, puis saisissez la bonne.';
   end if;
   if OLD.annule and not NEW.annule then raise exception 'Une ligne annulée le reste.'; end if;
+  if OLD.justificatif is not null and NEW.justificatif is distinct from OLD.justificatif then raise exception 'Le justificatif est déjà joint : il ne se remplace pas.'; end if;
   if NEW.annule and not OLD.annule and exists (select 1 from compta_documents where dette_id = OLD.id) then
     raise exception 'Somme due d''une facture : elle se corrige par un avoir.';
   end if;
@@ -1309,23 +1329,30 @@ returns trigger language plpgsql security definer set search_path = public as $$
 declare
   compte uuid;
 begin
+  if TG_OP = 'UPDATE' and OLD.statut = 'valide' then
+    if NEW.statut = OLD.statut and NEW.montant is not distinct from OLD.montant and NEW.mode = OLD.mode then return NEW; end if;
+    -- paiement corrigé ou refusé après validation : l'ancienne recette est annulée (et remplacée
+    -- par la bonne s'il reste validé)
+    update compta_ecritures set annule = true, motif_annulation = 'Paiement corrigé ou refusé dans l''espace 2'
+    where paiement_id = NEW.id and not annule;
+  end if;
   if NEW.statut <> 'valide' or NEW.montant is null or NEW.mode = 'avant_systeme' then return NEW; end if;
-  if TG_OP = 'UPDATE' and OLD.statut = 'valide' then return NEW; end if;
-  select id into compte from compta_comptes where type = case when NEW.mode = 'especes' then 'caisse' else 'wave' end and actif order by cree_le limit 1;
-  if compte is null then return NEW; end if;
+  -- (compte actif d'abord ; les garde-fous des comptes empêchent de fermer la dernière caisse ou le dernier Wave)
+  select id into compte from compta_comptes where type = case when NEW.mode = 'especes' then 'caisse' else 'wave' end order by actif desc, cree_le limit 1;
+  if compte is null then raise exception 'Comptabilité : aucun compte % pour recevoir ce paiement.', case when NEW.mode = 'especes' then 'caisse' else 'Wave' end; end if;
   insert into compta_ecritures (sens, date_op, montant, compte_id, categorie, libelle, source, paiement_id)
   values ('recette', coalesce(NEW.valide_le, now())::date, NEW.montant, compte,
           case when NEW.objet = 'inscription' then 'inscription' else 'formation' end,
           case when NEW.objet = 'inscription' then 'Droit d''inscription d''un mannequin'
                else 'Mensualité de formation · ' || to_char(NEW.mois, 'MM/YYYY') end,
           'espace2', NEW.id)
-  on conflict (paiement_id) do nothing;
+  on conflict (paiement_id) where not annule do nothing;
   return NEW;
 end;
 $$;
 revoke all on function compta_depuis_espace2() from public, anon, authenticated;
 drop trigger if exists compta_depuis_espace2 on paiements_mannequins;
-create trigger compta_depuis_espace2 after insert or update of statut on paiements_mannequins
+create trigger compta_depuis_espace2 after insert or update of statut, montant, mode on paiements_mannequins
   for each row execute function compta_depuis_espace2();
 -- paiements déjà validés avant cette étape : repris une fois
 insert into compta_ecritures (sens, date_op, montant, compte_id, categorie, libelle, source, paiement_id)
@@ -1336,7 +1363,7 @@ select 'recette', coalesce(p.valide_le, p.declare_le)::date, p.montant,
        'espace2', p.id
 from paiements_mannequins p
 where p.statut = 'valide' and p.montant is not null and p.mode <> 'avant_systeme'
-on conflict (paiement_id) do nothing;
+on conflict (paiement_id) where not annule do nothing;
 
 -- Soldes de trésorerie : solde de départ + recettes − dépenses ± virements (hors annulées)
 create or replace function compta_soldes()
@@ -1348,6 +1375,24 @@ returns table (compte_id uuid, nom text, type text, solde bigint) language sql s
   from compta_comptes c where portail_peut('compta') order by c.cree_le;
 $$;
 revoke all on function compta_soldes() from public, anon;
+-- Trésorerie d'une période (dossier du mois) : solde au début, entrées, sorties, solde à la fin
+create or replace function compta_tresorerie(p_debut date, p_fin date)
+returns table (compte_id uuid, nom text, ouvert boolean, debut bigint, entrees bigint, sorties bigint, fin bigint)
+language sql stable security definer set search_path = public as $$
+  with mvt as (
+    select c.id, e.date_op, case when e.sens = 'virement' and e.compte_dest_id = c.id then e.montant when e.sens = 'recette' then e.montant else -e.montant end as effet
+    from compta_comptes c join compta_ecritures e on (e.compte_id = c.id or (e.sens = 'virement' and e.compte_dest_id = c.id))
+    where not e.annule and e.date_op >= c.date_initiale and e.date_op < p_fin
+  )
+  select c.id, c.nom, c.date_initiale < p_fin,
+         c.solde_initial + coalesce((select sum(effet) from mvt where mvt.id = c.id and date_op < p_debut), 0),
+         coalesce((select sum(effet) from mvt where mvt.id = c.id and date_op >= p_debut and effet > 0), 0),
+         coalesce((select -sum(effet) from mvt where mvt.id = c.id and date_op >= p_debut and effet < 0), 0),
+         c.solde_initial + coalesce((select sum(effet) from mvt where mvt.id = c.id), 0)
+  from compta_comptes c where portail_peut('compta') order by c.cree_le;
+$$;
+revoke all on function compta_tresorerie(date, date) from public, anon;
+grant execute on function compta_tresorerie(date, date) to authenticated;
 grant execute on function compta_soldes() to authenticated;
 
 do $$
@@ -1455,7 +1500,7 @@ create table if not exists compta_documents (
   notes text,
   origine_id uuid references compta_documents(id), -- avoir → facture ; facture → devis/proforma ; reçu → facture
   dette_id uuid unique references compta_dettes(id),  -- facture → somme due par le client
-  ecriture_id uuid unique references compta_ecritures(id), -- reçu → recette encaissée
+  ecriture_id uuid references compta_ecritures(id),        -- reçu → recette encaissée (un seul reçu en vigueur)
   etat text not null default 'emis' check (etat in ('emis', 'en_attente', 'accepte', 'refuse', 'facture')),
   fne_reference text,                              -- numéro FNE de la DGI (vraies factures)
   annule boolean not null default false,
@@ -1466,6 +1511,8 @@ create table if not exists compta_documents (
   check (not annule or coalesce(trim(motif_annulation), '') <> '')
 );
 create index if not exists compta_documents_date on compta_documents (date_doc);
+alter table compta_documents drop constraint if exists compta_documents_ecriture_id_key;
+create unique index if not exists compta_documents_recu on compta_documents (ecriture_id) where not annule;
 
 -- Reste dû d'une créance ou d'une dette : montant − règlements − avoirs (factures)
 create or replace function compta_dette_reste(p_id uuid)
@@ -1568,25 +1615,30 @@ begin
   fisc := r.mode_legal;
   if fisc and typ <> 'recu' then taux := r.tva_taux; end if;
   if typ = 'avoir' then
-    select * into o from compta_documents where id = (p ->> 'origine_id')::uuid and type = 'facture' and not annule;
+    select * into o from compta_documents where id = (p ->> 'origine_id')::uuid and type = 'facture' and not annule for update;
     if not found then raise exception 'Un avoir corrige une facture : choisissez-la.'; end if;
     if o.tiers_id <> t.id then raise exception 'L''avoir va au client de la facture.'; end if;
     fisc := o.fiscal; taux := o.tva_taux;   -- même série et même TVA que la facture corrigée
     if ht + round(ht * taux / 100) > compta_dette_reste(o.dette_id) then raise exception 'L''avoir dépasse ce qui reste dû sur la facture.'; end if;
   elsif p ->> 'origine_id' is not null then
-    select * into o from compta_documents where id = (p ->> 'origine_id')::uuid and not annule;
+    select * into o from compta_documents where id = (p ->> 'origine_id')::uuid and not annule for update;
     if not found or not ((typ = 'facture' and o.type in ('devis', 'proforma') and o.etat <> 'facture') or (typ = 'recu' and o.type = 'facture')) then
       raise exception 'Document d''origine impossible.';
     end if;
   end if;
   if typ = 'recu' and p ->> 'ecriture_id' is not null then
-    select * into e from compta_ecritures where id = (p ->> 'ecriture_id')::uuid and sens = 'recette' and not annule;
+    select * into e from compta_ecritures where id = (p ->> 'ecriture_id')::uuid and sens = 'recette' and source = 'manuel' and not annule;
     if not found then raise exception 'Recette introuvable.'; end if;
     if e.montant <> ht then raise exception 'Le reçu doit être du montant de la recette.'; end if;
   end if;
   insert into compta_numeros (type, annee, fiscal, dernier) values (typ, extract(year from le_jour)::int, fisc, 1)
   on conflict (type, annee, fiscal) do update set dernier = compta_numeros.dernier + 1
   returning dernier into num;
+  -- (après la prise du compteur : la série est verrouillée le temps de la vérification)
+  if le_jour > current_date then raise exception 'La date du document ne peut pas être dans le futur.'; end if;
+  if exists (select 1 from compta_documents where type = typ and fiscal = fisc and date_doc > le_jour) then
+    raise exception 'Date plus ancienne que le dernier document de cette série : les numéros suivent l''ordre des dates.';
+  end if;
   if typ = 'facture' then
     insert into compta_dettes (sens, tiers_id, date_op, echeance, montant, categorie, libelle)
     values ('creance', t.id, le_jour, (p ->> 'echeance')::date, ht + round(ht * taux / 100), coalesce(p ->> 'categorie', 'prestation'),

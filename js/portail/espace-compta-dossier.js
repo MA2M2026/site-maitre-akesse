@@ -11,29 +11,23 @@
 
   // Tout ce qu'il faut pour le mois m (AAAA-MM-01)
   async function rassembler(m) {
-    const fin = new Date(Date.UTC(Number(m.slice(0, 4)), Number(m.slice(5, 7)), 1)).toISOString().slice(0, 10);
-    const [historique, comptes, creances, dettes, docs, impots, materiel, tiers, r] = await Promise.all([
-      P.bd(sb.from('compta_ecritures').select('*').lt('date_op', fin).order('date_op').order('cree_le')),
-      C.comptes(true), C.dettes('creance'), C.dettes('dette'),
+    const fin = C.bornes(m)[1];
+    const [ecritures, tresorerie, comptes, creances, dettes, docs, impots, materiel, tiers, r] = await Promise.all([
+      C.ecritures(m), P.rpc('compta_tresorerie', { p_debut: m, p_fin: fin }), C.comptes(true), C.dettes('creance'), C.dettes('dette'),
       P.bd(sb.from('compta_documents').select('*').gte('date_doc', m).lt('date_doc', fin).order('numero')),
       P.bd(sb.from('compta_impots').select('*').order('echeance')),
       P.bd(sb.from('compta_materiel').select('*').order('date_achat')),
       P.bd(sb.from('compta_tiers').select('id, nom')),
       P.bd(sb.from('compta_reglages').select('*').eq('id', 1).single())
     ]);
-    const duMois = historique.filter((e) => e.date_op >= m);
+    // paiements des impôts, quel que soit leur mois
+    const ids = impots.map((i) => i.ecriture_id).filter(Boolean);
+    const paiements = ids.length ? await P.bd(sb.from('compta_ecritures').select('id, date_op, annule').in('id', ids)) : [];
+    const paiement = (i) => paiements.find((e) => e.id === i.ecriture_id && !e.annule);
+    const duMois = ecritures.slice().reverse();  // (ordre des dates, du 1er au dernier jour)
     const noms = {}, nomsTiers = {};
     comptes.forEach((c) => { noms[c.id] = c.nom; });
     tiers.forEach((x) => { nomsTiers[x.id] = x.nom; });
-    // trésorerie : solde au début du mois, entrées, sorties, solde à la fin (hors annulées)
-    const tresorerie = comptes.map((c) => {
-      const mouvements = historique.filter((e) => !e.annule && e.date_op >= c.date_initiale && (e.compte_id === c.id || e.compte_dest_id === c.id));
-      const effet = (e) => (e.compte_dest_id === c.id && e.sens === 'virement' ? e.montant : e.sens === 'recette' ? e.montant : -e.montant);
-      const avant = mouvements.filter((e) => e.date_op < m).reduce((s, e) => s + effet(e), c.solde_initial);
-      const pendant = mouvements.filter((e) => e.date_op >= m);
-      const entrees = pendant.filter((e) => effet(e) > 0).reduce((s, e) => s + effet(e), 0), sorties = pendant.filter((e) => effet(e) < 0).reduce((s, e) => s - effet(e), 0);
-      return { nom: c.nom, debut: c.date_initiale >= fin ? null : avant, entrees, sorties, fin: c.date_initiale >= fin ? null : avant + entrees - sorties };
-    });
     const valides = duMois.filter((e) => !e.annule);
     const total = (sens) => valides.filter((e) => e.sens === sens).reduce((s, e) => s + e.montant, 0);
     const parCategorie = (sens) => {
@@ -42,7 +36,9 @@
       return Object.keys(t).sort((a, b) => t[b] - t[a]).map((k) => [cat(k), t[k]]);
     };
     return { m, fin, r, duMois, valides, noms, nomsTiers, tresorerie, creances, dettes, docs,
-      impots: impots.filter((i) => (i.echeance >= m && i.echeance < fin) || (i.ecriture_id && duMois.some((e) => e.id === i.ecriture_id))),
+      // impôts à payer dans le mois, ou payés dans le mois
+      impots: impots.map((i) => Object.assign({}, i, { paye: !!paiement(i) }))
+        .filter((i) => (i.echeance >= m && i.echeance < fin) || (paiement(i) && paiement(i).date_op >= m && paiement(i).date_op < fin)),
       materiel, recettes: total('recette'), depenses: total('depense'), parCategorie,
       tva: docs.filter((d) => d.fiscal && !d.annule).reduce((s, d) => s + (d.type === 'facture' ? d.tva : d.type === 'avoir' ? -d.tva : 0), 0) };
   }
@@ -68,7 +64,7 @@
       { nom: 'Virements', lignes: [['Date', 'Libellé', 'Depuis', 'Vers', 'Montant (FCFA)', 'Annulé']].concat(x.duMois.filter((e) => e.sens === 'virement')
         .map((e) => [P.date(e.date_op), e.libelle, x.noms[e.compte_id] || '', x.noms[e.compte_dest_id] || '', e.montant, e.annule ? 'Oui' : ''])), largeurs: [11, 40, 20, 20, 14, 9] },
       { nom: 'Trésorerie', lignes: [['Compte', 'Solde au début du mois', 'Entrées', 'Sorties', 'Solde à la fin du mois']]
-        .concat(x.tresorerie.map((c) => [c.nom, c.debut == null ? 'compte ouvert après ce mois' : c.debut, c.entrees, c.sorties, c.fin == null ? '' : c.fin])), largeurs: [24, 22, 14, 14, 22] },
+        .concat(x.tresorerie.map((c) => [c.nom, c.ouvert ? Number(c.debut) : 'compte ouvert après ce mois', Number(c.entrees), Number(c.sorties), c.ouvert ? Number(c.fin) : ''])), largeurs: [24, 22, 14, 14, 22] },
       { nom: 'Clients (on nous doit)', lignes: dettes(x.creances, 'Client'), largeurs: [22, 34, 18, 11, 11, 12, 12, 12, 12, 14] },
       { nom: 'Fournisseurs (on doit)', lignes: dettes(x.dettes, 'Fournisseur'), largeurs: [22, 34, 18, 11, 11, 12, 12, 12, 12, 14] },
       { nom: 'Documents', lignes: [['Numéro', 'Type', 'Client', 'Date', 'Hors taxes', 'TVA', 'Total', 'Fiscal', 'N° FNE', 'Annulé', 'Motif']]
@@ -77,7 +73,7 @@
       { nom: 'Personnel', lignes: [['Date', 'Personne', 'Libellé', 'Compte', 'Montant (FCFA)', 'Justificatif', 'Annulé']].concat(x.duMois.filter((e) => e.categorie === 'personnel')
         .map((e) => [P.date(e.date_op), x.nomsTiers[e.tiers_id] || e.tiers || '', e.libelle, x.noms[e.compte_id] || '', e.montant, e.justificatif ? 'Oui' : 'Non', e.annule ? 'Oui' : ''])), largeurs: [11, 24, 36, 18, 14, 11, 8] },
       { nom: 'Impôts et taxes', lignes: [['Impôt ou taxe', 'Période', 'Date limite', 'Montant prévu', 'Payé', 'Annulé']].concat(x.impots
-        .map((i) => [i.nom, i.periode || '', P.date(i.echeance), i.montant, i.ecriture_id && x.duMois.some((e) => e.id === i.ecriture_id && !e.annule) ? 'Oui' : 'Non', i.annule ? 'Oui' : ''])), largeurs: [28, 12, 12, 14, 8, 8] },
+        .map((i) => [i.nom, i.periode || '', P.date(i.echeance), i.montant, i.paye ? 'Oui' : 'Non', i.annule ? 'Oui' : ''])), largeurs: [28, 12, 12, 14, 8, 8] },
       { nom: 'Matériel', lignes: [['Matériel', 'Date d’achat', 'Prix (FCFA)', 'N° de série', 'Où', 'État', 'Sortie', 'Motif']].concat(x.materiel
         .map((t) => [t.designation, P.date(t.date_achat), t.montant, t.numero_serie || '', t.emplacement || '', ETATS_MAT[t.etat], t.date_sortie ? P.date(t.date_sortie) : '', t.motif_sortie || ''])), largeurs: [28, 12, 14, 16, 16, 12, 11, 24] }
     ]);
@@ -105,7 +101,7 @@
     m.tableau([{ titre: 'Dépenses', part: 3 }, { titre: 'Montant', part: 1.4, droite: true }], x.parCategorie('depense').map((c) => [c[0], F(c[1])]));
     m.titre('3. Trésorerie', 12);
     m.tableau([{ titre: 'Compte', part: 2.4 }, { titre: 'Début du mois', part: 1.4, droite: true }, { titre: 'Entrées', part: 1.3, droite: true }, { titre: 'Sorties', part: 1.3, droite: true }, { titre: 'Fin du mois', part: 1.4, droite: true }],
-      x.tresorerie.map((c) => [c.nom, c.debut == null ? '—' : F(c.debut), F(c.entrees), F(c.sorties), c.fin == null ? '—' : F(c.fin)]));
+      x.tresorerie.map((c) => [c.nom, c.ouvert ? F(c.debut) : '—', F(c.entrees), F(c.sorties), c.ouvert ? F(c.fin) : '—']));
     m.titre('4. Ce qu’on nous doit et ce qu’on doit (à ce jour)', 12);
     const ouvertes = (l) => l.filter((d) => Number(d.reste) > 0);
     m.tableau([{ titre: 'Client', part: 2 }, { titre: 'Libellé', part: 3 }, { titre: 'Échéance', part: 1.2 }, { titre: 'Reste', part: 1.4, droite: true }, { titre: 'État', part: 1.2 }],
@@ -117,7 +113,7 @@
       x.docs.map((d) => [d.numero + (d.annule ? ' (annulé)' : ''), TYPES_DOC[d.type], (d.destinataire || {}).nom || '', P.date(d.date_doc), F(d.total_ttc)]));
     m.titre('6. Impôts et taxes du mois', 12);
     m.tableau([{ titre: 'Impôt ou taxe', part: 3 }, { titre: 'Date limite', part: 1.2 }, { titre: 'Montant', part: 1.4, droite: true }, { titre: 'Payé', part: 0.8 }],
-      x.impots.filter((i) => !i.annule).map((i) => [i.nom + (i.periode ? ' · ' + i.periode : ''), P.date(i.echeance), F(i.montant), i.ecriture_id && x.valides.some((e) => e.id === i.ecriture_id) ? 'Oui' : 'Non']));
+      x.impots.filter((i) => !i.annule).map((i) => [i.nom + (i.periode ? ' · ' + i.periode : ''), P.date(i.echeance), F(i.montant), i.paye ? 'Oui' : 'Non']));
     m.titre('7. Journal du mois', 12);
     m.tableau([{ titre: 'Date', part: 1 }, { titre: 'Libellé', part: 3.4 }, { titre: 'Catégorie', part: 1.8 }, { titre: 'Compte', part: 1.5 }, { titre: 'Montant', part: 1.4, droite: true }, { titre: 'Justif.', part: 0.8 }],
       x.duMois.map((e) => [P.date(e.date_op), (e.sens === 'depense' ? '− ' : e.sens === 'virement' ? '⇄ ' : '+ ') + e.libelle + (e.annule ? ' (annulée : ' + (e.motif_annulation || '') + ')' : ''),

@@ -98,7 +98,11 @@
 > (`fne_reference`) en attendant le branchement DGI. **Dossier du mois**
 > (`js/portail/espace-compta-dossier.js`) : Excel 11 feuilles (`js/portail/compta-xlsx.js`, .xlsx écrit
 > sans outil extérieur) et PDF résumé + justificatifs (PDF ajoutés, photos mises en page, formats
-> illisibles listés). Essai visiteur : `test-comptabilite-documents.js` (relit l'Excel avec openpyxl
+> illisibles listés ; trésorerie du mois calculée par la base, `compta_tresorerie`). Relecture du
+> 19/10/2026 : paiement de l'espace 2 corrigé/refusé après validation → ancienne recette annulée et
+> remplacée ; toujours une caisse et un Wave actifs ; justificatif jamais remplacé ; un document ne
+> se date ni dans le futur ni avant le dernier de sa série ; nouveau reçu possible après annulation.
+> Essai visiteur : `test-comptabilite-documents.js` (relit l'Excel avec openpyxl
 > et le PDF avec pypdf, installés par `lancer.sh` s'ils manquent).
 >
 > Codes de secours : affichés à la première activation de la double authentification, et
@@ -666,7 +670,9 @@ Définies dans `js/app.js`, chargées sur (presque) chaque page :
   photo partagé (avec balayage tactile), réutilisé sur toutes les pages
   qui affichent des photos.
 - **`convertirSiHeic(fichier)`** — convertit une photo iPhone (HEIC) en
-  JPEG avant l'envoi, quand nécessaire (dupliquée dans plusieurs pages).
+  JPEG avant l'envoi, quand nécessaire. Depuis le 19/10/2026 dans
+  `js/conversion-heic.js` (chargé juste avant `js/app.js` sur chaque page, et par
+  l'Administration pour les justificatifs de la comptabilité).
 - **`construireHtmlCv(donnees)`** — gabarit du "Model CV" (icônes, libellés
   de compétences, regroupement des expériences par catégorie), partagé
   entre l'aperçu personnel du mannequin (`espace-mannequin.html`, bouton

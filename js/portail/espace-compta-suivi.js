@@ -9,7 +9,7 @@
   const P = window.Portail, C = P.compta;
   const TYPES = { client: 'Client', fournisseur: 'Fournisseur', personnel: 'Personnel', prestataire: 'Prestataire' };
   const ETATS = { en_service: ['En service', 'ok'], en_panne: ['En panne', 'alerte'], sorti: ['Sorti de l’inventaire', 'neutre'] };
-  const t = (f, k) => String(f.get(k) || '').trim() || null;
+  const t = C.champ;
   const montantDe = (f) => Math.round(Number(f.get('montant')));
   async function tiers(types) {
     const l = await P.bd(sb.from('compta_tiers').select('*').order('nom'));
@@ -21,7 +21,7 @@
     (requis ? ' required' : '') + ' value="' + P.esc(valeur || '') + '"></label>';
   const champMontant = (id, valeur) => '<label class="fl" for="' + id + '">Montant (FCFA)<input id="' + id + '" name="montant" type="number" inputmode="numeric" min="1" step="1" required' +
     (valeur ? ' value="' + valeur + '"' : '') + '></label>';
-  const actualiser = async (texte) => { P.fenetre(''); await P.afficher(); P.message(texte); };
+  const actualiser = C.actualiser;
 
   // ---------- Ce qu'on nous doit / ce qu'on doit ----------
   function ecranDettes(sens) {

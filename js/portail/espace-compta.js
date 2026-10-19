@@ -37,12 +37,27 @@
     const r = sb.from('compta_comptes').select('*').order('cree_le');
     return P.bd(tous ? r : r.eq('actif', true));
   }
+  // Toutes les lignes d'une requête, par paquets de 1 000 (limite d'une réponse de la base)
+  async function toutes(fabrique) {
+    const liste = [];
+    for (let i = 0; ; i += 1000) {
+      const r = await P.bd(fabrique().range(i, i + 999));
+      liste.push.apply(liste, r);
+      if (r.length < 1000) return liste;
+    }
+  }
   async function ecritures(mois, sens) {
     const [debut, fin] = bornes(mois);
-    let r = sb.from('compta_ecritures').select('*').gte('date_op', debut).lt('date_op', fin);
-    if (sens) r = r.eq('sens', sens);
-    return P.bd(r.order('date_op', { ascending: false }).order('cree_le', { ascending: false }));
+    return toutes(() => {
+      let r = sb.from('compta_ecritures').select('*').gte('date_op', debut).lt('date_op', fin);
+      if (sens) r = r.eq('sens', sens);
+      return r.order('date_op', { ascending: false }).order('cree_le', { ascending: false }).order('id');
+    });
   }
+  // valeur d'un champ de formulaire, sans espaces autour (null si vide)
+  const champ = (f, k) => String(f.get(k) || '').trim() || null;
+  // après une action : fenêtre fermée, page redessinée, message
+  const actualiser = async (texte) => { P.fenetre(''); await P.afficher(); P.message(texte); };
   // Créances (ce qu'on nous doit) ou dettes (ce qu'on doit) : réglé, avoirs, reste, retard
   // (calculés par la base, compta_dettes_etat)
   const dettes = (sens) => P.rpc('compta_dettes_etat', { p_sens: sens });
@@ -119,7 +134,9 @@
   async function deposerJustificatif(fichier) {
     if (!fichier || !fichier.size) return null;
     if (fichier.size > JUSTIF_MAX) throw new Error('Justificatif trop lourd : 10 Mo au plus.');
-    // (certains navigateurs ne donnent pas le type d'une photo HEIC d'iPhone)
+    // photo d'iPhone (HEIC) convertie en JPEG quand le navigateur le sait (js/conversion-heic.js),
+    // sinon gardée telle quelle (certains navigateurs ne donnent pas son type)
+    fichier = await window.convertirSiHeic(fichier);
     const type = fichier.type || (/\.hei[cf]$/i.test(fichier.name) ? 'image/heic' : '');
     if (JUSTIF_TYPES.indexOf(type) === -1) throw new Error('Justificatif : une photo (JPEG, PNG, HEIC) ou un PDF.');
     const ext = type === 'application/pdf' ? 'pdf' : type.split('/')[1].replace('jpeg', 'jpg');
@@ -176,10 +193,9 @@
     try {
       const chemin = await deposerJustificatif(f.get('justificatif'));
       if (!chemin) return P.message('Choisissez un fichier.');
-      await P.bd(sb.from(tableDe(form)).update({ justificatif: chemin }).eq('id', form.getAttribute('data-id')));
-      P.fenetre('');
-      await P.afficher();
-      P.message('Justificatif joint.');
+      const r = await P.bd(sb.from(tableDe(form)).update({ justificatif: chemin }).eq('id', form.getAttribute('data-id')).select('id'));
+      if (!r || !r.length) return P.message('Action refusée : votre rôle ne le permet pas.');
+      await actualiser('Justificatif joint.');
     } catch (e) { P.message(P.erreurTexte(e)); }
   };
 
@@ -231,9 +247,7 @@
       const r = await P.bd(sb.from('compta_comptes').update({ solde_initial: Math.round(Number(f.get('solde_initial')) || 0),
         date_initiale: String(f.get('date_initiale') || '') || P.aujourdhui(), actif: f.get('actif') === 'on' }).eq('id', form.getAttribute('data-id')).select('id'));
       if (!r || !r.length) return P.message('Action refusée : votre rôle ne le permet pas.');
-      P.fenetre('');
-      await P.afficher();
-      P.message('Compte enregistré.');
+      await actualiser('Compte enregistré.');
     } catch (e) { P.message(P.erreurTexte(e)); }
   };
   P.formulaires['compta-virement'] = async (f) => {
@@ -259,7 +273,7 @@
     } catch (e) { P.message(/duplicate|unique/i.test(String(e && e.message)) ? 'Un compte porte déjà ce nom.' : P.erreurTexte(e)); }
   };
 
-  P.compta = { RECETTES, DEPENSES, comptes, ecritures, dettes, moisChoisi, choixMois, lignes, optionsComptes, optionsCategories, deposerJustificatif, totaux };
+  P.compta = { RECETTES, DEPENSES, comptes, ecritures, toutes, dettes, moisChoisi, bornes, choixMois, lignes, optionsComptes, optionsCategories, deposerJustificatif, totaux, champ, actualiser };
   // (les pages du morceau B sont ajoutées par js/portail/espace-compta-suivi.js)
   P.espaces.compta = {
     nav: [[null, 'Au quotidien'], ['mois', 'Tableau du mois'], ['recettes', 'Recettes'], ['depenses', 'Dépenses'], ['tresorerie', 'Trésorerie']],

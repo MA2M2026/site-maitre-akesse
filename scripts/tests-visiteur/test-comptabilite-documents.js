@@ -50,6 +50,8 @@ function donnees(role, fichiers) {
       portail_enregistrer_appareil: { ok: true, nouveau: false },
       portail_code_appareil_etat: { defini: true, verrouille: false },
       compta_soldes: [{ compte_id: 'c1', nom: 'Caisse (espèces)', type: 'caisse', solde: 3000 }, { compte_id: 'c2', nom: 'Wave Business', type: 'wave', solde: 7000 }],
+      compta_tresorerie: [{ compte_id: 'c1', nom: 'Caisse (espèces)', ouvert: true, debut: 10000, entrees: 50000, sorties: 57000, fin: 3000 },
+        { compte_id: 'c2', nom: 'Wave Business', ouvert: true, debut: 0, entrees: 15000, sorties: 8000, fin: 7000 }],
       compta_dettes_etat: (q) => (q.p_sens === 'creance' ? [{ id: 'dd1', sens: 'creance', tiers_id: 't1', date_op: JOUR, echeance: null, montant: 200000, categorie: 'prestation', libelle: 'Facture NF-FAC-' + AN + '-0001',
         annule: false, regle: 0, avoirs: 0, reste: 200000, retard: false, facture: 'NF-FAC-' + AN + '-0001' }] : []),
       compta_document_creer: (q) => ({ id: 'nouveau', numero: 'NF-' + q.p.type.toUpperCase() + '-' + AN + '-0009' }),
@@ -180,7 +182,7 @@ function donnees(role, fichiers) {
     ok(f.nom === 'Dossier-' + MOIS + '-MA2M.xlsx' && feuilles.length === 11 && feuilles.includes('Recettes') && feuilles.includes('Clients (on nous doit)'), nomEcran + ' : Excel de 11 feuilles ' + feuilles.join(', '));
     const resume = Object.fromEntries(x['Résumé'].slice(1).map((r) => [r[0], r[1]]));
     ok(resume['Recettes du mois (FCFA)'] === 65000 && resume['Dépenses du mois (FCFA)'] === 65000 && resume['On nous doit, à ce jour (FCFA)'] === 200000, nomEcran + ' : Excel → recettes 65 000, dépenses 65 000, on nous doit 200 000');
-    ok(x['Recettes'].length === 3 && x['Dépenses'].length === 5 && x['Recettes'][1][5] === 50000 && x['Documents'].length === 3, nomEcran + ' : Excel → journaux et documents complets, montants en nombres');
+    ok(x['Recettes'].length === 3 && x['Dépenses'].length === 5 && x['Recettes'].some((r) => r[5] === 50000) && x['Documents'].length === 3, nomEcran + ' : Excel → journaux et documents complets, montants en nombres');
     const treso = x['Trésorerie'].find((r) => r[0] === 'Caisse (espèces)');
     ok(treso && treso[4] === 10000 + 50000 - 30000 - 2000 - 25000, nomEcran + ' : Excel → solde de la caisse en fin de mois');
     f = await telecharger(p, '[data-action="compta-dossier"][data-format="pdf"]');

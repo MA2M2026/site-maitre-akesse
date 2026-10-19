@@ -327,6 +327,14 @@ select essai((select statut from paiements_mannequins where mannequin_id = '0000
 -- Comptabilité, morceau A (cahier v2.4, section 6)
 select essai((select count(*) from compta_ecritures where source = 'espace2') >= 2, 'paiements validés de l''espace 2 repris en recettes');
 select essai(not exists (select 1 from compta_ecritures where libelle ~ 'YAO|KONÉ|BINTOU'), 'recettes sans nom de mannequin (le comptable ne voit que des montants)');
+-- relecture : paiement corrigé après validation → l'ancienne recette est annulée, la bonne enregistrée
+select paiement_id as pid_essai from compta_ecritures where source = 'espace2' and not annule order by cree_le limit 1 \gset
+update paiements_mannequins set montant = montant - 1000 where id = :'pid_essai';
+select essai((select count(*) from compta_ecritures where paiement_id = :'pid_essai' and annule) = 1
+  and (select montant from compta_ecritures where paiement_id = :'pid_essai' and not annule) = (select montant from paiements_mannequins where id = :'pid_essai'),
+  'paiement corrigé dans l''espace 2 : ancienne recette annulée, nouvelle au bon montant');
+update paiements_mannequins set statut = 'refuse' where id = :'pid_essai';
+select essai(not exists (select 1 from compta_ecritures where paiement_id = :'pid_essai' and not annule), 'paiement refusé après validation : plus de recette en vigueur');
 set role authenticated;
 -- (connexion après la révocation de son téléphone, plus haut)
 select essai_qui('00000000-0000-0000-0000-0000000000a4', 'aal2', -5, 'ordinateur-bureau-0003');
@@ -336,7 +344,7 @@ values ('depense', 50000, (select id from compta_comptes where type = 'caisse'),
 insert into compta_ecritures (sens, montant, compte_id, compte_dest_id, categorie, libelle)
 values ('virement', 20000, (select id from compta_comptes where type = 'wave'), (select id from compta_comptes where type = 'caisse'), 'virement', 'Retrait Wave → caisse');
 select essai((select solde from compta_soldes() where type = 'caisse') =
-             coalesce((select sum(montant) from compta_ecritures where sens = 'recette' and compte_id = (select id from compta_comptes where type = 'caisse')), 0) - 50000 + 20000,
+             coalesce((select sum(montant) from compta_ecritures where sens = 'recette' and not annule and compte_id = (select id from compta_comptes where type = 'caisse')), 0) - 50000 + 20000,
              'solde de la caisse : recettes − dépenses + virements');
 select essai_refuse($$update compta_ecritures set montant = 1 where libelle = 'Loyer octobre'$$, 'une écriture ne se modifie pas');
 select essai_refuse($$update compta_ecritures set annule = true where libelle = 'Loyer octobre'$$, 'annulation sans motif refusée');
@@ -399,6 +407,19 @@ select essai_refuse($$select compta_document_creer(jsonb_build_object('type', 'r
   'un reçu ne se fait que pour une recette');
 update compta_documents set annule = true, motif_annulation = 'Erreur de client' where type = 'recu';
 select essai((select annule from compta_documents where type = 'recu'), 'un reçu s''annule avec un motif (son numéro reste pris)');
+select compta_document_creer(jsonb_build_object('type', 'recu', 'tiers_id', (select id from compta_tiers where nom = 'Client Sococé'), 'ecriture_id', (select id from compta_ecritures where libelle = 'Acompte casting'),
+  'lignes', jsonb_build_array(jsonb_build_object('designation', 'Acompte casting', 'quantite', 1, 'prix', 100000))));
+select essai((select count(*) from compta_documents where type = 'recu') = 2, 'reçu annulé : un nouveau reçu se fait pour la même recette');
+select essai_refuse($$select compta_document_creer(jsonb_build_object('type', 'devis', 'date_doc', current_date + 1, 'tiers_id', (select id from compta_tiers where nom = 'Client Sococé'), 'lignes', jsonb_build_array(jsonb_build_object('designation', 'x', 'quantite', 1, 'prix', 1))))$$,
+  'document daté dans le futur refusé');
+select essai_refuse($$select compta_document_creer(jsonb_build_object('type', 'devis', 'date_doc', current_date - 400, 'tiers_id', (select id from compta_tiers where nom = 'Client Sococé'), 'lignes', jsonb_build_array(jsonb_build_object('designation', 'x', 'quantite', 1, 'prix', 1))))$$,
+  'document antidaté avant le dernier de sa série refusé');
+update compta_ecritures set justificatif = '2026-10/quittance.pdf' where libelle = 'Loyer octobre';
+select essai_refuse($$update compta_ecritures set justificatif = '2026-10/autre.pdf' where libelle = 'Loyer octobre'$$, 'un justificatif joint ne se remplace pas');
+select essai_refuse($$update compta_comptes set actif = false where type = 'wave'$$, 'le dernier compte Wave ne se ferme pas');
+select essai_refuse($$update compta_comptes set type = 'banque' where type = 'caisse'$$, 'le type d''un compte ne change pas');
+select essai((select fin from compta_tresorerie(date_trunc('month', current_date)::date, (date_trunc('month', current_date) + interval '1 month')::date) where nom like 'Caisse%')
+  = (select solde from compta_soldes() where type = 'caisse'), 'trésorerie du mois : solde de fin = solde du jour');
 insert into compta_impots (nom, periode, echeance, montant) values ('Patente', '2026', current_date + 10, 120000);
 select compta_impot_payer((select id from compta_impots where nom = 'Patente'), (select id from compta_comptes where type = 'caisse'), current_date, 120000);
 select essai(exists (select 1 from compta_impots i join compta_ecritures e on e.id = i.ecriture_id where i.nom = 'Patente' and e.categorie = 'impots'), 'impôt payé : dépense « Impôts et taxes » liée');
