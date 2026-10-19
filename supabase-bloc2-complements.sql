@@ -279,6 +279,17 @@ create table if not exists rapprochements (
   modifie_par uuid references auth.users(id),
   check (etat not in ('introuvable', 'precision') or coalesce(trim(note), '') <> '')
 );
+-- (si une première version du fichier a déjà été exécutée : les deux colonnes changent de nom,
+--  sans rien perdre)
+do $$
+begin
+  if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'rapprochements' and column_name = 'numero_wave') then
+    alter table rapprochements rename column numero_wave to numero_payeur;
+  end if;
+  if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'rapprochements' and column_name = 'reference_wave') then
+    alter table rapprochements rename column reference_wave to reference_paiement;
+  end if;
+end $$;
 create index if not exists rapprochements_reference on rapprochements (reference_paiement) where reference_paiement is not null;
 alter table rapprochements enable row level security;
 revoke all on rapprochements from anon, authenticated;
