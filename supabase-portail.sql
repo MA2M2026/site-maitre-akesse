@@ -1558,6 +1558,8 @@ begin
   if not (portail_peut('site') or portail_peut('paiements')) then raise exception 'Accès refusé.'; end if;
   select * into c from casting_applications where id = p_candidature;
   if c.id is null then raise exception 'Candidature introuvable.'; end if;
+  -- seulement pour une personne retenue (décision de la propriétaire, 19/10/2026)
+  if c.status <> 'retenue' then raise exception 'Passez d''abord la candidature en « Retenue » pour générer son code.'; end if;
   select * into r from portail_reglages limit 1;
   if c.date_naissance is null then raise exception 'Date de naissance manquante sur la candidature.'; end if;
   if age(current_date, c.date_naissance) < make_interval(years => r.age_majorite)
@@ -1571,7 +1573,6 @@ begin
   update registration_codes set statut = 'annule' where candidature_id = c.id and statut in ('genere', 'bloque', 'expire');
   insert into registration_codes (candidature_id, code_hache, indice, expire_le, cree_par)
   values (c.id, encode(digest(code, 'sha256'), 'hex'), substr(brut, 5, 2), now() + make_interval(days => r.validite_code_jours), auth.uid());
-  update casting_applications set status = 'retenue' where id = c.id and status <> 'inscrite';
   return code;
 end;
 $$;
@@ -1701,6 +1702,8 @@ begin
   values (trim(p_nom), '', trim(p_telephone), p_naissance, nullif(trim(p_parent_nom), ''), nullif(trim(p_parent_tel), ''),
           p_genre, 'retenue', 'direct', nullif(trim(p_lieu), ''), 'agence')
   returning id into cid;
+  -- (un déclencheur remet toute nouvelle candidature à « nouvelle » : on la retient ensuite)
+  update casting_applications set status = 'retenue' where id = cid;
   return json_build_object('candidature', cid, 'code', generer_code_inscription(cid), 'doublon_possible', doublon);
 end;
 $$;

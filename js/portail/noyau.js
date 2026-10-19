@@ -181,7 +181,7 @@
     try {
       const anciens = await P.bd(sb.auth.mfa.listFactors());
       for (const x of (anciens.all || []).filter((y) => y.status !== 'verified')) await sb.auth.mfa.unenroll({ factorId: x.id });
-      const r = await P.bd(sb.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Portail MA2M ' + new Date().toISOString().slice(0, 10) }));
+      const r = await P.bd(sb.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Administration MA2M ' + new Date().toISOString().slice(0, 10) }));
       P.etat.facteurEnCours = r.id;
       document.getElementById('qr-zone').innerHTML = '<img class="qr" alt="Code QR à scanner avec l’application d’authentification" src="' + P.esc(r.totp.qr_code) + '">' +
         '<details><summary class="petit-texte">Impossible de scanner ?</summary><p class="petit-texte">Saisissez cette clé dans l’application : <b style="word-break:break-all">' + P.esc(r.totp.secret) + '</b></p></details>';

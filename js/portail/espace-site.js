@@ -81,7 +81,7 @@
   async function candidatures() {
     const liste = await P.bd(sb.from('v_site_candidatures').select('*').order('created_at', { ascending: false }).limit(300));
     return P.entete('Candidatures casting', '<button class="btn rouge petit" data-action="site-casting-direct">Casting direct</button>') +
-      '<div class="note info">« Générer le code » crée le code individuel d’inscription (usage unique, ' +
+      '<div class="note info">Passez d’abord la candidature en « Retenue » : le bouton « Générer le code » apparaît alors. Il crée le code individuel d’inscription (usage unique, ' +
       'valable 30 jours). Il ne s’affiche qu’une fois : donnez-le au mannequin (ou au parent si mineur).</div>' +
       P.tableau(['Candidat', 'Âge', 'Origine', 'Reçue le', 'Statut', 'Code', 'Action'], liste.map((c) => {
         const age = P.age(c.date_naissance);
@@ -93,12 +93,15 @@
           '<td><select data-change="site-statut-candidature" data-id="' + c.id + '" aria-label="Statut de ' + P.esc(c.full_name) + '"' + (c.status === 'inscrite' ? ' disabled' : '') + '>' +
           Object.keys(STATUTS_CANDIDATURE).filter((k) => k !== 'inscrite' || c.status === 'inscrite').map((k) => '<option value="' + P.esc(k) + '"' + (k === c.status ? ' selected' : '') + '>' + STATUTS_CANDIDATURE[k] + '</option>').join('') + '</select></td>' +
           '<td>' + (c.code_statut ? P.pastille(LIBELLE_CODE[c.code_statut] + (c.code_indice ? ' · …' + c.code_indice : ''), TON_CODE[c.code_statut]) : '—') + '</td>' +
-          '<td>' + (c.status !== 'inscrite' && c.status !== 'refusée' ? '<button class="btn petit" data-action="site-code" data-id="' + c.id + '">' + (c.code_statut ? 'Nouveau code' : 'Générer le code') + '</button>' : '') + '</td></tr>';
+          // code d'inscription : seulement pour une personne retenue (décision du 19/10/2026)
+          '<td>' + (c.status === 'retenue' ? '<button class="btn petit" data-action="site-code" data-id="' + c.id + '">' + (c.code_statut ? 'Nouveau code' : 'Générer le code') + '</button>'
+            : c.status === 'inscrite' || c.status === 'refusée' ? '' : '<span class="petit-texte doux">Code après « Retenue »</span>') + '</td></tr>';
       }));
   }
   P.changements['site-statut-candidature'] = async (el) => {
     await P.bd(sb.rpc('portail_statut_candidature', { p_id: el.getAttribute('data-id'), p_statut: el.value }));
-    P.message('Statut mis à jour.');
+    P.message(el.value === 'retenue' ? 'Candidature retenue : vous pouvez générer son code.' : 'Statut mis à jour.');
+    P.afficher();  // le bouton « Générer le code » apparaît ou disparaît selon le statut
   };
   function montrerCode(code, nom) {
     P.fenetre('<h2>Code d’inscription de ' + P.esc(nom || 'ce mannequin') + '</h2><p class="doux">Notez-le maintenant : pour des raisons de sécurité, il ne sera plus affiché. Le mannequin le saisit avec sa date de naissance sur la page d’inscription.</p>' +

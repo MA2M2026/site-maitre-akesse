@@ -98,6 +98,9 @@ select essai_refuse($$insert into ledger_entries (date_ecriture, sens, montant, 
 -- 26. Candidature retenue → code individuel
 create temporary table essai_codes (qui text, code text) on commit preserve rows;
 grant all on essai_codes to authenticated;
+select essai_refuse($$select generer_code_inscription('00000000-0000-0000-0000-00000000c001')$$, 'candidature pas encore retenue : aucun code (décision du 19/10/2026)');
+select portail_statut_candidature('00000000-0000-0000-0000-00000000c001', 'retenue');
+select portail_statut_candidature('00000000-0000-0000-0000-00000000c002', 'retenue');
 insert into essai_codes values ('awa', generer_code_inscription('00000000-0000-0000-0000-00000000c001'));
 select essai((select code from essai_codes where qui = 'awa') ~ '^MA2M-[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{2}$', 'test 26 : code individuel unique de la forme MA2M-XXXX-XX, sans caractère ambigu');
 select essai((select status from v_site_candidatures where id = '00000000-0000-0000-0000-00000000c001') = 'retenue', 'test 26 : la candidature passe à Retenue');
