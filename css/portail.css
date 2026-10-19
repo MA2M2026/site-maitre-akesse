@@ -210,3 +210,9 @@ details summary { cursor: pointer; font-weight: 700; }
 /* Tableau du mois (espace 2) : mannequin non payé après le 5 = ligne rouge pâle */
 .tableau tr.ligne-retard td { background: #FBE3E3; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tableau tr.ligne-retard td { background: #3A1A1A; } }
+
+/* Texte réservé aux lecteurs d'écran */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+/* Matrice mannequins × mois : une pastille par case */
+.tableau table.matrice td.case-mois { padding: 6px 3px; }
+.case-mois .pastille { position: relative; min-width: 28px; justify-content: center; text-align: center; padding: 3px 6px; }

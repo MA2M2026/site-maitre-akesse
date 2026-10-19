@@ -411,9 +411,40 @@
   }
   P.actions['tableau-filtre'] = (el) => { P.etat.filtreTableau = el.getAttribute('data-filtre'); P.afficher(); };
 
+  // ---------- Matrice mannequins × mois (cahier V3, 7.2) ----------
+  // 12 colonnes (janvier à décembre), une pastille par case : ✓ payé (vert), … en attente (orange),
+  // ✕ non payé (rouge), · à venir ou avant l'entrée du mannequin (gris). Le sens ne repose jamais
+  // sur la seule couleur : chaque pastille porte un signe et un texte pour les lecteurs d'écran.
+  async function matrice() {
+    const annee = P.etat.anneeMatrice || new Date().getFullYear();
+    const [registreComplet, paiements] = await Promise.all([
+      P.bd(sb.from('agence_mannequins').select('*').neq('statut', 'sorti').order('full_name')),
+      P.bd(sb.from('paiements_mannequins').select('mannequin_id, mois, statut').eq('objet', 'mensualite').neq('statut', 'refuse').gte('mois', annee + '-01-01').lte('mois', annee + '-12-01'))
+    ]);
+    const mannequins = registreComplet.filter((m) => m.statut !== 'sorti');
+    const maintenant = new Date(), moisActuel = maintenant.getFullYear() * 12 + maintenant.getMonth(), jour = maintenant.getDate();
+    const paye = {};
+    paiements.forEach((x) => { paye[x.mannequin_id + '|' + Number(String(x.mois).slice(5, 7))] = x.statut; });
+    const case_ = (m, n) => {
+      const rang = annee * 12 + (n - 1), entree = m.date_entree ? new Date(m.date_entree) : null;
+      const avantEntree = entree && rang < entree.getFullYear() * 12 + entree.getMonth();
+      const st = paye[m.id + '|' + n];
+      let e = st ? (st === 'valide' ? 'paye' : 'attente') : avantEntree || rang > moisActuel ? 'neutre' : rang === moisActuel && jour <= 5 ? 'neutre' : 'non_paye';
+      const sign = { paye: ['✓', 'ok', 'payé'], attente: ['…', 'alerte', 'en attente de validation'], non_paye: ['✕', 'erreur', 'non payé'], neutre: ['·', 'neutre', rang > moisActuel ? 'à venir' : avantEntree ? 'avant l’entrée' : 'à payer avant le 5'] }[e];
+      return '<td class="case-mois"><span class="pastille ' + sign[1] + '" title="' + P.MOIS[n - 1] + ' : ' + sign[2] + '"><span aria-hidden="true">' + sign[0] + '</span><span class="sr-only">' + P.esc(P.MOIS[n - 1] + ' : ' + sign[2]) + '</span></span></td>';
+    };
+    const colonnes = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+    return P.entete('Matrice mannequins × mois · ' + annee, '<button class="btn petit" type="button" data-action="matrice-annee" data-sens="-1">‹ ' + (annee - 1) + '</button><button class="btn petit" type="button" data-action="matrice-annee" data-sens="1">' + (annee + 1) + ' ›</button>') +
+      '<div class="ligne">' + P.pastille('✓ payé', 'ok') + P.pastille('… en attente', 'alerte') + P.pastille('✕ non payé', 'erreur') + P.pastille('· à venir', 'neutre') + '</div>' +
+      '<div class="carte">' + (mannequins.length ? P.tableau(['Mannequin'].concat(colonnes), mannequins.map((m) =>
+        '<tr><td><a href="#/paiements/fiche/' + m.id + '"><b>' + P.esc(m.full_name) + '</b></a></td>' + colonnes.map((c, i) => case_(m, i + 1)).join('') + '</tr>'), 'matrice')
+        : '<p class="doux">Aucun mannequin dans le registre.</p>') + '</div>';
+  }
+  P.actions['matrice-annee'] = (el) => { P.etat.anneeMatrice = (P.etat.anneeMatrice || new Date().getFullYear()) + Number(el.getAttribute('data-sens')); P.afficher(); };
+
   P.espaces.paiements = {
-    nav: [['tableau', 'Tableau du mois'], ['a-valider', 'Paiements à valider'], ['mensualites', 'Mensualités du mois'], ['registre', 'Registre des mannequins'], ['ajouter', 'Ajouter un mannequin']],
-    pages: { tableau: tableauDuMois, 'a-valider': aValider, mensualites, registre, ajouter, fiche },
+    nav: [['tableau', 'Tableau du mois'], ['matrice', 'Matrice mannequins × mois'], ['a-valider', 'Paiements à valider'], ['mensualites', 'Mensualités du mois'], ['registre', 'Registre des mannequins'], ['ajouter', 'Ajouter un mannequin']],
+    pages: { tableau: tableauDuMois, matrice, 'a-valider': aValider, mensualites, registre, ajouter, fiche },
     compteur: {},
     // nombre de paiements en attente, affiché dans le menu
     avant: async () => {
