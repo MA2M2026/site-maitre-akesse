@@ -632,4 +632,4 @@ revoke all on function code_individuel_creer(uuid), casting_direct_creer(text, t
 grant execute on function code_individuel_creer(uuid), casting_direct_creer(text, text, text, date) to authenticated;
 
 NOTIFY pgrst, 'reload schema';
-select 'Administration — étape 1 en place' as resultat;
+select 'Administration — étape 1 et espace 1 en place' as resultat;
