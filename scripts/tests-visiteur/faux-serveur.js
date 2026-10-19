@@ -81,7 +81,9 @@ function brancher(page, donnees, journal) {
       const repPortail = portail && u.pathname === '/api/connexion-protegee' ? (() => { const x = sessionPortail(portail.aal || 'aal1'); return { access_token: x.access_token, refresh_token: x.refresh_token }; })() : null;
       let rep = (donnees.api && donnees.api[u.pathname]) || repPortail || (u.pathname === '/api/connexion-protegee' ? { access_token: jeton, refresh_token: 'faux' } : { ok: true });
       if (typeof rep === 'function') rep = rep(JSON.parse(route.request().postData() || '{}'));
-      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(rep) });
+      // « statut » : imiter un refus du serveur (ex. 403 « confirmez votre code »)
+      const statut = (rep && rep.statut) || 200; if (rep && rep.statut) rep = { error: rep.error };
+      route.fulfill({ status: statut, contentType: 'application/json', body: JSON.stringify(rep) });
     }),
     page.route(/api\.emailjs\.com/, async (route) => { journal.push(['EMAIL', route.request().postData()]); route.fulfill({ status: 200, body: 'OK' }); })
   ]));

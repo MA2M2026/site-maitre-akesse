@@ -208,14 +208,17 @@
     try {
       await P.bd(sb.auth.mfa.challengeAndVerify({ factorId: P.etat.facteurEnCours, code: String(f.get('code')).trim() }));
       // 8 codes de secours, montrés une seule fois (stockés hachés par le serveur)
-      const codes = await appelServeur('codes_secours_creer', {});
-      P.fenetre('<h2>Vos 8 codes de secours</h2><p class="doux">Recopiez-les et gardez-les hors ligne (papier, coffre). Chacun ne sert qu’une fois, si vous perdez votre téléphone. Ils ne seront plus affichés.</p>' +
-        '<div class="codes-secours">' + (codes.codes || []).map((c) => '<span>' + P.esc(c) + '</span>').join('') + '</div>' +
-        '<button class="btn rouge" data-action="fermer-fenetre-demarrer">Je les ai notés</button>');
+      P.montrerCodesSecours(await appelServeur('codes_secours_creer', {}), 'fermer-fenetre-demarrer');
     } catch (e) {
       ecranConnexion('inscrire-code', 'Code incorrect. Vérifiez l’heure du téléphone puis réessayez.');
       preparerInscriptionCode().catch((e) => P.message(P.erreurTexte(e)));
     }
+  };
+  // fenêtre des 8 codes (à l'activation, et depuis « Mes codes de secours » de la page Sécurité)
+  P.montrerCodesSecours = (reponse, actionFermer) => {
+    P.fenetre('<h2>Vos 8 codes de secours</h2><p class="doux">Recopiez-les et gardez-les hors ligne (papier, coffre). Chacun ne sert qu’une fois, si vous perdez votre téléphone. Ils ne seront plus affichés.</p>' +
+      '<div class="codes-secours">' + (reponse.codes || []).map((c) => '<span>' + P.esc(c) + '</span>').join('') + '</div>' +
+      '<button class="btn rouge" data-action="' + actionFermer + '">Je les ai notés</button>');
   };
   P.actions['fermer-fenetre-demarrer'] = () => { P.fenetre(''); return demarrer(); };
   // Code à 4 chiffres de l'appareil (verrouillage après 15 minutes, supabase-portail.sql)

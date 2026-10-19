@@ -53,7 +53,7 @@ function donnees(role) {
 
   for (const [nomEcran, ecran] of [['téléphone', { width: 390, height: 844 }], ['ordinateur', { width: 1280, height: 900 }]]) {
     // 1. Administrateur principal : mot de passe, mauvais code refusé, bon code → trois tuiles
-    const { ctx, p, errs, journal } = await ouvrir('principal', ecran);
+    const { ctx, p, errs, journal, d } = await ouvrir('principal', ecran);
     await p.waitForSelector('#cx-code');
     ok(/étape 2 sur 2/i.test(await texte(p)), nomEcran + ' : après le mot de passe, la double authentification est demandée');
     await p.fill('#cx-code', '000000'); await p.click('form[data-form="code"] [type=submit]');
@@ -86,7 +86,7 @@ function donnees(role) {
     }
     await p.setViewportSize(ecran);
     // chaque espace et chaque page de la sécurité s'ouvre
-    const pages = { site: ['accueil'], paiements: ['accueil'], compta: ['accueil'], securite: ['comptes', 'delegations', 'appareils', 'journal'] };
+    const pages = { site: ['accueil'], paiements: ['accueil'], compta: ['accueil'], securite: ['comptes', 'delegations', 'appareils', 'journal', 'codes'] };
     for (const [esp, liste] of Object.entries(pages)) {
       for (const pg of liste) {
         await p.goto(url + '#/' + esp + '/' + pg); await p.waitForSelector('.contenu h1, .contenu .carte h2', { timeout: 6000 }).catch(() => {});
@@ -99,6 +99,21 @@ function donnees(role) {
         mal = await pales(p); ok(!mal.length, nomEcran + ' : ' + esp + '/' + pg + ' lisible ' + mal.join(' | '));
       }
     }
+    // codes de secours refaits depuis la Sécurité (jamais reçus : double authentification activée
+    // avant le portail) — le serveur exige d'abord un code récent
+    let demandes = 0;
+    d.api['/api/portail'] = (corps) => corps.action !== 'codes_secours_creer' ? { ok: true }
+      : ++demandes === 1 ? { statut: 403, error: 'AUTH_RECENTE: confirmez votre code.' } : donnees('principal').api['/api/portail'](corps);
+    await p.goto(url + '#/securite/codes'); await p.waitForSelector('[data-action="securite-codes"]');
+    p.once('dialog', (dl) => dl.accept());
+    await p.click('[data-action="securite-codes"]');
+    await p.waitForSelector('#cf-code');
+    ok((await texte(p)).includes('Action sensible'), nomEcran + ' : « Créer mes 8 codes de secours » redemande le code d’authentification');
+    await p.fill('#cf-code', '123456'); await p.click('form[data-form="confirmer-code"] [type=submit]');
+    await p.waitForSelector('.codes-secours');
+    ok((await p.$$('.codes-secours span')).length === 8 && demandes === 2, nomEcran + ' : après le code, les 8 nouveaux codes de secours s’affichent');
+    await p.click('[data-action="fermer-fenetre"]');
+    ok(!(await p.isVisible('.codes-secours')) && (await p.evaluate(() => location.hash)) === '#/securite/codes', nomEcran + ' : « Je les ai notés » ferme la fenêtre, on reste sur la page');
     ok(!errs.length, nomEcran + ' : aucune erreur de page (principal) ' + errs.join(' | '));
     await ctx.close();
 

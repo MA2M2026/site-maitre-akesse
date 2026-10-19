@@ -3,7 +3,7 @@
 (function () {
   'use strict';
   const P = window.Portail;
-  const NAV = [['comptes', 'Comptes et rôles'], ['delegations', 'Délégations'], ['appareils', 'Appareils et sessions'], ['journal', 'Journal d’audit']];
+  const NAV = [['comptes', 'Comptes et rôles'], ['delegations', 'Délégations'], ['appareils', 'Appareils et sessions'], ['journal', 'Journal d’audit'], ['codes', 'Mes codes de secours']];
   const MODULES = { site: 'Administration du site', paiements: 'Suivi des paiements', compta: 'Comptabilité', noms_payeurs: 'Noms des payeurs (comptable)', contacts_prives: 'Contacts privés des mannequins' };
 
   async function comptes() {
@@ -101,6 +101,20 @@
   }
   P.formulaires['securite-filtre'] = (f) => { P.etat.filtreJournal = String(f.get('filtre')).trim(); P.afficher(); };
 
-  P.espaces.securite = { nav: NAV, pages: { comptes, delegations, appareils, journal } };
+  // Codes de secours de la personne connectée : à refaire si elle ne les a jamais reçus (double
+  // authentification activée avant le portail, 19/10/2026) ou les a perdus
+  function codes() {
+    return P.entete('Mes codes de secours') + '<div class="carte"><p>Les codes de secours servent si vous perdez votre téléphone : chacun remplace une fois le code de l’application d’authentification.</p>' +
+      '<p class="doux">Créer de nouveaux codes annule les anciens. Votre code d’authentification vous sera demandé.</p>' +
+      '<button class="btn rouge" data-action="securite-codes" style="margin-top:12px">Créer mes 8 codes de secours</button></div>';
+  }
+  P.actions['securite-codes'] = async () => {
+    if (!confirm('Créer 8 nouveaux codes de secours ? Les anciens ne marcheront plus.')) return;
+    try {
+      P.montrerCodesSecours(await P.sensible(() => P.serveur('codes_secours_creer', {})), 'fermer-fenetre');
+    } catch (e) { P.message(P.erreurTexte(e)); }
+  };
+
+  P.espaces.securite = { nav: NAV, pages: { comptes, delegations, appareils, journal, codes } };
   P.ESPACES.securite = 'Sécurité du portail';
 })();

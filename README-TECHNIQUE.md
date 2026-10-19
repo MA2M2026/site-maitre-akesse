@@ -12,6 +12,11 @@
 > admin » de l'ancien tableau de bord via `api/_creer-admin.js` : 11 fonctions au plus).
 > Base : `supabase-administration.sql` (comptes, appareils, codes, journal ; rejouable, n'efface
 > rien), essais `bash scripts/base-essai/lancer.sh` ; essai visiteur `test-administration.js`.
+>
+> Codes de secours : affichés à la première activation de la double authentification, et
+> refaits à la demande dans Sécurité › « Mes codes de secours » (code récent demandé ; les
+> anciens sont annulés). Ajouté le 19/10/2026 : un compte dont la double authentification
+> existait déjà avant le portail ne passait jamais par l'activation, donc n'en avait aucun.
 
 > **19/10/2026 — Administration (/admin) retirée, retour à l'ancien tableau de bord** (décision de la
 > propriétaire). Tout ce qui concernait le portail /admin, les paiements, la comptabilité et
