@@ -163,8 +163,81 @@
     } catch (e) { P.message(P.erreurTexte(e)); }
   };
 
+  // ---------- Paiements à valider (cahier v2.4, 5.2) ----------
+  // Après « J'ai payé » : orange. L'agence vérifie dans Wave Business puis valide (vert) ou refuse
+  // avec un motif ; le mannequin (son parent s'il est mineur) en est prévenu par e-mail et WhatsApp.
+  const libelleMois = (d) => { const p = String(d || '').split('-'); return p.length > 1 ? P.MOIS[Number(p[1]) - 1] + ' ' + p[0] : ''; };
+  const objetPaiement = (p) => p.objet === 'inscription' ? 'Inscription' : 'Mensualité de ' + libelleMois(p.mois);
+  async function aValider() {
+    const liste = await P.bd(sb.from('paiements_mannequins').select('*, mannequin:agence_mannequins(full_name, telephone)')
+      .eq('statut', 'declare').order('declare_le', { ascending: true }));
+    // une inscription déclarée (15 000) et son 1er mois (10 000) : une seule ligne, 25 000
+    const groupes = [];
+    liste.forEach((p) => {
+      const g = groupes.find((x) => x.mannequin_id === p.mannequin_id && x.declare_le === p.declare_le);
+      if (g) { g.total += p.montant || 0; if (p.objet === 'inscription') g.principal = p; } else groupes.push({ mannequin_id: p.mannequin_id, declare_le: p.declare_le, principal: p, total: p.montant || 0 });
+    });
+    return P.entete('Paiements à valider', P.pastille(groupes.length + ' en attente', groupes.length ? 'alerte' : 'ok')) +
+      '<div class="note info">Vérifiez chaque paiement dans Wave Business avant de valider. Le plus ancien est en haut.</div>' +
+      P.tableau(['Mannequin', 'Objet', '#Montant', 'Déclaré le', ''], groupes.map((g) => {
+        const p = g.principal;
+        return '<tr><td><b>' + P.esc(p.mannequin ? p.mannequin.full_name : '—') + '</b><div class="petit-texte doux">' + P.esc((p.mannequin && p.mannequin.telephone) || '') + '</div></td>' +
+          '<td>' + P.esc(objetPaiement(p)) + (p.objet === 'inscription' && g.total > (p.montant || 0) ? '<div class="petit-texte doux">dont 1er mois de formation</div>' : '') + '<div>' + P.pastille('En attente de validation', 'alerte') + '</div></td>' +
+          '<td class="nombre">' + P.fcfa(g.total) + '</td><td>' + P.dateHeure(p.declare_le) + '</td>' +
+          '<td class="ligne"><button class="btn rouge petit" type="button" data-action="paiement-valider" data-id="' + p.id + '">Valider</button>' +
+          '<button class="btn petit" type="button" data-action="paiement-refuser" data-id="' + p.id + '">Refuser</button></td></tr>';
+      }));
+  }
+  // Message au mannequin (au parent s'il est mineur) : e-mail envoyé tout de suite, WhatsApp en un geste
+  function prevenir(r, valide, motif) {
+    const mineur = P.age(r.date_naissance) !== null && P.age(r.date_naissance) < 18 && (r.parent_telephone || r.parent_email);
+    const nom = mineur ? r.parent_nom || 'Madame, Monsieur' : r.nom;
+    const quoi = (r.objet === 'inscription' ? 'l’inscription' : 'la mensualité de ' + libelleMois(r.mois)) + (mineur ? ' de ' + r.nom : '');
+    const texte = 'Bonjour ' + nom + ',\n\n' + (valide
+      ? 'Nous confirmons la réception de votre paiement de ' + P.fcfa(r.montant) + ' pour ' + quoi + '. Merci !'
+      : 'Nous n’avons pas pu valider votre paiement pour ' + quoi + ' : ' + motif + '.\nMerci de nous contacter ou de refaire le paiement.') +
+      '\n\nL’équipe Maître Akesse Model Management';
+    const email = mineur ? r.parent_email : r.email, tel = mineur ? r.parent_telephone : r.telephone;
+    let etatEmail = 'pas d’adresse e-mail';
+    if (email && typeof envoyerEmailCandidat === 'function') {
+      etatEmail = 'e-mail en cours d’envoi';
+      Promise.resolve(envoyerEmailCandidat({ to_email: email, to_name: nom, message: texte }))
+        .then(() => P.message('E-mail de ' + (valide ? 'confirmation' : 'refus') + ' envoyé à ' + email + '.'), () => P.message('L’e-mail n’a pas pu partir : envoyez le message par WhatsApp.'));
+    }
+    let chiffres = String(tel || '').replace(/\D/g, '');
+    if ((chiffres.length === 10 && chiffres.charAt(0) === '0') || chiffres.length === 8) chiffres = '225' + chiffres;
+    P.fenetre('<h2>' + (valide ? 'Paiement validé' : 'Paiement refusé') + '</h2><p class="doux">' + P.esc(r.nom) + ' · ' + P.fcfa(r.montant) + ' (' + P.esc(etatEmail) + ')</p>' +
+      '<pre class="journal" style="white-space:pre-wrap">' + P.esc(texte) + '</pre><div class="ligne">' +
+      (chiffres ? '<a class="btn rouge" target="_blank" rel="noopener" href="https://wa.me/' + chiffres + '?text=' + encodeURIComponent(texte) + '">Envoyer par WhatsApp</a>' : '<span class="doux">Pas de numéro WhatsApp dans le registre.</span>') +
+      '<button class="btn" type="button" data-action="fermer-fenetre">Fermer</button></div>');
+  }
+  P.actions['paiement-valider'] = async (el) => {
+    if (!confirm('Avez-vous retrouvé ce paiement dans Wave Business ? Il passera au vert chez vous et chez le mannequin.')) return;
+    try {
+      const r = await P.rpc('paiement_decider', { p_id: el.getAttribute('data-id'), p_valider: true });
+      await P.afficher();
+      prevenir(r, true);
+    } catch (e) { P.message(P.erreurTexte(e)); }
+  };
+  P.actions['paiement-refuser'] = async (el) => {
+    const motif = (prompt('Motif du refus (obligatoire), par exemple « paiement introuvable dans Wave » :') || '').trim();
+    if (!motif) return;
+    try {
+      const r = await P.rpc('paiement_decider', { p_id: el.getAttribute('data-id'), p_valider: false, p_motif: motif });
+      await P.afficher();
+      prevenir(r, false, motif);
+    } catch (e) { P.message(P.erreurTexte(e)); }
+  };
+
   P.espaces.paiements = {
-    nav: [['registre', 'Registre des mannequins'], ['ajouter', 'Ajouter un mannequin']],
-    pages: { registre, ajouter, fiche }
+    nav: [['a-valider', 'Paiements à valider'], ['registre', 'Registre des mannequins'], ['ajouter', 'Ajouter un mannequin']],
+    pages: { 'a-valider': aValider, registre, ajouter, fiche },
+    compteur: {},
+    // nombre de paiements en attente, affiché dans le menu
+    avant: async () => {
+      // (une inscription et son 1er mois, déclarés ensemble, comptent pour un)
+      const r = await sb.from('paiements_mannequins').select('mannequin_id, declare_le').eq('statut', 'declare');
+      P.espaces.paiements.compteur['a-valider'] = r && !r.error ? new Set((r.data || []).map((x) => x.mannequin_id + x.declare_le)).size : 0;
+    }
   };
 })();

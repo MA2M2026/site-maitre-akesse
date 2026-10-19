@@ -23,8 +23,12 @@ function donnees(role) {
       staff_module_grants: [], staff_devices: [{ id: 'sd1', appareil: 'abc', libelle: 'Android, Chrome', installe_le: '2026-10-19', derniere_activite: new Date().toISOString(), revoque: false, personne: { nom: 'Maître Akesse' } }],
       // Espace 2 — registre : un compte du site et un mannequin ajouté à la main
       agence_mannequins: [{ id: 'r1', full_name: 'ROXANE OUATTARA', telephone: '0102030405', mensualite: 10000, statut: 'actif', user_id: 'm-site', date_entree: '2026-09-01' },
-        { id: 'r2', full_name: 'KONÉ AWA', telephone: '0707070707', mensualite: 10000, statut: 'actif', user_id: null, date_entree: '2026-10-01', date_naissance: '2000-01-01' }],
-      paiements_mannequins: [],
+        { id: 'r2', full_name: 'KONÉ AWA', telephone: '0707070707', mensualite: 10000, statut: 'actif', user_id: null, date_entree: '2026-10-01', date_naissance: '2000-01-01' },
+        { id: 'r3', full_name: 'YAO KOUASSI', telephone: '0505050505', email: 'yao@test.ci', mensualite: 10000, statut: 'actif', user_id: null, date_entree: '2026-10-10' }],
+      // « J'ai payé » de YAO : inscription 15 000 + 1er mois 10 000, déclarés ensemble (orange)
+      paiements_mannequins: [
+        { id: 'pi3', mannequin_id: 'r3', objet: 'inscription', mois: null, montant: 15000, mode: 'wave', statut: 'declare', declare_le: '2026-10-19T09:00:00Z', mannequin: { full_name: 'YAO KOUASSI', telephone: '0505050505' } },
+        { id: 'pm3', mannequin_id: 'r3', objet: 'mensualite', mois: '2026-10-01', montant: 10000, mode: 'wave', statut: 'declare', declare_le: '2026-10-19T09:00:00Z', mannequin: { full_name: 'YAO KOUASSI', telephone: '0505050505' } }],
       audit_log: [{ id: 1, acteur_nom: 'Maître Akesse', acteur_role: 'principal', action: 'Compte créé', objet: 'staff_profiles', cree_le: new Date().toISOString() }]
     },
     rpc: {
@@ -90,7 +94,7 @@ function donnees(role) {
     }
     await p.setViewportSize(ecran);
     // chaque espace et chaque page de la sécurité s'ouvre
-    const pages = { paiements: ['registre', 'ajouter'], compta: ['accueil'], securite: ['comptes', 'delegations', 'appareils', 'journal', 'codes'] };
+    const pages = { paiements: ['a-valider', 'registre', 'ajouter'], compta: ['accueil'], securite: ['comptes', 'delegations', 'appareils', 'journal', 'codes'] };
     for (const [esp, liste] of Object.entries(pages)) {
       for (const pg of liste) {
         await p.goto(url + '#/' + esp + '/' + pg); await p.waitForSelector('.contenu h1, .contenu .carte h2', { timeout: 6000 }).catch(() => {});
@@ -331,7 +335,7 @@ function donnees(role) {
       await pr.waitForSelector('.tuile, .lateral', { timeout: 6000 }).catch(() => {});
       await pr.goto(url + '#/paiements/registre'); await pr.waitForSelector('.tableau tbody tr', { timeout: 6000 }).catch(() => {});
       const lignes = await pr.$$eval('.tableau tbody tr', (l) => l.map((x) => x.innerText.replace(/\s+/g, ' ')));
-      ok(lignes.length === 2 && lignes.some((x) => /ROXANE OUATTARA.*Inscription déjà effectuée sur le site/.test(x)) && lignes.some((x) => /KONÉ AWA.*Inscription non payée/.test(x)),
+      ok(lignes.length === 3 && lignes.some((x) => /ROXANE OUATTARA.*Inscription déjà effectuée sur le site/.test(x)) && lignes.some((x) => /KONÉ AWA.*Inscription non payée/.test(x)) && lignes.some((x) => /YAO KOUASSI.*En attente de validation/.test(x)),
         nomEcran + ' (' + role + ') : registre = comptes du site + ajoutés à la main, couleurs d’inscription');
       if (role === 'principal') {
         await pr.click('[data-action="registre-filtre"][data-filtre="non_paye"]'); await pr.waitForTimeout(500);
@@ -356,6 +360,26 @@ function donnees(role) {
       const lignesPaye = paye ? [].concat(JSON.parse(paye[3])) : [];
       ok(lignesPaye.length === 2 && lignesPaye.every((l) => l.statut === 'valide' && l.mode === 'especes') && lignesPaye[0].objet === 'inscription' && lignesPaye[0].montant === 15000 &&
         lignesPaye[1].objet === 'mensualite' && lignesPaye[1].montant === 10000 && /^\d{4}-\d{2}-01$/.test(lignesPaye[1].mois), nomEcran + ' (' + role + ') : espèces validées par l’agence : 15 000 d’inscription + 10 000 du 1er mois');
+      // paiements à valider (cahier v2.4, 5.2) : orange, l'agence valide ou refuse avec motif
+      await pr.goto(url + '#/paiements/a-valider'); await pr.waitForSelector('[data-action="paiement-valider"]', { timeout: 6000 }).catch(() => {});
+      const aValider = await pr.$$eval('.tableau tbody tr', (l) => l.map((x) => x.innerText.replace(/\s+/g, ' ')));
+      ok(aValider.length === 1 && /YAO KOUASSI.*Inscription.*En attente de validation.*25 000 FCFA/.test(aValider[0]), nomEcran + ' (' + role + ') : « J’ai payé » → une ligne orange de 25 000 FCFA à valider');
+      ok((await pr.textContent('.lateral .nav[href="#/paiements/a-valider"]')).includes('1'), nomEcran + ' (' + role + ') : compteur des paiements à valider dans le menu');
+      r.d.rpc.paiement_decider = (x) => ({ nom: 'YAO KOUASSI', telephone: '0505050505', email: 'yao@test.ci', objet: 'inscription', mois: null, montant: 25000, recu: x });
+      pr.once('dialog', (dl) => dl.accept());
+      await pr.click('[data-action="paiement-valider"]'); await pr.waitForSelector('#fenetre a[href^="https://wa.me/"]', { timeout: 6000 }).catch(() => {});
+      const decide = r.journal.find((j) => j[0] === 'rpc' && j[1] === 'paiement_decider');
+      const wa = decodeURIComponent((await pr.getAttribute('#fenetre a[href^="https://wa.me/"]', 'href').catch(() => '')) || '');
+      ok(decide && JSON.parse(decide[2]).p_id === 'pi3' && JSON.parse(decide[2]).p_valider === true, nomEcran + ' (' + role + ') : « Valider » → paiement validé par la base');
+      ok(/^https:\/\/wa\.me\/2250505050505\?text=/.test(wa) && wa.includes('25 000 FCFA') && /confirmons/.test(wa), nomEcran + ' (' + role + ') : confirmation prête à envoyer par WhatsApp');
+      await pr.waitForTimeout(500);
+      ok(r.journal.some((j) => j[0] === 'EMAIL' && /yao@test\.ci/.test(j[1]) && /confirmons/.test(j[1])), nomEcran + ' (' + role + ') : confirmation envoyée par e-mail');
+      await pr.click('#fenetre [data-action="fermer-fenetre"]');
+      pr.once('dialog', (dl) => dl.accept('Paiement introuvable dans Wave'));
+      await pr.click('[data-action="paiement-refuser"]'); await pr.waitForTimeout(800);
+      const refus = r.journal.filter((j) => j[0] === 'rpc' && j[1] === 'paiement_decider').pop();
+      ok(refus && JSON.parse(refus[2]).p_valider === false && JSON.parse(refus[2]).p_motif === 'Paiement introuvable dans Wave', nomEcran + ' (' + role + ') : « Refuser » → motif obligatoire, transmis à la base');
+      await pr.click('#fenetre [data-action="fermer-fenetre"]').catch(() => {});
       // fiche d'un compte du site : aucun bouton de paiement d'inscription, aucun code
       await pr.goto(url + '#/paiements/fiche/r1'); await pr.waitForSelector('.carte h2', { timeout: 6000 }).catch(() => {});
       ok(/Inscription déjà effectuée sur le site/.test(await texte(pr)) && !(await pr.isVisible('[data-action="registre-inscription"]')), nomEcran + ' (' + role + ') : compte du site → « Inscription déjà effectuée sur le site »');

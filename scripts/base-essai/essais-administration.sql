@@ -212,8 +212,20 @@ select essai_refuse($$delete from paiements_mannequins$$, 'un paiement ne s''eff
 select essai_qui('00000000-0000-0000-0000-0000000000a1');
 update agence_mannequins set mensualite = 20000 where id = '00000000-0000-0000-0000-0000000000d1';
 select essai((select mensualite from agence_mannequins where id = '00000000-0000-0000-0000-0000000000d1') = 20000, 'principal : change la mensualité');
+-- Validation (cahier v2.4, 5.2) : « J'ai payé » (inscription 15 000 + 1er mois 10 000) → orange,
+-- l'agence valide d'un seul geste → vert ; un refus exige un motif
+insert into agence_mannequins (id, full_name, telephone) values ('00000000-0000-0000-0000-0000000000d2', 'YAO KOUASSI', '0505050505');
+insert into paiements_mannequins (mannequin_id, objet, mois, montant, mode) values
+  ('00000000-0000-0000-0000-0000000000d2', 'inscription', null, 15000, 'wave'),
+  ('00000000-0000-0000-0000-0000000000d2', 'mensualite', date_trunc('month', now())::date, 10000, 'wave');
+select essai_refuse($$select paiement_decider((select id from paiements_mannequins where mannequin_id = '00000000-0000-0000-0000-0000000000d2' and objet = 'inscription'), false, '')$$, 'refus sans motif impossible');
+select essai((paiement_decider((select id from paiements_mannequins where mannequin_id = '00000000-0000-0000-0000-0000000000d2' and objet = 'inscription'), true) ->> 'montant')::int = 25000,
+             'valider l''inscription : 25 000 FCFA d''un seul geste');
+select essai((select count(*) from paiements_mannequins where mannequin_id = '00000000-0000-0000-0000-0000000000d2' and statut = 'valide') = 2, 'inscription et 1er mois passent au vert ensemble');
+select essai_refuse($$select paiement_decider((select id from paiements_mannequins where mannequin_id = '00000000-0000-0000-0000-0000000000d2' and objet = 'inscription'), true)$$, 'un paiement déjà validé ne se revalide pas');
 select essai_qui('00000000-0000-0000-0000-0000000000a4');
 select essai((select count(*) from agence_mannequins) = 0 and (select count(*) from paiements_mannequins) = 0, 'comptable : ni le registre ni les paiements nominatifs');
+select essai_refuse($$select paiement_decider('00000000-0000-0000-0000-000000000000', true)$$, 'comptable : ne valide aucun paiement');
 select essai_qui('00000000-0000-0000-0000-0000000000b1', 'aal1');
 select essai((select count(*) from paiements_mannequins) = 0, 'le mannequin ne voit ni ne coche aucun paiement par la base');
 reset role;

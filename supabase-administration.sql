@@ -765,5 +765,34 @@ begin
   end loop;
 end $$;
 
+-- Valider ou refuser un paiement déclaré (« J'ai payé », orange) : d'un seul geste, avec la
+-- ligne qui l'accompagne (inscription 15 000 + 1er mois 10 000, déclarés ensemble). Renvoie
+-- les contacts pour le message de confirmation (parent si mineur).
+create or replace function paiement_decider(p_id uuid, p_valider boolean, p_motif text default null)
+returns json language plpgsql security invoker set search_path = public as $$
+declare
+  p paiements_mannequins;
+  m agence_mannequins;
+  total int;
+begin
+  if not portail_peut('paiements') then raise exception 'Accès refusé'; end if;
+  select * into p from paiements_mannequins where id = p_id for update;
+  if not found or p.statut <> 'declare' then raise exception 'Ce paiement n''est plus en attente de validation.'; end if;
+  if not p_valider and coalesce(trim(p_motif), '') = '' then raise exception 'Motif obligatoire pour refuser un paiement.'; end if;
+  update paiements_mannequins
+     set statut = case when p_valider then 'valide' else 'refuse' end,
+         motif = case when p_valider then motif else trim(p_motif) end
+   where mannequin_id = p.mannequin_id and statut = 'declare' and declare_le = p.declare_le;
+  select coalesce(sum(montant), 0) into total from paiements_mannequins
+   where mannequin_id = p.mannequin_id and declare_le = p.declare_le;
+  select * into m from agence_mannequins where id = p.mannequin_id;
+  return json_build_object('nom', m.full_name, 'telephone', m.telephone, 'email', m.email,
+    'parent_nom', m.parent_nom, 'parent_telephone', m.parent_telephone, 'parent_email', m.parent_email,
+    'date_naissance', m.date_naissance, 'objet', p.objet, 'mois', p.mois, 'montant', total);
+end;
+$$;
+revoke all on function paiement_decider(uuid, boolean, text) from public, anon;
+grant execute on function paiement_decider(uuid, boolean, text) to authenticated;
+
 NOTIFY pgrst, 'reload schema';
-select 'Administration — étape 1, espace 1 et registre en place' as resultat;
+select 'Administration — étape 1, espace 1 et espace 2 (registre, validation) en place' as resultat;
