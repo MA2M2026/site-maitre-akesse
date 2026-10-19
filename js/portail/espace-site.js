@@ -78,12 +78,26 @@
     P.afficher();
   };
 
+  // Groupes de candidatures (demande de la propriétaire, 19/10/2026) : les refusées ne
+  // surchargent plus la liste, elles sont rangées à part ; les plus récentes en premier.
+  const GROUPES_CANDIDATURE = [
+    ['a_traiter', 'À traiter', (s) => ['nouvelle', 'vue', 'en étude', 'en attente'].includes(s)],
+    ['retenues', 'Retenues', (s) => s === 'retenue'],
+    ['inscrites', 'Inscrites', (s) => s === 'inscrite'],
+    ['refusees', 'Refusées (archivées)', (s) => s === 'refusée']
+  ];
   async function candidatures() {
-    const liste = await P.bd(sb.from('v_site_candidatures').select('*').order('created_at', { ascending: false }).limit(300));
+    const toutes = await P.bd(sb.from('v_site_candidatures').select('*').order('created_at', { ascending: false }).limit(1000));
+    const groupe = GROUPES_CANDIDATURE.find((g) => g[0] === P.etat.groupeCandidatures) || GROUPES_CANDIDATURE[1];
+    const liste = toutes.filter((c) => groupe[2](c.status));
     return P.entete('Candidatures casting', '<button class="btn rouge petit" data-action="site-casting-direct">Casting direct</button>') +
+      '<div class="segments">' + GROUPES_CANDIDATURE.map((g) =>
+        '<button class="btn petit' + (g === groupe ? ' actif' : '') + '" data-action="site-groupe-candidatures" data-g="' + g[0] + '">' + g[1] + ' (' + toutes.filter((c) => g[2](c.status)).length + ')</button>').join('') + '</div>' +
+      (groupe[0] === 'refusees' ? '<div class="note">Candidatures refusées, gardées à part pour mémoire (leurs photos restent dans le Drive). Elles n’apparaissent plus dans les autres listes.</div>' : '') +
+      (liste.length ? '' : '<p class="doux">Aucune candidature dans ce groupe.</p>') +
       '<div class="note info">Passez d’abord la candidature en « Retenue » : le bouton « Générer le code » apparaît alors. Il crée le code individuel d’inscription (usage unique, ' +
       'valable 30 jours). Il ne s’affiche qu’une fois : donnez-le au mannequin (ou au parent si mineur).</div>' +
-      P.tableau(['Candidat', 'Âge', 'Origine', 'Reçue le', 'Statut', 'Code', 'Action'], liste.map((c) => {
+      P.tableau(['Candidat', 'Âge', 'Origine', 'Date du casting', 'Statut', 'Code', 'Action'], liste.map((c) => {
         const age = P.age(c.date_naissance);
         return '<tr><td><b>' + P.esc(c.full_name) + '</b><div class="petit-texte doux">' + P.esc([c.genre, c.city, c.height_cm ? c.height_cm + ' cm' : ''].filter(Boolean).join(' · ')) + '</div>' +
           (masque() ? '' : '<div class="petit-texte">' + P.esc(c.phone || '') + ' ' + P.esc(c.email || '') + '</div>') + '</td>' +
@@ -98,6 +112,7 @@
             : c.status === 'inscrite' || c.status === 'refusée' ? '' : '<span class="petit-texte doux">Code après « Retenue »</span>') + '</td></tr>';
       }));
   }
+  P.actions['site-groupe-candidatures'] = (el) => { P.etat.groupeCandidatures = el.getAttribute('data-g'); P.afficher(); };
   P.changements['site-statut-candidature'] = async (el) => {
     await P.bd(sb.rpc('portail_statut_candidature', { p_id: el.getAttribute('data-id'), p_statut: el.value }));
     P.message(el.value === 'retenue' ? 'Candidature retenue : vous pouvez générer son code.' : 'Statut mis à jour.');

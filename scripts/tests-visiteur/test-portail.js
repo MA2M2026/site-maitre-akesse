@@ -28,7 +28,8 @@ function donnees(role) {
         age_majorite: 18, mois_impayes_alerte: 2, seuil_double_validation: 100000, validite_code_jours: 30, essais_code: 3, heures_alerte_rapprochement: 48 }],
       v_site_mannequins: [{ id: 'p1', full_name: 'Awa Koné', category: 'femme', city: 'Abidjan', height_cm: 178, published: true, desactive: false, date_naissance: '2001-03-12', slug: 'awa-kone', photos: 6, created_at: '2026-09-01' }],
       v_site_candidatures: [{ id: 'c1', full_name: 'Fatou Bamba', genre: 'femme', city: 'Abidjan', height_cm: 176, date_naissance: '2005-04-02', status: 'nouvelle', source: 'en_ligne', created_at: '2026-10-10', code_statut: null },
-        { id: 'c2', full_name: 'Kevin Diallo', genre: 'homme', city: 'Bouaké', height_cm: 186, date_naissance: '2000-08-02', status: 'retenue', source: 'direct', lieu_casting: 'Sofitel', created_at: '2026-10-11', code_statut: 'genere', code_indice: 'K7' }],
+        { id: 'c2', full_name: 'Kevin Diallo', genre: 'homme', city: 'Bouaké', height_cm: 186, date_naissance: '2000-08-02', status: 'retenue', source: 'direct', lieu_casting: 'Sofitel', created_at: '2026-10-11', code_statut: 'genere', code_indice: 'K7' },
+        { id: 'c3', full_name: 'Paul Refusé', genre: 'homme', city: 'Abidjan', height_cm: 170, date_naissance: '2001-01-01', status: 'refusée', source: 'en_ligne', created_at: '2026-10-09', code_statut: null }],
       v_site_dossiers: [{ id: 'm1', nom: 'Awa Koné', categorie: 'Femme', date_entree: '2026-01-10', statut: 'validé' }],
       recruiter_requests: [{ id: 'r1', company: 'Maison XYZ', contact_name: 'M. Yao', email: 'contact@xyz.ci', phone: '0701010101', project_type: 'Défilé', status: 'nouvelle', created_at: '2026-10-12' }],
       page_views: [{ page: '/index.html', created_at: new Date().toISOString() }, { page: '/mannequins.html', created_at: new Date().toISOString() }],
@@ -120,6 +121,17 @@ function donnees(role) {
         }
       }
     }
+    // candidatures (19/10/2026) : les refusées sont rangées à part, « Générer le code » seulement pour une retenue
+    await p.goto(url + '#/site/candidatures'); await p.waitForFunction(() => !document.querySelector('.chargement'), null, { timeout: 6000 }).catch(() => {});
+    let tc = await texte(p);
+    ok(tc.includes('Kevin Diallo') && !tc.includes('Paul Refusé') && !tc.includes('Fatou Bamba'), nomEcran + ' : candidatures → seules les retenues s’affichent d’abord (refusées absentes)');
+    ok(await p.$('[data-action="site-code"][data-id="c2"]') !== null, nomEcran + ' : « Générer le code » pour la candidature retenue');
+    await p.click('[data-action="site-groupe-candidatures"][data-g="a_traiter"]'); await p.waitForTimeout(400);
+    tc = await texte(p);
+    ok(tc.includes('Fatou Bamba') && !tc.includes('Paul Refusé') && await p.$('[data-action="site-code"]') === null, nomEcran + ' : « À traiter » : pas de code tant que la candidature n’est pas retenue');
+    await p.click('[data-action="site-groupe-candidatures"][data-g="refusees"]'); await p.waitForTimeout(400);
+    tc = await texte(p);
+    ok(tc.includes('Paul Refusé') && !tc.includes('Kevin Diallo'), nomEcran + ' : les refusées restent consultables à part (« Refusées (archivées) »)');
     // rapprochement : « Trouvé, valider » → fonction portail_valider_paiement avec la déclaration
     await p.goto(url + '#/paiements/rapprocher'); await p.waitForSelector('[data-action="paiements-trouve"]');
     ok((await texte(p)).includes('Vérifier le paiement de Awa Koné'), nomEcran + ' : la déclaration la plus ancienne est ouverte');
