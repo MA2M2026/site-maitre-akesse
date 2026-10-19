@@ -28,7 +28,7 @@ function donnees() {
 (async () => {
   const srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: RACINE }); await new Promise((r) => setTimeout(r, 800));
   const b = await chromium.launch();
-  for (const photo of process.env.PAGES ? [] : ['photo-sombre.jpg', 'photo-rayures.jpg']) {
+  for (const photo of process.env.PAGES ? [] : ['photo-sombre.jpg', 'photo-rayures.jpg', 'photo-claire.jpg']) {
     const image = fs.readFileSync(path.join(__dirname, 'medias', photo));
     for (const page of ['index.html', 'en/index.html']) {
       for (const ecran of ecrans) {
@@ -111,7 +111,9 @@ function donnees() {
             if (!propre) return;
             const r = el.getBoundingClientRect(), s = getComputedStyle(el);
             if (r.width < 4 || r.height < 4 || r.top < 0 || r.bottom > innerHeight || s.visibility === 'hidden' || Number(s.opacity) < 0.1) return;
-            if (!surImage(el, r.left + Math.min(r.width / 2, 40), r.top + r.height / 2)) return;
+            // le texte doit être entièrement visible : à moitié sous la barre du haut, on mesurerait la barre
+            const xm = r.left + Math.min(r.width / 2, 40);
+            if (![r.top + 2, r.top + r.height / 2, r.bottom - 2].every((y) => surImage(el, xm, y))) return;
             const fs = parseFloat(s.fontSize), gras = Number(s.fontWeight) >= 700;
             el.dataset.essaiLisible = String(res.length);
             res.push({ i: res.length, texte: el.textContent.trim().slice(0, 30) + (el.className && typeof el.className === 'string' ? ' (' + el.className.split(' ')[0] + ')' : ''), rgb: s.color.match(/[\d.]+/g).map(Number).slice(0, 3), grand: fs >= 24 || (fs >= 18.66 && gras),

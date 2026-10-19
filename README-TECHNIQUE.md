@@ -119,8 +119,12 @@ seule fois** (décision de la propriétaire). Ce qui change par rapport aux sect
   - Candidatures en groupes : À traiter, Retenues (par défaut), Inscrites, Refusées (archivées).
 - **Lisibilité sur photo** : `scripts/tests-visiteur/test-lisibilite-photos.js` cache chaque texte posé
   sur une photo, capture le dessous et mesure le contraste pixel par pixel (photo sombre et à
-  rayures, toutes les pages publiques, téléphone et tablette ; `PAGES=index.html` pour aller vite) ;
-  une capture de chaque défaut va dans `captures/illisible-*.png`.
+  rayures et claire, toutes les pages publiques, téléphone et tablette ; `PAGES=index.html` pour
+  aller vite) ; seuls les textes entièrement visibles sont mesurés (pas à moitié sous la barre du
+  haut) ; une capture de chaque défaut va dans `captures/illisible-*.png`.
+- « Mannequin à la une » et « Mot de Maître Akesse » (19/10/2026, demande de la propriétaire) : plus
+  de voile blanc, photo nette, textes en blanc sur une ombre foncée limitée au bas de l'image
+  (`css/charte-ma2m.css`).
 - Rôles : principal, site (aucun montant ni contact privé), caisse (paiements), compta (totaux sans
   nom). Les droits sont dans la base (RLS + fonctions `portail_peut`, `portail_est_principal`).
 
