@@ -1,5 +1,15 @@
 # README-TECHNIQUE.md — Maître Akesse Model Management (MA2M)
 
+> **19/10/2026 — Administration (/admin) retirée, retour à l'ancien tableau de bord** (décision de la
+> propriétaire). Tout ce qui concernait le portail /admin, les paiements, la comptabilité et
+> l'inscription par code a été supprimé du site ; `tableau-de-bord.html`, ses scripts, `middleware.js`,
+> les fonctions `api/` et l'espace mannequin sont revenus à leur état du 18/10/2026 (commit fb01d1e),
+> en gardant l'apparence actuelle du site (couleurs, boutons, lisibilité sur photo). Dans la base,
+> le texte « retour-ancien-tableau-de-bord.sql » (donné à la propriétaire) efface les tables,
+> fonctions et règles de l'Administration. Les sections ci-dessous qui parlent du portail sont
+> historiques.
+
+
 Documentation pour tout développeur (humain ou IA) qui reprendrait ce
 projet.
 

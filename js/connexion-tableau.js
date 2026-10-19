@@ -29,12 +29,7 @@ let tokenReinitCodeEnAttente = null;
   const p = new URLSearchParams(window.location.search).get('reset_code');
   if (p) {
     tokenReinitCodeEnAttente = p;
-    // retire seulement le jeton de l'adresse (« ?depuis=portail » doit rester : sans lui, la page
-    // rechargée mènerait au portail, voir middleware.js)
-    const reste = new URLSearchParams(window.location.search);
-    reste.delete('reset_code');
-    reste.set('depuis', reste.get('depuis') || 'portail');
-    window.history.replaceState({}, '', window.location.pathname + '?' + reste);
+    window.history.replaceState({}, '', window.location.pathname);
   }
 })();
 
@@ -139,15 +134,7 @@ async function obtenirStatutCodeValidationAvecRetry() {
 
 // Appelée après toute connexion réussie (mot de passe ou reset mdp) déjà
 // confirmée admin : décide s'il faut encore demander le code de validation.
-// Session ouverte depuis le portail avec la double authentification (niveau « aal2 », code de
-// l'application d'authentification) : elle vaut le code de validation de l'ancien tableau.
-function sessionDoubleAuthentification(session) {
-  try { return JSON.parse(atob(session.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).aal === 'aal2'; } catch (e) { return false; }
-}
-
 async function apresConnexionReussie() {
-  const { data: { session } } = await sb.auth.getSession();
-  if (session && sessionDoubleAuthentification(session)) { marquerCodeValide(); await reveleTableauDeBord(); return; }
   if (tokenReinitCodeEnAttente) {
     masquerBlocsConnexion();
     document.getElementById('bloc-code-nouveau').style.display = 'block';
@@ -242,9 +229,6 @@ const DELAI_INACTIVITE_MS = 15 * 60 * 1000;
 let minuteurInactivite = null;
 function demarrerMinuteurInactivite() {
   if (minuteurInactivite) clearTimeout(minuteurInactivite);
-  // dans l'administration (js/tableau-integre.js), c'est l'administration qui gère l'inactivité :
-  // ici, une déconnexion fermerait aussi la session de l'administration (même appareil)
-  if (document.documentElement.classList.contains('tdb-integre')) return;
   minuteurInactivite = setTimeout(verrouillerParInactivite, DELAI_INACTIVITE_MS);
 }
 function arreterMinuteurInactivite() {

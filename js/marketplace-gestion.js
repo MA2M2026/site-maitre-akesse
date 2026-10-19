@@ -855,8 +855,8 @@
     MP.afficherBandeauApercu(acces);
     if (!acces.codeValide) {
       principal.innerHTML = '<section class="mp-introuvable"><div><h1>Vérification de sécurité</h1>' +
-        '<p>Pour protéger la boutique, connectez-vous d’abord à l’administration avec votre code à 6 chiffres, puis revenez ici.</p>' +
-        '<a class="btn btn--principal" href="/admin/">Ouvrir l’administration</a></div></section>';
+        '<p>Pour protéger la boutique, validez d’abord votre code dans le tableau de bord de l’agence, puis revenez ici par le lien « Marketplace » en haut de page.</p>' +
+        '<a class="btn btn--principal" href="/tableau-de-bord.html">Valider mon code</a></div></section>';
       // Billet scanné dans un nouvel onglet : on garde le code pour après la validation.
       try { const code = codeBilletPropre(new URLSearchParams(location.search).get('billet')); if (code) sessionStorage.setItem('ma2m_billet_a_controler', code); } catch (e) {}
       return;

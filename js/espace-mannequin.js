@@ -115,9 +115,9 @@ function viewAuthGate(){
       '<p class="p20-15"><a href="#" id="au-mdp-oublie-lien" class="p20-7">Mot de passe oublié ?</a></p>' +
     '</div>' +
     '<div id="auth-panneau-inscription" class="p20-9">' +
-      '<h2>Créer mon compte</h2><p class="sub">Entrez le code personnel reçu de l’agence après votre inscription (ESP-…). Vos informations et vos photos du casting seront déjà dans votre espace.</p>' +
+      '<h2>Créer mon compte</h2><p class="sub">Un code d’invitation vous a été fourni par l’agence.</p>' +
       '<div class="grid">' +
-        field('Code personnel','au-in-code','',{req:true}) + field('Nom complet','au-in-nom','',{req:true}) +
+        field('Code d’invitation','au-in-code','',{req:true}) + field('Nom complet','au-in-nom','',{req:true}) +
         field('E-mail','au-in-email','',{type:'email',req:true}) + field('Mot de passe (8 caractères minimum)','au-in-mdp','',{type:'password',req:true}) +
       '</div>' +
       '<div class="actions-row end"><button class="btn primary" id="au-in-valider">Créer mon compte</button></div>' +
@@ -168,7 +168,7 @@ function messageRefusCode(statut, r){
       : `Trop de tentatives. Accès bloqué. Revenez dans ${h >= 1 ? h + ' heure' + (h > 1 ? 's' : '') : r.minutesRestantes + ' min'}.`;
   }
   const reste = r.essaisRestants;
-  return "Ce code est invalide." + (reste === 2 ? ' Attention : il vous reste 2 tentatives.' : reste === 1 ? ' Il vous reste 1 tentative.' : '');
+  return "Ce code d'invitation est invalide." + (reste === 2 ? ' Attention : il vous reste 2 tentatives.' : reste === 1 ? ' Il vous reste 1 tentative.' : '');
 }
 
 function bindAuthGate(){
@@ -245,7 +245,7 @@ function bindAuthGate(){
     }
 
     msg.textContent = '';
-    toast(/^\s*ESP-/i.test(code) ? 'Compte créé : vos informations du casting sont déjà là, vérifiez-les et complétez.' : 'Compte créé avec succès !');
+    toast('Compte créé avec succès !');
     await demarrerApresConnexion();
   });
 
@@ -695,7 +695,6 @@ function header(rightLabel){
   return '<div class="top">'+WORDMARK_HTML+
     '<div class="top-right">' +
       '<div class="espace-tag">' + (rightLabel||'Mon espace mannequin') + '<b>' + echapperHtml(state.identite.nomComplet||'').trim() + '</b></div>' +
-      '<a href="mes-paiements.html" class="btn-pill">Mes paiements</a>' +
       '<a href="index.html" class="btn-pill">Retour au site</a>' +
       '<button type="button" class="btn-pill" data-deconnexion="1">Se déconnecter</button>' +
     '</div></div>';

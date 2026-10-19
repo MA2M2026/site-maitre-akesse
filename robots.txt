@@ -1,7 +1,6 @@
 User-agent: *
 Allow: /
 Disallow: /tableau-de-bord
-Disallow: /admin
 Disallow: /espace-mannequin
 Disallow: /selection
 Disallow: /en/selection
