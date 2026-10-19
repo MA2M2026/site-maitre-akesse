@@ -1,4 +1,4 @@
-// Espace 3 — Comptabilité, morceau A (cahier v2.4, section 6), essayé comme une vraie personne
+// Espace 3 — Comptabilité, morceaux A et B (cahier v2.4, section 6), essayé comme une vraie personne
 // (le comptable), sur téléphone et ordinateur, avec une base SIMULÉE (rien n'est écrit pour de vrai) :
 //  - tableau du mois : recettes, dépenses, résultat, dépenses sans justificatif, trésorerie ;
 //  - recettes de l'espace 2 arrivées toutes seules, sans nom de mannequin, non annulables ;
@@ -6,6 +6,8 @@
 //  - justificatif joint après coup, justificatif ouvert par un lien temporaire ;
 //  - annulation avec motif (rien ne s'efface) ;
 //  - trésorerie : virement entre deux comptes, ajout d'un compte, solde de départ ;
+//  - morceau B : ce qu'on nous doit / ce qu'on doit (règlement en plusieurs fois, retard,
+//    annulation), paiement du personnel, matériel durable (achat, sortie avec motif), carnet ;
 //  - le responsable des encaissements n'entre pas dans la comptabilité.
 const { chromium } = require('playwright'); const { spawn } = require('child_process'); const { brancher } = require('./faux-serveur');
 const { lirePageEntiere } = require('./lisibilite');
@@ -25,7 +27,14 @@ function donnees(role) {
         { id: 'e2', sens: 'recette', date_op: JOUR, montant: 50000, compte_id: 'c1', categorie: 'casting', libelle: 'Casting défilé', tiers: 'Client essai', source: 'manuel', annule: false },
         { id: 'e3', sens: 'depense', date_op: JOUR, montant: 30000, compte_id: 'c1', categorie: 'loyer', libelle: 'Loyer du bureau', source: 'manuel', annule: false },
         { id: 'e4', sens: 'depense', date_op: JOUR, montant: 5000, compte_id: 'c2', categorie: 'frais_wave', libelle: 'Frais Wave', source: 'manuel', annule: false, justificatif: MOIS + '/1-2-3-4.pdf' },
-        { id: 'e5', sens: 'virement', date_op: JOUR, montant: 20000, compte_id: 'c2', compte_dest_id: 'c1', categorie: 'virement', libelle: 'Retrait Wave pour la caisse', source: 'manuel', annule: false }]
+        { id: 'e5', sens: 'virement', date_op: JOUR, montant: 20000, compte_id: 'c2', compte_dest_id: 'c1', categorie: 'virement', libelle: 'Retrait Wave pour la caisse', source: 'manuel', annule: false },
+        { id: 'e6', sens: 'recette', date_op: JOUR, montant: 40000, compte_id: 'c2', categorie: 'casting', libelle: 'Règlement : Défilé Sococé', tiers_id: 't1', tiers: 'Sococé', dette_id: 'd1', source: 'manuel', annule: false }],
+      compta_tiers: [{ id: 't1', nom: 'Sococé', type: 'client', actif: true }, { id: 't2', nom: 'Imprimerie Plateau', type: 'fournisseur', actif: true },
+        { id: 't3', nom: 'Assistante Fatou', type: 'personnel', actif: true }],
+      // d1 : 300 000 dus par le client, 40 000 déjà réglés, échéance passée ; d2 : facture fournisseur à payer
+      compta_dettes: [{ id: 'd1', sens: 'creance', tiers_id: 't1', date_op: JOUR, echeance: '2026-01-01', montant: 300000, categorie: 'casting', libelle: 'Défilé Sococé', annule: false },
+        { id: 'd2', sens: 'dette', tiers_id: 't2', date_op: JOUR, echeance: '2099-12-31', montant: 80000, categorie: 'communication', libelle: 'Impression des books', annule: false }],
+      compta_materiel: [{ id: 'm1', designation: 'Appareil photo', date_achat: JOUR, montant: 400000, etat: 'en_service', emplacement: 'Studio' }]
     },
     rpc: {
       portail_moi: { role, mfa: true, nom: role === 'compta' ? 'Comptable' : 'Encaissements', actif: true, membre: true, espaces: { site: false, paiements: role === 'caisse', compta: role === 'compta' }, contacts_prives: false, noms_payeurs: role === 'caisse' },
@@ -65,19 +74,20 @@ function donnees(role) {
   const envoi = (journal, methode, table) => journal.filter((j) => j[0] === methode && j[1] === table).map((j) => JSON.parse(j[3] || '{}'));
 
   for (const [nomEcran, ecran] of [['téléphone', { width: 390, height: 844 }], ['ordinateur', { width: 1280, height: 900 }]]) {
-    const { ctx, p, errs, journal } = await ouvrir('compta', ecran);
+    const { ctx, p, errs, journal, d } = await ouvrir('compta', ecran);
     await p.waitForFunction(() => location.hash === '#/compta/mois' && document.querySelector('#contenu h1'), null, { timeout: 6000 }).catch(() => {});
     ok(p.url().endsWith('#/compta/mois'), nomEcran + ' : le comptable arrive sur le tableau du mois');
     await p.waitForFunction(() => !document.querySelector('#contenu .chargement'), null, { timeout: 6000 }).catch(() => {});
     let t = await texte(p);
-    ok(/Recettes du mois\s*65 000 FCFA/i.test(t) && /Dépenses du mois\s*35 000 FCFA/i.test(t) && /Résultat du mois\s*30 000 FCFA/i.test(t),
-      nomEcran + ' : recettes 65 000, dépenses 35 000, résultat 30 000 (le virement ne compte ni en recette ni en dépense)');
+    ok(/Recettes du mois\s*105 000 FCFA/i.test(t) && /Dépenses du mois\s*35 000 FCFA/i.test(t) && /Résultat du mois\s*70 000 FCFA/i.test(t),
+      nomEcran + ' : recettes 105 000, dépenses 35 000, résultat 70 000 (le virement ne compte ni en recette ni en dépense)');
+    ok(/On nous doit\s*260 000 FCFA/i.test(t) && /Nous devons\s*80 000 FCFA/i.test(t), nomEcran + ' : on nous doit 260 000, nous devons 80 000');
     ok(/Dépenses sans justificatif\s*1/i.test(t) && /Wave Business\s*90 000 FCFA/i.test(t), nomEcran + ' : dépense sans justificatif signalée, soldes de trésorerie');
     await controler(p, nomEcran + ' : tableau du mois');
 
     // Recettes : celle de l'espace 2 est marquée « automatique » et ne s'annule pas d'ici
     await aller(p, 'recettes'); t = await texte(p);
-    ok(t.includes('Espace 2 · automatique') && (await p.$$('[data-action="compta-annuler"]')).length === 1, nomEcran + ' : recette de l’espace 2 automatique, sans bouton « Annuler »');
+    ok(t.includes('Espace 2 · automatique') && (await p.$$('[data-action="compta-annuler"]')).length === 2 && !(await p.$('[data-action="compta-annuler"][data-id="e1"]')), nomEcran + ' : recette de l’espace 2 automatique, sans bouton « Annuler »');
     await controler(p, nomEcran + ' : recettes');
 
     // Dépenses : mauvais fichier refusé, puis une vraie dépense avec son justificatif
@@ -136,6 +146,76 @@ function donnees(role) {
     const modif = envoi(journal, 'PATCH', 'compta_comptes')[0] || {};
     ok(modif.solde_initial === 75000 && modif.actif === true && (await p.textContent('#calque')).includes('Compte enregistré'), nomEcran + ' : solde de départ de la caisse corrigé');
 
+    // Morceau B — ce qu'on nous doit : reste, retard, encaissement partiel
+    await aller(p, 'a-recevoir'); t = await texte(p);
+    ok(/Reste à encaisser\s*260 000 FCFA/i.test(t) && t.includes('En retard') && !(await p.$('[data-action="compta-annuler"][data-id="d1"]')),
+      nomEcran + ' : créance en retard, reste 260 000, pas d’annulation après un règlement');
+    ok((await p.$$eval('#dt-tiers option', (l) => l.map((o) => o.textContent))).join('|') === 'Sococé', nomEcran + ' : seuls les clients sont proposés');
+    await controler(p, nomEcran + ' : ce qu’on nous doit');
+    await p.click('[data-action="compta-regler"][data-id="d1"]'); await p.waitForSelector('#rg-montant');
+    ok(await p.inputValue('#rg-montant') === '260000', nomEcran + ' : « Encaisser » propose le reste dû');
+    await p.fill('#rg-montant', '300000'); await p.click('form[data-form="compta-regler"] [type=submit]'); await p.waitForTimeout(400);
+    ok((await p.textContent('#calque')).includes('entre 1 et 260 000'), nomEcran + ' : encaisser plus que le reste est refusé');
+    await p.fill('#rg-montant', '60000'); await p.click('form[data-form="compta-regler"] [type=submit]'); await p.waitForTimeout(800);
+    let rg = envoi(journal, 'POST', 'compta_ecritures').pop() || {};
+    ok(rg.dette_id === 'd1' && rg.sens === 'recette' && rg.montant === 60000 && rg.categorie === 'casting' && (await p.textContent('#calque')).includes('Reste 200 000'),
+      nomEcran + ' : encaissement partiel enregistré comme recette, reste 200 000 annoncé');
+    await p.fill('#dt-montant', '150000'); await p.fill('#dt-libelle', 'Shooting catalogue'); await p.fill('#dt-echeance', '2099-01-31');
+    await p.click('form[data-form="compta-dette"] [type=submit]'); await p.waitForTimeout(800);
+    const cr = envoi(journal, 'POST', 'compta_dettes').pop() || {};
+    ok(cr.sens === 'creance' && cr.tiers_id === 't1' && cr.montant === 150000 && cr.echeance === '2099-01-31', nomEcran + ' : nouvelle somme due par un client');
+
+    // Ce qu'on doit : annulation avec motif, paiement en totalité
+    await aller(p, 'a-payer');
+    await controler(p, nomEcran + ' : ce qu’on doit');
+    p.once('dialog', (dl) => dl.accept('Facture en double'));
+    await p.click('[data-action="compta-annuler"][data-id="d2"]'); await p.waitForTimeout(800);
+    const an = envoi(journal, 'PATCH', 'compta_dettes').pop() || {};
+    ok(an.annule === true && an.motif_annulation === 'Facture en double' && journal.some((j) => j[0] === 'PATCH' && j[1] === 'compta_dettes' && /id=eq\.d2/.test(j[2])),
+      nomEcran + ' : facture fournisseur annulée avec son motif');
+    d.tables.compta_dettes[1].annule = false;  // (base simulée : on la remet pour essayer le paiement)
+    await aller(p, 'carnet'); await aller(p, 'a-payer');
+    await p.click('[data-action="compta-regler"][data-id="d2"]'); await p.waitForSelector('#rg-montant');
+    await p.click('form[data-form="compta-regler"] [type=submit]'); await p.waitForTimeout(800);
+    rg = envoi(journal, 'POST', 'compta_ecritures').pop() || {};
+    ok(rg.dette_id === 'd2' && rg.sens === 'depense' && rg.montant === 80000 && (await p.textContent('#calque')).includes('Réglé en totalité'), nomEcran + ' : facture payée en totalité, dépense enregistrée');
+
+    // Personnel et prestataires
+    await aller(p, 'personnel');
+    await controler(p, nomEcran + ' : personnel');
+    await p.fill('#pe-montant', '75000'); await p.fill('#pe-libelle', 'Salaire d’octobre');
+    await p.setInputFiles('#pe-justif', { name: 'recu.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4') });
+    await p.click('form[data-form="compta-payer-personne"] [type=submit]'); await p.waitForTimeout(800);
+    const pe = envoi(journal, 'POST', 'compta_ecritures').pop() || {};
+    ok(pe.categorie === 'personnel' && pe.tiers_id === 't3' && pe.montant === 75000 && pe.justificatif, nomEcran + ' : paiement du personnel avec son justificatif');
+
+    // Matériel durable : achat (dépense + inventaire en une fois), sortie avec motif
+    await aller(p, 'materiel'); t = await texte(p);
+    ok(/Valeur d’achat\s*400 000 FCFA/i.test(t), nomEcran + ' : inventaire du matériel et sa valeur');
+    await controler(p, nomEcran + ' : matériel');
+    await p.fill('#ma-nom', 'Projecteur LED'); await p.fill('#ma-montant', '120000'); await p.fill('#ma-serie', 'PX-9');
+    await p.click('form[data-form="compta-materiel"] [type=submit]'); await p.waitForTimeout(800);
+    const ach = journal.filter((j) => j[0] === 'rpc' && j[1] === 'compta_materiel_acheter').map((j) => JSON.parse(j[2])).pop() || {};
+    ok(ach.p_designation === 'Projecteur LED' && ach.p_montant === 120000 && ach.p_numero_serie === 'PX-9' && ach.p_compte, nomEcran + ' : achat de matériel enregistré');
+    await p.click('[data-action="compta-materiel-modifier"][data-id="m1"]'); await p.waitForSelector('#mm-etat');
+    await p.selectOption('#mm-etat', 'sorti'); await p.click('form[data-form="compta-materiel-modifier"] [type=submit]'); await p.waitForTimeout(400);
+    ok((await p.textContent('#calque')).includes('motif'), nomEcran + ' : sortie sans motif refusée');
+    await p.fill('#mm-motif', 'Volé'); p.once('dialog', (dl) => dl.accept());
+    await p.click('form[data-form="compta-materiel-modifier"] [type=submit]'); await p.waitForTimeout(800);
+    const so = envoi(journal, 'PATCH', 'compta_materiel').pop() || {};
+    ok(so.etat === 'sorti' && so.motif_sortie === 'Volé' && so.date_sortie, nomEcran + ' : matériel sorti de l’inventaire avec son motif');
+
+    // Carnet
+    await aller(p, 'carnet');
+    await controler(p, nomEcran + ' : carnet');
+    await p.fill('#ti-nom', 'Studio Lumière'); await p.selectOption('#ti-type', 'prestataire'); await p.fill('#ti-tel', '0101010101');
+    await p.click('form[data-form="compta-tiers"] [type=submit]'); await p.waitForTimeout(800);
+    const ti = envoi(journal, 'POST', 'compta_tiers').pop() || {};
+    ok(ti.nom === 'Studio Lumière' && ti.type === 'prestataire', nomEcran + ' : prestataire ajouté au carnet');
+    await p.click('[data-action="compta-tiers-modifier"][data-id="t2"]'); await p.waitForSelector('#ti-actif');
+    await p.uncheck('#ti-actif'); await p.click('form[data-form="compta-tiers-modifier"] [type=submit]'); await p.waitForTimeout(800);
+    ok((envoi(journal, 'PATCH', 'compta_tiers').pop() || {}).actif === false, nomEcran + ' : fournisseur marqué « plus en relation »');
+
     // Autre mois
     await aller(p, 'mois');
     await p.fill('#cp-mois', '2026-09'); await p.click('form[data-form="compta-mois"] [type=submit]'); await p.waitForTimeout(800);
@@ -151,6 +231,6 @@ function donnees(role) {
     await c.ctx.close();
   }
   await b.close();
-  console.log(ko ? '❌ ' + ko + ' échec(s)' : '✅ comptabilité (morceau A) : tout est bon');
+  console.log(ko ? '❌ ' + ko + ' échec(s)' : '✅ comptabilité (morceaux A et B) : tout est bon');
   process.exit(ko ? 1 : 0);
 })();

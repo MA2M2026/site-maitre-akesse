@@ -345,8 +345,31 @@ select essai((select annule from compta_ecritures where libelle = 'Loyer octobre
 select essai_refuse($$update compta_ecritures set annule = true, motif_annulation = 'x' where source = 'espace2'$$, 'une recette de l''espace 2 ne s''annule pas d''ici');
 select essai_refuse($$insert into compta_ecritures (sens, montant, compte_id, categorie, libelle, source) values ('recette', 1, (select id from compta_comptes limit 1), 'x', 'x', 'espace2')$$, 'on ne fabrique pas une recette « espace 2 » à la main');
 select essai_refuse($$delete from compta_ecritures$$, 'une écriture ne s''efface pas');
+-- Morceau B : ce qu'on nous doit, ce qu'on doit, personnel, matériel durable
+insert into compta_tiers (nom, type) values ('Client Sococé', 'client'), ('Imprimerie Plateau', 'fournisseur'), ('Assistante', 'personnel');
+insert into compta_dettes (sens, tiers_id, montant, categorie, libelle, echeance)
+values ('creance', (select id from compta_tiers where nom = 'Client Sococé'), 300000, 'casting', 'Casting défilé', current_date - 1);
+insert into compta_ecritures (sens, montant, compte_id, categorie, libelle, dette_id)
+values ('recette', 100000, (select id from compta_comptes where type = 'wave'), 'casting', 'Acompte casting', (select id from compta_dettes where libelle = 'Casting défilé'));
+select essai((select tiers from compta_ecritures where libelle = 'Acompte casting') = 'Client Sococé', 'règlement : le client est repris de la créance');
+select essai_refuse($$insert into compta_ecritures (sens, montant, compte_id, categorie, libelle, dette_id) values ('recette', 250000, (select id from compta_comptes where type = 'wave'), 'casting', 'Trop', (select id from compta_dettes where libelle = 'Casting défilé'))$$, 'règlement plus grand que le reste dû refusé');
+select essai_refuse($$insert into compta_ecritures (sens, montant, compte_id, categorie, libelle, dette_id) values ('depense', 1000, (select id from compta_comptes where type = 'wave'), 'casting', 'Sens', (select id from compta_dettes where libelle = 'Casting défilé'))$$, 'une créance se règle par une recette, pas une dépense');
+select essai_refuse($$update compta_dettes set montant = 1 where libelle = 'Casting défilé'$$, 'une créance ne se modifie pas');
+select essai_refuse($$update compta_dettes set annule = true, motif_annulation = 'x' where libelle = 'Casting défilé'$$, 'créance avec un règlement : pas d''annulation');
+update compta_dettes set echeance = current_date + 30 where libelle = 'Casting défilé';
+select essai((select echeance from compta_dettes where libelle = 'Casting défilé') = current_date + 30, 'l''échéance se repousse');
+select compta_materiel_acheter('Ordinateur portable', current_date, 450000, (select id from compta_comptes where type = 'caisse'), 'Boutique Info', 'SN-123', 'Bureau');
+select essai(exists (select 1 from compta_materiel m join compta_ecritures e on e.id = m.ecriture_id where m.designation = 'Ordinateur portable' and e.categorie = 'materiel' and e.montant = 450000),
+             'matériel acheté : inventaire + dépense « Matériel » ensemble');
+select essai_refuse($$update compta_materiel set montant = 1 where designation = 'Ordinateur portable'$$, 'l''achat du matériel ne se modifie pas');
+select essai_refuse($$update compta_materiel set etat = 'sorti' where designation = 'Ordinateur portable'$$, 'sortie sans date ni motif refusée');
+select essai_refuse($$update compta_ecritures set annule = true, motif_annulation = 'x' where libelle = 'Achat : Ordinateur portable'$$, 'achat de matériel encore en service : pas d''annulation');
+update compta_materiel set etat = 'sorti', date_sortie = current_date, motif_sortie = 'Volé' where designation = 'Ordinateur portable';
+select essai_refuse($$update compta_materiel set etat = 'en_service' where designation = 'Ordinateur portable'$$, 'matériel sorti : il le reste');
+select essai_refuse($$delete from compta_materiel$$, 'le matériel ne s''efface pas');
 select essai_qui('00000000-0000-0000-0000-0000000000a3');
 select essai((select count(*) from compta_ecritures) = 0, 'encaissements : pas d''accès à la comptabilité');
+select essai((select count(*) from compta_tiers) + (select count(*) from compta_dettes) + (select count(*) from compta_materiel) = 0, 'encaissements : ni clients, ni dettes, ni matériel');
 reset role;
 select set_config('request.jwt.claims', '', false);
 

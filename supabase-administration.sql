@@ -1098,7 +1098,9 @@ revoke all on function mes_mensualites(), mensualite_declarer(date) from public,
 grant execute on function mes_mensualites(), mensualite_declarer(date) to authenticated;
 
 -- -----------------------------------------------------------------------------------
--- 10. Espace 3 — Comptabilité, morceau A : recettes, dépenses, trésorerie (cahier v2.4, section 6)
+-- 10. Espace 3 — Comptabilité (cahier v2.4, section 6) : morceau A recettes, dépenses, trésorerie ;
+--     morceau B clients et fournisseurs (ce qu'on nous doit, ce qu'on doit), personnel et
+--     prestataires, matériel durable
 -- -----------------------------------------------------------------------------------
 -- L'agence enregistre, le comptable traite. Chaque paiement validé dans l'espace 2 devient tout
 -- seul une recette (sans le nom du mannequin : le comptable ne voit que des montants). Rien ne
@@ -1115,6 +1117,37 @@ create table if not exists compta_comptes (
 insert into compta_comptes (nom, type) values ('Caisse (espèces)', 'caisse'), ('Wave Business', 'wave')
 on conflict (nom) do nothing;
 
+-- Carnet : clients, fournisseurs, personnel, prestataires (jamais les mannequins : registre de l'espace 2)
+create table if not exists compta_tiers (
+  id uuid primary key default gen_random_uuid(),
+  nom text not null check (trim(nom) <> ''),
+  type text not null check (type in ('client', 'fournisseur', 'personnel', 'prestataire')),
+  telephone text,
+  email text,
+  notes text,
+  actif boolean not null default true,
+  cree_le timestamptz not null default now()
+);
+-- Ce qu'on nous doit (créance : facture d'un client pas encore payée) et ce qu'on doit (dette :
+-- facture d'un fournisseur pas encore payée). Réglées, en une ou plusieurs fois, par des
+-- recettes ou des dépenses liées (compta_ecritures.dette_id).
+create table if not exists compta_dettes (
+  id uuid primary key default gen_random_uuid(),
+  sens text not null check (sens in ('creance', 'dette')),
+  tiers_id uuid not null references compta_tiers(id),
+  date_op date not null default current_date,
+  echeance date,
+  montant int not null check (montant > 0),
+  categorie text not null,
+  libelle text not null,
+  justificatif text,
+  annule boolean not null default false,
+  motif_annulation text,
+  cree_par uuid references auth.users(id),
+  cree_le timestamptz not null default now(),
+  check (not annule or coalesce(trim(motif_annulation), '') <> '')
+);
+
 create table if not exists compta_ecritures (
   id uuid primary key default gen_random_uuid(),
   sens text not null check (sens in ('recette', 'depense', 'virement')),
@@ -1125,6 +1158,8 @@ create table if not exists compta_ecritures (
   categorie text not null,
   libelle text not null,
   tiers text,                                                  -- client, fournisseur, bénéficiaire
+  tiers_id uuid references compta_tiers(id),
+  dette_id uuid references compta_dettes(id),                  -- règlement d'une créance ou d'une dette
   justificatif text,                                           -- chemin dans le stockage privé
   source text not null default 'manuel' check (source in ('manuel', 'espace2')),
   paiement_id uuid unique references paiements_mannequins(id),
@@ -1135,18 +1170,51 @@ create table if not exists compta_ecritures (
   check (sens <> 'virement' or (compte_dest_id is not null and compte_dest_id <> compte_id)),
   check (not annule or coalesce(trim(motif_annulation), '') <> '')
 );
+alter table compta_ecritures add column if not exists tiers_id uuid references compta_tiers(id);
+alter table compta_ecritures add column if not exists dette_id uuid references compta_dettes(id);
 create index if not exists compta_ecritures_date on compta_ecritures (date_op);
+create index if not exists compta_ecritures_dette on compta_ecritures (dette_id) where dette_id is not null;
+
+-- Matériel durable acheté (ordinateur, appareil photo, projecteurs…), suivi à part : son achat
+-- est une dépense « Matériel » (ecriture_id) ; il sort de l'inventaire avec un motif, jamais effacé
+create table if not exists compta_materiel (
+  id uuid primary key default gen_random_uuid(),
+  designation text not null check (trim(designation) <> ''),
+  date_achat date not null,
+  montant int not null check (montant > 0),
+  ecriture_id uuid unique references compta_ecritures(id),
+  numero_serie text,
+  emplacement text,
+  etat text not null default 'en_service' check (etat in ('en_service', 'en_panne', 'sorti')),
+  date_sortie date,
+  motif_sortie text,
+  cree_par uuid references auth.users(id),
+  cree_le timestamptz not null default now(),
+  check (etat <> 'sorti' or (date_sortie is not null and coalesce(trim(motif_sortie), '') <> ''))
+);
 
 -- Une écriture ne se modifie pas : seuls l'annulation (avec motif) et l'ajout du justificatif
 -- sont permis ; les recettes venues de l'espace 2 ne s'annulent pas d'ici
 create or replace function compta_garde_fous()
 returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  d compta_dettes;
 begin
   if est_ecriture_serveur() then return NEW; end if;
   -- recette posée par compta_depuis_espace2 (déclencheur dans un déclencheur : jamais une saisie)
   if TG_OP = 'INSERT' and pg_trigger_depth() > 1 and NEW.source = 'espace2' then return NEW; end if;
   if TG_OP = 'INSERT' then
     if NEW.source <> 'manuel' or NEW.paiement_id is not null then raise exception 'Les recettes de l''espace 2 arrivent toutes seules.'; end if;
+    if NEW.dette_id is not null then
+      select * into d from compta_dettes where id = NEW.dette_id for update;
+      if not found or d.annule then raise exception 'Créance ou dette introuvable ou annulée.'; end if;
+      if NEW.sens <> (case when d.sens = 'creance' then 'recette' else 'depense' end) then raise exception 'Règlement incohérent.'; end if;
+      if NEW.montant > d.montant - coalesce((select sum(montant) from compta_ecritures where dette_id = d.id and not annule), 0) then
+        raise exception 'Le règlement dépasse ce qui reste à payer.';
+      end if;
+      NEW.tiers_id := d.tiers_id;
+    end if;
+    if NEW.tiers_id is not null then NEW.tiers := (select nom from compta_tiers where id = NEW.tiers_id); end if;
     NEW.cree_par := auth.uid();
     return NEW;
   end if;
@@ -1157,11 +1225,77 @@ begin
   if NEW.annule and not OLD.annule and OLD.source = 'espace2' then
     raise exception 'Une recette de l''espace 2 ne s''annule pas d''ici.';
   end if;
+  if NEW.annule and not OLD.annule and exists (select 1 from compta_materiel where ecriture_id = OLD.id and etat <> 'sorti') then
+    raise exception 'Achat de matériel : sortez d''abord le matériel de l''inventaire (avec le motif).';
+  end if;
   return NEW;
 end;
 $$;
 drop trigger if exists compta_garde_fous on compta_ecritures;
 create trigger compta_garde_fous before insert or update on compta_ecritures for each row execute function compta_garde_fous();
+
+-- Créance ou dette : ne se modifie pas (sauf échéance et justificatif) ; annulée avec un motif,
+-- seulement si aucun règlement n'est enregistré
+create or replace function compta_dettes_garde_fous()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if est_ecriture_serveur() then return NEW; end if;
+  if TG_OP = 'INSERT' then NEW.cree_par := auth.uid(); NEW.annule := false; NEW.motif_annulation := null; return NEW; end if;
+  if (to_jsonb(NEW) - 'annule' - 'motif_annulation' - 'justificatif' - 'echeance') <> (to_jsonb(OLD) - 'annule' - 'motif_annulation' - 'justificatif' - 'echeance') then
+    raise exception 'Ne se modifie pas : annulez avec un motif, puis saisissez la bonne.';
+  end if;
+  if OLD.annule and not NEW.annule then raise exception 'Une ligne annulée le reste.'; end if;
+  if NEW.annule and not OLD.annule and exists (select 1 from compta_ecritures where dette_id = OLD.id and not annule) then
+    raise exception 'Des règlements sont enregistrés : annulez-les d''abord.';
+  end if;
+  return NEW;
+end;
+$$;
+drop trigger if exists compta_dettes_garde_fous on compta_dettes;
+create trigger compta_dettes_garde_fous before insert or update on compta_dettes for each row execute function compta_dettes_garde_fous();
+
+-- Matériel : achat (date, montant, dépense liée) figé ; une fois sorti, il le reste
+create or replace function compta_materiel_garde_fous()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if est_ecriture_serveur() then return NEW; end if;
+  if TG_OP = 'INSERT' then
+    if NEW.ecriture_id is not null and not exists (select 1 from compta_ecritures where id = NEW.ecriture_id and sens = 'depense' and categorie = 'materiel' and not annule) then
+      raise exception 'La dépense liée doit être un achat de matériel.';
+    end if;
+    NEW.cree_par := auth.uid();
+    return NEW;
+  end if;
+  if NEW.date_achat <> OLD.date_achat or NEW.montant <> OLD.montant or NEW.ecriture_id is distinct from OLD.ecriture_id or NEW.cree_par is distinct from OLD.cree_par then
+    raise exception 'L''achat ne se modifie pas.';
+  end if;
+  if OLD.etat = 'sorti' and NEW.etat <> 'sorti' then raise exception 'Un matériel sorti de l''inventaire le reste.'; end if;
+  return NEW;
+end;
+$$;
+drop trigger if exists compta_materiel_garde_fous on compta_materiel;
+create trigger compta_materiel_garde_fous before insert or update on compta_materiel for each row execute function compta_materiel_garde_fous();
+
+-- Achat de matériel en une fois : la dépense « Matériel » et la ligne d'inventaire (droits de la
+-- personne qui appelle : règles d'accès et garde-fous s'appliquent)
+create or replace function compta_materiel_acheter(p_designation text, p_date date, p_montant int, p_compte uuid,
+  p_fournisseur text default null, p_numero_serie text default null, p_emplacement text default null, p_justificatif text default null)
+returns uuid language plpgsql security invoker set search_path = public as $$
+declare
+  e uuid;
+  m uuid;
+begin
+  insert into compta_ecritures (sens, date_op, montant, compte_id, categorie, libelle, tiers, justificatif)
+  values ('depense', p_date, p_montant, p_compte, 'materiel', 'Achat : ' || trim(p_designation), nullif(trim(p_fournisseur), ''), p_justificatif)
+  returning id into e;
+  insert into compta_materiel (designation, date_achat, montant, ecriture_id, numero_serie, emplacement)
+  values (trim(p_designation), p_date, p_montant, e, nullif(trim(p_numero_serie), ''), nullif(trim(p_emplacement), ''))
+  returning id into m;
+  return m;
+end;
+$$;
+revoke all on function compta_materiel_acheter(text, date, int, uuid, text, text, text, text) from public, anon;
+grant execute on function compta_materiel_acheter(text, date, int, uuid, text, text, text, text) to authenticated;
 
 -- Espace 2 → comptabilité : un paiement validé (montant connu) devient une recette
 create or replace function compta_depuis_espace2()
@@ -1210,21 +1344,18 @@ $$;
 revoke all on function compta_soldes() from public, anon;
 grant execute on function compta_soldes() to authenticated;
 
-alter table compta_comptes enable row level security;
-alter table compta_ecritures enable row level security;
-revoke all on compta_comptes, compta_ecritures from anon;
-revoke delete, truncate on compta_comptes, compta_ecritures from authenticated;
-grant select, insert, update on compta_comptes, compta_ecritures to authenticated;
-drop policy if exists compta_comptes_acces on compta_comptes;
-create policy compta_comptes_acces on compta_comptes for all using (portail_peut('compta')) with check (portail_peut('compta'));
-drop policy if exists compta_ecritures_acces on compta_ecritures;
-create policy compta_ecritures_acces on compta_ecritures for all using (portail_peut('compta')) with check (portail_peut('compta'));
 do $$
 declare
   t text;
 begin
-  foreach t in array array['compta_comptes', 'compta_ecritures']
+  foreach t in array array['compta_comptes', 'compta_ecritures', 'compta_tiers', 'compta_dettes', 'compta_materiel']
   loop
+    execute format('alter table %I enable row level security', t);
+    execute format('revoke all on %I from anon', t);
+    execute format('revoke delete, truncate on %I from authenticated', t);
+    execute format('grant select, insert, update on %I to authenticated', t);
+    execute format('drop policy if exists %s_acces on %I', t, t);
+    execute format('create policy %s_acces on %I for all using (portail_peut(''compta'')) with check (portail_peut(''compta''))', t, t);
     execute format('drop trigger if exists audit_%s on %I', t, t);
     execute format('create trigger audit_%s after insert or update or delete on %I for each row execute function audit_ecriture()', t, t);
   end loop;
@@ -1240,4 +1371,4 @@ drop policy if exists "Justificatifs : espace 3 dépose" on storage.objects;
 create policy "Justificatifs : espace 3 dépose" on storage.objects for insert with check (bucket_id = 'compta-justificatifs' and portail_peut('compta'));
 
 NOTIFY pgrst, 'reload schema';
-select 'Administration — étape 1, espaces 1 et 2, comptabilité (recettes, dépenses, trésorerie) en place' as resultat;
+select 'Administration — étape 1, espaces 1 et 2, comptabilité (recettes, dépenses, trésorerie, clients et fournisseurs, personnel, matériel) en place' as resultat;

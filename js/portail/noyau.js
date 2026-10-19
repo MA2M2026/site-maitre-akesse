@@ -363,7 +363,7 @@
     // une personne qui n'a droit qu'à un espace arrive directement dedans
     const permis = Object.keys(ESPACES).filter((k) => P.moi.espaces[k]);
     if ((location.hash === '' || location.hash === '#/') && permis.length === 1 && P.moi.role !== 'principal') {
-      location.hash = '#/' + permis[0] + '/' + P.espaces[permis[0]].nav[0][0];
+      location.hash = '#/' + permis[0] + '/' + premierePage(P.espaces[permis[0]]);
       return;
     }
     afficher().catch((e) => P.message(P.erreurTexte(e)));
@@ -400,6 +400,8 @@
   const dernierCodeApplication = (session) => window.dernierCodeApplicationPortail(session);  // js/portail/inactivite.js
 
   // ---------- coque et pages ----------
+  // première rubrique d'un espace (le menu peut commencer par un titre de groupe)
+  const premierePage = (esp) => esp.nav.find((n) => n[0])[0];
   P.coque = (module, page, html) => {
     const esp = P.espaces[module];
     // une entrée sans adresse (null) est un titre de groupe dans le menu
@@ -436,7 +438,7 @@
       (P.installee() ? '' : '<button class="btn petit clair" data-action="installer">Installer l’application</button>') +
       '<button class="btn petit clair" data-action="deconnexion">Déconnexion</button></div></div>' +
       '<div style="padding:30px 28px;display:flex;flex-direction:column;gap:22px"><div><h1>Bonjour, ' + P.esc(P.moi.nom) + '</h1><p class="doux" style="max-width:720px">' + P.esc(phrase) + '</p></div>' +
-      '<div class="tuiles">' + tuiles.map((t) => '<a class="tuile" href="#/' + t[0] + '/' + P.espaces[t[0]].nav[0][0] + '"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + t[2] + '</svg>' +
+      '<div class="tuiles">' + tuiles.map((t) => '<a class="tuile" href="#/' + t[0] + '/' + premierePage(P.espaces[t[0]]) + '"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + t[2] + '</svg>' +
         '<div><div class="tt">' + P.esc(ESPACES[t[0]]) + '</div><div class="ts">' + P.esc(t[1]) + '</div></div></a>').join('') + '</div>' +
       '<div class="pied-portail"><span>Une tuile n’apparaît que si votre rôle y donne accès.</span><a href="/" class="retour">Voir le site public</a></div></div></main></div>';
   }
@@ -451,7 +453,7 @@
     if (!module) { app().innerHTML = vuePortail(); return; }
     const esp = P.espaces[module];
     if (!esp) { location.hash = '#/'; return; }
-    const pageValide = esp.pages[page] ? page : esp.nav.find((n) => n[0])[0];
+    const pageValide = esp.pages[page] ? page : premierePage(esp);
     // Sécurité : réservée à l'administrateur principal, sauf « Mes codes de secours » (chacun)
     const autorise = module === 'securite' ? P.moi.role === 'principal' || pageValide === 'codes' : P.moi.espaces[module];
     if (!autorise) { app().innerHTML = P.coque(module, pageValide, P.refuse()); return; }

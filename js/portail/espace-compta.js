@@ -1,7 +1,9 @@
 // Espace 3 — Comptabilité (cahier v2.4, section 6), construit morceau par morceau après
 // validation du maître d'ouvrage. Morceau A : recettes, dépenses (avec justificatif) et
 // trésorerie (caisse, Wave, banque… et le solde de chacun). Les paiements validés dans
-// l'espace 2 deviennent tout seuls des recettes, sans nom de mannequin.
+// l'espace 2 deviennent tout seuls des recettes, sans nom de mannequin. Morceau B (ce qu'on
+// nous doit, ce qu'on doit, personnel, matériel, carnet) : js/portail/espace-compta-suivi.js,
+// qui se sert des outils communs P.compta.
 // Rien ne s'efface : une écriture erronée est annulée avec un motif (journal d'audit).
 // Base : compta_comptes, compta_ecritures, compta_soldes() (supabase-administration.sql, section 10).
 (function () {
@@ -40,12 +42,24 @@
     if (sens) r = r.eq('sens', sens);
     return P.bd(r.order('date_op', { ascending: false }).order('cree_le', { ascending: false }));
   }
+  // Créances (ce qu'on nous doit) ou dettes (ce qu'on doit), avec ce qui est déjà réglé et le reste
+  async function dettes(sens) {
+    const [liste, reglements] = await Promise.all([
+      P.bd(sb.from('compta_dettes').select('*').eq('sens', sens).order('date_op', { ascending: false })),
+      P.bd(sb.from('compta_ecritures').select('id, dette_id, montant, annule, date_op').not('dette_id', 'is', null))
+    ]);
+    return liste.map((d) => {
+      const regle = reglements.filter((r) => r.dette_id === d.id && !r.annule).reduce((t, r) => t + r.montant, 0);
+      return Object.assign({}, d, { regle, reste: d.annule ? 0 : d.montant - regle, retard: !d.annule && d.montant > regle && !!d.echeance && d.echeance < P.aujourdhui() });
+    });
+  }
   const totaux = (liste, sens) => liste.filter((e) => e.sens === sens && !e.annule).reduce((s, e) => s + e.montant, 0);
 
   // ---------- Tableau du mois ----------
   async function mois() {
     const m = moisChoisi();
-    const [liste, soldes] = await Promise.all([ecritures(m), P.rpc('compta_soldes')]);
+    const [liste, soldes, creances, dues] = await Promise.all([ecritures(m), P.rpc('compta_soldes'), dettes('creance'), dettes('dette')]);
+    const reste = (l) => l.reduce((t, d) => t + d.reste, 0);
     const rec = totaux(liste, 'recette'), dep = totaux(liste, 'depense');
     const parCategorie = (sens) => {
       const t = {};
@@ -59,7 +73,8 @@
     const sansJustif = liste.filter((e) => e.sens === 'depense' && !e.annule && !e.justificatif).length;
     return P.entete('Comptabilité · ' + P.mois(m), choixMois()) +
       '<div class="grille chiffres">' + P.chiffre('Recettes du mois', P.fcfa(rec), 'vert') + P.chiffre('Dépenses du mois', P.fcfa(dep), 'rouge') +
-      P.chiffre('Résultat du mois', P.fcfa(rec - dep), rec - dep < 0 ? 'rouge' : '') + P.chiffre('Dépenses sans justificatif', sansJustif, sansJustif ? 'orange' : '') + '</div>' +
+      P.chiffre('Résultat du mois', P.fcfa(rec - dep), rec - dep < 0 ? 'rouge' : '') + P.chiffre('Dépenses sans justificatif', sansJustif, sansJustif ? 'orange' : '') +
+      P.chiffre('On nous doit', P.fcfa(reste(creances)), creances.some((d) => d.retard) ? 'orange' : '') + P.chiffre('Nous devons', P.fcfa(reste(dues)), dues.some((d) => d.retard) ? 'rouge' : '') + '</div>' +
       '<div class="grille deux"><div class="carte"><h2>Recettes par catégorie</h2>' + barres('recette', rec, false) + '</div>' +
       '<div class="carte"><h2>Dépenses par catégorie</h2>' + barres('depense', dep, true) + '</div></div>' +
       '<div class="carte"><h2>Trésorerie aujourd’hui</h2>' + P.tableau(['Compte', '#Solde'], soldes.map((s) =>
@@ -135,16 +150,19 @@
     } catch (e) { P.message(P.erreurTexte(e)); }
   };
 
+  // Les boutons Justificatif / Joindre / Annuler servent aux écritures et, avec
+  // data-table="compta_dettes", aux créances et dettes (même colonnes)
   const trouver = (id) => (P.etat.comptaListe || []).find((e) => e.id === id);
+  const tableDe = (el) => (el.getAttribute('data-table') === 'compta_dettes' ? 'compta_dettes' : 'compta_ecritures');
   P.actions['compta-annuler'] = async (el) => {
     const e = trouver(el.getAttribute('data-id'));
     if (!e) return;
-    const motif = (prompt('Annuler « ' + e.libelle + ' » (' + P.fcfa(e.montant) + ') ?\nL’écriture reste visible, barrée. Motif de l’annulation :') || '').trim();
+    const motif = (prompt('Annuler « ' + e.libelle + ' » (' + P.fcfa(e.montant) + ') ?\nLa ligne reste visible, barrée. Motif de l’annulation :') || '').trim();
     if (!motif) return;
-    const r = await P.bd(sb.from('compta_ecritures').update({ annule: true, motif_annulation: motif }).eq('id', e.id).select('id'));
+    const r = await P.bd(sb.from(tableDe(el)).update({ annule: true, motif_annulation: motif }).eq('id', e.id).select('id'));
     if (!r || !r.length) return P.message('Action refusée : votre rôle ne le permet pas.');
     await P.afficher();
-    P.message('Écriture annulée.');
+    P.message('Ligne annulée.');
   };
   P.actions['compta-justif-voir'] = async (el) => {
     const e = trouver(el.getAttribute('data-id'));
@@ -157,7 +175,7 @@
   P.actions['compta-justif-joindre'] = (el) => {
     const e = trouver(el.getAttribute('data-id'));
     if (!e) return;
-    P.fenetre('<form data-form="compta-justif" data-id="' + e.id + '" class="grille" style="gap:12px"><h2>Joindre un justificatif</h2><p class="doux">' + P.esc(e.libelle) + ' · ' + P.fcfa(e.montant) + '</p>' +
+    P.fenetre('<form data-form="compta-justif" data-id="' + e.id + '" data-table="' + tableDe(el) + '" class="grille" style="gap:12px"><h2>Joindre un justificatif</h2><p class="doux">' + P.esc(e.libelle) + ' · ' + P.fcfa(e.montant) + '</p>' +
       '<label class="fl" for="cp-justif2">Photo ou PDF (10 Mo au plus)<input id="cp-justif2" name="justificatif" type="file" accept="image/*,application/pdf" required></label>' +
       '<div class="ligne"><button class="btn rouge" type="submit">Joindre</button><button class="btn" type="button" data-action="fermer-fenetre">Fermer</button></div></form>');
   };
@@ -165,7 +183,7 @@
     try {
       const chemin = await deposerJustificatif(f.get('justificatif'));
       if (!chemin) return P.message('Choisissez un fichier.');
-      await P.bd(sb.from('compta_ecritures').update({ justificatif: chemin }).eq('id', form.getAttribute('data-id')));
+      await P.bd(sb.from(tableDe(form)).update({ justificatif: chemin }).eq('id', form.getAttribute('data-id')));
       P.fenetre('');
       await P.afficher();
       P.message('Justificatif joint.');
@@ -248,8 +266,10 @@
     } catch (e) { P.message(/duplicate|unique/i.test(String(e && e.message)) ? 'Un compte porte déjà ce nom.' : P.erreurTexte(e)); }
   };
 
+  P.compta = { RECETTES, DEPENSES, comptes, ecritures, dettes, moisChoisi, choixMois, lignes, optionsComptes, optionsCategories, deposerJustificatif, totaux };
+  // (les pages du morceau B sont ajoutées par js/portail/espace-compta-suivi.js)
   P.espaces.compta = {
-    nav: [['mois', 'Tableau du mois'], ['recettes', 'Recettes'], ['depenses', 'Dépenses'], ['tresorerie', 'Trésorerie']],
+    nav: [[null, 'Au quotidien'], ['mois', 'Tableau du mois'], ['recettes', 'Recettes'], ['depenses', 'Dépenses'], ['tresorerie', 'Trésorerie']],
     pages: { mois, recettes: ecranSens('recette'), depenses: ecranSens('depense'), tresorerie }
   };
 })();

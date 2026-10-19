@@ -74,6 +74,16 @@
 > Justificatifs : stockage privé `compta-justificatifs` (photo ou PDF, 10 Mo), lus par lien
 > temporaire de 5 minutes. Droits : `portail_peut('compta')`. Essai visiteur : `test-comptabilite.js`.
 >
+> **Espace 3, morceau B — suivi (cahier v2.4 §6, points 5, 7, 8)** : `js/portail/espace-compta-suivi.js`
+> (se sert des outils `P.compta` de espace-compta.js, chargé avant). « Ce qu'on nous doit » /
+> « Ce qu'on doit » : `compta_dettes` (créance d'un client, dette envers un fournisseur ; réglée en
+> une ou plusieurs fois par des écritures liées `dette_id` — la base refuse un règlement plus grand
+> que le reste ou de mauvais sens ; annulation avec motif seulement sans règlement). Personnel et
+> prestataires : dépenses « personnel » liées à `compta_tiers` (pas de calcul de paie). Matériel
+> durable : `compta_materiel`, acheté par `compta_materiel_acheter()` (dépense « Matériel » + ligne
+> d'inventaire ensemble) ; achat figé, sortie définitive avec motif, dépense non annulable tant que
+> le matériel est à l'inventaire. Carnet : `compta_tiers` (jamais les mannequins).
+>
 > Codes de secours : affichés à la première activation de la double authentification, et
 > refaits à la demande dans Sécurité › « Mes codes de secours » (code récent demandé ; les
 > anciens sont annulés). Ajouté le 19/10/2026 : un compte dont la double authentification
