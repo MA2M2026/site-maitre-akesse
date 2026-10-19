@@ -11,11 +11,8 @@
 const crypto = require('crypto');
 const { SUPABASE_URL, enTetesService, verifierUtilisateur, extraireIp, debutRequete, chargeJeton, dernierCode, compteurTentatives } = require('./_commun.js');
 
-// adresse de l'Administration : le lien d'invitation y mène. Pour l'instant
-// www…/admin (choix de la propriétaire, 19/10/2026) : l'adresse séparée admin.… prévue par le
-// cahier v2.4 n'est pas encore créée chez Vercel ; le jour où elle l'est, remettre ici
-// https://admin.maitreakessemodelmanagement.com et, dans vercel.json, les redirections www/admin → admin.
-const ADMINISTRATION = 'https://www.maitreakessemodelmanagement.com';
+// adresse séparée de l'Administration (v2.4) : le lien d'invitation y mène
+const ADMINISTRATION = 'https://admin.maitreakessemodelmanagement.com';
 const hacher = (t) => crypto.createHash('sha256').update(String(t)).digest('hex');
 
 async function rpcService(nom, params) {
