@@ -311,7 +311,7 @@
       if (erreur) refus.push(x.full_name + ' : ' + erreur); else ajoutes++;
     }
     P.fenetre('<h2>Registre</h2><p>' + ajoutes + ' mannequin(s) ajouté(s) au registre, avec la mensualité du mois.</p>' +
-      (refus.length ? '<div class="note alerte">À compléter (' + refus.length + ') — ajoutez-les à la main avec leur date de naissance :<br>' + refus.map(P.esc).join('<br>') + '</div>' : '') +
+      (refus.length ? '<div class="note alerte">À compléter (' + refus.length + ') — ajoutez-les à la main avec leur date de naissance :<br>' + refus.map((x) => P.esc(x)).join('<br>') + '</div>' : '') +
       '<div class="ligne"><button class="btn rouge" data-action="fermer-fenetre-afficher">Fermer</button></div>');
   };
   // Import CSV (Excel : « Enregistrer sous… CSV ») — colonnes du modèle téléchargeable
@@ -356,7 +356,7 @@
       if (erreur) refus.push((v('Nom') || '?') + ' : ' + erreur); else ajoutes++;
     }
     P.fenetre('<h2>Import du registre</h2><p>' + ajoutes + ' mannequin(s) ajouté(s), avec l’échéance du mois.</p>' +
-      (refus.length ? '<div class="note alerte">Non ajoutés (' + refus.length + ') :<br>' + refus.map(P.esc).join('<br>') + '</div>' : '') +
+      (refus.length ? '<div class="note alerte">Non ajoutés (' + refus.length + ') :<br>' + refus.map((x) => P.esc(x)).join('<br>') + '</div>' : '') +
       '<div class="ligne"><button class="btn rouge" data-action="fermer-fenetre-afficher">Fermer</button></div>');
   };
   P.formulaires['paiements-inscription-agence'] = async (f) => {
@@ -473,7 +473,7 @@
     const decoches = P.etat.decoches || (P.etat.decoches = new Set());
     const coches = visibles.filter((mn) => !decoches.has(mn.id));
     const modele = modeles.find((x) => x.code === choix) || {};
-    const categories = [...new Set(liste.map((mn) => mn.categorie).filter(Boolean))].sort();
+    const categories = [...new Set(liste.map((mn) => mn.categorie).filter(Boolean))].sort((x, y) => x.localeCompare(y, 'fr'));
     const premier = coches[0];
     return '<div class="carte"><h2>Envoyer un message</h2>' +
       '<p class="petit-texte doux">1. Choisissez le message · 2. Cochez les personnes · 3. Envoyez à tous les cochés, ou à une seule personne avec le bouton de sa ligne.</p>' +
