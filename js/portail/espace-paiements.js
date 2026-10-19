@@ -137,8 +137,29 @@
         '<tr><td>' + (p.objet === 'inscription' ? 'Inscription' : 'Mensualité ' + P.esc(P.date(p.mois).slice(3))) + '</td><td>' + P.esc(MODES[p.mode]) + '</td>' +
         '<td class="nombre">' + (p.montant ? P.fcfa(p.montant) : '—') + '</td><td>' +
         P.pastille({ valide: 'Payé', declare: 'En attente de validation', refuse: 'Refusé' }[p.statut], { valide: 'ok', declare: 'alerte', refuse: 'erreur' }[p.statut]) +
-        '</td><td>' + P.dateHeure(p.valide_le || p.declare_le) + '</td></tr>')) + '</div>';
+        '</td><td>' + P.dateHeure(p.valide_le || p.declare_le) + '</td></tr>')) +
+      // mensualité reçue par l'agence (Wave en dehors du site ou espèces) : validée tout de suite
+      (m.statut === 'actif' ? '<form class="f" data-form="mensualite-enregistrer" data-id="' + m.id + '" style="margin-top:14px"><h2>Enregistrer une mensualité reçue par l’agence</h2>' +
+        '<label class="fl" for="mz-mois">Mois<select id="mz-mois" name="mois">' + listeMois().map((x) => '<option value="' + x + '"' + (x === moisCourant() ? ' selected' : '') + '>' + P.esc(libelleMois(x)) + '</option>').join('') + '</select></label>' +
+        '<label class="fl" for="mz-mode">Moyen<select id="mz-mode" name="mode"><option value="wave">Wave reçu en dehors du site</option><option value="especes">Espèces</option></select></label>' +
+        '<div class="large ligne"><button class="btn rouge" type="submit">Enregistrer ' + P.fcfa(m.mensualite) + '</button></div></form>' : '') + '</div>';
   }
+  // 6 mois passés, le mois en cours et 3 mois d'avance
+  function listeMois() {
+    const d = new Date(), l = [];
+    for (let i = -6; i <= 3; i++) { const x = new Date(d.getFullYear(), d.getMonth() + i, 1); l.push(x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-01'); }
+    return l;
+  }
+  P.formulaires['mensualite-enregistrer'] = async (f, form) => {
+    const id = form.getAttribute('data-id');
+    try {
+      const m = await P.bd(sb.from('agence_mannequins').select('mensualite').eq('id', id).single());
+      if (!confirm('Enregistrer la mensualité de ' + libelleMois(f.get('mois')) + ' (' + P.fcfa(m.mensualite) + '), reçue par l’agence ?')) return;
+      await P.bd(sb.from('paiements_mannequins').insert({ mannequin_id: id, objet: 'mensualite', mois: f.get('mois'), mode: f.get('mode'), montant: m.mensualite, statut: 'valide' }));
+      P.message('Mensualité enregistrée.');
+      P.afficher();
+    } catch (e) { P.message(/duplicate|unique/i.test(String(e && e.message)) ? 'Ce mois est déjà payé ou en attente de validation.' : P.erreurTexte(e)); }
+  };
   // Code de l'espace mannequin (cahier v2.4, 5.4) : seulement après une inscription payée et
   // validée, pour un mannequin sans compte ; une fois, 7 jours ; remplace le code général
   const SITE = 'https://www.maitreakessemodelmanagement.com';
@@ -281,9 +302,78 @@
     } catch (e) { P.message(P.erreurTexte(e)); }
   };
 
+  // ---------- Mensualités (cahier v2.4, 5.6 ; choix du 19/10/2026) ----------
+  // Le 1er : appel aux mannequins actifs cochés (on décoche ceux qui ne paient plus). Le 3 et le 5 :
+  // relances e-mail automatiques (serveur) et ici la liste WhatsApp prête. Messages communs :
+  // js/messages-mensualites.js. Couleurs : vert payé, orange en attente, rouge non payé (après le 5).
+  const ETATS = { paye: ['Payé', 'ok'], attente: ['En attente de validation', 'alerte'], non_paye: ['Non payé', 'erreur'], a_payer: ['À payer avant le 5', 'info'], a_venir: ['À venir', 'neutre'] };
+  async function mensualites() {
+    const mois = moisCourant();
+    const [actifs, paiements, appels] = await Promise.all([
+      P.bd(sb.from('agence_mannequins').select('*').eq('statut', 'actif').order('full_name')),
+      P.bd(sb.from('paiements_mannequins').select('mannequin_id, statut').eq('objet', 'mensualite').eq('mois', mois).neq('statut', 'refuse')),
+      P.bd(sb.from('mensualites_appels').select('*').eq('mois', mois))
+    ]);
+    const jour = new Date().getDate();
+    const etat = (m) => {
+      const p = paiements.find((x) => x.mannequin_id === m.id);
+      return p ? (p.statut === 'valide' ? 'paye' : 'attente') : jour > 5 ? 'non_paye' : 'a_payer';
+    };
+    const appele = (m) => appels.find((a) => a.mannequin_id === m.id);
+    const compte = (e) => actifs.filter((m) => etat(m) === e).length;
+    P.etat.mensualites = { actifs, etat, appele };
+    const relance = jour >= 5 ? 'relance5' : jour >= 3 ? 'relance3' : null;
+    return P.entete('Mensualités · ' + libelleMois(mois)) +
+      '<div class="grille chiffres">' + P.chiffre('Payé', compte('paye'), 'vert') + P.chiffre('En attente de validation', compte('attente'), 'orange') +
+      P.chiffre(jour > 5 ? 'Non payé' : 'À payer avant le 5', compte('non_paye') + compte('a_payer'), 'rouge') + '</div>' +
+      '<div class="note info">Le 1er : cochez les mannequins à appeler (décochez ceux qui ne paient plus), puis envoyez l’appel. Le 3 et le 5, les relances partent toutes seules par e-mail aux personnes appelées qui n’ont pas payé ; pour WhatsApp, utilisez « Relances WhatsApp ». Un mannequin qui ne paie plus : passez sa fiche en « Suspendu » ou « Sorti ».</div>' +
+      '<form data-form="mensualites-appel" class="carte"><h2>Appel du mois</h2>' +
+      P.tableau(['', 'Mannequin', '#Mensualité', 'Ce mois', 'Appel'], actifs.map((m) => {
+        const e = etat(m), a = appele(m), coche = !a && (e === 'a_payer' || e === 'non_paye');
+        return '<tr><td><input type="checkbox" name="ids" value="' + m.id + '" aria-label="Appeler ' + P.esc(m.full_name) + '"' + (coche ? ' checked' : '') + (a || e === 'paye' || e === 'attente' ? ' disabled' : '') + '></td>' +
+          '<td><a href="#/paiements/fiche/' + m.id + '"><b>' + P.esc(m.full_name) + '</b></a></td><td class="nombre">' + P.fcfa(m.mensualite) + '</td>' +
+          '<td>' + P.pastille(ETATS[e][0], ETATS[e][1]) + '</td><td class="petit-texte">' + (a ? 'envoyé le ' + P.dateHeure(a.appel_le) + (a.relance3_le ? ' · relancé le 3' : '') + (a.relance5_le ? ' · relancé le 5' : '') : '—') + '</td></tr>';
+      })) + '<div class="ligne" style="margin-top:12px"><button class="btn rouge" type="submit">Envoyer l’appel aux personnes cochées</button>' +
+      (relance ? '<button class="btn" type="button" data-action="mensualites-whatsapp" data-type="' + relance + '">Relances WhatsApp (' + (relance === 'relance5' ? 'dernière relance' : 'relance du 3') + ')</button>' : '') + '</div></form>';
+  }
+  // File d'envoi WhatsApp : un lien par personne, envoyé en un geste chacun
+  function fileWhatsApp(titre, personnes, type) {
+    const lignes = personnes.map((m) => {
+      const msg = window.messageMensualite(m, type, new Date());
+      const wa = lienWhatsApp(msg.telephone, msg.texte);
+      return '<tr><td><b>' + P.esc(m.full_name || m.nom) + '</b></td><td>' + (wa ? '<a class="btn rouge petit" target="_blank" rel="noopener" href="' + P.esc(wa) + '">Envoyer</a>' : '<span class="doux">pas de numéro</span>') + '</td></tr>';
+    });
+    P.fenetre('<h2>' + P.esc(titre) + '</h2>' + P.tableau(['Mannequin', 'WhatsApp'], lignes) +
+      '<div class="ligne" style="margin-top:12px"><button class="btn" type="button" data-action="fermer-fenetre">Fermer</button></div>');
+  }
+  P.formulaires['mensualites-appel'] = async (f) => {
+    const ids = f.getAll('ids');
+    if (!ids.length) return P.message('Cochez au moins une personne.');
+    if (!confirm('Envoyer l’appel du mois à ' + ids.length + ' personne(s) ?')) return;
+    try {
+      const liste = await P.rpc('mensualites_appeler', { p_mois: moisCourant(), p_ids: ids });
+      let envoyes = 0;
+      await Promise.all(liste.map((m) => {
+        const msg = window.messageMensualite(m, 'appel', new Date());
+        if (!msg.email || typeof envoyerEmailCandidat !== 'function') return null;
+        return Promise.resolve(envoyerEmailCandidat({ to_email: msg.email, to_name: msg.nom, message: msg.texte })).then(() => { envoyes++; }, () => { /* compté comme non envoyé */ });
+      }));
+      await P.afficher();
+      P.message(envoyes + ' e-mail(s) envoyé(s) sur ' + liste.length + '. Envoyez maintenant les messages WhatsApp.');
+      fileWhatsApp('Appel du mois — WhatsApp', liste, 'appel');
+    } catch (e) { P.message(P.erreurTexte(e)); }
+  };
+  P.actions['mensualites-whatsapp'] = (el) => {
+    const e = P.etat.mensualites;
+    if (!e) return;
+    const type = el.getAttribute('data-type');
+    fileWhatsApp(type === 'relance5' ? 'Dernière relance — WhatsApp' : 'Relance du 3 — WhatsApp',
+      e.actifs.filter((m) => e.appele(m) && ['a_payer', 'non_paye'].includes(e.etat(m))), type);
+  };
+
   P.espaces.paiements = {
-    nav: [['a-valider', 'Paiements à valider'], ['registre', 'Registre des mannequins'], ['ajouter', 'Ajouter un mannequin']],
-    pages: { 'a-valider': aValider, registre, ajouter, fiche },
+    nav: [['a-valider', 'Paiements à valider'], ['mensualites', 'Mensualités du mois'], ['registre', 'Registre des mannequins'], ['ajouter', 'Ajouter un mannequin']],
+    pages: { 'a-valider': aValider, mensualites, registre, ajouter, fiche },
     compteur: {},
     // nombre de paiements en attente, affiché dans le menu
     avant: async () => {

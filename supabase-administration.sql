@@ -949,5 +949,126 @@ end;
 $$;
 revoke all on function code_espace_valable(text), code_espace_utiliser(text, uuid) from public, anon, authenticated;
 
+-- -----------------------------------------------------------------------------------
+-- 9. Mensualités de formation (cahier v2.4, 5.6 et 5.7 ; choix du 19/10/2026)
+-- -----------------------------------------------------------------------------------
+-- Le 1er : l'agence coche les mannequins actifs à appeler (elle décoche ceux qui ne paient plus)
+-- et envoie l'appel. Le 3 et le 5 : relances automatiques par e-mail, seulement aux personnes
+-- appelées et pas encore payées (serveur du site), et liste WhatsApp prête dans l'espace 2.
+-- Après le 5 : non payé (rouge). Le mannequin paie dans son espace (Wave, puis « J'ai payé ») ;
+-- tableau de 24 mois de formation. Un seul paiement de mensualité en cours par mois.
+create unique index if not exists paiements_une_mensualite on paiements_mannequins (mannequin_id, mois)
+  where objet = 'mensualite' and statut <> 'refuse';
+create table if not exists mensualites_appels (
+  mois date not null,
+  mannequin_id uuid not null references agence_mannequins(id),
+  appel_le timestamptz not null default now(),
+  appel_par uuid references auth.users(id),
+  relance3_le timestamptz,
+  relance5_le timestamptz,
+  primary key (mois, mannequin_id)
+);
+alter table mensualites_appels enable row level security;
+revoke all on mensualites_appels from anon, authenticated;
+drop policy if exists appels_lecture on mensualites_appels;
+create policy appels_lecture on mensualites_appels for select using (portail_peut('paiements'));
+grant select on mensualites_appels to authenticated;
+
+-- État d'un mois pour un mannequin : paye (vert), attente (orange), non_paye (rouge, après le 5),
+-- a_payer (mois en cours avant le 6), a_venir
+create or replace function mensualite_etat(p_mannequin uuid, p_mois date)
+returns text language sql stable security definer set search_path = public as $$
+  select case
+    -- (seulement l'agence, le serveur, ou le mannequin pour lui-même)
+    when not (est_ecriture_serveur() or portail_peut('paiements')
+              or exists (select 1 from agence_mannequins where id = p_mannequin and user_id = auth.uid())) then null
+    when exists (select 1 from paiements_mannequins where mannequin_id = p_mannequin and objet = 'mensualite' and mois = p_mois and statut = 'valide') then 'paye'
+    when exists (select 1 from paiements_mannequins where mannequin_id = p_mannequin and objet = 'mensualite' and mois = p_mois and statut = 'declare') then 'attente'
+    when p_mois > date_trunc('month', now())::date then 'a_venir'
+    when p_mois < date_trunc('month', now())::date or extract(day from now()) > 5 then 'non_paye'
+    else 'a_payer' end;
+$$;
+revoke all on function mensualite_etat(uuid, date) from public, anon;
+grant execute on function mensualite_etat(uuid, date) to authenticated;
+
+-- L'agence envoie l'appel du 1er aux personnes cochées (actives) : renvoie leurs contacts
+create or replace function mensualites_appeler(p_mois date, p_ids uuid[])
+returns json language plpgsql security definer set search_path = public as $$
+begin
+  if not portail_peut('paiements') then raise exception 'Accès refusé'; end if;
+  insert into mensualites_appels (mois, mannequin_id, appel_par)
+  select date_trunc('month', p_mois)::date, a.id, auth.uid() from agence_mannequins a where a.id = any(p_ids) and a.statut = 'actif'
+  on conflict (mois, mannequin_id) do nothing;
+  perform journaliser('Appel des mensualités envoyé', 'mensualites_appels', to_char(p_mois, 'YYYY-MM'), null, json_build_object('nombre', coalesce(array_length(p_ids, 1), 0))::jsonb);
+  return (select coalesce(json_agg(json_build_object('id', a.id, 'nom', a.full_name, 'telephone', a.telephone, 'email', a.email, 'date_naissance', a.date_naissance,
+    'parent_nom', a.parent_nom, 'parent_telephone', a.parent_telephone, 'parent_email', a.parent_email, 'mensualite', a.mensualite)), '[]'::json)
+    from agence_mannequins a where a.id = any(p_ids) and a.statut = 'actif');
+end;
+$$;
+revoke all on function mensualites_appeler(date, uuid[]) from public, anon;
+grant execute on function mensualites_appeler(date, uuid[]) to authenticated;
+
+-- Relances du 3 et du 5 (serveur du site, une seule fois chacune) : personnes appelées ce mois,
+-- toujours actives, sans paiement déclaré ni validé ; marquées relancées
+create or replace function mensualites_relances(p_jour int)
+returns json language plpgsql security definer set search_path = public as $$
+declare
+  m date := date_trunc('month', now())::date;
+  liste json;
+begin
+  if not est_ecriture_serveur() then raise exception 'Accès refusé.'; end if;
+  if p_jour not in (3, 5) then raise exception 'Jour de relance : 3 ou 5.'; end if;
+  with cibles as (
+    select c.mannequin_id from mensualites_appels c join agence_mannequins a on a.id = c.mannequin_id
+    where c.mois = m and a.statut = 'actif' and mensualite_etat(a.id, m) in ('a_payer', 'non_paye')
+      and (case when p_jour = 3 then c.relance3_le else c.relance5_le end) is null
+    for update of c skip locked
+  ), marques as (
+    update mensualites_appels c set relance3_le = case when p_jour = 3 then now() else relance3_le end,
+                                     relance5_le = case when p_jour = 5 then now() else relance5_le end
+    from cibles where c.mois = m and c.mannequin_id = cibles.mannequin_id returning c.mannequin_id
+  )
+  select coalesce(json_agg(json_build_object('nom', a.full_name, 'telephone', a.telephone, 'email', a.email, 'date_naissance', a.date_naissance,
+    'parent_nom', a.parent_nom, 'parent_email', a.parent_email, 'mensualite', a.mensualite)), '[]'::json) into liste
+  from marques join agence_mannequins a on a.id = marques.mannequin_id;
+  return liste;
+end;
+$$;
+revoke all on function mensualites_relances(int) from public, anon, authenticated;
+
+-- Côté mannequin (son espace) : ses 24 mois de formation et « J'ai payé » pour un mois
+create or replace function mes_mensualites()
+returns json language plpgsql stable security definer set search_path = public as $$
+declare
+  a agence_mannequins;
+  debut date;
+begin
+  select * into a from agence_mannequins where user_id = auth.uid();
+  if not found then return json_build_object('inscrit', false); end if;
+  debut := date_trunc('month', coalesce((select min(mois) from paiements_mannequins where mannequin_id = a.id and objet = 'mensualite'), a.date_entree))::date;
+  return json_build_object('inscrit', true, 'nom', a.full_name, 'mensualite', a.mensualite, 'statut', a.statut,
+    'mineur', a.date_naissance is not null and extract(year from age(a.date_naissance)) < 18,
+    'mois', (select json_agg(json_build_object('mois', g::date, 'etat', mensualite_etat(a.id, g::date)) order by g)
+             from generate_series(debut, debut + interval '23 months', interval '1 month') g));
+end;
+$$;
+create or replace function mensualite_declarer(p_mois date)
+returns void language plpgsql security definer set search_path = public as $$
+declare
+  a agence_mannequins;
+  m date := date_trunc('month', p_mois)::date;
+begin
+  select * into a from agence_mannequins where user_id = auth.uid() and statut = 'actif';
+  if not found then raise exception 'Espace non rattaché à l''agence : contactez l''agence.'; end if;
+  if m > date_trunc('month', now())::date + interval '3 months' or m < a.date_entree - interval '1 month' then
+    raise exception 'Mois hors de votre formation.';
+  end if;
+  if mensualite_etat(a.id, m) in ('paye', 'attente') then raise exception 'Ce mois est déjà payé ou en cours de vérification.'; end if;
+  insert into paiements_mannequins (mannequin_id, objet, mois, montant, mode) values (a.id, 'mensualite', m, a.mensualite, 'wave');
+end;
+$$;
+revoke all on function mes_mensualites(), mensualite_declarer(date) from public, anon;
+grant execute on function mes_mensualites(), mensualite_declarer(date) to authenticated;
+
 NOTIFY pgrst, 'reload schema';
-select 'Administration — étape 1, espace 1 et espace 2 (registre, validation, inscription, code de l''espace) en place' as resultat;
+select 'Administration — étape 1, espace 1 et espace 2 (registre, paiements, inscription, code de l''espace, mensualités) en place' as resultat;

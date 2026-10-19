@@ -49,7 +49,44 @@ async function supprimerFacteurs(userId) {
 }
 const ROLES = ['site', 'caisse', 'compta'];
 
+// Relances automatiques des mensualités, le 3 et le 5 du mois (cahier v2.4, 5.6 ; choix du
+// 19/10/2026) : appelées par la tâche planifiée de Vercel (vercel.json, « crons »). Seulement les
+// personnes appelées le 1er et pas encore payées, une seule fois chacune (la base le garantit).
+// E-mail envoyé par EmailJS depuis le serveur : clé privée EMAILJS_PRIVATE_KEY (réglage Vercel),
+// et « API calls for non-browser applications » autorisé dans EmailJS. Sans clé : rien ne part,
+// la panne est notée au journal, la liste WhatsApp reste dans l'espace 2.
+const { messageMensualite } = require('../js/messages-mensualites.js');
+const EMAILJS = { service_id: 'service_771y6u7', template_id: 'template_q3qpg4p', user_id: 'iRmm0sDj_w3MBx3SK' };  // = js/emailjs-config.js
+async function relancesDuJour(req, res) {
+  const secret = process.env.CRON_SECRET;
+  if (secret && req.headers.authorization !== 'Bearer ' + secret) return res.status(401).json({ error: 'Non autorisé.' });
+  const jour = new Date().getUTCDate();  // (Abidjan : heure UTC)
+  if (jour !== 3 && jour !== 5) return res.status(200).json({ ok: true, rien: 'pas un jour de relance' });
+  try {
+    const liste = await rpcService('mensualites_relances', { p_jour: jour });
+    const cle = process.env.EMAILJS_PRIVATE_KEY;
+    let envoyes = 0;
+    for (const m of liste || []) {
+      const msg = messageMensualite(m, jour === 3 ? 'relance3' : 'relance5', new Date());
+      if (!cle || !msg.email) continue;
+      const rep = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(Object.assign({}, EMAILJS, { accessToken: cle, template_params: { to_email: msg.email, to_name: msg.nom, message: msg.texte } }))
+      }).catch(() => null);
+      if (rep && rep.ok) envoyes++;
+    }
+    if ((liste || []).length && envoyes < liste.length) {
+      await fetch(SUPABASE_URL + '/rest/v1/journal_erreurs', { method: 'POST', headers: { ...enTetesService(), 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify({ message: '[Mensualités] relance du ' + jour + ' : ' + envoyes + ' e-mail(s) envoyé(s) sur ' + liste.length + (cle ? '' : ' (clé EmailJS absente)'), page: '/api/portail', user_agent: 'serveur (relances)' }) }).catch(() => {});
+    }
+    return res.status(200).json({ ok: true, relances: (liste || []).length, envoyes });
+  } catch (e) {
+    return res.status(500).json({ error: 'Erreur serveur.' });
+  }
+}
+
 module.exports = async function handler(req, res) {
+  if (req.method === 'GET') return relancesDuJour(req, res);
   const debut = debutRequete(req, res, false);
   if (!debut) return;
   const { jeton, corps } = debut;

@@ -1,5 +1,6 @@
 {
   "cleanUrls": true,
+  "crons": [{ "path": "/api/portail", "schedule": "0 8 3,5 * *" }],
   "images": {
     "sizes": [640, 1080],
     "minimumCacheTTL": 2678400,

@@ -277,6 +277,36 @@ select essai((select phone from model_profiles where id = '00000000-0000-0000-00
 select essai(not code_espace_valable((select code from codes_espace where not annule)), 'code utilisé : il disparaît');
 select set_config('request.jwt.claims', '', false);
 
+-- Mensualités (cahier v2.4, 5.6 et 5.7)
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a1');
+update agence_mannequins set statut = 'sorti' where id = '00000000-0000-0000-0000-0000000000d1';
+select essai(json_array_length(mensualites_appeler(now()::date, array['00000000-0000-0000-0000-0000000000d1', '00000000-0000-0000-0000-0000000000d2']::uuid[])) = 1,
+             'appel du 1er : seules les personnes actives cochées sont appelées');
+reset role;
+select set_config('request.jwt.claims', '{"role":"service_role"}', false);
+-- YAO (d2) a son mois en cours payé (inscription validée) → pas de relance
+select essai(json_array_length(mensualites_relances(3)) = 0, 'relance du 3 : pas pour qui a déjà payé');
+delete from paiements_mannequins where mannequin_id = '00000000-0000-0000-0000-0000000000d2' and objet = 'mensualite';
+select essai(json_array_length(mensualites_relances(3)) = 1, 'relance du 3 : appelé et pas encore payé → relancé');
+select essai(json_array_length(mensualites_relances(3)) = 0, 'relance du 3 : une seule fois');
+select essai_refuse($$select mensualites_relances(4)$$, 'relances seulement le 3 et le 5');
+select set_config('request.jwt.claims', '', false);
+-- côté mannequin : 24 mois, « J'ai payé » une fois par mois, jamais validé par lui-même
+delete from agence_mannequins where user_id = '00000000-0000-0000-0000-0000000000b1';
+update agence_mannequins set user_id = '00000000-0000-0000-0000-0000000000b1' where id = '00000000-0000-0000-0000-0000000000d2';
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000b1', 'aal1');
+select essai(json_array_length(mes_mensualites() -> 'mois') = 24, 'espace du mannequin : tableau de 24 mois');
+select mensualite_declarer(now()::date);
+select essai(mes_mensualites() -> 'mois' -> 0 ->> 'etat' = 'attente' or exists (select 1 from json_array_elements(mes_mensualites() -> 'mois') x where x ->> 'etat' = 'attente'),
+             '« J''ai payé » : le mois passe en orange');
+select essai_refuse($$select mensualite_declarer(now()::date)$$, 'le même mois ne se déclare pas deux fois');
+update paiements_mannequins set statut = 'valide';  -- (refusé en silence par les règles d'accès : vérifié juste après)
+reset role;
+select set_config('request.jwt.claims', '', false);
+select essai((select statut from paiements_mannequins where mannequin_id = '00000000-0000-0000-0000-0000000000d2' and objet = 'mensualite') = 'declare', 'le mois reste à valider par l''agence');
+
 -- Visiteur anonyme : rien
 set role anon;
 select set_config('request.jwt.claims', '{"role":"anon"}', false);
