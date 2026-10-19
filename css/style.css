@@ -3112,3 +3112,6 @@ body.porte-verrouillee .couverture-faisceau, body.porte-verrouillee .couverture-
    coupé en deux). Sans effet quand le contenu est plus haut que l'écran. */
 body.zone-admin { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
 body.zone-admin > .site-footer { margin-top: auto; }
+
+/* Candidatures « À revoir » et « En attente » rangées à part dans les filtres (cahier v2.4, 3.2) */
+.filtres-a-part { align-self: center; margin-left: 0.8rem; padding-left: 0.8rem; border-left: 1px solid var(--gris-clair, #ccc); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--texte-doux, #5E5B57); }

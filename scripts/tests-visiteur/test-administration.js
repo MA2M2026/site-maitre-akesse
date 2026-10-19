@@ -183,7 +183,9 @@ function donnees(role) {
   // Espace 1 (cahier v2.4, 3.1) : l'ancien tableau de bord DANS l'Administration — même connexion,
   // sans argent ni anciens accès, partenaires gérés d'ici, verrouillage de l'Administration
   const ESPACE1 = { admins: [{ user_id: 'admin-1' }],
-    casting_applications: [{ id: 'c1', full_name: 'AWA KONÉ', email: 'awa@test.ci', phone: '+225 0102030405', genre: 'femme', date_naissance: '2000-01-01', type_candidature: 'agence', status: 'nouvelle', created_at: '2026-10-07T10:00:00Z' }],
+    casting_applications: [{ id: 'c1', full_name: 'AWA KONÉ', email: 'awa@test.ci', phone: '+225 0102030405', genre: 'femme', date_naissance: '2000-01-01', type_candidature: 'agence', status: 'nouvelle', created_at: '2026-10-07T10:00:00Z' },
+      { id: 'c2', full_name: 'BINTOU TRAORÉ', email: 'bintou@test.ci', phone: '+225 0505050505', genre: 'femme', date_naissance: '1998-01-01', type_candidature: 'agence', status: 'en étude', created_at: '2026-10-08T10:00:00Z' },
+      { id: 'c3', full_name: 'YAO KOUASSI', email: 'yao@test.ci', phone: '+225 0707070707', genre: 'homme', date_naissance: '1999-01-01', type_candidature: 'agence', status: 'retenue', created_at: '2026-10-09T10:00:00Z' }],
     inscriptions_mannequins: [{ id: 'i1', nom: 'YAO', prenoms: 'Kouassi', statut: 'en attente de paiement', created_at: '2026-10-06T10:00:00Z' }],
     model_profiles: [{ id: 'm1', full_name: 'MARIAM SANOGO', city: 'Abidjan', published: true, desactive: false }],
     partenaires: [{ id: 'p1', nom: 'Maison XYZ', ordre: 1 }] };
@@ -222,6 +224,17 @@ function donnees(role) {
     // fiche d'une candidature : s'ouvre comme avant
     await pe.click('.v2-bloc[data-bloc="2"]'); await pe.waitForTimeout(300);
     await pe.evaluate(() => document.querySelector('.v2-lien[data-page="b2-candidatures"]').click()); await pe.waitForTimeout(1200);
+    // statuts (cahier v2.4, 3.2) : « À revoir » remplace « En étude » ; « À revoir » et « En attente »
+    // rangés à part, hors de « Toutes » ; classées de la plus récente à la plus ancienne
+    const pastilles = await pe.$$eval('#filtres-candidatures > *', (l) => l.map((x) => x.textContent.replace(/\s+\d+$/, '').trim()));
+    ok(pastilles.join('|') === 'Toutes|Nouvelle|Retenue|Refusée|À part :|À revoir|En attente', nomEcran + ' : statuts des candidatures, « À revoir » et « En attente » à part ' + pastilles.join('|'));
+    await pe.click('#filtres-candidatures [data-filtre="toutes"]'); await pe.waitForTimeout(800);
+    const toutes = await pe.$$eval('#liste-candidatures .dossier-carte', (l) => l.map((c) => c.dataset.id));
+    ok(toutes.join(',') === 'c3,c1', nomEcran + ' : « Toutes » sans les dossiers à part, la plus récente en premier ' + toutes.join(','));
+    await pe.click('#filtres-candidatures [data-filtre="en étude"]'); await pe.waitForTimeout(800);
+    const arevoir = await pe.$$eval('#liste-candidatures .dossier-carte', (l) => l.map((c) => c.dataset.id));
+    ok(arevoir.join(',') === 'c2' && /À revoir/.test(await pe.textContent('#liste-candidatures')), nomEcran + ' : « À revoir » montre ses dossiers');
+    await pe.click('#filtres-candidatures [data-filtre="nouvelle"]'); await pe.waitForTimeout(800);
     await pe.click('#liste-candidatures .dossier-carte[data-id="c1"] .dc-nom').catch(() => {}); await pe.waitForTimeout(1000);
     ok(/AWA KONÉ/.test(await texte(pe)) && await pe.isVisible('#mf-statut-select'), nomEcran + ' : la fiche complète d’une candidature s’ouvre');
     await pe.keyboard.press('Escape'); await pe.evaluate(() => document.querySelectorAll('.modal-overlay.ouvert').forEach((m) => m.classList.remove('ouvert')));

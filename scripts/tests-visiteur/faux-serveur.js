@@ -60,6 +60,14 @@ function brancher(page, donnees, journal) {
         }
         let lignes = (donnees.tables[table] || []).slice();
         for (const [k, v] of url.searchParams) { if (/^eq\./.test(v)) lignes = lignes.filter(l => String(l[k]) === v.slice(3)); }
+        // order=colonne.desc : tri comme la vraie base (une seule colonne)
+        const ordre = (url.searchParams.get('order') || '').match(/^(\w+)\.(asc|desc)/);
+        if (ordre) lignes.sort((a, b) => (String(a[ordre[1]] ?? '') < String(b[ordre[1]] ?? '') ? -1 : String(a[ordre[1]] ?? '') > String(b[ordre[1]] ?? '') ? 1 : 0) * (ordre[2] === 'desc' ? -1 : 1));
+        // not.in.("a","b") : exclure ces valeurs (candidatures rangées à part)
+        for (const [k, v] of url.searchParams) {
+          const exclus = v.match(/^not\.in\.\((.*)\)$/);
+          if (exclus) { const liste = exclus[1].split(',').map(x => x.replace(/^"|"$/g, '')); lignes = lignes.filter(l => !liste.includes(String(l[k]))); }
+        }
         // or=(a.eq.x,b.ilike.y,and(c.eq.z,d.eq.w)) : conditions simples (recherche de doublons)
         if (url.searchParams.get('or')) {
           const morceaux = (t) => { const r = []; let n = 0, cur = ''; for (const ch of t) { if (ch === '(') n++; if (ch === ')') n--; if (ch === ',' && !n) { r.push(cur); cur = ''; } else cur += ch; } if (cur) r.push(cur); return r; };
