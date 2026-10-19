@@ -16,6 +16,8 @@ for i in range(5):
 [[ -f medias/verticale.webm ]] || ffmpeg -loglevel error -y -f lavfi -i testsrc=size=360x640:rate=25 -f lavfi -i sine=frequency=330 -t 5 -c:v libvpx-vp9 -deadline realtime -c:a libopus -shortest medias/verticale.webm
 [[ -f medias/photo-sombre.jpg ]] || ffmpeg -loglevel error -y -f lavfi -i "color=c=0x141414:s=1200x900" -frames:v 1 medias/photo-sombre.jpg
 [[ -f medias/photo-rayures.jpg ]] || ffmpeg -loglevel error -y -f lavfi -i "color=c=black:s=1200x900,geq=lum='if(lt(mod(X\,48)\,24)\,25\,235)':cb=128:cr=128" -frames:v 1 medias/photo-rayures.jpg
+[[ -f medias/photo-claire.jpg ]] || ffmpeg -loglevel error -y -f lavfi -i "color=c=0xE4E4E4:s=1200x900" -frames:v 1 medias/photo-claire.jpg
+[[ -f medias/photo-blanche.jpg ]] || ffmpeg -loglevel error -y -f lavfi -i "color=c=white:s=1200x900" -frames:v 1 medias/photo-blanche.jpg
 export NODE_PATH="${NODE_PATH:-$(npm root -g)}"
 # Paquets des fonctions serveur (api/) utilisés par test-note-integration.js : installés s'ils
 # manquent (nouvelle copie du dépôt), sans rien changer à package.json

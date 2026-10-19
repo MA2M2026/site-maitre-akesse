@@ -2,10 +2,10 @@
 // dossier /admin/, il ne touche ni le cache ni le fonctionnement du site public. Il ne garde
 // que les fichiers de l'INTERFACE (écrans, styles, icônes) : jamais de données nominatives ni
 // de montants (les requêtes vers la base et vers /api ne passent pas par lui).
-const VERSION = 'portail-v11';
+const VERSION = 'portail-v12';
 const INTERFACE = ['/admin/', '/css/jetons.css', '/css/portail.css', '/js/supabase-config.js',
   '/js/vendor/supabase-js-2.110.6.js', '/js/portail/noyau.js', '/js/portail/espace-site.js',
-  '/js/portail/espace-paiements.js', '/js/portail/espace-compta.js', '/js/portail/securite.js', '/css/bouton-ma2m.css', '/js/bouton-appui.js', '/icons/icon-192.png'];
+  '/js/portail/espace-paiements.js', '/js/portail/espace-compta.js', '/js/portail/securite.js', '/css/bouton-ma2m.css', '/js/bouton-appui.js', '/icons/admin-192.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(INTERFACE)).then(() => self.skipWaiting()));
