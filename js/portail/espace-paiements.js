@@ -212,6 +212,10 @@
         '<div class="note large">En un geste : entrée au registre (reliée à la candidature), reçu, recette en comptabilité, code d’inscription consommé, et code personnel de l’espace mannequin (ses informations et photos du casting y seront reprises).</div>' +
         '<button class="btn rouge" type="submit">Enregistrer l’inscription payée</button></form>'
         : '<p class="doux" style="margin-top:10px">Aucune candidature « Retenue » en attente. Passez d’abord la candidature à « Retenue » (Administration du site, Candidatures), ou créez une fiche de casting direct.</p>') + '</details>' +
+      '<details class="carte"' + (liste.length ? '' : ' open') + '><summary>Importer le registre (fichier CSV ou Excel enregistré en CSV)</summary>' +
+      '<p class="doux" style="margin-top:10px">Une ligne par mannequin déjà membre de l’agence : il entre au registre avec la mensualité du mois. Les doublons (même téléphone, ou même nom et date de naissance) sont écartés.</p>' +
+      '<div class="ligne" style="margin-top:10px"><button class="btn petit" data-action="paiements-modele-import">Télécharger le modèle</button>' +
+      '<label class="btn rouge petit" for="rg-import">Choisir le fichier<input id="rg-import" type="file" accept=".csv,text/csv" data-change="paiements-import" hidden></label></div></details>' +
       '<details class="carte"><summary>Ajouter un mannequin au registre</summary><form class="f" data-form="paiements-ajouter" style="margin-top:12px">' +
       '<label class="fl" for="rg-nom">Nom<input id="rg-nom" name="nom" required></label><label class="fl" for="rg-pre">Prénoms<input id="rg-pre" name="prenoms"></label>' +
       '<label class="fl" for="rg-nais">Date de naissance<input id="rg-nais" name="naissance" type="date" required></label>' +
@@ -237,29 +241,82 @@
             : '<button class="btn petit" data-action="paiements-proposer-sortie" data-id="' + m.id + '"' + (m.statut === 'sortie_proposee' ? ' disabled' : '') + '>Proposer la sortie</button>') + '</td></tr>';
       })) + '<p class="petit-texte doux">' + (estPrincipal() ? 'Le changement de mensualité s’applique aux échéances futures seulement (historique conservé).' : 'Seul l’administrateur principal modifie une mensualité ou décide une sortie.') + '</p>';
   }
-  P.formulaires['paiements-ajouter'] = async (f) => {
-    const r = await chargerReglages();
-    const age = P.age(f.get('naissance'));
-    const parentNom = String(f.get('parent_nom')).trim(), parentTel = String(f.get('parent_tel')).trim();
-    if (age < r.age_majorite && (!parentNom || !parentTel)) { P.message('Mannequin mineur : le nom et le téléphone du parent sont obligatoires.'); return; }
-    const tel = String(f.get('telephone')).trim();
-    const doublons = await P.bd(sb.from('agence_mannequins').select('id, nom').or('telephone.eq.' + tel.replace(/[,()]/g, '') + ',and(nom.ilike.' + String(f.get('nom')).trim().replace(/[,()%*]/g, '') + ',date_naissance.eq.' + f.get('naissance') + ')'));
-    if (doublons.length && !confirm('Un mannequin semble déjà enregistré (' + doublons.map((d) => d.nom).join(', ') + '). Ajouter quand même ?')) return;
+  // Entrée au registre (saisie manuelle ou import CSV, cahier 7.1 « Alimentation ») : fiche,
+  // parent si mineur, échéance du mois. Renvoie un message d'erreur, ou null si tout va bien.
+  async function ajouterAuRegistre(d, r, demanderDoublon) {
+    const age = P.age(d.naissance);
+    if (!d.nom || !d.naissance || age == null) return 'nom ou date de naissance manquant';
+    if (!d.telephone) return 'téléphone manquant';
+    if (age < r.age_majorite && (!d.parent_nom || !d.parent_tel)) return 'mineur : nom et téléphone du parent obligatoires';
+    const doublons = await P.bd(sb.from('agence_mannequins').select('id, nom').or('telephone.eq.' + d.telephone.replace(/[,()]/g, '') + ',and(nom.ilike.' + d.nom.replace(/[,()%*]/g, '') + ',date_naissance.eq.' + d.naissance + ')'));
+    if (doublons.length && !(demanderDoublon && confirm('Un mannequin semble déjà enregistré (' + doublons.map((x) => x.nom).join(', ') + '). Ajouter quand même ?'))) return 'déjà dans le registre';
+    const mensualite = [r.mensualite_standard, r.mensualite_haute].includes(Number(d.mensualite)) ? Number(d.mensualite) : r.mensualite_standard;
     const m = (await P.bd(sb.from('agence_mannequins').insert({
-      nom: String(f.get('nom')).trim(), prenoms: String(f.get('prenoms')).trim() || null, date_naissance: f.get('naissance'),
-      telephone: tel, whatsapp: String(f.get('whatsapp')).trim() || tel, email: String(f.get('email')).trim() || null,
-      categorie: String(f.get('categorie')).trim() || null, montant_mensuel: Number(f.get('mensualite'))
+      nom: d.nom, prenoms: d.prenoms || null, date_naissance: d.naissance, telephone: d.telephone, whatsapp: d.whatsapp || d.telephone,
+      email: d.email || null, categorie: d.categorie || null, montant_mensuel: mensualite
     }).select('id')))[0];
-    if (parentNom) await P.bd(sb.from('mannequin_guardians').insert({ mannequin_id: m.id, nom: parentNom, lien: 'Parent', telephone: parentTel, email: String(f.get('parent_email')).trim() || null }));
+    if (d.parent_nom) await P.bd(sb.from('mannequin_guardians').insert({ mannequin_id: m.id, nom: d.parent_nom, lien: 'Parent', telephone: d.parent_tel, email: d.parent_email || null }));
     const mois = P.moisCourant(), limite = mois.slice(0, 8) + String(r.jour_limite).padStart(2, '0');
-    const inscription = f.get('inscription') === '1';
     await P.bd(sb.from('fee_dues').insert({
-      mannequin_id: m.id, type: inscription ? 'inscription' : 'mensualite', mois,
-      montant_du: inscription ? r.droit_inscription + r.premier_mois : Number(f.get('mensualite')),
-      date_limite: inscription ? P.aujourdhui() : limite
+      mannequin_id: m.id, type: d.inscription ? 'inscription' : 'mensualite', mois,
+      montant_du: d.inscription ? r.droit_inscription + r.premier_mois : mensualite,
+      date_limite: d.inscription ? P.aujourdhui() : limite
     }));
-    P.message(String(f.get('nom')) + ' ajouté au registre.');
+    return null;
+  }
+  P.formulaires['paiements-ajouter'] = async (f) => {
+    const r = await chargerReglages(), t = (k) => String(f.get(k) || '').trim();
+    const erreur = await ajouterAuRegistre({ nom: t('nom'), prenoms: t('prenoms'), naissance: t('naissance'), telephone: t('telephone'), whatsapp: t('whatsapp'),
+      email: t('email'), categorie: t('categorie'), mensualite: t('mensualite'), parent_nom: t('parent_nom'), parent_tel: t('parent_tel'), parent_email: t('parent_email'),
+      inscription: f.get('inscription') === '1' }, r, true);
+    if (erreur && erreur !== 'déjà dans le registre') { P.message('Non ajouté : ' + erreur + '.'); return; }
+    if (!erreur) P.message(t('nom') + ' ajouté au registre.');
     P.afficher();
+  };
+  // Import CSV (Excel : « Enregistrer sous… CSV ») — colonnes du modèle téléchargeable
+  const COLONNES_IMPORT = ['Nom', 'Prénoms', 'Date de naissance', 'Téléphone', 'WhatsApp', 'E-mail', 'Catégorie', 'Mensualité', 'Parent', 'Téléphone du parent', 'E-mail du parent'];
+  P.actions['paiements-modele-import'] = () => P.telecharger(P.csv(COLONNES_IMPORT, [['Koné', 'Awa', '12/03/2001', '0700000001', '', 'awa@exemple.ci', 'Femme', '10000', '', '', '']]), 'modele-registre.csv');
+  function lireCsv(texte) {
+    const sep = (texte.split('\n')[0].match(/;/g) || []).length >= (texte.split('\n')[0].match(/,/g) || []).length ? ';' : ',';
+    const lignes = [];
+    let champ = '', ligne = [], guillemets = false;
+    for (let i = 0; i < texte.length; i++) {
+      const c = texte[i];
+      if (guillemets) { if (c === '"' && texte[i + 1] === '"') { champ += '"'; i++; } else if (c === '"') guillemets = false; else champ += c; }
+      else if (c === '"') guillemets = true;
+      else if (c === sep) { ligne.push(champ.trim()); champ = ''; }
+      else if (c === '\n' || c === '\r') { if (c === '\r' && texte[i + 1] === '\n') i++; ligne.push(champ.trim()); if (ligne.some(Boolean)) lignes.push(ligne); ligne = []; champ = ''; }
+      else champ += c;
+    }
+    ligne.push(champ.trim()); if (ligne.some(Boolean)) lignes.push(ligne);
+    return lignes;
+  }
+  // 12/03/2001, 12-03-2001 ou 2001-03-12 → 2001-03-12
+  function dateIso(v) {
+    const a = String(v || '').trim().match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/), b = String(v || '').trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    return a ? a[3] + '-' + a[2].padStart(2, '0') + '-' + a[1].padStart(2, '0') : b ? b[0] : '';
+  }
+  P.changements['paiements-import'] = async (el) => {
+    const fichier = el.files && el.files[0];
+    el.value = '';
+    if (!fichier) return;
+    const r = await chargerReglages();
+    const lignes = lireCsv((await fichier.text()).replace(/^\uFEFF/, ''));
+    const entete = (lignes.shift() || []).map((x) => x.toLowerCase());
+    const col = (nom) => entete.indexOf(nom.toLowerCase());
+    if (col('Nom') < 0 || col('Téléphone') < 0) { P.message('Fichier non reconnu : utilisez le modèle (colonnes Nom, Date de naissance, Téléphone…).'); return; }
+    let ajoutes = 0;
+    const refus = [];
+    for (const l of lignes) {
+      const v = (nom) => (col(nom) >= 0 ? l[col(nom)] || '' : '').trim();
+      const erreur = await ajouterAuRegistre({ nom: v('Nom'), prenoms: v('Prénoms'), naissance: dateIso(v('Date de naissance')), telephone: v('Téléphone'), whatsapp: v('WhatsApp'),
+        email: v('E-mail'), categorie: v('Catégorie'), mensualite: v('Mensualité').replace(/\D/g, ''), parent_nom: v('Parent'), parent_tel: v('Téléphone du parent'),
+        parent_email: v('E-mail du parent'), inscription: false }, r, false).catch((e) => P.erreurTexte(e));
+      if (erreur) refus.push((v('Nom') || '?') + ' : ' + erreur); else ajoutes++;
+    }
+    P.fenetre('<h2>Import du registre</h2><p>' + ajoutes + ' mannequin(s) ajouté(s), avec l’échéance du mois.</p>' +
+      (refus.length ? '<div class="note alerte">Non ajoutés (' + refus.length + ') :<br>' + refus.map(P.esc).join('<br>') + '</div>' : '') +
+      '<div class="ligne"><button class="btn rouge" data-action="fermer-fenetre-afficher">Fermer</button></div>');
   };
   P.formulaires['paiements-inscription-agence'] = async (f) => {
     const r = await P.sensible(() => P.rpc('portail_inscription_agence', {
@@ -325,13 +382,15 @@
   // ---------- Messages et relances ----------
   async function messages() {
     const r = await chargerReglages(), m = moisChoisi();
-    const [modeles, file, journal, ds] = await Promise.all([
+    const [modeles, file, journal, ds, registreListe, groupes, planifies] = await Promise.all([
       P.bd(sb.from('message_templates').select('*').order('code')),
       P.bd(sb.from('message_log').select('*').eq('statut', 'a_envoyer').in('canal', ['email', 'whatsapp']).order('planifie_le').limit(200)),
       P.bd(sb.from('message_log').select('*').neq('statut', 'a_envoyer').order('planifie_le', { ascending: false }).limit(25)),
-      echeancesDuMois(m)
+      echeancesDuMois(m),
+      P.bd(sb.from('agence_mannequins').select('id, nom, prenoms, date_naissance, categorie, user_id, statut, montant_mensuel').in('statut', ['actif', 'suspendu', 'sortie_proposee']).order('nom')),
+      P.bd(sb.from('message_groupes').select('*').order('nom')),
+      P.bd(sb.from('message_planifies').select('*').eq('statut', 'prevu').order('envoi_le'))
     ]);
-    const ouverts = ds.filter((e) => ['a_payer', 'refusee', 'non_paye'].includes(e.statut));
     const choix = P.etat.modele || 'relance';
     const calendrier = [['1er', 'appel', 1], [r.jour_relance, 'relance', r.jour_relance], [r.jour_derniere_relance, 'dernière relance', r.jour_derniere_relance], [r.jour_limite + 1, 'paiement non reçu', r.jour_limite + 1]];
     const jour = Number(P.aujourdhui().slice(8, 10));
@@ -344,29 +403,122 @@
       '<div class="carte"><h2>WhatsApp à envoyer (' + whatsapp.length + ')</h2><p class="doux">Un geste par message : le lien ouvre WhatsApp avec le texte déjà écrit.</p>' +
       whatsapp.slice(0, 15).map((x) => '<div class="ligne ecartee" style="padding:6px 0;border-top:1px solid var(--lignes)"><span class="petit-texte">' + P.esc(x.destinataire) + '</span>' +
         '<a class="btn petit" target="_blank" rel="noopener" data-action="paiements-whatsapp" data-id="' + x.id + '" href="https://wa.me/' + P.esc(numeroWhatsapp(x.adresse)) + '?text=' + encodeURIComponent(x.texte) + '">Envoyer</a></div>').join('') + '</div></div>' +
-      '<div class="carte"><h2>Envoyer un message maintenant</h2><div class="segments" style="margin:12px 0">' + modeles.filter((x) => ['appel', 'relance', 'derniere_relance', 'non_recu'].includes(x.code)).map((x) =>
-        '<button class="btn petit' + (choix === x.code ? ' actif' : '') + '" data-action="paiements-modele" data-code="' + x.code + '">' + P.esc(x.libelle) + '</button>').join('') + '</div>' +
-      '<div class="note ok">' + P.esc((modeles.find((x) => x.code === choix) || {}).texte || '') + '</div>' +
-      '<p class="petit-texte doux">Destinataires : ' + ouverts.length + ' mannequin(s) sans paiement validé ni déclaré pour ' + P.esc(P.mois(m)) + '. Canaux : espace, e-mail, WhatsApp (SMS dès qu’un fournisseur sera choisi).</p>' +
-      '<button class="btn rouge" data-action="paiements-envoyer" ' + (ouverts.length ? '' : 'disabled') + '>Préparer pour ' + ouverts.length + ' personne(s)</button></div>' +
+      carteSelection(m, r, modeles, choix, ds, registreListe, groupes, planifies) +
       '<h2>Journal des envois</h2>' + P.tableau(['Date', 'Destinataire', 'Canal', 'Statut', 'Message'], journal.map((g) =>
         '<tr><td>' + P.dateHeure(g.envoye_le || g.planifie_le) + '</td><td>' + P.esc(g.destinataire || '') + '</td><td>' + P.esc(g.canal) + '</td><td>' +
         P.pastille({ envoye: 'Envoyé', echec: 'Échec', sans_fournisseur: 'Sans fournisseur' }[g.statut] || g.statut, g.statut === 'envoye' ? 'ok' : g.statut === 'echec' ? 'erreur' : 'neutre') +
         (g.statut === 'echec' ? ' <button class="btn petit" data-action="paiements-reessayer" data-id="' + g.id + '">Réessayer</button>' : '') + '</td><td style="min-width:260px">' + P.esc(g.texte) + '</td></tr>'));
   }
+  // ---------- Sélection des destinataires (cahier 7.5) ----------
+  // Cases à cocher : tout le monde, un filtre (inscrits, non inscrits, non payés, catégorie), un
+  // groupe enregistré ou des personnes choisies ; envoi groupé (les cochés) ou individuel (une
+  // ligne) ; aperçu avant envoi ; envoi immédiat ou planifié (préparé à 6 h le jour choisi).
+  const FILTRES_MESSAGE = [['tous', 'Tout le monde'], ['inscrits', 'Inscrits sur le site'], ['non_inscrits', 'Non inscrits'], ['non_payes', 'Non payés ce mois']];
+  const NON_PAYE = ['a_payer', 'refusee', 'non_paye'];
+  function remplirModele(texte, mn, e, r) {
+    const reste = e ? e.montant_du - e.montant_paye : null;
+    return String(texte || '').replace(/\{prenom\}/g, String(mn.prenoms || mn.nom || '').split(' ')[0])
+      .replace(/\{mois\}/g, P.mois(e ? e.mois : moisChoisi())).replace(/\{montant\}/g, reste != null ? P.fcfa(reste) : '—')
+      .replace(/\{date_limite\}/g, e ? P.date(e.date_limite) : '—').replace(/\{lien_wave\}/g, '[lien Wave]').replace(/\{lien_espace\}/g, '[lien de l’espace]');
+  }
+  function carteSelection(m, r, modeles, choix, ds, liste, groupes, planifies) {
+    const echeance = {};
+    ds.forEach((e) => { if (!echeance[e.mannequin_id] || e.type === 'mensualite') echeance[e.mannequin_id] = e; });
+    const filtre = P.etat.filtreMessage || 'non_payes', cat = P.etat.categorieMessage || '';
+    const grp = groupes.find((g) => g.id === P.etat.groupeMessage);
+    const visibles = liste.filter((mn) => (grp ? grp.membres.includes(mn.id) : filtre === 'tous' || (filtre === 'inscrits' && mn.user_id) || (filtre === 'non_inscrits' && !mn.user_id)
+      || (filtre === 'non_payes' && echeance[mn.id] && NON_PAYE.includes(echeance[mn.id].statut))) && (!cat || mn.categorie === cat));
+    // cochés : ceux de la liste visible, sauf ceux décochés à la main
+    const decoches = P.etat.decoches || (P.etat.decoches = new Set());
+    const coches = visibles.filter((mn) => !decoches.has(mn.id));
+    const modele = modeles.find((x) => x.code === choix) || {};
+    const categories = [...new Set(liste.map((mn) => mn.categorie).filter(Boolean))].sort();
+    const premier = coches[0];
+    return '<div class="carte"><h2>Envoyer un message</h2>' +
+      '<p class="petit-texte doux">1. Choisissez le message · 2. Cochez les personnes · 3. Envoyez à tous les cochés, ou à une seule personne avec le bouton de sa ligne.</p>' +
+      '<div class="segments" style="margin:12px 0">' + modeles.filter((x) => !['code_espace', 'confirme', 'refuse'].includes(x.code)).map((x) =>
+        '<button class="btn petit' + (choix === x.code ? ' actif' : '') + '" data-action="paiements-modele" data-code="' + x.code + '">' + P.esc(x.libelle) + '</button>').join('') + '</div>' +
+      '<div class="note ok"><b>Aperçu' + (premier ? ' pour ' + P.esc(premier.nom + (premier.prenoms ? ' ' + premier.prenoms : '')) : '') + ' :</b> ' +
+        P.esc(premier ? remplirModele(modele.texte, premier, echeance[premier.id], r) : modele.texte || '') + '</div>' +
+      '<div class="ligne ecartee" style="margin-top:12px"><div class="segments">' + FILTRES_MESSAGE.map((f) =>
+        '<button class="btn petit' + (!grp && filtre === f[0] ? ' actif' : '') + '" data-action="paiements-filtre-message" data-f="' + f[0] + '">' + f[1] + '</button>').join('') + '</div>' +
+        '<div class="ligne"><label class="fl" for="msg-cat">Catégorie<select id="msg-cat" data-change="paiements-categorie-message"><option value="">Toutes</option>' +
+        categories.map((c) => '<option' + (c === cat ? ' selected' : '') + '>' + P.esc(c) + '</option>').join('') + '</select></label>' +
+        '<label class="fl" for="msg-grp">Groupe enregistré<select id="msg-grp" data-change="paiements-groupe-message"><option value="">—</option>' +
+        groupes.map((g) => '<option value="' + g.id + '"' + (grp && grp.id === g.id ? ' selected' : '') + '>' + P.esc(g.nom) + ' (' + g.membres.length + ')</option>').join('') + '</select></label></div></div>' +
+      '<div class="ligne" style="margin:10px 0"><button class="btn petit" data-action="paiements-cocher" data-tout="1">Tout cocher</button><button class="btn petit" data-action="paiements-cocher" data-tout="0">Tout décocher</button>' +
+        '<span class="petit-texte doux" id="msg-compte" data-total="' + visibles.length + '">' + coches.length + ' cochée(s) sur ' + visibles.length + '</span></div>' +
+      (visibles.length ? P.tableau(['', 'Mannequin', 'Groupe', 'Catégorie', 'Ce mois-ci', ''], visibles.map((mn) => {
+        const e = echeance[mn.id];
+        return '<tr><td><input type="checkbox" data-change="paiements-coche" data-id="' + mn.id + '"' + (decoches.has(mn.id) ? '' : ' checked') + ' aria-label="Choisir ' + P.esc(mn.nom) + '"></td>' +
+          '<td><b>' + P.esc(mn.nom + (mn.prenoms ? ' ' + mn.prenoms : '')) + '</b>' + (mineur(mn, r.age_majorite) ? ' ' + P.pastille('mineur · message au parent', 'neutre') : '') + '</td>' +
+          '<td>' + groupe(mn) + '</td><td>' + P.esc(mn.categorie || '—') + '</td><td>' + (e ? pastilleEcheance(e) : '<span class="doux petit-texte">pas d’échéance</span>') + '</td>' +
+          '<td>' + (e ? '<button class="btn petit" data-action="paiements-envoyer-un" data-id="' + mn.id + '">Envoyer à lui seul</button>' : '') + '</td></tr>';
+      })) : '<p class="doux">' + (liste.length ? 'Personne dans cette sélection.' : 'Le registre est vide : importez ou ajoutez les mannequins de l’agence (rubrique Registre des mannequins).') + '</p>') +
+      '<div class="ligne" style="margin-top:12px"><label class="fl" for="msg-date">Date d’envoi (vide = maintenant)<input id="msg-date" type="date" min="' + P.aujourdhui() + '" value="' + P.esc(P.etat.dateMessage || '') + '" data-change="paiements-date-message"></label>' +
+        '<button class="btn rouge" id="msg-envoyer" data-action="paiements-envoyer"' + (coches.length ? '' : ' disabled') + '>' + (P.etat.dateMessage ? 'Planifier pour ' : 'Envoyer à ') + coches.length + ' personne(s)</button></div>' +
+      '<p class="petit-texte doux">Canaux : espace, e-mail, WhatsApp (SMS dès qu’un fournisseur sera choisi). Mineur : le message va au parent. Planifié : préparé à 6 h le jour choisi.</p>' +
+      '<form class="ligne" data-form="paiements-groupe-enregistrer" style="margin-top:10px"><label class="fl" for="msg-nomgrp">Enregistrer les cochés comme groupe<input id="msg-nomgrp" name="nom" placeholder="Formation mensuelle" required></label>' +
+        '<button class="btn petit" type="submit"' + (coches.length ? '' : ' disabled') + '>Enregistrer le groupe</button>' +
+        (grp ? '<button class="btn petit" type="button" data-action="paiements-groupe-supprimer" data-id="' + grp.id + '">Supprimer ce groupe</button>' : '') + '</form>' +
+      (planifies.length ? '<h3 style="margin-top:14px">Envois planifiés</h3>' + planifies.map((x) => '<div class="ligne ecartee" style="padding:6px 0;border-top:1px solid var(--lignes)"><span class="petit-texte">' +
+        P.date(x.envoi_le) + ' · ' + P.esc((modeles.find((y) => y.code === x.modele) || {}).libelle || x.modele) + ' · ' + x.mannequins.length + ' personne(s)</span>' +
+        '<button class="btn petit" data-action="paiements-planifie-annuler" data-id="' + x.id + '">Annuler</button></div>').join('') : '') + '</div>';
+  }
+  // la sélection en cours (cases visibles et cochées), relue au moment d'envoyer
+  function cochesAffiches() {
+    return [...document.querySelectorAll('input[data-change="paiements-coche"]')].filter((c) => c.checked).map((c) => c.getAttribute('data-id'));
+  }
+  const nouvelleSelection = () => { P.etat.decoches = new Set(); };
+  P.actions['paiements-filtre-message'] = (el) => { P.etat.filtreMessage = el.getAttribute('data-f'); P.etat.groupeMessage = ''; nouvelleSelection(); P.afficher(); };
+  P.changements['paiements-categorie-message'] = (el) => { P.etat.categorieMessage = el.value; nouvelleSelection(); P.afficher(); };
+  P.changements['paiements-groupe-message'] = (el) => { P.etat.groupeMessage = el.value; nouvelleSelection(); P.afficher(); };
+  P.changements['paiements-date-message'] = (el) => { P.etat.dateMessage = el.value; P.afficher(); };
+  P.changements['paiements-coche'] = (el) => {
+    const d = P.etat.decoches || (P.etat.decoches = new Set());
+    if (el.checked) d.delete(el.getAttribute('data-id')); else d.add(el.getAttribute('data-id'));
+    // mise à jour sur place (sans recharger la page à chaque case)
+    const n = cochesAffiches().length, compte = document.getElementById('msg-compte'), bouton = document.getElementById('msg-envoyer');
+    if (compte) compte.textContent = n + ' cochée(s) sur ' + compte.getAttribute('data-total');
+    if (bouton) { bouton.disabled = !n; bouton.textContent = (P.etat.dateMessage ? 'Planifier pour ' : 'Envoyer à ') + n + ' personne(s)'; }
+  };
+  P.actions['paiements-cocher'] = (el) => {
+    P.etat.decoches = new Set(el.getAttribute('data-tout') === '1' ? [] : [...document.querySelectorAll('input[data-change="paiements-coche"]')].map((c) => c.getAttribute('data-id')));
+    P.afficher();
+  };
+  async function envoyerSelection(ids) {
+    const r = await P.rpc('portail_message_selection', { p_mannequins: ids, p_modele: P.etat.modele || 'relance', p_mois: moisChoisi(), p_envoi_le: P.etat.dateMessage || null });
+    P.message(r.planifie ? 'Envoi planifié le ' + P.date(r.envoi_le) + ' pour ' + r.personnes + ' personne(s).'
+      : r.personnes + ' personne(s) : ' + r.messages + ' message(s) préparé(s)' + (r.sans_echeance ? ' · ' + r.sans_echeance + ' sans échéance ce mois-ci (non envoyés)' : '') + '. Envoyez maintenant les e-mails et les WhatsApp ci-dessus.');
+    P.afficher();
+  }
+  P.actions['paiements-envoyer'] = async () => {
+    const ids = cochesAffiches();
+    if (!ids.length) { P.message('Cochez au moins une personne.'); return; }
+    await envoyerSelection(ids);
+  };
+  P.actions['paiements-envoyer-un'] = (el) => envoyerSelection([el.getAttribute('data-id')]);
+  P.formulaires['paiements-groupe-enregistrer'] = async (f) => {
+    const ids = cochesAffiches();
+    await P.bd(sb.from('message_groupes').upsert({ nom: String(f.get('nom')).trim(), membres: ids }, { onConflict: 'nom' }));
+    P.message('Groupe « ' + String(f.get('nom')).trim() + ' » enregistré (' + ids.length + ' personne(s)).');
+    P.afficher();
+  };
+  P.actions['paiements-groupe-supprimer'] = async (el) => {
+    if (!confirm('Supprimer ce groupe ? Les mannequins, eux, restent dans le registre.')) return;
+    await P.bd(sb.from('message_groupes').delete().eq('id', el.getAttribute('data-id')));
+    P.etat.groupeMessage = ''; P.afficher();
+  };
+  P.actions['paiements-planifie-annuler'] = async (el) => {
+    await P.bd(sb.from('message_planifies').update({ statut: 'annule' }).eq('id', el.getAttribute('data-id')));
+    P.message('Envoi planifié annulé.'); P.afficher();
+  };
   // numéro ivoirien local (10 chiffres) → format international pour wa.me
   function numeroWhatsapp(n) {
     const c = String(n || '').replace(/\D/g, '');
     return c.length === 10 ? '225' + c : c;
   }
   P.actions['paiements-modele'] = (el) => { P.etat.modele = el.getAttribute('data-code'); P.afficher(); };
-  P.actions['paiements-envoyer'] = async () => {
-    const ds = (await echeancesDuMois(moisChoisi())).filter((e) => ['a_payer', 'refusee', 'non_paye'].includes(e.statut));
-    let n = 0;
-    for (const e of ds) n += await P.rpc('portail_message_echeance', { p_echeance: e.id, p_modele: P.etat.modele || 'relance' });
-    P.message(n + ' message(s) préparé(s). Envoyez maintenant les e-mails et les WhatsApp ci-dessous.');
-    P.afficher();
-  };
   P.actions['paiements-whatsapp'] = (el) => {
     sb.from('message_log').update({ statut: 'envoye', envoye_le: new Date().toISOString(), tentatives: 1 }).eq('id', el.getAttribute('data-id'))
       .then(() => setTimeout(P.afficher, 800));

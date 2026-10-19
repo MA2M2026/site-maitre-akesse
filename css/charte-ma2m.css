@@ -111,9 +111,17 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .hero-v2-bg { filter: grayscale(60%) contrast(1.05) brightness(1.02) !important; }
 .hero-v2 :is(h1, h2, h3, p, .hero-v2-title, .hero-slide-titre, .ma2m-grand) { color: var(--encre); text-shadow: none !important; }
 .vedette-fullbleed { color: var(--encre); }
-.vedette-scrim { background: linear-gradient(to top, rgba(246,245,243,0.97) 0%, rgba(246,245,243,0.8) 34%, rgba(246,245,243,0.2) 62%, rgba(246,245,243,0) 80%) !important; }
+/* (19/10/2026, signalé par la propriétaire sur tablette : la ligne sous le nom et le bloc « Mot de
+   Maître Akesse » étaient illisibles sur la photo) — le voile clair couvre toute la zone du texte */
+.vedette-scrim { background: linear-gradient(to top, rgba(246,245,243,0.98) 0%, rgba(246,245,243,0.92) 42%, rgba(246,245,243,0.6) 62%, rgba(246,245,243,0) 85%) !important; }
 .vedette-contenu h2 { color: var(--encre); text-shadow: none; }
-.vedette-contenu p { color: var(--encre-douce); }
+.vedette-contenu p { color: var(--encre); font-weight: 500; }
+.mot-responsable-scrim { background: linear-gradient(to top, rgba(246,245,243,0.98) 0%, rgba(246,245,243,0.92) 45%, rgba(246,245,243,0.6) 65%, rgba(246,245,243,0) 88%) !important; }
+.mot-responsable-overlay h2 { color: var(--encre) !important; text-shadow: none !important; }
+.mot-resp-titre { color: var(--encre) !important; font-weight: 600; text-shadow: none !important; }
+/* vidéo de l'agence : image animée foncée, l'étiquette « Le film » reste en blanc sur une ombre */
+.video-accueil .eyebrow--clair { color: #fff; text-shadow: 0 1px 10px rgba(0,0,0,0.75); }
+.video-accueil .eyebrow--clair::before { background: #fff; box-shadow: none; }
 .vedette-cta { color: var(--encre); }
 .vedette-fullbleed:hover .vedette-cta { border-color: var(--rouge-ma2m); }
 .eyebrow--clair { color: var(--rouge-ma2m-texte); text-shadow: none; }

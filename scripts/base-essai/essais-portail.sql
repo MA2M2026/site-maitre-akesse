@@ -423,6 +423,27 @@ select set_config('request.jwt.claims', '', false);
 select essai((select count(*) from espace_codes e join agence_mannequins m on m.id = e.mannequin_id
               where m.candidature_id = '00000000-0000-0000-0000-00000000c004') = 1, 'un seul code d''espace créé pour cette inscription');
 
+-- Cahier 7.5 : messages aux personnes cochées, immédiat ou planifié, groupes enregistrés
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a1');
+create temp table essai_msg as select portail_message_selection(array['00000000-0000-0000-0000-00000000e077'::uuid, '00000000-0000-0000-0000-00000000e001'::uuid], 'relance', current_date) as r;
+select essai(((select r from essai_msg) ->> 'personnes')::int + ((select r from essai_msg) ->> 'sans_echeance')::int = 2 and ((select r from essai_msg) ->> 'messages')::int >= 1,
+             'cahier 7.5 : message préparé pour les personnes cochées (celles sans échéance comptées à part)');
+select essai((portail_message_selection(array['00000000-0000-0000-0000-00000000e077'::uuid], 'appel', current_date, current_date + 2) ->> 'planifie')::boolean,
+             'cahier 7.5 : envoi planifié enregistré');
+insert into message_groupes (nom, membres) values ('Formation mensuelle', array['00000000-0000-0000-0000-00000000e077'::uuid]);
+select essai((select array_length(membres, 1) from message_groupes where nom = 'Formation mensuelle') = 1, 'cahier 7.5 : groupe enregistré');
+select essai_refuse($$select portail_message_selection('{}'::uuid[], 'relance', current_date)$$, 'aucune personne cochée : refusé');
+reset role;
+select set_config('request.jwt.claims', '', false);
+select portail_tache_quotidienne(current_date + 2);
+select essai((select statut from message_planifies limit 1) = 'fait', 'cahier 7.5 : l''envoi planifié est préparé le jour venu (tâche de 6 h)');
+set role anon;
+select set_config('request.jwt.claims', '{"role":"anon"}', false);
+select essai_refuse($$select count(*) from message_groupes$$, 'visiteur : aucun accès aux groupes de messages');
+reset role;
+select set_config('request.jwt.claims', '', false);
+
 -- Relecture du 19/10/2026 : code d'inscription déjà utilisé + mauvaise date → message neutre
 update registration_codes set statut = 'utilise'
   where code_hache = encode(digest((select code from essai_codes where qui = 'awa'), 'sha256'), 'hex');

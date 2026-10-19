@@ -62,7 +62,8 @@ function donnees(role) {
       portail_enregistrer_appareil: { ok: true, nouveau: false },
       portail_valider_paiement: { recu: 'REC-2026-00002', paiement: 'p1', code_espace: 'ESP-K7P4-92' },
       portail_code_espace: 'ESP-QW3R-77',
-      portail_inscription_agence: { recu: 'REC-2026-00003', paiement: 'p2', code_espace: 'ESP-ZX8C-44' }
+      portail_inscription_agence: { recu: 'REC-2026-00003', paiement: 'p2', code_espace: 'ESP-ZX8C-44' },
+      portail_message_selection: (c) => ({ personnes: c.p_mannequins.length, messages: c.p_mannequins.length * 3, sans_echeance: 0 })
     },
     api: { '/api/portail': (corps) => corps.action === 'codes_secours_creer' ? { codes: ['AAAAA-BBBBB', 'CCCCC-DDDDD', 'EEEEE-FFFFF', 'GGGGG-HHHHH', 'JJJJJ-KKKKK', 'LLLLL-MMMMM', 'NNNNN-PPPPP', 'QQQQQ-RRRRR'] } : { ok: true } }
   };
@@ -146,6 +147,28 @@ function donnees(role) {
     await p.goto(url + '#/paiements/fiche/m2'); await p.waitForSelector('[data-action="paiements-code-espace"]', { timeout: 6000 }).catch(() => {});
     await p.click('[data-action="paiements-code-espace"]').catch(() => {}); await p.waitForTimeout(600);
     ok((await texte(p)).includes('ESP-QW3R-77') && journal.some((j) => j[0] === 'rpc' && j[1] === 'portail_code_espace' && /"p_mannequin":"m2"/.test(j[2])), nomEcran + ' : fiche sans espace → nouveau code donné');
+    // cahier 7.5 : messages aux personnes cochées (groupé ou individuel)
+    await p.click('[data-action="fermer-fenetre"]').catch(() => {});
+    await p.goto(url + '#/paiements/messages'); await p.waitForSelector('input[data-change="paiements-coche"]', { timeout: 6000 }).catch(() => {});
+    let tm = await texte(p);
+    ok(tm.includes('Yao Bamba') && !tm.includes('Awa Koné') && (await p.$$('input[data-change="paiements-coche"]')).length === 1, nomEcran + ' : messages → « Non payés ce mois » coche d’office la personne non payée');
+    await p.click('[data-action="paiements-filtre-message"][data-f="tous"]'); await p.waitForSelector('input[data-change="paiements-coche"][data-id="m1"]', { timeout: 6000 }).catch(() => {});
+    ok((await p.$$('input[data-change="paiements-coche"]:checked')).length === 2, nomEcran + ' : « Tout le monde » : les deux mannequins cochés');
+    await p.uncheck('input[data-change="paiements-coche"][data-id="m1"]'); await p.waitForTimeout(200);
+    ok((await p.textContent('#msg-envoyer')).includes('1 personne'), nomEcran + ' : décocher met à jour le bouton (1 personne)');
+    await p.click('#msg-envoyer'); await p.waitForTimeout(700);
+    let sel = journal.filter((j) => j[0] === 'rpc' && j[1] === 'portail_message_selection').pop();
+    ok(sel && /"p_mannequins":\["m2"\]/.test(sel[2]), nomEcran + ' : envoi groupé → seulement les cochés (m2)');
+    await p.click('[data-action="paiements-envoyer-un"][data-id="m1"]').catch(() => {}); await p.waitForTimeout(700);
+    sel = journal.filter((j) => j[0] === 'rpc' && j[1] === 'portail_message_selection').pop();
+    ok(sel && /"p_mannequins":\["m1"\]/.test(sel[2]), nomEcran + ' : « Envoyer à lui seul » → une seule personne (m1)');
+    // cahier 7.1 : import du registre (CSV) — une personne déjà présente est écartée et signalée
+    await p.goto(url + '#/paiements/registre'); await p.waitForSelector('#rg-import', { state: 'attached', timeout: 6000 }).catch(() => {});
+    await p.setInputFiles('#rg-import', { name: 'registre.csv', mimeType: 'text/csv', buffer: Buffer.from('Nom;Prénoms;Date de naissance;Téléphone\nKoné;Awa;12/03/2001;0700000001\n') });
+    await p.waitForTimeout(900);
+    tm = await texte(p);
+    ok(tm.includes('Import du registre') && tm.includes('déjà dans le registre'), nomEcran + ' : import CSV du registre : doublon écarté et signalé');
+    await p.click('[data-action="fermer-fenetre-afficher"]').catch(() => {});
     // inscription payée en espèces à l'agence, sans passer par le site
     await p.click('[data-action="fermer-fenetre"]').catch(() => {});
     await p.goto(url + '#/paiements/registre'); await p.waitForSelector('#ia-cand', { timeout: 6000 }).catch(() => {});
