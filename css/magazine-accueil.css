@@ -42,7 +42,7 @@ body.accueil-magazine { background: var(--mag-scene); }
   flex-direction: column;
 }
 .mag-page .cadre { overflow: hidden; background: var(--mag-scene); }
-.mag-page .cadre img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.mag-page .cadre img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 12%; } /* cadrage par le haut : le visage reste visible sur une photo en pied */
 .mag-page a { color: inherit; }
 
 /* Titres, rubriques, folios */
@@ -67,7 +67,7 @@ body.accueil-magazine { background: var(--mag-scene); }
 /* 1 · Couverture : le mannequin à la une */
 .mag-couv { padding: 0; color: #fff; overflow: hidden; }
 .mag-couv .cadre { position: absolute; inset: 0; }
-.mag-couv .cadre img { object-position: 50% 25%; }
+.mag-couv .cadre img { object-position: 50% 8%; }
 /* ombre en haut (numéro) et en bas (titres de couverture, nom du mannequin) : textes blancs
    lisibles même sur une photo blanche ou rayée (test-lisibilite-photos.js) */
 .mag-couv::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(to bottom, rgba(0,0,0,0.74) 0%, rgba(0,0,0,0.72) 24%, rgba(0,0,0,0) 36%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.74) 54%, rgba(0,0,0,0.86) 100%); }
@@ -149,7 +149,7 @@ body.accueil-magazine { background: var(--mag-scene); }
 .mag-agence li { display: grid; grid-template-columns: 1fr 1.3fr; gap: 4cqw; padding: 2.8cqw 0; border-top: 0.3cqw solid var(--mag-trait); }
 .mag-agence li strong { font-family: var(--mag-police-titre); font-weight: 800; text-transform: uppercase; font-size: max(18px, 4.8cqw); line-height: 1; }
 .mag-agence li span { font-size: max(12px, 2.8cqw); line-height: 1.5; color: var(--mag-gris); }
-.mag-agence .cadre { margin-top: auto; height: 28cqw; flex: none; }
+.mag-agence .cadre { margin-top: auto; flex: 0 1 28cqw; min-height: 0; } /* rétrécit si le texte prend la place (téléphone) : jamais sous le folio */
 .mag-agence .mag-lien { margin-top: 3cqw; align-self: flex-start; }
 
 /* Ils nous ont fait confiance (logos des partenaires) */
@@ -177,7 +177,7 @@ body.accueil-magazine { background: var(--mag-scene); }
 }
 .mag-dos-actions a + a { background: transparent; color: #fff; border: 1px solid #fff; }
 .mag-dos-actions a:hover { text-decoration: underline; }
-.mag-dos .cadre { margin-top: auto; height: 40cqw; flex: none; }
+.mag-dos .cadre { margin-top: auto; flex: 0 1 40cqw; min-height: 0; }
 .mag-dos .mag-folio { color: rgba(255, 255, 255, 0.85); }
 
 /* Le film (vidéo de l'accueil) garde sa place, sous le magazine */
