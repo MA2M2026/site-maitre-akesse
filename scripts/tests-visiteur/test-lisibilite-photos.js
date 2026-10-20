@@ -28,7 +28,7 @@ function donnees() {
 
 (async () => {
   const srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: RACINE }); await new Promise((r) => setTimeout(r, 800));
-  const b = await chromium.launch();
+  let b = await chromium.launch();
   for (const photo of process.env.PAGES ? [] : ['photo-sombre.jpg', 'photo-rayures.jpg', 'photo-claire.jpg', 'photo-blanche.jpg']) {
     const image = fs.readFileSync(path.join(__dirname, 'medias', photo));
     for (const page of ['index.html', 'en/index.html']) {
@@ -85,79 +85,96 @@ function donnees() {
   const { tables, rpc, pages } = require('./pages-publiques');
   const rayures = fs.readFileSync(path.join(__dirname, 'medias', 'photo-rayures.jpg'));
   // PAGES=index.html,en/index.html : seulement ces pages (pour corriger vite)
+  async function controler(page, ecran) {
+    const ctx = await b.newContext({ viewport: { width: ecran.width, height: ecran.height } });
+    const p = await ctx.newPage();
+    await p.emulateMedia({ reducedMotion: 'reduce' });
+    await p.addInitScript(() => { try { sessionStorage.setItem('ma2m_porte_ouverte', '1'); sessionStorage.setItem('ma2m_intro_vue', '1'); localStorage.setItem('ma2m_cookies', 'non'); } catch (e) { /* stockage bloqué */ } });
+    await brancher(p, { tables: JSON.parse(JSON.stringify(Object.assign({}, tables, donnees().tables, { model_profiles: tables.model_profiles }))), rpc }, []);
+    await p.route(/^https:\/\/x\//, (r) => r.fulfill({ status: 200, contentType: 'image/jpeg', body: rayures }));
+    await p.goto('http://127.0.0.1:' + PORT + '/' + page, { waitUntil: 'domcontentloaded' }).catch(() => {});
+    await p.waitForTimeout(1800);
+    const h = await p.evaluate(() => document.documentElement.scrollHeight);
+    const mauvais = new Map();
+    for (let y = 0; y < h; y += Math.round(ecran.height * 0.8)) {
+      await p.evaluate((y) => window.scrollTo({ top: y, behavior: 'instant' }), y); await p.waitForTimeout(350);
+      // textes visibles posés sur une image, une vidéo ou un fond photo
+      const cibles = await p.evaluate(() => {
+        const res = [];
+        // (un texte recouvert, par exemple par la barre du haut fixe, n'est pas mesuré à cet endroit)
+        const surImage = (el, x, y) => { const pile = document.elementsFromPoint(x, y); const i = pile.indexOf(el);
+          if (i < 0 || (pile[0] !== el && !el.contains(pile[0]))) return false;
+          // une photo cachée sous un fond opaque (page du magazine posée sur la précédente) ne compte pas
+          for (const d of pile.slice(i + 1)) {
+            if (/^(IMG|VIDEO|CANVAS)$/.test(d.tagName) || /url\(/.test(getComputedStyle(d).backgroundImage)) return true;
+            const fond = getComputedStyle(d).backgroundColor.match(/[\d.]+/g);
+            if (fond && (fond.length < 4 || Number(fond[3]) >= 0.98) && d !== document.documentElement && d !== document.body) return false;
+          }
+          return false; };
+        document.querySelectorAll('body *').forEach((el) => {
+          if (res.length > 40 || el.closest('button, .btn, [role=button], .whatsapp-flottant, .lang-switch')) return;
+          const propre = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim().length > 1);
+          if (!propre) return;
+          const r = el.getBoundingClientRect(), s = getComputedStyle(el);
+          if (r.width < 4 || r.height < 4 || r.top < 0 || r.bottom > innerHeight || s.visibility === 'hidden' || Number(s.opacity) < 0.1) return;
+          // le texte doit être entièrement visible : à moitié sous la barre du haut, on mesurerait la barre
+          const xm = r.left + Math.min(r.width / 2, 40);
+          if (![r.top + 2, r.top + r.height / 2, r.bottom - 2].every((y) => surImage(el, xm, y))) return;
+          const fs = parseFloat(s.fontSize), gras = Number(s.fontWeight) >= 700;
+          el.dataset.essaiLisible = String(res.length);
+          res.push({ i: res.length, texte: el.textContent.trim().slice(0, 30) + (el.className && typeof el.className === 'string' ? ' (' + el.className.split(' ')[0] + ')' : ''), rgb: s.color.match(/[\d.]+/g).map(Number).slice(0, 3), grand: fs >= 24 || (fs >= 18.66 && gras),
+            x: Math.max(0, r.left), y: Math.max(0, r.top), w: Math.min(r.right, innerWidth) - Math.max(0, r.left), h: Math.min(r.bottom, innerHeight) - Math.max(0, r.top) });
+        });
+        document.querySelectorAll('[data-essai-lisible]').forEach((el) => { el.style.setProperty('color', 'transparent', 'important'); el.style.setProperty('text-shadow', 'none', 'important'); });
+        return res;
+      });
+      if (!cibles.length) continue;
+      const capture = (await p.screenshot()).toString('base64');
+      const resultats = await p.evaluate(async ({ b64, cibles }) => {
+        document.querySelectorAll('[data-essai-lisible]').forEach((el) => { el.style.removeProperty('color'); el.style.removeProperty('text-shadow'); delete el.dataset.essaiLisible; });
+        const img = new Image(); img.src = 'data:image/png;base64,' + b64; await img.decode();
+        const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const g = c.getContext('2d'); g.drawImage(img, 0, 0);
+        const k = img.width / innerWidth;
+        const lin = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+        const lum = (r, gg, bb) => 0.2126 * lin(r) + 0.7152 * lin(gg) + 0.0722 * lin(bb);
+        return cibles.map((t) => {
+          if (t.w < 2 || t.h < 2) return null;
+          const d = g.getImageData(Math.round(t.x * k), Math.round(t.y * k), Math.max(1, Math.round(t.w * k)), Math.max(1, Math.round(t.h * k))).data;
+          const lt = lum(t.rgb[0], t.rgb[1], t.rgb[2]); const rap = [];
+          for (let i = 0; i < d.length; i += 16) { const lb = lum(d[i], d[i + 1], d[i + 2]); rap.push((Math.max(lt, lb) + 0.05) / (Math.min(lt, lb) + 0.05)); }
+          rap.sort((a, bb) => a - bb);
+          const contraste = rap[Math.floor(rap.length * 0.1)], seuil = t.grand ? 3 : 4.5;
+          // capture de la zone fautive (dossier captures/), pour voir le défaut comme un visiteur
+          let image = null;
+          if (contraste < seuil) { const z = document.createElement('canvas'); z.width = Math.round(t.w * k); z.height = Math.round(t.h * k); z.getContext('2d').drawImage(c, Math.round(t.x * k), Math.round(t.y * k), z.width, z.height, 0, 0, z.width, z.height); image = z.toDataURL('image/png').split(',')[1]; }
+          return { texte: t.texte, contraste, seuil, image };
+        }).filter(Boolean);
+      }, { b64: capture, cibles });
+      resultats.filter((r) => r.contraste < r.seuil).forEach((r) => {
+        mauvais.set(r.texte, r);
+        try { fs.mkdirSync(path.join(__dirname, 'captures'), { recursive: true }); fs.writeFileSync(path.join(__dirname, 'captures', 'illisible-' + page.replace(/[^a-z0-9]+/gi, '_') + '-' + ecran.width + '-' + mauvais.size + '.png'), Buffer.from(r.image, 'base64')); } catch (e) { /* capture facultative */ }
+      });
+    }
+    ok(!mauvais.size, page + ' · ' + ecran.nom + ' : textes sur photo lisibles' + [...mauvais.values()].map((r) => ' | « ' + r.texte + ' » ' + r.contraste.toFixed(2)).join(''));
+    await ctx.close();
+  }
   for (const page of pages.filter((x) => !process.env.PAGES || process.env.PAGES.split(',').includes(x))) {
+    // navigateur neuf pour chaque page : après des dizaines de pages dans le même navigateur, il
+    // finissait par ne plus répondre (blocage du 20/10/2026 sur la fiche, au format tablette)
+    await b.close(); b = await chromium.launch();
     for (const ecran of ecrans.slice(0, 2)) {
-      const ctx = await b.newContext({ viewport: { width: ecran.width, height: ecran.height } });
-      const p = await ctx.newPage();
-      await p.emulateMedia({ reducedMotion: 'reduce' });
-      await p.addInitScript(() => { try { sessionStorage.setItem('ma2m_porte_ouverte', '1'); sessionStorage.setItem('ma2m_intro_vue', '1'); localStorage.setItem('ma2m_cookies', 'non'); } catch (e) { /* stockage bloqué */ } });
-      await brancher(p, { tables: JSON.parse(JSON.stringify(Object.assign({}, tables, donnees().tables, { model_profiles: tables.model_profiles }))), rpc }, []);
-      await p.route(/^https:\/\/x\//, (r) => r.fulfill({ status: 200, contentType: 'image/jpeg', body: rayures }));
-      await p.goto('http://127.0.0.1:' + PORT + '/' + page, { waitUntil: 'domcontentloaded' }).catch(() => {});
-      await p.waitForTimeout(1800);
-      const h = await p.evaluate(() => document.documentElement.scrollHeight);
-      const mauvais = new Map();
-      for (let y = 0; y < h; y += Math.round(ecran.height * 0.8)) {
-        await p.evaluate((y) => window.scrollTo({ top: y, behavior: 'instant' }), y); await p.waitForTimeout(350);
-        // textes visibles posés sur une image, une vidéo ou un fond photo
-        const cibles = await p.evaluate(() => {
-          const res = [];
-          // (un texte recouvert, par exemple par la barre du haut fixe, n'est pas mesuré à cet endroit)
-          const surImage = (el, x, y) => { const pile = document.elementsFromPoint(x, y); const i = pile.indexOf(el);
-            if (i < 0 || (pile[0] !== el && !el.contains(pile[0]))) return false;
-            // une photo cachée sous un fond opaque (page du magazine posée sur la précédente) ne compte pas
-            for (const d of pile.slice(i + 1)) {
-              if (/^(IMG|VIDEO|CANVAS)$/.test(d.tagName) || /url\(/.test(getComputedStyle(d).backgroundImage)) return true;
-              const fond = getComputedStyle(d).backgroundColor.match(/[\d.]+/g);
-              if (fond && (fond.length < 4 || Number(fond[3]) >= 0.98) && d !== document.documentElement && d !== document.body) return false;
-            }
-            return false; };
-          document.querySelectorAll('body *').forEach((el) => {
-            if (res.length > 40 || el.closest('button, .btn, [role=button], .whatsapp-flottant, .lang-switch')) return;
-            const propre = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim().length > 1);
-            if (!propre) return;
-            const r = el.getBoundingClientRect(), s = getComputedStyle(el);
-            if (r.width < 4 || r.height < 4 || r.top < 0 || r.bottom > innerHeight || s.visibility === 'hidden' || Number(s.opacity) < 0.1) return;
-            // le texte doit être entièrement visible : à moitié sous la barre du haut, on mesurerait la barre
-            const xm = r.left + Math.min(r.width / 2, 40);
-            if (![r.top + 2, r.top + r.height / 2, r.bottom - 2].every((y) => surImage(el, xm, y))) return;
-            const fs = parseFloat(s.fontSize), gras = Number(s.fontWeight) >= 700;
-            el.dataset.essaiLisible = String(res.length);
-            res.push({ i: res.length, texte: el.textContent.trim().slice(0, 30) + (el.className && typeof el.className === 'string' ? ' (' + el.className.split(' ')[0] + ')' : ''), rgb: s.color.match(/[\d.]+/g).map(Number).slice(0, 3), grand: fs >= 24 || (fs >= 18.66 && gras),
-              x: Math.max(0, r.left), y: Math.max(0, r.top), w: Math.min(r.right, innerWidth) - Math.max(0, r.left), h: Math.min(r.bottom, innerHeight) - Math.max(0, r.top) });
-          });
-          document.querySelectorAll('[data-essai-lisible]').forEach((el) => { el.style.setProperty('color', 'transparent', 'important'); el.style.setProperty('text-shadow', 'none', 'important'); });
-          return res;
-        });
-        if (!cibles.length) continue;
-        const capture = (await p.screenshot()).toString('base64');
-        const resultats = await p.evaluate(async ({ b64, cibles }) => {
-          document.querySelectorAll('[data-essai-lisible]').forEach((el) => { el.style.removeProperty('color'); el.style.removeProperty('text-shadow'); delete el.dataset.essaiLisible; });
-          const img = new Image(); img.src = 'data:image/png;base64,' + b64; await img.decode();
-          const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const g = c.getContext('2d'); g.drawImage(img, 0, 0);
-          const k = img.width / innerWidth;
-          const lin = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
-          const lum = (r, gg, bb) => 0.2126 * lin(r) + 0.7152 * lin(gg) + 0.0722 * lin(bb);
-          return cibles.map((t) => {
-            if (t.w < 2 || t.h < 2) return null;
-            const d = g.getImageData(Math.round(t.x * k), Math.round(t.y * k), Math.max(1, Math.round(t.w * k)), Math.max(1, Math.round(t.h * k))).data;
-            const lt = lum(t.rgb[0], t.rgb[1], t.rgb[2]); const rap = [];
-            for (let i = 0; i < d.length; i += 16) { const lb = lum(d[i], d[i + 1], d[i + 2]); rap.push((Math.max(lt, lb) + 0.05) / (Math.min(lt, lb) + 0.05)); }
-            rap.sort((a, bb) => a - bb);
-            const contraste = rap[Math.floor(rap.length * 0.1)], seuil = t.grand ? 3 : 4.5;
-            // capture de la zone fautive (dossier captures/), pour voir le défaut comme un visiteur
-            let image = null;
-            if (contraste < seuil) { const z = document.createElement('canvas'); z.width = Math.round(t.w * k); z.height = Math.round(t.h * k); z.getContext('2d').drawImage(c, Math.round(t.x * k), Math.round(t.y * k), z.width, z.height, 0, 0, z.width, z.height); image = z.toDataURL('image/png').split(',')[1]; }
-            return { texte: t.texte, contraste, seuil, image };
-          }).filter(Boolean);
-        }, { b64: capture, cibles });
-        resultats.filter((r) => r.contraste < r.seuil).forEach((r) => {
-          mauvais.set(r.texte, r);
-          try { fs.mkdirSync(path.join(__dirname, 'captures'), { recursive: true }); fs.writeFileSync(path.join(__dirname, 'captures', 'illisible-' + page.replace(/[^a-z0-9]+/gi, '_') + '-' + ecran.width + '-' + mauvais.size + '.png'), Buffer.from(r.image, 'base64')); } catch (e) { /* capture facultative */ }
-        });
+      // une page qui ne répond plus (cela arrivait au hasard après des dizaines de pages) est reprise
+      // une fois avec un navigateur neuf, au lieu de bloquer tout le test
+      for (let essai = 1; essai <= 2; essai++) {
+        const fini = await Promise.race([controler(page, ecran).then(() => 'fini', (e) => e),
+          new Promise((r) => setTimeout(() => r('muet'), 120000))]);
+        if (fini === 'fini') break;
+        if (fini !== 'muet') { ok(false, page + ' · ' + ecran.nom + ' : ' + String(fini && fini.message || fini)); break; }
+        console.log('… ' + page + ' · ' + ecran.nom + ' : navigateur sans réponse, reprise avec un navigateur neuf');
+        try { await b.close(); } catch (e) { /* déjà fermé */ }
+        b = await chromium.launch();
+        if (essai === 2) ok(false, page + ' · ' + ecran.nom + ' : navigateur sans réponse deux fois');
       }
-      ok(!mauvais.size, page + ' · ' + ecran.nom + ' : textes sur photo lisibles' + [...mauvais.values()].map((r) => ' | « ' + r.texte + ' » ' + r.contraste.toFixed(2)).join(''));
-      await ctx.close();
     }
   }
 
