@@ -11,7 +11,12 @@ const RACINE = path.resolve(__dirname, '../..');
 const PORT = String(8700 + Math.floor(Math.random() * 90));
 let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m); if (!c) ko++; };
 // accueil « Magazine » (20/10/2026) : textes de la couverture et de la page « À la une »
-const TEXTES = ['.p-couv .numero span', '.p-couv .lignes .une', '#couv-nombre', '#couv-modele', '#couv-modele-nom', '.p-une .mag-rubrique', '#une-nom', '#une-info'];
+const TEXTES_ACCUEIL = ['.p-couv .numero span', '.p-couv .lignes .une', '#couv-nombre', '#couv-modele', '#couv-modele-nom', '.p-une .mag-rubrique', '#une-nom', '#une-info'];
+// article « à la une » des pages Actualités et Événements (20/10/2026 : titre resté en encre foncée sur
+// la photo, trouvé par la propriétaire)
+const TEXTES_UNE = ['.news-une-corps h2', '.news-une-corps .news-categorie', '.news-une-corps .news-date', '.news-une-corps p'];
+const CIBLES = [['index.html', TEXTES_ACCUEIL, 4], ['en/index.html', TEXTES_ACCUEIL, 4],
+  ['actualites.html', TEXTES_UNE, 3], ['en/actualites.html', TEXTES_UNE, 3], ['evenements.html', TEXTES_UNE, 2], ['en/evenements.html', TEXTES_UNE, 2]];  // (pas de catégorie sur un événement : 2 textes)
 const ecrans = [{ nom: 'téléphone', width: 390, height: 844 }, { nom: 'tablette', width: 1000, height: 1400 }, { nom: 'ordinateur', width: 1280, height: 900 }];
 
 function donnees() {
@@ -20,7 +25,8 @@ function donnees() {
       model_profiles: [{ id: 'a1', full_name: 'Bolli', city: 'Yopougon', height_cm: 180, category: 'femme', genre: 'femme', published: true, featured: true, slug: 'bolli' }],
       model_photos: [{ id: 'p1', model_id: 'a1', url: 'https://x/photo.jpg', principale: true, categorie: 'book' }],
       mot_responsable: [{ id: 'principal', nom: 'Maître Akesse', titre: 'DA', message: 'Chaque grand parcours commence par un rêve.', photo_url: 'https://x/photo.jpg' }],
-      actualites: [], evenements: [], partenaires: [], bandeau_annonce: [], instagram_posts_cache: [], admins: []
+      actualites: [{ id: 'n1', titre: 'Afrik Fashion Week 2026', contenu: '<p>Abidjan sur son 31.</p>', categorie: 'Événements', created_at: '2026-10-09T10:00:00Z', a_la_une: true, image_url: 'https://x/photo.jpg' }],
+      evenements: [{ id: 'e1', titre: 'Africa in Rhythm', contenu: '<p>La mode à l\'honneur.</p>', date_evenement: '2026-09-22', created_at: '2026-09-22T10:00:00Z', a_la_une: true, image_url: 'https://x/photo.jpg' }], partenaires: [], bandeau_annonce: [], instagram_posts_cache: [], admins: []
     },
     rpc: { photos_couverture_mannequins: [{ model_id: 'a1', url: 'https://x/photo.jpg' }] }
   };
@@ -31,7 +37,8 @@ function donnees() {
   let b = await chromium.launch();
   for (const photo of process.env.PAGES ? [] : ['photo-sombre.jpg', 'photo-rayures.jpg', 'photo-claire.jpg', 'photo-blanche.jpg']) {
     const image = fs.readFileSync(path.join(__dirname, 'medias', photo));
-    for (const page of ['index.html', 'en/index.html']) {
+    // CIBLES=actualites.html,evenements.html : seulement ces pages, et pas la 2e partie (pour corriger vite)
+    for (const [page, TEXTES, minimum] of CIBLES.filter((c) => !process.env.CIBLES || process.env.CIBLES.split(',').includes(c[0]))) {
       for (const ecran of ecrans) {
         const ctx = await b.newContext({ viewport: { width: ecran.width, height: ecran.height } });
         const p = await ctx.newPage();
@@ -75,7 +82,7 @@ function donnees() {
           ok(pire >= seuil, libelle + ' : « ' + sel + ' » lisible sur la photo (contraste ' + pire.toFixed(2) + ', minimum ' + seuil + ')');
           vus++;
         }
-        ok(vus >= 4, libelle + ' : les textes posés sur les photos ont bien été contrôlés (' + vus + ')');
+        ok(vus >= minimum, libelle + ' : les textes posés sur les photos ont bien été contrôlés (' + vus + ')');
         await ctx.close();
       }
     }
@@ -158,7 +165,7 @@ function donnees() {
     ok(!mauvais.size, page + ' · ' + ecran.nom + ' : textes sur photo lisibles' + [...mauvais.values()].map((r) => ' | « ' + r.texte + ' » ' + r.contraste.toFixed(2)).join(''));
     await ctx.close();
   }
-  for (const page of pages.filter((x) => !process.env.PAGES || process.env.PAGES.split(',').includes(x))) {
+  for (const page of pages.filter((x) => !process.env.CIBLES && (!process.env.PAGES || process.env.PAGES.split(',').includes(x)))) {
     // navigateur neuf pour chaque page : après des dizaines de pages dans le même navigateur, il
     // finissait par ne plus répondre (blocage du 20/10/2026 sur la fiche, au format tablette)
     await b.close(); b = await chromium.launch();

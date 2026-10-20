@@ -84,3 +84,6 @@ Le dossier `maquettes/` et ce fichier ne sont pas publiés (`.vercelignore`).
 - 20/10/2026, après la mise en ligne : la propriétaire aime le site ; à l'accueil, elle préfère que
   les pages ne se superposent plus : elles se suivent maintenant bord à bord, sans espace, et on les
   fait défiler normalement (plus de position: sticky).
+- 20/10/2026 (suite) : accueil en plein écran sur tous les appareils (doubles pages sur écran en
+  largeur), photos de couverture qui défilent en continu, titres lisibles sur les articles « à la une »
+  d'Actualités et d'Événements, plus de faux italique (« Qui sommes-nous »).

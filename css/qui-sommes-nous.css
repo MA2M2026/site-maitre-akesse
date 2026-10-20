@@ -47,12 +47,12 @@
   margin: 0.6rem 0 1.4rem;
   max-width: 14ch;
 }
-.qsn-ouverture h1 em { display: block; font-style: italic; color: var(--bordeaux-clair); }
+.qsn-ouverture h1 em { display: block; font-style: normal; color: var(--bordeaux-clair); }   /* édition « Magazine » : plus d'italique */
 .qsn-devise {
   display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.2rem 0.9rem;
   font-family: var(--texte);
   text-transform: uppercase;
-  letter-spacing: 0.32em;
+  letter-spacing: 0.14em;   /* comme les autres petits titres du site (édition « Magazine ») */
   font-size: clamp(0.82rem, 2.4vw, 1.05rem);
   color: var(--titre-clair);
   margin: 0 0 1rem;
@@ -90,7 +90,7 @@
   border: 1px solid var(--bordeaux); z-index: 0;
 }
 .qsn-portrait img { position: relative; z-index: 1; display: block; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; background: var(--noir-doux); }
-.qsn-portrait figcaption { position: relative; z-index: 1; margin-top: 1.8rem; font-family: var(--display); font-style: italic; font-size: 1.3rem; color: var(--titre-clair); }
+.qsn-portrait figcaption { position: relative; z-index: 1; margin-top: 1.8rem; font-family: var(--display); font-weight: 800; text-transform: uppercase; font-size: 1.5rem; color: var(--titre-clair); }
 .qsn-portrait:not(.avec-photo) { display: none; }
 .qsn-histoire-grille:has(.qsn-portrait:not(.avec-photo)) { grid-template-columns: 1fr; max-width: 52rem; }
 .qsn-histoire-texte p { color: var(--texte-corps); line-height: 1.8; }
@@ -98,7 +98,7 @@
   margin: 2.2rem 0 0; padding: 0 0 0 1.4rem;
   border-left: 2px solid var(--bordeaux-clair);
 }
-.qsn-citation p { font-family: var(--display); font-style: italic; font-size: clamp(1.3rem, 3vw, 1.7rem); line-height: 1.35; color: var(--titre-clair); margin: 0 0 0.8rem; }
+.qsn-citation p { font-family: var(--texte); font-weight: 500; font-size: clamp(1.15rem, 2.6vw, 1.45rem); line-height: 1.5; color: var(--titre-clair); margin: 0 0 0.8rem; }
 .qsn-citation footer { color: var(--texte-doux); font-size: 0.98rem; }
 
 /* ---------- 3. Pôles ---------- */
@@ -329,7 +329,7 @@
 }
 .qsn-bandeau-texte[data-sens="-1"] .qsn-bandeau-piste { margin-left: -100vw; }
 .qsn-bandeau-piste span {
-  font-family: var(--display); font-style: italic; font-weight: 500;
+  font-family: var(--display); font-weight: 800; text-transform: uppercase;
   font-size: clamp(3.2rem, 11vw, 9rem); line-height: 1;
   color: var(--encre); -webkit-text-stroke: 0;
   text-transform: uppercase; letter-spacing: 0.02em;

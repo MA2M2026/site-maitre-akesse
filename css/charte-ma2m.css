@@ -124,6 +124,11 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .profil-hero-contenu p { color: var(--c-fff) !important; font-weight: 600; text-shadow: 0 1px 10px var(--c-rgba-0-0-0-0_8) !important; }
 .profil-hero-contenu .eyebrow--clair { color: var(--c-fff); text-shadow: 0 1px 10px var(--c-rgba-0-0-0-0_8); }
 .profil-hero-contenu .eyebrow--clair::before { background: var(--c-fff); box-shadow: none; }
+/* (20/10/2026, signalé par la propriétaire : « Actualités, Événements : illisible ») — article « à la
+   une » des pages Actualités et Événements : titre et catégorie en BLANC sur l'ombre de la photo (le
+   titre était resté en encre foncée depuis le passage du site en clair). */
+.news-une .news-une-corps h2 { color: var(--c-fff) !important; text-shadow: 0 2px 18px var(--c-rgba-0-0-0-0_7) !important; }
+.news-une .news-une-corps .news-categorie { color: var(--c-fff); }
 /* téléphone : le texte occupe une plus grande part de l'image, l'ombre monte plus haut */
 @media (max-width: 700px) { .vedette-scrim, .mot-responsable-scrim { background: linear-gradient(to top, var(--c-rgba-0-0-0-0_8) 0%, var(--c-rgba-0-0-0-0_6) 45%, var(--c-rgba-0-0-0-0_25) 70%, var(--c-rgba-0-0-0-0) 88%) !important; } }
 /* vidéo de l'agence : image animée foncée, l'étiquette « Le film » reste en blanc sur une ombre */

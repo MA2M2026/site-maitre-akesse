@@ -178,6 +178,40 @@
     const moyenneDe = m => ((moyennes || []).find(x => x.model_id === m.id && x.url_miniature === m.photo && x.url_moyenne) || {}).url_moyenne;
     if (moyenneDe(couv)) photo(document.getElementById('couv-img'), moyenneDe(couv), couv.full_name, true);
     if (moyenneDe(une)) photo(document.getElementById('une-img'), moyenneDe(une), une.full_name);
+
+    defilerCouverture([couv].concat(autres.filter(m => m !== couv), une));
+  }
+
+  // --- Couverture : les photos de tous les mannequins défilent en continu (demande de la
+  // propriétaire, 20/10/2026), en fondu toutes les 5 s ; le nom « En couverture » suit. Deux
+  // images se relaient (#couv-img et #couv-img-2). Arrêt quand la couverture n'est pas à l'écran
+  // ou que l'onglet est caché (données mobiles), et pas de défilement si le visiteur a demandé
+  // moins d'animations. La version moyenne de chaque photo est demandée en une seule fois. ---
+  async function defilerCouverture(liste) {
+    if (liste.length < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const { data: photos } = await sb.from('model_photos').select('model_id, url_miniature, url_moyenne').in('model_id', liste.map(m => m.id));
+    const nette = m => ((photos || []).find(x => x.model_id === m.id && x.url_miniature === m.photo && x.url_moyenne) || {}).url_moyenne || m.photo;
+    const images = [document.getElementById('couv-img'), document.getElementById('couv-img-2')];
+    const couverture = document.getElementById('couverture');
+    const credit = document.getElementById('couv-modele');
+    let rang = 0, visible = true, jeton = 0;
+    if ('IntersectionObserver' in window) new IntersectionObserver(e => { visible = e[0].isIntersecting; }).observe(couverture);
+    setInterval(() => {
+      if (!visible || document.hidden) return;
+      // (une photo injoignable ne bloque rien : la suivante est demandée 5 s plus tard, et une
+      // réponse arrivée en retard est ignorée)
+      rang = (rang + 1) % liste.length;
+      const m = liste[rang], mien = ++jeton;
+      prechargerPhoto(urlLegere(nette(m)), ok => {
+        if (mien !== jeton) return;
+        const cachee = images.find(i => !i.classList.contains('visible'));
+        cachee.src = ok; cachee.alt = m.full_name || '';
+        images.forEach(i => i.classList.toggle('visible', i === cachee));
+        credit.href = fiche(m.id);
+        document.getElementById('couv-modele-nom').textContent = m.full_name || '';
+        credit.hidden = !m.full_name;
+      });
+    }, 5000);
   }
 
   // --- Édito : le mot de Maître Akesse quand il est rempli dans l'Administration ---

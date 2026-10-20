@@ -2805,7 +2805,17 @@ Administration, tableau de bord) ; aucune donnée n'a été modifiée.
   Le mode sombre de l'Administration (`:root.theme-auto`) et les couleurs d'état ne changent pas.
 - **Accueil** (`index.html`, `en/index.html`, `css/magazine.css`, `js/accueil.js`) : pages de magazine
   les unes sous les autres, bord à bord, qu'on fait défiler (d'abord « collées » et superposées ; changé le
-  20/10/2026 à la demande de la propriétaire : pas de superposition, pas d'espace entre les pages). Ordinateur et tablette : format 3:4 ;
+  20/10/2026 à la demande de la propriétaire : pas de superposition, pas d'espace entre les pages).
+  Chaque page prend TOUT l'écran (largeur, et hauteur sous la barre du haut) ; tailles en `cqmin`
+  (plus petit côté de la page) ; sur un écran en largeur, « doubles pages » (`@container (orientation:
+  landscape)` pour l'intérieur des pages, `@media (orientation: landscape)` pour la page elle-même).
+  Couverture : les photos de tous les mannequins défilent en fondu toutes les 5 s (`defilerCouverture`,
+  deux images `#couv-img` / `#couv-img-2`), arrêt hors écran, immobile si « moins d'animations ».
+  Essai : `test-couverture-accueil.js`.
+- **Polices partout** : `html { font-synthesis-style: none; }` (jetons) — pas de faux italique (nos polices
+  n'ont pas de version italique) ; « Qui sommes-nous » alignée sur le reste du site.
+- **Actualités / Événements** : titre et catégorie de l'article « à la une » en blanc sur la photo
+  (`css/charte-ma2m.css`) ; contrôlés par `test-lisibilite-photos.js` (photos d'essai très claires). Ordinateur et tablette : format 3:4 ;
   téléphone : hauteur de l'écran moins la place des boutons flottants, textes ≥ 12 px. Pages remplies
   depuis l'Administration ; pages en option (agenda, film, partenaires, Instagram) réservées d'une visite
   à l'autre (`localStorage ma2m_magazine_pages`) pour que la page ne saute pas au retour en arrière.

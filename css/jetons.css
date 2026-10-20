@@ -576,7 +576,6 @@
   --mag-voile-texte: rgba(0, 0, 0, 0.58);
   --mag-voile-plein: rgba(0, 0, 0, 0.85);
   --mag-voile-nul: rgba(0, 0, 0, 0);
-  --mag-ombre-page: 18px 0 34px -24px rgba(27, 24, 23, 0.4), -18px 0 34px -24px rgba(27, 24, 23, 0.4);
   --mag-attente: #B9AFA4;        /* cadre photo en cours de chargement */
   --mag-carte: #F8F5F1;          /* cartes, formulaires, en-tête et pied de page sur le papier */
   --mag-papier-fonce: #E6DFD6;   /* zones grisées, survol */
@@ -600,3 +599,7 @@
   --police: var(--mag-texte);
   --police-titre: var(--mag-titre);
 }
+/* Pas de faux italique : nos polices n'ont pas de version italique ; un texte « en italique » reste droit
+   au lieu d'être penché artificiellement par le navigateur (demande de la propriétaire, 20/10/2026 :
+   « Qui sommes-nous » semblait écrit dans une autre police). */
+html { font-synthesis-style: none; }
