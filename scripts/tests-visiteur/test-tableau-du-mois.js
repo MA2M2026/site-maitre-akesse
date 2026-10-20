@@ -85,7 +85,8 @@ function donnees(role) {
     const vide = await t();
     ok(/Le tableau est vide/.test(vide) && !/ROXANE/.test(vide.replace(/Choisir un mannequin.*/, '')) || /Le tableau est vide/.test(vide), nomEcran + ' : le tableau démarre vide');
     ok((await p.$$('#suivi-choix option')).length >= 3, nomEcran + ' : la liste déroulante propose les mannequins');
-    for (const [page, mot] of [['recapitulatif', /Récapitulatif/], ['matrice', /Matrice/], ['mensualites', /Mensualités/], ['messages', /Messages/]]) {
+    // (titres de page en capitales depuis la refonte « Magazine » du 20/10/2026 : comparaison sans tenir compte des majuscules)
+    for (const [page, mot] of [['recapitulatif', /Récapitulatif/i], ['matrice', /Matrice/i], ['mensualites', /Mensualités/i], ['messages', /Messages/i]]) {
       await p.evaluate((h) => { location.hash = '#/paiements/' + h; }, page); await p.waitForTimeout(900);
       const tp = await t();
       ok(mot.test(tp) && /Aucun mannequin suivi pour l’instant/.test(tp) && !/KONÉ AWA|ROXANE/.test(tp.replace(/Aucun mannequin suivi.*/, '')) || (mot.test(tp) && /Aucun mannequin suivi/.test(tp)), nomEcran + ' : « ' + page + ' » ne montre aucun mannequin tant que personne n’est suivi, et le dit');
@@ -109,7 +110,7 @@ function donnees(role) {
     ok(/Ont payé\s*1/i.test(tr) && /N’ont pas payé\s*3/i.test(tr), nomEcran + ' : le récapitulatif compte les mêmes mannequins que le tableau du mois (1 ont payé, 3 non) ' + tr.slice(0, 160));
     await p.evaluate(() => { location.hash = '#/paiements/tableau'; }); await p.waitForTimeout(900);
     const tx = await t();
-    ok(/Tableau du mois/.test(tx), nomEcran + ' : titre = le mois');
+    ok(/Tableau du mois/i.test(tx), nomEcran + ' : titre = le mois');
     const val = async (lib) => (await p.$$eval('.carte.chiffre', (l, x) => { const c = l.find((y) => y.querySelector('.l').textContent.trim() === x); return c ? c.querySelector('.v').textContent.replace(/\s|\u202f|\u00a0/g, '') : null; }, lib));
     ok(/^50000/.test(await val('Attendu')), nomEcran + ' : Attendu = 50 000 (4 actifs, le sorti est exclu) ' + await val('Attendu'));
     ok(/^10000/.test(await val('Validé')), nomEcran + ' : Validé = 10 000');
