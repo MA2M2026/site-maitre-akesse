@@ -19,7 +19,7 @@
 //   - une page plus large que l'écran (ce qui permettait de dézoomer et de balayer
 //     l'accueil sur le côté, 28 septembre 2026), avec l'élément responsable ;
 //   - (29 septembre 2026, demande de la propriétaire : « détecter tout, et dire
-//     précisément où ») : zoom automatique ou inattendu de l'écran, affichage qui
+//     précisément où ») : zoom automatique sur un champ de formulaire, affichage qui
 //     saute, page figée, page restée vide, clics répétés sur un bouton qui ne
 //     réagit pas. Chaque signalement indique aussi l'appareil, la taille d'écran,
 //     le zoom, une éventuelle coupure de connexion et le dernier élément cliqué.
@@ -363,6 +363,9 @@
   function verifierDebordement() {
     try {
       if (/^\/outils\//.test(location.pathname)) return; // affiches à imprimer, larges par nature
+      // pendant un zoom du visiteur, les mesures ne veulent rien dire (20/10/2026 : en-tête
+      // « décalé de 27 px » pendant un zoom) ; la page sera mesurée à la prochaine occasion
+      if (window.visualViewport && Math.abs(window.visualViewport.scale - 1) > 0.05) return;
       const largeur = document.documentElement.clientWidth;
       if (!largeur) return;
       const elements = document.body ? document.body.getElementsByTagName('*') : [];
@@ -416,33 +419,21 @@
     } catch (x) {}
   }, true);
 
-  // --- Zoom de l'écran qui change tout seul ---
-  // Cas classique : sur iPhone, toucher un champ de formulaire dont le texte fait
-  // moins de 16 px fait zoomer la page automatiquement (et elle reste zoomée). On
-  // signale aussi tout zoom qui change sans que le visiteur ait touché l'écran.
-  // Un pincement ou un double-tap du visiteur (geste volontaire) est ignoré.
+  // --- Zoom automatique sur un champ de formulaire ---
+  // Cas classique : sur iPhone, toucher un champ de formulaire dont le texte fait moins de
+  // 16 px fait zoomer la page automatiquement (et elle reste zoomée). Un pincement du visiteur
+  // (geste volontaire) est ignoré. Le « zoom inattendu » (zoom sans geste repéré) n'est plus
+  // signalé (20/10/2026) : la propriétaire zoome souvent elle-même (doigts, clavier, menu du
+  // navigateur) et le journal le comptait en erreur.
   const vv = window.visualViewport;
   const tactile = navigator.maxTouchPoints > 0 || 'ontouchstart' in window;
   if (vv && tactile) {
-    let dernierToucher = 0;
     let pincement = false;
     let echelle = vv.scale;
-    let zoomDejaSignale = false;
-    // Autres gestes volontaires (30/09, Journal 18:37) : pincement sur le pavé tactile
-    // ou Ctrl + molette (le navigateur les transmet comme une molette avec « Ctrl »),
-    // touches du clavier, et retour d'une autre fenêtre (choix d'une vidéo, d'une
-    // photo : le téléphone rétablit parfois le zoom en revenant sur la page).
-    document.addEventListener('wheel', function (e) { if (e.ctrlKey) dernierToucher = Date.now(); }, { passive: true, capture: true });
-    document.addEventListener('keydown', function () { dernierToucher = Date.now(); }, true);
-    document.addEventListener('visibilitychange', function () { dernierToucher = Date.now(); });
-    window.addEventListener('focus', function () { dernierToucher = Date.now(); });
-    document.addEventListener('change', function (e) { if (e.target && e.target.type === 'file') dernierToucher = Date.now(); }, true);
     document.addEventListener('touchstart', function (e) {
-      dernierToucher = Date.now();
       if (e.touches && e.touches.length > 1) pincement = true;
     }, { passive: true, capture: true });
     document.addEventListener('touchend', function (e) {
-      dernierToucher = Date.now();
       if (!e.touches || e.touches.length === 0) setTimeout(function () { pincement = false; }, 1000);
     }, { passive: true, capture: true });
     vv.addEventListener('resize', function () {
@@ -462,11 +453,6 @@
               'Le téléphone a zoomé tout seul quand le visiteur a touché ce champ : son texte fait moins de 16 px (règle des iPhone). Zoom ×' + s.toFixed(2));
             return;
           }
-        }
-        if (Date.now() - dernierToucher > 5000 && !zoomDejaSignale) {
-          zoomDejaSignale = true; // un seul signalement par page (un zoom progressif en faisait 10)
-          signaler('Zoom inattendu', location.pathname + ' : zoom passé à ×' + s.toFixed(2) + ' sans geste du visiteur',
-            'Élément actif : ' + (actif && actif !== document.body ? decrireElement(actif) : 'aucun'));
         }
       } catch (x) {}
     });
@@ -522,13 +508,20 @@
       finally { momentsExcuses.push([t0, performance.now() + (nom === 'open' ? 3000 : 500)]); }
     };
   });
+  // Impression (reçu en PDF…) : la fenêtre d'impression du navigateur fige aussi la page
+  // (journal du 14/10/2026 : « bloquée 21 s » après « Télécharger mon reçu »).
+  let debutImpression = null;
+  window.addEventListener('beforeprint', function () { debutImpression = performance.now(); });
+  window.addEventListener('afterprint', function () {
+    if (debutImpression !== null) { momentsExcuses.push([debutImpression, performance.now() + 1000]); debutImpression = null; }
+  });
   let debutCache = null;
   document.addEventListener('visibilitychange', function () {
     if (document.visibilityState === 'hidden') debutCache = performance.now();
     else if (debutCache !== null) { momentsExcuses.push([debutCache, performance.now() + 1000]); debutCache = null; }
   });
   function blocageExcuse(debut, fin) {
-    if (debutCache !== null) return true;
+    if (debutCache !== null || debutImpression !== null) return true;
     return momentsExcuses.some(function (m) { return m[0] < fin && m[1] > debut; });
   }
   if (typesMesures.indexOf('longtask') !== -1) {
@@ -558,7 +551,10 @@
       if (texte.length < 30) {
         signaler('Page vide', location.pathname + ' : presque aucun texte affiché 8 s après l\'ouverture', 'Texte visible : « ' + texte + ' »');
       }
-      if (vv && tactile && vv.scale < 0.95) {
+      // seulement si le contenu dépasse vraiment de l'écran : un dézoom choisi par le visiteur
+      // (ou le mode « version ordinateur ») n'est pas une erreur du site (20/10/2026)
+      const deborde = document.documentElement.scrollWidth > document.documentElement.clientWidth + 2;
+      if (vv && tactile && vv.scale < 0.95 && deborde) {
         signaler('Page dézoomée', location.pathname + ' : la page s\'affiche dézoomée (×' + vv.scale.toFixed(2) + ')',
           'Le contenu est plus large que l\'écran : le téléphone a réduit la page pour tout faire tenir.');
       }

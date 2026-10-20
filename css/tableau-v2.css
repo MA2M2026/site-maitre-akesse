@@ -173,6 +173,10 @@ html body.tdb-v2 .db-main .db-hero-link:hover { background: var(--v2-chip) !impo
 /* Une rubrique à la fois : les grilles prévues pour plusieurs panneaux côte à côte prennent toute la largeur. */
 html body.tdb-v2 .db-main .ref-core-grid, html body.tdb-v2 .db-main .ref-lower-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)) !important; }
 html body.tdb-v2 .db-main .ref-core-grid > *, html body.tdb-v2 .db-main .ref-lower-grid > * { grid-column: auto !important; grid-row: auto !important; }
+/* (20/10/2026, journal : « Inscriptions mannequins » dépassait de 75 à 114 px sur tablette de 800 px)
+   un bloc de grille ne s'élargit plus à la taille de son plus long texte (adresse e-mail…) */
+html body.tdb-v2 .db-main .ref-core-grid > *, html body.tdb-v2 .db-main .ref-lower-grid > * { min-width: 0; }
+html body.tdb-v2 .db-main .dossier-carte { min-width: 0; overflow-wrap: anywhere; }
 html body.tdb-v2 .db-main .ref-lower-grid { grid-template-columns: 1fr !important; }
 
 

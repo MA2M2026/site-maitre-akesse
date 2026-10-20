@@ -47,7 +47,7 @@
         (mineur() ? ligne(T('Parent ou tuteur', 'Parent or guardian'), c.parent_nom) + ligne(T('Téléphone du parent', 'Parent’s phone'), c.parent_telephone) : '') +
         ligne(T('Casting', 'Casting'), c.casting) + '</div>' +
         (mineur() && !(c.parent_nom && c.parent_telephone) ? '<div class="inn-note">' + T('Mineur : le nom et le téléphone du parent sont obligatoires. Touchez « Non, corriger ».', 'Minor: the parent’s name and phone are required. Tap “No, correct”.') + '</div>' : '') +
-        '<p style="font-weight:700;margin:0">' + T('Ces informations sont-elles exactes ?', 'Is this information correct?') + '</p>' +
+        '<p class="inn-question">' + T('Ces informations sont-elles exactes ?', 'Is this information correct?') + '</p>' +
         '<button class="btn btn--principal" type="button" data-a="oui"' + (mineur() && !(c.parent_nom && c.parent_telephone) ? ' disabled' : '') + '>' + T('Oui, continuer', 'Yes, continue') + '</button>' +
         '<button class="btn" type="button" data-a="corriger">' + T('Non, corriger', 'No, correct') + '</button></div>';
     }
@@ -66,7 +66,7 @@
     etapes(3);
     return '<div class="inn-carte"><div><div class="inn-surtitre">' + T('Étape 2 sur 3', 'Step 2 of 3') + '</div><h2>' + T('Règlement et paiement', 'Rules and payment') + '</h2></div>' +
       (E.note ? '<a class="btn" href="' + esc(E.note) + '" target="_blank" rel="noopener">' + T('Lire le règlement (PDF)', 'Read the rules (PDF)') + '</a>' : '') +
-      '<div><div class="inn-surtitre" style="margin-bottom:0.4rem">' + T('Moyen de paiement', 'Payment method') + '</div><div class="inn-operateurs">' +
+      '<div><div class="inn-surtitre inn-surtitre--serre">' + T('Moyen de paiement', 'Payment method') + '</div><div class="inn-operateurs">' +
       '<span class="inn-op actif">Wave</span><span class="inn-op bientot">Orange Money · ' + T('bientôt', 'soon') + '</span><span class="inn-op bientot">MTN Money · ' + T('bientôt', 'soon') + '</span><span class="inn-op bientot">Moov Money · ' + T('bientôt', 'soon') + '</span></div></div>' +
       (mineur() ? '<label class="inn-case" for="inn-parent"><input id="inn-parent" type="checkbox"' + (E.parent ? ' checked' : '') + '><span>' +
         T('Je suis ' + esc(E.c.parent_nom) + ', parent ou tuteur légal, et j’autorise cette inscription.', 'I am ' + esc(E.c.parent_nom) + ', parent or legal guardian, and I authorise this registration.') + '</span></label>' : '') +

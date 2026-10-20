@@ -43,6 +43,9 @@ if (EN) [...document.getElementById('ca-commune').options].forEach(o => {
 function afficherMsg(el, texte, type) {
   el.className = 'form-msg ' + type;
   el.textContent = texte;
+  // le message ramené à l'écran : sur un petit téléphone, il restait hors de vue et le visiteur
+  // tapait « Envoyer » encore et encore sans savoir pourquoi rien ne partait (journal du 19/10/2026)
+  if (typeof el.scrollIntoView === 'function') el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
 
 // --- Projet/casting concerné : liste des castings actifs. S'il n'y en a aucun,

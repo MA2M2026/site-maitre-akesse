@@ -546,7 +546,9 @@ async function rattraperPhotosEnArrierePlan() {
     const mini = miniatureAFaire(photo), moyenne = moyenneAFaire(photo);
     if (!mini && !moyenne) continue;  // plus rien à faire sans WebP
     try {
-      const reponse = await fetch(photo.url);
+      // par le relais de la même adresse (20/10/2026 : depuis admin.…, l'adresse www enregistrée
+      // en base était refusée par la sécurité du navigateur, connect-src)
+      const reponse = await fetch(photo.url.replace(RELAIS_PHOTOS, '/book-photos/'));
       if (!reponse.ok) throw new Error('Téléchargement échoué (HTTP ' + reponse.status + ')');
       const original = await reponse.blob();
       const maj = {};

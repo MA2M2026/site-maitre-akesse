@@ -19,6 +19,8 @@ const CASTINGS = {
     for (const code of ['MA2M-ADULTE', 'MA2M-ENFANT']) {
       const ctx = await b.newContext({ viewport: vp }); const p = await ctx.newPage(); const errs = [], journal = [];
       p.on('pageerror', e => errs.push(e.message));
+      // refus de la sécurité du navigateur (CSP), ex. style="…" écrit par le script (journal du 20/10/2026)
+      p.on('console', m => { if (/Content Security Policy/.test(m.text())) errs.push('CSP : ' + m.text().slice(0, 160)); });
       let essais = 3;
       await brancher(p, { tables: {}, rpc: { lien_paiement: () => 'https://pay.wave.com/m/PARAMETRES/c/ci/?amount=25000' }, api: { '/api/code-protege': (c) => {
         const k = CASTINGS[c.code];
