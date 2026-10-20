@@ -20,6 +20,41 @@
   mag.querySelectorAll('.mag-date').forEach(el => { el.textContent = edition; });
   mag.querySelectorAll('.mag-signature-folio').forEach(el => { el.textContent = 'MA2M · ' + edition; });
 
+  // --- Pages en option (agenda, film, partenaires, Instagram) : leur place est réservée dès
+  // l'ouverture si elles étaient affichées à la visite précédente (sinon, en revenant en arrière
+  // en bas de l'accueil, leur arrivée ferait sauter la page). Une page réservée qui n'a plus de
+  // contenu se retire dès qu'on le sait, et au plus tard 8 s après le chargement. ---
+  const OPTIONS = ['agenda', 'video-accueil', 'ils-nous-font-confiance', 'flux-instagram'];
+  const SOUVENIR = 'ma2m_magazine_pages';
+  const pageOption = id => document.getElementById(id);
+  function retenir() {
+    const affichees = OPTIONS.filter(id => { const p = pageOption(id); return p && !p.hidden && !p.classList.contains('u-hidden') && !p.dataset.reservee; });
+    try { localStorage.setItem(SOUVENIR, JSON.stringify(affichees)); } catch (e) { /* stockage bloqué */ }
+  }
+  function confirmer(id, aDuContenu) {
+    const p = pageOption(id);
+    if (!p) return;
+    if (aDuContenu) { p.hidden = false; p.classList.remove('u-hidden'); } else if (p.dataset.reservee) { p.hidden = true; }
+    delete p.dataset.reservee;
+    retenir();
+  }
+  try {
+    JSON.parse(localStorage.getItem(SOUVENIR) || '[]').filter(id => OPTIONS.includes(id)).forEach(id => {
+      const p = pageOption(id);
+      if (p) { p.hidden = false; p.classList.remove('u-hidden'); p.dataset.reservee = '1'; }
+    });
+  } catch (e) { /* stockage bloqué ou illisible */ }
+  // agenda (js/agenda.js) et film (js/video-accueil.js) ont leurs propres scripts : on regarde
+  // s'ils ont mis du contenu
+  new MutationObserver(() => { if (document.getElementById('agenda-accueil').children.length) confirmer('agenda', true); })
+    .observe(document.getElementById('agenda-accueil'), { childList: true });
+  new MutationObserver(() => { if (pageOption('video-accueil').dataset.confirme) confirmer('video-accueil', true); })
+    .observe(pageOption('video-accueil'), { attributes: true, attributeFilter: ['data-confirme', 'class'] });
+  window.addEventListener('load', () => setTimeout(() => {
+    OPTIONS.forEach(id => { const p = pageOption(id); if (p && p.dataset.reservee) confirmer(id, false); });
+    retenir();
+  }, 8000));
+
   // --- Numéros de page et sommaire : suivent les pages réellement affichées ---
   const visible = p => !p.hidden && !p.classList.contains('u-hidden');
   function numeroter() {
@@ -59,10 +94,13 @@
     window.scrollTo({ top: y, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   });
 
+  // (la dernière photo demandée pour une image gagne : une miniature en retard ne remplace pas
+  // la version moyenne arrivée avant elle)
   function photo(img, url, nom, prioritaire) {
     if (!img || !url) return;
     img.alt = nom || '';
-    prechargerPhoto(urlLegere(url), ok => { img.src = ok; }, !!prioritaire);
+    img.dataset.voulue = url;
+    prechargerPhoto(urlLegere(url), ok => { if (img.dataset.voulue === url) img.src = ok; }, !!prioritaire);
   }
   const fiche = id => 'mannequin.html?id=' + encodeURIComponent(id);
   const categorie = c => c === 'homme' ? T('Homme', 'Male') : c === 'femme' ? T('Femme', 'Female') : 'New Face';
@@ -83,7 +121,7 @@
     const { data: profils } = await sb.from('model_profiles')
       .select('id, full_name, city, category, height_cm, featured')
       .eq('published', true).order('created_at', { ascending: false }).limit(200);
-    if (!profils || !profils.length) return;
+    if (!profils || !profils.length) { ['femmes', 'hommes', 'a-la-une'].forEach(id => { document.getElementById(id).hidden = true; }); return; }
     const nombre = document.getElementById('couv-nombre');
     nombre.textContent = profils.length > 1
       ? T(profils.length + ' mannequins à découvrir', profils.length + ' models to discover')
@@ -94,7 +132,7 @@
     const photoDe = {};
     (couvertures || []).forEach(c => { if (c.url) photoDe[c.model_id] = c.url; });
     const avecPhoto = profils.filter(p => photoDe[p.id]).map(p => Object.assign({ photo: photoDe[p.id] }, p));
-    if (!avecPhoto.length) return;
+    if (!avecPhoto.length) { ['femmes', 'hommes', 'a-la-une'].forEach(id => { document.getElementById(id).hidden = true; }); return; }
 
     // À la une : la mannequin choisie dans l'Administration, sinon la plus récente
     const une = avecPhoto.find(p => p.featured) || avecPhoto[0];
@@ -103,12 +141,12 @@
     photo(document.getElementById('une-img'), une.photo, une.full_name);
     document.getElementById('une-nom').textContent = une.full_name || T('Mannequin', 'Model');
     document.getElementById('une-info').textContent = [categorie(une.category), une.city, une.height_cm ? une.height_cm + ' cm' : null].filter(Boolean).join(' · ');
-    document.getElementById('a-la-une').hidden = false;
 
     // Couverture : une autre mannequin à chaque visite
     const autres = melanger(avecPhoto.filter(p => p.id !== une.id));
     const couv = autres[0] || une;
     photo(document.getElementById('couv-img'), couv.photo, couv.full_name, true);
+
     const credit = document.getElementById('couv-modele');
     credit.href = fiche(couv.id);
     document.getElementById('couv-modele-nom').textContent = couv.full_name || '';
@@ -132,6 +170,13 @@
     });
     const edito = document.getElementById('edito-img');
     if (!edito.dataset.mot) { const m = reste[3 % reste.length] || une; photo(edito, m.photo, m.full_name); }
+
+    // Couverture et « À la une » sont en pleine page : la version moyenne de la même photo
+    // (plus nette que la miniature de 800 px) remplace la miniature dès qu'elle est connue.
+    const { data: moyennes } = await sb.from('model_photos').select('model_id, url_miniature, url_moyenne').in('model_id', [couv.id, une.id]);
+    const moyenneDe = m => ((moyennes || []).find(x => x.model_id === m.id && x.url_miniature === m.photo && x.url_moyenne) || {}).url_moyenne;
+    if (moyenneDe(couv)) photo(document.getElementById('couv-img'), moyenneDe(couv), couv.full_name, true);
+    if (moyenneDe(une)) photo(document.getElementById('une-img'), moyenneDe(une), une.full_name);
   }
 
   // --- Édito : le mot de Maître Akesse quand il est rempli dans l'Administration ---
@@ -184,12 +229,12 @@
     if (typeof sb === 'undefined' || !sb) return;
     const { data } = await sb.from('partenaires').select('id, nom, logo_url').order('created_at', { ascending: false }).limit(14);
     const avecLogo = (data || []).filter(p => p.logo_url).slice(0, 9);
-    if (!avecLogo.length) return;
+    if (!avecLogo.length) { confirmer('ils-nous-font-confiance', false); return; }
     document.getElementById('confiance-liste').innerHTML = avecLogo.map(p => `
       <a href="partenaires.html?partenaire=${encodeURIComponent(p.id)}" title="${echapperHtml(p.nom || '')}">
         <img src="${echapperHtml(urlLegere(p.logo_url))}" alt="${echapperHtml(p.nom || '')}" loading="lazy">
       </a>`).join('');
-    document.getElementById('ils-nous-font-confiance').hidden = false;
+    confirmer('ils-nous-font-confiance', true);
   }
 
   // --- Instagram : publications mises en cache depuis le tableau de bord ---
@@ -197,12 +242,12 @@
     if (typeof sb === 'undefined' || !sb) return;
     const { data } = await sb.from('instagram_posts_cache').select('posts').eq('id', 'principal').maybeSingle();
     const posts = data && Array.isArray(data.posts) ? data.posts.filter(p => p && p.image) : [];
-    if (!posts.length) return;
+    if (!posts.length) { confirmer('flux-instagram', false); return; }
     document.getElementById('instagram-grille').innerHTML = posts.slice(0, 9).map(p => `
       <a href="${echapperHtml(/^https:\/\//i.test(p.lien || '') ? p.lien : 'https://www.instagram.com/maitreakessemodelmanagement')}" target="_blank" rel="noopener" title="${echapperHtml(p.legende || '')}">
         <img src="${echapperHtml(p.image)}" alt="${echapperHtml(p.legende || T('Publication Instagram', 'Instagram post'))}" loading="lazy">
       </a>`).join('');
-    document.getElementById('flux-instagram').hidden = false;
+    confirmer('flux-instagram', true);
   }
 
   [chargerMannequins, chargerMotResponsable, chargerCastingsOuverts, chargerBandeauAnnonce, chargerPartenaires, chargerInstagram]

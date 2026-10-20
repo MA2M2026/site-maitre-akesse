@@ -27,7 +27,7 @@
     border: 1px solid var(--rouge-ma2m) !important;
     color: var(--c-fff) !important;
     -webkit-text-fill-color: var(--c-fff) !important;
-    border-radius: 10px !important;
+    border-radius: var(--bouton-rayon, 10px) !important;
     box-shadow: 0 10px 22px -10px var(--c-rgba-200-16-46-0_55) !important;
     font-family: var(--police) !important;
     font-weight: 600 !important;
@@ -101,7 +101,7 @@
   /* Bouton « Choisir un fichier » du navigateur */
   input[type="file"]::file-selector-button {
     background: var(--rouge-ma2m) !important; color: var(--c-fff) !important; border: 0 !important;
-    border-radius: 10px !important; padding: 0.6rem 1.1rem; margin-right: 0.8rem;
+    border-radius: var(--bouton-rayon, 10px) !important; padding: 0.6rem 1.1rem; margin-right: 0.8rem;
     font-family: var(--police); font-weight: 600; cursor: pointer;
   }
   input[type="file"]::file-selector-button:hover { background: var(--rouge-ma2m-survol) !important; }

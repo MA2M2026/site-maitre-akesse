@@ -8,8 +8,9 @@ html body.tdb-v2 {
   --noir: var(--c-f6f2ee); --noir-doux: var(--c-ffffff); --anthracite: var(--c-ffffff);
   --texte-corps: var(--c-1f1a18); --texte-doux: var(--c-4f4743); --titre-clair: var(--c-0f0b0a);
   --gris: var(--c-4f4743); --gris-clair: var(--c-ddd3cb);
-  --v2-fond: var(--c-ece6e0); --v2-carte: var(--c-ffffff); --v2-bord: var(--c-d6cbc1); --v2-texte: var(--c-1f1a18);
-  --v2-doux: var(--c-514944); --v2-titre: var(--c-0f0b0a); --v2-accent: var(--c-8c1a2c); --v2-accent-clair: var(--c-a3243a);
+  --v2-fond: var(--mag-papier); --v2-carte: var(--mag-carte); --v2-bord: var(--mag-lignes); --v2-texte: var(--mag-encre);
+  --texte: var(--mag-texte);  /* édition « Magazine » (20/10/2026) */
+  --v2-doux: var(--mag-gris); --v2-titre: var(--mag-encre); --v2-accent: var(--rouge-ma2m); --v2-accent-clair: var(--rouge-ma2m-texte);
   --v2-chip: var(--c-rgba-163-36-58-_09);
   --v2-ombre: 0 1px 2px var(--c-rgba-30-15-10-_07);
   background: var(--v2-fond) !important;
@@ -298,7 +299,7 @@ html body.tdb-v2 .db-profil-avatar-vide { border-radius: 11px !important; width:
 
 /* Titre de page */
 html body.tdb-v2 .v2-entete { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 24px !important; }
-html body.tdb-v2 .v2-entete h1 { margin: 0; font: 600 2.25rem/1.1 'Cormorant Garamond', Georgia, serif; color: var(--v2-titre); letter-spacing: 0; text-transform: none; }
+html body.tdb-v2 .v2-entete h1 { margin: 0; font: 800 2.6rem/1 var(--mag-titre); text-transform: uppercase; color: var(--v2-titre); letter-spacing: 0.01em; }
 html body.tdb-v2 .v2-entete p { margin: 6px 0 0; font: 400 15px var(--texte, 'Jost', sans-serif); color: var(--c-3a3330); }
 html body.tdb-v2 .v2-entete-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 html body.tdb-v2 .v2-action { border: 1px solid var(--c-d6cbc2); background: var(--v2-carte); color: var(--v2-titre); border-radius: 999px; padding: 11px 20px; font: 600 14.5px var(--texte, 'Jost', sans-serif); cursor: pointer; box-shadow: 0 1px 2px var(--c-rgba-60-30-20-_06); }
@@ -400,7 +401,7 @@ html body.tdb-v2 #bloc-tableau, html body.tdb-v2 #bloc-tableau button, html body
 html body.tdb-v2 .v2-bloc { box-shadow: 0 1px 3px var(--c-rgba-30-15-10-_1); border-color: var(--c-cfc3b9); color: var(--c-000); }
 html body.tdb-v2 .v2-bloc.actif, html body.tdb-v2 .v2-action-principale, html body.tdb-v2 .db-main .btn--principal,
 html body.tdb-v2 .db-main .btn.btn--principal, html body.tdb-v2 .db-main .filtre-pill.actif { background: linear-gradient(180deg, var(--c-b01f3b), var(--c-8a1228)) !important; border-color: var(--c-7d0f23) !important; }
-html body.tdb-v2 .v2-entete h1 { font-weight: 700; color: var(--c-000); }
+html body.tdb-v2 .v2-entete h1 { font-weight: 800; color: var(--v2-titre); }
 html body.tdb-v2 .v2-entete p, html body.tdb-v2 .v2-carte small, html body.tdb-v2 .v2-alerte, html body.tdb-v2 .v2-res-detail,
 html body.tdb-v2 .db-main p, html body.tdb-v2 .db-main li, html body.tdb-v2 .db-main td, html body.tdb-v2 .db-main .dc-meta,
 html body.tdb-v2 .db-main .timeline-texte, html body.tdb-v2 .db-main .at-label { font-weight: 500 !important; }

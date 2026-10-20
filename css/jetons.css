@@ -573,10 +573,30 @@
   --mag-rouge: var(--rouge-ma2m);
   --mag-sur-photo: #FFFFFF;      /* texte posé sur une photo */
   --mag-voile-fort: rgba(0, 0, 0, 0.72);
-  --mag-voile-moyen: rgba(0, 0, 0, 0.38);
+  --mag-voile-texte: rgba(0, 0, 0, 0.58);
+  --mag-voile-plein: rgba(0, 0, 0, 0.85);
   --mag-voile-nul: rgba(0, 0, 0, 0);
   --mag-ombre-page: 0 -12px 50px rgba(27, 24, 23, 0.22);
   --mag-attente: #B9AFA4;        /* cadre photo en cours de chargement */
+  --mag-carte: #F8F5F1;          /* cartes, formulaires, en-tête et pied de page sur le papier */
+  --mag-papier-fonce: #E6DFD6;   /* zones grisées, survol */
+  --mag-lignes: #D3C9BD;         /* bordures et séparateurs sur le papier */
   --mag-titre: 'Big Shoulders Display', 'Arial Narrow', system-ui, sans-serif;
   --mag-texte: 'Work Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+/* ===== Édition « Magazine » partout (20/10/2026) : les couleurs et polices de base du site ET de
+   l'Administration deviennent celles du magazine (demande de la propriétaire : « le nouveau style
+   doit s'appliquer à tout », Administration comprise). Les couleurs d'état (payé, en attente,
+   non payé…) et le mode sombre de l'Administration (:root.theme-auto, plus haut) ne changent pas. */
+:root {
+  --fond: var(--mag-papier);
+  --surface: var(--mag-carte);
+  --surface-douce: var(--mag-papier-fonce);
+  --encre: var(--mag-encre);
+  --encre-douce: var(--mag-gris);
+  --lignes: var(--mag-lignes);
+  --sombre: var(--mag-encre);
+  --police: var(--mag-texte);
+  --police-titre: var(--mag-titre);
 }

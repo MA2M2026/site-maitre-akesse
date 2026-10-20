@@ -92,7 +92,9 @@
 .p-couv .mag-cadre img { object-position: 50% 25%; }
 .p-couv::after {
   content: ""; position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(to bottom, var(--mag-voile-moyen), var(--mag-voile-nul) 28%, var(--mag-voile-nul) 50%, var(--mag-voile-fort));
+  /* voile sombre sous les textes (en haut : date ; en bas : titres de couverture) — lisibles même
+     sur une photo très claire (test-lisibilite-photos.js) */
+  background: linear-gradient(to bottom, var(--mag-voile-fort) 0%, var(--mag-voile-fort) 26%, var(--mag-voile-texte) 33%, var(--mag-voile-nul) 42%, var(--mag-voile-nul) 46%, var(--mag-voile-texte) 60%, var(--mag-voile-fort) 76%, var(--mag-voile-plein) 100%);
 }
 .p-couv > *:not(.mag-cadre) { position: absolute; z-index: 2; }
 .p-couv .tete { top: 3cqw; left: 5cqw; right: 5cqw; text-align: center; }
@@ -122,7 +124,7 @@
 }
 .p-couv .modele strong {
   display: block; font-family: var(--mag-titre); font-weight: 700; text-transform: uppercase;
-  font-size: max(18px, 4.6cqw); line-height: 1; margin-top: 0.8cqw;
+  font-size: max(20px, 4.6cqw); line-height: 1; margin-top: 0.8cqw;
 }
 
 /* ---- 2 · Sommaire ---- */
@@ -193,7 +195,7 @@
 .p-une > a { position: absolute; inset: 0; text-decoration: none; }
 .p-une .mag-cadre { position: absolute; inset: 0; }
 .p-une .mag-cadre img { object-position: 50% 20%; }
-.p-une > a::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, var(--mag-voile-fort), var(--mag-voile-nul) 50%); }
+.p-une > a::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, var(--mag-voile-plein) 0%, var(--mag-voile-fort) 30%, var(--mag-voile-texte) 44%, var(--mag-voile-nul) 62%); }
 .p-une .bas-une { position: absolute; z-index: 2; left: 6cqw; right: 6cqw; bottom: 9cqw; }
 .p-une .mag-rubrique { color: var(--mag-sur-photo); }
 .p-une .mag-titre { font-size: max(40px, 13cqw); margin-top: 1.5cqw; overflow-wrap: anywhere; }

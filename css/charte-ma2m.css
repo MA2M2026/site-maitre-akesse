@@ -189,3 +189,29 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--rouge-ma2m); }
 
 /* Menu clair : téléphones du bloc contact en encre (l'Espace mannequin les avait en clair) */
 html body .menu-overlay .menu-contact, html body .menu-overlay .menu-contact a.menu-tel { color: var(--encre); }
+
+/* ===== Édition « Magazine » sur tout le site public (refonte du 20/10/2026) =====
+   Demande de la propriétaire : le style « Magazine 3 » choisi pour l'accueil s'applique à tout le
+   site — en-tête, menu, pieds de page, pages, formulaires, boutique — sans rien changer au contenu.
+   Papier beige, encre presque noire, rouge MA2M ; grands titres Big Shoulders Display en
+   capitales, texte Work Sans. Couleurs et polices : css/jetons.css (« --mag-… »). Le tableau de
+   bord et l'Administration ne chargent pas cette feuille. */
+:root {
+  /* (couleurs et police de base : css/jetons.css, bloc « Édition Magazine partout ») */
+  --display: var(--mag-titre);
+  --texte: var(--mag-texte);
+  --bouton-rayon: 2px;
+  --rayon-carte: 4px;
+}
+h1, h2 {
+  font-family: var(--mag-titre); font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0; line-height: 0.98;
+}
+h3 { font-family: var(--mag-texte); font-weight: 600; letter-spacing: 0; }
+.eyebrow { font-family: var(--mag-texte); font-weight: 600; letter-spacing: 0.12em; color: var(--rouge-ma2m-texte); }
+.carte, .card { border-radius: var(--rayon-carte); }
+/* en-tête et pied de page : sur le papier, filet d'encre comme une couverture de magazine */
+.site-header-v2 { background: var(--mag-papier) !important; border-bottom: 2px solid var(--mag-encre); }
+.site-footer { background: var(--mag-papier); border-top: 2px solid var(--mag-encre); }
+.site-footer .footer-grille h3 { font-family: var(--mag-titre); font-weight: 800; text-transform: uppercase; font-size: 1.15rem; letter-spacing: 0.02em; }
+.menu-overlay .nav-links a { font-family: var(--mag-titre); font-weight: 800; text-transform: uppercase; letter-spacing: 0.01em; }

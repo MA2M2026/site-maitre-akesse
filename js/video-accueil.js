@@ -17,6 +17,7 @@
     if (!/^site\/video-accueil\/[A-Za-z0-9._-]+\.(mp4|webm)$/.test(valeur.chemin)) return;
     var v = sec.querySelector('video');
     var bouton = sec.querySelector('.video-accueil-son');
+    sec.dataset.confirme = '1';  // accueil « Magazine » : la page du film a bien un film (js/accueil.js)
     // Verticale ou horizontale (06/10/2026) : la forme de l'espace suit celle de la vidéo,
     // connue dès le réglage (ou, pour une vidéo envoyée avant, dès sa première image).
     function forme(l, h) { if (l && h) sec.classList.toggle('video-verticale', h > l); }

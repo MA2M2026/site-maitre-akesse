@@ -10,7 +10,8 @@ const fs = require('fs'); const path = require('path');
 const RACINE = path.resolve(__dirname, '../..');
 const PORT = String(8700 + Math.floor(Math.random() * 90));
 let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m); if (!c) ko++; };
-const TEXTES = ['#vedette-nom', '#vedette-info', '.vedette-cta', '#mot-responsable .eyebrow', '#mot-resp-nom', '#mot-resp-titre'];
+// accueil « Magazine » (20/10/2026) : textes de la couverture et de la page « À la une »
+const TEXTES = ['.p-couv .numero span', '.p-couv .lignes .une', '#couv-nombre', '#couv-modele', '#couv-modele-nom', '.p-une .mag-rubrique', '#une-nom', '#une-info'];
 const ecrans = [{ nom: 'téléphone', width: 390, height: 844 }, { nom: 'tablette', width: 1000, height: 1400 }, { nom: 'ordinateur', width: 1280, height: 900 }];
 
 function donnees() {
@@ -104,7 +105,13 @@ function donnees() {
           // (un texte recouvert, par exemple par la barre du haut fixe, n'est pas mesuré à cet endroit)
           const surImage = (el, x, y) => { const pile = document.elementsFromPoint(x, y); const i = pile.indexOf(el);
             if (i < 0 || (pile[0] !== el && !el.contains(pile[0]))) return false;
-            return pile.slice(i + 1).some((d) => /^(IMG|VIDEO|CANVAS)$/.test(d.tagName) || /url\(/.test(getComputedStyle(d).backgroundImage)); };
+            // une photo cachée sous un fond opaque (page du magazine posée sur la précédente) ne compte pas
+            for (const d of pile.slice(i + 1)) {
+              if (/^(IMG|VIDEO|CANVAS)$/.test(d.tagName) || /url\(/.test(getComputedStyle(d).backgroundImage)) return true;
+              const fond = getComputedStyle(d).backgroundColor.match(/[\d.]+/g);
+              if (fond && (fond.length < 4 || Number(fond[3]) >= 0.98) && d !== document.documentElement && d !== document.body) return false;
+            }
+            return false; };
           document.querySelectorAll('body *').forEach((el) => {
             if (res.length > 40 || el.closest('button, .btn, [role=button], .whatsapp-flottant, .lang-switch')) return;
             const propre = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim().length > 1);

@@ -3,14 +3,13 @@
 // iOS Safari — limitation connue et documentée d'iOS, pas un bug ponctuel. La seule
 // méthode qui fonctionne réellement sur iPhone consiste à figer la page en
 // position:fixed à sa position de défilement exacte, puis à la restaurer à l'identique
-// une fois déverrouillée. Un compteur permet à plusieurs éléments (porte d'entrée, menu,
+// une fois déverrouillée. Un compteur permet à plusieurs éléments (menu, lightbox,
 // modales) de verrouiller/déverrouiller sans se marcher dessus si jamais ils se
 // chevauchent. Utilisé par le menu et toutes les superpositions plein écran du site.
 //
 // Fichier à part (12/10/2026 : avant, recopié dans js/app.js et dans le script du haut de
-// l'accueil) : chargé SANS async ni defer, juste avant js/app.js sur toutes les pages, et tout
-// en haut du <body> sur l'accueil (avant js/accueil-debut.js), pour verrouiller la porte
-// d'entrée immédiatement, sans laisser à un visiteur rapide le temps de faire défiler.
+// l'accueil) : chargé SANS async ni defer, juste avant js/app.js sur toutes les pages (l'accueil
+// compris depuis la refonte « Magazine » du 20/10/2026, qui a retiré la porte d'entrée).
 (function verrouDefilementIOS() {
   let positionSauvegardee = 0;
   let compteur = 0;

@@ -23,7 +23,9 @@ Son choix final, avec ses mots : **« Le 3 est exactement ce que je veux »**, c
 - Lettres : titres **Big Shoulders Display** (800/900, capitales), texte **Work Sans**.
   Elle n'aimait pas la police fine type Cormorant pour « MA2M ».
 - **Français et anglais** (`index.html` et `en/index.html`, puis les autres pages).
-- Le **tableau de bord** et le portail `/admin` **ne changent pas**.
+- Le **tableau de bord** et le portail `/admin` : d'abord prévus inchangés ; le 20/10/2026 la
+  propriétaire a demandé d'y appliquer aussi le style (« pour donner du punch »), sans rien changer
+  à leur fonctionnement.
 
 Maquette de référence : **`maquettes/accueil-magazine.html`** (ouvrir dans un navigateur ; les
 photos viennent du site en ligne). Les 8 pages : 1 Couverture (mannequin en couverture, grand
@@ -38,7 +40,7 @@ Le dossier `maquettes/` et ce fichier ne sont pas publiés (`.vercelignore`).
 
 ## Étapes (une à la fois, chacune testée, mise en ligne, vérifiée en ligne)
 
-- [ ] **Étape 1 — Page d'accueil en magazine (FR + EN).** Remplacer le contenu de `index.html`
+- [x] **Étape 1 — Page d'accueil en magazine (FR + EN).** (faite le 20/10/2026, voir Journal) Remplacer le contenu de `index.html`
   et `en/index.html` par les 8 pages de la maquette, **remplies automatiquement** avec les
   données déjà gérées dans le tableau de bord : mannequins publiés (`model_profiles` avec
   `published = true` + fonction `photos_couverture_mannequins`, comme `js/mannequins.js`) pour
@@ -50,7 +52,7 @@ Le dossier `maquettes/` et ce fichier ne sont pas publiés (`.vercelignore`).
   Respecter `CONVENTIONS.md` : couleurs et polices dans `css/jetons.css` (nouveau bloc), pas de
   `<style>` ni de `style="…"` dans les pages, un fichier CSS dédié, CSP (`scripts/verifier-csp.py`),
   `scripts/versionner.py`, tests visiteur (ajouter un test de l'accueil magazine).
-- [ ] **Étape 2 — Habillage des autres pages publiques (FR + EN, boutique comprise)** : fond beige,
+- [x] **Étape 2 — Habillage des autres pages publiques (FR + EN, boutique comprise)** (faite le 20/10/2026) : fond beige,
   Big Shoulders Display + Work Sans, boutons rouges. Les couleurs de base se changent dans
   `css/jetons.css` et sont branchées sur le site public par `css/charte-ma2m.css` (le tableau de
   bord et `/admin` ne chargent pas cette feuille).
@@ -61,3 +63,21 @@ Le dossier `maquettes/` et ce fichier ne sont pas publiés (`.vercelignore`).
 
 - 20/10/2026 : choix du Magazine 3 ; maquette rangée dans `maquettes/accueil-magazine.html`.
   Rien n'a encore été changé sur le site en ligne.
+- 20/10/2026 (suite) : la propriétaire donne son accord pour tout faire et tout mettre en ligne,
+  et précise que le nouveau style s'applique à TOUT le site (en-tête, menu, pieds de page), sans
+  rien effacer des données.
+  - Accueil (index.html, en/index.html) : `css/magazine.css`, `js/accueil.js` réécrit. Pages :
+    couverture (une mannequin différente à chaque visite, photo moyenne), sommaire (calculé),
+    édito (= mot de Maître Akesse s'il est rempli), Femmes (6), Hommes (3), À la une (mannequin
+    « featured »), L'agence, puis en option À venir (agenda), Le film (vidéo), Ils nous font
+    confiance, Instagram, et le dos rouge (« Casting ouvert » seulement si un casting est actif,
+    sinon « Rejoindre l'agence »). Retirés : intro animée, porte « Entrer », carrousel, médaillons
+    (js/accueil-debut.js, js/intro-faisceau.js, js/faisceau.js, css/splash.css ne sont plus chargés).
+  - Téléphone : page sur toute la hauteur de l'écran (pas 3:4) et textes ≥ 12 px ; la page s'arrête
+    au-dessus des boutons flottants.
+  - Tout le site public : bloc « Édition Magazine » à la fin de `css/charte-ma2m.css` (variables
+    rebranchées sur `--mag-…`, titres h1/h2 Big Shoulders en capitales, boutons presque carrés via
+    `--bouton-rayon`), polices ajoutées aux 43 pages publiques.
+  - Tests : test-affichage-stable.js (pages Femmes/Hommes, pas de saut au retour), test-lisibilite-
+    photos.js (textes de la couverture et de « À la une », photos d'essai générées par lancer.sh ;
+    une photo cachée sous une page opaque ne compte plus).
