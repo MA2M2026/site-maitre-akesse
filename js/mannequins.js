@@ -85,6 +85,17 @@ async function afficherMannequins(vide) {
   appliquerFiltres();
 }
 
+// Mesures repliées sur téléphone (20/10/2026, règle CSS) : le bouton les ouvre ou les referme.
+function ouvrirMesures(ouvert) {
+  const bloc = document.querySelector('.filtres-mesures');
+  if (!bloc) return;
+  bloc.classList.toggle('ouvert', ouvert);
+  bloc.querySelector('.filtres-mesures-bouton').setAttribute('aria-expanded', String(ouvert));
+}
+document.querySelector('.filtres-mesures-bouton').addEventListener('click', () => {
+  ouvrirMesures(!document.querySelector('.filtres-mesures').classList.contains('ouvert'));
+});
+
 // Listes « yeux, cheveux, ville, langue » : seulement les valeurs présentes dans les fiches.
 // Une même couleur écrite de deux façons (« Noir » / « Noire », « Marron » / « Brun ») ne fait
 // qu'un choix : la clé est le mot anglais (enAnglais, js/app.js).
@@ -106,9 +117,12 @@ function remplirChoix() {
     });
     if (gardee) select.value = gardee;
   });
-  // un critère du bloc « Plus de critères » est rempli : le bloc s'ouvre (pas de filtre invisible)
-  const plus = document.querySelector('.filtres-plus');
-  if ([...plus.querySelectorAll('input, select')].some(e => e.value)) plus.open = true;
+  // un critère d'un bloc repliable (mesures, « Plus de critères ») est rempli : le bloc s'ouvre
+  // (pas de filtre invisible)
+  const rempli = bloc => [...bloc.querySelectorAll('input, select')].some(e => e.value);
+  document.querySelectorAll('.filtres-plus').forEach(bloc => { if (rempli(bloc)) bloc.open = true; });
+  const mesures = document.querySelector('.filtres-mesures');
+  if (mesures && rempli(mesures)) ouvrirMesures(true);
 }
 
 // Mesure tapée (« 97 ») comparée à celle de la fiche, exacte ou à « marge » cm près.
@@ -173,7 +187,7 @@ function appliquerFiltres() {
     carte.className = 'medaillon-carte reveal';
     const dejaSelectionne = estDansSelection(profil.id);
     carte.innerHTML = `
-      <button class="btn-selection${dejaSelectionne ? ' est-selectionne' : ''}" data-id="${profil.id}">
+      <button class="btn-selection${dejaSelectionne ? ' est-selectionne' : ''}" data-id="${profil.id}" title="${libelleSelection(dejaSelectionne)}" aria-label="${libelleSelection(dejaSelectionne)}">
         ${dejaSelectionne ? '✓' : '+'}
       </button>
       <a href="mannequin.html?id=${profil.id}" class="u-flex-col-centre">
@@ -198,6 +212,12 @@ function appliquerFiltres() {
       appliquerFiltres();
     });
   });
+}
+
+// Bouton « + » d'une photo : ce qu'il fait, dit à voix haute et au survol (20/10/2026 : « à quoi
+// sert le + ? »)
+function libelleSelection(dejaSelectionne) {
+  return dejaSelectionne ? T('Retirer de ma sélection', 'Remove from my selection') : T('Ajouter à ma sélection', 'Add to my selection');
 }
 
 document.querySelectorAll('.filtre-btn:not(.filtre-niveau-btn)').forEach(btn => {

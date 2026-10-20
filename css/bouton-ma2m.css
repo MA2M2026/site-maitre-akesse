@@ -94,6 +94,15 @@
     /* liseré AUTOUR du bouton (19/10/2026 : à l'intérieur, il mordait sur le texte) */
     box-shadow: 0 0 0 3px var(--fond, var(--c-fff)), 0 0 0 5px var(--rouge-ma2m) !important;
   }
+  /* Filtre choisi : une coche en plus du liseré (20/10/2026 : « le bouton choisi est à peine
+     plus foncé que les autres ») */
+  /* pastille dans le coin : elle ne prend pas de place au texte (« Tous niveaux » restait coupé) */
+  :is(.filtre-btn, .filtre-pill):is(.actif, [aria-pressed="true"]):not([data-bouton-libre]) { position: relative; overflow: visible; }
+  :is(.filtre-btn, .filtre-pill):is(.actif, [aria-pressed="true"]):not([data-bouton-libre])::after {
+    content: "✓"; position: absolute; top: -9px; right: -9px; width: 20px; height: 20px; display: grid; place-items: center;
+    border-radius: 50%; background: var(--fond, var(--c-fff)); color: var(--rouge-ma2m); -webkit-text-fill-color: var(--rouge-ma2m);
+    border: 2px solid var(--rouge-ma2m); font-size: 11px; font-weight: 800; line-height: 1;
+  }
   /* Étape pas encore ouverte : plus pâle mais toujours rouge (les jours passés du calendrier
      restent rouge plein : un rouge pâli rendrait le chiffre blanc illisible) */
   :is(button, [role="button"]).locked { opacity: 0.55 !important; }

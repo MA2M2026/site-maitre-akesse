@@ -2303,7 +2303,46 @@ function rendreContenuRiche(texte) {
   const conteneur = document.createElement('div');
   conteneur.appendChild(propre);
   normaliserListesQuill(conteneur);
+  retirerParagraphesVides(conteneur);
+  rendreLiensCliquables(conteneur);
   return conteneur.innerHTML;
+}
+
+// Lignes vides tapées dans l'éditeur (« Entrée » deux fois) : retirées, l'écart entre deux
+// paragraphes suffit (20/10/2026 : 12 lignes vides dans un seul article, de grands trous).
+function retirerParagraphesVides(racine) {
+  racine.querySelectorAll('p').forEach(p => {
+    if (!p.textContent.trim() && !p.querySelector('img, iframe, video')) p.remove();
+  });
+}
+
+// Adresses web et numéros de téléphone écrits en clair dans un texte : rendus cliquables
+// (20/10/2026 : lien WhatsApp et numéro d'un article qu'on ne pouvait pas toucher). Les
+// liens sont fabriqués élément par élément (jamais de HTML recollé), seulement en http(s).
+const LIEN_OU_TELEPHONE = /(https?:\/\/[^\s<>"']+[^\s<>"'.,;:!?)\]])|(\+?225[\s.]?(?:\d{2}[\s.]?){4}\d{2}|\b0\d(?:[\s.]?\d{2}){4}\b)/g;
+function rendreLiensCliquables(racine) {
+  const marcheur = document.createTreeWalker(racine, NodeFilter.SHOW_TEXT);
+  const noeuds = [];
+  while (marcheur.nextNode()) if (!marcheur.currentNode.parentElement.closest('a')) noeuds.push(marcheur.currentNode);
+  noeuds.forEach(noeud => {
+    const texte = noeud.nodeValue;
+    LIEN_OU_TELEPHONE.lastIndex = 0;
+    if (!LIEN_OU_TELEPHONE.test(texte)) return;
+    LIEN_OU_TELEPHONE.lastIndex = 0;
+    const morceaux = document.createDocumentFragment();
+    let debut = 0, m;
+    while ((m = LIEN_OU_TELEPHONE.exec(texte))) {
+      morceaux.appendChild(document.createTextNode(texte.slice(debut, m.index)));
+      const a = document.createElement('a');
+      a.textContent = m[0];
+      if (m[1]) { a.href = m[1]; a.target = '_blank'; a.rel = 'noopener'; }
+      else a.href = 'tel:' + m[0].replace(/[\s.]/g, '').replace(/^(?!\+)225/, '+225');
+      morceaux.appendChild(a);
+      debut = m.index + m[0].length;
+    }
+    morceaux.appendChild(document.createTextNode(texte.slice(debut)));
+    noeud.replaceWith(morceaux);
+  });
 }
 
 // Version texte brut (pour les extraits de carte, tronqués à N caractères) : dépouille

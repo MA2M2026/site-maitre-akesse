@@ -478,7 +478,10 @@ section { padding: 5rem 0; }
 
 /* Lecture du contenu enrichi publié (article complet, fiche détail) : espacement
    généreux façon revue de presse plutôt qu'un bloc de texte compact. */
-.contenu-riche { line-height: 1.75; font-family: var(--display); }
+.contenu-riche { line-height: 1.75; font-family: var(--texte); }   /* police de lecture (20/10/2026 : --display est
+   devenu le grand titre étroit du magazine, fatigant sur un long texte) */
+.contenu-riche h1, .contenu-riche h2, .contenu-riche h3, .contenu-riche h4 { font-family: var(--display); }
+.contenu-riche a { color: var(--rouge-ma2m-texte, var(--rouge-ma2m)); text-decoration: underline; text-underline-offset: 3px; overflow-wrap: anywhere; }
 /* La règle globale "p { color: var(--texte-corps) }" (pensée pour du texte sur fond
    noir) prenait le dessus sur la couleur posée en style inline sur ce conteneur —
    ici sur fond clair (actualités, partenaires), le texte redevenait presque
@@ -827,13 +830,21 @@ section { padding: 5rem 0; }
 .filtres-ligne .filtres { margin: 0; flex-wrap: nowrap; }
 .filtres-ligne { column-gap: 1.6rem; } /* écart entre les deux groupes (pas de trait : propre aussi quand ils passent à la ligne) */
 .filtres-plus { margin-bottom: 1.6rem; }
-.filtres-plus summary {
+.filtres-plus summary, .filtres-mesures-bouton {
   cursor: pointer; font-size: 0.72rem; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase;
   color: var(--texte-corps); padding: 0.6rem 0; list-style: none;
 }
 .filtres-plus summary::-webkit-details-marker { display: none; }
-.filtres-plus summary::before { content: '+ '; color: var(--bordeaux-clair); }
-.filtres-plus[open] summary::before { content: '− '; }
+.filtres-plus summary::before, .filtres-mesures-bouton::before { content: '+ '; color: var(--bordeaux-clair); }
+.filtres-plus[open] summary::before, .filtres-mesures.ouvert .filtres-mesures-bouton::before { content: '− '; }
+/* Mesures de The Book (20/10/2026) : toujours visibles sur ordinateur ; repliées sur téléphone */
+.filtres-mesures-bouton { display: none; background: none; border: 0; font-family: inherit; text-align: left; }
+@media (max-width: 720px) {
+  .filtres-mesures { margin-bottom: 1.6rem; }
+  .filtres-mesures-bouton { display: block; }
+  .filtres-mesures:not(.ouvert) > .filtres-avances { display: none; }
+  .filtres-mesures.ouvert > .filtres-avances { margin-top: 1.2rem; }
+}
 .filtres-plus[open] .filtres-avances { margin-top: 1.2rem; }
 .filtres-bilan {
   display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;

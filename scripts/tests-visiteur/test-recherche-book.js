@@ -34,7 +34,15 @@ const P = [['Awa Koné', 'femme', 176, 84, 62, 97, '39', 'Marron', 'Noir', 'Abid
     ok((await noms()).split(', ').length === 7, n + 'les 7 profils au départ');
     const lignes = await p.$$eval('.filtres-ligne .filtre-btn', l => new Set(l.map(e => Math.round(e.getBoundingClientRect().top))).size);
     ok(vp.width >= 800 ? lignes === 1 : lignes === 2, n + 'catégorie et niveau ' + (vp.width >= 800 ? 'sur une seule ligne' : 'en deux rangées rangées') + ' (' + lignes + ')');
-    ok(!(await p.$$eval('.filtre-btn', l => l.some(e => e.scrollWidth > e.clientWidth + 1))), n + 'aucun bouton coupé');
+    // texte plus large que l'intérieur du bouton (la coche du filtre choisi, posée dans le coin, ne compte pas)
+    ok(!(await p.$$eval('.filtre-btn', l => l.some(e => { const r = document.createRange(); r.selectNodeContents(e); const cs = getComputedStyle(e);
+      return r.getBoundingClientRect().width > e.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) + 1; }))), n + 'aucun bouton coupé');
+    // téléphone : mesures repliées au départ (profils juste sous les boutons), ouvertes d'un toucher (20/10/2026)
+    if (vp.width < 720) {
+      ok(!(await p.isVisible('#f-bassin')) && await p.isVisible('.filtres-mesures-bouton'), n + 'mesures repliées au départ');
+      await p.click('.filtres-mesures-bouton'); await p.waitForTimeout(200);
+      ok(await p.isVisible('#f-bassin') && await p.getAttribute('.filtres-mesures-bouton', 'aria-expanded') === 'true', n + 'mesures ouvertes d\'un toucher');
+    } else ok(await p.isVisible('#f-bassin') && !(await p.isVisible('.filtres-mesures-bouton')), n + 'mesures toujours visibles');
     await saisir('f-bassin', 97);
     ok(await noms() === 'Awa Koné, Mariam Diallo', n + 'tour de bassin 97 seul → les deux à 97 (' + await noms() + ')');
     ok(/2 profils correspondent|2 profiles/.test(await p.textContent('#f-compte')) && await p.isVisible('#f-effacer'), n + 'compteur et « Effacer les filtres »');

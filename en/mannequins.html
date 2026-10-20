@@ -31,12 +31,12 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap">
 <link rel="stylesheet" href="../css/menu.css?v=0dfc2b69">
 <link rel="stylesheet" href="../css/champs-telephone.css?v=11f5f49f">
-<link rel="stylesheet" href="../css/style.css?v=91b0b6fb">
+<link rel="stylesheet" href="../css/style.css?v=c40e92d4">
 <link rel="stylesheet" href="../css/jetons.css?v=a2155f1a">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=Work+Sans:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="../css/charte-ma2m.css?v=f840db68">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="../css/bouton-ma2m.css?v=83dcfb26">
+<link rel="stylesheet" href="../css/bouton-ma2m.css?v=5211180f">
 <script src="../js/bouton-appui.js?v=953ca4d8" defer></script>
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#1e1d1c">
@@ -57,7 +57,7 @@
   <div class="container">
     <div class="eyebrow reveal">The Agency</div>
     <h1 class="reveal reveal-delay-1">The Book<span class="oeil">.</span></h1>
-    <p class="u-mt-1-2 reveal reveal-delay-2">Select the profiles you're interested in for a group casting request.</p>
+    <p class="u-mt-1-2 reveal reveal-delay-2">Select the profiles you're interested in (tap the <strong>+</strong> on a photo) for a group casting request.</p>
   </div>
 </section>
 
@@ -78,42 +78,48 @@
       </div>
     </div>
 
-    <div class="filtres-avances reveal">
-      <div class="form-champ">
-        <label for="f-taille-min">Min height (cm)</label>
-        <input type="number" id="f-taille-min" inputmode="numeric" placeholder="e.g. 170">
-      </div>
-      <div class="form-champ">
-        <label for="f-taille-max">Max height (cm)</label>
-        <input type="number" id="f-taille-max" inputmode="numeric" placeholder="e.g. 185">
-      </div>
-      <div class="form-champ">
-        <label for="f-poitrine">Bust / chest (cm)</label>
-        <input type="number" id="f-poitrine" inputmode="numeric" placeholder="e.g. 86">
-      </div>
-      <div class="form-champ">
-        <label for="f-tour-taille">Waist (cm)</label>
-        <input type="number" id="f-tour-taille" inputmode="numeric" placeholder="e.g. 62">
-      </div>
-      <div class="form-champ">
-        <label for="f-bassin">Hips (cm)</label>
-        <input type="number" id="f-bassin" inputmode="numeric" placeholder="e.g. 97">
-      </div>
-      <div class="form-champ">
-        <label for="f-pointure">Shoe size (EU)</label>
-        <input type="number" id="f-pointure" inputmode="numeric" placeholder="e.g. 39">
-      </div>
-      <div class="form-champ">
-        <label for="f-taille-haut">Top size</label>
-        <select id="f-taille-haut"><option value="">All</option><option value="XXS">XXS</option><option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option><option value="XL">XL</option><option value="XXL">XXL</option><option value="XXXL">XXXL</option></select>
-      </div>
-      <div class="form-champ">
-        <label for="f-taille-bas">Bottom size</label>
-        <select id="f-taille-bas"><option value="">All</option><option value="XXS">XXS</option><option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option><option value="XL">XL</option><option value="XXL">XXL</option><option value="XXXL">XXXL</option></select>
-      </div>
-      <div class="form-champ">
-        <label for="f-taille-complete">Full outfit size</label>
-        <select id="f-taille-complete"><option value="">All</option><option value="XXS">XXS</option><option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option><option value="XL">XL</option><option value="XXL">XXL</option><option value="XXXL">XXXL</option></select>
+    <!-- Mesures repliables sur téléphone (20/10/2026) : repliées au départ (règle CSS, donc dès le
+         premier affichage, sans saut) pour que les profils apparaissent juste sous les boutons ;
+         toujours visibles sur ordinateur. Ouverture : js/mannequins.js -->
+    <div class="filtres-mesures reveal">
+      <button type="button" class="filtres-mesures-bouton" aria-expanded="false" aria-controls="filtres-mesures-champs" data-bouton-libre>Measurements: height, bust, waist, hips, shoes, clothing sizes</button>
+      <div class="filtres-avances" id="filtres-mesures-champs">
+        <div class="form-champ">
+          <label for="f-taille-min">Min height (cm)</label>
+          <input type="number" id="f-taille-min" inputmode="numeric" placeholder="e.g. 170">
+        </div>
+        <div class="form-champ">
+          <label for="f-taille-max">Max height (cm)</label>
+          <input type="number" id="f-taille-max" inputmode="numeric" placeholder="e.g. 185">
+        </div>
+        <div class="form-champ">
+          <label for="f-poitrine">Bust / chest (cm)</label>
+          <input type="number" id="f-poitrine" inputmode="numeric" placeholder="e.g. 86">
+        </div>
+        <div class="form-champ">
+          <label for="f-tour-taille">Waist (cm)</label>
+          <input type="number" id="f-tour-taille" inputmode="numeric" placeholder="e.g. 62">
+        </div>
+        <div class="form-champ">
+          <label for="f-bassin">Hips (cm)</label>
+          <input type="number" id="f-bassin" inputmode="numeric" placeholder="e.g. 97">
+        </div>
+        <div class="form-champ">
+          <label for="f-pointure">Shoe size (EU)</label>
+          <input type="number" id="f-pointure" inputmode="numeric" placeholder="e.g. 39">
+        </div>
+        <div class="form-champ">
+          <label for="f-taille-haut">Top size</label>
+          <select id="f-taille-haut"><option value="">All</option><option value="XXS">XXS</option><option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option><option value="XL">XL</option><option value="XXL">XXL</option><option value="XXXL">XXXL</option></select>
+        </div>
+        <div class="form-champ">
+          <label for="f-taille-bas">Bottom size</label>
+          <select id="f-taille-bas"><option value="">All</option><option value="XXS">XXS</option><option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option><option value="XL">XL</option><option value="XXL">XXL</option><option value="XXXL">XXXL</option></select>
+        </div>
+        <div class="form-champ">
+          <label for="f-taille-complete">Full outfit size</label>
+          <select id="f-taille-complete"><option value="">All</option><option value="XXS">XXS</option><option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option><option value="XL">XL</option><option value="XXL">XXL</option><option value="XXXL">XXXL</option></select>
+        </div>
       </div>
     </div>
 
@@ -166,11 +172,11 @@
 <script src="../js/supabase-config.js?v=16708773"></script>
 <script src="../js/verrou-defilement.js?v=c7be15da"></script>
 <script src="../js/conversion-heic.js?v=82dc3921"></script>
-<script src="../js/app.js?v=43357e1a"></script>
+<script src="../js/app.js?v=c8d0b0f4"></script>
 <script src="../js/confort.js?v=809fdae6"></script>
 <script src="../js/menu.js?v=8d0fbcf3"></script>
 <script src="../js/selection.js?v=80f86892"></script>
 <script src="../js/tailles.js?v=41cf2149"></script>
-<script src="../js/mannequins.js?v=4e0ab533"></script>
+<script src="../js/mannequins.js?v=77cb246a"></script>
 </body>
 </html>
