@@ -2746,3 +2746,4 @@ depuis Abidjan (une vérification a bloqué l'accueil 10 s) ; le tableau de bord
 - Registre : filtre « Sans nom » (comptes site sans nom rempli, e-mail affiché, rien n'est supprimé).
 - Sorties et suspensions : liste « Formation terminée (24 mois) » avec bouton « Proposer la sortie » (RPC `sortie_proposer`, motif prérempli). Un mannequin « sorti » n'est plus appelé ni relancé (les relances ciblent `statut='actif'`).
 - Codes de l'espace mannequin : bouton « Enregistrer son paiement » (fiche) quand l'inscription n'est pas payée, puis « Générer le code ».
+- Suppression définitive d'un mannequin d'essai : fonction `mannequin_supprimer` (fichier `supabase-suppression-mannequin.sql`, à exécuter une fois). Principal seulement, code récent exigé, refusée si compte existant, paiement validé ou reçu. Bouton sur la fiche.

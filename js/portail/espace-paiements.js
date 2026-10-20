@@ -136,6 +136,8 @@
         (inscription.valide_le ? ' · validé le ' + P.dateHeure(inscription.valide_le) : '') + '</p>' : '') +
       (m.user_id ? '<p class="doux petit-texte">Ce mannequin a déjà son compte sur le site : aucun code à lui donner, on suit seulement ses mensualités.</p>' : '') +
       actions + '</div>' + carteCodeEspace(m, inscription, codes[0]) +
+      (principal && !m.user_id && !paiements.some((p) => p.statut === 'valide')
+        ? '<div class="carte"><h2>Supprimer ce mannequin</h2><p class="doux">Pour un essai ou une erreur seulement. La fiche et ses paiements non validés disparaissent pour toujours. S’il a vraiment été mannequin de l’agence, proposez plutôt sa sortie.</p><button class="btn rouge" type="button" data-action="mannequin-supprimer" data-id="' + m.id + '">Supprimer définitivement</button></div>' : '') +
       '<form class="carte f" data-form="registre-modifier" data-id="' + m.id + '"><h2>Informations</h2>' + champs(m) +
       '<div class="large ligne"><button class="btn rouge" type="submit">Enregistrer les changements</button></div></form>' +
       '<div class="carte"><h2>Paiements</h2>' + P.tableau(['Objet', 'Mode', '#Montant', 'État', 'Date'].concat(principal ? [''] : []), paiements.map((p) =>
@@ -226,6 +228,15 @@
   };
   // Inscription payée sans passer par le site : avant le nouveau système, en espèces, ou par Wave
   // directement à l'agence (paiement reçu par l'agence, donc validé tout de suite)
+  P.actions['mannequin-supprimer'] = async (el) => {
+    if (!confirm('Supprimer définitivement ce mannequin ? Cette action ne peut pas être annulée.')) return;
+    try {
+      await P.sensible(() => P.rpc('mannequin_supprimer', { p_mannequin: el.getAttribute('data-id') }));
+      P.message('Mannequin supprimé.'); location.hash = '#/paiements/registre';
+    } catch (e) {
+      P.message(e && (e.code === 'PGRST202' || e.status === 404) ? 'La suppression n’est pas encore activée : il faut d’abord exécuter le fichier SQL de suppression.' : P.erreurTexte(e));
+    }
+  };
   P.actions['registre-inscription'] = async (el) => {
     const mode = el.getAttribute('data-mode');
     if (!confirm({ especes: 'Enregistrer le paiement de l’inscription en espèces (' + P.fcfa(INSCRIPTION_FCFA) + '), reçu par l’agence ?',

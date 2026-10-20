@@ -175,6 +175,19 @@ function donnees(role) {
     ok(!e.errs.length, nomEcran + ' : aucune erreur de page (modèles) ' + e.errs.join(' | '));
     await e.ctx.close();
 
+    // ----- 2 bis. Suppression définitive d'un mannequin d'essai (principal seulement)
+    e = await connecter('principal', 'fiche/r4'); p = e.p; x = await t(p);
+    ok(/Supprimer définitivement/.test(x), nomEcran + ' : bouton « Supprimer définitivement » visible pour le principal');
+    await p.click('[data-action="mannequin-supprimer"]'); await p.waitForTimeout(1000);
+    const sup = rpcs(e, 'mannequin_supprimer')[0];
+    ok(sup && sup.p_mannequin === 'r4', nomEcran + ' : suppression demandée ' + JSON.stringify(sup));
+    ok(!e.journal.some((j) => j[0] === 'DELETE'), nomEcran + ' : aucune suppression directe dans les tables');
+    ok(!e.errs.length, nomEcran + ' : aucune erreur de page (suppression) ' + e.errs.join(' | '));
+    await e.ctx.close();
+    e = await connecter('caisse', 'fiche/r4'); p = e.p; x = await t(p);
+    ok(!/Supprimer définitivement/.test(x), nomEcran + ' : pas de bouton de suppression pour la caisse');
+    await e.ctx.close();
+
     // ----- 3. Mois figés
     e = await connecter('caisse', 'figes'); p = e.p; x = await t(p);
     ok(new RegExp(moisIso(2).slice(0, 4)).test(x) && /1 figé/.test(x), nomEcran + ' : le mois déjà figé est listé');
