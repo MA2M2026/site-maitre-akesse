@@ -561,3 +561,22 @@
 /* (ajout manuel) */
 :root { --c-rgba-246-245-243-0_85: rgba(246, 245, 243, 0.85); }
 /* ===== Fin de la palette centralisée ===== */
+
+/* ===== Édition « Magazine » (refonte du 20/10/2026, choix de la propriétaire : « Magazine 3 »,
+   voir PLAN-REFONTE-MAGAZINE.md) — papier beige, encre presque noire, rouge MA2M, titres Big
+   Shoulders Display en capitales, texte Work Sans. Utilisé par css/magazine.css (site public). */
+:root {
+  --mag-scene: #CFC6BB;          /* fond derrière les pages (la « table ») */
+  --mag-papier: #F1ECE5;         /* papier des pages */
+  --mag-encre: #1B1817;          /* texte */
+  --mag-gris: #655D56;           /* légendes, folios */
+  --mag-rouge: var(--rouge-ma2m);
+  --mag-sur-photo: #FFFFFF;      /* texte posé sur une photo */
+  --mag-voile-fort: rgba(0, 0, 0, 0.72);
+  --mag-voile-moyen: rgba(0, 0, 0, 0.38);
+  --mag-voile-nul: rgba(0, 0, 0, 0);
+  --mag-ombre-page: 0 -12px 50px rgba(27, 24, 23, 0.22);
+  --mag-attente: #B9AFA4;        /* cadre photo en cours de chargement */
+  --mag-titre: 'Big Shoulders Display', 'Arial Narrow', system-ui, sans-serif;
+  --mag-texte: 'Work Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}

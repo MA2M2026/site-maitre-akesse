@@ -65,307 +65,158 @@
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="../css/splash.css?v=953a0210">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&family=Big+Shoulders+Display:wght@700;800&family=Work+Sans:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="../css/menu.css?v=0dfc2b69">
 <link rel="stylesheet" href="../css/champs-telephone.css?v=11f5f49f">
 <link rel="stylesheet" href="../css/style.css?v=e74de24b">
 <link rel="stylesheet" href="../css/agenda.css?v=318874b6">
-<link rel="stylesheet" href="../css/jetons.css?v=40725897">
+<link rel="stylesheet" href="../css/jetons.css?v=86e5b6d5">
 <link rel="stylesheet" href="../css/charte-ma2m.css?v=f0cdd318">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="../css/bouton-ma2m.css?v=8ad9ca02">
+<link rel="stylesheet" href="../css/magazine.css?v=3b50b53a">
 <script src="../js/bouton-appui.js?v=953ca4d8" defer></script>
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#1e1d1c">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
 </head>
-<body>
-<script src="../js/verrou-defilement.js?v=33c16996"></script>
-<script src="../js/accueil-debut.js?v=8da7722b"></script>
 
-<script async src="../js/filet-reveal.js?v=0e57f29d"></script>
-
-
-<!-- La barre du haut (logo, EN/FR, Menu) est placée sous la couverture animée : voir plus bas. -->
+<body class="page-magazine">
 
 <div class="menu-overlay" id="menuOverlay" data-gabarit="menu"></div>
-
-<div class="splash u-hidden" id="logo-splash">
-  <div class="splash-logo-wrap"><img src="../assets/logo-intro-clair.png" alt="Maître Akesse Model Management"></div>
-  <button class="splash-passer" id="splash-passer" type="button">Skip intro</button>
-</div>
-<script src="../js/faisceau.js?v=b2dcc447"></script>
-<script src="../js/intro-faisceau.js?v=c98a5be6"></script>
-
-<section class="hero-v2 bord-dechire-bas" id="porte-entree">
-  <div class="hero-carousel" id="heroCarousel">
-    <div class="hero-slide active" data-slide="0">
-      <img class="hero-v2-bg" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="">
-      <div class="hero-v2-content">
-        <div class="eyebrow eyebrow--clair u-flex-center">Abidjan · Côte d'Ivoire</div>
-        <h1 class="hero-v2-title hero-v2-title-texte">
-          <span class="ma2m-bloc">
-            <span class="ma2m-grand">M A 2 M</span>
-            <span class="ma2m-def">Maître Akesse Model Management</span>
-          </span>
-        </h1>
-        <p class="hero-v2-subtitle">Every great journey begins with a dream. Ours begins in Abidjan.</p>
-      </div>
-    </div>
-    <div class="hero-slide" data-slide="1">
-      <img class="hero-v2-bg" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="">
-      <div class="hero-v2-content">
-        <div class="eyebrow eyebrow--clair u-flex-center">Modeling Agency · Abidjan</div>
-        <h2 class="hero-v2-title hero-slide-titre">Character.<br>Refinement.</h2>
-        <p class="hero-v2-subtitle">Talents trained to embody every brand universe, with character and refinement.</p>
-        <div class="hero-v2-cta">
-          <a href="mannequins.html" class="btn btn--principal">Discover Our Talents</a>
-          <a href="services.html" class="btn">Our Services</a>
-        </div>
-      </div>
-    </div>
-    <div class="hero-slide" data-slide="2">
-      <img class="hero-v2-bg" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="">
-      <div class="hero-v2-content">
-        <div class="eyebrow eyebrow--clair u-flex-center">Management · Training · Casting</div>
-        <h2 class="hero-v2-title hero-slide-titre">From Casting<br>To the Runway.</h2>
-        <p class="hero-v2-subtitle">From your first casting to international runways, a structured agency by your side.</p>
-        <div class="hero-v2-cta">
-          <a href="candidature.html" class="btn btn--principal">Apply for a Casting</a>
-          <a href="contact.html" class="btn">Contact Us</a>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="hero-dots" id="heroDots"></div>
-  <button id="entrer-btn" class="entrer-fleche" aria-label="Enter the site">
-    <span>Enter</span>
-    <span class="entrer-icone">↓</span>
-  </button>
-</section>
-
-
-<!-- Barre du haut (la bande au logo animé a été retirée le 11/10/2026 : décision de la propriétaire) -->
 <header class="site-header-v2" data-gabarit="entete" data-page="index"></header>
 <script src="../js/gabarit.js?v=a26c2fad"></script>
 
+<!-- Bandeau « Infos du jour » : texte modifiable dans l'Administration (bandeau_annonce) -->
 <div class="marquee-bande" id="marqueeBande" aria-hidden="true">
-  <div class="marquee-label u-hidden" id="marqueeLabel">Today's News</div>
+  <div class="marquee-label u-hidden" id="marqueeLabel">Today's news</div>
   <div class="marquee-viewport">
     <div class="marquee-piste" id="marqueePiste">
-      <span>Management · Training · Casting · Booking · Artistic Direction · Runway Shows · Photo Shoots · Events ·</span>
-      <span>Management · Training · Casting · Booking · Artistic Direction · Runway Shows · Photo Shoots · Events ·</span>
+      <span>Management · Training · Casting · Booking · Art direction · Runway shows · Photo shoots · Events · </span>
+      <span>Management · Training · Casting · Booking · Art direction · Runway shows · Photo shoots · Events · </span>
     </div>
   </div>
 </div>
 
-<!-- Featured model -->
-<section id="mannequin-vedette" class="u-hidden section-reservee">
-  <a href="#" id="vedette-lien" class="vedette-fullbleed reveal">
-    <img id="vedette-img" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="">
-    <div class="vedette-scrim"></div>
-    <div class="vedette-contenu">
-      <span class="vedette-badge">★ Featured Model</span>
-      <h2 id="vedette-nom">Featured Model</h2>
-      <p id="vedette-info"></p>
-      <span class="vedette-cta">View Full Profile →</span>
-    </div>
-  </a>
-</section>
+<!-- Accueil « Magazine » (refonte du 20/10/2026, css/magazine.css, js/accueil.js) : les pages se
+     remplissent avec ce que l'agence gère dans l'Administration (mannequins publiés, mannequin à
+     la une, mot de Maître Akesse, agenda, vidéo, partenaires, Instagram, castings ouverts). Les
+     pages sans contenu restent cachées ; le sommaire et les numéros de page suivent. -->
+<main class="mag" id="mag">
 
-<!-- Espace vidéo (audit du 05/10/2026) : caché tant qu'aucune vidéo n'est choisie dans le
-     tableau de bord (« Vidéo de la page d'accueil »), voir js/video-accueil.js. -->
-<section id="video-accueil" class="video-accueil u-hidden" aria-label="Agency film">
-  <video muted loop playsinline preload="none" aria-hidden="true"></video>
-  <div class="video-accueil-voile"></div>
-  <div class="container video-accueil-legende">
-    <span class="eyebrow eyebrow--clair">The film</span>
-  </div>
-  <button type="button" class="video-accueil-son" aria-pressed="false"><span>Turn sound on</span></button>
-</section>
-
-<!-- 02 — Our Vision -->
-<section>
-  <div class="container">
-    <div class="section-tete reveal">
-      <div class="eyebrow reveal">02 — Our Vision</div>
-      <h2>Artistic Direction</h2>
-      <p>Talent management, training, casting, booking, artistic direction, and runway show organization — a structured agency supporting every model, from their first shoot to international stages. Maître Akesse Model Management was born from a simple conviction: Ivorian modeling deserves support worthy of its potential. Every profile is crafted like a brand image — coherent, prepared, ready for the most demanding castings.</p>
+  <article class="mag-page p-couv" id="couverture" aria-labelledby="couv-titre">
+    <div class="mag-cadre"><img id="couv-img" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="" fetchpriority="high"></div>
+    <div class="tete">
+      <h1 class="mag-titre mag-logo" id="couv-titre"><span aria-hidden="true">MA2M</span><span class="u-lecteur-ecran">Maître Akesse Model Management, modeling agency in Abidjan</span></h1>
+      <div class="numero"><span>Abidjan</span><span class="mag-date"></span></div>
     </div>
-  </div>
-</section>
-
-<!-- Founder's word -->
-<section id="mot-responsable" class="fond-anthracite u-hidden section-reservee">
-  <div class="mot-responsable-photo-wrap reveal">
-    <img id="mot-resp-photo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="" class="u-hidden">
-    <div class="mot-responsable-scrim"></div>
-    <div class="mot-responsable-overlay">
-      <div class="eyebrow eyebrow--clair">A Word from Maître Akesse</div>
-      <h2 id="mot-resp-nom">Maître Akesse</h2>
-      <p class="mot-resp-titre" id="mot-resp-titre"></p>
+    <div class="lignes">
+      <a href="mannequins.html" class="une">The new faces of Abidjan</a>
+      <a href="mannequins.html" class="ligne" id="couv-nombre">Our models to discover</a>
+      <a href="integrer-agence.html" class="ligne">Become a model: how to join us</a>
     </div>
-  </div>
-  <div class="container">
-    <p id="mot-resp-message" class="mot-resp-message"></p>
-  </div>
-</section>
+    <a class="modele" id="couv-modele" href="mannequins.html" hidden>On the cover<strong id="couv-modele-nom"></strong></a>
+  </article>
 
-<section id="stat-strip" class="divisions" aria-label="The Book by category">
-  <div class="container">
-    <p class="divisions-intro reveal">The Book — Abidjan, Côte d'Ivoire</p>
-    <nav class="divisions-liens reveal">
-      <a href="mannequins?categorie=femme">Women</a>
-      <a href="mannequins?categorie=homme">Men</a>
-    </nav>
-  </div>
-</section>
+  <article class="mag-page p-sommaire pair" id="sommaire" aria-labelledby="sommaire-titre">
+    <span class="mag-rubrique">In this issue</span>
+    <h2 class="mag-titre" id="sommaire-titre">Contents</h2>
+    <div class="mag-cadre vignette"><img id="sommaire-img" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="" loading="lazy"></div>
+    <ol id="sommaire-liste"></ol>
+    <div class="mag-folio"><span class="num"></span><span class="mag-signature-folio"></span></div>
+  </article>
 
-<section id="apercu-mannequins">
-  <div class="container">
-    <div class="section-tete reveal">
-      <div class="eyebrow reveal">03 — Our Talents</div>
-      <h2>Our Faces</h2>
-      <p>A glimpse of the talents represented by the agency.</p>
+  <article class="mag-page p-edito" id="edito" data-sommaire="Editorial|An agency born in Abidjan" aria-labelledby="edito-titre">
+    <div class="mag-cadre"><img id="edito-img" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="" loading="lazy"></div>
+    <div class="texte">
+      <div>
+        <span class="mag-rubrique" id="edito-rubrique">Editorial</span>
+        <h2 class="mag-titre" id="edito-titre">Every great journey begins with a dream.</h2>
+        <p class="signature u-hidden" id="edito-signature"><strong id="edito-nom"></strong><span id="edito-fonction"></span></p>
+        <a href="qui-sommes-nous.html" class="mag-lien-suite">About us</a>
+      </div>
+      <p class="mag-texte" id="edito-texte">Ours begins in Abidjan. Maître Akesse Model Management trains and represents models, from the first casting to the runway. Every profile is shaped like a brand image: consistent, prepared, ready for the most demanding castings.</p>
     </div>
-    <div class="medaillon-grille" id="medaillons-accueil"><!-- 6 placeholder cards, same size as the real ones (14/10/2026) --><div class="medaillon-carte medaillon-attente" aria-hidden="true"><div class="medaillon-photo"></div><div class="medaillon-nom">&nbsp;</div><div class="medaillon-info">&nbsp;</div></div><div class="medaillon-carte medaillon-attente" aria-hidden="true"><div class="medaillon-photo"></div><div class="medaillon-nom">&nbsp;</div><div class="medaillon-info">&nbsp;</div></div><div class="medaillon-carte medaillon-attente" aria-hidden="true"><div class="medaillon-photo"></div><div class="medaillon-nom">&nbsp;</div><div class="medaillon-info">&nbsp;</div></div><div class="medaillon-carte medaillon-attente" aria-hidden="true"><div class="medaillon-photo"></div><div class="medaillon-nom">&nbsp;</div><div class="medaillon-info">&nbsp;</div></div><div class="medaillon-carte medaillon-attente" aria-hidden="true"><div class="medaillon-photo"></div><div class="medaillon-nom">&nbsp;</div><div class="medaillon-info">&nbsp;</div></div><div class="medaillon-carte medaillon-attente" aria-hidden="true"><div class="medaillon-photo"></div><div class="medaillon-nom">&nbsp;</div><div class="medaillon-info">&nbsp;</div></div></div>
-    <div class="reveal u-mt-2-5 u-tc">
-      <a href="mannequins.html" class="btn btn--principal">See All Our Models</a>
-    </div>
-  </div>
-</section>
+    <div class="mag-folio"><span class="num"></span><span class="mag-signature-folio"></span></div>
+  </article>
 
-<!-- 04 — Management -->
-<!-- MA2M Agenda: the next 3 projects (js/agenda.js), hidden when there are none -->
-<section class="agenda-accueil" data-agenda-accueil hidden>
-  <div class="container">
-    <div class="agenda-accueil-tete">
-      <div><div class="eyebrow">MA2M Agenda</div><h2>Coming up<span class="oeil">.</span></h2></div>
-      <a href="agenda.html" class="agenda-accueil-lien">Full agenda →</a>
-    </div>
+  <article class="mag-page p-visages pair" id="femmes" data-sommaire="The faces|Our women models" aria-labelledby="femmes-titre">
+    <header><div><span class="mag-rubrique">The faces</span><h2 class="mag-titre" id="femmes-titre">Women</h2></div><a href="mannequins.html?categorie=femme" class="mag-lien-suite">The whole Book</a></header>
+    <div class="grille" id="grille-femmes"></div>
+    <div class="mag-folio"><span class="num"></span><span class="mag-signature-folio"></span></div>
+  </article>
+
+  <article class="mag-page p-visages hommes" id="hommes" data-sommaire="The faces|Our men models" aria-labelledby="hommes-titre">
+    <header><div><span class="mag-rubrique">The faces</span><h2 class="mag-titre" id="hommes-titre">Men</h2></div><a href="mannequins.html?categorie=homme" class="mag-lien-suite">The whole Book</a></header>
+    <div class="grille" id="grille-hommes"></div>
+    <div class="mag-folio"><span class="num"></span><span class="mag-signature-folio"></span></div>
+  </article>
+
+  <article class="mag-page p-une pair" id="a-la-une" data-sommaire="Featured|Our featured model" aria-labelledby="une-nom" hidden>
+    <a href="mannequins.html" id="une-lien">
+      <div class="mag-cadre"><img id="une-img" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="" loading="lazy"></div>
+      <div class="bas-une"><span class="mag-rubrique">Featured</span><h2 class="mag-titre" id="une-nom">Featured model</h2><p class="mag-texte" id="une-info"></p></div>
+    </a>
+    <div class="mag-folio"><span class="num"></span><span class="mag-signature-folio"></span></div>
+  </article>
+
+  <article class="mag-page p-agence" id="agence" data-sommaire="The agency|Training, casting, events" aria-labelledby="agence-titre">
+    <span class="mag-rubrique">The agency</span>
+    <h2 class="mag-titre" id="agence-titre">From casting to runway</h2>
+    <ul>
+      <li><strong>Training</strong><span>Walk, posing, presence in front of the camera: the basics before the first contract.</span></li>
+      <li><strong>Casting and booking</strong><span>The right faces for brands, runway shows and campaigns.</span></li>
+      <li><strong>Events</strong><span>Runway shows, photo shoots and art direction, from the idea to the big day.</span></li>
+    </ul>
+    <a href="services.html" class="mag-lien-suite">All our services</a>
+    <div class="mag-cadre"><img id="agence-img" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="" loading="lazy"></div>
+    <div class="mag-folio"><span class="num"></span><span class="mag-signature-folio"></span></div>
+  </article>
+
+  <!-- Agenda: the next 3 projects (js/agenda.js); page hidden when there are none -->
+  <article class="mag-page p-agenda" id="agenda" data-sommaire="Coming up|The agency's calendar" data-agenda-accueil aria-labelledby="agenda-titre" hidden>
+    <span class="mag-rubrique">Agenda</span>
+    <h2 class="mag-titre" id="agenda-titre">Coming up</h2>
     <div id="agenda-accueil" class="agenda-liste-publique"></div>
-  </div>
-</section>
+    <a href="agenda.html" class="mag-lien-suite">The full calendar</a>
+    <div class="mag-folio"><span class="num"></span><span class="mag-signature-folio"></span></div>
+  </article>
 
-<section>
-  <div class="container">
-    <div class="section-tete reveal">
-      <div class="eyebrow reveal">04 — Management</div>
-      <h2>What We Do</h2>
-      <p>From training a beginner model to the artistic direction of a full fashion event, every mission is designed to build an image that lasts.</p>
-    </div>
-    <div class="services-liste">
-      <div class="service-ligne reveal">
-        <div class="service-num">01</div>
-        <div class="service-nom">
-          <h3>Management &amp; Training</h3>
-          <p>Representation, career development, and preparation for the demands of the industry.</p>
-        </div>
-        <div class="service-tag">Talents</div>
-      </div>
-      <div class="service-ligne reveal">
-        <div class="service-num">02</div>
-        <div class="service-nom">
-          <h3>Casting &amp; Booking</h3>
-          <p>Scouting new talent and connecting them with brands and productions.</p>
-        </div>
-        <div class="service-tag">Opportunities</div>
-      </div>
-      <div class="service-ligne reveal">
-        <div class="service-num">03</div>
-        <div class="service-nom">
-          <h3>Artistic Direction &amp; Runway Shows</h3>
-          <p>Staging, choreography, and full organization of fashion events.</p>
-        </div>
-        <div class="service-tag">Events</div>
-      </div>
-    </div>
-    <div class="reveal u-mt-2-5">
-      <a href="services.html" class="btn">See All Services</a>
-    </div>
-  </div>
-</section>
+  <!-- Video chosen in the Administration (js/video-accueil.js); hidden until there is one -->
+  <article class="mag-page p-film u-hidden" id="video-accueil" data-sommaire="The film|The agency on screen" aria-label="The agency's film">
+    <video muted loop playsinline preload="none" aria-hidden="true"></video>
+    <div class="tete"><span class="mag-rubrique">The film</span><h2 class="mag-titre">The agency on screen</h2></div>
+    <button type="button" class="video-accueil-son" aria-pressed="false"><span>Turn sound on</span></button>
+    <div class="mag-folio"><span class="num"></span><span class="mag-signature-folio"></span></div>
+  </article>
 
-<!-- 05 — The Book -->
-<section>
-  <div class="container">
-    <div class="section-tete reveal">
-      <div class="eyebrow reveal">05 — The Book</div>
-      <h2>The Book</h2>
-      <p>Every model at the agency has their own space to showcase their book, updated directly by themselves.</p>
-    </div>
-    <div class="reveal u-mt-1">
-      <a href="mannequins.html" class="btn btn--principal">Discover Profiles</a>
-    </div>
-  </div>
-</section>
+  <article class="mag-page p-partenaires pair" id="ils-nous-font-confiance" data-sommaire="Partners|They trust us" aria-labelledby="partenaires-titre" hidden>
+    <span class="mag-rubrique">Partners</span>
+    <h2 class="mag-titre" id="partenaires-titre">They trust us</h2>
+    <div class="logos" id="confiance-liste"></div>
+    <a href="partenaires.html" class="mag-lien-suite">All our partners</a>
+    <div class="mag-folio"><span class="num"></span><span class="mag-signature-folio"></span></div>
+  </article>
 
-<!-- 06 — Opportunities -->
-<section class="fond-anthracite u-border-y-gris">
-  <div class="container">
-    <div class="section-tete reveal">
-      <div class="eyebrow reveal">06 — Opportunities</div>
-      <h2>Events &amp; Runway</h2>
-      <p>The agency orchestrates and supports runway shows and fashion projects in Côte d'Ivoire, with artistic direction designed from start to finish.</p>
-    </div>
-    <div class="evenements-grille">
-      <div class="evenement-carte reveal">
-        <div class="evenement-date">Current Projects</div>
-        <h3>Seasonal Runway Shows &amp; Shoots</h3>
-        <p>Coordination of runway shows and photo sessions for local brands and designers.</p>
-      </div>
-      <div class="evenement-carte reveal reveal-delay-1">
-        <div class="evenement-date">Portfolio</div>
-        <h3>Our Models on Stage</h3>
-        <p>Discover our talents' books and runway videos on their individual profiles.</p>
-      </div>
-      <div class="evenement-carte reveal reveal-delay-2" id="carte-a-venir">
-        <div class="evenement-date">Coming Up</div>
-        <h3>Upcoming Castings</h3>
-        <p id="carte-a-venir-texte">New casting calls open regularly — check the Application page.</p>
-      </div>
-    </div>
-  </div>
-</section>
+  <article class="mag-page p-instagram" id="flux-instagram" data-sommaire="Instagram|Behind the scenes" aria-labelledby="instagram-titre" hidden>
+    <span class="mag-rubrique">Instagram</span>
+    <h2 class="mag-titre" id="instagram-titre">Behind the scenes</h2>
+    <div class="grille" id="instagram-grille"></div>
+    <a href="https://www.instagram.com/maitreakessemodelmanagement" class="mag-lien-suite" target="_blank" rel="noopener">Follow the agency on Instagram</a>
+    <div class="mag-folio"><span class="num"></span><span class="mag-signature-folio"></span></div>
+  </article>
 
-<!-- 07 — The MA2M universe -->
-<section id="ils-nous-font-confiance" class="u-hidden u-py-0-5">
-  <div class="container">
-    <div class="confiance-bande reveal">
-      <span class="confiance-label">Trusted By</span>
-      <div class="confiance-liste" id="confiance-liste"></div>
-    </div>
-  </div>
-</section>
+  <article class="mag-page p-dos" id="nous-rejoindre" data-sommaire="Join us|Become an MA2M model" aria-labelledby="dos-titre">
+    <span class="mag-rubrique" id="dos-rubrique">Join the agency</span>
+    <h2 class="mag-titre" id="dos-titre">The next face is yours.</h2>
+    <p class="mag-texte" id="dos-texte">Women and men, in Abidjan and all over Côte d'Ivoire: introduce yourself, we review every profile.</p>
+    <a class="bouton" id="dos-bouton" data-bouton-libre href="integrer-agence.html">Join the agency</a>
+    <div class="mag-cadre"><img id="dos-img" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="" loading="lazy"></div>
+    <p class="contact">Maître Akesse Model Management, Abidjan · <a href="contact.html">Write to us</a></p>
+  </article>
 
-<!-- Instagram feed: only appears once publications have been fetched
-     from the dashboard (see chargerFluxInstagram below). -->
-<section id="flux-instagram" class="u-hidden">
-  <div class="container">
-    <div class="section-tete reveal u-maxw-60ch">
-      <div class="eyebrow reveal u-flex-center">On Instagram</div>
-      <h2>@maitreakessemodelmanagement</h2>
-    </div>
-    <div class="instagram-grille reveal" id="instagram-grille"></div>
-  </div>
-</section>
-
-<!-- 08 — Contact -->
-<section>
-  <div class="container">
-    <div class="section-tete reveal u-maxw-60ch">
-      <div class="eyebrow reveal u-flex-center">08 — Contact</div>
-      <h2>Let's Talk About Your Project</h2>
-      <p>An agency, a project, a casting to organize? Our team responds directly.</p>
-    </div>
-    <div class="reveal u-cta-row">
-      <a href="contact.html" class="btn btn--principal">Contact Us</a>
-      <a href="tel:+2250545656687" class="btn">+225 05 45 65 66 87</a>
-    </div>
-  </div>
-</section>
+</main>
 
 <footer class="site-footer" data-gabarit="pied"></footer>
 <script src="../js/gabarit.js?v=a26c2fad"></script>
@@ -374,10 +225,11 @@
 <script src="../js/supabase-config.js?v=16708773"></script>
 <script src="../js/conversion-heic.js?v=82dc3921"></script>
 <script src="../js/app.js?v=8749e1e9"></script>
-<script src="../js/confort.js?v=33474c14"></script>
+<script src="../js/confort.js?v=809fdae6"></script>
 <script src="../js/menu.js?v=8d0fbcf3"></script>
-<script src="../js/accueil.js?v=dd8559be"></script>
+<script src="../js/accueil.js?v=018ed76c"></script>
 <script src="../js/video-accueil.js?v=bc4e0b82"></script>
 <script src="../js/agenda.js?v=ca93831a"></script>
+
 </body>
 </html>

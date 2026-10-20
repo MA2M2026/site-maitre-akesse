@@ -70,7 +70,7 @@
 
   // --- Lien « Aller au contenu » (premier élément atteint avec la touche Tab) ---
   function lienContenu() {
-    // Le premier bloc de contenu (sur l'accueil : la grande image #porte-entree), pas le menu.
+    // Le premier bloc de contenu (sur l'accueil : le magazine, <main>), pas le menu.
     const candidats = [document.querySelector('main'), document.getElementById('contenu')]
       .concat(Array.from(document.querySelectorAll('section')));
     const cible = candidats.find(el => el && !el.closest('.menu-overlay'));
