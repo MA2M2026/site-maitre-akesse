@@ -2,7 +2,7 @@
 // utilisée pour le champ "Pays de naissance" — sert à proposer automatiquement
 // une nationalité suggérée (toujours modifiable librement ensuite : un mannequin
 // peut être né dans un pays et avoir une autre nationalité, ou l'inverse).
-// Même ordre et mêmes noms de pays que js/indicatifs-pays.js (sans l'indicatif
+// Même ordre et mêmes noms de pays que la liste des indicatifs (js/app.js) (sans l'indicatif
 // téléphonique, non pertinent ici), pour rester cohérent visuellement entre les
 // deux listes déroulantes du formulaire.
 const PAYS_NAISSANCE = [

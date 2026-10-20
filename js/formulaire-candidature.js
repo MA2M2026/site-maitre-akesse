@@ -30,7 +30,7 @@ remplirSelectNombres('ca-pointure', 34, 46, 1, '');
 
 // --- Ville en liste déroulante (avec "Autre" en secours) plutôt qu'en saisie
 // libre : évite les fautes/variantes d'orthographe (Man/Mann, Yakro/Yamoussoukro...). ---
-// VILLES_CI vient désormais de js/villes-cote-ivoire.js (partagé avec
+// VILLES_CI vient de js/app.js (depuis le 20/10/2026 ; partagé avec
 // espace-mannequin.html et espace-mannequin-MA2M-premium-20.html).
 remplirSelectListe('ca-ville', VILLES_CI);
 configurerSelectAvecAutre('ca-ville', 'ca-ville-autre');

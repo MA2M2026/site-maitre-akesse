@@ -1,6 +1,6 @@
 // Page Contact (contact.html et en/contact.html) : un seul script pour le français et
 // l'anglais (11/10/2026 : avant, deux copies dans les pages, avec leur propre liste de villes).
-// VILLES_CI : js/villes-cote-ivoire.js ; listes déroulantes « Autre » : js/app.js.
+// VILLES_CI : js/app.js ; listes déroulantes « Autre » : js/app.js.
 remplirSelectListe('ville', VILLES_CI);
 configurerSelectAvecAutre('ville', 'ville-autre');
 

@@ -654,7 +654,7 @@ js/evenements.js                      Logique de la page Nos Événements (même
                                         logique en script inline (comme en/actualites.html),
                                         pas ce fichier.
 js/selection.js                      Logique de la page selection.html
-js/indicatifs-pays.js                 Liste des indicatifs téléphoniques (formulaires)
+js/app.js (fin du fichier)       Indicatifs téléphoniques et villes de Côte d’Ivoire (formulaires ; intégrés le 20/10/2026)
 js/analytics-config.js               Initialise Google Analytics (dataLayer/gtag)
 js/copyright-annee.js                 Remplit l'année du copyright dans le pied de page
 js/supabase-config.js                 Connexion au projet Supabase (clé publique)

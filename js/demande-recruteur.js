@@ -1,6 +1,6 @@
 // Demande des recruteurs, page Sélection (selection.html et en/selection.html) : un seul script pour le français et
 // l'anglais (11/10/2026 : avant, deux copies dans les pages, avec leur propre liste de villes).
-// VILLES_CI : js/villes-cote-ivoire.js ; listes déroulantes « Autre » : js/app.js.
+// VILLES_CI : js/app.js ; listes déroulantes « Autre » : js/app.js.
 remplirSelectListe('re-ville', VILLES_CI);
 configurerSelectAvecAutre('re-ville', 're-ville-autre');
 

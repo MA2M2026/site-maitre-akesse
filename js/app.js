@@ -3286,3 +3286,378 @@ document.addEventListener('pointerdown', function (e) {
   setTimeout(function () { t.classList.remove('touche-appuyee'); }, 160);
   try { if (navigator.vibrate) navigator.vibrate(8); } catch (err) {}
 }, { passive: true });
+
+// ================== Villes de Côte d'Ivoire et communes d'Abidjan ==================
+// Intégré ici le 20/10/2026 (avant : fichier à part js/villes-cote-ivoire.js). Journal du jour :
+// ce petit fichier ne s'était pas chargé sur le téléphone d'une visiteuse (« VILLES_CI is not
+// defined ») et tout le formulaire « Intégrer l'agence » s'arrêtait. Un téléchargement de moins,
+// un risque de coupure de moins.
+// Villes de Côte d'Ivoire (chefs-lieux de région/département les plus connus) —
+// Abidjan en tête car c'est de loin la ville la plus fréquente pour nos mannequins.
+// Reprise à l'identique de la liste utilisée jusqu'ici séparément dans
+// candidature.html et espace-mannequin-ancien.html (une seule copie désormais,
+// réutilisée aussi par espace-mannequin.html).
+const VILLES_CI = [
+  'Abidjan', 'Abengourou', 'Aboisso', 'Adiaké', 'Adzopé', 'Affery', 'Agboville', 'Agnibilékrou',
+  'Akoupé', 'Alépé', 'Anyama', 'Arrah', 'Attiégouakro', 'Bangolo', 'Bettié', 'Biankouma',
+  'Bingerville', 'Bloléquin', 'Bocanda', 'Bondoukou', 'Bongouanou', 'Bouaflé', 'Bouaké', 'Bouna',
+  'Boundiali', 'Dabakala', 'Dabou', 'Daloa', 'Danané', 'Daoukro', 'Dimbokro', 'Divo', 'Duékoué',
+  'Facobly', 'Ferkessédougou', 'Fresco', 'Gagnoa', 'Grand-Bassam', 'Grand-Lahou', 'Guiglo',
+  'Guitry', 'Issia', 'Jacqueville', 'Kani', 'Katiola', 'Kong', 'Korhogo', 'Kouibly', 'Lakota',
+  'Man', 'Mankono', "M'Bahiakro", 'Minignan', 'Nassian', 'Odienné', 'Oumé', 'Ouangolodougou',
+  'Ouragahio', 'Prikro', 'Sakassou', 'San-Pédro', 'Sassandra', 'Séguéla', 'Sikensi', 'Sinfra',
+  'Soubré', 'Tabou', 'Tanda', 'Tengréla', 'Tiassalé', 'Tiébissou', 'Toulepleu', 'Toumodi',
+  'Touba', 'Vavoua', 'Yamoussoukro', 'Zouan-Hounien', 'Zuénoula'
+];
+
+// Communes du Grand Abidjan — affichées dans une seconde liste déroulante qui
+// n'apparaît que si "Abidjan" est choisi ci-dessus : les 10 communes historiques
+// d'Abidjan-ville + les 3 communes rattachées les plus connues (Anyama et
+// Bingerville existent déjà comme villes autonomes dans VILLES_CI ; ici on les
+// retrouve aussi comme communes du Grand Abidjan, pour ceux qui partent d'"Abidjan"
+// plutôt que de chercher directement leur commune dans la longue liste des villes).
+const COMMUNES_ABIDJAN = [
+  'Abobo', 'Adjamé', 'Anyama', 'Attécoubé', 'Bingerville', 'Cocody', 'Koumassi', 'Marcory',
+  'Plateau', 'Port-Bouët', 'Songon', 'Treichville', 'Yopougon'
+];
+
+// Branche la cascade "ville → commune (→ quartier)" sur les champs déjà présents
+// dans la page : quand "Abidjan" est choisi dans le select ville, un second select
+// commune apparaît (rempli avec COMMUNES_ABIDJAN + "Abidjan (sans précision)" +
+// "Autre"), suivi d'un champ libre "Quartier" (aucune liste fixe de quartiers
+// n'existe — texte libre, facultatif) ; sinon les deux restent masqués. La valeur
+// finalement enregistrée comme "ville" est celle de la commune si elle est
+// renseignée, sinon "Abidjan" seul, sinon la ville choisie normalement
+// (comportement inchangé pour toutes les autres villes) ; le quartier est
+// renvoyé séparément par valeurQuartier().
+//
+// idSelectVille : le <select> ville existant (déjà rempli par ailleurs avec VILLES_CI).
+// idWrapperCommune : l'élément (div) à afficher/masquer contenant le select commune.
+// idSelectCommune : le <select> commune à remplir.
+// idAutreCommune : le champ texte "Précisez la commune" (affiché seulement si Autre).
+// idWrapperQuartier (optionnel) : l'élément (div) du champ libre "Quartier",
+// affiché/masqué en même temps que la commune (n'a de sens que pour Abidjan).
+function brancherCascadeAbidjan(idSelectVille, idWrapperCommune, idSelectCommune, idAutreCommune, idWrapperQuartier) {
+  const selectVille = document.getElementById(idSelectVille);
+  const wrapper = document.getElementById(idWrapperCommune);
+  const selectCommune = document.getElementById(idSelectCommune);
+  const autreCommune = document.getElementById(idAutreCommune);
+  const wrapperQuartier = idWrapperQuartier ? document.getElementById(idWrapperQuartier) : null;
+  if (!selectVille || !wrapper || !selectCommune) return;
+
+  if (!selectCommune.options.length) {
+    selectCommune.appendChild(new Option('Abidjan (sans précision de commune)', 'Abidjan'));
+    COMMUNES_ABIDJAN.forEach(c => selectCommune.appendChild(new Option(c, c)));
+    selectCommune.appendChild(new Option('Autre', 'Autre'));
+  }
+
+  function actualiser() {
+    const estAbidjan = selectVille.value === 'Abidjan';
+    wrapper.style.display = estAbidjan ? 'block' : 'none';
+    if (wrapperQuartier) wrapperQuartier.style.display = estAbidjan ? 'block' : 'none';
+    if (!estAbidjan) {
+      selectCommune.value = 'Abidjan';
+      if (autreCommune) { autreCommune.style.display = 'none'; autreCommune.value = ''; }
+    }
+  }
+  selectVille.addEventListener('change', actualiser);
+  actualiser();
+
+  if (autreCommune) {
+    selectCommune.addEventListener('change', () => {
+      autreCommune.style.display = selectCommune.value === 'Autre' ? 'block' : 'none';
+      if (selectCommune.value !== 'Autre') autreCommune.value = '';
+    });
+  }
+}
+
+// Valeur finale de "ville" à enregistrer, une fois la cascade prise en compte :
+// - une ville différente d'Abidjan : renvoyée telle quelle (comportement inchangé) ;
+// - Abidjan + commune choisie : la commune (ex. "Cocody") ;
+// - Abidjan + "Autre" + précision : la précision saisie ;
+// - Abidjan sans commune précisée : "Abidjan".
+function villeAvecCommune(valeurVille, idSelectCommune, idAutreCommune) {
+  if (valeurVille !== 'Abidjan') return valeurVille;
+  const selectCommune = document.getElementById(idSelectCommune);
+  if (!selectCommune) return 'Abidjan';
+  if (selectCommune.value === 'Autre') {
+    const autre = document.getElementById(idAutreCommune);
+    return (autre && autre.value.trim()) || 'Abidjan';
+  }
+  return selectCommune.value || 'Abidjan';
+}
+
+// Repositionne les champs ville/commune à partir d'une valeur déjà enregistrée en
+// base (ex. "Cocody" doit rouvrir le select ville sur "Abidjan" ET le select
+// commune sur "Cocody" — sinon la commune enregistrée serait invisible à la
+// réouverture du formulaire). Pour toute autre ville, délègue à
+// definirSelectOuAutre() (déjà présente sur chaque page consommatrice), qui gère
+// la bascule vers "Autre" pour une ville hors liste.
+function definirVilleAvecCommune(valeurEnregistree, idSelectVille, idAutreVille, idSelectCommune, idAutreCommune) {
+  const selectVille = document.getElementById(idSelectVille);
+  const selectCommune = document.getElementById(idSelectCommune);
+  if (!selectVille) return;
+  const valeur = valeurEnregistree || '';
+  const estCommuneAbidjan = COMMUNES_ABIDJAN.includes(valeur);
+  if (valeur === 'Abidjan' || estCommuneAbidjan) {
+    selectVille.value = 'Abidjan';
+    selectVille.dispatchEvent(new Event('change'));
+    if (selectCommune) selectCommune.value = estCommuneAbidjan ? valeur : 'Abidjan';
+    return;
+  }
+  definirSelectOuAutre(idSelectVille, idAutreVille, valeur);
+}
+
+// ================== Indicatifs téléphoniques des pays ==================
+// Intégré ici le 20/10/2026 (avant : fichier à part js/indicatifs-pays.js), pour la même raison que
+// les villes ci-dessus : un fichier de moins à télécharger, un risque de coupure de moins (journal du
+// 20/10/2026 : « Script non chargé » sur le formulaire « Intégrer l'agence »).
+// Liste complète des indicatifs téléphoniques internationaux (drapeau, nom du
+// pays, indicatif), utilisée sur tous les formulaires du site qui demandent un
+// numéro de téléphone/WhatsApp — pour garantir un numéro toujours complet et
+// utilisable en lien WhatsApp cliquable depuis le tableau de bord.
+const INDICATIFS_PAYS = [
+  ['+93', '🇦🇫 Afghanistan (+93)'],
+  ['+27', '🇿🇦 Afrique du Sud (+27)'],
+  ['+355', '🇦🇱 Albanie (+355)'],
+  ['+213', '🇩🇿 Algérie (+213)'],
+  ['+49', '🇩🇪 Allemagne (+49)'],
+  ['+376', '🇦🇩 Andorre (+376)'],
+  ['+244', '🇦🇴 Angola (+244)'],
+  ['+1268', '🇦🇬 Antigua-et-Barbuda (+1268)'],
+  ['+966', '🇸🇦 Arabie saoudite (+966)'],
+  ['+54', '🇦🇷 Argentine (+54)'],
+  ['+374', '🇦🇲 Arménie (+374)'],
+  ['+61', '🇦🇺 Australie (+61)'],
+  ['+43', '🇦🇹 Autriche (+43)'],
+  ['+994', '🇦🇿 Azerbaïdjan (+994)'],
+  ['+1242', '🇧🇸 Bahamas (+1242)'],
+  ['+973', '🇧🇭 Bahreïn (+973)'],
+  ['+880', '🇧🇩 Bangladesh (+880)'],
+  ['+1246', '🇧🇧 Barbade (+1246)'],
+  ['+32', '🇧🇪 Belgique (+32)'],
+  ['+501', '🇧🇿 Belize (+501)'],
+  ['+229', '🇧🇯 Bénin (+229)'],
+  ['+975', '🇧🇹 Bhoutan (+975)'],
+  ['+375', '🇧🇾 Biélorussie (+375)'],
+  ['+95', '🇲🇲 Birmanie / Myanmar (+95)'],
+  ['+591', '🇧🇴 Bolivie (+591)'],
+  ['+387', '🇧🇦 Bosnie-Herzégovine (+387)'],
+  ['+267', '🇧🇼 Botswana (+267)'],
+  ['+55', '🇧🇷 Brésil (+55)'],
+  ['+673', '🇧🇳 Brunei (+673)'],
+  ['+359', '🇧🇬 Bulgarie (+359)'],
+  ['+226', '🇧🇫 Burkina Faso (+226)'],
+  ['+257', '🇧🇮 Burundi (+257)'],
+  ['+855', '🇰🇭 Cambodge (+855)'],
+  ['+237', '🇨🇲 Cameroun (+237)'],
+  ['+1', '🇨🇦 Canada (+1)'],
+  ['+238', '🇨🇻 Cap-Vert (+238)'],
+  ['+56', '🇨🇱 Chili (+56)'],
+  ['+86', '🇨🇳 Chine (+86)'],
+  ['+357', '🇨🇾 Chypre (+357)'],
+  ['+57', '🇨🇴 Colombie (+57)'],
+  ['+269', '🇰🇲 Comores (+269)'],
+  ['+242', '🇨🇬 Congo-Brazzaville (+242)'],
+  ['+243', '🇨🇩 Congo-Kinshasa / RDC (+243)'],
+  ['+850', '🇰🇵 Corée du Nord (+850)'],
+  ['+82', '🇰🇷 Corée du Sud (+82)'],
+  ['+506', '🇨🇷 Costa Rica (+506)'],
+  ['+225', "🇨🇮 Côte d'Ivoire (+225)"],
+  ['+385', '🇭🇷 Croatie (+385)'],
+  ['+53', '🇨🇺 Cuba (+53)'],
+  ['+45', '🇩🇰 Danemark (+45)'],
+  ['+253', '🇩🇯 Djibouti (+253)'],
+  ['+1767', '🇩🇲 Dominique (+1767)'],
+  ['+20', '🇪🇬 Égypte (+20)'],
+  ['+971', '🇦🇪 Émirats arabes unis (+971)'],
+  ['+593', '🇪🇨 Équateur (+593)'],
+  ['+291', '🇪🇷 Érythrée (+291)'],
+  ['+34', '🇪🇸 Espagne (+34)'],
+  ['+372', '🇪🇪 Estonie (+372)'],
+  ['+268', '🇸🇿 Eswatini (+268)'],
+  ['+1', '🇺🇸 États-Unis (+1)'],
+  ['+251', '🇪🇹 Éthiopie (+251)'],
+  ['+679', '🇫🇯 Fidji (+679)'],
+  ['+358', '🇫🇮 Finlande (+358)'],
+  ['+33', '🇫🇷 France (+33)'],
+  ['+241', '🇬🇦 Gabon (+241)'],
+  ['+220', '🇬🇲 Gambie (+220)'],
+  ['+995', '🇬🇪 Géorgie (+995)'],
+  ['+233', '🇬🇭 Ghana (+233)'],
+  ['+30', '🇬🇷 Grèce (+30)'],
+  ['+1473', '🇬🇩 Grenade (+1473)'],
+  ['+502', '🇬🇹 Guatemala (+502)'],
+  ['+224', '🇬🇳 Guinée (+224)'],
+  ['+245', '🇬🇼 Guinée-Bissau (+245)'],
+  ['+240', '🇬🇶 Guinée équatoriale (+240)'],
+  ['+592', '🇬🇾 Guyana (+592)'],
+  ['+509', '🇭🇹 Haïti (+509)'],
+  ['+504', '🇭🇳 Honduras (+504)'],
+  ['+36', '🇭🇺 Hongrie (+36)'],
+  ['+91', '🇮🇳 Inde (+91)'],
+  ['+62', '🇮🇩 Indonésie (+62)'],
+  ['+964', '🇮🇶 Irak (+964)'],
+  ['+98', '🇮🇷 Iran (+98)'],
+  ['+353', '🇮🇪 Irlande (+353)'],
+  ['+354', '🇮🇸 Islande (+354)'],
+  ['+972', '🇮🇱 Israël (+972)'],
+  ['+39', '🇮🇹 Italie (+39)'],
+  ['+1876', '🇯🇲 Jamaïque (+1876)'],
+  ['+81', '🇯🇵 Japon (+81)'],
+  ['+962', '🇯🇴 Jordanie (+962)'],
+  ['+7', '🇰🇿 Kazakhstan (+7)'],
+  ['+254', '🇰🇪 Kenya (+254)'],
+  ['+996', '🇰🇬 Kirghizistan (+996)'],
+  ['+686', '🇰🇮 Kiribati (+686)'],
+  ['+965', '🇰🇼 Koweït (+965)'],
+  ['+856', '🇱🇦 Laos (+856)'],
+  ['+266', '🇱🇸 Lesotho (+266)'],
+  ['+371', '🇱🇻 Lettonie (+371)'],
+  ['+961', '🇱🇧 Liban (+961)'],
+  ['+231', '🇱🇷 Liberia (+231)'],
+  ['+218', '🇱🇾 Libye (+218)'],
+  ['+423', '🇱🇮 Liechtenstein (+423)'],
+  ['+370', '🇱🇹 Lituanie (+370)'],
+  ['+352', '🇱🇺 Luxembourg (+352)'],
+  ['+389', '🇲🇰 Macédoine du Nord (+389)'],
+  ['+261', '🇲🇬 Madagascar (+261)'],
+  ['+60', '🇲🇾 Malaisie (+60)'],
+  ['+265', '🇲🇼 Malawi (+265)'],
+  ['+960', '🇲🇻 Maldives (+960)'],
+  ['+223', '🇲🇱 Mali (+223)'],
+  ['+356', '🇲🇹 Malte (+356)'],
+  ['+212', '🇲🇦 Maroc (+212)'],
+  ['+230', '🇲🇺 Maurice (+230)'],
+  ['+222', '🇲🇷 Mauritanie (+222)'],
+  ['+52', '🇲🇽 Mexique (+52)'],
+  ['+691', '🇫🇲 Micronésie (+691)'],
+  ['+373', '🇲🇩 Moldavie (+373)'],
+  ['+377', '🇲🇨 Monaco (+377)'],
+  ['+976', '🇲🇳 Mongolie (+976)'],
+  ['+382', '🇲🇪 Monténégro (+382)'],
+  ['+258', '🇲🇿 Mozambique (+258)'],
+  ['+264', '🇳🇦 Namibie (+264)'],
+  ['+674', '🇳🇷 Nauru (+674)'],
+  ['+977', '🇳🇵 Népal (+977)'],
+  ['+505', '🇳🇮 Nicaragua (+505)'],
+  ['+227', '🇳🇪 Niger (+227)'],
+  ['+234', '🇳🇬 Nigeria (+234)'],
+  ['+47', '🇳🇴 Norvège (+47)'],
+  ['+64', '🇳🇿 Nouvelle-Zélande (+64)'],
+  ['+968', '🇴🇲 Oman (+968)'],
+  ['+256', '🇺🇬 Ouganda (+256)'],
+  ['+998', '🇺🇿 Ouzbékistan (+998)'],
+  ['+92', '🇵🇰 Pakistan (+92)'],
+  ['+680', '🇵🇼 Palaos (+680)'],
+  ['+507', '🇵🇦 Panama (+507)'],
+  ['+675', '🇵🇬 Papouasie-Nouvelle-Guinée (+675)'],
+  ['+595', '🇵🇾 Paraguay (+595)'],
+  ['+31', '🇳🇱 Pays-Bas (+31)'],
+  ['+51', '🇵🇪 Pérou (+51)'],
+  ['+63', '🇵🇭 Philippines (+63)'],
+  ['+48', '🇵🇱 Pologne (+48)'],
+  ['+351', '🇵🇹 Portugal (+351)'],
+  ['+974', '🇶🇦 Qatar (+974)'],
+  ['+236', '🇨🇫 République centrafricaine (+236)'],
+  ['+1809', '🇩🇴 République dominicaine (+1809)'],
+  ['+420', '🇨🇿 République tchèque (+420)'],
+  ['+40', '🇷🇴 Roumanie (+40)'],
+  ['+44', '🇬🇧 Royaume-Uni (+44)'],
+  ['+7', '🇷🇺 Russie (+7)'],
+  ['+250', '🇷🇼 Rwanda (+250)'],
+  ['+1869', '🇰🇳 Saint-Kitts-et-Nevis (+1869)'],
+  ['+378', '🇸🇲 Saint-Marin (+378)'],
+  ['+1784', '🇻🇨 Saint-Vincent-et-les-Grenadines (+1784)'],
+  ['+1758', '🇱🇨 Sainte-Lucie (+1758)'],
+  ['+677', '🇸🇧 Salomon (+677)'],
+  ['+503', '🇸🇻 Salvador (+503)'],
+  ['+685', '🇼🇸 Samoa (+685)'],
+  ['+239', '🇸🇹 São Tomé-et-Príncipe (+239)'],
+  ['+221', '🇸🇳 Sénégal (+221)'],
+  ['+381', '🇷🇸 Serbie (+381)'],
+  ['+248', '🇸🇨 Seychelles (+248)'],
+  ['+232', '🇸🇱 Sierra Leone (+232)'],
+  ['+65', '🇸🇬 Singapour (+65)'],
+  ['+421', '🇸🇰 Slovaquie (+421)'],
+  ['+386', '🇸🇮 Slovénie (+386)'],
+  ['+252', '🇸🇴 Somalie (+252)'],
+  ['+249', '🇸🇩 Soudan (+249)'],
+  ['+211', '🇸🇸 Soudan du Sud (+211)'],
+  ['+94', '🇱🇰 Sri Lanka (+94)'],
+  ['+46', '🇸🇪 Suède (+46)'],
+  ['+41', '🇨🇭 Suisse (+41)'],
+  ['+597', '🇸🇷 Suriname (+597)'],
+  ['+963', '🇸🇾 Syrie (+963)'],
+  ['+992', '🇹🇯 Tadjikistan (+992)'],
+  ['+255', '🇹🇿 Tanzanie (+255)'],
+  ['+235', '🇹🇩 Tchad (+235)'],
+  ['+66', '🇹🇭 Thaïlande (+66)'],
+  ['+670', '🇹🇱 Timor oriental (+670)'],
+  ['+228', '🇹🇬 Togo (+228)'],
+  ['+676', '🇹🇴 Tonga (+676)'],
+  ['+1868', '🇹🇹 Trinité-et-Tobago (+1868)'],
+  ['+216', '🇹🇳 Tunisie (+216)'],
+  ['+993', '🇹🇲 Turkménistan (+993)'],
+  ['+90', '🇹🇷 Turquie (+90)'],
+  ['+688', '🇹🇻 Tuvalu (+688)'],
+  ['+380', '🇺🇦 Ukraine (+380)'],
+  ['+598', '🇺🇾 Uruguay (+598)'],
+  ['+678', '🇻🇺 Vanuatu (+678)'],
+  ['+379', '🇻🇦 Vatican (+379)'],
+  ['+58', '🇻🇪 Venezuela (+58)'],
+  ['+84', '🇻🇳 Vietnam (+84)'],
+  ['+967', '🇾🇪 Yémen (+967)'],
+  ['+260', '🇿🇲 Zambie (+260)'],
+  ['+263', '🇿🇼 Zimbabwe (+263)']
+];
+
+// Pages anglaises : noms des pays en anglais (traduits par le navigateur à partir du
+// drapeau, qui contient le code du pays), classés dans l'ordre alphabétique anglais.
+// Navigateur trop ancien pour traduire : la liste française reste affichée.
+function indicatifsAffiches() {
+  if ((document.documentElement.lang || '').indexOf('en') !== 0 || typeof Intl === 'undefined' || !Intl.DisplayNames) return INDICATIFS_PAYS;
+  try {
+    const noms = new Intl.DisplayNames(['en'], { type: 'region' });
+    return INDICATIFS_PAYS.map(([valeur, libelle]) => {
+      const lettres = Array.from(libelle).slice(0, 2).map(c => c.codePointAt(0) - 0x1F1E6);
+      if (lettres.length !== 2 || lettres.some(n => n < 0 || n > 25)) return [valeur, libelle, libelle];
+      const code = String.fromCharCode(65 + lettres[0], 65 + lettres[1]);
+      const nom = noms.of(code);
+      if (!nom || nom === code) return [valeur, libelle, libelle];
+      const drapeau = Array.from(libelle).slice(0, 2).join('');
+      return [valeur, `${drapeau} ${nom} (${valeur})`, nom];
+    }).sort((a, b) => a[2].localeCompare(b[2], 'en'));
+  } catch (e) { return INDICATIFS_PAYS; }
+}
+
+function remplirIndicatifs(selectEl, indicatifParDefaut) {
+  selectEl.innerHTML = indicatifsAffiches().map(([valeur, libelle]) => `<option value="${valeur}">${libelle}</option>`).join('');
+  selectEl.value = indicatifParDefaut || '+225';
+}
+
+function composerTelephone(selectEl, champNumeroEl) {
+  const numero = champNumeroEl.value.trim();
+  return numero ? `${selectEl.value} ${numero}` : '';
+}
+
+// Reconstitue le menu déroulant + le numéro local à partir d'un numéro déjà
+// enregistré (ex : "+225 0700000000") — utilisé par les formulaires qui
+// modifient un profil existant plutôt qu'une nouvelle inscription.
+function preRemplirTelephone(valeur, selectEl, champNumeroEl) {
+  const texte = (valeur || '').trim();
+  if (!texte) { selectEl.value = '+225'; champNumeroEl.value = ''; return; }
+  const correspondance = INDICATIFS_PAYS
+    .slice()
+    .sort((a, b) => b[0].length - a[0].length) // indicatifs les plus longs d'abord (ex : +1268 avant +1)
+    .find(([code]) => texte.startsWith(code));
+  if (correspondance) {
+    selectEl.value = correspondance[0];
+    champNumeroEl.value = texte.slice(correspondance[0].length).trim();
+  } else {
+    // Numéro ancien enregistré sans indicatif reconnu : on ne perd rien, le
+    // texte complet reste visible dans le champ numéro pour correction manuelle.
+    selectEl.value = '+225';
+    champNumeroEl.value = texte;
+  }
+}
