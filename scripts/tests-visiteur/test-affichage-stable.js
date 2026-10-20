@@ -18,6 +18,8 @@ const profils = Array.from({ length: 30 }, (_, i) => ({ id: '00000000-0000-0000-
     const p = await ctx.newPage(); const errs = [];
     p.on('pageerror', e => errs.push(e.message));
     await p.addInitScript(() => {
+      // intro du logo (7 s) déjà vue : elle couvrirait l'écran pendant la mesure (accueil en magazine, 20/10/2026)
+      try { sessionStorage.setItem('ma2m_intro_vue', '1'); } catch (e) {}
       window.__score = 0;
       new PerformanceObserver(l => l.getEntries().forEach(e => { if (!e.hadRecentInput) window.__score += e.value; })).observe({ type: 'layout-shift', buffered: true });
     });
