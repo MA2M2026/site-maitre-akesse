@@ -1,5 +1,5 @@
 // Contrôle « un seul bouton pour tout le site » (décision de la propriétaire, 18/10/2026) : chaque
-// bouton visible de la page doit être rouge MA2M, texte blanc, coins arrondis (css/bouton-ma2m.css).
+// bouton visible de la page doit être rouge MA2M, texte blanc, coins arrondis (css/bouton-ma2m.css ; presque carrés sur le site « Magazine » depuis le 20/10/2026 : 2 px au moins).
 // Compte aussi comme bouton un lien habillé en bouton (fond ou cadre, marge intérieure) : il doit
 // être rouge lui aussi. Ne sont pas concernés : les liens dans le texte, les photos cliquables
 // (.cliquable), le bouton WhatsApp flottant et les logos de réseaux (couleurs de marque).
@@ -39,7 +39,7 @@ function verifierBoutons() {
     const rayon = Number.parseFloat(s.borderTopLeftRadius);
     // le texte ne doit pas déborder du bouton (signalé par la propriétaire le 19/10/2026)
     const deborde = e.scrollWidth > e.clientWidth + 2 || e.scrollHeight > e.clientHeight + 2;
-    const ok = rouge(s.backgroundColor) && s.color === 'rgb(255, 255, 255)' && rayon >= 8 && !deborde;
+    const ok = rouge(s.backgroundColor) && s.color === 'rgb(255, 255, 255)' && rayon >= 2 && !deborde;
     if (!ok) {
       const nom = e.tagName.toLowerCase() + (e.id ? '#' + e.id : '') + [...e.classList].map((c) => '.' + c).join('');
       mauvais.push({ deborde, element: nom, texte: (e.innerText || e.value || e.getAttribute('aria-label') || '').trim().replace(/\s+/g, ' ').slice(0, 30), fond: s.backgroundColor, couleur: s.color, rayon: s.borderTopLeftRadius });

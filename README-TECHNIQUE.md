@@ -2793,3 +2793,31 @@ depuis Abidjan (une vérification a bloqué l'accueil 10 s) ; le tableau de bord
   (`/tableau-de-bord.html?notif=…&id=…`) suivent le renvoi : `adresseRetour()` garde aussi
   `notif` et `id`. Essais : test-pages-publiques.js (aucun bouton « Admin », même sur un
   ancien appareil admin), test-administration.js (notification → fiche).
+
+## Refonte « Magazine » (20/10/2026) — tout le site et l'Administration
+Choix de la propriétaire : « Magazine 3 » (maquette `maquettes/accueil-magazine.html`, plan et journal
+détaillés dans `PLAN-REFONTE-MAGAZINE.md`). Le style s'applique à TOUT (site public, boutique,
+Administration, tableau de bord) ; aucune donnée n'a été modifiée.
+- **Jetons** (`css/jetons.css`) : bloc « Édition Magazine » (`--mag-scene`, `--mag-papier`, `--mag-encre`,
+  `--mag-gris`, `--mag-carte`, `--mag-lignes`, voiles `--mag-voile-*`, polices `--mag-titre` = Big Shoulders
+  Display et `--mag-texte` = Work Sans), puis bloc « Édition Magazine partout » qui rebranche les couleurs
+  de base (`--fond`, `--surface`, `--encre`, `--sombre`, `--police`…) pour le site ET l'Administration.
+  Le mode sombre de l'Administration (`:root.theme-auto`) et les couleurs d'état ne changent pas.
+- **Accueil** (`index.html`, `en/index.html`, `css/magazine.css`, `js/accueil.js`) : pages « collées »
+  (position: sticky dans `<main class="mag">`) qui s'empilent. Ordinateur et tablette : format 3:4 ;
+  téléphone : hauteur de l'écran moins la place des boutons flottants, textes ≥ 12 px. Pages remplies
+  depuis l'Administration ; pages en option (agenda, film, partenaires, Instagram) réservées d'une visite
+  à l'autre (`localStorage ma2m_magazine_pages`) pour que la page ne saute pas au retour en arrière.
+  Sommaire et numéros de page recalculés (MutationObserver). Dos rouge : « Casting ouvert » seulement si
+  `casting_projets.actif`. Couverture et « À la une » : version moyenne de la photo (`url_moyenne`).
+- **Site public** : fin de `css/charte-ma2m.css` (titres h1 en Big Shoulders capitales, h2 en Big Shoulders sans capitales, en-tête et pied
+  de page sur le papier avec filet d'encre, boutons presque carrés via `--bouton-rayon` lu par
+  `css/bouton-ma2m.css`). Polices ajoutées dans les 43 pages publiques, `admin/index.html` et
+  `tableau-de-bord.html` (autorisées par le CSP : fonts.googleapis.com / fonts.gstatic.com).
+- **Administration** : `css/portail.css` (h1 en Big Shoulders), `css/tableau-v2.css` (`--v2-*` rebranchés
+  sur les jetons magazine, titre « Tableau de bord » en Big Shoulders).
+- **Retirés** : intro animée, porte « Entrer », carrousel, médaillons de l'accueil (`js/accueil-debut.js`,
+  `js/intro-faisceau.js`, `js/faisceau.js`, `css/splash.css`). `js/verrou-defilement.js` reste chargé sur
+  l'accueil (menu).
+- **Tests** : `test-affichage-stable.js` (pages Femmes/Hommes, pas de saut), `test-lisibilite-photos.js`
+  (ajouté à `lancer.sh` ; photos d'essai générées ; une photo cachée sous une page opaque ne compte plus).

@@ -203,10 +203,10 @@ html body .menu-overlay .menu-contact, html body .menu-overlay .menu-contact a.m
   --bouton-rayon: 2px;
   --rayon-carte: 4px;
 }
-h1, h2 {
-  font-family: var(--mag-titre); font-weight: 800; text-transform: uppercase;
-  letter-spacing: 0; line-height: 0.98;
-}
+h1, h2 { font-family: var(--mag-titre); font-weight: 800; letter-spacing: 0; line-height: 1; }
+/* capitales pour les grands titres de page seulement : un sous-titre est souvent une phrase
+   (« Bonjour Madame…, félicitations ! ») qui, en capitales, aurait l'air de crier */
+h1 { text-transform: uppercase; line-height: 0.98; }
 h3 { font-family: var(--mag-texte); font-weight: 600; letter-spacing: 0; }
 .eyebrow { font-family: var(--mag-texte); font-weight: 600; letter-spacing: 0.12em; color: var(--rouge-ma2m-texte); }
 .carte, .card { border-radius: var(--rayon-carte); }

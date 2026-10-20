@@ -76,7 +76,7 @@ Le dossier `maquettes/` et ce fichier ne sont pas publiés (`.vercelignore`).
   - Téléphone : page sur toute la hauteur de l'écran (pas 3:4) et textes ≥ 12 px ; la page s'arrête
     au-dessus des boutons flottants.
   - Tout le site public : bloc « Édition Magazine » à la fin de `css/charte-ma2m.css` (variables
-    rebranchées sur `--mag-…`, titres h1/h2 Big Shoulders en capitales, boutons presque carrés via
+    rebranchées sur `--mag-…`, titres h1 Big Shoulders en capitales et h2 en Big Shoulders, boutons presque carrés via
     `--bouton-rayon`), polices ajoutées aux 43 pages publiques.
   - Tests : test-affichage-stable.js (pages Femmes/Hommes, pas de saut au retour), test-lisibilite-
     photos.js (textes de la couverture et de « À la une », photos d'essai générées par lancer.sh ;
