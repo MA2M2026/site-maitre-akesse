@@ -200,8 +200,9 @@
 .p-agence li { display: grid; grid-template-columns: 1fr 1.3fr; gap: 4cqmin; padding: 3cqmin 0; border-top: 2px solid var(--mag-encre); }
 .p-agence li strong { font-family: var(--mag-titre); font-weight: 800; text-transform: uppercase; font-size: max(20px, 5cqmin); line-height: 1; }
 .p-agence li span { font-size: max(13px, 2.9cqmin); line-height: 1.5; color: var(--mag-gris); }
-.p-agence .mag-cadre { margin-top: auto; flex: 0 1 30cqmin; min-height: 18cqmin; }
-/* bandeaux larges et bas : photo calée vers le haut pour garder le visage (20/10/2026 : centrée, on ne voyait que le buste) */
+.p-agence .mag-cadre { margin-top: 5cqmin; flex: 1 1 30cqmin; min-height: 18cqmin; }
+/* en hauteur, la photo prend toute la place libre sous le texte et reste calée vers le haut, sur le
+   visage (20/10/2026 : bandeau bas et centré, on ne voyait que le buste) */
 .p-agence .mag-cadre img, .p-dos .mag-cadre img { object-position: 50% 12%; }
 
 /* ---- Pages qui n'apparaissent que si l'Administration les remplit ---- */
@@ -246,7 +247,7 @@
   font-size: max(15px, 3cqmin); font-weight: 600; text-decoration: none;
 }
 .p-dos .bouton:focus-visible { outline-color: var(--sur-rouge); }
-.p-dos .mag-cadre { margin-top: auto; flex: 0 1 44cqmin; min-height: 20cqmin; }
+.p-dos .mag-cadre { margin-top: 5cqmin; flex: 1 1 44cqmin; min-height: 20cqmin; }
 .p-dos .contact { margin-top: 3cqmin; font-size: max(12px, 2.6cqmin); }
 .p-dos .contact a { text-decoration: underline; text-underline-offset: 3px; }
 
