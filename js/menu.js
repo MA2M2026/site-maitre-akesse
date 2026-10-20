@@ -90,11 +90,17 @@ document.addEventListener('DOMContentLoaded', () => {
   // sinon, sur mobile, faire défiler jusqu'aux limites du menu peut faire défiler
   // la page en dessous sans que ça se voie, ce qui donne un rendu décalé à la fermeture.
   let menuEstOuvert = false;
+  // Clavier (20/10/2026, visite sur ordinateur) : menu ouvert, la touche Tab partait sur les liens
+  // de la page cachée derrière. Le focus entre dans le menu, y reste (Tab et Maj+Tab tournent
+  // sur ses liens), et revient au bouton « Menu » à la fermeture.
+  const elementsDuMenu = () => [...overlay.querySelectorAll('a[href], button:not([disabled])')].filter(el => el.offsetParent !== null);
   function ouvrirMenu() {
     overlay.classList.add('active');
     if (window.jouerSon) window.jouerSon('menu');
     menuEstOuvert = true;
     window.verrouillerDefilement();
+    const premier = elementsDuMenu()[0];
+    if (premier) setTimeout(() => premier.focus({ preventScroll: true }), 50);
   }
   function fermerMenu() {
     overlay.classList.remove('active');
@@ -104,8 +110,22 @@ document.addEventListener('DOMContentLoaded', () => {
     if (menuEstOuvert) {
       menuEstOuvert = false;
       window.deverrouillerDefilement();
+      if (overlay.contains(document.activeElement)) menuBtn.focus({ preventScroll: true });
     }
   }
+  overlay.addEventListener('keydown', (e) => {
+    if (e.key !== 'Tab' || !menuEstOuvert) return;
+    const liste = elementsDuMenu();
+    if (!liste.length) return;
+    const i = liste.indexOf(document.activeElement);
+    if (e.shiftKey && i <= 0) { e.preventDefault(); liste[liste.length - 1].focus(); }
+    else if (!e.shiftKey && i === liste.length - 1) { e.preventDefault(); liste[0].focus(); }
+  });
+  document.addEventListener('focusin', (e) => {
+    if (!menuEstOuvert || overlay.contains(e.target)) return;
+    const premier = elementsDuMenu()[0];
+    if (premier) premier.focus({ preventScroll: true });
+  });
 
   menuBtn.addEventListener('click', ouvrirMenu);
   if (closeBtn) closeBtn.addEventListener('click', fermerMenu);

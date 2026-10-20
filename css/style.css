@@ -2212,6 +2212,9 @@ html.porte-deja-vue #porte-entree { display: none; }
 .fiche-mesure dd { margin: 0.2rem 0 0; font-family: var(--display); font-size: 1.12rem; color: var(--titre-clair); line-height: 1.2; }
 
 @media (max-width: 600px) {
+  /* téléphone : mensurations SOUS la photo ronde, sur toute la largeur (20/10/2026 : serrées à
+     sa droite, elles laissaient un grand vide sous la photo) */
+  .fiche-entete { grid-template-columns: minmax(0, 1fr); row-gap: 0; }
   .fiche-avatar.profil-avatar { width: 116px; height: 116px; margin-top: -58px; border-width: 4px; }
   .fiche-mesures { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 0.9rem; padding-top: 0.5rem; }
   .fiche-mesure { padding: 0.45rem 0; }
@@ -2450,6 +2453,27 @@ html.vide-mot-responsable #mot-responsable.section-reservee.u-hidden { display: 
    que le Book, le contact et le pied de page restent hors de l'écran et ne « sautent » pas
    à l'arrivée du profil (journal : 0,57 et 0,37 sur téléphone). */
 #contenu:has(> .fiche-en-chargement) { min-height: calc(100svh + 120px); }
+/* 20/10/2026 (visite « comme une humaine ») : une page vide avec « Chargement… » faisait croire
+   à une page cassée. La fiche s'annonce par sa silhouette : grande photo et lignes de texte qui
+   scintillent doucement, le mot « Chargement… » dessous. Aussi pour l'attente posée par
+   relancerChargementFiche (js/app.js), qui reprend la même classe. */
+.fiche-en-chargement {
+  display: flex; flex-direction: column; gap: 14px; max-width: 520px;
+  font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--encre-douce);
+}
+.fiche-en-chargement::before, .fiche-en-chargement::after {
+  content: ""; order: -1;
+  background: linear-gradient(100deg, var(--mag-papier-fonce) 40%, var(--mag-carte) 50%, var(--mag-papier-fonce) 60%) 0 0 / 300% 100%;
+  animation: fiche-scintille 1.4s linear infinite;
+}
+.fiche-en-chargement::before { aspect-ratio: 3 / 4; width: 100%; max-height: 62svh; }
+.fiche-en-chargement::after {
+  height: 62px;
+  -webkit-mask: linear-gradient(#000 0 0) 0 0 / 70% 22px no-repeat, linear-gradient(#000 0 0) 0 38px / 45% 14px no-repeat;
+  mask: linear-gradient(#000 0 0) 0 0 / 70% 22px no-repeat, linear-gradient(#000 0 0) 0 38px / 45% 14px no-repeat;
+}
+@keyframes fiche-scintille { to { background-position: -150% 0; } }
+@media (prefers-reduced-motion: reduce) { .fiche-en-chargement::before, .fiche-en-chargement::after { animation: none; } }
 
 /* ==========================================================================
    Confort de navigation (29/09/2026, validé par la propriétaire) — js/confort.js
