@@ -2843,3 +2843,29 @@ Administration, tableau de bord) ; aucune donnée n'a été modifiée.
   l'accueil (menu).
 - **Tests** : `test-affichage-stable.js` (pages Femmes/Hommes, pas de saut), `test-lisibilite-photos.js`
   (ajouté à `lancer.sh` ; photos d'essai générées ; une photo cachée sous une page opaque ne compte plus).
+
+## Journal du 20/10/2026 : analyse et corrections (zooms de la propriétaire)
+La propriétaire zoome souvent elle-même (doigts, clavier, menu du navigateur) ; le journal le
+comptait en erreur. `js/surveillance.js` :
+- plus de « Zoom inattendu » (zoom sans geste repéré) ; le « Zoom automatique » sur un champ au
+  texte de moins de 16 px reste signalé ;
+- « Page dézoomée » seulement si le contenu dépasse vraiment de l'écran (`scrollWidth`) ;
+- « Page plus large que l'écran » pas mesurée pendant un zoom (`visualViewport.scale` ≠ 1) ;
+- « Page figée » : le temps passé dans la fenêtre d'impression (`beforeprint` / `afterprint`)
+  est excusé, comme les fenêtres de confirmation.
+Essai : `test-surveillance-zoom.js` (zoom simulé en remplaçant `window.visualViewport`).
+Autres corrections tirées du même journal :
+- tableau de bord (adresse admin.…) : le rattrapage des versions légères des photos télécharge
+  l'original par le relais de la même adresse (`/book-photos/…`), et non plus par l'adresse www
+  enregistrée en base, refusée par le CSP (`connect-src`) ;
+- bloc « Inscriptions mannequins » qui dépassait sur tablette (800 px) : `min-width: 0` sur les
+  blocs des grilles et coupure des longs textes (`css/tableau-v2.css`). Essai :
+  `test-tableau-largeur.js` ;
+- inscription simplifiée : plus de `style="…"` écrit par le script (refusé par le CSP),
+  classes `.inn-question` et `.inn-surtitre--serre` ; `test-inscription.js` relève désormais
+  les refus du CSP ;
+- formulaire de candidature : le message (erreur ou envoi) est ramené à l'écran, pour que le
+  visiteur sache pourquoi rien ne part (4 clics sur « Envoyer » relevés sur un petit téléphone).
+Sans action : erreurs de traduction automatique ou d'extensions (« user-script », fonctions
+« Hk/Fk »), pages lentes et réseau injoignable (connexion du visiteur), vidéo illisible sur
+certains vieux téléphones (la page la masque déjà).
