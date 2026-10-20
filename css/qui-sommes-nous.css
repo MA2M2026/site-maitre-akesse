@@ -333,7 +333,7 @@
   font-family: var(--display); font-weight: 800; text-transform: uppercase;
   font-size: clamp(3.2rem, 11vw, 9rem); line-height: 1;
   color: var(--encre); -webkit-text-stroke: 0;
-  text-transform: uppercase; letter-spacing: 0.02em;
+  letter-spacing: 0.02em;
 }
 .qsn-bandeau-piste span:nth-child(3n+2) { color: var(--bordeaux-clair); -webkit-text-stroke: 0; }
 .qsn-bandeau-piste span::after { content: "·"; margin-left: 3rem; color: var(--bordeaux-clair); -webkit-text-stroke: 0; }

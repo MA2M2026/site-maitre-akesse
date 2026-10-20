@@ -180,7 +180,7 @@
     if (moyenneDe(couv)) photo(document.getElementById('couv-img'), moyenneDe(couv), couv.full_name, true);
     if (moyenneDe(une)) photo(document.getElementById('une-img'), moyenneDe(une), une.full_name);
 
-    defilerCouverture([couv].concat(autres.filter(m => m !== couv), une));
+    defilerCouverture([couv].concat(autres.filter(m => m !== couv), une)).catch(e => console.warn('Accueil : defilerCouverture', e));
   }
 
   // --- Couverture : les photos de tous les mannequins défilent en continu (demande de la
