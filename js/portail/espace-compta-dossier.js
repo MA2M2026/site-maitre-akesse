@@ -177,4 +177,14 @@
   // (juste après « Tableau du mois » : c'est ce que le comptable demande chaque mois)
   esp.nav.splice(esp.nav.findIndex((n) => n[0] === 'mois') + 1, 0, ['dossier', 'Dossier du mois']);
   esp.pages.dossier = dossier;
+  // Ordre du plan validé (Portail_Admin_MA2M.html) : 8 entrées simples en tête, le reste regroupé dessous.
+  // Les pages et les données ne changent pas, seuls l'ordre et les titres du menu.
+  const PLAN = [['mois', 'Tableau de bord'], ['recettes', 'Recettes'], ['documents', 'Devis, proforma, factures'], ['depenses', 'Dépenses et charges'],
+    ['impots', 'Impôts et taxes'], ['dossier', 'Clôture mensuelle'], ['identite', 'Paramètres de l’entité']];
+  const cles = PLAN.map((n) => n[0]);
+  const autres = esp.nav.filter((n) => n[0] !== null && !cles.includes(n[0]));
+  esp.nav.length = 0;
+  esp.nav.push([null, 'Comptabilité']);
+  PLAN.forEach((n) => { if (esp.pages[n[0]]) esp.nav.push(n); });
+  if (autres.length) { esp.nav.push([null, 'Suivi et trésorerie']); autres.forEach((n) => esp.nav.push(n)); }
 })();

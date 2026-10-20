@@ -234,6 +234,6 @@ details summary { cursor: pointer; font-weight: 700; }
 /* Espace 1 dans le portail : écran de chargement clair, la page n'apparaît qu'une fois prête
    (au plus 8 secondes, même si elle ne répond pas) */
 .cadre-chargement { position: absolute; left: 0; right: 0; padding: 48px 16px; text-align: center; color: var(--encre-douce); }
-.cadre-cache { visibility: hidden; animation: cadre-montrer 0s 8s forwards; }
+.cadre-cache { visibility: hidden; animation: cadre-montrer 0s 10s forwards; }
 @keyframes cadre-montrer { to { visibility: visible; } }
 .contenu:has(.cadre-ancien:not(.cadre-cache)) .cadre-chargement { display: none; }

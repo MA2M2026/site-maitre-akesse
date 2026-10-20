@@ -63,7 +63,20 @@
     cadre.src = adresse(cle);
   }
   // la page de l'espace 1 apparaît quand elle a fini de charger (l'événement ne « remonte » pas : capture)
-  document.addEventListener('load', (e) => { if (e.target && e.target.id === 'cadre-ancien') e.target.classList.remove('cadre-cache'); }, true);
+  // Pour le tableau de bord, la page se charge puis vérifie la session quelques secondes : on garde
+  // « Chargement… » à l'écran jusqu'à la fin de cette vérification (9 s au plus), au lieu d'un écran noir.
+  document.addEventListener('load', (e) => {
+    const cadre = e.target;
+    if (!cadre || cadre.id !== 'cadre-ancien') return;
+    const montrer = () => cadre.classList.remove('cadre-cache');
+    let essais = 0;
+    const attendre = () => {
+      let enCours = false;
+      try { enCours = !!cadre.contentDocument.getElementById('tdb-verif-msg'); } catch (err) { enCours = false; }
+      if (enCours && ++essais < 45) setTimeout(attendre, 200); else montrer();
+    };
+    attendre();
+  }, true);
 
   P.actions['espace1-reessayer'] = () => { P.afficher(); };
   const pages = {};
