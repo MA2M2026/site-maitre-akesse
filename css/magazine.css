@@ -115,7 +115,7 @@
 /* ---- 2 · Sommaire ---- */
 .p-sommaire { padding: 8cqmin 6cqmin; }
 .p-sommaire .mag-titre { font-size: max(44px, 13cqmin); margin-top: 1cqmin; }
-/* Photo du sommaire : un tirage de galerie (marge claire, ombre douce, légéremment incliné, nom du
+/* Photo du sommaire : un tirage de galerie (marge claire, ombre douce, légèrement incliné, nom du
    mannequin en légende), posé à droite ; les lignes du sommaire s'arrêtent avant lui
    (20/10/2026 : collée dans le coin, elle faisait « photo d'identité ») */
 .p-sommaire .vignette { float: right; width: 30cqmin; margin: 0 0 4cqmin 6cqmin; padding: 1.8cqmin 1.8cqmin 0; background: var(--mag-carte); box-shadow: var(--mag-ombre-tirage); transform: rotate(2deg); }

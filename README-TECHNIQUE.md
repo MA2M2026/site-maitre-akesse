@@ -2812,6 +2812,11 @@ Administration, tableau de bord) ; aucune donnée n'a été modifiée.
   Couverture : les photos de tous les mannequins défilent en fondu toutes les 5 s (`defilerCouverture`,
   deux images `#couv-img` / `#couv-img-2`), arrêt hors écran, immobile si « moins d'animations ».
   Essai : `test-couverture-accueil.js`.
+  Sommaire : la photo est un « tirage de galerie » (`figure.vignette` : marge claire, ombre
+  `--mag-ombre-tirage`, légère inclinaison, nom du mannequin en légende `#sommaire-legende`), flottante à
+  droite ; titre et lignes en `display: flow-root` pour s'arrêter avant elle. Pages « L'agence » et
+  « Nous rejoindre » en hauteur : la photo prend toute la place libre et reste calée sur le visage
+  (`object-position: 50% 12%`). Les deux sont contrôlés par `test-couverture-accueil.js`.
 - **Polices partout** : `html { font-synthesis-style: none; }` (jetons) — pas de faux italique (nos polices
   n'ont pas de version italique) ; « Qui sommes-nous » alignée sur le reste du site.
 - **Actualités / Événements** : titre et catégorie de l'article « à la une » en blanc sur la photo

@@ -34,6 +34,15 @@ const IMAGE = Buffer.from('R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=', 'b
     }
     const cadrages = await p.evaluate(() => ['agence-img', 'dos-img'].map((id) => getComputedStyle(document.getElementById(id)).objectPosition));
     ok(cadrages.every((c) => c === '50% 12%'), libelle + ' : photos des bandeaux « agence » et « dos » calées sur le visage (' + cadrages.join(', ') + ')');
+    // Sommaire en hauteur (tablette) : photo en « tirage » avec le nom du mannequin, lignes qui ne la touchent pas
+    await p.setViewportSize({ width: 800, height: 1120 }); await p.waitForTimeout(400);
+    const tirage = await p.evaluate(() => {
+      const v = document.querySelector('.p-sommaire .vignette').getBoundingClientRect(), t = document.getElementById('sommaire-titre').getBoundingClientRect();
+      const lignes = [...document.querySelectorAll('#sommaire-liste li')].map((li) => li.getBoundingClientRect()).filter((r) => r.top < v.bottom && r.bottom > v.top);
+      return { nom: document.getElementById('sommaire-legende').textContent, aCote: lignes.length > 0 && lignes.every((r) => r.right <= v.left), titre: t.right <= v.left && t.top < v.bottom };
+    });
+    ok(/^Mannequin \d$/.test(tirage.nom), libelle + ' : nom du mannequin sous la photo du sommaire (' + tirage.nom + ')');
+    ok(tirage.aCote && tirage.titre, libelle + ' : titre et lignes du sommaire à côté de la photo, sans la toucher');
     ok(!errs.length, libelle + ' : aucune erreur ' + errs.join(' | '));
     await ctx.close();
   }
