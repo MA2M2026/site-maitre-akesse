@@ -2548,7 +2548,13 @@ Regroupements faits pour supprimer les derniers blocs recopiés signalés par So
   `js/formulaire-candidature.js`. Contact : icônes des réseaux via `data-gabarit="reseaux"`.
 - Actualités / Événements : `afficherMediasPublication`, `brancherRedaction`,
   `envoyerPhotosPublication`, `enregistrerPhotosPublication`, `supprimerPublication`
-  (`js/publications.js`, constante `PUBLICATION` dans chaque page). Essai : `test-publications.js`.
+  (`js/publications.js`, constante `PUBLICATION` dans chaque page). Depuis le 20/10/2026 (code
+  recopié signalé par jscpd) aussi : `ouvrirRedactionPublication`, `enregistrerPublication`,
+  `messageRedaction`, `montrerFichePublication`, `brancherFicheLecture` et l'état `redaction`
+  ({ id, images }) ; chaque page ne garde que ses champs propres (catégorie et vidéo ; date et
+  lieu). Essai : `test-publications.js` (publier, titre obligatoire d'un événement, modifier,
+  supprimer, se déconnecter). Le bloc d'administration de ces pages (dont « Voir le tableau de
+  bord ») ne s'affiche qu'avec une session admin, donc sur l'adresse de l'Administration.
 - Verrou du défilement (porte d'entrée, menu, fenêtres) : `js/verrou-defilement.js`, chargé sans
   defer juste avant `js/app.js` sur chaque page (tout en haut du body sur l'accueil).
 - CV de la mannequin : `css/cv-mannequin.css` (Espace + tableau de bord, rendu identique au pixel ;

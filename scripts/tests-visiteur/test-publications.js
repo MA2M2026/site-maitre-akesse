@@ -1,6 +1,6 @@
 // Actualités et Événements, côté administratrice (12/10/2026 : fonctions de rédaction et de
 // suppression regroupées dans js/publications.js) : publier, modifier, supprimer depuis la
-// rédaction et depuis la fenêtre de lecture. Base simulée : rien n'est écrit pour de vrai.
+// rédaction et depuis la fenêtre de lecture, se déconnecter. Base simulée : rien n'est écrit pour de vrai.
 const { chromium } = require('playwright'); const { spawn } = require('child_process'); const { brancher } = require('./faux-serveur');
 const PORT = String(9100 + Math.floor(Math.random() * 90));
 (async () => {
@@ -14,9 +14,9 @@ const PORT = String(9100 + Math.floor(Math.random() * 90));
   };
   const cas = [
     ['actualites.html', 'actualites', { actualites: [{ id: 'n1', titre: 'Casting Orange', commentaire: '<p>Texte</p>', categorie: 'Casting', created_at: '2026-10-01T10:00:00Z', image_url: 'https://x/1.jpg' }],
-      actualite_photos: [{ actualite_id: 'n1', url: 'https://x/1.jpg', chemin: 'site/actualites/n1/1.jpg' }] }, true],
+      actualite_photos: [{ actualite_id: 'n1', url: 'https://x/1.jpg', chemin: 'site/actualites/n1/1.jpg' }] }, 'video'],
     ['en/evenements.html', 'evenements', { evenements: [{ id: 'e1', titre: 'Défilé Abidjan', description: '<p>D</p>', date_evenement: '2026-09-20', created_at: '2026-09-21T10:00:00Z', image_url: 'https://x/2.jpg' }],
-      evenement_photos: [{ evenement_id: 'e1', url: 'https://x/2.jpg', chemin: 'site/evenements/e1/2.jpg' }] }, false]
+      evenement_photos: [{ evenement_id: 'e1', url: 'https://x/2.jpg', chemin: 'site/evenements/e1/2.jpg' }] }, 'photo']
   ];
   for (const [page, table, tables, creer] of cas) {
     const p = await (await b.newContext({ viewport: { width: 390, height: 844 } })).newPage(); const errs = [], journal = [];
@@ -25,12 +25,19 @@ const PORT = String(9100 + Math.floor(Math.random() * 90));
     await brancher(p, { tables: Object.assign({ admins: [{ user_id: 'admin-1' }] }, tables), rpc: {} }, journal);
     await p.goto('http://127.0.0.1:' + PORT + '/' + page); await p.waitForTimeout(2500);
     const r = {};
-    if (creer) { // publier une actualité (vidéo seule, sans photo)
-      await p.$eval('#ouvrir-redaction-btn', x => x.click()); await p.waitForTimeout(400);
-      await p.fill('#red-titre', 'Essai publication'); await p.fill('#red-video', 'https://youtu.be/abc');
-      await p.$eval('#red-enregistrer-btn', x => x.click()); await p.waitForTimeout(1200);
-      r.publie = journal.some(j => j[0] === 'POST' && j[1] === table);
+    // publier : une actualité avec une vidéo seule ; un événement avec une photo (20/10/2026 :
+    // rédaction regroupée dans js/publications.js — sans titre, l'événement est refusé)
+    await p.$eval('#ouvrir-redaction-btn', x => x.click()); await p.waitForTimeout(400);
+    if (creer === 'video') await p.fill('#red-video', 'https://youtu.be/abc');
+    else {
+      await p.setInputFiles('#red-images', require('path').resolve(__dirname, 'medias/photo0.jpg'));
+      await p.$eval('#red-enregistrer-btn', x => x.click()); await p.waitForTimeout(400);
+      r.titreExige = !journal.some(j => j[0] === 'POST' && j[1] === table) && /titre est obligatoire|Title is required/.test(await p.textContent('#red-msg'));
     }
+    await p.fill('#red-titre', 'Essai publication');
+    await p.$eval('#red-enregistrer-btn', x => x.click()); await p.waitForTimeout(2500);
+    r.publie = journal.some(j => j[0] === 'POST' && j[1] === table && /Essai publication/.test(j[3] || ''));
+    r.messagePublie = /publiée|publié|published/i.test(await p.textContent('#red-msg'));
     // modifier depuis la fenêtre de lecture puis enregistrer
     await p.evaluate(() => (document.querySelector('.news-card, .event-card, [data-index]') || {}).click && document.querySelector('.news-card, .event-card, [data-index]').click()); await p.waitForTimeout(1200);
     await p.$eval('#news-modal-modifier-btn', x => x.click()); await p.waitForTimeout(500);
@@ -50,7 +57,10 @@ const PORT = String(9100 + Math.floor(Math.random() * 90));
     avant = suppressions();
     await p.$eval('#news-modal-supprimer-btn', x => x.click()); await p.waitForTimeout(1200);
     r.supprimeLecture = suppressions() > avant;
-    const ok = (creer ? r.publie : true) && r.modifie && r.supprimeRedaction && r.supprimeLecture && !errs.length;
+    // se déconnecter : le bloc d'administration disparaît
+    await p.$eval('#admin-logout-btn', x => x.click()); await p.waitForTimeout(800);
+    r.deconnecte = await p.$eval('#admin-bloc', x => getComputedStyle(x).display === 'none');
+    const ok = r.publie && r.messagePublie && (creer === 'video' || r.titreExige) && r.modifie && r.supprimeRedaction && r.supprimeLecture && r.deconnecte && !errs.length;
     console.log((ok ? '✓' : '❌ ÉCHEC') + ' rédaction ' + page + ' ' + JSON.stringify(r) + ' | erreurs : ' + JSON.stringify(errs));
     if (!ok) process.exitCode = 1;
     await p.context().close();

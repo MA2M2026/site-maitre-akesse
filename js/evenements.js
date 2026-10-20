@@ -104,61 +104,24 @@ async function ouvrirEvenementModal(index) {
   document.getElementById('news-modal-lieu').classList.toggle('u-hidden', !e.lieu);
   document.getElementById('news-modal-texte').innerHTML = rendreContenuRiche(e.description);
 
-  ouvrirNewsModal();
-
-  window.evenementModalCourant = e.id;
-  if (window.ficheOuverte) window.ficheOuverte('evenement', e.id, e.titre);
-  document.getElementById('news-modal-admin-actions').style.display = window.estAdminConnecte ? 'block' : 'none';
+  montrerFichePublication('evenement', e); // js/publications.js
 }
-// Fiche ouverte / fermée (verrouillage du défilement) : js/publications.js.
-document.getElementById('news-modal-fermer').addEventListener('click', fermerNewsModal);
-document.getElementById('news-modal').addEventListener('click', (e) => { if (e.target.id === 'news-modal') fermerNewsModal(); });
+// Fenêtre de lecture, modification et suppression (admin) : js/publications.js.
+const QUESTION_SUPPRESSION = T("Supprimer définitivement cet événement et toutes ses photos ?", 'Permanently delete this event and all its photos?');
+brancherFicheLecture(PUBLICATION, () => window.evenementsData, ouvrirRedaction, QUESTION_SUPPRESSION, chargerEvenements);
 
-void verifierAdmin();
-
-// --- Modification / suppression directement depuis la fiche ouverte (admin) ---
-document.getElementById('news-modal-modifier-btn').addEventListener('click', () => {
-  const e = window.evenementsData.find(x => x.id === window.evenementModalCourant);
-  if (!e) return;
-  fermerNewsModal();
-  ouvrirRedaction(e);
-});
-
-document.getElementById('news-modal-supprimer-btn').addEventListener('click', () => {
-  void supprimerPublication(PUBLICATION, window.evenementModalCourant, T("Supprimer définitivement cet événement et toutes ses photos ?", 'Permanently delete this event and all its photos?'), chargerEvenements, fermerNewsModal); // js/publications.js
-});
-
-document.getElementById('admin-logout-btn').addEventListener('click', async () => {
-  await sbAdmin.auth.signOut();
-  document.getElementById('admin-bloc').style.display = 'none';
-  window.estAdminConnecte = false;
-});
-
-// --- Page de rédaction plein écran : sert à la fois pour publier un nouvel événement
-// (redactionIdEnCours === null) et pour modifier un événement existant (redactionIdEnCours
-// = son id) — un seul éditeur, un seul jeu de champs, avec un aperçu du rendu public qui
-// se met à jour en direct pendant la saisie.
-let redactionIdEnCours = null;
-let redactionNouvellesImages = [];
-
+// --- Page de rédaction plein écran : sert à la fois pour publier un nouvel événement et pour
+// modifier un événement existant — un seul éditeur, un seul jeu de champs, avec un aperçu du
+// rendu public qui se met à jour en direct pendant la saisie (js/publications.js).
 function ouvrirRedaction(evenementExistant) {
-  redactionIdEnCours = evenementExistant ? evenementExistant.id : null;
-  redactionNouvellesImages = [];
-  document.getElementById('redaction-titre-mode').textContent = evenementExistant ? T('Modifier l’événement', 'Edit Event') : T('Publier un nouvel événement', 'Publish a New Event');
-  document.getElementById('red-titre').value = evenementExistant ? (evenementExistant.titre || '') : '';
+  ouvrirRedactionPublication(evenementExistant, {
+    nouvelle: T('Publier un nouvel événement', 'Publish a New Event'), modifier: T('Modifier l’événement', 'Edit Event'),
+    images: T('Photos (tu peux en sélectionner plusieurs à la fois)', 'Photos (you can select several at once)'), publier: T('Publier l’événement', 'Publish Event')
+  });
   document.getElementById('red-date').value = evenementExistant ? (evenementExistant.date_evenement || '') : '';
   document.getElementById('red-lieu').value = evenementExistant ? (evenementExistant.lieu || '') : '';
   chargerContenuDansEditeur(quillRedaction, evenementExistant ? evenementExistant.description : '');
-  document.getElementById('red-images').value = '';
-  document.getElementById('red-images-label').textContent = evenementExistant ? T('Ajouter des photos (s’ajoutent à celles déjà en ligne)', 'Add photos (added to those already online)') : T('Photos (tu peux en sélectionner plusieurs à la fois)', 'Photos (you can select several at once)');
-  document.getElementById('red-enregistrer-btn').textContent = evenementExistant ? T('Enregistrer', 'Save') : T('Publier l’événement', 'Publish Event');
-  document.getElementById('red-supprimer-btn').classList.toggle('u-hidden', !evenementExistant);
-  document.getElementById('red-msg').style.display = 'none';
-  document.getElementById('red-images-apercu').innerHTML = '';
-  apercuImageCouverture(evenementExistant ? evenementExistant.image_url : null);
   mettreAJourApercuRedaction();
-  document.getElementById('redaction-overlay').classList.add('active');
-  window.verrouillerDefilement();
 }
 
 function mettreAJourApercuRedaction() {
@@ -177,46 +140,15 @@ document.getElementById('red-date').addEventListener('input', mettreAJourApercuR
 document.getElementById('red-lieu').addEventListener('input', mettreAJourApercuRedaction);
 if (quillRedaction && typeof quillRedaction.on === 'function') quillRedaction.on('text-change', mettreAJourApercuRedaction);
 
-brancherRedaction(ouvrirRedaction, (fichiers) => { redactionNouvellesImages = fichiers; }); // js/publications.js
+brancherRedaction(PUBLICATION, ouvrirRedaction, QUESTION_SUPPRESSION, chargerEvenements);
 
-document.getElementById('red-enregistrer-btn').addEventListener('click', async () => {
-  const msg = document.getElementById('red-msg');
+document.getElementById('red-enregistrer-btn').addEventListener('click', () => {
   const titre = document.getElementById('red-titre').value.trim();
-  const dateEvenement = document.getElementById('red-date').value || null;
-  const lieu = document.getElementById('red-lieu').value.trim();
+  if (!titre) { messageRedaction('err', T('Le titre est obligatoire.', 'Title is required.')); return; }
+  if (!redaction.id && !redaction.images.length) { messageRedaction('err', T('Choisis au moins une photo.', 'Choose at least one photo.')); return; }
   const description = lireContenuEditeur(quillRedaction);
-  const fichiers = redactionNouvellesImages;
-
-  if (!titre) { msg.className = 'form-msg err'; msg.textContent = T('Le titre est obligatoire.', 'Title is required.'); msg.style.display = 'block'; return; }
-  if (!redactionIdEnCours && !fichiers.length) {
-    msg.className = 'form-msg err'; msg.textContent = T('Choisis au moins une photo.', 'Choose at least one photo.'); msg.style.display = 'block';
-    return;
-  }
-
-  msg.className = 'form-msg ok'; msg.textContent = fichiers.length ? T(`Envoi de ${fichiers.length} photo(s) en cours…`, `Uploading ${fichiers.length} photo(s)…`) : T('Enregistrement…', 'Saving…'); msg.style.display = 'block';
-
-  const id = redactionIdEnCours || crypto.randomUUID();
-  const urls = await envoyerPhotosPublication(PUBLICATION, id, fichiers);
-
-  if (redactionIdEnCours) {
-    const { error: erreurUpdate } = await sbAdmin.from('evenements').update({ titre, date_evenement: dateEvenement, lieu: lieu || null, description: description || null }).eq('id', id);
-    if (erreurUpdate) { msg.className = 'form-msg err'; msg.textContent = T('Erreur lors de la modification.', 'Error while updating.'); return; }
-    await enregistrerPhotosPublication(PUBLICATION, id, urls, true);
-    msg.className = 'form-msg ok'; msg.textContent = T('Modifications enregistrées !', 'Changes saved!');
-  } else {
-    const { error: erreurInsert } = await sbAdmin.from('evenements').insert({
-      id, titre, date_evenement: dateEvenement, lieu: lieu || null, description: description || null,
-      image_url: urls.length ? urls[0].url : null
-    });
-    if (erreurInsert) { msg.className = 'form-msg err'; msg.textContent = T("Erreur d'enregistrement.", 'Error saving.'); msg.style.display = 'block'; return; }
-    await enregistrerPhotosPublication(PUBLICATION, id, urls, false);
-    msg.className = 'form-msg ok'; msg.textContent = T(`Événement publié avec ${urls.length} photo(s) !`, `Event published with ${urls.length} photo(s)!`);
-  }
-
-  await chargerEvenements();
-  setTimeout(fermerRedaction, 900);
-});
-
-document.getElementById('red-supprimer-btn').addEventListener('click', () => {
-  void supprimerPublication(PUBLICATION, redactionIdEnCours, T("Supprimer définitivement cet événement et toutes ses photos ?", 'Permanently delete this event and all its photos?'), chargerEvenements);
+  void enregistrerPublication(PUBLICATION, {
+    titre, date_evenement: document.getElementById('red-date').value || null,
+    lieu: document.getElementById('red-lieu').value.trim() || null, description: description || null
+  }, (n) => T(`Événement publié avec ${n} photo(s) !`, `Event published with ${n} photo(s)!`), chargerEvenements);
 });

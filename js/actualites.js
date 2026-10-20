@@ -157,61 +157,24 @@ async function ouvrirActuModal(index) {
     lienVideo.style.display = 'none';
   }
 
-  ouvrirNewsModal();
-
-  window.actualiteModalCourante = a.id;
-  if (window.ficheOuverte) window.ficheOuverte('actu', a.id, a.titre);
-  document.getElementById('news-modal-admin-actions').style.display = window.estAdminConnecte ? 'block' : 'none';
+  montrerFichePublication('actu', a); // js/publications.js
 }
-// Fiche ouverte / fermée (verrouillage du défilement) : js/publications.js.
-document.getElementById('news-modal-fermer').addEventListener('click', fermerNewsModal);
-document.getElementById('news-modal').addEventListener('click', (e) => { if (e.target.id === 'news-modal') fermerNewsModal(); });
+// Fenêtre de lecture, modification et suppression (admin) : js/publications.js.
+const QUESTION_SUPPRESSION = T('Supprimer définitivement cette actualité et toutes ses photos ?', 'Permanently delete this news item and all its photos?');
+brancherFicheLecture(PUBLICATION, () => window.actualitesData, ouvrirRedaction, QUESTION_SUPPRESSION, chargerActualites);
 
-void verifierAdmin();
-
-// --- Modification / suppression directement depuis la fiche ouverte (admin) ---
-document.getElementById('news-modal-modifier-btn').addEventListener('click', () => {
-  const a = window.actualitesData.find(x => x.id === window.actualiteModalCourante);
-  if (!a) return;
-  fermerNewsModal();
-  ouvrirRedaction(a);
-});
-
-document.getElementById('news-modal-supprimer-btn').addEventListener('click', () => {
-  void supprimerPublication(PUBLICATION, window.actualiteModalCourante, T('Supprimer définitivement cette actualité et toutes ses photos ?', 'Permanently delete this news item and all its photos?'), chargerActualites, fermerNewsModal); // js/publications.js
-});
-
-document.getElementById('admin-logout-btn').addEventListener('click', async () => {
-  await sbAdmin.auth.signOut();
-  document.getElementById('admin-bloc').style.display = 'none';
-  window.estAdminConnecte = false;
-});
-
-// --- Page de rédaction plein écran : sert à la fois pour publier une nouvelle
-// actualité (redactionIdEnCours === null) et pour modifier une actualité existante
-// (redactionIdEnCours = son id) — un seul éditeur, un seul jeu de champs, avec un
-// aperçu du rendu public qui se met à jour en direct pendant la saisie.
-let redactionIdEnCours = null;
-let redactionNouvellesImages = [];
-
+// --- Page de rédaction plein écran : sert à la fois pour publier une nouvelle actualité et
+// pour modifier une actualité existante — un seul éditeur, un seul jeu de champs, avec un
+// aperçu du rendu public qui se met à jour en direct pendant la saisie (js/publications.js).
 function ouvrirRedaction(actualiteExistante) {
-  redactionIdEnCours = actualiteExistante ? actualiteExistante.id : null;
-  redactionNouvellesImages = [];
-  document.getElementById('redaction-titre-mode').textContent = actualiteExistante ? T('Modifier l’actualité', 'Edit News Item') : T('Rédiger une actualité', 'Write a News Item');
-  document.getElementById('red-titre').value = actualiteExistante ? (actualiteExistante.titre || '') : '';
+  ouvrirRedactionPublication(actualiteExistante, {
+    nouvelle: T('Rédiger une actualité', 'Write a News Item'), modifier: T('Modifier l’actualité', 'Edit News Item'),
+    images: T('Images (tu peux en sélectionner plusieurs à la fois)', 'Images (you can select several at once)'), publier: T('Publier', 'Publish')
+  });
   document.getElementById('red-categorie').value = actualiteExistante ? (actualiteExistante.categorie || '') : '';
   chargerContenuDansEditeur(quillRedaction, actualiteExistante ? actualiteExistante.commentaire : '');
   document.getElementById('red-video').value = actualiteExistante ? (actualiteExistante.video_url || '') : '';
-  document.getElementById('red-images').value = '';
-  document.getElementById('red-images-label').textContent = actualiteExistante ? T('Ajouter des photos (s’ajoutent à celles déjà en ligne)', 'Add photos (added to those already online)') : T('Images (tu peux en sélectionner plusieurs à la fois)', 'Images (you can select several at once)');
-  document.getElementById('red-enregistrer-btn').textContent = actualiteExistante ? T('Enregistrer', 'Save') : T('Publier', 'Publish');
-  document.getElementById('red-supprimer-btn').classList.toggle('u-hidden', !actualiteExistante);
-  document.getElementById('red-msg').style.display = 'none';
-  document.getElementById('red-images-apercu').innerHTML = '';
-  apercuImageCouverture(actualiteExistante ? actualiteExistante.image_url : null);
   mettreAJourApercuRedaction();
-  document.getElementById('redaction-overlay').classList.add('active');
-  window.verrouillerDefilement();
 }
 
 function mettreAJourApercuRedaction() {
@@ -228,45 +191,16 @@ document.getElementById('red-titre').addEventListener('input', mettreAJourApercu
 document.getElementById('red-categorie').addEventListener('change', mettreAJourApercuRedaction);
 if (quillRedaction && typeof quillRedaction.on === 'function') quillRedaction.on('text-change', mettreAJourApercuRedaction);
 
-brancherRedaction(ouvrirRedaction, (fichiers) => { redactionNouvellesImages = fichiers; }); // js/publications.js
+brancherRedaction(PUBLICATION, ouvrirRedaction, QUESTION_SUPPRESSION, chargerActualites);
 
-document.getElementById('red-enregistrer-btn').addEventListener('click', async () => {
-  const msg = document.getElementById('red-msg');
+document.getElementById('red-enregistrer-btn').addEventListener('click', () => {
   const titre = document.getElementById('red-titre').value.trim();
   const categorie = document.getElementById('red-categorie').value;
-  const commentaire = lireContenuEditeur(quillRedaction);
   const videoUrl = document.getElementById('red-video').value.trim();
-  const fichiers = redactionNouvellesImages;
-
-  if (!redactionIdEnCours && !fichiers.length && !videoUrl) {
-    msg.className = 'form-msg err'; msg.textContent = T('Choisis au moins une image ou ajoute un lien vidéo.', 'Choose at least one image or add a video link.'); msg.style.display = 'block';
+  if (!redaction.id && !redaction.images.length && !videoUrl) {
+    messageRedaction('err', T('Choisis au moins une image ou ajoute un lien vidéo.', 'Choose at least one image or add a video link.'));
     return;
   }
-
-  msg.className = 'form-msg ok'; msg.textContent = fichiers.length ? T(`Envoi de ${fichiers.length} photo(s) en cours…`, `Uploading ${fichiers.length} photo(s)…`) : T('Enregistrement…', 'Saving…'); msg.style.display = 'block';
-
-  const id = redactionIdEnCours || crypto.randomUUID();
-  const urls = await envoyerPhotosPublication(PUBLICATION, id, fichiers);
-
-  if (redactionIdEnCours) {
-    const { error: erreurUpdate } = await sbAdmin.from('actualites').update({ titre, categorie: categorie || null, commentaire, video_url: videoUrl }).eq('id', id);
-    if (erreurUpdate) { msg.className = 'form-msg err'; msg.textContent = T('Erreur lors de la modification.', 'Error while updating.'); return; }
-    await enregistrerPhotosPublication(PUBLICATION, id, urls, true);
-    msg.className = 'form-msg ok'; msg.textContent = T('Modifications enregistrées !', 'Changes saved!');
-  } else {
-    const { error: erreurInsert } = await sbAdmin.from('actualites').insert({
-      id, titre, categorie: categorie || null, commentaire, video_url: videoUrl,
-      image_url: urls.length ? urls[0].url : null
-    });
-    if (erreurInsert) { msg.className = 'form-msg err'; msg.textContent = T("Erreur d'enregistrement.", 'Error saving.'); msg.style.display = 'block'; return; }
-    await enregistrerPhotosPublication(PUBLICATION, id, urls, false);
-    msg.className = 'form-msg ok'; msg.textContent = T(`Actualité publiée avec ${urls.length} photo(s) !`, `News item published with ${urls.length} photo(s)!`);
-  }
-
-  await chargerActualites();
-  setTimeout(fermerRedaction, 900);
-});
-
-document.getElementById('red-supprimer-btn').addEventListener('click', () => {
-  void supprimerPublication(PUBLICATION, redactionIdEnCours, T('Supprimer définitivement cette actualité et toutes ses photos ?', 'Permanently delete this news item and all its photos?'), chargerActualites);
+  void enregistrerPublication(PUBLICATION, { titre, categorie: categorie || null, commentaire: lireContenuEditeur(quillRedaction), video_url: videoUrl },
+    (n) => T(`Actualité publiée avec ${n} photo(s) !`, `News item published with ${n} photo(s)!`), chargerActualites);
 });
