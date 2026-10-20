@@ -38,7 +38,17 @@ function verifierBoutons() {
     const s = getComputedStyle(e);
     const rayon = Number.parseFloat(s.borderTopLeftRadius);
     // le texte ne doit pas déborder du bouton (signalé par la propriétaire le 19/10/2026)
-    const deborde = e.scrollWidth > e.clientWidth + 2 || e.scrollHeight > e.clientHeight + 2;
+    // (mesuré sur le texte lui-même : la coche posée dans le coin d'un filtre choisi, en dehors
+    // du bouton, ne compte pas — 20/10/2026)
+    let deborde;
+    const coche = e.matches('.filtre-btn, .filtre-pill') && e.matches('.actif, [aria-pressed="true"]');
+    if (!coche) deborde = e.scrollWidth > e.clientWidth + 2 || e.scrollHeight > e.clientHeight + 2;
+    else {
+      const plage = document.createRange(); plage.selectNodeContents(e);
+      const texte = plage.getBoundingClientRect();
+      const interieur = e.clientWidth - Number.parseFloat(s.paddingLeft) - Number.parseFloat(s.paddingRight);
+      deborde = texte.width > interieur + 2 || texte.height > e.clientHeight + 2;
+    }
     const ok = rouge(s.backgroundColor) && s.color === 'rgb(255, 255, 255)' && rayon >= 2 && !deborde;
     if (!ok) {
       const nom = e.tagName.toLowerCase() + (e.id ? '#' + e.id : '') + [...e.classList].map((c) => '.' + c).join('');
