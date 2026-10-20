@@ -18,7 +18,7 @@ body.accueil-magazine { background: var(--mag-scene); }
   font-family: var(--mag-police-texte);
   color: var(--mag-encre);
 }
-.magazine-aide { text-align: center; font-size: 0.85rem; color: var(--mag-gris); margin: 0 16px 8px; }
+.magazine-aide { text-align: center; font-size: 0.85rem; color: var(--mag-encre); margin: 0 16px 8px; }
 
 /* Les pages sont sœurs dans <main id="magazine"> et toutes « collantes » au même endroit : la
    page suivante monte et vient se poser par-dessus ; la pile entière ne s'en va qu'à la fin du
@@ -158,7 +158,7 @@ body.accueil-magazine { background: var(--mag-scene); }
 .mag-dos { background: var(--rouge-ma2m); color: #fff; }
 .mag-dos .mag-rubrique { color: #fff; opacity: 0.9; }
 .mag-dos .mag-titre { font-size: 12.5cqw; }
-.mag-dos .mag-texte { margin-top: 3.6cqw; max-width: 75cqw; }
+.magazine .mag-dos .mag-texte { margin-top: 3.6cqw; max-width: 75cqw; color: #fff; }
 .mag-dos-actions { display: flex; flex-wrap: wrap; gap: 2.4cqw; margin-top: 4.6cqw; }
 .mag-dos-actions a {
   display: inline-flex; align-items: center; min-height: 44px; padding: 0 4.6cqw;

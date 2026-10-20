@@ -90,8 +90,9 @@ Le dossier `maquettes/` et ce fichier ne sont pas publiés (`.vercelignore`).
    `closest('.medaillon-carte, section, article, footer')` tombe sur une page de la pile ou sur
    rien) ; `lancer.sh` s'arrête au premier échec, donc les tests suivants n'ont PAS tourné.
    → CORRIGÉ : c'était l'intro du logo (7 s) qui couvrait l'écran pendant la mesure ; le test la
-   marque comme déjà vue (comme les autres tests). Ensuite : relancer toute la batterie et corriger
-   ce qui casse (en particulier `test-visuel.js`, `test-visiteur.js`,
+   marque comme déjà vue (comme les autres tests). Batterie complète relancée : tout passe, sauf
+   `test-visuel.js` (contraste du texte du dos rouge et de la phrase « Descendez… ») → corrigé,
+   `test-visuel.js` repassé : tout est bon. **La batterie complète est verte.** (en particulier `test-visuel.js`, `test-visiteur.js`,
    `test-pages-publiques.js`, `test-video-accueil.js` qui connaissaient l'ancien accueil).
 2. Relecture `/code-review` du changement, puis montrer le rendu à la propriétaire.
 3. Avec son accord écrit : mise en ligne (fusion dans `main`), vérification du site en ligne,
