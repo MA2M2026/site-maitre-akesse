@@ -2,6 +2,10 @@
    Couleurs : uniquement les jetons de css/jetons.css. */
 .mp { padding: 2rem 0 3rem; background: var(--fond); }
 .mp-colonne { max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; padding: 0 16px; }
+/* la page occupe au moins l'écran (20/10/2026, journal : le pied de page, d'abord juste sous
+   l'en-tête, était poussé vers le bas à l'arrivée du contenu — saut de 0,40 sur tablette) ; le
+   pied de page reste ainsi sous l'écran, que le contenu soit court ou long */
+.mp { min-height: 100svh; box-sizing: border-box; }
 .mp-tete h1, .mp-carte h1 { font-size: 1.6rem; font-weight: 800; color: var(--encre); margin: 0; }
 .mp h2 { font-size: 1rem; font-weight: 700; color: var(--encre); margin: 10px 0 0; }
 .mp-carte { background: var(--surface); border: 1px solid var(--lignes); border-radius: var(--rayon-carte); padding: 18px; display: flex; flex-direction: column; gap: 12px; color: var(--encre); }
