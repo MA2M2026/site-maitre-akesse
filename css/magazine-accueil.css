@@ -196,7 +196,7 @@ body.accueil-magazine { background: var(--mag-scene); }
   .magazine { padding-top: 16px; }
   .mag-edito-corps { grid-template-columns: 1fr; gap: 3cqw; }
   .mag-edito .mag-titre { font-size: 9cqw; }
-  .mag-edito .cadre { height: 40%; }
+  .mag-edito .cadre { height: 34%; }
   .mag-agence li { grid-template-columns: 1fr; gap: 1.4cqw; }
   .mag-couv-lignes { max-width: 62%; }
 }
