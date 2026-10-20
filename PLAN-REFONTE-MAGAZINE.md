@@ -38,7 +38,7 @@ Le dossier `maquettes/` et ce fichier ne sont pas publiés (`.vercelignore`).
 
 ## Étapes (une à la fois, chacune testée, mise en ligne, vérifiée en ligne)
 
-- [ ] **Étape 1 — Page d'accueil en magazine (FR + EN).** Remplacer le contenu de `index.html`
+- [~] **Étape 1 — Page d'accueil en magazine (FR + EN) : CONSTRUITE, PAS ENCORE EN LIGNE** (voir « Où on en est » plus bas). Remplacer le contenu de `index.html`
   et `en/index.html` par les 8 pages de la maquette, **remplies automatiquement** avec les
   données déjà gérées dans le tableau de bord : mannequins publiés (`model_profiles` avec
   `published = true` + fonction `photos_couverture_mannequins`, comme `js/mannequins.js`) pour
@@ -56,6 +56,49 @@ Le dossier `maquettes/` et ce fichier ne sont pas publiés (`.vercelignore`).
   bord et `/admin` ne chargent pas cette feuille).
 - [ ] **Étape 3 — Pages « Mannequins » (book) et fiche d'un mannequin** dans le même esprit
   magazine (à proposer en maquette avant).
+
+## Où on en est (20/10/2026, fin de session)
+
+**Étape 1 construite sur la branche `claude/charming-faraday-liokxb`, PAS encore mise en ligne
+(rien n'a été fusionné dans `main`).** Ce qui est fait :
+- `index.html` et `en/index.html` : la porte d'entrée et les anciennes sections sont remplacées
+  par `<main id="magazine">` : pages `<article class="mag-page">` sœurs, toutes « collantes »
+  (sticky) au même endroit, la suivante monte par-dessus. Pages : couverture (= mannequin à la
+  une : ids `vedette-*`), sommaire (`data-sommaire`), édito, mot de Maître Akesse
+  (`#mot-responsable`, cachée si vide), les visages (`#medaillons-accueil`, 6 derniers
+  mannequins), agenda (`data-agenda-accueil`, cachée si vide), l'agence, partenaires
+  (`#ils-nous-font-confiance`), Instagram (`#flux-instagram`), dos « Casting ouvert ». La vidéo
+  d'accueil reste sous le magazine. Intro animée, en-tête, bande défilante, pied de page gardés.
+- `css/magazine-accueil.css` (mise en page, tailles en `cqw` avec minimum lisible),
+  `js/magazine-accueil.js` (numéros de page, sommaire, mois), jetons `--mag-…` dans
+  `css/jetons.css`, polices Big Shoulders Display + Work Sans ajoutées au lien Google Fonts des
+  deux accueils.
+- `js/accueil.js` : porte d'entrée et carrousel retirés ; `chargerPhotosMagazine` (photos au
+  hasard pour `img[data-photo-aleatoire]`) ; les pages se montrent en retirant `u-hidden`.
+  `js/accueil-debut.js` : plus de verrou de défilement (plus de porte).
+- Tests : nouveau `scripts/tests-visiteur/test-accueil-magazine.js` (ajouté à `lancer.sh`) —
+  **passe entièrement** ; `test-lisibilite-photos.js` adapté à la couverture — **passe** (avec
+  `PAGES=index.html,en/index.html`) ; `test-affichage-stable.js` adapté. Les photos d'essai de ce
+  test (`medias/photo-sombre.jpg`, `-rayures`, `-claire`, `-blanche`) ne sont pas dans le dépôt :
+  les refaire (900×1200 : sombre, rayures noir/blanc de 20 px, beige clair, blanc).
+- `versionner.py` et `verifier-csp.py` passés.
+
+**À faire ensuite, dans l'ordre :**
+1. Batterie `bash scripts/tests-visiteur/lancer.sh` lancée en fin de session : tout est passé
+   jusqu'à `test-affichage-stable.js`, qui échoue sur l'accueil (« au retour, le visiteur revoit le
+   même endroit » : le texte vu au milieu de l'écran est vide, sans doute parce que le repère
+   `closest('.medaillon-carte, section, article, footer')` tombe sur une page de la pile ou sur
+   rien) ; `lancer.sh` s'arrête au premier échec, donc les tests suivants n'ont PAS tourné.
+   Corriger ce test (ou le comportement), puis relancer toute la batterie et corriger ce qui casse (en particulier `test-visuel.js`, `test-visiteur.js`,
+   `test-pages-publiques.js`, `test-video-accueil.js` qui connaissaient l'ancien accueil).
+2. Relecture `/code-review` du changement, puis montrer le rendu à la propriétaire.
+3. Avec son accord écrit : mise en ligne (fusion dans `main`), vérification du site en ligne,
+   SonarQube.
+4. **Étape 2 — demande de la propriétaire à la fin de la session : « tu changes tout au style du
+   nouveau style 3 »** : TOUTES les pages publiques FR + EN (et la boutique) prennent l'habillage
+   Magazine 3 (fond beige, Big Shoulders Display + Work Sans, rouge MA2M, pages/cartes façon
+   magazine). Passer par `css/charte-ma2m.css` (site public seulement), jamais par le tableau de
+   bord ni `/admin`.
 
 ## Journal
 

@@ -10,7 +10,9 @@ const fs = require('fs'); const path = require('path');
 const RACINE = path.resolve(__dirname, '../..');
 const PORT = String(8700 + Math.floor(Math.random() * 90));
 let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m); if (!c) ko++; };
-const TEXTES = ['#vedette-nom', '#vedette-info', '.vedette-cta', '#mot-responsable .eyebrow', '#mot-resp-nom', '#mot-resp-titre'];
+// Accueil en magazine (20/10/2026) : textes posés sur la photo de couverture (le mot du fondateur
+// n'est plus posé sur sa photo)
+const TEXTES = ['#vedette-nom', '#vedette-info', '.mag-couv-modele', '.mag-couv-numero span', '.mag-couv-lignes b', '.mag-couv-lignes a'];
 const ecrans = [{ nom: 'téléphone', width: 390, height: 844 }, { nom: 'tablette', width: 1000, height: 1400 }, { nom: 'ordinateur', width: 1280, height: 900 }];
 
 function donnees() {

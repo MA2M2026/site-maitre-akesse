@@ -31,7 +31,7 @@ const profils = Array.from({ length: 30 }, (_, i) => ({ id: '00000000-0000-0000-
     const accueil = page.includes('index');
     await p.evaluate(f => window.scrollTo({ top: document.documentElement.scrollHeight * f, behavior: 'instant' }), part); await p.waitForTimeout(600);
     // contenu vu au milieu de l'écran (le navigateur peut ajuster la position pour le garder)
-    const vu = () => p.evaluate(() => { const e = document.elementFromPoint(innerWidth / 2, innerHeight / 2); const z = e && e.closest('.medaillon-carte, section, footer'); return z ? (z.innerText || '').replace(/\s+/g, ' ').slice(0, 50) : ''; });
+    const vu = () => p.evaluate(() => { const e = document.elementFromPoint(innerWidth / 2, innerHeight / 2); const z = e && e.closest('.medaillon-carte, section, article, footer'); return z ? (z.innerText || '').replace(/\s+/g, ' ').slice(0, 50) : ''; });
     const avant = await vu();
     await p.evaluate(() => { location.href = location.pathname.replace(/[^/]*$/, '') + 'contact.html'; }); await p.waitForTimeout(1500);
     if (accueil) await p.evaluate(() => Object.keys(localStorage).filter(k => k.startsWith('ma2m_hauteur_')).forEach(k => localStorage.removeItem(k)));

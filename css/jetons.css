@@ -42,6 +42,17 @@
   --ombre-rouge: 0 10px 22px -10px rgba(200, 16, 46, 0.55);
   --police: 'Montserrat', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --hauteur-tactile: 44px;
+
+  /* Charte « Magazine » (Magazine 3 choisi par la propriétaire le 20/10/2026, voir
+     PLAN-REFONTE-MAGAZINE.md) : papier beige, encre, rouge MA2M ci-dessus. Utilisée par
+     l'accueil en magazine (css/magazine-accueil.css). */
+  --mag-scene: #CFC6BB;          /* fond derrière les pages */
+  --mag-papier: #F1ECE5;         /* les pages */
+  --mag-encre: #1B1817;
+  --mag-gris: #5E5650;           /* légendes, folios (contraste AA sur le papier) */
+  --mag-trait: #1B1817;
+  --mag-police-titre: 'Big Shoulders Display', 'Arial Narrow', system-ui, sans-serif;
+  --mag-police-texte: 'Work Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {

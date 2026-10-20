@@ -1,0 +1,190 @@
+/* ===== Accueil en magazine (« Magazine 3 », choisi par la propriétaire le 20/10/2026) =====
+   index.html et en/index.html. La page d'accueil se lit comme un magazine qu'on feuillette :
+   des pages au format magazine (3:4), centrées ; en descendant, chaque page vient se poser sur
+   la précédente (pages « collantes » : position sticky).
+   Les tailles de texte suivent la largeur de la page (unités cqw), avec un minimum lisible sur
+   téléphone. Couleurs et polices : css/jetons.css (bloc --mag-…). Numéros de page et sommaire :
+   js/magazine-accueil.js. Les pages qui dépendent du tableau de bord (mot du fondateur, agenda,
+   partenaires, Instagram) restent cachées tant qu'elles sont vides (js/accueil.js, js/agenda.js). */
+
+body.accueil-magazine { background: var(--mag-scene); }
+
+.magazine {
+  --haut-entete: 64px;
+  /* largeur d'une page : tient dans l'écran, en largeur comme en hauteur */
+  --W: min(560px, calc(100vw - 24px), calc((100svh - var(--haut-entete) - 32px) * 0.75));
+  --H: calc(var(--W) * 4 / 3);
+  padding: 28px 0 40px;
+  font-family: var(--mag-police-texte);
+  color: var(--mag-encre);
+}
+.magazine-aide { text-align: center; font-size: 0.85rem; color: var(--mag-gris); margin: 0 16px 8px; }
+
+/* Les pages sont sœurs dans <main id="magazine"> et toutes « collantes » au même endroit : la
+   page suivante monte et vient se poser par-dessus ; la pile entière ne s'en va qu'à la fin du
+   magazine. L'écart entre deux pages règle le temps de lecture de chacune. */
+.mag-page.u-hidden, .mag-page[hidden] { display: none; }
+.mag-page + .mag-page { margin-top: 42svh; }
+.mag-page {
+  position: sticky;
+  top: max(calc(var(--haut-entete) + 12px), calc(var(--haut-entete) + (100svh - var(--haut-entete) - var(--H)) / 2));
+  width: var(--W);
+  aspect-ratio: 3 / 4;
+  margin: 0 auto;
+  background: var(--mag-papier);
+  color: var(--mag-encre);
+  box-shadow: 0 -10px 46px rgba(27, 24, 23, 0.22);
+  container-type: inline-size;
+  padding: 7cqw 6cqw 10cqw;
+  display: flex;
+  flex-direction: column;
+}
+.mag-page .cadre { overflow: hidden; background: var(--mag-scene); }
+.mag-page .cadre img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.mag-page a { color: inherit; }
+
+/* Titres, rubriques, folios */
+.magazine :is(h1, h2, h3).mag-titre, .mag-titre {
+  font-family: var(--mag-police-titre); font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0; line-height: 0.92; color: inherit; margin: 0;
+}
+.mag-rubrique {
+  display: block; font-size: max(11px, 2.4cqw); font-weight: 600; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--rouge-ma2m-texte); margin-bottom: 1.4cqw;
+}
+.mag-texte { font-size: max(14px, 3cqw); line-height: 1.55; margin: 0; }
+.mag-folio {
+  position: absolute; left: 6cqw; right: 6cqw; bottom: 3.4cqw; display: flex; justify-content: space-between;
+  font-size: max(10px, 2.2cqw); letter-spacing: 0.08em; color: var(--mag-gris);
+}
+.mag-lien {
+  font-size: max(13px, 2.8cqw); font-weight: 600; text-decoration: underline; text-underline-offset: 0.3em;
+}
+.mag-lien:hover { color: var(--rouge-ma2m-texte); }
+
+/* 1 · Couverture : le mannequin à la une */
+.mag-couv { padding: 0; color: #fff; overflow: hidden; }
+.mag-couv .cadre { position: absolute; inset: 0; }
+.mag-couv .cadre img { object-position: 50% 25%; }
+/* ombre en haut (numéro) et en bas (titres de couverture, nom du mannequin) : textes blancs
+   lisibles même sur une photo blanche ou rayée (test-lisibilite-photos.js) */
+.mag-couv::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(to bottom, rgba(0,0,0,0.74) 0%, rgba(0,0,0,0.72) 24%, rgba(0,0,0,0) 36%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.74) 54%, rgba(0,0,0,0.86) 100%); }
+.mag-couv > :not(.cadre) { position: relative; z-index: 2; }
+.mag-couv-tete { padding: 3cqw 5cqw 0; text-align: center; }
+.magazine .mag-couv-tete .mag-titre { font-size: 30cqw; font-weight: 900; color: var(--rouge-ma2m); line-height: 0.82; }
+.mag-couv-numero { display: flex; justify-content: space-between; margin-top: 1.4cqw; font-size: max(10px, 2.3cqw); letter-spacing: 0.1em; text-transform: uppercase; }
+.mag-couv-bas { margin-top: auto; padding: 0 5cqw 6cqw; display: flex; justify-content: space-between; align-items: flex-end; gap: 4cqw; }
+.mag-couv-lignes { max-width: 58%; }
+.mag-couv-lignes b { display: block; font-family: var(--mag-police-titre); font-weight: 800; text-transform: uppercase; font-size: 8cqw; line-height: 0.95; }
+.mag-couv-lignes a { display: block; margin-top: 2.2cqw; font-size: max(12px, 2.9cqw); line-height: 1.35; color: #fff; text-decoration: none; }
+.mag-couv-lignes a::before { content: ""; display: inline-block; width: 4cqw; height: 0.5cqw; min-height: 2px; background: var(--rouge-ma2m); vertical-align: middle; margin-right: 1.6cqw; }
+.mag-couv-lignes a:hover { text-decoration: underline; }
+.mag-couv-modele { text-align: right; font-size: max(11px, 2.5cqw); color: #fff; text-decoration: none; }
+.mag-couv-modele strong { display: block; font-family: var(--mag-police-titre); font-weight: 800; text-transform: uppercase; font-size: max(20px, 5.6cqw); line-height: 1; margin-top: 0.8cqw; }
+.mag-couv-modele span { display: block; margin-top: 0.6cqw; opacity: 0.9; }
+.mag-couv-modele:hover strong { text-decoration: underline; }
+
+/* 2 · Sommaire */
+.mag-sommaire .mag-titre { font-size: 13cqw; }
+.mag-sommaire ol { list-style: none; margin: 6cqw 0 0; padding: 0; }
+.mag-sommaire li { border-top: 0.3cqw solid var(--mag-trait); }
+.mag-sommaire li[hidden] { display: none; }
+.mag-sommaire li a { display: grid; grid-template-columns: 10cqw 1fr; gap: 2cqw; padding: 2.4cqw 0; text-decoration: none; }
+.mag-sommaire li b { font-family: var(--mag-police-titre); font-weight: 800; font-size: max(22px, 6.4cqw); line-height: 1; color: var(--rouge-ma2m-texte); }
+.mag-sommaire li strong { display: block; font-size: max(14px, 3.4cqw); }
+.mag-sommaire li span { display: block; font-size: max(12px, 2.7cqw); color: var(--mag-gris); margin-top: 0.4cqw; }
+.mag-sommaire li a:hover strong { color: var(--rouge-ma2m-texte); }
+
+/* 3 · Édito */
+.mag-edito { padding: 0 0 10cqw; }
+.mag-edito .cadre { height: 48%; flex: none; }
+.mag-edito-corps { padding: 5cqw 6cqw 0; display: grid; grid-template-columns: 1fr 1fr; gap: 5cqw; }
+.mag-edito .mag-titre { font-size: 7cqw; }
+.mag-edito .mag-texte::first-letter { font-family: var(--mag-police-titre); font-weight: 800; float: left; font-size: 3.2em; line-height: 0.82; padding: 0.06em 0.12em 0 0; color: var(--rouge-ma2m-texte); }
+
+/* Mot de Maître Akesse */
+.mag-mot { padding: 0 0 10cqw; }
+.mag-mot .mag-mot-photo { height: 46%; flex: none; }
+.mag-mot .mag-mot-photo img.u-hidden { display: none; }
+.mag-mot-corps { padding: 5cqw 6cqw 0; }
+.mag-mot .mag-titre { font-size: 9cqw; }
+.mag-mot-fonction { font-size: max(12px, 2.6cqw); color: var(--mag-gris); margin: 1cqw 0 3cqw; }
+.mag-mot .mag-texte { white-space: pre-line; }
+
+/* 4 · Les visages : les 6 derniers mannequins publiés (js/accueil.js) */
+.mag-visages-tete { display: flex; justify-content: space-between; align-items: flex-end; gap: 3cqw; margin-bottom: 4cqw; }
+.mag-visages .mag-titre { font-size: 12cqw; }
+.mag-visages-liens { display: flex; gap: 3cqw; }
+.mag-visages #medaillons-accueil.medaillon-grille { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: 1fr; gap: 2.6cqw 2cqw; margin: 0; min-height: 0; max-width: none; }
+.mag-visages #medaillons-accueil .medaillon-carte {
+  display: flex; flex-direction: column; align-items: stretch; text-align: left; min-height: 0; margin: 0; padding: 0;
+  background: none; border: 0; border-radius: 0; box-shadow: none; transform: none; opacity: 1; text-decoration: none;
+}
+.mag-visages #medaillons-accueil .medaillon-photo { flex: 1; min-height: 0; aspect-ratio: auto; border-radius: 0; overflow: hidden; background: var(--mag-scene); box-shadow: none; animation: none; }
+.mag-visages .medaillon-photo img { width: 100%; height: 100%; object-fit: cover; border-radius: 0; }
+.mag-visages .medaillon-nom { margin-top: 1.2cqw; font-family: var(--mag-police-texte); font-size: max(11px, 2.5cqw); font-weight: 600; text-transform: none; letter-spacing: 0; color: var(--mag-encre); text-align: left; }
+.mag-visages .medaillon-info { font-size: max(10px, 2.2cqw); color: var(--mag-gris); text-align: left; letter-spacing: 0; text-transform: none; }
+.mag-visages .medaillon-carte:hover .medaillon-nom { color: var(--rouge-ma2m-texte); }
+.mag-visages .medaillon-carte:is(:hover, :focus-within) .medaillon-photo { box-shadow: none; }
+.mag-visages .medaillon-carte:is(:hover, :focus-within) img { transform: scale(1.03); }
+
+/* Agenda : les 3 prochains projets (js/agenda.js) */
+.mag-agenda .mag-titre { font-size: 12cqw; margin-bottom: 4cqw; }
+.mag-agenda .agenda-liste-publique { flex: 1; min-height: 0; overflow: hidden; font-size: max(13px, 2.8cqw); }
+
+/* L'agence */
+.mag-agence .mag-titre { font-size: 10.5cqw; }
+.mag-agence ul { list-style: none; margin: 5cqw 0 0; padding: 0; }
+.mag-agence li { display: grid; grid-template-columns: 1fr 1.3fr; gap: 4cqw; padding: 2.8cqw 0; border-top: 0.3cqw solid var(--mag-trait); }
+.mag-agence li strong { font-family: var(--mag-police-titre); font-weight: 800; text-transform: uppercase; font-size: max(18px, 4.8cqw); line-height: 1; }
+.mag-agence li span { font-size: max(12px, 2.8cqw); line-height: 1.5; color: var(--mag-gris); }
+.mag-agence .cadre { margin-top: auto; height: 28cqw; flex: none; }
+.mag-agence .mag-lien { margin-top: 3cqw; align-self: flex-start; }
+
+/* Ils nous ont fait confiance (logos des partenaires) */
+.mag-partenaires .mag-titre { font-size: 11cqw; margin-bottom: 5cqw; }
+.mag-partenaires .confiance-liste { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3cqw; align-content: start; }
+.mag-partenaires .confiance-carte { display: grid; place-items: center; aspect-ratio: 3 / 2; background: #fff; padding: 2.4cqw; border: 0; border-radius: 0; }
+.mag-partenaires .confiance-carte img { max-width: 100%; max-height: 100%; object-fit: contain; filter: none; opacity: 1; }
+
+/* Instagram */
+.mag-instagram .mag-titre { font-size: 9cqw; margin-bottom: 4cqw; overflow-wrap: anywhere; }
+.mag-instagram .instagram-grille { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: 1fr; gap: 1.6cqw; min-height: 0; margin: 0; }
+.mag-instagram .instagram-vignette { display: block; overflow: hidden; border-radius: 0; }
+.mag-instagram .instagram-vignette img { width: 100%; height: 100%; object-fit: cover; }
+.mag-instagram .instagram-vignette:nth-child(n+7) { display: none; }
+
+/* Dos de couverture : casting et contact, sur le rouge MA2M */
+.mag-dos { background: var(--rouge-ma2m); color: #fff; }
+.mag-dos .mag-rubrique { color: #fff; opacity: 0.9; }
+.mag-dos .mag-titre { font-size: 12.5cqw; }
+.mag-dos .mag-texte { margin-top: 3.6cqw; max-width: 75cqw; }
+.mag-dos-actions { display: flex; flex-wrap: wrap; gap: 2.4cqw; margin-top: 4.6cqw; }
+.mag-dos-actions a {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0 4.6cqw;
+  background: #fff; color: var(--rouge-ma2m-texte); font-weight: 600; font-size: max(13px, 2.9cqw); text-decoration: none;
+}
+.mag-dos-actions a + a { background: transparent; color: #fff; border: 1px solid #fff; }
+.mag-dos-actions a:hover { text-decoration: underline; }
+.mag-dos .cadre { margin-top: auto; height: 40cqw; flex: none; }
+.mag-dos .mag-folio { color: rgba(255, 255, 255, 0.85); }
+
+/* Le film (vidéo de l'accueil) garde sa place, sous le magazine */
+.accueil-magazine .video-accueil { margin: 0 auto 40px; }
+
+/* Téléphone : la page prend toute la largeur ; textes à leur taille minimale lisible */
+@media (max-width: 600px) {
+  .magazine { padding-top: 16px; }
+  .mag-edito-corps { grid-template-columns: 1fr; gap: 3cqw; }
+  .mag-edito .mag-titre { font-size: 9cqw; }
+  .mag-edito .cadre { height: 40%; }
+  .mag-agence li { grid-template-columns: 1fr; gap: 1.4cqw; }
+  .mag-couv-lignes { max-width: 62%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mag-page { position: relative; top: auto; }
+  .mag-page + .mag-page { margin-top: 24px; }
+}
+
+/* Texte lu par les lecteurs d’écran mais invisible (titre complet de la couverture) */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }

@@ -1,29 +1,11 @@
 // Page d'accueil, français et anglais (index.html et en/index.html) : un seul script
 // (11/10/2026 : avant, js/accueil.js et js/accueil-en.js, deux copies). EN, T : js/app.js.
 
-// --- Porte d'entrée : le défilement reste verrouillé tant qu'on n'a pas cliqué « Entrer ».
-// (Le masquage de la porte déjà ouverte, ET le verrouillage du défilement lui-même, se font
-// plus tôt — tout en haut de <body>, voir le commentaire dans la page — pour éviter qu'elle
-// n'apparaisse, ou reste défilable, un instant avant que ce script de fin de page ne s'exécute.)
-document.getElementById('entrer-btn').addEventListener('click', async () => {
-  // Réaction immédiate à l'appui, puis 1,5 s d'attente au plus pour le mannequin à la une (05/10/2026).
-  const bouton = document.getElementById('entrer-btn');
-  if (bouton.dataset.ouverture) return;
-  bouton.dataset.ouverture = '1';
-  bouton.classList.add('entrer-en-cours');
-  if (window.jouerSon) window.jouerSon('entree');
-  if (window.promesseVedette) {
-    try { await Promise.race([window.promesseVedette, new Promise((r) => setTimeout(r, 1500))]); } catch (e) {}
-  }
-  document.body.classList.remove('porte-verrouillee');
-  document.documentElement.classList.remove('porte-verrouillee');
-  window.deverrouillerDefilement();
-  document.getElementById('porte-entree').style.display = 'none';
-  window.scrollTo(0, 0);
-  try { sessionStorage.setItem('ma2m_porte_ouverte', '1'); } catch (e) {}
-});
+// La porte d'entrée (3 photos et bouton « Entrer ») a été remplacée le 20/10/2026 par la
+// couverture du magazine (accueil « Magazine 3 », css/magazine-accueil.css) : la couverture
+// montre le mannequin à la une (chargerMannequinVedette, plus bas).
 
-// --- Intro : logo animé (5,8 s ou « Passer l'intro »), avant la porte d'entrée ---
+// --- Intro : logo animé (5,8 s ou « Passer l'intro »), avant le magazine ---
 // (L'affichage se fait plus tôt, tout en haut de <body> : ce bloc ne gère que la fermeture.)
 (function () {
   if (!document.documentElement.classList.contains('intro-a-venir')) return;
@@ -39,24 +21,20 @@ document.getElementById('entrer-btn').addEventListener('click', async () => {
   setTimeout(terminerIntro, window.MA2M_INTRO_DUREE || 5800);
 })();
 
-// --- Photos de fond de la porte d'entrée ---
-async function chargerPhotosHero() {
-  const imagesHero = Array.from(document.querySelectorAll('.hero-slide .hero-v2-bg'));
-  const CLE_CACHE = 'ma2m_hero_photos';
-
-
-  // la première photo est la plus grande image visible : chargée en priorité (Lighthouse,
-  // 12/10/2026) ; roue de secours (relais, JPEG) gérée par prechargerPhoto (app.js)
-  const afficher = (img, url, rang) => {
-    if (url) prechargerPhoto(urlLegere(url), ok => { img.src = ok; }, rang === 0);
-  };
+// --- Photos d'illustration du magazine (édito, agence, dos) : photos de mannequins publiés,
+// tirées au hasard (avant le 20/10/2026 : les 3 photos de la porte d'entrée) ---
+async function chargerPhotosMagazine() {
+  const images = Array.from(document.querySelectorAll('img[data-photo-aleatoire]'));
+  if (!images.length) return;
+  const CLE_CACHE = 'ma2m_photos_magazine';
+  // roue de secours (relais, JPEG) gérée par prechargerPhoto (app.js)
+  const afficher = (urls) => melanger(urls).slice(0, images.length).forEach((url, i) => {
+    prechargerPhoto(urlLegere(url), ok => { images[i].src = ok; });
+  });
 
   let cache = [];
   try { cache = JSON.parse(localStorage.getItem(CLE_CACHE) || '[]'); } catch (e) {}
-
-  if (cache.length) {
-    melanger(cache).slice(0, imagesHero.length).forEach((url, i) => afficher(imagesHero[i], url, i));
-  }
+  if (cache.length) afficher(cache);
 
   if (!sb) return;
   const { data } = await sb
@@ -70,13 +48,13 @@ async function chargerPhotosHero() {
   melanger(data || []).forEach(p => {
     if (!parMannequin.has(p.model_id)) parMannequin.set(p.model_id, urlLegere(p.url_moyenne || p.url));
   });
-  const urls = melanger(Array.from(parMannequin.values()));
+  const urls = Array.from(parMannequin.values());
   if (urls.length) {
     try { localStorage.setItem(CLE_CACHE, JSON.stringify(urls)); } catch (e) {}
-    if (!cache.length) melanger(urls).slice(0, imagesHero.length).forEach((url, i) => afficher(imagesHero[i], url, i));
+    if (!cache.length) afficher(urls);
   }
 }
-void chargerPhotosHero();
+void chargerPhotosMagazine();
 
 // --- Bande d'annonce défilante ---
 async function chargerBandeauAnnonce() {
@@ -93,6 +71,8 @@ async function chargerBandeauAnnonce() {
 void chargerBandeauAnnonce();
 
 // --- Flux Instagram : publications mises en cache depuis le tableau de bord ---
+// (Les pages du magazine se montrent en retirant u-hidden : un display forcé casserait leur mise
+// en page, css/magazine-accueil.css.)
 async function chargerFluxInstagram() {
   if (!sb) return;
   const { data } = await sb.from('instagram_posts_cache').select('posts').eq('id', 'principal').maybeSingle();
@@ -105,42 +85,9 @@ async function chargerFluxInstagram() {
       <img src="${echapperHtml(p.image)}" alt="${echapperHtml(p.legende || T('Publication Instagram', 'Instagram post'))}" loading="lazy">
     </a>
   `).join('');
-  document.getElementById('flux-instagram').style.display = 'block';
+  document.getElementById('flux-instagram').classList.remove('u-hidden');
 }
 void chargerFluxInstagram();
-
-// --- Carrousel du hero ---
-(function initCarrouselHero() {
-  const slides = Array.from(document.querySelectorAll('.hero-slide'));
-  const dotsConteneur = document.getElementById('heroDots');
-  if (!slides.length || !dotsConteneur) return;
-
-  let indexActif = 0;
-  let minuteur = null;
-  const reduitMouvement = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  slides.forEach((_, i) => {
-    const point = document.createElement('span');
-    if (i === 0) point.classList.add('actif');
-    point.addEventListener('click', () => allerAuSlide(i));
-    dotsConteneur.appendChild(point);
-  });
-  const points = Array.from(dotsConteneur.children);
-
-  function allerAuSlide(i) {
-    slides[indexActif].classList.remove('active');
-    points[indexActif].classList.remove('actif');
-    indexActif = i;
-    slides[indexActif].classList.add('active');
-    points[indexActif].classList.add('actif');
-  }
-
-  function suivant() { allerAuSlide((indexActif + 1) % slides.length); }
-
-  if (!reduitMouvement && slides.length > 1) {
-    minuteur = setInterval(suivant, 6000);
-  }
-})();
 
 // --- Médaillons d'accueil : quelques mannequins publiés en aperçu ---
 async function chargerMedaillonsAccueil() {
@@ -196,7 +143,7 @@ async function chargerMannequinVedette() {
   document.getElementById('vedette-nom').classList.toggle('nom-tres-long', longueurNom > 28);
   document.getElementById('vedette-info').textContent = [libelleCategorie, profil.city, profil.height_cm ? profil.height_cm + ' cm' : null].filter(Boolean).join(' · ');
   document.getElementById('vedette-lien').href = 'mannequin.html?id=' + profil.id;
-  document.getElementById('mannequin-vedette').style.display = 'block';
+  document.getElementById('mannequin-vedette').classList.remove('u-hidden');
 }
 window.promesseVedette = chargerMannequinVedette();
 
@@ -210,7 +157,7 @@ function libererSectionReservee(id, chargementTermine) {
   if (!section) return;
   section.classList.remove('section-reservee');
   if (!chargementTermine) return;
-  try { localStorage.setItem('ma2m_bloc_vide_' + id, section.style.display === 'block' ? '0' : '1'); } catch (e) {}
+  try { localStorage.setItem('ma2m_bloc_vide_' + id, section.classList.contains('u-hidden') ? '1' : '0'); } catch (e) {}
 }
 void Promise.resolve(window.promesseVedette).catch(() => {}).then(() => libererSectionReservee('mannequin-vedette', true));
 setTimeout(() => libererSectionReservee('mannequin-vedette'), 15000);
@@ -234,7 +181,7 @@ async function chargerMotResponsable() {
     photo.alt = data.nom || 'Maître Akesse';
     photo.style.display = 'block';
   }
-  document.getElementById('mot-responsable').style.display = 'block';
+  document.getElementById('mot-responsable').classList.remove('u-hidden');
 }
 void Promise.resolve(chargerMotResponsable()).catch(() => {}).then(() => libererSectionReservee('mot-responsable', true));
 setTimeout(() => libererSectionReservee('mot-responsable'), 15000);
@@ -253,7 +200,7 @@ async function chargerBandeauConfiance() {
       <img src="${echapperHtml(urlLegere(p.logo_url))}" alt="${echapperHtml(p.nom || '')}" loading="lazy">
     </a>
   `).join('');
-  document.getElementById('ils-nous-font-confiance').style.display = 'block';
+  document.getElementById('ils-nous-font-confiance').classList.remove('u-hidden');
 }
 void chargerBandeauConfiance();
 
