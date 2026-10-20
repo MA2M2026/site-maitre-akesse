@@ -34,7 +34,11 @@
   function confirmer(id, aDuContenu) {
     const p = pageOption(id);
     if (!p) return;
-    if (aDuContenu) { p.hidden = false; p.classList.remove('u-hidden'); } else if (p.dataset.reservee) { p.hidden = true; }
+    // (on ne touche à la page que si son état change : sinon la surveillance du film, qui suit la
+    // classe de la page, se relancerait sans fin)
+    const cachee = p.hidden || p.classList.contains('u-hidden');
+    if (aDuContenu && cachee) { p.hidden = false; p.classList.remove('u-hidden'); } else if (!aDuContenu && p.dataset.reservee) { p.hidden = true; }
+    if (!p.dataset.reservee && !(aDuContenu && cachee)) return;
     delete p.dataset.reservee;
     retenir();
   }
@@ -48,7 +52,7 @@
   // s'ils ont mis du contenu
   new MutationObserver(() => { if (document.getElementById('agenda-accueil').children.length) confirmer('agenda', true); })
     .observe(document.getElementById('agenda-accueil'), { childList: true });
-  new MutationObserver(() => { if (pageOption('video-accueil').dataset.confirme) confirmer('video-accueil', true); })
+  new MutationObserver(() => { const v = pageOption('video-accueil'); if (v.dataset.confirme && (v.dataset.reservee || v.hidden)) confirmer('video-accueil', true); })
     .observe(pageOption('video-accueil'), { attributes: true, attributeFilter: ['data-confirme', 'class'] });
   window.addEventListener('load', () => setTimeout(() => {
     OPTIONS.forEach(id => { const p = pageOption(id); if (p && p.dataset.reservee) confirmer(id, false); });
