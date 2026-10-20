@@ -2882,3 +2882,28 @@ Demande de la propriétaire : « chaque élément du site a son bel aperçu, con
   photo).
 - Boutique (`marketplace/index.html`, `produit.html`) : balises og: ajoutées (image commune).
 - Essais : `test-apercus.js` (pages + boutique), `test-middleware-apercus.mjs` (partenaires).
+
+## Visites « comme un humain » du 20/10/2026 (Android, iPhone, tablette, ordinateur) : corrections
+- **Bouton « retour » du téléphone** : il referme la fenêtre ouverte (article, album, photo en
+  grand, fiche d'un partenaire) au lieu de quitter la page — `window.fenetreOuverte(fermer)` /
+  `window.fenetreFermee(fermer)` dans `js/verrou-defilement.js` (une étape d'historique par
+  fenêtre ; le menu n'est pas concerné). Essai : `test-retour-fenetres.js`.
+- **Pastille WhatsApp** discrète : effacée quand on descend dans la page ou qu'on remplit un champ,
+  de retour en remontant (`js/app.js`, `css/charte-ma2m.css`). Essai : `test-whatsapp-discret.js`.
+- **Articles** : lignes vides retirées, police de lecture (`--texte`), adresses web et numéros de
+  téléphone cliquables (`retirerParagraphesVides`, `rendreLiensCliquables` dans `js/app.js`).
+  Essai : `test-texte-articles.js`.
+- **The Book** : sur téléphone, mesures repliées (règle CSS, donc sans saut ; bouton
+  `.filtres-mesures-bouton`) ; coche dans le coin du filtre choisi (`css/bouton-ma2m.css`) ; bouton
+  « + » expliqué. Essai : `test-recherche-book.js`.
+- **Menu au clavier** : focus gardé dans le menu ouvert, retour au bouton « Menu » à la fermeture
+  (`js/menu.js`). Essai : `test-menu-clavier.js`.
+- **Fiche d'un mannequin** : silhouette (photo + lignes) pendant le chargement ; sur téléphone, les
+  mensurations passent sous la photo ronde.
+- **Âge** : candidatures à partir de 14 ans (`AGE_MINIMUM`, `js/formulaire-candidature.js`), plus
+  d'âge maximum ; critères mis à jour (Intégrer l'agence, Qui sommes-nous, FR/EN). Essai :
+  `test-visiteur.js` (12 ans refusés).
+- **Accueil** : bouton « Activer le son » centré (il sortait de l'écran) ; sommaire « Les
+  visages : femmes / hommes » ; l'annonce du bandeau (écrite en français) n'est plus affichée sur
+  la version anglaise, qui garde son bandeau des services ; étiquette « Infos du jour » centrée.
+- Étoiles sur « Nom complet » et « E-mail » du formulaire de candidature.
