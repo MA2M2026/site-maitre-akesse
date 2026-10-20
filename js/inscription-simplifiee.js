@@ -159,13 +159,13 @@
     const b = e.target.closest('[data-a]');
     if (!b || b.disabled) return;
     const a = b.getAttribute('data-a');
-    if (a === 'entrer') entrer();
+    if (a === 'entrer') void entrer();
     else if (a === 'oui') aller('reglement');
     else if (a === 'corriger') { E.correction = true; dessiner(); }
     else if (a === 'enregistrer') enregistrer();
-    else if (a === 'paiement') { aller('paiement'); chargerLien().then(() => { if (E.ecran === 'paiement') dessiner(); }); }
+    else if (a === 'paiement') { aller('paiement'); void chargerLien().then(() => { if (E.ecran === 'paiement') dessiner(); }); }
     else if (a === 'wave') { E.waveOuvert = true; setTimeout(dessiner, 300); }  // le lien Wave s'ouvre dans un autre onglet
-    else if (a === 'paye') paye();
+    else if (a === 'paye') void paye();
   });
   zone.addEventListener('change', (e) => {
     if (e.target.id === 'inn-regl') E.reglement = e.target.checked;

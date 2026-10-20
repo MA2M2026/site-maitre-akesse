@@ -2526,6 +2526,14 @@ descendre les notes de fiabilité et de sécurité à C alors qu'ils ne sont jam
 visiteurs. `js/tableau-v2.js` : `ouvrirFicheSure()` signale au journal une panne d'ouverture
 de fiche au lieu de la laisser passer inaperçue.
 
+**20/10/2026 (audit général)** : `scripts/base-essai/**` déclaré de la même façon (ses `update`
+sans `where` visent exprès une table de la base d'essai jetable). `void` ajouté devant
+`entrer()`, `paye()`, `chargerLien()` (js/inscription-simplifiee.js) et `lancer()`
+(js/mode-administration.js) : ces fonctions gèrent déjà leurs erreurs elles-mêmes (règle S9383).
+Alerte « Browser Storage Poisoning » sur `ma2m_retour_administration` (mode-administration.js) :
+fausse alerte, l'adresse relue est filtrée par une liste stricte (js/portail/noyau.js) avant
+tout `location.replace`.
+
 ## Code recopié → 0 % (12/10/2026)
 Regroupements faits pour supprimer les derniers blocs recopiés signalés par SonarQube :
 - Boutique : `js/gabarit-boutique.js` (haut de page, menu, barre, panier, bas de page des 6

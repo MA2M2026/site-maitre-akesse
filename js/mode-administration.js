@@ -106,7 +106,7 @@
         resolve(true);
       };
       if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', lancer, { once: true });
-      else lancer();
+      else void lancer();
     })
   };
 })();
