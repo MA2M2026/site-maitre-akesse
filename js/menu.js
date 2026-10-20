@@ -114,15 +114,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
   overlay.addEventListener('keydown', (e) => {
-    if (e.key !== 'Tab' || !menuEstOuvert) return;
+    if (e.key !== 'Tab' || !overlay.classList.contains('active')) return;
     const liste = elementsDuMenu();
     if (!liste.length) return;
     const i = liste.indexOf(document.activeElement);
     if (e.shiftKey && i <= 0) { e.preventDefault(); liste[liste.length - 1].focus(); }
     else if (!e.shiftKey && i === liste.length - 1) { e.preventDefault(); liste[0].focus(); }
   });
+  // (menu réellement affiché : un autre script peut l'avoir refermé sans passer par fermerMenu)
   document.addEventListener('focusin', (e) => {
-    if (!menuEstOuvert || overlay.contains(e.target)) return;
+    if (!overlay.classList.contains('active') || overlay.contains(e.target)) return;
     const premier = elementsDuMenu()[0];
     if (premier) premier.focus({ preventScroll: true });
   });
