@@ -33,6 +33,23 @@
     });
   }
 
+  // Mot de Maître Akesse trop long pour sa page : « Lire la suite » l'ouvre en entier
+  var mot = document.getElementById('mot-responsable');
+  var suite = mot && mot.querySelector('.mag-mot-suite');
+  function verifierSuite() {
+    if (!suite || mot.classList.contains('deplie') || !visible(mot)) return;
+    var texte = mot.querySelector('.mag-texte');
+    suite.hidden = texte.scrollHeight <= texte.clientHeight + 2;
+  }
+  if (suite) {
+    suite.addEventListener('click', function () {
+      mot.classList.add('deplie'); suite.hidden = true; suite.setAttribute('aria-expanded', 'true');
+    });
+    // le texte change de taille quand la page apparaît, quand le message arrive ou quand l'écran tourne
+    if (window.ResizeObserver) new ResizeObserver(verifierSuite).observe(mot.querySelector('.mag-texte'));
+    window.addEventListener('resize', verifierSuite);
+  }
+
   numeroter();
   // une page remplie plus tard (style, classe ou attribut hidden changé) : on renumérote
   var attente = null;

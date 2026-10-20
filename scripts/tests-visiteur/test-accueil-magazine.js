@@ -102,6 +102,26 @@ const tables = (avecMot) => ({
       await ctx.close();
     }
   }
+  // Mot de Maître Akesse : message court sans « Lire la suite » (vérifié ci-dessus par l'absence de
+  // débordement) ; message long coupé en bas de sa page, « Lire la suite » l'ouvre en entier
+  for (const [page, lien] of [['index.html', 'Lire la suite'], ['en/index.html', 'Read more']]) {
+    for (const long of [false, true]) {
+      const ctx = await b.newContext({ viewport: { width: 390, height: 844 } }); const p = await ctx.newPage();
+      await p.addInitScript(() => { try { sessionStorage.setItem('ma2m_intro_vue', '1'); localStorage.setItem('ma2m_cookies', 'non'); } catch (e) {} });
+      const t = tables(true); if (long) t.mot_responsable[0].message = 'Chaque grand parcours commence par un rêve. '.repeat(40);
+      await brancher(p, { tables: t, rpc: {} }, []);
+      await p.goto('http://127.0.0.1:' + PORT + '/' + page, { waitUntil: 'domcontentloaded' }); await p.waitForTimeout(2500);
+      const bouton = p.locator('#mot-responsable .mag-mot-suite');
+      if (!long) { ok(!(await bouton.isVisible()), page + ' : message court, pas de « ' + lien + ' »'); await ctx.close(); continue; }
+      const avant = await p.evaluate(() => { const m = document.getElementById('mot-responsable'); return { page: m.getBoundingClientRect().height, h: parseFloat(getComputedStyle(m).height) }; });
+      ok(await bouton.isVisible() && (await bouton.textContent()).trim() === lien, page + ' : message long coupé en bas de sa page, avec « ' + lien + ' »');
+      await p.evaluate(async () => { const m = document.getElementById('mot-responsable'), T = parseFloat(getComputedStyle(m).top); window.scrollTo({ top: 0, behavior: 'instant' }); for (let i = 0; i < 400 && m.getBoundingClientRect().top > T + 1; i++) window.scrollBy({ top: 30, behavior: 'instant' }); });
+      await bouton.click(); await p.waitForTimeout(300);
+      const apres = await p.evaluate(() => { const m = document.getElementById('mot-responsable'), t = m.querySelector('.mag-texte'); return { page: m.getBoundingClientRect().height, entier: t.scrollHeight <= t.clientHeight + 2 }; });
+      ok(apres.entier && apres.page > avant.page, page + ' : « ' + lien + ' » ouvre le message en entier');
+      await ctx.close();
+    }
+  }
   await b.close();
   console.log(ko ? '❌ ' + ko + ' échec(s)' : 'Tout est bon.'); process.exit(ko ? 1 : 0);
 })();

@@ -92,7 +92,12 @@ Le dossier `maquettes/` et ce fichier ne sont pas publiés (`.vercelignore`).
    → CORRIGÉ : c'était l'intro du logo (7 s) qui couvrait l'écran pendant la mesure ; le test la
    marque comme déjà vue (comme les autres tests). Batterie complète relancée : tout passe, sauf
    `test-visuel.js` (contraste du texte du dos rouge et de la phrase « Descendez… ») → corrigé,
-   `test-visuel.js` repassé : tout est bon. **La batterie complète est verte.** (en particulier `test-visuel.js`, `test-visiteur.js`,
+   `test-visuel.js` repassé : tout est bon. **La batterie complète est verte.**
+   Puis essai avec les VRAIES données (lecture seule) : le mot de Maître Akesse (long) et le
+   sommaire (9 lignes sur téléphone) dépassaient sous les pages suivantes → pages à hauteur fixe
+   (3:4, `overflow: hidden`), sommaire resserré sur page étroite, mot coupé en fondu avec
+   « Lire la suite » (testé dans `test-accueil-magazine.js`). À refaire après ces corrections :
+   `test-visuel.js`, `test-affichage-stable.js`, `test-lisibilite-photos.js` (PAGES=index…). (en particulier `test-visuel.js`, `test-visiteur.js`,
    `test-pages-publiques.js`, `test-video-accueil.js` qui connaissaient l'ancien accueil).
 2. Relecture `/code-review` du changement, puis montrer le rendu à la propriétaire.
 3. Avec son accord écrit : mise en ligne (fusion dans `main`), vérification du site en ligne,

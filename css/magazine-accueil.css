@@ -29,7 +29,9 @@ body.accueil-magazine { background: var(--mag-scene); }
   position: sticky;
   top: max(calc(var(--haut-entete) + 12px), calc(var(--haut-entete) + (100svh - var(--haut-entete) - var(--H)) / 2));
   width: var(--W);
-  aspect-ratio: 3 / 4;
+  /* hauteur fixe (format 3:4) : une page plus haute dépasserait sous les pages posées dessus */
+  height: var(--H);
+  overflow: hidden;
   margin: 0 auto;
   background: var(--mag-papier);
   color: var(--mag-encre);
@@ -104,12 +106,21 @@ body.accueil-magazine { background: var(--mag-scene); }
 
 /* Mot de Maître Akesse */
 .mag-mot { padding: 0 0 10cqw; }
-.mag-mot .mag-mot-photo { height: 46%; flex: none; }
+.mag-mot .mag-mot-photo { height: 40%; flex: none; }
 .mag-mot .mag-mot-photo img.u-hidden { display: none; }
-.mag-mot-corps { padding: 5cqw 6cqw 0; }
+/* pas de photo choisie dans le tableau de bord : pas de cadre vide */
+.mag-mot .mag-mot-photo:not(:has(img[style*="block"])) { display: none; }
+/* Le message peut être long : il remplit la page puis s'arrête en fondu, « Lire la suite »
+   l'ouvre en entier (sinon la page dépassait sous les suivantes — 20/10/2026, vraies données) */
+.mag-mot-corps { padding: 5cqw 6cqw 0; flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .mag-mot .mag-titre { font-size: 9cqw; }
 .mag-mot-fonction { font-size: max(12px, 2.6cqw); color: var(--mag-gris); margin: 1cqw 0 3cqw; }
-.mag-mot .mag-texte { white-space: pre-line; }
+.mag-mot .mag-texte { white-space: pre-line; min-height: 0; overflow: hidden; -webkit-mask-image: linear-gradient(to bottom, #000 75%, transparent); mask-image: linear-gradient(to bottom, #000 75%, transparent); }
+.mag-mot-suite { align-self: flex-start; margin-top: 2cqw; padding: 0; background: none; border: 0; font: inherit; color: var(--rouge-ma2m-texte); }
+.mag-mot-suite[hidden] { display: none; }
+.mag-mot.deplie .mag-texte { overflow: visible; -webkit-mask-image: none; mask-image: none; }
+.mag-mot.deplie { height: auto; min-height: var(--H); }
+.mag-mot.deplie .mag-mot-corps { flex: none; }
 
 /* 4 · Les visages : les 6 derniers mannequins publiés (js/accueil.js) */
 .mag-visages-tete { display: flex; justify-content: space-between; align-items: flex-end; gap: 3cqw; margin-bottom: 4cqw; }
@@ -171,6 +182,14 @@ body.accueil-magazine { background: var(--mag-scene); }
 
 /* Le film (vidéo de l'accueil) garde sa place, sous le magazine */
 .accueil-magazine .video-accueil { margin: 0 auto 40px; }
+
+/* Page étroite (téléphone) : sommaire resserré, sans les sous-titres, pour tenir dans la page */
+@container (max-width: 480px) {
+  .mag-sommaire .mag-titre { font-size: 11cqw; }
+  .mag-sommaire ol { margin-top: 3cqw; }
+  .mag-sommaire li a { padding: 1.6cqw 0; align-items: center; }
+  .mag-sommaire li span { display: none; }
+}
 
 /* Téléphone : la page prend toute la largeur ; textes à leur taille minimale lisible */
 @media (max-width: 600px) {
