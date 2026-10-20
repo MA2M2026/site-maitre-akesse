@@ -2869,3 +2869,16 @@ Autres corrections tirées du même journal :
 Sans action : erreurs de traduction automatique ou d'extensions (« user-script », fonctions
 « Hk/Fk »), pages lentes et réseau injoignable (connexion du visiteur), vidéo illisible sur
 certains vieux téléphones (la page la masque déjà).
+
+## Aperçus des liens au style « Magazine » (20/10/2026)
+Demande de la propriétaire : « chaque élément du site a son bel aperçu, conforme au nouveau design ».
+- `scripts/apercus/generer.js` refait les 31 images de pages (`assets/apercus/`, FR + EN) et
+  l'image de la boutique (`fr-boutique.jpg`, liste `AUTRES`) : papier beige, rubrique rouge, grand
+  titre Big Shoulders Display (réduit tout seul pour tenir), texte Work Sans, bandeau rouge « MA2M ».
+  Polices : paquets `@fontsource/big-shoulders-display` et `@fontsource/work-sans` (mode d'emploi en
+  tête du fichier). Numéro des images passé à `?v=2` (pages et `middleware.js`).
+- `middleware.js` : nouvel aperçu d'UN partenaire (`/partenaires?partenaire=ID` : nom, texte, logo ;
+  sans logo, l'image de la page). Fiches des mannequins, actualités et événements : inchangés (leur
+  photo).
+- Boutique (`marketplace/index.html`, `produit.html`) : balises og: ajoutées (image commune).
+- Essais : `test-apercus.js` (pages + boutique), `test-middleware-apercus.mjs` (partenaires).

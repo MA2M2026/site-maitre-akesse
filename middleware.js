@@ -1,4 +1,5 @@
-// ================== Aperçu des liens partagés (actualités / événements / fiches des mannequins) ==================
+// ================== Aperçu des liens partagés (actualités / événements / partenaires / fiches des mannequins) ==================
+// 20/10/2026 : étendu à la fiche d'UN partenaire (?partenaire=ID : son nom, son texte, son logo).
 // 04/10/2026 : étendu à la fiche de CHAQUE mannequin publié (sa photo, son nom,
 // catégorie · ville · taille) — jamais ses coordonnées personnelles. (The Book lui-même
 // n'est plus ici depuis le 14/10/2026 : son image d'aperçu est assets/apercus/, comme les
@@ -23,6 +24,7 @@ export const config = {
   matcher: [
     '/actualites', '/actualites.html', '/evenements', '/evenements.html',
     '/en/actualites', '/en/actualites.html', '/en/evenements', '/en/evenements.html',
+    '/partenaires', '/partenaires.html', '/en/partenaires', '/en/partenaires.html',
     '/mannequin', '/mannequin.html', '/en/mannequin', '/en/mannequin.html',
     '/book/:slug', '/en/book/:slug',
     // tableau de bord protégé (13/10/2026) : la page et ses scripts réservés
@@ -147,7 +149,7 @@ async function lireSupabase(chemin) {
 // produite et mise en cache par l'optimiseur d'images de Vercel.
 // Sans photo : l'image d'aperçu de la page (assets/apercus/, 14/10/2026), pas le logo seul.
 function imageApercu(url, anglais, page) {
-  if (!url) return SITE + '/assets/apercus/' + (anglais ? 'en-' : 'fr-') + page + '.jpg?v=1';
+  if (!url) return SITE + '/assets/apercus/' + (anglais ? 'en-' : 'fr-') + page + '.jpg?v=2';
   const absolue = /^https?:\/\//i.test(url) ? url : SITE + (url.charAt(0) === '/' ? '' : '/') + url;
   return SITE + '/_vercel/image?url=' + encodeURIComponent(absolue) + '&w=1080&q=75';
 }
@@ -216,6 +218,21 @@ async function apercuMannequin(url, anglais, idFiche) {
   return pageApercu({ titre: m.full_name, description, photo: imageApercu(await photoMannequin(id), anglais, 'mannequin'), lien, anglais, type: 'profile' });
 }
 
+// Fiche d'UN partenaire (?partenaire=ID, 20/10/2026 : « chaque élément du site a son aperçu ») :
+// son nom, sa description et son logo ; sans logo, l'image de la page Partenaires.
+async function apercuPartenaire(url, anglais) {
+  const id = url.searchParams.get('partenaire');
+  if (!id || !ID_VALIDE.test(id)) return;
+  const lignes = await lireSupabase('partenaires?id=eq.' + id + '&select=nom,description,logo_url');
+  const p = lignes && lignes[0];
+  if (!p || !p.nom) return;
+  const description = texteSimple(p.description, 220) || (anglais
+    ? 'A partner of Maître Akesse Model Management.'
+    : 'Partenaire de Maître Akesse Model Management.');
+  const lien = SITE + url.pathname.replace(/\.html$/, '') + '?partenaire=' + id;
+  return pageApercu({ titre: p.nom, description, photo: imageApercu(p.logo_url, anglais, 'partenaires'), lien, anglais, type: 'website' });
+}
+
 export default async function middleware(requete) {
   try {
     const url = new URL(requete.url);
@@ -242,6 +259,7 @@ export default async function middleware(requete) {
     }
     if (!ROBOTS_APERCU.test(agent)) return; // visiteur normal : rien ne change
     if (/\/mannequin(\.html)?$/.test(url.pathname)) return await apercuMannequin(url, anglais);
+    if (/\/partenaires(\.html)?$/.test(url.pathname)) return await apercuPartenaire(url, anglais);
     const estEvenement = url.pathname.indexOf('evenements') !== -1;
     const id = url.searchParams.get(estEvenement ? 'evenement' : 'actu');
     if (!id || !ID_VALIDE.test(id)) return;

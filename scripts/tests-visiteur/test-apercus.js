@@ -34,5 +34,13 @@ for (const f of fichiers) {
   ok(/og:image:alt" content="[^"]+"/.test(html), f + ' : texte de l’image (og:image:alt)');
   ok(/og:title" content="[^"]+"/.test(html) && /og:description" content="[^"]+"/.test(html), f + ' : titre et description');
 }
-console.log((ko ? '❌ ÉCHEC' : '✓') + ' aperçus des liens : ' + fichiers.length + ' pages vérifiées' + (ko ? ', ' + ko + ' problème(s)' : ', chacune avec sa propre image 1200 × 630'));
+// Boutique « La Maison MA2M » (20/10/2026) : vitrine et fiche d'une pièce, une image commune
+for (const f of ['marketplace/index.html', 'marketplace/produit.html']) {
+  const html = fs.readFileSync(path.join(racine, f), 'utf8');
+  ok(/<meta property="og:image" content="https:\/\/www\.maitreakessemodelmanagement\.com\/assets\/apercus\/fr-boutique\.jpg\?v=\d+">/.test(html), f + ' : image d’aperçu de la boutique');
+  ok(/og:title" content="[^"]+"/.test(html) && /og:image:alt" content="[^"]+"/.test(html), f + ' : titre et texte de l’image');
+}
+const boutique = path.join(racine, 'assets/apercus/fr-boutique.jpg');
+ok(fs.existsSync(boutique) && taille(fs.readFileSync(boutique)).join('×') === '1200×630', 'assets/apercus/fr-boutique.jpg : 1200 × 630');
+console.log((ko ? '❌ ÉCHEC' : '✓') + ' aperçus des liens : ' + fichiers.length + ' pages (+ la boutique) vérifiées' + (ko ? ', ' + ko + ' problème(s)' : ', chacune avec sa propre image 1200 × 630'));
 if (ko) process.exitCode = 1;
