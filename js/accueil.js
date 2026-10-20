@@ -168,6 +168,7 @@
     [['sommaire-img', 0], ['agence-img', 1], ['dos-img', 2]].forEach(([id, i]) => {
       const m = reste[i % reste.length] || une;
       photo(document.getElementById(id), m.photo, m.full_name);
+      if (id === 'sommaire-img') document.getElementById('sommaire-legende').textContent = m.full_name;
     });
     const edito = document.getElementById('edito-img');
     if (!edito.dataset.mot) { const m = reste[3 % reste.length] || une; photo(edito, m.photo, m.full_name); }

@@ -577,6 +577,7 @@
   --mag-voile-plein: rgba(0, 0, 0, 0.85);
   --mag-voile-papier: rgba(241, 236, 229, 0.9);   /* papier presque opaque posé sur une photo, sous du texte foncé */
   --mag-voile-nul: rgba(0, 0, 0, 0);
+  --mag-ombre-tirage: 0 18px 40px -14px rgba(27, 24, 23, 0.45), 0 2px 6px rgba(27, 24, 23, 0.12);   /* tirage photo posé sur la page */
   --mag-attente: #B9AFA4;        /* cadre photo en cours de chargement */
   --mag-carte: #F8F5F1;          /* cartes, formulaires, en-tête et pied de page sur le papier */
   --mag-papier-fonce: #E6DFD6;   /* zones grisées, survol */
