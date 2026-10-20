@@ -83,18 +83,15 @@
   }).observe(mag, { attributes: true, subtree: true, attributeFilter: ['hidden', 'class'] });
   numeroter();
 
-  // Le sommaire mène à la page choisie (les pages sont collées l'une sur l'autre : on descend
-  // jusqu'à l'endroit où elle arrive, pas jusqu'à sa position collée).
+  // Le sommaire mène à la page choisie, juste sous la barre du haut (qui reste collée en haut).
   document.getElementById('sommaire-liste').addEventListener('click', e => {
     const lien = e.target.closest('a[href^="#"]');
     if (!lien) return;
     const cible = document.getElementById(lien.getAttribute('href').slice(1));
     if (!cible) return;
     e.preventDefault();
-    const avant = cible.style.position;
-    cible.style.position = 'relative';
-    const y = cible.getBoundingClientRect().top + window.scrollY - 100;
-    cible.style.position = avant;
+    const entete = document.querySelector('.site-header-v2');
+    const y = cible.getBoundingClientRect().top + window.scrollY - (entete ? entete.offsetHeight : 84);
     window.scrollTo({ top: y, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   });
 

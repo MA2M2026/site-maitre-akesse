@@ -81,3 +81,6 @@ Le dossier `maquettes/` et ce fichier ne sont pas publiés (`.vercelignore`).
   - Tests : test-affichage-stable.js (pages Femmes/Hommes, pas de saut au retour), test-lisibilite-
     photos.js (textes de la couverture et de « À la une », photos d'essai générées par lancer.sh ;
     une photo cachée sous une page opaque ne compte plus).
+- 20/10/2026, après la mise en ligne : la propriétaire aime le site ; à l'accueil, elle préfère que
+  les pages ne se superposent plus : elles se suivent maintenant bord à bord, sans espace, et on les
+  fait défiler normalement (plus de position: sticky).

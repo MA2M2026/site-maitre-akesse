@@ -1,8 +1,9 @@
 /* ===== Accueil « Magazine » (index.html et en/index.html) — refonte du 20/10/2026 =====
    Choix de la propriétaire : le « Magazine 3 » (maquettes/accueil-magazine.html, voir
    PLAN-REFONTE-MAGAZINE.md). L'accueil se lit comme un magazine qu'on feuillette : des pages
-   de papier beige, centrées, qui restent collées sous la barre du haut ; en descendant, chaque
-   page vient se poser sur la précédente.
+   de papier beige, centrées, les unes sous les autres, bord à bord, qu'on fait simplement
+   défiler (20/10/2026, demande de la propriétaire : plus de pages collées qui se superposent,
+   et pas d'espace vide entre les pages).
    - Ordinateur et tablette : pages au format magazine 3:4, aussi grandes que l'écran le permet
      (620 px de large au plus).
    - Téléphone : la page prend toute la hauteur de l'écran (au format 3:4, elle ferait 358 px
@@ -25,27 +26,23 @@
 @media (max-width: 700px) {
   .mag {
     --W: calc(100vw - 20px);
-    /* la page s'arrête au-dessus des boutons flottants (WhatsApp, retour en haut, installer l'app) */
-    --H: min(calc(100svh - var(--entete) - 96px), calc(var(--W) * 1.9));
+    --H: min(calc(100svh - var(--entete) - 20px), calc(var(--W) * 1.9));
     padding-top: 10px;
   }
-  .mag-page { top: calc(var(--entete) + 10px); }
 }
 
-/* Les pages s'empilent : toutes collées au même endroit, la suivante passe par-dessus. */
+/* Les pages se suivent bord à bord, sans espace : on les fait défiler normalement. */
 .mag-page {
-  position: sticky;
-  top: calc(var(--entete) + (100svh - var(--entete) - var(--H)) / 2);
+  position: relative;
   width: var(--W);
   height: var(--H);
-  margin: 0 auto 38svh;
+  margin: 0 auto;
   overflow: hidden;
   container-type: inline-size;
   background: var(--mag-papier);
   color: var(--mag-encre);
   box-shadow: var(--mag-ombre-page);
 }
-.mag-page:last-child { margin-bottom: 0; }
 .mag-page[hidden] { display: none; }
 
 .mag a, .mag p, .mag .mag-titre { color: inherit; }   /* la couleur de la page (charte-ma2m.css force l'encre sur h1-h3) */
@@ -257,10 +254,6 @@
 .p-dos .contact { margin-top: 3cqw; font-size: max(12px, 2.6cqw); }
 .p-dos .contact a { text-decoration: underline; text-underline-offset: 3px; }
 
-/* Petits écrans très bas (téléphone couché) : pas de pages collées, on lit à la suite. */
-@media (max-height: 520px) and (orientation: landscape) {
-  .mag-page { position: relative; top: auto; margin-bottom: 24px; }
-}
 @media (prefers-reduced-motion: reduce) {
   .mag-cadre img { transition: none; }
 }
