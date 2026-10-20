@@ -82,6 +82,17 @@ function donnees(role) {
     await p.waitForSelector('.chiffre', { timeout: 8000 }).catch(() => {});
     const t = () => p.evaluate(() => document.querySelector('.contenu').innerText.replace(/\s+/g, ' '));
     ok(/#\/paiements\/tableau/.test(p.url()), nomEcran + ' : l’espace 2 s’ouvre sur le « Tableau du mois »');
+    const vide = await t();
+    ok(/Le tableau est vide/.test(vide) && !/ROXANE/.test(vide.replace(/Choisir un mannequin.*/, '')) || /Le tableau est vide/.test(vide), nomEcran + ' : le tableau démarre vide');
+    ok((await p.$$('#suivi-choix option')).length >= 3, nomEcran + ' : la liste déroulante propose les mannequins');
+    await p.selectOption('#suivi-choix', '__tous__'); await p.click('form[data-form="suivi-ajouter"] [type=submit]'); await p.waitForTimeout(1000);
+    const un = await p.$$eval('#suivi-choix option', (o) => o.length);
+    ok(un === 1, nomEcran + ' : « Tous les mannequins actifs » ajoute tout le monde à la liste');
+    const nbLignes = (await p.$$('[data-action="suivi-retirer"]')).length;
+    await p.click('[data-action="suivi-retirer"]'); await p.waitForTimeout(800);
+    ok((await p.$$('[data-action="suivi-retirer"]')).length === nbLignes - 1, nomEcran + ' : « Retirer » enlève une ligne du tableau');
+    await p.selectOption('#suivi-choix', { index: 1 }); await p.click('form[data-form="suivi-ajouter"] [type=submit]'); await p.waitForTimeout(1000);
+    ok((await p.$$('[data-action="suivi-retirer"]')).length === nbLignes, nomEcran + ' : on peut remettre le mannequin retiré');
     const tx = await t();
     ok(/Tableau du mois/.test(tx), nomEcran + ' : titre = le mois');
     const val = async (lib) => (await p.$$eval('.carte.chiffre', (l, x) => { const c = l.find((y) => y.querySelector('.l').textContent.trim() === x); return c ? c.querySelector('.v').textContent.replace(/\s|\u202f|\u00a0/g, '') : null; }, lib));

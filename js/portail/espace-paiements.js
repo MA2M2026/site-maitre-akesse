@@ -471,10 +471,14 @@
   // « Mensualités du mois » : non payé seulement après le 5.
   async function tableauDuMois() {
     const mois = moisCourant();
-    const [actifs, paiements] = await Promise.all([
+    const [tousActifs, paiements] = await Promise.all([
       P.bd(sb.from('agence_mannequins').select('*').eq('statut', 'actif').order('full_name')),
       P.bd(sb.from('paiements_mannequins').select('id, mannequin_id, statut, montant').eq('objet', 'mensualite').eq('mois', mois).neq('statut', 'refuse'))
     ]);
+    // Suivi choisi par l'agence : seuls les mannequins ajoutés avec la liste déroulante apparaissent ici
+    const suivis = lireSuivi();
+    const actifs = tousActifs.filter((m) => suivis.includes(m.id));
+    const proposes = tousActifs.filter((m) => !suivis.includes(m.id));
     const jour = new Date().getDate();
     const filtre = P.etat.filtreTableau || 'tous';
     const lignes = actifs.map((m) => {
@@ -496,14 +500,38 @@
       P.chiffre('Taux de recouvrement', taux + ' %') + '</div>' +
       '<div class="ligne">' + P.pastille('À jour : ' + nb('paye'), 'ok') + P.pastille('Preuve reçue : ' + nb('attente'), 'alerte') +
       P.pastille('Non payé : ' + (nb('non_paye') + nb('a_payer')), 'erreur') + '</div>' +
+      '<form class="carte f" data-form="suivi-ajouter"><h2>Mannequins suivis</h2><p class="doux">Choisissez dans la liste les mannequins à suivre ce mois-ci. Retirer un mannequin du tableau ne supprime rien.</p>' +
+        '<div class="ligne"><label class="fl" for="suivi-choix">Mannequin<select id="suivi-choix" name="mannequin"><option value="">— Choisir un mannequin —</option>' +
+        (proposes.length > 1 ? '<option value="__tous__">Tous les mannequins actifs</option>' : '') +
+        proposes.map((m) => '<option value="' + P.esc(m.id) + '">' + P.esc(m.full_name) + (m.user_id ? '' : ' (non inscrit sur le site)') + '</option>').join('') +
+        '</select></label><button class="btn rouge" type="submit">Ajouter au tableau</button>' +
+        '<a class="btn" href="#/paiements/ajouter">＋ Nouveau mannequin</a></div></form>' +
       '<div class="segments" role="group" aria-label="Groupe">' + FILTRES_GROUPE.map((f) => '<button class="btn petit' + (f[0] === filtre ? ' actif' : '') + '" type="button" data-action="tableau-filtre" data-filtre="' + f[0] + '">' + P.esc(f[1]) + '</button>').join('') + '</div>' +
       '<div class="carte">' + (montrees.length ? P.tableau(['Mannequin', 'Groupe', 'Destinataire', '#Montant', 'Statut', 'Action'], montrees.map((x) =>
         '<tr' + (x.e === 'non_paye' ? ' class="ligne-retard"' : '') + '><td><a href="#/paiements/fiche/' + x.m.id + '"><b>' + P.esc(x.m.full_name) + '</b></a></td>' +
         '<td>' + (x.inscrit ? 'Inscrit sur le site' : 'Non inscrit') + '</td><td>' + P.esc(x.destinataire) + '</td><td class="nombre">' + P.fcfa(x.montant) + '</td>' +
         '<td>' + P.pastille(ETATS[x.e][0], ETATS[x.e][1]) + '</td>' +
-        '<td>' + (x.e === 'attente' ? '<a class="btn petit" href="#/paiements/a-valider">Valider</a>' : x.e === 'paye' ? '<span class="doux">Reçu émis</span>' : '<a class="btn petit" href="#/paiements/mensualites">Relancer</a>') + '</td></tr>'))
-        : '<p class="doux">Aucun mannequin actif dans ce groupe.</p>') + '</div>';
+        '<td>' + (x.e === 'attente' ? '<a class="btn petit" href="#/paiements/a-valider">Valider</a>' : x.e === 'paye' ? '<span class="doux">Reçu émis</span>' : '<a class="btn petit" href="#/paiements/mensualites">Relancer</a>') +
+        ' <button class="btn petit" type="button" data-action="suivi-retirer" data-id="' + x.m.id + '" aria-label="Retirer ' + P.esc(x.m.full_name) + ' du tableau">Retirer</button></td></tr>'))
+        : '<p class="doux">' + (suivis.length ? 'Aucun mannequin dans ce groupe.' : 'Le tableau est vide : choisissez un mannequin dans la liste ci-dessus.') + '</p>') + '</div>';
   }
+  // Liste des mannequins suivis, gardée sur cet appareil (aucune donnée n'est supprimée ni modifiée)
+  const CLE_SUIVI = 'ma2m_suivi_tableau';
+  function lireSuivi() {
+    try { const v = JSON.parse(localStorage.getItem(CLE_SUIVI) || '[]'); return Array.isArray(v) ? v.filter((x) => typeof x === 'string') : []; } catch (e) { return []; }
+  }
+  function ecrireSuivi(liste) { try { localStorage.setItem(CLE_SUIVI, JSON.stringify(liste)); } catch (e) { P.message('Impossible de garder la liste sur cet appareil.'); } }
+  P.formulaires['suivi-ajouter'] = async (f) => {
+    const choix = String(f.get('mannequin') || '');
+    if (!choix) return P.message('Choisissez d’abord un mannequin dans la liste.');
+    const liste = lireSuivi();
+    if (choix === '__tous__') {
+      const tous = await P.bd(sb.from('agence_mannequins').select('id').eq('statut', 'actif'));
+      tous.forEach((m) => { if (!liste.includes(m.id)) liste.push(m.id); });
+    } else if (!liste.includes(choix)) liste.push(choix);
+    ecrireSuivi(liste); P.afficher();
+  };
+  P.actions['suivi-retirer'] = (el) => { ecrireSuivi(lireSuivi().filter((id) => id !== el.getAttribute('data-id'))); P.afficher(); };
   P.actions['tableau-filtre'] = (el) => { P.etat.filtreTableau = el.getAttribute('data-filtre'); P.afficher(); };
 
   // ---------- Matrice mannequins × mois (cahier V3, 7.2) ----------
