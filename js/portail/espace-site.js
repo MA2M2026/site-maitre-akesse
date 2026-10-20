@@ -59,8 +59,11 @@
       try { cadre.contentWindow.ma2mOuvrirPage(cle); return; } catch (e) { /* page pas encore prête : rechargement ci-dessous */ }
     }
     cadre.dataset.genre = genre(cle);
+    cadre.classList.add('cadre-cache');
     cadre.src = adresse(cle);
   }
+  // la page de l'espace 1 apparaît quand elle a fini de charger (l'événement ne « remonte » pas : capture)
+  document.addEventListener('load', (e) => { if (e.target && e.target.id === 'cadre-ancien') e.target.classList.remove('cadre-cache'); }, true);
 
   P.actions['espace1-reessayer'] = () => { P.afficher(); };
   const pages = {};
@@ -74,7 +77,7 @@
           : 'Votre compte n’a pas encore accès à l’Administration du site. Demandez à l’administrateur principal.') + '</div>' +
           '<p style="margin-top:12px"><button class="btn" type="button" data-action="espace1-reessayer">Réessayer</button></p>';
       }
-      return '<iframe id="cadre-ancien" class="cadre-ancien" title="' + P.esc(PAGES[cle][1]) + '" data-genre="' + genre(cle) + '" src="' + P.esc(adresse(cle)) + '"></iframe>';
+      return '<p class="cadre-chargement">Chargement…</p><iframe id="cadre-ancien" class="cadre-ancien cadre-cache" title="' + P.esc(PAGES[cle][1]) + '" data-genre="' + genre(cle) + '" src="' + P.esc(adresse(cle)) + '"></iframe>';
     };
   });
   P.espaces.site = {

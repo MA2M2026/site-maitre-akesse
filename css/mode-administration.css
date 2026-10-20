@@ -57,3 +57,8 @@
 .cadre-admin #v2-cote,
 .cadre-admin .v2-burger,
 .cadre-admin #v2-voile { display: none !important; }
+
+/* Espace 1 ouvert dans le portail : ni message « Ouverture du tableau de bord… » ni gros titre vide
+   pendant le chargement (le portail affiche son propre « Chargement… ») */
+.cadre-admin #tdb-verif-msg,
+.cadre-admin #db-chrome-titre { display: none !important; }

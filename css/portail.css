@@ -172,7 +172,8 @@ details summary { cursor: pointer; font-weight: 700; }
 @media (max-width: 860px) {
   /* (19/10/2026, demande de la propriétaire) : plus de menu en ligne en haut ; barre « ☰ Menu »
      et menu qui glisse depuis la gauche, refermé dès qu'une rubrique est choisie */
-  .coque { grid-template-columns: minmax(0, 1fr); }
+  /* (20/10/2026) page courte sur tablette : la barre du haut ne s'étire plus pour remplir l'écran */
+  .coque { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
   .barre-menu { display: flex; justify-content: space-between; align-items: center; gap: 12px; background: var(--sombre); color: var(--sombre-encre); padding: 10px 12px 10px 0; position: sticky; top: 0; z-index: 30; }
   .lateral { position: fixed; top: 0; left: 0; bottom: 0; width: min(300px, 85vw); z-index: 45; overflow-y: auto; transform: translateX(-105%); visibility: hidden; transition: transform 0.22s ease, visibility 0.22s; padding-bottom: 22px; }
   .menu-ouvert .lateral { transform: none; visibility: visible; }
@@ -216,3 +217,23 @@ details summary { cursor: pointer; font-weight: 700; }
 /* Matrice mannequins × mois : une pastille par case */
 .tableau table.matrice td.case-mois { padding: 6px 3px; }
 .case-mois .pastille { position: relative; min-width: 28px; justify-content: center; text-align: center; padding: 3px 6px; }
+
+
+/* Logo de l'agence à la place du texte « M A 2 M » (20/10/2026) et entêtes moins hauts */
+.logo-portail { display: block; height: auto; max-width: 100%; }
+.logo-bandeau { width: 130px; }
+.logo-barre { width: 92px; margin-left: 12px; }
+.logo-menu { width: 150px; }
+.logo-connexion { width: 190px; }
+.bandeau-portail { padding: 10px 24px; }
+@media (max-width: 860px) {
+  .bandeau-portail { padding: 8px 14px; gap: 8px; }
+  .barre-menu { padding-top: 6px; padding-bottom: 6px; }
+}
+
+/* Espace 1 dans le portail : écran de chargement clair, la page n'apparaît qu'une fois prête
+   (au plus 8 secondes, même si elle ne répond pas) */
+.cadre-chargement { position: absolute; left: 0; right: 0; padding: 48px 16px; text-align: center; color: var(--encre-douce); }
+.cadre-cache { visibility: hidden; animation: cadre-montrer 0s 8s forwards; }
+@keyframes cadre-montrer { to { visibility: visible; } }
+.contenu:has(.cadre-ancien:not(.cadre-cache)) .cadre-chargement { display: none; }

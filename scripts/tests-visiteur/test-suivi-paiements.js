@@ -84,7 +84,7 @@ function donnees(role) {
     d.tables.codes_espace = [];
     d.rpc.sortie_proposer = {}; d.rpc.sortie_decider = {}; d.rpc.mannequin_reactiver = {}; d.rpc.recap_figer = {};
   };
-  for (const [nomEcran, ecran] of [['téléphone', { width: 390, height: 844 }], ['ordinateur', { width: 1280, height: 900 }]]) {
+  for (const [nomEcran, ecran] of [['téléphone', { width: 390, height: 844 }], ['tablette', { width: 820, height: 1400 }], ['ordinateur', { width: 1280, height: 900 }]]) {
     const connecter = async (role, page) => {
       const e = await ouvrir(role, ecran, base);
       e.p.on('console', (mm) => { if (mm.type() === 'error' && !/Failed to load resource/.test(mm.text())) e.errs.push('console : ' + mm.text().slice(0, 140)); });
@@ -106,6 +106,7 @@ function donnees(role) {
     ok(/Déclaré sans suite depuis 5 jours/.test(x) && !/sans suite depuis 1 jours/.test(x), nomEcran + ' : alerte « sans suite » seulement pour la déclaration de 5 jours');
     ok(/\+225 05 05 05 05 05/.test(x) && /Précision demandée/.test(x) && /Montant à confirmer/.test(x), nomEcran + ' : numéro du payeur, état et note affichés');
     ok(/Non communiqué/.test(x), nomEcran + ' : « Non communiqué » quand le payeur n’a pas donné de numéro');
+    if (ecran.width <= 860) ok((await p.$eval('.barre-menu', (b) => b.getBoundingClientRect().height)) < 90, nomEcran + ' : la barre du haut reste fine (pas de gros entête noir)');
     ok(!(await p.evaluate(verifierBoutons)).length && !(await lirePageEntiere(p)).length, nomEcran + ' : boutons au modèle rouge et textes lisibles');
     // note obligatoire pour « Introuvable »
     await p.click('[data-action="rapprochement-ouvrir"][data-id="pb"]'); await p.waitForSelector('form[data-form="rapprochement-enregistrer"]');

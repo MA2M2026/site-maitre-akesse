@@ -25,6 +25,8 @@
 
   // ---------- outils d'affichage ----------
   P.esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  // Logo de l'agence (version claire, pour les fonds sombres) à la place du texte « M A 2 M »
+  P.logo = (classe) => '<img class="logo-portail ' + classe + '" src="/assets/logo-header.png" width="600" height="182" alt="Maître Akesse Model Management">';
   P.fcfa = (n) => String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' FCFA';
   // Âge en années à partir d'une date 'AAAA-MM-JJ' (null si absente)
   P.age = (d) => window.ageMannequin(d);  // js/messages-mensualites.js
@@ -93,7 +95,7 @@
 
   // ---------- connexion ----------
   function ecranConnexion(etape, extra) {
-    const gauche = '<div class="g"><div><div class="marque" style="padding:0">M A 2 M</div><div class="petit-texte" style="letter-spacing:2px;text-transform:uppercase;color:var(--sombre-encre-douce);margin-top:8px">Maître Akesse Model Management</div></div>' +
+    const gauche = '<div class="g"><div>' + P.logo('logo-connexion') + '</div>' +
       '<div><div class="trait"></div><h1 style="font-size:32px">Espace d’administration</h1><p class="doux-sombre">Accès réservé à l’équipe de l’agence. Chaque personne a son propre compte et ne voit que ce qui relève de son rôle.</p></div>' +
       '<div class="petit-texte" style="color:var(--sombre-encre-douce)">Application installable sur téléphone et ordinateur' + (P.installee() ? '' : ' · <button class="btn petit clair" data-action="installer">Installer l’application</button>') + '</div></div>';
     let droite = '';
@@ -409,10 +411,10 @@
       '<a class="nav' + (n[0] === page ? ' actif' : '') + '" href="#/' + module + '/' + n[0] + '"' + (n[0] === page ? ' aria-current="page"' : '') + '><span>' + P.esc(n[1]) + '</span>' +
       (esp.compteur && esp.compteur[n[0]] ? '<span class="compteur">' + esp.compteur[n[0]] + '</span>' : '') + '</a>').join('');
     // écran étroit (téléphone, tablette en vertical) : barre « ☰ Menu », le menu glisse depuis la gauche
-    return '<div class="coque"><div class="barre-menu"><span class="marque">M A 2 M</span>' +
+    return '<div class="coque"><div class="barre-menu">' + P.logo('logo-barre') +
       '<button class="btn petit clair" data-action="menu-ouvrir" aria-controls="menu-lateral" aria-expanded="false">☰ Menu</button></div>' +
       '<div class="voile-menu" data-action="menu-fermer"></div>' +
-      '<nav class="lateral" id="menu-lateral" aria-label="' + P.esc(ESPACES[module]) + '"><div class="marque">M A 2 M<small>Maître Akesse Model Management</small></div>' +
+      '<nav class="lateral" id="menu-lateral" aria-label="' + P.esc(ESPACES[module]) + '"><div class="marque">' + P.logo('logo-menu') + '</div>' +
       '<div class="qui"><b>' + P.esc(P.moi.nom) + '</b>' + P.esc(ROLES[P.moi.role]) + '</div>' +
       '<div class="titre-menu">' + P.esc(ESPACES[module]) + '</div>' + nav +
       '<div class="lateral-pied"><a class="btn petit clair" href="#/">Retour au portail</a><button class="btn petit clair" data-action="deconnexion">Déconnexion</button></div></nav>' +
@@ -432,7 +434,7 @@
       compta: 'Vous tenez la comptabilité. Sur les mannequins, vous ne voyez que des totaux, jamais de noms.'
     }[P.moi.role];
     return '<div class="coque sans-menu"><main class="contenu" style="padding:0">' +
-      '<div class="bandeau-portail"><div class="marque" style="padding:0">M A 2 M</div><div class="ligne">' +
+      '<div class="bandeau-portail">' + P.logo('logo-bandeau') + '<div class="ligne">' +
       P.pastille(ROLES[P.moi.role], 'neutre') +
       (P.moi.role === 'principal' ? '<a class="btn petit clair" href="#/securite/comptes">Sécurité et journal</a>' : '<a class="btn petit clair" href="#/securite/codes">Mes codes de secours</a>') +
       (P.installee() ? '' : '<button class="btn petit clair" data-action="installer">Installer l’application</button>') +

@@ -92,6 +92,9 @@ function donnees(role) {
     ok(pe.url().includes('/admin/') && !pe.url().includes('tableau-de-bord'), nomEcran + ' : on reste dans le portail (adresse /admin/)');
     ok(await cadre.isVisible('#bloc-tableau'), nomEcran + ' : l’ancien tableau de bord s’affiche dans la zone centrale');
     ok(await pe.isVisible('.contenu #cadre-ancien'), nomEcran + ' : le cadre est dans le contenu de la coque');
+    ok(!/Ouverture du tableau de bord/.test(await cadre.evaluate(() => document.body.innerText)) && !(await cadre.isVisible('#tdb-verif-msg')), nomEcran + ' : plus d’écran noir « Ouverture du tableau de bord… »');
+    ok(!(await pe.$eval('#cadre-ancien', (f) => f.classList.contains('cadre-cache'))) && !(await pe.isVisible('.cadre-chargement')), nomEcran + ' : « Chargement… » du portail disparu, la page est visible');
+    ok((await pe.$$('img.logo-portail')).length >= 1 && !(await pe.evaluate(() => /M A 2 M/.test(document.body.innerText))), nomEcran + ' : le logo remplace « M A 2 M »');
     if (ecran.width > 860) ok(await pe.isVisible('#menu-lateral'), nomEcran + ' : le menu sombre du portail reste affiché');
     else { await pe.click('[data-action=menu-ouvrir]'); await pe.waitForTimeout(400); ok(await pe.isVisible('#menu-lateral'), nomEcran + ' : « ☰ Menu » ouvre le menu du portail'); }
     const items = await pe.$$eval('#menu-lateral a.nav', (l) => l.map((x) => x.textContent.trim()));

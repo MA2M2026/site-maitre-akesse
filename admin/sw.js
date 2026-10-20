@@ -2,12 +2,12 @@
 // admin.maitreakessemodelmanagement.com) : limité au dossier /admin/, il ne touche pas le site public. Il ne garde
 // que les fichiers de l'INTERFACE (écrans, styles, icônes) : jamais de données nominatives ni
 // de montants (les requêtes vers la base et vers /api ne passent pas par lui).
-const VERSION = 'administration-v6';
+const VERSION = 'administration-v7';
 const INTERFACE = ['/admin/', '/css/jetons.css', '/css/portail.css', '/js/supabase-config.js',
   '/js/vendor/supabase-js-2.110.6.js', '/js/portail/inactivite.js', '/js/messages-mensualites.js', '/js/portail/noyau.js', '/js/portail/espace-site.js', '/js/portail/espace-paiements.js', '/js/portail/espace-paiements-suivi.js',
   '/js/conversion-heic.js', '/js/portail/espace-compta.js', '/js/portail/espace-compta-suivi.js', '/js/portail/compta-pdf.js', '/js/portail/compta-xlsx.js',
   '/js/portail/espace-compta-documents.js', '/js/portail/espace-compta-dossier.js', '/js/vendor/pdf-lib-1.17.1.min.js',
-  '/js/portail/securite.js', '/css/bouton-ma2m.css', '/js/bouton-appui.js', '/icons/admin-192.png'];
+  '/js/portail/securite.js', '/css/bouton-ma2m.css', '/js/bouton-appui.js', '/icons/admin-192.png', '/assets/logo-header.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(INTERFACE)).then(() => self.skipWaiting()));
