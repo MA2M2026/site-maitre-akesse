@@ -2741,3 +2741,8 @@ depuis Abidjan (une vérification a bloqué l'accueil 10 s) ; le tableau de bord
   de haut en bas par `lirePageEntiere`, partagée avec `test-visuel.js`) et essaie la connexion
   coupée aux trois étapes (code, « Corriger » — ce qui a été tapé est gardé —, « J'ai payé »).
   Les boutons grisés (désactivés) ne sont pas jugés, comme le prévoit la norme.
+
+### Suivi des 6 points du 20/10/2026
+- Registre : filtre « Sans nom » (comptes site sans nom rempli, e-mail affiché, rien n'est supprimé).
+- Sorties et suspensions : liste « Formation terminée (24 mois) » avec bouton « Proposer la sortie » (RPC `sortie_proposer`, motif prérempli). Un mannequin « sorti » n'est plus appelé ni relancé (les relances ciblent `statut='actif'`).
+- Codes de l'espace mannequin : bouton « Enregistrer son paiement » (fiche) quand l'inscription n'est pas payée, puis « Générer le code ».

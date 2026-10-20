@@ -88,13 +88,16 @@
     try {
       [props, registre] = await Promise.all([
         P.bd(sb.from('sorties_mannequins').select('*, mannequin:agence_mannequins(full_name)').order('propose_le', { ascending: false })),
-        P.bd(sb.from('agence_mannequins').select('id, full_name, statut').order('full_name'))
+        P.bd(sb.from('agence_mannequins').select('id, full_name, statut, date_entree').order('full_name'))
       ]);
     } catch (e) { return P.entete('Sorties et suspensions') + ABSENT; }
     const principal = estPrincipal();
     const attente = props.filter((x) => x.decision === 'en_attente'), enAttenteIds = new Set(attente.map((x) => x.mannequin_id));
     const proposables = registre.filter((m) => m.statut === 'actif' && !enAttenteIds.has(m.id));
     const inactifs = registre.filter((m) => m.statut !== 'actif');
+    // formation de 24 mois écoulée : plus de mensualité à attendre, donc plus d'appel ni de relance une fois sortie
+    const limite = new Date(); limite.setMonth(limite.getMonth() - 24);
+    const terminees = proposables.filter((m) => m.date_entree && new Date(m.date_entree) <= limite);
     return P.entete('Sorties et suspensions', P.pastille(attente.length + ' en attente', attente.length ? 'alerte' : 'ok')) +
       '<div class="note info">L’équipe d’encaissement propose une suspension ou une sortie avec un motif ; seul l’administrateur principal décide, avec son code. Rien n’est supprimé : un mannequin sorti peut être réactivé.</div>' +
       '<div class="carte"><h2>Proposer</h2>' + (proposables.length
@@ -103,6 +106,8 @@
           '<label class="fl large" for="so-motif">Motif (obligatoire)<textarea id="so-motif" name="motif" rows="3" required></textarea></label>' +
           '<div class="large ligne"><button class="btn rouge" type="submit">Envoyer la proposition</button></div></form>'
         : '<p class="doux">Aucun mannequin actif à proposer.</p>') + '</div>' +
+      (terminees.length ? '<div class="carte"><h2>Formation terminée (24 mois écoulés)</h2><p class="doux">Ces mannequins ne paient plus de mensualité. Proposez leur sortie : ils ne recevront plus aucun appel ni relance.</p>' +
+        P.tableau(['Mannequin', 'Entrée à l’agence', ''], terminees.map((m) => '<tr><td><b>' + P.esc(m.full_name) + '</b></td><td>' + P.esc(P.date(m.date_entree)) + '</td><td><button class="btn rouge petit" type="button" data-action="sortie-formation-terminee" data-id="' + m.id + '">Proposer la sortie</button></td></tr>')) + '</div>' : '') +
       '<div class="carte"><h2>En attente de décision</h2>' + (attente.length ? P.tableau(['Mannequin', 'Proposition', 'Motif', 'Proposée le', ''], attente.map((x) =>
         '<tr><td><b>' + P.esc(x.mannequin ? x.mannequin.full_name : '—') + '</b></td><td>' + P.esc(TYPES_SORTIE[x.type] || x.type) + '</td><td>' + P.esc(x.motif) + '</td><td>' + P.dateHeure(x.propose_le) + '</td>' +
         '<td class="ligne">' + (principal ? '<button class="btn rouge petit" type="button" data-action="sortie-decider" data-id="' + x.id + '" data-accepter="1">Accepter</button><button class="btn petit" type="button" data-action="sortie-decider" data-id="' + x.id + '" data-accepter="0">Refuser</button>' : '<span class="doux">Décision de l’administrateur principal</span>') + '</td></tr>')) : '<p class="doux">Aucune proposition en attente.</p>') + '</div>' +
@@ -118,6 +123,13 @@
     try {
       await P.rpc('sortie_proposer', { p_mannequin: f.get('mannequin'), p_type: f.get('type'), p_motif: motif });
       P.message('Proposition envoyée à l’administrateur principal.'); await P.afficher();
+    } catch (e) { P.message(P.erreurTexte(e)); }
+  };
+  P.actions['sortie-formation-terminee'] = async (el) => {
+    if (!confirm('Proposer la sortie de ce mannequin (formation terminée) ? L’administrateur principal devra la confirmer.')) return;
+    try {
+      await P.rpc('sortie_proposer', { p_mannequin: el.getAttribute('data-id'), p_type: 'sorti', p_motif: 'Formation terminée (24 mois)' });
+      P.message('Proposition envoyée.'); await P.afficher();
     } catch (e) { P.message(P.erreurTexte(e)); }
   };
   P.actions['sortie-decider'] = async (el) => {

@@ -32,18 +32,22 @@
   }
 
   // ---------- Registre ----------
-  const FILTRES = [['tous', 'Tous'], ['site', 'Inscrits sur le site'], ['main', 'Ajoutés à la main'], ['non_paye', 'Inscription non payée']];
+  const FILTRES = [['tous', 'Tous'], ['site', 'Inscrits sur le site'], ['main', 'Ajoutés à la main'], ['non_paye', 'Inscription non payée'], ['sans_nom', 'Sans nom']];
+  // compte créé sur le site sans nom rempli : le registre l'a repris sous « Sans nom »
+  const sansNom = (m) => /^sans nom$/i.test(String(m.full_name || '').trim());
   async function registre() {
     const tous = await charger();
     const filtre = P.etat.filtreRegistre || 'tous', cherche = (P.etat.chercheRegistre || '').toLowerCase();
     const garde = (m) => (filtre === 'tous' || (filtre === 'site' && m.user_id) || (filtre === 'main' && !m.user_id) ||
-      (filtre === 'non_paye' && etatInscription(m, m.inscription)[1] === 'erreur')) &&
+      (filtre === 'non_paye' && etatInscription(m, m.inscription)[1] === 'erreur') || (filtre === 'sans_nom' && sansNom(m))) &&
       (!cherche || [m.full_name, m.telephone, m.email].join(' ').toLowerCase().includes(cherche));
     const liste = tous.filter(garde);
     const site = tous.filter((m) => m.user_id).length;
     return P.entete('Registre des mannequins', '<a class="btn rouge" href="#/paiements/ajouter">＋ Ajouter un mannequin</a>') +
       '<div class="grille chiffres">' + P.chiffre('Mannequins de l’agence', tous.length) + P.chiffre('Inscrits sur le site', site) +
-      P.chiffre('Ajoutés à la main', tous.length - site) + P.chiffre('Inscription non payée', tous.filter((m) => etatInscription(m, m.inscription)[1] === 'erreur').length, 'rouge') + '</div>' +
+      P.chiffre('Ajoutés à la main', tous.length - site) + P.chiffre('Inscription non payée', tous.filter((m) => etatInscription(m, m.inscription)[1] === 'erreur').length, 'rouge') +
+      (tous.some(sansNom) ? P.chiffre('Sans nom', tous.filter(sansNom).length, 'orange') : '') + '</div>' +
+      (tous.some(sansNom) ? '<div class="note info">« Sans nom » : des comptes créés sur le site sans nom rempli. Ouvrez la fiche pour voir leur e-mail et téléphone, et compléter le nom. Rien ne se supprime : si ce n’est pas un vrai mannequin, proposez sa sortie dans « Sorties et suspensions ».</div>' : '') +
       '<form class="ligne" data-form="registre-chercher"><label class="fl" for="rg-cherche" style="flex:1;min-width:200px">Rechercher (nom, téléphone, e-mail)' +
       '<input id="rg-cherche" name="cherche" value="' + P.esc(P.etat.chercheRegistre || '') + '"></label><button class="btn" type="submit">Rechercher</button></form>' +
       '<div class="segments">' + FILTRES.map((f) => '<button class="btn petit' + (f[0] === filtre ? ' actif' : '') + '" type="button" data-action="registre-filtre" data-filtre="' + f[0] + '">' + P.esc(f[1]) + '</button>').join('') + '</div>' +
@@ -51,7 +55,7 @@
         const e = etatInscription(m, m.inscription);
         return '<tr><td><b>' + P.esc(m.full_name) + '</b>' + (P.age(m.date_naissance) !== null && P.age(m.date_naissance) < 18 ? ' ' + P.pastille('Mineur', 'info') : '') +
           '<div class="petit-texte doux">' + (m.user_id ? 'Compte sur le site' : 'Ajouté à la main') + '</div></td>' +
-          '<td>' + P.esc(m.telephone || '—') + '</td><td>' + P.pastille(e[0], e[1]) + '</td><td class="nombre">' + P.fcfa(m.mensualite) + '</td>' +
+          '<td>' + P.esc(m.telephone || '—') + (sansNom(m) && m.email ? '<div class="petit-texte doux">' + P.esc(m.email) + '</div>' : '') + '</td><td>' + P.pastille(e[0], e[1]) + '</td><td class="nombre">' + P.fcfa(m.mensualite) + '</td>' +
           '<td>' + P.pastille(STATUTS[m.statut], m.statut === 'actif' ? 'neutre' : 'alerte') + '</td>' +
           '<td><a class="btn petit" href="#/paiements/fiche/' + m.id + '">Ouvrir</a></td></tr>';
       }));
@@ -444,7 +448,7 @@
         return '<tr><td><a href="#/paiements/fiche/' + x.m.id + '"><b>' + P.esc(x.m.full_name) + '</b></a></td><td>' + P.esc(x.origine) + '</td><td>' + P.esc(d.mineur ? d.nom + ' (parent)' : d.nom) + '</td>' +
           '<td>' + P.pastille(ETAT[x.etat][0], ETAT[x.etat][1]) + (actif ? '<div class="petit-texte doux">jusqu’au ' + P.esc(P.dateHeure(x.code.expire_le)) + '</div>' : '') + '</td>' +
           '<td>' + (actif ? '<b style="letter-spacing:1px">' + P.esc(x.code.code) + '</b>' : '—') + '</td>' +
-          '<td><div class="ligne">' + (x.etat === 'non_paye' ? '<a class="btn petit" href="#/paiements/fiche/' + x.m.id + '">Voir la fiche</a>'
+          '<td><div class="ligne">' + (x.etat === 'non_paye' ? '<a class="btn petit" href="#/paiements/fiche/' + x.m.id + '">Enregistrer son paiement</a>'
             : actif ? '<button class="btn petit" type="button" data-action="code-espace-copier" data-code="' + P.esc(x.code.code) + '">Copier</button>' + (wa ? '<a class="btn petit rouge" target="_blank" rel="noopener" href="' + P.esc(wa) + '">WhatsApp</a>' : '<span class="doux petit-texte">pas de numéro</span>') + '<button class="btn petit" type="button" data-action="code-espace" data-id="' + x.m.id + '">Nouveau code</button>'
             : '<button class="btn petit rouge" type="button" data-action="code-espace" data-id="' + x.m.id + '">Générer le code</button>') + '</div></td></tr>';
       })) : '<p class="doux">Tous les mannequins actifs ont déjà leur espace.</p>') + '</div>';

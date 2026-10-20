@@ -71,7 +71,7 @@ function donnees(role) {
       { id: 'r1', full_name: 'KONÉ AWA', telephone: '0707070707', mensualite: 10000, statut: 'actif', user_id: null, date_entree: '2026-01-05' },
       { id: 'r2', full_name: 'YAO KOUASSI', telephone: '0505050505', mensualite: 10000, statut: 'actif', user_id: null, date_entree: '2026-02-01' },
       { id: 'r3', full_name: 'SANOGO MARIAM', telephone: '0606060606', mensualite: 10000, statut: 'sorti', user_id: null, date_entree: '2026-03-01' },
-      { id: 'r4', full_name: 'DIALLO FATOU', telephone: '0101010101', mensualite: 10000, statut: 'actif', user_id: null, date_entree: '2026-04-01' }];
+      { id: 'r4', full_name: 'DIALLO FATOU', telephone: '0101010101', mensualite: 10000, statut: 'actif', user_id: null, date_entree: '2024-04-01' }];
     const m = (id, mq, nom, jours, mois) => ({ id, mannequin_id: mq, objet: 'mensualite', mois, montant: 10000, mode: 'wave', statut: 'declare', declare_le: il(jours), mannequin: { full_name: nom, telephone: '0700000000' } });
     d.tables.paiements_mannequins = [m('pa', 'r1', 'KONÉ AWA', 5, moisIso(0)), m('pb', 'r2', 'YAO KOUASSI', 1, moisIso(0)), m('pc', 'r4', 'DIALLO FATOU', 1, moisIso(0))];
     d.tables.rapprochements = [
@@ -145,6 +145,10 @@ function donnees(role) {
     await p.click('[data-action="sortie-decider"][data-id="s1"][data-accepter="0"]'); await p.waitForTimeout(1000);
     dec = rpcs(e, 'sortie_decider')[1];
     ok(dec && dec.p_accepter === false && dec.p_motif === 'Motif de test', nomEcran + ' : refus avec motif envoyé ' + JSON.stringify(dec));
+    ok(/Formation terminée/.test(x) && (await p.$$('[data-action="sortie-formation-terminee"]')).length === 1 && /DIALLO FATOU/.test(await p.textContent('[data-action="sortie-formation-terminee"]').then(() => x)), nomEcran + ' : liste « Formation terminée » (24 mois) affichée pour DIALLO seulement');
+    await p.click('[data-action="sortie-formation-terminee"][data-id="r4"]'); await p.waitForTimeout(1000);
+    const ft = rpcs(e, 'sortie_proposer').find((y) => y.p_mannequin === 'r4');
+    ok(ft && ft.p_type === 'sorti' && /Formation terminée/.test(ft.p_motif), nomEcran + ' : proposition de sortie « formation terminée » envoyée ' + JSON.stringify(ft));
     await p.click('[data-action="mannequin-reactiver"][data-id="r3"]'); await p.waitForTimeout(1000);
     const re = rpcs(e, 'mannequin_reactiver')[0];
     ok(re && re.p_mannequin === 'r3' && re.p_motif === 'Motif de test', nomEcran + ' : réactivation avec motif envoyée ' + JSON.stringify(re));
