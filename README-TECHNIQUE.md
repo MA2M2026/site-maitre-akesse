@@ -2814,8 +2814,8 @@ Administration, tableau de bord) ; aucune donnée n'a été modifiée.
   de page sur le papier avec filet d'encre, boutons presque carrés via `--bouton-rayon` lu par
   `css/bouton-ma2m.css`). Polices ajoutées dans les 43 pages publiques, `admin/index.html` et
   `tableau-de-bord.html` (autorisées par le CSP : fonts.googleapis.com / fonts.gstatic.com).
-- **Administration** : `css/portail.css` (h1 en Big Shoulders), `css/tableau-v2.css` (`--v2-*` rebranchés
-  sur les jetons magazine, titre « Tableau de bord » en Big Shoulders).
+- **Administration** : `css/portail.css` (h1 en Big Shoulders, sans capitales : outil de travail), `css/tableau-v2.css` (`--v2-*` rebranchés
+  sur les jetons magazine, titre « Tableau de bord » en Big Shoulders, sans capitales).
 - **Retirés** : intro animée, porte « Entrer », carrousel, médaillons de l'accueil (`js/accueil-debut.js`,
   `js/intro-faisceau.js`, `js/faisceau.js`, `css/splash.css`). `js/verrou-defilement.js` reste chargé sur
   l'accueil (menu).

@@ -299,7 +299,7 @@ html body.tdb-v2 .db-profil-avatar-vide { border-radius: 11px !important; width:
 
 /* Titre de page */
 html body.tdb-v2 .v2-entete { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 24px !important; }
-html body.tdb-v2 .v2-entete h1 { margin: 0; font: 800 2.6rem/1 var(--mag-titre); text-transform: uppercase; color: var(--v2-titre); letter-spacing: 0.01em; }
+html body.tdb-v2 .v2-entete h1 { margin: 0; font: 800 2.6rem/1.05 var(--mag-titre); color: var(--v2-titre); letter-spacing: 0.01em; }
 html body.tdb-v2 .v2-entete p { margin: 6px 0 0; font: 400 15px var(--texte, 'Jost', sans-serif); color: var(--c-3a3330); }
 html body.tdb-v2 .v2-entete-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 html body.tdb-v2 .v2-action { border: 1px solid var(--c-d6cbc2); background: var(--v2-carte); color: var(--v2-titre); border-radius: 999px; padding: 11px 20px; font: 600 14.5px var(--texte, 'Jost', sans-serif); cursor: pointer; box-shadow: 0 1px 2px var(--c-rgba-60-30-20-_06); }
