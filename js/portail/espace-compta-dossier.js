@@ -177,10 +177,26 @@
   // (juste après « Tableau du mois » : c'est ce que le comptable demande chaque mois)
   esp.nav.splice(esp.nav.findIndex((n) => n[0] === 'mois') + 1, 0, ['dossier', 'Dossier du mois']);
   esp.pages.dossier = dossier;
+
+  // ---------- Accès du comptable (administrateur principal seul) ----------
+  // Invitation et coupure : mêmes outils que « Sécurité » (js/portail/securite.js), ici à portée de main.
+  async function acces() {
+    if (P.moi.role !== 'principal') return P.refuse();
+    const liste = await P.bd(sb.from('staff_profiles').select('user_id, nom, email, actif, cree_le').eq('role', 'compta').order('cree_le'));
+    return P.entete('Accès du comptable', P.pastille('Administrateur principal seul', 'neutre')) +
+      '<div class="note info">Le comptable reçoit un lien d’invitation par e-mail, choisit son mot de passe et active sa double authentification. Il ne voit aucun nom de mannequin. Vous pouvez couper son accès à tout moment : l’accès est alors fermé immédiatement.</div>' +
+      '<div class="carte"><h2>Comptable' + (liste.length > 1 ? 's' : '') + '</h2>' +
+      (liste.length ? P.tableau(['Personne', 'Accès', 'Depuis', ''], liste.map((c) => '<tr><td><b>' + P.esc(c.nom) + '</b><div class="petit-texte doux">' + P.esc(c.email) + '</div></td>' +
+        '<td>' + P.pastille(c.actif ? 'Actif' : 'Coupé', c.actif ? 'ok' : 'erreur') + '</td><td>' + P.date(c.cree_le) + '</td>' +
+        '<td><button class="btn petit' + (c.actif ? '' : ' rouge') + '" type="button" data-action="securite-actif" data-id="' + c.user_id + '" data-actif="' + (c.actif ? '1' : '0') + '">' + (c.actif ? 'Couper l’accès' : 'Rétablir') + '</button></td></tr>'))
+        : '<p class="doux">Aucun comptable invité pour l’instant.</p>') +
+      '<div class="ligne"><a class="btn rouge" href="#/securite/comptes">Inviter le comptable</a></div></div>';
+  }
+  esp.pages.acces = acces;
   // Ordre du plan validé (Portail_Admin_MA2M.html) : 8 entrées simples en tête, le reste regroupé dessous.
   // Les pages et les données ne changent pas, seuls l'ordre et les titres du menu.
   const PLAN = [['mois', 'Tableau de bord'], ['recettes', 'Recettes'], ['documents', 'Devis, proforma, factures'], ['depenses', 'Dépenses et charges'],
-    ['impots', 'Impôts et taxes'], ['dossier', 'Clôture mensuelle'], ['identite', 'Paramètres de l’entité']];
+    ['impots', 'Impôts et taxes'], ['dossier', 'Clôture mensuelle'], ['acces', 'Accès du comptable', () => P.moi && P.moi.role === 'principal'], ['identite', 'Paramètres de l’entité']];
   const cles = PLAN.map((n) => n[0]);
   const autres = esp.nav.filter((n) => n[0] !== null && !cles.includes(n[0]));
   esp.nav.length = 0;

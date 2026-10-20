@@ -154,6 +154,13 @@ function donnees(role, fichiers) {
     ok(f.nom === 'NF-FAC-' + AN + '-0001.pdf' && /FACTURE N° NF-FAC-\d{4}-0001/.test(lu.texte) && lu.texte.includes('Document non fiscal') && lu.texte.includes('Sococé') && lu.texte.includes('200 000 FCFA'),
       nomEcran + ' : PDF de la facture (numéro, client, total, « Document non fiscal »)');
 
+    await p.click('[data-action="compta-doc-envoyer"][data-id="fa1"]'); await p.waitForSelector('#fenetre .boite', { timeout: 15000 }).catch(() => {});
+    const boite = await p.evaluate(() => { const b = document.querySelector('#fenetre .boite'); return b ? { texte: b.innerText, liens: Array.from(b.querySelectorAll('a')).map((a) => a.getAttribute('href')) } : null; });
+    ok(boite && /Envoyer NF-FAC/.test(boite.texte) && boite.liens.some((h) => /^https:\/\/wa\.me\/\d+\?text=/.test(h) && /NF-FAC/.test(decodeURIComponent(h))) && boite.liens.some((h) => /^mailto:/.test(h)),
+      nomEcran + ' : « Envoyer » propose WhatsApp (numéro du client, message prêt) et e-mail ' + JSON.stringify(boite && boite.liens));
+    ok(await p.$('[data-action="compta-doc-telecharger-envoi"]') !== null, nomEcran + ' : le PDF peut être téléchargé depuis la fenêtre d’envoi');
+    await p.click('[data-action="fermer-fenetre"]'); await p.waitForTimeout(300);
+
     // ---------- D. Impôts et taxes ----------
     await aller(p, 'impots'); t = await texte(p);
     ok(/En retard\s*1/i.test(t) && /Reste à payer\s*120 000 FCFA/i.test(t) && /Désactivée/i.test(t), nomEcran + ' : patente en retard, 120 000 à payer, TVA désactivée');
@@ -207,6 +214,10 @@ function donnees(role, fichiers) {
     await a.p.click('[data-action="compta-mode-legal"]'); await a.p.waitForTimeout(800);
     ok(demandes === 1 && (patch(a.journal, 'compta_reglages').pop() || {}).mode_legal === true && (await calque(a.p)).includes('Mode légal activé'), nomEcran + ' : mode légal activé après confirmation');
     ok((await texte(a.p)).includes('Activé'), nomEcran + ' : l’interrupteur affiche « Activé », sans retour possible');
+    a.d.tables.staff_profiles = (a.d.tables.staff_profiles || []).concat([{ user_id: 'u-cpt', nom: 'Awa Comptable', email: 'awa@exemple.ci', role: 'compta', actif: true, cree_le: '2026-10-01T10:00:00Z' }]);
+    await aller(a.p, 'acces'); const tAcces = await texte(a.p);
+    ok(/Accès du comptable/.test(tAcces) && /Awa Comptable/.test(tAcces) && /Couper l’accès/.test(tAcces) && (await a.p.$('a[href="#/securite/comptes"]')) !== null, nomEcran + ' : page « Accès du comptable » (liste, couper l’accès, inviter)');
+    ok((await a.p.$$eval('a', (l) => l.map((x) => x.textContent.trim()))).includes('Accès du comptable'), nomEcran + ' : « Accès du comptable » dans le menu du principal');
     ok(!a.errs.length, nomEcran + ' : aucune erreur de page (principal) ' + a.errs.join(' | '));
     await a.ctx.close();
   }

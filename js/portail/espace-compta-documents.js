@@ -54,6 +54,7 @@
       '<div class="segments">' + Object.entries(FILTRES).map((x) => '<button class="btn petit' + (x[0] === filtre ? ' actif' : '') + '" type="button" data-action="compta-doc-filtre" data-filtre="' + x[0] + '">' + P.esc(x[1]) + '</button>').join('') + '</div>' +
       P.tableau(['Numéro', 'Client', 'Date', '#Total', 'État', ''], liste.map((d) => {
         const actions = [bouton('compta-doc-pdf', d.id, 'PDF')];
+        if (!d.annule && d.type !== 'recu') actions.push(bouton('compta-doc-envoyer', d.id, 'Envoyer', true));
         if (!d.annule && (d.type === 'devis' || d.type === 'proforma') && d.etat !== 'facture') {
           actions.push(bouton('compta-doc-facturer', d.id, 'Facturer', true));
           if (d.etat !== 'accepte') actions.push(bouton('compta-doc-accepte', d.id, 'Accepté'));
@@ -115,6 +116,51 @@
     P.message('Préparation du PDF…');
     const [r, origine] = await Promise.all([reglages(), d.origine_id ? P.bd(sb.from('compta_documents').select('numero').eq('id', d.origine_id).single()) : null]);
     P.telecharger(await P.comptaPdf.documentPdf(d, r, origine && origine.numero), d.numero + '.pdf', 'application/pdf');
+  };
+  // Envoyer un document au client : le PDF est préparé, puis partagé (WhatsApp, e-mail… au choix de
+  // l'appareil), ou envoyé par un lien WhatsApp / e-mail avec le message déjà écrit (PDF à joindre).
+  const LIBELLE_DOC = { devis: 'devis', proforma: 'facture proforma', facture: 'facture', avoir: 'avoir' };
+  P.actions['compta-doc-envoyer'] = async (el) => {
+    const d = trouver(el.getAttribute('data-id'));
+    if (!d) return;
+    P.message('Préparation du document…');
+    try {
+      const [r, origine, tiers] = await Promise.all([
+        reglages(),
+        d.origine_id ? P.bd(sb.from('compta_documents').select('numero').eq('id', d.origine_id).single()) : null,
+        d.tiers_id ? P.bd(sb.from('compta_tiers').select('nom, telephone, email').eq('id', d.tiers_id).maybeSingle()) : null
+      ]);
+      const contenu = await P.comptaPdf.documentPdf(d, r, origine && origine.numero);
+      const nomFichier = d.numero + '.pdf';
+      const fichier = new File([contenu], nomFichier, { type: 'application/pdf' });
+      const nomClient = (tiers && tiers.nom) || (d.destinataire || {}).nom || '';
+      const agence = r.nom_commercial || 'Maître Akesse Model Management';
+      const libelle = LIBELLE_DOC[d.type] || 'document';
+      const texte = 'Bonjour' + (nomClient ? ' ' + nomClient : '') + ',\n\nVeuillez trouver ci-joint votre ' + libelle + ' N° ' + d.numero + ' d’un montant de ' + P.fcfa(d.total_ttc) + '.\n\nCordialement,\n' + agence;
+      P.etat.docPartage = { fichier, contenu, nomFichier, texte };
+      const n = tiers && tiers.telephone && window.numeroWhatsAppMa2m ? window.numeroWhatsAppMa2m(tiers.telephone) : '';
+      const lienWa = 'https://wa.me/' + (n || '') + '?text=' + encodeURIComponent(texte);
+      const lienMail = 'mailto:' + encodeURIComponent((tiers && tiers.email) || '') + '?subject=' + encodeURIComponent(libelle.charAt(0).toUpperCase() + libelle.slice(1) + ' N° ' + d.numero + ' · ' + agence) + '&body=' + encodeURIComponent(texte);
+      const peutPartager = !!(navigator.canShare && navigator.canShare({ files: [fichier] }));
+      P.fenetre('<h2>Envoyer ' + P.esc(d.numero) + '</h2><p class="doux">' + (nomClient ? 'Pour ' + P.esc(nomClient) + '. ' : '') +
+        (peutPartager ? 'Le plus simple : « Partager le PDF », puis choisissez WhatsApp ou votre messagerie.' : 'Téléchargez le PDF, puis envoyez-le avec WhatsApp ou par e-mail (le message est déjà écrit).') + '</p>' +
+        '<div class="ligne">' + (peutPartager ? '<button class="btn rouge" type="button" data-action="compta-doc-partager">Partager le PDF</button>' : '') +
+        '<button class="btn' + (peutPartager ? '' : ' rouge') + '" type="button" data-action="compta-doc-telecharger-envoi">Télécharger le PDF</button>' +
+        '<a class="btn" href="' + P.esc(lienWa) + '" target="_blank" rel="noopener">WhatsApp</a>' +
+        '<a class="btn" href="' + P.esc(lienMail) + '">E-mail</a>' + fermer + '</div>' +
+        (n ? '' : '<p class="petit-texte doux">Pas de numéro WhatsApp pour ce client : WhatsApp s’ouvrira sans destinataire, vous le choisirez.</p>') +
+        ((tiers && tiers.email) ? '' : '<p class="petit-texte doux">Pas d’e-mail pour ce client : vous saisirez l’adresse dans votre messagerie.</p>'));
+    } catch (e) { P.message(P.erreurTexte(e)); }
+  };
+  P.actions['compta-doc-partager'] = async () => {
+    const x = P.etat.docPartage;
+    if (!x) return;
+    try { await navigator.share({ files: [x.fichier], text: x.texte, title: x.nomFichier }); }
+    catch (e) { if (!e || e.name !== 'AbortError') P.message('Le partage n’a pas abouti : téléchargez le PDF et envoyez-le avec WhatsApp ou par e-mail.'); }
+  };
+  P.actions['compta-doc-telecharger-envoi'] = () => {
+    const x = P.etat.docPartage;
+    if (x) P.telecharger(x.contenu, x.nomFichier, 'application/pdf');
   };
   const changerEtat = (etat, texte) => async (el) => {
     const r = await P.bd(sb.from('compta_documents').update({ etat }).eq('id', el.getAttribute('data-id')).select('id'));
