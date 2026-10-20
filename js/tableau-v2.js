@@ -149,9 +149,6 @@
   function appliquer() {
     var visible = blocVisible();
     document.body.classList.toggle('tdb-v2', visible);
-    // Cet appareil a ouvert le tableau de bord : le bouton « Admin » du site public
-    // s'affiche désormais pour lui seul (caché à tous les autres visiteurs, js/menu.js).
-    if (visible) { try { localStorage.setItem('ma2m_appareil_admin', '1'); } catch (e) {} }
   }
   function itemOrigine(cle) { return document.querySelector('#tdb-menu-panel .tdb-menu-item[data-tdb-cible="' + cle + '"]'); }
   function client() { try { return sb || null; } catch (e) { return null; } }

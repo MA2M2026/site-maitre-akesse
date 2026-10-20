@@ -150,28 +150,10 @@ document.addEventListener('DOMContentLoaded', () => {
   navLinks.parentNode.insertBefore(bloc, navLinks.nextSibling);
 });
 
-// Lien "Admin" directement dans la barre d'en-tête (à côté du bouton Menu),
-// visible sans avoir à ouvrir le menu plein écran. Remplace l'ancien lien
-// "Tableau de bord" du menu hamburger, retiré pour éviter le doublon.
-// Caché aux visiteurs (demande de la propriétaire, 04/10/2026) : il n'apparaît que sur
-// un appareil qui a déjà ouvert le tableau de bord (repère posé par js/tableau-v2.js).
-// Ailleurs, le tableau de bord reste accessible par son adresse directe.
-document.addEventListener('DOMContentLoaded', () => {
-  const menuBtn = document.getElementById('menuBtn');
-  if (!menuBtn || !menuBtn.parentNode || document.querySelector('.header-admin-lien')) return;
-  let appareilAdmin = false;
-  try { appareilAdmin = localStorage.getItem('ma2m_appareil_admin') === '1' || sessionStorage.getItem('ma2m_est_admin') === '1'; } catch (e) {}
-  if (!appareilAdmin) return;
-  if (window.location.pathname.replace(/\/$/, '').endsWith('tableau-de-bord.html') || window.location.pathname.replace(/\/$/, '').endsWith('tableau-de-bord')) return;
+// (Le lien « Admin » de la barre d'en-tête est retiré le 20/10/2026, demande de la propriétaire :
+// l'administration se fait désormais par les applications de l'Administration, plus depuis le site.)
 
-  const lien = document.createElement('a');
-  lien.className = 'lang-switch header-admin-lien';
-  lien.href = '/tableau-de-bord.html';
-  lien.textContent = 'Admin';
-  menuBtn.parentNode.insertBefore(lien, menuBtn);
-});
-
-// Lien « Marketplace » dans la barre d'en-tête, à côté de « EN » et « Admin »
+// Lien « Marketplace » dans la barre d'en-tête, à côté de « EN »
 // (29/09/2026). Tant que la boutique est fermée au public, il n'apparaît QUE pour un
 // administrateur connecté : pour un simple visiteur (aucune session enregistrée), on
 // ne contacte même pas la base de données. Le résultat est gardé pour l'onglet.
@@ -198,8 +180,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     lien.className = 'lang-switch header-marketplace-lien';
     lien.href = '/marketplace/';
     lien.textContent = 'Marketplace';
-    const admin = menuBtn.parentNode.querySelector('.header-admin-lien');
-    menuBtn.parentNode.insertBefore(lien, admin || menuBtn);
+    menuBtn.parentNode.insertBefore(lien, menuBtn);
   }
   try {
     if (sessionStorage.getItem('ma2m_est_admin') === '1') { ajouterLien(); return; }

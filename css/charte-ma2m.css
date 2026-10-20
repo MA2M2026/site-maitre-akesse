@@ -117,6 +117,13 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .vedette-contenu h2, .mot-responsable-overlay h2 { color: var(--c-fff) !important; text-shadow: 0 2px 18px var(--c-rgba-0-0-0-0_7) !important; }
 .vedette-contenu p, .mot-resp-titre { color: var(--c-fff) !important; font-weight: 600; text-shadow: 0 1px 10px var(--c-rgba-0-0-0-0_8) !important; }
 .mot-responsable-photo-wrap .eyebrow--clair { color: var(--c-fff); text-shadow: 0 1px 10px var(--c-rgba-0-0-0-0_8); }
+/* (20/10/2026, demande de la propriétaire : « les noms des mannequins sont illisibles sur les photos
+   de couverture ») — couverture du book (mannequin.html) : nom, catégorie et ville en BLANC sur
+   l'ombre du bas de la photo, comme « Mannequin à la une » (ils étaient en encre foncée). */
+.profil-hero-contenu h1 { color: var(--c-fff) !important; text-shadow: 0 2px 18px var(--c-rgba-0-0-0-0_7) !important; }
+.profil-hero-contenu p { color: var(--c-fff) !important; font-weight: 600; text-shadow: 0 1px 10px var(--c-rgba-0-0-0-0_8) !important; }
+.profil-hero-contenu .eyebrow--clair { color: var(--c-fff); text-shadow: 0 1px 10px var(--c-rgba-0-0-0-0_8); }
+.profil-hero-contenu .eyebrow--clair::before { background: var(--c-fff); box-shadow: none; }
 /* téléphone : le texte occupe une plus grande part de l'image, l'ombre monte plus haut */
 @media (max-width: 700px) { .vedette-scrim, .mot-responsable-scrim { background: linear-gradient(to top, var(--c-rgba-0-0-0-0_8) 0%, var(--c-rgba-0-0-0-0_6) 45%, var(--c-rgba-0-0-0-0_25) 70%, var(--c-rgba-0-0-0-0) 88%) !important; } }
 /* vidéo de l'agence : image animée foncée, l'étiquette « Le film » reste en blanc sur une ombre */

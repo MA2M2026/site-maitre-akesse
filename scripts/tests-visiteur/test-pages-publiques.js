@@ -41,6 +41,8 @@ const cas = [
   for (const [i, [page, attendus]] of cas.entries()) {
     const vp = i % 2 ? { width: 1280, height: 900 } : { width: 390, height: 844 };
     const ctx = await b.newContext({ viewport: vp }); const p = await ctx.newPage(); const errs = [];
+    // appareil qui avait le bouton « Admin » (repères d'avant le 20/10/2026) : il ne doit plus apparaître
+    await p.addInitScript(() => { try { localStorage.setItem('ma2m_appareil_admin', '1'); } catch (e) { /* stockage bloqué */ } });
     p.on('pageerror', e => errs.push(e.message));
     await brancher(p, { tables, rpc: { photos_couverture_mannequins: [{ model_id: 'a1', url: 'https://x/1.jpg' }],
       agenda_public: [{ id: 'g1', type: 'evenement', titre: 'Forum Test', date_debut: '2030-10-21', date_fin: '2030-10-22', ville: 'Abidjan', lieu: 'Sofitel', description: '', intervenants: [], seances: [],
@@ -102,6 +104,17 @@ const cas = [
       if (avecMa2m) manquants.push('« Avec MA2M » encore affiché sur la fiche');
       if (n !== 2) manquants.push('projet de l’agence dans le parcours de la fiche (' + n + ' fois au lieu de 2 : édition 2026 de l’agence + édition 2023 de la mannequin)');
     }
+    // couverture du book : nom, étiquette et ligne d'infos en BLANC sur l'ombre de la photo
+    // (20/10/2026 : ils étaient en encre foncée, illisibles — trouvé par la propriétaire)
+    if (page.includes('mannequin.html?')) {
+      const foncés = await p.$$eval('.profil-hero-contenu :is(h1, p, .eyebrow)', (l) => l.filter((e) => {
+        const [r, g, b] = getComputedStyle(e).color.match(/\d+/g).map(Number); return 0.299 * r + 0.587 * g + 0.114 * b < 200;
+      }).map((e) => e.textContent.trim().slice(0, 30)));
+      const vus = await p.$$eval('.profil-hero-contenu h1', (l) => l.length);
+      if (!vus || foncés.length) manquants.push('couverture du book : texte foncé sur la photo (' + (vus ? foncés.join(', ') : 'nom absent') + ')');
+    }
+    // plus de bouton « Admin » sur le site public (20/10/2026 : administration par les applications)
+    if (await p.evaluate(() => [...document.querySelectorAll('header a, header button')].some((x) => /^\s*Admin\s*$/i.test(x.textContent)))) manquants.push('bouton « Admin » encore dans la barre du haut');
     if (!gabarit.pied || gabarit.annee !== String(new Date().getFullYear())) manquants.push('bas de page');
     if (page === 'index.html') {
       await p.click('#menuBtn'); await p.waitForTimeout(1500);

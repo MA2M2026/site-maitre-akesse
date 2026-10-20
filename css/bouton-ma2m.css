@@ -20,7 +20,7 @@
 @layer bouton-ma2m {
   :is(button, input[type="submit"], input[type="button"], input[type="reset"], [role="button"],
       .btn, .bouton, .btn-mini-admin, .filtre-btn, .filtre-pill, .fiche-partage-btn, .journal-btn,
-      .mp-panier-btn, .mpg-bouton-danger, .lang-switch, .header-marketplace-lien, .header-admin-lien,
+      .mp-panier-btn, .mpg-bouton-danger, .lang-switch, .header-marketplace-lien,
       .menu-trigger, .splash-passer, .close-menu, .entrer-fleche, .retour-haut, .video-accueil-son,
       .tdb-menu-bloc > summary, .tdb-menu-sousbloc > summary, .dc-whatsapp, .tuile, .btn-pill, .cc-upload-btn, .book-multi-upload, .lien-evitement, .em-vers-candidature > span):not(.cliquable, .mpg-produit, .mpg-commande, .whatsapp-flottant, [data-bouton-libre]) {
     background: var(--rouge-ma2m) !important;
@@ -47,7 +47,7 @@
 
   /* Taille commune des boutons à texte */
   :is(.btn, .bouton, .btn-pill, .btn-mini-admin, .filtre-btn, .filtre-pill, .fiche-partage-btn, .journal-btn,
-      .mp-panier-btn, .mpg-bouton-danger, .lang-switch, .header-marketplace-lien, .header-admin-lien,
+      .mp-panier-btn, .mpg-bouton-danger, .lang-switch, .header-marketplace-lien,
       .menu-trigger, .splash-passer, input[type="submit"], input[type="button"], input[type="reset"]) {
     display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem;
     min-height: 44px; padding: 0.7rem 1.6rem; box-sizing: border-box;
@@ -64,7 +64,7 @@
   /* Survol, appui, désactivé */
   @media (hover: hover) {
     :is(button, input[type="submit"], input[type="button"], .btn, .bouton, .btn-mini-admin, .filtre-btn,
-        .filtre-pill, .lang-switch, .header-marketplace-lien, .header-admin-lien, .menu-trigger, .tuile,
+        .filtre-pill, .lang-switch, .header-marketplace-lien, .menu-trigger, .tuile,
         .tdb-menu-bloc > summary, .tdb-menu-sousbloc > summary):not(.cliquable, [data-bouton-libre], :disabled):hover {
       background: var(--rouge-ma2m-survol) !important;
       border-color: var(--rouge-ma2m-survol) !important;

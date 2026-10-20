@@ -2767,3 +2767,24 @@ depuis Abidjan (une vérification a bloqué l'accueil 10 s) ; le tableau de bord
 
 ## Chantier A — couleurs centralisées (20/10/2026)
 - `python3 scripts/centraliser-couleurs.py` remplace les couleurs écrites en dur dans `css/*.css` par des variables `--c-…`, définies une seule fois dans `css/jetons.css` (bloc « Palette centralisée »). Rejouable, option `--essai`. Rendu identique (captures comparées : 0 différence).
+
+## Audit général, suite (20/10/2026)
+- **Sécurité (SonarCloud « Browser Storage Poisoning »)** : `js/mode-administration.js` ne recopie
+  plus l'adresse telle quelle dans `ma2m_retour_administration`. `adresseRetour()` la reconstruit :
+  page prise dans une liste fixe (`PAGES_RETOUR`), fiche `?actu=|evenement=|partenaire=` et rubrique
+  `#…` gardées seulement si elles n'ont que `[\w-]` (64 caractères au plus). `js/portail/noyau.js`
+  refiltre toujours avant d'y retourner. Essai : test-administration.js (adresse piégée sur partenaires).
+- **Descriptions Google** (`<meta name="description">`) ramenées entre 130 et 155 caractères :
+  inscription-mannequin, qui-sommes-nous, services, actualites (FR et EN).
+- **Couverture du book (mannequin.html)** : nom, étiquette et ligne d'infos en blanc sur l'ombre
+  de la photo (`css/charte-ma2m.css`, comme « Mannequin à la une ») — ils étaient restés en encre
+  foncée depuis le passage du site en clair. Essai : test-pages-publiques.js vérifie leur couleur.
+- **Plus d'administration sur le site public** (demande de la propriétaire, 20/10/2026 :
+  « l'administration se fait par les applications ») : bouton « Admin » de la barre du haut
+  retiré pour tout le monde (js/menu.js ; repère `ma2m_appareil_admin` plus posé par
+  js/tableau-v2.js). vercel.json : sur www, `/admin/`, `/tableau-de-bord` et
+  `/tableau-de-bord.html` renvoient vers admin.maitreakessemodelmanagement.com (le tableau
+  de bord reste l'espace 1 DANS l'Administration). Les notifications du téléphone
+  (`/tableau-de-bord.html?notif=…&id=…`) suivent le renvoi : `adresseRetour()` garde aussi
+  `notif` et `id`. Essais : test-pages-publiques.js (aucun bouton « Admin », même sur un
+  ancien appareil admin), test-administration.js (notification → fiche).

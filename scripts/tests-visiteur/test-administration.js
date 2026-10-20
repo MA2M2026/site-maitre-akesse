@@ -220,6 +220,8 @@ function donnees(role) {
       d.rpc.portail_code_appareil_etat = () => ({ defini: pin.defini, verrouille: pin.verrouille });
       d.rpc.portail_code_appareil_verrouiller = () => { pin.verrouille = true; return null; };
       d.rpc.portail_code_appareil_verifier = (x) => { if (x.p_code === '4826') { pin.verrouille = false; return { ok: true }; } return { ok: false, restants: 4 }; };
+      // accès refusé une fois par la base (ex. session périmée) : la page renvoie à l'Administration
+      const moi = d.rpc.portail_moi; d.rpc.portail_moi = () => (pin.refuserUneFois ? (pin.refuserUneFois = false, null) : moi);
     });
     const pe = e.p;
     pe.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) e.errs.push('console : ' + m.text().slice(0, 140)); });
@@ -312,6 +314,26 @@ function donnees(role) {
     ok(largeur, nomEcran + ' : barre de l’Administration sans défilement de côté');
     await pe.click('.adm-retour'); await pe.waitForSelector('#bloc-tableau', { state: 'visible', timeout: 10000 }).catch(() => {});
     ok(await pe.isVisible('#bloc-tableau'), nomEcran + ' : « Administration du site » ramène au tableau de bord');
+    // Adresse de retour reconstruite morceau par morceau (audit 20/10/2026) : la fiche et la rubrique
+    // sont gardées, tout morceau inattendu de l'adresse est écarté avant d'être mis en mémoire
+    await pe.goto(pe.url().split('/tableau-de-bord')[0] + '/partenaires.html?partenaire=p1&piege=%22%3E%3Cscript%3E#rubrique-1');
+    await pe.waitForSelector('.adm-barre', { timeout: 8000 }).catch(() => {});
+    await pe.clock.fastForward('15:30');
+    await pe.waitForSelector('#cx-pin', { timeout: 8000 }).catch(() => {});
+    await pe.fill('#cx-pin', '4826'); await pe.click('form[data-form="deverrouiller"] [type=submit]');
+    await pe.waitForURL(/partenaires\.html/, { timeout: 8000 }).catch(() => {});
+    ok(pe.url().endsWith('/partenaires.html?partenaire=p1#rubrique-1'), nomEcran + ' : après le code, retour sur la même fiche, sans les morceaux d’adresse inattendus ' + pe.url().replace(/^.*\/\/[^/]+/, ''));
+    await pe.goto(pe.url().split('/partenaires')[0] + '/tableau-de-bord.html');
+    await pe.waitForSelector('#bloc-tableau', { state: 'visible', timeout: 10000 }).catch(() => {});
+    // notification du téléphone (?notif=candidature&id=…) refusée une fois (session à revérifier) : retour
+    // par l'Administration, puis la fiche de la candidature s'ouvre (l'adresse garde notif et id, rien d'autre)
+    pin.refuserUneFois = true;
+    await pe.goto(pe.url().split('/tableau-de-bord')[0] + '/tableau-de-bord.html?notif=candidature&id=c1&piege=%3Cscript%3E');
+    await pe.waitForURL(/\/admin\//, { timeout: 8000 }).catch(() => {});
+    await pe.waitForURL(/tableau-de-bord\.html/, { timeout: 10000 }).catch(() => {});
+    await pe.waitForTimeout(2500);
+    ok(/AWA KONÉ/.test(await pe.textContent('#modal-dossier').catch(() => '')) && await pe.isVisible('#modal-dossier'), nomEcran + ' : notification → passage par l’Administration, puis la fiche de la candidature s’ouvre ' + pe.url().replace(/^.*\/\/[^/]+/, ''));
+    await pe.click('#modal-dossier-fermer').catch(() => {}); await pe.waitForTimeout(300);
     // Se déconnecter : retour à l'écran de connexion de l'Administration
     if (ecran.width < 1000) { await pe.click('.v2-burger'); await pe.waitForTimeout(300); }
     await pe.click('.v2-cote-bas [data-action="deconnexion"]');

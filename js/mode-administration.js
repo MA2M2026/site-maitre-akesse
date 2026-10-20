@@ -29,9 +29,25 @@
   const tableau = /\/tableau-de-bord(\.html)?$/.test(location.pathname);
   let pinDefini = false;
 
+  // Adresse de retour reconstruite morceau par morceau (20/10/2026, audit) : le nom de page vient
+  // d'une liste fixe, la fiche ouverte (?actu=…, ?notif=…&id=… d'une notification) et la rubrique (#…) ne sont gardées que si elles
+  // n'ont que des lettres, chiffres, « _ » et « - ». Rien de l'adresse n'est recopié tel quel
+  // (js/portail/noyau.js refiltre encore avant d'y retourner).
+  const PAGES_RETOUR = ['tableau-de-bord', 'actualites', 'evenements', 'partenaires'];
+  function adresseRetour() {
+    const page = PAGES_RETOUR.map((p) => ['/' + p, '/' + p + '.html']).flat().find((p) => location.pathname === p);
+    if (!page) return null;
+    let adresse = page;
+    const params = new URLSearchParams(location.search);
+    const gardes = ['actu', 'evenement', 'partenaire', 'notif', 'id'].filter((c) => /^[\w-]{1,64}$/.test(params.get(c) || ''));
+    if (gardes.length) adresse += '?' + gardes.map((c) => c + '=' + encodeURIComponent(params.get(c))).join('&');
+    if (/^#[\w-]{1,64}$/.test(location.hash)) adresse += '#' + encodeURIComponent(location.hash.slice(1));
+    return adresse;
+  }
   function retourAdministration() {
     // (dans le cadre : après le code, on revient aux tuiles du portail, pas à une page isolée)
-    if (!dansCadre) { try { sessionStorage.setItem('ma2m_retour_administration', location.pathname + location.search + location.hash); } catch (e) { /* stockage bloqué */ } }
+    const adresse = dansCadre ? null : adresseRetour();
+    if (adresse) { try { sessionStorage.setItem('ma2m_retour_administration', adresse); } catch (e) { /* stockage bloqué */ } }
     (dansCadre ? window.top : window).location.replace('/admin/');
   }
   async function deconnecter() {
