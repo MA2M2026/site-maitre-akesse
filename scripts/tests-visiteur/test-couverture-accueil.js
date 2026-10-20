@@ -32,6 +32,8 @@ const IMAGE = Buffer.from('R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=', 'b
       ok(images.size === 3, libelle + ' : les photos des mannequins défilent (' + releves.map((r) => r.image).join(', ') + ')');
       ok(releves.every((r) => /-moy\.jpg$/.test(r.image) && r.image.replace('-moy.jpg', '') === 'm' + r.nom.replace('Mannequin ', '')), libelle + ' : version moyenne de la photo, nom « En couverture » qui suit');
     }
+    const cadrages = await p.evaluate(() => ['agence-img', 'dos-img'].map((id) => getComputedStyle(document.getElementById(id)).objectPosition));
+    ok(cadrages.every((c) => c === '50% 12%'), libelle + ' : photos des bandeaux « agence » et « dos » calées sur le visage (' + cadrages.join(', ') + ')');
     ok(!errs.length, libelle + ' : aucune erreur ' + errs.join(' | '));
     await ctx.close();
   }
