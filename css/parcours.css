@@ -10,8 +10,8 @@
 /* Frise des mois : défile de gauche à droite, le mois choisi au centre */
 .parcours-mois {
   position: relative; display: flex; gap: 0.5rem; overflow-x: auto; padding: 0.4rem 0 1rem;
-  scroll-behavior: smooth; scrollbar-width: none; -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  scroll-behavior: smooth; scrollbar-width: none; -webkit-mask-image: linear-gradient(90deg, transparent, var(--c-000) 8%, var(--c-000) 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, var(--c-000) 8%, var(--c-000) 92%, transparent);
 }
 .parcours-mois::-webkit-scrollbar { display: none; }
 .parcours-mois-btn {
@@ -55,13 +55,13 @@
 .parcours-visage-badge {
   position: absolute; top: 0; right: 0; min-width: 1.6rem; height: 1.6rem; padding: 0 0.4rem;
   display: grid; place-items: center; border-radius: 999px; background: var(--bordeaux); color: var(--blanc);
-  font-size: 0.78rem; font-weight: 600; box-shadow: 0 6px 16px -6px rgba(0,0,0,0.8);
+  font-size: 0.78rem; font-weight: 600; box-shadow: 0 6px 16px -6px var(--c-rgba-0-0-0-0_8);
 }
 .parcours-plus { margin-top: 1.2rem; }
 .parcours-plus[hidden], .parcours-detail[hidden] { display: none !important; }
 
 /* Détail d'une mannequin pour le mois */
-.parcours-detail { margin-top: 1.6rem; padding: 1.4rem; border: 1px solid var(--bordeaux-clair); background: linear-gradient(120deg, rgba(122,18,32,0.18), transparent 60%); }
+.parcours-detail { margin-top: 1.6rem; padding: 1.4rem; border: 1px solid var(--bordeaux-clair); background: linear-gradient(120deg, var(--c-rgba-122-18-32-0_18), transparent 60%); }
 .parcours-detail-tete { display: grid; grid-template-columns: 4.2rem minmax(0, 1fr) auto; gap: 1rem; align-items: center; margin-bottom: 1rem; }
 .parcours-detail-tete img { width: 4.2rem; height: 4.2rem; border-radius: 50%; object-fit: cover; object-position: center 20%; }
 .parcours-detail-tete h3 { margin: 0; font-size: 1.4rem; }
@@ -77,10 +77,10 @@
 .parcours-projets { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); gap: 1rem; }
 .parcours-projet {
   padding: 1.3rem 1.3rem 1.4rem; border: 1px solid var(--gris-clair);
-  background: linear-gradient(120deg, rgba(255,255,255,0.04), transparent 55%);
+  background: linear-gradient(120deg, var(--c-rgba-255-255-255-0_04), transparent 55%);
   transition: border-color 0.4s ease, transform 0.5s var(--transition-douce);
 }
-@media (hover: hover) { .parcours-projet:hover { border-color: rgba(255,255,255,0.4); transform: translateY(-4px); box-shadow: 0 18px 40px -24px rgba(213,84,104,0.6); } .parcours-visage:hover .parcours-visage-photo { box-shadow: 0 0 0 3px var(--bordeaux-clair); } }
+@media (hover: hover) { .parcours-projet:hover { border-color: var(--c-rgba-255-255-255-0_4); transform: translateY(-4px); box-shadow: 0 18px 40px -24px var(--c-rgba-213-84-104-0_6); } .parcours-visage:hover .parcours-visage-photo { box-shadow: 0 0 0 3px var(--bordeaux-clair); } }
 .parcours-projet h3 { margin: 0.4rem 0 0.3rem; font-size: clamp(1.2rem, 3vw, 1.5rem); }
 .parcours-projet-meta { margin: 0 0 0.9rem; color: var(--texte-doux); font-size: 0.85rem; }
 .parcours-projet-visages { display: flex; align-items: center; }
@@ -108,7 +108,7 @@
   .parcours-ouverture::before {
     content: 'MA2M'; position: absolute; right: -6vw; top: -2vw; pointer-events: none;
     font: 400 clamp(7rem, 30vw, 22rem)/0.8 var(--display); color: transparent;
-    -webkit-text-stroke: 1px rgba(213,84,104,0.14);
+    -webkit-text-stroke: 1px var(--c-rgba-213-84-104-0_14);
     animation: pm-derive 18s ease-in-out infinite alternate;
   }
   @keyframes pm-derive { from { transform: translateX(0) rotate(-2deg); } to { transform: translateX(-12%) rotate(1deg); } }
@@ -120,13 +120,13 @@
 
   /* chiffres : la case s'allume d'un éclat bordeaux à son arrivée */
   .parcours-chiffre.pm-vu { animation: pm-eclat 1.6s ease-out both; animation-delay: var(--delai, 0ms); }
-  @keyframes pm-eclat { 0% { background: rgba(122,18,32,0.55); } 100% { background: var(--noir); } }
+  @keyframes pm-eclat { 0% { background: var(--c-rgba-122-18-32-0_55); } 100% { background: var(--noir); } }
 
   /* visages : éclosion, anneau rouge qui s'étend, pastille qui rebondit */
   .parcours-visage.pm-entree { transform: scale(0.6) rotate(-10deg); }
   .parcours-visage.pm-entree.pm-vu { transform: none; transition: opacity 0.6s ease, transform 0.9s cubic-bezier(.34,1.56,.64,1), filter 0.6s ease; transition-delay: var(--delai, 0ms); }
   .parcours-visage.pm-vu .parcours-visage-photo { animation: pm-anneau 1.4s ease-out both; animation-delay: calc(var(--delai, 0ms) + 0.35s); }
-  @keyframes pm-anneau { 0% { box-shadow: 0 0 0 0 rgba(213,84,104,0.75); } 100% { box-shadow: 0 0 0 16px rgba(213,84,104,0); } }
+  @keyframes pm-anneau { 0% { box-shadow: 0 0 0 0 var(--c-rgba-213-84-104-0_75); } 100% { box-shadow: 0 0 0 16px var(--c-rgba-213-84-104-0); } }
   .parcours-visage .parcours-visage-badge { transform: scale(0); }
   .parcours-visage.pm-vu .parcours-visage-badge { transform: none; transition: transform 0.6s cubic-bezier(.34,1.8,.64,1); transition-delay: calc(var(--delai, 0ms) + 0.55s); }
 
@@ -144,7 +144,7 @@
 
   /* mois choisi : pulsation douce */
   .parcours-mois-btn.actif { animation: pm-pouls 2.4s ease-in-out infinite; }
-  @keyframes pm-pouls { 0%, 100% { box-shadow: 0 0 0 0 rgba(213,84,104,0.45); } 50% { box-shadow: 0 0 0 6px rgba(213,84,104,0); } }
+  @keyframes pm-pouls { 0%, 100% { box-shadow: 0 0 0 0 var(--c-rgba-213-84-104-0_45); } 50% { box-shadow: 0 0 0 6px var(--c-rgba-213-84-104-0); } }
 }
 /* réponse au doigt et à la souris (même sans animation d'entrée) */
 .parcours-visage:active .parcours-visage-photo, .parcours-visage:focus-visible .parcours-visage-photo { box-shadow: 0 0 0 3px var(--bordeaux-clair); }

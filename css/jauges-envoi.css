@@ -6,27 +6,27 @@
 .jauge.u-hidden, .envoi-jauges.u-hidden, .video-apercu.u-hidden, .visionneuse.u-hidden { display: none; }
 .jauge-haut {
   display: flex; justify-content: space-between; align-items: baseline; gap: 1rem;
-  font-size: 0.82rem; color: #e8d9d2; margin-bottom: 0.35rem;
+  font-size: 0.82rem; color: var(--c-e8d9d2); margin-bottom: 0.35rem;
 }
-.jauge-pc { font-weight: 600; color: #fff; font-variant-numeric: tabular-nums; }
+.jauge-pc { font-weight: 600; color: var(--c-fff); font-variant-numeric: tabular-nums; }
 .jauge-barre {
   height: 12px; border-radius: 999px; overflow: hidden;
-  background: #1a1a1c; border: 1px solid rgba(255, 255, 255, 0.16);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6) inset;
+  background: var(--c-1a1a1c); border: 1px solid var(--c-rgba-255-255-255-0_16);
+  box-shadow: 0 1px 3px var(--c-rgba-0-0-0-0_6) inset;
 }
 .jauge-remplie {
   display: block; height: 100%; width: 0;
   border-radius: 999px;
-  background: linear-gradient(90deg, #6d1222 0%, #a3243a 60%, #d4455f 100%);
+  background: linear-gradient(90deg, var(--c-6d1222) 0%, var(--c-a3243a) 60%, var(--c-d4455f) 100%);
   transition: width 0.35s ease;
 }
-.jauge.terminee .jauge-remplie { background: linear-gradient(90deg, #1f6b3a 0%, #2f9a55 100%); }
-.jauge.terminee .jauge-pc { color: #7fd69a; }
-.jauge.en-erreur .jauge-remplie { background: #5a5a5f; }
+.jauge.terminee .jauge-remplie { background: linear-gradient(90deg, var(--c-1f6b3a) 0%, var(--c-2f9a55) 100%); }
+.jauge.terminee .jauge-pc { color: var(--c-7fd69a); }
+.jauge.en-erreur .jauge-remplie { background: var(--c-5a5a5f); }
 
 .envoi-jauges {
   margin-top: 1rem; padding: 1rem 1.1rem; border-radius: 14px;
-  background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--c-rgba-255-255-255-0_03); border: 1px solid var(--c-rgba-255-255-255-0_1);
 }
 .envoi-jauges .jauge:first-child { margin-top: 0; }
 
@@ -36,9 +36,9 @@
 }
 .video-apercu img {
   width: 96px; height: 96px; object-fit: cover; border-radius: 8px; display: block;
-  border: 1px solid rgba(255, 255, 255, 0.2); background: #111;
+  border: 1px solid var(--c-rgba-255-255-255-0_2); background: var(--c-111);
 }
-.video-apercu-texte { font-size: 0.8rem; color: #e8d9d2; line-height: 1.4; }
+.video-apercu-texte { font-size: 0.8rem; color: var(--c-e8d9d2); line-height: 1.4; }
 
 /* Vignettes photos un peu plus grandes, et photo en grand au toucher. */
 #ca-photos-apercu .ca-photo-vignette { width: 84px; height: 84px; }
@@ -46,6 +46,6 @@
 .visionneuse {
   position: fixed; inset: 0; z-index: 100000;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem;
-  padding: 1rem; background: rgba(0, 0, 0, 0.92);
+  padding: 1rem; background: var(--c-rgba-0-0-0-0_92);
 }
 .visionneuse img { max-width: 100%; max-height: calc(100vh - 6rem); object-fit: contain; border-radius: 6px; }

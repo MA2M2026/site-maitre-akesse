@@ -184,6 +184,11 @@ function donnees(role) {
     ok(!e.journal.some((j) => j[0] === 'DELETE'), nomEcran + ' : aucune suppression directe dans les tables');
     ok(!e.errs.length, nomEcran + ' : aucune erreur de page (suppression) ' + e.errs.join(' | '));
     await e.ctx.close();
+    for (const page of ['registre', 'codes']) {
+      e = await connecter('principal', page); p = e.p; x = await t(p);
+      ok((await p.$$('[data-action="mannequin-supprimer"]')).length >= 1, nomEcran + ' : « Supprimer » proposé au principal dans la liste « ' + page + ' » (inscription non payée, sans compte)');
+      await e.ctx.close();
+    }
     e = await connecter('caisse', 'fiche/r4'); p = e.p; x = await t(p);
     ok(!/Supprimer définitivement/.test(x), nomEcran + ' : pas de bouton de suppression pour la caisse');
     await e.ctx.close();

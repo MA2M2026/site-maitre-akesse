@@ -71,14 +71,14 @@ function brancher(page, donnees, journal) {
           if (m === 'PATCH' && donnees.refus && donnees.refus[table]) return json({ message: donnees.refus[table], code: 'P0001' }, 400);
           if (m === 'PATCH') {
             const maj = JSON.parse(req.postData() || '{}'), touchees = [];
-            (donnees.tables[table] || []).forEach(l => { let ok = true; for (const [k, v] of url.searchParams) if (/^eq\./.test(v) && String(l[k]) !== v.slice(3)) ok = false; if (ok) { Object.assign(l, maj); touchees.push(l); } });
+            (donnees.tables[table] || []).forEach(l => { let ok = true; for (const [k, v] of url.searchParams) { if (/^eq\./.test(v) && String(l[k]) !== v.slice(3)) ok = false; const dans = v.match(/^in\.\((.*)\)$/); if (dans && !dans[1].split(',').map(x => x.replace(/^"|"$/g, '')).includes(String(l[k]))) ok = false; } if (ok) { Object.assign(l, maj); touchees.push(l); } });
             // update(…).select() : la vraie base renvoie les lignes modifiées (aucune si refusé)
             if (/return=representation/.test(req.headers()['prefer'] || '')) return json(touchees);
           }
           return route.fulfill({ status: 204, body: '' });
         }
         let lignes = (donnees.tables[table] || []).slice();
-        for (const [k, v] of url.searchParams) { if (/^eq\./.test(v)) lignes = lignes.filter(l => String(l[k]) === v.slice(3)); }
+        for (const [k, v] of url.searchParams) { if (/^eq\./.test(v)) lignes = lignes.filter(l => (k === 'suivi' && !(k in l)) || String(l[k]) === v.slice(3)); const dans = v.match(/^in\.\((.*)\)$/); if (dans) { const liste = dans[1].split(',').map(x => x.replace(/^"|"$/g, '')); lignes = lignes.filter(l => liste.includes(String(l[k]))); } }
         // order=colonne.desc : tri comme la vraie base (une seule colonne)
         const ordre = (url.searchParams.get('order') || '').match(/^(\w+)\.(asc|desc)/);
         if (ordre) lignes.sort((a, b) => (String(a[ordre[1]] ?? '') < String(b[ordre[1]] ?? '') ? -1 : String(a[ordre[1]] ?? '') > String(b[ordre[1]] ?? '') ? 1 : 0) * (ordre[2] === 'desc' ? -1 : 1));

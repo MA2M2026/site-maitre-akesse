@@ -12,10 +12,10 @@
 .agenda-carte {
   display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); gap: 1.4rem;
   padding: 1.4rem 1.4rem 1.5rem; border: 1px solid var(--gris-clair);
-  background: linear-gradient(120deg, rgba(255,255,255,0.04), transparent 55%);
+  background: linear-gradient(120deg, var(--c-rgba-255-255-255-0_04), transparent 55%);
   transition: border-color 0.4s ease, transform 0.5s var(--transition-douce), box-shadow 0.5s ease;
 }
-.agenda-carte:hover { border-color: rgba(255,255,255,0.4); transform: translateY(-3px); box-shadow: 0 24px 50px -30px rgba(0,0,0,0.9); }
+.agenda-carte:hover { border-color: var(--c-rgba-255-255-255-0_4); transform: translateY(-3px); box-shadow: 0 24px 50px -30px var(--c-rgba-0-0-0-0_9); }
 
 .agenda-jour {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -39,8 +39,8 @@
   color: var(--titre-clair); font-size: 0.86rem; text-decoration: none;
   transition: border-color 0.3s ease, background 0.3s ease;
 }
-a.agenda-puce:hover, a.agenda-puce:focus-visible { border-color: var(--titre-clair); background: rgba(255,255,255,0.08); }
-.agenda-puce img { width: 1.4rem; height: 1.4rem; border-radius: 50%; object-fit: cover; background: #fff; }
+a.agenda-puce:hover, a.agenda-puce:focus-visible { border-color: var(--titre-clair); background: var(--c-rgba-255-255-255-0_08); }
+.agenda-puce img { width: 1.4rem; height: 1.4rem; border-radius: 50%; object-fit: cover; background: var(--c-fff); }
 .agenda-puce-simple { border-style: dashed; }
 
 /* Encart « À venir » de l'accueil */
@@ -71,7 +71,7 @@ a.agenda-puce:hover, a.agenda-puce:focus-visible { border-color: var(--titre-cla
 .cal-nav, .cal-aujourdhui { background: transparent; color: var(--titre-clair); border: 1px solid var(--gris-clair); font-family: var(--texte); cursor: pointer; transition: border-color 0.3s ease, background 0.3s ease; }
 .cal-nav { width: 2.6rem; height: 2.6rem; border-radius: 50%; font-size: 1.4rem; line-height: 1; }
 .cal-aujourdhui { padding: 0.55rem 1rem; border-radius: 999px; font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; }
-.cal-nav:hover, .cal-aujourdhui:hover, .cal-nav:focus-visible, .cal-aujourdhui:focus-visible { border-color: var(--titre-clair); background: rgba(255,255,255,0.08); }
+.cal-nav:hover, .cal-aujourdhui:hover, .cal-nav:focus-visible, .cal-aujourdhui:focus-visible { border-color: var(--titre-clair); background: var(--c-rgba-255-255-255-0_08); }
 
 .cal-corps { display: grid; grid-template-columns: minmax(0, 1fr) minmax(15rem, 22rem); gap: 1.2rem; align-items: start; }
 .cal-principal { min-width: 0; }
@@ -90,7 +90,7 @@ a.agenda-puce:hover, a.agenda-puce:focus-visible { border-color: var(--titre-cla
 }
 .cal-grille-semaine .cal-jour { min-height: 22rem; border-top: 0; }
 .cal-grille-semaine .cal-jour:first-child { border-left: 0; }
-.cal-jour:hover, .cal-jour:focus-visible { background: rgba(255,255,255,0.06); outline: none; }
+.cal-jour:hover, .cal-jour:focus-visible { background: var(--c-rgba-255-255-255-0_06); outline: none; }
 /* Jours estompés par une couleur plus douce plutôt que par la transparence : contraste
    ≥ 4,5:1 sur le fond noir (Lighthouse, 12/10/2026). */
 .cal-jour.passe .cal-num { color: var(--encre-douce); }
@@ -98,11 +98,11 @@ a.agenda-puce:hover, a.agenda-puce:focus-visible { border-color: var(--titre-cla
 .cal-jour.hors-mois .cal-num, .cal-jour.hors-mois.week-end .cal-num { color: var(--encre-douce); font-style: italic; }
 .cal-num { font-family: var(--texte); font-size: 1.55rem; font-weight: 400; line-height: 1; color: var(--titre-clair); align-self: center; padding: 0.35rem 0.5rem; border-radius: 10px; min-width: 2.6rem; text-align: center; margin-bottom: 0.35rem; }
 .cal-jour.week-end .cal-num { color: var(--bordeaux-clair); }
-.cal-jour.aujourdhui .cal-num { background: var(--bordeaux); color: #fff; opacity: 1; }
+.cal-jour.aujourdhui .cal-num { background: var(--bordeaux); color: var(--c-fff); opacity: 1; }
 .cal-jour.choisi:not(.aujourdhui) .cal-num { box-shadow: inset 0 0 0 2px var(--bordeaux-clair); }
 .cal-jour-nom { align-self: center; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--texte-doux); }
 
-.cal-evt { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 0.78rem; line-height: 1.3; padding: 0.22rem 0.4rem; border-radius: 5px; color: #fff; }
+.cal-evt { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 0.78rem; line-height: 1.3; padding: 0.22rem 0.4rem; border-radius: 5px; color: var(--c-fff); }
 .cal-grille-semaine .cal-evt { white-space: normal; }
 .cal-evt small { display: block; font-size: 0.7rem; opacity: 0.8; }
 .cal-plus { font-size: 0.75rem; color: var(--texte-doux); text-align: center; }
@@ -110,16 +110,16 @@ a.agenda-puce:hover, a.agenda-puce:focus-visible { border-color: var(--titre-cla
 .cal-points i, .cal-legende-item i, .cal-panneau-couleur { display: inline-block; width: 0.55rem; height: 0.55rem; border-radius: 50%; flex: 0 0 auto; }
 
 /* Une couleur par type de projet */
-.cal .cal-evt-shooting { background: #6b2f8a; }
+.cal .cal-evt-shooting { background: var(--c-6b2f8a); }
 .cal .cal-evt-defile { background: var(--bordeaux); }
-.cal .cal-evt-casting { background: #1f6b6b; }
-.cal .cal-evt-formation { background: #8a6a1f; }
-.cal .cal-evt-evenement { background: #2f4f8a; }
-.cal .cal-evt-show { background: #b35a00; }
-.cal .cal-evt-essayage { background: #5a6b2f; }
-.cal .cal-evt-masterclass { background: #8a3f6b; }
-.cal .cal-evt-rencontre { background: #2f6b4f; }
-.cal .cal-evt-autre { background: #555; }
+.cal .cal-evt-casting { background: var(--c-1f6b6b); }
+.cal .cal-evt-formation { background: var(--c-8a6a1f); }
+.cal .cal-evt-evenement { background: var(--c-2f4f8a); }
+.cal .cal-evt-show { background: var(--c-b35a00); }
+.cal .cal-evt-essayage { background: var(--c-5a6b2f); }
+.cal .cal-evt-masterclass { background: var(--c-8a3f6b); }
+.cal .cal-evt-rencontre { background: var(--c-2f6b4f); }
+.cal .cal-evt-autre { background: var(--c-555); }
 
 /* Année */
 .cal-annee { display: grid; grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); gap: 1rem; }
@@ -128,7 +128,7 @@ a.agenda-puce:hover, a.agenda-puce:focus-visible { border-color: var(--titre-cla
 .cal-mini-titre { display: block; color: var(--titre-clair); margin-bottom: 0.5rem; font-size: 1rem; }
 .cal-mini-grille { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
 .cal-mini-grille i { font-style: normal; font-size: 0.68rem; text-align: center; padding: 0.15rem 0; border-radius: 4px; color: var(--texte-doux); }
-.cal-mini-grille i.occupe { color: #fff; }
+.cal-mini-grille i.occupe { color: var(--c-fff); }
 .cal-mini-grille i.aujourdhui { box-shadow: inset 0 0 0 1px var(--bordeaux-clair); color: var(--titre-clair); }
 
 /* Jour */

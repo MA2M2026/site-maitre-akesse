@@ -57,7 +57,8 @@
           '<div class="petit-texte doux">' + (m.user_id ? 'Compte sur le site' : 'Ajouté à la main') + '</div></td>' +
           '<td>' + P.esc(m.telephone || '—') + (sansNom(m) && m.email ? '<div class="petit-texte doux">' + P.esc(m.email) + '</div>' : '') + '</td><td>' + P.pastille(e[0], e[1]) + '</td><td class="nombre">' + P.fcfa(m.mensualite) + '</td>' +
           '<td>' + P.pastille(STATUTS[m.statut], m.statut === 'actif' ? 'neutre' : 'alerte') + '</td>' +
-          '<td><a class="btn petit" href="#/paiements/fiche/' + m.id + '">Ouvrir</a></td></tr>';
+          '<td><div class="ligne"><a class="btn petit" href="#/paiements/fiche/' + m.id + '">Ouvrir</a>' +
+          (P.moi.role === 'principal' && !m.user_id && e[1] === 'erreur' ? '<button class="btn petit" type="button" data-action="mannequin-supprimer" data-id="' + m.id + '" aria-label="Supprimer ' + P.esc(m.full_name) + '">Supprimer</button>' : '') + '</div></td></tr>';
       }));
   }
   P.formulaires['registre-chercher'] = (f) => { P.etat.chercheRegistre = String(f.get('cherche')).trim(); P.afficher(); };
@@ -106,6 +107,8 @@
   P.formulaires['registre-ajouter'] = async (f) => {
     try {
       const ligne = await P.bd(sb.from('agence_mannequins').insert(lire(f, null)).select().single());
+      // il entre dans le suivi tout de suite (sans effet tant que le fichier SQL du suivi n'est pas exécuté)
+      if (!P.etat.suiviAbsent) await sb.from('agence_mannequins').update({ suivi: true }).eq('id', ligne.id).then(() => null, () => null);
       P.message('Mannequin ajouté au registre.');
       location.hash = '#/paiements/fiche/' + ligne.id;
     } catch (e) { P.message(P.erreurTexte(e)); }
@@ -232,7 +235,7 @@
     if (!confirm('Supprimer définitivement ce mannequin ? Cette action ne peut pas être annulée.')) return;
     try {
       await P.sensible(() => P.rpc('mannequin_supprimer', { p_mannequin: el.getAttribute('data-id') }));
-      P.message('Mannequin supprimé.'); location.hash = '#/paiements/registre';
+      P.message('Mannequin supprimé.'); if (/^#\/paiements\/fiche/.test(location.hash)) location.hash = '#/paiements/registre'; else await P.afficher();
     } catch (e) {
       P.message(e && (e.code === 'PGRST202' || e.status === 404) ? 'La suppression n’est pas encore activée : il faut d’abord exécuter le fichier SQL de suppression.' : P.erreurTexte(e));
     }
@@ -369,7 +372,7 @@
   async function mensualites() {
     const mois = moisCourant();
     const [actifs, paiements, appels] = await Promise.all([
-      P.bd(sb.from('agence_mannequins').select('*').eq('statut', 'actif').order('full_name')),
+      mannequinsSuivis(false),
       P.bd(sb.from('paiements_mannequins').select('mannequin_id, statut').eq('objet', 'mensualite').eq('mois', mois).neq('statut', 'refuse')),
       P.bd(sb.from('mensualites_appels').select('*').eq('mois', mois))
     ]);
@@ -461,9 +464,34 @@
           '<td>' + (actif ? '<b style="letter-spacing:1px">' + P.esc(x.code.code) + '</b>' : '—') + '</td>' +
           '<td><div class="ligne">' + (x.etat === 'non_paye' ? '<a class="btn petit" href="#/paiements/fiche/' + x.m.id + '">Enregistrer son paiement</a>'
             : actif ? '<button class="btn petit" type="button" data-action="code-espace-copier" data-code="' + P.esc(x.code.code) + '">Copier</button>' + (wa ? '<a class="btn petit rouge" target="_blank" rel="noopener" href="' + P.esc(wa) + '">WhatsApp</a>' : '<span class="doux petit-texte">pas de numéro</span>') + '<button class="btn petit" type="button" data-action="code-espace" data-id="' + x.m.id + '">Nouveau code</button>'
-            : '<button class="btn petit rouge" type="button" data-action="code-espace" data-id="' + x.m.id + '">Générer le code</button>') + '</div></td></tr>';
+            : '<button class="btn petit rouge" type="button" data-action="code-espace" data-id="' + x.m.id + '">Générer le code</button>') +
+          (P.moi.role === 'principal' && x.etat === 'non_paye' ? '<button class="btn petit" type="button" data-action="mannequin-supprimer" data-id="' + x.m.id + '" aria-label="Supprimer ' + P.esc(x.m.full_name) + '">Supprimer</button>' : '') + '</div></td></tr>';
       })) : '<p class="doux">Tous les mannequins actifs ont déjà leur espace.</p>') + '</div>';
   }
+
+  // ---------- Mannequins suivis (une seule liste pour tout l'espace 2) ----------
+  // Colonne agence_mannequins.suivi (supabase-suivi-mannequins.sql) : le tableau du mois, la matrice, les
+  // mensualités, le récapitulatif et les messages ne montrent et ne comptent que ces mannequins. Un
+  // mannequin qui paie (ou dont l'agence enregistre un paiement) y entre tout seul. Tant que le fichier
+  // SQL n'est pas exécuté, tous les mannequins actifs sont montrés, comme avant.
+  const colonneSuiviAbsente = (e) => !!e && (e.code === '42703' || /suivi/i.test(String(e.message || '')) && /column|colonne/i.test(String(e.message || '')));
+  async function mannequinsSuivis(horsSortis) {
+    const requete = (suivi) => {
+      let q = sb.from('agence_mannequins').select('*').order('full_name');
+      q = horsSortis ? q.neq('statut', 'sorti') : q.eq('statut', 'actif');
+      return suivi ? q.eq('suivi', true) : q;
+    };
+    try {
+      const liste = await P.bd(requete(true));
+      P.etat.suiviAbsent = false; P.etat.suiviCompte = liste.length;
+      return liste;
+    } catch (e) {
+      if (!colonneSuiviAbsente(e)) throw e;
+      P.etat.suiviAbsent = true; P.etat.suiviCompte = null;
+      return P.bd(requete(false));
+    }
+  }
+  const noteSuiviVide = (n) => n ? '' : '<div class="note info">Aucun mannequin suivi pour l’instant. Ajoutez-les depuis le <a href="#/paiements/tableau">Tableau du mois</a> (liste « Mannequins suivis »). Un mannequin qui paie y entre tout seul.</div>';
 
   // ---------- Tableau du mois (cahier V3, 7.2) ----------
   // Page d'accueil de l'espace : attendu, validé, en attente, non payé, taux de recouvrement,
@@ -476,9 +504,11 @@
       P.bd(sb.from('paiements_mannequins').select('id, mannequin_id, statut, montant').eq('objet', 'mensualite').eq('mois', mois).neq('statut', 'refuse'))
     ]);
     // Suivi choisi par l'agence : seuls les mannequins ajoutés avec la liste déroulante apparaissent ici
-    const suivis = lireSuivi();
-    const actifs = tousActifs.filter((m) => suivis.includes(m.id));
-    const proposes = tousActifs.filter((m) => !suivis.includes(m.id));
+    const suiviPret = tousActifs.length === 0 || tousActifs.some((m) => 'suivi' in m);
+    P.etat.suiviAbsent = !suiviPret;
+    const actifs = suiviPret ? tousActifs.filter((m) => m.suivi) : tousActifs;
+    const suivis = actifs.map((m) => m.id);
+    const proposes = suiviPret ? tousActifs.filter((m) => !m.suivi) : [];
     const jour = new Date().getDate();
     const filtre = P.etat.filtreTableau || 'tous';
     const lignes = actifs.map((m) => {
@@ -500,6 +530,7 @@
       P.chiffre('Taux de recouvrement', taux + ' %') + '</div>' +
       '<div class="ligne">' + P.pastille('À jour : ' + nb('paye'), 'ok') + P.pastille('Preuve reçue : ' + nb('attente'), 'alerte') +
       P.pastille('Non payé : ' + (nb('non_paye') + nb('a_payer')), 'erreur') + '</div>' +
+      (P.etat.suiviAbsent ? '<div class="note alerte">Le suivi par liste n’est pas encore activé : exécutez le fichier SQL « supabase-suivi-mannequins.sql ». En attendant, tous les mannequins actifs sont montrés.</div>' : '') +
       '<form class="carte f" data-form="suivi-ajouter"><h2>Mannequins suivis</h2><p class="doux">Choisissez dans la liste les mannequins à suivre ce mois-ci. Retirer un mannequin du tableau ne supprime rien.</p>' +
         '<div class="ligne"><label class="fl" for="suivi-choix">Mannequin<select id="suivi-choix" name="mannequin"><option value="">— Choisir un mannequin —</option>' +
         (proposes.length > 1 ? '<option value="__tous__">Tous les mannequins actifs</option>' : '') +
@@ -515,23 +546,30 @@
         ' <button class="btn petit" type="button" data-action="suivi-retirer" data-id="' + x.m.id + '" aria-label="Retirer ' + P.esc(x.m.full_name) + ' du tableau">Retirer</button></td></tr>'))
         : '<p class="doux">' + (suivis.length ? 'Aucun mannequin dans ce groupe.' : 'Le tableau est vide : choisissez un mannequin dans la liste ci-dessus.') + '</p>') + '</div>';
   }
-  // Liste des mannequins suivis, gardée sur cet appareil (aucune donnée n'est supprimée ni modifiée)
-  const CLE_SUIVI = 'ma2m_suivi_tableau';
-  function lireSuivi() {
-    try { const v = JSON.parse(localStorage.getItem(CLE_SUIVI) || '[]'); return Array.isArray(v) ? v.filter((x) => typeof x === 'string') : []; } catch (e) { return []; }
+  // Liste des mannequins suivis : colonne agence_mannequins.suivi (partagée entre tous les appareils et toutes les pages)
+  async function changerSuivi(ids, suivi) {
+    if (!ids.length) return;
+    try {
+      await P.bd(sb.from('agence_mannequins').update({ suivi }).in('id', ids));
+    } catch (e) {
+      P.message(colonneSuiviAbsente(e) ? 'Le suivi n’est pas encore activé : il faut d’abord exécuter le fichier SQL « supabase-suivi-mannequins.sql ».' : P.erreurTexte(e));
+      return;
+    }
+    await P.afficher();
   }
-  function ecrireSuivi(liste) { try { localStorage.setItem(CLE_SUIVI, JSON.stringify(liste)); } catch (e) { P.message('Impossible de garder la liste sur cet appareil.'); } }
   P.formulaires['suivi-ajouter'] = async (f) => {
     const choix = String(f.get('mannequin') || '');
     if (!choix) return P.message('Choisissez d’abord un mannequin dans la liste.');
-    const liste = lireSuivi();
     if (choix === '__tous__') {
-      const tous = await P.bd(sb.from('agence_mannequins').select('id').eq('statut', 'actif'));
-      tous.forEach((m) => { if (!liste.includes(m.id)) liste.push(m.id); });
-    } else if (!liste.includes(choix)) liste.push(choix);
-    ecrireSuivi(liste); P.afficher();
+      const tous = await P.bd(sb.from('agence_mannequins').select('id').eq('statut', 'actif').eq('suivi', false)).catch(() => []);
+      return changerSuivi(tous.map((m) => m.id), true);
+    }
+    return changerSuivi([choix], true);
   };
-  P.actions['suivi-retirer'] = (el) => { ecrireSuivi(lireSuivi().filter((id) => id !== el.getAttribute('data-id'))); P.afficher(); };
+  P.actions['suivi-retirer'] = (el) => {
+    if (!confirm('Retirer ce mannequin du suivi ? Il n’apparaîtra plus dans les tableaux, les récapitulatifs ni les messages (rien n’est supprimé).')) return;
+    return changerSuivi([el.getAttribute('data-id')], false);
+  };
   P.actions['tableau-filtre'] = (el) => { P.etat.filtreTableau = el.getAttribute('data-filtre'); P.afficher(); };
 
   // ---------- Matrice mannequins × mois (cahier V3, 7.2) ----------
@@ -541,7 +579,7 @@
   async function matrice() {
     const annee = P.etat.anneeMatrice || new Date().getFullYear();
     const [registreComplet, paiements] = await Promise.all([
-      P.bd(sb.from('agence_mannequins').select('*').neq('statut', 'sorti').order('full_name')),
+      mannequinsSuivis(true),
       P.bd(sb.from('paiements_mannequins').select('mannequin_id, mois, statut').eq('objet', 'mensualite').neq('statut', 'refuse').gte('mois', annee + '-01-01').lte('mois', annee + '-12-01'))
     ]);
     const mannequins = registreComplet.filter((m) => m.statut !== 'sorti');
@@ -575,7 +613,7 @@
   async function donneesRecap() {
     const cible = P.etat.moisRecap || moisCourant();
     const [actifs, paiements] = await Promise.all([
-      P.bd(sb.from('agence_mannequins').select('*').eq('statut', 'actif').order('full_name')),
+      mannequinsSuivis(false),
       P.bd(sb.from('paiements_mannequins').select('mannequin_id, mois, statut').eq('objet', 'mensualite').neq('statut', 'refuse'))
     ]);
     const ici = new Date(), courant = ici.getFullYear() * 12 + ici.getMonth(), t = indexMois(cible);
@@ -583,10 +621,11 @@
     const dernierEchu = t < courant || (t === courant && ici.getDate() > 5) ? t : t - 1;
     const statutDe = (id, i) => { const p = paiements.find((x) => x.mannequin_id === id && indexMois(x.mois) === i); return p ? p.statut : null; };
     const lignes = actifs.map((m) => {
-      const entree = m.date_entree ? indexMois(m.date_entree) : -Infinity;
+      // (sans date d'entrée : on compte à partir du dernier mois échu, jamais « depuis toujours »)
+      const entree = m.date_entree ? indexMois(m.date_entree) : dernierEchu;
       const st = statutDe(m.id, t);
       let affilee = 0, i = dernierEchu;
-      while (i >= entree && !statutDe(m.id, i)) { affilee++; i--; }
+      while (i >= entree && affilee < 240 && !statutDe(m.id, i)) { affilee++; i--; }
       const premierImpaye = dernierEchu - affilee + 1;
       const retard = affilee ? Math.max(0, Math.floor((ici - new Date(Math.floor(premierImpaye / 12), premierImpaye % 12, 5)) / 864e5)) : 0;
       const mineur = P.age(m.date_naissance) !== null && P.age(m.date_naissance) < 18;
@@ -673,7 +712,7 @@
     const e = P.etat.msg = Object.assign({ modele: 'appel', filtre: 'non_payes', journal: [] }, P.etat.msg || {});
     const mois = moisCourant();
     const [actifs, paiements, liens, modeles, historique] = await Promise.all([
-      P.bd(sb.from('agence_mannequins').select('*').eq('statut', 'actif').order('full_name')),
+      mannequinsSuivis(false),
       P.bd(sb.from('paiements_mannequins').select('mannequin_id, statut').eq('objet', 'mensualite').eq('mois', mois).neq('statut', 'refuse')),
       P.bd(sb.from('liens_wave').select('*').eq('actif', true)).catch(() => []),  // (table pas encore créée : lien de l'espace mannequin)
       P.bd(sb.from('modeles_messages').select('*')).catch(() => null),
@@ -810,7 +849,15 @@
 
   P.espaces.paiements = {
     nav: [['tableau', 'Tableau du mois'], ['matrice', 'Matrice mannequins × mois'], ['recapitulatif', 'Récapitulatif de fin de mois'], ['messages', 'Messages et relances'], ['codes', 'Codes de l’espace mannequin'], ['parametres', 'Paramètres'], ['a-valider', 'Paiements à valider'], ['mensualites', 'Mensualités du mois'], ['registre', 'Registre des mannequins'], ['ajouter', 'Ajouter un mannequin']],
-    pages: { tableau: tableauDuMois, matrice, recapitulatif, messages, codes: codesEspace, parametres, 'a-valider': aValider, mensualites, registre, ajouter, fiche },
+    // (pages qui comptent les mannequins suivis : une note explique la liste vide)
+    pages: Object.assign({ tableau: tableauDuMois, codes: codesEspace, parametres, 'a-valider': aValider, registre, ajouter, fiche },
+      ...['matrice', 'recapitulatif', 'messages', 'mensualites'].map((cle) => ({ [cle]: async (params) => {
+        const page = { matrice, recapitulatif, messages, mensualites }[cle];
+        const html = await page(params);
+        if (P.etat.suiviCompte !== 0) return html;
+        const debut = html.indexOf('</h1></div><div class="ligne">'), fin = debut < 0 ? -1 : html.indexOf('</div></div>', debut);
+        return fin < 0 ? html : html.slice(0, fin + 12) + noteSuiviVide(0) + html.slice(fin + 12);
+      } }))),
     compteur: {},
     // nombre de paiements en attente, affiché dans le menu
     avant: async () => {

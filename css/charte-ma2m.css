@@ -17,12 +17,12 @@
   --bordeaux: var(--rouge-ma2m);
   --bordeaux-vif: var(--rouge-ma2m-survol);
   --bordeaux-clair: var(--rouge-ma2m-texte);
-  --bordeaux-noir: #f3d9dd;
+  --bordeaux-noir: var(--c-f3d9dd);
   --rouge: var(--rouge-ma2m-texte);
   --gris: var(--encre-douce);
   --gris-clair: var(--lignes);
   --or: var(--rouge-ma2m);
-  --glow-bordeaux: 0 6px 18px rgba(200,16,46,0.22);
+  --glow-bordeaux: 0 6px 18px var(--c-rgba-200-16-46-0_22);
 
   --display: var(--police);
   --texte: var(--police);
@@ -52,7 +52,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
    propriétaire, 18/10/2026 : « plus de noir », de l'ouverture du site jusqu'au pied de page) */
 .site-header-v2 { background: var(--surface) !important; border-bottom: 1px solid var(--lignes); color: var(--encre); }
 .site-header-v2 a:not(.lang-switch):not(.header-marketplace-lien) { color: var(--encre); }
-#marqueeBande { background: var(--rouge-ma2m) !important; color: #fff; }
+#marqueeBande { background: var(--rouge-ma2m) !important; color: var(--c-fff); }
 .site-footer { background: var(--surface); color: var(--encre); border-top: 1px solid var(--lignes); }
 .site-footer a { color: var(--encre); }
 .site-footer .footer-bas { color: var(--encre-douce); }
@@ -91,39 +91,39 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   --lignes: var(--sombre-lignes);
   --rouge-ma2m-texte: var(--sombre-rouge-texte);
   /* anciennes variables (elles valent « clair » ailleurs : on les remet ici en sombre) */
-  --noir: #060606;
-  --noir-doux: #141312;
+  --noir: var(--c-060606);
+  --noir-doux: var(--c-141312);
   --anthracite: var(--sombre);
   --noir-brillant: var(--sombre-survol);
   --texte-corps: var(--sombre-encre);
   --texte-doux: var(--sombre-encre-douce);
-  --titre-clair: #ffffff;
+  --titre-clair: var(--c-ffffff);
   --bordeaux-clair: var(--sombre-rouge-texte);
   --rouge: var(--sombre-rouge-texte);
-  --gris-clair: rgba(255,255,255,0.22);
+  --gris-clair: var(--c-rgba-255-255-255-0_22);
   color: var(--sombre-encre);
 }
 /* ===== Ouverture claire : intro, grande image d'accueil, mannequin à la une, menu =====
    Sur les photos, un voile clair (couleur du fond) monte du bas : le texte foncé reste lisible. */
 .splash, .splash.intro-anime { background: var(--fond) !important; }
 .hero-v2 { background-color: var(--fond); }
-.hero-v2::before { background: linear-gradient(to top, rgba(246,245,243,0.96) 0%, rgba(246,245,243,0.75) 38%, rgba(246,245,243,0.15) 75%, rgba(246,245,243,0) 100%) !important; }
+.hero-v2::before { background: linear-gradient(to top, var(--c-rgba-246-245-243-0_96) 0%, var(--c-rgba-246-245-243-0_75) 38%, var(--c-rgba-246-245-243-0_15) 75%, var(--c-rgba-246-245-243-0) 100%) !important; }
 .hero-v2-bg { filter: grayscale(60%) contrast(1.05) brightness(1.02) !important; }
 .hero-v2 :is(h1, h2, h3, p, .hero-v2-title, .hero-slide-titre, .ma2m-grand) { color: var(--encre); text-shadow: none !important; }
 /* (19/10/2026, demande de la propriétaire sur tablette : « c'est trop flou, impossible de voir les
    photos ») — plus de voile blanc sur « Mannequin à la une » et « Mot de Maître Akesse » : la photo
    reste nette, le texte est en BLANC sur une ombre foncée limitée au bas de l'image. */
-.vedette-scrim, .mot-responsable-scrim { background: linear-gradient(to top, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.55) 30%, rgba(0,0,0,0.18) 55%, rgba(0,0,0,0) 72%) !important; }
-.vedette-contenu h2, .mot-responsable-overlay h2 { color: #fff !important; text-shadow: 0 2px 18px rgba(0,0,0,0.7) !important; }
-.vedette-contenu p, .mot-resp-titre { color: #fff !important; font-weight: 600; text-shadow: 0 1px 10px rgba(0,0,0,0.8) !important; }
-.mot-responsable-photo-wrap .eyebrow--clair { color: #fff; text-shadow: 0 1px 10px rgba(0,0,0,0.8); }
+.vedette-scrim, .mot-responsable-scrim { background: linear-gradient(to top, var(--c-rgba-0-0-0-0_78) 0%, var(--c-rgba-0-0-0-0_55) 30%, var(--c-rgba-0-0-0-0_18) 55%, var(--c-rgba-0-0-0-0) 72%) !important; }
+.vedette-contenu h2, .mot-responsable-overlay h2 { color: var(--c-fff) !important; text-shadow: 0 2px 18px var(--c-rgba-0-0-0-0_7) !important; }
+.vedette-contenu p, .mot-resp-titre { color: var(--c-fff) !important; font-weight: 600; text-shadow: 0 1px 10px var(--c-rgba-0-0-0-0_8) !important; }
+.mot-responsable-photo-wrap .eyebrow--clair { color: var(--c-fff); text-shadow: 0 1px 10px var(--c-rgba-0-0-0-0_8); }
 /* téléphone : le texte occupe une plus grande part de l'image, l'ombre monte plus haut */
-@media (max-width: 700px) { .vedette-scrim, .mot-responsable-scrim { background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.6) 45%, rgba(0,0,0,0.25) 70%, rgba(0,0,0,0) 88%) !important; } }
+@media (max-width: 700px) { .vedette-scrim, .mot-responsable-scrim { background: linear-gradient(to top, var(--c-rgba-0-0-0-0_8) 0%, var(--c-rgba-0-0-0-0_6) 45%, var(--c-rgba-0-0-0-0_25) 70%, var(--c-rgba-0-0-0-0) 88%) !important; } }
 /* vidéo de l'agence : image animée foncée, l'étiquette « Le film » reste en blanc sur une ombre */
-.video-accueil .eyebrow--clair { color: #fff; text-shadow: 0 1px 10px rgba(0,0,0,0.75); }
-.video-accueil .eyebrow--clair::before { background: #fff; box-shadow: none; }
-.vedette-cta { color: #fff; text-shadow: 0 1px 10px rgba(0,0,0,0.8); border-bottom-color: var(--rouge-ma2m); }
-.vedette-fullbleed:hover .vedette-cta { border-color: #fff; }
+.video-accueil .eyebrow--clair { color: var(--c-fff); text-shadow: 0 1px 10px var(--c-rgba-0-0-0-0_75); }
+.video-accueil .eyebrow--clair::before { background: var(--c-fff); box-shadow: none; }
+.vedette-cta { color: var(--c-fff); text-shadow: 0 1px 10px var(--c-rgba-0-0-0-0_8); border-bottom-color: var(--rouge-ma2m); }
+.vedette-fullbleed:hover .vedette-cta { border-color: var(--c-fff); }
 .eyebrow--clair { color: var(--rouge-ma2m-texte); text-shadow: none; }
 html body .menu-overlay { background: var(--fond) !important; }
 .menu-overlay::before { background-image: url("../assets/logo-header-clair.png") !important; }
@@ -131,7 +131,7 @@ html body .menu-overlay { background: var(--fond) !important; }
 /* Bandeau cookies : carte blanche */
 .bandeau-cookies {
   background: var(--surface); border: 1px solid var(--lignes); border-radius: 14px;
-  box-shadow: 0 12px 32px -12px rgba(30,29,28,0.35);
+  box-shadow: 0 12px 32px -12px var(--c-rgba-30-29-28-0_35);
 }
 .bandeau-cookies p { color: var(--encre); }
 .bandeau-cookies a { color: var(--rouge-ma2m-texte); }

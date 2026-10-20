@@ -33,14 +33,14 @@
   position: sticky; top: 0; z-index: 900;
   display: flex; align-items: center; gap: 12px;
   min-height: 52px; padding: 8px 16px; padding-top: max(8px, env(safe-area-inset-top));
-  background: var(--sombre, #1E1D1C); color: var(--sombre-encre, #F2F0EC);
+  background: var(--sombre, var(--c-1e1d1c)); color: var(--sombre-encre, var(--c-f2f0ec));
   font-family: 'Montserrat', system-ui, sans-serif; font-size: 15px;
 }
-.adm-barre .adm-retour { color: var(--sombre-encre, #F2F0EC); font-weight: 600; text-decoration: none; white-space: nowrap; }
-.adm-barre .adm-titre { flex: 1; text-align: center; color: var(--sombre-encre-douce, #BDB8B0); font-size: 13px; letter-spacing: .04em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adm-barre .adm-retour { color: var(--sombre-encre, var(--c-f2f0ec)); font-weight: 600; text-decoration: none; white-space: nowrap; }
+.adm-barre .adm-titre { flex: 1; text-align: center; color: var(--sombre-encre-douce, var(--c-bdb8b0)); font-size: 13px; letter-spacing: .04em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .adm-barre .adm-sortie {
-  font: inherit; font-size: 14px; color: var(--sombre-encre, #F2F0EC); background: transparent;
-  border: 1px solid var(--sombre-lignes, #3A3835); border-radius: 999px; padding: 6px 14px; cursor: pointer; white-space: nowrap;
+  font: inherit; font-size: 14px; color: var(--sombre-encre, var(--c-f2f0ec)); background: transparent;
+  border: 1px solid var(--sombre-lignes, var(--c-3a3835)); border-radius: 999px; padding: 6px 14px; cursor: pointer; white-space: nowrap;
 }
 .adm-barre .adm-retour:focus-visible, .adm-barre .adm-sortie:focus-visible { outline: none; box-shadow: var(--focus); }
 @media (max-width: 520px) { .adm-barre .adm-titre { display: none; } .adm-barre { justify-content: space-between; } }

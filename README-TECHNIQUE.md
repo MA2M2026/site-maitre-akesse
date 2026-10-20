@@ -2759,3 +2759,11 @@ depuis Abidjan (une vérification a bloqué l'accueil 10 s) ; le tableau de bord
 - Rappel : après toute modification d'un fichier JS/CSS, lancer `python3 scripts/versionner.py` AVANT la mise en ligne (oubli le 20/10/2026 : l'ancien tableau est resté affiché chez la propriétaire).
 - Compta : menu dans l'ordre du plan (Portail_Admin_MA2M.html), carte « Mode actuel / Activer le mode légal et la FNE » sur le tableau de bord. Espace 1 : le cadre reste caché (« Chargement… ») tant que le tableau de bord vérifie la session (9 s max).
 - Compta : bouton « Envoyer » sur devis/proformas/factures/avoirs (partage du PDF par l'appareil, sinon téléchargement + liens WhatsApp / e-mail avec message prêt) ; page « Accès du comptable » (principal seul : liste, couper/rétablir, lien vers l'invitation).
+
+## Suivi des mannequins (colonne `suivi`) — 20/10/2026
+- Le suivi des paiements repose sur la colonne `suivi` de la table des mannequins (remplie automatiquement par le déclencheur `suivi_auto` dès qu'un paiement est validé). Récapitulatif, matrice, mensualités, messages groupés et tableau du mois utilisent tous la même liste (`mannequinsSuivis` dans `js/portail/espace-paiements.js`).
+- À exécuter une fois dans Supabase : `supabase-suivi-et-suppression.sql` (colonne `suivi` + fonction `mannequin_supprimer`). Tant que ce n'est pas fait, les tableaux affichent tous les actifs avec un bandeau, et le bouton Supprimer indique que la fonction n'est pas activée.
+- Suppression d'un mannequin : réservée au responsable principal, seulement sans compte ni paiement validé.
+
+## Chantier A — couleurs centralisées (20/10/2026)
+- `python3 scripts/centraliser-couleurs.py` remplace les couleurs écrites en dur dans `css/*.css` par des variables `--c-…`, définies une seule fois dans `css/jetons.css` (bloc « Palette centralisée »). Rejouable, option `--essai`. Rendu identique (captures comparées : 0 différence).

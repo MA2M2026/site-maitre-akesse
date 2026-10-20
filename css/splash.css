@@ -35,33 +35,33 @@
   bottom: 2.6rem;
   right: 2.6rem;
   border-radius: 999px;
-  border: 1px solid var(--touche-n-contour, rgba(255,255,255,0.18));
-  background: var(--touche-n-fond, #1d1d1f);
-  color: #f4efe9;
+  border: 1px solid var(--touche-n-contour, var(--c-rgba-255-255-255-0_18));
+  background: var(--touche-n-fond, var(--c-1d1d1f));
+  color: var(--c-f4efe9);
   padding: 0.75rem 1.7rem;
   font-family: var(--texte);
   font-size: 0.66rem;
   letter-spacing: 0.28em;
   text-transform: uppercase;
   cursor: pointer;
-  box-shadow: 0 1px 0 rgba(255,255,255,0.08) inset, 0 4px 0 #000, 0 9px 16px -8px rgba(0,0,0,0.85);
+  box-shadow: 0 1px 0 var(--c-rgba-255-255-255-0_08) inset, 0 4px 0 var(--c-000), 0 9px 16px -8px var(--c-rgba-0-0-0-0_85);
   transform: translateY(0);
   transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.15s ease, border-color 0.15s ease;
 }
 
 @media (hover: hover) {
   .splash-passer:hover {
-    background: var(--touche-n-fond-survol, #27272a);
-    border-color: var(--touche-n-contour-survol, rgba(255,255,255,0.34));
-    color: #fff;
+    background: var(--touche-n-fond-survol, var(--c-27272a));
+    border-color: var(--touche-n-contour-survol, var(--c-rgba-255-255-255-0_34));
+    color: var(--c-fff);
   }
 }
 .splash-passer:active {
   transform: translateY(4px);
-  background: var(--touche-appui-fond, linear-gradient(180deg, #a3243a 0%, #6d1222 100%));
-  border-color: var(--touche-appui-contour, rgba(229,108,128,0.9));
-  color: #fff;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.7) inset, 0 0 16px rgba(213,84,104,0.4);
+  background: var(--touche-appui-fond, linear-gradient(180deg, var(--c-a3243a) 0%, var(--c-6d1222) 100%));
+  border-color: var(--touche-appui-contour, var(--c-rgba-229-108-128-0_9));
+  color: var(--c-fff);
+  box-shadow: 0 2px 6px var(--c-rgba-0-0-0-0_7) inset, 0 0 16px var(--c-rgba-213-84-104-0_4);
 }
 
 body.splash-active { overflow: hidden; }
@@ -80,6 +80,6 @@ html.intro-a-venir #logo-splash { display: flex; }
    occupe tout l'écran et remplace le logo fixe, qui reste en secours si l'animation ne
    peut pas démarrer (moins d'animations demandé, image introuvable…). */
 .splash-canvas { position: absolute; inset: 0; display: block; }
-.splash.intro-anime { background: #050304; }
+.splash.intro-anime { background: var(--c-050304); }
 .splash.intro-anime .splash-logo-wrap { display: none; }
 .splash-passer { z-index: 1; }

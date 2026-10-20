@@ -98,6 +98,7 @@ function donnees(role) {
     ok(/Code à générer/.test(await ligne('KONÉ AWA')) && /Générer le code/.test(await ligne('KONÉ AWA')), nomEcran + ' : inscription payée sans code → « Générer le code »');
     ok(/Code actif/.test(await ligne('KOUAME')) && /ESP-AAAAAA/.test(await ligne('KOUAME')), nomEcran + ' : code actif affiché avec sa date de fin');
     ok(/Inscription non payée/.test(await ligne('TRAORÉ')) && !/Générer le code/.test(await ligne('TRAORÉ')), nomEcran + ' : pas de code sans inscription payée');
+    ok(!/Supprimer/.test(await ligne('TRAORÉ')), nomEcran + ' : pas de bouton « Supprimer » pour le responsable des encaissements (réservé au principal)');
     ok(/Code expiré/.test(await ligne('CODE EXPIRÉ')), nomEcran + ' : code expiré signalé');
     const wa = decodeURIComponent((await p.getAttribute('a.btn:has-text("WhatsApp")', 'href')) || '');
     ok(/^https:\/\/wa\.me\/2250101010101/.test(wa) && wa.includes('ESP-AAAAAA') && /Bonjour MADAME KOUAME/.test(wa) && /de KOUAME JEAN/.test(wa), nomEcran + ' : WhatsApp au parent, avec le code et le nom de l’enfant');

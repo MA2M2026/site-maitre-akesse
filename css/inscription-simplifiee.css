@@ -15,10 +15,10 @@
 .inn-ligne span:first-child { color: var(--encre-douce); }
 .inn-ligne b { text-align: right; }
 .inn-bandeau { border-radius: 12px; padding: 0.9rem 1.1rem; font-weight: 600; font-size: 0.92rem; }
-.inn-bandeau.erreur { background: #FBE3E3; color: #8A1C1C; }
-.inn-bandeau.info { background: #E0ECF8; color: #17436F; }
-.inn-bandeau.ok { background: #E3F4E6; color: #1B5A2A; }
-.inn-note { background: #FFF1CC; color: #5C4400; border-radius: 10px; padding: 0.8rem 1rem; font-size: 0.85rem; }
+.inn-bandeau.erreur { background: var(--c-fbe3e3); color: var(--c-8a1c1c); }
+.inn-bandeau.info { background: var(--c-e0ecf8); color: var(--c-17436f); }
+.inn-bandeau.ok { background: var(--c-e3f4e6); color: var(--c-1b5a2a); }
+.inn-note { background: var(--c-fff1cc); color: var(--c-5c4400); border-radius: 10px; padding: 0.8rem 1rem; font-size: 0.85rem; }
 .inn-case { display: flex; gap: 0.8rem; align-items: flex-start; padding: 0.85rem; border: 1px solid var(--lignes); border-radius: 10px; cursor: pointer; font-size: 0.9rem; }
 .inn-case input { width: 22px; height: 22px; flex: none; margin-top: 1px; }
 .inn-operateurs { display: flex; gap: 0.5rem; flex-wrap: wrap; }

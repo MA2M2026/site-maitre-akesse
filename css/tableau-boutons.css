@@ -10,15 +10,15 @@
 :root {
   /* 30/09 (2e demande) : fond noir neutre, PAS de rouge au repos ni au survol —
      le rouge n'apparaît qu'à l'appui. */
-  --touche-fond: linear-gradient(180deg, #1d1d1f 0%, #0d0d0e 100%);
-  --touche-fond-survol: linear-gradient(180deg, #27272a 0%, #121213 100%);
-  --touche-fond-actif: linear-gradient(180deg, #a3243a 0%, #6d1222 100%);   /* appui */
-  --touche-fond-choisi: linear-gradient(180deg, #34343a 0%, #1a1a1d 100%);  /* page ouverte */
-  --touche-contour: rgba(255, 255, 255, 0.18);
-  --touche-contour-vif: rgba(255, 255, 255, 0.34);
-  --touche-contour-appui: rgba(229, 108, 128, 0.9);
-  --touche-relief: #000;
-  --touche-relief-actif: #000;
+  --touche-fond: linear-gradient(180deg, var(--c-1d1d1f) 0%, var(--c-0d0d0e) 100%);
+  --touche-fond-survol: linear-gradient(180deg, var(--c-27272a) 0%, var(--c-121213) 100%);
+  --touche-fond-actif: linear-gradient(180deg, var(--c-a3243a) 0%, var(--c-6d1222) 100%);   /* appui */
+  --touche-fond-choisi: linear-gradient(180deg, var(--c-34343a) 0%, var(--c-1a1a1d) 100%);  /* page ouverte */
+  --touche-contour: var(--c-rgba-255-255-255-0_18);
+  --touche-contour-vif: var(--c-rgba-255-255-255-0_34);
+  --touche-contour-appui: var(--c-rgba-229-108-128-0_9);
+  --touche-relief: var(--c-000);
+  --touche-relief-actif: var(--c-000);
 }
 
 /* ---------- Toutes les touches ---------- */
@@ -36,11 +36,11 @@ body .modal .btn {
   border-radius: 999px;
   border: 1px solid var(--touche-contour);
   background: var(--touche-fond);
-  color: #f4ece6;
+  color: var(--c-f4ece6);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.14) inset,
+    0 1px 0 var(--c-rgba-255-255-255-0_14) inset,
     0 4px 0 var(--touche-relief),
-    0 9px 18px -8px rgba(0, 0, 0, 0.75);
+    0 9px 18px -8px var(--c-rgba-0-0-0-0_75);
   transform: translateY(0);
   transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
   -webkit-tap-highlight-color: transparent;
@@ -61,12 +61,12 @@ body .modal .btn {
   body .modal .btn:hover {
     background: var(--touche-fond-survol);
     border-color: var(--touche-contour-vif);
-    color: #fff;
+    color: var(--c-fff);
     transform: translateY(-1px);
     box-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.16) inset,
+      0 1px 0 var(--c-rgba-255-255-255-0_16) inset,
       0 5px 0 var(--touche-relief),
-      0 12px 22px -8px rgba(0, 0, 0, 0.8);
+      0 12px 22px -8px var(--c-rgba-0-0-0-0_8);
   }
 }
 
@@ -85,12 +85,12 @@ body .modal .btn:active,
 body .touche-appuyee {
   transform: translateY(4px) !important;
   box-shadow:
-    0 2px 6px rgba(0, 0, 0, 0.7) inset,
+    0 2px 6px var(--c-rgba-0-0-0-0_7) inset,
     0 0 0 var(--touche-relief),
-    0 0 18px rgba(213, 84, 104, 0.45) !important;
+    0 0 18px var(--c-rgba-213-84-104-0_45) !important;
   background: var(--touche-fond-actif) !important;
   border-color: var(--touche-contour-appui) !important;
-  color: #fff !important;
+  color: var(--c-fff) !important;
   transition: transform 0.05s ease, box-shadow 0.05s ease, background 0.05s ease;
 }
 
@@ -100,9 +100,9 @@ body .modal .btn--principal {
   background: var(--touche-fond);
   border-color: var(--touche-contour-vif);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.22) inset,
+    0 1px 0 var(--c-rgba-255-255-255-0_22) inset,
     0 4px 0 var(--touche-relief-actif),
-    0 10px 22px -8px rgba(0, 0, 0, 0.8);
+    0 10px 22px -8px var(--c-rgba-0-0-0-0_8);
 }
 
 /* Bouton bloqué : grisé, plus de relief (il ne peut pas s'enfoncer). */
@@ -112,17 +112,17 @@ body .modal .btn:disabled {
   opacity: 0.42;
   cursor: not-allowed;
   transform: translateY(4px);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6) inset;
+  box-shadow: 0 1px 3px var(--c-rgba-0-0-0-0_6) inset;
 }
 
 /* Élément sélectionné (page ouverte, filtre choisi) : touche restée allumée. */
 body .tdb-menu-item.actif,
 body #bloc-tableau .filtre-pill.actif {
   background: var(--touche-fond-choisi);
-  border-color: rgba(255, 255, 255, 0.55);
-  color: #fff;
+  border-color: var(--c-rgba-255-255-255-0_55);
+  color: var(--c-fff);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.14) inset,
+    0 1px 0 var(--c-rgba-255-255-255-0_14) inset,
     0 3px 0 var(--touche-relief-actif);
 }
 
@@ -132,7 +132,7 @@ body .tdb-menu-fermer { padding: 0.4rem 0.95rem; font-size: 0.95rem; }
 body .tdb-menu-accueil { padding: 0.8rem 1.2rem; margin-bottom: 0.9rem; font-size: 0.9rem; }
 body .tdb-menu-bloc { border-top: none; padding: 0.4rem 0; }
 body .tdb-menu-bloc > summary { padding: 0.8rem 1.15rem; font-size: 0.8rem; line-height: 1.35; margin-bottom: 0.35rem; }
-body .tdb-menu-sousbloc > summary { padding: 0.6rem 1rem; font-size: 0.74rem; margin: 0.25rem 0; color: #e8d9d2; }
+body .tdb-menu-sousbloc > summary { padding: 0.6rem 1rem; font-size: 0.74rem; margin: 0.25rem 0; color: var(--c-e8d9d2); }
 body .tdb-menu-item {
   width: calc(100% - 0.6rem); margin: 0.55rem 0 0.55rem 0.6rem;
   padding: 0.72rem 1.15rem; font-size: 0.88rem; line-height: 1.3;
@@ -152,12 +152,12 @@ body .tdb-landing-carte {
   border-radius: 26px;
   border: 1px solid var(--touche-contour);
   background:
-    radial-gradient(120% 80% at 0% 0%, rgba(255, 255, 255, 0.07), transparent 55%),
-    linear-gradient(180deg, #1c1c1e 0%, #0b0b0c 100%);
+    radial-gradient(120% 80% at 0% 0%, var(--c-rgba-255-255-255-0_07), transparent 55%),
+    linear-gradient(180deg, var(--c-1c1c1e) 0%, var(--c-0b0b0c) 100%);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.14) inset,
+    0 1px 0 var(--c-rgba-255-255-255-0_14) inset,
     0 8px 0 var(--touche-relief),
-    0 22px 36px -14px rgba(0, 0, 0, 0.85);
+    0 22px 36px -14px var(--c-rgba-0-0-0-0_85);
   transform: translateY(0);
   transition: transform 0.14s ease, box-shadow 0.14s ease, border-color 0.2s ease;
   -webkit-tap-highlight-color: transparent;
@@ -165,40 +165,40 @@ body .tdb-landing-carte {
 body .tdb-landing-carte::after {
   content: "Ouvrir  →"; position: absolute; right: 1.4rem; bottom: 1.1rem;
   font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase;
-  color: #b9aca6;
+  color: var(--c-b9aca6);
 }
 @media (hover: hover) {
   body .tdb-landing-carte:hover {
     transform: translateY(-3px);
     border-color: var(--touche-contour-vif);
     background:
-      radial-gradient(120% 80% at 0% 0%, rgba(255, 255, 255, 0.1), transparent 55%),
-      linear-gradient(180deg, #232326 0%, #101011 100%);
+      radial-gradient(120% 80% at 0% 0%, var(--c-rgba-255-255-255-0_1), transparent 55%),
+      linear-gradient(180deg, var(--c-232326) 0%, var(--c-101011) 100%);
     box-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.16) inset,
+      0 1px 0 var(--c-rgba-255-255-255-0_16) inset,
       0 11px 0 var(--touche-relief),
-      0 28px 44px -14px rgba(0, 0, 0, 0.85);
+      0 28px 44px -14px var(--c-rgba-0-0-0-0_85);
   }
 }
 body .tdb-landing-carte:active,
 body .tdb-landing-carte.touche-appuyee {
   transform: translateY(8px) !important;
   border-color: var(--touche-contour-appui) !important;
-  background: linear-gradient(180deg, #5a1422 0%, #2a0a11 100%) !important;
+  background: linear-gradient(180deg, var(--c-5a1422) 0%, var(--c-2a0a11) 100%) !important;
   box-shadow:
-    0 3px 10px rgba(0, 0, 0, 0.7) inset,
+    0 3px 10px var(--c-rgba-0-0-0-0_7) inset,
     0 0 0 var(--touche-relief),
-    0 0 30px rgba(213, 84, 104, 0.45) !important;
+    0 0 30px var(--c-rgba-213-84-104-0_45) !important;
   transition: transform 0.05s ease, box-shadow 0.05s ease;
 }
 body .tdb-landing-carte .tdb-landing-num {
   font-size: 0.78rem; font-weight: 700; padding: 0.3rem 0.9rem;
-  color: #fff; background: var(--touche-fond-choisi);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 2px 0 #000;
+  color: var(--c-fff); background: var(--touche-fond-choisi);
+  border: 1px solid var(--c-rgba-255-255-255-0_3);
+  box-shadow: 0 2px 0 var(--c-000);
 }
 body .tdb-landing-carte .tdb-landing-titre { margin-bottom: 0.7rem; }
-body .tdb-landing-carte .tdb-landing-texte { padding-bottom: 1.2rem; color: #b9aca6; }
+body .tdb-landing-carte .tdb-landing-texte { padding-bottom: 1.2rem; color: var(--c-b9aca6); }
 
 @media (prefers-reduced-motion: reduce) {
   body .tdb-landing-carte, body .tdb-menu-item, body #bloc-tableau .btn { transition: none; }

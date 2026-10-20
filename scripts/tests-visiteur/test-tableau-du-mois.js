@@ -16,10 +16,10 @@ function donnees(role) {
         { user_id: 'u-k', nom: 'Comptable', email: 'k@test.ci', role: 'compta', actif: true, cree_le: '2026-10-19', appareils: [] }],
       staff_module_grants: [], staff_devices: [{ id: 'sd1', appareil: 'abc', libelle: 'Android, Chrome', installe_le: '2026-10-19', derniere_activite: new Date().toISOString(), revoque: false, personne: { nom: 'Maître Akesse' } }],
       // Espace 2 — registre : un compte du site et un mannequin ajouté à la main
-      agence_mannequins: [{ id: 'r1', full_name: 'ROXANE OUATTARA', telephone: '0102030405', mensualite: 10000, statut: 'actif', user_id: 'm-site', date_entree: '2026-09-01' },
-        { id: 'r2', full_name: 'KONÉ AWA', telephone: '0707070707', mensualite: 10000, statut: 'actif', user_id: null, date_entree: '2026-10-01', date_naissance: '2000-01-01' },
-        { id: 'r3', full_name: 'YAO KOUASSI', telephone: '0505050505', email: 'yao@test.ci', mensualite: 10000, statut: 'actif', user_id: null, date_entree: '2026-10-10' },
-        { id: 'r4', full_name: 'SANOGO MARIAM', telephone: '0606060606', mensualite: 10000, statut: 'actif', user_id: null, date_entree: '2026-10-11' }],
+      agence_mannequins: [{ id: 'r1', full_name: 'ROXANE OUATTARA', telephone: '0102030405', mensualite: 10000, statut: 'actif', suivi: false, user_id: 'm-site', date_entree: '2026-09-01' },
+        { id: 'r2', full_name: 'KONÉ AWA', telephone: '0707070707', mensualite: 10000, statut: 'actif', suivi: false, user_id: null, date_entree: '2026-10-01', date_naissance: '2000-01-01' },
+        { id: 'r3', full_name: 'YAO KOUASSI', telephone: '0505050505', email: 'yao@test.ci', mensualite: 10000, statut: 'actif', suivi: false, user_id: null, date_entree: '2026-10-10' },
+        { id: 'r4', full_name: 'SANOGO MARIAM', telephone: '0606060606', mensualite: 10000, statut: 'actif', suivi: false, user_id: null, date_entree: '2026-10-11' }],
       // code de l'espace de SANOGO MARIAM (inscription validée), valable encore 7 jours
       codes_espace: [{ code: 'ESP-MARIAM', mannequin_id: 'r4', annule: false, utilise_le: null, cree_le: new Date().toISOString(), expire_le: new Date(Date.now() + 7 * 864e5).toISOString() }],
       // « J'ai payé » de YAO : inscription 15 000 + 1er mois 10 000, déclarés ensemble (orange)
@@ -67,11 +67,11 @@ function donnees(role) {
   for (const [nomEcran, ecran] of [['téléphone', { width: 390, height: 844 }], ['ordinateur', { width: 1280, height: 900 }]]) {
     const e = await ouvrir('caisse', ecran, (d) => {
       d.tables.agence_mannequins = [
-        { id: 'r1', full_name: 'ROXANE OUATTARA', telephone: '0102030405', mensualite: 10000, statut: 'actif', user_id: 'm-site', date_naissance: '1999-01-01' },
-        { id: 'r2', full_name: 'KONÉ AWA', telephone: '0707070707', mensualite: 20000, statut: 'actif', user_id: null, date_naissance: '2000-01-01' },
-        { id: 'r3', full_name: 'KOUAME JEAN', telephone: '0505050505', mensualite: 10000, statut: 'actif', user_id: null, date_naissance: '2012-05-05', parent_nom: 'MADAME KOUAME', parent_telephone: '0101010101' },
-        { id: 'r4', full_name: 'SANOGO MARIAM', telephone: '0606060606', mensualite: 10000, statut: 'actif', user_id: null, date_naissance: '1998-01-01' },
-        { id: 'r5', full_name: 'ANCIEN SORTI', telephone: '0808080808', mensualite: 10000, statut: 'sorti', user_id: null, date_naissance: '1990-01-01' }];
+        { id: 'r1', full_name: 'ROXANE OUATTARA', telephone: '0102030405', mensualite: 10000, statut: 'actif', suivi: false, user_id: 'm-site', date_naissance: '1999-01-01' },
+        { id: 'r2', full_name: 'KONÉ AWA', telephone: '0707070707', mensualite: 20000, statut: 'actif', suivi: false, user_id: null, date_naissance: '2000-01-01' },
+        { id: 'r3', full_name: 'KOUAME JEAN', telephone: '0505050505', mensualite: 10000, statut: 'actif', suivi: false, user_id: null, date_naissance: '2012-05-05', parent_nom: 'MADAME KOUAME', parent_telephone: '0101010101' },
+        { id: 'r4', full_name: 'SANOGO MARIAM', telephone: '0606060606', mensualite: 10000, statut: 'actif', suivi: false, user_id: null, date_naissance: '1998-01-01' },
+        { id: 'r5', full_name: 'ANCIEN SORTI', telephone: '0808080808', mensualite: 10000, statut: 'sorti', suivi: false, user_id: null, date_naissance: '1990-01-01' }];
       d.tables.paiements_mannequins = [
         { id: 'p1', mannequin_id: 'r1', objet: 'mensualite', mois, montant: 10000, mode: 'wave', statut: 'valide', declare_le: now.toISOString() },
         { id: 'p3', mannequin_id: 'r3', objet: 'mensualite', mois, montant: 10000, mode: 'wave', statut: 'declare', declare_le: now.toISOString(), mannequin: { full_name: 'KOUAME JEAN', telephone: '0505050505' } }];
@@ -85,14 +85,29 @@ function donnees(role) {
     const vide = await t();
     ok(/Le tableau est vide/.test(vide) && !/ROXANE/.test(vide.replace(/Choisir un mannequin.*/, '')) || /Le tableau est vide/.test(vide), nomEcran + ' : le tableau démarre vide');
     ok((await p.$$('#suivi-choix option')).length >= 3, nomEcran + ' : la liste déroulante propose les mannequins');
+    for (const [page, mot] of [['recapitulatif', /Récapitulatif/], ['matrice', /Matrice/], ['mensualites', /Mensualités/], ['messages', /Messages/]]) {
+      await p.evaluate((h) => { location.hash = '#/paiements/' + h; }, page); await p.waitForTimeout(900);
+      const tp = await t();
+      ok(mot.test(tp) && /Aucun mannequin suivi pour l’instant/.test(tp) && !/KONÉ AWA|ROXANE/.test(tp.replace(/Aucun mannequin suivi.*/, '')) || (mot.test(tp) && /Aucun mannequin suivi/.test(tp)), nomEcran + ' : « ' + page + ' » ne montre aucun mannequin tant que personne n’est suivi, et le dit');
+    }
+    await p.evaluate(() => { location.hash = '#/paiements/tableau'; }); await p.waitForTimeout(900);
     await p.selectOption('#suivi-choix', '__tous__'); await p.click('form[data-form="suivi-ajouter"] [type=submit]'); await p.waitForTimeout(1000);
     const un = await p.$$eval('#suivi-choix option', (o) => o.length);
     ok(un === 1, nomEcran + ' : « Tous les mannequins actifs » ajoute tout le monde à la liste');
     const nbLignes = (await p.$$('[data-action="suivi-retirer"]')).length;
+    p.once('dialog', (dl) => dl.accept());
     await p.click('[data-action="suivi-retirer"]'); await p.waitForTimeout(800);
     ok((await p.$$('[data-action="suivi-retirer"]')).length === nbLignes - 1, nomEcran + ' : « Retirer » enlève une ligne du tableau');
     await p.selectOption('#suivi-choix', { index: 1 }); await p.click('form[data-form="suivi-ajouter"] [type=submit]'); await p.waitForTimeout(1000);
     ok((await p.$$('[data-action="suivi-retirer"]')).length === nbLignes, nomEcran + ' : on peut remettre le mannequin retiré');
+    for (const page of ['codes', 'registre']) {
+      await p.evaluate((h) => { location.hash = '#/paiements/' + h; }, page); await p.waitForTimeout(900);
+      ok((await p.$$('[data-action="mannequin-supprimer"]')).length === 0, nomEcran + ' : pas de « Supprimer » pour l’encaissement dans la liste « ' + page + ' » (réservé au principal)');
+    }
+    await p.evaluate(() => { location.hash = '#/paiements/recapitulatif'; }); await p.waitForTimeout(900);
+    const tr = await t();
+    ok(/Ont payé\s*1/i.test(tr) && /N’ont pas payé\s*3/i.test(tr), nomEcran + ' : le récapitulatif compte les mêmes mannequins que le tableau du mois (1 ont payé, 3 non) ' + tr.slice(0, 160));
+    await p.evaluate(() => { location.hash = '#/paiements/tableau'; }); await p.waitForTimeout(900);
     const tx = await t();
     ok(/Tableau du mois/.test(tx), nomEcran + ' : titre = le mois');
     const val = async (lib) => (await p.$$eval('.carte.chiffre', (l, x) => { const c = l.find((y) => y.querySelector('.l').textContent.trim() === x); return c ? c.querySelector('.v').textContent.replace(/\s|\u202f|\u00a0/g, '') : null; }, lib));
