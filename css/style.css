@@ -48,6 +48,9 @@
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
+  /* moins d'animations demandé : les blocs qui « apparaissent » au défilement sont visibles d'emblée
+     (20/10/2026 : ils restaient transparents le temps d'être repérés à l'écran) */
+  .reveal { opacity: 1 !important; transform: none !important; }
 }
 
 * { box-sizing: border-box; }

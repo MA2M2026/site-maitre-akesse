@@ -34,6 +34,17 @@ python3 -c "import openpyxl, pypdf" 2>/dev/null || pip install --quiet openpyxl 
 echo "########## versions des fichiers"; python3 ../versionner.py --verifier
 for t in test-visiteur.js test-inscription.js test-contact-recruteur.js test-admin.js test-pages-publiques.js test-espace-experiences.js test-boutique.js test-publications.js test-journal.js test-tri-photos.js test-video-accueil.js test-espace-enregistrement.js test-photos-webp.js test-photos-directes.js test-tableau-protege.js test-note-integration.js test-code-permanent.js test-journal-fichier.js test-affichage-stable.js test-couverture-accueil.js test-apercus.js test-middleware-apercus.mjs test-recherche-book.js test-administration.js test-espace1-cadre.js test-tableau-du-mois.js test-matrice-mois.js test-recapitulatif.js test-messages.js test-parametres.js test-correction-paiement.js test-suivi-paiements.js test-codes-espace.js test-mensualites.js test-comptabilite.js test-comptabilite-documents.js test-lisibilite-photos.js test-visuel.js; do
   echo "########## $t"
+  if [[ "$t" = test-lisibilite-photos.js ]]; then
+    # en petits morceaux (une page, ou 4 pages, à la fois) : d'un seul tenant, le test dépassait
+    # 4 minutes et son petit serveur ou son navigateur finissait par ne plus répondre (20/10/2026)
+    for c in index.html en/index.html actualites.html en/actualites.html evenements.html en/evenements.html; do
+      CIBLES="$c" timeout 600 node "$t"
+    done
+    for g in $(node -e "const {pages}=require('./pages-publiques');for(let i=0;i<pages.length;i+=4)console.log(pages.slice(i,i+4).join(','))"); do
+      PAGES="$g" timeout 600 node "$t"
+    done
+    continue
+  fi
   # le test visuel parcourt 42 pages × 2 écrans : il a sa propre limite de 600 s
-  timeout "$([[ "$t" = test-lisibilite-photos.js ]] && echo 3600 || { [[ "$t" = test-visuel.js ]] && echo 1500 || echo 400; })" node "$t"
+  timeout "$([[ "$t" = test-visuel.js ]] && echo 1500 || echo 400)" node "$t"
 done

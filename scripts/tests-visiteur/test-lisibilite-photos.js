@@ -39,6 +39,7 @@ function donnees() {
     const image = fs.readFileSync(path.join(__dirname, 'medias', photo));
     // CIBLES=actualites.html,evenements.html : seulement ces pages, et pas la 2e partie (pour corriger vite)
     for (const [page, TEXTES, minimum] of CIBLES.filter((c) => !process.env.CIBLES || process.env.CIBLES.split(',').includes(c[0]))) {
+      await b.close(); b = await chromium.launch();  // navigateur neuf pour chaque page (voir plus bas)
       for (const ecran of ecrans) {
         const ctx = await b.newContext({ viewport: { width: ecran.width, height: ecran.height } });
         const p = await ctx.newPage();
@@ -46,7 +47,9 @@ function donnees() {
         await p.addInitScript(() => { try { sessionStorage.setItem('ma2m_porte_ouverte', '1'); sessionStorage.setItem('ma2m_intro_vue', '1'); localStorage.setItem('ma2m_cookies', 'non'); } catch (e) { /* stockage bloqué */ } });
         await brancher(p, donnees(), []);
         await p.route(/^https:\/\/x\//, (r) => r.fulfill({ status: 200, contentType: 'image/jpeg', body: image }));
-        await p.goto('http://127.0.0.1:' + PORT + '/' + page, { waitUntil: 'domcontentloaded' });
+        // (chargement lent passager : un second essai avant de conclure)
+        await p.goto('http://127.0.0.1:' + PORT + '/' + page, { waitUntil: 'domcontentloaded' })
+          .catch(() => p.goto('http://127.0.0.1:' + PORT + '/' + page, { waitUntil: 'domcontentloaded', timeout: 60000 }));
         await p.waitForTimeout(2500);
         const libelle = page + ' · ' + ecran.nom + ' · ' + photo.replace(/photo-|\.jpg/g, '');
         let vus = 0;
@@ -101,6 +104,11 @@ function donnees() {
     await p.route(/^https:\/\/x\//, (r) => r.fulfill({ status: 200, contentType: 'image/jpeg', body: rayures }));
     await p.goto('http://127.0.0.1:' + PORT + '/' + page, { waitUntil: 'domcontentloaded' }).catch(() => {});
     await p.waitForTimeout(1800);
+    // boutons flottants (WhatsApp, retour en haut, installer l'app…) masqués pendant les mesures : ils
+    // passent par-dessus le texte un instant en défilant, ce n'est pas le fond du texte (20/10/2026)
+    await p.evaluate(() => document.querySelectorAll('body *').forEach((e) => {
+      if (getComputedStyle(e).position === 'fixed' && !e.closest('.site-header-v2')) e.style.setProperty('visibility', 'hidden', 'important');
+    }));
     const h = await p.evaluate(() => document.documentElement.scrollHeight);
     const mauvais = new Map();
     for (let y = 0; y < h; y += Math.round(ecran.height * 0.8)) {
