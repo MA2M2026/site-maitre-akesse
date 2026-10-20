@@ -1194,6 +1194,7 @@ section { padding: 5rem 0; }
 /* Étiquette fixe à gauche — masquée par défaut, visible uniquement quand une
    annonce est active (voir chargerBandeauAnnonce() sur la page d'accueil). */
 .marquee-label {
+  display: flex;   /* (20/10/2026) sinon le texte collait en haut de sa case */
   flex-shrink: 0;
   align-items: center;
   gap: 0.5rem;

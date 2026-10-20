@@ -14,13 +14,13 @@ function extraitTexte(texte, longueur) {
 
 function ouvrirNewsModal() {
   document.getElementById('news-modal').classList.add('active');
-  if (!newsModalEstOuverte) { newsModalEstOuverte = true; window.verrouillerDefilement(); }
+  if (!newsModalEstOuverte) { newsModalEstOuverte = true; window.verrouillerDefilement(); window.fenetreOuverte(fermerNewsModal); }
 }
 
 function fermerNewsModal() {
   document.getElementById('news-modal').classList.remove('active');
   if (window.ficheFermee) window.ficheFermee();
-  if (newsModalEstOuverte) { newsModalEstOuverte = false; window.deverrouillerDefilement(); }
+  if (newsModalEstOuverte) { newsModalEstOuverte = false; window.deverrouillerDefilement(); window.fenetreFermee(fermerNewsModal); }
 }
 
 function fermerRedaction() {

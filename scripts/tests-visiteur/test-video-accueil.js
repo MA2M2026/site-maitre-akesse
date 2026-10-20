@@ -42,7 +42,9 @@ const etat = p => p.evaluate(() => {
   const ratio = v.videoWidth / v.videoHeight, rs = r.width / r.height, fit = getComputedStyle(v).objectFit;
   const rognee = fit === 'cover' && Math.abs(ratio - rs) > 0.02;
   return { visible: !s.classList.contains('u-hidden') && r.height > 0, prete: s.classList.contains('video-prete'), opacite: getComputedStyle(v).opacity,
-    lit: !v.paused, rognee, source: v.getAttribute('src') || '', relais: localStorage.getItem('ma2m_photos_relais'), hauteur: Math.round(r.height), ecran: innerHeight, bouton: s.querySelector('.video-accueil-son span').textContent };
+    lit: !v.paused, rognee, source: v.getAttribute('src') || '', relais: localStorage.getItem('ma2m_photos_relais'), hauteur: Math.round(r.height), ecran: innerHeight, bouton: s.querySelector('.video-accueil-son span').textContent,
+    // bouton du son entièrement dans l'écran (20/10/2026 : « ctiver le son », coupé à gauche)
+    boutonDedans: (b => b.left >= 0 && b.right <= innerWidth)(s.querySelector('.video-accueil-son').getBoundingClientRect()) };
 });
 
 (async () => {
@@ -54,6 +56,7 @@ const etat = p => p.evaluate(() => {
     ok(e.visible && e.prete && e.lit && e.opacite === '1', appareil + ' : la vidéo s\'affiche et se lit');
     ok(!e.rognee && e.hauteur <= e.ecran, appareil + ' : vidéo entière, pas rognée (' + e.hauteur + ' px pour un écran de ' + e.ecran + ')');
     ok(/^https:\/\/photos\.maitreakessemodelmanagement\.com\/site\/video-accueil\//.test(e.source), appareil + ' : vidéo servie directement par Cloudflare (' + e.source + ')');
+    ok(e.boutonDedans, appareil + ' : bouton du son entièrement visible');
     ok(!errs.length, appareil + ' : aucune erreur de page ' + errs.join(' | '));
     await ctx.close();
     ({ p, ctx } = await ouvrir(b, appareil, { lectureRefusee: true })); e = await etat(p);

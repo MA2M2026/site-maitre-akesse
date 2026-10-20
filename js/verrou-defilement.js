@@ -50,3 +50,32 @@
     }
   };
 })();
+
+// ================== Bouton « retour » du téléphone : il ferme la fenêtre ouverte ==================
+// (20/10/2026, visite « comme une humaine » sur Android) : un article, un album, une photo en
+// grand ou la fiche d'un partenaire s'ouvrent par-dessus la page ; le geste « retour » faisait
+// QUITTER la page au lieu de refermer la fenêtre. À l'ouverture, une étape est ajoutée à
+// l'historique du navigateur (même adresse) ; « retour » la retire et referme la fenêtre du
+// dessus. Fermée par sa croix, la fenêtre retire elle-même son étape. Le menu n'est pas
+// concerné : ses liens mènent à d'autres pages (une étape en trop resterait derrière).
+//   window.fenetreOuverte(fermer) à l'ouverture, window.fenetreFermee(fermer) à la fermeture.
+(function retourFermeLesFenetres() {
+  const pile = [];          // fonctions de fermeture des fenêtres ouvertes, la dernière en haut
+  let retourAttendu = 0;    // retours lancés par nous-mêmes (croix), à ne pas traiter
+  window.fenetreOuverte = function (fermer) {
+    if (pile.indexOf(fermer) !== -1) return;
+    pile.push(fermer);
+    try { history.pushState({ ma2mFenetre: pile.length }, '', location.href); } catch (e) {}
+  };
+  window.fenetreFermee = function (fermer) {
+    const i = pile.lastIndexOf(fermer);
+    if (i === -1) return;   // déjà retirée (fermée par le bouton retour)
+    pile.splice(i, 1);
+    if (history.state && history.state.ma2mFenetre) { retourAttendu++; history.back(); }
+  };
+  window.addEventListener('popstate', function () {
+    if (retourAttendu) { retourAttendu--; return; }
+    const fermer = pile.pop();
+    if (fermer) fermer();
+  });
+})();

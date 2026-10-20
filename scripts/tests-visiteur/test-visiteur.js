@@ -34,18 +34,25 @@ const choisir = async (p, sel, pref) => { const v = await p.$eval(sel, (s, pref)
     await p.setInputFiles('#ca-video', __dirname + '/medias/video.mp4'); await p.waitForTimeout(4000);
     await p.check('#ca-consentement').catch(async () => { await p.evaluate(() => { const c = document.getElementById('ca-consentement'); c.disabled = false; c.checked = true; }); });
     await p.screenshot({ path: __dirname + '/medias/capture-' + Date.now() + '.png' });
+    // moins de 14 ans : refusé avec un message, rien n'est envoyé (décision du 20/10/2026)
+    await p.fill('#ca-naissance', '2014-06-01'); await p.dispatchEvent('#ca-naissance', 'change');
+    await p.click('#btn-envoyer'); await p.waitForTimeout(800);
+    const motifRefus = (await p.$eval('#ca-naissance', (c) => c.validationMessage)) + ' ' + (await p.textContent('#ca-msg'));
+    const refus12ans = /14 ans|age 14/.test(motifRefus) && !journal.some(j => j[0] === 'POST' && j[1] === 'casting_applications');
+    await p.fill('#ca-naissance', '2011-04-02'); await p.dispatchEvent('#ca-naissance', 'change'); await p.waitForTimeout(300);
     await p.click('#btn-envoyer');
     await p.waitForTimeout(12000);
     const inserts = journal.filter(j => j[0] === 'POST' && j[1] === 'casting_applications').map(j => JSON.parse(j[3]));
     const c = inserts[0] || {};
     console.log(`\n===== ${page} (${vp.width}px) =====`);
+    console.log('Candidate de 12 ans refusée (minimum 14 ans) :', refus12ans);
     console.log('Bloc parent visible pour 15 ans :', blocParent, '| case Civilité visible pour une femme :', caseCivilite);
     console.log('Candidature enregistrée :', inserts.length ? 'OUI' : 'NON', '| parent_nom :', c.parent_nom, '| parent_telephone :', c.parent_telephone, '| parent_email :', c.parent_email, '| email :', c.email, '| civilité :', c.civilite);
     console.log('Parcours :', c.type_candidature, '| projet :', c.projet_nom, '| expérience :', c.experience_mannequin, '| e-mail agence :', journal.filter(j => j[0] === 'EMAIL').map(j => String(JSON.parse(j[1]).template_params.message).split('\n').slice(0, 2).join(' / ')));
     console.log('Message affiché :', (await p.textContent('#ca-msg').catch(() => '')).trim().slice(0, 160));
     console.log('Erreurs :', errs);
     // Échec bloquant (relecture du 11/10/2026) : la candidature doit être enregistrée avec le bon parcours.
-    if (!inserts.length || c.type_candidature !== (page.includes('candidature') ? 'projet' : 'agence') || errs.length) { console.log('❌ ÉCHEC sur', page); process.exitCode = 1; }
+    if (!refus12ans || !inserts.length || c.type_candidature !== (page.includes('candidature') ? 'projet' : 'agence') || errs.length) { console.log('❌ ÉCHEC sur', page); process.exitCode = 1; }
     await ctx.close();
   }
   await b.close(); srv.kill();

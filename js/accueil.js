@@ -251,7 +251,9 @@
 
   // --- Bandeau « Infos du jour » ---
   async function chargerBandeauAnnonce() {
-    if (typeof sb === 'undefined' || !sb) return;
+    // L'annonce est écrite en français dans l'Administration : la version anglaise garde son
+    // bandeau des services, en anglais (20/10/2026, « CASTING TOUS LES JOURS » sur /en/)
+    if (typeof sb === 'undefined' || !sb || EN) return;
     const { data } = await sb.from('bandeau_annonce').select('texte, actif').eq('id', 'principal').maybeSingle();
     if (!data || !data.actif || !data.texte || !data.texte.trim()) return;
     const texte = data.texte.trim() + ' · ';

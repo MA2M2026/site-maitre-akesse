@@ -9,11 +9,13 @@ const PARCOURS = document.getElementById('form-casting').dataset.parcours === 'a
 // défiler des années totalement absurdes (ex. 2090) et impose souvent de faire
 // défiler très loin pour atteindre un âge plausible — d'où l'impression que la
 // sélection "ne marche pas" alors qu'il faut juste taper la date à la main.
+const AGE_MINIMUM = 14;
 (function limiterDateNaissance() {
   const champ = document.getElementById('ca-naissance');
   if (!champ) return;
   const aujourdhui = new Date();
-  champ.max = aujourdhui.toISOString().slice(0, 10);
+  // 14 ans au moins (décision de la propriétaire, 20/10/2026 : mineurs acceptés dès 14 ans, plus d'âge maximum)
+  champ.max = new Date(aujourdhui.getFullYear() - AGE_MINIMUM, aujourdhui.getMonth(), aujourdhui.getDate()).toISOString().slice(0, 10);
   champ.min = new Date(aujourdhui.getFullYear() - 100, aujourdhui.getMonth(), aujourdhui.getDate()).toISOString().slice(0, 10);
 })();
 
@@ -371,6 +373,10 @@ function estMineur() {
   return age !== null && age < 18;
 }
 document.getElementById('ca-naissance').addEventListener('change', () => {
+  // moins de 14 ans : le navigateur bloque l'envoi avec NOTRE phrase (et non « la valeur doit
+  // être inférieure ou égale à… »)
+  const age = calculerAgeCandidature(), champNaissance = document.getElementById('ca-naissance');
+  champNaissance.setCustomValidity(age !== null && age < AGE_MINIMUM ? T(`L'agence accepte les candidatures à partir de ${AGE_MINIMUM} ans.`, `The agency accepts applications from age ${AGE_MINIMUM}.`) : '');
   const blocParent = document.getElementById('ca-bloc-parent');
   const mineur = estMineur();
   blocParent.style.display = mineur ? 'block' : 'none';
@@ -437,6 +443,12 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
       afficherMsg(msg, T('Merci de préciser le projet ou casting concerné.', 'Please specify the project or casting concerned.'), 'err');
       return;
     }
+  }
+
+  const age = calculerAgeCandidature();
+  if (age !== null && age < AGE_MINIMUM) {
+    afficherMsg(msg, T(`L'agence accepte les candidatures à partir de ${AGE_MINIMUM} ans.`, `The agency accepts applications from age ${AGE_MINIMUM}.`), 'err');
+    return;
   }
 
   if (document.getElementById('ca-ville').value === 'Abidjan' && document.getElementById('ca-commune').value === 'Abidjan') {

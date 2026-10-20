@@ -86,14 +86,14 @@ function ouvrirPartModal(index) {
 let partModalEstOuverte = false;
 function afficherPartModal() {
   document.getElementById('part-modal').classList.add('active');
-  if (!partModalEstOuverte) { partModalEstOuverte = true; window.verrouillerDefilement(); }
+  if (!partModalEstOuverte) { partModalEstOuverte = true; window.verrouillerDefilement(); window.fenetreOuverte(fermerPartModal); }
 }
 document.getElementById('part-une-suite').addEventListener('click', () => {
   document.querySelector('#part-modal .news-modal-corps').scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 function fermerPartModal() {
   document.getElementById('part-modal').classList.remove('active');
-  if (partModalEstOuverte) { partModalEstOuverte = false; window.deverrouillerDefilement(); }
+  if (partModalEstOuverte) { partModalEstOuverte = false; window.deverrouillerDefilement(); window.fenetreFermee(fermerPartModal); }
 }
 document.getElementById('part-modal-fermer').addEventListener('click', fermerPartModal);
 

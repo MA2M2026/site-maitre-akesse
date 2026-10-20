@@ -219,7 +219,9 @@
 .p-film .tete { position: absolute; z-index: 2; left: 6cqmin; top: 6cqmin; }
 .p-film .mag-rubrique { color: var(--mag-sur-photo); }
 .p-film .mag-titre { font-size: max(40px, 12cqmin); margin-top: 1cqmin; }
-.p-film .video-accueil-son { position: absolute; z-index: 2; left: 6cqmin; bottom: 8cqmin; }   /* bouton rouge commun (bouton-ma2m.css) */
+.p-film .video-accueil-son { position: absolute; z-index: 2; left: 50%; bottom: 8cqmin; }   /* bouton rouge commun (bouton-ma2m.css) */
+/* centré comme dans css/style.css (translateX(-50%)) : posé à gauche, il sortait de moitié de
+   l'écran du téléphone (« ctiver le son », visite Android du 20/10/2026) */
 .p-film .mag-folio { color: var(--mag-sur-photo); z-index: 2; }
 
 /* Ils nous font confiance */
