@@ -164,6 +164,11 @@ rouge, à toute personne ou IA qui ouvre le dépôt, l'obligation de lire `CLAUD
 agents de code (Codex, Copilot, Cursor…). `GUIDE-DE-SECOURS.md` est le guide de la
 propriétaire pour se débrouiller sans IA (version PDF imprimable remise le 13/10/2026).
 
+## 🆕 REFONTE « MAGAZINE » EN COURS (choisie le 20/10/2026)
+Le site public va prendre l'allure d'un magazine qu'on feuillette (« Magazine 3 » : papier beige,
+rouge MA2M, pages qui s'empilent). Choix, étapes et état d'avancement : **`PLAN-REFONTE-MAGAZINE.md`** ;
+maquette : `maquettes/accueil-magazine.html` (fichiers non publiés, voir `.vercelignore`).
+
 ## 🆕 REFONTE OCTOBRE 2026 (cahiers v2.3 « Administration » et « Architecture ») — À LIRE EN PREMIER
 
 Travail fait sur la branche `claude/dossier-ma2m-btywwr` du 17 au 19/10/2026, mis en ligne **en une

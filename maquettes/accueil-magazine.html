@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<!-- MAQUETTE (non publiée, voir .vercelignore) : page d'accueil « Magazine 3 » choisie par la
+     propriétaire le 20/10/2026. Voir PLAN-REFONTE-MAGAZINE.md. Les photos viennent du site en ligne. -->
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maquette accueil magazine MA2M</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;0,6..96,700;1,6..96,400&family=Instrument+Sans:wght@400;500;600&family=Archivo:wdth,wght@62..125,300..900&family=Big+Shoulders+Display:wght@700;800;900&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body { font-family: system-ui, sans-serif; overflow-x: hidden; }
+  img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  :focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+
+  /* ===== Trois éditions : couleurs et lettres ===== */
+  .ed-vogue    { --scene: #E9E6E2; --papier: #FFFFFF; --encre: #141110; --gris: #6E6560; --rouge: #C8102E;
+                 --titre: "Bodoni Moda", Georgia, serif; --titre-poids: 500; --texte: "Instrument Sans", system-ui, sans-serif; --titre-casse: none; --titre-espace: -.01em; }
+  .ed-noir     { --scene: #050505; --papier: #0E0E0E; --encre: #F4F1EC; --gris: #9C978F; --rouge: #E0213F;
+                 --titre: "Archivo", system-ui, sans-serif; --titre-poids: 800; --texte: "Archivo", system-ui, sans-serif; --titre-casse: uppercase; --titre-espace: -.01em; }
+  .ed-lookbook { --scene: #CFC6BB; --papier: #F1ECE5; --encre: #1B1817; --gris: #655D56; --rouge: #C8102E;
+                 --titre: "Big Shoulders Display", system-ui, sans-serif; --titre-poids: 800; --texte: "Work Sans", system-ui, sans-serif; --titre-casse: uppercase; --titre-espace: 0; }
+  .ed-noir .titre-x { font-variation-settings: "wdth" 70; }
+
+  body { background: var(--scene); color: var(--encre); font-family: var(--texte); transition: background .4s; }
+  .edition { display: none; }
+  .edition.actif { display: block; }
+
+  /* ===== Une page de magazine (format 3:4) : tout est mesuré en largeur de page (cqw) ===== */
+  .page { position: relative; width: var(--W); aspect-ratio: 3 / 4; background: var(--papier); color: var(--encre); overflow: hidden; container-type: inline-size; }
+  .page .cadre { overflow: hidden; background: #888; }
+  .folio { position: absolute; left: 6cqw; right: 6cqw; bottom: 3.4cqw; display: flex; justify-content: space-between; font-size: 2.3cqw; letter-spacing: .08em; color: var(--gris); }
+  .pair .folio { flex-direction: row-reverse; }
+  .titre-x { font-family: var(--titre); font-weight: var(--titre-poids); text-transform: var(--titre-casse); letter-spacing: var(--titre-espace); line-height: .95; }
+  .rubrique { font-size: 2.4cqw; letter-spacing: .14em; text-transform: uppercase; color: var(--rouge); font-weight: 600; }
+
+  /* 1 · Couverture */
+  .p-couv { color: #fff; }
+  .p-couv .cadre { position: absolute; inset: 0; }
+  .p-couv .cadre img { object-position: 50% 30%; }
+  .p-couv::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,.35), rgba(0,0,0,0) 30%, rgba(0,0,0,0) 55%, rgba(0,0,0,.7)); }
+  .p-couv > *:not(.cadre) { position: absolute; z-index: 2; }
+  .p-couv .tete { top: 3cqw; left: 5cqw; right: 5cqw; text-align: center; }
+  .p-couv .tete .titre-x { font-size: 30cqw; color: var(--rouge); line-height: .82; font-weight: 700; }
+  .p-couv .numero { display: flex; justify-content: space-between; font-size: 2.3cqw; letter-spacing: .1em; text-transform: uppercase; margin-top: 1.4cqw; }
+  .p-couv .lignes { left: 5cqw; bottom: 6cqw; right: 40cqw; }
+  .p-couv .lignes b { display: block; font-family: var(--titre); font-weight: var(--titre-poids); text-transform: var(--titre-casse); font-size: 7.4cqw; line-height: .98; }
+  .p-couv .lignes span { display: block; margin-top: 2.4cqw; font-size: 3cqw; line-height: 1.35; }
+  .p-couv .lignes span::before { content: ""; display: inline-block; width: 4cqw; height: .5cqw; background: var(--rouge); vertical-align: .8cqw; margin-right: 1.6cqw; }
+  .p-couv .modele { right: 5cqw; bottom: 6cqw; text-align: right; font-size: 2.6cqw; }
+  .p-couv .modele em { display: block; font-family: var(--titre); font-style: italic; font-size: 4.6cqw; }
+
+  /* 2 · Sommaire */
+  .p-sommaire { padding: 8cqw 6cqw; }
+  .p-sommaire .titre-x { font-size: 13cqw; }
+  .p-sommaire ol { list-style: none; margin-top: 7cqw; }
+  .p-sommaire li { display: grid; grid-template-columns: 9cqw 1fr; gap: 2cqw; padding: 2.6cqw 0; border-top: .25cqw solid var(--encre); }
+  .p-sommaire li b { font-family: var(--titre); font-weight: var(--titre-poids); font-size: 6cqw; line-height: 1; color: var(--rouge); }
+  .p-sommaire li strong { display: block; font-size: 3.6cqw; font-weight: 600; }
+  .p-sommaire li span { display: block; margin-top: .6cqw; font-size: 2.8cqw; color: var(--gris); line-height: 1.4; }
+  .p-sommaire .vignette { position: absolute; right: 6cqw; top: 8cqw; width: 26cqw; aspect-ratio: 3 / 4; }
+
+  /* 3 · Édito */
+  .p-edito .cadre { height: 50%; }
+  .p-edito .texte { padding: 5cqw 6cqw; display: grid; grid-template-columns: 1fr 1fr; gap: 5cqw; }
+  .p-edito .titre-x { font-size: 6.6cqw; margin-top: 1.4cqw; }
+  .p-edito p { font-size: 2.9cqw; line-height: 1.55; }
+  .p-edito p::first-letter { font-family: var(--titre); font-weight: var(--titre-poids); float: left; font-size: 9.6cqw; line-height: .8; padding: .8cqw 1.4cqw 0 0; color: var(--rouge); }
+
+  /* 4 et 5 · Les visages */
+  .p-visages { padding: 7cqw 6cqw 10cqw; display: flex; flex-direction: column; }
+  .p-visages header { display: flex; justify-content: space-between; align-items: end; margin-bottom: 4cqw; }
+  .p-visages .titre-x { font-size: 12cqw; }
+  .p-visages .grille { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: 1fr 1fr; gap: 2.4cqw 2cqw; min-height: 0; }
+  .p-visages figure { display: flex; flex-direction: column; min-height: 0; }
+  .p-visages .cadre { flex: 1; min-height: 0; }
+  .p-visages figcaption { margin-top: 1.2cqw; font-size: 2.6cqw; font-weight: 500; }
+  .p-visages.hommes .grille { grid-template-columns: 1.4fr 1fr; grid-template-rows: 1fr 1fr; }
+  .p-visages.hommes figure:first-child { grid-row: span 2; }
+
+  /* 6 · À la une */
+  .p-une .cadre { position: absolute; inset: 0; }
+  .p-une::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,.75), rgba(0,0,0,0) 45%); }
+  .p-une .bas-une { position: absolute; z-index: 2; left: 6cqw; right: 6cqw; bottom: 8cqw; color: #fff; }
+  .p-une .titre-x { font-size: 13cqw; }
+  .p-une p { margin-top: 2cqw; font-size: 3cqw; max-width: 60cqw; line-height: 1.45; }
+  .p-une .folio { color: rgba(255,255,255,.8); z-index: 2; }
+
+  /* 7 · L'agence */
+  .p-agence { padding: 8cqw 6cqw; }
+  .p-agence .titre-x { font-size: 11cqw; margin-top: 2cqw; }
+  .p-agence ul { list-style: none; margin-top: 6cqw; }
+  .p-agence li { display: grid; grid-template-columns: 1fr 1.3fr; gap: 4cqw; padding: 3cqw 0; border-top: .25cqw solid var(--encre); }
+  .p-agence li strong { font-family: var(--titre); font-weight: var(--titre-poids); text-transform: var(--titre-casse); font-size: 5cqw; line-height: 1; }
+  .p-agence li span { font-size: 2.9cqw; line-height: 1.5; color: var(--gris); }
+  .p-agence .cadre { position: absolute; left: 6cqw; right: 6cqw; bottom: 9cqw; height: 30cqw; }
+
+  /* 8 · Dos de couverture */
+  .p-dos { background: var(--rouge); color: #fff; padding: 9cqw 7cqw; display: flex; flex-direction: column; }
+  .p-dos .rubrique { color: #fff; opacity: .85; }
+  .p-dos .titre-x { font-size: 13cqw; margin-top: 3cqw; }
+  .p-dos p { margin-top: 4cqw; font-size: 3.2cqw; line-height: 1.5; max-width: 70cqw; }
+  .p-dos .cadre { margin-top: auto; height: 46cqw; }
+  .p-dos .bouton { display: inline-block; margin-top: 5cqw; align-self: flex-start; background: #fff; color: var(--rouge); padding: 2.6cqw 5cqw; font-size: 3cqw; font-weight: 600; }
+  .p-dos .contact { margin-top: 4cqw; font-size: 2.6cqw; opacity: .9; }
+
+  /* ===== Commandes communes ===== */
+  .commandes { display: flex; justify-content: center; align-items: center; gap: 18px; padding: 14px 0 90px; font-size: 14px; color: var(--encre); }
+  .ed-vogue .commandes, .ed-lookbook .commandes { color: var(--encre); }
+  .commandes button { width: 46px; height: 46px; border-radius: 50%; border: 1px solid currentColor; font-size: 18px; }
+  .commandes button:disabled { opacity: .3; cursor: default; }
+  .aide { text-align: center; font-size: 13px; color: var(--gris); padding-top: 18px; }
+
+  /* ===== 1 · LIVRE : on tourne les pages ===== */
+  .livre-scene { display: flex; justify-content: center; padding-top: 18px; perspective: 2600px; overflow: hidden; }
+  .livre { position: relative; width: calc(var(--W) * var(--n)); height: calc(var(--W) * 4 / 3); transition: transform .7s cubic-bezier(.3,.7,.2,1); }
+  .feuille { position: absolute; top: 0; width: var(--W); height: 100%; transform-origin: left center; transform-style: preserve-3d; transition: transform .9s cubic-bezier(.35,.6,.2,1); }
+  .livre.double .feuille { left: 50%; }
+  .livre.simple .feuille { left: 0; }
+  .feuille > .page { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; box-shadow: 0 10px 40px rgba(0,0,0,.25); }
+  .feuille > .page.verso { transform: rotateY(180deg); }
+  .feuille > .page::before { content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; }
+  .livre.double .feuille > .page.recto::before { background: linear-gradient(to right, rgba(0,0,0,.18), rgba(0,0,0,0) 7%); }
+  .livre.double .feuille > .page.verso::before { background: linear-gradient(to left, rgba(0,0,0,.18), rgba(0,0,0,0) 7%); }
+  .feuille.tournee { transform: rotateY(-180deg); }
+  .livre.simple .feuille.tournee { transform: rotateY(-100deg); opacity: 0; transition: transform .8s cubic-bezier(.35,.6,.2,1), opacity .3s .5s; }
+
+  /* ===== 2 · GLISSE : les doubles pages glissent ===== */
+  .glisse { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding-top: 18px; }
+  .glisse::-webkit-scrollbar { display: none; }
+  .glisse .vue { flex: 0 0 100%; display: flex; justify-content: center; scroll-snap-align: center; }
+  .glisse .vue .page { box-shadow: 0 20px 60px rgba(0,0,0,.6); }
+  .glisse .vue .page + .page { box-shadow: 20px 20px 60px rgba(0,0,0,.6); }
+  .progression { height: 2px; width: min(420px, 60vw); margin: 22px auto 0; background: rgba(255,255,255,.18); }
+  .progression i { display: block; height: 100%; width: 0; background: var(--rouge); transition: width .3s; }
+
+  /* ===== 3 · PILE : les pages s'empilent en descendant ===== */
+  .pile .etage { height: 100vh; position: relative; }
+  .pile .etage .page { position: sticky; top: calc(50vh - var(--W) * 2 / 3); margin: 0 auto; box-shadow: 0 -12px 50px rgba(0,0,0,.25); }
+  .pile .etage:last-child { height: auto; padding-bottom: 40px; }
+  .pile-intro { height: 30vh; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 20px; font-size: 14px; color: var(--gris); }
+
+  /* Sélecteur (ne fait pas partie du design) */
+  .choix { position: fixed; z-index: 100; left: 50%; bottom: 16px; transform: translateX(-50%); display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: rgba(28,28,28,.92); box-shadow: 0 6px 24px rgba(0,0,0,.3); font: 500 14px/1 system-ui, sans-serif; }
+  .choix button { color: #ddd; padding: 11px 13px; border-radius: 999px; white-space: nowrap; }
+  .choix button[aria-pressed="true"] { background: #fff; color: #000; }
+  @media (prefers-reduced-motion: reduce) { .feuille, .livre { transition: none !important; } }
+</style>
+</head>
+<body class="ed-lookbook">
+
+<section class="edition actif" id="e3" data-edition="ed-lookbook" aria-label="Magazine 3 : les pages s'empilent">
+  <div class="pile" id="pile"><div class="pile-intro">Descendez : chaque page vient se poser sur la précédente.</div></div>
+</section>
+
+
+
+<template id="pages">
+  <article class="page p-couv">
+    <div class="cadre"><img data-i="18" alt="Rosemonde Dan"></div>
+    <div class="tete"><div class="titre-x">MA2M</div><div class="numero"><span>Numéro 01</span><span>Abidjan · Octobre 2026</span></div></div>
+    <div class="lignes"><b>Les nouveaux visages d'Abidjan</b><span>24 mannequins à découvrir</span><span>Devenir mannequin : comment postuler</span></div>
+    <div class="modele">En couverture<em>Rosemonde Dan</em></div>
+  </article>
+
+  <article class="page p-sommaire pair">
+    <span class="rubrique">Dans ce numéro</span>
+    <h2 class="titre-x">Sommaire</h2>
+    <div class="cadre vignette"><img data-i="11" alt="Alicia Kouadio"></div>
+    <ol>
+      <li><b>03</b><div><strong>Édito</strong><span>Une agence née à Abidjan</span></div></li>
+      <li><b>04</b><div><strong>Les visages</strong><span>Nos mannequins femmes</span></div></li>
+      <li><b>05</b><div><strong>Les visages</strong><span>Nos mannequins hommes</span></div></li>
+      <li><b>06</b><div><strong>À la une</strong><span>Emmanuella Tossou</span></div></li>
+      <li><b>07</b><div><strong>L'agence</strong><span>Formation, casting, événements</span></div></li>
+      <li><b>08</b><div><strong>Casting ouvert</strong><span>Devenir mannequin MA2M</span></div></li>
+    </ol>
+    <div class="folio"><span>02</span><span>MA2M · Octobre 2026</span></div>
+  </article>
+
+  <article class="page p-edito">
+    <div class="cadre"><img data-i="1" alt="Roxane Diomande"></div>
+    <div class="texte">
+      <div><span class="rubrique">Édito</span><h2 class="titre-x">Chaque grand parcours commence par un rêve.</h2></div>
+      <p>Le nôtre commence à Abidjan. Maître Akesse Model Management forme et représente des mannequins, du premier casting aux podiums internationaux. Chaque profil est travaillé comme une image de marque&nbsp;: cohérent, préparé, prêt pour les castings les plus exigeants.</p>
+    </div>
+    <div class="folio"><span>03</span><span>MA2M · Octobre 2026</span></div>
+  </article>
+
+  <article class="page p-visages pair">
+    <header><div><span class="rubrique">Les visages</span><h2 class="titre-x">Femmes</h2></div></header>
+    <div class="grille" data-liste="7,12,9,19,21,13"></div>
+    <div class="folio"><span>04</span><span>MA2M · Octobre 2026</span></div>
+  </article>
+
+  <article class="page p-visages hommes">
+    <header><div><span class="rubrique">Les visages</span><h2 class="titre-x">Hommes</h2></div></header>
+    <div class="grille" data-liste="22,3,23"></div>
+    <div class="folio"><span>05</span><span>MA2M · Octobre 2026</span></div>
+  </article>
+
+  <article class="page p-une pair">
+    <div class="cadre"><img data-i="15" alt="Emmanuella Tossou"></div>
+    <div class="bas-une"><span class="rubrique">À la une</span><h2 class="titre-x">Emmanuella Tossou</h2><p>Présence de scène et regard direct&nbsp;: du shooting beauté au défilé.</p></div>
+    <div class="folio"><span>06</span><span>MA2M · Octobre 2026</span></div>
+  </article>
+
+  <article class="page p-agence">
+    <span class="rubrique">L'agence</span>
+    <h2 class="titre-x">Du casting aux podiums</h2>
+    <ul>
+      <li><strong>Formation</strong><span>Démarche, pose, attitude face à l'objectif&nbsp;: les bases avant le premier contrat.</span></li>
+      <li><strong>Casting et booking</strong><span>Les bons visages pour les marques, les défilés et les campagnes.</span></li>
+      <li><strong>Événements</strong><span>Défilés, shootings et direction artistique, de l'idée au jour J.</span></li>
+    </ul>
+    <div class="cadre"><img data-i="2" alt="Jigger Galito"></div>
+    <div class="folio"><span>07</span><span>MA2M · Octobre 2026</span></div>
+  </article>
+
+  <article class="page p-dos pair">
+    <span class="rubrique">Casting ouvert</span>
+    <h2 class="titre-x">Le prochain visage, c'est vous.</h2>
+    <p>Femmes et hommes, à Abidjan et partout en Côte d'Ivoire. Envoyez quelques photos simples&nbsp;: nous étudions chaque candidature.</p>
+    <a class="bouton" href="#">Postuler à un casting</a>
+    <div class="cadre"><img data-i="20" alt="Divine Tama"></div>
+    <div class="contact">Maître Akesse Model Management · Abidjan · Instagram · WhatsApp</div>
+  </article>
+</template>
+
+<script>
+  var IMG = ["https://www.maitreakessemodelmanagement.com/book-photos/077ac8a8-6aec-4b72-b209-90304c37e5c6/miniatures/1791390264016-5o5ckq-n800.jpg", "https://www.maitreakessemodelmanagement.com/book-photos/0d5db2a1-5920-46dc-83fa-303eb0aba999/miniatures/1792155301937-yxa3zg-n800-w.jpg", "https://www.maitreakessemodelmanagement.com/book-photos/2978b219-4902-4529-855d-c183234e629b/miniatures/1791851765823-qeqyhl-n800-w.jpg", "https://www.maitreakessemodelmanagement.com/book-photos/2ccbd50f-99d6-4960-aa0e-e2052fd14db1/miniatures/1791824775357-qmwe35-n800.jpg", "https://www.maitreakessemodelmanagement.com/book-photos/2e98ba79-beb5-4562-9012-51d6c8ce54cf/miniatures/1791668403820-9fcn47-n800.jpg", "https://www.maitreakessemodelmanagement.com/book-photos/2eb3ff1b-f9ad-4d01-a054-e3a15b50efc5/miniatures/1791199155809-ca0nsx-n800.jpg", "https://www.maitreakessemodelmanagement.com/book-photos/3b931612-b4b5-4096-ac3e-d8f07211969a/miniatures/1792268898951-qq8wle-n800.jpg", "https://www.maitreakessemodelmanagement.com/book-photos/406973e2-cefb-4793-bc0e-6d19456bdc1d/miniatures/1791200017795-qmrokh-n800.jpg", "https://www.maitreakessemodelmanagement.com/book-photos/42343087-7cf9-442b-8539-51bc86fc4022/miniatures/1791199232773-k7h7bp-n800.jpg", "https://www.maitreakessemodelmanagement.com/book-photos/470f7ac3-f06b-444a-b2ce-d5635c1aea6d/miniatures/1791193618841-htcnof-n800.jpg", "https://www.maitreakessemodelmanagement.com/book-photos/576d25ec-b91c-421a-9ac5-38e0dab04e3a/miniatures/1791193764647-fijs80-n800.jpg", "https://www.maitreakessemodelmanagement.com/book-photos/5ccf227f-c6cc-4c00-afac-667285894684/miniatures/1792275163984-j9ez3a-n800.jpg", "https://www.maitreakessemodelmanagement.com/book-photos/66330b0d-d62c-440e-93c7-91f41fb76c44/miniatures/1791201366947-hz2gqj-n800.jpg", "https://www.maitreakessemodelmanagement.com/book-photos/69b6c7f0-8c63-4705-ad75-76cb42b21a66/miniatures/1792088577538-m9w123-n800-w.jpg", "https://www.maitreakessemodelmanagement.com/book-photos/7d1ff69c-a630-4308-8958-c59ab5d415f8/miniatures/1791199958487-km3100-n800.jpg", "https://www.maitreakessemodelmanagement.com/book-photos/8d149d96-407a-453f-aa4b-7d5f6cf07772/miniatures/1791200005615-m7zzc1-n800.jpg", "https://www.maitreakessemodelmanagement.com/book-photos/b2235c70-d1c4-4593-9f69-1b4d63cdd3dc/miniatures/1791675102997-wfvztk-n800.jpg", "https://www.maitreakessemodelmanagement.com/book-photos/b32c983c-3656-4324-9120-d9e568dc9d1b/miniatures/1791851925259-qatjhc-n800-w.jpg", "https://www.maitreakessemodelmanagement.com/book-photos/b5d34d56-820f-40c5-b3e3-583c26ec5ca6/miniatures/1791809745818-c6s8ss-n800.jpg", "https://www.maitreakessemodelmanagement.com/book-photos/bb2a27ac-262b-4321-aca0-ea874830e11f/miniatures/1791199162167-i079bu-n800.jpg", "https://www.maitreakessemodelmanagement.com/book-photos/c402a4a3-a090-421f-bdcc-b94fece2da4f/miniatures/1791390794802-yxlj4y-n800.jpg", "https://www.maitreakessemodelmanagement.com/book-photos/eb6e3c80-d587-4fe6-88ad-49530c78193c/miniatures/1792155103627-6iz5ld-n800-w.jpg", "https://www.maitreakessemodelmanagement.com/book-photos/ecd1af8e-dfa3-473f-952f-5e2dd35e6fb0/miniatures/1791193548857-ebbtmn-n800.jpg", "https://www.maitreakessemodelmanagement.com/book-photos/fcdcdb4a-cfa9-4c05-854c-968f0f090a50/miniatures/1791193590515-5scv3o-n800.jpg"];
+  var MANNEQUINS = [{"i": 0, "nom": "Roxane Ouattara", "cat": "femme"}, {"i": 1, "nom": "Roxane Diomande", "cat": "femme"}, {"i": 2, "nom": "Jigger Galito", "cat": "homme"}, {"i": 3, "nom": "Olalekan Sunday", "cat": "homme"}, {"i": 4, "nom": "Lucrèce Ori Kotchi", "cat": "femme"}, {"i": 5, "nom": "Joël Monso", "cat": "homme"}, {"i": 6, "nom": "Angela Diarra", "cat": "femme"}, {"i": 7, "nom": "Marie-France Assoa", "cat": "femme"}, {"i": 8, "nom": "Renée N'dri", "cat": "femme"}, {"i": 9, "nom": "Sensuella Kante", "cat": "femme"}, {"i": 10, "nom": "Bolli", "cat": "femme"}, {"i": 11, "nom": "Alicia Kouadio", "cat": "femme"}, {"i": 12, "nom": "Ainhoa Kapo", "cat": "femme"}, {"i": 13, "nom": "Viviane Diarra", "cat": "femme"}, {"i": 14, "nom": "Mellina Cherif", "cat": "femme"}, {"i": 15, "nom": "Emmanuella Tossou", "cat": "femme"}, {"i": 16, "nom": "Cedrick Attobra", "cat": "homme"}, {"i": 17, "nom": "Ophélia Mida", "cat": "femme"}, {"i": 18, "nom": "Rosemonde Dan", "cat": "femme"}, {"i": 19, "nom": "Elvira Dumas", "cat": "femme"}, {"i": 20, "nom": "Divine Tama", "cat": "femme"}, {"i": 21, "nom": "Mina Kouamé", "cat": "femme"}, {"i": 22, "nom": "Osiris N'goran", "cat": "homme"}, {"i": 23, "nom": "Christ N'cho", "cat": "homme"}];
+  function par(i) { return MANNEQUINS.filter(function (m) { return m.i === i; })[0]; }
+
+  // Fabrique les 8 pages (copie neuve à chaque appel)
+  function pages() {
+    var frag = document.getElementById('pages').content.cloneNode(true);
+    frag.querySelectorAll('img[data-i]').forEach(function (img) { img.src = IMG[img.dataset.i]; });
+    frag.querySelectorAll('[data-liste]').forEach(function (g) {
+      g.dataset.liste.split(',').forEach(function (n) {
+        var m = par(+n), f = document.createElement('figure');
+        f.innerHTML = '<div class="cadre"><img alt=""></div><figcaption></figcaption>';
+        f.querySelector('img').src = IMG[m.i]; f.querySelector('img').alt = m.nom;
+        f.querySelector('figcaption').textContent = m.nom; g.appendChild(f);
+      });
+    });
+    return Array.prototype.slice.call(frag.children);
+  }
+  var large = function () { return window.innerWidth >= 900; };
+  // Largeur d'une page : tient dans l'écran (double page sur ordinateur, une page sur téléphone)
+  function largeurPage(marge) {
+    var h = window.innerHeight - marge, w = large() ? (window.innerWidth - 80) / 2 : window.innerWidth - 32;
+    return Math.max(220, Math.min(w, h * 3 / 4));
+  }
+
+  /* 3 · Pile */
+  var pile = document.getElementById('pile');
+  function construirePile() {
+    var P = pages(), W = Math.min(largeurPage(60), large() ? 620 : 9999);
+    pile.querySelectorAll('.etage').forEach(function (e) { e.remove(); });
+    pile.style.setProperty('--W', W + 'px');
+    P.forEach(function (p) { var e = document.createElement('div'); e.className = 'etage'; e.appendChild(p); pile.appendChild(e); });
+  }
+
+  construirePile();
+  var dernierLarge = large();
+  window.addEventListener('resize', function () { if (large() !== dernierLarge) { dernierLarge = large(); construirePile(); } });
+</script>
+</body>
+</html>

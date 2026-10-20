@@ -10,3 +10,6 @@ scripts/
 .agents/
 .claude/
 skills-lock.json
+# Refonte « magazine » : maquettes et plan de travail (internes, jamais publiés)
+maquettes/
+PLAN-REFONTE-MAGAZINE.md
