@@ -106,6 +106,12 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     await p.evaluate(() => { window.open = () => null; });
     await p.$eval('#convoc-suivi a[href^="https://wa.me/"]', a => { a.addEventListener('click', e => e.preventDefault(), { once: true }); a.click(); }); await p.waitForTimeout(600);
     ok(ecrits(journal, 'PATCH', 'convocation_envois').filter(x => x.statut === 'envoye').length === 4, n + '« Ouvrir WhatsApp » : marqué envoyé');
+    // bouton unique « WhatsApp suivant » : chaque appui passe à la personne suivante
+    const suivant1 = await p.textContent('.convoc-suivant');
+    await p.$eval('.convoc-suivant', a => { a.addEventListener('click', e => e.preventDefault(), { once: true }); a.click(); }); await p.waitForTimeout(600);
+    const suivant2 = await p.textContent('.convoc-suivant');
+    ok(/2 restants/.test(suivant1) && /1 restant\)/.test(suivant2) && suivant1 !== suivant2 && ecrits(journal, 'PATCH', 'convocation_envois').filter(x => x.statut === 'envoye').length === 5,
+      n + '« Envoyer le WhatsApp suivant » : une personne par appui (' + suivant1.replace(/\s+/g, ' ') + ')');
     ok((await p.$$eval('#convoc-participants input:checked', cs => cs.length)) === 0 && /Déjà convoqué/.test(await p.textContent('#convoc-participants')), n + 'après l’envoi : personne n’est recochée, « Déjà convoqué(e) »');
 
     if (process.env.CAPTURES) { await p.$eval('#convoc-suivi', e => e.scrollIntoView()); await p.screenshot({ path: process.env.CAPTURES + '/suivi-' + vp.width + '.png' }); }

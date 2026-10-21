@@ -140,6 +140,18 @@
     boite.textContent = '';
     var visibles = envois.filter(function (e) { return e.statut !== 'annule'; });
     if (!visibles.length) { boite.textContent = 'Aucun envoi pour ce projet pour le moment.'; return; }
+    // Un seul bouton pour tous les WhatsApp arrivés à l'heure (comme « Messages groupés ») :
+    // chaque appui ouvre WhatsApp pour la personne suivante, avec son message déjà écrit.
+    var aFaire = visibles.filter(function (e) { return e.canal === 'whatsapp' && e.statut === 'a_faire' && lienWhatsApp(e); });
+    if (aFaire.length) {
+      var suivant = aFaire[0], persSuivante = personnes.find(function (x) { return x.participant_id === suivant.participant_id; });
+      var a = document.createElement('a');
+      a.className = 'btn btn--principal convoc-suivant'; a.target = '_blank'; a.rel = 'noopener';
+      a.href = lienWhatsApp(suivant);
+      a.textContent = '💬 Envoyer le WhatsApp suivant : ' + nomDe(persSuivante) + ' (' + aFaire.length + ' restant' + (aFaire.length > 1 ? 's' : '') + ')';
+      a.addEventListener('click', function () { changerStatut(suivant, 'envoye'); });
+      boite.appendChild(a);
+    }
     visibles.sort(function (a, b) { return (a.statut === 'a_faire' ? -1 : 0) - (b.statut === 'a_faire' ? -1 : 0) || String(a.prevu_le).localeCompare(String(b.prevu_le)); });
     visibles.forEach(function (e) {
       var pers = personnes.find(function (x) { return x.participant_id === e.participant_id; }) || { nom: 'Participant retiré' };
@@ -151,10 +163,10 @@
         + (e.erreur && e.statut !== 'envoye' ? '<br><small class="convoc-manque">' + echapperHtml(e.erreur) + '</small>' : '');
       var actions = document.createElement('div');
       actions.className = 'convoc-actions';
-      if (e.canal === 'whatsapp' && e.statut === 'a_faire' && pers.telephone && numeroWhatsApp(pers.telephone)) {
+      if (e.canal === 'whatsapp' && e.statut === 'a_faire' && lienWhatsApp(e)) {
         var a = document.createElement('a');
         a.className = 'btn-mini-admin'; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Ouvrir WhatsApp';
-        a.href = 'https://wa.me/' + numeroWhatsApp(pers.telephone) + '?text=' + encodeURIComponent(messageConvocation(projet, pers, e.sorte).texte);
+        a.href = lienWhatsApp(e);
         a.dataset.envoi = e.id;
         a.addEventListener('click', function () { changerStatut(e, 'envoye'); });
         actions.appendChild(a);
@@ -164,6 +176,12 @@
       l.appendChild(t); l.appendChild(actions);
       boite.appendChild(l);
     });
+  }
+  // lien wa.me avec le message de cette personne ('' sans numéro utilisable)
+  function lienWhatsApp(e) {
+    var pers = personnes.find(function (x) { return x.participant_id === e.participant_id; });
+    var num = pers && numeroWhatsApp(pers.telephone);
+    return num ? 'https://wa.me/' + num + '?text=' + encodeURIComponent(messageConvocation(projet, pers, e.sorte).texte) : '';
   }
   function bouton(texte, action) {
     var b = document.createElement('button');
