@@ -89,10 +89,12 @@ create table if not exists convocation_envois (
   statut text not null default 'programme' check (statut in ('programme', 'en_cours', 'envoye', 'echec', 'a_faire', 'annule')),
   tentatives int not null default 0,
   envoye_le timestamptz,
+  pris_le timestamptz,   -- quand l'envoi a été pris (serveur ou navigateur) : reprise après 15 min
   erreur text check (erreur is null or length(erreur) <= 300),
   created_at timestamptz not null default now(),
   unique (participant_id, sorte, canal)
 );
+alter table convocation_envois add column if not exists pris_le timestamptz;
 create index if not exists convocation_envois_a_l_heure on convocation_envois (prevu_le) where statut = 'programme';
 alter table convocation_envois enable row level security;
 revoke all on convocation_envois from anon;
@@ -119,7 +121,7 @@ $$;
 revoke all on function convocation_contacts_mannequins(uuid[]) from public, anon;
 grant execute on function convocation_contacts_mannequins(uuid[]) to authenticated;
 
--- 6) Heure du rappel de la veille (Abidjan = heure UTC), ou null si elle est déjà passée.
+-- 6) Heure du rappel de la veille (Abidjan = heure UTC).
 create or replace function convocation_heure_rappel(p_date date, p_heure text)
 returns timestamptz language sql immutable as $$
   select ((p_date - 1)::text || ' ' || coalesce(p_heure, '18:00') || ':00+00')::timestamptz;
@@ -138,9 +140,15 @@ begin
   if not NEW.rappel_veille then
     update convocation_envois set statut = 'annule'
       where projet_id = NEW.id and sorte = 'rappel' and statut in ('programme', 'a_faire');
-  elsif NEW.date_debut is distinct from OLD.date_debut or NEW.rappel_heure is distinct from OLD.rappel_heure then
-    update convocation_envois set prevu_le = convocation_heure_rappel(NEW.date_debut, NEW.rappel_heure)
-      where projet_id = NEW.id and sorte = 'rappel' and statut = 'programme';
+  elsif NEW.date_debut is distinct from OLD.date_debut or NEW.rappel_heure is distinct from OLD.rappel_heure
+        or (NEW.rappel_veille and not OLD.rappel_veille) then
+    -- nouvelle heure (ou rappel recoché) : à venir → programmé ; déjà passée → annulé
+    -- (jamais de « c'est demain ! » le jour même ou après l'événement)
+    update convocation_envois set
+      prevu_le = convocation_heure_rappel(NEW.date_debut, NEW.rappel_heure),
+      statut = case when convocation_heure_rappel(NEW.date_debut, NEW.rappel_heure) > now() then 'programme' else 'annule' end
+      where projet_id = NEW.id and sorte = 'rappel'
+        and (statut = 'programme' or (statut = 'annule' and NEW.rappel_veille and not OLD.rappel_veille));
   end if;
   return NEW;
 end;
@@ -173,8 +181,14 @@ returns jsonb language plpgsql security definer set search_path = public as $$
 declare
   resultat jsonb;
 begin
-  update convocation_envois set statut = 'programme'
-    where statut = 'en_cours' and prevu_le < now() - interval '15 minutes';
+  -- envoi pris il y a plus de 15 minutes sans résultat (serveur ou onglet interrompu) : repris,
+  -- sauf après 3 essais (non envoyé)
+  update convocation_envois set statut = case when tentatives >= 3 then 'echec' else 'programme' end,
+      erreur = coalesce(erreur, 'Envoi interrompu.')
+    where statut = 'en_cours' and coalesce(pris_le, prevu_le) < now() - interval '15 minutes';
+  -- un rappel de la veille dont l'heure est passée de plus d'une heure ne part plus
+  update convocation_envois set statut = 'annule'
+    where statut = 'programme' and sorte = 'rappel' and prevu_le < now() - interval '1 hour';
   with dus as (
     select id from convocation_envois
     where statut = 'programme' and prevu_le <= now()
@@ -183,7 +197,8 @@ begin
   ), pris as (
     update convocation_envois e
       set statut = case when e.canal = 'email' then 'en_cours' else 'a_faire' end,
-          tentatives = e.tentatives + case when e.canal = 'email' then 1 else 0 end
+          tentatives = e.tentatives + case when e.canal = 'email' then 1 else 0 end,
+          pris_le = now()
     from dus where e.id = dus.id
     returning e.*
   )

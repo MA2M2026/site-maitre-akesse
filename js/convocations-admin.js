@@ -195,7 +195,14 @@
       } catch (err) {
         maj = { statut: 'echec', erreur: String((err && (err.text || err.message)) || 'Envoi refusé').slice(0, 300) };
       }
-      await sb.from('convocation_envois').update(maj).eq('id', e.id);
+      // le résultat DOIT être enregistré (sinon le serveur reprendrait l'envoi : e-mail en double)
+      var enregistre = false;
+      for (var essai = 0; essai < 3 && !enregistre; essai++) {
+        var r = await sb.from('convocation_envois').update(maj).eq('id', e.id).select('id');
+        enregistre = !r.error && r.data && r.data.length;
+        if (!enregistre) await new Promise(function (ok) { setTimeout(ok, 1500); });
+      }
+      if (!enregistre) message('Attention : le résultat d’un envoi n’a pas pu être enregistré (connexion ?). Rechargez la page avant de renvoyer.', true);
       Object.assign(e, maj);
       if (i < liste.length - 1) await new Promise(function (r) { setTimeout(r, 1100); });
     }
@@ -206,7 +213,8 @@
   // ---------- Programmer l'envoi ----------
   function heureEnvoi() {
     var v = $('convoc-quand').value;
-    if (v === 'date') { var d = $('convoc-date').value; return d ? new Date(d) : null; }
+    // heure d'Abidjan (UTC), quel que soit le réglage de l'appareil
+    if (v === 'date') { var d = $('convoc-date').value; return d ? new Date(d + ':00Z') : null; }
     return new Date(Date.now() + Number(v) * 60000);
   }
 
@@ -245,7 +253,8 @@
           if (canal === 'email' ? !pers.email : !(pers.telephone && numeroWhatsApp(pers.telephone))) return;
           var base = { projet_id: projet.id, participant_id: pers.participant_id, canal: canal, tentatives: 0, envoye_le: null, erreur: null };
           lignes.push(Object.assign({}, base, { sorte: 'convocation', prevu_le: (maintenant ? new Date() : prevu).toISOString(),
-            statut: maintenant ? (canal === 'email' ? 'en_cours' : 'a_faire') : 'programme' }));
+            statut: maintenant ? (canal === 'email' ? 'en_cours' : 'a_faire') : 'programme',
+            pris_le: maintenant ? new Date().toISOString() : null, tentatives: maintenant && canal === 'email' ? 1 : 0 }));
           if (rappel) lignes.push(Object.assign({}, base, { sorte: 'rappel', prevu_le: rappel.toISOString(), statut: 'programme' }));
         });
       });
@@ -334,7 +343,7 @@
     $('convoc-programmer').textContent = this.value === '0' ? 'Envoyer maintenant' : 'Programmer l’envoi';
     if (date && !$('convoc-date').value) {
       var d = new Date(Date.now() + 3600000), z = function (n) { return String(n).padStart(2, '0'); };
-      $('convoc-date').value = d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()) + 'T' + z(d.getHours()) + ':' + z(d.getMinutes());
+      $('convoc-date').value = d.getUTCFullYear() + '-' + z(d.getUTCMonth() + 1) + '-' + z(d.getUTCDate()) + 'T' + z(d.getUTCHours()) + ':' + z(d.getUTCMinutes());
     }
   });
   $('convoc-programmer').textContent = 'Envoyer maintenant';

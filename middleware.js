@@ -30,7 +30,7 @@ export const config = {
     // tableau de bord protégé (13/10/2026) : la page et ses scripts réservés
     '/tableau-de-bord', '/tableau-de-bord.html',
     '/js/tableau-de-bord.js', '/js/tableau-v2.js', '/js/couverture-admin.js', '/js/photos-mises-de-cote.js',
-    '/js/fiches-evenement-admin.js', '/js/rapport-profils-admin.js', '/js/agenda-admin.js',
+    '/js/fiches-evenement-admin.js', '/js/rapport-profils-admin.js', '/js/agenda-admin.js', '/js/convocations-admin.js', '/js/messages-convocations.js',
     '/js/messages-candidats.js', '/js/messages-groupes.js', '/js/nettoyage-supabase.js', '/js/erreurs-corrigees.js'
   ]
 };
@@ -47,7 +47,7 @@ export const config = {
 const PAGE_TABLEAU = /^\/tableau-de-bord(\.html)?$/;
 // ⚠ Même liste que dans config.matcher ci-dessus (vérifié par test-tableau-protege.js), et
 // chaque script de la ZONE-ADMIN de tableau-de-bord.html doit y figurer.
-const SCRIPTS_ADMIN = /^\/js\/(tableau-de-bord|tableau-v2|couverture-admin|photos-mises-de-cote|fiches-evenement-admin|rapport-profils-admin|agenda-admin|messages-candidats|messages-groupes|nettoyage-supabase|erreurs-corrigees)\.js$/;
+const SCRIPTS_ADMIN = /^\/js\/(tableau-de-bord|tableau-v2|couverture-admin|photos-mises-de-cote|fiches-evenement-admin|rapport-profils-admin|agenda-admin|convocations-admin|messages-convocations|messages-candidats|messages-groupes|nettoyage-supabase|erreurs-corrigees)\.js$/;
 function base64url(octets) {
   let b = '';
   new Uint8Array(octets).forEach(o => { b += String.fromCodePoint(o); });

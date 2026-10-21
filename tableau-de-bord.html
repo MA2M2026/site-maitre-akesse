@@ -2090,7 +2090,7 @@ a.tdb-menu-item { text-decoration: none; }
 <!-- ===== AJOUT : navigation en 3 grands blocs + menu (remplace l'ancienne barre latérale toujours visible) ===== -->
 <link rel="stylesheet" href="css/cv-mannequin.css?v=b11ed6be">
 <link href="css/tableau-boutons.css?v=682b810e" rel="stylesheet"/>
-<link href="css/tableau-v2.css?v=c1e64ef0" rel="stylesheet"/>
+<link href="css/tableau-v2.css?v=8176e31b" rel="stylesheet"/>
 <!-- ZONE-ADMIN : livrée seulement après une connexion admin complète (middleware.js) -->
 <section id="bloc-tableau" class="u-hidden u-pt-0">
 <div class="db-shell">
@@ -2793,7 +2793,7 @@ document.addEventListener('DOMContentLoaded', function () {
 <label class="agenda-visible convoc-inactif"><input type="checkbox" id="convoc-canal-sms" disabled> SMS (bientôt)</label>
 <div class="agenda-grille">
 <div class="form-champ"><label for="convoc-quand">Quand ?</label><select id="convoc-quand"><option value="0">Maintenant</option><option value="30">Dans 30 minutes</option><option value="60">Dans 1 heure</option><option value="180">Dans 3 heures</option><option value="date">À une date et une heure précises</option></select></div>
-<div class="form-champ u-hidden" id="convoc-date-champ"><label for="convoc-date">Date et heure de l'envoi</label><input id="convoc-date" type="datetime-local"></div>
+<div class="form-champ u-hidden" id="convoc-date-champ"><label for="convoc-date">Date et heure de l'envoi (heure d'Abidjan)</label><input id="convoc-date" type="datetime-local"></div>
 </div>
 <p class="agenda-aide" id="convoc-rappel-info"></p>
 <div class="tdb-28"><button type="button" class="btn btn--principal" id="convoc-programmer">Programmer l'envoi</button><button type="button" class="btn" id="convoc-fermer">Fermer</button></div>
@@ -2926,15 +2926,15 @@ document.addEventListener('DOMContentLoaded', function () {
 <script src="js/analyse-profil.js?v=331cdca4"></script>
 <script src="js/erreurs-corrigees.js?v=9b5aeac4"></script>
 <script src="js/nettoyage-supabase.js?v=3556a060"></script>
-<script src="js/messages-convocations.js"></script>
-<script src="js/messages-candidats.js?v=2065a88a"></script>
+<script src="js/messages-convocations.js?v=c631297f"></script>
+<script src="js/messages-candidats.js?v=40e5e202"></script>
 <script src="js/messages-groupes.js?v=05068085"></script>
 <script src="js/couverture-admin.js?v=19280ca8"></script>
 <script src="js/photos-mises-de-cote.js?v=2585bdba"></script>
 <script src="js/fiches-evenement-admin.js?v=f6cdd740"></script>
 <script src="js/rapport-profils-admin.js?v=0ddad1e1"></script>
-<script src="js/agenda-admin.js?v=e682d95f"></script>
-<script src="js/convocations-admin.js"></script>
+<script src="js/agenda-admin.js?v=0867816c"></script>
+<script src="js/convocations-admin.js?v=a1958331"></script>
 <script src="js/tableau-de-bord.js?v=c7bc5134"></script>
 
 <script id="ma2m-final-visual-guard">
