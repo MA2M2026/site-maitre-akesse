@@ -14,8 +14,9 @@
     try { if (navigator.vibrate) navigator.vibrate(8); } catch (err) { /* vibration indisponible */ }
   }
   document.addEventListener('pointerdown', function (e) {
-    // boutons ronds de l'en-tête (EN/FR, Menu, css/charte-ma2m.css) : ils s'enfoncent et passent au vert
-    var rond = e.target.closest && e.target.closest('.site-header-v2 .lang-switch, .site-header-v2 .menu-trigger');
+    // boutons ronds « marche » (EN/FR, Menu, liens entre les formulaires ; css/charte-ma2m.css) :
+    // ils s'enfoncent et passent au vert
+    var rond = e.target.closest && e.target.closest('.site-header-v2 .lang-switch, .site-header-v2 .menu-trigger, .lien-marche');
     if (rond) { marquerAppui(rond, 'rond-appuye'); return; }
     var t = e.target.closest && e.target.closest(BOUTONS);
     if (!t || t.disabled || t.closest('.cliquable, [data-bouton-libre]')) return;

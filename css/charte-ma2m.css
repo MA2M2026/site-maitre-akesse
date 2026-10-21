@@ -163,7 +163,7 @@ html body .menu-overlay { background: var(--fond) !important; }
    pour sortir du bouton rouge commun ; à l'appui ils s'enfoncent et passent au vert
    (classe .rond-appuye posée par js/bouton-appui.js). */
 .site-header-v2 .header-v2-droite { gap: 18px !important; }
-.site-header-v2 .lang-switch, .site-header-v2 .menu-trigger {
+.site-header-v2 .lang-switch, .site-header-v2 .menu-trigger, .lien-marche-rond {
   position: relative !important;
   isolation: isolate !important;
   width: 46px !important;
@@ -188,7 +188,7 @@ html body .menu-overlay { background: var(--fond) !important; }
   -webkit-tap-highlight-color: transparent !important;
   transition: transform 0.12s ease, box-shadow 0.12s ease, color 0.15s ease !important;
 }
-.site-header-v2 .lang-switch::before, .site-header-v2 .menu-trigger::before {
+.site-header-v2 .lang-switch::before, .site-header-v2 .menu-trigger::before, .lien-marche-rond::before {
   content: '';
   position: absolute !important;
   left: 50% !important;
@@ -213,6 +213,20 @@ html body .menu-overlay { background: var(--fond) !important; }
   -webkit-text-fill-color: #1FA35B !important;
 }
 .site-header-v2 .menu-trigger:active .dots span, .site-header-v2 .menu-trigger.rond-appuye .dots span { background: #1FA35B !important; }
+
+/* Lien « Postuler à un casting » / « Intégrer l'agence » en haut des deux formulaires : le même
+   bouton rond « marche » (symbole marche/arrêt) suivi du libellé, pour qu'on voie où cliquer
+   (demande de la propriétaire, 21/10/2026). Appui : js/bouton-appui.js. */
+.lien-marche { display: inline-flex; align-items: center; gap: 14px; text-decoration: none; color: var(--encre); font-weight: 600; -webkit-tap-highlight-color: transparent; }
+.lien-marche > span:last-child { text-decoration: underline; text-decoration-color: var(--rouge-ma2m); text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.lien-marche-rond { flex: none; }
+.lien-marche-rond svg { width: 22px; height: 22px; fill: none; stroke: #5E5852; stroke-width: 3.2; stroke-linecap: round; transition: stroke 0.15s ease; }
+.lien-marche:focus-visible { outline: 2px solid var(--rouge-ma2m); outline-offset: 4px; border-radius: 999px; }
+.lien-marche:active .lien-marche-rond, .lien-marche.rond-appuye .lien-marche-rond {
+  transform: translateY(2px) scale(0.96) !important;
+  box-shadow: inset 0 3px 8px rgba(60,50,40,0.28), inset 0 -1px 0 rgba(255,255,255,0.9) !important;
+}
+.lien-marche:active .lien-marche-rond svg, .lien-marche.rond-appuye .lien-marche-rond svg { stroke: #1FA35B; }
 
 /* ===== Formulaires : champs blancs, trait fin, coins arrondis (inscription, contact, espace…) ===== */
 .form-champ input, .form-champ textarea, .form-champ select,
