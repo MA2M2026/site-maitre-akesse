@@ -35,14 +35,22 @@
   function nomDe(pers) { return pers.parent ? pers.nom + ' (parent : ' + (pers.parent_nom || 'Madame, Monsieur') + ')' : pers.nom; }
 
   // ---------- Participants ----------
-  // Mannequin du projet : coordonnées à jour, et au parent pour un(e) mineur(e) (même règle que
-  // les autres messages, contactsEnvoi de js/messages-candidats.js).
-  function personneMannequin(c, sauve) {
+  // Mannequin du projet, coordonnées à jour. Mineur(e) (demande du 21/10/2026) : SON message à
+  // elle / lui (s'il a un téléphone ou un e-mail) ET le même programme à son parent (contactsEnvoi,
+  // js/messages-candidats.js) : deux personnes dans la liste.
+  function personnesMannequin(c, sauves) {
     var dossier = { full_name: c.full_name, category: c.category, date_naissance: c.date_naissance, email: c.contact_email, phone: c.phone,
       parent_nom: c.parent_nom, parent_telephone: c.parent_telephone, parent_email: c.parent_email };
-    var dest = contactsEnvoi(dossier);
-    return avecSauve({ cle: 'm' + c.model_id, model_id: c.model_id, nom: nomAvecCivilite(dossier),
-      email: dest.email || null, telephone: dest.phone || null, parent: dest.parent, parent_nom: dest.parent ? dest.nom : null }, sauve);
+    var dest = contactsEnvoi(dossier), nom = nomAvecCivilite(dossier), liste = [];
+    if (!dest.parent || c.contact_email || c.phone) {
+      liste.push(avecSauve({ cle: 'm' + c.model_id, groupe: c.model_id, model_id: c.model_id, nom: nom,
+        email: c.contact_email || null, telephone: c.phone || null, parent: false, parent_nom: null }, sauves[c.model_id + ':false']));
+    }
+    if (dest.parent) {
+      liste.push(avecSauve({ cle: 'm' + c.model_id + '-parent', groupe: c.model_id, model_id: c.model_id, nom: nom,
+        email: dest.email || null, telephone: dest.phone || null, parent: true, parent_nom: dest.nom || null }, sauves[c.model_id + ':true']));
+    }
+    return liste;
   }
   // ce qui est déjà enregistré pour ce participant : lien personnel et réponse
   function avecSauve(pers, sauve) {
@@ -144,7 +152,14 @@
   function dessinerReponses() {
     var boite = $('convoc-reponses');
     boite.textContent = '';
-    var convoques = personnes.filter(function (x) { return x.participant_id && envois.some(function (e) { return e.participant_id === x.participant_id && e.sorte === 'convocation' && e.statut !== 'annule'; }); });
+    var touches = personnes.filter(function (x) { return x.participant_id && envois.some(function (e) { return e.participant_id === x.participant_id && e.sorte === 'convocation' && e.statut !== 'annule'; }); });
+    // un(e) mineur(e) et son parent comptent pour une seule personne : la réponse de l'un vaut pour les deux
+    var parGroupe = {}, convoques = [];
+    touches.forEach(function (x) {
+      var g = x.groupe || x.cle, deja = parGroupe[g];
+      if (!deja) { parGroupe[g] = x; convoques.push(x); return; }
+      if (!deja.reponse && x.reponse) { convoques[convoques.indexOf(deja)] = x; parGroupe[g] = x; }
+    });
     if (!convoques.length) return;
     var groupes = [
       ['confirme', '✅ Confirmé', convoques.filter(function (x) { return x.reponse === 'confirme'; })],
@@ -400,9 +415,9 @@
     envois = r[1].data || [];
     carnet = r[2].data || [];
     var parModele = {}, parContact = {};
-    sauves.forEach(function (s) { if (s.model_id) parModele[s.model_id] = s; if (s.contact_id) parContact[s.contact_id] = s; });
+    sauves.forEach(function (s) { if (s.model_id) parModele[s.model_id + ':' + !!s.parent] = s; if (s.contact_id) parContact[s.contact_id] = s; });
     (r[3].data || []).slice().sort(function (a, b) { return String(a.full_name).localeCompare(String(b.full_name), 'fr'); })
-      .forEach(function (c) { personnes.push(personneMannequin(c, parModele[c.model_id])); });
+      .forEach(function (c) { personnes.push.apply(personnes, personnesMannequin(c, parModele)); });
     sauves.filter(function (s) { return s.contact_id; }).forEach(function (s) {
       var c = carnet.find(function (x) { return x.id === s.contact_id; });
       personnes.push(c ? personneDuCarnet(c, s) : avecSauve({ cle: 'p' + s.id, contact_id: s.contact_id, externe: true, nom: s.nom, email: s.email, telephone: s.telephone, parent: false }, s));

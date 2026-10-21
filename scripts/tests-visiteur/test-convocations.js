@@ -74,19 +74,19 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     await p.click('[data-convoquer="pa2"]'); await p.waitForTimeout(1200);
     ok(await p.isVisible('#convoc-panneau'), n + 'panneau « Convoquer » ouvert');
     const liste = await p.$$eval('#convoc-participants .convoc-personne', ls => ls.map(l => l.textContent));
-    ok(liste.length === 2 && /Mademoiselle AWA KONÉ/.test(liste[0]) && /awa@test\.ci/.test(liste[0]) && /parent : Madame Ama Mère/.test(liste[1]) && /mere@test\.ci/.test(liste[1]),
-      n + 'mannequins du projet, la mineure avec son parent');
+    ok(liste.length === 3 && /Mademoiselle AWA KONÉ/.test(liste[0]) && /awa@test\.ci/.test(liste[0]) && /ama@test\.ci/.test(liste[1]) && !/parent/.test(liste[1]) && /parent : Madame Ama Mère/.test(liste[2]) && /mere@test\.ci/.test(liste[2]),
+      n + 'mannequins du projet : la mineure reçoit son message ET son parent le sien');
     ok(/Fatou Bamba/.test(await p.textContent('#convoc-participants')), n + 'les mannequins écrits à la main sont signalés');
     // personne non inscrite
     await p.selectOption('#convoc-civilite', 'Monsieur'); await p.fill('#convoc-nom', 'Jean Styliste'); await p.fill('#convoc-tel', '0709090909'); await p.fill('#convoc-email', 'jean@test.ci');
     await p.click('#convoc-personne-ajouter'); await p.waitForTimeout(600);
     const carnet = ecrits(journal, 'POST', 'contacts_externes').pop() || {};
-    ok(carnet.nom === 'Jean Styliste' && carnet.civilite === 'Monsieur' && (await p.$$('#convoc-participants .convoc-personne')).length === 3, n + 'personne non inscrite ajoutée au carnet et à la liste');
+    ok(carnet.nom === 'Jean Styliste' && carnet.civilite === 'Monsieur' && (await p.$$('#convoc-participants .convoc-personne')).length === 4, n + 'personne non inscrite ajoutée au carnet et à la liste');
     // aperçu
     const apercu = await p.textContent('#convoc-apercu');
     ok(/Bonjour Mademoiselle AWA KONÉ/.test(apercu) && /Vous êtes convoquée à 15h00 précises/.test(apercu) && /15h30 — Essayage/.test(apercu) && /Escarpins noirs/.test(apercu) && /Boulevard Hassan II/.test(apercu) && /Début : 20h00/.test(apercu),
       n + 'aperçu du message : convocation, programme, à prévoir, adresse');
-    await p.selectOption('#convoc-apercu-qui', { index: 1 });
+    await p.selectOption('#convoc-apercu-qui', { index: 2 });
     ok(/Bonjour Madame Ama Mère/.test(await p.textContent('#convoc-apercu')) && /participation de Mademoiselle PETITE AMA/.test(await p.textContent('#convoc-apercu')), n + 'aperçu pour la mineure : adressé au parent');
 
     if (process.env.CAPTURES) { await p.$eval('#convoc-panneau', e => e.scrollIntoView()); await p.screenshot({ path: process.env.CAPTURES + '/panneau-' + vp.width + '.png', fullPage: false }); }
@@ -95,22 +95,22 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     const participants = ecrits(journal, 'POST', 'convocation_participants').flat();
     const lignesEnvois = ecrits(journal, 'POST', 'convocation_envois').flat();
     const emails = journal.filter(j => j[0] === 'EMAIL').map(j => JSON.parse(j[1]).template_params);
-    ok(participants.length === 3 && participants.some(x => x.parent && x.email === 'mere@test.ci'), n + '3 participants enregistrés (parent pour la mineure)');
-    ok(lignesEnvois.filter(l => l.sorte === 'convocation').length === 6 && lignesEnvois.filter(l => l.sorte === 'rappel').length === 6 && lignesEnvois.some(l => l.sorte === 'rappel' && l.prevu_le === '2030-11-14T19:00:00.000Z'),
-      n + '6 convocations (e-mail + WhatsApp) et 6 rappels la veille à 19h00');
-    ok(emails.length === 3 && emails.some(e => e.to_email === 'mere@test.ci' && e.to_name === 'Madame Ama Mère') && emails.every(e => !/\*/.test(e.message)), n + '3 e-mails envoyés tout de suite (le parent pour la mineure), sans marques WhatsApp');
-    ok(ecrits(journal, 'PATCH', 'convocation_envois').filter(x => x.statut === 'envoye').length === 3, n + 'e-mails marqués « envoyé »');
-    ok(/3 e-mail\(s\) envoyé\(s\) sur 3/.test(await p.textContent('#convoc-msg')) && /Rappel de la veille/.test(await p.textContent('#convoc-msg')), n + 'bilan affiché');
+    ok(participants.length === 4 && participants.some(x => x.parent && x.email === 'mere@test.ci') && participants.some(x => !x.parent && x.email === 'ama@test.ci'), n + '4 participants enregistrés (la mineure et son parent)');
+    ok(lignesEnvois.filter(l => l.sorte === 'convocation').length === 8 && lignesEnvois.filter(l => l.sorte === 'rappel').length === 8 && lignesEnvois.some(l => l.sorte === 'rappel' && l.prevu_le === '2030-11-14T19:00:00.000Z'),
+      n + '8 convocations (e-mail + WhatsApp) et 8 rappels la veille à 19h00');
+    ok(emails.length === 4 && emails.some(e => e.to_email === 'ama@test.ci') && emails.some(e => e.to_email === 'mere@test.ci' && e.to_name === 'Madame Ama Mère') && emails.every(e => !/\*/.test(e.message)), n + '4 e-mails envoyés tout de suite (la mineure et son parent), sans marques WhatsApp');
+    ok(ecrits(journal, 'PATCH', 'convocation_envois').filter(x => x.statut === 'envoye').length === 4, n + 'e-mails marqués « envoyé »');
+    ok(/4 e-mail\(s\) envoyé\(s\) sur 4/.test(await p.textContent('#convoc-msg')) && /Rappel de la veille/.test(await p.textContent('#convoc-msg')), n + 'bilan affiché');
     const wa = await p.$$eval('#convoc-suivi .convoc-envoi a[href^="https://wa.me/"]', as => as.map(a => a.href));
-    ok(wa.length === 3 && wa.some(h => h.startsWith('https://wa.me/2250707070707?text=') && /Madame%20Ama%20M%C3%A8re/.test(h)), n + 'suivi : 3 « Ouvrir WhatsApp » prêts (le parent pour la mineure)');
+    ok(wa.length === 4 && wa.some(h => h.startsWith('https://wa.me/2250707070707?text=') && /Madame%20Ama%20M%C3%A8re/.test(h)), n + 'suivi : 4 « Ouvrir WhatsApp » prêts (la mineure et son parent)');
     await p.evaluate(() => { window.open = () => null; });
     await p.$eval('#convoc-suivi .convoc-envoi a[href^="https://wa.me/"]', a => { a.addEventListener('click', e => e.preventDefault(), { once: true }); a.click(); }); await p.waitForTimeout(600);
-    ok(ecrits(journal, 'PATCH', 'convocation_envois').filter(x => x.statut === 'envoye').length === 4, n + '« Ouvrir WhatsApp » : marqué envoyé');
+    ok(ecrits(journal, 'PATCH', 'convocation_envois').filter(x => x.statut === 'envoye').length === 5, n + '« Ouvrir WhatsApp » : marqué envoyé');
     // bouton unique « WhatsApp suivant » : chaque appui passe à la personne suivante
     const suivant1 = await p.textContent('.convoc-suivant');
     await p.$eval('.convoc-suivant', a => { a.addEventListener('click', e => e.preventDefault(), { once: true }); a.click(); }); await p.waitForTimeout(600);
     const suivant2 = await p.textContent('.convoc-suivant');
-    ok(/2 restants/.test(suivant1) && /1 restant\)/.test(suivant2) && suivant1 !== suivant2 && ecrits(journal, 'PATCH', 'convocation_envois').filter(x => x.statut === 'envoye').length === 5,
+    ok(/3 restants/.test(suivant1) && /2 restants/.test(suivant2) && suivant1 !== suivant2 && ecrits(journal, 'PATCH', 'convocation_envois').filter(x => x.statut === 'envoye').length === 6,
       n + '« Envoyer le WhatsApp suivant » : une personne par appui (' + suivant1.replace(/\s+/g, ' ') + ')');
     ok((await p.$$eval('#convoc-participants input:checked', cs => cs.length)) === 0 && /Déjà convoqué/.test(await p.textContent('#convoc-participants')), n + 'après l’envoi : personne n’est recochée, « Déjà convoqué(e) »');
 

@@ -65,7 +65,9 @@ create table if not exists convocation_participants (
   parent_nom text check (parent_nom is null or length(parent_nom) <= 160),
   created_at timestamptz not null default now()
 );
-create unique index if not exists convocation_participants_mannequin on convocation_participants (projet_id, model_id) where model_id is not null;
+-- un(e) mineur(e) reçoit son message ET son parent reçoit le sien (demande du 21/10/2026) : deux lignes
+drop index if exists convocation_participants_mannequin;
+create unique index if not exists convocation_participants_mannequin_parent on convocation_participants (projet_id, model_id, parent) where model_id is not null;
 create unique index if not exists convocation_participants_contact on convocation_participants (projet_id, contact_id) where contact_id is not null;
 alter table convocation_participants enable row level security;
 revoke all on convocation_participants from anon;
