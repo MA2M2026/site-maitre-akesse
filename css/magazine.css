@@ -72,7 +72,7 @@
 /* ---- 1 · Couverture ---- */
 .p-couv { color: var(--mag-sur-photo); }
 .p-couv .mag-cadre { position: absolute; inset: 0; }
-.p-couv .mag-cadre img { position: absolute; inset: 0; object-position: 50% 25%; opacity: 0; transition: opacity 1.4s ease; }
+.p-couv .mag-cadre img { position: absolute; inset: 0; object-position: 35% 25%; opacity: 0; transition: opacity 1.4s ease; }
 /* défilement des photos de couverture (js/accueil.js) : deux images qui se relaient en fondu */
 .p-couv .mag-cadre img.visible { opacity: 1; }
 .p-couv::after {
@@ -82,13 +82,20 @@
   background: linear-gradient(to bottom, var(--mag-voile-fort) 0%, var(--mag-voile-fort) 26%, var(--mag-voile-texte) 33%, var(--mag-voile-nul) 42%, var(--mag-voile-nul) 46%, var(--mag-voile-texte) 60%, var(--mag-voile-fort) 76%, var(--mag-voile-plein) 100%);
 }
 .p-couv > *:not(.mag-cadre) { position: absolute; z-index: 2; }
-.p-couv .tete { top: 3cqmin; left: 5cqmin; right: 5cqmin; text-align: center; }
-.p-couv .mag-logo { font-size: 31cqmin; line-height: 0.82; font-weight: 800; color: var(--mag-rouge); }
+/* « MA2M » : quatre lettres évidées l'une sous l'autre sur le bord droit, seul le contour rouge est
+   tracé et l'on voit la photo à travers (une validée par la propriétaire le 21/10/2026, modèle
+   Pinterest « NEXT »). Dessin dans index.html / en/index.html (SVG, police Montserrat 700) ;
+   --couv-lettres = largeur de la colonne de lettres, les textes s'arrêtent avant. */
+.p-couv { --couv-lettres: calc(100cqh * 140 / 760); }
+.p-couv .couv-lettres { top: 0; right: 1.5cqmin; height: 100%; width: var(--couv-lettres); pointer-events: none; }
+.p-couv .couv-lettres text { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 168px; text-anchor: middle; }
+.p-couv .tete { top: 3cqmin; left: 5cqmin; right: calc(var(--couv-lettres) + 4cqmin); }
+.p-couv .mag-logo { margin: 0; }
 .p-couv .numero {
-  display: flex; justify-content: space-between; margin-top: 1.6cqmin;
+  display: flex; justify-content: space-between;
   font-size: max(12px, 2.4cqmin); letter-spacing: 0.08em;
 }
-.p-couv .lignes { left: 5cqmin; right: 38cqmin; bottom: 7cqmin; }
+.p-couv .lignes { left: 5cqmin; right: calc(var(--couv-lettres) + 4cqmin); bottom: 7cqmin; }
 .p-couv .lignes a { display: block; text-decoration: none; }
 .p-couv .lignes .une {
   font-family: var(--mag-titre); font-weight: 800; text-transform: uppercase;
@@ -102,13 +109,12 @@
   content: ""; position: absolute; left: 0; top: 0.65em;
   width: 4cqmin; height: 2px; background: var(--mag-rouge);
 }
-.p-couv .modele { right: 5cqmin; bottom: 7cqmin; max-width: 32cqmin; text-align: right; font-size: max(12px, 2.5cqmin); text-decoration: none; }
+.p-couv .modele { left: 5cqmin; top: calc(3cqmin + max(12px, 2.4cqmin) * 2.6); right: calc(var(--couv-lettres) + 4cqmin); font-size: max(12px, 2.5cqmin); text-decoration: none; }
 @media (max-width: 700px) {
   /* au-dessus du bouton WhatsApp flottant (50 px, à 1 rem du bas) : il recouvrait le titre
      anglais, plus court (21/10/2026, test-lisibilite-photos.js) ; 140 px : la couverture commence
      sous le bandeau défilant, son bas est donc un peu sous le bord de l’écran */
-  .p-couv .lignes { right: 5cqmin; bottom: max(7cqmin, 140px); }
-  .p-couv .modele { top: 46cqmin; bottom: auto; }
+  .p-couv .lignes { bottom: max(7cqmin, 140px); }
 }
 .p-couv .modele strong {
   display: block; font-family: var(--mag-titre); font-weight: 700; text-transform: uppercase;
