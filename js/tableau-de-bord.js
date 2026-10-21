@@ -1097,7 +1097,6 @@ async function chargerStatistiques() {
   }).join('') || '<tr><td colspan="5">Aucun message.</td></tr>';
 
   void chargerVedette();
-  void chargerBandeau();
   void chargerMotResponsableTableau();
   void chargerCompteurValidations();
   void chargerConfigInstagram();
@@ -2654,34 +2653,6 @@ document.getElementById('tb-retirer-vedette-btn').addEventListener('click', asyn
   msg.className = 'form-msg ok'; msg.textContent = 'Mise en avant retirée.'; msg.style.display = 'block';
   void chargerVedette();
   void chargerHeroVedette();
-});
-
-async function chargerBandeau() {
-  const { data } = await sb.from('bandeau_annonce').select('*').eq('id', 'principal').maybeSingle();
-  const actif = !!(data && data.actif);
-  document.getElementById('bandeau-texte').value = (data && data.texte) || '';
-  const btnActif = document.getElementById('bandeau-actif-btn');
-  btnActif.textContent = actif ? 'Désactiver' : 'Activer';
-  btnActif.dataset.actif = actif ? '1' : '0';
-  document.getElementById('bandeau-etat').textContent = actif
-    ? 'Actuellement affiché sur le site, à la place du texte par défaut.'
-    : 'Actuellement masqué — le texte par défaut de la bande s\'affiche sur le site.';
-}
-
-document.getElementById('bandeau-enregistrer-btn').addEventListener('click', async () => {
-  const msg = document.getElementById('bandeau-msg');
-  const texte = document.getElementById('bandeau-texte').value.trim();
-  msg.className = 'form-msg ok'; msg.textContent = 'Enregistrement…'; msg.style.display = 'block';
-  const { error } = await sb.from('bandeau_annonce').update({ texte, updated_at: new Date().toISOString() }).eq('id', 'principal');
-  if (error) { msg.className = 'form-msg err'; msg.textContent = "Erreur lors de l'enregistrement."; return; }
-  msg.className = 'form-msg ok'; msg.textContent = 'Message enregistré !';
-  void chargerBandeau();
-});
-
-document.getElementById('bandeau-actif-btn').addEventListener('click', async () => {
-  const actif = document.getElementById('bandeau-actif-btn').dataset.actif === '1';
-  await sb.from('bandeau_annonce').update({ actif: !actif }).eq('id', 'principal');
-  void chargerBandeau();
 });
 
 let mrPhotoUrlActuelle = null;

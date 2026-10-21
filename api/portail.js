@@ -132,7 +132,7 @@ async function envoisConvocations(req, res) {
       const lignes = projets.map((t) => '• « ' + t.titre + ' » (' + t.date + ') : ' + t.n + ' message(s)');
       await envoyerEmailServeur(cle, EMAIL_AGENCE, 'Maître Akesse Model Management',
         'C’est l’heure d’envoyer les messages WhatsApp programmés :\n' + lignes.join('\n') +
-        '\n\nOuvrez le tableau de bord, rubrique « Agenda du site », bouton « Convoquer » du projet : les messages sont prêts, un bouton par personne.');
+        '\n\nOuvrez l’Administration (https://admin.maitreakessemodelmanagement.com/admin/), espace « Administration du site », « Contenu du site » → « Agenda du site », bouton « Convoquer » du projet : les messages sont prêts, un bouton par personne.');
     }
     if (echecs) await noterAuJournal('[Convocations] ' + echecs + ' e-mail(s) non envoyé(s) sur ' + (envoyes + echecs) + (cle ? '' : ' (clé EmailJS absente)'), 'convocations');
     return res.status(200).json({ ok: true, envoyes, echecs, whatsapp: projets.reduce((n, t) => n + t.n, 0) });

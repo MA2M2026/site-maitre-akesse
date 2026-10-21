@@ -36,7 +36,6 @@
     ['actualites', 'Actualités', '/actualites.html?cadre=1'],
     ['evenements', 'Événements', '/evenements.html?cadre=1'],
     ['partenaires', 'Partenaires', '/partenaires.html?cadre=1'],
-    ['b3c-bandeau', 'Bandeau d’information', '#b3c-bandeau'],
     ['b3c-mot-fondateur', 'Mot du fondateur', '#b3c-mot-fondateur'],
     ['b3c-agenda', 'Agenda du site', '#b3c-agenda'],
     ['b3d-video-accueil', 'Vidéo de l’accueil', '#b3d-video-accueil'],
