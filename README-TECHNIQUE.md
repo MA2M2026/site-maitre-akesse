@@ -193,6 +193,10 @@ dans la conversation du 21/10/2026.
   affiché nulle part ; la table et le réglage existent toujours. Le bandeau de la boutique
   (`js/marketplace-vitrine.js`) n'est pas concerné.
 - Essai : `test-ecran-entree.js` (plus de bandeau, boutons ronds, vert à l'appui, menu ouvert).
+- Même bouton rond (classe `.lien-marche-rond`, style partagé avec l'en-tête) en haut de « Intégrer
+  l'agence » et « Postuler à un casting » (FR/EN) : le lien vers l'autre formulaire est un
+  `a.lien-marche` (bouton rond + libellé souligné) au lieu d'un lien perdu dans la phrase. Essai :
+  `test-lien-marche.js`.
 
 ## 🔤 Polices hébergées sur le site (21/10/2026)
 Plus aucune page n'appelle Google Fonts : `css/polices.css` (chargée par toutes les pages) décrit

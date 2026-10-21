@@ -31,7 +31,8 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
     const enRemontant = await visible();
     ok(auDepart && !enDescendant && enRemontant, page + ' : visible au départ, effacée en descendant, de retour en remontant (' + [auDepart, enDescendant, enRemontant] + ')');
     if (champ) {
-      await p.focus(champ); await p.waitForTimeout(600);
+      // sans faire défiler la page (le défilement vers le bas efface déjà la pastille : ici on teste la saisie seule)
+      await p.evaluate((c) => document.querySelector(c).focus({ preventScroll: true }), champ); await p.waitForTimeout(600);
       const pendantSaisie = await visible();
       await p.evaluate(() => document.activeElement.blur()); await p.waitForTimeout(600);
       ok(!pendantSaisie && await visible(), page + ' : effacée pendant la saisie d\'un champ, de retour ensuite');
