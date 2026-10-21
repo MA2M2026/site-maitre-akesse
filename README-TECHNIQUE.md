@@ -221,7 +221,9 @@ Essai : `test-retour-invitation.js`.
   mannequins. Le panneau d'envoi `js/convocations-admin.js` (participants, carnet, aperçu, quand,
   suivi, réponses, « Ouvrir WhatsApp ») s'ouvre ensuite. Dans l'Agenda, « 📨 Convoquer » (projets
   à venir seulement) ouvre cette page avec le projet choisi (`convoquerProjet`). Outils partagés
-  Agenda/Convocations : `js/agenda-outils.js` (cases à cocher, lignes à deux champs, déroulé).
+  Agenda/Convocations : `js/agenda-outils.js` (cases à cocher, lignes à deux champs, déroulé,
+  `afficherMessageFormulaire` : un `.form-msg` ne se voit qu'avec la classe `ok` ou `err`).
+  Message de la page : `#cv-etat` (`cv-msg` est déjà pris par « Code de validation »).
   « Maintenant » : e-mails envoyés depuis le navigateur (EmailJS).
 - **Agenda public** : plus aucun nom de mannequin (`js/agenda.js`, décision du 21/10/2026) ; les
   noms restent dans « Parcours MA2M » (médaillons).

@@ -27,8 +27,7 @@
     promesse.catch(function (err) { message('Erreur : ' + ((err && err.message) || err), true); });
   }
   function message(t, erreur) {
-    $('convoc-msg').textContent = t || '';
-    $('convoc-msg').classList.toggle('erreur', !!erreur);
+    afficherMessageFormulaire($('convoc-msg'), t, erreur);
   }
   function quand(iso) {
     return new Date(iso).toLocaleString('fr-FR', { timeZone: 'Africa/Abidjan', weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });

@@ -15,8 +15,7 @@
   var projets = [], mannequins = [], charge = false, enCours = false, actif = false, projetChoisi = null;
 
   function message(t, erreur) {
-    $('cv-msg').textContent = t || '';
-    $('cv-msg').classList.toggle('erreur', !!erreur);
+    afficherMessageFormulaire($('cv-etat'), t, erreur);
   }
   function aVenir(p) { return !p.annule && (p.date_fin || p.date_debut) >= dateDuJour(); }
 

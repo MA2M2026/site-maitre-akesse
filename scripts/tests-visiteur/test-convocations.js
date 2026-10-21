@@ -46,6 +46,11 @@ async function connecter(b, vp, actif) {
 const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] === table).map(j => JSON.parse(j[3] || 'null'));
 
 (async () => {
+  // Un même identifiant deux fois dans le tableau de bord : le message de la page Convocations
+  // partait dans un autre écran, caché (« cv-msg », relevé par SonarQube Cloud le 21/10/2026)
+  const ids = (require('fs').readFileSync(require('path').resolve(__dirname, '../../tableau-de-bord.html'), 'utf8').match(/ id="[^"]+"/g) || []);
+  const doubles = ids.filter((x, i) => ids.indexOf(x) !== i);
+  ok(!doubles.length, 'tableau de bord : aucun identifiant en double' + (doubles.length ? ' (' + doubles.join(', ') + ')' : ''));
   let srv; process.on('exit', () => srv && srv.kill());
   srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..') }); await new Promise(r => setTimeout(r, 800));
   const b = await chromium.launch();
@@ -128,16 +133,16 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     const dansUneHeure = prog.filter(l => l.sorte === 'convocation');
     ok(dansUneHeure.length === 2 && dansUneHeure.every(l => l.statut === 'programme' && Math.abs(new Date(l.prevu_le) - Date.now() - 3600000) < 120000) && journal.filter(j => j[0] === 'EMAIL').length === avant,
       n + '« Dans 1 heure » : envois programmés, rien ne part tout de suite');
-    ok(/Programmé pour/.test(await p.textContent('#convoc-msg')), n + 'message « Programmé pour … »');
+    ok(await p.isVisible('#convoc-msg') && /Programmé pour/.test(await p.textContent('#convoc-msg')), n + 'message « Programmé pour … » affiché');
     // 5. Nouveau projet depuis la page : ajouté à l'agenda (visible, sans adresse publique) ; date passée refusée
     await p.selectOption('#cv-projet', '');
     ok((await p.inputValue('#cv-titre')) === '' && (await p.$$eval('#cv-mannequins input:checked', cs => cs.length)) === 0 && await p.isHidden('#convoc-panneau'), n + '« Nouveau projet » : page vierge');
     await p.fill('#cv-titre', 'SHOOTING TEST'); await p.fill('#cv-date', '2020-05-05'); await p.$eval('#cv-enregistrer', x => x.click()); await p.waitForTimeout(500);
-    ok(/déjà passée/.test(await p.textContent('#cv-msg')), n + 'nouveau projet à une date passée : refusé');
+    ok(await p.isVisible('#cv-etat') && /déjà passée/.test(await p.textContent('#cv-etat')), n + 'nouveau projet à une date passée : refusé');
     await p.fill('#cv-date', '2030-12-01'); await p.fill('#cv-lieu', 'Studio MA2M'); await p.$eval('#cv-mannequins input[value="m1"]', c => c.click());
     await p.$eval('#cv-enregistrer', x => x.click()); await p.waitForTimeout(1800);
     const cree = ecrits(journal, 'POST', 'agenda_projets').flat().pop() || {};
-    ok(cree.titre === 'SHOOTING TEST' && cree.date_debut === '2030-12-01' && cree.visible === true && cree.mannequin_ids.join() === 'm1' && await p.isVisible('#convoc-panneau') && /ajouté à l’agenda/.test(await p.textContent('#cv-msg')), n + 'nouveau projet ajouté à l’agenda, panneau d’envoi ouvert');
+    ok(cree.titre === 'SHOOTING TEST' && cree.date_debut === '2030-12-01' && cree.visible === true && cree.mannequin_ids.join() === 'm1' && await p.isVisible('#convoc-panneau') && /ajouté à l’agenda/.test(await p.textContent('#cv-etat')), n + 'nouveau projet ajouté à l’agenda, panneau d’envoi ouvert');
     ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth)), n + 'rien ne dépasse de l’écran');
     ok(!errs.length, n + 'aucune erreur ' + errs.join(' | '));
     await ctx.close();

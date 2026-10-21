@@ -1,6 +1,14 @@
 // Outils des formulaires de projets (Agenda du site, js/agenda-admin.js, et Convocations,
 // js/convocations-page.js) : une case à cocher avec son libellé, une ligne à deux champs avec
-// « Retirer » (intervenants, étapes du déroulé), et le déroulé de la journée (heure + activité).
+// « Retirer » (intervenants, étapes du déroulé), le déroulé de la journée (heure + activité) et
+// le message sous le formulaire.
+// Message d'un formulaire (.form-msg, caché tant qu'il n'a ni « ok » ni « err », css/style.css) :
+// avant le 21/10/2026, l'Agenda et les Convocations ne posaient que « erreur » et rien ne s'affichait.
+function afficherMessageFormulaire(m, t, erreur) {
+  m.textContent = t || '';
+  m.classList.toggle('ok', !!t && !erreur);
+  m.classList.toggle('err', !!t && !!erreur);
+}
 function caseACocher(valeur, libelle, nom, recherche) {
   var l = document.createElement('label');
   var c = document.createElement('input');

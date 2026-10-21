@@ -90,6 +90,8 @@ const PORT = String(8800 + Math.floor(Math.random() * 100));
     await p.$eval('#agenda-annule', x => x.click()); await p.$eval('#agenda-enregistrer', x => x.click()); await p.waitForTimeout(1200);
     const envoiAgenda = journal.filter(j => j[0] === 'POST' && j[1] === 'agenda_projets').map(j => JSON.parse(j[3])).map(x => Array.isArray(x) ? x[0] : x)[0] || {};
     console.log('Agenda envoyé : pays =', envoiAgenda.pays, '| annulé =', envoiAgenda.annule, '| autres mannequins =', JSON.stringify(envoiAgenda.mannequins_libres));
+    // le message « enregistré » doit se voir (avant le 21/10/2026, il restait caché)
+    if (!(await p.isVisible('#agenda-msg'))) { console.log('❌ ÉCHEC agenda (message après « Enregistrer » invisible :', JSON.stringify(await p.textContent('#agenda-msg')), ')'); process.exitCode = 1; }
     if (envoiAgenda.pays !== 'Sénégal' || envoiAgenda.annule !== true) { console.log('❌ ÉCHEC agenda (pays / annulé)'); process.exitCode = 1; }
     if (JSON.stringify(envoiAgenda.mannequins_libres) !== '["Fatou Bamba","Zoé N."]') { console.log('❌ ÉCHEC agenda (autres mannequins)'); process.exitCode = 1; }
     if (JSON.stringify(envoiAgenda.partenaires_libres) !== '["Maison XYZ (via un intermédiaire)"]' || journal.some(j => j[0] === 'POST' && j[1] === 'partenaires')) { console.log('❌ ÉCHEC agenda (autres partenaires)', JSON.stringify(envoiAgenda.partenaires_libres)); process.exitCode = 1; }

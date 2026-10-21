@@ -20,9 +20,7 @@
   var projetEnCours = null; // projet ouvert avec « Modifier »
 
   function message(t, erreur) {
-    var m = $('agenda-msg');
-    m.textContent = t || '';
-    m.classList.toggle('erreur', !!erreur);
+    afficherMessageFormulaire($('agenda-msg'), t, erreur);
   }
   function cochees(idConteneur) {
     return Array.prototype.map.call($(idConteneur).querySelectorAll('input[type=checkbox]:checked'), function (c) { return c.value; });
