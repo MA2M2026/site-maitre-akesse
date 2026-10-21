@@ -11,7 +11,10 @@
     return fetch(SUPABASE_URL + '/rest/v1/rpc/' + nom, {
       method: 'POST', headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify(params)
-    }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+    }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    });
   }
   function dateFr(iso) {
     var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); if (!m) return '';
@@ -39,11 +42,15 @@
   }).catch(function () { $('cf-details').textContent = 'Connexion impossible pour le moment. Réessayez dans un instant.'; });
   function repondre(reponse) {
     $('cf-oui').disabled = $('cf-non').disabled = true;
+    var reactiver = function () { $('cf-oui').disabled = $('cf-non').disabled = false; };
     rpc('convocation_repondre', { p_jeton: jeton, p_reponse: reponse }).then(function (ok) {
+      reactiver();
       if (ok === true) afficherReponse(reponse);
       else $('cf-resultat').textContent = 'Votre réponse n’a pas pu être enregistrée (projet terminé ou annulé).';
-    }).catch(function () { $('cf-resultat').textContent = 'Connexion impossible : réessayez dans un instant.'; })
-      .then(function () { $('cf-oui').disabled = $('cf-non').disabled = false; });
+    }).catch(function () {
+      reactiver();
+      $('cf-resultat').textContent = 'Connexion impossible : réessayez dans un instant.';
+    });
   }
   $('cf-oui').addEventListener('click', function () { repondre('confirme'); });
   $('cf-non').addEventListener('click', function () { repondre('absent'); });

@@ -22,6 +22,10 @@
   var CANAUX = { email: '📧 E-mail', whatsapp: '💬 WhatsApp', sms: '📱 SMS' };
   var SORTES = { convocation: 'convocation', rappel: 'rappel de la veille' };
 
+  // action lancée par un clic : une panne s'affiche au lieu de passer inaperçue
+  function lancer(promesse) {
+    promesse.catch(function (err) { message('Erreur : ' + ((err && err.message) || err), true); });
+  }
   function message(t, erreur) {
     $('convoc-msg').textContent = t || '';
     $('convoc-msg').classList.toggle('erreur', !!erreur);
@@ -90,7 +94,7 @@
         var x = document.createElement('button');
         x.type = 'button'; x.className = 'btn-mini-admin'; x.textContent = 'Retirer';
         x.setAttribute('aria-label', 'Retirer ' + pers.nom + ' de ce projet');
-        x.addEventListener('click', function (e) { e.preventDefault(); retirer(pers); });
+        x.addEventListener('click', function (e) { e.preventDefault(); lancer(retirer(pers)); });
         l.appendChild(x);
       } else l.appendChild(document.createElement('span'));
       boite.appendChild(l);
@@ -226,7 +230,7 @@
       a.className = 'btn btn--principal convoc-suivant'; a.target = '_blank'; a.rel = 'noopener';
       a.href = lienWhatsApp(suivant);
       a.textContent = '💬 Envoyer le WhatsApp suivant : ' + nomDe(persSuivante) + ' (' + aFaire.length + ' restant' + (aFaire.length > 1 ? 's' : '') + ')';
-      a.addEventListener('click', function () { changerStatut(suivant, 'envoye'); });
+      a.addEventListener('click', function () { lancer(changerStatut(suivant, 'envoye')); });
       boite.appendChild(a);
     }
     visibles.sort(function (a, b) { return (a.statut === 'a_faire' ? -1 : 0) - (b.statut === 'a_faire' ? -1 : 0) || String(a.prevu_le).localeCompare(String(b.prevu_le)); });
@@ -245,11 +249,11 @@
         a.className = 'btn-mini-admin'; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Ouvrir WhatsApp';
         a.href = lienWhatsApp(e);
         a.dataset.envoi = e.id;
-        a.addEventListener('click', function () { changerStatut(e, 'envoye'); });
+        a.addEventListener('click', function () { lancer(changerStatut(e, 'envoye')); });
         actions.appendChild(a);
       }
-      if (e.canal === 'email' && e.statut === 'echec') actions.appendChild(bouton('Réessayer', function () { envoyerEmails([e]); }));
-      if (e.statut === 'programme') actions.appendChild(bouton('Annuler', function () { changerStatut(e, 'annule'); }));
+      if (e.canal === 'email' && e.statut === 'echec') actions.appendChild(bouton('Réessayer', function () { lancer(envoyerEmails([e])); }));
+      if (e.statut === 'programme') actions.appendChild(bouton('Annuler', function () { lancer(changerStatut(e, 'annule')); }));
       l.appendChild(t); l.appendChild(actions);
       boite.appendChild(l);
     });
@@ -415,7 +419,10 @@
     envois = r[1].data || [];
     carnet = r[2].data || [];
     var parModele = {}, parContact = {};
-    sauves.forEach(function (s) { if (s.model_id) parModele[s.model_id + ':' + !!s.parent] = s; if (s.contact_id) parContact[s.contact_id] = s; });
+    sauves.forEach(function (s) {
+      if (s.model_id) parModele[s.model_id + ':' + !!s.parent] = s;
+      if (s.contact_id) parContact[s.contact_id] = s;
+    });
     (r[3].data || []).slice().sort(function (a, b) { return String(a.full_name).localeCompare(String(b.full_name), 'fr'); })
       .forEach(function (c) { personnes.push.apply(personnes, personnesMannequin(c, parModele)); });
     sauves.filter(function (s) { return s.contact_id; }).forEach(function (s) {
@@ -433,7 +440,7 @@
   };
 
   $('convoc-apercu-qui').addEventListener('change', dessinerApercu);
-  $('convoc-actualiser').addEventListener('click', function () { if (projet) window.ouvrirConvocations(projet); });
+  $('convoc-actualiser').addEventListener('click', function () { if (projet) lancer(window.ouvrirConvocations(projet)); });
   $('convoc-quand').addEventListener('change', function () {
     var date = this.value === 'date';
     $('convoc-date-champ').classList.toggle('u-hidden', !date);

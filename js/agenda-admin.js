@@ -92,7 +92,9 @@
     l.className = classe;
     [champ1, champ2].forEach(function (c) {
       var i = document.createElement('input');
-      i.type = c.type || 'text'; if (c.max) i.maxLength = c.max; if (c.liste) i.setAttribute('list', c.liste);
+      i.type = c.type || 'text';
+      if (c.max) i.maxLength = c.max;
+      if (c.liste) i.setAttribute('list', c.liste);
       if (c.placeholder) i.placeholder = c.placeholder;
       i.setAttribute('aria-label', c.aria); i.value = c.valeur || ''; i.dataset[c.cle] = '1';
       l.appendChild(i);
