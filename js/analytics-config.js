@@ -61,3 +61,24 @@ function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
 
 gtag('config', 'G-1BX5MPZ6WE');
+
+// Le programme de Google se charge APRÈS la page (21/10/2026, journal : sur une connexion
+// faible, ce fichier mettait jusqu'à 35 s et retardait l'affichage complet). Les appels
+// gtag() ci-dessus attendent dans dataLayer et partent dès qu'il arrive. Au plus tard 4 s
+// après l'arrivée, même si la page n'a pas fini de charger : un visiteur qui repart avant la
+// dernière photo est quand même compté.
+(function () {
+  let charge = false;
+  function chargerGoogle() {
+    if (charge) return;
+    charge = true;
+    const s = document.createElement('script');
+    s.async = true; s.crossOrigin = 'anonymous';
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE';
+    document.head.appendChild(s);
+  }
+  function apresChargement() { setTimeout(chargerGoogle, 1500); }
+  setTimeout(chargerGoogle, 4000);
+  if (document.readyState === 'complete') apresChargement();
+  else window.addEventListener('load', apresChargement, { once: true });
+})();

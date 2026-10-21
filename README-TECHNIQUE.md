@@ -164,6 +164,30 @@ rouge, à toute personne ou IA qui ouvre le dépôt, l'obligation de lire `CLAUD
 agents de code (Codex, Copilot, Cursor…). `GUIDE-DE-SECOURS.md` est le guide de la
 propriétaire pour se débrouiller sans IA (version PDF imprimable remise le 13/10/2026).
 
+## 🚪 Écran d'entrée de l'accueil (21/10/2026, validé par la propriétaire)
+`index.html` et `en/index.html` chargent dans le `<head>` `js/ecran-entree.js` (SANS defer) et
+`css/ecran-entree.css`. Une fois par visite (`sessionStorage` `ma2m_ecran_entree`) : animation
+du logo (`assets/logo-intro-clair.png` découpé en 9 morceaux par `clip-path`, modèle Pinterest
+choisi par la propriétaire, ≈ 3,7 s), puis « Bienvenue sur notre site » / « Welcome to our
+website » en police manuscrite Allison (hébergée : `assets/polices/`, licence OFL à côté),
+trois boutons en verre (Intégrer l'agence, Visiter le Book, Participer à un casting ; à
+l'appui le bouton s'enfonce et son rond passe au vert) et une jauge « Entrer sur le site »
+de 5 s. Le script pose aussitôt la classe `ee-actif` sur `<html>` : un voile du même fond
+(CSS) cache l'accueil jusqu'à ce que l'écran soit construit (pas d'éclair). Mouvements réduits :
+pas d'animation. Navigateurs automatisés (robots, tests) : pas d'écran, sauf
+`localStorage.ma2m_test_ecran_entree = '1'` (test `test-ecran-entree.js`). Échap ou la jauge
+ferment l'écran ; défilement de la page dessous bloqué (`verrouillerDefilement`). Aucune étape
+d'historique (le bouton « retour » ramène d'où l'on vient). Maquette validée et vidéos : faites
+dans la conversation du 21/10/2026.
+
+## 📶 Journal des erreurs : vraies erreurs seulement (21/10/2026, décision de la propriétaire)
+Les signalements 🟢 « connexion du visiteur » (page très lente, réseau coupé, script non
+chargé, bascule des photos vers le relais…) ne sont plus listés comme des erreurs : une seule
+ligne les compte (« N visiteurs avaient une connexion faible », bouton Effacer). Le journal ne
+montre que 🔴 et 🟠. Une erreur de `js/erreurs-corrigees.js` qui se reproduit APRÈS sa date de
+correction est mise en tête, avec « ⚠️ Revenue après la correction du … » (aussi dans le fichier
+pour Claude). Test : `test-journal-fichier.js`.
+
 ## 🆕 REFONTE « MAGAZINE » EN COURS (choisie le 20/10/2026)
 Le site public va prendre l'allure d'un magazine qu'on feuillette (« Magazine 3 » : papier beige,
 rouge MA2M, pages qui s'empilent). Choix, étapes et état d'avancement : **`PLAN-REFONTE-MAGAZINE.md`** ;
@@ -338,7 +362,11 @@ avec secours automatique, puis quitter le relais une fois le rodage réussi.
   chargement sans fin (aucune erreur n'arrive dans ce cas) : 8 s après une photo directe
   préparée (ou un défilement), s'il en reste d'attendues à l'écran, petite sonde vers une
   adresse inexistante de Cloudflare ; réponse (404) en moins de 5 s = connexion lente, on
-  patiente ; pas de réponse = bascule. Après la bascule, le visiteur est mémorisé 12 h
+  patiente ; sinon une seconde sonde part par le relais et Cloudflare a encore 5 s ; ni Cloudflare ni le relais ne répondent = connexion
+  faible du visiteur, on patiente aussi (passer par Vercel n'aiderait pas et consommerait son
+  quota — 21/10/2026) ; seul « Cloudflare muet, relais qui répond » fait basculer
+  (`cloudflareSeulMuet`, aussi utilisé par `js/video-accueil.js`). Après la bascule, le
+  visiteur est mémorisé 1 h (12 h avant le 21/10/2026)
   (`localStorage` `ma2m_photos_relais`, lu une fois par page), toute photo directe ajoutée
   ensuite à la page repart par le relais (MutationObserver : filtres, Sélection…), et le
   basculement est noté UNE fois dans le journal des erreurs (catégorie `photos`) : c'est
@@ -560,7 +588,10 @@ navigateur.
   reportés en mode "DNS uniquement" (non proxié) dans Cloudflare pour ne
   rien changer à leur comportement.
 - **Analytics** : Google Analytics (gtag.js, ID `G-1BX5MPZ6WE`), installé à
-  l'identique sur les 14 pages réelles du site. Google Search Console est
+  l'identique sur les pages réelles du site. Depuis le 21/10/2026, le programme de Google
+  n'est plus appelé dans le `<head>` des pages : `js/analytics-config.js` l'ajoute 1,5 s
+  après le chargement complet de la page (au plus tard 4 s après l'arrivée) (sur connexion faible, il mettait jusqu'à 35 s et
+  retardait tout ; les appels `gtag()` attendent dans `dataLayer`). Google Search Console est
   aussi vérifié (fichier `google5acb001b6b29c80f.html` à la racine — ne
   jamais le supprimer, c'est la preuve de propriété du site) et le
   sitemap (`sitemap.xml`) y est soumis.

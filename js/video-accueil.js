@@ -60,13 +60,14 @@
       v.preload = 'auto';  // la section est proche : la première image s'affiche même sans lecture
       v.src = urlLegere(relais);
       lecture();
-      // Chargement sans fin (domaine injoignable sans erreur) : rien après 10 s et la sonde
-      // ne répond pas → bascule de tout le site (passerAuRelais prévient aussi la vidéo).
+      // Chargement sans fin (domaine injoignable sans erreur) : rien après 10 s, Cloudflare
+      // muet alors que le relais répond → bascule de tout le site (passerAuRelais prévient
+      // aussi la vidéo). Les deux muets = connexion du visiteur : on reste sur Cloudflare.
       if (!directe()) return;
       setTimeout(function () {
         if (v.readyState >= 1 || !directe()) return;
-        sonderPhotosDirectes(function (repondu) {
-          if (repondu || v.readyState >= 1 || !directe()) return;
+        sonderPhotosDirectes(function (cloudflare, relais) {
+          if (!cloudflareSeulMuet(cloudflare, relais) || v.readyState >= 1 || !directe()) return;
           passerAuRelais('vidéo de l\'accueil : Cloudflare sans réponse');
         });
       }, 10000);

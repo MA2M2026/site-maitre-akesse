@@ -1807,13 +1807,18 @@ function navigateurEcritWebp() {
 // directement au domaine photos.maitreakessemodelmanagement.com (Cloudflare R2, trafic
 // gratuit), AVEC UNE ROUE DE SECOURS : le 13/10/2026, ce domaine restait parfois
 // injoignable quelques minutes depuis un téléphone sur une box Orange CI (connexion
-// coupée, ERR_CONNECTION_CLOSED). Le visiteur passe au relais Vercel pendant 12 h (sans
+// coupée, ERR_CONNECTION_CLOSED). Le visiteur passe au relais Vercel pendant 1 h (sans
 // rien lui demander, noté une fois dans le journal des erreurs pour suivre le rodage) :
 //  - quand une photo directe échoue ET que la même photo s'affiche par le relais (une
 //    photo simplement absente, qui échoue des deux côtés, ne compte pas) ;
 //  - quand des photos directes attendues à l'écran ne sont toujours pas là après
 //    DELAI_PHOTOS_DIRECTES ET qu'une petite sonde vers Cloudflare reste sans réponse
-//    (chargement sans fin) ; si la sonde répond, la connexion est juste lente : on patiente.
+//    (chargement sans fin) pendant 2 × DELAI_SONDE_PHOTOS ALORS QUE la même sonde par le relais
+//    répond ; si Cloudflare
+//    répond, ou si aucun des deux ne répond (connexion faible du visiteur), on patiente sur
+//    Cloudflare : passer par Vercel n'aiderait pas et consommerait son quota (21/10/2026,
+//    décision de la propriétaire : 3 visiteurs à connexion très lente basculés pour rien).
+// Durée de la bascule ramenée de 12 h à 1 h le 21/10/2026 (même raison).
 // Les adresses enregistrées en base ne changent pas (toujours /book-photos/) : seul
 // l'affichage est converti, donc revenir en arrière = mettre PHOTOS_DIRECTES_ACTIVES à false.
 const PHOTOS_DIRECTES_ACTIVES = true;
@@ -1822,7 +1827,7 @@ const RELAIS_PHOTOS = /^(?:https:\/\/(?:www\.)?maitreakessemodelmanagement\.com)
 const CLE_PHOTOS_RELAIS = 'ma2m_photos_relais';
 const DELAI_PHOTOS_DIRECTES = 8000;
 const DELAI_SONDE_PHOTOS = 5000;
-const DUREE_PHOTOS_RELAIS = 12 * 3600 * 1000;
+const DUREE_PHOTOS_RELAIS = 3600 * 1000;
 // Lu une seule fois par page, puis mis à jour par passerAuRelais.
 let photosParRelais = (function () {
   if (!PHOTOS_DIRECTES_ACTIVES) return true;
@@ -1878,20 +1883,34 @@ function photosDirectesEnAttente() {
     return r.bottom > 0 && r.top < innerHeight && r.width > 0;
   });
 }
-// Lenteur ou domaine muet ? Une adresse inexistante répond tout de suite (erreur 404)
-// quand Cloudflare est joignable : rappel(true/false) après DELAI_SONDE_PHOTOS.
+// Lenteur ou domaine muet ? Une adresse inexistante répond tout de suite (erreur 404) quand
+// le serveur est joignable. Sonde vers Cloudflare d'abord ; sans réponse après
+// DELAI_SONDE_PHOTOS, une seconde sonde part vers le relais, et Cloudflare a encore ce délai
+// pour répondre (sa sonde attend parfois derrière les photos en cours). Puis
+// rappel(cloudflareRepond, relaisRepond) ; relaisRepond vaut null s'il n'a pas fallu le sonder
+// (aucune requête Vercel quand Cloudflare répond).
 function sonderPhotosDirectes(rappel) {
-  let repondu = false;
-  const sonde = new Image();
-  sonde.onload = sonde.onerror = () => { repondu = true; };
-  sonde.src = PHOTOS_DIRECTES + 'sonde-connexion?' + Date.now();
-  setTimeout(() => { sonde.onload = sonde.onerror = null; rappel(repondu); }, DELAI_SONDE_PHOTOS);
+  const repondu = { cloudflare: false, relais: false };
+  const sonder = (cle, base) => {
+    const sonde = new Image();
+    sonde.onload = sonde.onerror = () => { repondu[cle] = true; };
+    sonde.src = base + 'sonde-connexion?' + Date.now();
+    return sonde;
+  };
+  const cf = sonder('cloudflare', PHOTOS_DIRECTES);
+  setTimeout(() => {
+    if (repondu.cloudflare) { cf.onload = cf.onerror = null; rappel(true, null); return; }
+    const relais = sonder('relais', '/book-photos/');
+    setTimeout(() => { cf.onload = cf.onerror = relais.onload = relais.onerror = null; rappel(repondu.cloudflare, repondu.relais); }, DELAI_SONDE_PHOTOS);
+  }, DELAI_SONDE_PHOTOS);
 }
+// Bascule justifiée : Cloudflare muet alors que le relais répond (sinon : connexion du visiteur).
+function cloudflareSeulMuet(cloudflare, relais) { return !cloudflare && relais; }
 function verifierPhotosDirectes() {
   if (photosParRelais || !photosDirectesEnAttente()) { gardeFouPhotos = null; return; }
-  sonderPhotosDirectes(repondu => {
+  sonderPhotosDirectes((cloudflare, relais) => {
     gardeFouPhotos = null;
-    if (!repondu) passerAuRelais('Cloudflare sans réponse (photos attendues depuis ' + ((DELAI_PHOTOS_DIRECTES + DELAI_SONDE_PHOTOS) / 1000) + ' s)');
+    if (cloudflareSeulMuet(cloudflare, relais)) passerAuRelais('Cloudflare sans réponse alors que le relais répond (photos attendues depuis ' + ((DELAI_PHOTOS_DIRECTES + 2 * DELAI_SONDE_PHOTOS) / 1000) + ' s)');
     else if (++patiencesPhotos <= 6) armerGardeFouPhotos();
   });
 }

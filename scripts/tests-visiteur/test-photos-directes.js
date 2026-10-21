@@ -1,7 +1,8 @@
 // Photos servies directement par Cloudflare (13/10/2026) : les pages publiques affichent les
 // photos depuis photos.maitreakessemodelmanagement.com au lieu du relais Vercel /book-photos/,
 // avec une roue de secours : domaine injoignable (connexion coupée) ou bloqué sans réponse →
-// les photos repassent par le relais, le visiteur est mémorisé 12 h, le journal le note une fois.
+// les photos repassent par le relais, le visiteur est mémorisé 1 h (12 h avant le 21/10/2026), le
+// journal le note une fois. Cloudflare ET relais muets = connexion du visiteur : pas de bascule.
 // Base et stockage simulés : rien n'est écrit pour de vrai.
 const { chromium } = require('playwright'); const { spawn } = require('child_process'); const { brancher } = require('./faux-serveur');
 const fs = require('fs'); const path = require('path');
@@ -20,7 +21,8 @@ const tables = {
 };
 
 // mode : 'ok' (Cloudflare répond), 'coupe' (connexion fermée), 'muet' (ne répond jamais),
-// 'sans-webp' (Cloudflare répond mais la copie WebP manque)
+// 'sans-webp' (Cloudflare répond mais la copie WebP manque), 'tout-muet' (connexion du visiteur
+// très faible : ni Cloudflare ni le relais ne répondent à la sonde)
 async function visite(b, page, mode, opts = {}) {
   const ctx = opts.ctx || await b.newContext({ viewport: opts.mobile ? { width: 390, height: 844 } : { width: 1280, height: 900 } });
   const p = await ctx.newPage(); const errs = [], journal = [], directes = [], relais = [];
@@ -35,7 +37,7 @@ async function visite(b, page, mode, opts = {}) {
   await p.route(DIRECT, r => {
     directes.push(r.request().url());
     if (mode === 'coupe') return r.abort('connectionclosed');
-    if (mode === 'muet') return; // la requête reste en attente, comme le téléphone du 13/10/2026
+    if (mode === 'muet' || mode === 'tout-muet') return; // la requête reste en attente, comme le téléphone du 13/10/2026
     if (/sonde-connexion/.test(r.request().url())) return r.fulfill({ status: 404, body: '' });
     if (mode === 'lent') return setTimeout(() => r.fulfill({ status: 200, contentType: 'image/jpeg', body: PHOTO }).catch(() => {}), 11000);
     if (mode === 'absente') return r.fulfill({ status: 404, body: '' });
@@ -44,6 +46,7 @@ async function visite(b, page, mode, opts = {}) {
   });
   await p.route(/^https:\/\/www\.maitreakessemodelmanagement\.com\/book-photos\/|127\.0\.0\.1:\d+\/book-photos\//, r => {
     relais.push(r.request().url());
+    if (mode === 'tout-muet') return; // le relais non plus ne répond pas
     if (mode === 'sans-webp' && /\.webp/.test(r.request().url())) return r.fulfill({ status: 404, body: '' });
     if (mode === 'absente') return r.fulfill({ status: 404, body: '' });
     return r.fulfill({ status: 200, contentType: 'image/jpeg', body: PHOTO });
@@ -147,7 +150,7 @@ async function visite(b, page, mode, opts = {}) {
   for (const page of ['index.html', 'mannequins.html', 'mannequin.html?id=a1']) {
     const v = await visite(b, page, 'coupe', { mobile: true });
     ok(v.etat.srcs.length > 0 && v.etat.srcs.every(s => /\/book-photos\//.test(s)) && !v.etat.vides, page + ' coupé : toutes les photos repassent par le relais et s\'affichent (' + v.etat.srcs.length + ')');
-    ok(Number(v.etat.marque) > Date.now() + 11 * 3600e3, page + ' coupé : visiteur mémorisé 12 h');
+    ok(Number(v.etat.marque) > Date.now() + 0.9 * 3600e3 && Number(v.etat.marque) < Date.now() + 1.1 * 3600e3, page + ' coupé : visiteur mémorisé 1 h');
     ok(v.signalements === 1, page + ' coupé : basculement noté une seule fois dans le journal (' + v.signalements + ')');
     ok(!v.errs.length, page + ' coupé : aucune erreur ' + v.errs.join(' | '));
     // visite suivante du même visiteur : directement par le relais, sans repasser par Cloudflare
@@ -159,18 +162,28 @@ async function visite(b, page, mode, opts = {}) {
   // 3) Cloudflare ne répond jamais (chargement sans fin) : garde-fou à 8 s, sonde sans
   //    réponse pendant 5 s → bascule
   for (const page of ['index.html', 'mannequin.html?id=a1']) {
-    const v = await visite(b, page, 'muet', { mobile: true, attente: 15000 });
+    const v = await visite(b, page, 'muet', { mobile: true, attente: 20000 });
     ok(v.etat.srcs.length > 0 && v.etat.srcs.every(s => /\/book-photos\//.test(s)) && !v.etat.vides, page + ' muet : photos affichées par le relais après le délai (' + v.etat.srcs.length + ')');
     ok(!!v.etat.marque && v.signalements === 1, page + ' muet : visiteur mémorisé, noté une fois');
     ok(!v.errs.length, page + ' muet : aucune erreur ' + v.errs.join(' | '));
     await v.ctx.close();
   }
 
+  // 3 bis-0) Connexion du visiteur très faible : Cloudflare ET relais muets → on reste sur
+  //          Cloudflare (Vercel n'aiderait pas), pas de bascule ni d'alerte (21/10/2026)
+  {
+    const v = await visite(b, 'mannequin.html?id=a1', 'tout-muet', { mobile: true, attente: 20000 });
+    ok(!v.etat.marque && v.signalements === 0, 'tout muet : pas de bascule vers Vercel ni d\'alerte');
+    ok(v.etat.srcs.length > 0 && v.etat.srcs.every(s => DIRECT.test(s)), 'tout muet : les photos restent demandées à Cloudflare (' + v.etat.srcs.length + ')');
+    ok(v.relais.every(u => /sonde-connexion/.test(u)), 'tout muet : seule la petite sonde est passée par Vercel (' + v.relais.length + ')');
+    ok(!v.errs.length, 'tout muet : aucune erreur ' + v.errs.join(' | '));
+    await v.ctx.close();
+  }
   // 3 bis) Connexion seulement LENTE (photos en 11 s, mais Cloudflare répond) : on patiente,
   //        pas de bascule ni de fausse alerte
   {
     const v = await visite(b, 'mannequin.html?id=a1', 'lent', { mobile: true, attente: 16000 });
-    ok(v.etat.srcs.length > 0 && v.etat.srcs.every(s => DIRECT.test(s)) && !v.etat.marque && v.signalements === 0 && v.relais.length === 0, 'lent : photos arrivées depuis Cloudflare, sans bascule (' + v.etat.srcs.length + ')');
+    ok(v.etat.srcs.length > 0 && v.etat.srcs.every(s => DIRECT.test(s)) && !v.etat.marque && v.signalements === 0 && v.relais.every(u => /sonde-connexion/.test(u)), 'lent : photos arrivées depuis Cloudflare, sans bascule, rien d\'autre que la sonde par Vercel ('  + v.etat.srcs.length + ')');
     ok(!v.errs.length, 'lent : aucune erreur ' + v.errs.join(' | '));
     await v.ctx.close();
   }

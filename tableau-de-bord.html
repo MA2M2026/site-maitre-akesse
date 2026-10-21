@@ -19,8 +19,7 @@
 <script src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js?v=47adbda8"></script>
 <!-- Google tag (gtag.js) -->
-<script async="" crossorigin="anonymous" src="https://www.googletagmanager.com/gtag/js?id=G-1BX5MPZ6WE"></script>
-<script src="js/analytics-config.js?v=45fb0c30"></script>
+<script src="js/analytics-config.js?v=85d0149e"></script>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <meta content="Tableau de bord de gestion de l'agence Maître Akesse Model Management." name="description"/>
 <title>Tableau de bord — Maître Akesse Model Management</title>
@@ -35,7 +34,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="css/bouton-ma2m.css?v=5211180f">
 <script src="js/bouton-appui.js?v=953ca4d8" defer></script>
-<link href="css/style.css?v=25f904c9" rel="stylesheet"/>
+<link href="css/style.css?v=29979cd6" rel="stylesheet"/>
 <link rel="stylesheet" href="css/mode-administration.css?v=a0b56058">
 <script src="js/mode-administration.js?v=54a53235"></script>
 <script src="js/portail/inactivite.js?v=952174f0"></script>
@@ -2518,8 +2517,9 @@ document.addEventListener('DOMContentLoaded', function () {
 <h2 class="tdb-10">🔴 Erreurs réelles du site (7 derniers jours)</h2>
 <span class="dossiers-compteur" id="erreurs-compteur"></span>
 </div>
-<p class="tdb-12">Chaque problème vécu par un vrai visiteur est enregistré ici automatiquement : affichage (page qui dépasse, zoom qui change tout seul, blocs qui sautent, page vide), connexion et lenteur, photos, code du site, sécurité. Chaque fiche dit <strong>où</strong> (page, élément, appareil, dernier clic), <strong>ce qui s'est passé</strong> en clair et <strong>que faire</strong>. Les 🔴 sont à corriger en priorité ; les 🟢 viennent de la connexion du visiteur. Touchez une case de couleur pour ne voir que ces erreurs, puis « Copier pour Claude » pour les envoyer toutes d’un coup. S’il y en a beaucoup, « Télécharger le fichier pour Claude » crée un fichier complet, rangé par gravité, à joindre à la conversation (rien n’est coupé). Une erreur corrigée disparaît toute seule ; si elle est encore là, c’est qu’elle n’est pas réglée. Une liste vide est bon signe.</p>
+<p class="tdb-12">Chaque problème vécu par un vrai visiteur est enregistré ici automatiquement : affichage (page qui dépasse, zoom qui change tout seul, blocs qui sautent, page vide), connexion et lenteur, photos, code du site, sécurité. Chaque fiche dit <strong>où</strong> (page, élément, appareil, dernier clic), <strong>ce qui s'est passé</strong> en clair et <strong>que faire</strong>. Les 🔴 sont à corriger en priorité, les 🟠 à surveiller. Les lenteurs dues à la connexion des visiteurs ne sont plus listées : une seule ligne les compte. Touchez une case de couleur pour ne voir que ces erreurs, puis « Copier pour Claude » pour les envoyer toutes d’un coup. S’il y en a beaucoup, « Télécharger le fichier pour Claude » crée un fichier complet, rangé par gravité, à joindre à la conversation (rien n’est coupé). Une erreur corrigée disparaît toute seule ; si elle est encore là, c’est qu’elle n’est pas réglée. Une liste vide est bon signe.</p>
 <p class="journal-nettoyage" id="erreurs-nettoyage" hidden></p>
+<p class="journal-connexion" id="erreurs-connexion" hidden></p>
 <div id="erreurs-resume"></div>
 <button class="btn journal-btn journal-copier-tout" id="erreurs-telecharger-btn" type="button" hidden>⬇️ Télécharger le fichier pour Claude (toutes les erreurs)</button>
 <button class="btn journal-btn journal-copier-tout" id="erreurs-copier-tout-btn" type="button" hidden>📋 Copier pour Claude</button>
@@ -2864,7 +2864,7 @@ document.addEventListener('DOMContentLoaded', function () {
 <script src="js/emailjs-config.js?v=8fcea597"></script>
 <script src="js/verrou-defilement.js?v=c7be15da"></script>
 <script src="js/conversion-heic.js?v=82dc3921"></script>
-<script src="js/app.js?v=9f5e1f92"></script>
+<script src="js/app.js?v=829feb85"></script>
 <script src="js/confort.js?v=809fdae6"></script>
 <script src="js/menu.js?v=fe58706b"></script>
 <script src="js/connexion-tableau.js?v=bc1aa778"></script>
@@ -2880,7 +2880,7 @@ document.addEventListener('DOMContentLoaded', function () {
 <script src="js/fiches-evenement-admin.js?v=f6cdd740"></script>
 <script src="js/rapport-profils-admin.js?v=0ddad1e1"></script>
 <script src="js/agenda-admin.js?v=e682d95f"></script>
-<script src="js/tableau-de-bord.js?v=27e680d9"></script>
+<script src="js/tableau-de-bord.js?v=c7bc5134"></script>
 
 <script id="ma2m-final-visual-guard">
 (function(){

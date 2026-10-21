@@ -74,6 +74,8 @@ const REGLES_ERREURS = [
   [/^\[Page vide/, 'affichage', 'surveiller', "la page est restée presque vide chez ce visiteur : les informations ne sont pas arrivées (connexion coupée, ou panne).", 'Si plusieurs visiteurs sont touchés, envoyez la fiche à Claude.'],
   [/^\[Clics répétés/, 'code', 'surveiller', "un visiteur a cliqué plusieurs fois de suite sur le même bouton : il ne réagissait pas, ou trop lentement. Le bouton est indiqué.", 'Essayez ce bouton vous-même ; s’il ne réagit pas, envoyez la fiche à Claude.'],
   [/^\[Page figée/, 'connexion', 'surveiller', "la page n'a plus répondu pendant plusieurs secondes (téléphone ancien ou très chargé, ou calcul trop lourd).", 'Si ça se répète sur la même page, envoyez la fiche à Claude.'],
+  // 21/10/2026 : la roue de secours des photos a fait son travail (photos passées par Vercel), rien à corriger
+  [/Photos directes Cloudflare injoignables/, 'connexion', 'info', "les photos ont tardé chez ce visiteur : le site a pris un autre chemin tout seul, les photos se sont affichées.", 'Rien à faire.'],
   [/^\[Page très lente/, 'connexion', 'info', "la page a mis très longtemps à s'afficher, le plus souvent à cause d'une connexion faible (4G, Instagram, Facebook…). Les fichiers les plus longs sont indiqués.", 'Rien à faire si ce sont des services extérieurs (Google, Sentry). Si c’est un fichier du site, envoyez la fiche à Claude.'],
   [/^\[Image non chargée/, 'photos', 'info', "une image n'a pas pu s'afficher chez ce visiteur, même après un second essai : connexion coupée, ou image supprimée depuis.", 'Ouvrez la page : si l’image s’affiche chez vous, rien à faire.'],
   [/^\[Envoi de photo échoué/, 'photos', 'surveiller', "un mannequin n'a pas réussi à envoyer une photo dans son espace. Son nom est indiqué : si c'est « connexion coupée », c'est son réseau.", 'Conseillez-lui de réessayer en Wi-Fi ou avec une meilleure connexion. Sinon, envoyez la fiche à Claude.'],
@@ -179,10 +181,26 @@ function erreursVisibles() {
 // toute occurrence antérieure à la date de correction est effacée du journal.
 // Une ligne du journal est-elle une erreur déjà corrigée ? (motif trouvé, survenue avant la
 // correction, et — si la règle le précise — venant de ce navigateur seulement : « navigateur »)
-function estErreurCorrigee(e, corrigees) {
+function regleCorrespond(e, c) {
   const texte = (e.message || '') + '\n' + (e.pile || '') + '\n' + (e.user_agent || '');
-  return corrigees.some(c => c.motif && texte.indexOf(c.motif) !== -1 && new Date(e.created_at) < new Date(c.corrige_le)
-    && (!c.navigateur || (e.user_agent || '').indexOf(c.navigateur) !== -1));
+  return !!c.motif && texte.indexOf(c.motif) !== -1 && (!c.navigateur || (e.user_agent || '').indexOf(c.navigateur) !== -1);
+}
+function estErreurCorrigee(e, corrigees) {
+  return corrigees.some(c => regleCorrespond(e, c) && new Date(e.created_at) < new Date(c.corrige_le));
+}
+// Une erreur qui RESSEMBLE à une erreur déjà corrigée (même motif) et survient après la
+// correction : la règle trouvée, sinon null. Le motif peut être large (ex. « footer.site-footer ») :
+// la fiche le dit « à vérifier », sans affirmer que c'est la même erreur.
+function correctionDepassee(e, corrigees) {
+  return corrigees.find(c => regleCorrespond(e, c) && new Date(e.created_at) >= new Date(c.corrige_le)) || null;
+}
+// Efface des lignes du journal par paquets de 100 ; renvoie la première erreur rencontrée.
+async function effacerSignalements(ids) {
+  for (let i = 0; i < ids.length; i += 100) {
+    const { error } = await sb.from('journal_erreurs').delete().in('id', ids.slice(i, i + 100));
+    if (error) return error;
+  }
+  return null;
 }
 async function nettoyerErreursCorrigees(erreurs) {
   const corrigees = window.MA2M_ERREURS_CORRIGEES || [];
@@ -192,9 +210,7 @@ async function nettoyerErreursCorrigees(erreurs) {
     if (estErreurCorrigee(e, corrigees)) { aEffacer.push(e.id); return false; }
     return true;
   });
-  for (let i = 0; i < aEffacer.length; i += 100) {
-    await sb.from('journal_erreurs').delete().in('id', aEffacer.slice(i, i + 100));
-  }
+  await effacerSignalements(aEffacer);
   return { restantes, nb: aEffacer.length };
 }
 
@@ -207,6 +223,8 @@ function ficheTechniqueErreur(g, sansEntete) {
   return [
     sansEntete ? '' : '— Journal MA2M —',
     'Erreur : ' + g.message,
+    g.revenue ? 'À vérifier : ressemble à une erreur corrigée le ' + dateCourte(g.revenue.corrige_le) + ' (' + g.revenue.note + ')' : '',
+    g.nombreux ? 'Touche ' + g.visiteurs + ' visiteurs différents : peut-être pas leur connexion' : '',
     'Famille / gravité : ' + FAMILLES_ERREURS[a.famille] + ' / ' + GRAVITES_ERREURS[a.gravite].libelle,
     'Page : ' + nomPageLisible(g.page) + (g.nomMannequin ? ' — ' + g.nomMannequin : '') + ' (' + Array.from(g.pages).slice(0, 3).join(' , ') + ')',
     'Nombre : ' + g.occurrences + ' fois, du ' + dateCourte(g.premiere) + ' au ' + dateCourte(g.created_at),
@@ -235,6 +253,19 @@ function messageTemporaire(bouton, texte, duree) {
   clearTimeout(bouton._minuteur);
   bouton.textContent = texte;
   bouton._minuteur = setTimeout(() => { bouton.textContent = bouton.dataset.libelle; delete bouton.dataset.libelle; }, duree);
+}
+
+const SEUIL_VISITEURS_TOUCHES = 5;
+// Ligne unique « connexion faible » : nombre de visiteurs (identité de navigateur distincte)
+// et de signalements de la semaine, avec un bouton pour les effacer.
+let idsConnexion = [];
+function afficherLigneConnexion(groupes) {
+  const el = document.getElementById('erreurs-connexion');
+  idsConnexion = groupes.flatMap(g => g.ids);
+  el.hidden = !idsConnexion.length;
+  if (!idsConnexion.length) { el.textContent = ''; return; }
+  const visiteurs = new Set(groupes.flatMap(g => [...g.navigateurs])).size;
+  el.innerHTML = `📶 Pas d’erreur du site : cette semaine, <b>${visiteurs} visiteur${visiteurs > 1 ? 's' : ''}</b> avai${visiteurs > 1 ? 'ent' : 't'} une connexion faible (${idsConnexion.length} signalement${idsConnexion.length > 1 ? 's' : ''} : pages lentes, connexion coupée…). Rien à faire. <button type="button" class="btn-mini-admin" id="erreurs-connexion-effacer">Effacer</button>`;
 }
 
 function afficherErreurs() {
@@ -272,6 +303,8 @@ function afficherErreurs() {
         <span class="journal-famille">${FAMILLES_ERREURS[a.famille]}</span>
         <span class="journal-nombre">${g.occurrences} fois</span>
       </div>
+      ${g.revenue ? `<p class="journal-revenue">⚠️ Ressemble à une erreur corrigée le ${dateCourte(g.revenue.corrige_le)} (${echapperHtml(g.revenue.note)}) : à vérifier, la correction n’a peut-être pas suffi.</p>` : ''}
+      ${g.nombreux ? `<p class="journal-revenue">⚠️ Touche ${g.visiteurs} visiteurs différents cette semaine : ce n’est peut-être pas leur connexion.</p>` : ''}
       <div class="journal-titre">${echapperHtml(type)}</div>
       <dl class="journal-infos">
         <dt>Où</dt><dd>${echapperHtml(nomPageLisible(g.page))}${g.nomMannequin ? ' — ' + echapperHtml(g.nomMannequin) : ''}${autresPages}<br><small>${echapperHtml(titre.slice(0, 200))}</small></dd>
@@ -311,6 +344,7 @@ async function chargerErreurs() {
   erreurs = restantes;
 
   if (!erreurs || !erreurs.length) {
+    afficherLigneConnexion([]);
     groupesErreursAffiches = [];
     compteurEl.textContent = '0 erreur';
     resume.innerHTML = '';
@@ -325,15 +359,28 @@ async function chargerErreurs() {
   const groupes = {};
   erreurs.forEach(e => {
     const cle = (e.message || '') + '|' + cheminSansSuivi(e.page).split('?')[0];
-    if (!groupes[cle]) groupes[cle] = { ...e, occurrences: 0, ids: [], pages: new Set(), premiere: e.created_at, lu: lirePileErreur(e.pile), analyse: analyserErreur(e.message) };
+    if (!groupes[cle]) groupes[cle] = { ...e, occurrences: 0, ids: [], pages: new Set(), premiere: e.created_at, lu: lirePileErreur(e.pile), analyse: analyserErreur(e.message), revenue: correctionDepassee(e, window.MA2M_ERREURS_CORRIGEES || []) };
     const g = groupes[cle];
     g.occurrences++;
     g.ids.push(e.id);
+    (g.navigateurs || (g.navigateurs = new Set())).add(e.user_agent || e.id);
     g.pages.add(cheminSansSuivi(e.page));
     g.premiere = e.created_at; // liste triée du plus récent au plus ancien
   });
-  const groupesTries = Object.values(groupes).sort((a, b) =>
+  // Décision de la propriétaire (21/10/2026) : les 🟢 (connexion faible du visiteur) reviennent
+  // tous les jours et ne demandent rien ; ils ne sont plus listés comme des erreurs, seulement
+  // comptés sur une ligne. Le journal ne montre que les vraies erreurs (🔴, 🟠).
+  // Garde-fou : un problème « de connexion » qui touche beaucoup de visiteurs différents la même
+  // semaine (e-mails qui ne partent plus, photos Cloudflare injoignables pour tout un opérateur…)
+  // n'est sans doute pas leur connexion : il redevient une erreur 🟠 à surveiller.
+  Object.values(groupes).forEach(g => {
+    g.visiteurs = g.navigateurs.size;
+    if (g.analyse.gravite === 'info' && g.visiteurs >= SEUIL_VISITEURS_TOUCHES) { g.nombreux = true; g.analyse = { ...g.analyse, gravite: 'surveiller', action: 'Envoyez la fiche à Claude.' }; }
+  });
+  const connexion = Object.values(groupes).filter(g => g.analyse.gravite === 'info');
+  const groupesTries = Object.values(groupes).filter(g => g.analyse.gravite !== 'info').sort((a, b) =>
     GRAVITES_ERREURS[a.analyse.gravite].ordre - GRAVITES_ERREURS[b.analyse.gravite].ordre || b.occurrences - a.occurrences);
+  afficherLigneConnexion(connexion);
 
   // Nom du mannequin pour les fiches (« Fiche d'un mannequin — Awa Konaté »).
   const idsMannequins = [...new Set(groupesTries.map(g => (String(g.page || '').match(/[?&]id=([0-9a-f-]{36})/i) || [])[1]).filter(Boolean))];
@@ -348,12 +395,13 @@ async function chargerErreurs() {
   }
 
   groupesErreursAffiches = groupesTries;
-  compteurEl.textContent = `${erreurs.length} erreur${erreurs.length > 1 ? 's' : ''} (${groupesTries.length} distincte${groupesTries.length > 1 ? 's' : ''})`;
+  const nbVraies = groupesTries.reduce((s, g) => s + g.occurrences, 0);
+  compteurEl.textContent = `${nbVraies} erreur${nbVraies > 1 ? 's' : ''} (${groupesTries.length} distincte${groupesTries.length > 1 ? 's' : ''})`;
   btnEffacer.style.display = 'block';
   btnCopierTout.hidden = false;
 
   // Résumé : gravités + boutons de filtre par famille.
-  const parGravite = { corriger: 0, surveiller: 0, info: 0 };
+  const parGravite = { corriger: 0, surveiller: 0 };
   const parFamille = {};
   groupesTries.forEach(g => {
     parGravite[g.analyse.gravite]++;
@@ -385,6 +433,16 @@ document.getElementById('erreurs-resume').addEventListener('click', (e) => {
   if (!bouton) return;
   filtreFamilleErreurs = bouton.dataset.journalFamille;
   afficherErreurs();
+});
+
+document.getElementById('erreurs-connexion').addEventListener('click', async (e) => {
+  const bouton = e.target.closest('#erreurs-connexion-effacer');
+  if (!bouton || !idsConnexion.length) return;
+  if (!confirm('Effacer ces ' + idsConnexion.length + ' signalements de connexion faible ?')) return;
+  bouton.disabled = true;
+  const erreur = await effacerSignalements(idsConnexion);
+  if (erreur) { bouton.disabled = false; alert('Effacement impossible : ' + (erreur.message || 'reconnectez-vous puis réessayez.')); return; }
+  void chargerErreurs();
 });
 
 document.getElementById('liste-erreurs').addEventListener('click', async (e) => {
