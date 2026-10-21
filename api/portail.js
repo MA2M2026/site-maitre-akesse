@@ -57,7 +57,20 @@ const ROLES = ['site', 'caisse', 'compta'];
 // et « API calls for non-browser applications » autorisé dans EmailJS. Sans clé : rien ne part,
 // la panne est notée au journal, la liste WhatsApp reste dans l'espace 2.
 const { messageMensualite } = require('../js/messages-mensualites.js');
+const { messageConvocation, EMAIL_AGENCE } = require('../js/messages-convocations.js');
 const EMAILJS = { service_id: 'service_771y6u7', template_id: 'template_q3qpg4p', user_id: 'iRmm0sDj_w3MBx3SK' };  // = js/emailjs-config.js
+// Un e-mail envoyé par EmailJS depuis le serveur (clé privée) ; vrai s'il est parti.
+async function envoyerEmailServeur(cle, email, nom, message) {
+  const rep = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(Object.assign({}, EMAILJS, { accessToken: cle, template_params: { to_email: email, to_name: nom, message } }))
+  }).catch(() => null);
+  return { ok: !!(rep && rep.ok), statut: rep ? rep.status : 0 };
+}
+async function noterAuJournal(message, origine) {
+  await fetch(SUPABASE_URL + '/rest/v1/journal_erreurs', { method: 'POST', headers: { ...enTetesService(), 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+    body: JSON.stringify({ message, page: '/api/portail', user_agent: 'serveur (' + origine + ')' }) }).catch(() => {});
+}
 async function relancesDuJour(req, res) {
   // seule la tâche planifiée de Vercel (variable CRON_SECRET, envoyée par Vercel) peut les lancer
   const secret = process.env.CRON_SECRET;
@@ -71,16 +84,11 @@ async function relancesDuJour(req, res) {
     for (const m of liste || []) {
       const msg = messageMensualite(m, jour === 3 ? 'relance3' : 'relance5', new Date());
       if (!cle || !msg.email) continue;
-      const rep = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(Object.assign({}, EMAILJS, { accessToken: cle, template_params: { to_email: msg.email, to_name: msg.nom, message: msg.texte } }))
-      }).catch(() => null);
       // marquée « relancée » seulement si l'e-mail est parti (sinon la liste WhatsApp la montre encore)
-      if (rep && rep.ok) { envoyes++; await rpcService('mensualites_relance_faite', { p_jour: jour, p_mannequin: m.id }).catch(() => {}); }
+      if ((await envoyerEmailServeur(cle, msg.email, msg.nom, msg.texte)).ok) { envoyes++; await rpcService('mensualites_relance_faite', { p_jour: jour, p_mannequin: m.id }).catch(() => {}); }
     }
     if ((liste || []).length && envoyes < liste.length) {
-      await fetch(SUPABASE_URL + '/rest/v1/journal_erreurs', { method: 'POST', headers: { ...enTetesService(), 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-        body: JSON.stringify({ message: '[Mensualités] relance du ' + jour + ' : ' + envoyes + ' e-mail(s) envoyé(s) sur ' + liste.length + (cle ? '' : ' (clé EmailJS absente)'), page: '/api/portail', user_agent: 'serveur (relances)' }) }).catch(() => {});
+      await noterAuJournal('[Mensualités] relance du ' + jour + ' : ' + envoyes + ' e-mail(s) envoyé(s) sur ' + liste.length + (cle ? '' : ' (clé EmailJS absente)'), 'relances');
     }
     return res.status(200).json({ ok: true, relances: (liste || []).length, envoyes });
   } catch (e) {
@@ -88,7 +96,53 @@ async function relancesDuJour(req, res) {
   }
 }
 
+// Convocations programmées (Extension 141, 21/10/2026) : la base appelle cette adresse toutes les
+// 5 minutes quand des envois sont arrivés à l'heure (pg_cron + pg_net, convocations_reveil), avec
+// une clé tirée au hasard dans la base et vérifiée par la base. Les e-mails partent ici ; les
+// WhatsApp (pas encore d'envoi automatique) passent « à faire » dans le tableau de bord et
+// l'agence reçoit un e-mail pour les envoyer.
+async function envoisConvocations(req, res) {
+  const cleAppel = String(req.headers['x-cle-convocations'] || '');
+  const valide = cleAppel.length >= 32 && await rpcService('convocations_cle_valide', { p_cle: cleAppel }).catch(() => false);
+  if (valide !== true) return res.status(401).json({ error: 'Non autorisé.' });
+  try {
+    const dus = await rpcService('convocations_a_traiter', {});
+    const cle = process.env.EMAILJS_PRIVATE_KEY;
+    let envoyes = 0, echecs = 0;
+    const aFaire = {};  // WhatsApp / SMS arrivés à l'heure, par projet
+    for (const e of dus || []) {
+      const p = e.participant || {}, projet = e.projet || {};
+      if (e.canal !== 'email') {
+        const t = aFaire[projet.id] = aFaire[projet.id] || { titre: projet.titre, date: projet.date_debut, n: 0 };
+        t.n++;
+        continue;
+      }
+      let resultat = { ok: false, statut: 0 }, erreur = null;
+      if (!cle) erreur = 'Clé EmailJS absente du serveur (réglage Vercel EMAILJS_PRIVATE_KEY).';
+      else if (!p.email) erreur = 'Pas d’adresse e-mail.';
+      else {
+        resultat = await envoyerEmailServeur(cle, p.email, p.parent ? p.parent_nom || p.nom : p.nom, messageConvocation(projet, p, e.sorte).email);
+        if (!resultat.ok) erreur = 'EmailJS a refusé l’envoi (' + resultat.statut + ').';
+      }
+      await rpcService('convocations_resultat', { p_id: e.id, p_ok: resultat.ok, p_erreur: erreur }).catch(() => {});
+      if (resultat.ok) envoyes++; else echecs++;
+    }
+    const projets = Object.values(aFaire);
+    if (projets.length && cle) {
+      const lignes = projets.map((t) => '• « ' + t.titre + ' » (' + t.date + ') : ' + t.n + ' message(s)');
+      await envoyerEmailServeur(cle, EMAIL_AGENCE, 'Maître Akesse Model Management',
+        'C’est l’heure d’envoyer les messages WhatsApp programmés :\n' + lignes.join('\n') +
+        '\n\nOuvrez le tableau de bord, rubrique « Agenda du site », bouton « Convoquer » du projet : les messages sont prêts, un bouton par personne.');
+    }
+    if (echecs) await noterAuJournal('[Convocations] ' + echecs + ' e-mail(s) non envoyé(s) sur ' + (envoyes + echecs) + (cle ? '' : ' (clé EmailJS absente)'), 'convocations');
+    return res.status(200).json({ ok: true, envoyes, echecs, whatsapp: projets.reduce((n, t) => n + t.n, 0) });
+  } catch (e) {
+    return res.status(500).json({ error: 'Erreur serveur.' });
+  }
+}
+
 module.exports = async function handler(req, res) {
+  if (req.method === 'GET' && req.query && req.query.tache === 'convocations') return envoisConvocations(req, res);
   if (req.method === 'GET') return relancesDuJour(req, res);
   const debut = debutRequete(req, res, false);
   if (!debut) return;
