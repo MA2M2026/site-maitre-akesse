@@ -1,9 +1,10 @@
 // Écran d'entrée de l'accueil (21/10/2026, validé par la propriétaire) : animation du logo,
-// « Bienvenue sur notre site » écrit à la main, trois boutons en verre, jauge de 5 s.
+// « Bienvenue sur notre site » écrit à la main, trois boutons en verre, bouton rond « Entrer sur le
+// site » (la jauge de 5 s a été remplacée le 21/10/2026 : plus de compte à rebours).
 // Visité comme une personne, sur téléphone, tablette et ordinateur, en français et en anglais :
 // l'écran apparaît une seule fois par visite, rien ne dépasse de l'écran, les boutons mènent
-// aux bonnes pages (le rond passe au vert à l'appui), la jauge et la touche Échap ferment
-// l'écran, la jauge pleine aussi, et les mouvements réduits l'affichent sans animation.
+// aux bonnes pages (le rond passe au vert à l'appui), le bouton « Entrer » et la touche Échap
+// ferment l'écran, sans rien toucher il reste affiché, et les mouvements réduits l'affichent sans animation.
 // Base simulée : rien n'est écrit pour de vrai.
 const { chromium } = require('playwright'); const { spawn } = require('child_process'); const { brancher } = require('./faux-serveur');
 const PORT = String(9600 + Math.floor(Math.random() * 90));
@@ -38,7 +39,7 @@ async function ouvrir(b, page, vp, opts = {}) {
       await p.waitForTimeout(400);
       ok(await p.isVisible('.ee-intro'), n + 'animation du logo affichée à l’arrivée');
       ok(await p.evaluate(() => document.querySelectorAll('.ee-morceau').length) === 9, n + 'logo découpé en 9 morceaux');
-      // après l'animation du logo : Bienvenue, trois boutons, jauge
+      // après l'animation du logo : Bienvenue, trois boutons, bouton « Entrer »
       await p.waitForTimeout(4000);
       ok(!(await p.$('.ee-intro')), n + 'animation du logo terminée et retirée');
       const etat = await p.evaluate(() => {
@@ -49,9 +50,9 @@ async function ouvrir(b, page, vp, opts = {}) {
           police: getComputedStyle(document.querySelector('.ee-accueil')).fontFamily,
           policePrete: document.fonts.check('80px "Allison"'),
           boutons: boutons.map(a => [a.textContent.trim(), a.getAttribute('href')]),
-          dehors: [...document.querySelectorAll('.ee-accueil, .ee-bouton, .ee-jauge')].filter(e => { const x = e.getBoundingClientRect(); return x.left < -1 || x.right > innerWidth + 1 || x.top < -1 || x.bottom > innerHeight + 1; }).map(e => e.className),
+          dehors: [...document.querySelectorAll('.ee-accueil, .ee-bouton, .ee-entree')].filter(e => { const x = e.getBoundingClientRect(); return x.left < -1 || x.right > innerWidth + 1 || x.top < -1 || x.bottom > innerHeight + 1; }).map(e => e.className),
           ligne: new Set(boutons.map(a => Math.round(a.getBoundingClientRect().top))).size,
-          jauge: r('.ee-jauge').width > 0,
+          entree: r('.ee-marche').width > 0 && /Entrer sur le site|Enter the website/.test(document.querySelector('.ee-entree').textContent),
           defilementBloque: getComputedStyle(document.body).position === 'fixed'
         };
       });
@@ -59,13 +60,8 @@ async function ouvrir(b, page, vp, opts = {}) {
       ok(JSON.stringify(etat.boutons.map(x => x[0])) === JSON.stringify(libelles) && JSON.stringify(etat.boutons.map(x => x[1])) === JSON.stringify(liens), n + 'trois boutons et leurs pages : ' + etat.boutons.map(x => x.join(' → ')).join(' | '));
       ok(!etat.dehors.length, n + 'rien ne dépasse de l’écran ' + etat.dehors.join(', '));
       ok(nom === 'téléphone' ? etat.ligne === 3 : etat.ligne === 1, n + (nom === 'téléphone' ? 'boutons en colonne' : 'boutons côte à côte sur une ligne'));
-      ok(etat.jauge && etat.defilementBloque, n + 'jauge visible, la page dessous ne défile pas');
+      ok(etat.entree && etat.defilementBloque, n + 'bouton « Entrer sur le site » visible, la page dessous ne défile pas');
       if (nom === 'ordinateur') await p.screenshot({ path: __dirname + '/captures/ecran-entree-' + langue + '.png' });
-      // la jauge se remplit
-      const avant = await p.evaluate(() => parseFloat(document.querySelector('.ee-jauge .ee-plein').style.width));
-      await p.waitForTimeout(1000);
-      const apres = await p.evaluate(() => parseFloat(document.querySelector('.ee-jauge .ee-plein').style.width));
-      ok(apres > avant && apres < 100, n + 'la jauge se remplit (' + avant.toFixed(0) + ' % → ' + apres.toFixed(0) + ' %)');
       // appui sur un bouton : il s'enfonce, le rond passe au vert, la page s'ouvre
       const bouton = (await p.$$('.ee-bouton'))[1];
       const zone = await bouton.boundingBox();
@@ -78,25 +74,29 @@ async function ouvrir(b, page, vp, opts = {}) {
       await ctx.close();
     }
 
-    // jauge appuyée : l'écran se ferme, puis ne revient plus de la visite
+    // bouton « Entrer » appuyé : il s'enfonce et son symbole passe au vert, l'écran se ferme, puis
+    // ne revient plus de la visite
     {
       const { ctx, p, errs } = await ouvrir(b, page, { width: 390, height: 844 });
       await p.waitForSelector('.ee'); await p.waitForTimeout(4200);
-      await p.click('.ee-jauge'); await p.waitForTimeout(700);
+      const zone = await (await p.$('.ee-marche')).boundingBox();
+      await p.mouse.move(zone.x + zone.width / 2, zone.y + zone.height / 2); await p.mouse.down(); await p.waitForTimeout(200);
+      ok(await p.evaluate(() => /31, 163, 91/.test(getComputedStyle(document.querySelector('.ee-marche svg')).stroke)), page + ' : à l’appui, le bouton « Entrer » s’enfonce et son symbole devient vert');
+      await p.mouse.up(); await p.waitForTimeout(900);
       ok(!(await p.$('.ee')) && await p.evaluate(() => !document.documentElement.classList.contains('ee-actif') && getComputedStyle(document.body).position !== 'fixed'), page + ' : « Entrer sur le site » ferme l’écran et rend la page');
       await p.goto(BASE + page, { waitUntil: 'domcontentloaded' }); await p.waitForTimeout(1200);
       ok(!(await p.$('.ee')), page + ' : de retour sur l’accueil pendant la même visite, l’écran ne revient pas');
-      ok(!errs.length, page + ' jauge : aucune erreur ' + errs.join(' | '));
+      ok(!errs.length, page + ' entrée : aucune erreur ' + errs.join(' | '));
       await ctx.close();
     }
-    // sans rien toucher : jauge pleine au bout de 5 s → l'accueil
+    // sans rien toucher : l'écran reste (plus de compte à rebours), le visiteur a le temps de choisir
     {
       const { ctx, p } = await ouvrir(b, page, { width: 1440, height: 900 });
-      await p.waitForSelector('.ee'); await p.waitForTimeout(3700 + 5000 + 900);
-      ok(!(await p.$('.ee')), page + ' : sans rien toucher, l’accueil s’ouvre tout seul quand la jauge est pleine');
+      await p.waitForSelector('.ee'); await p.waitForTimeout(3700 + 5000 + 3000);
+      ok(!!(await p.$('.ee')) && await p.isVisible('.ee-bouton'), page + ' : sans rien toucher, l’écran reste affiché (pas de compte à rebours)');
       await ctx.close();
     }
-    // clavier : Tab reste dans l'écran (3 boutons + jauge, puis retour au premier)
+    // clavier : Tab reste dans l'écran (3 boutons + « Entrer », puis retour au premier)
     {
       const { ctx, p } = await ouvrir(b, page, { width: 1440, height: 900 });
       await p.waitForSelector('.ee'); await p.waitForTimeout(400);

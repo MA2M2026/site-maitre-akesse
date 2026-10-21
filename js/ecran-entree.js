@@ -7,7 +7,9 @@
 //     deviennent des points qui tournent en cercle, puis reviennent ;
 //  3. trois boutons en verre (Intégrer l'agence, Visiter le Book, Participer à un casting) :
 //     à l'appui, le bouton s'enfonce et son rond passe du rouge au vert ;
-//  4. jauge « Entrer sur le site » qui se remplit en 5 s, puis l'écran s'efface.
+//  4. bouton rond « marche » (modèle Pinterest de la propriétaire) « Entrer sur le site ». Depuis
+//     le 21/10/2026 (matin), plus de compte à rebours : la jauge de 5 s laissait trop peu de temps
+//     pour lire et choisir ; l'écran reste jusqu'au choix du visiteur.
 // Une seule fois par visite (sessionStorage). Mouvements réduits demandés par le téléphone :
 // pas d'animation, l'écran s'affiche directement. Les navigateurs automatisés (tests, robots)
 // ne le voient pas, sauf si un test le demande (localStorage ma2m_test_ecran_entree = 1).
@@ -32,7 +34,6 @@
   var TEXTES = EN
     ? { bienvenue: 'Welcome to our website', entrer: 'Enter the website →', boutons: [['Join the agency', '/en/integrer-agence'], ['Visit the Book', '/en/mannequins'], ['Take part in a casting', '/en/candidature']] }
     : { bienvenue: 'Bienvenue sur notre site', entrer: 'Entrer sur le site →', boutons: [['Intégrer l’agence', '/integrer-agence'], ['Visiter le Book', '/mannequins'], ['Participer à un casting', '/candidature']] };
-  var DUREE_JAUGE = 5;      // secondes avant l'entrée automatique
   var DEBUT_CHOIX = 3.7;    // fin de l'animation du logo
   var calme = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -43,7 +44,8 @@
   function el(balise, classe, parent) { var e = document.createElement(balise); if (classe) e.className = classe; if (parent) parent.appendChild(e); return e; }
 
   var ecran, zone, lettres = [], points = [], centres = null, milieu = [0, 0];
-  var scene, morceaux = [], arcs = [], formes = {}, tige, intro, plein, clair;
+  var scene, morceaux = [], arcs = [], formes = {}, tige, intro;
+  var FIN_ANIMATION = 3.7 + 5;   // logo puis « Bienvenue » : ensuite l'écran ne bouge plus
   // horloge de l'animation : elle n'avance que lorsque l'écran se dessine vraiment. Pendant que le
   // téléphone charge le reste de la page, les images ne se dessinent pas : sans ce frein, le visiteur
   // arrivait directement à « Bienvenue » sans voir le logo (visite du site en ligne, 21/10/2026).
@@ -84,14 +86,20 @@
       });
     });
 
-    var jauge = el('a', 'ee-jauge', ecran);
-    jauge.href = EN ? '/en/' : '/';
-    plein = el('i', 'ee-plein', jauge);
-    el('span', 'ee-sombre', jauge).textContent = TEXTES.entrer;
-    clair = el('span', 'ee-clair', jauge);
-    clair.textContent = TEXTES.entrer;
-    clair.setAttribute('aria-hidden', 'true');
-    jauge.addEventListener('click', function (e) { e.preventDefault(); fermer(); });
+    // « Entrer sur le site » : bouton rond « marche » avec sa longue ombre ; à l'appui il s'enfonce,
+    // son symbole passe au vert, puis l'écran s'efface
+    var entree = el('a', 'ee-entree', ecran);
+    entree.href = EN ? '/en/' : '/';
+    el('span', 'ee-entree-libelle', entree).textContent = TEXTES.entrer;
+    var marche = el('span', 'ee-marche', el('span', 'ee-zone-marche', entree));
+    marche.setAttribute('aria-hidden', 'true');
+    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 40 40');
+    ['M13.5 11.5a12 12 0 1 0 13 0', 'M20 6v13'].forEach(function (d) { var p = document.createElementNS('http://www.w3.org/2000/svg', 'path'); p.setAttribute('d', d); svg.appendChild(p); });
+    marche.appendChild(svg);
+    entree.addEventListener('pointerdown', function () { entree.classList.add('ee-appui'); try { if (navigator.vibrate) navigator.vibrate(12); } catch (e) { /* indisponible */ } });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (t) { entree.addEventListener(t, function () { if (!ferme) entree.classList.remove('ee-appui'); }); });
+    entree.addEventListener('click', function (e) { e.preventDefault(); entree.classList.add('ee-appui'); setTimeout(fermer, 220); });
 
     if (!calme) {
       intro = el('div', 'ee-intro', ecran);
@@ -144,10 +152,7 @@
     var c = (t - t0) / 1.0 * (n + 6) - 3, d = i - c;
     return (t < t0 || t > t0 + 1.1) ? 0 : Math.exp(-d * d / 3);
   }
-  function rendreChoix(t, tJauge) {
-    var q = cl(tJauge / DUREE_JAUGE);
-    plein.style.width = (q * 100).toFixed(2) + '%';
-    clair.style.clipPath = 'inset(0 ' + ((1 - q) * 100).toFixed(2) + '% 0 0)';
+  function rendreChoix(t) {
     if (!centres) return;
     var n = lettres.length, R = Math.min(78, zone.getBoundingClientRect().width * 0.18), rot = t * 140;
     lettres.forEach(function (l, i) {
@@ -228,14 +233,13 @@
     if (derniere) tAnim += Math.min(0.05, (maintenant - derniere) / 1000);
     derniere = maintenant;
     var t = tAnim;
-    if (calme) rendreChoix(99, t);
+    if (calme) rendreChoix(99);
     else {
       if (intro) rendreIntro(t);
-      var tc = Math.max(0, t - DEBUT_CHOIX);
-      rendreChoix(tc, tc);
+      rendreChoix(Math.max(0, t - DEBUT_CHOIX));
     }
-    var tJauge = calme ? t : t - DEBUT_CHOIX;
-    if (tJauge >= DUREE_JAUGE) { fermer(); return; }
+    // animation finie : l'écran reste tel quel jusqu'au choix du visiteur (plus de calcul à chaque image)
+    if ((calme && centres) || t >= FIN_ANIMATION) return;
     boucle = requestAnimationFrame(image);
   }
 

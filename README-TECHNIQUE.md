@@ -171,11 +171,12 @@ du logo (`assets/logo-intro-clair.png` découpé en 9 morceaux par `clip-path`, 
 choisi par la propriétaire, ≈ 3,7 s), puis « Bienvenue sur notre site » / « Welcome to our
 website » en police manuscrite Allison (hébergée : `assets/polices/`, licence OFL à côté),
 trois boutons en verre (Intégrer l'agence, Visiter le Book, Participer à un casting ; à
-l'appui le bouton s'enfonce et son rond passe au vert) et une jauge « Entrer sur le site »
-de 5 s. Le script pose aussitôt la classe `ee-actif` sur `<html>` : un voile du même fond
+l'appui le bouton s'enfonce et son rond passe au vert) et un bouton rond « marche » « Entrer
+sur le site » à longue ombre (modèle Pinterest ; il a remplacé le 21/10/2026 la jauge de 5 s, trop
+courte pour lire et choisir : plus de compte à rebours, l'écran reste jusqu'au choix du visiteur). Le script pose aussitôt la classe `ee-actif` sur `<html>` : un voile du même fond
 (CSS) cache l'accueil jusqu'à ce que l'écran soit construit (pas d'éclair). Mouvements réduits :
 pas d'animation. Navigateurs automatisés (robots, tests) : pas d'écran, sauf
-`localStorage.ma2m_test_ecran_entree = '1'` (test `test-ecran-entree.js`). Échap ou la jauge
+`localStorage.ma2m_test_ecran_entree = '1'` (test `test-ecran-entree.js`). Échap ou le bouton « Entrer »
 ferment l'écran ; défilement de la page dessous bloqué (`verrouillerDefilement`). Aucune étape
 d'historique (le bouton « retour » ramène d'où l'on vient). Maquette validée et vidéos : faites
 dans la conversation du 21/10/2026.
