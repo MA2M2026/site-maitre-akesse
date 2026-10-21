@@ -6,7 +6,7 @@
 // Base et stockage simulés : rien n'est écrit pour de vrai.
 const { chromium } = require('playwright'); const { spawn } = require('child_process'); const { brancher } = require('./faux-serveur');
 const fs = require('fs'); const path = require('path');
-const PORT = String(9100 + Math.floor(Math.random() * 90));
+let PORT = String(9100 + Math.floor(Math.random() * 90));
 const PHOTO = fs.readFileSync(path.join(__dirname, 'medias/photo0.jpg'));
 let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m); if (!c) ko++; };
 
@@ -46,7 +46,9 @@ async function visite(b, page, mode, opts = {}) {
   });
   await p.route(/^https:\/\/www\.maitreakessemodelmanagement\.com\/book-photos\/|127\.0\.0\.1:\d+\/book-photos\//, r => {
     relais.push(r.request().url());
-    if (mode === 'tout-muet') return; // le relais non plus ne répond pas
+    // le relais non plus ne répond pas à temps (réponse bien après le délai de la sonde : une
+    // requête laissée en attente pour toujours bloquait la visite suivante)
+    if (mode === 'tout-muet') return setTimeout(() => r.fulfill({ status: 404, body: '' }).catch(() => {}), 15000);
     if (mode === 'sans-webp' && /\.webp/.test(r.request().url())) return r.fulfill({ status: 404, body: '' });
     if (mode === 'absente') return r.fulfill({ status: 404, body: '' });
     return r.fulfill({ status: 200, contentType: 'image/jpeg', body: PHOTO });
@@ -68,7 +70,7 @@ async function visite(b, page, mode, opts = {}) {
 (async () => {
   let srv; process.on('exit', () => srv && srv.kill());
   srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: path.resolve(__dirname, '../..') }); await new Promise(r => setTimeout(r, 800));
-  const b = await chromium.launch();
+  let b = await chromium.launch();
 
   // 1) Cloudflare répond : les photos viennent directement de Cloudflare, rien par Vercel
   for (const page of ['index.html', 'mannequins.html', 'mannequin.html?id=a1', 'qui-sommes-nous.html', 'en/index.html']) {
@@ -179,6 +181,12 @@ async function visite(b, page, mode, opts = {}) {
     ok(!v.errs.length, 'tout muet : aucune erreur ' + v.errs.join(' | '));
     await v.ctx.close();
   }
+  // navigateur neuf : les requêtes laissées sans réponse par les cas « muets » ci-dessus gardaient
+  // le navigateur et le petit serveur de test occupés et bloquaient l'ouverture de la page
+  // suivante (21/10/2026) : navigateur et serveur neufs
+  await b.close(); b = await chromium.launch();
+  srv.kill(); PORT = String(Number(PORT) + 100);
+  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: path.resolve(__dirname, '../..') }); await new Promise(r => setTimeout(r, 800));
   // 3 bis) Connexion seulement LENTE (photos en 11 s, mais Cloudflare répond) : on patiente,
   //        pas de bascule ni de fausse alerte
   {
