@@ -104,7 +104,10 @@
 }
 .p-couv .modele { right: 5cqmin; bottom: 7cqmin; max-width: 32cqmin; text-align: right; font-size: max(12px, 2.5cqmin); text-decoration: none; }
 @media (max-width: 700px) {
-  .p-couv .lignes { right: 5cqmin; }
+  /* au-dessus du bouton WhatsApp flottant (50 px, à 1 rem du bas) : il recouvrait le titre
+     anglais, plus court (21/10/2026, test-lisibilite-photos.js) ; 140 px : la couverture commence
+     sous le bandeau défilant, son bas est donc un peu sous le bord de l’écran */
+  .p-couv .lignes { right: 5cqmin; bottom: max(7cqmin, 140px); }
   .p-couv .modele { top: 46cqmin; bottom: auto; }
 }
 .p-couv .modele strong {
