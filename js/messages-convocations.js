@@ -6,7 +6,8 @@
 // change partout.
 //
 // Repères d'un message personnalisé (champ « Message » du projet) : {salutation}, {introduction},
-// {projet}, {date}, {heure_evenement}, {lieu}, {adresse}, {convocation}, {programme}, {a_prevoir}.
+// {projet}, {date}, {heure_evenement}, {lieu}, {adresse}, {convocation}, {programme}, {a_prevoir},
+// {confirmer} (lien personnel « Je confirme ma présence »).
 // Une ligne dont un repère est vide (pas d'adresse, pas de programme…) disparaît du message.
 (function (racine) {
   'use strict';
@@ -15,6 +16,7 @@
   // « au défilé », « à la formation »… (types de l'agenda : MA2M_TYPES_AGENDA, js/app.js)
   const AU_TYPE = { defile: 'au défilé', shooting: 'au shooting', casting: 'au casting', formation: 'à la formation', evenement: 'à l’événement', autre: 'au projet' };
   const CONTACT = 'WhatsApp +225 05 45 65 66 87';
+  const LIEN_CONFIRMER = 'https://www.maitreakessemodelmanagement.com/confirmer?c=';
   const EMAIL_AGENCE = 'infos.ma2m@gmail.com';  // = MA2M_EMAIL (js/app.js) : alertes « WhatsApp à envoyer »
 
   const MODELE_CONVOCATION = [
@@ -37,7 +39,8 @@
     '🎒 *À prévoir*',
     '{a_prevoir}',
     '',
-    'Merci d’arriver à l’heure et de confirmer votre présence en répondant à ce message.',
+    'Merci d’arriver à l’heure.',
+    '✅ *Confirmez votre présence en un clic :* {confirmer}',
     'Pour toute question : ' + CONTACT + '.',
     '',
     '_L’équipe Maître Akesse Model Management_'
@@ -91,6 +94,8 @@
       programme: (Array.isArray(p.deroule) ? p.deroule : [])
         .filter((e) => e && (e.heure || e.activite))
         .map((e) => '• ' + [heureFr(e.heure), String(e.activite || '').trim()].filter(Boolean).join(' — ')).join('\n'),
+      // lien personnel de confirmation (jeton du participant, Extension 141)
+      confirmer: q.jeton ? LIEN_CONFIRMER + q.jeton : '',
       a_prevoir: String(p.a_prevoir || '').split('\n').map((l) => l.trim().replace(/^[-•*]\s*/, '')).filter(Boolean).map((l) => '• ' + l).join('\n')
     };
     const modele = String(p.message_modele || '').trim() || MODELE_CONVOCATION;
@@ -121,7 +126,7 @@
       .replace(/(^|[\s(«])_([^_\n]+)_(?=$|[\s.,;:!?)»])/gm, '$1$2');
   }
 
-  const outils = { messageConvocation, sansMarquesWhatsApp, heureRappel, dateLongue, MODELE_CONVOCATION, EMAIL_AGENCE };
+  const outils = { messageConvocation, sansMarquesWhatsApp, heureRappel, dateLongue, MODELE_CONVOCATION, EMAIL_AGENCE, LIEN_CONFIRMER };
   if (typeof module !== 'undefined' && module.exports) module.exports = outils;
   else Object.assign(racine, outils);
 })(typeof window !== 'undefined' ? window : globalThis);

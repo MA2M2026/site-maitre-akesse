@@ -250,4 +250,36 @@ revoke all on function convocations_reveil() from public, anon, authenticated;
 select cron.unschedule('convocations-envois') where exists (select 1 from cron.job where jobname = 'convocations-envois');
 select cron.schedule('convocations-envois', '*/5 * * * *', $$select convocations_reveil();$$);
 
+-- 9) Confirmation de présence (demande de la propriétaire, 21/10/2026) : chaque message porte un
+--    lien personnel (maitreakessemodelmanagement.com/confirmer?c=…), impossible à deviner, qui
+--    marche sans compte (personnes non inscrites, parents). La page publique ne lit que le titre,
+--    la date, l'heure de convocation, le lieu et le nom ; elle enregistre « confirmé » ou « absent ».
+alter table convocation_participants add column if not exists jeton text not null default encode(extensions.gen_random_bytes(18), 'hex');
+create unique index if not exists convocation_participants_jeton on convocation_participants (jeton);
+alter table convocation_participants add column if not exists reponse text check (reponse is null or reponse in ('confirme', 'absent'));
+alter table convocation_participants add column if not exists repondu_le timestamptz;
+
+create or replace function convocation_lire(p_jeton text)
+returns table(titre text, type text, date_debut date, date_fin date, heure_convocation text, lieu text, ville text, nom text, parent boolean, reponse text, passe boolean)
+language sql stable security definer set search_path = public as $$
+  select a.titre, a.type, a.date_debut, a.date_fin, a.heure_convocation, a.lieu, a.ville, cp.nom, cp.parent, cp.reponse,
+         coalesce(a.date_fin, a.date_debut) < current_date
+  from convocation_participants cp join agenda_projets a on a.id = cp.projet_id
+  where length(coalesce(p_jeton, '')) = 36 and cp.jeton = p_jeton and not a.annule;
+$$;
+revoke all on function convocation_lire(text) from public;
+grant execute on function convocation_lire(text) to anon, authenticated;
+
+create or replace function convocation_repondre(p_jeton text, p_reponse text)
+returns boolean language sql security definer set search_path = public as $$
+  update convocation_participants cp set reponse = p_reponse, repondu_le = now()
+  from agenda_projets a
+  where a.id = cp.projet_id and length(coalesce(p_jeton, '')) = 36 and cp.jeton = p_jeton
+    and p_reponse in ('confirme', 'absent') and not a.annule
+    and coalesce(a.date_fin, a.date_debut) >= current_date
+  returning true;
+$$;
+revoke all on function convocation_repondre(text, text) from public;
+grant execute on function convocation_repondre(text, text) to anon, authenticated;
+
 NOTIFY pgrst, 'reload schema';

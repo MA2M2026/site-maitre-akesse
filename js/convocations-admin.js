@@ -41,12 +41,17 @@
     var dossier = { full_name: c.full_name, category: c.category, date_naissance: c.date_naissance, email: c.contact_email, phone: c.phone,
       parent_nom: c.parent_nom, parent_telephone: c.parent_telephone, parent_email: c.parent_email };
     var dest = contactsEnvoi(dossier);
-    return { cle: 'm' + c.model_id, model_id: c.model_id, participant_id: sauve && sauve.id, nom: nomAvecCivilite(dossier),
-      email: dest.email || null, telephone: dest.phone || null, parent: dest.parent, parent_nom: dest.parent ? dest.nom : null };
+    return avecSauve({ cle: 'm' + c.model_id, model_id: c.model_id, nom: nomAvecCivilite(dossier),
+      email: dest.email || null, telephone: dest.phone || null, parent: dest.parent, parent_nom: dest.parent ? dest.nom : null }, sauve);
+  }
+  // ce qui est déjà enregistré pour ce participant : lien personnel et réponse
+  function avecSauve(pers, sauve) {
+    if (sauve) { pers.participant_id = sauve.id; pers.jeton = sauve.jeton; pers.reponse = sauve.reponse; pers.repondu_le = sauve.repondu_le; }
+    return pers;
   }
   function personneDuCarnet(c, sauve) {
-    return { cle: 'c' + c.id, contact_id: c.id, participant_id: sauve && sauve.id, externe: true,
-      nom: [c.civilite, c.nom].filter(Boolean).join(' '), email: c.email || null, telephone: c.telephone || null, parent: false, parent_nom: null };
+    return avecSauve({ cle: 'c' + c.id, contact_id: c.id, externe: true,
+      nom: [c.civilite, c.nom].filter(Boolean).join(' '), email: c.email || null, telephone: c.telephone || null, parent: false, parent_nom: null }, sauve);
   }
 
   function dessinerParticipants() {
@@ -70,6 +75,7 @@
         manque.textContent = !pers.email && !pers.telephone ? 'Aucune coordonnée : impossible de lui écrire.' : !pers.email ? 'Pas d’e-mail : WhatsApp seulement.' : 'Pas de WhatsApp : e-mail seulement.';
         t.appendChild(manque);
       }
+      if (pers.reponse) { var rep = document.createElement('small'); rep.className = 'convoc-reponse-' + pers.reponse; rep.textContent = pers.reponse === 'confirme' ? '✅ A confirmé sa présence' : '❌ Ne pourra pas venir'; t.appendChild(rep); }
       if (dejaConvoque(pers)) { var deja = document.createElement('small'); deja.textContent = 'Déjà convoqué(e) : cochez pour renvoyer.'; t.appendChild(deja); }
       l.appendChild(c); l.appendChild(t);
       if (pers.externe) {
@@ -131,11 +137,67 @@
     });
     if (avant && liste.some(function (x) { return x.cle === avant; })) s.value = avant;
     var pers = liste.find(function (x) { return x.cle === s.value; }) || liste[0];
-    $('convoc-apercu').textContent = messageConvocation(projet, pers, 'convocation').texte;
+    $('convoc-apercu').textContent = messageConvocation(projet, Object.assign({ jeton: '(lien personnel)' }, pers), 'convocation').texte;
+  }
+
+  // ---------- Réponses : qui a confirmé, qui ne viendra pas, qui n'a pas répondu ----------
+  function dessinerReponses() {
+    var boite = $('convoc-reponses');
+    boite.textContent = '';
+    var convoques = personnes.filter(function (x) { return x.participant_id && envois.some(function (e) { return e.participant_id === x.participant_id && e.sorte === 'convocation' && e.statut !== 'annule'; }); });
+    if (!convoques.length) return;
+    var groupes = [
+      ['confirme', '✅ Confirmé', convoques.filter(function (x) { return x.reponse === 'confirme'; })],
+      ['absent', '❌ Absent', convoques.filter(function (x) { return x.reponse === 'absent'; })],
+      ['attente', '⏳ Sans réponse', convoques.filter(function (x) { return !x.reponse; })]
+    ];
+    var titre = document.createElement('p');
+    titre.className = 'convoc-chiffres';
+    titre.textContent = convoques.length + ' convoqué(s) · ' + groupes.map(function (g) { return g[2].length + ' ' + g[1].replace(/^\S+ /, '').toLowerCase(); }).join(' · ');
+    boite.appendChild(titre);
+    var barre = document.createElement('div');
+    barre.className = 'convoc-barre';
+    barre.setAttribute('role', 'img');
+    barre.setAttribute('aria-label', titre.textContent);
+    groupes.forEach(function (g) {
+      if (!g[2].length) return;
+      var part = document.createElement('span');
+      part.className = 'convoc-barre-' + g[0];
+      part.style.width = (100 * g[2].length / convoques.length) + '%';
+      barre.appendChild(part);
+    });
+    boite.appendChild(barre);
+    groupes.forEach(function (g) {
+      if (!g[2].length) return;
+      var d = document.createElement('details');
+      d.className = 'convoc-groupe';
+      if (g[0] !== 'confirme') d.open = true;
+      var r = document.createElement('summary');
+      r.textContent = g[1] + ' (' + g[2].length + ')';
+      d.appendChild(r);
+      g[2].forEach(function (pers) {
+        var l = document.createElement('div');
+        l.className = 'convoc-reponse';
+        var n = document.createElement('span');
+        n.textContent = nomDe(pers) + (pers.repondu_le ? ' — ' + quand(pers.repondu_le) : '');
+        l.appendChild(n);
+        // sans réponse : petit rappel WhatsApp avec son lien personnel
+        var num = g[0] === 'attente' && pers.jeton && numeroWhatsApp(pers.telephone);
+        if (num) {
+          var a = document.createElement('a');
+          a.className = 'btn-mini-admin'; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Relancer sur WhatsApp';
+          a.href = 'https://wa.me/' + num + '?text=' + encodeURIComponent('Bonjour ' + (pers.parent ? pers.parent_nom || 'Madame, Monsieur' : pers.nom) + ',\n\nPouvez-vous nous confirmer ' + (pers.parent ? 'la présence de ' + pers.nom : 'votre présence') + ' pour « ' + projet.titre + ' » (' + dateLongue(projet.date_debut) + ') ? Un seul clic suffit : ' + LIEN_CONFIRMER + pers.jeton + '\n\nMerci !\nL’équipe Maître Akesse Model Management');
+          l.appendChild(a);
+        }
+        d.appendChild(l);
+      });
+      boite.appendChild(d);
+    });
   }
 
   // ---------- Suivi des envois ----------
   function dessinerSuivi() {
+    dessinerReponses();
     var boite = $('convoc-suivi');
     boite.textContent = '';
     var visibles = envois.filter(function (e) { return e.statut !== 'annule'; });
@@ -257,10 +319,11 @@
         var pers = choisis[i];
         var ligne = { nom: pers.nom, email: pers.email, telephone: pers.telephone, parent: !!pers.parent, parent_nom: pers.parent_nom };
         var r = pers.participant_id
-          ? await sb.from('convocation_participants').update(ligne).eq('id', pers.participant_id).select('id')
-          : await sb.from('convocation_participants').insert(Object.assign({ projet_id: projet.id, model_id: pers.model_id || null, contact_id: pers.contact_id || null }, ligne)).select('id');
+          ? await sb.from('convocation_participants').update(ligne).eq('id', pers.participant_id).select('id, jeton')
+          : await sb.from('convocation_participants').insert(Object.assign({ projet_id: projet.id, model_id: pers.model_id || null, contact_id: pers.contact_id || null }, ligne)).select('id, jeton');
         if (r.error || !r.data || !r.data.length) throw new Error(r.error ? r.error.message : 'rien n’a été enregistré (reconnectez-vous)');
         pers.participant_id = r.data[0].id;
+        pers.jeton = r.data[0].jeton;  // lien personnel « Je confirme ma présence »
       }
       // 2. Les envois : convocation (à l'heure choisie) et rappel de la veille (si demandé et à venir)
       var rappel = projet.rappel_veille !== false ? heureRappel(projet.date_debut, projet.rappel_heure) : null;
@@ -342,11 +405,11 @@
       .forEach(function (c) { personnes.push(personneMannequin(c, parModele[c.model_id])); });
     sauves.filter(function (s) { return s.contact_id; }).forEach(function (s) {
       var c = carnet.find(function (x) { return x.id === s.contact_id; });
-      personnes.push(c ? personneDuCarnet(c, s) : { cle: 'p' + s.id, participant_id: s.id, contact_id: s.contact_id, externe: true, nom: s.nom, email: s.email, telephone: s.telephone, parent: false });
+      personnes.push(c ? personneDuCarnet(c, s) : avecSauve({ cle: 'p' + s.id, contact_id: s.contact_id, externe: true, nom: s.nom, email: s.email, telephone: s.telephone, parent: false }, s));
     });
     // une personne retirée du projet (mannequin décochée) mais déjà convoquée reste dans le suivi
     sauves.filter(function (s) { return s.model_id && !personnes.some(function (x) { return x.participant_id === s.id; }); }).forEach(function (s) {
-      personnes.push({ cle: 'p' + s.id, participant_id: s.id, model_id: s.model_id, externe: true, nom: s.nom, email: s.email, telephone: s.telephone, parent: s.parent, parent_nom: s.parent_nom });
+      personnes.push(avecSauve({ cle: 'p' + s.id, model_id: s.model_id, externe: true, nom: s.nom, email: s.email, telephone: s.telephone, parent: s.parent, parent_nom: s.parent_nom }, s));
     });
     personnes.forEach(function (x) { x.coche = !dejaConvoque(x) && !!(x.email || x.telephone); });
     dessinerCarnet();
@@ -355,6 +418,7 @@
   };
 
   $('convoc-apercu-qui').addEventListener('change', dessinerApercu);
+  $('convoc-actualiser').addEventListener('click', function () { if (projet) window.ouvrirConvocations(projet); });
   $('convoc-quand').addEventListener('change', function () {
     var date = this.value === 'date';
     $('convoc-date-champ').classList.toggle('u-hidden', !date);

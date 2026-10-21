@@ -101,10 +101,10 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     ok(emails.length === 3 && emails.some(e => e.to_email === 'mere@test.ci' && e.to_name === 'Madame Ama Mère') && emails.every(e => !/\*/.test(e.message)), n + '3 e-mails envoyés tout de suite (le parent pour la mineure), sans marques WhatsApp');
     ok(ecrits(journal, 'PATCH', 'convocation_envois').filter(x => x.statut === 'envoye').length === 3, n + 'e-mails marqués « envoyé »');
     ok(/3 e-mail\(s\) envoyé\(s\) sur 3/.test(await p.textContent('#convoc-msg')) && /Rappel de la veille/.test(await p.textContent('#convoc-msg')), n + 'bilan affiché');
-    const wa = await p.$$eval('#convoc-suivi a[href^="https://wa.me/"]', as => as.map(a => a.href));
+    const wa = await p.$$eval('#convoc-suivi .convoc-envoi a[href^="https://wa.me/"]', as => as.map(a => a.href));
     ok(wa.length === 3 && wa.some(h => h.startsWith('https://wa.me/2250707070707?text=') && /Madame%20Ama%20M%C3%A8re/.test(h)), n + 'suivi : 3 « Ouvrir WhatsApp » prêts (le parent pour la mineure)');
     await p.evaluate(() => { window.open = () => null; });
-    await p.$eval('#convoc-suivi a[href^="https://wa.me/"]', a => { a.addEventListener('click', e => e.preventDefault(), { once: true }); a.click(); }); await p.waitForTimeout(600);
+    await p.$eval('#convoc-suivi .convoc-envoi a[href^="https://wa.me/"]', a => { a.addEventListener('click', e => e.preventDefault(), { once: true }); a.click(); }); await p.waitForTimeout(600);
     ok(ecrits(journal, 'PATCH', 'convocation_envois').filter(x => x.statut === 'envoye').length === 4, n + '« Ouvrir WhatsApp » : marqué envoyé');
     // bouton unique « WhatsApp suivant » : chaque appui passe à la personne suivante
     const suivant1 = await p.textContent('.convoc-suivant');
@@ -131,6 +131,60 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     await ctx.close();
   }
 
+  // 5bis. Réponses des participants (lien « Confirmez votre présence »)
+  {
+    const J = (c) => c.repeat(36);
+    const d = donnees(true);
+    Object.assign(d.tables.agenda_projets[0], { heure_convocation: '15:00' });
+    d.tables.convocation_participants = [
+      { id: 'cp1', projet_id: 'pa2', model_id: 'm1', nom: 'Mademoiselle AWA KONÉ', email: 'awa@test.ci', telephone: '0701020304', parent: false, jeton: J('a'), reponse: 'confirme', repondu_le: '2030-11-10T09:00:00Z' },
+      { id: 'cp2', projet_id: 'pa2', model_id: 'm2', nom: 'Mademoiselle PETITE AMA', email: 'mere@test.ci', telephone: '0707070707', parent: true, parent_nom: 'Madame Ama Mère', jeton: J('b'), reponse: null },
+      { id: 'cp3', projet_id: 'pa2', contact_id: 'x1', nom: 'Monsieur Jean Styliste', email: 'jean@test.ci', telephone: '0709090909', parent: false, jeton: J('c'), reponse: 'absent', repondu_le: '2030-11-11T09:00:00Z' }];
+    d.tables.contacts_externes = [{ id: 'x1', civilite: 'Monsieur', nom: 'Jean Styliste', telephone: '0709090909', email: 'jean@test.ci' }];
+    d.tables.convocation_envois = ['cp1', 'cp2', 'cp3'].map((id, i) => ({ id: 'e' + i, projet_id: 'pa2', participant_id: id, sorte: 'convocation', canal: 'email', statut: 'envoye', prevu_le: '2030-11-09T10:00:00Z', envoye_le: '2030-11-09T10:00:00Z' }));
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+    const p = await ctx.newPage(); const journal = [], errs = [];
+    p.on('pageerror', e => errs.push(e.message));
+    await p.addInitScript(() => { sessionStorage.setItem('ma2m_code_valide', '1'); localStorage.setItem('ma2m_cookies', 'non'); });
+    await brancher(p, d, journal);
+    await p.goto(BASE + 'tableau-de-bord.html'); await p.waitForTimeout(1000);
+    await p.fill('#tb-email', 'admin@test.ci'); await p.fill('#tb-password', 'motdepasse'); await p.click('#tb-login-btn');
+    await p.waitForSelector('#bloc-tableau', { state: 'visible', timeout: 15000 });
+    await p.evaluate(() => document.querySelector('.tdb-menu-item[data-tdb-cible="b3c-agenda"]').click()); await p.waitForTimeout(1500);
+    await p.click('[data-convoquer="pa2"]'); await p.waitForTimeout(1500);
+    const chiffres = await p.textContent('.convoc-chiffres');
+    const barre = await p.$$eval('.convoc-barre span', ss => ss.map(s => s.className + ' ' + Math.round(parseFloat(s.style.width))));
+    const relance = await p.$$eval('.convoc-reponse a', as => as.map(a => decodeURIComponent(a.href)));
+    ok(/3 convoqué\(s\) · 1 confirmé · 1 absent · 1 sans réponse/.test(chiffres) && barre.length === 3 && barre.every(x => / 33$/.test(x)), 'réponses : chiffres et barre de couleur (' + chiffres + ')');
+    ok(relance.length === 1 && relance[0].startsWith('https://wa.me/2250707070707') && relance[0].includes('/confirmer?c=' + J('b')) && /Madame Ama Mère/.test(relance[0]), 'sans réponse : « Relancer sur WhatsApp » avec le lien personnel (au parent)');
+    ok(/A confirmé sa présence/.test(await p.textContent('#convoc-participants')) && /Ne pourra pas venir/.test(await p.textContent('#convoc-participants')), 'réponses visibles dans la liste des participants');
+    ok(!errs.length, 'réponses : aucune erreur ' + errs.join(' | '));
+    await ctx.close();
+  }
+  // 5ter. La page publique « Confirmer ma présence » (sans compte)
+  for (const [nom, vp] of [['téléphone', { width: 390, height: 844 }], ['ordinateur', { width: 1280, height: 900 }]]) {
+    const J = 'd'.repeat(36);
+    const ctx = await b.newContext({ viewport: vp, isMobile: vp.width < 700, hasTouch: vp.width < 700 });
+    const p = await ctx.newPage(); const journal = [], errs = [];
+    p.on('pageerror', e => errs.push(e.message));
+    await brancher(p, { tables: {}, rpc: {
+      convocation_lire: (x) => x.p_jeton === J ? [{ titre: 'AFRICA IN RHYTHM', type: 'defile', date_debut: '2030-11-15', heure_convocation: '15:00', lieu: 'Hôtel Ivoire', ville: 'Abidjan', nom: 'Mademoiselle AWA KONÉ', parent: false, reponse: null, passe: false }] : [],
+      convocation_repondre: () => true } }, journal);
+    await p.goto(BASE + 'confirmer.html?c=' + J); await p.waitForTimeout(1500);
+    const details = await p.textContent('#cf-details');
+    ok(/AFRICA IN RHYTHM/.test(await p.textContent('#cf-titre')) && /Mademoiselle AWA KONÉ/.test(details) && /Vendredi 15 novembre 2030|vendredi 15 novembre 2030/.test(details) && /15h00/.test(details), nom + ' : la page montre le projet (' + details + ')');
+    await p.click('#cf-oui'); await p.waitForTimeout(800);
+    const envoi = journal.find(j => j[0] === 'rpc' && j[1] === 'convocation_repondre');
+    ok(envoi && JSON.parse(envoi[2]).p_reponse === 'confirme' && /présence est confirmée/.test(await p.textContent('#cf-resultat')), nom + ' : « Je confirme ma présence » enregistré');
+    await p.click('#cf-non'); await p.waitForTimeout(800);
+    ok(/ne pourrez pas venir/.test(await p.textContent('#cf-resultat')), nom + ' : on peut changer d’avis (« Je ne pourrai pas venir »)');
+    ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth)), nom + ' : rien ne dépasse');
+    if (process.env.CAPTURES) await p.screenshot({ path: process.env.CAPTURES + '/confirmer-' + vp.width + '.png' });
+    await p.goto(BASE + 'confirmer.html?c=' + 'e'.repeat(36)); await p.waitForTimeout(1200);
+    ok(/pas valable/.test(await p.textContent('#cf-details')) && await p.isHidden('#cf-boutons'), nom + ' : lien inconnu → message clair, pas de boutons');
+    ok(!errs.length, nom + ' : page de confirmation sans erreur ' + errs.join(' | '));
+    await ctx.close();
+  }
   // 5. Extension 141 pas encore exécutée
   {
     const { ctx, p, errs } = await connecter(b, { width: 1280, height: 900 }, false);

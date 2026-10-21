@@ -2090,7 +2090,7 @@ a.tdb-menu-item { text-decoration: none; }
 <!-- ===== AJOUT : navigation en 3 grands blocs + menu (remplace l'ancienne barre latérale toujours visible) ===== -->
 <link rel="stylesheet" href="css/cv-mannequin.css?v=b11ed6be">
 <link href="css/tableau-boutons.css?v=682b810e" rel="stylesheet"/>
-<link href="css/tableau-v2.css?v=8176e31b" rel="stylesheet"/>
+<link href="css/tableau-v2.css?v=860a6a81" rel="stylesheet"/>
 <!-- ZONE-ADMIN : livrée seulement après une connexion admin complète (middleware.js) -->
 <section id="bloc-tableau" class="u-hidden u-pt-0">
 <div class="db-shell">
@@ -2745,7 +2745,7 @@ document.addEventListener('DOMContentLoaded', function () {
 <div class="form-champ agenda-espace"><label for="agenda-a-prevoir">À prévoir (une chose par ligne)</label><textarea id="agenda-a-prevoir" rows="3" maxlength="1500" placeholder="ex : Escarpins noirs&#10;Pièce d'identité&#10;Venir démaquillée"></textarea></div>
 <div class="agenda-rappel"><label class="agenda-visible"><input id="agenda-rappel" type="checkbox" checked> Rappel automatique la veille, à</label> <input id="agenda-rappel-heure" type="time" value="18:00" aria-label="Heure du rappel de la veille"></div>
 <details class="agenda-message"><summary>Personnaliser le message (facultatif)</summary>
-<p class="agenda-aide">Laissez vide pour le message type. Repères remplis pour chaque personne : {salutation}, {introduction}, {date}, {heure_evenement}, {lieu}, {adresse}, {convocation}, {programme}, {a_prevoir}. Une ligne dont le repère est vide disparaît.</p>
+<p class="agenda-aide">Laissez vide pour le message type. Repères remplis pour chaque personne : {salutation}, {introduction}, {date}, {heure_evenement}, {lieu}, {adresse}, {convocation}, {programme}, {a_prevoir}, {confirmer} (lien de confirmation). Une ligne dont le repère est vide disparaît.</p>
 <textarea id="agenda-message-modele" rows="12" maxlength="4000" aria-label="Message personnalisé"></textarea>
 <button type="button" class="btn-mini-admin" id="agenda-message-type">Partir du message type</button>
 </details>
@@ -2799,6 +2799,8 @@ document.addEventListener('DOMContentLoaded', function () {
 <div class="tdb-28"><button type="button" class="btn btn--principal" id="convoc-programmer">Programmer l'envoi</button><button type="button" class="btn" id="convoc-fermer">Fermer</button></div>
 <div class="form-msg" id="convoc-msg" role="status"></div>
 </fieldset>
+<h4 class="convoc-suivi-titre">Réponses des participants <button type="button" class="btn-mini-admin" id="convoc-actualiser">🔄 Actualiser</button></h4>
+<div id="convoc-reponses" class="convoc-reponses"><p class="agenda-aide">Les réponses arrivent quand les participants appuient sur leur lien « Confirmez votre présence ».</p></div>
 <h4 class="convoc-suivi-titre">Suivi des envois</h4>
 <div id="convoc-suivi" class="convoc-suivi"></div>
 </section>
@@ -2926,7 +2928,7 @@ document.addEventListener('DOMContentLoaded', function () {
 <script src="js/analyse-profil.js?v=331cdca4"></script>
 <script src="js/erreurs-corrigees.js?v=9b5aeac4"></script>
 <script src="js/nettoyage-supabase.js?v=3556a060"></script>
-<script src="js/messages-convocations.js?v=c631297f"></script>
+<script src="js/messages-convocations.js?v=a9725213"></script>
 <script src="js/messages-candidats.js?v=40e5e202"></script>
 <script src="js/messages-groupes.js?v=05068085"></script>
 <script src="js/couverture-admin.js?v=19280ca8"></script>
@@ -2934,7 +2936,7 @@ document.addEventListener('DOMContentLoaded', function () {
 <script src="js/fiches-evenement-admin.js?v=f6cdd740"></script>
 <script src="js/rapport-profils-admin.js?v=0ddad1e1"></script>
 <script src="js/agenda-admin.js?v=0867816c"></script>
-<script src="js/convocations-admin.js?v=a1958331"></script>
+<script src="js/convocations-admin.js?v=e229def6"></script>
 <script src="js/tableau-de-bord.js?v=c7bc5134"></script>
 
 <script id="ma2m-final-visual-guard">
