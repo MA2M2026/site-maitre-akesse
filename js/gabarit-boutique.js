@@ -23,7 +23,7 @@
       '  <div class="container header-v2-inner">\n' +
       '    <a href="/index.html" class="logo-img-header"><img src="/assets/logo-header.png" alt="Maître Akesse Model Management"></a>\n' +
       '    <div class="header-v2-droite">\n' +
-      '      <button class="menu-trigger" id="menuBtn"><span>Menu</span><span class="dots"><span></span><span></span><span></span></span></button>\n' +
+      '      <button class="menu-trigger" id="menuBtn" data-bouton-libre><span>Menu</span><span class="dots"><span></span><span></span><span></span></span></button>\n' +
       '    </div>\n  </div>\n</header>\n' +
       '<div class="menu-overlay" id="menuOverlay">\n' +
       '  <button class="close-menu" id="closeMenuBtn">Fermer ✕</button>\n' +

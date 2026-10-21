@@ -58,8 +58,8 @@ async function unePage(b, page, ecran) {
   const { ctx, p } = await ouvrir(b, page, ecran, false);
   try {
     await lireTout(p, etiquette);
-    // appui sur un bouton : il doit se signaler (liseré blanc, js/bouton-appui.js)
-    const appui = await p.evaluate(() => { const b = document.getElementById('menuBtn'); if (!b) return true; b.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); return b.classList.contains('touche-appuyee'); });
+    // appui sur un bouton : il doit se signaler (liseré blanc, ou bouton rond « marche » qui s'enfonce et passe au vert ; js/bouton-appui.js)
+    const appui = await p.evaluate(() => { const b = document.getElementById('menuBtn'); if (!b) return true; b.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); return b.classList.contains('touche-appuyee') || b.classList.contains('rond-appuye'); });
     if (!appui) problemes.push(etiquette + ' : appuyer sur un bouton ne se voit pas');
     if (await p.evaluate(() => { const f = document.querySelector('footer[data-gabarit="pied"]'); return f && !f.innerText.trim(); })) problemes.push(etiquette + ' : pied de page vide');
     for (const x of await p.evaluate(verifierBoutons)) problemes.push(etiquette + ' : bouton « ' + x.texte + ' » (' + x.element + ') pas au modèle rouge (fond ' + x.fond + ', texte ' + x.couleur + ', coins ' + x.rayon + ')');
