@@ -7,8 +7,8 @@ const window = {}; eval(fs.readFileSync(path.join(racine, 'js/erreurs-corrigees.
 const tdb = fs.readFileSync(path.join(racine, 'js/tableau-de-bord.js'), 'utf8');
 const debut = tdb.indexOf('const REGLES_ERREURS = '), fin = tdb.indexOf('\n}\n', tdb.indexOf('function analyserErreur(')) + 2;
 eval(tdb.slice(debut, fin)); // règles de classement + analyserErreur, telles quelles
-const debutC = tdb.indexOf('function estErreurCorrigee('), finC = tdb.indexOf('\n}\n', debutC) + 2;
-eval(tdb.slice(debutC, finC)); // la règle du nettoyage automatique, telle quelle
+const debutC = tdb.indexOf('function regleCorrespond('), finC = tdb.indexOf('\n}\n', tdb.indexOf('function estErreurCorrigee(')) + 2;
+eval(tdb.slice(debutC, finC)); // la règle du nettoyage automatique (regleCorrespond + estErreurCorrigee), telle quelle
 const efface = (message, ua, date) => estErreurCorrigee({ message, pile: '', user_agent: ua, created_at: date }, window.MA2M_ERREURS_CORRIGEES);
 const PHX = 'Mozilla/5.0 (Linux; U; Android 12; fr-fr; TECNO KI5k) Chrome/105.0 Mobile Safari/537.36 PHX/22.4';
 const BRAVE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6_2 like Mac OS X) Version/18.6.2 Mobile/15E148 Safari/604.1 Brave';
