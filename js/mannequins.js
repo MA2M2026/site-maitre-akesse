@@ -182,7 +182,7 @@ function appliquerFiltres() {
   }
   vide.style.display = 'none';
 
-  resultats.forEach(profil => {
+  resultats.forEach((profil, rang) => {
     const carte = document.createElement('div');
     carte.className = 'medaillon-carte reveal';
     const dejaSelectionne = estDansSelection(profil.id);
@@ -192,7 +192,7 @@ function appliquerFiltres() {
       </button>
       <a href="mannequin.html?id=${profil.id}" class="u-flex-col-centre">
         <div class="medaillon-photo">
-          <img src="${echapperHtml(profil.photoUrl)}" alt="${echapperHtml(profil.full_name || (EN ? 'Model' : 'Mannequin'))}" loading="lazy">
+          <img src="${echapperHtml(profil.photoUrl)}" alt="${echapperHtml(profil.full_name || (EN ? 'Model' : 'Mannequin'))}"${rang < 4 ? (rang === 0 ? ' fetchpriority="high"' : '') : ' loading="lazy"'}>
           <div class="book-carte-legende">
             <div class="medaillon-nom">${echapperHtml(profil.full_name || (EN ? 'Model' : 'Mannequin'))}</div>
             <div class="medaillon-info">${echapperHtml(profil.city || '')}${profil.height_cm ? ' · ' + profil.height_cm + ' cm' : ''}</div>

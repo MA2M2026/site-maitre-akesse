@@ -110,7 +110,7 @@
     const a = document.createElement('a');
     a.href = fiche(m.id);
     a.innerHTML = '<div class="mag-cadre"><img alt="" loading="lazy"></div><span></span>';
-    a.querySelector('img').alt = m.full_name || '';
+    // le nom est écrit juste dessous : image décorative pour les lecteurs d'écran (pas de nom lu deux fois)
     a.querySelector('img').src = urlLegere(m.photo);
     a.querySelector('span').textContent = m.full_name || T('Mannequin', 'Model');
     return a;

@@ -62,9 +62,9 @@
   placeHolders('entete').forEach(function (el) {
     var autre = el.dataset.autreLangue || ((EN_G ? '../' : 'en/') + page + '.html');
     el.innerHTML = '\n  <div class="container header-v2-inner">\n' +
-      '    <a href="index.html" class="logo-img-header"><img src="' + RACINE_G + 'assets/logo-header-clair.png" alt="Maître Akesse Model Management"></a>\n' +
+      '    <a href="index.html" class="logo-img-header"><img src="' + RACINE_G + 'assets/logo-header-clair.png" alt="Maître Akesse Model Management" width="600" height="182"></a>\n' +
       '    <div class="header-v2-droite">\n' +
-      '      <a href="' + autre + '" class="lang-switch" aria-label="' + (EN_G ? 'Switch to French">FR' : 'Switch to English">EN') + '</a>\n' +
+      '      <a href="' + autre + '" class="lang-switch" aria-label="' + (EN_G ? 'FR, version française">FR' : 'EN, English version">EN') + '</a>\n' +
       '      <button class="menu-trigger" id="menuBtn">\n        <span>Menu</span>\n        <span class="dots"><span></span><span></span><span></span></span>\n      </button>\n' +
       '    </div>\n  </div>\n';
     el.setAttribute('data-rempli', '');
