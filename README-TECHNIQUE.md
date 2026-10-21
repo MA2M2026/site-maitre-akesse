@@ -198,6 +198,31 @@ dans la conversation du 21/10/2026.
   `a.lien-marche` (bouton rond + libellé souligné) au lieu d'un lien perdu dans la phrase. Essai :
   `test-lien-marche.js`.
 
+## 📨 Convocations des projets de l'agenda (Extension 141, 21/10/2026)
+- **Base** : `supabase-convocations.sql` (rejouable, à exécuter une fois dans Supabase). Colonnes
+  d'`agenda_projets` : `heure_evenement`, `heure_convocation`, `deroule` (heure + activité),
+  `a_prevoir`, `message_modele`, `rappel_veille`, `rappel_heure`. Tables (agence seulement, RLS
+  `admins`) : `contacts_externes` (carnet des non-inscrits), `convocation_participants`
+  (coordonnées recopiées ; `parent` pour un mineur), `convocation_envois` (un par participant ×
+  canal × sorte convocation/rappel ; statuts programme/en_cours/envoye/echec/a_faire/annule).
+  `agenda_public` ne lit aucune de ces colonnes.
+- **Tableau de bord** : champs dans le formulaire de l'Agenda (`js/agenda-admin.js`), bouton
+  « 📨 Convoquer » → `js/convocations-admin.js` (participants, carnet, aperçu, quand, suivi,
+  « Ouvrir WhatsApp »). « Maintenant » : e-mails envoyés depuis le navigateur (EmailJS).
+- **Envois programmés** : `pg_cron` toutes les 5 min → `convocations_reveil()` appelle (seulement
+  s'il y a un envoi dû, `pg_net`) `GET /api/portail?tache=convocations` avec la clé tirée au hasard
+  dans `reglages_prives` (vérifiée par `convocations_cle_valide`). Le serveur prend les envois
+  (`convocations_a_traiter`, une seule fois chacun), envoie les e-mails (EmailJS, clé Vercel
+  `EMAILJS_PRIVATE_KEY`, 3 essais à 10 min, `convocations_resultat`), passe WhatsApp/SMS « à faire »
+  et prévient l'agence par e-mail. Rappel de la veille à `rappel_heure` (Abidjan = UTC) ; il suit
+  les changements de date, et un projet annulé annule ses envois (déclencheur).
+- **Textes** : `js/messages-convocations.js` (navigateur + serveur), repères `{salutation}`,
+  `{introduction}`, `{date}`, `{heure_evenement}`, `{lieu}`, `{adresse}`, `{convocation}`,
+  `{programme}`, `{a_prevoir}` ; une ligne dont le repère est vide disparaît.
+- **Essais** : `test-convocations.js` (tableau de bord, téléphone/ordinateur, sans Extension 141),
+  `test-convocations-serveur.js` (serveur, faux EmailJS). Le SQL a été essayé sur un PostgreSQL
+  local (droits, reprise, échecs, rappel, annulation).
+
 ## 🔤 Polices hébergées sur le site (21/10/2026)
 Plus aucune page n'appelle Google Fonts : `css/polices.css` (chargée par toutes les pages) décrit
 les polices du site (Cormorant Garamond, Jost, Montserrat, Big Shoulders Display, Work Sans,

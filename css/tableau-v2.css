@@ -533,5 +533,45 @@ html body.tdb-v2:not(.v2-page-v2-ensemble) .v2-entete-actions { display: none !i
   .agenda-intervenant { grid-template-columns: 1fr; }
 }
 
+/* Convocations des projets de l'agenda (Extension 141, 21/10/2026) */
+.agenda-alerte { color: var(--c-b3261e); font-weight: 600; }
+.agenda-espace { margin-top: 0.9rem; }
+.agenda-rappel { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin: 0.4rem 0 0.8rem; }
+.agenda-rappel input[type=time], .agenda-intervenant input[type=time] { padding: 0.5rem 0.7rem; border: 1px solid var(--gris-clair); border-radius: 8px; font: inherit; }
+.agenda-message summary { cursor: pointer; font-weight: 600; margin: 0.4rem 0; }
+.agenda-message textarea { width: 100%; font: inherit; }
+.agenda-etape { grid-template-columns: 9rem minmax(0, 1fr) auto; }
+.convoc-panneau { margin: 1.4rem 0; padding: 1.1rem; border: 2px solid var(--rouge-ma2m); border-radius: 14px; background: var(--surface); }
+.convoc-participants { display: grid; gap: 0.4rem; margin-bottom: 0.6rem; }
+.convoc-personne { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 0.6rem; align-items: center; padding: 0.45rem 0.6rem; border: 1px solid var(--gris-clair); border-radius: 10px; }
+.convoc-personne small { display: block; color: var(--texte-doux); overflow-wrap: anywhere; }
+.convoc-personne .convoc-manque { color: var(--c-b3261e); }
+.convoc-apercu { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-size: 0.88rem; max-height: 26rem; overflow: auto; padding: 0.8rem; margin: 0.6rem 0 0; background: var(--fond); border: 1px solid var(--gris-clair); border-radius: 10px; }
+.convoc-inactif { opacity: 0.55; }
+.convoc-panneau .agenda-nouveau-partenaire select { flex: 1 1 14rem; min-width: 0; max-width: 100%; }
+.convoc-panneau button { white-space: normal !important; max-width: 100%; }
+#convoc-apercu-qui { max-width: 100%; }
+.convoc-suivi { display: grid; gap: 0.4rem; }
+.convoc-envoi { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.3rem 0.8rem; align-items: center; padding: 0.5rem 0.7rem; border: 1px solid var(--gris-clair); border-radius: 10px; font-size: 0.88rem; }
+.convoc-envoi .convoc-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: flex-end; }
+.convoc-envoi.a-faire { border-color: var(--rouge-ma2m); }
+.convoc-chiffres { font-weight: 600; margin: 0 0 0.5rem; }
+.convoc-barre { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: var(--gris-clair); margin-bottom: 0.8rem; }
+.convoc-barre-confirme { background: #1FA35B; }
+.convoc-barre-absent { background: var(--rouge-ma2m); }
+.convoc-barre-attente { background: #B9B3AC; }
+.convoc-groupe summary { cursor: pointer; font-weight: 600; margin: 0.3rem 0; }
+.convoc-reponse { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.4rem; padding: 0.35rem 0; border-bottom: 1px solid var(--gris-clair); font-size: 0.88rem; }
+.convoc-reponse-confirme { color: #137A43; font-weight: 600; }
+.convoc-reponse-absent { color: var(--c-b3261e); font-weight: 600; }
+.convoc-suivant { justify-self: start; text-align: center; white-space: normal !important; margin-bottom: 0.4rem; }
+@media (max-width: 640px) {
+  .agenda-etape { grid-template-columns: 1fr; }
+  .convoc-envoi { grid-template-columns: 1fr; }
+  .convoc-personne { grid-template-columns: auto minmax(0, 1fr); }
+  .convoc-personne > :last-child { grid-column: 2; justify-self: start; }
+  .convoc-envoi .convoc-actions { justify-content: flex-start; }
+}
+
 /* Mise en sourdine (11/10/2026) */
 .tdb-sourdine { color: var(--c-b3261e); font-weight: 600; }

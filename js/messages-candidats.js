@@ -287,7 +287,5 @@ function sansPhraseEmail(texte) {
 // Version e-mail d'un message WhatsApp : sans la phrase qui annonce l'e-mail,
 // sans *gras* ni _italique_ (signes qui s'afficheraient tels quels dans un e-mail).
 function messagePourEmail(texte) {
-  return sansPhraseEmail(texte)
-    .replace(/\*([^*\n]+)\*/g, '$1')
-    .replace(/(^|[\s(«])_([^_\n]+)_(?=$|[\s.,;:!?)»])/gm, '$1$2');
+  return sansMarquesWhatsApp(sansPhraseEmail(texte));  // js/messages-convocations.js
 }
