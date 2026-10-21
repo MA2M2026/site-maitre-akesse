@@ -189,8 +189,8 @@ dans la conversation du 21/10/2026.
   sombre à `.lang-switch`). À l'appui, `js/bouton-appui.js` pose `.rond-appuye` : le bouton
   s'enfonce et passe au vert. Le mot « Menu » reste lu par les lecteurs d'écran (caché à l'œil).
 - Le bandeau défilant « Infos du jour » est retiré de l'accueil FR/EN (il surchargeait la
-  nouvelle couverture). Le texte réglé dans le tableau de bord (`bandeau_annonce`) n'est donc plus
-  affiché nulle part ; la table et le réglage existent toujours. Le bandeau de la boutique
+  nouvelle couverture). La rubrique « Bandeau d'information » est aussi retirée du tableau de bord et
+  de l'Administration (21/10/2026) ; la table `bandeau_annonce` reste dans la base, inutilisée. Le bandeau de la boutique
   (`js/marketplace-vitrine.js`) n'est pas concerné.
 - Essai : `test-ecran-entree.js` (plus de bandeau, boutons ronds, vert à l'appui, menu ouvert).
 - Même bouton rond (classe `.lien-marche-rond`, style partagé avec l'en-tête) en haut de « Intégrer
