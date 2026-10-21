@@ -16,7 +16,7 @@
   var projets = [], mannequins = [], partenaires = [];
   var colonneAutres = false; // colonne « Autres mannequins » présente (Extension 137 collée)
   var colonnePartenairesLibres = false; // colonne « Autres partenaires » présente (Extension 138 collée)
-  var convocationsActives = false; // colonnes et tables des convocations présentes (Extension 141 collée)
+  var convocationsActives = false; // tables des convocations présentes (Extension 141 collée)
   var projetEnCours = null; // projet ouvert avec « Modifier »
 
   function message(t, erreur) {
@@ -26,15 +26,6 @@
   }
   function cochees(idConteneur) {
     return Array.prototype.map.call($(idConteneur).querySelectorAll('input[type=checkbox]:checked'), function (c) { return c.value; });
-  }
-  function caseACocher(valeur, libelle, nom, recherche) {
-    var l = document.createElement('label');
-    var c = document.createElement('input');
-    c.type = 'checkbox'; c.value = valeur; c.name = nom;
-    l.appendChild(c);
-    l.appendChild(document.createTextNode(libelle));
-    l.dataset.nom = String(recherche || libelle).toLowerCase();
-    return l;
   }
   // ---------- Horaires jour par jour ----------
   function joursEntre(debut, fin) {
@@ -86,42 +77,11 @@
     });
   }
 
-  // ---------- Lignes à deux champs + « Retirer » (intervenants, étapes du déroulé) ----------
-  function ligneDeuxChamps(boite, classe, champ1, champ2) {
-    var l = document.createElement('div');
-    l.className = classe;
-    [champ1, champ2].forEach(function (c) {
-      var i = document.createElement('input');
-      i.type = c.type || 'text';
-      if (c.max) i.maxLength = c.max;
-      if (c.liste) i.setAttribute('list', c.liste);
-      if (c.placeholder) i.placeholder = c.placeholder;
-      i.setAttribute('aria-label', c.aria); i.value = c.valeur || ''; i.dataset[c.cle] = '1';
-      l.appendChild(i);
-    });
-    var x = document.createElement('button');
-    x.type = 'button'; x.className = 'btn-mini-admin'; x.textContent = 'Retirer';
-    x.addEventListener('click', function () { l.remove(); });
-    l.appendChild(x);
-    $(boite).appendChild(l);
-    return l.querySelectorAll('input')[1];
-  }
   // ---------- Intervenants (rôle + nom, liste libre) ----------
   function ajouterIntervenant(role, nom) {
-    return ligneDeuxChamps('agenda-intervenants', 'agenda-intervenant',
+    return ligneDeuxChamps($('agenda-intervenants'), 'agenda-intervenant',
       { max: 60, liste: 'agenda-roles', placeholder: 'Rôle (ex : Photographe)', aria: 'Rôle de l’intervenant', valeur: role, cle: 'role' },
       { max: 120, placeholder: 'Nom', aria: 'Nom de l’intervenant', valeur: nom, cle: 'nom' });
-  }
-  // ---------- Déroulé de la journée (convocations, Extension 141) : heure + activité ----------
-  function ajouterEtape(heure, activite) {
-    return ligneDeuxChamps('agenda-deroule', 'agenda-intervenant agenda-etape',
-      { type: 'time', aria: 'Heure de l’étape', valeur: heure, cle: 'heure' },
-      { max: 120, placeholder: 'ex : Essayage', aria: 'Activité de l’étape', valeur: activite, cle: 'activite' });
-  }
-  function lireDeroule() {
-    return Array.prototype.map.call($('agenda-deroule').querySelectorAll('.agenda-etape'), function (l) {
-      return { heure: l.querySelector('[data-heure]').value, activite: l.querySelector('[data-activite]').value.trim() };
-    }).filter(function (x) { return x.heure || x.activite; }).slice(0, 30);
   }
   function lireIntervenants() {
     return Array.prototype.map.call($('agenda-intervenants').querySelectorAll('.agenda-intervenant'), function (l) {
@@ -199,7 +159,8 @@
       + (prive ? '<p class="agenda-prive">🔒 ' + echapperHtml(prive) + '</p>' : '')
       + '</div>'
       + '<div class="agenda-boutons">'
-      + (convocationsActives && !p.annule ? '<button type="button" class="btn-mini-admin" data-convoquer="' + echapperHtml(p.id) + '" aria-label="Convoquer les participants de « ' + echapperHtml(p.titre) + ' »">📨 Convoquer</button>' : '')
+      // « Convoquer » : projets à venir seulement (page Convocations, js/convocations-page.js)
+      + (convocationsActives && !p.annule && (p.date_fin || p.date_debut) >= dateDuJour() ? '<button type="button" class="btn-mini-admin" data-convoquer="' + echapperHtml(p.id) + '" aria-label="Convoquer les participants de « ' + echapperHtml(p.titre) + ' »">📨 Convoquer</button>' : '')
       + '<button type="button" class="btn-mini-admin" data-modifier="' + echapperHtml(p.id) + '" aria-label="Modifier « ' + echapperHtml(p.titre) + ' »">Modifier</button>'
       + '<button type="button" class="btn-mini-admin" data-supprimer="' + echapperHtml(p.id) + '" aria-label="Supprimer « ' + echapperHtml(p.titre) + ' »">Supprimer</button></div>';
     return div;
@@ -228,8 +189,6 @@
     // convocations (Extension 141) : la table des envois répond-elle ?
     var essai = await sb.from('convocation_envois').select('id').limit(1);
     convocationsActives = !essai.error;
-    $('agenda-convocation-inactive').hidden = convocationsActives;
-    $('agenda-convocation-champs').querySelectorAll('input, textarea, button').forEach(function (c) { c.disabled = !convocationsActives; });
     colonneAutres = projets.some(function (p) { return 'mannequins_libres' in p; });
     colonnePartenairesLibres = projets.some(function (p) { return 'partenaires_libres' in p; });
     afficherListe();
@@ -251,9 +210,6 @@
     $('agenda-visible').checked = true;
     $('agenda-pays').value = "Côte d'Ivoire";
     $('agenda-intervenants').textContent = '';
-    $('agenda-deroule').textContent = '';
-    $('agenda-rappel').checked = true;
-    $('agenda-rappel-heure').value = '18:00';
     dessinerSeances([]);
     $('agenda-enregistrer').textContent = 'Ajouter à l’agenda';
     $('agenda-annuler').hidden = true;
@@ -295,14 +251,6 @@
     $('agenda-annule').checked = !!p.annule;
     $('agenda-autres').value = (p.mannequins_libres || []).join('\n');
     $('agenda-autres-partenaires').value = (p.partenaires_libres || []).join('\n');
-    $('agenda-heure-evenement').value = p.heure_evenement || '';
-    $('agenda-heure-convocation').value = p.heure_convocation || '';
-    $('agenda-deroule').textContent = '';
-    (p.deroule || []).forEach(function (x) { ajouterEtape(x.heure, x.activite); });
-    $('agenda-a-prevoir').value = p.a_prevoir || '';
-    $('agenda-rappel').checked = p.rappel_veille !== false;
-    $('agenda-rappel-heure').value = p.rappel_heure || '18:00';
-    $('agenda-message-modele').value = p.message_modele || '';
     $('agenda-en-cours').textContent = '✏️ Vous modifiez : « ' + p.titre + ' » — ' + dateAgenda(p.date_debut, p.date_fin)
       + '. Vérifiez le titre et les dates avant d’enregistrer.';
     $('agenda-en-cours').hidden = false;
@@ -380,18 +328,6 @@
       return false;
     });
     if (autresPartenaires.length || colonnePartenairesLibres) ligne.partenaires_libres = autresPartenaires;
-    // Convocation (Extension 141) : seulement si les colonnes existent déjà
-    if (convocationsActives) {
-      Object.assign(ligne, {
-        heure_evenement: $('agenda-heure-evenement').value || null,
-        heure_convocation: $('agenda-heure-convocation').value || null,
-        deroule: lireDeroule(),
-        a_prevoir: $('agenda-a-prevoir').value.trim() || null,
-        rappel_veille: $('agenda-rappel').checked,
-        rappel_heure: $('agenda-rappel-heure').value || '18:00',
-        message_modele: $('agenda-message-modele').value.trim() || null
-      });
-    }
     var id = $('agenda-id').value;
     enCours = true;
     $('agenda-enregistrer').disabled = true;
@@ -426,12 +362,6 @@
   $('agenda-date').addEventListener('change', function () { dessinerSeances(); });
   $('agenda-date-fin').addEventListener('change', function () { dessinerSeances(); });
   $('agenda-ajouter-intervenant').addEventListener('click', function () { ajouterIntervenant('', '').focus(); });
-  $('agenda-ajouter-etape').addEventListener('click', function () { ajouterEtape('', '').focus(); });
-  $('agenda-message-type').addEventListener('click', function () {
-    var t = $('agenda-message-modele');
-    if (t.value.trim() && !confirm('Remplacer votre message par le message type ?')) return;
-    t.value = MODELE_CONVOCATION;
-  });
 
   // Nouveau partenaire enregistré sur place, puis coché pour ce projet.
   $('agenda-ajouter-partenaire').addEventListener('click', async function () {
@@ -483,7 +413,7 @@
     if (!p) return;
     if (b.dataset.modifier) { remplirFormulaire(p); return; }
     // « Convoquer » : panneau des convocations (js/convocations-admin.js)
-    if (b.dataset.convoquer) { ouvrirConvocations(p, mannequins); return; }
+    if (b.dataset.convoquer) { convoquerProjet(p.id); return; }
     if (!confirm('Supprimer « ' + p.titre + ' » de l’agenda ?')) return;
     b.disabled = true;
     var r = await sb.from('agenda_projets').delete().eq('id', p.id).select('id');

@@ -19,7 +19,7 @@ function donnees(actif) {
     memoriser: true,
     tables: { admins: [{ user_id: 'admin-1' }], casting_applications: [],
       model_profiles: [{ id: 'm1', full_name: 'AWA KONÉ', published: true }, { id: 'm2', full_name: 'PETITE AMA', published: true }],
-      agenda_projets: [projet], convocation_participants: [], convocation_envois: [], contacts_externes: [] },
+      agenda_projets: [projet, { id: 'pa1', type: 'defile', titre: 'DEFILE PASSE', date_debut: '2026-01-10', visible: true, annule: false, mannequin_ids: [], partenaire_ids: [], seances: [], intervenants: [], mannequins_libres: [], partenaires_libres: [] }], convocation_participants: [], convocation_envois: [], contacts_externes: [] },
     rpc: { code_validation_statut: [{ defini: true }],
       convocation_contacts_mannequins: [
         { model_id: 'm1', full_name: 'AWA KONÉ', category: 'femme', phone: '0701020304', contact_email: 'awa@test.ci', date_naissance: '1999-01-01' },
@@ -53,25 +53,28 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     const n = nom + ' : ';
     const { ctx, p, errs, journal } = await connecter(b, vp, true);
 
-    // 1. Le projet : heure, déroulé, « À prévoir », rappel
-    ok(await p.isVisible('#agenda-heure-convocation') && !(await p.isVisible('#agenda-convocation-inactive')), n + 'champs de convocation dans le formulaire du projet');
-    await p.click('[data-modifier="pa2"]'); await p.waitForTimeout(400);
-    await p.fill('#agenda-heure-evenement', '20:00'); await p.fill('#agenda-heure-convocation', '15:00');
+    // 1. Agenda : « Convoquer » seulement sur les projets à venir → page Convocations, projet déjà choisi
+    ok(!!(await p.$('[data-convoquer="pa2"]')) && !(await p.$('[data-convoquer="pa1"]')), n + 'Agenda : « Convoquer » sur le projet à venir, pas sur le projet passé');
+    await p.click('[data-convoquer="pa2"]'); await p.waitForTimeout(1500);
+    const choix = await p.$$eval('#cv-projet option', os => os.map(o => o.value + '|' + o.textContent));
+    ok(await p.isVisible('#cv-form') && (await p.inputValue('#cv-projet')) === 'pa2' && (await p.inputValue('#cv-titre')) === 'AFRICA IN RHYTHM', n + 'page Convocations ouverte avec le projet choisi');
+    ok(choix.length === 2 && choix[0].startsWith('|') && /AFRICA IN RHYTHM/.test(choix[1]) && !choix.some(c => /DEFILE PASSE/.test(c)), n + 'liste : « Nouveau projet » et les projets à venir seulement');
+    ok((await p.$$eval('#cv-mannequins input:checked', cs => cs.map(c => c.value))).join() === 'm1,m2', n + 'mannequins du projet déjà cochés');
+    await p.fill('#cv-heure-evenement', '20:00'); await p.fill('#cv-heure-convocation', '15:00');
     for (const [h, a] of [['15:00', 'Accueil'], ['15:30', 'Essayage'], ['18:00', 'Répétition']]) {
-      await p.click('#agenda-ajouter-etape');
-      const l = p.locator('#agenda-deroule .agenda-etape').last();
+      await p.click('#cv-ajouter-etape');
+      const l = p.locator('#cv-deroule .agenda-etape').last();
       await l.locator('[data-heure]').fill(h); await l.locator('[data-activite]').fill(a);
     }
-    await p.fill('#agenda-a-prevoir', 'Escarpins noirs\nPièce d’identité');
-    await p.fill('#agenda-rappel-heure', '19:00');
-    if (process.env.CAPTURES) { await p.$eval('#agenda-convocation-champs', e => e.scrollIntoView()); await p.waitForTimeout(800); await p.screenshot({ path: process.env.CAPTURES + '/form-' + vp.width + '.png' }); }
-    await p.$eval('#agenda-enregistrer', x => x.click()); await p.waitForTimeout(1200);
+    await p.fill('#cv-a-prevoir', 'Escarpins noirs\nPièce d’identité');
+    await p.fill('#cv-rappel-heure', '19:00');
+    if (process.env.CAPTURES) { await p.$eval('#cv-form', e => e.scrollIntoView()); await p.waitForTimeout(800); await p.screenshot({ path: process.env.CAPTURES + '/form-' + vp.width + '.png' }); }
+    await p.$eval('#cv-enregistrer', x => x.click()); await p.waitForTimeout(1800);
     const maj = ecrits(journal, 'PATCH', 'agenda_projets').pop() || {};
-    ok(maj.heure_convocation === '15:00' && maj.heure_evenement === '20:00' && maj.deroule.length === 3 && maj.deroule[1].activite === 'Essayage' && /Escarpins/.test(maj.a_prevoir) && maj.rappel_veille === true && maj.rappel_heure === '19:00',
-      n + 'projet enregistré avec convocation, déroulé, « À prévoir » et rappel');
+    ok(maj.heure_convocation === '15:00' && maj.heure_evenement === '20:00' && maj.deroule.length === 3 && maj.deroule[1].activite === 'Essayage' && /Escarpins/.test(maj.a_prevoir) && maj.rappel_veille === true && maj.rappel_heure === '19:00' && maj.mannequin_ids.join() === 'm1,m2',
+      n + 'projet enregistré avec convocation, déroulé, « À prévoir », rappel et mannequins');
 
-    // 2. « Convoquer »
-    await p.click('[data-convoquer="pa2"]'); await p.waitForTimeout(1200);
+    // 2. Panneau d'envoi
     ok(await p.isVisible('#convoc-panneau'), n + 'panneau « Convoquer » ouvert');
     const liste = await p.$$eval('#convoc-participants .convoc-personne', ls => ls.map(l => l.textContent));
     ok(liste.length === 3 && /Mademoiselle AWA KONÉ/.test(liste[0]) && /awa@test\.ci/.test(liste[0]) && /ama@test\.ci/.test(liste[1]) && !/parent/.test(liste[1]) && /parent : Madame Ama Mère/.test(liste[2]) && /mere@test\.ci/.test(liste[2]),
@@ -126,6 +129,15 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     ok(dansUneHeure.length === 2 && dansUneHeure.every(l => l.statut === 'programme' && Math.abs(new Date(l.prevu_le) - Date.now() - 3600000) < 120000) && journal.filter(j => j[0] === 'EMAIL').length === avant,
       n + '« Dans 1 heure » : envois programmés, rien ne part tout de suite');
     ok(/Programmé pour/.test(await p.textContent('#convoc-msg')), n + 'message « Programmé pour … »');
+    // 5. Nouveau projet depuis la page : ajouté à l'agenda (visible, sans adresse publique) ; date passée refusée
+    await p.selectOption('#cv-projet', '');
+    ok((await p.inputValue('#cv-titre')) === '' && (await p.$$eval('#cv-mannequins input:checked', cs => cs.length)) === 0 && await p.isHidden('#convoc-panneau'), n + '« Nouveau projet » : page vierge');
+    await p.fill('#cv-titre', 'SHOOTING TEST'); await p.fill('#cv-date', '2020-05-05'); await p.$eval('#cv-enregistrer', x => x.click()); await p.waitForTimeout(500);
+    ok(/déjà passée/.test(await p.textContent('#cv-msg')), n + 'nouveau projet à une date passée : refusé');
+    await p.fill('#cv-date', '2030-12-01'); await p.fill('#cv-lieu', 'Studio MA2M'); await p.$eval('#cv-mannequins input[value="m1"]', c => c.click());
+    await p.$eval('#cv-enregistrer', x => x.click()); await p.waitForTimeout(1800);
+    const cree = ecrits(journal, 'POST', 'agenda_projets').flat().pop() || {};
+    ok(cree.titre === 'SHOOTING TEST' && cree.date_debut === '2030-12-01' && cree.visible === true && cree.mannequin_ids.join() === 'm1' && await p.isVisible('#convoc-panneau') && /ajouté à l’agenda/.test(await p.textContent('#cv-msg')), n + 'nouveau projet ajouté à l’agenda, panneau d’envoi ouvert');
     ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth)), n + 'rien ne dépasse de l’écran');
     ok(!errs.length, n + 'aucune erreur ' + errs.join(' | '));
     await ctx.close();
@@ -152,6 +164,7 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     await p.waitForSelector('#bloc-tableau', { state: 'visible', timeout: 15000 });
     await p.evaluate(() => document.querySelector('.tdb-menu-item[data-tdb-cible="b3c-agenda"]').click()); await p.waitForTimeout(1500);
     await p.click('[data-convoquer="pa2"]'); await p.waitForTimeout(1500);
+    await p.$eval('#cv-enregistrer', x => x.click()); await p.waitForTimeout(1800);
     const chiffres = await p.textContent('.convoc-chiffres');
     const barre = await p.$$eval('.convoc-barre span', ss => ss.map(s => s.className + ' ' + Math.round(parseFloat(s.style.width))));
     const relance = await p.$$eval('.convoc-reponse a', as => as.map(a => decodeURIComponent(a.href)));
@@ -188,8 +201,10 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
   // 5. Extension 141 pas encore exécutée
   {
     const { ctx, p, errs } = await connecter(b, { width: 1280, height: 900 }, false);
-    ok(await p.isVisible('#agenda-convocation-inactive') && await p.isDisabled('#agenda-heure-convocation') && !(await p.$('[data-convoquer]')), 'sans l’Extension 141 : message pour l’activer, champs grisés, pas de « Convoquer »');
+    ok(!(await p.$('[data-convoquer]')), 'sans l’Extension 141 : pas de « Convoquer » dans l’Agenda');
     await p.click('[data-modifier="pa2"]'); await p.waitForTimeout(300);
+    await p.evaluate(() => document.querySelector('.tdb-menu-item[data-tdb-cible="b2-convocations"]').click()); await p.waitForTimeout(1200);
+    ok(await p.isVisible('#cv-inactif') && await p.isDisabled('#cv-titre'), 'sans l’Extension 141 : page Convocations avec le message pour l’activer, champs grisés');
     ok(!errs.filter(e => !/convocation_envois/.test(e)).length, 'sans l’Extension 141 : aucune erreur de page');
     await ctx.close();
   }

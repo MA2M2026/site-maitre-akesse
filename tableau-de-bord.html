@@ -2149,6 +2149,7 @@ a.tdb-menu-item { text-decoration: none; }
     <button class="tdb-menu-item" data-tdb-cible="b2-fiches-evenement" type="button">Fiches événement (défilés)</button>
     <button class="tdb-menu-item" data-tdb-cible="b2-candidatures" type="button">Candidatures / Castings</button>
     <button class="tdb-menu-item" data-tdb-cible="b2-messages-groupes" type="button">📣 Messages groupés (e-mail / WhatsApp)</button>
+    <button class="tdb-menu-item" data-tdb-cible="b2-convocations" type="button">📨 Convocations</button>
     <button class="tdb-menu-item" data-tdb-cible="b2-projets" type="button">Projets &amp; Castings</button>
     <button class="tdb-menu-item" data-tdb-cible="b2-recruteurs" type="button">Demandes recruteurs</button>
     <button class="tdb-menu-item" data-tdb-cible="b2-contacts" type="button">Derniers messages de contact</button>
@@ -2534,6 +2535,86 @@ document.addEventListener('DOMContentLoaded', function () {
 <div class="dossier-liste" id="liste-candidatures"></div>
 <button class="btn dossiers-plus u-hidden" id="candidatures-plus-btn">Voir plus</button>
 </div>
+<div class="liste-recente" data-section="b2-convocations">
+<h2 class="tdb-4">📨 Convocations</h2>
+<p class="tdb-5">Une convocation par événement : choisissez un projet à venir de l'agenda, ou créez-en un nouveau (il s'ajoute tout seul à l'agenda). Remplissez les informations, cochez les mannequins, puis programmez l'envoi : chaque mannequin reçoit SON message, avec le programme et un lien pour confirmer sa présence.</p>
+<p class="agenda-aide agenda-alerte" id="cv-inactif" hidden>Les convocations ne sont pas encore activées : exécutez une fois le fichier supabase-convocations.sql (Extension 141) dans Supabase.</p>
+<form id="cv-form" class="agenda-form" novalidate>
+<div class="form-champ"><label for="cv-projet">1. Le projet</label><select id="cv-projet"><option value="">➕ Nouveau projet</option></select></div>
+<div class="agenda-grille">
+<div class="form-champ"><label for="cv-type">Type</label><select id="cv-type"></select></div>
+<div class="form-champ"><label for="cv-titre">Titre</label><input id="cv-titre" type="text" maxlength="160" placeholder="ex : Défilé Africa in Rhythm"></div>
+<div class="form-champ"><label for="cv-date">Date</label><input id="cv-date" type="date"></div>
+<div class="form-champ"><label for="cv-date-fin">Date de fin, si plusieurs jours</label><input id="cv-date-fin" type="date"></div>
+<div class="form-champ"><label for="cv-lieu">Lieu</label><input id="cv-lieu" type="text" maxlength="160" placeholder="ex : Hôtel Ivoire, salle Atlantique"></div>
+<div class="form-champ"><label for="cv-ville">Ville</label><input id="cv-ville" type="text" maxlength="80" placeholder="ex : Abidjan"></div>
+<div class="form-champ"><label for="cv-adresse">Adresse exacte (jamais sur le site)</label><input id="cv-adresse" type="text" maxlength="300"></div>
+<div class="form-champ"><label for="cv-heure-evenement">Heure de l'événement</label><input id="cv-heure-evenement" type="time"></div>
+<div class="form-champ"><label for="cv-heure-convocation">Heure de convocation des mannequins</label><input id="cv-heure-convocation" type="time"></div>
+</div>
+<fieldset class="agenda-choix"><legend>Déroulé de la journée</legend>
+<p class="agenda-aide">Étape par étape : accueil, essayage, maquillage, répétition…</p>
+<div id="cv-deroule" class="agenda-intervenants"></div>
+<button type="button" class="btn-mini-admin" id="cv-ajouter-etape">＋ Ajouter une étape</button>
+</fieldset>
+<div class="form-champ"><label for="cv-a-prevoir">À prévoir (une chose par ligne)</label><textarea id="cv-a-prevoir" rows="3" maxlength="1500" placeholder="ex : Escarpins noirs&#10;Pièce d'identité&#10;Venir démaquillée"></textarea></div>
+<div class="agenda-rappel"><label class="agenda-visible"><input id="cv-rappel" type="checkbox" checked> Rappel automatique la veille, à</label> <input id="cv-rappel-heure" type="time" value="18:00" aria-label="Heure du rappel de la veille"></div>
+<details class="agenda-message"><summary>Personnaliser le message (facultatif)</summary>
+<p class="agenda-aide">Laissez vide pour le message type. Repères remplis pour chaque personne : {salutation}, {introduction}, {date}, {heure_evenement}, {lieu}, {adresse}, {convocation}, {programme}, {a_prevoir}, {confirmer} (lien de confirmation). Une ligne dont le repère est vide disparaît.</p>
+<textarea id="cv-message" rows="12" maxlength="4000" aria-label="Message personnalisé"></textarea>
+<button type="button" class="btn-mini-admin" id="cv-message-type">Partir du message type</button>
+</details>
+<fieldset class="agenda-choix"><legend>2. Les mannequins concernés</legend>
+<input id="cv-recherche" type="search" aria-label="Rechercher une mannequin" placeholder="Rechercher un nom…" class="agenda-recherche">
+<div id="cv-mannequins" class="agenda-cases agenda-cases-mannequins">Chargement…</div>
+<p class="agenda-compte" id="cv-compte"></p>
+<p class="agenda-aide">Personnes non inscrites sur le site : vous les ajouterez à l'étape suivante.</p>
+</fieldset>
+<label class="agenda-visible"><input id="cv-visible" type="checkbox" checked> Montrer ce projet sur l'agenda du site (sans les noms des mannequins, sans l'adresse ni le programme)</label>
+<div class="tdb-28"><button class="btn btn--principal" id="cv-enregistrer" type="submit">Enregistrer et passer à l'envoi</button></div>
+<div class="form-msg" id="cv-msg" role="status"></div>
+</form>
+<section id="convoc-panneau" class="convoc-panneau" hidden aria-labelledby="convoc-titre">
+<h3 class="tri-titre" id="convoc-titre">📨 Convoquer</h3>
+<p class="agenda-aide" id="convoc-resume"></p>
+<fieldset class="agenda-choix"><legend>Participants</legend>
+<p class="agenda-aide">Les mannequins cochés dans le projet sont déjà dans la liste. Pour un(e) mineur(e), le message part au parent. Décochez une personne pour ne pas lui écrire.</p>
+<div id="convoc-participants" class="convoc-participants">Chargement…</div>
+<div class="agenda-nouveau-partenaire">
+<select id="convoc-carnet" aria-label="Choisir une personne déjà enregistrée dans le carnet"><option value="">Carnet : personne déjà enregistrée…</option></select>
+<button type="button" class="btn-mini-admin" id="convoc-carnet-ajouter">＋ Ajouter</button>
+</div>
+<div class="agenda-nouveau-partenaire">
+<select id="convoc-civilite" aria-label="Civilité"><option>Mademoiselle</option><option>Madame</option><option>Monsieur</option></select>
+<input id="convoc-nom" type="text" maxlength="120" placeholder="Nom complet" aria-label="Nom complet de la personne non inscrite">
+<input id="convoc-tel" type="tel" maxlength="40" placeholder="WhatsApp" aria-label="Numéro WhatsApp de la personne non inscrite">
+<input id="convoc-email" type="email" maxlength="160" placeholder="E-mail" aria-label="E-mail de la personne non inscrite">
+<button type="button" class="btn-mini-admin" id="convoc-personne-ajouter">＋ Ajouter une personne non inscrite</button>
+</div>
+<p class="agenda-aide">La personne non inscrite est gardée dans le carnet, pour la retrouver au prochain projet.</p>
+</fieldset>
+<fieldset class="agenda-choix"><legend>Aperçu du message</legend>
+<select id="convoc-apercu-qui" aria-label="Voir le message envoyé à"></select>
+<pre id="convoc-apercu" class="convoc-apercu"></pre>
+</fieldset>
+<fieldset class="agenda-choix"><legend>Envoi</legend>
+<label class="agenda-visible"><input type="checkbox" id="convoc-canal-email" checked> E-mail (automatique)</label>
+<label class="agenda-visible"><input type="checkbox" id="convoc-canal-whatsapp" checked> WhatsApp (préparé : un appui par personne, tant que l'envoi automatique n'est pas activé)</label>
+<label class="agenda-visible convoc-inactif"><input type="checkbox" id="convoc-canal-sms" disabled> SMS (bientôt)</label>
+<div class="agenda-grille">
+<div class="form-champ"><label for="convoc-quand">Quand ?</label><select id="convoc-quand"><option value="0">Maintenant</option><option value="30">Dans 30 minutes</option><option value="40">Dans 40 minutes</option><option value="60">Dans 1 heure</option><option value="120">Dans 2 heures</option><option value="180">Dans 3 heures</option><option value="date">À une date et une heure précises</option></select></div>
+<div class="form-champ u-hidden" id="convoc-date-champ"><label for="convoc-date">Date et heure de l'envoi (heure d'Abidjan)</label><input id="convoc-date" type="datetime-local"></div>
+</div>
+<p class="agenda-aide" id="convoc-rappel-info"></p>
+<div class="tdb-28"><button type="button" class="btn btn--principal" id="convoc-programmer">Programmer l'envoi</button><button type="button" class="btn" id="convoc-fermer">Fermer</button></div>
+<div class="form-msg" id="convoc-msg" role="status"></div>
+</fieldset>
+<h4 class="convoc-suivi-titre">Réponses des participants <button type="button" class="btn-mini-admin" id="convoc-actualiser">🔄 Actualiser</button></h4>
+<div id="convoc-reponses" class="convoc-reponses"><p class="agenda-aide">Les réponses arrivent quand les participants appuient sur leur lien « Confirmez votre présence ».</p></div>
+<h4 class="convoc-suivi-titre">Suivi des envois</h4>
+<div id="convoc-suivi" class="convoc-suivi"></div>
+</section>
+</div>
 <div class="liste-recente" data-section="b2-messages-groupes">
 <h2 class="tdb-10">📣 Messages groupés</h2>
 <p class="tdb-9">Un seul message, envoyé à chaque personne <strong>séparément</strong> : personne ne voit les autres et aucun groupe n'est créé. Écrivez <strong>{prénom}</strong> ou <strong>{casting}</strong> dans le message : ils seront remplacés pour chaque personne.</p>
@@ -2679,7 +2760,7 @@ document.addEventListener('DOMContentLoaded', function () {
 </div>
 <div class="liste-recente" data-section="b3c-agenda">
 <h2 class="tdb-4">📅 Agenda du site</h2>
-<p class="tdb-5">Le programme de l'agence, montré aux clients sur la page « Agenda » : défilés, shows, shootings, castings, essayages, masterclass, rencontres, événements… Sur le site, on voit les jours, la ville, le lieu, les intervenants, les partenaires et les mannequins (seulement ceux dont le profil est visible). Les horaires n'apparaissent que si vous cochez la case prévue. L'adresse exacte et les notes restent ici, jamais sur le site.</p>
+<p class="tdb-5">Le programme de l'agence, montré aux clients sur la page « Agenda » : défilés, shows, shootings, castings, essayages, masterclass, rencontres, événements… Sur le site, on voit les jours, la ville, le lieu, les intervenants et les partenaires ; les noms des mannequins n'y sont plus (ils restent dans le Parcours MA2M). Les horaires n'apparaissent que si vous cochez la case prévue. L'adresse exacte et les notes restent ici, jamais sur le site.</p>
 <form id="agenda-form" class="agenda-form" novalidate>
 <input type="hidden" id="agenda-id">
 <p class="agenda-en-cours" id="agenda-en-cours" role="status" hidden></p>
@@ -2714,30 +2795,12 @@ document.addEventListener('DOMContentLoaded', function () {
 <div class="form-champ"><label for="agenda-autres-partenaires">Autres partenaires de ce projet, qui ne sont pas nos partenaires directs (un nom par ligne)</label><textarea id="agenda-autres-partenaires" rows="2" maxlength="3000" placeholder="ex : Maison XYZ (via un intermédiaire)"></textarea></div>
 <p class="agenda-aide">Ces noms apparaissent seulement sur ce projet de l'agenda, jamais sur la page Partenaires du site.</p>
 </fieldset>
-<fieldset class="agenda-choix"><legend>Mannequins (visibles si leur profil est publié)</legend>
+<fieldset class="agenda-choix"><legend>Mannequins (jamais sur l'agenda du site ; Parcours MA2M si leur profil est publié)</legend>
 <input id="agenda-recherche" type="search" aria-label="Rechercher une mannequin" placeholder="Rechercher un nom…" class="agenda-recherche">
 <div id="agenda-mannequins" class="agenda-cases agenda-cases-mannequins">Chargement…</div>
 <p class="agenda-compte" id="agenda-compte"></p>
 <div class="form-champ"><label for="agenda-autres">Autres mannequins de l'agence, pas encore sur le site (un nom par ligne)</label><textarea id="agenda-autres" rows="3" maxlength="3000" placeholder="ex : Fatou Bamba"></textarea></div>
-<p class="agenda-aide">Ces noms apparaissent sur l'agenda du site et dans le Parcours MA2M, sans photo ni lien. Quand la mannequin aura son profil, cochez-la plutôt dans la liste ci-dessus et effacez son nom ici.</p></fieldset>
-<fieldset class="agenda-choix agenda-interne" id="agenda-convocation-champs"><legend>📨 Convocation des participants — jamais affiché sur le site</legend>
-<p class="agenda-aide">Ces informations remplissent le message envoyé à chaque participant (bouton « Convoquer » du projet, dans la liste ci-dessous).</p>
-<p class="agenda-aide agenda-alerte" id="agenda-convocation-inactive" hidden>Les convocations ne sont pas encore activées : exécutez une fois le fichier supabase-convocations.sql (Extension 141) dans Supabase.</p>
-<div class="agenda-grille">
-<div class="form-champ"><label for="agenda-heure-evenement">Heure de l'événement</label><input id="agenda-heure-evenement" type="time"></div>
-<div class="form-champ"><label for="agenda-heure-convocation">Heure de convocation des mannequins</label><input id="agenda-heure-convocation" type="time"></div>
-</div>
-<p class="agenda-aide">Déroulé de la journée, étape par étape (accueil, essayage, maquillage, répétition…).</p>
-<div id="agenda-deroule" class="agenda-intervenants"></div>
-<button type="button" class="btn-mini-admin" id="agenda-ajouter-etape">＋ Ajouter une étape</button>
-<div class="form-champ agenda-espace"><label for="agenda-a-prevoir">À prévoir (une chose par ligne)</label><textarea id="agenda-a-prevoir" rows="3" maxlength="1500" placeholder="ex : Escarpins noirs&#10;Pièce d'identité&#10;Venir démaquillée"></textarea></div>
-<div class="agenda-rappel"><label class="agenda-visible"><input id="agenda-rappel" type="checkbox" checked> Rappel automatique la veille, à</label> <input id="agenda-rappel-heure" type="time" value="18:00" aria-label="Heure du rappel de la veille"></div>
-<details class="agenda-message"><summary>Personnaliser le message (facultatif)</summary>
-<p class="agenda-aide">Laissez vide pour le message type. Repères remplis pour chaque personne : {salutation}, {introduction}, {date}, {heure_evenement}, {lieu}, {adresse}, {convocation}, {programme}, {a_prevoir}, {confirmer} (lien de confirmation). Une ligne dont le repère est vide disparaît.</p>
-<textarea id="agenda-message-modele" rows="12" maxlength="4000" aria-label="Message personnalisé"></textarea>
-<button type="button" class="btn-mini-admin" id="agenda-message-type">Partir du message type</button>
-</details>
-</fieldset>
+<p class="agenda-aide">Ces noms apparaissent dans le Parcours MA2M, sans photo ni lien (jamais sur l'agenda du site). Quand la mannequin aura son profil, cochez-la plutôt dans la liste ci-dessus et effacez son nom ici.</p></fieldset>
 <fieldset class="agenda-choix agenda-interne"><legend>🔒 Interne — jamais affiché sur le site</legend>
 <div class="agenda-grille">
 <div class="form-champ"><label for="agenda-adresse">Adresse exacte</label><input id="agenda-adresse" type="text" maxlength="300"></div>
@@ -2752,46 +2815,6 @@ document.addEventListener('DOMContentLoaded', function () {
 </div>
 <div class="form-msg" id="agenda-msg" role="status"></div>
 </form>
-<section id="convoc-panneau" class="convoc-panneau" hidden aria-labelledby="convoc-titre">
-<h3 class="tri-titre" id="convoc-titre">📨 Convoquer</h3>
-<p class="agenda-aide" id="convoc-resume"></p>
-<fieldset class="agenda-choix"><legend>Participants</legend>
-<p class="agenda-aide">Les mannequins cochés dans le projet sont déjà dans la liste. Pour un(e) mineur(e), le message part au parent. Décochez une personne pour ne pas lui écrire.</p>
-<div id="convoc-participants" class="convoc-participants">Chargement…</div>
-<div class="agenda-nouveau-partenaire">
-<select id="convoc-carnet" aria-label="Choisir une personne déjà enregistrée dans le carnet"><option value="">Carnet : personne déjà enregistrée…</option></select>
-<button type="button" class="btn-mini-admin" id="convoc-carnet-ajouter">＋ Ajouter</button>
-</div>
-<div class="agenda-nouveau-partenaire">
-<select id="convoc-civilite" aria-label="Civilité"><option>Mademoiselle</option><option>Madame</option><option>Monsieur</option></select>
-<input id="convoc-nom" type="text" maxlength="120" placeholder="Nom complet" aria-label="Nom complet de la personne non inscrite">
-<input id="convoc-tel" type="tel" maxlength="40" placeholder="WhatsApp" aria-label="Numéro WhatsApp de la personne non inscrite">
-<input id="convoc-email" type="email" maxlength="160" placeholder="E-mail" aria-label="E-mail de la personne non inscrite">
-<button type="button" class="btn-mini-admin" id="convoc-personne-ajouter">＋ Ajouter une personne non inscrite</button>
-</div>
-<p class="agenda-aide">La personne non inscrite est gardée dans le carnet, pour la retrouver au prochain projet.</p>
-</fieldset>
-<fieldset class="agenda-choix"><legend>Aperçu du message</legend>
-<select id="convoc-apercu-qui" aria-label="Voir le message envoyé à"></select>
-<pre id="convoc-apercu" class="convoc-apercu"></pre>
-</fieldset>
-<fieldset class="agenda-choix"><legend>Envoi</legend>
-<label class="agenda-visible"><input type="checkbox" id="convoc-canal-email" checked> E-mail (automatique)</label>
-<label class="agenda-visible"><input type="checkbox" id="convoc-canal-whatsapp" checked> WhatsApp (préparé : un appui par personne, tant que l'envoi automatique n'est pas activé)</label>
-<label class="agenda-visible convoc-inactif"><input type="checkbox" id="convoc-canal-sms" disabled> SMS (bientôt)</label>
-<div class="agenda-grille">
-<div class="form-champ"><label for="convoc-quand">Quand ?</label><select id="convoc-quand"><option value="0">Maintenant</option><option value="30">Dans 30 minutes</option><option value="40">Dans 40 minutes</option><option value="60">Dans 1 heure</option><option value="120">Dans 2 heures</option><option value="180">Dans 3 heures</option><option value="date">À une date et une heure précises</option></select></div>
-<div class="form-champ u-hidden" id="convoc-date-champ"><label for="convoc-date">Date et heure de l'envoi (heure d'Abidjan)</label><input id="convoc-date" type="datetime-local"></div>
-</div>
-<p class="agenda-aide" id="convoc-rappel-info"></p>
-<div class="tdb-28"><button type="button" class="btn btn--principal" id="convoc-programmer">Programmer l'envoi</button><button type="button" class="btn" id="convoc-fermer">Fermer</button></div>
-<div class="form-msg" id="convoc-msg" role="status"></div>
-</fieldset>
-<h4 class="convoc-suivi-titre">Réponses des participants <button type="button" class="btn-mini-admin" id="convoc-actualiser">🔄 Actualiser</button></h4>
-<div id="convoc-reponses" class="convoc-reponses"><p class="agenda-aide">Les réponses arrivent quand les participants appuient sur leur lien « Confirmez votre présence ».</p></div>
-<h4 class="convoc-suivi-titre">Suivi des envois</h4>
-<div id="convoc-suivi" class="convoc-suivi"></div>
-</section>
 <h3 class="tri-titre">À venir</h3>
 <div id="agenda-liste-avenir" class="agenda-liste">Chargement…</div>
 <h3 class="tri-titre">Réalisés</h3>
@@ -2923,7 +2946,9 @@ document.addEventListener('DOMContentLoaded', function () {
 <script src="js/photos-mises-de-cote.js?v=2585bdba"></script>
 <script src="js/fiches-evenement-admin.js?v=f6cdd740"></script>
 <script src="js/rapport-profils-admin.js?v=0ddad1e1"></script>
-<script src="js/agenda-admin.js?v=95fbef60"></script>
+<script src="js/agenda-outils.js?v=5ddd1308"></script>
+<script src="js/agenda-admin.js?v=6ed22fe3"></script>
+<script src="js/convocations-page.js?v=47d7c900"></script>
 <script src="js/convocations-admin.js?v=8db0296c"></script>
 <script src="js/tableau-de-bord.js?v=f738af79"></script>
 
@@ -3476,7 +3501,7 @@ document.addEventListener('DOMContentLoaded', function () {
 })();
 </script>
 
-<script src="js/tableau-v2.js?v=af86d729"></script>
+<script src="js/tableau-v2.js?v=97a98fd3"></script>
 <!-- /ZONE-ADMIN -->
 </body>
 </html>

@@ -31,8 +31,8 @@ const cas = [
   ['parcours.html', ['Défilé Abidjan', 'septembre 2026', 'Awa Koné']], ['en/parcours.html', ['Défilé Abidjan', 'Our models at work', 'Awa Koné']],
   // fiche : expériences (projets de l'agence inclus) ; l'encadré « Avec MA2M » est retiré (12/10/2026)
   ['mannequin.html?id=a1', ['Shooting Marque Perso']],
-  // agenda public : partenaire indirect et mannequin sans profil, écrits à la main (Ext. 137/138)
-  ['agenda.html', ['Forum Test', 'Maison XYZ', 'Fatou Bamba']], ['en/agenda.html', ['Forum Test', 'Maison XYZ', 'Fatou Bamba']]
+  // agenda public : partenaire indirect écrit à la main (Ext. 138) ; plus aucun nom de mannequin (21/10/2026)
+  ['agenda.html', ['Forum Test', 'Maison XYZ']], ['en/agenda.html', ['Forum Test', 'Maison XYZ']]
 ];
 (async () => {
   let srv; process.on('exit', () => srv && srv.kill());
@@ -80,7 +80,13 @@ const cas = [
     if (page.includes('parcours') && texte.toLowerCase().includes('casting ouvert sans nos mannequins')) manquants.push('projet sans nos mannequins affiché');
     if (page.includes('parcours') || page.includes('agenda')) {
       const libre = await p.evaluate(() => ({ nom: document.body.innerText.includes('Fatou Bamba'), mauvaisLien: !!document.querySelector('a[href*="null"], a[href*="undefined"], a[href=""]') }));
-      if (!libre.nom || libre.mauvaisLien) manquants.push('mannequin écrite à la main (' + JSON.stringify(libre) + ')');
+      if (page.includes('parcours') && !libre.nom) manquants.push('mannequin écrite à la main absente du parcours');
+      if (libre.mauvaisLien) manquants.push('lien vide ou cassé');
+    }
+    // Décision du 21/10/2026 : les noms des mannequins restent dans « Parcours MA2M », plus sur l'agenda public
+    if (page.includes('agenda')) {
+      const noms = await p.evaluate(() => ['Awa Koné', 'Fatou Bamba'].filter(n => document.body.innerText.includes(n)));
+      if (noms.length) manquants.push('noms de mannequins sur l\'agenda : ' + noms.join(', '));
     }
     // Journal du 14/10/2026 : en-tête du calendrier plus large que l'écran du téléphone.
     // Chaque vue (Année, Mois, Semaine, Jour : titres de longueurs différentes) sur 320 px.

@@ -86,7 +86,8 @@
       { titre: 'Castings', items: [
         ['b2-candidatures', 'Candidatures', 'fichierOk', 'candidatures'],
         ['b2-projets', 'Projets & castings', 'calendrier'],
-        ['b2-messages-groupes', 'Messages groupés', 'megaphone']
+        ['b2-messages-groupes', 'Messages groupés', 'megaphone'],
+        ['b2-convocations', 'Convocations', 'megaphone']
       ] },
       { titre: 'Relations', items: [
         ['b2-recruteurs', 'Demandes recruteurs', 'mallette', 'recruteurs'],

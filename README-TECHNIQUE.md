@@ -214,9 +214,17 @@ Essai : `test-retour-invitation.js`.
   (coordonnées recopiées ; `parent` pour un mineur), `convocation_envois` (un par participant ×
   canal × sorte convocation/rappel ; statuts programme/en_cours/envoye/echec/a_faire/annule).
   `agenda_public` ne lit aucune de ces colonnes.
-- **Tableau de bord** : champs dans le formulaire de l'Agenda (`js/agenda-admin.js`), bouton
-  « 📨 Convoquer » → `js/convocations-admin.js` (participants, carnet, aperçu, quand, suivi,
-  « Ouvrir WhatsApp »). « Maintenant » : e-mails envoyés depuis le navigateur (EmailJS).
+- **Tableau de bord** : page à part « 📨 Convocations » (section `b2-convocations`,
+  `js/convocations-page.js`, demande du 21/10/2026), vierge à l'ouverture : on choisit un projet
+  À VENIR de l'agenda (les projets passés ne sont pas proposés) ou « Nouveau projet », qui est
+  enregistré dans l'agenda (date passée refusée) ; puis heures, déroulé, « À prévoir », message,
+  mannequins. Le panneau d'envoi `js/convocations-admin.js` (participants, carnet, aperçu, quand,
+  suivi, réponses, « Ouvrir WhatsApp ») s'ouvre ensuite. Dans l'Agenda, « 📨 Convoquer » (projets
+  à venir seulement) ouvre cette page avec le projet choisi (`convoquerProjet`). Outils partagés
+  Agenda/Convocations : `js/agenda-outils.js` (cases à cocher, lignes à deux champs, déroulé).
+  « Maintenant » : e-mails envoyés depuis le navigateur (EmailJS).
+- **Agenda public** : plus aucun nom de mannequin (`js/agenda.js`, décision du 21/10/2026) ; les
+  noms restent dans « Parcours MA2M » (médaillons).
 - **Envois programmés** : `pg_cron` toutes les 5 min → `convocations_reveil()` appelle (seulement
   s'il y a un envoi dû, `pg_net`) `GET /api/portail?tache=convocations` avec la clé tirée au hasard
   dans `reglages_prives` (vérifiée par `convocations_cle_valide`). Le serveur prend les envois

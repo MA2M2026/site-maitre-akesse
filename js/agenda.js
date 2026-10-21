@@ -8,14 +8,14 @@
 (function () {
   const enAnglais = document.documentElement.lang === 'en';
   const T = enAnglais ? {
-    intervenants: 'With', horaires: 'Times', voirPlus: 'See more', voirPhotos: 'See the photos on the Events page →', partenaires: 'Partners', mannequins: 'Models',
+    intervenants: 'With', horaires: 'Times', voirPlus: 'See more', voirPhotos: 'See the photos on the Events page →', partenaires: 'Partners',
     vide: 'Our upcoming projects will appear here very soon.',
     videPasses: 'Our completed projects will appear here.',
     erreur: 'The agenda could not be loaded. Please try again later.',
     precedent: 'Previous month', suivant: 'Next month', aujourdhui: 'Today',
     aVenir: 'Upcoming', programmeDu: 'Schedule for ', rienCeJour: 'No project on this day.', jour: 'day', jours: 'days', enCours: 'today'
   } : {
-    intervenants: 'Avec', horaires: 'Horaires', voirPlus: 'Voir plus', voirPhotos: 'Voir les photos sur la page Événements →', partenaires: 'Partenaires', mannequins: 'Mannequins',
+    intervenants: 'Avec', horaires: 'Horaires', voirPlus: 'Voir plus', voirPhotos: 'Voir les photos sur la page Événements →', partenaires: 'Partenaires',
     vide: 'Nos prochains projets seront affichés ici très bientôt.',
     videPasses: 'Nos projets réalisés seront affichés ici.',
     erreur: 'L’agenda n’a pas pu être chargé. Réessayez dans un instant.',
@@ -44,14 +44,6 @@
     bloc.appendChild(el('span', 'agenda-jour-num', String(d.getDate())));
     bloc.appendChild(el('span', 'agenda-jour-mois', d.toLocaleDateString(enAnglais ? 'en-GB' : 'fr-FR', { month: 'short' }).replace('.', '')));
     return bloc;
-  }
-
-  function lienMannequin(m) {
-    const lien = lienFicheMannequin(m);
-    // mannequin sans profil sur le site (« Autres mannequins ») : son nom, sans lien
-    const a = el(lien ? 'a' : 'span', 'agenda-puce', m.nom);
-    if (lien) a.href = lien;
-    return a;
   }
 
   function lienPartenaire(pa) {
@@ -95,8 +87,8 @@
       const partenaires = Array.isArray(p.partenaires) ? p.partenaires : [];
       if (partenaires.length) corps.appendChild(groupe(T.partenaires, partenaires.map(lienPartenaire)));
     }
-    const mannequins = Array.isArray(p.mannequins) ? p.mannequins : [];
-    if (mannequins.length) corps.appendChild(groupe(T.mannequins, mannequins.map(lienMannequin)));
+    // Plus de noms de mannequins sur l'agenda public (décision de la propriétaire, 21/10/2026) :
+    // ils restent dans le Parcours MA2M (médaillons), pas ici.
     if (p.deSite) {
       const lien = el('a', null, T.voirPhotos);
       lien.href = 'evenements.html';

@@ -29,6 +29,7 @@
     ['b2-candidatures', 'Candidatures casting', '#b2-candidatures'],
     ['b2-projets', 'Projets et castings', '#b2-projets'],
     ['b2-messages-groupes', 'Messages groupés', '#b2-messages-groupes'],
+    ['b2-convocations', 'Convocations', '#b2-convocations'],
     [null, 'Relations'],
     ['b2-recruteurs', 'Demandes recruteurs', '#b2-recruteurs'],
     ['b2-contacts', 'Messages de contact', '#b2-contacts'],
