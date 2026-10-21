@@ -255,7 +255,9 @@
     const email = champ && champ.value.trim();
     if (!email) { P.message('Saisissez d’abord votre adresse e-mail.'); return; }
     try {
-      await P.bd(sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + '/admin/#/nouveau-mot-de-passe' }));
+      // retour par le site principal (seule adresse acceptée par la base), qui renvoie vers
+      // l'Administration en gardant la clé du lien (même règle que les invitations, api/portail.js)
+      await P.bd(sb.auth.resetPasswordForEmail(email, { redirectTo: 'https://www.maitreakessemodelmanagement.com/admin/#/nouveau-mot-de-passe' }));
     } catch (e) { /* même réponse dans tous les cas : ne dit pas si le compte existe */ }
     P.message('Si ce compte existe, un e-mail de réinitialisation vient de partir.');
   };

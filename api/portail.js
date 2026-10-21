@@ -13,6 +13,10 @@ const { SUPABASE_URL, enTetesService, verifierUtilisateur, extraireIp, debutRequ
 
 // adresse séparée de l'Administration (v2.4) : le lien d'invitation y mène
 const ADMINISTRATION = 'https://admin.maitreakessemodelmanagement.com';
+// Retour des liens d'invitation : la base (Supabase, « Redirect URLs ») n'accepte que les adresses
+// du site principal ; www…/admin/ renvoie aussitôt vers l'Administration en gardant la clé de
+// session (le « # » du lien). Sans cela, l'invité arrivait sur l'accueil du site public (21/10/2026).
+const RETOUR_ADMINISTRATION = 'https://www.maitreakessemodelmanagement.com/admin/';
 const hacher = (t) => crypto.createHash('sha256').update(String(t)).digest('hex');
 
 async function rpcService(nom, params) {
@@ -174,7 +178,7 @@ module.exports = async function handler(req, res) {
           if ((await dejaLa.json()).length) return res.status(400).json({ error: 'Cette personne a déjà un compte du portail : changez son rôle dans la liste.' });
         }
         if (!userId) {
-          const invite = await adminAuth('invite?redirect_to=' + encodeURIComponent(ADMINISTRATION + '/admin/'), 'POST', { email, data: { portail_invite: true, nom } });
+          const invite = await adminAuth('invite?redirect_to=' + encodeURIComponent(RETOUR_ADMINISTRATION), 'POST', { email, data: { portail_invite: true, nom } });
           userId = invite.id;
         }
         const rep = await fetch(SUPABASE_URL + '/rest/v1/staff_profiles?on_conflict=user_id', {

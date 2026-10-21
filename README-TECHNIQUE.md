@@ -198,6 +198,14 @@ dans la conversation du 21/10/2026.
   `a.lien-marche` (bouton rond + libellé souligné) au lieu d'un lien perdu dans la phrase. Essai :
   `test-lien-marche.js`.
 
+## 🔑 Retour des liens d'invitation et « mot de passe oublié » (21/10/2026)
+La base (Supabase, « Redirect URLs ») n'accepte que les adresses du site principal : un lien qui
+demandait à revenir sur `admin.…` retombait sur l'accueil public. Invitations (`api/portail.js`,
+`RETOUR_ADMINISTRATION`) et « mot de passe oublié » (`js/portail/noyau.js`) reviennent donc par
+`https://www.maitreakessemodelmanagement.com/admin/`, que `vercel.json` renvoie vers l'Administration en
+gardant la clé du lien (le « # »). E-mail d'invitation en français : modèle « Invite user » de Supabase.
+Essai : `test-retour-invitation.js`.
+
 ## 📨 Convocations des projets de l'agenda (Extension 141, 21/10/2026)
 - **Base** : `supabase-convocations.sql` (rejouable, à exécuter une fois dans Supabase). Colonnes
   d'`agenda_projets` : `heure_evenement`, `heure_convocation`, `deroule` (heure + activité),
