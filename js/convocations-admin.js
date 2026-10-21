@@ -152,8 +152,10 @@
   }
 
   // ---------- Réponses : qui a confirmé, qui ne viendra pas, qui n'a pas répondu ----------
-  function dessinerReponses() {
-    var boite = $('convoc-reponses');
+  function dessinerReponses() { window.dessinerReponsesConvocation($('convoc-reponses'), projet, personnes, envois, false); }
+  // Partagé avec « 📋 Voir les réponses » de la page Convocations (js/convocations-page.js) ;
+  // toutOuvert : la liste des confirmés est ouverte elle aussi.
+  window.dessinerReponsesConvocation = function (boite, projet, personnes, envois, toutOuvert) {
     boite.textContent = '';
     var touches = personnes.filter(function (x) { return x.participant_id && envois.some(function (e) { return e.participant_id === x.participant_id && e.sorte === 'convocation' && e.statut !== 'annule'; }); });
     // un(e) mineur(e) et son parent comptent pour une seule personne : la réponse de l'un vaut pour les deux
@@ -163,7 +165,7 @@
       if (!deja) { parGroupe[g] = x; convoques.push(x); return; }
       if (!deja.reponse && x.reponse) { convoques[convoques.indexOf(deja)] = x; parGroupe[g] = x; }
     });
-    if (!convoques.length) return;
+    if (!convoques.length) { boite.textContent = 'Personne n’a encore été convoqué pour ce projet.'; return false; }
     var groupes = [
       ['confirme', '✅ Confirmé', convoques.filter(function (x) { return x.reponse === 'confirme'; })],
       ['absent', '❌ Absent', convoques.filter(function (x) { return x.reponse === 'absent'; })],
@@ -189,7 +191,7 @@
       if (!g[2].length) return;
       var d = document.createElement('details');
       d.className = 'convoc-groupe';
-      if (g[0] !== 'confirme') d.open = true;
+      if (toutOuvert || g[0] !== 'confirme') d.open = true;
       var r = document.createElement('summary');
       r.textContent = g[1] + ' (' + g[2].length + ')';
       d.appendChild(r);
@@ -211,7 +213,8 @@
       });
       boite.appendChild(d);
     });
-  }
+    return true;
+  };
 
   // ---------- Suivi des envois ----------
   function dessinerSuivi() {

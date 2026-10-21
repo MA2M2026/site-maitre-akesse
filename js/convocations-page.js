@@ -4,6 +4,8 @@
 // déroulé, « À prévoir », message), on coche les mannequins, puis « Enregistrer et passer à
 // l'envoi » : le projet est enregistré dans l'agenda (créé s'il est nouveau) et le panneau d'envoi
 // s'ouvre (js/convocations-admin.js : participants, aperçu, quand, suivi, réponses).
+// En haut, « 📋 Voir les réponses » : choisir un projet déjà convoqué (même passé, le plus récent
+// en premier) et voir qui a confirmé, qui ne viendra pas, qui n'a pas répondu, sans rien envoyer.
 // Outils partagés avec l'Agenda : js/agenda-outils.js.
 (function () {
   var $ = function (id) { return document.getElementById(id); };
@@ -12,7 +14,7 @@
   window.convoquerProjet = function () {};
   if (!section || !form || typeof sb === 'undefined' || !sb) return;
 
-  var projets = [], mannequins = [], charge = false, enCours = false, actif = false, projetChoisi = null;
+  var projets = [], mannequins = [], charge = false, enCours = false, actif = false, projetChoisi = null, chargement = null;
 
   function message(t, erreur) {
     afficherMessageFormulaire($('cv-etat'), t, erreur);
@@ -73,6 +75,7 @@
     var essai = await sb.from('convocation_envois').select('id').limit(1);
     actif = !essai.error;
     $('cv-inactif').hidden = actif;
+    $('cv-voir-reponses').disabled = !actif;
     form.querySelectorAll('input, select, textarea, button').forEach(function (c) { c.disabled = !actif; });
     if (!actif) return;
     var r = await Promise.all([
@@ -151,17 +154,65 @@
   });
   $('cv-type').value = 'defile';
 
+  // ---------- « 📋 Voir les réponses » ----------
+  async function projetsConvoques() {
+    var r = await lireToutesLignes(function () { return sb.from('convocation_envois').select('projet_id').eq('sorte', 'convocation').neq('statut', 'annule').order('id'); });
+    if (r.error) { $('cv-reponses').textContent = 'Impossible de charger les projets : ' + r.error.message; return; }
+    var ids = {};
+    r.data.forEach(function (e) { ids[e.projet_id] = true; });
+    var s = $('cv-reponses-projet'), avant = s.value;
+    while (s.options.length > 1) s.remove(1);
+    projets.filter(function (p) { return ids[p.id]; })
+      .sort(function (a, b) { return String(b.date_debut).localeCompare(String(a.date_debut)); })
+      .forEach(function (p) {
+        var o = document.createElement('option');
+        o.value = p.id; o.textContent = dateAgenda(p.date_debut, p.date_fin) + ' — ' + p.titre;
+        s.appendChild(o);
+      });
+    s.value = avant;
+    if (s.options.length < 2) $('cv-reponses').textContent = 'Aucun projet n’a encore reçu de convocation.';
+  }
+  async function afficherReponses() {
+    var boite = $('cv-reponses'), id = $('cv-reponses-projet').value;
+    var p = projets.find(function (x) { return x.id === id; });
+    $('cv-reponses-actualiser').hidden = !p;
+    if (!p) { boite.textContent = ''; return; }
+    boite.textContent = 'Chargement…';
+    var r = await Promise.all([
+      sb.from('convocation_participants').select('*').eq('projet_id', id),
+      sb.from('convocation_envois').select('participant_id, sorte, statut').eq('projet_id', id)
+    ]);
+    if ($('cv-reponses-projet').value !== id) return;  // un autre projet a été choisi entre-temps
+    var erreur = r.find(function (x) { return x.error; });
+    if (erreur) { boite.textContent = 'Impossible de charger les réponses : ' + erreur.error.message; return; }
+    // un(e) mineur(e) et son parent ont le même model_id : une seule personne dans les réponses
+    var personnes = (r[0].data || []).map(function (x) {
+      return { cle: 'p' + x.id, groupe: x.model_id || 'p' + x.id, participant_id: x.id, nom: x.nom, telephone: x.telephone,
+        parent: x.parent, parent_nom: x.parent_nom, jeton: x.jeton, reponse: x.reponse, repondu_le: x.repondu_le };
+    }).sort(function (a, b) { return String(a.nom).localeCompare(String(b.nom), 'fr'); });
+    window.dessinerReponsesConvocation(boite, p, personnes, r[1].data || [], true);
+  }
+  function erreurReponses(e) { $('cv-reponses').textContent = 'Erreur : ' + ((e && e.message) || e); }
+  $('cv-voir-reponses').addEventListener('click', function () {
+    var bloc = $('cv-reponses-bloc'), ouvrir = bloc.hidden;
+    bloc.hidden = !ouvrir;
+    this.setAttribute('aria-expanded', String(ouvrir));
+    if (ouvrir) Promise.resolve(chargement).then(projetsConvoques).catch(erreurReponses);
+  });
+  $('cv-reponses-projet').addEventListener('change', function () { afficherReponses().catch(erreurReponses); });
+  $('cv-reponses-actualiser').addEventListener('click', function () { afficherReponses().catch(erreurReponses); });
+
   // « 📨 Convoquer » d'un projet de l'Agenda : ouvre cette page avec le projet déjà choisi
   window.convoquerProjet = function (id) {
     projetChoisi = { id: id };
     var bouton = document.querySelector('.tdb-menu-item[data-tdb-cible="b2-convocations"]');
     if (bouton) bouton.click();
-    if (charge) charger().catch(function (e) { message('Erreur : ' + ((e && e.message) || e), true); });
+    if (charge) chargement = charger().catch(function (e) { message('Erreur : ' + ((e && e.message) || e), true); });
   };
 
   // Chargement au premier affichage de la page (la session admin est alors ouverte)
   function siVisible() {
-    if (!charge && section.classList.contains('tdb-actif')) charger().catch(function (e) {
+    if (!charge && section.classList.contains('tdb-actif')) chargement = charger().catch(function (e) {
       charge = false;
       message('Impossible de charger la page : ' + ((e && e.message) || e), true);
     });

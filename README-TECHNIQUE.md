@@ -224,6 +224,10 @@ Essai : `test-retour-invitation.js`.
   Agenda/Convocations : `js/agenda-outils.js` (cases à cocher, lignes à deux champs, déroulé,
   `afficherMessageFormulaire` : un `.form-msg` ne se voit qu'avec la classe `ok` ou `err`).
   Message de la page : `#cv-etat` (`cv-msg` est déjà pris par « Code de validation »).
+  En haut, « 📋 Voir les réponses » (demande du 21/10/2026) : liste des projets ayant au moins
+  une convocation non annulée (le plus récent d'abord), puis réponses du projet choisi, sans
+  rien envoyer. Dessin partagé avec le panneau : `window.dessinerReponsesConvocation`
+  (`js/convocations-admin.js`).
   « Maintenant » : e-mails envoyés depuis le navigateur (EmailJS).
 - **Agenda public** : plus aucun nom de mannequin (`js/agenda.js`, décision du 21/10/2026) ; les
   noms restent dans « Parcours MA2M » (médaillons).

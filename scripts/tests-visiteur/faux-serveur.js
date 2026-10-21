@@ -78,7 +78,7 @@ function brancher(page, donnees, journal) {
           return route.fulfill({ status: 204, body: '' });
         }
         let lignes = (donnees.tables[table] || []).slice();
-        for (const [k, v] of url.searchParams) { if (/^eq\./.test(v)) lignes = lignes.filter(l => (k === 'suivi' && !(k in l)) || String(l[k]) === v.slice(3)); const dans = v.match(/^in\.\((.*)\)$/); if (dans) { const liste = dans[1].split(',').map(x => x.replace(/^"|"$/g, '')); lignes = lignes.filter(l => liste.includes(String(l[k]))); } }
+        for (const [k, v] of url.searchParams) { if (/^neq\./.test(v)) lignes = lignes.filter(l => String(l[k]) !== v.slice(4)); if (/^eq\./.test(v)) lignes = lignes.filter(l => (k === 'suivi' && !(k in l)) || String(l[k]) === v.slice(3)); const dans = v.match(/^in\.\((.*)\)$/); if (dans) { const liste = dans[1].split(',').map(x => x.replace(/^"|"$/g, '')); lignes = lignes.filter(l => liste.includes(String(l[k]))); } }
         // order=colonne.desc : tri comme la vraie base (une seule colonne)
         const ordre = (url.searchParams.get('order') || '').match(/^(\w+)\.(asc|desc)/);
         if (ordre) lignes.sort((a, b) => (String(a[ordre[1]] ?? '') < String(b[ordre[1]] ?? '') ? -1 : String(a[ordre[1]] ?? '') > String(b[ordre[1]] ?? '') ? 1 : 0) * (ordre[2] === 'desc' ? -1 : 1));

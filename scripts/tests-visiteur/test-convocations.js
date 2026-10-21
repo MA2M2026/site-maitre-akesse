@@ -162,6 +162,8 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
       { id: 'cp3', projet_id: 'pa2', contact_id: 'x1', nom: 'Monsieur Jean Styliste', email: 'jean@test.ci', telephone: '0709090909', parent: false, jeton: J('c'), reponse: 'absent', repondu_le: '2030-11-11T09:00:00Z' }];
     d.tables.contacts_externes = [{ id: 'x1', civilite: 'Monsieur', nom: 'Jean Styliste', telephone: '0709090909', email: 'jean@test.ci' }];
     d.tables.convocation_envois = ['cp1', 'cp2', 'cp3'].map((id, i) => ({ id: 'e' + i, projet_id: 'pa2', participant_id: id, sorte: 'convocation', canal: 'email', statut: 'envoye', prevu_le: '2030-11-09T10:00:00Z', envoye_le: '2030-11-09T10:00:00Z' }));
+    // projet passé dont la seule convocation a été annulée : pas dans « Voir les réponses »
+    d.tables.convocation_envois.push({ id: 'e9', projet_id: 'pa1', participant_id: 'cpx', sorte: 'convocation', canal: 'email', statut: 'annule', prevu_le: '2026-01-09T10:00:00Z' });
     const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
     const p = await ctx.newPage(); const journal = [], errs = [];
     p.on('pageerror', e => errs.push(e.message));
@@ -179,6 +181,19 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     ok(/3 convoqué\(s\) · 1 confirmé · 1 absent · 1 sans réponse/.test(chiffres) && barre.length === 3 && barre.every(x => / 33$/.test(x)), 'réponses : chiffres et barre de couleur (' + chiffres + ')');
     ok(relance.length === 1 && relance[0].startsWith('https://wa.me/2250707070707') && relance[0].includes('/confirmer?c=' + J('b')) && /Madame Ama Mère/.test(relance[0]), 'sans réponse : « Relancer sur WhatsApp » avec le lien personnel (au parent)');
     ok(/A confirmé sa présence/.test(await p.textContent('#convoc-participants')) && /Ne pourra pas venir/.test(await p.textContent('#convoc-participants')), 'réponses visibles dans la liste des participants');
+    // « 📋 Voir les réponses » en haut de la page Convocations : choisir un projet déjà convoqué
+    await p.evaluate(() => document.querySelector('.tdb-menu-item[data-tdb-cible="b2-convocations"]').click()); await p.waitForTimeout(800);
+    ok(await p.isHidden('#cv-reponses-bloc'), '« Voir les réponses » : fermé à l’ouverture de la page');
+    await p.click('#cv-voir-reponses'); await p.waitForTimeout(1200);
+    const choix = await p.$$eval('#cv-reponses-projet option', os => os.map(o => o.value));
+    ok(await p.isVisible('#cv-reponses-projet') && choix.join() === ',pa2', '« Voir les réponses » : seuls les projets convoqués sont proposés (' + choix.join() + ')');
+    await p.selectOption('#cv-reponses-projet', 'pa2'); await p.waitForTimeout(1200);
+    const vue = await p.textContent('#cv-reponses');
+    ok(/3 convoqué\(s\) · 1 confirmé · 1 absent · 1 sans réponse/.test(vue) && await p.isVisible('#cv-reponses >> text=Mademoiselle AWA KONÉ') && await p.isVisible('#cv-reponses >> text=Monsieur Jean Styliste')
+      && await p.isVisible('#cv-reponses-actualiser'),
+      '« Voir les réponses » : confirmés, absents et sans réponse visibles (' + vue.slice(0, 80) + ')');
+    if (process.env.CAPTURES) await p.locator('.convoc-voir').screenshot({ path: process.env.CAPTURES + '/voir-reponses-390.png' });
+    ok(!ecrits(journal, 'POST', 'convocation_envois').length && !ecrits(journal, 'PATCH', 'convocation_envois').length, '« Voir les réponses » : rien n’est envoyé');
     ok(!errs.length, 'réponses : aucune erreur ' + errs.join(' | '));
     await ctx.close();
   }

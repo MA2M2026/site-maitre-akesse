@@ -555,6 +555,9 @@ html body.tdb-v2:not(.v2-page-v2-ensemble) .v2-entete-actions { display: none !i
 .convoc-envoi { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.3rem 0.8rem; align-items: center; padding: 0.5rem 0.7rem; border: 1px solid var(--gris-clair); border-radius: 10px; font-size: 0.88rem; }
 .convoc-envoi .convoc-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: flex-end; }
 .convoc-envoi.a-faire { border-color: var(--rouge-ma2m); }
+.convoc-voir { margin: 0 0 1.5rem; }
+.convoc-voir-bloc { margin-top: 0.8rem; padding: 1rem; border: 1px solid var(--gris-clair); border-radius: 8px; }
+#cv-reponses-actualiser { margin-bottom: 0.8rem; }
 .convoc-chiffres { font-weight: 600; margin: 0 0 0.5rem; }
 .convoc-barre { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: var(--gris-clair); margin-bottom: 0.8rem; }
 .convoc-barre-confirme { background: #1FA35B; }

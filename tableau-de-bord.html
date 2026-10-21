@@ -2090,7 +2090,7 @@ a.tdb-menu-item { text-decoration: none; }
 <!-- ===== AJOUT : navigation en 3 grands blocs + menu (remplace l'ancienne barre latérale toujours visible) ===== -->
 <link rel="stylesheet" href="css/cv-mannequin.css?v=b11ed6be">
 <link href="css/tableau-boutons.css?v=682b810e" rel="stylesheet"/>
-<link href="css/tableau-v2.css?v=860a6a81" rel="stylesheet"/>
+<link href="css/tableau-v2.css?v=091c4abf" rel="stylesheet"/>
 <!-- ZONE-ADMIN : livrée seulement après une connexion admin complète (middleware.js) -->
 <section id="bloc-tableau" class="u-hidden u-pt-0">
 <div class="db-shell">
@@ -2539,6 +2539,14 @@ document.addEventListener('DOMContentLoaded', function () {
 <h2 class="tdb-4">📨 Convocations</h2>
 <p class="tdb-5">Une convocation par événement : choisissez un projet à venir de l'agenda, ou créez-en un nouveau (il s'ajoute tout seul à l'agenda). Remplissez les informations, cochez les mannequins, puis programmez l'envoi : chaque mannequin reçoit SON message, avec le programme et un lien pour confirmer sa présence.</p>
 <p class="agenda-aide agenda-alerte" id="cv-inactif" hidden>Les convocations ne sont pas encore activées : exécutez une fois le fichier supabase-convocations.sql (Extension 141) dans Supabase.</p>
+<div class="convoc-voir">
+<button type="button" class="btn btn--principal" id="cv-voir-reponses" aria-expanded="false" aria-controls="cv-reponses-bloc">📋 Voir les réponses</button>
+<div id="cv-reponses-bloc" class="convoc-voir-bloc" hidden>
+<div class="form-champ"><label for="cv-reponses-projet">Projet</label><select id="cv-reponses-projet"><option value="">Choisissez un projet…</option></select></div>
+<button type="button" class="btn-mini-admin" id="cv-reponses-actualiser" hidden>🔄 Actualiser</button>
+<div id="cv-reponses" class="convoc-reponses" aria-live="polite"></div>
+</div>
+</div>
 <form id="cv-form" class="agenda-form" novalidate>
 <div class="form-champ"><label for="cv-projet">1. Le projet</label><select id="cv-projet"><option value="">➕ Nouveau projet</option></select></div>
 <div class="agenda-grille">
@@ -2948,8 +2956,8 @@ document.addEventListener('DOMContentLoaded', function () {
 <script src="js/rapport-profils-admin.js?v=0ddad1e1"></script>
 <script src="js/agenda-outils.js?v=f7f662e5"></script>
 <script src="js/agenda-admin.js?v=7b81eca0"></script>
-<script src="js/convocations-page.js?v=82b0212d"></script>
-<script src="js/convocations-admin.js?v=41d78881"></script>
+<script src="js/convocations-page.js?v=407c1d88"></script>
+<script src="js/convocations-admin.js?v=f7e8cd2a"></script>
 <script src="js/tableau-de-bord.js?v=f738af79"></script>
 
 <script id="ma2m-final-visual-guard">
