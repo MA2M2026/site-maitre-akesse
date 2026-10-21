@@ -87,7 +87,10 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     ok(/Fatou Bamba/.test(await p.textContent('#convoc-participants')), n + 'les mannequins écrits à la main sont signalés');
     // personne non inscrite
     await p.selectOption('#convoc-civilite', 'Monsieur'); await p.fill('#convoc-nom', 'Jean Styliste'); await p.fill('#convoc-tel', '0709090909'); await p.fill('#convoc-email', 'jean@test.ci');
+    const blocParticipants = '#convoc-panneau fieldset.agenda-choix';
+    if (process.env.CAPTURES) await p.locator(blocParticipants).first().screenshot({ path: process.env.CAPTURES + '/exterieur-avant-' + vp.width + '.png' });
     await p.click('#convoc-personne-ajouter'); await p.waitForTimeout(600);
+    if (process.env.CAPTURES) await p.locator(blocParticipants).first().screenshot({ path: process.env.CAPTURES + '/exterieur-apres-' + vp.width + '.png' });
     const carnet = ecrits(journal, 'POST', 'contacts_externes').pop() || {};
     ok(carnet.nom === 'Jean Styliste' && carnet.civilite === 'Monsieur' && (await p.$$('#convoc-participants .convoc-personne')).length === 4, n + 'personne non inscrite ajoutée au carnet et à la liste');
     // aperçu
