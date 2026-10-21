@@ -122,6 +122,20 @@ async function ouvrir(b, page, vp, opts = {}) {
       await ctx.close();
     }
   }
+  // téléphone lent : les scripts du bas de page mettent 3 s à arriver. L'animation du logo ne doit
+  // pas être « sautée » pendant ce temps (vu sur le site en ligne le 21/10/2026)
+  {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }); const p = await ctx.newPage();
+    await p.addInitScript(() => { localStorage.setItem('ma2m_test_ecran_entree', '1'); });
+    await brancher(p, { tables }, []);
+    await p.route(/supabase-js-.*\.js/, r => setTimeout(() => r.continue().catch(() => {}), 3000));
+    await p.goto(BASE + 'index.html', { waitUntil: 'commit', timeout: 20000 });
+    await p.waitForSelector('.ee', { timeout: 10000 });   // l'écran apparaît avant la fin du chargement
+    await p.waitForTimeout(900);
+    const intro = await p.evaluate(() => { const i = document.querySelector('.ee-intro'); return !!i && getComputedStyle(i).opacity > 0.9; });
+    ok(intro, 'téléphone lent : l’animation du logo est bien visible au début, pas sautée');
+    await ctx.close();
+  }
   // les navigateurs automatisés (robots) ne voient pas l'écran, sauf demande d'un test
   {
     const ctx = await b.newContext(); const p = await ctx.newPage();

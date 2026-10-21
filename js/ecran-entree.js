@@ -44,7 +44,10 @@
 
   var ecran, zone, lettres = [], points = [], centres = null, milieu = [0, 0];
   var scene, morceaux = [], arcs = [], formes = {}, tige, intro, plein, clair;
-  var debut = 0, ferme = false, boucle = 0;
+  // horloge de l'animation : elle n'avance que lorsque l'écran se dessine vraiment. Pendant que le
+  // téléphone charge le reste de la page, les images ne se dessinent pas : sans ce frein, le visiteur
+  // arrivait directement à « Bienvenue » sans voir le logo (visite du site en ligne, 21/10/2026).
+  var tAnim = 0, derniere = 0, ferme = false, boucle = 0;
 
   function construire() {
     ecran = el('div', 'ee');
@@ -125,7 +128,6 @@
     ecran.focus({ preventScroll: true });
     if (document.fonts && document.fonts.load) document.fonts.load('80px "Allison"').then(mesurer, mesurer); else mesurer();
     addEventListener('resize', mesurer);
-    debut = performance.now();
     boucle = requestAnimationFrame(image);
   }
 
@@ -223,7 +225,9 @@
 
   function image(maintenant) {
     if (ferme) return;
-    var t = (maintenant - debut) / 1000;
+    if (derniere) tAnim += Math.min(0.05, (maintenant - derniere) / 1000);
+    derniere = maintenant;
+    var t = tAnim;
     if (calme) rendreChoix(99, t);
     else {
       if (intro) rendreIntro(t);
