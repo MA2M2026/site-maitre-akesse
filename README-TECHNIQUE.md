@@ -190,6 +190,16 @@ fichier woff2 correspondant. Raison : une feuille Google bloquante et un serveur
 (jusqu'à ~0,9 s sur téléphone d'après Lighthouse), et plus aucune adresse IP de visiteur
 envoyée à Google pour les polices.
 
+## ⚡ Chargement des pages (21/10/2026)
+- Le programme Sentry (`js-de.sentry-cdn.com`) est chargé en `async` sur toutes les pages : il
+  bloquait l'affichage (jusqu'à 0,8 s sur téléphone d'après Lighthouse). `js/surveillance.js`
+  attrape de toute façon les erreurs dès le début.
+- `<link rel="preconnect" href="https://dfhghgmwmxiguhtxtsle.supabase.co" crossorigin>` sur
+  toutes les pages qui lisent la base (≈ 0,3 s gagnées sur la première demande).
+- Mesure Lighthouse depuis l'environnement de travail (qui bloque photos Cloudflare, Sentry et
+  Google : les notes « Bonnes pratiques » 96 y viennent de ces blocages) : accessibilité 100,
+  référencement 100 ; vitesse accueil ordinateur 93, téléphone 70 (avant : 86 / 52).
+
 ## 📶 Journal des erreurs : vraies erreurs seulement (21/10/2026, décision de la propriétaire)
 Les signalements 🟢 « connexion du visiteur » (page très lente, réseau coupé, script non
 chargé, bascule des photos vers le relais…) ne sont plus listés comme des erreurs : une seule
