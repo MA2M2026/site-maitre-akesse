@@ -86,6 +86,14 @@ async function ouvrir(b, page, vp, opts = {}) {
       ok(!(await p.$('.ee')) && await p.evaluate(() => !document.documentElement.classList.contains('ee-actif') && getComputedStyle(document.body).position !== 'fixed'), page + ' : « Entrer sur le site » ferme l’écran et rend la page');
       await p.goto(BASE + page, { waitUntil: 'domcontentloaded' }); await p.waitForTimeout(1200);
       ok(!(await p.$('.ee')), page + ' : de retour sur l’accueil pendant la même visite, l’écran ne revient pas');
+      // accueil derrière l'écran : plus de bandeau défilant ; EN/FR et Menu en boutons ronds qui passent au vert à l'appui
+      ok(!(await p.$('.marquee-bande')), page + ' : plus de bandeau « Infos du jour » sur l’accueil');
+      ok(await p.evaluate(() => ['.lang-switch', '.menu-trigger'].every(s => { const e = document.querySelector('.site-header-v2 ' + s); const r = e.getBoundingClientRect(); return getComputedStyle(e).borderRadius === '50%' && Math.round(r.width) === 46 && Math.round(r.height) === 46; })), page + ' : boutons EN/FR et Menu ronds');
+      const menu = await (await p.$('.site-header-v2 .menu-trigger')).boundingBox();
+      await p.mouse.move(menu.x + 23, menu.y + 23); await p.mouse.down(); await p.waitForTimeout(250);
+      ok(await p.evaluate(() => /31, 163, 91/.test(getComputedStyle(document.querySelector('.site-header-v2 .menu-trigger .dots span')).backgroundColor)), page + ' : à l’appui, les points du Menu passent au vert');
+      await p.mouse.up(); await p.waitForTimeout(500);
+      ok(await p.evaluate(() => document.querySelector('.menu-overlay').classList.contains('active')), page + ' : le bouton rond ouvre bien le menu');
       ok(!errs.length, page + ' entrée : aucune erreur ' + errs.join(' | '));
       await ctx.close();
     }

@@ -8,12 +8,18 @@
 // permanence (css/bouton-ma2m.css). Chargé sur toutes les pages, y compris le portail /admin.
 (function () {
   var BOUTONS = 'button, input[type="submit"], input[type="button"], [role="button"], .btn, .bouton, .btn-mini-admin, .filtre-btn, .filtre-pill, .fiche-partage-btn, .journal-btn, .lang-switch, .mp-panier-btn, .mpg-bouton-danger, .tuile, .btn-pill';
+  function marquerAppui(el, classe) {
+    el.classList.add(classe);
+    setTimeout(function () { el.classList.remove(classe); }, 450);
+    try { if (navigator.vibrate) navigator.vibrate(8); } catch (err) { /* vibration indisponible */ }
+  }
   document.addEventListener('pointerdown', function (e) {
+    // boutons ronds de l'en-tête (EN/FR, Menu, css/charte-ma2m.css) : ils s'enfoncent et passent au vert
+    var rond = e.target.closest && e.target.closest('.site-header-v2 .lang-switch, .site-header-v2 .menu-trigger');
+    if (rond) { marquerAppui(rond, 'rond-appuye'); return; }
     var t = e.target.closest && e.target.closest(BOUTONS);
     if (!t || t.disabled || t.closest('.cliquable, [data-bouton-libre]')) return;
-    t.classList.add('touche-appuyee');
-    setTimeout(function () { t.classList.remove('touche-appuyee'); }, 450);
-    try { if (navigator.vibrate) navigator.vibrate(8); } catch (err) { /* vibration indisponible */ }
+    marquerAppui(t, 'touche-appuyee');
   }, { passive: true });
   document.addEventListener('submit', function (e) {
     var b = e.submitter;

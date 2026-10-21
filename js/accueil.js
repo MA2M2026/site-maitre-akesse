@@ -4,7 +4,7 @@
 // melanger et echapperHtml viennent de js/app.js.
 // Les pages se remplissent avec ce que l'agence gère dans l'Administration : mannequins publiés
 // et leurs photos de couverture, mannequin à la une, mot de Maître Akesse, castings ouverts,
-// partenaires, Instagram, bandeau « Infos du jour ». La vidéo et l'agenda ont leurs propres
+// partenaires, Instagram. La vidéo et l'agenda ont leurs propres
 // scripts (js/video-accueil.js, js/agenda.js). Une page sans contenu reste cachée : le sommaire
 // et les numéros de page sont recalculés à chaque apparition.
 // (Avant le 20/10/2026 : intro animée, porte d'entrée « Entrer », carrousel de photos et
@@ -249,19 +249,6 @@
     bouton.href = 'candidature.html';
   }
 
-  // --- Bandeau « Infos du jour » ---
-  async function chargerBandeauAnnonce() {
-    // L'annonce est écrite en français dans l'Administration : la version anglaise garde son
-    // bandeau des services, en anglais (20/10/2026, « CASTING TOUS LES JOURS » sur /en/)
-    if (typeof sb === 'undefined' || !sb || EN) return;
-    const { data } = await sb.from('bandeau_annonce').select('texte, actif').eq('id', 'principal').maybeSingle();
-    if (!data || !data.actif || !data.texte || !data.texte.trim()) return;
-    const texte = data.texte.trim() + ' · ';
-    document.querySelectorAll('#marqueePiste span').forEach(span => { span.textContent = texte; });
-    document.getElementById('marqueeLabel').classList.remove('u-hidden');
-    document.getElementById('marqueeBande').classList.add('marquee-annonce-active');
-  }
-
   // --- Ils nous font confiance : logos des partenaires ---
   async function chargerPartenaires() {
     if (typeof sb === 'undefined' || !sb) return;
@@ -288,6 +275,6 @@
     confirmer('flux-instagram', true);
   }
 
-  [chargerMannequins, chargerMotResponsable, chargerCastingsOuverts, chargerBandeauAnnonce, chargerPartenaires, chargerInstagram]
+  [chargerMannequins, chargerMotResponsable, chargerCastingsOuverts, chargerPartenaires, chargerInstagram]
     .forEach(f => { void Promise.resolve().then(f).catch(e => console.warn('Accueil : ' + f.name, e)); });
 })();

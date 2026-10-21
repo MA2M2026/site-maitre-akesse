@@ -181,6 +181,19 @@ ferment l'écran ; défilement de la page dessous bloqué (`verrouillerDefilemen
 d'historique (le bouton « retour » ramène d'où l'on vient). Maquette validée et vidéos : faites
 dans la conversation du 21/10/2026.
 
+## 🔘 En-tête : boutons ronds EN/FR et Menu ; plus de bandeau sur l'accueil (21/10/2026)
+- Les boutons « EN/FR » et « Menu » de l'en-tête (toutes les pages, `js/gabarit.js`) reprennent le
+  bouton rond « marche » à longue ombre de l'écran d'entrée (validé par la propriétaire). Ils
+  portent `data-bouton-libre` pour sortir du bouton rouge commun (`css/bouton-ma2m.css`) ; style
+  dans `css/charte-ma2m.css` (en `!important`, car `css/style.css` impose encore l'ancien bouton
+  sombre à `.lang-switch`). À l'appui, `js/bouton-appui.js` pose `.rond-appuye` : le bouton
+  s'enfonce et passe au vert. Le mot « Menu » reste lu par les lecteurs d'écran (caché à l'œil).
+- Le bandeau défilant « Infos du jour » est retiré de l'accueil FR/EN (il surchargeait la
+  nouvelle couverture). Le texte réglé dans le tableau de bord (`bandeau_annonce`) n'est donc plus
+  affiché nulle part ; la table et le réglage existent toujours. Le bandeau de la boutique
+  (`js/marketplace-vitrine.js`) n'est pas concerné.
+- Essai : `test-ecran-entree.js` (plus de bandeau, boutons ronds, vert à l'appui, menu ouvert).
+
 ## 🔤 Polices hébergées sur le site (21/10/2026)
 Plus aucune page n'appelle Google Fonts : `css/polices.css` (chargée par toutes les pages) décrit
 les polices du site (Cormorant Garamond, Jost, Montserrat, Big Shoulders Display, Work Sans,
