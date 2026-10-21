@@ -18,7 +18,7 @@ html.ee-actif.ee-pret::after { content: none; }
 .ee:focus { outline: none; }
 
 /* --- Bienvenue : lettres animées --- */
-.ee-accueil { position: relative; margin: 0 0 64px; font-weight: 400; letter-spacing: 0; text-transform: none; font-family: 'Allison', cursive; font-weight: 400; font-size: 100px; line-height: 1.05; color: #141110; text-align: center; }
+.ee-accueil { position: relative; margin: 0 0 64px; letter-spacing: 0; text-transform: none; font-family: 'Allison', cursive; font-weight: 400; font-size: 100px; line-height: 1.05; color: #141110; text-align: center; }
 .ee-accueil .ee-mot { display: inline-block; white-space: nowrap; }
 .ee-accueil .ee-l { display: inline-block; transform-origin: 50% 80%; will-change: transform; }
 .ee-accueil .ee-pt { position: absolute; left: 0; top: 0; width: 13px; height: 13px; margin: -6.5px 0 0 -6.5px; border-radius: 50%; background: #141110; transform: scale(0); will-change: transform; }
