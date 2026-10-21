@@ -69,7 +69,7 @@
   function dessinerParticipants() {
     var boite = $('convoc-participants');
     boite.textContent = '';
-    if (!personnes.length) { boite.textContent = 'Personne pour le moment : cochez des mannequins dans le projet (bouton « Modifier »), ou ajoutez une personne ci-dessous.'; }
+    if (!personnes.length) { boite.textContent = 'Personne pour le moment : cochez des mannequins plus haut sur cette page, ou ajoutez une personne ci-dessous.'; }
     personnes.forEach(function (pers) {
       var l = document.createElement('label');
       l.className = 'convoc-personne';
@@ -396,11 +396,11 @@
     panneau.hidden = false;
     $('convoc-titre').textContent = '📨 Convoquer — « ' + p.titre + ' »';
     $('convoc-resume').textContent = [dateAgenda(p.date_debut, p.date_fin),
-      p.heure_convocation ? 'convocation à ' + p.heure_convocation.replace(':', 'h') : 'heure de convocation non indiquée (bouton « Modifier » du projet)',
+      p.heure_convocation ? 'convocation à ' + p.heure_convocation.replace(':', 'h') : 'heure de convocation non indiquée (à remplir plus haut sur cette page)',
       [p.lieu, p.ville].filter(Boolean).join(', ')].filter(Boolean).join(' · ');
     var rappel = p.rappel_veille !== false ? heureRappel(p.date_debut, p.rappel_heure) : null;
     $('convoc-rappel-info').textContent = rappel && rappel > new Date()
-      ? '⏰ Rappel automatique la veille : ' + quand(rappel) + ' (réglable dans le projet, bouton « Modifier »).'
+      ? '⏰ Rappel automatique la veille : ' + quand(rappel) + ' (réglable plus haut sur cette page).'
       : 'Pas de rappel la veille pour ce projet.';
     $('convoc-participants').textContent = 'Chargement…';
     $('convoc-suivi').textContent = '';

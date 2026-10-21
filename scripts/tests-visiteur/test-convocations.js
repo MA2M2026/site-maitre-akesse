@@ -1,5 +1,5 @@
 // Convocations des projets de l'agenda (Extension 141, 21/10/2026), dans le tableau de bord,
-// comme l'agence : connexion → Agenda → « Modifier » un défilé (heure de convocation, déroulé,
+// comme l'agence : connexion → page « 📨 Convocations » (projet à venir ou nouveau projet ; heure de convocation, déroulé,
 // « À prévoir », rappel) → « 📨 Convoquer » → participants (adulte, mineure → parent, personne
 // non inscrite ajoutée au carnet) → aperçu du message → « Envoyer maintenant » (e-mails partis,
 // WhatsApp prêts, « Ouvrir WhatsApp ») → programmation « dans 1 heure » et date passée refusée.

@@ -80,7 +80,7 @@
       sb.from('agenda_projets').select('*').order('date_debut', { ascending: true }),
       lireToutesLignes(function () { return sb.from('model_profiles').select('id, full_name, published').order('id'); })
     ]);
-    if (r[0].error || r[1].error) { message('Impossible de charger les projets ou les mannequins : ' + (r[0].error || r[1].error).message, true); return; }
+    if (r[0].error || r[1].error) { charge = false; message('Impossible de charger les projets ou les mannequins : ' + (r[0].error || r[1].error).message, true); return; }
     projets = r[0].data || [];
     mannequins = (r[1].data || []).filter(function (p) { return p.full_name; })
       .sort(function (a, b) { return a.full_name.localeCompare(b.full_name, 'fr'); });
@@ -124,7 +124,7 @@
       projetChoisi = p;
       message(nouveau ? 'Projet ajouté à l’agenda' + (p.visible ? ' (visible sur le site, sans les noms des mannequins).' : ' (caché du site).') + ' Choisissez maintenant les participants et l’envoi ci-dessous.'
         : 'Projet enregistré. Choisissez maintenant les participants et l’envoi ci-dessous.');
-      window.ouvrirConvocations(p);
+      Promise.resolve(window.ouvrirConvocations(p)).catch(function (err) { message('Erreur : ' + ((err && err.message) || err), true); });
     } finally {
       enCours = false;
       $('cv-enregistrer').disabled = false;
