@@ -180,6 +180,16 @@ ferment l'écran ; défilement de la page dessous bloqué (`verrouillerDefilemen
 d'historique (le bouton « retour » ramène d'où l'on vient). Maquette validée et vidéos : faites
 dans la conversation du 21/10/2026.
 
+## 🔤 Polices hébergées sur le site (21/10/2026)
+Plus aucune page n'appelle Google Fonts : `css/polices.css` (chargée par toutes les pages) décrit
+les polices du site (Cormorant Garamond, Jost, Montserrat, Big Shoulders Display, Work Sans,
+Cinzel, Allison pour l'écran d'entrée), fichiers `assets/polices/*.woff2` venant de Fontsource
+(npm `@fontsource/<police>`, sous-ensembles « latin » et « latin étendu », licence SIL OFL). Pour
+ajouter une graisse : copier le bloc `@font-face` du fichier `<graisse>.css` du paquet et le
+fichier woff2 correspondant. Raison : une feuille Google bloquante et un serveur de plus
+(jusqu'à ~0,9 s sur téléphone d'après Lighthouse), et plus aucune adresse IP de visiteur
+envoyée à Google pour les polices.
+
 ## 📶 Journal des erreurs : vraies erreurs seulement (21/10/2026, décision de la propriétaire)
 Les signalements 🟢 « connexion du visiteur » (page très lente, réseau coupé, script non
 chargé, bascule des photos vers le relais…) ne sont plus listés comme des erreurs : une seule
