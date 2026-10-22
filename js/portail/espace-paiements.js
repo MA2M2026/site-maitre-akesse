@@ -510,6 +510,9 @@
     const actifs = suiviPret ? tousActifs.filter((m) => m.suivi) : tousActifs;
     const suivis = actifs.map((m) => m.id);
     const proposes = suiviPret ? tousActifs.filter((m) => !m.suivi) : [];
+    // Nouvelle Administration : la photo du Book en médaillon devant le nom (initiales sinon)
+    // (P.photosCouverture et P.visage : js/admin/coque.js ; compte du site = id du profil)
+    const photos = P.photosCouverture ? await P.photosCouverture(actifs.filter((m) => m.user_id).map((m) => m.user_id)).catch(() => ({})) : null;
     const jour = new Date().getDate();
     const filtre = P.etat.filtreTableau || 'tous';
     const lignes = actifs.map((m) => {
@@ -541,8 +544,9 @@
       '<div class="segments" role="group" aria-label="Groupe">' + FILTRES_GROUPE.map((f) => '<button class="btn petit' + (f[0] === filtre ? ' actif' : '') + '" type="button" data-action="tableau-filtre" data-filtre="' + f[0] + '">' + P.esc(f[1]) + '</button>').join('') + '</div>' +
       '<div class="carte">' + (montrees.length ? P.tableau(['Mannequin', 'Groupe', '#Montant', 'Statut', 'Action'], montrees.map((x) =>
         // (le destinataire n'est montré que s'il diffère : le parent d'une mineure)
-        '<tr' + (x.e === 'non_paye' ? ' class="ligne-retard"' : '') + '><td><a href="#/paiements/fiche/' + x.m.id + '"><b>' + P.esc(x.m.full_name) + '</b></a>' +
-        (x.destinataire && x.destinataire !== x.m.full_name ? '<div class="petit-texte doux">Message à : ' + P.esc(x.destinataire) + '</div>' : '') + '</td>' +
+        '<tr' + (x.e === 'non_paye' ? ' class="ligne-retard"' : '') + '><td>' + (photos ? '<div class="nom-visage">' + P.visage(photos[x.m.user_id], x.m.full_name, 'rond-vis') + '<div>' : '') +
+        '<a href="#/paiements/fiche/' + x.m.id + '"><b>' + P.esc(x.m.full_name) + '</b></a>' +
+        (x.destinataire && x.destinataire !== x.m.full_name ? '<div class="petit-texte doux">Message à : ' + P.esc(x.destinataire) + '</div>' : '') + (photos ? '</div></div>' : '') + '</td>' +
         '<td>' + (x.inscrit ? 'Inscrit sur le site' : 'Non inscrit') + '</td><td class="nombre">' + P.fcfa(x.montant) + '</td>' +
         '<td>' + P.pastille(ETATS[x.e][0], ETATS[x.e][1]) + '</td>' +
         '<td>' + (x.e === 'attente' ? '<a class="btn petit" href="#/paiements/a-valider">Valider</a>' : x.e === 'paye' ? '<span class="doux">Reçu émis</span>' : '<a class="btn petit" href="#/paiements/mensualites">Relancer</a>') +

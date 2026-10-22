@@ -255,6 +255,9 @@ details summary { cursor: pointer; font-weight: 600; }
 .vis img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 18%; opacity: 0; transition: opacity .6s; }
 .vis img.charge { opacity: 1; }
 .vis.rond-vis { border-radius: 50%; }
+/* nom précédé de la photo en médaillon (Tableau du mois des Paiements) */
+.nom-visage { display: flex; align-items: center; gap: 12px; }
+.nom-visage .vis { width: 46px; height: 46px; font-size: 15px; box-shadow: 0 0 0 2px #fff, 0 2px 8px rgba(30, 20, 15, .18); }
 
 /* ---------- Accueil vivant ---------- */
 .accueil-tete { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 18px; }

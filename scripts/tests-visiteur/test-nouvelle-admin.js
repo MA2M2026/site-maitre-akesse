@@ -73,6 +73,12 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     await capture(p, 'paiements-' + (tel ? 'tel' : 'pc'));
     const palesP = await lirePageEntiere(p);
     ok(!palesP.length, n + 'paiements : textes lisibles ' + palesP.slice(0, 4).map((x) => x.texte.slice(0, 20) + ' (' + x.contraste + ')').join(', '));
+    // Tableau du mois : la photo du Book en médaillon devant le nom (initiales pour les non-inscrits)
+    await p.goto(URL_ADMIN + '#/paiements/tableau'); await p.waitForSelector('.nom-visage', { timeout: 8000 }).catch(() => {}); await p.waitForTimeout(1200);
+    const medaillons = await p.$$eval('.nom-visage .vis', (l) => l.map((v) => !!(v.querySelector('img.charge') && v.querySelector('img').naturalWidth)));
+    ok(medaillons.length === 6 && medaillons.filter(Boolean).length === 3, n + 'tableau du mois : photos en médaillon pour les 3 inscrites, initiales pour les autres (' + medaillons + ')');
+    ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)), n + 'tableau du mois : rien ne dépasse');
+    await capture(p, 'tableau-mois-' + (tel ? 'tel' : 'pc'));
     await p.goto(URL_ADMIN + '#/compta/tableau'); await p.waitForTimeout(1500);
     ok(/Comptabilité/.test(await p.textContent('.haut .bloc-actuel')), n + 'bloc 3 (comptabilité) affiché dans la nouvelle maison');
     ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)), n + 'comptabilité : rien ne dépasse');

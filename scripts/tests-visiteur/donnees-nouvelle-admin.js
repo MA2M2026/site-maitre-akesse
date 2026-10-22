@@ -49,7 +49,7 @@ function donnees(role) {
         { id: 'cp3', projet_id: 'p1', model_id: 'm2', nom: 'Mademoiselle GRÂCE YAO', parent: false, reponse: null },
         { id: 'cp4', projet_id: 'p1', model_id: 'm3', nom: 'Mademoiselle FATIM DIALLO', parent: false, reponse: null }],
       convocation_envois: [],
-      agence_mannequins: profils.slice(0, 6).map((p, i) => ({ id: 'r' + i, full_name: p.full_name, telephone: '07000000' + (10 + i), mensualite: 10000, statut: 'actif', user_id: null, date_entree: '2026-09-01', suivi: true })),
+      agence_mannequins: profils.slice(0, 6).map((p, i) => ({ id: 'r' + i, full_name: p.full_name, telephone: '07000000' + (10 + i), mensualite: 10000, statut: 'actif', user_id: i < 3 ? p.id : null, date_entree: '2026-09-01', suivi: true })),
       paiements_mannequins: [
         { id: 'pm1', mannequin_id: 'r1', objet: 'mensualite', mois: '2026-10-01', montant: 10000, mode: 'wave', statut: 'declare', declare_le: '2026-10-19T09:00:00Z', mannequin: { full_name: 'MARIAM TRAORÉ', telephone: '0700000011' } },
         { id: 'pm2', mannequin_id: 'r2', objet: 'mensualite', mois: '2026-10-01', montant: 10000, mode: 'wave', statut: 'declare', declare_le: '2026-10-20T09:00:00Z', mannequin: { full_name: 'GRÂCE YAO', telephone: '0700000012' } }],

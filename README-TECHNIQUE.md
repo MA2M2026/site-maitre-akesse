@@ -195,6 +195,11 @@ reste en service ; la nouvelle vit à `/admin/nouvelle/`.
   vidéo, accès, erreurs…), chargée seulement après la clé d'accès (`/api/acces-tableau`).
   Protection : `middleware.js` (`SCRIPTS_NOUVELLE_ADMIN`, `/js/admin/:fichier*`) et
   `vercel.json` (pas de cache public).
+- **Photos en médaillon dans les Paiements** (demande de la propriétaire, 22/10/2026) : le
+  Tableau du mois (`tableauDuMois`, `js/portail/espace-paiements.js`) met la photo du Book
+  devant le nom des mannequins inscrits sur le site (`agence_mannequins.user_id` = id du profil),
+  les initiales sinon. Seulement dans la nouvelle Administration (`P.photosCouverture` et
+  `P.visage` de `js/admin/coque.js` ; l'ancienne garde la liste sans photo). Style `.nom-visage`.
 - **Écrans partagés entre les deux maisons** (jamais de copie) : l'écran est dans
   `js/<nom>-gabarit.js` (`window.GABARIT_*`), la logique dans un `window.demarrer…()` :
   convocations, messages groupés, agenda, vidéo de l'accueil, photos mises de côté, rapport des
