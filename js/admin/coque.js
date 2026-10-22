@@ -1,0 +1,223 @@
+// Nouvelle Administration « vivante » (PLAN-NOUVELLE-ADMINISTRATION.md, 22/10/2026) : la
+// décoration de la maison. La connexion, les droits et l'aiguillage restent dans
+// js/portail/noyau.js (les fondations) ; ce fichier remplace seulement P.coque (en-tête, menu,
+// barre du bas sur téléphone) et P.vuePortail (l'accueil vivant), et apporte les visages.
+(function () {
+  'use strict';
+  const P = window.Portail;
+  if (!P) return;
+
+  // ---------- Visages (vignettes légères des photos du Book, js/photos.js) ----------
+  P.initiales = (nom) => String(nom || '').trim().split(/\s+/).map((x) => x.charAt(0)).slice(0, 2).join('').toUpperCase();
+  P.visage = (url, nom, classe) => '<span class="vis ' + (classe || '') + '"><span class="ini" aria-hidden="true">' + P.esc(P.initiales(nom)) + '</span>' +
+    (url ? '<img src="' + P.esc(urlLegere(url)) + '" alt="" loading="lazy" decoding="async">' : '') + '</span>';
+  // une photo affichée apparaît en fondu (l'évènement « load » ne remonte pas : capture)
+  document.addEventListener('load', (e) => {
+    if (e.target.tagName === 'IMG' && e.target.parentNode && e.target.parentNode.classList && e.target.parentNode.classList.contains('vis')) e.target.classList.add('charge');
+  }, true);
+  // Photo de couverture de chaque mannequin publiée : { id: url }
+  P.photosCouverture = async (ids) => {
+    if (!ids.length) return {};
+    const lignes = await P.rpc('photos_couverture_mannequins', { ids });
+    const parId = {};
+    (lignes || []).forEach((p) => { parId[p.model_id] = p.url; });
+    return parId;
+  };
+  // Nombre qui défile jusqu'à sa valeur (attribut data-compte)
+  P.animerChiffres = (racine) => {
+    (racine || document).querySelectorAll('[data-compte]').forEach((el) => {
+      const cible = Number(el.dataset.compte) || 0, suffixe = el.dataset.suffixe || '';
+      const ecrire = (v) => { el.textContent = Math.round(v).toLocaleString('fr-FR') + suffixe; };
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches || !cible) { ecrire(cible); return; }
+      const t0 = performance.now();
+      const pas = (t) => { const k = Math.min(1, (t - t0) / 1100); ecrire(cible * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(pas); };
+      requestAnimationFrame(pas);
+    });
+  };
+  // Page de connexion : un mur des visages du Book derrière le texte (photos publiques)
+  let murVisages = null;
+  async function visagesPublics() {
+    if (!murVisages) {
+      murVisages = (async () => {
+        const profils = await P.bd(sb.from('model_profiles').select('id, full_name').eq('published', true).order('created_at', { ascending: false }).limit(16));
+        const photos = await P.photosCouverture(profils.map((m) => m.id));
+        return profils.filter((m) => photos[m.id]).map((m) => [photos[m.id], m.full_name]);
+      })().catch(() => []);
+    }
+    return murVisages;
+  }
+  new MutationObserver(() => {
+    const g = document.querySelector('.connexion .g');
+    if (!g || g.querySelector('.mur-fond')) return;
+    const mur = document.createElement('div');
+    mur.className = 'mur-fond'; mur.setAttribute('aria-hidden', 'true');
+    g.prepend(mur);
+    visagesPublics().then((v) => { if (mur.isConnected) mur.innerHTML = v.slice(0, 8).map((x) => P.visage(x[0], x[1])).join(''); });
+  }).observe(document.getElementById('app'), { childList: true });
+
+  P.compte = (n, suffixe) => '<span data-compte="' + (Number(n) || 0) + '"' + (suffixe ? ' data-suffixe="' + P.esc(suffixe) + '"' : '') + '>0' + P.esc(suffixe || '') + '</span>';
+
+  // ---------- Les trois blocs ----------
+  const ICONES = {
+    accueil: '<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/>',
+    site: '<rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 9h18M8 21h8M12 18v3"/>',
+    paiements: '<rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 11h20M6 15h4"/>',
+    compta: '<path d="M5 3h11l3 3v15H5z"/><path d="M8 10h8M8 14h8M8 18h5"/>',
+    menu: '<path d="M4 7h16M4 12h16M4 17h16"/>'
+  };
+  const icone = (cle, taille) => '<svg width="' + (taille || 20) + '" height="' + (taille || 20) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONES[cle] + '</svg>';
+  const COURT = { site: 'Le site', paiements: 'Paiements', compta: 'Compta' };
+  const premierePage = (esp) => esp.nav.find((n) => n[0])[0];
+  const blocsPermis = () => ['site', 'paiements', 'compta'].filter((k) => P.moi.espaces[k] && P.espaces[k]);
+  const lienSecurite = () => P.moi.role === 'principal' ? ['#/securite/comptes', 'Sécurité et journal'] : ['#/securite/codes', 'Mes codes de secours'];
+
+  function enTete(titre) {
+    return '<header class="haut"><a class="marque" href="#/" aria-label="Accueil de l’Administration">' +
+      '<img class="logo-portail logo-haut" src="/assets/logo-header-clair.png" width="600" height="182" alt="Maître Akesse Model Management"></a>' +
+      '<div class="bloc-actuel">' + P.esc(titre) + '</div>' +
+      '<div class="qui"><b>' + P.esc(P.moi.nom) + '</b>' + P.esc(P.ROLES[P.moi.role]) + '</div></header>';
+  }
+  function barreBas(module, avecMenu) {
+    return '<nav class="onglets-bas" aria-label="Blocs de l’Administration">' +
+      '<a href="#/"' + (!module ? ' class="actif" aria-current="page"' : '') + '>' + icone('accueil') + 'Accueil</a>' +
+      blocsPermis().map((k) => '<a href="#/' + k + '/' + premierePage(P.espaces[k]) + '"' + (k === module ? ' class="actif" aria-current="page"' : '') + '>' + icone(k) + COURT[k] + '</a>').join('') +
+      (avecMenu ? '<button type="button" data-action="menu-ouvrir" aria-controls="menu-lateral" aria-expanded="false">' + icone('menu') + 'Rubriques</button>' : '') +
+      '</nav>';
+  }
+
+  // Coque d'un bloc : en-tête, menu des rubriques (à gauche ; en bas, en tiroir, sur téléphone)
+  P.coque = (module, page, html) => {
+    const esp = P.espaces[module];
+    const nav = esp.nav.filter((n) => !n[2] || n[2]()).map((n) => !n[0] ? '<div class="titre-menu">' + P.esc(n[1]) + '</div>' :
+      '<a class="nav' + (n[0] === page ? ' actif' : '') + '" href="#/' + module + '/' + n[0] + '"' + (n[0] === page ? ' aria-current="page"' : '') + '><span>' + P.esc(n[1]) + '</span>' +
+      (esp.compteur && esp.compteur[n[0]] ? '<span class="compteur">' + esp.compteur[n[0]] + '</span>' : '') + '</a>').join('');
+    const blocs = '<div class="blocs">' + '<a class="bloc" href="#/">' + icone('accueil') + 'Accueil</a>' +
+      blocsPermis().map((k) => '<a class="bloc' + (k === module ? ' actif' : '') + '" href="#/' + k + '/' + premierePage(P.espaces[k]) + '">' + icone(k) + P.esc(P.ESPACES[k]) + '</a>').join('') + '</div>';
+    const secu = lienSecurite();
+    return '<div class="coque">' + enTete(P.ESPACES[module] || 'Sécurité') +
+      '<div class="voile-menu" data-action="menu-fermer"></div>' +
+      '<nav class="lateral" id="menu-lateral" aria-label="' + P.esc(P.ESPACES[module] || 'Sécurité') + '">' + blocs + nav +
+      '<div class="lateral-pied"><a class="btn petit clair" href="' + secu[0] + '">' + P.esc(secu[1]) + '</a>' +
+      '<button class="btn petit clair" data-action="deconnexion">Déconnexion</button></div></nav>' +
+      '<main class="contenu" id="contenu">' + html + '</main>' + barreBas(module, true) + '</div>';
+  };
+
+  // ---------- Accueil vivant ----------
+  const JOURS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+  function dateDuJour() {
+    const d = new Date(new Date().toLocaleString('en-US', { timeZone: 'Africa/Abidjan' }));
+    return { jour: JOURS[d.getDay()], date: d.getDate() + ' ' + P.MOIS[d.getMonth()] };
+  }
+  // Une lecture qui échoue ne casse pas l'accueil : sa carte disparaît simplement
+  const essai = (promesse) => Promise.resolve(promesse).catch(() => null);
+  const nombre = async (requete) => { const r = await requete; if (r.error) throw r.error; return r.count || 0; };
+
+  async function donneesSite() {
+    const aujourdhui = P.aujourdhui();
+    const [profils, nouvelles, projets] = await Promise.all([
+      essai(P.bd(sb.from('model_profiles').select('id, full_name, niveau_mannequin, city').eq('published', true).order('created_at', { ascending: false }).limit(40))),
+      essai(nombre(sb.from('casting_applications').select('id', { count: 'exact', head: true }).eq('status', 'nouvelle'))),
+      essai(P.bd(sb.from('agenda_projets').select('id, titre, type, date_debut, date_fin, lieu, ville, annule, mannequin_ids').eq('annule', false).gte('date_debut', aujourdhui.slice(0, 8) + '01').order('date_debut').limit(20)))
+    ]);
+    const prochain = (projets || []).find((p) => (p.date_fin || p.date_debut) >= aujourdhui) || null;
+    let reponses = null;
+    if (prochain) {
+      const parts = await essai(P.bd(sb.from('convocation_participants').select('id, model_id, parent, reponse').eq('projet_id', prochain.id)));
+      if (parts && parts.length) {
+        const vus = {}, uniques = [];
+        parts.forEach((x) => { const g = x.model_id || x.id; if (!vus[g] || (!vus[g].reponse && x.reponse)) { if (!vus[g]) uniques.push(g); vus[g] = x; } });
+        reponses = { total: uniques.length, confirme: uniques.filter((g) => vus[g].reponse === 'confirme').length, sans: uniques.filter((g) => !vus[g].reponse).length };
+      }
+    }
+    const liste = profils || [];
+    const photos = await essai(P.photosCouverture(liste.map((p) => p.id).concat(prochain ? prochain.mannequin_ids || [] : []).filter((x, i, l) => l.indexOf(x) === i))) || {};
+    return { profils: liste, photos, nouvelles, prochain, reponses };
+  }
+  async function donneesPaiements() {
+    const declares = await essai(nombre(sb.from('paiements_mannequins').select('id', { count: 'exact', head: true }).eq('statut', 'declare')));
+    return { declares };
+  }
+  async function donneesCompta() {
+    const soldes = await essai(P.rpc('compta_soldes'));
+    return { total: soldes ? soldes.reduce((s, x) => s + (Number(x.solde) || 0), 0) : null };
+  }
+
+  function dateCourte(d) { const s = String(d).slice(0, 10).split('-'); return Number(s[2]) + ' ' + P.MOIS[Number(s[1]) - 1]; }
+  function affiche(site) {
+    const p = site.prochain;
+    if (!p) return '';
+    const auj = P.aujourdhui(), quand = p.date_debut === auj || (p.date_fin && p.date_debut <= auj && p.date_fin >= auj) ? 'Aujourd’hui' : 'Prochain projet · ' + dateCourte(p.date_debut);
+    const ids = (p.mannequin_ids || []).filter((id) => site.photos[id]).slice(0, 4);
+    const fond = (ids.length ? ids.map((id) => [site.photos[id], '']) : site.profils.slice(0, 4).map((m) => [site.photos[m.id], m.full_name]));
+    const r = site.reponses;
+    return '<a class="affiche apparait" href="#/site/b2-convocations" style="--i:1"><span class="fond">' + fond.map((f) => P.visage(f[0], f[1])).join('') + '</span>' +
+      '<span class="txt"><span class="surtitre">' + P.esc(quand) + (p.lieu || p.ville ? ' · ' + P.esc([p.lieu, p.ville].filter(Boolean).join(', ')) : '') + '</span>' +
+      '<span class="titre">' + P.esc(p.titre) + '</span>' +
+      (r ? '<span class="surtitre">Réponses : ' + r.confirme + ' sur ' + r.total + ' confirmées' + (r.sans ? ' · ' + r.sans + ' sans réponse' : '') + '</span>' +
+        '<span class="jauge"><i data-largeur="' + Math.round(100 * r.confirme / Math.max(1, r.total)) + '"></i></span>' : '<span class="surtitre">Aucune convocation envoyée pour l’instant</span>') +
+      '</span></a>';
+  }
+  function taches(site, paiements) {
+    const t = [];
+    if (site && site.nouvelles) t.push(['#/site/b2-candidatures', 'Candidatures à étudier', 'Casting et agence', site.nouvelles, true]);
+    if (site && site.reponses && site.reponses.sans) t.push(['#/site/b2-convocations', 'Mannequins sans réponse', site.prochain.titre, site.reponses.sans, true]);
+    if (paiements && paiements.declares) t.push(['#/paiements/rapprocher', 'Paiements « J’ai payé » à valider', 'Wave et espèces', paiements.declares, true]);
+    if (!t.length) return '<div class="taches apparait" style="--i:2"><div class="tache"><span class="point"></span><span class="t">Rien d’urgent<small>Tout est à jour pour le moment.</small></span></div></div>';
+    return '<div class="taches apparait" style="--i:2">' + t.map((x) => '<a class="tache" href="' + x[0] + '"><span class="point' + (x[4] ? ' chaud' : '') + '"></span>' +
+      '<span class="t">' + P.esc(x[1]) + '<small>' + P.esc(x[2]) + '</small></span><b>' + P.compte(x[3]) + '</b></a>').join('') + '</div>';
+  }
+  function ruban(site) {
+    const avecPhoto = site.profils.filter((m) => site.photos[m.id]);
+    if (!avecPhoto.length) return '';
+    const carte = (m, cache) => '<a class="carte-vis" href="#/site/b2-mannequins-publies"' + (cache ? ' aria-hidden="true" tabindex="-1"' : '') + '>' + P.visage(site.photos[m.id], m.full_name) +
+      '<b>' + P.esc(m.full_name) + '</b><span>' + P.esc([m.niveau_mannequin, m.city].filter(Boolean).join(' · ')) + '</span></a>';
+    return '<div class="section-titre apparait" style="--i:4"><h2>Nos mannequins</h2><a href="#/site/b2-mannequins-publies">Tout voir →</a></div>' +
+      '<div class="ruban apparait" style="--i:5"><div class="piste">' + avecPhoto.map((m) => carte(m, false)).join('') + avecPhoto.map((m) => carte(m, true)).join('') + '</div></div>';
+  }
+  function blocsAccueil(site, paiements, compta) {
+    const cartes = blocsPermis().map((k, i) => {
+      const lien = '#/' + k + '/' + premierePage(P.espaces[k]);
+      let grand = '', legende = '';
+      if (k === 'site' && site) { grand = P.compte(site.profils.length); legende = 'mannequins publiés au Book'; }
+      if (k === 'paiements' && paiements) { grand = paiements.declares == null ? '—' : P.compte(paiements.declares); legende = 'paiements déclarés à valider'; }
+      if (k === 'compta' && compta) { grand = compta.total == null ? '—' : P.compte(compta.total, ' F'); legende = 'en caisse et en banque'; }
+      return '<a class="bloc-accueil apparait' + (i === 0 ? ' noir' : '') + '" style="--i:' + (3 + i) + '" href="' + lien + '">' +
+        '<span class="nom">' + P.esc(P.ESPACES[k]) + '</span><span><span class="grand">' + grand + '</span><span class="legende" style="display:block">' + P.esc(legende) + '</span></span>' +
+        '<span class="pied"><span>Ouvrir</span><span class="fleche" aria-hidden="true">→</span></span></a>';
+    }).join('');
+    return '<div class="blocs-accueil">' + cartes + '</div>';
+  }
+
+  P.vuePortail = async () => {
+    const d = dateDuJour();
+    const [site, paiements, compta] = await Promise.all([
+      P.moi.espaces.site ? essai(donneesSite()) : null,
+      P.moi.espaces.paiements ? essai(donneesPaiements()) : null,
+      P.moi.espaces.compta ? essai(donneesCompta()) : null
+    ]);
+    const phrase = {
+      principal: 'Voici l’essentiel de la journée. Touchez un bloc pour y entrer.',
+      site: 'Le site au quotidien : mannequins, castings, contenu. Aucune donnée financière.',
+      caisse: 'Les paiements des mannequins : à valider, en retard, messages.',
+      compta: 'La comptabilité de l’agence. Sur les mannequins, vous ne voyez que des totaux.'
+    }[P.moi.role];
+    const secu = lienSecurite();
+    return '<div class="coque sans-menu">' + enTete('Bonjour, ' + P.moi.nom) +
+      '<main class="contenu" id="contenu">' +
+      '<div class="accueil-tete"><div class="date">' + P.esc(d.jour.charAt(0).toUpperCase() + d.jour.slice(1)) + '<span>' + P.esc(d.date) + '</span></div>' +
+      '<p class="bonjour">' + P.esc(phrase) + '</p></div>' +
+      (site ? affiche(site) : '') +
+      taches(site, paiements) +
+      blocsAccueil(site, paiements, compta) +
+      (site ? ruban(site) : '') +
+      '<div class="pied-portail"><span class="ligne"><a class="btn petit" href="' + secu[0] + '">' + P.esc(secu[1]) + '</a>' +
+      (P.installee() ? '' : '<button class="btn petit" data-action="installer">Installer l’application</button>') +
+      '<button class="btn petit" data-action="deconnexion">Déconnexion</button></span><a href="/" class="retour">Voir le site public →</a></div>' +
+      '</main>' + barreBas('', false) + '</div>';
+  };
+  P.apresPortail = () => {
+    P.animerChiffres(document.getElementById('app'));
+    // la jauge des réponses se remplit après l'apparition de l'affiche
+    setTimeout(() => document.querySelectorAll('.affiche .jauge i[data-largeur]').forEach((i) => { i.style.width = i.dataset.largeur + '%'; }), 350);
+  };
+})();

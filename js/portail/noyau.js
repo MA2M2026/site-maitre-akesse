@@ -423,7 +423,9 @@
       '<main class="contenu" id="contenu">' + html + '</main></div>';
   };
 
-  function vuePortail() {
+  // Écran d'accueil (les tuiles) ; la nouvelle Administration (admin/nouvelle/, js/admin/coque.js)
+  // remplace P.vuePortail et P.coque par sa propre décoration — la connexion et l'aiguillage restent ici.
+  P.vuePortail = function () {
     const tuiles = [
       ['site', 'Mannequins, candidatures, actualités. Aucune donnée financière.', '<rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 9h18M8 21h8M12 18v3"/>'],
       ['paiements', 'Qui a payé, qui est en retard, paiements à rapprocher, messages.', '<rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 11h20M6 15h4"/>'],
@@ -445,7 +447,7 @@
       '<div class="tuiles">' + tuiles.map((t) => '<a class="tuile" href="#/' + t[0] + '/' + premierePage(P.espaces[t[0]]) + '"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + t[2] + '</svg>' +
         '<div><div class="tt">' + P.esc(ESPACES[t[0]]) + '</div><div class="ts">' + P.esc(t[1]) + '</div></div></a>').join('') + '</div>' +
       '<div class="pied-portail"><span>Une tuile n’apparaît que si votre rôle y donne accès.</span><a href="/" class="retour">Voir le site public</a></div></div></main></div>';
-  }
+  };
 
   let rendu = 0;
   async function afficher() {
@@ -454,7 +456,14 @@
     const module = morceaux[0], page = morceaux[1];
     const n = ++rendu;
     document.documentElement.classList.remove('menu-ouvert'); // une rubrique choisie referme le menu
-    if (!module) { app().innerHTML = vuePortail(); return; }
+    if (!module) {
+      app().dataset.module = '';
+      const html = await P.vuePortail();
+      if (n !== rendu) return; // l'utilisateur est déjà ailleurs
+      app().innerHTML = html;
+      if (P.apresPortail) P.apresPortail();
+      return;
+    }
     const esp = P.espaces[module];
     if (!esp) { location.hash = '#/'; return; }
     const pageValide = esp.pages[page] ? page : premierePage(esp);

@@ -14,7 +14,7 @@ function brancher(page, donnees, journal) {
     page.route(SUPA + '/**', async (route) => {
       const req = route.request(), url = new URL(req.url()), m = req.method();
       const objet = /vnd\.pgrst\.object/.test(req.headers()['accept'] || '');
-      const json = (body, status = 200, extra = {}) => route.fulfill({ status, contentType: 'application/json', headers: { 'content-range': '0-0/' + (Array.isArray(body) ? body.length : 1), ...extra }, body: JSON.stringify(body) });
+      const json = (body, status = 200, extra = {}) => route.fulfill({ status, contentType: 'application/json', headers: { 'content-range': '0-0/' + (Array.isArray(body) ? body.length : 1), 'access-control-expose-headers': 'content-range', ...extra }, body: JSON.stringify(body) });
       if (portail && url.pathname.startsWith('/auth/v1/token')) {
         const corps = JSON.parse(req.postData() || '{}');
         return json(sessionPortail(String(corps.refresh_token || '').includes('aal2') ? 'aal2' : (portail.aal || 'aal1')));
