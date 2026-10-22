@@ -38,7 +38,7 @@
       '<button type="button" class="btn petit" data-action="projet-descendre" data-id="' + P.esc(p.id) + '"' + (i === projets.length - 1 ? ' disabled' : '') + ' aria-label="Descendre « ' + P.esc(p.nom) + ' »">▼</button></span>' +
       '<button type="button" class="btn petit" data-action="projet-supprimer" data-id="' + P.esc(p.id) + '">Supprimer</button></div></article>').join('');
     return P.entete('Projets et castings', '<button type="button" class="btn rouge" data-action="projet-nouveau">＋ Nouveau casting</button><span class="doux">' + projets.filter((p) => p.actif).length + ' ' + (projets.filter((p) => p.actif).length > 1 ? 'actifs' : 'actif') + ' sur ' + projets.length + '</span>') +
-      '<p class="doux">Les castings actifs apparaissent dans le formulaire public « Postuler à un casting », dans cet ordre.</p>' +
+      '<p class="doux">Les castings actifs apparaissent dans le formulaire public « Postuler à un casting », dans cet ordre. Les dates des défilés, shootings et convocations se gèrent dans l’<a href="#/site/b3c-agenda">Agenda du site</a>.</p>' +
       (cartes ? '<div class="projets-liste">' + cartes + '</div>' : '<div class="carte vide">Aucun casting pour le moment.</div>');
   }
   P.actions['projet-nouveau'] = () => {
