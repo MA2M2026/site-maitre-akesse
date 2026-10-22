@@ -6,8 +6,11 @@
 // les jours, la ville, le lieu, les intervenants, les partenaires et les mannequins dont le
 // profil est visible ; les horaires seulement si la case est cochée ; l'adresse exacte et
 // les notes restent ici.
-(function () {
-  var section = document.querySelector('[data-section="b3c-agenda"]');
+// Écran partagé (js/agenda-gabarit.js) : l'ancien tableau de bord le démarre tout seul et le
+// charge à l'ouverture de la rubrique ; la nouvelle Administration appelle
+// window.demarrerAgendaAdmin(racine) à chaque affichage de la page (chargement immédiat).
+window.demarrerAgendaAdmin = function (racine) {
+  var section = racine || document.querySelector('[data-section="b3c-agenda"]');
   var form = document.getElementById('agenda-form');
   if (!section || !form || typeof sb === 'undefined' || !sb) return;
 
@@ -426,6 +429,7 @@
   });
 
   // Chargement au premier affichage de la rubrique (la session admin est alors ouverte).
+  if (racine) { charger().catch(function (e) { message('Impossible de charger l’agenda : ' + ((e && e.message) || String(e)), true); }); return; }
   function siVisible() {
     if (!charge && section.classList.contains('tdb-actif')) charger().catch(function (e) {
       charge = false; // nouvel essai à la prochaine ouverture de la rubrique
@@ -434,4 +438,5 @@
   }
   new MutationObserver(siVisible).observe(section, { attributes: true, attributeFilter: ['class'] });
   siVisible();
-})();
+};
+if (document.querySelector('[data-section="b3c-agenda"]')) window.demarrerAgendaAdmin();

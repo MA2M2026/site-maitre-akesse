@@ -30,7 +30,7 @@ export const config = {
     // tableau de bord protégé (13/10/2026) : la page et ses scripts réservés
     '/tableau-de-bord', '/tableau-de-bord.html',
     '/js/tableau-de-bord.js', '/js/tableau-v2.js', '/js/couverture-admin.js', '/js/photos-mises-de-cote-gabarit.js', '/js/photos-mises-de-cote.js',
-    '/js/fiches-evenement-gabarit.js', '/js/fiches-evenement-admin.js', '/js/rapport-profils-gabarit.js', '/js/rapport-profils-admin.js', '/js/agenda-admin.js', '/js/agenda-outils.js', '/js/convocations-gabarit.js', '/js/convocations-page.js', '/js/convocations-admin.js', '/js/messages-convocations.js',
+    '/js/fiches-evenement-gabarit.js', '/js/fiches-evenement-admin.js', '/js/rapport-profils-gabarit.js', '/js/rapport-profils-admin.js', '/js/agenda-gabarit.js', '/js/agenda-admin.js', '/js/agenda-outils.js', '/js/convocations-gabarit.js', '/js/convocations-page.js', '/js/convocations-admin.js', '/js/messages-convocations.js',
     '/js/messages-candidats.js', '/js/messages-groupes-gabarit.js', '/js/messages-groupes.js', '/js/nettoyage-supabase.js', '/js/erreurs-corrigees.js',
     // pièces du bloc 1 de la nouvelle Administration (PLAN-NOUVELLE-ADMINISTRATION.md, 22/10/2026)
     '/js/admin/:fichier*'
@@ -49,7 +49,7 @@ export const config = {
 const PAGE_TABLEAU = /^\/tableau-de-bord(\.html)?$/;
 // ⚠ Même liste que dans config.matcher ci-dessus (vérifié par test-tableau-protege.js), et
 // chaque script de la ZONE-ADMIN de tableau-de-bord.html doit y figurer.
-const SCRIPTS_ADMIN = /^\/js\/(fiches-evenement-gabarit|rapport-profils-gabarit|photos-mises-de-cote-gabarit|tableau-de-bord|tableau-v2|couverture-admin|photos-mises-de-cote|fiches-evenement-admin|rapport-profils-admin|agenda-admin|agenda-outils|convocations-gabarit|convocations-page|convocations-admin|messages-convocations|messages-candidats|messages-groupes-gabarit|messages-groupes|nettoyage-supabase|erreurs-corrigees)\.js$/;
+const SCRIPTS_ADMIN = /^\/js\/(agenda-gabarit|fiches-evenement-gabarit|rapport-profils-gabarit|photos-mises-de-cote-gabarit|tableau-de-bord|tableau-v2|couverture-admin|photos-mises-de-cote|fiches-evenement-admin|rapport-profils-admin|agenda-admin|agenda-outils|convocations-gabarit|convocations-page|convocations-admin|messages-convocations|messages-candidats|messages-groupes-gabarit|messages-groupes|nettoyage-supabase|erreurs-corrigees)\.js$/;
 // Nouvelle Administration : les pièces du bloc 1 (js/admin/site-*.js) sont réservées de la même
 // façon ; js/admin/coque.js et js/admin/site.js (décoration, menu) restent publics.
 const SCRIPTS_NOUVELLE_ADMIN = /^\/js\/admin\/site-[\w-]+\.js$/;

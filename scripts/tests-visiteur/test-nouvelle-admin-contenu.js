@@ -120,6 +120,20 @@ const photo = (n) => chemin.join(__dirname, 'medias', 'photo' + n + '.jpg');
     ok(ecrits(journal, 'POST', 'instagram_posts_cache').some((j) => /Nouvelle collection/.test(j[3]) && /2\.jpg/.test(j[3])), n + 'publications récupérées et mises sur le site');
     await capture(p, 'instagram' + suffixe);
 
+    // 8. Agenda du site (écran partagé avec l'ancien tableau de bord) : liste, ajout, modifier, Convoquer
+    await p.goto(URL_ADMIN + '#/site/b3c-agenda'); await p.waitForSelector('#agenda-form'); await p.waitForTimeout(1800);
+    const listeAgenda = await p.textContent('#agenda-liste-avenir');
+    ok(/ABIDJAN BORDER FORUM/.test(listeAgenda) && /SHOOTING CACAO/.test(listeAgenda) && (await p.$$('#agenda-mannequins input[type=checkbox]')).length >= 12, n + 'agenda : projets à venir et liste des mannequins chargés d’office');
+    await p.fill('#agenda-titre', 'Défilé de Noël'); await p.fill('#agenda-date', '2026-12-20'); await p.fill('#agenda-ville', 'Abidjan');
+    await p.$eval('#agenda-mannequins input[type=checkbox]', (x) => x.click());
+    await p.click('#agenda-enregistrer'); await p.waitForTimeout(1500);
+    ok(ecrits(journal, 'POST', 'agenda_projets').some((j) => /Défilé de Noël/.test(j[3]) && /"date_debut":"2026-12-20"/.test(j[3])) && await p.isVisible('#agenda-msg'), n + 'agenda : projet ajouté, message visible');
+    await p.click('#agenda-liste-avenir [data-modifier="p2"]'); await p.waitForTimeout(500);
+    ok(!(await p.isHidden('#agenda-en-cours')) && /SHOOTING CACAO/.test(await p.textContent('#agenda-en-cours')), n + 'agenda : « Modifier » ouvre le bon projet');
+    await capture(p, 'agenda' + suffixe);
+    await p.click('#agenda-liste-avenir [data-convoquer="p1"]').catch(() => {}); await p.waitForTimeout(1500);
+    ok(/b2-convocations/.test(p.url()), n + 'agenda : « Convoquer » ouvre les convocations');
+
     const pales = await lirePageEntiere(p);
     ok(!pales.length, n + 'textes lisibles ' + pales.slice(0, 4).map((x) => x.texte.slice(0, 20) + ' (' + x.contraste + ')').join(', '));
     await p.goto(URL_ADMIN + '#/site/actualites/a1'); await p.waitForSelector('#pub-titre'); await p.waitForTimeout(1200);

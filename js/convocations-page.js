@@ -10,7 +10,8 @@
 // Deux maisons (22/10/2026) : l'ancien tableau de bord le démarre tout seul (écran présent dès le
 // chargement) ; la nouvelle Administration (js/admin/site-convocations.js) appelle
 // window.demarrerConvocationsPage(racine) chaque fois qu'elle affiche l'écran.
-window.convoquerProjet = function () {};
+// avant le premier affichage de l'écran (nouvelle Administration) : ouvrir la rubrique avec ce projet
+window.convoquerProjet = function (id) { window.convocationDemandee = id; location.hash = '#/site/b2-convocations'; };
 window.demarrerConvocationsPage = function (racine) {
   var $ = function (id) { return document.getElementById(id); };
   var section = racine || document.querySelector('[data-section="b2-convocations"]');
