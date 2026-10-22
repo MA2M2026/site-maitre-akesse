@@ -5,7 +5,7 @@ const { chromium } = require('playwright'); const { spawn } = require('child_pro
 const { donnees, photosLocales, seConnecter } = require('./donnees-nouvelle-admin');
 const chemin = require('path'), fs = require('fs');
 const PORT = String(9300 + Math.floor(Math.random() * 90));
-const URL_ADMIN = 'http://127.0.0.1:' + PORT + '/admin/nouvelle/';
+const URL_ADMIN = 'http://127.0.0.1:' + PORT + '/admin/';
 const DOSSIER = process.env.CAPTURES || '.', ESPACE = process.env.ESPACE || 'site';
 (async () => {
   let srv; process.on('exit', () => srv && srv.kill());

@@ -9,7 +9,7 @@ const { chromium } = require('playwright'); const { spawn } = require('child_pro
 const { donnees, photosLocales, seConnecter } = require('./donnees-nouvelle-admin');
 const { lirePageEntiere } = require('./lisibilite');
 const PORT = String(9400 + Math.floor(Math.random() * 90));
-const URL_ADMIN = 'http://127.0.0.1:' + PORT + '/admin/nouvelle/';
+const URL_ADMIN = 'http://127.0.0.1:' + PORT + '/admin/';
 let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m); if (!c) ko++; };
 const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.env.CAPTURES + '/' + nom + '.png' }) : null;
 const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] === table);

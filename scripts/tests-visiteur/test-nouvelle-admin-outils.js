@@ -8,7 +8,7 @@ const { donnees, photosLocales, seConnecter } = require('./donnees-nouvelle-admi
 const { lirePageEntiere } = require('./lisibilite');
 const chemin = require('path');
 const PORT = String(9400 + Math.floor(Math.random() * 90));
-const URL_ADMIN = 'http://127.0.0.1:' + PORT + '/admin/nouvelle/';
+const URL_ADMIN = 'http://127.0.0.1:' + PORT + '/admin/';
 let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m); if (!c) ko++; };
 const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.env.CAPTURES + '/' + nom + '.png', fullPage: true }) : null;
 const api = (journal, chemin, motif) => journal.filter((j) => j[0] === 'API' && j[1] === chemin && (!motif || motif.test(j[2] || '')));

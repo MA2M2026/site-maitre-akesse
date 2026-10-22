@@ -14,6 +14,8 @@
   "redirects": [
     { "source": "/espace-mannequin-ancien", "destination": "/espace-mannequin", "permanent": true },
     { "source": "/espace-mannequin-ancien.html", "destination": "/espace-mannequin", "permanent": true },
+    { "source": "/admin/nouvelle", "destination": "/admin/", "permanent": false },
+    { "source": "/admin/nouvelle/", "destination": "/admin/", "permanent": false },
     { "source": "/", "has": [{ "type": "host", "value": "admin.maitreakessemodelmanagement.com" }], "destination": "/admin/", "permanent": false },
     { "source": "/admin", "has": [{ "type": "host", "value": "www.maitreakessemodelmanagement.com" }], "destination": "https://admin.maitreakessemodelmanagement.com/admin/", "permanent": false },
     { "source": "/admin/", "has": [{ "type": "host", "value": "www.maitreakessemodelmanagement.com" }], "destination": "https://admin.maitreakessemodelmanagement.com/admin/", "permanent": false },

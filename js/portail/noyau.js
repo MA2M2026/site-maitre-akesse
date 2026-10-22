@@ -423,7 +423,7 @@
       '<main class="contenu" id="contenu">' + html + '</main></div>';
   };
 
-  // Écran d'accueil (les tuiles) ; la nouvelle Administration (admin/nouvelle/, js/admin/coque.js)
+  // Écran d'accueil (les tuiles) ; la nouvelle Administration (admin/index.html, js/admin/coque.js)
   // remplace P.vuePortail et P.coque par sa propre décoration — la connexion et l'aiguillage restent ici.
   P.vuePortail = function () {
     const tuiles = [

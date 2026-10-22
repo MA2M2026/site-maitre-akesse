@@ -143,6 +143,12 @@ tr.en-retard td, .tableau tr.ligne-retard td { background: var(--erreur-fond); }
 }
 .btn:hover { background: #fff; box-shadow: var(--av-ombre); }
 .btn:active { transform: scale(.97); }
+/* Appui visible (demande de la propriétaire, 18/10/2026 ; js/bouton-appui.js garde l'effet un instant
+   après le doigt) et bouton d'envoi « en cours » (points qui défilent) jusqu'à la réponse */
+.touche-appuyee { transform: scale(.96); box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--av-rouge) !important; }
+.en-cours { cursor: progress; }
+.en-cours::after { content: ""; display: inline-block; width: 1.2em; text-align: left; animation: av-points 1s steps(4, end) infinite; }
+@keyframes av-points { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
 .btn.rouge { background: var(--av-rouge); border-color: var(--av-rouge); color: #fff; }
 .btn.rouge:hover { background: var(--rouge-ma2m-survol, #A50D26); }
 .btn.noir { background: var(--av-encre); border-color: var(--av-encre); color: var(--av-papier); }

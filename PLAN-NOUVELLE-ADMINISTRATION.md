@@ -17,8 +17,7 @@ prend l'adresse /admin/) puis **démolir** l'ancien tableau de bord.
   d'appareil, rôles, aiguillage `#/espace/page`, évènements `data-action` / `data-form`),
   `js/portail/inactivite.js`, `api/*`, base Supabase et ses droits (RLS), `js/messages-*.js`.
 - **Nouvelle maison construite à côté** : `admin/nouvelle/index.html` (adresse d'essai, même
-  connexion, mêmes données). L'Administration actuelle `/admin/` continue de marcher pendant le
-  chantier.
+  connexion, mêmes données) pendant le chantier ; depuis le déménagement, c'est `admin/index.html`.
 - **Décoration neuve** : `css/admin-vivante.css` (couleurs et polices du site : papier `--mag-papier`,
   encre `--mag-encre`, rouge `--rouge-ma2m`, titres `--mag-titre`, texte `--mag-texte`), animations
   douces (`prefers-reduced-motion` respecté), vignettes légères des photos (`urlLegere`).
@@ -60,4 +59,7 @@ sorti dans un fichier « gabarit » partagé et sa logique démarre à la demand
 | 5. Contenu du site | faite (22/10) : Actualités, Événements, Partenaires (`js/admin/site-contenu.js`, reconstruits ; outils partagés `js/publications.js`, `js/partenaires-communs.js`), Mot du fondateur et Instagram (`js/admin/site-vitrine.js`), Agenda et Vidéo de l'accueil (écrans partagés `js/agenda-gabarit.js`, `js/video-accueil-gabarit.js`). Essai : `test-nouvelle-admin-contenu.js`. |
 | 6. Accès et outils | faite (22/10) : Codes d'accès, Accès bloqués, Drive, Nettoyage (`js/admin/site-acces.js`, reconstruits ; `js/note-integration.js` et `js/nettoyage-supabase.js` partagés), Erreurs du site (journal sorti de `js/tableau-de-bord.js` dans `js/erreurs-site.js` + `js/erreurs-gabarit.js`). Message WhatsApp du code d'inscription partagé (`lienWhatsAppCode`, `js/messages-candidats.js`). Essai : `test-nouvelle-admin-outils.js`. **Bloc 1 entièrement reconstruit.** |
 | 7. Visite « patron d'agence » du bloc 1 | faite (22/10) : relecteur indépendant sur 66 captures (`scripts/tests-visiteur/tournee-nouvelle-admin.js`), 15 défauts ; corrigés : chiffres droits, contradictions de chiffres, aides repliées et titres sans émoji (écrans partagés), listes avant formulaires (Projets, Agenda), écrans partagés harmonisés, Rapport des profils compact, champs fichier, suppressions en rouge, Messages groupés guidé, fiche dossier sur téléphone, menu, validations, ruban, pluriels, « Mineure ». Restent pour la grande visite : vidéo de l'accueil (image d'aperçu), recherche pendant la frappe. Tableaux des blocs 2 et 3 en cartes sur téléphone. |
-| 8. Blocs 2 (Paiements) et 3 (Comptabilité) | en cours |
+| 8. Blocs 2 (Paiements) et 3 (Comptabilité) | faite (22/10) : redécorés, menus rangés, « Payer les mannequins » ajouté. |
+| 9-10. Visites et grande visite | faites (22/10) : 122 captures ; défauts d'affichage et de texte corrigés, photos en médaillon dans les Paiements (demande de la propriétaire). |
+| 11. Déménagement | préparé (22/10, en ligne avec la mise en ligne suivante) : `admin/index.html` = nouvelle maison, `/admin/nouvelle/` renvoie vers `/admin/`, service worker v10, essais à l'adresse `/admin/`. |
+| 12. Démolition | à faire |

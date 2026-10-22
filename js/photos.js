@@ -1,5 +1,5 @@
 // Affichage des photos du site (sorti de js/app.js le 22/10/2026 pour être partagé avec la
-// nouvelle Administration, admin/nouvelle/, sans recopier le code) : copies WebP légères,
+// nouvelle Administration, admin/index.html, sans recopier le code) : copies WebP légères,
 // photos servies directement par Cloudflare avec la roue de secours du relais Vercel.
 // À charger AVANT js/app.js (qui s'en sert) sur toutes les pages.
 // Journal des erreurs : window.signalerErreur (js/surveillance.js), s'il est présent.

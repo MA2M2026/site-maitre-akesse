@@ -169,7 +169,7 @@ propriétaire pour se débrouiller sans IA (version PDF imprimable remise le 13/
 ## 💸 Payer les mannequins (Comptabilité, 22/10/2026, choix de la propriétaire : Wave d'abord)
 
 Rubrique « Payer les mannequins » de l'espace 3 (`js/portail/espace-compta-cachets.js`, chargé dans
-`/admin/` et `/admin/nouvelle/`) ; base : **`supabase-cachets.sql`** (à exécuter une fois dans Supabase).
+`/admin/`) ; base : **`supabase-cachets.sql`** (à exécuter une fois dans Supabase).
 Un cachet = une personne (registre `agence_mannequins` ou personne extérieure : nom + numéro Wave),
 un montant, une prestation (projet de l'agenda ou texte). « Marquer payé » appelle `cachet_payer` :
 la dépense « Cachets reversés aux mannequins » (`compta_ecritures`) est créée et le cachet passe payé,
@@ -179,15 +179,18 @@ agence constituée et une clé Wave Business avec l'autorisation « Payout », d
 dans Vercel (jamais donnée à l'assistant). Le serveur appellera alors `POST /v1/payout` (clé
 d'idempotence = id du cachet) puis `cachet_payer(..., 'wave_api')`. Test : `test-cachets.js`.
 
-## 🏛️ Nouvelle Administration (chantier du 22/10/2026, adresse d'essai `/admin/nouvelle/`)
+## 🏛️ Nouvelle Administration (chantier du 22/10/2026 ; à l'adresse `/admin/` depuis le déménagement)
 
 Feu vert de la propriétaire : nouvelle Administration aux couleurs du site (papier, rouge,
 visages des mannequins), mêmes données, mêmes comptes, mêmes envois. Plan, règles du chantier
-et avancement : **`PLAN-NOUVELLE-ADMINISTRATION.md`** (à lire avant d'y toucher). Tant que le
-déménagement n'est pas fait, l'ancienne Administration (`/admin/`, `tableau-de-bord.html`)
-reste en service ; la nouvelle vit à `/admin/nouvelle/`.
+et avancement : **`PLAN-NOUVELLE-ADMINISTRATION.md`** (à lire avant d'y toucher). **Déménagement**
+(feu vert de la propriétaire, 22/10/2026) : `/admin/` ouvre la nouvelle Administration ;
+l'adresse d'essai `/admin/nouvelle/` renvoie vers `/admin/` (`vercel.json`) ; service worker
+`admin/sw.js` en `administration-v10` (liste INTERFACE = fichiers de la nouvelle page) ; signal
+d'appui des boutons (`js/bouton-appui.js`) gardé, avec son style dans `css/admin-vivante.css`.
+L'ancien `tableau-de-bord.html` existe encore jusqu'à la démolition (étape 12 du plan).
 
-- **Page** : `admin/nouvelle/index.html` ; décoration `css/admin-vivante.css` ; coque, accueil
+- **Page** : `admin/index.html` ; décoration `css/admin-vivante.css` ; coque, accueil
   vivant, visages et retouches automatiques (tableaux en cartes sur téléphone, écrans partagés
   harmonisés) : `js/admin/coque.js` ; noyau commun au portail : `js/portail/noyau.js`.
 - **Bloc 1 « Administration du site »** : menu `js/admin/site.js` ; chaque rubrique est une
