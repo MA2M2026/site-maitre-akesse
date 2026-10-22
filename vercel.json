@@ -65,7 +65,7 @@
       ]
     },
     {
-      "source": "/js/(tableau-de-bord|agenda-gabarit|fiches-evenement-gabarit|rapport-profils-gabarit|photos-mises-de-cote-gabarit|tableau-v2|couverture-admin|photos-mises-de-cote|fiches-evenement-admin|rapport-profils-admin|agenda-admin|agenda-outils|convocations-gabarit|convocations-page|convocations-admin|messages-convocations|messages-candidats|messages-groupes-gabarit|messages-groupes|nettoyage-supabase|erreurs-corrigees)\\.js",
+      "source": "/js/(tableau-de-bord|video-accueil-gabarit|agenda-gabarit|fiches-evenement-gabarit|rapport-profils-gabarit|photos-mises-de-cote-gabarit|tableau-v2|couverture-admin|photos-mises-de-cote|fiches-evenement-admin|rapport-profils-admin|agenda-admin|agenda-outils|convocations-gabarit|convocations-page|convocations-admin|messages-convocations|messages-candidats|messages-groupes-gabarit|messages-groupes|nettoyage-supabase|erreurs-corrigees)\\.js",
       "headers": [
         { "key": "Cache-Control", "value": "private, no-cache, must-revalidate" }
       ]

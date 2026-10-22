@@ -101,6 +101,7 @@ function donnees(role) {
       d.tables.mot_responsable = [{ id: 'principal', nom: 'Franck Akesse', titre: 'Fondateur', message: 'Bienvenue chez MA2M.', photo_url: photo(8) }];
       d.tables.instagram_config = [{ id: 'principal', access_token: 'jeton-secret-essai', ig_user_id: '1784', token_expire_le: new Date(Date.now() + 5 * 864e5).toISOString() }];
       d.tables.instagram_posts_cache = [{ id: 'principal', posts: [{ id: 'g1', image: photo(9), lien: 'https://www.instagram.com/p/abc/', legende: 'Défilé' }], updated_at: '2026-10-20T10:00:00Z' }];
+      d.tables.reglages_site = [{ cle: 'video_accueil', valeur: { type: 'video', chemin: 'site/video-accueil/essai.mp4', largeur: 640, hauteur: 360, taille: 99797, maj: '2026-10-10T10:00:00Z' } }];
       d.tables.evenement_photos = [{ id: 'ep1', evenement_id: 'e1', url: photo(6), chemin: 'site/evenements/e1/1.jpg' }];
       d.tables.inscriptions_mannequins = [{ id: 'i1', full_name: 'KADI SORO', genre: 'femme', date_naissance: '2001-02-02', statut: 'payée' }, { id: 'i2', full_name: 'PETIT ZIE', genre: 'homme', date_naissance: '2015-02-02', statut: 'payée' }];
       d.rpc.contacts_mannequins_admin = d.tables.model_profiles.filter((p) => /^m\d+$/.test(p.id)).map((p) => ({ model_id: p.id, phone: '0700000099' }));

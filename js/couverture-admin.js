@@ -6,7 +6,9 @@
 //    60 s au plus.
 // Les vidéos sont envoyées chez Cloudflare R2 (api/r2-site-images.js) et le choix est
 // enregistré dans la table reglages_site (cle 'couverture' ou 'video_accueil').
-(function () {
+// Écran partagé (js/video-accueil-gabarit.js) : l'ancien tableau de bord le démarre tout seul ;
+// la nouvelle Administration appelle window.demarrerVideosSite() à chaque affichage de la page.
+window.demarrerVideosSite = function () {
   if (typeof sb === 'undefined') return;
   [
     { prefixe: 'couv', cle: 'couverture', categorie: 'couverture', cache: 'ma2m_couverture', son: false, dureeMax: 30,
@@ -143,7 +145,7 @@
     if (window.Mediabunny) return Promise.resolve(window.Mediabunny);
     return new Promise(function (ok, ko) {
       var s = document.createElement('script');
-      s.src = 'js/vendor/mediabunny-1.61.0.min.js';
+      s.src = '/js/vendor/mediabunny-1.61.0.min.js';
       s.onload = function () { window.Mediabunny ? ok(window.Mediabunny) : ko(new Error('outil vidéo absent')); };
       s.onerror = function () { ko(new Error('outil vidéo non chargé')); };
       document.head.appendChild(s);
@@ -398,4 +400,5 @@
 
   void chargerReglage();
   }
-})();
+};
+window.demarrerVideosSite();

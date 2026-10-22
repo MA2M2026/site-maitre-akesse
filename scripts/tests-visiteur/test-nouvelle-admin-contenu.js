@@ -134,6 +134,17 @@ const photo = (n) => chemin.join(__dirname, 'medias', 'photo' + n + '.jpg');
     await p.click('#agenda-liste-avenir [data-convoquer="p1"]').catch(() => {}); await p.waitForTimeout(1500);
     ok(/b2-convocations/.test(p.url()), n + 'agenda : « Convoquer » ouvre les convocations');
 
+    // 9. Vidéo de l'accueil (écran partagé) : vidéo actuelle, nouvelle vidéo envoyée (rien de réel)
+    await p.route('**/book-photos/site/video-accueil/**', (r) => r.fulfill({ status: 200, contentType: 'video/mp4', body: require('fs').readFileSync(chemin.join(__dirname, 'medias', 'video.mp4')) }));
+    await p.goto(URL_ADMIN + '#/site/b3d-video-accueil'); await p.waitForSelector('#va-fichier'); await p.waitForTimeout(1500);
+    ok(!/Chargement/.test(await p.textContent('#va-etat')) && !!(await p.$('#va-apercu video')), n + 'vidéo de l’accueil : état et aperçu de la vidéo actuelle (' + (await p.textContent('#va-etat')).slice(0, 60) + ')');
+    await p.setInputFiles('#va-fichier', chemin.join(__dirname, 'medias', 'video.mp4')); await p.waitForTimeout(2500);
+    await p.waitForSelector('#va-publier-btn:not([disabled])', { timeout: 15000 }).catch(() => {});
+    await p.click('#va-publier-btn'); await p.waitForTimeout(500);
+    await p.waitForFunction(() => /✓/.test(document.getElementById('va-msg').textContent), null, { timeout: 60000 }).catch(() => {});
+    ok(journal.some((j) => j[0] === 'POST' && j[1] === 'reglages_site' && /video-accueil/.test(j[3])) && /✓/.test(await p.textContent('#va-msg')), n + 'nouvelle vidéo envoyée et mise sur l’accueil (' + (await p.textContent('#va-msg')).slice(0, 80) + ')');
+    await capture(p, 'video-accueil' + suffixe);
+
     const pales = await lirePageEntiere(p);
     ok(!pales.length, n + 'textes lisibles ' + pales.slice(0, 4).map((x) => x.texte.slice(0, 20) + ' (' + x.contraste + ')').join(', '));
     await p.goto(URL_ADMIN + '#/site/actualites/a1'); await p.waitForSelector('#pub-titre'); await p.waitForTimeout(1200);
