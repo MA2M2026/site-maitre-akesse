@@ -21,7 +21,11 @@
 //     du WhatsApp des personnes sans e-mail). Textes et outils : js/messages-candidats.js.
 //   - Les envois déjà faits sont notés sur cet appareil (on peut s'arrêter et reprendre
 //     plus tard sans renvoyer en double).
-(function () {
+// Deux maisons (22/10/2026) : démarré tout seul dans l'ancien tableau de bord (écran présent dès le
+// chargement) ; la nouvelle Administration appelle window.demarrerMessagesGroupes() à chaque
+// affichage de l'écran (js/messages-groupes-gabarit.js). Réglages des dossiers : DOSSIERS (ancien
+// tableau de bord) ou window.MA2M_DOSSIERS (js/admin/site-dossiers.js).
+window.demarrerMessagesGroupes = function () {
   const $ = (id) => document.getElementById(id);
   if (!$('mg-source')) return;
 
@@ -33,7 +37,7 @@
   let destinataires = [];
   // « Qui ? » : agence et casting précis sont deux sortes de candidatures (même table).
   function table() { return $('mg-source').value === 'inscription' ? 'inscription' : 'casting'; }
-  function conf() { return DOSSIERS[table()]; }
+  function conf() { return (typeof DOSSIERS !== 'undefined' ? DOSSIERS : window.MA2M_DOSSIERS)[table()]; }
   // {date}, {heure}, {lieu} : mêmes pour tout le groupe (cases au-dessus du message).
   const A_COMPLETER = '[à compléter]';
   const INFOS_RDV = /\{(date|heure|lieu)\}/i;
@@ -287,6 +291,7 @@
   $('mg-wa-copier').addEventListener('click', copierNumeros);
   $('mg-tout').addEventListener('click', () => { const tous = !choisis().length || choisis().length < destinataires.length; destinataires.forEach(d => { d.choisi = tous; }); afficherListe(); });
 
-  function demarrer() { if (typeof DOSSIERS === 'undefined' || typeof sb === 'undefined') return setTimeout(demarrer, 300); initialiserInfos(); remplirStatuts(); void chargerCastings(); }
+  function demarrer() { if ((typeof DOSSIERS === 'undefined' && !window.MA2M_DOSSIERS) || typeof sb === 'undefined') return setTimeout(demarrer, 300); initialiserInfos(); remplirStatuts(); void chargerCastings(); }
   demarrer();
-})();
+};
+window.demarrerMessagesGroupes();

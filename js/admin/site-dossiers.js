@@ -58,6 +58,14 @@
   };
   const LIEN_INSCRIPTION = 'https://www.maitreakessemodelmanagement.com/inscription-mannequin.html';
 
+  // Réglages des dossiers lus par les Messages groupés (js/messages-groupes.js), au format de
+  // l'ancien tableau de bord : table, champ du statut, statuts et libellés.
+  window.MA2M_DOSSIERS = {
+    casting: { table: 'casting_applications', statutChamp: 'status', statuts: SOURCES.casting.statuts, libellesStatut: SOURCES.casting.libelles },
+    inscription: { table: 'inscriptions_mannequins', statutChamp: 'statut', statuts: ['en attente de paiement', 'dossier en vérification', 'payée', 'annulée'],
+      libellesStatut: { 'en attente de paiement': 'Paiement à vérifier', 'dossier en vérification': 'Dossier en vérification', 'payée': 'Inscription validée', 'annulée': 'Refusée' } }
+  };
+
   // ---------- Outils ----------
   const etat = (source) => (P.etat['dossiers-' + source] = P.etat['dossiers-' + source] || { filtre: SOURCES[source].defaut, pages: 1 });
   const lienWa = (numero) => { const n = numeroWhatsApp(numero); return n ? 'https://wa.me/' + n : null; };

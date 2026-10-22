@@ -103,6 +103,31 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     await capture(p, 'recruteur' + suffixe);
     await p.click('.choisi [data-action="dossier-retirer-mannequin"]'); await p.waitForTimeout(800);
     ok(ecrits(journal, 'DELETE', 'recruiter_request_models').length === 1 && (await p.$$('.choisi')).length === 1, n + 'mannequin retiré de la sélection');
+    // 7. Projets et castings : liste, ajout, modification, ordre
+    await p.goto(URL_ADMIN + '#/site/b2-projets'); await p.waitForSelector('.projets-liste'); await p.waitForTimeout(800);
+    const projets = await p.$$eval('.projet-carte', (cs) => cs.map((c) => c.innerText.replace(/\s+/g, ' ')));
+    ok(projets.length === 2 && /CASTING CACAO.*Actif.*08\/11\/2026.*Studio MA2M.*7 candidatures/.test(projets[0]) && /SHOOTING LAGUNE.*Inactif/.test(projets[1]), n + 'castings listés, actif / inactif, candidatures reçues');
+    await p.fill('#pj-nom', 'CASTING NOËL'); await p.fill('#pj-lieu', 'Hôtel Ivoire');
+    await p.click('form[data-form="projet-ajouter"] [type=submit]'); await p.waitForTimeout(900);
+    ok(ecrits(journal, 'POST', 'casting_projets').some((j) => /CASTING NOËL/.test(j[3]) && /Hôtel Ivoire/.test(j[3])), n + 'nouveau casting ajouté');
+    await p.click('.projet-carte [data-action="projet-modifier"]'); await p.waitForSelector('.voile form');
+    await p.fill('.voile #pj-description', 'Description modifiée.'); await p.click('.voile [type=submit]'); await p.waitForTimeout(900);
+    ok(ecrits(journal, 'PATCH', 'casting_projets').some((j) => /Description modifiée/.test(j[3])) && !(await p.$('.voile')), n + 'casting modifié dans une fenêtre, sans petites questions successives');
+    const avant = ecrits(journal, 'PATCH', 'casting_projets').length;
+    await p.click('.projet-carte:nth-child(2) [data-action="projet-monter"]'); await p.waitForTimeout(900);
+    ok(ecrits(journal, 'PATCH', 'casting_projets').length > avant, n + 'ordre d’affichage changé (▲)');
+    await capture(p, 'projets' + suffixe);
+
+    // 8. Messages groupés : même écran que l'ancien, dans la nouvelle maison
+    await p.goto(URL_ADMIN + '#/site/b2-messages-groupes'); await p.waitForSelector('#mg-source'); await p.waitForTimeout(800);
+    await p.selectOption('#mg-statut', 'retenue'); await p.click('#mg-charger'); await p.waitForTimeout(1200);
+    ok((await p.$$('.mg-personne')).length === 1 && /YAO KOUASSI/.test(await p.textContent('#mg-liste')), n + 'Messages groupés : destinataires chargés (retenues de l’agence)');
+    await p.evaluate(() => { window.open = () => null; });
+    const mailsAvant = journal.filter((j) => j[0] === 'EMAIL').length;
+    if (/\[à compléter\]/.test(await p.textContent('#mg-apercu').catch(() => ''))) { await p.fill('#mg-lieu', 'Studio MA2M'); }
+    await p.click('#mg-email'); await p.waitForTimeout(2500);
+    ok(journal.filter((j) => j[0] === 'EMAIL').length === mailsAvant + 1, n + 'Messages groupés : e-mail envoyé');
+    await capture(p, 'messages-groupes' + suffixe);
     ok(!errs.length, n + 'aucune erreur de page ' + errs.join(' | '));
     await ctx.close();
   }

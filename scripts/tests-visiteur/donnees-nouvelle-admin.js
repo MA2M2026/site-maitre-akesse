@@ -35,6 +35,9 @@ function donnees(role) {
         { id: 'ph2', application_id: 'c4', chemin: null, url: 'https://drive.google.com/uc?id=photo-ama-2' },
         { id: 'ph3', application_id: 'c1', chemin: null, url: 'https://drive.google.com/uc?id=photo-awa-1' }],
       codes_inscription: [], contacts_externes: [],
+      casting_projets: [
+        { id: 'cp-a', nom: 'CASTING CACAO', description: 'Défilé de la maison Cacao.', actif: true, created_at: '2026-10-01T10:00:00Z', date_casting: '2026-11-08', lieu: 'Studio MA2M', ordre_affichage: 0 },
+        { id: 'cp-b', nom: 'SHOOTING LAGUNE', description: null, actif: false, created_at: '2026-09-01T10:00:00Z', date_casting: null, lieu: null, ordre_affichage: 1 }],
       recruiter_requests: [
         { id: 'r-1', contact_name: 'Koffi Marc', company: 'Maison Ivoire', email: 'marc@maison.ci', phone: '0505050505', whatsapp: '0505050505', city: 'Abidjan', project_type: 'Défilé', event_date: '2026-12-05', status: 'nouvelle', created_at: '2026-10-21T12:00:00Z', message: 'Trois mannequins pour un défilé.' }],
       recruiter_request_models: [
@@ -59,6 +62,7 @@ function donnees(role) {
       code_validation_statut: [{ defini: true }],
       photos_couverture_mannequins: profils.map((p, i) => ({ model_id: p.id, url: photo(i) })),
       compta_soldes: [{ compte_id: 'k1', nom: 'Caisse (espèces)', type: 'caisse', solde: 235000 }],
+      resume_candidatures_par_projet: [{ type_candidature: 'projet', projet_nom: 'CASTING CACAO', total: 7 }],
       convocation_contacts_mannequins: (x) => (x.p_ids || []).map((id) => { const i = Number(id.slice(1)); return { model_id: id, full_name: NOMS[i], category: 'femme', phone: '07000000' + (10 + i), contact_email: 'mannequin' + i + '@test.ci', date_naissance: '2000-01-01' }; })
     },
     // code d'inscription créé par la base pour une candidature retenue (rangé dans codes_inscription)

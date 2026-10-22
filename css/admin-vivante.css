@@ -488,3 +488,35 @@ dl.champs a { color: var(--av-rouge-texte); font-weight: 600; }
   .convoc-envoi .convoc-actions { justify-content: flex-start; }
   .agenda-cases.mur-visages { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 }
+/* Messages groupés (écran partagé js/messages-groupes-gabarit.js) */
+.ecran-partage { display: flex; flex-direction: column; gap: 14px; }
+.ecran-partage > h2.tdb-10, .ecran-partage > h2.tdb-4 { font-size: clamp(34px, 6vw, 48px); }
+.ecran-partage .tdb-9, .ecran-partage .tdb-5 { color: var(--av-gris); max-width: 760px; }
+.mg-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 0 16px; background: var(--av-carte); border-radius: var(--av-rayon); padding: 20px 20px 6px; box-shadow: var(--av-ombre); }
+.mg-resume { margin: 4px 0; font-size: 14px; }
+.mg-liste { max-height: 360px; overflow-y: auto; background: var(--av-carte); border-radius: var(--av-rayon); box-shadow: var(--av-ombre); }
+.mg-liste:empty { display: none; }
+.mg-personne { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; padding: 11px 16px; border-bottom: 1px solid var(--av-creux); }
+.mg-personne input { flex: none; width: 18px; height: 18px; }
+.mg-nom { min-width: 10rem; font-weight: 500; }
+.mg-infos { color: var(--av-gris); font-size: 13px; overflow-wrap: anywhere; }
+.mg-date, .mg-envoye { display: block; margin-top: 2px; font-size: 12px; }
+.mg-date { color: var(--av-gris); }
+.mg-envoye { color: var(--ok-texte); }
+.mg-apercu { display: none; white-space: pre-line; background: var(--av-carte); border-left: 3px solid var(--av-rouge); border-radius: 0 12px 12px 0; padding: 14px 18px; font-size: 14px; }
+.mg-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 4px 0; }
+.mg-actions .btn:disabled { opacity: .45; }
+.mg-sous-titre { font-family: var(--av-titre); font-size: 26px; font-weight: 500; margin-top: 18px; }
+.mg-consigne { color: var(--alerte-texte); font-size: 14px; }
+.mg-consigne:empty { display: none; }
+@media (max-width: 640px) { .mg-nom { min-width: 0; } .mg-infos { flex-basis: 100%; padding-left: 28px; } }
+/* Projets et castings (js/admin/site-projets.js) */
+.projets-liste { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 16px; }
+.projet-carte { background: var(--av-carte); border-radius: var(--av-rayon); box-shadow: var(--av-ombre); padding: 20px; display: flex; flex-direction: column; gap: 8px; border-top: 4px solid var(--av-rouge); }
+.projet-carte.inactif { border-top-color: var(--av-lignes); }
+.projet-tete { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.projet-tete h2 { font-size: 26px; }
+.projet-description { font-size: 14px; white-space: pre-line; }
+.projet-chiffre { font-size: 14px; color: var(--av-gris); }
+.projet-chiffre b { font-family: var(--av-titre); font-size: 28px; font-weight: 500; color: var(--av-encre); margin-right: 4px; }
+.projet-carte .ligne { margin-top: auto; padding-top: 6px; }

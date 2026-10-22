@@ -38,7 +38,8 @@
   // l'ordre. Sans clé (compte sans droit), elles restent introuvables : la page le dit.
   const PIECES = ['/js/messages-convocations.js', '/js/messages-candidats.js', '/js/agenda-outils.js',
     '/js/convocations-gabarit.js', '/js/convocations-page.js', '/js/convocations-admin.js',
-    '/js/admin/site-dossiers.js', '/js/admin/site-convocations.js'];
+    '/js/messages-groupes-gabarit.js', '/js/messages-groupes.js',
+    '/js/admin/site-dossiers.js', '/js/admin/site-convocations.js', '/js/admin/site-messages-groupes.js', '/js/admin/site-projets.js'];
   const charges = new Set();  // une pièce déjà chargée ne l'est jamais deux fois
   const charger = (src) => charges.has(src) ? Promise.resolve() : new Promise((ok, ko) => {
     const s = document.createElement('script');

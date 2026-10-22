@@ -26,6 +26,13 @@ prend l'adresse /admin/) puis **démolir** l'ancien tableau de bord.
   la coque du portail comme les espaces 2 et 3 — plus d'iframe.
 - **Blocs 2 et 3** : leur logique (déjà native) est gardée ; nouvelle décoration et visages.
 
+## Règle pendant le chantier
+
+Une pièce qui sert aux deux maisons (ancienne et nouvelle) n'est jamais recopiée : son écran est
+sorti dans un fichier « gabarit » partagé et sa logique démarre à la demande
+(`window.demarrer…`). Une pièce reconstruite à neuf (nouvelle présentation) vit dans
+`js/admin/site-*.js` ; l'ancienne version disparaît à la démolition.
+
 ## Étapes (une à la fois, essais « comme un visiteur » à chaque étape)
 
 1. Fondations visibles : décoration, entrée (connexion), menu des 3 blocs, accueil vivant.
@@ -47,4 +54,5 @@ prend l'adresse /admin/) puis **démolir** l'ancien tableau de bord.
 | Étape | État |
 |---|---|
 | 1. Fondations visibles | faite (22/10) : `css/admin-vivante.css`, `js/admin/coque.js` (coque, accueil vivant, visages, mur de la connexion), `js/admin/site.js` (menu du bloc 1), `admin/nouvelle/index.html`, `js/photos.js` (outils photo sortis de `js/app.js`, partagés). Essai : `test-nouvelle-admin.js` (données : `donnees-nouvelle-admin.js`). Inventaire de l'ancien bloc 1 : `INVENTAIRE-BLOC1.md`. |
-| 2. Castings | en cours |
+| 2. Castings | faite (22/10) : Candidatures et Demandes recruteurs (`js/admin/site-dossiers.js`, reconstruites, visages, fiche pleine page), Projets (`js/admin/site-projets.js`, reconstruit), Convocations et Messages groupés (écrans partagés `js/convocations-gabarit.js`, `js/messages-groupes-gabarit.js` : même logique pour les deux maisons, démarrage à la demande ; mur de visages). Pièces réservées chargées après la clé d'accès (`js/admin/site.js`, `middleware.js`). Essais : `test-nouvelle-admin-castings.js`, `test-nouvelle-admin-convocations.js`. |
+| 3. Mannequins | en cours |
