@@ -788,3 +788,21 @@ svg.courbe text.sem { font-size: 13px; font-weight: 400; fill: var(--av-gris); }
 .journal-boutons { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
 @media (max-width: 560px) { .journal-infos { grid-template-columns: 1fr; } }
 .ecran-erreurs .tdb-12 { font-size: 14px; color: var(--av-gris); max-width: 760px; margin: 0; }
+
+/* ---------- Téléphone : lignes de tableau en cartes (blocs 2 et 3 ; js/admin/coque.js) ---------- */
+@media (max-width: 640px) {
+  .tableau:has(table[data-etiquete]) { background: none; box-shadow: none; overflow: visible; }
+  .tableau table[data-etiquete], .tableau table[data-etiquete] tbody, .tableau table[data-etiquete] tr, .tableau table[data-etiquete] td { display: block; width: 100%; min-width: 0; box-sizing: border-box; }
+  .tableau table[data-etiquete] td { background: transparent !important; }
+  .tableau table[data-etiquete] tr.en-retard, .tableau table[data-etiquete] tr.ligne-retard { background: var(--erreur-fond); }
+  .tableau table[data-etiquete] thead { display: none; }
+  .tableau table[data-etiquete] tr { background: var(--av-carte); border-radius: var(--av-rayon-petit); box-shadow: var(--av-ombre); margin-bottom: 10px; padding: 8px 14px; }
+  .tableau table[data-etiquete] td { display: flex; justify-content: space-between; align-items: center; gap: 12px; border: 0; border-top: 1px solid var(--av-creux); padding: 8px 0; text-align: right; min-width: 0; overflow-wrap: anywhere; }
+  .tableau table[data-etiquete] td:first-child { border-top: 0; font-weight: 600; font-size: 16px; }
+  .tableau table[data-etiquete] td[data-titre]::before { content: attr(data-titre); flex: none; max-width: 45%; text-align: left; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--av-gris); font-weight: 400; }
+  .tableau table[data-etiquete] td:first-child::before { display: none; }
+  .tableau table[data-etiquete] td:first-child { justify-content: flex-start; text-align: left; }
+  .tableau table[data-etiquete] td .ligne, .tableau table[data-etiquete] td:last-child { flex-wrap: wrap; justify-content: flex-end; }
+  .tableau table[data-etiquete] td:empty { display: none; }
+  .tableau table[data-etiquete] td select { min-width: 0; max-width: 60%; }
+}

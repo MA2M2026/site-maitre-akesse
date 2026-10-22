@@ -55,6 +55,17 @@
     visagesPublics().then((v) => { if (mur.isConnected) mur.innerHTML = v.slice(0, 8).map((x) => P.visage(x[0], x[1])).join(''); });
   }).observe(document.getElementById('app'), { childList: true });
 
+  // Téléphone : chaque ligne d'un tableau devient une petite carte (css « .tableau » en bas de
+  // admin-vivante.css) ; chaque case reçoit le titre de sa colonne. La matrice reste une grille.
+  function etiqueterTableaux() {
+    document.querySelectorAll('.tableau table:not(.matrice):not([data-etiquete])').forEach((t) => {
+      t.setAttribute('data-etiquete', '');
+      const titres = Array.from(t.querySelectorAll('thead th'), (th) => th.textContent.trim());
+      t.querySelectorAll('tbody tr').forEach((tr) => Array.from(tr.children).forEach((td, i) => { if (titres[i] && !td.hasAttribute('colspan')) td.setAttribute('data-titre', titres[i]); }));
+    });
+  }
+  new MutationObserver(etiqueterTableaux).observe(document.getElementById('app'), { childList: true, subtree: true });
+
   P.compte = (n, suffixe) => '<span data-compte="' + (Number(n) || 0) + '"' + (suffixe ? ' data-suffixe="' + P.esc(suffixe) + '"' : '') + '>0' + P.esc(suffixe || '') + '</span>';
 
   // ---------- Les trois blocs ----------
