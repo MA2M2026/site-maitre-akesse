@@ -162,6 +162,9 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
       { id: 'cp3', projet_id: 'pa2', contact_id: 'x1', nom: 'Monsieur Jean Styliste', email: 'jean@test.ci', telephone: '0709090909', parent: false, jeton: J('c'), reponse: 'absent', repondu_le: '2030-11-11T09:00:00Z' }];
     d.tables.contacts_externes = [{ id: 'x1', civilite: 'Monsieur', nom: 'Jean Styliste', telephone: '0709090909', email: 'jean@test.ci' }];
     d.tables.convocation_envois = ['cp1', 'cp2', 'cp3'].map((id, i) => ({ id: 'e' + i, projet_id: 'pa2', participant_id: id, sorte: 'convocation', canal: 'email', statut: 'envoye', prevu_le: '2030-11-09T10:00:00Z', envoye_le: '2030-11-09T10:00:00Z' }));
+    // convocation encore programmée (pas partie) : sans réponse, mais pas de relance possible
+    d.tables.convocation_participants.push({ id: 'cp4', projet_id: 'pa2', contact_id: 'x2', nom: 'Madame Programmée Plustard', email: 'pp@test.ci', telephone: '0708080808', parent: false, jeton: J('d'), reponse: null });
+    d.tables.convocation_envois.push({ id: 'e4', projet_id: 'pa2', participant_id: 'cp4', sorte: 'convocation', canal: 'whatsapp', statut: 'programme', prevu_le: '2030-11-12T10:00:00Z' });
     // projet passé dont la seule convocation a été annulée : pas dans « Voir les réponses »
     d.tables.convocation_envois.push({ id: 'e9', projet_id: 'pa1', participant_id: 'cpx', sorte: 'convocation', canal: 'email', statut: 'annule', prevu_le: '2026-01-09T10:00:00Z' });
     const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
@@ -177,9 +180,15 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     await p.$eval('#cv-enregistrer', x => x.click()); await p.waitForTimeout(1800);
     const chiffres = await p.textContent('.convoc-chiffres');
     const barre = await p.$$eval('.convoc-barre span', ss => ss.map(s => s.className + ' ' + Math.round(parseFloat(s.style.width))));
-    const relance = await p.$$eval('.convoc-reponse a', as => as.map(a => decodeURIComponent(a.href)));
-    ok(/3 convoqué\(s\) · 1 confirmé · 1 absent · 1 sans réponse/.test(chiffres) && barre.length === 3 && barre.every(x => / 33$/.test(x)), 'réponses : chiffres et barre de couleur (' + chiffres + ')');
-    ok(relance.length === 1 && relance[0].startsWith('https://wa.me/2250707070707') && relance[0].includes('/confirmer?c=' + J('b')) && /Madame Ama Mère/.test(relance[0]), 'sans réponse : « Relancer sur WhatsApp » avec le lien personnel (au parent)');
+    const relance = await p.$$eval('#convoc-reponses .convoc-relance', as => as.map(a => decodeURIComponent(a.href) + '|' + a.textContent));
+    ok(/4 convoqué\(s\) · 1 confirmé · 1 absent · 2 sans réponse/.test(chiffres) && barre.length === 3 && barre.map(x => x.split(' ')[1]).join() === '25,25,50', 'réponses : chiffres et barre de couleur (' + chiffres + ')');
+    ok(relance.length === 1 && relance[0].startsWith('https://wa.me/2250707070707') && relance[0].includes('/confirmer?c=' + J('b')) && /Madame Ama Mère/.test(relance[0]) && /Relancer la suivante : Mademoiselle PETITE AMA.*\(1 restante\)/.test(relance[0]),
+      'sans réponse : un seul bouton « Relancer la suivante », avec le lien personnel (au parent)');
+    // un appui : WhatsApp s'ouvre pour elle, puis le bouton laisse place à « toutes relancées »
+    await p.evaluate(() => { window.open = () => null; });
+    await p.$eval('#convoc-reponses .convoc-relance', a => { a.addEventListener('click', e => e.preventDefault(), { once: true }); a.click(); }); await p.waitForTimeout(500);
+    ok(!(await p.$('#convoc-reponses .convoc-relance')) && /Toutes les personnes sans réponse ont été relancées/.test(await p.textContent('#convoc-reponses')) && /relancé\(e\)/.test(await p.textContent('#convoc-reponses')),
+      'relance : après l’appui, la personne est marquée « relancé(e) », plus personne à relancer');
     ok(/A confirmé sa présence/.test(await p.textContent('#convoc-participants')) && /Ne pourra pas venir/.test(await p.textContent('#convoc-participants')), 'réponses visibles dans la liste des participants');
     // « 📋 Voir les réponses » en haut de la page Convocations : choisir un projet déjà convoqué
     await p.evaluate(() => document.querySelector('.tdb-menu-item[data-tdb-cible="b2-convocations"]').click()); await p.waitForTimeout(800);
@@ -189,7 +198,7 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     ok(await p.isVisible('#cv-reponses-projet') && choix.join() === ',pa2', '« Voir les réponses » : seuls les projets convoqués sont proposés (' + choix.join() + ')');
     await p.selectOption('#cv-reponses-projet', 'pa2'); await p.waitForTimeout(1200);
     const vue = await p.textContent('#cv-reponses');
-    ok(/3 convoqué\(s\) · 1 confirmé · 1 absent · 1 sans réponse/.test(vue) && await p.isVisible('#cv-reponses >> text=Mademoiselle AWA KONÉ') && await p.isVisible('#cv-reponses >> text=Monsieur Jean Styliste')
+    ok(/4 convoqué\(s\) · 1 confirmé · 1 absent · 2 sans réponse/.test(vue) && await p.isVisible('#cv-reponses >> text=Mademoiselle AWA KONÉ') && await p.isVisible('#cv-reponses >> text=Monsieur Jean Styliste')
       && await p.isVisible('#cv-reponses-actualiser'),
       '« Voir les réponses » : confirmés, absents et sans réponse visibles (' + vue.slice(0, 80) + ')');
     if (process.env.CAPTURES) await p.locator('.convoc-voir').screenshot({ path: process.env.CAPTURES + '/voir-reponses-390.png' });

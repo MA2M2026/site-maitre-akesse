@@ -155,7 +155,7 @@
   function dessinerReponses() { window.dessinerReponsesConvocation($('convoc-reponses'), projet, personnes, envois, false); }
   // Partagé avec « 📋 Voir les réponses » de la page Convocations (js/convocations-page.js) ;
   // toutOuvert : la liste des confirmés est ouverte elle aussi.
-  window.dessinerReponsesConvocation = function (boite, projet, personnes, envois, toutOuvert) {
+  window.dessinerReponsesConvocation = function (boite, projet, personnes, envois, toutOuvert, faitesIci) {
     boite.textContent = '';
     var touches = personnes.filter(function (x) { return x.participant_id && envois.some(function (e) { return e.participant_id === x.participant_id && e.sorte === 'convocation' && e.statut !== 'annule'; }); });
     // un(e) mineur(e) et son parent comptent pour une seule personne : la réponse de l'un vaut pour les deux
@@ -195,19 +195,15 @@
       var r = document.createElement('summary');
       r.textContent = g[1] + ' (' + g[2].length + ')';
       d.appendChild(r);
+      if (g[0] === 'attente') ajouterRelance(d, boite, projet, personnes, envois, toutOuvert, g[2], faitesIci);
       g[2].forEach(function (pers) {
         var l = document.createElement('div');
         l.className = 'convoc-reponse';
         var n = document.createElement('span');
         n.textContent = nomDe(pers) + (pers.repondu_le ? ' — ' + quand(pers.repondu_le) : '');
         l.appendChild(n);
-        // sans réponse : petit rappel WhatsApp avec son lien personnel
-        var num = g[0] === 'attente' && pers.jeton && numeroWhatsApp(pers.telephone);
-        if (num) {
-          var a = document.createElement('a');
-          a.className = 'btn-mini-admin'; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Relancer sur WhatsApp';
-          a.href = 'https://wa.me/' + num + '?text=' + encodeURIComponent('Bonjour ' + (pers.parent ? pers.parent_nom || 'Madame, Monsieur' : pers.nom) + ',\n\nPouvez-vous nous confirmer ' + (pers.parent ? 'la présence de ' + pers.nom : 'votre présence') + ' pour « ' + projet.titre + ' » (' + dateLongue(projet.date_debut) + ') ? Un seul clic suffit : ' + LIEN_CONFIRMER + pers.jeton + '\n\nMerci !\nL’équipe Maître Akesse Model Management');
-          l.appendChild(a);
+        if (g[0] === 'attente' && (faitesIci || relancees(projet))[pers.participant_id]) {
+          var fait = document.createElement('small'); fait.textContent = '✓ relancé(e)'; l.appendChild(fait);
         }
         d.appendChild(l);
       });
@@ -215,6 +211,49 @@
     });
     return true;
   };
+
+  // ---------- Relance des personnes sans réponse (demande du 22/10/2026) ----------
+  // Un seul bouton, comme « Envoyer le WhatsApp suivant » : chaque appui ouvre WhatsApp pour la
+  // personne suivante, avec son lien personnel. Seulement pour celles dont la convocation est
+  // vraiment partie (pas pour un envoi encore programmé). Les relances faites sont retenues dans
+  // ce navigateur le temps de la session.
+  function relancees(p) {
+    try { return JSON.parse(sessionStorage.getItem('ma2m_relances_' + p.id) || '{}'); } catch (e) { return {}; }
+  }
+  function noterRelance(p, id) {
+    var faites = relancees(p); faites[id] = true;
+    try { sessionStorage.setItem('ma2m_relances_' + p.id, JSON.stringify(faites)); } catch (e) { /* stockage bloqué : le bouton passe quand même à la suivante ci-dessous */ }
+    return faites;
+  }
+  function lienRelance(p, pers) {
+    var num = pers.jeton && numeroWhatsApp(pers.telephone);
+    if (!num) return null;
+    return 'https://wa.me/' + num + '?text=' + encodeURIComponent('Bonjour ' + (pers.parent ? pers.parent_nom || 'Madame, Monsieur' : pers.nom) + ',\n\nPouvez-vous nous confirmer ' + (pers.parent ? 'la présence de ' + pers.nom : 'votre présence') + ' pour « ' + p.titre + ' » (' + dateLongue(p.date_debut) + ') ? Un seul clic suffit : ' + LIEN_CONFIRMER + pers.jeton + '\n\nMerci !\nL’équipe Maître Akesse Model Management');
+  }
+  function ajouterRelance(groupe, boite, p, personnes, envois, toutOuvert, sansReponse, faitesIci) {
+    var faites = faitesIci || relancees(p);
+    var partie = function (pers) { return envois.some(function (e) { return e.participant_id === pers.participant_id && e.sorte === 'convocation' && e.statut === 'envoye'; }); };
+    var aRelancer = sansReponse.filter(function (pers) { return partie(pers) && !faites[pers.participant_id] && lienRelance(p, pers); });
+    var note = document.createElement('p');
+    note.className = 'agenda-aide';
+    if (!aRelancer.length) {
+      note.textContent = sansReponse.some(partie) ? 'Toutes les personnes sans réponse ont été relancées.' : 'La relance sera possible une fois la convocation envoyée.';
+      groupe.appendChild(note);
+      return;
+    }
+    var suivante = aRelancer[0];
+    var a = document.createElement('a');
+    a.className = 'btn btn--principal convoc-suivant convoc-relance'; a.target = '_blank'; a.rel = 'noopener';
+    a.href = lienRelance(p, suivante);
+    a.textContent = '💬 Relancer la suivante : ' + nomDe(suivante) + ' (' + aRelancer.length + ' restante' + (aRelancer.length > 1 ? 's' : '') + ')';
+    a.addEventListener('click', function () {
+      var maj = Object.assign({}, faites, noterRelance(p, suivante.participant_id));
+      maj[suivante.participant_id] = true;
+      // après l'ouverture de WhatsApp : le bouton passe à la personne suivante
+      setTimeout(function () { window.dessinerReponsesConvocation(boite, p, personnes, envois, toutOuvert, maj); }, 0);
+    });
+    groupe.appendChild(a);
+  }
 
   // ---------- Suivi des envois ----------
   function dessinerSuivi() {
@@ -374,7 +413,7 @@
         message('Envoi des e-mails…');
         var aEnvoyer = envois.filter(function (e) { return e.statut === 'en_cours' && e.canal === 'email' && e.sorte === 'convocation' && cles[e.id]; });
         var partis = await envoyerEmails(aEnvoyer);
-        bilan = partis + ' e-mail(s) envoyé(s) sur ' + aEnvoyer.length + '.' + (nbWa ? ' ' + nbWa + ' WhatsApp prêt(s) : appuyez sur « Ouvrir WhatsApp » pour chacun, dans le suivi ci-dessous.' : '');
+        bilan = partis + ' e-mail(s) envoyé(s) sur ' + aEnvoyer.length + '.' + (nbWa ? ' ' + nbWa + ' WhatsApp prêt(s) : appuyez sur le bouton rouge « 💬 Envoyer le WhatsApp suivant », dans le suivi ci-dessous.' : '');
       } else {
         bilan = 'Programmé pour ' + quand(prevu) + ' : ' + nbEmails + ' e-mail(s) automatique(s)' + (nbWa ? ', ' + nbWa + ' WhatsApp à envoyer (vous serez prévenue par e-mail à l’heure prévue)' : '') + '.';
       }

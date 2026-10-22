@@ -228,6 +228,10 @@ Essai : `test-retour-invitation.js`.
   une convocation non annulée (le plus récent d'abord), puis réponses du projet choisi, sans
   rien envoyer. Dessin partagé avec le panneau : `window.dessinerReponsesConvocation`
   (`js/convocations-admin.js`).
+  Relance des personnes sans réponse (22/10/2026) : un seul bouton « 💬 Relancer la suivante (X
+  restantes) », comme « Envoyer le WhatsApp suivant », et seulement pour celles dont la convocation
+  est vraiment partie (statut `envoye`) ; relances faites retenues pour la session
+  (`sessionStorage` « ma2m_relances_<projet> »).
   « Maintenant » : e-mails envoyés depuis le navigateur (EmailJS).
 - **Agenda public** : plus aucun nom de mannequin (`js/agenda.js`, décision du 21/10/2026) ; les
   noms restent dans « Parcours MA2M » (médaillons).
