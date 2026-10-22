@@ -210,7 +210,7 @@
     const options = MESSAGES_CANDIDATS.filter((m) => m.source === source && !m.premier).map((m) => '<option value="c:' + m.cle + '">' + P.esc(m.libelle) + '</option>').join('') +
       Object.keys(MODELES_LIBRES).filter((k) => MODELES_LIBRES[k].sources.includes(source)).map((k) => '<option value="' + k + '">' + P.esc(MODELES_LIBRES[k].libelle) + '</option>').join('');
     const rdv = infosRdvMemorisees();
-    return '<section class="carte"><h2>💬 Écrire sur WhatsApp</h2><div class="grille" style="gap:12px">' +
+    return '<section class="carte"><h2>Écrire sur WhatsApp</h2><div class="grille" style="gap:12px">' +
       '<label class="fl" for="dos-wa-modele">Message<select id="dos-wa-modele" data-change="dossier-wa-modele">' + options + '</select></label>' +
       '<div class="rdv" id="dos-wa-rdv" hidden><label class="fl" for="dos-wa-date">Date<input type="date" id="dos-wa-date" value="' + P.esc(dimancheSuivantISO()) + '"></label>' +
       '<label class="fl" for="dos-wa-heure">Heure<input id="dos-wa-heure" value="' + P.esc(rdv.heure) + '"></label>' +

@@ -825,3 +825,16 @@ input[type="file"]::file-selector-button {
   font: inherit; font-weight: 600; font-size: 14px; margin-right: 12px; padding: 10px 18px; border-radius: 99px; cursor: pointer;
   border: 1px solid var(--av-lignes); background: var(--av-carte); color: var(--av-encre);
 }
+/* les visages sont toujours des boîtes (sinon, dans un lien, ils perdaient leur taille : ruban de l'accueil) */
+.vis { display: block; }
+/* fiche d'un dossier sur téléphone : statut, puis les informations, puis WhatsApp ; deux photos entières par ligne */
+@media (max-width: 640px) {
+  .fiche-grille { display: flex; flex-direction: column; }
+  .fiche-col { display: contents; }
+  .fiche-col > * { order: 4; }
+  .fiche-col:first-child > :first-child { order: 1; }
+  .fiche-col:last-child > :first-child { order: 2; }
+  .fiche-col:first-child > :nth-child(2) { order: 3; }
+  .photo-dossier { width: calc(50% - 6px); }
+  .photo-dossier figcaption .btn { padding: 6px 10px; font-size: 12px; }
+}
