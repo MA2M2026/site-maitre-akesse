@@ -24,7 +24,14 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     p.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errs.push('console : ' + m.text().slice(0, 140)); });
     await brancher(p, donnees('principal'), journal); await photosLocales(p);
     // services de fond demandés par la page (l'Administration n'enregistre que le sien : /admin/sw.js)
-    await p.addInitScript(() => { window.__sw = []; if (navigator.serviceWorker) navigator.serviceWorker.register = (u) => { window.__sw.push(String(u)); return Promise.reject(new Error('essai')); }; });
+    // notifications du téléphone simulées : l'appareil n'a encore jamais répondu ; « Oui » les autorise
+    await p.addInitScript(() => {
+      window.__sw = [];
+      const abonnement = { toJSON: () => ({ endpoint: 'https://push.essai/appareil-1', keys: { p256dh: 'cle-essai', auth: 'auth-essai' } }) };
+      if (navigator.serviceWorker) navigator.serviceWorker.register = (u) => { window.__sw.push(String(u)); return Promise.resolve({ pushManager: { getSubscription: async () => null, subscribe: async () => abonnement } }); };
+      window.PushManager = window.PushManager || function () {};
+      window.Notification = { permission: 'default', requestPermission: async () => { window.Notification.permission = 'granted'; return 'granted'; } };
+    });
 
     // 1. Entrée
     await p.goto(URL_ADMIN); await p.waitForSelector('#cx-mail');
@@ -35,6 +42,12 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     await capture(p, 'accueil-' + (tel ? 'tel' : 'pc'));
     const sw = await p.evaluate(() => window.__sw);
     ok(!sw.includes('/service-worker.js') && !(await p.$('#pastille-installer')), n + 'pas de service de fond ni de pastille « Installer l’app » du site public dans l’Administration (' + sw.join(', ') + ')');
+    // notifications (reprises de l'ancien tableau de bord, 23/10/2026) : invitation sur l'accueil, puis « Oui, activer »
+    ok(await p.isVisible('#notif-invitation [data-action="notif-oui"]'), n + 'accueil : invitation « Activer les notifications » sur cet appareil');
+    await p.click('#notif-invitation [data-action="notif-oui"]'); await p.waitForTimeout(800);
+    const abo = journal.filter((j) => j[0] === 'POST' && j[1] === 'push_abonnements').map((j) => JSON.parse(j[3]))[0] || {};
+    ok(!(await p.$('#notif-invitation')) && (await p.evaluate(() => window.__sw)).includes('/service-worker.js') && abo.endpoint === 'https://push.essai/appareil-1' && abo.actif === true,
+      n + 'notifications activées : appareil inscrit (' + JSON.stringify(abo).slice(0, 90) + ')');
 
     // 2. Accueil vivant
     const acc = await p.evaluate(() => ({
