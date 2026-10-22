@@ -77,6 +77,14 @@ function brancher(page, donnees, journal) {
             // update(…).select() : la vraie base renvoie les lignes modifiées (aucune si refusé)
             if (/return=representation/.test(req.headers()['prefer'] || '')) return json(touchees);
           }
+          // delete(…).select() : la vraie base renvoie les lignes supprimées ; base mémorisée : retirées
+          if (m === 'DELETE' && /return=representation/.test(req.headers()['prefer'] || '')) {
+            const garde = (l) => { for (const [k, v] of url.searchParams) { if (/^eq\./.test(v) && String(l[k]) !== v.slice(3)) return true; } return false; };
+            const avant = donnees.tables[table] || [];
+            const parties = avant.filter((l) => !garde(l));
+            if (donnees.memoriser) donnees.tables[table] = avant.filter(garde);
+            return json(parties);
+          }
           return route.fulfill({ status: 204, body: '' });
         }
         let lignes = (donnees.tables[table] || []).slice();

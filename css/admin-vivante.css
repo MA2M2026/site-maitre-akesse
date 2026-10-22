@@ -344,3 +344,57 @@ details summary { cursor: pointer; font-weight: 600; }
   .coque { display: block; }
   .carte, .tableau { box-shadow: none; border: 1px solid #ccc; }
 }
+
+/* ---------- Dossiers : Candidatures, Demandes recruteurs (js/admin/site-dossiers.js) ---------- */
+.segments .nb { font-weight: 500; opacity: .7; margin-left: 2px; }
+.segments .a-part { align-self: center; font-size: 12px; color: var(--av-gris); margin: 0 2px 0 8px; }
+.dossiers-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)); gap: 18px; }
+.dossier-carte { position: relative; display: flex; flex-direction: column; background: var(--av-carte); border-radius: var(--av-rayon); box-shadow: var(--av-ombre); overflow: hidden; transition: transform .25s var(--av-courbe), box-shadow .25s; }
+.dossier-carte:hover { transform: translateY(-3px); box-shadow: var(--av-ombre-forte); }
+.dossier-lien { display: flex; flex-direction: column; text-decoration: none; flex: 1; }
+.dossier-visage { width: 100%; aspect-ratio: 4 / 5; border-radius: 0; font-size: 34px; }
+.dossier-texte { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px 12px; align-items: flex-start; }
+.dossier-nom { font-family: var(--av-titre); font-size: 22px; line-height: 1.1; }
+.dossier-meta { font-size: 12px; color: var(--av-gris); }
+.dossier-wa { margin: 0 16px 14px; align-self: flex-start; font-size: 13px; font-weight: 600; color: var(--av-rouge-texte); text-decoration: none; }
+.dossiers-grille.sans-visage { grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+.dossier-sigle { display: grid; place-items: center; width: 54px; height: 54px; margin: 16px 16px 0; border-radius: 50%; background: var(--av-encre); color: var(--av-papier); font-family: var(--av-titre); font-size: 22px; }
+.retour-liste { align-self: flex-start; font-size: 14px; color: var(--av-gris); text-decoration: none; padding: 6px 0; }
+.retour-liste:hover { color: var(--av-encre); }
+.fiche-tete { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.fiche-tete h1 { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.galerie-dossier { display: flex; gap: 14px; overflow-x: auto; padding: 4px 2px 10px; scroll-snap-type: x mandatory; align-items: flex-start; }
+.photo-dossier { margin: 0; flex: none; width: min(62vw, 240px); scroll-snap-align: start; display: flex; flex-direction: column; gap: 8px; }
+.photo-ouvrir { padding: 0; border: 0; background: none; cursor: zoom-in; border-radius: var(--av-rayon); overflow: hidden; box-shadow: var(--av-ombre); }
+.photo-ouvrir .vis { display: block; width: 100%; aspect-ratio: 3 / 4; border-radius: var(--av-rayon); font-size: 40px; }
+.photo-dossier figcaption { display: flex; gap: 6px; }
+.galerie-vide { padding: 20px 0; }
+.ajout-photo { flex: none; align-self: center; cursor: pointer; }
+#dos-photo-msg { flex: none; align-self: center; max-width: 220px; }
+.fiche-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 18px; align-items: start; }
+.fiche-col { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.statuts .btn.actif { background: var(--av-encre); border-color: var(--av-encre); color: var(--av-papier); }
+.notification { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; padding-top: 16px; border-top: 1px solid var(--av-creux); }
+dl.champs { margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 180px), 1fr)); gap: 14px 18px; }
+dl.champs dt { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--av-gris); }
+dl.champs dd { margin: 3px 0 0; font-size: 15px; overflow-wrap: anywhere; }
+dl.champs a { color: var(--av-rouge-texte); font-weight: 600; }
+.message-dossier { margin: 18px 0 0; padding: 14px 18px; border-left: 3px solid var(--av-rouge); background: var(--av-papier); border-radius: 0 12px 12px 0; white-space: pre-wrap; font-size: 14px; }
+.rdv { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.code-valeur strong { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 20px; letter-spacing: .06em; }
+.code-zone .ligne { margin-top: 10px; }
+.choisis { display: grid; gap: 10px; }
+.choisi { display: flex; align-items: center; gap: 12px; }
+.choisi .choisi-visage { width: 52px; height: 52px; border-radius: 50%; }
+.choisi > span { flex: 1; display: flex; flex-direction: column; font-size: 14px; }
+.choisi small { color: var(--av-gris); }
+.choisi a { font-size: 13px; color: var(--av-rouge-texte); }
+.zone-danger h2 { font-size: 20px; }
+.pastille { font-family: var(--av-texte); letter-spacing: 0; }
+@media (max-width: 520px) {
+  .dossiers-grille { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .dossiers-grille.sans-visage { grid-template-columns: minmax(0, 1fr); }
+  .dossier-nom { font-size: 18px; }
+  .dossier-texte { padding: 10px 12px; }
+  .dossier-wa { margin: 0 12px 12px; }
+}

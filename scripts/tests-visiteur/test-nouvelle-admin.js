@@ -45,7 +45,7 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     }));
     ok(/[a-z]+\s*\d{1,2} [a-zéû]+/i.test(acc.date.replace(/\n/g, ' ')), n + 'la date du jour en grand (' + acc.date.replace(/\n/g, ' ') + ')');
     ok(/Aujourd’hui/i.test(acc.affiche) && /ABIDJAN BORDER FORUM/.test(acc.affiche) && /2 sur 4 confirmées/i.test(acc.affiche) && acc.jauge === '50%', n + 'affiche du projet du jour, réponses 2 sur 4 et jauge à 50 %');
-    ok(acc.taches.some((t) => /Candidatures à étudier.* 2$/.test(t)) && acc.taches.some((t) => /sans réponse.* 2$/.test(t)) && acc.taches.some((t) => /J’ai payé.* 2$/.test(t)), n + 'tâches du jour avec leurs nombres (' + acc.taches.join(' | ') + ')');
+    ok(acc.taches.some((t) => /Candidatures à étudier.* 3$/.test(t)) && acc.taches.some((t) => /sans réponse.* 2$/.test(t)) && acc.taches.some((t) => /J’ai payé.* 2$/.test(t)), n + 'tâches du jour avec leurs nombres (' + acc.taches.join(' | ') + ')');
     ok(acc.blocs.length === 3, n + 'les 3 blocs sur l’accueil (' + acc.blocs.join(', ') + ')');
     ok(acc.visages === 12 && acc.chargees >= 4, n + 'ruban des visages du Book (' + acc.visages + ' visages, ' + acc.chargees + ' photos affichées)');
     ok(!acc.deborde, n + 'rien ne dépasse de l’écran');

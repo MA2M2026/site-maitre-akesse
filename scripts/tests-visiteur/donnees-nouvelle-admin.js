@@ -10,7 +10,7 @@ function donnees(role) {
   const espaces = { site: role === 'principal' || role === 'site', paiements: role === 'principal' || role === 'caisse', compta: role === 'principal' || role === 'compta' };
   const profils = NOMS.map((n, i) => ({ id: 'm' + i, full_name: n, published: true, desactive: false, city: i % 3 ? 'Abidjan' : 'Cocody', category: i > 9 ? 'homme' : 'femme',
     niveau_mannequin: i % 4 ? 'New Face' : 'Main Board', created_at: '2026-10-' + String(20 - i).padStart(2, '0') + 'T10:00:00Z' }));
-  return {
+  const d = {
     memoriser: true,
     portail: { aal: 'aal1', facteurs: true },
     tables: {
@@ -19,6 +19,9 @@ function donnees(role) {
       staff_module_grants: [], staff_devices: [], audit_log: [],
       model_profiles: profils,
       casting_applications: [
+        { id: 'c4', full_name: 'PETITE AMA', email: 'ama@test.ci', phone: '+225 0101010101', genre: 'femme', civilite: 'Mademoiselle', date_naissance: '2013-03-03', type_candidature: 'projet', projet_nom: 'CASTING CACAO',
+          status: 'nouvelle', created_at: '2026-10-22T08:00:00Z', city: 'Cocody', experience_mannequin: 'non', height_cm: 158, parent_nom: 'Madame Ama Mère', parent_telephone: '0707070707', parent_email: 'mere@test.ci',
+          message: 'Je rêve de défiler pour MA2M.', video_url: 'https://drive.google.com/file/d/abc123/view' },
         { id: 'c1', full_name: 'AWA KONÉ', email: 'awa@test.ci', phone: '+225 0102030405', genre: 'femme', date_naissance: '2000-01-01', type_candidature: 'agence', status: 'nouvelle', created_at: '2026-10-21T10:00:00Z' },
         { id: 'c2', full_name: 'BINTOU TRAORÉ', email: 'bintou@test.ci', phone: '+225 0505050505', genre: 'femme', date_naissance: '1998-01-01', type_candidature: 'agence', status: 'nouvelle', created_at: '2026-10-20T10:00:00Z' },
         { id: 'c3', full_name: 'YAO KOUASSI', email: 'yao@test.ci', phone: '+225 0707070707', genre: 'homme', date_naissance: '1999-01-01', type_candidature: 'agence', status: 'retenue', created_at: '2026-10-09T10:00:00Z' }],
@@ -27,6 +30,16 @@ function donnees(role) {
           mannequin_ids: ['m0', 'm1', 'm2', 'm3'], partenaire_ids: [], seances: [], intervenants: [], mannequins_libres: [], partenaires_libres: [] },
         { id: 'p2', type: 'shooting', titre: 'SHOOTING CACAO', date_debut: dansJours(12), date_fin: null, lieu: 'Studio MA2M', ville: 'Abidjan', annule: false, visible: true,
           mannequin_ids: [], partenaire_ids: [], seances: [], intervenants: [], mannequins_libres: [], partenaires_libres: [] }],
+      casting_photos: [
+        { id: 'ph1', application_id: 'c4', chemin: null, url: 'https://drive.google.com/uc?id=photo-ama-1' },
+        { id: 'ph2', application_id: 'c4', chemin: null, url: 'https://drive.google.com/uc?id=photo-ama-2' },
+        { id: 'ph3', application_id: 'c1', chemin: null, url: 'https://drive.google.com/uc?id=photo-awa-1' }],
+      codes_inscription: [],
+      recruiter_requests: [
+        { id: 'r-1', contact_name: 'Koffi Marc', company: 'Maison Ivoire', email: 'marc@maison.ci', phone: '0505050505', whatsapp: '0505050505', city: 'Abidjan', project_type: 'Défilé', event_date: '2026-12-05', status: 'nouvelle', created_at: '2026-10-21T12:00:00Z', message: 'Trois mannequins pour un défilé.' }],
+      recruiter_request_models: [
+        { id: 'rm1', request_id: 'r-1', model_id: 'm0', model_name_snapshot: 'AYA KOUASSI', model_height_snapshot: 178 },
+        { id: 'rm2', request_id: 'r-1', model_id: 'm1', model_name_snapshot: 'MARIAM TRAORÉ', model_height_snapshot: 175 }],
       convocation_participants: [
         { id: 'cp1', projet_id: 'p1', model_id: 'm0', nom: 'Mademoiselle AYA KOUASSI', parent: false, reponse: 'confirme' },
         { id: 'cp2', projet_id: 'p1', model_id: 'm1', nom: 'Mademoiselle MARIAM TRAORÉ', parent: false, reponse: 'confirme' },
@@ -47,15 +60,21 @@ function donnees(role) {
       photos_couverture_mannequins: profils.map((p, i) => ({ model_id: p.id, url: photo(i) })),
       compta_soldes: [{ compte_id: 'k1', nom: 'Caisse (espèces)', type: 'caisse', solde: 235000 }]
     },
+    // code d'inscription créé par la base pour une candidature retenue (rangé dans codes_inscription)
+    preparer(d) {
+      d.rpc.code_individuel_creer = (x) => { d.tables.codes_inscription.push({ code: 'MA2M-ESSAI1', utilise: false, candidature_id: x.p_candidature }); return { code: 'MA2M-ESSAI1' }; };
+    },
     api: { '/api/portail': () => ({ ok: true }) }
   };
+  d.preparer(d); delete d.preparer;
+  return d;
 }
 
 // Photos du Book : servies par le serveur local (images d'essai), jamais par Cloudflare ni Vercel
 async function photosLocales(page) {
   const fs = require('fs'), chemin = require('path');
   const images = ['photo0.jpg', 'photo1.jpg', 'photo2.jpg', 'photo3.jpg'].map((f) => fs.readFileSync(chemin.join(__dirname, 'medias', f)));
-  await page.route(/photos\.maitreakessemodelmanagement\.com|\/book-photos\//, (r) => {
+  await page.route(/photos\.maitreakessemodelmanagement\.com|\/book-photos\/|drive\.google\.com\/uc/, (r) => {
     const n = Number((/\/m(\d+)\//.exec(r.request().url()) || [0, 0])[1]);
     r.fulfill({ status: 200, contentType: 'image/jpeg', body: images[n % images.length] });
   });

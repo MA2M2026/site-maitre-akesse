@@ -31,7 +31,9 @@ export const config = {
     '/tableau-de-bord', '/tableau-de-bord.html',
     '/js/tableau-de-bord.js', '/js/tableau-v2.js', '/js/couverture-admin.js', '/js/photos-mises-de-cote.js',
     '/js/fiches-evenement-admin.js', '/js/rapport-profils-admin.js', '/js/agenda-admin.js', '/js/agenda-outils.js', '/js/convocations-page.js', '/js/convocations-admin.js', '/js/messages-convocations.js',
-    '/js/messages-candidats.js', '/js/messages-groupes.js', '/js/nettoyage-supabase.js', '/js/erreurs-corrigees.js'
+    '/js/messages-candidats.js', '/js/messages-groupes.js', '/js/nettoyage-supabase.js', '/js/erreurs-corrigees.js',
+    // pièces du bloc 1 de la nouvelle Administration (PLAN-NOUVELLE-ADMINISTRATION.md, 22/10/2026)
+    '/js/admin/:fichier*'
   ]
 };
 
@@ -48,6 +50,9 @@ const PAGE_TABLEAU = /^\/tableau-de-bord(\.html)?$/;
 // ⚠ Même liste que dans config.matcher ci-dessus (vérifié par test-tableau-protege.js), et
 // chaque script de la ZONE-ADMIN de tableau-de-bord.html doit y figurer.
 const SCRIPTS_ADMIN = /^\/js\/(tableau-de-bord|tableau-v2|couverture-admin|photos-mises-de-cote|fiches-evenement-admin|rapport-profils-admin|agenda-admin|agenda-outils|convocations-page|convocations-admin|messages-convocations|messages-candidats|messages-groupes|nettoyage-supabase|erreurs-corrigees)\.js$/;
+// Nouvelle Administration : les pièces du bloc 1 (js/admin/site-*.js) sont réservées de la même
+// façon ; js/admin/coque.js et js/admin/site.js (décoration, menu) restent publics.
+const SCRIPTS_NOUVELLE_ADMIN = /^\/js\/admin\/site-[\w-]+\.js$/;
 function base64url(octets) {
   let b = '';
   new Uint8Array(octets).forEach(o => { b += String.fromCodePoint(o); });
@@ -236,7 +241,7 @@ async function apercuPartenaire(url, anglais) {
 export default async function middleware(requete) {
   try {
     const url = new URL(requete.url);
-    if (PAGE_TABLEAU.test(url.pathname) || SCRIPTS_ADMIN.test(url.pathname)) return await tableauProtege(requete, url);
+    if (PAGE_TABLEAU.test(url.pathname) || SCRIPTS_ADMIN.test(url.pathname) || SCRIPTS_NOUVELLE_ADMIN.test(url.pathname)) return await tableauProtege(requete, url);
     const agent = requete.headers.get('user-agent') || '';
     const anglais = url.pathname.indexOf('/en/') === 0;
     // Adresse lisible /book/nom : on retrouve le mannequin, puis on sert sa fiche

@@ -33,5 +33,23 @@
       '<div class="carte"><h2>Pièce en construction</h2><p class="doux">Cette rubrique est en cours de reconstruction dans la nouvelle Administration. ' +
       'Elle reste disponible dans l’Administration actuelle en attendant.</p></div>';
   });
-  P.espaces.site = { nav: MENU, pages, apres: {} };
+  // Pièces réservées (middleware.js) : la clé d'accès est posée par le serveur après la double
+  // authentification (api/acces-tableau.js), puis les pièces sont chargées une seule fois, dans
+  // l'ordre. Sans clé (compte sans droit), elles restent introuvables : la page le dit.
+  const PIECES = ['/js/messages-convocations.js', '/js/messages-candidats.js', '/js/admin/site-dossiers.js'];
+  const charges = new Set();  // une pièce déjà chargée ne l'est jamais deux fois
+  const charger = (src) => charges.has(src) ? Promise.resolve() : new Promise((ok, ko) => {
+    const s = document.createElement('script');
+    s.src = src; s.async = false;
+    s.onload = () => { charges.add(src); ok(); };
+    s.onerror = () => { s.remove(); ko(new Error('Accès refusé à cette partie de l’Administration (reconnectez-vous).')); };
+    document.body.appendChild(s);
+  });
+  let pret = null;
+  async function preparer() {
+    const session = (await sb.auth.getSession()).data.session;
+    if (session) await fetch('/api/acces-tableau', { method: 'POST', headers: { Authorization: 'Bearer ' + session.access_token }, credentials: 'same-origin' }).catch(() => { /* hors ligne : les pièces déjà en mémoire suffisent */ });
+    for (const src of PIECES) await charger(src);
+  }
+  P.espaces.site = { nav: MENU, pages, apres: {}, avant: () => pret || (pret = preparer().catch((e) => { pret = null; throw e; })) };
 })();
