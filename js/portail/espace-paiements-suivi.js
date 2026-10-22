@@ -190,4 +190,14 @@
   apres('a-valider', ['rapprochement', 'Rapprochement Wave']);
   apres('registre', ['sorties', 'Sorties et suspensions']);
   Object.assign(E.pages, { rapprochement, sorties, figes });
+  // Menu rangé dans l'ordre du travail (visite du 22/10/2026) : ce qui attend aujourd'hui d'abord,
+  // puis les mannequins, puis les réglages. Les pages ne changent pas, seulement l'ordre.
+  const PLAN = [[null, 'Ce mois-ci'], 'tableau', 'a-valider', 'rapprochement', 'mensualites', 'messages', 'recapitulatif', 'figes',
+    [null, 'Mannequins'], 'registre', 'ajouter', 'sorties', 'matrice', 'codes', [null, 'Réglages'], 'parametres'];
+  const parCle = {};
+  E.nav.forEach((n) => { if (n[0]) parCle[n[0]] = n; });
+  const range = PLAN.map((x) => (Array.isArray(x) ? x : parCle[x])).filter(Boolean);
+  const restes = E.nav.filter((n) => n[0] && !PLAN.includes(n[0]));
+  E.nav.length = 0;
+  range.concat(restes).forEach((n) => E.nav.push(n));
 })();

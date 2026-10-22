@@ -92,17 +92,17 @@ function donnees(role) {
     ok(/On nous doit\s*260 000 FCFA/i.test(t) && /Nous devons\s*80 000 FCFA/i.test(t), nomEcran + ' : on nous doit 260 000, nous devons 80 000');
     ok(/Dépenses sans justificatif\s*1/i.test(t) && /Wave Business\s*90 000 FCFA/i.test(t), nomEcran + ' : dépense sans justificatif signalée, soldes de trésorerie');
     await controler(p, nomEcran + ' : tableau du mois');
-    ok(/Tableau de bord/.test(t) && /Mode actuel : Pré-légal/.test(t) && /Activer le mode légal et la FNE/.test(t), nomEcran + ' : tableau de bord avec le mode légal / FNE en évidence');
+    ok(/Tableau de bord/.test(t) && /Mode actuel : Factures internes, non déclarées/.test(t) && /Activer le mode légal et la FNE/.test(t), nomEcran + ' : tableau de bord avec le mode légal / FNE en évidence');
     if (ecran.width > 860) {
       const menu = await p.$$eval('.menu a, nav a', (l) => l.map((a) => a.textContent.trim()));
-      const ordre = ['Tableau de bord', 'Recettes', 'Devis, proforma, factures', 'Dépenses et charges', 'Impôts et taxes', 'Clôture mensuelle', 'Paramètres de l’entité'];
+      const ordre = ['Tableau de bord', 'Recettes', 'Devis, proforma, factures', 'Dépenses et charges', 'Impôts et taxes', 'Clôture mensuelle', 'Identité de l’agence'];
       const pos = ordre.map((x) => menu.indexOf(x));
       ok(pos.every((x, i) => x >= 0 && (i === 0 || x > pos[i - 1])), nomEcran + ' : menu dans l’ordre du plan ' + JSON.stringify(menu.slice(0, 12)));
     }
 
     // Recettes : celle de l'espace 2 est marquée « automatique » et ne s'annule pas d'ici
     await aller(p, 'recettes'); t = await texte(p);
-    ok(t.includes('Espace 2 · automatique') && (await p.$$('[data-action="compta-annuler"]')).length === 2 && !(await p.$('[data-action="compta-annuler"][data-id="e1"]')), nomEcran + ' : recette de l’espace 2 automatique, sans bouton « Annuler »');
+    ok(t.includes('Suivi des paiements · automatique') && (await p.$$('[data-action="compta-annuler"]')).length === 2 && !(await p.$('[data-action="compta-annuler"][data-id="e1"]')), nomEcran + ' : recette de l’espace 2 automatique, sans bouton « Annuler »');
     await controler(p, nomEcran + ' : recettes');
 
     // Dépenses : mauvais fichier refusé, puis une vraie dépense avec son justificatif

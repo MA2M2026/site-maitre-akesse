@@ -84,7 +84,7 @@
     const sansJustif = liste.filter((e) => e.sens === 'depense' && !e.annule && !e.justificatif).length;
     let legal = false;
     try { const r = await sb.from('compta_reglages').select('mode_legal').eq('id', 1).maybeSingle(); legal = !!(r && r.data && r.data.mode_legal); } catch (e) { /* réglages indisponibles : on affiche le mode non fiscal */ }
-    const carteMode = '<div class="carte"><h2>Mode actuel : ' + (legal ? 'Légal' : 'Pré-légal') + '</h2><p class="doux">' +
+    const carteMode = '<div class="carte"><h2>Mode actuel : ' + (legal ? 'Légal (factures officielles)' : 'Factures internes, non déclarées') + '</h2><p class="doux">' +
       (legal ? 'Factures complètes, TVA et FNE actives.' : 'Les factures sont des documents internes « non fiscaux ». La FNE et la TVA sont prévues et s’activeront avec le mode légal.') +
       '</p><a class="btn' + (legal ? '' : ' rouge') + '" href="#/compta/identite">' + (legal ? 'Voir le mode légal' : 'Activer le mode légal et la FNE') + '</a></div>';
     return P.entete('Tableau de bord · ' + P.mois(m), choixMois()) + carteMode +
@@ -102,7 +102,7 @@
     return liste.map((e) => '<tr' + (e.annule ? ' class="annulee"' : '') + '><td>' + P.date(e.date_op) + '</td>' +
       '<td><b>' + P.esc(e.libelle) + '</b>' + (e.tiers ? '<div class="petit-texte doux">' + P.esc(e.tiers) + '</div>' : '') +
       (e.annule ? '<div class="petit-texte">' + P.pastille('Annulée', 'erreur') + ' ' + P.esc(e.motif_annulation) + '</div>' : '') + '</td>' +
-      '<td>' + P.esc(categorie(e)) + (e.source === 'espace2' ? ' ' + P.pastille('Espace 2 · automatique', 'info') : '') + '</td>' +
+      '<td>' + P.esc(categorie(e)) + (e.source === 'espace2' ? ' ' + P.pastille('Suivi des paiements · automatique', 'info') : '') + '</td>' +
       '<td>' + P.esc(nomsComptes[e.compte_id] || '—') + (e.compte_dest_id ? ' → ' + P.esc(nomsComptes[e.compte_dest_id] || '—') : '') + '</td>' +
       '<td class="nombre">' + P.fcfa(e.montant) + '</td>' +
       '<td><div class="ligne">' + (e.justificatif ? '<button class="btn petit" type="button" data-action="compta-justif-voir" data-id="' + e.id + '">Justificatif</button>' :
@@ -124,7 +124,7 @@
       const actifs = cpts.filter((c) => c.actif);
       return P.entete((recette ? 'Recettes · ' : 'Dépenses · ') + P.mois(m), choixMois()) +
         '<div class="grille chiffres">' + P.chiffre(recette ? 'Total des recettes' : 'Total des dépenses', P.fcfa(totaux(liste, sens)), recette ? 'vert' : 'rouge') + '</div>' +
-        (recette ? '<div class="note info">Les inscriptions et mensualités validées dans l’espace 2 arrivent ici toutes seules. Saisissez ici les autres recettes : castings, prestations, masterclass…</div>' : '') +
+        (recette ? '<div class="note info">Les inscriptions et mensualités validées dans le Suivi des paiements arrivent ici toutes seules. Saisissez ici les autres recettes : castings, prestations, masterclass…</div>' : '') +
         '<form class="carte f" data-form="compta-ecrire" data-sens="' + sens + '"><h2>' + (recette ? 'Nouvelle recette' : 'Nouvelle dépense') + '</h2>' +
         '<label class="fl" for="cp-date">Date<input id="cp-date" name="date_op" type="date" required max="' + P.aujourdhui() + '" value="' + P.aujourdhui() + '"></label>' +
         '<label class="fl" for="cp-montant">Montant (FCFA)<input id="cp-montant" name="montant" type="number" inputmode="numeric" min="1" step="1" required></label>' +

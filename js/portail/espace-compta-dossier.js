@@ -47,7 +47,7 @@
   function excel(x) {
     const journal = (sens) => [['Date', 'Libellé', 'Catégorie', sens === 'recette' ? 'Client' : 'Fournisseur / bénéficiaire', 'Compte', 'Montant (FCFA)', 'Origine', 'Justificatif', 'Annulée', 'Motif']]
       .concat(x.duMois.filter((e) => e.sens === sens).map((e) => [P.date(e.date_op), e.libelle, cat(e.categorie), e.tiers || '', x.noms[e.compte_id] || '', e.montant,
-        e.source === 'espace2' ? 'Espace 2 (automatique)' : 'Saisie', e.justificatif ? 'Oui' : 'Non', e.annule ? 'Oui' : '', e.motif_annulation || '']));
+        e.source === 'espace2' ? 'Suivi des paiements (automatique)' : 'Saisie', e.justificatif ? 'Oui' : 'Non', e.annule ? 'Oui' : '', e.motif_annulation || '']));
     const dettes = (l, quoi) => [[quoi, 'Libellé', 'Facture', 'Date', 'Échéance', 'Montant', 'Réglé', 'Avoirs', 'Reste', 'État']]
       .concat(l.map((d) => [x.nomsTiers[d.tiers_id] || '', d.libelle, d.facture || '', P.date(d.date_op), d.echeance ? P.date(d.echeance) : '', d.montant, Number(d.regle), Number(d.avoirs || 0), Number(d.reste), etatDette(d)]));
     const resume = [['Rubrique', 'Valeur'], ['Mois', P.mois(x.m)], ['Agence', x.r.mode_legal ? x.r.raison_sociale : x.r.nom_commercial], ['Mode', x.r.mode_legal ? 'Légal (vraies factures, TVA)' : 'Non fiscal'],
@@ -196,7 +196,7 @@
   // Ordre du plan validé (Portail_Admin_MA2M.html) : 8 entrées simples en tête, le reste regroupé dessous.
   // Les pages et les données ne changent pas, seuls l'ordre et les titres du menu.
   const PLAN = [['mois', 'Tableau de bord'], ['recettes', 'Recettes'], ['documents', 'Devis, proforma, factures'], ['depenses', 'Dépenses et charges'], ['cachets', 'Payer les mannequins'],
-    ['impots', 'Impôts et taxes'], ['dossier', 'Clôture mensuelle'], ['acces', 'Accès du comptable', () => P.moi && P.moi.role === 'principal'], ['identite', 'Paramètres de l’entité']];
+    ['impots', 'Impôts et taxes'], ['dossier', 'Clôture mensuelle'], ['acces', 'Accès du comptable', () => P.moi && P.moi.role === 'principal'], ['identite', 'Identité de l’agence']];
   const cles = PLAN.map((n) => n[0]);
   const autres = esp.nav.filter((n) => n[0] !== null && !cles.includes(n[0]));
   esp.nav.length = 0;

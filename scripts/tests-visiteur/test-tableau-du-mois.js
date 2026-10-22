@@ -107,7 +107,7 @@ function donnees(role) {
     }
     await p.evaluate(() => { location.hash = '#/paiements/recapitulatif'; }); await p.waitForTimeout(900);
     const tr = await t();
-    ok(/Ont payé\s*1/i.test(tr) && /N’ont pas payé\s*3/i.test(tr), nomEcran + ' : le récapitulatif compte les mêmes mannequins que le tableau du mois (1 ont payé, 3 non) ' + tr.slice(0, 160));
+    ok(/Payé\s*1/i.test(tr) && /Preuve reçue, à valider\s*1/i.test(tr) && /Non payé\s*2/i.test(tr), nomEcran + ' : le récapitulatif compte les mêmes mannequins que le tableau du mois (1 payé, 1 preuve reçue, 2 non payés) ' + tr.slice(0, 160));
     await p.evaluate(() => { location.hash = '#/paiements/tableau'; }); await p.waitForTimeout(900);
     const tx = await t();
     ok(/Tableau du mois/i.test(tx), nomEcran + ' : titre = le mois');
