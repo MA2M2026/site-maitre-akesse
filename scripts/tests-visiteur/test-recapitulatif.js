@@ -83,9 +83,13 @@ function donnees(role) {
     const tx = await t();
     ok(/Récapitulatif/.test(tx), nomEcran + ' : page « Récapitulatif de fin de mois »');
     const val = (lib) => p.$$eval('.carte.chiffre', (l, x) => { const c = l.find((y) => y.querySelector('.l').textContent.trim() === x); return c ? c.querySelector('.v').textContent.replace(/\s|\u202f|\u00a0/g, '') : null; }, lib);
-    ok(/^1/.test(await val('Ont payé')), nomEcran + ' : Ont payé = 1 (ROXANE) ' + await val('Ont payé'));
+    ok(/^1/.test(await val('Payé')), nomEcran + ' : Payé = 1 (ROXANE) ' + await val('Payé'));
+    // trois groupes (22/10/2026) : la preuve reçue de KOUAME n'est plus un impayé
+    ok(/^1/.test(await val('Preuve reçue, à valider')) && /^1/.test(await val('Non payé')), nomEcran + ' : Preuve reçue, à valider = 1 (KOUAME) ; Non payé = 1 (KONÉ)');
+    const impayes = await p.$$eval('.carte', (l) => { const c = l.find((x) => (x.querySelector('h2') || {}).textContent === 'Non payé'); return c ? c.innerText : ''; });
+    ok(/KONÉ AWA/.test(impayes) && !/KOUAME/.test(impayes), nomEcran + ' : la liste « Non payé » ne contient pas la preuve en attente');
     const apres5 = now.getDate() > 5;
-    // N'ont pas payé : KONÉ (jamais payé depuis son entrée), KOUAME (preuve reçue), pas « entrée plus tard » (pas encore dû)
+    // KONÉ (jamais payé depuis son entrée), KOUAME (preuve reçue), pas « entrée plus tard » (pas encore dû)
     ok(/KONÉ AWA/.test(tx) && /KOUAME JEAN/.test(tx) && !/ENTRÉE PLUS TARD/.test(tx), nomEcran + ' : la liste des impayés exclut celui qui n’est pas encore entré');
     ok(/MADAME KOUAME \(parent\)/.test(tx), nomEcran + ' : le destinataire d’un mineur est son parent');
     if (apres5) {
@@ -93,6 +97,7 @@ function donnees(role) {
       const kone = await p.$$eval('tr', (rows) => { const r = rows.find((y) => y.textContent.includes('KONÉ AWA')); return Array.from(r.querySelectorAll('td')).map((c) => c.textContent.trim()); });
       ok(kone[3] === '3' && /^60/.test(kone[4].replace(/\s|\u202f|\u00a0/g, '')), nomEcran + ' : KONÉ = 3 mois d’affilée × 20 000 = 60 000 ' + kone.join('|'));
       ok(Number(kone[2]) >= 1, nomEcran + ' : jours de retard comptés ' + kone[2]);
+      ok(/dont .* : 20 000 FCFA · dont mois précédents : 40 000 FCFA/.test(tx.replace(/\u202f|\u00a0/g, ' ')), nomEcran + ' : montant dû coupé en deux (ce mois-ci / mois précédents)');
     }
     ok(await p.isVisible('a.btn:has-text("Relancer")'), nomEcran + ' : bouton « Relancer » (WhatsApp)');
     const href = decodeURIComponent((await p.getAttribute('a.btn:has-text("Relancer")', 'href')) || '');

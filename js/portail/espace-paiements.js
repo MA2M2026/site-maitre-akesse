@@ -604,7 +604,7 @@
   P.actions['matrice-annee'] = (el) => { P.etat.anneeMatrice = (P.etat.anneeMatrice || new Date().getFullYear()) + Number(el.getAttribute('data-sens')); P.afficher(); };
 
   // ---------- Récapitulatif de fin de mois (cahier V3, 7.2) ----------
-  // Deux listes (ont payé / n'ont pas payé), jours de retard, mois impayés d'affilée, montant dû, export
+  // Trois listes (payé / preuve reçue, à valider / non payé — 22/10/2026), jours de retard, mois impayés d'affilée, montant dû, export
   // PDF et Excel, relance WhatsApp par personne. Calculé en direct à partir des paiements ; l'archivage
   // figé du dernier jour et la décision de sortie viendront avec la table d'archive (étape suivante).
   // Un mois est « échu » une fois le 5 passé ; un mannequin n'est dû qu'à partir de son mois d'entrée.
@@ -629,26 +629,33 @@
       const premierImpaye = dernierEchu - affilee + 1;
       const retard = affilee ? Math.max(0, Math.floor((ici - new Date(Math.floor(premierImpaye / 12), premierImpaye % 12, 5)) / 864e5)) : 0;
       const mineur = P.age(m.date_naissance) !== null && P.age(m.date_naissance) < 18;
-      return { m, ok: st === 'valide', attente: st === 'declare', affilee, retard, du: affilee * (m.mensualite || 0),
+      // montant dû coupé en deux (décision de la propriétaire, 22/10/2026) : le mois affiché, et les mois d'avant
+      const duMois = affilee && dernierEchu === t ? (m.mensualite || 0) : 0;
+      return { m, ok: st === 'valide', attente: st === 'declare', affilee, retard, du: affilee * (m.mensualite || 0), duMois, duAvant: affilee * (m.mensualite || 0) - duMois,
         destinataire: mineur && m.parent_nom ? m.parent_nom + ' (parent)' : m.full_name, entreeApres: entree > t };
     }).filter((x) => !x.entreeApres);
-    return { cible, lignes, ont: lignes.filter((x) => x.ok), pas: lignes.filter((x) => !x.ok) };
+    // trois groupes : payé / preuve reçue, à valider / non payé (une preuve en attente n'est pas un impayé)
+    return { cible, lignes, ont: lignes.filter((x) => x.ok), attente: lignes.filter((x) => x.attente), pas: lignes.filter((x) => !x.ok && !x.attente) };
   }
   async function recapitulatif() {
     const d = await donneesRecap();
     P.etat.recap = d;
-    const total = d.pas.reduce((t, x) => t + x.du, 0);
+    const total = d.pas.reduce((t, x) => t + x.du, 0), duMois = d.pas.reduce((t, x) => t + x.duMois, 0);
     const wa = (x) => { const msg = window.messageMensualite(x.m, 'relance5', new Date()); const l = lienWhatsApp(msg.telephone, msg.texte); return l ? '<a class="btn petit rouge" target="_blank" rel="noopener" href="' + P.esc(l) + '">Relancer</a>' : '<span class="doux">pas de numéro</span>'; };
     return P.entete('Récapitulatif · ' + libelleMois(d.cible),
       '<button class="btn petit" type="button" data-action="recap-mois" data-sens="-1">‹ Mois précédent</button><button class="btn petit" type="button" data-action="recap-mois" data-sens="1">Mois suivant ›</button>') +
-      '<div class="grille chiffres">' + P.chiffre('Ont payé', d.ont.length, 'vert') + P.chiffre('N’ont pas payé', d.pas.length, 'rouge') + P.chiffre('Montant dû', P.fcfa(total), 'rouge') + '</div>' +
+      '<div class="grille chiffres">' + P.chiffre('Payé', d.ont.length, 'vert') + P.chiffre('Preuve reçue, à valider', d.attente.length, 'orange') + P.chiffre('Non payé', d.pas.length, 'rouge') + P.chiffre('Montant dû', P.fcfa(total), 'rouge') + '</div>' +
+      (total ? '<p class="doux">dont ' + libelleMois(d.cible) + ' : <b>' + P.fcfa(duMois) + '</b> · dont mois précédents : <b>' + P.fcfa(total - duMois) + '</b></p>' : '') +
       '<div class="ligne"><button class="btn rouge" type="button" data-action="recap-export" data-format="pdf">Télécharger en PDF</button><button class="btn" type="button" data-action="recap-export" data-format="xlsx">Télécharger en Excel</button></div>' +
-      '<div class="carte"><h2>N’ont pas payé</h2>' + (d.pas.length ? P.tableau(['Mannequin', 'Destinataire', '#Retard (j)', '#Mois d’affilée', '#Montant dû', 'Statut', 'Action'], d.pas.map((x) =>
+      (d.attente.length ? '<div class="carte"><h2>Preuve reçue, à valider</h2>' + P.tableau(['Mannequin', 'Destinataire', '#Montant', 'Action'], d.attente.map((x) =>
+        '<tr><td><a href="#/paiements/fiche/' + x.m.id + '"><b>' + P.esc(x.m.full_name) + '</b></a></td><td>' + P.esc(x.destinataire) + '</td><td class="nombre">' + P.fcfa(x.m.mensualite || 0) + '</td>' +
+        '<td><a class="btn petit" href="#/paiements/a-valider">Valider</a></td></tr>')) + '</div>' : '') +
+      '<div class="carte"><h2>Non payé</h2>' + (d.pas.length ? P.tableau(['Mannequin', 'Destinataire', '#Retard (j)', '#Mois d’affilée', '#Montant dû', 'Statut', 'Action'], d.pas.map((x) =>
         '<tr' + (x.affilee ? ' class="ligne-retard"' : '') + '><td><a href="#/paiements/fiche/' + x.m.id + '"><b>' + P.esc(x.m.full_name) + '</b></a></td><td>' + P.esc(x.destinataire) + '</td>' +
         '<td class="nombre">' + x.retard + '</td><td class="nombre">' + x.affilee + '</td><td class="nombre">' + P.fcfa(x.du) + '</td>' +
-        '<td>' + (x.attente ? P.pastille('En attente de validation', 'alerte') : x.affilee ? P.pastille('Non payé', 'erreur') : P.pastille('À payer avant le 5', 'info')) + '</td><td>' + (x.attente ? '<a class="btn petit" href="#/paiements/a-valider">Valider</a>' : wa(x)) + '</td></tr>'))
-        : '<p class="doux">Tout le monde est à jour.</p>') + '</div>' +
-      '<div class="carte"><h2>Ont payé</h2>' + (d.ont.length ? P.tableau(['Mannequin', 'Destinataire', '#Montant'], d.ont.map((x) =>
+        '<td>' + (x.affilee ? P.pastille('Non payé', 'erreur') : P.pastille('À payer avant le 5', 'info')) + '</td><td>' + wa(x) + '</td></tr>'))
+        : '<p class="doux">Personne n’est en retard.</p>') + '</div>' +
+      '<div class="carte"><h2>Payé</h2>' + (d.ont.length ? P.tableau(['Mannequin', 'Destinataire', '#Montant'], d.ont.map((x) =>
         '<tr><td><a href="#/paiements/fiche/' + x.m.id + '"><b>' + P.esc(x.m.full_name) + '</b></a></td><td>' + P.esc(x.destinataire) + '</td><td class="nombre">' + P.fcfa(x.m.mensualite || 0) + '</td></tr>'))
         : '<p class="doux">Personne n’a encore payé ce mois-ci.</p>') + '</div>' +
       '<div class="note info">Ce récapitulatif est calculé en direct. Son archivage figé le dernier jour du mois et la proposition de sortie d’un mannequin arrivent à l’étape suivante.</div>';
@@ -660,8 +667,9 @@
     try {
       if (el.getAttribute('data-format') === 'xlsx') {
         P.telecharger(P.xlsx([
-          { nom: 'N’ont pas payé', largeurs: [28, 28, 14, 18, 14, 22], lignes: [['Mannequin', 'Destinataire', 'Retard (jours)', 'Mois impayés d’affilée', 'Montant dû (FCFA)', 'Statut']].concat(d.pas.map((x) => [x.m.full_name, x.destinataire, x.retard, x.affilee, x.du, x.attente ? 'En attente de validation' : x.affilee ? 'Non payé' : 'À payer avant le 5'])) },
-          { nom: 'Ont payé', largeurs: [28, 28, 14], lignes: [['Mannequin', 'Destinataire', 'Montant (FCFA)']].concat(d.ont.map((x) => [x.m.full_name, x.destinataire, x.m.mensualite || 0])) }]),
+          { nom: 'Non payé', largeurs: [28, 28, 14, 18, 14, 16, 18, 22], lignes: [['Mannequin', 'Destinataire', 'Retard (jours)', 'Mois impayés d’affilée', 'Montant dû (FCFA)', 'dont ce mois-ci', 'dont mois précédents', 'Statut']].concat(d.pas.map((x) => [x.m.full_name, x.destinataire, x.retard, x.affilee, x.du, x.duMois, x.duAvant, x.affilee ? 'Non payé' : 'À payer avant le 5'])) },
+          { nom: 'Preuve reçue', largeurs: [28, 28, 14], lignes: [['Mannequin', 'Destinataire', 'Montant (FCFA)']].concat(d.attente.map((x) => [x.m.full_name, x.destinataire, x.m.mensualite || 0])) },
+          { nom: 'Payé', largeurs: [28, 28, 14], lignes: [['Mannequin', 'Destinataire', 'Montant (FCFA)']].concat(d.ont.map((x) => [x.m.full_name, x.destinataire, x.m.mensualite || 0])) }]),
         nom + '.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
       } else {
         const m = await P.comptaPdf.mise();
@@ -671,11 +679,18 @@
         m.ecrire('Récapitulatif des mensualités — ' + libelleMois(d.cible), { taille: 16, gras: true, couleur: m.rouge });
         m.ecrire('Préparé le ' + P.dateHeure(new Date().toISOString()), { taille: 9, couleur: m.gris });
         m.espace(8);
-        m.ecrire('N’ont pas payé (' + d.pas.length + ') — montant dû : ' + F(d.pas.reduce((t, x) => t + x.du, 0)), { taille: 12, gras: true });
+        const duTotal = d.pas.reduce((t, x) => t + x.du, 0), duMois = d.pas.reduce((t, x) => t + x.duMois, 0);
+        m.ecrire('Non payé (' + d.pas.length + ') — montant dû : ' + F(duTotal), { taille: 12, gras: true });
+        m.ecrire('dont ' + libelleMois(d.cible) + ' : ' + F(duMois) + ' · dont mois précédents : ' + F(duTotal - duMois), { taille: 9, couleur: m.gris });
         m.tableau([{ titre: 'Mannequin', part: 3 }, { titre: 'Retard (j)', part: 1.2, droite: true }, { titre: 'Mois d’affilée', part: 1.4, droite: true }, { titre: 'Montant dû', part: 1.8, droite: true }],
           d.pas.map((x) => [x.m.full_name, String(x.retard), String(x.affilee), F(x.du)]));
         m.espace(10);
-        m.ecrire('Ont payé (' + d.ont.length + ')', { taille: 12, gras: true });
+        if (d.attente.length) {
+          m.ecrire('Preuve reçue, à valider (' + d.attente.length + ')', { taille: 12, gras: true });
+          m.tableau([{ titre: 'Mannequin', part: 4 }, { titre: 'Montant', part: 1.8, droite: true }], d.attente.map((x) => [x.m.full_name, F(x.m.mensualite || 0)]));
+          m.espace(10);
+        }
+        m.ecrire('Payé (' + d.ont.length + ')', { taille: 12, gras: true });
         m.tableau([{ titre: 'Mannequin', part: 4 }, { titre: 'Montant', part: 1.8, droite: true }], d.ont.map((x) => [x.m.full_name, F(x.m.mensualite || 0)]));
         P.telecharger(await m.finir('Récapitulatif ' + d.cible.slice(0, 7)), nom + '.pdf', 'application/pdf');
       }
