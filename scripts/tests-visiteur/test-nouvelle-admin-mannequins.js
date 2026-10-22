@@ -76,6 +76,16 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     await p.click('.mannequin-carte[data-id="m5"]'); await p.waitForTimeout(1000);
     ok(ecrits(journal, 'PATCH', 'model_profiles').some((j) => /"featured":true/.test(j[3]) && /id=eq\.m5/.test(j[2])), n + 'nouvelle mannequin à la une en touchant son visage');
     await capture(p, 'vedette' + suffixe);
+    // 8. Photos mises de côté, Rapport des profils, Fiches événement (écrans partagés)
+    await p.goto(URL_ADMIN + '#/site/b2-tri-photos'); await p.waitForSelector('#tri-photos-details'); await p.waitForTimeout(1500);
+    ok((await p.$$('#tri-ecartees .tri-vignette')).length === 1 && /FATIM DIALLO/.test(await p.textContent('#tri-ecartees')), n + 'photos mises de côté : chargées d’office, avec le nom');
+    await p.click('#tri-ecartees .tri-vignette .btn'); await p.waitForTimeout(900);
+    ok(ecrits(journal, 'PATCH', 'model_photos').some((j) => /"tri_statut":"book"/.test(j[3])), n + 'photo remise dans le Book');
+    await p.goto(URL_ADMIN + '#/site/b2-rapport-profils'); await p.waitForSelector('#rapport-profils-details'); await p.waitForTimeout(2500);
+    ok((await p.$$('#rapport-profils-liste .rp-profil')).length >= 10, n + 'rapport des profils : analyse lancée d’office (' + (await p.$$('#rapport-profils-liste .rp-profil')).length + ' profils)');
+    await capture(p, 'rapport-profils' + suffixe);
+    await p.goto(URL_ADMIN + '#/site/b2-fiches-evenement'); await p.waitForSelector('#fiches-evenement-details'); await p.waitForTimeout(1500);
+    ok((await p.$$('#fiches-evenement-liste .fe-ligne')).length >= 10 && /AYA KOUASSI/.test(await p.textContent('#fiches-evenement-liste')), n + 'fiches événement : liste des mannequins');
     const pales = await lirePageEntiere(p);
     ok(!pales.length, n + 'textes lisibles ' + pales.slice(0, 4).map((x) => x.texte.slice(0, 20) + ' (' + x.contraste + ')').join(', '));
     ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)), n + 'rien ne dépasse de l’écran');

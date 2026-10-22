@@ -79,6 +79,11 @@ function donnees(role) {
         { id: 'pv1', model_id: 'v1', url: photo(3), url_miniature: photo(3), principale: true, created_at: '2026-10-21T10:00:00Z' },
         { id: 'pv2', model_id: 'v1', url: photo(2), url_miniature: photo(2), principale: false, created_at: '2026-10-21T10:01:00Z' }]);
       d.tables.model_projects = [];
+      // photo que l'ancienne IA avait mise de côté ; fiches événement et contacts pour le rapport
+      d.tables.model_photos.push({ id: 'pt1', model_id: 'm3', url: photo(3), url_miniature: photo(3), url_moyenne: photo(3), chemin: 'm3/t.jpg', tri_statut: 'ecartee', created_at: '2026-10-03T10:00:00Z' });
+      d.tables.fiche_evenement = [{ model_id: 'm0', mis_a_jour: '2026-10-10T10:00:00Z', regime_allergies: 'Aucune', tiktok: null, facebook: null, droit_image: true }];
+      d.tables.contacts_parents = [];
+      d.rpc.contacts_mannequins_admin = d.tables.model_profiles.filter((p) => /^m\d+$/.test(p.id)).map((p) => ({ model_id: p.id, phone: '0700000099' }));
       d.rpc.profils_prives = (x) => (x.ids || []).map((id) => ({ id, date_naissance: id === 'v1' ? '2011-05-05' : '2000-01-01' }));
       d.rpc.definir_sourdine = (x) => { const m = d.tables.model_profiles.find((p) => p.id === x.p_model); if (m) { m.desactive = x.p_desactive; m.published = !x.p_desactive; } return null; };
       d.rpc.code_individuel_creer = (x) => { d.tables.codes_inscription.push({ code: 'MA2M-ESSAI1', utilise: false, candidature_id: x.p_candidature }); return { code: 'MA2M-ESSAI1' }; };

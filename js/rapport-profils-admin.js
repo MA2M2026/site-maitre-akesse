@@ -9,7 +9,9 @@
 // erreurs). On coche plusieurs mannequins et chacune reçoit SON message, séparément,
 // par WhatsApp (un appui par personne : l'envoi automatique n'existe qu'avec l'offre
 // payante de WhatsApp). Les envois sont notés sur cet appareil.
-(function () {
+// Deux maisons (22/10/2026) : démarré tout seul dans l'ancien tableau de bord ; la nouvelle
+// Administration appelle window.demarrerRapportProfils() à chaque affichage de l'écran (section déjà ouverte).
+window.demarrerRapportProfils = function () {
   var details = document.getElementById('rapport-profils-details');
   if (!details || typeof sb === 'undefined' || !sb) return;
   var charge = false, profils = [], telephones = {}, parents = {};
@@ -267,4 +269,6 @@
     }
     majBouton();
   }
-})();
+  if (details.open && !charge) void charger();
+};
+window.demarrerRapportProfils();

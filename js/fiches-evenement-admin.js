@@ -4,7 +4,9 @@
 // du téléchargement (fonction fiche_evenement_admin, Extension 120, réservée aux
 // admins) : la fiche est donc toujours à jour. Contacts affichés : ceux de l'agence. Jamais de pièce d'identité. Les
 // mannequins ne peuvent pas la télécharger.
-(function () {
+// Deux maisons (22/10/2026) : démarré tout seul dans l'ancien tableau de bord ; la nouvelle
+// Administration appelle window.demarrerFichesEvenement() à chaque affichage de l'écran (section déjà ouverte).
+window.demarrerFichesEvenement = function () {
   var details = document.getElementById('fiches-evenement-details');
   if (!details || typeof sb === 'undefined' || !sb) return;
   var charge = false;
@@ -26,7 +28,7 @@
 
   async function genererPdf(d) {
     await chargerJsPdf();
-    var image = await chargerImageLocale('assets/logo-header.png'); // logo partagé (js/app.js)
+    var image = await chargerImageLocale('/assets/logo-header.png'); // logo partagé (js/app.js)
     var jsPDF = window.jspdf.jsPDF;
     var doc = new jsPDF({ unit: 'mm', format: 'a4' });
     var L = 210, M = 16, y;
@@ -171,4 +173,6 @@
     var b = e.target.closest && e.target.closest('.fe-btn');
     if (b) void telecharger(b);
   });
-})();
+  if (details.open && !charge) void charger();
+};
+window.demarrerFichesEvenement();

@@ -562,3 +562,38 @@ dl.champs a { color: var(--av-rouge-texte); font-weight: 600; }
 .surtitre { font-size: 11px; letter-spacing: .25em; text-transform: uppercase; color: var(--av-gris); margin-bottom: 4px; }
 .une-actuelle .btn { margin-top: 12px; }
 .cv-apercu img { display: block; width: 100%; max-width: 820px; margin: 0 auto; border-radius: 8px; box-shadow: var(--av-ombre); }
+/* Photos mises de côté, Rapport des profils, Fiches événement (écrans partagés) */
+.section-ouverte details > summary { list-style: none; cursor: default; pointer-events: none; }
+.section-ouverte details > summary::-webkit-details-marker { display: none; }
+.dossiers-entete { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 10px; }
+.dossiers-entete h2 { font-size: clamp(34px, 6vw, 48px); }
+.dossiers-compteur { font-size: 14px; color: var(--av-gris); }
+.dossiers-vide { padding: 22px; color: var(--av-gris); text-align: center; }
+.tdb-17 { color: var(--av-gris); max-width: 760px; margin: 8px 0 16px; }
+.tri-grille, #rapport-profils-liste, #fiches-evenement-liste { background: var(--av-carte); border-radius: var(--av-rayon); box-shadow: var(--av-ombre); padding: 18px; }
+.tri-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(46%, 150px), 1fr)); gap: 14px; }
+.tri-grille:empty { display: none; }
+.tri-vignette { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.tri-vignette img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 14px; background: var(--av-creux); }
+.tri-nom { font-weight: 600; font-size: 14px; overflow-wrap: anywhere; }
+.tri-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; }
+.tri-actions .btn { min-height: 36px; padding: 6px 12px; font-size: 13px; }
+.fe-ligne { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--av-creux); flex-wrap: wrap; }
+.fe-etat { font-size: 13px; color: var(--alerte-texte); }
+.fe-etat.ok { color: var(--ok-texte); }
+.fe-non-publie { font-size: 13px; color: var(--av-gris); }
+.rp-resume { margin: 0 0 12px; }
+.rp-boutons { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.rp-profil { padding: 14px 0; border-bottom: 1px solid var(--av-creux); }
+.rp-entete { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; cursor: pointer; }
+.rp-entete input { width: 18px; height: 18px; }
+.rp-etat { font-size: 12px; font-weight: 600; color: var(--alerte-texte); background: var(--alerte-fond); border-radius: 99px; padding: 2px 10px; }
+.rp-ok .rp-etat { color: var(--ok-texte); background: var(--ok-fond); }
+.rp-gris { font-size: 13px; color: var(--av-gris); }
+.rp-envoye { font-size: 13px; color: var(--ok-texte); font-weight: 600; }
+.rp-points { margin: 8px 0 6px 26px; padding: 0; font-size: 14px; line-height: 1.5; }
+.rp-points .rp-rouge { color: var(--erreur-texte); }
+.rp-message summary { font-size: 14px; color: var(--av-rouge-texte); }
+.rp-message textarea { margin-top: 6px; font-size: 14px; }
+.rp-groupe { margin-top: 16px; border-top: 1px solid var(--av-creux); padding-top: 10px; }
+.rp-groupe > summary { padding: 4px 0; }

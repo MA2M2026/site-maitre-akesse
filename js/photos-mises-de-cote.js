@@ -5,7 +5,9 @@
 //  - photos écartées (cachées sur la fiche publique) : remettre ou supprimer ;
 //  - photos « à vérifier » (encore visibles) : garder ou supprimer.
 // Rien n'est supprimé sans le clic de l'agence (confirmation à chaque suppression).
-(function () {
+// Deux maisons (22/10/2026) : démarré tout seul dans l'ancien tableau de bord ; la nouvelle
+// Administration appelle window.demarrerPhotosMisesDeCote() à chaque affichage de l'écran (section déjà ouverte).
+window.demarrerPhotosMisesDeCote = function () {
   var details = document.getElementById('tri-photos-details');
   if (!details || typeof sb === 'undefined' || !sb) return;
   var charge = false, parId = {};
@@ -72,4 +74,6 @@
     if (r && r.error) { alert('Erreur : ' + r.error.message); b.disabled = false; return; }
     void charger();
   });
-})();
+  if (details.open && !charge) void charger();
+};
+window.demarrerPhotosMisesDeCote();
