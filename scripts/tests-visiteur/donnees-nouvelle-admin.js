@@ -54,8 +54,13 @@ function donnees(role) {
         { id: 'pm1', mannequin_id: 'r1', objet: 'mensualite', mois: '2026-10-01', montant: 10000, mode: 'wave', statut: 'declare', declare_le: '2026-10-19T09:00:00Z', mannequin: { full_name: 'MARIAM TRAORÉ', telephone: '0700000011' } },
         { id: 'pm2', mannequin_id: 'r2', objet: 'mensualite', mois: '2026-10-01', montant: 10000, mode: 'wave', statut: 'declare', declare_le: '2026-10-20T09:00:00Z', mannequin: { full_name: 'GRÂCE YAO', telephone: '0700000012' } }],
       codes_espace: [], compta_reglages: [{ id: 1, mode_legal: false, nom_entite: 'Maître Akesse Model Management' }], compta_comptes: [{ id: 'k1', nom: 'Caisse (espèces)', type: 'caisse', solde_initial: 0, date_initiale: '2026-10-01', actif: true }, { id: 'k2', nom: 'Wave Business', type: 'wave', solde_initial: 0, date_initiale: '2026-10-01', actif: true }],
-      // payer les mannequins : un cachet déjà payé (historique)
-      cachets_mannequins: [{ id: 'cc0', beneficiaire: 'GRÂCE YAO', telephone: '2250700000012', montant: 15000, prestation: 'Shooting Lagune', statut: 'paye', mode: 'wave_manuel', reference_wave: 'T_AB12', compte_id: 'k2', paye_le: '2026-10-15T10:00:00Z', cree_le: '2026-10-14T10:00:00Z' }], compta_ecritures: []
+      // payer les mannequins : un cachet déjà payé (historique), avec sa dépense dans la comptabilité
+      cachets_mannequins: [{ id: 'cc0', beneficiaire: 'GRÂCE YAO', telephone: '2250700000012', montant: 15000, prestation: 'Shooting Lagune', statut: 'paye', mode: 'wave_manuel', reference_wave: 'T_AB12', compte_id: 'k2', ecriture_id: 'e3', paye_le: '2026-10-15T10:00:00Z', cree_le: '2026-10-14T10:00:00Z' }],
+      // comptabilité d'octobre qui tombe juste : caisse 15 000 F, Wave 50 000 − 15 000 = 35 000 F (compta_soldes ci-dessous)
+      compta_ecritures: [
+        { id: 'e1', sens: 'recette', date_op: '2026-10-03', montant: 15000, compte_id: 'k1', categorie: 'inscription', libelle: 'Droit d’inscription d’un mannequin', source: 'espace2', annule: false },
+        { id: 'e2', sens: 'recette', date_op: '2026-10-08', montant: 50000, compte_id: 'k2', categorie: 'casting', libelle: 'Casting Cacao', tiers: 'Maison Ivoire', source: 'manuel', annule: false },
+        { id: 'e3', sens: 'depense', date_op: '2026-10-15', montant: 15000, compte_id: 'k2', categorie: 'cachets', libelle: 'Cachet : Shooting Lagune', tiers: 'GRÂCE YAO', source: 'manuel', annule: false }]
     },
     rpc: {
       portail_moi: { role, mfa: true, nom: 'Maître Akesse', actif: true, membre: true, espaces, contacts_prives: role !== 'site' && role !== 'compta', noms_payeurs: espaces.paiements },
@@ -63,7 +68,7 @@ function donnees(role) {
       portail_code_appareil_etat: { defini: true, verrouille: false },
       code_validation_statut: [{ defini: true }],
       photos_couverture_mannequins: profils.map((p, i) => ({ model_id: p.id, url: photo(i) })),
-      compta_soldes: [{ compte_id: 'k1', nom: 'Caisse (espèces)', type: 'caisse', solde: 235000 }],
+      compta_soldes: [{ compte_id: 'k1', nom: 'Caisse (espèces)', type: 'caisse', solde: 15000 }, { compte_id: 'k2', nom: 'Wave Business', type: 'wave', solde: 35000 }],
       resume_candidatures_par_projet: [{ type_candidature: 'projet', projet_nom: 'CASTING CACAO', total: 7 }],
       convocation_contacts_mannequins: (x) => (x.p_ids || []).map((id) => { const i = Number(id.slice(1)); return { model_id: id, full_name: NOMS[i], category: 'femme', phone: '07000000' + (10 + i), contact_email: 'mannequin' + i + '@test.ci', date_naissance: '2000-01-01' }; })
     },
