@@ -54,7 +54,7 @@
     const mur = document.createElement('div');
     mur.className = 'mur-fond'; mur.setAttribute('aria-hidden', 'true');
     g.prepend(mur);
-    visagesPublics().then((v) => { if (mur.isConnected) mur.innerHTML = v.slice(0, 8).map((x) => P.visage(x[0], x[1])).join(''); });
+    visagesPublics().then((v) => { if (mur.isConnected) mur.innerHTML = v.slice(0, 8).map((x) => P.visage(x[0], x[1])).join(''); }, () => { /* pas de visages : le fond reste uni */ });
   }).observe(document.getElementById('app'), { childList: true });
 
   // Téléphone : chaque ligne d'un tableau devient une petite carte (css « .tableau » en bas de

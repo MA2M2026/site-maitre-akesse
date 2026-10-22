@@ -326,7 +326,7 @@
     const zone = document.getElementById('dos-notification');
     const cle = PREMIER[fiche.source] && PREMIER[fiche.source][nouveau];
     // la zone du code d'inscription suit le statut « Retenue »
-    if (fiche.source === 'casting') rafraichirCode();
+    if (fiche.source === 'casting') void rafraichirCode();
     if (!cle) { zone.innerHTML = ''; return; }
     const texte = personnaliserMessage(texteMessageCandidat(messageCandidatParCle(cle), d, typeCandidature(d)), d, {}, () => '');
     const wa = lienWaTexte(fiche.source, d, texte), c = contacts(fiche.source, d);

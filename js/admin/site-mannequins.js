@@ -289,7 +289,7 @@
 
   // ---------- Branchement ----------
   P.espaces.site.pages[PAGE] = (args) => (args && args[0] ? (args[1] === 'cv' ? cv(decodeURIComponent(args[0])) : fiche(decodeURIComponent(args[0]))) : liste());
-  P.espaces.site.apres[PAGE] = () => { if (/\/cv$/.test(location.hash)) apresCv(); };
+  P.espaces.site.apres[PAGE] = () => { if (/\/cv$/.test(location.hash)) void apresCv(); };
   P.espaces.site.pages['b2-validations'] = validations;
   P.espaces.site.pages['b3c-vedette-admin'] = vedette;
 })();

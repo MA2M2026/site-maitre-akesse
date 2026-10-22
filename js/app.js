@@ -2633,7 +2633,7 @@ document.addEventListener('DOMContentLoaded', () => {
 })();
 
 // Pages de l'agence (Administration) : ni pastille « Nous contacter », ni visite comptée
-function pageAdministration() { return /^\/admin\/|tableau-de-bord/.test(window.location.pathname); }
+function pageAdministration() { return /^\/admin\//.test(window.location.pathname) || window.location.pathname.includes('tableau-de-bord'); }
 
 // Pastille WhatsApp flottante, injectée sur toutes les pages publiques
 document.addEventListener('DOMContentLoaded', () => {
