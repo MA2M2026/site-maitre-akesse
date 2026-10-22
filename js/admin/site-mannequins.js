@@ -54,7 +54,7 @@
     const ph = ouverte.photos;
     const optionsCc = (n) => '<option value="">Compcard —</option>' + [1, 2, 3, 4, 5].map((c) => '<option value="' + c + '"' + (n === c ? ' selected' : '') + '>Compcard ' + c + (c === 1 ? ' (grande)' : '') + '</option>').join('');
     return '<section class="carte" id="mq-photos"><div class="section-titre"><h2>Photos du Book <span class="doux">(' + ph.length + ')</span></h2>' +
-      '<label class="btn rouge"><input type="file" accept="image/*" multiple data-change="mannequin-photos-ajouter" hidden>＋ Ajouter des photos</label></div>' +
+      '<label class="btn rouge"><input type="file" accept="image/*" multiple data-change="mannequin-photos-ajouter" hidden>＋ Photos</label></div>' +
       '<p class="doux petit-texte">Sous chaque photo : sa case sur la compcard (1 à 5, la case 1 est la grande photo) et son classement Book ou Lifestyle.</p>' +
       '<p class="doux" id="mq-photo-msg" role="status"></p>' +
       (ph.length ? '<div class="photos-mannequin">' + ph.map((p, i) => '<figure class="photo-mannequin apparait" style="--i:' + Math.min(i, 12) + '">' +
@@ -62,7 +62,7 @@
         (p.principale ? '<span class="etiquette-photo">Photo de profil</span>' : '') + (p.compcard_ordre ? '<span class="etiquette-photo cc">Compcard ' + p.compcard_ordre + '</span>' : '') + '</button>' +
         '<select data-change="mannequin-compcard" data-photo="' + P.esc(p.id) + '" aria-label="Case de la compcard, photo ' + (i + 1) + '">' + optionsCc(p.compcard_ordre) + '</select>' +
         '<select data-change="mannequin-categorie" data-photo="' + P.esc(p.id) + '" aria-label="Book ou Lifestyle, photo ' + (i + 1) + '"><option value="book"' + (p.categorie === 'lifestyle' ? '' : ' selected') + '>📒 Book</option><option value="lifestyle"' + (p.categorie === 'lifestyle' ? ' selected' : '') + '>🌿 Lifestyle</option></select>' +
-        '<figcaption><button type="button" class="btn petit" data-action="mannequin-photo-remplacer" data-photo="' + P.esc(p.id) + '">⇄ Remplacer</button>' +
+        '<figcaption><button type="button" class="btn petit" data-action="mannequin-photo-remplacer" data-photo="' + P.esc(p.id) + '">Remplacer</button>' +
         '<button type="button" class="btn petit" data-action="mannequin-photo-supprimer" data-photo="' + P.esc(p.id) + '" aria-label="Supprimer la photo ' + (i + 1) + '">✕</button></figcaption></figure>').join('') + '</div>' :
         '<p class="doux">Aucune photo pour cette mannequin.</p>') +
       '<input type="file" accept="image/*" id="mq-remplacement" data-change="mannequin-photo-remplacement" hidden></section>';

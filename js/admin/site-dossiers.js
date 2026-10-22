@@ -191,7 +191,7 @@
     return '<section class="galerie-dossier" aria-label="Photos">' + (ph.length ? ph.map((p, i) =>
       '<figure class="photo-dossier apparait" style="--i:' + i + '"><button type="button" class="photo-ouvrir" data-action="dossier-photo-voir" data-index="' + i + '" aria-label="Agrandir la photo ' + (i + 1) + '">' +
       visageDossier(p.affiche, fiche.d.full_name) + '</button>' +
-      '<figcaption><button type="button" class="btn petit" data-action="dossier-photo-remplacer" data-photo="' + P.esc(p.id) + '" aria-label="Remplacer la photo ' + (i + 1) + '">⇄ Remplacer</button>' +
+      '<figcaption><button type="button" class="btn petit" data-action="dossier-photo-remplacer" data-photo="' + P.esc(p.id) + '" aria-label="Remplacer la photo ' + (i + 1) + '">Remplacer</button>' +
       '<button type="button" class="btn petit" data-action="dossier-photo-supprimer" data-photo="' + P.esc(p.id) + '" aria-label="Supprimer la photo ' + (i + 1) + '">✕</button></figcaption></figure>').join('') :
       '<p class="doux galerie-vide">Aucune photo jointe.</p>') +
       '<label class="ajout-photo"><input type="file" accept="image/*" data-change="dossier-photo-ajouter" hidden><span class="btn">＋ Ajouter une photo</span></label>' +

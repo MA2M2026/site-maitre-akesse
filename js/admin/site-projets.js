@@ -34,8 +34,8 @@
       '<p class="projet-chiffre"><b>' + p.candidatures + '</b> candidature' + (p.candidatures > 1 ? 's' : '') + ' reçue' + (p.candidatures > 1 ? 's' : '') + '</p>' +
       '<div class="ligne"><button type="button" class="btn petit" data-action="projet-modifier" data-id="' + P.esc(p.id) + '">✏️ Modifier</button>' +
       '<button type="button" class="btn petit" data-action="projet-actif" data-id="' + P.esc(p.id) + '">' + (p.actif ? 'Désactiver' : 'Réactiver') + '</button>' +
-      '<button type="button" class="btn petit" data-action="projet-monter" data-id="' + P.esc(p.id) + '"' + (i === 0 ? ' disabled' : '') + ' aria-label="Monter « ' + P.esc(p.nom) + ' »">▲</button>' +
-      '<button type="button" class="btn petit" data-action="projet-descendre" data-id="' + P.esc(p.id) + '"' + (i === projets.length - 1 ? ' disabled' : '') + ' aria-label="Descendre « ' + P.esc(p.nom) + ' »">▼</button>' +
+      '<span class="fleches"><button type="button" class="btn petit" data-action="projet-monter" data-id="' + P.esc(p.id) + '"' + (i === 0 ? ' disabled' : '') + ' aria-label="Monter « ' + P.esc(p.nom) + ' »">▲</button>' +
+      '<button type="button" class="btn petit" data-action="projet-descendre" data-id="' + P.esc(p.id) + '"' + (i === projets.length - 1 ? ' disabled' : '') + ' aria-label="Descendre « ' + P.esc(p.nom) + ' »">▼</button></span>' +
       '<button type="button" class="btn petit" data-action="projet-supprimer" data-id="' + P.esc(p.id) + '">Supprimer</button></div></article>').join('');
     return P.entete('Projets et castings', '<button type="button" class="btn rouge" data-action="projet-nouveau">＋ Nouveau casting</button><span class="doux">' + projets.filter((p) => p.actif).length + ' ' + (projets.filter((p) => p.actif).length > 1 ? 'actifs' : 'actif') + ' sur ' + projets.length + '</span>') +
       '<p class="doux">Les castings actifs apparaissent dans le formulaire public « Postuler à un casting », dans cet ordre.</p>' +
