@@ -91,7 +91,7 @@ async function unePage(b, page, ecran) {
   const debut = Date.now();
   fs.rmSync(path.join(CAPTURES, 'actuelles'), { recursive: true, force: true });
   fs.mkdirSync(path.join(CAPTURES, 'actuelles'), { recursive: true });
-  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: RACINE, stdio: 'ignore' }); await new Promise(r => setTimeout(r, 1500));
+  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: RACINE, stdio: 'ignore', stdio: 'ignore' }); await new Promise(r => setTimeout(r, 1500));
   const b = await chromium.launch();
 
   // 1. Contrôle du contrôle : texte sombre posé exprès sur le menu ouvert (fond sombre)

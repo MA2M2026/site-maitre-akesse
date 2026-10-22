@@ -51,7 +51,7 @@ const cas = [
 ];
 const PORT = String(9200 + Math.floor(Math.random() * 90));
 (async () => {
-  const srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: path.resolve(__dirname, '../..') }); await new Promise(r => setTimeout(r, 800));
+  const srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: path.resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise(r => setTimeout(r, 800));
   const b = await chromium.launch(); const p = await b.newPage(); const errs = [];
   p.on('pageerror', e => errs.push(e.message));
   await p.route(/^https?:\/\/(?!127\.0\.0\.1)/, r => r.abort());

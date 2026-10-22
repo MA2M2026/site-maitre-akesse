@@ -3,7 +3,7 @@ const { chromium } = require('playwright'); const { spawn } = require('child_pro
 const PORT = String(8800 + Math.floor(Math.random() * 100));
 (async () => {
   let srv; process.on('exit', () => srv && srv.kill());
-  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..') }); await new Promise(r => setTimeout(r, 800));
+  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise(r => setTimeout(r, 800));
   const b = await chromium.launch();
   const cas = [
     ['contact.html', { width: 390, height: 844 }, async p => { await p.selectOption('#civilite', 'Madame'); await p.fill('#nom', 'Kouassi Marie'); await p.fill('#email', 'marie@test.ci'); await p.fill('#message', 'Bonjour, je voudrais des informations.'); await p.check('#ct-consentement'); await p.click('#form-contact button[type="submit"]'); }, 'messages_contact', 'nom'],

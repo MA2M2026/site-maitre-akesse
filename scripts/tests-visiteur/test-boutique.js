@@ -4,7 +4,7 @@
 const { chromium } = require('playwright'); const { spawn } = require('child_process');
 const PORT = String(9000 + Math.floor(Math.random() * 90));
 (async () => {
-  const srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..') }); await new Promise(r => setTimeout(r, 800));
+  const srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise(r => setTimeout(r, 800));
   const b = await chromium.launch();
   const attendu = { index: ['Collection', true], produit: ['Collection', true], cgv: ['', false], commande: ['', false], suivi: ['Suivi', false], gestion: ['Gestion', false] };
   for (const [pg, [actif, panier]] of Object.entries(attendu)) {

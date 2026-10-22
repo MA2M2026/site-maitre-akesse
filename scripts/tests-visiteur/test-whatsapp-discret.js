@@ -8,7 +8,7 @@ const PORT = String(9100 + Math.floor(Math.random() * 90));
 let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m); if (!c) ko++; };
 (async () => {
   let srv; process.on('exit', () => srv && srv.kill());
-  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..') }); await new Promise((r) => setTimeout(r, 800));
+  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise((r) => setTimeout(r, 800));
   const b = await chromium.launch();
   for (const [page, champ] of [['integrer-agence.html', '#ca-nom'], ['en/integrer-agence.html', '#ca-nom'], ['espace-mannequin.html', null]]) {
     const ctx = await b.newContext({ viewport: { width: 393, height: 851 }, isMobile: true, hasTouch: true });

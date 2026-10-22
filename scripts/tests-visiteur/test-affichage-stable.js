@@ -11,7 +11,7 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
 const profils = Array.from({ length: 30 }, (_, i) => ({ id: '00000000-0000-0000-0000-0000000000' + String(i).padStart(2, '0'), full_name: 'Mannequin ' + i, city: 'Abidjan', category: i % 2 ? 'homme' : 'femme', height_cm: 170 + i % 10, published: true }));
 (async () => {
   let srv; process.on('exit', () => srv && srv.kill());
-  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..') }); await new Promise(r => setTimeout(r, 800));
+  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise(r => setTimeout(r, 800));
   const b = await chromium.launch();
   for (const [page, part] of [['mannequins.html', 1], ['en/mannequins.html', 0.5], ['index.html', 0.6], ['en/index.html', 1]]) {
     const ctx = await b.newContext({ viewport: { width: 360, height: 716 }, isMobile: true, hasTouch: true });

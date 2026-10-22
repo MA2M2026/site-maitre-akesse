@@ -49,7 +49,7 @@ const etat = p => p.evaluate(() => {
 
 (async () => {
   let srv; process.on('exit', () => srv && srv.kill());
-  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: path.resolve(__dirname, '../..') }); await new Promise(r => setTimeout(r, 800));
+  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: path.resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise(r => setTimeout(r, 800));
   const b = await chromium.launch();
   for (const appareil of Object.keys(APPAREILS)) {
     let { p, ctx, errs } = await ouvrir(b, appareil); let e = await etat(p);

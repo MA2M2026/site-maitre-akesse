@@ -68,7 +68,7 @@ const ADMIN = '11111111-2222-3333-4444-555555555555';
   // --- 2) Comme une visiteuse : page réduite → connexion → code → rechargement → tableau de bord ---
   const reduite = PAGE.replace(/<!-- ZONE-ADMIN[^>]*-->[\s\S]*?<!-- \/ZONE-ADMIN -->/g, '');
   let cle = false, sansCode = false; const journal = []; const appels = [];
-  const srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: RACINE }); await new Promise(r2 => setTimeout(r2, 800));
+  const srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: RACINE, stdio: 'ignore' }); await new Promise(r2 => setTimeout(r2, 800));
   const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: 1280, height: 900 } })).newPage(); const errs = [];
   p.on('pageerror', e => errs.push(e.message));
   await brancher(p, { tables: { admins: [{ user_id: 'admin-1' }], model_photos: [] }, rpc: { code_validation_statut: [{ defini: true, email_recuperation: 'a@b.ci' }] } }, journal);

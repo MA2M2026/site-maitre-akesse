@@ -11,7 +11,7 @@ const tables = { model_profiles: [], model_photos: [], castings: [], actualites:
 
 (async () => {
   let srv; process.on('exit', () => srv && srv.kill());
-  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..') }); await new Promise(r => setTimeout(r, 800));
+  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise(r => setTimeout(r, 800));
   const b = await chromium.launch();
   const pages = [
     ['integrer-agence.html', 'Postuler à un casting', 'candidature.html'],

@@ -13,7 +13,7 @@ const CASTINGS = {
 };
 (async () => {
   let srv; process.on('exit', () => srv && srv.kill());
-  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise(r => setTimeout(r, 800));
+  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..'), stdio: 'ignore', stdio: 'ignore' }); await new Promise(r => setTimeout(r, 800));
   const b = await chromium.launch();
   for (const [page, vp, nom] of [['inscription-mannequin.html', { width: 390, height: 844 }, 'FR téléphone'], ['en/inscription-mannequin.html', { width: 1280, height: 900 }, 'EN ordinateur']]) {
     for (const code of ['MA2M-ADULTE', 'MA2M-ENFANT']) {

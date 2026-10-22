@@ -9,7 +9,7 @@ const URL_ADMIN = 'http://127.0.0.1:' + PORT + '/admin/nouvelle/';
 const DOSSIER = process.env.CAPTURES || '.', ESPACE = process.env.ESPACE || 'site';
 (async () => {
   let srv; process.on('exit', () => srv && srv.kill());
-  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: chemin.resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise((r) => setTimeout(r, 900));
+  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: chemin.resolve(__dirname, '../..'), stdio: 'ignore', stdio: 'ignore' }); await new Promise((r) => setTimeout(r, 900));
   const menu = fs.readFileSync(chemin.resolve(__dirname, '../../js/admin/site.js'), 'utf8');
   let pages = ['', ...[...menu.matchAll(/\['([a-z0-9-]+)', '/g)].map((m) => m[1]), 'b2-candidatures/c4', 'b2-mannequins-publies/m0', 'actualites/a1'];
   const b = await chromium.launch();

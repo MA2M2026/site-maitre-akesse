@@ -45,7 +45,7 @@ function donnees(role) {
 
 (async () => {
   let srv; process.on('exit', () => srv && srv.kill());
-  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise((r) => setTimeout(r, 900));
+  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..'), stdio: 'ignore', stdio: 'ignore' }); await new Promise((r) => setTimeout(r, 900));
   const b = await chromium.launch();
   const url = 'http://127.0.0.1:' + PORT + '/admin/';
   const ouvrir = async (role, ecran, reglage) => {

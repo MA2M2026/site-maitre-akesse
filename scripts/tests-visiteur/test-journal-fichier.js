@@ -20,7 +20,7 @@ erreurs.push({ id: 'r1', message: '[Affichage qui saute] /actualites : footer.si
 for (let k = 0; k < 6; k++) erreurs.push({ id: 'm' + k, message: '[Réseau injoignable] POST api.emailjs.com/api/v1.0/email/send → Failed to fetch', page: '/candidature.html', pile: '', user_agent: IPHONE.replace('18_7', '18_' + k), created_at: new Date(maintenant - k * 1000).toISOString() });
 (async () => {
   let srv; process.on('exit', () => srv && srv.kill());
-  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..') }); await new Promise(r => setTimeout(r, 800));
+  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise(r => setTimeout(r, 800));
   const b = await chromium.launch();
   for (const vp of [{ width: 390, height: 844 }, { width: 1280, height: 900 }]) {
     const ctx = await b.newContext({ viewport: vp, acceptDownloads: true, permissions: ['clipboard-read', 'clipboard-write'] });

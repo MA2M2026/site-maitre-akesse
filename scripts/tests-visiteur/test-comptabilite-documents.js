@@ -63,7 +63,7 @@ function donnees(role, fichiers) {
 
 (async () => {
   let srv; process.on('exit', () => srv && srv.kill());
-  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise((r) => setTimeout(r, 900));
+  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..'), stdio: 'ignore', stdio: 'ignore' }); await new Promise((r) => setTimeout(r, 900));
   // justificatif PDF d'essai (1 page avec un texte reconnaissable)
   const source = await PDFLib.PDFDocument.create();
   const police = await source.embedFont(PDFLib.StandardFonts.Helvetica);

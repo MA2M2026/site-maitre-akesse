@@ -88,7 +88,7 @@ async function serveur() {
 
 async function navigateur() {
   let srv; process.on('exit', () => srv && srv.kill());
-  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: RACINE }); await new Promise(r => setTimeout(r, 800));
+  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: RACINE, stdio: 'ignore' }); await new Promise(r => setTimeout(r, 800));
   const b = await chromium.launch();
   // 1) Inscription simplifiée (cahier v2.4) : la note (règlement) n'apparaît qu'après un code et
   //    une date de naissance valables, à l'écran du règlement

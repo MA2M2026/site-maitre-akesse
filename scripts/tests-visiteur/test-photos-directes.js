@@ -69,7 +69,7 @@ async function visite(b, page, mode, opts = {}) {
 
 (async () => {
   let srv; process.on('exit', () => srv && srv.kill());
-  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: path.resolve(__dirname, '../..') }); await new Promise(r => setTimeout(r, 800));
+  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: path.resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise(r => setTimeout(r, 800));
   let b = await chromium.launch();
 
   // 1) Cloudflare répond : les photos viennent directement de Cloudflare, rien par Vercel
@@ -186,7 +186,7 @@ async function visite(b, page, mode, opts = {}) {
   // suivante (21/10/2026) : navigateur et serveur neufs
   await b.close(); b = await chromium.launch();
   srv.kill(); PORT = String(Number(PORT) + 100);
-  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: path.resolve(__dirname, '../..') }); await new Promise(r => setTimeout(r, 800));
+  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: path.resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise(r => setTimeout(r, 800));
   // 3 bis) Connexion seulement LENTE (photos en 11 s, mais Cloudflare répond) : on patiente,
   //        pas de bascule ni de fausse alerte
   {

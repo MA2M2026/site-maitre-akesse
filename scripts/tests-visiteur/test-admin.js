@@ -2,7 +2,7 @@ const { chromium } = require('playwright'); const { spawn } = require('child_pro
 const PORT = String(8800 + Math.floor(Math.random() * 100));
 (async () => {
   let srv; process.on('exit', () => srv && srv.kill());
-  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..') }); await new Promise(r => setTimeout(r, 800));
+  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise(r => setTimeout(r, 800));
   const b = await chromium.launch();
   for (const vp of [{ nom: 'téléphone', width: 390, height: 844 }, { nom: 'ordinateur', width: 1280, height: 900 }]) {
     const ctx = await b.newContext({ viewport: vp }); const p = await ctx.newPage(); const errs = [], journal = [], ouverts = [];

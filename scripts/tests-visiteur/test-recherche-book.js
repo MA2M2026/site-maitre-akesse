@@ -18,7 +18,7 @@ const P = [['Awa Koné', 'femme', 176, 84, 62, 97, '39', 'Marron', 'Noir', 'Abid
   .map((x, i) => ({ id: '00000000-0000-0000-0000-00000000000' + i, full_name: x[0], category: x[1], height_cm: x[2], chest_cm: x[3], waist_cm: x[4], hips_cm: x[5], shoe_size: x[6], eye_color: x[7], hair_color: x[8], city: x[9], languages: x[10], clothing_size: x[11] || null, published: true, niveau_mannequin: 'New Face' }));
 (async () => {
   let srv; process.on('exit', () => srv && srv.kill());
-  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..') }); await new Promise(r => setTimeout(r, 800));
+  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise(r => setTimeout(r, 800));
   const b = await chromium.launch();
   for (const [page, vp] of [['mannequins.html', { width: 390, height: 844 }], ['mannequins.html', { width: 800, height: 1078 }], ['en/mannequins.html', { width: 1280, height: 900 }]]) {
     const ctx = await b.newContext({ viewport: vp }); const p = await ctx.newPage(); const errs = [];

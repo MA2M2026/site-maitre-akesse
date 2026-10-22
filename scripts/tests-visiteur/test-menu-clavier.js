@@ -8,7 +8,7 @@ const PORT = String(8900 + Math.floor(Math.random() * 90));
 let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m); if (!c) ko++; };
 (async () => {
   let srv; process.on('exit', () => srv && srv.kill());
-  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..') }); await new Promise((r) => setTimeout(r, 800));
+  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise((r) => setTimeout(r, 800));
   const b = await chromium.launch();
   for (const page of ['qui-sommes-nous.html', 'en/mannequins.html']) {
     const p = await b.newPage({ viewport: { width: 1366, height: 768 } }); const errs = [];

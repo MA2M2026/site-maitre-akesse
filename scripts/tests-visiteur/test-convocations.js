@@ -52,7 +52,7 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
   const doubles = ids.filter((x, i) => ids.indexOf(x) !== i);
   ok(!doubles.length, 'tableau de bord : aucun identifiant en double' + (doubles.length ? ' (' + doubles.join(', ') + ')' : ''));
   let srv; process.on('exit', () => srv && srv.kill());
-  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..') }); await new Promise(r => setTimeout(r, 800));
+  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise(r => setTimeout(r, 800));
   const b = await chromium.launch();
   for (const [nom, vp] of [['téléphone', { width: 390, height: 844 }], ['ordinateur', { width: 1280, height: 900 }]]) {
     const n = nom + ' : ';

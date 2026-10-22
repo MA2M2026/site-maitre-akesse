@@ -25,7 +25,7 @@ async function ouvrir(b, page, vp, opts = {}) {
 
 (async () => {
   let srv; process.on('exit', () => srv && srv.kill());
-  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..') }); await new Promise(r => setTimeout(r, 800));
+  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise(r => setTimeout(r, 800));
   const b = await chromium.launch();
   const ecrans = [['téléphone', { width: 390, height: 844 }], ['tablette', { width: 820, height: 1180 }], ['ordinateur', { width: 1440, height: 900 }]];
   for (const [page, langue] of [['index.html', 'fr'], ['en/index.html', 'en']]) {

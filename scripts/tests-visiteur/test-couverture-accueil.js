@@ -9,7 +9,7 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
 const IMAGE = Buffer.from('R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=', 'base64');
 (async () => {
   let srv; process.on('exit', () => srv && srv.kill());
-  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: path.resolve(__dirname, '../..') }); await new Promise((r) => setTimeout(r, 800));
+  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: path.resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise((r) => setTimeout(r, 800));
   const b = await chromium.launch();
   const profils = Array.from({ length: 5 }, (_, i) => ({ id: 'm' + i, full_name: 'Mannequin ' + i, city: 'Abidjan', category: 'femme', published: true, featured: i === 0 }));
   const donnees = { tables: { model_profiles: profils, model_photos: profils.map((m) => ({ model_id: m.id, url_miniature: 'https://x/' + m.id + '.jpg', url_moyenne: 'https://x/' + m.id + '-moy.jpg' })) },
