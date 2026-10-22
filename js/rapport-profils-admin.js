@@ -15,6 +15,9 @@ window.demarrerRapportProfils = function () {
   var details = document.getElementById('rapport-profils-details');
   if (!details || typeof sb === 'undefined' || !sb) return;
   var charge = false, profils = [], telephones = {}, parents = {};
+  // visages en médaillon (nouvelle Administration : P.photosCouverture et P.visage, js/admin/coque.js)
+  var P = window.Portail, visages = {};
+  var visage = function (p) { return P && P.visage ? P.visage(visages[p.id], p.full_name, 'rond-vis medaillon') + ' ' : ''; };
   var suppDisponibles = true; // colonnes de l'Extension 121 lisibles ?
   var envoyesCetteFois = {}; // file d'envoi : on passe à la suivante (la date reste notée pour la prochaine fois)
   var BOOK_MINIMUM = MA2M_PHOTOS_MINIMUM; // js/analyse-profil.js
@@ -104,7 +107,7 @@ window.demarrerRapportProfils = function () {
     if (a.photos.length) points.push('<li><strong>Photos :</strong> ' + lib(a.photos) + ' (' + a.nbPhotos + ' photo' + (a.nbPhotos > 1 ? 's' : '') + ')</li>');
     return '<div class="rp-profil' + (a.aJour ? ' rp-ok' : '') + '" data-profil="' + echapper(p.id) + '">' +
       '<label class="rp-entete">' + (a.aJour ? '' : '<input type="checkbox" class="rp-choix" data-id="' + echapper(p.id) + '">') +
-      '<strong>' + echapper(civilite(p)) + '</strong>' + (p.published ? '' : ' <span class="rp-gris">(non publiée)</span>') +
+      visage(p) + '<strong>' + echapper(civilite(p)) + '</strong>' + (p.published ? '' : ' <span class="rp-gris">(non publiée)</span>') +
       ' <span class="rp-etat">' + (a.aJour ? '✓ À jour' : 'Complet à ' + a.score + ' %') + '</span>' +
       (deja ? ' <span class="rp-gris rp-date-envoi">· dernier message le ' + new Date(deja).toLocaleDateString('fr-FR') + '</span>' : '') +
       (!a.aJour && !wa ? ' <span class="rp-gris">· pas de numéro WhatsApp : le message sera copié, à coller où vous voulez</span>' : '') + '</label>' +
@@ -208,6 +211,7 @@ window.demarrerRapportProfils = function () {
       p.analyse = ma2mAnalyserProfil(p, parModele[p.id] || [], projets[p.id] || 0, suppDisponibles);
       return p;
     }).sort(function (a, b) { return String(a.full_name).localeCompare(String(b.full_name), 'fr'); });
+    if (P && P.photosCouverture) visages = await P.photosCouverture(profils.map(function (p) { return p.id; })).catch(function () { return {}; });
     afficher();
   }
 

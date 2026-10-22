@@ -213,8 +213,8 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     ok(!errs.length, 'réponses : aucune erreur ' + errs.join(' | '));
     await ctx.close();
   }
-  // 5ter. La page publique « Confirmer ma présence » (sans compte)
-  for (const [nom, vp] of [['téléphone', { width: 390, height: 844 }], ['ordinateur', { width: 1280, height: 900 }]]) {
+  // 5ter. La page publique « Confirmer ma présence » (sans compte) ; iPhone de 375 px (journal du 21/10/2026)
+  for (const [nom, vp] of [['téléphone', { width: 375, height: 667 }], ['ordinateur', { width: 1280, height: 900 }]]) {
     const J = 'd'.repeat(36);
     const ctx = await b.newContext({ viewport: vp, isMobile: vp.width < 700, hasTouch: vp.width < 700 });
     const p = await ctx.newPage(); const journal = [], errs = [];

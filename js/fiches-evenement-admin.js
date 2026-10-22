@@ -160,9 +160,11 @@ window.demarrerFichesEvenement = function () {
       if (f.regime_allergies || f.tiktok || f.facebook || f.droit_image != null) remplies[f.model_id] = f.mis_a_jour;
     });
     var liste = (pr.data || []).filter(function (m) { return (m.full_name || '').trim(); });
+    // visages en médaillon (nouvelle Administration : P.photosCouverture et P.visage, js/admin/coque.js)
+    var P = window.Portail, visages = P && P.photosCouverture ? await P.photosCouverture(liste.map(function (m) { return m.id; })).catch(function () { return {}; }) : null;
     zone.innerHTML = liste.length ? liste.map(function (m) {
       var etat = remplies[m.id] ? '✓ informations événements remplies le ' + new Date(remplies[m.id]).toLocaleDateString('fr-FR') : 'informations événements pas encore remplies';
-      return '<div class="fe-ligne"><div><strong>' + echapper(m.full_name) + '</strong>' + (m.published ? '' : ' <span class="fe-non-publie">(non publiée)</span>') +
+      return '<div class="fe-ligne">' + (visages ? P.visage(visages[m.id], m.full_name, 'rond-vis medaillon') : '') + '<div class="fe-nom"><strong>' + echapper(m.full_name) + '</strong>' + (m.published ? '' : ' <span class="fe-non-publie">(non publiée)</span>') +
         '<br><span class="fe-etat' + (remplies[m.id] ? ' ok' : '') + '">' + etat + '</span></div>' +
         '<button class="btn fe-btn" type="button" data-id="' + echapper(m.id) + '">⬇ Télécharger la fiche</button></div>';
     }).join('') : '<div class="dossiers-vide">Aucun mannequin.</div>';

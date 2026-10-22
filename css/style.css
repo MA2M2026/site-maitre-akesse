@@ -3115,7 +3115,11 @@ body.porte-verrouillee .couverture-faisceau, body.porte-verrouillee .couverture-
 
 /* Page « introuvable » (404.html, audit du 05/10/2026). */
 .page-introuvable { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--noir); }
-.introuvable { max-width: 560px; padding: 3rem var(--marge); text-align: center; }
+.introuvable { max-width: 560px; padding: 3rem var(--marge); text-align: center; width: 100%; min-width: 0; box-sizing: border-box; }
+/* Confirmer ma présence (journal du 21/10/2026, iPhone 375 px : page plus large que l'écran) :
+   le bloc ne s'élargit plus pour ses boutons, qui passent à la ligne si besoin */
+.introuvable-liens .btn { max-width: 100%; white-space: normal; }
+.introuvable-logo { display: inline-block; max-width: 100%; }
 .introuvable-logo img { width: min(220px, 60vw); height: auto; margin: 0 auto 2.4rem; display: block; }
 .introuvable h1 { color: var(--titre-clair); font-family: var(--display); font-size: clamp(2.4rem, 7vw, 3.6rem); font-weight: 500; margin: 0.6rem 0 1rem; }
 .introuvable-texte { color: var(--texte-corps); line-height: 1.7; }
