@@ -3,11 +3,11 @@
 // que les fichiers de l'INTERFACE (écrans, styles, icônes) : jamais de données nominatives ni
 // de montants (les requêtes vers la base et vers /api ne passent pas par lui).
 // v8 (22/10/2026) : nouvelle copie, l'ancienne pouvait contenir le manifeste à la place de la page.
-const VERSION = 'administration-v8';
+const VERSION = 'administration-v9';
 const INTERFACE = ['/admin/', '/css/jetons.css', '/css/portail.css', '/js/supabase-config.js',
   '/js/vendor/supabase-js-2.110.6.js', '/js/portail/inactivite.js', '/js/messages-mensualites.js', '/js/portail/noyau.js', '/js/portail/espace-site.js', '/js/portail/espace-paiements.js', '/js/portail/espace-paiements-suivi.js',
   '/js/conversion-heic.js', '/js/portail/espace-compta.js', '/js/portail/espace-compta-suivi.js', '/js/portail/compta-pdf.js', '/js/portail/compta-xlsx.js',
-  '/js/portail/espace-compta-documents.js', '/js/portail/espace-compta-dossier.js', '/js/vendor/pdf-lib-1.17.1.min.js',
+  '/js/portail/espace-compta-cachets.js', '/js/portail/espace-compta-documents.js', '/js/portail/espace-compta-dossier.js', '/js/vendor/pdf-lib-1.17.1.min.js',
   '/js/portail/securite.js', '/css/bouton-ma2m.css', '/js/bouton-appui.js', '/icons/admin-192.png', '/assets/logo-header.png'];
 
 self.addEventListener('install', (e) => {

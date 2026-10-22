@@ -53,7 +53,9 @@ function donnees(role) {
       paiements_mannequins: [
         { id: 'pm1', mannequin_id: 'r1', objet: 'mensualite', mois: '2026-10-01', montant: 10000, mode: 'wave', statut: 'declare', declare_le: '2026-10-19T09:00:00Z', mannequin: { full_name: 'MARIAM TRAORÉ', telephone: '0700000011' } },
         { id: 'pm2', mannequin_id: 'r2', objet: 'mensualite', mois: '2026-10-01', montant: 10000, mode: 'wave', statut: 'declare', declare_le: '2026-10-20T09:00:00Z', mannequin: { full_name: 'GRÂCE YAO', telephone: '0700000012' } }],
-      codes_espace: [], compta_reglages: [{ id: 1, mode_legal: false, nom_entite: 'Maître Akesse Model Management' }], compta_comptes: [{ id: 'k1', nom: 'Caisse (espèces)', type: 'caisse', solde_initial: 0, date_initiale: '2026-10-01', actif: true }], compta_ecritures: []
+      codes_espace: [], compta_reglages: [{ id: 1, mode_legal: false, nom_entite: 'Maître Akesse Model Management' }], compta_comptes: [{ id: 'k1', nom: 'Caisse (espèces)', type: 'caisse', solde_initial: 0, date_initiale: '2026-10-01', actif: true }, { id: 'k2', nom: 'Wave Business', type: 'wave', solde_initial: 0, date_initiale: '2026-10-01', actif: true }],
+      // payer les mannequins : un cachet déjà payé (historique)
+      cachets_mannequins: [{ id: 'cc0', beneficiaire: 'GRÂCE YAO', telephone: '2250700000012', montant: 15000, prestation: 'Shooting Lagune', statut: 'paye', mode: 'wave_manuel', reference_wave: 'T_AB12', compte_id: 'k2', paye_le: '2026-10-15T10:00:00Z', cree_le: '2026-10-14T10:00:00Z' }], compta_ecritures: []
     },
     rpc: {
       portail_moi: { role, mfa: true, nom: 'Maître Akesse', actif: true, membre: true, espaces, contacts_prives: role !== 'site' && role !== 'compta', noms_payeurs: espaces.paiements },
@@ -108,6 +110,8 @@ function donnees(role) {
         { code: 'MA2M-FAIT01', utilise: true, utilise_le: '2026-10-05T10:00:00Z', created_at: '2026-09-20T10:00:00Z', candidature: { full_name: 'AWA KONÉ' } }];
       d.rpc.casting_direct_creer = () => ({ code: 'MA2M-DIRECT' });
       d.rpc.nettoyer_photos_traitees_anciennes = 3;
+      d.rpc.cachet_payer = (x) => { const c = d.tables.cachets_mannequins.find((l) => l.id === x.p_id); if (c) Object.assign(c, { statut: 'paye', compte_id: x.p_compte, reference_wave: x.p_reference, paye_le: new Date().toISOString(), mode: 'wave_manuel' }); return 'e-1'; };
+      d.rpc.cachet_annuler = (x) => { const c = d.tables.cachets_mannequins.find((l) => l.id === x.p_id); if (c) Object.assign(c, { statut: 'annule', motif_annulation: x.p_motif }); return null; };
       const ilYa = (h) => new Date(Date.now() - h * 3600e3).toISOString();
       d.tables.journal_erreurs = [
         { id: 'j1', message: '[Erreur JavaScript] x is not defined', page: '/mannequins', pile: 'at f (app.js:1:2)', user_agent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)', created_at: ilYa(2) },

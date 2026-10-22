@@ -858,3 +858,13 @@ input[type="file"]::file-selector-button {
   .tableau table[data-etiquete] td[data-titre="Action"], .tableau table[data-etiquete] td[data-titre="Actions"] { justify-content: flex-end; }
   .tableau table[data-etiquete] td.vide { justify-content: center; text-align: center; font-weight: 400; color: var(--av-gris); }
 }
+
+/* ---------- Payer les mannequins (js/portail/espace-compta-cachets.js) ---------- */
+.cachet { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 14px 0; border-top: 1px solid var(--av-creux); }
+.cachet:first-of-type { border-top: 0; }
+.cachet .t { flex: 1 1 200px; min-width: 0; overflow-wrap: anywhere; }
+.cachet .t small { display: block; color: var(--av-gris); font-size: 13px; }
+.cachet-montant { font-family: var(--av-titre); font-size: 24px; white-space: nowrap; }
+.cachet .ligne { flex-basis: 100%; }
+.cachet.fait .cachet-montant { color: var(--av-gris); }
+.recap-cachet { font-size: 17px; line-height: 1.5; }

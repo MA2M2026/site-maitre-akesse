@@ -195,7 +195,7 @@
   esp.pages.acces = acces;
   // Ordre du plan validé (Portail_Admin_MA2M.html) : 8 entrées simples en tête, le reste regroupé dessous.
   // Les pages et les données ne changent pas, seuls l'ordre et les titres du menu.
-  const PLAN = [['mois', 'Tableau de bord'], ['recettes', 'Recettes'], ['documents', 'Devis, proforma, factures'], ['depenses', 'Dépenses et charges'],
+  const PLAN = [['mois', 'Tableau de bord'], ['recettes', 'Recettes'], ['documents', 'Devis, proforma, factures'], ['depenses', 'Dépenses et charges'], ['cachets', 'Payer les mannequins'],
     ['impots', 'Impôts et taxes'], ['dossier', 'Clôture mensuelle'], ['acces', 'Accès du comptable', () => P.moi && P.moi.role === 'principal'], ['identite', 'Paramètres de l’entité']];
   const cles = PLAN.map((n) => n[0]);
   const autres = esp.nav.filter((n) => n[0] !== null && !cles.includes(n[0]));

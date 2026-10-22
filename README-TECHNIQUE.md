@@ -166,6 +166,19 @@ rouge, à toute personne ou IA qui ouvre le dépôt, l'obligation de lire `CLAUD
 agents de code (Codex, Copilot, Cursor…). `GUIDE-DE-SECOURS.md` est le guide de la
 propriétaire pour se débrouiller sans IA (version PDF imprimable remise le 13/10/2026).
 
+## 💸 Payer les mannequins (Comptabilité, 22/10/2026, choix de la propriétaire : Wave d'abord)
+
+Rubrique « Payer les mannequins » de l'espace 3 (`js/portail/espace-compta-cachets.js`, chargé dans
+`/admin/` et `/admin/nouvelle/`) ; base : **`supabase-cachets.sql`** (à exécuter une fois dans Supabase).
+Un cachet = une personne (registre `agence_mannequins` ou personne extérieure : nom + numéro Wave),
+un montant, une prestation (projet de l'agenda ou texte). « Marquer payé » appelle `cachet_payer` :
+la dépense « Cachets reversés aux mannequins » (`compta_ecritures`) est créée et le cachet passe payé,
+ensemble ; réservé à l'administrateur principal, avec un code récent (`P.sensible`). Rien ne s'efface
+(annulation avec motif). **Envoi direct par Wave (Payout API) : pas encore branché** — il faut une
+agence constituée et une clé Wave Business avec l'autorisation « Payout », déposée par la propriétaire
+dans Vercel (jamais donnée à l'assistant). Le serveur appellera alors `POST /v1/payout` (clé
+d'idempotence = id du cachet) puis `cachet_payer(..., 'wave_api')`. Test : `test-cachets.js`.
+
 ## 🏛️ Nouvelle Administration (chantier du 22/10/2026, adresse d'essai `/admin/nouvelle/`)
 
 Feu vert de la propriétaire : nouvelle Administration aux couleurs du site (papier, rouge,
