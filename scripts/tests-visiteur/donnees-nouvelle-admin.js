@@ -98,6 +98,9 @@ function donnees(role) {
       d.tables.partenaires = [
         { id: 'pa1', nom: 'Maison Ivoire', structure: 'Maison Ivoire SARL', evenement: 'Abidjan Fashion Night', role: 'Promoteur', description: '<p>Fidèle partenaire.</p>', logo_url: photo(7), logo_chemin: 'site/partenaires/pa1/logo.jpg', created_at: '2026-10-01T10:00:00Z' },
         { id: 'pa2', nom: 'koffi studio', structure: null, evenement: null, role: 'DA', description: null, logo_url: null, logo_chemin: null, created_at: '2026-09-01T10:00:00Z' }];
+      d.tables.mot_responsable = [{ id: 'principal', nom: 'Franck Akesse', titre: 'Fondateur', message: 'Bienvenue chez MA2M.', photo_url: photo(8) }];
+      d.tables.instagram_config = [{ id: 'principal', access_token: 'jeton-secret-essai', ig_user_id: '1784', token_expire_le: new Date(Date.now() + 5 * 864e5).toISOString() }];
+      d.tables.instagram_posts_cache = [{ id: 'principal', posts: [{ id: 'g1', image: photo(9), lien: 'https://www.instagram.com/p/abc/', legende: 'Défilé' }], updated_at: '2026-10-20T10:00:00Z' }];
       d.tables.evenement_photos = [{ id: 'ep1', evenement_id: 'e1', url: photo(6), chemin: 'site/evenements/e1/1.jpg' }];
       d.tables.inscriptions_mannequins = [{ id: 'i1', full_name: 'KADI SORO', genre: 'femme', date_naissance: '2001-02-02', statut: 'payée' }, { id: 'i2', full_name: 'PETIT ZIE', genre: 'homme', date_naissance: '2015-02-02', statut: 'payée' }];
       d.rpc.contacts_mannequins_admin = d.tables.model_profiles.filter((p) => /^m\d+$/.test(p.id)).map((p) => ({ model_id: p.id, phone: '0700000099' }));

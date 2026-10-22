@@ -2682,11 +2682,6 @@ async function chargerMotResponsableTableau() {
   }
 }
 
-function redimensionnerPhotoResponsable(fichier, coteMax = 2400, qualite = 0.88) {
-  if (!/^image\/(jpeg|png|webp)$/.test(fichier.type) || fichier.size < 1.5 * 1024 * 1024) return Promise.resolve(fichier);
-  return reduireEnJpeg(fichier, coteMax, qualite); // js/app.js
-}
-
 document.getElementById('mr-photo-btn').addEventListener('click', async () => {
   const input = document.getElementById('mr-photo-input');
   const msg = document.getElementById('mr-msg');
@@ -2705,7 +2700,7 @@ document.getElementById('mr-photo-btn').addEventListener('click', async () => {
       return;
     }
   }
-  fichier = await redimensionnerPhotoResponsable(fichier);
+  fichier = await allegerPhotoSite(fichier); // js/app.js
   if (fichier.size > 10 * 1024 * 1024) {
     msg.className = 'form-msg err';
     msg.textContent = 'Cette photo est trop lourde (plus de 10 Mo) même après compression — essayez une autre photo.';

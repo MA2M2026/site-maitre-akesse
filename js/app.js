@@ -2752,6 +2752,14 @@ async function reduireEnJpeg(fichier, coteMax, qualite) {
   return resultat || fichier;
 }
 
+// Photo d'une page du site (ex. photo du fondateur) : JPEG / PNG / WebP de plus de 1,5 Mo
+// réduite (2400 px, JPEG) ; sinon gardée telle quelle. Partagé le 22/10/2026 (ancien tableau
+// de bord et nouvelle Administration).
+function allegerPhotoSite(fichier, coteMax = 2400, qualite = 0.88) {
+  if (!/^image\/(jpeg|png|webp)$/.test(fichier.type) || fichier.size < 1.5 * 1024 * 1024) return Promise.resolve(fichier);
+  return reduireEnJpeg(fichier, coteMax, qualite);
+}
+
 function fichierEnBase64(fichier) {
   return new Promise((resolve, reject) => {
     const lecteur = new FileReader();

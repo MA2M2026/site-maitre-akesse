@@ -699,3 +699,14 @@ svg.courbe text.sem { font-size: 13px; font-weight: 400; fill: var(--av-gris); }
 .partenaire-logo img { width: 100%; height: 100%; object-fit: contain; background: #fff; }
 .partenaire-logo .ini { font-family: var(--av-titre); font-size: 40px; color: var(--av-papier); }
 .partenaire-tete { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+
+/* ---------- Mot du fondateur, Instagram (js/admin/site-vitrine.js) ---------- */
+.fondateur { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 800px) { .fondateur { grid-template-columns: 1fr; } }
+.fondateur-photo { display: flex; flex-direction: column; gap: 14px; }
+.fondateur-photo .vis { width: 100%; aspect-ratio: 4 / 5; border-radius: var(--av-rayon); }
+.fondateur-photo .vis .ini { font-size: 64px; }
+.fondateur-photo .f { display: flex; flex-wrap: wrap; gap: 8px; }
+.etat-jeton .pastille { white-space: normal; }
+.insta-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(30%, 140px), 1fr)); gap: 8px; margin: 10px 0; }
+.insta-vignette img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 12px; background: var(--av-creux); }

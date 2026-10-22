@@ -66,6 +66,8 @@ function brancher(page, donnees, journal) {
             const cree = [].concat(JSON.parse(req.postData() || '{}')).map((l, i) => ({ id: 'nouveau-' + journal.length + '-' + i, ...l }));
             // lien personnel des convocations : tiré au hasard par la vraie base (valeur par défaut)
             if (table === 'convocation_participants') cree.forEach((l, i) => { if (!l.jeton) l.jeton = (String(journal.length) + 'abcdef' + i).padEnd(36, '0').slice(0, 36); });
+            // upsert (resolution=merge-duplicates) : la ligne de même id est remplacée, pas doublée
+            if (donnees.memoriser && /merge-duplicates/.test(req.headers()['prefer'] || '')) donnees.tables[table] = (donnees.tables[table] || []).filter((l) => !cree.some((c) => c.id === l.id));
             if (donnees.memoriser) (donnees.tables[table] = donnees.tables[table] || []).push(...cree);
             return json(cree, 201);
           }

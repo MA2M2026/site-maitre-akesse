@@ -102,6 +102,24 @@ const photo = (n) => chemin.join(__dirname, 'medias', 'photo' + n + '.jpg');
     await p.click('[data-action="partenaire-supprimer"]'); await p.waitForTimeout(1500);
     ok(ecrits(journal, 'DELETE', 'partenaires').some((j) => /id=eq\.pa2/.test(j[2])), n + 'partenaire supprimé après confirmation');
 
+    // 6. Mot du fondateur : texte et photo
+    await p.goto(URL_ADMIN + '#/site/b3c-mot-fondateur'); await p.waitForSelector('#mr-nom'); await p.waitForTimeout(900);
+    ok(await p.inputValue('#mr-nom') === 'Franck Akesse' && !!(await p.$('#mr-apercu img')) && await p.isDisabled('#mr-photo-btn'), n + 'mot du fondateur : nom, photo actuelle, bouton photo inactif sans fichier');
+    await p.fill('#mr-message', 'Bienvenue chez Maître Akesse Model Management.'); await p.click('form[data-form="mot-texte"] [type=submit]'); await p.waitForTimeout(1000);
+    ok(ecrits(journal, 'PATCH', 'mot_responsable').some((j) => /id=eq\.principal/.test(j[2]) && /Model Management/.test(j[3])) && /en ligne/.test(await p.textContent('#mr-msg')), n + 'message enregistré');
+    await p.setInputFiles('input[data-change="mot-photo-choisie"]', photo(1)); await p.click('#mr-photo-btn'); await p.waitForTimeout(2500);
+    ok(ecrits(journal, 'PATCH', 'mot_responsable').some((j) => /"photo_url":"https:\/\/photos\.[^"]*site\/responsable\//.test(j[3])), n + 'nouvelle photo envoyée et enregistrée');
+    await capture(p, 'mot-fondateur' + suffixe);
+    // 7. Instagram : état du jeton, publications, jeton jamais réaffiché
+    await p.goto(URL_ADMIN + '#/site/b3c-instagram'); await p.waitForSelector('.insta-grille'); await p.waitForTimeout(800);
+    ok(/expire dans 5 jour/.test(await p.textContent('.etat-jeton')) && (await p.$$('.insta-vignette img')).length === 1 && await p.inputValue('#ig-jeton') === '' && !/jeton-secret-essai/.test(await p.content()), n + 'instagram : alerte d’expiration, publications, jeton jamais affiché');
+    await p.fill('#ig-jeton', 'nouveau-jeton'); await p.click('form[data-form="instagram-jeton"] [type=submit]'); await p.waitForTimeout(1000);
+    ok(ecrits(journal, 'POST', 'instagram_config').some((j) => /nouveau-jeton/.test(j[3]) && /"ig_user_id":"1784"/.test(j[3])), n + 'nouveau jeton enregistré (60 jours)');
+    await p.route(/graph\.facebook\.com/, (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: [{ id: 'x1', media_type: 'IMAGE', media_url: 'https://www.maitreakessemodelmanagement.com/book-photos/m1/1.jpg', permalink: 'https://www.instagram.com/p/x1/', caption: 'Nouvelle collection' }, { id: 'x2', media_type: 'VIDEO', thumbnail_url: 'https://www.maitreakessemodelmanagement.com/book-photos/m2/2.jpg', permalink: 'https://www.instagram.com/p/x2/' }] }) }));
+    await p.click('[data-action="instagram-rafraichir"]'); await p.waitForTimeout(1500);
+    ok(ecrits(journal, 'POST', 'instagram_posts_cache').some((j) => /Nouvelle collection/.test(j[3]) && /2\.jpg/.test(j[3])), n + 'publications récupérées et mises sur le site');
+    await capture(p, 'instagram' + suffixe);
+
     const pales = await lirePageEntiere(p);
     ok(!pales.length, n + 'textes lisibles ' + pales.slice(0, 4).map((x) => x.texte.slice(0, 20) + ' (' + x.contraste + ')').join(', '));
     await p.goto(URL_ADMIN + '#/site/actualites/a1'); await p.waitForSelector('#pub-titre'); await p.waitForTimeout(1200);
