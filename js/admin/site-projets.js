@@ -79,13 +79,19 @@
     if (p && await maj(p.id, { actif: !p.actif }, p.actif ? 'Casting désactivé : il n’apparaît plus sur le site.' : 'Casting réactivé : il apparaît de nouveau sur le site.')) return P.afficher();
   };
   // Ordre : on échange deux voisins puis on renumérote toute la liste de 0 à n
+  // (un seul déplacement à la fois : deux appuis rapides ne mélangent plus l'ordre)
+  let enCours = false;
   async function deplacer(el, sens) {
     const i = projets.findIndex((p) => String(p.id) === el.dataset.id), j = i + sens;
-    if (i < 0 || j < 0 || j >= projets.length) return;
-    const ordre = projets.slice();
-    [ordre[i], ordre[j]] = [ordre[j], ordre[i]];
-    const changes = ordre.map((p, k) => [p, k]).filter(([p, k]) => p.ordre_affichage !== k);
-    for (const [p, k] of changes) await P.bd(sb.from('casting_projets').update({ ordre_affichage: k }).eq('id', p.id));
+    if (enCours || i < 0 || j < 0 || j >= projets.length) return;
+    enCours = true;
+    document.querySelectorAll('[data-action="projet-monter"], [data-action="projet-descendre"]').forEach((b) => { b.disabled = true; });
+    try {
+      const ordre = projets.slice();
+      [ordre[i], ordre[j]] = [ordre[j], ordre[i]];
+      const changes = ordre.map((p, k) => [p, k]).filter(([p, k]) => p.ordre_affichage !== k);
+      await Promise.all(changes.map(([p, k]) => P.bd(sb.from('casting_projets').update({ ordre_affichage: k }).eq('id', p.id))));
+    } finally { enCours = false; }
     return P.afficher();
   }
   P.actions['projet-monter'] = (el) => deplacer(el, -1);

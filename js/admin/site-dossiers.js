@@ -397,9 +397,10 @@
     msg.textContent = 'Envoi de la photo de remplacement…';
     try {
       const lien = await envoyerVersDrive(fichier);
-      if (photo.chemin) await sb.storage.from(conf.photos.bucket).remove([photo.chemin]);
+      // la base d'abord, l'ancien fichier ensuite (jamais de photo cassée si la base refuse)
       const r = await P.bd(sb.from(conf.photos.table).update({ url: lien, chemin: null }).eq('id', photo.id).select('id'));
       if (!r || !r.length) throw new Error('la photo n’a pas été remplacée : reconnectez-vous puis réessayez');
+      if (photo.chemin) await sb.storage.from(conf.photos.bucket).remove([photo.chemin]);
       await rechargerPhotos('Photo remplacée.');
     } catch (e) { msg.textContent = 'Échec du remplacement : ' + P.erreurTexte(e); }
   };
@@ -424,14 +425,13 @@
     const conf = SOURCES[fiche.source];
     if (!confirm('Supprimer définitivement ce dossier' + (conf.photos ? ' et toutes ses photos' : '') + ' ? Cette action est irréversible.')) return;
     el.disabled = true;
+    // la base d'abord, les fichiers ensuite : si la base refuse, les photos restent intactes
+    const chemins = conf.photos ? fiche.photos.map((p) => p.chemin).filter(Boolean) : [];
     try {
-      if (conf.photos) {
-        const chemins = fiche.photos.map((p) => p.chemin).filter(Boolean);
-        if (chemins.length) await sb.storage.from(conf.photos.bucket).remove(chemins);
-      }
       const r = await P.bd(sb.from(conf.table).delete().eq('id', fiche.d.id).select('id'));
       if (!r || !r.length) throw new Error('rien n’a été supprimé : reconnectez-vous puis réessayez');
     } catch (e) { el.disabled = false; P.message('Erreur : ' + P.erreurTexte(e)); return; }
+    if (chemins.length) await sb.storage.from(conf.photos.bucket).remove(chemins).catch(() => { /* fichiers orphelins : sans effet visible */ });
     P.message('Dossier supprimé.');
     location.hash = '#/site/' + conf.page;
   };

@@ -101,7 +101,8 @@
   P.changements['publication-photos'] = (el) => {
     if (!redaction) return;
     redaction.fichiers = Array.from(el.files || []);
-    const urls = redaction.fichiers.map((f) => URL.createObjectURL(f));
+    (redaction.apercus || []).forEach((u) => URL.revokeObjectURL(u));  // les aperçus précédents libèrent la mémoire
+    const urls = redaction.apercus = redaction.fichiers.map((f) => URL.createObjectURL(f));
     document.getElementById('pub-nouvelles').innerHTML = urls.map((u) => '<img src="' + u + '" alt="">').join('');
     if (urls.length && !(redaction.existante && redaction.existante.image_url)) document.getElementById('apercu-image').innerHTML = '<img src="' + urls[0] + '" alt="">';
   };
@@ -179,7 +180,8 @@
   P.changements['partenaire-logo'] = (el) => {
     if (!partenaire) return;
     partenaire.logo = el.files && el.files[0];
-    if (partenaire.logo) document.getElementById('pa-apercu').innerHTML = '<img src="' + URL.createObjectURL(partenaire.logo) + '" alt="">';
+    if (partenaire.apercu) URL.revokeObjectURL(partenaire.apercu);
+    if (partenaire.logo) document.getElementById('pa-apercu').innerHTML = '<img src="' + (partenaire.apercu = URL.createObjectURL(partenaire.logo)) + '" alt="">';
   };
   P.formulaires['partenaire-enregistrer'] = async (f) => {
     if (!partenaire) return;
@@ -194,7 +196,11 @@
       Object.assign(ligne, logo);
     }
     const r = await P.bd((ancien ? sb.from('partenaires').update(ligne).eq('id', id) : sb.from('partenaires').insert(Object.assign({ id }, ligne))).select('id'));
-    if (!r || !r.length) { messagePa('err', 'Rien n’a été enregistré : reconnectez-vous puis réessayez.'); return; }
+    if (!r || !r.length) {
+      // le logo envoyé à l'instant n'est rattaché à rien : il est retiré
+      if (ligne.logo_chemin) await supprimerCheminsImagesSite('partenaires', 'partenaires-logos', [ligne.logo_chemin]).catch(() => {});
+      messagePa('err', 'Rien n’a été enregistré : reconnectez-vous puis réessayez.'); return;
+    }
     // ancien logo remplacé : le fichier n'est plus utilisé nulle part (base d'abord, fichier ensuite)
     if (ancien && ligne.logo_chemin && ancien.logo_chemin && ancien.logo_chemin !== ligne.logo_chemin) await supprimerCheminsImagesSite('partenaires', 'partenaires-logos', [ancien.logo_chemin]);
     partenaire = null;

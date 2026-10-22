@@ -12,7 +12,7 @@
   const P = window.Portail;
   if (!P || !P.espaces.site) return;
   const msg = (id, classe, texte) => { const m = document.getElementById(id); if (m) { m.className = 'form-msg large ' + classe; m.textContent = texte; } };
-  const nb = async (requete) => { const { count, error } = await requete; if (error) throw error; return count || 0; };
+  const nb = P.nombre;  // js/admin/coque.js
 
   // ---------- Codes d'accès ----------
   let dernierCode = null;  // code créé à l'instant (montré en haut de la page)
@@ -123,6 +123,7 @@
     try {
       const n = await P.rpc('nettoyer_photos_traitees_anciennes');
       const m = document.getElementById('nt-msg');
+      if (!m) { P.message(n > 0 ? P.pluriel(n, 'photo retirée', 'photos retirées') + ' des dossiers traités.' : 'Rien à nettoyer pour le moment.'); return; }  // (rubrique quittée entre-temps)
       m.className = 'form-msg ok';
       m.textContent = n > 0 ? P.pluriel(n, 'photo retirée', 'photos retirées') + ' (dossiers traités depuis plus de 5 jours). Les fichiers restent dans Google Drive.' : 'Rien à nettoyer pour le moment : aucun dossier traité depuis plus de 5 jours.';
     } finally { if (el.isConnected) el.disabled = false; }

@@ -164,6 +164,40 @@ rouge, à toute personne ou IA qui ouvre le dépôt, l'obligation de lire `CLAUD
 agents de code (Codex, Copilot, Cursor…). `GUIDE-DE-SECOURS.md` est le guide de la
 propriétaire pour se débrouiller sans IA (version PDF imprimable remise le 13/10/2026).
 
+## 🏛️ Nouvelle Administration (chantier du 22/10/2026, adresse d'essai `/admin/nouvelle/`)
+
+Feu vert de la propriétaire : nouvelle Administration aux couleurs du site (papier, rouge,
+visages des mannequins), mêmes données, mêmes comptes, mêmes envois. Plan, règles du chantier
+et avancement : **`PLAN-NOUVELLE-ADMINISTRATION.md`** (à lire avant d'y toucher). Tant que le
+déménagement n'est pas fait, l'ancienne Administration (`/admin/`, `tableau-de-bord.html`)
+reste en service ; la nouvelle vit à `/admin/nouvelle/`.
+
+- **Page** : `admin/nouvelle/index.html` ; décoration `css/admin-vivante.css` ; coque, accueil
+  vivant, visages et retouches automatiques (tableaux en cartes sur téléphone, écrans partagés
+  harmonisés) : `js/admin/coque.js` ; noyau commun au portail : `js/portail/noyau.js`.
+- **Bloc 1 « Administration du site »** : menu `js/admin/site.js` ; chaque rubrique est une
+  pièce `js/admin/site-*.js` (dossiers, projets, mannequins, pilotage, contenu, vitrine, agenda,
+  vidéo, accès, erreurs…), chargée seulement après la clé d'accès (`/api/acces-tableau`).
+  Protection : `middleware.js` (`SCRIPTS_NOUVELLE_ADMIN`, `/js/admin/:fichier*`) et
+  `vercel.json` (pas de cache public).
+- **Écrans partagés entre les deux maisons** (jamais de copie) : l'écran est dans
+  `js/<nom>-gabarit.js` (`window.GABARIT_*`), la logique dans un `window.demarrer…()` :
+  convocations, messages groupés, agenda, vidéo de l'accueil, photos mises de côté, rapport des
+  profils, fiches événement, erreurs du site (`js/erreurs-site.js`), note d'intégration
+  (`js/note-integration.js`), nettoyage (`js/nettoyage-supabase.js`).
+- **Outils partagés créés pour l'occasion** : `js/photos.js` (affichage des photos, sorti de
+  `js/app.js`, chargé avant lui sur toutes les pages), `PUBLICATIONS`, `sauverPublication`,
+  `effacerPublication` (`js/publications.js`), `js/partenaires-communs.js`,
+  `lienWhatsAppCode` (`js/messages-candidats.js`), `allegerPhotoSite` et
+  `pageAdministration()` (`js/app.js` : l'Administration n'est ni comptée comme visite ni
+  dotée de la pastille WhatsApp publique).
+- **Tests** : `test-nouvelle-admin*.js` (dans `lancer.sh`), données simulées
+  `donnees-nouvelle-admin.js` ; tournée photographique pour les visites « patron d'agence » :
+  `CAPTURES=dossier [ESPACE=paiements|compta] node scripts/tests-visiteur/tournee-nouvelle-admin.js`.
+- **Piège des tests (22/10/2026)** : le petit serveur local doit être lancé avec
+  `stdio: 'ignore'` ; sinon son journal non lu se remplit et il se fige (pages qui ne
+  s'ouvrent plus, faux échecs).
+
 ## 🚪 Écran d'entrée de l'accueil (21/10/2026, validé par la propriétaire)
 `index.html` et `en/index.html` chargent dans le `<head>` `js/ecran-entree.js` (SANS defer) et
 `css/ecran-entree.css`. Une fois par visite (`sessionStorage` `ma2m_ecran_entree`) : animation

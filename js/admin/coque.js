@@ -94,7 +94,12 @@
     const menu = a.closest('.lateral'), r = a.getBoundingClientRect(), m = menu.getBoundingClientRect();
     if (r.bottom > m.bottom - 40 || r.top < m.top) menu.scrollTop += r.top - m.top - m.height / 3;
   }
-  new MutationObserver(() => { etiqueterTableaux(); harmoniserEcransPartages(); rubriqueVisible(); }).observe(document.getElementById('app'), { childList: true, subtree: true });
+  // (regroupé : une seule passe après une rafale de changements, pas une par image des chiffres animés)
+  let retouche = 0;
+  new MutationObserver(() => {
+    if (retouche) return;
+    retouche = setTimeout(() => { retouche = 0; etiqueterTableaux(); harmoniserEcransPartages(); rubriqueVisible(); }, 60);
+  }).observe(document.getElementById('app'), { childList: true, subtree: true });
 
   P.compte = (n, suffixe) => '<span data-compte="' + (Number(n) || 0) + '"' + (suffixe ? ' data-suffixe="' + P.esc(suffixe) + '"' : '') + '>0' + P.esc(suffixe || '') + '</span>';
 
@@ -108,7 +113,7 @@
   };
   const icone = (cle, taille) => '<svg width="' + (taille || 20) + '" height="' + (taille || 20) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONES[cle] + '</svg>';
   const COURT = { site: 'Le site', paiements: 'Paiements', compta: 'Compta' };
-  const premierePage = (esp) => esp.nav.find((n) => n[0])[0];
+  const premierePage = P.premierePage;  // js/portail/noyau.js
   const blocsPermis = () => ['site', 'paiements', 'compta'].filter((k) => P.moi.espaces[k] && P.espaces[k]);
   const lienSecurite = () => P.moi.role === 'principal' ? ['#/securite/comptes', 'Sécurité et journal'] : ['#/securite/codes', 'Mes codes de secours'];
 
@@ -150,15 +155,16 @@
     return { jour: JOURS[d.getDay()], date: d.getDate() + ' ' + P.MOIS[d.getMonth()] };
   }
   // Une lecture qui échoue ne casse pas l'accueil : sa carte disparaît simplement
-  const essai = (promesse) => Promise.resolve(promesse).catch(() => null);
-  const nombre = async (requete) => { const r = await requete; if (r.error) throw r.error; return r.count || 0; };
+  // (partagés avec les pièces du bloc 1 : P.essai, P.nombre)
+  const essai = P.essai = (promesse) => Promise.resolve(promesse).catch(() => null);
+  const nombre = P.nombre = async (requete) => { const r = await requete; if (r.error) throw r.error; return r.count || 0; };
 
   async function donneesSite() {
     const aujourdhui = P.aujourdhui();
     const [profils, nouvelles, projets] = await Promise.all([
       essai(P.bd(sb.from('model_profiles').select('id, full_name, niveau_mannequin, city').eq('published', true).order('created_at', { ascending: false }).limit(40))),
       essai(nombre(sb.from('casting_applications').select('id', { count: 'exact', head: true }).eq('status', 'nouvelle'))),
-      essai(P.bd(sb.from('agenda_projets').select('id, titre, type, date_debut, date_fin, lieu, ville, annule, mannequin_ids').eq('annule', false).gte('date_debut', aujourdhui.slice(0, 8) + '01').order('date_debut').limit(20)))
+      essai(P.bd(sb.from('agenda_projets').select('id, titre, type, date_debut, date_fin, lieu, ville, annule, mannequin_ids').eq('annule', false).or('date_debut.gte.' + aujourdhui + ',date_fin.gte.' + aujourdhui).order('date_debut').limit(10)))  // en cours ou à venir
     ]);
     const prochain = (projets || []).find((p) => (p.date_fin || p.date_debut) >= aujourdhui) || null;
     let reponses = null;

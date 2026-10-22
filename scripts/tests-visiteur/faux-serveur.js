@@ -102,7 +102,8 @@ function brancher(page, donnees, journal) {
         // or=(a.eq.x,b.ilike.y,and(c.eq.z,d.eq.w)) : conditions simples (recherche de doublons)
         if (url.searchParams.get('or')) {
           const morceaux = (t) => { const r = []; let n = 0, cur = ''; for (const ch of t) { if (ch === '(') n++; if (ch === ')') n--; if (ch === ',' && !n) { r.push(cur); cur = ''; } else cur += ch; } if (cur) r.push(cur); return r; };
-          const vrai = (l, c) => { if (/^and\(/.test(c)) return morceaux(c.slice(4, -1)).every((x) => vrai(l, x)); const m = c.match(/^([\w]+)\.(eq|ilike)\.(.*)$/); if (!m) return false;
+          const vrai = (l, c) => { if (/^and\(/.test(c)) return morceaux(c.slice(4, -1)).every((x) => vrai(l, x)); const m = c.match(/^([\w]+)\.(eq|ilike|gte|lte)\.(.*)$/); if (!m) return false;
+            if (m[2] === 'gte' || m[2] === 'lte') return l[m[1]] != null && (m[2] === 'gte' ? String(l[m[1]]) >= m[3] : String(l[m[1]]) <= m[3]);
             return m[2] === 'eq' ? String(l[m[1]]) === m[3] : String(l[m[1]] || '').toLowerCase() === m[3].toLowerCase(); };
           const conds = morceaux(url.searchParams.get('or').replace(/^\(|\)$/g, ''));
           lignes = lignes.filter((l) => conds.some((c) => vrai(l, c)));

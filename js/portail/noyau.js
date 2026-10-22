@@ -405,7 +405,7 @@
 
   // ---------- coque et pages ----------
   // première rubrique d'un espace (le menu peut commencer par un titre de groupe)
-  const premierePage = (esp) => esp.nav.find((n) => n[0])[0];
+  const premierePage = P.premierePage = (esp) => esp.nav.find((n) => n[0])[0];  // (aussi pour js/admin/coque.js)
   P.coque = (module, page, html) => {
     const esp = P.espaces[module];
     // une entrée sans adresse (null) est un titre de groupe dans le menu

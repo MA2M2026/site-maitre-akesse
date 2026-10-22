@@ -145,8 +145,11 @@ document.getElementById('edit-p-enregistrer-btn').addEventListener('click', asyn
   const logoInput = document.getElementById('edit-p-logo');
   if (logoInput.files[0]) Object.assign(maj, await envoyerLogoPartenaire(id, logoInput.files[0]));  // js/partenaires-communs.js
 
+  const ancien = window.partenairesData.find(x => x.id === id);
   const { error } = await sbAdmin.from('partenaires').update(maj).eq('id', id);
   if (error) { msg.className = 'form-msg err'; msg.textContent = T('Erreur lors de la modification.', 'Error while updating.'); return; }
+  // ancien logo remplacé : plus utilisé nulle part (base d'abord, fichier ensuite), comme dans l'Administration
+  if (maj.logo_chemin && ancien && ancien.logo_chemin && ancien.logo_chemin !== maj.logo_chemin) await supprimerCheminsImagesSite('partenaires', 'partenaires-logos', [ancien.logo_chemin]);
 
   msg.className = 'form-msg ok'; msg.textContent = T('Partenaire modifié !', 'Partner updated!');
   await chargerPartenaires();

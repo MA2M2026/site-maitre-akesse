@@ -14,9 +14,9 @@
   'use strict';
   const P = window.Portail;
   if (!P || !P.espaces.site) return;
-  const nb = async (requete) => { const { count, error } = await requete; if (error) throw error; return count || 0; };
+  const nb = P.nombre;  // js/admin/coque.js
   const tete = (table) => sb.from(table).select('id', { count: 'exact', head: true });
-  const essai = (x) => Promise.resolve(x).catch(() => null);
+  const essai = P.essai;
   const pluriel = P.pluriel;
   function lundi() { const d = new Date(); const j = (d.getDay() + 6) % 7; d.setDate(d.getDate() - j); d.setHours(0, 0, 0, 0); return d.toISOString(); }
   function debutMois() { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1).toISOString(); }
