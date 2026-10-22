@@ -10,7 +10,10 @@ function brancher(page, donnees, journal) {
   const jetonPortail = (aal) => b64j({ alg: 'HS256', typ: 'JWT' }) + '.' + b64j({ sub: 'admin-1', role: 'authenticated', aud: 'authenticated', email: 'admin@test.ci',
     exp: Math.floor(Date.now() / 1000) + 36000, aal, amr: aal === 'aal2' ? [{ method: 'password', timestamp: Math.floor(Date.now() / 1000) }, { method: 'totp', timestamp: Math.floor(Date.now() / 1000) }] : [{ method: 'password', timestamp: Math.floor(Date.now() / 1000) }] }) + '.c2lnbmF0dXJl';
   const sessionPortail = (aal) => ({ access_token: jetonPortail(aal), token_type: 'bearer', expires_in: 36000, expires_at: Math.floor(Date.now() / 1000) + 36000, refresh_token: 'faux-' + aal, user });
-  return page.route(/^https?:\/\/(?!127\.0\.0\.1)(?!dfhghgmwmxiguhtxtsle)/, r => r.abort()).then(() => Promise.all([
+  // Rattrapage des anciennes photos (Administration, js/photos.js) : il écrit dans la base 8 s après
+  // l'accueil ; mis de côté sauf pour l'essai qui le vérifie (donnees.rattrapage = true).
+  const sansRattrapage = donnees.rattrapage ? Promise.resolve() : page.addInitScript(() => { try { sessionStorage.setItem('ma2m_rattrapage_photos', '1'); } catch (e) { /* stockage bloqué */ } });
+  return sansRattrapage.then(() => page.route(/^https?:\/\/(?!127\.0\.0\.1)(?!dfhghgmwmxiguhtxtsle)/, r => r.abort())).then(() => Promise.all([
     page.route(SUPA + '/**', async (route) => {
       const req = route.request(), url = new URL(req.url()), m = req.method();
       const objet = /vnd\.pgrst\.object/.test(req.headers()['accept'] || '');

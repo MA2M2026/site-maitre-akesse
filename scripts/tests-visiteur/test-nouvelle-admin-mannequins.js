@@ -55,7 +55,13 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     ok(journal.some((j) => j[0] === 'rpc' && j[1] === 'definir_sourdine' && /"p_desactive":true/.test(j[2])) && /En sourdine/.test(await p.textContent('.mannequin-tete')), n + 'mise en sourdine après confirmation');
     ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)), n + 'fiche en sourdine : rien ne dépasse de l’écran');
     // 4. CV
+    // photos du CV téléchargées par l'adresse de l'Administration elle-même : depuis admin.…, l'adresse
+    // www est refusée par la sécurité du navigateur (CV sans photos, signalé le 22/10/2026)
+    const photosCv = []; const surRequete = (r) => { if (/book-photos/.test(r.url()) && r.resourceType() === 'fetch') photosCv.push(r.url()); };
+    p.on('request', surRequete);
     await p.click('a[href$="/cv"]'); await p.waitForSelector('#cv-apercu'); await p.waitForTimeout(4000);
+    p.off('request', surRequete);
+    ok(photosCv.length > 0 && photosCv.every((u) => u.startsWith('http://127.0.0.1:')), n + 'CV : photos chargées par l’adresse de l’Administration (' + photosCv.length + ' ; ' + (photosCv.find((u) => !u.startsWith('http://127.0.0.1:')) || 'toutes locales') + ')');
     ok(await p.isVisible('#cv-pdf') && await p.isVisible('#cv-jpeg') && (await p.$('#cv-apercu img') || /indisponible/.test(await p.textContent('#cv-apercu'))), n + 'CV : aperçu et téléchargements PDF / JPEG');
     await p.goBack(); await p.waitForSelector('.mannequin-tete'); await p.waitForTimeout(600);
     // 5. Suppression définitive : il faut taper SUPPRIMER

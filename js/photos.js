@@ -47,6 +47,15 @@ const CLE_PHOTOS_RELAIS = 'ma2m_photos_relais';
 const DELAI_PHOTOS_DIRECTES = 8000;
 const DELAI_SONDE_PHOTOS = 5000;
 const DUREE_PHOTOS_RELAIS = 3600 * 1000;
+// Photo du Book à TÉLÉCHARGER par le navigateur (CV, compcard, rattrapage) : toujours par le relais
+// de la même adresse que la page. Depuis l'Administration (admin.…), l'adresse www ou l'adresse
+// directe des photos est refusée par la sécurité du navigateur (connect-src) : CV sans photos
+// (signalé par la propriétaire le 22/10/2026).
+function urlPhotoMemeOrigine(url) {
+  if (typeof url !== 'string') return url;
+  if (RELAIS_PHOTOS.test(url)) return url.replace(RELAIS_PHOTOS, '/book-photos/');
+  return url.indexOf(PHOTOS_DIRECTES) === 0 ? '/book-photos/' + url.slice(PHOTOS_DIRECTES.length) : url;
+}
 // Lu une seule fois par page, puis mis à jour par passerAuRelais.
 let photosParRelais = (function () {
   if (!PHOTOS_DIRECTES_ACTIVES) return true;
@@ -230,7 +239,7 @@ async function rattraperPhotosEnArrierePlan() {
     try {
       // par le relais de la même adresse (20/10/2026 : depuis admin.…, l'adresse www enregistrée
       // en base était refusée par la sécurité du navigateur, connect-src)
-      const reponse = await fetch(photo.url.replace(RELAIS_PHOTOS, '/book-photos/'));
+      const reponse = await fetch(urlPhotoMemeOrigine(photo.url));
       if (!reponse.ok) throw new Error('Téléchargement échoué (HTTP ' + reponse.status + ')');
       const original = await reponse.blob();
       const maj = {};

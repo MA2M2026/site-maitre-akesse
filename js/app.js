@@ -443,7 +443,9 @@ function definirSelectOuAutre(idSelect, idAutre, valeur) {
 const COTE_MAX_FICHE = 2000;
 async function telechargerImage(url, cache) {
   try {
-    const reponse = await fetch(url, cache ? { cache: cache } : undefined);
+    // (par le relais de la même adresse que la page : js/photos.js)
+    const source = typeof urlPhotoMemeOrigine === 'function' ? urlPhotoMemeOrigine(url) : url;
+    const reponse = await fetch(source, cache ? { cache: cache } : undefined);
     if (!reponse.ok) return null; // déjà signalé par la surveillance des requêtes
     const blob = await reponse.blob();
     return blob && blob.size ? blob : null;
