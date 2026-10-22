@@ -18,10 +18,11 @@
 
 const { verifierUtilisateur, estAdmin, cheminSur } = require('./_commun.js');
 const { debutR2, repondreR2, TYPES_IMAGES, traiterNoteIntegration } = require('./_r2.js');
-// 'boutique' : photos des produits de la Marketplace (29/09/2026).
+// ('boutique' : photos des produits de la Marketplace, retirée du site le 23/10/2026 ; les photos
+// déjà envoyées restent dans le stockage.)
 // 'couverture' : vidéo de couverture en haut de toutes les pages (04/10/2026).
 // 'video-accueil' : grand espace vidéo dans le corps de la page d'accueil (05/10/2026).
-const CATEGORIES_AUTORISEES = ['actualites', 'evenements', 'partenaires', 'responsable', 'boutique', 'couverture', 'video-accueil'];
+const CATEGORIES_AUTORISEES = ['actualites', 'evenements', 'partenaires', 'responsable', 'couverture', 'video-accueil'];
 const CATEGORIES_VIDEO = ['couverture', 'video-accueil'];
 
 // Formats d'image acceptés : TYPES_IMAGES (api/_r2.js).

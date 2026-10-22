@@ -117,7 +117,7 @@ async function visite(b, page, mode, opts = {}) {
       boutique_categories: [{ id: 'c1', nom: 'Robes', slug: 'robes', actif: true, ordre: 0 }],
       boutique_produits: [{ id: 'b1', nom: 'Robe MA2M', slug: 'robe-ma2m', statut: 'en_vente', type: 'article', mis_en_avant: true, ordre: 0, created_at: '2026-10-01T10:00:00Z', description: 'Robe',
         photos: photosProduit, variantes: [{ id: 'v1', taille: 'M', couleur: 'Noir', prix_fcfa: 25000, stock: 3, actif: true, ordre: 0 }], categorie: { nom: 'Robes', slug: 'robes' } }] };
-    const cas = [['index.html', /site\/(mot|logo)\.jpg/], ['qui-sommes-nous.html', /site\/mot\.jpg/], ['marketplace/index.html', /site\/robe/], ['marketplace/produit.html?p=robe-ma2m', /site\/robe/]];
+    const cas = [['index.html', /site\/(mot|logo)\.jpg/], ['qui-sommes-nous.html', /site\/mot\.jpg/]];
     for (const [page, attendu] of cas) {
       const ctx = await b.newContext({ viewport: { width: 390, height: 844 } }); const p = await ctx.newPage(); const e5 = [], relais = [];
       p.on('pageerror', e => e5.push(e.message));

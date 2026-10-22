@@ -9,13 +9,11 @@ const tables = {
   bandeau_annonce: [], instagram_posts_cache: [], mot_responsable: [], admins: []
 };
 const rpc = { photos_couverture_mannequins: [{ model_id: 'a1', url: 'https://x/1.jpg' }] };
-// Toutes les pages publiques (le tableau de bord et la gestion de la boutique sont protégés et
-// couverts par test-admin.js / test-boutique.js)
+// Toutes les pages publiques (l'Administration est essayée à part : test-nouvelle-admin*.js…)
 const pages = [
   'index', 'qui-sommes-nous', 'mannequins', 'mannequin.html?id=a1', 'actualites', 'evenements', 'agenda', 'parcours',
   'partenaires', 'services', 'selection', 'contact', 'integrer-agence', 'candidature', 'inscription-mannequin',
   'mentions-legales', 'politique-confidentialite'
-].flatMap(n => [n, 'en/' + n]).concat(['espace-mannequin', 'reinitialiser-mot-de-passe', '404',
-  'marketplace/index', 'marketplace/cgv', 'marketplace/suivi', 'marketplace/commande'])
+].flatMap(n => [n, 'en/' + n]).concat(['espace-mannequin', 'reinitialiser-mot-de-passe', '404'])
   .map(n => (n.includes('.html') ? n : n + '.html'));
 module.exports = { tables, rpc, pages };

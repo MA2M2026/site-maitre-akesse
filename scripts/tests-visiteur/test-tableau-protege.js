@@ -43,6 +43,8 @@ const ADMIN = '11111111-2222-3333-4444-555555555555';
   // l'ancienne adresse du tableau de bord (signets, liens d'avant) mène à l'Administration
   ok(['/tableau-de-bord', '/tableau-de-bord.html'].every(s => vercel.redirects.some(x => x.source === s && !x.has && x.destination === '/admin/')), 'ancienne adresse du tableau de bord → /admin/');
   ok(!fs.existsSync(path.join(RACINE, 'tableau-de-bord.html')), 'ancien tableau de bord retiré du site');
+  // boutique retirée le 23/10/2026 (décision de la propriétaire) : ses anciennes adresses mènent à l'accueil
+  ok(['/marketplace', '/marketplace/:chemin*'].every(s => vercel.redirects.some(x => x.source === s && x.destination === '/')) && !fs.existsSync(path.join(RACINE, 'marketplace')), 'boutique retirée : ses adresses mènent à l’accueil');
   fs.unlinkSync(tmp);
   console.log(ko ? '❌ ' + ko + ' échec(s)' : 'Tout est bon.'); process.exit(ko ? 1 : 0);
 })().catch(e => { console.log('❌ ÉCHEC', e.stack); process.exit(1); });

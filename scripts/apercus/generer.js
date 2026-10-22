@@ -32,11 +32,9 @@ const PAGES = [
   ['selection', ['Casting groupé', 'Ma sélection', 'Les profils choisis pour votre demande'], ['Group casting', 'My selection', 'The profiles chosen for your request']],
   ['espace-mannequin', ['Réservé aux mannequins', 'Espace mannequin', 'Mon book, mes photos, mon parcours'], null]
 ];
-// Images sans page du même nom à la racine (20/10/2026) : la boutique « La Maison MA2M »
-// (marketplace/index.html et produit.html, en français seulement)
-const AUTRES = [
-  ['boutique', ['La boutique de l’agence', 'La Maison<br>MA2M', 'Articles, billets d’événements et services de l’agence'], null]
-];
+// Images sans page du même nom à la racine (la boutique « La Maison MA2M », retirée le 23/10/2026,
+// en avait une) : aucune pour le moment
+const AUTRES = [];
 function css() {
   const dossiers = fs.readdirSync(POLICES).filter(d => fs.statSync(path.join(POLICES, d)).isDirectory());
   const trouver = n => {
@@ -78,7 +76,7 @@ function ajusterTitre() {
   while (taille > 60 && tropGrand()) { taille -= 4; h1.style.fontSize = taille + 'px'; }
 }
 async function capturer(p, fichierHtml, sortie, { page, langue, t }) {
-  const chemin = [langue === 'en' ? 'en' : '', page === 'index' ? '' : page === 'boutique' ? 'marketplace' : page].filter(Boolean).join('/');
+  const chemin = [langue === 'en' ? 'en' : '', page === 'index' ? '' : page].filter(Boolean).join('/');
   fs.writeFileSync(fichierHtml, gabarit(t[0], t[1], t[2], 'maitreakessemodelmanagement.com' + (chemin ? '/' + chemin : ''), langue === 'en'));
   await p.goto('file://' + fichierHtml);
   await p.evaluate(() => document.fonts.ready);

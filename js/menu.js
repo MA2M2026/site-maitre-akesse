@@ -174,46 +174,5 @@ document.addEventListener('DOMContentLoaded', () => {
 // (Le lien « Admin » de la barre d'en-tête est retiré le 20/10/2026, demande de la propriétaire :
 // l'administration se fait désormais par les applications de l'Administration, plus depuis le site.)
 
-// Lien « Marketplace » dans la barre d'en-tête, à côté de « EN »
-// (29/09/2026). Tant que la boutique est fermée au public, il n'apparaît QUE pour un
-// administrateur connecté : pour un simple visiteur (aucune session enregistrée), on
-// ne contacte même pas la base de données. Le résultat est gardé pour l'onglet.
-document.addEventListener('DOMContentLoaded', async () => {
-  const menuBtn = document.getElementById('menuBtn');
-  if (!menuBtn || !menuBtn.parentNode || document.querySelector('.header-marketplace-lien')) return;
-  if (/\/marketplace(\/|$)/.test(window.location.pathname)) return;
-  function ajouterLien() {
-    // Dans le menu plein écran aussi : sur téléphone, la barre du haut n'a pas la
-    // place pour un 4e bouton (le logo disparaissait) — le lien y est donc masqué
-    // (voir .header-marketplace-lien dans css/style.css) et proposé dans le menu.
-    const liste = document.querySelector('.menu-overlay .nav-links');
-    if (liste && !liste.querySelector('.item-marketplace')) {
-      const li = document.createElement('li');
-      li.className = 'item-marketplace';
-      li.style.setProperty('--rang', 0); // tout en haut : apparaît le premier
-      const a = document.createElement('a');
-      a.href = '/marketplace/';
-      a.textContent = 'Marketplace';
-      li.appendChild(a);
-      liste.insertBefore(li, liste.firstChild);
-    }
-    const lien = document.createElement('a');
-    lien.className = 'lang-switch header-marketplace-lien';
-    lien.href = '/marketplace/';
-    lien.textContent = 'Marketplace';
-    menuBtn.parentNode.insertBefore(lien, menuBtn);
-  }
-  try {
-    if (sessionStorage.getItem('ma2m_est_admin') === '1') { ajouterLien(); return; }
-  } catch (e) {}
-  try {
-    const client = (typeof sbAdmin !== 'undefined' && sbAdmin) ? sbAdmin : null;
-    if (!client) return;
-    const { data: { session } } = await client.auth.getSession();
-    if (!session) return;
-    const { data } = await client.from('admins').select('user_id').eq('user_id', session.user.id).maybeSingle();
-    if (!data) return;
-    try { sessionStorage.setItem('ma2m_est_admin', '1'); } catch (e) {}
-    ajouterLien();
-  } catch (e) {}
-});
+// (Le lien « Marketplace » de la barre d'en-tête est retiré le 23/10/2026 avec la boutique, décision
+// de la propriétaire : « on en créera une autre au moment venu ».)

@@ -201,6 +201,17 @@ recette annulée avec elle et cachet de nouveau « à payer » ; la recette seul
 (`cachet_depense_annulee`). Tant que ce SQL n'est pas exécuté, la page reste en
 « montant à verser » (pas de calcul). La page montre aussi la photo de la mannequin (registre).
 
+## 🛍️ Boutique « Marketplace » retirée (23/10/2026)
+
+Décision de la propriétaire (22/10/2026) : « dissoudre le marketplace, on en créera une autre au
+moment venu ». Retirés : `marketplace/*.html`, `js/marketplace-*.js`, `js/gabarit-boutique.js`,
+`css/marketplace.css`, le lien « Marketplace » de l'en-tête (`js/menu.js`), l'image d'aperçu
+`assets/apercus/fr-boutique.jpg`, la catégorie d'envoi « boutique » (`api/r2-site-images.js`),
+`test-boutique.js`. Les anciennes adresses `/marketplace…` mènent à l'accueil (`vercel.json`).
+**Rien n'est effacé dans la base** (tables `boutique_*`, commandes) ni dans le stockage des photos :
+une future boutique pourra s'en servir. Les sections plus bas qui parlent de la boutique sont
+historiques.
+
 ## 🏛️ Nouvelle Administration (chantier du 22/10/2026 ; à l'adresse `/admin/` depuis le déménagement)
 
 Feu vert de la propriétaire : nouvelle Administration aux couleurs du site (papier, rouge,
