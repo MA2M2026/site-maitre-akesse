@@ -69,9 +69,12 @@ function donnees(role) {
       d.tables.agence_mannequins = [
         { id: 'r1', full_name: 'ROXANE OUATTARA', telephone: '0102030405', email: 'roxane@test.ci', mensualite: 10000, statut: 'actif', user_id: 'm-site', date_naissance: '1999-01-01' },
         { id: 'r2', full_name: 'KONÉ AWA', telephone: '0707070707', email: 'awa@test.ci', mensualite: 20000, statut: 'actif', user_id: null, date_naissance: '2000-01-01' },
-        { id: 'r3', full_name: 'KOUAME JEAN', telephone: '0505050505', mensualite: 10000, statut: 'actif', user_id: null, date_naissance: '2012-05-05', parent_nom: 'MADAME KOUAME', parent_telephone: '0101010101', parent_email: 'parent@test.ci' }];
+        { id: 'r3', full_name: 'KOUAME JEAN', telephone: '0505050505', mensualite: 10000, statut: 'actif', user_id: null, date_naissance: '2012-05-05', parent_nom: 'MADAME KOUAME', parent_telephone: '0101010101', parent_email: 'parent@test.ci' },
+        { id: 'r5', full_name: 'BAMBA AÏCHA', telephone: '0909090909', mensualite: 10000, statut: 'actif', user_id: null, date_naissance: '2001-01-01' }];
       d.tables.messages_envoyes = []; d.tables.modeles_messages = [];
-      d.tables.paiements_mannequins = [{ id: 'p1', mannequin_id: 'r1', objet: 'mensualite', mois: mm(mc), montant: 10000, statut: 'valide' }];
+      // ROXANE a payé (validé) ; BAMBA a envoyé sa preuve, pas encore validée : ni l'une ni l'autre n'est relancée
+      d.tables.paiements_mannequins = [{ id: 'p1', mannequin_id: 'r1', objet: 'mensualite', mois: mm(mc), montant: 10000, statut: 'valide' },
+        { id: 'p5', mannequin_id: 'r5', objet: 'mensualite', mois: mm(mc), montant: 10000, statut: 'declare' }];
     });
     const p = e.p; p.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) e.errs.push('console : ' + m.text().slice(0, 140)); });
     await p.addInitScript(() => { window.__mails = []; window.envoyerEmailCandidat = (x) => { window.__mails.push(x); return Promise.resolve(); }; });
@@ -88,6 +91,7 @@ function donnees(role) {
     // filtre par défaut : pas encore payé → KONÉ et KOUAME, pas ROXANE (qui a payé)
     const noms = await p.$$eval('input[name="msg-ids"]', (l) => l.map((x) => x.closest('tr').textContent));
     ok(noms.length === 2 && !noms.some((x) => /ROXANE/.test(x)), nomEcran + ' : « pas encore payé » exclut ceux qui ont payé');
+    ok(!noms.some((x) => /BAMBA/.test(x)), nomEcran + ' : « pas encore payé » exclut aussi la preuve envoyée en attente de validation (pas de relance)');
     ok(noms.some((x) => /MADAME KOUAME \(parent\)/.test(x)), nomEcran + ' : le destinataire d’un mineur est son parent');
     await p.click('[data-action="msg-filtre"][data-filtre="inscrits"]'); await p.waitForTimeout(800);
     ok((await p.$$('input[name="msg-ids"]')).length === 1 && /ROXANE/.test(await t()), nomEcran + ' : filtre « inscrits sur le site »');

@@ -721,7 +721,9 @@
     P.etat.liensWave = liens;
     (modeles || []).forEach((x) => { if (MODELES[x.cle]) MODELES[x.cle][1] = x.texte; });
     if (e.texte === undefined) e.texte = MODELES[e.modele][1];
-    const aPaye = (m) => paiements.some((x) => x.mannequin_id === m.id && x.statut === 'valide');
+    // « Pas encore payé » : ni paiement validé, ni preuve envoyée en attente de validation (décision de la
+    // propriétaire, 22/10/2026 : on ne relance pas une personne qui a déjà payé), comme les relances automatiques
+    const aPaye = (m) => paiements.some((x) => x.mannequin_id === m.id && (x.statut === 'valide' || x.statut === 'declare'));
     const choisis = actifs.filter((m) => e.filtre === 'tous' || (e.filtre === 'inscrits' && m.user_id) || (e.filtre === 'non_inscrits' && !m.user_id) || (e.filtre === 'non_payes' && !aPaye(m)));
     e.liste = choisis;
     return P.entete('Messages et relances') +

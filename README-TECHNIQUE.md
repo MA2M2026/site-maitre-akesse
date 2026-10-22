@@ -60,7 +60,9 @@
 > (actifs cochés, `mensualites_appeler`, e-mail EmailJS + file WhatsApp), relances du 3 et du 5 :
 > tâche planifiée Vercel (`vercel.json` « crons » → GET `/api/portail`, `mensualites_relances`,
 > e-mail EmailJS côté serveur : variables `EMAILJS_PRIVATE_KEY` et, conseillé, `CRON_SECRET` ; sans
-> clé, rien ne part et c'est noté au journal). Textes communs : `js/messages-mensualites.js`
+> clé, rien ne part et c'est noté au journal). **Jamais de relance à qui a envoyé sa preuve** (« J'ai
+> payé » en attente de validation) : ni les relances automatiques (`mensualite_etat` = `attente`), ni le
+> filtre « Pas encore payé » de « Messages et relances » (décision de la propriétaire, 22/10/2026). Textes communs : `js/messages-mensualites.js`
 > (navigateur + serveur). Mannequin : `mes-paiements.html` (`mes_mensualites`, 24 mois,
 > `mensualite_declarer`). Fiche du registre : mensualité reçue par l'agence (Wave hors site, espèces).
 >
