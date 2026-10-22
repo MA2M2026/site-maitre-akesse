@@ -91,6 +91,8 @@ function donnees(role) {
     if (mc > 3) ok(l1[2] === 'erreur' && l2[0] === 'erreur', nomEcran + ' : mois passés sans paiement = non payé (rouge)');
     ok(l1[11] === 'neutre' || mc === 12, nomEcran + ' : décembre à venir (gris)');
     if (mc > 1) ok(l3[0] === 'neutre', nomEcran + ' : mois avant l’entrée = gris, pas rouge');
+    if (mc > 1) ok(await p.evaluate(() => [...document.querySelectorAll('td.case-mois .sr-only')].some((x) => /avant l’entrée \(non concerné\)/.test(x.textContent))), nomEcran + ' : mois avant l’entrée marqué « — non concerné », pas « à venir »');
+    if (ecran.width < 700 && mc > 3) ok(await p.evaluate(() => { const b = document.querySelector('td.mois-actuel').closest('.tableau'); return b.scrollLeft > 0; }), nomEcran + ' : la matrice s’ouvre sur le mois en cours');
     ok(/✓/.test(await t()) && (await p.$$eval('table.matrice .sr-only', (l) => l.map((x) => x.textContent))).includes('janvier : payé'), nomEcran + ' : chaque pastille a un signe et un texte (pas seulement la couleur)');
     ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)), nomEcran + ' : pas de défilement de côté de la page');
     await p.screenshot({ path: __dirname + '/medias/matrice-' + (ecran.width > 860 ? 'pc' : 'tel') + '.png' });

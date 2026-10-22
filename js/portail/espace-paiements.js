@@ -590,17 +590,23 @@
       const rang = annee * 12 + (n - 1), entree = m.date_entree ? new Date(m.date_entree) : null;
       const avantEntree = entree && rang < entree.getFullYear() * 12 + entree.getMonth();
       const st = paye[m.id + '|' + n];
-      let e = st ? (st === 'valide' ? 'paye' : 'attente') : avantEntree || rang > moisActuel ? 'neutre' : rang === moisActuel && jour <= 5 ? 'neutre' : 'non_paye';
-      const sign = { paye: ['✓', 'ok', 'payé'], attente: ['…', 'alerte', 'en attente de validation'], non_paye: ['✕', 'erreur', 'non payé'], neutre: ['·', 'neutre', rang > moisActuel ? 'à venir' : avantEntree ? 'avant l’entrée' : 'à payer avant le 5'] }[e];
-      return '<td class="case-mois"><span class="pastille ' + sign[1] + '" title="' + P.MOIS[n - 1] + ' : ' + sign[2] + '"><span aria-hidden="true">' + sign[0] + '</span><span class="sr-only">' + P.esc(P.MOIS[n - 1] + ' : ' + sign[2]) + '</span></span></td>';
+      // (avant l'entrée du mannequin : « — », non concerné ; jamais confondu avec « à venir »)
+      let e = st ? (st === 'valide' ? 'paye' : 'attente') : avantEntree ? 'hors' : rang > moisActuel ? 'neutre' : rang === moisActuel && jour <= 5 ? 'neutre' : 'non_paye';
+      const sign = { paye: ['✓', 'ok', 'payé'], attente: ['…', 'alerte', 'en attente de validation'], non_paye: ['✕', 'erreur', 'non payé'], hors: ['—', 'neutre', 'avant l’entrée (non concerné)'], neutre: ['·', 'neutre', rang > moisActuel ? 'à venir' : 'à payer avant le 5'] }[e];
+      return '<td class="case-mois' + (rang === moisActuel ? ' mois-actuel' : '') + '"><span class="pastille ' + sign[1] + '" title="' + P.MOIS[n - 1] + ' : ' + sign[2] + '"><span aria-hidden="true">' + sign[0] + '</span><span class="sr-only">' + P.esc(P.MOIS[n - 1] + ' : ' + sign[2]) + '</span></span></td>';
     };
     const colonnes = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
     return P.entete('Matrice mannequins × mois · ' + annee, '<button class="btn petit" type="button" data-action="matrice-annee" data-sens="-1">‹ ' + (annee - 1) + '</button><button class="btn petit" type="button" data-action="matrice-annee" data-sens="1">' + (annee + 1) + ' ›</button>') +
-      '<div class="ligne">' + P.pastille('✓ payé', 'ok') + P.pastille('… en attente', 'alerte') + P.pastille('✕ non payé', 'erreur') + P.pastille('· à venir', 'neutre') + '</div>' +
+      '<div class="ligne">' + P.pastille('✓ payé', 'ok') + P.pastille('… en attente', 'alerte') + P.pastille('✕ non payé', 'erreur') + P.pastille('· à venir', 'neutre') + P.pastille('— avant l’entrée', 'neutre') + '</div>' +
       '<div class="carte">' + (mannequins.length ? P.tableau(['Mannequin'].concat(colonnes), mannequins.map((m) =>
         '<tr><td><a href="#/paiements/fiche/' + m.id + '"><b>' + P.esc(m.full_name) + '</b></a></td>' + colonnes.map((c, i) => case_(m, i + 1)).join('') + '</tr>'), 'matrice')
         : '<p class="doux">Aucun mannequin dans le registre.</p>') + '</div>';
   }
+  // téléphone : la matrice s'ouvre sur le mois en cours (visite du 22/10/2026)
+  const versMoisActuel = () => {
+    const c = document.querySelector('td.mois-actuel'), boite = c && c.closest('.tableau');
+    if (boite && boite.scrollWidth > boite.clientWidth) boite.scrollLeft = c.offsetLeft - boite.clientWidth / 2;
+  };
   P.actions['matrice-annee'] = (el) => { P.etat.anneeMatrice = (P.etat.anneeMatrice || new Date().getFullYear()) + Number(el.getAttribute('data-sens')); P.afficher(); };
 
   // ---------- Récapitulatif de fin de mois (cahier V3, 7.2) ----------
@@ -876,6 +882,7 @@
         return fin < 0 ? html : html.slice(0, fin + 12) + noteSuiviVide(0) + html.slice(fin + 12);
       } }))),
     compteur: {},
+    apres: { matrice: versMoisActuel },
     // nombre de paiements en attente, affiché dans le menu
     avant: async () => {
       // (une inscription et son 1er mois, déclarés ensemble, comptent pour un)
