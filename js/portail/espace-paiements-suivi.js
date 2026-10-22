@@ -40,7 +40,10 @@
       return { g, p, r, alertes };
     });
     const nbAlertes = lignes.filter((l) => l.alertes.length).length;
-    return P.entete('Rapprochement Wave', P.pastille(nbAlertes ? nbAlertes + ' à regarder' : 'Aucune alerte', nbAlertes ? 'alerte' : 'ok')) +
+    // (« Aucune alerte » en vert seulement quand plus rien n'attend : des paiements à vérifier ne sont pas « tout va bien »)
+    const nbAttente = lignes.length;
+    const etat = nbAlertes ? [nbAlertes + ' à regarder', 'erreur'] : nbAttente ? [nbAttente + ' à vérifier', 'alerte'] : ['Rien à vérifier', 'ok'];
+    return P.entete('Rapprochement Wave', P.pastille(etat[0], etat[1])) +
       '<div class="note info">Comparez chaque déclaration avec Wave Business : numéro du payeur, référence et montant. Quand tout correspond, « Valider ». Sinon, notez « Introuvable » ou « Précision demandée », avec une note.</div>' +
       P.tableau(['Mannequin', 'Déclaré', 'Numéro du payeur', 'Vu dans Wave', 'État', ''], lignes.map((l) => {
         const e = ETATS_RAPP[(l.r && l.r.etat) || 'a_verifier'];

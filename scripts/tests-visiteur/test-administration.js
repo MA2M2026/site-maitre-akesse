@@ -364,11 +364,11 @@ function donnees(role) {
       await pr.waitForSelector('.tuile, .lateral', { timeout: 6000 }).catch(() => {});
       await pr.goto(url + '#/paiements/registre'); await pr.waitForSelector('.tableau tbody tr', { timeout: 6000 }).catch(() => {});
       const lignes = await pr.$$eval('.tableau tbody tr', (l) => l.map((x) => x.innerText.replace(/\s+/g, ' ')));
-      ok(lignes.length === 4 && lignes.some((x) => /ROXANE OUATTARA.*Inscription déjà effectuée sur le site/.test(x)) && lignes.some((x) => /KONÉ AWA.*Inscription non payée/.test(x)) && lignes.some((x) => /YAO KOUASSI.*En attente de validation/.test(x)),
+      ok(lignes.length === 4 && lignes.some((x) => /ROXANE OUATTARA.*Inscription déjà effectuée sur le site/.test(x)) && lignes.some((x) => /KONÉ AWA.*Inscription à enregistrer/.test(x)) && lignes.some((x) => /YAO KOUASSI.*En attente de validation/.test(x)),
         nomEcran + ' (' + role + ') : registre = comptes du site + ajoutés à la main, couleurs d’inscription');
       if (role === 'principal') {
         await pr.click('[data-action="registre-filtre"][data-filtre="non_paye"]'); await pr.waitForTimeout(500);
-        ok((await pr.$$('.tableau tbody tr')).length === 1, nomEcran + ' : filtre « Inscription non payée »');
+        ok((await pr.$$('.tableau tbody tr')).length === 1, nomEcran + ' : filtre « Inscription à enregistrer »');
         // ajout à la main : un mineur sans parent est refusé
         await pr.goto(url + '#/paiements/ajouter'); await pr.waitForSelector('#mq-nom');
         await pr.fill('#mq-nom', 'Petit Franck'); await pr.fill('#mq-naissance', '2014-05-05'); await pr.click('form[data-form="registre-ajouter"] [type=submit]'); await pr.waitForTimeout(600);

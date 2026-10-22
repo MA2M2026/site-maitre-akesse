@@ -17,7 +17,7 @@
   // État de l'inscription d'un mannequin : [libellé, ton de la pastille]
   function etatInscription(m, paiement) {
     if (m.user_id) return ['Inscription déjà effectuée sur le site', 'ok'];
-    if (!paiement) return ['Inscription non payée', 'erreur'];
+    if (!paiement) return ['Inscription à enregistrer', 'erreur'];  // (aucun paiement noté : à régulariser dans la fiche)
     if (paiement.statut === 'valide') return ['Inscription payée' + (paiement.mode === 'avant_systeme' ? ' (avant le nouveau système)' : ''), 'ok'];
     return ['En attente de validation', 'alerte'];
   }
@@ -32,7 +32,7 @@
   }
 
   // ---------- Registre ----------
-  const FILTRES = [['tous', 'Tous'], ['site', 'Inscrits sur le site'], ['main', 'Ajoutés à la main'], ['non_paye', 'Inscription non payée'], ['sans_nom', 'Sans nom']];
+  const FILTRES = [['tous', 'Tous'], ['site', 'Inscrits sur le site'], ['main', 'Ajoutés à la main'], ['non_paye', 'Inscription à enregistrer'], ['sans_nom', 'Sans nom']];
   // compte créé sur le site sans nom rempli : le registre l'a repris sous « Sans nom »
   const sansNom = (m) => /^sans nom$/i.test(String(m.full_name || '').trim());
   async function registre() {
@@ -45,7 +45,7 @@
     const site = tous.filter((m) => m.user_id).length;
     return P.entete('Registre des mannequins', '<a class="btn rouge" href="#/paiements/ajouter">＋ Ajouter un mannequin</a>') +
       '<div class="grille chiffres">' + P.chiffre('Mannequins de l’agence', tous.length) + P.chiffre('Inscrits sur le site', site) +
-      P.chiffre('Ajoutés à la main', tous.length - site) + P.chiffre('Inscription non payée', tous.filter((m) => etatInscription(m, m.inscription)[1] === 'erreur').length, 'rouge') +
+      P.chiffre('Ajoutés à la main', tous.length - site) + P.chiffre('Inscription à enregistrer', tous.filter((m) => etatInscription(m, m.inscription)[1] === 'erreur').length, 'rouge') +
       (tous.some(sansNom) ? P.chiffre('Sans nom', tous.filter(sansNom).length, 'orange') : '') + '</div>' +
       (tous.some(sansNom) ? '<div class="note info">« Sans nom » : des comptes créés sur le site sans nom rempli. Ouvrez la fiche pour voir leur e-mail et téléphone, et compléter le nom. Rien ne se supprime : si ce n’est pas un vrai mannequin, proposez sa sortie dans « Sorties et suspensions ».</div>' : '') +
       '<form class="ligne" data-form="registre-chercher"><label class="fl" for="rg-cherche" style="flex:1;min-width:200px">Rechercher (nom, téléphone, e-mail)' +
@@ -452,7 +452,7 @@
     });
     const ordre = { a_generer: 0, expire: 1, actif: 2, non_paye: 3 };
     lignes.sort((a, b) => ordre[a.etat] - ordre[b.etat]);
-    const ETAT = { a_generer: ['Code à générer', 'alerte'], expire: ['Code expiré', 'erreur'], actif: ['Code actif', 'ok'], non_paye: ['Inscription non payée', 'neutre'] };
+    const ETAT = { a_generer: ['Code à générer', 'alerte'], expire: ['Code expiré', 'erreur'], actif: ['Code actif', 'ok'], non_paye: ['Inscription à enregistrer', 'neutre'] };
     return P.entete('Codes de l’espace mannequin') +
       '<div class="note info">Le code (ESP-…) permet au mannequin de créer son espace avec son e-mail et son mot de passe ; ses informations du casting sont alors reprises. Il ne sert qu’une fois et reste valable 7 jours. Il ne se génère qu’après une inscription payée et validée.</div>' +
       '<div class="grille chiffres">' + P.chiffre('À générer', lignes.filter((x) => x.etat === 'a_generer').length, 'orange') + P.chiffre('Actifs', lignes.filter((x) => x.etat === 'actif').length, 'vert') +
@@ -538,9 +538,11 @@
         '</select></label><button class="btn rouge" type="submit">Ajouter au tableau</button>' +
         '<a class="btn" href="#/paiements/ajouter">＋ Nouveau mannequin</a></div></form>' +
       '<div class="segments" role="group" aria-label="Groupe">' + FILTRES_GROUPE.map((f) => '<button class="btn petit' + (f[0] === filtre ? ' actif' : '') + '" type="button" data-action="tableau-filtre" data-filtre="' + f[0] + '">' + P.esc(f[1]) + '</button>').join('') + '</div>' +
-      '<div class="carte">' + (montrees.length ? P.tableau(['Mannequin', 'Groupe', 'Destinataire', '#Montant', 'Statut', 'Action'], montrees.map((x) =>
-        '<tr' + (x.e === 'non_paye' ? ' class="ligne-retard"' : '') + '><td><a href="#/paiements/fiche/' + x.m.id + '"><b>' + P.esc(x.m.full_name) + '</b></a></td>' +
-        '<td>' + (x.inscrit ? 'Inscrit sur le site' : 'Non inscrit') + '</td><td>' + P.esc(x.destinataire) + '</td><td class="nombre">' + P.fcfa(x.montant) + '</td>' +
+      '<div class="carte">' + (montrees.length ? P.tableau(['Mannequin', 'Groupe', '#Montant', 'Statut', 'Action'], montrees.map((x) =>
+        // (le destinataire n'est montré que s'il diffère : le parent d'une mineure)
+        '<tr' + (x.e === 'non_paye' ? ' class="ligne-retard"' : '') + '><td><a href="#/paiements/fiche/' + x.m.id + '"><b>' + P.esc(x.m.full_name) + '</b></a>' +
+        (x.destinataire && x.destinataire !== x.m.full_name ? '<div class="petit-texte doux">Message à : ' + P.esc(x.destinataire) + '</div>' : '') + '</td>' +
+        '<td>' + (x.inscrit ? 'Inscrit sur le site' : 'Non inscrit') + '</td><td class="nombre">' + P.fcfa(x.montant) + '</td>' +
         '<td>' + P.pastille(ETATS[x.e][0], ETATS[x.e][1]) + '</td>' +
         '<td>' + (x.e === 'attente' ? '<a class="btn petit" href="#/paiements/a-valider">Valider</a>' : x.e === 'paye' ? '<span class="doux">Reçu émis</span>' : '<a class="btn petit" href="#/paiements/mensualites">Relancer</a>') +
         ' <button class="btn petit" type="button" data-action="suivi-retirer" data-id="' + x.m.id + '" aria-label="Retirer ' + P.esc(x.m.full_name) + ' du tableau">Retirer</button></td></tr>'))
