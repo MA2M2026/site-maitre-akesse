@@ -141,6 +141,8 @@ async function lirePageEntiere(p) {
   for (let y = 0; y < h; y += Math.round(hauteurEcran * 0.85)) {
     await p.evaluate((y) => window.scrollTo({ top: y, behavior: 'instant' }), y);
     await p.waitForTimeout(250);
+    // apparitions en fondu (nouvelle Administration) : mesurer le texte une fois arrivé, pas en chemin
+    await p.waitForFunction(() => document.getAnimations().every((a) => a.playState !== 'running' || a.effect.getComputedTiming().iterations === Infinity), null, { timeout: 4000 }).catch(() => {});
     for (const x of await p.evaluate(verifierLisibilite)) {
       const cle = x.element + '|' + x.texte;
       if (!vus.has(cle)) { vus.add(cle); trouves.push(x); }

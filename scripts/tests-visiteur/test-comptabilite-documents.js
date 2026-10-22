@@ -9,7 +9,7 @@
 //    ajouté, photo mise en page, format illisible signalé).
 const { chromium } = require('playwright'); const { spawn, execFileSync } = require('child_process'); const { brancher } = require('./faux-serveur');
 const { lirePageEntiere } = require('./lisibilite');
-const { verifierBoutons } = require('./boutons');
+const { verifierBoutons, ouvrirSaisies } = require('./boutons');
 const PDFLib = require('../../js/vendor/pdf-lib-1.17.1.min.js');
 const PORT = String(9500 + Math.floor(Math.random() * 90));
 let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m); if (!c) ko++; };
@@ -90,6 +90,7 @@ function donnees(role, fichiers) {
   const aller = async (p, page) => {
     await p.goto(url + '#/compta/' + page);
     await p.waitForFunction((pg) => location.hash === '#/compta/' + pg && document.querySelector('#contenu h1') && !document.querySelector('#contenu .chargement'), page, { timeout: 8000 }).catch(() => {});
+    await ouvrirSaisies(p);
   };
   const controler = async (p, nom) => {
     const boutons = (await p.evaluate(verifierBoutons)).map((x) => x.texte); ok(!boutons.length, nom + ' : boutons au modèle rouge ' + boutons.join(' | '));
@@ -138,7 +139,7 @@ function donnees(role, fichiers) {
     await p.fill('#av-motif', 'Remise fidélité'); await p.fill('#av-montant', '20000'); await p.click('form[data-form="compta-doc-avoir"] [type=submit]'); await p.waitForTimeout(800);
     cr = (rpc(journal, 'compta_document_creer').pop() || {}).p || {};
     ok(cr.type === 'avoir' && cr.origine_id === 'fa1' && cr.lignes[0].prix === 20000 && cr.lignes[0].designation === 'Remise fidélité', nomEcran + ' : avoir sur la facture');
-    await p.selectOption('#do-type', 'recu');
+    await ouvrirSaisies(p); await p.selectOption('#do-type', 'recu');
     ok(await p.isVisible('#do-recette') && !(await p.isVisible('#do-lignes')), nomEcran + ' : reçu → choix de la recette encaissée, sans lignes à taper');
     const proposees = await p.$$eval('#do-recette option', (l) => l.map((o) => o.value));
     ok(proposees.join() === 'e1', nomEcran + ' : seules les recettes saisies (pas celles de l’espace 2) sont proposées');

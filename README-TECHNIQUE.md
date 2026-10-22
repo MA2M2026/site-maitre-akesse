@@ -82,7 +82,7 @@
 > `mensualite_declarer_avec_numero`, `inscription_payer_avec_numero`, `mes_recus`). Les pages gardent un repli
 > tant que le SQL n'est pas exécuté (`api/code-protege.js` retombe sur l'ancienne fonction). Orange, MTN et Moov :
 > non activés, il faut d'abord un compte comptable par opérateur (aujourd'hui tout ce qui n'est pas « espèces »
-> va au compte Wave). Tests : `test-espace1-cadre`, `test-tableau-du-mois`, `test-matrice-mois`, `test-recapitulatif`,
+> va au compte Wave). Tests : `test-tableau-du-mois`, `test-matrice-mois`, `test-recapitulatif`,
 > `test-messages`, `test-parametres`, `test-correction-paiement`, `test-codes-espace`, `test-suivi-paiements`, `test-mensualites`.
 >
 > **Espace 3, morceau A — recettes, dépenses, trésorerie (cahier v2.4 §6)** : `js/portail/espace-compta.js`
@@ -189,6 +189,12 @@ l'adresse d'essai `/admin/nouvelle/` renvoie vers `/admin/` (`vercel.json`) ; se
 `admin/sw.js` en `administration-v10` (liste INTERFACE = fichiers de la nouvelle page) ; signal
 d'appui des boutons (`js/bouton-appui.js`) gardé, avec son style dans `css/admin-vivante.css`.
 L'ancien `tableau-de-bord.html` existe encore jusqu'à la démolition (étape 12 du plan).
+**Boutons de la nouvelle Administration** (choix de la propriétaire, 22/10/2026) : rouge pour les
+actions importantes, clair (ou noir) pour les autres ; la règle « tous les boutons rouges » du
+18/10/2026 reste celle du site public. Les essais (`scripts/tests-visiteur/boutons.js`) vérifient
+dans l'Administration que chaque bouton reste lisible (contraste ≥ 4,5) et ne déborde pas ; ils
+ouvrent les formulaires repliés par « ＋ » (`ouvrirSaisies`) et la lisibilité attend la fin des
+apparitions en fondu (`lisibilite.js`). `test-espace1-cadre.js` (tuile de l'ancienne entrée) est retiré.
 
 - **Page** : `admin/index.html` ; décoration `css/admin-vivante.css` ; coque, accueil
   vivant, visages et retouches automatiques (tableaux en cartes sur téléphone, écrans partagés
@@ -370,7 +376,7 @@ seule fois** (décision de la propriétaire). Ce qui change par rapport aux sect
   sous la clé `/admin/` ; avant, tout fichier du dossier (le manifeste) la remplaçait et, réseau coupé,
   on voyait le texte JSON « comme du code » (essai : `test-admin-hors-ligne.js`, serveur arrêté).
   Fond du tableau de bord dans le cadre : clair dès le début (`html.cadre-admin`, css/mode-administration.css),
-  plus de fond noir pendant le chargement (essai dans `test-espace1-cadre.js`).
+  plus de fond noir pendant le chargement (essai retiré au déménagement du 22/10/2026).
   Identifiant de l'application : `/admin/?application=administration-ma2m` (changé le 19/10/2026 : une
   tablette gardait en mémoire l'ancienne installation et refusait de réinstaller). Sur téléphone et
   tablette en vertical (< 860 px), le menu est caché derrière « ☰ Menu » et glisse depuis la gauche

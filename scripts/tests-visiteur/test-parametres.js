@@ -3,7 +3,7 @@
 // les encaissements, message clair si la table n'existe pas encore), montants et calendrier.
 const { chromium } = require('playwright'); const { spawn } = require('child_process'); const { brancher } = require('./faux-serveur');
 const { lirePageEntiere } = require('./lisibilite');
-const { verifierBoutons } = require('./boutons');
+const { verifierBoutons, ouvrirSaisies } = require('./boutons');
 const PORT = String(9300 + Math.floor(Math.random() * 90));
 let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m); if (!c) ko++; };
 
@@ -85,7 +85,8 @@ function donnees(role) {
     ok(/25 000 FCFA/.test(tx) && /15 000 FCFA de droit d’inscription/.test(tx) && /10 000 FCFA/.test(tx) && /20 000 FCFA/.test(tx), nomEcran + ' : montants en vigueur affichés');
     ok(/Le 1er/.test(tx) && /Le 3/.test(tx) && /Le 5/.test(tx) && /Le 6/.test(tx), nomEcran + ' : calendrier du mois affiché');
     ok(/Inscription 25 000/.test(tx) && /Actif/.test(tx) && /Désactivé/.test(tx), nomEcran + ' : liens listés avec leur état');
-    ok(await p.isVisible('form[data-form="lien-ajouter"]'), nomEcran + ' : l’administrateur principal peut ajouter un lien');
+    await ouvrirSaisies(p);
+    ok(await p.isVisible('form[data-form="lien-ajouter"]'), nomEcran + ' : l’administrateur principal peut ajouter un lien (« ＋ » ouvre le formulaire)');
     const lienHref = await p.$eval('table a[target="_blank"]', (a) => a.getAttribute('rel'));
     ok(/noopener/.test(lienHref), nomEcran + ' : les liens s’ouvrent sans donner accès à la page d’origine');
     await p.fill('#lw-libelle', 'Mensualité 20 000'); await p.fill('#lw-montant', '20000'); await p.fill('#lw-adresse', 'http://pas-securise.example');
@@ -103,7 +104,7 @@ function donnees(role) {
     // 2. encaissements : lecture seule
     const c = await connecter('caisse', (d) => { d.tables.liens_wave = [{ id: 'l1', type: 'inscription', libelle: 'Inscription 25 000', montant: 25000, adresse: 'https://pay.wave.com/m/M_ci_a/c/ci/', actif: true }]; });
     const tc = await t(c.p);
-    ok(/Inscription 25 000/.test(tc) && !(await c.p.isVisible('form[data-form="lien-ajouter"]')) && !(await c.p.$('[data-action="lien-etat"]')), nomEcran + ' : encaissements → liens en lecture seule, ni ajout ni désactivation');
+    ok(/Inscription 25 000/.test(tc) && !(await c.p.isVisible('form[data-form="lien-ajouter"]')) && !(await c.p.$('#contenu .ouvrir-saisie')) && !(await c.p.$('[data-action="lien-etat"]')), nomEcran + ' : encaissements → liens en lecture seule, ni ajout ni désactivation');
     ok(/Seul l’administrateur principal/.test(tc), nomEcran + ' : message expliquant pourquoi');
     await c.ctx.close();
     // 3. table pas encore créée

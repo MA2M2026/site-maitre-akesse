@@ -3,7 +3,8 @@
 // Compte aussi comme bouton un lien habillé en bouton (fond ou cadre, marge intérieure) : il doit
 // être rouge lui aussi. Ne sont pas concernés : les liens dans le texte, les photos cliquables
 // (.cliquable), le bouton WhatsApp flottant et les logos de réseaux (couleurs de marque).
-// Utilisé par test-visuel.js (pages publiques) et test-portail.js (portail /admin).
+// Utilisé par test-visuel.js (pages publiques) et les essais de l'Administration (/admin/) ;
+// dans la nouvelle Administration, règle du 22/10/2026 (voir plus bas).
 
 // Exécutée DANS la page : renvoie la liste des boutons qui ne suivent pas le modèle.
 function verifierBoutons() {
@@ -20,6 +21,16 @@ function verifierBoutons() {
     return q.width > 4 && q.height > 4 && s.visibility !== 'hidden' && s.display !== 'none' && Number(s.opacity) > 0.05;
   };
   const transparent = (c) => c === 'rgba(0, 0, 0, 0)' || c === 'transparent';
+  const adminVivante = !!document.querySelector('link[href*="admin-vivante"]');
+  const rvb = (c) => (/rgba?\((\d+), (\d+), (\d+)/.exec(c) || [0, 255, 255, 255]).slice(1, 4).map(Number);
+  const lum = (c) => { const [r, g, b] = rvb(c).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+  // contraste du texte sur le premier fond non transparent (le bouton ou ce qui est derrière)
+  const contraste = (e) => {
+    let x = e; while (x && transparent(getComputedStyle(x).backgroundColor)) x = x.parentElement;
+    const fond = x ? getComputedStyle(x).backgroundColor : 'rgb(255, 255, 255)';
+    const a = lum(getComputedStyle(e).color), f = lum(fond);
+    return (Math.max(a, f) + 0.05) / (Math.min(a, f) + 0.05);
+  };
   const habille = (e) => {
     const s = getComputedStyle(e);
     const cadre = Number.parseFloat(s.borderTopWidth) > 0 && Number.parseFloat(s.borderBottomWidth) > 0 && Number.parseFloat(s.borderLeftWidth) > 0 && !transparent(s.borderTopColor);
@@ -49,7 +60,11 @@ function verifierBoutons() {
       const interieur = e.clientWidth - Number.parseFloat(s.paddingLeft) - Number.parseFloat(s.paddingRight);
       deborde = texte.width > interieur + 2 || texte.height > e.clientHeight + 2;
     }
-    const ok = rouge(s.backgroundColor) && s.color === 'rgb(255, 255, 255)' && rayon >= 2 && !deborde;
+    // Nouvelle Administration (choix de la propriétaire, 22/10/2026) : rouge pour les actions
+    // importantes, boutons clairs ou noirs pour les autres — chaque bouton doit seulement rester
+    // bien lisible (contraste du texte sur son fond d'au moins 4,5).
+    const modele = adminVivante ? (rouge(s.backgroundColor) && s.color === 'rgb(255, 255, 255)') || contraste(e) >= 4.5 : rouge(s.backgroundColor) && s.color === 'rgb(255, 255, 255)';
+    const ok = modele && rayon >= 2 && !deborde;
     if (!ok) {
       const nom = e.tagName.toLowerCase() + (e.id ? '#' + e.id : '') + [...e.classList].map((c) => '.' + c).join('');
       mauvais.push({ deborde, element: nom, texte: (e.innerText || e.value || e.getAttribute('aria-label') || '').trim().replace(/\s+/g, ' ').slice(0, 30), fond: s.backgroundColor, couleur: s.color, rayon: s.borderTopLeftRadius });
@@ -58,4 +73,11 @@ function verifierBoutons() {
   return mauvais;
 }
 
-module.exports = { verifierBoutons };
+// Nouvelle Administration : les formulaires de saisie sont repliés derrière « ＋ titre »
+// (js/admin/coque.js, SAISIES) ; on les ouvre comme une personne, en touchant ce bouton.
+async function ouvrirSaisies(p) {
+  await p.waitForTimeout(400);  // (le repli se fait juste après l'affichage de la page)
+  for (const b of await p.$$('#contenu .ouvrir-saisie')) await b.click().catch(() => {});
+}
+
+module.exports = { verifierBoutons, ouvrirSaisies };

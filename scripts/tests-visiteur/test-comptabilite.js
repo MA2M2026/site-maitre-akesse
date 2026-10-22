@@ -11,7 +11,7 @@
 //  - le responsable des encaissements n'entre pas dans la comptabilité.
 const { chromium } = require('playwright'); const { spawn } = require('child_process'); const { brancher } = require('./faux-serveur');
 const { lirePageEntiere } = require('./lisibilite');
-const { verifierBoutons } = require('./boutons');
+const { verifierBoutons, ouvrirSaisies } = require('./boutons');
 const PORT = String(9400 + Math.floor(Math.random() * 90));
 let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m); if (!c) ko++; };
 const MOIS = new Date().toISOString().slice(0, 7), JOUR = MOIS + '-02';
@@ -73,6 +73,7 @@ function donnees(role) {
   const aller = async (p, page) => {
     await p.goto(url + '#/compta/' + page);
     await p.waitForFunction(() => document.querySelector('#contenu h1') && !document.querySelector('#contenu .chargement'), null, { timeout: 6000 }).catch(() => {});
+    await ouvrirSaisies(p);
   };
   const controler = async (p, nom) => {
     const boutons = (await p.evaluate(verifierBoutons)).map((x) => x.texte); ok(!boutons.length, nom + ' : boutons au modèle rouge ' + boutons.join(' | '));
@@ -121,12 +122,12 @@ function donnees(role) {
     ok((await p.textContent('#calque')).includes('Dépense enregistrée'), nomEcran + ' : message « Dépense enregistrée »');
 
     // Photo d'iPhone (HEIC) : convertie en JPEG quand le navigateur la lit, sinon gardée telle quelle
-    await p.fill('#cp-montant', '3000'); await p.fill('#cp-libelle', 'Photo iPhone lisible');
+    await ouvrirSaisies(p); await p.fill('#cp-montant', '3000'); await p.fill('#cp-libelle', 'Photo iPhone lisible');
     await p.setInputFiles('#cp-justif', { name: 'recu.heic', mimeType: 'image/heic', buffer: PNG });
     await p.click('form[data-form="compta-ecrire"] [type=submit]'); await p.waitForTimeout(1000);
     let depots = journal.filter((j) => j[0] === 'STOCKAGE');
     ok(/\.jpg$/.test(depots[depots.length - 1][1]), nomEcran + ' : photo HEIC lisible → convertie en JPEG avant l’envoi');
-    await p.fill('#cp-montant', '3000'); await p.fill('#cp-libelle', 'Photo iPhone illisible ici');
+    await ouvrirSaisies(p); await p.fill('#cp-montant', '3000'); await p.fill('#cp-libelle', 'Photo iPhone illisible ici');
     await p.setInputFiles('#cp-justif', { name: 'recu2.heic', mimeType: 'image/heic', buffer: Buffer.from('pas une photo') });
     await p.click('form[data-form="compta-ecrire"] [type=submit]'); await p.waitForTimeout(1000);
     depots = journal.filter((j) => j[0] === 'STOCKAGE');
@@ -166,7 +167,7 @@ function donnees(role) {
     await aller(p, 'tresorerie'); t = await texte(p);
     ok(/Total disponible\s*130 000 FCFA/i.test(t), nomEcran + ' : total disponible de la trésorerie');
     await controler(p, nomEcran + ' : trésorerie');
-    await p.fill('#vi-montant', '10000'); await p.fill('#vi-libelle', 'Dépôt à la banque');
+    await ouvrirSaisies(p); await p.fill('#vi-montant', '10000'); await p.fill('#vi-libelle', 'Dépôt à la banque');
     await p.selectOption('#vi-vers', 'c1'); await p.selectOption('#vi-de', 'c1');
     await p.click('form[data-form="compta-virement"] [type=submit]'); await p.waitForTimeout(400);
     ok((await p.textContent('#calque')).includes('deux comptes différents'), nomEcran + ' : virement vers le même compte refusé');
@@ -174,7 +175,7 @@ function donnees(role) {
     await p.click('form[data-form="compta-virement"] [type=submit]'); await p.waitForTimeout(800);
     const vir = envoi(journal, 'POST', 'compta_ecritures').pop() || {};
     ok(vir.sens === 'virement' && vir.compte_id === 'c2' && vir.compte_dest_id === 'c1' && vir.montant === 10000, nomEcran + ' : virement Wave → caisse enregistré');
-    await p.fill('#co-nom', 'Banque essai'); await p.selectOption('#co-type', 'banque'); await p.fill('#co-solde', '250000');
+    await ouvrirSaisies(p); await p.fill('#co-nom', 'Banque essai'); await p.selectOption('#co-type', 'banque'); await p.fill('#co-solde', '250000');
     await p.click('form[data-form="compta-compte"] [type=submit]'); await p.waitForTimeout(800);
     const cpt = envoi(journal, 'POST', 'compta_comptes')[0] || {};
     ok(cpt.nom === 'Banque essai' && cpt.type === 'banque' && cpt.solde_initial === 250000, nomEcran + ' : compte bancaire ajouté avec son solde de départ');
@@ -202,7 +203,7 @@ function donnees(role) {
     let rg = envoi(journal, 'POST', 'compta_ecritures').pop() || {};
     ok(rg.dette_id === 'd1' && rg.sens === 'recette' && rg.montant === 60000 && rg.categorie === 'casting' && (await p.textContent('#calque')).includes('Reste 200 000'),
       nomEcran + ' : encaissement partiel enregistré comme recette, reste 200 000 annoncé');
-    await p.fill('#dt-montant', '150000'); await p.fill('#dt-libelle', 'Shooting catalogue'); await p.fill('#dt-echeance', '2099-01-31');
+    await ouvrirSaisies(p); await p.fill('#dt-montant', '150000'); await p.fill('#dt-libelle', 'Shooting catalogue'); await p.fill('#dt-echeance', '2099-01-31');
     await p.click('form[data-form="compta-dette"] [type=submit]'); await p.waitForTimeout(800);
     const cr = envoi(journal, 'POST', 'compta_dettes').pop() || {};
     ok(cr.sens === 'creance' && cr.tiers_id === 't1' && cr.montant === 150000 && cr.echeance === '2099-01-31', nomEcran + ' : nouvelle somme due par un client');
@@ -225,7 +226,7 @@ function donnees(role) {
     // Personnel et prestataires
     await aller(p, 'personnel');
     await controler(p, nomEcran + ' : personnel');
-    await p.fill('#pe-montant', '75000'); await p.fill('#pe-libelle', 'Salaire d’octobre');
+    await ouvrirSaisies(p); await p.fill('#pe-montant', '75000'); await p.fill('#pe-libelle', 'Salaire d’octobre');
     await p.setInputFiles('#pe-justif', { name: 'recu.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4') });
     await p.click('form[data-form="compta-payer-personne"] [type=submit]'); await p.waitForTimeout(800);
     const pe = envoi(journal, 'POST', 'compta_ecritures').pop() || {};
@@ -235,7 +236,7 @@ function donnees(role) {
     await aller(p, 'materiel'); t = await texte(p);
     ok(/Valeur d’achat\s*400 000 FCFA/i.test(t), nomEcran + ' : inventaire du matériel et sa valeur');
     await controler(p, nomEcran + ' : matériel');
-    await p.fill('#ma-nom', 'Projecteur LED'); await p.fill('#ma-montant', '120000'); await p.fill('#ma-serie', 'PX-9');
+    await ouvrirSaisies(p); await p.fill('#ma-nom', 'Projecteur LED'); await p.fill('#ma-montant', '120000'); await p.fill('#ma-serie', 'PX-9');
     await p.click('form[data-form="compta-materiel"] [type=submit]'); await p.waitForTimeout(800);
     const ach = journal.filter((j) => j[0] === 'rpc' && j[1] === 'compta_materiel_acheter').map((j) => JSON.parse(j[2])).pop() || {};
     ok(ach.p_designation === 'Projecteur LED' && ach.p_montant === 120000 && ach.p_numero_serie === 'PX-9' && ach.p_compte, nomEcran + ' : achat de matériel enregistré');
@@ -250,7 +251,7 @@ function donnees(role) {
     // Carnet
     await aller(p, 'carnet');
     await controler(p, nomEcran + ' : carnet');
-    await p.fill('#ti-nom', 'Studio Lumière'); await p.selectOption('#ti-type', 'prestataire'); await p.fill('#ti-tel', '0101010101');
+    await ouvrirSaisies(p); await p.fill('#ti-nom', 'Studio Lumière'); await p.selectOption('#ti-type', 'prestataire'); await p.fill('#ti-tel', '0101010101');
     await p.click('form[data-form="compta-tiers"] [type=submit]'); await p.waitForTimeout(800);
     const ti = envoi(journal, 'POST', 'compta_tiers').pop() || {};
     ok(ti.nom === 'Studio Lumière' && ti.type === 'prestataire', nomEcran + ' : prestataire ajouté au carnet');

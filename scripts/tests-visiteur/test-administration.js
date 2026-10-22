@@ -2,9 +2,9 @@
 // téléphone et ordinateur, avec une base SIMULÉE (rien n'est écrit pour de vrai) :
 //  - connexion : mot de passe, puis code de double authentification (un mauvais code est refusé) ;
 //  - première connexion : activation de la double authentification, 8 codes de secours ;
-//  - administrateur principal : trois tuiles aux libellés exacts, chaque espace s'ouvre, sécurité ;
-//  - une personne n'ayant droit qu'à un espace y arrive directement, sans tuile des autres ;
-//  - menu « ☰ Menu » sur téléphone et tablette en vertical, toujours à gauche sur ordinateur ;
+//  - administrateur principal : trois blocs aux libellés exacts sur l'accueil, chaque espace s'ouvre, sécurité ;
+//  - une personne n'ayant droit qu'à un espace y arrive directement, sans les blocs des autres ;
+//  - menu « Rubriques » qui monte du bas sur téléphone et tablette en vertical, toujours à gauche sur ordinateur ;
 //  - code à 4 chiffres de l'appareil : choix, verrouillage après 15 minutes, déverrouillage ;
 //  - lisibilité des écrans, boutons au modèle rouge, aucune erreur de page.
 const { chromium } = require('playwright'); const { spawn } = require('child_process'); const { brancher } = require('./faux-serveur');
@@ -68,7 +68,7 @@ function donnees(role) {
   const pales = async (p) => (await lirePageEntiere(p)).map((x) => x.texte.slice(0, 25) + ' (' + x.contraste + ')');
 
   for (const [nomEcran, ecran] of [['téléphone', { width: 390, height: 844 }], ['ordinateur', { width: 1280, height: 900 }]]) {
-    // 1. Administrateur principal : mot de passe, mauvais code refusé, bon code → trois tuiles
+    // 1. Administrateur principal : mot de passe, mauvais code refusé, bon code → les trois blocs
     const { ctx, p, errs, journal, d } = await ouvrir('principal', ecran);
     await p.waitForSelector('#cx-code');
     ok(/étape 2 sur 2/i.test(await texte(p)), nomEcran + ' : après le mot de passe, la double authentification est demandée');
@@ -76,11 +76,11 @@ function donnees(role) {
     await p.waitForSelector('.note.erreur');
     ok((await texte(p)).includes('Code incorrect'), nomEcran + ' : un mauvais code est refusé');
     await p.fill('#cx-code', '123456'); await p.click('form[data-form="code"] [type=submit]');
-    await p.waitForSelector('.tuile');
-    ok((await p.$$('.tuile')).length === 3, nomEcran + ' : administrateur principal → trois tuiles rouges');
-    const libelles = await p.$$eval('.tuile .tt', (l) => l.map((x) => x.textContent));
-    ok(libelles.join('|') === 'Administration du site|Suivi des paiements et des inscriptions|Comptabilité', nomEcran + ' : libellés exacts des trois tuiles');
-    let mal = await pales(p); ok(!mal.length, nomEcran + ' : écran des tuiles lisible ' + mal.join(' | '));
+    await p.waitForSelector('.bloc-accueil');
+    ok((await p.$$('.bloc-accueil')).length === 3, nomEcran + ' : administrateur principal → les trois blocs sur l’accueil');
+    const libelles = await p.$$eval('.bloc-accueil .nom', (l) => l.map((x) => x.textContent));
+    ok(libelles.join('|') === 'Administration du site|Suivi des paiements et des inscriptions|Comptabilité', nomEcran + ' : libellés exacts des trois blocs');
+    let mal = await pales(p); ok(!mal.length, nomEcran + ' : accueil lisible ' + mal.join(' | '));
     // menu : à gauche sur ordinateur ; sur téléphone et tablette en vertical, bouton « ☰ Menu » qui fait glisser le menu
     for (const largeur of nomEcran === 'téléphone' ? [390, 768] : [1280]) {
       await p.setViewportSize({ width: largeur, height: ecran.height });
@@ -89,14 +89,15 @@ function donnees(role) {
       if (largeur >= 1000) {
         ok(await vu() && !(await p.isVisible('[data-action="menu-ouvrir"]')), nomEcran + ' : menu toujours visible à gauche, sans bouton « Menu »');
       } else {
-        ok(!(await vu()) && await p.isVisible('[data-action="menu-ouvrir"]'), largeur + ' px : menu caché, bouton « ☰ Menu » en haut');
-        await p.click('[data-action="menu-ouvrir"]'); await p.waitForTimeout(400);
-        const r = await p.evaluate(() => document.querySelector('.lateral').getBoundingClientRect().left);
-        ok(await vu() && r === 0, largeur + ' px : « ☰ Menu » fait glisser le menu depuis la gauche');
+        // (nouvelle Administration : bouton « Rubriques » dans la barre du bas, menu qui monte du bas)
+        ok(!(await vu()) && await p.isVisible('[data-action="menu-ouvrir"]'), largeur + ' px : menu caché, bouton « Rubriques » visible');
+        await p.click('[data-action="menu-ouvrir"]'); await p.waitForTimeout(500);
+        const r = await p.evaluate(() => Math.round(innerHeight - document.querySelector('.lateral').getBoundingClientRect().bottom));
+        ok(await vu() && r === 0, largeur + ' px : « Rubriques » fait monter le menu du bas de l’écran');
         await p.click('.lateral .nav[href="#/compta/mois"]'); await p.waitForTimeout(500);
         ok(!(await vu()) && (await p.evaluate(() => location.hash)) === '#/compta/mois', largeur + ' px : choisir une rubrique l’ouvre et referme le menu');
         await p.click('[data-action="menu-ouvrir"]'); await p.waitForTimeout(400);
-        await p.mouse.click(largeur - 10, 400); await p.waitForTimeout(400);
+        await p.mouse.click(largeur / 2, 30); await p.waitForTimeout(500);  // la zone assombrie, au-dessus du menu
         ok(!(await vu()), largeur + ' px : toucher à côté du menu le referme');
       }
     }
@@ -136,7 +137,7 @@ function donnees(role) {
     for (const [role, esp] of [['site', 'site'], ['compta', 'compta']]) {
       const s = await ouvrir(role, ecran);
       await s.p.waitForSelector('#cx-code'); await s.p.fill('#cx-code', '123456'); await s.p.click('form[data-form="code"] [type=submit]');
-      // (espace 1 : ouvert dans le cadre du portail — essayé dans test-espace1-cadre.js)
+      // (espace 1 : bloc 1 natif de la nouvelle Administration — test-nouvelle-admin*.js)
       const attendu = '#/' + esp + '/';
       await s.p.waitForFunction((a) => location.href.includes(a), attendu, { timeout: 6000 }).catch(() => {});
       ok(s.p.url().includes(attendu), nomEcran + ' : rôle « ' + role + ' » → arrive directement dans son espace');
@@ -177,18 +178,18 @@ function donnees(role) {
     await c.p.fill('#cx-pin1', '4826'); await c.p.fill('#cx-pin2', '4827'); await c.p.click('form[data-form="choisir-pin"] [type=submit]');
     ok((await texte(c.p)).includes('pas identiques'), nomEcran + ' : deux codes différents refusés');
     await c.p.fill('#cx-pin1', '4826'); await c.p.fill('#cx-pin2', '4826'); await c.p.click('form[data-form="choisir-pin"] [type=submit]');
-    await c.p.waitForSelector('.tuile', { timeout: 6000 }).catch(() => {});
-    ok(pin.code === '4826' && await c.p.isVisible('.tuile'), nomEcran + ' : code enregistré, entrée dans l’administration');
+    await c.p.waitForSelector('.bloc-accueil', { timeout: 6000 }).catch(() => {});
+    ok(pin.code === '4826' && await c.p.isVisible('.bloc-accueil'), nomEcran + ' : code enregistré, entrée dans l’administration');
     // b) 15 minutes sans geste : écran verrouillé, le code à 4 chiffres suffit
     await c.p.clock.fastForward('15:30'); await c.p.waitForSelector('#cx-pin', { timeout: 6000 }).catch(() => {});
     ok(await c.p.isVisible('#cx-pin') && pin.verrouille, nomEcran + ' : 15 minutes sans activité → écran verrouillé (serveur prévenu)');
-    ok(!(await c.p.isVisible('.tuile')), nomEcran + ' : écran verrouillé : plus rien de l’administration n’est visible');
+    ok(!(await c.p.isVisible('.bloc-accueil')), nomEcran + ' : écran verrouillé : plus rien de l’administration n’est visible');
     await c.p.fill('#cx-pin', '0000'); await c.p.click('form[data-form="deverrouiller"] [type=submit]');
     await c.p.waitForSelector('.note.erreur', { timeout: 4000 }).catch(() => {});
     ok((await texte(c.p)).includes('Essais restants : 4'), nomEcran + ' : mauvais code refusé, essais restants affichés');
     await c.p.fill('#cx-pin', '4826'); await c.p.click('form[data-form="deverrouiller"] [type=submit]');
-    await c.p.waitForSelector('.tuile', { timeout: 6000 }).catch(() => {});
-    ok(await c.p.isVisible('.tuile') && !pin.verrouille, nomEcran + ' : bon code → retour dans l’administration, sans l’application d’authentification');
+    await c.p.waitForSelector('.bloc-accueil', { timeout: 6000 }).catch(() => {});
+    ok(await c.p.isVisible('.bloc-accueil') && !pin.verrouille, nomEcran + ' : bon code → retour dans l’administration, sans l’application d’authentification');
     // c) rouvrir l'application alors que l'appareil est verrouillé : écran du code d'abord
     pin.verrouille = true; await c.p.reload(); await c.p.waitForSelector('#cx-pin', { timeout: 6000 }).catch(() => {});
     ok(await c.p.isVisible('#cx-pin'), nomEcran + ' : application rouverte sur un appareil verrouillé → code à 4 chiffres demandé');
@@ -227,8 +228,8 @@ function donnees(role) {
     pe.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) e.errs.push('console : ' + m.text().slice(0, 140)); });
     await pe.clock.install();
     await pe.waitForSelector('#cx-code'); await pe.fill('#cx-code', '123456'); await pe.click('form[data-form="code"] [type=submit]');
-    await pe.waitForSelector('.tuile');
-    // (la page seule — adresse ouverte directement, signets d'avant ; dans le portail : test-espace1-cadre.js)
+    await pe.waitForSelector('.bloc-accueil');
+    // (la page seule — adresse ouverte directement, signets d'avant ; dans l'Administration : test-nouvelle-admin*.js)
     await pe.goto(pe.url().split('/admin/')[0] + '/tableau-de-bord.html');
     await pe.waitForSelector('#bloc-tableau', { state: 'visible', timeout: 10000 }).catch(() => {});
     ok(pe.url().includes('/tableau-de-bord.html') && await pe.isVisible('#bloc-tableau'), nomEcran + ' : ancien tableau de bord ouvert seul → il s’affiche');
@@ -361,7 +362,7 @@ function donnees(role) {
       const r = await ouvrir(role, ecran);
       const pr = r.p;
       await pr.waitForSelector('#cx-code'); await pr.fill('#cx-code', '123456'); await pr.click('form[data-form="code"] [type=submit]');
-      await pr.waitForSelector('.tuile, .lateral', { timeout: 6000 }).catch(() => {});
+      await pr.waitForSelector('.bloc-accueil, .lateral', { timeout: 6000 }).catch(() => {});
       await pr.goto(url + '#/paiements/registre'); await pr.waitForSelector('.tableau tbody tr', { timeout: 6000 }).catch(() => {});
       const lignes = await pr.$$eval('.tableau tbody tr', (l) => l.map((x) => x.innerText.replace(/\s+/g, ' ')));
       ok(lignes.length === 4 && lignes.some((x) => /ROXANE OUATTARA.*Inscription déjà effectuée sur le site/.test(x)) && lignes.some((x) => /KONÉ AWA.*Inscription à enregistrer/.test(x)) && lignes.some((x) => /YAO KOUASSI.*En attente de validation/.test(x)),
