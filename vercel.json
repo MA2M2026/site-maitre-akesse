@@ -16,6 +16,7 @@
     { "source": "/espace-mannequin-ancien.html", "destination": "/espace-mannequin", "permanent": true },
     { "source": "/marketplace", "destination": "/", "permanent": false },
     { "source": "/marketplace/:chemin*", "destination": "/", "permanent": false },
+    { "source": "/marketplace/", "destination": "/", "permanent": false },
     { "source": "/admin/nouvelle", "destination": "/admin/", "permanent": false },
     { "source": "/admin/nouvelle/", "destination": "/admin/", "permanent": false },
     { "source": "/", "has": [{ "type": "host", "value": "admin.maitreakessemodelmanagement.com" }], "destination": "/admin/", "permanent": false },
