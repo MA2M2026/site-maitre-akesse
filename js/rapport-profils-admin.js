@@ -108,7 +108,8 @@ window.demarrerRapportProfils = function () {
       ' <span class="rp-etat">' + (a.aJour ? '✓ À jour' : 'Complet à ' + a.score + ' %') + '</span>' +
       (deja ? ' <span class="rp-gris rp-date-envoi">· dernier message le ' + new Date(deja).toLocaleDateString('fr-FR') + '</span>' : '') +
       (!a.aJour && !wa ? ' <span class="rp-gris">· pas de numéro WhatsApp : le message sera copié, à coller où vous voulez</span>' : '') + '</label>' +
-      (a.aJour ? '' : '<ul class="rp-points">' + points.join('') + '</ul>' +
+      // détail replié (visite du 22/10/2026 : une page de listes identiques) ; il s'ouvre au toucher
+      (a.aJour ? '' : '<details class="rp-detail"><summary>' + points.length + (points.length > 1 ? ' points à compléter' : ' point à compléter') + '</summary><ul class="rp-points">' + points.join('') + '</ul></details>' +
         '<details class="rp-message"><summary>Voir / modifier le message</summary><textarea rows="16" data-id="' + echapper(p.id) + '">' + echapper(message(p, a)) + '</textarea></details>') +
       '</div>';
   }
@@ -122,7 +123,8 @@ window.demarrerRapportProfils = function () {
 
   function afficher() {
     var zone = document.getElementById('rapport-profils-liste');
-    var aCompleter = profils.filter(function (p) { return !p.analyse.aJour; });
+    // du moins complet au plus complet : les profils à reprendre d'abord
+    var aCompleter = profils.filter(function (p) { return !p.analyse.aJour; }).sort(function (x, y) { return x.analyse.score - y.analyse.score; });
     var dates = envois();
     var aEnvoyer = aCompleter.filter(function (p) { return !envoyeAujourdhui(p.id, dates); });
     var envoyes = aCompleter.filter(function (p) { return envoyeAujourdhui(p.id, dates); });

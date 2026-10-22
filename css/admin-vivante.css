@@ -838,3 +838,9 @@ input[type="file"]::file-selector-button {
   .photo-dossier { width: calc(50% - 6px); }
   .photo-dossier figcaption .btn { padding: 6px 10px; font-size: 12px; }
 }
+/* Messages groupés (écran partagé) : « Tout cocher » seulement quand la liste est là ; dire pourquoi l'envoi attend */
+.ecran-partage #mg-tout:has(+ #mg-liste:empty) { display: none; }
+.ecran-partage .mg-actions:has(#mg-email:disabled) + #mg-email-etat:empty::before,
+.ecran-partage .mg-actions:has(#mg-wa-suivant:disabled) + #mg-wa-etat:empty::before { content: "Appuyez d’abord sur « Afficher les destinataires »."; display: block; font-size: 13px; color: var(--av-gris); }
+.ecran-partage .mg-actions:has(#mg-email:not(:disabled)) + #mg-email-etat:empty::before { content: none; }
+.rp-detail summary { font-size: 13px; color: var(--av-rouge-texte); font-weight: 600; margin: 6px 0 0 26px; }
