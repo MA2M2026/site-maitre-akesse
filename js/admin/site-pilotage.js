@@ -1,6 +1,6 @@
 // Nouvelle Administration — groupe « Pilotage » et « Messages de contact » du bloc 1 (étape 4),
 // reconstruits à neuf (PLAN-NOUVELLE-ADMINISTRATION.md). Mêmes chiffres que l'ancien tableau de
-// bord (INVENTAIRE-BLOC1.md), rien d'inventé :
+// bord (inventaire du 22/10/2026, retiré à la démolition : historique git), rien d'inventé :
 //  - Vue d'ensemble : 8 cartes et la liste des alertes (fiches à valider, prochain casting,
 //    nouvelles candidatures, demandes recruteurs) ; raccourcis Messages groupés, Nouveau casting ;
 //  - À traiter : seulement ce qui attend (nombre > 0), chaque ligne ouvre sa rubrique ; aussi en

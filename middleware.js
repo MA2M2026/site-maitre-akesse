@@ -27,9 +27,8 @@ export const config = {
     '/partenaires', '/partenaires.html', '/en/partenaires', '/en/partenaires.html',
     '/mannequin', '/mannequin.html', '/en/mannequin', '/en/mannequin.html',
     '/book/:slug', '/en/book/:slug',
-    // tableau de bord protégé (13/10/2026) : la page et ses scripts réservés
-    '/tableau-de-bord', '/tableau-de-bord.html',
-    '/js/tableau-de-bord.js', '/js/tableau-v2.js', '/js/video-accueil-gabarit.js', '/js/couverture-admin.js', '/js/photos-mises-de-cote-gabarit.js', '/js/photos-mises-de-cote.js',
+    // scripts réservés de l'Administration (13/10/2026 ; l'ancien tableau de bord est démoli le 23/10/2026)
+    '/js/video-accueil-gabarit.js', '/js/couverture-admin.js', '/js/photos-mises-de-cote-gabarit.js', '/js/photos-mises-de-cote.js',
     '/js/fiches-evenement-gabarit.js', '/js/fiches-evenement-admin.js', '/js/rapport-profils-gabarit.js', '/js/rapport-profils-admin.js', '/js/agenda-gabarit.js', '/js/agenda-admin.js', '/js/agenda-outils.js', '/js/convocations-gabarit.js', '/js/convocations-page.js', '/js/convocations-admin.js', '/js/messages-convocations.js',
     '/js/messages-candidats.js', '/js/messages-groupes-gabarit.js', '/js/messages-groupes.js', '/js/nettoyage-supabase.js', '/js/note-integration.js', '/js/erreurs-corrigees.js', '/js/erreurs-gabarit.js', '/js/erreurs-site.js',
     // pièces du bloc 1 de la nouvelle Administration (PLAN-NOUVELLE-ADMINISTRATION.md, 22/10/2026)
@@ -37,19 +36,17 @@ export const config = {
   ]
 };
 
-// ================== Tableau de bord protégé (13/10/2026, demande de la propriétaire) ==================
-// Avant, n'importe qui pouvait télécharger la page du tableau de bord et ses scripts (sans
-// pouvoir lire ni modifier les données, protégées par la base). Désormais :
-//  - avec la clé « ma2m_admin » (cookie signé posé après mot de passe + code de validation,
-//    voir cookieAccesTableau dans api/_commun.js) → tout passe, comme avant ;
-//  - sans clé → la page arrive sans la ZONE-ADMIN (seulement l'écran de connexion,
-//    js/connexion-tableau.js) et les scripts réservés répondent « introuvable ».
-// Prudence : clé serveur absente ou panne → on laisse passer (comportement d'avant) ; la
-// propriétaire ne doit jamais être enfermée dehors.
-const PAGE_TABLEAU = /^\/tableau-de-bord(\.html)?$/;
-// ⚠ Même liste que dans config.matcher ci-dessus (vérifié par test-tableau-protege.js), et
-// chaque script de la ZONE-ADMIN de tableau-de-bord.html doit y figurer.
-const SCRIPTS_ADMIN = /^\/js\/(erreurs-gabarit|erreurs-site|note-integration|video-accueil-gabarit|agenda-gabarit|fiches-evenement-gabarit|rapport-profils-gabarit|photos-mises-de-cote-gabarit|tableau-de-bord|tableau-v2|couverture-admin|photos-mises-de-cote|fiches-evenement-admin|rapport-profils-admin|agenda-admin|agenda-outils|convocations-gabarit|convocations-page|convocations-admin|messages-convocations|messages-candidats|messages-groupes-gabarit|messages-groupes|nettoyage-supabase|erreurs-corrigees)\.js$/;
+// ================== Scripts réservés de l'Administration (13/10/2026, demande de la propriétaire) ==================
+// Avant, n'importe qui pouvait télécharger les scripts de l'administration (sans pouvoir lire ni
+// modifier les données, protégées par la base). Désormais :
+//  - avec la clé « ma2m_admin » (cookie signé posé après la double authentification de
+//    l'Administration, api/acces-tableau.js ; voir cookieAccesTableau dans api/_commun.js) → ils passent ;
+//  - sans clé → ils répondent « introuvable ».
+// Prudence : clé serveur absente → on laisse passer (comportement d'avant) ; la propriétaire ne
+// doit jamais être enfermée dehors. (L'ancien tableau de bord, protégé ici aussi, est démoli le
+// 23/10/2026 ; son adresse renvoie vers /admin/, vercel.json.)
+// ⚠ Même liste que dans config.matcher ci-dessus (vérifié par test-tableau-protege.js).
+const SCRIPTS_ADMIN = /^\/js\/(erreurs-gabarit|erreurs-site|note-integration|video-accueil-gabarit|agenda-gabarit|fiches-evenement-gabarit|rapport-profils-gabarit|photos-mises-de-cote-gabarit|couverture-admin|photos-mises-de-cote|fiches-evenement-admin|rapport-profils-admin|agenda-admin|agenda-outils|convocations-gabarit|convocations-page|convocations-admin|messages-convocations|messages-candidats|messages-groupes-gabarit|messages-groupes|nettoyage-supabase|erreurs-corrigees)\.js$/;
 // Nouvelle Administration : les pièces du bloc 1 (js/admin/site-*.js) sont réservées de la même
 // façon ; js/admin/coque.js et js/admin/site.js (décoration, menu) restent publics.
 const SCRIPTS_NOUVELLE_ADMIN = /^\/js\/admin\/site-[\w-]+\.js$/;
@@ -73,34 +70,11 @@ async function cleAccesValide(requete, secret) {
   if (!m || Number(m[2]) < Date.now() / 1000) return false;
   return egalSur(await signer(secret, 'tableau|' + m[1] + '|' + m[2]), m[3]);
 }
-async function tableauProtege(requete, url) {
+async function tableauProtege(requete) {
   const secret = typeof process !== 'undefined' && process.env ? process.env.SUPABASE_SERVICE_ROLE_KEY : '';
   if (!secret) return;  // configuration absente : comme avant
-  // demande interne (ci-dessous) pour lire la page d'origine : jeton daté, valable 60 s,
-  // et seulement pour la page (jamais pour les scripts réservés)
-  const interne = (requete.headers.get('x-ma2m-interne') || '').match(/^(\d{10})\.([A-Za-z0-9_-]+)$/);
-  if (interne && PAGE_TABLEAU.test(url.pathname) && Math.abs(Date.now() / 1000 - Number(interne[1])) < 60
-    && egalSur(interne[2], await signer(secret, 'interne|' + interne[1]))) return;
   if (await cleAccesValide(requete, secret)) return;
-  if (!PAGE_TABLEAU.test(url.pathname)) {
-    return new Response('Introuvable', { status: 404, headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' } });
-  }
-  const instant = String(Math.floor(Date.now() / 1000));
-  // les cookies du visiteur suivent (copie de test Vercel protégée : sans eux, Vercel répond par
-  // sa propre page de connexion — page blanche « Skip to content », 13/10/2026)
-  const entetesInternes = { 'x-ma2m-interne': instant + '.' + await signer(secret, 'interne|' + instant) };
-  if (requete.headers.get('cookie')) entetesInternes.cookie = requete.headers.get('cookie');
-  const origine = await fetch(new URL('/tableau-de-bord.html', url), { headers: entetesInternes });
-  if (!origine.ok) return;
-  const brut = await origine.text();
-  // ce n'est pas notre page (autre réponse en chemin) : on laisse passer, comme avant
-  if (brut.indexOf('id="bloc-login"') === -1 || brut.indexOf('<!-- /ZONE-ADMIN -->') === -1) return;
-  const html = brut.replace(/<!-- ZONE-ADMIN[^>]*-->[\s\S]*?<!-- \/ZONE-ADMIN -->/g, '');
-  const entetes = new Headers();
-  origine.headers.forEach((valeur, nom) => { if (!/^(content-length|content-encoding|transfer-encoding|etag|age|x-vercel-cache)$/i.test(nom)) entetes.set(nom, valeur); });
-  entetes.set('Content-Type', 'text/html; charset=utf-8');
-  entetes.set('Cache-Control', 'no-store');
-  return new Response(html, { status: 200, headers: entetes });
+  return new Response('Introuvable', { status: 404, headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' } });
 }
 
 
@@ -241,7 +215,7 @@ async function apercuPartenaire(url, anglais) {
 export default async function middleware(requete) {
   try {
     const url = new URL(requete.url);
-    if (PAGE_TABLEAU.test(url.pathname) || SCRIPTS_ADMIN.test(url.pathname) || SCRIPTS_NOUVELLE_ADMIN.test(url.pathname)) return await tableauProtege(requete, url);
+    if (SCRIPTS_ADMIN.test(url.pathname) || SCRIPTS_NOUVELLE_ADMIN.test(url.pathname)) return await tableauProtege(requete);
     const agent = requete.headers.get('user-agent') || '';
     const anglais = url.pathname.indexOf('/en/') === 0;
     // Adresse lisible /book/nom : on retrouve le mannequin, puis on sert sa fiche

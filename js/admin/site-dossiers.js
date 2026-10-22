@@ -1,6 +1,6 @@
 // Nouvelle Administration — Candidatures casting et Demandes recruteurs (bloc 1), reconstruites
 // à neuf (PLAN-NOUVELLE-ADMINISTRATION.md, étape 2) : galerie des visages, fiche en pleine page.
-// Mêmes données et mêmes règles que l'ancien tableau de bord (INVENTAIRE-BLOC1.md) :
+// Mêmes données et mêmes règles que l'ancien tableau de bord (inventaire du 22/10/2026, retiré à la démolition : historique git) :
 //  - statuts et pastilles avec leurs nombres ; « À revoir » (valeur « en étude ») et « En attente »
 //    rangés à part, hors de « Toutes » ; 12 dossiers par page, « Voir plus » ;
 //  - changement de statut : premier message du catalogue (js/messages-candidats.js), e-mail parti

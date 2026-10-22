@@ -1,6 +1,7 @@
 // Note d'information et procédure d'intégration (14/10/2026) : PDF au nom secret dans R2,
 // remis aux mannequins seulement après un code d'inscription valable, et déposé par l'admin
-// depuis le tableau de bord. Rien n'est écrit pour de vrai : base, stockage et serveur simulés.
+// depuis l'Administration. Rien n'est écrit pour de vrai : base, stockage et serveur simulés.
+const admin = require('./donnees-nouvelle-admin');
 const { chromium } = require('playwright'); const { spawn } = require('child_process'); const { brancher } = require('./faux-serveur');
 const path = require('path');
 const RACINE = path.resolve(__dirname, '../..');
@@ -119,12 +120,11 @@ async function navigateur() {
     ok(!(await p.isVisible('a[href*="note-integration"]')) && !(await p.isVisible('[data-a="oui"]')), 'code faux : ni informations ni note');
     await ctx.close();
   }
-  // 3) Tableau de bord : dépôt du document, sur téléphone et ordinateur
+  // 3) Administration : dépôt du document, sur téléphone et ordinateur
   for (const vp of [{ width: 390, height: 844 }, { width: 1280, height: 900 }]) {
     const ctx = await b.newContext({ viewport: vp }); const p = await ctx.newPage(); const errs = [], appels = [];
     p.on('pageerror', e => errs.push(e.message));
-    await p.addInitScript(() => { sessionStorage.setItem('ma2m_code_valide', '1'); });
-    await brancher(p, { tables: { admins: [{ user_id: 'admin-1' }] }, rpc: { code_validation_statut: [{ defini: true }] } }, []);
+    await brancher(p, admin.donnees('principal'), []);
     let depose = null;
     await p.route(/\/api\/r2-site-images/, async r => {
       const c = JSON.parse(r.request().postData() || '{}'); appels.push(c);
@@ -134,23 +134,22 @@ async function navigateur() {
       return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ uploadUrl: 'http://127.0.0.1:' + PORT + '/__stockage', publicUrl: 'x' }) });
     });
     await p.route(/__stockage/, r => r.fulfill({ status: 200, body: '' }));
-    await p.goto('http://127.0.0.1:' + PORT + '/tableau-de-bord.html'); await p.waitForTimeout(1200);
-    await p.fill('#tb-email', 'admin@test.ci'); await p.fill('#tb-password', 'motdepasse'); await p.click('#tb-login-btn');
-    await p.waitForSelector('#bloc-tableau', { state: 'visible', timeout: 15000 });
-    // comme l'administratrice : menu → Sécurité & accès → Codes d'inscription
-    await p.evaluate(() => document.querySelector('[data-tdb-cible="b3b-codes-inscription"]').click()); await p.waitForTimeout(1500);
-    ok(await p.isVisible('#ni-fichier'), 'tableau de bord ' + vp.width + 'px : le dépôt du document est dans « Codes d\'inscription »');
+    // comme l'administratrice, dans l'Administration (/admin/ ; essai transposé de l'ancien tableau
+    // de bord à sa démolition, 23/10/2026) : Accès et outils → Codes d'accès
+    await admin.seConnecter(p, 'http://127.0.0.1:' + PORT + '/admin/'); await p.waitForSelector('.accueil-tete', { timeout: 15000 });
+    await p.goto('http://127.0.0.1:' + PORT + '/admin/#/site/b3b-codes-inscription'); await p.waitForSelector('#ni-etat', { timeout: 15000 }).catch(() => {}); await p.waitForTimeout(1500);
+    ok(await p.isVisible('#ni-fichier'), 'Administration ' + vp.width + 'px : le dépôt du document est dans « Codes d\'accès »');
     const etatVide = await p.textContent('#ni-etat');
     await p.setInputFiles('#ni-fichier', { name: 'Note.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 essai') });
     await p.click('#ni-envoyer-btn'); await p.waitForTimeout(2000);
     const envoi = appels.find(c => !c.action), nettoyage = appels.find(c => c.action === 'nettoyer');
-    ok(/Aucun document/.test(etatVide), 'tableau de bord ' + vp.width + 'px : « aucun document » au départ (' + etatVide + ')');
-    ok(envoi && /^prive\/note-integration\/[0-9a-f]{32}\.pdf$/.test(envoi.chemin) && envoi.contentType === 'application/pdf', 'tableau de bord ' + vp.width + 'px : envoi sous un nom secret (' + (envoi || {}).chemin + ')');
-    ok(nettoyage && nettoyage.chemin === envoi.chemin, 'tableau de bord ' + vp.width + 'px : les anciens documents sont retirés après l\'envoi');
-    ok(/Document en place/.test(await p.textContent('#ni-etat')) && /déposé/.test(await p.textContent('#ni-msg')), 'tableau de bord ' + vp.width + 'px : document en place annoncé');
+    ok(/Aucun document/.test(etatVide), 'Administration ' + vp.width + 'px : « aucun document » au départ (' + etatVide + ')');
+    ok(envoi && /^prive\/note-integration\/[0-9a-f]{32}\.pdf$/.test(envoi.chemin) && envoi.contentType === 'application/pdf', 'Administration ' + vp.width + 'px : envoi sous un nom secret (' + (envoi || {}).chemin + ')');
+    ok(nettoyage && nettoyage.chemin === envoi.chemin, 'Administration ' + vp.width + 'px : les anciens documents sont retirés après l\'envoi');
+    ok(/Document en place/.test(await p.textContent('#ni-etat')) && /déposé/.test(await p.textContent('#ni-msg')), 'Administration ' + vp.width + 'px : document en place annoncé');
     await p.setInputFiles('#ni-fichier', { name: 'photo.jpg', mimeType: 'image/jpeg', buffer: Buffer.from('xx') });
-    ok(await p.isDisabled('#ni-envoyer-btn'), 'tableau de bord ' + vp.width + 'px : un fichier qui n\'est pas un PDF est refusé');
-    ok(!errs.length, 'tableau de bord ' + vp.width + 'px : aucune erreur ' + errs.join(' | '));
+    ok(await p.isDisabled('#ni-envoyer-btn'), 'Administration ' + vp.width + 'px : un fichier qui n\'est pas un PDF est refusé');
+    ok(!errs.length, 'Administration ' + vp.width + 'px : aucune erreur ' + errs.join(' | '));
     await ctx.close();
   }
   await b.close();

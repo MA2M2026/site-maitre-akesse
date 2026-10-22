@@ -1,4 +1,5 @@
-// Convocations des projets de l'agenda (Extension 141, 21/10/2026), dans le tableau de bord,
+// Convocations des projets de l'agenda (Extension 141, 21/10/2026), dans l'Administration (/admin/ ;
+// essai transposé de l'ancien tableau de bord à sa démolition, 23/10/2026 : même écran partagé),
 // comme l'agence : connexion → page « 📨 Convocations » (projet à venir ou nouveau projet ; heure de convocation, déroulé,
 // « À prévoir », rappel) → « 📨 Convoquer » → participants (adulte, mineure → parent, personne
 // non inscrite ajoutée au carnet) → aperçu du message → « Envoyer maintenant » (e-mails partis,
@@ -6,6 +7,7 @@
 // Puis l'agenda sans l'Extension 141 : pas de bouton « Convoquer », message pour l'activer.
 // Téléphone et ordinateur. Base et EmailJS simulés : rien n'est écrit ni envoyé pour de vrai.
 const { chromium } = require('playwright'); const { spawn } = require('child_process'); const { brancher } = require('./faux-serveur');
+const admin = require('./donnees-nouvelle-admin');
 const PORT = String(9800 + Math.floor(Math.random() * 90));
 let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m); if (!c) ko++; };
 const BASE = 'http://127.0.0.1:' + PORT + '/';
@@ -33,24 +35,29 @@ async function connecter(b, vp, actif) {
   const p = await ctx.newPage(); const errs = [], journal = [];
   p.on('pageerror', e => errs.push(e.message));
   p.on('console', m => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errs.push(m.text().slice(0, 160)); });
-  await p.addInitScript(() => { sessionStorage.setItem('ma2m_code_valide', '1'); localStorage.setItem('ma2m_cookies', 'non'); window.confirm = () => true; });
-  await brancher(p, donnees(actif), journal);
+  await p.addInitScript(() => { localStorage.setItem('ma2m_cookies', 'non'); window.confirm = () => true; });
+  await brancher(p, dansAdmin(donnees(actif)), journal);
   // sans l'Extension 141 : la table des envois n'existe pas encore
   if (!actif) await p.route(/\/rest\/v1\/convocation_envois/, r => r.fulfill({ status: 404, contentType: 'application/json', body: JSON.stringify({ code: '42P01', message: 'relation "convocation_envois" does not exist' }) }));
-  await p.goto(BASE + 'tableau-de-bord.html'); await p.waitForTimeout(1000);
-  await p.fill('#tb-email', 'admin@test.ci'); await p.fill('#tb-password', 'motdepasse'); await p.click('#tb-login-btn');
-  await p.waitForSelector('#bloc-tableau', { state: 'visible', timeout: 15000 });
-  await p.evaluate(() => document.querySelector('.tdb-menu-item[data-tdb-cible="b3c-agenda"]').click()); await p.waitForTimeout(1500);
+  await ouvrirAgenda(p);
   return { ctx, p, errs, journal };
 }
+// les données de l'essai, posées dans la base simulée de l'Administration (comptes, rôles…)
+function dansAdmin(d) {
+  const base = admin.donnees('principal');
+  Object.assign(base.tables, d.tables); Object.assign(base.rpc, d.rpc);
+  if (d.memoriser) base.memoriser = d.memoriser;
+  return base;
+}
+// connexion à l'Administration comme l'agence, puis rubrique « Agenda du site »
+async function ouvrirAgenda(p) {
+  await admin.seConnecter(p, BASE + 'admin/'); await p.waitForSelector('.accueil-tete', { timeout: 15000 });
+  await p.goto(BASE + 'admin/#/site/b3c-agenda'); await p.waitForSelector('#agenda-form', { state: 'attached', timeout: 15000 }).catch(() => {}); await p.waitForTimeout(1500);
+}
+const rubrique = async (p, cle) => { await p.evaluate((c) => { location.hash = '#/site/' + c; }, cle); };
 const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] === table).map(j => JSON.parse(j[3] || 'null'));
 
 (async () => {
-  // Un même identifiant deux fois dans le tableau de bord : le message de la page Convocations
-  // partait dans un autre écran, caché (« cv-msg », relevé par SonarQube Cloud le 21/10/2026)
-  const ids = (require('fs').readFileSync(require('path').resolve(__dirname, '../../tableau-de-bord.html'), 'utf8').match(/ id="[^"]+"/g) || []);
-  const doubles = ids.filter((x, i) => ids.indexOf(x) !== i);
-  ok(!doubles.length, 'tableau de bord : aucun identifiant en double' + (doubles.length ? ' (' + doubles.join(', ') + ')' : ''));
   let srv; process.on('exit', () => srv && srv.kill());
   srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise(r => setTimeout(r, 800));
   const b = await chromium.launch();
@@ -173,12 +180,9 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
     const p = await ctx.newPage(); const journal = [], errs = [];
     p.on('pageerror', e => errs.push(e.message));
-    await p.addInitScript(() => { sessionStorage.setItem('ma2m_code_valide', '1'); localStorage.setItem('ma2m_cookies', 'non'); });
-    await brancher(p, d, journal);
-    await p.goto(BASE + 'tableau-de-bord.html'); await p.waitForTimeout(1000);
-    await p.fill('#tb-email', 'admin@test.ci'); await p.fill('#tb-password', 'motdepasse'); await p.click('#tb-login-btn');
-    await p.waitForSelector('#bloc-tableau', { state: 'visible', timeout: 15000 });
-    await p.evaluate(() => document.querySelector('.tdb-menu-item[data-tdb-cible="b3c-agenda"]').click()); await p.waitForTimeout(1500);
+    await p.addInitScript(() => { localStorage.setItem('ma2m_cookies', 'non'); });
+    await brancher(p, dansAdmin(d), journal);
+    await ouvrirAgenda(p);
     await p.click('[data-convoquer="pa2"]'); await p.waitForTimeout(1500);
     await p.$eval('#cv-enregistrer', x => x.click()); await p.waitForTimeout(1800);
     const chiffres = await p.textContent('.convoc-chiffres');
@@ -194,7 +198,7 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
       'relance : après l’appui, la personne est marquée « relancé(e) », plus personne à relancer');
     ok(/A confirmé sa présence/.test(await p.textContent('#convoc-participants')) && /Ne pourra pas venir/.test(await p.textContent('#convoc-participants')), 'réponses visibles dans la liste des participants');
     // « 📋 Voir les réponses » en haut de la page Convocations : choisir un projet déjà convoqué
-    await p.evaluate(() => document.querySelector('.tdb-menu-item[data-tdb-cible="b2-convocations"]').click()); await p.waitForTimeout(800);
+    await rubrique(p, 'b2-convocations'); await p.waitForTimeout(800);
     ok(await p.isHidden('#cv-reponses-bloc'), '« Voir les réponses » : fermé à l’ouverture de la page');
     await p.click('#cv-voir-reponses'); await p.waitForTimeout(1200);
     const choix = await p.$$eval('#cv-reponses-projet option', os => os.map(o => o.value));
@@ -238,7 +242,7 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     const { ctx, p, errs } = await connecter(b, { width: 1280, height: 900 }, false);
     ok(!(await p.$('[data-convoquer]')), 'sans l’Extension 141 : pas de « Convoquer » dans l’Agenda');
     await p.click('[data-modifier="pa2"]'); await p.waitForTimeout(300);
-    await p.evaluate(() => document.querySelector('.tdb-menu-item[data-tdb-cible="b2-convocations"]').click()); await p.waitForTimeout(1200);
+    await rubrique(p, 'b2-convocations'); await p.waitForTimeout(1200);
     ok(await p.isVisible('#cv-inactif') && await p.isDisabled('#cv-titre'), 'sans l’Extension 141 : page Convocations avec le message pour l’activer, champs grisés');
     ok(!errs.filter(e => !/convocation_envois/.test(e)).length, 'sans l’Extension 141 : aucune erreur de page');
     await ctx.close();

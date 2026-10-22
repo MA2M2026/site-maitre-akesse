@@ -1,6 +1,6 @@
 // Nouvelle Administration — groupe « Mannequins » du bloc 1 (étape 3), reconstruit à neuf avec les
 // visages (PLAN-NOUVELLE-ADMINISTRATION.md). Mêmes données et mêmes règles que l'ancien tableau de
-// bord (INVENTAIRE-BLOC1.md) :
+// bord (inventaire du 22/10/2026, retiré à la démolition : historique git) :
 //  - Mannequins : publiées et en sourdine (pour pouvoir les réactiver) ; fiche : photos du Book
 //    (ajouter plusieurs, remplacer, supprimer — la base d'abord, les fichiers ensuite), case de la
 //    compcard (1 à 5), Book / Lifestyle, sourdine (definir_sourdine), CV (image, PDF, JPEG),

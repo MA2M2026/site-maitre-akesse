@@ -187,3 +187,66 @@ document.addEventListener('load', function (e) {
   delete img.dataset.secoursRelais;
   passerAuRelais('échec de ' + echec);
 }, true);
+
+// Rattrapage automatique des anciennes photos du Book (demande de la propriétaire,
+// 06/10/2026 : plus de boutons à appuyer). Les nouvelles photos ont déjà, dès leur envoi,
+// leur miniature nette (800 px) et leur version moyenne. Pour les photos plus anciennes,
+// l'Administration fait le travail toute seule, en arrière-plan, quelques secondes après
+// l'ouverture (js/admin/coque.js ; déplacé de l'ancien tableau de bord à sa démolition, 23/10/2026) : il fabrique la miniature ou la version moyenne qui manque, à partir de
+// la photo d'origine (jamais modifiée), puis met à jour la fiche de la photo. Une fois
+// par ouverture ; si la page est fermée avant la fin, il reprend à la suivante. Après 5
+// échecs (réseau faible), il s'arrête et réessaiera la prochaine fois.
+// Une version (miniature ou moyenne) refaite à partir de l'original ; false si la copie
+// WebP attendue n'a pas pu être envoyée.
+async function refaireVersion(photo, original, maj, cle, dossier, fin, cote, qualite) {
+  const v = await envoyerVersionPhoto(photo.model_id, original, dossier, fin, cote, qualite);
+  if (!v) throw new Error('Image illisible');
+  maj['url_' + cle] = v.url; maj['chemin_' + cle] = v.chemin;
+  return !!cheminWebp(v.chemin);
+}
+async function rattraperPhotosEnArrierePlan() {
+  try { if (sessionStorage.getItem('ma2m_rattrapage_photos')) return; sessionStorage.setItem('ma2m_rattrapage_photos', '1'); } catch (e) {}
+  const { data: photos, error } = await sb.from('model_photos')
+    .select('id, model_id, url, url_miniature, url_moyenne, chemin_miniature, chemin_moyenne');
+  if (error || !photos) return;
+  // Versions à (re)faire : absente, ancienne miniature (< 800 px), ou sans copie WebP légère
+  // quand ce navigateur sait l'écrire (12/10/2026 ; voir envoyerVersionPhoto dans js/app.js).
+  // Copies WebP : sur un ordinateur ou une tablette (écran de 700 px et plus ; 14/10/2026 : la
+  // propriétaire travaille surtout sur tablette, les copies ne se faisaient donc jamais) hors
+  // connexion mobile signalée — environ 370 photos d'origine à télécharger — et 40 photos au
+  // plus par ouverture.
+  // Une photo à la fois (pas en parallèle) pour ménager la connexion.
+  const c = navigator.connection || {};
+  const donneesMobiles = c.saveData || c.type === 'cellular' || /(^|-)(2g|3g)$/.test(c.effectiveType || '');
+  let webp = navigateurEcritWebp() && !donneesMobiles && window.matchMedia('(min-width: 700px) and (min-height: 600px)').matches; // pas un téléphone tenu en largeur
+  const miniatureAFaire = p => !p.url_miniature || !/-n800(-w)?\.jpg$/.test(p.chemin_miniature || '') || (webp && !cheminWebp(p.chemin_miniature));
+  const moyenneAFaire = p => !p.url_moyenne || (webp && !cheminWebp(p.chemin_moyenne));
+  const aFaire = photos.filter(p => p.url && (miniatureAFaire(p) || moyenneAFaire(p))).slice(0, 40);
+  let echecs = 0, faites = 0;
+  for (const photo of aFaire) {
+    if (echecs >= 5) break;
+    const mini = miniatureAFaire(photo), moyenne = moyenneAFaire(photo);
+    if (!mini && !moyenne) continue;  // plus rien à faire sans WebP
+    try {
+      // par le relais de la même adresse (20/10/2026 : depuis admin.…, l'adresse www enregistrée
+      // en base était refusée par la sécurité du navigateur, connect-src)
+      const reponse = await fetch(photo.url.replace(RELAIS_PHOTOS, '/book-photos/'));
+      if (!reponse.ok) throw new Error('Téléchargement échoué (HTTP ' + reponse.status + ')');
+      const original = await reponse.blob();
+      const maj = {};
+      let webpOk = true;
+      if (mini) webpOk = await refaireVersion(photo, original, maj, 'miniature', 'miniatures', '-n800', 800, 0.75);
+      if (moyenne) webpOk = (await refaireVersion(photo, original, maj, 'moyenne', 'moyennes', '', 1400, 0.78)) && webpOk;
+      if (!webpOk) webp = false;  // copie WebP refusée : on n'insiste pas pour les suivantes
+      // seulement si la photo n'a pas été remplacée entre-temps (bouton « Remplacer »)
+      const { error: erreurMaj } = await sb.from('model_photos').update(maj).eq('id', photo.id).eq('url', photo.url);
+      if (erreurMaj) throw erreurMaj;
+      faites++;
+    } catch (e) {
+      echecs++;
+      console.warn('Rattrapage photo', photo.id, e);
+    }
+    await new Promise(r => setTimeout(r, 300));
+  }
+  if (aFaire.length) console.info('Rattrapage des photos :', faites, 'faite(s) sur', aFaire.length, '—', echecs, 'échec(s).');
+}

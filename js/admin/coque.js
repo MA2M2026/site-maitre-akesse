@@ -290,5 +290,10 @@
     P.animerChiffres(document.getElementById('app'));
     // la jauge des réponses se remplit après l'apparition de l'affiche
     setTimeout(() => document.querySelectorAll('.affiche .jauge i[data-largeur]').forEach((i) => { i.style.width = i.dataset.largeur + '%'; }), 350);
+    // anciennes photos du Book : versions légères refaites en arrière-plan, une fois par session
+    // (js/photos.js ; avant, par l'ancien tableau de bord, 8 secondes après la connexion)
+    if (P.moi.espaces.site && typeof rattraperPhotosEnArrierePlan === 'function') {
+      setTimeout(() => rattraperPhotosEnArrierePlan().catch((e) => console.warn('Rattrapage des photos :', e)), 8000);
+    }
   };
 })();

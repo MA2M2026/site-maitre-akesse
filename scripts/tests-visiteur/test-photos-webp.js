@@ -3,6 +3,7 @@
 // sans WebP (Safari), seulement le JPEG, nom habituel. Les pages affichent la copie WebP, et
 // reviennent au JPEG si elle manque. La suppression emporte aussi la copie WebP.
 // Base et stockage simulés : rien n'est écrit pour de vrai.
+const admin = require('./donnees-nouvelle-admin');
 const { chromium } = require('playwright'); const { spawn } = require('child_process'); const { brancher } = require('./faux-serveur');
 const fs = require('fs'); const path = require('path');
 const PORT = String(9100 + Math.floor(Math.random() * 90));
@@ -99,23 +100,20 @@ async function espace(b, sansWebp) {
     }
   }
 
-  // 4) Tableau de bord : le rattrapage automatique refait les anciennes versions avec copie WebP
+  // 4) Administration (/admin/) : le rattrapage automatique refait les anciennes versions avec copie WebP
+  //    (déplacé de l'ancien tableau de bord dans js/photos.js à sa démolition, 23/10/2026)
   {
     const p = await (await b.newContext({ viewport: { width: 1280, height: 900 } })).newPage(); const journal = [], envois = [];
-    await p.addInitScript(() => {
-      const b64 = o => btoa(JSON.stringify(o)).replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_');
-      const exp = Math.floor(Date.now() / 1000) + 36000;
-      const jeton = b64({ alg: 'HS256', typ: 'JWT' }) + '.' + b64({ sub: 'admin-1', role: 'authenticated', aud: 'authenticated', exp }) + '.c2ln';
-      localStorage.setItem('sb-dfhghgmwmxiguhtxtsle-auth-token', JSON.stringify({ access_token: jeton, token_type: 'bearer', expires_in: 36000, expires_at: exp, refresh_token: 'x', user: { id: 'admin-1', aud: 'authenticated', role: 'authenticated', email: 'admin@test.ci' } }));
-    });
-    await brancher(p, { tables: { admins: [{ user_id: 'admin-1' }], model_photos: [
+    const d = admin.donnees('principal'); d.tables.model_photos = [
       { id: 'v1', model_id: 'm1', url: 'https://photos.test/m1/orig.jpg', url_miniature: 'https://photos.test/m1/miniatures/1-a-n800.jpg', chemin_miniature: 'm1/miniatures/1-a-n800.jpg', url_moyenne: 'https://photos.test/m1/moyennes/1-b.jpg', chemin_moyenne: 'm1/moyennes/1-b.jpg' },
-      { id: 'v2', model_id: 'm1', url: 'https://photos.test/m1/orig2.jpg', url_miniature: 'x', chemin_miniature: 'm1/miniatures/2-a-n800-w.jpg', url_moyenne: 'y', chemin_moyenne: 'm1/moyennes/2-b-w.jpg' }] }, rpc: {} }, journal);
+      { id: 'v2', model_id: 'm1', url: 'https://photos.test/m1/orig2.jpg', url_miniature: 'x', chemin_miniature: 'm1/miniatures/2-a-n800-w.jpg', url_moyenne: 'y', chemin_moyenne: 'm1/moyennes/2-b-w.jpg' }];
+    await brancher(p, d, journal);
     await p.route(/\/api\/r2-presigner/, async r => { const c = JSON.parse(r.request().postData() || '{}'); envois.push(c.chemin);
       r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ uploadUrl: 'http://127.0.0.1:' + PORT + '/__stockage', publicUrl: 'https://photos.test/' + c.chemin }) }); });
     await p.route(/__stockage/, r => r.fulfill({ status: 200, body: '' }));
     await p.route(/photos\.test\//, r => r.fulfill({ status: 200, contentType: 'image/jpeg', body: PHOTO }));
-    await p.goto('http://127.0.0.1:' + PORT + '/tableau-de-bord.html'); await p.waitForTimeout(2500);
+    await admin.seConnecter(p, 'http://127.0.0.1:' + PORT + '/admin/'); await p.waitForSelector('.accueil-tete', { timeout: 15000 });
+    // (sans attendre les 8 secondes du lancement automatique)
     await p.evaluate(async () => { try { sessionStorage.removeItem('ma2m_rattrapage_photos'); } catch (e) {} await rattraperPhotosEnArrierePlan(); });
     const maj = journal.filter(j => j[0] === 'PATCH' && j[1] === 'model_photos');
     const m = maj.length ? JSON.parse(maj[0][3]) : {};

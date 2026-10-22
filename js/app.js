@@ -120,9 +120,9 @@ function niveauControle(choix, experiences, anneesExperience) {
 }
 
 // ================== CV mannequin ("Model CV") ==================
-// Gabarit partagé entre l'aperçu personnel du mannequin (espace-mannequin.html)
-// et l'outil admin du tableau de bord (tableau-de-bord.html) — un seul endroit
-// à maintenir pour les deux. construireHtmlCv() prend un objet de données simple
+// Gabarit de l'aperçu personnel du mannequin (espace-mannequin.html)
+// (l'ancien tableau de bord, démoli le 23/10/2026, s'en servait aussi) — un seul endroit
+// à maintenir. construireHtmlCv() prend un objet de données simple
 // (pas de dépendance à un état global) et renvoie le HTML à placer à l'intérieur
 // d'un conteneur ayant la classe .cv-sheet (styles définis localement dans
 // chaque page, qui ont chacune leur propre système de variables CSS).
@@ -2914,13 +2914,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // Protection des images : empêche le clic-droit/enregistrer, le glisser-déposer et
-// l'appui long (copier une image) sur l'ensemble du site, SAUF sur le tableau de
-// bord de l'administrateur qui doit pouvoir télécharger les photos normalement.
+// l'appui long (copier une image) sur l'ensemble du site, SAUF dans l'Administration
+// (/admin/), où l'agence doit pouvoir télécharger les photos normalement.
 // NB : ceci décourage la récupération "facile" d'une image, mais ne peut techniquement
 // pas empêcher une vraie capture d'écran (impossible à bloquer depuis un site web).
 (function protectionImages() {
-  const estAdmin = window.location.pathname.includes('tableau-de-bord');
-  if (estAdmin) return;
+  if (pageAdministration()) return;
 
   document.addEventListener('contextmenu', (e) => {
     if (e.target.tagName === 'IMG') e.preventDefault();

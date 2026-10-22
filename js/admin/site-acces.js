@@ -1,6 +1,6 @@
 // Nouvelle Administration — groupe « Accès et outils » (bloc 1, étape 6), reconstruit à neuf
 // (PLAN-NOUVELLE-ADMINISTRATION.md). Mêmes données et mêmes règles que l'ancien tableau de bord
-// (INVENTAIRE-BLOC1.md) :
+// (inventaire du 22/10/2026, retiré à la démolition : historique git) :
 //  - Codes d'accès : casting direct (fiche minimale « Retenue » + son code, casting_direct_creer),
 //    codes disponibles et déjà utilisés, note d'intégration (écran partagé js/note-integration.js) ;
 //  - Accès bloqués : /api/connexion-admin (débloquer, liste blanche des adresses de confiance) ;

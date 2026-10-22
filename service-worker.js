@@ -26,23 +26,24 @@ self.addEventListener('push', (event) => {
     vibrate: [200, 100, 200],
     tag: donnees.tag || undefined,
     renotify: !!donnees.tag,
-    data: { url: donnees.url || '/tableau-de-bord.html' },
+    data: { url: donnees.url || '/admin/' },
     requireInteraction: true
   };
 
   event.waitUntil(self.registration.showNotification(titre, options));
 });
 
-// N-12 : au clic, ouvrir directement la fiche concernée (ou la ramener au premier
-// plan si un onglet du tableau de bord est déjà ouvert).
+// N-12 : au clic, ouvrir directement la fiche concernée dans l'Administration (ou la ramener
+// au premier plan si un onglet de l'Administration est déjà ouvert ; 23/10/2026 : l'ancien
+// tableau de bord est démoli).
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const url = (event.notification.data && event.notification.data.url) || '/tableau-de-bord.html';
+  const url = (event.notification.data && event.notification.data.url) || '/admin/';
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((listeClients) => {
       for (const client of listeClients) {
-        if (client.url.includes('/tableau-de-bord.html') && 'focus' in client) {
+        if (client.url.includes('/admin/') && 'focus' in client) {
           client.navigate(url);
           return client.focus();
         }

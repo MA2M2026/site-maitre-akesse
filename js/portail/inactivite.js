@@ -1,7 +1,5 @@
 // Verrouillage de l'Administration après 15 minutes sans geste (cahier v2.3, « Appareils et
-// sessions ») — partagé par la coque de l'Administration (js/portail/noyau.js) et les écrans de
-// l'espace 1 ouverts dans l'Administration (js/mode-administration.js : ancien tableau de bord,
-// actualités, événements, partenaires).
+// sessions ») — utilisé par la coque de l'Administration (js/portail/noyau.js).
 //   surveillerInactivitePortail({ actif, pinDefini, verrouiller }) : actif() et pinDefini()
 //   renvoient vrai ou faux ; verrouiller() est appelée au bout de 15 minutes sans geste.
 // À chaque geste (au plus une fois par minute), le serveur est prévenu : il verrouille aussi de

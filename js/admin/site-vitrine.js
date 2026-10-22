@@ -1,6 +1,6 @@
 // Nouvelle Administration — groupe « Contenu du site », 2e partie : Mot du fondateur et Flux
 // Instagram, reconstruits à neuf (PLAN-NOUVELLE-ADMINISTRATION.md). Mêmes données que l'ancien
-// tableau de bord (INVENTAIRE-BLOC1.md) :
+// tableau de bord (inventaire du 22/10/2026, retiré à la démolition : historique git) :
 //  - mot_responsable (id 'principal') : nom, titre, message, photo (R2, catégorie 'responsable') ;
 //    la photo est convertie (HEIC) et allégée (allegerPhotoSite, js/app.js) ; l'ancienne photo
 //    reste en place (elle peut servir ailleurs) ;

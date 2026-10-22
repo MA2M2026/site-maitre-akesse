@@ -4,6 +4,7 @@
 // Claude » doit donner le même texte. Depuis le 21/10/2026 (décision de la propriétaire), les 🟢
 // (connexion faible du visiteur) ne sont plus listés : une seule ligne les compte ; et une erreur
 // déjà corrigée qui revient est signalée « revenue après la correction ». Base simulée : rien n'est écrit.
+const admin = require('./donnees-nouvelle-admin');
 const { chromium } = require('playwright'); const { spawn } = require('child_process'); const fs = require('fs'); const { brancher } = require('./faux-serveur');
 const PORT = String(9500 + Math.floor(Math.random() * 90));
 let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m); if (!c) ko++; };
@@ -27,12 +28,12 @@ for (let k = 0; k < 6; k++) erreurs.push({ id: 'm' + k, message: '[Réseau injoi
     const p = await ctx.newPage(); const errs = [], journal = [];
     p.on('pageerror', e => errs.push(e.message));
     p.on('dialog', d => d.accept());
-    await p.addInitScript(() => { sessionStorage.setItem('ma2m_code_valide', '1'); });
-    await brancher(p, { tables: { admins: [{ user_id: 'admin-1' }], journal_erreurs: erreurs } }, journal);
-    await p.goto('http://127.0.0.1:' + PORT + '/tableau-de-bord.html'); await p.waitForTimeout(1200);
-    await p.fill('#tb-email', 'admin@test.ci'); await p.fill('#tb-password', 'motdepasse'); await p.click('#tb-login-btn');
-    await p.waitForSelector('#bloc-tableau', { state: 'visible', timeout: 15000 }); await p.waitForTimeout(800);
-    await p.evaluate(() => document.querySelector('[data-tdb-cible="b3a-erreurs"]').click());
+    // dans l'Administration (/admin/, rubrique « Erreurs du site » ; essai transposé de l'ancien
+    // tableau de bord à sa démolition, 23/10/2026 : même écran partagé)
+    const d = admin.donnees('principal'); d.tables.journal_erreurs = erreurs;
+    await brancher(p, d, journal);
+    await admin.seConnecter(p, 'http://127.0.0.1:' + PORT + '/admin/'); await p.waitForSelector('.accueil-tete', { timeout: 15000 });
+    await p.goto('http://127.0.0.1:' + PORT + '/admin/#/site/b3a-erreurs');
     await p.waitForSelector('#erreurs-telecharger-btn:not([hidden])', { timeout: 10000 }).catch(() => {});
     const n = vp.width + 'px : ';
     ok(/69 erreurs/.test(await p.textContent('#erreurs-telecharger-btn')), n + 'bouton « Télécharger le fichier pour Claude (69 erreurs) » : les 33 🟢 ne sont plus listés');
@@ -55,7 +56,7 @@ for (let k = 0; k < 6; k++) erreurs.push({ id: 'm' + k, message: '[Réseau injoi
     ok(copie.replace(/—[^—\n]*\n/, '') === texte.replace(/—[^—\n]*\n/, '') || copie.split('\n').slice(1).join('\n') === texte.split('\n').slice(1).join('\n'), n + '« Copier pour Claude » donne le même texte');
     // deux appuis rapides : le bouton retrouve ensuite son libellé
     await p.click('#erreurs-telecharger-btn'); await p.click('#erreurs-telecharger-btn'); await p.waitForTimeout(5600);
-    ok(/^⬇️ Télécharger le fichier pour Claude \(69 erreurs/.test(await p.textContent('#erreurs-telecharger-btn')), n + 'après deux appuis rapides, le bouton retrouve son libellé');
+    ok(/^(⬇️ )?Télécharger le fichier pour Claude \(69 erreurs/.test(await p.textContent('#erreurs-telecharger-btn')), n + 'après deux appuis rapides, le bouton retrouve son libellé');
     // filtre « À corriger » : le fichier ne contient que ces erreurs
     await p.click('#erreurs-resume [data-journal-gravite="corriger"]'); await p.waitForTimeout(300);
     const [dl2] = await Promise.all([p.waitForEvent('download', { timeout: 5000 }), p.click('#erreurs-telecharger-btn')]);

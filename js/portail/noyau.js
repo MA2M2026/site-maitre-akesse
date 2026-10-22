@@ -1,7 +1,7 @@
 // Portail d'administration /admin — cœur de l'application (cahier des charges v2.3).
 // Connexion (mot de passe + double authentification obligatoire), coque (menu sombre à
 // gauche), écran des trois tuiles, navigation, outils d'affichage partagés par les espaces
-// (js/portail/espace-site.js, espace-paiements.js, espace-compta.js, securite.js).
+// (js/admin/site.js et ses pièces, espace-paiements.js, espace-compta.js, securite.js).
 // Toutes les données viennent de Supabase (client `sb`, js/supabase-config.js) ; les droits
 // sont vérifiés par la base elle-même (RLS, fonctions de supabase-portail.sql) : l'écran ne
 // fait que masquer ce qui serait de toute façon refusé.
@@ -273,8 +273,9 @@
     try { await sb.auth.signOut(); } catch (e) { /* déjà déconnecté */ }
     sessionStorage.removeItem('ma2m_pin_plus_tard');
     window.arreterInactivitePortail();
+    // (clé de l'ancien « mode administration » des pages publiques, démoli le 23/10/2026 : effacée des appareils)
     try { localStorage.removeItem('ma2m_mode_administration'); } catch (e) { /* stockage bloqué */ }
-    // clé de l'ancien tableau de bord (espace 1) effacée aussi
+    // clé d'accès aux pièces réservées de l'Administration effacée aussi
     fetch('/api/acces-tableau', { method: 'DELETE', credentials: 'same-origin' }).catch(() => { /* hors ligne : elle expire seule */ });
     P.moi = null;
     location.hash = '#/';
@@ -353,15 +354,6 @@
     // juste après une connexion complète, sur un appareil sans code : proposer le code à 4 chiffres
     if (pin && !pin.defini && dernierCode && Date.now() - dernierCode < 9 * 60 * 1000 && !sessionStorage.getItem('ma2m_pin_plus_tard')) {
       return ecranConnexion('choisir-pin');
-    }
-    // écrans de l'espace 1 (ancien tableau de bord…) : ils s'ouvrent dans l'Administration
-    // (js/mode-administration.js) ; après un verrouillage, on revient là où l'on était
-    try { localStorage.setItem('ma2m_mode_administration', '1'); } catch (e) { /* stockage bloqué */ }
-    const retour = sessionStorage.getItem('ma2m_retour_administration');
-    sessionStorage.removeItem('ma2m_retour_administration');
-    if (retour && P.moi.espaces.site && /^\/(tableau-de-bord|actualites|evenements|partenaires)(\.html)?([?#][^\s]*)?$/.test(retour)) {
-      location.replace(retour);
-      return;
     }
     surveillerInactivite();
     // une personne qui n'a droit qu'à un espace arrive directement dedans
@@ -470,16 +462,6 @@
     // Sécurité : réservée à l'administrateur principal, sauf « Mes codes de secours » (chacun)
     const autorise = module === 'securite' ? P.moi.role === 'principal' || pageValide === 'codes' : P.moi.espaces[module];
     if (!autorise) { app().innerHTML = P.coque(module, pageValide, P.refuse()); return; }
-    // Espace dont la page vit dans un cadre (espace 1) : changer de rubrique ne recharge ni le menu ni le cadre
-    if (esp.garder && document.getElementById('cadre-ancien') && app().dataset.module === module) {
-      document.querySelectorAll('#menu-lateral a.nav').forEach((a) => {
-        const actif = a.getAttribute('href') === '#/' + module + '/' + pageValide;
-        a.classList.toggle('actif', actif);
-        if (actif) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
-      });
-      esp.garder(pageValide);
-      return;
-    }
     app().dataset.module = module;
     app().innerHTML = P.coque(module, pageValide, '<div class="chargement">Chargement…</div>');
     try {

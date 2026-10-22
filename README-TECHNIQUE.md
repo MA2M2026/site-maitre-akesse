@@ -190,7 +190,26 @@ et avancement : **`PLAN-NOUVELLE-ADMINISTRATION.md`** (à lire avant d'y toucher
 l'adresse d'essai `/admin/nouvelle/` renvoie vers `/admin/` (`vercel.json`) ; service worker
 `admin/sw.js` en `administration-v10` (liste INTERFACE = fichiers de la nouvelle page) ; signal
 d'appui des boutons (`js/bouton-appui.js`) gardé, avec son style dans `css/admin-vivante.css`.
-L'ancien `tableau-de-bord.html` existe encore jusqu'à la démolition (étape 12 du plan).
+**Démolition de l'ancien tableau de bord** (23/10/2026, accord de la propriétaire) : retirés
+`tableau-de-bord.html`, `js/tableau-de-bord.js`, `js/tableau-v2.js`, `js/connexion-tableau.js`,
+`css/tableau-v2.css`, `css/tableau-boutons.css`, `js/mode-administration.js` et
+`css/mode-administration.css` (le « mode administration » des pages Actualités, Événements,
+Partenaires), `js/portail/espace-site.js`, `css/portail.css`, `INVENTAIRE-BLOC1.md`. Repris
+ailleurs, sans perte : l'invitation « Activer les notifications » et la réinscription du
+téléphone (`js/admin/notifications.js`, table `push_abonnements`, service de fond
+`/service-worker.js` dont le toucher ouvre `/admin/#/site/…` ; adresses envoyées par
+`api/notifications-webhook.js`), le rattrapage des anciennes photos du Book
+(`rattraperPhotosEnArrierePlan`, maintenant dans `js/photos.js`, lancé 8 s après l'accueil par
+`js/admin/coque.js`). `/tableau-de-bord(.html)` renvoie vers `/admin/` (`vercel.json`) ; les
+liens « Voir le tableau de bord » des pages publiques mènent à l'Administration. `middleware.js`
+ne protège plus que les scripts réservés (`test-tableau-protege.js`, réécrit). Essais transposés
+dans l'Administration : `test-convocations.js`, `test-journal-fichier.js`,
+`test-note-integration.js`, `test-photos-webp.js` ; retirés : `test-admin.js`,
+`test-tableau-largeur.js`, `test-code-permanent.js`, la partie « espace 1 » de
+`test-administration.js`. Restent côté serveur, sans page qui s'en serve : l'espace 'admin' de
+`api/connexion-protegee.js` et `api/code-validation-protege.js` ; à décider avec la propriétaire :
+la gestion de la boutique (`js/marketplace-gestion.js`) demandait le code validé dans l'ancien
+tableau de bord (`ma2m_code_valide`).
 **Boutons de la nouvelle Administration** (choix de la propriétaire, 22/10/2026) : rouge pour les
 actions importantes, clair (ou noir) pour les autres ; la règle « tous les boutons rouges » du
 18/10/2026 reste celle du site public. Les essais (`scripts/tests-visiteur/boutons.js`) vérifient
