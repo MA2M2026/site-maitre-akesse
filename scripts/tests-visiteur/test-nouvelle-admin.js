@@ -23,6 +23,8 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     p.on('pageerror', (e) => errs.push(e.message));
     p.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errs.push('console : ' + m.text().slice(0, 140)); });
     await brancher(p, donnees('principal'), journal); await photosLocales(p);
+    // services de fond demandés par la page (l'Administration n'enregistre que le sien : /admin/sw.js)
+    await p.addInitScript(() => { window.__sw = []; if (navigator.serviceWorker) navigator.serviceWorker.register = (u) => { window.__sw.push(String(u)); return Promise.reject(new Error('essai')); }; });
 
     // 1. Entrée
     await p.goto(URL_ADMIN); await p.waitForSelector('#cx-mail');
@@ -31,6 +33,8 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     await seConnecter(p, URL_ADMIN);
     await p.waitForSelector('.accueil-tete', { timeout: 10000 }); await p.waitForTimeout(2200);
     await capture(p, 'accueil-' + (tel ? 'tel' : 'pc'));
+    const sw = await p.evaluate(() => window.__sw);
+    ok(!sw.includes('/service-worker.js') && !(await p.$('#pastille-installer')), n + 'pas de service de fond ni de pastille « Installer l’app » du site public dans l’Administration (' + sw.join(', ') + ')');
 
     // 2. Accueil vivant
     const acc = await p.evaluate(() => ({

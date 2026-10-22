@@ -10,7 +10,8 @@
 -- entre alors toute seule dans la comptabilité. Le jour de la clé, le serveur du site enverra
 -- l'argent lui-même et appellera la même fonction (mode 'wave_api').
 -- Droits : l'espace 3 voit et prépare ; SEUL l'administrateur principal marque payé ou annule,
--- avec un code d'authentification récent. Rien ne s'efface : un cachet abandonné est annulé.
+-- avec un code d'authentification récent. Rien ne s'efface : un cachet abandonné est annulé ;
+-- si la dépense d'un cachet payé est annulée en comptabilité, le cachet revient « à payer ».
 create table if not exists cachets_mannequins (
   id uuid primary key default gen_random_uuid(),
   beneficiaire text not null check (length(trim(beneficiaire)) between 1 and 160),
@@ -43,7 +44,9 @@ create policy cachets_lecture on cachets_mannequins for select using (portail_pe
 -- (une saisie arrive toujours « à payer », sans écriture : le paiement passe par cachet_payer)
 drop policy if exists cachets_ajout on cachets_mannequins;
 create policy cachets_ajout on cachets_mannequins for insert
-  with check (portail_peut('compta') and statut = 'a_payer' and ecriture_id is null and paye_le is null and mode is null);
+  with check (portail_peut('compta') and statut = 'a_payer' and ecriture_id is null and paye_le is null and mode is null
+    and paye_par is null and compte_id is null and reference_wave is null and motif_annulation is null
+    and cree_par = auth.uid());
 drop trigger if exists audit_cachets_mannequins on cachets_mannequins;
 create trigger audit_cachets_mannequins after insert or update or delete on cachets_mannequins
   for each row execute function audit_ecriture();
@@ -57,7 +60,7 @@ declare
 begin
   if not (est_ecriture_serveur() or portail_est_principal()) then raise exception 'Réservé à l''administrateur principal.'; end if;
   if not est_ecriture_serveur() then perform portail_exiger_auth_recente(); end if;
-  if p_mode not in ('wave_manuel', 'wave_api') or (p_mode = 'wave_api' and not est_ecriture_serveur()) then raise exception 'Mode de paiement inconnu.'; end if;
+  if p_mode is null or p_mode not in ('wave_manuel', 'wave_api') or (p_mode = 'wave_api' and not est_ecriture_serveur()) then raise exception 'Mode de paiement inconnu.'; end if;
   select * into c from cachets_mannequins where id = p_id for update;
   if not found then raise exception 'Cachet introuvable.'; end if;
   if c.statut <> 'a_payer' then raise exception 'Ce cachet est déjà payé ou annulé.'; end if;
@@ -78,6 +81,7 @@ create or replace function cachet_annuler(p_id uuid, p_motif text)
 returns void language plpgsql security definer set search_path = public as $$
 begin
   if not portail_est_principal() then raise exception 'Réservé à l''administrateur principal.'; end if;
+  perform portail_exiger_auth_recente();
   if coalesce(trim(p_motif), '') = '' then raise exception 'Indiquez le motif de l''annulation.'; end if;
   update cachets_mannequins set statut = 'annule', motif_annulation = left(trim(p_motif), 300) where id = p_id and statut = 'a_payer';
   if not found then raise exception 'Seul un cachet encore à payer peut être annulé.'; end if;
@@ -85,5 +89,23 @@ end;
 $$;
 revoke all on function cachet_annuler(uuid, text) from public, anon;
 grant execute on function cachet_annuler(uuid, text) to authenticated;
+
+-- La dépense d'un cachet est annulée dans la comptabilité (erreur : l'argent n'est pas parti) :
+-- le cachet revient « à payer », pour être payé de nouveau ou annulé avec un motif. Rien ne
+-- s'efface : le journal (audit_ecriture) garde le paiement annulé et sa référence Wave.
+create or replace function cachet_depense_annulee()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if NEW.annule and not OLD.annule then
+    update cachets_mannequins set statut = 'a_payer', mode = null, compte_id = null, ecriture_id = null, paye_le = null, paye_par = null, reference_wave = null
+      where ecriture_id = NEW.id and statut = 'paye';
+  end if;
+  return NEW;
+end;
+$$;
+revoke all on function cachet_depense_annulee() from public, anon, authenticated;
+drop trigger if exists cachet_depense_annulee on compta_ecritures;
+create trigger cachet_depense_annulee after update of annule on compta_ecritures
+  for each row execute function cachet_depense_annulee();
 
 notify pgrst, 'reload schema';

@@ -2633,7 +2633,7 @@ document.addEventListener('DOMContentLoaded', () => {
 })();
 
 // Pages de l'agence (Administration) : ni pastille « Nous contacter », ni visite comptée
-function pageAdministration() { return /^\/admin\//.test(window.location.pathname) || window.location.pathname.includes('tableau-de-bord'); }
+function pageAdministration() { return /^\/admin(\/|$)/.test(window.location.pathname) || window.location.pathname.includes('tableau-de-bord'); }
 
 // Pastille WhatsApp flottante, injectée sur toutes les pages publiques
 document.addEventListener('DOMContentLoaded', () => {
@@ -2948,6 +2948,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // ================== Installation sur l'écran d'accueil (PWA) ==================
 (function installationEcranAccueil() {
+  // (l'Administration a son propre service worker, admin/sw.js, et son bouton « Installer »)
+  if (pageAdministration()) return;
   // Enregistre le service worker (nécessaire pour l'installabilité sur Android/Chrome)
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {

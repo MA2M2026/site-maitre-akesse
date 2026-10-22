@@ -641,18 +641,21 @@
       // (sans date d'entrée : on compte à partir du dernier mois échu, jamais « depuis toujours »)
       const entree = m.date_entree ? indexMois(m.date_entree) : dernierEchu;
       const st = statutDe(m.id, t);
-      let affilee = 0, i = dernierEchu;
+      // (preuve du mois affiché en attente : on compte les mois impayés d'avant, sans s'arrêter sur elle)
+      const depart = dernierEchu === t && st === 'declare' ? t - 1 : dernierEchu;
+      let affilee = 0, i = depart;
       while (i >= entree && affilee < 240 && !statutDe(m.id, i)) { affilee++; i--; }
-      const premierImpaye = dernierEchu - affilee + 1;
+      const premierImpaye = depart - affilee + 1;
       const retard = affilee ? Math.max(0, Math.floor((ici - new Date(Math.floor(premierImpaye / 12), premierImpaye % 12, 5)) / 864e5)) : 0;
       const mineur = P.age(m.date_naissance) !== null && P.age(m.date_naissance) < 18;
       // montant dû coupé en deux (décision de la propriétaire, 22/10/2026) : le mois affiché, et les mois d'avant
-      const duMois = affilee && dernierEchu === t ? (m.mensualite || 0) : 0;
+      const duMois = affilee && depart === t ? (m.mensualite || 0) : 0;
       return { m, ok: st === 'valide', attente: st === 'declare', affilee, retard, du: affilee * (m.mensualite || 0), duMois, duAvant: affilee * (m.mensualite || 0) - duMois,
         destinataire: mineur && m.parent_nom ? m.parent_nom + ' (parent)' : m.full_name, entreeApres: entree > t };
     }).filter((x) => !x.entreeApres);
-    // trois groupes : payé / preuve reçue, à valider / non payé (une preuve en attente n'est pas un impayé)
-    return { cible, lignes, ont: lignes.filter((x) => x.ok), attente: lignes.filter((x) => x.attente), pas: lignes.filter((x) => !x.ok && !x.attente) };
+    // trois groupes : payé / preuve reçue, à valider / non payé (une preuve en attente n'est pas un
+    // impayé ; mais une dette des mois précédents reste dans « Non payé » et dans le montant dû)
+    return { cible, lignes, ont: lignes.filter((x) => x.ok), attente: lignes.filter((x) => x.attente), pas: lignes.filter((x) => x.affilee || (!x.ok && !x.attente)) };
   }
   async function recapitulatif() {
     const d = await donneesRecap();

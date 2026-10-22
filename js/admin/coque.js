@@ -71,13 +71,13 @@
   const EMOJI_DEBUT = /^[\p{Extended_Pictographic}\uFE0F\u200D\s]+/u;
   function harmoniserEcransPartages() {
     // (grande visite du 22/10/2026 : aucun émoji en tête des titres, boutons, choix et pastilles, partout)
-    document.querySelectorAll('#contenu').forEach((c) => c.querySelectorAll('h1, h2, h3, button, a.btn, label.btn, option, summary, .pastille, .btn-mini-admin').forEach((h) => {
-      if (h.hasAttribute('data-sans-emoji')) return;
+    // (seulement les éléments nouveaux : ceux déjà vus portent data-sans-emoji)
+    document.querySelectorAll('#contenu :is(h1, h2, h3, button, a.btn, label.btn, option, summary, .pastille, .btn-mini-admin):not([data-sans-emoji])').forEach((h) => {
       h.setAttribute('data-sans-emoji', '');
       const t = h.firstChild;
       if (t && t.nodeType === 3 && EMOJI_DEBUT.test(t.textContent)) t.textContent = t.textContent.replace(EMOJI_DEBUT, '');
       else if (t && t.nodeType === 1 && t.matches('img.emoji')) t.remove();
-    }));
+    });
     document.querySelectorAll('.ecran-partage:not([data-harmonise])').forEach((ecran) => {
       ecran.setAttribute('data-harmonise', '');
       ecran.querySelectorAll('p.tdb-5, p.tdb-9, p.tdb-12, p.tdb-17').forEach((p) => {

@@ -67,7 +67,9 @@
 > `mensualite_declarer`). Fiche du registre : mensualité reçue par l'agence (Wave hors site, espèces).
 >
 > **Branche `administration-v23` (19/10/2026, cahier V3)** — administration reprise sur une branche à part
-> (rien de mis en ligne sans accord écrit de la propriétaire). **Espace 1 dans le portail** : `js/portail/espace-site.js`
+> (rien de mis en ligne sans accord écrit de la propriétaire). ⚠️ *Historique : depuis le déménagement du 22/10/2026,
+> `/admin/` ne charge plus `espace-site.js` ni `css/portail.css` (voir « 🏛️ Nouvelle Administration » ; ces fichiers
+> partent à la démolition).* **Espace 1 dans le portail** : `js/portail/espace-site.js`
 > affiche l'ancien tableau de bord dans un cadre de même origine (`/tableau-de-bord.html?cadre=1#cle`) ;
 > `js/mode-administration.js` détecte le cadre (classe `cadre-admin`, relais d'activité pour la déconnexion
 > à 15 min) ; `vercel.json` : `frame-src 'self'` seul changement de sécurité (accord écrit). **Espace 2** :
@@ -389,6 +391,8 @@ seule fois** (décision de la propriétaire). Ce qui change par rapport aux sect
   `api/_creer-admin.js`). **Limite réelle : 11 fichiers `api/*.js` sans « _ » + `middleware.js`** —
   une 12e fonction fait échouer TOUTES les mises en ligne (05/10 et 19/10/2026) ; vérifié par
   `scripts/tests-visiteur/test-portail-serveur.js`.
+- ⚠️ *Historique (jusqu'au déménagement du 22/10/2026) : depuis, `/admin/` charge `js/admin/site.js` et
+  ses pièces `js/admin/site-*.js` ; `espace-site.js` n'est plus chargé (démolition à suivre).*
 - **L'ancien tableau de bord n'existe plus seul** (19/10/2026) : `middleware.js` renvoie toute
   adresse `/tableau-de-bord(.html)` vers `/admin/`, sauf `?integre=1` chargé DANS un cadre
   (en-tête `Sec-Fetch-Dest: iframe`) et la lecture interne `?depuis=interne`. Ses rubriques

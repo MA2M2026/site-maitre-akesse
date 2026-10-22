@@ -101,7 +101,7 @@
       '<div class="ligne large"><button class="btn rouge" type="submit">Annuler le cachet</button><button class="btn" type="button" data-action="fermer-fenetre">Retour</button></div></form>');
   };
   P.formulaires['cachet-annuler'] = async (f, form) => {
-    await P.rpc('cachet_annuler', { p_id: form.dataset.id, p_motif: t(f, 'motif') });
+    await P.sensible(() => P.rpc('cachet_annuler', { p_id: form.dataset.id, p_motif: t(f, 'motif') }));
     await C.actualiser('Cachet annulé (gardé dans l’historique).');
   };
 

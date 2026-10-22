@@ -70,9 +70,11 @@ function donnees(role) {
         { id: 'r1', full_name: 'ROXANE OUATTARA', telephone: '0102030405', mensualite: 10000, statut: 'actif', date_entree: mm(1), date_naissance: '1999-01-01' },
         { id: 'r2', full_name: 'KONÉ AWA', telephone: '0707070707', mensualite: 20000, statut: 'actif', date_entree: mm(mc - 2), date_naissance: '2000-01-01' },
         { id: 'r3', full_name: 'KOUAME JEAN', telephone: '0505050505', mensualite: 10000, statut: 'actif', date_entree: mm(mc - 2), date_naissance: '2012-05-05', parent_nom: 'MADAME KOUAME', parent_telephone: '0101010101' },
+        // preuve reçue pour le mois affiché, mais le mois d'avant jamais payé : la dette reste visible
+        { id: 'r5', full_name: 'DIABATÉ SALI', telephone: '0708080808', mensualite: 10000, statut: 'actif', date_entree: mm(mc - 1), date_naissance: '2001-01-01' },
         { id: 'r4', full_name: 'ENTRÉE PLUS TARD', telephone: '0606060606', mensualite: 10000, statut: 'actif', date_entree: mm(Math.min(mc + 1, 12)), date_naissance: '1998-01-01' }];
       const ligne = (id, n, st) => ({ id: id + n, mannequin_id: id, objet: 'mensualite', mois: mm(n), montant: 10000, statut: st });
-      d.tables.paiements_mannequins = [ligne('r1', mc, 'valide'), ligne('r1', mc - 1, 'valide'), ligne('r3', mc, 'declare'), ligne('r3', mc - 2, 'valide'), ligne('r3', mc - 1, 'valide')];
+      d.tables.paiements_mannequins = [ligne('r1', mc, 'valide'), ligne('r1', mc - 1, 'valide'), ligne('r3', mc, 'declare'), ligne('r3', mc - 2, 'valide'), ligne('r3', mc - 1, 'valide'), ligne('r5', mc, 'declare')];
     });
     const p = e.p; p.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) e.errs.push('console : ' + m.text().slice(0, 140)); });
     await p.waitForSelector('#cx-code'); await p.fill('#cx-code', '123456'); await p.click('form[data-form="code"] [type=submit]');
@@ -85,9 +87,11 @@ function donnees(role) {
     const val = (lib) => p.$$eval('.carte.chiffre', (l, x) => { const c = l.find((y) => y.querySelector('.l').textContent.trim() === x); return c ? c.querySelector('.v').textContent.replace(/\s|\u202f|\u00a0/g, '') : null; }, lib);
     ok(/^1/.test(await val('Payé')), nomEcran + ' : Payé = 1 (ROXANE) ' + await val('Payé'));
     // trois groupes (22/10/2026) : la preuve reçue de KOUAME n'est plus un impayé
-    ok(/^1/.test(await val('Preuve reçue, à valider')) && /^1/.test(await val('Non payé')), nomEcran + ' : Preuve reçue, à valider = 1 (KOUAME) ; Non payé = 1 (KONÉ)');
+    ok(/^2/.test(await val('Preuve reçue, à valider')) && /^2/.test(await val('Non payé')), nomEcran + ' : Preuve reçue, à valider = 2 (KOUAME, DIABATÉ) ; Non payé = 2 (KONÉ, et DIABATÉ pour le mois d’avant)');
     const impayes = await p.$$eval('.carte', (l) => { const c = l.find((x) => (x.querySelector('h2') || {}).textContent === 'Non payé'); return c ? c.innerText : ''; });
     ok(/KONÉ AWA/.test(impayes) && !/KOUAME/.test(impayes), nomEcran + ' : la liste « Non payé » ne contient pas la preuve en attente');
+    const sali = await p.$$eval('.carte', (l) => { const c = l.find((x) => (x.querySelector('h2') || {}).textContent === 'Non payé'); const r = c && [...c.querySelectorAll('tr')].find((y) => y.textContent.includes('DIABATÉ')); return r ? [...r.querySelectorAll('td')].map((x) => x.textContent.trim()) : []; });
+    ok(sali[3] === '1' && /^10000/.test((sali[4] || '').replace(/\s|\u202f|\u00a0/g, '')), nomEcran + ' : preuve du mois en attente, mais le mois d’avant reste dû (1 mois, 10 000) ' + sali.join('|'));
     const apres5 = now.getDate() > 5;
     // KONÉ (jamais payé depuis son entrée), KOUAME (preuve reçue), pas « entrée plus tard » (pas encore dû)
     ok(/KONÉ AWA/.test(tx) && /KOUAME JEAN/.test(tx) && !/ENTRÉE PLUS TARD/.test(tx), nomEcran + ' : la liste des impayés exclut celui qui n’est pas encore entré');
@@ -97,7 +101,7 @@ function donnees(role) {
       const kone = await p.$$eval('tr', (rows) => { const r = rows.find((y) => y.textContent.includes('KONÉ AWA')); return Array.from(r.querySelectorAll('td')).map((c) => c.textContent.trim()); });
       ok(kone[3] === '3' && /^60/.test(kone[4].replace(/\s|\u202f|\u00a0/g, '')), nomEcran + ' : KONÉ = 3 mois d’affilée × 20 000 = 60 000 ' + kone.join('|'));
       ok(Number(kone[2]) >= 1, nomEcran + ' : jours de retard comptés ' + kone[2]);
-      ok(/dont .* : 20 000 FCFA · dont mois précédents : 40 000 FCFA/.test(tx.replace(/\u202f|\u00a0/g, ' ')), nomEcran + ' : montant dû coupé en deux (ce mois-ci / mois précédents)');
+      ok(/dont .* : 20 000 FCFA · dont mois précédents : 50 000 FCFA/.test(tx.replace(/\u202f|\u00a0/g, ' ')), nomEcran + ' : montant dû coupé en deux (ce mois-ci / mois précédents)');
     }
     ok(await p.isVisible('a.btn:has-text("Relancer")'), nomEcran + ' : bouton « Relancer » (WhatsApp)');
     const href = decodeURIComponent((await p.getAttribute('a.btn:has-text("Relancer")', 'href')) || '');
