@@ -36,7 +36,9 @@
   // Pièces réservées (middleware.js) : la clé d'accès est posée par le serveur après la double
   // authentification (api/acces-tableau.js), puis les pièces sont chargées une seule fois, dans
   // l'ordre. Sans clé (compte sans droit), elles restent introuvables : la page le dit.
-  const PIECES = ['/js/messages-convocations.js', '/js/messages-candidats.js', '/js/admin/site-dossiers.js'];
+  const PIECES = ['/js/messages-convocations.js', '/js/messages-candidats.js', '/js/agenda-outils.js',
+    '/js/convocations-gabarit.js', '/js/convocations-page.js', '/js/convocations-admin.js',
+    '/js/admin/site-dossiers.js', '/js/admin/site-convocations.js'];
   const charges = new Set();  // une pièce déjà chargée ne l'est jamais deux fois
   const charger = (src) => charges.has(src) ? Promise.resolve() : new Promise((ok, ko) => {
     const s = document.createElement('script');

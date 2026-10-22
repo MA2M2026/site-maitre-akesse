@@ -11,10 +11,12 @@
 //    (pas encore d'envoi automatique) ; l'agence est prévenue par e-mail à l'heure prévue. SMS : plus tard.
 //  - Suivi : chaque envoi, son état, et les boutons « Ouvrir WhatsApp », « Annuler », « Réessayer ».
 // Textes : js/messages-convocations.js (partagés avec le serveur).
-(function () {
+// Deux maisons (22/10/2026) : démarré tout seul dans l'ancien tableau de bord ; la nouvelle
+// Administration appelle window.demarrerConvocationsPanneau() à chaque affichage de l'écran.
+window.ouvrirConvocations = function () {};
+window.demarrerConvocationsPanneau = function () {
   var $ = function (id) { return document.getElementById(id); };
   var panneau = $('convoc-panneau');
-  window.ouvrirConvocations = function () {};
   if (!panneau || typeof sb === 'undefined' || !sb) return;
 
   var projet = null, personnes = [], envois = [], carnet = [], enCours = false;
@@ -523,4 +525,5 @@
     ['convoc-nom', 'convoc-tel', 'convoc-email'].forEach(function (id) { $(id).value = ''; });
     message(nom + ' est ajouté(e) à la liste et au carnet.');
   });
-})();
+};
+window.demarrerConvocationsPanneau();

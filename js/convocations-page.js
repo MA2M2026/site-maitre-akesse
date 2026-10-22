@@ -6,14 +6,18 @@
 // s'ouvre (js/convocations-admin.js : participants, aperçu, quand, suivi, réponses).
 // En haut, « 📋 Voir les réponses » : choisir un projet déjà convoqué (même passé, le plus récent
 // en premier) et voir qui a confirmé, qui ne viendra pas, qui n'a pas répondu, sans rien envoyer.
-// Outils partagés avec l'Agenda : js/agenda-outils.js.
-(function () {
+// Outils partagés avec l'Agenda : js/agenda-outils.js. Écran : js/convocations-gabarit.js.
+// Deux maisons (22/10/2026) : l'ancien tableau de bord le démarre tout seul (écran présent dès le
+// chargement) ; la nouvelle Administration (js/admin/site-convocations.js) appelle
+// window.demarrerConvocationsPage(racine) chaque fois qu'elle affiche l'écran.
+window.convoquerProjet = function () {};
+window.demarrerConvocationsPage = function (racine) {
   var $ = function (id) { return document.getElementById(id); };
-  var section = document.querySelector('[data-section="b2-convocations"]');
+  var section = racine || document.querySelector('[data-section="b2-convocations"]');
   var form = $('cv-form');
-  window.convoquerProjet = function () {};
   if (!section || !form || typeof sb === 'undefined' || !sb) return;
 
+  var visages = null;  // nouvelle Administration : { id: photo } pour choisir sur un mur de visages
   var projets = [], mannequins = [], charge = false, enCours = false, actif = false, projetChoisi = null, chargement = null;
 
   function message(t, erreur) {
@@ -35,8 +39,17 @@
   function dessinerMannequins() {
     var boite = $('cv-mannequins');
     boite.textContent = '';
+    boite.classList.toggle('mur-visages', !!visages);
     mannequins.forEach(function (p) {
-      boite.appendChild(caseACocher(p.id, p.full_name + (p.published ? '' : ' (profil non publié)'), 'cv-mannequin', p.full_name));
+      var libelle = p.full_name + (p.published ? '' : ' (profil non publié)');
+      if (!visages) { boite.appendChild(caseACocher(p.id, libelle, 'cv-mannequin', p.full_name)); return; }
+      // un visage par mannequin : on le touche pour le choisir (la case reste lue par les lecteurs d'écran)
+      var l = document.createElement('label');
+      l.className = 'choix-visage';
+      l.dataset.nom = String(p.full_name).toLowerCase();
+      l.innerHTML = '<input type="checkbox" name="cv-mannequin" value="' + window.Portail.esc(p.id) + '">' + window.Portail.visage(visages[p.id], p.full_name) +
+        '<span class="choix-nom">' + window.Portail.esc(libelle) + '</span><span class="choix-coche" aria-hidden="true">✓</span>';
+      boite.appendChild(l);
     });
     if (!mannequins.length) boite.textContent = 'Aucun mannequin trouvé.';
     majCompte();
@@ -84,6 +97,9 @@
     ]);
     if (r[0].error || r[1].error) { charge = false; message('Impossible de charger les projets ou les mannequins : ' + (r[0].error || r[1].error).message, true); return; }
     projets = r[0].data || [];
+    if (racine && window.Portail && window.Portail.photosCouverture) {
+      visages = await window.Portail.photosCouverture((r[1].data || []).filter(function (p) { return p.published; }).map(function (p) { return p.id; })).catch(function () { return {}; });
+    }
     mannequins = (r[1].data || []).filter(function (p) { return p.full_name; })
       .sort(function (a, b) { return a.full_name.localeCompare(b.full_name, 'fr'); });
     dessinerProjets(projetChoisi && projetChoisi.id);
@@ -203,20 +219,25 @@
   $('cv-reponses-actualiser').addEventListener('click', function () { afficherReponses().catch(erreurReponses); });
 
   // « 📨 Convoquer » d'un projet de l'Agenda : ouvre cette page avec le projet déjà choisi
+  // (nouvelle Administration : l'adresse de la rubrique ; le projet attend dans convocationDemandee)
   window.convoquerProjet = function (id) {
     projetChoisi = { id: id };
     var bouton = document.querySelector('.tdb-menu-item[data-tdb-cible="b2-convocations"]');
     if (bouton) bouton.click();
+    else { window.convocationDemandee = id; location.hash = '#/site/b2-convocations'; return; }
     if (charge) chargement = charger().catch(function (e) { message('Erreur : ' + ((e && e.message) || e), true); });
   };
 
-  // Chargement au premier affichage de la page (la session admin est alors ouverte)
+  // Chargement au premier affichage de la page (la session admin est alors ouverte) ; dans la
+  // nouvelle Administration, l'écran n'est affiché que quand on l'ouvre : chargement immédiat
   function siVisible() {
-    if (!charge && section.classList.contains('tdb-actif')) chargement = charger().catch(function (e) {
+    if (!charge && (racine || section.classList.contains('tdb-actif'))) chargement = charger().catch(function (e) {
       charge = false;
       message('Impossible de charger la page : ' + ((e && e.message) || e), true);
     });
   }
-  new MutationObserver(siVisible).observe(section, { attributes: true, attributeFilter: ['class'] });
+  if (racine && window.convocationDemandee) { projetChoisi = { id: window.convocationDemandee }; window.convocationDemandee = null; }
+  if (!racine) new MutationObserver(siVisible).observe(section, { attributes: true, attributeFilter: ['class'] });
   siVisible();
-})();
+};
+window.demarrerConvocationsPage();
