@@ -2,6 +2,8 @@
 // orange en attente de validation, rouge non payé), le paiement du mois avec Wave, puis
 // « J'ai payé » — sans capture ni référence. Seule l'agence valide un mois (espace 2).
 // Base : mes_mensualites() et mensualite_declarer() (supabase-administration.sql, section 9).
+// « Mes cachets reçus » (22/10/2026) : cachets payés par l'agence, avec leur reçu (mes_cachets,
+// supabase-cachets-recus.sql ; outils communs window.CachetsMa2m, js/cachets-communs.js).
 (function () {
   'use strict';
   const zone = document.getElementById('mp-zone');
@@ -12,7 +14,7 @@
   const fcfa = (n) => String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' FCFA';
   const nomMois = (d) => MOIS[Number(String(d).slice(5, 7)) - 1] + ' ' + String(d).slice(0, 4);
   const ETATS = { paye: ['Payé', 'ok'], attente: ['En attente de validation', 'alerte'], non_paye: ['Non payé', 'erreur'], a_payer: ['À payer avant le 5', 'info'], a_venir: ['À venir', 'neutre'] };
-  let donnees = null, waveOuvert = {}, lienWave = null, recus = [], numeros = {};
+  let donnees = null, waveOuvert = {}, lienWave = null, recus = [], numeros = {}, cachets = [];
   const numeroValide = (n) => /^[0-9+ ]{6,20}$/.test(String(n || '').trim());
 
   async function charger() {
@@ -34,6 +36,10 @@
       const r = await sb.rpc('mes_recus');
       recus = r.error || !Array.isArray(r.data) ? [] : r.data;
     } catch (e) { recus = []; }
+    try {
+      const r = await sb.rpc('mes_cachets');
+      cachets = r.error || !Array.isArray(r.data) ? [] : r.data;
+    } catch (e) { cachets = []; }
   }
   const adresseWave = (montant) => lienWave || (LIEN_WAVE + Number(montant));
   function carteAPayer(m) {
@@ -65,7 +71,7 @@
       '<div class="mp-calendrier" role="list">' + mois.map((m, i) => {
         const e = ETATS[m.etat] || [m.etat, 'neutre'];
         return '<div class="mp-mois ' + e[1] + '" role="listitem"><span class="mp-mois-num">' + (i + 1) + '</span><b>' + esc(nomMois(m.mois)) + '</b><span>' + esc(e[0]) + '</span></div>';
-      }).join('') + '</div>' + historique();
+      }).join('') + '</div>' + historique() + mesCachets();
   }
   function historique() {
     if (!recus.length) return '';
@@ -73,6 +79,13 @@
       '<div class="mp-histo mp-ligne"><span><b>' + esc(r.objet === 'inscription' ? 'Inscription' : r.mois ? nomMois(r.mois) : 'Mensualité') + '</b><br><span class="mp-petit">' +
       esc(r.montant ? fcfa(r.montant) : 'Avant le nouveau système') + '</span></span>' +
       '<span class="mp-petit">' + (r.numero ? 'Reçu ' + esc(r.numero) : '—') + '</span></div>').join('') + '</div>';
+  }
+  function mesCachets() {
+    const K = window.CachetsMa2m;
+    if (!cachets.length || !K) return '';
+    return '<h2>Mes cachets reçus</h2><div class="mp-carte">' + cachets.map((c) =>
+      '<div class="mp-histo mp-ligne"><span><b>' + esc(c.prestation || K.libelle(c.motif)) + '</b><br><span class="mp-petit">Payé le ' + esc(K.jour(c.paye_le)) + (c.numero ? ' · reçu ' + esc(c.numero) : '') + '</span></span>' +
+      '<span class="mp-cachet"><b class="mp-montant">' + fcfa(c.montant) + '</b><br><a class="mp-petit" href="' + esc(K.lienRecu(c.jeton)) + '" target="_blank" rel="noopener">Voir le reçu</a></span></div>').join('') + '</div>';
   }
   zone.addEventListener('input', (ev) => {
     const c = ev.target.closest('[data-num]');

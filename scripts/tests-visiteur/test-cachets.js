@@ -27,22 +27,32 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
 
     await p.goto(URL_ADMIN + '#/compta/cachets'); await p.waitForSelector('[data-action="cachet-nouveau"]', { timeout: 10000 }); await p.waitForTimeout(800);
     ok(/Rien à payer/.test(await p.textContent('#contenu')) && /GRÂCE YAO/.test(await p.textContent('#contenu')) && /réf\. T_AB12/.test(await p.textContent('#contenu')), n + 'rien à payer ; l’historique montre le cachet déjà payé et sa référence');
+    // reçu du cachet payé : WhatsApp avec le reçu, et sa page
+    const waRecu = await p.getAttribute('.cachet.fait a[href^="https://wa.me/"]', 'href');
+    const texteRecu = decodeURIComponent((waRecu || '').split('?text=')[1] || '');
+    ok(/^https:\/\/wa\.me\/2250700000012\?text=/.test(waRecu || '') && /Reçu n° MA2M-CA-2026-0001/.test(texteRecu) && /Montant reçu : 15 000 FCFA/.test(texteRecu) && /\/recu\?r=11111111-2222-3333-4444-555555555555/.test(texteRecu),
+      n + 'cachet payé : « Envoyer le reçu sur WhatsApp » avec le numéro, le montant et le lien du reçu');
+    ok(/\/recu\?r=11111111/.test(await p.getAttribute('.cachet.fait a[href*="/recu?r="]', 'href') || ''), n + 'cachet payé : « Voir le reçu »');
     ok(await p.$('#menu-lateral a.nav[href="#/compta/cachets"]') !== null, n + '« Payer les mannequins » dans le menu de la Comptabilité');
     // 1. mannequin du registre : nom et numéro remplis d'office
     await p.click('[data-action="cachet-nouveau"]'); await p.waitForSelector('#ca-qui');
     await p.selectOption('#ca-qui', 'r0'); await p.waitForTimeout(200);
     ok(await p.inputValue('#ca-nom') === 'AYA KOUASSI' && await p.inputValue('#ca-tel') === '0700000010', n + 'mannequin du registre : nom et numéro remplis');
     await p.selectOption('#ca-projet', 'p1'); await p.fill('#ca-montant', '25000');
+    // motif choisi dans une liste (22/10/2026)
+    ok((await p.$$eval('#ca-motif option', (o) => o.map((x) => x.textContent))).join('|') === '— Choisir —|Défilé|Shooting photo|Campagne publicitaire|Tournage vidéo|Événement / hôtesse|Casting rémunéré|Autre', n + 'motif du cachet : liste de choix');
+    await p.selectOption('#ca-motif', 'defile');
     // commission de l'agence (22/10/2026) : montant total saisi, commission et part de la mannequin affichées
     ok(/Montant total de la prestation/.test(await p.textContent('label[for="ca-montant"]')) && /20 % : 5 000 FCFA · à verser à la mannequin : 20 000 FCFA/.test((await p.textContent('#ca-calcul')).replace(/\u202f|\u00a0/g, ' ')), n + 'commission de 20 % et montant à verser affichés pendant la saisie');
     await p.click('form[data-form="cachet-ajouter"] [type=submit]'); await p.waitForTimeout(1200);
     const cree = journal.filter((j) => j[0] === 'POST' && j[1] === 'cachets_mannequins').map((j) => JSON.parse(j[3]))[0] || {};
     ok(cree.montant_prestation === 25000, n + 'montant total de la prestation envoyé : la base calcule la commission');
+    ok(cree.motif === 'defile' && /^Défilé · ABIDJAN BORDER FORUM/.test(cree.prestation), n + 'motif enregistré, et repris en tête de la prestation (' + cree.prestation + ')');
     ok(await p.$('.cachet .visage-lien .vis') !== null, n + 'cachet d’une mannequin du registre : sa photo en médaillon, qui ouvre sa fiche');
     ok(cree.telephone === '2250700000010' && cree.montant === 25000 && cree.projet_id === 'p1' && /ABIDJAN BORDER FORUM/.test(cree.prestation) && cree.agence_mannequin_id === 'r0', n + 'cachet ajouté : numéro au format Wave, prestation reprise du projet (' + JSON.stringify(cree).slice(0, 120) + ')');
     // 2. personne extérieure, numéro faux refusé
     await p.click('[data-action="cachet-nouveau"]'); await p.waitForSelector('#ca-nom');
-    await p.fill('#ca-nom', 'Koné Styliste'); await p.fill('#ca-tel', '12'); await p.fill('#ca-prestation', 'Maquillage défilé'); await p.fill('#ca-montant', '10000');
+    await p.fill('#ca-nom', 'Koné Styliste'); await p.fill('#ca-tel', '12'); await p.selectOption('#ca-motif', 'autre'); await p.fill('#ca-prestation', 'Maquillage défilé'); await p.fill('#ca-montant', '10000');
     await p.click('form[data-form="cachet-ajouter"] [type=submit]'); await p.waitForTimeout(500);
     ok(journal.filter((j) => j[0] === 'POST' && j[1] === 'cachets_mannequins').length === 1, n + 'numéro Wave non valable : refusé');
     await p.fill('#ca-tel', '05 05 05 05 05'); await p.click('form[data-form="cachet-ajouter"] [type=submit]'); await p.waitForTimeout(1200);

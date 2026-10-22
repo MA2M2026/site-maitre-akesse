@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<!-- Reçu de paiement d'un cachet (22/10/2026) : ouvert depuis le lien personnel envoyé sur
+     WhatsApp (?r=…) ou depuis l'Espace mannequin, sans compte. js/recu.js -->
+<script src="/js/surveillance.js?v=47adbda8"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reçu de paiement — Maître Akesse Model Management</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="description" content="Reçu de paiement d'un cachet, Maître Akesse Model Management.">
+<link rel="stylesheet" href="/css/polices.css?v=f8b78de5">
+<link rel="stylesheet" href="/css/style.css?v=7015ca1d">
+<link rel="stylesheet" href="/css/jetons.css?v=a2155f1a">
+<link rel="stylesheet" href="/css/charte-ma2m.css?v=1f32edbe">
+<link rel="stylesheet" href="/css/bouton-ma2m.css?v=5211180f">
+<link rel="stylesheet" href="/css/recu.css?v=6acb3257">
+<script src="/js/bouton-appui.js?v=bedca56e" defer></script>
+<script src="/js/supabase-config.js?v=16708773" defer></script>
+<script src="/js/cachets-communs.js?v=41508892" defer></script>
+<script src="/js/recu.js?v=b34d082a" defer></script>
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<meta name="theme-color" content="#1e1d1c">
+</head>
+<body class="page-recu">
+<main class="recu">
+  <article class="recu-feuille" aria-labelledby="rc-titre">
+    <header class="recu-tete">
+      <img src="/assets/logo-header-clair.png" alt="Maître Akesse Model Management" width="200" height="61">
+      <div class="recu-numero"><span>Reçu</span><b id="rc-numero">—</b></div>
+    </header>
+    <h1 id="rc-titre">Reçu de paiement</h1>
+    <p class="recu-etat" id="rc-etat" role="status">Chargement…</p>
+    <dl class="recu-lignes" id="rc-lignes" hidden>
+      <div><dt>Payé à</dt><dd id="rc-qui"></dd></div>
+      <div><dt>Motif</dt><dd id="rc-quoi"></dd></div>
+      <div><dt>Date du paiement</dt><dd id="rc-date"></dd></div>
+      <div><dt>Moyen de paiement</dt><dd>Wave</dd></div>
+      <div id="rc-ref-ligne" hidden><dt>Référence Wave</dt><dd id="rc-ref"></dd></div>
+    </dl>
+    <div class="recu-montant" id="rc-montant-bloc" hidden><span>Montant reçu</span><strong id="rc-montant"></strong></div>
+    <p class="recu-merci" id="rc-merci" hidden>Merci pour votre travail. — Maître Akesse Model Management</p>
+    <footer class="recu-pied">Maître Akesse Model Management · Abidjan, Côte d’Ivoire · +225 05 45 65 66 87 · infos.ma2m@gmail.com</footer>
+  </article>
+  <div class="recu-actions" id="rc-actions" hidden>
+    <button type="button" class="btn btn--principal" id="rc-imprimer">Enregistrer en PDF / imprimer</button>
+  </div>
+</main>
+</body>
+</html>

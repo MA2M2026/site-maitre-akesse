@@ -22,6 +22,10 @@
   const numero = (x) => (typeof numeroWhatsApp === 'function' ? numeroWhatsApp(x) : String(x || '').replace(/\D/g, ''));
   const joli = (n) => '+' + String(n).replace(/^(\d{3})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/, '$1 $2 $3 $4 $5 $6');
   let cachets = [], commission = null;  // pourcentage de la commission (null : pas encore activée)
+  // Motif choisi dans une liste et reçu après paiement (supabase-cachets-recus.sql ; outils communs :
+  // window.CachetsMa2m, js/cachets-communs.js) — false tant que ce SQL n'est pas exécuté
+  let recus = false;
+  const K = window.CachetsMa2m;
   const pourcent = (x) => String(Number(x)).replace('.', ',') + ' %';
   // nom : lien vers la fiche (et sa photo en médaillon, js/admin/coque.js) pour qui voit les Paiements
   const nom = (c) => (c.agence_mannequin_id && P.lienFiche && P.moi.espaces.paiements ? P.lienFiche(c.agence_mannequin_id, c.beneficiaire) : '<b>' + P.esc(c.beneficiaire) + '</b>');
@@ -31,11 +35,13 @@
     try { liste = await P.bd(sb.from('cachets_mannequins').select('*').order('cree_le', { ascending: false }).limit(300)); }
     catch (e) { if (tableAbsente(e)) return P.entete('Payer les mannequins') + ABSENTE; throw e; }
     cachets = liste;
-    const [registre, projets, reglage] = await Promise.all([
+    const [registre, projets, reglage, colonneMotif] = await Promise.all([
       P.bd(sb.from('agence_mannequins').select('id, full_name, telephone, statut').eq('statut', 'actif').order('full_name')).catch(() => []),
       P.bd(sb.from('agenda_projets').select('id, titre, date_debut').eq('annule', false).gte('date_debut', new Date(Date.now() - 120 * 864e5).toISOString().slice(0, 10)).order('date_debut', { ascending: false }).limit(40)).catch(() => []),
-      P.bd(sb.from('compta_reglages').select('*').eq('id', 1).maybeSingle()).catch(() => null)
+      P.bd(sb.from('compta_reglages').select('*').eq('id', 1).maybeSingle()).catch(() => null),
+      sb.from('cachets_mannequins').select('motif, numero_recu, jeton').limit(1)
     ]);
+    recus = !!K && !colonneMotif.error;
     commission = reglage && reglage.commission_taux != null ? Number(reglage.commission_taux) : null;
     P.etat.cachetsRegistre = registre;
     const aPayer = liste.filter((c) => c.statut === 'a_payer'), payes = liste.filter((c) => c.statut === 'paye').slice(0, 60);
@@ -47,7 +53,9 @@
       (c.statut === 'a_payer' ? '<div class="ligne"><button class="btn petit" type="button" data-action="cachet-copier" data-numero="' + P.esc(c.telephone) + '">Copier le numéro</button>' +
         (principal() ? '<button class="btn petit rouge" type="button" data-action="cachet-payer" data-id="' + c.id + '">Marquer payé</button>' +
           '<button class="btn petit" type="button" data-action="cachet-annuler" data-id="' + c.id + '">Annuler</button>' : '') + '</div>'
-        : '<small class="doux">Payé le ' + P.date(c.paye_le) + (c.reference_wave ? ' · réf. ' + P.esc(c.reference_wave) : '') + '</small>') + '</div>';
+        : '<small class="doux">Payé le ' + P.date(c.paye_le) + (c.reference_wave ? ' · réf. ' + P.esc(c.reference_wave) : '') + (c.numero_recu ? ' · reçu ' + P.esc(c.numero_recu) : '') + '</small>' +
+          (recus && c.numero_recu ? '<div class="ligne"><a class="btn petit rouge" target="_blank" rel="noopener" href="https://wa.me/' + P.esc(c.telephone) + '?text=' + encodeURIComponent(K.texteRecu(c)) + '">Envoyer le reçu sur WhatsApp</a>' +
+            '<a class="btn petit" target="_blank" rel="noopener" href="' + P.esc(K.lienRecu(c.jeton)) + '">Voir le reçu</a></div>' : '')) + '</div>';
     return P.entete('Payer les mannequins', '<button class="btn rouge" type="button" data-action="cachet-nouveau">＋ Nouveau cachet</button>') +
       '<div class="note info">Envoi direct par Wave : disponible quand l’agence aura sa clé Wave Business. En attendant, payez depuis votre téléphone Wave, puis touchez « Marquer payé » : la dépense entre toute seule dans la comptabilité.</div>' +
       (commission === null ? '' : '<form class="carte f" data-form="cachet-commission"><h2 class="large">Commission de l’agence</h2>' +
@@ -69,7 +77,10 @@
       '<label class="fl" for="ca-nom">Nom et prénoms<input id="ca-nom" name="nom" maxlength="160" required></label>' +
       '<label class="fl" for="ca-tel">Numéro Wave<input id="ca-tel" name="telephone" type="tel" inputmode="tel" required placeholder="07 07 07 07 07"></label>' +
       '<label class="fl" for="ca-projet">Projet de l’agenda (facultatif)<select id="ca-projet" name="projet"><option value="">—</option>' + (tpl ? tpl.innerHTML : '') + '</select></label>' +
-      '<label class="fl" for="ca-prestation">Prestation (sinon : le projet choisi)<input id="ca-prestation" name="prestation" maxlength="200" placeholder="ex. : défilé du 5 décembre"></label>' +
+      (recus ? '<label class="fl" for="ca-motif">Motif du cachet<select id="ca-motif" name="motif" required><option value="">— Choisir —</option>' +
+          K.MOTIFS.map((m) => '<option value="' + m[0] + '">' + P.esc(m[1]) + '</option>').join('') + '</select></label>' +
+        '<label class="fl" for="ca-prestation">Précision (facultatif)<input id="ca-prestation" name="prestation" maxlength="150" placeholder="ex. : défilé du 5 décembre"></label>'
+        : '<label class="fl" for="ca-prestation">Prestation (sinon : le projet choisi)<input id="ca-prestation" name="prestation" maxlength="200" placeholder="ex. : défilé du 5 décembre"></label>') +
       '<label class="fl" for="ca-montant">' + (commission === null ? 'Montant à verser (FCFA)' : 'Montant total de la prestation (FCFA)') +
         '<input id="ca-montant" name="montant" type="number" inputmode="numeric" min="1" max="5000000" step="1" required data-change="cachet-montant" data-direct></label>' +
       (commission === null ? '' : '<p class="large doux" id="ca-calcul" role="status">Commission de l’agence ' + pourcent(commission) + ' · à verser à la mannequin : —</p>') +
@@ -87,11 +98,15 @@
     if (!/^\d{8,15}$/.test(tel)) { P.message('Ce numéro Wave n’est pas valable.'); return; }
     if (!(montant > 0)) { P.message('Indiquez le montant.'); return; }
     const projet = t(f, 'projet'), sel = document.getElementById('ca-projet');
-    const prestation = t(f, 'prestation') || (projet && sel ? sel.selectedOptions[0].textContent : '');
+    const titreProjet = projet && sel ? sel.selectedOptions[0].textContent : '', motif = recus ? t(f, 'motif') : '';
+    if (recus && !motif) { P.message('Choisissez le motif du cachet.'); return; }
+    // texte de la prestation : motif · projet · précision (sans motif : précision, sinon le projet)
+    const prestation = recus ? [K.libelle(motif), titreProjet, t(f, 'prestation')].filter(Boolean).join(' · ') : (t(f, 'prestation') || titreProjet);
     if (!prestation) { P.message('Indiquez la prestation, ou choisissez le projet de l’agenda.'); return; }
     // avec la commission : la base recalcule la commission et le montant à verser (montant ci-dessous provisoire)
     const ligne = { beneficiaire: t(f, 'nom'), telephone: tel, montant, prestation, projet_id: projet, agence_mannequin_id: t(f, 'qui'), statut: 'a_payer', cree_le: new Date().toISOString() };
     if (commission !== null) ligne.montant_prestation = montant;
+    if (recus) ligne.motif = motif;
     const r = await P.bd(sb.from('cachets_mannequins').insert(ligne).select('id'));
     if (!r || !r.length) { P.message('Rien n’a été enregistré : reconnectez-vous puis réessayez.'); return; }
     await C.actualiser('Cachet ajouté à la liste « À payer ».');

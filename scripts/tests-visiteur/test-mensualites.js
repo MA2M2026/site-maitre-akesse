@@ -24,7 +24,9 @@ async function navigateur() {
     const ctx = await b.newContext({ viewport: ecran }); const p = await ctx.newPage(); const errs = [], journal = [];
     p.on('pageerror', (e) => errs.push(e.message));
     await p.addInitScript((s) => { localStorage.setItem('sb-dfhghgmwmxiguhtxtsle-auth-token', JSON.stringify(s)); }, SESSION);
-    await brancher(p, { tables: {}, rpc: { mes_mensualites: () => ({ inscrit: true, nom: 'KONÉ AWA', mensualite: 20000, statut: 'actif', mineur: false, mois: MOIS }), lien_paiement: () => 'https://pay.wave.com/m/PARAMETRES/c/ci/?amount=20000', mes_recus: () => [{ objet: 'mensualite', mois: MOIS[0].mois, montant: 20000, mode: 'wave', numero: 'REC-2026-00007' }, { objet: 'mensualite', mois: MOIS[3].mois, montant: null, mode: 'avant_systeme', numero: null }], mensualite_declarer_avec_numero: null } }, journal);
+    await brancher(p, { tables: {}, rpc: { mes_mensualites: () => ({ inscrit: true, nom: 'KONÉ AWA', mensualite: 20000, statut: 'actif', mineur: false, mois: MOIS }), lien_paiement: () => 'https://pay.wave.com/m/PARAMETRES/c/ci/?amount=20000', mes_recus: () => [{ objet: 'mensualite', mois: MOIS[0].mois, montant: 20000, mode: 'wave', numero: 'REC-2026-00007' }, { objet: 'mensualite', mois: MOIS[3].mois, montant: null, mode: 'avant_systeme', numero: null }], mensualite_declarer_avec_numero: null,
+      // cachets payés par l'agence (22/10/2026) : visibles ici avec leur reçu
+      mes_cachets: () => [{ numero: 'MA2M-CA-2026-0003', montant: 40000, motif: 'defile', prestation: 'Défilé · ABIDJAN BORDER FORUM', paye_le: '2026-10-20T10:00:00Z', jeton: '22222222-3333-4444-5555-666666666666' }] } }, journal);
     await p.goto('http://127.0.0.1:' + PORT + '/mes-paiements.html'); await p.waitForSelector('.mp-calendrier', { timeout: 8000 });
     const t = () => p.evaluate(() => document.getElementById('mp-zone').innerText);
     ok((await p.$$('.mp-calendrier .mp-mois')).length === 24 && /1 mois réglé sur 24/.test(await t()), nomEcran + ' : tableau des 24 mois de formation');
@@ -32,6 +34,8 @@ async function navigateur() {
     ok(couleurs[0] === 'ok' && couleurs[1] === 'alerte' && ['erreur', 'info'].includes(couleurs[2]), nomEcran + ' : vert payé, orange en attente, rouge non payé ' + couleurs.join(','));
     ok(await p.isDisabled('[data-mp=paye]') && /PARAMETRES.*amount=20000$/.test(await p.getAttribute('[data-mp=wave]', 'href')), nomEcran + ' : lien Wave des Paramètres au montant du mannequin (20 000), « J’ai payé » attend le paiement');
     ok(/REC-2026-00007/.test(await t()) && /Avant le nouveau système/.test(await t()), nomEcran + ' : historique avec numéro de reçu');
+    ok(/Mes cachets reçus/.test(await t()) && /Défilé · ABIDJAN BORDER FORUM/.test(await t()) && /40 000 FCFA/.test((await t()).replace(/\u202f|\u00a0/g, ' ')) && /MA2M-CA-2026-0003/.test(await t())
+      && /\/recu\?r=22222222-3333/.test(await p.getAttribute('.mp-cachet a', 'href') || ''), nomEcran + ' : « Mes cachets reçus » avec le montant, le reçu et son lien');
     ok(/espèces/i.test(await t()) && /Orange Money/.test(await t()), nomEcran + ' : espèces à l’agence, autres opérateurs « bientôt »');
     const boutons = (await p.evaluate(verifierBoutons)).map((x) => x.texte); ok(!boutons.length, nomEcran + ' : boutons au modèle rouge ' + boutons.join(' | '));
     const pales = (await lirePageEntiere(p)).map((x) => x.texte.slice(0, 25)); ok(!pales.length, nomEcran + ' : textes lisibles ' + pales.join(' | '));

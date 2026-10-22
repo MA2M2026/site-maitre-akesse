@@ -181,6 +181,15 @@ agence constituée et une clé Wave Business avec l'autorisation « Payout », d
 dans Vercel (jamais donnée à l'assistant). Le serveur appellera alors `POST /v1/payout` (clé
 d'idempotence = id du cachet) puis `cachet_payer(..., 'wave_api')`. Test : `test-cachets.js`.
 
+**Motif et reçu** (22/10/2026, demande de la propriétaire) : motif choisi dans une liste
+(`cachets_mannequins.motif`, repris en tête du texte de la prestation) ; au paiement, la base donne
+un numéro de reçu (`MA2M-CA-AAAA-NNNN`) ; « Envoyer le reçu sur WhatsApp » (message prêt, avec le
+lien personnel) et « Voir le reçu » ouvrent **`recu.html?r=<jeton>`** (`js/recu.js`, `css/recu.css`,
+sans compte : `cachet_recu_lire`, seulement un cachet payé, sans la commission) ; la mannequin
+retrouve ses cachets payés dans « Mes paiements » de son Espace (`mes_cachets`, `js/mes-paiements.js`).
+Outils communs (motifs, message, lien) : `js/cachets-communs.js`. Base : **`supabase-cachets-recus.sql`**
+(à exécuter une fois). Essais : `test-cachets.js`, `test-recu.js`, `test-mensualites.js`.
+
 **Commission de l'agence** (22/10/2026, choix de la propriétaire : « A et 1 ») : on saisit le montant
 TOTAL de la prestation ; la base (`cachet_commission`, **`supabase-cachets-commission.sql`**, à
 exécuter une fois) garde la commission au pourcentage unique `compta_reglages.commission_taux`
