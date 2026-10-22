@@ -4,6 +4,10 @@
 // Tant que l'agence n'a pas sa clé Wave Business (pas encore constituée), l'envoi se fait depuis
 // le téléphone Wave, puis « Marquer payé » : la dépense « Cachets reversés aux mannequins » entre
 // toute seule dans la comptabilité. Seul l'administrateur principal marque payé (code récent).
+// Commission de l'agence (22/10/2026, choix de la propriétaire) : on saisit le montant TOTAL de la
+// prestation ; la base garde la commission (pourcentage unique de compta_reglages, 20 % par défaut,
+// réglé ici par l'administrateur principal) et calcule le montant à verser
+// (supabase-cachets-commission.sql). Tant que ce SQL n'est pas exécuté : saisie du montant versé.
 // Outils communs : P.compta (js/portail/espace-compta.js, à charger avant).
 (function () {
   'use strict';
@@ -16,28 +20,39 @@
   // numéro saisi → chiffres seuls avec l'indicatif ivoirien (numeroWhatsApp, js/app.js)
   const numero = (x) => (typeof numeroWhatsApp === 'function' ? numeroWhatsApp(x) : String(x || '').replace(/\D/g, ''));
   const joli = (n) => '+' + String(n).replace(/^(\d{3})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/, '$1 $2 $3 $4 $5 $6');
-  let cachets = [];
+  let cachets = [], commission = null;  // pourcentage de la commission (null : pas encore activée)
+  const pourcent = (x) => String(Number(x)).replace('.', ',') + ' %';
+  // nom : lien vers la fiche (et sa photo en médaillon, js/admin/coque.js) pour qui voit les Paiements
+  const nom = (c) => (c.agence_mannequin_id && P.lienFiche && P.moi.espaces.paiements ? P.lienFiche(c.agence_mannequin_id, c.beneficiaire) : '<b>' + P.esc(c.beneficiaire) + '</b>');
 
   async function page() {
     let liste;
     try { liste = await P.bd(sb.from('cachets_mannequins').select('*').order('cree_le', { ascending: false }).limit(300)); }
     catch (e) { if (tableAbsente(e)) return P.entete('Payer les mannequins') + ABSENTE; throw e; }
     cachets = liste;
-    const [registre, projets] = await Promise.all([
+    const [registre, projets, reglage] = await Promise.all([
       P.bd(sb.from('agence_mannequins').select('id, full_name, telephone, statut').eq('statut', 'actif').order('full_name')).catch(() => []),
-      P.bd(sb.from('agenda_projets').select('id, titre, date_debut').eq('annule', false).gte('date_debut', new Date(Date.now() - 120 * 864e5).toISOString().slice(0, 10)).order('date_debut', { ascending: false }).limit(40)).catch(() => [])
+      P.bd(sb.from('agenda_projets').select('id, titre, date_debut').eq('annule', false).gte('date_debut', new Date(Date.now() - 120 * 864e5).toISOString().slice(0, 10)).order('date_debut', { ascending: false }).limit(40)).catch(() => []),
+      P.bd(sb.from('compta_reglages').select('*').eq('id', 1).maybeSingle()).catch(() => null)
     ]);
+    commission = reglage && reglage.commission_taux != null ? Number(reglage.commission_taux) : null;
     P.etat.cachetsRegistre = registre;
     const aPayer = liste.filter((c) => c.statut === 'a_payer'), payes = liste.filter((c) => c.statut === 'paye').slice(0, 60);
     const total = aPayer.reduce((s, c) => s + c.montant, 0);
-    const carte = (c) => '<div class="cachet' + (c.statut === 'a_payer' ? '' : ' fait') + '"><div class="t"><b>' + P.esc(c.beneficiaire) + '</b>' +
-      '<small>' + P.esc(c.prestation) + ' · ' + joli(c.telephone) + '</small></div><span class="cachet-montant">' + P.fcfa(c.montant) + '</span>' +
+    const carte = (c) => '<div class="cachet' + (c.statut === 'a_payer' ? '' : ' fait') + '"><div class="t">' + nom(c) +
+      '<small>' + P.esc(c.prestation) + ' · ' + joli(c.telephone) + '</small>' +
+      (c.montant_prestation ? '<small>Prestation ' + P.fcfa(c.montant_prestation) + ' · commission de l’agence ' + pourcent(c.commission_taux) + ' : ' + P.fcfa(c.commission) + '</small>' : '') +
+      '</div><span class="cachet-montant">' + P.fcfa(c.montant) + '</span>' +
       (c.statut === 'a_payer' ? '<div class="ligne"><button class="btn petit" type="button" data-action="cachet-copier" data-numero="' + P.esc(c.telephone) + '">Copier le numéro</button>' +
         (principal() ? '<button class="btn petit rouge" type="button" data-action="cachet-payer" data-id="' + c.id + '">Marquer payé</button>' +
           '<button class="btn petit" type="button" data-action="cachet-annuler" data-id="' + c.id + '">Annuler</button>' : '') + '</div>'
         : '<small class="doux">Payé le ' + P.date(c.paye_le) + (c.reference_wave ? ' · réf. ' + P.esc(c.reference_wave) : '') + '</small>') + '</div>';
     return P.entete('Payer les mannequins', '<button class="btn rouge" type="button" data-action="cachet-nouveau">＋ Nouveau cachet</button>') +
       '<div class="note info">Envoi direct par Wave : disponible quand l’agence aura sa clé Wave Business. En attendant, payez depuis votre téléphone Wave, puis touchez « Marquer payé » : la dépense entre toute seule dans la comptabilité.</div>' +
+      (commission === null ? '' : '<form class="carte f" data-form="cachet-commission"><h2 class="large">Commission de l’agence</h2>' +
+        '<p class="large doux">Sur chaque cachet, l’agence garde ' + pourcent(commission) + ' du montant de la prestation ; la mannequin reçoit le reste. Changer le pourcentage ne modifie pas les cachets déjà saisis.</p>' +
+        (principal() ? '<label class="fl" for="cc-taux">Pourcentage (%)<input id="cc-taux" name="taux" type="number" inputmode="decimal" min="0" max="99" step="0.5" required value="' + commission + '"></label>' +
+          '<div class="ligne large"><button class="btn" type="submit">Enregistrer</button></div>' : '') + '</form>') +
       '<section class="carte"><h2>À payer <span class="doux">(' + aPayer.length + (aPayer.length ? ' · ' + P.fcfa(total) : '') + ')</span></h2>' +
       (aPayer.length ? aPayer.map(carte).join('') : '<p class="doux">Rien à payer pour le moment.</p>') + '</section>' +
       '<section class="carte"><h2>Déjà payés</h2>' + (payes.length ? payes.map(carte).join('') : '<p class="doux">Aucun cachet payé pour le moment.</p>') + '</section>' +
@@ -54,7 +69,9 @@
       '<label class="fl" for="ca-tel">Numéro Wave<input id="ca-tel" name="telephone" type="tel" inputmode="tel" required placeholder="07 07 07 07 07"></label>' +
       '<label class="fl" for="ca-projet">Projet de l’agenda (facultatif)<select id="ca-projet" name="projet"><option value="">—</option>' + (tpl ? tpl.innerHTML : '') + '</select></label>' +
       '<label class="fl" for="ca-prestation">Prestation (sinon : le projet choisi)<input id="ca-prestation" name="prestation" maxlength="200" placeholder="ex. : défilé du 5 décembre"></label>' +
-      '<label class="fl" for="ca-montant">Montant (FCFA)<input id="ca-montant" name="montant" type="number" inputmode="numeric" min="1" max="5000000" step="1" required></label>' +
+      '<label class="fl" for="ca-montant">' + (commission === null ? 'Montant à verser (FCFA)' : 'Montant total de la prestation (FCFA)') +
+        '<input id="ca-montant" name="montant" type="number" inputmode="numeric" min="1" max="5000000" step="1" required data-change="cachet-montant" data-direct></label>' +
+      (commission === null ? '' : '<p class="large doux" id="ca-calcul" role="status">Commission de l’agence ' + pourcent(commission) + ' · à verser à la mannequin : —</p>') +
       '<div class="ligne large"><button class="btn rouge" type="submit">Ajouter à payer</button><button class="btn" type="button" data-action="fermer-fenetre">Annuler</button></div></form>');
     document.getElementById('ca-qui').focus();
   };
@@ -71,9 +88,26 @@
     const projet = t(f, 'projet'), sel = document.getElementById('ca-projet');
     const prestation = t(f, 'prestation') || (projet && sel ? sel.selectedOptions[0].textContent : '');
     if (!prestation) { P.message('Indiquez la prestation, ou choisissez le projet de l’agenda.'); return; }
-    const r = await P.bd(sb.from('cachets_mannequins').insert({ beneficiaire: t(f, 'nom'), telephone: tel, montant, prestation, projet_id: projet, agence_mannequin_id: t(f, 'qui'), statut: 'a_payer', cree_le: new Date().toISOString() }).select('id'));
+    // avec la commission : la base recalcule la commission et le montant à verser (montant ci-dessous provisoire)
+    const ligne = { beneficiaire: t(f, 'nom'), telephone: tel, montant, prestation, projet_id: projet, agence_mannequin_id: t(f, 'qui'), statut: 'a_payer', cree_le: new Date().toISOString() };
+    if (commission !== null) ligne.montant_prestation = montant;
+    const r = await P.bd(sb.from('cachets_mannequins').insert(ligne).select('id'));
     if (!r || !r.length) { P.message('Rien n’a été enregistré : reconnectez-vous puis réessayez.'); return; }
     await C.actualiser('Cachet ajouté à la liste « À payer ».');
+  };
+  // calcul affiché pendant la saisie (le vrai calcul est fait par la base, au franc près)
+  P.changements['cachet-montant'] = (el) => {
+    const z = document.getElementById('ca-calcul'), total = Math.round(Number(el.value));
+    if (!z || commission === null) return;
+    const part = Math.round(total * commission / 100);
+    z.textContent = 'Commission de l’agence ' + pourcent(commission) + (total > 0 ? ' : ' + P.fcfa(part) + ' · à verser à la mannequin : ' + P.fcfa(total - part) : ' · à verser à la mannequin : —');
+  };
+  P.formulaires['cachet-commission'] = async (f) => {
+    const taux = Number(String(f.get('taux')).replace(',', '.'));
+    if (!(taux >= 0 && taux < 100)) { P.message('Indiquez un pourcentage entre 0 et 99.'); return; }
+    const r = await P.bd(sb.from('compta_reglages').update({ commission_taux: taux }).eq('id', 1).select('id'));
+    if (!r || !r.length) { P.message('Action refusée : votre rôle ne le permet pas.'); return; }
+    await C.actualiser('Commission de l’agence : ' + pourcent(taux) + '.');
   };
   P.actions['cachet-copier'] = (el) => {
     const texte = el.textContent;

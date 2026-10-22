@@ -33,8 +33,12 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     await p.selectOption('#ca-qui', 'r0'); await p.waitForTimeout(200);
     ok(await p.inputValue('#ca-nom') === 'AYA KOUASSI' && await p.inputValue('#ca-tel') === '0700000010', n + 'mannequin du registre : nom et numéro remplis');
     await p.selectOption('#ca-projet', 'p1'); await p.fill('#ca-montant', '25000');
+    // commission de l'agence (22/10/2026) : montant total saisi, commission et part de la mannequin affichées
+    ok(/Montant total de la prestation/.test(await p.textContent('label[for="ca-montant"]')) && /20 % : 5 000 FCFA · à verser à la mannequin : 20 000 FCFA/.test((await p.textContent('#ca-calcul')).replace(/\u202f|\u00a0/g, ' ')), n + 'commission de 20 % et montant à verser affichés pendant la saisie');
     await p.click('form[data-form="cachet-ajouter"] [type=submit]'); await p.waitForTimeout(1200);
     const cree = journal.filter((j) => j[0] === 'POST' && j[1] === 'cachets_mannequins').map((j) => JSON.parse(j[3]))[0] || {};
+    ok(cree.montant_prestation === 25000, n + 'montant total de la prestation envoyé : la base calcule la commission');
+    ok(await p.$('.cachet .visage-lien .vis') !== null, n + 'cachet d’une mannequin du registre : sa photo en médaillon, qui ouvre sa fiche');
     ok(cree.telephone === '2250700000010' && cree.montant === 25000 && cree.projet_id === 'p1' && /ABIDJAN BORDER FORUM/.test(cree.prestation) && cree.agence_mannequin_id === 'r0', n + 'cachet ajouté : numéro au format Wave, prestation reprise du projet (' + JSON.stringify(cree).slice(0, 120) + ')');
     // 2. personne extérieure, numéro faux refusé
     await p.click('[data-action="cachet-nouveau"]'); await p.waitForSelector('#ca-nom');
@@ -54,10 +58,24 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     // 4. Annuler l'autre, avec motif
     await p.click('.cachet [data-action="cachet-annuler"]'); await p.fill('#cn-motif', 'Prestation annulée'); await p.click('form[data-form="cachet-annuler"] [type=submit]'); await p.waitForTimeout(1000);
     ok(journal.some((j) => j[0] === 'rpc' && j[1] === 'cachet_annuler' && /Prestation annulée/.test(j[2])), n + 'cachet annulé avec motif');
+    // le pourcentage se règle ici (administrateur principal)
+    await p.fill('#cc-taux', '25'); await p.click('form[data-form="cachet-commission"] [type=submit]'); await p.waitForTimeout(1000);
+    const regl = journal.filter((j) => j[0] === 'PATCH' && j[1] === 'compta_reglages').map((j) => JSON.parse(j[3])).pop() || {};
+    ok(regl.commission_taux === 25, n + 'commission de l’agence modifiable : 25 % enregistré');
     const pales = await lirePageEntiere(p);
     ok(!pales.length, n + 'textes lisibles ' + pales.slice(0, 4).map((x) => x.texte.slice(0, 20) + ' (' + x.contraste + ')').join(', '));
     ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)), n + 'rien ne dépasse de l’écran');
     ok(!errs.length, n + 'aucune erreur de page ' + errs.join(' | '));
+    await ctx.close();
+  }
+  // 4bis. SQL de la commission pas encore exécuté : saisie du montant versé, comme avant
+  {
+    const ctx = await b.newContext({ viewport: { width: 1366, height: 900 }, serviceWorkers: 'block' }); const p = await ctx.newPage(); const journal = [];
+    const d = donnees('principal'); delete d.tables.compta_reglages[0].commission_taux;
+    await brancher(p, d, journal); await seConnecter(p, URL_ADMIN); await p.waitForTimeout(1500);
+    await p.goto(URL_ADMIN + '#/compta/cachets'); await p.waitForSelector('[data-action="cachet-nouveau"]', { timeout: 10000 }); await p.waitForTimeout(800);
+    await p.click('[data-action="cachet-nouveau"]'); await p.waitForSelector('#ca-montant');
+    ok(/Montant à verser/.test(await p.textContent('label[for="ca-montant"]')) && !(await p.$('#ca-calcul')) && !(await p.$('form[data-form="cachet-commission"]')), 'commission pas encore activée : « Montant à verser », sans calcul ni réglage');
     await ctx.close();
   }
   // 5. Le comptable prépare les cachets mais ne paie pas

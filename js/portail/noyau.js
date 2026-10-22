@@ -509,12 +509,13 @@
     Promise.resolve(f(new FormData(form), form)).catch((err) => P.message(P.erreurTexte(err)))
       .finally(() => { if (bouton && bouton.isConnected) bouton.disabled = false; });
   });
-  document.addEventListener('change', (e) => {
+  // (data-direct : aussi à chaque frappe, pas seulement en quittant le champ — ex. calcul affiché)
+  ['change', 'input'].forEach((sorte) => document.addEventListener(sorte, (e) => {
     const el = e.target.closest('[data-change]');
-    if (!el) return;
+    if (!el || (sorte === 'input' && !el.hasAttribute('data-direct'))) return;
     const f = P.changements[el.getAttribute('data-change')];
     if (f) Promise.resolve(f(el, e)).catch((err) => P.message(P.erreurTexte(err)));
-  });
+  }));
   addEventListener('hashchange', () => { if (P.moi && P.moi.role) afficher().catch((e) => P.message(P.erreurTexte(e))); });
 
   // ---------- application installable ----------

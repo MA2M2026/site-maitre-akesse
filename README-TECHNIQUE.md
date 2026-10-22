@@ -181,6 +181,13 @@ agence constituée et une clé Wave Business avec l'autorisation « Payout », d
 dans Vercel (jamais donnée à l'assistant). Le serveur appellera alors `POST /v1/payout` (clé
 d'idempotence = id du cachet) puis `cachet_payer(..., 'wave_api')`. Test : `test-cachets.js`.
 
+**Commission de l'agence** (22/10/2026, choix de la propriétaire : « A et 1 ») : on saisit le montant
+TOTAL de la prestation ; la base (`cachet_commission`, **`supabase-cachets-commission.sql`**, à
+exécuter une fois) garde la commission au pourcentage unique `compta_reglages.commission_taux`
+(20 % par défaut, réglé sur la page par l'administrateur principal) et calcule `montant` (à verser) ;
+le pourcentage est gardé sur le cachet. Tant que ce SQL n'est pas exécuté, la page reste en
+« montant à verser » (pas de calcul). La page montre aussi la photo de la mannequin (registre).
+
 ## 🏛️ Nouvelle Administration (chantier du 22/10/2026 ; à l'adresse `/admin/` depuis le déménagement)
 
 Feu vert de la propriétaire : nouvelle Administration aux couleurs du site (papier, rouge,
