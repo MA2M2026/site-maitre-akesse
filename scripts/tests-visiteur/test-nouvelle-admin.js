@@ -85,18 +85,30 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     ok(!(await p.$('iframe')), n + 'aucun cadre vers l’ancien tableau de bord');
 
     // 4. Blocs 2 et 3 dans la nouvelle décoration
-    await p.goto(URL_ADMIN + '#/paiements/registre'); await p.waitForTimeout(1500);
-    ok((await p.$$eval('.nom-visage .vis', (l) => l.filter((v) => v.querySelector('img')).length)) === 3 && (await p.$$('.nom-visage')).length === 6, n + 'registre : photos en médaillon pour les 3 inscrites, initiales pour les autres');
+    // photos en médaillon partout où le nom mène à la fiche, cliquables (demande du 22/10/2026)
+    const visages = (sel) => p.$$eval(sel + ' .visage-lien .vis', (l) => l.map((v) => !!(v.querySelector('img'))));
+    await p.goto(URL_ADMIN + '#/paiements/registre'); await p.waitForTimeout(2000);
+    const vr = await visages('#contenu');
+    ok(vr.length === 6 && vr.filter(Boolean).length === 3, n + 'registre : photos en médaillon pour les 3 inscrites, initiales pour les autres (' + vr + ')');
     ok(/paiements/i.test(await p.textContent('.haut .bloc-actuel')) && await p.isVisible('.contenu .tableau, .contenu .carte'), n + 'bloc 2 (paiements) affiché dans la nouvelle maison');
     await capture(p, 'paiements-' + (tel ? 'tel' : 'pc'));
     const palesP = await lirePageEntiere(p);
     ok(!palesP.length, n + 'paiements : textes lisibles ' + palesP.slice(0, 4).map((x) => x.texte.slice(0, 20) + ' (' + x.contraste + ')').join(', '));
     // Tableau du mois : la photo du Book en médaillon devant le nom (initiales pour les non-inscrits)
-    await p.goto(URL_ADMIN + '#/paiements/tableau'); await p.waitForSelector('.nom-visage', { timeout: 8000 }).catch(() => {}); await p.waitForTimeout(1200);
-    const medaillons = await p.$$eval('.nom-visage .vis', (l) => l.map((v) => !!(v.querySelector('img.charge') && v.querySelector('img').naturalWidth)));
+    await p.goto(URL_ADMIN + '#/paiements/tableau'); await p.waitForSelector('.visage-lien', { timeout: 8000 }).catch(() => {}); await p.waitForTimeout(1500);
+    const medaillons = await p.$$eval('#contenu .visage-lien .vis', (l) => l.map((v) => !!(v.querySelector('img.charge') && v.querySelector('img').naturalWidth)));
     ok(medaillons.length === 6 && medaillons.filter(Boolean).length === 3, n + 'tableau du mois : photos en médaillon pour les 3 inscrites, initiales pour les autres (' + medaillons + ')');
     ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)), n + 'tableau du mois : rien ne dépasse');
     await capture(p, 'tableau-mois-' + (tel ? 'tel' : 'pc'));
+    // la photo s'ouvre comme le nom : la fiche de la mannequin
+    await p.click('#contenu .visage-lien'); await p.waitForTimeout(800);
+    ok(/#\/paiements\/fiche\//.test(await p.evaluate(() => location.hash)), n + 'toucher la photo ouvre la fiche de la mannequin');
+    for (const [page, nom] of [['matrice', 'paiements mois par mois'], ['mensualites', 'appel du mois'], ['messages', 'destinataires des messages'], ['a-valider', 'paiements à valider']]) {
+      await p.goto(URL_ADMIN + '#/paiements/' + page); await p.waitForTimeout(1800);
+      const v = await visages('#contenu');
+      ok(v.length >= 2 && v.some(Boolean), n + nom + ' : photos en médaillon (' + v.length + ')');
+    }
+    ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)), n + 'avec les photos, rien ne dépasse');
     await p.goto(URL_ADMIN + '#/compta/tableau'); await p.waitForTimeout(1500);
     ok(/Comptabilité/.test(await p.textContent('.haut .bloc-actuel')), n + 'bloc 3 (comptabilité) affiché dans la nouvelle maison');
     ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)), n + 'comptabilité : rien ne dépasse');

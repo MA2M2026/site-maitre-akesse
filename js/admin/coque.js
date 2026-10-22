@@ -114,11 +114,35 @@
     const menu = a.closest('.lateral'), r = a.getBoundingClientRect(), m = menu.getBoundingClientRect();
     if (r.bottom > m.bottom - 40 || r.top < m.top) menu.scrollTop += r.top - m.top - m.height / 3;
   }
+  // Visages partout (demande de la propriétaire, 22/10/2026 : « les photos des mannequins partout où
+  // se trouve leur nom, et cliquables ») : devant chaque lien vers la fiche d'une mannequin des
+  // Paiements (#/paiements/fiche/<id du registre>), sa photo du Book en médaillon, qui ouvre la même
+  // fiche ; initiales tant que la photo arrive, ou si elle n'est pas inscrite sur le site.
+  const photoDuRegistre = {};  // id du registre → adresse de la photo ('' : pas de photo)
+  async function chercherPhotos(ids) {
+    const lignes = await P.bd(sb.from('agence_mannequins').select('id, user_id').in('id', ids));
+    const parCompte = await P.photosCouverture(lignes.map((l) => l.user_id).filter(Boolean));
+    ids.forEach((id) => { photoDuRegistre[id] = ''; });
+    lignes.forEach((l) => { photoDuRegistre[l.id] = (l.user_id && parCompte[l.user_id]) || ''; });
+  }
+  function visagesDesFiches() {
+    const liens = [...document.querySelectorAll('#contenu a[href^="#/paiements/fiche/"]:not(.btn):not(.visage-lien):not([data-visage])')];
+    if (!liens.length) return;
+    const poser = (a) => {
+      const id = a.getAttribute('href').split('/').pop(), nom = a.textContent.trim();
+      const v = a.previousElementSibling && a.previousElementSibling.classList.contains('visage-lien') ? a.previousElementSibling : null;
+      const html = '<a class="visage-lien" href="' + P.esc(a.getAttribute('href')) + '" tabindex="-1" aria-hidden="true">' + P.visage(photoDuRegistre[id] || '', nom, 'rond-vis') + '</a>';
+      if (v) v.outerHTML = html; else a.insertAdjacentHTML('beforebegin', html);
+    };
+    liens.forEach((a) => { a.setAttribute('data-visage', ''); poser(a); });
+    const manquants = [...new Set(liens.map((a) => a.getAttribute('href').split('/').pop()))].filter((id) => !(id in photoDuRegistre));
+    if (manquants.length) chercherPhotos(manquants).then(() => liens.forEach((a) => { if (a.isConnected) poser(a); }), () => { /* initiales gardées */ });
+  }
   // (regroupé : une seule passe après une rafale de changements, pas une par image des chiffres animés)
   let retouche = 0;
   new MutationObserver(() => {
     if (retouche) return;
-    retouche = setTimeout(() => { retouche = 0; etiqueterTableaux(); harmoniserEcransPartages(); replierSaisies(); rubriqueVisible(); }, 60);
+    retouche = setTimeout(() => { retouche = 0; etiqueterTableaux(); harmoniserEcransPartages(); replierSaisies(); rubriqueVisible(); visagesDesFiches(); }, 60);
   }).observe(document.getElementById('app'), { childList: true, subtree: true });
 
   P.compte = (n, suffixe) => '<span data-compte="' + (Number(n) || 0) + '"' + (suffixe ? ' data-suffixe="' + P.esc(suffixe) + '"' : '') + '>0' + P.esc(suffixe || '') + '</span>';

@@ -31,11 +31,9 @@
     return registre.map((m) => Object.assign({}, m, { inscription: parMannequin[m.id] || null }));
   }
 
-  // Nouvelle Administration : la photo du Book en médaillon devant le nom (initiales sinon)
-  // (P.photosCouverture et P.visage : js/admin/coque.js ; compte du site = id du profil).
-  // Ailleurs (ancienne Administration) : null, et le nom reste seul.
-  const photosDe = (liste) => (P.photosCouverture ? P.photosCouverture(liste.filter((m) => m.user_id).map((m) => m.user_id)).catch(() => ({})) : Promise.resolve(null));
-  const avecVisage = (photos, m, html) => (photos ? '<div class="nom-visage">' + P.visage(photos[m.user_id], m.full_name, 'rond-vis') + '<div>' + html + '</div></div>' : html);
+  // Nom d'une mannequin = lien vers sa fiche ; l'Administration y ajoute sa photo en médaillon,
+  // cliquable elle aussi (visagesDesFiches, js/admin/coque.js ; demande de la propriétaire, 22/10/2026)
+  P.lienFiche = (id, nom) => (id ? '<a href="#/paiements/fiche/' + P.esc(id) + '"><b>' + P.esc(nom || '—') + '</b></a>' : '<b>' + P.esc(nom || '—') + '</b>');
 
   // ---------- Registre ----------
   const FILTRES = [['tous', 'Tous'], ['site', 'Inscrits sur le site'], ['main', 'Ajoutés à la main'], ['non_paye', 'Inscription à enregistrer'], ['sans_nom', 'Sans nom']];
@@ -49,7 +47,6 @@
       (!cherche || [m.full_name, m.telephone, m.email].join(' ').toLowerCase().includes(cherche));
     const liste = tous.filter(garde);
     const site = tous.filter((m) => m.user_id).length;
-    const photos = await photosDe(liste);
     return P.entete('Registre des mannequins', '<a class="btn rouge" href="#/paiements/ajouter">＋ Ajouter un mannequin</a>') +
       '<p class="doux petit-texte">Ici : tous les mannequins en formation à l’agence, pour les inscriptions et les mensualités, qu’ils soient publiés dans The Book du site ou non.</p>' +
       '<div class="grille chiffres">' + P.chiffre('Mannequins de l’agence', tous.length) + P.chiffre('Inscrits sur le site', site) +
@@ -61,8 +58,8 @@
       '<div class="segments">' + FILTRES.map((f) => '<button class="btn petit' + (f[0] === filtre ? ' actif' : '') + '" type="button" data-action="registre-filtre" data-filtre="' + f[0] + '">' + P.esc(f[1]) + '</button>').join('') + '</div>' +
       P.tableau(['Mannequin', 'Téléphone', 'Inscription', '#Mensualité', 'Statut', ''], liste.map((m) => {
         const e = etatInscription(m, m.inscription);
-        return '<tr><td>' + avecVisage(photos, m, '<b>' + P.esc(m.full_name) + '</b>' + (P.age(m.date_naissance) !== null && P.age(m.date_naissance) < 18 ? ' ' + P.pastille('Mineur', 'info') : '') +
-          '<div class="petit-texte doux">' + (m.user_id ? 'Compte sur le site' : 'Ajouté à la main') + '</div>') + '</td>' +
+        return '<tr><td>' + P.lienFiche(m.id, m.full_name) + (P.age(m.date_naissance) !== null && P.age(m.date_naissance) < 18 ? ' ' + P.pastille('Mineur', 'info') : '') +
+          '<div class="petit-texte doux">' + (m.user_id ? 'Compte sur le site' : 'Ajouté à la main') + '</div></td>' +
           '<td>' + P.esc(m.telephone || '—') + (sansNom(m) && m.email ? '<div class="petit-texte doux">' + P.esc(m.email) + '</div>' : '') + '</td><td>' + P.pastille(e[0], e[1]) + '</td><td class="nombre">' + P.fcfa(m.mensualite) + '</td>' +
           '<td>' + P.pastille(STATUTS[m.statut], m.statut === 'actif' ? 'neutre' : 'alerte') + '</td>' +
           '<td><div class="ligne"><a class="btn petit" href="#/paiements/fiche/' + m.id + '">Ouvrir</a>' +
@@ -317,7 +314,7 @@
       '<div class="note info">Vérifiez chaque paiement dans Wave Business avant de valider. Le plus ancien est en haut.</div>' +
       P.tableau(['Mannequin', 'Objet', '#Montant', 'Déclaré le', ''], groupes.map((g) => {
         const p = g.principal;
-        return '<tr><td><b>' + P.esc(p.mannequin ? p.mannequin.full_name : '—') + '</b><div class="petit-texte doux">' + P.esc((p.mannequin && p.mannequin.telephone) || '') + '</div></td>' +
+        return '<tr><td>' + P.lienFiche(p.mannequin_id, p.mannequin && p.mannequin.full_name) + '<div class="petit-texte doux">' + P.esc((p.mannequin && p.mannequin.telephone) || '') + '</div></td>' +
           '<td>' + P.esc(objetPaiement(p)) + (p.objet === 'inscription' && g.total > (p.montant || 0) ? '<div class="petit-texte doux">dont 1er mois de formation</div>' : '') + '<div>' + P.pastille('En attente de validation', 'alerte') + '</div></td>' +
           '<td class="nombre">' + P.fcfa(g.total) + '</td><td>' + P.dateHeure(p.declare_le) + '</td>' +
           '<td class="ligne"><button class="btn rouge petit" type="button" data-action="paiement-valider" data-id="' + p.id + '">Valider</button>' +
@@ -411,7 +408,7 @@
     const lignes = personnes.map((m) => {
       const msg = window.messageMensualite(m, type, new Date());
       const wa = lienWhatsApp(msg.telephone, msg.texte);
-      return '<tr><td><b>' + P.esc(m.full_name || m.nom) + '</b></td><td>' + (wa ? '<a class="btn rouge petit" target="_blank" rel="noopener" href="' + P.esc(wa) + '">Envoyer</a>' : '<span class="doux">pas de numéro</span>') + '</td></tr>';
+      return '<tr><td>' + P.lienFiche(m.id, m.full_name || m.nom) + '</td><td>' + (wa ? '<a class="btn rouge petit" target="_blank" rel="noopener" href="' + P.esc(wa) + '">Envoyer</a>' : '<span class="doux">pas de numéro</span>') + '</td></tr>';
     });
     P.fenetre('<h2>' + P.esc(titre) + '</h2>' + P.tableau(['Mannequin', 'WhatsApp'], lignes) +
       '<div class="ligne" style="margin-top:12px"><button class="btn" type="button" data-action="fermer-fenetre">Fermer</button></div>');
@@ -517,7 +514,6 @@
     const actifs = suiviPret ? tousActifs.filter((m) => m.suivi) : tousActifs;
     const suivis = actifs.map((m) => m.id);
     const proposes = suiviPret ? tousActifs.filter((m) => !m.suivi) : [];
-    const photos = await photosDe(actifs);
     const jour = new Date().getDate();
     const filtre = P.etat.filtreTableau || 'tous';
     const lignes = actifs.map((m) => {
@@ -549,8 +545,8 @@
       '<div class="segments" role="group" aria-label="Groupe">' + FILTRES_GROUPE.map((f) => '<button class="btn petit' + (f[0] === filtre ? ' actif' : '') + '" type="button" data-action="tableau-filtre" data-filtre="' + f[0] + '">' + P.esc(f[1]) + '</button>').join('') + '</div>' +
       '<div class="carte">' + (montrees.length ? P.tableau(['Mannequin', 'Groupe', '#Montant', 'Statut', 'Action'], montrees.map((x) =>
         // (le destinataire n'est montré que s'il diffère : le parent d'une mineure)
-        '<tr' + (x.e === 'non_paye' ? ' class="ligne-retard"' : '') + '><td>' + avecVisage(photos, x.m, '<a href="#/paiements/fiche/' + x.m.id + '"><b>' + P.esc(x.m.full_name) + '</b></a>' +
-        (x.destinataire && x.destinataire !== x.m.full_name ? '<div class="petit-texte doux">Message à : ' + P.esc(x.destinataire) + '</div>' : '')) + '</td>' +
+        '<tr' + (x.e === 'non_paye' ? ' class="ligne-retard"' : '') + '><td>' + P.lienFiche(x.m.id, x.m.full_name) +
+        (x.destinataire && x.destinataire !== x.m.full_name ? '<div class="petit-texte doux">Message à : ' + P.esc(x.destinataire) + '</div>' : '') + '</td>' +
         '<td>' + (x.inscrit ? 'Inscrit sur le site' : 'Non inscrit') + '</td><td class="nombre">' + P.fcfa(x.montant) + '</td>' +
         '<td>' + P.pastille(ETATS[x.e][0], ETATS[x.e][1]) + '</td>' +
         '<td>' + (x.e === 'attente' ? '<a class="btn petit" href="#/paiements/a-valider">Valider</a>' : x.e === 'paye' ? '<span class="doux">Reçu émis</span>' : '<a class="btn petit" href="#/paiements/mensualites">Relancer</a>') +
@@ -766,9 +762,9 @@
       '<div class="carte"><h2>1. Modèle</h2><div class="segments">' + Object.keys(MODELES).map((k) => '<button class="btn petit' + (k === e.modele ? ' actif' : '') + '" type="button" data-action="msg-modele" data-modele="' + k + '">' + P.esc(MODELES[k][0]) + '</button>').join('') + '</div>' +
       '<label class="fl" for="msg-texte" style="margin-top:12px">Texte (les mots entre accolades se remplacent tout seuls : {prenom} = le prénom, {mois}, {montant}, {date_limite}, {lien_wave} = le lien de paiement, {lien_espace} = l’espace de la mannequin)<textarea id="msg-texte" rows="9">' + P.esc(e.texte) + '</textarea></label></div>' +
       '<div class="carte"><h2>2. Destinataires</h2><div class="segments">' + FILTRES_MSG.map((f) => '<button class="btn petit' + (f[0] === e.filtre ? ' actif' : '') + '" type="button" data-action="msg-filtre" data-filtre="' + f[0] + '">' + P.esc(f[1]) + '</button>').join('') + '</div>' +
-      (choisis.length ? P.tableau(['', 'Mannequin', 'Destinataire', 'Contact'], choisis.map((m) => { const d = destinataire(m); return '<tr><td><input type="checkbox" name="msg-ids" value="' + m.id + '" checked aria-label="Écrire à ' + P.esc(m.full_name) + '"></td><td><b>' + P.esc(m.full_name) + '</b></td><td>' + P.esc(d.mineur ? d.nom + ' (parent)' : d.nom) + '</td><td class="petit-texte">' + P.esc([d.tel, d.email].filter(Boolean).join(' · ') || 'aucun contact') + '</td></tr>'; })) : '<p class="doux">Personne dans ce groupe.</p>') + '</div>' +
+      (choisis.length ? P.tableau(['', 'Mannequin', 'Destinataire', 'Contact'], choisis.map((m) => { const d = destinataire(m); return '<tr><td><input type="checkbox" name="msg-ids" value="' + m.id + '" checked aria-label="Écrire à ' + P.esc(m.full_name) + '"></td><td>' + P.lienFiche(m.id, m.full_name) + '</td><td>' + P.esc(d.mineur ? d.nom + ' (parent)' : d.nom) + '</td><td class="petit-texte">' + P.esc([d.tel, d.email].filter(Boolean).join(' · ') || 'aucun contact') + '</td></tr>'; })) : '<p class="doux">Personne dans ce groupe.</p>') + '</div>' +
       '<div class="ligne"><button class="btn" type="button" data-action="msg-apercu">Aperçu</button>' + (P.moi && P.moi.role === 'principal' ? '<button class="btn" type="button" data-action="msg-enregistrer-modele">Enregistrer ce modèle</button>' : '') + '<button class="btn rouge" type="button" data-action="msg-envoyer">Envoyer aux personnes cochées</button></div>' +
-      (historique ? '<div class="carte"><h2>Messages envoyés</h2>' + (historique.length ? P.tableau(['Date', 'Mannequin', 'Message', 'Canal'], historique.map((j) => '<tr><td>' + P.dateHeure(j.envoye_le) + '</td><td>' + P.esc(j.mannequin ? j.mannequin.full_name : '—') + '</td><td>' + P.esc((MODELES[j.modele] || [j.modele])[0]) + '</td><td>' + P.esc(CANAUX[j.canal] || j.canal) + '</td></tr>')) : '<p class="doux">Aucun message envoyé pour l’instant.</p>') + '</div>'
+      (historique ? '<div class="carte"><h2>Messages envoyés</h2>' + (historique.length ? P.tableau(['Date', 'Mannequin', 'Message', 'Canal'], historique.map((j) => '<tr><td>' + P.dateHeure(j.envoye_le) + '</td><td>' + P.lienFiche(j.mannequin_id, j.mannequin && j.mannequin.full_name) + '</td><td>' + P.esc((MODELES[j.modele] || [j.modele])[0]) + '</td><td>' + P.esc(CANAUX[j.canal] || j.canal) + '</td></tr>')) : '<p class="doux">Aucun message envoyé pour l’instant.</p>') + '</div>'
       : e.journal.length ? '<div class="carte"><h2>Envois de cette session</h2>' + P.tableau(['Heure', 'Mannequin', 'E-mail'], e.journal.map((j) => '<tr><td>' + P.esc(j[0]) + '</td><td>' + P.esc(j[1]) + '</td><td>' + P.esc(j[2]) + '</td></tr>')) + '</div>' : '');
   }
   const cochees = () => { const ids = Array.from(document.querySelectorAll('input[name="msg-ids"]:checked')).map((x) => x.value); return (P.etat.msg.liste || []).filter((m) => ids.includes(m.id)); };
@@ -825,7 +821,7 @@
     P.message(envoyes + ' e-mail(s) envoyé(s) sur ' + l.length + '. Envoyez maintenant les messages WhatsApp.');
     P.fenetre('<h2>Messages WhatsApp</h2>' + P.tableau(['Mannequin', 'WhatsApp'], lignes.map((x) => {
       const wa = lienWhatsApp(x.r.d.tel, x.r.texte);
-      return '<tr><td><b>' + P.esc(x.m.full_name) + '</b></td><td>' + (wa ? '<a class="btn rouge petit" target="_blank" rel="noopener" data-wa-id="' + P.esc(x.m.id) + '" data-wa-modele="' + P.esc(e.modele) + '" href="' + P.esc(wa) + '">Envoyer</a>' : '<span class="doux">pas de numéro</span>') + '</td></tr>';
+      return '<tr><td>' + P.lienFiche(x.m.id, x.m.full_name) + '</td><td>' + (wa ? '<a class="btn rouge petit" target="_blank" rel="noopener" data-wa-id="' + P.esc(x.m.id) + '" data-wa-modele="' + P.esc(e.modele) + '" href="' + P.esc(wa) + '">Envoyer</a>' : '<span class="doux">pas de numéro</span>') + '</td></tr>';
     })) + '<div class="ligne" style="margin-top:12px"><button class="btn" type="button" data-action="fermer-fenetre">Fermer</button></div>');
   };
 

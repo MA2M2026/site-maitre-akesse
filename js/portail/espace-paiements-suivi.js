@@ -47,7 +47,7 @@
       '<div class="note info">Comparez chaque déclaration avec Wave Business : numéro du payeur, référence et montant. Quand tout correspond, « Valider ». Sinon, notez « Introuvable » ou « Précision demandée », avec une note.</div>' +
       P.tableau(['Mannequin', 'Déclaré', 'Numéro du payeur', 'Vu dans Wave', 'État', ''], lignes.map((l) => {
         const e = ETATS_RAPP[(l.r && l.r.etat) || 'a_verifier'];
-        return '<tr' + (l.alertes.length ? ' class="ligne-retard"' : '') + '><td><b>' + P.esc(l.p.mannequin ? l.p.mannequin.full_name : '—') + '</b><div class="petit-texte doux">' + P.esc((l.p.mannequin && l.p.mannequin.telephone) || '') + '</div></td>' +
+        return '<tr' + (l.alertes.length ? ' class="ligne-retard"' : '') + '><td>' + P.lienFiche(l.p.mannequin_id, l.p.mannequin && l.p.mannequin.full_name) + '<div class="petit-texte doux">' + P.esc((l.p.mannequin && l.p.mannequin.telephone) || '') + '</div></td>' +
           '<td class="nombre">' + P.fcfa(l.g.total) + '<div class="petit-texte doux">' + P.esc(l.p.objet === 'inscription' ? 'Inscription' : 'Mensualité') + ' · ' + P.dateHeure(l.g.declare_le) + '</div></td>' +
           '<td>' + P.esc((l.r && l.r.numero_payeur) || 'Non communiqué') + '</td>' +
           '<td>' + (l.r && (l.r.reference_paiement || l.r.montant_recu) ? P.esc(l.r.reference_paiement || '—') + (l.r.montant_recu ? '<div class="petit-texte">' + P.fcfa(l.r.montant_recu) + '</div>' : '') : '<span class="doux">à saisir</span>') + '</td>' +
@@ -110,15 +110,15 @@
           '<div class="large ligne"><button class="btn rouge" type="submit">Envoyer la proposition</button></div></form>'
         : '<p class="doux">Aucun mannequin actif à proposer.</p>') + '</div>' +
       (terminees.length ? '<div class="carte"><h2>Formation terminée (24 mois écoulés)</h2><p class="doux">Ces mannequins ne paient plus de mensualité. Proposez leur sortie : ils ne recevront plus aucun appel ni relance.</p>' +
-        P.tableau(['Mannequin', 'Entrée à l’agence', ''], terminees.map((m) => '<tr><td><b>' + P.esc(m.full_name) + '</b></td><td>' + P.esc(P.date(m.date_entree)) + '</td><td><button class="btn rouge petit" type="button" data-action="sortie-formation-terminee" data-id="' + m.id + '">Proposer la sortie</button></td></tr>')) + '</div>' : '') +
+        P.tableau(['Mannequin', 'Entrée à l’agence', ''], terminees.map((m) => '<tr><td>' + P.lienFiche(m.id, m.full_name) + '</td><td>' + P.esc(P.date(m.date_entree)) + '</td><td><button class="btn rouge petit" type="button" data-action="sortie-formation-terminee" data-id="' + m.id + '">Proposer la sortie</button></td></tr>')) + '</div>' : '') +
       '<div class="carte"><h2>En attente de décision</h2>' + (attente.length ? P.tableau(['Mannequin', 'Proposition', 'Motif', 'Proposée le', ''], attente.map((x) =>
-        '<tr><td><b>' + P.esc(x.mannequin ? x.mannequin.full_name : '—') + '</b></td><td>' + P.esc(TYPES_SORTIE[x.type] || x.type) + '</td><td>' + P.esc(x.motif) + '</td><td>' + P.dateHeure(x.propose_le) + '</td>' +
+        '<tr><td>' + P.lienFiche(x.mannequin_id, x.mannequin && x.mannequin.full_name) + '</td><td>' + P.esc(TYPES_SORTIE[x.type] || x.type) + '</td><td>' + P.esc(x.motif) + '</td><td>' + P.dateHeure(x.propose_le) + '</td>' +
         '<td class="ligne">' + (principal ? '<button class="btn rouge petit" type="button" data-action="sortie-decider" data-id="' + x.id + '" data-accepter="1">Accepter</button><button class="btn petit" type="button" data-action="sortie-decider" data-id="' + x.id + '" data-accepter="0">Refuser</button>' : '<span class="doux">Décision de l’administrateur principal</span>') + '</td></tr>')) : '<p class="doux">Aucune proposition en attente.</p>') + '</div>' +
       '<div class="carte"><h2>Suspendus et sortis</h2>' + (inactifs.length ? P.tableau(['Mannequin', 'Statut', ''], inactifs.map((m) =>
-        '<tr><td><b>' + P.esc(m.full_name) + '</b></td><td>' + P.pastille(m.statut === 'sorti' ? 'Sorti' : 'Suspendu', 'neutre') + '</td><td>' +
+        '<tr><td>' + P.lienFiche(m.id, m.full_name) + '</td><td>' + P.pastille(m.statut === 'sorti' ? 'Sorti' : 'Suspendu', 'neutre') + '</td><td>' +
         (principal ? '<button class="btn petit" type="button" data-action="mannequin-reactiver" data-id="' + m.id + '">Réactiver</button>' : '') + '</td></tr>')) : '<p class="doux">Personne n’est suspendu ni sorti.</p>') + '</div>' +
       '<div class="carte"><h2>Historique des décisions</h2>' + (props.filter((x) => x.decision !== 'en_attente').length ? P.tableau(['Mannequin', 'Proposition', 'Décision', 'Le', 'Motif de la décision'], props.filter((x) => x.decision !== 'en_attente').map((x) =>
-        '<tr><td>' + P.esc(x.mannequin ? x.mannequin.full_name : '—') + '</td><td>' + P.esc(TYPES_SORTIE[x.type] || x.type) + '</td><td>' + P.pastille(DECISIONS[x.decision][0], DECISIONS[x.decision][1]) + '</td><td>' + P.dateHeure(x.decide_le) + '</td><td>' + P.esc(x.motif_decision || '—') + '</td></tr>')) : '<p class="doux">Aucune décision pour l’instant.</p>') + '</div>';
+        '<tr><td>' + P.lienFiche(x.mannequin_id, x.mannequin && x.mannequin.full_name) + '</td><td>' + P.esc(TYPES_SORTIE[x.type] || x.type) + '</td><td>' + P.pastille(DECISIONS[x.decision][0], DECISIONS[x.decision][1]) + '</td><td>' + P.dateHeure(x.decide_le) + '</td><td>' + P.esc(x.motif_decision || '—') + '</td></tr>')) : '<p class="doux">Aucune décision pour l’instant.</p>') + '</div>';
   }
   P.formulaires['sortie-proposer'] = async (f) => {
     const motif = String(f.get('motif') || '').trim();
