@@ -67,9 +67,23 @@ function donnees(role) {
     },
     // code d'inscription créé par la base pour une candidature retenue (rangé dans codes_inscription)
     preparer(d) {
+      // une mannequin en sourdine, une fiche en attente de validation (mineure), une mannequin à la une
+      d.tables.model_profiles.push({ id: 'm12', full_name: 'KORA BAMBA', published: false, desactive: true, city: 'Yopougon', category: 'femme', niveau_mannequin: 'New Face', created_at: '2026-09-01T10:00:00Z' },
+        { id: 'v1', full_name: 'NOUVELLE FACE', published: false, desactive: false, en_attente_validation: true, city: 'Abobo', category: 'femme', created_at: '2026-10-21T10:00:00Z' });
+      d.tables.model_profiles[2].featured = true;
+      d.tables.model_photos = d.tables.model_profiles.filter((p) => /^m\d+$/.test(p.id)).map((p) => {
+        const i = Number(p.id.slice(1));
+        return { id: 'pp' + i, model_id: p.id, url: photo(i), url_miniature: photo(i), url_moyenne: photo(i), chemin: 'm' + i + '/o.jpg', chemin_miniature: 'm' + i + '/miniatures/n.jpg', chemin_moyenne: 'm' + i + '/moyennes/m.jpg',
+          principale: true, compcard_ordre: i === 0 ? 1 : null, categorie: 'book', created_at: '2026-10-01T10:00:00Z' };
+      }).concat([{ id: 'pp0b', model_id: 'm0', url: photo(1), url_miniature: photo(1), chemin: 'm0/b.jpg', principale: false, compcard_ordre: null, categorie: 'lifestyle', created_at: '2026-10-02T10:00:00Z' },
+        { id: 'pv1', model_id: 'v1', url: photo(3), url_miniature: photo(3), principale: true, created_at: '2026-10-21T10:00:00Z' },
+        { id: 'pv2', model_id: 'v1', url: photo(2), url_miniature: photo(2), principale: false, created_at: '2026-10-21T10:01:00Z' }]);
+      d.tables.model_projects = [];
+      d.rpc.profils_prives = (x) => (x.ids || []).map((id) => ({ id, date_naissance: id === 'v1' ? '2011-05-05' : '2000-01-01' }));
+      d.rpc.definir_sourdine = (x) => { const m = d.tables.model_profiles.find((p) => p.id === x.p_model); if (m) { m.desactive = x.p_desactive; m.published = !x.p_desactive; } return null; };
       d.rpc.code_individuel_creer = (x) => { d.tables.codes_inscription.push({ code: 'MA2M-ESSAI1', utilise: false, candidature_id: x.p_candidature }); return { code: 'MA2M-ESSAI1' }; };
     },
-    api: { '/api/portail': () => ({ ok: true }) }
+    api: { '/api/portail': () => ({ ok: true }), '/api/r2-presigner': (c) => ({ uploadUrl: '/__stockage', publicUrl: 'https://photos.maitreakessemodelmanagement.com/' + c.chemin }) }
   };
   d.preparer(d); delete d.preparer;
   return d;
@@ -79,6 +93,7 @@ function donnees(role) {
 async function photosLocales(page) {
   const fs = require('fs'), chemin = require('path');
   const images = ['photo0.jpg', 'photo1.jpg', 'photo2.jpg', 'photo3.jpg'].map((f) => fs.readFileSync(chemin.join(__dirname, 'medias', f)));
+  await page.route(/__stockage/, (r) => r.fulfill({ status: 200, body: '' }));  // envoi d'une photo (R2 simulé)
   await page.route(/photos\.maitreakessemodelmanagement\.com|\/book-photos\/|drive\.google\.com\/uc/, (r) => {
     const n = Number((/\/m(\d+)\//.exec(r.request().url()) || [0, 0])[1]);
     r.fulfill({ status: 200, contentType: 'image/jpeg', body: images[n % images.length] });
