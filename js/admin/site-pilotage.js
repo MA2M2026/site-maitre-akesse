@@ -17,7 +17,7 @@
   const nb = async (requete) => { const { count, error } = await requete; if (error) throw error; return count || 0; };
   const tete = (table) => sb.from(table).select('id', { count: 'exact', head: true });
   const essai = (x) => Promise.resolve(x).catch(() => null);
-  const pluriel = (n, un, plusieurs) => n + ' ' + (n > 1 ? plusieurs : un);
+  const pluriel = P.pluriel;
   function lundi() { const d = new Date(); const j = (d.getDay() + 6) % 7; d.setDate(d.getDate() - j); d.setHours(0, 0, 0, 0); return d.toISOString(); }
   function debutMois() { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1).toISOString(); }
   function quandCasting(date) {
@@ -109,7 +109,7 @@
     const [profils, photos] = await Promise.all([P.bd(sb.from('model_profiles').select('id, full_name').in('id', ids)), P.photosCouverture(ids).catch(() => ({}))]);
     const nom = {}; profils.forEach((p) => { nom[p.id] = p.full_name; });
     const max = Math.max(1, top[0].nb_visites || 0);
-    const PRIX = ['✦ 1er prix', '✦ 2e prix', '✦ 3e prix'];
+    const PRIX = ['✦ 1re place', '✦ 2e place', '✦ 3e place'];
     const podium = top.slice(0, 3).map((s, i) => '<div class="podium-place place-' + (i + 1) + ' apparait" style="--i:' + i + '">' + P.visage(photos[s.model_id], nom[s.model_id], 'podium-visage') +
       '<span class="podium-prix">' + PRIX[i] + '</span><b>' + P.esc(nom[s.model_id] || 'Mannequin') + '</b><span class="doux">' + pluriel(s.nb_visites || 0, 'visite', 'visites') + '</span></div>').join('');
     const classement = top.map((s, i) => '<div class="classement-ligne apparait" style="--i:' + i + '"><span class="rang">' + (i + 1) + '</span>' + P.visage(photos[s.model_id], nom[s.model_id], 'rond-vis classement-visage') +
@@ -130,7 +130,7 @@
     tous.forEach((d) => { const a = P.age(d.date_naissance); if (a !== null && a !== undefined && a < 18) e++; else if (d.genre === 'homme') h++; else if (d.genre === 'femme') f++; });
     const total = f + h + e, pc = (n) => (total ? Math.round(100 * n / total) : 0);
     const pf = pc(f), ph = pc(h), pe = total ? 100 - pf - ph : 0;
-    return P.entete('Répartition des profils', '<span class="doux">' + total + ' candidatures et inscriptions</span>') +
+    return P.entete('Répartition des profils', '<span class="doux">' + P.pluriel(c.length, 'candidature', 'candidatures') + ' + ' + P.pluriel((i || []).length, 'inscription', 'inscriptions') + '</span>') +
       '<section class="carte repartition"><div class="donut" style="background:conic-gradient(var(--av-rouge) 0 ' + pf + '%, #8D7C7F ' + pf + '% ' + (pf + ph) + '%, #E8A83D ' + (pf + ph) + '% 100%)" role="img" aria-label="Femmes ' + pf + ' %, hommes ' + ph + ' %, enfants ' + pe + ' %"><span>' + total + '</span></div>' +
       '<ul class="legende-donut"><li><i class="f"></i>Femmes <b>' + pf + ' %</b> <span class="doux">(' + f + ')</span></li><li><i class="h"></i>Hommes <b>' + ph + ' %</b> <span class="doux">(' + h + ')</span></li>' +
       '<li><i class="e"></i>Enfants (moins de 18 ans) <b>' + pe + ' %</b> <span class="doux">(' + e + ')</span></li></ul></section>' +

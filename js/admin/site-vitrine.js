@@ -63,12 +63,12 @@
       const jours = config.token_expire_le ? Math.round((new Date(config.token_expire_le) - Date.now()) / 864e5) : null;
       etat = jours === null ? P.pastille('Jeton enregistré', 'ok')
         : jours < 0 ? P.pastille('Jeton expiré : générez-en un nouveau et enregistrez-le', 'erreur')
-          : jours <= 10 ? P.pastille('Le jeton expire dans ' + jours + ' jour(s) : pensez à le renouveler', 'alerte')
+          : jours <= 10 ? P.pastille('Le jeton expire dans ' + P.pluriel(jours, 'jour', 'jours') + ' : pensez à le renouveler', 'alerte')
             : P.pastille('Jeton valable encore ' + jours + ' jours', 'ok');
     }
     const posts = (cache && cache.posts) || [];
     const grille = posts.length ? '<div class="insta-grille">' + posts.map((x) => '<a href="' + P.esc(urlHttpSure(x.lien) || '#') + '" target="_blank" rel="noopener" class="insta-vignette"><img src="' + P.esc(urlHttpSure(x.image) || '') + '" alt="' + P.esc(x.legende || 'Publication Instagram') + '" loading="lazy"></a>').join('') + '</div>' +
-      '<p class="doux petit-texte">Mis à jour le ' + P.esc(cache.updated_at ? P.dateHeure(cache.updated_at) : '—') + ' · ' + posts.length + ' publication(s) sur le site</p>' : '<p class="doux">Aucune publication récupérée pour le moment.</p>';
+      '<p class="doux petit-texte">Mis à jour le ' + P.esc(cache.updated_at ? P.dateHeure(cache.updated_at) : '—') + ' · ' + P.pluriel(posts.length, 'publication', 'publications') + ' sur le site</p>' : '<p class="doux">Aucune publication récupérée pour le moment.</p>';
     return P.entete('Flux Instagram') +
       '<section class="carte"><h2>Publications affichées sur le site</h2>' + grille + '<div class="ligne"><button class="btn rouge" type="button" data-action="instagram-rafraichir">↻ Rafraîchir les publications</button></div><p class="form-msg" id="ig-msg" role="status"></p></section>' +
       '<form class="carte f" data-form="instagram-jeton"><h2 class="large">Connexion au compte</h2><div class="large etat-jeton">' + etat + '</div>' +
@@ -104,7 +104,7 @@
       }
       const r = await P.bd(sb.from('instagram_posts_cache').upsert({ id: 'principal', posts, updated_at: new Date().toISOString() }).select('id'));
       if (!r || !r.length) { msg('ig-msg', 'err', 'Rien n’a été enregistré : reconnectez-vous puis réessayez.'); return; }
-      P.message(posts.length + ' publication(s) récupérée(s) et mise(s) à jour sur le site.');
+      P.message(P.pluriel(posts.length, 'publication récupérée et mise', 'publications récupérées et mises') + ' à jour sur le site.');
       return P.afficher();
     } finally { if (el.isConnected) el.disabled = false; }
   };

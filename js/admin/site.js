@@ -26,7 +26,13 @@
     ['b3b-codes-inscription', 'Codes d’accès'], ['b3b-acces-bloques', 'Accès bloqués'], ['b3a-drive', 'Drive et transferts'],
     ['b3a-nettoyage', 'Nettoyage des photos'], ['b3a-erreurs', 'Erreurs du site']
   ];
-  const pages = {};  // remplies par les pièces js/admin/site-*.js (toutes reconstruites le 22/10/2026)
+  // Chaque rubrique est remplie par sa pièce js/admin/site-*.js (toutes reconstruites le 22/10/2026).
+  // La page de secours ci-dessous doit exister dès le départ : le portail vérifie la rubrique
+  // demandée AVANT de charger les pièces ; elle ne s'affiche que si une pièce n'a pas pu arriver.
+  const pages = {};
+  MENU.forEach((m) => {
+    if (m[0]) pages[m[0]] = async () => P.entete(m[1]) + '<div class="carte vide">Cette rubrique n’a pas pu être chargée. Vérifiez la connexion puis rechargez la page.</div>';
+  });
   // Pièces réservées (middleware.js) : la clé d'accès est posée par le serveur après la double
   // authentification (api/acces-tableau.js), puis les pièces sont chargées une seule fois, dans
   // l'ordre. Sans clé (compte sans droit), elles restent introuvables : la page le dit.

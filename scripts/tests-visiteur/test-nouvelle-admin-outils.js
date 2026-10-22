@@ -54,12 +54,12 @@ const api = (journal, chemin, motif) => journal.filter((j) => j[0] === 'API' && 
 
     // 3. Drive
     await p.goto(URL_ADMIN + '#/site/b3a-drive'); await p.waitForSelector('.cartes-pilotage'); await p.waitForTimeout(1600);
-    ok(/PHOTOS DU BOOK\s*\d+/i.test(await p.innerText('.cartes-pilotage')) && /aucun chiffre n’est inventé/.test(await p.textContent('#contenu')), n + 'drive : chiffres réels, rien d’inventé');
+    ok(/PHOTOS DU BOOK\s*\d+/i.test(await p.innerText('.cartes-pilotage')) && /seuls les chiffres sûrs/.test(await p.textContent('#contenu')), n + 'drive : chiffres réels, rien d’inventé');
 
     // 4. Nettoyage
     await p.goto(URL_ADMIN + '#/site/b3a-nettoyage'); await p.waitForSelector('[data-action="nettoyer-traitees"]'); await p.waitForTimeout(600);
     await p.click('[data-action="nettoyer-traitees"]'); await p.waitForTimeout(900);
-    ok(/3 photo\(s\) retirée\(s\)/.test(await p.textContent('#nt-msg')), n + 'nettoyage des dossiers traités lancé');
+    ok(/3 photos retirées/.test(await p.textContent('#nt-msg')), n + 'nettoyage des dossiers traités lancé');
     ok(!!(await p.$('#nettoyage-supabase-btn')), n + 'outil de nettoyage Supabase présent');
     await capture(p, 'nettoyage' + suffixe);
 

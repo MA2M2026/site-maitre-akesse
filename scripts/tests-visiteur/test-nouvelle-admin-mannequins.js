@@ -30,7 +30,7 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     // 1. Galerie
     await p.goto(URL_ADMIN + '#/site/b2-mannequins-publies'); await p.waitForSelector('.mannequins-grille', { timeout: 10000 }); await p.waitForTimeout(1200);
     const g = await p.evaluate(() => ({ cartes: [...document.querySelectorAll('.mannequin-carte')].map((c) => c.innerText.replace(/\s+/g, ' ')), photos: document.querySelectorAll('.mannequin-carte .vis img.charge').length, entete: document.querySelector('.entete').innerText }));
-    ok(g.cartes.length === 13 && g.cartes.some((c) => /KORA BAMBA.*En sourdine/.test(c)) && /12 publiée\(s\) · 1 en sourdine/.test(g.entete), n + 'galerie : 12 publiées et 1 en sourdine (pour pouvoir la réactiver)');
+    ok(g.cartes.length === 13 && g.cartes.some((c) => /KORA BAMBA.*En sourdine/.test(c)) && /12 publiées · 1 en sourdine/.test(g.entete), n + 'galerie : 12 publiées et 1 en sourdine (pour pouvoir la réactiver)');
     ok(g.photos >= 10, n + 'galerie : les visages s’affichent (' + g.photos + ')');
     await capture(p, 'mannequins' + suffixe);
     await p.fill('#mq-cherche', 'aya'); await p.click('form[data-form="mannequins-chercher"] [type=submit]'); await p.waitForTimeout(800);
@@ -46,13 +46,14 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     await p.selectOption('.photo-mannequin:nth-child(1) select[data-change="mannequin-categorie"]', 'lifestyle'); await p.waitForTimeout(900);
     ok(ecrits(journal, 'PATCH', 'model_photos').some((j) => /lifestyle/.test(j[3])), n + 'classement Book / Lifestyle enregistré');
     await p.setInputFiles('input[data-change="mannequin-photos-ajouter"]', [require('path').join(__dirname, 'medias', 'photo1.jpg'), require('path').join(__dirname, 'medias', 'photo2.jpg')]); await p.waitForTimeout(6000);
-    ok(ecrits(journal, 'POST', 'model_photos').length === 2 && /2\/2 photo\(s\) envoyée\(s\)/.test(await p.textContent('#mq-photo-msg')), n + 'deux photos ajoutées d’un coup');
+    ok(ecrits(journal, 'POST', 'model_photos').length === 2 && /2\/2 photos envoyées/.test(await p.textContent('#mq-photo-msg')), n + 'deux photos ajoutées d’un coup');
     const r2Avant = journal.filter((j) => j[0] === 'API' && j[1] === '/api/r2-supprimer').length;
     await p.click('.photo-mannequin [data-action="mannequin-photo-supprimer"]'); await p.waitForTimeout(1500);
     ok(ecrits(journal, 'DELETE', 'model_photos').length === 1, n + 'photo supprimée (la base d’abord)');
     // 3. Sourdine
     await p.click('[data-action="mannequin-sourdine"]'); await p.waitForTimeout(1000);
     ok(journal.some((j) => j[0] === 'rpc' && j[1] === 'definir_sourdine' && /"p_desactive":true/.test(j[2])) && /En sourdine/.test(await p.textContent('.mannequin-tete')), n + 'mise en sourdine après confirmation');
+    ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)), n + 'fiche en sourdine : rien ne dépasse de l’écran');
     // 4. CV
     await p.click('a[href$="/cv"]'); await p.waitForSelector('#cv-apercu'); await p.waitForTimeout(4000);
     ok(await p.isVisible('#cv-pdf') && await p.isVisible('#cv-jpeg') && (await p.$('#cv-apercu img') || /indisponible/.test(await p.textContent('#cv-apercu'))), n + 'CV : aperçu et téléchargements PDF / JPEG');
@@ -65,7 +66,7 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
 
     // 6. Validations
     await p.goto(URL_ADMIN + '#/site/b2-validations'); await p.waitForSelector('.entete'); await p.waitForTimeout(1200);
-    ok(/NOUVELLE FACE/.test(await p.textContent('.contenu')) && /Mineur — 15 ans/.test(await p.textContent('.contenu')) && (await p.$$('.validation-photos .vis img')).length === 2, n + 'validation : fiche en attente, mineure signalée, ses photos');
+    ok(/NOUVELLE FACE/.test(await p.textContent('.contenu')) && /Mineure — 15 ans/.test(await p.textContent('.contenu')) && (await p.$$('.validation-photos .vis img')).length === 2, n + 'validation : fiche en attente, mineure signalée, ses photos');
     await capture(p, 'validations' + suffixe);
     await p.click('[data-action="validation-refuser"]'); await p.fill('#vr-raison', 'Ajoutez une photo de face.'); await p.click('form[data-form="validation-refuser"] [type=submit]'); await p.waitForTimeout(900);
     ok(ecrits(journal, 'PATCH', 'model_profiles').some((j) => /Ajoutez une photo de face/.test(j[3]) && /"en_attente_validation":false/.test(j[3])), n + 'refus avec la raison, visible par la mannequin');

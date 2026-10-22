@@ -223,7 +223,7 @@ function afficherLigneConnexion(groupes) {
   el.hidden = !idsConnexion.length;
   if (!idsConnexion.length) { el.textContent = ''; return; }
   const visiteurs = new Set(groupes.flatMap(g => [...g.navigateurs])).size;
-  el.innerHTML = `📶 Pas d’erreur du site : cette semaine, <b>${visiteurs} visiteur${visiteurs > 1 ? 's' : ''}</b> avai${visiteurs > 1 ? 'ent' : 't'} une connexion faible (${idsConnexion.length} signalement${idsConnexion.length > 1 ? 's' : ''} : pages lentes, connexion coupée…). Rien à faire. <button type="button" class="btn-mini-admin" id="erreurs-connexion-effacer">Effacer</button>`;
+  el.innerHTML = `📶 Connexions faibles (pas une erreur du site) : cette semaine, <b>${visiteurs} visiteur${visiteurs > 1 ? 's' : ''}</b> avai${visiteurs > 1 ? 'ent' : 't'} une connexion faible (${idsConnexion.length} signalement${idsConnexion.length > 1 ? 's' : ''} : pages lentes, connexion coupée…). Rien à faire. <button type="button" class="btn-mini-admin" id="erreurs-connexion-effacer">Effacer</button>`;
 }
 
 function afficherErreurs() {

@@ -32,6 +32,7 @@ const texte = (p, sel) => p.evaluate((s) => document.querySelector(s).innerText.
     ok(/MANNEQUINS AU BOOK 12/i.test(cartes[0]) && /CANDIDATURES 4 3 nouvelles/i.test(cartes[1]) && /CASTINGS ACTIFS 1 prochain/i.test(cartes[2]), n + 'mannequins, candidatures, castings : chiffres justes (' + cartes.slice(0, 3).join(' | ') + ')');
     ok(/VISITES AUJOURD’HUI 37/i.test(cartes[3]) && /VISITES SUR 7 JOURS 412/i.test(cartes[4]), n + 'visites du jour et de la semaine');
     ok(/FICHES À VALIDER 1/i.test(cartes[7]), n + 'fiche à valider comptée');
+    ok(/MESSAGES DE CONTACT 1 cette semaine/i.test(cartes[6]), n + 'messages de contact : seulement ceux de la semaine (' + cartes[6] + ')');
     const alertes = await texte(p, '.alertes');
     ok(/1 fiche mannequin à valider/.test(alertes) && /CASTING CACAO/.test(alertes) && /3 nouvelles candidatures/.test(alertes) && /1 demande recruteur non lue/.test(alertes), n + 'alertes : validation, prochain casting, candidatures, recruteur');
     ok(!/FCFA|F CFA/.test(await texte(p, '#contenu')), n + 'aucun chiffre d’argent dans le bloc 1');
@@ -49,7 +50,7 @@ const texte = (p, sel) => p.evaluate((s) => document.querySelector(s).innerText.
     // 3. Top 3 et classement, avec les visages
     await p.goto(URL_ADMIN + '#/site/v2-top3'); await p.waitForSelector('.podium'); await p.waitForTimeout(2000);
     const podium = await p.$$eval('.podium-place', (l) => l.map((c) => c.innerText.replace(/\s+/g, ' ')));
-    ok(podium.length === 3 && /1er prix AYA KOUASSI 140 visites/i.test(podium[0]) && /2e prix MARIAM TRAORÉ/i.test(podium[1]), n + 'podium : ' + podium.join(' | '));
+    ok(podium.length === 3 && /1re place AYA KOUASSI 140 visites/i.test(podium[0]) && /2e place MARIAM TRAORÉ/i.test(podium[1]), n + 'podium : ' + podium.join(' | '));
     ok((await p.$$('.podium-place .vis img.charge')).length === 3 && (await p.$$('.classement-ligne')).length === 10, n + 'podium avec 3 visages, classement des 10');
     ok(/\+3 autres mannequins/.test(await texte(p, '#contenu')), n + 'mention des mannequins hors classement');
     await capture(p, 'pilotage-top' + suffixe);

@@ -37,17 +37,22 @@
       '<button type="button" class="btn petit" data-action="projet-monter" data-id="' + P.esc(p.id) + '"' + (i === 0 ? ' disabled' : '') + ' aria-label="Monter « ' + P.esc(p.nom) + ' »">▲</button>' +
       '<button type="button" class="btn petit" data-action="projet-descendre" data-id="' + P.esc(p.id) + '"' + (i === projets.length - 1 ? ' disabled' : '') + ' aria-label="Descendre « ' + P.esc(p.nom) + ' »">▼</button>' +
       '<button type="button" class="btn petit" data-action="projet-supprimer" data-id="' + P.esc(p.id) + '">Supprimer</button></div></article>').join('');
-    return P.entete('Projets et castings', '<span class="doux">' + projets.filter((p) => p.actif).length + ' actif(s) sur ' + projets.length + '</span>') +
+    return P.entete('Projets et castings', '<button type="button" class="btn rouge" data-action="projet-nouveau">＋ Nouveau casting</button><span class="doux">' + projets.filter((p) => p.actif).length + ' ' + (projets.filter((p) => p.actif).length > 1 ? 'actifs' : 'actif') + ' sur ' + projets.length + '</span>') +
       '<p class="doux">Les castings actifs apparaissent dans le formulaire public « Postuler à un casting », dans cet ordre.</p>' +
-      '<form class="carte f" data-form="projet-ajouter"><h2>Nouveau casting</h2>' + champs(null) + '<div class="large"><button class="btn rouge" type="submit">＋ Ajouter</button></div></form>' +
       (cartes ? '<div class="projets-liste">' + cartes + '</div>' : '<div class="carte vide">Aucun casting pour le moment.</div>');
   }
+  P.actions['projet-nouveau'] = () => {
+    P.fenetre('<form class="f" data-form="projet-ajouter"><h2>Nouveau casting</h2>' + champs(null) +
+      '<div class="ligne large"><button class="btn rouge" type="submit">＋ Ajouter</button><button class="btn" type="button" data-action="fermer-fenetre">Annuler</button></div></form>');
+    document.getElementById('pj-nom').focus();
+  };
   P.formulaires['projet-ajouter'] = async (f) => {
     const l = ligne(f);
     if (!l.nom) { P.message('Indiquez au moins le nom du casting.'); return; }
     const r = await P.bd(sb.from('casting_projets').insert(l).select('id'));
     if (!r || !r.length) { P.message('Rien n’a été enregistré : reconnectez-vous puis réessayez.'); return; }
     P.message('Casting « ' + l.nom + ' » ajouté.');
+    P.fenetre('');
     return P.afficher();
   };
   const trouver = (el) => projets.find((p) => String(p.id) === el.dataset.id);

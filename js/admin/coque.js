@@ -8,6 +8,8 @@
   if (!P) return;
 
   // ---------- Visages (vignettes légères des photos du Book, js/photos.js) ----------
+  // « 1 photo », « 3 photos » (jamais « photo(s) »)
+  P.pluriel = (n, un, plusieurs) => n + ' ' + (n > 1 ? plusieurs : un);
   P.initiales = (nom) => String(nom || '').trim().split(/\s+/).map((x) => x.charAt(0)).slice(0, 2).join('').toUpperCase();
   P.visage = (url, nom, classe) => '<span class="vis ' + (classe || '') + '"><span class="ini" aria-hidden="true">' + P.esc(P.initiales(nom)) + '</span>' +
     (url ? '<img src="' + P.esc(urlLegere(url)) + '" alt="" loading="lazy" decoding="async">' : '') + '</span>';
@@ -64,7 +66,35 @@
       t.querySelectorAll('tbody tr').forEach((tr) => Array.from(tr.children).forEach((td, i) => { if (titres[i] && !td.hasAttribute('colspan')) td.setAttribute('data-titre', titres[i]); }));
     });
   }
-  new MutationObserver(etiqueterTableaux).observe(document.getElementById('app'), { childList: true, subtree: true });
+  // Écrans repris de l'ancien tableau de bord (.ecran-partage) : titres sans émoji, comme les
+  // autres pages, et longues explications repliées sous « En savoir plus » (visite du 22/10/2026).
+  const EMOJI_DEBUT = /^[\p{Extended_Pictographic}\uFE0F\u200D\s]+/u;
+  function harmoniserEcransPartages() {
+    document.querySelectorAll('.ecran-partage:not([data-harmonise])').forEach((ecran) => {
+      ecran.setAttribute('data-harmonise', '');
+      ecran.querySelectorAll('h2, h3, summary h2').forEach((h) => {
+        const t = h.firstChild;
+        if (t && t.nodeType === 3 && EMOJI_DEBUT.test(t.textContent)) t.textContent = t.textContent.replace(EMOJI_DEBUT, '');
+        else if (h.firstElementChild && h.firstElementChild.matches('img.emoji')) h.firstElementChild.remove();
+      });
+      ecran.querySelectorAll('p.tdb-5, p.tdb-9, p.tdb-12, p.tdb-17').forEach((p) => {
+        if (p.textContent.length < 160 || p.closest('details.aide')) return;
+        const d = document.createElement('details');
+        d.className = 'aide';
+        d.innerHTML = '<summary>En savoir plus</summary>';
+        p.replaceWith(d); d.appendChild(p);
+      });
+    });
+  }
+  // Menu : la rubrique ouverte reste visible (menu long sur un ordinateur portable)
+  function rubriqueVisible() {
+    const a = document.querySelector('.lateral .nav.actif:not([data-vu])');
+    if (!a) return;
+    a.setAttribute('data-vu', '');
+    const menu = a.closest('.lateral'), r = a.getBoundingClientRect(), m = menu.getBoundingClientRect();
+    if (r.bottom > m.bottom - 40 || r.top < m.top) menu.scrollTop += r.top - m.top - m.height / 3;
+  }
+  new MutationObserver(() => { etiqueterTableaux(); harmoniserEcransPartages(); rubriqueVisible(); }).observe(document.getElementById('app'), { childList: true, subtree: true });
 
   P.compte = (n, suffixe) => '<span data-compte="' + (Number(n) || 0) + '"' + (suffixe ? ' data-suffixe="' + P.esc(suffixe) + '"' : '') + '>0' + P.esc(suffixe || '') + '</span>';
 

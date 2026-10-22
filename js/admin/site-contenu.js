@@ -83,7 +83,7 @@
     document.getElementById('apercu-titre').textContent = val('pub-titre') || (type === 'evenements' ? 'Titre de l’événement' : 'Titre de l’actualité');
     const cat = document.getElementById('apercu-categorie');
     cat.textContent = val('pub-categorie'); cat.hidden = !val('pub-categorie');
-    document.getElementById('apercu-quand').textContent = type === 'evenements' ? [val('pub-date') ? dateMidi(val('pub-date')) : '', val('pub-lieu') ? '📍 ' + val('pub-lieu') : ''].filter(Boolean).join(' · ') : P.date(new Date().toISOString());
+    document.getElementById('apercu-quand').textContent = type === 'evenements' ? [val('pub-date') ? dateMidi(val('pub-date')) : '', val('pub-lieu') ? '📍 ' + val('pub-lieu') : ''].filter(Boolean).join(' · ') : P.date(redaction.existante ? redaction.existante.created_at : new Date().toISOString());
     document.getElementById('apercu-texte').innerHTML = rendreContenuRiche(lireContenuEditeur(redaction.editeur));
   }
   function brancherRedaction() {
@@ -121,11 +121,11 @@
       champs = { titre, date_evenement: f.get('date') || null, lieu: String(f.get('lieu') || '').trim() || null, description: texte || null };
     }
     const n = redaction.fichiers.length;
-    message('ok', n ? 'Envoi de ' + n + ' photo(s)… gardez la page ouverte.' : 'Enregistrement…');
+    message('ok', n ? 'Envoi de ' + P.pluriel(n, 'photo', 'photos') + '… gardez la page ouverte.' : 'Enregistrement…');
     const r = await sauverPublication(c.t, redaction.id, champs, redaction.fichiers);
     if (!r.ok) { message('err', 'Rien n’a été enregistré : reconnectez-vous puis réessayez.'); return; }
-    if (r.photos < n) P.message((n - r.photos) + ' photo(s) n’ont pas pu être envoyées : réessayez de les ajouter.');
-    else P.message(redaction.id ? 'Modifications enregistrées.' : 'Publié sur le site' + (r.photos ? ' avec ' + r.photos + ' photo(s)' : '') + '.');
+    if (r.photos < n) P.message(P.pluriel(n - r.photos, 'photo n’a pas pu être envoyée', 'photos n’ont pas pu être envoyées') + ' : réessayez de les ajouter.');
+    else P.message(redaction.id ? 'Modifications enregistrées.' : 'Publié sur le site' + (r.photos ? ' avec ' + P.pluriel(r.photos, 'photo', 'photos') : '') + '.');
     redaction = null;
     location.hash = '#/site/' + type;
   };

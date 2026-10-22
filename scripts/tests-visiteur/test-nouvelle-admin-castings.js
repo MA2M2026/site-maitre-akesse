@@ -56,7 +56,7 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
       liens: [...document.querySelectorAll('dl.champs a')].map((a) => a.textContent + ' ' + a.href),
       message: (document.querySelector('.message-dossier') || {}).textContent
     }));
-    ok(/PETITE AMA Mineur — 13 ans/.test(fiche.titre) && /Postule pour : CASTING CACAO/.test(fiche.titre), n + 'fiche : nom, âge de la mineure, casting visé');
+    ok(/PETITE AMA Mineure — 13 ans/.test(fiche.titre) && /Postule pour : CASTING CACAO/.test(fiche.titre), n + 'fiche : nom, âge de la mineure, casting visé');
     ok(fiche.photos === 2, n + 'fiche : les 2 photos de la candidate');
     ok(/mineur : écrire au parent/.test(fiche.champs) && fiche.liens.some((l) => /0707070707 ↗ WhatsApp https:\/\/wa\.me\/2250707070707/.test(l)) && fiche.liens.some((l) => /Voir la vidéo/.test(l)) && /rêve de défiler/.test(fiche.message),
       n + 'fiche : WhatsApp sur le numéro du parent, vidéo, message de la candidate');
@@ -107,6 +107,7 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     await p.goto(URL_ADMIN + '#/site/b2-projets'); await p.waitForSelector('.projets-liste'); await p.waitForTimeout(800);
     const projets = await p.$$eval('.projet-carte', (cs) => cs.map((c) => c.innerText.replace(/\s+/g, ' ')));
     ok(projets.length === 2 && /CASTING CACAO.*Actif.*08\/11\/2026.*Studio MA2M.*7 candidatures/.test(projets[0]) && /SHOOTING LAGUNE.*Inactif/.test(projets[1]), n + 'castings listés, actif / inactif, candidatures reçues');
+    await p.click('[data-action="projet-nouveau"]'); await p.waitForSelector('.voile #pj-nom');
     await p.fill('#pj-nom', 'CASTING NOËL'); await p.fill('#pj-lieu', 'Hôtel Ivoire');
     await p.click('form[data-form="projet-ajouter"] [type=submit]'); await p.waitForTimeout(900);
     ok(ecrits(journal, 'POST', 'casting_projets').some((j) => /CASTING NOËL/.test(j[3]) && /Hôtel Ivoire/.test(j[3])), n + 'nouveau casting ajouté');

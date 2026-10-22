@@ -121,9 +121,11 @@ const photo = (n) => chemin.join(__dirname, 'medias', 'photo' + n + '.jpg');
     await capture(p, 'instagram' + suffixe);
 
     // 8. Agenda du site (écran partagé avec l'ancien tableau de bord) : liste, ajout, modifier, Convoquer
-    await p.goto(URL_ADMIN + '#/site/b3c-agenda'); await p.waitForSelector('#agenda-form'); await p.waitForTimeout(1800);
+    await p.goto(URL_ADMIN + '#/site/b3c-agenda'); await p.waitForSelector('#agenda-form', { state: 'attached' }); await p.waitForTimeout(1800);
     const listeAgenda = await p.textContent('#agenda-liste-avenir');
     ok(/ABIDJAN BORDER FORUM/.test(listeAgenda) && /SHOOTING CACAO/.test(listeAgenda) && (await p.$$('#agenda-mannequins input[type=checkbox]')).length >= 12, n + 'agenda : projets à venir et liste des mannequins chargés d’office');
+    ok(!(await p.isVisible('#agenda-form')), n + 'agenda : formulaire replié, la liste d’abord');
+    await p.click('.agenda-ouvrir'); await p.waitForTimeout(400);
     await p.fill('#agenda-titre', 'Défilé de Noël'); await p.fill('#agenda-date', '2026-12-20'); await p.fill('#agenda-ville', 'Abidjan');
     await p.$eval('#agenda-mannequins input[type=checkbox]', (x) => x.click());
     await p.click('#agenda-enregistrer'); await p.waitForTimeout(1500);

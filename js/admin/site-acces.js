@@ -74,7 +74,7 @@
     const lignes = [].concat((d.ipBloquees || []).map((b) => ({ type: 'ip', valeur: b.ip, espace: b.espace, jusqua: b.bloque_jusqua })),
       (d.comptesBloques || []).map((b) => ({ type: 'compte', valeur: b.identifiant, espace: b.espace, jusqua: b.bloque_jusqua })));
     const heure = (t) => new Date(t).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    return P.entete('Accès bloqués', '<span class="doux">' + (lignes.length ? lignes.length + ' blocage(s) en cours' : 'Aucun blocage') + '</span>') +
+    return P.entete('Accès bloqués', '<span class="doux">' + (lignes.length ? P.pluriel(lignes.length, 'blocage en cours', 'blocages en cours') : 'Aucun blocage') + '</span>') +
       '<p class="doux">Après 5 codes ou mots de passe erronés, l’accès est bloqué 1 h (2 h en cas de récidive). Une personne bloquée par erreur peut être débloquée ici.</p>' +
       '<section class="carte">' + (lignes.length ? lignes.map((l) => '<div class="code-ligne"><span class="t">' + P.esc(l.type === 'ip' ? 'Adresse ' + l.valeur : l.valeur) + '<small>' + P.esc(ESPACES[l.espace] || l.espace) + ' · jusqu’à ' + heure(l.jusqua) + '</small></span>' +
         '<button type="button" class="btn petit" data-action="debloquer" data-type="' + l.type + '" data-valeur="' + P.esc(l.valeur) + '" data-espace="' + P.esc(l.espace) + '">Débloquer</button></div>').join('') :
@@ -105,9 +105,9 @@
       nb(sb.from('casting_photos').select('id', { count: 'exact', head: true })).catch(() => null)
     ]);
     const carte = (l, v, s) => '<div class="carte-pilotage"><span class="l">' + P.esc(l) + '</span><span class="v">' + (v == null ? '—' : P.compte(v)) + '</span><span class="s">' + P.esc(s) + '</span></div>';
-    return P.entete('Drive et transferts') + '<div class="cartes-pilotage">' + carte('Photos du Book', photosBook, 'rangées chez Cloudflare') + carte('Mannequins publiés', publies, 'dans The Book') +
+    return P.entete('Drive et transferts') + '<div class="cartes-pilotage">' + carte('Photos du Book', photosBook, 'en ligne sur le site') + carte('Mannequins publiés', publies, 'dans The Book') +
       carte('Photos de candidature', photosCandidatures, 'liens vers Google Drive') + '</div>' +
-      '<p class="doux petit-texte">Le suivi photo par photo des envois vers Google Drive (réussi, en attente, erreur) n’existe pas encore : aucun chiffre n’est inventé ici en attendant.</p>';
+      '<p class="doux petit-texte">Le suivi photo par photo des envois vers Google Drive n’existe pas encore : seuls les chiffres sûrs sont montrés.</p>';
   }
 
   // ---------- Nettoyage des photos ----------
@@ -115,7 +115,7 @@
     return P.entete('Nettoyage des photos') +
       '<section class="carte"><h2>Photos des dossiers traités</h2><p class="doux">Une fois une candidature ou une inscription définitivement traitée, ses photos sont retirées de l’Administration après 5 jours (les fichiers restent dans Google Drive). Ce nettoyage tourne chaque nuit ; ce bouton le lance tout de suite.</p>' +
       '<button class="btn" type="button" data-action="nettoyer-traitees">Lancer le nettoyage maintenant</button><p class="form-msg" id="nt-msg" role="status"></p></section>' +
-      '<section class="carte"><h2>Anciennes photos restées sur Supabase</h2><p class="doux">Efface de Supabase les anciennes photos (actualités, événements, logos, photo du fondateur, candidatures, inscriptions). <b>Les photos des mannequins ne sont jamais touchées.</b> Une photo du site encore utilisée est d’abord recopiée chez Cloudflare ; une photo de candidature encore utilisée est conservée. Une confirmation est demandée avant d’effacer.</p>' +
+      '<section class="carte"><h2>Anciennes photos de l’ancien stockage</h2><p class="doux">Libère de la place en effaçant les anciennes copies qui ne servent plus. <b>Les photos des mannequins ne sont jamais touchées</b>, et rien ne change sur le site. Une confirmation est demandée avant d’effacer.</p>' +
       '<button class="btn" id="nettoyage-supabase-btn" type="button">Vérifier et nettoyer</button><p class="form-msg" id="nettoyage-supabase-msg" role="status"></p></section>';
   }
   P.actions['nettoyer-traitees'] = async (el) => {
@@ -124,7 +124,7 @@
       const n = await P.rpc('nettoyer_photos_traitees_anciennes');
       const m = document.getElementById('nt-msg');
       m.className = 'form-msg ok';
-      m.textContent = n > 0 ? n + ' photo(s) retirée(s) (dossiers traités depuis plus de 5 jours). Les fichiers restent dans Google Drive.' : 'Rien à nettoyer pour le moment : aucun dossier traité depuis plus de 5 jours.';
+      m.textContent = n > 0 ? P.pluriel(n, 'photo retirée', 'photos retirées') + ' (dossiers traités depuis plus de 5 jours). Les fichiers restent dans Google Drive.' : 'Rien à nettoyer pour le moment : aucun dossier traité depuis plus de 5 jours.';
     } finally { if (el.isConnected) el.disabled = false; }
   };
 

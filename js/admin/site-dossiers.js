@@ -138,7 +138,7 @@
       return '<article class="dossier-carte apparait" style="--i:' + Math.min(i, 12) + '">' +
         '<a class="dossier-lien" href="#/site/' + conf.page + '/' + P.esc(d.id) + '">' +
         (source === 'casting' ? visageDossier(ph && ph.affiche, nomDe(source, d), 'dossier-visage') : '<span class="dossier-sigle" aria-hidden="true">' + P.esc(P.initiales(nomDe(source, d))) + '</span>') +
-        '<span class="dossier-texte"><span class="dossier-nom">' + P.esc(nomDe(source, d)) + (age !== null && age < 18 ? ' ' + P.pastille('Mineur', 'info') : '') + '</span>' +
+        '<span class="dossier-texte"><span class="dossier-nom">' + P.esc(nomDe(source, d)) + (age !== null && age < 18 ? ' ' + P.pastille(d.genre === 'femme' ? 'Mineure' : 'Mineur', 'info') : '') + '</span>' +
         '<span class="dossier-meta">' + P.esc(meta(source, d)) + '</span>' +
         P.pastille(conf.libelles[statut] || statut || '', TONS[statut]) + '</span></a>' +
         (wa ? '<a class="dossier-wa" href="' + P.esc(wa) + '" target="_blank" rel="noopener" aria-label="WhatsApp ' + (c.parent ? 'du parent de ' : '') + P.esc(nomDe(source, d)) + '">' + (c.parent ? 'WhatsApp parent ↗' : 'WhatsApp ↗') + '</a>' : '') +
@@ -255,7 +255,7 @@
     const age = source === 'casting' ? ageDe(d) : null, mineur = age !== null && age < 18;
     const type = source === 'casting' ? typeDe(d) : null;
     return '<a class="retour-liste" href="#/site/' + conf.page + '">← ' + P.esc(conf.titre) + '</a>' +
-      '<header class="fiche-tete"><div><h1>' + P.esc(nomDe(source, d)) + (mineur ? ' ' + P.pastille('Mineur — ' + age + ' ans', 'info') : '') + '</h1>' +
+      '<header class="fiche-tete"><div><h1>' + P.esc(nomDe(source, d)) + (mineur ? ' ' + P.pastille((d.genre === 'femme' ? 'Mineure' : 'Mineur') + ' — ' + age + ' ans', 'info') : '') + '</h1>' +
       '<p class="doux">' + P.esc(conf.reçue + dateFr(d.created_at) + (type ? ' · Postule pour : ' + type : '')) + '</p></div>' +
       P.pastille(conf.libelles[d[conf.champStatut]] || d[conf.champStatut] || '', TONS[d[conf.champStatut]]) + '</header>' +
       blocPhotos(source) +

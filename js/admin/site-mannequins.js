@@ -36,7 +36,7 @@
     const cherche = (P.etat.chercheMannequins || '').toLowerCase();
     const visibles = profils.filter((p) => !cherche || String(p.full_name || '').toLowerCase().includes(cherche));
     const sourdine = profils.filter((p) => p.desactive).length;
-    return P.entete('Mannequins', '<span class="doux">' + (profils.length - sourdine) + ' publiée(s)' + (sourdine ? ' · ' + sourdine + ' en sourdine' : '') + '</span>') +
+    return P.entete('Mannequins', '<span class="doux">' + P.pluriel(profils.length - sourdine, 'publiée', 'publiées') + (sourdine ? ' · ' + sourdine + ' en sourdine' : '') + '</span>') +
       '<form class="ligne" data-form="mannequins-chercher" role="search"><label class="fl" for="mq-cherche" style="flex:1;min-width:200px">Rechercher un nom' +
       '<input id="mq-cherche" name="cherche" type="search" value="' + P.esc(P.etat.chercheMannequins || '') + '"></label><button class="btn" type="submit">Rechercher</button></form>' +
       (visibles.length ? '<div class="mannequins-grille">' + visibles.map((p, i) => '<a class="mannequin-carte apparait' + (p.desactive ? ' sourdine' : '') + '" style="--i:' + Math.min(i, 14) + '" href="#/site/' + PAGE + '/' + P.esc(p.id) + '">' +
@@ -117,7 +117,7 @@
         reussies++;
       } catch (e) { console.error('Envoi photo échoué :', e); }
     }
-    if (ouverte && ouverte.id === modelId) await rafraichirPhotos(reussies + '/' + fichiers.length + ' photo(s) envoyée(s).');
+    if (ouverte && ouverte.id === modelId) await rafraichirPhotos(reussies + '/' + fichiers.length + (fichiers.length > 1 ? ' photos envoyées.' : ' photo envoyée.'));
   };
   let aRemplacer = null;
   P.actions['mannequin-photo-remplacer'] = (el) => { aRemplacer = ouverte.photos.find((p) => String(p.id) === el.dataset.photo) || null; document.getElementById('mq-remplacement').click(); };
@@ -235,7 +235,7 @@
         const age = P.age(p.date_naissance), mes = (parId[p.id] || []).slice(0, 4);
         return '<article class="carte validation apparait" style="--i:' + i + '"><div class="validation-photos">' +
           (mes.length ? mes.map((u) => P.visage(u, p.full_name)).join('') : '<p class="doux">Aucune photo</p>') + '</div>' +
-          '<div class="validation-texte"><h2>' + P.esc(p.full_name || 'Sans nom') + (age !== null && age !== undefined && age < 18 ? ' ' + P.pastille('Mineur — ' + age + ' ans', 'info') : '') + '</h2>' +
+          '<div class="validation-texte"><h2>' + P.esc(p.full_name || 'Sans nom') + (age !== null && age !== undefined && age < 18 ? ' ' + P.pastille((p.category === 'femme' ? 'Mineure' : 'Mineur') + ' — ' + age + ' ans', 'info') : '') + '</h2>' +
           '<p class="doux">' + P.esc([p.city, p.category].filter(Boolean).join(' · ')) + '</p><div class="ligne">' +
           '<button type="button" class="btn rouge" data-action="validation-publier" data-id="' + P.esc(p.id) + '">Valider et publier</button>' +
           '<button type="button" class="btn" data-action="validation-refuser" data-id="' + P.esc(p.id) + '" data-nom="' + P.esc(p.full_name || '') + '">Refuser</button></div></div></article>';
