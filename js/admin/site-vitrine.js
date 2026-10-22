@@ -58,13 +58,13 @@
       P.bd(sb.from('instagram_config').select('ig_user_id, token_expire_le, access_token').eq('id', 'principal').maybeSingle()),
       P.bd(sb.from('instagram_posts_cache').select('posts, updated_at').eq('id', 'principal').maybeSingle()).catch(() => null)
     ]);
-    let etat = '<p class="doux">Aucun jeton enregistré : le flux ne s’affiche pas encore sur le site.</p>';
+    let etat = '<p class="doux">Aucune clé de connexion enregistrée : le flux ne s’affiche pas encore sur le site.</p>';
     if (config && config.access_token) {
       const jours = config.token_expire_le ? Math.round((new Date(config.token_expire_le) - Date.now()) / 864e5) : null;
-      etat = jours === null ? P.pastille('Jeton enregistré', 'ok')
-        : jours < 0 ? P.pastille('Jeton expiré : générez-en un nouveau et enregistrez-le', 'erreur')
-          : jours <= 10 ? P.pastille('Le jeton expire dans ' + P.pluriel(jours, 'jour', 'jours') + ' : pensez à le renouveler', 'alerte')
-            : P.pastille('Jeton valable encore ' + jours + ' jours', 'ok');
+      etat = jours === null ? P.pastille('Clé de connexion enregistrée', 'ok')
+        : jours < 0 ? P.pastille('Clé de connexion expirée : demandez-en une nouvelle à Instagram et enregistrez-la', 'erreur')
+          : jours <= 10 ? P.pastille('La clé de connexion expire dans ' + P.pluriel(jours, 'jour', 'jours') + ' : pensez à le renouveler', 'alerte')
+            : P.pastille('Clé de connexion valable encore ' + jours + ' jours', 'ok');
     }
     const posts = (cache && cache.posts) || [];
     const grille = posts.length ? '<div class="insta-grille">' + posts.map((x) => '<a href="' + P.esc(urlHttpSure(x.lien) || '#') + '" target="_blank" rel="noopener" class="insta-vignette"><img src="' + P.esc(urlHttpSure(x.image) || '') + '" alt="' + P.esc(x.legende || 'Publication Instagram') + '" loading="lazy"></a>').join('') + '</div>' +
@@ -73,16 +73,16 @@
       '<section class="carte"><h2>Publications affichées sur le site</h2>' + grille + '<div class="ligne"><button class="btn rouge" type="button" data-action="instagram-rafraichir">↻ Rafraîchir les publications</button></div><p class="form-msg" id="ig-msg" role="status"></p></section>' +
       '<form class="carte f" data-form="instagram-jeton"><h2 class="large">Connexion au compte</h2><div class="large etat-jeton">' + etat + '</div>' +
       '<label class="fl" for="ig-compte">Identifiant du compte Instagram professionnel<input id="ig-compte" name="compte" inputmode="numeric" autocomplete="off" value="' + P.esc(config && config.ig_user_id ? config.ig_user_id : '') + '"></label>' +
-      '<label class="fl" for="ig-jeton">Nouveau jeton d’accès<input id="ig-jeton" name="jeton" type="password" autocomplete="off" placeholder="Collez le jeton ici"></label>' +
-      '<p class="form-msg large" id="ig-jeton-msg" role="status"></p><div class="large"><button class="btn" type="submit">Enregistrer le jeton</button></div></form>';
+      '<label class="fl" for="ig-jeton">Nouvelle clé de connexion Instagram<input id="ig-jeton" name="jeton" type="password" autocomplete="off" placeholder="Collez la clé ici"></label>' +
+      '<p class="form-msg large" id="ig-jeton-msg" role="status"></p><div class="large"><button class="btn" type="submit">Enregistrer la clé</button></div></form>';
   }
   P.formulaires['instagram-jeton'] = async (f, form) => {
     const jeton = String(f.get('jeton') || '').trim(), compte = String(f.get('compte') || '').trim();
-    if (!jeton || !compte) { msg('ig-jeton-msg', 'err', 'L’identifiant du compte et le jeton sont tous les deux nécessaires.'); return; }
+    if (!jeton || !compte) { msg('ig-jeton-msg', 'err', 'L’identifiant du compte et la clé de connexion sont tous les deux nécessaires.'); return; }
     const r = await P.bd(sb.from('instagram_config').upsert({ id: 'principal', access_token: jeton, ig_user_id: compte, token_expire_le: new Date(Date.now() + 60 * 864e5).toISOString(), updated_at: new Date().toISOString() }).select('id'));
     form.querySelector('#ig-jeton').value = '';
     if (!r || !r.length) { msg('ig-jeton-msg', 'err', 'Rien n’a été enregistré : reconnectez-vous puis réessayez.'); return; }
-    P.message('Jeton enregistré. Touchez « Rafraîchir les publications » pour les récupérer.');
+    P.message('Clé de connexion enregistrée. Touchez « Rafraîchir les publications » pour les récupérer.');
     return P.afficher();
   };
   P.actions['instagram-rafraichir'] = async (el) => {
@@ -90,7 +90,7 @@
     try {
       msg('ig-msg', '', 'Récupération des publications…');
       const config = await P.bd(sb.from('instagram_config').select('access_token, ig_user_id').eq('id', 'principal').maybeSingle());
-      if (!config || !config.access_token || !config.ig_user_id) { msg('ig-msg', 'err', 'Enregistrez d’abord l’identifiant du compte et un jeton (plus bas).'); return; }
+      if (!config || !config.access_token || !config.ig_user_id) { msg('ig-msg', 'err', 'Enregistrez d’abord l’identifiant du compte et une clé de connexion (plus bas).'); return; }
       let posts;
       try {
         const rep = await fetch('https://graph.facebook.com/v21.0/' + encodeURIComponent(config.ig_user_id) + '/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp&access_token=' + encodeURIComponent(config.access_token) + '&limit=8');
@@ -99,7 +99,7 @@
         posts = (res.data || []).filter((p) => p.media_type !== 'VIDEO' || p.thumbnail_url)
           .map((p) => ({ id: p.id, image: p.media_type === 'VIDEO' ? p.thumbnail_url : p.media_url, lien: p.permalink, legende: (p.caption || '').slice(0, 140) }));
       } catch (e) {
-        msg('ig-msg', 'err', 'Instagram a refusé : ' + e.message + ' — vérifiez que le jeton est valide et que le compte est professionnel, relié à une Page Facebook.');
+        msg('ig-msg', 'err', 'Instagram a refusé : ' + e.message + ' — vérifiez que la clé de connexion est valable et que le compte est professionnel, relié à une Page Facebook.');
         return;
       }
       const r = await P.bd(sb.from('instagram_posts_cache').upsert({ id: 'principal', posts, updated_at: new Date().toISOString() }).select('id'));

@@ -136,13 +136,13 @@
         for (const f of inventaire[conf.bucket]) if (cite(texte, conf, f.chemin)) aDeplacer.push({ conf: conf, chemin: f.chemin });
       }
       if (!total) {
-        msg.textContent = 'Rien à nettoyer : plus aucune photo chez Supabase (en dehors des photos des mannequins).';
+        msg.textContent = 'Rien à nettoyer : plus aucune photo dans l’ancien stockage (en dehors des photos des mannequins).';
         btn.disabled = false;
         return;
       }
-      if (!confirm(total + ' photo(s) encore chez Supabase (actualités, événements, partenaires, candidatures, inscriptions — les mannequins ne sont pas concernés).' +
+      if (!confirm(total + ' photo(s) encore dans l’ancien stockage (actualités, événements, partenaires, candidatures, inscriptions — les mannequins ne sont pas concernés).' +
           (aDeplacer.length ? '\n' + aDeplacer.length + ' photo(s) du site encore utilisée(s) : d’abord recopiée(s) chez Cloudflare, fiche(s) mise(s) à jour.' : '') +
-          '\n\nTout ce qui ne sert plus sera effacé de Supabase. Continuer ?')) {
+          '\n\nTout ce qui ne sert plus sera effacé de l’ancien stockage. Continuer ?')) {
         msg.textContent = 'Annulé : rien n’a été supprimé.';
         btn.disabled = false;
         return;
@@ -190,7 +190,7 @@
         }
       }
       const deplaces = aDeplacer.length - erreursDeplacement.length;
-      msg.textContent = '✓ ' + faits + ' photo(s) supprimée(s) de Supabase — ' + mo + ' Mo libérés.' +
+      msg.textContent = '✓ ' + faits + ' photo(s) supprimée(s) de l’ancien stockage — ' + mo + ' Mo libérés.' +
         (deplaces > 0 ? '\n' + deplaces + ' photo(s) recopiée(s) chez Cloudflare, fiche(s) mise(s) à jour.' : '') +
         (gardes.length ? '\n\nConservée(s) car encore utilisée(s) :\n' + gardes.join('\n') : '') +
         (erreursDeplacement.length ? '\n\nProblème :\n' + erreursDeplacement.join('\n') : '');

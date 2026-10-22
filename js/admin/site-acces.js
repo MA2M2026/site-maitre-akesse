@@ -81,7 +81,7 @@
         '<p class="doux">✅ Aucun accès bloqué actuellement.</p>') + '</section>' +
       '<form class="carte f" data-form="liste-blanche"><h2 class="large">Adresses de confiance (jamais bloquées)</h2>' +
       ((d.listeBlanche || []).map((w) => '<div class="code-ligne large"><span class="t">' + P.esc(w.ip) + (w.note ? '<small>' + P.esc(w.note) + '</small>' : '') + '</span><button type="button" class="btn petit" data-action="liste-blanche-retirer" data-ip="' + P.esc(w.ip) + '">Retirer</button></div>').join('')) +
-      '<label class="fl" for="lb-ip">Ajouter une adresse IP<input id="lb-ip" name="ip" placeholder="ex. 90.12.34.56" autocomplete="off" maxlength="45"></label><div class="large"><button class="btn" type="submit">Ajouter à la liste</button></div></form>';
+      '<label class="fl" for="lb-ip">Ajouter l’adresse internet d’un appareil<input id="lb-ip" name="ip" placeholder="ex. 90.12.34.56" autocomplete="off" maxlength="45"></label><div class="large"><button class="btn" type="submit">Ajouter à la liste</button></div></form>';
   }
   P.actions.debloquer = async (el) => {
     await api(el.dataset.type === 'ip' ? { action: 'debloquer_ip', ip: el.dataset.valeur, espace: el.dataset.espace } : { action: 'debloquer_compte', identifiant: el.dataset.valeur, espace: el.dataset.espace });
