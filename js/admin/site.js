@@ -41,7 +41,7 @@
     '/js/messages-groupes-gabarit.js', '/js/messages-groupes.js',
     '/js/admin/site-dossiers.js', '/js/admin/site-convocations.js', '/js/admin/site-messages-groupes.js', '/js/admin/site-projets.js', '/js/admin/site-mannequins.js',
     '/js/photos-mises-de-cote-gabarit.js', '/js/photos-mises-de-cote.js', '/js/rapport-profils-gabarit.js', '/js/rapport-profils-admin.js',
-    '/js/fiches-evenement-gabarit.js', '/js/fiches-evenement-admin.js', '/js/admin/site-outils-mannequins.js'];
+    '/js/fiches-evenement-gabarit.js', '/js/fiches-evenement-admin.js', '/js/admin/site-outils-mannequins.js', '/js/admin/site-pilotage.js'];
   const charges = new Set();  // une pièce déjà chargée ne l'est jamais deux fois
   const charger = (src) => charges.has(src) ? Promise.resolve() : new Promise((ok, ko) => {
     const s = document.createElement('script');
@@ -56,5 +56,12 @@
     if (session) await fetch('/api/acces-tableau', { method: 'POST', headers: { Authorization: 'Bearer ' + session.access_token }, credentials: 'same-origin' }).catch(() => { /* hors ligne : les pièces déjà en mémoire suffisent */ });
     for (const src of PIECES) await charger(src);
   }
-  P.espaces.site = { nav: MENU, pages, apres: {}, avant: () => pret || (pret = preparer().catch((e) => { pret = null; throw e; })) };
+  // pastilles « à traiter » du menu : rafraîchies sans faire attendre la page, au plus une fois par minute
+  let pastillesLe = 0;
+  function pastilles() {
+    if (!P.rafraichirCompteursSite || Date.now() - pastillesLe < 60000) return;
+    pastillesLe = Date.now();
+    P.rafraichirCompteursSite().catch(() => { pastillesLe = 0; });
+  }
+  P.espaces.site = { nav: MENU, pages, apres: {}, avant: () => (pret || (pret = preparer().catch((e) => { pret = null; throw e; }))).then(pastilles) };
 })();

@@ -597,3 +597,65 @@ dl.champs a { color: var(--av-rouge-texte); font-weight: 600; }
 .rp-message textarea { margin-top: 6px; font-size: 14px; }
 .rp-groupe { margin-top: 16px; border-top: 1px solid var(--av-creux); padding-top: 10px; }
 .rp-groupe > summary { padding: 4px 0; }
+
+/* ---------- Pilotage (js/admin/site-pilotage.js) ---------- */
+.cartes-pilotage { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(46%, 210px), 1fr)); gap: 14px; }
+.carte-pilotage {
+  display: flex; flex-direction: column; gap: 6px; padding: 18px; border-radius: var(--av-rayon); background: var(--av-carte); box-shadow: var(--av-ombre);
+  text-decoration: none; min-width: 0; transition: transform .25s var(--av-courbe), box-shadow .25s;
+}
+.carte-pilotage:hover { transform: translateY(-3px); box-shadow: var(--av-ombre-forte); }
+.carte-pilotage .l { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--av-gris); }
+.carte-pilotage .v { font-family: var(--av-titre); font-size: 44px; line-height: 1; font-variant-numeric: lining-nums; }
+.carte-pilotage .s { font-size: 13px; color: var(--av-gris); overflow-wrap: anywhere; }
+.alertes { display: flex; flex-direction: column; }
+.alerte-ligne { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--av-creux); text-decoration: none; }
+.alerte-ligne:first-child { border-top: 0; }
+.alerte-ligne > span:last-child { margin-left: auto; color: var(--av-rouge-texte); font-weight: 600; }
+.alerte-ligne .point { width: 9px; height: 9px; border-radius: 50%; background: var(--av-rouge); flex: none; }
+.podium { display: grid; grid-template-columns: 1fr 1.15fr 1fr; align-items: end; gap: 12px; }
+.podium-place { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; padding: 16px 10px; border-radius: var(--av-rayon); background: var(--av-carte); box-shadow: var(--av-ombre); min-width: 0; }
+.podium-place b { font-family: var(--av-titre); font-size: 20px; line-height: 1.1; overflow-wrap: anywhere; }
+.podium-place.place-1 { order: 2; background: var(--av-encre); color: var(--av-papier); padding-top: 22px; }
+.podium-place.place-1 .doux { color: #CFC6BB; }
+.podium-place.place-2 { order: 1; }
+.podium-place.place-3 { order: 3; }
+.podium-visage { width: 100%; max-width: 150px; aspect-ratio: 3 / 4; border-radius: 14px; }
+.podium-place.place-1 .podium-visage { max-width: 180px; }
+.podium-prix { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--av-rouge-texte); font-weight: 600; margin-top: 6px; }
+.podium-place.place-1 .podium-prix { color: #F2A2B1; }
+.classement { display: flex; flex-direction: column; }
+.classement-ligne { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--av-creux); }
+.classement-ligne:first-child { border-top: 0; }
+.rang { width: 26px; text-align: center; font-family: var(--av-titre); font-size: 22px; color: var(--av-gris); flex: none; }
+.classement-visage { width: 44px; height: 44px; }
+.classement-nom { flex: 1; min-width: 0; font-weight: 600; overflow-wrap: anywhere; }
+.classement-nom .piste { display: block; height: 6px; border-radius: 9px; background: var(--av-creux); margin-top: 6px; overflow: hidden; }
+.classement-nom .piste i { display: block; height: 100%; border-radius: 9px; background: var(--av-rouge); transform-origin: left; }
+.classement-ligne > b { font-family: var(--av-titre); font-size: 22px; font-weight: 500; }
+.repartition { display: flex; flex-wrap: wrap; align-items: center; gap: 28px; }
+.donut { position: relative; width: 190px; height: 190px; border-radius: 50%; flex: none; display: grid; place-items: center; }
+.donut::before { content: ""; position: absolute; inset: 30px; border-radius: 50%; background: var(--av-carte); }
+.donut span { position: relative; font-family: var(--av-titre); font-size: 44px; }
+.legende-donut { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.legende-donut i { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 10px; vertical-align: -1px; }
+.legende-donut i.f { background: var(--av-rouge); }
+.legende-donut i.h { background: #8D7C7F; }
+.legende-donut i.e { background: #E8A83D; }
+svg.courbe { width: 100%; height: auto; display: block; overflow: visible; }
+svg.courbe .aire { fill: rgba(217, 35, 78, .1); stroke: none; }
+svg.courbe .ligne-courbe { fill: none; stroke: var(--av-rouge); stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
+svg.courbe circle { fill: var(--av-carte); stroke: var(--av-rouge); stroke-width: 3; }
+svg.courbe text { font-family: var(--av-texte); font-size: 15px; font-weight: 600; fill: var(--av-encre); }
+svg.courbe text.sem { font-size: 13px; font-weight: 400; fill: var(--av-gris); }
+@media (prefers-reduced-motion: no-preference) {
+  .classement-nom .piste i { animation: av-barre 1s var(--av-courbe) both; }
+  svg.courbe .ligne-courbe { stroke-dasharray: 2000; animation: av-trace 1.6s var(--av-courbe) both; }
+}
+@keyframes av-trace { from { stroke-dashoffset: 2000; } to { stroke-dashoffset: 0; } }
+@media (max-width: 560px) {
+  .podium { gap: 8px; }
+  .podium-place { padding: 12px 6px; }
+  .podium-place b { font-size: 16px; }
+  .repartition { justify-content: center; }
+}

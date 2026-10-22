@@ -2632,8 +2632,12 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 })();
 
-// Pastille WhatsApp flottante, injectée sur toutes les pages
+// Pages de l'agence (Administration) : ni pastille « Nous contacter », ni visite comptée
+function pageAdministration() { return /^\/admin\/|tableau-de-bord/.test(window.location.pathname); }
+
+// Pastille WhatsApp flottante, injectée sur toutes les pages publiques
 document.addEventListener('DOMContentLoaded', () => {
+  if (pageAdministration()) return;
   const bouton = document.createElement('a');
   bouton.href = MA2M_WHATSAPP;
   bouton.target = '_blank';
@@ -2874,6 +2878,8 @@ async function journaliserPhotosEchouees(source, dossierId, nbEchouees) {
 // personne = pas de doublon), notamment pour le classement des fiches mannequins.
 document.addEventListener('DOMContentLoaded', async () => {
   if (!sb) return;
+  // L'Administration (agence) n'est pas une visite du site : elle ne fausse plus les chiffres.
+  if (pageAdministration()) return;
   // Clé par page ET par fiche : avant, toutes les fiches mannequin partageaient la
   // même clé (/mannequin) — seule la première fiche vue dans la session était
   // comptée, ce qui faussait le classement des mannequins les plus vus.

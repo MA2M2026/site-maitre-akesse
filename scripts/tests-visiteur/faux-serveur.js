@@ -73,7 +73,7 @@ function brancher(page, donnees, journal) {
           if (m === 'PATCH' && donnees.refus && donnees.refus[table]) return json({ message: donnees.refus[table], code: 'P0001' }, 400);
           if (m === 'PATCH') {
             const maj = JSON.parse(req.postData() || '{}'), touchees = [];
-            (donnees.tables[table] || []).forEach(l => { let ok = true; for (const [k, v] of url.searchParams) { if (/^eq\./.test(v) && String(l[k]) !== v.slice(3)) ok = false; const dans = v.match(/^in\.\((.*)\)$/); if (dans && !dans[1].split(',').map(x => x.replace(/^"|"$/g, '')).includes(String(l[k]))) ok = false; } if (ok) { Object.assign(l, maj); touchees.push(l); } });
+            (donnees.tables[table] || []).forEach(l => { let ok = true; for (const [k, v] of url.searchParams) { if (/^eq\./.test(v) && String(l[k]) !== v.slice(3)) ok = false; if (/^(gte|lte)\./.test(v)) { const borne = v.slice(4), haut = v[0] === 'g'; lignes = lignes.filter(l => l[k] != null && (haut ? String(l[k]) >= borne : String(l[k]) <= borne)); } const dans = v.match(/^in\.\((.*)\)$/); if (dans && !dans[1].split(',').map(x => x.replace(/^"|"$/g, '')).includes(String(l[k]))) ok = false; } if (ok) { Object.assign(l, maj); touchees.push(l); } });
             // update(…).select() : la vraie base renvoie les lignes modifiées (aucune si refusé)
             if (/return=representation/.test(req.headers()['prefer'] || '')) return json(touchees);
           }

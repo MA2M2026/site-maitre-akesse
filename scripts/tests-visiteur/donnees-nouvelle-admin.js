@@ -83,6 +83,13 @@ function donnees(role) {
       d.tables.model_photos.push({ id: 'pt1', model_id: 'm3', url: photo(3), url_miniature: photo(3), url_moyenne: photo(3), chemin: 'm3/t.jpg', tri_statut: 'ecartee', created_at: '2026-10-03T10:00:00Z' });
       d.tables.fiche_evenement = [{ model_id: 'm0', mis_a_jour: '2026-10-10T10:00:00Z', regime_allergies: 'Aucune', tiktok: null, facebook: null, droit_image: true }];
       d.tables.contacts_parents = [];
+      // pilotage : visites des fiches (7 jours), visites du site, messages de contact, inscriptions
+      d.rpc.stats_classement_mannequins = d.tables.model_profiles.filter((p) => /^m\d+$/.test(p.id)).map((p, i) => ({ model_id: p.id, nb_visites: 140 - i * 11 }));
+      d.rpc.stats_visites_reelles_site = (x) => (new Date(x.depuis) > new Date(Date.now() - 864e5) ? 37 : 412);
+      d.tables.messages_contact = [
+        { id: 'mc1', nom: 'Marie Bamba', type_contact: 'Devenir mannequin', telephone: '0707123456', created_at: new Date(Date.now() - 3600e3).toISOString() },
+        { id: 'mc2', nom: 'Société Lagune', type_contact: 'Recruter des mannequins', telephone: null, created_at: '2026-09-02T10:00:00Z' }];
+      d.tables.inscriptions_mannequins = [{ id: 'i1', full_name: 'KADI SORO', genre: 'femme', date_naissance: '2001-02-02', statut: 'payée' }, { id: 'i2', full_name: 'PETIT ZIE', genre: 'homme', date_naissance: '2015-02-02', statut: 'payée' }];
       d.rpc.contacts_mannequins_admin = d.tables.model_profiles.filter((p) => /^m\d+$/.test(p.id)).map((p) => ({ model_id: p.id, phone: '0700000099' }));
       d.rpc.profils_prives = (x) => (x.ids || []).map((id) => ({ id, date_naissance: id === 'v1' ? '2011-05-05' : '2000-01-01' }));
       d.rpc.definir_sourdine = (x) => { const m = d.tables.model_profiles.find((p) => p.id === x.p_model); if (m) { m.desactive = x.p_desactive; m.published = !x.p_desactive; } return null; };
