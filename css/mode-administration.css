@@ -62,3 +62,10 @@
    pendant le chargement (le portail affiche son propre « Chargement… ») */
 .cadre-admin #tdb-verif-msg,
 .cadre-admin #db-chrome-titre { display: none !important; }
+
+/* Fond clair dès le début (22/10/2026, signalé par la propriétaire : « quand la page se rafraîchit,
+   on voit un fond noir ») : dans le cadre, le tableau de bord commençait avec l'ancien fond sombre
+   (#030405, posé en !important dans tableau-de-bord.html) tant que le nouvel habillage clair
+   (css/tableau-v2.css, en bas de la page) n'était pas arrivé — plusieurs secondes sur un réseau lent. */
+html.cadre-admin,
+html.cadre-admin body.zone-admin { background: var(--mag-papier, #F1ECE5) !important; }

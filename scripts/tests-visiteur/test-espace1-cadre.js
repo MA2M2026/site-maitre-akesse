@@ -111,6 +111,15 @@ function donnees(role) {
     ok(await pe.evaluate(() => document.getElementById('cadre-ancien').contentWindow.__m === 7), nomEcran + ' : le cadre n’a pas été rechargé');
     ok(await cadre.isVisible('#liste-candidatures'), nomEcran + ' : la liste des candidatures s’ouvre dans la zone centrale');
     ok(await pe.evaluate(() => document.querySelector('#menu-lateral a.nav.actif').getAttribute('href') === '#/site/b2-candidatures'), nomEcran + ' : la rubrique active est signalée dans le menu');
+    // Page rafraîchie sur un réseau lent (22/10/2026, « on voit un fond noir ») : tant que le nouvel
+    // habillage clair (css/tableau-v2.css) n'est pas arrivé, le fond du cadre doit déjà être clair.
+    await pe.route(/tableau-v2\.css/, (r) => r.abort());
+    await cadre.evaluate(() => location.reload()).catch(() => {}); await pe.waitForTimeout(2500);
+    const cadreLent = await (await pe.$('#cadre-ancien')).contentFrame();
+    const fond = await cadreLent.evaluate(() => getComputedStyle(document.body).backgroundColor).catch(() => '?');
+    const sombre = /rgb\((\d+), (\d+), (\d+)/.exec(fond);
+    ok(sombre && Number(sombre[1]) + Number(sombre[2]) + Number(sombre[3]) > 600, nomEcran + ' : page rafraîchie, habillage pas encore arrivé : fond clair, pas noir (' + fond + ')');
+    await pe.unroute(/tableau-v2\.css/);
     // une rubrique qui est une page entière (partenaires)
     if (ecran.width <= 860) { await pe.click('[data-action=menu-ouvrir]'); await pe.waitForTimeout(400); }
     await pe.click('#menu-lateral a.nav[href="#/site/partenaires"]'); await pe.waitForTimeout(2500);

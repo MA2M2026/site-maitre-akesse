@@ -305,6 +305,11 @@ seule fois** (décision de la propriétaire). Ce qui change par rapport aux sect
 - `admin/index.html` + `admin/manifest.webmanifest` + `admin/sw.js` (portée `/admin/` seulement ;
   monter `VERSION` à chaque changement des fichiers listés ; logo propre `icons/admin-*.png`, noir sur
   fond blanc, pour ne pas confondre avec l'application du site au logo blanc sur noir).
+  Copie de secours (22/10/2026) : seule la page (`/admin`, `/admin/`, `/admin/index.html`) est rangée
+  sous la clé `/admin/` ; avant, tout fichier du dossier (le manifeste) la remplaçait et, réseau coupé,
+  on voyait le texte JSON « comme du code » (essai : `test-admin-hors-ligne.js`, serveur arrêté).
+  Fond du tableau de bord dans le cadre : clair dès le début (`html.cadre-admin`, css/mode-administration.css),
+  plus de fond noir pendant le chargement (essai dans `test-espace1-cadre.js`).
   Identifiant de l'application : `/admin/?application=administration-ma2m` (changé le 19/10/2026 : une
   tablette gardait en mémoire l'ancienne installation et refusait de réinstaller). Sur téléphone et
   tablette en vertical (< 860 px), le menu est caché derrière « ☰ Menu » et glisse depuis la gauche
