@@ -89,13 +89,20 @@ function donnees(role) {
       d.tables.messages_contact = [
         { id: 'mc1', nom: 'Marie Bamba', type_contact: 'Devenir mannequin', telephone: '0707123456', created_at: new Date(Date.now() - 3600e3).toISOString() },
         { id: 'mc2', nom: 'Société Lagune', type_contact: 'Recruter des mannequins', telephone: null, created_at: '2026-09-02T10:00:00Z' }];
+      // contenu du site : actualités et événements publiés (images servies localement)
+      d.tables.actualites = [
+        { id: 'a1', titre: 'Casting national 2026', categorie: 'Casting', commentaire: '<p>Le grand <b>casting</b> revient.</p>', video_url: '', image_url: photo(4), created_at: '2026-10-18T10:00:00Z' },
+        { id: 'a2', titre: 'Conseils pour un premier shooting', categorie: 'Conseils', commentaire: 'Dormez bien la veille.', video_url: 'https://youtu.be/abcdefghijk', image_url: null, created_at: '2026-10-02T10:00:00Z' }];
+      d.tables.actualite_photos = [{ id: 'ap1', actualite_id: 'a1', url: photo(4), chemin: 'site/actualites/a1/1.jpg' }, { id: 'ap2', actualite_id: 'a1', url: photo(5), chemin: 'site/actualites/a1/2.jpg' }];
+      d.tables.evenements = [{ id: 'e1', titre: 'Abidjan Fashion Night', date_evenement: '2026-09-12', lieu: 'Sofitel Ivoire', description: '<p>Une soirée inoubliable.</p>', image_url: photo(6), created_at: '2026-09-13T10:00:00Z' }];
+      d.tables.evenement_photos = [{ id: 'ep1', evenement_id: 'e1', url: photo(6), chemin: 'site/evenements/e1/1.jpg' }];
       d.tables.inscriptions_mannequins = [{ id: 'i1', full_name: 'KADI SORO', genre: 'femme', date_naissance: '2001-02-02', statut: 'payée' }, { id: 'i2', full_name: 'PETIT ZIE', genre: 'homme', date_naissance: '2015-02-02', statut: 'payée' }];
       d.rpc.contacts_mannequins_admin = d.tables.model_profiles.filter((p) => /^m\d+$/.test(p.id)).map((p) => ({ model_id: p.id, phone: '0700000099' }));
       d.rpc.profils_prives = (x) => (x.ids || []).map((id) => ({ id, date_naissance: id === 'v1' ? '2011-05-05' : '2000-01-01' }));
       d.rpc.definir_sourdine = (x) => { const m = d.tables.model_profiles.find((p) => p.id === x.p_model); if (m) { m.desactive = x.p_desactive; m.published = !x.p_desactive; } return null; };
       d.rpc.code_individuel_creer = (x) => { d.tables.codes_inscription.push({ code: 'MA2M-ESSAI1', utilise: false, candidature_id: x.p_candidature }); return { code: 'MA2M-ESSAI1' }; };
     },
-    api: { '/api/portail': () => ({ ok: true }), '/api/r2-presigner': (c) => ({ uploadUrl: '/__stockage', publicUrl: 'https://photos.maitreakessemodelmanagement.com/' + c.chemin }) }
+    api: { '/api/portail': () => ({ ok: true }), '/api/r2-site-images': (c) => (c.action ? { ok: true } : { uploadUrl: '/__stockage', publicUrl: 'https://photos.maitreakessemodelmanagement.com/' + c.chemin }), '/api/r2-presigner': (c) => ({ uploadUrl: '/__stockage', publicUrl: 'https://photos.maitreakessemodelmanagement.com/' + c.chemin }) }
   };
   d.preparer(d); delete d.preparer;
   return d;
@@ -106,7 +113,7 @@ async function photosLocales(page) {
   const fs = require('fs'), chemin = require('path');
   const images = ['photo0.jpg', 'photo1.jpg', 'photo2.jpg', 'photo3.jpg'].map((f) => fs.readFileSync(chemin.join(__dirname, 'medias', f)));
   await page.route(/__stockage/, (r) => r.fulfill({ status: 200, body: '' }));  // envoi d'une photo (R2 simulé)
-  await page.route(/photos\.maitreakessemodelmanagement\.com|\/book-photos\/|drive\.google\.com\/uc/, (r) => {
+  await page.route(/photos\.maitreakessemodelmanagement\.com|\/book-photos\/|drive\.google\.com\/uc|i\.ytimg\.com/, (r) => {
     const n = Number((/\/m(\d+)\//.exec(r.request().url()) || [0, 0])[1]);
     r.fulfill({ status: 200, contentType: 'image/jpeg', body: images[n % images.length] });
   });

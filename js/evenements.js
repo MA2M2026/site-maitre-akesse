@@ -1,5 +1,5 @@
 // Tables et dossiers d'images de cette page (fonctions communes : js/publications.js)
-const PUBLICATION = { table: 'evenements', tablePhotos: 'evenement_photos', colonne: 'evenement_id', dossier: 'evenements', seau: 'evenements-images' };
+const PUBLICATION = PUBLICATIONS.evenements;  // js/publications.js
 // Événements (evenements.html et en/evenements.html) : un seul script pour le français et
 // l'anglais (11/10/2026 : avant, la version anglaise était recopiée dans la page). EN, T : js/app.js.
 const quillRedaction = creerEditeurRiche('red-editeur', T('Racontez cet événement ici… (facultatif)', 'Tell the story of this event here… (optional)'));

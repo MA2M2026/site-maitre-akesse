@@ -2,6 +2,35 @@
 // (avant, recopiées dans js/actualites.js et js/evenements.js).
 let newsModalEstOuverte = false;
 
+// Tables et dossiers d'images des publications, partagés par les pages publiques et la
+// nouvelle Administration (js/admin/site-contenu.js).
+const PUBLICATIONS = {
+  actualites: { table: 'actualites', tablePhotos: 'actualite_photos', colonne: 'actualite_id', dossier: 'actualites', seau: 'actualites-images' },
+  evenements: { table: 'evenements', tablePhotos: 'evenement_photos', colonne: 'evenement_id', dossier: 'evenements', seau: 'evenements-images' }
+};
+const CATEGORIES_ACTUALITES = ['Casting', 'Mannequinat', 'Conseils', 'Événements'];
+
+// Lien YouTube / Vimeo collé par l'agence → adresse du lecteur intégré (null si non reconnu).
+function urlVideoIntegree(url) {
+  if (!url) return null;
+  try {
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      let id = '';
+      if (url.includes('youtu.be/')) id = url.split('youtu.be/')[1].split(/[?&]/)[0];
+      else if (url.includes('/shorts/')) id = url.split('/shorts/')[1].split(/[?&]/)[0];
+      else if (url.includes('/live/')) id = url.split('/live/')[1].split(/[?&]/)[0];
+      else if (url.includes('/embed/')) id = url.split('/embed/')[1].split(/[?&]/)[0];
+      else if (url.includes('v=')) id = url.split('v=')[1].split('&')[0];
+      return id ? `https://www.youtube.com/embed/${id}` : null;
+    }
+    if (url.includes('vimeo.com')) {
+      const id = url.split('vimeo.com/')[1].split(/[?&]/)[0];
+      return id ? `https://player.vimeo.com/video/${id}` : null;
+    }
+  } catch (e) { return null; }
+  return null;
+}
+
 function extraitTexte(texte, longueur) {
   if (!texte) return '';
   if (texte.length <= longueur) return texte;
@@ -114,21 +143,24 @@ function messageRedaction(classe, texte) {
 async function enregistrerPublication(t, champs, publiee, recharger) {
   const fichiers = redaction.images;
   messageRedaction('ok', fichiers.length ? T(`Envoi de ${fichiers.length} photo(s) en cours…`, `Uploading ${fichiers.length} photo(s)…`) : T('Enregistrement…', 'Saving…'));
-  const id = redaction.id || crypto.randomUUID();
-  const urls = await envoyerPhotosPublication(t, id, fichiers);
-  if (redaction.id) {
-    const { error } = await sbAdmin.from(t.table).update(champs).eq('id', id);
-    if (error) { messageRedaction('err', T('Erreur lors de la modification.', 'Error while updating.')); return; }
-    await enregistrerPhotosPublication(t, id, urls, true);
-    messageRedaction('ok', T('Modifications enregistrées !', 'Changes saved!'));
-  } else {
-    const { error } = await sbAdmin.from(t.table).insert({ id, ...champs, image_url: urls.length ? urls[0].url : null });
-    if (error) { messageRedaction('err', T("Erreur d'enregistrement.", 'Error saving.')); return; }
-    await enregistrerPhotosPublication(t, id, urls, false);
-    messageRedaction('ok', publiee(urls.length));
-  }
+  const r = await sauverPublication(t, redaction.id, champs, fichiers);
+  if (!r.ok) { messageRedaction('err', redaction.id ? T('Erreur lors de la modification.', 'Error while updating.') : T("Erreur d'enregistrement.", 'Error saving.')); return; }
+  messageRedaction('ok', redaction.id ? T('Modifications enregistrées !', 'Changes saved!') : publiee(r.photos));
   await recharger();
   setTimeout(fermerRedaction, 900);
+}
+
+// Publie (id null) ou modifie une publication : photos d'abord, puis la ligne, puis ses photos.
+// Renvoie { ok, id, photos } ; ok est faux si rien n'a été enregistré (session expirée comprise).
+async function sauverPublication(t, idExistant, champs, fichiers) {
+  const id = idExistant || crypto.randomUUID();
+  const urls = await envoyerPhotosPublication(t, id, fichiers || []);
+  const requete = idExistant ? sbAdmin.from(t.table).update(champs).eq('id', id)
+    : sbAdmin.from(t.table).insert({ id, ...champs, image_url: urls.length ? urls[0].url : null });
+  const { data, error } = await requete.select('id');
+  if (error || !data || !data.length) return { ok: false, id, photos: 0 };
+  await enregistrerPhotosPublication(t, id, urls, !!idExistant);
+  return { ok: true, id, photos: urls.length };
 }
 
 // Fenêtre de lecture : ouverture (type : 'actu' ou 'evenement', pour le suivi des fiches) et,
@@ -195,11 +227,18 @@ async function enregistrerPhotosPublication(t, id, urls, modification) {
 // fenêtre à refermer ensuite (rédaction par défaut, ou fenêtre de lecture).
 async function supprimerPublication(t, id, question, recharger, fermer) {
   if (!id || !confirm(question)) return;
-  const { data: photos } = await sbAdmin.from(t.tablePhotos).select('chemin').eq(t.colonne, id);
-  const chemins = (photos || []).map(p => p.chemin).filter(Boolean);
-  const { error: erreurSuppression } = await sbAdmin.from(t.table).delete().eq('id', id);
-  if (erreurSuppression) { alert(T('La suppression a échoué. Réessayez.', 'Deletion failed. Please try again.')); return; }
-  if (chemins.length) await supprimerCheminsImagesSite(t.dossier, t.seau, chemins);
+  if (!(await effacerPublication(t, id))) { alert(T('La suppression a échoué. Réessayez.', 'Deletion failed. Please try again.')); return; }
   (fermer || fermerRedaction)();
   void recharger();
+}
+
+// Efface une publication puis ses images (base d'abord : si elle refuse, les images restent).
+// Renvoie true si la publication a bien été supprimée.
+async function effacerPublication(t, id) {
+  const { data: photos } = await sbAdmin.from(t.tablePhotos).select('chemin').eq(t.colonne, id);
+  const chemins = (photos || []).map(p => p.chemin).filter(Boolean);
+  const { data, error } = await sbAdmin.from(t.table).delete().eq('id', id).select('id');
+  if (error || !data || !data.length) return false;
+  if (chemins.length) await supprimerCheminsImagesSite(t.dossier, t.seau, chemins);
+  return true;
 }

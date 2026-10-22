@@ -1,28 +1,7 @@
 // Tables et dossiers d'images de cette page (fonctions communes : js/publications.js)
-const PUBLICATION = { table: 'actualites', tablePhotos: 'actualite_photos', colonne: 'actualite_id', dossier: 'actualites', seau: 'actualites-images' };
+const PUBLICATION = PUBLICATIONS.actualites;  // js/publications.js
 // Actualités (actualites.html et en/actualites.html) : un seul script pour le français et
 // l'anglais (11/10/2026 : avant, la version anglaise était recopiée dans la page). EN, T : js/app.js.
-function urlVideoIntegree(url) {
-  if (!url) return null;
-  try {
-    if (url.includes('youtube.com') || url.includes('youtu.be')) {
-      let id = '';
-      if (url.includes('youtu.be/')) id = url.split('youtu.be/')[1].split(/[?&]/)[0];
-      else if (url.includes('/shorts/')) id = url.split('/shorts/')[1].split(/[?&]/)[0];
-      else if (url.includes('/live/')) id = url.split('/live/')[1].split(/[?&]/)[0];
-      else if (url.includes('/embed/')) id = url.split('/embed/')[1].split(/[?&]/)[0];
-      else if (url.includes('v=')) id = url.split('v=')[1].split('&')[0];
-      return id ? `https://www.youtube.com/embed/${id}` : null;
-    }
-    if (url.includes('vimeo.com')) {
-      const id = url.split('vimeo.com/')[1].split(/[?&]/)[0];
-      return id ? `https://player.vimeo.com/video/${id}` : null;
-    }
-  } catch (e) { return null; }
-  return null;
-}
-
-const CATEGORIES_ACTUALITES = ['Casting', 'Mannequinat', 'Conseils', 'Événements'];
 
 const quillRedaction = creerEditeurRiche('red-editeur', T('Racontez votre actualité ici… (vous pouvez coller un texte déjà mis en forme)', 'Write here… (you can paste text already formatted from Word)'));
 const LIBELLES_CATEGORIES_EN = { Casting: 'Casting', Mannequinat: 'Modeling', Conseils: 'Tips', Événements: 'Events' };
