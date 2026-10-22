@@ -44,6 +44,7 @@
     const liste = tous.filter(garde);
     const site = tous.filter((m) => m.user_id).length;
     return P.entete('Registre des mannequins', '<a class="btn rouge" href="#/paiements/ajouter">＋ Ajouter un mannequin</a>') +
+      '<p class="doux petit-texte">Ici : tous les mannequins en formation à l’agence, pour les inscriptions et les mensualités, qu’ils soient publiés dans The Book du site ou non.</p>' +
       '<div class="grille chiffres">' + P.chiffre('Mannequins de l’agence', tous.length) + P.chiffre('Inscrits sur le site', site) +
       P.chiffre('Ajoutés à la main', tous.length - site) + P.chiffre('Inscription à enregistrer', tous.filter((m) => etatInscription(m, m.inscription)[1] === 'erreur').length, 'rouge') +
       (tous.some(sansNom) ? P.chiffre('Sans nom', tous.filter(sansNom).length, 'orange') : '') + '</div>' +

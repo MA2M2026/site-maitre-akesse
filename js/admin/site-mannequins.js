@@ -37,6 +37,7 @@
     const visibles = profils.filter((p) => !cherche || String(p.full_name || '').toLowerCase().includes(cherche));
     const sourdine = profils.filter((p) => p.desactive).length;
     return P.entete('Mannequins', '<span class="doux">' + P.pluriel(profils.length - sourdine, 'publiée', 'publiées') + (sourdine ? ' · ' + sourdine + ' en sourdine' : '') + '</span>') +
+      '<p class="doux petit-texte">Ici : les mannequins publiées dans The Book du site. Les mensualités de formation se suivent dans le <a href="#/paiements/registre">registre du Suivi des paiements</a>.</p>' +
       '<form class="ligne" data-form="mannequins-chercher" role="search"><label class="fl" for="mq-cherche" style="flex:1;min-width:200px">Rechercher un nom' +
       '<input id="mq-cherche" name="cherche" type="search" value="' + P.esc(P.etat.chercheMannequins || '') + '"></label><button class="btn" type="submit">Rechercher</button></form>' +
       (visibles.length ? '<div class="mannequins-grille">' + visibles.map((p, i) => '<a class="mannequin-carte apparait' + (p.desactive ? ' sourdine' : '') + '" style="--i:' + Math.min(i, 14) + '" href="#/site/' + PAGE + '/' + P.esc(p.id) + '">' +
