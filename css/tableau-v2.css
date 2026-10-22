@@ -567,7 +567,7 @@ html body.tdb-v2:not(.v2-page-v2-ensemble) .v2-entete-actions { display: none !i
 .convoc-reponse { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.4rem; padding: 0.35rem 0; border-bottom: 1px solid var(--gris-clair); font-size: 0.88rem; }
 .convoc-reponse-confirme { color: #137A43; font-weight: 600; }
 .convoc-reponse-absent { color: var(--c-b3261e); font-weight: 600; }
-.convoc-suivant { justify-self: start; text-align: center; white-space: normal !important; margin-bottom: 0.4rem; }
+.convoc-suivant, .convoc-relance { justify-self: start; text-align: center; white-space: normal !important; margin-bottom: 0.4rem; }
 @media (max-width: 640px) {
   .agenda-etape { grid-template-columns: 1fr; }
   .convoc-envoi { grid-template-columns: 1fr; }

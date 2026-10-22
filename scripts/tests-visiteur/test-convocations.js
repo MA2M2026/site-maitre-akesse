@@ -112,6 +112,9 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     ok(emails.length === 4 && emails.some(e => e.to_email === 'ama@test.ci') && emails.some(e => e.to_email === 'mere@test.ci' && e.to_name === 'Madame Ama Mère') && emails.every(e => !/\*/.test(e.message)), n + '4 e-mails envoyés tout de suite (la mineure et son parent), sans marques WhatsApp');
     ok(ecrits(journal, 'PATCH', 'convocation_envois').filter(x => x.statut === 'envoye').length === 4, n + 'e-mails marqués « envoyé »');
     ok(/4 e-mail\(s\) envoyé\(s\) sur 4/.test(await p.textContent('#convoc-msg')) && /Rappel de la veille/.test(await p.textContent('#convoc-msg')), n + 'bilan affiché');
+    // e-mails partis, WhatsApp encore à envoyer : pas encore de relance (on ne mélange pas les deux boutons)
+    ok(!(await p.$('#convoc-reponses .convoc-relance')) && /La relance sera possible une fois la convocation envoyée/.test(await p.textContent('#convoc-reponses')),
+      n + 'WhatsApp pas encore envoyés : pas de bouton « Relancer », seulement « Envoyer le WhatsApp suivant »');
     const wa = await p.$$eval('#convoc-suivi .convoc-envoi a[href^="https://wa.me/"]', as => as.map(a => a.href));
     ok(wa.length === 4 && wa.some(h => h.startsWith('https://wa.me/2250707070707?text=') && /Madame%20Ama%20M%C3%A8re/.test(h)), n + 'suivi : 4 « Ouvrir WhatsApp » prêts (la mineure et son parent)');
     await p.evaluate(() => { window.open = () => null; });

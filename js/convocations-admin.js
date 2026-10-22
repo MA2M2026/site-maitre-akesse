@@ -232,18 +232,26 @@
   }
   function ajouterRelance(groupe, boite, p, personnes, envois, toutOuvert, sansReponse, faitesIci) {
     var faites = faitesIci || relancees(p);
-    var partie = function (pers) { return envois.some(function (e) { return e.participant_id === pers.participant_id && e.sorte === 'convocation' && e.statut === 'envoye'; }); };
-    var aRelancer = sansReponse.filter(function (pers) { return partie(pers) && !faites[pers.participant_id] && lienRelance(p, pers); });
+    // convocation vraiment partie : au moins un envoi fait, et plus aucun en attente (un WhatsApp
+    // encore « à envoyer » passe d'abord par « Envoyer le WhatsApp suivant »)
+    var partie = function (pers) {
+      var siens = envois.filter(function (e) { return e.participant_id === pers.participant_id && e.sorte === 'convocation'; });
+      return siens.some(function (e) { return e.statut === 'envoye'; }) && !siens.some(function (e) { return ['programme', 'en_cours', 'a_faire'].indexOf(e.statut) >= 0; });
+    };
+    var restantes = sansReponse.filter(function (pers) { return partie(pers) && !faites[pers.participant_id]; });
+    var aRelancer = restantes.filter(function (pers) { return lienRelance(p, pers); });
     var note = document.createElement('p');
     note.className = 'agenda-aide';
     if (!aRelancer.length) {
-      note.textContent = sansReponse.some(partie) ? 'Toutes les personnes sans réponse ont été relancées.' : 'La relance sera possible une fois la convocation envoyée.';
+      note.textContent = !sansReponse.some(partie) ? 'La relance sera possible une fois la convocation envoyée.'
+        : restantes.length ? 'Les personnes restantes n’ont pas de numéro WhatsApp : relancez-les par téléphone ou par e-mail.'
+        : 'Toutes les personnes sans réponse ont été relancées.';
       groupe.appendChild(note);
       return;
     }
     var suivante = aRelancer[0];
     var a = document.createElement('a');
-    a.className = 'btn btn--principal convoc-suivant convoc-relance'; a.target = '_blank'; a.rel = 'noopener';
+    a.className = 'btn btn--principal convoc-relance'; a.target = '_blank'; a.rel = 'noopener';
     a.href = lienRelance(p, suivante);
     a.textContent = '💬 Relancer la suivante : ' + nomDe(suivante) + ' (' + aRelancer.length + ' restante' + (aRelancer.length > 1 ? 's' : '') + ')';
     a.addEventListener('click', function () {

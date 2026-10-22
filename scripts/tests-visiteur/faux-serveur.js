@@ -64,6 +64,8 @@ function brancher(page, donnees, journal) {
           if (m === 'POST' && objet) { const cree = JSON.parse(req.postData() || '{}'); return json({ id: 'nouveau-' + journal.length, ...(Array.isArray(cree) ? cree[0] : cree) }, 201); }
           if (m === 'POST' && /return=representation/.test(req.headers()['prefer'] || '')) {
             const cree = [].concat(JSON.parse(req.postData() || '{}')).map((l, i) => ({ id: 'nouveau-' + journal.length + '-' + i, ...l }));
+            // lien personnel des convocations : tiré au hasard par la vraie base (valeur par défaut)
+            if (table === 'convocation_participants') cree.forEach((l, i) => { if (!l.jeton) l.jeton = (String(journal.length) + 'abcdef' + i).padEnd(36, '0').slice(0, 36); });
             if (donnees.memoriser) (donnees.tables[table] = donnees.tables[table] || []).push(...cree);
             return json(cree, 201);
           }
