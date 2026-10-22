@@ -95,6 +95,9 @@ function donnees(role) {
         { id: 'a2', titre: 'Conseils pour un premier shooting', categorie: 'Conseils', commentaire: 'Dormez bien la veille.', video_url: 'https://youtu.be/abcdefghijk', image_url: null, created_at: '2026-10-02T10:00:00Z' }];
       d.tables.actualite_photos = [{ id: 'ap1', actualite_id: 'a1', url: photo(4), chemin: 'site/actualites/a1/1.jpg' }, { id: 'ap2', actualite_id: 'a1', url: photo(5), chemin: 'site/actualites/a1/2.jpg' }];
       d.tables.evenements = [{ id: 'e1', titre: 'Abidjan Fashion Night', date_evenement: '2026-09-12', lieu: 'Sofitel Ivoire', description: '<p>Une soirée inoubliable.</p>', image_url: photo(6), created_at: '2026-09-13T10:00:00Z' }];
+      d.tables.partenaires = [
+        { id: 'pa1', nom: 'Maison Ivoire', structure: 'Maison Ivoire SARL', evenement: 'Abidjan Fashion Night', role: 'Promoteur', description: '<p>Fidèle partenaire.</p>', logo_url: photo(7), logo_chemin: 'site/partenaires/pa1/logo.jpg', created_at: '2026-10-01T10:00:00Z' },
+        { id: 'pa2', nom: 'koffi studio', structure: null, evenement: null, role: 'DA', description: null, logo_url: null, logo_chemin: null, created_at: '2026-09-01T10:00:00Z' }];
       d.tables.evenement_photos = [{ id: 'ep1', evenement_id: 'e1', url: photo(6), chemin: 'site/evenements/e1/1.jpg' }];
       d.tables.inscriptions_mannequins = [{ id: 'i1', full_name: 'KADI SORO', genre: 'femme', date_naissance: '2001-02-02', statut: 'payée' }, { id: 'i2', full_name: 'PETIT ZIE', genre: 'homme', date_naissance: '2015-02-02', statut: 'payée' }];
       d.rpc.contacts_mannequins_admin = d.tables.model_profiles.filter((p) => /^m\d+$/.test(p.id)).map((p) => ({ model_id: p.id, phone: '0700000099' }));

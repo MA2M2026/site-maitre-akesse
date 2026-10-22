@@ -79,6 +79,29 @@ const photo = (n) => chemin.join(__dirname, 'medias', 'photo' + n + '.jpg');
     ok(ecrits(journal, 'POST', 'evenements').some((j) => /"date_evenement":"2026-12-05"/.test(j[3]) && /"lieu":"Plateau"/.test(j[3])), n + 'événement publié');
     await capture(p, 'evenements' + suffixe);
 
+    // 5. Partenaires : logos (ou initiale), ajout, changement de logo (l'ancien fichier est effacé), suppression
+    await p.goto(URL_ADMIN + '#/site/partenaires'); await p.waitForSelector('.partenaires-grille'); await p.waitForTimeout(800);
+    ok((await p.$$('.partenaire-carte')).length === 2 && (await p.$$('.partenaire-logo img')).length === 1 && /K/.test(await p.textContent('.partenaire-carte:nth-child(2) .ini')), n + 'partenaires : logo, ou initiale sans logo');
+    await capture(p, 'partenaires' + suffixe);
+    await p.click('a[href$="/partenaires/nouveau"]'); await p.waitForSelector('#pa-nom'); await p.waitForTimeout(800);
+    await p.fill('#pa-nom', 'Studio Lagune'); await p.selectOption('#pa-role', 'Styliste'); await p.fill('#pa-structure', 'Lagune & Co');
+    await p.click('#pa-editeur .ql-editor'); await p.keyboard.type('Styliste des défilés.');
+    await p.setInputFiles('input[data-change="partenaire-logo"]', photo(2)); await p.waitForTimeout(300);
+    ok(!!(await p.$('#pa-apercu img')), n + 'aperçu du logo choisi');
+    await p.click('form[data-form="partenaire-enregistrer"] [type=submit]'); await p.waitForTimeout(2500);
+    ok(ecrits(journal, 'POST', 'partenaires').some((j) => /"nom":"Studio Lagune"/.test(j[3]) && /"role":"Styliste"/.test(j[3]) && /défilés/.test(j[3]) && /"logo_chemin":"site\/partenaires\//.test(j[3])) && /#\/site\/partenaires$/.test(p.url()), n + 'partenaire ajouté avec son logo et sa présentation');
+    await p.goto(URL_ADMIN + '#/site/partenaires/pa1'); await p.waitForSelector('#pa-nom'); await p.waitForTimeout(1000);
+    ok(await p.inputValue('#pa-nom') === 'Maison Ivoire' && await p.inputValue('#pa-role') === 'Promoteur' && /Fidèle/.test(await p.textContent('#pa-editeur')), n + 'fiche partenaire reprise');
+    await capture(p, 'partenaire-fiche' + suffixe);
+    const supprAvant = journal.filter((j) => j[0] === 'API' && /"action":"suppression"/.test(j[2] || '')).length;
+    await p.setInputFiles('input[data-change="partenaire-logo"]', photo(3));
+    await p.click('form[data-form="partenaire-enregistrer"] [type=submit]'); await p.waitForTimeout(2500);
+    const supprs = journal.filter((j) => j[0] === 'API' && /"action":"suppression"/.test(j[2] || ''));
+    ok(ecrits(journal, 'PATCH', 'partenaires').some((j) => /id=eq\.pa1/.test(j[2]) && /logo_chemin/.test(j[3])) && supprs.length === supprAvant + 1 && /pa1\/logo\.jpg/.test(supprs[supprs.length - 1][2]), n + 'nouveau logo enregistré, ancien fichier effacé ensuite');
+    await p.goto(URL_ADMIN + '#/site/partenaires/pa2'); await p.waitForSelector('[data-action="partenaire-supprimer"]'); await p.waitForTimeout(600);
+    await p.click('[data-action="partenaire-supprimer"]'); await p.waitForTimeout(1500);
+    ok(ecrits(journal, 'DELETE', 'partenaires').some((j) => /id=eq\.pa2/.test(j[2])), n + 'partenaire supprimé après confirmation');
+
     const pales = await lirePageEntiere(p);
     ok(!pales.length, n + 'textes lisibles ' + pales.slice(0, 4).map((x) => x.texte.slice(0, 20) + ' (' + x.contraste + ')').join(', '));
     await p.goto(URL_ADMIN + '#/site/actualites/a1'); await p.waitForSelector('#pub-titre'); await p.waitForTimeout(1200);

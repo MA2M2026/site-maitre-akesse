@@ -1,4 +1,4 @@
-// Nouvelle Administration — groupe « Contenu du site », 1re partie : Actualités et Événements,
+// Nouvelle Administration — groupe « Contenu du site », 1re partie : Actualités, Événements, Partenaires,
 // reconstruits à neuf (PLAN-NOUVELLE-ADMINISTRATION.md). Avant, il fallait ouvrir la page
 // publique en « mode administration » ; ici : une galerie des publications avec leur photo de
 // couverture, et une page de rédaction (titre, photos, texte mis en forme, aperçu en direct).
@@ -9,7 +9,7 @@
 (function () {
   'use strict';
   const P = window.Portail;
-  if (!P || !P.espaces.site || typeof PUBLICATIONS === 'undefined') return;
+  if (!P || !P.espaces.site || typeof PUBLICATIONS === 'undefined' || typeof ROLES_PARTENAIRES === 'undefined') return;
   const TYPES = {
     actualites: { t: PUBLICATIONS.actualites, titre: 'Actualités', un: 'une actualité', texte: 'commentaire', lien: '/actualites?actu=',
       ordre: (q) => q.order('created_at', { ascending: false }) },
@@ -138,6 +138,78 @@
     P.message('Publication supprimée.');
     location.hash = '#/site/' + type;
   };
+
+  // ---------- Partenaires : galerie des logos, fiche d'ajout et de modification ----------
+  let partenaire = null;  // { p (null = nouveau), editeur }
+  const initiale = (nom) => P.esc(String(nom || '?').trim().charAt(0).toUpperCase() || '?');
+  async function partenaires() {
+    const lignes = await P.bd(sb.from('partenaires').select('*').order('created_at', { ascending: false }));
+    const cartes = lignes.map((p, i) => '<a class="partenaire-carte apparait" style="--i:' + Math.min(i, 10) + '" href="#/site/partenaires/' + encodeURIComponent(p.id) + '">' +
+      '<span class="partenaire-logo">' + (p.logo_url ? '<img src="' + P.esc(urlLegere(p.logo_url)) + '" alt="" loading="lazy">' : '<span class="ini">' + initiale(p.nom) + '</span>') + '</span>' +
+      '<b>' + P.esc(p.nom || '') + '</b><span class="doux">' + P.esc([p.role, p.structure].filter(Boolean).join(' · ')) + '</span></a>').join('');
+    return P.entete('Partenaires', '<span class="doux">' + lignes.length + ' partenaire' + (lignes.length > 1 ? 's' : '') + '</span><a class="btn rouge" href="#/site/partenaires/nouveau">＋ Ajouter un partenaire</a>') +
+      (cartes ? '<div class="partenaires-grille">' + cartes + '</div>' : '<div class="carte vide">Aucun partenaire pour le moment.</div>');
+  }
+  async function fichePartenaire(id) {
+    const p = id === 'nouveau' ? null : await P.bd(sb.from('partenaires').select('*').eq('id', id).maybeSingle());
+    if (id !== 'nouveau' && !p) return P.entete('Partenaires') + '<div class="carte vide">Ce partenaire n’existe plus. <a href="#/site/partenaires">Retour</a></div>';
+    await outilsRedaction();
+    partenaire = { p, editeur: null };
+    const v = (k) => P.esc(p && p[k] ? p[k] : '');
+    return P.entete(p ? p.nom : 'Nouveau partenaire', '<a class="btn" href="#/site/partenaires">← Partenaires</a>' +
+        (p ? '<a class="btn" href="/partenaires?partenaire=' + encodeURIComponent(p.id) + '" target="_blank" rel="noopener">Voir sur le site ↗</a>' : '')) +
+      '<form class="carte f" data-form="partenaire-enregistrer">' +
+      '<div class="large partenaire-tete"><span class="partenaire-logo grand" id="pa-apercu">' + (p && p.logo_url ? '<img src="' + P.esc(urlLegere(p.logo_url)) + '" alt="">' : '<span class="ini">' + initiale(p && p.nom) + '</span>') + '</span>' +
+      '<label class="btn"><input type="file" accept="image/*,.heic,.heif" data-change="partenaire-logo" hidden>🖼️ ' + (p && p.logo_url ? 'Changer le logo' : 'Choisir le logo') + '</label></div>' +
+      '<label class="fl" for="pa-nom">Nom (obligatoire)<input id="pa-nom" name="nom" required maxlength="160" value="' + v('nom') + '"></label>' +
+      '<label class="fl" for="pa-role">Rôle<select id="pa-role" name="role"><option value="">—</option>' + ROLES_PARTENAIRES.map((r) => '<option value="' + P.esc(r[0]) + '"' + (p && p.role === r[0] ? ' selected' : '') + '>' + P.esc(r[1]) + '</option>').join('') + '</select></label>' +
+      '<label class="fl" for="pa-structure">Structure<input id="pa-structure" name="structure" maxlength="200" value="' + v('structure') + '"></label>' +
+      '<label class="fl" for="pa-evenement">Événement<input id="pa-evenement" name="evenement" maxlength="200" value="' + v('evenement') + '"></label>' +
+      '<div class="large"><span class="fl">Présentation</span><div id="pa-editeur" class="editeur-riche"></div></div>' +
+      '<p class="form-msg large" id="pa-msg" role="status"></p>' +
+      '<div class="ligne large"><button class="btn rouge" type="submit">' + (p ? 'Enregistrer' : 'Ajouter ce partenaire') + '</button>' +
+      (p ? '<button class="btn" type="button" data-action="partenaire-supprimer">Supprimer</button>' : '') + '</div></form>';
+  }
+  function brancherPartenaire() {
+    if (!partenaire || !document.getElementById('pa-editeur')) return;
+    partenaire.editeur = creerEditeurRiche('pa-editeur');
+    if (partenaire.p) chargerContenuDansEditeur(partenaire.editeur, partenaire.p.description);
+  }
+  const messagePa = (classe, texte) => { const m = document.getElementById('pa-msg'); if (m) { m.className = 'form-msg large ' + classe; m.textContent = texte; } };
+  P.changements['partenaire-logo'] = (el) => {
+    if (!partenaire) return;
+    partenaire.logo = el.files && el.files[0];
+    if (partenaire.logo) document.getElementById('pa-apercu').innerHTML = '<img src="' + URL.createObjectURL(partenaire.logo) + '" alt="">';
+  };
+  P.formulaires['partenaire-enregistrer'] = async (f) => {
+    if (!partenaire) return;
+    const nom = String(f.get('nom') || '').trim();
+    if (!nom) { messagePa('err', 'Le nom est obligatoire.'); return; }
+    const ancien = partenaire.p, id = ancien ? ancien.id : crypto.randomUUID();
+    const ligne = { nom, structure: String(f.get('structure') || '').trim(), evenement: String(f.get('evenement') || '').trim(), role: f.get('role') || '', description: lireContenuEditeur(partenaire.editeur) };
+    messagePa('ok', partenaire.logo ? 'Envoi du logo…' : 'Enregistrement…');
+    if (partenaire.logo) {
+      const logo = await envoyerLogoPartenaire(id, partenaire.logo);
+      if (!logo) { messagePa('err', 'Le logo n’a pas pu être envoyé : vérifiez la connexion puis réessayez.'); return; }
+      Object.assign(ligne, logo);
+    }
+    const r = await P.bd((ancien ? sb.from('partenaires').update(ligne).eq('id', id) : sb.from('partenaires').insert(Object.assign({ id }, ligne))).select('id'));
+    if (!r || !r.length) { messagePa('err', 'Rien n’a été enregistré : reconnectez-vous puis réessayez.'); return; }
+    // ancien logo remplacé : le fichier n'est plus utilisé nulle part (base d'abord, fichier ensuite)
+    if (ancien && ligne.logo_chemin && ancien.logo_chemin && ancien.logo_chemin !== ligne.logo_chemin) await supprimerCheminsImagesSite('partenaires', 'partenaires-logos', [ancien.logo_chemin]);
+    partenaire = null;
+    P.message(ancien ? 'Partenaire enregistré.' : 'Partenaire « ' + nom + ' » ajouté au site.');
+    location.hash = '#/site/partenaires';
+  };
+  P.actions['partenaire-supprimer'] = async () => {
+    if (!partenaire || !partenaire.p || !confirm('Supprimer définitivement ce partenaire ?')) return;
+    if (!(await effacerPartenaire(partenaire.p))) { messagePa('err', 'La suppression a échoué : reconnectez-vous puis réessayez.'); return; }
+    partenaire = null;
+    P.message('Partenaire supprimé.');
+    location.hash = '#/site/partenaires';
+  };
+  P.espaces.site.pages.partenaires = (args) => (args && args[0] ? fichePartenaire(decodeURIComponent(args[0])) : partenaires());
+  P.espaces.site.apres.partenaires = brancherPartenaire;
 
   Object.keys(TYPES).forEach((type) => {
     P.espaces.site.pages[type] = (args) => (args && args[0] ? rediger(type, decodeURIComponent(args[0])) : liste(type));

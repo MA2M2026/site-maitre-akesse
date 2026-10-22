@@ -143,14 +143,7 @@ document.getElementById('edit-p-enregistrer-btn').addEventListener('click', asyn
   };
 
   const logoInput = document.getElementById('edit-p-logo');
-  if (logoInput.files[0]) {
-    const fichier = await convertirSiHeic(logoInput.files[0], 0.9);
-    const chemin = `site/partenaires/${id}/${Date.now()}-${nomFichierSur(fichier.name)}`;
-    try {
-      maj.logo_url = await envoyerImageSite('partenaires', chemin, fichier);
-      maj.logo_chemin = chemin;
-    } catch (e) {}
-  }
+  if (logoInput.files[0]) Object.assign(maj, await envoyerLogoPartenaire(id, logoInput.files[0]));  // js/partenaires-communs.js
 
   const { error } = await sbAdmin.from('partenaires').update(maj).eq('id', id);
   if (error) { msg.className = 'form-msg err'; msg.textContent = T('Erreur lors de la modification.', 'Error while updating.'); return; }
@@ -165,10 +158,8 @@ document.getElementById('part-modal-supprimer-btn').addEventListener('click', as
   const id = window.partenaireModalCourant;
   if (!confirm(T('Supprimer définitivement ce partenaire ?', 'Permanently delete this partner?'))) return;
   const p = window.partenairesData.find(x => x.id === id);
-  // Base d'abord : si la suppression échoue, les images restent intactes.
-  const { error: erreurSuppression } = await sbAdmin.from('partenaires').delete().eq('id', id);
-  if (erreurSuppression) { alert(T('La suppression a échoué. Réessayez.', 'Deletion failed. Please try again.')); return; }
-  if (p && p.logo_chemin) await supprimerCheminsImagesSite('partenaires', 'partenaires-logos', [p.logo_chemin]);
+  // Base d'abord : si la suppression échoue, les images restent intactes (js/partenaires-communs.js).
+  if (!p || !(await effacerPartenaire(p))) { alert(T('La suppression a échoué. Réessayez.', 'Deletion failed. Please try again.')); return; }
   fermerPartModal();
   chargerPartenaires().catch(e => { if (window.signalerErreur) window.signalerErreur('Partenaires : chargement', (e && e.message) || String(e)); });
 });
@@ -182,16 +173,8 @@ document.getElementById('p-publier-btn').addEventListener('click', async () => {
   msg.className = 'form-msg ok'; msg.textContent = T('Enregistrement…', 'Saving…'); msg.style.display = 'block';
 
   const idPartenaire = crypto.randomUUID();
-  let logo_url = null, logo_chemin = null;
   const logoInput = document.getElementById('p-logo');
-  if (logoInput.files[0]) {
-    const fichier = await convertirSiHeic(logoInput.files[0], 0.9);
-    const chemin = `site/partenaires/${idPartenaire}/${Date.now()}-${nomFichierSur(fichier.name)}`;
-    try {
-      logo_url = await envoyerImageSite('partenaires', chemin, fichier);
-      logo_chemin = chemin;
-    } catch (e) {}
-  }
+  const { logo_url, logo_chemin } = (logoInput.files[0] && await envoyerLogoPartenaire(idPartenaire, logoInput.files[0])) || { logo_url: null, logo_chemin: null };
 
   const { error } = await sbAdmin.from('partenaires').insert({
     id: idPartenaire, nom,
