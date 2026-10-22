@@ -44,7 +44,8 @@
     '/js/fiches-evenement-gabarit.js', '/js/fiches-evenement-admin.js', '/js/admin/site-outils-mannequins.js', '/js/admin/site-pilotage.js',
     '/js/publications.js', '/js/partenaires-communs.js', '/js/admin/site-contenu.js', '/js/admin/site-vitrine.js',
     '/js/agenda-gabarit.js', '/js/agenda-admin.js', '/js/admin/site-agenda.js',
-    '/js/video-accueil-gabarit.js', '/js/couverture-admin.js', '/js/admin/site-video.js'];
+    '/js/video-accueil-gabarit.js', '/js/couverture-admin.js', '/js/admin/site-video.js',
+    '/js/note-integration.js', '/js/nettoyage-supabase.js', '/js/admin/site-acces.js'];
   const charges = new Set();  // une pièce déjà chargée ne l'est jamais deux fois
   const charger = (src) => charges.has(src) ? Promise.resolve() : new Promise((ok, ko) => {
     const s = document.createElement('script');

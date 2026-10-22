@@ -2307,19 +2307,7 @@ function genererCode() {
 // Code individuel d'inscription (cahier v2.4, 3.3, 19/10/2026) : un code par personne RETENUE,
 // créé par la base (code_individuel_creer, supabase-administration.sql) seulement quand elle veut
 // s'inscrire — plus de code « libre » sans nom. Casting direct : fiche minimale + code.
-const LIEN_INSCRIPTION = 'https://www.maitreakessemodelmanagement.com/inscription-mannequin.html';
-// Message WhatsApp du code (en-tête, salutation et signature communes : js/messages-candidats.js ;
-// mineur : au parent, sur son numéro)
-function lienWhatsAppCode(d, code) {
-  const contacts = contactsEnvoi(d);
-  const lien = lienWhatsApp(contacts.phone);
-  if (!lien) return null;
-  const fin = `\n\nIl ne sert qu'une seule fois. Inscription : ${LIEN_INSCRIPTION}`;
-  const texte = contacts.parent
-    ? messageParent(`Voici le code personnel de votre enfant {prénom} pour son inscription chez Maître Akesse Model Management : *${code}*` + fin)
-    : messageCandidat(`Voici votre code personnel pour vous inscrire chez Maître Akesse Model Management : *${code}*` + fin);
-  return lien + '?text=' + encodeURIComponent(personnaliserMessage(texte, d, null, () => ''));
-}
+// LIEN_INSCRIPTION et lienWhatsAppCode : js/messages-candidats.js (partagés)
 document.getElementById('form-casting-direct').addEventListener('submit', async (e) => {
   e.preventDefault();
   const msg = document.getElementById('codes-msg');
@@ -2735,62 +2723,6 @@ document.getElementById('mr-enregistrer-btn').addEventListener('click', async ()
   void chargerMotResponsableTableau();
 });
 
-// ===================================================================
-// Note d'intégration (PDF) — 14/10/2026, demande de la propriétaire : document remis aux
-// mannequins seulement après la validation de leur code d'inscription. Rangé dans R2 sous
-// un nom secret (prive/note-integration/<32 caractères hexadécimaux>.pdf, api/_r2.js) ; le
-// nouveau dépôt remplace l'ancien (action 'nettoyer' après un envoi réussi).
-// ===================================================================
-(function noteIntegration() {
-  const champ = document.getElementById('ni-fichier');
-  if (!champ) return;
-  const bouton = document.getElementById('ni-envoyer-btn'), etat = document.getElementById('ni-etat'), msg = document.getElementById('ni-msg');
-  const dire = (texte, ok) => { msg.className = 'form-msg ' + (ok ? 'ok' : 'err'); msg.textContent = texte; };
-  let demande = 0;  // seule la réponse la plus récente s'affiche
-  async function afficherEtat() {
-    const numero = ++demande;
-    try {
-      const n = await actionImageSite({ action: 'lire', categorie: 'note-integration' });
-      if (numero !== demande) return;
-      etat.textContent = '';
-      if (!n.chemin) { etat.textContent = 'Aucun document déposé : les mannequins ne voient pas encore de note d’intégration.'; return; }
-      etat.append('Document en place, déposé le ' + new Date(n.date).toLocaleDateString('fr-FR') + '. ');
-      const lien = document.createElement('a');
-      lien.href = PHOTOS_DIRECTES + n.chemin; lien.target = '_blank'; lien.rel = 'noopener'; lien.textContent = 'Voir le document';
-      etat.append(lien);
-    } catch (e) { if (numero === demande) etat.textContent = 'État du document indisponible : ' + e.message; }
-  }
-  champ.addEventListener('change', () => {
-    const f = champ.files[0];
-    bouton.disabled = !f;
-    if (f && f.type !== 'application/pdf') { bouton.disabled = true; dire('Choisissez un fichier PDF.', false); }
-    else if (f && f.size > 15 * 1024 * 1024) { bouton.disabled = true; dire('Document trop lourd (15 Mo au maximum).', false); }
-    else msg.textContent = '';
-  });
-  bouton.addEventListener('click', async () => {
-    const f = champ.files[0];
-    if (!f) return;
-    bouton.disabled = true; dire('Envoi en cours…', true);
-    const octets = crypto.getRandomValues(new Uint8Array(16));
-    const chemin = 'prive/note-integration/' + Array.from(octets, o => o.toString(16).padStart(2, '0')).join('') + '.pdf';
-    try {
-      await envoyerImageSite('note-integration', chemin, f);
-    } catch (e) {
-      dire('Le dépôt a échoué : ' + e.message, false);
-      bouton.disabled = false;
-      return;
-    }
-    // Le nouveau document est en place ; retirer les anciens est un plus (refait au prochain dépôt).
-    let nettoye = true;
-    try { await actionImageSite({ action: 'nettoyer', categorie: 'note-integration', chemin }); } catch (e) { nettoye = false; }
-    dire('Document déposé : les mannequins le verront après avoir validé leur code.' + (nettoye ? '' : ' (L’ancien document n’a pas pu être retiré ; il le sera au prochain dépôt.)'), true);
-    champ.value = '';
-    void afficherEtat();
-  });
-  // État relu à chaque ouverture de « Codes d'inscription » (la session n'est pas toujours
-  // prête au chargement de la page).
-  document.querySelectorAll('[data-tdb-cible="b3b-codes-inscription"]').forEach(el => el.addEventListener('click', () => { void afficherEtat(); }));
-  void afficherEtat();
-})();
+// Note d'intégration (PDF) : js/note-integration.js (écran partagé avec la nouvelle Administration)
 
 initSidebarNav();

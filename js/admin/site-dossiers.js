@@ -56,7 +56,6 @@
     libre: { libelle: '✏️ Message libre', sources: ['casting', 'recruteur'],
       texte: (d) => d.contact_name ? 'Bonjour ' + String(d.contact_name).trim() + ',\n\n' : 'Bonjour ' + (contactsEnvoi(d).parent ? salutationParent(d.parent_nom) : nomAvecCivilite(d)) + ',\n\n' }
   };
-  const LIEN_INSCRIPTION = 'https://www.maitreakessemodelmanagement.com/inscription-mannequin.html';
 
   // Réglages des dossiers lus par les Messages groupés (js/messages-groupes.js), au format de
   // l'ancien tableau de bord : table, champ du statut, statuts et libellés.
@@ -239,12 +238,10 @@
     let corps;
     if (utilise && !libre) corps = '<p>Code ' + P.esc(utilise.code) + ' utilisé le ' + P.date(utilise.utilise_le || new Date().toISOString()) + ' : l’inscription est faite.</p>';
     else if (libre) {
-      const c = contactsEnvoi(d), wa = lienWa(c.phone), fin = '\n\nIl ne sert qu’une seule fois. Inscription : ' + LIEN_INSCRIPTION;
-      const texte = c.parent ? messageParent('Voici le code personnel de votre enfant {prénom} pour son inscription chez Maître Akesse Model Management : *' + libre.code + '*' + fin)
-        : messageCandidat('Voici votre code personnel pour vous inscrire chez Maître Akesse Model Management : *' + libre.code + '*' + fin);
+      const wa = lienWhatsAppCode(d, libre.code);  // js/messages-candidats.js
       corps = '<p class="code-valeur"><strong id="dos-code">' + P.esc(libre.code) + '</strong> — valable une seule fois</p><div class="ligne">' +
         '<button type="button" class="btn" data-action="dossier-code-copier">Copier</button>' +
-        (wa ? '<a class="btn rouge" href="' + P.esc(wa + '?text=' + encodeURIComponent(personnaliserMessage(texte, d, null, () => ''))) + '" target="_blank" rel="noopener">💬 Envoyer par WhatsApp</a>' : '') + '</div>';
+        (wa ? '<a class="btn rouge" href="' + P.esc(wa) + '" target="_blank" rel="noopener">💬 Envoyer par WhatsApp</a>' : '') + '</div>';
     } else corps = '<p class="doux">Pas encore de code. Créez-le seulement quand la personne montre son intérêt pour s’inscrire.</p>' +
       '<button type="button" class="btn rouge" data-action="dossier-code-creer">La personne veut s’inscrire : créer son code</button>';
     return '<section class="carte code-zone"><h2>Code d’inscription</h2>' + corps + '</section>';

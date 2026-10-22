@@ -740,3 +740,14 @@ svg.courbe text.sem { font-size: 13px; font-weight: 400; fill: var(--av-gris); }
 .ecran-video .form-champ { background: var(--av-carte); padding: 18px; border-radius: var(--av-rayon); box-shadow: var(--av-ombre); display: flex; flex-direction: column; gap: 10px; }
 .ecran-video .couv-barre { height: 8px; border-radius: 9px; background: var(--av-creux); overflow: hidden; max-width: 720px; }
 .ecran-video .couv-barre span { display: block; height: 100%; width: 0; background: var(--av-rouge); transition: width .3s ease; }
+
+/* ---------- Accès et outils (js/admin/site-acces.js) ---------- */
+.code-ligne { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--av-creux); min-width: 0; }
+.code-ligne:first-of-type { border-top: 0; }
+.code-ligne .t { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.code-ligne .t small { display: block; color: var(--av-gris); font-size: 12px; }
+.code-ligne .code-valeur { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 600; letter-spacing: .04em; color: var(--av-rouge-texte); }
+.nouveau-code { background: var(--av-encre); color: var(--av-papier); }
+.nouveau-code .surtitre { font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: #CFC6BB; }
+.code-grand { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: clamp(28px, 7vw, 40px); letter-spacing: .06em; margin: 8px 0 14px; overflow-wrap: anywhere; }
+@media (max-width: 560px) { .code-ligne { flex-wrap: wrap; } }

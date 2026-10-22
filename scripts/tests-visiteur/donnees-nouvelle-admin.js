@@ -102,6 +102,12 @@ function donnees(role) {
       d.tables.instagram_config = [{ id: 'principal', access_token: 'jeton-secret-essai', ig_user_id: '1784', token_expire_le: new Date(Date.now() + 5 * 864e5).toISOString() }];
       d.tables.instagram_posts_cache = [{ id: 'principal', posts: [{ id: 'g1', image: photo(9), lien: 'https://www.instagram.com/p/abc/', legende: 'Défilé' }], updated_at: '2026-10-20T10:00:00Z' }];
       d.tables.reglages_site = [{ cle: 'video_accueil', valeur: { type: 'video', chemin: 'site/video-accueil/essai.mp4', largeur: 640, hauteur: 360, taille: 99797, maj: '2026-10-10T10:00:00Z' } }];
+      d.tables.codes_inscription = [
+        { code: 'MA2M-LIBRE1', utilise: false, created_at: '2026-10-20T10:00:00Z', candidature: { full_name: 'YAO KOUASSI' } },
+        { code: 'MA2M-VIEUX1', utilise: false, created_at: '2026-09-01T10:00:00Z', candidature: null },
+        { code: 'MA2M-FAIT01', utilise: true, utilise_le: '2026-10-05T10:00:00Z', created_at: '2026-09-20T10:00:00Z', candidature: { full_name: 'AWA KONÉ' } }];
+      d.rpc.casting_direct_creer = () => ({ code: 'MA2M-DIRECT' });
+      d.rpc.nettoyer_photos_traitees_anciennes = 3;
       d.tables.evenement_photos = [{ id: 'ep1', evenement_id: 'e1', url: photo(6), chemin: 'site/evenements/e1/1.jpg' }];
       d.tables.inscriptions_mannequins = [{ id: 'i1', full_name: 'KADI SORO', genre: 'femme', date_naissance: '2001-02-02', statut: 'payée' }, { id: 'i2', full_name: 'PETIT ZIE', genre: 'homme', date_naissance: '2015-02-02', statut: 'payée' }];
       d.rpc.contacts_mannequins_admin = d.tables.model_profiles.filter((p) => /^m\d+$/.test(p.id)).map((p) => ({ model_id: p.id, phone: '0700000099' }));
@@ -109,7 +115,9 @@ function donnees(role) {
       d.rpc.definir_sourdine = (x) => { const m = d.tables.model_profiles.find((p) => p.id === x.p_model); if (m) { m.desactive = x.p_desactive; m.published = !x.p_desactive; } return null; };
       d.rpc.code_individuel_creer = (x) => { d.tables.codes_inscription.push({ code: 'MA2M-ESSAI1', utilise: false, candidature_id: x.p_candidature }); return { code: 'MA2M-ESSAI1' }; };
     },
-    api: { '/api/portail': () => ({ ok: true }), '/api/r2-site-images': (c) => (c.action ? { ok: true } : { uploadUrl: '/__stockage', publicUrl: 'https://photos.maitreakessemodelmanagement.com/' + c.chemin }), '/api/r2-presigner': (c) => ({ uploadUrl: '/__stockage', publicUrl: 'https://photos.maitreakessemodelmanagement.com/' + c.chemin }) }
+    api: { '/api/portail': () => ({ ok: true }), '/api/r2-site-images': (c) => (c.action === 'lire' ? { chemin: 'prive/note-integration/abc.pdf', date: '2026-10-14T10:00:00Z' } : c.action ? { ok: true } : { uploadUrl: '/__stockage', publicUrl: 'https://photos.maitreakessemodelmanagement.com/' + c.chemin }), '/api/connexion-admin': (c) => (c && c.action ? { ok: true } : { ipBloquees: [{ ip: '102.67.1.9', espace: 'mannequin', bloque_jusqua: new Date(Date.now() + 3600e3).toISOString() }],
+      comptesBloques: [{ identifiant: '0707070707', espace: 'inscription-code', bloque_jusqua: new Date(Date.now() + 1800e3).toISOString() }], listeBlanche: [{ ip: '41.66.2.3', note: 'Bureau', ajoute_le: '2026-10-01' }] }),
+    '/api/r2-presigner': (c) => ({ uploadUrl: '/__stockage', publicUrl: 'https://photos.maitreakessemodelmanagement.com/' + c.chemin }) }
   };
   d.preparer(d); delete d.preparer;
   return d;

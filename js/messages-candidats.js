@@ -289,3 +289,18 @@ function sansPhraseEmail(texte) {
 function messagePourEmail(texte) {
   return sansMarquesWhatsApp(sansPhraseEmail(texte));  // js/messages-convocations.js
 }
+
+// Code individuel d'inscription envoyé par WhatsApp (mineur : au parent, sur son numéro).
+// Partagé le 22/10/2026 (ancien tableau de bord, fiche et « Codes d'accès » de la nouvelle
+// Administration). Renvoie le lien wa.me prêt à ouvrir, ou null sans numéro utilisable.
+const LIEN_INSCRIPTION = 'https://www.maitreakessemodelmanagement.com/inscription-mannequin.html';
+function lienWhatsAppCode(d, code) {
+  const contacts = contactsEnvoi(d);
+  const numero = numeroWhatsApp(contacts.phone);
+  if (!numero) return null;
+  const fin = `\n\nIl ne sert qu'une seule fois. Inscription : ${LIEN_INSCRIPTION}`;
+  const texte = contacts.parent
+    ? messageParent(`Voici le code personnel de votre enfant {prénom} pour son inscription chez Maître Akesse Model Management : *${code}*` + fin)
+    : messageCandidat(`Voici votre code personnel pour vous inscrire chez Maître Akesse Model Management : *${code}*` + fin);
+  return 'https://wa.me/' + numero + '?text=' + encodeURIComponent(personnaliserMessage(texte, d, null, () => ''));
+}

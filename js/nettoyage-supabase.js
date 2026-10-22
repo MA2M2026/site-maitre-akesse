@@ -207,6 +207,8 @@
     const btn = document.getElementById('nettoyage-supabase-btn');
     if (btn && typeof sb !== 'undefined' && sb) btn.addEventListener('click', nettoyer);
   }
+  // nouvelle Administration : appelé à chaque affichage de « Nettoyage des photos »
+  window.demarrerNettoyageSupabase = brancher;
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', brancher);
   else brancher();
 })();
