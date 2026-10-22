@@ -6,7 +6,8 @@
 // toute seule dans la comptabilité. Seul l'administrateur principal marque payé (code récent).
 // Commission de l'agence (22/10/2026, choix de la propriétaire) : on saisit le montant TOTAL de la
 // prestation ; la base garde la commission (pourcentage unique de compta_reglages, 20 % par défaut,
-// réglé ici par l'administrateur principal) et calcule le montant à verser
+// réglé ici par l'administrateur principal) et calcule le montant à verser ; « Marquer payé » y
+// enregistre la recette de la prestation ET la dépense du cachet
 // (supabase-cachets-commission.sql). Tant que ce SQL n'est pas exécuté : saisie du montant versé.
 // Outils communs : P.compta (js/portail/espace-compta.js, à charger avant).
 (function () {
@@ -122,12 +123,15 @@
       '<p class="large recap-cachet"><b>' + P.fcfa(c.montant) + '</b> à <b>' + P.esc(c.beneficiaire) + '</b> (' + joli(c.telephone) + ')<br><span class="doux">' + P.esc(c.prestation) + '</span></p>' +
       '<label class="fl" for="cp-compte">Payé depuis<select id="cp-compte" name="compte" required>' + C.optionsComptes(comptes) + '</select></label>' +
       '<label class="fl" for="cp-ref">Référence de la transaction Wave (facultatif)<input id="cp-ref" name="reference" maxlength="80" autocomplete="off"></label>' +
-      '<p class="doux petit-texte large">Ne touchez « J’ai payé » qu’après l’envoi réussi dans Wave. La dépense entre dans la comptabilité.</p>' +
+      '<p class="doux petit-texte large">Ne touchez « J’ai payé » qu’après l’envoi réussi dans Wave. ' + (c.montant_prestation
+        ? 'Deux lignes entrent dans la comptabilité : la recette de la prestation (' + P.fcfa(c.montant_prestation) + ') et la dépense du cachet (' + P.fcfa(c.montant) + ') ; la différence est la commission de l’agence. Ne saisissez pas cette recette à la main.'
+        : 'La dépense entre dans la comptabilité.') + '</p>' +
       '<div class="ligne large"><button class="btn rouge" type="submit">J’ai payé</button><button class="btn" type="button" data-action="fermer-fenetre">Retour</button></div></form>');
   };
   P.formulaires['cachet-confirmer'] = async (f, form) => {
     await P.sensible(() => P.rpc('cachet_payer', { p_id: form.dataset.id, p_compte: t(f, 'compte'), p_reference: t(f, 'reference') }));
-    await C.actualiser('Paiement enregistré : la dépense est dans la comptabilité.');
+    const c = cachets.find((x) => x.id === form.dataset.id);
+    await C.actualiser(c && c.montant_prestation ? 'Paiement enregistré : la recette de la prestation et la dépense du cachet sont dans la comptabilité.' : 'Paiement enregistré : la dépense est dans la comptabilité.');
   };
   P.actions['cachet-annuler'] = (el) => {
     P.fenetre('<form class="f" data-form="cachet-annuler" data-id="' + el.dataset.id + '"><h2 class="large">Annuler ce cachet</h2>' +

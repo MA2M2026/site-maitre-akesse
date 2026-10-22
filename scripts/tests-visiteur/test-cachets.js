@@ -52,6 +52,7 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     // 3. Marquer payé : compte Wave proposé d'abord, la base enregistre la dépense
     await p.click('.cachet [data-action="cachet-payer"]'); await p.waitForSelector('#cp-compte');
     ok(await p.inputValue('#cp-compte') === 'k2' && /AYA KOUASSI|Koné Styliste/.test(await p.textContent('.recap-cachet')), n + 'confirmation : récapitulatif, compte Wave proposé');
+    ok(/Deux lignes entrent dans la comptabilité : la recette de la prestation/.test(await p.textContent('#fenetre')), n + 'confirmation : recette de la prestation et dépense du cachet annoncées (commission)');
     await capture(p, 'cachet-confirmer' + suffixe);
     await p.fill('#cp-ref', 'T_XY99'); await p.click('form[data-form="cachet-confirmer"] [type=submit]'); await p.waitForTimeout(1200);
     ok(journal.some((j) => j[0] === 'rpc' && j[1] === 'cachet_payer' && /"p_compte":"k2"/.test(j[2]) && /T_XY99/.test(j[2])), n + 'paiement enregistré (cachet_payer : dépense + cachet payé)');

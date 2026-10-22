@@ -2,6 +2,8 @@
 -- Espace 3 — « Payer les mannequins » : cachets après une prestation (22/10/2026, choix de la
 -- propriétaire : Wave d'abord). À exécuter UNE FOIS par la propriétaire, dans l'éditeur SQL de
 -- Supabase, APRÈS supabase-administration.sql. Rejouable sans danger (rien n'est supprimé).
+-- ⚠ Version à jour de cachet_payer et cachet_depense_annulee (commission, recette de la
+-- prestation) : supabase-cachets-commission.sql, à rejouer APRÈS celui-ci s'il est rejoué.
 -- ===================================================================================
 -- Un cachet à payer : une personne (mannequin du registre, ou personne extérieure : nom +
 -- numéro Wave), un montant, une prestation (projet de l'agenda ou texte libre).

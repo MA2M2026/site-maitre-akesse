@@ -185,7 +185,11 @@ d'idempotence = id du cachet) puis `cachet_payer(..., 'wave_api')`. Test : `test
 TOTAL de la prestation ; la base (`cachet_commission`, **`supabase-cachets-commission.sql`**, à
 exécuter une fois) garde la commission au pourcentage unique `compta_reglages.commission_taux`
 (20 % par défaut, réglé sur la page par l'administrateur principal) et calcule `montant` (à verser) ;
-le pourcentage est gardé sur le cachet. Tant que ce SQL n'est pas exécuté, la page reste en
+le pourcentage est gardé sur le cachet. « Marquer payé » enregistre alors DEUX écritures sur le
+même compte : la recette de la prestation (catégorie « prestation ») et la dépense du cachet ; la
+différence est la commission (accord de la propriétaire, 22/10/2026). Dépense du cachet annulée →
+recette annulée avec elle et cachet de nouveau « à payer » ; la recette seule ne s'annule pas
+(`cachet_depense_annulee`). Tant que ce SQL n'est pas exécuté, la page reste en
 « montant à verser » (pas de calcul). La page montre aussi la photo de la mannequin (registre).
 
 ## 🏛️ Nouvelle Administration (chantier du 22/10/2026 ; à l'adresse `/admin/` depuis le déménagement)
