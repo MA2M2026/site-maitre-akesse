@@ -69,6 +69,7 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
 
     // 4. Blocs 2 et 3 dans la nouvelle décoration
     await p.goto(URL_ADMIN + '#/paiements/registre'); await p.waitForTimeout(1500);
+    ok((await p.$$eval('.nom-visage .vis', (l) => l.filter((v) => v.querySelector('img')).length)) === 3 && (await p.$$('.nom-visage')).length === 6, n + 'registre : photos en médaillon pour les 3 inscrites, initiales pour les autres');
     ok(/paiements/i.test(await p.textContent('.haut .bloc-actuel')) && await p.isVisible('.contenu .tableau, .contenu .carte'), n + 'bloc 2 (paiements) affiché dans la nouvelle maison');
     await capture(p, 'paiements-' + (tel ? 'tel' : 'pc'));
     const palesP = await lirePageEntiere(p);

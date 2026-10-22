@@ -31,6 +31,12 @@
     return registre.map((m) => Object.assign({}, m, { inscription: parMannequin[m.id] || null }));
   }
 
+  // Nouvelle Administration : la photo du Book en médaillon devant le nom (initiales sinon)
+  // (P.photosCouverture et P.visage : js/admin/coque.js ; compte du site = id du profil).
+  // Ailleurs (ancienne Administration) : null, et le nom reste seul.
+  const photosDe = (liste) => (P.photosCouverture ? P.photosCouverture(liste.filter((m) => m.user_id).map((m) => m.user_id)).catch(() => ({})) : Promise.resolve(null));
+  const avecVisage = (photos, m, html) => (photos ? '<div class="nom-visage">' + P.visage(photos[m.user_id], m.full_name, 'rond-vis') + '<div>' + html + '</div></div>' : html);
+
   // ---------- Registre ----------
   const FILTRES = [['tous', 'Tous'], ['site', 'Inscrits sur le site'], ['main', 'Ajoutés à la main'], ['non_paye', 'Inscription à enregistrer'], ['sans_nom', 'Sans nom']];
   // compte créé sur le site sans nom rempli : le registre l'a repris sous « Sans nom »
@@ -43,6 +49,7 @@
       (!cherche || [m.full_name, m.telephone, m.email].join(' ').toLowerCase().includes(cherche));
     const liste = tous.filter(garde);
     const site = tous.filter((m) => m.user_id).length;
+    const photos = await photosDe(liste);
     return P.entete('Registre des mannequins', '<a class="btn rouge" href="#/paiements/ajouter">＋ Ajouter un mannequin</a>') +
       '<p class="doux petit-texte">Ici : tous les mannequins en formation à l’agence, pour les inscriptions et les mensualités, qu’ils soient publiés dans The Book du site ou non.</p>' +
       '<div class="grille chiffres">' + P.chiffre('Mannequins de l’agence', tous.length) + P.chiffre('Inscrits sur le site', site) +
@@ -54,8 +61,8 @@
       '<div class="segments">' + FILTRES.map((f) => '<button class="btn petit' + (f[0] === filtre ? ' actif' : '') + '" type="button" data-action="registre-filtre" data-filtre="' + f[0] + '">' + P.esc(f[1]) + '</button>').join('') + '</div>' +
       P.tableau(['Mannequin', 'Téléphone', 'Inscription', '#Mensualité', 'Statut', ''], liste.map((m) => {
         const e = etatInscription(m, m.inscription);
-        return '<tr><td><b>' + P.esc(m.full_name) + '</b>' + (P.age(m.date_naissance) !== null && P.age(m.date_naissance) < 18 ? ' ' + P.pastille('Mineur', 'info') : '') +
-          '<div class="petit-texte doux">' + (m.user_id ? 'Compte sur le site' : 'Ajouté à la main') + '</div></td>' +
+        return '<tr><td>' + avecVisage(photos, m, '<b>' + P.esc(m.full_name) + '</b>' + (P.age(m.date_naissance) !== null && P.age(m.date_naissance) < 18 ? ' ' + P.pastille('Mineur', 'info') : '') +
+          '<div class="petit-texte doux">' + (m.user_id ? 'Compte sur le site' : 'Ajouté à la main') + '</div>') + '</td>' +
           '<td>' + P.esc(m.telephone || '—') + (sansNom(m) && m.email ? '<div class="petit-texte doux">' + P.esc(m.email) + '</div>' : '') + '</td><td>' + P.pastille(e[0], e[1]) + '</td><td class="nombre">' + P.fcfa(m.mensualite) + '</td>' +
           '<td>' + P.pastille(STATUTS[m.statut], m.statut === 'actif' ? 'neutre' : 'alerte') + '</td>' +
           '<td><div class="ligne"><a class="btn petit" href="#/paiements/fiche/' + m.id + '">Ouvrir</a>' +
@@ -510,9 +517,7 @@
     const actifs = suiviPret ? tousActifs.filter((m) => m.suivi) : tousActifs;
     const suivis = actifs.map((m) => m.id);
     const proposes = suiviPret ? tousActifs.filter((m) => !m.suivi) : [];
-    // Nouvelle Administration : la photo du Book en médaillon devant le nom (initiales sinon)
-    // (P.photosCouverture et P.visage : js/admin/coque.js ; compte du site = id du profil)
-    const photos = P.photosCouverture ? await P.photosCouverture(actifs.filter((m) => m.user_id).map((m) => m.user_id)).catch(() => ({})) : null;
+    const photos = await photosDe(actifs);
     const jour = new Date().getDate();
     const filtre = P.etat.filtreTableau || 'tous';
     const lignes = actifs.map((m) => {
@@ -544,9 +549,8 @@
       '<div class="segments" role="group" aria-label="Groupe">' + FILTRES_GROUPE.map((f) => '<button class="btn petit' + (f[0] === filtre ? ' actif' : '') + '" type="button" data-action="tableau-filtre" data-filtre="' + f[0] + '">' + P.esc(f[1]) + '</button>').join('') + '</div>' +
       '<div class="carte">' + (montrees.length ? P.tableau(['Mannequin', 'Groupe', '#Montant', 'Statut', 'Action'], montrees.map((x) =>
         // (le destinataire n'est montré que s'il diffère : le parent d'une mineure)
-        '<tr' + (x.e === 'non_paye' ? ' class="ligne-retard"' : '') + '><td>' + (photos ? '<div class="nom-visage">' + P.visage(photos[x.m.user_id], x.m.full_name, 'rond-vis') + '<div>' : '') +
-        '<a href="#/paiements/fiche/' + x.m.id + '"><b>' + P.esc(x.m.full_name) + '</b></a>' +
-        (x.destinataire && x.destinataire !== x.m.full_name ? '<div class="petit-texte doux">Message à : ' + P.esc(x.destinataire) + '</div>' : '') + (photos ? '</div></div>' : '') + '</td>' +
+        '<tr' + (x.e === 'non_paye' ? ' class="ligne-retard"' : '') + '><td>' + avecVisage(photos, x.m, '<a href="#/paiements/fiche/' + x.m.id + '"><b>' + P.esc(x.m.full_name) + '</b></a>' +
+        (x.destinataire && x.destinataire !== x.m.full_name ? '<div class="petit-texte doux">Message à : ' + P.esc(x.destinataire) + '</div>' : '')) + '</td>' +
         '<td>' + (x.inscrit ? 'Inscrit sur le site' : 'Non inscrit') + '</td><td class="nombre">' + P.fcfa(x.montant) + '</td>' +
         '<td>' + P.pastille(ETATS[x.e][0], ETATS[x.e][1]) + '</td>' +
         '<td>' + (x.e === 'attente' ? '<a class="btn petit" href="#/paiements/a-valider">Valider</a>' : x.e === 'paye' ? '<span class="doux">Reçu émis</span>' : '<a class="btn petit" href="#/paiements/mensualites">Relancer</a>') +
