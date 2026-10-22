@@ -44,7 +44,9 @@ self.addEventListener('notificationclick', (event) => {
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((listeClients) => {
       for (const client of listeClients) {
         if (client.url.includes('/admin/') && 'focus' in client) {
-          client.navigate(url);
+          // (l'onglet de l'Administration dépend de son propre service de fond, /admin/sw.js : il ne
+          // peut pas être conduit d'ici ; on lui demande d'ouvrir la fiche — js/admin/notifications.js)
+          client.postMessage({ ma2mOuvrir: url });
           return client.focus();
         }
       }

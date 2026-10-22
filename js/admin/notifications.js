@@ -57,12 +57,22 @@
     try { sessionStorage.setItem(CLE_VUE, '1'); } catch (e) { /* stockage bloqué */ }
   };
 
-  // après l'affichage de l'accueil (P.apresPortail, js/admin/coque.js)
+  // après l'affichage de l'accueil (P.apresPortail, js/admin/coque.js) ; réinscription une seule
+  // fois par ouverture de l'Administration, pas à chaque retour sur l'accueil
   const avant = P.apresPortail;
+  let inscrit = false;
   P.apresPortail = () => {
     if (avant) avant();
     if (!possible() || !concerne()) return;
-    if (Notification.permission === 'granted') inscrireCetAppareil().catch(() => { /* réessayé à la prochaine ouverture */ });
+    if (Notification.permission === 'granted' && !inscrit) { inscrit = true; inscrireCetAppareil().catch(() => { inscrit = false; }); }
     else if (Notification.permission === 'default') proposer();
   };
+  // toucher une notification alors que l'Administration est déjà ouverte : le service de fond du
+  // site (/service-worker.js) demande d'ouvrir la fiche concernée
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', (e) => {
+      const url = e.data && e.data.ma2mOuvrir;
+      if (typeof url === 'string' && /^\/admin\/#\/[\w/-]+$/.test(url)) location.href = url;
+    });
+  }
 })();

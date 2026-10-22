@@ -48,6 +48,11 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     const abo = journal.filter((j) => j[0] === 'POST' && j[1] === 'push_abonnements').map((j) => JSON.parse(j[3]))[0] || {};
     ok(!(await p.$('#notif-invitation')) && (await p.evaluate(() => window.__sw)).includes('/service-worker.js') && abo.endpoint === 'https://push.essai/appareil-1' && abo.actif === true,
       n + 'notifications activées : appareil inscrit (' + JSON.stringify(abo).slice(0, 90) + ')');
+    // toucher une notification, Administration déjà ouverte : le service de fond demande d'ouvrir la fiche
+    await p.evaluate(() => navigator.serviceWorker.dispatchEvent(new MessageEvent('message', { data: { ma2mOuvrir: '/admin/#/site/b2-contacts' } })));
+    await p.waitForTimeout(800);
+    ok(/#\/site\/b2-contacts$/.test(await p.evaluate(() => location.hash)), n + 'notification touchée : la rubrique concernée s’ouvre dans l’Administration déjà ouverte');
+    await p.goto(URL_ADMIN); await p.waitForSelector('.accueil-tete', { timeout: 10000 }); await p.waitForTimeout(1500);
 
     // 2. Accueil vivant
     const acc = await p.evaluate(() => ({

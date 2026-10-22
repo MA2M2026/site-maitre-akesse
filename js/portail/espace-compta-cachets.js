@@ -30,13 +30,21 @@
   // nom : lien vers la fiche (et sa photo en médaillon, js/admin/coque.js) pour qui voit les Paiements
   const nom = (c) => (c.agence_mannequin_id && P.lienFiche && P.moi.espaces.paiements ? P.lienFiche(c.agence_mannequin_id, c.beneficiaire) : '<b>' + P.esc(c.beneficiaire) + '</b>');
 
+  // Reçu sur WhatsApp : à la mannequin, ou à son parent si elle est mineure (règle de toute
+  // l'Administration : les messages d'un mineur vont au parent)
+  function lienRecuWhatsApp(c, registre) {
+    const m = registre.find((x) => x.id === c.agence_mannequin_id);
+    const parent = m && m.parent_telephone && P.age(m.date_naissance) !== null && P.age(m.date_naissance) < 18 ? m : null;
+    const n = parent ? numero(parent.parent_telephone) : c.telephone;
+    return 'https://wa.me/' + n + '?text=' + encodeURIComponent(K.texteRecu(c, parent ? parent.parent_nom || 'Madame, Monsieur' : ''));
+  }
   async function page() {
     let liste;
     try { liste = await P.bd(sb.from('cachets_mannequins').select('*').order('cree_le', { ascending: false }).limit(300)); }
     catch (e) { if (tableAbsente(e)) return P.entete('Payer les mannequins') + ABSENTE; throw e; }
     cachets = liste;
     const [registre, projets, reglage, colonneMotif] = await Promise.all([
-      P.bd(sb.from('agence_mannequins').select('id, full_name, telephone, statut').eq('statut', 'actif').order('full_name')).catch(() => []),
+      P.bd(sb.from('agence_mannequins').select('id, full_name, telephone, statut, user_id, date_naissance, parent_nom, parent_telephone').eq('statut', 'actif').order('full_name')).catch(() => []),
       P.bd(sb.from('agenda_projets').select('id, titre, date_debut').eq('annule', false).gte('date_debut', new Date(Date.now() - 120 * 864e5).toISOString().slice(0, 10)).order('date_debut', { ascending: false }).limit(40)).catch(() => []),
       P.bd(sb.from('compta_reglages').select('*').eq('id', 1).maybeSingle()).catch(() => null),
       sb.from('cachets_mannequins').select('motif, numero_recu, jeton').limit(1)
@@ -54,7 +62,7 @@
         (principal() ? '<button class="btn petit rouge" type="button" data-action="cachet-payer" data-id="' + c.id + '">Marquer payé</button>' +
           '<button class="btn petit" type="button" data-action="cachet-annuler" data-id="' + c.id + '">Annuler</button>' : '') + '</div>'
         : '<small class="doux">Payé le ' + P.date(c.paye_le) + (c.reference_wave ? ' · réf. ' + P.esc(c.reference_wave) : '') + (c.numero_recu ? ' · reçu ' + P.esc(c.numero_recu) : '') + '</small>' +
-          (recus && c.numero_recu ? '<div class="ligne"><a class="btn petit rouge" target="_blank" rel="noopener" href="https://wa.me/' + P.esc(c.telephone) + '?text=' + encodeURIComponent(K.texteRecu(c)) + '">Envoyer le reçu sur WhatsApp</a>' +
+          (recus && c.numero_recu ? '<div class="ligne"><a class="btn petit rouge" target="_blank" rel="noopener" href="' + P.esc(lienRecuWhatsApp(c, registre)) + '">Envoyer le reçu sur WhatsApp</a>' +
             '<a class="btn petit" target="_blank" rel="noopener" href="' + P.esc(K.lienRecu(c.jeton)) + '">Voir le reçu</a></div>' : '')) + '</div>';
     return P.entete('Payer les mannequins', '<button class="btn rouge" type="button" data-action="cachet-nouveau">＋ Nouveau cachet</button>') +
       '<div class="note info">Envoi direct par Wave : disponible quand l’agence aura sa clé Wave Business. En attendant, payez depuis votre téléphone Wave, puis touchez « Marquer payé » : la dépense entre toute seule dans la comptabilité.</div>' +
@@ -101,7 +109,8 @@
     const titreProjet = projet && sel ? sel.selectedOptions[0].textContent : '', motif = recus ? t(f, 'motif') : '';
     if (recus && !motif) { P.message('Choisissez le motif du cachet.'); return; }
     // texte de la prestation : motif · projet · précision (sans motif : précision, sinon le projet)
-    const prestation = recus ? [K.libelle(motif), titreProjet, t(f, 'prestation')].filter(Boolean).join(' · ') : (t(f, 'prestation') || titreProjet);
+    // (200 caractères au plus, comme le veut la base)
+    const prestation = (recus ? [K.libelle(motif), titreProjet, t(f, 'prestation')].filter(Boolean).join(' · ') : (t(f, 'prestation') || titreProjet)).slice(0, 200);
     if (!prestation) { P.message('Indiquez la prestation, ou choisissez le projet de l’agenda.'); return; }
     // avec la commission : la base recalcule la commission et le montant à verser (montant ci-dessous provisoire)
     const ligne = { beneficiaire: t(f, 'nom'), telephone: tel, montant, prestation, projet_id: projet, agence_mannequin_id: t(f, 'qui'), statut: 'a_payer', cree_le: new Date().toISOString() };

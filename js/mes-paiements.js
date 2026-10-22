@@ -11,7 +11,7 @@
   const LIEN_WAVE = 'https://pay.wave.com/m/M_ci_5eXs19LXWW_D/c/ci/?amount=';
   const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const fcfa = (n) => String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' FCFA';
+  const fcfa = window.CachetsMa2m.fcfa;  // (js/cachets-communs.js, chargé avant)
   const nomMois = (d) => MOIS[Number(String(d).slice(5, 7)) - 1] + ' ' + String(d).slice(0, 4);
   const ETATS = { paye: ['Payé', 'ok'], attente: ['En attente de validation', 'alerte'], non_paye: ['Non payé', 'erreur'], a_payer: ['À payer avant le 5', 'info'], a_venir: ['À venir', 'neutre'] };
   let donnees = null, waveOuvert = {}, lienWave = null, recus = [], numeros = {}, cachets = [];
@@ -28,18 +28,12 @@
   // Lien Wave géré dans les Paramètres de l'agence et historique des reçus : si la base ne les
   // fournit pas encore, la page garde le lien de secours et simplement n'affiche pas les reçus.
   async function complements(d) {
-    try {
-      const r = await sb.rpc('lien_paiement', { p_type: 'mensualite', p_montant: Number(d.mensualite) });
-      lienWave = !r.error && typeof r.data === 'string' && /^https:\/\//.test(r.data) ? r.data : null;
-    } catch (e) { lienWave = null; }
-    try {
-      const r = await sb.rpc('mes_recus');
-      recus = r.error || !Array.isArray(r.data) ? [] : r.data;
-    } catch (e) { recus = []; }
-    try {
-      const r = await sb.rpc('mes_cachets');
-      cachets = r.error || !Array.isArray(r.data) ? [] : r.data;
-    } catch (e) { cachets = []; }
+    // (les trois en même temps : une connexion lente n'attend qu'une fois)
+    const [lien, mesRecus, mesCachets] = await Promise.allSettled([sb.rpc('lien_paiement', { p_type: 'mensualite', p_montant: Number(d.mensualite) }), sb.rpc('mes_recus'), sb.rpc('mes_cachets')]);
+    const donneesDe = (x) => (x.status === 'fulfilled' && !x.value.error ? x.value.data : null);
+    lienWave = typeof donneesDe(lien) === 'string' && /^https:\/\//.test(donneesDe(lien)) ? donneesDe(lien) : null;
+    recus = Array.isArray(donneesDe(mesRecus)) ? donneesDe(mesRecus) : [];
+    cachets = Array.isArray(donneesDe(mesCachets)) ? donneesDe(mesCachets) : [];
   }
   const adresseWave = (montant) => lienWave || (LIEN_WAVE + Number(montant));
   function carteAPayer(m) {

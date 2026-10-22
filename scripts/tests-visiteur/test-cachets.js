@@ -22,17 +22,24 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     p.on('pageerror', (e) => errs.push(e.message));
     p.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errs.push('console : ' + m.text().slice(0, 140)); });
     const d = donnees('principal');
+    // une mannequin mineure (avec son parent) déjà payée : son reçu doit partir au parent
+    Object.assign(d.tables.agence_mannequins[5], { date_naissance: '2012-03-03', parent_nom: 'Madame Diallo Mère', parent_telephone: '0707000005' });
+    d.tables.cachets_mannequins.push({ id: 'cc9', beneficiaire: d.tables.agence_mannequins[5].full_name, telephone: '2250700000015', montant: 8000, prestation: 'Shooting photo · essai', motif: 'shooting',
+      numero_recu: 'MA2M-CA-2026-0002', jeton: '99999999-2222-3333-4444-555555555555', statut: 'paye', mode: 'wave_manuel', compte_id: 'k2', agence_mannequin_id: 'r5', paye_le: '2026-10-16T10:00:00Z', cree_le: '2026-10-16T09:00:00Z' });
     await brancher(p, d, journal);
     await seConnecter(p, URL_ADMIN); await p.waitForSelector('.accueil-tete');
 
     await p.goto(URL_ADMIN + '#/compta/cachets'); await p.waitForSelector('[data-action="cachet-nouveau"]', { timeout: 10000 }); await p.waitForTimeout(800);
     ok(/Rien à payer/.test(await p.textContent('#contenu')) && /GRÂCE YAO/.test(await p.textContent('#contenu')) && /réf\. T_AB12/.test(await p.textContent('#contenu')), n + 'rien à payer ; l’historique montre le cachet déjà payé et sa référence');
     // reçu du cachet payé : WhatsApp avec le reçu, et sa page
-    const waRecu = await p.getAttribute('.cachet.fait a[href^="https://wa.me/"]', 'href');
+    const waRecu = await p.$$eval('.cachet.fait a[href^="https://wa.me/"]', (l) => l.map((a) => a.href).find((h) => /0001/.test(decodeURIComponent(h))) || '');
     const texteRecu = decodeURIComponent((waRecu || '').split('?text=')[1] || '');
     ok(/^https:\/\/wa\.me\/2250700000012\?text=/.test(waRecu || '') && /Reçu n° MA2M-CA-2026-0001/.test(texteRecu) && /Montant reçu : 15 000 FCFA/.test(texteRecu) && /\/recu\?r=11111111-2222-3333-4444-555555555555/.test(texteRecu),
       n + 'cachet payé : « Envoyer le reçu sur WhatsApp » avec le numéro, le montant et le lien du reçu');
-    ok(/\/recu\?r=11111111/.test(await p.getAttribute('.cachet.fait a[href*="/recu?r="]', 'href') || ''), n + 'cachet payé : « Voir le reçu »');
+    ok(!!(await p.$('.cachet.fait a[href$="/recu?r=11111111-2222-3333-4444-555555555555"]')), n + 'cachet payé : « Voir le reçu »');
+    const waMineure = await p.$$eval('.cachet.fait a[href^="https://wa.me/"]', (l) => l.map((a) => a.href).find((h) => /0002/.test(decodeURIComponent(h))) || '');
+    ok(/^https:\/\/wa\.me\/2250707000005\?/.test(waMineure) && /Bonjour Madame Diallo Mère/.test(decodeURIComponent(waMineure)) && /paiement du cachet de /.test(decodeURIComponent(waMineure)),
+      n + 'mannequin mineure : le reçu part à son parent, qui est salué');
     ok(await p.$('#menu-lateral a.nav[href="#/compta/cachets"]') !== null, n + '« Payer les mannequins » dans le menu de la Comptabilité');
     // 1. mannequin du registre : nom et numéro remplis d'office
     await p.click('[data-action="cachet-nouveau"]'); await p.waitForSelector('#ca-qui');

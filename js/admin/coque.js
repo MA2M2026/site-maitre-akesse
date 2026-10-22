@@ -119,11 +119,20 @@
   // Paiements (#/paiements/fiche/<id du registre>), sa photo du Book en médaillon, qui ouvre la même
   // fiche ; initiales tant que la photo arrive, ou si elle n'est pas inscrite sur le site.
   const photoDuRegistre = {};  // id du registre → adresse de la photo ('' : pas de photo)
-  async function chercherPhotos(ids) {
-    const lignes = await P.bd(sb.from('agence_mannequins').select('id, user_id').in('id', ids));
-    const parCompte = await P.photosCouverture(lignes.map((l) => l.user_id).filter(Boolean));
-    ids.forEach((id) => { photoDuRegistre[id] = ''; });
-    lignes.forEach((l) => { photoDuRegistre[l.id] = (l.user_id && parCompte[l.user_id]) || ''; });
+  const paquets = (l, n) => Array.from({ length: Math.ceil(l.length / n) }, (_, i) => l.slice(i * n, i * n + n));
+  // compte du site : donné par la page (data-compte) ; sinon cherché dans le registre (par paquets
+  // de 100, pour des adresses courtes) ; puis les photos de tous ces comptes
+  async function chercherPhotos(ids, compteDe) {
+    ids.forEach((id) => { photoDuRegistre[id] = ''; });  // (une seule recherche par mannequin)
+    const inconnus = ids.filter((id) => !compteDe[id]);
+    for (const p of paquets(inconnus, 100)) {
+      (await P.bd(sb.from('agence_mannequins').select('id, user_id').in('id', p))).forEach((l) => { if (l.user_id) compteDe[l.id] = l.user_id; });
+    }
+    const comptes = [...new Set(ids.map((id) => compteDe[id]).filter(Boolean))];
+    for (const p of paquets(comptes, 100)) {
+      const parCompte = await P.photosCouverture(p);
+      ids.forEach((id) => { if (parCompte[compteDe[id]]) photoDuRegistre[id] = parCompte[compteDe[id]]; });
+    }
   }
   function visagesDesFiches() {
     const liens = [...document.querySelectorAll('#contenu a[href^="#/paiements/fiche/"]:not(.btn):not(.visage-lien):not([data-visage])')];
@@ -135,8 +144,10 @@
       if (v) v.outerHTML = html; else a.insertAdjacentHTML('beforebegin', html);
     };
     liens.forEach((a) => { a.setAttribute('data-visage', ''); poser(a); });
+    const compteDe = {};
+    liens.forEach((a) => { if (a.dataset.compte) compteDe[a.getAttribute('href').split('/').pop()] = a.dataset.compte; });
     const manquants = [...new Set(liens.map((a) => a.getAttribute('href').split('/').pop()))].filter((id) => !(id in photoDuRegistre));
-    if (manquants.length) chercherPhotos(manquants).then(() => liens.forEach((a) => { if (a.isConnected) poser(a); }), () => { /* initiales gardées */ });
+    if (manquants.length) chercherPhotos(manquants, compteDe).then(() => liens.forEach((a) => { if (a.isConnected) poser(a); }), () => { /* initiales gardées */ });
   }
   // (regroupé : une seule passe après une rafale de changements, pas une par image des chiffres animés)
   let retouche = 0;

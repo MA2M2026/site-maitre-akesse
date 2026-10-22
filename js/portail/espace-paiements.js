@@ -33,7 +33,8 @@
 
   // Nom d'une mannequin = lien vers sa fiche ; l'Administration y ajoute sa photo en médaillon,
   // cliquable elle aussi (visagesDesFiches, js/admin/coque.js ; demande de la propriétaire, 22/10/2026)
-  P.lienFiche = (id, nom) => (id ? '<a href="#/paiements/fiche/' + P.esc(id) + '"><b>' + P.esc(nom || '—') + '</b></a>' : '<b>' + P.esc(nom || '—') + '</b>');
+  // (compte : son compte du site s'il est connu — la photo se trouve alors sans recherche de plus)
+  P.lienFiche = (id, nom, compte) => (id ? '<a href="#/paiements/fiche/' + P.esc(id) + '"' + (compte ? ' data-compte="' + P.esc(compte) + '"' : '') + '><b>' + P.esc(nom || '—') + '</b></a>' : '<b>' + P.esc(nom || '—') + '</b>');
 
   // ---------- Registre ----------
   const FILTRES = [['tous', 'Tous'], ['site', 'Inscrits sur le site'], ['main', 'Ajoutés à la main'], ['non_paye', 'Inscription à enregistrer'], ['sans_nom', 'Sans nom']];
@@ -58,7 +59,7 @@
       '<div class="segments">' + FILTRES.map((f) => '<button class="btn petit' + (f[0] === filtre ? ' actif' : '') + '" type="button" data-action="registre-filtre" data-filtre="' + f[0] + '">' + P.esc(f[1]) + '</button>').join('') + '</div>' +
       P.tableau(['Mannequin', 'Téléphone', 'Inscription', '#Mensualité', 'Statut', ''], liste.map((m) => {
         const e = etatInscription(m, m.inscription);
-        return '<tr><td>' + P.lienFiche(m.id, m.full_name) + (P.age(m.date_naissance) !== null && P.age(m.date_naissance) < 18 ? ' ' + P.pastille('Mineur', 'info') : '') +
+        return '<tr><td>' + P.lienFiche(m.id, m.full_name, m.user_id) + (P.age(m.date_naissance) !== null && P.age(m.date_naissance) < 18 ? ' ' + P.pastille('Mineur', 'info') : '') +
           '<div class="petit-texte doux">' + (m.user_id ? 'Compte sur le site' : 'Ajouté à la main') + '</div></td>' +
           '<td>' + P.esc(m.telephone || '—') + (sansNom(m) && m.email ? '<div class="petit-texte doux">' + P.esc(m.email) + '</div>' : '') + '</td><td>' + P.pastille(e[0], e[1]) + '</td><td class="nombre">' + P.fcfa(m.mensualite) + '</td>' +
           '<td>' + P.pastille(STATUTS[m.statut], m.statut === 'actif' ? 'neutre' : 'alerte') + '</td>' +
@@ -398,7 +399,7 @@
       P.tableau(['', 'Mannequin', '#Mensualité', 'Ce mois', 'Appel'], actifs.map((m) => {
         const e = etat(m), a = appele(m), coche = !a && (e === 'a_payer' || e === 'non_paye');
         return '<tr><td><input type="checkbox" name="ids" value="' + m.id + '" aria-label="Appeler ' + P.esc(m.full_name) + '"' + (coche ? ' checked' : '') + (a || e === 'paye' || e === 'attente' ? ' disabled' : '') + '></td>' +
-          '<td><a href="#/paiements/fiche/' + m.id + '"><b>' + P.esc(m.full_name) + '</b></a></td><td class="nombre">' + P.fcfa(m.mensualite) + '</td>' +
+          '<td>' + P.lienFiche(m.id, m.full_name, m.user_id) + '</td><td class="nombre">' + P.fcfa(m.mensualite) + '</td>' +
           '<td>' + P.pastille(ETATS[e][0], ETATS[e][1]) + '</td><td class="petit-texte">' + (a ? 'envoyé le ' + P.dateHeure(a.appel_le) + (a.relance3_le ? ' · relancé le 3' : '') + (a.relance5_le ? ' · relancé le 5' : '') : '—') + '</td></tr>';
       })) + '<div class="ligne" style="margin-top:12px"><button class="btn rouge" type="submit">Envoyer l’appel aux personnes cochées</button>' +
       (relance ? '<button class="btn" type="button" data-action="mensualites-whatsapp" data-type="' + relance + '">Relances WhatsApp (' + (relance === 'relance5' ? 'dernière relance' : 'relance du 3') + ')</button>' : '') + '</div></form>';
@@ -464,7 +465,7 @@
       P.chiffre('Expirés', lignes.filter((x) => x.etat === 'expire').length, 'rouge') + '</div>' +
       '<div class="carte">' + (lignes.length ? P.tableau(['Mannequin', 'Origine', 'Destinataire', 'État', 'Code', ''], lignes.map((x) => {
         const d = destinataire(x.m), actif = x.etat === 'actif', wa = actif ? messageCodeEspace(x.m, x.code).wa : null;
-        return '<tr><td><a href="#/paiements/fiche/' + x.m.id + '"><b>' + P.esc(x.m.full_name) + '</b></a></td><td>' + P.esc(x.origine) + '</td><td>' + P.esc(d.mineur ? d.nom + ' (parent)' : d.nom) + '</td>' +
+        return '<tr><td>' + P.lienFiche(x.m.id, x.m.full_name, x.m.user_id) + '</td><td>' + P.esc(x.origine) + '</td><td>' + P.esc(d.mineur ? d.nom + ' (parent)' : d.nom) + '</td>' +
           '<td>' + P.pastille(ETAT[x.etat][0], ETAT[x.etat][1]) + (actif ? '<div class="petit-texte doux">jusqu’au ' + P.esc(P.dateHeure(x.code.expire_le)) + '</div>' : '') + '</td>' +
           '<td>' + (actif ? '<b style="letter-spacing:1px">' + P.esc(x.code.code) + '</b>' : '—') + '</td>' +
           '<td><div class="ligne">' + (x.etat === 'non_paye' ? '<a class="btn petit" href="#/paiements/fiche/' + x.m.id + '">Enregistrer son paiement</a>'
@@ -545,7 +546,7 @@
       '<div class="segments" role="group" aria-label="Groupe">' + FILTRES_GROUPE.map((f) => '<button class="btn petit' + (f[0] === filtre ? ' actif' : '') + '" type="button" data-action="tableau-filtre" data-filtre="' + f[0] + '">' + P.esc(f[1]) + '</button>').join('') + '</div>' +
       '<div class="carte">' + (montrees.length ? P.tableau(['Mannequin', 'Groupe', '#Montant', 'Statut', 'Action'], montrees.map((x) =>
         // (le destinataire n'est montré que s'il diffère : le parent d'une mineure)
-        '<tr' + (x.e === 'non_paye' ? ' class="ligne-retard"' : '') + '><td>' + P.lienFiche(x.m.id, x.m.full_name) +
+        '<tr' + (x.e === 'non_paye' ? ' class="ligne-retard"' : '') + '><td>' + P.lienFiche(x.m.id, x.m.full_name, x.m.user_id) +
         (x.destinataire && x.destinataire !== x.m.full_name ? '<div class="petit-texte doux">Message à : ' + P.esc(x.destinataire) + '</div>' : '') + '</td>' +
         '<td>' + (x.inscrit ? 'Inscrit sur le site' : 'Non inscrit') + '</td><td class="nombre">' + P.fcfa(x.montant) + '</td>' +
         '<td>' + P.pastille(ETATS[x.e][0], ETATS[x.e][1]) + '</td>' +
@@ -606,7 +607,7 @@
     return P.entete('Paiements mois par mois · ' + annee, '<button class="btn petit" type="button" data-action="matrice-annee" data-sens="-1">‹ ' + (annee - 1) + '</button><button class="btn petit" type="button" data-action="matrice-annee" data-sens="1">' + (annee + 1) + ' ›</button>') +
       '<div class="ligne">' + P.pastille('✓ payé', 'ok') + P.pastille('… en attente', 'alerte') + P.pastille('✕ non payé', 'erreur') + P.pastille('· à venir', 'neutre') + P.pastille('— avant l’entrée', 'neutre') + '</div>' +
       '<div class="carte">' + (mannequins.length ? P.tableau(['Mannequin'].concat(colonnes), mannequins.map((m) =>
-        '<tr><td><a href="#/paiements/fiche/' + m.id + '"><b>' + P.esc(m.full_name) + '</b></a></td>' + colonnes.map((c, i) => case_(m, i + 1)).join('') + '</tr>'), 'matrice')
+        '<tr><td>' + P.lienFiche(m.id, m.full_name, m.user_id) + '</td>' + colonnes.map((c, i) => case_(m, i + 1)).join('') + '</tr>'), 'matrice')
         : '<p class="doux">Aucun mannequin dans le registre.</p>') + '</div>';
   }
   // téléphone : la matrice s'ouvre sur le mois en cours (visite du 22/10/2026)
@@ -664,15 +665,15 @@
       (total ? '<p class="doux">dont ' + libelleMois(d.cible) + ' : <b>' + P.fcfa(duMois) + '</b> · dont mois précédents : <b>' + P.fcfa(total - duMois) + '</b></p>' : '') +
       '<div class="ligne"><button class="btn rouge" type="button" data-action="recap-export" data-format="pdf">Télécharger en PDF</button><button class="btn" type="button" data-action="recap-export" data-format="xlsx">Télécharger en Excel</button></div>' +
       (d.attente.length ? '<div class="carte"><h2>Preuve reçue, à valider</h2>' + P.tableau(['Mannequin', 'Destinataire', '#Montant', 'Action'], d.attente.map((x) =>
-        '<tr><td><a href="#/paiements/fiche/' + x.m.id + '"><b>' + P.esc(x.m.full_name) + '</b></a></td><td>' + P.esc(x.destinataire) + '</td><td class="nombre">' + P.fcfa(x.m.mensualite || 0) + '</td>' +
+        '<tr><td>' + P.lienFiche(x.m.id, x.m.full_name, x.m.user_id) + '</td><td>' + P.esc(x.destinataire) + '</td><td class="nombre">' + P.fcfa(x.m.mensualite || 0) + '</td>' +
         '<td><a class="btn petit" href="#/paiements/a-valider">Valider</a></td></tr>')) + '</div>' : '') +
       '<div class="carte"><h2>Non payé</h2>' + (d.pas.length ? P.tableau(['Mannequin', 'Destinataire', '#Retard (j)', '#Mois d’affilée', '#Montant dû', 'Statut', 'Action'], d.pas.map((x) =>
-        '<tr' + (x.affilee ? ' class="ligne-retard"' : '') + '><td><a href="#/paiements/fiche/' + x.m.id + '"><b>' + P.esc(x.m.full_name) + '</b></a></td><td>' + P.esc(x.destinataire) + '</td>' +
+        '<tr' + (x.affilee ? ' class="ligne-retard"' : '') + '><td>' + P.lienFiche(x.m.id, x.m.full_name, x.m.user_id) + '</td><td>' + P.esc(x.destinataire) + '</td>' +
         '<td class="nombre">' + x.retard + '</td><td class="nombre">' + x.affilee + '</td><td class="nombre">' + P.fcfa(x.du) + '</td>' +
         '<td>' + (x.affilee ? P.pastille('Non payé', 'erreur') : P.pastille('À payer avant le 5', 'info')) + '</td><td>' + wa(x) + '</td></tr>'))
         : '<p class="doux">Personne n’est en retard.</p>') + '</div>' +
       '<div class="carte"><h2>Payé</h2>' + (d.ont.length ? P.tableau(['Mannequin', 'Destinataire', '#Montant'], d.ont.map((x) =>
-        '<tr><td><a href="#/paiements/fiche/' + x.m.id + '"><b>' + P.esc(x.m.full_name) + '</b></a></td><td>' + P.esc(x.destinataire) + '</td><td class="nombre">' + P.fcfa(x.m.mensualite || 0) + '</td></tr>'))
+        '<tr><td>' + P.lienFiche(x.m.id, x.m.full_name, x.m.user_id) + '</td><td>' + P.esc(x.destinataire) + '</td><td class="nombre">' + P.fcfa(x.m.mensualite || 0) + '</td></tr>'))
         : '<p class="doux">Personne n’a encore payé ce mois-ci.</p>') + '</div>' +
       '<div class="note info">Ce récapitulatif est calculé en direct. Une fois le mois terminé, figez-le dans « Mois figés » pour le garder tel quel.</div>';
   }
@@ -762,7 +763,7 @@
       '<div class="carte"><h2>1. Modèle</h2><div class="segments">' + Object.keys(MODELES).map((k) => '<button class="btn petit' + (k === e.modele ? ' actif' : '') + '" type="button" data-action="msg-modele" data-modele="' + k + '">' + P.esc(MODELES[k][0]) + '</button>').join('') + '</div>' +
       '<label class="fl" for="msg-texte" style="margin-top:12px">Texte (les mots entre accolades se remplacent tout seuls : {prenom} = le prénom, {mois}, {montant}, {date_limite}, {lien_wave} = le lien de paiement, {lien_espace} = l’espace de la mannequin)<textarea id="msg-texte" rows="9">' + P.esc(e.texte) + '</textarea></label></div>' +
       '<div class="carte"><h2>2. Destinataires</h2><div class="segments">' + FILTRES_MSG.map((f) => '<button class="btn petit' + (f[0] === e.filtre ? ' actif' : '') + '" type="button" data-action="msg-filtre" data-filtre="' + f[0] + '">' + P.esc(f[1]) + '</button>').join('') + '</div>' +
-      (choisis.length ? P.tableau(['', 'Mannequin', 'Destinataire', 'Contact'], choisis.map((m) => { const d = destinataire(m); return '<tr><td><input type="checkbox" name="msg-ids" value="' + m.id + '" checked aria-label="Écrire à ' + P.esc(m.full_name) + '"></td><td>' + P.lienFiche(m.id, m.full_name) + '</td><td>' + P.esc(d.mineur ? d.nom + ' (parent)' : d.nom) + '</td><td class="petit-texte">' + P.esc([d.tel, d.email].filter(Boolean).join(' · ') || 'aucun contact') + '</td></tr>'; })) : '<p class="doux">Personne dans ce groupe.</p>') + '</div>' +
+      (choisis.length ? P.tableau(['', 'Mannequin', 'Destinataire', 'Contact'], choisis.map((m) => { const d = destinataire(m); return '<tr><td><input type="checkbox" name="msg-ids" value="' + m.id + '" checked aria-label="Écrire à ' + P.esc(m.full_name) + '"></td><td>' + P.lienFiche(m.id, m.full_name, m.user_id) + '</td><td>' + P.esc(d.mineur ? d.nom + ' (parent)' : d.nom) + '</td><td class="petit-texte">' + P.esc([d.tel, d.email].filter(Boolean).join(' · ') || 'aucun contact') + '</td></tr>'; })) : '<p class="doux">Personne dans ce groupe.</p>') + '</div>' +
       '<div class="ligne"><button class="btn" type="button" data-action="msg-apercu">Aperçu</button>' + (P.moi && P.moi.role === 'principal' ? '<button class="btn" type="button" data-action="msg-enregistrer-modele">Enregistrer ce modèle</button>' : '') + '<button class="btn rouge" type="button" data-action="msg-envoyer">Envoyer aux personnes cochées</button></div>' +
       (historique ? '<div class="carte"><h2>Messages envoyés</h2>' + (historique.length ? P.tableau(['Date', 'Mannequin', 'Message', 'Canal'], historique.map((j) => '<tr><td>' + P.dateHeure(j.envoye_le) + '</td><td>' + P.lienFiche(j.mannequin_id, j.mannequin && j.mannequin.full_name) + '</td><td>' + P.esc((MODELES[j.modele] || [j.modele])[0]) + '</td><td>' + P.esc(CANAUX[j.canal] || j.canal) + '</td></tr>')) : '<p class="doux">Aucun message envoyé pour l’instant.</p>') + '</div>'
       : e.journal.length ? '<div class="carte"><h2>Envois de cette session</h2>' + P.tableau(['Heure', 'Mannequin', 'E-mail'], e.journal.map((j) => '<tr><td>' + P.esc(j[0]) + '</td><td>' + P.esc(j[1]) + '</td><td>' + P.esc(j[2]) + '</td></tr>')) + '</div>' : '');
@@ -821,7 +822,7 @@
     P.message(envoyes + ' e-mail(s) envoyé(s) sur ' + l.length + '. Envoyez maintenant les messages WhatsApp.');
     P.fenetre('<h2>Messages WhatsApp</h2>' + P.tableau(['Mannequin', 'WhatsApp'], lignes.map((x) => {
       const wa = lienWhatsApp(x.r.d.tel, x.r.texte);
-      return '<tr><td>' + P.lienFiche(x.m.id, x.m.full_name) + '</td><td>' + (wa ? '<a class="btn rouge petit" target="_blank" rel="noopener" data-wa-id="' + P.esc(x.m.id) + '" data-wa-modele="' + P.esc(e.modele) + '" href="' + P.esc(wa) + '">Envoyer</a>' : '<span class="doux">pas de numéro</span>') + '</td></tr>';
+      return '<tr><td>' + P.lienFiche(x.m.id, x.m.full_name, x.m.user_id) + '</td><td>' + (wa ? '<a class="btn rouge petit" target="_blank" rel="noopener" data-wa-id="' + P.esc(x.m.id) + '" data-wa-modele="' + P.esc(e.modele) + '" href="' + P.esc(wa) + '">Envoyer</a>' : '<span class="doux">pas de numéro</span>') + '</td></tr>';
     })) + '<div class="ligne" style="margin-top:12px"><button class="btn" type="button" data-action="fermer-fenetre">Fermer</button></div>');
   };
 
