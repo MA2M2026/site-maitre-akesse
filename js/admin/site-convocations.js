@@ -6,7 +6,7 @@
   'use strict';
   const P = window.Portail;
   if (!P || !P.espaces.site) return;
-  P.espaces.site.pages['b2-convocations'] = async () => '<div class="ecran-convocations" id="ecran-convocations">' + window.GABARIT_CONVOCATIONS + '</div>';
+  P.espaces.site.pages['b2-convocations'] = async () => '<div class="ecran-partage ecran-convocations" id="ecran-convocations">' + window.GABARIT_CONVOCATIONS + '</div>';
   P.espaces.site.apres['b2-convocations'] = () => {
     window.demarrerConvocationsPanneau();
     window.demarrerConvocationsPage(document.getElementById('ecran-convocations'));

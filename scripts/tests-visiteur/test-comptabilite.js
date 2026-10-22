@@ -92,7 +92,7 @@ function donnees(role) {
     ok(/On nous doit\s*260 000 FCFA/i.test(t) && /Nous devons\s*80 000 FCFA/i.test(t), nomEcran + ' : on nous doit 260 000, nous devons 80 000');
     ok(/Dépenses sans justificatif\s*1/i.test(t) && /Wave Business\s*90 000 FCFA/i.test(t), nomEcran + ' : dépense sans justificatif signalée, soldes de trésorerie');
     await controler(p, nomEcran + ' : tableau du mois');
-    ok(/Tableau de bord/.test(t) && /Mode actuel : Factures internes, non déclarées/.test(t) && /Activer le mode légal et la FNE/.test(t), nomEcran + ' : tableau de bord avec le mode légal / FNE en évidence');
+    ok(/Tableau de bord/.test(t) && /Mode actuel : Factures internes, non déclarées/.test(t) && /Identité de l’agence →/.test(t), nomEcran + ' : tableau de bord avec le mode légal / FNE en évidence');
     if (ecran.width > 860) {
       const menu = await p.$$eval('.menu a, nav a', (l) => l.map((a) => a.textContent.trim()));
       const ordre = ['Tableau de bord', 'Recettes', 'Devis, proforma, factures', 'Dépenses et charges', 'Impôts et taxes', 'Clôture mensuelle', 'Identité de l’agence'];

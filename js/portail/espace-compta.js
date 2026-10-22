@@ -86,7 +86,7 @@
     try { const r = await sb.from('compta_reglages').select('mode_legal').eq('id', 1).maybeSingle(); legal = !!(r && r.data && r.data.mode_legal); } catch (e) { /* réglages indisponibles : on affiche le mode non fiscal */ }
     const carteMode = '<div class="carte"><h2>Mode actuel : ' + (legal ? 'Légal (factures officielles)' : 'Factures internes, non déclarées') + '</h2><p class="doux">' +
       (legal ? 'Factures complètes, TVA et FNE actives.' : 'Les factures sont des documents internes « non fiscaux ». La FNE et la TVA sont prévues et s’activeront avec le mode légal.') +
-      '</p><a class="btn' + (legal ? '' : ' rouge') + '" href="#/compta/identite">' + (legal ? 'Voir le mode légal' : 'Activer le mode légal et la FNE') + '</a></div>';
+      '</p><a class="btn petit rouge" href="#/compta/identite">' + (legal ? 'Voir l’identité de l’agence' : 'Identité de l’agence →') + '</a></div>';
     return P.entete('Tableau de bord · ' + P.mois(m), choixMois()) + carteMode +
       '<div class="grille chiffres">' + P.chiffre('Recettes du mois', P.fcfa(rec), 'vert') + P.chiffre('Dépenses du mois', P.fcfa(dep), 'rouge') +
       P.chiffre('Résultat du mois', P.fcfa(rec - dep), rec - dep < 0 ? 'rouge' : '') + P.chiffre('Dépenses sans justificatif', sansJustif, sansJustif ? 'orange' : '') +

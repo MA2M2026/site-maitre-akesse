@@ -1,4 +1,4 @@
-// Espace 2 — « Matrice mannequins × mois » (cahier V3, 7.2), essayé comme une vraie personne sur téléphone et
+// Espace 2 — « Paiements mois par mois » (cahier V3, 7.2), essayé comme une vraie personne sur téléphone et
 // ordinateur, base SIMULÉE : 12 colonnes, une pastille par case (payé, en attente, non payé, à venir),
 // signe et texte sur chaque pastille, changement d'année.
 const { chromium } = require('playwright'); const { spawn } = require('child_process'); const { brancher } = require('./faux-serveur');
@@ -79,7 +79,7 @@ function donnees(role) {
     await p.waitForSelector('#cx-code'); await p.fill('#cx-code', '123456'); await p.click('form[data-form="code"] [type=submit]');
     await p.waitForFunction(() => location.hash.startsWith('#/paiements/'), null, { timeout: 8000 }).catch(() => {});
     if (ecran.width <= 860) { await p.click('[data-action=menu-ouvrir]'); await p.waitForTimeout(300); }
-    ok(await p.isVisible('#menu-lateral a.nav[href="#/paiements/matrice"]'), nomEcran + ' : « Matrice mannequins × mois » dans le menu');
+    ok(await p.isVisible('#menu-lateral a.nav[href="#/paiements/matrice"]'), nomEcran + ' : « Paiements mois par mois » dans le menu');
     await p.click('#menu-lateral a.nav[href="#/paiements/matrice"]');
     await p.waitForSelector('table.matrice', { timeout: 8000 }).catch(() => {});
     const t = () => p.evaluate(() => document.querySelector('.contenu').innerText.replace(/\s+/g, ' '));
@@ -97,7 +97,7 @@ function donnees(role) {
     ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)), nomEcran + ' : pas de défilement de côté de la page');
     await p.screenshot({ path: __dirname + '/medias/matrice-' + (ecran.width > 860 ? 'pc' : 'tel') + '.png' });
     await p.click('[data-action="matrice-annee"][data-sens="-1"]'); await p.waitForTimeout(800);
-    ok(new RegExp('× mois · ' + (an - 1)).test(await t()), nomEcran + ' : année précédente');
+    ok(new RegExp('mois par mois\\s· ' + (an - 1)).test(await t()), nomEcran + ' : année précédente');
     ok(!e.errs.length, nomEcran + ' : aucune erreur de page ' + e.errs.join(' | '));
     await e.ctx.close();
   }

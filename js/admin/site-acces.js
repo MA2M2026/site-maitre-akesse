@@ -107,7 +107,7 @@
     const carte = (l, v, s) => '<div class="carte-pilotage"><span class="l">' + P.esc(l) + '</span><span class="v">' + (v == null ? '—' : P.compte(v)) + '</span><span class="s">' + P.esc(s) + '</span></div>';
     return P.entete('Drive et transferts') + '<div class="cartes-pilotage">' + carte('Photos du Book', photosBook, 'en ligne sur le site') + carte('Mannequins publiés', publies, 'dans The Book') +
       carte('Photos de candidature', photosCandidatures, 'liens vers Google Drive') + '</div>' +
-      '<p class="doux petit-texte">Le suivi photo par photo des envois vers Google Drive n’existe pas encore : seuls les chiffres sûrs sont montrés.</p>';
+      '<p class="doux petit-texte">Les photos de candidature sont rangées dans Google Drive ; ici, le nombre de photos enregistrées.</p>';
   }
 
   // ---------- Nettoyage des photos ----------

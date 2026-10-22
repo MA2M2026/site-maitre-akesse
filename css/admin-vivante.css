@@ -848,6 +848,13 @@ input[type="file"]::file-selector-button {
 .fleches { display: inline-flex; gap: 4px; }
 
 /* Visite des blocs 2 et 3 (22/10/2026) */
+.ouvrir-saisie { align-self: flex-start; }
+/* paiements mois par mois : la colonne des noms reste visible pendant le défilement */
+.tableau table.matrice th:first-child, .tableau table.matrice td:first-child { position: sticky; left: 0; z-index: 1; background: var(--av-carte); box-shadow: 1px 0 0 var(--av-creux); }
+@media (max-width: 640px) { .tableau table.matrice td:first-child { max-width: 120px; white-space: normal; overflow-wrap: anywhere; } }
+/* téléphone : les petites lignes sous un montant passent à la ligne au lieu de déborder */
+@media (max-width: 640px) { .tableau table[data-etiquete] td .petit-texte { white-space: normal; } .tableau table[data-etiquete] td.nombre { white-space: normal; flex-wrap: wrap; } }
+form[hidden] { display: none !important; }
 .haut .bloc-actuel .court { display: none; }
 @media (max-width: 640px) { .haut .bloc-actuel:has(.court) .long { display: none; } .haut .bloc-actuel .court { display: inline; } }
 /* montants : jamais coupés entre le nombre et « FCFA » */

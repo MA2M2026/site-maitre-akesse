@@ -34,7 +34,7 @@
     const liste = docs.filter((d) => filtre === 'tous' || d.type === filtre);
     P.etat.comptaDocs = docs;
     const sansRecu = recettes.filter((e) => !e.annule && e.source === 'manuel' && !docs.some((d) => d.ecriture_id === e.id && !d.annule));
-    return P.entete('Documents · ' + P.mois(m), C.choixMois()) +
+    return P.entete('Devis, proforma, factures · ' + P.mois(m), C.choixMois()) +
       (r.mode_legal ? '<div class="note ok">Mode légal activé : les nouvelles factures sont de vraies factures, avec TVA (' + P.esc(String(r.tva_taux).replace('.', ',')) + ' %).</div>'
         : '<div class="note info">Mode non fiscal : chaque document porte la mention « non fiscal », sans TVA. Les numéros se suivent sans trou ; un document ne s’efface jamais (une facture se corrige par un avoir).</div>') +
       (clients.length ? '<form class="carte f" data-form="compta-document" id="form-document"><h2>Nouveau document</h2>' +
@@ -315,7 +315,7 @@
     const champ = (nom, libelle, o) => '<label class="fl' + (o && o.large ? ' large' : '') + '" for="rg-' + nom + '">' + libelle +
       (o && o.zone ? '<textarea id="rg-' + nom + '" name="' + nom + '" maxlength="500"' + (principal ? '' : ' disabled') + '>' + P.esc(r[nom] || '') + '</textarea>'
         : '<input id="rg-' + nom + '" name="' + nom + '" maxlength="200" value="' + P.esc(r[nom] == null ? '' : r[nom]) + '"' + (o && o.type ? ' type="' + o.type + '"' : '') + (principal ? '' : ' disabled') + '>') + '</label>';
-    return P.entete('Identité et mode légal') +
+    return P.entete('Identité de l’agence') +
       (principal ? '' : '<div class="note info">Seul l’administrateur principal modifie l’identité de l’agence et le mode légal.</div>') +
       '<form class="carte f" data-form="compta-identite"><h2>Sur tous les documents</h2>' +
       champ('nom_commercial', 'Nom de l’agence') + champ('telephone', 'Téléphone') + champ('email', 'E-mail', { type: 'email' }) + champ('adresse', 'Adresse', { large: true }) +

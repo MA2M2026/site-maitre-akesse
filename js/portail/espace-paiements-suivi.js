@@ -104,7 +104,7 @@
     return P.entete('Sorties et suspensions', P.pastille(attente.length + ' en attente', attente.length ? 'alerte' : 'ok')) +
       '<div class="note info">L’équipe d’encaissement propose une suspension ou une sortie avec un motif ; seul l’administrateur principal décide, avec son code. Rien n’est supprimé : un mannequin sorti peut être réactivé.</div>' +
       '<div class="carte"><h2>Proposer</h2>' + (proposables.length
-        ? '<form class="f" data-form="sortie-proposer"><label class="fl" for="so-mannequin">Mannequin<select id="so-mannequin" name="mannequin">' + proposables.map((m) => '<option value="' + P.esc(m.id) + '">' + P.esc(m.full_name) + '</option>').join('') + '</select></label>' +
+        ? '<form class="f" data-form="sortie-proposer"><label class="fl" for="so-mannequin">Mannequin<select id="so-mannequin" name="mannequin" required><option value="">— Choisir —</option>' + proposables.map((m) => '<option value="' + P.esc(m.id) + '">' + P.esc(m.full_name) + '</option>').join('') + '</select></label>' +
           '<label class="fl" for="so-type">Type<select id="so-type" name="type"><option value="suspendu">Suspension</option><option value="sorti">Sortie définitive</option></select></label>' +
           '<label class="fl large" for="so-motif">Motif (obligatoire)<textarea id="so-motif" name="motif" rows="3" required></textarea></label>' +
           '<div class="large ligne"><button class="btn rouge" type="submit">Envoyer la proposition</button></div></form>'

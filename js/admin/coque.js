@@ -70,13 +70,16 @@
   // autres pages, et longues explications repliées sous « En savoir plus » (visite du 22/10/2026).
   const EMOJI_DEBUT = /^[\p{Extended_Pictographic}\uFE0F\u200D\s]+/u;
   function harmoniserEcransPartages() {
+    // (grande visite du 22/10/2026 : aucun émoji en tête des titres, boutons, choix et pastilles, partout)
+    document.querySelectorAll('#contenu').forEach((c) => c.querySelectorAll('h1, h2, h3, button, a.btn, label.btn, option, summary, .pastille, .btn-mini-admin').forEach((h) => {
+      if (h.hasAttribute('data-sans-emoji')) return;
+      h.setAttribute('data-sans-emoji', '');
+      const t = h.firstChild;
+      if (t && t.nodeType === 3 && EMOJI_DEBUT.test(t.textContent)) t.textContent = t.textContent.replace(EMOJI_DEBUT, '');
+      else if (t && t.nodeType === 1 && t.matches('img.emoji')) t.remove();
+    }));
     document.querySelectorAll('.ecran-partage:not([data-harmonise])').forEach((ecran) => {
       ecran.setAttribute('data-harmonise', '');
-      ecran.querySelectorAll('h2, h3, summary h2').forEach((h) => {
-        const t = h.firstChild;
-        if (t && t.nodeType === 3 && EMOJI_DEBUT.test(t.textContent)) t.textContent = t.textContent.replace(EMOJI_DEBUT, '');
-        else if (h.firstElementChild && h.firstElementChild.matches('img.emoji')) h.firstElementChild.remove();
-      });
       ecran.querySelectorAll('p.tdb-5, p.tdb-9, p.tdb-12, p.tdb-17').forEach((p) => {
         if (p.textContent.length < 160 || p.closest('details.aide')) return;
         const d = document.createElement('details');
@@ -84,6 +87,23 @@
         d.innerHTML = '<summary>En savoir plus</summary>';
         p.replaceWith(d); d.appendChild(p);
       });
+    });
+  }
+  // Formulaires de saisie (blocs 2 et 3) : repliés derrière « ＋ … », la liste d'abord (grande visite du
+  // 22/10/2026) ; un appui les ouvre. Les pages elles-mêmes ne changent pas (même logique partout).
+  const SAISIES = ['compta-ecrire', 'compta-virement', 'compta-compte', 'compta-document', 'compta-impot', 'compta-dette',
+    'compta-payer-personne', 'compta-materiel', 'compta-tiers', 'lien-ajouter'];
+  function replierSaisies() {
+    document.querySelectorAll('#contenu form.carte.f[data-form]:not([data-replie])').forEach((form) => {
+      if (!SAISIES.includes(form.getAttribute('data-form'))) return;
+      form.setAttribute('data-replie', '');
+      const titre = form.querySelector('h2'), bouton = document.createElement('button');
+      bouton.type = 'button'; bouton.className = 'btn rouge ouvrir-saisie';
+      bouton.textContent = '＋ ' + (titre ? titre.textContent.trim() : 'Nouvelle saisie');
+      bouton.setAttribute('aria-expanded', 'false');
+      form.hidden = true;
+      form.before(bouton);
+      bouton.addEventListener('click', () => { form.hidden = false; bouton.remove(); const champ = form.querySelector('input, select, textarea'); if (champ) champ.focus(); });
     });
   }
   // Menu : la rubrique ouverte reste visible (menu long sur un ordinateur portable)
@@ -98,7 +118,7 @@
   let retouche = 0;
   new MutationObserver(() => {
     if (retouche) return;
-    retouche = setTimeout(() => { retouche = 0; etiqueterTableaux(); harmoniserEcransPartages(); rubriqueVisible(); }, 60);
+    retouche = setTimeout(() => { retouche = 0; etiqueterTableaux(); harmoniserEcransPartages(); replierSaisies(); rubriqueVisible(); }, 60);
   }).observe(document.getElementById('app'), { childList: true, subtree: true });
 
   P.compte = (n, suffixe) => '<span data-compte="' + (Number(n) || 0) + '"' + (suffixe ? ' data-suffixe="' + P.esc(suffixe) + '"' : '') + '>0' + P.esc(suffixe || '') + '</span>';
@@ -161,10 +181,12 @@
 
   async function donneesSite() {
     const aujourdhui = P.aujourdhui();
-    const [profils, nouvelles, projets] = await Promise.all([
+    const [profils, nouvelles, projets, aValider, recruteurs] = await Promise.all([
       essai(P.bd(sb.from('model_profiles').select('id, full_name, niveau_mannequin, city').eq('published', true).order('created_at', { ascending: false }).limit(40))),
       essai(nombre(sb.from('casting_applications').select('id', { count: 'exact', head: true }).eq('status', 'nouvelle'))),
-      essai(P.bd(sb.from('agenda_projets').select('id, titre, type, date_debut, date_fin, lieu, ville, annule, mannequin_ids').eq('annule', false).or('date_debut.gte.' + aujourdhui + ',date_fin.gte.' + aujourdhui).order('date_debut').limit(10)))  // en cours ou à venir
+      essai(P.bd(sb.from('agenda_projets').select('id, titre, type, date_debut, date_fin, lieu, ville, annule, mannequin_ids').eq('annule', false).or('date_debut.gte.' + aujourdhui + ',date_fin.gte.' + aujourdhui).order('date_debut').limit(10))),  // en cours ou à venir
+      essai(nombre(sb.from('model_profiles').select('id', { count: 'exact', head: true }).eq('en_attente_validation', true))),
+      essai(nombre(sb.from('recruiter_requests').select('id', { count: 'exact', head: true }).eq('status', 'nouvelle')))
     ]);
     const prochain = (projets || []).find((p) => (p.date_fin || p.date_debut) >= aujourdhui) || null;
     let reponses = null;
@@ -178,7 +200,7 @@
     }
     const liste = profils || [];
     const photos = await essai(P.photosCouverture(liste.map((p) => p.id).concat(prochain ? prochain.mannequin_ids || [] : []).filter((x, i, l) => l.indexOf(x) === i))) || {};
-    return { profils: liste, photos, nouvelles, prochain, reponses };
+    return { profils: liste, photos, nouvelles, prochain, reponses, aValider, recruteurs };
   }
   async function donneesPaiements() {
     const declares = await essai(nombre(sb.from('paiements_mannequins').select('id', { count: 'exact', head: true }).eq('statut', 'declare')));
@@ -207,8 +229,10 @@
   function taches(site, paiements) {
     const t = [];
     if (site && site.nouvelles) t.push(['#/site/b2-candidatures', 'Candidatures à étudier', 'Casting et agence', site.nouvelles, true]);
+    if (site && site.aValider) t.push(['#/site/b2-validations', 'Fiches mannequins à valider', 'Espace mannequin', site.aValider, true]);
+    if (site && site.recruteurs) t.push(['#/site/b2-recruteurs', 'Demandes de recruteurs à lire', 'Marques et organisateurs', site.recruteurs, true]);
     if (site && site.reponses && site.reponses.sans) t.push(['#/site/b2-convocations', 'Mannequins sans réponse', site.prochain.titre, site.reponses.sans, true]);
-    if (paiements && paiements.declares) t.push(['#/paiements/rapprocher', 'Paiements « J’ai payé » à valider', 'Wave et espèces', paiements.declares, true]);
+    if (paiements && paiements.declares) t.push(['#/paiements/a-valider', 'Paiements « J’ai payé » à valider', 'Wave et espèces', paiements.declares, true]);
     if (!t.length) return '<div class="taches apparait" style="--i:2"><div class="tache"><span class="point"></span><span class="t">Rien d’urgent<small>Tout est à jour pour le moment.</small></span></div></div>';
     return '<div class="taches apparait" style="--i:2">' + t.map((x) => '<a class="tache" href="' + x[0] + '"><span class="point' + (x[4] ? ' chaud' : '') + '"></span>' +
       '<span class="t">' + P.esc(x[1]) + '<small>' + P.esc(x[2]) + '</small></span><b>' + P.compte(x[3]) + '</b></a>').join('') + '</div>';

@@ -54,7 +54,7 @@ const api = (journal, chemin, motif) => journal.filter((j) => j[0] === 'API' && 
 
     // 3. Drive
     await p.goto(URL_ADMIN + '#/site/b3a-drive'); await p.waitForSelector('.cartes-pilotage'); await p.waitForTimeout(1600);
-    ok(/PHOTOS DU BOOK\s*\d+/i.test(await p.innerText('.cartes-pilotage')) && /seuls les chiffres sûrs/.test(await p.textContent('#contenu')), n + 'drive : chiffres réels, rien d’inventé');
+    ok(/PHOTOS DU BOOK\s*\d+/i.test(await p.innerText('.cartes-pilotage')) && /rangées dans Google Drive/.test(await p.textContent('#contenu')), n + 'drive : chiffres réels, rien d’inventé');
 
     // 4. Nettoyage
     await p.goto(URL_ADMIN + '#/site/b3a-nettoyage'); await p.waitForSelector('[data-action="nettoyer-traitees"]'); await p.waitForTimeout(600);

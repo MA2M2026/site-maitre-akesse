@@ -86,7 +86,7 @@ function donnees(role) {
     ok(/Le tableau est vide/.test(vide) && !/ROXANE/.test(vide.replace(/Choisir un mannequin.*/, '')) || /Le tableau est vide/.test(vide), nomEcran + ' : le tableau démarre vide');
     ok((await p.$$('#suivi-choix option')).length >= 3, nomEcran + ' : la liste déroulante propose les mannequins');
     // (titres de page en capitales depuis la refonte « Magazine » du 20/10/2026 : comparaison sans tenir compte des majuscules)
-    for (const [page, mot] of [['recapitulatif', /Récapitulatif/i], ['matrice', /Matrice/i], ['mensualites', /Mensualités/i], ['messages', /Messages/i]]) {
+    for (const [page, mot] of [['recapitulatif', /Récapitulatif/i], ['matrice', /Paiements mois par mois/i], ['mensualites', /Mensualités/i], ['messages', /Messages/i]]) {
       await p.evaluate((h) => { location.hash = '#/paiements/' + h; }, page); await p.waitForTimeout(900);
       const tp = await t();
       ok(mot.test(tp) && /Aucun mannequin suivi pour l’instant/.test(tp) && !/KONÉ AWA|ROXANE/.test(tp.replace(/Aucun mannequin suivi.*/, '')) || (mot.test(tp) && /Aucun mannequin suivi/.test(tp)), nomEcran + ' : « ' + page + ' » ne montre aucun mannequin tant que personne n’est suivi, et le dit');

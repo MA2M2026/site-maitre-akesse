@@ -43,7 +43,7 @@
   P.tableau = (entetes, lignes, classe) => '<div class="tableau"><table class="' + (classe || '') + '"><thead><tr>' +
     entetes.map((h) => '<th' + (h.charAt(0) === '#' ? ' class="nombre"' : '') + '>' + P.esc(h.replace(/^#/, '')) + '</th>').join('') +
     '</tr></thead><tbody>' + (lignes.length ? lignes.join('') : '<tr><td colspan="' + entetes.length + '" class="vide">Rien pour le moment.</td></tr>') + '</tbody></table></div>';
-  P.entete = (titre, extra) => '<div class="entete"><div><a class="retour" href="#/">← Retour au portail</a><h1>' + P.esc(titre) + '</h1></div><div class="ligne">' + (extra || '') + '</div></div>';
+  P.entete = (titre, extra) => '<div class="entete"><div><a class="retour" href="#/">← Retour au portail</a><h1>' + P.esc(titre).replace(/ · /g, '\u00a0· ') + '</h1></div><div class="ligne">' + (extra || '') + '</div></div>';
   P.refuse = () => '<div class="carte"><h2>Accès refusé</h2><p class="doux">Votre rôle (' + P.esc(ROLES[P.moi && P.moi.role] || 'aucun') +
     ') ne donne pas accès à cette page. Le serveur et la base de données refusent aussi la demande.</p></div>';
   P.erreurTexte = (e) => {

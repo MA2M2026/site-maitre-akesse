@@ -151,7 +151,7 @@
     const m = C.moisChoisi();
     const liste = await C.ecritures(m);
     const justifs = liste.filter((e) => !e.annule && e.justificatif).length, manquants = liste.filter((e) => !e.annule && e.sens === 'depense' && !e.justificatif).length;
-    return P.entete('Dossier du mois · ' + P.mois(m), C.choixMois()) +
+    return P.entete('Clôture mensuelle · ' + P.mois(m), C.choixMois()) +
       '<div class="grille chiffres">' + P.chiffre('Écritures du mois', liste.length) + P.chiffre('Justificatifs joints', justifs) +
       P.chiffre('Dépenses sans justificatif', manquants, manquants ? 'orange' : '') + '</div>' +
       (manquants ? '<div class="note">Il manque ' + manquants + ' justificatif(s) de dépense : joignez-les (page Dépenses, bouton « Joindre ») avant d’envoyer le dossier.</div>' : '') +

@@ -210,7 +210,7 @@
     const liste = await tiers();
     P.etat.comptaTiers = liste;
     return P.entete('Carnet') +
-      '<div class="note info">Les clients, fournisseurs, membres du personnel et prestataires de l’agence. Les mannequins n’y figurent pas : ils sont dans le registre de l’espace 2.</div>' +
+      '<div class="note info">Les clients, fournisseurs, membres du personnel et prestataires de l’agence. Les mannequins n’y figurent pas : ils sont dans le registre du Suivi des paiements.</div>' +
       '<form class="carte f" data-form="compta-tiers"><h2>Ajouter au carnet</h2>' + champsTiers(null) + '<div class="large ligne"><button class="btn rouge" type="submit">Ajouter</button></div></form>' +
       P.tableau(['Nom', 'Type', 'Téléphone', 'E-mail', ''], liste.map((x) => '<tr><td><b>' + P.esc(x.nom) + '</b>' + (x.actif ? '' : ' ' + P.pastille('Plus actif', 'neutre')) + '</td>' +
         '<td>' + TYPES[x.type] + '</td><td>' + P.esc(x.telephone || '—') + '</td><td>' + P.esc(x.email || '—') + '</td>' +

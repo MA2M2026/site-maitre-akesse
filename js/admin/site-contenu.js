@@ -44,7 +44,7 @@
       '<span class="publication-image">' + (p.image_url || vignetteVideo(p.video_url) ? '<img src="' + P.esc(p.image_url ? urlLegere(p.image_url) : vignetteVideo(p.video_url)) + '" alt="" loading="lazy">' : '') + (p.video_url ? '<span class="ini">▶</span>' : p.image_url ? '' : '<span class="ini">✦</span>') + '</span>' +
       '<span class="publication-texte">' + (p.categorie ? '<span class="publication-categorie">' + P.esc(p.categorie) + '</span>' : '') +
       '<b>' + P.esc(p.titre || 'Sans titre') + '</b><span class="doux">' + P.esc([quand(type, p), p.lieu, nb[p.id] ? nb[p.id] + ' photo' + (nb[p.id] > 1 ? 's' : '') : '', p.video_url ? 'vidéo' : ''].filter(Boolean).join(' · ')) + '</span></span></a>').join('');
-    return P.entete(c.titre, '<span class="doux">' + lignes.length + ' publiée' + (lignes.length > 1 ? 's' : '') + '</span><a class="btn rouge" href="#/site/' + type + '/nouvelle">＋ Publier ' + c.un + '</a>') +
+    return P.entete(c.titre, '<span class="doux">' + P.pluriel(lignes.length, type === 'evenements' ? 'publié' : 'publiée', type === 'evenements' ? 'publiés' : 'publiées') + '</span><a class="btn rouge" href="#/site/' + type + '/nouvelle">＋ Publier ' + c.un + '</a>') +
       (cartes ? '<div class="publications-grille">' + cartes + '</div>' : '<div class="carte vide">Rien de publié pour le moment.</div>');
   }
 

@@ -598,7 +598,7 @@
       return '<td class="case-mois' + (rang === moisActuel ? ' mois-actuel' : '') + '"><span class="pastille ' + sign[1] + '" title="' + P.MOIS[n - 1] + ' : ' + sign[2] + '"><span aria-hidden="true">' + sign[0] + '</span><span class="sr-only">' + P.esc(P.MOIS[n - 1] + ' : ' + sign[2]) + '</span></span></td>';
     };
     const colonnes = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
-    return P.entete('Matrice mannequins × mois · ' + annee, '<button class="btn petit" type="button" data-action="matrice-annee" data-sens="-1">‹ ' + (annee - 1) + '</button><button class="btn petit" type="button" data-action="matrice-annee" data-sens="1">' + (annee + 1) + ' ›</button>') +
+    return P.entete('Paiements mois par mois · ' + annee, '<button class="btn petit" type="button" data-action="matrice-annee" data-sens="-1">‹ ' + (annee - 1) + '</button><button class="btn petit" type="button" data-action="matrice-annee" data-sens="1">' + (annee + 1) + ' ›</button>') +
       '<div class="ligne">' + P.pastille('✓ payé', 'ok') + P.pastille('… en attente', 'alerte') + P.pastille('✕ non payé', 'erreur') + P.pastille('· à venir', 'neutre') + P.pastille('— avant l’entrée', 'neutre') + '</div>' +
       '<div class="carte">' + (mannequins.length ? P.tableau(['Mannequin'].concat(colonnes), mannequins.map((m) =>
         '<tr><td><a href="#/paiements/fiche/' + m.id + '"><b>' + P.esc(m.full_name) + '</b></a></td>' + colonnes.map((c, i) => case_(m, i + 1)).join('') + '</tr>'), 'matrice')
@@ -666,7 +666,7 @@
       '<div class="carte"><h2>Payé</h2>' + (d.ont.length ? P.tableau(['Mannequin', 'Destinataire', '#Montant'], d.ont.map((x) =>
         '<tr><td><a href="#/paiements/fiche/' + x.m.id + '"><b>' + P.esc(x.m.full_name) + '</b></a></td><td>' + P.esc(x.destinataire) + '</td><td class="nombre">' + P.fcfa(x.m.mensualite || 0) + '</td></tr>'))
         : '<p class="doux">Personne n’a encore payé ce mois-ci.</p>') + '</div>' +
-      '<div class="note info">Ce récapitulatif est calculé en direct. Son archivage figé le dernier jour du mois et la proposition de sortie d’un mannequin arrivent à l’étape suivante.</div>';
+      '<div class="note info">Ce récapitulatif est calculé en direct. Une fois le mois terminé, figez-le dans « Mois figés » pour le garder tel quel.</div>';
   }
   P.actions['recap-mois'] = (el) => { P.etat.moisRecap = isoMois(indexMois(P.etat.moisRecap || moisCourant()) + Number(el.getAttribute('data-sens'))); P.afficher(); };
   P.actions['recap-export'] = async (el) => {
@@ -873,7 +873,7 @@
   };
 
   P.espaces.paiements = {
-    nav: [['tableau', 'Tableau du mois'], ['matrice', 'Matrice mannequins × mois'], ['recapitulatif', 'Récapitulatif de fin de mois'], ['messages', 'Messages et relances'], ['codes', 'Codes de l’espace mannequin'], ['parametres', 'Paramètres'], ['a-valider', 'Paiements à valider'], ['mensualites', 'Mensualités du mois'], ['registre', 'Registre des mannequins'], ['ajouter', 'Ajouter un mannequin']],
+    nav: [['tableau', 'Tableau du mois'], ['matrice', 'Paiements mois par mois'], ['recapitulatif', 'Récapitulatif de fin de mois'], ['messages', 'Messages et relances'], ['codes', 'Codes de l’espace mannequin'], ['parametres', 'Paramètres'], ['a-valider', 'Paiements à valider'], ['mensualites', 'Mensualités du mois'], ['registre', 'Registre des mannequins'], ['ajouter', 'Ajouter un mannequin']],
     // (pages qui comptent les mannequins suivis : une note explique la liste vide)
     pages: Object.assign({ tableau: tableauDuMois, codes: codesEspace, parametres, 'a-valider': aValider, registre, ajouter, fiche },
       ...['matrice', 'recapitulatif', 'messages', 'mensualites'].map((cle) => ({ [cle]: async (params) => {
