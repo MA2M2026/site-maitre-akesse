@@ -12,7 +12,7 @@
   const E = P.espaces.paiements;
   const estPrincipal = () => !!(P.moi && P.moi.role === 'principal');
   const jours = (d) => Math.floor((Date.now() - new Date(d).getTime()) / 86400000);
-  const ABSENT = '<div class="note info">Cette page sera disponible dès que le fichier SQL « compléments » aura été exécuté dans Supabase.</div>';
+  const ABSENT = '<div class="note info">Cette page n’est pas encore activée. <span class="petit-texte doux">(Étape d’installation : fichier « compléments » à exécuter dans la base.)</span></div>';
   const vide = (v) => { const t = String(v == null ? '' : v).trim(); return t === '' ? null : t; };
 
   // ---------- Rapprochement Wave ----------

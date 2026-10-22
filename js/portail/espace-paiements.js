@@ -237,7 +237,7 @@
       await P.sensible(() => P.rpc('mannequin_supprimer', { p_mannequin: el.getAttribute('data-id') }));
       P.message('Mannequin supprimé.'); if (/^#\/paiements\/fiche/.test(location.hash)) location.hash = '#/paiements/registre'; else await P.afficher();
     } catch (e) {
-      P.message(e && (e.code === 'PGRST202' || e.status === 404) ? 'La suppression n’est pas encore activée : il faut d’abord exécuter le fichier SQL de suppression.' : P.erreurTexte(e));
+      P.message(e && (e.code === 'PGRST202' || e.status === 404) ? 'La suppression n’est pas encore activée (étape d’installation : fichier de suppression à exécuter dans la base).' : P.erreurTexte(e));
     }
   };
   P.actions['registre-inscription'] = async (el) => {
@@ -530,7 +530,7 @@
       P.chiffre('Taux de recouvrement', taux + ' %') + '</div>' +
       '<div class="ligne">' + P.pastille('À jour : ' + nb('paye'), 'ok') + P.pastille('Preuve reçue : ' + nb('attente'), 'alerte') +
       P.pastille('Non payé : ' + (nb('non_paye') + nb('a_payer')), 'erreur') + '</div>' +
-      (P.etat.suiviAbsent ? '<div class="note alerte">Le suivi par liste n’est pas encore activé : exécutez le fichier SQL « supabase-suivi-mannequins.sql ». En attendant, tous les mannequins actifs sont montrés.</div>' : '') +
+      (P.etat.suiviAbsent ? '<div class="note alerte">Le suivi par liste n’est pas encore activé <span class="petit-texte">(étape d’installation : « supabase-suivi-mannequins.sql »)</span>. En attendant, tous les mannequins actifs sont montrés.</div>' : '') +
       '<form class="carte f" data-form="suivi-ajouter"><h2>Mannequins suivis</h2><p class="doux">Choisissez dans la liste les mannequins à suivre ce mois-ci. Retirer un mannequin du tableau ne supprime rien.</p>' +
         '<div class="ligne"><label class="fl" for="suivi-choix">Mannequin<select id="suivi-choix" name="mannequin"><option value="">— Choisir un mannequin —</option>' +
         (proposes.length > 1 ? '<option value="__tous__">Tous les mannequins actifs</option>' : '') +
@@ -552,7 +552,7 @@
     try {
       await P.bd(sb.from('agence_mannequins').update({ suivi }).in('id', ids));
     } catch (e) {
-      P.message(colonneSuiviAbsente(e) ? 'Le suivi n’est pas encore activé : il faut d’abord exécuter le fichier SQL « supabase-suivi-mannequins.sql ».' : P.erreurTexte(e));
+      P.message(colonneSuiviAbsente(e) ? 'Le suivi par liste n’est pas encore activé (étape d’installation : « supabase-suivi-mannequins.sql »).' : P.erreurTexte(e));
       return;
     }
     await P.afficher();
@@ -810,7 +810,7 @@
       '<tr><td>Le 3</td><td>Relance par e-mail à ceux qui n’ont pas payé</td></tr>',
       '<tr><td>Le 5</td><td>Dernière relance ; date limite de paiement</td></tr>',
       '<tr><td>Le 6</td><td>Les mensualités non payées passent en rouge (« Non payé »)</td></tr>']);
-    const liste = absente ? '<div class="note erreur">Les liens de paiement ne sont pas encore activés : le fichier <b>supabase-parametres.sql</b> n’a pas encore été exécuté dans Supabase.</div>'
+    const liste = absente ? '<div class="note erreur">Les liens de paiement ne sont pas encore activés <span class="petit-texte">(étape d’installation : « supabase-parametres.sql »)</span>.</div>'
       : (liens.length ? P.tableau(['Libellé', 'Type', '#Montant', 'Lien', 'État', ''], liens.map((l) =>
         '<tr' + (l.actif ? '' : ' class="annulee"') + '><td><b>' + P.esc(l.libelle) + '</b></td><td>' + P.esc(TYPES_LIEN[l.type] || l.type) + '</td><td class="nombre">' + P.fcfa(l.montant) + '</td>' +
         '<td class="petit-texte"><a href="' + P.esc(l.adresse) + '" target="_blank" rel="noopener noreferrer">' + P.esc(l.adresse.replace(/^https:\/\//, '').slice(0, 38)) + '</a></td>' +

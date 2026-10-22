@@ -812,7 +812,7 @@ svg.courbe text.sem { font-size: 13px; font-weight: 400; fill: var(--av-gris); }
 }
 
 /* ---------- Retouches de la visite « patron d'agence » (22/10/2026) ---------- */
-.lateral { mask-image: linear-gradient(180deg, #000 calc(100% - 36px), transparent); padding-bottom: 40px; }
+.lateral { padding-bottom: 28px; }
 details.aide { font-size: 14px; color: var(--av-gris); max-width: 760px; }
 details.aide summary { font-weight: 600; color: var(--av-rouge-texte); font-size: 13px; list-style-position: inside; }
 details.aide > p { margin: 8px 0 0; }
@@ -846,3 +846,15 @@ input[type="file"]::file-selector-button {
 .ecran-partage .mg-actions:has(#mg-email:not(:disabled)) + #mg-email-etat:empty::before { content: none; }
 .rp-detail summary { font-size: 13px; color: var(--av-rouge-texte); font-weight: 600; margin: 6px 0 0 26px; }
 .fleches { display: inline-flex; gap: 4px; }
+
+/* Visite des blocs 2 et 3 (22/10/2026) */
+.haut .bloc-actuel .court { display: none; }
+@media (max-width: 640px) { .haut .bloc-actuel:has(.court) .long { display: none; } .haut .bloc-actuel .court { display: inline; } }
+/* montants : jamais coupés entre le nombre et « FCFA » */
+.chiffre .v { white-space: nowrap; font-size: clamp(24px, 2.2vw, 32px); }
+.chiffres { grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); }
+@media (max-width: 640px) {
+  .tableau table[data-etiquete] td[data-titre="Action"]::before, .tableau table[data-etiquete] td[data-titre="Actions"]::before { display: none; }
+  .tableau table[data-etiquete] td[data-titre="Action"], .tableau table[data-etiquete] td[data-titre="Actions"] { justify-content: flex-end; }
+  .tableau table[data-etiquete] td.vide { justify-content: center; text-align: center; font-weight: 400; color: var(--av-gris); }
+}

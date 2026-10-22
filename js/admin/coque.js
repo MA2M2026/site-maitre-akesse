@@ -112,10 +112,10 @@
   const blocsPermis = () => ['site', 'paiements', 'compta'].filter((k) => P.moi.espaces[k] && P.espaces[k]);
   const lienSecurite = () => P.moi.role === 'principal' ? ['#/securite/comptes', 'Sécurité et journal'] : ['#/securite/codes', 'Mes codes de secours'];
 
-  function enTete(titre) {
+  function enTete(titre, court) {
     return '<header class="haut"><a class="marque" href="#/" aria-label="Accueil de l’Administration">' +
       '<img class="logo-portail logo-haut" src="/assets/logo-header-clair.png" width="600" height="182" alt="Maître Akesse Model Management"></a>' +
-      '<div class="bloc-actuel">' + P.esc(titre) + '</div>' +
+      '<div class="bloc-actuel"><span class="long">' + P.esc(titre) + '</span>' + (court ? '<span class="court">' + P.esc(court) + '</span>' : '') + '</div>' +
       '<div class="qui"><b>' + P.esc(P.moi.nom) + '</b>' + P.esc(P.ROLES[P.moi.role]) + '</div></header>';
   }
   function barreBas(module, avecMenu) {
@@ -135,7 +135,7 @@
     const blocs = '<div class="blocs">' + '<a class="bloc" href="#/">' + icone('accueil') + 'Accueil</a>' +
       blocsPermis().map((k) => '<a class="bloc' + (k === module ? ' actif' : '') + '" href="#/' + k + '/' + premierePage(P.espaces[k]) + '">' + icone(k) + P.esc(P.ESPACES[k]) + '</a>').join('') + '</div>';
     const secu = lienSecurite();
-    return '<div class="coque">' + enTete(P.ESPACES[module] || 'Sécurité') +
+    return '<div class="coque">' + enTete(P.ESPACES[module] || 'Sécurité', { site: 'Administration du site', paiements: 'Paiements', compta: 'Comptabilité' }[module]) +
       '<div class="voile-menu" data-action="menu-fermer"></div>' +
       '<nav class="lateral" id="menu-lateral" aria-label="' + P.esc(P.ESPACES[module] || 'Sécurité') + '">' + blocs + nav +
       '<div class="lateral-pied"><a class="btn petit clair" href="' + secu[0] + '">' + P.esc(secu[1]) + '</a>' +
