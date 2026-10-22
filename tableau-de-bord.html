@@ -2488,19 +2488,7 @@ document.addEventListener('DOMContentLoaded', function () {
 </details>
 </div>
 <div class="liste-recente" data-section="b3a-erreurs">
-<div class="dossiers-entete">
-<h2 class="tdb-10">🔴 Erreurs réelles du site (7 derniers jours)</h2>
-<span class="dossiers-compteur" id="erreurs-compteur"></span>
-</div>
-<p class="tdb-12">Chaque problème vécu par un vrai visiteur est enregistré ici automatiquement : affichage (page qui dépasse, zoom qui change tout seul, blocs qui sautent, page vide), connexion et lenteur, photos, code du site, sécurité. Chaque fiche dit <strong>où</strong> (page, élément, appareil, dernier clic), <strong>ce qui s'est passé</strong> en clair et <strong>que faire</strong>. Les 🔴 sont à corriger en priorité, les 🟠 à surveiller. Les lenteurs dues à la connexion des visiteurs ne sont plus listées : une seule ligne les compte. Touchez une case de couleur pour ne voir que ces erreurs, puis « Copier pour Claude » pour les envoyer toutes d’un coup. S’il y en a beaucoup, « Télécharger le fichier pour Claude » crée un fichier complet, rangé par gravité, à joindre à la conversation (rien n’est coupé). Une erreur corrigée disparaît toute seule ; si elle est encore là, c’est qu’elle n’est pas réglée. Une liste vide est bon signe.</p>
-<p class="journal-nettoyage" id="erreurs-nettoyage" hidden></p>
-<p class="journal-connexion" id="erreurs-connexion" hidden></p>
-<div id="erreurs-resume"></div>
-<button class="btn journal-btn journal-copier-tout" id="erreurs-telecharger-btn" type="button" hidden>⬇️ Télécharger le fichier pour Claude (toutes les erreurs)</button>
-<button class="btn journal-btn journal-copier-tout" id="erreurs-copier-tout-btn" type="button" hidden>📋 Copier pour Claude</button>
-<div id="liste-erreurs"></div>
-<button class="btn journal-btn journal-copier-tout" id="erreurs-copier-tout-bas-btn" type="button" hidden>📋 Copier pour Claude</button>
-<button class="btn tdb-18" id="erreurs-tout-effacer-btn">Tout marquer comme vu (effacer le journal)</button>
+<div id="erreurs-racine"></div>
 </div>
 
 <div class="liste-recente" data-section="b2-candidatures">
@@ -2758,7 +2746,9 @@ document.addEventListener('DOMContentLoaded', function () {
 <script src="js/convocations-gabarit.js?v=ce45ba1d"></script>
 <script src="js/convocations-page.js?v=29c1c680"></script>
 <script src="js/convocations-admin.js?v=b99bfe62"></script>
-<script src="js/tableau-de-bord.js?v=34da88ab"></script>
+<script src="js/erreurs-gabarit.js?v=ac2e668b"></script>
+<script src="js/erreurs-site.js?v=8c5525a8"></script>
+<script src="js/tableau-de-bord.js?v=0ef0efdb"></script>
 <script src="js/note-integration.js?v=1b31b051"></script>
 
 <script id="ma2m-final-visual-guard">

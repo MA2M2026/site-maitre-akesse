@@ -108,6 +108,11 @@ function donnees(role) {
         { code: 'MA2M-FAIT01', utilise: true, utilise_le: '2026-10-05T10:00:00Z', created_at: '2026-09-20T10:00:00Z', candidature: { full_name: 'AWA KONÉ' } }];
       d.rpc.casting_direct_creer = () => ({ code: 'MA2M-DIRECT' });
       d.rpc.nettoyer_photos_traitees_anciennes = 3;
+      const ilYa = (h) => new Date(Date.now() - h * 3600e3).toISOString();
+      d.tables.journal_erreurs = [
+        { id: 'j1', message: '[Erreur JavaScript] x is not defined', page: '/mannequins', pile: 'at f (app.js:1:2)', user_agent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)', created_at: ilYa(2) },
+        { id: 'j2', message: '[Clics répétés] bouton « Envoyer » touché 4 fois', page: '/contact', pile: '', user_agent: 'Mozilla/5.0 (Linux; Android 13)', created_at: ilYa(5) },
+        { id: 'j3', message: '[Page très lente] 14 s', page: '/', pile: '', user_agent: 'Mozilla/5.0 (Linux; Android 12)', created_at: ilYa(9) }];
       d.tables.evenement_photos = [{ id: 'ep1', evenement_id: 'e1', url: photo(6), chemin: 'site/evenements/e1/1.jpg' }];
       d.tables.inscriptions_mannequins = [{ id: 'i1', full_name: 'KADI SORO', genre: 'femme', date_naissance: '2001-02-02', statut: 'payée' }, { id: 'i2', full_name: 'PETIT ZIE', genre: 'homme', date_naissance: '2015-02-02', statut: 'payée' }];
       d.rpc.contacts_mannequins_admin = d.tables.model_profiles.filter((p) => /^m\d+$/.test(p.id)).map((p) => ({ model_id: p.id, phone: '0700000099' }));

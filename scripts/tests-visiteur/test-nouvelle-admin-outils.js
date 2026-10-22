@@ -63,6 +63,17 @@ const api = (journal, chemin, motif) => journal.filter((j) => j[0] === 'API' && 
     ok(!!(await p.$('#nettoyage-supabase-btn')), n + 'outil de nettoyage Supabase présent');
     await capture(p, 'nettoyage' + suffixe);
 
+    // 5. Erreurs du site (écran partagé) : classées par gravité, copie pour Claude, « Réglé — effacer »
+    await p.goto(URL_ADMIN + '#/site/b3a-erreurs'); await p.waitForSelector('#liste-erreurs'); await p.waitForSelector('.journal-carte', { timeout: 8000 }).catch(() => {});
+    await p.waitForTimeout(800);
+    const resume = await p.innerText('#erreurs-resume');
+    ok(/1\s*À corriger/i.test(resume.replace(/\n/g, ' ')) && /1\s*À surveiller/i.test(resume.replace(/\n/g, ' ')) && (await p.$$('.journal-carte')).length >= 2 && !(await p.isHidden('#erreurs-connexion')), n + 'erreurs : une à corriger, une à surveiller, la lenteur regroupée en une ligne');
+    await capture(p, 'erreurs' + suffixe);
+    await p.click('[data-journal-copier="0"]'); await p.waitForTimeout(500);
+    ok(/Copié|copié/.test(await p.textContent('[data-journal-copier="0"]')), n + 'fiche copiée pour Claude');
+    await p.click('[data-journal-effacer="0"]'); await p.waitForTimeout(1200);
+    ok(journal.some((j) => j[0] === 'DELETE' && j[1] === 'journal_erreurs'), n + '« Réglé — effacer » efface ce signalement après confirmation');
+
     const pales = await lirePageEntiere(p);
     ok(!pales.length, n + 'textes lisibles ' + pales.slice(0, 4).map((x) => x.texte.slice(0, 20) + ' (' + x.contraste + ')').join(', '));
     for (const page of ['b3b-codes-inscription', 'b3b-acces-bloques']) {

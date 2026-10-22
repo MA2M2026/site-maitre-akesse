@@ -1,10 +1,10 @@
 // Journal des erreurs (tableau de bord) : avec de vraies lignes du journal de la propriétaire
 // (12/10/2026), vérifie ce que le nettoyage automatique efface (js/erreurs-corrigees.js) et
-// comment le reste est classé (REGLES_ERREURS, js/tableau-de-bord.js). Rien n'est écrit.
+// comment le reste est classé (REGLES_ERREURS, js/erreurs-site.js). Rien n'est écrit.
 const fs = require('fs'); const path = require('path');
 const racine = path.resolve(__dirname, '../..');
 const window = {}; eval(fs.readFileSync(path.join(racine, 'js/erreurs-corrigees.js'), 'utf8'));
-const tdb = fs.readFileSync(path.join(racine, 'js/tableau-de-bord.js'), 'utf8');
+const tdb = fs.readFileSync(path.join(racine, 'js/erreurs-site.js'), 'utf8');
 const debut = tdb.indexOf('const REGLES_ERREURS = '), fin = tdb.indexOf('\n}\n', tdb.indexOf('function analyserErreur(')) + 2;
 eval(tdb.slice(debut, fin)); // règles de classement + analyserErreur, telles quelles
 const debutC = tdb.indexOf('function regleCorrespond('), finC = tdb.indexOf('\n}\n', tdb.indexOf('function estErreurCorrigee(')) + 2;

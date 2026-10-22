@@ -1,7 +1,7 @@
 // Nouvelle Administration — bloc 1 « Administration du site », reconstruit à neuf, rubrique par
 // rubrique (PLAN-NOUVELLE-ADMINISTRATION.md). Plus de cadre vers l'ancien tableau de bord :
 // chaque rubrique est une page du portail, dans un fichier js/admin/site-*.js qui l'ajoute à
-// P.espaces.site.pages. Une rubrique pas encore reconstruite l'indique clairement.
+// P.espaces.site.pages.
 (function () {
   'use strict';
   const P = window.Portail;
@@ -26,13 +26,7 @@
     ['b3b-codes-inscription', 'Codes d’accès'], ['b3b-acces-bloques', 'Accès bloqués'], ['b3a-drive', 'Drive et transferts'],
     ['b3a-nettoyage', 'Nettoyage des photos'], ['b3a-erreurs', 'Erreurs du site']
   ];
-  const pages = {};
-  MENU.forEach((m) => {
-    if (!m[0]) return;
-    pages[m[0]] = async () => P.entete(m[1]) +
-      '<div class="carte"><h2>Pièce en construction</h2><p class="doux">Cette rubrique est en cours de reconstruction dans la nouvelle Administration. ' +
-      'Elle reste disponible dans l’Administration actuelle en attendant.</p></div>';
-  });
+  const pages = {};  // remplies par les pièces js/admin/site-*.js (toutes reconstruites le 22/10/2026)
   // Pièces réservées (middleware.js) : la clé d'accès est posée par le serveur après la double
   // authentification (api/acces-tableau.js), puis les pièces sont chargées une seule fois, dans
   // l'ordre. Sans clé (compte sans droit), elles restent introuvables : la page le dit.
@@ -45,7 +39,8 @@
     '/js/publications.js', '/js/partenaires-communs.js', '/js/admin/site-contenu.js', '/js/admin/site-vitrine.js',
     '/js/agenda-gabarit.js', '/js/agenda-admin.js', '/js/admin/site-agenda.js',
     '/js/video-accueil-gabarit.js', '/js/couverture-admin.js', '/js/admin/site-video.js',
-    '/js/note-integration.js', '/js/nettoyage-supabase.js', '/js/admin/site-acces.js'];
+    '/js/note-integration.js', '/js/nettoyage-supabase.js', '/js/admin/site-acces.js',
+    '/js/erreurs-corrigees.js', '/js/erreurs-gabarit.js', '/js/erreurs-site.js', '/js/admin/site-erreurs.js'];
   const charges = new Set();  // une pièce déjà chargée ne l'est jamais deux fois
   const charger = (src) => charges.has(src) ? Promise.resolve() : new Promise((ok, ko) => {
     const s = document.createElement('script');
