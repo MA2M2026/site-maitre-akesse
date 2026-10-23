@@ -18,12 +18,14 @@
   let dernierCode = null;  // code créé à l'instant (montré en haut de la page)
   function carteCode(c) {
     const nom = c.candidature && c.candidature.full_name;
-    return '<div class="code-ligne"><span class="code-valeur">' + P.esc(c.code) + '</span><span class="t">' + (nom ? P.esc(nom) : '<span class="doux">Ancien code sans nom</span>') +
+    // le nom ouvre la candidature, sa photo vient se placer devant (js/admin/coque.js)
+    const qui = nom && c.candidature_id ? '<a href="#/site/b2-candidatures/' + P.esc(c.candidature_id) + '">' + P.esc(nom) + '</a>' : nom ? P.esc(nom) : '<span class="doux">Ancien code sans nom</span>';
+    return '<div class="code-ligne"><span class="code-valeur">' + P.esc(c.code) + '</span><span class="t">' + qui +
       '<small>' + (c.utilise ? 'utilisé le ' + P.date(c.utilise_le || c.created_at) : 'créé le ' + P.date(c.created_at)) + '</small></span>' +
       (c.utilise ? P.pastille('Utilisé', 'neutre') : '<button type="button" class="btn petit" data-action="code-copier" data-code="' + P.esc(c.code) + '">Copier</button>') + '</div>';
   }
   async function pageCodes() {
-    const codes = await P.bd(sb.from('codes_inscription').select('code, utilise, utilise_le, created_at, candidature:casting_applications(full_name)').order('created_at', { ascending: false }).limit(200));
+    const codes = await P.bd(sb.from('codes_inscription').select('code, utilise, utilise_le, created_at, candidature_id, candidature:casting_applications(full_name)').order('created_at', { ascending: false }).limit(200));
     const libres = codes.filter((c) => !c.utilise), utilises = codes.filter((c) => c.utilise);
     const nouveau = dernierCode ? '<section class="carte nouveau-code"><span class="surtitre">Code créé pour ' + P.esc(dernierCode.nom) + '</span><p class="code-grand">' + P.esc(dernierCode.code) + '</p>' +
       '<div class="ligne"><button type="button" class="btn" data-action="code-copier" data-code="' + P.esc(dernierCode.code) + '">Copier</button>' +

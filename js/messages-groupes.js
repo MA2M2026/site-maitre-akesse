@@ -172,6 +172,8 @@ window.demarrerMessagesGroupes = function () {
   function afficherListe() {
     $('mg-resume').textContent = destinataires.length ? '' : 'Personne dans ce groupe.';
     const mails = datesEnvoi('email'), was = datesEnvoi('wa');
+    // candidatures : leur photo devant le nom (js/admin/coque.js, nouvelle Administration seulement)
+    const avecPhoto = !!window.Portail && $('mg-source').value !== 'inscription';
     $('mg-liste').innerHTML = destinataires.map((d, i) => {
       const envois = [
         d.id in mails ? '✉️ e-mail envoyé' + (mails[d.id] ? ' le ' + dateCourte(mails[d.id]) : '') : '',
@@ -180,7 +182,7 @@ window.demarrerMessagesGroupes = function () {
       return `
       <label class="mg-personne">
         <input type="checkbox" data-i="${i}" ${d.choisi ? 'checked' : ''}>
-        <span class="mg-nom">${echapper(d.full_name || '—')}</span>
+        <span class="mg-nom">${avecPhoto ? `<span class="mg-visage" data-visage-candidature="${echapper(d.id)}" data-nom="${echapper(d.full_name || '')}"></span>` : ''}${echapper(d.full_name || '—')}</span>
         <span class="mg-infos">${contactsEnvoi(d).parent ? '👨‍👩‍👧 Parent : ' + echapper(salutationParent(d.parent_nom)) + ' · ' : ''}${echapper([contactsEnvoi(d).email, contactsEnvoi(d).phone].filter(Boolean).join(' · ') || 'aucun contact')}
           <span class="mg-date">Postulé le ${dateCourte(d.created_at)}</span>${envois ? `<span class="mg-envoye">${envois}</span>` : ''}</span>
       </label>`;

@@ -44,13 +44,8 @@ window.demarrerConvocationsPage = function (racine) {
     mannequins.forEach(function (p) {
       var libelle = p.full_name + (p.published ? '' : ' (profil non publié)');
       if (!visages) { boite.appendChild(caseACocher(p.id, libelle, 'cv-mannequin', p.full_name)); return; }
-      // un visage par mannequin : on le touche pour le choisir (la case reste lue par les lecteurs d'écran)
-      var l = document.createElement('label');
-      l.className = 'choix-visage';
-      l.dataset.nom = String(p.full_name).toLowerCase();
-      l.innerHTML = '<input type="checkbox" name="cv-mannequin" value="' + window.Portail.esc(p.id) + '">' + window.Portail.visage(visages[p.id], p.full_name) +
-        '<span class="choix-nom">' + window.Portail.esc(libelle) + '</span><span class="choix-coche" aria-hidden="true">✓</span>';
-      boite.appendChild(l);
+      // un visage par mannequin : on le touche pour le choisir (caseVisage, js/agenda-outils.js)
+      boite.appendChild(caseVisage(p.id, libelle, 'cv-mannequin', visages[p.id], p.full_name));
     });
     if (!mannequins.length) boite.textContent = 'Aucun mannequin trouvé.';
     majCompte();
@@ -204,7 +199,7 @@ window.demarrerConvocationsPage = function (racine) {
     if (erreur) { boite.textContent = 'Impossible de charger les réponses : ' + erreur.error.message; return; }
     // un(e) mineur(e) et son parent ont le même model_id : une seule personne dans les réponses
     var personnes = (r[0].data || []).map(function (x) {
-      return { cle: 'p' + x.id, groupe: x.model_id || 'p' + x.id, participant_id: x.id, nom: x.nom, telephone: x.telephone,
+      return { cle: 'p' + x.id, groupe: x.model_id || 'p' + x.id, model_id: x.model_id, participant_id: x.id, nom: x.nom, telephone: x.telephone,
         parent: x.parent, parent_nom: x.parent_nom, jeton: x.jeton, reponse: x.reponse, repondu_le: x.repondu_le };
     }).sort(function (a, b) { return String(a.nom).localeCompare(String(b.nom), 'fr'); });
     window.dessinerReponsesConvocation(boite, p, personnes, r[1].data || [], true);

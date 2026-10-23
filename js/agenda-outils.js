@@ -18,6 +18,18 @@ function caseACocher(valeur, libelle, nom, recherche) {
   l.dataset.nom = String(recherche || libelle).toLowerCase();
   return l;
 }
+// Case à cocher avec la photo de la mannequin (« mur de visages ») : on touche la photo pour la
+// choisir, le nom est dessous (la case reste lue par les lecteurs d'écran). Partagée par l'Agenda
+// et les Convocations (23/10/2026) ; demande la nouvelle Administration (window.Portail).
+function caseVisage(valeur, libelle, nom, photo, recherche) {
+  var P = window.Portail;
+  var l = document.createElement('label');
+  l.className = 'choix-visage';
+  l.dataset.nom = String(recherche || libelle).toLowerCase();
+  l.innerHTML = '<input type="checkbox" name="' + P.esc(nom) + '" value="' + P.esc(valeur) + '">' + P.visage(photo, recherche || libelle) +
+    '<span class="choix-nom">' + P.esc(libelle) + '</span><span class="choix-coche" aria-hidden="true">✓</span>';
+  return l;
+}
 function ligneDeuxChamps(boite, classe, champ1, champ2) {
   var l = document.createElement('div');
   l.className = classe;

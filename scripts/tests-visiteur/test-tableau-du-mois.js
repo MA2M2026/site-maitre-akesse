@@ -84,7 +84,8 @@ function donnees(role) {
     ok(/#\/paiements\/tableau/.test(p.url()), nomEcran + ' : l’espace 2 s’ouvre sur le « Tableau du mois »');
     const vide = await t();
     ok(/Le tableau est vide/.test(vide) && !/ROXANE/.test(vide.replace(/Choisir un mannequin.*/, '')) || /Le tableau est vide/.test(vide), nomEcran + ' : le tableau démarre vide');
-    ok((await p.$$('#suivi-choix option')).length >= 3, nomEcran + ' : la liste déroulante propose les mannequins');
+    await p.waitForSelector('.choix-visages .cvi-item .vis', { timeout: 3000 }).catch(() => {});
+    ok((await p.$$('.choix-visages .cvi-item')).length >= 3 && (await p.$$('.choix-visages .cvi-item .vis')).length >= 2, nomEcran + ' : les mannequins se choisissent par leur photo');
     // (titres de page en capitales depuis la refonte « Magazine » du 20/10/2026 : comparaison sans tenir compte des majuscules)
     for (const [page, mot] of [['recapitulatif', /Récapitulatif/i], ['matrice', /Paiements mois par mois/i], ['mensualites', /Mensualités/i], ['messages', /Messages/i]]) {
       await p.evaluate((h) => { location.hash = '#/paiements/' + h; }, page); await p.waitForTimeout(900);
@@ -92,14 +93,14 @@ function donnees(role) {
       ok(mot.test(tp) && /Aucun mannequin suivi pour l’instant/.test(tp) && !/KONÉ AWA|ROXANE/.test(tp.replace(/Aucun mannequin suivi.*/, '')) || (mot.test(tp) && /Aucun mannequin suivi/.test(tp)), nomEcran + ' : « ' + page + ' » ne montre aucun mannequin tant que personne n’est suivi, et le dit');
     }
     await p.evaluate(() => { location.hash = '#/paiements/tableau'; }); await p.waitForTimeout(900);
-    await p.selectOption('#suivi-choix', '__tous__'); await p.click('form[data-form="suivi-ajouter"] [type=submit]'); await p.waitForTimeout(1000);
-    const un = await p.$$eval('#suivi-choix option', (o) => o.length);
-    ok(un === 1, nomEcran + ' : « Tous les mannequins actifs » ajoute tout le monde à la liste');
+    await p.click('.cvi-item[data-valeur="__tous__"]'); await p.click('form[data-form="suivi-ajouter"] [type=submit]'); await p.waitForTimeout(1000);
+    const un = await p.$$eval('.choix-visages .cvi-item', (o) => o.length);
+    ok(un === 0, nomEcran + ' : « Tous les mannequins actifs » ajoute tout le monde à la liste');
     const nbLignes = (await p.$$('[data-action="suivi-retirer"]')).length;
     p.once('dialog', (dl) => dl.accept());
     await p.click('[data-action="suivi-retirer"]'); await p.waitForTimeout(800);
     ok((await p.$$('[data-action="suivi-retirer"]')).length === nbLignes - 1, nomEcran + ' : « Retirer » enlève une ligne du tableau');
-    await p.selectOption('#suivi-choix', { index: 1 }); await p.click('form[data-form="suivi-ajouter"] [type=submit]'); await p.waitForTimeout(1000);
+    await p.click('.cvi-item:not([data-valeur="__tous__"])'); await p.click('form[data-form="suivi-ajouter"] [type=submit]'); await p.waitForTimeout(1000);
     ok((await p.$$('[data-action="suivi-retirer"]')).length === nbLignes, nomEcran + ' : on peut remettre le mannequin retiré');
     for (const page of ['codes', 'registre']) {
       await p.evaluate((h) => { location.hash = '#/paiements/' + h; }, page); await p.waitForTimeout(900);

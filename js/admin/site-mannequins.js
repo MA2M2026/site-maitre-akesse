@@ -269,7 +269,7 @@
     const une = profils.find((p) => p.featured);
     return P.entete('Mannequin à la une') +
       '<p class="doux">Sa photo ouvre l’accueil du site. Sans mannequin à la une, l’accueil montre une photo au hasard.</p>' +
-      (une ? '<section class="carte une-actuelle">' + P.visage(photos[une.id], une.full_name, 'une-visage') + '<div><p class="surtitre">À la une en ce moment</p><h2>' + P.esc(une.full_name) + '</h2>' +
+      (une ? '<section class="carte une-actuelle"><a href="#/site/' + PAGE + '/' + P.esc(une.id) + '" class="visage-lien" tabindex="-1" aria-hidden="true">' + P.visage(photos[une.id], une.full_name, 'une-visage') + '</a><div><p class="surtitre">À la une en ce moment</p><h2><a href="#/site/' + PAGE + '/' + P.esc(une.id) + '" data-visage>' + P.esc(une.full_name) + '</a></h2>' +
         '<button type="button" class="btn" data-action="vedette-retirer">Retirer la mise en avant</button></div></section>' :
         '<div class="note info">Aucune mannequin à la une : l’accueil montre une photo au hasard.</div>') +
       '<h2>Choisir une mannequin</h2><div class="mannequins-grille">' + profils.map((p, i) => '<button type="button" class="mannequin-carte apparait' + (p.featured ? ' choisie' : '') + '" style="--i:' + Math.min(i, 14) + '" data-action="vedette-choisir" data-id="' + P.esc(p.id) + '" aria-pressed="' + !!p.featured + '">' +

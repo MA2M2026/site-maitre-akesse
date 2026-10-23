@@ -134,27 +134,118 @@
       ids.forEach((id) => { if (parCompte[compteDe[id]]) photoDuRegistre[id] = parCompte[compteDe[id]]; });
     }
   }
+  // Même règle pour les fiches du Book (#/site/b2-mannequins-publies/<id du profil>, 23/10/2026 :
+  // « partout où il y a le nom d'un mannequin, sa photo cliquable, avec son nom à côté »).
+  const photoDuProfil = {};  // id du profil → adresse de la photo ('' : pas de photo)
+  const photoDeCandidature = {};  // id de la candidature → première photo jointe
+  async function chercherPhotosProfils(ids) {
+    ids.forEach((id) => { photoDuProfil[id] = ''; });
+    for (const p of paquets(ids, 100)) Object.assign(photoDuProfil, await P.photosCouverture(p));
+  }
+  const FICHES = [
+    { liens: 'a[href^="#/paiements/fiche/"]', photos: photoDuRegistre, attribut: 'data-visage-registre',
+      chercher: (ids, liens) => { const compteDe = {}; liens.forEach((a) => { if (a.dataset.compte) compteDe[a.getAttribute('href').split('/').pop()] = a.dataset.compte; }); return chercherPhotos(ids, compteDe); } },
+    { liens: 'a[href^="#/site/b2-mannequins-publies/"]', photos: photoDuProfil, attribut: 'data-visage-profil', chercher: chercherPhotosProfils,
+      // (le lien du nom seulement : pas « CV », pas un lien qui porte déjà sa photo)
+      garde: (a) => /^#\/site\/b2-mannequins-publies\/[^/]+$/.test(a.getAttribute('href')) && !a.querySelector('img, .vis') },
+    // candidature (codes d'accès…) : sa première photo jointe (P.photosDossiers, js/admin/site-dossiers.js)
+    { liens: 'a[href^="#/site/b2-candidatures/"]', photos: photoDeCandidature, attribut: 'data-visage-candidature',
+      chercher: async (ids) => { ids.forEach((id) => { photoDeCandidature[id] = ''; }); if (P.photosDossiers) Object.assign(photoDeCandidature, await P.photosDossiers('b2-candidatures', ids)); },
+      garde: (a) => /^#\/site\/b2-candidatures\/[^/]+$/.test(a.getAttribute('href')) && !a.querySelector('img, .vis') }
+  ];
   function visagesDesFiches() {
-    const liens = [...document.querySelectorAll('#contenu a[href^="#/paiements/fiche/"]:not(.btn):not(.visage-lien):not([data-visage])')];
-    if (!liens.length) return;
-    const poser = (a) => {
-      const id = a.getAttribute('href').split('/').pop(), nom = a.textContent.trim();
-      const v = a.previousElementSibling && a.previousElementSibling.classList.contains('visage-lien') ? a.previousElementSibling : null;
-      const html = '<a class="visage-lien" href="' + P.esc(a.getAttribute('href')) + '" tabindex="-1" aria-hidden="true">' + P.visage(photoDuRegistre[id] || '', nom, 'rond-vis') + '</a>';
-      if (v) v.outerHTML = html; else a.insertAdjacentHTML('beforebegin', html);
-    };
-    liens.forEach((a) => { a.setAttribute('data-visage', ''); poser(a); });
+    FICHES.forEach((f) => {
+      const liens = [...document.querySelectorAll('#contenu ' + f.liens + ':not(.btn):not(.visage-lien):not([data-visage])')].filter((a) => !f.garde || f.garde(a));
+      // emplacements d'une photo dans une case à cocher ou un choix (la photo sélectionne, le nom est à côté)
+      const places = [...document.querySelectorAll('#contenu [' + f.attribut + ']:not([data-vu]), #fenetre [' + f.attribut + ']:not([data-vu])')];
+      if (!liens.length && !places.length) return;
+      const poserLien = (a) => {
+        const id = a.getAttribute('href').split('/').pop(), nom = a.textContent.trim();
+        const v = a.previousElementSibling && a.previousElementSibling.classList.contains('visage-lien') ? a.previousElementSibling : null;
+        const html = '<a class="visage-lien" href="' + P.esc(a.getAttribute('href')) + '" tabindex="-1" aria-hidden="true">' + P.visage(f.photos[id] || '', nom, 'rond-vis') + '</a>';
+        if (v) v.outerHTML = html; else a.insertAdjacentHTML('beforebegin', html);
+      };
+      const poserPlace = (el) => { el.setAttribute('data-vu', ''); el.innerHTML = P.visage(f.photos[el.getAttribute(f.attribut)] || '', el.dataset.nom || '', 'rond-vis'); };
+      liens.forEach((a) => { a.setAttribute('data-visage', ''); poserLien(a); });
+      places.forEach(poserPlace);
+      const idsLiens = liens.map((a) => a.getAttribute('href').split('/').pop());
+      const manquants = [...new Set(idsLiens.concat(places.map((el) => el.getAttribute(f.attribut))))].filter((id) => id && !(id in f.photos));
+      if (manquants.length) {
+        f.chercher(manquants, liens).then(() => {
+          liens.forEach((a) => { if (a.isConnected) poserLien(a); });
+          places.forEach((el) => { if (el.isConnected) poserPlace(el); });
+        }, () => { /* initiales gardées */ });
+      }
+    });
+  }
+  // Un nom écrit seul (tiers d'une écriture de la Comptabilité, bénéficiaire d'un cachet…) :
+  // emplacement <span data-visage-nom="Nom">. Si c'est une mannequin du registre, sa photo s'y
+  // place ; sinon (fournisseur, client…), rien.
+  const registreParNom = {};  // nom en minuscules → id du registre ('' : pas une mannequin)
+  async function chercherNoms(noms) {
+    noms.forEach((n) => { registreParNom[n.toLowerCase()] = ''; });
     const compteDe = {};
-    liens.forEach((a) => { if (a.dataset.compte) compteDe[a.getAttribute('href').split('/').pop()] = a.dataset.compte; });
-    const manquants = [...new Set(liens.map((a) => a.getAttribute('href').split('/').pop()))].filter((id) => !(id in photoDuRegistre));
-    if (manquants.length) chercherPhotos(manquants, compteDe).then(() => liens.forEach((a) => { if (a.isConnected) poser(a); }), () => { /* initiales gardées */ });
+    for (const p of paquets(noms, 50)) {
+      (await P.bd(sb.from('agence_mannequins').select('id, full_name, user_id').in('full_name', p))).forEach((l) => {
+        registreParNom[String(l.full_name).toLowerCase()] = l.id;
+        if (l.user_id) compteDe[l.id] = l.user_id;
+      });
+    }
+    const ids = [...new Set(Object.values(registreParNom).filter((id) => id && !(id in photoDuRegistre)))];
+    if (ids.length) await chercherPhotos(ids, compteDe);
+  }
+  function visagesParNom() {
+    const places = [...document.querySelectorAll('#contenu [data-visage-nom]:not([data-vu]), #fenetre [data-visage-nom]:not([data-vu])')];
+    if (!places.length) return;
+    const poser = (el) => {
+      const id = registreParNom[el.dataset.visageNom.toLowerCase()];
+      if (id === undefined) return;
+      el.setAttribute('data-vu', '');
+      el.innerHTML = id ? P.visage(photoDuRegistre[id] || '', el.dataset.visageNom, 'rond-vis') : '';
+    };
+    places.forEach(poser);
+    const inconnus = [...new Set(places.map((el) => el.dataset.visageNom).filter((n) => n && !(n.toLowerCase() in registreParNom)))];
+    if (inconnus.length) chercherNoms(inconnus).then(() => places.forEach((el) => { if (el.isConnected) poser(el); }), () => { /* pas de droit sur le registre : pas de photo */ });
   }
   // (regroupé : une seule passe après une rafale de changements, pas une par image des chiffres animés)
   let retouche = 0;
-  new MutationObserver(() => {
+  const retoucheur = new MutationObserver(() => {
     if (retouche) return;
-    retouche = setTimeout(() => { retouche = 0; etiqueterTableaux(); harmoniserEcransPartages(); replierSaisies(); rubriqueVisible(); visagesDesFiches(); }, 60);
-  }).observe(document.getElementById('app'), { childList: true, subtree: true });
+    retouche = setTimeout(() => { retouche = 0; etiqueterTableaux(); harmoniserEcransPartages(); replierSaisies(); rubriqueVisible(); visagesDesFiches(); visagesParNom(); }, 60);
+  });
+  retoucheur.observe(document.getElementById('app'), { childList: true, subtree: true });
+  // (la fenêtre par-dessus la page : ses choix à photos aussi)
+  new MutationObserver(() => { visagesDesFiches(); visagesParNom(); }).observe(document.getElementById('fenetre'), { childList: true, subtree: true });
+
+  // ---------- Choisir une mannequin par sa photo (23/10/2026) ----------
+  // Au lieu d'une liste déroulante de noms : une recherche et une grille de médaillons, le nom à
+  // côté. Le choix remplit un champ caché (nom du formulaire inchangé) et déclenche son
+  // data-change, comme la liste d'avant. items : [{ id, nom, note }] ; sorte : 'registre' (photo par
+  // le registre des Paiements) ou 'profil' (photo du Book) ; autres : [[valeur, libellé]] proposés
+  // en premier (« Personne extérieure », « Tous les mannequins »…).
+  P.choixVisages = (o) => {
+    const bouton = (valeur, contenu, nomTexte) => '<button type="button" class="cvi-item" role="option" aria-selected="' + (String(o.valeur || '') === String(valeur)) + '" data-valeur="' + P.esc(valeur) + '" data-texte="' + P.esc(String(nomTexte || '').toLowerCase()) + '">' + contenu + '</button>';
+    return '<div class="choix-visages large"><span class="fl-titre">' + P.esc(o.libelle || 'Mannequin') + '</span>' +
+      '<input type="hidden" id="' + P.esc(o.id) + '" name="' + P.esc(o.nom) + '" value="' + P.esc(o.valeur || '') + '"' + (o.change ? ' data-change="' + P.esc(o.change) + '"' : '') + '>' +
+      (o.items.length > 8 ? '<input type="search" class="cvi-recherche" placeholder="Rechercher un nom…" aria-label="Rechercher une mannequin">' : '') +
+      '<div class="cvi-grille" role="listbox" aria-label="' + P.esc(o.libelle || 'Mannequin') + '">' +
+      (o.autres || []).map((x) => bouton(x[0], '<span class="cvi-autre" aria-hidden="true">' + (x[2] || '＋') + '</span><span class="cvi-nom">' + P.esc(x[1]) + '</span>', x[1])).join('') +
+      o.items.map((m) => bouton(m.id, '<span data-visage-' + o.sorte + '="' + P.esc(m.id) + '" data-nom="' + P.esc(m.nom) + '"></span><span class="cvi-nom">' + P.esc(m.nom) + (m.note ? '<small class="doux">' + P.esc(m.note) + '</small>' : '') + '</span>', m.nom)).join('') +
+      '</div></div>';
+  };
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('.cvi-item');
+    if (!b) return;
+    const boite = b.closest('.choix-visages'), champ = boite.querySelector('input[type=hidden]');
+    boite.querySelectorAll('.cvi-item').forEach((x) => x.setAttribute('aria-selected', String(x === b)));
+    champ.value = b.dataset.valeur;
+    champ.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  document.addEventListener('input', (e) => {
+    if (!e.target.classList || !e.target.classList.contains('cvi-recherche')) return;
+    const q = e.target.value.trim().toLowerCase();
+    e.target.closest('.choix-visages').querySelectorAll('.cvi-item').forEach((x) => { x.hidden = !!q && !x.dataset.texte.includes(q); });
+  });
 
   P.compte = (n, suffixe) => '<span data-compte="' + (Number(n) || 0) + '"' + (suffixe ? ' data-suffixe="' + P.esc(suffixe) + '"' : '') + '>0' + P.esc(suffixe || '') + '</span>';
 
@@ -275,7 +366,7 @@
   function ruban(site) {
     const avecPhoto = site.profils.filter((m) => site.photos[m.id]);
     if (!avecPhoto.length) return '';
-    const carte = (m, cache) => '<a class="carte-vis" href="#/site/b2-mannequins-publies"' + (cache ? ' aria-hidden="true" tabindex="-1"' : '') + '>' + P.visage(site.photos[m.id], m.full_name) +
+    const carte = (m, cache) => '<a class="carte-vis" href="#/site/b2-mannequins-publies/' + P.esc(encodeURIComponent(m.id)) + '"' + (cache ? ' aria-hidden="true" tabindex="-1"' : '') + '>' + P.visage(site.photos[m.id], m.full_name) +
       '<b>' + P.esc(m.full_name) + '</b><span>' + P.esc([m.niveau_mannequin, m.city].filter(Boolean).join(' · ')) + '</span></a>';
     return '<div class="section-titre apparait" style="--i:4"><h2>Nos mannequins</h2><a href="#/site/b2-mannequins-publies">Tout voir →</a></div>' +
       '<div class="ruban apparait" style="--i:5"><div class="piste">' + avecPhoto.map((m) => carte(m, false)).join('') + avecPhoto.map((m) => carte(m, true)).join('') + '</div></div>';

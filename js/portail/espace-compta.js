@@ -100,7 +100,7 @@
   // ---------- Liste d'écritures (recettes, dépenses, virements) ----------
   function lignes(liste, nomsComptes) {
     return liste.map((e) => '<tr' + (e.annule ? ' class="annulee"' : '') + '><td>' + P.date(e.date_op) + '</td>' +
-      '<td><b>' + P.esc(e.libelle) + '</b>' + (e.tiers ? '<div class="petit-texte doux">' + P.esc(e.tiers) + '</div>' : '') +
+      '<td><b>' + P.esc(e.libelle) + '</b>' + (e.tiers ? '<div class="petit-texte doux tiers"><span data-visage-nom="' + P.esc(e.tiers) + '"></span>' + P.esc(e.tiers) + '</div>' : '') +
       (e.annule ? '<div class="petit-texte">' + P.pastille('Annulée', 'erreur') + ' ' + P.esc(e.motif_annulation) + '</div>' : '') + '</td>' +
       '<td>' + P.esc(categorie(e)) + (e.source === 'espace2' ? ' ' + P.pastille('Suivi des paiements · automatique', 'info') : '') + '</td>' +
       '<td>' + P.esc(nomsComptes[e.compte_id] || '—') + (e.compte_dest_id ? ' → ' + P.esc(nomsComptes[e.compte_dest_id] || '—') : '') + '</td>' +

@@ -164,7 +164,10 @@ window.demarrerFichesEvenement = function () {
     var P = window.Portail, visages = P && P.photosCouverture ? await P.photosCouverture(liste.map(function (m) { return m.id; })).catch(function () { return {}; }) : null;
     zone.innerHTML = liste.length ? liste.map(function (m) {
       var etat = remplies[m.id] ? '✓ informations événements remplies le ' + new Date(remplies[m.id]).toLocaleDateString('fr-FR') : 'informations événements pas encore remplies';
-      return '<div class="fe-ligne">' + (visages ? P.visage(visages[m.id], m.full_name, 'rond-vis medaillon') : '') + '<div class="fe-nom"><strong>' + echapper(m.full_name) + '</strong>' + (m.published ? '' : ' <span class="fe-non-publie">(non publiée)</span>') +
+      // photo et nom ouvrent la fiche de la mannequin (23/10/2026)
+      var fiche = '#/site/b2-mannequins-publies/' + encodeURIComponent(m.id);
+      return '<div class="fe-ligne">' + (visages ? '<a class="visage-lien" href="' + fiche + '" tabindex="-1" aria-hidden="true">' + P.visage(visages[m.id], m.full_name, 'rond-vis medaillon') + '</a>' : '') +
+        '<div class="fe-nom"><strong>' + (visages ? '<a href="' + fiche + '" data-visage>' + echapper(m.full_name) + '</a>' : echapper(m.full_name)) + '</strong>' + (m.published ? '' : ' <span class="fe-non-publie">(non publiée)</span>') +
         '<br><span class="fe-etat' + (remplies[m.id] ? ' ok' : '') + '">' + etat + '</span></div>' +
         '<button class="btn fe-btn" type="button" data-id="' + echapper(m.id) + '">⬇ Télécharger la fiche</button></div>';
     }).join('') : '<div class="dossiers-vide">Aucun mannequin.</div>';

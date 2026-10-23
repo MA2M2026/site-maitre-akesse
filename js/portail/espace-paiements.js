@@ -139,7 +139,7 @@
         '<button class="btn" type="button" data-action="registre-inscription" data-mode="wave" data-id="' + m.id + '">Paiement Wave reçu en dehors du site (' + P.fcfa(INSCRIPTION_FCFA) + ')</button>' +
         '<button class="btn" type="button" data-action="registre-inscription" data-mode="especes" data-id="' + m.id + '">Paiement en espèces (' + P.fcfa(INSCRIPTION_FCFA) + ')</button></div>'
       : '';
-    return P.entete(m.full_name, '<a class="btn" href="#/paiements/registre">Registre</a>') +
+    return P.entete(m.full_name, '<a class="btn" href="#/paiements/registre">Registre</a>', '<span class="titre-visage" data-visage-registre="' + P.esc(m.id) + '" data-nom="' + P.esc(m.full_name) + '"></span>') +
       '<div class="carte"><h2>Inscription</h2><p>' + P.pastille(e[0], e[1]) + '</p>' +
       (inscription ? '<p class="doux petit-texte">' + P.esc(MODES[inscription.mode]) + (inscription.montant ? ' · ' + P.fcfa(inscription.montant) : '') +
         (inscription.valide_le ? ' · validé le ' + P.dateHeure(inscription.valide_le) : '') + '</p>' : '') +
@@ -538,10 +538,11 @@
       P.pastille('Non payé : ' + (nb('non_paye') + nb('a_payer')), 'erreur') + '</div>' +
       (P.etat.suiviAbsent ? '<div class="note alerte">Le suivi par liste n’est pas encore activé <span class="petit-texte">(étape d’installation : « supabase-suivi-mannequins.sql »)</span>. En attendant, tous les mannequins actifs sont montrés.</div>' : '') +
       '<form class="carte f" data-form="suivi-ajouter"><h2>Mannequins suivis</h2><p class="doux">Choisissez dans la liste les mannequins à suivre ce mois-ci. Retirer un mannequin du tableau ne supprime rien.</p>' +
-        '<div class="ligne"><label class="fl" for="suivi-choix">Mannequin<select id="suivi-choix" name="mannequin"><option value="">— Choisir un mannequin —</option>' +
-        (proposes.length > 1 ? '<option value="__tous__">Tous les mannequins actifs</option>' : '') +
-        proposes.map((m) => '<option value="' + P.esc(m.id) + '">' + P.esc(m.full_name) + (m.user_id ? '' : ' (non inscrit sur le site)') + '</option>').join('') +
-        '</select></label><button class="btn rouge" type="submit">Ajouter au tableau</button>' +
+        // choix par la photo (P.choixVisages, js/admin/coque.js, 23/10/2026)
+        P.choixVisages({ id: 'suivi-choix', nom: 'mannequin', libelle: 'Mannequin', sorte: 'registre',
+          autres: proposes.length > 1 ? [['__tous__', 'Tous les mannequins actifs', '★']] : [],
+          items: proposes.map((m) => ({ id: m.id, nom: m.full_name, note: m.user_id ? '' : 'non inscrit sur le site' })) }) +
+        '<div class="ligne"><button class="btn rouge" type="submit">Ajouter au tableau</button>' +
         '<a class="btn" href="#/paiements/ajouter">＋ Nouveau mannequin</a></div></form>' +
       '<div class="segments" role="group" aria-label="Groupe">' + FILTRES_GROUPE.map((f) => '<button class="btn petit' + (f[0] === filtre ? ' actif' : '') + '" type="button" data-action="tableau-filtre" data-filtre="' + f[0] + '">' + P.esc(f[1]) + '</button>').join('') + '</div>' +
       '<div class="carte">' + (montrees.length ? P.tableau(['Mannequin', 'Groupe', '#Montant', 'Statut', 'Action'], montrees.map((x) =>

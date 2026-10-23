@@ -42,8 +42,10 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
       n + 'mannequin mineure : le reçu part à son parent, qui est salué');
     ok(await p.$('#menu-lateral a.nav[href="#/compta/cachets"]') !== null, n + '« Payer les mannequins » dans le menu de la Comptabilité');
     // 1. mannequin du registre : nom et numéro remplis d'office
-    await p.click('[data-action="cachet-nouveau"]'); await p.waitForSelector('#ca-qui');
-    await p.selectOption('#ca-qui', 'r0'); await p.waitForTimeout(200);
+    await p.click('[data-action="cachet-nouveau"]'); await p.waitForSelector('#ca-qui', { state: 'attached' }); await p.waitForTimeout(600);
+    // la mannequin se choisit par sa photo (23/10/2026)
+    ok((await p.$$('.choix-visages .cvi-item .vis')).length >= 1 && await p.isVisible('.cvi-item[data-valeur="r0"]'), n + '« Qui ? » : les mannequins du registre avec leur photo');
+    await p.click('.cvi-item[data-valeur="r0"]'); await p.waitForTimeout(200);
     ok(await p.inputValue('#ca-nom') === 'AYA KOUASSI' && await p.inputValue('#ca-tel') === '0700000010', n + 'mannequin du registre : nom et numéro remplis');
     await p.selectOption('#ca-projet', 'p1'); await p.fill('#ca-montant', '25000');
     // motif choisi dans une liste (22/10/2026)

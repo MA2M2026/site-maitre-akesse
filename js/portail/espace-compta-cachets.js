@@ -28,7 +28,10 @@
   const K = window.CachetsMa2m;
   const pourcent = (x) => String(Number(x)).replace('.', ',') + ' %';
   // nom : lien vers la fiche (et sa photo en médaillon, js/admin/coque.js) pour qui voit les Paiements
-  const nom = (c) => (c.agence_mannequin_id && P.lienFiche && P.moi.espaces.paiements ? P.lienFiche(c.agence_mannequin_id, c.beneficiaire) : '<b>' + P.esc(c.beneficiaire) + '</b>');
+  // (sans accès aux Paiements, ou cachet saisi sans la lier au registre : sa photo seule, cherchée
+  // par son nom, js/admin/coque.js)
+  const nom = (c) => (c.agence_mannequin_id && P.lienFiche && P.moi.espaces.paiements ? P.lienFiche(c.agence_mannequin_id, c.beneficiaire)
+    : '<span data-visage-nom="' + P.esc(c.beneficiaire) + '"></span><b>' + P.esc(c.beneficiaire) + '</b>');
 
   // Reçu sur WhatsApp : à la mannequin, ou à son parent si elle est mineure (règle de toute
   // l'Administration : les messages d'un mineur vont au parent)
@@ -80,8 +83,9 @@
   P.actions['cachet-nouveau'] = () => {
     const registre = P.etat.cachetsRegistre || [], tpl = document.getElementById('cachet-projets');
     P.fenetre('<form class="f" data-form="cachet-ajouter"><h2 class="large">Nouveau cachet à payer</h2>' +
-      '<label class="fl large" for="ca-qui">Qui ?<select id="ca-qui" name="qui" data-change="cachet-qui"><option value="">— Personne extérieure (nom et numéro) —</option>' +
-      registre.map((m) => '<option value="' + m.id + '">' + P.esc(m.full_name) + '</option>').join('') + '</select></label>' +
+      // qui : par sa photo (P.choixVisages, js/admin/coque.js, 23/10/2026)
+      P.choixVisages({ id: 'ca-qui', nom: 'qui', libelle: 'Qui ?', sorte: 'registre', change: 'cachet-qui', valeur: '',
+        autres: [['', 'Personne extérieure (nom et numéro)', '＋']], items: registre.map((m) => ({ id: m.id, nom: m.full_name })) }) +
       '<label class="fl" for="ca-nom">Nom et prénoms<input id="ca-nom" name="nom" maxlength="160" required></label>' +
       '<label class="fl" for="ca-tel">Numéro Wave<input id="ca-tel" name="telephone" type="tel" inputmode="tel" required placeholder="07 07 07 07 07"></label>' +
       '<label class="fl" for="ca-projet">Projet de l’agenda (facultatif)<select id="ca-projet" name="projet"><option value="">—</option>' + (tpl ? tpl.innerHTML : '') + '</select></label>' +
@@ -93,7 +97,7 @@
         '<input id="ca-montant" name="montant" type="number" inputmode="numeric" min="1" max="5000000" step="1" required data-change="cachet-montant" data-direct></label>' +
       (commission === null ? '' : '<p class="large doux" id="ca-calcul" role="status">Commission de l’agence ' + pourcent(commission) + ' · à verser à la mannequin : —</p>') +
       '<div class="ligne large"><button class="btn rouge" type="submit">Ajouter à payer</button><button class="btn" type="button" data-action="fermer-fenetre">Annuler</button></div></form>');
-    document.getElementById('ca-qui').focus();
+    document.getElementById('ca-nom').focus();
   };
   // une mannequin du registre : nom et numéro remplis d'office (modifiables)
   P.changements['cachet-qui'] = (el) => {

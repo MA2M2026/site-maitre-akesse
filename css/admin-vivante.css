@@ -910,3 +910,27 @@ form.f .f-sous[hidden] { display: none; }
 .pl-choix .vis { width: 32px; height: 32px; }
 .pl-liste-choix { max-height: 60vh; overflow: auto; margin-top: 10px; }
 .pl-apercu { white-space: pre-wrap; word-break: break-word; background: var(--av-papier, #fff); border-radius: 10px; padding: 12px; font-size: 14px; max-height: 40vh; overflow: auto; }
+/* Photos cliquables partout où un nom de mannequin apparaît (23/10/2026, js/admin/coque.js) */
+a.podium-place, a.classement-ligne { color: inherit; text-decoration: none; }
+a.podium-place:hover b, a.classement-ligne:hover .classement-nom { text-decoration: underline; }
+.agenda-noms { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+.agenda-noms .visage-lien .vis, .convoc-reponse .visage-lien .vis, .convoc-envoi .visage-lien .vis { width: 26px; height: 26px; font-size: 10px; }
+.convoc-reponse, .convoc-envoi strong { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.convoc-visage { display: inline-block; vertical-align: middle; margin-right: 8px; }
+.convoc-visage .vis { width: 36px; height: 36px; font-size: 12px; }
+/* choisir une mannequin par sa photo (P.choixVisages) */
+.choix-visages { display: grid; gap: 8px; }
+.choix-visages .fl-titre { font-size: 13px; font-weight: 600; }
+.cvi-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; max-height: 22rem; overflow: auto; padding: 4px; }
+.cvi-item { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 4px; border: 2px solid transparent; border-radius: 14px; background: none; cursor: pointer; font: inherit; color: inherit; text-align: center; }
+.cvi-item[hidden] { display: none; }
+.cvi-item .vis, .cvi-autre { width: 64px; height: 64px; border-radius: 50%; font-size: 20px; }
+.cvi-autre { display: grid; place-items: center; background: var(--av-papier-fonce, #e9e1d6); font-size: 26px; }
+.cvi-nom { font-size: 13px; line-height: 1.25; display: grid; }
+.cvi-item[aria-selected="true"] { border-color: var(--av-rouge); background: rgba(200, 16, 46, 0.06); }
+.cvi-item:focus-visible { outline: 3px solid var(--av-encre); }
+.titre-visage, .titre-visage.vis { display: inline-block; vertical-align: middle; margin-right: 12px; }
+.titre-visage .vis, .vis.titre-visage { width: 52px; height: 52px; font-size: 16px; }
+[data-visage-nom] .vis { display: inline-block; vertical-align: middle; width: 26px; height: 26px; font-size: 10px; margin-right: 6px; }
+.mg-visage { display: inline-block; vertical-align: middle; margin-right: 8px; }
+.mg-visage .vis { width: 34px; height: 34px; font-size: 12px; }

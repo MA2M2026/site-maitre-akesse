@@ -110,10 +110,12 @@
     const nom = {}; profils.forEach((p) => { nom[p.id] = p.full_name; });
     const max = Math.max(1, top[0].nb_visites || 0);
     const PRIX = ['✦ 1re place', '✦ 2e place', '✦ 3e place'];
-    const podium = top.slice(0, 3).map((s, i) => '<div class="podium-place place-' + (i + 1) + ' apparait" style="--i:' + i + '">' + P.visage(photos[s.model_id], nom[s.model_id], 'podium-visage') +
-      '<span class="podium-prix">' + PRIX[i] + '</span><b>' + P.esc(nom[s.model_id] || 'Mannequin') + '</b><span class="doux">' + pluriel(s.nb_visites || 0, 'visite', 'visites') + '</span></div>').join('');
-    const classement = top.map((s, i) => '<div class="classement-ligne apparait" style="--i:' + i + '"><span class="rang">' + (i + 1) + '</span>' + P.visage(photos[s.model_id], nom[s.model_id], 'rond-vis classement-visage') +
-      '<span class="classement-nom">' + P.esc(nom[s.model_id] || 'Mannequin') + '<span class="piste"><i style="width:' + Math.max(4, Math.round(100 * (s.nb_visites || 0) / max)) + '%"></i></span></span><b>' + (s.nb_visites || 0) + '</b></div>').join('');
+    // photo et nom ouvrent la fiche de la mannequin (23/10/2026)
+    const fiche = (id) => '#/site/b2-mannequins-publies/' + encodeURIComponent(id);
+    const podium = top.slice(0, 3).map((s, i) => '<a class="podium-place place-' + (i + 1) + ' apparait" style="--i:' + i + '" href="' + P.esc(fiche(s.model_id)) + '">' + P.visage(photos[s.model_id], nom[s.model_id], 'podium-visage') +
+      '<span class="podium-prix">' + PRIX[i] + '</span><b>' + P.esc(nom[s.model_id] || 'Mannequin') + '</b><span class="doux">' + pluriel(s.nb_visites || 0, 'visite', 'visites') + '</span></a>').join('');
+    const classement = top.map((s, i) => '<a class="classement-ligne apparait" style="--i:' + i + '" href="' + P.esc(fiche(s.model_id)) + '"><span class="rang">' + (i + 1) + '</span>' + P.visage(photos[s.model_id], nom[s.model_id], 'rond-vis classement-visage') +
+      '<span class="classement-nom">' + P.esc(nom[s.model_id] || 'Mannequin') + '<span class="piste"><i style="width:' + Math.max(4, Math.round(100 * (s.nb_visites || 0) / max)) + '%"></i></span></span><b>' + (s.nb_visites || 0) + '</b></a>').join('');
     return P.entete('Top 3 et classement', '<span class="doux">Visites des fiches sur 7 jours</span>') + '<div class="podium">' + podium + '</div>' +
       '<section class="carte"><h2>Les 10 fiches les plus visitées</h2><div class="classement">' + classement + '</div>' +
       (tri.length > 10 ? '<p class="doux petit-texte">+' + (tri.length - 10) + ' autres mannequins</p>' : '') + '</section>';

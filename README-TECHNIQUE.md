@@ -321,6 +321,25 @@ demandait à revenir sur `admin.…` retombait sur l'accueil public. Invitations
 gardant la clé du lien (le « # »). E-mail d'invitation en français : modèle « Invite user » de Supabase.
 Essai : `test-retour-invitation.js`.
 
+## 🖼️ Photos des mannequins partout dans l'Administration (23/10/2026)
+Demande de la propriétaire : partout où le nom d'une mannequin est écrit, sa photo à côté ; quand
+on doit la choisir ou l'ouvrir, c'est la photo (avec le nom) qu'on touche. Tout passe par
+`js/admin/coque.js`, sans recopie :
+- **liens vers une fiche** : un écran écrit seulement le lien du nom — `#/paiements/fiche/<registre>`,
+  `#/site/b2-mannequins-publies/<profil>` ou `#/site/b2-candidatures/<candidature>` — et
+  `visagesDesFiches` place la photo cliquable devant (photos cherchées par paquets, une fois) ;
+- **emplacements** `data-visage-registre` / `data-visage-profil` / `data-visage-candidature`
+  (+ `data-nom`) : la photo dans une case à cocher ou un titre (fiche Paiements, participants des
+  Convocations, Messages groupés) ; `data-visage-nom` : un nom seul (tiers de la Comptabilité,
+  bénéficiaire d'un cachet) — photo seulement si c'est une mannequin du registre ;
+- **choisir une mannequin** : `P.choixVisages` (grille de médaillons + recherche, champ caché au
+  même nom que l'ancienne liste déroulante) — « Mannequins suivis » (Paiements), « Qui ? » d'un
+  cachet ; cases à cocher à photo `caseVisage` (`js/agenda-outils.js`) — Agenda, Convocations ;
+- classement, mannequin à la une, fiches événement, accueil : photo et nom mènent à la fiche ;
+  fiche d'une candidature : sa première photo devant le nom (`P.photosDossiers`).
+Essai : `test-visages-partout.js` parcourt tous les écrans (et les fiches, panneaux et fenêtres
+qui s'ouvrent ensuite) et échoue si un nom de mannequin est sans photo.
+
 ## 🏁 Places limitées (premier arrivé, premier servi — 23/10/2026)
 - **Base** : `supabase-places.sql` (rejouable, après `supabase-convocations.sql`). `places_appels`
   (un par projet de l'agenda : `places_femmes`, `places_hommes`, `ouvert`) et `places_invitations`

@@ -44,6 +44,15 @@ window.demarrerConvocationsPanneau = function () {
     return envois.some(function (e) { return e.participant_id === pers.participant_id && e.sorte === sorteChoisie() && ['envoye', 'programme', 'a_faire', 'en_cours'].indexOf(e.statut) >= 0; });
   }
   function nomDe(pers) { return pers.parent ? pers.nom + ' (parent : ' + (pers.parent_nom || 'Madame, Monsieur') + ')' : pers.nom; }
+  // nom d'une mannequin inscrite : lien vers sa fiche, sa photo vient se placer devant
+  // (js/admin/coque.js, 23/10/2026) ; une personne non inscrite : son nom seul
+  function nomCliquable(pers) {
+    if (!pers.model_id || !window.Portail) { var s = document.createElement('span'); s.textContent = nomDe(pers); return s; }
+    var a = document.createElement('a');
+    a.href = '#/site/b2-mannequins-publies/' + encodeURIComponent(pers.model_id);
+    a.textContent = nomDe(pers);
+    return a;
+  }
 
   // ---------- Participants ----------
   // Mannequin du projet, coordonnées à jour. Mineur(e) (demande du 21/10/2026) : SON message à
@@ -86,6 +95,8 @@ window.demarrerConvocationsPanneau = function () {
       c.addEventListener('change', function () { pers.coche = c.checked; dessinerApercu(); });
       var t = document.createElement('span');
       var nom = document.createElement('strong'); nom.textContent = nomDe(pers);
+      // la photo de la mannequin : la toucher coche ou décoche, comme le nom
+      if (pers.model_id && window.Portail) { var v = document.createElement('span'); v.className = 'convoc-visage'; v.setAttribute('data-visage-profil', pers.model_id); v.dataset.nom = pers.nom; nom.prepend(v); }
       var details = document.createElement('small');
       details.textContent = [pers.email ? '📧 ' + pers.email : '', pers.telephone ? '💬 ' + pers.telephone : ''].filter(Boolean).join(' · ');
       t.appendChild(nom); t.appendChild(details);
@@ -209,9 +220,8 @@ window.demarrerConvocationsPanneau = function () {
       g[2].forEach(function (pers) {
         var l = document.createElement('div');
         l.className = 'convoc-reponse';
-        var n = document.createElement('span');
-        n.textContent = nomDe(pers) + (pers.repondu_le ? ' — ' + quand(pers.repondu_le) : '');
-        l.appendChild(n);
+        l.appendChild(nomCliquable(pers));
+        if (pers.repondu_le) { var quandRep = document.createElement('span'); quandRep.textContent = ' — ' + quand(pers.repondu_le); l.appendChild(quandRep); }
         if (tournee && faites(projet, tournee, faitesIci)[pers.participant_id]) {
           var fait = document.createElement('small'); fait.textContent = tournee === 'relance' ? '✓ relancé(e)' : '✓ rappel envoyé'; l.appendChild(fait);
         }
@@ -308,9 +318,10 @@ window.demarrerConvocationsPanneau = function () {
       var l = document.createElement('div');
       l.className = 'convoc-envoi' + (e.statut === 'a_faire' ? ' a-faire' : '');
       var t = document.createElement('div');
-      t.innerHTML = '<strong>' + echapperHtml(nomDe(pers)) + '</strong> · ' + CANAUX[e.canal] + ' · ' + SORTES[e.sorte]
+      t.innerHTML = '<strong></strong> · ' + CANAUX[e.canal] + ' · ' + SORTES[e.sorte]
         + '<br>' + STATUTS[e.statut] + ' — ' + (e.statut === 'envoye' && e.envoye_le ? 'le ' + echapperHtml(quand(e.envoye_le)) : 'prévu ' + echapperHtml(quand(e.prevu_le)))
         + (e.erreur && e.statut !== 'envoye' ? '<br><small class="convoc-manque">' + echapperHtml(e.erreur) + '</small>' : '');
+      t.querySelector('strong').appendChild(nomCliquable(pers));
       var actions = document.createElement('div');
       actions.className = 'convoc-actions';
       if (e.canal === 'whatsapp' && e.statut === 'a_faire' && lienWhatsApp(e)) {

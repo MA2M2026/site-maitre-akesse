@@ -108,6 +108,13 @@
     });
     return parDossier;
   }
+  // première photo de chaque dossier, pour les médaillons des autres écrans (codes d'accès…) :
+  // { idDossier: adresse } (js/admin/coque.js, 23/10/2026)
+  P.photosDossiers = async (page, ids) => {
+    const conf = Object.values(SOURCES).find((c) => c.page === page), parDossier = conf ? await photosDe(conf, ids) : {}, une = {};
+    Object.keys(parDossier).forEach((id) => { une[id] = parDossier[id][0].affiche; });
+    return une;
+  };
   // Visage d'un dossier (photo jointe, sinon initiales) ; l'adresse est déjà prête (pas de urlLegere)
   const visageDossier = (url, nom, classe) => '<span class="vis ' + (classe || '') + '"><span class="ini" aria-hidden="true">' + P.esc(P.initiales(nom)) + '</span>' +
     (url ? '<img src="' + P.esc(url) + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">' : '') + '</span>';
@@ -255,7 +262,7 @@
     const age = source === 'casting' ? ageDe(d) : null, mineur = age !== null && age < 18;
     const type = source === 'casting' ? typeDe(d) : null;
     return '<a class="retour-liste" href="#/site/' + conf.page + '">← ' + P.esc(conf.titre) + '</a>' +
-      '<header class="fiche-tete"><div><h1>' + P.esc(nomDe(source, d)) + (mineur ? ' ' + P.pastille((d.genre === 'femme' ? 'Mineure' : 'Mineur') + ' — ' + age + ' ans', 'info') : '') + '</h1>' +
+      '<header class="fiche-tete"><div><h1>' + (conf.photos ? visageDossier(fiche.photos[0] && fiche.photos[0].affiche, nomDe(source, d), 'rond-vis titre-visage') : '') + P.esc(nomDe(source, d)) + (mineur ? ' ' + P.pastille((d.genre === 'femme' ? 'Mineure' : 'Mineur') + ' — ' + age + ' ans', 'info') : '') + '</h1>' +
       '<p class="doux">' + P.esc(conf.reçue + dateFr(d.created_at) + (type ? ' · Postule pour : ' + type : '')) + '</p></div>' +
       P.pastille(conf.libelles[d[conf.champStatut]] || d[conf.champStatut] || '', TONS[d[conf.champStatut]]) + '</header>' +
       blocPhotos(source) +

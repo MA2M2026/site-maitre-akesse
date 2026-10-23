@@ -107,9 +107,13 @@ window.demarrerAgendaAdmin = function (racine) {
     mannequins = (r[0].data || []).filter(function (p) { return p.full_name; })
       .sort(function (a, b) { return a.full_name.localeCompare(b.full_name, 'fr'); });
     partenaires = r[1].data || [];
+    // nouvelle Administration : les mannequins se choisissent par leur photo (23/10/2026)
+    var P = window.Portail, visages = P && P.photosCouverture ? await P.photosCouverture(mannequins.map(function (p) { return p.id; })).catch(function () { return {}; }) : null;
     var boiteM = $('agenda-mannequins'); boiteM.textContent = '';
+    boiteM.classList.toggle('mur-visages', !!visages);
     mannequins.forEach(function (p) {
-      boiteM.appendChild(caseACocher(p.id, p.full_name + (p.published ? '' : ' (profil non publié)'), 'agenda-mannequin', p.full_name));
+      var libelle = p.full_name + (p.published ? '' : ' (profil non publié)');
+      boiteM.appendChild(visages ? caseVisage(p.id, libelle, 'agenda-mannequin', visages[p.id], p.full_name) : caseACocher(p.id, libelle, 'agenda-mannequin', p.full_name));
     });
     if (!mannequins.length) boiteM.textContent = 'Aucun mannequin trouvé.';
     var boiteP = $('agenda-partenaires'); boiteP.textContent = '';
@@ -139,6 +143,20 @@ window.demarrerAgendaAdmin = function (racine) {
     return coches.concat((anciens || []).filter(function (id) { return !connus[id] && coches.indexOf(id) < 0; }));
   }
 
+  // les mannequins inscrites : leur nom ouvre leur fiche (la photo vient se placer devant,
+  // js/admin/coque.js) ; les noms écrits à la main restent du texte
+  function nomsCliquables(p) {
+    var vus = {};
+    var liens = (p.mannequin_ids || []).map(function (id) {
+      var m = mannequins.find(function (x) { return x.id === id; });
+      if (!m || vus[m.full_name.toLowerCase()]) return null;
+      vus[m.full_name.toLowerCase()] = true;
+      return window.Portail ? '<a href="#/site/b2-mannequins-publies/' + echapperHtml(encodeURIComponent(id)) + '">' + echapperHtml(m.full_name) + '</a>' : echapperHtml(m.full_name);
+    }).filter(Boolean);
+    var libres = sansDoublon(p.mannequins_libres || []).filter(function (n) { return !vus[String(n).trim().toLowerCase()]; }).map(echapperHtml);
+    return liens.concat(libres).join(', ');
+  }
+
   function ligneProjet(p) {
     var div = document.createElement('div');
     div.className = 'agenda-ligne' + (p.visible && !p.annule ? '' : ' cache') + (projetEnCours && projetEnCours.id === p.id ? ' en-modif' : '');
@@ -156,7 +174,7 @@ window.demarrerAgendaAdmin = function (racine) {
       + (horaires && p.horaires_publics ? '<p>Horaires : ' + echapperHtml(horaires) + '</p>' : '')
       + (intervenants.length ? '<p>' + echapperHtml(intervenants.join(' · ')) + '</p>' : '')
       + (parts.length ? '<p>Partenaires : ' + echapperHtml(parts.join(', ')) + '</p>' : '')
-      + (noms.length ? '<p>Mannequins : ' + echapperHtml(noms.join(', ')) + '</p>' : '')
+      + (noms.length ? '<p class="agenda-noms">Mannequins : ' + nomsCliquables(p) + '</p>' : '')
       + (prive ? '<p class="agenda-prive">🔒 ' + echapperHtml(prive) + '</p>' : '')
       + '</div>'
       + '<div class="agenda-boutons">'
