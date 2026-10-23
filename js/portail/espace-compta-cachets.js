@@ -16,6 +16,7 @@
   if (!P || !C) return;
   const t = C.champ;
   const NOUVEAU = '__nouvel_evenement';  // « ➕ Nouvel événement » dans la liste des projets
+  const EXT = 'ext:';  // « Qui ? » : une mannequin extérieure du carnet (pas dans le registre)
   const ABSENTE = '<div class="note info">Cette rubrique n’est pas encore activée. <span class="petit-texte doux">(Étape d’installation : « supabase-cachets.sql » à exécuter dans la base.)</span></div>';
   const principal = () => P.moi && P.moi.role === 'principal';
   // numéro saisi → chiffres seuls avec l'indicatif ivoirien (numeroWhatsApp, js/app.js)
@@ -46,13 +47,15 @@
   }
   async function page() {
     // (toutes les questions à la base partent en même temps : écran prêt plus vite)
-    const [lecture, registre, projets, reglage, colonneMotif, colonneParent] = await Promise.all([
+    const [lecture, registre, projets, reglage, colonneMotif, colonneParent, externes] = await Promise.all([
       P.bd(sb.from('cachets_mannequins').select('*').order('cree_le', { ascending: false }).limit(300)).then((data) => ({ data }), (error) => ({ error })),
       P.bd(sb.from('agence_mannequins').select('id, full_name, telephone, statut, user_id, date_naissance, parent_nom, parent_telephone').eq('statut', 'actif').order('full_name')).catch(() => []),
       P.bd(sb.from('agenda_projets').select('id, titre, date_debut').eq('annule', false).gte('date_debut', new Date(Date.now() - 120 * 864e5).toISOString().slice(0, 10)).order('date_debut', { ascending: false }).limit(40)).catch(() => []),
       P.bd(sb.from('compta_reglages').select('*').eq('id', 1).maybeSingle()).catch(() => null),
       sb.from('cachets_mannequins').select('motif, numero_recu, jeton').limit(1),
-      sb.from('cachets_mannequins').select('parent_nom').limit(1)
+      sb.from('cachets_mannequins').select('parent_nom').limit(1),
+      // mannequins extérieures (partenaires du carnet, 23/10/2026), pour les retrouver d'un geste
+      P.bd(sb.from('contacts_externes').select('id, nom, telephone').is('mannequin_id', null).order('nom')).catch(() => [])
     ]);
     if (lecture.error) { if (C.cachetsAbsents(lecture.error)) return P.entete('Payer les mannequins') + ABSENTE; throw lecture.error; }
     const liste = cachets = lecture.data || [];
@@ -60,6 +63,7 @@
     parents = !colonneParent.error;
     commission = reglage && reglage.commission_taux != null ? Number(reglage.commission_taux) : null;
     P.etat.cachetsRegistre = registre;
+    P.etat.cachetsExternes = externes;
     const aPayer = liste.filter((c) => c.statut === 'a_payer'), payes = liste.filter((c) => c.statut === 'paye').slice(0, 60);
     const total = aPayer.reduce((s, c) => s + c.montant, 0);
     const carte = (c) => '<div class="cachet' + (c.statut === 'a_payer' ? '' : ' fait') + '"><div class="t">' + nom(c) +
@@ -90,7 +94,7 @@
     P.fenetre('<form class="f" data-form="cachet-ajouter"><h2 class="large">Nouveau cachet à payer</h2>' +
       // qui : par sa photo (P.choixVisages, js/admin/coque.js, 23/10/2026)
       P.choixVisages({ id: 'ca-qui', nom: 'qui', libelle: 'Qui ?', sorte: 'registre', change: 'cachet-qui', valeur: '',
-        autres: [['', 'Personne extérieure (nom et numéro)', '＋']], items: registre.map((m) => ({ id: m.id, nom: m.full_name })) }) +
+        autres: [['', 'Personne extérieure (nom et numéro)', '＋']].concat((P.etat.cachetsExternes || []).map((c) => [EXT + c.id, c.nom + ' (extérieure)', '🤝'])), items: registre.map((m) => ({ id: m.id, nom: m.full_name })) }) +
       '<label class="fl" for="ca-nom">Nom et prénoms<input id="ca-nom" name="nom" maxlength="160" required></label>' +
       // mineure : payée sur le Wave de son parent, dont le nom et le numéro sont gardés
       '<p class="large note info" id="ca-mineure" hidden>Mannequin mineure : le cachet est versé sur le compte Wave de son parent. S’il manque, son nom et son numéro sont enregistrés dans le registre et sur sa fiche.</p>' +
@@ -119,8 +123,12 @@
   P.changements['cachet-qui'] = (el) => {
     const m = (P.etat.cachetsRegistre || []).find((x) => x.id === el.value), parent = parents && mineure(m);
     const $ = (id) => document.getElementById(id);
-    $('ca-nom').value = m ? m.full_name : '';
-    $('ca-tel').value = m ? ((parent ? m.parent_telephone : m.telephone) || '') : '';
+    const ext = (P.etat.cachetsExternes || []).find((x) => EXT + x.id === el.value);
+    if (ext) { $('ca-nom').value = ext.nom; $('ca-tel').value = ext.telephone || ''; }
+    else {
+      $('ca-nom').value = m ? m.full_name : '';
+      $('ca-tel').value = m ? ((parent ? m.parent_telephone : m.telephone) || '') : '';
+    }
     $('ca-mineure').hidden = $('ca-parent-ligne').hidden = !parent;
     $('ca-parent-nom').required = parent;
     $('ca-parent-nom').value = parent ? m.parent_nom || '' : '';
@@ -153,7 +161,7 @@
     const prestation = (recus ? [K.libelle(motif), titreProjet, t(f, 'prestation')].filter(Boolean).join(' · ') : (t(f, 'prestation') || titreProjet)).slice(0, 200);
     if (!prestation) { P.message('Indiquez la prestation, ou choisissez le projet de l’agenda.'); return; }
     // avec la commission : la base recalcule la commission et le montant à verser (montant ci-dessous provisoire)
-    const ligne = { beneficiaire: t(f, 'nom'), telephone: tel, montant, prestation, projet_id: projet, agence_mannequin_id: t(f, 'qui'), statut: 'a_payer', cree_le: new Date().toISOString() };
+    const ligne = { beneficiaire: t(f, 'nom'), telephone: tel, montant, prestation, projet_id: projet, agence_mannequin_id: String(t(f, 'qui') || '').startsWith(EXT) ? null : t(f, 'qui'), statut: 'a_payer', cree_le: new Date().toISOString() };
     // mineure : versée au parent ; son nom et son numéro, s'ils manquaient ou ont changé, vont dans
     // le registre et sur sa fiche (cachet_enregistrer_parent)
     const m = (P.etat.cachetsRegistre || []).find((x) => x.id === ligne.agence_mannequin_id);

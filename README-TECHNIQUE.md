@@ -404,6 +404,35 @@ qui s'ouvrent ensuite) et échoue si un nom de mannequin est sans photo.
 - **Essais** : `test-places.js` (Administration + page publique, téléphone/ordinateur) et
   `scripts/base-essai/essais-places.sql` (droits, premier arrivé, mineure/parent, désistement).
 
+## 👤 Ajouter une personne : de l'agence ou extérieure (23/10/2026)
+- **Base** : `supabase-personnes.sql` (rejouable, après `supabase-convocations.sql` et
+  `supabase-places.sql`). `personne_ajouter(p_agence, p_civilite, p_nom, p_telephone,
+  p_parent_nom, p_parent_telephone, p_email)` (agence seulement) : **de l'agence** → une ligne du
+  registre `agence_mannequins` (sans compte sur le site ; le code d'accès se donne ensuite) ET une
+  fiche du carnet `contacts_externes` liée (`mannequin_id`) ; **extérieure** (partenaire, majeure,
+  jamais de parent) → le carnet seulement (`mannequin_id` vide). WhatsApp ou e-mail (au moins un) ;
+  parent facultatif : nom ET WhatsApp, ou rien. Le carnet garde `parent_nom` / `parent_telephone`.
+  Un enfant et son parent sont deux participants d'un même projet (index unique
+  `convocation_participants (projet_id, contact_id, parent)`). `places_participant_registre` :
+  parent connu et mineure (ou âge inconnu) → la mannequin ET son parent. `convocation_lire`
+  renvoie `autre_reponse` (réponse déjà donnée par l'enfant ou le parent).
+- **Formulaire partagé** : `champsPersonne(px, avecEmail)` et `personneEnregistrer(px)` dans
+  `js/agenda-outils.js` (choix « Mannequin de l'agence » / « Mannequin extérieure », champs du
+  parent montrés pour l'agence seulement). Utilisé par les Places limitées (préfixe `pl` ; agence
+  → invitation `mannequin_id`, extérieure → `contact_id`) et les Convocations (préfixe `convoc`,
+  `personnesDuCarnet` : elle et son parent, même `groupe`, une seule réponse pour les deux).
+- **Envois** : Places limitées, le lien part aussi au parent si la mannequin est mineure OU si
+  son parent est connu sans date de naissance. Page « Confirmer ma présence » : « … a déjà
+  répondu » quand l'autre (enfant ou parent) a répondu.
+- **Mannequins extérieures** : rubrique `b2-exterieures` (`js/admin/site-exterieures.js`, groupe
+  Mannequins) : les fiches du carnet sans `mannequin_id`, leurs projets (convoquées, ou place
+  prise ; projets annulés exclus), filtre par période, bouton WhatsApp. Lecture seule. Elles sont
+  aussi proposées dans « Qui ? » d'un nouveau cachet (valeur `ext:<id>`, cachet sans
+  `agence_mannequin_id`).
+- **Essais** : `scripts/base-essai/essais-personnes.sql`, `test-places.js`,
+  `test-convocations.js` (agence + parent, « déjà répondu »), `test-exterieures.js`,
+  `test-cachets.js` (extérieure).
+
 - **Rappeler l'information** (menu, 23/10/2026) : ligne `b2-rappel`, même écran que les
   Convocations avec le message `rappel_avant` (date, heure, lieu) envoyé à la main aux personnes
   déjà prévenues (pas aux absentes) ; il remplace le rappel automatique « quelques jours avant »

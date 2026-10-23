@@ -59,14 +59,11 @@ window.GABARIT_CONVOCATIONS = `<h2 class="tdb-4">📨 Convocations</h2>
 <select id="convoc-carnet" aria-label="Choisir une personne déjà enregistrée dans le carnet"><option value="">Carnet : personne déjà enregistrée…</option></select>
 <button type="button" class="btn-mini-admin" id="convoc-carnet-ajouter">＋ Ajouter</button>
 </div>
-<div class="agenda-nouveau-partenaire">
-<select id="convoc-civilite" aria-label="Civilité"><option>Mademoiselle</option><option>Madame</option><option>Monsieur</option></select>
-<input id="convoc-nom" type="text" maxlength="120" placeholder="Nom complet" aria-label="Nom complet de la personne non inscrite">
-<input id="convoc-tel" type="tel" maxlength="40" placeholder="WhatsApp" aria-label="Numéro WhatsApp de la personne non inscrite">
-<input id="convoc-email" type="email" maxlength="160" placeholder="E-mail" aria-label="E-mail de la personne non inscrite">
-<button type="button" class="btn-mini-admin" id="convoc-personne-ajouter">＋ Ajouter une personne non inscrite</button>
-</div>
-<p class="agenda-aide">La personne non inscrite est gardée dans le carnet, pour la retrouver au prochain projet.</p>
+<details class="convoc-ajout"><summary>＋ Ajouter une personne pas encore enregistrée</summary>
+${champsPersonne('convoc', true)}
+<button type="button" class="btn-mini-admin" id="convoc-personne-ajouter">＋ Ajouter cette personne</button>
+<p class="agenda-aide">Elle reste enregistrée (registre de l'agence, ou mannequins extérieures), pour la retrouver au prochain projet.</p>
+</details>
 </fieldset>
 <fieldset class="agenda-choix"><legend>Le message</legend>
 <div class="form-champ"><label for="convoc-sorte">Quel message envoyer ?</label><select id="convoc-sorte"><option value="selection">🎉 Annoncer la sélection (court, en premier)</option><option value="convocation">📨 Convocation (tous les détails)</option><option value="rappel_avant">🔔 Rappel de l'information (date, heure, lieu)</option></select></div>

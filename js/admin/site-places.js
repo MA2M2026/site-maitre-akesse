@@ -82,26 +82,17 @@
       (cartes ? '<div class="projets-liste">' + cartes + '</div>' : '<div class="carte vide">Aucun appel à places pour le moment.</div>');
   }
   // coordonnées des mannequins invitées, par paquets (la base renvoie au plus 1 000 lignes à la fois)
-  async function contactsDe(ids) {
-    let tous = [];
-    for (let i = 0; i < ids.length; i += 500) tous = tous.concat(await P.rpc('convocation_contacts_mannequins', { p_ids: ids.slice(i, i + 500) }));
-    return tous;
-  }
+  const contactsDe = (ids) => P.parPaquets(ids, 500, (l) => P.rpc('convocation_contacts_mannequins', { p_ids: l }));
   // coordonnées des mannequins du registre sans compte (fonction ajoutée le 23/10/2026 : avant
   // l'exécution de supabase-places.sql, aucune)
   async function contactsRegistre(ids) {
-    let tous = [];
-    try {
-      for (let i = 0; i < ids.length; i += 500) tous = tous.concat(await P.rpc('places_contacts_registre', { p_ids: ids.slice(i, i + 500) }));
-    } catch (e) { if (!/places_contacts_registre|PGRST202|42883/.test(String((e && (e.message || e.code)) || e))) throw e; }
-    return tous;
+    try { return await P.parPaquets(ids, 500, (l) => P.rpc('places_contacts_registre', { p_ids: l })); }
+    catch (e) { if (!/places_contacts_registre|PGRST202|42883/.test(String((e && (e.message || e.code)) || e))) throw e; return []; }
   }
   // noms des mannequins (par paquets : une longue liste d'identifiants ne tient pas dans une adresse)
   async function nomsDe(ids) {
     const noms = {};
-    for (let i = 0; i < ids.length; i += 100) {
-      (await P.bd(sb.from('model_profiles').select('id, full_name').in('id', ids.slice(i, i + 100)))).forEach((m) => { noms[m.id] = m.full_name; });
-    }
+    (await P.parPaquets(ids, 100, (l) => P.bd(sb.from('model_profiles').select('id, full_name').in('id', l)))).forEach((m) => { noms[m.id] = m.full_name; });
     return noms;
   }
 
@@ -164,7 +155,7 @@
     const c = ecran.contacts[cle(inv)];
     if (!c) return [];
     const nom = nomAvecCivilite({ full_name: c.full_name, category: c.category, civilite: c.civilite }), liste = [];
-    const mineure = estMineurDossier({ date_naissance: c.date_naissance });
+    const mineure = parentAPrevenir(c);  // (js/messages-candidats.js)
     if (numeroWhatsApp(c.phone)) liste.push({ inv, cle: inv.id, parent: false, nom, tel: c.phone, envoye: inv.envoye_le });
     if (mineure && numeroWhatsApp(c.parent_telephone)) liste.push({ inv, cle: inv.id + '-p', parent: true, nom, parent_nom: c.parent_nom, tel: c.parent_telephone, envoye: inv.parent_envoye_le });
     return liste;
@@ -221,15 +212,13 @@
         (i.contact_id && i.statut === 'invite' && !i.envoye_le ? ' <button type="button" class="btn petit" data-action="places-retirer" data-id="' + P.esc(i.id) + '">Retirer</button>' : '') + '</li>';
     };
     // « ＋ Ajouter une personne » (23/10/2026) : une personne pas encore enregistrée dans le site,
-    // gardée dans le carnet des Convocations pour les prochains projets
+    // de l'agence (registre) ou extérieure (carnet) — champs partagés : champsPersonne (js/agenda-outils.js)
     const carnet = ecran.carnet || [];
     const ajout = '<form class="f pl-ajout" data-form="places-personne"><h3 class="pl-titre-grille large">＋ Ajouter une personne</h3>' +
-      (carnet.length ? '<label class="fl large" for="pl-carnet">Déjà dans le carnet<select id="pl-carnet" name="carnet"><option value="">— Nouvelle personne —</option>' +
+      (carnet.length ? '<label class="fl large" for="pl-carnet">Mannequin extérieure déjà dans le carnet<select id="pl-carnet" name="carnet"><option value="">— Nouvelle personne —</option>' +
         carnet.map((c) => '<option value="' + P.esc(c.id) + '">' + P.esc([c.civilite, c.nom].filter(Boolean).join(' ')) + '</option>').join('') + '</select></label>' : '') +
-      '<label class="fl" for="pl-civ">Civilité<select id="pl-civ" name="civilite"><option>Mademoiselle</option><option>Madame</option><option>Monsieur</option></select></label>' +
-      '<label class="fl" for="pl-nom">Nom complet<input id="pl-nom" name="nom" maxlength="120" autocomplete="off"></label>' +
-      '<label class="fl" for="pl-tel">WhatsApp<input id="pl-tel" name="tel" type="tel" maxlength="40" inputmode="tel"></label>' +
-      '<p class="doux large">Elle reçoit son lien comme les autres, et reste dans le carnet pour les prochains projets.</p>' +
+      '<div class="large">' + champsPersonne('pl', false) + '</div>' +
+      '<p class="doux large">Elle reçoit son lien comme les autres, et reste enregistrée pour les prochains projets.</p>' +
       '<div class="ligne large"><button class="btn rouge" type="submit">＋ Ajouter</button></div></form>';
     return '<details class="carte pl-qui"' + (choixOuvert ? ' open' : '') + '><summary><h2>Qui reçoit le lien ? (' + choisies + ' sur ' + invitations.length + ')</h2></summary>' +
       '<p class="doux">Décochez les mannequins qui ne doivent pas recevoir ce projet : elles ne reçoivent rien et ne peuvent pas prendre de place.</p>' +
@@ -304,23 +293,28 @@
       .catch((err) => P.message(P.erreurTexte(err)));
   });
   P.actions['places-actualiser'] = () => P.afficher();
-  // ajouter une personne extérieure (nouvelle, ou déjà dans le carnet)
+  // ajouter une personne : nouvelle (de l'agence → invitée comme mannequin du registre ;
+  // extérieure → comme personne du carnet), ou extérieure déjà dans le carnet
   P.formulaires['places-personne'] = async (f) => {
     choixOuvert = true;
     let contact = (ecran.carnet || []).find((c) => c.id === f.get('carnet'));
-    if (!contact) {
-      const nom = String(f.get('nom') || '').trim(), tel = String(f.get('tel') || '').trim();
-      if (!nom) { P.message('Indiquez le nom de la personne.'); return; }
-      if (!numeroWhatsApp(tel)) { P.message('Indiquez un numéro WhatsApp correct (ex. 07 01 02 03 04).'); return; }
-      const cree = await P.bd(sb.from('contacts_externes').insert({ civilite: f.get('civilite') || null, nom, telephone: tel }).select('*'));
-      if (!cree || !cree.length) { P.message('La personne n’a pas pu être enregistrée : reconnectez-vous puis réessayez.'); return; }
-      contact = cree[0];
-    }
-    const sexe = contact.civilite === 'Monsieur' ? 'homme' : 'femme';
+    const sexeDe = (civilite) => civilite === 'Monsieur' ? 'homme' : 'femme';
+    const sexe = sexeDe(contact ? contact.civilite : (document.getElementById('pl-civ') || {}).value);
     if (!(sexe === 'homme' ? ecran.appel.places_hommes : ecran.appel.places_femmes)) { P.message('Cet appel n’a aucune place pour les ' + (sexe === 'homme' ? 'hommes' : 'femmes') + ' : changez d’abord le « Nombre de places ».'); return; }
-    const r = await P.bd(sb.from('places_invitations').insert({ projet_id: ecran.appel.projet_id, contact_id: contact.id, sexe }).select('id'));
-    if (!r || !r.length) { P.message('Rien n’a été enregistré : reconnectez-vous puis réessayez.'); return; }
-    P.message([contact.civilite, contact.nom].filter(Boolean).join(' ') + ' est ajouté(e) : son lien est prêt à envoyer.');
+    const nouvelle = !contact;
+    if (nouvelle) {
+      try { contact = await personneEnregistrer('pl'); } catch (e) { P.message(P.erreurTexte(e)); return; }
+    }
+    const qui = contact.mannequin_id ? { mannequin_id: contact.mannequin_id } : { contact_id: contact.id };
+    let r = null;
+    try { r = await P.bd(sb.from('places_invitations').insert(Object.assign({ projet_id: ecran.appel.projet_id, sexe }, qui)).select('id')); } catch (e) { r = null; }
+    if (!r || !r.length) {
+      // (déjà enregistrée : on ne la ressaisit pas, sinon elle serait en double)
+      P.message(nouvelle ? contact.nom + ' est enregistré(e), mais son lien n’a pas pu être préparé. Reconnectez-vous, puis ' +
+        (contact.mannequin_id ? 'touchez « Ajouter les nouvelles mannequins ».' : 'choisissez-la dans « Mannequin extérieure déjà dans le carnet ».') : 'Rien n’a été enregistré : reconnectez-vous puis réessayez.');
+      return P.afficher();
+    }
+    P.message([contact.civilite, contact.nom].filter(Boolean).join(' ') + ' est ajouté(e)' + (contact.mannequin_id ? ' au registre de l’agence' : '') + ' : son lien est prêt à envoyer.');
     return P.afficher();
   };
   // retirer une personne extérieure ajoutée par erreur (seulement si rien ne lui a été envoyé)
@@ -368,7 +362,7 @@
     if (!form) return;
     form.closest('details').open = true;
     form.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    const champ = document.getElementById('pl-nom');
+    const champ = document.querySelector('input[name="pl-type"]');
     if (champ) champ.focus({ preventScroll: true });
   }
   P.actions['places-ajout-ouvrir'] = () => ouvrirAjout();

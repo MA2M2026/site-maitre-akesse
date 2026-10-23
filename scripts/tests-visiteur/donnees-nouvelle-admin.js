@@ -134,6 +134,14 @@ function donnees(role) {
     '/api/r2-presigner': (c) => ({ uploadUrl: '/__stockage', publicUrl: 'https://photos.maitreakessemodelmanagement.com/' + c.chemin }) }
   };
   d.preparer(d); delete d.preparer;
+  // « Ajouter une personne » (personne_ajouter, supabase-personnes.sql) : de l'agence → registre
+  // ET carnet ; extérieure → carnet seulement (en mémoire : rien n'est écrit pour de vrai)
+  d.rpc.personne_ajouter = d.rpc.personne_ajouter || ((x) => {
+    const n = (d.compteurPersonnes = (d.compteurPersonnes || 0) + 1), reg = x.p_agence ? 'reg-ajout-' + n : null;
+    if (reg) (d.tables.agence_mannequins = d.tables.agence_mannequins || []).push({ id: reg, full_name: x.p_nom, genre: x.p_civilite === 'Monsieur' ? 'homme' : 'femme', telephone: x.p_telephone, email: x.p_email, parent_nom: x.p_parent_nom, parent_telephone: x.p_parent_telephone, statut: 'actif', user_id: null });
+    (d.tables.contacts_externes = d.tables.contacts_externes || []).push({ id: 'contact-ajout-' + n, civilite: x.p_civilite, nom: x.p_nom, telephone: x.p_telephone, email: x.p_email ? x.p_email.toLowerCase() : null, parent_nom: x.p_parent_nom, parent_telephone: x.p_parent_telephone, mannequin_id: reg });
+    return { contact_id: 'contact-ajout-' + n, mannequin_id: reg };
+  });
   return d;
 }
 

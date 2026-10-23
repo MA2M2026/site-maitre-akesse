@@ -942,3 +942,27 @@ a.podium-place:hover b, a.classement-ligne:hover .classement-nom { text-decorati
 [data-visage-nom] .vis { display: inline-block; vertical-align: middle; width: 26px; height: 26px; font-size: 10px; margin-right: 6px; }
 .mg-visage { display: inline-block; vertical-align: middle; margin-right: 8px; }
 .mg-visage .vis { width: 34px; height: 34px; font-size: 12px; }
+
+/* « Ajouter une personne » (23/10/2026) : agence ou extérieure, parent facultatif — champsPersonne (js/agenda-outils.js) */
+.personne-champs { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px 14px; margin: 8px 0; }
+.personne-type, .personne-aide, .personne-parent { grid-column: 1 / -1; }
+.personne-type { border: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 18px; }
+.personne-type legend { font-weight: 600; font-size: 13px; margin-bottom: 6px; padding: 0; }
+.personne-type label { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; font-size: 14px; cursor: pointer; }
+.personne-type input { width: 20px; height: 20px; accent-color: var(--av-rouge, #b0122b); }
+.personne-aide { margin: 0; font-size: 13px; color: var(--av-gris, #5a5048); }
+.personne-aide:empty { display: none; }
+.personne-champ { display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 500; color: var(--av-gris, #5a5048); }
+.personne-champ input, .personne-champ select { min-height: 42px; font-size: 16px; }
+.personne-parent { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px 14px; padding: 10px 12px; border-radius: 12px; background: rgba(176, 18, 43, .05); }
+.personne-parent[hidden] { display: none; }
+.convoc-ajout { margin: 10px 0; }
+.convoc-ajout > summary { cursor: pointer; font-weight: 600; min-height: 40px; display: flex; align-items: center; }
+/* « Mannequins extérieures » (js/admin/site-exterieures.js, 23/10/2026) */
+.ext-liste { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.ext-tete { display: flex; align-items: center; gap: 12px; }
+.ext-tete h2 { margin: 0; font-size: 17px; overflow-wrap: anywhere; }
+.ext-tete p { margin: 2px 0 0; overflow-wrap: anywhere; }
+.ext-tete .vis { width: 52px; height: 52px; flex: none; }
+.ext-projets { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 6px; }
+.ext-projets li { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding: 6px 0; border-top: 1px solid var(--av-filet, rgba(0, 0, 0, 0.12)); }

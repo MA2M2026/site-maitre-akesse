@@ -86,12 +86,22 @@ window.demarrerConvocationsPanneau = function () {
     if (sauve) { pers.participant_id = sauve.id; pers.jeton = sauve.jeton; pers.reponse = sauve.reponse; pers.repondu_le = sauve.repondu_le; }
     return pers;
   }
-  // (mannequin du registre mineure, ajoutée par les Places limitées : on écrit à son parent ;
-  // ce choix enregistré est gardé)
-  function personneDuCarnet(c, sauve) {
-    return avecSauve({ cle: 'c' + c.id, contact_id: c.id, externe: true,
-      nom: [c.civilite, c.nom].filter(Boolean).join(' '), email: c.email || null, telephone: c.telephone || null,
-      parent: !!(sauve && sauve.parent), parent_nom: (sauve && sauve.parent && sauve.parent_nom) || null }, sauve);
+  // Personne du carnet (mannequin de l'agence sans compte, ou extérieure) : elle-même (si elle a
+  // un WhatsApp ou un e-mail) et, si son parent est connu (23/10/2026), son parent aussi — même
+  // programme, deux messages, une seule réponse pour les deux (groupe). parContact : ce qui est
+  // déjà enregistré, par « contact:parent ».
+  function personnesDuCarnet(c, parContact) {
+    var nom = [c.civilite, c.nom].filter(Boolean).join(' '), liste = [], sauve = parContact || {};
+    var avecParent = parentAPrevenir(c);  // (js/messages-candidats.js)
+    if (c.telephone || c.email || !avecParent) {
+      liste.push(avecSauve({ cle: 'c' + c.id, groupe: 'c' + c.id, contact_id: c.id, externe: true, nom: nom,
+        email: c.email || null, telephone: c.telephone || null, parent: false, parent_nom: null }, sauve[c.id + ':false']));
+    }
+    if (avecParent) {
+      liste.push(avecSauve({ cle: 'c' + c.id + '-parent', groupe: 'c' + c.id, contact_id: c.id, externe: true, nom: nom,
+        email: null, telephone: c.parent_telephone, parent: true, parent_nom: c.parent_nom || null }, sauve[c.id + ':true']));
+    }
+    return liste;
   }
 
   function dessinerParticipants() {
@@ -162,7 +172,7 @@ window.demarrerConvocationsPanneau = function () {
     while (s.options.length > 1) s.remove(1);
     carnet.forEach(function (c) {
       var o = document.createElement('option');
-      o.value = c.id; o.textContent = [c.civilite, c.nom].filter(Boolean).join(' ') + (c.telephone ? ' — ' + c.telephone : '');
+      o.value = c.id; o.textContent = [c.civilite, c.nom].filter(Boolean).join(' ') + (c.mannequin_id ? ' (agence)' : ' (extérieure)') + (c.telephone ? ' — ' + c.telephone : '');
       s.appendChild(o);
     });
   }
@@ -523,16 +533,33 @@ window.demarrerConvocationsPanneau = function () {
     var sauves = r[0].data || [];
     envois = r[1].data || [];
     carnet = r[2].data || [];
+    // fiche du carnet liée au registre : numéros, parent et date de naissance à jour (le carnet
+    // en garde une copie faite une fois) ; avant supabase-places.sql : la copie du carnet
+    var lies = carnet.filter(function (c) { return c.mannequin_id; });
+    for (var i = 0; i < lies.length; i += 500) {
+      var rr = await sb.rpc('places_contacts_registre', { p_ids: lies.slice(i, i + 500).map(function (c) { return c.mannequin_id; }) });
+      (rr.data || []).forEach(function (m) {
+        var c = carnet.find(function (x) { return x.mannequin_id === m.mannequin_id; });
+        if (c) Object.assign(c, { telephone: m.phone || c.telephone, email: m.contact_email || c.email, parent_nom: m.parent_nom, parent_telephone: m.parent_telephone, date_naissance: m.date_naissance });
+      });
+    }
+    if (projet !== p) return;
     var parModele = {}, parContact = {};
     sauves.forEach(function (s) {
       if (s.model_id) parModele[s.model_id + ':' + !!s.parent] = s;
-      if (s.contact_id) parContact[s.contact_id] = s;
+      if (s.contact_id) parContact[s.contact_id + ':' + !!s.parent] = s;
     });
     (r[3].data || []).slice().sort(function (a, b) { return String(a.full_name).localeCompare(String(b.full_name), 'fr'); })
       .forEach(function (c) { personnes.push.apply(personnes, personnesMannequin(c, parModele)); });
+    // les personnes du carnet déjà dans le projet (elle et, s'il est connu, son parent)
     sauves.filter(function (s) { return s.contact_id; }).forEach(function (s) {
+      if (personnes.some(function (x) { return x.participant_id === s.id; })) return;
       var c = carnet.find(function (x) { return x.id === s.contact_id; });
-      personnes.push(c ? personneDuCarnet(c, s) : avecSauve({ cle: 'p' + s.id, contact_id: s.contact_id, externe: true, nom: s.nom, email: s.email, telephone: s.telephone, parent: false }, s));
+      var siens = c ? personnesDuCarnet(c, parContact) : [];
+      if (!siens.some(function (x) { return x.participant_id === s.id; })) {
+        siens.push(avecSauve({ cle: 'p' + s.id, groupe: 'c' + s.contact_id, contact_id: s.contact_id, externe: true, nom: s.nom, email: s.email, telephone: s.telephone, parent: !!s.parent, parent_nom: s.parent_nom }, s));
+      }
+      siens.forEach(function (x) { if (!personnes.some(function (y) { return y.cle === x.cle; })) personnes.push(x); });
     });
     // une personne retirée du projet (mannequin décochée) mais déjà convoquée reste dans le suivi
     sauves.filter(function (s) { return s.model_id && !personnes.some(function (x) { return x.participant_id === s.id; }); }).forEach(function (s) {
@@ -578,23 +605,20 @@ window.demarrerConvocationsPanneau = function () {
   $('convoc-carnet-ajouter').addEventListener('click', function () {
     var c = carnet.find(function (x) { return x.id === $('convoc-carnet').value; });
     if (!c) { $('convoc-carnet').focus(); return; }
-    ajouterPersonne(personneDuCarnet(c, null));
+    personnesDuCarnet(c, null).forEach(ajouterPersonne);
   });
-  // Personne non inscrite : enregistrée dans le carnet, puis ajoutée à la liste
+  // Personne pas encore enregistrée : de l'agence (registre) ou extérieure (carnet), puis
+  // ajoutée à la liste avec son parent s'il est indiqué (champsPersonne, js/agenda-outils.js)
   $('convoc-personne-ajouter').addEventListener('click', async function () {
-    var nom = $('convoc-nom').value.trim(), tel = $('convoc-tel').value.trim(), email = $('convoc-email').value.trim();
-    if (!nom) { message('Indiquez le nom de la personne.', true); $('convoc-nom').focus(); return; }
-    if (!tel && !email) { message('Indiquez au moins son WhatsApp ou son e-mail.', true); return; }
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { message('Cette adresse e-mail ne semble pas correcte.', true); return; }
-    this.disabled = true;
-    var r = await sb.from('contacts_externes').insert({ civilite: $('convoc-civilite').value, nom: nom, telephone: tel || null, email: email || null }).select('*');
-    this.disabled = false;
-    if (r.error || !r.data || !r.data.length) { message('La personne n’a pas pu être enregistrée' + (r.error ? ' : ' + r.error.message : '.'), true); return; }
-    carnet.push(r.data[0]);
+    var bouton = this, c;
+    bouton.disabled = true;
+    try { c = await personneEnregistrer('convoc'); }
+    catch (e) { message(window.Portail.erreurTexte(e), true); return; }
+    finally { bouton.disabled = false; }
+    carnet.push(c);
     dessinerCarnet();
-    ajouterPersonne(personneDuCarnet(r.data[0], null));
-    ['convoc-nom', 'convoc-tel', 'convoc-email'].forEach(function (id) { $(id).value = ''; });
-    message(nom + ' est ajouté(e) à la liste et au carnet.');
+    personnesDuCarnet(c, null).forEach(ajouterPersonne);
+    message(c.nom + ' est ajouté(e) à la liste' + (c.mannequin_id ? ' et au registre de l’agence' : ' et aux mannequins extérieures') + (c.parent_telephone ? ', avec son parent' : '') + '.');
   });
 };
 window.demarrerConvocationsPanneau();

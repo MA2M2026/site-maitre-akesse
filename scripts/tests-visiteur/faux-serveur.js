@@ -94,6 +94,8 @@ function brancher(page, donnees, journal) {
         }
         let lignes = (donnees.tables[table] || []).slice();
         for (const [k, v] of url.searchParams) { if (/^neq\./.test(v)) lignes = lignes.filter(l => String(l[k]) !== v.slice(4)); if (/^eq\./.test(v)) lignes = lignes.filter(l => (k === 'suivi' && !(k in l)) || String(l[k]) === v.slice(3)); if (/^(gte|lte)\./.test(v)) { const borne = v.slice(4), haut = v[0] === 'g'; lignes = lignes.filter(l => l[k] != null && (haut ? String(l[k]) >= borne : String(l[k]) <= borne)); } const dans = v.match(/^in\.\((.*)\)$/); if (dans) { const liste = dans[1].split(',').map(x => x.replace(/^"|"$/g, '')); lignes = lignes.filter(l => liste.includes(String(l[k]))); } }
+        // is.null / not.is.null : colonne vide ou remplie (mannequins extérieures, 23/10/2026)
+        for (const [k, v] of url.searchParams) { if (v === 'is.null') lignes = lignes.filter(l => l[k] == null); if (v === 'not.is.null') lignes = lignes.filter(l => l[k] != null); }
         // order=colonne.desc : tri comme la vraie base (une seule colonne)
         const ordre = (url.searchParams.get('order') || '').match(/^(\w+)\.(asc|desc)/);
         if (ordre) lignes.sort((a, b) => (String(a[ordre[1]] ?? '') < String(b[ordre[1]] ?? '') ? -1 : String(a[ordre[1]] ?? '') > String(b[ordre[1]] ?? '') ? 1 : 0) * (ordre[2] === 'desc' ? -1 : 1));

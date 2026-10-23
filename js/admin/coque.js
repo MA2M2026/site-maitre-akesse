@@ -121,6 +121,13 @@
   // fiche ; initiales tant que la photo arrive, ou si elle n'est pas inscrite sur le site.
   const photoDuRegistre = {};  // id du registre → adresse de la photo ('' : pas de photo)
   const paquets = (l, n) => Array.from({ length: Math.ceil(l.length / n) }, (_, i) => l.slice(i * n, i * n + n));
+  // lecture par paquets de n identifiants (une longue liste ne tient pas dans une adresse) :
+  // lire(paquet) renvoie une liste ; les réponses sont mises bout à bout. Partagé par les pages.
+  P.parPaquets = async (ids, n, lire) => {
+    let tous = [];
+    for (const p of paquets(ids, n)) tous = tous.concat((await lire(p)) || []);
+    return tous;
+  };
   // compte du site : donné par la page (data-compte) ; sinon cherché dans le registre (par paquets
   // de 100, pour des adresses courtes) ; puis les photos de tous ces comptes
   async function chercherPhotos(ids, compteDe) {

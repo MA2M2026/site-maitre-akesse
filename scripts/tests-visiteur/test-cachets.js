@@ -27,6 +27,8 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     d.tables.cachets_mannequins.push({ id: 'cc9', beneficiaire: d.tables.agence_mannequins[5].full_name, telephone: '2250700000015', montant: 8000, prestation: 'Shooting photo · essai', motif: 'shooting',
       numero_recu: 'MA2M-CA-2026-0002', jeton: '99999999-2222-3333-4444-555555555555', statut: 'paye', mode: 'wave_manuel', compte_id: 'k2', agence_mannequin_id: 'r5', paye_le: '2026-10-16T10:00:00Z', cree_le: '2026-10-16T09:00:00Z' });
     d.rpc.cachet_nouvel_evenement = () => 'ev-neuf';  // (23/10/2026) événement ajouté à l'agenda pendant le paiement
+    // carnet : une mannequin extérieure (partenaire) et une mannequin de l'agence (déjà au registre)
+    d.tables.contacts_externes = [{ id: 'x1', civilite: 'Madame', nom: 'KONÉ PARTENAIRE', telephone: '2250709090909', mannequin_id: null }, { id: 'x2', civilite: 'Mademoiselle', nom: 'DOUBLE AGENCE', telephone: '2250708080808', mannequin_id: 'r1' }];
     await brancher(p, d, journal);
     await seConnecter(p, URL_ADMIN); await p.waitForSelector('.accueil-tete');
 
@@ -95,6 +97,16 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     await p.fill('#cc-taux', '25'); await p.click('form[data-form="cachet-commission"] [type=submit]'); await p.waitForTimeout(1000);
     const regl = journal.filter((j) => j[0] === 'PATCH' && j[1] === 'compta_reglages').map((j) => JSON.parse(j[3])).pop() || {};
     ok(regl.commission_taux === 25, n + 'commission de l’agence modifiable : 25 % enregistré');
+    // 4ter. mannequin extérieure du carnet (23/10/2026) : proposée dans « Qui ? », cachet sans lien au registre
+    await p.goto(URL_ADMIN + '#/compta'); await p.waitForTimeout(400); await p.goto(URL_ADMIN + '#/compta/cachets'); await p.waitForSelector('[data-action="cachet-nouveau"]'); await p.waitForTimeout(800);
+    await p.click('[data-action="cachet-nouveau"]'); await p.waitForSelector('.cvi-item[data-valeur="ext:x1"]');
+    ok(/KONÉ PARTENAIRE \(extérieure\)/.test(await p.textContent('.choix-visages')) && !(await p.$('.cvi-item[data-valeur="ext:x2"]')), n + '« Qui ? » : les mannequins extérieures du carnet sont proposées (pas celles de l’agence en double)');
+    await p.click('.cvi-item[data-valeur="ext:x1"]'); await p.waitForTimeout(200);
+    ok(await p.inputValue('#ca-nom') === 'KONÉ PARTENAIRE' && await p.inputValue('#ca-tel') === '2250709090909' && await p.isHidden('#ca-mineure'), n + 'extérieure : nom et numéro remplis');
+    await p.selectOption('#ca-motif', 'defile'); await p.fill('#ca-montant', '30000');
+    await p.click('form[data-form="cachet-ajouter"] [type=submit]'); await p.waitForTimeout(1200);
+    const creeExt = journal.filter((j) => j[0] === 'POST' && j[1] === 'cachets_mannequins').map((j) => JSON.parse(j[3])).pop() || {};
+    ok(creeExt.beneficiaire === 'KONÉ PARTENAIRE' && creeExt.agence_mannequin_id === null && creeExt.telephone === '2250709090909', n + 'cachet de l’extérieure : enregistré sans lien au registre de l’agence');
     // 5. mannequin mineure sans parent enregistré : payée sur le Wave du parent, saisi ici et gardé (23/10/2026)
     Object.assign(d.tables.agence_mannequins[2], { date_naissance: '2013-05-05', parent_nom: null, parent_telephone: null });
     await p.goto(URL_ADMIN + '#/compta'); await p.waitForTimeout(400); await p.goto(URL_ADMIN + '#/compta/cachets'); await p.waitForSelector('[data-action="cachet-nouveau"]'); await p.waitForTimeout(800);

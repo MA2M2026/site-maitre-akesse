@@ -43,6 +43,12 @@ function estMineurDossier(d) {
   if (a.getMonth() < n.getMonth() || (a.getMonth() === n.getMonth() && a.getDate() < n.getDate())) age--;
   return age < 18;
 }
+// Écrire AUSSI au parent (Places limitées, Convocations, 23/10/2026) : son numéro est connu et la
+// personne est mineure, ou son âge est inconnu (ajoutée avec son parent). Même règle que
+// places_participant_registre (supabase-personnes.sql).
+function parentAPrevenir(d) {
+  return !!(d && d.parent_telephone) && (!d.date_naissance || estMineurDossier(d));
+}
 // À qui écrire : au parent pour un mineur dont on a les contacts, sinon à la personne.
 function contactsEnvoi(d) {
   if (estMineurDossier(d) && (d.parent_telephone || d.parent_email)) {

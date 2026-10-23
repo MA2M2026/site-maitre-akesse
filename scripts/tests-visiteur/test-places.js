@@ -175,7 +175,7 @@ async function partieRegistre(b, nom, vp) {
   await p.click('.pl-qui summary'); await p.waitForTimeout(300);  // (on referme la liste)
   ok(await p.isHidden('#pl-nom') && await p.isVisible('[data-action="places-ajout-ouvrir"]'), n + 'bouton « ＋ Ajouter une personne » visible sans ouvrir la liste');
   await p.click('[data-action="places-ajout-ouvrir"]'); await p.waitForTimeout(1200);
-  ok(await p.isVisible('#pl-nom') && await p.evaluate(() => document.activeElement && document.activeElement.id === 'pl-nom'), n + '« ＋ Ajouter une personne » : la liste s’ouvre sur le formulaire, prêt à écrire');
+  ok(await p.isVisible('#pl-nom') && await p.evaluate(() => document.activeElement && document.activeElement.name === 'pl-type'), n + '« ＋ Ajouter une personne » : la liste s’ouvre sur le formulaire, sur le choix « agence » ou « extérieure »');
   await p.click('.pl-qui summary'); await p.waitForTimeout(300);
   d.rpc.places_preparer = () => d.tables.places_invitations.length;
   await p.click('[data-action="places-preparer"]'); await p.waitForTimeout(1500);
@@ -184,22 +184,43 @@ async function partieRegistre(b, nom, vp) {
   d.tables.contacts_externes = d.tables.contacts_externes || []; d.memoriser = true;
   // (la vraie base donne d'office un lien et le statut « invite » à une nouvelle invitation)
   const valeursParDefaut = async () => { d.tables.places_invitations.forEach((l) => { l.statut = l.statut || 'invite'; l.jeton = l.jeton || J('t'); l.envoye_le = l.envoye_le || null; }); await p.click('[data-action="places-actualiser"]'); await p.waitForTimeout(1000); };
-  await p.fill('#pl-nom', 'JEAN STYLISTE'); await p.fill('#pl-tel', '0102'); await p.click('form[data-form="places-personne"] [type=submit]'); await p.waitForTimeout(500);
-  ok(/numéro WhatsApp correct/.test(await p.textContent('body')) && !ecrits(journal, 'POST', 'contacts_externes').length, n + 'ajout : numéro faux refusé, rien d’enregistré');
-  await p.selectOption('#pl-civ', 'Monsieur'); await p.fill('#pl-tel', '0506070809'); await p.click('form[data-form="places-personne"] [type=submit]'); await p.waitForTimeout(800);
-  ok(/aucune place pour les hommes/.test(await p.textContent('body')) && !ecrits(journal, 'POST', 'places_invitations').length, n + 'ajout : un homme sans place homme dans l’appel → expliqué, pas d’invitation');
-  await p.click('[data-action="places-actualiser"]'); await p.waitForTimeout(1000);
-  ok(/Monsieur JEAN STYLISTE/.test(await p.textContent('#pl-carnet')), n + 'ajout : la personne enregistrée reste proposée dans le carnet');
-  await p.selectOption('#pl-civ', 'Madame'); await p.fill('#pl-nom', 'AWA EXTÉRIEURE'); await p.fill('#pl-tel', '0506070809');
-  await p.click('form[data-form="places-personne"] [type=submit]'); await p.waitForTimeout(1200);
+  const ajouts = () => journal.filter((j) => j[0] === 'rpc' && j[1] === 'personne_ajouter').map((j) => JSON.parse(j[2] || '{}'));
+  const ajouter = async () => { await p.click('form[data-form="places-personne"] [type=submit]'); await p.waitForTimeout(800); };
+  await p.fill('#pl-nom', 'JEAN STYLISTE'); await p.fill('#pl-tel', '0506070809'); await ajouter();
+  ok(/agence ou mannequin extérieure/.test(await p.textContent('body')) && !ajouts().length, n + 'ajout : il faut d’abord choisir « de l’agence » ou « extérieure »');
+  ok(await p.isHidden('#pl-pnom'), n + 'ajout : pas de champ « parent » tant que « de l’agence » n’est pas choisi');
+  await p.check('input[name="pl-type"][value="exterieure"]'); await p.fill('#pl-tel', '0102'); await ajouter();
+  ok(/WhatsApp ne semble pas correct/.test(await p.textContent('body')) && !ajouts().length, n + 'ajout : numéro faux refusé, rien d’enregistré');
+  ok(/majeure : gardée à part/.test(await p.textContent('#pl-aide')) && await p.isHidden('#pl-pnom'), n + 'ajout « extérieure » : expliqué, sans parent (toujours majeure)');
+  await p.selectOption('#pl-civ', 'Monsieur'); await p.fill('#pl-tel', '0506070809'); await ajouter();
+  ok(/aucune place pour les hommes/.test(await p.textContent('body')) && !ajouts().length && !ecrits(journal, 'POST', 'places_invitations').length, n + 'ajout : un homme sans place homme dans l’appel → expliqué, rien d’enregistré');
+  await p.selectOption('#pl-civ', 'Madame'); await p.fill('#pl-nom', 'AWA EXTÉRIEURE'); await p.fill('#pl-tel', '0506070809'); await ajouter();
   await valeursParDefaut();
-  const contact = ecrits(journal, 'POST', 'contacts_externes').flat().pop() || {};
+  const contact = ajouts().pop() || {};
   const invit = ecrits(journal, 'POST', 'places_invitations').flat().pop() || {};
-  ok(contact.nom === 'AWA EXTÉRIEURE' && contact.civilite === 'Madame' && invit.contact_id && invit.sexe === 'femme' && invit.projet_id === 'p2', n + 'ajout : la personne est enregistrée dans le carnet et invitée');
+  ok(contact.p_nom === 'AWA EXTÉRIEURE' && contact.p_civilite === 'Madame' && contact.p_agence === false && contact.p_telephone === '2250506070809' && invit.contact_id && !invit.mannequin_id && invit.sexe === 'femme' && invit.projet_id === 'p2', n + 'ajout « extérieure » : gardée dans le carnet (pas dans le registre) et invitée');
   ok(/Madame AWA EXTÉRIEURE/.test(await p.textContent('.pl-qui')) && /personne extérieure/.test(await p.textContent('.pl-qui')) && await p.isVisible('.pl-qui [data-action="places-retirer"]'), n + 'ajout : elle apparaît avec « personne extérieure » et un bouton « Retirer »');
   ok(/sur 2\./.test(await p.textContent('#contenu')), n + 'ajout : un message de plus à envoyer');
   await p.click('.pl-qui [data-action="places-retirer"]'); await p.waitForTimeout(1000);
   ok(journal.some(j => j[0] === 'DELETE' && j[1] === 'places_invitations') && !/AWA EXTÉRIEURE/.test(await p.textContent('.pl-qui ul')), n + '« Retirer » : la personne ajoutée par erreur disparaît de l’appel');
+  ok(/AWA EXTÉRIEURE/.test(await p.textContent('#pl-carnet')), n + 'l’extérieure reste proposée dans le carnet pour la suite');
+  // une mannequin DE L'AGENCE, avec son parent : dans le registre (sans compte), invitée comme
+  // mannequin du registre ; le lien part à elle ET à son parent
+  const registreAvant = d.rpc.places_contacts_registre;
+  d.rpc.places_contacts_registre = (x) => registreAvant(x).concat((d.tables.agence_mannequins || []).filter((m) => x.p_ids.includes(m.id)).map((m) => ({ mannequin_id: m.id, full_name: m.full_name, genre: m.genre, phone: m.telephone, contact_email: m.email, date_naissance: null, parent_nom: m.parent_nom, parent_telephone: m.parent_telephone, parent_email: null })));
+  await p.check('input[name="pl-type"][value="agence"]'); await p.waitForTimeout(200);
+  ok(await p.isVisible('#pl-pnom') && await p.isVisible('#pl-ptel') && /registre de l’agence/.test(await p.textContent('#pl-aide')), n + 'ajout « de l’agence » : expliqué, avec le parent (facultatif)');
+  await p.selectOption('#pl-civ', 'Mademoiselle'); await p.fill('#pl-nom', 'FATOU AGENCE'); await p.fill('#pl-tel', '0707070707'); await p.fill('#pl-pnom', 'Madame Mère'); await ajouter();
+  ok(/Pour le parent, indiquez son nom ET son WhatsApp/.test(await p.textContent('body')) && ajouts().length === 1, n + 'ajout : parent à moitié rempli → expliqué, rien d’enregistré');
+  await p.fill('#pl-ptel', '0505050505'); await ajouter();
+  await valeursParDefaut();
+  const agence = ajouts().pop() || {}, invitAgence = ecrits(journal, 'POST', 'places_invitations').flat().pop() || {};
+  ok(agence.p_agence === true && agence.p_parent_nom === 'Madame Mère' && agence.p_parent_telephone === '2250505050505' && /^reg-ajout-/.test(invitAgence.mannequin_id || '') && !invitAgence.contact_id, n + 'ajout « de l’agence » : dans le registre avec son parent, invitée comme mannequin de l’agence');
+  ok(/Mademoiselle FATOU AGENCE/.test(await p.textContent('.pl-qui')) && /sans compte sur le site/.test(await p.textContent('.pl-qui')), n + 'elle apparaît « sans compte sur le site », comme les mannequins du registre');
+  const waAgence = await p.$$eval('a[data-places-wa]', (l) => l.map((a) => a.textContent));
+  const tousLiens = [];
+  for (let i = 0; i < 6; i++) { const a = await p.$('a[data-places-wa]'); if (!a) break; tousLiens.push(decodeURIComponent(await a.getAttribute('href')).split('?')[0] + ' ' + (await a.textContent())); await a.evaluate((x) => x.removeAttribute('target')); await p.evaluate(() => { document.querySelector('a[data-places-wa]').addEventListener('click', (e) => e.preventDefault(), { once: true }); }); await a.click(); await p.waitForTimeout(900); }
+  ok(tousLiens.some((l) => /wa\.me\/2250707070707 .*FATOU AGENCE/.test(l)) && tousLiens.some((l) => /wa\.me\/2250505050505 .*FATOU AGENCE \(parent : Madame Mère\)/.test(l)), n + 'son lien part à elle ET à son parent (âge inconnu, parent indiqué) — ' + waAgence.length);
   // elle prend sa place : visage (initiales) dans la grille, sans lien de fiche
   Object.assign(d.tables.places_invitations[0], { statut: 'pris', pris_par: 'mannequin', pris_le: new Date().toISOString() });
   await p.click('[data-action="places-actualiser"]'); await p.waitForTimeout(1200);

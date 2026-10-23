@@ -24,6 +24,11 @@
     if (p.passe) { $('cf-resultat').textContent = 'Ce projet est terminé.'; return; }
     $('cf-boutons').hidden = false;
     afficherReponse(p.reponse);
+    // l'enfant ou son parent a déjà répondu (23/10/2026) : on le dit, la réponse reste modifiable
+    if (!p.reponse && p.autre_reponse) {
+      $('cf-resultat').textContent = (p.parent ? p.nom : 'Votre parent') + ' a déjà répondu : '
+        + (p.autre_reponse === 'confirme' ? 'présence confirmée ✅.' : 'ne pourra pas venir.') + ' Vous pouvez aussi répondre ci-dessous.';
+    }
   }).catch(function () { $('cf-details').textContent = 'Connexion impossible pour le moment. Réessayez dans un instant.'; });
   function repondre(reponse) {
     $('cf-oui').disabled = $('cf-non').disabled = true;

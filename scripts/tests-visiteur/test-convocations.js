@@ -97,13 +97,16 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
       n + 'mannequins du projet : la mineure reçoit son message ET son parent le sien');
     ok(/Fatou Bamba/.test(await p.textContent('#convoc-participants')), n + 'les mannequins écrits à la main sont signalés');
     // personne non inscrite
-    await p.selectOption('#convoc-civilite', 'Monsieur'); await p.fill('#convoc-nom', 'Jean Styliste'); await p.fill('#convoc-tel', '0709090909'); await p.fill('#convoc-email', 'jean@test.ci');
+    await p.click('.convoc-ajout summary');
+    await p.check('input[name="convoc-type"][value="exterieure"]');
+    await p.selectOption('#convoc-civ', 'Monsieur'); await p.fill('#convoc-nom', 'Jean Styliste'); await p.fill('#convoc-tel', '0709090909'); await p.fill('#convoc-email', 'jean@test.ci');
     const blocParticipants = '#convoc-panneau fieldset.agenda-choix';
     if (process.env.CAPTURES) await p.locator(blocParticipants).first().screenshot({ path: process.env.CAPTURES + '/exterieur-avant-' + vp.width + '.png' });
     await p.click('#convoc-personne-ajouter'); await p.waitForTimeout(600);
     if (process.env.CAPTURES) await p.locator(blocParticipants).first().screenshot({ path: process.env.CAPTURES + '/exterieur-apres-' + vp.width + '.png' });
-    const carnet = ecrits(journal, 'POST', 'contacts_externes').pop() || {};
-    ok(carnet.nom === 'Jean Styliste' && carnet.civilite === 'Monsieur' && (await p.$$('#convoc-participants .convoc-personne')).length === 4, n + 'personne non inscrite ajoutée au carnet et à la liste');
+    const carnet = JSON.parse((journal.filter(j => j[0] === 'rpc' && j[1] === 'personne_ajouter').pop() || [])[2] || '{}');
+    ok(carnet.p_nom === 'Jean Styliste' && carnet.p_civilite === 'Monsieur' && carnet.p_agence === false && carnet.p_email === 'jean@test.ci' && (await p.$$('#convoc-participants .convoc-personne')).length === 4, n + 'mannequin extérieure ajoutée (carnet seulement) et à la liste');
+    ok(/Jean Styliste \(extérieure\)/.test(await p.textContent('#convoc-carnet')), n + 'carnet : l’extérieure marquée « (extérieure) »');
     // rien encore envoyé : le panneau propose d'abord d'annoncer la sélection ; ici, la convocation
     ok((await p.inputValue('#convoc-sorte')) === 'selection' && /Félicitations/.test(await p.textContent('#convoc-apercu')), n + 'premier message proposé : « Annoncer la sélection »');
     await p.selectOption('#convoc-sorte', 'convocation'); await p.waitForTimeout(200);
@@ -292,6 +295,38 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     ok(!errs.length, n + 'aucune erreur ' + errs.join(' | '));
     await ctx.close();
   }
+  // 5bis3. « Ajouter une personne » de l'agence avec son parent (23/10/2026) : dans le registre,
+  // elle ET son parent dans la liste (deux messages, une seule réponse)
+  for (const [nom, vp] of [['téléphone', { width: 390, height: 844 }], ['ordinateur', { width: 1280, height: 900 }]]) {
+    const n = nom + ' : agence + parent : ';
+    const { ctx, p, errs, journal } = await connecter(b, vp, true);
+    await p.click('[data-convoquer="pa2"]'); await p.waitForTimeout(1500);
+    await p.$eval('#cv-enregistrer', x => x.click()); await p.waitForTimeout(1800);
+    await p.click('.convoc-ajout summary');
+    await p.fill('#convoc-nom', 'FATOU AGENCE'); await p.fill('#convoc-tel', '0702020202');
+    await p.click('#convoc-personne-ajouter'); await p.waitForTimeout(500);
+    ok(/agence ou mannequin extérieure/.test(await p.textContent('#convoc-msg')) && !journal.some(j => j[1] === 'personne_ajouter'), n + 'sans choisir « agence » ou « extérieure » : expliqué, rien d’enregistré');
+    ok(await p.isHidden('#convoc-pnom'), n + 'champs du parent cachés au départ');
+    await p.check('input[name="convoc-type"][value="agence"]'); await p.waitForTimeout(200);
+    ok(await p.isVisible('#convoc-pnom') && /registre de l’agence/.test(await p.textContent('#convoc-aide')), n + '« de l’agence » : registre expliqué, parent proposé');
+    await p.fill('#convoc-pnom', 'Madame Fatou Mère'); await p.fill('#convoc-ptel', '0703030303');
+    await p.click('#convoc-personne-ajouter'); await p.waitForTimeout(800);
+    const x = JSON.parse((journal.filter(j => j[0] === 'rpc' && j[1] === 'personne_ajouter').pop() || [])[2] || '{}');
+    ok(x.p_agence === true && x.p_parent_nom === 'Madame Fatou Mère' && x.p_parent_telephone === '2250703030303' && x.p_telephone === '2250702020202', n + 'enregistrée dans le registre avec son parent');
+    const liste = await p.$$eval('#convoc-participants .convoc-personne', ls => ls.map(l => l.textContent.replace(/\s+/g, ' ')));
+    ok(liste.length === 5 && liste.some(l => /FATOU AGENCE/.test(l) && !/parent/.test(l)) && liste.some(l => /FATOU AGENCE/.test(l) && /parent : Madame Fatou Mère/.test(l)), n + 'elle ET son parent sont dans la liste (' + liste.length + ')');
+    ok(/et au registre de l’agence, avec son parent/.test(await p.textContent('#convoc-msg')) && await p.inputValue('#convoc-nom') === '', n + 'message de confirmation, formulaire vidé');
+    const qui = await p.$$eval('#convoc-apercu-qui option', os => os.map(o => o.value + '|' + o.textContent));
+    const cleParent = (qui.find(q => /parent : Madame Fatou Mère/.test(q)) || '').split('|')[0];
+    await p.selectOption('#convoc-apercu-qui', cleParent);
+    ok(/Bonjour Madame Fatou Mère/.test(await p.textContent('#convoc-apercu')) && /FATOU AGENCE/.test(await p.textContent('#convoc-apercu')), n + 'aperçu pour le parent : adressé au parent, au sujet de sa fille');
+    await p.click('#convoc-programmer'); await p.waitForTimeout(5000);
+    const parts = ecrits(journal, 'POST', 'convocation_participants').flat().filter(l => l.contact_id);
+    ok(parts.length === 2 && parts.some(l => l.parent && l.telephone === '2250703030303' && l.parent_nom === 'Madame Fatou Mère') && parts.some(l => !l.parent && l.telephone === '2250702020202') && parts[0].contact_id === parts[1].contact_id,
+      n + 'deux participants enregistrés (elle et son parent), même fiche du carnet');
+    ok(!errs.length, n + 'aucune erreur ' + errs.join(' | '));
+    await ctx.close();
+  }
   // 5ter. La page publique « Confirmer ma présence » (sans compte) ; iPhone de 375 px (journal du 21/10/2026)
   for (const [nom, vp] of [['téléphone', { width: 375, height: 667 }], ['ordinateur', { width: 1280, height: 900 }]]) {
     const J = 'd'.repeat(36);
@@ -299,7 +334,10 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     const p = await ctx.newPage(); const journal = [], errs = [];
     p.on('pageerror', e => errs.push(e.message));
     await brancher(p, { tables: {}, rpc: {
-      convocation_lire: (x) => x.p_jeton === J ? [{ titre: 'AFRICA IN RHYTHM', type: 'defile', date_debut: '2030-11-15', heure_convocation: '15:00', lieu: 'Hôtel Ivoire', ville: 'Abidjan', nom: 'Mademoiselle AWA KONÉ', parent: false, reponse: null, passe: false }] : [],
+      convocation_lire: (x) => { const base = { titre: 'AFRICA IN RHYTHM', type: 'defile', date_debut: '2030-11-15', heure_convocation: '15:00', lieu: 'Hôtel Ivoire', ville: 'Abidjan', reponse: null, passe: false };
+        return x.p_jeton === J ? [Object.assign({ nom: 'Mademoiselle AWA KONÉ', parent: false }, base)]
+          : x.p_jeton === 'f'.repeat(36) ? [Object.assign({ nom: 'Mademoiselle FATOU AGENCE', parent: true, autre_reponse: 'confirme' }, base)]
+          : x.p_jeton === 'a'.repeat(36) ? [Object.assign({ nom: 'Mademoiselle FATOU AGENCE', parent: false, autre_reponse: 'absent' }, base)] : []; },
       convocation_repondre: () => true } }, journal);
     await p.goto(BASE + 'confirmer.html?c=' + J); await p.waitForTimeout(1500);
     const details = await p.textContent('#cf-details');
@@ -313,6 +351,11 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     if (process.env.CAPTURES) await p.screenshot({ path: process.env.CAPTURES + '/confirmer-' + vp.width + '.png' });
     await p.goto(BASE + 'confirmer.html?c=' + 'e'.repeat(36)); await p.waitForTimeout(1200);
     ok(/pas valable/.test(await p.textContent('#cf-details')) && await p.isHidden('#cf-boutons'), nom + ' : lien inconnu → message clair, pas de boutons');
+    // le parent ouvre SON lien : sa fille a déjà confirmé (23/10/2026)
+    await p.goto(BASE + 'confirmer.html?c=' + 'f'.repeat(36)); await p.waitForTimeout(1500);
+    ok(/Mademoiselle FATOU AGENCE a déjà répondu : présence confirmée/.test(await p.textContent('#cf-resultat')) && await p.isVisible('#cf-oui'), nom + ' : le parent voit que sa fille a déjà confirmé (et peut répondre aussi)');
+    await p.goto(BASE + 'confirmer.html?c=' + 'a'.repeat(36)); await p.waitForTimeout(1500);
+    ok(/Votre parent a déjà répondu : ne pourra pas venir/.test(await p.textContent('#cf-resultat')), nom + ' : la fille voit que son parent a déjà répondu');
     ok(!errs.length, nom + ' : page de confirmation sans erreur ' + errs.join(' | '));
     await ctx.close();
   }
