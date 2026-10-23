@@ -276,7 +276,8 @@
       '<section class="carte">' + grille('Femmes', appel.places_femmes, prises('femme'), noms, photos) + grille('Hommes', appel.places_hommes, prises('homme'), noms, photos) +
       (fini ? '' : '<div class="ligne"><button type="button" class="btn petit" data-action="places-modifier">✏️ Nombre de places</button>' +
         '<button type="button" class="btn petit" data-action="places-ouvrir">' + (appel.ouvert ? 'Fermer l’appel' : 'Rouvrir l’appel') + '</button>' +
-        '<button type="button" class="btn petit" data-action="places-preparer">Ajouter les nouvelles mannequins</button></div>') +
+        '<button type="button" class="btn petit" data-action="places-preparer">Ajouter les nouvelles mannequins</button>' +
+        '<button type="button" class="btn petit rouge" data-action="places-ajout-ouvrir">＋ Ajouter une personne</button></div>') +
       '<div class="ligne"><button type="button" class="btn petit" data-action="places-supprimer">🗑️ Supprimer cet appel</button></div></section>' +
       (fini ? '' : blocChoix(invitations, noms, photos)) +
       (envoi ? '<section class="carte"><h2>Envoi des liens</h2>' + envoi + '</section>' : '') +
@@ -359,10 +360,24 @@
   P.actions['places-libre'] = () => { noterLibre({ debut: Date.now(), faits: {} }); return P.afficher(); };
   P.actions['places-libre-fin'] = () => { noterLibre(null); return P.afficher(); };
   P.actions['places-convoquer'] = () => { if (ecran) window.convoquerProjet(ecran.projet.id); };
+  // « ＋ Ajouter une personne » : la liste « Qui reçoit le lien ? » s'ouvre sur le formulaire
+  async function ouvrirAjout() {
+    choixOuvert = true;
+    await P.afficher();
+    const form = document.querySelector('form[data-form="places-personne"]');
+    if (!form) return;
+    form.closest('details').open = true;
+    form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const champ = document.getElementById('pl-nom');
+    if (champ) champ.focus({ preventScroll: true });
+  }
+  P.actions['places-ajout-ouvrir'] = () => ouvrirAjout();
   P.actions['places-preparer'] = async () => {
     const avant = ecran.invitations.length, n = await P.rpc('places_preparer', { p_projet: ecran.appel.projet_id });
-    P.message(n > avant ? (n - avant) + ' nouvelle(s) mannequin(s) ajoutée(s) à l’envoi.' : n < avant ? 'Liste mise à jour (fiche sans nom retirée).' : 'Toutes les mannequins ont déjà leur lien.');
-    return P.afficher();
+    if (n > avant) { P.message((n - avant) + ' nouvelle(s) mannequin(s) ajoutée(s) à l’envoi.'); return P.afficher(); }
+    // personne de nouveau dans le site : on propose tout de suite d'ajouter une personne à la main
+    P.message('Toutes les mannequins du site ont déjà leur lien. Pour une personne pas encore enregistrée, remplissez « ＋ Ajouter une personne ».');
+    return ouvrirAjout();
   };
   P.actions['places-ouvrir'] = async () => {
     const ouvert = !ecran.appel.ouvert;

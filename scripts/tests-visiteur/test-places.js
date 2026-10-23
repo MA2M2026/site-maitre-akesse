@@ -170,6 +170,16 @@ async function partieRegistre(b, nom, vp) {
   ok(/Sans numéro WhatsApp \(1\)/.test(await p.textContent('.pl-sans')) && (await p.$$('.pl-sans .vis')).length === 1 && (await p.$$('.pl-sans .vis img')).length === 0 && /GY/.test(await p.textContent('.pl-sans .vis')), n + '« Sans numéro WhatsApp » : le nom avec son visage (initiales sans photo)');
   const taille = await p.$eval('.pl-sans .vis', e => e.getBoundingClientRect().width);
   ok(taille >= 30, n + 'visage visible (' + taille + ' px)');
+  // le bouton « ＋ Ajouter une personne » est visible tout de suite, et « Ajouter les nouvelles
+  // mannequins » sans personne de nouveau y mène aussi (demande du 23/10/2026)
+  await p.click('.pl-qui summary'); await p.waitForTimeout(300);  // (on referme la liste)
+  ok(await p.isHidden('#pl-nom') && await p.isVisible('[data-action="places-ajout-ouvrir"]'), n + 'bouton « ＋ Ajouter une personne » visible sans ouvrir la liste');
+  await p.click('[data-action="places-ajout-ouvrir"]'); await p.waitForTimeout(1200);
+  ok(await p.isVisible('#pl-nom') && await p.evaluate(() => document.activeElement && document.activeElement.id === 'pl-nom'), n + '« ＋ Ajouter une personne » : la liste s’ouvre sur le formulaire, prêt à écrire');
+  await p.click('.pl-qui summary'); await p.waitForTimeout(300);
+  d.rpc.places_preparer = () => d.tables.places_invitations.length;
+  await p.click('[data-action="places-preparer"]'); await p.waitForTimeout(1500);
+  ok(/pas encore enregistrée/.test(await p.textContent('body')) && await p.isVisible('#pl-nom'), n + '« Ajouter les nouvelles mannequins » sans nouvelle : le formulaire d’ajout s’ouvre');
   // « ＋ Ajouter une personne » : une personne extérieure, gardée dans le carnet
   d.tables.contacts_externes = d.tables.contacts_externes || []; d.memoriser = true;
   // (la vraie base donne d'office un lien et le statut « invite » à une nouvelle invitation)
