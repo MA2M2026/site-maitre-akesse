@@ -161,11 +161,11 @@ async function visite(b, page, mode, opts = {}) {
     await v.ctx.close();
   }
 
-  // 3) Cloudflare ne répond jamais (chargement sans fin) : garde-fou à 8 s, sonde sans
-  //    réponse pendant 5 s → bascule
+  // 3) Cloudflare ne répond jamais (chargement sans fin) : garde-fou à 2,5 s, sonde sans
+  //    réponse pendant 2 s → bascule ; photos affichées en moins de 6 s (23/10/2026 : avant, 18 s)
   for (const page of ['index.html', 'mannequin.html?id=a1']) {
-    const v = await visite(b, page, 'muet', { mobile: true, attente: 20000 });
-    ok(v.etat.srcs.length > 0 && v.etat.srcs.every(s => /\/book-photos\//.test(s)) && !v.etat.vides, page + ' muet : photos affichées par le relais après le délai (' + v.etat.srcs.length + ')');
+    const v = await visite(b, page, 'muet', { mobile: true, attente: 3500 });
+    ok(v.etat.srcs.length > 0 && v.etat.srcs.every(s => /\/book-photos\//.test(s)) && !v.etat.vides, page + ' muet : photos affichées par le relais en moins de 6 s (' + v.etat.srcs.length + ')');
     ok(!!v.etat.marque && v.signalements === 1, page + ' muet : visiteur mémorisé, noté une fois');
     ok(!v.errs.length, page + ' muet : aucune erreur ' + v.errs.join(' | '));
     await v.ctx.close();

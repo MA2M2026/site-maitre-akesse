@@ -733,7 +733,10 @@ avec secours automatique, puis quitter le relais une fois le rodage réussi.
   chargement sans fin (aucune erreur n'arrive dans ce cas) : 8 s après une photo directe
   préparée (ou un défilement), s'il en reste d'attendues à l'écran, petite sonde vers une
   adresse inexistante de Cloudflare ; réponse (404) en moins de 5 s = connexion lente, on
-  patiente ; sinon une seconde sonde part par le relais et Cloudflare a encore 5 s ; ni Cloudflare ni le relais ne répondent = connexion
+  patiente ; sinon une seconde sonde part par le relais et Cloudflare a encore 5 s (**depuis le
+  23/10/2026 : garde-fou à 2,5 s, les deux sondes partent ensemble et ont 2 s** — sur la box Orange
+  de la propriétaire, Cloudflare coupait la connexion ou ne répondait plus, et l'accueil attendait
+  ses photos ; `photos.js` surveille aussi, dès son arrivée, les photos déjà écrites dans la page) ; ni Cloudflare ni le relais ne répondent = connexion
   faible du visiteur, on patiente aussi (passer par Vercel n'aiderait pas et consommerait son
   quota — 21/10/2026) ; seul « Cloudflare muet, relais qui répond » fait basculer
   (`cloudflareSeulMuet`, aussi utilisé par `js/video-accueil.js`). Après la bascule, le

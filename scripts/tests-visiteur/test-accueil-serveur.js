@@ -79,8 +79,9 @@ async function middleware() {
   }
   for (const [langue, chemin] of [['FR', ''], ['EN', 'en/']]) {
     for (const [nom, ecran] of [['téléphone', { width: 390, height: 844 }], ['ordinateur', { width: 1366, height: 900 }]]) {
-      for (const cloudflare of [true, false]) {
-        const n = langue + ' · ' + nom + (cloudflare ? '' : ' · Cloudflare muet') + ' : ';
+      for (const etatCf of ['ok', 'coupé', 'muet']) {
+        const cloudflare = etatCf === 'ok';
+        const n = langue + ' · ' + nom + (cloudflare ? '' : ' · Cloudflare ' + etatCf) + ' : ';
         const page = await pageServeur(chemin);
         const ctx = await b.newContext({ viewport: ecran, isMobile: ecran.width < 700, hasTouch: ecran.width < 700, serviceWorkers: 'block' });
         const p = await ctx.newPage(); const errs = [], journal = [], ordre = [];
@@ -88,19 +89,21 @@ async function middleware() {
         p.on('request', (r) => ordre.push(r.url()));
         await p.addInitScript(() => { try { localStorage.setItem('ma2m_cookies', 'non'); sessionStorage.setItem('ma2m_entree_vue', '1'); } catch (e) { /* */ } });
         await brancher(p, { tables: { model_profiles: profils.map((x) => Object.assign({ published: true }, x)), model_photos: [] }, rpc: { photos_couverture_mannequins: profils.map((x) => ({ model_id: x.id, url: photo(x.id) })) } }, journal);
-        await p.route(/^https:\/\/photos\.maitreakessemodelmanagement\.com\//, (r) => cloudflare ? r.fulfill({ status: 200, contentType: 'image/webp', body: IMAGE }) : r.abort());
+        await p.route(/^https:\/\/photos\.maitreakessemodelmanagement\.com\//, (r) => cloudflare ? r.fulfill({ status: 200, contentType: 'image/webp', body: IMAGE }) : etatCf === 'coupé' ? r.abort('connectionclosed') : undefined);  // muet : jamais de réponse
         await p.route(/\/book-photos\//, (r) => r.fulfill({ status: 200, contentType: 'image/jpeg', body: IMAGE }));
         await p.route('http://127.0.0.1:' + PORT + '/' + chemin, (r) => r.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: page }));
-        await p.goto('http://127.0.0.1:' + PORT + '/' + chemin);
-        await p.waitForFunction(() => { const i = document.getElementById('couv-img'); return i.complete && i.naturalWidth > 0; }, null, { timeout: 15000 }).catch(() => {});
+        const t0 = Date.now();
+        await p.goto('http://127.0.0.1:' + PORT + '/' + chemin, { waitUntil: 'domcontentloaded' });
+        await p.waitForFunction(() => { const i = document.getElementById('couv-img'); return i.complete && i.naturalWidth > 0; }, null, { timeout: 15000, polling: 100 }).catch(() => {});
+        const delai = Date.now() - t0;
         await p.waitForTimeout(1500);
-        const couv = await p.evaluate(() => { const i = document.getElementById('couv-img'); return { src: i.currentSrc || i.src, largeur: i.naturalWidth, modele: i.dataset.modele, credit: document.getElementById('couv-modele-nom').textContent }; });
+        const couv = await p.evaluate(() => { const i = document.getElementById('couv-img'); return { src: i.currentSrc || i.src, largeur: i.naturalWidth, modele: i.dataset.modele, credit: document.getElementById('couv-modele-nom').textContent, enVue: (document.querySelector('.p-couv .mag-cadre img.visible').getAttribute('src').match(/\/(a\d)\//) || [])[1] }; });
         const premiere = ordre.findIndex((u) => u.includes('/miniatures/')), accueilJs = ordre.findIndex((u) => /\/js\/accueil\.js/.test(u));
-        ok(couv.largeur > 0, n + 'la photo de couverture s’affiche' + (cloudflare ? '' : ' (par la roue de secours : ' + couv.src.replace(/^https?:\/\/[^/]+/, '').slice(0, 30) + '…)'));
+        ok(couv.largeur > 0 && delai < (etatCf === 'muet' ? 6000 : 3000), n + 'la photo de couverture s’affiche en ' + (delai / 1000).toFixed(1) + ' s' + (cloudflare ? '' : ' (par la roue de secours : ' + couv.src.replace(/^https?:\/\/[^/]+/, '').slice(0, 30) + '…)'));
         ok(premiere >= 0 && premiere < accueilJs, n + 'la photo est demandée avant même les programmes de la page');
         if (cloudflare) ok(couv.src.startsWith(CF), n + 'la photo vient de Cloudflare');
         else ok(/\/book-photos\//.test(couv.src), n + 'Cloudflare muet : la photo vient de la copie Vercel');
-        const attendu = profils.find((x) => x.id === couv.modele) || {};
+        const attendu = profils.find((x) => x.id === couv.enVue) || {};  // (la couverture défile toutes les 5 s)
         ok(couv.credit === attendu.full_name, n + '« En couverture » : le nom de la mannequin en photo (' + couv.credit + ')');
         const questions = ordre.filter((u) => /model_profiles/.test(u));
         ok(!journal.some((j) => j[0] === 'rpc' && j[1] === 'photos_couverture_mannequins') && questions.length === 1 && /select=id&/.test(questions[0]) && ordre.indexOf(questions[0]) > premiere,
@@ -108,7 +111,7 @@ async function middleware() {
         ok((await p.$$('#grille-femmes a')).length === 3 && (await p.$$('#grille-hommes a')).length === 1 && /AWA UNE/.test(await p.textContent('#une-nom')), n + 'visages des femmes, des hommes et « À la une » remplis');
         ok(/4 (mannequins à découvrir|models to discover)/.test(await p.textContent('#couv-nombre')), n + 'nombre de mannequins sur la couverture');
         ok(!errs.length, n + 'aucune erreur ' + errs.join(' | '));
-        await ctx.close();
+        await p.unrouteAll({ behavior: 'ignoreErrors' }); await ctx.close();
       }
     }
   }
