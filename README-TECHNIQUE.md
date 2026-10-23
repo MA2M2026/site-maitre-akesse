@@ -169,6 +169,11 @@ agents de code (Codex, Copilot, Cursor…). `GUIDE-DE-SECOURS.md` est le guide d
 propriétaire pour se débrouiller sans IA (version PDF imprimable remise le 13/10/2026).
 
 ## 💸 Payer les mannequins (Comptabilité, 22/10/2026, choix de la propriétaire : Wave d'abord)
+« Rapport des cachets » (23/10/2026, `js/portail/espace-compta-cachets-rapport.js`, menu de la
+Comptabilité) : cachets payés d'un mois ou d'une année (filtre sur `paye_le`), totaux (prestations,
+commission = recette de l'agence, versé = dépense), par mannequin (photo) et détail ; PDF
+(`P.comptaPdf`, mention « non fiscal » hors mode légal) et Excel (`P.xlsx`, feuilles « Par
+mannequin » et « Détail »). Lecture seule. Essai : `test-rapport-cachets.js`.
 Mineure payée sur le Wave de son parent (23/10/2026, `supabase-cachets-parent.sql`) : en
 choisissant une mannequin mineure du registre, le formulaire annonce le versement au parent,
 demande le nom du parent et met son numéro Wave ; `cachets_mannequins.parent_nom` garde à qui

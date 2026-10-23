@@ -5,7 +5,7 @@
 // v8 (22/10/2026) : nouvelle copie, l'ancienne pouvait contenir le manifeste à la place de la page.
 // v10 (déménagement) : /admin/ ouvre la nouvelle Administration (décoration vivante, bloc 1 natif).
 // v11 (démolition, 23/10/2026) : notifications du téléphone reprises dans js/admin/notifications.js.
-const VERSION = 'administration-v12';
+const VERSION = 'administration-v13';
 // (les pièces réservées js/admin/site-*.js ne sont jamais gardées : elles exigent la clé d'accès)
 const INTERFACE = ['/admin/', '/css/polices.css', '/css/jetons.css', '/css/admin-vivante.css', '/js/supabase-config.js',
   '/js/vendor/supabase-js-2.110.6.js', '/js/vendor/emailjs-browser-3.12.1.min.js', '/js/emailjs-config.js', '/js/verrou-defilement.js',
@@ -13,7 +13,7 @@ const INTERFACE = ['/admin/', '/css/polices.css', '/css/jetons.css', '/css/admin
   '/js/portail/inactivite.js', '/js/messages-mensualites.js', '/js/portail/noyau.js', '/js/admin/coque.js', '/js/admin/notifications.js', '/js/admin/site.js',
   '/js/portail/espace-paiements.js', '/js/portail/espace-paiements-suivi.js',
   '/js/portail/espace-compta.js', '/js/portail/espace-compta-suivi.js', '/js/portail/compta-pdf.js', '/js/portail/compta-xlsx.js',
-  '/js/cachets-communs.js', '/js/portail/espace-compta-cachets.js', '/js/portail/espace-compta-documents.js', '/js/portail/espace-compta-dossier.js', '/js/vendor/pdf-lib-1.17.1.min.js',
+  '/js/cachets-communs.js', '/js/portail/espace-compta-cachets.js', '/js/portail/espace-compta-cachets-rapport.js', '/js/portail/espace-compta-documents.js', '/js/portail/espace-compta-dossier.js', '/js/vendor/pdf-lib-1.17.1.min.js',
   '/js/portail/securite.js', '/icons/admin-192.png', '/assets/logo-header.png', '/assets/logo-header-clair.png'];
 
 self.addEventListener('install', (e) => {
