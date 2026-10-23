@@ -337,8 +337,9 @@ Essai : `test-retour-invitation.js`.
 
 ## ⚡ Rapidité de l'Administration (23/10/2026)
 Rafraîchir une page de l'espace « Le site » prenait ~7 s avec une connexion d'Abidjan : les 36
-pièces (`js/admin/site.js`, `PIECES`) étaient demandées l'une après l'autre. Elles sont demandées
-toutes ensemble (`Promise.all`, `async = false` : exécution toujours dans l'ordre) : < 1 s.
+pièces (`js/admin/site.js`, `PIECES`) étaient téléchargées l'une après l'autre. Elles sont
+téléchargées toutes ensemble (`<link rel="preload" as="script">`) puis exécutées une par une dans
+l'ordre, comme avant (la première qui manque arrête tout) : < 1 s.
 « Payer les mannequins » envoie toutes ses questions à la base en même temps. Essai :
 `test-rapidite-admin.js` (150 ms par requête simulés ; rafraîchi < 2,5 s, ouvert < 1 s).
 

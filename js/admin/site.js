@@ -60,10 +60,17 @@
   async function preparer() {
     const session = (await sb.auth.getSession()).data.session;
     if (session) await fetch('/api/acces-tableau', { method: 'POST', headers: { Authorization: 'Bearer ' + session.access_token }, credentials: 'same-origin' }).catch(() => { /* hors ligne : les pièces déjà en mémoire suffisent */ });
-    // toutes les pièces demandées en même temps (23/10/2026 : une par une, un rafraîchissement
-    // prenait ~7 s avec une connexion d'Abidjan) ; async = false : elles s'exécutent quand même
-    // dans l'ordre de la liste
-    await Promise.all(PIECES.map(charger));
+    // toutes les pièces TÉLÉCHARGÉES en même temps (« preload », 23/10/2026 : une par une, un
+    // rafraîchissement prenait ~7 s avec une connexion d'Abidjan), puis exécutées une par une dans
+    // l'ordre, comme avant : la première qui manque arrête tout (jamais une pièce sans celles dont
+    // elle dépend, jamais une pièce exécutée deux fois)
+    PIECES.forEach((src) => {
+      if (charges.has(src) || document.querySelector('link[rel="preload"][href="' + src + '"]')) return;
+      const l = document.createElement('link');
+      l.rel = 'preload'; l.as = 'script'; l.href = src;
+      document.head.appendChild(l);
+    });
+    for (const src of PIECES) await charger(src);
   }
   // pastilles « à traiter » du menu : rafraîchies sans faire attendre la page, au plus une fois par minute
   let pastillesLe = 0;
