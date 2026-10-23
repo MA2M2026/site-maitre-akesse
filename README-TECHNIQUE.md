@@ -381,6 +381,10 @@ Essai : `test-retour-invitation.js`.
   date, heure, lieu et le même lien personnel de confirmation ; pas de rappel avec lui. Le
   panneau propose la sélection tant que rien n'est parti, puis la convocation ; changer de message
   recoche ceux qui ne l'ont pas reçu. Réponses et relances comptent dès la sélection.
+  Textes validés par la propriétaire le 23/10/2026 (accord féminin / masculin par la civilité,
+  version parent) ; relance et rappel : `messageRelance`, `messageRappel`. « 🔔 Rappel à la
+  suivante » (23/10/2026) dans la liste des confirmés, même fonctionnement que la relance
+  (`ajouterTournee`, `sessionStorage` « ma2m_rappels_<projet> »).
 - **Agenda public** : plus aucun nom de mannequin (`js/agenda.js`, décision du 21/10/2026) ; les
   noms restent dans « Parcours MA2M » (médaillons).
 - **Envois programmés** : `pg_cron` toutes les 5 min → `convocations_reveil()` appelle (seulement

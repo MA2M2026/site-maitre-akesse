@@ -106,10 +106,10 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     await p.selectOption('#convoc-sorte', 'convocation'); await p.waitForTimeout(200);
     // aperçu
     const apercu = await p.textContent('#convoc-apercu');
-    ok(/Bonjour Mademoiselle AWA KONÉ/.test(apercu) && /Vous êtes convoquée à 15h00 précises/.test(apercu) && /15h30 — Essayage/.test(apercu) && /Escarpins noirs/.test(apercu) && /Boulevard Hassan II/.test(apercu) && /Début : 20h00/.test(apercu),
+    ok(/Bonjour Mademoiselle AWA KONÉ/.test(apercu) && /Vous êtes attendue à 15h00 précises/.test(apercu) && /15h30 — Essayage/.test(apercu) && /Escarpins noirs/.test(apercu) && /Boulevard Hassan II/.test(apercu) && /Début : 20h00/.test(apercu),
       n + 'aperçu du message : convocation, programme, à prévoir, adresse');
     await p.selectOption('#convoc-apercu-qui', { index: 2 });
-    ok(/Bonjour Madame Ama Mère/.test(await p.textContent('#convoc-apercu')) && /participation de Mademoiselle PETITE AMA/.test(await p.textContent('#convoc-apercu')), n + 'aperçu pour la mineure : adressé au parent');
+    ok(/Bonjour Madame Ama Mère/.test(await p.textContent('#convoc-apercu')) && /convocation de Mademoiselle PETITE AMA/.test(await p.textContent('#convoc-apercu')), n + 'aperçu pour la mineure : adressé au parent');
 
     if (process.env.CAPTURES) { await p.$eval('#convoc-panneau', e => e.scrollIntoView()); await p.screenshot({ path: process.env.CAPTURES + '/panneau-' + vp.width + '.png', fullPage: false }); }
     // 3. Envoyer maintenant
@@ -200,6 +200,13 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     await p.$eval('#convoc-reponses .convoc-relance', a => { a.addEventListener('click', e => e.preventDefault(), { once: true }); a.click(); }); await p.waitForTimeout(500);
     ok(!(await p.$('#convoc-reponses .convoc-relance')) && /Toutes les personnes sans réponse ont été relancées/.test(await p.textContent('#convoc-reponses')) && /relancé\(e\)/.test(await p.textContent('#convoc-reponses')),
       'relance : après l’appui, la personne est marquée « relancé(e) », plus personne à relancer');
+    // « 🔔 Rappel » aux personnes qui ont confirmé (23/10/2026)
+    const rappel = await p.$$eval('#convoc-reponses .convoc-rappel', as => as.map(a => decodeURIComponent(a.href) + '|' + a.textContent));
+    ok(rappel.length === 1 && rappel[0].startsWith('https://wa.me/2250701020304') && /Rappel :\* nous vous confirmons le défilé \*« AFRICA IN RHYTHM »\*/.test(rappel[0]) && /Vous êtes attendue à \*15h00 précises\*/.test(rappel[0])
+      && /Rappel à la suivante : Mademoiselle AWA KONÉ \(1 restante\)/.test(rappel[0]), 'confirmés : bouton « 🔔 Rappel », message accordé (« attendue »)');
+    await p.$eval('#convoc-reponses .convoc-rappel', a => { a.addEventListener('click', e => e.preventDefault(), { once: true }); a.click(); }); await p.waitForTimeout(500);
+    ok(!(await p.$('#convoc-reponses .convoc-rappel')) && /ont reçu le rappel/.test(await p.textContent('#convoc-reponses')) && /rappel envoyé/.test(await p.textContent('#convoc-reponses'))
+      && /relancé\(e\)/.test(await p.textContent('#convoc-reponses')) && await p.$eval('#convoc-reponses details.convoc-groupe', d => d.open), 'rappel : noté « rappel envoyé », la relance reste notée, la liste des confirmés reste ouverte');
     ok(/A confirmé sa présence/.test(await p.textContent('#convoc-participants')) && /Ne pourra pas venir/.test(await p.textContent('#convoc-participants')), 'réponses visibles dans la liste des participants');
     // « 📋 Voir les réponses » en haut de la page Convocations : choisir un projet déjà convoqué
     await rubrique(p, 'b2-convocations'); await p.waitForTimeout(800);
@@ -232,11 +239,11 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     await p.click('[data-convoquer="pa2"]'); await p.waitForTimeout(1500);
     await p.$eval('#cv-enregistrer', x => x.click()); await p.waitForTimeout(1800);
     const apercu = await p.textContent('#convoc-apercu');
-    ok((await p.inputValue('#convoc-sorte')) === 'selection' && /Félicitations !\* Vous êtes sélectionnée pour le défilé \*« AFRICA IN RHYTHM »\*/.test(apercu) && /Début : 20h00/.test(apercu) && /Hôtel Ivoire, Abidjan/.test(apercu)
-      && /second message/.test(apercu) && /Confirmez votre participation/.test(apercu) && !/Essayage|15h00 précises|Boulevard/.test(apercu), n + 'aperçu court : félicitations, date, heure, lieu, lien ; ni programme ni adresse');
+    ok((await p.inputValue('#convoc-sorte')) === 'selection' && /Félicitations, vous êtes sélectionnée !\*/.test(apercu) && /ferez partie du défilé \*« AFRICA IN RHYTHM »\*/.test(apercu) && /Début : 20h00/.test(apercu) && /Hôtel Ivoire, Abidjan/.test(apercu)
+      && /second message/.test(apercu) && /Confirmez votre participation/.test(apercu) && !/Essayage|15h00 précises|Boulevard/.test(apercu) && /fière de vous compter/.test(apercu), n + 'aperçu court : félicitations, date, heure, lieu, lien ; ni programme ni adresse');
     ok(await p.isHidden('#convoc-rappel-info') && /La convocation avec tous les détails suit/.test(await p.textContent('#convoc-sorte-aide')), n + 'explication affichée, pas de rappel annoncé');
     await p.selectOption('#convoc-apercu-qui', { index: 2 });
-    ok(/Bonjour Madame Ama Mère/.test(await p.textContent('#convoc-apercu')) && /Mademoiselle PETITE AMA est sélectionnée/.test(await p.textContent('#convoc-apercu')), n + 'aperçu pour le parent de la mineure');
+    ok(/Bonjour Madame Ama Mère/.test(await p.textContent('#convoc-apercu')) && /Mademoiselle PETITE AMA est sélectionnée !/.test(await p.textContent('#convoc-apercu')) && /qu’elle fera partie/.test(await p.textContent('#convoc-apercu')), n + 'aperçu pour le parent de la mineure');
     await p.click('#convoc-programmer');
     for (let i = 0; i < 30 && !/envoyé\(s\) sur/.test(await p.textContent('#convoc-msg')); i++) await p.waitForTimeout(400);
     const lignes = ecrits(journal, 'POST', 'convocation_envois').flat();

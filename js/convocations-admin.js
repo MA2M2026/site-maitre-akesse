@@ -199,19 +199,21 @@ window.demarrerConvocationsPanneau = function () {
       if (!g[2].length) return;
       var d = document.createElement('details');
       d.className = 'convoc-groupe';
-      if (toutOuvert || g[0] !== 'confirme') d.open = true;
+      // la liste des confirmés reste ouverte pendant la tournée de rappels
+      if (toutOuvert || g[0] !== 'confirme' || (faitesIci && faitesIci.rappel)) d.open = true;
       var r = document.createElement('summary');
       r.textContent = g[1] + ' (' + g[2].length + ')';
       d.appendChild(r);
-      if (g[0] === 'attente') ajouterRelance(d, boite, projet, personnes, envois, toutOuvert, g[2], faitesIci);
+      var tournee = g[0] === 'attente' ? 'relance' : g[0] === 'confirme' ? 'rappel' : null;
+      if (tournee) ajouterTournee(tournee, d, boite, projet, personnes, envois, toutOuvert, g[2], faitesIci);
       g[2].forEach(function (pers) {
         var l = document.createElement('div');
         l.className = 'convoc-reponse';
         var n = document.createElement('span');
         n.textContent = nomDe(pers) + (pers.repondu_le ? ' — ' + quand(pers.repondu_le) : '');
         l.appendChild(n);
-        if (g[0] === 'attente' && (faitesIci || relancees(projet))[pers.participant_id]) {
-          var fait = document.createElement('small'); fait.textContent = '✓ relancé(e)'; l.appendChild(fait);
+        if (tournee && faites(projet, tournee, faitesIci)[pers.participant_id]) {
+          var fait = document.createElement('small'); fait.textContent = tournee === 'relance' ? '✓ relancé(e)' : '✓ rappel envoyé'; l.appendChild(fait);
         }
         d.appendChild(l);
       });
@@ -220,51 +222,61 @@ window.demarrerConvocationsPanneau = function () {
     return true;
   };
 
-  // ---------- Relance des personnes sans réponse (demande du 22/10/2026) ----------
-  // Un seul bouton, comme « Envoyer le WhatsApp suivant » : chaque appui ouvre WhatsApp pour la
-  // personne suivante, avec son lien personnel. Seulement pour celles dont la convocation est
-  // vraiment partie (pas pour un envoi encore programmé). Les relances faites sont retenues dans
-  // ce navigateur le temps de la session.
-  function relancees(p) {
-    try { return JSON.parse(sessionStorage.getItem('ma2m_relances_' + p.id) || '{}'); } catch (e) { return {}; }
+  // ---------- Relance des personnes sans réponse (22/10/2026) et rappel aux confirmés (23/10/2026) ----------
+  // Un seul bouton par liste, comme « Envoyer le WhatsApp suivant » : chaque appui ouvre WhatsApp
+  // pour la personne suivante (relance : avec son lien personnel ; rappel : date, heure, lieu).
+  // Seulement pour celles dont le message est vraiment parti (pas pour un envoi encore
+  // programmé). Ce qui est fait est retenu dans ce navigateur le temps de la session
+  // (« ma2m_relances_<projet> », « ma2m_rappels_<projet> ») ; faitesIci le garde aussi quand le
+  // stockage est bloqué : { relance: {…}, rappel: {…} }.
+  var TOURNEES = {
+    relance: { cle: 'ma2m_relances_', classe: 'convoc-relance', bouton: '💬 Relancer la suivante : ', message: messageRelance,
+      avant: 'La relance sera possible une fois la convocation envoyée.', sansNumero: 'Les personnes restantes n’ont pas de numéro WhatsApp : relancez-les par téléphone ou par e-mail.',
+      fini: 'Toutes les personnes sans réponse ont été relancées.' },
+    rappel: { cle: 'ma2m_rappels_', classe: 'convoc-rappel', bouton: '🔔 Rappel à la suivante : ', message: messageRappel,
+      avant: 'Le rappel sera possible une fois la convocation envoyée.', sansNumero: 'Les personnes restantes n’ont pas de numéro WhatsApp : rappelez-les par téléphone ou par e-mail.',
+      fini: 'Toutes les personnes qui ont confirmé ont reçu le rappel.' }
+  };
+  function faites(p, tournee, faitesIci) {
+    if (faitesIci && faitesIci[tournee]) return faitesIci[tournee];
+    try { return JSON.parse(sessionStorage.getItem(TOURNEES[tournee].cle + p.id) || '{}'); } catch (e) { return {}; }
   }
-  function noterRelance(p, id) {
-    var faites = relancees(p); faites[id] = true;
-    try { sessionStorage.setItem('ma2m_relances_' + p.id, JSON.stringify(faites)); } catch (e) { /* stockage bloqué : le bouton passe quand même à la suivante ci-dessous */ }
-    return faites;
+  function noterFaite(p, tournee, id, faitesIci) {
+    var deja = Object.assign({}, faites(p, tournee, faitesIci));
+    deja[id] = true;
+    try { sessionStorage.setItem(TOURNEES[tournee].cle + p.id, JSON.stringify(deja)); } catch (e) { /* stockage bloqué : faitesIci le garde pour cet affichage */ }
+    var maj = Object.assign({}, faitesIci || {});
+    maj[tournee] = deja;
+    return maj;
   }
-  function lienRelance(p, pers) {
+  function lienTournee(tournee, p, pers) {
     var num = pers.jeton && numeroWhatsApp(pers.telephone);
-    if (!num) return null;
-    return 'https://wa.me/' + num + '?text=' + encodeURIComponent('Bonjour ' + (pers.parent ? pers.parent_nom || 'Madame, Monsieur' : pers.nom) + ',\n\nPouvez-vous nous confirmer ' + (pers.parent ? 'la présence de ' + pers.nom : 'votre présence') + ' pour « ' + p.titre + ' » (' + dateLongue(p.date_debut) + ') ? Un seul clic suffit : ' + LIEN_CONFIRMER + pers.jeton + '\n\nMerci !\nL’équipe Maître Akesse Model Management');
+    return num ? 'https://wa.me/' + num + '?text=' + encodeURIComponent(TOURNEES[tournee].message(p, pers)) : null;
   }
-  function ajouterRelance(groupe, boite, p, personnes, envois, toutOuvert, sansReponse, faitesIci) {
-    var faites = faitesIci || relancees(p);
-    // convocation vraiment partie : au moins un envoi fait, et plus aucun en attente (un WhatsApp
+  function ajouterTournee(tournee, groupe, boite, p, personnes, envois, toutOuvert, liste, faitesIci) {
+    var t = TOURNEES[tournee], deja = faites(p, tournee, faitesIci);
+    // message vraiment parti : au moins un envoi fait, et plus aucun en attente (un WhatsApp
     // encore « à envoyer » passe d'abord par « Envoyer le WhatsApp suivant »)
     var partie = function (pers) {
       var siens = envois.filter(function (e) { return e.participant_id === pers.participant_id && PREVENU.indexOf(e.sorte) >= 0; });
       return siens.some(function (e) { return e.statut === 'envoye'; }) && !siens.some(function (e) { return ['programme', 'en_cours', 'a_faire'].indexOf(e.statut) >= 0; });
     };
-    var restantes = sansReponse.filter(function (pers) { return partie(pers) && !faites[pers.participant_id]; });
-    var aRelancer = restantes.filter(function (pers) { return lienRelance(p, pers); });
-    var note = document.createElement('p');
-    note.className = 'agenda-aide';
-    if (!aRelancer.length) {
-      note.textContent = !sansReponse.some(partie) ? 'La relance sera possible une fois la convocation envoyée.'
-        : restantes.length ? 'Les personnes restantes n’ont pas de numéro WhatsApp : relancez-les par téléphone ou par e-mail.'
-        : 'Toutes les personnes sans réponse ont été relancées.';
+    var restantes = liste.filter(function (pers) { return partie(pers) && !deja[pers.participant_id]; });
+    var aFaire = restantes.filter(function (pers) { return lienTournee(tournee, p, pers); });
+    if (!aFaire.length) {
+      var note = document.createElement('p');
+      note.className = 'agenda-aide';
+      note.textContent = !liste.some(partie) ? t.avant : restantes.length ? t.sansNumero : t.fini;
       groupe.appendChild(note);
       return;
     }
-    var suivante = aRelancer[0];
+    var suivante = aFaire[0];
     var a = document.createElement('a');
-    a.className = 'btn btn--principal convoc-relance'; a.target = '_blank'; a.rel = 'noopener';
-    a.href = lienRelance(p, suivante);
-    a.textContent = '💬 Relancer la suivante : ' + nomDe(suivante) + ' (' + aRelancer.length + ' restante' + (aRelancer.length > 1 ? 's' : '') + ')';
+    a.className = 'btn btn--principal ' + t.classe; a.target = '_blank'; a.rel = 'noopener';
+    a.href = lienTournee(tournee, p, suivante);
+    a.textContent = t.bouton + nomDe(suivante) + ' (' + aFaire.length + ' restante' + (aFaire.length > 1 ? 's' : '') + ')';
     a.addEventListener('click', function () {
-      var maj = Object.assign({}, faites, noterRelance(p, suivante.participant_id));
-      maj[suivante.participant_id] = true;
+      var maj = noterFaite(p, tournee, suivante.participant_id, faitesIci);
       // après l'ouverture de WhatsApp : le bouton passe à la personne suivante
       setTimeout(function () { window.dessinerReponsesConvocation(boite, p, personnes, envois, toutOuvert, maj); }, 0);
     });

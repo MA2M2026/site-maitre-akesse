@@ -34,7 +34,7 @@ window.GABARIT_CONVOCATIONS = `<h2 class="tdb-4">📨 Convocations</h2>
 <div class="form-champ"><label for="cv-a-prevoir">À prévoir (une chose par ligne)</label><textarea id="cv-a-prevoir" rows="3" maxlength="1500" placeholder="ex : Escarpins noirs&#10;Pièce d'identité&#10;Venir démaquillée"></textarea></div>
 <div class="agenda-rappel"><label class="agenda-visible"><input id="cv-rappel" type="checkbox" checked> Rappel automatique la veille, à</label> <input id="cv-rappel-heure" type="time" value="18:00" aria-label="Heure du rappel de la veille"></div>
 <details class="agenda-message"><summary>Personnaliser le message (facultatif)</summary>
-<p class="agenda-aide">Laissez vide pour le message type. Repères remplis pour chaque personne : {salutation}, {introduction}, {date}, {heure_evenement}, {lieu}, {adresse}, {convocation}, {programme}, {a_prevoir}, {confirmer} (lien de confirmation). Une ligne dont le repère est vide disparaît.</p>
+<p class="agenda-aide">Laissez vide pour le message type. Repères remplis pour chaque personne : {salutation}, {introduction}, {date}, {heure_evenement}, {lieu}, {adresse}, {convocation}, {programme}, {a_prevoir}, {ponctualite}, {confirmer} (lien de confirmation). Une ligne dont le repère est vide disparaît.</p>
 <textarea id="cv-message" rows="12" maxlength="4000" aria-label="Message personnalisé"></textarea>
 <button type="button" class="btn-mini-admin" id="cv-message-type">Partir du message type</button>
 </details>
