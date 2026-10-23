@@ -327,12 +327,18 @@ Essai : `test-retour-invitation.js`.
   (une par mannequin : `sexe` — catégorie « homme » ou civilité « Monsieur », sinon femme —,
   `jeton` de 36 caractères, `statut` invite/pris/desiste, `pris_par` mannequin/parent,
   `envoye_le` / `parent_envoye_le`). Tables réservées aux `admins`. Fonctions :
-  `places_preparer` (agence : une invitation par mannequin du sexe concerné, rejouable),
+  `places_preparer` (agence : une invitation par mannequin publiée et pas en sourdine, du sexe
+  concerné, rejouable ; un homme « new-faces » sans civilité est compté femme : remplir sa
+  civilité),
   `places_lire`, `places_prendre`, `places_rendre` (public, par le jeton seul). `places_prendre`
   verrouille la ligne de l'appel (`for update`) : jamais plus de places prises que prévu, même
   avec des clics simultanés. Une place prise ajoute la mannequin à `agenda_projets.mannequin_ids`
   (donc à « Convoquer ») ; un désistement l'en retire, la note « absente » dans les convocations
-  et annule ses envois programmés. La grille publique ne montre que photo (miniature) ou initiales.
+  et annule ses envois programmés ; une place reprise ensuite défait cela (plus « absente »,
+  rappel de la veille reprogrammé). Déclencheur `places_garder_selectionnees` : un formulaire
+  (agenda, convocations) enregistré avec une liste ancienne garde les sélectionnées. La grille
+  publique ne montre que la photo (miniature) d'une personne majeure au profil publié, sinon les
+  initiales : jamais le visage d'un(e) mineur(e), le lien pouvant être transféré.
 - **Administration** : rubrique « Places limitées » (`b2-places`, `js/admin/site-places.js`) :
   nouvel appel (projet de l'agenda ou nouveau projet, ajouté à l'agenda), fiche avec la grille
   des visages (cliquables vers la fiche), « 💬 Envoyer le lien suivant » un par un (mineure ET
@@ -340,7 +346,8 @@ Essai : `test-retour-invitation.js`.
   libre » après un désistement (suivi pour la session : `sessionStorage`
   « ma2m_places_libre_<projet> »), nombre de places, fermer/rouvrir, « Ajouter les nouvelles
   mannequins », « Convoquer les sélectionnées » (`window.convoquerProjet`).
-- **Page publique** : `places.html` + `js/places.js` + `css/places.css` (sans compte, `noindex`) :
+- **Page publique** : `places.html` + `js/places.js` + `css/places.css` (sans compte, `noindex` ;
+  code commun avec `confirmer.html` dans `js/lien-public.js`) :
   « Je prends ma place » → « Bravo… » (vert) ou « Oups… plus de place disponible. Rendez-vous au
   prochain projet ! » ; parent : « Votre fille / votre fils a déjà pris sa place » ; « Me
   désister ». La grille se relit toute seule toutes les 15 s.

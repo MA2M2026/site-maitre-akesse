@@ -2,26 +2,15 @@
 // personnel (?c=jeton ; &p=1 dans le message du parent d'une mineure, même jeton) ouvre cette
 // page, sans compte. Premier arrivé, premier servi (places_prendre : le serveur décide) ; on
 // peut se désister (places_rendre). La grille montre les places prises (photo ou initiales,
-// jamais les noms des autres) et se met à jour toute seule. Fonctions : supabase-places.sql.
+// jamais les noms des autres) et se met à jour toute seule. Fonctions : supabase-places.sql ;
+// commun avec confirmer.html : js/lien-public.js.
 (function () {
   'use strict';
   var $ = function (id) { return document.getElementById(id); };
   var params = new URLSearchParams(location.search);
   var jeton = params.get('c') || '', parent = params.get('p') === '1';
-  var JOURS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
-  var MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+  var L = window.LienPublic, rpc = L.rpc, dateFr = L.dateFr;
   var etat = null, dejaVues = null, enCours = false;  // dejaVues : places déjà montrées (les nouvelles apparaissent en grandissant)
-  function rpc(nom, p) {
-    return fetch(SUPABASE_URL + '/rest/v1/rpc/' + nom, {
-      method: 'POST', headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify(p)
-    }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
-  }
-  function dateFr(iso) {
-    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); if (!m) return '';
-    var d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
-    return JOURS[d.getUTCDay()] + ' ' + (+m[3] === 1 ? '1er' : +m[3]) + ' ' + MOIS[+m[2] - 1] + ' ' + m[1];
-  }
   var homme = function () { return etat && etat.sexe === 'homme'; };
   var accord = function (f, h) { return homme() ? h : f; };
   function montrerEtat(classe, titre, texte) {
@@ -86,7 +75,7 @@
     });
     boite.hidden = !boite.childNodes.length;
   }
-  function introuvable() { $('pl-details').textContent = 'Ce lien n’est pas valable, ou le projet a été annulé. Contactez l’agence sur WhatsApp.'; }
+  var introuvable = function () { L.introuvable($('pl-details')); };
   function charger() {
     return rpc('places_lire', { p_jeton: jeton }).then(function (e) {
       if (!e) { introuvable(); return; }
@@ -111,7 +100,7 @@
       $('pl-prendre').disabled = $('pl-rendre').disabled = false;
     });
   }
-  if (!/^[0-9a-f]{36}$/.test(jeton) || typeof SUPABASE_URL === 'undefined') { introuvable(); return; }
+  if (!L.jetonValable(jeton)) { introuvable(); return; }
   charger().catch(function () { $('pl-details').textContent = 'Connexion impossible pour le moment. Réessayez dans un instant.'; });
   $('pl-prendre').addEventListener('click', function () { agir('places_prendre', { p_jeton: jeton, p_parent: parent }); });
   $('pl-rendre').addEventListener('click', function () {

@@ -505,8 +505,10 @@ window.demarrerConvocationsPanneau = function () {
     sauves.filter(function (s) { return s.model_id && !personnes.some(function (x) { return x.participant_id === s.id; }); }).forEach(function (s) {
       personnes.push(avecSauve({ cle: 'p' + s.id, model_id: s.model_id, externe: true, nom: s.nom, email: s.email, telephone: s.telephone, parent: s.parent, parent_nom: s.parent_nom }, s));
     });
-    // rien encore envoyé : on commence par annoncer la sélection ; sinon, la convocation
-    $('convoc-sorte').value = envois.some(function (e) { return PREVENU.indexOf(e.sorte) >= 0 && e.statut !== 'annule'; }) ? 'convocation' : 'selection';
+    // quelqu'un n'a encore rien reçu (nouveau projet, ou mannequin ajoutée par les Places
+    // limitées) : on propose d'annoncer la sélection ; sinon, la convocation
+    var prevenu = function (x) { return envois.some(function (e) { return e.participant_id === x.participant_id && PREVENU.indexOf(e.sorte) >= 0 && e.statut !== 'annule'; }); };
+    $('convoc-sorte').value = personnes.some(function (x) { return (x.email || x.telephone) && !(x.participant_id && prevenu(x)); }) ? 'selection' : 'convocation';
     choisirSorte();
     dessinerCarnet();
     dessinerParticipants();

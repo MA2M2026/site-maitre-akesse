@@ -1,34 +1,19 @@
 // Page « Confirmer ma présence » (confirmer.html, Extension 141, 21/10/2026) : le lien personnel
 // du message de convocation (?c=jeton) ouvre cette page, sans compte. Elle montre le projet et
 // enregistre « confirmé » ou « absent » (fonctions convocation_lire / convocation_repondre ;
-// le jeton seul donne accès, rien d'autre n'est lisible).
+// le jeton seul donne accès, rien d'autre n'est lisible). Commun avec places.html : js/lien-public.js.
 (function () {
   var $ = function (id) { return document.getElementById(id); };
   var jeton = new URLSearchParams(location.search).get('c') || '';
-  var JOURS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
-  var MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-  function rpc(nom, params) {
-    return fetch(SUPABASE_URL + '/rest/v1/rpc/' + nom, {
-      method: 'POST', headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify(params)
-    }).then(function (r) {
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      return r.json();
-    });
-  }
-  function dateFr(iso) {
-    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); if (!m) return '';
-    var d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
-    return JOURS[d.getUTCDay()] + ' ' + (+m[3] === 1 ? '1er' : +m[3]) + ' ' + MOIS[+m[2] - 1] + ' ' + m[1];
-  }
+  var L = window.LienPublic, rpc = L.rpc, dateFr = L.dateFr;
   function afficherReponse(reponse) {
     $('cf-resultat').textContent = reponse === 'confirme' ? '✅ Merci ! Votre présence est confirmée. À bientôt.'
       : reponse === 'absent' ? '❌ C’est noté : vous ne pourrez pas venir. Merci de nous avoir prévenus.' : '';
     $('cf-oui').classList.toggle('actif', reponse === 'confirme');
     $('cf-non').classList.toggle('actif', reponse === 'absent');
   }
-  function introuvable() { $('cf-details').textContent = 'Ce lien n’est pas valable, ou le projet a été annulé. Contactez l’agence sur WhatsApp.'; }
-  if (!/^[0-9a-f]{36}$/.test(jeton) || typeof SUPABASE_URL === 'undefined') { introuvable(); return; }
+  var introuvable = function () { L.introuvable($('cf-details')); };
+  if (!L.jetonValable(jeton)) { introuvable(); return; }
   rpc('convocation_lire', { p_jeton: jeton }).then(function (lignes) {
     var p = lignes && lignes[0];
     if (!p) { introuvable(); return; }

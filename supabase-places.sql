@@ -56,8 +56,9 @@ returns text language sql immutable as $$
   select case when lower(coalesce(p_category, '')) = 'homme' or p_civilite = 'Monsieur' then 'homme' else 'femme' end;
 $$;
 
--- 4) Préparer les liens : une invitation pour chaque mannequin du sexe demandé (celles déjà
---    invitées gardent leur lien). Renvoie le nombre d'invitations du projet.
+-- 4) Préparer les liens : une invitation pour chaque mannequin de l'agence (profil publié, pas
+--    en sourdine) du sexe demandé ; celles déjà invitées gardent leur lien. Renvoie le nombre
+--    d'invitations du projet.
 create or replace function places_preparer(p_projet uuid)
 returns int language plpgsql security definer set search_path = public, extensions as $$
 declare
@@ -70,8 +71,9 @@ begin
   insert into places_invitations (projet_id, model_id, sexe)
     select p_projet, m.id, places_sexe(m.category, m.civilite)
     from model_profiles m
-    where (places_sexe(m.category, m.civilite) = 'femme' and ap.places_femmes > 0)
-       or (places_sexe(m.category, m.civilite) = 'homme' and ap.places_hommes > 0)
+    where m.published and not m.desactive
+      and ((places_sexe(m.category, m.civilite) = 'femme' and ap.places_femmes > 0)
+        or (places_sexe(m.category, m.civilite) = 'homme' and ap.places_hommes > 0))
   on conflict (projet_id, model_id) do nothing;
   select count(*) into n from places_invitations where projet_id = p_projet;
   return n;
@@ -81,7 +83,9 @@ revoke all on function places_preparer(uuid) from public, anon;
 grant execute on function places_preparer(uuid) to authenticated;
 
 -- 5) Page publique du lien (sans compte) : le projet (sans adresse ni programme), la personne,
---    les places et la grille des places prises (photo ou initiales, jamais les noms des autres).
+--    les places et la grille des places prises : photo (miniature) d'une personne majeure dont le
+--    profil est publié dans le Book ; sinon les initiales. Jamais les noms des autres ; jamais le
+--    visage d'un(e) mineur(e) (le lien peut être transféré).
 create or replace function places_lire(p_jeton text)
 returns jsonb language plpgsql stable security definer set search_path = public as $$
 declare
@@ -106,7 +110,8 @@ begin
       select jsonb_agg(jsonb_build_object(
           'sexe', i.sexe, 'moi', i.id = inv.id,
           'initiales', upper(left(split_part(trim(p.full_name), ' ', 1), 1) || left(split_part(trim(p.full_name), ' ', 2), 1)),
-          'photo', (select coalesce(ph.url_miniature, ph.url) from model_photos ph where ph.model_id = i.model_id order by ph.principale desc, ph.created_at asc limit 1))
+          'photo', case when p.published and p.date_naissance is not null and p.date_naissance <= current_date - interval '18 years' then
+            (select coalesce(ph.url_miniature, ph.url) from model_photos ph where ph.model_id = i.model_id order by ph.principale desc, ph.created_at asc limit 1) end)
         order by i.pris_le)
       from places_invitations i join model_profiles p on p.id = i.model_id
       where i.projet_id = inv.projet_id and i.statut = 'pris'), '[]'::jsonb));
@@ -145,6 +150,16 @@ begin
     where id = inv.id;
   update agenda_projets set mannequin_ids = array_append(array_remove(mannequin_ids, inv.model_id), inv.model_id), updated_at = now()
     where id = projet;
+  -- place reprise après un désistement : plus « absente », et le rappel de la veille (annulé par
+  -- le désistement) repart s'il est encore à venir
+  if inv.statut = 'desiste' then
+    update convocation_participants set reponse = null, repondu_le = null
+      where projet_id = projet and model_id = inv.model_id and reponse = 'absent';
+    update convocation_envois e set statut = 'programme'
+      from convocation_participants cp
+      where cp.id = e.participant_id and cp.projet_id = projet and cp.model_id = inv.model_id
+        and e.sorte = 'rappel' and e.statut = 'annule' and e.prevu_le > now();
+  end if;
   return 'pris';
 end;
 $$;
@@ -181,5 +196,21 @@ end;
 $$;
 revoke all on function places_rendre(text) from public;
 grant execute on function places_rendre(text) to anon, authenticated;
+
+-- 8) Le formulaire de l'agenda ou des Convocations enregistre la liste des mannequins telle
+--    qu'elle était à son ouverture : une mannequin qui a pris sa place entre-temps est gardée
+--    dans le projet (sinon elle disparaîtrait de « Convoquer »).
+create or replace function places_garder_selectionnees()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  NEW.mannequin_ids := NEW.mannequin_ids || coalesce((
+    select array_agg(i.model_id) from places_invitations i
+    where i.projet_id = NEW.id and i.statut = 'pris' and not (i.model_id = any(NEW.mannequin_ids))), '{}');
+  return NEW;
+end;
+$$;
+drop trigger if exists places_garder_selectionnees on agenda_projets;
+create trigger places_garder_selectionnees before update of mannequin_ids on agenda_projets
+  for each row execute function places_garder_selectionnees();
 
 NOTIFY pgrst, 'reload schema';

@@ -65,6 +65,12 @@
       '<p class="doux">Premier arrivé, premier servi : chaque mannequin reçoit son lien personnel sur WhatsApp (le même pour une mineure et son parent). Les sélectionnées sont ajoutées au projet, pour la convocation.</p>' +
       (cartes ? '<div class="projets-liste">' + cartes + '</div>' : '<div class="carte vide">Aucun appel à places pour le moment.</div>');
   }
+  // coordonnées des mannequins invitées, par paquets (la base renvoie au plus 1 000 lignes à la fois)
+  async function contactsDe(ids) {
+    let tous = [];
+    for (let i = 0; i < ids.length; i += 500) tous = tous.concat(await P.rpc('convocation_contacts_mannequins', { p_ids: ids.slice(i, i + 500) }));
+    return tous;
+  }
   // noms des mannequins (par paquets : une longue liste d'identifiants ne tient pas dans une adresse)
   async function nomsDe(ids) {
     const noms = {};
@@ -102,7 +108,7 @@
   P.formulaires['places-creer'] = async (f) => {
     const femmes = Math.max(0, Math.min(500, parseInt(f.get('femmes'), 10) || 0)), hommes = Math.max(0, Math.min(500, parseInt(f.get('hommes'), 10) || 0));
     if (!femmes && !hommes) { P.message('Indiquez au moins une place (femmes ou hommes).'); return; }
-    let id = f.get('projet');
+    let id = f.get('projet'), nouveau = false;
     if (!id) {
       const titre = String(f.get('titre') || '').trim(), date = f.get('date');
       if (!titre || !date) { P.message('Indiquez au moins le titre et la date du nouveau projet.'); return; }
@@ -111,9 +117,15 @@
         lieu: String(f.get('lieu') || '').trim() || null, ville: String(f.get('ville') || '').trim() || null, visible: f.get('visible') === 'on' }).select('id'));
       if (!cree || !cree.length) { P.message('Le projet n’a pas pu être créé : reconnectez-vous puis réessayez.'); return; }
       id = cree[0].id;
+      nouveau = true;
     }
-    const r = await P.bd(sb.from('places_appels').insert({ projet_id: id, places_femmes: femmes, places_hommes: hommes, ouvert: true }).select('projet_id'));
-    if (!r || !r.length) { P.message('Rien n’a été enregistré : reconnectez-vous puis réessayez.'); return; }
+    // l'appel n'a pas pu être enregistré : le projet tout juste créé est retiré de l'agenda
+    // (sinon il resterait seul, et un nouvel essai le créerait une seconde fois)
+    const retirer = () => nouveau ? P.bd(sb.from('agenda_projets').delete().eq('id', id).select('id')).catch(() => null) : null;
+    let r;
+    try { r = await P.bd(sb.from('places_appels').insert({ projet_id: id, places_femmes: femmes, places_hommes: hommes, ouvert: true }).select('projet_id')); }
+    catch (e) { await retirer(); throw e; }
+    if (!r || !r.length) { await retirer(); P.message('Rien n’a été enregistré : reconnectez-vous puis réessayez.'); return; }
     const n = await P.rpc('places_preparer', { p_projet: id });
     P.fenetre('');
     P.message('Appel créé : ' + n + ' lien' + (n > 1 ? 's' : '') + ' personnel' + (n > 1 ? 's' : '') + ' prêt' + (n > 1 ? 's' : '') + '.');
@@ -153,7 +165,7 @@
     if (!projet) return P.entete('Places limitées', retour) + '<div class="carte vide">Le projet de cet appel a été supprimé de l’agenda.</div>';
     const ids = invitations.map((i) => i.model_id);
     const [contacts, photos] = await Promise.all([
-      ids.length ? P.rpc('convocation_contacts_mannequins', { p_ids: ids }) : [],
+      contactsDe(ids),
       P.photosCouverture(invitations.filter((i) => i.statut !== 'invite').map((i) => i.model_id))
     ]);
     ecran = { appel, projet, invitations, photos, contacts: {} };
