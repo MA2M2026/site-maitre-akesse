@@ -126,41 +126,8 @@ $$;
 revoke all on function places_contacts_registre(uuid[]) from public, anon;
 grant execute on function places_contacts_registre(uuid[]) to authenticated;
 
--- 4 ter) Une mannequin du registre qui prend sa place : fiche dans le carnet (une seule par
---    mannequin) et participant du projet, pour la convocation. Mineure : on écrit au parent.
-create or replace function places_participant_registre(p_projet uuid, p_mannequin uuid)
-returns uuid language plpgsql security definer set search_path = public as $$
-declare
-  r agence_mannequins;
-  contact uuid;
-  part uuid;
-  mineure boolean;
-  civ text;
-begin
-  select * into r from agence_mannequins where id = p_mannequin;
-  if not found then return null; end if;
-  mineure := r.date_naissance is not null and r.date_naissance > current_date - interval '18 years';
-  civ := case when r.genre = 'homme' then 'Monsieur' else 'Mademoiselle' end;
-  select id into contact from contacts_externes where mannequin_id = r.id;
-  if contact is null then
-    insert into contacts_externes (civilite, nom, telephone, email, mannequin_id)
-      values (civ, left(trim(r.full_name), 120),
-              left(case when mineure then coalesce(r.parent_telephone, r.telephone) else coalesce(r.telephone, r.parent_telephone) end, 40),
-              left(case when mineure then coalesce(r.parent_email, r.email) else coalesce(r.email, r.parent_email) end, 160), r.id)
-      returning id into contact;
-  end if;
-  select id into part from convocation_participants where projet_id = p_projet and contact_id = contact;
-  if part is null then
-    insert into convocation_participants (projet_id, contact_id, nom, email, telephone, parent, parent_nom)
-      select p_projet, c.id, left(trim(coalesce(c.civilite || ' ', '') || c.nom), 160), c.email, c.telephone,
-             mineure and r.parent_telephone is not null, case when mineure then left(r.parent_nom, 160) end
-      from contacts_externes c where c.id = contact
-      returning id into part;
-  end if;
-  return part;
-end;
-$$;
-revoke all on function places_participant_registre(uuid, uuid) from public, anon, authenticated;
+-- 4 ter) places_participant_registre (mannequin du registre qui prend sa place → participant du
+--    projet) : définie dans supabase-personnes.sql (23/10/2026, parent facultatif).
 
 -- les participants du projet qui correspondent à une invitation (profil du site, registre ou
 -- personne extérieure du carnet)
