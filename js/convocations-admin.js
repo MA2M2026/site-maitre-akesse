@@ -9,6 +9,9 @@
 //    projet le demande. E-mail : automatique (tout de suite depuis ce navigateur, sinon par le
 //    serveur du site à l'heure prévue, api/portail.js). WhatsApp : préparé, un appui par personne
 //    (pas encore d'envoi automatique) ; l'agence est prévenue par e-mail à l'heure prévue. SMS : plus tard.
+//  - Deux messages (23/10/2026) : « Annoncer la sélection » d'abord (court : projet, date, heure,
+//    lieu, lien « Confirmez votre participation »), puis la convocation (tous les détails), puis
+//    les relances. Même lien personnel : une réponse vaut pour les deux.
 //  - Suivi : chaque envoi, son état, et les boutons « Ouvrir WhatsApp », « Annuler », « Réessayer ».
 // Textes : js/messages-convocations.js (partagés avec le serveur).
 // Deux maisons (22/10/2026) : démarré tout seul dans l'ancien tableau de bord ; la nouvelle
@@ -22,7 +25,10 @@ window.demarrerConvocationsPanneau = function () {
   var projet = null, personnes = [], envois = [], carnet = [], enCours = false;
   var STATUTS = { programme: '🕒 programmé', en_cours: '⏳ en cours', envoye: '✅ envoyé', echec: '❌ non envoyé', a_faire: '👉 à envoyer', annule: '— annulé' };
   var CANAUX = { email: '📧 E-mail', whatsapp: '💬 WhatsApp', sms: '📱 SMS' };
-  var SORTES = { convocation: 'convocation', rappel: 'rappel de la veille' };
+  var SORTES = { selection: 'annonce de la sélection', convocation: 'convocation', rappel: 'rappel de la veille' };
+  // les deux premiers messages portent le lien de réponse : l'un ou l'autre compte comme « prévenu(e) »
+  var PREVENU = ['selection', 'convocation'];
+  var sorteChoisie = function () { return $('convoc-sorte').value === 'selection' ? 'selection' : 'convocation'; };
 
   // action lancée par un clic : une panne s'affiche au lieu de passer inaperçue
   function lancer(promesse) {
@@ -35,7 +41,7 @@ window.demarrerConvocationsPanneau = function () {
     return new Date(iso).toLocaleString('fr-FR', { timeZone: 'Africa/Abidjan', weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
   }
   function dejaConvoque(pers) {
-    return envois.some(function (e) { return e.participant_id === pers.participant_id && e.sorte === 'convocation' && ['envoye', 'programme', 'a_faire', 'en_cours'].indexOf(e.statut) >= 0; });
+    return envois.some(function (e) { return e.participant_id === pers.participant_id && e.sorte === sorteChoisie() && ['envoye', 'programme', 'a_faire', 'en_cours'].indexOf(e.statut) >= 0; });
   }
   function nomDe(pers) { return pers.parent ? pers.nom + ' (parent : ' + (pers.parent_nom || 'Madame, Monsieur') + ')' : pers.nom; }
 
@@ -89,7 +95,7 @@ window.demarrerConvocationsPanneau = function () {
         t.appendChild(manque);
       }
       if (pers.reponse) { var rep = document.createElement('small'); rep.className = 'convoc-reponse-' + pers.reponse; rep.textContent = pers.reponse === 'confirme' ? '✅ A confirmé sa présence' : '❌ Ne pourra pas venir'; t.appendChild(rep); }
-      if (dejaConvoque(pers)) { var deja = document.createElement('small'); deja.textContent = 'Déjà convoqué(e) : cochez pour renvoyer.'; t.appendChild(deja); }
+      if (dejaConvoque(pers)) { var deja = document.createElement('small'); deja.textContent = (sorteChoisie() === 'selection' ? 'Sélection déjà annoncée' : 'Déjà convoqué(e)') + ' : cochez pour renvoyer.'; t.appendChild(deja); }
       l.appendChild(c); l.appendChild(t);
       if (pers.externe) {
         var x = document.createElement('button');
@@ -150,7 +156,7 @@ window.demarrerConvocationsPanneau = function () {
     });
     if (avant && liste.some(function (x) { return x.cle === avant; })) s.value = avant;
     var pers = liste.find(function (x) { return x.cle === s.value; }) || liste[0];
-    $('convoc-apercu').textContent = messageConvocation(projet, Object.assign({ jeton: '(lien personnel)' }, pers), 'convocation').texte;
+    $('convoc-apercu').textContent = messageConvocation(projet, Object.assign({ jeton: '(lien personnel)' }, pers), sorteChoisie()).texte;
   }
 
   // ---------- Réponses : qui a confirmé, qui ne viendra pas, qui n'a pas répondu ----------
@@ -159,7 +165,7 @@ window.demarrerConvocationsPanneau = function () {
   // toutOuvert : la liste des confirmés est ouverte elle aussi.
   window.dessinerReponsesConvocation = function (boite, projet, personnes, envois, toutOuvert, faitesIci) {
     boite.textContent = '';
-    var touches = personnes.filter(function (x) { return x.participant_id && envois.some(function (e) { return e.participant_id === x.participant_id && e.sorte === 'convocation' && e.statut !== 'annule'; }); });
+    var touches = personnes.filter(function (x) { return x.participant_id && envois.some(function (e) { return e.participant_id === x.participant_id && PREVENU.indexOf(e.sorte) >= 0 && e.statut !== 'annule'; }); });
     // un(e) mineur(e) et son parent comptent pour une seule personne : la réponse de l'un vaut pour les deux
     var parGroupe = {}, convoques = [];
     touches.forEach(function (x) {
@@ -237,7 +243,7 @@ window.demarrerConvocationsPanneau = function () {
     // convocation vraiment partie : au moins un envoi fait, et plus aucun en attente (un WhatsApp
     // encore « à envoyer » passe d'abord par « Envoyer le WhatsApp suivant »)
     var partie = function (pers) {
-      var siens = envois.filter(function (e) { return e.participant_id === pers.participant_id && e.sorte === 'convocation'; });
+      var siens = envois.filter(function (e) { return e.participant_id === pers.participant_id && PREVENU.indexOf(e.sorte) >= 0; });
       return siens.some(function (e) { return e.statut === 'envoye'; }) && !siens.some(function (e) { return ['programme', 'en_cours', 'a_faire'].indexOf(e.statut) >= 0; });
     };
     var restantes = sansReponse.filter(function (pers) { return partie(pers) && !faites[pers.participant_id]; });
@@ -370,6 +376,7 @@ window.demarrerConvocationsPanneau = function () {
 
   async function programmer() {
     if (enCours) return;
+    var sorte = sorteChoisie();
     var canaux = ['email', 'whatsapp'].filter(function (c) { return $('convoc-canal-' + c).checked; });
     var choisis = personnes.filter(function (x) { return x.coche; });
     var maintenant = $('convoc-quand').value === '0';
@@ -395,15 +402,16 @@ window.demarrerConvocationsPanneau = function () {
         pers.participant_id = r.data[0].id;
         pers.jeton = r.data[0].jeton;  // lien personnel « Je confirme ma présence »
       }
-      // 2. Les envois : convocation (à l'heure choisie) et rappel de la veille (si demandé et à venir)
-      var rappel = projet.rappel_veille !== false ? heureRappel(projet.date_debut, projet.rappel_heure) : null;
+      // 2. Les envois : le message choisi (à l'heure choisie) et, avec la convocation, le rappel de
+      // la veille (si demandé et à venir)
+      var rappel = sorte === 'convocation' && projet.rappel_veille !== false ? heureRappel(projet.date_debut, projet.rappel_heure) : null;
       if (rappel && rappel <= prevu) rappel = null;
       var lignes = [];
       choisis.forEach(function (pers) {
         canaux.forEach(function (canal) {
           if (canal === 'email' ? !pers.email : !(pers.telephone && numeroWhatsApp(pers.telephone))) return;
           var base = { projet_id: projet.id, participant_id: pers.participant_id, canal: canal, tentatives: 0, envoye_le: null, erreur: null };
-          lignes.push(Object.assign({}, base, { sorte: 'convocation', prevu_le: (maintenant ? new Date() : prevu).toISOString(),
+          lignes.push(Object.assign({}, base, { sorte: sorte, prevu_le: (maintenant ? new Date() : prevu).toISOString(),
             statut: maintenant ? (canal === 'email' ? 'en_cours' : 'a_faire') : 'programme',
             pris_le: maintenant ? new Date().toISOString() : null, tentatives: maintenant && canal === 'email' ? 1 : 0 }));
           if (rappel) lignes.push(Object.assign({}, base, { sorte: 'rappel', prevu_le: rappel.toISOString(), statut: 'programme' }));
@@ -416,12 +424,12 @@ window.demarrerConvocationsPanneau = function () {
       envois = envois.filter(function (e) { return !cles[e.id]; }).concat(rr.data || []);
       dessinerSuivi();
       // 3. « Maintenant » : les e-mails partent tout de suite d'ici
-      var nbEmails = lignes.filter(function (l) { return l.canal === 'email' && l.sorte === 'convocation'; }).length;
-      var nbWa = lignes.filter(function (l) { return l.canal === 'whatsapp' && l.sorte === 'convocation'; }).length;
+      var nbEmails = lignes.filter(function (l) { return l.canal === 'email' && l.sorte === sorte; }).length;
+      var nbWa = lignes.filter(function (l) { return l.canal === 'whatsapp' && l.sorte === sorte; }).length;
       var bilan;
       if (maintenant) {
         message('Envoi des e-mails…');
-        var aEnvoyer = envois.filter(function (e) { return e.statut === 'en_cours' && e.canal === 'email' && e.sorte === 'convocation' && cles[e.id]; });
+        var aEnvoyer = envois.filter(function (e) { return e.statut === 'en_cours' && e.canal === 'email' && e.sorte === sorte && cles[e.id]; });
         var partis = await envoyerEmails(aEnvoyer);
         bilan = partis + ' e-mail(s) envoyé(s) sur ' + aEnvoyer.length + '.' + (nbWa ? ' ' + nbWa + ' WhatsApp prêt(s) : appuyez sur le bouton rouge « 💬 Envoyer le WhatsApp suivant », dans le suivi ci-dessous.' : '');
       } else {
@@ -429,6 +437,7 @@ window.demarrerConvocationsPanneau = function () {
       }
       if (rappel) bilan += ' Rappel de la veille : ' + quand(rappel) + '.';
       if (sansMoyen.length) bilan += ' Sans coordonnée pour ce moyen d’envoi : ' + sansMoyen.map(function (x) { return x.nom; }).join(', ') + '.';
+      if (sorte === 'selection') bilan += ' Ensuite, choisissez « 📨 Convocation » pour envoyer tous les détails.';
       choisis.forEach(function (x) { x.coche = false; });
       dessinerParticipants();
       message(bilan);
@@ -484,12 +493,25 @@ window.demarrerConvocationsPanneau = function () {
     sauves.filter(function (s) { return s.model_id && !personnes.some(function (x) { return x.participant_id === s.id; }); }).forEach(function (s) {
       personnes.push(avecSauve({ cle: 'p' + s.id, model_id: s.model_id, externe: true, nom: s.nom, email: s.email, telephone: s.telephone, parent: s.parent, parent_nom: s.parent_nom }, s));
     });
-    personnes.forEach(function (x) { x.coche = !dejaConvoque(x) && !!(x.email || x.telephone); });
+    // rien encore envoyé : on commence par annoncer la sélection ; sinon, la convocation
+    $('convoc-sorte').value = envois.some(function (e) { return PREVENU.indexOf(e.sorte) >= 0 && e.statut !== 'annule'; }) ? 'convocation' : 'selection';
+    choisirSorte();
     dessinerCarnet();
     dessinerParticipants();
     dessinerSuivi();
   };
 
+  // changer de message recoche les personnes qui ne l'ont pas encore reçu
+  function choisirSorte() {
+    var selection = sorteChoisie() === 'selection';
+    personnes.forEach(function (x) { x.coche = !dejaConvoque(x) && !!(x.email || x.telephone); });
+    $('convoc-sorte-aide').textContent = selection
+      ? 'Message court : félicitations, le projet, la date, l’heure, le lieu, et le lien « Confirmez votre participation ». La convocation avec tous les détails suit plus tard.'
+      : 'Tous les détails : heure de convocation, adresse, programme, « À prévoir », et le lien de confirmation.';
+    $('convoc-rappel-info').hidden = selection;
+    dessinerParticipants();
+  }
+  $('convoc-sorte').addEventListener('change', choisirSorte);
   $('convoc-apercu-qui').addEventListener('change', dessinerApercu);
   $('convoc-actualiser').addEventListener('click', function () { if (projet) lancer(window.ouvrirConvocations(projet)); });
   $('convoc-quand').addEventListener('change', function () {

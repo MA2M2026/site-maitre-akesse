@@ -348,6 +348,12 @@ Essai : `test-retour-invitation.js`.
   est vraiment partie (statut `envoye`) ; relances faites retenues pour la session
   (`sessionStorage` « ma2m_relances_<projet> »).
   « Maintenant » : e-mails envoyés depuis le navigateur (EmailJS).
+  « Annoncer la sélection » (23/10/2026, `supabase-selection.sql` : sorte `selection` ajoutée à
+  `convocation_envois`) : choix « Quel message envoyer ? » (`#convoc-sorte`) dans le panneau ; le
+  premier message (`MODELE_SELECTION`, toujours ce modèle) ne donne que félicitations, projet,
+  date, heure, lieu et le même lien personnel de confirmation ; pas de rappel avec lui. Le
+  panneau propose la sélection tant que rien n'est parti, puis la convocation ; changer de message
+  recoche ceux qui ne l'ont pas reçu. Réponses et relances comptent dès la sélection.
 - **Agenda public** : plus aucun nom de mannequin (`js/agenda.js`, décision du 21/10/2026) ; les
   noms restent dans « Parcours MA2M » (médaillons).
 - **Envois programmés** : `pg_cron` toutes les 5 min → `convocations_reveil()` appelle (seulement

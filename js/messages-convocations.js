@@ -46,6 +46,29 @@
     '_L’équipe Maître Akesse Model Management_'
   ].join('\n');
 
+  // Premier message : « Annoncer la sélection » (demande de la propriétaire, 23/10/2026). Court :
+  // le projet, la date, l'heure, le lieu, et le même lien personnel de confirmation ; la
+  // convocation (tous les détails) suit plus tard. Toujours ce modèle (le message personnalisé
+  // du projet ne vaut que pour la convocation).
+  const MODELE_SELECTION = [
+    '✨ *MAÎTRE AKESSE MODEL MANAGEMENT* ✨',
+    '',
+    'Bonjour {salutation},',
+    '',
+    '🎉 *Félicitations !* {introduction}',
+    '',
+    '📅 *{date}*',
+    '🎬 Début : {heure_evenement}',
+    '📍 {lieu}',
+    '',
+    'Vous recevrez un second message avec tous les détails (heure de convocation, programme, à prévoir).',
+    '',
+    '✅ *Confirmez votre participation en un clic :* {confirmer}',
+    'Pour toute question : ' + CONTACT + '.',
+    '',
+    '_L’équipe Maître Akesse Model Management_'
+  ].join('\n');
+
   // 'AAAA-MM-JJ' → « Samedi 15 novembre 2026 » (date seule, sans fuseau)
   function dateLongue(iso) {
     const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ''));
@@ -68,7 +91,7 @@
   }
 
   // projet : ligne d'agenda_projets ; participant : { nom, parent, parent_nom } ;
-  // sorte : 'convocation' | 'rappel'. Renvoie { texte (WhatsApp, *gras*), email (sans marques) }.
+  // sorte : 'selection' | 'convocation' | 'rappel'. Renvoie { texte (WhatsApp, *gras*), email (sans marques) }.
   function messageConvocation(projet, participant, sorte) {
     const p = projet || {}, q = participant || {};
     const titre = String(p.titre || '').trim();
@@ -78,9 +101,12 @@
     const premiereSeance = (Array.isArray(p.seances) ? p.seances : []).find((s) => s && s.debut);
     const heureEvenement = heureFr(p.heure_evenement) || heureFr(premiereSeance && premiereSeance.debut);
     const convoque = feminin(qui) ? 'convoquée' : 'convoqué';
+    const selectionne = feminin(qui) ? 'sélectionnée' : /^Monsieur\b/.test(qui) ? 'sélectionné' : 'sélectionné(e)';
     const valeurs = {
       salutation: parent ? (String(q.parent_nom || '').trim() || 'Madame, Monsieur') : (qui || 'Madame, Monsieur'),
-      introduction: sorte === 'rappel'
+      introduction: sorte === 'selection'
+        ? (parent && qui ? qui + ' est ' + selectionne : 'Vous êtes ' + selectionne) + ' ' + au.replace(/^au /, 'pour le ').replace(/^à (la |l’)/, 'pour $1') + '.'
+        : sorte === 'rappel'
         ? '⏰ *Petit rappel : c’est demain !* Voici toutes les informations pour ' + (parent && qui ? 'la participation de ' + qui : 'votre participation') + ' ' + au + '.'
         : 'Maître Akesse Model Management a le plaisir de vous confirmer ' + (parent && qui ? 'la participation de ' + qui : 'votre participation') + ' ' + au + '.',
       projet: titre,
@@ -98,7 +124,7 @@
       confirmer: q.jeton ? LIEN_CONFIRMER + q.jeton : '',
       a_prevoir: String(p.a_prevoir || '').split('\n').map((l) => l.trim().replace(/^[-•*]\s*/, '')).filter(Boolean).map((l) => '• ' + l).join('\n')
     };
-    const modele = String(p.message_modele || '').trim() || MODELE_CONVOCATION;
+    const modele = sorte === 'selection' ? MODELE_SELECTION : String(p.message_modele || '').trim() || MODELE_CONVOCATION;
     const lignes = [];
     modele.split('\n').forEach((ligne) => {
       let vide = false;
@@ -126,7 +152,7 @@
       .replace(/(^|[\s(«])_([^_\n]+)_(?=$|[\s.,;:!?)»])/gm, '$1$2');
   }
 
-  const outils = { messageConvocation, sansMarquesWhatsApp, heureRappel, dateLongue, MODELE_CONVOCATION, EMAIL_AGENCE, LIEN_CONFIRMER };
+  const outils = { messageConvocation, sansMarquesWhatsApp, heureRappel, dateLongue, MODELE_CONVOCATION, MODELE_SELECTION, EMAIL_AGENCE, LIEN_CONFIRMER };
   if (typeof module !== 'undefined' && module.exports) module.exports = outils;
   else Object.assign(racine, outils);
 })(typeof window !== 'undefined' ? window : globalThis);

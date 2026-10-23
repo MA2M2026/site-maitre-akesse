@@ -41,15 +41,18 @@ function appeler(cle) {
     { id: 'e2', sorte: 'rappel', canal: 'email', projet, participant: { nom: 'Petite Ama', parent: true, parent_nom: 'Madame Ama Mère', email: 'mere@test.ci' } },
     { id: 'e3', sorte: 'convocation', canal: 'email', projet, participant: { nom: 'Monsieur Refus', email: 'refus@test.ci' } },
     { id: 'e4', sorte: 'convocation', canal: 'email', projet, participant: { nom: 'Monsieur Sans Adresse' } },
+    { id: 'e5', sorte: 'selection', canal: 'email', projet, participant: { nom: 'Mademoiselle Sélection', email: 'selection@test.ci', jeton: 'j'.repeat(36) } },
     { id: 'w1', sorte: 'convocation', canal: 'whatsapp', projet, participant: { nom: 'Mademoiselle Awa Koné', telephone: '0700000001' } },
     { id: 'w2', sorte: 'convocation', canal: 'whatsapp', projet, participant: { nom: 'Monsieur Refus', telephone: '0700000002' } }
   ];
   r = await appeler(CLE);
   const mails = appels.filter((a) => /emailjs/.test(a.url)).map((a) => a.corps);
   const resultats = appels.filter((a) => /convocations_resultat/.test(a.url)).map((a) => a.corps);
-  ok(r.code === 200 && r.j.envoyes === 2 && r.j.echecs === 2 && r.j.whatsapp === 2, 'bonne clé : 2 e-mails envoyés, 2 échecs, 2 WhatsApp à faire ' + JSON.stringify(r.j));
+  ok(r.code === 200 && r.j.envoyes === 3 && r.j.echecs === 2 && r.j.whatsapp === 2, 'bonne clé : 3 e-mails envoyés, 2 échecs, 2 WhatsApp à faire ' + JSON.stringify(r.j));
   const awa = mails.find((m) => m.template_params.to_email === 'awa@test.ci');
   ok(awa && awa.accessToken === 'cle-emailjs-essai' && /Vous êtes convoquée à 15h00 précises/.test(awa.template_params.message) && !/\*/.test(awa.template_params.message), 'e-mail d’Awa : convocation à 15h00, sans marques WhatsApp');
+  const sel = mails.find((m) => m.template_params.to_email === 'selection@test.ci');
+  ok(sel && /Félicitations ! Vous êtes sélectionnée pour le défilé/.test(sel.template_params.message) && /confirmer\?c=j{36}/.test(sel.template_params.message) && !/15h00 précises|Escarpins/.test(sel.template_params.message), 'annonce de la sélection programmée : message court avec le lien, sans les détails');
   const mere = mails.find((m) => m.template_params.to_email === 'mere@test.ci');
   ok(mere && mere.template_params.to_name === 'Madame Ama Mère' && /Bonjour Madame Ama Mère/.test(mere.template_params.message) && /c’est demain/.test(mere.template_params.message), 'mineure : le rappel part au parent');
   ok(resultats.find((x) => x.p_id === 'e1').p_ok === true && resultats.find((x) => x.p_id === 'e3').p_ok === false && /400/.test(resultats.find((x) => x.p_id === 'e3').p_erreur), 'EmailJS refuse : échec noté avec la raison');

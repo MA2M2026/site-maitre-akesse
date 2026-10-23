@@ -173,7 +173,7 @@ window.demarrerConvocationsPage = function (racine) {
 
   // ---------- « 📋 Voir les réponses » ----------
   async function projetsConvoques() {
-    var r = await lireToutesLignes(function () { return sb.from('convocation_envois').select('projet_id').eq('sorte', 'convocation').neq('statut', 'annule').order('id'); });
+    var r = await lireToutesLignes(function () { return sb.from('convocation_envois').select('projet_id').in('sorte', ['selection', 'convocation']).neq('statut', 'annule').order('id'); });
     if (r.error) { $('cv-reponses').textContent = 'Impossible de charger les projets : ' + r.error.message; return; }
     var ids = {};
     r.data.forEach(function (e) { ids[e.projet_id] = true; });

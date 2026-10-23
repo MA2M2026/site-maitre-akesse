@@ -4,6 +4,7 @@
 // « À prévoir », rappel) → « 📨 Convoquer » → participants (adulte, mineure → parent, personne
 // non inscrite ajoutée au carnet) → aperçu du message → « Envoyer maintenant » (e-mails partis,
 // WhatsApp prêts, « Ouvrir WhatsApp ») → programmation « dans 1 heure » et date passée refusée.
+// « Annoncer la sélection » (23/10/2026) : premier message court, sans rappel, puis la convocation.
 // Puis l'agenda sans l'Extension 141 : pas de bouton « Convoquer », message pour l'activer.
 // Téléphone et ordinateur. Base et EmailJS simulés : rien n'est écrit ni envoyé pour de vrai.
 const { chromium } = require('playwright'); const { spawn } = require('child_process'); const { brancher } = require('./faux-serveur');
@@ -100,6 +101,9 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     if (process.env.CAPTURES) await p.locator(blocParticipants).first().screenshot({ path: process.env.CAPTURES + '/exterieur-apres-' + vp.width + '.png' });
     const carnet = ecrits(journal, 'POST', 'contacts_externes').pop() || {};
     ok(carnet.nom === 'Jean Styliste' && carnet.civilite === 'Monsieur' && (await p.$$('#convoc-participants .convoc-personne')).length === 4, n + 'personne non inscrite ajoutée au carnet et à la liste');
+    // rien encore envoyé : le panneau propose d'abord d'annoncer la sélection ; ici, la convocation
+    ok((await p.inputValue('#convoc-sorte')) === 'selection' && /Félicitations/.test(await p.textContent('#convoc-apercu')), n + 'premier message proposé : « Annoncer la sélection »');
+    await p.selectOption('#convoc-sorte', 'convocation'); await p.waitForTimeout(200);
     // aperçu
     const apercu = await p.textContent('#convoc-apercu');
     ok(/Bonjour Mademoiselle AWA KONÉ/.test(apercu) && /Vous êtes convoquée à 15h00 précises/.test(apercu) && /15h30 — Essayage/.test(apercu) && /Escarpins noirs/.test(apercu) && /Boulevard Hassan II/.test(apercu) && /Début : 20h00/.test(apercu),
@@ -211,6 +215,43 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     if (process.env.CAPTURES) await p.locator('.convoc-voir').screenshot({ path: process.env.CAPTURES + '/voir-reponses-390.png' });
     ok(!ecrits(journal, 'POST', 'convocation_envois').length && !ecrits(journal, 'PATCH', 'convocation_envois').length, '« Voir les réponses » : rien n’est envoyé');
     ok(!errs.length, 'réponses : aucune erreur ' + errs.join(' | '));
+    await ctx.close();
+  }
+  // 5bis2. « Annoncer la sélection » : message court (projet, date, heure, lieu, lien), sans rappel ;
+  // ensuite la convocation recoche tout le monde
+  for (const [nom, vp] of [['téléphone', { width: 390, height: 844 }], ['ordinateur', { width: 1280, height: 900 }]]) {
+    const n = nom + ' : sélection : ';
+    const d = donnees(true);
+    Object.assign(d.tables.agenda_projets[0], { heure_convocation: '15:00', heure_evenement: '20:00', deroule: [{ heure: '15:30', activite: 'Essayage' }] });
+    const ctx = await b.newContext({ viewport: vp, isMobile: vp.width < 700, hasTouch: vp.width < 700 });
+    const p = await ctx.newPage(); const journal = [], errs = [];
+    p.on('pageerror', e => errs.push(e.message));
+    await p.addInitScript(() => { localStorage.setItem('ma2m_cookies', 'non'); });
+    await brancher(p, dansAdmin(d), journal);
+    await ouvrirAgenda(p);
+    await p.click('[data-convoquer="pa2"]'); await p.waitForTimeout(1500);
+    await p.$eval('#cv-enregistrer', x => x.click()); await p.waitForTimeout(1800);
+    const apercu = await p.textContent('#convoc-apercu');
+    ok((await p.inputValue('#convoc-sorte')) === 'selection' && /Félicitations !\* Vous êtes sélectionnée pour le défilé \*« AFRICA IN RHYTHM »\*/.test(apercu) && /Début : 20h00/.test(apercu) && /Hôtel Ivoire, Abidjan/.test(apercu)
+      && /second message/.test(apercu) && /Confirmez votre participation/.test(apercu) && !/Essayage|15h00 précises|Boulevard/.test(apercu), n + 'aperçu court : félicitations, date, heure, lieu, lien ; ni programme ni adresse');
+    ok(await p.isHidden('#convoc-rappel-info') && /La convocation avec tous les détails suit/.test(await p.textContent('#convoc-sorte-aide')), n + 'explication affichée, pas de rappel annoncé');
+    await p.selectOption('#convoc-apercu-qui', { index: 2 });
+    ok(/Bonjour Madame Ama Mère/.test(await p.textContent('#convoc-apercu')) && /Mademoiselle PETITE AMA est sélectionnée/.test(await p.textContent('#convoc-apercu')), n + 'aperçu pour le parent de la mineure');
+    await p.click('#convoc-programmer');
+    for (let i = 0; i < 30 && !/envoyé\(s\) sur/.test(await p.textContent('#convoc-msg')); i++) await p.waitForTimeout(400);
+    const lignes = ecrits(journal, 'POST', 'convocation_envois').flat();
+    const emails = journal.filter(j => j[0] === 'EMAIL').map(j => JSON.parse(j[1]).template_params);
+    ok(lignes.length === 6 && lignes.every(l => l.sorte === 'selection'), n + '6 envois « sélection » (e-mail + WhatsApp, la mineure et son parent), aucun rappel');
+    ok(emails.length === 3 && emails.every(e => /Félicitations/.test(e.message) && /confirmer\?c=/.test(e.message) && !/\*/.test(e.message)), n + '3 e-mails de félicitations partis, avec le lien personnel');
+    ok(/3 e-mail\(s\) envoyé\(s\) sur 3/.test(await p.textContent('#convoc-msg')) && /choisissez « 📨 Convocation »/.test(await p.textContent('#convoc-msg')), n + 'bilan : la suite est indiquée (la convocation)');
+    const suivant = await p.getAttribute('.convoc-suivant', 'href');
+    ok(/F%C3%A9licitations/.test(suivant || '') && /annonce de la sélection/.test(await p.textContent('#convoc-suivi')), n + '« Envoyer le WhatsApp suivant » : le message de sélection');
+    ok(/Sélection déjà annoncée/.test(await p.textContent('#convoc-participants')) && (await p.$$eval('#convoc-participants input:checked', cs => cs.length)) === 0, n + 'après l’envoi : « Sélection déjà annoncée », personne recoché');
+    ok(/2 convoqué\(s\) · 0 confirmé · 0 absent · 2 sans réponse/.test(await p.textContent('.convoc-chiffres')), n + 'les réponses comptent dès la sélection (la mineure et son parent : une personne)');
+    await p.selectOption('#convoc-sorte', 'convocation'); await p.waitForTimeout(200);
+    ok((await p.$$eval('#convoc-participants input:checked', cs => cs.length)) === 3 && /15h00 précises/.test(await p.textContent('#convoc-apercu')) && await p.isVisible('#convoc-rappel-info'), n + 'puis « Convocation » : tout le monde recoché, message complet, rappel annoncé');
+    ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth)), n + 'rien ne dépasse de l’écran');
+    ok(!errs.length, n + 'aucune erreur ' + errs.join(' | '));
     await ctx.close();
   }
   // 5ter. La page publique « Confirmer ma présence » (sans compte) ; iPhone de 375 px (journal du 21/10/2026)
