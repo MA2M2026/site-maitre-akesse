@@ -5,6 +5,8 @@
 const { chromium, devices } = require('playwright'); const { spawn } = require('child_process'); const { brancher } = require('./faux-serveur');
 const fs = require('fs'); const path = require('path');
 const PORT = String(8900 + Math.floor(Math.random() * 90));
+// vidéo par Vercel quand les photos passent par Vercel (décision de la propriétaire du 23/10/2026)
+const ACTIVES = /const PHOTOS_DIRECTES_ACTIVES = true;/.test(fs.readFileSync(path.join(__dirname, '../../js/photos.js'), 'utf8'));
 const VIDEO = fs.readFileSync(path.join(__dirname, 'medias/verticale.webm'));
 const tables = { reglages_site: [{ cle: 'video_accueil', valeur: { type: 'video', chemin: 'site/video-accueil/essai.mp4', largeur: 360, hauteur: 640 } }],
   model_profiles: [], model_photos: [], actualites: [], evenements: [], partenaires: [], bandeau_annonce: [], instagram_posts_cache: [], mot_responsable: [], admins: [] };
@@ -55,7 +57,8 @@ const etat = p => p.evaluate(() => {
     let { p, ctx, errs } = await ouvrir(b, appareil); let e = await etat(p);
     ok(e.visible && e.prete && e.lit && e.opacite === '1', appareil + ' : la vidéo s\'affiche et se lit');
     ok(!e.rognee && e.hauteur <= e.ecran, appareil + ' : vidéo entière, pas rognée (' + e.hauteur + ' px pour un écran de ' + e.ecran + ')');
-    ok(/^https:\/\/photos\.maitreakessemodelmanagement\.com\/site\/video-accueil\//.test(e.source), appareil + ' : vidéo servie directement par Cloudflare (' + e.source + ')');
+    if (ACTIVES) ok(/^https:\/\/photos\.maitreakessemodelmanagement\.com\/site\/video-accueil\//.test(e.source), appareil + ' : vidéo servie directement par Cloudflare (' + e.source + ')');
+    else ok(/\/book-photos\/site\/video-accueil\//.test(e.source), appareil + ' : vidéo servie par Vercel (' + e.source + ')');
     ok(e.boutonDedans, appareil + ' : bouton du son entièrement visible');
     ok(!errs.length, appareil + ' : aucune erreur de page ' + errs.join(' | '));
     await ctx.close();
@@ -72,7 +75,7 @@ const etat = p => p.evaluate(() => {
     ok(!heads.length, 'Cloudflare ' + direct + ' : la surveillance n\'interroge pas l\'adresse Cloudflare (' + heads.length + ' demande(s))');
     // coupé avant toute donnée : tout le site bascule (visiteur mémorisé) ; muet : la vidéo seule
     // passe par le relais après 12 s d'attente (les photos ont leur propre garde-fou)
-    ok(e.visible && e.lit && /^\/book-photos\//.test(e.source) && (direct === 'muet' || !!e.relais), 'Cloudflare ' + (direct === 'coupe' ? 'coupé' : 'muet') + ' → la vidéo passe par le relais et se lit (' + e.source + ')'); await ctx.close();
+    ok(e.visible && e.lit && /^\/book-photos\//.test(e.source) && (direct === 'muet' || !!e.relais || !ACTIVES), 'Cloudflare ' + (direct === 'coupe' ? 'coupé' : 'muet') + ' → la vidéo passe par le relais et se lit (' + e.source + ')'); await ctx.close();
   }
   ({ p, ctx } = await ouvrir(b, 'tablette', { lectureRefusee: true, page: 'en/index.html' })); e = await etat(p);
   ok(/Play the film/.test(e.bouton), 'anglais : « Play the film » quand la lecture automatique est refusée'); await ctx.close();

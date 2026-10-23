@@ -362,6 +362,17 @@ on doit la choisir ou l'ouvrir, c'est la photo (avec le nom) qu'on touche. Tout 
 Essai : `test-visages-partout.js` parcourt tous les écrans (et les fiches, panneaux et fenêtres
 qui s'ouvrent ensuite) et échoue si un nom de mannequin est sans photo.
 
+## 🔁 Photos par Vercel (23/10/2026, décision de la propriétaire)
+Le domaine Cloudflare des photos (`photos.maitreakessemodelmanagement.com`) coupe la connexion
+(`ERR_CONNECTION_CLOSED`) ou ne répond plus depuis la box Orange CI de la propriétaire : l'accueil
+restait sans photos jusqu'à 30 s. Décision : **toutes les photos et la vidéo passent par le relais
+Vercel `/book-photos/`** — `PHOTOS_DIRECTES_ACTIVES = false` dans `js/photos.js` ET `middleware.js`.
+Coût : le « Fast Data Transfer » Vercel (100 Go/mois gratuits ; 27,8 Go sur les 30 jours au
+23/10/2026) — à surveiller dans Vercel → Usage. Revenir à Cloudflare = remettre `true` aux deux
+endroits, seulement après avoir trouvé la cause côté Cloudflare (piste : Encrypted Client Hello).
+Les essais (`test-photos-directes.js`, `test-accueil-serveur.js`, `test-video-accueil.js`) lisent
+le réglage et vérifient alors qu'aucune photo n'est demandée à Cloudflare.
+
 ## ⚡ Accueil servi déjà rempli (23/10/2026)
 - **Pourquoi** : à la première visite, la photo de couverture arrivait après 5 à 12 s (même en
   Wi-Fi) : page vide → programmes téléchargés un par un → deux questions à la base → photo.

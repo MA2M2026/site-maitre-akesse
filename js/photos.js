@@ -44,7 +44,7 @@ function navigateurEcritWebp() {
 // à la sonde, même quand les photos mettent du temps.
 // Les adresses enregistrées en base ne changent pas (toujours /book-photos/) : seul
 // l'affichage est converti, donc revenir en arrière = mettre PHOTOS_DIRECTES_ACTIVES à false.
-const PHOTOS_DIRECTES_ACTIVES = true;
+const PHOTOS_DIRECTES_ACTIVES = false;  // 23/10/2026, décision de la propriétaire : photos par Vercel (Cloudflare coupé sur Orange CI, accueil sans photos jusqu'à 30 s)
 const PHOTOS_DIRECTES = 'https://photos.maitreakessemodelmanagement.com/';
 const RELAIS_PHOTOS = /^(?:https:\/\/(?:www\.)?maitreakessemodelmanagement\.com)?\/book-photos\//;
 const CLE_PHOTOS_RELAIS = 'ma2m_photos_relais';

@@ -71,6 +71,22 @@ async function visite(b, page, mode, opts = {}) {
   let srv; process.on('exit', () => srv && srv.kill());
   srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: path.resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise(r => setTimeout(r, 800));
   let b = await chromium.launch();
+  // Photos par Vercel (PHOTOS_DIRECTES_ACTIVES = false, décision de la propriétaire du 23/10/2026) :
+  // aucune photo ne doit être demandée à Cloudflare, toutes s'affichent par le relais
+  if (/const PHOTOS_DIRECTES_ACTIVES = false;/.test(require('fs').readFileSync(path.resolve(__dirname, '../../js/photos.js'), 'utf8'))) {
+    for (const page of ['index.html', 'mannequins.html', 'mannequin.html?id=a1', 'qui-sommes-nous.html', 'en/index.html']) {
+      for (const mobile of [false, true]) {
+        const v = await visite(b, page, 'coupe', { mobile });
+        const nom = page + (mobile ? ' (téléphone)' : ' (ordinateur)');
+        ok(v.directes.length === 0, nom + ' : aucune photo demandée à Cloudflare');
+        ok(v.etat.srcs.length > 0 && v.etat.srcs.every(x => /\/book-photos\//.test(x)) && !v.etat.vides, nom + ' : photos affichées par Vercel (' + v.etat.srcs.length + ')');
+        ok(!v.errs.length, nom + ' : aucune erreur ' + v.errs.join(' | '));
+        await v.ctx.close();
+      }
+    }
+    await b.close();
+    console.log(ko ? '❌ ' + ko + ' échec(s)' : 'Tout est bon.'); process.exit(ko ? 1 : 0);
+  }
 
   // 1) Cloudflare répond : les photos viennent directement de Cloudflare, rien par Vercel
   for (const page of ['index.html', 'mannequins.html', 'mannequin.html?id=a1', 'qui-sommes-nous.html', 'en/index.html']) {

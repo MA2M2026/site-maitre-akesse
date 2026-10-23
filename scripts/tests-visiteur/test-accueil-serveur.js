@@ -18,6 +18,8 @@ const profils = [
   { id: 'a2', full_name: 'MARIAM <i>DEUX</i>', city: 'Abidjan', category: 'femme' },
   { id: 'a3', full_name: 'GRÂCE TROIS', city: 'Abidjan', category: 'femme' },
   { id: 'a4', full_name: 'KOFFI QUATRE', city: 'Abidjan', category: 'homme' }];
+// photos par Vercel (décision du 23/10/2026) ou par Cloudflare : lu dans js/photos.js
+const ACTIVES = /const PHOTOS_DIRECTES_ACTIVES = true;/.test(fs.readFileSync(path.join(RACINE, 'js/photos.js'), 'utf8'));
 const photo = (id) => CF + id + '/miniatures/179000000000' + id.slice(1) + '-abc-w.jpg';
 
 // le middleware, avec une base simulée et la page lue sur le disque
@@ -50,7 +52,7 @@ async function middleware() {
   const html = await pageServeur('');
   const donnees = html && JSON.parse((html.match(/<script type="application\/json" id="accueil-donnees">(.*?)<\/script>/) || [])[1] || 'null');
   ok(donnees && donnees.profils.length === 4 && donnees.nombre === 4, 'serveur : la liste des mannequins publiées est dans la page');
-  ok(/<img id="couv-img" class="visible" src="https:\/\/photos\.maitreakessemodelmanagement\.com\/[^"]+-w\.webp" alt="[^"]+" data-modele="a[234]"/.test(html), 'serveur : la photo de couverture est déjà en place (WebP, Cloudflare ; pas la mannequin « À la une »)');
+  ok(new RegExp('<img id="couv-img" class="visible" src="' + (ACTIVES ? 'https://photos\\.maitreakessemodelmanagement\\.com/' : '/book-photos/') + '[^"]+-w\\.webp" alt="[^"]+" data-modele="a[234]"').test(html), 'serveur : la photo de couverture est déjà en place (WebP, ' + (ACTIVES ? 'Cloudflare' : 'Vercel') + ' ; pas la mannequin « À la une »)');
   ok(!/<i>DEUX/.test(html) && /MARIAM \\u003ci\\u003eDEUX/.test(html), 'serveur : un nom avec des signes spéciaux ne peut rien injecter dans la page');
   const avant = appelsBase; await pageServeur('en/');
   ok(appelsBase === avant, 'serveur : 2e visite servie de mémoire (pas de nouvelle question à la base)');
@@ -99,9 +101,10 @@ async function middleware() {
         await p.waitForTimeout(1500);
         const couv = await p.evaluate(() => { const i = document.getElementById('couv-img'); return { src: i.currentSrc || i.src, largeur: i.naturalWidth, modele: i.dataset.modele, credit: document.getElementById('couv-modele-nom').textContent, enVue: (document.querySelector('.p-couv .mag-cadre img.visible').getAttribute('src').match(/\/(a\d)\//) || [])[1] }; });
         const premiere = ordre.findIndex((u) => u.includes('/miniatures/')), accueilJs = ordre.findIndex((u) => /\/js\/accueil\.js/.test(u));
-        ok(couv.largeur > 0 && delai < (etatCf === 'muet' ? 6000 : 3000), n + 'la photo de couverture s’affiche en ' + (delai / 1000).toFixed(1) + ' s' + (cloudflare ? '' : ' (par la roue de secours : ' + couv.src.replace(/^https?:\/\/[^/]+/, '').slice(0, 30) + '…)'));
+        ok(couv.largeur > 0 && delai < (etatCf === 'muet' && ACTIVES ? 6000 : 3000), n + 'la photo de couverture s’affiche en ' + (delai / 1000).toFixed(1) + ' s' + (cloudflare ? '' : ' (par la roue de secours : ' + couv.src.replace(/^https?:\/\/[^/]+/, '').slice(0, 30) + '…)'));
         ok(premiere >= 0 && premiere < accueilJs, n + 'la photo est demandée avant même les programmes de la page');
-        if (cloudflare) ok(couv.src.startsWith(CF), n + 'la photo vient de Cloudflare');
+        if (!ACTIVES) ok(/\/book-photos\//.test(couv.src) && !ordre.some((u) => u.startsWith(CF)), n + 'la photo vient de Vercel, rien n’est demandé à Cloudflare');
+        else if (cloudflare) ok(couv.src.startsWith(CF), n + 'la photo vient de Cloudflare');
         else ok(/\/book-photos\//.test(couv.src), n + 'Cloudflare muet : la photo vient de la copie Vercel');
         const attendu = profils.find((x) => x.id === couv.enVue) || {};  // (la couverture défile toutes les 5 s)
         ok(couv.credit === attendu.full_name, n + '« En couverture » : le nom de la mannequin en photo (' + couv.credit + ')');
