@@ -508,7 +508,8 @@ window.demarrerConvocationsPanneau = function () {
     // quelqu'un n'a encore rien reçu (nouveau projet, ou mannequin ajoutée par les Places
     // limitées) : on propose d'annoncer la sélection ; sinon, la convocation
     var prevenu = function (x) { return envois.some(function (e) { return e.participant_id === x.participant_id && PREVENU.indexOf(e.sorte) >= 0 && e.statut !== 'annule'; }); };
-    $('convoc-sorte').value = personnes.some(function (x) { return (x.email || x.telephone) && !(x.participant_id && prevenu(x)); }) ? 'selection' : 'convocation';
+    // (écran « Annoncer la sélection » du menu : toujours l'annonce de la sélection)
+    $('convoc-sorte').value = window.convocationSorteImposee || (personnes.some(function (x) { return (x.email || x.telephone) && !(x.participant_id && prevenu(x)); }) ? 'selection' : 'convocation');
     choisirSorte();
     dessinerCarnet();
     dessinerParticipants();

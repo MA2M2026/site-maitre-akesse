@@ -397,6 +397,9 @@ Essai : `test-retour-invitation.js`.
   version parent) ; relance et rappel : `messageRelance`, `messageRappel`. « 🔔 Rappel à la
   suivante » (23/10/2026) dans la liste des confirmés, même fonctionnement que la relance
   (`ajouterTournee`, `sessionStorage` « ma2m_rappels_<projet> »).
+  Ligne de menu « Annoncer la sélection » (`b2-selection`, `js/admin/site-convocations.js`) :
+  le même écran que « Convocations », titre changé et message de sélection imposé
+  (`window.convocationSorteImposee`).
 - **Agenda public** : plus aucun nom de mannequin (`js/agenda.js`, décision du 21/10/2026) ; les
   noms restent dans « Parcours MA2M » (médaillons).
 - **Envois programmés** : `pg_cron` toutes les 5 min → `convocations_reveil()` appelle (seulement

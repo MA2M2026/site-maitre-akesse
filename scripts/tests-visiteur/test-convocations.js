@@ -257,6 +257,16 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     ok(/2 convoqué\(s\) · 0 confirmé · 0 absent · 2 sans réponse/.test(await p.textContent('.convoc-chiffres')), n + 'les réponses comptent dès la sélection (la mineure et son parent : une personne)');
     await p.selectOption('#convoc-sorte', 'convocation'); await p.waitForTimeout(200);
     ok((await p.$$eval('#convoc-participants input:checked', cs => cs.length)) === 3 && /15h00 précises/.test(await p.textContent('#convoc-apercu')) && await p.isVisible('#convoc-rappel-info'), n + 'puis « Convocation » : tout le monde recoché, message complet, rappel annoncé');
+    // ligne « Annoncer la sélection » du menu (23/10/2026) : même écran, message de sélection imposé
+    await rubrique(p, 'b2-selection'); await p.waitForSelector('#cv-projet', { timeout: 10000 }); await p.waitForTimeout(1000);
+    await p.selectOption('#cv-projet', 'pa2'); await p.waitForTimeout(800);
+    await p.$eval('#cv-enregistrer', x => x.click()); await p.waitForTimeout(1800);
+    ok(/Annoncer la sélection/.test(await p.textContent('#ecran-convocations h2')) && (await p.inputValue('#convoc-sorte')) === 'selection' && /Félicitations/.test(await p.textContent('#convoc-apercu')),
+      n + 'menu « Annoncer la sélection » : l’annonce est choisie d’office, même après un premier envoi');
+    await rubrique(p, 'b2-convocations'); await p.waitForSelector('#cv-projet', { timeout: 10000 }); await p.waitForTimeout(1000);
+    await p.selectOption('#cv-projet', 'pa2'); await p.waitForTimeout(800);
+    await p.$eval('#cv-enregistrer', x => x.click()); await p.waitForTimeout(1800);
+    ok(/Convocations/.test(await p.textContent('#ecran-convocations h2')) && (await p.inputValue('#convoc-sorte')) === 'convocation', n + 'puis « Convocations » : la convocation est proposée');
     ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth)), n + 'rien ne dépasse de l’écran');
     ok(!errs.length, n + 'aucune erreur ' + errs.join(' | '));
     await ctx.close();

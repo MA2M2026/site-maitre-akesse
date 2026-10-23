@@ -13,7 +13,7 @@
     ['b1-repartition', 'Répartition des profils'], ['b1-evolution', 'Évolution des candidatures'],
     [null, 'Castings'],
     ['b2-candidatures', 'Candidatures casting'], ['b2-projets', 'Projets et castings'],
-    ['b2-messages-groupes', 'Messages groupés'], ['b2-places', 'Places limitées'], ['b2-convocations', 'Convocations'],
+    ['b2-messages-groupes', 'Messages groupés'], ['b2-places', 'Places limitées'], ['b2-selection', 'Annoncer la sélection'], ['b2-convocations', 'Convocations'],
     [null, 'Mannequins'],
     ['b2-mannequins-publies', 'Mannequins'], ['b2-validations', 'Validations en attente'], ['b3c-vedette-admin', 'Mannequin à la une'],
     ['b2-tri-photos', 'Photos mises de côté'], ['b2-rapport-profils', 'Rapport des profils'], ['b2-fiches-evenement', 'Fiches événement'],
