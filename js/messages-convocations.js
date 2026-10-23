@@ -202,7 +202,7 @@
         + (lieu ? '\n📍 ' + lieu : ''), '',
       'Nous comptons sur ' + (pourParent ? 'sa présence' : 'votre présence') + '. À très bientôt ! ✨']
       // (rappel automatique : une personne qui n'a pas encore répondu peut confirmer d'un clic)
-      .concat(q.jeton && q.reponse !== 'confirme' && 'reponse' in q ? ['✅ *Pas encore de réponse ? Confirmez en un clic :* ' + LIEN_CONFIRMER + q.jeton] : [])
+      .concat(q.jeton && 'reponse' in q && !q.reponse ? ['✅ *Pas encore de réponse ? Confirmez en un clic :* ' + LIEN_CONFIRMER + q.jeton] : [])
       .concat(['_L’équipe Maître Akesse Model Management_']).join('\n');
   }
 

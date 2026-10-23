@@ -16,7 +16,6 @@
   if (!P || !C) return;
   const t = C.champ;
   const ABSENTE = '<div class="note info">Cette rubrique n’est pas encore activée. <span class="petit-texte doux">(Étape d’installation : « supabase-cachets.sql » à exécuter dans la base.)</span></div>';
-  const tableAbsente = (e) => /cachets_mannequins|PGRST205|42P01|does not exist/.test(String((e && (e.code + ' ' + e.message)) || e));
   const principal = () => P.moi && P.moi.role === 'principal';
   // numéro saisi → chiffres seuls avec l'indicatif ivoirien (numeroWhatsApp, js/app.js)
   const numero = (x) => (typeof numeroWhatsApp === 'function' ? numeroWhatsApp(x) : String(x || '').replace(/\D/g, ''));
@@ -31,11 +30,8 @@
   const mineure = (m) => !!m && P.age(m.date_naissance) !== null && P.age(m.date_naissance) < 18;
   const K = window.CachetsMa2m;
   const pourcent = (x) => String(Number(x)).replace('.', ',') + ' %';
-  // nom : lien vers la fiche (et sa photo en médaillon, js/admin/coque.js) pour qui voit les Paiements
-  // (sans accès aux Paiements, ou cachet saisi sans la lier au registre : sa photo seule, cherchée
-  // par son nom, js/admin/coque.js)
-  const nom = (c) => (c.agence_mannequin_id && P.lienFiche && P.moi.espaces.paiements ? P.lienFiche(c.agence_mannequin_id, c.beneficiaire)
-    : '<span data-visage-nom="' + P.esc(c.beneficiaire) + '"></span><b>' + P.esc(c.beneficiaire) + '</b>');
+  // nom : photo et lien vers la fiche (C.nomMannequin, js/portail/espace-compta.js)
+  const nom = (c) => C.nomMannequin(c.agence_mannequin_id, c.beneficiaire);
 
   // Reçu sur WhatsApp : à la mannequin, ou à son parent si elle est mineure (règle de toute
   // l'Administration : les messages d'un mineur vont au parent)
@@ -50,7 +46,7 @@
   async function page() {
     let liste;
     try { liste = await P.bd(sb.from('cachets_mannequins').select('*').order('cree_le', { ascending: false }).limit(300)); }
-    catch (e) { if (tableAbsente(e)) return P.entete('Payer les mannequins') + ABSENTE; throw e; }
+    catch (e) { if (C.cachetsAbsents(e)) return P.entete('Payer les mannequins') + ABSENTE; throw e; }
     cachets = liste;
     const [registre, projets, reglage, colonneMotif, colonneParent] = await Promise.all([
       P.bd(sb.from('agence_mannequins').select('id, full_name, telephone, statut, user_id, date_naissance, parent_nom, parent_telephone').eq('statut', 'actif').order('full_name')).catch(() => []),
@@ -138,20 +134,20 @@
     // mineure : versée au parent ; son nom et son numéro, s'ils manquaient ou ont changé, vont dans
     // le registre et sur sa fiche (cachet_enregistrer_parent)
     const m = (P.etat.cachetsRegistre || []).find((x) => x.id === ligne.agence_mannequin_id);
-    if (parents && mineure(m)) {
-      const parentNom = t(f, 'parent_nom');
-      if (!parentNom) { P.message('Indiquez le nom du parent.'); return; }
-      ligne.parent_nom = parentNom;
-      if (parentNom !== (m.parent_nom || '') || tel !== numero(m.parent_telephone)) {
-        await P.rpc('cachet_enregistrer_parent', { p_mannequin: m.id, p_nom: parentNom, p_telephone: tel });
-        Object.assign(m, { parent_nom: parentNom, parent_telephone: tel });
-      }
-    }
+    const pourParent = parents && mineure(m), parentNom = pourParent ? t(f, 'parent_nom') : '';
+    if (pourParent && !parentNom) { P.message('Indiquez le nom du parent.'); return; }
+    if (pourParent) ligne.parent_nom = parentNom;
     if (commission !== null) ligne.montant_prestation = montant;
     if (recus) ligne.motif = motif;
     const r = await P.bd(sb.from('cachets_mannequins').insert(ligne).select('id'));
     if (!r || !r.length) { P.message('Rien n’a été enregistré : reconnectez-vous puis réessayez.'); return; }
-    await C.actualiser('Cachet ajouté à la liste « À payer ».');
+    // (après le cachet seulement : un cachet refusé ne change jamais le parent)
+    let note = '';
+    if (pourParent && (parentNom !== (m.parent_nom || '') || tel !== numero(m.parent_telephone))) {
+      try { await P.rpc('cachet_enregistrer_parent', { p_mannequin: m.id, p_nom: parentNom, p_telephone: tel }); Object.assign(m, { parent_nom: parentNom, parent_telephone: tel }); note = ' Parent enregistré dans le registre et sur sa fiche.'; }
+      catch (e) { note = ' Le parent n’a pas été enregistré dans le registre : ' + P.erreurTexte(e); }
+    }
+    await C.actualiser('Cachet ajouté à la liste « À payer ».' + note);
   };
   // calcul affiché pendant la saisie (le vrai calcul est fait par la base, au franc près)
   P.changements['cachet-montant'] = (el) => {

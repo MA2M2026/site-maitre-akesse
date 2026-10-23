@@ -75,7 +75,7 @@ window.demarrerConvocationsPage = function (racine) {
     $('cv-rappel-avant-jours').value = String((p && p.rappel_avant_jours) || 3);
     if (!$('cv-rappel-avant-jours').value) $('cv-rappel-avant-jours').value = '3';
     $('cv-rappel-avant-heure').value = (p && p.rappel_avant_heure) || '10:00';
-    // (rappel quelques jours avant : seulement quand la base le connaît, supabase-rappel-avant.sql)
+    // (rappel quelques jours avant : seulement quand la base le connaît, supabase-convocations.sql)
     $('cv-rappel-avant-ligne').hidden = !rappelAvantConnu();
     $('cv-visible').checked = !p || !!p.visible;
     $('cv-deroule').textContent = '';

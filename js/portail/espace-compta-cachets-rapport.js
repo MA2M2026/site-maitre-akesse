@@ -47,17 +47,17 @@
     let liste, reglage;
     try {
       [liste, reglage] = await Promise.all([
-        P.bd(sb.from('cachets_mannequins').select('*').eq('statut', 'paye').gte('paye_le', per.debut).lt('paye_le', per.fin).order('paye_le')),
+        // (toutes les lignes, par pages : la base en renvoie au plus 1 000 à la fois)
+        lireToutesLignes(() => sb.from('cachets_mannequins').select('*').eq('statut', 'paye').gte('paye_le', per.debut).lt('paye_le', per.fin).order('paye_le').order('id')).then((r) => { if (r.error) throw r.error; return r.data || []; }),
         P.bd(sb.from('compta_reglages').select('*').eq('id', 1).maybeSingle()).catch(() => null)
       ]);
     } catch (e) {
-      if (/cachets_mannequins|PGRST205|42P01/.test(String(e && (e.code + ' ' + e.message)))) return P.entete('Rapport des cachets') + '<div class="note info">« Payer les mannequins » n’est pas encore activé.</div>';
+      if (P.compta.cachetsAbsents(e)) return P.entete('Rapport des cachets') + '<div class="note info">« Payer les mannequins » n’est pas encore activé.</div>';
       throw e;
     }
     const { total, personnes } = calculer(liste), F = P.fcfa;
     dernier = { per, liste, total, personnes, reglage: reglage || {} };
-    // nom : lien vers la fiche des Paiements (photo devant) ; sinon sa photo par son nom (js/admin/coque.js)
-    const nom = (x) => (x.id && P.lienFiche && P.moi.espaces.paiements ? P.lienFiche(x.id, x.nom) : '<span data-visage-nom="' + P.esc(x.nom) + '"></span><b>' + P.esc(x.nom) + '</b>');
+    const nom = (x) => P.compta.nomMannequin(x.id, x.nom);  // photo et lien vers la fiche
     const selecteur = '<label class="fl" for="rc-periode">Période<select id="rc-periode" data-change="rapport-cachets-periode">' +
       choixPossibles().map((o) => '<option value="' + o[0] + '"' + (o[0] === choix ? ' selected' : '') + '>' + P.esc(o[1]) + '</option>').join('') + '</select></label>';
     return P.entete('Rapport des cachets', '<button class="btn" type="button" data-action="rapport-cachets-pdf"' + (liste.length ? '' : ' disabled') + '>⬇ PDF</button>' +

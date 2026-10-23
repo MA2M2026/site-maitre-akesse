@@ -1,6 +1,9 @@
 -- ===========================================================================
 -- Extension 141 — Convocations des projets de l'agenda (21/10/2026, demande de la
 -- propriétaire). Rejouable : on peut l'exécuter plusieurs fois sans rien casser.
+-- Ajouts du 23/10/2026 (un seul fichier, à rejouer en entier) : annonce de la sélection (sorte
+-- « selection »), rappel automatique quelques jours avant (« rappel_avant », réglage du projet),
+-- et plus aucun rappel à une personne qui a répondu « absent ».
 --
 -- Un projet de l'agenda (défilé, shooting…) reçoit en plus : l'heure de convocation,
 -- le déroulé de la journée (heure + activité), « À prévoir », un message personnalisé
@@ -33,6 +36,12 @@ alter table agenda_projets add column if not exists message_modele text
 alter table agenda_projets add column if not exists rappel_veille boolean not null default true;
 alter table agenda_projets add column if not exists rappel_heure text not null default '18:00'
   check (rappel_heure ~ '^([01][0-9]|2[0-3]):[0-5][0-9]$');
+-- rappel automatique quelques jours avant (23/10/2026) : coché d'office, 3 jours avant à 10h00
+alter table agenda_projets add column if not exists rappel_avant boolean not null default true;
+alter table agenda_projets add column if not exists rappel_avant_jours int not null default 3
+  check (rappel_avant_jours between 2 and 14);
+alter table agenda_projets add column if not exists rappel_avant_heure text not null default '10:00'
+  check (rappel_avant_heure ~ '^([01][0-9]|2[0-3]):[0-5][0-9]$');
 
 -- 2) Carnet des personnes non inscrites sur le site (réutilisables d'un projet à l'autre)
 create table if not exists contacts_externes (
@@ -100,6 +109,22 @@ alter table convocation_envois add column if not exists pris_le timestamptz;
 create index if not exists convocation_envois_a_l_heure on convocation_envois (prevu_le) where statut = 'programme';
 alter table convocation_envois enable row level security;
 revoke all on convocation_envois from anon;
+-- sortes d'envoi (la liste s'est agrandie : « selection », annonce de la sélection, et
+-- « rappel_avant », rappel quelques jours avant, 23/10/2026)
+do $$
+declare
+  nom text;
+begin
+  for nom in
+    select con.conname from pg_constraint con
+    where con.conrelid = 'public.convocation_envois'::regclass and con.contype = 'c'
+      and pg_get_constraintdef(con.oid) like '%sorte%'
+  loop
+    execute format('alter table public.convocation_envois drop constraint %I', nom);
+  end loop;
+end $$;
+alter table public.convocation_envois add constraint convocation_envois_sorte_check
+  check (sorte in ('selection', 'convocation', 'rappel', 'rappel_avant'));
 drop policy if exists "Envois : agence seulement" on convocation_envois;
 create policy "Envois : agence seulement" on convocation_envois for all
   using (exists (select 1 from admins where user_id = auth.uid()))
@@ -129,8 +154,14 @@ returns timestamptz language sql immutable as $$
   select ((p_date - 1)::text || ' ' || coalesce(p_heure, '18:00') || ':00+00')::timestamptz;
 $$;
 
--- Projet modifié après la programmation : le rappel suit la nouvelle date / heure, et un
--- projet annulé (ou dont le rappel est décoché) n'envoie plus rien.
+-- Heure du rappel N jours avant (Abidjan = heure UTC)
+create or replace function convocation_heure_rappel_avant(p_date date, p_jours int, p_heure text)
+returns timestamptz language sql immutable as $$
+  select ((p_date - coalesce(p_jours, 3))::text || ' ' || coalesce(p_heure, '10:00') || ':00+00')::timestamptz;
+$$;
+
+-- Projet modifié après la programmation : les deux rappels suivent la nouvelle date / heure ;
+--    un projet annulé (ou un rappel décoché) n'envoie plus rien.
 create or replace function convocation_suivre_projet()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
@@ -139,18 +170,30 @@ begin
       where projet_id = NEW.id and statut in ('programme', 'a_faire');
     return NEW;
   end if;
+  -- rappel de la veille
   if not NEW.rappel_veille then
     update convocation_envois set statut = 'annule'
       where projet_id = NEW.id and sorte = 'rappel' and statut in ('programme', 'a_faire');
   elsif NEW.date_debut is distinct from OLD.date_debut or NEW.rappel_heure is distinct from OLD.rappel_heure
         or (NEW.rappel_veille and not OLD.rappel_veille) then
     -- nouvelle heure (ou rappel recoché) : à venir → programmé ; déjà passée → annulé
-    -- (jamais de « c'est demain ! » le jour même ou après l'événement)
     update convocation_envois set
       prevu_le = convocation_heure_rappel(NEW.date_debut, NEW.rappel_heure),
       statut = case when convocation_heure_rappel(NEW.date_debut, NEW.rappel_heure) > now() then 'programme' else 'annule' end
       where projet_id = NEW.id and sorte = 'rappel'
         and (statut = 'programme' or (statut = 'annule' and NEW.rappel_veille and not OLD.rappel_veille));
+  end if;
+  -- rappel quelques jours avant
+  if not NEW.rappel_avant then
+    update convocation_envois set statut = 'annule'
+      where projet_id = NEW.id and sorte = 'rappel_avant' and statut in ('programme', 'a_faire');
+  elsif NEW.date_debut is distinct from OLD.date_debut or NEW.rappel_avant_jours is distinct from OLD.rappel_avant_jours
+        or NEW.rappel_avant_heure is distinct from OLD.rappel_avant_heure or (NEW.rappel_avant and not OLD.rappel_avant) then
+    update convocation_envois set
+      prevu_le = convocation_heure_rappel_avant(NEW.date_debut, NEW.rappel_avant_jours, NEW.rappel_avant_heure),
+      statut = case when convocation_heure_rappel_avant(NEW.date_debut, NEW.rappel_avant_jours, NEW.rappel_avant_heure) > now() then 'programme' else 'annule' end
+      where projet_id = NEW.id and sorte = 'rappel_avant'
+        and (statut = 'programme' or (statut = 'annule' and NEW.rappel_avant and not OLD.rappel_avant));
   end if;
   return NEW;
 end;
@@ -183,17 +226,17 @@ returns jsonb language plpgsql security definer set search_path = public as $$
 declare
   resultat jsonb;
 begin
-  -- envoi pris il y a plus de 15 minutes sans résultat (serveur ou onglet interrompu) : repris,
-  -- sauf après 3 essais (non envoyé)
   update convocation_envois set statut = case when tentatives >= 3 then 'echec' else 'programme' end,
       erreur = coalesce(erreur, 'Envoi interrompu.')
     where statut = 'en_cours' and coalesce(pris_le, prevu_le) < now() - interval '15 minutes';
-  -- un rappel de la veille dont l'heure est passée de plus d'une heure ne part plus
   update convocation_envois set statut = 'annule'
-    where statut = 'programme' and sorte = 'rappel' and prevu_le < now() - interval '1 hour';
+    where statut = 'programme' and sorte in ('rappel', 'rappel_avant') and prevu_le < now() - interval '1 hour';
   with dus as (
     select id from convocation_envois
     where statut = 'programme' and prevu_le <= now()
+      -- pas de rappel à une personne qui a répondu « absent » (s'il change d'avis, il repart)
+      and not (sorte in ('rappel', 'rappel_avant') and exists (
+        select 1 from convocation_participants cp where cp.id = convocation_envois.participant_id and cp.reponse = 'absent'))
     order by prevu_le limit 200
     for update skip locked
   ), pris as (

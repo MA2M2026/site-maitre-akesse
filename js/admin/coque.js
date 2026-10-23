@@ -155,7 +155,7 @@
   ];
   function visagesDesFiches() {
     FICHES.forEach((f) => {
-      const liens = [...document.querySelectorAll('#contenu ' + f.liens + ':not(.btn):not(.visage-lien):not([data-visage])')].filter((a) => !f.garde || f.garde(a));
+      const liens = [...document.querySelectorAll('#contenu ' + f.liens + ':not(.btn):not(.visage-lien):not(.retour-liste):not([data-visage])')].filter((a) => !f.garde || f.garde(a));
       // emplacements d'une photo dans une case à cocher ou un choix (la photo sélectionne, le nom est à côté)
       const places = [...document.querySelectorAll('#contenu [' + f.attribut + ']:not([data-vu]), #fenetre [' + f.attribut + ']:not([data-vu])')];
       if (!liens.length && !places.length) return;
@@ -171,9 +171,11 @@
       const idsLiens = liens.map((a) => a.getAttribute('href').split('/').pop());
       const manquants = [...new Set(idsLiens.concat(places.map((el) => el.getAttribute(f.attribut))))].filter((id) => id && !(id in f.photos));
       if (manquants.length) {
+        // (photos arrivées : on les pose partout où ces mannequins sont affichées MAINTENANT,
+        // la page a pu être redessinée pendant la recherche)
         f.chercher(manquants, liens).then(() => {
-          liens.forEach((a) => { if (a.isConnected) poserLien(a); });
-          places.forEach((el) => { if (el.isConnected) poserPlace(el); });
+          document.querySelectorAll('#contenu ' + f.liens + '[data-visage]').forEach((a) => { if (manquants.includes(a.getAttribute('href').split('/').pop())) poserLien(a); });
+          document.querySelectorAll('#contenu [' + f.attribut + '], #fenetre [' + f.attribut + ']').forEach((el) => { if (manquants.includes(el.getAttribute(f.attribut))) poserPlace(el); });
         }, () => { /* initiales gardées */ });
       }
     });
@@ -182,17 +184,19 @@
   // emplacement <span data-visage-nom="Nom">. Si c'est une mannequin du registre, sa photo s'y
   // place ; sinon (fournisseur, client…), rien.
   const registreParNom = {};  // nom en minuscules → id du registre ('' : pas une mannequin)
+  const nomsEnCours = new Set();  // noms en cours de recherche (pas encore de réponse)
   async function chercherNoms(noms) {
-    noms.forEach((n) => { registreParNom[n.toLowerCase()] = ''; });
-    const compteDe = {};
+    noms.forEach((n) => nomsEnCours.add(n.toLowerCase()));
+    const compteDe = {}, trouves = {};
     for (const p of paquets(noms, 50)) {
       (await P.bd(sb.from('agence_mannequins').select('id, full_name, user_id').in('full_name', p))).forEach((l) => {
-        registreParNom[String(l.full_name).toLowerCase()] = l.id;
+        trouves[String(l.full_name).toLowerCase()] = l.id;
         if (l.user_id) compteDe[l.id] = l.user_id;
       });
     }
-    const ids = [...new Set(Object.values(registreParNom).filter((id) => id && !(id in photoDuRegistre)))];
+    const ids = [...new Set(Object.values(trouves).filter((id) => !(id in photoDuRegistre)))];
     if (ids.length) await chercherPhotos(ids, compteDe);
+    noms.forEach((n) => { const k = n.toLowerCase(); registreParNom[k] = trouves[k] || ''; nomsEnCours.delete(k); });
   }
   function visagesParNom() {
     const places = [...document.querySelectorAll('#contenu [data-visage-nom]:not([data-vu]), #fenetre [data-visage-nom]:not([data-vu])')];
@@ -204,8 +208,9 @@
       el.innerHTML = id ? P.visage(photoDuRegistre[id] || '', el.dataset.visageNom, 'rond-vis') : '';
     };
     places.forEach(poser);
-    const inconnus = [...new Set(places.map((el) => el.dataset.visageNom).filter((n) => n && !(n.toLowerCase() in registreParNom)))];
-    if (inconnus.length) chercherNoms(inconnus).then(() => places.forEach((el) => { if (el.isConnected) poser(el); }), () => { /* pas de droit sur le registre : pas de photo */ });
+    const inconnus = [...new Set(places.map((el) => el.dataset.visageNom).filter((n) => n && !(n.toLowerCase() in registreParNom) && !nomsEnCours.has(n.toLowerCase())))];
+    // (réponse arrivée : on reprend tous les emplacements affichés MAINTENANT)
+    if (inconnus.length) chercherNoms(inconnus).then(() => visagesParNom(), () => { inconnus.forEach((n) => nomsEnCours.delete(n.toLowerCase())); });
   }
   // (regroupé : une seule passe après une rafale de changements, pas une par image des chiffres animés)
   let retouche = 0;

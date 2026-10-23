@@ -281,7 +281,12 @@
     } catch (e) { P.message(/duplicate|unique/i.test(String(e && e.message)) ? 'Un compte porte déjà ce nom.' : P.erreurTexte(e)); }
   };
 
-  P.compta = { RECETTES, DEPENSES, comptes, ecritures, toutes, dettes, moisChoisi, bornes, choixMois, lignes, optionsComptes, optionsCategories, deposerJustificatif, totaux, champ, actualiser, paiementsImpots, paiementImpot };
+  // Cachets (Payer les mannequins, Rapport des cachets) : nom d'une mannequin du registre — lien
+  // vers sa fiche des Paiements (sa photo devant, js/admin/coque.js) pour qui voit les Paiements ;
+  // sinon sa photo cherchée par son nom ; et la table des cachets pas encore créée
+  const nomMannequin = (id, nom) => (id && P.lienFiche && P.moi.espaces.paiements ? P.lienFiche(id, nom) : '<span data-visage-nom="' + P.esc(nom) + '"></span><b>' + P.esc(nom) + '</b>');
+  const cachetsAbsents = (e) => /cachets_mannequins|PGRST205|42P01|does not exist/.test(String((e && (e.code + ' ' + e.message)) || e));
+  P.compta = { nomMannequin, cachetsAbsents, RECETTES, DEPENSES, comptes, ecritures, toutes, dettes, moisChoisi, bornes, choixMois, lignes, optionsComptes, optionsCategories, deposerJustificatif, totaux, champ, actualiser, paiementsImpots, paiementImpot };
   // (les pages du morceau B sont ajoutées par js/portail/espace-compta-suivi.js)
   P.espaces.compta = {
     nav: [[null, 'Au quotidien'], ['mois', 'Tableau du mois'], ['recettes', 'Recettes'], ['depenses', 'Dépenses'], ['tresorerie', 'Trésorerie']],

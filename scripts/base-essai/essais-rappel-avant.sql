@@ -1,4 +1,4 @@
--- Essais du rappel quelques jours avant (supabase-rappel-avant.sql) sur la base LOCALE jetable.
+-- Essais du rappel quelques jours avant (supabase-convocations.sql, ajouts du 23/10/2026) sur la base LOCALE jetable.
 \set ON_ERROR_STOP 1
 set search_path = public, extensions;
 insert into agenda_projets (id, type, titre, date_debut) values ('00000000-0000-0000-0000-0000000000e1', 'defile', 'RAPPEL ESSAI', current_date + 30);
@@ -23,7 +23,11 @@ select essai_refuse('update agenda_projets set rappel_avant_jours = 1 where id =
 -- l'envoi du serveur : la personne « absente » ne reçoit pas de rappel
 update convocation_envois set statut = 'programme', prevu_le = now() - interval '5 minutes' where participant_id = '00000000-0000-0000-0000-0000000000e3';
 create temp table tour1 as select convocations_a_traiter() as v;
-select essai(not ((select v from tour1)::text like '%00000000-0000-0000-0000-0000000000e3%') and (select statut from convocation_envois where participant_id = '00000000-0000-0000-0000-0000000000e3') = 'annule', 'personne absente : son rappel n''est pas envoyé');
+select essai(not ((select v from tour1)::text like '%00000000-0000-0000-0000-0000000000e3%') and (select statut from convocation_envois where participant_id = '00000000-0000-0000-0000-0000000000e3') = 'programme', 'personne absente : son rappel n''est pas envoyé (il reste en attente)');
+-- elle change d'avis : son rappel repart
+update convocation_participants set reponse = 'confirme' where id = '00000000-0000-0000-0000-0000000000e3';
+create temp table tour1b as select convocations_a_traiter() as v;
+select essai((select v from tour1b)::text like '%00000000-0000-0000-0000-0000000000e3%', 'elle se ravise et confirme : son rappel part');
 update convocation_envois set prevu_le = now() - interval '5 minutes' where participant_id = '00000000-0000-0000-0000-0000000000e2';
 create temp table tour2 as select convocations_a_traiter() as v;
 select essai(exists (select 1 from jsonb_array_elements((select v from tour2)) x where x ->> 'sorte' = 'rappel_avant' and x -> 'participant' ->> 'id' = '00000000-0000-0000-0000-0000000000e2'), 'personne qui a confirmé : son rappel part à l''heure');

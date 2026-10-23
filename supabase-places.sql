@@ -155,15 +155,15 @@ begin
     where id = inv.id;
   update agenda_projets set mannequin_ids = array_append(array_remove(mannequin_ids, inv.model_id), inv.model_id), updated_at = now()
     where id = projet;
-  -- place reprise après un désistement : plus « absente », et le rappel de la veille (annulé par
-  -- le désistement) repart s'il est encore à venir
+  -- place reprise après un désistement : plus « absente », et les rappels (veille, quelques jours
+  -- avant), annulés par le désistement, repartent s'ils sont encore à venir
   if inv.statut = 'desiste' then
     update convocation_participants set reponse = null, repondu_le = null
       where projet_id = projet and model_id = inv.model_id and reponse = 'absent';
     update convocation_envois e set statut = 'programme'
       from convocation_participants cp
       where cp.id = e.participant_id and cp.projet_id = projet and cp.model_id = inv.model_id
-        and e.sorte = 'rappel' and e.statut = 'annule' and e.prevu_le > now();
+        and e.sorte in ('rappel', 'rappel_avant') and e.statut = 'annule' and e.prevu_le > now();
   end if;
   return 'pris';
 end;

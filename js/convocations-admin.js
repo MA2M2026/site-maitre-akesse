@@ -298,7 +298,9 @@ window.demarrerConvocationsPanneau = function () {
     dessinerReponses();
     var boite = $('convoc-suivi');
     boite.textContent = '';
-    var visibles = envois.filter(function (e) { return e.statut !== 'annule'; });
+    // (un rappel encore « à envoyer » à une personne qui a répondu « absent » n'est plus proposé)
+    var absente = function (e) { var x = personnes.find(function (y) { return y.participant_id === e.participant_id; }); return x && x.reponse === 'absent' && /^rappel/.test(e.sorte) && e.statut === 'a_faire'; };
+    var visibles = envois.filter(function (e) { return e.statut !== 'annule' && !absente(e); });
     if (!visibles.length) { boite.textContent = 'Aucun envoi pour ce projet pour le moment.'; return; }
     // Un seul bouton pour tous les WhatsApp arrivés à l'heure (comme « Messages groupés ») :
     // chaque appui ouvre WhatsApp pour la personne suivante, avec son message déjà écrit.
@@ -429,7 +431,7 @@ window.demarrerConvocationsPanneau = function () {
       // la veille (si demandé et à venir)
       var rappel = sorte === 'convocation' && projet.rappel_veille !== false ? heureRappel(projet.date_debut, projet.rappel_heure) : null;
       if (rappel && rappel <= prevu) rappel = null;
-      // rappel automatique quelques jours avant (supabase-rappel-avant.sql : colonne rappel_avant)
+      // rappel automatique quelques jours avant (colonne rappel_avant, supabase-convocations.sql)
       var rappelAvant = sorte === 'convocation' && 'rappel_avant' in projet && projet.rappel_avant !== false ? heureRappelAvant(projet.date_debut, projet.rappel_avant_jours, projet.rappel_avant_heure) : null;
       if (rappelAvant && rappelAvant <= prevu) rappelAvant = null;
       var lignes = [];

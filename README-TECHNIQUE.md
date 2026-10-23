@@ -418,7 +418,7 @@ qui s'ouvrent ensuite) et échoue si un nom de mannequin est sans photo.
   est vraiment partie (statut `envoye`) ; relances faites retenues pour la session
   (`sessionStorage` « ma2m_relances_<projet> »).
   « Maintenant » : e-mails envoyés depuis le navigateur (EmailJS).
-  « Annoncer la sélection » (23/10/2026, `supabase-selection.sql` : sorte `selection` ajoutée à
+  « Annoncer la sélection » (23/10/2026, `supabase-convocations.sql` : sorte `selection` ajoutée à
   `convocation_envois`) : choix « Quel message envoyer ? » (`#convoc-sorte`) dans le panneau ; le
   premier message (`MODELE_SELECTION`, toujours ce modèle) ne donne que félicitations, projet,
   date, heure, lieu et le même lien personnel de confirmation ; pas de rappel avec lui. Le
@@ -428,7 +428,7 @@ qui s'ouvrent ensuite) et échoue si un nom de mannequin est sans photo.
   version parent) ; relance et rappel : `messageRelance`, `messageRappel`. « 🔔 Rappel à la
   suivante » (23/10/2026) dans la liste des confirmés, même fonctionnement que la relance
   (`ajouterTournee`, `sessionStorage` « ma2m_rappels_<projet> »).
-  Rappel automatique avant l'événement (23/10/2026, `supabase-rappel-avant.sql`) :
+  Rappel automatique avant l’événement (23/10/2026, ajouté à `supabase-convocations.sql`, à rejouer en entier ; plus aucun autre fichier ne redéfinit ses fonctions) :
   `agenda_projets.rappel_avant` (coché d'office), `rappel_avant_jours` (2 à 14, 3 par défaut),
   `rappel_avant_heure` (10:00) ; sorte d'envoi `rappel_avant`, programmée avec la convocation
   (`heureRappelAvant`), message = celui du bouton « 🔔 Rappel » (+ lien de confirmation pour qui
