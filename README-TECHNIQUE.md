@@ -366,19 +366,23 @@ qui s'ouvrent ensuite) et échoue si un nom de mannequin est sans photo.
 - **Pourquoi** : à la première visite, la photo de couverture arrivait après 5 à 12 s (même en
   Wi-Fi) : page vide → programmes téléchargés un par un → deux questions à la base → photo.
 - **Serveur** : `middleware.js` (`ACCUEIL`, `accueilRempli`) sur `/`, `/index.html`, `/en`, `/en/`,
-  `/en/index.html` : il relit la page statique (en-tête `x-ma2m-accueil`, pour ne pas boucler),
-  y pose la liste des mannequins publiées et leur photo (`<script type="application/json"
-  id="accueil-donnees">`, JSON sans `<` brut), la photo de couverture déjà en place
-  (`#couv-img` avec `data-modele`) et annoncée en tête (`<link rel="preload" as="image">`).
-  Photos : Cloudflare (`photos.maitreakessemodelmanagement.com`, version WebP, même règle que
-  `urlLegere`) ; la copie Vercel `/book-photos/` reste la roue de secours (`js/photos.js`, et un
-  rattrapage dans `js/accueil.js` si la photo posée échoue avant son arrivée). Liste gardée
-  5 minutes en mémoire ; base lente ou en panne (1,5 s) : page normale, et 1 minute sans réessayer.
-  Pas de nouvelle fonction serveur (limite Vercel inchangée).
-- **Navigateur** : `js/accueil.js` lit `#accueil-donnees` (sinon interroge la base, comme avant) et
-  garde la couverture choisie par le serveur. Les programmes du bas de `index.html` et
-  `en/index.html` sont en `defer` (téléchargés ensemble ; `gabarit.js` reste immédiat).
-- **Essai** : `test-accueil-serveur.js` (FR/EN, téléphone/ordinateur, Cloudflare muet, base en panne).
+  `/en/index.html` : il relit la page statique (en-tête `x-ma2m-accueil`, pour ne pas boucler :
+  chaque ouverture passe donc deux fois par le middleware, sans nouvelle fonction serveur), y pose
+  la liste des mannequins publiées et leur photo (`<script type="application/json"
+  id="accueil-donnees">`, JSON sans `<` brut) et la photo de couverture déjà en place (`#couv-img`
+  avec `data-modele`). Photos : Cloudflare, version WebP (`photoLegere` = même règle que
+  `urlLegere` ; **`PHOTOS_DIRECTES_ACTIVES` existe en double, dans `js/photos.js` et
+  `middleware.js` : un retour en arrière se fait aux deux endroits**, vérifié par l'essai) ; la
+  copie Vercel `/book-photos/` reste la roue de secours. Liste gardée 5 minutes en mémoire, lue une
+  seule fois à la fois ; la page n'attend jamais la base plus de 0,8 s (sinon page normale, et la
+  liste sert aux visiteurs suivants) ; base en panne : 1 minute sans réessayer.
+- **Navigateur** : `js/accueil.js` lit `#accueil-donnees` (sinon interroge la base, comme avant),
+  garde la couverture choisie par le serveur, puis vérifie d'une petite question que les
+  mannequins affichées sont toujours publiées (une mannequin retirée disparaît aussitôt). Les
+  programmes du bas de `index.html` et `en/index.html` sont en `defer` (téléchargés ensemble ;
+  `gabarit.js` reste immédiat).
+- **Essai** : `test-accueil-serveur.js` (FR/EN, téléphone/ordinateur, Cloudflare muet, base lente ou
+  en panne, mannequin retirée, même adresse de photo que le navigateur).
 
 ## 🏁 Places limitées (premier arrivé, premier servi — 23/10/2026)
 - **Base** : `supabase-places.sql` (rejouable, après `supabase-convocations.sql`). `places_appels`

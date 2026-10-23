@@ -111,12 +111,15 @@ function texteSimple(html, max) {
   return texte.length > max ? texte.slice(0, max - 1).replace(/\s+\S*$/, '') + '…' : texte;
 }
 
-async function lireSupabase(chemin) {
+// corps : envoi (POST, fonctions « rpc/… ») ; null si la base répond une erreur
+async function lireSupabase(chemin, corps, delai) {
   const controleur = new AbortController();
-  const minuteur = setTimeout(() => controleur.abort(), 2500);
+  const minuteur = setTimeout(() => controleur.abort(), delai || 2500);
   try {
     const rep = await fetch(SUPABASE_URL + '/rest/v1/' + chemin, {
-      headers: { apikey: CLE_ANON, Authorization: 'Bearer ' + CLE_ANON },
+      method: corps ? 'POST' : 'GET',
+      headers: Object.assign({ apikey: CLE_ANON, Authorization: 'Bearer ' + CLE_ANON }, corps ? { 'Content-Type': 'application/json' } : {}),
+      body: corps ? JSON.stringify(corps) : undefined,
       signal: controleur.signal
     });
     if (!rep.ok) return null;
@@ -215,83 +218,79 @@ async function apercuPartenaire(url, anglais) {
 }
 
 // ================== Page d'accueil déjà remplie (23/10/2026, demande de la propriétaire) ==================
-// Avant, le serveur envoyait une page vide : le téléphone chargeait tous ses programmes, puis
+// Avant, le serveur envoyait une page vide : le téléphone chargeait ses programmes, puis
 // interrogeait deux fois la base, et seulement alors demandait la photo de couverture (5 à 12 s à
 // la première visite, même en Wi-Fi). Désormais, la page part avec la liste des mannequins
 // publiées et leurs photos (bloc <script type="application/json" id="accueil-donnees">, lu par
-// js/accueil.js), et la photo de couverture déjà en place et annoncée en tête de page : le
-// téléphone la télécharge dès la première seconde. Les photos viennent toujours de Cloudflare
-// (photos.maitreakessemodelmanagement.com) ; la copie Vercel (/book-photos/) reste la roue de
-// secours (js/photos.js). Liste gardée 5 minutes en mémoire : une mannequin publiée apparaît
-// sur l'accueil au plus 5 minutes après. Au moindre souci (base lente…), la page part comme avant.
+// js/accueil.js) et la photo de couverture déjà en place : le téléphone la télécharge dès la
+// première seconde. Les photos viennent de Cloudflare ; la copie Vercel (/book-photos/) reste la
+// roue de secours (js/photos.js). Liste gardée 5 minutes (une mannequin publiée apparaît au plus
+// 5 minutes après ; une mannequin retirée disparaît tout de suite : js/accueil.js revérifie).
+// La page n'attend JAMAIS la base plus de 0,8 s : sinon elle part comme avant (remplie par le
+// navigateur), et la liste arrive pour les visiteurs suivants.
+// (Coût : chaque ouverture de l'accueil passe deux fois par ce fichier, la seconde pour relire la
+// page elle-même — sans nouvelle fonction serveur.)
 const ACCUEIL = /^\/(en\/?)?(index\.html)?$/;
+// ⚠ Même règle que urlLegere et mêmes réglages que js/photos.js (vérifié par test-accueil-serveur.js) :
+// copie WebP, servie directement par Cloudflare ; retour en arrière = PHOTOS_DIRECTES_ACTIVES à false.
+const PHOTOS_DIRECTES_ACTIVES = true;
 const PHOTOS_DIRECTES = 'https://photos.maitreakessemodelmanagement.com/';
 const RELAIS_PHOTOS = /^(?:https:\/\/(?:www\.)?maitreakessemodelmanagement\.com)?\/book-photos\//;
 const MARQUE_WEBP = /\/(miniatures|moyennes)\/[^/?]*-w\.jpg(\?.*)?$/;
 const DUREE_ACCUEIL = 5 * 60 * 1000;
+const ATTENTE_ACCUEIL = 800;
 let memoireAccueil = null;  // { quand, donnees }
-// même règle que urlLegere (js/photos.js) : copie WebP, servie directement par Cloudflare
+let lectureAccueil = null;  // lecture de la base en cours (partagée par les visites simultanées)
 function photoLegere(url) {
   if (typeof url !== 'string') return '';
   const legere = MARQUE_WEBP.test(url) ? url.replace(/\.jpg(\?|$)/, '.webp$1') : url;
+  if (!PHOTOS_DIRECTES_ACTIVES) return legere.indexOf(PHOTOS_DIRECTES) === 0 ? '/book-photos/' + legere.slice(PHOTOS_DIRECTES.length) : legere;
   return legere.replace(RELAIS_PHOTOS, PHOTOS_DIRECTES);
 }
-async function appelSupabase(chemin, corps) {
-  const controleur = new AbortController();
-  const minuteur = setTimeout(() => controleur.abort(), 1500);
-  try {
-    const rep = await fetch(SUPABASE_URL + '/rest/v1/' + chemin, {
-      method: corps ? 'POST' : 'GET',
-      headers: { apikey: CLE_ANON, Authorization: 'Bearer ' + CLE_ANON, 'Content-Type': 'application/json' },
-      body: corps ? JSON.stringify(corps) : undefined,
-      signal: controleur.signal
-    });
-    if (!rep.ok) throw new Error('base : ' + rep.status);
-    return await rep.json();
-  } finally {
-    clearTimeout(minuteur);
-  }
-}
 // les mannequins publiées avec leur photo de couverture (les mêmes questions que js/accueil.js)
-async function donneesAccueil() {
-  if (memoireAccueil && Date.now() - memoireAccueil.quand < DUREE_ACCUEIL) return memoireAccueil.donnees;
-  try { return await lireDonneesAccueil(); } catch (e) {
-    // base lente ou en panne : page comme avant, et on ne la refait pas attendre pendant 1 minute
-    memoireAccueil = { quand: Date.now() - DUREE_ACCUEIL + 60 * 1000, donnees: null };
-    return null;
-  }
-}
 async function lireDonneesAccueil() {
-  const profils = await appelSupabase('model_profiles?published=eq.true&select=id,full_name,city,category,height_cm,featured&order=created_at.desc&limit=200');
-  const couvertures = profils.length ? await appelSupabase('rpc/photos_couverture_mannequins', { ids: profils.map(p => p.id) }) : [];
+  const profils = await lireSupabase('model_profiles?published=eq.true&select=id,full_name,city,category,height_cm,featured&order=created_at.desc&limit=200', null, 3000);
+  if (!profils) throw new Error('base : mannequins');
+  const couvertures = profils.length ? await lireSupabase('rpc/photos_couverture_mannequins', { ids: profils.map(p => p.id) }, 3000) : [];
+  if (!couvertures) throw new Error('base : photos');
   const photoDe = {};
   couvertures.forEach(c => { if (c.url) photoDe[c.model_id] = c.url; });
-  const avecPhoto = profils.filter(p => photoDe[p.id]).map(p => Object.assign({ photo: photoDe[p.id] }, p));
-  const donnees = { profils: avecPhoto, nombre: profils.length };
-  memoireAccueil = { quand: Date.now(), donnees };
-  return donnees;
+  return { profils: profils.filter(p => photoDe[p.id]).map(p => Object.assign({ photo: photoDe[p.id] }, p)), nombre: profils.length };
+}
+// liste fraîche (ou vieille de moins de 5 minutes) ; sinon on lance la lecture (une seule à la fois)
+// et on l'attend au plus ATTENTE_ACCUEIL ; une liste plus ancienne sert en attendant
+function donneesAccueil() {
+  const fraiche = memoireAccueil && Date.now() - memoireAccueil.quand < DUREE_ACCUEIL;
+  if (fraiche) return Promise.resolve(memoireAccueil.donnees);
+  if (!lectureAccueil) {
+    lectureAccueil = lireDonneesAccueil()
+      .then(donnees => { memoireAccueil = { quand: Date.now(), donnees }; return donnees; })
+      // base lente ou en panne : on ne réessaie pas avant 1 minute (liste précédente gardée)
+      .catch(() => { memoireAccueil = { quand: Date.now() - DUREE_ACCUEIL + 60 * 1000, donnees: memoireAccueil ? memoireAccueil.donnees : null }; return null; })
+      .finally(() => { lectureAccueil = null; });
+  }
+  const ancienne = memoireAccueil ? memoireAccueil.donnees : null;
+  return Promise.race([lectureAccueil.then(d => d || ancienne), new Promise(ok => setTimeout(() => ok(ancienne), ATTENTE_ACCUEIL))]);
 }
 // JSON posé dans la page : jamais de « < » brut (pas de fin de bloc possible)
 const jsonSur = (x) => JSON.stringify(x).replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026');
 async function accueilRempli(requete, url) {
   if (requete.method !== 'GET') return;
-  const [donnees, page] = await Promise.all([
-    donneesAccueil(),
-    fetch(url.toString(), { headers: { 'x-ma2m-accueil': '1', 'accept': 'text/html' }, redirect: 'manual' })
-  ]);
+  const donnees = await donneesAccueil();
+  if (!donnees || !donnees.profils.length) return;
+  const page = await fetch(url.toString(), { headers: { 'x-ma2m-accueil': '1', 'accept': 'text/html' }, redirect: 'manual' });
   if (!page.ok || !/text\/html/.test(page.headers.get('content-type') || '')) return;
   let html = await page.text();
   const marque = '<img id="couv-img" class="visible" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt=""';
-  if (!donnees || !donnees.profils.length || html.indexOf(marque) === -1 || html.indexOf('</head>') === -1) return;
+  if (html.indexOf(marque) === -1 || html.indexOf('<main') === -1) return;
   // couverture : une mannequin au hasard à chaque visite (pas celle « À la une »)
   const une = donnees.profils.find(p => p.featured) || donnees.profils[0];
   const autres = donnees.profils.filter(p => p.id !== une.id);
   const couv = autres.length ? autres[Math.floor(Math.random() * autres.length)] : une;
-  const photo = photoLegere(couv.photo);
-  html = html.replace('</head>', '<link rel="preload" as="image" href="' + echapper(photo) + '" fetchpriority="high">\n</head>')
-    .replace(marque, '<img id="couv-img" class="visible" src="' + echapper(photo) + '" alt="' + echapper(couv.full_name || '') + '" data-modele="' + echapper(couv.id) + '"')
+  html = html.replace(marque, '<img id="couv-img" class="visible" src="' + echapper(photoLegere(couv.photo)) + '" alt="' + echapper(couv.full_name || '') + '" data-modele="' + echapper(couv.id) + '"')
     .replace('<main', '<script type="application/json" id="accueil-donnees">' + jsonSur(donnees) + '</script>\n<main');
   const entetes = new Headers(page.headers);
+  // (le texte a été décompressé pour être complété ; Vercel le recompresse)
   ['content-length', 'content-encoding', 'etag', 'last-modified'].forEach(k => entetes.delete(k));
   entetes.set('Cache-Control', 'no-cache, must-revalidate');
   return new Response(html, { status: 200, headers: entetes });

@@ -123,9 +123,9 @@
   function donneesDeLaPage() {
     try { const d = JSON.parse(document.getElementById('accueil-donnees').textContent); return d && Array.isArray(d.profils) ? d : null; } catch (e) { return null; }
   }
-  async function mannequinsAvecPhoto() {
-    const page = donneesDeLaPage();
-    if (page) return page;
+  async function mannequinsAvecPhoto(depuisLaBase) {
+    const page = !depuisLaBase && donneesDeLaPage();
+    if (page) return Object.assign({ deLaPage: true }, page);
     const { data: profils } = await sb.from('model_profiles')
       .select('id, full_name, city, category, height_cm, featured')
       .eq('published', true).order('created_at', { ascending: false }).limit(200);
@@ -140,11 +140,22 @@
   // (js/photos.js) : on la redemande par le relais
   (function () {
     const img = document.getElementById('couv-img'), secours = img && img.complete && !img.naturalWidth && typeof urlDeSecours === 'function' && urlDeSecours(img.getAttribute('src'));
-    if (secours && img.dataset.modele) img.src = secours;
+    if (!secours || !img.dataset.modele) return;
+    // (photo directe affichée par le relais : js/photos.js bascule alors toute la page au relais)
+    if (estPhotoDirecte(img.getAttribute('src')) && !estPhotoDirecte(secours)) img.dataset.secoursRelais = img.getAttribute('src');
+    img.src = secours;
   })();
-  async function chargerMannequins() {
+  async function chargerMannequins(depuisLaBase) {
     if (typeof sb === 'undefined' || !sb) return;
-    const { profils: avecPhoto, nombre: total } = await mannequinsAvecPhoto();
+    const { profils: avecPhoto, nombre: total, deLaPage } = await mannequinsAvecPhoto(depuisLaBase);
+    // liste du serveur (jusqu'à 5 minutes d'âge) : une mannequin retirée entre-temps ne doit pas
+    // rester affichée ; une seule petite question à la base, après l'affichage
+    if (deLaPage) {
+      sb.from('model_profiles').select('id').eq('published', true).limit(200).then(({ data }) => {
+        const publiees = new Set((data || []).map(x => x.id));
+        if (data && avecPhoto.some(p => !publiees.has(p.id))) chargerMannequins(true).catch(e => console.warn('Accueil : liste à jour', e));
+      });
+    }
     if (total) {
       document.getElementById('couv-nombre').textContent = total > 1
         ? T(total + ' mannequins à découvrir', total + ' models to discover')
@@ -168,6 +179,7 @@
     if (dejaPosee > 0) autres.unshift(autres.splice(dejaPosee, 1)[0]);
     const couv = autres[0] || une;
     if (couv.id !== imgCouv.dataset.modele) photo(imgCouv, couv.photo, couv.full_name, true);
+    else if (typeof armerGardeFouPhotos === 'function') armerGardeFouPhotos();  // (Cloudflare muet : bascule au relais, js/photos.js)
 
     const credit = document.getElementById('couv-modele');
     credit.href = fiche(couv.id);
@@ -209,7 +221,9 @@
   // images se relaient (#couv-img et #couv-img-2). Arrêt quand la couverture n'est pas à l'écran
   // ou que l'onglet est caché (données mobiles), et pas de défilement si le visiteur a demandé
   // moins d'animations. La version moyenne de chaque photo est demandée en une seule fois. ---
+  let minuteurCouverture = 0;  // (liste remise à jour : un seul défilement à la fois)
   async function defilerCouverture(liste) {
+    clearInterval(minuteurCouverture);
     if (liste.length < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const { data: photos } = await sb.from('model_photos').select('model_id, url_miniature, url_moyenne').in('model_id', liste.map(m => m.id));
     const nette = m => ((photos || []).find(x => x.model_id === m.id && x.url_miniature === m.photo && x.url_moyenne) || {}).url_moyenne || m.photo;
@@ -218,7 +232,8 @@
     const credit = document.getElementById('couv-modele');
     let rang = 0, visible = true, jeton = 0;
     if ('IntersectionObserver' in window) new IntersectionObserver(e => { visible = e[0].isIntersecting; }).observe(couverture);
-    setInterval(() => {
+    clearInterval(minuteurCouverture);
+    minuteurCouverture = setInterval(() => {
       if (!visible || document.hidden) return;
       // (une photo injoignable ne bloque rien : la suivante est demandée 5 s plus tard, et une
       // réponse arrivée en retard est ignorée)
