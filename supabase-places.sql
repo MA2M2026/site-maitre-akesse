@@ -60,9 +60,9 @@ returns text language sql immutable as $$
   select case when lower(coalesce(p_category, '')) = 'homme' or p_civilite = 'Monsieur' then 'homme' else 'femme' end;
 $$;
 
--- 4) Préparer les liens : une invitation pour chaque mannequin de l'agence (profil publié, pas
---    en sourdine) du sexe demandé ; celles déjà invitées gardent leur lien. Renvoie le nombre
---    d'invitations du projet.
+-- 4) Préparer les liens : une invitation pour chaque mannequin de l'agence (publiée dans le Book
+--    ou pas encore — demande de la propriétaire du 23/10/2026 —, jamais une fiche en sourdine) du
+--    sexe demandé ; celles déjà invitées gardent leur lien. Renvoie le nombre d'invitations du projet.
 create or replace function places_preparer(p_projet uuid)
 returns int language plpgsql security definer set search_path = public, extensions as $$
 declare
@@ -75,7 +75,7 @@ begin
   insert into places_invitations (projet_id, model_id, sexe)
     select p_projet, m.id, places_sexe(m.category, m.civilite)
     from model_profiles m
-    where m.published and not m.desactive
+    where not m.desactive
       and ((places_sexe(m.category, m.civilite) = 'femme' and ap.places_femmes > 0)
         or (places_sexe(m.category, m.civilite) = 'homme' and ap.places_hommes > 0))
   on conflict (projet_id, model_id) do nothing;

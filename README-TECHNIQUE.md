@@ -358,7 +358,7 @@ qui s'ouvrent ensuite) et échoue si un nom de mannequin est sans photo.
   (une par mannequin : `sexe` — catégorie « homme » ou civilité « Monsieur », sinon femme —,
   `jeton` de 36 caractères, `statut` invite/pris/desiste, `pris_par` mannequin/parent,
   `envoye_le` / `parent_envoye_le`). Tables réservées aux `admins`. Fonctions :
-  `places_preparer` (agence : une invitation par mannequin publiée et pas en sourdine, du sexe
+  `places_preparer` (agence : une invitation par mannequin pas en sourdine, publiée dans le Book ou pas encore, du sexe
   concerné, rejouable ; un homme « new-faces » sans civilité est compté femme : remplir sa
   civilité),
   `places_lire`, `places_prendre`, `places_rendre` (public, par le jeton seul). `places_prendre`

@@ -22,21 +22,27 @@ update model_profiles set date_naissance = current_date - interval '15 years' wh
 insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000b6', 'sourdine@test.ci') on conflict do nothing;
 insert into model_profiles (id, full_name, category, published, desactive) values ('00000000-0000-0000-0000-0000000000b6', 'EN SOURDINE', 'femme', false, true)
 on conflict (id) do update set published = false, desactive = true;
+-- une nouvelle mannequin pas encore publiée dans le Book est invitée (23/10/2026)
+insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000b7', 'nouvelle@test.ci') on conflict do nothing;
+insert into model_profiles (id, full_name, category, published, desactive) values ('00000000-0000-0000-0000-0000000000b7', 'NOUVELLE RECRUE', 'femme', false, false)
+on conflict (id) do update set published = false, desactive = false;
 insert into model_photos (model_id, url) values ('00000000-0000-0000-0000-0000000000b1', 'https://exemple.ci/awa.jpg');
 insert into agenda_projets (id, type, titre, date_debut, lieu, ville) values
   ('00000000-0000-0000-0000-0000000000c1', 'defile', 'AFRICA IN RHYTHM', current_date + 20, 'Hôtel Ivoire', 'Abidjan'),
   ('00000000-0000-0000-0000-0000000000c2', 'defile', 'DEFILE PASSE', current_date - 3, 'Sofitel', 'Abidjan');
 
 -- (d'autres mannequins existent déjà dans la base d'essai : on compte tout le monde)
-create temp table attendu as select count(*)::int n, count(*) filter (where places_sexe(category, civilite) = 'femme')::int f from model_profiles where published and not desactive;
+create temp table attendu as select count(*)::int n, count(*) filter (where places_sexe(category, civilite) = 'femme')::int f from model_profiles where not desactive;
 grant select on attendu to authenticated;
 -- l'agence ouvre l'appel et prépare les liens
 select essai_qui('00000000-0000-0000-0000-0000000000a2');
 set role authenticated;
 insert into places_appels (projet_id, places_femmes, places_hommes) values ('00000000-0000-0000-0000-0000000000c1', 2, 1), ('00000000-0000-0000-0000-0000000000c2', 1, 0);
-select essai(places_preparer('00000000-0000-0000-0000-0000000000c1') = (select n from attendu), 'agence : un lien pour chaque mannequin publiée');
+select essai(places_preparer('00000000-0000-0000-0000-0000000000c1') = (select n from attendu), 'agence : un lien pour chaque mannequin (publiée ou pas encore)');
 select essai(places_preparer('00000000-0000-0000-0000-0000000000c1') = (select n from attendu), 'préparer deux fois : pas de doublon, liens gardés');
 select essai(places_preparer('00000000-0000-0000-0000-0000000000c2') = (select f from attendu), 'projet sans place homme : seules les femmes sont invitées');
+select essai(exists (select 1 from places_invitations where projet_id = '00000000-0000-0000-0000-0000000000c1' and model_id = '00000000-0000-0000-0000-0000000000b7'), 'nouvelle mannequin pas encore publiée : invitée');
+select essai(not exists (select 1 from places_invitations where model_id = '00000000-0000-0000-0000-0000000000b6'), 'mannequin en sourdine : jamais invitée');
 select essai((select string_agg(sexe, ',' order by model_id) from places_invitations where projet_id = '00000000-0000-0000-0000-0000000000c1' and model_id::text ~ '0000000000b[1-5]$') = 'femme,femme,femme,homme,homme', 'sexe : catégorie ou civilité (Mademoiselle new-face = femme, Monsieur = homme)');
 reset role;
 select essai(not exists (select 1 from places_invitations where model_id = '00000000-0000-0000-0000-0000000000b6'), 'mannequin en sourdine (non publiée) : pas de lien');
