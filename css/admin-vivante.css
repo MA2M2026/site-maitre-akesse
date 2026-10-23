@@ -243,8 +243,11 @@ textarea { min-height: 90px; resize: vertical; }
 /* ---------- Messages, fenêtres ---------- */
 .message-ephemere {
   position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(24px + var(--av-bas-visible, 0px) + env(safe-area-inset-bottom, 0px));
-  background: var(--av-encre); color: var(--av-papier); padding: 12px 20px; border-radius: 99px; font-weight: 500;
-  max-width: min(92vw, 560px); z-index: 60; box-shadow: var(--av-ombre-forte); animation: av-monte .35s var(--av-courbe);
+  background: var(--av-encre); color: var(--av-papier); padding: 12px 20px; border-radius: 16px; font-weight: 500;
+  /* (coins arrondis, pas en pilule : un texte long faisait un gros cercle noir sur le formulaire,
+     23/10/2026) ; un toucher le ferme tout de suite */
+  width: max-content; max-width: min(92vw, 560px); text-align: center; line-height: 1.4; cursor: pointer;
+  z-index: 60; box-shadow: var(--av-ombre-forte); animation: av-monte .35s var(--av-courbe);
 }
 .voile { position: fixed; inset: 0; background: rgba(27, 24, 23, .45); backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 50; }
 .voile .boite { background: var(--av-carte); border-radius: var(--av-rayon); padding: 26px; max-width: 520px; width: 100%; display: flex; flex-direction: column; gap: 14px; max-height: 90vh; overflow: auto; box-shadow: var(--av-ombre-forte); animation: av-monte .35s var(--av-courbe); }

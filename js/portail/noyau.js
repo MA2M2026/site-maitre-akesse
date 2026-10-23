@@ -57,9 +57,11 @@
   let minuteurMessage = 0;
   P.message = (texte) => {
     const c = document.getElementById('calque');
-    c.innerHTML = '<div class="message-ephemere" role="status">' + P.esc(texte) + '</div>';
+    c.innerHTML = '<div class="message-ephemere" role="status" title="Toucher pour fermer">' + P.esc(texte) + '</div>';
     clearTimeout(minuteurMessage);
-    minuteurMessage = setTimeout(() => { c.innerHTML = ''; }, 4500);
+    // un toucher le ferme ; sinon il part tout seul (un peu plus tard pour un texte long)
+    c.firstChild.addEventListener('click', () => { clearTimeout(minuteurMessage); c.innerHTML = ''; });
+    minuteurMessage = setTimeout(() => { c.innerHTML = ''; }, String(texte).length > 90 ? 6000 : 4500);
   };
   P.fenetre = (html) => { document.getElementById('fenetre').innerHTML = html ? '<div class="voile"><div class="boite" role="dialog" aria-modal="true">' + html + '</div></div>' : ''; };
   P.telecharger = (contenu, nom, type) => {
