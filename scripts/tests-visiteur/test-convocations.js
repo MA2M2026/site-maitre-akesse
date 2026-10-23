@@ -272,6 +272,22 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     await p.selectOption('#cv-projet', 'pa2'); await p.waitForTimeout(800);
     await p.$eval('#cv-enregistrer', x => x.click()); await p.waitForTimeout(1800);
     ok(/Convocations/.test(await p.textContent('#ecran-convocations h2')) && (await p.inputValue('#convoc-sorte')) === 'convocation', n + 'puis « Convocations » : la convocation est proposée');
+    // ligne « Rappeler l'information » du menu (23/10/2026) : le rappel envoyé à la main, aux personnes déjà prévenues
+    await rubrique(p, 'b2-rappel'); await p.waitForSelector('#cv-projet', { timeout: 10000 }); await p.waitForTimeout(1000);
+    await p.selectOption('#cv-projet', 'pa2'); await p.waitForTimeout(800);
+    await p.$eval('#cv-enregistrer', x => x.click()); await p.waitForTimeout(1800);
+    ok(/Rappeler l’information/.test(await p.textContent('#ecran-convocations h2')) && (await p.inputValue('#convoc-sorte')) === 'rappel_avant'
+      && /🔔 \*Rappel :\*/.test(await p.textContent('#convoc-apercu')) && /Hôtel Ivoire/.test(await p.textContent('#convoc-apercu')) && await p.isHidden('#convoc-rappel-info'),
+      n + 'menu « Rappeler l’information » : le rappel est choisi d’office (date, heure, lieu)');
+    ok((await p.$$eval('#convoc-participants input:checked', cs => cs.length)) === 3, n + 'rappel : les 3 personnes déjà prévenues sont cochées');
+    const avantRappel = ecrits(journal, 'POST', 'convocation_envois').length, avantEmails = journal.filter(j => j[0] === 'EMAIL').length;
+    await p.click('#convoc-programmer');
+    for (let i = 0; i < 30 && !/envoyé\(s\) sur/.test(await p.textContent('#convoc-msg')); i++) await p.waitForTimeout(400);
+    const lignesRappel = ecrits(journal, 'POST', 'convocation_envois').slice(avantRappel).flat();
+    const emailsRappel = journal.filter(j => j[0] === 'EMAIL').slice(avantEmails).map(j => JSON.parse(j[1]).template_params);
+    ok(lignesRappel.length === 6 && lignesRappel.every(l => l.sorte === 'rappel_avant'), n + 'rappel : 6 envois « rappel », rien d’autre');
+    ok(emailsRappel.length === 3 && emailsRappel.every(e => /Rappel/.test(e.message) && /confirmer\?c=/.test(e.message)), n + 'rappel : 3 e-mails partis, avec le lien pour confirmer (pas encore de réponse)');
+    ok(/remplace, pour ces personnes, le rappel automatique/.test(await p.textContent('#convoc-msg')) && /Rappel déjà envoyé/.test(await p.textContent('#convoc-participants')), n + 'rappel : bilan clair, « Rappel déjà envoyé » ensuite');
     ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth)), n + 'rien ne dépasse de l’écran');
     ok(!errs.length, n + 'aucune erreur ' + errs.join(' | '));
     await ctx.close();

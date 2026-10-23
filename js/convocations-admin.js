@@ -28,7 +28,10 @@ window.demarrerConvocationsPanneau = function () {
   var SORTES = { selection: 'annonce de la sélection', convocation: 'convocation', rappel: 'rappel de la veille', rappel_avant: 'rappel avant l’événement' };
   // les deux premiers messages portent le lien de réponse : l'un ou l'autre compte comme « prévenu(e) »
   var PREVENU = ['selection', 'convocation'];
-  var sorteChoisie = function () { return $('convoc-sorte').value === 'selection' ? 'selection' : 'convocation'; };
+  // « Rappeler l'information » (menu, 23/10/2026) : le rappel (date, heure, lieu) envoyé à la main,
+  // quand l'agence le décide ; il prend la place du rappel automatique « quelques jours avant »
+  // de la même personne (jamais deux fois le même rappel)
+  var sorteChoisie = function () { var v = $('convoc-sorte').value; return v === 'selection' || v === 'rappel_avant' ? v : 'convocation'; };
 
   // action lancée par un clic : une panne s'affiche au lieu de passer inaperçue
   function lancer(promesse) {
@@ -41,7 +44,13 @@ window.demarrerConvocationsPanneau = function () {
     return new Date(iso).toLocaleString('fr-FR', { timeZone: 'Africa/Abidjan', weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
   }
   function dejaConvoque(pers) {
-    return envois.some(function (e) { return e.participant_id === pers.participant_id && e.sorte === sorteChoisie() && ['envoye', 'programme', 'a_faire', 'en_cours'].indexOf(e.statut) >= 0; });
+    // (un rappel seulement programmé n'est pas encore parti : il peut être envoyé maintenant)
+    var faits = sorteChoisie() === 'rappel_avant' ? ['envoye', 'a_faire', 'en_cours'] : ['envoye', 'programme', 'a_faire', 'en_cours'];
+    return envois.some(function (e) { return e.participant_id === pers.participant_id && e.sorte === sorteChoisie() && faits.indexOf(e.statut) >= 0; });
+  }
+  // a déjà reçu l'annonce de la sélection ou la convocation
+  function prevenue(pers) {
+    return !!pers.participant_id && envois.some(function (e) { return e.participant_id === pers.participant_id && PREVENU.indexOf(e.sorte) >= 0 && e.statut !== 'annule'; });
   }
   function nomDe(pers) { return pers.parent ? pers.nom + ' (parent : ' + (pers.parent_nom || 'Madame, Monsieur') + ')' : pers.nom; }
   // nom d'une mannequin inscrite : lien vers sa fiche, sa photo vient se placer devant
@@ -106,7 +115,7 @@ window.demarrerConvocationsPanneau = function () {
         t.appendChild(manque);
       }
       if (pers.reponse) { var rep = document.createElement('small'); rep.className = 'convoc-reponse-' + pers.reponse; rep.textContent = pers.reponse === 'confirme' ? '✅ A confirmé sa présence' : '❌ Ne pourra pas venir'; t.appendChild(rep); }
-      if (dejaConvoque(pers)) { var deja = document.createElement('small'); deja.textContent = (sorteChoisie() === 'selection' ? 'Sélection déjà annoncée' : 'Déjà convoqué(e)') + ' : cochez pour renvoyer.'; t.appendChild(deja); }
+      if (dejaConvoque(pers)) { var deja = document.createElement('small'); deja.textContent = ({ selection: 'Sélection déjà annoncée', rappel_avant: 'Rappel déjà envoyé' }[sorteChoisie()] || 'Déjà convoqué(e)') + ' : cochez pour renvoyer.'; t.appendChild(deja); }
       l.appendChild(c); l.appendChild(t);
       if (pers.externe) {
         var x = document.createElement('button');
@@ -468,6 +477,7 @@ window.demarrerConvocationsPanneau = function () {
       if (rappel) bilan += ' Rappel de la veille : ' + quand(rappel) + '.';
       if (sansMoyen.length) bilan += ' Sans coordonnée pour ce moyen d’envoi : ' + sansMoyen.map(function (x) { return x.nom; }).join(', ') + '.';
       if (sorte === 'selection') bilan += ' Ensuite, choisissez « 📨 Convocation » pour envoyer tous les détails.';
+      if (sorte === 'rappel_avant') bilan += ' (Ce rappel remplace, pour ces personnes, le rappel automatique quelques jours avant ; le rappel de la veille reste prévu.)';
       choisis.forEach(function (x) { x.coche = false; });
       dessinerParticipants();
       message(bilan);
@@ -527,9 +537,8 @@ window.demarrerConvocationsPanneau = function () {
     });
     // quelqu'un n'a encore rien reçu (nouveau projet, ou mannequin ajoutée par les Places
     // limitées) : on propose d'annoncer la sélection ; sinon, la convocation
-    var prevenu = function (x) { return envois.some(function (e) { return e.participant_id === x.participant_id && PREVENU.indexOf(e.sorte) >= 0 && e.statut !== 'annule'; }); };
-    // (écran « Annoncer la sélection » du menu : toujours l'annonce de la sélection)
-    $('convoc-sorte').value = window.convocationSorteImposee || (personnes.some(function (x) { return (x.email || x.telephone) && !(x.participant_id && prevenu(x)); }) ? 'selection' : 'convocation');
+    // (écrans « Annoncer la sélection » et « Rappeler l'information » du menu : leur message à eux)
+    $('convoc-sorte').value = window.convocationSorteImposee || (personnes.some(function (x) { return (x.email || x.telephone) && !prevenue(x); }) ? 'selection' : 'convocation');
     choisirSorte();
     dessinerCarnet();
     dessinerParticipants();
@@ -538,12 +547,14 @@ window.demarrerConvocationsPanneau = function () {
 
   // changer de message recoche les personnes qui ne l'ont pas encore reçu
   function choisirSorte() {
-    var selection = sorteChoisie() === 'selection';
-    personnes.forEach(function (x) { x.coche = !dejaConvoque(x) && !!(x.email || x.telephone); });
+    var sorte = sorteChoisie(), selection = sorte === 'selection', rappel = sorte === 'rappel_avant';
+    // rappel : seulement les personnes déjà prévenues, et jamais celles qui ont dit « absent »
+    personnes.forEach(function (x) { x.coche = !dejaConvoque(x) && !!(x.email || x.telephone) && (!rappel || (prevenue(x) && x.reponse !== 'absent')); });
     $('convoc-sorte-aide').textContent = selection
       ? 'Message court : félicitations, le projet, la date, l’heure, le lieu, et le lien « Confirmez votre participation ». La convocation avec tous les détails suit plus tard.'
+      : rappel ? 'Rappel de l’information : le projet, la date, l’heure de convocation et le lieu. Sont cochées les personnes déjà prévenues (sauf celles qui ne viennent pas) ; celles qui n’ont pas encore répondu reçoivent aussi leur lien pour confirmer.'
       : 'Tous les détails : heure de convocation, adresse, programme, « À prévoir », et le lien de confirmation.';
-    $('convoc-rappel-info').hidden = selection;
+    $('convoc-rappel-info').hidden = selection || rappel;
     dessinerParticipants();
   }
   $('convoc-sorte').addEventListener('change', choisirSorte);
