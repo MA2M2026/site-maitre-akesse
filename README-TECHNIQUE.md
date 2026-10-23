@@ -335,6 +335,13 @@ demandait à revenir sur `admin.…` retombait sur l'accueil public. Invitations
 gardant la clé du lien (le « # »). E-mail d'invitation en français : modèle « Invite user » de Supabase.
 Essai : `test-retour-invitation.js`.
 
+## ⚡ Rapidité de l'Administration (23/10/2026)
+Rafraîchir une page de l'espace « Le site » prenait ~7 s avec une connexion d'Abidjan : les 36
+pièces (`js/admin/site.js`, `PIECES`) étaient demandées l'une après l'autre. Elles sont demandées
+toutes ensemble (`Promise.all`, `async = false` : exécution toujours dans l'ordre) : < 1 s.
+« Payer les mannequins » envoie toutes ses questions à la base en même temps. Essai :
+`test-rapidite-admin.js` (150 ms par requête simulés ; rafraîchi < 2,5 s, ouvert < 1 s).
+
 ## 🖼️ Photos des mannequins partout dans l'Administration (23/10/2026)
 Demande de la propriétaire : partout où le nom d'une mannequin est écrit, sa photo à côté ; quand
 on doit la choisir ou l'ouvrir, c'est la photo (avec le nom) qu'on touche. Tout passe par

@@ -60,7 +60,10 @@
   async function preparer() {
     const session = (await sb.auth.getSession()).data.session;
     if (session) await fetch('/api/acces-tableau', { method: 'POST', headers: { Authorization: 'Bearer ' + session.access_token }, credentials: 'same-origin' }).catch(() => { /* hors ligne : les pièces déjà en mémoire suffisent */ });
-    for (const src of PIECES) await charger(src);
+    // toutes les pièces demandées en même temps (23/10/2026 : une par une, un rafraîchissement
+    // prenait ~7 s avec une connexion d'Abidjan) ; async = false : elles s'exécutent quand même
+    // dans l'ordre de la liste
+    await Promise.all(PIECES.map(charger));
   }
   // pastilles « à traiter » du menu : rafraîchies sans faire attendre la page, au plus une fois par minute
   let pastillesLe = 0;

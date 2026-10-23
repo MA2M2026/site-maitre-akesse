@@ -45,17 +45,17 @@
     return 'https://wa.me/' + n + '?text=' + encodeURIComponent(K.texteRecu(c, parent ? parent.parent_nom || 'Madame, Monsieur' : ''));
   }
   async function page() {
-    let liste;
-    try { liste = await P.bd(sb.from('cachets_mannequins').select('*').order('cree_le', { ascending: false }).limit(300)); }
-    catch (e) { if (C.cachetsAbsents(e)) return P.entete('Payer les mannequins') + ABSENTE; throw e; }
-    cachets = liste;
-    const [registre, projets, reglage, colonneMotif, colonneParent] = await Promise.all([
+    // (toutes les questions à la base partent en même temps : écran prêt plus vite)
+    const [lecture, registre, projets, reglage, colonneMotif, colonneParent] = await Promise.all([
+      P.bd(sb.from('cachets_mannequins').select('*').order('cree_le', { ascending: false }).limit(300)).then((data) => ({ data }), (error) => ({ error })),
       P.bd(sb.from('agence_mannequins').select('id, full_name, telephone, statut, user_id, date_naissance, parent_nom, parent_telephone').eq('statut', 'actif').order('full_name')).catch(() => []),
       P.bd(sb.from('agenda_projets').select('id, titre, date_debut').eq('annule', false).gte('date_debut', new Date(Date.now() - 120 * 864e5).toISOString().slice(0, 10)).order('date_debut', { ascending: false }).limit(40)).catch(() => []),
       P.bd(sb.from('compta_reglages').select('*').eq('id', 1).maybeSingle()).catch(() => null),
       sb.from('cachets_mannequins').select('motif, numero_recu, jeton').limit(1),
       sb.from('cachets_mannequins').select('parent_nom').limit(1)
     ]);
+    if (lecture.error) { if (C.cachetsAbsents(lecture.error)) return P.entete('Payer les mannequins') + ABSENTE; throw lecture.error; }
+    const liste = cachets = lecture.data || [];
     recus = !!K && !colonneMotif.error;
     parents = !colonneParent.error;
     commission = reglage && reglage.commission_taux != null ? Number(reglage.commission_taux) : null;
