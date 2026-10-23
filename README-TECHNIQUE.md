@@ -358,7 +358,9 @@ qui s'ouvrent ensuite) et échoue si un nom de mannequin est sans photo.
   (une par mannequin : `sexe` — catégorie « homme » ou civilité « Monsieur », sinon femme —,
   `jeton` de 36 caractères, `statut` invite/pris/desiste, `pris_par` mannequin/parent,
   `envoye_le` / `parent_envoye_le`). Tables réservées aux `admins`. Fonctions :
-  `places_preparer` (agence : une invitation par mannequin pas en sourdine, publiée dans le Book ou pas encore, du sexe
+  `places_preparer` (agence : une invitation par mannequin pas en sourdine, publiée dans le Book ou pas encore,
+  et par mannequin active du registre `agence_mannequins` sans compte (colonne `mannequin_id`, coordonnées par
+  `places_contacts_registre` ; place prise → carnet `contacts_externes.mannequin_id` + participant du projet), du sexe
   concerné, rejouable ; un homme « new-faces » sans civilité est compté femme : remplir sa
   civilité),
   `places_lire`, `places_prendre`, `places_rendre` (public, par le jeton seul). `places_prendre`
@@ -390,6 +392,12 @@ qui s'ouvrent ensuite) et échoue si un nom de mannequin est sans photo.
 - **Textes** : `messagePlaces` dans `js/messages-convocations.js` (appel et place libérée).
 - **Essais** : `test-places.js` (Administration + page publique, téléphone/ordinateur) et
   `scripts/base-essai/essais-places.sql` (droits, premier arrivé, mineure/parent, désistement).
+
+- **Rappeler l'information** (menu, 23/10/2026) : ligne `b2-rappel`, même écran que les
+  Convocations avec le message `rappel_avant` (date, heure, lieu) envoyé à la main aux personnes
+  déjà prévenues (pas aux absentes) ; il remplace le rappel automatique « quelques jours avant »
+  de ces personnes (même ligne `participant_id, sorte, canal`).
+- **Visages** : `P.initiales` ignore la civilité (« Mademoiselle GRÂCE YAO » → GY).
 
 ## 📨 Convocations des projets de l'agenda (Extension 141, 21/10/2026)
 - **Base** : `supabase-convocations.sql` (rejouable, à exécuter une fois dans Supabase). Colonnes

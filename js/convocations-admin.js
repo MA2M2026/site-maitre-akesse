@@ -86,9 +86,12 @@ window.demarrerConvocationsPanneau = function () {
     if (sauve) { pers.participant_id = sauve.id; pers.jeton = sauve.jeton; pers.reponse = sauve.reponse; pers.repondu_le = sauve.repondu_le; }
     return pers;
   }
+  // (mannequin du registre mineure, ajoutée par les Places limitées : on écrit à son parent ;
+  // ce choix enregistré est gardé)
   function personneDuCarnet(c, sauve) {
     return avecSauve({ cle: 'c' + c.id, contact_id: c.id, externe: true,
-      nom: [c.civilite, c.nom].filter(Boolean).join(' '), email: c.email || null, telephone: c.telephone || null, parent: false, parent_nom: null }, sauve);
+      nom: [c.civilite, c.nom].filter(Boolean).join(' '), email: c.email || null, telephone: c.telephone || null,
+      parent: !!(sauve && sauve.parent), parent_nom: (sauve && sauve.parent && sauve.parent_nom) || null }, sauve);
   }
 
   function dessinerParticipants() {
