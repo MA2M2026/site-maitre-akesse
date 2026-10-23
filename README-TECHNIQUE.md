@@ -362,6 +362,24 @@ on doit la choisir ou l'ouvrir, c'est la photo (avec le nom) qu'on touche. Tout 
 Essai : `test-visages-partout.js` parcourt tous les écrans (et les fiches, panneaux et fenêtres
 qui s'ouvrent ensuite) et échoue si un nom de mannequin est sans photo.
 
+## ⚡ Accueil servi déjà rempli (23/10/2026)
+- **Pourquoi** : à la première visite, la photo de couverture arrivait après 5 à 12 s (même en
+  Wi-Fi) : page vide → programmes téléchargés un par un → deux questions à la base → photo.
+- **Serveur** : `middleware.js` (`ACCUEIL`, `accueilRempli`) sur `/`, `/index.html`, `/en`, `/en/`,
+  `/en/index.html` : il relit la page statique (en-tête `x-ma2m-accueil`, pour ne pas boucler),
+  y pose la liste des mannequins publiées et leur photo (`<script type="application/json"
+  id="accueil-donnees">`, JSON sans `<` brut), la photo de couverture déjà en place
+  (`#couv-img` avec `data-modele`) et annoncée en tête (`<link rel="preload" as="image">`).
+  Photos : Cloudflare (`photos.maitreakessemodelmanagement.com`, version WebP, même règle que
+  `urlLegere`) ; la copie Vercel `/book-photos/` reste la roue de secours (`js/photos.js`, et un
+  rattrapage dans `js/accueil.js` si la photo posée échoue avant son arrivée). Liste gardée
+  5 minutes en mémoire ; base lente ou en panne (1,5 s) : page normale, et 1 minute sans réessayer.
+  Pas de nouvelle fonction serveur (limite Vercel inchangée).
+- **Navigateur** : `js/accueil.js` lit `#accueil-donnees` (sinon interroge la base, comme avant) et
+  garde la couverture choisie par le serveur. Les programmes du bas de `index.html` et
+  `en/index.html` sont en `defer` (téléchargés ensemble ; `gabarit.js` reste immédiat).
+- **Essai** : `test-accueil-serveur.js` (FR/EN, téléphone/ordinateur, Cloudflare muet, base en panne).
+
 ## 🏁 Places limitées (premier arrivé, premier servi — 23/10/2026)
 - **Base** : `supabase-places.sql` (rejouable, après `supabase-convocations.sql`). `places_appels`
   (un par projet de l'agenda : `places_femmes`, `places_hommes`, `ouvert`) et `places_invitations`

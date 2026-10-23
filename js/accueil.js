@@ -117,22 +117,39 @@
   }
 
   // --- Mannequins publiés : couverture, Femmes, Hommes, À la une, et les photos des autres pages ---
-  async function chargerMannequins() {
-    if (typeof sb === 'undefined' || !sb) return;
+  // Mannequins publiées et leur photo de couverture : déjà dans la page quand le serveur l'a
+  // remplie (middleware.js, 23/10/2026 : plus d'attente de la base à l'ouverture), sinon
+  // demandées à la base comme avant.
+  function donneesDeLaPage() {
+    try { const d = JSON.parse(document.getElementById('accueil-donnees').textContent); return d && Array.isArray(d.profils) ? d : null; } catch (e) { return null; }
+  }
+  async function mannequinsAvecPhoto() {
+    const page = donneesDeLaPage();
+    if (page) return page;
     const { data: profils } = await sb.from('model_profiles')
       .select('id, full_name, city, category, height_cm, featured')
       .eq('published', true).order('created_at', { ascending: false }).limit(200);
-    if (!profils || !profils.length) { ['femmes', 'hommes', 'a-la-une'].forEach(id => { document.getElementById(id).hidden = true; }); return; }
-    const nombre = document.getElementById('couv-nombre');
-    nombre.textContent = profils.length > 1
-      ? T(profils.length + ' mannequins à découvrir', profils.length + ' models to discover')
-      : T('Nos mannequins à découvrir', 'Our models to discover');
-
+    if (!profils || !profils.length) return { profils: [], nombre: 0 };
     // une seule demande pour toutes les photos de couverture (la même que le Book)
     const { data: couvertures } = await sb.rpc('photos_couverture_mannequins', { ids: profils.map(p => p.id) });
     const photoDe = {};
     (couvertures || []).forEach(c => { if (c.url) photoDe[c.model_id] = c.url; });
-    const avecPhoto = profils.filter(p => photoDe[p.id]).map(p => Object.assign({ photo: photoDe[p.id] }, p));
+    return { profils: profils.filter(p => photoDe[p.id]).map(p => Object.assign({ photo: photoDe[p.id] }, p)), nombre: profils.length };
+  }
+  // photo de couverture posée par le serveur, en échec avant l'arrivée de la roue de secours
+  // (js/photos.js) : on la redemande par le relais
+  (function () {
+    const img = document.getElementById('couv-img'), secours = img && img.complete && !img.naturalWidth && typeof urlDeSecours === 'function' && urlDeSecours(img.getAttribute('src'));
+    if (secours && img.dataset.modele) img.src = secours;
+  })();
+  async function chargerMannequins() {
+    if (typeof sb === 'undefined' || !sb) return;
+    const { profils: avecPhoto, nombre: total } = await mannequinsAvecPhoto();
+    if (total) {
+      document.getElementById('couv-nombre').textContent = total > 1
+        ? T(total + ' mannequins à découvrir', total + ' models to discover')
+        : T('Nos mannequins à découvrir', 'Our models to discover');
+    }
     if (!avecPhoto.length) { ['femmes', 'hommes', 'a-la-une'].forEach(id => { document.getElementById(id).hidden = true; }); return; }
 
     // À la une : la mannequin choisie dans l'Administration, sinon la plus récente
@@ -143,10 +160,14 @@
     document.getElementById('une-nom').textContent = une.full_name || T('Mannequin', 'Model');
     document.getElementById('une-info').textContent = [categorie(une.category), une.city, une.height_cm ? une.height_cm + ' cm' : null].filter(Boolean).join(' · ');
 
-    // Couverture : une autre mannequin à chaque visite
+    // Couverture : une autre mannequin à chaque visite (choisie par le serveur quand la photo
+    // est déjà en place : on la garde)
+    const imgCouv = document.getElementById('couv-img');
     const autres = melanger(avecPhoto.filter(p => p.id !== une.id));
+    const dejaPosee = autres.findIndex(p => p.id === imgCouv.dataset.modele);
+    if (dejaPosee > 0) autres.unshift(autres.splice(dejaPosee, 1)[0]);
     const couv = autres[0] || une;
-    photo(document.getElementById('couv-img'), couv.photo, couv.full_name, true);
+    if (couv.id !== imgCouv.dataset.modele) photo(imgCouv, couv.photo, couv.full_name, true);
 
     const credit = document.getElementById('couv-modele');
     credit.href = fiche(couv.id);

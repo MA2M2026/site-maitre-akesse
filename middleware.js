@@ -27,6 +27,8 @@ export const config = {
     '/partenaires', '/partenaires.html', '/en/partenaires', '/en/partenaires.html',
     '/mannequin', '/mannequin.html', '/en/mannequin', '/en/mannequin.html',
     '/book/:slug', '/en/book/:slug',
+    // page d'accueil servie déjà remplie (23/10/2026)
+    '/', '/index.html', '/en', '/en/', '/en/index.html',
     // scripts réservés de l'Administration (13/10/2026 ; l'ancien tableau de bord est démoli le 23/10/2026)
     '/js/video-accueil-gabarit.js', '/js/couverture-admin.js', '/js/photos-mises-de-cote-gabarit.js', '/js/photos-mises-de-cote.js',
     '/js/fiches-evenement-gabarit.js', '/js/fiches-evenement-admin.js', '/js/rapport-profils-gabarit.js', '/js/rapport-profils-admin.js', '/js/agenda-gabarit.js', '/js/agenda-admin.js', '/js/agenda-outils.js', '/js/convocations-gabarit.js', '/js/convocations-page.js', '/js/convocations-admin.js', '/js/messages-convocations.js',
@@ -212,9 +214,96 @@ async function apercuPartenaire(url, anglais) {
   return pageApercu({ titre: p.nom, description, photo: imageApercu(p.logo_url, anglais, 'partenaires'), lien, anglais, type: 'website' });
 }
 
+// ================== Page d'accueil déjà remplie (23/10/2026, demande de la propriétaire) ==================
+// Avant, le serveur envoyait une page vide : le téléphone chargeait tous ses programmes, puis
+// interrogeait deux fois la base, et seulement alors demandait la photo de couverture (5 à 12 s à
+// la première visite, même en Wi-Fi). Désormais, la page part avec la liste des mannequins
+// publiées et leurs photos (bloc <script type="application/json" id="accueil-donnees">, lu par
+// js/accueil.js), et la photo de couverture déjà en place et annoncée en tête de page : le
+// téléphone la télécharge dès la première seconde. Les photos viennent toujours de Cloudflare
+// (photos.maitreakessemodelmanagement.com) ; la copie Vercel (/book-photos/) reste la roue de
+// secours (js/photos.js). Liste gardée 5 minutes en mémoire : une mannequin publiée apparaît
+// sur l'accueil au plus 5 minutes après. Au moindre souci (base lente…), la page part comme avant.
+const ACCUEIL = /^\/(en\/?)?(index\.html)?$/;
+const PHOTOS_DIRECTES = 'https://photos.maitreakessemodelmanagement.com/';
+const RELAIS_PHOTOS = /^(?:https:\/\/(?:www\.)?maitreakessemodelmanagement\.com)?\/book-photos\//;
+const MARQUE_WEBP = /\/(miniatures|moyennes)\/[^/?]*-w\.jpg(\?.*)?$/;
+const DUREE_ACCUEIL = 5 * 60 * 1000;
+let memoireAccueil = null;  // { quand, donnees }
+// même règle que urlLegere (js/photos.js) : copie WebP, servie directement par Cloudflare
+function photoLegere(url) {
+  if (typeof url !== 'string') return '';
+  const legere = MARQUE_WEBP.test(url) ? url.replace(/\.jpg(\?|$)/, '.webp$1') : url;
+  return legere.replace(RELAIS_PHOTOS, PHOTOS_DIRECTES);
+}
+async function appelSupabase(chemin, corps) {
+  const controleur = new AbortController();
+  const minuteur = setTimeout(() => controleur.abort(), 1500);
+  try {
+    const rep = await fetch(SUPABASE_URL + '/rest/v1/' + chemin, {
+      method: corps ? 'POST' : 'GET',
+      headers: { apikey: CLE_ANON, Authorization: 'Bearer ' + CLE_ANON, 'Content-Type': 'application/json' },
+      body: corps ? JSON.stringify(corps) : undefined,
+      signal: controleur.signal
+    });
+    if (!rep.ok) throw new Error('base : ' + rep.status);
+    return await rep.json();
+  } finally {
+    clearTimeout(minuteur);
+  }
+}
+// les mannequins publiées avec leur photo de couverture (les mêmes questions que js/accueil.js)
+async function donneesAccueil() {
+  if (memoireAccueil && Date.now() - memoireAccueil.quand < DUREE_ACCUEIL) return memoireAccueil.donnees;
+  try { return await lireDonneesAccueil(); } catch (e) {
+    // base lente ou en panne : page comme avant, et on ne la refait pas attendre pendant 1 minute
+    memoireAccueil = { quand: Date.now() - DUREE_ACCUEIL + 60 * 1000, donnees: null };
+    return null;
+  }
+}
+async function lireDonneesAccueil() {
+  const profils = await appelSupabase('model_profiles?published=eq.true&select=id,full_name,city,category,height_cm,featured&order=created_at.desc&limit=200');
+  const couvertures = profils.length ? await appelSupabase('rpc/photos_couverture_mannequins', { ids: profils.map(p => p.id) }) : [];
+  const photoDe = {};
+  couvertures.forEach(c => { if (c.url) photoDe[c.model_id] = c.url; });
+  const avecPhoto = profils.filter(p => photoDe[p.id]).map(p => Object.assign({ photo: photoDe[p.id] }, p));
+  const donnees = { profils: avecPhoto, nombre: profils.length };
+  memoireAccueil = { quand: Date.now(), donnees };
+  return donnees;
+}
+// JSON posé dans la page : jamais de « < » brut (pas de fin de bloc possible)
+const jsonSur = (x) => JSON.stringify(x).replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026');
+async function accueilRempli(requete, url) {
+  if (requete.method !== 'GET') return;
+  const [donnees, page] = await Promise.all([
+    donneesAccueil(),
+    fetch(url.toString(), { headers: { 'x-ma2m-accueil': '1', 'accept': 'text/html' }, redirect: 'manual' })
+  ]);
+  if (!page.ok || !/text\/html/.test(page.headers.get('content-type') || '')) return;
+  let html = await page.text();
+  const marque = '<img id="couv-img" class="visible" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt=""';
+  if (!donnees || !donnees.profils.length || html.indexOf(marque) === -1 || html.indexOf('</head>') === -1) return;
+  // couverture : une mannequin au hasard à chaque visite (pas celle « À la une »)
+  const une = donnees.profils.find(p => p.featured) || donnees.profils[0];
+  const autres = donnees.profils.filter(p => p.id !== une.id);
+  const couv = autres.length ? autres[Math.floor(Math.random() * autres.length)] : une;
+  const photo = photoLegere(couv.photo);
+  html = html.replace('</head>', '<link rel="preload" as="image" href="' + echapper(photo) + '" fetchpriority="high">\n</head>')
+    .replace(marque, '<img id="couv-img" class="visible" src="' + echapper(photo) + '" alt="' + echapper(couv.full_name || '') + '" data-modele="' + echapper(couv.id) + '"')
+    .replace('<main', '<script type="application/json" id="accueil-donnees">' + jsonSur(donnees) + '</script>\n<main');
+  const entetes = new Headers(page.headers);
+  ['content-length', 'content-encoding', 'etag', 'last-modified'].forEach(k => entetes.delete(k));
+  entetes.set('Cache-Control', 'no-cache, must-revalidate');
+  return new Response(html, { status: 200, headers: entetes });
+}
+
 export default async function middleware(requete) {
   try {
     const url = new URL(requete.url);
+    if (ACCUEIL.test(url.pathname)) {
+      if (requete.headers.get('x-ma2m-accueil')) return;  // (la page elle-même, demandée ci-dessous)
+      try { return await accueilRempli(requete, url); } catch (e) { return; }
+    }
     if (SCRIPTS_ADMIN.test(url.pathname) || SCRIPTS_NOUVELLE_ADMIN.test(url.pathname)) return await tableauProtege(requete);
     const agent = requete.headers.get('user-agent') || '';
     const anglais = url.pathname.indexOf('/en/') === 0;
