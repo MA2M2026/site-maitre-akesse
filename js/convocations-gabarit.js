@@ -69,7 +69,7 @@ window.GABARIT_CONVOCATIONS = `<h2 class="tdb-4">📨 Convocations</h2>
 <p class="agenda-aide">La personne non inscrite est gardée dans le carnet, pour la retrouver au prochain projet.</p>
 </fieldset>
 <fieldset class="agenda-choix"><legend>Le message</legend>
-<div class="form-champ"><label for="convoc-sorte">Quel message envoyer ?</label><select id="convoc-sorte"><option value="selection">🎉 Annoncer la sélection (court, en premier)</option><option value="convocation">📨 Convocation (tous les détails)</option></select></div>
+<div class="form-champ"><label for="convoc-sorte">Quel message envoyer ?</label><select id="convoc-sorte"><option value="selection">🎉 Annoncer la sélection (court, en premier)</option><option value="convocation">📨 Convocation (tous les détails)</option><option value="rappel_avant">🔔 Rappel de l'information (date, heure, lieu)</option></select></div>
 <p class="agenda-aide" id="convoc-sorte-aide"></p>
 <select id="convoc-apercu-qui" aria-label="Voir le message envoyé à"></select>
 <pre id="convoc-apercu" class="convoc-apercu"></pre>

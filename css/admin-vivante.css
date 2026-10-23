@@ -908,6 +908,10 @@ form.f .f-sous[hidden] { display: none; }
 .pl-qui summary h2 { display: inline; }
 .pl-choix { display: flex; align-items: center; gap: 8px; cursor: pointer; }
 .pl-choix .vis { width: 32px; height: 32px; }
+/* visage d'une mannequin du registre sans compte (sans lien de fiche), et dans les boutons d'envoi (23/10/2026) */
+.pl-noms li > .vis { width: 42px; height: 42px; font-size: 14px; box-shadow: 0 0 0 2px #fff, 0 2px 8px rgba(30, 20, 15, .18); }
+.pl-case > span { width: 100%; height: 100%; display: block; }
+.btn .vis.pl-btn-vis { display: inline-block; width: 28px; height: 28px; font-size: 11px; vertical-align: middle; margin-right: 6px; box-shadow: 0 0 0 2px #fff; }
 .pl-liste-choix { max-height: 60vh; overflow: auto; margin-top: 10px; }
 .pl-apercu { white-space: pre-wrap; word-break: break-word; background: var(--av-papier, #fff); border-radius: 10px; padding: 12px; font-size: 14px; max-height: 40vh; overflow: auto; }
 /* Photos cliquables partout où un nom de mannequin apparaît (23/10/2026, js/admin/coque.js) */

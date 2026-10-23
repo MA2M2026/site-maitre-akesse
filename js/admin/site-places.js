@@ -13,6 +13,16 @@
   if (!P || !P.espaces.site) return;
   const PAGE = 'b2-places';
   const lienFiche = (id) => '#/site/b2-mannequins-publies/' + encodeURIComponent(id);
+  // une invitation vise un profil du site (model_id) ou une mannequin du registre de l'agence sans
+  // compte (mannequin_id, 23/10/2026) : cle() les distingue dans les listes de noms et de contacts
+  const cle = (i) => i.model_id || 'r:' + i.mannequin_id;
+  // le visage (photo du profil, sinon initiales) devant le nom, partout ; lien vers la fiche
+  // seulement pour un profil du site
+  function visageNom(i, noms, photos) {
+    const nom = noms[cle(i)] || '?', vis = P.visage((i.model_id && photos[i.model_id]) || '', nom, 'rond-vis');
+    return i.model_id ? '<a class="visage-lien" href="' + P.esc(lienFiche(i.model_id)) + '" tabindex="-1" aria-hidden="true">' + vis + '</a> <a href="' + P.esc(lienFiche(i.model_id)) + '">' + P.esc(nom) + '</a>'
+      : vis + ' <span>' + P.esc(nom) + '</span>';
+  }
   const aujourdhui = () => new Date().toISOString().slice(0, 10);
   const passe = (p) => !p || p.annule || (p.date_fin || p.date_debut) < aujourdhui();
   const nonActive = (e) => /places_(appels|invitations|preparer)|42P01|PGRST20[25]/.test(String((e && (e.message || e.code)) || e));
@@ -32,7 +42,8 @@
     let cases = '';
     for (let i = 0; i < total; i++) {
       const x = prises[i];
-      cases += x ? '<li class="pl-case prise"><a href="' + P.esc(lienFiche(x.model_id)) + '" title="' + P.esc(noms[x.model_id] || '') + '">' + P.visage(photos[x.model_id] || '', noms[x.model_id] || '?', 'rond-vis') + '</a></li>'
+      const vis = x && P.visage((x.model_id && photos[x.model_id]) || '', noms[cle(x)] || '?', 'rond-vis');
+      cases += x ? '<li class="pl-case prise">' + (x.model_id ? '<a href="' + P.esc(lienFiche(x.model_id)) + '" title="' + P.esc(noms[cle(x)] || '') + '">' + vis + '</a>' : '<span title="' + P.esc(noms[cle(x)] || '') + '">' + vis + '</span>') + '</li>'
         : '<li class="pl-case" aria-label="Place libre"></li>';
     }
     return '<h3 class="pl-titre-grille">' + P.esc(titre) + ' : ' + prises.length + ' / ' + total + '</h3><ul class="pl-grille">' + cases + '</ul>';
@@ -48,10 +59,11 @@
     const ids = appels.map((a) => a.projet_id);
     const [projets, pris] = ids.length ? await Promise.all([
       P.bd(sb.from('agenda_projets').select('id, type, titre, date_debut, date_fin, heure_evenement, lieu, ville, annule').in('id', ids)),
-      P.bd(sb.from('places_invitations').select('projet_id, model_id, sexe, statut').in('projet_id', ids).eq('statut', 'pris').order('pris_le'))
+      P.bd(sb.from('places_invitations').select('*').in('projet_id', ids).eq('statut', 'pris').order('pris_le'))
     ]) : [[], []];
-    const modeles = [...new Set(pris.map((x) => x.model_id))];
-    const [noms, photos] = await Promise.all([nomsDe(modeles), P.photosCouverture(modeles)]);
+    const modeles = [...new Set(pris.map((x) => x.model_id).filter(Boolean))];
+    const [noms, photos, registre] = await Promise.all([nomsDe(modeles), P.photosCouverture(modeles), contactsRegistre([...new Set(pris.map((x) => x.mannequin_id).filter(Boolean))])]);
+    registre.forEach((c) => { noms['r:' + c.mannequin_id] = c.full_name; });
     const cartes = appels.map((a) => ({ a, p: projets.find((x) => x.id === a.projet_id) })).filter((x) => x.p)
       .sort((x, y) => String(y.p.date_debut).localeCompare(String(x.p.date_debut)))
       .map(({ a, p }, i) => {
@@ -70,6 +82,15 @@
   async function contactsDe(ids) {
     let tous = [];
     for (let i = 0; i < ids.length; i += 500) tous = tous.concat(await P.rpc('convocation_contacts_mannequins', { p_ids: ids.slice(i, i + 500) }));
+    return tous;
+  }
+  // coordonnées des mannequins du registre sans compte (fonction ajoutée le 23/10/2026 : avant
+  // l'exécution de supabase-places.sql, aucune)
+  async function contactsRegistre(ids) {
+    let tous = [];
+    try {
+      for (let i = 0; i < ids.length; i += 500) tous = tous.concat(await P.rpc('places_contacts_registre', { p_ids: ids.slice(i, i + 500) }));
+    } catch (e) { if (!/places_contacts_registre|PGRST202|42883/.test(String((e && (e.message || e.code)) || e))) throw e; }
     return tous;
   }
   // noms des mannequins (par paquets : une longue liste d'identifiants ne tient pas dans une adresse)
@@ -137,7 +158,7 @@
   // destinataires WhatsApp d'une invitation : la mannequin (si elle a un numéro, ou si elle est
   // majeure) et, pour une mineure, son parent — même lien, avec &p=1
   function destinataires(inv) {
-    const c = ecran.contacts[inv.model_id];
+    const c = ecran.contacts[cle(inv)];
     if (!c) return [];
     const nom = nomAvecCivilite({ full_name: c.full_name, category: c.category }), liste = [];
     const mineure = estMineurDossier({ date_naissance: c.date_naissance });
@@ -147,6 +168,7 @@
   }
   const lienWa = (d, sorte) => 'https://wa.me/' + numeroWhatsApp(d.tel) + '?text=' + encodeURIComponent(messagePlaces(ecran.projet, ecran.appel,
     { nom: d.nom, sexe: d.inv.sexe, parent: d.parent, parent_nom: d.parent_nom, jeton: d.inv.jeton }, sorte));
+  const visageBouton = (d) => P.visage((d.inv.model_id && ecran.photos[d.inv.model_id]) || '', d.nom, 'rond-vis pl-btn-vis');
   const nomDe = (d) => d.parent ? d.nom + ' (parent : ' + (d.parent_nom || 'Madame, Monsieur') + ')' : d.nom;
   // annonce d'une place libérée : qui a déjà été prévenu, retenu le temps de la session
   const cleLibre = () => 'ma2m_places_libre_' + ecran.appel.projet_id;
@@ -164,7 +186,7 @@
     const pluriel = (k, mot) => k + ' ' + mot + (k > 1 ? 's' : '');
     let html = '<p>' + pluriel(envoyes, 'message') + ' ' + (envoyes > 1 ? 'envoyés' : 'envoyé') + ' sur ' + tous.length + '.</p>';
     if (aEnvoyer.length) {
-      html += '<a class="btn rouge" target="_blank" rel="noopener" data-places-wa="' + P.esc(aEnvoyer[0].cle) + '" href="' + P.esc(lienWa(aEnvoyer[0], 'appel')) + '">💬 Envoyer le lien suivant : ' + P.esc(nomDe(aEnvoyer[0])) + ' (' + pluriel(aEnvoyer.length, 'restant') + ')</a>';
+      html += '<a class="btn rouge" target="_blank" rel="noopener" data-places-wa="' + P.esc(aEnvoyer[0].cle) + '" href="' + P.esc(lienWa(aEnvoyer[0], 'appel')) + '">' + visageBouton(aEnvoyer[0]) + '💬 Envoyer le lien suivant : ' + P.esc(nomDe(aEnvoyer[0])) + ' (' + pluriel(aEnvoyer.length, 'restant') + ')</a>';
     } else {
       html += '<p class="doux">' + (libres ? 'Tous les liens ont été envoyés.' : 'Toutes les places sont prises : plus de lien à envoyer.') + '</p>';
     }
@@ -175,24 +197,24 @@
     if (annonce) {
       const restantes = tous.filter((d) => sansPlace(d) && !annonce.faits[d.cle]);
       let suite;
-      if (restantes.length && libres) suite = '<a class="btn rouge" target="_blank" rel="noopener" data-places-libre="' + P.esc(restantes[0].cle) + '" href="' + P.esc(lienWa(restantes[0], 'place_libre')) + '">💬 Prévenir la suivante : ' + P.esc(nomDe(restantes[0])) + ' (' + pluriel(restantes.length, 'restante') + ')</a>';
+      if (restantes.length && libres) suite = '<a class="btn rouge" target="_blank" rel="noopener" data-places-libre="' + P.esc(restantes[0].cle) + '" href="' + P.esc(lienWa(restantes[0], 'place_libre')) + '">' + visageBouton(restantes[0]) + '💬 Prévenir la suivante : ' + P.esc(nomDe(restantes[0])) + ' (' + pluriel(restantes.length, 'restante') + ')</a>';
       else suite = '<p class="doux">' + (libres ? 'Tout le monde a été prévenu.' : 'La place a été reprise.') + '</p>';
       html += '<h3 class="pl-titre-grille">📣 Annonce d’une place libre</h3>' + suite + ' <button type="button" class="btn petit" data-action="places-libre-fin">Terminer l’annonce</button>';
     } else if (libres && tous.some(sansPlace) && invitations.some((i) => i.statut === 'desiste')) {
       html += '<p><button type="button" class="btn" data-action="places-libre">📣 Annoncer une place libre</button></p>';
     }
-    if (sansNumero.length) html += '<details class="pl-sans"><summary>Sans numéro WhatsApp (' + sansNumero.length + ')</summary><p class="doux">' + sansNumero.map((i) => P.esc(noms[i.model_id] || '?')).join(', ') + '</p></details>';
+    if (sansNumero.length) html += '<details class="pl-sans"><summary>Sans numéro WhatsApp (' + sansNumero.length + ')</summary><ul class="pl-noms">' + sansNumero.map((i) => '<li>' + visageNom(i, noms, ecran.photos) + '</li>').join('') + '</ul></details>';
     return html;
   }
   // « Qui reçoit le lien ? » : une case par mannequin ; décochée, elle ne reçoit rien et ne peut
   // pas prendre de place (statut « exclu », même si on lui transfère un lien)
   function blocChoix(invitations, noms, photos) {
-    const ordre = invitations.slice().sort((a, b) => String(noms[a.model_id] || '').localeCompare(String(noms[b.model_id] || ''), 'fr'));
+    const ordre = invitations.slice().sort((a, b) => String(noms[cle(a)] || '').localeCompare(String(noms[cle(b)] || ''), 'fr'));
     const choisies = invitations.filter((i) => i.statut !== 'exclu').length;
     const ligne = (i) => {
       const pris = i.statut === 'pris' || i.statut === 'desiste';
       return '<li><label class="pl-choix"><input type="checkbox" data-change="places-choix" data-id="' + P.esc(i.id) + '"' + (i.statut === 'exclu' ? '' : ' checked') + (pris ? ' disabled' : '') + '> ' +
-        P.visage(photos[i.model_id] || '', noms[i.model_id] || '?', 'rond-vis') + ' <span>' + P.esc(noms[i.model_id] || '?') + (pris ? ' <small class="doux">(' + (i.statut === 'pris' ? 'place prise' : 'désistée') + ')</small>' : '') + '</span></label></li>';
+        P.visage((i.model_id && photos[i.model_id]) || '', noms[cle(i)] || '?', 'rond-vis') + ' <span>' + P.esc(noms[cle(i)] || '?') + (!i.model_id ? ' <small class="doux">(sans compte sur le site)</small>' : '') + (pris ? ' <small class="doux">(' + (i.statut === 'pris' ? 'place prise' : 'désistée') + ')</small>' : '') + '</span></label></li>';
     };
     return '<details class="carte pl-qui"' + (choixOuvert ? ' open' : '') + '><summary><h2>Qui reçoit le lien ? (' + choisies + ' sur ' + invitations.length + ')</h2></summary>' +
       '<p class="doux">Décochez les mannequins qui ne doivent pas recevoir ce projet : elles ne reçoivent rien et ne peuvent pas prendre de place.</p>' +
@@ -211,20 +233,23 @@
     ]);
     const projet = projets[0];
     if (!projet) return P.entete('Places limitées', retour) + '<div class="carte vide">Le projet de cet appel a été supprimé de l’agenda.</div>';
-    const ids = invitations.map((i) => i.model_id);
-    const [contacts, photos] = await Promise.all([
+    const ids = invitations.map((i) => i.model_id).filter(Boolean);
+    const [contacts, photos, registre] = await Promise.all([
       contactsDe(ids),
-      P.photosCouverture(ids)
+      P.photosCouverture(ids),
+      contactsRegistre(invitations.map((i) => i.mannequin_id).filter(Boolean))
     ]);
     ecran = { appel, projet, invitations, photos, contacts: {} };
     contacts.forEach((c) => { ecran.contacts[c.model_id] = c; });
+    // registre : mêmes champs que convocation_contacts_mannequins (genre → category)
+    registre.forEach((c) => { ecran.contacts['r:' + c.mannequin_id] = Object.assign({}, c, { category: c.genre }); });
     const noms = {};
-    contacts.forEach((c) => { noms[c.model_id] = nomAvecCivilite({ full_name: c.full_name, category: c.category }); });
+    Object.keys(ecran.contacts).forEach((k) => { const c = ecran.contacts[k]; noms[k] = nomAvecCivilite({ full_name: c.full_name, category: c.category }); });
     const n = comptes(appel, invitations), fini = passe(projet);
     const prises = (s) => invitations.filter((i) => i.sexe === s && i.statut === 'pris').sort((a, b) => String(a.pris_le).localeCompare(String(b.pris_le)));
 
     const envoi = fini || !appel.ouvert ? '' : blocEnvoi(invitations, n, noms);
-    const ligneNom = (i) => '<li><a class="visage-lien" href="' + P.esc(lienFiche(i.model_id)) + '" tabindex="-1" aria-hidden="true">' + P.visage(photos[i.model_id] || '', noms[i.model_id] || '?', 'rond-vis') + '</a> <a href="' + P.esc(lienFiche(i.model_id)) + '">' + P.esc(noms[i.model_id] || '?') + '</a>' +
+    const ligneNom = (i) => '<li>' + visageNom(i, noms, photos) +
       ' <span class="doux">' + (i.statut === 'pris' ? (i.pris_par === 'parent' ? 'place prise par le parent' : 'place prise') + ' le ' + P.esc(new Date(i.pris_le).toLocaleString('fr-FR', { timeZone: 'Africa/Abidjan', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })) : 'désistement') + '</span></li>';
     const selectionnees = [...prises('femme'), ...prises('homme')], desistees = invitations.filter((i) => i.statut === 'desiste');
     return P.entete('Places limitées · ' + projet.titre, retour + '<button type="button" class="btn" data-action="places-actualiser">🔄 Actualiser</button>') +
@@ -291,7 +316,7 @@
   P.actions['places-convoquer'] = () => { if (ecran) window.convoquerProjet(ecran.projet.id); };
   P.actions['places-preparer'] = async () => {
     const avant = ecran.invitations.length, n = await P.rpc('places_preparer', { p_projet: ecran.appel.projet_id });
-    P.message(n > avant ? (n - avant) + ' nouvelle(s) mannequin(s) ajoutée(s) à l’envoi.' : 'Toutes les mannequins ont déjà leur lien.');
+    P.message(n > avant ? (n - avant) + ' nouvelle(s) mannequin(s) ajoutée(s) à l’envoi.' : n < avant ? 'Liste mise à jour (fiche sans nom retirée).' : 'Toutes les mannequins ont déjà leur lien.');
     return P.afficher();
   };
   P.actions['places-ouvrir'] = async () => {

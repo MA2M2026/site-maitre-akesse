@@ -32,7 +32,9 @@ insert into agenda_projets (id, type, titre, date_debut, lieu, ville) values
   ('00000000-0000-0000-0000-0000000000c2', 'defile', 'DEFILE PASSE', current_date - 3, 'Sofitel', 'Abidjan');
 
 -- (d'autres mannequins existent déjà dans la base d'essai : on compte tout le monde)
-create temp table attendu as select count(*)::int n, count(*) filter (where places_sexe(category, civilite) = 'femme')::int f from model_profiles where not desactive;
+create temp table attendu as select sum(n)::int n, sum(f)::int f from (
+  select count(*) n, count(*) filter (where places_sexe(category, civilite) = 'femme') f from model_profiles where not desactive and length(trim(coalesce(full_name, ''))) > 0
+  union all select count(*), count(*) filter (where coalesce(genre, 'femme') = 'femme') from agence_mannequins where statut = 'actif' and user_id is null and length(trim(full_name)) > 0) x;
 grant select on attendu to authenticated;
 -- l'agence ouvre l'appel et prépare les liens
 select essai_qui('00000000-0000-0000-0000-0000000000a2');
@@ -122,3 +124,44 @@ select essai_refuse('select places_preparer(''00000000-0000-0000-0000-0000000000
 select essai((select count(*) from places_invitations) = 0, 'mannequin connectée : ne voit aucune invitation');
 reset role;
 -- premier arrivé même quand tout le monde clique en même temps : vérifié par le verrou (for update)
+
+-- 23/10/2026 : une mannequin du registre de l'agence (espace Paiements) sans compte sur le site
+reset role;
+insert into agence_mannequins (id, full_name, genre, date_naissance, telephone, parent_nom, parent_telephone, statut) values
+  ('00000000-0000-0000-0000-0000000000e1', 'NOUVELLE SANS COMPTE', 'femme', current_date - interval '16 years', null, 'Madame Maman', '0707070707', 'actif'),
+  ('00000000-0000-0000-0000-0000000000e2', 'PARTIE DE L AGENCE', 'femme', '2000-01-01', '0101010101', null, null, 'sorti');
+insert into agenda_projets (id, type, titre, date_debut, lieu, ville) values ('00000000-0000-0000-0000-0000000000c3', 'defile', 'FASHION SHOW', current_date + 10, 'Parc des expositions', 'Abidjan');
+select essai_qui('00000000-0000-0000-0000-0000000000a2');
+set role authenticated;
+insert into places_appels (projet_id, places_femmes, places_hommes) values ('00000000-0000-0000-0000-0000000000c3', 5, 0);
+select places_preparer('00000000-0000-0000-0000-0000000000c3');
+select essai(exists (select 1 from places_invitations where projet_id = '00000000-0000-0000-0000-0000000000c3' and mannequin_id = '00000000-0000-0000-0000-0000000000e1' and model_id is null and sexe = 'femme'), 'registre : la nouvelle mannequin sans compte est invitée');
+select essai(not exists (select 1 from places_invitations where mannequin_id = '00000000-0000-0000-0000-0000000000e2'), 'registre : une mannequin sortie de l''agence n''est pas invitée');
+select essai((select count(*) from places_contacts_registre(array['00000000-0000-0000-0000-0000000000e1']::uuid[]) where parent_telephone = '0707070707') = 1, 'agence : coordonnées du registre lues (parent de la mineure)');
+reset role;
+create temp table jr as select jeton from places_invitations where mannequin_id = '00000000-0000-0000-0000-0000000000e1';
+grant select on jr to anon;
+set role anon;
+select essai((places_lire((select jeton from jr)) ->> 'nom') = 'NOUVELLE SANS COMPTE' and (places_lire((select jeton from jr)) ->> 'civilite') = 'Mademoiselle', 'registre : son lien montre son nom');
+select essai(places_prendre((select jeton from jr), true) = 'pris', 'registre : le parent prend la place');
+select essai((places_lire((select jeton from jr)) -> 'pris' -> 0 ->> 'initiales') = 'NS' and (places_lire((select jeton from jr)) -> 'pris' -> 0 ->> 'photo') is null, 'registre : grille avec ses initiales, sans photo');
+reset role;
+select essai((select count(*) from convocation_participants cp join contacts_externes c on c.id = cp.contact_id
+  where cp.projet_id = '00000000-0000-0000-0000-0000000000c3' and c.mannequin_id = '00000000-0000-0000-0000-0000000000e1' and cp.telephone = '0707070707' and cp.parent and cp.parent_nom = 'Madame Maman') = 1,
+  'registre : ajoutée aux participants du projet (carnet), message au parent de la mineure');
+set role anon;
+select essai(places_rendre((select jeton from jr)) = 'desiste', 'registre : désistement');
+reset role;
+select essai((select reponse from convocation_participants cp join contacts_externes c on c.id = cp.contact_id where cp.projet_id = '00000000-0000-0000-0000-0000000000c3' and c.mannequin_id = '00000000-0000-0000-0000-0000000000e1') = 'absent', 'registre : désistée, notée absente');
+set role anon;
+select essai(places_prendre((select jeton from jr)) = 'pris', 'registre : reprend sa place');
+reset role;
+select essai((select count(*) from convocation_participants cp join contacts_externes c on c.id = cp.contact_id where cp.projet_id = '00000000-0000-0000-0000-0000000000c3' and c.mannequin_id = '00000000-0000-0000-0000-0000000000e1' and cp.reponse is null) = 1, 'registre : place reprise, plus absente, pas de doublon');
+-- une fiche du site sans nom n'est pas invitée
+insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000b8', 'sansnom@test.ci') on conflict do nothing;
+insert into model_profiles (id, full_name, category, published, desactive) values ('00000000-0000-0000-0000-0000000000b8', '', 'femme', false, false) on conflict (id) do update set full_name = '';
+select essai_qui('00000000-0000-0000-0000-0000000000a2');
+set role authenticated;
+select places_preparer('00000000-0000-0000-0000-0000000000c3');
+reset role;
+select essai(not exists (select 1 from places_invitations where model_id = '00000000-0000-0000-0000-0000000000b8'), 'fiche du site sans nom : pas invitée');

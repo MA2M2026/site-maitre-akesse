@@ -10,7 +10,8 @@
   // ---------- Visages (vignettes légères des photos du Book, js/photos.js) ----------
   // « 1 photo », « 3 photos » (jamais « photo(s) »)
   P.pluriel = (n, un, plusieurs) => n + ' ' + (n > 1 ? plusieurs : un);
-  P.initiales = (nom) => String(nom || '').trim().split(/\s+/).map((x) => x.charAt(0)).slice(0, 2).join('').toUpperCase();
+  // (la civilité devant le nom ne compte pas : « Mademoiselle GRÂCE YAO » → GY)
+  P.initiales = (nom) => String(nom || '').trim().split(/\s+/).filter((x, i, t) => !(t.length > 1 && /^(madame|mademoiselle|monsieur)$/i.test(x))).map((x) => x.charAt(0)).slice(0, 2).join('').toUpperCase();
   P.visage = (url, nom, classe) => '<span class="vis ' + (classe || '') + '"><span class="ini" aria-hidden="true">' + P.esc(P.initiales(nom)) + '</span>' +
     (url ? '<img src="' + P.esc(urlLegere(url)) + '" alt="" loading="lazy" decoding="async">' : '') + '</span>';
   // une photo affichée apparaît en fondu (l'évènement « load » ne remonte pas : capture)

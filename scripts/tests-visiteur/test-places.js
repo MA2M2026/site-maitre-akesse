@@ -142,6 +142,43 @@ async function partieAdmin(b, nom, vp) {
   await ctx.close();
 }
 
+// 23/10/2026 : une nouvelle mannequin du registre de l'agence (sans compte sur le site) reçoit
+// aussi son lien ; partout, le nom vient avec un visage (photo, sinon initiales), même dans la
+// liste « Sans numéro WhatsApp » et dans le bouton d'envoi
+async function partieRegistre(b, nom, vp) {
+  const n = nom + ' : registre : ';
+  const ctx = await b.newContext({ viewport: vp, isMobile: vp.width < 700, hasTouch: vp.width < 700 });
+  const p = await ctx.newPage(); const journal = [], errs = [];
+  p.on('pageerror', e => errs.push(e.message));
+  p.on('console', m => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errs.push(m.text().slice(0, 160)); });
+  await p.addInitScript(() => { localStorage.setItem('ma2m_cookies', 'non'); window.confirm = () => true; });
+  const d = donneesAdmin();
+  d.tables.places_appels = [{ projet_id: 'p2', places_femmes: 5, places_hommes: 0, ouvert: true }];
+  d.tables.places_invitations = [
+    { id: 'r1', projet_id: 'p2', model_id: null, mannequin_id: 'a-nouvelle', sexe: 'femme', jeton: J('r'), statut: 'invite', envoye_le: null, parent_envoye_le: null },
+    { id: 'i2', projet_id: 'p2', model_id: 'm2', mannequin_id: null, sexe: 'femme', jeton: J('s'), statut: 'invite', envoye_le: null, parent_envoye_le: null }];
+  d.rpc.places_contacts_registre = (x) => x.p_ids.filter((id) => id === 'a-nouvelle').map(() => ({ mannequin_id: 'a-nouvelle', full_name: 'DIVINE TAMA', genre: 'femme', phone: '0102030405', contact_email: null, date_naissance: '2001-01-01', parent_nom: null, parent_telephone: null, parent_email: null }));
+  await brancher(p, d, journal); await admin.photosLocales(p);
+  await admin.seConnecter(p, BASE + 'admin/'); await p.waitForSelector('.accueil-tete', { timeout: 15000 });
+  await p.goto(BASE + 'admin/#/site/b2-places/p2'); await p.waitForSelector('.pl-qui', { timeout: 15000 }); await p.waitForTimeout(800);
+  await p.click('.pl-qui summary'); await p.waitForTimeout(300);
+  ok(/Mademoiselle DIVINE TAMA/.test(await p.textContent('.pl-qui')) && /sans compte sur le site/.test(await p.textContent('.pl-qui')) && (await p.$$('.pl-qui .vis')).length === 2, n + 'la nouvelle mannequin sans compte est dans « Qui reçoit le lien ? », avec un visage');
+  const bouton = p.locator('a[data-places-wa]');
+  const href = decodeURIComponent(await bouton.getAttribute('href'));
+  ok(/Envoyer le lien suivant : Mademoiselle DIVINE TAMA/.test(await bouton.textContent()) && href.startsWith('https://wa.me/2250102030405?text=') && href.includes('/places?c=' + J('r')) && (await p.$$('a[data-places-wa] .vis')).length === 1,
+    n + 'son lien part sur son WhatsApp, avec son visage dans le bouton');
+  ok(/Sans numéro WhatsApp \(1\)/.test(await p.textContent('.pl-sans')) && (await p.$$('.pl-sans .vis')).length === 1 && (await p.$$('.pl-sans .vis img')).length === 0 && /GY/.test(await p.textContent('.pl-sans .vis')), n + '« Sans numéro WhatsApp » : le nom avec son visage (initiales sans photo)');
+  const taille = await p.$eval('.pl-sans .vis', e => e.getBoundingClientRect().width);
+  ok(taille >= 30, n + 'visage visible (' + taille + ' px)');
+  // elle prend sa place : visage (initiales) dans la grille, sans lien de fiche
+  Object.assign(d.tables.places_invitations[0], { statut: 'pris', pris_par: 'mannequin', pris_le: new Date().toISOString() });
+  await p.click('[data-action="places-actualiser"]'); await p.waitForTimeout(1200);
+  ok((await p.$$('.pl-case.prise span .vis')).length === 1 && /Sélectionnées \(1\)/.test(await p.textContent('#contenu')) && /DIVINE TAMA/.test(await p.textContent('#contenu')), n + 'place prise : dans la grille et les sélectionnées');
+  ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth)), n + 'rien ne dépasse de l’écran');
+  ok(!errs.length, n + 'aucune erreur ' + errs.join(' | '));
+  await ctx.close();
+}
+
 async function partiePublique(b, nom, vp) {
   const n = nom + ' : page publique : ';
   const ctx = await b.newContext({ viewport: vp, isMobile: vp.width < 700, hasTouch: vp.width < 700 });
@@ -197,6 +234,7 @@ async function partiePublique(b, nom, vp) {
   const b = await chromium.launch();
   for (const [nom, vp] of [['téléphone', { width: 390, height: 844 }], ['ordinateur', { width: 1280, height: 900 }]]) {
     await partieAdmin(b, nom, vp);
+    await partieRegistre(b, nom, vp);
     await partiePublique(b, nom, vp.width < 700 ? { width: 375, height: 667 } : vp);
   }
   await b.close();
