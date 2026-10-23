@@ -17,14 +17,15 @@ create table if not exists places_appels (
 );
 
 -- 2) Une invitation par mannequin et par projet, avec son lien personnel (jeton impossible à
---    deviner). statut : invite → pris (place prise) → desiste (place rendue, reprenable s'il en reste).
+--    deviner). statut : invite → pris (place prise) → desiste (place rendue, reprenable s'il en reste) ;
+--    exclu : décochée par l'agence (« Qui reçoit le lien ? ») : ne reçoit rien, ne peut rien prendre.
 create table if not exists places_invitations (
   id uuid primary key default gen_random_uuid(),
   projet_id uuid not null references places_appels(projet_id) on delete cascade,
   model_id uuid not null references model_profiles(id) on delete cascade,
   sexe text not null check (sexe in ('femme', 'homme')),
   jeton text not null default encode(extensions.gen_random_bytes(18), 'hex'),
-  statut text not null default 'invite' check (statut in ('invite', 'pris', 'desiste')),
+  statut text not null default 'invite',
   pris_par text check (pris_par is null or pris_par in ('mannequin', 'parent')),
   pris_le timestamptz,
   desiste_le timestamptz,
@@ -33,6 +34,9 @@ create table if not exists places_invitations (
   created_at timestamptz not null default now(),
   unique (projet_id, model_id)
 );
+-- (la liste des statuts s'est agrandie le 23/10/2026 : « exclu »)
+alter table places_invitations drop constraint if exists places_invitations_statut_check;
+alter table places_invitations add constraint places_invitations_statut_check check (statut in ('invite', 'pris', 'desiste', 'exclu'));
 create unique index if not exists places_invitations_jeton on places_invitations (jeton);
 create index if not exists places_invitations_projet on places_invitations (projet_id, sexe, statut);
 
@@ -95,7 +99,7 @@ declare
   m model_profiles;
 begin
   if length(coalesce(p_jeton, '')) <> 36 then return null; end if;
-  select * into inv from places_invitations where jeton = p_jeton;
+  select * into inv from places_invitations where jeton = p_jeton and statut <> 'exclu';
   if not found then return null; end if;
   select * into ap from places_appels where projet_id = inv.projet_id;
   select * into a from agenda_projets where id = inv.projet_id;
@@ -138,6 +142,7 @@ begin
   if not found then return 'inconnu'; end if;
   select * into ap from places_appels where projet_id = projet for update;
   select * into inv from places_invitations where jeton = p_jeton;
+  if inv.statut = 'exclu' then return 'inconnu'; end if;
   select * into a from agenda_projets where id = projet;
   if a.annule or coalesce(a.date_fin, a.date_debut) < current_date then return 'termine'; end if;
   if inv.statut = 'pris' then return 'deja'; end if;

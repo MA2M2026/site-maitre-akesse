@@ -67,6 +67,21 @@ async function partieAdmin(b, nom, vp) {
   ok(appel.projet_id === 'p2' && appel.places_femmes === 2 && appel.places_hommes === 1 && journal.some(j => j[0] === 'rpc' && j[1] === 'places_preparer'), n + 'appel enregistré (2 femmes, 1 homme) et liens préparés');
   ok(/#\/site\/b2-places\/p2$/.test(p.url()) && /Femmes : 0 \/ 2/.test(await p.textContent('#contenu')) && /Hommes : 0 \/ 1/.test(await p.textContent('#contenu')) && (await p.$$('.pl-case:not(.prise)')).length === 3, n + 'fiche : grille de 3 places libres');
 
+  // 1bis. « Qui reçoit le lien ? » : décocher une mannequin, puis la recocher
+  ok(/Qui reçoit le lien \? \(4 sur 4\)/.test(await p.textContent('.pl-qui summary')), n + '« Qui reçoit le lien ? » : 4 mannequins cochées');
+  await p.click('.pl-qui summary'); await p.waitForTimeout(300);
+  await p.click('.pl-qui input[data-id="i0"]'); await p.waitForTimeout(1000);
+  ok(ecrits(journal, 'PATCH', 'places_invitations').some(x => x.statut === 'exclu') && d.tables.places_invitations.find(l => l.id === 'i0').statut === 'exclu'
+    && /\(3 sur 4\)/.test(await p.textContent('.pl-qui summary')) && /sur 3\./.test(await p.textContent('#contenu')) && !/AYA KOUASSI/.test(await p.textContent('a[data-places-wa]')), n + 'décochée : elle ne reçoit pas de lien (3 messages au lieu de 4)');
+  await p.click('[data-action="places-tous"][data-valeur="invite"]'); await p.waitForTimeout(1000);
+  ok(/\(4 sur 4\)/.test(await p.textContent('.pl-qui summary')), n + '« Tout cocher » : de nouveau 4');
+  // 1ter. « Voir le message » : rien n'est envoyé ni noté
+  const avantApercu = ecrits(journal, 'PATCH', 'places_invitations').length;
+  await p.click('[data-action="places-apercu"]'); await p.waitForSelector('.pl-apercu');
+  const apercu = await p.$$eval('.pl-apercu', ps => ps.map(x => x.textContent));
+  ok(apercu.length === 2 && /Places limitées/.test(apercu[0]) && /Une place vient de se libérer/.test(apercu[1]) && ecrits(journal, 'PATCH', 'places_invitations').length === avantApercu, n + '« Voir le message » : les deux messages, rien d’envoyé');
+  await p.click('.boite [data-action="fermer-fenetre"]'); await p.waitForTimeout(300);
+
   // 2. Envoi des liens, un par un
   let bouton = p.locator('a[data-places-wa]');
   let href = decodeURIComponent(await bouton.getAttribute('href'));
@@ -118,6 +133,11 @@ async function partieAdmin(b, nom, vp) {
   // 6. Liste des appels
   await p.goto(BASE + 'admin/#/site/b2-places'); await p.waitForSelector('.projet-carte', { timeout: 10000 }); await p.waitForTimeout(600);
   ok(/SHOOTING CACAO/.test(await p.textContent('.projet-carte')) && (await p.$$('.projet-carte .pl-case.prise img')).length === 2, n + 'liste : l’appel avec ses visages');
+  // 7. Supprimer l'appel (un essai) : le projet reste dans l'agenda
+  await p.click('.projet-carte a.btn'); await p.waitForSelector('[data-action="places-supprimer"]'); await p.waitForTimeout(500);
+  await p.click('[data-action="places-supprimer"]'); await p.waitForTimeout(1500);
+  ok(journal.some(j => j[0] === 'DELETE' && j[1] === 'places_appels') && !journal.some(j => j[0] === 'DELETE' && j[1] === 'agenda_projets') && /#\/site\/b2-places$/.test(p.url()) && /Aucun appel à places/.test(await p.textContent('#contenu')),
+    n + '« Supprimer cet appel » : l’appel disparaît, le projet reste dans l’agenda');
   ok(!errs.length, n + 'aucune erreur ' + errs.join(' | '));
   await ctx.close();
 }

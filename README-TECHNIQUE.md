@@ -345,7 +345,12 @@ Essai : `test-retour-invitation.js`.
   parent, même lien, `&p=1` pour le parent ; envoi noté dans la base), « 📣 Annoncer une place
   libre » après un désistement (suivi pour la session : `sessionStorage`
   « ma2m_places_libre_<projet> »), nombre de places, fermer/rouvrir, « Ajouter les nouvelles
-  mannequins », « Convoquer les sélectionnées » (`window.convoquerProjet`).
+  mannequins », « Convoquer les sélectionnées » (`window.convoquerProjet`). Ajouts du 23/10/2026
+  (demande de la propriétaire après un essai) : « Qui reçoit le lien ? » (une case par
+  mannequin ; décochée = statut `exclu` : aucun message, son lien ne montre rien et ne prend
+  rien ; « Ajouter les nouvelles mannequins » ne la recoche pas), « 👁️ Voir le message » (aperçu
+  sans rien envoyer ni noter), « 🗑️ Supprimer cet appel » (liens et places effacés, le projet
+  reste dans l'agenda ; les personnes déjà sélectionnées restent dans le projet).
 - **Page publique** : `places.html` + `js/places.js` + `css/places.css` (sans compte, `noindex` ;
   code commun avec `confirmer.html` dans `js/lien-public.js`) :
   « Je prends ma place » → « Bravo… » (vert) ou « Oups… plus de place disponible. Rendez-vous au

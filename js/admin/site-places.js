@@ -18,6 +18,7 @@
   const nonActive = (e) => /places_(appels|invitations|preparer)|42P01|PGRST20[25]/.test(String((e && (e.message || e.code)) || e));
   const PAS_ACTIVE = '<div class="carte vide">Les Places limitées ne sont pas encore activées : exécutez une fois le fichier supabase-places.sql dans Supabase.</div>';
   let ecran = null;  // fiche affichée : { appel, projet, invitations, contacts, photos }
+  let choixOuvert = false;  // « Qui reçoit le lien ? » reste ouvert pendant qu'on coche
 
   // places prises par sexe, et ce qui reste
   function comptes(appel, invitations) {
@@ -152,6 +153,53 @@
   function annonceLibre() { try { return JSON.parse(sessionStorage.getItem(cleLibre()) || 'null'); } catch (e) { return null; } }
   function noterLibre(v) { try { if (v) sessionStorage.setItem(cleLibre(), JSON.stringify(v)); else sessionStorage.removeItem(cleLibre()); } catch (e) { /* stockage bloqué */ } }
 
+  // envoi des liens, un par un (mannequins choisies seulement), et annonce d'une place libérée
+  function blocEnvoi(invitations, n, noms) {
+    const choisies = invitations.filter((i) => i.statut !== 'exclu');
+    const tous = choisies.flatMap(destinataires);
+    const sansNumero = choisies.filter((i) => !destinataires(i).length);
+    const aEnvoyer = tous.filter((d) => !d.envoye && d.inv.statut !== 'pris' && n.libres[d.inv.sexe] > 0);
+    const libres = n.libres.femme + n.libres.homme;
+    const envoyes = tous.filter((d) => d.envoye).length;
+    const pluriel = (k, mot) => k + ' ' + mot + (k > 1 ? 's' : '');
+    let html = '<p>' + pluriel(envoyes, 'message') + ' ' + (envoyes > 1 ? 'envoyés' : 'envoyé') + ' sur ' + tous.length + '.</p>';
+    if (aEnvoyer.length) {
+      html += '<a class="btn rouge" target="_blank" rel="noopener" data-places-wa="' + P.esc(aEnvoyer[0].cle) + '" href="' + P.esc(lienWa(aEnvoyer[0], 'appel')) + '">💬 Envoyer le lien suivant : ' + P.esc(nomDe(aEnvoyer[0])) + ' (' + pluriel(aEnvoyer.length, 'restant') + ')</a>';
+    } else {
+      html += '<p class="doux">' + (libres ? 'Tous les liens ont été envoyés.' : 'Toutes les places sont prises : plus de lien à envoyer.') + '</p>';
+    }
+    if (tous.length) html += ' <button type="button" class="btn petit" data-action="places-apercu">👁️ Voir le message</button>';
+    // place libérée : prévenir celles qui n'ont pas de place (après le premier envoi)
+    const sansPlace = (d) => d.envoye && d.inv.statut !== 'pris' && n.libres[d.inv.sexe] > 0;
+    const annonce = annonceLibre();
+    if (annonce) {
+      const restantes = tous.filter((d) => sansPlace(d) && !annonce.faits[d.cle]);
+      let suite;
+      if (restantes.length && libres) suite = '<a class="btn rouge" target="_blank" rel="noopener" data-places-libre="' + P.esc(restantes[0].cle) + '" href="' + P.esc(lienWa(restantes[0], 'place_libre')) + '">💬 Prévenir la suivante : ' + P.esc(nomDe(restantes[0])) + ' (' + pluriel(restantes.length, 'restante') + ')</a>';
+      else suite = '<p class="doux">' + (libres ? 'Tout le monde a été prévenu.' : 'La place a été reprise.') + '</p>';
+      html += '<h3 class="pl-titre-grille">📣 Annonce d’une place libre</h3>' + suite + ' <button type="button" class="btn petit" data-action="places-libre-fin">Terminer l’annonce</button>';
+    } else if (libres && tous.some(sansPlace) && invitations.some((i) => i.statut === 'desiste')) {
+      html += '<p><button type="button" class="btn" data-action="places-libre">📣 Annoncer une place libre</button></p>';
+    }
+    if (sansNumero.length) html += '<details class="pl-sans"><summary>Sans numéro WhatsApp (' + sansNumero.length + ')</summary><p class="doux">' + sansNumero.map((i) => P.esc(noms[i.model_id] || '?')).join(', ') + '</p></details>';
+    return html;
+  }
+  // « Qui reçoit le lien ? » : une case par mannequin ; décochée, elle ne reçoit rien et ne peut
+  // pas prendre de place (statut « exclu », même si on lui transfère un lien)
+  function blocChoix(invitations, noms, photos) {
+    const ordre = invitations.slice().sort((a, b) => String(noms[a.model_id] || '').localeCompare(String(noms[b.model_id] || ''), 'fr'));
+    const choisies = invitations.filter((i) => i.statut !== 'exclu').length;
+    const ligne = (i) => {
+      const pris = i.statut === 'pris' || i.statut === 'desiste';
+      return '<li><label class="pl-choix"><input type="checkbox" data-change="places-choix" data-id="' + P.esc(i.id) + '"' + (i.statut === 'exclu' ? '' : ' checked') + (pris ? ' disabled' : '') + '> ' +
+        P.visage(photos[i.model_id] || '', noms[i.model_id] || '?', 'rond-vis') + ' <span>' + P.esc(noms[i.model_id] || '?') + (pris ? ' <small class="doux">(' + (i.statut === 'pris' ? 'place prise' : 'désistée') + ')</small>' : '') + '</span></label></li>';
+    };
+    return '<details class="carte pl-qui"' + (choixOuvert ? ' open' : '') + '><summary><h2>Qui reçoit le lien ? (' + choisies + ' sur ' + invitations.length + ')</h2></summary>' +
+      '<p class="doux">Décochez les mannequins qui ne doivent pas recevoir ce projet : elles ne reçoivent rien et ne peuvent pas prendre de place.</p>' +
+      '<div class="ligne"><button type="button" class="btn petit" data-action="places-tous" data-valeur="invite">Tout cocher</button><button type="button" class="btn petit" data-action="places-tous" data-valeur="exclu">Tout décocher</button></div>' +
+      '<ul class="pl-noms pl-liste-choix">' + ordre.map(ligne).join('') + '</ul></details>';
+  }
+
   async function fiche(id) {
     let appel;
     try { appel = (await P.bd(sb.from('places_appels').select('*').eq('projet_id', id)))[0]; } catch (e) { if (nonActive(e)) return P.entete('Places limitées') + PAS_ACTIVE; throw e; }
@@ -166,7 +214,7 @@
     const ids = invitations.map((i) => i.model_id);
     const [contacts, photos] = await Promise.all([
       contactsDe(ids),
-      P.photosCouverture(invitations.filter((i) => i.statut !== 'invite').map((i) => i.model_id))
+      P.photosCouverture(ids)
     ]);
     ecran = { appel, projet, invitations, photos, contacts: {} };
     contacts.forEach((c) => { ecran.contacts[c.model_id] = c; });
@@ -175,29 +223,7 @@
     const n = comptes(appel, invitations), fini = passe(projet);
     const prises = (s) => invitations.filter((i) => i.sexe === s && i.statut === 'pris').sort((a, b) => String(a.pris_le).localeCompare(String(b.pris_le)));
 
-    // envoi des liens, un par un
-    const tous = invitations.flatMap(destinataires);
-    const sansNumero = invitations.filter((i) => !destinataires(i).length);
-    const aEnvoyer = tous.filter((d) => !d.envoye && d.inv.statut !== 'pris' && n.libres[d.inv.sexe] > 0);
-    let envoi = '';
-    if (!fini && appel.ouvert) {
-      envoi = '<p>' + tous.filter((d) => d.envoye).length + ' message' + (tous.filter((d) => d.envoye).length > 1 ? 's' : '') + ' envoyé' + (tous.filter((d) => d.envoye).length > 1 ? 's' : '') + ' sur ' + tous.length + '.</p>';
-      envoi += aEnvoyer.length
-        ? '<a class="btn rouge" target="_blank" rel="noopener" data-places-wa="' + P.esc(aEnvoyer[0].cle) + '" href="' + P.esc(lienWa(aEnvoyer[0], 'appel')) + '">💬 Envoyer le lien suivant : ' + P.esc(nomDe(aEnvoyer[0])) + ' (' + aEnvoyer.length + ' restant' + (aEnvoyer.length > 1 ? 's' : '') + ')</a>'
-        : '<p class="doux">' + (n.libres.femme + n.libres.homme ? 'Tous les liens ont été envoyés.' : 'Toutes les places sont prises : plus de lien à envoyer.') + '</p>';
-      // place libérée : prévenir celles qui n'ont pas de place (après le premier envoi)
-      const annonce = annonceLibre();
-      if (annonce) {
-        const restantes = tous.filter((d) => d.envoye && d.inv.statut !== 'pris' && n.libres[d.inv.sexe] > 0 && !annonce.faits[d.cle]);
-        envoi += '<h3 class="pl-titre-grille">📣 Annonce d’une place libre</h3>' + (restantes.length && n.libres.femme + n.libres.homme
-          ? '<a class="btn rouge" target="_blank" rel="noopener" data-places-libre="' + P.esc(restantes[0].cle) + '" href="' + P.esc(lienWa(restantes[0], 'place_libre')) + '">💬 Prévenir la suivante : ' + P.esc(nomDe(restantes[0])) + ' (' + restantes.length + ' restante' + (restantes.length > 1 ? 's' : '') + ')</a>'
-          : '<p class="doux">' + (n.libres.femme + n.libres.homme ? 'Tout le monde a été prévenu.' : 'La place a été reprise.') + '</p>') +
-          ' <button type="button" class="btn petit" data-action="places-libre-fin">Terminer l’annonce</button>';
-      } else if (n.libres.femme + n.libres.homme && tous.some((d) => d.envoye && d.inv.statut !== 'pris' && n.libres[d.inv.sexe] > 0) && invitations.some((i) => i.statut === 'desiste')) {
-        envoi += '<p><button type="button" class="btn" data-action="places-libre">📣 Annoncer une place libre</button></p>';
-      }
-      if (sansNumero.length) envoi += '<details class="pl-sans"><summary>Sans numéro WhatsApp (' + sansNumero.length + ')</summary><p class="doux">' + sansNumero.map((i) => P.esc(noms[i.model_id] || '?')).join(', ') + '</p></details>';
-    }
+    const envoi = fini || !appel.ouvert ? '' : blocEnvoi(invitations, n, noms);
     const ligneNom = (i) => '<li><a class="visage-lien" href="' + P.esc(lienFiche(i.model_id)) + '" tabindex="-1" aria-hidden="true">' + P.visage(photos[i.model_id] || '', noms[i.model_id] || '?', 'rond-vis') + '</a> <a href="' + P.esc(lienFiche(i.model_id)) + '">' + P.esc(noms[i.model_id] || '?') + '</a>' +
       ' <span class="doux">' + (i.statut === 'pris' ? (i.pris_par === 'parent' ? 'place prise par le parent' : 'place prise') + ' le ' + P.esc(new Date(i.pris_le).toLocaleString('fr-FR', { timeZone: 'Africa/Abidjan', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })) : 'désistement') + '</span></li>';
     const selectionnees = [...prises('femme'), ...prises('homme')], desistees = invitations.filter((i) => i.statut === 'desiste');
@@ -206,7 +232,9 @@
       '<section class="carte">' + grille('Femmes', appel.places_femmes, prises('femme'), noms, photos) + grille('Hommes', appel.places_hommes, prises('homme'), noms, photos) +
       (fini ? '' : '<div class="ligne"><button type="button" class="btn petit" data-action="places-modifier">✏️ Nombre de places</button>' +
         '<button type="button" class="btn petit" data-action="places-ouvrir">' + (appel.ouvert ? 'Fermer l’appel' : 'Rouvrir l’appel') + '</button>' +
-        '<button type="button" class="btn petit" data-action="places-preparer">Ajouter les nouvelles mannequins</button></div>') + '</section>' +
+        '<button type="button" class="btn petit" data-action="places-preparer">Ajouter les nouvelles mannequins</button></div>') +
+      '<div class="ligne"><button type="button" class="btn petit" data-action="places-supprimer">🗑️ Supprimer cet appel</button></div></section>' +
+      (fini ? '' : blocChoix(invitations, noms, photos)) +
       (envoi ? '<section class="carte"><h2>Envoi des liens</h2>' + envoi + '</section>' : '') +
       '<section class="carte"><h2>Sélectionnées (' + selectionnees.length + ')</h2>' + (selectionnees.length ? '<ul class="pl-noms">' + selectionnees.map(ligneNom).join('') + '</ul>' : '<p class="doux">Personne pour le moment.</p>') +
       (selectionnees.length && !fini ? '<p class="doux">Elles sont ajoutées au projet de l’agenda. Ensuite : annonce de la sélection, convocation et relances.</p><button type="button" class="btn rouge" data-action="places-convoquer">📨 Convoquer les sélectionnées</button>' : '') +
@@ -231,6 +259,33 @@
       .catch((err) => P.message(P.erreurTexte(err)));
   });
   P.actions['places-actualiser'] = () => P.afficher();
+  // cocher / décocher une mannequin (jamais une place déjà prise ou rendue)
+  async function choisir(colonne, valeur, statut) {
+    choixOuvert = true;
+    const r = await P.bd(sb.from('places_invitations').update({ statut }).eq(colonne, valeur).in('statut', ['invite', 'exclu']).select('id'));
+    if (!r || !r.length) { P.message('Rien n’a été enregistré : reconnectez-vous puis réessayez.'); return; }
+    return P.afficher();
+  }
+  P.changements['places-choix'] = (el) => choisir('id', el.dataset.id, el.checked ? 'invite' : 'exclu');
+  P.actions['places-tous'] = (el) => choisir('projet_id', ecran.appel.projet_id, el.dataset.valeur === 'exclu' ? 'exclu' : 'invite');
+  // le message tel qu'il partira, sans l'envoyer ni rien noter
+  P.actions['places-apercu'] = () => {
+    const d = ecran.invitations.filter((i) => i.statut !== 'exclu').flatMap(destinataires)[0];
+    if (!d) return;
+    const texte = (sorte) => messagePlaces(ecran.projet, ecran.appel, { nom: d.nom, sexe: d.inv.sexe, parent: d.parent, parent_nom: d.parent_nom, jeton: d.inv.jeton }, sorte);
+    P.fenetre('<h2>Aperçu du message</h2><p class="doux">Exemple pour ' + P.esc(nomDe(d)) + ' : rien n’est envoyé.</p><pre class="pl-apercu">' + P.esc(texte('appel')) + '</pre>' +
+      '<h3 class="pl-titre-grille">Quand une place se libère</h3><pre class="pl-apercu">' + P.esc(texte('place_libre')) + '</pre>' +
+      '<div class="ligne"><button class="btn" type="button" data-action="fermer-fenetre">Fermer</button></div>');
+  };
+  // effacer un appel (un essai, par exemple) : liens et places supprimés, le projet reste dans l'agenda
+  P.actions['places-supprimer'] = async () => {
+    const pris = ecran.invitations.filter((i) => i.statut === 'pris').length;
+    if (!confirm('Supprimer cet appel à places ? Les liens envoyés ne marcheront plus.' + (pris ? ' ' + pris + ' personne(s) ont déjà pris une place : elles restent dans le projet de l’agenda.' : '') + ' Le projet reste dans l’agenda.')) return;
+    const r = await P.bd(sb.from('places_appels').delete().eq('projet_id', ecran.appel.projet_id).select('projet_id'));
+    if (!r || !r.length) { P.message('Rien n’a été supprimé : reconnectez-vous puis réessayez.'); return; }
+    P.message('Appel supprimé.');
+    location.hash = '#/site/' + PAGE;
+  };
   P.actions['places-libre'] = () => { noterLibre({ debut: Date.now(), faits: {} }); return P.afficher(); };
   P.actions['places-libre-fin'] = () => { noterLibre(null); return P.afficher(); };
   P.actions['places-convoquer'] = () => { if (ecran) window.convoquerProjet(ecran.projet.id); };
@@ -266,5 +321,8 @@
     return P.afficher();
   };
 
-  P.espaces.site.pages[PAGE] = (args) => (args && args[0] ? fiche(decodeURIComponent(args[0])) : liste());
+  P.espaces.site.pages[PAGE] = (args) => {
+    if (!ecran || !args || args[0] !== ecran.appel.projet_id) choixOuvert = false;  // autre appel : liste refermée
+    return args && args[0] ? fiche(decodeURIComponent(args[0])) : liste();
+  };
 })();

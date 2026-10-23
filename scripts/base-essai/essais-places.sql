@@ -91,6 +91,18 @@ select essai(places_prendre(jt('b4')) = 'pris', 'Jean reprend sa place');
 reset role;
 select essai((select reponse from convocation_participants where id = '00000000-0000-0000-0000-0000000000d1') is null
   and (select statut from convocation_envois where participant_id = '00000000-0000-0000-0000-0000000000d1' and sorte = 'rappel') = 'programme', 'Jean : plus noté absent, son rappel de la veille repart');
+-- Koffi décoché par l'agence : son lien ne marche plus, préparer de nouveau ne le recoche pas
+update places_invitations set statut = 'exclu' where model_id = '00000000-0000-0000-0000-0000000000b5' and projet_id = '00000000-0000-0000-0000-0000000000c1';
+update places_appels set places_hommes = 2 where projet_id = '00000000-0000-0000-0000-0000000000c1';
+select essai_qui('00000000-0000-0000-0000-0000000000a2');
+set role authenticated;
+select places_preparer('00000000-0000-0000-0000-0000000000c1');
+reset role;
+select essai((select statut from places_invitations where model_id = '00000000-0000-0000-0000-0000000000b5' and projet_id = '00000000-0000-0000-0000-0000000000c1') = 'exclu', 'mannequin décochée : préparer de nouveau ne la recoche pas');
+set role anon;
+select essai(places_prendre(jt('b5')) = 'inconnu' and places_lire(jt('b5')) is null, 'mannequin décochée : son lien ne montre rien et ne prend pas de place, même s''il en reste');
+reset role;
+update places_invitations set statut = 'invite' where model_id = '00000000-0000-0000-0000-0000000000b5';  -- recoché
 -- appel fermé, projet passé
 update places_appels set ouvert = false where projet_id = '00000000-0000-0000-0000-0000000000c1';
 set role anon;

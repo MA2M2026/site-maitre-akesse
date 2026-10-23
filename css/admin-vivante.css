@@ -904,3 +904,9 @@ form.f .f-sous[hidden] { display: none; }
 .pl-noms { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .pl-noms li { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .pl-sans { margin-top: 12px; }
+.pl-qui summary { cursor: pointer; }
+.pl-qui summary h2 { display: inline; }
+.pl-choix { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.pl-choix .vis { width: 32px; height: 32px; }
+.pl-liste-choix { max-height: 60vh; overflow: auto; margin-top: 10px; }
+.pl-apercu { white-space: pre-wrap; word-break: break-word; background: var(--av-papier, #fff); border-radius: 10px; padding: 12px; font-size: 14px; max-height: 40vh; overflow: auto; }
