@@ -170,6 +170,26 @@ async function partieRegistre(b, nom, vp) {
   ok(/Sans numéro WhatsApp \(1\)/.test(await p.textContent('.pl-sans')) && (await p.$$('.pl-sans .vis')).length === 1 && (await p.$$('.pl-sans .vis img')).length === 0 && /GY/.test(await p.textContent('.pl-sans .vis')), n + '« Sans numéro WhatsApp » : le nom avec son visage (initiales sans photo)');
   const taille = await p.$eval('.pl-sans .vis', e => e.getBoundingClientRect().width);
   ok(taille >= 30, n + 'visage visible (' + taille + ' px)');
+  // « ＋ Ajouter une personne » : une personne extérieure, gardée dans le carnet
+  d.tables.contacts_externes = d.tables.contacts_externes || []; d.memoriser = true;
+  // (la vraie base donne d'office un lien et le statut « invite » à une nouvelle invitation)
+  const valeursParDefaut = async () => { d.tables.places_invitations.forEach((l) => { l.statut = l.statut || 'invite'; l.jeton = l.jeton || J('t'); l.envoye_le = l.envoye_le || null; }); await p.click('[data-action="places-actualiser"]'); await p.waitForTimeout(1000); };
+  await p.fill('#pl-nom', 'JEAN STYLISTE'); await p.fill('#pl-tel', '0102'); await p.click('form[data-form="places-personne"] [type=submit]'); await p.waitForTimeout(500);
+  ok(/numéro WhatsApp correct/.test(await p.textContent('body')) && !ecrits(journal, 'POST', 'contacts_externes').length, n + 'ajout : numéro faux refusé, rien d’enregistré');
+  await p.selectOption('#pl-civ', 'Monsieur'); await p.fill('#pl-tel', '0506070809'); await p.click('form[data-form="places-personne"] [type=submit]'); await p.waitForTimeout(800);
+  ok(/aucune place pour les hommes/.test(await p.textContent('body')) && !ecrits(journal, 'POST', 'places_invitations').length, n + 'ajout : un homme sans place homme dans l’appel → expliqué, pas d’invitation');
+  await p.click('[data-action="places-actualiser"]'); await p.waitForTimeout(1000);
+  ok(/Monsieur JEAN STYLISTE/.test(await p.textContent('#pl-carnet')), n + 'ajout : la personne enregistrée reste proposée dans le carnet');
+  await p.selectOption('#pl-civ', 'Madame'); await p.fill('#pl-nom', 'AWA EXTÉRIEURE'); await p.fill('#pl-tel', '0506070809');
+  await p.click('form[data-form="places-personne"] [type=submit]'); await p.waitForTimeout(1200);
+  await valeursParDefaut();
+  const contact = ecrits(journal, 'POST', 'contacts_externes').flat().pop() || {};
+  const invit = ecrits(journal, 'POST', 'places_invitations').flat().pop() || {};
+  ok(contact.nom === 'AWA EXTÉRIEURE' && contact.civilite === 'Madame' && invit.contact_id && invit.sexe === 'femme' && invit.projet_id === 'p2', n + 'ajout : la personne est enregistrée dans le carnet et invitée');
+  ok(/Madame AWA EXTÉRIEURE/.test(await p.textContent('.pl-qui')) && /personne extérieure/.test(await p.textContent('.pl-qui')) && await p.isVisible('.pl-qui [data-action="places-retirer"]'), n + 'ajout : elle apparaît avec « personne extérieure » et un bouton « Retirer »');
+  ok(/sur 2\./.test(await p.textContent('#contenu')), n + 'ajout : un message de plus à envoyer');
+  await p.click('.pl-qui [data-action="places-retirer"]'); await p.waitForTimeout(1000);
+  ok(journal.some(j => j[0] === 'DELETE' && j[1] === 'places_invitations') && !/AWA EXTÉRIEURE/.test(await p.textContent('.pl-qui ul')), n + '« Retirer » : la personne ajoutée par erreur disparaît de l’appel');
   // elle prend sa place : visage (initiales) dans la grille, sans lien de fiche
   Object.assign(d.tables.places_invitations[0], { statut: 'pris', pris_par: 'mannequin', pris_le: new Date().toISOString() });
   await p.click('[data-action="places-actualiser"]'); await p.waitForTimeout(1200);

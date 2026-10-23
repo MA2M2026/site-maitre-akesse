@@ -165,3 +165,26 @@ set role authenticated;
 select places_preparer('00000000-0000-0000-0000-0000000000c3');
 reset role;
 select essai(not exists (select 1 from places_invitations where model_id = '00000000-0000-0000-0000-0000000000b8'), 'fiche du site sans nom : pas invitée');
+
+-- 23/10/2026 : une personne extérieure ajoutée à la main (carnet des Convocations)
+reset role;
+select essai_qui('00000000-0000-0000-0000-0000000000a2');
+set role authenticated;
+insert into contacts_externes (id, civilite, nom, telephone) values ('00000000-0000-0000-0000-0000000000f1', 'Monsieur', 'KOFFI EXTERIEUR', '0505050505');
+insert into places_appels (projet_id, places_femmes, places_hommes) values ('00000000-0000-0000-0000-0000000000c1', 0, 0) on conflict do nothing;
+update places_appels set places_hommes = 3, ouvert = true where projet_id = '00000000-0000-0000-0000-0000000000c3';
+insert into places_invitations (projet_id, contact_id, sexe) values ('00000000-0000-0000-0000-0000000000c3', '00000000-0000-0000-0000-0000000000f1', 'homme');
+select essai_refuse('insert into places_invitations (projet_id, contact_id, sexe) values (''00000000-0000-0000-0000-0000000000c3'', ''00000000-0000-0000-0000-0000000000f1'', ''homme'')', 'personne extérieure : pas deux fois dans le même appel');
+reset role;
+create temp table jc as select jeton from places_invitations where contact_id = '00000000-0000-0000-0000-0000000000f1';
+grant select on jc to anon;
+set role anon;
+select essai((places_lire((select jeton from jc)) ->> 'nom') = 'KOFFI EXTERIEUR' and (places_lire((select jeton from jc)) ->> 'civilite') = 'Monsieur', 'personne extérieure : son lien montre son nom');
+select essai(places_prendre((select jeton from jc)) = 'pris', 'personne extérieure : prend sa place');
+reset role;
+select essai((select count(*) from convocation_participants where projet_id = '00000000-0000-0000-0000-0000000000c3' and contact_id = '00000000-0000-0000-0000-0000000000f1' and telephone = '0505050505' and nom = 'Monsieur KOFFI EXTERIEUR') = 1, 'personne extérieure : ajoutée aux participants du projet');
+set role anon;
+select essai(places_rendre((select jeton from jc)) = 'desiste', 'personne extérieure : désistement');
+reset role;
+select essai((select reponse from convocation_participants where projet_id = '00000000-0000-0000-0000-0000000000c3' and contact_id = '00000000-0000-0000-0000-0000000000f1') = 'absent', 'personne extérieure : désistée, notée absente');
+select essai((places_lire((select jeton from jr)) -> 'pris' -> 0 ->> 'initiales') = 'NS', 'grille : toujours lisible avec une personne extérieure');

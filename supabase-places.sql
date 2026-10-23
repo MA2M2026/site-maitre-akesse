@@ -43,8 +43,12 @@ create unique index if not exists places_invitations_jeton on places_invitations
 alter table places_invitations add column if not exists mannequin_id uuid references agence_mannequins(id) on delete cascade;
 alter table places_invitations alter column model_id drop not null;
 create unique index if not exists places_invitations_registre on places_invitations (projet_id, mannequin_id) where mannequin_id is not null;
+-- (23/10/2026) … ou une personne extérieure, ajoutée à la main par l'agence (« ＋ Ajouter une
+-- personne ») et gardée dans le carnet des Convocations : contact_id
+alter table places_invitations add column if not exists contact_id uuid references contacts_externes(id) on delete cascade;
+create unique index if not exists places_invitations_contact on places_invitations (projet_id, contact_id) where contact_id is not null;
 alter table places_invitations drop constraint if exists places_invitations_quelquun;
-alter table places_invitations add constraint places_invitations_quelquun check (model_id is not null or mannequin_id is not null);
+alter table places_invitations add constraint places_invitations_quelquun check (model_id is not null or mannequin_id is not null or contact_id is not null);
 -- le carnet des non-inscrits garde le lien avec le registre (convocation d'une mannequin du
 -- registre qui a pris sa place)
 alter table contacts_externes add column if not exists mannequin_id uuid unique references agence_mannequins(id) on delete set null;
@@ -158,15 +162,35 @@ end;
 $$;
 revoke all on function places_participant_registre(uuid, uuid) from public, anon, authenticated;
 
--- les participants du projet qui correspondent à une invitation (profil du site ou registre)
-create or replace function places_participants_de(p_projet uuid, p_model uuid, p_mannequin uuid)
+-- les participants du projet qui correspondent à une invitation (profil du site, registre ou
+-- personne extérieure du carnet)
+drop function if exists places_participants_de(uuid, uuid, uuid);
+create or replace function places_participants_de(p_inv places_invitations)
 returns setof uuid language sql stable security definer set search_path = public as $$
   select cp.id from convocation_participants cp
-  where cp.projet_id = p_projet
-    and ((p_model is not null and cp.model_id = p_model)
-      or (p_mannequin is not null and cp.contact_id = (select c.id from contacts_externes c where c.mannequin_id = p_mannequin)));
+  where cp.projet_id = p_inv.projet_id
+    and ((p_inv.model_id is not null and cp.model_id = p_inv.model_id)
+      or (p_inv.mannequin_id is not null and cp.contact_id = (select c.id from contacts_externes c where c.mannequin_id = p_inv.mannequin_id))
+      or (p_inv.contact_id is not null and cp.contact_id = p_inv.contact_id));
 $$;
-revoke all on function places_participants_de(uuid, uuid, uuid) from public, anon, authenticated;
+revoke all on function places_participants_de(places_invitations) from public, anon, authenticated;
+
+-- une personne extérieure qui prend sa place : participant du projet, pour la convocation
+create or replace function places_participant_contact(p_projet uuid, p_contact uuid)
+returns uuid language plpgsql security definer set search_path = public as $$
+declare part uuid;
+begin
+  select id into part from convocation_participants where projet_id = p_projet and contact_id = p_contact;
+  if part is null then
+    insert into convocation_participants (projet_id, contact_id, nom, email, telephone)
+      select p_projet, c.id, left(trim(coalesce(c.civilite || ' ', '') || c.nom), 160), c.email, c.telephone
+      from contacts_externes c where c.id = p_contact
+      returning id into part;
+  end if;
+  return part;
+end;
+$$;
+revoke all on function places_participant_contact(uuid, uuid) from public, anon, authenticated;
 
 -- 5) Page publique du lien (sans compte) : le projet (sans adresse ni programme), la personne,
 --    les places et la grille des places prises : photo (miniature) d'une personne majeure dont le
@@ -180,6 +204,7 @@ declare
   a agenda_projets;
   m model_profiles;
   r agence_mannequins;
+  ce contacts_externes;
 begin
   if length(coalesce(p_jeton, '')) <> 36 then return null; end if;
   select * into inv from places_invitations where jeton = p_jeton and statut <> 'exclu';
@@ -188,21 +213,22 @@ begin
   select * into a from agenda_projets where id = inv.projet_id;
   select * into m from model_profiles where id = inv.model_id;
   select * into r from agence_mannequins where id = inv.mannequin_id;
+  select * into ce from contacts_externes where id = inv.contact_id;
   return jsonb_build_object(
     'titre', a.titre, 'type', a.type, 'date_debut', a.date_debut, 'date_fin', a.date_fin,
     'heure_evenement', a.heure_evenement, 'lieu', a.lieu, 'ville', a.ville,
-    'nom', coalesce(m.full_name, r.full_name),
-    'civilite', case when inv.model_id is not null then m.civilite when r.genre = 'homme' then 'Monsieur' else 'Mademoiselle' end, 'sexe', inv.sexe, 'statut', inv.statut, 'pris_par', inv.pris_par,
+    'nom', coalesce(m.full_name, r.full_name, ce.nom),
+    'civilite', case when inv.model_id is not null then m.civilite when inv.contact_id is not null then ce.civilite when r.genre = 'homme' then 'Monsieur' else 'Mademoiselle' end, 'sexe', inv.sexe, 'statut', inv.statut, 'pris_par', inv.pris_par,
     'ouvert', ap.ouvert and not a.annule, 'passe', a.annule or coalesce(a.date_fin, a.date_debut) < current_date,
     'places_femmes', ap.places_femmes, 'places_hommes', ap.places_hommes,
     'pris', coalesce((
       select jsonb_agg(jsonb_build_object(
           'sexe', i.sexe, 'moi', i.id = inv.id,
-          'initiales', upper(left(split_part(trim(coalesce(p.full_name, rg.full_name)), ' ', 1), 1) || left(split_part(trim(coalesce(p.full_name, rg.full_name)), ' ', 2), 1)),
+          'initiales', upper(left(split_part(trim(coalesce(p.full_name, rg.full_name, cx.nom)), ' ', 1), 1) || left(split_part(trim(coalesce(p.full_name, rg.full_name, cx.nom)), ' ', 2), 1)),
           'photo', case when p.published and p.date_naissance is not null and p.date_naissance <= current_date - interval '18 years' then
             (select coalesce(ph.url_miniature, ph.url) from model_photos ph where ph.model_id = i.model_id order by ph.principale desc, ph.created_at asc limit 1) end)
         order by i.pris_le)
-      from places_invitations i left join model_profiles p on p.id = i.model_id left join agence_mannequins rg on rg.id = i.mannequin_id
+      from places_invitations i left join model_profiles p on p.id = i.model_id left join agence_mannequins rg on rg.id = i.mannequin_id left join contacts_externes cx on cx.id = i.contact_id
       where i.projet_id = inv.projet_id and i.statut = 'pris'), '[]'::jsonb));
 end;
 $$;
@@ -241,17 +267,20 @@ begin
   if inv.model_id is not null then
     update agenda_projets set mannequin_ids = array_append(array_remove(mannequin_ids, inv.model_id), inv.model_id), updated_at = now()
       where id = projet;
-  else
+  elsif inv.mannequin_id is not null then
     -- mannequin du registre (sans compte) : ajoutée aux participants du projet, pour la convocation
     perform places_participant_registre(projet, inv.mannequin_id);
+  else
+    -- personne extérieure (carnet) : idem
+    perform places_participant_contact(projet, inv.contact_id);
   end if;
   -- place reprise après un désistement : plus « absente », et les rappels (veille, quelques jours
   -- avant), annulés par le désistement, repartent s'ils sont encore à venir
   if inv.statut = 'desiste' then
     update convocation_participants set reponse = null, repondu_le = null
-      where id in (select places_participants_de(projet, inv.model_id, inv.mannequin_id)) and reponse = 'absent';
+      where id in (select places_participants_de(inv)) and reponse = 'absent';
     update convocation_envois e set statut = 'programme'
-      where e.participant_id in (select places_participants_de(projet, inv.model_id, inv.mannequin_id))
+      where e.participant_id in (select places_participants_de(inv))
         and e.sorte in ('rappel', 'rappel_avant') and e.statut = 'annule' and e.prevu_le > now();
   end if;
   return 'pris';
@@ -283,9 +312,9 @@ begin
     update agenda_projets set mannequin_ids = array_remove(mannequin_ids, inv.model_id), updated_at = now() where id = projet;
   end if;
   update convocation_participants set reponse = 'absent', repondu_le = now()
-    where id in (select places_participants_de(projet, inv.model_id, inv.mannequin_id));
+    where id in (select places_participants_de(inv));
   update convocation_envois e set statut = 'annule'
-    where e.participant_id in (select places_participants_de(projet, inv.model_id, inv.mannequin_id)) and e.statut = 'programme';
+    where e.participant_id in (select places_participants_de(inv)) and e.statut = 'programme';
   return 'desiste';
 end;
 $$;

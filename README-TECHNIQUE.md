@@ -360,7 +360,8 @@ qui s'ouvrent ensuite) et échoue si un nom de mannequin est sans photo.
   `envoye_le` / `parent_envoye_le`). Tables réservées aux `admins`. Fonctions :
   `places_preparer` (agence : une invitation par mannequin pas en sourdine, publiée dans le Book ou pas encore,
   et par mannequin active du registre `agence_mannequins` sans compte (colonne `mannequin_id`, coordonnées par
-  `places_contacts_registre` ; place prise → carnet `contacts_externes.mannequin_id` + participant du projet), du sexe
+  `places_contacts_registre` ; place prise → carnet `contacts_externes.mannequin_id` + participant du projet ;
+  « ＋ Ajouter une personne » : personne extérieure du carnet, colonne `contact_id`, retirable tant que rien n'est parti), du sexe
   concerné, rejouable ; un homme « new-faces » sans civilité est compté femme : remplir sa
   civilité),
   `places_lire`, `places_prendre`, `places_rendre` (public, par le jeton seul). `places_prendre`

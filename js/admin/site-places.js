@@ -15,7 +15,8 @@
   const lienFiche = (id) => '#/site/b2-mannequins-publies/' + encodeURIComponent(id);
   // une invitation vise un profil du site (model_id) ou une mannequin du registre de l'agence sans
   // compte (mannequin_id, 23/10/2026) : cle() les distingue dans les listes de noms et de contacts
-  const cle = (i) => i.model_id || 'r:' + i.mannequin_id;
+  // … ou une personne extérieure du carnet (contact_id, « ＋ Ajouter une personne », 23/10/2026)
+  const cle = (i) => i.model_id || (i.mannequin_id ? 'r:' + i.mannequin_id : 'c:' + i.contact_id);
   // le visage (photo du profil, sinon initiales) devant le nom, partout ; lien vers la fiche
   // seulement pour un profil du site
   function visageNom(i, noms, photos) {
@@ -64,6 +65,8 @@
     const modeles = [...new Set(pris.map((x) => x.model_id).filter(Boolean))];
     const [noms, photos, registre] = await Promise.all([nomsDe(modeles), P.photosCouverture(modeles), contactsRegistre([...new Set(pris.map((x) => x.mannequin_id).filter(Boolean))])]);
     registre.forEach((c) => { noms['r:' + c.mannequin_id] = c.full_name; });
+    const externes = [...new Set(pris.map((x) => x.contact_id).filter(Boolean))];
+    if (externes.length) (await P.bd(sb.from('contacts_externes').select('id, nom').in('id', externes))).forEach((c) => { noms['c:' + c.id] = c.nom; });
     const cartes = appels.map((a) => ({ a, p: projets.find((x) => x.id === a.projet_id) })).filter((x) => x.p)
       .sort((x, y) => String(y.p.date_debut).localeCompare(String(x.p.date_debut)))
       .map(({ a, p }, i) => {
@@ -160,7 +163,7 @@
   function destinataires(inv) {
     const c = ecran.contacts[cle(inv)];
     if (!c) return [];
-    const nom = nomAvecCivilite({ full_name: c.full_name, category: c.category }), liste = [];
+    const nom = nomAvecCivilite({ full_name: c.full_name, category: c.category, civilite: c.civilite }), liste = [];
     const mineure = estMineurDossier({ date_naissance: c.date_naissance });
     if (numeroWhatsApp(c.phone)) liste.push({ inv, cle: inv.id, parent: false, nom, tel: c.phone, envoye: inv.envoye_le });
     if (mineure && numeroWhatsApp(c.parent_telephone)) liste.push({ inv, cle: inv.id + '-p', parent: true, nom, parent_nom: c.parent_nom, tel: c.parent_telephone, envoye: inv.parent_envoye_le });
@@ -214,12 +217,24 @@
     const ligne = (i) => {
       const pris = i.statut === 'pris' || i.statut === 'desiste';
       return '<li><label class="pl-choix"><input type="checkbox" data-change="places-choix" data-id="' + P.esc(i.id) + '"' + (i.statut === 'exclu' ? '' : ' checked') + (pris ? ' disabled' : '') + '> ' +
-        P.visage((i.model_id && photos[i.model_id]) || '', noms[cle(i)] || '?', 'rond-vis') + ' <span>' + P.esc(noms[cle(i)] || '?') + (!i.model_id ? ' <small class="doux">(sans compte sur le site)</small>' : '') + (pris ? ' <small class="doux">(' + (i.statut === 'pris' ? 'place prise' : 'désistée') + ')</small>' : '') + '</span></label></li>';
+        P.visage((i.model_id && photos[i.model_id]) || '', noms[cle(i)] || '?', 'rond-vis') + ' <span>' + P.esc(noms[cle(i)] || '?') + (i.contact_id ? ' <small class="doux">(personne extérieure)</small>' : i.mannequin_id ? ' <small class="doux">(sans compte sur le site)</small>' : '') + (pris ? ' <small class="doux">(' + (i.statut === 'pris' ? 'place prise' : 'désistée') + ')</small>' : '') + '</span></label>' +
+        (i.contact_id && i.statut === 'invite' && !i.envoye_le ? ' <button type="button" class="btn petit" data-action="places-retirer" data-id="' + P.esc(i.id) + '">Retirer</button>' : '') + '</li>';
     };
+    // « ＋ Ajouter une personne » (23/10/2026) : une personne pas encore enregistrée dans le site,
+    // gardée dans le carnet des Convocations pour les prochains projets
+    const carnet = ecran.carnet || [];
+    const ajout = '<form class="f pl-ajout" data-form="places-personne"><h3 class="pl-titre-grille large">＋ Ajouter une personne</h3>' +
+      (carnet.length ? '<label class="fl large" for="pl-carnet">Déjà dans le carnet<select id="pl-carnet" name="carnet"><option value="">— Nouvelle personne —</option>' +
+        carnet.map((c) => '<option value="' + P.esc(c.id) + '">' + P.esc([c.civilite, c.nom].filter(Boolean).join(' ')) + '</option>').join('') + '</select></label>' : '') +
+      '<label class="fl" for="pl-civ">Civilité<select id="pl-civ" name="civilite"><option>Mademoiselle</option><option>Madame</option><option>Monsieur</option></select></label>' +
+      '<label class="fl" for="pl-nom">Nom complet<input id="pl-nom" name="nom" maxlength="120" autocomplete="off"></label>' +
+      '<label class="fl" for="pl-tel">WhatsApp<input id="pl-tel" name="tel" type="tel" maxlength="40" inputmode="tel"></label>' +
+      '<p class="doux large">Elle reçoit son lien comme les autres, et reste dans le carnet pour les prochains projets.</p>' +
+      '<div class="ligne large"><button class="btn rouge" type="submit">＋ Ajouter</button></div></form>';
     return '<details class="carte pl-qui"' + (choixOuvert ? ' open' : '') + '><summary><h2>Qui reçoit le lien ? (' + choisies + ' sur ' + invitations.length + ')</h2></summary>' +
       '<p class="doux">Décochez les mannequins qui ne doivent pas recevoir ce projet : elles ne reçoivent rien et ne peuvent pas prendre de place.</p>' +
       '<div class="ligne"><button type="button" class="btn petit" data-action="places-tous" data-valeur="invite">Tout cocher</button><button type="button" class="btn petit" data-action="places-tous" data-valeur="exclu">Tout décocher</button></div>' +
-      '<ul class="pl-noms pl-liste-choix">' + ordre.map(ligne).join('') + '</ul></details>';
+      '<ul class="pl-noms pl-liste-choix">' + ordre.map(ligne).join('') + '</ul>' + ajout + '</details>';
   }
 
   async function fiche(id) {
@@ -234,17 +249,21 @@
     const projet = projets[0];
     if (!projet) return P.entete('Places limitées', retour) + '<div class="carte vide">Le projet de cet appel a été supprimé de l’agenda.</div>';
     const ids = invitations.map((i) => i.model_id).filter(Boolean);
-    const [contacts, photos, registre] = await Promise.all([
+    const [contacts, photos, registre, carnet] = await Promise.all([
       contactsDe(ids),
       P.photosCouverture(ids),
-      contactsRegistre(invitations.map((i) => i.mannequin_id).filter(Boolean))
+      contactsRegistre(invitations.map((i) => i.mannequin_id).filter(Boolean)),
+      P.bd(sb.from('contacts_externes').select('id, civilite, nom, telephone, email, mannequin_id').order('nom')).catch(() => [])
     ]);
     ecran = { appel, projet, invitations, photos, contacts: {} };
     contacts.forEach((c) => { ecran.contacts[c.model_id] = c; });
     // registre : mêmes champs que convocation_contacts_mannequins (genre → category)
     registre.forEach((c) => { ecran.contacts['r:' + c.mannequin_id] = Object.assign({}, c, { category: c.genre }); });
+    // personnes extérieures invitées : leurs coordonnées viennent du carnet
+    carnet.forEach((c) => { if (invitations.some((i) => i.contact_id === c.id)) ecran.contacts['c:' + c.id] = { full_name: c.nom, civilite: c.civilite, category: c.civilite === 'Monsieur' ? 'homme' : 'femme', phone: c.telephone, date_naissance: null }; });
+    ecran.carnet = carnet.filter((c) => !c.mannequin_id && !invitations.some((i) => i.contact_id === c.id));
     const noms = {};
-    Object.keys(ecran.contacts).forEach((k) => { const c = ecran.contacts[k]; noms[k] = nomAvecCivilite({ full_name: c.full_name, category: c.category }); });
+    Object.keys(ecran.contacts).forEach((k) => { const c = ecran.contacts[k]; noms[k] = nomAvecCivilite({ full_name: c.full_name, category: c.category, civilite: c.civilite }); });
     const n = comptes(appel, invitations), fini = passe(projet);
     const prises = (s) => invitations.filter((i) => i.sexe === s && i.statut === 'pris').sort((a, b) => String(a.pris_le).localeCompare(String(b.pris_le)));
 
@@ -284,6 +303,32 @@
       .catch((err) => P.message(P.erreurTexte(err)));
   });
   P.actions['places-actualiser'] = () => P.afficher();
+  // ajouter une personne extérieure (nouvelle, ou déjà dans le carnet)
+  P.formulaires['places-personne'] = async (f) => {
+    choixOuvert = true;
+    let contact = (ecran.carnet || []).find((c) => c.id === f.get('carnet'));
+    if (!contact) {
+      const nom = String(f.get('nom') || '').trim(), tel = String(f.get('tel') || '').trim();
+      if (!nom) { P.message('Indiquez le nom de la personne.'); return; }
+      if (!numeroWhatsApp(tel)) { P.message('Indiquez un numéro WhatsApp correct (ex. 07 01 02 03 04).'); return; }
+      const cree = await P.bd(sb.from('contacts_externes').insert({ civilite: f.get('civilite') || null, nom, telephone: tel }).select('*'));
+      if (!cree || !cree.length) { P.message('La personne n’a pas pu être enregistrée : reconnectez-vous puis réessayez.'); return; }
+      contact = cree[0];
+    }
+    const sexe = contact.civilite === 'Monsieur' ? 'homme' : 'femme';
+    if (!(sexe === 'homme' ? ecran.appel.places_hommes : ecran.appel.places_femmes)) { P.message('Cet appel n’a aucune place pour les ' + (sexe === 'homme' ? 'hommes' : 'femmes') + ' : changez d’abord le « Nombre de places ».'); return; }
+    const r = await P.bd(sb.from('places_invitations').insert({ projet_id: ecran.appel.projet_id, contact_id: contact.id, sexe }).select('id'));
+    if (!r || !r.length) { P.message('Rien n’a été enregistré : reconnectez-vous puis réessayez.'); return; }
+    P.message([contact.civilite, contact.nom].filter(Boolean).join(' ') + ' est ajouté(e) : son lien est prêt à envoyer.');
+    return P.afficher();
+  };
+  // retirer une personne extérieure ajoutée par erreur (seulement si rien ne lui a été envoyé)
+  P.actions['places-retirer'] = async (el) => {
+    choixOuvert = true;
+    const r = await P.bd(sb.from('places_invitations').delete().eq('id', el.dataset.id).not('contact_id', 'is', null).eq('statut', 'invite').is('envoye_le', null).select('id'));
+    if (!r || !r.length) { P.message('Rien n’a été retiré : reconnectez-vous puis réessayez.'); return; }
+    return P.afficher();
+  };
   // cocher / décocher une mannequin (jamais une place déjà prise ou rendue)
   async function choisir(colonne, valeur, statut) {
     choixOuvert = true;
