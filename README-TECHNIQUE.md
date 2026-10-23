@@ -416,6 +416,13 @@ qui s'ouvrent ensuite) et échoue si un nom de mannequin est sans photo.
   version parent) ; relance et rappel : `messageRelance`, `messageRappel`. « 🔔 Rappel à la
   suivante » (23/10/2026) dans la liste des confirmés, même fonctionnement que la relance
   (`ajouterTournee`, `sessionStorage` « ma2m_rappels_<projet> »).
+  Rappel automatique avant l'événement (23/10/2026, `supabase-rappel-avant.sql`) :
+  `agenda_projets.rappel_avant` (coché d'office), `rappel_avant_jours` (2 à 14, 3 par défaut),
+  `rappel_avant_heure` (10:00) ; sorte d'envoi `rappel_avant`, programmée avec la convocation
+  (`heureRappelAvant`), message = celui du bouton « 🔔 Rappel » (+ lien de confirmation pour qui
+  n'a pas répondu) ; suit les changements de date (`convocation_suivre_projet`) ; aucun rappel
+  (veille ou avant) à une personne « absente » (`convocations_a_traiter`). Le formulaire ne
+  montre et n'enregistre ce réglage que si la base a la colonne (fichier SQL exécuté).
   Ligne de menu « Annoncer la sélection » (`b2-selection`, `js/admin/site-convocations.js`) :
   le même écran que « Convocations », titre changé et message de sélection imposé
   (`window.convocationSorteImposee`).

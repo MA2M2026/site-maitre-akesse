@@ -25,7 +25,7 @@ window.demarrerConvocationsPanneau = function () {
   var projet = null, personnes = [], envois = [], carnet = [], enCours = false;
   var STATUTS = { programme: '🕒 programmé', en_cours: '⏳ en cours', envoye: '✅ envoyé', echec: '❌ non envoyé', a_faire: '👉 à envoyer', annule: '— annulé' };
   var CANAUX = { email: '📧 E-mail', whatsapp: '💬 WhatsApp', sms: '📱 SMS' };
-  var SORTES = { selection: 'annonce de la sélection', convocation: 'convocation', rappel: 'rappel de la veille' };
+  var SORTES = { selection: 'annonce de la sélection', convocation: 'convocation', rappel: 'rappel de la veille', rappel_avant: 'rappel avant l’événement' };
   // les deux premiers messages portent le lien de réponse : l'un ou l'autre compte comme « prévenu(e) »
   var PREVENU = ['selection', 'convocation'];
   var sorteChoisie = function () { return $('convoc-sorte').value === 'selection' ? 'selection' : 'convocation'; };
@@ -429,6 +429,9 @@ window.demarrerConvocationsPanneau = function () {
       // la veille (si demandé et à venir)
       var rappel = sorte === 'convocation' && projet.rappel_veille !== false ? heureRappel(projet.date_debut, projet.rappel_heure) : null;
       if (rappel && rappel <= prevu) rappel = null;
+      // rappel automatique quelques jours avant (supabase-rappel-avant.sql : colonne rappel_avant)
+      var rappelAvant = sorte === 'convocation' && 'rappel_avant' in projet && projet.rappel_avant !== false ? heureRappelAvant(projet.date_debut, projet.rappel_avant_jours, projet.rappel_avant_heure) : null;
+      if (rappelAvant && rappelAvant <= prevu) rappelAvant = null;
       var lignes = [];
       choisis.forEach(function (pers) {
         canaux.forEach(function (canal) {
@@ -438,6 +441,7 @@ window.demarrerConvocationsPanneau = function () {
             statut: maintenant ? (canal === 'email' ? 'en_cours' : 'a_faire') : 'programme',
             pris_le: maintenant ? new Date().toISOString() : null, tentatives: maintenant && canal === 'email' ? 1 : 0 }));
           if (rappel) lignes.push(Object.assign({}, base, { sorte: 'rappel', prevu_le: rappel.toISOString(), statut: 'programme' }));
+          if (rappelAvant) lignes.push(Object.assign({}, base, { sorte: 'rappel_avant', prevu_le: rappelAvant.toISOString(), statut: 'programme' }));
         });
       });
       var rr = await sb.from('convocation_envois').upsert(lignes, { onConflict: 'participant_id,sorte,canal' }).select('*');
@@ -458,6 +462,7 @@ window.demarrerConvocationsPanneau = function () {
       } else {
         bilan = 'Programmé pour ' + quand(prevu) + ' : ' + nbEmails + ' e-mail(s) automatique(s)' + (nbWa ? ', ' + nbWa + ' WhatsApp à envoyer (vous serez prévenue par e-mail à l’heure prévue)' : '') + '.';
       }
+      if (rappelAvant) bilan += ' Rappel avant l’événement : ' + quand(rappelAvant) + '.';
       if (rappel) bilan += ' Rappel de la veille : ' + quand(rappel) + '.';
       if (sansMoyen.length) bilan += ' Sans coordonnée pour ce moyen d’envoi : ' + sansMoyen.map(function (x) { return x.nom; }).join(', ') + '.';
       if (sorte === 'selection') bilan += ' Ensuite, choisissez « 📨 Convocation » pour envoyer tous les détails.';
@@ -482,9 +487,11 @@ window.demarrerConvocationsPanneau = function () {
       p.heure_convocation ? 'convocation à ' + p.heure_convocation.replace(':', 'h') : 'heure de convocation non indiquée (à remplir plus haut sur cette page)',
       [p.lieu, p.ville].filter(Boolean).join(', ')].filter(Boolean).join(' · ');
     var rappel = p.rappel_veille !== false ? heureRappel(p.date_debut, p.rappel_heure) : null;
-    $('convoc-rappel-info').textContent = rappel && rappel > new Date()
-      ? '⏰ Rappel automatique la veille : ' + quand(rappel) + ' (réglable plus haut sur cette page).'
-      : 'Pas de rappel la veille pour ce projet.';
+    var rappelAvant = 'rappel_avant' in p && p.rappel_avant !== false ? heureRappelAvant(p.date_debut, p.rappel_avant_jours, p.rappel_avant_heure) : null;
+    $('convoc-rappel-info').textContent = [
+      rappelAvant && rappelAvant > new Date() ? '🔔 Rappel automatique avant l’événement : ' + quand(rappelAvant) + '.' : '',
+      rappel && rappel > new Date() ? '⏰ Rappel automatique la veille : ' + quand(rappel) + '.' : 'Pas de rappel la veille pour ce projet.'
+    ].filter(Boolean).join(' ') + ' (réglables plus haut sur cette page)';
     $('convoc-participants').textContent = 'Chargement…';
     $('convoc-suivi').textContent = '';
     message('');

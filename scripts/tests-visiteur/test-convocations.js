@@ -17,7 +17,7 @@ function donnees(actif) {
   const projet = { id: 'pa2', type: 'defile', titre: 'AFRICA IN RHYTHM', date_debut: '2030-11-15', ville: 'Abidjan', lieu: 'Hôtel Ivoire', pays: "Côte d'Ivoire",
     adresse: 'Boulevard Hassan II, Cocody', visible: true, annule: false, mannequin_ids: ['m1', 'm2'], partenaire_ids: [], seances: [], intervenants: [],
     mannequins_libres: ['Fatou Bamba'], partenaires_libres: [] };
-  if (actif) Object.assign(projet, { heure_evenement: null, heure_convocation: null, deroule: [], a_prevoir: null, rappel_veille: true, rappel_heure: '18:00', message_modele: null });
+  if (actif) Object.assign(projet, { heure_evenement: null, heure_convocation: null, deroule: [], a_prevoir: null, rappel_veille: true, rappel_heure: '18:00', message_modele: null, rappel_avant: true, rappel_avant_jours: 3, rappel_avant_heure: '10:00' });
   return {
     memoriser: true,
     tables: { admins: [{ user_id: 'admin-1' }], casting_applications: [],
@@ -81,10 +81,13 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     }
     await p.fill('#cv-a-prevoir', 'Escarpins noirs\nPièce d’identité');
     await p.fill('#cv-rappel-heure', '19:00');
+    // rappel automatique quelques jours avant (23/10/2026) : 5 jours avant, à 9h30
+    ok(await p.isVisible('#cv-rappel-avant') && await p.isChecked('#cv-rappel-avant') && (await p.inputValue('#cv-rappel-avant-jours')) === '3' && (await p.inputValue('#cv-rappel-avant-heure')) === '10:00', n + 'rappel automatique avant l’événement : coché, 3 jours avant à 10h00');
+    await p.selectOption('#cv-rappel-avant-jours', '5'); await p.fill('#cv-rappel-avant-heure', '09:30');
     if (process.env.CAPTURES) { await p.$eval('#cv-form', e => e.scrollIntoView()); await p.waitForTimeout(800); await p.screenshot({ path: process.env.CAPTURES + '/form-' + vp.width + '.png' }); }
     await p.$eval('#cv-enregistrer', x => x.click()); await p.waitForTimeout(1800);
     const maj = ecrits(journal, 'PATCH', 'agenda_projets').pop() || {};
-    ok(maj.heure_convocation === '15:00' && maj.heure_evenement === '20:00' && maj.deroule.length === 3 && maj.deroule[1].activite === 'Essayage' && /Escarpins/.test(maj.a_prevoir) && maj.rappel_veille === true && maj.rappel_heure === '19:00' && maj.mannequin_ids.join() === 'm1,m2',
+    ok(maj.heure_convocation === '15:00' && maj.heure_evenement === '20:00' && maj.deroule.length === 3 && maj.deroule[1].activite === 'Essayage' && /Escarpins/.test(maj.a_prevoir) && maj.rappel_veille === true && maj.rappel_heure === '19:00' && maj.rappel_avant === true && maj.rappel_avant_jours === 5 && maj.rappel_avant_heure === '09:30' && maj.mannequin_ids.join() === 'm1,m2',
       n + 'projet enregistré avec convocation, déroulé, « À prévoir », rappel et mannequins');
 
     // 2. Panneau d'envoi
@@ -120,6 +123,8 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     ok(participants.length === 4 && participants.some(x => x.parent && x.email === 'mere@test.ci') && participants.some(x => !x.parent && x.email === 'ama@test.ci'), n + '4 participants enregistrés (la mineure et son parent)');
     ok(lignesEnvois.filter(l => l.sorte === 'convocation').length === 8 && lignesEnvois.filter(l => l.sorte === 'rappel').length === 8 && lignesEnvois.some(l => l.sorte === 'rappel' && l.prevu_le === '2030-11-14T19:00:00.000Z'),
       n + '8 convocations (e-mail + WhatsApp) et 8 rappels la veille à 19h00');
+    ok(lignesEnvois.filter(l => l.sorte === 'rappel_avant').length === 8 && lignesEnvois.some(l => l.sorte === 'rappel_avant' && l.prevu_le === '2030-11-10T09:30:00.000Z') && /Rappel avant l’événement/.test(await p.textContent('#convoc-msg')),
+      n + '8 rappels automatiques 5 jours avant, à 9h30');
     ok(emails.length === 4 && emails.some(e => e.to_email === 'ama@test.ci') && emails.some(e => e.to_email === 'mere@test.ci' && e.to_name === 'Madame Ama Mère') && emails.every(e => !/\*/.test(e.message)), n + '4 e-mails envoyés tout de suite (la mineure et son parent), sans marques WhatsApp');
     ok(ecrits(journal, 'PATCH', 'convocation_envois').filter(x => x.statut === 'envoye').length === 4, n + 'e-mails marqués « envoyé »');
     ok(/4 e-mail\(s\) envoyé\(s\) sur 4/.test(await p.textContent('#convoc-msg')) && /Rappel de la veille/.test(await p.textContent('#convoc-msg')), n + 'bilan affiché');

@@ -58,6 +58,8 @@ window.demarrerConvocationsPage = function (racine) {
     $('cv-compte').textContent = n ? n + (n > 1 ? ' mannequins choisis' : ' mannequin choisi') : '';
   }
 
+  // la base connaît-elle le rappel quelques jours avant ? (colonne présente sur les projets lus)
+  function rappelAvantConnu() { return projets.some(function (x) { return 'rappel_avant' in x; }); }
   // Projet choisi dans la liste (ou vierge pour « Nouveau projet »)
   function remplir(p) {
     projetChoisi = p || null;
@@ -69,6 +71,12 @@ window.demarrerConvocationsPage = function (racine) {
     v('cv-a-prevoir', p && p.a_prevoir); v('cv-message', p && p.message_modele);
     $('cv-rappel').checked = !p || p.rappel_veille !== false;
     $('cv-rappel-heure').value = (p && p.rappel_heure) || '18:00';
+    $('cv-rappel-avant').checked = !p || p.rappel_avant !== false;
+    $('cv-rappel-avant-jours').value = String((p && p.rappel_avant_jours) || 3);
+    if (!$('cv-rappel-avant-jours').value) $('cv-rappel-avant-jours').value = '3';
+    $('cv-rappel-avant-heure').value = (p && p.rappel_avant_heure) || '10:00';
+    // (rappel quelques jours avant : seulement quand la base le connaît, supabase-rappel-avant.sql)
+    $('cv-rappel-avant-ligne').hidden = !rappelAvantConnu();
     $('cv-visible').checked = !p || !!p.visible;
     $('cv-deroule').textContent = '';
     ((p && p.deroule) || []).forEach(function (x) { ajouterEtapeDeroule($('cv-deroule'), x.heure, x.activite); });
@@ -122,6 +130,7 @@ window.demarrerConvocationsPage = function (racine) {
       rappel_veille: $('cv-rappel').checked, rappel_heure: $('cv-rappel-heure').value || '18:00',
       message_modele: $('cv-message').value.trim() || null, visible: $('cv-visible').checked, mannequin_ids: ids
     };
+    if (rappelAvantConnu()) Object.assign(ligne, { rappel_avant: $('cv-rappel-avant').checked, rappel_avant_jours: Number($('cv-rappel-avant-jours').value) || 3, rappel_avant_heure: $('cv-rappel-avant-heure').value || '10:00' });
     enCours = true;
     $('cv-enregistrer').disabled = true;
     message('Enregistrement…');

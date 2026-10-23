@@ -14,7 +14,7 @@ if ! psql -h $D -p $P -U postgres -c 'select 1' >/dev/null 2>&1; then
 fi
 Q="psql -h $D -p $P -U postgres -v ON_ERROR_STOP=1 -q"
 $Q -c 'drop database if exists essai' -c 'create database essai'
-for f in scripts/base-essai/socle-supabase.sql supabase-setup.sql supabase-extension.sql supabase-administration.sql supabase-administration.sql scripts/base-essai/essais-administration.sql supabase-convocations.sql supabase-selection.sql supabase-places.sql supabase-places.sql scripts/base-essai/essais-places.sql; do
+for f in scripts/base-essai/socle-supabase.sql supabase-setup.sql supabase-extension.sql supabase-administration.sql supabase-administration.sql scripts/base-essai/essais-administration.sql supabase-convocations.sql supabase-selection.sql supabase-places.sql supabase-places.sql scripts/base-essai/essais-places.sql supabase-rappel-avant.sql supabase-rappel-avant.sql scripts/base-essai/essais-rappel-avant.sql; do
   echo "########## $f"
   # pg_cron et pg_net n'existent pas en local : imités par le socle
   sed -E 's/^create extension if not exists (pg_cron|pg_net)[^;]*;/-- (essai local) &/' "$f" > /tmp/essai-sql.sql

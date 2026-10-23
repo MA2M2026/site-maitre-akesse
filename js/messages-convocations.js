@@ -103,6 +103,14 @@
   // « le dimanche 15 novembre 2026 »
   const leJour = (iso) => { const d = dateLongue(iso); return d ? 'le ' + d.charAt(0).toLowerCase() + d.slice(1) : ''; };
 
+  // Heure du rappel quelques jours avant (23/10/2026), comme la base
+  // (convocation_heure_rappel_avant) : 3 jours avant à 10h00 par défaut.
+  function heureRappelAvant(dateDebut, jours, heure) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(dateDebut || ''));
+    if (!m) return null;
+    const h = /^\d{2}:\d{2}$/.test(heure || '') ? heure : '10:00';
+    return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3] - (Number(jours) || 3), +h.slice(0, 2), +h.slice(3)));
+  }
   // Heure du rappel de la veille, comme la base (convocation_heure_rappel) : Abidjan = UTC.
   function heureRappel(dateDebut, heure) {
     const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(dateDebut || ''));
@@ -112,9 +120,12 @@
   }
 
   // projet : ligne d'agenda_projets ; participant : { nom, parent, parent_nom } ;
-  // sorte : 'selection' | 'convocation' | 'rappel'. Renvoie { texte (WhatsApp, *gras*), email (sans marques) }.
+  // sorte : 'selection' | 'convocation' | 'rappel' | 'rappel_avant'. Renvoie { texte (WhatsApp,
+  // *gras*), email (sans marques) }.
   function messageConvocation(projet, participant, sorte) {
     const p = projet || {}, q = participant || {};
+    // rappel automatique quelques jours avant : le message du bouton « 🔔 Rappel »
+    if (sorte === 'rappel_avant') { const t = messageRappel(p, q); return { texte: t, email: sansMarquesWhatsApp(t) }; }
     const parent = !!q.parent;
     const qui = String(q.nom || '').trim();
     const pourParent = parent && qui;  // message au parent : on parle de l'enfant
@@ -189,7 +200,10 @@
       '🔔 *Rappel :* nous vous confirmons ' + leProjet(p) + (leJour(p.date_debut) ? ', *' + leJour(p.date_debut) + '*' : '') + '.'
         + (heure ? ' ' + (pourParent ? qui + ' est ' : 'Vous êtes ') + attendu + ' à *' + heure + ' précises*.' : '')
         + (lieu ? '\n📍 ' + lieu : ''), '',
-      'Nous comptons sur ' + (pourParent ? 'sa présence' : 'votre présence') + '. À très bientôt ! ✨', '_L’équipe Maître Akesse Model Management_'].join('\n');
+      'Nous comptons sur ' + (pourParent ? 'sa présence' : 'votre présence') + '. À très bientôt ! ✨']
+      // (rappel automatique : une personne qui n'a pas encore répondu peut confirmer d'un clic)
+      .concat(q.jeton && q.reponse !== 'confirme' && 'reponse' in q ? ['✅ *Pas encore de réponse ? Confirmez en un clic :* ' + LIEN_CONFIRMER + q.jeton] : [])
+      .concat(['_L’équipe Maître Akesse Model Management_']).join('\n');
   }
 
   // « Places limitées » (23/10/2026) : le message WhatsApp envoyé à chaque mannequin (et au parent
@@ -229,7 +243,7 @@
       .replace(/(^|[\s(«])_([^_\n]+)_(?=$|[\s.,;:!?)»])/gm, '$1$2');
   }
 
-  const outils = { messageConvocation, messageRelance, messageRappel, messagePlaces, LIEN_PLACES, sansMarquesWhatsApp, heureRappel, dateLongue, MODELE_CONVOCATION, MODELE_SELECTION, EMAIL_AGENCE, LIEN_CONFIRMER };
+  const outils = { heureRappelAvant, messageConvocation, messageRelance, messageRappel, messagePlaces, LIEN_PLACES, sansMarquesWhatsApp, heureRappel, dateLongue, MODELE_CONVOCATION, MODELE_SELECTION, EMAIL_AGENCE, LIEN_CONFIRMER };
   if (typeof module !== 'undefined' && module.exports) module.exports = outils;
   else Object.assign(racine, outils);
 })(typeof window !== 'undefined' ? window : globalThis);
