@@ -17,9 +17,11 @@ drop index if exists convocation_participants_contact;
 create unique index if not exists convocation_participants_contact_parent on convocation_participants (projet_id, contact_id, parent) where contact_id is not null;
 
 -- 2) Ajouter une personne (agence → registre + carnet ; extérieure → carnet). Réservé à l'agence.
---    Renvoie { contact_id, mannequin_id }.
+--    WhatsApp ou e-mail (au moins l'un des deux ; pour une mineure de l'agence, celui du parent suffit). Renvoie { contact_id, mannequin_id }.
+drop function if exists personne_ajouter(boolean, text, text, text, text, text);
 create or replace function personne_ajouter(p_agence boolean, p_civilite text, p_nom text, p_telephone text,
-                                            p_parent_nom text default null, p_parent_telephone text default null)
+                                            p_parent_nom text default null, p_parent_telephone text default null,
+                                            p_email text default null)
 returns jsonb language plpgsql security definer set search_path = public as $$
 declare
   reg uuid;
@@ -27,28 +29,36 @@ declare
   nom text := trim(coalesce(p_nom, ''));
   pnom text := nullif(trim(coalesce(p_parent_nom, '')), '');
   ptel text := nullif(trim(coalesce(p_parent_telephone, '')), '');
+  tel text := nullif(trim(coalesce(p_telephone, '')), '');
+  mail text := nullif(lower(trim(coalesce(p_email, ''))), '');
 begin
-  if not exists (select 1 from admins where user_id = auth.uid()) then raise exception 'Réservé à l''agence.'; end if;
+  -- (gestion des projets ou des paiements : une mannequin « de l'agence » entre dans le registre
+  -- depuis un projet, voulu par la propriétaire le 23/10/2026)
+  if not exists (select 1 from admins where user_id = auth.uid()) or not (portail_peut('site') or portail_peut('paiements')) then
+    raise exception 'Réservé à l''agence.';
+  end if;
   if length(nom) not between 2 and 120 then raise exception 'Indiquez le nom complet.'; end if;
   if p_civilite is not null and p_civilite not in ('Madame', 'Mademoiselle', 'Monsieur') then raise exception 'Civilité inconnue.'; end if;
-  if coalesce(p_telephone, '') !~ '^[0-9]{8,15}$' then raise exception 'Le numéro WhatsApp n''est pas valable.'; end if;
+  if tel is null and mail is null and ptel is null then raise exception 'Indiquez au moins son WhatsApp ou son e-mail (ou celui de son parent).'; end if;
+  if tel is not null and tel !~ '^[0-9]{8,15}$' then raise exception 'Le numéro WhatsApp n''est pas valable.'; end if;
+  if mail is not null and (length(mail) > 160 or mail !~ '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$') then raise exception 'L''adresse e-mail n''est pas valable.'; end if;
   if (pnom is null) <> (ptel is null) then raise exception 'Pour le parent, indiquez son nom ET son numéro WhatsApp (ou aucun des deux).'; end if;
   if ptel is not null and ptel !~ '^[0-9]{8,15}$' then raise exception 'Le numéro WhatsApp du parent n''est pas valable.'; end if;
   if not p_agence and ptel is not null then raise exception 'Une mannequin extérieure est majeure : pas de parent.'; end if;
   if p_agence then
-    insert into agence_mannequins (full_name, genre, telephone, parent_nom, parent_telephone, notes)
-      values (nom, case when p_civilite = 'Monsieur' then 'homme' else 'femme' end, p_telephone, pnom, ptel,
+    insert into agence_mannequins (full_name, genre, telephone, email, parent_nom, parent_telephone, notes)
+      values (nom, case when p_civilite = 'Monsieur' then 'homme' else 'femme' end, tel, mail, pnom, ptel,
               'Ajoutée depuis un projet (Places limitées ou Convocations), sans compte sur le site.')
       returning id into reg;
   end if;
-  insert into contacts_externes (civilite, nom, telephone, parent_nom, parent_telephone, mannequin_id)
-    values (p_civilite, nom, p_telephone, pnom, ptel, reg)
+  insert into contacts_externes (civilite, nom, telephone, email, parent_nom, parent_telephone, mannequin_id)
+    values (p_civilite, nom, tel, mail, pnom, ptel, reg)
     returning id into contact;
   return jsonb_build_object('contact_id', contact, 'mannequin_id', reg);
 end;
 $$;
-revoke all on function personne_ajouter(boolean, text, text, text, text, text) from public, anon;
-grant execute on function personne_ajouter(boolean, text, text, text, text, text) to authenticated;
+revoke all on function personne_ajouter(boolean, text, text, text, text, text, text) from public, anon;
+grant execute on function personne_ajouter(boolean, text, text, text, text, text, text) to authenticated;
 
 -- 3) Une mannequin du registre (sans compte) qui prend sa place : fiche dans le carnet (une seule
 --    par mannequin) et participant(s) du projet, pour la convocation. Parent connu et mineure (ou

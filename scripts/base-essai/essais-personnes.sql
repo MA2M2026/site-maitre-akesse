@@ -10,12 +10,18 @@ create temp table ajout_ext as select personne_ajouter(false, 'Monsieur', 'PARTE
 select essai_refuse('select personne_ajouter(false, ''Madame'', ''EXT AVEC PARENT'', ''2250704040404'', ''X'', ''2250705050505'')', 'extérieure : pas de parent (toujours majeure)');
 select essai_refuse('select personne_ajouter(true, ''Madame'', ''PARENT INCOMPLET'', ''2250704040404'', ''Madame X'', null)', 'parent : le nom ET le numéro, ou rien');
 select essai_refuse('select personne_ajouter(true, ''Madame'', ''MAUVAIS'', ''12'')', 'numéro WhatsApp pas valable : refusé');
+select essai_refuse('select personne_ajouter(false, ''Madame'', ''SANS RIEN'', null)', 'ni WhatsApp ni e-mail : refusé');
+select essai_refuse('select personne_ajouter(false, ''Madame'', ''MAUVAIS MAIL'', null, null, null, ''pas-une-adresse'')', 'e-mail pas valable : refusé');
+create temp table ajout_petite as select personne_ajouter(true, 'Mademoiselle', 'PETITE SANS TEL', null, 'Madame Maman', '2250706060606') as r;
+create temp table ajout_mail as select personne_ajouter(false, 'Madame', 'PAR MAIL', null, null, null, ' Par.Mail@Exemple.CI ') as r;
 reset role;
 select essai((select full_name = 'NOUVELLE AGENCE' and genre = 'femme' and user_id is null and parent_nom = 'Madame Mère Agence' and statut = 'actif'
   from agence_mannequins where id = ((select r from ajout_agence) ->> 'mannequin_id')::uuid), 'agence : dans le registre (sans compte), avec son parent');
 select essai((select mannequin_id is not null and parent_telephone = '2250702020202' from contacts_externes where id = ((select r from ajout_agence) ->> 'contact_id')::uuid), 'agence : aussi dans le carnet, liée au registre');
 select essai((select mannequin_id is null from contacts_externes where id = ((select r from ajout_ext) ->> 'contact_id')::uuid)
   and not exists (select 1 from agence_mannequins where full_name = 'PARTENAIRE EXT'), 'extérieure : dans le carnet seulement, jamais dans le registre');
+select essai((select telephone is null and parent_telephone = '2250706060606' from contacts_externes where id = ((select r from ajout_petite) ->> 'contact_id')::uuid), 'mineure de l''agence sans téléphone : le numéro du parent suffit');
+select essai((select email = 'par.mail@exemple.ci' and telephone is null from contacts_externes where id = ((select r from ajout_mail) ->> 'contact_id')::uuid), 'une adresse e-mail suffit (sans WhatsApp)');
 -- elle prend une place : elle ET son parent deviennent participants du projet
 insert into agenda_projets (id, type, titre, date_debut) values ('00000000-0000-0000-0000-0000000000e9', 'defile', 'PROJET PARENT', current_date + 20);
 select places_participant_registre('00000000-0000-0000-0000-0000000000e9', ((select r from ajout_agence) ->> 'mannequin_id')::uuid);
@@ -34,4 +40,9 @@ reset role;
 select essai_qui('00000000-0000-0000-0000-0000000000a5');
 set role authenticated;
 select essai_refuse('select personne_ajouter(true, ''Madame'', ''INTRUSE'', ''2250709090909'')', 'compte mannequin : ne peut pas ajouter de personne');
+reset role;
+-- le comptable (ni projets ni paiements) ne peut pas ajouter de mannequin au registre
+select essai_qui('00000000-0000-0000-0000-0000000000a4');
+set role authenticated;
+select essai_refuse('select personne_ajouter(true, ''Madame'', ''PAR LE COMPTABLE'', ''2250709090908'')', 'comptable : ne peut pas ajouter de personne');
 reset role;
