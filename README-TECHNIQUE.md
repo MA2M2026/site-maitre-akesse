@@ -169,6 +169,13 @@ agents de code (Codex, Copilot, Cursor…). `GUIDE-DE-SECOURS.md` est le guide d
 propriétaire pour se débrouiller sans IA (version PDF imprimable remise le 13/10/2026).
 
 ## 💸 Payer les mannequins (Comptabilité, 22/10/2026, choix de la propriétaire : Wave d'abord)
+Mineure payée sur le Wave de son parent (23/10/2026, `supabase-cachets-parent.sql`) : en
+choisissant une mannequin mineure du registre, le formulaire annonce le versement au parent,
+demande le nom du parent et met son numéro Wave ; `cachets_mannequins.parent_nom` garde à qui
+l'argent est allé (« versé au parent » dans la liste, reçu WhatsApp envoyé à ce numéro). Un parent
+manquant ou changé est enregistré par `cachet_enregistrer_parent` (Paiements ou Comptabilité
+seulement) dans le registre et, si elle est inscrite, dans `contacts_parents` (sa fiche).
+Essais : `test-cachets.js`, `scripts/base-essai/essais-cachets-parent.sql`.
 
 Rubrique « Payer les mannequins » de l'espace 3 (`js/portail/espace-compta-cachets.js`, chargé dans
 `/admin/`) ; base : **`supabase-cachets.sql`** (à exécuter une fois dans Supabase).

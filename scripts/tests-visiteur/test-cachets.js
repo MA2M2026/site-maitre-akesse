@@ -82,6 +82,21 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     await p.fill('#cc-taux', '25'); await p.click('form[data-form="cachet-commission"] [type=submit]'); await p.waitForTimeout(1000);
     const regl = journal.filter((j) => j[0] === 'PATCH' && j[1] === 'compta_reglages').map((j) => JSON.parse(j[3])).pop() || {};
     ok(regl.commission_taux === 25, n + 'commission de l’agence modifiable : 25 % enregistré');
+    // 5. mannequin mineure sans parent enregistré : payée sur le Wave du parent, saisi ici et gardé (23/10/2026)
+    Object.assign(d.tables.agence_mannequins[2], { date_naissance: '2013-05-05', parent_nom: null, parent_telephone: null });
+    await p.goto(URL_ADMIN + '#/compta'); await p.waitForTimeout(400); await p.goto(URL_ADMIN + '#/compta/cachets'); await p.waitForSelector('[data-action="cachet-nouveau"]'); await p.waitForTimeout(800);
+    await p.click('[data-action="cachet-nouveau"]'); await p.waitForSelector('.cvi-item[data-valeur="r2"]'); await p.click('.cvi-item[data-valeur="r2"]'); await p.waitForTimeout(200);
+    ok(await p.isVisible('#ca-mineure') && await p.isVisible('#ca-parent-nom') && /Numéro Wave du parent/.test(await p.textContent('#ca-tel-libelle')) && (await p.inputValue('#ca-tel')) === '',
+      n + 'mineure : « versé sur le Wave de son parent », nom et numéro du parent demandés');
+    await p.selectOption('#ca-motif', 'shooting'); await p.fill('#ca-prestation', 'Shooting enfants'); await p.fill('#ca-montant', '10000'); await p.fill('#ca-tel', '07 07 12 12 12');
+    await p.click('form[data-form="cachet-ajouter"] [type=submit]'); await p.waitForTimeout(600);
+    ok(!journal.some((j) => j[0] === 'rpc' && j[1] === 'cachet_enregistrer_parent'), n + 'mineure : sans le nom du parent, rien n’est enregistré');
+    await p.fill('#ca-parent-nom', 'Madame Yao Mère'); await p.click('form[data-form="cachet-ajouter"] [type=submit]'); await p.waitForTimeout(1200);
+    const parentRpc = journal.filter((j) => j[0] === 'rpc' && j[1] === 'cachet_enregistrer_parent').map((j) => JSON.parse(j[2]))[0] || {};
+    const creeMineure = journal.filter((j) => j[0] === 'POST' && j[1] === 'cachets_mannequins').map((j) => JSON.parse(j[3])).pop() || {};
+    ok(parentRpc.p_mannequin === 'r2' && parentRpc.p_nom === 'Madame Yao Mère' && parentRpc.p_telephone === '2250707121212', n + 'parent enregistré dans le registre et sur la fiche (cachet_enregistrer_parent)');
+    ok(creeMineure.agence_mannequin_id === 'r2' && creeMineure.telephone === '2250707121212' && creeMineure.parent_nom === 'Madame Yao Mère' && creeMineure.beneficiaire === 'GRÂCE YAO', n + 'cachet de la mineure : versé au numéro du parent, nom du parent gardé');
+    ok(/versé au parent : Madame Yao Mère/.test(await p.textContent('#contenu')), n + 'liste « À payer » : « versé au parent »');
     const pales = await lirePageEntiere(p);
     ok(!pales.length, n + 'textes lisibles ' + pales.slice(0, 4).map((x) => x.texte.slice(0, 20) + ' (' + x.contraste + ')').join(', '));
     ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)), n + 'rien ne dépasse de l’écran');

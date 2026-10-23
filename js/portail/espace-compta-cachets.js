@@ -25,6 +25,10 @@
   // Motif choisi dans une liste et reçu après paiement (supabase-cachets-recus.sql ; outils communs :
   // window.CachetsMa2m, js/cachets-communs.js) — false tant que ce SQL n'est pas exécuté
   let recus = false;
+  // Mineure payée sur le Wave de son parent (supabase-cachets-parent.sql) — false tant que ce SQL
+  // n'est pas exécuté
+  let parents = false;
+  const mineure = (m) => !!m && P.age(m.date_naissance) !== null && P.age(m.date_naissance) < 18;
   const K = window.CachetsMa2m;
   const pourcent = (x) => String(Number(x)).replace('.', ',') + ' %';
   // nom : lien vers la fiche (et sa photo en médaillon, js/admin/coque.js) pour qui voit les Paiements
@@ -36,8 +40,10 @@
   // Reçu sur WhatsApp : à la mannequin, ou à son parent si elle est mineure (règle de toute
   // l'Administration : les messages d'un mineur vont au parent)
   function lienRecuWhatsApp(c, registre) {
+    // cachet versé au parent : le reçu part au numéro payé, au nom du parent
+    if (c.parent_nom) return 'https://wa.me/' + c.telephone + '?text=' + encodeURIComponent(K.texteRecu(c, c.parent_nom));
     const m = registre.find((x) => x.id === c.agence_mannequin_id);
-    const parent = m && m.parent_telephone && P.age(m.date_naissance) !== null && P.age(m.date_naissance) < 18 ? m : null;
+    const parent = m && m.parent_telephone && mineure(m) ? m : null;
     const n = parent ? numero(parent.parent_telephone) : c.telephone;
     return 'https://wa.me/' + n + '?text=' + encodeURIComponent(K.texteRecu(c, parent ? parent.parent_nom || 'Madame, Monsieur' : ''));
   }
@@ -46,19 +52,21 @@
     try { liste = await P.bd(sb.from('cachets_mannequins').select('*').order('cree_le', { ascending: false }).limit(300)); }
     catch (e) { if (tableAbsente(e)) return P.entete('Payer les mannequins') + ABSENTE; throw e; }
     cachets = liste;
-    const [registre, projets, reglage, colonneMotif] = await Promise.all([
+    const [registre, projets, reglage, colonneMotif, colonneParent] = await Promise.all([
       P.bd(sb.from('agence_mannequins').select('id, full_name, telephone, statut, user_id, date_naissance, parent_nom, parent_telephone').eq('statut', 'actif').order('full_name')).catch(() => []),
       P.bd(sb.from('agenda_projets').select('id, titre, date_debut').eq('annule', false).gte('date_debut', new Date(Date.now() - 120 * 864e5).toISOString().slice(0, 10)).order('date_debut', { ascending: false }).limit(40)).catch(() => []),
       P.bd(sb.from('compta_reglages').select('*').eq('id', 1).maybeSingle()).catch(() => null),
-      sb.from('cachets_mannequins').select('motif, numero_recu, jeton').limit(1)
+      sb.from('cachets_mannequins').select('motif, numero_recu, jeton').limit(1),
+      sb.from('cachets_mannequins').select('parent_nom').limit(1)
     ]);
     recus = !!K && !colonneMotif.error;
+    parents = !colonneParent.error;
     commission = reglage && reglage.commission_taux != null ? Number(reglage.commission_taux) : null;
     P.etat.cachetsRegistre = registre;
     const aPayer = liste.filter((c) => c.statut === 'a_payer'), payes = liste.filter((c) => c.statut === 'paye').slice(0, 60);
     const total = aPayer.reduce((s, c) => s + c.montant, 0);
     const carte = (c) => '<div class="cachet' + (c.statut === 'a_payer' ? '' : ' fait') + '"><div class="t">' + nom(c) +
-      '<small>' + P.esc(c.prestation) + ' · ' + joli(c.telephone) + '</small>' +
+      '<small>' + P.esc(c.prestation) + ' · ' + joli(c.telephone) + (c.parent_nom ? ' · versé au parent : ' + P.esc(c.parent_nom) : '') + '</small>' +
       (c.montant_prestation ? '<small>Prestation ' + P.fcfa(c.montant_prestation) + ' · commission de l’agence ' + pourcent(c.commission_taux) + ' : ' + P.fcfa(c.commission) + '</small>' : '') +
       '</div><span class="cachet-montant">' + P.fcfa(c.montant) + '</span>' +
       (c.statut === 'a_payer' ? '<div class="ligne"><button class="btn petit" type="button" data-action="cachet-copier" data-numero="' + P.esc(c.telephone) + '">Copier le numéro</button>' +
@@ -87,7 +95,10 @@
       P.choixVisages({ id: 'ca-qui', nom: 'qui', libelle: 'Qui ?', sorte: 'registre', change: 'cachet-qui', valeur: '',
         autres: [['', 'Personne extérieure (nom et numéro)', '＋']], items: registre.map((m) => ({ id: m.id, nom: m.full_name })) }) +
       '<label class="fl" for="ca-nom">Nom et prénoms<input id="ca-nom" name="nom" maxlength="160" required></label>' +
-      '<label class="fl" for="ca-tel">Numéro Wave<input id="ca-tel" name="telephone" type="tel" inputmode="tel" required placeholder="07 07 07 07 07"></label>' +
+      // mineure : payée sur le Wave de son parent, dont le nom et le numéro sont gardés
+      '<p class="large note info" id="ca-mineure" hidden>Mannequin mineure : le cachet est versé sur le compte Wave de son parent. S’il manque, son nom et son numéro sont enregistrés dans le registre et sur sa fiche.</p>' +
+      '<label class="fl" for="ca-parent-nom" id="ca-parent-ligne" hidden>Nom du parent<input id="ca-parent-nom" name="parent_nom" maxlength="160" placeholder="ex. : Madame Koné"></label>' +
+      '<label class="fl" for="ca-tel"><span id="ca-tel-libelle">Numéro Wave</span><input id="ca-tel" name="telephone" type="tel" inputmode="tel" required placeholder="07 07 07 07 07"></label>' +
       '<label class="fl" for="ca-projet">Projet de l’agenda (facultatif)<select id="ca-projet" name="projet"><option value="">—</option>' + (tpl ? tpl.innerHTML : '') + '</select></label>' +
       (recus ? '<label class="fl" for="ca-motif">Motif du cachet<select id="ca-motif" name="motif" required><option value="">— Choisir —</option>' +
           K.MOTIFS.map((m) => '<option value="' + m[0] + '">' + P.esc(m[1]) + '</option>').join('') + '</select></label>' +
@@ -100,10 +111,16 @@
     document.getElementById('ca-nom').focus();
   };
   // une mannequin du registre : nom et numéro remplis d'office (modifiables)
+  // (mineure : le numéro Wave de son parent, et son nom)
   P.changements['cachet-qui'] = (el) => {
-    const m = (P.etat.cachetsRegistre || []).find((x) => x.id === el.value);
-    document.getElementById('ca-nom').value = m ? m.full_name : '';
-    document.getElementById('ca-tel').value = m ? (m.telephone || '') : '';
+    const m = (P.etat.cachetsRegistre || []).find((x) => x.id === el.value), parent = parents && mineure(m);
+    const $ = (id) => document.getElementById(id);
+    $('ca-nom').value = m ? m.full_name : '';
+    $('ca-tel').value = m ? ((parent ? m.parent_telephone : m.telephone) || '') : '';
+    $('ca-mineure').hidden = $('ca-parent-ligne').hidden = !parent;
+    $('ca-parent-nom').required = parent;
+    $('ca-parent-nom').value = parent ? m.parent_nom || '' : '';
+    $('ca-tel-libelle').textContent = parent ? 'Numéro Wave du parent' : 'Numéro Wave';
   };
   P.formulaires['cachet-ajouter'] = async (f) => {
     const tel = numero(t(f, 'telephone')), montant = Math.round(Number(f.get('montant')));
@@ -118,6 +135,18 @@
     if (!prestation) { P.message('Indiquez la prestation, ou choisissez le projet de l’agenda.'); return; }
     // avec la commission : la base recalcule la commission et le montant à verser (montant ci-dessous provisoire)
     const ligne = { beneficiaire: t(f, 'nom'), telephone: tel, montant, prestation, projet_id: projet, agence_mannequin_id: t(f, 'qui'), statut: 'a_payer', cree_le: new Date().toISOString() };
+    // mineure : versée au parent ; son nom et son numéro, s'ils manquaient ou ont changé, vont dans
+    // le registre et sur sa fiche (cachet_enregistrer_parent)
+    const m = (P.etat.cachetsRegistre || []).find((x) => x.id === ligne.agence_mannequin_id);
+    if (parents && mineure(m)) {
+      const parentNom = t(f, 'parent_nom');
+      if (!parentNom) { P.message('Indiquez le nom du parent.'); return; }
+      ligne.parent_nom = parentNom;
+      if (parentNom !== (m.parent_nom || '') || tel !== numero(m.parent_telephone)) {
+        await P.rpc('cachet_enregistrer_parent', { p_mannequin: m.id, p_nom: parentNom, p_telephone: tel });
+        Object.assign(m, { parent_nom: parentNom, parent_telephone: tel });
+      }
+    }
     if (commission !== null) ligne.montant_prestation = montant;
     if (recus) ligne.motif = motif;
     const r = await P.bd(sb.from('cachets_mannequins').insert(ligne).select('id'));
