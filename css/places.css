@@ -1,0 +1,17 @@
+/* Page « Places limitées » (places.html, 23/10/2026) : état en grand (vert « Bravo », doux
+   « Oups »), puis la grille des places : une case par place, la photo de qui l'a prise. */
+.places [hidden] { display: none !important; }
+.places { max-width: 640px; }
+.pl-etat { margin: 1.6rem 0 0.4rem; padding: 1.2rem 1rem; border-radius: 14px; font-size: 1.15rem; line-height: 1.5; color: #1e1d1c; background: #fff; border: 1px solid rgba(30, 29, 28, 0.12); }
+.pl-etat strong { display: block; font-size: 1.45rem; margin-bottom: 0.3rem; }
+.pl-etat.bravo { background: #157A43; border-color: #157A43; color: #fff; }
+.pl-grilles { margin: 1.4rem 0 2rem; }
+.pl-grilles h2 { color: #1e1d1c; font-family: var(--mag-texte, inherit); font-size: 1rem; font-weight: 600; letter-spacing: 0.04em; margin: 1.2rem 0 0.6rem; }
+.pl-grille { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.55rem; padding: 0; margin: 0; list-style: none; }
+.pl-case { width: 52px; height: 52px; flex: none; border-radius: 50%; border: 2px dashed rgba(30, 29, 28, 0.35); display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; font-weight: 700; font-size: 0.85rem; }
+.pl-case.prise { border: 2px solid #3a3633; background: #3a3633; color: #fff; }
+.pl-case.moi { border-color: #157A43; box-shadow: 0 0 0 3px rgba(31, 163, 91, 0.45); }
+.pl-case img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.pl-case.nouvelle { animation: pl-arrivee 0.6s ease-out; }
+@keyframes pl-arrivee { from { transform: scale(0.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .pl-case.nouvelle { animation: none; } }

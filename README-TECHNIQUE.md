@@ -321,6 +321,33 @@ demandait à revenir sur `admin.…` retombait sur l'accueil public. Invitations
 gardant la clé du lien (le « # »). E-mail d'invitation en français : modèle « Invite user » de Supabase.
 Essai : `test-retour-invitation.js`.
 
+## 🏁 Places limitées (premier arrivé, premier servi — 23/10/2026)
+- **Base** : `supabase-places.sql` (rejouable, après `supabase-convocations.sql`). `places_appels`
+  (un par projet de l'agenda : `places_femmes`, `places_hommes`, `ouvert`) et `places_invitations`
+  (une par mannequin : `sexe` — catégorie « homme » ou civilité « Monsieur », sinon femme —,
+  `jeton` de 36 caractères, `statut` invite/pris/desiste, `pris_par` mannequin/parent,
+  `envoye_le` / `parent_envoye_le`). Tables réservées aux `admins`. Fonctions :
+  `places_preparer` (agence : une invitation par mannequin du sexe concerné, rejouable),
+  `places_lire`, `places_prendre`, `places_rendre` (public, par le jeton seul). `places_prendre`
+  verrouille la ligne de l'appel (`for update`) : jamais plus de places prises que prévu, même
+  avec des clics simultanés. Une place prise ajoute la mannequin à `agenda_projets.mannequin_ids`
+  (donc à « Convoquer ») ; un désistement l'en retire, la note « absente » dans les convocations
+  et annule ses envois programmés. La grille publique ne montre que photo (miniature) ou initiales.
+- **Administration** : rubrique « Places limitées » (`b2-places`, `js/admin/site-places.js`) :
+  nouvel appel (projet de l'agenda ou nouveau projet, ajouté à l'agenda), fiche avec la grille
+  des visages (cliquables vers la fiche), « 💬 Envoyer le lien suivant » un par un (mineure ET
+  parent, même lien, `&p=1` pour le parent ; envoi noté dans la base), « 📣 Annoncer une place
+  libre » après un désistement (suivi pour la session : `sessionStorage`
+  « ma2m_places_libre_<projet> »), nombre de places, fermer/rouvrir, « Ajouter les nouvelles
+  mannequins », « Convoquer les sélectionnées » (`window.convoquerProjet`).
+- **Page publique** : `places.html` + `js/places.js` + `css/places.css` (sans compte, `noindex`) :
+  « Je prends ma place » → « Bravo… » (vert) ou « Oups… plus de place disponible. Rendez-vous au
+  prochain projet ! » ; parent : « Votre fille / votre fils a déjà pris sa place » ; « Me
+  désister ». La grille se relit toute seule toutes les 15 s.
+- **Textes** : `messagePlaces` dans `js/messages-convocations.js` (appel et place libérée).
+- **Essais** : `test-places.js` (Administration + page publique, téléphone/ordinateur) et
+  `scripts/base-essai/essais-places.sql` (droits, premier arrivé, mineure/parent, désistement).
+
 ## 📨 Convocations des projets de l'agenda (Extension 141, 21/10/2026)
 - **Base** : `supabase-convocations.sql` (rejouable, à exécuter une fois dans Supabase). Colonnes
   d'`agenda_projets` : `heure_evenement`, `heure_convocation`, `deroule` (heure + activité),

@@ -69,6 +69,10 @@
     '_L’équipe Maître Akesse Model Management_'
   ].join('\n');
 
+  // « pour le défilé *« Titre »* », « pour la formation… » (annonce de la sélection, places limitées)
+  const pourLeProjet = (p) => (AU_TYPE[p.type] || AU_TYPE.autre).replace(/^au /, 'pour le ').replace(/^à (la |l’)/, 'pour $1')
+    + (String(p.titre || '').trim() ? ' *« ' + String(p.titre).trim() + ' »*' : '');
+
   // 'AAAA-MM-JJ' → « Samedi 15 novembre 2026 » (date seule, sans fuseau)
   function dateLongue(iso) {
     const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ''));
@@ -105,7 +109,7 @@
     const valeurs = {
       salutation: parent ? (String(q.parent_nom || '').trim() || 'Madame, Monsieur') : (qui || 'Madame, Monsieur'),
       introduction: sorte === 'selection'
-        ? (parent && qui ? qui + ' est ' + selectionne : 'Vous êtes ' + selectionne) + ' ' + au.replace(/^au /, 'pour le ').replace(/^à (la |l’)/, 'pour $1') + '.'
+        ? (parent && qui ? qui + ' est ' + selectionne : 'Vous êtes ' + selectionne) + ' ' + pourLeProjet(p) + '.'
         : sorte === 'rappel'
         ? '⏰ *Petit rappel : c’est demain !* Voici toutes les informations pour ' + (parent && qui ? 'la participation de ' + qui : 'votre participation') + ' ' + au + '.'
         : 'Maître Akesse Model Management a le plaisir de vous confirmer ' + (parent && qui ? 'la participation de ' + qui : 'votre participation') + ' ' + au + '.',
@@ -144,6 +148,35 @@
     return { texte, email: sansMarquesWhatsApp(texte) };
   }
 
+  // « Places limitées » (23/10/2026) : le message WhatsApp envoyé à chaque mannequin (et au parent
+  // d'une mineure : même lien, avec &p=1), ou l'annonce d'une place libérée.
+  // projet : ligne d'agenda_projets ; appel : { places_femmes, places_hommes } ;
+  // pers : { nom, sexe, parent, parent_nom, jeton } ; sorte : 'appel' | 'place_libre'.
+  const LIEN_PLACES = 'https://www.maitreakessemodelmanagement.com/places?c=';
+  function messagePlaces(projet, appel, pers, sorte) {
+    const p = projet || {}, q = pers || {};
+    const au = pourLeProjet(p);
+    const homme = q.sexe === 'homme';
+    const n = Number(homme ? (appel || {}).places_hommes : (appel || {}).places_femmes) || 0;
+    const qui = String(q.nom || '').trim();
+    const lignes = [
+      '✨ *MAÎTRE AKESSE MODEL MANAGEMENT* ✨', '',
+      'Bonjour ' + (q.parent ? String(q.parent_nom || '').trim() || 'Madame, Monsieur' : qui || 'Madame, Monsieur') + ',', '',
+      sorte === 'place_libre' ? '🔔 *Une place vient de se libérer* ' + au + ' !' : '🎬 *Places limitées* ' + au + ' !', '',
+      '📅 *' + dateLongue(p.date_debut) + '*'
+    ];
+    const heure = heureFr(p.heure_evenement);
+    if (heure) lignes.push('🎬 Début : ' + heure);
+    const lieu = [p.lieu, p.ville].filter(Boolean).join(', ');
+    if (lieu) lignes.push('📍 ' + lieu);
+    lignes.push('');
+    if (sorte !== 'place_libre' && n) lignes.push('Seulement ' + n + ' place' + (n > 1 ? 's' : '') + ' pour les ' + (homme ? 'hommes' : 'femmes') + '. *Premier arrivé, premier servi !*');
+    else lignes.push('*Premier arrivé, premier servi !*');
+    lignes.push('👉 ' + (q.parent && qui ? 'Pour inscrire ' + qui + ', appuyez ici' : 'Prenez votre place ici') + ' : ' + LIEN_PLACES + (q.jeton || '') + (q.parent ? '&p=1' : ''));
+    lignes.push('', 'Pour toute question : ' + CONTACT + '.', '', '_L’équipe Maître Akesse Model Management_');
+    return lignes.join('\n');
+  }
+
   // *gras* et _italique_ de WhatsApp retirés pour la version e-mail (partagé avec
   // messagePourEmail, js/messages-candidats.js)
   function sansMarquesWhatsApp(texte) {
@@ -152,7 +185,7 @@
       .replace(/(^|[\s(«])_([^_\n]+)_(?=$|[\s.,;:!?)»])/gm, '$1$2');
   }
 
-  const outils = { messageConvocation, sansMarquesWhatsApp, heureRappel, dateLongue, MODELE_CONVOCATION, MODELE_SELECTION, EMAIL_AGENCE, LIEN_CONFIRMER };
+  const outils = { messageConvocation, messagePlaces, LIEN_PLACES, sansMarquesWhatsApp, heureRappel, dateLongue, MODELE_CONVOCATION, MODELE_SELECTION, EMAIL_AGENCE, LIEN_CONFIRMER };
   if (typeof module !== 'undefined' && module.exports) module.exports = outils;
   else Object.assign(racine, outils);
 })(typeof window !== 'undefined' ? window : globalThis);

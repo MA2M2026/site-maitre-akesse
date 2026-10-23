@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<!-- « Places limitées » (23/10/2026) : ouverte depuis le lien personnel envoyé à chaque mannequin
+     (?c=…, et &p=1 pour le message du parent d'une mineure), sans compte. Premier arrivé, premier
+     servi ; grille des places prises. js/places.js, supabase-places.sql -->
+<script src="/js/surveillance.js?v=47adbda8"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Places limitées — Maître Akesse Model Management</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="description" content="Prenez votre place pour un projet de Maître Akesse Model Management.">
+<link rel="stylesheet" href="/css/polices.css?v=f8b78de5">
+<link rel="stylesheet" href="/css/menu.css?v=0dfc2b69">
+<link rel="stylesheet" href="/css/style.css?v=39f4dd33">
+<link rel="stylesheet" href="/css/jetons.css?v=a2155f1a">
+<link rel="stylesheet" href="/css/charte-ma2m.css?v=1f32edbe">
+<link rel="stylesheet" href="/css/bouton-ma2m.css?v=5211180f">
+<link rel="stylesheet" href="/css/places.css?v=659f30b7">
+<script src="/js/bouton-appui.js?v=bedca56e" defer></script>
+<script src="/js/supabase-config.js?v=16708773" defer></script>
+<script src="/js/photos.js?v=d19d2d0b" defer></script>
+<script src="/js/places.js?v=79abf724" defer></script>
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<meta name="theme-color" content="#1e1d1c">
+</head>
+<body class="page-introuvable">
+<main class="introuvable places">
+  <a href="/" class="introuvable-logo"><img src="/assets/logo-header-clair.png" alt="Maître Akesse Model Management" width="220"></a>
+  <p class="eyebrow">Places limitées</p>
+  <h1 id="pl-titre">Prendre ma place<span class="oeil">.</span></h1>
+  <p class="introuvable-texte" id="pl-details" role="status">Chargement…</p>
+  <div class="pl-etat" id="pl-etat" role="status" aria-live="polite" hidden></div>
+  <div class="introuvable-liens" id="pl-boutons" hidden>
+    <button type="button" class="btn btn--principal" id="pl-prendre">🙋 Je prends ma place</button>
+    <button type="button" class="btn" id="pl-rendre" hidden>Me désister</button>
+  </div>
+  <section class="pl-grilles" id="pl-grilles" aria-label="Places prises" hidden></section>
+  <p class="introuvable-texte">Une question ? WhatsApp <a href="https://wa.me/2250545656687">+225 05 45 65 66 87</a></p>
+</main>
+</body>
+</html>
