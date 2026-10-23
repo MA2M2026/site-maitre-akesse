@@ -15,6 +15,7 @@
   const P = window.Portail, C = P.compta;
   if (!P || !C) return;
   const t = C.champ;
+  const NOUVEAU = '__nouvel_evenement';  // « ➕ Nouvel événement » dans la liste des projets
   const ABSENTE = '<div class="note info">Cette rubrique n’est pas encore activée. <span class="petit-texte doux">(Étape d’installation : « supabase-cachets.sql » à exécuter dans la base.)</span></div>';
   const principal = () => P.moi && P.moi.role === 'principal';
   // numéro saisi → chiffres seuls avec l'indicatif ivoirien (numeroWhatsApp, js/app.js)
@@ -95,7 +96,14 @@
       '<p class="large note info" id="ca-mineure" hidden>Mannequin mineure : le cachet est versé sur le compte Wave de son parent. S’il manque, son nom et son numéro sont enregistrés dans le registre et sur sa fiche.</p>' +
       '<label class="fl" for="ca-parent-nom" id="ca-parent-ligne" hidden>Nom du parent<input id="ca-parent-nom" name="parent_nom" maxlength="160" placeholder="ex. : Madame Koné"></label>' +
       '<label class="fl" for="ca-tel"><span id="ca-tel-libelle">Numéro Wave</span><input id="ca-tel" name="telephone" type="tel" inputmode="tel" required placeholder="07 07 07 07 07"></label>' +
-      '<label class="fl" for="ca-projet">Projet de l’agenda (facultatif)<select id="ca-projet" name="projet"><option value="">—</option>' + (tpl ? tpl.innerHTML : '') + '</select></label>' +
+      '<label class="fl" for="ca-projet">Projet de l’agenda (facultatif)<select id="ca-projet" name="projet" data-change="cachet-projet"><option value="">—</option><option value="' + NOUVEAU + '">➕ Nouvel événement (ajouté à l’agenda)</option>' + (tpl ? tpl.innerHTML : '') + '</select></label>' +
+      // événement pas encore dans l'agenda (23/10/2026) : il y est ajouté en même temps que le cachet
+      '<div id="ca-nouveau" class="large f-sous" hidden>' +
+        '<label class="fl" for="ca-ev-titre">Titre de l’événement<input id="ca-ev-titre" name="ev_titre" maxlength="160" placeholder="ex. : Défilé Africa in Rhythm"></label>' +
+        '<label class="fl" for="ca-ev-date">Date<input id="ca-ev-date" name="ev_date" type="date" value="' + new Date().toISOString().slice(0, 10) + '"></label>' +
+        '<label class="fl" for="ca-ev-type">Type<select id="ca-ev-type" name="ev_type">' + Object.keys(typeof MA2M_TYPES_AGENDA === 'object' ? MA2M_TYPES_AGENDA : { evenement: 1 }).map((k) => '<option value="' + k + '"' + (k === 'defile' ? ' selected' : '') + '>' + P.esc(typeof libelleTypeAgenda === 'function' ? libelleTypeAgenda(k) : k) + '</option>').join('') + '</select></label>' +
+        '<label class="fl" for="ca-ev-lieu">Lieu (facultatif)<input id="ca-ev-lieu" name="ev_lieu" maxlength="160"></label>' +
+        '<p class="doux large">Il est ajouté à l’agenda (pas montré sur le site public : l’agence décide ensuite).</p></div>' +
       (recus ? '<label class="fl" for="ca-motif">Motif du cachet<select id="ca-motif" name="motif" required><option value="">— Choisir —</option>' +
           K.MOTIFS.map((m) => '<option value="' + m[0] + '">' + P.esc(m[1]) + '</option>').join('') + '</select></label>' +
         '<label class="fl" for="ca-prestation">Précision (facultatif)<input id="ca-prestation" name="prestation" maxlength="150" placeholder="ex. : défilé du 5 décembre"></label>'
@@ -118,12 +126,27 @@
     $('ca-parent-nom').value = parent ? m.parent_nom || '' : '';
     $('ca-tel-libelle').textContent = parent ? 'Numéro Wave du parent' : 'Numéro Wave';
   };
+  P.changements['cachet-projet'] = (el) => { const b = document.getElementById('ca-nouveau'); if (b) b.hidden = el.value !== NOUVEAU; };
   P.formulaires['cachet-ajouter'] = async (f) => {
     const tel = numero(t(f, 'telephone')), montant = Math.round(Number(f.get('montant')));
     if (!/^\d{8,15}$/.test(tel)) { P.message('Ce numéro Wave n’est pas valable.'); return; }
     if (!(montant > 0)) { P.message('Indiquez le montant.'); return; }
-    const projet = t(f, 'projet'), sel = document.getElementById('ca-projet');
-    const titreProjet = projet && sel ? sel.selectedOptions[0].textContent : '', motif = recus ? t(f, 'motif') : '';
+    const sel = document.getElementById('ca-projet');
+    let projet = t(f, 'projet');
+    if (projet === NOUVEAU) {
+      const titre = t(f, 'ev_titre'), date = t(f, 'ev_date');
+      if (!titre || !date) { P.message('Indiquez le titre et la date du nouvel événement.'); return; }
+      if (recus && !t(f, 'motif')) { P.message('Choisissez le motif du cachet.'); return; }
+      projet = await P.rpc('cachet_nouvel_evenement', { p_titre: titre, p_date: date, p_type: t(f, 'ev_type') || 'evenement', p_lieu: t(f, 'ev_lieu') || null, p_ville: 'Abidjan' });
+      if (!projet) { P.message('L’événement n’a pas pu être ajouté : reconnectez-vous puis réessayez.'); return; }
+      // il est maintenant dans la liste : un nouvel essai ne le recréera pas
+      const option = new Option(titre + ' · ' + P.date(date), projet);
+      sel.add(option, 2); sel.value = projet;
+      document.getElementById('ca-nouveau').hidden = true;
+      const tpl = document.getElementById('cachet-projets');
+      if (tpl) tpl.innerHTML = option.outerHTML + tpl.innerHTML;
+    }
+    const titreProjet = projet && sel && sel.selectedOptions[0] ? sel.selectedOptions[0].textContent : '', motif = recus ? t(f, 'motif') : '';
     if (recus && !motif) { P.message('Choisissez le motif du cachet.'); return; }
     // texte de la prestation : motif · projet · précision (sans motif : précision, sinon le projet)
     // (200 caractères au plus, comme le veut la base)

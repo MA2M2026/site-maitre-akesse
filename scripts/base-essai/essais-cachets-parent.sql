@@ -36,3 +36,16 @@ select set_config('request.jwt.claims', '{"role":"anon"}', false);
 set role anon;
 select essai_refuse('select cachet_enregistrer_parent(''00000000-0000-0000-0000-0000000000f2'', ''Quelqu''''un'', ''2250101010101'')', 'visiteur : refusé');
 reset role;
+
+-- 23/10/2026 : « ➕ Nouvel événement » pendant un paiement : ajouté à l'agenda (non public)
+reset role;
+select essai_qui('00000000-0000-0000-0000-0000000000a1');
+set role authenticated;
+create temp table ev as select cachet_nouvel_evenement('SOIRÉE PRIVÉE', current_date - 3, 'defile', 'Sofitel', 'Abidjan') id;
+reset role;
+select essai((select count(*) from agenda_projets a join ev on ev.id = a.id where a.titre = 'SOIRÉE PRIVÉE' and a.type = 'defile' and a.date_debut = current_date - 3 and a.lieu = 'Sofitel' and not a.visible) = 1,
+  'paiement : nouvel événement ajouté à l''agenda (date passée permise, pas sur le site public)');
+select essai_qui('00000000-0000-0000-0000-0000000000a5');
+set role authenticated;
+select essai_refuse('select cachet_nouvel_evenement(''X'', current_date)', 'mannequin connectée : ne peut pas ajouter d''événement');
+reset role;

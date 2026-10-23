@@ -26,6 +26,7 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     Object.assign(d.tables.agence_mannequins[5], { date_naissance: '2012-03-03', parent_nom: 'Madame Diallo Mère', parent_telephone: '0707000005' });
     d.tables.cachets_mannequins.push({ id: 'cc9', beneficiaire: d.tables.agence_mannequins[5].full_name, telephone: '2250700000015', montant: 8000, prestation: 'Shooting photo · essai', motif: 'shooting',
       numero_recu: 'MA2M-CA-2026-0002', jeton: '99999999-2222-3333-4444-555555555555', statut: 'paye', mode: 'wave_manuel', compte_id: 'k2', agence_mannequin_id: 'r5', paye_le: '2026-10-16T10:00:00Z', cree_le: '2026-10-16T09:00:00Z' });
+    d.rpc.cachet_nouvel_evenement = () => 'ev-neuf';  // (23/10/2026) événement ajouté à l'agenda pendant le paiement
     await brancher(p, d, journal);
     await seConnecter(p, URL_ADMIN); await p.waitForSelector('.accueil-tete');
 
@@ -64,7 +65,19 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     await p.fill('#ca-nom', 'Koné Styliste'); await p.fill('#ca-tel', '12'); await p.selectOption('#ca-motif', 'autre'); await p.fill('#ca-prestation', 'Maquillage défilé'); await p.fill('#ca-montant', '10000');
     await p.click('form[data-form="cachet-ajouter"] [type=submit]'); await p.waitForTimeout(500);
     ok(journal.filter((j) => j[0] === 'POST' && j[1] === 'cachets_mannequins').length === 1, n + 'numéro Wave non valable : refusé');
-    await p.fill('#ca-tel', '05 05 05 05 05'); await p.click('form[data-form="cachet-ajouter"] [type=submit]'); await p.waitForTimeout(1200);
+    await p.fill('#ca-tel', '05 05 05 05 05');
+    // 2bis. événement pas encore dans l'agenda : « ➕ Nouvel événement », ajouté à l'agenda avec le cachet
+    ok(await p.isHidden('#ca-nouveau'), n + 'champs du nouvel événement cachés au départ');
+    await p.selectOption('#ca-projet', '__nouvel_evenement'); await p.waitForTimeout(200);
+    ok(await p.isVisible('#ca-ev-titre') && await p.isVisible('#ca-ev-date'), n + '« ➕ Nouvel événement » : titre, date, type et lieu à remplir');
+    await p.click('form[data-form="cachet-ajouter"] [type=submit]'); await p.waitForTimeout(500);
+    ok(/titre et la date du nouvel événement/.test(await p.textContent('body')) && !journal.some((j) => j[0] === 'rpc' && j[1] === 'cachet_nouvel_evenement'), n + 'nouvel événement sans titre : refusé, rien de créé');
+    await p.fill('#ca-ev-titre', 'SOIRÉE PRIVÉE SOFITEL'); await p.fill('#ca-ev-lieu', 'Sofitel');
+    await p.click('form[data-form="cachet-ajouter"] [type=submit]'); await p.waitForTimeout(1200);
+    const ev = journal.find((j) => j[0] === 'rpc' && j[1] === 'cachet_nouvel_evenement'), evArgs = ev ? JSON.parse(ev[2]) : {};
+    const cachetEv = journal.filter((j) => j[0] === 'POST' && j[1] === 'cachets_mannequins').map((j) => [].concat(JSON.parse(j[3] || '{}'))[0]).pop() || {};
+    ok(evArgs.p_titre === 'SOIRÉE PRIVÉE SOFITEL' && evArgs.p_lieu === 'Sofitel' && /^\d{4}-\d{2}-\d{2}$/.test(evArgs.p_date) && cachetEv.projet_id === 'ev-neuf' && /SOIRÉE PRIVÉE SOFITEL/.test(cachetEv.prestation),
+      n + 'nouvel événement : ajouté à l’agenda, et le cachet y est rattaché (' + JSON.stringify(cachetEv).slice(0, 100) + ')');
     ok(journal.filter((j) => j[0] === 'POST' && j[1] === 'cachets_mannequins').length === 2 && (await p.$$('.cachet [data-action="cachet-payer"]')).length === 2, n + 'personne extérieure ajoutée ; 2 cachets à payer');
     ok(/35 000 FCFA/.test(await p.textContent('#contenu').then((x) => x.replace(/ | /g, ' '))), n + 'total à payer affiché');
     await capture(p, 'cachets' + suffixe);

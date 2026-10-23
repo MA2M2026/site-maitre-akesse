@@ -184,6 +184,8 @@ Essais : `test-cachets.js`, `scripts/base-essai/essais-cachets-parent.sql`.
 
 Rubrique « Payer les mannequins » de l'espace 3 (`js/portail/espace-compta-cachets.js`, chargé dans
 `/admin/`) ; base : **`supabase-cachets.sql`** (à exécuter une fois dans Supabase).
+« ➕ Nouvel événement » (23/10/2026) : un cachet pour un événement absent de l'agenda l'y ajoute
+(`cachet_nouvel_evenement`, réservé à `portail_peut('compta')`, non visible sur le site public).
 Un cachet = une personne (registre `agence_mannequins` ou personne extérieure : nom + numéro Wave),
 un montant, une prestation (projet de l'agenda ou texte). « Marquer payé » appelle `cachet_payer` :
 la dépense « Cachets reversés aux mannequins » (`compta_ecritures`) est créée et le cachet passe payé,

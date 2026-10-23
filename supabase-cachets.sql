@@ -110,4 +110,25 @@ drop trigger if exists cachet_depense_annulee on compta_ecritures;
 create trigger cachet_depense_annulee after update of annule on compta_ecritures
   for each row execute function cachet_depense_annulee();
 
+-- 23/10/2026 (demande de la propriétaire) : un cachet pour un événement qui n'est pas encore dans
+-- l'agenda — « ➕ Nouvel événement » dans « Nouveau cachet ». La personne des paiements n'a pas
+-- accès à l'agenda : la fonction l'y ajoute (non montré sur le site public, l'agence décide
+-- ensuite), date passée permise (on paie souvent après l'événement).
+create or replace function cachet_nouvel_evenement(p_titre text, p_date date, p_type text default 'evenement', p_lieu text default null, p_ville text default null)
+returns uuid language plpgsql security definer set search_path = public as $$
+declare nouveau uuid;
+begin
+  if not portail_peut('compta') then raise exception 'Réservé à l''agence.'; end if;
+  if length(trim(coalesce(p_titre, ''))) = 0 or p_date is null then raise exception 'Indiquez le titre et la date de l''événement.'; end if;
+  insert into agenda_projets (titre, type, date_debut, lieu, ville, visible)
+    values (left(trim(p_titre), 160),
+            coalesce(nullif(trim(coalesce(p_type, '')), ''), 'evenement'),  -- (types : ceux de l'agenda, vérifiés par la table)
+            p_date, nullif(left(trim(coalesce(p_lieu, '')), 160), ''), nullif(left(trim(coalesce(p_ville, '')), 80), ''), false)
+    returning id into nouveau;
+  return nouveau;
+end;
+$$;
+revoke all on function cachet_nouvel_evenement(text, date, text, text, text) from public, anon;
+grant execute on function cachet_nouvel_evenement(text, date, text, text, text) to authenticated;
+
 notify pgrst, 'reload schema';
