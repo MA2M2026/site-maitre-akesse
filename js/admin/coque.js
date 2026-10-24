@@ -327,9 +327,7 @@
   // Coque d'un bloc : en-tête, menu des rubriques (à gauche ; en bas, en tiroir, sur téléphone)
   P.coque = (module, page, html) => {
     const esp = P.espaces[module];
-    const nav = esp.nav.filter((n) => !n[2] || n[2]()).map((n) => !n[0] ? '<div class="titre-menu">' + P.esc(n[1]) + '</div>' :
-      '<a class="nav' + (n[0] === page ? ' actif' : '') + '" href="#/' + module + '/' + n[0] + '"' + (n[0] === page ? ' aria-current="page"' : '') + '><span>' + P.esc(n[1]) + '</span>' +
-      (esp.compteur && esp.compteur[n[0]] ? '<span class="compteur">' + esp.compteur[n[0]] + '</span>' : '') + '</a>').join('');
+    const nav = P.menuRubriques(esp, module, page);  // (js/portail/noyau.js : compartiments)
     const blocs = '<div class="blocs">' + '<a class="bloc" href="#/">' + icone('accueil') + 'Accueil</a>' +
       blocsPermis().map((k) => '<a class="bloc' + (k === module ? ' actif' : '') + '" href="#/' + k + '/' + premierePage(P.espaces[k]) + '">' + icone(k) + P.esc(P.ESPACES[k]) + '</a>').join('') + '</div>';
     const secu = lienSecurite();

@@ -30,7 +30,8 @@ let srv; process.on('exit', () => srv && srv.kill());
 
     // 1. Liste, puis nouveau défilé sur 2 jours
     await p.goto(URL_ADMIN + '#/site/b2-defiles'); await p.waitForSelector('[data-action="defile-nouveau"]', { timeout: 15000 });
-    ok(/Aucun défilé programmé/.test(await p.textContent('#contenu')) && /Programmation défilé/.test(await p.textContent('.compartiment:has(.nav.actif)')), n + 'liste vide ; la rubrique est dans le compartiment « Projets et convocations »');
+    const compartiment = await p.evaluate(() => { const a = document.querySelector('.lateral .nav.actif'), c = a && a.closest('.compartiment'); return c ? c.getAttribute('aria-label') : ''; });
+    ok(/Aucun défilé programmé/.test(await p.textContent('#contenu')) && compartiment === 'Projets et convocations', n + 'liste vide ; la rubrique est dans le compartiment « ' + compartiment + ' »');
     await p.click('[data-action="defile-nouveau"]'); await p.waitForSelector('.voile #df-titre');
     await p.fill('#df-titre', 'FASHION WEEK'); await p.fill('#df-debut', '2030-12-01'); await p.fill('#df-fin', '2030-12-02'); await p.fill('#df-lieu', 'Sofitel');
     await p.click('form[data-form="defile-nouveau"] [type=submit]'); await p.waitForSelector('form[data-form="defile-passage"]', { timeout: 10000 }); await p.waitForTimeout(500);
@@ -47,11 +48,11 @@ let srv; process.on('exit', () => srv && srv.kill());
     ok(/Femmes extérieures/.test(await p.textContent('.voile')) && /Hommes de l’agence/.test(await p.textContent('.voile')), n + 'choix du vivier : femmes et hommes, agence et extérieures, avec leurs visages');
     for (const c of await p.$$('.voile input[name="cle"]')) await c.check();
     await p.click('form[data-form="defile-vivier"] [type=submit]'); await p.waitForTimeout(1500);
-    ok(d.tables.defile_vivier.length === 14 && /11 femmes \(10 de l’agence, 1 extérieures\) · 3 hommes/.test(await p.textContent('#contenu')), n + 'vivier : 14 mannequins (11 femmes, 3 hommes ; agence et extérieures comptées)');
+    ok(d.tables.defile_vivier.length === 17 && /14 femmes \(13 de l’agence, 1 extérieures\) · 3 hommes \(2 de l’agence, 1 extérieurs\)/.test(await p.textContent('#contenu')), n + 'vivier : 17 mannequins (site, registre sans compte, extérieures), comptées par sexe et origine');
     // 4. Répartition automatique
     await p.click('[data-action="defile-repartir"]'); await p.waitForTimeout(2000);
-    ok((await p.$$('.df-place.prise')).length === 12 && !(await p.$('.df-place:not(.prise)')) && !/trop rapproché/.test(await p.textContent('#contenu')), n + '« Répartir » : les 3 passages remplis (3 femmes, 1 homme chacun), aucun conflit (17h00 et 17h30 : personnes différentes)');
-    ok((await p.$$('.df-synthese li')).length === 14, n + 'synthèse : le nombre de passages de chaque mannequin');
+    ok((await p.$$('.df-place.prise')).length === 12 && !(await p.$('.df-place:not(.prise)')) && !(await p.$('.df-carte .conflit, section .note.attention')), n + '« Répartir » : les 3 passages remplis (3 femmes, 1 homme chacun), aucun conflit (17h00 et 17h30 : personnes différentes)');
+    ok((await p.$$('.df-synthese li')).length === 17, n + 'synthèse : le nombre de passages de chaque mannequin');
     // 5. Retirer un visage, puis remplir la place à la main
     await p.click('.df-place.prise'); await p.waitForTimeout(1200);
     ok((await p.$$('.df-place.prise')).length === 11 && (await p.$$('.df-place:not(.prise)')).length === 1, n + 'toucher un visage le retire : la place redevient libre');

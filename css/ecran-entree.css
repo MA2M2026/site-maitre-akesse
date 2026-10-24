@@ -20,6 +20,10 @@ html.ee-actif.ee-pret::after { content: none; }
 /* --- Bienvenue : lettres animées --- */
 .ee-accueil { position: relative; margin: 0 0 64px; letter-spacing: 0; text-transform: none; font-family: 'Allison', cursive; font-weight: 400; font-size: 100px; line-height: 1.05; color: #141110; text-align: center; }
 .ee-accueil .ee-mot { display: inline-block; white-space: nowrap; }
+/* hauteur fixée au nombre de lignes de « Bienvenue sur notre site » écrit avec Allison : tant que
+   la police n'est pas arrivée, l'écriture de secours (plus large) prend plus de lignes ; sans cette
+   hauteur, les boutons remontaient d'un coup à son arrivée (journal du 24/10/2026, téléphone) */
+.ee-accueil { height: 1lh; }
 .ee-accueil .ee-l { display: inline-block; transform-origin: 50% 80%; will-change: transform; }
 .ee-accueil .ee-pt { position: absolute; left: 0; top: 0; width: 13px; height: 13px; margin: -6.5px 0 0 -6.5px; border-radius: 50%; background: #141110; transform: scale(0); will-change: transform; }
 
@@ -81,7 +85,7 @@ html.ee-actif.ee-pret::after { content: none; }
 }
 /* --- Téléphone : boutons en colonne, « Bienvenue » sur deux lignes --- */
 @media (max-width: 640px) {
-  .ee-accueil { font-size: 80px; margin-bottom: 36px; line-height: 0.85; }
+  .ee-accueil { font-size: 80px; margin-bottom: 36px; line-height: 0.85; height: 2lh; }
   .ee-accueil .ee-mot:first-child { display: block; }
   .ee-accueil .ee-pt { width: 10px; height: 10px; margin: -5px 0 0 -5px; }
   .ee-rangee { flex-direction: column; width: 100%; max-width: 320px; gap: 18px; }
@@ -91,7 +95,7 @@ html.ee-actif.ee-pret::after { content: none; }
 }
 /* Écran bas (téléphone couché) : tout tient sans défiler */
 @media (max-height: 520px) {
-  .ee-accueil { font-size: 56px; margin-bottom: 18px; }
+  .ee-accueil { font-size: 56px; margin-bottom: 18px; height: 1lh; }
   .ee-accueil .ee-mot:first-child { display: inline-block; }
   .ee-rangee { flex-direction: row; max-width: none; gap: 10px; }
   .ee-bouton { height: 48px; font-size: 14px; padding: 0 14px 0 10px; gap: 8px; }

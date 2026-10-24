@@ -401,10 +401,10 @@
   // ---------- coque et pages ----------
   // première rubrique d'un espace (le menu peut commencer par un titre de groupe)
   const premierePage = P.premierePage = (esp) => esp.nav.find((n) => n[0])[0];  // (aussi pour js/admin/coque.js)
-  P.coque = (module, page, html) => {
-    const esp = P.espaces[module];
-    // une entrée sans adresse (null) est un titre de groupe : chaque groupe est un compartiment
-    // bien séparé (24/10/2026, demande de la propriétaire : tout ce qui va ensemble au même endroit)
+  // Menu des rubriques d'un espace ; une entrée sans adresse (null) est un titre de groupe : chaque
+  // groupe est un compartiment bien séparé (24/10/2026, demande de la propriétaire : tout ce qui va
+  // ensemble au même endroit). Partagé avec la coque de l'Administration (js/admin/coque.js).
+  P.menuRubriques = (esp, module, page) => {
     let nav = '', ouvert = false;
     esp.nav.filter((n) => !n[2] || n[2]()).forEach((n) => {
       if (!n[0]) { nav += (ouvert ? '</div>' : '') + '<div class="compartiment" role="group" aria-label="' + P.esc(n[1]) + '"><div class="titre-menu sous-titre-menu">' + P.esc(n[1]) + '</div>'; ouvert = true; return; }
@@ -412,6 +412,11 @@
         (esp.compteur && esp.compteur[n[0]] ? '<span class="compteur">' + esp.compteur[n[0]] + '</span>' : '') + '</a>';
     });
     if (ouvert) nav += '</div>';
+    return nav;
+  };
+  P.coque = (module, page, html) => {
+    const esp = P.espaces[module];
+    const nav = P.menuRubriques(esp, module, page);
     // écran étroit (téléphone, tablette en vertical) : barre « ☰ Menu », le menu glisse depuis la gauche
     return '<div class="coque"><div class="barre-menu">' + P.logo('logo-barre') +
       '<button class="btn petit clair" data-action="menu-ouvrir" aria-controls="menu-lateral" aria-expanded="false">☰ Menu</button></div>' +
