@@ -382,7 +382,7 @@ propriétaire, réglage `zones/<zone>/settings/ech` → `off`, réponse `success
 minutes après, le téléphone en Wi-Fi Orange ouvre l'adresse (`sni=plaintext`). Aucune perte de
 sécurité réelle (les photos restent en HTTPS ; ECH ne cache que le nom de l'adresse). Prochaine étape
 (avec son accord, après observation) : remettre `PHOTOS_DIRECTES_ACTIVES = true` aux deux endroits.
-Si le problème revient, vérifier d'abord que Cloudflare n'a pas réactivé ECH
+**Fait le 24/10/2026 vers 2 h (demande de la propriétaire, après son essai réussi en Wi-Fi Orange) : photos de nouveau par Cloudflare (`PHOTOS_DIRECTES_ACTIVES = true`), Vercel en secours.** Si le problème revient, vérifier d'abord que Cloudflare n'a pas réactivé ECH
 (`GET zones/<zone>/settings/ech`).
 
 ## ⚡ Accueil servi déjà rempli (23/10/2026)

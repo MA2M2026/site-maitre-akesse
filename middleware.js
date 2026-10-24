@@ -233,7 +233,7 @@ async function apercuPartenaire(url, anglais) {
 const ACCUEIL = /^\/(en\/?)?(index\.html)?$/;
 // ⚠ Même règle que urlLegere et mêmes réglages que js/photos.js (vérifié par test-accueil-serveur.js) :
 // copie WebP, servie directement par Cloudflare ; retour en arrière = PHOTOS_DIRECTES_ACTIVES à false.
-const PHOTOS_DIRECTES_ACTIVES = false;  // (comme js/photos.js : photos par Vercel depuis le 23/10/2026)
+const PHOTOS_DIRECTES_ACTIVES = true;  // 24/10/2026 : de nouveau par Cloudflare (cause trouvée : ECH, désactivé — voir README-TECHNIQUE.md)
 const PHOTOS_DIRECTES = 'https://photos.maitreakessemodelmanagement.com/';
 const RELAIS_PHOTOS = /^(?:https:\/\/(?:www\.)?maitreakessemodelmanagement\.com)?\/book-photos\//;
 const MARQUE_WEBP = /\/(miniatures|moyennes)\/[^/?]*-w\.jpg(\?.*)?$/;
