@@ -964,8 +964,14 @@ Vercel.
   `evenements-images`, `partenaires-logos` les fichiers qu'AUCUNE fiche ne
   référence plus — sans jamais toucher `casting-applications` ni
   `inscriptions-photos` (anciennes photos de dossiers encore affichées).
-- **Rendre le code de validation admin (2FA) obligatoire côté serveur** — voir
-  la section « Audit complet du 28 septembre 2026 » en bas de ce fichier.
+- ✅ **Code de l'application d'authentification obligatoire côté serveur** (24/10/2026) :
+  `supabase-admins-aal2.sql` (la table `admins` n'est lisible qu'en `aal2`, donc toutes les règles
+  « admin » l'exigent ; les fonctions `security definer` qui lisent `admins` sont réécrites
+  automatiquement pour ajouter `portail_mfa_ok()`) et `adminVerifie` (api/_commun.js) pour les
+  serveurs d'administration (photos R2, images du site, suppression de mannequin, création
+  d'admin ; les étapes de connexion gardent `estAdmin`). ⚠️ Après avoir rejoué un AUTRE fichier
+  SQL qui redéfinit des fonctions, rejouer `supabase-admins-aal2.sql` (sa dernière requête doit
+  afficher 0). Essais : `scripts/base-essai/essais-admins-aal2.sql`, `test-admin-code-serveur.js`.
 
 ## Vue d'ensemble
 

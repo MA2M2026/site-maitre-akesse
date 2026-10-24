@@ -115,6 +115,12 @@ function debutRequete(req, res, authentifie) {
 function chargeJeton(jeton) {
   try { return JSON.parse(Buffer.from(String(jeton).split('.')[1], 'base64url').toString('utf8')); } catch (e) { return {}; }
 }
+// Administrateur connecté AVEC le code de l'application d'authentification (jeton « aal2 ») :
+// un mot de passe volé seul ne suffit plus (24/10/2026). Pour toute action d'administration ;
+// les étapes de connexion (avant le code) gardent estAdmin. Toujours après verifierUtilisateur.
+async function adminVerifie(jeton, utilisateur) {
+  return chargeJeton(jeton).aal === 'aal2' && (await estAdmin(utilisateur.id));
+}
 // Heure (en secondes) du dernier code de l'application d'authentification saisi pour ce jeton
 function dernierCode(jeton) {
   const amr = chargeJeton(jeton).amr || [];
@@ -185,6 +191,6 @@ function cleAccesTableauValide(req, userId) {
 
 module.exports = {
   SUPABASE_URL, cleService, enTetesService, jetonDe, corpsDe,
-  verifierUtilisateur, lignesAdmin, estAdmin, creerClientR2, cheminSur, extraireIp, nettoyerAppareil,
+  verifierUtilisateur, lignesAdmin, estAdmin, adminVerifie, creerClientR2, cheminSur, extraireIp, nettoyerAppareil,
   debutRequete, chargeJeton, dernierCode, compteurTentatives, cookieAccesTableau, cleAccesTableauValide, COOKIE_ACCES_TABLEAU_EFFACE
 };

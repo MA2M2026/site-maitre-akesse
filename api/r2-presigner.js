@@ -11,7 +11,7 @@
 // R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, R2_PUBLIC_URL.
 
 
-const { verifierUtilisateur, estAdmin, cheminSur } = require('./_commun.js');
+const { verifierUtilisateur, adminVerifie, cheminSur } = require('./_commun.js');
 const { debutR2, repondreR2, TYPES_IMAGES } = require('./_r2.js');
 
 // Autorisation : le propriétaire de la photo (mannequin agissant sur son
@@ -21,7 +21,7 @@ async function autoriser(jeton, modelId) {
   const utilisateur = await verifierUtilisateur(jeton);
   if (!utilisateur) return { ok: false, code: 401, message: 'Session invalide ou expirée — reconnectez-vous.' };
   if (utilisateur.id === modelId) return { ok: true };
-  if (await estAdmin(utilisateur.id)) return { ok: true };
+  if (await adminVerifie(jeton, utilisateur)) return { ok: true };
   return { ok: false, code: 403, message: "Vous n'avez pas le droit d'agir sur ces photos." };
 }
 

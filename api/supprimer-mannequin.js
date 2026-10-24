@@ -18,7 +18,7 @@
 
 const { DeleteObjectsCommand } = require('@aws-sdk/client-s3');
 
-const { SUPABASE_URL, enTetesService, verifierUtilisateur, lignesAdmin, estAdmin, creerClientR2, debutRequete } = require('./_commun.js');
+const { SUPABASE_URL, enTetesService, verifierUtilisateur, lignesAdmin, adminVerifie, creerClientR2, debutRequete } = require('./_commun.js');
 
 module.exports = async function handler(req, res) {
   const debut = debutRequete(req, res, true); // POST + clé serveur + jeton (api/_commun.js)
@@ -41,7 +41,7 @@ module.exports = async function handler(req, res) {
     // 2. Ce compte figure-t-il dans la table admins ? (même contrôle que
     // celui déjà appliqué par le déclencheur gerer_validation_publication()
     // côté base de données.)
-    if (!(await estAdmin(utilisateur.id))) {
+    if (!(await adminVerifie(jeton, utilisateur))) {
       res.status(403).json({ error: "Ce compte n'est pas administrateur." });
       return;
     }

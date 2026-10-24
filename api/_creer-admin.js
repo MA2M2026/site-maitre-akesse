@@ -12,7 +12,7 @@
 //
 // Variable d'environnement requise sur Vercel : SUPABASE_SERVICE_ROLE_KEY.
 
-const { SUPABASE_URL, enTetesService, verifierUtilisateur, estAdmin, ficheStaff, debutRequete } = require('./_commun.js');
+const { SUPABASE_URL, enTetesService, verifierUtilisateur, adminVerifie, ficheStaff, debutRequete } = require('./_commun.js');
 
 module.exports = async function handler(req, res) {
   const debut = debutRequete(req, res, true); // POST + clé serveur + jeton (api/_commun.js)
@@ -38,7 +38,7 @@ module.exports = async function handler(req, res) {
     }
 
     // 2. Ce compte figure-t-il dans la table admins ?
-    if (!(await estAdmin(utilisateur.id))) {
+    if (!(await adminVerifie(jeton, utilisateur))) {
       res.status(403).json({ error: "Ce compte n'est pas administrateur." });
       return;
     }

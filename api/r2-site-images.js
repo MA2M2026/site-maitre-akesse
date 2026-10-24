@@ -16,7 +16,7 @@
 // R2_BUCKET_NAME, R2_PUBLIC_URL, SUPABASE_SERVICE_ROLE_KEY.
 
 
-const { verifierUtilisateur, estAdmin, cheminSur } = require('./_commun.js');
+const { verifierUtilisateur, adminVerifie, cheminSur } = require('./_commun.js');
 const { debutR2, repondreR2, TYPES_IMAGES, traiterNoteIntegration } = require('./_r2.js');
 // ('boutique' : photos des produits de la Marketplace, retirée du site le 23/10/2026 ; les photos
 // déjà envoyées restent dans le stockage.)
@@ -47,7 +47,7 @@ module.exports = async function handler(req, res) {
     try {
       const utilisateur = await verifierUtilisateur(jeton);
       if (!utilisateur) { res.status(401).json({ error: 'Session invalide ou expirée — reconnectez-vous.' }); return; }
-      if (!(await estAdmin(utilisateur.id))) { res.status(403).json({ error: 'Réservé aux administrateurs.' }); return; }
+      if (!(await adminVerifie(jeton, utilisateur))) { res.status(403).json({ error: 'Réservé aux administrateurs.' }); return; }
       await traiterNoteIntegration(res, debut.corps);
     } catch (e) {
       console.error('r2-site-images (note) :', e);
@@ -82,7 +82,7 @@ module.exports = async function handler(req, res) {
       res.status(401).json({ error: 'Session invalide ou expirée — reconnectez-vous.' });
       return;
     }
-    if (!(await estAdmin(utilisateur.id))) {
+    if (!(await adminVerifie(jeton, utilisateur))) {
       res.status(403).json({ error: "Réservé aux administrateurs." });
       return;
     }
