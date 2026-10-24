@@ -209,7 +209,8 @@
       const pris = i.statut === 'pris' || i.statut === 'desiste';
       return '<li><label class="pl-choix"><input type="checkbox" data-change="places-choix" data-id="' + P.esc(i.id) + '"' + (i.statut === 'exclu' ? '' : ' checked') + (pris ? ' disabled' : '') + '> ' +
         P.visage((i.model_id && photos[i.model_id]) || '', noms[cle(i)] || '?', 'rond-vis') + ' <span>' + P.esc(noms[cle(i)] || '?') + (i.contact_id ? ' <small class="doux">(personne extérieure)</small>' : i.mannequin_id ? ' <small class="doux">(sans compte sur le site)</small>' : '') + (pris ? ' <small class="doux">(' + (i.statut === 'pris' ? 'place prise' : 'désistée') + ')</small>' : '') + '</span></label>' +
-        (i.contact_id && i.statut === 'invite' && !i.envoye_le ? ' <button type="button" class="btn petit" data-action="places-retirer" data-id="' + P.esc(i.id) + '">Retirer</button>' : '') + '</li>';
+        (i.contact_id && i.statut === 'invite' && !i.envoye_le ? ' <button type="button" class="btn petit" data-action="places-retirer" data-id="' + P.esc(i.id) + '">Retirer</button>' : '') +
+        (i.statut === 'invite' ? ' <button type="button" class="btn petit" data-action="places-admin-donner" data-id="' + P.esc(i.id) + '">Donner la place</button>' : '') + '</li>';
     };
     // « ＋ Ajouter une personne » (23/10/2026) : une personne pas encore enregistrée dans le site,
     // de l'agence (registre) ou extérieure (carnet) — champs partagés : champsPersonne (js/agenda-outils.js)
@@ -257,8 +258,13 @@
     const prises = (s) => invitations.filter((i) => i.sexe === s && i.statut === 'pris').sort((a, b) => String(a.pris_le).localeCompare(String(b.pris_le)));
 
     const envoi = fini || !appel.ouvert ? '' : blocEnvoi(invitations, n, noms);
+    // l'agence garde la main (24/10/2026) : retirer une place (elle ne pourra pas la reprendre),
+    // ou la redonner après un désistement
+    const actionAgence = (i) => fini ? '' : i.statut === 'pris'
+      ? ' <button type="button" class="btn petit" data-action="places-admin-retirer" data-id="' + P.esc(i.id) + '">Retirer la place</button>'
+      : ' <button type="button" class="btn petit" data-action="places-admin-donner" data-id="' + P.esc(i.id) + '">Redonner la place</button>';
     const ligneNom = (i) => '<li>' + visageNom(i, noms, photos) +
-      ' <span class="doux">' + (i.statut === 'pris' ? (i.pris_par === 'parent' ? 'place prise par le parent' : 'place prise') + ' le ' + P.esc(new Date(i.pris_le).toLocaleString('fr-FR', { timeZone: 'Africa/Abidjan', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })) : 'désistement') + '</span></li>';
+      ' <span class="doux">' + (i.statut === 'pris' ? (i.pris_par === 'parent' ? 'place prise par le parent' : 'place prise') + ' le ' + P.esc(new Date(i.pris_le).toLocaleString('fr-FR', { timeZone: 'Africa/Abidjan', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })) : 'désistement') + '</span>' + actionAgence(i) + '</li>';
     const selectionnees = [...prises('femme'), ...prises('homme')], desistees = invitations.filter((i) => i.statut === 'desiste');
     return P.entete('Places limitées · ' + projet.titre, retour + '<button type="button" class="btn" data-action="places-actualiser">🔄 Actualiser</button>') +
       '<p class="doux">' + P.esc(resume(projet)) + ' ' + etatAppel(appel, projet) + '</p>' +
@@ -315,6 +321,33 @@
       return P.afficher();
     }
     P.message([contact.civilite, contact.nom].filter(Boolean).join(' ') + ' est ajouté(e)' + (contact.mannequin_id ? ' au registre de l’agence' : '') + ' : son lien est prêt à envoyer.');
+    return P.afficher();
+  };
+  // L'agence retire une place (mannequin indisciplinée…) : même effet qu'un désistement (retirée du
+  // projet, convocation « absente », envois programmés annulés : places_rendre), puis « exclue » :
+  // son lien ne lui permet plus de reprendre la place. La place redevient libre.
+  P.actions['places-admin-retirer'] = async (el) => {
+    const inv = ecran.invitations.find((i) => i.id === el.dataset.id);
+    if (!inv) return;
+    if (!confirm('Retirer sa place ? Elle ne pourra pas la reprendre avec son lien, et la place redevient libre.')) return;
+    const r = await P.rpc('places_rendre', { p_jeton: inv.jeton });
+    if (r !== 'desiste') { P.message(r === 'termine' ? 'Ce projet est terminé : rien n’a été changé.' : 'La place n’a pas pu être retirée. Actualisez puis réessayez.'); return P.afficher(); }
+    const x = await P.bd(sb.from('places_invitations').update({ statut: 'exclu' }).eq('id', inv.id).select('id'));
+    P.message(x && x.length ? 'Place retirée : elle est de nouveau libre.' : 'Place libérée, mais son lien pourrait encore la reprendre : reconnectez-vous puis réessayez « Retirer la place ».');
+    return P.afficher();
+  };
+  // L'agence donne (ou redonne) une place elle-même : comme si la mannequin l'avait prise avec son
+  // lien (places_prendre : ajoutée au projet et aux convocations), s'il reste une place.
+  P.actions['places-admin-donner'] = async (el) => {
+    const inv = ecran.invitations.find((i) => i.id === el.dataset.id);
+    if (!inv) return;
+    if (inv.statut === 'exclu') {
+      const x = await P.bd(sb.from('places_invitations').update({ statut: 'invite' }).eq('id', inv.id).select('id'));
+      if (!x || !x.length) { P.message('Rien n’a été enregistré : reconnectez-vous puis réessayez.'); return; }
+    }
+    const r = await P.rpc('places_prendre', { p_jeton: inv.jeton });
+    P.message({ pris: 'Place donnée : elle est ajoutée au projet.', complet: 'Plus de place libre pour ce sexe : retirez d’abord une place, ou augmentez le « Nombre de places ».',
+      ferme: 'L’appel est fermé : rouvrez-le d’abord.', termine: 'Ce projet est terminé.', deja: 'Elle a déjà une place.' }[r] || 'La place n’a pas pu être donnée. Actualisez puis réessayez.');
     return P.afficher();
   };
   // retirer une personne extérieure ajoutée par erreur (seulement si rien ne lui a été envoyé)

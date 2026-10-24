@@ -34,6 +34,16 @@ function donneesAdmin() {
     });
     return d.tables.places_invitations.length;
   };
+  // l'agence retire / donne une place (24/10/2026) : mêmes réponses que supabase-places.sql
+  const parJeton = (j) => d.tables.places_invitations.find((l) => l.jeton === j);
+  d.rpc.places_rendre = (x) => { const i = parJeton(x.p_jeton); if (i.statut !== 'pris') return 'pas_pris'; Object.assign(i, { statut: 'desiste', desiste_le: new Date().toISOString() }); return 'desiste'; };
+  d.rpc.places_prendre = (x) => {
+    const i = parJeton(x.p_jeton), ap = d.tables.places_appels[0];
+    if (i.statut === 'exclu') return 'inconnu'; if (i.statut === 'pris') return 'deja'; if (!ap.ouvert) return 'ferme';
+    const n = d.tables.places_invitations.filter((l) => l.sexe === i.sexe && l.statut === 'pris').length;
+    if (n >= (i.sexe === 'homme' ? ap.places_hommes : ap.places_femmes)) return 'complet';
+    Object.assign(i, { statut: 'pris', pris_le: new Date().toISOString(), pris_par: 'mannequin' }); return 'pris';
+  };
   d.rpc.convocation_contacts_mannequins = (x) => x.p_ids.filter((id) => contacts[id]).map((id) => {
     const p = d.tables.model_profiles.find((m) => m.id === id);
     return Object.assign({ model_id: id, full_name: p.full_name, category: p.category, contact_email: null }, contacts[id]);
@@ -119,6 +129,20 @@ async function partieAdmin(b, nom, vp) {
   ok(apres !== avant, n + 'annonce : une personne par appui (' + apres.replace(/\s+/g, ' ') + ')');
   await p.click('[data-action="places-libre-fin"]'); await p.waitForTimeout(800);
   ok(!(await p.$('a[data-places-libre]')) && await p.isVisible('[data-action="places-libre"]'), n + '« Terminer l’annonce »');
+
+  // 3 bis. L'agence garde la main (24/10/2026) : retirer une place, la redonner, la donner
+  const rpcs = (nomRpc) => journal.filter(j => j[0] === 'rpc' && j[1] === nomRpc).map(j => JSON.parse(j[2]));
+  await p.click('[data-action="places-admin-retirer"][data-id="' + inv('m0').id + '"]'); await p.waitForTimeout(1200);
+  ok(rpcs('places_rendre').some(x => x.p_jeton === J('a')) && ecrits(journal, 'PATCH', 'places_invitations').some(x => x.statut === 'exclu') && inv('m0').statut === 'exclu'
+    && /Place retirée/.test(await p.textContent('body')) && /Femmes : 0 \/ 2/.test(await p.textContent('#contenu')), n + '« Retirer la place » : place libérée, son lien ne peut plus la reprendre');
+  await p.click('[data-action="places-admin-donner"][data-id="' + inv('m1').id + '"]'); await p.waitForTimeout(1200);
+  ok(rpcs('places_prendre').some(x => x.p_jeton === J('b')) && inv('m1').statut === 'pris' && /Place donnée/.test(await p.textContent('body'))
+    && /Femmes : 1 \/ 2/.test(await p.textContent('#contenu')) && !/Désistements/.test(await p.textContent('#contenu')), n + '« Redonner la place » après un désistement');
+  if (!(await p.isVisible('[data-action="places-admin-donner"][data-id="' + inv('m2').id + '"]'))) await p.click('.pl-qui summary');
+  await p.click('[data-action="places-admin-donner"][data-id="' + inv('m2').id + '"]'); await p.waitForTimeout(1200);
+  ok(rpcs('places_prendre').some(x => x.p_jeton === J('c')) && inv('m2').statut === 'pris' && /Femmes : 2 \/ 2/.test(await p.textContent('#contenu')), n + '« Donner la place » à une invitée');
+  ok(!(await p.$('[data-action="places-admin-donner"][data-id="' + inv('m0').id + '"]')), n + 'la place retirée n’est pas proposée à « Donner » tant qu’elle n’est pas recochée');
+  ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth)), n + 'boutons de l’agence : rien ne dépasse de l’écran');
 
   // 4. Nombre de places trop petit refusé ; fermer l'appel
   await p.click('[data-action="places-modifier"]'); await p.fill('#pl-hommes', '0'); await p.click('form[data-form="places-nombre"] [type=submit]'); await p.waitForTimeout(500);
