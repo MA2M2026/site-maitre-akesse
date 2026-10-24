@@ -50,6 +50,9 @@ async function serveur() {
   };
   const codeProtege = require(path.join(RACINE, 'api/code-protege.js'));
   const sitesImages = require(path.join(RACINE, 'api/r2-site-images.js'));
+  // jeton d'une administratrice connectée AVEC le code de l'application (aal2, exigé depuis le 24/10/2026)
+  const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
+  const JETON = b64({ alg: 'HS256' }) + '.' + b64({ sub: 'admin-1', aal: 'aal2' }) + '.c2ln';
   const appeler = async (f, corps, jeton) => { const res = fauxRes(); await f({ method: 'POST', body: corps, headers: { authorization: jeton ? 'Bearer ' + jeton : '' } }, res); return res; };
 
   let r = await appeler(codeProtege, { type: 'inscription', code: 'BON' });
@@ -61,29 +64,29 @@ async function serveur() {
   lent = true; const t0 = Date.now(); r = await appeler(codeProtege, { type: 'inscription', code: 'BON' }); lent = false;
   ok(r.statut === 200 && r.corps.note === null && Date.now() - t0 < 4500, 'serveur : stockage trop lent → réponse sans note en 3 s au plus (' + (Date.now() - t0) + ' ms)');
 
-  r = await appeler(sitesImages, { action: 'lire', categorie: 'note-integration' }, 'jeton');
+  r = await appeler(sitesImages, { action: 'lire', categorie: 'note-integration' }, JETON);
   ok(r.statut === 200 && r.corps.chemin === RECENTE, 'serveur : l\'admin voit le document en place');
-  admin = false; r = await appeler(sitesImages, { action: 'lire', categorie: 'note-integration' }, 'jeton'); admin = true;
+  admin = false; r = await appeler(sitesImages, { action: 'lire', categorie: 'note-integration' }, JETON); admin = true;
   ok(r.statut === 403, 'serveur : un compte non admin ne voit pas le document');
   r = await appeler(sitesImages, { action: 'lire', categorie: 'note-integration' });
   ok(r.statut === 401, 'serveur : sans connexion, refus');
-  r = await appeler(sitesImages, { categorie: 'note-integration', chemin: 'prive/note-integration/note.pdf', contentType: 'application/pdf', taille: 1000 }, 'jeton');
+  r = await appeler(sitesImages, { categorie: 'note-integration', chemin: 'prive/note-integration/note.pdf', contentType: 'application/pdf', taille: 1000 }, JETON);
   ok(r.statut === 400, 'serveur : nom devinable refusé (32 caractères secrets obligatoires)');
-  r = await appeler(sitesImages, { categorie: 'note-integration', chemin: AUTRE, contentType: 'text/html', taille: 1000 }, 'jeton');
+  r = await appeler(sitesImages, { categorie: 'note-integration', chemin: AUTRE, contentType: 'text/html', taille: 1000 }, JETON);
   ok(r.statut === 400, 'serveur : seul un PDF est accepté');
-  r = await appeler(sitesImages, { categorie: 'note-integration', chemin: AUTRE, contentType: 'application/pdf', taille: 20 * 1024 * 1024 }, 'jeton');
+  r = await appeler(sitesImages, { categorie: 'note-integration', chemin: AUTRE, contentType: 'application/pdf', taille: 20 * 1024 * 1024 }, JETON);
   ok(r.statut === 400, 'serveur : document de plus de 15 Mo refusé');
-  r = await appeler(sitesImages, { categorie: 'note-integration', chemin: AUTRE, contentType: 'application/pdf', taille: 1000 }, 'jeton');
+  r = await appeler(sitesImages, { categorie: 'note-integration', chemin: AUTRE, contentType: 'application/pdf', taille: 1000 }, JETON);
   ok(r.statut === 200 && r.corps.uploadUrl, 'serveur : envoi d\'un PDF au nom secret accepté');
-  r = await appeler(sitesImages, { categorie: 'actualites', chemin: 'site/actualites/x.pdf', contentType: 'application/pdf', taille: 1000 }, 'jeton');
+  r = await appeler(sitesImages, { categorie: 'actualites', chemin: 'site/actualites/x.pdf', contentType: 'application/pdf', taille: 1000 }, JETON);
   ok(r.statut === 400, 'serveur : les images refusent toujours les PDF');
-  r = await appeler(sitesImages, { action: 'nettoyer', categorie: 'note-integration', chemin: AUTRE }, 'jeton');
+  r = await appeler(sitesImages, { action: 'nettoyer', categorie: 'note-integration', chemin: AUTRE }, JETON);
   ok(r.statut === 404 && supprimes.length === 0, 'serveur : nettoyage avec un document inexistant → rien n\'est supprimé');
-  r = await appeler(sitesImages, { action: 'nettoyer', categorie: 'note-integration', chemin: RECENTE }, 'jeton');
+  r = await appeler(sitesImages, { action: 'nettoyer', categorie: 'note-integration', chemin: RECENTE }, JETON);
   ok(r.statut === 200 && supprimes.join() === ANCIENNE && objets.some(o => o.Key === RECENTE), 'serveur : seuls les documents plus anciens sont retirés');
   // deux dépôts presque simultanés : le nettoyage du premier n'efface pas le second
   objets.push({ Key: AUTRE, LastModified: new Date('2026-10-14') });
-  r = await appeler(sitesImages, { action: 'nettoyer', categorie: 'note-integration', chemin: RECENTE }, 'jeton');
+  r = await appeler(sitesImages, { action: 'nettoyer', categorie: 'note-integration', chemin: RECENTE }, JETON);
   ok(r.statut === 200 && objets.some(o => o.Key === AUTRE), 'serveur : un dépôt plus récent n\'est jamais effacé par un nettoyage plus ancien');
 }
 
