@@ -105,13 +105,16 @@ async function espace(b, sansWebp) {
   {
     const p = await (await b.newContext({ viewport: { width: 1280, height: 900 } })).newPage(); const journal = [], envois = [];
     const d = admin.donnees('principal'); d.tables.model_photos = [
-      { id: 'v1', model_id: 'm1', url: 'https://photos.test/m1/orig.jpg', url_miniature: 'https://photos.test/m1/miniatures/1-a-n800.jpg', chemin_miniature: 'm1/miniatures/1-a-n800.jpg', url_moyenne: 'https://photos.test/m1/moyennes/1-b.jpg', chemin_moyenne: 'm1/moyennes/1-b.jpg' },
-      { id: 'v2', model_id: 'm1', url: 'https://photos.test/m1/orig2.jpg', url_miniature: 'x', chemin_miniature: 'm1/miniatures/2-a-n800-w.jpg', url_moyenne: 'y', chemin_moyenne: 'm1/moyennes/2-b-w.jpg' }];
+      { id: 'v1', model_id: 'm1', url: 'https://www.maitreakessemodelmanagement.com/book-photos/m1/orig.jpg', url_miniature: 'https://photos.test/m1/miniatures/1-a-n800.jpg', chemin_miniature: 'm1/miniatures/1-a-n800.jpg', url_moyenne: 'https://photos.test/m1/moyennes/1-b.jpg', chemin_moyenne: 'm1/moyennes/1-b.jpg' },
+      { id: 'v2', model_id: 'm1', url: 'https://www.maitreakessemodelmanagement.com/book-photos/m1/orig2.jpg', url_miniature: 'x', chemin_miniature: 'm1/miniatures/2-a-n800-w.jpg', url_moyenne: 'y', chemin_moyenne: 'm1/moyennes/2-b-w.jpg' }];
     await brancher(p, d, journal);
     await p.route(/\/api\/r2-presigner/, async r => { const c = JSON.parse(r.request().postData() || '{}'); envois.push(c.chemin);
       r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ uploadUrl: 'http://127.0.0.1:' + PORT + '/__stockage', publicUrl: 'https://photos.test/' + c.chemin }) }); });
     await p.route(/__stockage/, r => r.fulfill({ status: 200, body: '' }));
     await p.route(/photos\.test\//, r => r.fulfill({ status: 200, contentType: 'image/jpeg', body: PHOTO }));
+    // (photos d'origine lues par l'adresse du site, comme en ligne : la règle de sécurité de
+    // l'Administration n'autorise pas d'autre adresse)
+    await p.route(/\/book-photos\/m1\//, r => r.fulfill({ status: 200, contentType: 'image/jpeg', body: PHOTO }));
     await admin.seConnecter(p, 'http://127.0.0.1:' + PORT + '/admin/'); await p.waitForSelector('.accueil-tete', { timeout: 15000 });
     // (sans attendre les 8 secondes du lancement automatique)
     await p.evaluate(async () => { try { sessionStorage.removeItem('ma2m_rattrapage_photos'); } catch (e) {} await rattraperPhotosEnArrierePlan(); });
