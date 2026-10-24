@@ -450,6 +450,10 @@ sécurité réelle (les photos restent en HTTPS ; ECH ne cache que le nom de l'a
   rien ; « Ajouter les nouvelles mannequins » ne la recoche pas), « 👁️ Voir le message » (aperçu
   sans rien envoyer ni noter), « 🗑️ Supprimer cet appel » (liens et places effacés, le projet
   reste dans l'agenda ; les personnes déjà sélectionnées restent dans le projet).
+  L'agence garde la main (24/10/2026) : « Retirer la place » (sélectionnée : `places_rendre`
+  puis statut `exclu`, son lien ne peut plus la reprendre ; la place redevient libre),
+  « Redonner la place » (désistement) et « Donner la place » (invitée, dans « Qui reçoit le
+  lien ? ») : `places_prendre` avec son jeton, comme si elle l'avait prise elle-même.
 - **Page publique** : `places.html` + `js/places.js` + `css/places.css` (sans compte, `noindex` ;
   code commun avec `confirmer.html` dans `js/lien-public.js`) :
   « Je prends ma place » → « Bravo… » (vert) ou « Oups… plus de place disponible. Rendez-vous au
@@ -516,6 +520,9 @@ sécurité réelle (les photos restent en HTTPS ; ECH ne cache que le nom de l'a
   une convocation non annulée (le plus récent d'abord), puis réponses du projet choisi, sans
   rien envoyer. Dessin partagé avec le panneau : `window.dessinerReponsesConvocation`
   (`js/convocations-admin.js`).
+  L'agence peut corriger une réponse (24/10/2026) : liste « ✅ Confirmé / ❌ Absent / ⏳ Sans
+  réponse » sur chaque ligne (`choixReponse`), enregistrée pour la mineure ET son parent
+  (`convocation_participants.reponse`) ; les rappels suivent (aucun rappel à une « absente »).
   Relance des personnes sans réponse (22/10/2026) : un seul bouton « 💬 Relancer la suivante (X
   restantes) », comme « Envoyer le WhatsApp suivant », et seulement pour celles dont la convocation
   est vraiment partie (statut `envoye`) ; relances faites retenues pour la session

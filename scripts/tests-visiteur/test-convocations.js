@@ -229,6 +229,13 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
       '« Voir les réponses » : confirmés, absents et sans réponse visibles (' + vue.slice(0, 80) + ')');
     if (process.env.CAPTURES) await p.locator('.convoc-voir').screenshot({ path: process.env.CAPTURES + '/voir-reponses-390.png' });
     ok(!ecrits(journal, 'POST', 'convocation_envois').length && !ecrits(journal, 'PATCH', 'convocation_envois').length, '« Voir les réponses » : rien n’est envoyé');
+    // l'agence corrige une réponse (24/10/2026) : la mineure a confirmé par téléphone
+    await p.selectOption('#cv-reponses .convoc-reponse:has-text("PETITE AMA") select.convoc-changer', 'confirme'); await p.waitForTimeout(1200);
+    const corrige = ecrits(journal, 'PATCH', 'convocation_participants').pop() || {};
+    ok(corrige.reponse === 'confirme' && corrige.repondu_le && /2 confirmé · 1 absent · 1 sans réponse/.test(await p.textContent('#cv-reponses')), '« Changer la réponse » : enregistrée, chiffres à jour (' + JSON.stringify(corrige) + ')');
+    await p.selectOption('#cv-reponses .convoc-reponse:has-text("PETITE AMA") select.convoc-changer', ''); await p.waitForTimeout(1200);
+    ok((ecrits(journal, 'PATCH', 'convocation_participants').pop() || {}).reponse === null && /1 confirmé · 1 absent · 2 sans réponse/.test(await p.textContent('#cv-reponses')), '« Sans réponse » : la réponse est effacée');
+    ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth)), 'réponses : rien ne dépasse de l’écran');
     ok(!errs.length, 'réponses : aucune erreur ' + errs.join(' | '));
     await ctx.close();
   }

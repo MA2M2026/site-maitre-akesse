@@ -489,6 +489,7 @@ dl.champs a { color: var(--av-rouge-texte); font-weight: 600; }
 .convoc-reponse { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px; padding: 8px 0; border-bottom: 1px solid var(--av-creux); font-size: 14px; }
 .convoc-reponse-confirme { color: var(--ok-texte); font-weight: 600; }
 .convoc-reponse-absent { color: var(--erreur-texte); font-weight: 600; }
+.convoc-changer { font-size: 13px; padding: 4px 6px; max-width: 100%; margin-left: auto; }
 .convoc-suivant, .convoc-relance { justify-self: start; text-align: center; white-space: normal; margin-bottom: 6px; }
 /* Mur de visages pour choisir les mannequins (nouvelle Administration) */
 .agenda-cases.mur-visages { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 12px; max-height: 34rem; padding: 4px; }
