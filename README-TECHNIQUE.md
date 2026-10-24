@@ -362,6 +362,16 @@ on doit la choisir ou l'ouvrir, c'est la photo (avec le nom) qu'on touche. Tout 
 Essai : `test-visages-partout.js` parcourt tous les écrans (et les fiches, panneaux et fenêtres
 qui s'ouvrent ensuite) et échoue si un nom de mannequin est sans photo.
 
+## 🖨️ CV et compcards en pleine qualité (24/10/2026)
+Les CV et compcards étaient flous : (1) l'originale était réduite à l'envoi (2200 px, JPEG 0,85),
+(2) certaines photos arrivent déjà petites (1280 px : photos envoyées par WhatsApp, irréparable par
+le site — demander l'originale, ou WhatsApp « HD » / « document »). Désormais `compresserPhotoOrigine`
+garde 4000 px en JPEG 0,92 (originale rangée chez Cloudflare R2), et les fiches sont dessinées jusqu'à
+3000 px (`COTE_MAX_FICHE`). Le site affiche toujours la miniature (800 px) ou la moyenne (1400 px) ;
+la photo agrandie de la fiche publique prend la moyenne (`fiche-mannequin.js`). Les photos déjà
+envoyées gardent leur taille ; seules les nouvelles (ou renvoyées) profitent de la pleine qualité.
+À faire : avertir quand une photo est trop petite pour une compcard nette.
+
 ## 🔁 Photos par Vercel (23/10/2026, décision de la propriétaire)
 Le domaine Cloudflare des photos (`photos.maitreakessemodelmanagement.com`) coupe la connexion
 (`ERR_CONNECTION_CLOSED`) ou ne répond plus depuis la box Orange CI de la propriétaire : l'accueil

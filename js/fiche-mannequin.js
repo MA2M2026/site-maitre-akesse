@@ -362,7 +362,9 @@ async function chargerProfilInterne() {
   const photosDigitals = (photos || []).filter(p => p.categorie === 'lifestyle');
   const photosBook = (photos || []).filter(p => p.categorie !== 'lifestyle');
   const ordreGalerie = photosBook.concat(photosDigitals);
-  const urlsPhotos = ordreGalerie.map(p => p.url);
+  // photo agrandie : la version moyenne (1400 px), l'originale (jusqu'à 4000 px depuis le
+  // 24/10/2026) étant réservée aux CV et compcards
+  const urlsPhotos = ordreGalerie.map(p => p.url_moyenne || p.url);
   window.photosLightbox = urlsPhotos;
 
   const photoPrincipale = document.getElementById('compsheet-photo-clic');

@@ -439,8 +439,9 @@ function definirSelectOuAutre(idSelect, idAutre, valeur) {
 // « illisible » à la création de la compcard / du CV (réception coupée sur une connexion
 // faible), et le dessin de très grandes photos figeait les téléphones Android plusieurs
 // secondes. Désormais : deuxième essai sans cache si la photo ne se décode pas, et photo
-// réduite à 2000 px de côté au plus (largement assez pour une fiche A4).
-const COTE_MAX_FICHE = 2000;
+// réduite à 3000 px de côté au plus (24/10/2026 : 2000 px avant ; une case de compcard A4 à
+// 400 ppp fait jusqu'à ~1700 px : marge pour une impression nette, sans figer les téléphones).
+const COTE_MAX_FICHE = 3000;
 async function telechargerImage(url, cache) {
   try {
     // (par le relais de la même adresse que la page : js/photos.js)
@@ -1779,9 +1780,12 @@ function redessinerPhoto(fichier, coteMax, rendu) {
     img.src = adresse;
   });
 }
-// Compresse toute photo lourde (> 900 Ko) en JPEG de 2200 px au plus ; les GIF (animés)
+// Compresse toute photo lourde (> 900 Ko) en JPEG de 4000 px au plus ; les GIF (animés)
 // et les photos déjà légères restent intactes ; jamais plus lourde qu'au départ.
-async function compresserPhotoOrigine(fichier, coteMax = 2200, qualite = 0.85) {
+// 24/10/2026 (demande de la propriétaire : CV et compcards flous) : l'originale garde sa pleine
+// qualité (4000 px, JPEG 0,92 ; avant 2200 px, 0,85). Elle ne sert qu'aux CV, compcards et à la
+// photo agrandie ; le site affiche la miniature (800 px) ou la version moyenne (1400 px).
+async function compresserPhotoOrigine(fichier, coteMax = 4000, qualite = 0.92) {
   const compressible = /^image\/(jpeg|jpg|pjpeg|png|webp)$/i.test(fichier.type || '');
   if (!compressible || fichier.size < 900 * 1024) return fichier;
   return reduireEnJpeg(fichier, coteMax, qualite);
