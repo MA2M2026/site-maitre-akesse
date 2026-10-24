@@ -1851,23 +1851,32 @@ async function envoyerVersionPhoto(modelId, source, dossier, fin, cote, qualite)
 // Book / Lifestyle (07 au 24/10/2026) : le tri automatique se trompait (photos de studio
 // rangées en Lifestyle) ; décision de la propriétaire, toutes les photos vont dans le Book.
 
+// Versions réduites d'une photo du Book : [colonne, dossier, fin du nom, côté, qualité JPEG/WebP].
+// Petite (24/10/2026, supabase-photos-petites.sql) : les grilles sur téléphone (js/photos.js, urlGrille).
+const VERSIONS_PHOTO_BOOK = [['miniature', 'miniatures', '-n800', 800, 0.75], ['moyenne', 'moyennes', '', 1400, 0.78], ['petite', 'petites', '-n480', 480, 0.72]];
 // Préparation complète d'une photo du Book puis envoi : conversion HEIC, compression,
-// original + miniature 800 px + version moyenne 1400 px, dans le dossier du mannequin.
-// Une miniature ou une version moyenne qui échoue n'empêche pas l'envoi de la photo.
+// original + ses versions réduites, dans le dossier du mannequin. Une version qui échoue
+// n'empêche pas l'envoi de la photo. Renvoie les colonnes de model_photos à enregistrer
+// (url, chemin, url_miniature, chemin_miniature… ).
 async function envoyerPhotoBook(modelId, fichierOriginal) {
   const fichierConverti = await convertirSiHeic(fichierOriginal);
   const fichier = await compresserPhotoOrigine(fichierConverti);
   const chemin = modelId + '/' + Date.now() + '-' + suffixeAleatoire() + '-' + nomFichierSur(fichier.name);
   const url = await uploaderVersR2(modelId, chemin, fichier, fichier.type || 'image/jpeg');
-  const versions = [['Miniature', 'miniatures', '-n800', 800, 0.75], ['Moyenne', 'moyennes', '', 1400, 0.78]];
-  const resultat = { chemin, url, cheminMiniature: null, urlMiniature: null, cheminMoyenne: null, urlMoyenne: null, categorie: 'book' };
-  for (const [cle, dossier, fin, cote, qualite] of versions) {
+  const colonnes = { url, chemin, categorie: 'book' };
+  for (const [cle, dossier, fin, cote, qualite] of VERSIONS_PHOTO_BOOK) {
+    colonnes['url_' + cle] = null; colonnes['chemin_' + cle] = null;
     try {
       const v = await envoyerVersionPhoto(modelId, fichier, dossier, fin, cote, qualite);
-      if (v) { resultat['url' + cle] = v.url; resultat['chemin' + cle] = v.chemin; }
+      if (v) { colonnes['url_' + cle] = v.url; colonnes['chemin_' + cle] = v.chemin; }
     } catch (e) { console.warn('Version ' + cle + ' non envoyée :', e); }
   }
-  return resultat;
+  return colonnes;
+}
+// Tous les fichiers d'une photo du Book (originale et versions réduites, d'après les colonnes de
+// model_photos), retirés de R2. Partagé le 24/10/2026 (avant, la liste était recopiée à 5 endroits).
+async function supprimerFichiersPhoto(modelId, p) {
+  for (const c of [p.chemin].concat(VERSIONS_PHOTO_BOOK.map(([cle]) => p['chemin_' + cle]))) if (c) await supprimerDeR2(modelId, c);
 }
 
 // ================== Images du site (actualités/événements/partenaires) sur

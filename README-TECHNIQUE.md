@@ -362,6 +362,24 @@ on doit la choisir ou l'ouvrir, c'est la photo (avec le nom) qu'on touche. Tout 
 Essai : `test-visages-partout.js` parcourt tous les écrans (et les fiches, panneaux et fenêtres
 qui s'ouvrent ensuite) et échoue si un nom de mannequin est sans photo.
 
+## 📱 Photos à la taille du téléphone (24/10/2026)
+Lighthouse (mobile) : les grilles envoyaient la miniature de 800 px dans des cases de ~180 px
+(« Properly size images », ~400 Ko de trop par page). Chaque photo du Book a désormais une
+**petite version de 480 px** (dossier `petites/`, « -n480 », copie WebP comme les autres ;
+colonnes `url_petite`/`chemin_petite`, fonction `photos_couverture_petites` :
+`supabase-photos-petites.sql`, à exécuter AVANT la mise en ligne du code qui écrit ces colonnes).
+- Fabrication : à l'envoi (`VERSIONS_PHOTO_BOOK`, `envoyerPhotoBook`, js/app.js) et, pour les
+  photos déjà en ligne, par le rattrapage automatique de l'Administration (js/photos.js ; seulement
+  si la colonne existe).
+- Affichage : `lirePhotosCouverture` + `urlGrille` (js/photos.js) — petite version sur téléphone
+  (écran < 700 px) pour l'accueil, The Book ; partout pour les petits visages (Parcours,
+  Administration) ; miniature sinon. Avant l'installation SQL, l'ancienne fonction répond
+  (rien ne change). Le serveur de l'accueil (middleware.js) transmet aussi `petite`.
+- Suppression : `supprimerFichiersPhoto` (js/app.js) retire l'originale et TOUTES les versions
+  (avant, la liste était recopiée à 5 endroits ; l'Espace mannequin oubliait miniature et moyenne).
+- Logo de l'en-tête allégé (34 → 10 Ko). Essais : `test-accueil-serveur.js` (petite sur
+  téléphone, miniature sur ordinateur), `scripts/base-essai/essais-photos-petites.sql`.
+
 ## 🖨️ CV et compcards en pleine qualité (24/10/2026)
 Les CV et compcards étaient flous : (1) l'originale était réduite à l'envoi (2200 px, JPEG 0,85),
 (2) certaines photos arrivent déjà petites (1280 px : photos envoyées par WhatsApp, irréparable par
@@ -938,6 +956,14 @@ Vercel.
   Deployments, la ligne du commit de `main` doit porter l'étiquette
   « Production ». Le 29/09, une fusion n'a produit qu'un « Aperçu » (limite
   quotidienne probable) : il a fallu une nouvelle fusion pour relancer.
+
+## 📐 Accueil qui ne saute plus (24/10/2026)
+Le « Mot de Maître Akesse » et l'annonce « Casting ouvert » remplaçaient, après le chargement,
+les textes d'attente de la page : le bas de l'accueil sautait (journal des erreurs). Le serveur
+(`completerAccueil`, middleware.js) les écrit désormais dans la page avant l'envoi ; les textes
+des variantes sont dans la page elle-même (`data-mot`, `data-sommaire-mot`, `data-casting`,
+`data-casting-lien`, index.html et en/index.html), lus par le serveur ET par js/accueil.js (qui
+ne relit la base que si le serveur n'a pas pu). Essai : `test-accueil-serveur.js`.
 
 ## 📐 « Affichage qui saute » (29 septembre 2026)
 

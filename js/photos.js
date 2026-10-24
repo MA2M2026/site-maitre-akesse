@@ -9,12 +9,30 @@
 // 30 % plus léger. Le nom du JPEG se termine alors par « -w.jpg » et la copie WebP porte le
 // même nom en « .webp » : aucune colonne de plus dans la base. Les photos d'origine ne
 // changent jamais.
-// Seules les versions réduites (dossiers miniatures/ et moyennes/) portent la marque : une
+// Seules les versions réduites (dossiers miniatures/, moyennes/ et petites/) portent la marque : une
 // photo d'origine dont le nom finirait par « -w.jpg » n'est jamais concernée.
-const MARQUE_WEBP = /\/(miniatures|moyennes)\/[^/?]*-w\.jpg(\?.*)?$/;
-function cheminWebp(chemin) { return typeof chemin === 'string' && /\/(miniatures|moyennes)\/[^/?]*-w\.jpg$/.test(chemin) ? chemin.replace(/\.jpg$/, '.webp') : null; }
+const MARQUE_WEBP = /\/(miniatures|moyennes|petites)\/[^/?]*-w\.jpg(\?.*)?$/;
+function cheminWebp(chemin) { return typeof chemin === 'string' && /\/(miniatures|moyennes|petites)\/[^/?]*-w\.jpg$/.test(chemin) ? chemin.replace(/\.jpg$/, '.webp') : null; }
 // Adresse JPEG de secours d'une copie WebP (null si ce n'en est pas une).
-function urlJpegDeSecours(url) { return typeof url === 'string' && /\/(miniatures|moyennes)\/[^/?]*-w\.webp(\?|$)/.test(url) ? url.replace(/\.webp(\?|$)/, '.jpg$1') : null; }
+function urlJpegDeSecours(url) { return typeof url === 'string' && /\/(miniatures|moyennes|petites)\/[^/?]*-w\.webp(\?|$)/.test(url) ? url.replace(/\.webp(\?|$)/, '.jpg$1') : null; }
+// ---- Petite version (480 px) pour les grilles sur téléphone (24/10/2026, supabase-photos-petites.sql) ----
+// Photo de couverture de chaque mannequin : [{ model_id, url (miniature 800 px), url_petite }].
+// client : le client Supabase de la page ; avant l'installation de la fonction en base,
+// l'ancienne (sans petite version) répond.
+async function lirePhotosCouverture(client, ids) {
+  if (!ids.length) return [];
+  const r = await client.rpc('photos_couverture_petites', { ids });
+  if (!r.error) return r.data || [];
+  const ancienne = await client.rpc('photos_couverture_mannequins', { ids });
+  return ancienne.data || [];
+}
+const ECRAN_TELEPHONE = typeof matchMedia === 'function' && matchMedia('(max-width: 699px)').matches;
+// Adresse pour une case de grille : la petite version sur téléphone (ou partout : partout = true,
+// pour les petits visages ronds), sinon la miniature.
+function urlGrille(ligne, partout) {
+  if (!ligne) return '';
+  return ligne.url_petite && (partout || ECRAN_TELEPHONE) ? ligne.url_petite : ligne.url;
+}
 // Ce navigateur sait-il ÉCRIRE du WebP (fabriquer les copies) ? Safari, non : ses envois
 // restent en JPEG seul, et le tableau de bord les rattrapera depuis un autre navigateur.
 function navigateurEcritWebp() {
@@ -215,8 +233,8 @@ async function refaireVersion(photo, original, maj, cle, dossier, fin, cote, qua
 }
 async function rattraperPhotosEnArrierePlan() {
   try { if (sessionStorage.getItem('ma2m_rattrapage_photos')) return; sessionStorage.setItem('ma2m_rattrapage_photos', '1'); } catch (e) {}
-  const { data: photos, error } = await sb.from('model_photos')
-    .select('id, model_id, url, url_miniature, url_moyenne, chemin_miniature, chemin_moyenne');
+  // (toutes les colonnes : la petite version n'est rattrapée que si sa colonne existe en base)
+  const { data: photos, error } = await sb.from('model_photos').select('*');
   if (error || !photos) return;
   // Versions à (re)faire : absente, ancienne miniature (< 800 px), ou sans copie WebP légère
   // quand ce navigateur sait l'écrire (12/10/2026 ; voir envoyerVersionPhoto dans js/app.js).
@@ -230,12 +248,13 @@ async function rattraperPhotosEnArrierePlan() {
   let webp = navigateurEcritWebp() && !donneesMobiles && window.matchMedia('(min-width: 700px) and (min-height: 600px)').matches; // pas un téléphone tenu en largeur
   const miniatureAFaire = p => !p.url_miniature || !/-n800(-w)?\.jpg$/.test(p.chemin_miniature || '') || (webp && !cheminWebp(p.chemin_miniature));
   const moyenneAFaire = p => !p.url_moyenne || (webp && !cheminWebp(p.chemin_moyenne));
-  const aFaire = photos.filter(p => p.url && (miniatureAFaire(p) || moyenneAFaire(p))).slice(0, 40);
+  const petiteAFaire = p => 'url_petite' in p && (!p.url_petite || (webp && !cheminWebp(p.chemin_petite)));
+  const aFaire = photos.filter(p => p.url && (miniatureAFaire(p) || moyenneAFaire(p) || petiteAFaire(p))).slice(0, 40);
   let echecs = 0, faites = 0;
   for (const photo of aFaire) {
     if (echecs >= 5) break;
-    const mini = miniatureAFaire(photo), moyenne = moyenneAFaire(photo);
-    if (!mini && !moyenne) continue;  // plus rien à faire sans WebP
+    const mini = miniatureAFaire(photo), moyenne = moyenneAFaire(photo), petite = petiteAFaire(photo);
+    if (!mini && !moyenne && !petite) continue;  // plus rien à faire sans WebP
     try {
       // par le relais de la même adresse (20/10/2026 : depuis admin.…, l'adresse www enregistrée
       // en base était refusée par la sécurité du navigateur, connect-src)
@@ -244,8 +263,11 @@ async function rattraperPhotosEnArrierePlan() {
       const original = await reponse.blob();
       const maj = {};
       let webpOk = true;
-      if (mini) webpOk = await refaireVersion(photo, original, maj, 'miniature', 'miniatures', '-n800', 800, 0.75);
-      if (moyenne) webpOk = (await refaireVersion(photo, original, maj, 'moyenne', 'moyennes', '', 1400, 0.78)) && webpOk;
+      // (mêmes réglages qu'à l'envoi : VERSIONS_PHOTO_BOOK, js/app.js)
+      const aRefaire = { miniature: mini, moyenne, petite };
+      for (const [cle, dossier, fin, cote, qualite] of VERSIONS_PHOTO_BOOK) {
+        if (aRefaire[cle]) webpOk = (await refaireVersion(photo, original, maj, cle, dossier, fin, cote, qualite)) && webpOk;
+      }
       if (!webpOk) webp = false;  // copie WebP refusée : on n'insiste pas pour les suivantes
       // seulement si la photo n'a pas été remplacée entre-temps (bouton « Remplacer »)
       const { error: erreurMaj } = await sb.from('model_photos').update(maj).eq('id', photo.id).eq('url', photo.url);

@@ -236,8 +236,8 @@
     projets = await ma2mParcours(dateLocaleIso(debut), dateLocaleIso(fin));
     const ids = [...new Set(projets.flatMap(p => (p.mannequins || []).map(m => m.id).filter(Boolean)))];
     if (ids.length && typeof sb !== 'undefined' && sb) {
-      const { data } = await sb.rpc('photos_couverture_mannequins', { ids });
-      (data || []).forEach(c => { photos[c.model_id] = urlLegere(c.url); });
+      // petits visages : la petite version (480 px) quand elle existe (js/photos.js)
+      (await lirePhotosCouverture(sb, ids)).forEach(c => { photos[c.model_id] = urlLegere(urlGrille(c, true)); });
     }
     // Mois affiché au départ : le plus récent qui a des activités (sinon le mois en cours).
     const recents = projets.map(p => cleMois(p.date_fin || p.date_debut)).sort();

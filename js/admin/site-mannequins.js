@@ -49,7 +49,7 @@
 
   // ---------- Fiche d'une mannequin ----------
   let ouverte = null; // { id, profil, photos }
-  const COLONNES_PHOTOS = 'id, url, url_miniature, url_moyenne, chemin, chemin_miniature, chemin_moyenne, principale, compcard_ordre, categorie, created_at';
+  const COLONNES_PHOTOS = '*';  // (toutes les versions : supprimerFichiersPhoto, js/app.js)
   async function lirePhotos(id) { return P.bd(sb.from('model_photos').select(COLONNES_PHOTOS).eq('model_id', id).order('created_at', { ascending: true })); }
   function blocPhotos() {
     const ph = ouverte.photos;
@@ -106,8 +106,7 @@
       msg().textContent = 'Envoi ' + (i + 1) + '/' + fichiers.length + '…';
       try {
         const n = await envoyerPhotoBook(modelId, fichiers[i]);
-        const r = await P.bd(sb.from('model_photos').insert({ model_id: modelId, url: n.url, chemin: n.chemin, url_miniature: n.urlMiniature, chemin_miniature: n.cheminMiniature,
-          url_moyenne: n.urlMoyenne, chemin_moyenne: n.cheminMoyenne, originale_optimisee: true, categorie: n.categorie }).select('id'));
+        const r = await P.bd(sb.from('model_photos').insert(Object.assign({ model_id: modelId, originale_optimisee: true }, n)).select('id'));
         if (!r || !r.length) throw new Error('photo non rattachée');
         reussies++;
       } catch (e) { console.error('Envoi photo échoué :', e); }
@@ -125,13 +124,12 @@
       const n = await envoyerPhotoBook(modelId, fichier);
       // la fiche en base d'abord : si la base refuse, l'ancienne photo reste intacte et les
       // nouveaux fichiers (inutilisés) sont retirés
-      const r = await sb.from('model_photos').update({ url: n.url, chemin: n.chemin, url_miniature: n.urlMiniature, chemin_miniature: n.cheminMiniature,
-        url_moyenne: n.urlMoyenne, chemin_moyenne: n.cheminMoyenne, categorie: n.categorie }).eq('id', photo.id).select('id');
+      const r = await sb.from('model_photos').update(n).eq('id', photo.id).select('id');
       if (r.error || !r.data || !r.data.length) {
-        for (const c of [n.chemin, n.cheminMiniature, n.cheminMoyenne]) if (c) await supprimerDeR2(modelId, c);
+        await supprimerFichiersPhoto(modelId, n);
         throw r.error || new Error('la photo n’a pas été remplacée : reconnectez-vous puis réessayez');
       }
-      for (const c of [photo.chemin, photo.chemin_miniature, photo.chemin_moyenne]) if (c) await supprimerDeR2(modelId, c);
+      await supprimerFichiersPhoto(modelId, photo);
       await rafraichirPhotos('Photo remplacée.');
     } catch (e) { document.getElementById('mq-photo-msg').textContent = 'Échec du remplacement : ' + P.erreurTexte(e); }
   };
@@ -143,7 +141,7 @@
     // la fiche en base d'abord, les fichiers ensuite (sinon une photo listée sans fichier)
     const r = await P.bd(sb.from('model_photos').delete().eq('id', photo.id).select('id'));
     if (!r || !r.length) { el.disabled = false; P.message('Rien n’a été supprimé : reconnectez-vous puis réessayez.'); return; }
-    for (const c of [photo.chemin, photo.chemin_miniature, photo.chemin_moyenne]) if (c) await supprimerDeR2(modelId, c);
+    await supprimerFichiersPhoto(modelId, photo);
     await rafraichirPhotos('Photo supprimée.');
   };
   P.actions['mannequin-sourdine'] = async (el) => {

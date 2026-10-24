@@ -21,9 +21,10 @@
   // Photo de couverture de chaque mannequin publiée : { id: url }
   P.photosCouverture = async (ids) => {
     if (!ids.length) return {};
-    const lignes = await P.rpc('photos_couverture_mannequins', { ids });
+    // petits visages ronds : la petite version (480 px) partout quand elle existe (js/photos.js)
+    const lignes = await lirePhotosCouverture(sb, ids);
     const parId = {};
-    (lignes || []).forEach((p) => { parId[p.model_id] = p.url; });
+    lignes.forEach((p) => { parId[p.model_id] = urlGrille(p, true); });
     return parId;
   };
   // Nombre qui défile jusqu'à sa valeur (attribut data-compte)

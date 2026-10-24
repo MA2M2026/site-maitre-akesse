@@ -15,8 +15,8 @@ window.demarrerPhotosMisesDeCote = function () {
   // Suppression définitive : la fiche en base d'abord, puis les fichiers.
   async function supprimer(p) {
     var r = await sb.from('model_photos').delete().eq('id', p.id);
-    if (!r.error && typeof supprimerDeR2 === 'function') {
-      for (var c of [p.chemin, p.chemin_miniature, p.chemin_moyenne]) if (c) await supprimerDeR2(p.model_id, c);
+    if (!r.error && typeof supprimerFichiersPhoto === 'function') {
+      await supprimerFichiersPhoto(p.model_id, p);
     }
     return r;
   }
@@ -36,7 +36,7 @@ window.demarrerPhotosMisesDeCote = function () {
     var zoneE = document.getElementById('tri-ecartees');
     var zoneV = document.getElementById('tri-a-verifier');
     zoneE.textContent = 'Chargement…'; zoneV.textContent = '';
-    var res = await sb.from('model_photos').select('id, model_id, numero, url, url_miniature, url_moyenne, chemin, chemin_miniature, chemin_moyenne, tri_statut, created_at')
+    var res = await sb.from('model_photos').select('*')
       .in('tri_statut', ['ecartee', 'a_verifier']).order('created_at', { ascending: false }).limit(300);
     if (res.error) { charge = false; zoneE.textContent = 'Lecture impossible : ' + res.error.message; return; }
     var photos = res.data || [];

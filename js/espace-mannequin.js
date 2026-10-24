@@ -465,6 +465,12 @@ function mapProfileFromDb(row, contactPrive){
 // la bande passante (conversion HEIC, compression, 3 envois vers R2) sur un
 // envoi que le serveur refusera de toute façon.
 const LIMITE_PHOTOS_BOOK = 60;
+// Photo du Book telle que l'Espace l'affiche, d'après sa ligne model_photos (fichiers : ceux à
+// retirer de R2 si elle est supprimée, versions comprises)
+function photoDuBook(p) {
+  return { id:p.id, numero:p.numero||null, path:p.chemin, url:p.url_miniature||p.url, urlPleine:p.url, compcardOrdre:p.compcard_ordre||null,
+    couverturePosition:p.couverture_position||'center', ecartee:p.tri_statut==='ecartee', fichiers:p };
+}
 const Store = {
   async load(){
     const { data: profile, error: e1 } = await sb.from('model_profiles')
@@ -509,7 +515,7 @@ const Store = {
 
     const { data: photos } = await sb.from('model_photos').select('*').eq('model_id', currentUser.id).order('created_at', { ascending:true });
     (photos||[]).forEach(function(p){
-      const item = { id:p.id, numero:p.numero||null, path:p.chemin, url:p.url_miniature||p.url, urlPleine:p.url, compcardOrdre:p.compcard_ordre, couverturePosition:p.couverture_position||'center', ecartee:p.tri_statut==='ecartee' };
+      const item = photoDuBook(p);
       s.photos.book.push(item);
       if (p.principale) s.photos.principale = item;
       if (p.photo_cv) s.photos.photoCv = item;
@@ -594,14 +600,12 @@ const Store = {
     }, 90000);
     try{
       // Préparation et envoi partagés avec le tableau de bord (js/app.js).
-      const { chemin, url, cheminMiniature, urlMiniature, cheminMoyenne, urlMoyenne, categorie } = await envoyerPhotoBook(currentUser.id, file);
+      const colonnes = await envoyerPhotoBook(currentUser.id, file);
 
-      const { data: row, error: dbErr } = await sb.from('model_photos').insert({
-        model_id: currentUser.id, url, chemin, url_miniature:urlMiniature, chemin_miniature:cheminMiniature,
-        url_moyenne:urlMoyenne, chemin_moyenne:cheminMoyenne, originale_optimisee:true, categorie
-      }).select().single();
+      const { data: row, error: dbErr } = await sb.from('model_photos').insert(Object.assign({
+        model_id: currentUser.id, originale_optimisee:true }, colonnes)).select().single();
       if (dbErr) throw dbErr;
-      return { id: row.id, numero: row.numero||null, path: chemin, url: urlMiniature||url, urlPleine:url, compcardOrdre:null };
+      return photoDuBook(row);
     }catch(e){
       // e.message porte le vrai motif quand il vient d'un refus explicite du
       // serveur (ex. limite de photos atteinte) — l'afficher plutôt qu'un
@@ -622,15 +626,13 @@ const Store = {
     }
   },
 
-  async removePhoto(id, path, cheminMiniature, cheminMoyenne){
+  async removePhoto(id, fichiers){
     try{
       // D'abord la fiche en base : si elle échoue, on ne touche surtout pas aux
       // fichiers (sinon la photo resterait listée mais cassée).
       const { error } = await sb.from('model_photos').delete().eq('id', id).eq('model_id', currentUser.id);
       if (error) throw error;
-      if (path) void supprimerDeR2(currentUser.id, path);
-      if (cheminMiniature) void supprimerDeR2(currentUser.id, cheminMiniature);
-      if (cheminMoyenne) void supprimerDeR2(currentUser.id, cheminMoyenne);
+      void supprimerFichiersPhoto(currentUser.id, fichiers);  // (js/app.js)
       return true;
     }catch(e){ console.error(e); toast('Échec de la suppression', true); return false; }
   },
@@ -1386,7 +1388,7 @@ function bindPhotoHandlers(){
     e.stopPropagation();
     const id = b.dataset.rmbook; const photo = s.photos.book.find(function(ph){ return String(ph.id)===String(id); });
     if (!photo) return;
-    const ok = await Store.removePhoto(id, photo.path);
+    const ok = await Store.removePhoto(id, photo.fichiers);
     if (ok) {
       s.photos.book = s.photos.book.filter(function(ph){ return String(ph.id)!==String(id); });
       if (s.photos.principale && String(s.photos.principale.id)===String(id)) s.photos.principale=null;

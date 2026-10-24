@@ -236,7 +236,7 @@ const ACCUEIL = /^\/(en\/?)?(index\.html)?$/;
 const PHOTOS_DIRECTES_ACTIVES = true;  // 24/10/2026 : de nouveau par Cloudflare (cause trouvée : ECH, désactivé — voir README-TECHNIQUE.md)
 const PHOTOS_DIRECTES = 'https://photos.maitreakessemodelmanagement.com/';
 const RELAIS_PHOTOS = /^(?:https:\/\/(?:www\.)?maitreakessemodelmanagement\.com)?\/book-photos\//;
-const MARQUE_WEBP = /\/(miniatures|moyennes)\/[^/?]*-w\.jpg(\?.*)?$/;
+const MARQUE_WEBP = /\/(miniatures|moyennes|petites)\/[^/?]*-w\.jpg(\?.*)?$/;
 const DUREE_ACCUEIL = 5 * 60 * 1000;
 const ATTENTE_ACCUEIL = 800;
 let memoireAccueil = null;  // { quand, donnees }
@@ -247,15 +247,58 @@ function photoLegere(url) {
   if (!PHOTOS_DIRECTES_ACTIVES) return legere.indexOf(PHOTOS_DIRECTES) === 0 ? '/book-photos/' + legere.slice(PHOTOS_DIRECTES.length) : legere;
   return legere.replace(RELAIS_PHOTOS, PHOTOS_DIRECTES);
 }
+// photos de couverture avec leur petite version (comme lirePhotosCouverture, js/photos.js) ;
+// l'ancienne fonction tant que supabase-photos-petites.sql n'est pas installé
+async function lireCouvertures(ids) {
+  return (await lireSupabase('rpc/photos_couverture_petites', { ids }, 3000)) || lireSupabase('rpc/photos_couverture_mannequins', { ids }, 3000);
+}
 // les mannequins publiées avec leur photo de couverture (les mêmes questions que js/accueil.js)
 async function lireDonneesAccueil() {
   const profils = await lireSupabase('model_profiles?published=eq.true&select=id,full_name,city,category,height_cm,featured&order=created_at.desc&limit=200', null, 3000);
   if (!profils) throw new Error('base : mannequins');
-  const couvertures = profils.length ? await lireSupabase('rpc/photos_couverture_mannequins', { ids: profils.map(p => p.id) }, 3000) : [];
+  // (en même temps : le mot de Maître Akesse et les castings ouverts, écrits dans la page pour
+  // qu'elle ne saute pas quand ils arrivent — 24/10/2026 ; s'ils manquent, le navigateur les lit)
+  const [couvertures, mots, castings] = await Promise.all([
+    profils.length ? lireCouvertures(profils.map(p => p.id)) : [],
+    lireSupabase('mot_responsable?id=eq.principal&select=nom,titre,message,photo_url', null, 3000).catch(() => null),
+    lireSupabase('casting_projets?actif=eq.true&select=id&limit=1', null, 3000).catch(() => null)]);
   if (!couvertures) throw new Error('base : photos');
   const photoDe = {};
-  couvertures.forEach(c => { if (c.url) photoDe[c.model_id] = c.url; });
-  return { profils: profils.filter(p => photoDe[p.id]).map(p => Object.assign({ photo: photoDe[p.id] }, p)), nombre: profils.length };
+  couvertures.forEach(c => { if (c.url) photoDe[c.model_id] = c; });
+  const donnees = { profils: profils.filter(p => photoDe[p.id]).map(p => Object.assign({ photo: photoDe[p.id].url, petite: photoDe[p.id].url_petite || null }, p)), nombre: profils.length };
+  if (Array.isArray(mots)) donnees.mot = mots[0] || null;
+  if (Array.isArray(castings)) donnees.castingOuvert = castings.length > 0;
+  return donnees;
+}
+// Texte d'un élément de la page (repéré par son id) ; brut : déjà écrit pour du HTML
+function texteElement(html, id, texte, brut) {
+  return html.replace(new RegExp('(<[a-z0-9]+ [^>]*id="' + id + '"[^>]*>)[^<]*(</)'), (m, debut, fin) => debut + (brut ? texte : echapper(texte)) + fin);
+}
+// Valeur d'un attribut data-… d'un élément (déjà écrite pour du HTML), ou null
+function attributElement(html, id, nom) {
+  const m = html.match(new RegExp('id="' + id + '"[^>]*\\sdata-' + nom + '="([^"]*)"'));
+  return m ? m[1] : null;
+}
+// Mot de Maître Akesse et casting ouvert : les mêmes textes que js/accueil.js, venus de la page
+function completerAccueil(html, donnees) {
+  const mot = donnees.mot;
+  if (mot && mot.message) {
+    const rubrique = attributElement(html, 'edito-rubrique', 'mot');
+    if (rubrique) html = texteElement(html, 'edito-rubrique', rubrique, true);
+    html = texteElement(html, 'edito-texte', mot.message);
+    html = texteElement(html, 'edito-nom', mot.nom || 'Maître Akesse');
+    html = texteElement(html, 'edito-fonction', mot.titre || '');
+    html = html.replace('<p class="signature u-hidden" id="edito-signature">', '<p class="signature" id="edito-signature">');
+  }
+  if (donnees.castingOuvert) {
+    ['dos-rubrique', 'dos-texte', 'dos-bouton'].forEach((id) => {
+      const texte = attributElement(html, id, 'casting');
+      if (texte) html = texteElement(html, id, texte, true);
+    });
+    const lien = attributElement(html, 'dos-bouton', 'casting-lien');
+    if (lien) html = html.replace(/(<a [^>]*id="dos-bouton"[^>]*\shref=")[^"]*"/, (m, debut) => debut + lien + '"');
+  }
+  return html;
 }
 // liste fraîche (ou vieille de moins de 5 minutes) ; sinon on lance la lecture (une seule à la fois)
 // et on l'attend au plus ATTENTE_ACCUEIL ; une liste plus ancienne sert en attendant
@@ -287,6 +330,7 @@ async function accueilRempli(requete, url) {
   const une = donnees.profils.find(p => p.featured) || donnees.profils[0];
   const autres = donnees.profils.filter(p => p.id !== une.id);
   const couv = autres.length ? autres[Math.floor(Math.random() * autres.length)] : une;
+  html = completerAccueil(html, donnees);
   html = html.replace(marque, '<img id="couv-img" class="visible" src="' + echapper(photoLegere(couv.photo)) + '" alt="' + echapper(couv.full_name || '') + '" data-modele="' + echapper(couv.id) + '"')
     .replace('<main', '<script type="application/json" id="accueil-donnees">' + jsonSur(donnees) + '</script>\n<main');
   const entetes = new Headers(page.headers);

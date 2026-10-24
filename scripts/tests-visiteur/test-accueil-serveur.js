@@ -20,7 +20,9 @@ const profils = [
   { id: 'a4', full_name: 'KOFFI QUATRE', city: 'Abidjan', category: 'homme' }];
 // photos par Vercel (décision du 23/10/2026) ou par Cloudflare : lu dans js/photos.js
 const ACTIVES = /const PHOTOS_DIRECTES_ACTIVES = true;/.test(fs.readFileSync(path.join(RACINE, 'js/photos.js'), 'utf8'));
+const MOT = { nom: 'Maître <b>Essai</b>', titre: 'Fondateur', message: 'Bienvenue <script>x</script> & merci', photo_url: null };
 const photo = (id) => CF + id + '/miniatures/179000000000' + id.slice(1) + '-abc-w.jpg';
+const petite = (id) => CF + id + '/petites/179000000000' + id.slice(1) + '-abc-n480-w.jpg';  // (24/10/2026)
 
 // le middleware, avec une base simulée et la page lue sur le disque
 let basePanne = false, baseLente = 0, appelsBase = 0;
@@ -33,7 +35,10 @@ async function middleware() {
       appelsBase++;
       if (basePanne) throw new Error('base en panne');
       if (baseLente) await new Promise((r) => setTimeout(r, baseLente));
-      const corps = u.includes('model_profiles') ? profils.map(({ photo: _p, ...x }) => x) : profils.map((p) => ({ model_id: p.id, url: p.photo || photo(p.id) }));
+      // mot de Maître Akesse et casting ouvert (24/10/2026), écrits dans la page par le serveur
+      if (u.includes('mot_responsable')) return new Response(JSON.stringify([MOT]), { headers: { 'content-type': 'application/json' } });
+      if (u.includes('casting_projets')) return new Response(JSON.stringify([{ id: 'c1' }]), { headers: { 'content-type': 'application/json' } });
+      const corps = u.includes('model_profiles') ? profils.map(({ photo: _p, ...x }) => x) : profils.map((p) => ({ model_id: p.id, url: p.photo || photo(p.id), url_petite: p.photo ? null : petite(p.id) }));
       return new Response(JSON.stringify(corps), { headers: { 'content-type': 'application/json' } });
     }
     const chemin = new URL(u).pathname.startsWith('/en') ? 'en/index.html' : 'index.html';
@@ -96,6 +101,8 @@ async function middleware() {
         await p.route('http://127.0.0.1:' + PORT + '/' + chemin, (r) => r.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: page }));
         const t0 = Date.now();
         await p.goto('http://127.0.0.1:' + PORT + '/' + chemin, { waitUntil: 'domcontentloaded' });
+        const textes = () => p.evaluate(() => ['edito-rubrique', 'edito-texte', 'edito-nom', 'dos-rubrique', 'dos-texte', 'dos-bouton'].map((id) => document.getElementById(id).textContent).join(' | ') + ' | ' + document.getElementById('edito-signature').className);
+        const textesArrivee = await textes();
         await p.waitForFunction(() => { const i = document.getElementById('couv-img'); return i.complete && i.naturalWidth > 0; }, null, { timeout: 15000, polling: 100 }).catch(() => {});
         const delai = Date.now() - t0;
         await p.waitForTimeout(1500);
@@ -111,6 +118,10 @@ async function middleware() {
         const questions = ordre.filter((u) => /model_profiles/.test(u));
         ok(!journal.some((j) => j[0] === 'rpc' && j[1] === 'photos_couverture_mannequins') && questions.length === 1 && /select=id&/.test(questions[0]) && ordre.indexOf(questions[0]) > premiere,
           n + 'le navigateur ne redemande pas la liste : une seule petite vérification, après la photo');
+        ok(textesArrivee === await textes() && textesArrivee.includes(MOT.message) && textesArrivee.includes(MOT.nom) && /Casting ouvert|Open casting/.test(textesArrivee) && !/u-hidden/.test(textesArrivee)
+          && !ordre.some((u) => /mot_responsable|casting_projets/.test(u)), n + 'mot de Maître Akesse et casting ouvert déjà écrits par le serveur : rien ne change ensuite, la page ne saute pas');
+        const vignettes = await p.$$eval('#grille-femmes img, #grille-hommes img', (l) => l.map((i) => i.getAttribute('src')));
+        ok(vignettes.length === 4 && vignettes.every((u) => (ecran.width < 700) === /\/petites\/[^/]*-n480-w\.webp$/.test(u)), n + (ecran.width < 700 ? 'téléphone : visages en petite version (480 px, WebP)' : 'ordinateur : visages en miniature (800 px)') + ' — ' + vignettes[0].replace(/^.*\//, ''));
         ok((await p.$$('#grille-femmes a')).length === 3 && (await p.$$('#grille-hommes a')).length === 1 && /AWA UNE/.test(await p.textContent('#une-nom')), n + 'visages des femmes, des hommes et « À la une » remplis');
         ok(/4 (mannequins à découvrir|models to discover)/.test(await p.textContent('#couv-nombre')), n + 'nombre de mannequins sur la couverture');
         ok(!errs.length, n + 'aucune erreur ' + errs.join(' | '));

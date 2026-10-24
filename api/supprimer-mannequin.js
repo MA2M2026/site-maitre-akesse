@@ -61,17 +61,17 @@ module.exports = async function handler(req, res) {
     // model_photos, déjà "on delete cascade") ne touche pas aux fichiers du
     // Storage, qui doivent être retirés séparément.
     const reponsePhotos = await fetch(
-      SUPABASE_URL + '/rest/v1/model_photos?model_id=eq.' + encodeURIComponent(modelId) + '&select=chemin,chemin_miniature,chemin_moyenne',
+      SUPABASE_URL + '/rest/v1/model_photos?model_id=eq.' + encodeURIComponent(modelId) + '&select=*',  // (toutes les versions, petite comprise quand la colonne existe)
       { headers: enTetesService() }
     );
     const photos = reponsePhotos.ok ? await reponsePhotos.json() : [];
     const chemins = [];
     (photos || []).forEach(function (p) {
-      ['chemin', 'chemin_miniature', 'chemin_moyenne'].forEach(function (c) {
+      ['chemin', 'chemin_miniature', 'chemin_moyenne', 'chemin_petite'].forEach(function (c) {
         if (!p[c]) return;
         chemins.push(p[c]);
         // copie WebP légère d'une version « -w.jpg » (12/10/2026, voir envoyerVersionPhoto dans js/app.js)
-        if (/\/(miniatures|moyennes)\/[^/]*-w\.jpg$/.test(p[c])) chemins.push(p[c].replace(/\.jpg$/, '.webp'));
+        if (/\/(miniatures|moyennes|petites)\/[^/]*-w\.jpg$/.test(p[c])) chemins.push(p[c].replace(/\.jpg$/, '.webp'));
       });
     });
 

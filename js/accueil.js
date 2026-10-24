@@ -111,7 +111,7 @@
     a.href = fiche(m.id);
     a.innerHTML = '<div class="mag-cadre"><img alt="" loading="lazy"></div><span></span>';
     // le nom est écrit juste dessous : image décorative pour les lecteurs d'écran (pas de nom lu deux fois)
-    a.querySelector('img').src = urlLegere(m.photo);
+    a.querySelector('img').src = urlLegere(urlGrille({ url: m.photo, url_petite: m.petite }));  // (petite sur téléphone)
     a.querySelector('span').textContent = m.full_name || T('Mannequin', 'Model');
     return a;
   }
@@ -131,10 +131,10 @@
       .eq('published', true).order('created_at', { ascending: false }).limit(200);
     if (!profils || !profils.length) return { profils: [], nombre: 0 };
     // une seule demande pour toutes les photos de couverture (la même que le Book)
-    const { data: couvertures } = await sb.rpc('photos_couverture_mannequins', { ids: profils.map(p => p.id) });
+    const couvertures = await lirePhotosCouverture(sb, profils.map(p => p.id));
     const photoDe = {};
-    (couvertures || []).forEach(c => { if (c.url) photoDe[c.model_id] = c.url; });
-    return { profils: profils.filter(p => photoDe[p.id]).map(p => Object.assign({ photo: photoDe[p.id] }, p)), nombre: profils.length };
+    couvertures.forEach(c => { if (c.url) photoDe[c.model_id] = c; });
+    return { profils: profils.filter(p => photoDe[p.id]).map(p => Object.assign({ photo: photoDe[p.id].url, petite: photoDe[p.id].url_petite || null }, p)), nombre: profils.length };
   }
   // photo de couverture posée par le serveur, en échec avant l'arrivée de la roue de secours
   // (js/photos.js) : on la redemande par le relais
@@ -252,16 +252,23 @@
   }
 
   // --- Édito : le mot de Maître Akesse quand il est rempli dans l'Administration ---
+  // (déjà écrit dans la page par le serveur quand il le peut : middleware.js, 24/10/2026 — la page
+  // ne saute plus ; textes de la variante dans la page : data-mot, data-sommaire-mot)
   async function chargerMotResponsable() {
-    if (typeof sb === 'undefined' || !sb) return;
-    const { data } = await sb.from('mot_responsable').select('*').eq('id', 'principal').maybeSingle();
+    const page = donneesDeLaPage();
+    let data = page && page.mot !== undefined ? page.mot : undefined;
+    if (data === undefined) {
+      if (typeof sb === 'undefined' || !sb) return;
+      data = (await sb.from('mot_responsable').select('*').eq('id', 'principal').maybeSingle()).data;
+    }
     if (!data || !data.message) return;
-    document.getElementById('edito-rubrique').textContent = T('Le mot de Maître Akesse', 'A word from Maître Akesse');
+    const rubrique = document.getElementById('edito-rubrique'), edito = document.getElementById('edito');
+    rubrique.textContent = rubrique.dataset.mot;
     document.getElementById('edito-texte').textContent = data.message;
     document.getElementById('edito-nom').textContent = data.nom || 'Maître Akesse';
     document.getElementById('edito-fonction').textContent = data.titre || '';
     document.getElementById('edito-signature').classList.remove('u-hidden');
-    document.getElementById('edito').dataset.sommaire = T('Édito|Le mot de Maître Akesse', 'Editorial|A word from Maître Akesse');
+    edito.dataset.sommaire = edito.dataset.sommaireMot;
     if (data.photo_url) {
       const img = document.getElementById('edito-img');
       img.dataset.mot = '1';
@@ -271,18 +278,19 @@
   }
 
   // --- Dos de couverture : « Casting ouvert » seulement s'il y en a un (castings actifs de
-  // l'Administration, les mêmes que la page Postuler) ; sinon, intégrer l'agence ---
+  // l'Administration, les mêmes que la page Postuler) ; sinon, intégrer l'agence. Textes dans la
+  // page (data-casting), aussi posés par le serveur quand il le peut (middleware.js) ---
   async function chargerCastingsOuverts() {
-    if (typeof sb === 'undefined' || !sb) return;
-    const { count, error } = await sb.from('casting_projets').select('id', { count: 'exact', head: true }).eq('actif', true);
-    if (error || !count) return;
-    document.getElementById('dos-rubrique').textContent = T('Casting ouvert', 'Open casting');
-    document.getElementById('dos-texte').textContent = T(
-      'Un casting est ouvert en ce moment. Femmes et hommes, à Abidjan et partout en Côte d\'Ivoire : envoyez votre candidature, nous étudions chaque profil.',
-      'A casting is open right now. Women and men, in Abidjan and all over Côte d\'Ivoire: send your application, we review every profile.');
-    const bouton = document.getElementById('dos-bouton');
-    bouton.textContent = T('Postuler à un casting', 'Apply for a casting');
-    bouton.href = 'candidature.html';
+    const page = donneesDeLaPage();
+    let ouvert = page && typeof page.castingOuvert === 'boolean' ? page.castingOuvert : undefined;
+    if (ouvert === undefined) {
+      if (typeof sb === 'undefined' || !sb) return;
+      const { count, error } = await sb.from('casting_projets').select('id', { count: 'exact', head: true }).eq('actif', true);
+      ouvert = !error && !!count;
+    }
+    if (!ouvert) return;
+    ['dos-rubrique', 'dos-texte', 'dos-bouton'].forEach((id) => { const el = document.getElementById(id); el.textContent = el.dataset.casting; });
+    document.getElementById('dos-bouton').setAttribute('href', document.getElementById('dos-bouton').dataset.castingLien);
   }
 
   // --- Ils nous font confiance : logos des partenaires ---

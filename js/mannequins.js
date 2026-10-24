@@ -58,11 +58,12 @@ async function afficherMannequins(vide) {
   // le nombre de photos de chacun, seulement avec le nombre de mannequins —
   // ça tient donc même à 100+ mannequins.
   const ids = profils.map(p => p.id);
-  const { data: photos } = await sb.rpc('photos_couverture_mannequins', { ids });
+  // (petite version de 480 px sur téléphone quand elle existe : js/photos.js)
+  const photos = await lirePhotosCouverture(sb, ids);
 
   const photoParMannequin = {};
-  (photos || []).forEach(p => {
-    photoParMannequin[p.model_id] = urlLegere(p.url);
+  photos.forEach(p => {
+    photoParMannequin[p.model_id] = urlLegere(urlGrille(p));
   });
 
   profils.forEach(profil => {
