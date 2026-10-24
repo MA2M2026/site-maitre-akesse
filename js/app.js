@@ -1906,7 +1906,7 @@ async function envoyerPhotoBook(modelId, fichierOriginal) {
 // Tous les fichiers d'une photo du Book (originale et versions réduites, d'après les colonnes de
 // model_photos), retirés de R2. Partagé le 24/10/2026 (avant, la liste était recopiée à 5 endroits).
 async function supprimerFichiersPhoto(modelId, p) {
-  for (const c of [p.chemin].concat(VERSIONS_PHOTO_BOOK.map(([cle]) => p['chemin_' + cle]))) if (c) await supprimerDeR2(modelId, c);
+  await Promise.all([p.chemin].concat(VERSIONS_PHOTO_BOOK.map(([cle]) => p['chemin_' + cle])).filter(Boolean).map((c) => supprimerDeR2(modelId, c)));
 }
 
 // ================== Images du site (actualités/événements/partenaires) sur

@@ -219,7 +219,9 @@ NOTIFY pgrst, 'reload schema';
 drop policy if exists "Un utilisateur peut verifier son statut admin" on admins;
 create policy "Un utilisateur peut verifier son statut admin"
   on admins for select
-  using (auth.uid() = user_id);
+  -- (24/10/2026 : seulement avec le code de l'application d'authentification, jeton « aal2 » —
+  -- même règle que supabase-admins-aal2.sql, écrite ici sans fonction pour pouvoir rejouer ce fichier)
+  using (auth.uid() = user_id and coalesce(auth.jwt() ->> 'aal', '') = 'aal2');
 
 NOTIFY pgrst, 'reload schema';
 

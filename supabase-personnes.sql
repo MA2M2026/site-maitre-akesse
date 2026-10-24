@@ -34,7 +34,7 @@ declare
 begin
   -- (gestion des projets ou des paiements : une mannequin « de l'agence » entre dans le registre
   -- depuis un projet, voulu par la propriétaire le 23/10/2026)
-  if not exists (select 1 from admins where user_id = auth.uid()) or not (portail_peut('site') or portail_peut('paiements')) then
+  if not exists (select 1 from admins where user_id = auth.uid() and portail_mfa_ok()) or not (portail_peut('site') or portail_peut('paiements')) then
     raise exception 'Réservé à l''agence.';
   end if;
   if length(nom) not between 2 and 120 then raise exception 'Indiquez le nom complet.'; end if;

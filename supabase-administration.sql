@@ -579,7 +579,7 @@ declare
   nouveau text;
   alphabet constant text := 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 begin
-  if not exists (select 1 from admins where user_id = auth.uid()) then
+  if not exists (select 1 from admins where user_id = auth.uid() and portail_mfa_ok()) then
     raise exception 'Accès refusé';
   end if;
   select * into c from casting_applications where id = p_candidature for update;
@@ -619,7 +619,7 @@ returns json language plpgsql security definer set search_path = public, extensi
 declare
   v_id uuid;
 begin
-  if not exists (select 1 from admins where user_id = auth.uid()) then
+  if not exists (select 1 from admins where user_id = auth.uid() and portail_mfa_ok()) then
     raise exception 'Accès refusé';
   end if;
   if coalesce(trim(p_nom), '') = '' or coalesce(trim(p_telephone), '') = '' or p_genre not in ('femme', 'homme') or p_naissance is null

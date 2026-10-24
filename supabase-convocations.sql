@@ -56,8 +56,8 @@ alter table contacts_externes enable row level security;
 revoke all on contacts_externes from anon;
 drop policy if exists "Carnet : agence seulement" on contacts_externes;
 create policy "Carnet : agence seulement" on contacts_externes for all
-  using (exists (select 1 from admins where user_id = auth.uid()))
-  with check (exists (select 1 from admins where user_id = auth.uid()));
+  using (exists (select 1 from admins where user_id = auth.uid() and portail_mfa_ok()))
+  with check (exists (select 1 from admins where user_id = auth.uid() and portail_mfa_ok()));
 
 -- 3) Participants convoqués à un projet. Les coordonnées sont recopiées au moment où la
 --    personne est ajoutée (et rafraîchies à chaque programmation) : le serveur d'envoi n'a
@@ -82,8 +82,8 @@ alter table convocation_participants enable row level security;
 revoke all on convocation_participants from anon;
 drop policy if exists "Participants : agence seulement" on convocation_participants;
 create policy "Participants : agence seulement" on convocation_participants for all
-  using (exists (select 1 from admins where user_id = auth.uid()))
-  with check (exists (select 1 from admins where user_id = auth.uid()));
+  using (exists (select 1 from admins where user_id = auth.uid() and portail_mfa_ok()))
+  with check (exists (select 1 from admins where user_id = auth.uid() and portail_mfa_ok()));
 
 -- 4) Les envois : un par participant, par moyen (e-mail, WhatsApp, SMS) et par sorte
 --    (convocation, rappel de la veille). Le texte est écrit au moment de l'envoi, avec les
@@ -127,8 +127,8 @@ alter table public.convocation_envois add constraint convocation_envois_sorte_ch
   check (sorte in ('selection', 'convocation', 'rappel', 'rappel_avant'));
 drop policy if exists "Envois : agence seulement" on convocation_envois;
 create policy "Envois : agence seulement" on convocation_envois for all
-  using (exists (select 1 from admins where user_id = auth.uid()))
-  with check (exists (select 1 from admins where user_id = auth.uid()));
+  using (exists (select 1 from admins where user_id = auth.uid() and portail_mfa_ok()))
+  with check (exists (select 1 from admins where user_id = auth.uid() and portail_mfa_ok()));
 
 -- 5) Coordonnées des mannequins choisis (téléphone, e-mail, date de naissance, parent) :
 --    réservé à l'agence, comme les autres informations privées.
@@ -143,7 +143,7 @@ as $$
   from model_profiles m
   left join contacts_parents c on c.model_id = m.id
   where m.id = any(p_ids)
-    and exists (select 1 from admins where user_id = auth.uid());
+    and exists (select 1 from admins where user_id = auth.uid() and portail_mfa_ok());
 $$;
 revoke all on function convocation_contacts_mannequins(uuid[]) from public, anon;
 grant execute on function convocation_contacts_mannequins(uuid[]) to authenticated;

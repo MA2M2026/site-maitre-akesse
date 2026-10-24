@@ -403,10 +403,15 @@
   const premierePage = P.premierePage = (esp) => esp.nav.find((n) => n[0])[0];  // (aussi pour js/admin/coque.js)
   P.coque = (module, page, html) => {
     const esp = P.espaces[module];
-    // une entrée sans adresse (null) est un titre de groupe dans le menu
-    const nav = esp.nav.filter((n) => !n[2] || n[2]()).map((n) => !n[0] ? '<div class="titre-menu sous-titre-menu">' + P.esc(n[1]) + '</div>' :
-      '<a class="nav' + (n[0] === page ? ' actif' : '') + '" href="#/' + module + '/' + n[0] + '"' + (n[0] === page ? ' aria-current="page"' : '') + '><span>' + P.esc(n[1]) + '</span>' +
-      (esp.compteur && esp.compteur[n[0]] ? '<span class="compteur">' + esp.compteur[n[0]] + '</span>' : '') + '</a>').join('');
+    // une entrée sans adresse (null) est un titre de groupe : chaque groupe est un compartiment
+    // bien séparé (24/10/2026, demande de la propriétaire : tout ce qui va ensemble au même endroit)
+    let nav = '', ouvert = false;
+    esp.nav.filter((n) => !n[2] || n[2]()).forEach((n) => {
+      if (!n[0]) { nav += (ouvert ? '</div>' : '') + '<div class="compartiment" role="group" aria-label="' + P.esc(n[1]) + '"><div class="titre-menu sous-titre-menu">' + P.esc(n[1]) + '</div>'; ouvert = true; return; }
+      nav += '<a class="nav' + (n[0] === page ? ' actif' : '') + '" href="#/' + module + '/' + n[0] + '"' + (n[0] === page ? ' aria-current="page"' : '') + '><span>' + P.esc(n[1]) + '</span>' +
+        (esp.compteur && esp.compteur[n[0]] ? '<span class="compteur">' + esp.compteur[n[0]] + '</span>' : '') + '</a>';
+    });
+    if (ouvert) nav += '</div>';
     // écran étroit (téléphone, tablette en vertical) : barre « ☰ Menu », le menu glisse depuis la gauche
     return '<div class="coque"><div class="barre-menu">' + P.logo('logo-barre') +
       '<button class="btn petit clair" data-action="menu-ouvrir" aria-controls="menu-lateral" aria-expanded="false">☰ Menu</button></div>' +

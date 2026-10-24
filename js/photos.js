@@ -14,9 +14,11 @@
 // (mêmes dossiers dans middleware.js et api/supprimer-mannequin.js, qui ne peuvent pas lire ce fichier)
 const DOSSIERS_VERSIONS = '(miniatures|moyennes|petites)';
 const MARQUE_WEBP = new RegExp('/' + DOSSIERS_VERSIONS + '/[^/?]*-w\\.jpg(\\?.*)?$');
-function cheminWebp(chemin) { return typeof chemin === 'string' && new RegExp('/' + DOSSIERS_VERSIONS + '/[^/?]*-w\\.jpg$').test(chemin) ? chemin.replace(/\.jpg$/, '.webp') : null; }
+const CHEMIN_VERSION_JPEG = new RegExp('/' + DOSSIERS_VERSIONS + '/[^/?]*-w\\.jpg$');
+const URL_VERSION_WEBP = new RegExp('/' + DOSSIERS_VERSIONS + '/[^/?]*-w\\.webp(\\?|$)');
+function cheminWebp(chemin) { return typeof chemin === 'string' && CHEMIN_VERSION_JPEG.test(chemin) ? chemin.replace(/\.jpg$/, '.webp') : null; }
 // Adresse JPEG de secours d'une copie WebP (null si ce n'en est pas une).
-function urlJpegDeSecours(url) { return typeof url === 'string' && new RegExp('/' + DOSSIERS_VERSIONS + '/[^/?]*-w\\.webp(\\?|$)').test(url) ? url.replace(/\.webp(\?|$)/, '.jpg$1') : null; }
+function urlJpegDeSecours(url) { return typeof url === 'string' && URL_VERSION_WEBP.test(url) ? url.replace(/\.webp(\?|$)/, '.jpg$1') : null; }
 // ---- Petite version (480 px) pour les grilles sur téléphone (24/10/2026, supabase-photos-petites.sql) ----
 // Photo de couverture de chaque mannequin : [{ model_id, url (miniature 800 px), url_petite }].
 // client : le client Supabase de la page ; avant l'installation de la fonction en base,
@@ -252,7 +254,8 @@ async function rattraperPhotosEnArrierePlan() {
   let webp = navigateurEcritWebp() && !donneesMobiles && window.matchMedia('(min-width: 700px) and (min-height: 600px)').matches; // pas un téléphone tenu en largeur
   const miniatureAFaire = p => !p.url_miniature || !/-n800(-w)?\.jpg$/.test(p.chemin_miniature || '') || (webp && !cheminWebp(p.chemin_miniature));
   const moyenneAFaire = p => !p.url_moyenne || (webp && !cheminWebp(p.chemin_moyenne));
-  const petiteAFaire = p => 'url_petite' in p && (!p.url_petite || (webp && !cheminWebp(p.chemin_petite)));
+  // petite version : jamais sur données mobiles (une photo d'origine fait plusieurs Mo)
+  const petiteAFaire = p => 'url_petite' in p && !donneesMobiles && (!p.url_petite || (webp && !cheminWebp(p.chemin_petite)));
   const aFaire = photos.filter(p => p.url && (miniatureAFaire(p) || moyenneAFaire(p) || petiteAFaire(p))).slice(0, 40);
   let echecs = 0, faites = 0;
   for (const photo of aFaire) {
@@ -274,8 +277,15 @@ async function rattraperPhotosEnArrierePlan() {
       }
       if (!webpOk) webp = false;  // copie WebP refusée : on n'insiste pas pour les suivantes
       // seulement si la photo n'a pas été remplacée entre-temps (bouton « Remplacer »)
-      const { error: erreurMaj } = await sb.from('model_photos').update(maj).eq('id', photo.id).eq('url', photo.url);
+      const { data: misesAJour, error: erreurMaj } = await sb.from('model_photos').update(maj).eq('id', photo.id).eq('url', photo.url).select('id');
       if (erreurMaj) throw erreurMaj;
+      // fichiers devenus inutiles retirés de R2 (24/10/2026) : les anciennes versions remplacées ou,
+      // si la photo a été remplacée entre-temps, les versions tout juste faites
+      const gardee = misesAJour && misesAJour.length;
+      for (const cle of Object.keys(maj).filter((k) => k.indexOf('chemin_') === 0)) {
+        const inutile = gardee ? (photo[cle] !== maj[cle] && photo[cle]) : maj[cle];
+        if (inutile) await supprimerDeR2(photo.model_id, inutile);
+      }
       faites++;
     } catch (e) {
       echecs++;

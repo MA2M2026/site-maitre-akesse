@@ -61,12 +61,12 @@ revoke all on places_appels from anon;
 revoke all on places_invitations from anon;
 drop policy if exists "Places : admins seulement" on places_appels;
 create policy "Places : admins seulement" on places_appels for all
-  using (exists (select 1 from admins where user_id = auth.uid()))
-  with check (exists (select 1 from admins where user_id = auth.uid()));
+  using (exists (select 1 from admins where user_id = auth.uid() and portail_mfa_ok()))
+  with check (exists (select 1 from admins where user_id = auth.uid() and portail_mfa_ok()));
 drop policy if exists "Places : admins seulement" on places_invitations;
 create policy "Places : admins seulement" on places_invitations for all
-  using (exists (select 1 from admins where user_id = auth.uid()))
-  with check (exists (select 1 from admins where user_id = auth.uid()));
+  using (exists (select 1 from admins where user_id = auth.uid() and portail_mfa_ok()))
+  with check (exists (select 1 from admins where user_id = auth.uid() and portail_mfa_ok()));
 
 -- 3) Sexe d'une mannequin : catégorie « homme » ou civilité « Monsieur », sinon femme
 create or replace function places_sexe(p_category text, p_civilite text)
@@ -85,7 +85,7 @@ declare
   ap places_appels;
   n int;
 begin
-  if not exists (select 1 from admins where user_id = auth.uid()) then raise exception 'Réservé à l''agence.'; end if;
+  if not exists (select 1 from admins where user_id = auth.uid() and portail_mfa_ok()) then raise exception 'Réservé à l''agence.'; end if;
   select * into ap from places_appels where projet_id = p_projet;
   if not found then raise exception 'Aucun appel à places pour ce projet.'; end if;
   insert into places_invitations (projet_id, model_id, sexe)
@@ -121,7 +121,7 @@ returns table(mannequin_id uuid, full_name text, genre text, phone text, contact
 language sql stable security definer set search_path = public as $$
   select r.id, r.full_name, r.genre, r.telephone, r.email, r.date_naissance, r.parent_nom, r.parent_telephone, r.parent_email
   from agence_mannequins r
-  where r.id = any(p_ids) and exists (select 1 from admins where user_id = auth.uid());
+  where r.id = any(p_ids) and exists (select 1 from admins where user_id = auth.uid() and portail_mfa_ok());
 $$;
 revoke all on function places_contacts_registre(uuid[]) from public, anon;
 grant execute on function places_contacts_registre(uuid[]) to authenticated;
