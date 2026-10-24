@@ -81,11 +81,11 @@ function champsPersonne(px, avecEmail) {
     '<p class="personne-aide" id="' + px + '-aide" aria-live="polite"></p>' +
     '<label class="personne-champ" for="' + px + '-civ">Civilité<select id="' + px + '-civ"><option>Mademoiselle</option><option>Madame</option><option>Monsieur</option></select></label>' +
     champ('nom', 'Nom complet', 'maxlength="120" autocomplete="off"') +
-    champ('tel', 'WhatsApp', 'type="tel" maxlength="40" inputmode="tel" autocomplete="off"') +
+    champ('tel', 'WhatsApp', 'type="tel" maxlength="40" inputmode="tel" autocomplete="off"') + boutonContactTelephone(px + '-tel', px + '-nom', avecEmail ? px + '-email' : null) +
     (avecEmail ? champ('email', 'E-mail', 'type="email" maxlength="160" autocomplete="off"') : '') +
     '<div class="personne-parent" id="' + px + '-parent" hidden><p class="personne-aide">Parent <small>(facultatif, pour une mineure)</small> : rempli, le message part à la mannequin ET à son parent.</p>' +
     champ('pnom', 'Nom du parent', 'maxlength="160" autocomplete="off"') +
-    champ('ptel', 'WhatsApp du parent', 'type="tel" maxlength="40" inputmode="tel" autocomplete="off"') + '</div></div>';
+    champ('ptel', 'WhatsApp du parent', 'type="tel" maxlength="40" inputmode="tel" autocomplete="off"') + boutonContactTelephone(px + '-ptel', px + '-pnom') + '</div></div>';
 }
 // le choix agence / extérieure : l'explication, et les champs du parent pour l'agence seulement
 document.addEventListener('change', function (e) {

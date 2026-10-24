@@ -1147,6 +1147,36 @@ function numeroWhatsApp(tel) {
   return n.length >= 8 ? n : '';
 }
 
+// ---- « 📇 Mes contacts » (24/10/2026, demande de la propriétaire) ----
+// Bouton à côté d'un numéro : ouvre le répertoire du téléphone (Chrome sur Android : API « Contact
+// Picker » ; ailleurs le bouton n'apparaît pas), la personne choisie remplit le numéro, et aussi son
+// nom (et e-mail) s'ils sont vides. Seul le contact choisi est lu. La date de naissance n'est jamais
+// transmise par le téléphone : elle se tape à la main. idTel, idNom, idEmail : identifiants des champs.
+const CONTACTS_DISPONIBLES = typeof navigator !== 'undefined' && !!(navigator.contacts && navigator.contacts.select);
+function boutonContactTelephone(idTel, idNom, idEmail) {
+  if (!CONTACTS_DISPONIBLES) return '';
+  return '<button type="button" class="btn petit bouton-contact" data-contact-tel="' + idTel + '"' + (idNom ? ' data-contact-nom="' + idNom + '"' : '') +
+    (idEmail ? ' data-contact-email="' + idEmail + '"' : '') + '>📇 Mes contacts</button>';
+}
+document.addEventListener('click', async function (e) {
+  const bouton = e.target.closest && e.target.closest('[data-contact-tel]');
+  if (!bouton) return;
+  e.preventDefault();
+  let choix;
+  try { choix = await navigator.contacts.select(['name', 'tel', 'email'], { multiple: false }); } catch (x) { return; }
+  const c = choix && choix[0];
+  if (!c) return;
+  const remplir = (id, valeur, toujours) => {
+    const champ = id && document.getElementById(id);
+    if (!champ || !valeur || (!toujours && champ.value.trim())) return;
+    champ.value = valeur;
+    champ.dispatchEvent(new Event('input', { bubbles: true }));
+  };
+  remplir(bouton.dataset.contactTel, String((c.tel || [])[0] || '').replace(/[^\d+]/g, ''), true);
+  remplir(bouton.dataset.contactNom, String((c.name || [])[0] || '').trim());
+  remplir(bouton.dataset.contactEmail, String((c.email || [])[0] || '').trim());
+});
+
 // Place une photo sur une case (1 à 5) de la compcard d'un mannequin, ou l'en retire
 // (caseN = null). Fonction partagée par l'Espace mannequin et le tableau de bord
 // (06/10/2026). La photo qui occupait déjà la case la quitte — APRÈS la pose de la

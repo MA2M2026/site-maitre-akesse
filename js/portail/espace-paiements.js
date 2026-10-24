@@ -77,7 +77,7 @@
     return '<label class="fl" for="mq-nom">Nom et prénoms<input id="mq-nom" name="full_name" required value="' + v('full_name') + '"></label>' +
       '<label class="fl" for="mq-genre">Genre<select id="mq-genre" name="genre"><option value="">—</option><option value="femme"' + (m && m.genre === 'femme' ? ' selected' : '') + '>Femme</option><option value="homme"' + (m && m.genre === 'homme' ? ' selected' : '') + '>Homme</option></select></label>' +
       '<label class="fl" for="mq-naissance">Date de naissance<input id="mq-naissance" name="date_naissance" type="date" value="' + v('date_naissance') + '"></label>' +
-      '<label class="fl" for="mq-tel">Téléphone (WhatsApp)<input id="mq-tel" name="telephone" type="tel" value="' + v('telephone') + '"></label>' +
+      '<label class="fl" for="mq-tel">Téléphone (WhatsApp)<input id="mq-tel" name="telephone" type="tel" value="' + v('telephone') + '"></label>' + boutonContactTelephone('mq-tel', 'mq-nom', 'mq-mail') +
       '<label class="fl" for="mq-mail">E-mail<input id="mq-mail" name="email" type="email" value="' + v('email') + '"></label>' +
       '<label class="fl" for="mq-entree">Date d’entrée à l’agence<input id="mq-entree" name="date_entree" type="date" value="' + P.esc((m && m.date_entree) || new Date().toISOString().slice(0, 10)) + '"></label>' +
       // (la mensualité ne change que par l'administrateur principal ; la base le vérifie aussi)
@@ -87,7 +87,7 @@
       '<h2>Parent ou responsable (obligatoire pour un mineur)</h2>' +
       '<label class="fl" for="mq-pnom">Nom du parent<input id="mq-pnom" name="parent_nom" value="' + v('parent_nom') + '"></label>' +
       '<label class="fl" for="mq-plien">Lien (mère, père, tuteur…)<input id="mq-plien" name="parent_lien" value="' + v('parent_lien') + '"></label>' +
-      '<label class="fl" for="mq-ptel">Téléphone du parent<input id="mq-ptel" name="parent_telephone" type="tel" value="' + v('parent_telephone') + '"></label>' +
+      '<label class="fl" for="mq-ptel">Téléphone du parent<input id="mq-ptel" name="parent_telephone" type="tel" value="' + v('parent_telephone') + '"></label>' + boutonContactTelephone('mq-ptel', 'mq-pnom', 'mq-pmail') +
       '<label class="fl" for="mq-pmail">E-mail du parent<input id="mq-pmail" name="parent_email" type="email" value="' + v('parent_email') + '"></label>' +
       '<label class="fl large" for="mq-notes">Notes internes<textarea id="mq-notes" name="notes">' + v('notes') + '</textarea></label>';
   }

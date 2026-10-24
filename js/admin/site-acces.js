@@ -35,7 +35,7 @@
       '<p class="doux">Un code par personne retenue, valable une seule fois, créé seulement quand elle veut s’inscrire. Candidature reçue sur le site : ouvrez sa fiche (statut « Retenue »). Personne venue directement à l’agence : « Casting direct » ci-dessous.</p>' + nouveau +
       '<form class="carte f" data-form="casting-direct"><h2 class="large">Casting direct</h2>' +
       '<label class="fl" for="cd-nom">Nom et prénoms<input id="cd-nom" name="nom" required maxlength="160" autocomplete="off"></label>' +
-      '<label class="fl" for="cd-telephone">Téléphone (WhatsApp)<input id="cd-telephone" name="telephone" type="tel" required autocomplete="off"></label>' +
+      '<label class="fl" for="cd-telephone">Téléphone (WhatsApp)<input id="cd-telephone" name="telephone" type="tel" required autocomplete="off"></label>' + boutonContactTelephone('cd-telephone', 'cd-nom') +
       '<label class="fl" for="cd-genre">Genre<select id="cd-genre" name="genre" required><option value="">Choisir…</option><option value="femme">Femme</option><option value="homme">Homme</option></select></label>' +
       '<label class="fl" for="cd-naissance">Date de naissance<input id="cd-naissance" name="naissance" type="date" required></label>' +
       '<p class="form-msg large" id="cd-msg" role="status"></p><div class="large"><button class="btn rouge" type="submit">Créer la fiche et son code</button></div></form>' +

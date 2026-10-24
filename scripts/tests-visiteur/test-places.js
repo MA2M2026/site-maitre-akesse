@@ -176,6 +176,8 @@ async function partieRegistre(b, nom, vp) {
   p.on('pageerror', e => errs.push(e.message));
   p.on('console', m => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errs.push(m.text().slice(0, 160)); });
   await p.addInitScript(() => { localStorage.setItem('ma2m_cookies', 'non'); window.confirm = () => true; });
+  // répertoire du téléphone (Chrome Android, 24/10/2026) : imité sur téléphone seulement
+  if (vp.width < 700) await p.addInitScript(() => { navigator.contacts = { select: async () => [{ name: ['AWA DU RÉPERTOIRE'], tel: ['+225 07 11 22 33 44'], email: [] }] }; });
   const d = donneesAdmin();
   d.tables.places_appels = [{ projet_id: 'p2', places_femmes: 5, places_hommes: 0, ouvert: true }];
   d.tables.places_invitations = [
@@ -204,6 +206,13 @@ async function partieRegistre(b, nom, vp) {
   d.rpc.places_preparer = () => d.tables.places_invitations.length;
   await p.click('[data-action="places-preparer"]'); await p.waitForTimeout(1500);
   ok(/pas encore enregistrée/.test(await p.textContent('body')) && await p.isVisible('#pl-nom'), n + '« Ajouter les nouvelles mannequins » sans nouvelle : le formulaire d’ajout s’ouvre');
+  // « 📇 Mes contacts » : sur téléphone, le contact choisi remplit le nom et le numéro ; ailleurs, pas de bouton
+  if (vp.width < 700) {
+    await p.click('[data-contact-tel="pl-tel"]'); await p.waitForTimeout(300);
+    ok(await p.inputValue('#pl-nom') === 'AWA DU RÉPERTOIRE' && await p.inputValue('#pl-tel') === '+2250711223344' && !!(await p.$('[data-contact-tel="pl-ptel"][data-contact-nom="pl-pnom"]')),
+      n + '« 📇 Mes contacts » : le contact choisi remplit le nom et le WhatsApp (bouton aussi pour le parent)');
+    await p.fill('#pl-nom', ''); await p.fill('#pl-tel', '');
+  } else ok(!(await p.$('[data-contact-tel]')), n + 'sans répertoire (ordinateur) : pas de bouton « Mes contacts »');
   // « ＋ Ajouter une personne » : une personne extérieure, gardée dans le carnet
   d.tables.contacts_externes = d.tables.contacts_externes || []; d.memoriser = true;
   // (la vraie base donne d'office un lien et le statut « invite » à une nouvelle invitation)

@@ -362,6 +362,14 @@ on doit la choisir ou l'ouvrir, c'est la photo (avec le nom) qu'on touche. Tout 
 Essai : `test-visages-partout.js` parcourt tous les écrans (et les fiches, panneaux et fenêtres
 qui s'ouvrent ensuite) et échoue si un nom de mannequin est sans photo.
 
+## 📇 « Mes contacts » (24/10/2026, demande de la propriétaire)
+`boutonContactTelephone(idTel, idNom, idEmail)` (js/app.js) : bouton à côté d'un numéro, qui ouvre
+le répertoire du téléphone (API « Contact Picker », Chrome sur Android seulement ; ailleurs le
+bouton n'apparaît pas) ; le contact choisi remplit le numéro, et le nom / l'e-mail s'ils sont vides.
+La date de naissance n'est pas transmise par le navigateur (à taper). Posé dans : « Ajouter une
+personne » (`champsPersonne`, Places et Convocations, mannequin et parent), registre des mannequins
+(Paiements : mannequin et parent), « Casting direct » (Codes d'accès). Essai : `test-places.js`.
+
 ## 📱 Photos à la taille du téléphone (24/10/2026)
 Lighthouse (mobile) : les grilles envoyaient la miniature de 800 px dans des cases de ~180 px
 (« Properly size images », ~400 Ko de trop par page). Chaque photo du Book a désormais une
