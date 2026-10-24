@@ -16,6 +16,12 @@
 // Facultatif : navigateur: 'texte' — la règle ne vaut que pour les navigateurs dont l'identité
 // contient ce texte (ex. 'Brave') ; une même erreur venue d'un autre navigateur reste visible.
 window.MA2M_ERREURS_CORRIGEES = [
+  // journal du 24/10/2026 (copié par la propriétaire)
+  { motif: 'user-script:1', corrige_le: '2100-01-01T00:00:00Z', note: 'Programme ajouté par Chrome sur iPhone (remplissage automatique des formulaires) : pas un défaut du site, toujours ignoré' },
+  { motif: 'kaspersky-labs.com', corrige_le: '2100-01-01T00:00:00Z', note: 'Antivirus Kaspersky du visiteur, qui ajoute ses propres programmes aux pages : pas un défaut du site, toujours ignoré' },
+  { motif: '/confirmer : a.introuvable-logo', corrige_le: '2026-10-22T20:18:00Z', note: 'Logo de « Confirmer ma présence » : ne dépasse plus de l’écran (corrigé le 22/10, vérifié de 240 à 412 px)' },
+  { motif: 'header.site-header-v2', corrige_le: '2026-10-24T23:30:00Z', note: 'Fausse alerte : la page était décalée sur le côté par un geste (rebond de l’iPhone) ; le détecteur ne mesure plus pendant un tel décalage' },
+  { motif: 'div.lignes « Les nouveaux visages', corrige_le: '2026-10-24T23:30:00Z', note: 'Accueil : liste des mannequins, mot de Maître Akesse et casting écrits par le serveur dans la page : plus rien n’arrive après coup' },
   { motif: 'inscriptions_mannequins.genre does not exist', corrige_le: '2026-09-29T15:02:31Z', note: 'Colonne « genre » ajoutée dans Supabase (Extension 48 lancée par la propriétaire) — formulaire d’inscription réparé' },
   { motif: "la page s'affiche dézoomée", corrige_le: '2026-09-29T15:41:02Z', note: 'Faux signalement : page ouverte dans une fenêtre invisible (écran 0×0, aperçu de lien ou préchargement) — ces fenêtres sont désormais ignorées' },
   { motif: 'footer.site-footer', corrige_le: '2026-09-29T15:52:23Z', note: 'Actualités / Événements : place du bloc « À la une » réservée pendant le chargement, le bas de page ne saute plus' },

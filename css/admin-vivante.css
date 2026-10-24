@@ -976,3 +976,30 @@ a.podium-place:hover b, a.classement-ligne:hover .classement-nom { text-decorati
 .ext-tete .vis { width: 52px; height: 52px; flex: none; }
 .ext-projets { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 6px; }
 .ext-projets li { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding: 6px 0; border-top: 1px solid var(--av-filet, rgba(0, 0, 0, 0.12)); }
+
+/* Programmation défilé (24/10/2026, js/admin/site-defiles.js) : passages par jour, vivier, cartes
+   des passages avec un rond par place (visage, initiales sans photo, rond pointillé si libre) */
+.df-jour h3 { margin: 14px 0 6px; text-transform: capitalize; }
+.df-passages { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+.df-passages li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 10px; border-radius: var(--av-rayon-petit); background: var(--av-creux); }
+.df-ajout { margin-top: 14px; }
+.df-vivier { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0; }
+.df-mini .vis { width: 32px; height: 32px; font-size: 11px; }
+.df-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin: 12px 0; }
+.df-carte { padding: 14px; border-radius: var(--av-rayon); background: var(--av-carte); box-shadow: var(--av-ombre); }
+.df-carte h3 { margin: 0; font-size: 15px; text-transform: capitalize; }
+.df-ronds { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.df-place { width: 52px; height: 52px; padding: 0; border-radius: 50%; border: 2px dashed var(--av-gris); background: transparent; cursor: pointer; }
+.df-place.prise { border: 2px solid transparent; }
+.df-place.main { border-color: var(--av-rouge); }
+.df-place.conflit { border-color: #b3261e; outline: 2px solid #b3261e; outline-offset: 2px; }
+.df-place .vis, .df-vis { width: 48px; height: 48px; font-size: 14px; }
+.df-synthese { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px; }
+.df-synthese li { display: flex; align-items: center; gap: 8px; }
+.df-synthese b { margin-left: auto; }
+.df-fenetre { max-height: 80vh; overflow-y: auto; }
+.df-choix { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.df-choix-carte { display: flex; align-items: center; gap: 8px; padding: 6px; border-radius: var(--av-rayon-petit); background: var(--av-creux); border: 0; font: inherit; text-align: left; cursor: pointer; }
+.df-choix-carte input { width: 20px; height: 20px; accent-color: var(--av-rouge); }
+.vis.df-vis { border-radius: 50%; }
+.df-synthese li.absente span { color: #b3261e; }

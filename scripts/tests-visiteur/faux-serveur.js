@@ -87,7 +87,7 @@ function brancher(page, donnees, journal) {
           }
           // delete(…).select() : la vraie base renvoie les lignes supprimées ; base mémorisée : retirées
           if (m === 'DELETE' && /return=representation/.test(req.headers()['prefer'] || '')) {
-            const garde = (l) => { for (const [k, v] of url.searchParams) { if (/^eq\./.test(v) && String(l[k]) !== v.slice(3)) return true; } return false; };
+            const garde = (l) => { for (const [k, v] of url.searchParams) { if (/^eq\./.test(v) && String(l[k]) !== v.slice(3)) return true; const dans = v.match(/^in\.\((.*)\)$/); if (dans && !dans[1].split(',').map(x => x.replace(/^"|"$/g, '')).includes(String(l[k]))) return true; } return false; };
             const avant = donnees.tables[table] || [];
             const parties = avant.filter((l) => !garde(l));
             if (donnees.memoriser) donnees.tables[table] = avant.filter(garde);

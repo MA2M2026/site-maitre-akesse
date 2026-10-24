@@ -362,6 +362,31 @@ on doit la choisir ou l'ouvrir, c'est la photo (avec le nom) qu'on touche. Tout 
 Essai : `test-visages-partout.js` parcourt tous les écrans (et les fiches, panneaux et fenêtres
 qui s'ouvrent ensuite) et échoue si un nom de mannequin est sans photo.
 
+## 👠 Programmation défilé (24/10/2026, demande de la propriétaire ; à vendre un jour à d'autres agences)
+- Rubrique « Programmation défilé » (`b2-defiles`, js/admin/site-defiles.js), compartiment
+  « Projets et convocations ». Un défilé = un projet de l'Agenda sur un ou plusieurs jours, découpé
+  en **passages** (jour, heure, salle ou lieu, thème ou créateur, nombre de femmes et d'hommes ;
+  « Tous les jours » en un clic). **Vivier** : les mannequins retenues (profils du site, registre de
+  l'agence sans compte, extérieures du carnet), comptées par sexe et origine.
+- **Répartition** : `repartirDefile` (js/defile-repartition.js, partagé et essayé sans navigateur :
+  test-defile-repartition.js) — nombre de femmes / hommes par passage, travail partagé (celles qui
+  ont le moins de passages d'abord), jamais deux passages trop rapprochés pour une même mannequin
+  (délai réglable, 1 h 30 par défaut ; heure inconnue le même jour = prudence), choix faits à la main
+  gardés (`a_la_main`), places impossibles signalées. `conflitsDefile` : alerte après une
+  modification à la main. Grille : un rond par place, visage (initiales sans photo), toucher un
+  visage le retire, une place vide → choisir. Synthèse : passages par mannequin, ❌ absente (réponse
+  à la convocation), « Remplacer » (ses places reprises par d'autres, le reste ne bouge pas).
+- **Convoquer** : `defile_participants` (SQL) ajoute chaque mannequin placée au projet ou aux
+  participants des convocations (registre et carnet, mêmes fonctions que les Places limitées), puis
+  page Convocations. **Fiche programme** : sur « Confirmer ma présence » (lien personnel),
+  `defile_programme(jeton)` donne ses passages (en tête, soulignés) et tout le programme avec les
+  visages et les noms, sans aucun numéro (js/confirmer.js). **Imprimer le programme** : fenêtre
+  d'impression (jour par jour, noms par passage ; « Enregistrer en PDF »).
+- Base : `supabase-defiles.sql` (tables `defile_passages`, `defile_vivier`, `defile_affectations`,
+  réservées à l'agence avec le code ; à exécuter AVANT la mise en ligne). Essais :
+  test-defile.js (Administration et fiche programme, téléphone et ordinateur),
+  scripts/base-essai/essais-defiles.sql.
+
 ## 📨 Convoquer une sélection (24/10/2026, demande de la propriétaire)
 - `P.convoquerSelection(ids, valeurs)` (js/admin/coque.js) : petite fenêtre (titre, type, date, ville,
   client, « citer le client ») → projet ajouté à l'Agenda, caché du site, avec ces mannequins →

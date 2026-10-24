@@ -366,6 +366,9 @@
       // pendant un zoom du visiteur, les mesures ne veulent rien dire (20/10/2026 : en-tête
       // « décalé de 27 px » pendant un zoom) ; la page sera mesurée à la prochaine occasion
       if (window.visualViewport && Math.abs(window.visualViewport.scale - 1) > 0.05) return;
+      // page décalée sur le côté par un geste (rebond de l'iPhone) : tout paraît « dépasser » de
+      // quelques pixels, l'en-tête le premier (journal du 24/10/2026) ; mesurée à la prochaine occasion
+      if (Math.abs(window.scrollX || 0) > 1 || (window.visualViewport && Math.abs(window.visualViewport.offsetLeft) > 1)) return;
       const largeur = document.documentElement.clientWidth;
       if (!largeur) return;
       const elements = document.body ? document.body.getElementsByTagName('*') : [];
