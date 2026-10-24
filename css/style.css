@@ -3129,8 +3129,6 @@ body.porte-verrouillee .couverture-faisceau, body.porte-verrouillee .couverture-
 .fiche-imperial { display: block; margin-top: 0.15rem; font-size: 0.78em; color: var(--texte-doux); letter-spacing: 0.02em; }
 
 /* Fiche mannequin : rubrique « Digitals » sous le Book (tri automatique des photos, 06/10/2026). */
-.fiche-digitals-titre { margin-top: 2.6rem; }
-.fiche-digitals-sous { margin: -0.4rem 0 1.2rem; font-size: 0.95rem; color: var(--gris, var(--c-6b625d)); }
 
 /* Fiche publique — tableau « Tailles & équivalences internationales » (06/10/2026),
    construit par js/tailles.js. Défile dans son cadre sur téléphone, jamais la page. */

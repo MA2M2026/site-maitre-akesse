@@ -2701,6 +2701,11 @@ photo de profil. Le rapport dit donc « vous n'avez pas choisi… votre fiche af
 aux deux endroits » au lieu de « ajoutez une photo de profil » (cas réel du 07/10/2026).
 
 ## 📒🌿 Photos : Book et Lifestyle, classées par le site sans IA (07/10/2026)
+> **⚠️ Supprimé le 24/10/2026 (décision de la propriétaire : le tri se trompait, des photos de
+> studio partaient en Lifestyle).** Toutes les photos vont dans le Book : `categoriePhoto` et ses
+> outils, `enregistrerCategoriePhoto`, l'étiquette de l'Espace mannequin, le choix de
+> l'Administration et la section « Digitals & Lifestyle » de la fiche sont retirés ; l'envoi écrit
+> `categorie = 'book'`, et la colonne n'est plus lue à l'affichage. Le texte ci-dessous est historique.
 
 - Colonne `model_photos.categorie` (`book` | `lifestyle`, défaut `book`) — **Extension 127**.
   Toutes les photos existantes sont dans le Book.

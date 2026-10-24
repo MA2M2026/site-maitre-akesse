@@ -356,12 +356,9 @@ async function chargerProfilInterne() {
   });
 
   galerie.innerHTML = '';
-  // Book et Lifestyle / Digitals séparés : la galerie
-  // plein écran parcourt d'abord le Book, puis les Digitals.
-  // Catégorie décidée par le site (Book / Lifestyle, colonne categorie, 07/10/2026) — plus par l'IA.
-  const photosDigitals = (photos || []).filter(p => p.categorie === 'lifestyle');
-  const photosBook = (photos || []).filter(p => p.categorie !== 'lifestyle');
-  const ordreGalerie = photosBook.concat(photosDigitals);
+  // Toutes les photos dans le Book (24/10/2026 : plus de section Lifestyle, le tri automatique
+  // se trompait).
+  const ordreGalerie = photos || [];
   // photo agrandie : la version moyenne (1400 px), l'originale (jusqu'à 4000 px depuis le
   // 24/10/2026) étant réservée aux CV et compcards
   const urlsPhotos = ordreGalerie.map(p => p.url_moyenne || p.url);
@@ -386,17 +383,13 @@ async function chargerProfilInterne() {
     });
   }
 
-  const galerieDigitals = document.getElementById('galerie-digitals');
   ordreGalerie.forEach((p, index) => {
-    const digital = p.categorie === 'lifestyle';
     const div = document.createElement('div');
     div.className = 'book-photo-carte cliquable';
-    div.innerHTML = `<img src="${echapperHtml(urlLegere(p.url_miniature || p.url))}" loading="lazy" alt="${digital ? T('Photo digitale', 'Digital photo') : T('Photo du book', 'Book photo')}">`;
+    div.innerHTML = `<img src="${echapperHtml(urlLegere(p.url_miniature || p.url))}" loading="lazy" alt="${T('Photo du book', 'Book photo')}">`;
     div.querySelector('img').addEventListener('click', () => ouvrirLightbox(index));
-    (digital && galerieDigitals ? galerieDigitals : galerie).appendChild(div);
+    galerie.appendChild(div);
   });
-  const blocDigitals = document.getElementById('bloc-digitals');
-  if (blocDigitals) blocDigitals.classList.toggle('u-hidden', !photosDigitals.length);
 }
 
 // --- Lightbox plein écran (système partagé, voir js/app.js) ---

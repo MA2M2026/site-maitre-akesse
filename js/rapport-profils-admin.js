@@ -62,7 +62,7 @@ window.demarrerRapportProfils = function () {
       else if (v.identiques) r.push('• Votre photo de profil et votre photo de couverture sont *la même photo* : remplacez l’une des deux par une autre photo de votre book.');
     }
     var reste = BOOK_MINIMUM - a.nbPhotos;
-    if (reste > 0) r.push('• ' + (a.nbPhotos ? 'Vous avez publié ' + a.nbPhotos + ' photo' + (a.nbPhotos > 1 ? 's' : '') + '. Il' : 'Il') + ' vous reste *' + reste + ' photo' + (reste > 1 ? 's' : '') + ' à publier* pour arriver au minimum de *' + BOOK_MINIMUM + ' photos*, dans le Book ou dans Lifestyle, avec des tenues et des ambiances variées.');
+    if (reste > 0) r.push('• ' + (a.nbPhotos ? 'Vous avez publié ' + a.nbPhotos + ' photo' + (a.nbPhotos > 1 ? 's' : '') + '. Il' : 'Il') + ' vous reste *' + reste + ' photo' + (reste > 1 ? 's' : '') + ' à publier* pour arriver au minimum de *' + BOOK_MINIMUM + ' photos* dans le Book, avec des tenues et des ambiances variées.');
     return r;
   }
 

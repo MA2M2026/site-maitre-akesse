@@ -1,6 +1,6 @@
 // Nouvelle Administration — groupe « Mannequins » (js/admin/site-mannequins.js), essayé comme
 // l'agence sur téléphone et ordinateur, base SIMULÉE (donnees-nouvelle-admin.js) : galerie des
-// visages (publiées + en sourdine), recherche, fiche (photos, compcard, Book/Lifestyle, ajout,
+// visages (publiées + en sourdine), recherche, fiche (photos, compcard, ajout,
 // suppression — la base d'abord, les fichiers ensuite), sourdine, CV, suppression définitive
 // (taper SUPPRIMER) ; validations (publier, refuser avec la raison) ; mannequin à la une.
 // Rien n'est écrit ni envoyé pour de vrai. CAPTURES=dossier : captures d'écran.
@@ -43,8 +43,8 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     await capture(p, 'fiche-mannequin' + suffixe);
     await p.selectOption('.photo-mannequin:nth-child(2) select[data-change="mannequin-compcard"]', '2'); await p.waitForTimeout(900);
     ok(ecrits(journal, 'PATCH', 'model_photos').some((j) => /"compcard_ordre":2/.test(j[3])), n + 'compcard : photo placée en case 2');
-    await p.selectOption('.photo-mannequin:nth-child(1) select[data-change="mannequin-categorie"]', 'lifestyle'); await p.waitForTimeout(900);
-    ok(ecrits(journal, 'PATCH', 'model_photos').some((j) => /lifestyle/.test(j[3])), n + 'classement Book / Lifestyle enregistré');
+    // plus de classement Book / Lifestyle (24/10/2026) : toutes les photos sont dans le Book
+    ok(!(await p.$('select[data-change="mannequin-categorie"]')) && !/Lifestyle/.test(await p.textContent('#mq-photos')), n + 'plus de classement Book / Lifestyle : toutes les photos dans le Book');
     await p.setInputFiles('input[data-change="mannequin-photos-ajouter"]', [require('path').join(__dirname, 'medias', 'photo1.jpg'), require('path').join(__dirname, 'medias', 'photo2.jpg')]); await p.waitForTimeout(6000);
     ok(ecrits(journal, 'POST', 'model_photos').length === 2 && /2\/2 photos envoyées/.test(await p.textContent('#mq-photo-msg')), n + 'deux photos ajoutées d’un coup');
     const r2Avant = journal.filter((j) => j[0] === 'API' && j[1] === '/api/r2-supprimer').length;
