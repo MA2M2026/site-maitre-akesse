@@ -371,6 +371,8 @@ colonnes `url_petite`/`chemin_petite`, fonction `photos_couverture_petites` :
 - Fabrication : à l'envoi (`VERSIONS_PHOTO_BOOK`, `envoyerPhotoBook`, js/app.js) et, pour les
   photos déjà en ligne, par le rattrapage automatique de l'Administration (js/photos.js ; seulement
   si la colonne existe).
+- (Petite de 480 px choisie sur tout téléphone : sur un écran très fin, case de ~180 px, elle
+  est agrandie d'environ 10 %, sans flou visible.)
 - Affichage : `lirePhotosCouverture` + `urlGrille` (js/photos.js) — petite version sur téléphone
   (écran < 700 px) pour l'accueil, The Book ; partout pour les petits visages (Parcours,
   Administration) ; miniature sinon. Avant l'installation SQL, l'ancienne fonction répond
@@ -963,7 +965,9 @@ les textes d'attente de la page : le bas de l'accueil sautait (journal des erreu
 (`completerAccueil`, middleware.js) les écrit désormais dans la page avant l'envoi ; les textes
 des variantes sont dans la page elle-même (`data-mot`, `data-sommaire-mot`, `data-casting`,
 `data-casting-lien`, index.html et en/index.html), lus par le serveur ET par js/accueil.js (qui
-ne relit la base que si le serveur n'a pas pu). Essai : `test-accueil-serveur.js`.
+ne relit la base que si le serveur n'a pas pu ; le sommaire aussi). Comme la liste des
+mannequins, ils sont gardés 5 minutes par le serveur : un casting fermé peut rester annoncé
+5 minutes au plus. Essai : `test-accueil-serveur.js`.
 
 ## 📐 « Affichage qui saute » (29 septembre 2026)
 
@@ -987,7 +991,8 @@ ne relit la base que si le serveur n'a pas pu). Essai : `test-accueil-serveur.js
   « admin » l'exigent ; les fonctions `security definer` qui lisent `admins` sont réécrites
   automatiquement pour ajouter `portail_mfa_ok()`) et `adminVerifie` (api/_commun.js) pour les
   serveurs d'administration (photos R2, images du site, suppression de mannequin, création
-  d'admin ; les étapes de connexion gardent `estAdmin`). ⚠️ Après avoir rejoué un AUTRE fichier
+  d'admin, déblocage des comptes et adresses `connexion-admin.js` ; les étapes de connexion gardent
+  `estAdmin`). `ficheStaff` (api/_commun.js) écrite : « Créer un compte admin » plantait. ⚠️ Après avoir rejoué un AUTRE fichier
   SQL qui redéfinit des fonctions, rejouer `supabase-admins-aal2.sql` (sa dernière requête doit
   afficher 0). Essais : `scripts/base-essai/essais-admins-aal2.sql`, `test-admin-code-serveur.js`.
 

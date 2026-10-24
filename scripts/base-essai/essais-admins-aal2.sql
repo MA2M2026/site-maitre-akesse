@@ -4,7 +4,7 @@
 set search_path = public, extensions;
 insert into admins (user_id) values ('00000000-0000-0000-0000-0000000000a2') on conflict do nothing;
 select essai((select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-  where n.nspname = 'public' and p.prosrc like '%from admins where user_id = auth.uid())%') = 0, 'toutes les fonctions vérifient le code');
+  where n.nspname = 'public' and p.prosrc ~* 'admins\s+(\w+\s+)?where\s+(\w+\.)?user_id\s*=\s*auth\.uid\(\)' and p.prosrc !~ 'portail_mfa_ok') = 0, 'toutes les fonctions vérifient le code');
 select essai((select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
   where n.nspname = 'public' and p.prosrc like '%from admins where user_id = auth.uid() and portail_mfa_ok())%') > 10, 'fonctions réécrites');
 set role authenticated;

@@ -11,19 +11,23 @@
 // changent jamais.
 // Seules les versions réduites (dossiers miniatures/, moyennes/ et petites/) portent la marque : une
 // photo d'origine dont le nom finirait par « -w.jpg » n'est jamais concernée.
-const MARQUE_WEBP = /\/(miniatures|moyennes|petites)\/[^/?]*-w\.jpg(\?.*)?$/;
-function cheminWebp(chemin) { return typeof chemin === 'string' && /\/(miniatures|moyennes|petites)\/[^/?]*-w\.jpg$/.test(chemin) ? chemin.replace(/\.jpg$/, '.webp') : null; }
+// (mêmes dossiers dans middleware.js et api/supprimer-mannequin.js, qui ne peuvent pas lire ce fichier)
+const DOSSIERS_VERSIONS = '(miniatures|moyennes|petites)';
+const MARQUE_WEBP = new RegExp('/' + DOSSIERS_VERSIONS + '/[^/?]*-w\\.jpg(\\?.*)?$');
+function cheminWebp(chemin) { return typeof chemin === 'string' && new RegExp('/' + DOSSIERS_VERSIONS + '/[^/?]*-w\\.jpg$').test(chemin) ? chemin.replace(/\.jpg$/, '.webp') : null; }
 // Adresse JPEG de secours d'une copie WebP (null si ce n'en est pas une).
-function urlJpegDeSecours(url) { return typeof url === 'string' && /\/(miniatures|moyennes|petites)\/[^/?]*-w\.webp(\?|$)/.test(url) ? url.replace(/\.webp(\?|$)/, '.jpg$1') : null; }
+function urlJpegDeSecours(url) { return typeof url === 'string' && new RegExp('/' + DOSSIERS_VERSIONS + '/[^/?]*-w\\.webp(\\?|$)').test(url) ? url.replace(/\.webp(\?|$)/, '.jpg$1') : null; }
 // ---- Petite version (480 px) pour les grilles sur téléphone (24/10/2026, supabase-photos-petites.sql) ----
 // Photo de couverture de chaque mannequin : [{ model_id, url (miniature 800 px), url_petite }].
 // client : le client Supabase de la page ; avant l'installation de la fonction en base,
-// l'ancienne (sans petite version) répond.
-async function lirePhotosCouverture(client, ids) {
+// l'ancienne (sans petite version) répond. Base injoignable : [] (pages publiques : la page
+// s'affiche sans photos), ou l'erreur si exiger (Administration : elle s'affiche).
+async function lirePhotosCouverture(client, ids, exiger) {
   if (!ids.length) return [];
   const r = await client.rpc('photos_couverture_petites', { ids });
   if (!r.error) return r.data || [];
   const ancienne = await client.rpc('photos_couverture_mannequins', { ids });
+  if (ancienne.error && exiger) throw ancienne.error;
   return ancienne.data || [];
 }
 const ECRAN_TELEPHONE = typeof matchMedia === 'function' && matchMedia('(max-width: 699px)').matches;

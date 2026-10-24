@@ -40,6 +40,7 @@ end $$;
 
 NOTIFY pgrst, 'reload schema';
 
--- Contrôle : doit afficher 0 (aucune fonction sans la vérification du code)
+-- Contrôle : doit afficher 0 (aucune fonction qui reconnaît un administrateur sans le code,
+-- quelle que soit la façon de l'écrire)
 select count(*) as fonctions_sans_code from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-where n.nspname = 'public' and p.prosrc like '%from admins where user_id = auth.uid())%';
+where n.nspname = 'public' and p.prosrc ~* 'admins\s+(\w+\s+)?where\s+(\w+\.)?user_id\s*=\s*auth\.uid\(\)' and p.prosrc !~ 'portail_mfa_ok';

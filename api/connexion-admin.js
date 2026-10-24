@@ -5,12 +5,12 @@
 // policy publique) : seul ce point d'entrée, authentifié admin, peut les
 // lire ou les modifier.
 
-const { SUPABASE_URL, enTetesService, jetonDe, corpsDe, verifierUtilisateur, estAdmin } = require('./_commun.js');
+const { SUPABASE_URL, enTetesService, jetonDe, corpsDe, verifierUtilisateur, adminVerifie } = require('./_commun.js');
 
-// Compte connecté ET administrateur, sinon null.
+// Compte connecté ET administrateur, avec le code de l'application d'authentification, sinon null.
 async function verifierAdmin(jeton) {
   const utilisateur = await verifierUtilisateur(jeton);
-  return utilisateur && (await estAdmin(utilisateur.id)) ? utilisateur : null;
+  return utilisateur && (await adminVerifie(jeton, utilisateur)) ? utilisateur : null;
 }
 
 module.exports = async function handler(req, res) {

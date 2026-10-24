@@ -15,6 +15,7 @@ global.fetch = async (url) => {
   if (/\/auth\/v1\/user/.test(url)) return { ok: true, json: async () => ({ id: 'admin-1' }) };
   if (/\/rest\/v1\/admins\?user_id=eq\.admin-1/.test(url)) return { ok: true, json: async () => [{ user_id: 'admin-1' }] };
   if (/\/rest\/v1\/admins/.test(url)) return { ok: true, json: async () => [] };
+  if (/\/rest\/v1\/staff_profiles/.test(url)) return { ok: true, json: async () => [{ role: 'site', actif: true }] };
   return { ok: false, status: 599, json: async () => ({}), text: async () => '' };
 };
 function appel(fichier, aal, corps) {
@@ -36,6 +37,12 @@ function appel(fichier, aal, corps) {
   ok(r2.code === 403, 'envoyer une image du site sans le code : refusé (' + r2.code + ')');
   const cree = await appel('_creer-admin.js', 'aal1', { email: 'x@test.ci', password: 'Essai-1234567' });
   ok(cree.code === 403, 'créer un compte admin sans le code : refusé (' + cree.code + ')');
+  const blocages = await appel('connexion-admin.js', 'aal1', {});
+  ok(blocages.code === 403, 'débloquer des comptes ou des adresses sans le code : refusé (' + blocages.code + ')');
+  // « Créer un compte admin » avec le code : la fiche du portail est bien lue (ficheStaff manquait)
+  const creeCode = await appel('_creer-admin.js', 'aal2', { email: 'x@test.ci', password: 'Essai-1234567' });
+  ok(creeCode.code === 403 && /administrateur principal/.test((creeCode.corps || {}).error || '') && appels.some((u) => /staff_profiles/.test(u)),
+    'créer un compte admin avec le code mais rôle « site » : refusé proprement (' + creeCode.code + ' ' + ((creeCode.corps || {}).error || '').slice(0, 50) + ')');
   console.log(ko ? '\n❌ ' + ko + ' échec(s)' : '\nTout est bon.');
   process.exit(ko ? 1 : 0);
 })();

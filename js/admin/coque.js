@@ -22,7 +22,7 @@
   P.photosCouverture = async (ids) => {
     if (!ids.length) return {};
     // petits visages ronds : la petite version (480 px) partout quand elle existe (js/photos.js)
-    const lignes = await lirePhotosCouverture(sb, ids);
+    const lignes = await lirePhotosCouverture(sb, ids, true);
     const parId = {};
     lignes.forEach((p) => { parId[p.model_id] = urlGrille(p, true); });
     return parId;

@@ -289,6 +289,8 @@ function completerAccueil(html, donnees) {
     html = texteElement(html, 'edito-nom', mot.nom || 'Maître Akesse');
     html = texteElement(html, 'edito-fonction', mot.titre || '');
     html = html.replace('<p class="signature u-hidden" id="edito-signature">', '<p class="signature" id="edito-signature">');
+    const sommaire = attributElement(html, 'edito', 'sommaire-mot');
+    if (sommaire) html = html.replace(/(id="edito" data-sommaire=")[^"]*"/, (m, debut) => debut + sommaire + '"');
   }
   if (donnees.castingOuvert) {
     ['dos-rubrique', 'dos-texte', 'dos-bouton'].forEach((id) => {

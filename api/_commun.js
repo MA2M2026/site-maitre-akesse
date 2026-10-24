@@ -53,6 +53,16 @@ async function lignesAdmin(userId) {
   return Array.isArray(lignes) ? lignes : null;
 }
 
+// Fiche du portail d'administration de ce compte ({ role, actif }), ou null s'il n'en a pas
+// (ancien compte admin) ; erreur si la base n'a pas répondu (24/10/2026 : utilisée par
+// _creer-admin.js mais jamais écrite — « Créer un compte admin » plantait).
+async function ficheStaff(userId) {
+  const reponse = await fetch(SUPABASE_URL + '/rest/v1/staff_profiles?user_id=eq.' + encodeURIComponent(userId) + '&select=role,actif', { headers: enTetesService() });
+  if (!reponse.ok) throw new Error('Base injoignable (fiche du portail).');
+  const lignes = await reponse.json();
+  return Array.isArray(lignes) && lignes.length ? lignes[0] : null;
+}
+
 // Le compte est-il administrateur ? (non, si la base n'a pas répondu)
 async function estAdmin(userId) {
   const lignes = await lignesAdmin(userId);
@@ -191,6 +201,6 @@ function cleAccesTableauValide(req, userId) {
 
 module.exports = {
   SUPABASE_URL, cleService, enTetesService, jetonDe, corpsDe,
-  verifierUtilisateur, lignesAdmin, estAdmin, adminVerifie, creerClientR2, cheminSur, extraireIp, nettoyerAppareil,
+  verifierUtilisateur, lignesAdmin, estAdmin, adminVerifie, ficheStaff, creerClientR2, cheminSur, extraireIp, nettoyerAppareil,
   debutRequete, chargeJeton, dernierCode, compteurTentatives, cookieAccesTableau, cleAccesTableauValide, COOKIE_ACCES_TABLEAU_EFFACE
 };
