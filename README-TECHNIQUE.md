@@ -952,18 +952,10 @@ Vercel.
 
 ## 📝 À faire plus tard (demandé par la propriétaire — à lui rappeler)
 
-- **Nettoyer les anciennes copies de photos sur Supabase Storage** (noté le 28
-  septembre 2026). Les outils « Migration des photos vers R2 » du tableau de bord
-  ont COPIÉ les photos vers Cloudflare R2 sans les effacer de Supabase. Vérifié le
-  28/09 : « Aucune photo à migrer — tout est déjà sur R2 » pour le Book ET pour
-  les images du site. Les copies Supabase ne servent donc plus (aucune bande
-  passante consommée, seulement de la place de stockage). Idée validée avec la
-  propriétaire, à faire quand elle le demandera : un bouton « Nettoyer les
-  anciennes copies sur Supabase » dans le tableau de bord, qui supprime
-  uniquement dans les buckets `model-photos`, `actualites-images`,
-  `evenements-images`, `partenaires-logos` les fichiers qu'AUCUNE fiche ne
-  référence plus — sans jamais toucher `casting-applications` ni
-  `inscriptions-photos` (anciennes photos de dossiers encore affichées).
+- ✅ **Nettoyer les anciennes copies de photos sur Supabase Storage** : fait le 30/09/2026 —
+  outil « Vérifier et nettoyer » (Administration › Outils, `js/nettoyage-supabase.js`) pour les
+  images du site et les anciennes photos de dossiers. Les photos des mannequins (`model-photos`)
+  restent exclues par décision de la propriétaire (30/09) : ne les ajouter que si elle le demande.
 - ✅ **Code de l'application d'authentification obligatoire côté serveur** (24/10/2026) :
   `supabase-admins-aal2.sql` (la table `admins` n'est lisible qu'en `aal2`, donc toutes les règles
   « admin » l'exigent ; les fonctions `security definer` qui lisent `admins` sont réécrites
@@ -2656,8 +2648,10 @@ plus qu'à un seul endroit.
   couleurs traduites `enAnglais`). Les mensurations viennent de `champsCompcard()` : masquage
   « à reprendre » et libellé « Bassin » en français conservés. Vérifié : fiches FR et EN
   identiques au pixel près avant/après.
-- Reste à faire plus tard (prudence) : les paires de scripts FR/EN encore recopiées
-  (accueil, mannequins, actualités/événements) et les pages HTML en double.
+- ✅ Scripts FR/EN : un seul script par page depuis le 11/10/2026 (voir « Scripts partagés FR/EN »).
+  Le reste signalé en double par SonarCloud (24/10/2026) : l'en-tête `<head>` des pages FR/EN
+  (balises propres à chaque page, sans étape de construction possible) et d'anciens fichiers SQL
+  d'historique, jamais rejoués.
 
 ## ✅ Remarques de fiabilité SonarQube traitées (07/10/2026, matin — demande de la propriétaire)
 
