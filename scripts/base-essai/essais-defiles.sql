@@ -13,8 +13,8 @@ insert into defile_vivier (id, projet_id, model_id, sexe) values ('00000000-0000
 select essai_refuse($$insert into defile_vivier (projet_id, model_id, sexe) values ('00000000-0000-0000-0000-0000000000e1', '00000000-0000-0000-0000-0000000000b1', 'femme')$$, 'la même mannequin deux fois dans le vivier : refusé');
 insert into defile_affectations (passage_id, vivier_id) values ('00000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-0000000000f2');
 select essai((select count(*) from defile_affectations) = 1, 'affectation enregistrée');
-select essai(defile_participants('00000000-0000-0000-0000-0000000000e1') = 1 and (select '00000000-0000-0000-0000-0000000000b1'::uuid = any(mannequin_ids) from agenda_projets where id = '00000000-0000-0000-0000-0000000000e1'),
-  '« Convoquer » : la mannequin placée entre dans le projet');
+select essai(defile_participants('00000000-0000-0000-0000-0000000000e1') = 1, '« Convoquer » : une mannequin placée');
+select essai((select '00000000-0000-0000-0000-0000000000b1'::uuid = any(mannequin_ids) from agenda_projets where id = '00000000-0000-0000-0000-0000000000e1'), '« Convoquer » : elle entre dans le projet');
 select essai_qui('00000000-0000-0000-0000-0000000000a2', 'aal1');
 select essai_refuse($$select defile_participants('00000000-0000-0000-0000-0000000000e1')$$, 'sans le code : « Convoquer » refusé');
 reset role;
