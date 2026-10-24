@@ -218,7 +218,8 @@
     if (!zone || !donneesCv) return;
     try {
       const canvas = await construireCanvasCv(donneesCv);
-      zone.innerHTML = '<img alt="Aperçu du CV" src="' + canvas.toDataURL('image/jpeg', 0.9) + '">';
+      const faibles = messagePhotosFaibles(canvas);  // (js/app.js)
+      zone.innerHTML = (faibles ? '<div class="note attention">⚠️ ' + P.esc(faibles) + '</div>' : '') + '<img alt="Aperçu du CV" src="' + canvas.toDataURL('image/jpeg', 0.9) + '">';
     } catch (e) { zone.innerHTML = '<p class="doux">Aperçu indisponible : le fichier reste téléchargeable.</p>'; }
   }
   P.actions['mannequin-cv'] = (el) => genererCvFichier(el.dataset.format, donneesCv, 'cv-pdf', 'cv-jpeg');

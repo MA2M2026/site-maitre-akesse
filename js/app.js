@@ -465,7 +465,7 @@ function decoderImage(blob) {
         canvas.width = Math.round(img.width * echelle);
         canvas.height = Math.round(img.height * echelle);
         canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve({ canvas, largeur: canvas.width, hauteur: canvas.height });
+        resolve({ canvas, largeur: canvas.width, hauteur: canvas.height, coteOrigine: Math.max(img.width, img.height) });
       } catch (e) {
         resolve(null);
       } finally {
@@ -475,6 +475,20 @@ function decoderImage(blob) {
     img.onerror = () => { URL.revokeObjectURL(urlLocale); resolve(false); };
     img.src = urlLocale;
   });
+}
+// Photo trop petite pour une fiche nette (24/10/2026, demande de la propriétaire) : moins de
+// 1600 px sur son plus grand côté (photo passée par WhatsApp, capture d'écran…).
+const COTE_MIN_FICHE_NETTE = 1600;
+function photosTropPetites(images) {
+  return images.filter(function (i) { return i && i.coteOrigine && i.coteOrigine < COTE_MIN_FICHE_NETTE; }).length;
+}
+// Message à montrer après la création d'un CV ou d'une compcard (canvas.photosFaibles), ou ''.
+function messagePhotosFaibles(canvas, en) {
+  const n = canvas && canvas.photosFaibles;
+  if (!n) return '';
+  return en
+    ? n + ' photo(s) are low quality: the file may look blurry. For a sharp card, upload the original photos (from the phone gallery, or on WhatsApp as HD / as a document).'
+    : n + ' photo(s) de faible qualité : le fichier peut paraître flou. Pour une fiche nette, envoyez les photos originales (depuis la galerie du téléphone, ou sur WhatsApp en « HD » / « en document »).';
 }
 async function chargerImageHauteRes(url) {
   let blob = await telechargerImage(url);
@@ -812,6 +826,7 @@ async function construireCanvasCompcard(ficheData, langue) {
     ? `Official document generated on ${new Date().toLocaleDateString('en-US')} from maitreakessemodelmanagement.com — all booking requests must go exclusively through the agency.`
     : `Document officiel généré le ${new Date().toLocaleDateString('fr-FR')} depuis maitreakessemodelmanagement.com — toute demande de booking passe exclusivement par l'agence.`, px(15), px(yPiedPage + hPiedPage - 6));
 
+  canvas.photosFaibles = photosTropPetites(imagesPhotos);
   return canvas;
 }
 
@@ -1178,6 +1193,8 @@ async function genererFiche(format, ficheData, idBtnPdf, idBtnJpeg, langue) {
       doc.addImage(canvas.toDataURL('image/jpeg', 0.98), 'JPEG', 0, 0, 210, 297);
       doc.save(nomFichier + '.pdf');
     }
+    const avertissement = messagePhotosFaibles(canvas, en);
+    if (avertissement) alert(avertissement);
   } catch (e) {
     signalerProbleme('Génération de fichier échouée', (e && e.message) || String(e), e && e.stack);
     alert(en ? 'An error occurred while generating the file. Please try again.' : 'Une erreur est survenue pendant la génération du fichier. Réessayez.');
@@ -1631,6 +1648,7 @@ async function construireCanvasCv(d) {
   canvas.height = Math.round(px(hBanniere + hColonnes));
   const resultat = dessinerTout(canvas.getContext('2d'), hColonnes);
   canvas.zonesLiens = resultat.zonesLiens;
+  canvas.photosFaibles = photosTropPetites([photoHero].concat(photosPortfolio));
   return canvas;
 }
 
@@ -1665,6 +1683,8 @@ async function genererCvFichier(format, donneesCv, idBtnPdf, idBtnJpeg) {
       (canvas.zonesLiens || []).forEach(function (z) { doc.link(z.x, z.y, z.l, z.h, { url: z.url }); });
       doc.save(nomFichier + '.pdf');
     }
+    const avertissement = messagePhotosFaibles(canvas);
+    if (avertissement) alert(avertissement);
   } catch (e) {
     signalerProbleme('Génération de fichier échouée', (e && e.message) || String(e), e && e.stack);
     alert('Une erreur est survenue pendant la génération du fichier. Réessayez.');
