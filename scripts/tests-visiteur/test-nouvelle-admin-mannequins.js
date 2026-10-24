@@ -36,6 +36,19 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     await p.fill('#mq-cherche', 'aya'); await p.click('form[data-form="mannequins-chercher"] [type=submit]'); await p.waitForTimeout(800);
     ok((await p.$$('.mannequin-carte')).length === 1, n + 'recherche par nom');
     await p.fill('#mq-cherche', ''); await p.click('form[data-form="mannequins-chercher"] [type=submit]'); await p.waitForTimeout(800);
+    // 1 bis. Sélection par l'agence (24/10/2026) : cocher deux mannequins, puis les convoquer
+    await p.click('[data-action="mannequins-selection"]'); await p.waitForSelector('.mannequin-case');
+    ok(!/En sourdine/.test(await p.textContent('.mannequins-grille')) && await p.isDisabled('[data-action="mannequins-convoquer"]'), n + 'sélection : une case par visage (sans les mannequins en sourdine), bouton inactif tant que rien n’est coché');
+    const cases = await p.$$('.mannequin-case'); await cases[0].check(); await cases[1].check();
+    ok(/Convoquer la sélection \(2\)/.test(await p.textContent('[data-action="mannequins-convoquer"]')) && (await p.$$('.mannequin-carte.choisie')).length === 2, n + 'sélection : 2 cochées, le bouton les compte');
+    await p.click('[data-action="mannequins-convoquer"]'); await p.waitForSelector('.voile #sel-titre');
+    await p.fill('#sel-titre', 'SHOOTING AGENCE'); await p.fill('#sel-date', '2026-12-20'); await p.fill('#sel-client', '');
+    await p.click('form[data-form="selection-convoquer"] [type=submit]'); await p.waitForTimeout(1500);
+    const projetAgence = journal.filter((j) => j[0] === 'POST' && j[1] === 'agenda_projets').map((j) => JSON.parse(j[3] || 'null')).flat().pop() || {};
+    ok(projetAgence.titre === 'SHOOTING AGENCE' && (projetAgence.mannequin_ids || []).length === 2 && projetAgence.client === null && /#\/site\/b2-convocations$/.test(p.url()),
+      n + 'sélection : projet créé avec les 2 mannequins, les Convocations s’ouvrent');
+    await p.goto(URL_ADMIN + '#/site/b2-mannequins-publies'); await p.waitForSelector('.mannequins-grille'); await p.waitForTimeout(800);
+    if (await p.$('.mannequin-case')) { await p.click('[data-action="mannequins-selection"]'); await p.waitForTimeout(500); }
 
     // 2. Fiche : photos, compcard, catégorie, ajout, suppression
     await p.click('.mannequin-carte[href$="/m0"]'); await p.waitForSelector('.mannequin-tete'); await p.waitForTimeout(1000);

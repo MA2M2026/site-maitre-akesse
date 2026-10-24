@@ -68,6 +68,7 @@ ${champsPersonne('convoc', true)}
 <fieldset class="agenda-choix"><legend>Le message</legend>
 <div class="form-champ"><label for="convoc-sorte">Quel message envoyer ?</label><select id="convoc-sorte"><option value="selection">🎉 Annoncer la sélection (court, en premier)</option><option value="convocation">📨 Convocation (tous les détails)</option><option value="rappel_avant">🔔 Rappel de l'information (date, heure, lieu)</option></select></div>
 <p class="agenda-aide" id="convoc-sorte-aide"></p>
+<label class="agenda-visible" id="convoc-client-bloc" hidden><input type="checkbox" id="convoc-citer-client" checked> Citer le client dans les messages : « <span id="convoc-client-nom"></span> »</label>
 <select id="convoc-apercu-qui" aria-label="Voir le message envoyé à"></select>
 <pre id="convoc-apercu" class="convoc-apercu"></pre>
 </fieldset>

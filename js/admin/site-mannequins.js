@@ -36,16 +36,35 @@
     const cherche = (P.etat.chercheMannequins || '').toLowerCase();
     const visibles = profils.filter((p) => !cherche || String(p.full_name || '').toLowerCase().includes(cherche));
     const sourdine = profils.filter((p) => p.desactive).length;
+    // Sélection par l'agence (24/10/2026) : cocher plusieurs mannequins, puis les convoquer
+    const choix = P.etat.choixMannequins;  // Set des identifiants cochés, ou null hors sélection
+    const carte = (p, i) => choix
+      ? '<label class="mannequin-carte apparait' + (choix.has(p.id) ? ' choisie' : '') + '" style="--i:' + Math.min(i, 14) + '"><input type="checkbox" class="mannequin-case" data-change="mannequin-choisir" data-id="' + P.esc(p.id) + '"' + (choix.has(p.id) ? ' checked' : '') + ' aria-label="Choisir ' + P.esc(p.full_name || '') + '">' +
+        P.visage(photos[p.id], p.full_name, 'mannequin-visage') + '<span class="mannequin-nom">' + P.esc(p.full_name || 'Sans nom') + '</span></label>'
+      : '<a class="mannequin-carte apparait' + (p.desactive ? ' sourdine' : '') + '" style="--i:' + Math.min(i, 14) + '" href="#/site/' + PAGE + '/' + P.esc(p.id) + '">' +
+        P.visage(photos[p.id], p.full_name, 'mannequin-visage') + '<span class="mannequin-nom">' + P.esc(p.full_name || 'Sans nom') + '</span>' +
+        '<span class="mannequin-meta">' + (p.desactive ? '🔇 En sourdine' : P.esc([p.niveau_mannequin, p.city].filter(Boolean).join(' · '))) + '</span></a>';
+    const barre = choix
+      ? '<div class="ligne barre-selection"><button type="button" class="btn rouge" data-action="mannequins-convoquer"' + (choix.size ? '' : ' disabled') + '>📨 Convoquer la sélection (' + choix.size + ')</button><button type="button" class="btn" data-action="mannequins-selection">Annuler</button></div>'
+      : '<div class="ligne"><button type="button" class="btn" data-action="mannequins-selection">☑️ Sélectionner pour convoquer</button></div>';
     return P.entete('Mannequins', '<span class="doux">' + P.pluriel(profils.length - sourdine, 'publiée', 'publiées') + (sourdine ? ' · ' + sourdine + ' en sourdine' : '') + '</span>') +
       '<p class="doux petit-texte">Ici : les mannequins publiées dans The Book du site. Les mensualités de formation se suivent dans le <a href="#/paiements/registre">registre du Suivi des paiements</a>.</p>' +
       '<form class="ligne" data-form="mannequins-chercher" role="search"><label class="fl" for="mq-cherche" style="flex:1;min-width:200px">Rechercher un nom' +
       '<input id="mq-cherche" name="cherche" type="search" value="' + P.esc(P.etat.chercheMannequins || '') + '"></label><button class="btn" type="submit">Rechercher</button></form>' +
-      (visibles.length ? '<div class="mannequins-grille">' + visibles.map((p, i) => '<a class="mannequin-carte apparait' + (p.desactive ? ' sourdine' : '') + '" style="--i:' + Math.min(i, 14) + '" href="#/site/' + PAGE + '/' + P.esc(p.id) + '">' +
-        P.visage(photos[p.id], p.full_name, 'mannequin-visage') + '<span class="mannequin-nom">' + P.esc(p.full_name || 'Sans nom') + '</span>' +
-        '<span class="mannequin-meta">' + (p.desactive ? '🔇 En sourdine' : P.esc([p.niveau_mannequin, p.city].filter(Boolean).join(' · '))) + '</span></a>').join('') + '</div>' :
+      barre + (visibles.length ? '<div class="mannequins-grille">' + visibles.filter((p) => !choix || !p.desactive).map(carte).join('') + '</div>' :
         '<div class="carte vide">Aucune mannequin' + (cherche ? ' pour « ' + P.esc(cherche) + ' »' : ' publiée pour le moment') + '.</div>');
   }
   P.formulaires['mannequins-chercher'] = (f) => { P.etat.chercheMannequins = String(f.get('cherche') || '').trim(); return P.afficher(); };
+  P.actions['mannequins-selection'] = () => { P.etat.choixMannequins = P.etat.choixMannequins ? null : new Set(); return P.afficher(); };
+  P.changements['mannequin-choisir'] = (el) => {
+    const choix = P.etat.choixMannequins;
+    if (!choix) return;
+    if (el.checked) choix.add(el.dataset.id); else choix.delete(el.dataset.id);
+    el.closest('.mannequin-carte').classList.toggle('choisie', el.checked);
+    const b = document.querySelector('[data-action="mannequins-convoquer"]');
+    if (b) { b.textContent = '📨 Convoquer la sélection (' + choix.size + ')'; b.disabled = !choix.size; }
+  };
+  P.actions['mannequins-convoquer'] = () => { if (P.etat.choixMannequins && P.etat.choixMannequins.size) P.convoquerSelection([...P.etat.choixMannequins], { client: '' }); };
 
   // ---------- Fiche d'une mannequin ----------
   let ouverte = null; // { id, profil, photos }

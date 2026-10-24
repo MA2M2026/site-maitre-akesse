@@ -46,6 +46,7 @@ window.GABARIT_AGENDA = `<h2 class="tdb-4">📅 Agenda du site</h2>
 <fieldset class="agenda-choix agenda-interne"><legend>🔒 Interne — jamais affiché sur le site</legend>
 <div class="agenda-grille">
 <div class="form-champ"><label for="agenda-adresse">Adresse exacte</label><input id="agenda-adresse" type="text" maxlength="300"></div>
+<div class="form-champ"><label for="agenda-client">Client (peut être cité dans les messages aux mannequins)</label><input id="agenda-client" type="text" maxlength="160" placeholder="ex : Marque Cha Kane"></div>
 </div>
 <div class="form-champ"><label for="agenda-notes">Notes internes</label><textarea id="agenda-notes" rows="2" maxlength="2000"></textarea></div>
 </fieldset>

@@ -561,6 +561,10 @@ dl.champs a { color: var(--av-rouge-texte); font-weight: 600; }
 .mannequin-meta { font-size: 12px; color: var(--av-gris); }
 .mannequin-carte.sourdine .mannequin-visage img.charge { opacity: .45; filter: grayscale(1); }
 .mannequin-carte.choisie .mannequin-visage { outline: 3px solid var(--av-rouge); outline-offset: 3px; }
+/* Sélection pour convoquer (24/10/2026) : une case sur chaque visage, la barre reste visible */
+.mannequin-carte { position: relative; }
+.mannequin-case { position: absolute; top: 8px; left: 8px; z-index: 1; width: 26px; height: 26px; accent-color: var(--av-rouge); }
+.barre-selection { position: sticky; top: 64px; z-index: 3; padding: 8px 0; background: var(--av-papier); }
 .mannequin-carte.choisie .mannequin-meta { color: var(--av-rouge-texte); font-weight: 600; }
 .mannequin-tete { display: grid; grid-template-columns: minmax(0, 260px) minmax(0, 1fr); gap: 24px; align-items: end; }
 .mannequin-portrait { width: 100%; aspect-ratio: 3 / 4; border-radius: 24px; box-shadow: var(--av-ombre-forte); font-size: 60px; }

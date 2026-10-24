@@ -81,6 +81,8 @@
     return le + (titre ? ' *« ' + titre + ' »*' : '');
   }
   const pourLeProjet = (p) => leProjet(p, 'pour');
+  // « pour *Marque X* » : le client du projet, s'il faut le citer (case du panneau, 24/10/2026)
+  const duClient = (p) => String(p.client || '').trim() && p.citer_client !== false ? ' pour *' + String(p.client).trim() + '*' : '';
 
   // 'AAAA-MM-JJ' → « Samedi 15 novembre 2026 » (date seule, sans fuseau)
   function dateLongue(iso) {
@@ -137,12 +139,12 @@
     const introductions = {
       selection: 'Félicitations, ' + (pourParent ? qui + ' est ' : 'vous êtes ') + selectionne + ' !',
       rappel: '⏰ *C’est demain !* Voici un dernier rappel de ' + laConvocation + ' ' + pourLeProjet(p) + '.',
-      convocation: 'C’est officiel : voici ' + laConvocation + ' ' + pourLeProjet(p) + '.'
+      convocation: 'C’est officiel : voici ' + laConvocation + ' ' + pourLeProjet(p) + duClient(p) + '.'
     };
     const valeurs = {
       salutation: salutation(q),
       introduction: introductions[sorte] || introductions.convocation,
-      annonce: 'Nous avons le plaisir de vous annoncer ' + (pourParent ? 'qu' + (pronom(qui) === qui ? 'e ' + qui : '’' + pronom(qui)) + ' fera' : 'que vous ferez') + ' partie ' + leProjet(p, 'de') + '.',
+      annonce: 'Nous avons le plaisir de vous annoncer ' + (pourParent ? 'qu' + (pronom(qui) === qui ? 'e ' + qui : '’' + pronom(qui)) + ' fera' : 'que vous ferez') + ' partie ' + leProjet(p, 'de') + duClient(p) + '.',
       suite: (pourParent ? 'Sa convocation' : 'Votre convocation') + ', avec l’heure d’arrivée, le programme et tout ce qu’il faut prévoir, vous parviendra dans un second message.',
       fierte: 'Toute l’équipe est fière de ' + (pourParent ? 'compter ' + qui : 'vous compter') + ' parmi nous. ✨',
       projet: String(p.titre || '').trim(),

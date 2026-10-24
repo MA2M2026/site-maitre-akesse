@@ -101,6 +101,15 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     ok((await p.$$('.choisi')).length === 2 && (await p.$$('.choisi .vis img')).length === 2 && /AYA KOUASSI.*178 cm/.test(await p.textContent('.choisis')), n + 'mannequins choisis par le recruteur, avec leurs visages');
     ok(/wa\.me\/2250505050505/.test(await p.getAttribute('#dos-wa-ouvrir', 'href')), n + 'recruteur : WhatsApp prêt');
     await capture(p, 'recruteur' + suffixe);
+    // annoncer la sélection du client et convoquer (24/10/2026) : projet créé avec ses mannequins
+    await p.click('[data-action="dossier-recruteur-convoquer"]'); await p.waitForSelector('.voile #sel-titre');
+    const proposes = await p.evaluate(() => ['sel-titre', 'sel-type', 'sel-date', 'sel-client'].map((id) => document.getElementById(id).value).join('|'));
+    ok(proposes === 'Défilé — Maison Ivoire|defile|2026-12-05|Maison Ivoire', n + 'recruteur : « Annoncer la sélection et convoquer » propose le projet du client (' + proposes + ')');
+    await p.click('form[data-form="selection-convoquer"] [type=submit]'); await p.waitForTimeout(1500);
+    const projetClient = ecrits(journal, 'POST', 'agenda_projets').map((j) => JSON.parse(j[3] || 'null')).flat().pop() || {};
+    ok(projetClient.client === 'Maison Ivoire' && projetClient.citer_client === true && projetClient.visible === false && JSON.stringify(projetClient.mannequin_ids) === '["m0","m1"]' && /#\/site\/b2-convocations$/.test(p.url()),
+      n + 'recruteur : projet créé (client cité, caché du site, 2 mannequins), les Convocations s’ouvrent');
+    await p.goBack(); await p.waitForSelector('.choisis'); await p.waitForTimeout(800);
     await p.click('.choisi [data-action="dossier-retirer-mannequin"]'); await p.waitForTimeout(800);
     ok(ecrits(journal, 'DELETE', 'recruiter_request_models').length === 1 && (await p.$$('.choisi')).length === 1, n + 'mannequin retiré de la sélection');
     // 7. Projets et castings : liste, ajout, modification, ordre

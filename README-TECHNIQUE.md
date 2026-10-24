@@ -362,6 +362,19 @@ on doit la choisir ou l'ouvrir, c'est la photo (avec le nom) qu'on touche. Tout 
 Essai : `test-visages-partout.js` parcourt tous les écrans (et les fiches, panneaux et fenêtres
 qui s'ouvrent ensuite) et échoue si un nom de mannequin est sans photo.
 
+## 📨 Convoquer une sélection (24/10/2026, demande de la propriétaire)
+- `P.convoquerSelection(ids, valeurs)` (js/admin/coque.js) : petite fenêtre (titre, type, date, ville,
+  client, « citer le client ») → projet ajouté à l'Agenda, caché du site, avec ces mannequins →
+  page Convocations sur lui (« Annoncer la sélection » d'abord, puis la convocation).
+- Utilisée par : la fiche d'une demande client (« 📨 Annoncer la sélection et convoquer »,
+  js/admin/site-dossiers.js : projet proposé d'après sa demande) et la page Mannequins
+  (« ☑️ Sélectionner pour convoquer », cases sur les visages, js/admin/site-mannequins.js).
+- Client d'un projet : colonnes `client` et `citer_client` (`supabase-agenda-client.sql`, à exécuter
+  AVANT la mise en ligne) ; champ « Client » de l'Agenda ; case « Citer le client » du panneau des
+  convocations (enregistrée dans le projet : les envois programmés suivent) ; message
+  « … pour *Client* » (`duClient`, js/messages-convocations.js).
+- Essais : test-nouvelle-admin-castings.js, test-nouvelle-admin-mannequins.js, test-convocations.js.
+
 ## 📇 « Mes contacts » (24/10/2026, demande de la propriétaire)
 `boutonContactTelephone(idTel, idNom, idEmail)` (js/app.js) : bouton à côté d'un numéro, qui ouvre
 le répertoire du téléphone (API « Contact Picker », Chrome sur Android seulement ; ailleurs le

@@ -265,6 +265,7 @@ window.demarrerAgendaAdmin = function (racine) {
     (p.intervenants || []).forEach(function (x) { ajouterIntervenant(x.role, x.nom); });
     if (!(p.intervenants || []).length && p.photographe) ajouterIntervenant('Photographe', p.photographe);
     $('agenda-adresse').value = p.adresse || '';
+    $('agenda-client').value = p.client || '';
     $('agenda-notes').value = p.notes_internes || '';
     $('agenda-visible').checked = !!p.visible;
     $('agenda-annule').checked = !!p.annule;
@@ -324,6 +325,7 @@ window.demarrerAgendaAdmin = function (racine) {
       // les horaires jour par jour remplacent l'ancien champ « Heure » (Extension 124)
       heure: lireSeances().length ? null : (projetEnCours && projetEnCours.heure) || null,
       adresse: $('agenda-adresse').value.trim() || null,
+      client: $('agenda-client').value.trim() || null,  // (supabase-agenda-client.sql)
       notes_internes: $('agenda-notes').value.trim() || null,
       visible: $('agenda-visible').checked,
       mannequin_ids: idsGardes(cochees('agenda-mannequins'), projetEnCours && projetEnCours.mannequin_ids, mannequins),

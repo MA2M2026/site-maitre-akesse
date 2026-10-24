@@ -58,6 +58,15 @@ async function ouvrirAgenda(p) {
 const rubrique = async (p, cle) => { await p.evaluate((c) => { location.hash = '#/site/' + c; }, cle); };
 const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] === table).map(j => JSON.parse(j[3] || 'null'));
 
+// client cité dans les messages (24/10/2026) : « … pour *Marque* », ou pas si la case est décochée
+{
+  const { messageConvocation } = require('../../js/messages-convocations.js');
+  const projet = { type: 'defile', titre: 'AFRICA', date_debut: '2026-12-05', client: 'Maison Ivoire' };
+  const avec = messageConvocation(projet, { nom: 'Mademoiselle AYA' }, 'selection').texte;
+  const sans = messageConvocation(Object.assign({}, projet, { citer_client: false }), { nom: 'Mademoiselle AYA' }, 'selection').texte;
+  const conv = messageConvocation(projet, { nom: 'Mademoiselle AYA' }, 'convocation').texte;
+  ok(/partie du défilé \*« AFRICA »\* pour \*Maison Ivoire\*\./.test(avec) && !/Maison Ivoire/.test(sans) && /pour \*Maison Ivoire\*/.test(conv), 'messages : le client est cité (sélection et convocation), sauf si la case est décochée');
+}
 (async () => {
   let srv; process.on('exit', () => srv && srv.kill());
   srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise(r => setTimeout(r, 800));
@@ -193,10 +202,17 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     const p = await ctx.newPage(); const journal = [], errs = [];
     p.on('pageerror', e => errs.push(e.message));
     await p.addInitScript(() => { localStorage.setItem('ma2m_cookies', 'non'); });
+    d.tables.agenda_projets.find((x) => x.id === 'pa2').client = 'Maison Ivoire';  // (24/10/2026)
     await brancher(p, dansAdmin(d), journal);
     await ouvrirAgenda(p);
     await p.click('[data-convoquer="pa2"]'); await p.waitForTimeout(1500);
     await p.$eval('#cv-enregistrer', x => x.click()); await p.waitForTimeout(1800);
+    // case « Citer le client » : visible avec son nom, cochée ; décochée → enregistrée dans le projet, aperçu sans le client
+    ok(await p.isVisible('#convoc-client-bloc') && /Maison Ivoire/.test(await p.textContent('#convoc-client-bloc')) && await p.isChecked('#convoc-citer-client') && /Maison Ivoire/.test(await p.textContent('#convoc-apercu')),
+      'client du projet : case « Citer le client » cochée, le client est dans le message');
+    await p.uncheck('#convoc-citer-client'); await p.waitForTimeout(800);
+    ok(ecrits(journal, 'PATCH', 'agenda_projets').some((x) => x.citer_client === false) && !/Maison Ivoire/.test(await p.textContent('#convoc-apercu')), 'client décoché : choix enregistré, le message ne le cite plus');
+    await p.check('#convoc-citer-client'); await p.waitForTimeout(800);
     const chiffres = await p.textContent('.convoc-chiffres');
     const barre = await p.$$eval('.convoc-barre span', ss => ss.map(s => s.className + ' ' + Math.round(parseFloat(s.style.width))));
     const relance = await p.$$eval('#convoc-reponses .convoc-relance', as => as.map(a => decodeURIComponent(a.href) + '|' + a.textContent));

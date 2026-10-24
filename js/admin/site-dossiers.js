@@ -235,8 +235,19 @@
       '<span><b>' + P.esc(m.model_name_snapshot || 'Mannequin') + '</b>' + (m.model_height_snapshot ? '<small>' + P.esc(m.model_height_snapshot) + ' cm</small>' : '') +
       (m.model_id ? '<a href="/mannequin.html?id=' + P.esc(m.model_id) + '" target="_blank" rel="noopener">Voir la fiche ↗</a>' : '') + '</span>' +
       '<button type="button" class="btn petit" data-action="dossier-retirer-mannequin" data-choix="' + P.esc(m.id) + '" aria-label="Retirer ' + P.esc(m.model_name_snapshot || 'ce mannequin') + ' de la sélection">✕</button></div>').join('') + '</div>' :
-      '<p class="doux">Aucun mannequin dans cette sélection.</p>') + '</section>';
+      '<p class="doux">Aucun mannequin dans cette sélection.</p>') +
+      // (24/10/2026) annoncer la sélection du client aux mannequins, puis les convoquer
+      (choisis.some((m) => m.model_id) ? '<div class="ligne"><button type="button" class="btn rouge" data-action="dossier-recruteur-convoquer">📨 Annoncer la sélection et convoquer</button></div>' : '') + '</section>';
   }
+  // type de l'agenda deviné d'après le « type de projet » écrit par le client
+  const typeDuProjet = (t) => { t = String(t || '').toLowerCase(); return /d[ée]fil/.test(t) ? 'defile' : /shoot|photo/.test(t) ? 'shooting' : /casting/.test(t) ? 'casting' : /show/.test(t) ? 'show' : /[ée]v[ée]nement/.test(t) ? 'evenement' : 'autre'; };
+  P.actions['dossier-recruteur-convoquer'] = async () => {
+    const d = fiche.d;
+    const choisis = await P.bd(sb.from('recruiter_request_models').select('model_id').eq('request_id', d.id));
+    const ids = [...new Set(choisis.map((m) => m.model_id).filter(Boolean))];
+    P.convoquerSelection(ids, { titre: [d.project_type, d.company].filter(Boolean).join(' — ') || 'Sélection client', type: typeDuProjet(d.project_type),
+      date: d.event_date || '', ville: d.city || '', client: d.company || d.contact_name || '' });
+  };
   async function blocCode() {
     const d = fiche.d;
     if (fiche.source !== 'casting' || d.status !== 'retenue') return '';

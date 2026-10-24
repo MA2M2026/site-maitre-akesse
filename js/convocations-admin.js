@@ -554,6 +554,10 @@ window.demarrerConvocationsPanneau = function () {
       rappelAvant && rappelAvant > new Date() ? '🔔 Rappel automatique avant l’événement : ' + quand(rappelAvant) + '.' : '',
       rappel && rappel > new Date() ? '⏰ Rappel automatique la veille : ' + quand(rappel) + '.' : 'Pas de rappel la veille pour ce projet.'
     ].filter(Boolean).join(' ') + ' (réglables plus haut sur cette page)';
+    // client du projet (supabase-agenda-client.sql) : le citer ou non dans les messages
+    $('convoc-client-bloc').hidden = !String(p.client || '').trim();
+    $('convoc-client-nom').textContent = p.client || '';
+    $('convoc-citer-client').checked = p.citer_client !== false;
     $('convoc-participants').textContent = 'Chargement…';
     $('convoc-suivi').textContent = '';
     message('');
@@ -625,6 +629,16 @@ window.demarrerConvocationsPanneau = function () {
     dessinerParticipants();
   }
   $('convoc-sorte').addEventListener('change', choisirSorte);
+  // choix enregistré dans le projet : les envois programmés (serveur) suivent le même choix
+  $('convoc-citer-client').addEventListener('change', function () {
+    var citer = this.checked, p = projet;
+    if (!p) return;
+    lancer(sb.from('agenda_projets').update({ citer_client: citer }).eq('id', p.id).select('id').then(function (r) {
+      if (r.error || !r.data || !r.data.length) { $('convoc-citer-client').checked = !citer; throw new Error(r.error ? r.error.message : 'choix non enregistré : reconnectez-vous puis réessayez.'); }
+      p.citer_client = citer;
+      dessinerApercu();
+    }));
+  });
   $('convoc-apercu-qui').addEventListener('change', dessinerApercu);
   $('convoc-actualiser').addEventListener('click', function () { if (projet) lancer(window.ouvrirConvocations(projet)); });
   $('convoc-quand').addEventListener('change', function () {

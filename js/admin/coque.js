@@ -18,6 +18,39 @@
   document.addEventListener('load', (e) => {
     if (e.target.tagName === 'IMG' && e.target.parentNode && e.target.parentNode.classList && e.target.parentNode.classList.contains('vis')) e.target.classList.add('charge');
   }, true);
+  // ---------- Convoquer une sélection (24/10/2026, demande de la propriétaire) ----------
+  // Sélection d'un client (Demandes recruteurs) ou de l'agence (Mannequins, cases à cocher) : une
+  // petite fenêtre crée le projet dans l'Agenda avec ces mannequins (caché du site public), puis
+  // ouvre les Convocations sur lui, message « Annoncer la sélection » d'abord.
+  // ids : identifiants des mannequins ; v : valeurs proposées { titre, type, date, ville, client }.
+  P.convoquerSelection = (ids, v) => {
+    v = v || {};
+    P.etat.selectionAConvoquer = ids.slice();
+    const types = Object.keys(MA2M_TYPES_AGENDA).map((k) => '<option value="' + k + '"' + (k === (v.type || 'shooting') ? ' selected' : '') + '>' + P.esc(libelleTypeAgenda(k)) + '</option>').join('');
+    P.fenetre('<form class="grille" data-form="selection-convoquer"><h2>📨 Annoncer la sélection et convoquer</h2>' +
+      '<p class="doux">' + P.pluriel(ids.length, 'mannequin sélectionnée', 'mannequins sélectionnées') + '. Le projet est ajouté à l’Agenda (caché du site), puis l’envoi groupé WhatsApp et e-mail s’ouvre.</p>' +
+      '<label class="fl" for="sel-titre">Titre du projet<input id="sel-titre" name="titre" maxlength="160" required value="' + P.esc(v.titre || '') + '"></label>' +
+      '<label class="fl" for="sel-type">Type<select id="sel-type" name="type">' + types + '</select></label>' +
+      '<label class="fl" for="sel-date">Date<input id="sel-date" name="date" type="date" required value="' + P.esc(v.date || '') + '"></label>' +
+      '<label class="fl" for="sel-ville">Ville<input id="sel-ville" name="ville" maxlength="80" value="' + P.esc(v.ville || 'Abidjan') + '"></label>' +
+      '<label class="fl" for="sel-client">Client<input id="sel-client" name="client" maxlength="160" value="' + P.esc(v.client || '') + '"></label>' +
+      '<label class="ligne"><input type="checkbox" name="citer" checked> Citer le client dans les messages aux mannequins</label>' +
+      '<div class="ligne"><button class="btn rouge" type="submit">Créer le projet et préparer les messages</button><button class="btn" type="button" data-action="fermer-fenetre">Annuler</button></div></form>');
+    document.getElementById('sel-titre').focus();
+  };
+  P.formulaires['selection-convoquer'] = async (f) => {
+    const ids = P.etat.selectionAConvoquer || [];
+    const titre = String(f.get('titre') || '').trim(), date = String(f.get('date') || '');
+    if (!ids.length) { P.message('Aucune mannequin sélectionnée.'); return; }
+    if (!titre || !date) { P.message('Indiquez au moins le titre et la date du projet.'); return; }
+    const r = await P.bd(sb.from('agenda_projets').insert({ type: String(f.get('type') || 'autre'), titre, date_debut: date, ville: String(f.get('ville') || '').trim() || null,
+      client: String(f.get('client') || '').trim() || null, citer_client: f.get('citer') === 'on', visible: false, mannequin_ids: ids }).select('id'));
+    if (!r || !r.length) { P.message('Le projet n’a pas pu être créé : reconnectez-vous puis réessayez.'); return; }
+    P.fenetre(''); P.etat.selectionAConvoquer = null;
+    P.message('Projet « ' + titre + ' » ajouté à l’Agenda : vérifiez le message, puis envoyez.');
+    if (typeof window.convoquerProjet === 'function') window.convoquerProjet(r[0].id);
+    else { window.convocationDemandee = r[0].id; location.hash = '#/site/b2-convocations'; }
+  };
   // Photo de couverture de chaque mannequin publiée : { id: url }
   P.photosCouverture = async (ids) => {
     if (!ids.length) return {};
