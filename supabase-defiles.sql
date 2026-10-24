@@ -61,12 +61,13 @@ create policy "Défilé : agence" on defile_affectations for all
   using (exists (select 1 from admins where user_id = auth.uid() and portail_mfa_ok()))
   with check (exists (select 1 from admins where user_id = auth.uid() and portail_mfa_ok()));
 
--- Nom et visage d'une personne du vivier (profil du site : sa photo de couverture, petite version
--- si elle existe ; registre ou carnet : son nom seul, les initiales s'affichent)
+-- Nom et visage d'une personne du vivier (profil du site publié : sa photo de couverture, petite
+-- version si elle existe ; profil retiré du site : son nom seul ; registre ou carnet : son nom seul, les initiales s'affichent)
 create or replace function defile_personne(v defile_vivier)
 returns table(nom text, photo text) language sql stable security definer set search_path = public as $$
   select coalesce(m.full_name, r.full_name, trim(coalesce(c.civilite || ' ', '') || c.nom), '?'),
-    (select coalesce(ph.url_petite, ph.url_miniature, ph.url) from model_photos ph where ph.model_id = v.model_id order by ph.principale desc, ph.created_at asc limit 1)
+    (select coalesce(ph.url_petite, ph.url_miniature, ph.url) from model_photos ph where ph.model_id = v.model_id and m.published
+      order by ph.principale desc, ph.created_at asc limit 1)
   from (select 1) x
   left join model_profiles m on m.id = v.model_id
   left join agence_mannequins r on r.id = v.mannequin_id
@@ -109,6 +110,8 @@ begin
   if cp.contact_id is not null then select mannequin_id into registre from contacts_externes where id = cp.contact_id; end if;
   select id into moi from defile_vivier v where v.projet_id = cp.projet_id and ((cp.model_id is not null and v.model_id = cp.model_id)
     or (cp.contact_id is not null and v.contact_id = cp.contact_id) or (registre is not null and v.mannequin_id = registre)) limit 1;
+  -- seules les mannequins retenues pour ce défilé voient le programme
+  if moi is null then return null; end if;
   return json_build_object('passages', coalesce((
     select json_agg(json_build_object('jour', p.jour, 'debut', p.debut, 'salle', p.salle, 'theme', p.theme,
       'moi', exists (select 1 from defile_affectations a where a.passage_id = p.id and a.vivier_id = moi),

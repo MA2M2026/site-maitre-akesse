@@ -62,6 +62,9 @@ let srv; process.on('exit', () => srv && srv.kill());
     await p.click('[data-action="defile-repartir"]'); await p.waitForTimeout(2000);
     ok((await p.$$('.df-place.prise.main')).length === 1 && (await p.$$('.df-place.prise')).length === 12, n + '« Répartir » de nouveau : la mannequin placée à la main reste à sa place');
     ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)), n + 'rien ne dépasse de l’écran');
+    // délai entre deux passages : gardé après un nouvel affichage (et pour ce défilé sur cet appareil)
+    await p.selectOption('#df-ecart', '120'); await p.waitForTimeout(1200);
+    ok(await p.inputValue('#df-ecart') === '120' && await p.evaluate(() => Object.keys(localStorage).some((k) => /^ma2m_ecart_defile_/.test(k) && localStorage.getItem(k) === '120')), n + 'délai entre deux passages (2 h) : gardé pour ce défilé');
     // 6. Remplacer une mannequin (absente) : ses places sont reprises par d'autres
     const avantRemplacer = d.tables.defile_affectations.length;
     await p.click('.df-synthese [data-action="defile-remplacer"]'); await p.waitForTimeout(2000);

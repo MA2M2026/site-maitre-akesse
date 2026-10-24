@@ -18,13 +18,15 @@
     if (x === null || y === null) return true;  // heure inconnue le même jour : prudence
     return Math.abs(x - y) < ecart;
   }
-  // passages : [{ id, jour 'AAAA-MM-JJ', debut 'HH:MM', femmes, hommes }] ; vivier : [{ cle, sexe }] ;
+  // passages : [{ id, jour 'AAAA-MM-JJ', debut 'HH:MM', femmes, hommes }] ; vivier : [{ cle, sexe,
+  // horsChoix (absente : garde ses places fixes, jamais placée ailleurs) }] ;
   // fixes : { idPassage: [cle…] } ; options : { ecartMinutes (90 par défaut) }.
   // Renvoie { affectations: { idPassage: [cle…] }, manques: { idPassage: { femme, homme } }, compte: { cle: n } }
   function repartirDefile(passages, vivier, fixes, options) {
     const ecart = (options && options.ecartMinutes) || 90;
     const ordre = passages.slice().sort((a, b) => String(a.jour).localeCompare(String(b.jour)) || (minutes(a.debut) || 0) - (minutes(b.debut) || 0));
     const sexeDe = {}; vivier.forEach((v) => { sexeDe[v.cle] = v.sexe === 'homme' ? 'homme' : 'femme'; });
+    const choisissables = vivier.map((v, rang) => ({ cle: v.cle, rang, horsChoix: v.horsChoix })).filter((x) => !x.horsChoix);
     const affectations = {}, compte = {}, passagesDe = {};
     vivier.forEach((v) => { compte[v.cle] = 0; passagesDe[v.cle] = []; });
     // d'abord les choix faits à la main (seulement des mannequins du vivier)
@@ -38,7 +40,7 @@
       ['femme', 'homme'].forEach((sexe) => {
         const voulu = Math.max(0, Number(sexe === 'femme' ? p.femmes : p.hommes) || 0);
         let deja = affectations[p.id].filter((c) => sexeDe[c] === sexe).length;
-        const libres = vivier.map((v, rang) => ({ cle: v.cle, rang })).filter((x) => sexeDe[x.cle] === sexe && affectations[p.id].indexOf(x.cle) < 0 &&
+        const libres = choisissables.filter((x) => sexeDe[x.cle] === sexe && affectations[p.id].indexOf(x.cle) < 0 &&
           !passagesDe[x.cle].some((q) => seGenent(p, q, ecart)))
           .sort((a, b) => compte[a.cle] - compte[b.cle] || a.rang - b.rang);
         while (deja < voulu && libres.length) {

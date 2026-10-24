@@ -371,15 +371,19 @@ qui s'ouvrent ensuite) et échoue si un nom de mannequin est sans photo.
 - **Répartition** : `repartirDefile` (js/defile-repartition.js, partagé et essayé sans navigateur :
   test-defile-repartition.js) — nombre de femmes / hommes par passage, travail partagé (celles qui
   ont le moins de passages d'abord), jamais deux passages trop rapprochés pour une même mannequin
-  (délai réglable, 1 h 30 par défaut ; heure inconnue le même jour = prudence), choix faits à la main
-  gardés (`a_la_main`), places impossibles signalées. `conflitsDefile` : alerte après une
+  (délai réglable, 1 h 30 par défaut, gardé par défilé sur l'appareil : `ma2m_ecart_defile_<id>` ;
+  heure inconnue le même jour = prudence), choix faits à la main gardés (`a_la_main`), places
+  impossibles signalées, absentes (réponse à la convocation) jamais replacées. Enregistrement
+  (`enregistrerRepartition`) : nouvelles places d'abord, anciennes retirées ensuite — une coupure en
+  route ne vide jamais le programme. Passages hors des dates du projet : affichés quand même. `conflitsDefile` : alerte après une
   modification à la main. Grille : un rond par place, visage (initiales sans photo), toucher un
   visage le retire, une place vide → choisir. Synthèse : passages par mannequin, ❌ absente (réponse
   à la convocation), « Remplacer » (ses places reprises par d'autres, le reste ne bouge pas).
 - **Convoquer** : `defile_participants` (SQL) ajoute chaque mannequin placée au projet ou aux
   participants des convocations (registre et carnet, mêmes fonctions que les Places limitées), puis
   page Convocations. **Fiche programme** : sur « Confirmer ma présence » (lien personnel),
-  `defile_programme(jeton)` donne ses passages (en tête, soulignés) et tout le programme avec les
+  `defile_programme(jeton)` (seulement pour une personne du vivier ; photo seulement si le profil est
+  publié) donne ses passages (en tête, soulignés) et tout le programme avec les
   visages et les noms, sans aucun numéro (js/confirmer.js). **Imprimer le programme** : fenêtre
   d'impression (jour par jour, noms par passage ; « Enregistrer en PDF »).
 - Base : `supabase-defiles.sql` (tables `defile_passages`, `defile_vivier`, `defile_affectations`,

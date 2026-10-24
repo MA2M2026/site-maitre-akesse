@@ -33,5 +33,8 @@ ok(JSON.stringify(repartirDefile(passages, vivier, {}).affectations) === JSON.st
 // heure inconnue le même jour : jamais deux fois la même personne
 const r4 = repartirDefile([{ id: 'a', jour: '2026-12-05', debut: '', femmes: 30, hommes: 0 }, { id: 'b', jour: '2026-12-05', debut: '', femmes: 1, hommes: 0 }], vivier, {});
 ok(r4.manques.b && r4.manques.b.femme === 1, 'heure inconnue le même jour : prudence, pas deux passages pour la même');
+// absente (réponse à la convocation) : garde sa place choisie à la main, jamais placée ailleurs
+const r5 = repartirDefile(passages, vivier.map((v) => Object.assign({}, v, { horsChoix: v.cle === 'f1' })), { j3a: ['f1'] });
+ok(r5.affectations.j3a.indexOf('f1') >= 0 && passages.every((p) => p.id === 'j3a' || r5.affectations[p.id].indexOf('f1') < 0), 'absente : sa place choisie à la main est gardée, elle n’est placée nulle part ailleurs');
 console.log(ko ? '\n❌ ' + ko + ' échec(s)' : '\nTout est bon.');
 process.exit(ko ? 1 : 0);

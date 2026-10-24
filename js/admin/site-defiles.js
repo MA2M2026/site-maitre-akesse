@@ -56,7 +56,7 @@
       const f = siens.reduce((s, x) => s + x.femmes, 0), h = siens.reduce((s, x) => s + x.hommes, 0);
       return '<article class="projet-carte apparait" style="--i:' + Math.min(i, 10) + '"><div class="projet-tete"><h2>' + P.esc(p.titre) + '</h2>' +
         ((p.date_fin || p.date_debut) < aujourdhui() ? P.pastille('Terminé', 'neutre') : P.pastille('À venir', 'ok')) + '</div>' +
-        '<p class="doux">' + P.esc([P.date(p.date_debut) + (p.date_fin && p.date_fin !== p.date_debut ? ' → ' + P.date(p.date_fin) : ''), [p.lieu, p.ville].filter(Boolean).join(', ')].filter(Boolean).join(' · ')) + '</p>' +
+        '<p class="doux">' + P.esc(resumeProjet(p)) + '</p>' +
         '<p>' + P.pluriel(siens.length, 'passage', 'passages') + ' · ' + f + ' femmes, ' + h + ' hommes à placer</p>' +
         '<div class="ligne"><a class="btn rouge" href="#/site/' + PAGE + '/' + P.esc(p.id) + '">Ouvrir</a></div></article>';
     }).join('');
@@ -114,11 +114,63 @@
   }
   const vivierDe = (cle) => ecran.vivier.find((v) => cleDe(v) === cle);
   const visage = (cle, petite) => { const x = ecran.personnes[cle] || { nom: '?' }; return P.visage(x.photo, x.nom, petite ? 'rond-vis' : 'df-vis'); };
+  // dates et lieu d'un projet, sur une ligne
+  const resumeProjet = (p, avecClient) => [P.date(p.date_debut) + (p.date_fin && p.date_fin !== p.date_debut ? ' → ' + P.date(p.date_fin) : ''),
+    [p.lieu, p.ville].filter(Boolean).join(', '), avecClient && p.client ? 'client : ' + p.client : ''].filter(Boolean).join(' · ');
+  // personnes placées, passage par passage ({ id du passage: [clés] }) ; seulementMain : celles placées à la main
+  function parPassage(seulementMain) {
+    const r = {};
+    ecran.affectations.forEach((a) => {
+      if (seulementMain && !a.a_la_main) return;
+      const v = ecran.vivier.find((x) => x.id === a.vivier_id);
+      if (v) (r[a.passage_id] = r[a.passage_id] || []).push(cleDe(v));
+    });
+    return r;
+  }
+  // temps minimum entre deux passages d'une même mannequin, gardé pour chaque défilé sur cet appareil
+  const ECARTS = [30, 60, 90, 120, 180];
+  const cleEcart = () => 'ma2m_ecart_defile_' + ecran.projet.id;
+  function ecartChoisi() {
+    let m = 90;
+    try { m = Number(localStorage.getItem(cleEcart())); } catch (e) { /* appareil sans stockage */ }
+    return ECARTS.includes(m) ? m : 90;
+  }
+  P.changements['defile-ecart'] = (el) => {
+    try { localStorage.setItem(cleEcart(), String(Number(el.value) || 90)); } catch (e) { /* appareil sans stockage : 1 h 30 par défaut */ }
+    return P.afficher();
+  };
+  // vivier pour la répartition, sans la personne remplacée ; les absentes gardent leurs places
+  // choisies à la main mais ne sont jamais placées ailleurs (horsChoix)
+  const vivierDisponible = (sauf) => ecran.vivier.filter((v) => v.id !== sauf).map((v) => ({ cle: cleDe(v), sexe: v.sexe, horsChoix: !!ecran.absentes[cleDe(v)] }));
+  // enregistre une répartition : d'abord les nouvelles places, ensuite on retire les anciennes
+  // qui n’y sont plus — une coupure en route ne vide jamais le programme
+  async function enregistrerRepartition(r, fixes) {
+    const idDe = {}, avant = {};
+    ecran.vivier.forEach((v) => { idDe[cleDe(v)] = v.id; });
+    ecran.affectations.forEach((a) => { avant[a.passage_id + '|' + a.vivier_id] = true; });
+    const garder = {}, nouvelles = [];
+    Object.keys(r.affectations).forEach((id) => r.affectations[id].forEach((c) => {
+      const cle = id + '|' + idDe[c];
+      garder[cle] = true;
+      if (!avant[cle] && !(fixes[id] || []).includes(c)) nouvelles.push({ passage_id: id, vivier_id: idDe[c], a_la_main: false });
+    }));
+    // déjà placée depuis un autre appareil : la ligne existante est gardée telle quelle
+    await P.parPaquets(nouvelles, 500, (l) => P.bd(sb.from('defile_affectations').upsert(l, { onConflict: 'passage_id,vivier_id', ignoreDuplicates: true }).select('passage_id')));
+    // anciennes places à retirer : une demande par mannequin (tous ses passages d'un coup)
+    const parMannequin = {};
+    ecran.affectations.filter((a) => !garder[a.passage_id + '|' + a.vivier_id]).forEach((a) => { (parMannequin[a.vivier_id] = parMannequin[a.vivier_id] || []).push(a.passage_id); });
+    for (const v of Object.keys(parMannequin)) {
+      await P.parPaquets(parMannequin[v], 100, (l) => P.bd(sb.from('defile_affectations').delete().eq('vivier_id', v).in('passage_id', l).select('passage_id')));
+    }
+    return nouvelles.length;
+  }
+  const placesVides = (r) => Object.values(r.manques).reduce((s, m) => s + (m.femme || 0) + (m.homme || 0), 0);
 
   function blocPassages() {
     const jours = joursDu(ecran.projet);
+    const horsDates = [...new Set(ecran.passages.map((x) => x.jour))].filter((j) => !jours.includes(j));
     const options = jours.map((j) => '<option value="' + j + '">' + P.esc(jourLong(j)) + '</option>').join('');
-    const parJour = jours.map((j) => {
+    const parJour = jours.concat(horsDates).sort().map((j) => {
       const siens = ecran.passages.filter((x) => x.jour === j);
       return '<div class="df-jour"><h3>' + P.esc(jourLong(j)) + '</h3>' + (siens.length ? '<ul class="df-passages">' + siens.map((x) =>
         '<li><b>' + P.esc(heure(x.debut)) + '</b> · ' + P.esc(x.salle || 'salle à préciser') + (x.theme ? ' · ' + P.esc(x.theme) : '') +
@@ -142,12 +194,13 @@
       '<div class="ligne"><button type="button" class="btn" data-action="defile-vivier">☑️ Choisir les mannequins</button></div></section>';
   }
   function blocRepartition() {
-    const parPassage = {}, manuel = {};
-    ecran.affectations.forEach((a) => { const v = ecran.vivier.find((x) => x.id === a.vivier_id); if (!v) return; (parPassage[a.passage_id] = parPassage[a.passage_id] || []).push(cleDe(v)); if (a.a_la_main) manuel[a.passage_id + cleDe(v)] = true; });
-    const conflits = conflitsDefile(ecran.passages, parPassage);
+    const places = parPassage(), main = parPassage(true), manuel = {};
+    Object.keys(main).forEach((id) => main[id].forEach((c) => { manuel[id + c] = true; }));
+    const ecart = ecartChoisi();
+    const conflits = conflitsDefile(ecran.passages, places, { ecartMinutes: ecart });
     const enConflit = {}; conflits.forEach((c) => { enConflit[c.a + c.cle] = enConflit[c.b + c.cle] = true; });
     const cartes = ecran.passages.map((x) => {
-      const siens = parPassage[x.id] || [];
+      const siens = places[x.id] || [];
       const ronds = (sexe, total) => {
         const l = siens.filter((c) => (ecran.personnes[c] || {}).sexe === sexe);
         let html = l.map((c) => '<button type="button" class="df-place prise' + (manuel[x.id + c] ? ' main' : '') + (enConflit[x.id + c] ? ' conflit' : '') + '" data-action="defile-retirer" data-passage="' + P.esc(x.id) + '" data-cle="' + P.esc(c) + '" title="' + P.esc((ecran.personnes[c] || {}).nom || '') + ' — toucher pour retirer">' + visage(c) + '</button>').join('');
@@ -159,13 +212,13 @@
     }).join('');
     // synthèse : nombre de passages de chacune
     const compte = {};
-    Object.keys(parPassage).forEach((id) => parPassage[id].forEach((c) => { compte[c] = (compte[c] || 0) + 1; }));
+    Object.keys(places).forEach((id) => places[id].forEach((c) => { compte[c] = (compte[c] || 0) + 1; }));
     const synthese = ecran.vivier.map(cleDe).sort((a, b) => (compte[b] || 0) - (compte[a] || 0) || String((ecran.personnes[a] || {}).nom).localeCompare(String((ecran.personnes[b] || {}).nom)))
       .map((c) => '<li' + (ecran.absentes[c] ? ' class="absente"' : '') + '>' + visage(c, true) + ' <span>' + P.esc((ecran.personnes[c] || {}).nom || '?') + (ecran.absentes[c] ? ' <small>❌ absente</small>' : '') + '</span> <b>' + (compte[c] || 0) + '</b>' +
         (compte[c] ? ' <button type="button" class="btn petit" data-action="defile-remplacer" data-cle="' + P.esc(c) + '">Remplacer</button>' : '') + '</li>').join('');
     return '<section class="carte"><h2>3. La répartition</h2>' +
       '<div class="ligne"><button type="button" class="btn rouge" data-action="defile-repartir"' + (ecran.passages.length && ecran.vivier.length ? '' : ' disabled') + '>⚡ Répartir automatiquement</button>' +
-      '<label class="ligne petit-texte" for="df-ecart">Temps minimum entre deux passages d’une même mannequin <select id="df-ecart">' + [30, 60, 90, 120, 180].map((m) => '<option value="' + m + '"' + (m === (P.etat.ecartDefile || 90) ? ' selected' : '') + '>' + (m >= 60 ? (m / 60) + ' h' + (m % 60 ? ' 30' : '') : m + ' min') + '</option>').join('') + '</select></label></div>' +
+      '<label class="ligne petit-texte" for="df-ecart">Temps minimum entre deux passages d’une même mannequin <select id="df-ecart" data-change="defile-ecart">' + ECARTS.map((m) => '<option value="' + m + '"' + (m === ecart ? ' selected' : '') + '>' + (m >= 60 ? Math.floor(m / 60) + ' h' + (m % 60 ? ' 30' : '') : m + ' min') + '</option>').join('') + '</select></label></div>' +
       '<p class="doux petit-texte">Les mannequins placées à la main (bord rouge) restent à leur place ; touchez un visage pour le retirer, une place vide pour la remplir. Un visage barré : deux passages trop rapprochés.</p>' +
       (conflits.length ? '<p class="note attention">⚠️ ' + P.pluriel(conflits.length, 'passage trop rapproché', 'passages trop rapprochés') + ' pour une même mannequin.</p>' : '') +
       '<div class="df-grille">' + (cartes || '<p class="doux">Ajoutez d’abord des passages.</p>') + '</div>' +
@@ -179,7 +232,7 @@
     const p = ecran.projet;
     if (!p) return P.entete('Programmation défilé') + '<div class="carte vide">Ce projet n’existe plus.</div>';
     return P.entete('Défilé · ' + p.titre, '<a class="btn" href="#/site/' + PAGE + '">← Tous les défilés</a>') +
-      '<p class="doux">' + P.esc([P.date(p.date_debut) + (p.date_fin && p.date_fin !== p.date_debut ? ' → ' + P.date(p.date_fin) : ''), [p.lieu, p.ville].filter(Boolean).join(', '), p.client ? 'client : ' + p.client : ''].filter(Boolean).join(' · ')) + '</p>' +
+      '<p class="doux">' + P.esc(resumeProjet(p, true)) + '</p>' +
       blocPassages() + blocVivier() + blocRepartition();
   }
 
@@ -212,6 +265,7 @@
     P.fenetre('<form class="grille df-fenetre" data-form="defile-vivier"><h2>Mannequins retenues pour le défilé</h2>' +
       groupe('Femmes de l’agence', (x) => x.sexe === 'femme' && x.origine === 'agence') + groupe('Femmes extérieures', (x) => x.sexe === 'femme' && x.origine === 'exterieure') +
       groupe('Hommes de l’agence', (x) => x.sexe === 'homme' && x.origine === 'agence') + groupe('Hommes extérieurs', (x) => x.sexe === 'homme' && x.origine === 'exterieure') +
+      groupe('Retirées du site (gardées tant qu’elles sont cochées)', (x) => !x.origine && dans[x.cle]) +
       '<div class="ligne"><button class="btn rouge" type="submit">Enregistrer</button><button class="btn" type="button" data-action="fermer-fenetre">Annuler</button></div></form>');
   };
   P.formulaires['defile-vivier'] = async (f) => {
@@ -230,18 +284,11 @@
   };
   // répartition automatique : on garde ce qui a été placé à la main, on refait le reste
   P.actions['defile-repartir'] = async () => {
-    const ecart = Number((document.getElementById('df-ecart') || {}).value) || 90;
-    P.etat.ecartDefile = ecart;
-    const fixes = {};
-    ecran.affectations.filter((a) => a.a_la_main).forEach((a) => { const v = ecran.vivier.find((x) => x.id === a.vivier_id); if (v) (fixes[a.passage_id] = fixes[a.passage_id] || []).push(cleDe(v)); });
-    const r = repartirDefile(ecran.passages, ecran.vivier.map((v) => ({ cle: cleDe(v), sexe: v.sexe })), fixes, { ecartMinutes: ecart });
-    const lignes = [];
-    Object.keys(r.affectations).forEach((id) => r.affectations[id].forEach((c) => lignes.push({ passage_id: id, vivier_id: vivierDe(c).id, a_la_main: !!(fixes[id] && fixes[id].indexOf(c) >= 0) })));
-    const auto = ecran.affectations.filter((a) => !a.a_la_main);
-    if (auto.length) await P.parPaquets(ecran.passages.map((x) => x.id), 100, (l) => P.bd(sb.from('defile_affectations').delete().in('passage_id', l).eq('a_la_main', false).select('passage_id')));
-    const nouvelles = lignes.filter((l) => !l.a_la_main);
-    for (let i = 0; i < nouvelles.length; i += 500) await P.bd(sb.from('defile_affectations').insert(nouvelles.slice(i, i + 500)).select('passage_id'));
-    const manque = Object.values(r.manques).reduce((s, m) => s + (m.femme || 0) + (m.homme || 0), 0);
+    const ecart = ecartChoisi();
+    const fixes = parPassage(true);
+    const r = repartirDefile(ecran.passages, vivierDisponible(), fixes, { ecartMinutes: ecart });
+    await enregistrerRepartition(r, fixes);
+    const manque = placesVides(r);
     P.message('Répartition faite.' + (manque ? ' ⚠️ ' + P.pluriel(manque, 'place reste vide', 'places restent vides') + ' : ajoutez des mannequins au vivier, ou laissez plus de temps entre deux passages.' : ''));
     return P.afficher();
   };
@@ -257,7 +304,7 @@
     const passage = el.dataset.passage, deja = {};
     ecran.affectations.filter((a) => a.passage_id === passage).forEach((a) => { deja[a.vivier_id] = true; });
     const compte = {}; ecran.affectations.forEach((a) => { compte[a.vivier_id] = (compte[a.vivier_id] || 0) + 1; });
-    const libres = ecran.vivier.filter((v) => v.sexe === el.dataset.sexe && !deja[v.id]).sort((a, b) => (compte[a.id] || 0) - (compte[b.id] || 0));
+    const libres = ecran.vivier.filter((v) => v.sexe === el.dataset.sexe && !deja[v.id] && !ecran.absentes[cleDe(v)]).sort((a, b) => (compte[a.id] || 0) - (compte[b.id] || 0));
     if (!libres.length) { P.message('Plus personne de disponible dans le vivier pour cette place : ajoutez des mannequins (« Choisir les mannequins »).'); return; }
     P.fenetre('<div class="grille"><h2>Choisir pour cette place</h2><div class="df-choix">' + libres.map((v) =>
       '<button type="button" class="df-choix-carte" data-action="defile-placer" data-passage="' + P.esc(passage) + '" data-vivier="' + P.esc(v.id) + '">' + visage(cleDe(v)) +
@@ -283,30 +330,26 @@
   P.actions['defile-remplacer'] = async (el) => {
     const v = vivierDe(el.dataset.cle), nom = (ecran.personnes[el.dataset.cle] || {}).nom || 'cette mannequin';
     if (!v || !confirm('Retirer ' + nom + ' de ses passages et la remplacer ?')) return;
-    const fixes = {};
-    ecran.affectations.filter((a) => a.vivier_id !== v.id).forEach((a) => { const x = ecran.vivier.find((y) => y.id === a.vivier_id); if (x) (fixes[a.passage_id] = fixes[a.passage_id] || []).push(cleDe(x)); });
-    const r = repartirDefile(ecran.passages, ecran.vivier.filter((x) => x.id !== v.id).map((x) => ({ cle: cleDe(x), sexe: x.sexe })), fixes, { ecartMinutes: P.etat.ecartDefile || 90 });
-    await P.bd(sb.from('defile_affectations').delete().eq('vivier_id', v.id).select('passage_id'));
-    const nouvelles = [];
-    Object.keys(r.affectations).forEach((id) => r.affectations[id].forEach((c) => { if (!(fixes[id] || []).includes(c)) nouvelles.push({ passage_id: id, vivier_id: vivierDe(c).id, a_la_main: false }); }));
-    if (nouvelles.length) await P.bd(sb.from('defile_affectations').insert(nouvelles).select('passage_id'));
-    const manque = Object.values(r.manques).reduce((s, m) => s + (m.femme || 0) + (m.homme || 0), 0);
-    P.message(nom + ' est retirée de ses passages : ' + P.pluriel(nouvelles.length, 'remplaçante placée', 'remplaçantes placées') + (manque ? ' ; ⚠️ ' + P.pluriel(manque, 'place reste vide', 'places restent vides') : '') + '. Pensez à prévenir les remplaçantes (Convocations).');
+    const fixes = parPassage(), cle = el.dataset.cle;
+    Object.keys(fixes).forEach((id) => { fixes[id] = fixes[id].filter((c) => c !== cle); });
+    const r = repartirDefile(ecran.passages, vivierDisponible(v.id), fixes, { ecartMinutes: ecartChoisi() });
+    const placees = await enregistrerRepartition(r, fixes);
+    const manque = placesVides(r);
+    P.message(nom + ' est retirée de ses passages : ' + P.pluriel(placees, 'remplaçante placée', 'remplaçantes placées') + (manque ? ' ; ⚠️ ' + P.pluriel(manque, 'place reste vide', 'places restent vides') : '') + '. Pensez à prévenir les remplaçantes (Convocations).');
     return P.afficher();
   };
   // programme à imprimer (coulisses) : jour par jour, chaque passage avec les noms ; « Enregistrer
   // en PDF » dans la fenêtre d'impression du téléphone ou de l'ordinateur
   P.actions['defile-imprimer'] = () => {
-    const p = ecran.projet, parPassage = {};
-    ecran.affectations.forEach((a) => { const v = ecran.vivier.find((x) => x.id === a.vivier_id); if (v) (parPassage[a.passage_id] = parPassage[a.passage_id] || []).push(v); });
+    const p = ecran.projet, places = parPassage();
     let html = '<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Programme — ' + P.esc(p.titre) + '</title><style>' +
       'body{font-family:Arial,sans-serif;margin:24px;color:#1b1817}h1{margin:0 0 4px}h2{margin:22px 0 8px;text-transform:capitalize;border-bottom:2px solid #B00E28}' +
       '.p{break-inside:avoid;margin:0 0 12px;padding:10px;border:1px solid #ccc;border-radius:8px}.p b{display:block;margin-bottom:6px}.n{display:inline-block;margin:2px 10px 2px 0}.doux{color:#666}</style></head><body>' +
-      '<h1>' + P.esc(p.titre) + '</h1><p class="doux">' + P.esc([P.date(p.date_debut) + (p.date_fin && p.date_fin !== p.date_debut ? ' → ' + P.date(p.date_fin) : ''), [p.lieu, p.ville].filter(Boolean).join(', ')].filter(Boolean).join(' · ')) + '</p>';
+      '<h1>' + P.esc(p.titre) + '</h1><p class="doux">' + P.esc(resumeProjet(p)) + '</p>';
     let jour = null;
     ecran.passages.forEach((x) => {
       if (x.jour !== jour) { jour = x.jour; html += '<h2>' + P.esc(jourLong(jour)) + '</h2>'; }
-      const noms = (parPassage[x.id] || []).sort((a, b) => a.sexe.localeCompare(b.sexe)).map((v) => '<span class="n">' + (v.sexe === 'homme' ? '♂ ' : '♀ ') + P.esc((ecran.personnes[cleDe(v)] || {}).nom || '?') + '</span>').join('');
+      const noms = (places[x.id] || []).map((c) => ({ nom: (ecran.personnes[c] || {}).nom || '?', sexe: vivierDe(c).sexe })).sort((a, b) => a.sexe.localeCompare(b.sexe)).map((v) => '<span class="n">' + (v.sexe === 'homme' ? '♂ ' : '♀ ') + P.esc(v.nom) + '</span>').join('');
       html += '<div class="p"><b>' + P.esc([heure(x.debut), x.salle, x.theme].filter(Boolean).join(' · ')) + '</b>' + (noms || '<span class="doux">Personne pour le moment</span>') + '</div>';
     });
     const w = window.open('', '_blank');
