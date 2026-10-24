@@ -157,7 +157,12 @@ async function photosLocales(page) {
 }
 
 // Connexion à la nouvelle Administration (mot de passe + code), comme une vraie personne
+// Règle de sécurité stricte de l'Administration (vercel.json, 24/10/2026 : aucun programme écrit dans
+// la page), posée par le serveur comme en ligne : tous les essais de l'Administration tournent avec
+// elle ; un programme bloqué apparaît dans la console comme une erreur (« aucune erreur »).
+const REGLE_ADMIN = require('../../vercel.json').headers.find((h) => h.source === '/admin/(.*)').headers.find((h) => h.key === 'Content-Security-Policy').value;
 async function seConnecter(p, url) {
+  await p.route(/127\.0\.0\.1:\d+\/admin\/$/, async (r) => { const rep = await r.fetch(); r.fulfill({ response: rep, headers: Object.assign({}, rep.headers(), { 'content-security-policy': REGLE_ADMIN }) }); });
   await p.goto(url); await p.waitForSelector('#cx-mail', { timeout: 8000 });
   await p.fill('#cx-mail', 'admin@test.ci'); await p.fill('#cx-mdp', 'motdepasse-tres-long');
   await p.click('form[data-form="connexion"] [type=submit]');

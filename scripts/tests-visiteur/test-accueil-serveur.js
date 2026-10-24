@@ -121,7 +121,7 @@ async function middleware() {
         ok(textesArrivee === await textes() && textesArrivee.includes(MOT.message) && textesArrivee.includes(MOT.nom) && /Casting ouvert|Open casting/.test(textesArrivee) && !/u-hidden/.test(textesArrivee)
           && !ordre.some((u) => /mot_responsable|casting_projets/.test(u)), n + 'mot de Maître Akesse et casting ouvert déjà écrits par le serveur : rien ne change ensuite, la page ne saute pas');
         const vignettes = await p.$$eval('#grille-femmes img, #grille-hommes img', (l) => l.map((i) => i.getAttribute('src')));
-        ok(vignettes.length === 4 && vignettes.every((u) => (ecran.width < 700) === /\/petites\/[^/]*-n480-w\.webp$/.test(u)), n + (ecran.width < 700 ? 'téléphone : visages en petite version (480 px, WebP)' : 'ordinateur : visages en miniature (800 px)') + ' — ' + vignettes[0].replace(/^.*\//, ''));
+        ok(vignettes.length === 4 && vignettes.every((u) => (ecran.width < 700) === /\/petites\/[^/]*-n480-w\.(webp|jpg)$/.test(u)), n + (ecran.width < 700 ? 'téléphone : visages en petite version (480 px)' : 'ordinateur : visages en miniature (800 px)') + ' — ' + vignettes[0].replace(/^.*\//, ''));
         ok((await p.$$('#grille-femmes a')).length === 3 && (await p.$$('#grille-hommes a')).length === 1 && /AWA UNE/.test(await p.textContent('#une-nom')), n + 'visages des femmes, des hommes et « À la une » remplis');
         ok(/4 (mannequins à découvrir|models to discover)/.test(await p.textContent('#couv-nombre')), n + 'nombre de mannequins sur la couverture');
         ok(!errs.length, n + 'aucune erreur ' + errs.join(' | '));

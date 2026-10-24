@@ -986,6 +986,11 @@ mannequins, ils sont gardés 5 minutes par le serveur : un casting fermé peut r
   outil « Vérifier et nettoyer » (Administration › Outils, `js/nettoyage-supabase.js`) pour les
   images du site et les anciennes photos de dossiers. Les photos des mannequins (`model-photos`)
   restent exclues par décision de la propriétaire (30/09) : ne les ajouter que si elle le demande.
+- ✅ **Sécurité de l'Administration B+ → A+** (24/10/2026) : règle `/admin/(.*)` de vercel.json,
+  `script-src 'self'` (aucun programme écrit dans la page, aucun `onclick=`). Posée par le SERVEUR :
+  écrite dans la page (balise meta, essai du 23/10), elle empêchait le navigateur de précharger
+  les programmes (5,5 s au lieu de 1,2 s). Tous les essais de l'Administration tournent avec elle
+  (`seConnecter`, donnees-nouvelle-admin.js) ; `test-rapidite-admin.js` vérifie que rien n'est bloqué.
 - ✅ **Code de l'application d'authentification obligatoire côté serveur** (24/10/2026) :
   `supabase-admins-aal2.sql` (la table `admins` n'est lisible qu'en `aal2`, donc toutes les règles
   « admin » l'exigent ; les fonctions `security definer` qui lisent `admins` sont réécrites

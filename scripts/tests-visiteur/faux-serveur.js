@@ -55,7 +55,10 @@ function brancher(page, donnees, journal) {
       if (url.pathname.startsWith('/rest/v1/rpc/')) {
         const nom = url.pathname.split('/').pop();
         journal.push(['rpc', nom, req.postData()]);
-        const valeur = donnees.rpc && nom in donnees.rpc ? donnees.rpc[nom] : [];
+        // photos_couverture_petites (24/10/2026) : mêmes photos que photos_couverture_mannequins
+        // quand l'essai ne la décrit pas
+        const cle = nom === 'photos_couverture_petites' && donnees.rpc && !(nom in donnees.rpc) && 'photos_couverture_mannequins' in donnees.rpc ? 'photos_couverture_mannequins' : nom;
+        const valeur = donnees.rpc && cle in donnees.rpc ? donnees.rpc[cle] : [];
         if (valeur && valeur.erreur) return json({ message: valeur.erreur, code: 'P0001' }, 400);
         return json(typeof valeur === 'function' ? valeur(JSON.parse(req.postData() || '{}')) : valeur);
       }

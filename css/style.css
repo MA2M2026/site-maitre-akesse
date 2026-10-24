@@ -2222,7 +2222,7 @@ html.porte-deja-vue #porte-entree { display: none; }
 }
 
 .fiche-actions { display: flex; flex-wrap: wrap; gap: 0.7rem; margin: 1.8rem 0 1.6rem; }
-.fiche-actions .btn { display: inline-flex; align-items: center; gap: 0.5rem; }
+.fiche-actions .btn { display: inline-flex; align-items: center; gap: 0.5rem; max-width: 100%; white-space: normal; text-align: center; }  /* (écrans de 280 px : Galaxy Fold fermé, 24/10/2026) */
 .fiche-telecharger { position: relative; }
 .fiche-telecharger-menu {
   position: absolute; top: calc(100% + 0.4rem); left: 0; z-index: 20; min-width: 100%;
