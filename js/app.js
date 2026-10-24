@@ -442,6 +442,10 @@ function definirSelectOuAutre(idSelect, idAutre, valeur) {
 // réduite à 3000 px de côté au plus (24/10/2026 : 2000 px avant ; une case de compcard A4 à
 // 400 ppp fait jusqu'à ~1700 px : marge pour une impression nette, sans figer les téléphones).
 const COTE_MAX_FICHE = 3000;
+// Petites cases (grille de la compcard, photo et portfolio du CV, 70 mm au plus) : 1600 px
+// suffisent (≈ 1100 px à 400 ppp, plus la marge du recadrage) — bien moins de mémoire pour les
+// téléphones, qui décodent toutes les photos en même temps.
+const COTE_PETITE_CASE = 1600;
 async function telechargerImage(url, cache) {
   try {
     // (par le relais de la même adresse que la page : js/photos.js)
@@ -454,13 +458,13 @@ async function telechargerImage(url, cache) {
     return null; // idem (réseau injoignable)
   }
 }
-function decoderImage(blob) {
+function decoderImage(blob, coteMax) {
   const urlLocale = URL.createObjectURL(blob);
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
       try {
-        const echelle = Math.min(1, COTE_MAX_FICHE / Math.max(img.width, img.height));
+        const echelle = Math.min(1, (coteMax || COTE_MAX_FICHE) / Math.max(img.width, img.height));
         const canvas = document.createElement('canvas');
         canvas.width = Math.round(img.width * echelle);
         canvas.height = Math.round(img.height * echelle);
@@ -477,10 +481,16 @@ function decoderImage(blob) {
   });
 }
 // Photo trop petite pour une fiche nette (24/10/2026, demande de la propriétaire) : moins de
-// 1600 px sur son plus grand côté (photo passée par WhatsApp, capture d'écran…).
-const COTE_MIN_FICHE_NETTE = 1600;
-function photosTropPetites(images) {
-  return images.filter(function (i) { return i && i.coteOrigine && i.coteOrigine < COTE_MIN_FICHE_NETTE; }).length;
+// 300 points par pouce une fois imprimée à la taille de sa case (photo passée par WhatsApp,
+// capture d'écran…). cases : [{ image, url, coteMm }] ; une même photo placée deux fois
+// (photo principale ET portfolio du CV) ne compte qu'une fois.
+const PPP_FICHE_NETTE = 300;
+function photosTropPetites(cases) {
+  const faibles = new Set();
+  cases.forEach(function (c) {
+    if (c.image && c.image.coteOrigine && c.image.coteOrigine < c.coteMm / 25.4 * PPP_FICHE_NETTE) faibles.add(c.url);
+  });
+  return faibles.size;
 }
 // Message à montrer après la création d'un CV ou d'une compcard (canvas.photosFaibles), ou ''.
 function messagePhotosFaibles(canvas, en) {
@@ -490,13 +500,13 @@ function messagePhotosFaibles(canvas, en) {
     ? n + ' photo(s) are low quality: the file may look blurry. For a sharp card, upload the original photos (from the phone gallery, or on WhatsApp as HD / as a document).'
     : n + ' photo(s) de faible qualité : le fichier peut paraître flou. Pour une fiche nette, envoyez les photos originales (depuis la galerie du téléphone, ou sur WhatsApp en « HD » / « en document »).';
 }
-async function chargerImageHauteRes(url) {
+async function chargerImageHauteRes(url, coteMax) {
   let blob = await telechargerImage(url);
   if (!blob) return null;
-  let resultat = await decoderImage(blob);
+  let resultat = await decoderImage(blob, coteMax);
   if (resultat === false) {
     blob = await telechargerImage(url, 'reload');
-    resultat = blob ? await decoderImage(blob) : null;
+    resultat = blob ? await decoderImage(blob, coteMax) : null;
     if (resultat === false) signalerProbleme('Photo illisible pour la fiche/CV', url);
   }
   return resultat || null;
@@ -672,7 +682,7 @@ async function construireCanvasCompcard(ficheData, langue) {
   const urlsPhotos = completerEmplacementsPhotos(choisiesParCase, photos.map(p => p.url), 5).filter(Boolean);
   const [logo, ...imagesPhotos] = await Promise.all([
     chargerImageLocale('/assets/logo-dark-bg.png'),
-    ...urlsPhotos.map(u => chargerImageHauteRes(u))
+    ...urlsPhotos.map((u, i) => chargerImageHauteRes(u, i ? COTE_PETITE_CASE : COTE_MAX_FICHE))
   ]);
 
   function dessinerCouvrant(image, xMm, yMm, lMm, hMm, ancrage) {
@@ -826,7 +836,7 @@ async function construireCanvasCompcard(ficheData, langue) {
     ? `Official document generated on ${new Date().toLocaleDateString('en-US')} from maitreakessemodelmanagement.com — all booking requests must go exclusively through the agency.`
     : `Document officiel généré le ${new Date().toLocaleDateString('fr-FR')} depuis maitreakessemodelmanagement.com — toute demande de booking passe exclusivement par l'agence.`, px(15), px(yPiedPage + hPiedPage - 6));
 
-  canvas.photosFaibles = photosTropPetites(imagesPhotos);
+  canvas.photosFaibles = photosTropPetites(imagesPhotos.map((image, i) => ({ image, url: urlsPhotos[i], coteMm: i ? hCellule : hPhotos })));
   return canvas;
 }
 
@@ -1169,7 +1179,9 @@ function horodatageFichier() {
 // projets }), en désactivant/réactivant pendant la génération les deux boutons désignés
 // par leur id (idBtnPdf/idBtnJpeg — chaque page peut leur donner l'id de son choix).
 // langue 'en' : fiche et messages en anglais (en/mannequin.html).
-async function genererFiche(format, ficheData, idBtnPdf, idBtnJpeg, langue) {
+// avertir : conseil « photos de faible qualité » (Espace mannequin seulement : jamais aux visiteurs
+// de la fiche publique)
+async function genererFiche(format, ficheData, idBtnPdf, idBtnJpeg, langue, avertir) {
   const en = langue === 'en';
   if (!ficheData || !ficheData.profil) return;
   const btnPdf = idBtnPdf ? document.getElementById(idBtnPdf) : null;
@@ -1193,7 +1205,7 @@ async function genererFiche(format, ficheData, idBtnPdf, idBtnJpeg, langue) {
       doc.addImage(canvas.toDataURL('image/jpeg', 0.98), 'JPEG', 0, 0, 210, 297);
       doc.save(nomFichier + '.pdf');
     }
-    const avertissement = messagePhotosFaibles(canvas, en);
+    const avertissement = avertir && messagePhotosFaibles(canvas, en);
     if (avertissement) alert(avertissement);
   } catch (e) {
     signalerProbleme('Génération de fichier échouée', (e && e.message) || String(e), e && e.stack);
@@ -1339,9 +1351,9 @@ async function construireCanvasCv(d) {
   const lienFichePublique = 'https://www.maitreakessemodelmanagement.com/mannequin.html?id=' + encodeURIComponent(d.mannequinId || '');
   const photosAuto = photosCvCompletees(d);
   const [photoHero, logo, ...photosPortfolio] = await Promise.all([
-    photosAuto.hero ? chargerImageHauteRes(photosAuto.hero) : Promise.resolve(null),
+    photosAuto.hero ? chargerImageHauteRes(photosAuto.hero, COTE_PETITE_CASE) : Promise.resolve(null),
     chargerImageLocale('assets/logo-header.png'),
-    ...[0, 1, 2, 3, 4].map(function (i) { const u = photosAuto.compcard[i]; return u ? chargerImageHauteRes(u) : Promise.resolve(null); }),
+    ...[0, 1, 2, 3, 4].map(function (i) { const u = photosAuto.compcard[i]; return u ? chargerImageHauteRes(u, COTE_PETITE_CASE) : Promise.resolve(null); }),
     chargerQrLib().catch(function () { return null; })
   ]);
   photosPortfolio.pop(); // résultat de chargerQrLib, pas une photo
@@ -1350,6 +1362,8 @@ async function construireCanvasCv(d) {
   const handle = d.instagram ? String(d.instagram).replace(/^@/, '') : '';
 
   const PAD_SIDEBAR = 7, PAD_MAIN = 8;
+  // Portfolio : une rangée de 5 photos (format 3/4) sur la largeur de la colonne principale
+  const ECART_PORTFOLIO = 2, L_PORTFOLIO = (MAIN_MM - PAD_MAIN * 2 - ECART_PORTFOLIO * 4) / 5, H_PORTFOLIO = L_PORTFOLIO * 4 / 3;
   const hPhotoHero = SIDEBAR_MM; // photo carrée pleine largeur (ratio 1/1, plus sûr que 3/4 quelle que soit la photo fournie)
   const hBanniere = 9;
   const RESERVE_LOGO_BAS = 22; // logo de l'agence en pied de colonne gauche
@@ -1590,7 +1604,7 @@ async function construireCanvasCv(d) {
     // --- Portfolio : une rangée de photos (5 emplacements), tout en bas ---
     if (photosPresentes.length) {
       titreSection('image', 'Portfolio');
-      const ecart = 2, lPhoto = (lMain - ecart * 4) / 5, hPhoto = lPhoto * 4 / 3;
+      const ecart = ECART_PORTFOLIO, lPhoto = L_PORTFOLIO, hPhoto = H_PORTFOLIO;
       const lRangee = photosPresentes.length * lPhoto + (photosPresentes.length - 1) * ecart;
       const xRangee = xMain + (lMain - lRangee) / 2;
       photosPresentes.forEach(function (photo, i) {
@@ -1648,7 +1662,8 @@ async function construireCanvasCv(d) {
   canvas.height = Math.round(px(hBanniere + hColonnes));
   const resultat = dessinerTout(canvas.getContext('2d'), hColonnes);
   canvas.zonesLiens = resultat.zonesLiens;
-  canvas.photosFaibles = photosTropPetites([photoHero].concat(photosPortfolio));
+  canvas.photosFaibles = photosTropPetites([{ image: photoHero, url: photosAuto.hero, coteMm: hPhotoHero }].concat(
+    photosPortfolio.map(function (image, i) { return { image: image, url: photosAuto.compcard[i], coteMm: H_PORTFOLIO }; })));
   return canvas;
 }
 

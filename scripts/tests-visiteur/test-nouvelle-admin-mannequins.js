@@ -63,8 +63,16 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     p.off('request', surRequete);
     ok(photosCv.length > 0 && photosCv.every((u) => u.startsWith('http://127.0.0.1:')), n + 'CV : photos chargées par l’adresse de l’Administration (' + photosCv.length + ' ; ' + (photosCv.find((u) => !u.startsWith('http://127.0.0.1:')) || 'toutes locales') + ')');
     ok(await p.isVisible('#cv-pdf') && await p.isVisible('#cv-jpeg') && (await p.$('#cv-apercu img') || /indisponible/.test(await p.textContent('#cv-apercu'))), n + 'CV : aperçu et téléchargements PDF / JPEG');
-    // photos d'essai de 1200 px (moins de 1600 px) : l'aperçu prévient qu'elles sont trop petites (24/10/2026)
-    ok(!(await p.$('#cv-apercu img')) || /faible qualité.*photos originales/.test(await p.textContent('#cv-apercu')), n + 'CV : avertissement « photos de faible qualité, envoyez les originales »');
+    // avertissement « photos de faible qualité » (24/10/2026) : selon la taille de la case une fois
+    // imprimée (300 ppp). Photos d'essai de 1200 px : assez pour les cases du CV (70 mm au plus).
+    ok(!(await p.$('#cv-apercu img')) || !/faible qualité/.test(await p.textContent('#cv-apercu')), n + 'CV : photos de 1200 px assez grandes pour leurs cases, pas d’avertissement');
+    const faibles = await p.evaluate(() => {
+      const ph = (cote) => ({ coteOrigine: cote });
+      return [photosTropPetites([{ image: ph(1200), url: 'a', coteMm: 130 }, { image: ph(1200), url: 'b', coteMm: 63 }]),
+        photosTropPetites([{ image: ph(500), url: 'a', coteMm: 68 }, { image: ph(500), url: 'a', coteMm: 31 }]),
+        messagePhotosFaibles({ photosFaibles: 1 })].join('|');
+    });
+    ok(/^1\|1\|1 photo\(s\) de faible qualité.*photos originales/.test(faibles), n + 'CV / compcard : grande case de 130 mm trop grande pour 1200 px, même photo placée deux fois comptée une fois (' + faibles.slice(0, 40) + ')');
     await p.goBack(); await p.waitForSelector('.mannequin-tete'); await p.waitForTimeout(600);
     // 5. Suppression définitive : il faut taper SUPPRIMER
     await p.click('[data-action="mannequin-supprimer"]'); await p.fill('#mq-confirmer', 'supprimer'); await p.click('form[data-form="mannequin-supprimer"] [type=submit]'); await p.waitForTimeout(500);

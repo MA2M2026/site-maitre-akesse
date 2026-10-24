@@ -332,7 +332,8 @@
     if (!confirm('Retirer sa place ? Elle ne pourra pas la reprendre avec son lien, et la place redevient libre.')) return;
     const r = await P.rpc('places_rendre', { p_jeton: inv.jeton });
     if (r !== 'desiste') { P.message(r === 'termine' ? 'Ce projet est terminé : rien n’a été changé.' : 'La place n’a pas pu être retirée. Actualisez puis réessayez.'); return P.afficher(); }
-    const x = await P.bd(sb.from('places_invitations').update({ statut: 'exclu' }).eq('id', inv.id).select('id'));
+    // (seulement si elle n'a pas repris sa place entre-temps avec son lien)
+    const x = await P.bd(sb.from('places_invitations').update({ statut: 'exclu' }).eq('id', inv.id).eq('statut', 'desiste').select('id'));
     P.message(x && x.length ? 'Place retirée : elle est de nouveau libre.' : 'Place libérée, mais son lien pourrait encore la reprendre : reconnectez-vous puis réessayez « Retirer la place ».');
     return P.afficher();
   };
@@ -341,10 +342,6 @@
   P.actions['places-admin-donner'] = async (el) => {
     const inv = ecran.invitations.find((i) => i.id === el.dataset.id);
     if (!inv) return;
-    if (inv.statut === 'exclu') {
-      const x = await P.bd(sb.from('places_invitations').update({ statut: 'invite' }).eq('id', inv.id).select('id'));
-      if (!x || !x.length) { P.message('Rien n’a été enregistré : reconnectez-vous puis réessayez.'); return; }
-    }
     const r = await P.rpc('places_prendre', { p_jeton: inv.jeton });
     P.message({ pris: 'Place donnée : elle est ajoutée au projet.', complet: 'Plus de place libre pour ce sexe : retirez d’abord une place, ou augmentez le « Nombre de places ».',
       ferme: 'L’appel est fermé : rouvrez-le d’abord.', termine: 'Ce projet est terminé.', deja: 'Elle a déjà une place.' }[r] || 'La place n’a pas pu être donnée. Actualisez puis réessayez.');

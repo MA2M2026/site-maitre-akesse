@@ -367,10 +367,15 @@ Les CV et compcards étaient flous : (1) l'originale était réduite à l'envoi 
 (2) certaines photos arrivent déjà petites (1280 px : photos envoyées par WhatsApp, irréparable par
 le site — demander l'originale, ou WhatsApp « HD » / « document »). Désormais `compresserPhotoOrigine`
 garde 4000 px en JPEG 0,92 (originale rangée chez Cloudflare R2), et les fiches sont dessinées jusqu'à
-3000 px (`COTE_MAX_FICHE`). Le site affiche toujours la miniature (800 px) ou la moyenne (1400 px) ;
+3000 px (`COTE_MAX_FICHE`, grande photo de la compcard) ou 1600 px (`COTE_PETITE_CASE` : grille de la
+compcard, photo et portfolio du CV — moins de mémoire sur téléphone). Le site affiche toujours la miniature (800 px) ou la moyenne (1400 px) ;
 la photo agrandie de la fiche publique prend la moyenne (`fiche-mannequin.js`). Les photos déjà
 envoyées gardent leur taille ; seules les nouvelles (ou renvoyées) profitent de la pleine qualité.
-À faire : avertir quand une photo est trop petite pour une compcard nette.
+Avertissement (24/10/2026) : `photosTropPetites` compte les photos qui feraient moins de 300 ppp
+une fois imprimées à la taille de leur case (`PPP_FICHE_NETTE` ; même photo placée deux fois comptée
+une fois) ; `messagePhotosFaibles` conseille d'envoyer les originales — après le téléchargement dans
+l'Espace mannequin (`genererFiche(…, avertir)`, `genererCvFichier`) et sous l'aperçu du CV dans
+l'Administration ; jamais aux visiteurs de la fiche publique.
 
 ## 🔁 Photos par Vercel (23/10/2026, décision de la propriétaire)
 Le domaine Cloudflare des photos (`photos.maitreakessemodelmanagement.com`) coupe la connexion
@@ -522,7 +527,8 @@ sécurité réelle (les photos restent en HTTPS ; ECH ne cache que le nom de l'a
   (`js/convocations-admin.js`).
   L'agence peut corriger une réponse (24/10/2026) : liste « ✅ Confirmé / ❌ Absent / ⏳ Sans
   réponse » sur chaque ligne (`choixReponse`), enregistrée pour la mineure ET son parent
-  (`convocation_participants.reponse`) ; les rappels suivent (aucun rappel à une « absente »).
+  (`convocation_participants.reponse`) ; aucun rappel à une « absente » ; repassée « confirmée » ou « sans réponse », ses rappels à venir
+  annulés par un désistement (places limitées) repartent, comme avec `places_prendre`.
   Relance des personnes sans réponse (22/10/2026) : un seul bouton « 💬 Relancer la suivante (X
   restantes) », comme « Envoyer le WhatsApp suivant », et seulement pour celles dont la convocation
   est vraiment partie (statut `envoye`) ; relances faites retenues pour la session

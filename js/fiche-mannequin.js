@@ -115,7 +115,7 @@ async function chargerProfilInterne() {
 
   const { data: photos } = await sb
     .from('model_photos')
-    .select('id, url, url_miniature, url_moyenne, compcard_ordre, principale, photo_couverture, couverture_position, tri_statut, created_at, categorie')
+    .select('id, url, url_miniature, url_moyenne, compcard_ordre, principale, photo_couverture, couverture_position, tri_statut, created_at')
     .eq('model_id', id)
     .order('principale', { ascending: false })
     .order('created_at', { ascending: true });

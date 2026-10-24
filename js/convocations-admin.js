@@ -244,7 +244,7 @@ window.demarrerConvocationsPanneau = function () {
         l.className = 'convoc-reponse';
         l.appendChild(nomCliquable(pers));
         if (pers.repondu_le) { var quandRep = document.createElement('span'); quandRep.textContent = ' — ' + quand(pers.repondu_le); l.appendChild(quandRep); }
-        l.appendChild(choixReponse(pers, personnes, function () { window.dessinerReponsesConvocation(boite, projet, personnes, envois, toutOuvert, faitesIci); }));
+        l.appendChild(choixReponse(pers, personnes, boite, function () { window.dessinerReponsesConvocation(boite, projet, personnes, envois, toutOuvert, faitesIci); }));
         if (tournee && faites(projet, tournee, faitesIci)[pers.participant_id]) {
           var fait = document.createElement('small'); fait.textContent = tournee === 'relance' ? '✓ relancé(e)' : '✓ rappel envoyé'; l.appendChild(fait);
         }
@@ -257,7 +257,7 @@ window.demarrerConvocationsPanneau = function () {
 
   // L'agence corrige une réponse (24/10/2026) : réponse donnée par téléphone, erreur de la
   // mannequin… Elle vaut pour la mineure et son parent (même groupe), comme une réponse par le lien.
-  function choixReponse(pers, personnes, redessiner) {
+  function choixReponse(pers, personnes, boite, redessiner) {
     var s = document.createElement('select');
     s.className = 'convoc-changer';
     s.setAttribute('aria-label', 'Changer la réponse de ' + pers.nom);
@@ -265,15 +265,30 @@ window.demarrerConvocationsPanneau = function () {
       var x = document.createElement('option'); x.value = o[0]; x.textContent = o[1]; s.appendChild(x);
     });
     s.value = pers.reponse || '';
-    s.addEventListener('change', function () { lancer(changerReponse(pers, personnes, s.value || null).then(redessiner, function (e) { redessiner(); throw e; })); });
+    s.addEventListener('change', function () {
+      // l'erreur s'affiche sur la liste elle-même (le panneau des messages peut être caché)
+      changerReponse(pers, personnes, s.value || null).then(redessiner, function (e) {
+        redessiner();
+        var erreur = document.createElement('div');
+        erreur.className = 'form-msg'; erreur.setAttribute('role', 'alert');
+        afficherMessageFormulaire(erreur, 'La réponse n’a pas été changée : ' + ((e && e.message) || e), true);
+        boite.prepend(erreur);
+      });
+    });
     return s;
   }
   async function changerReponse(pers, personnes, reponse) {
     var groupe = personnes.filter(function (x) { return x.participant_id && (x.groupe || x.cle) === (pers.groupe || pers.cle); });
     var maj = { reponse: reponse, repondu_le: reponse ? new Date().toISOString() : null };
     var r = await sb.from('convocation_participants').update(maj).in('id', groupe.map(function (x) { return x.participant_id; })).select('id');
-    if (r.error || !r.data || !r.data.length) throw new Error(r.error ? r.error.message : 'rien n’a été changé : reconnectez-vous puis réessayez.');
+    if (r.error || !r.data || !r.data.length) throw new Error(r.error ? r.error.message : 'reconnectez-vous puis réessayez.');
     groupe.forEach(function (x) { Object.assign(x, maj); });
+    // plus « absente » : les rappels à venir annulés par un désistement (places limitées) repartent,
+    // comme quand elle reprend sa place avec son lien (places_prendre)
+    if (reponse !== 'absent') {
+      await sb.from('convocation_envois').update({ statut: 'programme' }).in('participant_id', groupe.map(function (x) { return x.participant_id; }))
+        .in('sorte', ['rappel', 'rappel_avant']).eq('statut', 'annule').gt('prevu_le', new Date().toISOString());
+    }
   }
 
   // ---------- Relance des personnes sans réponse (22/10/2026) et rappel aux confirmés (23/10/2026) ----------

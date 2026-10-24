@@ -509,7 +509,7 @@ const Store = {
 
     const { data: photos } = await sb.from('model_photos').select('*').eq('model_id', currentUser.id).order('created_at', { ascending:true });
     (photos||[]).forEach(function(p){
-      const item = { id:p.id, numero:p.numero||null, path:p.chemin, url:p.url_miniature||p.url, urlPleine:p.url, compcardOrdre:p.compcard_ordre, couverturePosition:p.couverture_position||'center', categorie:p.categorie==='lifestyle'?'lifestyle':'book', ecartee:p.tri_statut==='ecartee' };
+      const item = { id:p.id, numero:p.numero||null, path:p.chemin, url:p.url_miniature||p.url, urlPleine:p.url, compcardOrdre:p.compcard_ordre, couverturePosition:p.couverture_position||'center', ecartee:p.tri_statut==='ecartee' };
       s.photos.book.push(item);
       if (p.principale) s.photos.principale = item;
       if (p.photo_cv) s.photos.photoCv = item;
@@ -1873,8 +1873,8 @@ function openCompcard(){
     '</div>' +
     '<div class="cv-actions"><button class="btn ghost small" id="closeOv2">Fermer</button><button class="btn ghost small" id="p20BtnJpeg">Télécharger en JPEG</button><button class="btn primary small" id="p20BtnPdf">Télécharger en PDF</button></div>';
   showOverlay();
-  document.getElementById('p20BtnPdf').addEventListener('click', function(){ void genererFiche('pdf', ficheDataDepuisEtat(), 'p20BtnPdf', 'p20BtnJpeg'); });
-  document.getElementById('p20BtnJpeg').addEventListener('click', function(){ void genererFiche('jpeg', ficheDataDepuisEtat(), 'p20BtnPdf', 'p20BtnJpeg'); });
+  document.getElementById('p20BtnPdf').addEventListener('click', function(){ void genererFiche('pdf', ficheDataDepuisEtat(), 'p20BtnPdf', 'p20BtnJpeg', undefined, true); });
+  document.getElementById('p20BtnJpeg').addEventListener('click', function(){ void genererFiche('jpeg', ficheDataDepuisEtat(), 'p20BtnPdf', 'p20BtnJpeg', undefined, true); });
 }
 
 function showOverlay(){

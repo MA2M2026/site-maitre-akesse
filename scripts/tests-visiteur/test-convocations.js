@@ -233,6 +233,8 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     await p.selectOption('#cv-reponses .convoc-reponse:has-text("PETITE AMA") select.convoc-changer', 'confirme'); await p.waitForTimeout(1200);
     const corrige = ecrits(journal, 'PATCH', 'convocation_participants').pop() || {};
     ok(corrige.reponse === 'confirme' && corrige.repondu_le && /2 confirmé · 1 absent · 1 sans réponse/.test(await p.textContent('#cv-reponses')), '« Changer la réponse » : enregistrée, chiffres à jour (' + JSON.stringify(corrige) + ')');
+    ok(ecrits(journal, 'PATCH', 'convocation_envois').some(x => x.statut === 'programme') && journal.some(j => j[0] === 'PATCH' && j[1] === 'convocation_envois' && /statut=eq\.annule/.test(j[2] || '')),
+      '« Confirmé » : les rappels annulés par un désistement repartent');
     await p.selectOption('#cv-reponses .convoc-reponse:has-text("PETITE AMA") select.convoc-changer', ''); await p.waitForTimeout(1200);
     ok((ecrits(journal, 'PATCH', 'convocation_participants').pop() || {}).reponse === null && /1 confirmé · 1 absent · 2 sans réponse/.test(await p.textContent('#cv-reponses')), '« Sans réponse » : la réponse est effacée');
     ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth)), 'réponses : rien ne dépasse de l’écran');

@@ -3128,8 +3128,6 @@ body.porte-verrouillee .couverture-faisceau, body.porte-verrouillee .couverture-
    métriques, pour les recruteurs américains et britanniques (06/10/2026). */
 .fiche-imperial { display: block; margin-top: 0.15rem; font-size: 0.78em; color: var(--texte-doux); letter-spacing: 0.02em; }
 
-/* Fiche mannequin : rubrique « Digitals » sous le Book (tri automatique des photos, 06/10/2026). */
-
 /* Fiche publique — tableau « Tailles & équivalences internationales » (06/10/2026),
    construit par js/tailles.js. Défile dans son cadre sur téléphone, jamais la page. */
 .fiche-equivalences { margin: 1.4rem 0 0.4rem; }
