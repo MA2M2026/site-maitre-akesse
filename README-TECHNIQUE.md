@@ -373,6 +373,18 @@ endroits, seulement après avoir trouvé la cause côté Cloudflare (piste : Enc
 Les essais (`test-photos-directes.js`, `test-accueil-serveur.js`, `test-video-accueil.js`) lisent
 le réglage et vérifient alors qu'aucune photo n'est demandée à Cloudflare.
 
+**Cause trouvée le 24/10/2026 (avec la propriétaire, sur son Wi-Fi Orange) : ECH (Encrypted Client
+Hello)**, activé d'office par Cloudflare sur la zone (offre gratuite, aucun bouton dans le tableau de
+bord). Preuves : `https://photos.…/cdn-cgi/trace` — téléphone Android en 4G : `sni=encrypted`, page
+OK ; même téléphone en Wi-Fi Orange : `ERR_CONNECTION_CLOSED` ou chargement sans fin ; Mac (Chrome,
+Safari, curl) sur le même Wi-Fi : `sni=plaintext`, OK. ECH désactivé par l'API (jeton créé par la
+propriétaire, réglage `zones/<zone>/settings/ech` → `off`, réponse `success: true`) ; quelques
+minutes après, le téléphone en Wi-Fi Orange ouvre l'adresse (`sni=plaintext`). Aucune perte de
+sécurité réelle (les photos restent en HTTPS ; ECH ne cache que le nom de l'adresse). Prochaine étape
+(avec son accord, après observation) : remettre `PHOTOS_DIRECTES_ACTIVES = true` aux deux endroits.
+Si le problème revient, vérifier d'abord que Cloudflare n'a pas réactivé ECH
+(`GET zones/<zone>/settings/ech`).
+
 ## ⚡ Accueil servi déjà rempli (23/10/2026)
 - **Pourquoi** : à la première visite, la photo de couverture arrivait après 5 à 12 s (même en
   Wi-Fi) : page vide → programmes téléchargés un par un → deux questions à la base → photo.
