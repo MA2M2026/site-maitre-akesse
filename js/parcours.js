@@ -245,5 +245,7 @@
     $('parcours-plus').addEventListener('click', () => { tousLesVisages = true; afficher(); });
     afficher();
   }
-  demarrer().catch(e => { if (window.signalerErreur) window.signalerErreur('Parcours MA2M : chargement', (e && e.message) || String(e)); });
+  // place gardée pour le programme le temps qu'il arrive (journal du 24/10/2026 : la page sautait
+  // à l'arrivée des chiffres ; même principe que The Book, js/gabarit.js)
+  demarrer().finally(() => { if (typeof libererPlaceListe === 'function') libererPlaceListe($('parcours-scene')); }).catch(e => { if (window.signalerErreur) window.signalerErreur('Parcours MA2M : chargement', (e && e.message) || String(e)); });
 })();

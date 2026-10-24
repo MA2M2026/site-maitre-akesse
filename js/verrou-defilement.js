@@ -29,6 +29,10 @@
   window.verrouillerDefilement = function () {
     if (compteur === 0) {
       positionSauvegardee = window.scrollY || window.pageYOffset || 0;
+      // ordinateur : la barre de défilement disparaît ; sa place est gardée, sinon toute la page
+      // s'élargit d'un coup et « saute » (journal du 24/10/2026, écran d'entrée de l'accueil)
+      const barre = window.innerWidth - document.documentElement.clientWidth;
+      if (barre > 0) document.body.style.paddingRight = barre + 'px';
       document.body.style.position = 'fixed';
       document.body.style.top = '-' + positionSauvegardee + 'px';
       document.body.style.left = '0';
@@ -45,6 +49,7 @@
       document.body.style.top = '';
       document.body.style.left = '';
       document.body.style.right = '';
+      document.body.style.paddingRight = '';
       window.scrollTo(0, positionSauvegardee);
       document.removeEventListener('touchmove', bloquerGesteTactile, { passive: false });
     }
