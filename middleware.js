@@ -32,7 +32,7 @@ export const config = {
     // scripts réservés de l'Administration (13/10/2026 ; l'ancien tableau de bord est démoli le 23/10/2026)
     '/js/video-accueil-gabarit.js', '/js/couverture-admin.js', '/js/photos-mises-de-cote-gabarit.js', '/js/photos-mises-de-cote.js',
     '/js/fiches-evenement-gabarit.js', '/js/fiches-evenement-admin.js', '/js/rapport-profils-gabarit.js', '/js/rapport-profils-admin.js', '/js/agenda-gabarit.js', '/js/agenda-admin.js', '/js/agenda-outils.js', '/js/convocations-gabarit.js', '/js/convocations-page.js', '/js/convocations-admin.js', '/js/messages-convocations.js',
-    '/js/messages-candidats.js', '/js/messages-groupes-gabarit.js', '/js/messages-groupes.js', '/js/nettoyage-supabase.js', '/js/note-integration.js', '/js/erreurs-corrigees.js', '/js/erreurs-gabarit.js', '/js/erreurs-site.js', '/js/defile-repartition.js',
+    '/js/messages-candidats.js', '/js/messages-groupes-gabarit.js', '/js/messages-groupes.js', '/js/nettoyage-supabase.js', '/js/note-integration.js', '/js/erreurs-corrigees.js', '/js/erreurs-gabarit.js', '/js/erreurs-site.js', '/js/defile-repartition.js', '/js/cartes-acces.js',
     // pièces du bloc 1 de la nouvelle Administration (PLAN-NOUVELLE-ADMINISTRATION.md, 22/10/2026)
     '/js/admin/:fichier*'
   ]
@@ -48,7 +48,7 @@ export const config = {
 // doit jamais être enfermée dehors. (L'ancien tableau de bord, protégé ici aussi, est démoli le
 // 23/10/2026 ; son adresse renvoie vers /admin/, vercel.json.)
 // ⚠ Même liste que dans config.matcher ci-dessus (vérifié par test-tableau-protege.js).
-const SCRIPTS_ADMIN = /^\/js\/(erreurs-gabarit|erreurs-site|note-integration|video-accueil-gabarit|agenda-gabarit|fiches-evenement-gabarit|rapport-profils-gabarit|photos-mises-de-cote-gabarit|couverture-admin|photos-mises-de-cote|fiches-evenement-admin|rapport-profils-admin|agenda-admin|agenda-outils|convocations-gabarit|convocations-page|convocations-admin|messages-convocations|messages-candidats|defile-repartition|messages-groupes-gabarit|messages-groupes|nettoyage-supabase|erreurs-corrigees)\.js$/;
+const SCRIPTS_ADMIN = /^\/js\/(erreurs-gabarit|erreurs-site|note-integration|video-accueil-gabarit|agenda-gabarit|fiches-evenement-gabarit|rapport-profils-gabarit|photos-mises-de-cote-gabarit|couverture-admin|photos-mises-de-cote|fiches-evenement-admin|rapport-profils-admin|agenda-admin|agenda-outils|convocations-gabarit|convocations-page|convocations-admin|messages-convocations|messages-candidats|defile-repartition|cartes-acces|messages-groupes-gabarit|messages-groupes|nettoyage-supabase|erreurs-corrigees)\.js$/;
 // Nouvelle Administration : les pièces du bloc 1 (js/admin/site-*.js) sont réservées de la même
 // façon ; js/admin/coque.js et js/admin/site.js (décoration, menu) restent publics.
 const SCRIPTS_NOUVELLE_ADMIN = /^\/js\/admin\/site-[\w-]+\.js$/;
