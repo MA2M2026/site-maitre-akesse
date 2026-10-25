@@ -17,8 +17,9 @@
   const heure = (h) => h ? String(h).replace(':', 'h') : 'heure à préciser';
   // jours du projet (du premier au dernier), au plus 31
   function joursDu(p) {
-    const jours = [], d = new Date(p.date_debut + 'T12:00:00Z'), fin = new Date((p.date_fin || p.date_debut) + 'T12:00:00Z');
-    while (d <= fin && jours.length < 31) { jours.push(d.toISOString().slice(0, 10)); d.setUTCDate(d.getUTCDate() + 1); }
+    const debut = Date.parse(p.date_debut + 'T12:00:00Z'), fin = Date.parse((p.date_fin || p.date_debut) + 'T12:00:00Z');
+    const jours = [];
+    for (let t = debut; t <= fin && jours.length < 31; t += 86400000) jours.push(new Date(t).toISOString().slice(0, 10));
     return jours;
   }
   const jourLong = (j) => new Date(j + 'T12:00:00Z').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
@@ -170,7 +171,7 @@
     const jours = joursDu(ecran.projet);
     const horsDates = [...new Set(ecran.passages.map((x) => x.jour))].filter((j) => !jours.includes(j));
     const options = jours.map((j) => '<option value="' + j + '">' + P.esc(jourLong(j)) + '</option>').join('');
-    const parJour = jours.concat(horsDates).sort().map((j) => {
+    const parJour = jours.concat(horsDates).sort((a, b) => a.localeCompare(b)).map((j) => {
       const siens = ecran.passages.filter((x) => x.jour === j);
       return '<div class="df-jour"><h3>' + P.esc(jourLong(j)) + '</h3>' + (siens.length ? '<ul class="df-passages">' + siens.map((x) =>
         '<li><b>' + P.esc(heure(x.debut)) + '</b> · ' + P.esc(x.salle || 'salle à préciser') + (x.theme ? ' · ' + P.esc(x.theme) : '') +
@@ -259,7 +260,7 @@
   P.actions['defile-vivier'] = () => {
     const dans = {}; ecran.vivier.forEach((v) => { dans[cleDe(v)] = true; });
     const groupe = (titre, filtre) => {
-      const l = Object.values(ecran.personnes).filter(filtre).sort((a, b) => String(a.nom).localeCompare(String(b.nom)));
+      const l = Object.values(ecran.personnes).filter((x) => filtre(x)).sort((a, b) => String(a.nom).localeCompare(String(b.nom)));
       return l.length ? '<h3>' + P.esc(titre) + ' <span class="doux">(' + l.length + ')</span></h3><div class="df-choix">' + l.map((x) =>
         '<label class="df-choix-carte"><input type="checkbox" name="cle" value="' + P.esc(x.cle) + '"' + (dans[x.cle] ? ' checked' : '') + '>' + P.visage(x.photo, x.nom, 'df-vis') + '<span>' + P.esc(x.nom) + '</span></label>').join('') + '</div>' : '';
     };
