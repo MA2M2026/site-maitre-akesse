@@ -16,7 +16,11 @@
   const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
   const CLE_NAVIGATEUR = 'ma2m_app_navigateur';  // « Continuer dans le navigateur » (cette visite)
   const installee = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-  const estIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const estIOS = /iphone|ipad|ipod/i.test(navigator.userAgent), estAndroid = /android/i.test(navigator.userAgent);
+  // Lien touché dans une autre application (WhatsApp, Claude, Instagram…) : sa petite fenêtre ne sait
+  // pas installer. Sur Android, ce lien rouvre la même page dans Chrome, d'un seul appui (sans
+  // Chrome : la page s'ouvre dans le navigateur du téléphone)
+  const lienChrome = () => 'intent://' + location.host + location.pathname + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(location.href) + ';end';
   let invitation = null;  // installation proposée par le navigateur (Chrome, Edge, Samsung)
   let etat = null;        // { uid, profil, analyse, photos, nbProjets, evenements, mensualites, cachets, castings }
   let periode = 'avenir'; // onglet de « Mes événements »
@@ -45,9 +49,9 @@
   // ---------- installation ----------
   addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault(); invitation = e;
-    const bouton = document.getElementById('ap-installer'), aide = document.getElementById('ap-installer-aide');
+    const bouton = document.getElementById('ap-installer');
     if (bouton) bouton.hidden = false;
-    if (aide) aide.hidden = true;
+    ['ap-installer-aide', 'ap-ouvrir-chrome'].forEach((id) => { const el = document.getElementById(id); if (el) el.hidden = true; });
   });
   function ecranInstallation() {
     racine.innerHTML = '<main class="ap-installation">' +
@@ -56,9 +60,13 @@
       '<div class="ap-carte"><ol class="ap-etapes"><li><b>1</b><span>Touchez <strong>Installer l’application</strong></span></li>' +
       '<li><b>2</b><span>L’icône <strong>MA2M Mannequin</strong> apparaît sur votre écran d’accueil</span></li>' +
       '<li><b>3</b><span>Connectez-vous <strong>une seule fois</strong> : ensuite elle s’ouvre directement</span></li></ol>' +
-      (estIOS ? '<p class="ap-ios">Sur iPhone : touchez <strong>Partager</strong> <span aria-hidden="true">⬆️</span> en bas de Safari, puis <strong>« Sur l’écran d’accueil »</strong>.</p>'
+      (estIOS ? '<p class="ap-ios">Sur iPhone, dans <strong>Safari</strong> : touchez <strong>Partager</strong> <span aria-hidden="true">⬆️</span>, puis <strong>« Sur l’écran d’accueil »</strong>.</p>' +
+          '<p class="ap-petit">Ouvert depuis WhatsApp, Instagram ou une autre application ? Touchez d’abord <strong>« Ouvrir dans Safari »</strong> (ou l’icône de la boussole).</p>'
         : '<button type="button" class="ap-btn rouge" id="ap-installer"' + (invitation ? '' : ' hidden') + '>📲 Installer l’application</button>' +
-          '<p class="ap-petit" id="ap-installer-aide"' + (invitation ? ' hidden' : '') + '>Si le bouton n’apparaît pas : ouvrez ce lien dans <strong>Chrome</strong>, puis menu <strong>⋮</strong> › <strong>Installer l’application</strong>.</p>') +
+          (estAndroid ? '<a class="ap-btn rouge" id="ap-ouvrir-chrome" href="' + esc(lienChrome()) + '"' + (invitation ? ' hidden' : '') + '>📲 Ouvrir dans Chrome pour installer</a>' : '') +
+          '<p class="ap-petit" id="ap-installer-aide"' + (invitation ? ' hidden' : '') + '>' + (estAndroid
+            ? 'Déjà dans Chrome et pas de bouton ? Menu <strong>⋮</strong> › <strong>Installer l’application</strong>.'
+            : 'Si le bouton n’apparaît pas : ouvrez ce lien dans <strong>Chrome</strong>, puis menu <strong>⋮</strong> › <strong>Installer l’application</strong>.') + '</p>') +
       '</div><button type="button" class="ap-lien" id="ap-continuer">Continuer sans installer</button>' +
       '<p class="ap-petit">Gratuit, sans Play Store ni App Store.</p></main>';
     const bouton = document.getElementById('ap-installer');

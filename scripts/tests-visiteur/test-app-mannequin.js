@@ -167,6 +167,23 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html']) {
     ok(!errs.length, n + 'aucune erreur ' + errs.join(' | '));
     await ctx.close();
   }
+  // Lien touché dans une autre application (WhatsApp, Claude…) : sa petite fenêtre ne sait pas
+  // installer → sur Android, « Ouvrir dans Chrome pour installer » (un seul appui) ; sur iPhone,
+  // l'aide pour passer dans Safari
+  for (const [nom, ua] of [['Android', 'Mozilla/5.0 (Linux; Android 14; SM-A546B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36'],
+    ['iPhone', 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1']]) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, userAgent: ua, serviceWorkers: 'block' });
+    const p = await ctx.newPage(); await brancher(p, donnees(), []);
+    await p.goto(BASE + '/app/'); await p.waitForSelector('.ap-installation', { timeout: 15000 });
+    if (nom === 'Android') {
+      const lien = await p.getAttribute('#ap-ouvrir-chrome', 'href');
+      ok(await p.isVisible('#ap-ouvrir-chrome') && /^intent:\/\/127\.0\.0\.1:\d+\/app\/#Intent;scheme=https;package=com\.android\.chrome;S\.browser_fallback_url=/.test(lien) && !(await p.isVisible('#ap-installer')),
+        'Android, lien ouvert dans une autre application : « Ouvrir dans Chrome pour installer » (un seul appui)');
+    } else {
+      ok(/Ouvrir dans Safari/.test(await p.textContent('.ap-carte')) && !(await p.$('#ap-ouvrir-chrome')), 'iPhone : comment passer dans Safari, puis « Sur l’écran d’accueil »');
+    }
+    await ctx.close();
+  }
   await b.close();
   console.log(ko ? '\n❌ ' + ko + ' échec(s)' : '\nTout est bon.');
   process.exit(ko ? 1 : 0);
