@@ -384,8 +384,18 @@ qui s'ouvrent ensuite) et échoue si un nom de mannequin est sans photo.
   déjà envoyées (au moins un envoi « envoyé » ou « à envoyer à la main »), sa propre ligne (pas
   celle du parent), ou celles de sa fiche du carnet si elle est au registre avec un compte.
   Essais : essais-app-mannequin.sql, test-app-mannequin.js, test-admin-hors-ligne.js (sans réseau).
-- Étapes suivantes prévues : paiement Wave et profil directement dans l'application, puis
-  notifications sur le téléphone.
+- **Autonome, sans repasser par le site** (demande de la propriétaire, 25/10/2026) :
+  `app/espace-mannequin.html` (l'éditeur du profil, photos, compcard, CV, création du compte
+  `#inscription`, mot de passe oublié `#mot-de-passe-oublie`) et `app/mes-paiements.html` (Wave,
+  « J'ai payé », reçus, cachets) sont les pages du site OUVERTES DANS l'application : mêmes
+  programmes (js/espace-mannequin.js, js/mes-paiements.js), sans l'en-tête du site, avec le menu
+  du bas. `js/app-coque.js` (partagé) : le menu, le service worker et les liens du site qui ont
+  leur version dans l'application (`DANS_APP`) y restent. « Tout le programme » du défilé
+  s'affiche dans l'onglet Événements. Seuls sortent : l'itinéraire (Google Maps), Wave, un reçu
+  à imprimer et le lien de l'e-mail « mot de passe oublié ».
+- Session gardée (js/session-requise.js chargé avant supabase-config.js) : on se connecte une
+  seule fois.
+- Étape suivante prévue : notifications sur le téléphone.
 
 ## 🎫 Cartes d'événement (25/10/2026, demande de la propriétaire)
 - Rubrique « Cartes d'événement » (`b2-cartes`, `js/cartes-acces.js`, compartiment « Projets et

@@ -12,7 +12,7 @@
   const racine = document.getElementById('app');
   if (!racine || typeof sb === 'undefined' || !sb) return;
   const esc = echapperHtml;  // (js/app.js)
-  const ONGLETS = [['accueil', 'Accueil', '🏠'], ['evenements', 'Événements', '📅'], ['profil', 'Profil', '👤'], ['paiements', 'Paiements', '💳'], ['alertes', 'Alertes', '🔔']];
+  const ONGLETS = window.MA2M_APP.ONGLETS;  // (menu du bas : js/app-coque.js)
   const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
   const CLE_NAVIGATEUR = 'ma2m_app_navigateur';  // « Continuer dans le navigateur » (cette visite)
   const installee = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
@@ -20,7 +20,8 @@
   let invitation = null;  // installation proposée par le navigateur (Chrome, Edge, Samsung)
   let etat = null;        // { uid, profil, analyse, photos, nbProjets, evenements, mensualites, cachets, castings }
   let periode = 'avenir'; // onglet de « Mes événements »
-  const passagesVus = {}; // jeton → passages du défilé (chargés à la demande)
+  const programmes = {};  // jeton → programme du défilé (defile_programme, chargé à la demande)
+  const programmeOuvert = {};  // jeton → « Tout le programme » déplié
 
   // ---------- petits outils ----------
   const jourLong = (j) => new Date(j + 'T12:00:00Z').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
@@ -38,6 +39,8 @@
     clearTimeout(message.minuteur);
     message.minuteur = setTimeout(() => zone.classList.remove('visible'), 4200);
   }
+  // « Madame AWA KONÉ » → « AK » (sans la civilité)
+  const initialesDe = (nom) => String(nom || '?').trim().split(/\s+/).filter((x, i, t) => !(t.length > 1 && /^(madame|mademoiselle|monsieur)$/i.test(x))).map((x) => x.charAt(0)).slice(0, 2).join('').toUpperCase();
   const ongletCourant = () => { const o = location.hash.replace('#', ''); return ONGLETS.some((x) => x[0] === o) ? o : 'accueil'; };
 
   // ---------- installation ----------
@@ -47,7 +50,6 @@
     if (bouton) bouton.hidden = false;
     if (aide) aide.hidden = true;
   });
-  if ('serviceWorker' in navigator) addEventListener('load', () => { navigator.serviceWorker.register('/app/sw.js', { scope: '/app/' }).catch(() => { /* sans copie de secours */ }); });
   function ecranInstallation() {
     racine.innerHTML = '<main class="ap-installation">' +
       '<div class="ap-presentation"><img class="ap-icone" src="/icons/mannequin-192.png" alt="" width="88" height="88"><h1>MA2M <em>Mannequin</em></h1>' +
@@ -83,7 +85,7 @@
       '<label for="ap-mdp">Mot de passe<input id="ap-mdp" type="password" autocomplete="current-password" required></label>' +
       '<p class="ap-erreur" id="ap-connexion-msg" role="alert"></p>' +
       '<button type="submit" class="ap-btn rouge">Se connecter</button></form>' +
-      '<p class="ap-petit"><a href="/espace-mannequin">Mot de passe oublié ?</a> · <a href="/espace-mannequin">Créer mon compte (code de l’agence)</a></p></main>';
+      '<p class="ap-petit"><a href="/app/espace-mannequin.html#mot-de-passe-oublie">Mot de passe oublié ?</a> · <a href="/app/espace-mannequin.html#inscription">Créer mon compte (code de l’agence)</a></p></main>';
     document.getElementById('ap-form-connexion').addEventListener('submit', async (e) => {
       e.preventDefault();
       const msg = document.getElementById('ap-connexion-msg'), bouton = e.target.querySelector('button');
@@ -183,21 +185,33 @@
   }
   function visage(nom) {
     const url = photoProfil();
-    const initiales = String(nom || '?').trim().split(/\s+/).map((x) => x.charAt(0)).slice(0, 2).join('').toUpperCase();
-    return url ? '<img src="' + esc(urlPhotoMemeOrigine(url)) + '" alt="" loading="lazy">' : '<span>' + esc(initiales) + '</span>';
+    return url ? '<img src="' + esc(urlPhotoMemeOrigine(url)) + '" alt="" loading="lazy">' : '<span>' + esc(initialesDe(nom)) + '</span>';
   }
   function carteEvenement(e, mise) {
     const sombre = mise === 'sombre';
-    const passages = passagesVus[e.jeton];
+    const prog = programmes[e.jeton], passages = prog && prog.filter((x) => x.moi);
     return '<article class="ap-carte' + (sombre ? ' sombre' : '') + '"><div class="ap-ligne entre"><span class="ap-pastille or">' + esc(libelleTypeAgenda(e.type)) +
       (sombre && !e.passe ? ' · ' + esc(dansJours(e.date_debut) <= 0 ? 'aujourd’hui' : dansJours(e.date_debut) === 1 ? 'demain' : 'dans ' + dansJours(e.date_debut) + ' jours') : '') + '</span>' + pastilleReponse(e) + '</div>' +
       '<h3 class="ap-ev-titre">' + esc(e.titre) + '</h3>' + infosEvenement(e) +
       (e.defile && e.reponse === 'confirme' && !e.passe ? (passages ? '<div class="ap-passages"><span class="doux">Mes passages</span>' +
         (passages.length ? passages.map((x) => '<div class="ap-passage"><span>' + esc(jourCourt(x.jour) + (x.salle ? ' · ' + x.salle : '') + (x.theme ? ' · ' + x.theme : '')) + '</span><b>' + esc(heure(x.debut) || '—') + '</b></div>').join('')
           : '<p class="doux">Pas encore de passage pour vous : l’agence prépare le programme.</p>') +
-        '<a class="ap-btn' + (sombre ? ' clair' : '') + '" href="/confirmer.html?c=' + esc(encodeURIComponent(e.jeton)) + '">📋 Tout le programme</a></div>'
+        (prog.length ? '<button type="button" class="ap-btn' + (sombre ? ' clair' : '') + '" data-programme="' + esc(e.jeton) + '" aria-expanded="' + !!programmeOuvert[e.jeton] + '">📋 ' + (programmeOuvert[e.jeton] ? 'Masquer le programme' : 'Tout le programme') + '</button>' : '') +
+        (programmeOuvert[e.jeton] ? toutLeProgramme(prog) : '') + '</div>'
         : '<button type="button" class="ap-btn' + (sombre ? ' clair' : '') + '" data-passages="' + esc(e.jeton) + '">👠 Voir mes passages</button>') : '') +
       boutonsReponse(e, sombre) + '</article>';
+  }
+
+  // tout le programme du défilé, jour par jour : ses passages soulignés, les autres avec leur visage
+  function toutLeProgramme(prog) {
+    let jourEnCours = '', html = '<div class="ap-programme">';
+    prog.forEach((x) => {
+      if (x.jour !== jourEnCours) { jourEnCours = x.jour; html += '<h4>' + esc(jourLong(x.jour)) + '</h4>'; }
+      html += '<div class="ap-prog-passage' + (x.moi ? ' moi' : '') + '"><div class="ap-ligne entre"><b>' + esc(heure(x.debut) || '—') + '</b><span class="doux">' + esc([x.salle, x.theme].filter(Boolean).join(' · ')) + '</span></div>' +
+        '<div class="ap-prog-visages">' + (x.mannequins || []).map((m) => '<span class="ap-prog-visage' + (m.moi ? ' moi' : '') + '" title="' + esc(m.nom) + '">' +
+          (m.photo ? '<img src="' + esc(urlPhotoMemeOrigine(m.photo)) + '" alt="" loading="lazy">' : esc(initialesDe(m.nom))) + '</span>').join('') + '</div></div>';
+    });
+    return html + '</div>';
   }
 
   // ---------- les cinq onglets ----------
@@ -207,7 +221,7 @@
     return '<h1>Bonjour <em>' + esc(prenomAffiche(etat.profil.full_name)) + '</em></h1>' +
       '<h2 class="ap-titre-sec">Prochain rendez-vous</h2>' +
       (prochain ? carteEvenement(prochain, 'sombre') : '<div class="ap-carte doux">Aucune convocation pour le moment. Dès que l’agence vous convoque, elle apparaît ici.</div>') +
-      '<nav class="ap-raccourcis" aria-label="Raccourcis"><a href="#evenements" data-ma-carte><span>🎫</span>Ma carte</a><a href="/espace-mannequin"><span>🗂️</span>Ma compcard</a><a href="/espace-mannequin"><span>📄</span>Mon CV</a></nav>' +
+      '<nav class="ap-raccourcis" aria-label="Raccourcis"><a href="#evenements" data-ma-carte><span>🎫</span>Ma carte</a><a href="/app/espace-mannequin.html"><span>🗂️</span>Ma compcard</a><a href="/app/espace-mannequin.html"><span>📄</span>Mon CV</a></nav>' +
       (m && m.inscrit && moisCourant() && moisCourant().etat !== 'paye' && moisCourant().etat !== 'attente'
         ? '<a class="ap-carte ap-rappel" href="#paiements">💳 <span>Mensualité de ' + esc(MOIS[Number(String(moisCourant().mois).slice(5, 7)) - 1]) + ' : <b>' + fcfa(m.mensualite) + '</b></span> ›</a>' : '') +
       (etat.castings.length ? '<h2 class="ap-titre-sec">Messages de l’agence</h2><div class="ap-carte ap-messages">' + etat.castings.map((c) =>
@@ -235,12 +249,12 @@
       '<p class="doux ap-score">Profil complet à ' + a.score + ' %</p><div class="ap-jauge"><i style="width:' + a.score + '%"></i></div></div></div>' +
       '<h2 class="ap-titre-sec">Photos du Book <span class="doux">(' + etat.photos.length + ')</span></h2>' +
       '<div class="ap-galerie">' + vignettes.map((x) => '<img src="' + esc(urlPhotoMemeOrigine(x.url_petite || x.url_miniature || x.url)) + '" alt="" loading="lazy">').join('') +
-      '<a href="/espace-mannequin" aria-label="Ajouter des photos">＋</a></div>' +
-      '<div class="ap-carte ap-liste"><a href="/espace-mannequin">Identité <span>' + esc(p.city || '') + ' ›</span></a>' +
-      '<a href="/espace-mannequin">Mensurations <span>' + esc(mesures) + ' ›</span></a>' +
-      '<a href="/espace-mannequin">Expérience <span>' + etat.nbProjets + ' ' + (etat.nbProjets > 1 ? 'événements' : 'événement') + ' ›</span></a>' +
-      '<a href="/espace-mannequin">Formation et compétences <span>›</span></a></div>' +
-      '<div class="ap-btns"><a class="ap-btn rouge" href="/espace-mannequin">✏️ Modifier mon profil</a><a class="ap-btn" href="/espace-mannequin">🗂️ Compcard et CV</a></div>' +
+      '<a href="/app/espace-mannequin.html" aria-label="Ajouter des photos">＋</a></div>' +
+      '<div class="ap-carte ap-liste"><a href="/app/espace-mannequin.html">Identité <span>' + esc(p.city || '') + ' ›</span></a>' +
+      '<a href="/app/espace-mannequin.html">Mensurations <span>' + esc(mesures) + ' ›</span></a>' +
+      '<a href="/app/espace-mannequin.html">Expérience <span>' + etat.nbProjets + ' ' + (etat.nbProjets > 1 ? 'événements' : 'événement') + ' ›</span></a>' +
+      '<a href="/app/espace-mannequin.html">Formation et compétences <span>›</span></a></div>' +
+      '<div class="ap-btns"><a class="ap-btn rouge" href="/app/espace-mannequin.html">✏️ Modifier mon profil</a><a class="ap-btn" href="/app/espace-mannequin.html">🗂️ Compcard et CV</a></div>' +
       '<button type="button" class="ap-lien" data-deconnexion>Se déconnecter</button>';
   }
   function ecranPaiements() {
@@ -257,7 +271,7 @@
           : courant && courant.etat === 'a_payer' ? '<span class="ap-pastille orange">À payer avant le 5</span>' : '<span class="ap-pastille vert">À jour</span>') + '</div>' +
         '<div class="ap-jauge"><i style="width:' + Math.round(payes * 100 / total) + '%"></i></div>' +
         (prochain ? '<p class="ap-echeance"><b>Prochaine échéance</b><br><span class="doux">' + esc(MOIS[Number(String(prochain.mois).slice(5, 7)) - 1]) + ' · ' + fcfa(m.mensualite) + '</span></p>' : '') +
-        '<div class="ap-btns"><a class="ap-btn rouge" href="/mes-paiements">Payer avec Wave</a><a class="ap-btn" href="/mes-paiements">Mes reçus</a></div></div>';
+        '<div class="ap-btns"><a class="ap-btn rouge" href="/app/mes-paiements.html">Payer avec Wave</a><a class="ap-btn" href="/app/mes-paiements.html">Mes reçus</a></div></div>';
     }
     return '<h2 class="ap-titre-sec">Formation · mensualités</h2>' + haut +
       '<h2 class="ap-titre-sec">Mes cachets</h2>' + (etat.cachets.length ? '<div class="ap-carte ap-cachets">' + etat.cachets.map((c) =>
@@ -278,23 +292,20 @@
     const o = ongletCourant(), nbAlertes = alertes().length, nbRepondre = aRepondre().length;
     const tete = o === 'accueil' ? '<img class="ap-logo" src="/assets/logo-header-clair.png" alt="Maître Akesse Model Management" width="150" height="45">' : '<h1 class="ap-h-onglet">' + TITRES[o] + '</h1>';
     racine.innerHTML = '<header class="ap-tete">' + tete + (o === 'alertes' ? '' : '<a class="ap-cloche" href="#alertes" aria-label="Alertes (' + nbAlertes + ')">🔔' + (nbAlertes ? '<b>' + nbAlertes + '</b>' : '') + '</a>') + '</header>' +
-      '<main class="ap-ecran" id="ap-ecran">' + ECRANS[o]() + '</main>' +
-      '<nav class="ap-nav" aria-label="Menu">' + ONGLETS.map((x) => {
-        const n = x[0] === 'evenements' ? nbRepondre : x[0] === 'alertes' ? nbAlertes : 0;
-        return '<a href="#' + x[0] + '"' + (x[0] === o ? ' class="actif" aria-current="page"' : '') + '><i aria-hidden="true">' + x[2] + '</i>' + x[1] + (n ? '<b aria-label="' + n + ' nouveau(x)">' + n + '</b>' : '') + '</a>';
-      }).join('') + '</nav>';
+      '<main class="ap-ecran" id="ap-ecran">' + ECRANS[o]() + '</main>' + window.MA2M_APP.nav(o, { evenements: nbRepondre, alertes: nbAlertes });
     document.title = (o === 'accueil' ? '' : TITRES[o] + ' · ') + 'MA2M Mannequin';
   }
 
   // ---------- actions ----------
   racine.addEventListener('click', async (e) => {
-    const rep = e.target.closest('[data-repondre]'), per = e.target.closest('[data-periode]'), pas = e.target.closest('[data-passages]');
+    const rep = e.target.closest('[data-repondre]'), per = e.target.closest('[data-periode]'), pas = e.target.closest('[data-passages]'), tout = e.target.closest('[data-programme]');
+    if (tout) { programmeOuvert[tout.dataset.programme] = !programmeOuvert[tout.dataset.programme]; afficher(); return; }
     if (per) { periode = per.dataset.periode; afficher(); return; }
     if (e.target.closest('[data-ma-carte]')) periode = 'avenir';
     if (e.target.closest('[data-deconnexion]')) {
       await sb.auth.signOut().catch(() => null);
       etat = null; periode = 'avenir';
-      Object.keys(passagesVus).forEach((k) => { delete passagesVus[k]; });
+      [programmes, programmeOuvert].forEach((o) => Object.keys(o).forEach((k) => { delete o[k]; }));
       ecranConnexion();
       return;
     }
@@ -303,7 +314,7 @@
       const { data, error } = await sb.rpc('defile_programme', { p_jeton: pas.dataset.passages });
       if (error) { pas.disabled = false; message('Le programme n’a pas pu être chargé : réessayez.'); return; }
       // (rien : pas encore retenue dans le programme du défilé)
-      passagesVus[pas.dataset.passages] = ((data && data.passages) || []).filter((x) => x.moi);
+      programmes[pas.dataset.passages] = (data && data.passages) || [];
       afficher();
       return;
     }

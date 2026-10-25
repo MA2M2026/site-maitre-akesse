@@ -260,10 +260,14 @@ function bindAuthGate(){
   });
 }
 
+// Adresse #inscription ou #mot-de-passe-oublie (liens de l'application MA2M Mannequin) : le bon
+// formulaire s'ouvre tout de suite
+const PANNEAUX_PAR_ADRESSE = { '#inscription': 'auth-panneau-inscription', '#mot-de-passe-oublie': 'auth-panneau-mdp-oublie' };
 function renderAuthGate(){
   const app = document.getElementById('app');
   app.innerHTML = viewAuthGate();
   bindAuthGate();
+  if (PANNEAUX_PAR_ADRESSE[location.hash]) afficherPanneauAuth(PANNEAUX_PAR_ADRESSE[location.hash]);
 }
 
 sb && sb.auth.onAuthStateChange(function(event){

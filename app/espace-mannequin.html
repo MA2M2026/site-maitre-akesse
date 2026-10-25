@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Espace mannequin DANS l'application MA2M Mannequin (25/10/2026) : le même éditeur que la page
+     du site (profil, photos, compcard, CV, création du compte, mot de passe oublié), sans l'en-tête
+     du site, avec le menu de l'application (js/app-coque.js). « / » : les adresses écrites par
+     l'Espace mannequin (assets/…, mes-paiements.html…) partent de la racine du site. -->
+<base href="/">
+<title>Mon profil · MA2M Mannequin</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#F1ECE5">
+<link rel="manifest" href="/app/manifest.webmanifest">
+<link rel="icon" href="/icons/mannequin-192.png">
+<link rel="apple-touch-icon" href="/icons/mannequin-apple-180.png">
+<link rel="preconnect" href="https://dfhghgmwmxiguhtxtsle.supabase.co" crossorigin>
+<link rel="stylesheet" href="/css/polices.css?v=f8b78de5">
+<link rel="stylesheet" href="/css/espace-mannequin.css?v=b07564ae">
+<link rel="stylesheet" href="/css/cv-mannequin.css?v=b11ed6be">
+<link rel="stylesheet" href="/css/champs-telephone.css?v=11f5f49f">
+<link rel="stylesheet" href="/css/espace-mannequin-correctifs.css?v=387653ae">
+<link rel="stylesheet" href="/css/jetons.css?v=a2155f1a">
+<link rel="stylesheet" href="/css/charte-ma2m.css?v=1f32edbe">
+<link rel="stylesheet" href="/css/bouton-ma2m.css?v=5211180f">
+<link rel="stylesheet" href="/css/mannequin-app.css?v=fcbb6a99">
+<script src="/js/surveillance.js?v=e030b7f1"></script>
+<script src="/js/bouton-appui.js?v=bedca56e" defer></script>
+</head>
+<body class="ap-page-site ap-page-profil">
+<div class="shell" id="app">
+  <div class="auth-loading"><div class="spinner"></div><span>Chargement de votre espace…</span></div>
+</div>
+<div class="toast-wrap" id="toasts"></div>
+<div class="overlay hidden" id="overlay"><div id="overlayContent"></div></div>
+<nav data-app-nav="profil"></nav>
+<script src="/js/session-requise.js?v=32d5da69"></script>
+<script src="/js/vendor/supabase-js-2.110.6.js?v=82632987"></script>
+<script src="/js/supabase-config.js?v=16708773"></script>
+<script src="/js/pays-naissance.js?v=51e82590"></script>
+<script src="/js/verrou-defilement.js?v=83d529ab"></script>
+<script src="/js/conversion-heic.js?v=82dc3921"></script>
+<script src="/js/photos.js?v=992c058a"></script>
+<script src="/js/app.js?v=c0699ced"></script>
+<script src="/js/tailles.js?v=41cf2149"></script>
+<script src="/js/analyse-profil.js?v=3be3ebbc"></script>
+<script src="/js/confort.js?v=809fdae6"></script>
+<script src="/js/app-coque.js?v=c843b913"></script>
+<script src="/js/espace-mannequin.js?v=0235ba4b"></script>
+<div class="cc-book-modal" id="ccBookModal" aria-hidden="true"><div class="cc-book-dialog" role="dialog" aria-modal="true" aria-labelledby="ccBookTitle"><div class="cc-book-head"><div><span class="editor-kicker">TON BOOK</span><h3 id="ccBookTitle">Choisir une photo pour la compcard</h3><p class="sub">La photo est réutilisée telle quelle. Elle reste dans ton Book.</p></div><button type="button" class="btn ghost small" data-cc-book-close>Fermer</button></div><div class="cc-book-grid" data-cc-book-grid></div></div></div>
+</body>
+</html>

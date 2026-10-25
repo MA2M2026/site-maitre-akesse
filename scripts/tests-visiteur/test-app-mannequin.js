@@ -16,6 +16,11 @@ const moisDe = (n) => { const d = new Date(); d.setUTCDate(1); d.setUTCMonth(d.g
 let srv; process.on('exit', () => srv && srv.kill());
 function donnees() {
   const photo = (i) => '/scripts/tests-visiteur/medias/photo' + i + '.jpg';
+  // convocations de la mannequin ; « Je confirme » est gardé, comme dans la vraie base
+  const evenements = [
+    { jeton: 'j'.repeat(36), titre: 'ABIDJAN FASHION WEEK', type: 'defile', date_debut: jour(4), date_fin: jour(5), heure_evenement: null, heure_convocation: '15:00', lieu: 'Sofitel Hôtel Ivoire', ville: 'Abidjan', reponse: null, passe: false, defile: true },
+    { jeton: 'k'.repeat(36), titre: 'SHOOTING CACAO', type: 'shooting', date_debut: jour(15), date_fin: null, heure_evenement: '09:00', heure_convocation: '08:30', lieu: 'Studio MA2M', ville: 'Abidjan', reponse: 'confirme', passe: false, defile: false },
+    { jeton: 'l'.repeat(36), titre: 'BORDER FORUM', type: 'defile', date_debut: jour(-10), date_fin: null, heure_evenement: null, heure_convocation: null, lieu: 'Parc des Expositions', ville: 'Abidjan', reponse: 'confirme', passe: true, defile: false }];
   return {
     memoriser: true,
     tables: {
@@ -26,12 +31,9 @@ function donnees() {
       casting_projets: [{ nom: 'CASTING CACAO', actif: true, date_casting: jour(20), lieu: 'Studio MA2M', ordre_affichage: 0 }]
     },
     rpc: {
-      app_mes_evenements: [
-        { jeton: 'j'.repeat(36), titre: 'ABIDJAN FASHION WEEK', type: 'defile', date_debut: jour(4), date_fin: jour(5), heure: null, heure_convocation: '15:00', lieu: 'Sofitel Hôtel Ivoire', ville: 'Abidjan', reponse: null, passe: false, defile: true },
-        { jeton: 'k'.repeat(36), titre: 'SHOOTING CACAO', type: 'shooting', date_debut: jour(15), date_fin: null, heure: '09:00', heure_convocation: '08:30', lieu: 'Studio MA2M', ville: 'Abidjan', reponse: 'confirme', passe: false, defile: false },
-        { jeton: 'l'.repeat(36), titre: 'BORDER FORUM', type: 'defile', date_debut: jour(-10), date_fin: null, heure: null, heure_convocation: null, lieu: 'Parc des Expositions', ville: 'Abidjan', reponse: 'confirme', passe: true, defile: false }],
-      convocation_repondre: true,
-      defile_programme: { passages: [{ jour: jour(4), debut: '17:00', salle: 'Salle A', theme: null, moi: true, mannequins: [] }, { jour: jour(4), debut: '17:30', salle: 'Salle B', theme: 'Pathé’O', moi: false, mannequins: [] }] },
+      app_mes_evenements: () => evenements,
+      convocation_repondre: (x) => { const e = evenements.find((y) => y.jeton === x.p_jeton); if (e) e.reponse = x.p_reponse; return !!e; },
+      defile_programme: { passages: [{ jour: jour(4), debut: '17:00', salle: 'Salle A', theme: null, moi: true, mannequins: [] }, { jour: jour(4), debut: '17:30', salle: 'Salle B', theme: 'Pathé’O', moi: false, mannequins: [{ nom: 'Madame AWA KONÉ', photo: null, moi: false }] }] },
       mes_mensualites: { inscrit: true, nom: 'AYA KOUASSI', mensualite: 10000, statut: 'actif', mineur: false,
         mois: Array.from({ length: 24 }, (_, i) => ({ mois: moisDe(i - 8), etat: i < 8 ? 'paye' : i === 8 ? 'a_payer' : 'a_venir' })) },
       mes_cachets: [{ numero: 'C-0001', montant: 25000, motif: null, prestation: 'Border Forum', paye_le: jour(-8) + 'T10:00:00Z', jeton: 'x' }]
@@ -50,7 +52,7 @@ function donnees() {
     p.on('dialog', (d) => d.accept());
     const d = donnees();
     await brancher(p, d, journal);
-    await p.route(/127\.0\.0\.1:\d+\/app\/(\?.*)?$/, async (r) => { const rep = await r.fetch(); r.fulfill({ response: rep, headers: Object.assign({}, rep.headers(), { 'content-security-policy': REGLE_ADMIN }) }); });
+    await p.route(/127\.0\.0\.1:\d+\/app\/([a-z-]+\.html)?(\?.*)?$/, async (r) => { const rep = await r.fetch(); r.fulfill({ response: rep, headers: Object.assign({}, rep.headers(), { 'content-security-policy': REGLE_ADMIN }) }); });
     const rpc = (nomRpc) => journal.filter((j) => j[0] === 'rpc' && j[1] === nomRpc).map((j) => JSON.parse(j[2] || '{}'));
     // CAPTURES=dossier : images des écrans (téléphone) pour les regarder
     const capture = (nomCapture) => (process.env.CAPTURES && tel ? p.screenshot({ path: path.join(process.env.CAPTURES, nomCapture + '.png') }) : null);
@@ -69,14 +71,23 @@ function donnees() {
     await p.click('#ap-form-connexion button[type=submit]');
     ok(/e-mail et votre mot de passe/.test(await p.textContent('#ap-connexion-msg')), n + 'connexion : champs vides → message, rien n’est envoyé');
     await capture('0b-connexion');
+    // « Créer mon compte » et « Mot de passe oublié » : le bon formulaire, dans l'application
+    for (const [lien, panneau, quoi] of [['#inscription', '#auth-panneau-inscription', 'Créer mon compte'], ['#mot-de-passe-oublie', '#auth-panneau-mdp-oublie', 'Mot de passe oublié']]) {
+      await p.click('a[href="/app/espace-mannequin.html' + lien + '"]'); await p.waitForSelector(panneau, { state: 'visible', timeout: 15000 });
+      ok(/\/app\/espace-mannequin\.html/.test(p.url()) && (await p.$('.ap-nav')), n + '« ' + quoi + ' » : son formulaire s’ouvre dans l’application');
+      await p.goBack(); await p.waitForSelector('#ap-form-connexion', { timeout: 15000 });
+    }
     await p.fill('#ap-email', 'aya@test.ci'); await p.fill('#ap-mdp', 'motdepasse1');
     await p.click('#ap-form-connexion button[type=submit]'); await p.waitForSelector('.ap-nav', { timeout: 15000 });
     const appel = journal.find((j) => j[0] === 'API' && j[1] === '/api/connexion-protegee');
     ok(appel && JSON.parse(appel[2]).espace === 'mannequin' && JSON.parse(appel[2]).email === 'aya@test.ci', n + 'connexion par le serveur protégé de l’Espace mannequin');
+    // l'application fermée puis rouverte : la connexion est gardée (plus besoin de se reconnecter)
+    await p.reload(); await p.waitForSelector('.ap-nav', { timeout: 15000 });
+    ok(!(await p.$('#ap-form-connexion')) && /Bonjour/.test(await p.textContent('#ap-ecran')), n + 'application rouverte : toujours connectée');
     // 3. Accueil
     const accueil = await p.textContent('#ap-ecran');
     ok(/Bonjour\s*Aya(?!A)/.test(accueil) && /ABIDJAN FASHION WEEK/.test(accueil) && /dans 4 jours/.test(accueil) && /À répondre/.test(accueil) && /Convocation à 15h00/.test(accueil), n + 'Accueil : « Bonjour Aya », prochain rendez-vous (dans 4 jours, convocation à 15h00, à répondre)');
-    ok((await p.$$('.ap-nav a')).length === 5 && /Accueil.*Événements.*Profil.*Paiements.*Alertes/s.test(await p.textContent('.ap-nav')) && /1/.test(await p.textContent('.ap-nav a[href="#evenements"]')), n + 'menu du bas : 5 onglets, « 1 » sur Événements (à répondre)');
+    ok((await p.$$('.ap-nav a')).length === 5 && /Accueil.*Événements.*Profil.*Paiements.*Alertes/s.test(await p.textContent('.ap-nav')) && /1/.test(await p.textContent('.ap-nav a[href="/app/#evenements"]')), n + 'menu du bas : 5 onglets, « 1 » sur Événements (à répondre)');
     ok(/Ma carte.*Ma compcard.*Mon CV/s.test(await p.textContent('.ap-raccourcis')) && /CASTING CACAO/.test(accueil) && /Mensualité de .*10 000 F/.test(accueil), n + 'Accueil : raccourcis, casting ouvert, mensualité du mois à payer');
     const nav = await p.evaluate(() => { const r = document.querySelector('.ap-nav').getBoundingClientRect(); return Math.abs(r.bottom - innerHeight) < 2; });
     ok(nav && !(await deborde()), n + 'menu collé en bas de l’écran, rien ne dépasse');
@@ -87,12 +98,15 @@ function donnees() {
     ok(rep.p_jeton === 'j'.repeat(36) && rep.p_reponse === 'confirme' && /Confirmée/.test(await p.textContent('.ap-carte.sombre')) && /présence est confirmée/.test(await p.textContent('#ap-message')),
       n + '« Je confirme » : réponse envoyée avec son lien personnel, « ✓ Confirmée » affiché');
     // 5. Mes événements : passages du défilé, carte d'accès, passés
-    await p.click('.ap-nav a[href="#evenements"]'); await p.waitForSelector('.ap-onglets');
+    await p.click('.ap-nav a[href="/app/#evenements"]'); await p.waitForSelector('.ap-onglets');
     ok((await p.$$('#ap-ecran article.ap-carte')).length === 2 && /SHOOTING CACAO/.test(await p.textContent('#ap-ecran')) && /Mes événements/.test(await p.textContent('.ap-tete')), n + 'Mes événements : les 2 à venir');
     await p.click('[data-passages]'); await p.waitForSelector('.ap-passage');
     const passages = await p.$$eval('.ap-passage', (l) => l.map((x) => x.textContent));
-    ok(rpc('defile_programme').length === 1 && passages.length === 1 && /Salle A/.test(passages[0]) && /17h00/.test(passages[0]) && (await p.getAttribute('.ap-passages a', 'href')) === '/confirmer.html?c=' + 'j'.repeat(36),
-      n + 'défilé : ses passages seulement (Salle A, 17h00), « Tout le programme » sur sa page personnelle');
+    ok(rpc('defile_programme').length === 1 && passages.length === 1 && /Salle A/.test(passages[0]) && /17h00/.test(passages[0]) ,
+      n + 'défilé : ses passages seulement (Salle A, 17h00)');
+    await p.click('[data-programme]'); await p.waitForSelector('.ap-programme');
+    ok((await p.$$('.ap-prog-passage')).length === 2 && (await p.$$('.ap-prog-passage.moi')).length === 1 && /AK/.test(await p.textContent('.ap-programme')) && /Pathé’O/.test(await p.textContent('.ap-programme')),
+      n + '« Tout le programme » dans l’application : jour par jour, ses passages soulignés, les autres avec leur visage');
     await capture('2-evenements');
     ok(/AYA KOUASSI/.test(await p.textContent('.ap-acces')) && /ACCÈS MANNEQUIN/.test(await p.textContent('.ap-acces')), n + 'carte d’accès à montrer à l’entrée');
     await p.click('[data-periode="passes"]'); await p.waitForTimeout(200);
@@ -101,26 +115,40 @@ function donnees() {
     await p.click('article.ap-carte:has-text("SHOOTING CACAO") [data-repondre="absent"]'); await p.waitForTimeout(600);
     ok((rpc('convocation_repondre').pop() || {}).p_reponse === 'absent' && /Absent\(e\)/.test(await p.textContent('article.ap-carte:has-text("SHOOTING CACAO")')), n + '« Je ne pourrai pas venir » (après confirmation) : l’agence est prévenue');
     // 6. Profil
-    await p.click('.ap-nav a[href="#profil"]'); await p.waitForSelector('.ap-portrait');
+    await p.click('.ap-nav a[href="/app/#profil"]'); await p.waitForSelector('.ap-portrait');
     const profil = await p.textContent('#ap-ecran');
     ok(/AYA KOUASSI/.test(profil) && /New Face/.test(profil) && /Publié/.test(profil) && /Profil complet à \d+ %/.test(profil) && /1,78 m · 84-61-90/.test(profil) && (await p.$$('.ap-galerie img')).length === 3,
       n + 'Mon profil : niveau, en ligne, profil complet en %, mensurations, photos du Book');
     await capture('3-profil');
-    ok((await p.getAttribute('a.ap-btn.rouge', 'href')) === '/espace-mannequin', n + '« Modifier mon profil » ouvre l’Espace mannequin');
+    ok((await p.getAttribute('a.ap-btn.rouge', 'href')) === '/app/espace-mannequin.html', n + '« Modifier mon profil » reste dans l’application');
+    // l'éditeur du profil DANS l'application : même éditeur que le site, menu de l'application en bas
+    await p.click('a.ap-btn.rouge'); await p.waitForSelector('.ap-nav a.actif', { timeout: 15000 }); await p.waitForTimeout(2500);
+    ok(/\/app\/espace-mannequin\.html$/.test(p.url()) && /Profil/.test(await p.textContent('.ap-nav a.actif')) && /AYA KOUASSI/.test(await p.textContent('#app')) && !(await p.$('.site-header-v2')),
+      n + 'Mon profil à modifier : l’éditeur s’ouvre dans l’application (sans l’en-tête du site), menu « Profil » en bas');
+    ok(!(await p.isVisible('.top-right a[href="index.html"]').catch(() => false)) && !(await p.isVisible('.top').catch(() => false)) && !(await deborde()), n + 'ni « Retour au site » ni barre du site, rien ne dépasse');
+    await capture('3b-profil-editeur');
+    // un lien du site vers « Mes paiements » (écrit par l'Espace mannequin) reste dans l'application
+    await p.evaluate(() => { const a = document.createElement('a'); a.href = 'mes-paiements.html'; a.id = 'lien-essai'; a.textContent = 'Mes paiements'; document.body.appendChild(a); });
+    await p.click('#lien-essai'); await p.waitForSelector('#mp-zone .mp-carte', { timeout: 15000 }); await p.waitForTimeout(800);
+    ok(/\/app\/mes-paiements\.html$/.test(p.url()) && /Paiements/.test(await p.textContent('.ap-nav a.actif')) && /Wave/.test(await p.textContent('#mp-zone')),
+      n + 'un lien « Mes paiements » du site : la page de paiement s’ouvre dans l’application (Wave, « J’ai payé »)');
+    await capture('4b-paiements-wave');
+    await p.click('.ap-nav a[href="/app/#profil"]'); await p.waitForSelector('.ap-portrait', { timeout: 15000 });
+    ok(/\/app\/#profil$/.test(p.url()), n + 'retour à l’application par le menu du bas');
     // 7. Paiements
-    await p.click('.ap-nav a[href="#paiements"]'); await p.waitForSelector('.ap-chiffre');
+    await p.click('.ap-nav a[href="/app/#paiements"]'); await p.waitForSelector('.ap-chiffre');
     const paiements = await p.textContent('#ap-ecran');
-    ok(/8\s*\/\s*24/.test(paiements) && /mois payés/.test(paiements) && /À payer avant le 5/.test(paiements) && /Border Forum/.test(paiements) && /25 000 F/.test(paiements) && (await p.getAttribute('a.ap-btn.rouge', 'href')) === '/mes-paiements',
+    ok(/8\s*\/\s*24/.test(paiements) && /mois payés/.test(paiements) && /À payer avant le 5/.test(paiements) && /Border Forum/.test(paiements) && /25 000 F/.test(paiements) && (await p.getAttribute('a.ap-btn.rouge', 'href')) === '/app/mes-paiements.html',
       n + 'Mes paiements : 8 mois sur 24, cachet reçu, « Payer avec Wave »');
     await capture('4-paiements');
     // 8. Alertes
-    await p.click('.ap-nav a[href="#alertes"]'); await p.waitForSelector('.ap-alerte');
+    await p.click('.ap-nav a[href="/app/#alertes"]'); await p.waitForSelector('.ap-alerte');
     const alertes = await p.textContent('#ap-ecran');
     ok(/Mensualité de/.test(alertes) && /Casting ouvert : CASTING CACAO/.test(alertes) && !/confirmez votre présence/.test(alertes), n + 'Alertes : mensualité, casting ; plus de convocation à confirmer');
     await capture('5-alertes');
     ok(!(await deborde()), n + 'rien ne dépasse de l’écran');
     // 9. Déconnexion
-    await p.click('.ap-nav a[href="#profil"]'); await p.click('[data-deconnexion]'); await p.waitForSelector('#ap-form-connexion');
+    await p.click('.ap-nav a[href="/app/#profil"]'); await p.waitForSelector('.ap-portrait'); await p.click('[data-deconnexion]'); await p.waitForSelector('#ap-form-connexion');
     ok(true, n + 'déconnexion : retour à la connexion');
     ok(!errs.length, n + 'aucune erreur ' + errs.join(' | '));
     await ctx.close();
