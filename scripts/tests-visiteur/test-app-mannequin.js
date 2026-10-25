@@ -6,6 +6,8 @@
 // paiements, Alertes ; enfin la déconnexion. Base simulée : rien n'est écrit pour de vrai.
 const { chromium } = require('playwright'); const { spawn } = require('child_process'); const { brancher } = require('./faux-serveur');
 const path = require('path');
+// règle de sécurité stricte, posée par le serveur comme en ligne (vercel.json : aucun programme écrit dans la page)
+const { REGLE_ADMIN } = require('./donnees-nouvelle-admin');
 const PORT = String(9600 + Math.floor(Math.random() * 90));
 const BASE = 'http://127.0.0.1:' + PORT;
 let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m); if (!c) ko++; };
@@ -44,10 +46,11 @@ function donnees() {
     const ctx = await b.newContext({ viewport: ecran, isMobile: tel, hasTouch: tel, serviceWorkers: 'block' });
     const p = await ctx.newPage(); const errs = [], journal = [];
     p.on('pageerror', (e) => errs.push(e.message));
-    p.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource|ERR_FAILED/.test(m.text())) errs.push('console : ' + m.text().slice(0, 160)); });
+    p.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource|ERR_FAILED/.test(m.text()) || /Content Security Policy/.test(m.text())) errs.push('console : ' + m.text().slice(0, 160)); });
     p.on('dialog', (d) => d.accept());
     const d = donnees();
     await brancher(p, d, journal);
+    await p.route(/127\.0\.0\.1:\d+\/app\/(\?.*)?$/, async (r) => { const rep = await r.fetch(); r.fulfill({ response: rep, headers: Object.assign({}, rep.headers(), { 'content-security-policy': REGLE_ADMIN }) }); });
     const rpc = (nomRpc) => journal.filter((j) => j[0] === 'rpc' && j[1] === nomRpc).map((j) => JSON.parse(j[2] || '{}'));
     // CAPTURES=dossier : images des écrans (téléphone) pour les regarder
     const capture = (nomCapture) => (process.env.CAPTURES && tel ? p.screenshot({ path: path.join(process.env.CAPTURES, nomCapture + '.png') }) : null);

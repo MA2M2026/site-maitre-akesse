@@ -10,6 +10,24 @@
 // Mannequin) ; les champs privés passent par sansChampsPrives / completerProfilsPrives (js/app.js).
 var MA2M_CHAMPS_ANALYSE = 'id, full_name, category, published, height_cm, weight_kg, chest_cm, waist_cm, hips_cm, inseam_cm, shoe_size, eye_color, hair_color, ' +
   'date_naissance, nationalite, city, bio, instagram, niveau_etude, formation_mannequin, languages, niveau_mannequin, years_experience';
+// Lecture des profils pour l'analyse : lire(champs) renvoie { data, error } (une ou plusieurs
+// lignes de model_profiles). Mensurations supplémentaires (Extension 121) si la base les a ;
+// champs privés (Extension 131) et case « pas d'Instagram » (Extension 126) lus en même temps —
+// si une colonne manque, rien d'autre n'est perdu. Renvoie { data, error, avecSupp }.
+async function ma2mLireProfilsAnalyse(lire) {
+  var r = await lire(sansChampsPrives(MA2M_CHAMPS_ANALYSE) + ', shoulder_cm, arm_cm, neck_cm');
+  var avecSupp = !r.error;
+  if (r.error) r = await lire(sansChampsPrives(MA2M_CHAMPS_ANALYSE));
+  if (r.error) return { data: null, error: r.error, avecSupp: false };
+  var lus = await Promise.all([completerProfilsPrives(r.data), lire('id, sans_instagram')]);
+  var si = lus[1];
+  if (!si.error) {
+    var sans = {};
+    si.data.forEach(function (x) { sans[x.id] = x.sans_instagram; });
+    r.data.forEach(function (x) { x.sans_instagram = sans[x.id] === true; });
+  }
+  return { data: r.data, error: null, avecSupp: avecSupp };
+}
 
 // 10 photos au moins, Book et Lifestyle ensemble ; à partir de 10, le book est riche.
 var MA2M_PHOTOS_MINIMUM = 10;

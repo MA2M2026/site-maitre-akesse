@@ -160,7 +160,7 @@ async function photosLocales(page) {
 // Règle de sécurité stricte de l'Administration (vercel.json, 24/10/2026 : aucun programme écrit dans
 // la page), posée par le serveur comme en ligne : tous les essais de l'Administration tournent avec
 // elle ; un programme bloqué apparaît dans la console comme une erreur (« aucune erreur »).
-const REGLE_ADMIN = require('../../vercel.json').headers.find((h) => h.source === '/admin/(.*)').headers.find((h) => h.key === 'Content-Security-Policy').value;
+const REGLE_ADMIN = require('../../vercel.json').headers.find((h) => h.source === '/(admin|app)/(.*)').headers.find((h) => h.key === 'Content-Security-Policy').value;
 async function seConnecter(p, url) {
   await p.route(/127\.0\.0\.1:\d+\/admin\/$/, async (r) => { const rep = await r.fetch(); r.fulfill({ response: rep, headers: Object.assign({}, rep.headers(), { 'content-security-policy': REGLE_ADMIN }) }); });
   await p.goto(url); await p.waitForSelector('#cx-mail', { timeout: 8000 });
@@ -169,4 +169,4 @@ async function seConnecter(p, url) {
   await p.waitForSelector('#cx-code'); await p.fill('#cx-code', '123456'); await p.click('form[data-form="code"] [type=submit]');
 }
 
-module.exports = { donnees, photosLocales, seConnecter, NOMS };
+module.exports = { donnees, photosLocales, seConnecter, NOMS, REGLE_ADMIN };

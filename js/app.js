@@ -1136,6 +1136,8 @@ async function completerProfilsPrives(lignes) {
 
 // Prénom (premier mot du nom complet), pour personnaliser les messages.
 function prenomDe(nomComplet) { return String(nomComplet || '').trim().split(/\s+/)[0] || ''; }
+// « AYA KOUASSI » → « Aya » (accueil de l'application des mannequins)
+function prenomAffiche(nomComplet) { return prenomDe(nomComplet).toLowerCase().replace(/(^|[-'’])(\p{L})/gu, (t, a, l) => a + l.toUpperCase()); }
 
 // Numéro au format WhatsApp (wa.me) : chiffres seuls, indicatif ivoirien ajouté s'il
 // manque. Chaîne vide si le numéro est inutilisable. Partagé par le tableau de bord

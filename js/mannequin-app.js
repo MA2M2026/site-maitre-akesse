@@ -29,8 +29,6 @@
   const fcfa = (n) => Number(n || 0).toLocaleString('fr-FR').replace(/ | /g, ' ') + ' F';
   const aujourdhui = () => new Date().toISOString().slice(0, 10);
   const dansJours = (j) => Math.round((Date.parse(j + 'T12:00:00Z') - Date.parse(aujourdhui() + 'T12:00:00Z')) / 86400000);
-  // « AYA KOUASSI » → « Aya »
-  const prenom = (nom) => (String(nom || '').trim().split(/\s+/)[0] || '').toLowerCase().replace(/(^|[-'’])(\p{L})/gu, (t, a, l) => a + l.toUpperCase());
   const datesEvenement = (e) => (e.date_fin && e.date_fin !== e.date_debut ? jourCourt(e.date_debut) + ' → ' + jourCourt(e.date_fin) : jourLong(e.date_debut));
   const itineraire = (e) => 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent([e.lieu, e.ville].filter(Boolean).join(', '));
   function message(texte) {
@@ -103,17 +101,14 @@
   }
 
   // ---------- données ----------
+  // son profil, lu comme le Rapport des profils (js/analyse-profil.js) ; null : pas un compte
+  // mannequin ; erreur (connexion coupée…) : on la laisse remonter
   async function lireProfil(uid) {
-    const lire = (champs) => sb.from('model_profiles').select(champs).eq('id', uid).maybeSingle();
-    let r = await lire(sansChampsPrives(MA2M_CHAMPS_ANALYSE) + ', shoulder_cm, arm_cm, neck_cm');
-    const avecSupp = !r.error;
-    if (r.error) r = await lire(sansChampsPrives(MA2M_CHAMPS_ANALYSE));
-    if (r.error || !r.data) return null;
-    await completerProfilsPrives(r.data);  // date de naissance, nationalité (js/app.js)
-    const sansInsta = await lire('sans_instagram');
-    r.data.sans_instagram = !sansInsta.error && !!(sansInsta.data && sansInsta.data.sans_instagram);
-    r.data.avecSupp = avecSupp;
-    return r.data;
+    const r = await ma2mLireProfilsAnalyse((champs) => sb.from('model_profiles').select(champs).eq('id', uid));
+    if (r.error) throw r.error;
+    const p = r.data[0] || null;
+    if (p) p.avecSupp = r.avecSupp;
+    return p;
   }
   const donnees = (x) => (x.status === 'fulfilled' && x.value && !x.value.error ? x.value.data : null);
   async function charger(uid) {
@@ -126,6 +121,7 @@
       sb.rpc('mes_cachets'),
       sb.from('casting_projets').select('nom, date_casting, lieu').eq('actif', true).order('ordre_affichage', { ascending: true, nullsFirst: false }).limit(3)
     ]);
+    if (profil.status === 'rejected') throw profil.reason;  // (connexion coupée : « Réessayer »)
     const p = donnees(profil);
     const lesPhotos = (donnees(photos) || []).filter((x) => x.tri_statut !== 'ecartee');
     const nbProjets = (donnees(projets) || []).length;
@@ -146,8 +142,11 @@
   function alertes() {
     const l = [];
     aRepondre().forEach((e) => l.push({ ic: '📨', fond: 'rose', titre: 'Convocation : confirmez votre présence', texte: e.titre + ' · ' + datesEvenement(e), lien: '#evenements' }));
-    aVenir().filter((e) => e.reponse === 'confirme' && dansJours(e.date_debut) >= 0 && dansJours(e.date_debut) <= 2).forEach((e) =>
-      l.push({ ic: '⏰', fond: 'orange', titre: dansJours(e.date_debut) === 0 ? 'C’est aujourd’hui' : dansJours(e.date_debut) === 1 ? 'C’est demain' : 'Dans 2 jours', texte: e.titre + (e.heure_convocation ? ' · convocation à ' + heure(e.heure_convocation) : ''), lien: '#evenements' }));
+    // rappel du jour J à J-2, et chaque jour d'un événement de plusieurs jours déjà commencé
+    aVenir().filter((e) => e.reponse === 'confirme' && dansJours(e.date_debut) <= 2).forEach((e) => {
+      const j = dansJours(e.date_debut);
+      l.push({ ic: '⏰', fond: 'orange', titre: j <= 0 ? 'C’est aujourd’hui' : j === 1 ? 'C’est demain' : 'Dans 2 jours', texte: e.titre + (e.heure_convocation ? ' · convocation à ' + heure(e.heure_convocation) : ''), lien: '#evenements' });
+    });
     const m = moisCourant();
     if (m && (m.etat === 'a_payer' || m.etat === 'non_paye')) l.push({ ic: '💳', fond: 'orange', titre: 'Mensualité de ' + MOIS[Number(String(m.mois).slice(5, 7)) - 1], texte: (m.etat === 'non_paye' ? 'Pas encore payée : ' : 'À payer avant le 5 : ') + fcfa(etat.mensualites.mensualite), lien: '#paiements' });
     if (etat.analyse && etat.analyse.score < 100) l.push({ ic: '✨', fond: 'bleu', titre: 'Profil complet à ' + etat.analyse.score + ' %', texte: 'Un profil complet attire davantage les recruteurs.', lien: '#profil' });
@@ -168,7 +167,7 @@
       (e.reponse === 'confirme' ? 'Je ne pourrai pas venir' : 'Finalement je viens') + '</button></div>';
   }
   function infosEvenement(e) {
-    return '<dl class="ap-infos"><dt>📅</dt><dd>' + esc(datesEvenement(e)) + (e.heure ? ' · ' + esc(heure(e.heure)) : '') + '</dd>' +
+    return '<dl class="ap-infos"><dt>📅</dt><dd>' + esc(datesEvenement(e)) + (e.heure_evenement ? ' · ' + esc(heure(e.heure_evenement)) : '') + '</dd>' +
       (e.heure_convocation ? '<dt>⏰</dt><dd>Convocation à ' + esc(heure(e.heure_convocation)) + '</dd>' : '') +
       (e.lieu || e.ville ? '<dt>📍</dt><dd>' + esc([e.lieu, e.ville].filter(Boolean).join(', ')) + '</dd>' : '') + '</dl>';
   }
@@ -205,10 +204,10 @@
   function ecranAccueil() {
     const prochain = aVenir()[0];
     const m = etat.mensualites;
-    return '<h1>Bonjour <em>' + esc(prenom(etat.profil.full_name)) + '</em></h1>' +
+    return '<h1>Bonjour <em>' + esc(prenomAffiche(etat.profil.full_name)) + '</em></h1>' +
       '<h2 class="ap-titre-sec">Prochain rendez-vous</h2>' +
       (prochain ? carteEvenement(prochain, 'sombre') : '<div class="ap-carte doux">Aucune convocation pour le moment. Dès que l’agence vous convoque, elle apparaît ici.</div>') +
-      '<nav class="ap-raccourcis" aria-label="Raccourcis"><a href="#evenements"><span>🎫</span>Ma carte</a><a href="/espace-mannequin"><span>🗂️</span>Ma compcard</a><a href="/espace-mannequin"><span>📄</span>Mon CV</a></nav>' +
+      '<nav class="ap-raccourcis" aria-label="Raccourcis"><a href="#evenements" data-ma-carte><span>🎫</span>Ma carte</a><a href="/espace-mannequin"><span>🗂️</span>Ma compcard</a><a href="/espace-mannequin"><span>📄</span>Mon CV</a></nav>' +
       (m && m.inscrit && moisCourant() && moisCourant().etat !== 'paye' && moisCourant().etat !== 'attente'
         ? '<a class="ap-carte ap-rappel" href="#paiements">💳 <span>Mensualité de ' + esc(MOIS[Number(String(moisCourant().mois).slice(5, 7)) - 1]) + ' : <b>' + fcfa(m.mensualite) + '</b></span> ›</a>' : '') +
       (etat.castings.length ? '<h2 class="ap-titre-sec">Messages de l’agence</h2><div class="ap-carte ap-messages">' + etat.castings.map((c) =>
@@ -291,7 +290,14 @@
   racine.addEventListener('click', async (e) => {
     const rep = e.target.closest('[data-repondre]'), per = e.target.closest('[data-periode]'), pas = e.target.closest('[data-passages]');
     if (per) { periode = per.dataset.periode; afficher(); return; }
-    if (e.target.closest('[data-deconnexion]')) { await sb.auth.signOut().catch(() => null); etat = null; ecranConnexion(); return; }
+    if (e.target.closest('[data-ma-carte]')) periode = 'avenir';
+    if (e.target.closest('[data-deconnexion]')) {
+      await sb.auth.signOut().catch(() => null);
+      etat = null; periode = 'avenir';
+      Object.keys(passagesVus).forEach((k) => { delete passagesVus[k]; });
+      ecranConnexion();
+      return;
+    }
     if (pas) {
       pas.disabled = true;
       const { data, error } = await sb.rpc('defile_programme', { p_jeton: pas.dataset.passages });

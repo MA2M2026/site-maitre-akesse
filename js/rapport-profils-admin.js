@@ -160,19 +160,11 @@ window.demarrerRapportProfils = function () {
       : (Object.keys(envoyesCetteFois).length ? '✓ Tout le monde a été fait' : '💬 Envoyer sur WhatsApp');
   }
 
-  // Profils avec les mensurations de l'Extension 121 et la case « pas d'Instagram »
-  // (Extension 126) ; si une de ces colonnes manque, relecture sans elles.
-  var CHAMPS_PROFIL = MA2M_CHAMPS_ANALYSE;  // (js/analyse-profil.js)
+  // Profils avec les mensurations, les champs privés et la case « pas d'Instagram » : lecture
+  // partagée avec l'application des mannequins (ma2mLireProfilsAnalyse, js/analyse-profil.js)
   async function lireProfils() {
-    var lire = function (champs) { return lireToutesLignes(function () { return sb.from('model_profiles').select(champs).not('full_name', 'is', null).order('id'); }); };
-    var r = await lire(sansChampsPrives(CHAMPS_PROFIL) + ', shoulder_cm, arm_cm, neck_cm');
-    suppDisponibles = !r.error;
-    if (r.error) r = await lire(sansChampsPrives(CHAMPS_PROFIL));
-    // Date de naissance, nationalité : lues par la fonction sécurisée (Extension 131).
-    if (!r.error) await completerProfilsPrives(r.data);
-    // Case « Je n'ai pas Instagram » (Extension 126), lue à part : si la colonne manque, rien d'autre n'est perdu.
-    var si = await lire('id, sans_instagram');
-    if (!r.error && !si.error) { var sans = {}; si.data.forEach(function (x) { sans[x.id] = x.sans_instagram; }); r.data.forEach(function (x) { x.sans_instagram = sans[x.id] === true; }); }
+    var r = await ma2mLireProfilsAnalyse(function (champs) { return lireToutesLignes(function () { return sb.from('model_profiles').select(champs).not('full_name', 'is', null).order('id'); }); });
+    suppDisponibles = r.avecSupp;
     return r;
   }
 
