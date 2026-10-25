@@ -394,7 +394,11 @@ qui s'ouvrent ensuite) et échoue si un nom de mannequin est sans photo.
   s'affiche dans l'onglet Événements. Seuls sortent : l'itinéraire (Google Maps), Wave, un reçu
   à imprimer et le lien de l'e-mail « mot de passe oublié ».
 - Session gardée (js/session-requise.js chargé avant supabase-config.js) : on se connecte une
-  seule fois.
+  seule fois. « Se déconnecter » ne ferme que cet appareil (`scope: 'local'`).
+- Garde-fou : test-app-mannequin.js vérifie que les pages de l'application chargent les mêmes
+  programmes et styles que leur page du site. La fenêtre « Choisir une photo pour la compcard »
+  est créée par js/espace-mannequin.js (`fenetreChoixBook`) ; initiales des visages sans photo :
+  `initialesNom` (js/app.js, aussi pour l'Administration).
 - Étape suivante prévue : notifications sur le téléphone.
 
 ## 🎫 Cartes d'événement (25/10/2026, demande de la propriétaire)

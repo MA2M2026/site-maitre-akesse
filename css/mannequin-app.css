@@ -6,9 +6,9 @@
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
 [hidden] { display: none !important; }
-body:not(.ap-page-site) { margin: 0; background: var(--ap-papier); color: var(--ap-encre); font: 400 15px/1.45 'Work Sans', system-ui, sans-serif; }
-body:not(.ap-page-site) a { color: inherit; }
-body:not(.ap-page-site) :is(h1, h2, h3, p) { margin: 0; }
+:where(body:not(.ap-page-site)) { margin: 0; background: var(--ap-papier); color: var(--ap-encre); font: 400 15px/1.45 'Work Sans', system-ui, sans-serif; }
+:where(body:not(.ap-page-site)) a { color: inherit; }
+:where(body:not(.ap-page-site)) :where(h1, h2, h3, p) { margin: 0; }
 .doux { color: var(--ap-gris); font-size: 14px; }
 .ap { min-height: 100dvh; max-width: 560px; margin: 0 auto; }
 .ap-chargement { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; color: var(--ap-gris); }
@@ -162,7 +162,10 @@ body:not(.ap-page-site) :is(h1, h2, h3, p) { margin: 0; }
    leur propre mise en page, le menu de l'application en bas, rien ne mène plus « au site » */
 .ap-page-site { padding-bottom: calc(var(--ap-nav) + 16px + env(safe-area-inset-bottom)); }
 .ap-page-site .ap-nav { font-family: 'Work Sans', system-ui, sans-serif; }
-.ap-page-site .ap-tete h1 { margin: 0; }
 /* la barre du haut de l'Espace mannequin (logo, « Mes paiements », « Retour au site », « Se
    déconnecter ») : le menu de l'application et l'onglet Profil font déjà tout cela */
 .ap-page-profil .top { display: none; }
+/* « Postuler à un casting » (formulaire de création du compte) : pour les visiteurs du site */
+.ap-page-profil .em-vers-candidature { display: none; }
+/* bouton « retour en haut » (js/confort.js) : au-dessus du menu de l'application, pas dessus */
+.ap-page-site .retour-haut { bottom: calc(var(--ap-nav) + 16px + env(safe-area-inset-bottom)); }

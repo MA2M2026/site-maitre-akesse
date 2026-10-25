@@ -1136,6 +1136,12 @@ async function completerProfilsPrives(lignes) {
 
 // Prénom (premier mot du nom complet), pour personnaliser les messages.
 function prenomDe(nomComplet) { return String(nomComplet || '').trim().split(/\s+/)[0] || ''; }
+// « Madame AWA KONÉ », « Mme Awa Koné » → « AK » (visages sans photo : Administration, application
+// des mannequins) ; un nom d'un seul mot garde son initiale
+function initialesNom(nom) {
+  return String(nom || '').trim().split(/\s+/).filter((x, i, t) => !(t.length > 1 && /^(madame|mademoiselle|monsieur|mme|mlle|m\.?)$/i.test(x)))
+    .map((x) => x.charAt(0)).slice(0, 2).join('').toUpperCase();
+}
 // « AYA KOUASSI » → « Aya » (accueil de l'application des mannequins)
 function prenomAffiche(nomComplet) { return prenomDe(nomComplet).toLowerCase().replace(/(^|[-'’])(\p{L})/gu, (t, a, l) => a + l.toUpperCase()); }
 

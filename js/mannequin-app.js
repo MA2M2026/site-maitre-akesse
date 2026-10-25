@@ -39,8 +39,7 @@
     clearTimeout(message.minuteur);
     message.minuteur = setTimeout(() => zone.classList.remove('visible'), 4200);
   }
-  // « Madame AWA KONÉ » → « AK » (sans la civilité)
-  const initialesDe = (nom) => String(nom || '?').trim().split(/\s+/).filter((x, i, t) => !(t.length > 1 && /^(madame|mademoiselle|monsieur)$/i.test(x))).map((x) => x.charAt(0)).slice(0, 2).join('').toUpperCase();
+  const initialesDe = (nom) => initialesNom(nom) || '?';  // (js/app.js)
   const ongletCourant = () => { const o = location.hash.replace('#', ''); return ONGLETS.some((x) => x[0] === o) ? o : 'accueil'; };
 
   // ---------- installation ----------
@@ -292,7 +291,7 @@
     const o = ongletCourant(), nbAlertes = alertes().length, nbRepondre = aRepondre().length;
     const tete = o === 'accueil' ? '<img class="ap-logo" src="/assets/logo-header-clair.png" alt="Maître Akesse Model Management" width="150" height="45">' : '<h1 class="ap-h-onglet">' + TITRES[o] + '</h1>';
     racine.innerHTML = '<header class="ap-tete">' + tete + (o === 'alertes' ? '' : '<a class="ap-cloche" href="#alertes" aria-label="Alertes (' + nbAlertes + ')">🔔' + (nbAlertes ? '<b>' + nbAlertes + '</b>' : '') + '</a>') + '</header>' +
-      '<main class="ap-ecran" id="ap-ecran">' + ECRANS[o]() + '</main>' + window.MA2M_APP.nav(o, { evenements: nbRepondre, alertes: nbAlertes });
+      '<main class="ap-ecran" id="ap-ecran">' + ECRANS[o]() + '</main>' + window.MA2M_APP.nav(o, { evenements: nbRepondre, alertes: nbAlertes }, true);
     document.title = (o === 'accueil' ? '' : TITRES[o] + ' · ') + 'MA2M Mannequin';
   }
 
@@ -303,7 +302,7 @@
     if (per) { periode = per.dataset.periode; afficher(); return; }
     if (e.target.closest('[data-ma-carte]')) periode = 'avenir';
     if (e.target.closest('[data-deconnexion]')) {
-      await sb.auth.signOut().catch(() => null);
+      await sb.auth.signOut({ scope: 'local' }).catch(() => null);  // cet appareil seulement
       etat = null; periode = 'avenir';
       [programmes, programmeOuvert].forEach((o) => Object.keys(o).forEach((k) => { delete o[k]; }));
       ecranConnexion();

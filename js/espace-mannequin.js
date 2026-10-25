@@ -263,6 +263,16 @@ function bindAuthGate(){
 // Adresse #inscription ou #mot-de-passe-oublie (liens de l'application MA2M Mannequin) : le bon
 // formulaire s'ouvre tout de suite
 const PANNEAUX_PAR_ADRESSE = { '#inscription': 'auth-panneau-inscription', '#mot-de-passe-oublie': 'auth-panneau-mdp-oublie' };
+// Fenêtre « Choisir une photo pour la compcard » : créée une seule fois par le programme (la même
+// sur le site et dans l'application MA2M Mannequin, sans la recopier dans chaque page)
+function fenetreChoixBook(){
+  let modal = document.getElementById('ccBookModal');
+  if (!modal) {
+    document.body.insertAdjacentHTML('beforeend', '<div class="cc-book-modal" id="ccBookModal" aria-hidden="true"><div class="cc-book-dialog" role="dialog" aria-modal="true" aria-labelledby="ccBookTitle"><div class="cc-book-head"><div><span class="editor-kicker">TON BOOK</span><h3 id="ccBookTitle">Choisir une photo pour la compcard</h3><p class="sub">La photo est réutilisée telle quelle. Elle reste dans ton Book.</p></div><button type="button" class="btn ghost small" data-cc-book-close>Fermer</button></div><div class="cc-book-grid" data-cc-book-grid></div></div></div>');
+    modal = document.getElementById('ccBookModal');
+  }
+  return modal;
+}
 function renderAuthGate(){
   const app = document.getElementById('app');
   app.innerHTML = viewAuthGate();
@@ -1412,7 +1422,7 @@ function bindPhotoHandlers(){
   }); });
 
   function ouvrirChoixBook(onChoisir){
-    const modal = document.getElementById('ccBookModal'); if (!modal) return;
+    const modal = fenetreChoixBook();
     const grid = modal.querySelector('[data-cc-book-grid]');
     grid.innerHTML = s.photos.book.length ? s.photos.book.map(function(ph){
       return '<button type="button" class="cc-book-choice" data-choix-id="'+ph.id+'"><img src="'+ph.url+'" alt="Photo du Book"><span>Choisir</span></button>';

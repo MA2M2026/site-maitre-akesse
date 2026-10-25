@@ -40,6 +40,17 @@ function donnees() {
     }
   };
 }
+// Les pages du site ouvertes dans l'application (app/espace-mannequin.html, app/mes-paiements.html)
+// doivent charger les mêmes programmes et styles que leur page du site (hors en-tête, menu et
+// mesures d'audience du site) : un fichier ajouté d'un côté seulement est signalé ici.
+const fs = require('fs');
+const RACINE = path.resolve(__dirname, '../..');
+const fichiersDe = (page) => (fs.readFileSync(path.join(RACINE, page), 'utf8').match(/(?:src|href)="\/?((?:js|css)\/[^"?]+)/g) || []).map((x) => x.replace(/^(src|href)="\/?/, ''));
+const SITE_SEULEMENT = /^(js\/(gabarit|menu|analytics-config)\.js|css\/(menu|entete-site)\.css)$/;
+for (const page of ['espace-mannequin.html', 'mes-paiements.html']) {
+  const manquants = fichiersDe(page).filter((f) => !SITE_SEULEMENT.test(f) && !fichiersDe('app/' + page).includes(f));
+  ok(!manquants.length, 'app/' + page + ' charge les mêmes programmes et styles que ' + page + (manquants.length ? ' — manquent : ' + manquants.join(', ') : ''));
+}
 (async () => {
   srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: path.resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise((r) => setTimeout(r, 900));
   const b = await chromium.launch();
@@ -87,7 +98,7 @@ function donnees() {
     // 3. Accueil
     const accueil = await p.textContent('#ap-ecran');
     ok(/Bonjour\s*Aya(?!A)/.test(accueil) && /ABIDJAN FASHION WEEK/.test(accueil) && /dans 4 jours/.test(accueil) && /À répondre/.test(accueil) && /Convocation à 15h00/.test(accueil), n + 'Accueil : « Bonjour Aya », prochain rendez-vous (dans 4 jours, convocation à 15h00, à répondre)');
-    ok((await p.$$('.ap-nav a')).length === 5 && /Accueil.*Événements.*Profil.*Paiements.*Alertes/s.test(await p.textContent('.ap-nav')) && /1/.test(await p.textContent('.ap-nav a[href="/app/#evenements"]')), n + 'menu du bas : 5 onglets, « 1 » sur Événements (à répondre)');
+    ok((await p.$$('.ap-nav a')).length === 5 && /Accueil.*Événements.*Profil.*Paiements.*Alertes/s.test(await p.textContent('.ap-nav')) && /1/.test(await p.textContent('.ap-nav a[href="#evenements"]')), n + 'menu du bas : 5 onglets, « 1 » sur Événements (à répondre)');
     ok(/Ma carte.*Ma compcard.*Mon CV/s.test(await p.textContent('.ap-raccourcis')) && /CASTING CACAO/.test(accueil) && /Mensualité de .*10 000 F/.test(accueil), n + 'Accueil : raccourcis, casting ouvert, mensualité du mois à payer');
     const nav = await p.evaluate(() => { const r = document.querySelector('.ap-nav').getBoundingClientRect(); return Math.abs(r.bottom - innerHeight) < 2; });
     ok(nav && !(await deborde()), n + 'menu collé en bas de l’écran, rien ne dépasse');
@@ -98,7 +109,7 @@ function donnees() {
     ok(rep.p_jeton === 'j'.repeat(36) && rep.p_reponse === 'confirme' && /Confirmée/.test(await p.textContent('.ap-carte.sombre')) && /présence est confirmée/.test(await p.textContent('#ap-message')),
       n + '« Je confirme » : réponse envoyée avec son lien personnel, « ✓ Confirmée » affiché');
     // 5. Mes événements : passages du défilé, carte d'accès, passés
-    await p.click('.ap-nav a[href="/app/#evenements"]'); await p.waitForSelector('.ap-onglets');
+    await p.click('.ap-nav a[href="#evenements"]'); await p.waitForSelector('.ap-onglets');
     ok((await p.$$('#ap-ecran article.ap-carte')).length === 2 && /SHOOTING CACAO/.test(await p.textContent('#ap-ecran')) && /Mes événements/.test(await p.textContent('.ap-tete')), n + 'Mes événements : les 2 à venir');
     await p.click('[data-passages]'); await p.waitForSelector('.ap-passage');
     const passages = await p.$$eval('.ap-passage', (l) => l.map((x) => x.textContent));
@@ -115,7 +126,7 @@ function donnees() {
     await p.click('article.ap-carte:has-text("SHOOTING CACAO") [data-repondre="absent"]'); await p.waitForTimeout(600);
     ok((rpc('convocation_repondre').pop() || {}).p_reponse === 'absent' && /Absent\(e\)/.test(await p.textContent('article.ap-carte:has-text("SHOOTING CACAO")')), n + '« Je ne pourrai pas venir » (après confirmation) : l’agence est prévenue');
     // 6. Profil
-    await p.click('.ap-nav a[href="/app/#profil"]'); await p.waitForSelector('.ap-portrait');
+    await p.click('.ap-nav a[href="#profil"]'); await p.waitForSelector('.ap-portrait');
     const profil = await p.textContent('#ap-ecran');
     ok(/AYA KOUASSI/.test(profil) && /New Face/.test(profil) && /Publié/.test(profil) && /Profil complet à \d+ %/.test(profil) && /1,78 m · 84-61-90/.test(profil) && (await p.$$('.ap-galerie img')).length === 3,
       n + 'Mon profil : niveau, en ligne, profil complet en %, mensurations, photos du Book');
@@ -127,28 +138,31 @@ function donnees() {
       n + 'Mon profil à modifier : l’éditeur s’ouvre dans l’application (sans l’en-tête du site), menu « Profil » en bas');
     ok(!(await p.isVisible('.top-right a[href="index.html"]').catch(() => false)) && !(await p.isVisible('.top').catch(() => false)) && !(await deborde()), n + 'ni « Retour au site » ni barre du site, rien ne dépasse');
     await capture('3b-profil-editeur');
+    // fenêtre « Choisir une photo pour la compcard » : créée par le programme (plus recopiée dans chaque page)
+    ok(await p.evaluate(() => { const a = fenetreChoixBook(), b = fenetreChoixBook(); return a === b && !!a.querySelector('[data-cc-book-grid]') && document.querySelectorAll('#ccBookModal').length === 1; }),
+      n + 'fenêtre de choix de photo pour la compcard disponible (une seule)');
     // un lien du site vers « Mes paiements » (écrit par l'Espace mannequin) reste dans l'application
     await p.evaluate(() => { const a = document.createElement('a'); a.href = 'mes-paiements.html'; a.id = 'lien-essai'; a.textContent = 'Mes paiements'; document.body.appendChild(a); });
     await p.click('#lien-essai'); await p.waitForSelector('#mp-zone .mp-carte', { timeout: 15000 }); await p.waitForTimeout(800);
     ok(/\/app\/mes-paiements\.html$/.test(p.url()) && /Paiements/.test(await p.textContent('.ap-nav a.actif')) && /Wave/.test(await p.textContent('#mp-zone')),
       n + 'un lien « Mes paiements » du site : la page de paiement s’ouvre dans l’application (Wave, « J’ai payé »)');
     await capture('4b-paiements-wave');
-    await p.click('.ap-nav a[href="/app/#profil"]'); await p.waitForSelector('.ap-portrait', { timeout: 15000 });
+    await p.click('.ap-nav a[href="/app/#profil"]'); await p.waitForSelector('.ap-portrait', { timeout: 15000 }); // (depuis une page du site)
     ok(/\/app\/#profil$/.test(p.url()), n + 'retour à l’application par le menu du bas');
     // 7. Paiements
-    await p.click('.ap-nav a[href="/app/#paiements"]'); await p.waitForSelector('.ap-chiffre');
+    await p.click('.ap-nav a[href="#paiements"]'); await p.waitForSelector('.ap-chiffre');
     const paiements = await p.textContent('#ap-ecran');
     ok(/8\s*\/\s*24/.test(paiements) && /mois payés/.test(paiements) && /À payer avant le 5/.test(paiements) && /Border Forum/.test(paiements) && /25 000 F/.test(paiements) && (await p.getAttribute('a.ap-btn.rouge', 'href')) === '/app/mes-paiements.html',
       n + 'Mes paiements : 8 mois sur 24, cachet reçu, « Payer avec Wave »');
     await capture('4-paiements');
     // 8. Alertes
-    await p.click('.ap-nav a[href="/app/#alertes"]'); await p.waitForSelector('.ap-alerte');
+    await p.click('.ap-nav a[href="#alertes"]'); await p.waitForSelector('.ap-alerte');
     const alertes = await p.textContent('#ap-ecran');
     ok(/Mensualité de/.test(alertes) && /Casting ouvert : CASTING CACAO/.test(alertes) && !/confirmez votre présence/.test(alertes), n + 'Alertes : mensualité, casting ; plus de convocation à confirmer');
     await capture('5-alertes');
     ok(!(await deborde()), n + 'rien ne dépasse de l’écran');
     // 9. Déconnexion
-    await p.click('.ap-nav a[href="/app/#profil"]'); await p.waitForSelector('.ap-portrait'); await p.click('[data-deconnexion]'); await p.waitForSelector('#ap-form-connexion');
+    await p.click('.ap-nav a[href="#profil"]'); await p.waitForSelector('.ap-portrait'); await p.click('[data-deconnexion]'); await p.waitForSelector('#ap-form-connexion');
     ok(true, n + 'déconnexion : retour à la connexion');
     ok(!errs.length, n + 'aucune erreur ' + errs.join(' | '));
     await ctx.close();
