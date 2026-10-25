@@ -393,6 +393,23 @@ qui s'ouvrent ensuite) et échoue si un nom de mannequin est sans photo.
   leur version dans l'application (`DANS_APP`) y restent. « Tout le programme » du défilé
   s'affiche dans l'onglet Événements. Seuls sortent : l'itinéraire (Google Maps), Wave, un reçu
   à imprimer et le lien de l'e-mail « mot de passe oublié ».
+- **Adresse propre : https://mannequin.maitreakessemodelmanagement.com** (sous-domaine Vercel +
+  Cloudflare, 25/10/2026) : sur www, l'application entrait en conflit avec l'application du
+  site déjà installée (portée « / ») et Chrome répondait « déjà installée ». vercel.json :
+  mannequin…/ → /app/ ; www…/app… → mannequin…/app… ; et, **l'Espace mannequin du site étant
+  fermé au profit de l'application** (décision de la propriétaire, démolition des anciennes pages
+  prévue plus tard, après accord), /espace-mannequin, /mes-paiements et /inscription-mannequin
+  (FR), sur tous les domaines, renvoient vers leur page dans l'application
+  (`app/inscription-mannequin.html` : inscription après casting avec le code de l'agence,
+  js/inscription-simplifiee.js, sans menu de l'application puisqu'on n'a pas encore de compte).
+  Tous les messages envoyés aux mannequins (code d'inscription `LIEN_INSCRIPTION`,
+  js/messages-candidats.js ; code du compte et mensualités, js/portail/espace-paiements.js et
+  js/messages-mensualites.js, aussi utilisé par le serveur api/portail.js ; rapport des profils)
+  pointent sur `MA2M_APPLI`, défini une seule fois dans js/messages-mensualites.js. Copie de
+  secours (js/sw-interface.js) : une page « x.html » est rangée sous « x » (adresse propre de
+  Vercel). Supabase › Authentication › URL Configuration doit contenir
+  `https://mannequin.maitreakessemodelmanagement.com/**` (lien « mot de passe oublié »).
+  La page anglaise en/inscription-mannequin.html reste sur le site.
 - Session gardée (js/session-requise.js chargé avant supabase-config.js) : on se connecte une
   seule fois. « Se déconnecter » ne ferme que cet appareil (`scope: 'local'`).
 - Garde-fou : test-app-mannequin.js vérifie que les pages de l'application chargent les mêmes

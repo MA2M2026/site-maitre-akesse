@@ -5,7 +5,11 @@
 (function (racine) {
   'use strict';
   const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-  const LIEN = 'https://www.maitreakessemodelmanagement.com/mes-paiements';
+  // Application MA2M Mannequin (25/10/2026) : tous les liens envoyés aux mannequins y mènent, plus à
+  // l'Espace mannequin du site (fermé ; ses anciennes adresses y renvoient, vercel.json). Partagée
+  // (MA2M_APPLI) avec js/messages-candidats.js, js/rapport-profils-admin.js, js/portail/espace-paiements.js.
+  const MA2M_APPLI = 'https://mannequin.maitreakessemodelmanagement.com/app/';
+  const LIEN = MA2M_APPLI + 'mes-paiements.html';
   const fcfa = (n) => String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' FCFA';
   function ageMannequin(d) {
     if (!/^\d{4}-\d{2}-\d{2}/.test(d || '')) return null;
@@ -30,7 +34,7 @@
       email: mineur ? m.parent_email : m.email,
       telephone: mineur ? m.parent_telephone : m.telephone,
       texte: 'Bonjour ' + (mineur ? m.parent_nom || 'Madame, Monsieur' : nom) + ',\n\n' + corps +
-        '\nPaiement par Wave dans l’espace mannequin, rubrique « Mes paiements » : ' + LIEN + ' (puis « J’ai payé »).\n\nMerci !\nL’équipe Maître Akesse Model Management'
+        '\nPaiement par Wave dans l’application MA2M Mannequin, onglet « Paiements » : ' + LIEN + ' (puis « J’ai payé »).\n\nMerci !\nL’équipe Maître Akesse Model Management'
     };
   }
   // Numéro pour wa.me : sans « + » ni « 00 », indicatif ivoirien ajouté si absent ('' si trop court)
@@ -40,7 +44,7 @@
     if ((n.length === 10 && n.charAt(0) === '0') || n.length === 8) n = '225' + n;
     return n.length >= 8 ? n : '';
   }
-  const outils = { messageMensualite, ageMannequin, numeroWhatsAppMa2m };
+  const outils = { messageMensualite, ageMannequin, numeroWhatsAppMa2m, MA2M_APPLI };
   if (typeof module !== 'undefined' && module.exports) module.exports = outils;
   else Object.assign(racine, outils);
 })(typeof window !== 'undefined' ? window : globalThis);

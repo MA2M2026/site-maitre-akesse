@@ -36,7 +36,7 @@ const api = (journal, chemin, motif) => journal.filter((j) => j[0] === 'API' && 
     await p.click('form[data-form="casting-direct"] [type=submit]'); await p.waitForSelector('.nouveau-code', { timeout: 8000 }).catch(() => {});
     const wa = await p.getAttribute('.nouveau-code a[href^="https://wa.me/"]', 'href').catch(() => '');
     ok(journal.some((j) => j[0] === 'rpc' && j[1] === 'casting_direct_creer' && /Kady/.test(j[2])) && /MA2M-DIRECT/.test(await p.textContent('.nouveau-code')), n + 'casting direct : fiche et code créés, code montré en grand');
-    ok(/wa\.me\/2250102030405\?text=/.test(wa) && /MA2M-DIRECT/.test(decodeURIComponent(wa)) && /Inscription : https/.test(decodeURIComponent(wa)), n + 'message WhatsApp prêt avec le code et le lien d’inscription');
+    ok(/wa\.me\/2250102030405\?text=/.test(wa) && /MA2M-DIRECT/.test(decodeURIComponent(wa)) && decodeURIComponent(wa).includes('Inscription : https://mannequin.maitreakessemodelmanagement.com/app/inscription-mannequin.html'), n + 'message WhatsApp prêt avec le code et le lien d’inscription (dans l’application MA2M Mannequin)');
     await p.waitForTimeout(1200); await capture(p, 'codes' + suffixe);
     await p.setInputFiles('#ni-fichier', { name: 'note.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 essai') });
     await p.click('#ni-envoyer-btn'); await p.waitForTimeout(1500);

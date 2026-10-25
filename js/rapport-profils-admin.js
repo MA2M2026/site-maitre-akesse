@@ -82,7 +82,7 @@ window.demarrerRapportProfils = function () {
     if (pts.nb.formation) l.push('', titreBloc('formation', pts.nb.formation), '• ' + TEXTES.etudes);
     if (pts.nb.experiences) l.push('', titreBloc('experiences', pts.nb.experiences), pts.elements.experiences.map(function (k) { return '• ' + TEXTES[k]; }).join('\n'));
     if (pts.nb.photos) l.push('', titreBloc('photos', pts.nb.photos), lignesPhotos(a).join('\n'));
-    l.push('', '👉 *Pour mettre votre profil à jour*, rendez-vous dans votre Espace mannequin :', MA2M_SITE + '/espace-mannequin',
+    l.push('', '👉 *Pour mettre votre profil à jour*, rendez-vous dans votre application MA2M Mannequin :', MA2M_APPLI,
       '', '🤝 _L’agence reste à vos côtés : pour toute question, écrivez-nous sur WhatsApp._',
       '', '*Maître Akesse Model Management*', 'Le ' + new Date().toLocaleDateString('fr-FR'));
     return l.join('\n');

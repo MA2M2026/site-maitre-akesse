@@ -15,7 +15,8 @@ const CASTINGS = {
   let srv; process.on('exit', () => srv && srv.kill());
   srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..'), stdio: 'ignore', stdio: 'ignore' }); await new Promise(r => setTimeout(r, 800));
   const b = await chromium.launch();
-  for (const [page, vp, nom] of [['inscription-mannequin.html', { width: 390, height: 844 }, 'FR téléphone'], ['en/inscription-mannequin.html', { width: 1280, height: 900 }, 'EN ordinateur']]) {
+  for (const [page, vp, nom] of [['inscription-mannequin.html', { width: 390, height: 844 }, 'FR téléphone'], ['en/inscription-mannequin.html', { width: 1280, height: 900 }, 'EN ordinateur'],
+    ['app/inscription-mannequin.html', { width: 390, height: 844 }, 'Application téléphone']]) {
     for (const code of ['MA2M-ADULTE', 'MA2M-ENFANT']) {
       const ctx = await b.newContext({ viewport: vp }); const p = await ctx.newPage(); const errs = [], journal = [];
       p.on('pageerror', e => errs.push(e.message));
@@ -62,7 +63,7 @@ const CASTINGS = {
       ok(!boutons.length, nom + ' ' + code + ' : boutons au modèle rouge ' + boutons.join(' | '));
       const pales = (await lirePageEntiere(p)).map((x) => x.texte.slice(0, 25)); ok(!pales.length, nom + ' ' + code + ' : écran lisible ' + pales.join(' | '));
       await p.evaluate(() => { window.open = () => null; });
-      await p.locator('[data-a="wave"]').evaluate((a) => { a.removeAttribute('target'); a.href = '#'; });
+      await p.locator('[data-a="wave"]').evaluate((a) => { a.removeAttribute('target'); a.href = location.href.split('#')[0] + '#'; });  // (pas « # » seul : dans l'application, <base href="/"> en ferait l'accueil)
       await p.click('[data-a="wave"]'); await p.waitForTimeout(500);
       await p.fill('#inn-num', 'abc'); ok(await p.isDisabled('[data-a="paye"]'), nom + ' ' + code + ' : numéro invalide, « J’ai payé » fermé');
       await p.fill('#inn-num', '+225 05 05 05 05 05'); ok(!(await p.isDisabled('[data-a="paye"]')), nom + ' ' + code + ' : numéro valide, « J’ai payé » ouvert');

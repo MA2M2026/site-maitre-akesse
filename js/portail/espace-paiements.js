@@ -183,12 +183,11 @@
   };
   // Code de l'espace mannequin (cahier v2.4, 5.4) : seulement après une inscription payée et
   // validée, pour un mannequin sans compte ; une fois, 7 jours ; remplace le code général
-  const SITE = 'https://www.maitreakessemodelmanagement.com';
   // Message au mannequin (au parent s'il est mineur) avec son code personnel + lien WhatsApp prêt
   function messageCodeEspace(m, code) {
     const d = destinataire(m);
     const texte = 'Bonjour ' + d.nom + ',\n\nL’inscription' + (d.mineur ? ' de ' + m.full_name : '') + ' à Maître Akesse Model Management est validée. ' +
-      'Pour créer ' + (d.mineur ? 'son' : 'votre') + ' espace mannequin, ouvrez ' + SITE + '/espace-mannequin.html, choisissez « Créer mon compte » et entrez ce code personnel : ' + code.code +
+      'Pour créer ' + (d.mineur ? 'son' : 'votre') + ' compte, ouvrez l’application MA2M Mannequin :\n' + window.MA2M_APPLI + '\npuis touchez « Créer mon compte (code reçu après l’inscription) » et entrez ce code personnel : ' + code.code +
       '\n\nIl ne sert qu’une fois et reste valable jusqu’au ' + P.dateHeure(code.expire_le) + '.\n\nL’équipe Maître Akesse Model Management';
     return { texte, wa: lienWhatsApp(d.tel, texte), d };
   }
@@ -731,7 +730,7 @@
   };
   const CANAUX = { email: 'E-mail', whatsapp: 'WhatsApp', sms: 'SMS' };
   const FILTRES_MSG = [['tous', 'Tous les actifs'], ['inscrits', 'Inscrits sur le site'], ['non_inscrits', 'Non inscrits'], ['non_payes', 'Pas encore payé ce mois-ci']];
-  const LIEN_ESPACE = 'https://www.maitreakessemodelmanagement.com/mes-paiements';
+  const LIEN_ESPACE = window.MA2M_APPLI + 'mes-paiements.html';  // js/messages-mensualites.js
   // Lien Wave Business actif du montant de ce mannequin (page Paramètres) ; à défaut, son espace « Mes paiements »
   const lienWaveDe = (m) => { const l = (P.etat.liensWave || []).find((x) => x.actif && x.type === 'mensualite' && x.montant === m.mensualite); return l ? l.adresse : LIEN_ESPACE; };
   function remplir(modele, m) {

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Inscription après un casting retenu DANS l'application MA2M Mannequin (26/10/2026) : la même
+     inscription en 4 écrans que sur le site (code personnel, informations, règlement, paiement
+     Wave), sans l'en-tête du site, avec le menu de l'application (js/app-coque.js). « / » : les
+     adresses écrites par la page partent de la racine du site. -->
+<base href="/">
+<title>Inscription · MA2M Mannequin</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#F1ECE5">
+<link rel="manifest" href="/app/manifest.webmanifest">
+<link rel="icon" href="/icons/mannequin-192.png">
+<link rel="apple-touch-icon" href="/icons/mannequin-apple-180.png">
+<link rel="preconnect" href="https://dfhghgmwmxiguhtxtsle.supabase.co" crossorigin>
+<link rel="stylesheet" href="/css/polices.css?v=f8b78de5">
+<link rel="stylesheet" href="/css/champs-telephone.css?v=11f5f49f">
+<link rel="stylesheet" href="/css/jetons.css?v=a2155f1a">
+<link rel="stylesheet" href="/css/bouton-ma2m.css?v=5211180f">
+<link rel="stylesheet" href="/css/style.css?v=cf3e875a">
+<link rel="stylesheet" href="/css/inscription-simplifiee.css?v=52dc4b91">
+<link rel="stylesheet" href="/css/charte-ma2m.css?v=1f32edbe">
+<link rel="stylesheet" href="/css/mannequin-app.css?v=9b3ac168">
+<script src="/js/surveillance.js?v=e030b7f1"></script>
+<script src="/js/bouton-appui.js?v=bedca56e" defer></script>
+</head>
+<body class="ap-page-site ap-page-inscription">
+<header class="ap-tete"><a class="ap-retour" href="/app/">‹ Retour</a><span class="ap-h-onglet">Inscription</span></header>
+<p class="ap-intro">Retenue à un casting de l’agence ? Inscrivez-vous avec le <strong>code personnel</strong> que l’agence vous a envoyé.</p>
+<!-- Inscription simplifiée en 4 écrans (cahier v2.4, section 4) : js/inscription-simplifiee.js -->
+<main class="inn">
+  <div class="container inn-colonne">
+    <div class="inn-etapes" id="inn-etapes" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    <div id="inn-ecran" aria-live="polite"></div>
+  </div>
+</main>
+<script src="/js/vendor/supabase-js-2.110.6.js?v=82632987"></script>
+<script src="/js/supabase-config.js?v=16708773"></script>
+<script src="/js/verrou-defilement.js?v=83d529ab"></script>
+<script src="/js/conversion-heic.js?v=82dc3921"></script>
+<script src="/js/photos.js?v=992c058a"></script>
+<script src="/js/app.js?v=63e87e07"></script>
+<script src="/js/confort.js?v=809fdae6"></script>
+<script src="/js/app-coque.js?v=25e22c9e"></script>
+<script src="/js/inscription-simplifiee.js?v=0d86ff6c"></script>
+</body>
+</html>

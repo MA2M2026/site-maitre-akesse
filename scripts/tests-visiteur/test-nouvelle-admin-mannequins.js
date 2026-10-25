@@ -118,6 +118,7 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     const volet = await p.$('#rapport-profils-liste details.rp-message, #rapport-profils-liste details.rp-groupe:not([hidden])');
     if (volet) { await volet.$eval('summary', (x) => x.scrollIntoView({ block: 'center' })); await (await volet.$('summary')).click(); await p.waitForTimeout(300); }
     ok(volet && await volet.evaluate((x) => x.open), n + 'rapport des profils : un volet replié s’ouvre au toucher');
+    ok(await p.$$eval('#rapport-profils-liste details.rp-message textarea', (l) => l.length > 0 && l.every((t) => t.value.includes('https://mannequin.maitreakessemodelmanagement.com/app/') && !/\/espace-mannequin/.test(t.value))), n + 'rapport des profils : les messages envoient vers l’application MA2M Mannequin');
     await capture(p, 'rapport-profils' + suffixe);
     await p.goto(URL_ADMIN + '#/site/b2-fiches-evenement'); await p.waitForSelector('#fiches-evenement-details'); await p.waitForTimeout(1500);
     ok((await p.$$('#fiches-evenement-liste .fe-ligne')).length >= 10 && /AYA KOUASSI/.test(await p.textContent('#fiches-evenement-liste')), n + 'fiches événement : liste des mannequins');

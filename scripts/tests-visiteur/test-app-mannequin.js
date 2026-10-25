@@ -40,14 +40,15 @@ function donnees() {
     }
   };
 }
-// Les pages du site ouvertes dans l'application (app/espace-mannequin.html, app/mes-paiements.html)
+// Les pages du site ouvertes dans l'application (app/espace-mannequin.html, app/mes-paiements.html,
+// app/inscription-mannequin.html)
 // doivent charger les mêmes programmes et styles que leur page du site (hors en-tête, menu et
 // mesures d'audience du site) : un fichier ajouté d'un côté seulement est signalé ici.
 const fs = require('fs');
 const RACINE = path.resolve(__dirname, '../..');
 const fichiersDe = (page) => (fs.readFileSync(path.join(RACINE, page), 'utf8').match(/(?:src|href)="\/?((?:js|css)\/[^"?]+)/g) || []).map((x) => x.replace(/^(src|href)="\/?/, ''));
-const SITE_SEULEMENT = /^(js\/(gabarit|menu|analytics-config)\.js|css\/(menu|entete-site)\.css)$/;
-for (const page of ['espace-mannequin.html', 'mes-paiements.html']) {
+const SITE_SEULEMENT = /^(js\/(gabarit|menu|analytics-config|filet-reveal)\.js|css\/(menu|entete-site)\.css)$/;
+for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-mannequin.html']) {
   const manquants = fichiersDe(page).filter((f) => !SITE_SEULEMENT.test(f) && !fichiersDe('app/' + page).includes(f));
   ok(!manquants.length, 'app/' + page + ' charge les mêmes programmes et styles que ' + page + (manquants.length ? ' — manquent : ' + manquants.join(', ') : ''));
 }
@@ -88,6 +89,14 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html']) {
       ok(/\/app\/espace-mannequin\.html/.test(p.url()) && (await p.$('.ap-nav')), n + '« ' + quoi + ' » : son formulaire s’ouvre dans l’application');
       await p.goBack(); await p.waitForSelector('#ap-form-connexion', { timeout: 15000 });
     }
+    // « Retenue à un casting ? » : l'inscription avec le code de l'agence, dans l'application
+    await p.click('a[href="/app/inscription-mannequin.html"]'); await p.waitForSelector('#inn-code', { state: 'visible', timeout: 15000 });
+    ok(/\/app\/inscription-mannequin\.html$/.test(p.url()) && (await p.isVisible('#inn-naissance')) && !(await p.$('.site-header-v2')) && !(await deborde()) && (await p.$$('h1')).length === 1,
+      n + '« Retenue à un casting ? » : l’inscription avec le code s’ouvre dans l’application (sans l’en-tête du site, un seul titre)');
+    // pas encore de compte : pas de menu (Profil, Paiements… mèneraient à la connexion), un « Retour » vers l'application
+    ok(!(await p.$('.ap-nav')) && (await p.getAttribute('.ap-retour', 'href')) === '/app/', n + 'inscription : pas de menu de l’application, « ‹ Retour » vers l’application');
+    await capture('0c-inscription');
+    await p.click('.ap-retour'); await p.waitForSelector('#ap-form-connexion', { timeout: 15000 });
     await p.fill('#ap-email', 'aya@test.ci'); await p.fill('#ap-mdp', 'motdepasse1');
     await p.click('#ap-form-connexion button[type=submit]'); await p.waitForSelector('.ap-nav', { timeout: 15000 });
     const appel = journal.find((j) => j[0] === 'API' && j[1] === '/api/connexion-protegee');

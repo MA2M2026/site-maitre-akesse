@@ -10,9 +10,17 @@ function copieInterface(version, prefixes, page, fichiers) {
   // la page (/admin, /admin/, /admin/index.html) est rangée sous « /admin/ » ; les autres
   // fichiers du dossier (manifest.webmanifest…) gardent leur propre nom (avant le 22/10/2026,
   // le manifeste prenait la place de la page : sans réseau, on voyait son texte « comme du code »)
-  const cleDe = (chemin) => (chemin === racine || chemin === page || chemin === page + 'index.html' ? page : chemin);
+  // Une page « x.html » est rangée sous « x » : en ligne, Vercel (cleanUrls) affiche l'adresse
+  // sans « .html » et redirige l'autre ; une réponse redirigée ne peut pas servir de page, d'où
+  // la copie « propre » faite à l'installation
+  const cleDe = (chemin) => (chemin === racine || chemin === page || chemin === page + 'index.html' ? page : chemin.replace(/\.html$/, ''));
+  const cles = fichiers.map(cleDe);
+  const propre = (r) => (r.redirected ? new Response(r.body, { status: r.status, statusText: r.statusText, headers: r.headers }) : r);
   self.addEventListener('install', (e) => {
-    e.waitUntil(caches.open(version).then((c) => c.addAll(fichiers)).then(() => self.skipWaiting()));
+    e.waitUntil(caches.open(version).then((c) => Promise.all(fichiers.map((f) => fetch(f).then((r) => {
+      if (!r.ok) throw new Error('copie impossible : ' + f);
+      return c.put(cleDe(f), propre(r));
+    })))).then(() => self.skipWaiting()));
   });
   self.addEventListener('activate', (e) => {
     e.waitUntil(caches.keys().then((cles) => Promise.all(cles.filter((k) => prefixes.some((p) => k.startsWith(p)) && k !== version).map((k) => caches.delete(k))))
@@ -22,9 +30,9 @@ function copieInterface(version, prefixes, page, fichiers) {
     const u = new URL(e.request.url);
     if (e.request.method !== 'GET' || u.origin !== location.origin || u.pathname.startsWith('/api/')) return;
     const cle = cleDe(u.pathname);
-    if (!fichiers.includes(cle)) return;
+    if (!cles.includes(cle)) return;
     e.respondWith(fetch(e.request).then((r) => {
-      if (r.ok) { const copie = r.clone(); caches.open(version).then((c) => c.put(cle, copie)).catch(() => { /* mémoire du navigateur pleine : la page reste servie */ }); }
+      if (r.ok) { const copie = propre(r.clone()); caches.open(version).then((c) => c.put(cle, copie)).catch(() => { /* mémoire du navigateur pleine : la page reste servie */ }); }
       return r;
     }).catch(() => caches.match(cle)));
   });

@@ -92,7 +92,8 @@
       '<label for="ap-mdp">Mot de passe<input id="ap-mdp" type="password" autocomplete="current-password" required></label>' +
       '<p class="ap-erreur" id="ap-connexion-msg" role="alert"></p>' +
       '<button type="submit" class="ap-btn rouge">Se connecter</button></form>' +
-      '<p class="ap-petit"><a href="/app/espace-mannequin.html#mot-de-passe-oublie">Mot de passe oublié ?</a> · <a href="/app/espace-mannequin.html#inscription">Créer mon compte (code de l’agence)</a></p></main>';
+      '<p class="ap-petit"><a href="/app/espace-mannequin.html#mot-de-passe-oublie">Mot de passe oublié ?</a> · <a href="/app/espace-mannequin.html#inscription">Créer mon compte (code reçu après l’inscription)</a></p>' +
+      '<p class="ap-petit"><a href="/app/inscription-mannequin.html">Retenue à un casting ? Commencez par l’inscription</a></p></main>';
     document.getElementById('ap-form-connexion').addEventListener('submit', async (e) => {
       e.preventDefault();
       const msg = document.getElementById('ap-connexion-msg'), bouton = e.target.querySelector('button');

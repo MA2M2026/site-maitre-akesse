@@ -216,3 +216,11 @@ body.ap-page-paiements :is(.btn, .btn--principal) { min-height: 46px; border-rad
 body.ap-page-paiements .btn--principal { background: var(--ap-rouge); border-color: var(--ap-rouge); color: #fff; }
 body.ap-page-paiements .btn:not(.btn--principal) { background: var(--ap-creux); border-color: transparent; color: var(--ap-encre); }
 body.ap-page-paiements .btn:disabled { opacity: .5; }
+
+/* Inscription après casting (app/inscription-mannequin.html, 25/10/2026) : la page du site, aux couleurs de l'application */
+body.ap-page-inscription { padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+body.ap-page-inscription .ap-retour { color: var(--ap-rouge-texte); font-weight: 600; text-decoration: none; padding: 8px 0; }
+body.ap-page-inscription .ap-intro { margin: 0; padding: 0 18px; max-width: 560px; color: var(--ap-gris); font-size: 15px; }
+body.ap-page-inscription .inn { padding: 14px 0 0; }
+body.ap-page-inscription .inn-colonne { padding: 0 18px; }
+body.ap-page-inscription .inn-carte { background: var(--ap-carte); border: 0; border-radius: 18px; box-shadow: var(--ap-ombre); }

@@ -299,7 +299,7 @@ function messagePourEmail(texte) {
 // Code individuel d'inscription envoyé par WhatsApp (mineur : au parent, sur son numéro).
 // Partagé le 22/10/2026 (ancien tableau de bord, fiche et « Codes d'accès » de la nouvelle
 // Administration). Renvoie le lien wa.me prêt à ouvrir, ou null sans numéro utilisable.
-const LIEN_INSCRIPTION = 'https://www.maitreakessemodelmanagement.com/inscription-mannequin.html';
+const LIEN_INSCRIPTION = MA2M_APPLI + 'inscription-mannequin.html';  // MA2M_APPLI : js/messages-mensualites.js
 function lienWhatsAppCode(d, code) {
   const contacts = contactsEnvoi(d);
   const numero = numeroWhatsApp(contacts.phone);
