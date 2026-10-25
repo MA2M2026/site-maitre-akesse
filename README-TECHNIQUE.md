@@ -362,6 +362,26 @@ on doit la choisir ou l'ouvrir, c'est la photo (avec le nom) qu'on touche. Tout 
 Essai : `test-visages-partout.js` parcourt tous les écrans (et les fiches, panneaux et fenêtres
 qui s'ouvrent ensuite) et échoue si un nom de mannequin est sans photo.
 
+## 🎫 Cartes d'événement (25/10/2026, demande de la propriétaire)
+- Rubrique « Cartes d'événement » (`b2-cartes`, `js/cartes-acces.js`, compartiment « Projets et
+  convocations ») ; raccourcis « 🎫 Cartes » sur chaque projet de l'Agenda et dans la
+  Programmation défilé (`data-action="cartes-acces"`).
+- On choisit l'événement ; seules les mannequins qui ont **confirmé** leur présence
+  (`convocation_participants.reponse = 'confirme'` : site, registre, carnet) apparaissent — jamais
+  une carte pour une mannequin sans réponse ou absente. Nom sans civilité, N° 001… par ordre
+  alphabétique. Toucher une mannequin → sa carte seule (PDF A5) ; « Toutes les cartes » → deux par
+  feuille A4 couchée, trait de coupe au milieu. « Organisé par » : client du projet, sinon l'agence.
+- **Photo ajoutée** (mannequin sans photo dans le Book, extérieure, autre agence) : « 📷 Ajouter une
+  photo » → JPEG refait (1600 px, sans données de l'appareil) dans le stockage privé
+  `cartes-photos`, table `cartes_photos` (clé `m:` / `r:` / `c:` + identifiant), gardée pour les
+  prochains événements, l'ancienne retirée quand on la change. Jamais dans le Book ni sur le site.
+  Base : `supabase-cartes.sql` (réservé à l'agence avec le code ; essais : essais-cartes.sql).
+- Carte A5 dessinée sur canvas (220 ppp) : logo, « Former – Révéler – Valoriser », « Mannequin ·
+  Accès événement », photo (ajoutée, sinon couverture du Book, sinon initiales), nom, numéro,
+  QR code vers la fiche (profil publié seulement, cliquable dans le PDF), événement (titre, date,
+  lieu, organisé par), bandeau bordeaux « ACCÈS MANNEQUIN · MA2M ». jsPDF et outils partagés de
+  js/app.js. Essai : test-cartes-acces.js.
+
 ## 👠 Programmation défilé (24/10/2026, demande de la propriétaire ; à vendre un jour à d'autres agences)
 - Rubrique « Programmation défilé » (`b2-defiles`, js/admin/site-defiles.js), compartiment
   « Projets et convocations ». Un défilé = un projet de l'Agenda sur un ou plusieurs jours, découpé

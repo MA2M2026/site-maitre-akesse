@@ -37,6 +37,9 @@ create table storage.objects (id uuid primary key default gen_random_uuid(), buc
   name text, owner uuid, metadata jsonb, created_at timestamptz default now(), updated_at timestamptz default now(),
   last_accessed_at timestamptz, path_tokens text[]);
 alter table storage.objects enable row level security;
+-- comme Supabase : les droits de table sont donnés, ce sont les règles (RLS) qui filtrent
+grant select, insert, update, delete on storage.objects to anon, authenticated;
+grant select on storage.buckets to anon, authenticated;
 create or replace function storage.foldername(name text) returns text[] language sql immutable as $$
   select (string_to_array(name, '/'))[1:array_length(string_to_array(name, '/'), 1) - 1] $$;
 create or replace function storage.filename(name text) returns text language sql immutable as $$

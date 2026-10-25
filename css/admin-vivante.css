@@ -1001,5 +1001,15 @@ a.podium-place:hover b, a.classement-ligne:hover .classement-nom { text-decorati
 .df-choix { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
 .df-choix-carte { display: flex; align-items: center; gap: 8px; padding: 6px; border-radius: var(--av-rayon-petit); background: var(--av-creux); border: 0; font: inherit; text-align: left; cursor: pointer; }
 .df-choix-carte input { width: 20px; height: 20px; accent-color: var(--av-rouge); }
+/* Cartes d'événement (js/cartes-acces.js) : les mannequins confirmées, une carte au toucher */
+.ca-evenement { display: block; color: inherit; text-decoration: none; }
+.ca-liste { list-style: none; padding: 0; margin: 12px 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.ca-carte { display: flex; flex-direction: column; gap: 6px; align-items: stretch; }
+.ca-faire { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px; border: 1px solid var(--av-lignes); border-radius: var(--av-rayon-petit); background: var(--av-creux); font: inherit; color: inherit; cursor: pointer; text-align: center; }
+.ca-faire:hover, .ca-faire:focus-visible { border-color: var(--av-rouge); }
+.vis.ca-vis { width: 96px; height: 128px; border-radius: 8px; font-size: 28px; }
+.ca-nom { font-weight: 600; overflow-wrap: anywhere; }
+.ca-photo { position: relative; text-align: center; cursor: pointer; }
+.ca-photo input { position: absolute; inset: 0; opacity: 0; width: 100%; cursor: pointer; }
 .vis.df-vis { border-radius: 50%; }
 .df-synthese li.absente span { color: #b3261e; }

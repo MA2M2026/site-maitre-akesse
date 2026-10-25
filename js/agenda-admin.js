@@ -180,6 +180,8 @@ window.demarrerAgendaAdmin = function (racine) {
       + '<div class="agenda-boutons">'
       // « Convoquer » : projets à venir seulement (page Convocations, js/convocations-page.js)
       + (convocationsActives && !p.annule && (p.date_fin || p.date_debut) >= dateDuJour() ? '<button type="button" class="btn-mini-admin" data-convoquer="' + echapperHtml(p.id) + '" aria-label="Convoquer les participants de « ' + echapperHtml(p.titre) + ' »">📨 Convoquer</button>' : '')
+      // « Cartes » : rubrique Cartes d'événement sur ce projet (js/cartes-acces.js)
+      + (window.Portail && window.Portail.actions['cartes-acces'] && !p.annule && convocationsActives ? '<button type="button" class="btn-mini-admin" data-action="cartes-acces" data-id="' + echapperHtml(p.id) + '" aria-label="Cartes d’événement de « ' + echapperHtml(p.titre) + ' »">🎫 Cartes</button>' : '')
       + '<button type="button" class="btn-mini-admin" data-modifier="' + echapperHtml(p.id) + '" aria-label="Modifier « ' + echapperHtml(p.titre) + ' »">Modifier</button>'
       + '<button type="button" class="btn-mini-admin" data-supprimer="' + echapperHtml(p.id) + '" aria-label="Supprimer « ' + echapperHtml(p.titre) + ' »">Supprimer</button></div>';
     return div;

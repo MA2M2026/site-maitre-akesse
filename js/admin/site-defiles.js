@@ -224,7 +224,8 @@
       '<div class="df-grille">' + (cartes || '<p class="doux">Ajoutez d’abord des passages.</p>') + '</div>' +
       (synthese ? '<h3>Passages par mannequin</h3><ul class="df-synthese">' + synthese + '</ul>' : '') +
       '<div class="ligne"><button type="button" class="btn rouge" data-action="defile-convoquer"' + (ecran.affectations.length ? '' : ' disabled') + '>📨 Convoquer les mannequins du défilé</button>' +
-      '<button type="button" class="btn" data-action="defile-imprimer"' + (ecran.affectations.length ? '' : ' disabled') + '>🖨️ Imprimer le programme</button></div>' +
+      '<button type="button" class="btn" data-action="defile-imprimer"' + (ecran.affectations.length ? '' : ' disabled') + '>🖨️ Imprimer le programme</button>' +
+      '<button type="button" class="btn" data-action="cartes-acces" data-id="' + P.esc(ecran.projet.id) + '"' + (ecran.affectations.length ? '' : ' disabled') + '>🎫 Cartes d’événement</button></div>' +
       '<p class="doux petit-texte">Chaque mannequin convoquée reçoit son lien personnel : après avoir confirmé, elle voit sa fiche programme (ses passages, et tout le programme avec les visages).</p></section>';
   }
   async function fiche(id) {
