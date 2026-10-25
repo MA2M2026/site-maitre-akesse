@@ -169,3 +169,50 @@ html { -webkit-text-size-adjust: 100%; }
 .ap-page-profil .em-vers-candidature { display: none; }
 /* bouton « retour en haut » (js/confort.js) : au-dessus du menu de l'application, pas dessus */
 .ap-page-site .retour-haut { bottom: calc(var(--ap-nav) + 16px + env(safe-area-inset-bottom)); }
+
+/* ===== Harmonisation (25/10/2026, demande de la propriétaire) : l'éditeur du profil et la page
+   des paiements ouverts dans l'application prennent exactement le style de l'application —
+   papier, cartes arrondies, titres Cormorant, texte Work Sans, boutons rouges arrondis. ===== */
+body.ap-page-site { --fond: var(--ap-papier); --surface: var(--ap-carte); --lignes: var(--ap-creux); --police: 'Work Sans', system-ui, sans-serif;
+  --police-titre: 'Cormorant Garamond', Georgia, serif; --mag-titre: 'Cormorant Garamond', Georgia, serif; --texte: 'Work Sans', system-ui, sans-serif;
+  --rayon-carte: 18px; --ombre-carte: var(--ap-ombre);
+  background: var(--ap-papier); color: var(--ap-encre); font-family: 'Work Sans', system-ui, sans-serif; font-weight: 400; letter-spacing: 0; }
+body.ap-page-site :is(h1, h2, h3, h4) { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 600; font-style: normal; text-transform: none; letter-spacing: 0; line-height: 1.1; color: var(--ap-encre); }
+
+/* éditeur du profil */
+body.ap-page-profil .shell { max-width: 560px; padding: calc(14px + env(safe-area-inset-top)) 18px 0; }
+body.ap-page-profil .greet { background: linear-gradient(160deg, #241d1a, #0e0b0a); color: #F4EFE6; border: 0; border-radius: 18px; box-shadow: var(--ap-ombre); padding: 22px 20px; margin-bottom: 16px; }
+body.ap-page-profil .greet::before, body.ap-page-profil .greet::after { display: none; }
+body.ap-page-profil .greet h1 { color: #F4EFE6; font-size: 32px; margin: 0 0 6px; }
+body.ap-page-profil .greet p { color: #BDB2A6; font-size: 14.5px; }
+body.ap-page-profil .stepper { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; border: 0; background: none; border-radius: 0; overflow: visible; margin-bottom: 16px; }
+body.ap-page-profil .step-tab { min-width: 0; border: 0; border-radius: 14px; background: var(--ap-carte); color: var(--ap-encre); box-shadow: var(--ap-ombre);
+  padding: 10px 4px; font: 600 12.5px/1.25 'Work Sans', sans-serif; letter-spacing: 0; text-transform: none; }
+body.ap-page-profil .step-tab .n { font: 600 20px 'Cormorant Garamond', serif; color: var(--ap-rouge-texte); }
+body.ap-page-profil .step-tab.active { background: var(--ap-rouge); color: #fff; }
+body.ap-page-profil .step-tab.active .n { color: #fff; }
+body.ap-page-profil .panel, body.ap-page-profil .block, body.ap-page-profil .blocks-grid > * { background: var(--ap-carte); border: 0; border-radius: 18px; box-shadow: var(--ap-ombre); }
+body.ap-page-profil .panel { padding: 20px 16px; }
+body.ap-page-profil .panel h2 { font-size: 28px; }
+body.ap-page-profil .field label { font: 600 13px 'Work Sans', sans-serif; letter-spacing: 0; text-transform: none; color: var(--ap-encre); }
+body.ap-page-profil .field :is(input, select, textarea) { font: 400 16px 'Work Sans', sans-serif; border-radius: 12px; border: 1px solid #CFC6BB; background: #fff; color: var(--ap-encre); padding: 12px 14px; }
+body.ap-page-profil .field :is(input, select, textarea):focus { border-color: var(--ap-rouge); outline: 3px solid color-mix(in srgb, var(--ap-rouge) 30%, transparent); }
+body.ap-page-profil .btn { min-height: 46px; border-radius: 12px; font: 600 15px 'Work Sans', sans-serif; letter-spacing: 0; text-transform: none; border: 0; background: var(--ap-creux); color: var(--ap-encre); box-shadow: none; }
+body.ap-page-profil .btn.primary, body.ap-page-profil .btn.editor-save, body.ap-page-profil .btn.save-block { background: var(--ap-rouge); color: #fff; }
+body.ap-page-profil .btn.small { min-height: 38px; font-size: 13.5px; padding: 8px 14px; }
+body.ap-page-profil .editor-kicker { color: var(--ap-rouge-texte); font-size: 11.5px; font-weight: 700; letter-spacing: .16em; }
+
+/* paiements */
+body.ap-page-paiements .mp { padding: calc(14px + env(safe-area-inset-top)) 0 0; min-height: 0; background: none; }
+body.ap-page-paiements .mp-colonne { max-width: 560px; padding: 0 18px; }
+body.ap-page-paiements :is(.mp-tete, .mp-carte) h1 { font-size: 30px; font-weight: 600; }
+body.ap-page-paiements .mp h2 { font: 700 12px 'Work Sans', sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--ap-rouge-texte); margin: 10px 0 0; }
+body.ap-page-paiements .mp-carte { background: var(--ap-carte); border: 0; border-radius: 18px; box-shadow: var(--ap-ombre); padding: 16px; }
+body.ap-page-paiements .mp-montant { font: 600 26px 'Cormorant Garamond', serif; white-space: nowrap; }
+body.ap-page-paiements .mp-bandeau { border-radius: 14px; font-weight: 600; }
+body.ap-page-paiements .mp-mois { border: 0; border-radius: 12px; background: var(--ap-carte); box-shadow: 0 1px 2px rgba(27, 24, 23, .06); }
+body.ap-page-paiements .mp-num { border-radius: 12px; border-color: #CFC6BB; background: #fff; font-size: 16px; }
+body.ap-page-paiements :is(.btn, .btn--principal) { min-height: 46px; border-radius: 12px; font: 600 15px 'Work Sans', sans-serif; letter-spacing: 0; text-transform: none; box-shadow: none; transform: none; }
+body.ap-page-paiements .btn--principal { background: var(--ap-rouge); border-color: var(--ap-rouge); color: #fff; }
+body.ap-page-paiements .btn:not(.btn--principal) { background: var(--ap-creux); border-color: transparent; color: var(--ap-encre); }
+body.ap-page-paiements .btn:disabled { opacity: .5; }
