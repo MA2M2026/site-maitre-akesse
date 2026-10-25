@@ -169,13 +169,17 @@
     const participants = await P.bd(sb.from('convocation_participants').select('model_id, contact_id, nom, reponse').eq('projet_id', p.id).eq('reponse', 'confirme')).catch(() => []);
     const idsSite = [...new Set(participants.map((x) => x.model_id).filter(Boolean))];
     const contacts = [...new Set(participants.map((x) => x.contact_id).filter(Boolean))];
-    const [profils, carnet, ajoutees] = await Promise.all([
+    const [profils, carnet] = await Promise.all([
       idsSite.length ? P.parPaquets(idsSite, 100, (l) => P.bd(sb.from('model_profiles').select('id, full_name, published').in('id', l))) : [],
-      contacts.length ? P.parPaquets(contacts, 100, (l) => P.bd(sb.from('contacts_externes').select('id, civilite, nom, mannequin_id').in('id', l))).catch(() => []) : [],
-      P.bd(sb.from('cartes_photos').select('cle, chemin')).catch(() => [])
+      contacts.length ? P.parPaquets(contacts, 100, (l) => P.bd(sb.from('contacts_externes').select('id, civilite, nom, mannequin_id').in('id', l))).catch(() => []) : []
     ]);
     const registreIds = [...new Set(carnet.map((c) => c.mannequin_id).filter(Boolean))];
-    const registre = registreIds.length ? await P.parPaquets(registreIds, 100, (l) => P.bd(sb.from('agence_mannequins').select('id, full_name').in('id', l))).catch(() => []) : [];
+    // clés possibles des personnes de l'événement (photos ajoutées pour les cartes)
+    const cles = idsSite.map((id) => 'm:' + id).concat(registreIds.map((id) => 'r:' + id), contacts.map((id) => 'c:' + id));
+    const [registre, ajoutees] = await Promise.all([
+      registreIds.length ? P.parPaquets(registreIds, 100, (l) => P.bd(sb.from('agence_mannequins').select('id, full_name').in('id', l))).catch(() => []) : [],
+      P.parPaquets(cles, 100, (l) => P.bd(sb.from('cartes_photos').select('cle, chemin').in('cle', l))).catch(() => [])
+    ]);
     const photos = {}, chemins = {};
     (idsSite.length ? await lirePhotosCouverture(sb, idsSite, false).catch(() => []) : []).forEach((l) => { photos[l.model_id] = l; });
     ajoutees.forEach((x) => { chemins[x.cle] = x.chemin; });
@@ -206,6 +210,7 @@
 
   // ---------- La rubrique ----------
   const PAGE = 'b2-cartes', STOCKAGE = 'cartes-photos';
+  const PAS_ACTIVE = 'L’ajout de photos pour les cartes n’est pas encore activé : exécutez une fois le fichier supabase-cartes.sql dans Supabase.';
   let ecran = null;  // { projet, personnes, apercus: { cle: url locale } }
   async function choixEvenement() {
     const depuis = new Date(Date.now() - 60 * 86400000).toISOString().slice(0, 10);
@@ -234,7 +239,7 @@
         '<input type="file" accept="image/*" data-change="carte-photo" data-i="' + i + '"></label>') + '</li>').join('');
     return P.entete('Cartes · ' + projet.titre, '<a class="btn" href="#/site/' + PAGE + '">← Choisir un autre événement</a>') +
       '<p class="doux">' + P.esc([datesProjet(projet), [projet.lieu, projet.ville].filter(Boolean).join(', ')].filter(Boolean).join(' · ')) + '</p>' +
-      (personnes.length ? '<div class="carte"><label class="fl" for="ca-organisateur">Organisé par (écrit sur les cartes)<input id="ca-organisateur" maxlength="80" value="' + P.esc(projet.client || ORGANISATEUR) + '"></label>' +
+      (personnes.length ? '<div class="carte"><label class="fl" for="ca-organisateur">Organisé par (écrit sur les cartes)<input id="ca-organisateur" maxlength="80" value="' + P.esc((projet.citer_client !== false && projet.client) || ORGANISATEUR) + '"></label>' +
         '<p class="doux petit-texte">' + P.pluriel(personnes.length, 'mannequin a confirmé', 'mannequins ont confirmé') + ' sa présence. Celles qui n’ont pas encore répondu, ou qui sont absentes, n’ont pas de carte.</p>' +
         '<ul class="ca-liste">' + cartes + '</ul>' +
         '<div class="ligne"><button type="button" class="btn rouge" data-action="cartes-toutes">🖨️ Toutes les cartes (2 par feuille A4)</button></div></div>'
@@ -262,8 +267,20 @@
     if (!image) { P.message('Cette photo n’a pas pu être lue : essayez une photo JPEG ou PNG.'); return; }
     const jpeg = await new Promise((ok) => image.canvas.toBlob(ok, 'image/jpeg', 0.9));
     const chemin = c.cle.replace(':', '-') + '/' + crypto.getRandomValues(new Uint32Array(2)).join('-') + '.jpg';
-    await P.bd(sb.storage.from(STOCKAGE).upload(chemin, jpeg, { contentType: 'image/jpeg', upsert: false }));
-    await P.bd(sb.from('cartes_photos').upsert({ cle: c.cle, chemin, mis_a_jour: new Date().toISOString() }).select('cle'));
+    try {
+      await P.bd(sb.storage.from(STOCKAGE).upload(chemin, jpeg, { contentType: 'image/jpeg', upsert: false }));
+    } catch (e) {
+      if (/bucket|not.?found|cartes/i.test(String((e && e.message) || e))) { P.message(PAS_ACTIVE); return; }
+      throw e;
+    }
+    try {
+      const r = await P.bd(sb.from('cartes_photos').upsert({ cle: c.cle, chemin, mis_a_jour: new Date().toISOString() }).select('cle'));
+      if (!r || !r.length) throw new Error('Rien n’a été enregistré : reconnectez-vous puis réessayez.');
+    } catch (e) {
+      await P.bd(sb.storage.from(STOCKAGE).remove([chemin])).catch(() => null);  // pas de fichier orphelin
+      if (/cartes_photos|42P01|PGRST20[25]/.test(String((e && (e.message || e.code)) || e))) { P.message(PAS_ACTIVE); return; }
+      throw e;
+    }
     if (c.chemin) await P.bd(sb.storage.from(STOCKAGE).remove([c.chemin])).catch(() => null);
     P.message('Photo de ' + c.nom + ' enregistrée pour ses cartes.');
     return P.afficher();
