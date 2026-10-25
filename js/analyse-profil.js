@@ -6,6 +6,11 @@
 // photos écartées) et son nombre d'expériences. Dépend de js/app.js (niveauNormalise,
 // photosAffichees) et de js/tailles.js (ma2mTailles). Rien n'est calculé par l'IA.
 
+// Colonnes de model_profiles lues par l'analyse (Rapport des profils, application MA2M
+// Mannequin) ; les champs privés passent par sansChampsPrives / completerProfilsPrives (js/app.js).
+var MA2M_CHAMPS_ANALYSE = 'id, full_name, category, published, height_cm, weight_kg, chest_cm, waist_cm, hips_cm, inseam_cm, shoe_size, eye_color, hair_color, ' +
+  'date_naissance, nationalite, city, bio, instagram, niveau_etude, formation_mannequin, languages, niveau_mannequin, years_experience';
+
 // 10 photos au moins, Book et Lifestyle ensemble ; à partir de 10, le book est riche.
 var MA2M_PHOTOS_MINIMUM = 10;
 

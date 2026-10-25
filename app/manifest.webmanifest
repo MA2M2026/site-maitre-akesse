@@ -1,0 +1,18 @@
+{
+  "name": "MA2M Mannequin",
+  "short_name": "MA2M Mannequin",
+  "description": "L'application des mannequins de Maître Akesse Model Management : convocations, programme, profil, paiements.",
+  "id": "/app/",
+  "start_url": "/app/",
+  "scope": "/app/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F1ECE5",
+  "theme_color": "#F1ECE5",
+  "lang": "fr",
+  "icons": [
+    { "src": "/icons/mannequin-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/mannequin-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/mannequin-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

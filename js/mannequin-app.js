@@ -1,0 +1,339 @@
+// Application MA2M Mannequin (/app/, 25/10/2026, maquette validée par la propriétaire) : l'espace
+// de chaque mannequin, installable sur le téléphone par un simple lien (sans Play Store ni App
+// Store). Cinq onglets en bas : Accueil, Mes événements, Mon profil, Mes paiements, Alertes.
+// Étape 1 : installation, connexion (la même que l'Espace mannequin : connexionMannequin, js/app.js),
+// convocations envoyées par l'agence (app_mes_evenements, supabase-app-mannequin.sql) avec
+// « Je confirme » / « Je suis absente » (convocation_repondre) et passages du défilé
+// (defile_programme), résumé du profil (analyse partagée : js/analyse-profil.js) et des paiements
+// (mes_mensualites, mes_cachets). Les modifications du profil et le paiement se font encore sur
+// les pages du site (Espace mannequin, Mes paiements).
+(function () {
+  'use strict';
+  const racine = document.getElementById('app');
+  if (!racine || typeof sb === 'undefined' || !sb) return;
+  const esc = echapperHtml;  // (js/app.js)
+  const ONGLETS = [['accueil', 'Accueil', '🏠'], ['evenements', 'Événements', '📅'], ['profil', 'Profil', '👤'], ['paiements', 'Paiements', '💳'], ['alertes', 'Alertes', '🔔']];
+  const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+  const CLE_NAVIGATEUR = 'ma2m_app_navigateur';  // « Continuer dans le navigateur » (cette visite)
+  const installee = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  const estIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  let invitation = null;  // installation proposée par le navigateur (Chrome, Edge, Samsung)
+  let etat = null;        // { uid, profil, analyse, photos, nbProjets, evenements, mensualites, cachets, castings }
+  let periode = 'avenir'; // onglet de « Mes événements »
+  const passagesVus = {}; // jeton → passages du défilé (chargés à la demande)
+
+  // ---------- petits outils ----------
+  const jourLong = (j) => new Date(j + 'T12:00:00Z').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+  const jourCourt = (j) => new Date(j + 'T12:00:00Z').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+  const heure = (h) => (h ? String(h).slice(0, 5).replace(':', 'h') : '');
+  const fcfa = (n) => Number(n || 0).toLocaleString('fr-FR').replace(/ | /g, ' ') + ' F';
+  const aujourdhui = () => new Date().toISOString().slice(0, 10);
+  const dansJours = (j) => Math.round((Date.parse(j + 'T12:00:00Z') - Date.parse(aujourdhui() + 'T12:00:00Z')) / 86400000);
+  // « AYA KOUASSI » → « Aya »
+  const prenom = (nom) => (String(nom || '').trim().split(/\s+/)[0] || '').toLowerCase().replace(/(^|[-'’])(\p{L})/gu, (t, a, l) => a + l.toUpperCase());
+  const datesEvenement = (e) => (e.date_fin && e.date_fin !== e.date_debut ? jourCourt(e.date_debut) + ' → ' + jourCourt(e.date_fin) : jourLong(e.date_debut));
+  const itineraire = (e) => 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent([e.lieu, e.ville].filter(Boolean).join(', '));
+  function message(texte) {
+    const zone = document.getElementById('ap-message');
+    zone.textContent = texte;
+    zone.classList.add('visible');
+    clearTimeout(message.minuteur);
+    message.minuteur = setTimeout(() => zone.classList.remove('visible'), 4200);
+  }
+  const ongletCourant = () => { const o = location.hash.replace('#', ''); return ONGLETS.some((x) => x[0] === o) ? o : 'accueil'; };
+
+  // ---------- installation ----------
+  addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault(); invitation = e;
+    const bouton = document.getElementById('ap-installer'), aide = document.getElementById('ap-installer-aide');
+    if (bouton) bouton.hidden = false;
+    if (aide) aide.hidden = true;
+  });
+  if ('serviceWorker' in navigator) addEventListener('load', () => { navigator.serviceWorker.register('/app/sw.js', { scope: '/app/' }).catch(() => { /* sans copie de secours */ }); });
+  function ecranInstallation() {
+    racine.innerHTML = '<main class="ap-installation">' +
+      '<div class="ap-presentation"><img class="ap-icone" src="/icons/mannequin-192.png" alt="" width="88" height="88"><h1>MA2M <em>Mannequin</em></h1>' +
+      '<p class="doux">Votre espace de l’agence Maître Akesse Model Management, dans votre téléphone.</p></div>' +
+      '<div class="ap-carte"><ol class="ap-etapes"><li><b>1</b><span>Touchez <strong>Installer l’application</strong></span></li>' +
+      '<li><b>2</b><span>L’icône <strong>MA2M Mannequin</strong> apparaît sur votre écran d’accueil</span></li>' +
+      '<li><b>3</b><span>Connectez-vous <strong>une seule fois</strong> : ensuite elle s’ouvre directement</span></li></ol>' +
+      (estIOS ? '<p class="ap-ios">Sur iPhone : touchez <strong>Partager</strong> <span aria-hidden="true">⬆️</span> en bas de Safari, puis <strong>« Sur l’écran d’accueil »</strong>.</p>'
+        : '<button type="button" class="ap-btn rouge" id="ap-installer"' + (invitation ? '' : ' hidden') + '>📲 Installer l’application</button>' +
+          '<p class="ap-petit" id="ap-installer-aide"' + (invitation ? ' hidden' : '') + '>Si le bouton n’apparaît pas : ouvrez ce lien dans <strong>Chrome</strong>, puis menu <strong>⋮</strong> › <strong>Installer l’application</strong>.</p>') +
+      '</div><button type="button" class="ap-lien" id="ap-continuer">Continuer sans installer</button>' +
+      '<p class="ap-petit">Gratuit, sans Play Store ni App Store.</p></main>';
+    const bouton = document.getElementById('ap-installer');
+    if (bouton) bouton.addEventListener('click', async () => {
+      if (!invitation) return;
+      invitation.prompt();
+      const choix = await invitation.userChoice.catch(() => null);
+      invitation = null;
+      if (choix && choix.outcome === 'accepted') message('Application installée : ouvrez-la depuis l’icône MA2M Mannequin.');
+    });
+    document.getElementById('ap-continuer').addEventListener('click', () => {
+      try { sessionStorage.setItem(CLE_NAVIGATEUR, '1'); } catch (e) { /* stockage indisponible : on continue quand même */ }
+      demarrer(true);
+    });
+  }
+
+  // ---------- connexion ----------
+  function ecranConnexion() {
+    racine.innerHTML = '<main class="ap-connexion"><div class="ap-presentation"><img class="ap-icone" src="/icons/mannequin-192.png" alt="" width="72" height="72">' +
+      '<h1>Bonjour</h1><p class="doux">Connectez-vous avec l’e-mail et le mot de passe de votre espace mannequin.</p></div>' +
+      '<form class="ap-carte ap-form" id="ap-form-connexion" novalidate>' +
+      '<label for="ap-email">E-mail<input id="ap-email" type="email" autocomplete="username" inputmode="email" required></label>' +
+      '<label for="ap-mdp">Mot de passe<input id="ap-mdp" type="password" autocomplete="current-password" required></label>' +
+      '<p class="ap-erreur" id="ap-connexion-msg" role="alert"></p>' +
+      '<button type="submit" class="ap-btn rouge">Se connecter</button></form>' +
+      '<p class="ap-petit"><a href="/espace-mannequin">Mot de passe oublié ?</a> · <a href="/espace-mannequin">Créer mon compte (code de l’agence)</a></p></main>';
+    document.getElementById('ap-form-connexion').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById('ap-connexion-msg'), bouton = e.target.querySelector('button');
+      const email = document.getElementById('ap-email').value.trim(), mdp = document.getElementById('ap-mdp').value;
+      if (!email || !mdp) { msg.textContent = 'Merci d’indiquer votre e-mail et votre mot de passe.'; return; }
+      msg.textContent = 'Connexion…'; bouton.disabled = true;
+      try {
+        const refus = await connexionMannequin(email, mdp);  // (js/app.js)
+        if (refus) { msg.textContent = refus; return; }
+        demarrer(true);
+      } catch (err) {
+        msg.textContent = 'Erreur de connexion — réessayez.';
+      } finally { bouton.disabled = false; }
+    });
+  }
+
+  // ---------- données ----------
+  async function lireProfil(uid) {
+    const lire = (champs) => sb.from('model_profiles').select(champs).eq('id', uid).maybeSingle();
+    let r = await lire(sansChampsPrives(MA2M_CHAMPS_ANALYSE) + ', shoulder_cm, arm_cm, neck_cm');
+    const avecSupp = !r.error;
+    if (r.error) r = await lire(sansChampsPrives(MA2M_CHAMPS_ANALYSE));
+    if (r.error || !r.data) return null;
+    await completerProfilsPrives(r.data);  // date de naissance, nationalité (js/app.js)
+    const sansInsta = await lire('sans_instagram');
+    r.data.sans_instagram = !sansInsta.error && !!(sansInsta.data && sansInsta.data.sans_instagram);
+    r.data.avecSupp = avecSupp;
+    return r.data;
+  }
+  const donnees = (x) => (x.status === 'fulfilled' && x.value && !x.value.error ? x.value.data : null);
+  async function charger(uid) {
+    const [profil, photos, projets, evenements, mensualites, cachets, castings] = await Promise.allSettled([
+      lireProfil(uid).then((data) => ({ data })),
+      sb.from('model_photos').select('id, url, url_miniature, url_petite, principale, photo_couverture, tri_statut, created_at').eq('model_id', uid),
+      sb.from('model_projects').select('id').eq('model_id', uid),
+      sb.rpc('app_mes_evenements'),
+      sb.rpc('mes_mensualites'),
+      sb.rpc('mes_cachets'),
+      sb.from('casting_projets').select('nom, date_casting, lieu').eq('actif', true).order('ordre_affichage', { ascending: true, nullsFirst: false }).limit(3)
+    ]);
+    const p = donnees(profil);
+    const lesPhotos = (donnees(photos) || []).filter((x) => x.tri_statut !== 'ecartee');
+    const nbProjets = (donnees(projets) || []).length;
+    return {
+      uid, profil: p, photos: lesPhotos, nbProjets,
+      analyse: p ? ma2mAnalyserProfil(p, lesPhotos, nbProjets, p.avecSupp) : null,  // (js/analyse-profil.js)
+      evenements: donnees(evenements) || [], evenementsActifs: !!donnees(evenements),
+      mensualites: donnees(mensualites), cachets: donnees(cachets) || [], castings: donnees(castings) || []
+    };
+  }
+  const aVenir = () => etat.evenements.filter((e) => !e.passe);
+  const aRepondre = () => aVenir().filter((e) => !e.reponse);
+  const moisCourant = () => {
+    const m = etat.mensualites;
+    return m && m.inscrit ? (m.mois || []).find((x) => String(x.mois).slice(0, 7) === aujourdhui().slice(0, 7)) : null;
+  };
+  // alertes : ce qui attend la mannequin (calculé ; les notifications du téléphone viendront ensuite)
+  function alertes() {
+    const l = [];
+    aRepondre().forEach((e) => l.push({ ic: '📨', fond: 'rose', titre: 'Convocation : confirmez votre présence', texte: e.titre + ' · ' + datesEvenement(e), lien: '#evenements' }));
+    aVenir().filter((e) => e.reponse === 'confirme' && dansJours(e.date_debut) >= 0 && dansJours(e.date_debut) <= 2).forEach((e) =>
+      l.push({ ic: '⏰', fond: 'orange', titre: dansJours(e.date_debut) === 0 ? 'C’est aujourd’hui' : dansJours(e.date_debut) === 1 ? 'C’est demain' : 'Dans 2 jours', texte: e.titre + (e.heure_convocation ? ' · convocation à ' + heure(e.heure_convocation) : ''), lien: '#evenements' }));
+    const m = moisCourant();
+    if (m && (m.etat === 'a_payer' || m.etat === 'non_paye')) l.push({ ic: '💳', fond: 'orange', titre: 'Mensualité de ' + MOIS[Number(String(m.mois).slice(5, 7)) - 1], texte: (m.etat === 'non_paye' ? 'Pas encore payée : ' : 'À payer avant le 5 : ') + fcfa(etat.mensualites.mensualite), lien: '#paiements' });
+    if (etat.analyse && etat.analyse.score < 100) l.push({ ic: '✨', fond: 'bleu', titre: 'Profil complet à ' + etat.analyse.score + ' %', texte: 'Un profil complet attire davantage les recruteurs.', lien: '#profil' });
+    etat.castings.forEach((c) => l.push({ ic: '📣', fond: 'vert', titre: 'Casting ouvert : ' + c.nom, texte: [c.date_casting ? jourLong(c.date_casting) : '', c.lieu].filter(Boolean).join(' · ') || 'Renseignez-vous auprès de l’agence.', lien: '' }));
+    return l;
+  }
+
+  // ---------- morceaux d'écran ----------
+  const pastilleReponse = (e) => (e.reponse === 'confirme' ? '<span class="ap-pastille vert">✓ Confirmée</span>'
+    : e.reponse === 'absent' ? '<span class="ap-pastille gris">Absent(e)</span>'
+    : e.passe ? '' : '<span class="ap-pastille orange">À répondre</span>');
+  function boutonsReponse(e, sombre) {
+    if (e.passe) return '';
+    if (!e.reponse) return '<div class="ap-btns"><button type="button" class="ap-btn rouge" data-repondre="confirme" data-jeton="' + esc(e.jeton) + '">✓ Je confirme</button>' +
+      '<button type="button" class="ap-btn' + (sombre ? ' clair' : '') + '" data-repondre="absent" data-jeton="' + esc(e.jeton) + '">Je ne pourrai pas venir</button></div>';
+    return '<div class="ap-btns">' + (e.lieu || e.ville ? '<a class="ap-btn' + (sombre ? ' clair' : '') + '" href="' + esc(itineraire(e)) + '" target="_blank" rel="noopener">📍 Itinéraire</a>' : '') +
+      '<button type="button" class="ap-btn' + (sombre ? ' clair' : '') + '" data-repondre="' + (e.reponse === 'confirme' ? 'absent' : 'confirme') + '" data-jeton="' + esc(e.jeton) + '">' +
+      (e.reponse === 'confirme' ? 'Je ne pourrai pas venir' : 'Finalement je viens') + '</button></div>';
+  }
+  function infosEvenement(e) {
+    return '<dl class="ap-infos"><dt>📅</dt><dd>' + esc(datesEvenement(e)) + (e.heure ? ' · ' + esc(heure(e.heure)) : '') + '</dd>' +
+      (e.heure_convocation ? '<dt>⏰</dt><dd>Convocation à ' + esc(heure(e.heure_convocation)) + '</dd>' : '') +
+      (e.lieu || e.ville ? '<dt>📍</dt><dd>' + esc([e.lieu, e.ville].filter(Boolean).join(', ')) + '</dd>' : '') + '</dl>';
+  }
+  function carteAcces(e) {
+    const p = etat.profil || {};
+    return '<div class="ap-acces" aria-label="Carte d’accès"><div class="ap-acces-photo">' + visage(p.full_name) + '</div><div class="ap-acces-texte">' +
+      '<span class="ap-acces-sur">Mannequin · Accès événement</span><b>' + esc(String(p.full_name || '').toUpperCase()) + '</b>' +
+      '<span class="ap-acces-ev">' + esc(e.titre) + ' · ' + esc(datesEvenement(e)) + '</span></div><div class="ap-acces-bande">ACCÈS MANNEQUIN · MA2M</div></div>';
+  }
+  function photoProfil() {
+    const vues = photosAffichees(etat.photos);  // (js/app.js : même règle que la fiche publique)
+    return vues.profil ? (vues.profil.url_petite || vues.profil.url_miniature || vues.profil.url) : '';
+  }
+  function visage(nom) {
+    const url = photoProfil();
+    const initiales = String(nom || '?').trim().split(/\s+/).map((x) => x.charAt(0)).slice(0, 2).join('').toUpperCase();
+    return url ? '<img src="' + esc(urlPhotoMemeOrigine(url)) + '" alt="" loading="lazy">' : '<span>' + esc(initiales) + '</span>';
+  }
+  function carteEvenement(e, mise) {
+    const sombre = mise === 'sombre';
+    const passages = passagesVus[e.jeton];
+    return '<article class="ap-carte' + (sombre ? ' sombre' : '') + '"><div class="ap-ligne entre"><span class="ap-pastille or">' + esc(libelleTypeAgenda(e.type)) +
+      (sombre && !e.passe ? ' · ' + esc(dansJours(e.date_debut) <= 0 ? 'aujourd’hui' : dansJours(e.date_debut) === 1 ? 'demain' : 'dans ' + dansJours(e.date_debut) + ' jours') : '') + '</span>' + pastilleReponse(e) + '</div>' +
+      '<h3 class="ap-ev-titre">' + esc(e.titre) + '</h3>' + infosEvenement(e) +
+      (e.defile && e.reponse === 'confirme' && !e.passe ? (passages ? '<div class="ap-passages"><span class="doux">Mes passages</span>' +
+        (passages.length ? passages.map((x) => '<div class="ap-passage"><span>' + esc(jourCourt(x.jour) + (x.salle ? ' · ' + x.salle : '') + (x.theme ? ' · ' + x.theme : '')) + '</span><b>' + esc(heure(x.debut) || '—') + '</b></div>').join('')
+          : '<p class="doux">Pas encore de passage pour vous : l’agence prépare le programme.</p>') +
+        '<a class="ap-btn' + (sombre ? ' clair' : '') + '" href="/confirmer.html?c=' + esc(encodeURIComponent(e.jeton)) + '">📋 Tout le programme</a></div>'
+        : '<button type="button" class="ap-btn' + (sombre ? ' clair' : '') + '" data-passages="' + esc(e.jeton) + '">👠 Voir mes passages</button>') : '') +
+      boutonsReponse(e, sombre) + '</article>';
+  }
+
+  // ---------- les cinq onglets ----------
+  function ecranAccueil() {
+    const prochain = aVenir()[0];
+    const m = etat.mensualites;
+    return '<h1>Bonjour <em>' + esc(prenom(etat.profil.full_name)) + '</em></h1>' +
+      '<h2 class="ap-titre-sec">Prochain rendez-vous</h2>' +
+      (prochain ? carteEvenement(prochain, 'sombre') : '<div class="ap-carte doux">Aucune convocation pour le moment. Dès que l’agence vous convoque, elle apparaît ici.</div>') +
+      '<nav class="ap-raccourcis" aria-label="Raccourcis"><a href="#evenements"><span>🎫</span>Ma carte</a><a href="/espace-mannequin"><span>🗂️</span>Ma compcard</a><a href="/espace-mannequin"><span>📄</span>Mon CV</a></nav>' +
+      (m && m.inscrit && moisCourant() && moisCourant().etat !== 'paye' && moisCourant().etat !== 'attente'
+        ? '<a class="ap-carte ap-rappel" href="#paiements">💳 <span>Mensualité de ' + esc(MOIS[Number(String(moisCourant().mois).slice(5, 7)) - 1]) + ' : <b>' + fcfa(m.mensualite) + '</b></span> ›</a>' : '') +
+      (etat.castings.length ? '<h2 class="ap-titre-sec">Messages de l’agence</h2><div class="ap-carte ap-messages">' + etat.castings.map((c) =>
+        '<div class="ap-msg"><i></i><div><b>Casting ouvert : ' + esc(c.nom) + '</b><br><span class="doux">' + esc([c.date_casting ? jourLong(c.date_casting) : '', c.lieu].filter(Boolean).join(' · ') || 'Renseignez-vous auprès de l’agence.') + '</span></div></div>').join('') + '</div>' : '');
+  }
+  function ecranEvenements() {
+    const avenir = aVenir(), passes = etat.evenements.filter((e) => e.passe).reverse();
+    const liste = periode === 'avenir' ? avenir : passes;
+    const confirmes = avenir.filter((e) => e.reponse === 'confirme');
+    return '<div class="ap-onglets" role="tablist"><button type="button" role="tab" data-periode="avenir" aria-selected="' + (periode === 'avenir') + '">À venir (' + avenir.length + ')</button>' +
+      '<button type="button" role="tab" data-periode="passes" aria-selected="' + (periode === 'passes') + '">Passés (' + passes.length + ')</button></div>' +
+      (!etat.evenementsActifs ? '<div class="ap-carte doux">Vos convocations apparaîtront ici très bientôt.</div>'
+        : liste.length ? liste.map((e, i) => carteEvenement(e, periode === 'avenir' && i === 0 ? 'sombre' : '')).join('')
+        : '<div class="ap-carte doux">' + (periode === 'avenir' ? 'Aucune convocation à venir.' : 'Aucun événement passé pour le moment.') + '</div>') +
+      (periode === 'avenir' && confirmes.length ? '<h2 class="ap-titre-sec">Ma carte d’accès</h2>' + carteAcces(confirmes[0]) +
+        '<p class="ap-petit">À montrer à l’entrée de « ' + esc(confirmes[0].titre) + ' ». L’agence vous remet aussi votre carte imprimée.</p>' : '');
+  }
+  function ecranProfil() {
+    const p = etat.profil, a = etat.analyse || { score: 0 };
+    const mesures = [p.height_cm ? (Number(p.height_cm) / 100).toFixed(2).replace('.', ',') + ' m' : '', [p.chest_cm, p.waist_cm, p.hips_cm].every(Boolean) ? [p.chest_cm, p.waist_cm, p.hips_cm].join('-') : ''].filter(Boolean).join(' · ');
+    const vignettes = etat.photos.slice(0, 3);
+    return '<div class="ap-carte ap-ligne haut"><div class="ap-portrait">' + visage(p.full_name) + '</div><div class="ap-plein"><h3 class="ap-ev-titre">' + esc(p.full_name) + '</h3>' +
+      (p.niveau_mannequin ? '<span class="ap-pastille rose">' + esc(niveauNormalise(p.niveau_mannequin, p.years_experience)) + '</span> ' : '') +
+      (p.published ? '<span class="ap-pastille vert">Publié</span>' : '<span class="ap-pastille gris">Pas encore en ligne</span>') +
+      '<p class="doux ap-score">Profil complet à ' + a.score + ' %</p><div class="ap-jauge"><i style="width:' + a.score + '%"></i></div></div></div>' +
+      '<h2 class="ap-titre-sec">Photos du Book <span class="doux">(' + etat.photos.length + ')</span></h2>' +
+      '<div class="ap-galerie">' + vignettes.map((x) => '<img src="' + esc(urlPhotoMemeOrigine(x.url_petite || x.url_miniature || x.url)) + '" alt="" loading="lazy">').join('') +
+      '<a href="/espace-mannequin" aria-label="Ajouter des photos">＋</a></div>' +
+      '<div class="ap-carte ap-liste"><a href="/espace-mannequin">Identité <span>' + esc(p.city || '') + ' ›</span></a>' +
+      '<a href="/espace-mannequin">Mensurations <span>' + esc(mesures) + ' ›</span></a>' +
+      '<a href="/espace-mannequin">Expérience <span>' + etat.nbProjets + ' ' + (etat.nbProjets > 1 ? 'événements' : 'événement') + ' ›</span></a>' +
+      '<a href="/espace-mannequin">Formation et compétences <span>›</span></a></div>' +
+      '<div class="ap-btns"><a class="ap-btn rouge" href="/espace-mannequin">✏️ Modifier mon profil</a><a class="ap-btn" href="/espace-mannequin">🗂️ Compcard et CV</a></div>' +
+      '<button type="button" class="ap-lien" data-deconnexion>Se déconnecter</button>';
+  }
+  function ecranPaiements() {
+    const m = etat.mensualites;
+    let haut;
+    if (!m) haut = '<div class="ap-carte doux">Vos paiements ne sont pas disponibles pour le moment. Réessayez plus tard.</div>';
+    else if (!m.inscrit) haut = '<div class="ap-carte doux">Votre espace n’est pas encore rattaché au registre de l’agence. Contactez l’agence.</div>';
+    else {
+      const mois = m.mois || [], payes = mois.filter((x) => x.etat === 'paye').length, total = Math.max(24, mois.length);
+      const courant = moisCourant(), enRetard = mois.some((x) => x.etat === 'non_paye');
+      const prochain = mois.find((x) => x.etat === 'a_payer' || x.etat === 'non_paye' || x.etat === 'a_venir');
+      haut = '<div class="ap-carte"><div class="ap-ligne entre bas"><div><div class="ap-chiffre">' + payes + ' <small>/ ' + total + '</small></div><div class="doux">mois payés</div></div>' +
+        (enRetard ? '<span class="ap-pastille rose">Retard</span>' : courant && courant.etat === 'attente' ? '<span class="ap-pastille orange">En vérification</span>'
+          : courant && courant.etat === 'a_payer' ? '<span class="ap-pastille orange">À payer avant le 5</span>' : '<span class="ap-pastille vert">À jour</span>') + '</div>' +
+        '<div class="ap-jauge"><i style="width:' + Math.round(payes * 100 / total) + '%"></i></div>' +
+        (prochain ? '<p class="ap-echeance"><b>Prochaine échéance</b><br><span class="doux">' + esc(MOIS[Number(String(prochain.mois).slice(5, 7)) - 1]) + ' · ' + fcfa(m.mensualite) + '</span></p>' : '') +
+        '<div class="ap-btns"><a class="ap-btn rouge" href="/mes-paiements">Payer avec Wave</a><a class="ap-btn" href="/mes-paiements">Mes reçus</a></div></div>';
+    }
+    return '<h2 class="ap-titre-sec">Formation · mensualités</h2>' + haut +
+      '<h2 class="ap-titre-sec">Mes cachets</h2>' + (etat.cachets.length ? '<div class="ap-carte ap-cachets">' + etat.cachets.map((c) =>
+        '<div class="ap-cachet"><div><b>' + esc(c.prestation || c.motif || 'Cachet') + '</b><br><span class="doux">' + esc(c.paye_le ? jourLong(String(c.paye_le).slice(0, 10)) : '') + '</span></div>' +
+        '<div class="ap-droite"><b>' + fcfa(c.montant) + '</b><br><span class="ap-pastille vert">Payé</span></div></div>').join('') + '</div>'
+        : '<div class="ap-carte doux">Aucun cachet payé pour le moment.</div>');
+  }
+  function ecranAlertes() {
+    const l = alertes();
+    return l.length ? l.map((x) => '<' + (x.lien ? 'a href="' + x.lien + '"' : 'div') + ' class="ap-alerte"><span class="ap-alerte-ic ' + x.fond + '">' + x.ic + '</span><span><b>' + esc(x.titre) + '</b><br>' + esc(x.texte) + '</span></' + (x.lien ? 'a' : 'div') + '>').join('')
+      : '<div class="ap-carte doux">Rien de nouveau : tout est à jour. 👌</div>';
+  }
+  const ECRANS = { accueil: ecranAccueil, evenements: ecranEvenements, profil: ecranProfil, paiements: ecranPaiements, alertes: ecranAlertes };
+  const TITRES = { evenements: 'Mes événements', profil: 'Mon profil', paiements: 'Mes paiements', alertes: 'Alertes' };
+
+  function afficher() {
+    if (!etat) return;
+    const o = ongletCourant(), nbAlertes = alertes().length, nbRepondre = aRepondre().length;
+    const tete = o === 'accueil' ? '<img class="ap-logo" src="/assets/logo-header-clair.png" alt="Maître Akesse Model Management" width="150" height="45">' : '<h1 class="ap-h-onglet">' + TITRES[o] + '</h1>';
+    racine.innerHTML = '<header class="ap-tete">' + tete + (o === 'alertes' ? '' : '<a class="ap-cloche" href="#alertes" aria-label="Alertes (' + nbAlertes + ')">🔔' + (nbAlertes ? '<b>' + nbAlertes + '</b>' : '') + '</a>') + '</header>' +
+      '<main class="ap-ecran" id="ap-ecran">' + ECRANS[o]() + '</main>' +
+      '<nav class="ap-nav" aria-label="Menu">' + ONGLETS.map((x) => {
+        const n = x[0] === 'evenements' ? nbRepondre : x[0] === 'alertes' ? nbAlertes : 0;
+        return '<a href="#' + x[0] + '"' + (x[0] === o ? ' class="actif" aria-current="page"' : '') + '><i aria-hidden="true">' + x[2] + '</i>' + x[1] + (n ? '<b aria-label="' + n + ' nouveau(x)">' + n + '</b>' : '') + '</a>';
+      }).join('') + '</nav>';
+    document.title = (o === 'accueil' ? '' : TITRES[o] + ' · ') + 'MA2M Mannequin';
+  }
+
+  // ---------- actions ----------
+  racine.addEventListener('click', async (e) => {
+    const rep = e.target.closest('[data-repondre]'), per = e.target.closest('[data-periode]'), pas = e.target.closest('[data-passages]');
+    if (per) { periode = per.dataset.periode; afficher(); return; }
+    if (e.target.closest('[data-deconnexion]')) { await sb.auth.signOut().catch(() => null); etat = null; ecranConnexion(); return; }
+    if (pas) {
+      pas.disabled = true;
+      const { data, error } = await sb.rpc('defile_programme', { p_jeton: pas.dataset.passages });
+      if (error) { pas.disabled = false; message('Le programme n’a pas pu être chargé : réessayez.'); return; }
+      // (rien : pas encore retenue dans le programme du défilé)
+      passagesVus[pas.dataset.passages] = ((data && data.passages) || []).filter((x) => x.moi);
+      afficher();
+      return;
+    }
+    if (!rep) return;
+    const ev = etat.evenements.find((x) => x.jeton === rep.dataset.jeton);
+    if (!ev) return;
+    if (rep.dataset.repondre === 'absent' && !confirm('Vous ne pourrez pas venir à « ' + ev.titre + ' » ? L’agence sera prévenue.')) return;
+    rep.disabled = true;
+    const { data, error } = await sb.rpc('convocation_repondre', { p_jeton: ev.jeton, p_reponse: rep.dataset.repondre });
+    if (error || !data) { rep.disabled = false; message('Votre réponse n’a pas pu être envoyée : vérifiez votre connexion et réessayez.'); return; }
+    ev.reponse = rep.dataset.repondre;
+    message(ev.reponse === 'confirme' ? 'Merci ! Votre présence est confirmée.' : 'C’est noté : l’agence est prévenue.');
+    afficher();
+  });
+  addEventListener('hashchange', () => { afficher(); scrollTo(0, 0); });
+
+  // ---------- démarrage ----------
+  async function demarrer(apresConnexion) {
+    let dansNavigateur = false;
+    try { dansNavigateur = sessionStorage.getItem(CLE_NAVIGATEUR) === '1'; } catch (e) { /* stockage indisponible */ }
+    if (!apresConnexion && !installee() && !dansNavigateur) { ecranInstallation(); return; }
+    const { data } = await sb.auth.getSession();
+    if (!data || !data.session) { ecranConnexion(); return; }
+    racine.innerHTML = '<div class="ap-chargement"><img src="/icons/mannequin-192.png" alt="" width="96" height="96"><span>Chargement de votre espace…</span></div>';
+    try {
+      etat = await charger(data.session.user.id);
+    } catch (e) {
+      racine.innerHTML = '<main class="ap-connexion"><div class="ap-carte">Votre espace n’a pas pu être chargé : vérifiez votre connexion. <button type="button" class="ap-btn rouge" id="ap-reessayer">Réessayer</button></div></main>';
+      document.getElementById('ap-reessayer').addEventListener('click', () => demarrer(true));
+      return;
+    }
+    if (!etat.profil) {
+      racine.innerHTML = '<main class="ap-connexion"><div class="ap-carte">Ce compte n’est pas un compte mannequin. <button type="button" class="ap-lien" data-deconnexion>Se déconnecter</button></div></main>';
+      return;
+    }
+    afficher();
+  }
+  demarrer(false);
+})();

@@ -184,15 +184,8 @@ function bindAuthGate(){
     if (!email || !mdp) { msg.textContent = !email && !mdp ? 'Merci d\'indiquer votre e-mail et votre mot de passe.' : (!email ? 'Merci d\'indiquer votre e-mail.' : 'Merci d\'indiquer votre mot de passe.'); return; }
     msg.textContent = 'Connexion…';
     try {
-      const reponse = await fetch('/api/connexion-protegee', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password: mdp, espace: 'mannequin', appareil: idAppareilMa2m() })
-      });
-      const resultat = await reponse.json().catch(() => ({}));
-      const refus = messageAccesRefuse(reponse, resultat, 'E-mail ou mot de passe incorrect'); // js/app.js
+      const refus = await connexionMannequin(email, mdp); // js/app.js
       if (refus) { msg.textContent = refus; return; }
-      const { error } = await sb.auth.setSession({ access_token: resultat.access_token, refresh_token: resultat.refresh_token });
-      if (error) { msg.textContent = 'Erreur de connexion — réessayez.'; return; }
       msg.textContent = '';
       await demarrerApresConnexion();
     } catch (e) {
@@ -230,14 +223,7 @@ function bindAuthGate(){
 
     // Compte créé : connexion immédiate, par le même chemin que « Se connecter ».
     try {
-      const reponse = await fetch('/api/connexion-protegee', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password: mdp, espace: 'mannequin', appareil: idAppareilMa2m() })
-      });
-      const resultat = await reponse.json().catch(() => ({}));
-      if (!reponse.ok) throw new Error('connexion');
-      const { error } = await sb.auth.setSession({ access_token: resultat.access_token, refresh_token: resultat.refresh_token });
-      if (error) throw error;
+      if (await connexionMannequin(email, mdp)) throw new Error('connexion'); // js/app.js
     } catch (e) {
       afficherPanneauAuth('auth-panneau-connexion');
       document.getElementById('au-co-email').value = email;

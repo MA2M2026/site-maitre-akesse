@@ -162,8 +162,7 @@ window.demarrerRapportProfils = function () {
 
   // Profils avec les mensurations de l'Extension 121 et la case « pas d'Instagram »
   // (Extension 126) ; si une de ces colonnes manque, relecture sans elles.
-  var CHAMPS_PROFIL = 'id, full_name, category, published, height_cm, weight_kg, chest_cm, waist_cm, hips_cm, inseam_cm, shoe_size, eye_color, hair_color, ' +
-    'date_naissance, nationalite, city, bio, instagram, niveau_etude, formation_mannequin, languages, niveau_mannequin, years_experience';
+  var CHAMPS_PROFIL = MA2M_CHAMPS_ANALYSE;  // (js/analyse-profil.js)
   async function lireProfils() {
     var lire = function (champs) { return lireToutesLignes(function () { return sb.from('model_profiles').select(champs).not('full_name', 'is', null).order('id'); }); };
     var r = await lire(sansChampsPrives(CHAMPS_PROFIL) + ', shoulder_cm, arm_cm, neck_cm');

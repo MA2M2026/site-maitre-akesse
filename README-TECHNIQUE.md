@@ -362,6 +362,31 @@ on doit la choisir ou l'ouvrir, c'est la photo (avec le nom) qu'on touche. Tout 
 Essai : `test-visages-partout.js` parcourt tous les écrans (et les fiches, panneaux et fenêtres
 qui s'ouvrent ensuite) et échoue si un nom de mannequin est sans photo.
 
+## 📱 Application MA2M Mannequin (25/10/2026, maquette validée par la propriétaire)
+- Adresse : **/app/** (`app/index.html`, `js/mannequin-app.js`, `css/mannequin-app.css`). Application
+  installable par un simple lien (sans Play Store ni App Store) : manifeste `app/manifest.webmanifest`
+  (« MA2M Mannequin », portée /app/, icônes `icons/mannequin-*.png`), service worker `app/sw.js`
+  (copie de secours de l'interface, partagée avec l'Administration : `js/sw-interface.js` ;
+  notifications : `service-worker.js`). Dans le navigateur : écran d'installation (bouton
+  « Installer » de Chrome, aide iPhone), « Continuer sans installer ».
+- Connexion : la même que l'Espace mannequin (`connexionMannequin`, js/app.js : serveur protégé
+  api/connexion-protegee.js). Sur /app/, ni pastille WhatsApp, ni pastille « Installer l'app »,
+  ni visite comptée (`pageApplicationMannequin`, js/app.js).
+- Menu du bas, 5 onglets : **Accueil** (prochain rendez-vous, « Je confirme », raccourcis, castings
+  ouverts, mensualité du mois) ; **Mes événements** (convocations à venir / passées, « Je
+  confirme » / « Je ne pourrai pas venir » = `convocation_repondre`, passages du défilé =
+  `defile_programme`, carte d'accès à montrer) ; **Mon profil** (score de l'analyse partagée
+  js/analyse-profil.js, colonnes `MA2M_CHAMPS_ANALYSE`, photos, mensurations ; modifications sur
+  l'Espace mannequin) ; **Mes paiements** (`mes_mensualites`, `mes_cachets` ; paiement sur
+  /mes-paiements) ; **Alertes** (calculées : convocation à confirmer, rendez-vous proche,
+  mensualité, profil incomplet, castings).
+- Base : `supabase-app-mannequin.sql` — `app_mes_evenements()` : seulement SES convocations
+  déjà envoyées (au moins un envoi « envoyé » ou « à envoyer à la main »), sa propre ligne (pas
+  celle du parent), ou celles de sa fiche du carnet si elle est au registre avec un compte.
+  Essais : essais-app-mannequin.sql, test-app-mannequin.js, test-admin-hors-ligne.js (sans réseau).
+- Étapes suivantes prévues : paiement Wave et profil directement dans l'application, puis
+  notifications sur le téléphone.
+
 ## 🎫 Cartes d'événement (25/10/2026, demande de la propriétaire)
 - Rubrique « Cartes d'événement » (`b2-cartes`, `js/cartes-acces.js`, compartiment « Projets et
   convocations ») ; raccourcis « 🎫 Cartes » sur chaque projet de l'Agenda et dans la

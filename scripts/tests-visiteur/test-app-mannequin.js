@@ -1,0 +1,128 @@
+// Application MA2M Mannequin (/app/, 25/10/2026), comme une vraie mannequin, sur téléphone et
+// ordinateur : l'écran d'installation (manifeste « MA2M Mannequin », icône), « Continuer sans
+// installer », la connexion (même serveur protégé que l'Espace mannequin), puis les 5 onglets du
+// menu du bas : Accueil (prochain rendez-vous, « Je confirme »), Mes événements (passages du
+// défilé, carte d'accès, événements passés, « Je ne pourrai pas venir »), Mon profil, Mes
+// paiements, Alertes ; enfin la déconnexion. Base simulée : rien n'est écrit pour de vrai.
+const { chromium } = require('playwright'); const { spawn } = require('child_process'); const { brancher } = require('./faux-serveur');
+const path = require('path');
+const PORT = String(9600 + Math.floor(Math.random() * 90));
+const BASE = 'http://127.0.0.1:' + PORT;
+let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m); if (!c) ko++; };
+const jour = (n) => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);
+const moisDe = (n) => { const d = new Date(); d.setUTCDate(1); d.setUTCMonth(d.getUTCMonth() + n); return d.toISOString().slice(0, 7) + '-01'; };
+let srv; process.on('exit', () => srv && srv.kill());
+function donnees() {
+  const photo = (i) => '/scripts/tests-visiteur/medias/photo' + i + '.jpg';
+  return {
+    memoriser: true,
+    tables: {
+      model_profiles: [{ id: 'admin-1', full_name: 'AYA KOUASSI', category: 'femme', published: true, height_cm: 178, chest_cm: 84, waist_cm: 61, hips_cm: 90, city: 'Abidjan',
+        niveau_mannequin: 'New Face', years_experience: 0, created_at: '2026-09-01T10:00:00Z' }],
+      model_photos: [1, 2, 3].map((i) => ({ id: 'ph' + i, model_id: 'admin-1', url: photo(i), url_miniature: photo(i), principale: i === 1, created_at: '2026-09-0' + i + 'T10:00:00Z' })),
+      model_projects: [{ id: 'pr1', model_id: 'admin-1' }],
+      casting_projets: [{ nom: 'CASTING CACAO', actif: true, date_casting: jour(20), lieu: 'Studio MA2M', ordre_affichage: 0 }]
+    },
+    rpc: {
+      app_mes_evenements: [
+        { jeton: 'j'.repeat(36), titre: 'ABIDJAN FASHION WEEK', type: 'defile', date_debut: jour(4), date_fin: jour(5), heure: null, heure_convocation: '15:00', lieu: 'Sofitel Hôtel Ivoire', ville: 'Abidjan', reponse: null, passe: false, defile: true },
+        { jeton: 'k'.repeat(36), titre: 'SHOOTING CACAO', type: 'shooting', date_debut: jour(15), date_fin: null, heure: '09:00', heure_convocation: '08:30', lieu: 'Studio MA2M', ville: 'Abidjan', reponse: 'confirme', passe: false, defile: false },
+        { jeton: 'l'.repeat(36), titre: 'BORDER FORUM', type: 'defile', date_debut: jour(-10), date_fin: null, heure: null, heure_convocation: null, lieu: 'Parc des Expositions', ville: 'Abidjan', reponse: 'confirme', passe: true, defile: false }],
+      convocation_repondre: true,
+      defile_programme: { passages: [{ jour: jour(4), debut: '17:00', salle: 'Salle A', theme: null, moi: true, mannequins: [] }, { jour: jour(4), debut: '17:30', salle: 'Salle B', theme: 'Pathé’O', moi: false, mannequins: [] }] },
+      mes_mensualites: { inscrit: true, nom: 'AYA KOUASSI', mensualite: 10000, statut: 'actif', mineur: false,
+        mois: Array.from({ length: 24 }, (_, i) => ({ mois: moisDe(i - 8), etat: i < 8 ? 'paye' : i === 8 ? 'a_payer' : 'a_venir' })) },
+      mes_cachets: [{ numero: 'C-0001', montant: 25000, motif: null, prestation: 'Border Forum', paye_le: jour(-8) + 'T10:00:00Z', jeton: 'x' }]
+    }
+  };
+}
+(async () => {
+  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: path.resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise((r) => setTimeout(r, 900));
+  const b = await chromium.launch();
+  for (const [nom, ecran] of [['téléphone', { width: 390, height: 844 }], ['ordinateur', { width: 1280, height: 860 }]]) {
+    const tel = ecran.width < 700, n = nom + ' : ';
+    const ctx = await b.newContext({ viewport: ecran, isMobile: tel, hasTouch: tel, serviceWorkers: 'block' });
+    const p = await ctx.newPage(); const errs = [], journal = [];
+    p.on('pageerror', (e) => errs.push(e.message));
+    p.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource|ERR_FAILED/.test(m.text())) errs.push('console : ' + m.text().slice(0, 160)); });
+    p.on('dialog', (d) => d.accept());
+    const d = donnees();
+    await brancher(p, d, journal);
+    const rpc = (nomRpc) => journal.filter((j) => j[0] === 'rpc' && j[1] === nomRpc).map((j) => JSON.parse(j[2] || '{}'));
+    // CAPTURES=dossier : images des écrans (téléphone) pour les regarder
+    const capture = (nomCapture) => (process.env.CAPTURES && tel ? p.screenshot({ path: path.join(process.env.CAPTURES, nomCapture + '.png') }) : null);
+    const deborde = () => p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);
+
+    // 1. Le lien reçu : l'écran d'installation
+    await p.goto(BASE + '/app/'); await p.waitForSelector('.ap-installation', { timeout: 15000 });
+    const manifeste = await p.evaluate(async () => { const l = document.querySelector('link[rel="manifest"]'); const r = await fetch(l.href); return r.json(); });
+    ok(/MA2M Mannequin/.test(await p.textContent('h1')) && (await p.$$('.ap-etapes li')).length === 3 && (await p.isVisible('#ap-installer')) !== (await p.isVisible('#ap-installer-aide')) && manifeste.name === 'MA2M Mannequin' && manifeste.scope === '/app/' && manifeste.display === 'standalone' && manifeste.icons.some((i) => i.purpose === 'maskable'),
+      n + 'écran d’installation (3 étapes, le bouton « Installer » ou l’aide, pas les deux) ; application « MA2M Mannequin » installable (sa propre icône, s’ouvre sans barre d’adresse)');
+    ok((await p.evaluate(async () => (await fetch('/icons/mannequin-512.png')).ok)) && (await p.evaluate(async () => (await fetch('/app/sw.js')).ok)), n + 'icône et service worker de l’application présents');
+    ok(!(await p.$('#pastille-installer')) && !(await p.$('.whatsapp-flottant, #whatsapp-flottant, .bouton-whatsapp')), n + 'ni pastille « Installer l’app » du site ni bouton WhatsApp flottant dans l’application');
+    await capture('0-installation');
+    // 2. Continuer sans installer → connexion
+    await p.click('#ap-continuer'); await p.waitForSelector('#ap-form-connexion');
+    await p.click('#ap-form-connexion button[type=submit]');
+    ok(/e-mail et votre mot de passe/.test(await p.textContent('#ap-connexion-msg')), n + 'connexion : champs vides → message, rien n’est envoyé');
+    await capture('0b-connexion');
+    await p.fill('#ap-email', 'aya@test.ci'); await p.fill('#ap-mdp', 'motdepasse1');
+    await p.click('#ap-form-connexion button[type=submit]'); await p.waitForSelector('.ap-nav', { timeout: 15000 });
+    const appel = journal.find((j) => j[0] === 'API' && j[1] === '/api/connexion-protegee');
+    ok(appel && JSON.parse(appel[2]).espace === 'mannequin' && JSON.parse(appel[2]).email === 'aya@test.ci', n + 'connexion par le serveur protégé de l’Espace mannequin');
+    // 3. Accueil
+    const accueil = await p.textContent('#ap-ecran');
+    ok(/Bonjour\s*Aya(?!A)/.test(accueil) && /ABIDJAN FASHION WEEK/.test(accueil) && /dans 4 jours/.test(accueil) && /À répondre/.test(accueil) && /Convocation à 15h00/.test(accueil), n + 'Accueil : « Bonjour Aya », prochain rendez-vous (dans 4 jours, convocation à 15h00, à répondre)');
+    ok((await p.$$('.ap-nav a')).length === 5 && /Accueil.*Événements.*Profil.*Paiements.*Alertes/s.test(await p.textContent('.ap-nav')) && /1/.test(await p.textContent('.ap-nav a[href="#evenements"]')), n + 'menu du bas : 5 onglets, « 1 » sur Événements (à répondre)');
+    ok(/Ma carte.*Ma compcard.*Mon CV/s.test(await p.textContent('.ap-raccourcis')) && /CASTING CACAO/.test(accueil) && /Mensualité de .*10 000 F/.test(accueil), n + 'Accueil : raccourcis, casting ouvert, mensualité du mois à payer');
+    const nav = await p.evaluate(() => { const r = document.querySelector('.ap-nav').getBoundingClientRect(); return Math.abs(r.bottom - innerHeight) < 2; });
+    ok(nav && !(await deborde()), n + 'menu collé en bas de l’écran, rien ne dépasse');
+    await capture('1-accueil');
+    // 4. Je confirme
+    await p.click('.ap-carte.sombre [data-repondre="confirme"]'); await p.waitForTimeout(700);
+    const rep = rpc('convocation_repondre').pop() || {};
+    ok(rep.p_jeton === 'j'.repeat(36) && rep.p_reponse === 'confirme' && /Confirmée/.test(await p.textContent('.ap-carte.sombre')) && /présence est confirmée/.test(await p.textContent('#ap-message')),
+      n + '« Je confirme » : réponse envoyée avec son lien personnel, « ✓ Confirmée » affiché');
+    // 5. Mes événements : passages du défilé, carte d'accès, passés
+    await p.click('.ap-nav a[href="#evenements"]'); await p.waitForSelector('.ap-onglets');
+    ok((await p.$$('#ap-ecran article.ap-carte')).length === 2 && /SHOOTING CACAO/.test(await p.textContent('#ap-ecran')) && /Mes événements/.test(await p.textContent('.ap-tete')), n + 'Mes événements : les 2 à venir');
+    await p.click('[data-passages]'); await p.waitForSelector('.ap-passage');
+    const passages = await p.$$eval('.ap-passage', (l) => l.map((x) => x.textContent));
+    ok(rpc('defile_programme').length === 1 && passages.length === 1 && /Salle A/.test(passages[0]) && /17h00/.test(passages[0]) && (await p.getAttribute('.ap-passages a', 'href')) === '/confirmer.html?c=' + 'j'.repeat(36),
+      n + 'défilé : ses passages seulement (Salle A, 17h00), « Tout le programme » sur sa page personnelle');
+    await capture('2-evenements');
+    ok(/AYA KOUASSI/.test(await p.textContent('.ap-acces')) && /ACCÈS MANNEQUIN/.test(await p.textContent('.ap-acces')), n + 'carte d’accès à montrer à l’entrée');
+    await p.click('[data-periode="passes"]'); await p.waitForTimeout(200);
+    ok(/BORDER FORUM/.test(await p.textContent('#ap-ecran')) && !/SHOOTING CACAO/.test(await p.textContent('#ap-ecran')), n + 'onglet « Passés »');
+    await p.click('[data-periode="avenir"]');
+    await p.click('article.ap-carte:has-text("SHOOTING CACAO") [data-repondre="absent"]'); await p.waitForTimeout(600);
+    ok((rpc('convocation_repondre').pop() || {}).p_reponse === 'absent' && /Absent\(e\)/.test(await p.textContent('article.ap-carte:has-text("SHOOTING CACAO")')), n + '« Je ne pourrai pas venir » (après confirmation) : l’agence est prévenue');
+    // 6. Profil
+    await p.click('.ap-nav a[href="#profil"]'); await p.waitForSelector('.ap-portrait');
+    const profil = await p.textContent('#ap-ecran');
+    ok(/AYA KOUASSI/.test(profil) && /New Face/.test(profil) && /Publié/.test(profil) && /Profil complet à \d+ %/.test(profil) && /1,78 m · 84-61-90/.test(profil) && (await p.$$('.ap-galerie img')).length === 3,
+      n + 'Mon profil : niveau, en ligne, profil complet en %, mensurations, photos du Book');
+    await capture('3-profil');
+    ok((await p.getAttribute('a.ap-btn.rouge', 'href')) === '/espace-mannequin', n + '« Modifier mon profil » ouvre l’Espace mannequin');
+    // 7. Paiements
+    await p.click('.ap-nav a[href="#paiements"]'); await p.waitForSelector('.ap-chiffre');
+    const paiements = await p.textContent('#ap-ecran');
+    ok(/8\s*\/\s*24/.test(paiements) && /mois payés/.test(paiements) && /À payer avant le 5/.test(paiements) && /Border Forum/.test(paiements) && /25 000 F/.test(paiements) && (await p.getAttribute('a.ap-btn.rouge', 'href')) === '/mes-paiements',
+      n + 'Mes paiements : 8 mois sur 24, cachet reçu, « Payer avec Wave »');
+    await capture('4-paiements');
+    // 8. Alertes
+    await p.click('.ap-nav a[href="#alertes"]'); await p.waitForSelector('.ap-alerte');
+    const alertes = await p.textContent('#ap-ecran');
+    ok(/Mensualité de/.test(alertes) && /Casting ouvert : CASTING CACAO/.test(alertes) && !/confirmez votre présence/.test(alertes), n + 'Alertes : mensualité, casting ; plus de convocation à confirmer');
+    await capture('5-alertes');
+    ok(!(await deborde()), n + 'rien ne dépasse de l’écran');
+    // 9. Déconnexion
+    await p.click('.ap-nav a[href="#profil"]'); await p.click('[data-deconnexion]'); await p.waitForSelector('#ap-form-connexion');
+    ok(true, n + 'déconnexion : retour à la connexion');
+    ok(!errs.length, n + 'aucune erreur ' + errs.join(' | '));
+    await ctx.close();
+  }
+  await b.close();
+  console.log(ko ? '\n❌ ' + ko + ' échec(s)' : '\nTout est bon.');
+  process.exit(ko ? 1 : 0);
+})();

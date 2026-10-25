@@ -1774,6 +1774,20 @@ function idAppareilMa2m() {
     return v;
   } catch (e) { return null; }
 }
+// Connexion d'une mannequin (Espace mannequin, application MA2M Mannequin) par le serveur
+// protégé (api/connexion-protegee.js : blocage après trop d'erreurs, par appareil). Renvoie ''
+// quand la session est ouverte, sinon le message à afficher.
+async function connexionMannequin(email, mdp) {
+  const reponse = await fetch('/api/connexion-protegee', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password: mdp, espace: 'mannequin', appareil: idAppareilMa2m() })
+  });
+  const resultat = await reponse.json().catch(() => ({}));
+  const refus = messageAccesRefuse(reponse, resultat, 'E-mail ou mot de passe incorrect');
+  if (refus) return refus;
+  const { error } = await sb.auth.setSession({ access_token: resultat.access_token, refresh_token: resultat.refresh_token });
+  return error ? 'Erreur de connexion — réessayez.' : '';
+}
 // Jeton de la session ouverte (mannequin ou admin), ou null.
 async function jetonSessionCourante() {
   const { data: { session } } = await sb.auth.getSession();
@@ -2563,10 +2577,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Pages de l'agence (Administration) : ni pastille « Nous contacter », ni visite comptée
 function pageAdministration() { return /^\/admin(\/|$)/.test(window.location.pathname) || window.location.pathname.includes('tableau-de-bord'); }
+// Application MA2M Mannequin (/app/, 25/10/2026) : son propre menu, son installation et son
+// service worker (app/sw.js) — ni pastille WhatsApp, ni pastille « Installer », ni visite comptée
+function pageApplicationMannequin() { return /^\/app(\/|$)/.test(window.location.pathname); }
 
 // Pastille WhatsApp flottante, injectée sur toutes les pages publiques
 document.addEventListener('DOMContentLoaded', () => {
-  if (pageAdministration()) return;
+  if (pageAdministration() || pageApplicationMannequin()) return;
   const bouton = document.createElement('a');
   bouton.href = MA2M_WHATSAPP;
   bouton.target = '_blank';
@@ -2816,7 +2833,7 @@ async function journaliserPhotosEchouees(source, dossierId, nbEchouees) {
 document.addEventListener('DOMContentLoaded', async () => {
   if (!sb) return;
   // L'Administration (agence) n'est pas une visite du site : elle ne fausse plus les chiffres.
-  if (pageAdministration()) return;
+  if (pageAdministration() || pageApplicationMannequin()) return;
   // Clé par page ET par fiche : avant, toutes les fiches mannequin partageaient la
   // même clé (/mannequin) — seule la première fiche vue dans la session était
   // comptée, ce qui faussait le classement des mannequins les plus vus.
@@ -2876,8 +2893,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // ================== Installation sur l'écran d'accueil (PWA) ==================
 (function installationEcranAccueil() {
-  // (l'Administration a son propre service worker, admin/sw.js, et son bouton « Installer »)
-  if (pageAdministration()) return;
+  // (l'Administration et l'application des mannequins ont leur propre service worker et leur
+  // propre bouton « Installer »)
+  if (pageAdministration() || pageApplicationMannequin()) return;
   // Enregistre le service worker (nécessaire pour l'installabilité sur Android/Chrome)
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
