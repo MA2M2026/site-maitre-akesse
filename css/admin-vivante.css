@@ -85,7 +85,9 @@ img { max-width: 100%; }
 /* Menu en compartiments (24/10/2026) : chaque groupe dans son cadre, bien séparé des autres ;
    le compartiment de la page ouverte est souligné */
 .compartiment { margin: 10px 0; padding: 4px 6px 6px; border: 1px solid var(--av-creux); border-radius: var(--av-rayon); background: var(--av-papier); }
-.compartiment .sous-titre-menu { padding: 10px 8px 6px; color: var(--av-encre); font-weight: 600; }
+/* titres des parties en rouge (25/10/2026, demande de la propriétaire) : on les distingue tout de
+   suite des lignes en dessous (contraste 4,9 sur le papier du menu) */
+.compartiment .sous-titre-menu { padding: 10px 8px 6px; color: var(--av-rouge); font-weight: 700; }
 .compartiment:has(.nav.actif) { border-color: var(--av-rouge); }
 .nav {
   display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 7px 12px; min-height: 36px;
