@@ -55,7 +55,7 @@ const SCRIPTS_NOUVELLE_ADMIN = /^\/js\/admin\/site-[\w-]+\.js$/;
 function base64url(octets) {
   let b = '';
   new Uint8Array(octets).forEach(o => { b += String.fromCodePoint(o); });
-  return btoa(b).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return btoa(b).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');  // « = » n'existe qu'en fin de base64
 }
 async function signer(secret, texte) {
   const cle = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
@@ -100,15 +100,26 @@ function echapper(texte) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
+// Retire le dernier mot entamé et les espaces qui le précèdent (texte sans espace : inchangé).
+// Sans expression régulière (SonarCloud S8786, 26/10/2026).
+function sansDernierMot(s) {
+  const blanc = (c) => c === ' ' || c === '\n' || c === '\t' || c === '\r';
+  let fin = s.length;
+  while (fin > 0 && !blanc(s[fin - 1])) fin--;
+  if (fin === 0) return s;
+  while (fin > 0 && blanc(s[fin - 1])) fin--;
+  return s.slice(0, fin);
+}
+
 // Texte riche (HTML de l'éditeur) → texte simple, court, pour la description.
 function texteSimple(html, max) {
   const texte = String(html || '')
     .replace(/<(br|\/p|\/div|\/li|\/h[1-6])[^>]*>/gi, ' ')
-    .replace(/<[^>]+>/g, '')
+    .replace(/<[^<>]*>/g, '')
     .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'")
     .replace(/\s+/g, ' ').trim();
-  return texte.length > max ? texte.slice(0, max - 1).replace(/\s+\S*$/, '') + '…' : texte;
+  return texte.length > max ? sansDernierMot(texte.slice(0, max - 1)) + '…' : texte;
 }
 
 // corps : envoi (POST, fonctions « rpc/… ») ; null si la base répond une erreur
@@ -272,8 +283,17 @@ async function lireDonneesAccueil() {
   if (donnees.mot) donnees.motEn = await motEnAnglais(donnees.mot).catch(() => null);
   return donnees;
 }
+// Retire espaces, tabulations et retours à la ligne en début et en fin (pas les espaces
+// insécables : même règle que js/app.js et traduction_cle en base). Sans expression régulière (SonarCloud
+// S8786, 26/10/2026 : une expression « ^…+|…+$ » peut devenir très lente sur un long texte).
+function rognerBlancs(s) {
+  let debut = 0, fin = s.length;
+  while (debut < fin && ' \t\r\n'.includes(s[debut])) debut++;
+  while (fin > debut && ' \t\r\n'.includes(s[fin - 1])) fin--;
+  return s.slice(debut, fin);
+}
 async function empreinteTexte(t) {
-  const propre = String(t == null ? '' : t).replace(/^[ \t\r\n]+|[ \t\r\n]+$/g, '');
+  const propre = rognerBlancs(String(t == null ? '' : t));
   const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(propre));
   return Array.from(new Uint8Array(h), (x) => x.toString(16).padStart(2, '0')).join('');
 }

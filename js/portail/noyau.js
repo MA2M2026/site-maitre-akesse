@@ -27,7 +27,7 @@
   P.esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   // Logo de l'agence (version claire, pour les fonds sombres) à la place du texte « M A 2 M »
   P.logo = (classe) => '<img class="logo-portail ' + classe + '" src="/assets/logo-header.png" width="600" height="182" alt="Maître Akesse Model Management">';
-  P.fcfa = (n) => String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' FCFA';
+  P.fcfa = (n) => (Math.round(Number(n) || 0) || 0).toLocaleString('fr-FR').replace(/[\u202f\u00a0]/g, ' ') + ' FCFA';
   // Âge en années à partir d'une date 'AAAA-MM-JJ' (null si absente)
   P.age = (d) => window.ageMannequin(d);  // js/messages-mensualites.js
   P.date = (d) => { if (!d) return '—'; const s = String(d).slice(0, 10).split('-'); return s[2] + '/' + s[1] + '/' + s[0]; };

@@ -199,7 +199,12 @@ function cleAccesTableauValide(req, userId) {
   return attendue.length === recue.length && require('crypto').timingSafeEqual(attendue, recue);
 }
 
+// Adresse e-mail acceptée (une seule façon de lire l'adresse : étiquettes du domaine sans point,
+// séparées par des points — SonarCloud S8786, 26/10/2026). Même règle que js/app.js.
+const EMAIL_VALIDE = /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/;
+
 module.exports = {
+  EMAIL_VALIDE,
   SUPABASE_URL, cleService, enTetesService, jetonDe, corpsDe,
   verifierUtilisateur, lignesAdmin, estAdmin, adminVerifie, ficheStaff, creerClientR2, cheminSur, extraireIp, nettoyerAppareil,
   debutRequete, chargeJeton, dernierCode, compteurTentatives, cookieAccesTableau, cleAccesTableauValide, COOKIE_ACCES_TABLEAU_EFFACE

@@ -106,7 +106,7 @@ async function personneEnregistrer(px) {
   if (nom.length < 2) throw new Error('Indiquez le nom complet de la personne.');
   if (!tel && !email && !ptel) throw new Error($('email') ? 'Indiquez au moins son WhatsApp ou son e-mail (ou, pour une mineure de l’agence, celui de son parent).' : 'Indiquez son numéro WhatsApp (ex. 07 01 02 03 04), ou, pour une mineure de l’agence, celui de son parent.');
   if (tel && !numeroWhatsApp(tel)) throw new Error('Ce numéro WhatsApp ne semble pas correct (ex. 07 01 02 03 04).');
-  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Cette adresse e-mail ne semble pas correcte.');
+  if (email && !EMAIL_VALIDE.test(email)) throw new Error('Cette adresse e-mail ne semble pas correcte.');
   if (!!pnom !== !!ptel) throw new Error('Pour le parent, indiquez son nom ET son WhatsApp (ou laissez les deux vides).');
   if (ptel && !numeroWhatsApp(ptel)) throw new Error('Le numéro WhatsApp du parent ne semble pas correct.');
   var civilite = $('civ').value;

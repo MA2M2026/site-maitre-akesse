@@ -12,7 +12,7 @@
 //
 // Variable d'environnement requise sur Vercel : SUPABASE_SERVICE_ROLE_KEY.
 
-const { SUPABASE_URL, enTetesService, verifierUtilisateur, adminVerifie, ficheStaff, debutRequete } = require('./_commun.js');
+const { SUPABASE_URL, enTetesService, verifierUtilisateur, adminVerifie, ficheStaff, debutRequete, EMAIL_VALIDE } = require('./_commun.js');
 
 module.exports = async function handler(req, res) {
   const debut = debutRequete(req, res, true); // POST + clé serveur + jeton (api/_commun.js)
@@ -20,7 +20,7 @@ module.exports = async function handler(req, res) {
   const { jeton, corps } = debut;
   const email = corps && typeof corps.email === 'string' ? corps.email.trim() : '';
   const motDePasse = corps && typeof corps.password === 'string' ? corps.password : '';
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!email || !EMAIL_VALIDE.test(email)) {
     res.status(400).json({ error: 'Adresse e-mail invalide.' });
     return;
   }

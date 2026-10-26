@@ -10,7 +10,7 @@
   // (MA2M_APPLI) avec js/messages-candidats.js, js/rapport-profils-admin.js, js/portail/espace-paiements.js.
   const MA2M_APPLI = 'https://mannequin.maitreakessemodelmanagement.com/app/';
   const LIEN = MA2M_APPLI + 'mes-paiements.html';
-  const fcfa = (n) => String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' FCFA';
+  const fcfa = (n) => (Math.round(Number(n) || 0) || 0).toLocaleString('fr-FR').replace(/[\u202f\u00a0]/g, ' ') + ' FCFA';
   function ageMannequin(d) {
     if (!/^\d{4}-\d{2}-\d{2}/.test(d || '')) return null;
     const n = new Date(String(d).slice(0, 10) + 'T12:00:00'), a = new Date();

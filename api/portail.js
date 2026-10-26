@@ -9,7 +9,7 @@
 // (Les actions de l'inscription par code et des paiements viendront avec l'espace 2.)
 
 const crypto = require('crypto');
-const { SUPABASE_URL, enTetesService, verifierUtilisateur, extraireIp, debutRequete, chargeJeton, dernierCode, compteurTentatives } = require('./_commun.js');
+const { SUPABASE_URL, enTetesService, verifierUtilisateur, extraireIp, debutRequete, chargeJeton, dernierCode, compteurTentatives, EMAIL_VALIDE } = require('./_commun.js');
 
 // adresse séparée de l'Administration (v2.4) : le lien d'invitation y mène
 const ADMINISTRATION = 'https://admin.maitreakessemodelmanagement.com';
@@ -167,7 +167,7 @@ module.exports = async function handler(req, res) {
 
       if (action === 'inviter') {
         const email = String(corps.email || '').trim().toLowerCase(), nom = String(corps.nom || '').trim(), role = String(corps.role || '');
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !nom || !ROLES.includes(role)) return res.status(400).json({ error: 'Nom, e-mail et rôle obligatoires.' });
+        if (!EMAIL_VALIDE.test(email) || !nom || !ROLES.includes(role)) return res.status(400).json({ error: 'Nom, e-mail et rôle obligatoires.' });
         let userId = await rpcService('portail_utilisateur_par_email', { p_email: email });
         // une personne déjà dans le portail (ou soi-même) : son rôle ne s'écrase pas par une
         // invitation, il se change dans la liste (relecture du 19/10/2026)

@@ -22,9 +22,8 @@
 // Les fonctions SQL correspondantes ne sont plus appelables depuis le
 // navigateur : tout passe par ici, avec la clé service_role.
 
-const { SUPABASE_URL, enTetesService, corpsDe, extraireIp, nettoyerAppareil } = require('./_commun.js');
+const { SUPABASE_URL, enTetesService, corpsDe, extraireIp, nettoyerAppareil, EMAIL_VALIDE } = require('./_commun.js');
 
-const EMAIL_VALIDE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Code d'inscription valable : on remet aussi le chemin secret de la note d'intégration
 // (14/10/2026, api/_r2.js), ou null s'il n'y en a pas (ou si le stockage ne répond pas :

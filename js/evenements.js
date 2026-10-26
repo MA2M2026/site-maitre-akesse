@@ -2,7 +2,7 @@
 const PUBLICATION = PUBLICATIONS.evenements;  // js/publications.js
 // Événements (evenements.html et en/evenements.html) : un seul script pour le français et
 // l'anglais (11/10/2026 : avant, la version anglaise était recopiée dans la page). EN, T : js/app.js.
-const quillRedaction = creerEditeurRiche('red-editeur', T('Racontez cet événement ici… (facultatif)', 'Tell the story of this event here… (optional)'));
+const quillRedaction = editeurRicheDiffere('red-editeur', T('Racontez cet événement ici… (facultatif)', 'Tell the story of this event here… (optional)'));
 
 // "date" (sans heure) : new Date('2026-05-01') est interprété en UTC, ce qui peut
 // afficher la veille selon le fuseau du visiteur — on force midi pour l'éviter.
@@ -115,14 +115,18 @@ brancherFicheLecture(PUBLICATION, () => window.evenementsData, ouvrirRedaction, 
 // modifier un événement existant — un seul éditeur, un seul jeu de champs, avec un aperçu du
 // rendu public qui se met à jour en direct pendant la saisie (js/publications.js).
 function ouvrirRedaction(evenementExistant) {
+  const editeurPret = quillRedaction.preparer();  // éditeur chargé à la demande (js/app.js)
   ouvrirRedactionPublication(evenementExistant, {
     nouvelle: T('Publier un nouvel événement', 'Publish a New Event'), modifier: T('Modifier l’événement', 'Edit Event'),
     images: T('Photos (tu peux en sélectionner plusieurs à la fois)', 'Photos (you can select several at once)'), publier: T('Publier l’événement', 'Publish Event')
   });
   document.getElementById('red-date').value = evenementExistant ? (evenementExistant.date_evenement || '') : '';
   document.getElementById('red-lieu').value = evenementExistant ? (evenementExistant.lieu || '') : '';
-  chargerContenuDansEditeur(quillRedaction, evenementExistant ? evenementExistant.description : '');
   mettreAJourApercuRedaction();
+  void editeurPret.then(() => {
+    chargerContenuDansEditeur(quillRedaction, evenementExistant ? evenementExistant.description : '');
+    mettreAJourApercuRedaction();
+  });
 }
 
 function mettreAJourApercuRedaction() {
@@ -139,14 +143,15 @@ function mettreAJourApercuRedaction() {
 document.getElementById('red-titre').addEventListener('input', mettreAJourApercuRedaction);
 document.getElementById('red-date').addEventListener('input', mettreAJourApercuRedaction);
 document.getElementById('red-lieu').addEventListener('input', mettreAJourApercuRedaction);
-if (quillRedaction && typeof quillRedaction.on === 'function') quillRedaction.on('text-change', mettreAJourApercuRedaction);
+quillRedaction.on('text-change', mettreAJourApercuRedaction);
 
 brancherRedaction(PUBLICATION, ouvrirRedaction, QUESTION_SUPPRESSION, chargerEvenements);
 
-document.getElementById('red-enregistrer-btn').addEventListener('click', () => {
+document.getElementById('red-enregistrer-btn').addEventListener('click', async () => {
   const titre = document.getElementById('red-titre').value.trim();
   if (!titre) { messageRedaction('err', T('Le titre est obligatoire.', 'Title is required.')); return; }
   if (!redaction.id && !redaction.images.length) { messageRedaction('err', T('Choisis au moins une photo.', 'Choose at least one photo.')); return; }
+  await quillRedaction.preparer();
   const description = lireContenuEditeur(quillRedaction);
   void enregistrerPublication(PUBLICATION, {
     titre, date_evenement: document.getElementById('red-date').value || null,
