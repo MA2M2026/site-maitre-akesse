@@ -14,11 +14,11 @@
   const nonActive = P.pasActivee('defile_');  // (js/portail/noyau.js)
   const PAS_ACTIVE = '<div class="carte vide">La Programmation défilé n’est pas encore activée : exécutez une fois le fichier supabase-defiles.sql dans Supabase.</div>';
   const heure = (h) => h ? String(h).replace(':', 'h') : 'heure à préciser';
-  // jours du projet (du premier au dernier), au plus 31
+  // jours du projet (du premier au dernier), au plus 60 comme l’Agenda (joursEntre, js/agenda-admin.js)
   function joursDu(p) {
     const debut = Date.parse(p.date_debut + 'T12:00:00Z'), fin = Date.parse((p.date_fin || p.date_debut) + 'T12:00:00Z');
     const jours = [];
-    for (let t = debut; t <= fin && jours.length < 31; t += 86400000) jours.push(new Date(t).toISOString().slice(0, 10));
+    for (let t = debut; t <= fin && jours.length < 60; t += 86400000) jours.push(new Date(t).toISOString().slice(0, 10));
     return jours;
   }
   // (jourLong : js/app.js)

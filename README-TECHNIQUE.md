@@ -3691,3 +3691,27 @@ axe (accessibilité) sur les 28 pages publiques, SonarCloud. Chantiers menés :
   Production **sans** redirection. Le middleware passe avant ces redirections : il renvoie lui-même
   le domaine nu vers www (`versWww`, middleware.js), sinon l'accueil était servi sans www et ses styles
   bloqués (incident du 26/10/2026, 19 h 50, réglage Vercel remis aussitôt).
+
+## Grand test du 26/10/2026 (20h) — dernière mise en ligne avant le gel
+
+Visites du site en ligne sur iPhone 13, Pixel 7 (Android), iPad et MacBook (Chromium avec profils
+d'appareil ; WebKit n'est pas installé dans l'environnement de test), FR et EN, toutes les pages
+du plan du site + fiche Book + confirmer/places + page 404 + entrée de l'Administration : aucune
+erreur de script, aucun blocage CSP, aucune ressource manquante, aucune page plus large que l'écran.
+Le script de visite est rangé hors du dépôt (mesure des décalages « layout-shift » par page).
+Corrections :
+- **Ancienne application sur www** (journal : manifeste bloqué par le CSP) : `app/sw.js` se retire
+  lui-même quand il tourne sur www (vide sa copie, se désinscrit) ; `vercel.json` laisse
+  `www/app/sw.js` sans renvoi pour que les téléphones concernés le récupèrent, tout le reste de
+  `www/app/*` renvoie vers mannequin.
+- **Pages qui sautaient** : /parcours (place du mois réservée avant les données, `css/parcours.css`),
+  /en/partenaires (le message « aucun partenaire » était masqué avant la traduction, ce qui
+  libérait la place réservée : `js/partenaires.js`), /confirmer et /places (bloc recentré quand le
+  projet arrivait : départ du haut + hauteur du logo, `css/style.css`), écran d'entrée
+  (`font-display: block` pour Allison, préchargée).
+- Programmation défilé : jours du projet jusqu'à 60, comme l'Agenda.
+Expliqués sans correction : jauges d'envoi de /integrer-agence (elles apparaissent sous le bouton
+après le clic, c'est voulu) ; « délai dépassé » des fiches le 21/10 (connexion lente du visiteur,
+second essai automatique déjà en place) ; envoi de photo coupé (3 essais automatiques dans
+`uploaderVersR2`, message clair sinon) ; alerte CSP « style en ligne » sur l'accueil (extension du
+navigateur du visiteur, la page n'a aucun style en ligne).

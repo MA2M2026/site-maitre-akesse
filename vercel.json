@@ -28,7 +28,7 @@
     { "source": "/", "has": [{ "type": "host", "value": "mannequin.maitreakessemodelmanagement.com" }], "destination": "/app/", "permanent": false },
     { "source": "/app", "has": [{ "type": "host", "value": "www.maitreakessemodelmanagement.com" }], "destination": "https://mannequin.maitreakessemodelmanagement.com/app/", "permanent": false },
     { "source": "/app/", "has": [{ "type": "host", "value": "www.maitreakessemodelmanagement.com" }], "destination": "https://mannequin.maitreakessemodelmanagement.com/app/", "permanent": false },
-    { "source": "/app/:chemin*", "has": [{ "type": "host", "value": "www.maitreakessemodelmanagement.com" }], "destination": "https://mannequin.maitreakessemodelmanagement.com/app/:chemin*", "permanent": false },
+    { "source": "/app/:chemin((?!sw\\.js$).*)", "has": [{ "type": "host", "value": "www.maitreakessemodelmanagement.com" }], "destination": "https://mannequin.maitreakessemodelmanagement.com/app/:chemin", "permanent": false },
     { "source": "/admin", "has": [{ "type": "host", "value": "www.maitreakessemodelmanagement.com" }], "destination": "https://admin.maitreakessemodelmanagement.com/admin/", "permanent": false },
     { "source": "/admin/", "has": [{ "type": "host", "value": "www.maitreakessemodelmanagement.com" }], "destination": "https://admin.maitreakessemodelmanagement.com/admin/", "permanent": false },
     { "source": "/tableau-de-bord", "has": [{ "type": "host", "value": "www.maitreakessemodelmanagement.com" }], "destination": "https://admin.maitreakessemodelmanagement.com/admin/", "permanent": false },

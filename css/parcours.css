@@ -157,3 +157,9 @@
   .parcours-chiffres { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 .parcours-espace-haut { margin-top: 3rem; }
+
+/* Première visite : la place du mois est réservée avant l’arrivée des données (sans cela, le
+   bandeau « Un projet avec nos mannequins ? » remontait puis redescendait : journal du 26/10/2026,
+   page qui saute de 0,35 au téléphone). Les visites suivantes réservent la hauteur exacte
+   (data-place-reservee, js/gabarit.js). */
+.parcours-scene:not(.joue) { min-height: 100vh; min-height: 100svh; }

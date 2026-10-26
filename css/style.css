@@ -3040,6 +3040,9 @@ body.porte-verrouillee .couverture-faisceau, body.porte-verrouillee .couverture-
 .introuvable-liens .btn { max-width: 100%; white-space: normal; }
 .introuvable-logo { display: inline-block; max-width: 100%; }
 .introuvable-logo img { width: min(220px, 60vw); height: auto; margin: 0 auto 2.4rem; display: block; }
+/* Confirmer ma présence et places (journal du 25/10/2026 : la page « sautait » quand le projet
+   s'affichait, le bloc étant recentré) : ces pages se remplissent, elles partent du haut */
+.page-introuvable:has(.confirmer, .places) { align-items: flex-start; }
 /* Fiche programme d’un défilé sur « Confirmer ma présence » (24/10/2026, js/confirmer.js) */
 .cf-programme { width: 100%; max-width: 640px; margin: 2rem auto 1rem; text-align: left; }
 .cf-programme h2 { font-size: 1.25rem; margin: 1.6rem 0 .6rem; }

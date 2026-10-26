@@ -23,8 +23,10 @@ async function chargerPartenaires() {
     vide.style.display = 'block';
     return;
   }
-  vide.style.display = 'none';
   await versAnglais(data, ['structure', 'evenement', 'role', 'description'], true);  // (page anglaise, js/app.js)
+  // après la traduction (grand test du 26/10/2026) : masquer ce message libère la place
+  // réservée à la liste (css/style.css) ; avant, le bas de page remontait le temps de traduire
+  vide.style.display = 'none';
   window.partenairesData = data;
 
   grille.innerHTML = data.map((p, i) => `

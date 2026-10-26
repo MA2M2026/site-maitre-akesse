@@ -2,6 +2,17 @@
 // l'application installable et garde une copie de l'INTERFACE pour qu'elle s'ouvre même avec
 // une connexion coupée (js/sw-interface.js, partagé avec l'Administration). Notifications :
 // celles du service worker du site (service-worker.js), chargé ici.
+// Depuis le 25/10/2026, l'application vit sur mannequin.maitreakessemodelmanagement.com. Un ancien
+// service worker resté sur www (téléphones qui l'avaient installée avant) se retire : il vide sa
+// copie et se désinscrit, et www/app/ renvoie alors vers la bonne adresse (journal du 26/10/2026 :
+// manifeste de l'application bloqué sur www). vercel.json laisse www/app/sw.js sans renvoi pour cela.
+const SUR_WWW = /^www\./.test(self.location.hostname);
+if (SUR_WWW) {
+  self.addEventListener('install', () => self.skipWaiting());
+  self.addEventListener('activate', (e) => e.waitUntil(caches.keys()
+    .then((cles) => Promise.all(cles.filter((k) => k.startsWith('mannequin-app-')).map((k) => caches.delete(k))))
+    .then(() => self.registration.unregister())));
+} else {
 importScripts('/service-worker.js', '/js/sw-interface.js');
 const VERSION = 'mannequin-app-v5';
 const INTERFACE = ['/app/', '/app/manifest.webmanifest', '/css/polices.css', '/css/jetons.css', '/css/installation.css', '/css/mannequin-app.css', '/js/surveillance.js',
@@ -13,3 +24,4 @@ const INTERFACE = ['/app/', '/app/manifest.webmanifest', '/css/polices.css', '/c
   '/js/bouton-appui.js', '/js/pays-naissance.js', '/js/verrou-defilement.js', '/js/conversion-heic.js', '/js/confort.js',
   '/js/espace-mannequin.js', '/js/cachets-communs.js', '/js/mes-paiements.js', '/css/inscription-simplifiee.css', '/js/inscription-simplifiee.js'];
 copieInterface(VERSION, ['mannequin-app-'], '/app/', INTERFACE);
+}

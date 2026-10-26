@@ -3,7 +3,9 @@
    écrit à la main (police Allison, hébergée dans le site), trois boutons en verre dépoli et
    un bouton rond « marche » « Entrer sur le site » (sans compte à rebours). Une seule fois par visite.
    Comportement : js/ecran-entree.js. */
-@font-face { font-family: 'Allison'; font-weight: 400; font-display: swap; src: url('../assets/polices/allison-latin-400-normal.woff2') format('woff2'); }
+/* « block » (grand test du 26/10/2026, iPhone et iPad) : « Bienvenue » attend l'écriture manuscrite
+   (préchargée, au plus 3 s) au lieu de s'écrire d'abord en écriture de secours puis de changer de place */
+@font-face { font-family: 'Allison'; font-weight: 400; font-display: block; src: url('../assets/polices/allison-latin-400-normal.woff2') format('woff2'); }
 
 /* Dès le <head> (avant que la page se dessine), un voile du même fond cache l'accueil :
    pas d'éclair de la page avant l'écran. Retiré dès que l'écran est construit. */
