@@ -857,6 +857,18 @@ function chargerJsPdf() {
   return promesseJsPdf;
 }
 
+// Paiement à l'avance des mensualités (26/10/2026, décision de la propriétaire : jusqu'à 3 mois,
+// même prix) : les prochains mois « à venir », quand aucun mois n'est à payer. Partagé par Mes
+// paiements (js/mes-paiements.js) et l'onglet Paiements de l'application (js/mannequin-app.js) ;
+// la base décide en dernier (mensualites_payer_avance, supabase-paiement-avance.sql).
+const MA2M_AVANCE_MAX = 3;
+function moisPayablesAvance(mois) {
+  const liste = mois || [];
+  if (liste.some((m) => m.etat === 'a_payer' || m.etat === 'non_paye')) return [];
+  const d = new Date(), limite = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + MA2M_AVANCE_MAX, 1)).toISOString().slice(0, 10);
+  return liste.filter((m) => m.etat === 'a_venir' && String(m.mois).slice(0, 10) <= limite).slice(0, MA2M_AVANCE_MAX);
+}
+
 // Coordonnées officielles de l'agence pour les documents générés (PDF), à un seul endroit.
 const MA2M_SITE = 'https://www.maitreakessemodelmanagement.com';
 const MA2M_TELEPHONES = ['+225 27 22 23 11 76', '+225 05 45 65 66 87'];

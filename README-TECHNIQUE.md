@@ -422,9 +422,12 @@ qui s'ouvrent ensuite) et échoue si un nom de mannequin est sans photo.
   (js/mes-paiements.js, aussi dans l'application : app/mes-paiements.html) : quand rien n'est à
   payer, carte « Payer à l'avance » (`#avance`) : 1 à 3 mois, un seul paiement Wave du montant
   total (lien des Paramètres pour ce montant via `lien_paiement`, sinon le lien de secours au bon
-  montant), puis « J'ai payé » déclare chaque mois avec le même numéro
-  (`mensualite_declarer_avec_numero`, qui accepte déjà jusqu'au mois en cours + 3). L'agence
-  voit un paiement orange par mois et les valide comme d'habitude.
+  montant), puis « J'ai payé » déclare tous les mois choisis EN UNE FOIS, tout ou rien :
+  `mensualites_payer_avance(p_nb, p_numero)` (supabase-paiement-avance.sql ; chaque mois passe
+  par `mensualite_declarer_avec_numero`, dans la même transaction donc à la même heure). L'écran
+  « Paiements à vérifier » de l'Administration les regroupe en une ligne au montant total.
+  Mois proposés : `moisPayablesAvance` (js/app.js, partagé avec l'onglet Paiements de
+  l'application). Essais : essais-paiement-avance.sql, test-mensualites.js, test-app-mannequin.js.
 - Onglet Paiements de l'application : « Payer avec Wave » seulement s'il y a un mois à payer ;
   à jour : « Rien à payer pour le moment », « Payer à l'avance » et « Mes mois et mes reçus ».
 

@@ -229,6 +229,7 @@
       const mois = m.mois || [], payes = mois.filter((x) => x.etat === 'paye').length, total = Math.max(24, mois.length);
       const courant = moisCourant(), enRetard = mois.some((x) => x.etat === 'non_paye');
       const prochain = mois.find((x) => x.etat === 'a_payer' || x.etat === 'non_paye' || x.etat === 'a_venir');
+      const avance = moisPayablesAvance(mois).length > 0;  // (js/app.js)
       haut = '<div class="ap-carte"><div class="ap-ligne entre bas"><div><div class="ap-chiffre">' + payes + ' <small>/ ' + total + '</small></div><div class="doux">mois payés</div></div>' +
         (enRetard ? '<span class="ap-pastille rose">Retard</span>' : courant && courant.etat === 'attente' ? '<span class="ap-pastille orange">En vérification</span>'
           : courant && courant.etat === 'a_payer' ? '<span class="ap-pastille orange">À payer avant le 5</span>' : '<span class="ap-pastille vert">À jour</span>') + '</div>' +
@@ -239,9 +240,9 @@
         (mois.some((x) => x.etat === 'a_payer' || x.etat === 'non_paye')
           ? '<div class="ap-btns"><a class="ap-btn rouge" href="/app/mes-paiements.html">Payer avec Wave</a><a class="ap-btn" href="/app/mes-paiements.html">Mes reçus</a></div></div>'
           : '<p class="doux ap-rien-a-payer">' + (courant && courant.etat === 'attente' ? 'Votre paiement est en cours de vérification par l’agence.'
-            : 'Rien à payer pour le moment.' + (prochain ? ' Vous pouvez payer jusqu’à 3 mois à l’avance.' : '')) + '</p>' +
-            // paiement à l'avance (jusqu'à 3 mois : js/mes-paiements.js, carte « Payer à l'avance »)
-            '<div class="ap-btns">' + (prochain && courant && courant.etat === 'paye' ? '<a class="ap-btn rouge" href="/app/mes-paiements.html#avance">Payer à l’avance</a>' : '') +
+            : 'Rien à payer pour le moment.' + (avance ? ' Vous pouvez payer jusqu’à ' + MA2M_AVANCE_MAX + ' mois à l’avance.' : '')) + '</p>' +
+            // paiement à l'avance (moisPayablesAvance, js/app.js ; carte « Payer à l'avance » de js/mes-paiements.js)
+            '<div class="ap-btns">' + (avance ? '<a class="ap-btn rouge" href="/app/mes-paiements.html#avance">Payer à l’avance</a>' : '') +
             '<a class="ap-btn" href="/app/mes-paiements.html">Mes mois et mes reçus</a></div></div>');
     }
     return '<h2 class="ap-titre-sec">Formation · mensualités</h2>' + haut +

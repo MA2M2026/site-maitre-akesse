@@ -1,7 +1,7 @@
 // Mensualités de formation (cahier v2.4, 5.6 et 5.7 ; choix du 19/10/2026), comme une vraie
 // personne, base SIMULÉE :
 //  - « Mes paiements » du mannequin : 24 mois en couleurs, Wave puis « J'ai payé » ; à jour, le
-//    paiement à l'avance (jusqu'à 3 mois, un seul paiement Wave, chaque mois déclaré, 26/10/2026) ;
+//    paiement à l'avance (jusqu'à 3 mois, un seul paiement Wave, déclarés ensemble, 26/10/2026) ;
 //  - serveur du site : relances automatiques par e-mail le 3 et le 5 seulement, jamais sans clé
 //    EmailJS, messages au parent pour un mineur.
 // (L'appel du 1er dans l'espace 2 est essayé dans test-administration.js.)
@@ -58,7 +58,7 @@ async function navigateur() {
     await p.addInitScript((s) => { localStorage.setItem('sb-dfhghgmwmxiguhtxtsle-auth-token', JSON.stringify(s)); }, SESSION);
     const aJour = MOIS.map((m, i) => Object.assign({}, m, { etat: i <= 2 ? 'paye' : 'a_venir' }));
     await brancher(p, { tables: {}, rpc: { mes_mensualites: () => ({ inscrit: true, nom: 'KONÉ AWA', mensualite: 20000, statut: 'actif', mineur: false, mois: aJour }),
-      lien_paiement: (c) => (c.p_montant === 20000 ? 'https://pay.wave.com/m/PARAMETRES/c/ci/?amount=20000' : null), mes_recus: () => [], mes_cachets: () => [], mensualite_declarer_avec_numero: null } }, journal);
+      lien_paiement: (c) => (c.p_montant === 20000 ? 'https://pay.wave.com/m/PARAMETRES/c/ci/?amount=20000' : null), mes_recus: () => [], mes_cachets: () => [], mensualites_payer_avance: 3 } }, journal);
     await p.goto('http://127.0.0.1:' + PORT + '/mes-paiements.html#avance'); await p.waitForSelector('#avance', { timeout: 8000 });
     const carte = () => p.evaluate(() => document.getElementById('avance').innerText.replace(/\u202f|\u00a0/g, ' '));
     ok(/Payer à l’avance/.test(await carte()) && /20 000 FCFA/.test(await carte()) && (await p.$$('#mp-avance-nb option')).length === 3 && !(await p.$('[data-mp=wave]:not([data-mois=avance])')),
@@ -69,10 +69,10 @@ async function navigateur() {
     await p.locator('#avance [data-mp=wave]').evaluate((a) => { a.removeAttribute('target'); a.href = '#avance'; });
     await p.click('#avance [data-mp=wave]'); await p.waitForTimeout(500);
     await p.fill('#mp-num-avance', '+225 07 01 02 03 04'); await p.click('#avance [data-mp=paye]'); await p.waitForTimeout(1200);
-    const declares = journal.filter((j) => j[0] === 'rpc' && j[1] === 'mensualite_declarer_avec_numero').map((j) => JSON.parse(j[2]));
-    ok(declares.length === 3 && declares.map((x) => x.p_mois).join() === [3, 4, 5].map((i) => aJour[i].mois).join() && declares.every((x) => x.p_numero === '+225 07 01 02 03 04')
+    const declares = journal.filter((j) => j[0] === 'rpc' && /^mensualite/.test(j[1])).map((j) => [j[1], JSON.parse(j[2])]);
+    ok(declares.length === 1 && declares[0][0] === 'mensualites_payer_avance' && declares[0][1].p_nb === 3 && declares[0][1].p_numero === '+225 07 01 02 03 04'
       && /L’agence vérifie votre paiement \(3 mois\)/.test(await p.evaluate(() => document.getElementById('mp-zone').innerText)),
-      nomEcran + ' : « J’ai payé » déclare les 3 mois avec le même numéro, l’agence vérifie');
+      nomEcran + ' : « J’ai payé » déclare les 3 mois ensemble (tout ou rien), avec le numéro ; l’agence vérifie');
     const boutons = (await p.evaluate(verifierBoutons)).map((x) => x.texte); ok(!boutons.length, nomEcran + ' : boutons au modèle rouge (paiement à l’avance) ' + boutons.join(' | '));
     ok(!errs.length, nomEcran + ' : aucune erreur de page (paiement à l’avance) ' + errs.join(' | '));
     await ctx.close();

@@ -5,8 +5,9 @@
 // « Mes cachets reçus » (22/10/2026) : cachets payés par l'agence, avec leur reçu (mes_cachets,
 // supabase-cachets-recus.sql ; outils communs window.CachetsMa2m, js/cachets-communs.js).
 // Paiement à l'avance (26/10/2026, décision de la propriétaire : jusqu'à 3 mois, même prix) : quand
-// rien n'est à payer, 1 à 3 mois suivants en un seul paiement Wave, puis « J'ai payé » déclare
-// chacun de ces mois (mensualite_declarer accepte jusqu'au mois en cours + 3).
+// rien n'est à payer, 1 à 3 mois suivants (moisPayablesAvance, js/app.js) en un seul paiement Wave,
+// puis « J'ai payé » les déclare tous ensemble, tout ou rien (mensualites_payer_avance,
+// supabase-paiement-avance.sql : une seule ligne au montant total à vérifier pour l'agence).
 (function () {
   'use strict';
   const zone = document.getElementById('mp-zone');
@@ -17,7 +18,6 @@
   const fcfa = window.CachetsMa2m.fcfa;  // (js/cachets-communs.js, chargé avant)
   const nomMois = (d) => MOIS[Number(String(d).slice(5, 7)) - 1] + ' ' + String(d).slice(0, 4);
   const ETATS = { paye: ['Payé', 'ok'], attente: ['En attente de validation', 'alerte'], non_paye: ['Non payé', 'erreur'], a_payer: ['À payer avant le 5', 'info'], a_venir: ['À venir', 'neutre'] };
-  const AVANCE_MAX = 3;
   let donnees = null, waveOuvert = {}, liensWave = {}, recus = [], numeros = {}, cachets = [], nbAvance = 1;
   const numeroValide = (n) => /^[0-9+ ]{6,20}$/.test(String(n || '').trim());
 
@@ -33,8 +33,8 @@
   // fournit pas encore, la page garde le lien de secours et simplement n'affiche pas les reçus.
   async function complements(d) {
     // (les trois en même temps : une connexion lente n'attend qu'une fois)
-    // (liens Wave du montant d'un mois, et de 2 et 3 mois pour le paiement à l'avance)
-    const montants = [1, 2, 3].map((n) => n * Number(d.mensualite));
+    // (liens Wave du montant d'un mois, et de 2 et 3 mois si le paiement à l'avance est proposé)
+    const montants = Array.from({ length: Math.max(1, moisPayablesAvance(d.mois).length) }, (_, i) => (i + 1) * Number(d.mensualite));
     const [mesRecus, mesCachets, ...liens] = await Promise.allSettled([sb.rpc('mes_recus'), sb.rpc('mes_cachets')]
       .concat(montants.map((m) => sb.rpc('lien_paiement', { p_type: 'mensualite', p_montant: m }))));
     const donneesDe = (x) => (x.status === 'fulfilled' && !x.value.error ? x.value.data : null);
@@ -59,16 +59,11 @@
     return '<div class="mp-carte"><div class="mp-ligne"><span><b>Mensualité · ' + esc(nomMois(m.mois)) + '</b></span><b class="mp-montant">' + fcfa(donnees.mensualite) + '</b></div>' +
       blocPaiement(m.mois, donnees.mensualite) + '</div>';
   }
-  // mois qui peuvent être payés à l'avance : les prochains « à venir », jusqu'au mois en cours + 3
-  function moisAvance(mois) {
-    const d = new Date(), limite = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + AVANCE_MAX, 1)).toISOString().slice(0, 10);
-    return mois.filter((m) => m.etat === 'a_venir' && String(m.mois).slice(0, 10) <= limite).slice(0, AVANCE_MAX);
-  }
   function carteAvance(liste) {
     nbAvance = Math.min(Math.max(1, nbAvance), liste.length);
     const choisis = liste.slice(0, nbAvance), total = nbAvance * Number(donnees.mensualite);
     return '<div class="mp-carte" id="avance"><div class="mp-ligne"><span><b>Payer à l’avance</b></span><b class="mp-montant">' + fcfa(total) + '</b></div>' +
-      '<p class="mp-petit">Jusqu’à ' + AVANCE_MAX + ' mois à l’avance, au même prix, en un seul paiement.</p>' +
+      '<p class="mp-petit">Jusqu’à ' + MA2M_AVANCE_MAX + ' mois à l’avance, au même prix, en un seul paiement.</p>' +
       '<label class="mp-petit" for="mp-avance-nb">Nombre de mois</label>' +
       '<select class="mp-num" id="mp-avance-nb" data-avance-nb>' + liste.map((m, i) => '<option value="' + (i + 1) + '"' + (i + 1 === nbAvance ? ' selected' : '') + '>' + (i + 1) + ' mois · ' + fcfa((i + 1) * Number(donnees.mensualite)) + '</option>').join('') + '</select>' +
       '<p class="mp-petit">Mois payés : <b>' + esc(choisis.map((m) => nomMois(m.mois)).join(', ')) + '</b></p>' +
@@ -89,7 +84,7 @@
     zone.innerHTML = '<div class="mp-tete"><h1>Mes paiements</h1><div class="mp-doux">' + esc(donnees.nom || '') + (donnees.mineur ? ' · mineur : les messages vont au parent' : '') + '</div></div>' +
       (message ? '<div class="mp-bandeau ' + message[1] + '" role="status">' + esc(message[0]) + '</div>' : '') + bandeau +
       ouverts.map(carteAPayer).join('') +
-      (!ouverts.length && courant && courant.etat !== 'attente' && moisAvance(mois).length ? carteAvance(moisAvance(mois)) : '') +
+      (moisPayablesAvance(mois).length ? carteAvance(moisPayablesAvance(mois)) : '') +
       '<h2>Ma formation · 24 mois</h2><p class="mp-doux">' + payes + ' mois réglé' + (payes > 1 ? 's' : '') + ' sur 24.</p>' +
       '<div class="mp-calendrier" role="list">' + mois.map((m, i) => {
         const e = ETATS[m.etat] || [m.etat, 'neutre'];
@@ -129,24 +124,22 @@
     const mois = el.getAttribute('data-mois');
     if (el.getAttribute('data-mp') === 'wave') { waveOuvert[mois] = true; setTimeout(() => afficher(), 300); return; }
     el.disabled = true;
-    // à l'avance : chacun des mois choisis, avec le même numéro (un seul paiement Wave)
-    const liste = mois === 'avance' ? moisAvance(donnees.mois || []).slice(0, nbAvance).map((m) => m.mois) : [mois];
     const numero = String(numeros[mois] || '').trim();
-    let faits = 0;
     try {
-      for (const m of liste) {
-        let { error } = await sb.rpc('mensualite_declarer_avec_numero', { p_mois: m, p_numero: numero });
-        if (error && error.code === 'PGRST202') ({ error } = await sb.rpc('mensualite_declarer', { p_mois: m }));
-        if (error) throw error;
-        faits++;
+      let error;
+      // à l'avance : tous les mois choisis en une fois, tout ou rien (un seul paiement Wave)
+      if (mois === 'avance') ({ error } = await sb.rpc('mensualites_payer_avance', { p_nb: nbAvance, p_numero: numero }));
+      else {
+        ({ error } = await sb.rpc('mensualite_declarer_avec_numero', { p_mois: mois, p_numero: numero }));
+        if (error && error.code === 'PGRST202') ({ error } = await sb.rpc('mensualite_declarer', { p_mois: mois }));
       }
+      if (error) throw error;
+      const nb = mois === 'avance' ? nbAvance : 1;
       donnees = await charger();
       waveOuvert = {}; nbAvance = 1;
-      afficher(['Merci ! L’agence vérifie votre paiement' + (liste.length > 1 ? ' (' + liste.length + ' mois)' : '') + '. Vous serez prévenu(e) par e-mail et WhatsApp dès qu’il est confirmé.', 'bleu']);
+      afficher(['Merci ! L’agence vérifie votre paiement' + (nb > 1 ? ' (' + nb + ' mois)' : '') + '. Vous serez prévenu(e) par e-mail et WhatsApp dès qu’il est confirmé.', 'bleu']);
     } catch (e) {
-      // (une partie des mois peut être déjà déclarée : la grille ci-dessous le montre)
-      if (faits) donnees = await charger().catch(() => donnees);
-      afficher([(faits ? faits + ' mois déclaré(s), puis : ' : '') + (String((e && e.message) || e).replace(/^.*?ERROR:\s*/, '') || 'Connexion impossible. Réessayez.'), 'rouge']);
+      afficher([String((e && e.message) || e).replace(/^.*?ERROR:\s*/, '') || 'Connexion impossible. Réessayez.', 'rouge']);
     }
   });
   afficher();
