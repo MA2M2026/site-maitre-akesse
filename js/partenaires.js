@@ -2,8 +2,8 @@
 // français et l'anglais (11/10/2026 : avant, deux copies dans les pages). EN, T : js/app.js.
 window.partenairesData = [];
 
-const quillPDescription = creerEditeurRiche('p-description-editeur', EN ? 'Write here… (you can paste text already formatted from Word)' : undefined);
-const quillEditPDescription = creerEditeurRiche('edit-p-description-editeur', EN ? 'Write here… (you can paste text already formatted from Word)' : undefined);
+const quillPDescription = editeurRicheDiffere('p-description-editeur', EN ? 'Write here… (you can paste text already formatted from Word)' : undefined);
+const quillEditPDescription = editeurRicheDiffere('edit-p-description-editeur', EN ? 'Write here… (you can paste text already formatted from Word)' : undefined);
 
 async function chargerPartenaires() {
   const grille = document.getElementById('partenaires-grille');
@@ -106,7 +106,7 @@ document.getElementById('part-modal-modifier-btn').addEventListener('click', () 
   document.getElementById('edit-p-structure').value = p.structure || '';
   document.getElementById('edit-p-evenement').value = p.evenement || '';
   document.getElementById('edit-p-role').value = p.role || '';
-  chargerContenuDansEditeur(quillEditPDescription, p.description);
+  void quillEditPDescription.preparer().then(() => chargerContenuDansEditeur(quillEditPDescription, p.description));  // (js/app.js)
   document.getElementById('edit-p-logo').value = '';
   document.getElementById('edit-p-msg').style.display = 'none';
 
@@ -135,6 +135,7 @@ document.getElementById('edit-p-enregistrer-btn').addEventListener('click', asyn
 
   msg.className = 'form-msg ok'; msg.textContent = T('Enregistrement…', 'Saving…'); msg.style.display = 'block';
 
+  await quillEditPDescription.preparer();
   const maj = {
     nom,
     structure: document.getElementById('edit-p-structure').value.trim(),
@@ -176,6 +177,7 @@ document.getElementById('p-publier-btn').addEventListener('click', async () => {
 
   msg.className = 'form-msg ok'; msg.textContent = T('Enregistrement…', 'Saving…'); msg.style.display = 'block';
 
+  await quillPDescription.preparer();
   const idPartenaire = crypto.randomUUID();
   const logoInput = document.getElementById('p-logo');
   const { logo_url, logo_chemin } = (logoInput.files[0] && await envoyerLogoPartenaire(idPartenaire, logoInput.files[0])) || { logo_url: null, logo_chemin: null };
@@ -196,7 +198,7 @@ document.getElementById('p-publier-btn').addEventListener('click', async () => {
   document.getElementById('p-structure').value = '';
   document.getElementById('p-evenement').value = '';
   document.getElementById('p-role').value = '';
-  if (quillPDescription) quillPDescription.setText('');
+  quillPDescription.setText('');
   logoInput.value = '';
   chargerPartenaires().catch(e => { if (window.signalerErreur) window.signalerErreur('Partenaires : chargement', (e && e.message) || String(e)); });
 });

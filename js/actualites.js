@@ -3,7 +3,7 @@ const PUBLICATION = PUBLICATIONS.actualites;  // js/publications.js
 // Actualités (actualites.html et en/actualites.html) : un seul script pour le français et
 // l'anglais (11/10/2026 : avant, la version anglaise était recopiée dans la page). EN, T : js/app.js.
 
-const quillRedaction = creerEditeurRiche('red-editeur', T('Racontez votre actualité ici… (vous pouvez coller un texte déjà mis en forme)', 'Write here… (you can paste text already formatted from Word)'));
+const quillRedaction = editeurRicheDiffere('red-editeur', T('Racontez votre actualité ici… (vous pouvez coller un texte déjà mis en forme)', 'Write here… (you can paste text already formatted from Word)'));
 const LIBELLES_CATEGORIES_EN = { Casting: 'Casting', Mannequinat: 'Modeling', Conseils: 'Tips', Événements: 'Events' };
 function libelleCategorieActu(cat) {
   return EN ? (LIBELLES_CATEGORIES_EN[cat] || cat) : cat;
@@ -147,14 +147,18 @@ brancherFicheLecture(PUBLICATION, () => window.actualitesData, ouvrirRedaction, 
 // pour modifier une actualité existante — un seul éditeur, un seul jeu de champs, avec un
 // aperçu du rendu public qui se met à jour en direct pendant la saisie (js/publications.js).
 function ouvrirRedaction(actualiteExistante) {
+  const editeurPret = quillRedaction.preparer();  // éditeur chargé à la demande (js/app.js)
   ouvrirRedactionPublication(actualiteExistante, {
     nouvelle: T('Rédiger une actualité', 'Write a News Item'), modifier: T('Modifier l’actualité', 'Edit News Item'),
     images: T('Images (tu peux en sélectionner plusieurs à la fois)', 'Images (you can select several at once)'), publier: T('Publier', 'Publish')
   });
   document.getElementById('red-categorie').value = actualiteExistante ? (actualiteExistante.categorie || '') : '';
-  chargerContenuDansEditeur(quillRedaction, actualiteExistante ? actualiteExistante.commentaire : '');
   document.getElementById('red-video').value = actualiteExistante ? (actualiteExistante.video_url || '') : '';
   mettreAJourApercuRedaction();
+  void editeurPret.then(() => {
+    chargerContenuDansEditeur(quillRedaction, actualiteExistante ? actualiteExistante.commentaire : '');
+    mettreAJourApercuRedaction();
+  });
 }
 
 function mettreAJourApercuRedaction() {
@@ -169,7 +173,7 @@ function mettreAJourApercuRedaction() {
 }
 document.getElementById('red-titre').addEventListener('input', mettreAJourApercuRedaction);
 document.getElementById('red-categorie').addEventListener('change', mettreAJourApercuRedaction);
-if (quillRedaction && typeof quillRedaction.on === 'function') quillRedaction.on('text-change', mettreAJourApercuRedaction);
+quillRedaction.on('text-change', mettreAJourApercuRedaction);
 
 brancherRedaction(PUBLICATION, ouvrirRedaction, QUESTION_SUPPRESSION, chargerActualites);
 
@@ -181,6 +185,6 @@ document.getElementById('red-enregistrer-btn').addEventListener('click', () => {
     messageRedaction('err', T('Choisis au moins une image ou ajoute un lien vidéo.', 'Choose at least one image or add a video link.'));
     return;
   }
-  void enregistrerPublication(PUBLICATION, { titre, categorie: categorie || null, commentaire: lireContenuEditeur(quillRedaction), video_url: videoUrl },
-    (n) => T(`Actualité publiée avec ${n} photo(s) !`, `News item published with ${n} photo(s)!`), chargerActualites);
+  void quillRedaction.preparer().then(() => enregistrerPublication(PUBLICATION, { titre, categorie: categorie || null, commentaire: lireContenuEditeur(quillRedaction), video_url: videoUrl },
+    (n) => T(`Actualité publiée avec ${n} photo(s) !`, `News item published with ${n} photo(s)!`), chargerActualites));
 });

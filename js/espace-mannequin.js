@@ -361,7 +361,7 @@ function lireParentFormulaire(){
     telephone: composerTelephone(document.getElementById('f-parent-indicatif'), document.getElementById('f-parent-numero')),
     email: val('f-parent-email').trim().toLowerCase()
   };
-  if (!p.civilite || !p.nom || !val('f-parent-numero').trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email)) {
+  if (!p.civilite || !p.nom || !val('f-parent-numero').trim() || !EMAIL_VALIDE.test(p.email)) {
     toast('Vous avez moins de 18 ans : indiquez la civilité, le nom, le WhatsApp et l’e-mail de votre parent ou tuteur.', true);
     document.getElementById('f-parent-nom')?.focus();
     return false;

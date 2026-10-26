@@ -303,6 +303,9 @@ function urlHttpSure(url) {
 
 // Pages publiques Actualités, Événements, Partenaires : si l'agence est connectée (session du
 // tableau de bord), révèle le panneau d'ajout (#admin-bloc). Partagé le 11/10/2026.
+// Adresse e-mail acceptée (même règle que api/_commun.js ; SonarCloud S8786, 26/10/2026)
+const EMAIL_VALIDE = /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/;
+
 async function verifierAdmin() {
   // Sur une connexion instable, la bibliothèque Supabase (chargée depuis un
   // CDN) peut échouer à se charger — sans ce filet, "sbAdmin" vaut alors null et
@@ -316,6 +319,7 @@ async function verifierAdmin() {
     if (data) {
       window.estAdminConnecte = true;
       document.getElementById('admin-bloc').style.display = 'block';
+      preparerEditeursDifferes();  // l'éditeur de texte, seulement pour l'agence
     }
   } catch (e) {}
 }
@@ -611,8 +615,17 @@ function enAnglais(v) { const k = String(v || '').trim().toLowerCase(); return T
 // supabase-traductions.sql ; écrite dans Administration › Traductions anglaises). Elle est retrouvée
 // par l'empreinte du texte français (la même qu'en base : traduction_cle) ; sans traduction, le
 // français reste. versAnglais remplace les champs des lignes lues, avant leur affichage.
+// Retire espaces, tabulations et retours à la ligne en début et en fin (pas les espaces
+// insécables : même règle que traduction_cle en base). Sans expression régulière (SonarCloud
+// S8786, 26/10/2026 : une expression « ^…+|…+$ » peut devenir très lente sur un long texte).
+function rognerBlancs(s) {
+  let debut = 0, fin = s.length;
+  while (debut < fin && ' \t\r\n'.includes(s[debut])) debut++;
+  while (fin > debut && ' \t\r\n'.includes(s[fin - 1])) fin--;
+  return s.slice(debut, fin);
+}
 async function empreinteTexte(t) {
-  const propre = String(t == null ? '' : t).replace(/^[ \t\r\n]+|[ \t\r\n]+$/g, '');
+  const propre = rognerBlancs(String(t == null ? '' : t));
   const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(propre));
   return Array.from(new Uint8Array(h), (x) => x.toString(16).padStart(2, '0')).join('');
 }
@@ -631,15 +644,15 @@ async function traductionsDe(textes) {
 }
 // garderPourAgence : pages où l'agence connectée modifie les publications (actualités,
 // événements, partenaires) ; elle y garde le français, qu'elle corrige
+// Les lignes sont modifiées sur place (rien n'est rendu : SonarCloud S3516, 26/10/2026).
 async function versAnglais(lignes, champs, garderPourAgence) {
   const liste = (Array.isArray(lignes) ? lignes : [lignes]).filter(Boolean);
-  if (!EN || !liste.length || typeof sb === 'undefined' || !sb || !(window.crypto && crypto.subtle)) return lignes;
+  if (!EN || !liste.length || typeof sb === 'undefined' || !sb || !(window.crypto && crypto.subtle)) return;
   try {
-    if (garderPourAgence && typeof sbAdmin !== 'undefined' && sbAdmin && (await sbAdmin.auth.getSession()).data.session) return lignes;
+    if (garderPourAgence && typeof sbAdmin !== 'undefined' && sbAdmin && (await sbAdmin.auth.getSession()).data.session) return;
     const parTexte = await traductionsDe(liste.flatMap((l) => champs.map((c) => l[c])));
     liste.forEach((l) => champs.forEach((c) => { const v = parTexte.get(l[c]); if (v) l[c] = v; }));
   } catch (e) { /* table pas encore créée, réseau… : le français reste */ }
-  return lignes;
 }
 window.empreinteTexte = empreinteTexte; window.traductionsDe = traductionsDe;
 function avecImperial(metrique, imperial) { return imperial ? metrique + ' · ' + imperial : metrique; }
@@ -2301,13 +2314,13 @@ function ajouterLectureStylesCollage(quill) {
 // symboles apparaissaient tels quels ou la mise en page était perdue. On reconnaît ce
 // format et on le transforme en vraie mise en forme au moment du collage.
 function ressembleMarkdown(texte) {
-  return /(^|\n)[ \t]{0,3}(#{1,6}[ \t]|[-*+][ \t]|\d+[.)][ \t]|>)|\*\*[^*\n]+\*\*|__[^_\n]+__|(^|[\s(])\*[^*\s][^*\n]*\*|~~[^~\n]+~~|\[[^\]\n]+\]\(https?:\/\/[^)\s]+\)/.test(texte);
+  return /(^|\n)[ \t]{0,3}(#{1,6}[ \t]|[-*+][ \t]|\d+[.)][ \t]|>)|\*\*[^*\n]+\*\*|__[^_\n]+__|(^|[\s(])\*[^*\s][^*\n]*\*|~~[^~\n]+~~|\[[^[\]\n]+\]\(https?:\/\/[^)\s]+\)/.test(texte);
 }
 
 function markdownEnLigneVersHtml(texte) {
   let t = echapperHtml(texte);
   t = t.replace(/`([^`\n]+)`/g, '$1');
-  t = t.replace(/\[([^\]\n]+)\]\((https?:\/\/[^)\s]+|mailto:[^)\s]+)\)/g, '<a href="$2">$1</a>');
+  t = t.replace(/\[([^[\]\n]+)\]\((https?:\/\/[^)\s]+|mailto:[^)\s]+)\)/g, '<a href="$2">$1</a>');
   t = t.replace(/(\*\*\*|___)(?=\S)([^\n]*?\S)\1/g, '<strong><em>$2</em></strong>');
   t = t.replace(/(\*\*|__)(?=\S)([^\n]*?\S)\1/g, '<strong>$2</strong>');
   t = t.replace(/(^|[^*\w])\*(?=\S)([^*\n]*?\S)\*(?!\*)/g, '$1<em>$2</em>');
@@ -2325,11 +2338,15 @@ function markdownVersHtml(texte) {
     const brute = ligne.trim();
     let m;
     if (!brute || /^([-*_])(\s*\1){2,}$/.test(brute)) { fermerListe(); return; }
-    if ((m = brute.match(/^(#{1,6})\s+(.*?)\s*#*$/))) {
+    // (« brute » est déjà sans espace aux bouts : après les espaces vient toujours un caractère
+    // visible — une seule façon de lire la ligne, SonarCloud S8786)
+    if ((m = brute.match(/^(#{1,6})\s+(\S.*)$/))) {
       fermerListe();
       const niveau = Math.min(m[1].length, 3);
-      html.push('<h' + niveau + '>' + markdownEnLigneVersHtml(m[2]) + '</h' + niveau + '>');
-    } else if ((m = brute.match(/^[-*+•]\s+(.*)$/)) || (m = brute.match(/^\d+[.)]\s+(.*)$/))) {
+      let titre = m[2];  // « ## Titre ## » : dièses de fin retirés
+      while (titre.endsWith('#')) titre = titre.slice(0, -1);
+      html.push('<h' + niveau + '>' + markdownEnLigneVersHtml(titre.trimEnd()) + '</h' + niveau + '>');
+    } else if ((m = brute.match(/^[-*+•]\s+(\S.*)$/)) || (m = brute.match(/^\d+[.)]\s+(\S.*)$/))) {
       const type = /^\d/.test(brute) ? 'ol' : 'ul';
       if (liste !== type) { fermerListe(); html.push('<' + type + '>'); liste = type; }
       html.push('<li>' + markdownEnLigneVersHtml(m[1]) + '</li>');
@@ -2406,9 +2423,58 @@ function creerEditeurRiche(idConteneur, placeholder) {
   return quill;
 }
 
+// Éditeur riche « différé » (26/10/2026) : Quill (≈ 200 Ko) n'est plus téléchargé par les
+// visiteurs des pages Actualités, Événements et Partenaires. La page reçoit tout de suite une
+// poignée ; Quill se charge seulement quand l'agence est reconnue (verifierAdmin) ou qu'un
+// formulaire en a besoin (poignee.preparer(), à attendre avant de lire ou remplir l'éditeur).
+const EDITEURS_DIFFERES = [];
+let quillEnChargement = null;
+function chargerFichierPage(balise, attributs) {
+  return new Promise((ok, ko) => {
+    const el = Object.assign(document.createElement(balise), attributs);
+    el.onload = ok; el.onerror = ko;
+    document.head.appendChild(el);
+  });
+}
+function chargerQuill() {
+  // les deux fichiers jusqu'au bout, même si l'un échoue ; en cas d'échec, l'éditeur simple
+  // prend le relais (creerEditeurRiche) et le prochain éditeur réessaiera de charger Quill
+  if (!quillEnChargement) quillEnChargement = Promise.allSettled([
+    chargerFichierPage('link', { rel: 'stylesheet', href: '/js/vendor/quill-2.0.3.snow.css' }),
+    chargerFichierPage('script', { src: '/js/vendor/quill-2.0.3.js' })
+  ]).then((r) => { if (r.some((x) => x.status === 'rejected')) quillEnChargement = null; });
+  return quillEnChargement;
+}
+function editeurRicheDiffere(idConteneur, placeholder) {
+  const poignee = { editeur: null, ecouteurs: [], pret: null };
+  poignee.preparer = () => poignee.pret || (poignee.pret = chargerQuill().then(() => {
+    poignee.editeur = creerEditeurRiche(idConteneur, placeholder);
+    if (poignee.editeur && typeof poignee.editeur.on === 'function') poignee.ecouteurs.forEach(([evt, fn]) => poignee.editeur.on(evt, fn));
+    return poignee.editeur;
+  }));
+  poignee.on = (evt, fn) => {
+    poignee.ecouteurs.push([evt, fn]);
+    if (poignee.editeur && typeof poignee.editeur.on === 'function') poignee.editeur.on(evt, fn);
+  };
+  poignee.setText = (t) => { if (poignee.editeur) poignee.editeur.setText(t); };
+  EDITEURS_DIFFERES.push(poignee);
+  return poignee;
+}
+function preparerEditeursDifferes() {
+  EDITEURS_DIFFERES.forEach((p) => { void p.preparer(); });
+}
+// La poignée d'un éditeur différé, ou l'éditeur lui-même. Lire ou remplir une poignée pas
+// encore prête serait une erreur silencieuse (texte vide enregistré) : on la signale.
+function editeurReel(quill) {
+  if (!quill || typeof quill.preparer !== 'function') return quill;
+  if (!quill.pret) throw new Error('Éditeur de texte pas encore préparé : attendre preparer()');
+  return quill.editeur;
+}
+
 // Charge un contenu existant (nouveau HTML ou ancien texte brut) dans un éditeur Quill —
 // utilisé à l'ouverture du formulaire de modification d'une fiche déjà publiée.
 function chargerContenuDansEditeur(quill, texte) {
+  quill = editeurReel(quill);
   if (!quill) return;
   quill.root.innerHTML = texteEstDejaHtml(texte) ? String(texte) : convertirTexteBrutEnHtml(texte);
 }
@@ -2417,6 +2483,7 @@ function chargerContenuDansEditeur(quill, texte) {
 // toujours au moins "<p><br></p>" même sans saisie, il faut donc le détecter via le
 // texte brut plutôt que de tester le HTML directement.
 function lireContenuEditeur(quill) {
+  quill = editeurReel(quill);
   if (!quill) return '';
   return quill.getText().trim() ? quill.root.innerHTML : '';
 }
@@ -2663,9 +2730,15 @@ document.addEventListener('DOMContentLoaded', () => {
   bouton.target = '_blank';
   bouton.rel = 'noopener';
   bouton.className = 'whatsapp-flottant';
-  bouton.setAttribute('aria-label', (document.documentElement.lang || '').indexOf('en') === 0 ? 'Contact us on WhatsApp' : 'Nous contacter sur WhatsApp');
+  const libelle = (document.documentElement.lang || '').indexOf('en') === 0 ? 'Contact us on WhatsApp' : 'Nous contacter sur WhatsApp';
+  bouton.setAttribute('aria-label', libelle);
   bouton.innerHTML = '<svg viewBox="0 0 32 32" fill="#fff"><path d="M16.001 3C9.373 3 4 8.373 4 15c0 2.386.7 4.61 1.902 6.475L4 29l7.727-1.868A11.94 11.94 0 0016 27c6.628 0 12-5.373 12-12S22.629 3 16.001 3zm0 21.6c-1.98 0-3.833-.55-5.41-1.505l-.388-.23-4.586 1.108 1.146-4.47-.253-.397A9.58 9.58 0 016.4 15c0-5.302 4.299-9.6 9.601-9.6 5.301 0 9.6 4.298 9.6 9.6 0 5.301-4.299 9.6-9.6 9.6zm5.263-7.19c-.288-.144-1.705-.841-1.969-.937-.264-.096-.456-.144-.648.144-.192.288-.744.937-.912 1.129-.168.192-.336.216-.624.072-.288-.144-1.216-.448-2.316-1.428-.856-.763-1.434-1.706-1.602-1.994-.168-.288-.018-.443.126-.587.129-.129.288-.336.432-.504.144-.168.192-.288.288-.48.096-.192.048-.36-.024-.504-.072-.144-.648-1.563-.888-2.14-.234-.562-.472-.486-.648-.495-.168-.009-.36-.011-.552-.011-.192 0-.504.072-.768.36-.264.288-1.008.985-1.008 2.403s1.032 2.786 1.176 2.978c.144.192 2.03 3.1 4.92 4.347.688.297 1.224.474 1.643.606.69.22 1.318.189 1.815.115.554-.083 1.705-.697 1.945-1.371.24-.674.24-1.251.168-1.371-.072-.12-.264-.192-.552-.336z"/></svg>';
-  document.body.appendChild(bouton);
+  // rangée dans une zone repère (« aside ») : les lecteurs d'écran la trouvent dans la liste
+  // des zones de la page (accessibilité axe « region », 26/10/2026) ; position fixe inchangée
+  const zone = document.createElement('aside');
+  zone.setAttribute('aria-label', libelle);
+  zone.appendChild(bouton);
+  document.body.appendChild(zone);
   // Discrète pendant la lecture (20/10/2026, visites « comme un humain ») : posée sur le coin
   // de l'écran, elle cachait des titres, des noms et des champs. Elle s'efface quand on descend
   // dans la page ou qu'on remplit un champ, et revient dès qu'on remonte.

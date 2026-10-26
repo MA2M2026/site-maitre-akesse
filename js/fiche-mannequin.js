@@ -131,6 +131,19 @@ async function chargerProfilInterne() {
 
   const vues = photosAffichees(photos); // photo de profil et couverture affichées (js/app.js)
   const premierePhoto = vues.profil ? vues.profil.url : '/assets/logo-dark-bg.png';
+  // Fiche d'identité pour Google (26/10/2026) : seulement ce que la page montre déjà
+  // (nom, photo, adresse), rattaché à l'agence décrite sur l'accueil (index.html)
+  let identite = document.getElementById('identite-mannequin');  // une seule, même si la fiche se recharge
+  if (!identite) {
+    identite = document.createElement('script');
+    identite.type = 'application/ld+json'; identite.id = 'identite-mannequin';
+    document.head.appendChild(identite);
+  }
+  identite.textContent = JSON.stringify({
+    '@context': 'https://schema.org', '@type': 'Person', name: profil.full_name || T('Mannequin', 'Model'),
+    jobTitle: T('Mannequin', 'Model'), url: urlActuelle, image: new URL(premierePhoto, location.origin).href,
+    worksFor: { '@type': 'Organization', '@id': 'https://www.maitreakessemodelmanagement.com/#agence', name: 'Maître Akesse Model Management' }
+  });
   const photoCouverture = vues.couvertureChoisie;
   // Versions allégées pour l'affichage (la fiche était lourde à ouvrir, surtout depuis
   // le navigateur intégré de Facebook) : couverture en taille « moyenne » (~1400px),

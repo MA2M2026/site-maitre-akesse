@@ -3658,3 +3658,28 @@ Demande de la propriétaire : « chaque élément du site a son bel aperçu, con
   visages : femmes / hommes » ; l'annonce du bandeau (écrite en français) n'est plus affichée sur
   la version anglaise, qui garde son bandeau des services ; étiquette « Infos du jour » centrée.
 - Étoiles sur « Nom complet » et « E-mail » du formulaire de candidature.
+
+## Niveau supérieur après le contrôle extérieur du 26/10/2026
+Contrôle : Mozilla Observatory A+ (110), SSL Labs A+, W3C sans erreur sur les 29 pages en ligne,
+axe (accessibilité) sur les 28 pages publiques, SonarCloud. Chantiers menés :
+- **Éditeur de texte à la demande** : Quill (≈ 200 Ko) n'est plus chargé par les pages Actualités,
+  Événements et Partenaires. `editeurRicheDiffere()` (js/app.js) rend une poignée ; Quill se charge
+  quand l'agence est reconnue (`verifierAdmin` → `preparerEditeursDifferes`) ou à l'ouverture d'un
+  formulaire. Toujours `await poignee.preparer()` avant `lireContenuEditeur` /
+  `chargerContenuDansEditeur` (sinon erreur volontaire : un texte vide serait enregistré). Essais :
+  test-publications.js (agence : éditeur présent, texte repris et gardé ; partenaires ; visiteur :
+  aucun fichier Quill téléchargé).
+- **SonarCloud S8786** (expressions qui peuvent devenir très lentes) : `rognerBlancs` (empreinte des
+  traductions, js/app.js et middleware.js — deux environnements différents, même règle),
+  `sansDernierMot` (middleware.js), montants FCFA par `toLocaleString('fr-FR')`, règle d'e-mail
+  unique `EMAIL_VALIDE` (api/_commun.js côté serveur, js/app.js côté navigateur), lignes de texte
+  collé (titres, puces) lues d'une seule façon. **S3516** : `versAnglais` modifie les lignes sur
+  place et ne rend plus rien.
+- **Google** : fiche d'identité unique de l'agence sur l'accueil (`"@id": ".../#agence"`), à laquelle
+  renvoient Qui sommes-nous (AboutPage), Services (prestations), Contact (ContactPage, téléphones,
+  e-mail) ; fiche « Person » sur chaque fiche mannequin (js/fiche-mannequin.js, une seule balise).
+  Ces blocs ont leur empreinte dans le CSP de chaque page (scripts/verifier-csp.py).
+- **Accessibilité** : contenu des pages rangé dans `<main>` (20 pages) ; pastille WhatsApp dans un
+  `<aside>` (css/style.css : `body:has(.whatsapp-flottant)`). Essai `test-accessibilite-axe.js`
+  (axe, WCAG 2.2 AA + bonnes pratiques, 28 pages, téléphone).
+- Reste à faire par la propriétaire : inscription sur hstspreload.org (l'en-tête est déjà prêt).

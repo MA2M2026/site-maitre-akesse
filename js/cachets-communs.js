@@ -9,7 +9,7 @@
   var libelle = function (motif) { var m = MOTIFS.filter(function (x) { return x[0] === motif; })[0]; return m ? m[1] : ''; };
   var SITE = 'https://www.maitreakessemodelmanagement.com';
   // (même format que « Mes paiements », qui s'en sert aussi)
-  var fcfa = function (n) { return String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' FCFA'; };
+  var fcfa = function (n) { return (Math.round(Number(n) || 0) || 0).toLocaleString('fr-FR').replace(/[\u202f\u00a0]/g, ' ') + ' FCFA'; };
   var jour = function (iso) { return iso ? new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Africa/Abidjan' }) : ''; };
   window.CachetsMa2m = {
     MOTIFS: MOTIFS,

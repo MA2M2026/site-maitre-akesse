@@ -38,7 +38,10 @@ function extraitTexte(texte, longueur) {
   let coupe = texte.slice(0, longueur);
   const espace = coupe.lastIndexOf(' ');
   if (espace > longueur * 0.6) coupe = coupe.slice(0, espace);
-  return coupe.replace(/[\s,;:.\-–—(]+$/, '') + '…';
+  // ponctuation et espaces de fin retirés un à un (sans expression régulière : SonarCloud S8786)
+  let fin = coupe.length;
+  while (fin > 0 && (/\s/.test(coupe[fin - 1]) || ',;:.-–—('.includes(coupe[fin - 1]))) fin--;
+  return coupe.slice(0, fin) + '…';
 }
 
 function ouvrirNewsModal() {
