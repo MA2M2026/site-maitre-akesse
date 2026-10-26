@@ -11,25 +11,14 @@
   const PAGE = 'b2-exterieures';
   let choix = '';  // '' (toujours), 'AAAA' ou 'AAAA-MM'
 
-  // la période choisie : bornes [debut, fin[ des dates de projet ('AAAA-MM-JJ')
-  function periode(c) {
-    if (!c) return null;
-    if (/^\d{4}$/.test(c)) return { debut: c + '-01-01', fin: (Number(c) + 1) + '-01-01' };
-    const [a, m] = c.split('-').map(Number);
-    return { debut: c + '-01', fin: (m === 12 ? (a + 1) + '-01' : a + '-' + String(m + 1).padStart(2, '0')) + '-01' };
-  }
-  function choixPossibles() {
-    const l = [['', 'Depuis toujours']], d = new Date(P.moisCourant() + 'T00:00:00Z');
-    for (let i = 0; i < 12; i++) { const x = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - i, 1)); l.push([x.toISOString().slice(0, 7), P.mois(x.toISOString())]); }
-    const an = d.getUTCFullYear();
-    l.push([String(an), 'Toute l’année ' + an], [String(an - 1), 'Toute l’année ' + (an - 1)]);
-    return l;
-  }
+  // la période choisie : bornes [debut, fin[ des dates de projet (P.bornesPeriode, js/portail/noyau.js)
+  const periode = (c) => (c ? P.bornesPeriode(c) : null);
+  const choixPossibles = () => [['', 'Depuis toujours']].concat(P.choixPeriodes());
   // lecture par paquets de 200 identifiants (P.parPaquets, js/admin/coque.js)
   const parPaquets = (ids, lire) => P.parPaquets(ids, 200, (l) => P.bd(lire(l)));
   // Places limitées pas encore activées (supabase-places.sql) : aucune invitation ; toute autre
   // erreur (connexion…) s'affiche
-  const placesAbsentes = (e) => /places_invitations|42P01|PGRST20[25]/.test(String((e && (e.message || e.code)) || e));
+  const placesAbsentes = P.pasActivee('places_invitations');
 
   async function page() {
     const contacts = await P.bd(sb.from('contacts_externes').select('id, civilite, nom, telephone, email').is('mannequin_id', null).order('nom'));

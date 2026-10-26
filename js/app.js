@@ -1067,6 +1067,10 @@ function titreLisible(t) {
   }).join('');
 }
 
+// 'AAAA-MM-JJ' → « samedi 14 novembre » (Programmation défilé de l'Administration, application des mannequins)
+function jourLong(j) {
+  return new Date(j + 'T12:00:00Z').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+}
 // Date du jour au format AAAA-MM-JJ (heure de l'appareil), et projets d'agenda séparés
 // en « à venir » (du plus proche au plus lointain) et « réalisés » (du plus récent au
 // plus ancien) ; un projet sur plusieurs jours reste « à venir » jusqu'à son dernier jour.

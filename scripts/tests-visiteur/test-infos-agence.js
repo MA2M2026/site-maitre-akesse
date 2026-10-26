@@ -12,6 +12,18 @@ const URL_ADMIN = 'http://127.0.0.1:' + PORT + '/admin/';
 let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m); if (!c) ko++; };
 const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.env.CAPTURES + '/' + nom + '.png', fullPage: true }) : null;
 
+// règles des lieux et des dates (js/messages-convocations.js), les mêmes que la base (app_lieux, app_periode)
+{
+  const o = require('../../js/messages-convocations.js');
+  const proj = { date_debut: '2026-10-30', date_fin: '2026-11-01', lieu: 'Noom Hôtel', ville: 'Abidjan', seances: [{ lieu: 'Parc des Expositions et des Congrès, La Tribe' }, { lieu: 'la tribe' }, { lieu: ' ' }] };
+  ok(o.periode(proj) === 'du vendredi 30 octobre au dimanche 1er novembre 2026', 'dates sur deux mois, avec le « 1er »');
+  ok(o.lieuxDuProjet(proj).join(' | ') === 'Parc des Expositions et des Congrès | La Tribe | Noom Hôtel', 'lieux : ceux de chaque jour, le lieu général pour un jour sans lieu, sans doublon, « et » gardé dans un nom (comme app_lieux en base)');
+  ok(o.auxLieux({ lieu: 'Noom Hôtel, Parc des Expositions' }) === 'au Noom Hôtel et au Parc des Expositions', 'lieu général avec plusieurs lieux (virgule, comme l’indique l’agenda) : « au … et au … »');
+  ok(o.auxLieux({ lieu: 'au Plateau' }) === 'au Plateau' && o.auxLieux({ lieu: 'Parcours Vita' }) === 'à Parcours Vita' && o.auxLieux({ lieu: 'Hôtel Ivoire' }) === 'à l’Hôtel Ivoire', 'au / à la / à l’ : jamais deux fois, jamais sur un début de mot');
+  ok(o.villeEnPlus({ ville: 'Abidjan' }, ['Sofitel Abidjan']) === '' && o.villeEnPlus({ ville: 'Abidjan' }, ['Sofitel']) === 'Abidjan', 'la ville n’est pas répétée quand un lieu la nomme déjà');
+  ok(o.villeEnPlus({ ville: 'Man' }, ['Salle Germaine']) === 'Man' && o.auxLieux({ lieu: 'Chez Noom, Au Plateau' }) === 'chez Noom et au Plateau' &&
+    o.lieuxDuProjet({ lieu: 'Noom', seances: [null, { lieu: 'Sofitel' }] }).join() === 'Noom,Sofitel', 'ville en mot entier, « Chez » / « Au » avec majuscule, jour vide (comme app_lieux en base)');
+}
 (async () => {
   let srv; process.on('exit', () => srv && srv.kill());
   srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: chemin.resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise((r) => setTimeout(r, 900));
@@ -49,10 +61,10 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     // projet de l'agenda : tout se remplit, et les mannequins convoquées (pas les absentes) sont cochées
     await p.selectOption('#if-projet', 'p1'); await p.waitForFunction(() => document.getElementById('if-titre') && document.getElementById('if-titre').value === 'ABIDJAN BORDER FORUM', null, { timeout: 8000 });
     const coches = await p.$$eval('.df-choix-carte input:checked', (l) => l.map((x) => x.value));
-    ok((await p.inputValue('#if-lieu')) === 'Parc des Expositions, La Tribe' && (await p.inputValue('#if-date_fin')) === lendemain && coches.sort().join() === 'm:m0,m:m1,m:m2,m:m3' && /4 mannequins choisies/.test(await p.textContent('#if-compte')),
+    ok((await p.inputValue('#if-lieu')) === 'Parc des Expositions, La Tribe' && (await p.inputValue('#if-ville')) === 'Abidjan' && (await p.inputValue('#if-date_fin')) === lendemain && coches.sort().join() === 'm:m0,m:m1,m:m2,m:m3' && /4 mannequins choisies/.test(await p.textContent('#if-compte')),
       n + 'projet de l’agenda sur deux jours : toutes les dates et tous les lieux, les 4 mannequins convoquées cochées');
-    ok(/Merci pour votre participation à \*ABIDJAN BORDER FORUM\*, du \S+ \d+ (\S+ )?au \S+ \d+ \S+ \d{4}, au Parc des Expositions et à la Tribe\./.test(await p.inputValue('#if-message')),
-      n + 'remerciement : « du … au …, au Parc des Expositions et à la Tribe » en une phrase');
+    ok(/Merci pour votre participation à \*ABIDJAN BORDER FORUM\*, du \S+ \d+ (\S+ )?au \S+ \d+ \S+ \d{4}, au Parc des Expositions et à la Tribe, à Abidjan\./.test(await p.inputValue('#if-message')),
+      n + 'remerciement : « du … au …, au Parc des Expositions et à la Tribe, à Abidjan » en une phrase');
     // retouche à la main : gardée même si on change un champ
     await p.fill('#if-message', (await p.inputValue('#if-message')) + '\nÀ très vite !'); await p.fill('#if-client', 'Border Forum'); await p.waitForTimeout(200);
     ok(/À très vite !/.test(await p.inputValue('#if-message')), n + 'message retouché à la main : gardé');

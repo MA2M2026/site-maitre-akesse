@@ -14,19 +14,9 @@
   let dernier = null;  // dernier rapport affiché (pour le PDF et l'Excel)
 
   // bornes de la période, à l'heure d'Abidjan (= UTC)
-  function periode(c) {
-    if (/^\d{4}$/.test(c)) return { debut: c + '-01-01T00:00:00Z', fin: (Number(c) + 1) + '-01-01T00:00:00Z', titre: 'année ' + c };
-    const [a, m] = c.split('-').map(Number), suivant = m === 12 ? (a + 1) + '-01' : a + '-' + String(m + 1).padStart(2, '0');
-    return { debut: c + '-01T00:00:00Z', fin: suivant + '-01T00:00:00Z', titre: P.mois(c + '-01') };
-  }
-  // les 12 derniers mois et les 2 dernières années
-  function choixPossibles() {
-    const l = [], d = new Date(P.moisCourant() + 'T00:00:00Z');
-    for (let i = 0; i < 12; i++) { const x = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - i, 1)); l.push([x.toISOString().slice(0, 7), P.mois(x.toISOString())]); }
-    const an = d.getUTCFullYear();
-    l.push([String(an), 'Toute l’année ' + an], [String(an - 1), 'Toute l’année ' + (an - 1)]);
-    return l;
-  }
+  // (P.bornesPeriode et P.choixPeriodes : js/portail/noyau.js)
+  const periode = (c) => { const b = P.bornesPeriode(c); return { debut: b.debut + 'T00:00:00Z', fin: b.fin + 'T00:00:00Z', titre: b.titre }; };
+  const choixPossibles = P.choixPeriodes;
   // chiffres d'un cachet : prestation, commission, versé (anciens cachets sans commission : versé = prestation)
   const chiffres = (c) => ({ prestation: Number(c.montant_prestation || c.montant) || 0, commission: Number(c.commission) || 0, verse: Number(c.montant) || 0 });
   const motif = (c) => (K && c.motif ? K.libelle(c.motif) : '') || String(c.prestation || '').split(' · ')[0];

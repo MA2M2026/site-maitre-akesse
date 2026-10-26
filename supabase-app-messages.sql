@@ -127,18 +127,42 @@ returns text language sql immutable as $$
   select regexp_replace(coalesce(p, 0)::text, '(\d)(?=(\d{3})+$)', '\1 ', 'g') || ' FCFA';
 $$;
 
--- dates et lieux d'un projet en une phrase (comme les messages WhatsApp : js/messages-convocations.js) :
--- « le 14 novembre 2026 », « du 21 au 22 octobre 2026 » ; les lieux de chaque jour, sinon le lieu
+-- dates et lieux d'un projet en une phrase (mêmes règles que js/messages-convocations.js) :
+-- « le samedi 14 novembre 2026 », « du mercredi 21 au jeudi 22 octobre 2026 », « du vendredi 30
+-- octobre au dimanche 1er novembre 2026 »
+create or replace function app_jour(d date)
+returns text language sql immutable as $$
+  select (array['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'])[extract(dow from d)::int + 1] || ' ' ||
+         case when extract(day from d) = 1 then '1er' else extract(day from d)::int::text end;
+$$;
 create or replace function app_periode(p_debut date, p_fin date)
 returns text language sql immutable as $$
   select case when p_debut is null then null
-    when p_fin is null or p_fin <= p_debut then 'le ' || extract(day from p_debut)::int || ' ' || split_part(app_nom_mois(p_debut), ' ', 1) || ' ' || extract(year from p_debut)::int
-    when date_trunc('month', p_fin) = date_trunc('month', p_debut) then 'du ' || extract(day from p_debut)::int || ' au ' || extract(day from p_fin)::int || ' ' || app_nom_mois(p_fin)
-    else 'du ' || extract(day from p_debut)::int || ' ' || split_part(app_nom_mois(p_debut), ' ', 1) || ' au ' || extract(day from p_fin)::int || ' ' || app_nom_mois(p_fin) end;
+    when p_fin is null or p_fin <= p_debut then 'le ' || app_jour(p_debut) || ' ' || app_nom_mois(p_debut)
+    else 'du ' || app_jour(p_debut) ||
+         case when extract(year from p_debut) <> extract(year from p_fin) then ' ' || app_nom_mois(p_debut)
+              when extract(month from p_debut) <> extract(month from p_fin) then ' ' || split_part(app_nom_mois(p_debut), ' ', 1)
+              else '' end ||
+         ' au ' || app_jour(p_fin) || ' ' || app_nom_mois(p_fin) end;
 $$;
+-- tous les lieux : celui de chaque jour, le lieu général pour les jours sans lieu ; plusieurs lieux
+-- séparés par une virgule (jamais coupés sur « et »), sans doublon, dans l'ordre des jours, puis la
+-- ville si aucun lieu ne la nomme déjà (comme lieuProjet, js/messages-convocations.js)
 create or replace function app_lieux(a agenda_projets)
 returns text language sql stable as $$
-  select coalesce(nullif((select string_agg(distinct s ->> 'lieu', ', ') from jsonb_array_elements(coalesce(a.seances, '[]'::jsonb)) s where coalesce(s ->> 'lieu', '') <> ''), ''), nullif(a.lieu, ''));
+  with jours as (
+    select j.n, coalesce(nullif(btrim(j.v ->> 'lieu', E' \t\r\n'), ''), a.lieu) as lieu
+    from jsonb_array_elements(coalesce(a.seances, '[]'::jsonb)) with ordinality j(v, n)
+    union all select 0, a.lieu where not exists (select 1 from jsonb_array_elements(coalesce(a.seances, '[]'::jsonb)))
+  ), tous as (
+    select j.n * 1000 + t.m as o, btrim(t.x, E' \t\r\n') as x
+    from jours j cross join lateral regexp_split_to_table(coalesce(j.lieu, ''), '[,;\n]') with ordinality t(x, m)
+  ), uniques as (
+    select distinct on (lower(x)) x, o from tous where x <> '' order by lower(x), o
+  ), liste as (select string_agg(x, ', ' order by o) as l from uniques)
+  -- (la ville comme mot entier : « Man » n'est pas dans « Salle Germaine »)
+  select nullif(concat_ws(', ', l, case when nullif(btrim(a.ville), '') is not null and coalesce(l, '') !~* ('(^|[^[:alpha:]])' ||
+    regexp_replace(btrim(a.ville), '([.*+?^$(){}|\[\]\\])', '\\\1', 'g') || '([^[:alpha:]]|$)') then btrim(a.ville) end), '') from liste;
 $$;
 
 -- a) annonce de sélection, convocation, rappels : quand le message part (ou est à envoyer à la

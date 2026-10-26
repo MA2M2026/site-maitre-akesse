@@ -103,20 +103,24 @@
     const jour = (x) => x[0].toLowerCase() + ' ' + x[1];
     return 'du ' + jour(d) + (d[3] !== f[3] ? ' ' + d[2] + ' ' + d[3] : d[2] !== f[2] ? ' ' + d[2] : '') + ' au ' + jour(f) + ' ' + f[2] + ' ' + f[3];
   }
-  // tous les lieux du projet : ceux de chaque jour (agenda, « Horaires, jour par jour »), sinon le
-  // lieu général ; sans doublon, dans l'ordre des jours
+  // tous les lieux du projet : celui de chaque jour (agenda, « Horaires et lieux, jour par jour »),
+  // le lieu général pour les jours qui n'en ont pas ; plusieurs lieux séparés par une virgule (comme
+  // le demandent les champs de l'agenda), jamais coupés sur « et » (« Parc des Expositions et des
+  // Congrès ») ; sans doublon, dans l'ordre des jours. (Mêmes règles en base : app_lieux.)
   function lieuxDuProjet(p) {
     const vus = new Set(), liste = [];
-    const ajouter = (l) => String(l || '').split(/\s*[,;\n]\s*|\s+et\s+/).map((x) => x.trim()).filter(Boolean).forEach((x) => { if (!vus.has(x.toLowerCase())) { vus.add(x.toLowerCase()); liste.push(x); } });
-    (Array.isArray(p && p.seances) ? p.seances : []).forEach((s) => ajouter(s && s.lieu));
-    if (!liste.length) ajouter(p && p.lieu);
+    const ajouter = (l) => String(l || '').split(/[,;\n]/).map((x) => x.trim()).filter(Boolean).forEach((x) => { if (!vus.has(x.toLowerCase())) { vus.add(x.toLowerCase()); liste.push(x); } });
+    const seances = Array.isArray(p && p.seances) ? p.seances : [];
+    seances.forEach((s) => ajouter(String((s && s.lieu) || '').trim() || (p && p.lieu)));  // (jour vide : le lieu général)
+    if (!seances.length) ajouter(p && p.lieu);
     return liste;
   }
   // « au Parc des Expositions », « à la Tribe », « à l’Hôtel Ivoire », « aux Jardins » (sinon « à »)
-  const MASCULINS = /^(parc|palais|sofitel|hôtel|hotel|stade|centre|studio|musée|jardin|restaurant|théâtre|theatre|plateau|siège|showroom|club|lounge|complexe|domaine|golf|port|marché|carrefour|cinéma|noom|radisson|pullman|azalaï|azalai|novotel|ivoire)\b/i;
-  const FEMININS = /^(salle|maison|tribe|place|galerie|plage|villa|résidence|terrasse|cité|fondation|boutique|rotonde|esplanade|agence)\b/i;
+  const MASCULINS = /^(parc|palais|sofitel|hôtel|hotel|stade|centre|studio|musée|jardin|restaurant|théâtre|theatre|plateau|siège|showroom|club|lounge|complexe|domaine|golf|port|marché|carrefour|cinéma|noom|radisson|pullman|azalaï|azalai|novotel|ivoire)(?=[\s'’-]|$)/i;
+  const FEMININS = /^(salle|maison|tribe|place|galerie|plage|villa|résidence|terrasse|cité|fondation|boutique|rotonde|esplanade|agence)(?=[\s'’-]|$)/i;
   function aLieu(l) {
     const t = String(l || '').trim();
+    if (/^(au|aux|à|chez)\s/i.test(t)) return t.charAt(0).toLowerCase() + t.slice(1);  // « Au Plateau », « chez Noom » : déjà dit
     if (/^le\s/i.test(t)) return 'au ' + t.slice(3);
     if (/^les\s/i.test(t)) return 'aux ' + t.slice(4);
     if (/^(la\s|l[’'])/i.test(t)) return 'à ' + t.charAt(0).toLowerCase() + t.slice(1);
@@ -125,14 +129,21 @@
     return 'à ' + t;
   }
   // « au Parc des Expositions et à la Tribe »
-  function auxLieux(p) {
-    const l = lieuxDuProjet(p).map(aLieu);
+  function auxLieux(p, lieux) {
+    const l = (lieux || lieuxDuProjet(p)).map(aLieu);
     return l.length > 1 ? l.slice(0, -1).join(', ') + ' et ' + l[l.length - 1] : (l[0] || '');
   }
+  // la ville, sauf si un lieu la nomme déjà (« Sofitel Abidjan », ville Abidjan)
+  // (mot entier : la ville « Man » n'est pas dans « Salle Germaine »)
+  const villeEnPlus = (p, lieux) => {
+    const v = String((p && p.ville) || '').trim();
+    const mot = v && new RegExp('(^|[^\\p{L}])' + v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '($|[^\\p{L}])', 'iu');
+    return v && !lieux.some((l) => mot.test(l)) ? v : '';
+  };
   // la date d'un message (« Samedi 14 novembre 2026 », ou « Du mercredi 21 au jeudi 22 octobre 2026 »)
   // et son lieu (tous les lieux des jours, puis la ville)
   const dateProjet = (p) => { const t = p.date_fin && String(p.date_fin) > String(p.date_debut) ? periode(p) : dateLongue(p.date_debut); return t ? t.charAt(0).toUpperCase() + t.slice(1) : ''; };
-  const lieuProjet = (p) => [lieuxDuProjet(p).join(', '), p.ville].filter(Boolean).join(', ');
+  const lieuProjet = (p) => { const l = lieuxDuProjet(p); return [l.join(', '), villeEnPlus(p, l)].filter(Boolean).join(', '); };
   // '15:00' → '15h00'
   const heureFr = (h) => /^\d{2}:\d{2}$/.test(h || '') ? h.replace(':', 'h') : '';
   // Accord selon la civilité : « attendue » pour Madame / Mademoiselle, « attendu » pour Monsieur,
@@ -286,7 +297,7 @@
       .replace(/(^|[\s(«])_([^_\n]+)_(?=$|[\s.,;:!?)»])/gm, '$1$2');
   }
 
-  const outils = { periode, lieuxDuProjet, auxLieux, heureRappelAvant, messageConvocation, messageRelance, messageRappel, messagePlaces, LIEN_PLACES, sansMarquesWhatsApp, heureRappel, dateLongue, MODELE_CONVOCATION, MODELE_SELECTION, EMAIL_AGENCE, LIEN_CONFIRMER };
+  const outils = { periode, lieuxDuProjet, auxLieux, villeEnPlus, heureRappelAvant, messageConvocation, messageRelance, messageRappel, messagePlaces, LIEN_PLACES, sansMarquesWhatsApp, heureRappel, dateLongue, MODELE_CONVOCATION, MODELE_SELECTION, EMAIL_AGENCE, LIEN_CONFIRMER };
   if (typeof module !== 'undefined' && module.exports) module.exports = outils;
   else Object.assign(racine, outils);
 })(typeof window !== 'undefined' ? window : globalThis);

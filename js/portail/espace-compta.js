@@ -72,11 +72,7 @@
     const [liste, soldes, creances, dues] = await Promise.all([ecritures(m), P.rpc('compta_soldes'), dettes('creance'), dettes('dette')]);
     const reste = (l) => l.reduce((t, d) => t + d.reste, 0);
     const rec = totaux(liste, 'recette'), dep = totaux(liste, 'depense');
-    const parCategorie = (sens) => {
-      const t = {};
-      liste.filter((e) => e.sens === sens && !e.annule).forEach((e) => { t[e.categorie] = (t[e.categorie] || 0) + e.montant; });
-      return Object.keys(t).sort((a, b) => t[b] - t[a]).map((k) => [k, t[k]]);
-    };
+    const parCategorie = (sens) => P.sommesParCategorie(liste, sens);
     const barres = (sens, total, rouge) => {
       const l = parCategorie(sens);
       return l.length ? l.map((c) => P.barre(RECETTES[c[0]] || DEPENSES[c[0]] || c[0], c[1], total, rouge)).join('') : '<p class="doux">Rien pour le moment.</p>';
@@ -281,6 +277,13 @@
     } catch (e) { P.message(/duplicate|unique/i.test(String(e && e.message)) ? 'Un compte porte déjà ce nom.' : P.erreurTexte(e)); }
   };
 
+  // Écritures d'un sens (recette / dépense), hors annulées : [[catégorie, total]], la plus grosse d'abord
+  // (tableau de bord de la Comptabilité et Dossier du mois)
+  P.sommesParCategorie = (ecritures, sens) => {
+    const t = {};
+    ecritures.filter((e) => e.sens === sens && !e.annule).forEach((e) => { t[e.categorie] = (t[e.categorie] || 0) + e.montant; });
+    return Object.keys(t).sort((a, b) => t[b] - t[a]).map((k) => [k, t[k]]);
+  };
   // Cachets (Payer les mannequins, Rapport des cachets) : nom d'une mannequin du registre — lien
   // vers sa fiche des Paiements (sa photo devant, js/admin/coque.js) pour qui voit les Paiements ;
   // sinon sa photo cherchée par son nom ; et la table des cachets pas encore créée

@@ -14,6 +14,13 @@
   P.initiales = initialesNom;  // (js/app.js)
   P.visage = (url, nom, classe) => '<span class="vis ' + (classe || '') + '"><span class="ini" aria-hidden="true">' + P.esc(P.initiales(nom)) + '</span>' +
     (url ? '<img src="' + P.esc(urlLegere(url)) + '" alt="" loading="lazy" decoding="async">' : '') + '</span>';
+  // Grille de cases à cocher avec visages (Programmation défilé, Informations agence) : un titre, le
+  // nombre, les personnes par ordre alphabétique ; attributs(x) = ce que porte la case de chacune
+  P.casesVisages = (titre, l, attributs) => {
+    l = l.slice().sort((a, b) => String(a.nom).localeCompare(String(b.nom)));
+    return l.length ? '<h3>' + P.esc(titre) + ' <span class="doux">(' + l.length + ')</span></h3><div class="df-choix">' + l.map((x) =>
+      '<label class="df-choix-carte"><input type="checkbox" ' + attributs(x) + '>' + P.visage(x.photo, x.nom, 'df-vis') + '<span>' + P.esc(x.nom) + '</span></label>').join('') + '</div>' : '';
+  };
   // une photo affichée apparaît en fondu (l'évènement « load » ne remonte pas : capture)
   document.addEventListener('load', (e) => {
     if (e.target.tagName === 'IMG' && e.target.parentNode && e.target.parentNode.classList && e.target.parentNode.classList.contains('vis')) e.target.classList.add('charge');

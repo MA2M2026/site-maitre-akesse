@@ -785,7 +785,7 @@ function field(label, id, value, opts){
     const valeurs = opts.options || [];
     const estAutre = !!value && valeurs.indexOf(value) === -1;
     return '<div class="field '+(opts.full?'full':'')+'"><label for="'+id+'">'+label+(opts.req?'<span class="req">*</span>':'')+'</label>' +
-      '<select id="'+id+'" data-avec-autre="1"><option value="">—</option>' +
+      '<select id="'+id+'" data-avec-autre="1"><option value="">Choisir</option>' +
         valeurs.map(function(o){ return '<option value="'+echapperHtml(o)+'" '+(o===value?'selected':'')+'>'+echapperHtml(o)+'</option>'; }).join('') +
         '<option value="Autre" '+(estAutre?'selected':'')+'>Autre</option>' +
       '</select>' +

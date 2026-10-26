@@ -11,9 +11,8 @@
   const P = window.Portail;
   if (!P || !P.espaces.site) return;
   const PAGE = 'b2-defiles';
-  const nonActive = (e) => /defile_|42P01|PGRST20[25]/.test(String((e && (e.message || e.code)) || e));
+  const nonActive = P.pasActivee('defile_');  // (js/portail/noyau.js)
   const PAS_ACTIVE = '<div class="carte vide">La Programmation défilé n’est pas encore activée : exécutez une fois le fichier supabase-defiles.sql dans Supabase.</div>';
-  const aujourdhui = () => new Date().toISOString().slice(0, 10);
   const heure = (h) => h ? String(h).replace(':', 'h') : 'heure à préciser';
   // jours du projet (du premier au dernier), au plus 31
   function joursDu(p) {
@@ -22,7 +21,7 @@
     for (let t = debut; t <= fin && jours.length < 31; t += 86400000) jours.push(new Date(t).toISOString().slice(0, 10));
     return jours;
   }
-  const jourLong = (j) => new Date(j + 'T12:00:00Z').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+  // (jourLong : js/app.js)
   // le jour et son lieu (agenda, « Horaires et lieux, jour par jour », 26/10/2026)
   const jourEtLieu = (j) => { const s = ((ecran && ecran.projet && ecran.projet.seances) || []).find((x) => x && x.jour === j); return jourLong(j) + (s && s.lieu ? ', ' + s.lieu : ''); };
   // personne du vivier : sa clé (profil du site, registre, carnet)
@@ -39,7 +38,7 @@
       const siens = passages.filter((x) => x.projet_id === p.id);
       const f = siens.reduce((s, x) => s + x.femmes, 0), h = siens.reduce((s, x) => s + x.hommes, 0);
       return '<article class="projet-carte apparait" style="--i:' + Math.min(i, 10) + '"><div class="projet-tete"><h2>' + P.esc(p.titre) + '</h2>' +
-        ((p.date_fin || p.date_debut) < aujourdhui() ? P.pastille('Terminé', 'neutre') : P.pastille('À venir', 'ok')) + '</div>' +
+        ((p.date_fin || p.date_debut) < P.aujourdhui() ? P.pastille('Terminé', 'neutre') : P.pastille('À venir', 'ok')) + '</div>' +
         '<p class="doux">' + P.esc(resumeProjet(p)) + '</p>' +
         '<p>' + P.pluriel(siens.length, 'passage', 'passages') + ' · ' + f + ' femmes, ' + h + ' hommes à placer</p>' +
         '<div class="ligne"><a class="btn rouge" href="#/site/' + PAGE + '/' + P.esc(p.id) + '">Ouvrir</a></div></article>';
@@ -49,7 +48,7 @@
       (cartes ? '<div class="projets-liste">' + cartes + '</div>' : '<div class="carte vide">Aucun défilé programmé pour le moment.</div>');
   }
   P.actions['defile-nouveau'] = async () => {
-    const projets = await P.bd(sb.from('agenda_projets').select('id, titre, date_debut, date_fin, annule').gte('date_debut', aujourdhui()).eq('annule', false).order('date_debut'));
+    const projets = await P.bd(sb.from('agenda_projets').select('id, titre, date_debut, date_fin, annule').gte('date_debut', P.aujourdhui()).eq('annule', false).order('date_debut'));
     P.fenetre('<form class="grille" data-form="defile-nouveau"><h2>Programmer un défilé</h2>' +
       '<label class="fl" for="df-projet">Projet de l’Agenda<select id="df-projet" name="projet"><option value="">＋ Nouveau projet</option>' +
       projets.map((p) => '<option value="' + P.esc(p.id) + '">' + P.esc(P.date(p.date_debut) + ' · ' + p.titre) + '</option>').join('') + '</select></label>' +
@@ -242,11 +241,7 @@
   // choisir le vivier : une case par visage, femmes puis hommes, agence puis extérieures
   P.actions['defile-vivier'] = () => {
     const dans = {}; ecran.vivier.forEach((v) => { dans[cleDe(v)] = true; });
-    const groupe = (titre, filtre) => {
-      const l = Object.values(ecran.personnes).filter((x) => filtre(x)).sort((a, b) => String(a.nom).localeCompare(String(b.nom)));
-      return l.length ? '<h3>' + P.esc(titre) + ' <span class="doux">(' + l.length + ')</span></h3><div class="df-choix">' + l.map((x) =>
-        '<label class="df-choix-carte"><input type="checkbox" name="cle" value="' + P.esc(x.cle) + '"' + (dans[x.cle] ? ' checked' : '') + '>' + P.visage(x.photo, x.nom, 'df-vis') + '<span>' + P.esc(x.nom) + '</span></label>').join('') + '</div>' : '';
-    };
+    const groupe = (titre, filtre) => P.casesVisages(titre, Object.values(ecran.personnes).filter(filtre), (x) => 'name="cle" value="' + P.esc(x.cle) + '"' + (dans[x.cle] ? ' checked' : ''));
     P.fenetre('<form class="grille df-fenetre" data-form="defile-vivier"><h2>Mannequins retenues pour le défilé</h2>' +
       groupe('Femmes de l’agence', (x) => x.sexe === 'femme' && x.origine === 'agence') + groupe('Femmes extérieures', (x) => x.sexe === 'femme' && x.origine === 'exterieure') +
       groupe('Hommes de l’agence', (x) => x.sexe === 'homme' && x.origine === 'agence') + groupe('Hommes extérieurs', (x) => x.sexe === 'homme' && x.origine === 'exterieure') +

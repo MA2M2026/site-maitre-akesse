@@ -100,7 +100,7 @@
       '<p class="large note info" id="ca-mineure" hidden>Mannequin mineure : le cachet est versé sur le compte Wave de son parent. S’il manque, son nom et son numéro sont enregistrés dans le registre et sur sa fiche.</p>' +
       '<label class="fl" for="ca-parent-nom" id="ca-parent-ligne" hidden>Nom du parent<input id="ca-parent-nom" name="parent_nom" maxlength="160" placeholder="ex. : Madame Koné"></label>' +
       '<label class="fl" for="ca-tel"><span id="ca-tel-libelle">Numéro Wave</span><input id="ca-tel" name="telephone" type="tel" inputmode="tel" required placeholder="07 07 07 07 07"></label>' +
-      '<label class="fl" for="ca-projet">Projet de l’agenda (facultatif)<select id="ca-projet" name="projet" data-change="cachet-projet"><option value="">—</option><option value="' + NOUVEAU + '">➕ Nouvel événement (ajouté à l’agenda)</option>' + (tpl ? tpl.innerHTML : '') + '</select></label>' +
+      '<label class="fl" for="ca-projet">Projet de l’agenda (facultatif)<select id="ca-projet" name="projet" data-change="cachet-projet"><option value="">Choisir</option><option value="' + NOUVEAU + '">➕ Nouvel événement (ajouté à l’agenda)</option>' + (tpl ? tpl.innerHTML : '') + '</select></label>' +
       // événement pas encore dans l'agenda (23/10/2026) : il y est ajouté en même temps que le cachet
       '<div id="ca-nouveau" class="large f-sous" hidden>' +
         '<label class="fl" for="ca-ev-titre">Titre de l’événement<input id="ca-ev-titre" name="ev_titre" maxlength="160" placeholder="ex. : Défilé Africa in Rhythm"></label>' +
@@ -108,7 +108,7 @@
         '<label class="fl" for="ca-ev-type">Type<select id="ca-ev-type" name="ev_type">' + Object.keys(typeof MA2M_TYPES_AGENDA === 'object' ? MA2M_TYPES_AGENDA : { evenement: 1 }).map((k) => '<option value="' + k + '"' + (k === 'defile' ? ' selected' : '') + '>' + P.esc(typeof libelleTypeAgenda === 'function' ? libelleTypeAgenda(k) : k) + '</option>').join('') + '</select></label>' +
         '<label class="fl" for="ca-ev-lieu">Lieu (facultatif)<input id="ca-ev-lieu" name="ev_lieu" maxlength="160"></label>' +
         '<p class="doux large">Il est ajouté à l’agenda (pas montré sur le site public : l’agence décide ensuite).</p></div>' +
-      (recus ? '<label class="fl" for="ca-motif">Motif du cachet<select id="ca-motif" name="motif" required><option value="">— Choisir —</option>' +
+      (recus ? '<label class="fl" for="ca-motif">Motif du cachet<select id="ca-motif" name="motif" required><option value="">Choisir</option>' +
           K.MOTIFS.map((m) => '<option value="' + m[0] + '">' + P.esc(m[1]) + '</option>').join('') + '</select></label>' +
         '<label class="fl" for="ca-prestation">Précision (facultatif)<input id="ca-prestation" name="prestation" maxlength="150" placeholder="ex. : défilé du 5 décembre"></label>'
         : '<label class="fl" for="ca-prestation">Prestation (sinon : le projet choisi)<input id="ca-prestation" name="prestation" maxlength="200" placeholder="ex. : défilé du 5 décembre"></label>') +

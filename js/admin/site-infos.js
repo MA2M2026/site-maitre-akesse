@@ -14,10 +14,9 @@
   const PAGE = 'b2-infos';
   // (émojis choisis pour leur chaleur, demande de la propriétaire du 26/10/2026)
   const SORTES = { casting: ['✨', 'Casting'], defile: ['👠', 'Défilé'], remerciement: ['🤍', 'Remerciement'], info: ['💌', 'Information'] };
-  const nonActive = (e) => /infos_agence|app_messages|42P01|PGRST20[25]/.test(String((e && (e.message || e.code)) || e));
+  const nonActive = P.pasActivee('infos_agence|app_messages');  // (js/portail/noyau.js)
   const PAS_ACTIVE = '<div class="carte vide">Les Informations agence ne sont pas encore activées : exécutez une fois le fichier supabase-app-messages.sql dans Supabase.</div>';
-  const aujourdhui = () => new Date().toISOString().slice(0, 10);
-  let brouillon = null;  // nouvelle information en cours : { sorte, projet, titre, date, heure, lieu, client, precisions, image, fiche, message, retouche, choisis:Set }
+  let brouillon = null;  // nouvelle information en cours : { sorte, projet, titre, date, heure, lieu, ville, client, precisions, image, fiche, message, retouche, choisis:Set }
   let personnes = null;  // P.personnesPossibles(true)
 
   // ---------- Le beau message (WhatsApp ; l'e-mail en est la version sans *gras*) ----------
@@ -25,8 +24,9 @@
   // lieux d'un projet en une phrase (« du mercredi 21 au jeudi 22 octobre 2026, au Parc des
   // Expositions et à la Tribe » : periode et auxLieux, js/messages-convocations.js).
   function quandEtOu(b) {
-    const p = { date_debut: b.date, date_fin: b.date_fin, lieu: b.lieu };
-    return [window.periode(p), b.heure ? 'à partir de ' + String(b.heure).trim() : '', window.auxLieux(p)].filter(Boolean).join(', ');
+    // (le champ Lieu accepte plusieurs lieux séparés par une virgule, comme ceux de l'agenda)
+    const p = { date_debut: b.date, date_fin: b.date_fin, lieu: b.lieu, ville: b.ville }, lieux = window.lieuxDuProjet(p), ville = window.villeEnPlus(p, lieux);
+    return [window.periode(p), b.heure ? 'à partir de ' + String(b.heure).trim() : '', window.auxLieux(p, lieux), ville ? 'à ' + ville : ''].filter(Boolean).join(', ');
   }
   // corps du message (sans « Bonjour » ni signature), pour la mannequin
   function corps(b) {
@@ -82,26 +82,22 @@
   // ---------- Nouvelle information ----------
   async function formulaire() {
     if (!personnes) personnes = await P.personnesPossibles(true);
-    if (!brouillon) brouillon = { sorte: 'casting', projet: '', titre: '', date: '', date_fin: '', heure: '', lieu: '', client: '', precisions: '', image: '', fiche: '', message: '', retouche: false, choisis: new Set() };
+    if (!brouillon) brouillon = { sorte: 'casting', projet: '', titre: '', date: '', date_fin: '', heure: '', lieu: '', ville: '', client: '', precisions: '', image: '', fiche: '', message: '', retouche: false, choisis: new Set() };
     const b = brouillon;
     if (!b.retouche) b.message = messageMannequin(b);
     const projets = await P.bd(sb.from('agenda_projets').select('id, titre, type, date_debut').eq('annule', false).gte('date_debut', new Date(Date.now() - 120 * 86400000).toISOString().slice(0, 10)).order('date_debut', { ascending: false }).limit(60)).catch(() => []);
     const gens = Object.values(personnes).filter((x) => x && x.cle);
-    const groupe = (titre, filtre) => {
-      const l = gens.filter(filtre).sort((x, y) => String(x.nom).localeCompare(String(y.nom)));
-      return l.length ? '<h3>' + P.esc(titre) + ' <span class="doux">(' + l.length + ')</span></h3><div class="df-choix">' + l.map((x) =>
-        '<label class="df-choix-carte"><input type="checkbox" data-change="infos-choix" value="' + P.esc(x.cle) + '"' + (b.choisis.has(x.cle) ? ' checked' : '') + '>' + P.visage(x.photo, x.nom, 'df-vis') + '<span>' + P.esc(x.nom) + '</span></label>').join('') + '</div>' : '';
-    };
+    const groupe = (titre, filtre) => P.casesVisages(titre, gens.filter(filtre), (x) => 'data-change="infos-choix" value="' + P.esc(x.cle) + '"' + (b.choisis.has(x.cle) ? ' checked' : ''));
     const champ = (nom, libelle, type, extra) => '<label class="fl" for="if-' + nom + '">' + libelle + '<input id="if-' + nom + '" name="' + nom + '" type="' + (type || 'text') + '" value="' + P.esc(b[nom]) + '" data-change="infos-champ" data-direct' + (extra || '') + '></label>';
     return P.entete('Nouvelle information', '<a class="btn" href="#/site/' + PAGE + '">← Toutes les informations</a>') +
       '<form class="carte f" data-form="infos-envoyer">' +
       '<fieldset class="large if-sortes"><legend>Quelle information ?</legend>' + Object.keys(SORTES).map((s) =>
         '<label class="if-sorte"><input type="radio" name="sorte" value="' + s + '" data-change="infos-champ"' + (b.sorte === s ? ' checked' : '') + '> ' + SORTES[s][0] + ' ' + SORTES[s][1] + '</label>').join('') + '</fieldset>' +
-      '<label class="fl large" for="if-projet">Projet de l’agenda (facultatif : remplit tout)<select id="if-projet" name="projet" data-change="infos-projet"><option value="">— Aucun —</option>' +
+      '<label class="fl large" for="if-projet">Projet de l’agenda (facultatif : remplit tout)<select id="if-projet" name="projet" data-change="infos-projet"><option value="">Aucun</option>' +
       projets.map((p) => '<option value="' + P.esc(p.id) + '"' + (b.projet === p.id ? ' selected' : '') + '>' + P.esc(P.date(p.date_debut) + ' · ' + p.titre) + '</option>').join('') + '</select></label>' +
       champ('titre', 'Titre', 'text', ' maxlength="160" required placeholder="ex : Casting Kouroukan Mode"') + champ('date', 'Date', 'date') + champ('date_fin', 'Date de fin, si plusieurs jours', 'date') +
       champ('heure', 'Heure', 'text', ' maxlength="20" placeholder="ex : 15 h 00"') +
-      champ('lieu', 'Lieu (plusieurs : séparés par une virgule)', 'text', ' maxlength="300"') + champ('client', 'Client ou partenaire', 'text', ' maxlength="160"') +
+      champ('lieu', 'Lieu (plusieurs : séparés par une virgule)', 'text', ' maxlength="200"') + champ('ville', 'Ville', 'text', ' maxlength="80" placeholder="ex : Abidjan"') + champ('client', 'Client ou partenaire', 'text', ' maxlength="160"') +
       '<label class="fl large" for="if-precisions">Précisions (facultatif)<textarea id="if-precisions" name="precisions" rows="3" maxlength="1200" data-change="infos-champ" data-direct>' + P.esc(b.precisions) + '</textarea></label>' +
       '<label class="fl" for="if-photo">Photo (affiche, visuel…)<input id="if-photo" type="file" accept="image/*" data-change="infos-fichier" data-quoi="image"></label>' +
       '<label class="fl" for="if-fiche">Fiche jointe (PDF ou image)<input id="if-fiche" type="file" accept="application/pdf,image/*" data-change="infos-fichier" data-quoi="fiche"></label>' +
@@ -138,14 +134,19 @@
       const p = (await P.bd(sb.from('agenda_projets').select('*').eq('id', b.projet)))[0];
       // (un casting ou un défilé donne son type, sauf pour un remerciement)
       // (tout le projet : ses dates, et les lieux de chacun de ses jours)
+      const lieux = p ? window.lieuxDuProjet(p) : [];
       if (p) Object.assign(b, { titre: p.titre || '', date: p.date_debut || '', date_fin: p.date_fin || '', heure: p.heure_evenement ? String(p.heure_evenement).replace(':', ' h ') : '',
-        lieu: window.lieuxDuProjet(p).join(', '), client: p.client || '',
+        lieu: jusqua200(lieux), ville: p.ville || '', client: p.client || '',
         sorte: b.sorte !== 'remerciement' && ['casting', 'defile'].includes(p.type) ? p.type : b.sorte });
       // remerciement : les mannequins convoquées à ce projet sont cochées
       if (b.sorte === 'remerciement') await cocherDuProjet();
+      // (lieux trop longs pour le champ : l'agence est prévenue, rien n'est retiré en silence)
+      if (p && b.lieu.split(', ').length < lieux.length) P.message('Tous les lieux ne tiennent pas dans le champ Lieu (200 caractères) : vérifiez-le avant d’envoyer.');
     }
     return P.afficher();
   };
+  // les lieux qui tiennent dans le champ (200 caractères), sans jamais couper un nom
+  const jusqua200 = (lieux) => lieux.reduce((t, l) => (t ? t + ', ' + l : l).length <= 200 ? (t ? t + ', ' + l : l) : t, '');
   // les mannequins convoquées au projet (pas les lignes des parents ; celles qui ont dit « absente » non plus)
   async function cocherDuProjet() {
     const b = brouillon;
@@ -186,8 +187,16 @@
     if (!message) { P.message('Le message est vide.'); return; }
     if (!confirm('Envoyer « ' + b.titre + ' » à ' + P.pluriel(b.choisis.size, 'mannequin', 'mannequins') + ' ?\n\nElles le reçoivent tout de suite dans l’application ; l’e-mail et WhatsApp se préparent ensuite.')) return;
     const destinataires = [...b.choisis];
-    const cree = await P.bd(sb.from('infos_agence').insert({ sorte: b.sorte, titre: String(b.titre).trim(), date_info: b.date || null, date_fin: b.date_fin || null, heure: b.heure || null, lieu: b.lieu || null, client: b.client || null,
-      projet_id: b.projet || null, image: b.image || null, fiche: b.fiche || null, message, message_parent: messageParentDe(message), message_app: texteApplication(message), destinataires }).select('id'));
+    const ligne = { sorte: b.sorte, titre: String(b.titre).trim(), date_info: b.date || null, date_fin: b.date_fin || null, heure: b.heure || null, lieu: b.lieu || null, client: b.client || null,
+      projet_id: b.projet || null, image: b.image || null, fiche: b.fiche || null, message, message_parent: messageParentDe(message), message_app: texteApplication(message), destinataires };
+    const inserer = (l) => P.bd(sb.from('infos_agence').insert(l).select('id'));
+    // (base pas encore mise à jour pour la date de fin : l'information part quand même, la date de fin est dans le message)
+    let sansDateFin = false;
+    const cree = await inserer(ligne).catch((e) => {
+      // (seulement « colonne date_fin inconnue », PGRST204 : toute autre erreur est montrée)
+      if (!(e && e.code === 'PGRST204' && /date_fin/.test(String(e.message)))) throw e;
+      delete ligne.date_fin; sansDateFin = true; return inserer(ligne);
+    });
     const id = cree && cree[0] && cree[0].id;
     if (!id) { P.message('L’information n’a pas pu être enregistrée : reconnectez-vous puis réessayez.'); return; }
     let n;
@@ -199,7 +208,8 @@
     }
     await P.bd(sb.from('infos_agence').update({ dans_app: n || 0 }).eq('id', id).select('id'));
     brouillon = null;
-    P.message('📱 Reçue dans l’application par ' + P.pluriel(n || 0, 'mannequin', 'mannequins') + '. Envoyez maintenant l’e-mail et WhatsApp.');
+    P.message('📱 Reçue dans l’application par ' + P.pluriel(n || 0, 'mannequin', 'mannequins') + '. Envoyez maintenant l’e-mail et WhatsApp.' +
+      (sansDateFin ? ' (Pour garder aussi la date de fin, exécutez une fois supabase-app-messages.sql dans Supabase.)' : ''));
     location.hash = '#/site/' + PAGE + '/' + id;
   };
 

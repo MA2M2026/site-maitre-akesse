@@ -35,6 +35,23 @@
   P.mois = (d) => { const s = String(d).slice(0, 7).split('-'); return MOIS[Number(s[1]) - 1] + ' ' + s[0]; };
   P.moisCourant = () => new Date().toLocaleDateString('fr-CA', { timeZone: 'Africa/Abidjan' }).slice(0, 7) + '-01';
   P.aujourdhui = () => new Date().toLocaleDateString('fr-CA', { timeZone: 'Africa/Abidjan' });
+  // Une partie pas encore activée dans Supabase (table ou fonction absente) : motif = noms propres à
+  // cette partie ; toute autre erreur (connexion…) reste une vraie erreur
+  P.pasActivee = (motif) => (e) => new RegExp(motif + '|42P01|PGRST20[25]').test(String((e && (e.message || e.code)) || e));
+  // Choix d'une période : 'AAAA-MM' (un mois) ou 'AAAA' (une année) → bornes [debut, fin[ ('AAAA-MM-JJ')
+  P.bornesPeriode = (c) => {
+    if (/^\d{4}$/.test(c)) return { debut: c + '-01-01', fin: (Number(c) + 1) + '-01-01', titre: 'année ' + c };
+    const [a, m] = c.split('-').map(Number);
+    return { debut: c + '-01', fin: (m === 12 ? (a + 1) + '-01' : a + '-' + String(m + 1).padStart(2, '0')) + '-01', titre: P.mois(c + '-01') };
+  };
+  // … et la liste à proposer : les 12 derniers mois et les 2 dernières années
+  P.choixPeriodes = () => {
+    const l = [], d = new Date(P.moisCourant() + 'T00:00:00Z');
+    for (let i = 0; i < 12; i++) { const x = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - i, 1)); l.push([x.toISOString().slice(0, 7), P.mois(x.toISOString())]); }
+    const an = d.getUTCFullYear();
+    l.push([String(an), 'Toute l’année ' + an], [String(an - 1), 'Toute l’année ' + (an - 1)]);
+    return l;
+  };
   P.pastille = (texte, ton) => '<span class="pastille ' + (ton || 'neutre') + '">' + P.esc(texte) + '</span>';
   P.chiffre = (libelle, valeur, couleur) => '<div class="carte chiffre"><div class="l">' + P.esc(libelle) + '</div><div class="v ' + (couleur || '') + '">' + valeur + '</div></div>';
   P.barre = (libelle, valeur, max, rouge, texte) => '<div class="barre"><div class="t"><span>' + P.esc(libelle) + '</span><span>' + (texte || P.fcfa(valeur)) +

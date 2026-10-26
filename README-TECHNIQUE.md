@@ -427,10 +427,26 @@ qui s'ouvrent ensuite) et échoue si un nom de mannequin est sans photo.
   `auxLieux` (« au Parc des Expositions et à la Tribe »). Utilisée par Informations agence (le
   projet entier : toutes ses dates, tous ses lieux), les convocations, relances, rappels et places
   limitées ; en base, `app_periode` et `app_lieux` (messages automatiques de l'application).
+  Règles (identiques en JS et en SQL, essayées des deux côtés) : le lieu de chaque jour, le lieu
+  général pour un jour sans lieu ; plusieurs lieux séparés par une virgule (comme l'indiquent les
+  champs de l'agenda), jamais coupés sur « et » (« Parc des Expositions et des Congrès ») ; sans
+  doublon, dans l'ordre des jours ; puis la ville, sauf si un lieu la nomme déjà (`villeEnPlus`).
+  Un lieu écrit en minuscule avec « au », « à », « chez »… est gardé tel quel. Informations agence :
+  champ Ville à part (« …, à Abidjan ») ; si la base n'a pas encore la colonne `date_fin`
+  (PGRST204), l'information part quand même sans elle.
 - Messages chaleureux (l'agence qui parle à ses mannequins), émojis choisis pour leur chaleur
   (✨ 👠 🤍 💌…). Tous les textes visibles (messages, écrans, titres des pages) : plus de tiret long
   « — » (outils de relecture : remplacé par une virgule, « · » entre deux éléments, « | » dans
   les titres des pages ; le « — » seul qui signifie « vide » reste).
+
+## 🧹 Grand nettoyage de l'Administration et de l'application (26/10/2026, demande de la propriétaire)
+- Code recopié regroupé en un seul endroit : `P.pasActivee(motif)` (partie pas encore activée
+  dans Supabase), `P.bornesPeriode` et `P.choixPeriodes` (choix d'un mois ou d'une année),
+  `P.aujourdhui` partout (js/portail/noyau.js) ; `P.casesVisages` (cases à cocher avec visages,
+  js/admin/coque.js) ; `P.sommesParCategorie` (Comptabilité, js/portail/espace-compta.js) ;
+  `jourLong` (js/app.js, Administration et application).
+- Listes de choix sans tiret long : « Choisir », « Aucun », « Nouvelle personne » (« Choose » en
+  anglais). Le « — » seul qui signifie « vide » dans un tableau reste.
 
 ## ✉️ La « 3e voie » : tout arrive aussi dans l'application (26/10/2026, demande de la propriétaire)
 - Ce que l'Administration envoie aux mannequins par WhatsApp et e-mail arrive AUSSI dans leur

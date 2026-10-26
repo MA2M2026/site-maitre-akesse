@@ -62,9 +62,23 @@ insert into convocation_envois (projet_id, participant_id, sorte, canal, prevu_l
 update convocation_envois set statut = 'envoye', envoye_le = now() where participant_id = '00000000-0000-0000-0000-0000000000e2' and canal = 'email';
 select essai((select count(*) from app_messages where user_id = '00000000-0000-0000-0000-0000000000b1' and titre like '%DÉFILÉ BOÎTE') = 2
   and exists (select 1 from app_messages where titre = '🎉 Bonne nouvelle, vous êtes sélectionnée pour DÉFILÉ BOÎTE')
-  and (select texte from app_messages where titre = '💌 Votre convocation pour DÉFILÉ BOÎTE') like 'Rendez-vous le % 20%, Sofitel, convocation à 14h00.%',
+  and (select texte from app_messages where titre = '💌 Votre convocation pour DÉFILÉ BOÎTE') like 'Rendez-vous le % 20%, Sofitel, Abidjan, convocation à 14h00.%',
   'sélection puis convocation : un message chacune (pas une par canal, rien pour le parent), avec la date, le lieu et l''heure, au féminin');
 select essai(not exists (select 1 from app_messages where titre like '%DÉFILÉ BOÎTE' and lien <> '/app/#evenements'), 'le message ouvre l''onglet Événements');
+-- dates et lieux d'un projet sur plusieurs jours (mêmes phrases que les messages WhatsApp)
+select essai(app_periode('2026-11-14', null) = 'le samedi 14 novembre 2026'
+  and app_periode('2026-10-21', '2026-10-22') = 'du mercredi 21 au jeudi 22 octobre 2026'
+  and app_periode('2026-10-30', '2026-11-01') = 'du vendredi 30 octobre au dimanche 1er novembre 2026'
+  and app_periode('2026-12-31', '2027-01-01') = 'du jeudi 31 décembre 2026 au vendredi 1er janvier 2027', 'dates : un jour ou plusieurs, en une phrase, avec le « 1er »');
+select essai(app_lieux(row(a.*)::agenda_projets) = 'Parc des Expositions et des Congrès, La Tribe, Noom Hôtel, Abidjan', 'lieux : ceux de chaque jour dans l''ordre, le lieu général pour un jour sans lieu, jamais coupés sur « et », sans doublon, puis la ville')
+  from (select (jsonb_populate_record(null::agenda_projets, jsonb_build_object('lieu', 'Noom Hôtel', 'ville', 'Abidjan',
+    'seances', '[{"jour":"2026-10-21","lieu":"Parc des Expositions et des Congrès, La Tribe"},{"jour":"2026-10-22","lieu":"la tribe"},{"jour":"2026-10-23","lieu":" \n"}]'::jsonb))).*) a;
+select essai(app_lieux(row(a.*)::agenda_projets) = 'Sofitel Abidjan, Parc des Expositions', 'lieux : sans horaires par jour, le lieu général (découpé aux virgules), sans répéter la ville')
+  from (select (jsonb_populate_record(null::agenda_projets, jsonb_build_object('lieu', 'Sofitel Abidjan, Parc des Expositions', 'ville', 'abidjan', 'seances', '[]'::jsonb))).*) a;
+select essai(app_lieux(row(a.*)::agenda_projets) = 'Salle Germaine, Man', 'lieux : la ville comme mot entier (« Man » n''est pas dans « Salle Germaine »)')
+  from (select (jsonb_populate_record(null::agenda_projets, jsonb_build_object('lieu', 'Salle Germaine', 'ville', 'Man', 'seances', '[]'::jsonb))).*) a;
+select essai(app_lieux(row(a.*)::agenda_projets) = 'Noom, Sofitel', 'lieux : un jour vide prend le lieu général (comme en JS)')
+  from (select (jsonb_populate_record(null::agenda_projets, jsonb_build_object('lieu', 'Noom', 'seances', '[null, {"lieu":"Sofitel"}]'::jsonb))).*) a;
 -- b) places limitées : quand son lien part
 update places_invitations set envoye_le = now() where model_id = '00000000-0000-0000-0000-0000000000b1' and envoye_le is null and statut <> 'exclu';
 select essai(exists (select 1 from app_messages where user_id = '00000000-0000-0000-0000-0000000000b1' and sorte = 'places' and lien like '/places?c=%'), 'places limitées : son lien personnel dans l''application');

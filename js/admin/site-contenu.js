@@ -58,7 +58,7 @@
     redaction = { type, id: existante ? existante.id : null, existante, fichiers: [], editeur: null };
     const v = (k) => P.esc(existante && existante[k] ? existante[k] : '');
     const propres = type === 'actualites'
-      ? '<label class="fl" for="pub-categorie">Catégorie<select id="pub-categorie" name="categorie"><option value="">—</option>' + CATEGORIES_ACTUALITES.map((k) => '<option' + (existante && existante.categorie === k ? ' selected' : '') + '>' + P.esc(k) + '</option>').join('') + '</select></label>' +
+      ? '<label class="fl" for="pub-categorie">Catégorie<select id="pub-categorie" name="categorie"><option value="">Choisir</option>' + CATEGORIES_ACTUALITES.map((k) => '<option' + (existante && existante.categorie === k ? ' selected' : '') + '>' + P.esc(k) + '</option>').join('') + '</select></label>' +
         '<label class="fl" for="pub-video">Lien vidéo YouTube ou Vimeo (facultatif)<input id="pub-video" name="video" type="url" inputmode="url" placeholder="https://youtu.be/…" value="' + v('video_url') + '"></label>'
       : '<label class="fl" for="pub-date">Date de l’événement<input id="pub-date" name="date" type="date" value="' + v('date_evenement') + '"></label>' +
         '<label class="fl" for="pub-lieu">Lieu<input id="pub-lieu" name="lieu" maxlength="200" value="' + v('lieu') + '"></label>';
@@ -163,7 +163,7 @@
       '<div class="large partenaire-tete"><span class="partenaire-logo grand" id="pa-apercu">' + (p && p.logo_url ? '<img src="' + P.esc(urlLegere(p.logo_url)) + '" alt="">' : '<span class="ini">' + initiale(p && p.nom) + '</span>') + '</span>' +
       '<label class="btn"><input type="file" accept="image/*,.heic,.heif" data-change="partenaire-logo" hidden>🖼️ ' + (p && p.logo_url ? 'Changer le logo' : 'Choisir le logo') + '</label></div>' +
       '<label class="fl" for="pa-nom">Nom (obligatoire)<input id="pa-nom" name="nom" required maxlength="160" value="' + v('nom') + '"></label>' +
-      '<label class="fl" for="pa-role">Rôle<select id="pa-role" name="role"><option value="">—</option>' + ROLES_PARTENAIRES.map((r) => '<option value="' + P.esc(r[0]) + '"' + (p && p.role === r[0] ? ' selected' : '') + '>' + P.esc(r[1]) + '</option>').join('') + '</select></label>' +
+      '<label class="fl" for="pa-role">Rôle<select id="pa-role" name="role"><option value="">Choisir</option>' + ROLES_PARTENAIRES.map((r) => '<option value="' + P.esc(r[0]) + '"' + (p && p.role === r[0] ? ' selected' : '') + '>' + P.esc(r[1]) + '</option>').join('') + '</select></label>' +
       '<label class="fl" for="pa-structure">Structure<input id="pa-structure" name="structure" maxlength="200" value="' + v('structure') + '"></label>' +
       '<label class="fl" for="pa-evenement">Événement<input id="pa-evenement" name="evenement" maxlength="200" value="' + v('evenement') + '"></label>' +
       '<div class="large"><span class="fl">Présentation</span><div id="pa-editeur" class="editeur-riche"></div></div>' +

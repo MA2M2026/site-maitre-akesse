@@ -24,9 +24,8 @@
     return i.model_id ? '<a class="visage-lien" href="' + P.esc(lienFiche(i.model_id)) + '" tabindex="-1" aria-hidden="true">' + vis + '</a> <a href="' + P.esc(lienFiche(i.model_id)) + '">' + P.esc(nom) + '</a>'
       : vis + ' <span>' + P.esc(nom) + '</span>';
   }
-  const aujourdhui = () => new Date().toISOString().slice(0, 10);
-  const passe = (p) => !p || p.annule || (p.date_fin || p.date_debut) < aujourdhui();
-  const nonActive = (e) => /places_(appels|invitations|preparer)|42P01|PGRST20[25]/.test(String((e && (e.message || e.code)) || e));
+  const passe = (p) => !p || p.annule || (p.date_fin || p.date_debut) < P.aujourdhui();
+  const nonActive = P.pasActivee('places_(appels|invitations|preparer)');  // (js/portail/noyau.js)
   const PAS_ACTIVE = '<div class="carte vide">Les Places limitées ne sont pas encore activées : exécutez une fois le fichier supabase-places.sql dans Supabase.</div>';
   let ecran = null;  // fiche affichée : { appel, projet, invitations, contacts, photos }
   let choixOuvert = false;  // « Qui reçoit le lien ? » reste ouvert pendant qu'on coche
@@ -99,7 +98,7 @@
   // ---------- Nouvel appel ----------
   P.actions['places-nouveau'] = async () => {
     const [projets, appels] = await Promise.all([
-      P.bd(sb.from('agenda_projets').select('id, titre, date_debut, date_fin, annule').gte('date_debut', aujourdhui()).eq('annule', false).order('date_debut')),
+      P.bd(sb.from('agenda_projets').select('id, titre, date_debut, date_fin, annule').gte('date_debut', P.aujourdhui()).eq('annule', false).order('date_debut')),
       P.bd(sb.from('places_appels').select('projet_id'))
     ]);
     const libres = projets.filter((p) => !appels.some((a) => a.projet_id === p.id));
@@ -110,7 +109,7 @@
       '<div id="pl-nouveau" class="large f-sous">' +
       '<label class="fl" for="pl-titre">Titre<input id="pl-titre" name="titre" maxlength="160" placeholder="ex : Défilé Africa in Rhythm"></label>' +
       '<label class="fl" for="pl-type">Type<select id="pl-type" name="type">' + types.map((t) => '<option value="' + t + '"' + (t === 'defile' ? ' selected' : '') + '>' + P.esc(typeof libelleTypeAgenda === 'function' ? libelleTypeAgenda(t) : t) + '</option>').join('') + '</select></label>' +
-      '<label class="fl" for="pl-date">Date<input id="pl-date" name="date" type="date" min="' + aujourdhui() + '"></label>' +
+      '<label class="fl" for="pl-date">Date<input id="pl-date" name="date" type="date" min="' + P.aujourdhui() + '"></label>' +
       '<label class="fl" for="pl-heure">Heure de l’événement<input id="pl-heure" name="heure" type="time"></label>' +
       '<label class="fl" for="pl-lieu">Lieu<input id="pl-lieu" name="lieu" maxlength="160"></label>' +
       '<label class="fl" for="pl-ville">Ville<input id="pl-ville" name="ville" maxlength="80" value="Abidjan"></label>' +
@@ -128,7 +127,7 @@
     if (!id) {
       const titre = String(f.get('titre') || '').trim(), date = f.get('date');
       if (!titre || !date) { P.message('Indiquez au moins le titre et la date du nouveau projet.'); return; }
-      if (date < aujourdhui()) { P.message('Cette date est déjà passée.'); return; }
+      if (date < P.aujourdhui()) { P.message('Cette date est déjà passée.'); return; }
       const cree = await P.bd(sb.from('agenda_projets').insert({ titre, type: f.get('type') || 'defile', date_debut: date, heure_evenement: f.get('heure') || null,
         lieu: String(f.get('lieu') || '').trim() || null, ville: String(f.get('ville') || '').trim() || null, visible: f.get('visible') === 'on' }).select('id'));
       if (!cree || !cree.length) { P.message('Le projet n’a pas pu être créé : reconnectez-vous puis réessayez.'); return; }
@@ -216,7 +215,7 @@
     // de l'agence (registre) ou extérieure (carnet) — champs partagés : champsPersonne (js/agenda-outils.js)
     const carnet = ecran.carnet || [];
     const ajout = '<form class="f pl-ajout" data-form="places-personne"><h3 class="pl-titre-grille large">＋ Ajouter une personne</h3>' +
-      (carnet.length ? '<label class="fl large" for="pl-carnet">Mannequin extérieure déjà dans le carnet<select id="pl-carnet" name="carnet"><option value="">— Nouvelle personne —</option>' +
+      (carnet.length ? '<label class="fl large" for="pl-carnet">Mannequin extérieure déjà dans le carnet<select id="pl-carnet" name="carnet"><option value="">Nouvelle personne</option>' +
         carnet.map((c) => '<option value="' + P.esc(c.id) + '">' + P.esc([c.civilite, c.nom].filter(Boolean).join(' ')) + '</option>').join('') + '</select></label>' : '') +
       '<div class="large">' + champsPersonne('pl', false) + '</div>' +
       '<p class="doux large">Elle reçoit son lien comme les autres, et reste enregistrée pour les prochains projets.</p>' +

@@ -278,7 +278,7 @@
       if (!r || !r.length) throw new Error('Rien n’a été enregistré : reconnectez-vous puis réessayez.');
     } catch (e) {
       await P.bd(sb.storage.from(STOCKAGE).remove([chemin])).catch(() => null);  // pas de fichier orphelin
-      if (/cartes_photos|42P01|PGRST20[25]/.test(String((e && (e.message || e.code)) || e))) { P.message(PAS_ACTIVE); return; }
+      if (P.pasActivee('cartes_photos')(e)) { P.message(PAS_ACTIVE); return; }
       throw e;
     }
     if (c.chemin) await P.bd(sb.storage.from(STOCKAGE).remove([c.chemin])).catch(() => null);

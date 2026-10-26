@@ -5,8 +5,8 @@
 // convocations envoyées par l'agence (app_mes_evenements, supabase-app-mannequin.sql) avec
 // « Je confirme » / « Je suis absente » (convocation_repondre) et passages du défilé
 // (defile_programme), résumé du profil (analyse partagée : js/analyse-profil.js) et des paiements
-// (mes_mensualites, mes_cachets). Les modifications du profil et le paiement se font encore sur
-// les pages du site (Espace mannequin, Mes paiements).
+// (mes_mensualites, mes_cachets). Modifier son profil et payer : pages de l'application
+// (app/espace-mannequin.html, app/mes-paiements.html). jourLong : js/app.js.
 (function () {
   'use strict';
   const racine = document.getElementById('app');
@@ -20,11 +20,10 @@
   const programmeOuvert = {};  // jeton → « Tout le programme » déplié
 
   // ---------- petits outils ----------
-  const jourLong = (j) => new Date(j + 'T12:00:00Z').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
   const jourCourt = (j) => new Date(j + 'T12:00:00Z').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', timeZone: 'UTC' });
   const heure = (h) => (h ? String(h).slice(0, 5).replace(':', 'h') : '');
   const fcfa = (n) => Number(n || 0).toLocaleString('fr-FR').replace(/ | /g, ' ') + ' F';
-  const aujourdhui = () => new Date().toISOString().slice(0, 10);
+  const aujourdhui = () => dateDuJour();  // (js/app.js)
   const dansJours = (j) => Math.round((Date.parse(j + 'T12:00:00Z') - Date.parse(aujourdhui() + 'T12:00:00Z')) / 86400000);
   const datesEvenement = (e) => (e.date_fin && e.date_fin !== e.date_debut ? jourCourt(e.date_debut) + ' → ' + jourCourt(e.date_fin) : jourLong(e.date_debut));
   const itineraire = (e) => 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent([e.lieu, e.ville].filter(Boolean).join(', '));
@@ -164,7 +163,7 @@
       (sombre && !e.passe ? ' · ' + esc(dansJours(e.date_debut) <= 0 ? 'aujourd’hui' : dansJours(e.date_debut) === 1 ? 'demain' : 'dans ' + dansJours(e.date_debut) + ' jours') : '') + '</span>' + pastilleReponse(e) + '</div>' +
       '<h3 class="ap-ev-titre">' + esc(e.titre) + '</h3>' + infosEvenement(e) +
       (e.defile && e.reponse === 'confirme' && !e.passe ? (passages ? '<div class="ap-passages"><span class="doux">Mes passages</span>' +
-        (passages.length ? passages.map((x) => '<div class="ap-passage"><span>' + esc(jourCourt(x.jour) + (x.salle ? ' · ' + x.salle : '') + (x.theme ? ' · ' + x.theme : '')) + '</span><b>' + esc(heure(x.debut) || '—') + '</b></div>').join('')
+        (passages.length ? passages.map((x) => '<div class="ap-passage"><span>' + esc(jourCourt(x.jour) + (x.salle ? ' · ' + x.salle : '') + (x.theme ? ' · ' + x.theme : '')) + '</span><b>' + esc(heure(x.debut) || 'À préciser') + '</b></div>').join('')
           : '<p class="doux">Pas encore de passage pour vous : l’agence prépare le programme.</p>') +
         (prog.length ? '<button type="button" class="ap-btn' + (sombre ? ' clair' : '') + '" data-programme="' + esc(e.jeton) + '" aria-expanded="' + !!programmeOuvert[e.jeton] + '">📋 ' + (programmeOuvert[e.jeton] ? 'Masquer le programme' : 'Tout le programme') + '</button>' : '') +
         (programmeOuvert[e.jeton] ? toutLeProgramme(prog) : '') + '</div>'
@@ -177,7 +176,7 @@
     let jourEnCours = '', html = '<div class="ap-programme">';
     prog.forEach((x) => {
       if (x.jour !== jourEnCours) { jourEnCours = x.jour; html += '<h4>' + esc(jourLong(x.jour)) + '</h4>'; }
-      html += '<div class="ap-prog-passage' + (x.moi ? ' moi' : '') + '"><div class="ap-ligne entre"><b>' + esc(heure(x.debut) || '—') + '</b><span class="doux">' + esc([x.salle, x.theme].filter(Boolean).join(' · ')) + '</span></div>' +
+      html += '<div class="ap-prog-passage' + (x.moi ? ' moi' : '') + '"><div class="ap-ligne entre"><b>' + esc(heure(x.debut) || 'À préciser') + '</b><span class="doux">' + esc([x.salle, x.theme].filter(Boolean).join(' · ')) + '</span></div>' +
         '<div class="ap-prog-visages">' + (x.mannequins || []).map((m) => '<span class="ap-prog-visage' + (m.moi ? ' moi' : '') + '" title="' + esc(m.nom) + '">' +
           (m.photo ? '<img src="' + esc(urlPhotoMemeOrigine(m.photo)) + '" alt="" loading="lazy">' : esc(initialesDe(m.nom))) + '</span>').join('') + '</div></div>';
     });

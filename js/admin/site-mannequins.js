@@ -72,7 +72,7 @@
   async function lirePhotos(id) { return P.bd(sb.from('model_photos').select(COLONNES_PHOTOS).eq('model_id', id).order('created_at', { ascending: true })); }
   function blocPhotos() {
     const ph = ouverte.photos;
-    const optionsCc = (n) => '<option value="">Compcard —</option>' + [1, 2, 3, 4, 5].map((c) => '<option value="' + c + '"' + (n === c ? ' selected' : '') + '>Compcard ' + c + (c === 1 ? ' (grande)' : '') + '</option>').join('');
+    const optionsCc = (n) => '<option value="">Pas sur une compcard</option>' + [1, 2, 3, 4, 5].map((c) => '<option value="' + c + '"' + (n === c ? ' selected' : '') + '>Compcard ' + c + (c === 1 ? ' (grande)' : '') + '</option>').join('');
     return '<section class="carte" id="mq-photos"><div class="section-titre"><h2>Photos du Book <span class="doux">(' + ph.length + ')</span></h2>' +
       '<label class="btn rouge"><input type="file" accept="image/*" multiple data-change="mannequin-photos-ajouter" hidden>＋ Photos</label></div>' +
       '<p class="doux petit-texte">Sous chaque photo : sa case sur la compcard (1 à 5, la case 1 est la grande photo).</p>' +

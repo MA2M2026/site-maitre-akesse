@@ -75,7 +75,7 @@
     const v = (k) => P.esc((m && m[k]) || '');
     const principal = P.moi.role === 'principal';
     return '<label class="fl" for="mq-nom">Nom et prénoms<input id="mq-nom" name="full_name" required value="' + v('full_name') + '"></label>' +
-      '<label class="fl" for="mq-genre">Genre<select id="mq-genre" name="genre"><option value="">—</option><option value="femme"' + (m && m.genre === 'femme' ? ' selected' : '') + '>Femme</option><option value="homme"' + (m && m.genre === 'homme' ? ' selected' : '') + '>Homme</option></select></label>' +
+      '<label class="fl" for="mq-genre">Genre<select id="mq-genre" name="genre"><option value="">Choisir</option><option value="femme"' + (m && m.genre === 'femme' ? ' selected' : '') + '>Femme</option><option value="homme"' + (m && m.genre === 'homme' ? ' selected' : '') + '>Homme</option></select></label>' +
       '<label class="fl" for="mq-naissance">Date de naissance<input id="mq-naissance" name="date_naissance" type="date" value="' + v('date_naissance') + '"></label>' +
       '<label class="fl" for="mq-tel">Téléphone (WhatsApp)<input id="mq-tel" name="telephone" type="tel" value="' + v('telephone') + '"></label>' + boutonContactTelephone('mq-tel', 'mq-nom', 'mq-mail') +
       '<label class="fl" for="mq-mail">E-mail<input id="mq-mail" name="email" type="email" value="' + v('email') + '"></label>' +

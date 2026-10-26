@@ -52,7 +52,7 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     ok(await p.inputValue('#ca-nom') === 'AYA KOUASSI' && await p.inputValue('#ca-tel') === '0700000010', n + 'mannequin du registre : nom et numéro remplis');
     await p.selectOption('#ca-projet', 'p1'); await p.fill('#ca-montant', '25000');
     // motif choisi dans une liste (22/10/2026)
-    ok((await p.$$eval('#ca-motif option', (o) => o.map((x) => x.textContent))).join('|') === '— Choisir —|Défilé|Shooting photo|Campagne publicitaire|Tournage vidéo|Événement / hôtesse|Casting rémunéré|Autre', n + 'motif du cachet : liste de choix');
+    ok((await p.$$eval('#ca-motif option', (o) => o.map((x) => x.textContent))).join('|') === 'Choisir|Défilé|Shooting photo|Campagne publicitaire|Tournage vidéo|Événement / hôtesse|Casting rémunéré|Autre', n + 'motif du cachet : liste de choix');
     await p.selectOption('#ca-motif', 'defile');
     // commission de l'agence (22/10/2026) : montant total saisi, commission et part de la mannequin affichées
     ok(/Montant total de la prestation/.test(await p.textContent('label[for="ca-montant"]')) && /20 % : 5 000 FCFA · à verser à la mannequin : 20 000 FCFA/.test((await p.textContent('#ca-calcul')).replace(/\u202f|\u00a0/g, ' ')), n + 'commission de 20 % et montant à verser affichés pendant la saisie');

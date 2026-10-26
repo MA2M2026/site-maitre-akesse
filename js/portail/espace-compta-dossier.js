@@ -28,11 +28,7 @@
     tiers.forEach((x) => { nomsTiers[x.id] = x.nom; });
     const valides = duMois.filter((e) => !e.annule);
     const total = (sens) => valides.filter((e) => e.sens === sens).reduce((s, e) => s + e.montant, 0);
-    const parCategorie = (sens) => {
-      const t = {};
-      valides.filter((e) => e.sens === sens).forEach((e) => { t[e.categorie] = (t[e.categorie] || 0) + e.montant; });
-      return Object.keys(t).sort((a, b) => t[b] - t[a]).map((k) => [cat(k), t[k]]);
-    };
+    const parCategorie = (sens) => P.sommesParCategorie(valides, sens).map(([k, v]) => [cat(k), v]);  // (js/portail/espace-compta.js)
     return { m, fin, r, duMois, valides, noms, nomsTiers, tresorerie, creances, dettes, docs,
       // impôts à payer dans le mois, ou payés dans le mois
       impots: impots.map((i) => Object.assign({}, i, { paye: !!paiement(i) }))
