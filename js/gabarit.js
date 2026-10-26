@@ -17,6 +17,8 @@
   // [fichier, libellé menu FR, libellé menu EN, libellé bas de page FR, libellé bas de page EN]
   // (libellé bas de page null = absent du bas de page)
   // Ordre du menu « Modèle A » (11/10/2026) ; « Intégrer l'agence » devient le grand bouton rouge.
+  var APP_G = 'https://mannequin.maitreakessemodelmanagement.com/app/';  // (l'application des mannequins, comme MA2M_APPLI)
+  var lienPage = function (p) { return p[5] || p[0] + '.html'; };
   var PAGES = [
     ['index', 'Accueil', 'Home', 'Accueil', 'Home'],
     ['mannequins', 'The Book', 'The Book', 'The Book', 'The Book'],
@@ -28,7 +30,8 @@
     ['evenements', 'Événements', 'Our Events', 'Nos événements', 'Our Events'],
     ['partenaires', 'Partenaires', 'Our Partners', 'Nos partenaires', 'Our Partners'],
     ['candidature', 'Postuler à un casting', 'Apply for a Casting', 'Postuler à un casting', 'Apply for a Casting'],
-    ['inscription-mannequin', "Inscription nouveau mannequin de l'agence", 'Registration', 'Inscription', 'Registration'],
+    // (l'inscription et l'espace mannequin sont dans l'application des mannequins, 26/10/2026)
+    ['inscription-mannequin', "Inscription nouveau mannequin de l'agence", 'Registration', 'Inscription', 'Registration', APP_G + 'inscription-mannequin.html'],
     ['contact', 'Contact', 'Contact', null, null],
     ['integrer-agence', "Intégrer l'agence", 'Join the Agency', "Intégrer l'agence", 'Join the Agency']
   ];
@@ -72,9 +75,9 @@
 
   placeHolders('menu').forEach(function (el) {
     var liens = PAGES.filter(function (p) { return visible(p, true); }).map(function (p) {
-      return '    <li' + (p[0] === 'integrer-agence' ? ' class="menu-rejoindre"' : '') + '><a href="' + p[0] + '.html"' + (p[0] === actif ? ' class="actif"' : '') + '>' + (EN_G ? p[2] : p[1]) + '</a></li>';
+      return '    <li' + (p[0] === 'integrer-agence' ? ' class="menu-rejoindre"' : '') + '><a href="' + lienPage(p) + '"' + (p[0] === actif ? ' class="actif"' : '') + '>' + (EN_G ? p[2] : p[1]) + '</a></li>';
     });
-    liens.push('    <li class="item-cta"><a href="' + RACINE_G + 'espace-mannequin.html"' + (actif === 'espace-mannequin' ? ' class="actif"' : '') + '>' + (EN_G ? "Agency's Model Space" : "Espace mannequin de l'agence") + '</a></li>');
+    // (plus de bouton « Espace mannequin » : les mannequins entrent par l'application, 26/10/2026)
     el.innerHTML = '\n  <button class="close-menu" id="closeMenuBtn">' + (EN_G ? 'Close ✕' : 'Fermer ✕') + '</button>\n  <ul class="nav-links">\n' + liens.join('\n') + '\n  </ul>\n';
     el.setAttribute('data-rempli', '');
   });
@@ -90,7 +93,7 @@
     var nav = PAGES.filter(function (p) { return p[3] && visible(p, false); }).sort(function (a, b) {
       return ORDRE_PIED.indexOf(a[0]) - ORDRE_PIED.indexOf(b[0]);
     }).map(function (p) {
-      return '        <a href="' + p[0] + '.html">' + (EN_G ? p[4] : p[3]) + '</a>';
+      return '        <a href="' + lienPage(p) + '">' + (EN_G ? p[4] : p[3]) + '</a>';
     }).join('\n');
     // Titre de structure invisible (12/10/2026) : sur les pages sans titre de niveau 2, les
     // titres h3 du bas de page « sautaient » un niveau (relevé par Lighthouse et le W3C).

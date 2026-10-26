@@ -1044,21 +1044,6 @@ section { padding: 5rem 0; }
 .menu-overlay .nav-links a:hover,
 .menu-overlay .nav-links a.actif { color: var(--bordeaux-clair); letter-spacing: 0.08em; }
 
-.menu-overlay .nav-links .item-cta { border-bottom: none; margin-top: 1.6rem; }
-.menu-overlay .nav-links .item-cta a {
-  font-family: var(--texte);
-  font-size: 0.72rem;
-  letter-spacing: 0.22em;
-  border: 1px solid var(--bordeaux);
-  background: none;
-  color: var(--bordeaux-clair);
-  padding: 0.95rem 2.2rem;
-  font-weight: 500;
-  display: inline-block;
-  transition: background 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
-}
-.menu-overlay .nav-links .item-cta a:hover { background: var(--bordeaux); color: var(--c-fff); box-shadow: var(--glow-bordeaux); letter-spacing: 0.22em; }
-
 .menu-contact {
   margin-top: 2.6rem;
   text-align: center;
@@ -2854,17 +2839,6 @@ html.selection-vide #liste-vide { display: block; }
   color: var(--c-fff);
 }
 
-/* L'entrée "Espace mannequin de l'agence" garde la même taille que les
-   autres — avant, sa police était plus petite que le reste du menu. */
-.menu-overlay .nav-links .item-cta { margin-top: 0.4rem; }
-.menu-overlay .nav-links .item-cta a {
-  font-family: var(--texte) !important;
-  font-size: 0.95rem !important;
-  letter-spacing: 0.14em;
-  padding: 0.95rem 1.6rem;
-  font-weight: 500;
-}
-
 /* Fiche dossier (tableau de bord) : message WhatsApp tout prêt — champs du rendez-vous */
 .mf-wa .form-champ { margin-bottom: 0.7rem; }
 .mf-wa select, .mf-wa input { width: 100%; box-sizing: border-box; }
@@ -2983,25 +2957,6 @@ html { scroll-padding-top: 95px; }
   width: 2px; border-radius: 2px; background: var(--c-d55468);
 }
 
-/* « Espace mannequin de l'agence » : écrit exactement comme les autres liens du menu
-   (demande de la propriétaire, 05/10/2026 — plus de bouton rouge). */
-.menu-overlay .nav-links .item-cta { margin-top: 0; border-bottom: none; }
-.menu-overlay .nav-links .item-cta a {
-  justify-content: space-between;
-  padding: 0.62rem 12px !important;
-  border-radius: 8px !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  font-family: var(--texte) !important;
-  font-size: 1rem !important; font-weight: 400;
-  letter-spacing: 0.03em !important; text-transform: none;
-  text-align: left;
-  color: var(--c-f4efe9) !important;
-}
-@media (hover: hover) { .menu-overlay .nav-links .item-cta a:hover { background: var(--c-rgba-255-255-255-0_05) !important; letter-spacing: 0.03em !important; } }
-.menu-overlay .nav-links .item-cta a::after { content: "›"; font-size: 1.15rem; color: var(--c-rgba-255-255-255-0_35); }
-.menu-overlay .nav-links .item-cta a.actif { background: var(--c-rgba-255-255-255-0_06) !important; }
-.menu-overlay .nav-links .item-cta a.actif::before { content: ""; }
 .menu-overlay .menu-contact { margin-top: 1.4rem; }
 .menu-overlay .menu-contact a.menu-tel { font-size: 1rem; }
 .menu-overlay .menu-reseaux { margin-top: 0.9rem; gap: 9px; }

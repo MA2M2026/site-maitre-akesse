@@ -28,19 +28,19 @@ async function navigateur() {
     await brancher(p, { tables: {}, rpc: { mes_mensualites: () => ({ inscrit: true, nom: 'KONÉ AWA', mensualite: 20000, statut: 'actif', mineur: false, mois: MOIS }), lien_paiement: (c) => (c.p_montant === 20000 ? 'https://pay.wave.com/m/PARAMETRES/c/ci/?amount=20000' : null), mes_recus: () => [{ objet: 'mensualite', mois: MOIS[0].mois, montant: 20000, mode: 'wave', numero: 'REC-2026-00007' }, { objet: 'mensualite', mois: MOIS[3].mois, montant: null, mode: 'avant_systeme', numero: null }], mensualite_declarer_avec_numero: null,
       // cachets payés par l'agence (22/10/2026) : visibles ici avec leur reçu
       mes_cachets: () => [{ numero: 'MA2M-CA-2026-0003', montant: 40000, motif: 'defile', prestation: 'Défilé · ABIDJAN BORDER FORUM', paye_le: '2026-10-20T10:00:00Z', jeton: '22222222-3333-4444-5555-666666666666' }] } }, journal);
-    await p.goto('http://127.0.0.1:' + PORT + '/mes-paiements.html'); await p.waitForSelector('.mp-calendrier', { timeout: 8000 });
+    await p.goto('http://127.0.0.1:' + PORT + '/app/mes-paiements.html'); await p.waitForSelector('.mp-calendrier', { timeout: 8000 });
     const t = () => p.evaluate(() => document.getElementById('mp-zone').innerText);
     ok((await p.$$('.mp-calendrier .mp-mois')).length === 24 && /1 mois réglé sur 24/.test(await t()), nomEcran + ' : tableau des 24 mois de formation');
     const couleurs = await p.$$eval('.mp-calendrier .mp-mois', (l) => l.slice(0, 3).map((x) => x.className.replace('mp-mois ', '')));
     ok(couleurs[0] === 'ok' && couleurs[1] === 'alerte' && ['erreur', 'info'].includes(couleurs[2]), nomEcran + ' : vert payé, orange en attente, rouge non payé ' + couleurs.join(','));
     ok(await p.isDisabled('[data-mp=paye]') && /PARAMETRES.*amount=20000$/.test(await p.getAttribute('[data-mp=wave]', 'href')), nomEcran + ' : lien Wave des Paramètres au montant du mannequin (20 000), « J’ai payé » attend le paiement');
     ok(/REC-2026-00007/.test(await t()) && /Avant le nouveau système/.test(await t()), nomEcran + ' : historique avec numéro de reçu');
-    ok(/Mes cachets reçus/.test(await t()) && /Défilé · ABIDJAN BORDER FORUM/.test(await t()) && /40 000 FCFA/.test((await t()).replace(/\u202f|\u00a0/g, ' ')) && /MA2M-CA-2026-0003/.test(await t())
+    ok(/Mes cachets reçus/i.test(await t()) && /Défilé · ABIDJAN BORDER FORUM/.test(await t()) && /40 000 FCFA/.test((await t()).replace(/\u202f|\u00a0/g, ' ')) && /MA2M-CA-2026-0003/.test(await t())
       && /\/recu\?r=22222222-3333/.test(await p.getAttribute('.mp-cachet a', 'href') || ''), nomEcran + ' : « Mes cachets reçus » avec le montant, le reçu et son lien');
     ok(/espèces/i.test(await t()) && /Orange Money/.test(await t()), nomEcran + ' : espèces à l’agence, autres opérateurs « bientôt »');
     const boutons = (await p.evaluate(verifierBoutons)).map((x) => x.texte); ok(!boutons.length, nomEcran + ' : boutons au modèle rouge ' + boutons.join(' | '));
     const pales = (await lirePageEntiere(p)).map((x) => x.texte.slice(0, 25)); ok(!pales.length, nomEcran + ' : textes lisibles ' + pales.join(' | '));
-    await p.locator('[data-mp=wave]').evaluate((a) => { a.removeAttribute('target'); a.href = '#'; });
+    await p.locator('[data-mp=wave]').evaluate((a) => { a.removeAttribute('target'); a.addEventListener('click', (e) => e.preventDefault()); });
     await p.click('[data-mp=wave]'); await p.waitForTimeout(500);
     ok(await p.isDisabled('[data-mp=paye]'), nomEcran + ' : « J’ai payé » reste fermé sans le numéro du payeur');
     await p.fill('.mp-num', 'abc'); ok(await p.isDisabled('[data-mp=paye]'), nomEcran + ' : numéro invalide refusé');
@@ -59,14 +59,14 @@ async function navigateur() {
     const aJour = MOIS.map((m, i) => Object.assign({}, m, { etat: i <= 2 ? 'paye' : 'a_venir' }));
     await brancher(p, { tables: {}, rpc: { mes_mensualites: () => ({ inscrit: true, nom: 'KONÉ AWA', mensualite: 20000, statut: 'actif', mineur: false, mois: aJour }),
       lien_paiement: (c) => (c.p_montant === 20000 ? 'https://pay.wave.com/m/PARAMETRES/c/ci/?amount=20000' : null), mes_recus: () => [], mes_cachets: () => [], mensualites_payer_avance: 3 } }, journal);
-    await p.goto('http://127.0.0.1:' + PORT + '/mes-paiements.html#avance'); await p.waitForSelector('#avance', { timeout: 8000 });
+    await p.goto('http://127.0.0.1:' + PORT + '/app/mes-paiements.html#avance'); await p.waitForSelector('#avance', { timeout: 8000 });
     const carte = () => p.evaluate(() => document.getElementById('avance').innerText.replace(/\u202f|\u00a0/g, ' '));
     ok(/Payer à l’avance/.test(await carte()) && /20 000 FCFA/.test(await carte()) && (await p.$$('#mp-avance-nb option')).length === 3 && !(await p.$('[data-mp=wave]:not([data-mois=avance])')),
       nomEcran + ' : à jour → « Payer à l’avance » (1 à 3 mois), pas d’autre paiement proposé');
     await p.selectOption('#mp-avance-nb', '3'); await p.waitForTimeout(300);
     ok(/60 000 FCFA/.test(await carte()) && ((await carte()).match(/Mois payés : (.*)/) || ['', ''])[1].split(', ').length === 3 && /amount=60000$/.test(await p.getAttribute('#avance [data-mp=wave]', 'href')),
       nomEcran + ' : 3 mois → 60 000 FCFA, les 3 mois nommés, lien Wave de 60 000');
-    await p.locator('#avance [data-mp=wave]').evaluate((a) => { a.removeAttribute('target'); a.href = '#avance'; });
+    await p.locator('#avance [data-mp=wave]').evaluate((a) => { a.removeAttribute('target'); a.addEventListener('click', (e) => e.preventDefault()); });
     await p.click('#avance [data-mp=wave]'); await p.waitForTimeout(500);
     await p.fill('#mp-num-avance', '+225 07 01 02 03 04'); await p.click('#avance [data-mp=paye]'); await p.waitForTimeout(1200);
     const declares = journal.filter((j) => j[0] === 'rpc' && /^mensualite/.test(j[1])).map((j) => [j[1], JSON.parse(j[2])]);

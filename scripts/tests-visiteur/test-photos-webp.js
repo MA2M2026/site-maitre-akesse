@@ -29,7 +29,7 @@ async function espace(b, sansWebp) {
     r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ uploadUrl: 'http://127.0.0.1:' + PORT + '/__stockage', publicUrl: 'https://photos.test/' + corps.chemin }) });
   });
   await q.route(/__stockage/, r => r.fulfill({ status: 200, body: '' }));
-  await q.goto('http://127.0.0.1:' + PORT + '/espace-mannequin.html'); await q.waitForTimeout(4000);
+  await q.goto('http://127.0.0.1:' + PORT + '/app/espace-mannequin.html'); await q.waitForTimeout(4000);
   for (let n = 1; n <= 6 && !(await q.$('#fBook')); n++) { await q.click('.step-tab[data-goto="' + n + '"]').catch(() => {}); await q.waitForTimeout(400); }
   await q.setInputFiles('#fBook', [{ name: 'IMG_0001.jpg', mimeType: 'image/jpeg', buffer: PHOTO }]).catch(e => errs.push('envoi : ' + e.message));
   await q.waitForTimeout(5000);

@@ -1,6 +1,6 @@
 /* Menu « Modèle A — plein écran éditorial » (choisi par la propriétaire le 11/10/2026 parmi
    4 maquettes). Remplace l'ancien tiroir à droite. Appelé par un <link> dans chaque page, juste avant
-   css/style.css ou css/entete-site.css (Espace mannequin) : une seule copie pour tout le site.
+   css/style.css : une seule copie pour tout le site.
    Le contenu du menu vient de js/gabarit.js ; js/menu.js ajoute Femmes / Hommes sous
    The Book et le bloc contact (téléphones, réseaux). */
 
@@ -44,7 +44,7 @@ html body .menu-overlay::after {
 }
 html body .menu-overlay.active::after { opacity: 1; transform: none; transition: opacity 1.4s ease 0.25s, transform 2.6s cubic-bezier(.16,1,.3,1) 0.25s; }
 html body .menu-overlay .nav-links, html body .menu-overlay .menu-contact { position: relative; z-index: 1; }
-html body .menu-overlay .nav-links li:not(.menu-sous):not(.item-cta):not(.menu-rejoindre):not(.item-marketplace)::after {
+html body .menu-overlay .nav-links li:not(.menu-sous):not(.menu-rejoindre):not(.item-marketplace)::after {
   content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
   background: linear-gradient(90deg, var(--bordeaux-clair, var(--c-d55468)), var(--c-rgba-255-255-255-0_08) 60%);
   transform: scaleX(0); transform-origin: left; transition: transform 0.2s ease;
@@ -61,7 +61,7 @@ html body .menu-overlay.active .close-menu { opacity: 1; transform: none; transi
 html body .menu-overlay.active .menu-contact { opacity: 1; transform: none; transition: opacity 0.7s ease 1.1s, transform 0.9s cubic-bezier(.16,1,.3,1) 1.1s !important; }
 
 /* rubriques : grands titres numérotés 01, 02, 03… */
-html body .menu-overlay .nav-links li:not(.menu-sous):not(.item-cta):not(.menu-rejoindre):not(.item-marketplace) { counter-increment: rubrique; }
+html body .menu-overlay .nav-links li:not(.menu-sous):not(.menu-rejoindre):not(.item-marketplace) { counter-increment: rubrique; }
 html body .menu-overlay .nav-links li a {
   display: flex !important; align-items: baseline; gap: 14px; justify-content: flex-start !important;
   /* même police et même taille que le bouton « Espace mannequin de l'agence » (12/10/2026) */
@@ -74,16 +74,15 @@ html body .menu-overlay .nav-links li a {
   background: linear-gradient(90deg, var(--c-rgba-122-18-32-0_55), var(--c-rgba-122-18-32-0)) no-repeat left / 0% 100% !important;
   transition: color 0.3s ease, letter-spacing 0.4s ease, background-size 0.45s cubic-bezier(.16,1,.3,1), transform 0.35s cubic-bezier(.16,1,.3,1), padding-left 0.35s ease !important;
 }
-html body .menu-overlay .nav-links li:not(.item-cta):not(.menu-rejoindre) a:active,
-html body .menu-overlay .nav-links li:not(.item-cta):not(.menu-rejoindre) a.appui {
+html body .menu-overlay .nav-links li:not(.menu-rejoindre) a:active,
+html body .menu-overlay .nav-links li:not(.menu-rejoindre) a.appui {
   background-size: 100% 100% !important; padding-left: 0.7rem !important; color: var(--c-fff) !important;
   transition-duration: 0.18s !important;
 }
-html body .menu-overlay .nav-links li.item-cta a:active, html body .menu-overlay .nav-links li.item-cta a.appui,
 html body .menu-overlay .nav-links li.menu-rejoindre a:active, html body .menu-overlay .nav-links li.menu-rejoindre a.appui {
   transform: scale(0.96); box-shadow: 0 0 0 6px var(--c-rgba-213-84-104-0_25) !important; transition-duration: 0.15s !important;
 }
-html body .menu-overlay .nav-links li:not(.menu-sous):not(.item-cta):not(.menu-rejoindre):not(.item-marketplace) a::before {
+html body .menu-overlay .nav-links li:not(.menu-sous):not(.menu-rejoindre):not(.item-marketplace) a::before {
   content: counter(rubrique, decimal-leading-zero) !important; position: static !important;
   width: auto !important; background: none !important;
   font: 500 0.8rem var(--texte); letter-spacing: 0.1em; color: var(--bordeaux-clair, var(--c-d55468));
@@ -91,7 +90,7 @@ html body .menu-overlay .nav-links li:not(.menu-sous):not(.item-cta):not(.menu-r
 }
 html body .menu-overlay .nav-links li a::after { content: none !important; }
 @media (hover: hover) {
-  html body .menu-overlay .nav-links li:not(.item-cta):not(.menu-rejoindre) a:hover { color: var(--bordeaux-clair, var(--c-d55468)) !important; letter-spacing: 0.2em !important; background-size: 100% 100% !important; }
+  html body .menu-overlay .nav-links li:not(.menu-rejoindre) a:hover { color: var(--bordeaux-clair, var(--c-d55468)) !important; letter-spacing: 0.2em !important; background-size: 100% 100% !important; }
   html body .menu-overlay .nav-links li a:hover::before { transform: translateX(6px); transition: transform 0.3s ease !important; }
 }
 html body .menu-overlay .nav-links li a.actif { color: var(--bordeaux-clair, var(--c-d55468)) !important; font-style: normal !important; background: none !important; }
@@ -107,20 +106,16 @@ html body .menu-overlay .nav-links li.menu-sous a {
   padding: 0.4rem 0 0.4rem 3.1rem !important;
 }
 
-/* « Intégrer l'agence » : grand bouton rouge ; « Espace mannequin » : bouton en contour */
+/* « Intégrer l'agence » : grand bouton rouge */
 html body .menu-overlay .nav-links li.menu-rejoindre { order: 90; margin-top: 1.6rem !important; }
-html body .menu-overlay .nav-links li.item-cta { order: 91; margin-top: 0.7rem !important; }
-html body .menu-overlay .nav-links li.menu-rejoindre a,
-html body .menu-overlay .nav-links li.item-cta a {
+html body .menu-overlay .nav-links li.menu-rejoindre a {
   justify-content: center !important; border-radius: 999px !important; padding: 1.05rem 1rem !important;
   font-family: var(--texte) !important; font-size: 0.95rem !important; font-weight: 500 !important;
   letter-spacing: 0.16em !important; font-style: normal !important;
 }
 html body .menu-overlay .nav-links li.menu-rejoindre a { background: var(--bordeaux, var(--c-7a1220)) !important; color: var(--c-fff) !important; }
-html body .menu-overlay .nav-links li.item-cta a { border: 1px solid var(--c-rgba-255-255-255-0_22) !important; color: var(--titre-clair, var(--c-f5efe7)) !important; }
 @media (hover: hover) {
   html body .menu-overlay .nav-links li.menu-rejoindre a:hover { background: var(--bordeaux-vif, var(--c-9c1c2c)) !important; color: var(--c-fff) !important; }
-  html body .menu-overlay .nav-links li.item-cta a:hover { border-color: var(--bordeaux-clair, var(--c-d55468)) !important; }
 }
 
 /* contact et réseaux en bas */

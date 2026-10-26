@@ -142,7 +142,7 @@ async function unePage(b, page, ecran) {
       localStorage.setItem('ma2m_cookies', 'non');
     });
     await brancher(p, { tables: { model_profiles: [{ id: 'm-1', full_name: 'AWA KONÉ', published: enLigne, desactive: false, statut: enLigne ? 'publie' : 'brouillon' }] }, rpc: {} }, []);
-    await p.goto('http://127.0.0.1:' + PORT + '/espace-mannequin.html', { waitUntil: 'domcontentloaded' }); await p.waitForTimeout(3000);
+    await p.goto('http://127.0.0.1:' + PORT + '/app/espace-mannequin.html', { waitUntil: 'domcontentloaded' }); await p.waitForTimeout(3000);
     const etapes = enLigne ? [null] : [1, 2, 3, 4, 5, 6];
     for (const n of etapes) {
       const etiquette = 'espace-mannequin connectée ' + (enLigne ? 'en ligne' : 'étape ' + n) + ' (' + ecran.nom + ')';

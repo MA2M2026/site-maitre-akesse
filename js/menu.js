@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const page = (location.pathname.split('/').pop() || '').replace(/\.html$/, '');
     const pied = document.querySelector('footer.site-footer');
     const cible = overlay.querySelector('a[href$="integrer-agence.html"], a[href$="integrer-agence"]');
-    if (!pied || !cible || ['integrer-agence', 'inscription-mannequin', 'tableau-de-bord'].indexOf(page) !== -1) return;
+    if (!pied || !cible || ['integrer-agence', 'tableau-de-bord'].indexOf(page) !== -1) return;
     const en = document.documentElement.lang === 'en';
     const bandeau = document.createElement('section');
     bandeau.className = 'bandeau-integrer';

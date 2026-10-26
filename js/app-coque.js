@@ -6,12 +6,12 @@
 (function () {
   'use strict';
   const ONGLETS = [['accueil', 'Accueil', '🏠'], ['evenements', 'Événements', '📅'], ['profil', 'Profil', '👤'], ['paiements', 'Paiements', '💳'], ['alertes', 'Messages', '✉️']];
-  // page du site → sa version dans l'application
+  // lien écrit par les programmes partagés (« mes-paiements.html », lu depuis <base href="/">)
+  // → sa page dans l'application (les anciennes pages du site n'existent plus, 26/10/2026)
   const DANS_APP = {
     '/': '/app/', '/index.html': '/app/', '/index': '/app/',
-    '/espace-mannequin': '/app/espace-mannequin.html', '/espace-mannequin.html': '/app/espace-mannequin.html',
-    '/mes-paiements': '/app/mes-paiements.html', '/mes-paiements.html': '/app/mes-paiements.html',
-    '/inscription-mannequin': '/app/inscription-mannequin.html', '/inscription-mannequin.html': '/app/inscription-mannequin.html'
+    '/espace-mannequin.html': '/app/espace-mannequin.html', '/mes-paiements.html': '/app/mes-paiements.html',
+    '/inscription-mannequin.html': '/app/inscription-mannequin.html'
   };
   // menu du bas ; badges : { onglet: nombre } ; surPlace : dans l'application elle-même, les onglets
   // changent sans recharger la page (« #événements ») ; ailleurs ils y ramènent (« /app/#… »)

@@ -10,7 +10,7 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
   let srv; process.on('exit', () => srv && srv.kill());
   srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise((r) => setTimeout(r, 800));
   const b = await chromium.launch();
-  for (const [page, champ] of [['integrer-agence.html', '#ca-nom'], ['en/integrer-agence.html', '#ca-nom'], ['espace-mannequin.html', null]]) {
+  for (const [page, champ] of [['integrer-agence.html', '#ca-nom'], ['en/integrer-agence.html', '#ca-nom']]) {
     const ctx = await b.newContext({ viewport: { width: 393, height: 851 }, isMobile: true, hasTouch: true });
     const p = await ctx.newPage(); const errs = [];
     p.on('pageerror', (e) => errs.push(e.message));

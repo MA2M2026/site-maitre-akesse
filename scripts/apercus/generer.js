@@ -17,7 +17,6 @@ const POLICES = process.env.POLICES;
 const PAGES = [
   ['index', ['Maître Akesse Model Management', 'Agence de<br>mannequins', 'Chaque grand parcours commence par un rêve.'], ['Maître Akesse Model Management', 'Model<br>agency', 'Every great journey begins with a dream.']],
   ['mannequins', ['Nos mannequins', 'The Book', 'Femmes, hommes, New Faces : books et mensurations'], ['Our models', 'The Book', 'Women, men, New Faces: books and measurements']],
-  ['inscription-mannequin', ['Espace candidats retenus', 'Inscription<br>mannequin', 'Finalisez votre inscription officielle à l’agence'], ['Selected candidates', 'Model<br>registration', 'Complete your official registration with the agency']],
   ['integrer-agence', ['Devenir mannequin', 'Intégrer l’agence', 'Envoyez vos photos et vos mensurations'], ['Become a model', 'Join the agency', 'Send your photos and measurements']],
   ['candidature', ['Castings', 'Postuler<br>à un casting', 'Un projet précis lancé par l’agence'], ['Castings', 'Apply for<br>a casting', 'A specific project launched by the agency']],
   ['parcours', ['Nos réalisations', 'Parcours MA2M', 'Défilés, shootings, castings, mois par mois'], ['Our work', 'MA2M Track Record', 'Shows, shoots and castings, month by month']],
@@ -30,7 +29,6 @@ const PAGES = [
   ['contact', ['Abidjan, Côte d’Ivoire', 'Contact', 'Partenariats, collaborations, recrutement'], ['Abidjan, Côte d’Ivoire', 'Contact', 'Partnerships, collaborations, scouting']],
   ['mannequin', ['The Book', 'Profil mannequin', 'Le book complet du mannequin'], ['The Book', 'Model profile', 'The model’s full book']],
   ['selection', ['Casting groupé', 'Ma sélection', 'Les profils choisis pour votre demande'], ['Group casting', 'My selection', 'The profiles chosen for your request']],
-  ['espace-mannequin', ['Réservé aux mannequins', 'Espace mannequin', 'Mon book, mes photos, mon parcours'], null]
 ];
 // Images sans page du même nom à la racine (la boutique « La Maison MA2M », retirée le 23/10/2026,
 // en avait une) : aucune pour le moment

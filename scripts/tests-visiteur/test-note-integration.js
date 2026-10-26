@@ -97,7 +97,7 @@ async function navigateur() {
   // 1) Inscription simplifiée (cahier v2.4) : la note (règlement) n'apparaît qu'après un code et
   //    une date de naissance valables, à l'écran du règlement
   const CASTING = { salutation: 'Mademoiselle TRAORÉ BINTOU', full_name: 'TRAORÉ BINTOU', telephone: '0909090909', date_naissance: '2001-03-04', casting: 'Intégrer l\'agence', mineur: false };
-  for (const [page, avecNote] of [['inscription-mannequin.html', true], ['en/inscription-mannequin.html', true], ['inscription-mannequin.html', false]]) {
+  for (const [page, avecNote] of [['app/inscription-mannequin.html', true], ['app/inscription-mannequin.html', false]]) {
     const ctx = await b.newContext({ viewport: { width: 390, height: 844 } }); const p = await ctx.newPage(); const errs = [];
     p.on('pageerror', e => errs.push(e.message));
     await brancher(p, { tables: {}, api: { '/api/code-protege': { ok: true, casting: CASTING, note: avecNote ? NOTE : null } } }, []);
@@ -118,7 +118,7 @@ async function navigateur() {
     const ctx = await b.newContext(); const p = await ctx.newPage();
     await brancher(p, { tables: {}, api: {} }, []);
     await p.route(/\/api\/code-protege/, r => r.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ error: 'refuse', essaisRestants: 2 }) }));
-    await p.goto('http://127.0.0.1:' + PORT + '/inscription-mannequin.html'); await p.waitForSelector('#inn-code');
+    await p.goto('http://127.0.0.1:' + PORT + '/app/inscription-mannequin.html'); await p.waitForSelector('#inn-code');
     await p.fill('#inn-code', 'FAUX'); await p.fill('#inn-naissance', '2001-03-04'); await p.click('[data-a="entrer"]'); await p.waitForSelector('.inn-bandeau.erreur');
     ok(!(await p.isVisible('a[href*="note-integration"]')) && !(await p.isVisible('[data-a="oui"]')), 'code faux : ni informations ni note');
     await ctx.close();

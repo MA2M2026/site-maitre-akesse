@@ -439,6 +439,19 @@ qui s'ouvrent ensuite) et échoue si un nom de mannequin est sans photo.
   « — » (outils de relecture : remplacé par une virgule, « · » entre deux éléments, « | » dans
   les titres des pages ; le « — » seul qui signifie « vide » reste).
 
+## 🧱 Démolition de l'ancien espace mannequin du site (26/10/2026, décision de la propriétaire)
+- Supprimés : espace-mannequin.html, mes-paiements.html, inscription-mannequin.html,
+  en/inscription-mannequin.html, css/entete-site.css et leurs images d'aperçu, et les renvois de
+  /espace-mannequin-ancien. Les renvois de /espace-mannequin, /mes-paiements et /inscription-mannequin
+  vers l'application restent **jusqu'au 16/11/2026** (liens déjà envoyés aux mannequins jusqu'au
+  25/10), puis seront retirés (décision de la propriétaire). Seule l'application compte :
+  https://mannequin.maitreakessemodelmanagement.com/app/ (espace-mannequin.html, mes-paiements.html,
+  inscription-mannequin.html), dont les programmes (js/espace-mannequin.js, js/mes-paiements.js,
+  js/inscription-simplifiee.js) restent partagés.
+- Menu et bas de page du site (js/gabarit.js) : « Espace mannequin » et « Inscription » ouvrent
+  l'application ; la page « nouveau mot de passe » renvoie à l'espace de l'application.
+- Tests : test-app-mannequin.js vérifie que les anciennes pages et leurs renvois n'existent plus.
+
 ## 📏 Grille de tailles de l'agence (26/10/2026, décision de la propriétaire)
 - Femmes (js/tailles.js, et en base `mesures_incoherentes` : supabase-tailles-agence.sql) :
   XS poitrine 80-84 / taille 60-65 / bassin 88-92 · S 85-89 / 66-70 / 93-96 · M 90-93 / 71-74 /

@@ -46,18 +46,20 @@ function donnees() {
     }
   };
 }
-// Les pages du site ouvertes dans l'application (app/espace-mannequin.html, app/mes-paiements.html,
-// app/inscription-mannequin.html)
-// doivent charger les mêmes programmes et styles que leur page du site (hors en-tête, menu et
-// mesures d'audience du site) : un fichier ajouté d'un côté seulement est signalé ici.
+// L'ancien espace mannequin du site est démoli (26/10/2026, décision de la propriétaire) : ses
+// pages n'existent plus, l'application a les siennes (app/espace-mannequin.html, app/mes-paiements.html,
+// app/inscription-mannequin.html) ; les renvois des anciennes adresses vers l'application restent
+// jusqu'au 16/11/2026 (liens déjà envoyés aux mannequins), puis seront retirés.
 const fs = require('fs');
 const RACINE = path.resolve(__dirname, '../..');
-const fichiersDe = (page) => (fs.readFileSync(path.join(RACINE, page), 'utf8').match(/(?:src|href)="\/?((?:js|css)\/[^"?]+)/g) || []).map((x) => x.replace(/^(src|href)="\/?/, ''));
-const SITE_SEULEMENT = /^(js\/(gabarit|menu|analytics-config|filet-reveal)\.js|css\/(menu|entete-site)\.css)$/;
-for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-mannequin.html']) {
-  const manquants = fichiersDe(page).filter((f) => !SITE_SEULEMENT.test(f) && !fichiersDe('app/' + page).includes(f));
-  ok(!manquants.length, 'app/' + page + ' charge les mêmes programmes et styles que ' + page + (manquants.length ? ' — manquent : ' + manquants.join(', ') : ''));
+const vercel = fs.readFileSync(path.join(RACINE, 'vercel.json'), 'utf8');
+for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-mannequin.html', 'en/inscription-mannequin.html']) {
+  ok(!fs.existsSync(path.join(RACINE, page)), 'ancienne page ' + page + ' : supprimée');
 }
+// renvois gardés jusqu'au 16/11/2026 pour les liens déjà envoyés aux mannequins : vers l'application seulement
+ok((vercel.match(/"source": "\/(espace-mannequin|mes-paiements|inscription-mannequin)[^"]*", "destination": "([^"]*)"/g) || []).every((l) => l.includes('https://mannequin.maitreakessemodelmanagement.com/app/'))
+  && !/espace-mannequin-ancien/.test(vercel), 'anciennes adresses : renvoyées vers l’application (temporaire), aucune autre');
+for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-mannequin.html']) ok(fs.existsSync(path.join(RACINE, 'app', page)), 'app/' + page + ' : présente');
 (async () => {
   srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: path.resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise((r) => setTimeout(r, 900));
   const b = await chromium.launch();

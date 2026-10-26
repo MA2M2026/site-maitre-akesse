@@ -15,7 +15,7 @@ const { chromium } = require('playwright'); const { spawn } = require('child_pro
     localStorage.setItem('sb-dfhghgmwmxiguhtxtsle-auth-token', JSON.stringify({ access_token: jeton, token_type: 'bearer', expires_in: 36000, expires_at: exp, refresh_token: 'x', user: { id: 'admin-1', aud: 'authenticated', role: 'authenticated', email: 'awa@test.ci' } }));
   });
   await brancher(p, { tables: { model_profiles: [{ id: 'admin-1', full_name: 'AWA KONÉ', published: false, desactive: false }] }, rpc: {} }, journal);
-  await p.goto('http://127.0.0.1:' + PORT + '/espace-mannequin.html'); await p.waitForTimeout(3500);
+  await p.goto('http://127.0.0.1:' + PORT + '/app/espace-mannequin.html'); await p.waitForTimeout(3500);
   const r = {};
   // Étape 1 : identité d'une mineure de 16 ans
   await p.evaluate(() => { state.meta.currentStep = 1; render(); });

@@ -165,6 +165,8 @@ body:has(.ap-nav) { --ma2m-installer-bas: var(--ap-nav); }  /* bande « Téléch
 .ap-page-profil .em-vers-candidature { display: none; }
 /* bouton « retour en haut » (js/confort.js) : au-dessus du menu de l'application, pas dessus */
 .ap-page-site .retour-haut { bottom: calc(var(--ap-nav) + 16px + env(safe-area-inset-bottom)); }
+/* pourcentage de progression du profil, sur le bandeau sombre : lisible (contraste AA) */
+.ap-page-profil .progress-pct { color: var(--ap-papier); font-weight: 600; }
 
 /* ===== Harmonisation (25/10/2026, demande de la propriétaire) : l'éditeur du profil et la page
    des paiements ouverts dans l'application prennent exactement le style de l'application —

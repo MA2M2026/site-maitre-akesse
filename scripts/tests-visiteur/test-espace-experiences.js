@@ -18,7 +18,7 @@ const { chromium } = require('playwright'); const { spawn } = require('child_pro
     // cas réel du 12/10/2026 : nom de l'agence précédé d'un autre mot, date complète
     { id: 'x3', model_id: 'admin-1', type_projet: 'Défilé', titre: 'JNCC/ cacao fashion show', ville: 'Abidjan', periode: '2026-09-03' }] },
     rpc: { parcours_public: [{ id: 'e1', type: 'defile', titre: 'CACAO FASHION SHOW', date_debut: '2026-09-02', date_fin: '2026-09-03', lieu: 'Sofitel', ville: 'Abidjan', pays: "Côte d'Ivoire", mannequins: [] }] } }, journal);
-  await p.goto('http://127.0.0.1:' + PORT + '/espace-mannequin.html'); await p.waitForTimeout(4000);
+  await p.goto('http://127.0.0.1:' + PORT + '/app/espace-mannequin.html'); await p.waitForTimeout(4000);
   const r = await p.evaluate(() => ({ agence: (state.experiencesAgence || []).map(e => e.nom + '|' + e.annee), etape: stepExperience().includes('Ajoutés automatiquement par l’agence'), doublon: doublonsExperiences().length, masques: !stepExperience().includes('value="JNCC/ cacao fashion show"') && stepExperience().includes('id="supprDoublons"'),
     cv: donneesCvDepuisEtat().experiences.map(e => e.nom),
     // formulaire enrichi (12/10/2026) : date, pays, ville, lieu, promoteur — tout facultatif
