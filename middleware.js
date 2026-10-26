@@ -377,9 +377,22 @@ async function accueilRempli(requete, url) {
   return new Response(html, { status: 200, headers: entetes });
 }
 
+// Adresse sans « www » (26/10/2026, inscription hstspreload.org) : le middleware passe AVANT les
+// redirections de vercel.json, il renvoie donc lui-même vers www pour les adresses qu'il traite
+// (sinon l'accueil était servi sans www, et ses styles, redirigés vers www, bloqués par le CSP).
+// Les autres adresses suivent la première règle de vercel.json. En-tête HSTS complet dans les deux cas.
+const DOMAINE_NU = 'maitreakessemodelmanagement.com';
+function versWww(url) {
+  return new Response(null, { status: 308, headers: {
+    Location: 'https://www.' + DOMAINE_NU + url.pathname + url.search,
+    'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload'
+  } });
+}
+
 export default async function middleware(requete) {
   try {
     const url = new URL(requete.url);
+    if (url.hostname === DOMAINE_NU) return versWww(url);
     if (ACCUEIL.test(url.pathname)) {
       if (requete.headers.get('x-ma2m-accueil')) return;  // (la page elle-même, demandée ci-dessous)
       try { return await accueilRempli(requete, url); } catch (e) { return; }
