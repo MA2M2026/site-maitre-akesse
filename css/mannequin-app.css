@@ -137,15 +137,10 @@ html { -webkit-text-size-adjust: 100%; }
 .ap-nav b { right: calc(50% - 22px); }
 
 /* installation et connexion */
-.ap-installation, .ap-connexion { min-height: 100dvh; display: flex; flex-direction: column; justify-content: center; gap: 22px; padding: calc(24px + env(safe-area-inset-top)) 24px 24px; }
+.ap-connexion { min-height: 100dvh; display: flex; flex-direction: column; justify-content: center; gap: 22px; padding: calc(24px + env(safe-area-inset-top)) 24px 24px; }
 .ap-presentation { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
 .ap-presentation h1 { font: 600 38px/1.05 'Cormorant Garamond', Georgia, serif; }
 .ap-icone { border-radius: 22px; box-shadow: 0 6px 16px rgba(0, 0, 0, .25); }
-.ap-etapes { list-style: none; margin: 0 0 14px; padding: 0; display: flex; flex-direction: column; gap: 12px; }
-.ap-etapes li { display: flex; gap: 12px; align-items: flex-start; }
-.ap-etapes b { width: 28px; height: 28px; flex: none; border-radius: 50%; background: var(--ap-rouge); color: #fff; display: grid; place-items: center; font-size: 13px; }
-.ap-ios { font-size: 14.5px; background: var(--ap-creux); border-radius: 12px; padding: 12px; }
-.ap-installation .ap-btn { width: 100%; }
 .ap-form { display: flex; flex-direction: column; gap: 14px; }
 .ap-form label { display: flex; flex-direction: column; gap: 6px; font-weight: 600; font-size: 14px; }
 .ap-form input { font: 400 16px 'Work Sans', sans-serif; padding: 12px 14px; border-radius: 12px; border: 1px solid #CFC6BB; background: #fff; color: var(--ap-encre); }
@@ -160,6 +155,7 @@ html { -webkit-text-size-adjust: 100%; }
 
 /* pages du site ouvertes DANS l'application (app/espace-mannequin.html, app/mes-paiements.html) :
    leur propre mise en page, le menu de l'application en bas, rien ne mène plus « au site » */
+body:has(.ap-nav) { --ma2m-installer-bas: var(--ap-nav); }  /* bande « Télécharger l'application » au-dessus du menu */
 .ap-page-site { padding-bottom: calc(var(--ap-nav) + 16px + env(safe-area-inset-bottom)); }
 .ap-page-site .ap-nav { font-family: 'Work Sans', system-ui, sans-serif; }
 /* la barre du haut de l'Espace mannequin (logo, « Mes paiements », « Retour au site », « Se

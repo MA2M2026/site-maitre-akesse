@@ -94,7 +94,7 @@
   P.rpc = (nom, params) => P.bd(sb.rpc(nom, params || {}));
 
   // déjà ouverte comme application (écran d'accueil) : plus besoin du bouton
-  P.installee = () => { try { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; } catch (e) { return false; } };
+  P.installee = () => window.MA2M_INSTALLATION.installee();  // (js/app.js)
 
   // ---------- connexion ----------
   function ecranConnexion(etape, extra) {
@@ -532,16 +532,9 @@
   addEventListener('hashchange', () => { if (P.moi && P.moi.role) afficher().catch((e) => P.message(P.erreurTexte(e))); });
 
   // ---------- application installable ----------
-  addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); P.installation = e; });
-  P.actions.installer = async () => {
-    if (!P.installation) {
-      P.fenetre('<h2>Installer l’application</h2><p>L’administration s’installe comme une application, sans passer par le site.</p><p><b>iPhone</b> : ouvrez cette adresse dans Safari, touchez le bouton Partager, puis « Sur l’écran d’accueil ».</p><p><b>Android</b> : ouvrez-la dans Chrome, menu ⋮, puis « Installer l’application ».</p><p><b>Ordinateur</b> : dans Chrome ou Edge, cliquez sur l’icône d’installation à droite de la barre d’adresse.</p><button class="btn" data-action="fermer-fenetre">Fermer</button>');
-      return;
-    }
-    P.installation.prompt();
-    await P.installation.userChoice;
-    P.installation = null;
-  };
+  // même installation que la bande « Télécharger l'application » (js/app.js, partagée avec le site
+  // et l'application des mannequins)
+  P.actions.installer = () => window.MA2M_INSTALLATION.installer();
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/admin/sw.js', { scope: '/admin/' }).catch(() => { /* l'application marche aussi sans */ });
   }

@@ -367,11 +367,10 @@ qui s'ouvrent ensuite) et échoue si un nom de mannequin est sans photo.
   installable par un simple lien (sans Play Store ni App Store) : manifeste `app/manifest.webmanifest`
   (« MA2M Mannequin », portée /app/, icônes `icons/mannequin-*.png`), service worker `app/sw.js`
   (copie de secours de l'interface, partagée avec l'Administration : `js/sw-interface.js` ;
-  notifications : `service-worker.js`). Dans le navigateur : écran d'installation (bouton
-  « Installer » de Chrome, aide iPhone), « Continuer sans installer ».
+  notifications : `service-worker.js`). Dans le navigateur : la connexion tout de suite, et la
+  bande « Télécharger l'application » en bas (voir ci-dessous).
 - Connexion : la même que l'Espace mannequin (`connexionMannequin`, js/app.js : serveur protégé
-  api/connexion-protegee.js). Sur /app/, ni pastille WhatsApp, ni pastille « Installer l'app »,
-  ni visite comptée (`pageApplicationMannequin`, js/app.js).
+  api/connexion-protegee.js). Sur /app/, ni pastille WhatsApp, ni visite comptée (`pageApplicationMannequin`, js/app.js).
 - Menu du bas, 5 onglets : **Accueil** (prochain rendez-vous, « Je confirme », raccourcis, castings
   ouverts, mensualité du mois) ; **Mes événements** (convocations à venir / passées, « Je
   confirme » / « Je ne pourrai pas venir » = `convocation_repondre`, passages du défilé =
@@ -417,6 +416,26 @@ qui s'ouvrent ensuite) et échoue si un nom de mannequin est sans photo.
   est créée par js/espace-mannequin.js (`fenetreChoixBook`) ; initiales des visages sans photo :
   `initialesNom` (js/app.js, aussi pour l'Administration).
 - Étape suivante prévue : notifications sur le téléphone.
+
+## ⬇️ Bande « Télécharger l'application » (25/10/2026, demande de la propriétaire)
+- Une seule bande, partagée par le **site**, l'**Administration** et l'**application MA2M
+  Mannequin** : `bandeInstallation` (js/app.js) + css/installation.css (chargé par toutes les pages
+  qui chargent js/app.js). Elle remplace l'ancienne pastille du site et l'ancien écran
+  d'installation de l'application (les mannequins s'y perdaient).
+- Dès l'ouverture sur un téléphone, tant que l'application n'est pas installée (ouverte depuis
+  l'icône ou, sur Chrome Android, `getInstalledRelatedApps` grâce à `related_applications` des
+  manifestes) : bande rouge avec l'icône, « Télécharger l'application ». ✕ = fermée pour la
+  visite (sessionStorage). Sur ordinateur : seulement si le navigateur propose l'installation.
+  Site : après le choix des cookies, au-dessus du bouton WhatsApp ; application et
+  Administration : au-dessus du menu du bas (`--ma2m-installer-bas`).
+- Un appui : proposition du navigateur (`beforeinstallprompt`) → fenêtre « Installer » ;
+  Android sans proposition (lien ouvert dans WhatsApp…) → la page est rouverte dans Chrome
+  (`intent://…?installer=1`) ; rouverte dans Chrome et toujours sans proposition (Chrome attend
+  parfois que la page ait été utilisée) → guide avec flèche vers le menu ⋮ › « Installer
+  l'application » ; iPhone (Apple n'autorise aucune fenêtre d'installation) → guide en images
+  Partager › « Sur l'écran d'accueil » › « Ajouter ». Le bouton « Installer l'application » de
+  l'Administration passe par la même fonction (`window.MA2M_INSTALLATION.installer`).
+- Essai : scripts/tests-visiteur/test-installation.js (Android, iPhone, ordinateur, FR/EN, CSP).
 
 ## 🎫 Cartes d'événement (25/10/2026, demande de la propriétaire)
 - Rubrique « Cartes d'événement » (`b2-cartes`, `js/cartes-acces.js`, compartiment « Projets et

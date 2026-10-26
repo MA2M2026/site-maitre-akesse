@@ -271,8 +271,8 @@ function donnees(role) {
       ok(/se génère après la validation/.test(await texte(pr)) && !(await pr.isVisible('[data-action="code-espace"]')), nomEcran + ' (' + role + ') : pas de code de l’espace avant la validation de l’inscription');
       await pr.goto(url + '#/paiements/fiche/r4'); await pr.waitForSelector('#code-espace-texte', { timeout: 6000 }).catch(() => {});
       const waEspace = decodeURIComponent((await pr.getAttribute('#code-espace-whatsapp', 'href').catch(() => '')) || '');
-      ok((await pr.textContent('#code-espace-texte').catch(() => '')) === 'ESP-MARIAM' && /^https:\/\/wa\.me\/2250606060606\?text=/.test(waEspace) && waEspace.includes('ESP-MARIAM') && waEspace.includes('/espace-mannequin.html'),
-        nomEcran + ' (' + role + ') : inscription validée → code de l’espace (7 jours) prêt à envoyer par WhatsApp');
+      ok((await pr.textContent('#code-espace-texte').catch(() => '')) === 'ESP-MARIAM' && /^https:\/\/wa\.me\/2250606060606\?text=/.test(waEspace) && waEspace.includes('ESP-MARIAM') && waEspace.includes('https://mannequin.maitreakessemodelmanagement.com/app/') && waEspace.includes('Créer mon compte'),
+        nomEcran + ' (' + role + ') : inscription validée → code de l’espace (7 jours) prêt à envoyer par WhatsApp, avec le lien de l’application');
       r.d.rpc.code_espace_creer = 'ESP-NOUVEAU';
       pr.once('dialog', (dl) => dl.accept());
       await pr.click('[data-action="code-espace"]'); await pr.waitForTimeout(800);

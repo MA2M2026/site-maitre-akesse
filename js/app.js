@@ -2585,8 +2585,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Pages de l'agence (Administration) : ni pastille « Nous contacter », ni visite comptée
 function pageAdministration() { return /^\/admin(\/|$)/.test(window.location.pathname) || window.location.pathname.includes('tableau-de-bord'); }
-// Application MA2M Mannequin (/app/, 25/10/2026) : son propre menu, son installation et son
-// service worker (app/sw.js) — ni pastille WhatsApp, ni pastille « Installer », ni visite comptée
+// Application MA2M Mannequin (/app/, 25/10/2026) : son propre menu et son service worker
+// (app/sw.js) — ni pastille WhatsApp, ni visite comptée
 function pageApplicationMannequin() { return /^\/app(\/|$)/.test(window.location.pathname); }
 
 // Pastille WhatsApp flottante, injectée sur toutes les pages publiques
@@ -2899,112 +2899,142 @@ document.addEventListener('DOMContentLoaded', async () => {
   observateurImages.observe(document.body || document.documentElement, { childList: true, subtree: true });
 })();
 
-// ================== Installation sur l'écran d'accueil (PWA) ==================
-(function installationEcranAccueil() {
-  // (l'Administration et l'application des mannequins ont leur propre service worker et leur
-  // propre bouton « Installer »)
-  if (pageAdministration() || pageApplicationMannequin()) return;
-  // Enregistre le service worker (nécessaire pour l'installabilité sur Android/Chrome)
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/service-worker.js').catch(() => {});
-    });
+// ================== Bande « Télécharger l'application » (25/10/2026) ==================
+// Partagée par le site, l'Administration et l'application MA2M Mannequin (demande de la
+// propriétaire : les mannequins étaient perdues). Dès l'ouverture, tant que l'application n'est
+// pas installée sur ce téléphone, une bande avec l'icône s'affiche en bas ; un appui suit la
+// procédure du téléphone :
+// - Chrome/Android (ou ordinateur) qui propose l'installation : la fenêtre « Installer » s'ouvre ;
+// - Android sans cette proposition (lien ouvert dans WhatsApp, Claude…, ou Chrome qui ne l'a pas
+//   encore faite) : la page est rouverte dans Chrome (« ?installer=1 »), puis, là, une flèche
+//   montre le menu ⋮ › « Installer l'application » ;
+// - iPhone : Apple n'autorise aucune fenêtre d'installation ; un guide en images montre le
+//   bouton Partager puis « Sur l'écran d'accueil ».
+// Fermée d'un ✕ : revient à la prochaine visite. window.MA2M_INSTALLATION.installer() sert aussi
+// au bouton « Installer l'application » de l'Administration (js/portail/noyau.js).
+(function bandeInstallation() {
+  // service worker du site (l'Administration et l'application des mannequins ont le leur)
+  if (!pageAdministration() && !pageApplicationMannequin() && 'serviceWorker' in navigator) {
+    window.addEventListener('load', () => { navigator.serviceWorker.register('/service-worker.js').catch(() => { /* site utilisable sans */ }); });
   }
-
-  const CLE_REFUS = 'ma2m_installation_refusee';
-  const dejaInstalle = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-  const refusePrecedemment = (() => { try { return localStorage.getItem(CLE_REFUS) === '1'; } catch (e) { return false; } })();
-  // Les navigateurs intégrés (Instagram, Facebook) ne peuvent pas installer une PWA sur
-  // l'écran d'accueil : les instructions "Partager > Sur l'écran d'accueil" ne s'y appliquent
-  // pas (le bouton Partager de ces apps ne propose pas cette option). Autant ne pas montrer
-  // une bannière qui promet une fonctionnalité indisponible dans ce contexte.
-  const estNavigateurIntegre = /Instagram|FBAN|FBAV|FB_IAB|MessengerForiOS/i.test(navigator.userAgent);
-  // Une seule apparition par visite (relevé le 30/09 : la pastille revenait sur chaque
-  // page et cachait le contenu en bas de l'écran des téléphones tant qu'on ne l'avait pas
-  // fermée). Elle s'efface aussi d'elle-même au bout de 12 s ou dès qu'on fait défiler.
-  const CLE_VUE = 'ma2m_installation_vue';
-  const dejaVueCetteVisite = (() => { try { return sessionStorage.getItem(CLE_VUE) === '1'; } catch (e) { return false; } })();
-  if (dejaInstalle || refusePrecedemment || estNavigateurIntegre || dejaVueCetteVisite) return;
   const anglais = (document.documentElement.lang || '').indexOf('en') === 0;
+  const T = (fr, en) => (anglais ? en : fr);
+  const ua = navigator.userAgent;
+  const estIOS = /iphone|ipad|ipod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const estAndroid = /android/i.test(ua);
+  const PARAM = 'installer', CLE_FERMEE = 'ma2m_installation_fermee';
+  const appli = pageAdministration() ? { nom: 'Administration MA2M', icone: '/icons/admin-192.png' }
+    : pageApplicationMannequin() ? { nom: 'MA2M Mannequin', icone: '/icons/mannequin-192.png' }
+      : { nom: 'MA2M', icone: '/icons/icon-192.png' };
+  const installee = () => { try { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; } catch (e) { return false; } };
+  const fermee = () => { try { return sessionStorage.getItem(CLE_FERMEE) === '1'; } catch (e) { return false; } };
+  const rouverteDansChrome = new URLSearchParams(location.search).has(PARAM);
+  // (le repère est retiré de l'adresse : recopiée et renvoyée par WhatsApp, elle ne doit pas le garder)
+  if (rouverteDansChrome) { try { const u = new URL(location.href); u.searchParams.delete(PARAM); history.replaceState(history.state, '', u.pathname + u.search + u.hash); } catch (e) { /* adresse laissée telle quelle */ } }
+  let invitation = null;  // proposition d'installation du navigateur (Chrome, Edge, Samsung Internet)
+  let dejaProposee = false;  // le navigateur a su proposer l'installation : on est déjà dans le bon navigateur
 
-  const estIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
-  let evenementInstall = null;
-
-  function creerPastille(texteClic) {
-    const pastille = document.createElement('button');
-    pastille.id = 'pastille-installer';
-    pastille.innerHTML = `
-      <span class="pastille-installer-icone">⬇</span>
-      <span>${anglais ? 'Install the MA2M app' : "Installer l'app MA2M"}</span>
-      <span class="pastille-installer-fermer" title="${anglais ? 'Close' : 'Fermer'}">✕</span>
-    `;
-    document.body.appendChild(pastille);
-    try { sessionStorage.setItem(CLE_VUE, '1'); } catch (e) {}
-
-    // Disparition douce (sans la marquer « refusée » : elle reviendra à une prochaine visite).
-    function effacer() {
-      window.removeEventListener('scroll', auDefilement);
-      if (!pastille.isConnected) return;
-      pastille.classList.add('pastille-installer--sortie');
-      setTimeout(() => pastille.remove(), 400);
+  function lienChrome() {
+    const u = new URL(location.href);
+    u.searchParams.set(PARAM, '1'); u.hash = '';
+    return 'intent://' + u.host + u.pathname + u.search + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(u.href) + ';end';
+  }
+  function retirer() {
+    const b = document.getElementById('ma2m-installer');
+    if (b) b.remove();
+    document.body.classList.remove('ma2m-installer-visible');
+  }
+  function afficher() {
+    if (installee() || fermee() || document.getElementById('ma2m-installer') || !document.body) return;
+    const cookies = document.getElementById('bandeau-cookies');
+    if (cookies) {  // le choix des cookies d'abord (même place en bas de l'écran), la bande juste après
+      new MutationObserver((l, obs) => { if (!cookies.isConnected) { obs.disconnect(); afficher(); } }).observe(document.body, { childList: true });
+      return;
     }
-    function auDefilement() { if (window.scrollY > window.innerHeight * 0.6) effacer(); }
-    window.addEventListener('scroll', auDefilement, { passive: true });
-    setTimeout(effacer, 12000);
-
-    pastille.querySelector('.pastille-installer-fermer').addEventListener('click', (e) => {
-      e.stopPropagation();
-      pastille.remove();
-      try { localStorage.setItem(CLE_REFUS, '1'); } catch (err) {}
+    const b = document.createElement('div');
+    b.id = 'ma2m-installer'; b.className = 'ma2m-installer';
+    b.innerHTML = '<button type="button" class="ma2m-installer-ouvrir"><img src="' + appli.icone + '" alt="" width="44" height="44">' +
+      '<span class="ma2m-installer-texte"><b>' + T('Télécharger l’application', 'Download the app') + '</b><small>' + echapperHtml(appli.nom) + ' · ' + T('gratuit', 'free') + '</small></span>' +
+      '<span class="ma2m-installer-fleche" aria-hidden="true">⬇</span></button>' +
+      '<button type="button" class="ma2m-installer-fermer" aria-label="' + T('Fermer', 'Close') + '">✕</button>';
+    b.querySelector('.ma2m-installer-ouvrir').addEventListener('click', installer);
+    b.querySelector('.ma2m-installer-fermer').addEventListener('click', () => {
+      try { sessionStorage.setItem(CLE_FERMEE, '1'); } catch (e) { /* stockage indisponible : fermée pour cette page */ }
+      retirer();
     });
-
-    pastille.addEventListener('click', texteClic);
-    return pastille;
+    document.body.appendChild(b);
+    document.body.classList.add('ma2m-installer-visible');
+  }
+  // fenêtre d'aide en images, avec une flèche animée vers le bouton à toucher (en bas sur iPhone,
+  // en haut à droite pour le menu ⋮ de Chrome)
+  function guide(ou, titre, etapes) {
+    const ancien = document.getElementById('ma2m-guide');
+    if (ancien) ancien.remove();
+    const g = document.createElement('div');
+    g.id = 'ma2m-guide'; g.className = 'ma2m-guide ma2m-guide--' + ou;
+    g.innerHTML = '<div class="ma2m-guide-carte" role="dialog" aria-modal="true" aria-labelledby="ma2m-guide-titre">' +
+      '<button type="button" class="ma2m-guide-fermer" aria-label="' + T('Fermer', 'Close') + '">✕</button>' +
+      '<img src="' + appli.icone + '" alt="" width="56" height="56"><h2 id="ma2m-guide-titre">' + titre + '</h2>' +
+      '<ol>' + etapes.map((x, i) => '<li><b>' + (i + 1) + '</b><span>' + x + '</span></li>').join('') + '</ol></div>' +
+      '<span class="ma2m-guide-fleche" aria-hidden="true">' + (ou === 'haut' ? '⬆' : '⬇') + '</span>';
+    g.addEventListener('click', (e) => { if (e.target === g || e.target.closest('.ma2m-guide-fermer')) g.remove(); });
+    document.body.appendChild(g);
+    g.querySelector('.ma2m-guide-fermer').focus();
+  }
+  const ICONE_PARTAGE = '<svg class="ma2m-pictogramme" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M6 11H5v10h14V11h-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const ICONE_AJOUTER = '<svg class="ma2m-pictogramme" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  function guideIOS() {
+    const autreAppli = /Instagram|FBAN|FBAV|FB_IAB|Line\//i.test(ua);
+    // Chrome, Firefox, Edge de l'iPhone : le bouton Partager est en haut, dans la barre d'adresse
+    const enHaut = /CriOS|FxiOS|EdgiOS/.test(ua);
+    const pasTrouve = T('<small>Pas de bouton Partager ? Ouvrez ce lien dans <strong>Safari</strong>.</small>', '<small>No Share button? Open this link in <strong>Safari</strong>.</small>');
+    guide(enHaut ? 'haut' : 'bas', T('Installer en 3 touches', 'Install in 3 taps'), (autreAppli ? [T('Touchez <strong>⋯</strong> puis <strong>« Ouvrir dans Safari »</strong>', 'Tap <strong>⋯</strong> then <strong>“Open in Safari”</strong>')] : []).concat([
+      (enHaut ? T('Touchez <strong>Partager</strong> ' + ICONE_PARTAGE + ' en haut, dans la barre d’adresse', 'Tap <strong>Share</strong> ' + ICONE_PARTAGE + ' at the top, in the address bar')
+        : T('Touchez <strong>Partager</strong> ' + ICONE_PARTAGE + ' en bas de l’écran <small>(iPhone récent : touchez d’abord <strong>⋯</strong>)</small>', 'Tap <strong>Share</strong> ' + ICONE_PARTAGE + ' at the bottom of the screen <small>(recent iPhone: tap <strong>⋯</strong> first)</small>')) + pasTrouve,
+      T('Choisissez <strong>« Sur l’écran d’accueil »</strong> ' + ICONE_AJOUTER, 'Choose <strong>“Add to Home Screen”</strong> ' + ICONE_AJOUTER),
+      T('Touchez <strong>« Ajouter »</strong> : l’icône apparaît sur votre écran', 'Tap <strong>“Add”</strong>: the icon appears on your screen')]));
+  }
+  function guideAndroid() {
+    guide('haut', T('Installer en 2 touches', 'Install in 2 taps'), [
+      T('Touchez le menu <strong>⋮</strong> en haut à droite de Chrome', 'Tap the <strong>⋮</strong> menu at the top right of Chrome'),
+      T('Choisissez <strong>« Installer l’application »</strong> (ou <strong>« Ajouter à l’écran d’accueil »</strong>), puis <strong>« Installer »</strong>', 'Choose <strong>“Install app”</strong> (or <strong>“Add to Home screen”</strong>), then <strong>“Install”</strong>')]);
+  }
+  function guideOrdinateur() {
+    guide('haut', T('Installer l’application', 'Install the app'), [
+      T('Cliquez sur l’icône d’installation à droite de la barre d’adresse (Chrome, Edge)', 'Click the install icon on the right of the address bar (Chrome, Edge)'),
+      T('Ou menu <strong>⋮</strong> › <strong>« Installer… »</strong>', 'Or menu <strong>⋮</strong> › <strong>“Install…”</strong>')]);
+  }
+  async function installer() {
+    if (invitation) {
+      const e = invitation; invitation = null;
+      e.prompt();
+      const choix = await e.userChoice.catch(() => null);
+      if (choix && choix.outcome === 'accepted') retirer();
+      return;
+    }
+    // Android : rouvrir dans Chrome seulement si l'on n'y est sûrement pas déjà (pas pour
+    // l'Administration, où l'on perdrait la fiche ouverte)
+    if (estIOS) guideIOS();
+    else if (!estAndroid) guideOrdinateur();
+    else if (!rouverteDansChrome && !dejaProposee && !pageAdministration()) location.href = lienChrome();
+    else guideAndroid();
   }
 
-  if (estIOS) {
-    // iOS/Safari n'a pas d'invite automatique : on explique la manipulation
-    const pastille = creerPastille(() => {
-      afficherInstructionsIOS();
-    });
-  } else {
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      evenementInstall = e;
-      creerPastille(async () => {
-        if (!evenementInstall) return;
-        evenementInstall.prompt();
-        await evenementInstall.userChoice;
-        evenementInstall = null;
-        const p = document.getElementById('pastille-installer');
-        if (p) p.remove();
-      });
-    });
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault(); invitation = e; dejaProposee = true;
+    const g = document.getElementById('ma2m-guide');
+    if (g) g.remove();
+    afficher();
+  });
+  window.addEventListener('appinstalled', retirer);
+  // téléphone : la bande s'affiche tout de suite ; ordinateur : seulement si le navigateur sait installer
+  function auChargement() {
+    if (estIOS || estAndroid) afficher();
+    // déjà installée sur ce téléphone (Chrome Android sait le dire grâce au manifeste) : pas de bande
+    if (navigator.getInstalledRelatedApps) navigator.getInstalledRelatedApps().then((l) => { if (l && l.length) retirer(); }).catch(() => { /* inconnu : la bande reste */ });
   }
-
-  function afficherInstructionsIOS() {
-    const fond = document.createElement('div');
-    fond.className = 'modale-ios-fond';
-    fond.innerHTML = `
-      <div class="modale-ios-contenu">
-        <button class="modale-ios-fermer" title="${anglais ? 'Close' : 'Fermer'}">✕</button>
-        ${anglais ? `<h3>Install the app on your home screen</h3>
-        <ol>
-          <li>Tap the <strong>Share</strong> icon <span class="u-icone-partage">⬆️</span> at the bottom of Safari</li>
-          <li>Scroll down and choose <strong>“Add to Home Screen”</strong></li>
-          <li>Tap <strong>“Add”</strong> in the top right corner</li>
-        </ol>` : `<h3>Installer l'app sur votre écran d'accueil</h3>
-        <ol>
-          <li>Appuyez sur l'icône <strong>Partager</strong> <span class="u-icone-partage">⬆️</span> en bas de Safari</li>
-          <li>Faites défiler et choisissez <strong>« Sur l'écran d'accueil »</strong></li>
-          <li>Appuyez sur <strong>« Ajouter »</strong> en haut à droite</li>
-        </ol>`}
-      </div>
-    `;
-    document.body.appendChild(fond);
-    fond.addEventListener('click', (e) => { if (e.target === fond) fond.remove(); });
-    fond.querySelector('.modale-ios-fermer').addEventListener('click', () => fond.remove());
-  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', auChargement); else auChargement();
+  window.MA2M_INSTALLATION = { installer, installee };
 })();
 
 // ================== Lightbox plein écran lumineux, réutilisable partout ==================

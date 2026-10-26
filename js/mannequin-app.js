@@ -1,7 +1,7 @@
 // Application MA2M Mannequin (/app/, 25/10/2026, maquette validée par la propriétaire) : l'espace
 // de chaque mannequin, installable sur le téléphone par un simple lien (sans Play Store ni App
 // Store). Cinq onglets en bas : Accueil, Mes événements, Mon profil, Mes paiements, Alertes.
-// Étape 1 : installation, connexion (la même que l'Espace mannequin : connexionMannequin, js/app.js),
+// Étape 1 : installation (bande « Télécharger l'application », partagée : js/app.js), connexion (la même que l'Espace mannequin : connexionMannequin, js/app.js),
 // convocations envoyées par l'agence (app_mes_evenements, supabase-app-mannequin.sql) avec
 // « Je confirme » / « Je suis absente » (convocation_repondre) et passages du défilé
 // (defile_programme), résumé du profil (analyse partagée : js/analyse-profil.js) et des paiements
@@ -14,14 +14,6 @@
   const esc = echapperHtml;  // (js/app.js)
   const ONGLETS = window.MA2M_APP.ONGLETS;  // (menu du bas : js/app-coque.js)
   const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-  const CLE_NAVIGATEUR = 'ma2m_app_navigateur';  // « Continuer dans le navigateur » (cette visite)
-  const installee = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-  const estIOS = /iphone|ipad|ipod/i.test(navigator.userAgent), estAndroid = /android/i.test(navigator.userAgent);
-  // Lien touché dans une autre application (WhatsApp, Claude, Instagram…) : sa petite fenêtre ne sait
-  // pas installer. Sur Android, ce lien rouvre la même page dans Chrome, d'un seul appui (sans
-  // Chrome : la page s'ouvre dans le navigateur du téléphone)
-  const lienChrome = () => 'intent://' + location.host + location.pathname + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(location.href) + ';end';
-  let invitation = null;  // installation proposée par le navigateur (Chrome, Edge, Samsung)
   let etat = null;        // { uid, profil, analyse, photos, nbProjets, evenements, mensualites, cachets, castings }
   let periode = 'avenir'; // onglet de « Mes événements »
   const programmes = {};  // jeton → programme du défilé (defile_programme, chargé à la demande)
@@ -46,43 +38,6 @@
   const initialesDe = (nom) => initialesNom(nom) || '?';  // (js/app.js)
   const ongletCourant = () => { const o = location.hash.replace('#', ''); return ONGLETS.some((x) => x[0] === o) ? o : 'accueil'; };
 
-  // ---------- installation ----------
-  addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault(); invitation = e;
-    const bouton = document.getElementById('ap-installer');
-    if (bouton) bouton.hidden = false;
-    ['ap-installer-aide', 'ap-ouvrir-chrome'].forEach((id) => { const el = document.getElementById(id); if (el) el.hidden = true; });
-  });
-  function ecranInstallation() {
-    racine.innerHTML = '<main class="ap-installation">' +
-      '<div class="ap-presentation"><img class="ap-icone" src="/icons/mannequin-192.png" alt="" width="88" height="88"><h1>MA2M <em>Mannequin</em></h1>' +
-      '<p class="doux">Votre espace de l’agence Maître Akesse Model Management, dans votre téléphone.</p></div>' +
-      '<div class="ap-carte"><ol class="ap-etapes"><li><b>1</b><span>Touchez <strong>Installer l’application</strong></span></li>' +
-      '<li><b>2</b><span>L’icône <strong>MA2M Mannequin</strong> apparaît sur votre écran d’accueil</span></li>' +
-      '<li><b>3</b><span>Connectez-vous <strong>une seule fois</strong> : ensuite elle s’ouvre directement</span></li></ol>' +
-      (estIOS ? '<p class="ap-ios">Sur iPhone, dans <strong>Safari</strong> : touchez <strong>Partager</strong> <span aria-hidden="true">⬆️</span>, puis <strong>« Sur l’écran d’accueil »</strong>.</p>' +
-          '<p class="ap-petit">Ouvert depuis WhatsApp, Instagram ou une autre application ? Touchez d’abord <strong>« Ouvrir dans Safari »</strong> (ou l’icône de la boussole).</p>'
-        : '<button type="button" class="ap-btn rouge" id="ap-installer"' + (invitation ? '' : ' hidden') + '>📲 Installer l’application</button>' +
-          (estAndroid ? '<a class="ap-btn rouge" id="ap-ouvrir-chrome" href="' + esc(lienChrome()) + '"' + (invitation ? ' hidden' : '') + '>📲 Ouvrir dans Chrome pour installer</a>' : '') +
-          '<p class="ap-petit" id="ap-installer-aide"' + (invitation ? ' hidden' : '') + '>' + (estAndroid
-            ? 'Déjà dans Chrome et pas de bouton ? Menu <strong>⋮</strong> › <strong>Installer l’application</strong>.'
-            : 'Si le bouton n’apparaît pas : ouvrez ce lien dans <strong>Chrome</strong>, puis menu <strong>⋮</strong> › <strong>Installer l’application</strong>.') + '</p>') +
-      '</div><button type="button" class="ap-lien" id="ap-continuer">Continuer sans installer</button>' +
-      '<p class="ap-petit">Gratuit, sans Play Store ni App Store.</p></main>';
-    const bouton = document.getElementById('ap-installer');
-    if (bouton) bouton.addEventListener('click', async () => {
-      if (!invitation) return;
-      invitation.prompt();
-      const choix = await invitation.userChoice.catch(() => null);
-      invitation = null;
-      if (choix && choix.outcome === 'accepted') message('Application installée : ouvrez-la depuis l’icône MA2M Mannequin.');
-    });
-    document.getElementById('ap-continuer').addEventListener('click', () => {
-      try { sessionStorage.setItem(CLE_NAVIGATEUR, '1'); } catch (e) { /* stockage indisponible : on continue quand même */ }
-      demarrer(true);
-    });
-  }
-
   // ---------- connexion ----------
   function ecranConnexion() {
     racine.innerHTML = '<main class="ap-connexion"><div class="ap-presentation"><img class="ap-icone" src="/icons/mannequin-192.png" alt="" width="72" height="72">' +
@@ -103,7 +58,7 @@
       try {
         const refus = await connexionMannequin(email, mdp);  // (js/app.js)
         if (refus) { msg.textContent = refus; return; }
-        demarrer(true);
+        demarrer();
       } catch (err) {
         msg.textContent = 'Erreur de connexion — réessayez.';
       } finally { bouton.disabled = false; }
@@ -340,10 +295,7 @@
   addEventListener('hashchange', () => { afficher(); scrollTo(0, 0); });
 
   // ---------- démarrage ----------
-  async function demarrer(apresConnexion) {
-    let dansNavigateur = false;
-    try { dansNavigateur = sessionStorage.getItem(CLE_NAVIGATEUR) === '1'; } catch (e) { /* stockage indisponible */ }
-    if (!apresConnexion && !installee() && !dansNavigateur) { ecranInstallation(); return; }
+  async function demarrer() {
     const { data } = await sb.auth.getSession();
     if (!data || !data.session) { ecranConnexion(); return; }
     racine.innerHTML = '<div class="ap-chargement"><img src="/icons/mannequin-192.png" alt="" width="96" height="96"><span>Chargement de votre espace…</span></div>';
@@ -351,7 +303,7 @@
       etat = await charger(data.session.user.id);
     } catch (e) {
       racine.innerHTML = '<main class="ap-connexion"><div class="ap-carte">Votre espace n’a pas pu être chargé : vérifiez votre connexion. <button type="button" class="ap-btn rouge" id="ap-reessayer">Réessayer</button></div></main>';
-      document.getElementById('ap-reessayer').addEventListener('click', () => demarrer(true));
+      document.getElementById('ap-reessayer').addEventListener('click', () => demarrer());
       return;
     }
     if (!etat.profil) {
@@ -360,5 +312,5 @@
     }
     afficher();
   }
-  demarrer(false);
+  demarrer();
 })();

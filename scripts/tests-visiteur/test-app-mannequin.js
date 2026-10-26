@@ -1,6 +1,6 @@
 // Application MA2M Mannequin (/app/, 25/10/2026), comme une vraie mannequin, sur téléphone et
-// ordinateur : l'écran d'installation (manifeste « MA2M Mannequin », icône), « Continuer sans
-// installer », la connexion (même serveur protégé que l'Espace mannequin), puis les 5 onglets du
+// ordinateur : l'application installable (manifeste « MA2M Mannequin », icône ; la bande
+// « Télécharger l'application » : test-installation.js), la connexion (même serveur protégé que l'Espace mannequin), puis les 5 onglets du
 // menu du bas : Accueil (prochain rendez-vous, « Je confirme »), Mes événements (passages du
 // défilé, carte d'accès, événements passés, « Je ne pourrai pas venir »), Mon profil, Mes
 // paiements, Alertes ; enfin la déconnexion. Base simulée : rien n'est écrit pour de vrai.
@@ -70,16 +70,14 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
     const capture = (nomCapture) => (process.env.CAPTURES && tel ? p.screenshot({ path: path.join(process.env.CAPTURES, nomCapture + '.png') }) : null);
     const deborde = () => p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);
 
-    // 1. Le lien reçu : l'écran d'installation
-    await p.goto(BASE + '/app/'); await p.waitForSelector('.ap-installation', { timeout: 15000 });
+    // 1. Le lien reçu : la connexion tout de suite (l'installation : la bande en bas, test-installation.js)
+    await p.goto(BASE + '/app/'); await p.waitForSelector('#ap-form-connexion', { timeout: 15000 });
     const manifeste = await p.evaluate(async () => { const l = document.querySelector('link[rel="manifest"]'); const r = await fetch(l.href); return r.json(); });
-    ok(/MA2M Mannequin/.test(await p.textContent('h1')) && (await p.$$('.ap-etapes li')).length === 3 && (await p.isVisible('#ap-installer')) !== (await p.isVisible('#ap-installer-aide')) && manifeste.name === 'MA2M Mannequin' && manifeste.scope === '/app/' && manifeste.display === 'standalone' && manifeste.icons.some((i) => i.purpose === 'maskable'),
-      n + 'écran d’installation (3 étapes, le bouton « Installer » ou l’aide, pas les deux) ; application « MA2M Mannequin » installable (sa propre icône, s’ouvre sans barre d’adresse)');
+    ok(manifeste.name === 'MA2M Mannequin' && manifeste.scope === '/app/' && manifeste.display === 'standalone' && manifeste.icons.some((i) => i.purpose === 'maskable') && manifeste.related_applications.some((x) => x.platform === 'webapp'),
+      n + 'application « MA2M Mannequin » installable (sa propre icône, s’ouvre sans barre d’adresse, le téléphone sait si elle est déjà installée)');
     ok((await p.evaluate(async () => (await fetch('/icons/mannequin-512.png')).ok)) && (await p.evaluate(async () => (await fetch('/app/sw.js')).ok)), n + 'icône et service worker de l’application présents');
     ok(!(await p.$('#pastille-installer')) && !(await p.$('.whatsapp-flottant, #whatsapp-flottant, .bouton-whatsapp')), n + 'ni pastille « Installer l’app » du site ni bouton WhatsApp flottant dans l’application');
-    await capture('0-installation');
-    // 2. Continuer sans installer → connexion
-    await p.click('#ap-continuer'); await p.waitForSelector('#ap-form-connexion');
+    // 2. Connexion
     await p.click('#ap-form-connexion button[type=submit]');
     ok(/e-mail et votre mot de passe/.test(await p.textContent('#ap-connexion-msg')), n + 'connexion : champs vides → message, rien n’est envoyé');
     await capture('0b-connexion');
@@ -174,23 +172,6 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
     await p.click('.ap-nav a[href="#profil"]'); await p.waitForSelector('.ap-portrait'); await p.click('[data-deconnexion]'); await p.waitForSelector('#ap-form-connexion');
     ok(true, n + 'déconnexion : retour à la connexion');
     ok(!errs.length, n + 'aucune erreur ' + errs.join(' | '));
-    await ctx.close();
-  }
-  // Lien touché dans une autre application (WhatsApp, Claude…) : sa petite fenêtre ne sait pas
-  // installer → sur Android, « Ouvrir dans Chrome pour installer » (un seul appui) ; sur iPhone,
-  // l'aide pour passer dans Safari
-  for (const [nom, ua] of [['Android', 'Mozilla/5.0 (Linux; Android 14; SM-A546B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36'],
-    ['iPhone', 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1']]) {
-    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, userAgent: ua, serviceWorkers: 'block' });
-    const p = await ctx.newPage(); await brancher(p, donnees(), []);
-    await p.goto(BASE + '/app/'); await p.waitForSelector('.ap-installation', { timeout: 15000 });
-    if (nom === 'Android') {
-      const lien = await p.getAttribute('#ap-ouvrir-chrome', 'href');
-      ok(await p.isVisible('#ap-ouvrir-chrome') && /^intent:\/\/127\.0\.0\.1:\d+\/app\/#Intent;scheme=https;package=com\.android\.chrome;S\.browser_fallback_url=/.test(lien) && !(await p.isVisible('#ap-installer')),
-        'Android, lien ouvert dans une autre application : « Ouvrir dans Chrome pour installer » (un seul appui)');
-    } else {
-      ok(/Ouvrir dans Safari/.test(await p.textContent('.ap-carte')) && !(await p.$('#ap-ouvrir-chrome')), 'iPhone : comment passer dans Safari, puis « Sur l’écran d’accueil »');
-    }
     await ctx.close();
   }
   await b.close();

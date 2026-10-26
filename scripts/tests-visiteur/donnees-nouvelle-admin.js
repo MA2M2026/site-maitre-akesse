@@ -94,7 +94,7 @@ function donnees(role) {
       d.rpc.stats_classement_mannequins = d.tables.model_profiles.filter((p) => /^m\d+$/.test(p.id)).map((p, i) => ({ model_id: p.id, nb_visites: 140 - i * 11 }));
       d.rpc.stats_visites_reelles_site = (x) => (new Date(x.depuis) > new Date(Date.now() - 864e5) ? 37 : 412);
       d.tables.messages_contact = [
-        { id: 'mc1', nom: 'Marie Bamba', type_contact: 'Devenir mannequin', telephone: '0707123456', created_at: new Date(Date.now() - 3600e3).toISOString() },
+        { id: 'mc1', nom: 'Marie Bamba', type_contact: 'Devenir mannequin', telephone: '0707123456', created_at: new Date(Date.now() - 1000).toISOString() },  // (pas « il y a une heure » : lancé le lundi peu après minuit, il tombait la semaine d'avant)
         { id: 'mc2', nom: 'Société Lagune', type_contact: 'Recruter des mannequins', telephone: null, created_at: '2026-09-02T10:00:00Z' }];
       // contenu du site : actualités et événements publiés (images servies localement)
       d.tables.actualites = [

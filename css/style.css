@@ -1792,6 +1792,9 @@ body.porte-verrouillee #marqueeBande { display: none; }
 .whatsapp-flottant svg { width: 28px; height: 28px; }
 @media (max-width: 700px) { .whatsapp-flottant { width: 50px; height: 50px; bottom: 1rem; left: 1rem; } }
 body.porte-verrouillee .whatsapp-flottant { display: none; }
+/* la bande « Télécharger l'application » (css/installation.css) se range au-dessus du bouton WhatsApp */
+body:has(> .whatsapp-flottant) { --ma2m-installer-bas: calc(1.4rem + 56px - 4px); }
+@media (max-width: 700px) { body:has(> .whatsapp-flottant) { --ma2m-installer-bas: calc(1rem + 50px - 4px); } }
 
 /* ---------- Galerie multi-photos dans la modale actualité (revue de presse) : même
    grille façon réseau social que "The Book" (.book-grille-ig) — collée, sans espacement,
@@ -1879,41 +1882,6 @@ body.porte-verrouillee .whatsapp-flottant { display: none; }
 .redaction-apercu-carte .news-une-photo { aspect-ratio: 4/3; }
 .redaction-apercu-carte .news-une-corps { padding: 1.6rem; }
 .redaction-apercu-carte .news-une-corps .contenu-riche { color: var(--texte-corps); margin-top: 0.8rem; font-size: 0.88rem; }
-
-/* ---------- Pastille d'installation PWA ---------- */
-#pastille-installer {
-  position: fixed; left: 50%; bottom: 1.2rem; transform: translateX(-50%);
-  z-index: 500; display: flex; align-items: center; gap: 0.6rem;
-  background: var(--noir); color: var(--blanc); border: 1px solid var(--gris-clair);
-  padding: 0.75rem 1rem; font-family: var(--texte); font-size: 0.82rem; letter-spacing: 0.02em;
-  cursor: pointer; box-shadow: 0 6px 24px var(--c-rgba-0-0-0-0_5); animation: pastille-apparition 0.4s ease;
-  max-width: calc(100vw - 2rem);
-}
-.pastille-installer-icone { font-size: 1rem; }
-.pastille-installer-fermer {
-  margin-left: 0.4rem; padding: 0.35rem 0.55rem; opacity: 0.6; font-size: 0.9rem;
-}
-#pastille-installer.pastille-installer--sortie { opacity: 0; transition: opacity 0.4s ease; pointer-events: none; }
-.pastille-installer-fermer:hover { opacity: 1; }
-@keyframes pastille-apparition {
-  from { opacity: 0; transform: translateX(-50%) translateY(12px); }
-  to { opacity: 1; transform: translateX(-50%) translateY(0); }
-}
-
-.modale-ios-fond {
-  position: fixed; inset: 0; z-index: 600; background: var(--c-rgba-0-0-0-0_7);
-  display: flex; align-items: flex-end; justify-content: center;
-}
-.modale-ios-contenu {
-  position: relative; background: var(--creme); color: var(--c-1a1512); width: 100%; max-width: 420px;
-  padding: 1.8rem 1.6rem 2.2rem; border-radius: 14px 14px 0 0; animation: pastille-apparition 0.3s ease;
-}
-.modale-ios-contenu h3 { margin: 0 0 1rem; font-size: 1.1rem; color: var(--c-1a1512); }
-.modale-ios-contenu ol { margin: 0; padding-left: 1.2rem; line-height: 1.9; font-size: 0.92rem; }
-.modale-ios-fermer {
-  position: absolute; top: 0.8rem; right: 1rem; background: none; border: none;
-  font-size: 1.1rem; cursor: pointer; color: var(--c-6b6560);
-}
 
 /* ---------- Mannequin à la une (accueil) — traitement plein écran, façon couverture ---------- */
 .vedette-fullbleed {
@@ -2080,7 +2048,6 @@ html.porte-deja-vue #porte-entree { display: none; }
 .u-pb-0 { padding-bottom: 0; }
 .u-mt-1-2 { margin-top: 1.2rem; }
 .u-m-1-auto { margin: 1rem auto; }
-.u-icone-partage { font-size: 1.1em; }
 .u-ic-facebook { color: var(--c-1877f2); }
 .u-ic-youtube { color: var(--c-ff0000); }
 .u-ic-whatsapp { color: var(--c-25d366); }
