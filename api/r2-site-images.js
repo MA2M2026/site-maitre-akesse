@@ -48,7 +48,7 @@ module.exports = async function handler(req, res) {
   if (categorie === 'note-integration') {
     try {
       const utilisateur = await verifierUtilisateur(jeton);
-      if (!utilisateur) { res.status(401).json({ error: 'Session invalide ou expirée — reconnectez-vous.' }); return; }
+      if (!utilisateur) { res.status(401).json({ error: 'Session invalide ou expirée, reconnectez-vous.' }); return; }
       if (!(await adminVerifie(jeton, utilisateur))) { res.status(403).json({ error: 'Réservé aux administrateurs.' }); return; }
       await traiterNoteIntegration(res, debut.corps);
     } catch (e) {
@@ -82,7 +82,7 @@ module.exports = async function handler(req, res) {
   try {
     const utilisateur = await verifierUtilisateur(jeton);
     if (!utilisateur) {
-      res.status(401).json({ error: 'Session invalide ou expirée — reconnectez-vous.' });
+      res.status(401).json({ error: 'Session invalide ou expirée, reconnectez-vous.' });
       return;
     }
     if (!(await adminVerifie(jeton, utilisateur))) {

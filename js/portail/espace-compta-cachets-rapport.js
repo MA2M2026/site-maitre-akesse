@@ -92,7 +92,7 @@
     if (!dernier) return;
     const d = dernier, F = P.fcfa, m = await P.comptaPdf.mise(), legal = !!d.reglage.mode_legal;
     P.comptaPdf.entete(m, d.reglage, legal);
-    m.ecrire('Rapport des cachets versés aux mannequins — ' + d.per.titre, { taille: 16, gras: true, couleur: m.rouge });
+    m.ecrire('Rapport des cachets versés aux mannequins · ' + d.per.titre, { taille: 16, gras: true, couleur: m.rouge });
     m.ecrire('Préparé le ' + P.dateHeure(new Date().toISOString()) + (legal ? '' : ' · document non fiscal (agence pas encore immatriculée)'), { taille: 9, couleur: m.gris });
     m.titre('1. Totaux', 12);
     m.tableau([{ titre: 'Rubrique', part: 3 }, { titre: 'Montant', part: 1.4, droite: true }], [['Cachets payés', String(d.total.nb)], ['Montant des prestations', F(d.total.prestation)],

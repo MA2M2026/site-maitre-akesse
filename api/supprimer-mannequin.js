@@ -34,7 +34,7 @@ module.exports = async function handler(req, res) {
     // 1. Le jeton fourni correspond-il bien à un compte connecté ?
     const utilisateur = await verifierUtilisateur(jeton);
     if (!utilisateur) {
-      res.status(401).json({ error: 'Session invalide ou expirée — reconnectez-vous.' });
+      res.status(401).json({ error: 'Session invalide ou expirée, reconnectez-vous.' });
       return;
     }
 

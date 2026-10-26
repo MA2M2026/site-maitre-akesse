@@ -38,7 +38,7 @@ function construireNotification(table, record) {
       return {
         cle: 'evenement_candidature_casting',
         titre: '📸 Nouvelle candidature casting',
-        texte: (record.full_name || 'Candidat') + (record.projet_nom ? ' — ' + record.projet_nom : ''),
+        texte: (record.full_name || 'Candidat') + (record.projet_nom ? ' · ' + record.projet_nom : ''),
         url: '/admin/#/site/b2-candidatures/' + record.id
       };
     }
@@ -54,7 +54,7 @@ function construireNotification(table, record) {
     return {
       cle: 'evenement_message_recruteur',
       titre: '💼 Nouveau message recruteur',
-      texte: qui + (record.message ? ' — ' + String(record.message).slice(0, 70) : ''),
+      texte: qui + (record.message ? ' · ' + String(record.message).slice(0, 70) : ''),
       url: '/admin/#/site/b2-recruteurs/' + record.id
     };
   }
@@ -62,7 +62,7 @@ function construireNotification(table, record) {
     return {
       cle: 'evenement_message_visiteur',
       titre: '💬 Nouveau message visiteur',
-      texte: (record.nom || 'Visiteur') + (record.message ? ' — ' + String(record.message).slice(0, 70) : ''),
+      texte: (record.nom || 'Visiteur') + (record.message ? ' · ' + String(record.message).slice(0, 70) : ''),
       url: '/admin/#/site/b2-contacts'
     };
   }
@@ -82,7 +82,7 @@ function construireNotification(table, record) {
     return {
       cle: 'evenement_blocage_connexion',
       titre: '🔒 Accès bloqué',
-      texte: 'Trop de tentatives — ' + lieu + (record.recidive ? ' (récidive)' : ''),
+      texte: 'Trop de tentatives · ' + lieu + (record.recidive ? ' (récidive)' : ''),
       url: '/admin/#/site/b3b-acces-bloques'
     };
   }
@@ -216,7 +216,7 @@ module.exports = async function handler(req, res) {
         cible_id: record.id,
         // (message d'une mannequin : son titre seulement, pas son contenu privé)
         resume: pourMannequin ? notif.titre : notif.texte,
-        erreur: echecs ? echecs + ' appareil(s) en échec sur ' + abonnements.length + ' — ' + String(derniereErreur).slice(0, 200) : null
+        erreur: echecs ? echecs + ' appareil(s) en échec sur ' + abonnements.length + ' · ' + String(derniereErreur).slice(0, 200) : null
       })
     });
     bilan = { ok: true, appareils: abonnements.length, reussites, echecs };

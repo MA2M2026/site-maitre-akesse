@@ -39,7 +39,7 @@
   // Une table entière (par pages de 1000 : Supabase n'en renvoie pas plus d'un coup).
   async function lireTable(table) {
     const { data, error } = await lireToutesLignes(() => sb.from(table).select('*').order('id'));
-    if (error) throw new Error('lecture impossible des fiches « ' + table + ' » (' + error.message + ') — rien n’a été supprimé');
+    if (error) throw new Error('lecture impossible des fiches « ' + table + ' » (' + error.message + '), rien n’a été supprimé');
     return data;
   }
 
@@ -140,7 +140,7 @@
         btn.disabled = false;
         return;
       }
-      if (!confirm(total + ' photo(s) encore dans l’ancien stockage (actualités, événements, partenaires, candidatures, inscriptions — les mannequins ne sont pas concernés).' +
+      if (!confirm(total + ' photo(s) encore dans l’ancien stockage (actualités, événements, partenaires, candidatures, inscriptions, les mannequins ne sont pas concernés).' +
           (aDeplacer.length ? '\n' + aDeplacer.length + ' photo(s) du site encore utilisée(s) : d’abord recopiée(s) chez Cloudflare, fiche(s) mise(s) à jour.' : '') +
           '\n\nTout ce qui ne sert plus sera effacé de l’ancien stockage. Continuer ?')) {
         msg.textContent = 'Annulé : rien n’a été supprimé.';
@@ -169,7 +169,7 @@
           if (cite(texte, conf, f.chemin)) {
             const ou = [];
             for (const t of conf.tables) for (const l of fiches[t]) if (cite(JSON.stringify(l), conf, f.chemin)) ou.push(nomFiche(t, l));
-            gardes.push(conf.bucket + '/' + f.chemin + ' — ' + (ou.join(', ') || 'fiche inconnue'));
+            gardes.push(conf.bucket + '/' + f.chemin + ' · ' + (ou.join(', ') || 'fiche inconnue'));
             continue;
           }
           aSupprimer[conf.bucket].push(f.chemin);
@@ -184,13 +184,13 @@
         const liste = aSupprimer[conf.bucket];
         for (let i = 0; i < liste.length; i += 100) {
           const { error } = await sb.storage.from(conf.bucket).remove(liste.slice(i, i + 100));
-          if (error) throw new Error('suppression interrompue (' + error.message + ') — ' + faits + ' fichier(s) déjà supprimé(s)');
+          if (error) throw new Error('suppression interrompue (' + error.message + ') · ' + faits + ' fichier(s) déjà supprimé(s)');
           faits += Math.min(100, liste.length - i);
           msg.textContent = 'Suppression… ' + faits + ' / ' + nb;
         }
       }
       const deplaces = aDeplacer.length - erreursDeplacement.length;
-      msg.textContent = '✓ ' + faits + ' photo(s) supprimée(s) de l’ancien stockage — ' + mo + ' Mo libérés.' +
+      msg.textContent = '✓ ' + faits + ' photo(s) supprimée(s) de l’ancien stockage · ' + mo + ' Mo libérés.' +
         (deplaces > 0 ? '\n' + deplaces + ' photo(s) recopiée(s) chez Cloudflare, fiche(s) mise(s) à jour.' : '') +
         (gardes.length ? '\n\nConservée(s) car encore utilisée(s) :\n' + gardes.join('\n') : '') +
         (erreursDeplacement.length ? '\n\nProblème :\n' + erreursDeplacement.join('\n') : '');

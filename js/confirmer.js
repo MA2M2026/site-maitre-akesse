@@ -18,7 +18,7 @@
     var p = lignes && lignes[0];
     if (!p) { introuvable(); return; }
     $('cf-titre').textContent = p.titre;
-    $('cf-details').textContent = 'Bonjour ' + p.nom + (p.parent ? ' (message pour son parent)' : '') + ' — ' + dateFr(p.date_debut)
+    $('cf-details').textContent = 'Bonjour ' + p.nom + (p.parent ? ' (message pour son parent)' : '') + ' · ' + dateFr(p.date_debut)
       + (p.heure_convocation ? ', convocation à ' + p.heure_convocation.replace(':', 'h') : '')
       + ([p.lieu, p.ville].filter(Boolean).length ? ', ' + [p.lieu, p.ville].filter(Boolean).join(', ') : '') + '.';
     programme();
@@ -52,7 +52,7 @@
       var siens = passages.filter(function (x) { return x.moi; });
       var mes = el('ul', 'cf-mes-passages', '', boite);
       if (!siens.length) el('li', '', 'Vos passages seront bientôt programmés.', mes);
-      siens.forEach(function (x) { var li = el('li', '', '', mes); el('b', '', jourFr(x.jour), li); el('span', '', ' — ' + ligne(x), li); });
+      siens.forEach(function (x) { var li = el('li', '', '', mes); el('b', '', jourFr(x.jour), li); el('span', '', ' · ' + ligne(x), li); });
       el('h2', '', 'Le programme complet', boite);
       var jour = null, bloc = null;
       passages.forEach(function (x) {

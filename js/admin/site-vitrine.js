@@ -99,7 +99,7 @@
         posts = (res.data || []).filter((p) => p.media_type !== 'VIDEO' || p.thumbnail_url)
           .map((p) => ({ id: p.id, image: p.media_type === 'VIDEO' ? p.thumbnail_url : p.media_url, lien: p.permalink, legende: (p.caption || '').slice(0, 140) }));
       } catch (e) {
-        msg('ig-msg', 'err', 'Instagram a refusé : ' + e.message + ' — vérifiez que la clé de connexion est valable et que le compte est professionnel, relié à une Page Facebook.');
+        msg('ig-msg', 'err', 'Instagram a refusé : ' + e.message + ', vérifiez que la clé de connexion est valable et que le compte est professionnel, relié à une Page Facebook.');
         return;
       }
       const r = await P.bd(sb.from('instagram_posts_cache').upsert({ id: 'principal', posts, updated_at: new Date().toISOString() }).select('id'));

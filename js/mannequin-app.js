@@ -60,7 +60,7 @@
         if (refus) { msg.textContent = refus; return; }
         demarrer();
       } catch (err) {
-        msg.textContent = 'Erreur de connexion — réessayez.';
+        msg.textContent = 'Erreur de connexion, réessayez.';
       } finally { bouton.disabled = false; }
     });
   }
@@ -261,7 +261,7 @@
         : '<div class="ap-carte doux">Aucun cachet payé pour le moment.</div>');
   }
   // un message de l'agence : titre, date, texte, photo, fiche jointe, page à ouvrir
-  const ICONES_MESSAGE = { casting: '📣', defile: '👠', remerciement: '🙏', selection: '🎉', convocation: '📅', rappel: '⏰', places: '🎟️', mensualite: '💳', paiement: '✅', cachet: '💰' };
+  const ICONES_MESSAGE = { casting: '✨', defile: '👠', remerciement: '🤍', info: '💌', selection: '🎉', convocation: '💌', rappel: '⏰', places: '🎟️', mensualite: '💳', paiement: '✅', cachet: '💰' };
   const quandMessage = (d) => new Date(d).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Abidjan' });
   function carteMessage(x) {
     const ic = ICONES_MESSAGE[x.sorte] || '✉️';

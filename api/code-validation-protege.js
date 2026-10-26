@@ -19,7 +19,7 @@ module.exports = async function handler(req, res) {
   try {
     const utilisateur = await verifierUtilisateur(jeton);
     if (!utilisateur) {
-      res.status(401).json({ error: 'Session invalide ou expirée — reconnectez-vous.' });
+      res.status(401).json({ error: 'Session invalide ou expirée, reconnectez-vous.' });
       return;
     }
     const tentatives = compteurTentatives(extraireIp(req), utilisateur.id, 'admin-code', nettoyerAppareil(corps && corps.appareil));

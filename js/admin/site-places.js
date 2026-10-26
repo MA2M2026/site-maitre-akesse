@@ -106,7 +106,7 @@
     const types = typeof MA2M_TYPES_AGENDA === 'object' ? Object.keys(MA2M_TYPES_AGENDA) : ['defile', 'shooting', 'casting', 'formation', 'evenement', 'autre'];
     P.fenetre('<form class="f" data-form="places-creer"><h2>Nouvel appel à places</h2>' +
       '<label class="fl large" for="pl-projet">Projet<select id="pl-projet" name="projet" data-change="places-projet" data-direct><option value="">➕ Nouveau projet (ajouté à l’agenda)</option>' +
-      libres.map((p) => '<option value="' + P.esc(p.id) + '">' + P.esc(P.date(p.date_debut) + ' — ' + p.titre) + '</option>').join('') + '</select></label>' +
+      libres.map((p) => '<option value="' + P.esc(p.id) + '">' + P.esc(P.date(p.date_debut) + ' · ' + p.titre) + '</option>').join('') + '</select></label>' +
       '<div id="pl-nouveau" class="large f-sous">' +
       '<label class="fl" for="pl-titre">Titre<input id="pl-titre" name="titre" maxlength="160" placeholder="ex : Défilé Africa in Rhythm"></label>' +
       '<label class="fl" for="pl-type">Type<select id="pl-type" name="type">' + types.map((t) => '<option value="' + t + '"' + (t === 'defile' ? ' selected' : '') + '>' + P.esc(typeof libelleTypeAgenda === 'function' ? libelleTypeAgenda(t) : t) + '</option>').join('') + '</select></label>' +

@@ -95,7 +95,7 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
 
     // 6. Validations
     await p.goto(URL_ADMIN + '#/site/b2-validations'); await p.waitForSelector('.entete'); await p.waitForTimeout(1200);
-    ok(/NOUVELLE FACE/.test(await p.textContent('.contenu')) && /Mineure — 15 ans/.test(await p.textContent('.contenu')) && (await p.$$('.validation-photos .vis img')).length === 2, n + 'validation : fiche en attente, mineure signalée, ses photos');
+    ok(/NOUVELLE FACE/.test(await p.textContent('.contenu')) && /Mineure · 15 ans/.test(await p.textContent('.contenu')) && (await p.$$('.validation-photos .vis img')).length === 2, n + 'validation : fiche en attente, mineure signalée, ses photos');
     await capture(p, 'validations' + suffixe);
     await p.click('[data-action="validation-refuser"]'); await p.fill('#vr-raison', 'Ajoutez une photo de face.'); await p.click('form[data-form="validation-refuser"] [type=submit]'); await p.waitForTimeout(900);
     ok(ecrits(journal, 'PATCH', 'model_profiles').some((j) => /Ajoutez une photo de face/.test(j[3]) && /"en_attente_validation":false/.test(j[3])), n + 'refus avec la raison, visible par la mannequin');

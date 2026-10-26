@@ -427,14 +427,14 @@
       }));
       await P.afficher();
       P.message(envoyes + ' e-mail(s) envoyé(s) sur ' + liste.length + '. Envoyez maintenant les messages WhatsApp.');
-      fileWhatsApp('Appel du mois — WhatsApp', liste, 'appel');
+      fileWhatsApp('Appel du mois · WhatsApp', liste, 'appel');
     } catch (e) { P.message(P.erreurTexte(e)); }
   };
   P.actions['mensualites-whatsapp'] = (el) => {
     const e = P.etat.mensualites;
     if (!e) return;
     const type = el.getAttribute('data-type');
-    fileWhatsApp(type === 'relance5' ? 'Dernière relance — WhatsApp' : 'Relance du 3 — WhatsApp',
+    fileWhatsApp(type === 'relance5' ? 'Dernière relance · WhatsApp' : 'Relance du 3 · WhatsApp',
       e.actifs.filter((m) => e.appele(m) && ['a_payer', 'non_paye'].includes(e.etat(m))), type);
   };
 
@@ -693,11 +693,11 @@
         m.nouvellePage();
         m.ecrire('Maître Akesse Model Management', { taille: 15, gras: true });
         m.espace(6); m.trait();
-        m.ecrire('Récapitulatif des mensualités — ' + libelleMois(d.cible), { taille: 16, gras: true, couleur: m.rouge });
+        m.ecrire('Récapitulatif des mensualités · ' + libelleMois(d.cible), { taille: 16, gras: true, couleur: m.rouge });
         m.ecrire('Préparé le ' + P.dateHeure(new Date().toISOString()), { taille: 9, couleur: m.gris });
         m.espace(8);
         const duTotal = d.pas.reduce((t, x) => t + x.du, 0), duMois = d.pas.reduce((t, x) => t + x.duMois, 0);
-        m.ecrire('Non payé (' + d.pas.length + ') — montant dû : ' + F(duTotal), { taille: 12, gras: true });
+        m.ecrire('Non payé (' + d.pas.length + '), montant dû : ' + F(duTotal), { taille: 12, gras: true });
         m.ecrire('dont ' + libelleMois(d.cible) + ' : ' + F(duMois) + ' · dont mois précédents : ' + F(duTotal - duMois), { taille: 9, couleur: m.gris });
         m.tableau([{ titre: 'Mannequin', part: 3 }, { titre: 'Retard (j)', part: 1.2, droite: true }, { titre: 'Mois d’affilée', part: 1.4, droite: true }, { titre: 'Montant dû', part: 1.8, droite: true }],
           d.pas.map((x) => [x.m.full_name, String(x.retard), String(x.affilee), F(x.du)]));
@@ -796,7 +796,7 @@
     const l = cochees();
     if (!l.length) return P.message('Cochez au moins une personne.');
     const r = remplir(P.etat.msg.texte, l[0]);
-    P.fenetre('<h2>Aperçu — ' + P.esc(l[0].full_name) + '</h2><p class="doux">Envoyé à : ' + P.esc(r.d.mineur ? r.d.nom + ' (parent)' : r.d.nom) + '</p><pre class="journal" style="white-space:pre-wrap">' + P.esc(r.texte) +
+    P.fenetre('<h2>Aperçu · ' + P.esc(l[0].full_name) + '</h2><p class="doux">Envoyé à : ' + P.esc(r.d.mineur ? r.d.nom + ' (parent)' : r.d.nom) + '</p><pre class="journal" style="white-space:pre-wrap">' + P.esc(r.texte) +
       '</pre><div class="ligne"><button class="btn" type="button" data-action="fermer-fenetre">Fermer</button></div>');
   };
   P.actions['msg-envoyer'] = async () => {

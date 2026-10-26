@@ -17,8 +17,8 @@ window.GABARIT_AGENDA = `<h2 class="tdb-4">📅 Agenda du site</h2>
 <div class="form-champ"><label for="agenda-pays">Pays (visible dans le Parcours MA2M)</label><input id="agenda-pays" type="text" maxlength="80" value="Côte d'Ivoire" placeholder="ex : Côte d'Ivoire"></div>
 </div>
 <div class="form-champ"><label for="agenda-description">Quelques mots pour les clients (visible)</label><textarea id="agenda-description" rows="3" maxlength="1200" placeholder="ex : Nos mannequins portent la nouvelle collection de la marque."></textarea></div>
-<fieldset class="agenda-choix"><legend>Horaires, jour par jour</legend>
-<p class="agenda-aide">Une ligne par jour de l'activité : les heures peuvent changer d'un jour à l'autre. Laissez vide si vous ne les connaissez pas encore.</p>
+<fieldset class="agenda-choix"><legend>Horaires et lieux, jour par jour</legend>
+<p class="agenda-aide">Une ligne par jour de l'activité. Les heures et le lieu peuvent changer d'un jour à l'autre, et un même jour peut avoir plusieurs lieux ou salles (séparez-les par une virgule). Laissez vide ce que vous ne connaissez pas encore.</p>
 <div id="agenda-seances" class="agenda-seances"></div>
 <label class="agenda-visible"><input id="agenda-horaires-publics" type="checkbox"> Montrer les horaires sur le site (sinon, ils restent ici seulement)</label>
 </fieldset>
@@ -43,7 +43,7 @@ window.GABARIT_AGENDA = `<h2 class="tdb-4">📅 Agenda du site</h2>
 <p class="agenda-compte" id="agenda-compte"></p>
 <div class="form-champ"><label for="agenda-autres">Autres mannequins de l'agence, pas encore sur le site (un nom par ligne)</label><textarea id="agenda-autres" rows="3" maxlength="3000" placeholder="ex : Fatou Bamba"></textarea></div>
 <p class="agenda-aide">Ces noms apparaissent dans le Parcours MA2M, sans photo ni lien (jamais sur l'agenda du site). Quand la mannequin aura son profil, cochez-la plutôt dans la liste ci-dessus et effacez son nom ici.</p></fieldset>
-<fieldset class="agenda-choix agenda-interne"><legend>🔒 Interne — jamais affiché sur le site</legend>
+<fieldset class="agenda-choix agenda-interne"><legend>🔒 Interne, jamais affiché sur le site</legend>
 <div class="agenda-grille">
 <div class="form-champ"><label for="agenda-adresse">Adresse exacte</label><input id="agenda-adresse" type="text" maxlength="300"></div>
 <div class="form-champ"><label for="agenda-client">Client (peut être cité dans les messages aux mannequins)</label><input id="agenda-client" type="text" maxlength="160" placeholder="ex : Marque Cha Kane"></div>

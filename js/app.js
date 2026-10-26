@@ -233,7 +233,7 @@ function construireHtmlCv(d) {
     return url ? '<img src="' + url + '" alt="Compcard ' + (i + 1) + '">' : '<div></div>';
   }).join('');
   return (
-    '<div class="private-note">Document privé — visible uniquement par ' + echapperHtml((d.nomComplet || '').split(' ')[0] || 'le mannequin') + ' et l’administrateur MA2M</div>' +
+    '<div class="private-note">Document privé, visible uniquement par ' + echapperHtml((d.nomComplet || '').split(' ')[0] || 'le mannequin') + ' et l’administrateur MA2M</div>' +
     '<div class="mcv-wrap"><aside class="mcv-side">' +
       '<div class="mcv-photo">' + heroPhoto + mcvIcon('user', 48) + '<div class="mcv-photo-logo"><img src="assets/logo-header.png" alt="Maître Akesse Model Management"></div></div>' +
       '<div class="mcv-tagline">Former · Révéler · Valoriser</div>' +
@@ -808,8 +808,8 @@ async function construireCanvasCompcard(ficheData, langue) {
     ctx.fillStyle = GRIS;
     ctx.font = `italic ${fpx(9.5)}px Arial, sans-serif`;
     const pluriel = projets.length > 1 ? 's' : '';
-    ctx.fillText(en ? `${projets.length} completed project${pluriel} — full book on maitreakessemodelmanagement.com`
-      : `${projets.length} projet${pluriel} réalisé${pluriel} — book complet sur maitreakessemodelmanagement.com`, px(15), px(yFinGrille + 3));
+    ctx.fillText(en ? `${projets.length} completed project${pluriel}, full book on maitreakessemodelmanagement.com`
+      : `${projets.length} projet${pluriel} réalisé${pluriel}, book complet sur maitreakessemodelmanagement.com`, px(15), px(yFinGrille + 3));
   }
   const hPiedPage = HAUTEUR_MM - yPiedPage;
   ctx.fillStyle = BORDEAUX;
@@ -833,8 +833,8 @@ async function construireCanvasCompcard(ficheData, langue) {
 
   ctx.font = `italic ${fpx(7)}px Arial, sans-serif`;
   ctx.fillText(en
-    ? `Official document generated on ${new Date().toLocaleDateString('en-US')} from maitreakessemodelmanagement.com — all booking requests must go exclusively through the agency.`
-    : `Document officiel généré le ${new Date().toLocaleDateString('fr-FR')} depuis maitreakessemodelmanagement.com — toute demande de booking passe exclusivement par l'agence.`, px(15), px(yPiedPage + hPiedPage - 6));
+    ? `Official document generated on ${new Date().toLocaleDateString('en-US')} from maitreakessemodelmanagement.com, all booking requests must go exclusively through the agency.`
+    : `Document officiel généré le ${new Date().toLocaleDateString('fr-FR')} depuis maitreakessemodelmanagement.com, toute demande de booking passe exclusivement par l'agence.`, px(15), px(yPiedPage + hPiedPage - 6));
 
   canvas.photosFaibles = photosTropPetites(imagesPhotos.map((image, i) => ({ image, url: urlsPhotos[i], coteMm: i ? hCellule : hPhotos })));
   return canvas;
@@ -1449,7 +1449,7 @@ async function construireCanvasCv(d) {
     ctx.fillStyle = '#f0d3d7';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.font = `400 ${fpx(9)}px Jost, sans-serif`;
-    ctx.fillText('Document privé — visible uniquement par ' + ((d.nomComplet || '').split(' ')[0] || 'le mannequin') + ' et l’administrateur MA2M', px(LARGEUR_MM) / 2, px(hBanniere / 2));
+    ctx.fillText('Document privé, visible uniquement par ' + ((d.nomComplet || '').split(' ')[0] || 'le mannequin') + ' et l’administrateur MA2M', px(LARGEUR_MM) / 2, px(hBanniere / 2));
 
     // ============== COLONNE GAUCHE (sidebar sombre) ==============
     const yColDebut = hBanniere;
@@ -1820,7 +1820,7 @@ async function connexionMannequin(email, mdp) {
   const refus = messageAccesRefuse(reponse, resultat, 'E-mail ou mot de passe incorrect');
   if (refus) return refus;
   const { error } = await sb.auth.setSession({ access_token: resultat.access_token, refresh_token: resultat.refresh_token });
-  return error ? 'Erreur de connexion — réessayez.' : '';
+  return error ? 'Erreur de connexion, réessayez.' : '';
 }
 // Jeton de la session ouverte (mannequin ou admin), ou null.
 async function jetonSessionCourante() {
@@ -1833,7 +1833,7 @@ async function jetonSessionCourante() {
 // parfois une fois puis réussit : 3 essais avant de faire remonter l'échec.
 async function uploaderVersR2(modelId, chemin, blob, contentType) {
   const jeton = await jetonSessionCourante();
-  if (!jeton) throw new Error('Session expirée — reconnectez-vous.');
+  if (!jeton) throw new Error('Session expirée, reconnectez-vous.');
   let derniereErreur;
   for (let essai = 1; essai <= 3; essai++) {
     try {
@@ -1978,7 +1978,7 @@ function envoyerAvecProgression(url, fichier, progression) {
 }
 async function envoyerImageSite(categorie, chemin, fichier, progression) {
   const { data: { session } } = await sbAdmin.auth.getSession();
-  if (!session) throw new Error('Session expirée — reconnectez-vous.');
+  if (!session) throw new Error('Session expirée, reconnectez-vous.');
   let derniereErreur;
   for (let essai = 1; essai <= 3; essai++) {
     try {
@@ -2010,7 +2010,7 @@ async function envoyerImageSite(categorie, chemin, fichier, progression) {
 // 'nettoyer'). Renvoie la réponse du serveur, ou lève une erreur.
 async function actionImageSite(corps) {
   const { data: { session } } = await sbAdmin.auth.getSession();
-  if (!session) throw new Error('Session expirée — reconnectez-vous.');
+  if (!session) throw new Error('Session expirée, reconnectez-vous.');
   const rep = await fetch('/api/r2-site-images', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
@@ -2703,8 +2703,8 @@ async function insererAvecPatience(table, ligne, surAttente) {
 }
 function texteAttenteEnvoi(secondes) {
   return (document.documentElement.lang || '').indexOf('en') === 0
-    ? `Many submissions right now — trying again automatically in ${secondes} s. Please keep this page open.`
-    : `Beaucoup d'envois en ce moment — nouvel essai automatique dans ${secondes} s. Merci de garder la page ouverte.`;
+    ? `Many submissions right now, trying again automatically in ${secondes} s. Please keep this page open.`
+    : `Beaucoup d'envois en ce moment, nouvel essai automatique dans ${secondes} s. Merci de garder la page ouverte.`;
 }
 
 // Photos de candidature / d'inscription envoyées vers Google Drive (partagé le 11/10/2026 :
@@ -2841,7 +2841,7 @@ async function envoyerVideoVersDrive(urlScript, infos, fichier, surProgres) {
   if (!lien && window.signalerErreur) {
     const conn = navigator.connection || {};
     window.signalerErreur('Vidéo de candidature non envoyée',
-      `${infos.nom || '?'} — vidéo ${(total / 1048576).toFixed(1)} Mo (${typeVideo}), ${Math.round((Date.now() - debut) / 1000)} s au total, réseau ${conn.effectiveType || '?'}${conn.downlink ? ' ~' + conn.downlink + ' Mbit/s' : ''}`,
+      `${infos.nom || '?'}, vidéo ${(total / 1048576).toFixed(1)} Mo (${typeVideo}), ${Math.round((Date.now() - debut) / 1000)} s au total, réseau ${conn.effectiveType || '?'}${conn.downlink ? ' ~' + conn.downlink + ' Mbit/s' : ''}`,
       causes.slice(-6).join(' | '));
   }
   return lien;

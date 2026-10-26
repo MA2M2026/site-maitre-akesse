@@ -127,7 +127,7 @@ window.demarrerFichesEvenement = function () {
       doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
       doc.text(MA2M_CONTACT_PDF, L / 2, 288, { align: 'center' });
       doc.setFont('helvetica', 'normal'); doc.setFontSize(7);
-      doc.text('Document confidentiel réservé à l’organisation de l’événement — généré le ' + new Date().toLocaleDateString('fr-FR') + ' · maitreakessemodelmanagement.com', L / 2, 293, { align: 'center' });
+      doc.text('Document confidentiel réservé à l’organisation de l’événement, généré le ' + new Date().toLocaleDateString('fr-FR') + ' · maitreakessemodelmanagement.com', L / 2, 293, { align: 'center' });
     }
     var nom = String(d.full_name || 'mannequin').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase();
     doc.save('fiche-evenement-' + nom + (typeof horodatageFichier === 'function' ? horodatageFichier() : '') + '.pdf');

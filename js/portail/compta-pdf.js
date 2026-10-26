@@ -117,7 +117,7 @@
     m.ecrire('Date : ' + P.date(d.date_doc) + (d.validite ? '   ·   Valable jusqu’au ' + P.date(d.validite) : ''), { taille: 10 });
     if (origine) m.ecrire((d.type === 'avoir' ? 'Corrige la facture N° ' : d.type === 'recu' ? 'Pour la facture N° ' : 'Suite au document N° ') + origine, { taille: 10 });
     if (d.fne_reference) m.ecrire('Référence FNE : ' + d.fne_reference, { taille: 10 });
-    if (d.annule) m.ecrire('DOCUMENT ANNULÉ — ' + (d.motif_annulation || ''), { taille: 11, gras: true, couleur: m.rouge });
+    if (d.annule) m.ecrire('DOCUMENT ANNULÉ · ' + (d.motif_annulation || ''), { taille: 11, gras: true, couleur: m.rouge });
     m.espace(8);
     const dest = d.destinataire || {};
     m.ecrire(d.type === 'recu' ? 'Reçu de :' : 'Destinataire :', { taille: 9, couleur: m.gris });
@@ -130,7 +130,7 @@
       : [[d.type === 'recu' ? 'Montant reçu' : 'Total', P.fcfa(d.total_ttc)]];
     totaux.forEach((t, i) => m.ecrire(t[0] + ' : ' + t[1], { taille: i === totaux.length - 1 ? 12 : 10, gras: i === totaux.length - 1, droite: true }));
     if (d.notes) { m.espace(10); m.ecrire(d.notes, { taille: 9 }); }
-    if (!d.fiscal) { m.espace(14); m.ecrire('Document non fiscal — l’agence n’est pas encore immatriculée : ce document ne vaut pas facture au sens fiscal.', { taille: 9, gras: true, couleur: m.rouge }); }
+    if (!d.fiscal) { m.espace(14); m.ecrire('Document non fiscal, l’agence n’est pas encore immatriculée : ce document ne vaut pas facture au sens fiscal.', { taille: 9, gras: true, couleur: m.rouge }); }
     if (r.pied_de_page) { m.espace(8); m.ecrire(r.pied_de_page, { taille: 8, couleur: m.gris }); }
     return m.finir(d.numero + (d.fiscal ? '' : ' · non fiscal'));
   }

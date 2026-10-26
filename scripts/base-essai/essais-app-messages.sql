@@ -61,9 +61,9 @@ insert into convocation_envois (projet_id, participant_id, sorte, canal, prevu_l
   ('00000000-0000-0000-0000-0000000000e1', '00000000-0000-0000-0000-0000000000e3', 'convocation', 'whatsapp', now(), 'a_faire');
 update convocation_envois set statut = 'envoye', envoye_le = now() where participant_id = '00000000-0000-0000-0000-0000000000e2' and canal = 'email';
 select essai((select count(*) from app_messages where user_id = '00000000-0000-0000-0000-0000000000b1' and titre like '%DÉFILÉ BOÎTE') = 2
-  and exists (select 1 from app_messages where titre = '🎉 Vous êtes sélectionné(e) : DÉFILÉ BOÎTE')
-  and (select texte from app_messages where titre = '📅 Convocation : DÉFILÉ BOÎTE') like '%convocation à 14:00 · Sofitel, Abidjan%',
-  'sélection puis convocation : un message chacune (pas une par canal, rien pour le parent), avec la date, l''heure et le lieu');
+  and exists (select 1 from app_messages where titre = '🎉 Bonne nouvelle, vous êtes sélectionnée pour DÉFILÉ BOÎTE')
+  and (select texte from app_messages where titre = '💌 Votre convocation pour DÉFILÉ BOÎTE') like 'Rendez-vous le % 20%, Sofitel, convocation à 14h00.%',
+  'sélection puis convocation : un message chacune (pas une par canal, rien pour le parent), avec la date, le lieu et l''heure, au féminin');
 select essai(not exists (select 1 from app_messages where titre like '%DÉFILÉ BOÎTE' and lien <> '/app/#evenements'), 'le message ouvre l''onglet Événements');
 -- b) places limitées : quand son lien part
 update places_invitations set envoye_le = now() where model_id = '00000000-0000-0000-0000-0000000000b1' and envoye_le is null and statut <> 'exclu';
@@ -73,11 +73,11 @@ delete from mensualites_appels where mannequin_id = (select id from agence_manne
 insert into mensualites_appels (mois, mannequin_id) select date_trunc('month', now())::date, id from agence_mannequins where user_id = '00000000-0000-0000-0000-0000000000b1' on conflict do nothing;
 update mensualites_appels set relance3_le = now() where mannequin_id = (select id from agence_mannequins where user_id = '00000000-0000-0000-0000-0000000000b1');
 select essai((select count(*) from app_messages where user_id = '00000000-0000-0000-0000-0000000000b1' and sorte = 'mensualite') = 2
-  and exists (select 1 from app_messages where titre like '🔔 Rappel : mensualité de%' and texte like '% FCFA à régler avant le 5.%'), 'mensualités : l''appel du 1er et la relance du 3, avec le montant');
+  and exists (select 1 from app_messages where titre like '🔔 Petit rappel pour votre mensualité de%' and texte like '% FCFA à régler avant le 5%'), 'mensualités : l''appel du 1er et la relance du 3, avec le montant');
 -- d) paiement vérifié par l'agence (les deux mois payés à l'avance dans essais-paiement-avance.sql)
 set ma2m.decision = '1';  -- (comme le bouton « Valider », paiement_decider)
 update paiements_mannequins set statut = 'valide', valide_le = now() where statut = 'declare' and mannequin_id = (select id from agence_mannequins where user_id = '00000000-0000-0000-0000-0000000000b1');
-select essai((select count(*) from app_messages where user_id = '00000000-0000-0000-0000-0000000000b1' and titre like '✅ Paiement confirmé : mensualité de %') >= 2, 'paiement validé : « Paiement confirmé » pour chaque mois');
+select essai((select count(*) from app_messages where user_id = '00000000-0000-0000-0000-0000000000b1' and titre like '✅ Paiement bien reçu pour votre mensualité de %') >= 2, 'paiement validé : « Paiement confirmé » pour chaque mois');
 -- rejouer la même validation ne renvoie rien
 update paiements_mannequins set motif = motif where mannequin_id = (select id from agence_mannequins where user_id = '00000000-0000-0000-0000-0000000000b1');
 select essai((select count(*) from app_messages where cle like 'paiement:%') = (select count(distinct cle) from app_messages where cle like 'paiement:%'), 'jamais deux fois le même message automatique');

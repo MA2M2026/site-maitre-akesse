@@ -23,6 +23,8 @@
     return jours;
   }
   const jourLong = (j) => new Date(j + 'T12:00:00Z').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+  // le jour et son lieu (agenda, « Horaires et lieux, jour par jour », 26/10/2026)
+  const jourEtLieu = (j) => { const s = ((ecran && ecran.projet && ecran.projet.seances) || []).find((x) => x && x.jour === j); return jourLong(j) + (s && s.lieu ? ', ' + s.lieu : ''); };
   // personne du vivier : sa clé (profil du site, registre, carnet)
   const cleDe = (v) => v.model_id ? 'm:' + v.model_id : v.mannequin_id ? 'r:' + v.mannequin_id : 'c:' + v.contact_id;
   let ecran = null;  // { projet, passages, vivier, affectations, personnes: { cle: { nom, photo, sexe, origine } } }
@@ -50,7 +52,7 @@
     const projets = await P.bd(sb.from('agenda_projets').select('id, titre, date_debut, date_fin, annule').gte('date_debut', aujourdhui()).eq('annule', false).order('date_debut'));
     P.fenetre('<form class="grille" data-form="defile-nouveau"><h2>Programmer un défilé</h2>' +
       '<label class="fl" for="df-projet">Projet de l’Agenda<select id="df-projet" name="projet"><option value="">＋ Nouveau projet</option>' +
-      projets.map((p) => '<option value="' + P.esc(p.id) + '">' + P.esc(P.date(p.date_debut) + ' — ' + p.titre) + '</option>').join('') + '</select></label>' +
+      projets.map((p) => '<option value="' + P.esc(p.id) + '">' + P.esc(P.date(p.date_debut) + ' · ' + p.titre) + '</option>').join('') + '</select></label>' +
       '<div id="df-nouveau" class="grille"><label class="fl" for="df-titre">Titre<input id="df-titre" name="titre" maxlength="160"></label>' +
       '<label class="fl" for="df-debut">Premier jour<input id="df-debut" name="debut" type="date"></label>' +
       '<label class="fl" for="df-fin">Dernier jour<input id="df-fin" name="fin" type="date"></label>' +
@@ -154,7 +156,7 @@
     const options = jours.map((j) => '<option value="' + j + '">' + P.esc(jourLong(j)) + '</option>').join('');
     const parJour = jours.concat(horsDates).sort((a, b) => a.localeCompare(b)).map((j) => {
       const siens = ecran.passages.filter((x) => x.jour === j);
-      return '<div class="df-jour"><h3>' + P.esc(jourLong(j)) + '</h3>' + (siens.length ? '<ul class="df-passages">' + siens.map((x) =>
+      return '<div class="df-jour"><h3>' + P.esc(jourEtLieu(j)) + '</h3>' + (siens.length ? '<ul class="df-passages">' + siens.map((x) =>
         '<li><b>' + P.esc(heure(x.debut)) + '</b> · ' + P.esc(x.salle || 'salle à préciser') + (x.theme ? ' · ' + P.esc(x.theme) : '') +
         ' <span class="doux">(' + x.femmes + ' F, ' + x.hommes + ' H)</span> <button type="button" class="btn petit" data-action="defile-passage-supprimer" data-id="' + P.esc(x.id) + '" aria-label="Supprimer ce passage">✕</button></li>').join('') + '</ul>' : '<p class="doux">Aucun passage ce jour-là.</p>') + '</div>';
     }).join('');
@@ -185,7 +187,7 @@
       const siens = places[x.id] || [];
       const ronds = (sexe, total) => {
         const l = siens.filter((c) => (ecran.personnes[c] || {}).sexe === sexe);
-        let html = l.map((c) => '<button type="button" class="df-place prise' + (manuel[x.id + c] ? ' main' : '') + (enConflit[x.id + c] ? ' conflit' : '') + '" data-action="defile-retirer" data-passage="' + P.esc(x.id) + '" data-cle="' + P.esc(c) + '" title="' + P.esc((ecran.personnes[c] || {}).nom || '') + ' — toucher pour retirer">' + visage(c) + '</button>').join('');
+        let html = l.map((c) => '<button type="button" class="df-place prise' + (manuel[x.id + c] ? ' main' : '') + (enConflit[x.id + c] ? ' conflit' : '') + '" data-action="defile-retirer" data-passage="' + P.esc(x.id) + '" data-cle="' + P.esc(c) + '" title="' + P.esc((ecran.personnes[c] || {}).nom || '') + ', toucher pour retirer">' + visage(c) + '</button>').join('');
         for (let i = l.length; i < total; i++) html += '<button type="button" class="df-place" data-action="defile-choisir" data-passage="' + P.esc(x.id) + '" data-sexe="' + sexe + '" aria-label="Place libre : choisir"></button>';
         return total || l.length ? '<div class="df-ronds" aria-label="' + (sexe === 'femme' ? 'Femmes' : 'Hommes') + '">' + html + '</div>' : '';
       };
@@ -325,13 +327,13 @@
   // en PDF » dans la fenêtre d'impression du téléphone ou de l'ordinateur
   P.actions['defile-imprimer'] = () => {
     const p = ecran.projet, places = parPassage();
-    let html = '<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Programme — ' + P.esc(p.titre) + '</title><style>' +
+    let html = '<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Programme · ' + P.esc(p.titre) + '</title><style>' +
       'body{font-family:Arial,sans-serif;margin:24px;color:#1b1817}h1{margin:0 0 4px}h2{margin:22px 0 8px;text-transform:capitalize;border-bottom:2px solid #B00E28}' +
       '.p{break-inside:avoid;margin:0 0 12px;padding:10px;border:1px solid #ccc;border-radius:8px}.p b{display:block;margin-bottom:6px}.n{display:inline-block;margin:2px 10px 2px 0}.doux{color:#666}</style></head><body>' +
       '<h1>' + P.esc(p.titre) + '</h1><p class="doux">' + P.esc(resumeProjet(p)) + '</p>';
     let jour = null;
     ecran.passages.forEach((x) => {
-      if (x.jour !== jour) { jour = x.jour; html += '<h2>' + P.esc(jourLong(jour)) + '</h2>'; }
+      if (x.jour !== jour) { jour = x.jour; html += '<h2>' + P.esc(jourEtLieu(jour)) + '</h2>'; }
       const noms = (places[x.id] || []).map((c) => ({ nom: (ecran.personnes[c] || {}).nom || '?', sexe: vivierDe(c).sexe })).sort((a, b) => a.sexe.localeCompare(b.sexe)).map((v) => '<span class="n">' + (v.sexe === 'homme' ? '♂ ' : '♀ ') + P.esc(v.nom) + '</span>').join('');
       html += '<div class="p"><b>' + P.esc([heure(x.debut), x.salle, x.theme].filter(Boolean).join(' · ')) + '</b>' + (noms || '<span class="doux">Personne pour le moment</span>') + '</div>';
     });

@@ -43,8 +43,11 @@ window.demarrerAgendaAdmin = function (racine) {
   }
   function lireSeances() {
     return Array.prototype.map.call($('agenda-seances').querySelectorAll('.agenda-seance'), function (l) {
-      return { jour: l.dataset.jour, debut: l.querySelector('[data-debut]').value, fin: l.querySelector('[data-fin]').value };
-    }).filter(function (x) { return x.debut || x.fin; });
+      var x = { jour: l.dataset.jour, debut: l.querySelector('[data-debut]').value, fin: l.querySelector('[data-fin]').value };
+      var lieu = l.querySelector('[data-lieu]').value.trim();
+      if (lieu) x.lieu = lieu;
+      return x;
+    }).filter(function (x) { return x.debut || x.fin || x.lieu; });
   }
   // Une ligne par jour de l'activité ; les heures déjà tapées sont gardées si les dates changent.
   function dessinerSeances(existantes) {
@@ -71,9 +74,14 @@ window.demarrerAgendaAdmin = function (racine) {
       debut.setAttribute('aria-label', 'Début le ' + dateAgenda(j));
       var fin = document.createElement('input'); fin.type = 'time'; fin.dataset.fin = '1';
       fin.setAttribute('aria-label', 'Fin le ' + dateAgenda(j));
-      if (connues[j]) { debut.value = connues[j].debut || ''; fin.value = connues[j].fin || ''; }
+      // le lieu de ce jour (26/10/2026 : un défilé sur deux jours peut changer d'endroit ; plusieurs
+      // lieux ou salles le même jour : séparés par une virgule)
+      var lieu = document.createElement('input'); lieu.type = 'text'; lieu.maxLength = 200; lieu.dataset.lieu = '1';
+      lieu.className = 'agenda-seance-lieu'; lieu.placeholder = 'Lieu de ce jour (plusieurs : séparés par une virgule)';
+      lieu.setAttribute('aria-label', 'Lieu le ' + dateAgenda(j));
+      if (connues[j]) { debut.value = connues[j].debut || ''; fin.value = connues[j].fin || ''; lieu.value = connues[j].lieu || ''; }
       var a = document.createElement('span'); a.textContent = 'à';
-      l.appendChild(nom); l.appendChild(debut); l.appendChild(a); l.appendChild(fin);
+      l.appendChild(nom); l.appendChild(debut); l.appendChild(a); l.appendChild(fin); l.appendChild(lieu);
       boite.appendChild(l);
     });
   }
@@ -162,7 +170,7 @@ window.demarrerAgendaAdmin = function (racine) {
     div.className = 'agenda-ligne' + (p.visible && !p.annule ? '' : ' cache') + (projetEnCours && projetEnCours.id === p.id ? ' en-modif' : '');
     var noms = sansDoublon(nomsDe(p.mannequin_ids, mannequins, 'full_name').concat(p.mannequins_libres || []));
     var parts = sansDoublon(nomsDe(p.partenaire_ids, partenaires, 'nom').concat(p.partenaires_libres || []));
-    var horaires = (p.seances || []).map(function (x) { return dateAgenda(x.jour) + ' ' + (x.debut || '?') + '–' + (x.fin || '?'); }).join(' ; ');
+    var horaires = (p.seances || []).map(function (x) { return dateAgenda(x.jour) + (x.debut || x.fin ? ' ' + (x.debut || '?') + ' à ' + (x.fin || '?') : '') + (x.lieu ? ', ' + x.lieu : ''); }).join(' · ');
     var intervenants = (p.intervenants || []).map(function (x) { return (x.role ? x.role + ' : ' : '') + x.nom; });
     var prive = [horaires ? '' : p.heure, p.adresse, horaires && !p.horaires_publics ? horaires : '',
       p.heure_convocation ? 'convocation à ' + p.heure_convocation.replace(':', 'h') : ''].filter(Boolean).join(' · ');
@@ -273,7 +281,7 @@ window.demarrerAgendaAdmin = function (racine) {
     $('agenda-annule').checked = !!p.annule;
     $('agenda-autres').value = (p.mannequins_libres || []).join('\n');
     $('agenda-autres-partenaires').value = (p.partenaires_libres || []).join('\n');
-    $('agenda-en-cours').textContent = '✏️ Vous modifiez : « ' + p.titre + ' » — ' + dateAgenda(p.date_debut, p.date_fin)
+    $('agenda-en-cours').textContent = '✏️ Vous modifiez : « ' + p.titre + ' » · ' + dateAgenda(p.date_debut, p.date_fin)
       + '. Vérifiez le titre et les dates avant d’enregistrer.';
     $('agenda-en-cours').hidden = false;
     marquerLigne(p.id);

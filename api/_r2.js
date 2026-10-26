@@ -47,7 +47,7 @@ async function repondreR2(res, action, chemin, typeFichier, taille, tailleMax) {
   if (!Number.isInteger(taille) || taille <= 0 || taille > tailleMax) {
     res.status(400).json({ error: Number.isInteger(taille) && taille > tailleMax
       ? 'Fichier trop lourd (' + (taille / 1048576).toFixed(1).replace('.', ',') + ' Mo, maximum ' + (tailleMax / 1048576) + ' Mo).'
-      : 'Taille du fichier manquante — rechargez la page puis réessayez.' });
+      : 'Taille du fichier manquante, rechargez la page puis réessayez.' });
     return;
   }
   const commande = new PutObjectCommand({ Bucket: bucket, Key: chemin, ContentType: typeFichier, ContentLength: taille });

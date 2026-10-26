@@ -35,7 +35,7 @@
   // « Noom Hôtel, Abidjan » : le lieu visible puis la ville.
   const endroit = p => [p.lieu, p.ville].filter(Boolean).join(', ');
   // « mer. 21 oct. · 10:00 – 12:00 » (une séance d'une activité sur plusieurs jours).
-  const texteSeance = x => dateAgenda(x.jour, null, enAnglais) + ' · ' + [x.debut, x.fin].filter(Boolean).join(' – ');
+  const texteSeance = x => [dateAgenda(x.jour, null, enAnglais), [x.debut, x.fin].filter(Boolean).join(enAnglais ? ' to ' : ' à '), x.lieu].filter(Boolean).join(' · ');
 
   // Grand bloc de date : jour en chiffres, mois abrégé.
   function blocDate(p) {
@@ -80,7 +80,7 @@
     corps.appendChild(el('h3', 'agenda-titre', p.titre));
     if (!compacte) {
       if (p.description) corps.appendChild(el('p', 'agenda-description', p.description));
-      const seances = Array.isArray(p.seances) ? p.seances.filter(x => x && (x.debut || x.fin)) : [];
+      const seances = Array.isArray(p.seances) ? p.seances.filter(x => x && (x.debut || x.fin || x.lieu)) : [];
       if (seances.length) corps.appendChild(groupe(T.horaires, seances.map(x => el('span', 'agenda-puce agenda-puce-simple', texteSeance(x)))));
       const intervenants = Array.isArray(p.intervenants) ? p.intervenants.filter(x => x && x.nom) : [];
       if (intervenants.length) corps.appendChild(groupe(T.intervenants, intervenants.map(x => el('span', 'agenda-puce agenda-puce-simple', (x.role ? x.role + ' : ' : '') + x.nom))));

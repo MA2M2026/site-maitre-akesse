@@ -19,7 +19,7 @@ const { debutR2, repondreR2, TYPES_IMAGES } = require('./_r2.js');
 // proteger_proprietaire_photo() qu'on remplace ici pour les photos R2.
 async function autoriser(jeton, modelId) {
   const utilisateur = await verifierUtilisateur(jeton);
-  if (!utilisateur) return { ok: false, code: 401, message: 'Session invalide ou expirée — reconnectez-vous.' };
+  if (!utilisateur) return { ok: false, code: 401, message: 'Session invalide ou expirée, reconnectez-vous.' };
   if (utilisateur.id === modelId) return { ok: true };
   if (await adminVerifie(jeton, utilisateur)) return { ok: true };
   return { ok: false, code: 403, message: "Vous n'avez pas le droit d'agir sur ces photos." };

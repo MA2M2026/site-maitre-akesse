@@ -172,7 +172,7 @@ window.demarrerConvocationsPanneau = function () {
     while (s.options.length > 1) s.remove(1);
     carnet.forEach(function (c) {
       var o = document.createElement('option');
-      o.value = c.id; o.textContent = [c.civilite, c.nom].filter(Boolean).join(' ') + (c.mannequin_id ? ' (agence)' : ' (extérieure)') + (c.telephone ? ' — ' + c.telephone : '');
+      o.value = c.id; o.textContent = [c.civilite, c.nom].filter(Boolean).join(' ') + (c.mannequin_id ? ' (agence)' : ' (extérieure)') + (c.telephone ? ' · ' + c.telephone : '');
       s.appendChild(o);
     });
   }
@@ -243,7 +243,7 @@ window.demarrerConvocationsPanneau = function () {
         var l = document.createElement('div');
         l.className = 'convoc-reponse';
         l.appendChild(nomCliquable(pers));
-        if (pers.repondu_le) { var quandRep = document.createElement('span'); quandRep.textContent = ' — ' + quand(pers.repondu_le); l.appendChild(quandRep); }
+        if (pers.repondu_le) { var quandRep = document.createElement('span'); quandRep.textContent = ' · ' + quand(pers.repondu_le); l.appendChild(quandRep); }
         l.appendChild(choixReponse(pers, personnes, boite, function () { window.dessinerReponsesConvocation(boite, projet, personnes, envois, toutOuvert, faitesIci); }));
         if (tournee && faites(projet, tournee, faitesIci)[pers.participant_id]) {
           var fait = document.createElement('small'); fait.textContent = tournee === 'relance' ? '✓ relancé(e)' : '✓ rappel envoyé'; l.appendChild(fait);
@@ -380,7 +380,7 @@ window.demarrerConvocationsPanneau = function () {
       l.className = 'convoc-envoi' + (e.statut === 'a_faire' ? ' a-faire' : '');
       var t = document.createElement('div');
       t.innerHTML = '<strong></strong> · ' + CANAUX[e.canal] + ' · ' + SORTES[e.sorte]
-        + '<br>' + STATUTS[e.statut] + ' — ' + (e.statut === 'envoye' && e.envoye_le ? 'le ' + echapperHtml(quand(e.envoye_le)) : 'prévu ' + echapperHtml(quand(e.prevu_le)))
+        + '<br>' + STATUTS[e.statut] + ' · ' + (e.statut === 'envoye' && e.envoye_le ? 'le ' + echapperHtml(quand(e.envoye_le)) : 'prévu ' + echapperHtml(quand(e.prevu_le)))
         + (e.erreur && e.statut !== 'envoye' ? '<br><small class="convoc-manque">' + echapperHtml(e.erreur) + '</small>' : '');
       t.querySelector('strong').appendChild(nomCliquable(pers));
       var actions = document.createElement('div');
@@ -544,7 +544,7 @@ window.demarrerConvocationsPanneau = function () {
     projet = p;
     personnes = []; envois = [];
     panneau.hidden = false;
-    $('convoc-titre').textContent = '📨 Convoquer — « ' + p.titre + ' »';
+    $('convoc-titre').textContent = '📨 Convoquer · « ' + p.titre + ' »';
     $('convoc-resume').textContent = [dateAgenda(p.date_debut, p.date_fin),
       p.heure_convocation ? 'convocation à ' + p.heure_convocation.replace(':', 'h') : 'heure de convocation non indiquée (à remplir plus haut sur cette page)',
       [p.lieu, p.ville].filter(Boolean).join(', ')].filter(Boolean).join(' · ');

@@ -132,7 +132,7 @@
         '<label class="fl" for="cp-compte">' + (recette ? 'Encaissé sur' : 'Payé depuis') + '<select id="cp-compte" name="compte_id" required>' + optionsComptes(actifs) + '</select></label>' +
         '<label class="fl large" for="cp-libelle">Libellé<input id="cp-libelle" name="libelle" required maxlength="200" placeholder="' + (recette ? 'Ex. : casting défilé Sococé' : 'Ex. : loyer du bureau d’octobre') + '"></label>' +
         '<label class="fl" for="cp-tiers">' + (recette ? 'Client' : 'Fournisseur ou bénéficiaire') + ' (facultatif)<input id="cp-tiers" name="tiers" maxlength="120"></label>' +
-        '<label class="fl" for="cp-justif">Justificatif (photo ou PDF, 10 Mo au plus)' + (recette ? '' : ' — recommandé') + '<input id="cp-justif" name="justificatif" type="file" accept="image/*,application/pdf"></label>' +
+        '<label class="fl" for="cp-justif">Justificatif (photo ou PDF, 10 Mo au plus)' + (recette ? '' : ', recommandé') + '<input id="cp-justif" name="justificatif" type="file" accept="image/*,application/pdf"></label>' +
         '<div class="large ligne"><button class="btn rouge" type="submit">Enregistrer</button></div></form>' +
         P.tableau(['Date', 'Libellé', 'Catégorie', 'Compte', '#Montant', ''], lignes(liste, noms));
     };

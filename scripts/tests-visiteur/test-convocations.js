@@ -121,7 +121,7 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     await p.selectOption('#convoc-sorte', 'convocation'); await p.waitForTimeout(200);
     // aperçu
     const apercu = await p.textContent('#convoc-apercu');
-    ok(/Bonjour Mademoiselle AWA KONÉ/.test(apercu) && /Vous êtes attendue à 15h00 précises/.test(apercu) && /15h30 — Essayage/.test(apercu) && /Escarpins noirs/.test(apercu) && /Boulevard Hassan II/.test(apercu) && /Début : 20h00/.test(apercu),
+    ok(/Bonjour Mademoiselle AWA KONÉ/.test(apercu) && /Vous êtes attendue à 15h00 précises/.test(apercu) && /15h30 · Essayage/.test(apercu) && /Escarpins noirs/.test(apercu) && /Boulevard Hassan II/.test(apercu) && /Début : 20h00/.test(apercu),
       n + 'aperçu du message : convocation, programme, à prévoir, adresse');
     await p.selectOption('#convoc-apercu-qui', { index: 2 });
     ok(/Bonjour Madame Ama Mère/.test(await p.textContent('#convoc-apercu')) && /convocation de Mademoiselle PETITE AMA/.test(await p.textContent('#convoc-apercu')), n + 'aperçu pour la mineure : adressé au parent');

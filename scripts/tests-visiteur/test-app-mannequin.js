@@ -32,7 +32,7 @@ function donnees() {
       casting_projets: [{ nom: 'CASTING CACAO', actif: true, date_casting: jour(20), lieu: 'Studio MA2M', ordre_affichage: 0 }],
       // boîte de réception (supabase-app-messages.sql) : un message non lu de l'agence, un déjà lu
       app_messages: [
-        { id: 'msg1', user_id: 'admin-1', sorte: 'casting', titre: '📣 Casting Kouroukan', texte: 'Information casting : Casting Kouroukan\n📅 Samedi\nVeuillez vous préparer.', image: '/scripts/tests-visiteur/medias/photo1.jpg', fiche: 'https://exemple.ci/fiche.pdf', lien: null, cree_le: new Date().toISOString(), lu_le: null },
+        { id: 'msg1', user_id: 'admin-1', sorte: 'casting', titre: '✨ Casting Kouroukan', texte: 'Information casting : Casting Kouroukan\n📅 Samedi\nVeuillez vous préparer.', image: '/scripts/tests-visiteur/medias/photo1.jpg', fiche: 'https://exemple.ci/fiche.pdf', lien: null, cree_le: new Date().toISOString(), lu_le: null },
         { id: 'msg2', user_id: 'admin-1', sorte: 'paiement', titre: '✅ Paiement confirmé : mensualité de septembre', texte: '10 000 FCFA reçus.', image: null, fiche: null, lien: '/app/#paiements', cree_le: '2026-10-01T10:00:00Z', lu_le: '2026-10-01T11:00:00Z' }]
     },
     rpc: {
@@ -119,7 +119,7 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
     // 3. Accueil
     const accueil = await p.textContent('#ap-ecran');
     ok(/Bonjour\s*Aya(?!A)/.test(accueil) && /ABIDJAN FASHION WEEK/.test(accueil) && /dans 4 jours/.test(accueil) && /À répondre/.test(accueil) && /Convocation à 15h00/.test(accueil), n + 'Accueil : « Bonjour Aya », prochain rendez-vous (dans 4 jours, convocation à 15h00, à répondre)');
-    ok(/Nouveau message de l’agence : 📣 Casting Kouroukan/.test(accueil) && (await p.getAttribute('.ap-nouveau-message', 'href')) === '#alertes', n + 'Accueil : « Nouveau message de l’agence » mène à l’onglet Messages');
+    ok(/Nouveau message de l’agence : ✨ Casting Kouroukan/.test(accueil) && (await p.getAttribute('.ap-nouveau-message', 'href')) === '#alertes', n + 'Accueil : « Nouveau message de l’agence » mène à l’onglet Messages');
     ok((await p.$$('.ap-nav a')).length === 5 && /Accueil.*Événements.*Profil.*Paiements.*Messages/s.test(await p.textContent('.ap-nav')) && /1/.test(await p.textContent('.ap-nav a[href="#evenements"]')), n + 'menu du bas : 5 onglets, « 1 » sur Événements (à répondre)');
     ok(/Ma carte.*Ma compcard.*Mon CV/s.test(await p.textContent('.ap-raccourcis')) && /CASTING CACAO/.test(accueil) && /Mensualité de .*10 000 F/.test(accueil), n + 'Accueil : raccourcis, casting ouvert, mensualité du mois à payer');
     const nav = await p.evaluate(() => { const r = document.querySelector('.ap-nav').getBoundingClientRect(); return Math.abs(r.bottom - innerHeight) < 2; });

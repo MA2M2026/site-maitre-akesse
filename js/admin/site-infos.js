@@ -12,7 +12,8 @@
   const P = window.Portail;
   if (!P || !P.espaces.site) return;
   const PAGE = 'b2-infos';
-  const SORTES = { casting: ['📣', 'Casting'], defile: ['👠', 'Défilé'], remerciement: ['🙏', 'Remerciement'], info: ['📢', 'Information'] };
+  // (émojis choisis pour leur chaleur, demande de la propriétaire du 26/10/2026)
+  const SORTES = { casting: ['✨', 'Casting'], defile: ['👠', 'Défilé'], remerciement: ['🤍', 'Remerciement'], info: ['💌', 'Information'] };
   const nonActive = (e) => /infos_agence|app_messages|42P01|PGRST20[25]/.test(String((e && (e.message || e.code)) || e));
   const PAS_ACTIVE = '<div class="carte vide">Les Informations agence ne sont pas encore activées : exécutez une fois le fichier supabase-app-messages.sql dans Supabase.</div>';
   const aujourdhui = () => new Date().toISOString().slice(0, 10);
@@ -20,22 +21,28 @@
   let personnes = null;  // P.personnesPossibles(true)
 
   // ---------- Le beau message (WhatsApp ; l'e-mail en est la version sans *gras*) ----------
-  function details(b) {
-    return [b.date ? '📅 ' + dateLongueFr(b.date) : '', b.heure ? '🕒 ' + b.heure : '', b.lieu ? '📍 ' + b.lieu : '',  // (js/messages-candidats.js)
-      b.client ? '🤝 Avec ' + b.client : ''].filter(Boolean).join('\n');
+  // Comme l'agence qui parle à ses mannequins : chaleureux, court, et toutes les dates et tous les
+  // lieux d'un projet en une phrase (« du mercredi 21 au jeudi 22 octobre 2026, au Parc des
+  // Expositions et à la Tribe » : periode et auxLieux, js/messages-convocations.js).
+  function quandEtOu(b) {
+    const p = { date_debut: b.date, date_fin: b.date_fin, lieu: b.lieu };
+    return [window.periode(p), b.heure ? 'à partir de ' + String(b.heure).trim() : '', window.auxLieux(p)].filter(Boolean).join(', ');
   }
   // corps du message (sans « Bonjour » ni signature), pour la mannequin
   function corps(b) {
-    const t = '*' + String(b.titre || '…').trim() + '*', d = details(b), plus = String(b.precisions || '').trim();
-    const fiche = b.fiche ? '\n\n📄 La fiche est jointe : ' + b.fiche : '';
+    const t = '*' + String(b.titre || '…').trim() + '*', q = quandEtOu(b), plus = String(b.precisions || '').trim();
+    const client = String(b.client || '').trim();
     const textes = {
-      casting: '📣 *Information casting* : ' + t + '\n\n' + (d ? d + '\n\n' : '') + 'Veuillez vous préparer à participer à ce casting : tenue soignée, ponctualité et sourire. ✨',
-      defile: '👠 *Information défilé* : ' + t + '\n\n' + (d ? d + '\n\n' : '') + 'Préparez-vous : l’agence vous donnera très vite tous les détails (programme, passages, convocation).',
-      remerciement: '🙏 *Merci !*\n\nMerci pour votre participation à ' + t + (b.date ? ' (' + dateLongueFr(b.date) + ')' : '') + (b.client ? ', avec ' + b.client : '') +
-        '. Votre professionnalisme et votre énergie font la fierté de l’agence. Bravo et à très bientôt pour de nouveaux projets ! 👏',
-      info: '📢 *Information de l’agence* : ' + t + (d ? '\n\n' + d : '')
+      casting: 'Nous avons une belle nouvelle à partager avec vous ✨\n\nL’agence organise le casting ' + t + (client ? ' pour ' + client : '') + (q ? ', ' + q : '') + '.\n\n' +
+        'Préparez-vous avec soin : une tenue simple et élégante, votre plus beau sourire et beaucoup de confiance. Nous croyons en vous 💫',
+      defile: 'Un nouveau défilé se prépare, et nous avons pensé à vous ✨\n\n' + t + (client ? ' avec ' + client : '') + (q ? ' aura lieu ' + q : ' se prépare') + '.\n\n' +
+        'Gardez ces dates libres et commencez à vous préparer. Le programme, vos passages et votre convocation suivront très vite 👠',
+      remerciement: 'Du fond du cœur, merci 🤍\n\nMerci pour votre participation à ' + t + (client ? ' avec ' + client : '') + (q ? ', ' + q : '') + '. ' +
+        'Votre professionnalisme, votre élégance et votre énergie ont fait la différence, et toute l’agence est fière de vous.\n\nCe n’est qu’un début. À très vite pour de nouvelles aventures ✨',
+      info: 'Une information de l’agence pour vous 💌\n\n' + t + (q ? ', ' + q : '') + '.'
     };
-    return textes[b.sorte] + (plus ? '\n\n' + plus : '') + fiche;
+    return textes[b.sorte] + (plus ? '\n\n' + plus : '') + (b.fiche ? '\n\n📎 La fiche est ici : ' + b.fiche : '') +
+      (b.sorte === 'info' ? '\n\nNous restons à votre écoute pour toute question 🤍' : '');
   }
   const messageMannequin = (b) => messageCandidat(corps(b));  // (js/messages-candidats.js)
   // (le cœur d'un message, même retouché : coeurMessage, js/messages-candidats.js)
@@ -75,7 +82,7 @@
   // ---------- Nouvelle information ----------
   async function formulaire() {
     if (!personnes) personnes = await P.personnesPossibles(true);
-    if (!brouillon) brouillon = { sorte: 'casting', projet: '', titre: '', date: '', heure: '', lieu: '', client: '', precisions: '', image: '', fiche: '', message: '', retouche: false, choisis: new Set() };
+    if (!brouillon) brouillon = { sorte: 'casting', projet: '', titre: '', date: '', date_fin: '', heure: '', lieu: '', client: '', precisions: '', image: '', fiche: '', message: '', retouche: false, choisis: new Set() };
     const b = brouillon;
     if (!b.retouche) b.message = messageMannequin(b);
     const projets = await P.bd(sb.from('agenda_projets').select('id, titre, type, date_debut').eq('annule', false).gte('date_debut', new Date(Date.now() - 120 * 86400000).toISOString().slice(0, 10)).order('date_debut', { ascending: false }).limit(60)).catch(() => []);
@@ -91,9 +98,10 @@
       '<fieldset class="large if-sortes"><legend>Quelle information ?</legend>' + Object.keys(SORTES).map((s) =>
         '<label class="if-sorte"><input type="radio" name="sorte" value="' + s + '" data-change="infos-champ"' + (b.sorte === s ? ' checked' : '') + '> ' + SORTES[s][0] + ' ' + SORTES[s][1] + '</label>').join('') + '</fieldset>' +
       '<label class="fl large" for="if-projet">Projet de l’agenda (facultatif : remplit tout)<select id="if-projet" name="projet" data-change="infos-projet"><option value="">— Aucun —</option>' +
-      projets.map((p) => '<option value="' + P.esc(p.id) + '"' + (b.projet === p.id ? ' selected' : '') + '>' + P.esc(P.date(p.date_debut) + ' — ' + p.titre) + '</option>').join('') + '</select></label>' +
-      champ('titre', 'Titre', 'text', ' maxlength="160" required placeholder="ex : Casting Kouroukan Mode"') + champ('date', 'Date', 'date') + champ('heure', 'Heure', 'text', ' maxlength="20" placeholder="ex : 15 h 00"') +
-      champ('lieu', 'Lieu', 'text', ' maxlength="200"') + champ('client', 'Client ou partenaire', 'text', ' maxlength="160"') +
+      projets.map((p) => '<option value="' + P.esc(p.id) + '"' + (b.projet === p.id ? ' selected' : '') + '>' + P.esc(P.date(p.date_debut) + ' · ' + p.titre) + '</option>').join('') + '</select></label>' +
+      champ('titre', 'Titre', 'text', ' maxlength="160" required placeholder="ex : Casting Kouroukan Mode"') + champ('date', 'Date', 'date') + champ('date_fin', 'Date de fin, si plusieurs jours', 'date') +
+      champ('heure', 'Heure', 'text', ' maxlength="20" placeholder="ex : 15 h 00"') +
+      champ('lieu', 'Lieu (plusieurs : séparés par une virgule)', 'text', ' maxlength="300"') + champ('client', 'Client ou partenaire', 'text', ' maxlength="160"') +
       '<label class="fl large" for="if-precisions">Précisions (facultatif)<textarea id="if-precisions" name="precisions" rows="3" maxlength="1200" data-change="infos-champ" data-direct>' + P.esc(b.precisions) + '</textarea></label>' +
       '<label class="fl" for="if-photo">Photo (affiche, visuel…)<input id="if-photo" type="file" accept="image/*" data-change="infos-fichier" data-quoi="image"></label>' +
       '<label class="fl" for="if-fiche">Fiche jointe (PDF ou image)<input id="if-fiche" type="file" accept="application/pdf,image/*" data-change="infos-fichier" data-quoi="fiche"></label>' +
@@ -129,7 +137,9 @@
     if (b.projet) {
       const p = (await P.bd(sb.from('agenda_projets').select('*').eq('id', b.projet)))[0];
       // (un casting ou un défilé donne son type, sauf pour un remerciement)
-      if (p) Object.assign(b, { titre: p.titre || '', date: p.date_debut || '', heure: p.heure_evenement ? String(p.heure_evenement).replace(':', ' h ') : '', lieu: [p.lieu, p.ville].filter(Boolean).join(', '), client: p.client || '',
+      // (tout le projet : ses dates, et les lieux de chacun de ses jours)
+      if (p) Object.assign(b, { titre: p.titre || '', date: p.date_debut || '', date_fin: p.date_fin || '', heure: p.heure_evenement ? String(p.heure_evenement).replace(':', ' h ') : '',
+        lieu: window.lieuxDuProjet(p).join(', '), client: p.client || '',
         sorte: b.sorte !== 'remerciement' && ['casting', 'defile'].includes(p.type) ? p.type : b.sorte });
       // remerciement : les mannequins convoquées à ce projet sont cochées
       if (b.sorte === 'remerciement') await cocherDuProjet();
@@ -176,7 +186,7 @@
     if (!message) { P.message('Le message est vide.'); return; }
     if (!confirm('Envoyer « ' + b.titre + ' » à ' + P.pluriel(b.choisis.size, 'mannequin', 'mannequins') + ' ?\n\nElles le reçoivent tout de suite dans l’application ; l’e-mail et WhatsApp se préparent ensuite.')) return;
     const destinataires = [...b.choisis];
-    const cree = await P.bd(sb.from('infos_agence').insert({ sorte: b.sorte, titre: String(b.titre).trim(), date_info: b.date || null, heure: b.heure || null, lieu: b.lieu || null, client: b.client || null,
+    const cree = await P.bd(sb.from('infos_agence').insert({ sorte: b.sorte, titre: String(b.titre).trim(), date_info: b.date || null, date_fin: b.date_fin || null, heure: b.heure || null, lieu: b.lieu || null, client: b.client || null,
       projet_id: b.projet || null, image: b.image || null, fiche: b.fiche || null, message, message_parent: messageParentDe(message), message_app: texteApplication(message), destinataires }).select('id'));
     const id = cree && cree[0] && cree[0].id;
     if (!id) { P.message('L’information n’a pas pu être enregistrée : reconnectez-vous puis réessayez.'); return; }

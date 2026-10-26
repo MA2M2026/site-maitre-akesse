@@ -46,7 +46,7 @@ for (let k = 0; k < 6; k++) erreurs.push({ id: 'm' + k, message: '[Réseau injoi
     const [dl] = await Promise.all([p.waitForEvent('download', { timeout: 5000 }), p.click('#erreurs-telecharger-btn')]);
     const texte = fs.readFileSync(await dl.path(), 'utf8'); if (process.env.GARDER) fs.writeFileSync(process.env.GARDER, texte);
     ok(/^journal-ma2m-\d{4}-\d\d-\d\d-.*\.md$/.test(dl.suggestedFilename()), n + 'fichier ' + dl.suggestedFilename());
-    ok(/^# Journal MA2M — 69 erreur\(s\)/.test(texte), n + 'en-tête : 69 erreurs');
+    ok(/^# Journal MA2M · 69 erreur\(s\)/.test(texte), n + 'en-tête : 69 erreurs');
     ok((texte.match(/^### #\d+$/gm) || []).length === 69 && texte.includes('### #69'), n + 'les 69 vraies erreurs sont dans le fichier, rien n’est coupé');
     const pos = ['## 🔴', '## 🟠'].map(t => texte.indexOf(t));
     ok(pos.every(x => x >= 0) && pos[0] < pos[1] && !texte.includes('## 🟢'), n + 'rangées en 2 groupes : 🔴 puis 🟠 (plus de 🟢)');
@@ -61,7 +61,7 @@ for (let k = 0; k < 6; k++) erreurs.push({ id: 'm' + k, message: '[Réseau injoi
     await p.click('#erreurs-resume [data-journal-gravite="corriger"]'); await p.waitForTimeout(300);
     const [dl2] = await Promise.all([p.waitForEvent('download', { timeout: 5000 }), p.click('#erreurs-telecharger-btn')]);
     const filtre = fs.readFileSync(await dl2.path(), 'utf8');
-    ok(/^# Journal MA2M — 34 erreur\(s\) \(🔴 À corriger\)/.test(filtre) && (filtre.match(/^### #\d+$/gm) || []).length === 34 && !filtre.includes('## 🟠') && !filtre.includes('## 🟢'), n + 'filtre « À corriger » : seules ses 34 erreurs dans le fichier');
+    ok(/^# Journal MA2M · 34 erreur\(s\) \(🔴 À corriger\)/.test(filtre) && (filtre.match(/^### #\d+$/gm) || []).length === 34 && !filtre.includes('## 🟠') && !filtre.includes('## 🟢'), n + 'filtre « À corriger » : seules ses 34 erreurs dans le fichier');
     ok(!journal.some(j => /journal_erreurs/.test(j[1] || '') && /delete/i.test(j[0])), n + 'rien n’est effacé du journal');
     ok(!errs.length, n + 'aucune erreur ' + errs.join(' | '));
     await ctx.close();

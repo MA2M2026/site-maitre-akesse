@@ -28,7 +28,7 @@
     var e = etat, pris = e.statut === 'pris', libres = restantes();
     $('pl-titre').textContent = e.titre;
     var qui = parent ? 'Bonjour ! Message pour le parent de ' + e.nom : 'Bonjour ' + [e.civilite, e.nom].filter(Boolean).join(' ');
-    $('pl-details').textContent = qui + ' — ' + dateFr(e.date_debut) + (e.heure_evenement ? ', ' + e.heure_evenement.replace(':', 'h') : '')
+    $('pl-details').textContent = qui + ' · ' + dateFr(e.date_debut) + (e.heure_evenement ? ', ' + e.heure_evenement.replace(':', 'h') : '')
       + ([e.lieu, e.ville].filter(Boolean).length ? ', ' + [e.lieu, e.ville].filter(Boolean).join(', ') : '') + '.';
     $('pl-prendre').hidden = pris || e.passe || !e.ouvert || !libres;
     $('pl-rendre').hidden = !pris || e.passe;

@@ -118,7 +118,7 @@ window.demarrerVideosSite = function () {
   // pourquoi une vidéo ne passe pas (format, taille, appareil).
   function signaler(quoi, detail) {
     if (!window.signalerErreur || !fichierChoisi) return;
-    window.signalerErreur('Vidéo du site (' + Z.nomZone + ') : ' + quoi, (detail || '') + ' — « ' + fichierChoisi.name + ' », ' + mo(fichierChoisi.size) + ', ' + (fichierChoisi.type || 'type inconnu') + (infosChoisies ? ', ' + infosChoisies.largeur + '×' + infosChoisies.hauteur + ', ' + Math.round(infosChoisies.duree) + ' s' + (infosChoisies.codec ? ', ' + infosChoisies.codec : '') : ''), navigator.userAgent);
+    window.signalerErreur('Vidéo du site (' + Z.nomZone + ') : ' + quoi, (detail || '') + ' · « ' + fichierChoisi.name + ' », ' + mo(fichierChoisi.size) + ', ' + (fichierChoisi.type || 'type inconnu') + (infosChoisies ? ', ' + infosChoisies.largeur + '×' + infosChoisies.hauteur + ', ' + Math.round(infosChoisies.duree) + ' s' + (infosChoisies.codec ? ', ' + infosChoisies.codec : '') : ''), navigator.userAgent);
   }
 
   // L'original peut-il être envoyé tel quel (s'il est déjà plus léger que la version
@@ -129,8 +129,8 @@ window.demarrerVideosSite = function () {
 
   function afficherInfos() {
     if (!fichierChoisi || !infosChoisies) return;
-    var inf = infosChoisies, txt = '« ' + fichierChoisi.name + ' » — ' + mo(fichierChoisi.size) + ', ' + Math.round(inf.duree) + ' s, ' + inf.largeur + ' × ' + inf.hauteur + '. ';
-    txt += 'Elle sera compressée automatiquement avant l’envoi' + (inf.duree > DUREE_MAX + 0.5 ? ' et limitée aux ' + (DUREE_MAX >= 120 ? (DUREE_MAX / 60) + ' premières minutes' : DUREE_MAX + ' premières secondes') : '') + ' (cela prend à peu près la durée de la vidéo — gardez cette page ouverte).';
+    var inf = infosChoisies, txt = '« ' + fichierChoisi.name + ' » · ' + mo(fichierChoisi.size) + ', ' + Math.round(inf.duree) + ' s, ' + inf.largeur + ' × ' + inf.hauteur + '. ';
+    txt += 'Elle sera compressée automatiquement avant l’envoi' + (inf.duree > DUREE_MAX + 0.5 ? ' et limitée aux ' + (DUREE_MAX >= 120 ? (DUREE_MAX / 60) + ' premières minutes' : DUREE_MAX + ' premières secondes') : '') + ' (cela prend à peu près la durée de la vidéo, gardez cette page ouverte).';
     if (Z.son && inf.duree > 120) txt += ' Pour une longue vidéo, utilisez de préférence un ordinateur.';
     $('infos').textContent = txt;
   }
@@ -329,7 +329,7 @@ window.demarrerVideosSite = function () {
         return;
       }
       message('Compression en cours… gardez cette page ouverte.');
-      var compressee = await compresser(fichierChoisi, function (p) { barre(p); message('Compression en cours… ' + Math.round(p * 100) + ' % — gardez cette page ouverte.'); });
+      var compressee = await compresser(fichierChoisi, function (p) { barre(p); message('Compression en cours… ' + Math.round(p * 100) + ' %, gardez cette page ouverte.'); });
       var originalOk = originalUtilisable(fichierChoisi, infosChoisies);
       if (!compressee) {
         if (!originalOk || fichierChoisi.size > (Z.son ? LIMITE_FINALE_ZONE : LIMITE_SANS_COMPRESSION)) { signaler('aucune compression possible', ''); throw new Error('La compression n’est pas possible sur ce navigateur. Essayez avec Chrome sur un ordinateur.'); }
@@ -343,7 +343,7 @@ window.demarrerVideosSite = function () {
       await envoyerFichier(envoi);
       if (envoi.sansSon) message(Z.succes + ' Remarque : ce navigateur n’a pas pu garder le son de cette vidéo. Pour l’avoir avec le son, renvoyez-la depuis Chrome sur un ordinateur.');
     } catch (e) {
-      message(e.message || 'L’envoi a échoué — réessayez.', true);
+      message(e.message || 'L’envoi a échoué, réessayez.', true);
       bouton.disabled = false;
     } finally {
       barre(null); $('animation-btn').disabled = false;
@@ -355,7 +355,7 @@ window.demarrerVideosSite = function () {
       var ext = envoi.type === 'video/webm' ? 'webm' : 'mp4';
       var chemin = 'site/' + Z.categorie + '/' + Date.now() + '.' + ext;
       await envoyerImageSite(Z.categorie, chemin, envoi, function (p) {
-        barre(p); message('Envoi de la vidéo (' + mo(envoi.size) + ')… ' + Math.round(p * 100) + ' % — gardez cette page ouverte.');
+        barre(p); message('Envoi de la vidéo (' + mo(envoi.size) + ')… ' + Math.round(p * 100) + ' %, gardez cette page ouverte.');
       });
       var ancien = reglage && reglage.type === 'video' ? reglage.chemin : null;
       // Format de l'image gardé avec le réglage : le site prépare la bonne forme (verticale ou

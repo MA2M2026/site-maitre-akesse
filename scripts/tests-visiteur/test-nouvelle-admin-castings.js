@@ -56,7 +56,7 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
       liens: [...document.querySelectorAll('dl.champs a')].map((a) => a.textContent + ' ' + a.href),
       message: (document.querySelector('.message-dossier') || {}).textContent
     }));
-    ok(/PETITE AMA Mineure — 13 ans/.test(fiche.titre) && /Postule pour : CASTING CACAO/.test(fiche.titre), n + 'fiche : nom, âge de la mineure, casting visé');
+    ok(/PETITE AMA Mineure · 13 ans/.test(fiche.titre) && /Postule pour : CASTING CACAO/.test(fiche.titre), n + 'fiche : nom, âge de la mineure, casting visé');
     ok(fiche.photos === 2, n + 'fiche : les 2 photos de la candidate');
     ok(/mineur : écrire au parent/.test(fiche.champs) && fiche.liens.some((l) => /0707070707 ↗ WhatsApp https:\/\/wa\.me\/2250707070707/.test(l)) && fiche.liens.some((l) => /Voir la vidéo/.test(l)) && /rêve de défiler/.test(fiche.message),
       n + 'fiche : WhatsApp sur le numéro du parent, vidéo, message de la candidate');
@@ -104,7 +104,7 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     // annoncer la sélection du client et convoquer (24/10/2026) : projet créé avec ses mannequins
     await p.click('[data-action="dossier-recruteur-convoquer"]'); await p.waitForSelector('.voile #sel-titre');
     const proposes = await p.evaluate(() => ['sel-titre', 'sel-type', 'sel-date', 'sel-client'].map((id) => document.getElementById(id).value).join('|'));
-    ok(proposes === 'Défilé — Maison Ivoire|defile|2026-12-05|Maison Ivoire', n + 'recruteur : « Annoncer la sélection et convoquer » propose le projet du client (' + proposes + ')');
+    ok(proposes === 'Défilé · Maison Ivoire|defile|2026-12-05|Maison Ivoire', n + 'recruteur : « Annoncer la sélection et convoquer » propose le projet du client (' + proposes + ')');
     await p.click('form[data-form="selection-convoquer"] [type=submit]'); await p.waitForTimeout(1500);
     const projetClient = ecrits(journal, 'POST', 'agenda_projets').map((j) => JSON.parse(j[3] || 'null')).flat().pop() || {};
     ok(projetClient.client === 'Maison Ivoire' && projetClient.citer_client === true && projetClient.visible === false && JSON.stringify(projetClient.mannequin_ids) === '["m0","m1"]' && /#\/site\/b2-convocations$/.test(p.url()),

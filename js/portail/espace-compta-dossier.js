@@ -89,7 +89,7 @@
   async function pdf(x) {
     const m = await P.comptaPdf.mise(), F = P.fcfa;
     P.comptaPdf.entete(m, x.r, x.r.mode_legal);
-    m.ecrire('Dossier du mois pour le comptable — ' + P.mois(x.m), { taille: 16, gras: true, couleur: m.rouge });
+    m.ecrire('Dossier du mois pour le comptable · ' + P.mois(x.m), { taille: 16, gras: true, couleur: m.rouge });
     m.ecrire('Préparé le ' + P.dateHeure(new Date().toISOString()) + ' · ' + (x.r.mode_legal ? 'mode légal' : 'mode non fiscal (agence pas encore immatriculée)'), { taille: 9, couleur: m.gris });
     m.titre('1. Résultat du mois');
     m.tableau([{ titre: 'Rubrique', part: 3 }, { titre: 'Montant', part: 1.4, droite: true }], [['Recettes', F(x.recettes)], ['Dépenses', F(x.depenses)],

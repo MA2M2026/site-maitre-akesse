@@ -149,7 +149,7 @@ document.getElementById('ca-etudes-cat').addEventListener('change', majEtudes);
 function niveauEtudesChoisi() {
   const cat = document.getElementById('ca-etudes-cat').value;
   const classe = document.getElementById('ca-etudes-classe').value;
-  return cat ? cat + (classe ? ' — ' + classe : '') : null;
+  return cat ? cat + (classe ? ' · ' + classe : '') : null;
 }
 
 // --- Vidéo de présentation : obligatoire, 1 minute maximum. Une vidéo lourde
@@ -279,7 +279,7 @@ function rafraichirApercuPhotos() {
   const pl = n > 1 ? 's' : '';
   compteur.textContent = n >= min
     ? T(`${n} photo${pl} sélectionnée${pl}.`, `${n} photo${pl} selected.`)
-    : T(`${n} photo${pl} sélectionnée${pl} — ${min} minimum requises.`, `${n} photo${pl} selected — ${min} minimum required.`);
+    : T(`${n} photo${pl} sélectionnée${pl} · ${min} minimum requises.`, `${n} photo${pl} selected · ${min} minimum required.`);
   compteur.style.color = n >= min ? 'var(--gris)' : 'var(--rouge)';
 
   apercu.innerHTML = photosSelectionnees.map((f, i) => `
@@ -463,7 +463,7 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
     return;
   }
   if (videoEnPreparation) {
-    afficherMsg(msg, T('Votre vidéo est en cours de préparation — l\'envoi démarre dès qu\'elle est prête…', 'Your video is being prepared — sending will start as soon as it is ready…'), 'ok');
+    afficherMsg(msg, T('Votre vidéo est en cours de préparation, l\'envoi démarre dès qu\'elle est prête…', 'Your video is being prepared, sending will start as soon as it is ready…'), 'ok');
     document.getElementById('btn-envoyer').disabled = true;
     await videoEnPreparation;
     document.getElementById('btn-envoyer').disabled = false;
@@ -611,13 +611,13 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
     name: candidature.full_name,
     telephone: candidature.phone,
     email: candidature.email,
-    message: `Nouvelle candidature casting${EN ? ' (site en anglais)' : ''}.\nPostule pour : ${PARCOURS === 'projet' ? 'Projet/casting : ' + projetNom : "Intégrer l'agence" + (candidature.experience_mannequin === 'non' ? ' — Débutant(e)' : ' — Déjà mannequin')}\nVille : ${candidature.city || '-'}${candidature.quartier ? ' — ' + candidature.quartier : ''}\nNiveau d'études : ${candidature.niveau_etudes || candidature.situation_scolaire || '-'}\nTaille de vêtements : ${candidature.clothing_size || '-'}\nVidéo : ${lienVideo || 'non reçue'}\nTaille : ${candidature.height_cm || '-'} cm\nMessage : ${candidature.message || '-'}${mineur ? `\n⚠️ MINEUR — Parent/tuteur : ${candidature.parent_nom || '-'} — ${candidature.parent_telephone || '-'}` : ''}`
+    message: `Nouvelle candidature casting${EN ? ' (site en anglais)' : ''}.\nPostule pour : ${PARCOURS === 'projet' ? 'Projet/casting : ' + projetNom : "Intégrer l'agence" + (candidature.experience_mannequin === 'non' ? ' · Débutant(e)' : ' · Déjà mannequin')}\nVille : ${candidature.city || '-'}${candidature.quartier ? ' · ' + candidature.quartier : ''}\nNiveau d'études : ${candidature.niveau_etudes || candidature.situation_scolaire || '-'}\nTaille de vêtements : ${candidature.clothing_size || '-'}\nVidéo : ${lienVideo || 'non reçue'}\nTaille : ${candidature.height_cm || '-'} cm\nMessage : ${candidature.message || '-'}${mineur ? `\n⚠️ MINEUR. Parent ou tuteur : ${candidature.parent_nom || '-'} — ${candidature.parent_telephone || '-'}` : ''}`
   });
 
   if (window.jouerSon) window.jouerSon('envoi');
   const soucis = [];
   if (nbPhotosEchouees) soucis.push(T(`${nbPhotosEchouees} photo${nbPhotosEchouees > 1 ? 's n\'ont' : ' n\'a'} pas pu être envoyée${nbPhotosEchouees > 1 ? 's' : ''}`, `${nbPhotosEchouees} photo${nbPhotosEchouees > 1 ? 's' : ''} could not be sent`));
-  if (!lienVideo) soucis.push(T('votre vidéo n\'a pas pu être envoyée — envoyez-la sur WhatsApp au +225 05 45 65 66 87 en indiquant votre nom', 'your video could not be sent — please send it on WhatsApp to +225 05 45 65 66 87 with your name'));
+  if (!lienVideo) soucis.push(T('votre vidéo n\'a pas pu être envoyée, envoyez-la sur WhatsApp au +225 05 45 65 66 87 en indiquant votre nom', 'your video could not be sent, please send it on WhatsApp to +225 05 45 65 66 87 with your name'));
   afficherMsg(msg, soucis.length
     ? T(`Candidature envoyée, mais ${soucis.join(' ; ')} (connexion instable ?). Le reste du dossier est bien enregistré.`, `Application sent, but ${soucis.join('; ')} (unstable connection?). The rest of your application has been saved.`)
     : T('Merci ! Votre candidature a bien été envoyée. Notre équipe vous recontactera si votre profil est retenu.', 'Thank you! Your application has been sent. Our team will contact you if your profile is selected.'), 'ok');

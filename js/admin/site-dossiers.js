@@ -245,7 +245,7 @@
     const d = fiche.d;
     const choisis = await P.bd(sb.from('recruiter_request_models').select('model_id').eq('request_id', d.id));
     const ids = [...new Set(choisis.map((m) => m.model_id).filter(Boolean))];
-    P.convoquerSelection(ids, { titre: [d.project_type, d.company].filter(Boolean).join(' — ') || 'Sélection client', type: typeDuProjet(d.project_type),
+    P.convoquerSelection(ids, { titre: [d.project_type, d.company].filter(Boolean).join(' · ') || 'Sélection client', type: typeDuProjet(d.project_type),
       date: d.event_date || '', ville: d.city || '', client: d.company || d.contact_name || '' });
   };
   async function blocCode() {
@@ -257,7 +257,7 @@
     if (utilise && !libre) corps = '<p>Code ' + P.esc(utilise.code) + ' utilisé le ' + P.date(utilise.utilise_le || new Date().toISOString()) + ' : l’inscription est faite.</p>';
     else if (libre) {
       const wa = lienWhatsAppCode(d, libre.code);  // js/messages-candidats.js
-      corps = '<p class="code-valeur"><strong id="dos-code">' + P.esc(libre.code) + '</strong> — valable une seule fois</p><div class="ligne">' +
+      corps = '<p class="code-valeur"><strong id="dos-code">' + P.esc(libre.code) + '</strong>, valable une seule fois</p><div class="ligne">' +
         '<button type="button" class="btn" data-action="dossier-code-copier">Copier</button>' +
         (wa ? '<a class="btn rouge" href="' + P.esc(wa) + '" target="_blank" rel="noopener">💬 Envoyer par WhatsApp</a>' : '') + '</div>';
     } else corps = '<p class="doux">Pas encore de code. Créez-le seulement quand la personne montre son intérêt pour s’inscrire.</p>' +
@@ -273,7 +273,7 @@
     const age = source === 'casting' ? ageDe(d) : null, mineur = age !== null && age < 18;
     const type = source === 'casting' ? typeDe(d) : null;
     return '<a class="retour-liste" href="#/site/' + conf.page + '">← ' + P.esc(conf.titre) + '</a>' +
-      '<header class="fiche-tete"><div><h1>' + (conf.photos ? visageDossier(fiche.photos[0] && fiche.photos[0].affiche, nomDe(source, d), 'rond-vis titre-visage') : '') + P.esc(nomDe(source, d)) + (mineur ? ' ' + P.pastille((d.genre === 'femme' ? 'Mineure' : 'Mineur') + ' — ' + age + ' ans', 'info') : '') + '</h1>' +
+      '<header class="fiche-tete"><div><h1>' + (conf.photos ? visageDossier(fiche.photos[0] && fiche.photos[0].affiche, nomDe(source, d), 'rond-vis titre-visage') : '') + P.esc(nomDe(source, d)) + (mineur ? ' ' + P.pastille((d.genre === 'femme' ? 'Mineure' : 'Mineur') + ' · ' + age + ' ans', 'info') : '') + '</h1>' +
       '<p class="doux">' + P.esc(conf.reçue + dateFr(d.created_at) + (type ? ' · Postule pour : ' + type : '')) + '</p></div>' +
       P.pastille(conf.libelles[d[conf.champStatut]] || d[conf.champStatut] || '', TONS[d[conf.champStatut]]) + '</header>' +
       blocPhotos(source) +

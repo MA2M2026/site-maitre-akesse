@@ -25,6 +25,9 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     p.on('dialog', (dl) => dl.accept());
     const d = donnees('principal');
     d.tables.infos_agence = [];
+    // le projet dure deux jours, dans deux lieux différents (agenda, « Horaires et lieux, jour par jour »)
+    const p1 = d.tables.agenda_projets[0], lendemain = new Date(Date.parse(p1.date_debut + 'T12:00:00Z') + 86400000).toISOString().slice(0, 10);
+    Object.assign(p1, { date_fin: lendemain, seances: [{ jour: p1.date_debut, debut: '17:00', lieu: 'Parc des Expositions' }, { jour: lendemain, debut: '18:00', lieu: 'La Tribe' }] });
     d.rpc.app_messages_envoyer = (x) => (x.p_cles || []).filter((c) => /^m:m[0-2]$/.test(c)).length;  // (m0 à m2 ont l'application)
     d.rpc.places_contacts_registre = (x) => (x.p_ids || []).map((id) => ({ mannequin_id: id, full_name: 'REGISTRE ' + id, genre: 'femme', phone: '0700000099', contact_email: null, date_naissance: '2012-05-05', parent_nom: 'Madame Mère', parent_telephone: '0505050599', parent_email: 'mere@test.ci' }));
     await brancher(p, d, journal); await photosLocales(p);
@@ -38,16 +41,18 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     await p.click('a[href="#/site/b2-infos/nouvelle"]'); await p.waitForSelector('#if-message', { timeout: 8000 });
     await p.fill('#if-titre', 'Casting Kouroukan Mode'); await p.fill('#if-date', '2026-11-14'); await p.fill('#if-lieu', 'Riviera Faya'); await p.fill('#if-client', 'Kouroukan');
     let m = await p.inputValue('#if-message');
-    ok(/Information casting\* : \*Casting Kouroukan Mode\*/.test(m) && /Samedi 14 novembre 2026/.test(m) && /Riviera Faya/.test(m) && /Avec Kouroukan/.test(m) && /préparer à participer à ce casting/.test(m) && /^✨ \*MAÎTRE AKESSE/.test(m),
-      n + 'casting : le beau message s’écrit tout seul (titre, date, lieu, client, « préparez-vous »)');
+    ok(/L’agence organise le casting \*Casting Kouroukan Mode\* pour Kouroukan, le samedi 14 novembre 2026, à Riviera Faya\./.test(m) && /Préparez-vous avec soin/.test(m) && /^✨ \*MAÎTRE AKESSE/.test(m) && !/—/.test(m),
+      n + 'casting : le message chaleureux s’écrit tout seul (titre, client, date, lieu, « préparez-vous »), sans tiret long');
     await p.check('input[name="sorte"][value="remerciement"]'); await p.waitForTimeout(200);
     m = await p.inputValue('#if-message');
     ok(/Merci pour votre participation à \*Casting Kouroukan Mode\*/.test(m) && !/Information casting/.test(m), n + 'remerciement : le message change avec le type');
     // projet de l'agenda : tout se remplit, et les mannequins convoquées (pas les absentes) sont cochées
     await p.selectOption('#if-projet', 'p1'); await p.waitForFunction(() => document.getElementById('if-titre') && document.getElementById('if-titre').value === 'ABIDJAN BORDER FORUM', null, { timeout: 8000 });
     const coches = await p.$$eval('.df-choix-carte input:checked', (l) => l.map((x) => x.value));
-    ok((await p.inputValue('#if-lieu')) === 'Parc des Expositions, Abidjan' && coches.sort().join() === 'm:m0,m:m1,m:m2,m:m3' && /4 mannequins choisies/.test(await p.textContent('#if-compte')),
-      n + 'projet de l’agenda : titre et lieu remplis, les 4 mannequins convoquées cochées');
+    ok((await p.inputValue('#if-lieu')) === 'Parc des Expositions, La Tribe' && (await p.inputValue('#if-date_fin')) === lendemain && coches.sort().join() === 'm:m0,m:m1,m:m2,m:m3' && /4 mannequins choisies/.test(await p.textContent('#if-compte')),
+      n + 'projet de l’agenda sur deux jours : toutes les dates et tous les lieux, les 4 mannequins convoquées cochées');
+    ok(/Merci pour votre participation à \*ABIDJAN BORDER FORUM\*, du \S+ \d+ (\S+ )?au \S+ \d+ \S+ \d{4}, au Parc des Expositions et à la Tribe\./.test(await p.inputValue('#if-message')),
+      n + 'remerciement : « du … au …, au Parc des Expositions et à la Tribe » en une phrase');
     // retouche à la main : gardée même si on change un champ
     await p.fill('#if-message', (await p.inputValue('#if-message')) + '\nÀ très vite !'); await p.fill('#if-client', 'Border Forum'); await p.waitForTimeout(200);
     ok(/À très vite !/.test(await p.inputValue('#if-message')), n + 'message retouché à la main : gardé');
@@ -62,7 +67,7 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     await p.click('form[data-form="infos-envoyer"] [type=submit]'); await p.waitForSelector('[data-action="infos-emails"]', { timeout: 8000 });
     const envoi = journal.find((j) => j[0] === 'rpc' && j[1] === 'app_messages_envoyer');
     const x = envoi ? JSON.parse(envoi[2]) : {};
-    ok(x.p_cles && x.p_cles.length === 5 && x.p_sorte === 'remerciement' && x.p_titre === '🙏 ABIDJAN BORDER FORUM' && /Merci pour votre participation à ABIDJAN BORDER FORUM/.test(x.p_texte) && !/MAÎTRE AKESSE|Bonjour|\*/.test(x.p_texte) && /^https?:/.test(x.p_image || ''),
+    ok(x.p_cles && x.p_cles.length === 5 && x.p_sorte === 'remerciement' && x.p_titre === '🤍 ABIDJAN BORDER FORUM' && /Merci pour votre participation à ABIDJAN BORDER FORUM/.test(x.p_texte) && !/MAÎTRE AKESSE|Bonjour|\*/.test(x.p_texte) && /^https?:/.test(x.p_image || ''),
       n + 'application : le message (sans en-tête ni *gras*) et la photo pour les 5 mannequins choisies');
     const info = d.tables.infos_agence[0] || {};
     ok(info.dans_app === 3 && /Bonjour \{parent\}/.test(info.message_parent || '') && /votre enfant \*\{prénom\}\*/.test(info.message_parent || '') && /À très vite !/.test(info.message_parent || ''),

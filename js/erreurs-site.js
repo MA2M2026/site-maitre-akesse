@@ -184,7 +184,7 @@ function ficheTechniqueErreur(g, sansEntete) {
     g.revenue ? 'À vérifier : ressemble à une erreur corrigée le ' + dateCourte(g.revenue.corrige_le) + ' (' + g.revenue.note + ')' : '',
     g.nombreux ? 'Touche ' + g.visiteurs + ' visiteurs différents : peut-être pas leur connexion' : '',
     'Famille / gravité : ' + FAMILLES_ERREURS[a.famille] + ' / ' + GRAVITES_ERREURS[a.gravite].libelle,
-    'Page : ' + nomPageLisible(g.page) + (g.nomMannequin ? ' — ' + g.nomMannequin : '') + ' (' + Array.from(g.pages).slice(0, 3).join(' , ') + ')',
+    'Page : ' + nomPageLisible(g.page) + (g.nomMannequin ? ' · ' + g.nomMannequin : '') + ' (' + Array.from(g.pages).slice(0, 3).join(' , ') + ')',
     'Nombre : ' + g.occurrences + ' fois, du ' + dateCourte(g.premiere) + ' au ' + dateCourte(g.created_at),
     'Contexte : ' + appareilAffiche(g),
     g.lu.clic ? 'Dernier clic : ' + g.lu.clic : '',
@@ -202,7 +202,7 @@ async function copierTexte(texte, bouton) {
       document.body.appendChild(zone); zone.select(); ok = document.execCommand('copy'); zone.remove();
     } catch (x) {}
   }
-  if (bouton) messageTemporaire(bouton, ok ? '✓ Copié — collez-le dans la conversation' : 'Copie impossible', 2500);
+  if (bouton) messageTemporaire(bouton, ok ? '✓ Copié, collez-le dans la conversation' : 'Copie impossible', 2500);
 }
 // Texte provisoire sur un bouton, puis retour à son libellé. Le libellé d'origine est gardé
 // sur le bouton : deux appuis rapides ne laissent pas le message provisoire pour de bon.
@@ -265,7 +265,7 @@ function afficherErreurs() {
       ${g.nombreux ? `<p class="journal-revenue">⚠️ Touche ${g.visiteurs} visiteurs différents cette semaine : ce n’est peut-être pas leur connexion.</p>` : ''}
       <div class="journal-titre">${echapperHtml(type)}</div>
       <dl class="journal-infos">
-        <dt>Où</dt><dd>${echapperHtml(nomPageLisible(g.page))}${g.nomMannequin ? ' — ' + echapperHtml(g.nomMannequin) : ''}${autresPages}<br><small>${echapperHtml(titre.slice(0, 200))}</small></dd>
+        <dt>Où</dt><dd>${echapperHtml(nomPageLisible(g.page))}${g.nomMannequin ? ' · ' + echapperHtml(g.nomMannequin) : ''}${autresPages}<br><small>${echapperHtml(titre.slice(0, 200))}</small></dd>
         <dt>Appareil</dt><dd>${echapperHtml(contexte || '?')}</dd>
         ${g.lu.clic ? `<dt>Dernier clic</dt><dd>${echapperHtml(g.lu.clic)}</dd>` : ''}
         <dt>Quand</dt><dd>dernière fois le ${dateCourte(g.created_at)}${g.occurrences > 1 ? ` · première le ${dateCourte(g.premiere)}` : ''}</dd>
@@ -275,7 +275,7 @@ function afficherErreurs() {
       ${g.lu.detail ? `<details class="journal-detail"><summary>Détail technique</summary><pre>${echapperHtml(g.lu.detail.slice(0, 1200))}</pre></details>` : ''}
       <div class="journal-boutons">
         <button type="button" class="btn journal-btn" data-journal-copier="${i}">📋 Copier pour Claude</button>
-        <button type="button" class="btn journal-btn" data-journal-effacer="${i}">✓ Réglé — effacer</button>
+        <button type="button" class="btn journal-btn" data-journal-effacer="${i}">✓ Réglé, effacer</button>
       </div>
     </div>`;
   }).join('') || '<div class="dossiers-vide">✅ Aucune erreur dans cette sélection.</div>';
@@ -392,14 +392,14 @@ function journalPourClaude() {
   const parties = Object.keys(GRAVITES_ERREURS).map(k => {
     const groupe = visibles.filter(g => g.analyse.gravite === k);
     if (!groupe.length) return '';
-    return `## ${GRAVITES_ERREURS[k].libelle} — ${groupe.length}\n\n` + groupe.map(g => {
+    return `## ${GRAVITES_ERREURS[k].libelle} · ${groupe.length}\n\n` + groupe.map(g => {
       const fiche = ficheTechniqueErreur(g, true);
       // barrière plus longue que tout « ``` » présent dans l'erreur : son texte reste intact
       const barriere = '`'.repeat(Math.max(3, ...(fiche.match(/`+/g) || []).map(x => x.length + 1)));
       return `### #${++n}\n\n${barriere}\n${fiche}\n${barriere}`;
     }).join('\n\n');
   }).filter(Boolean);
-  return { nb: visibles.length, texte: `# Journal MA2M — ${visibles.length} erreur(s) (${titre}${filtreFamilleErreurs === 'toutes' ? '' : ', ' + FAMILLES_ERREURS[filtreFamilleErreurs]}) — ${new Date().toLocaleString('fr-FR')}\n\n`
+  return { nb: visibles.length, texte: `# Journal MA2M · ${visibles.length} erreur(s) (${titre}${filtreFamilleErreurs === 'toutes' ? '' : ', ' + FAMILLES_ERREURS[filtreFamilleErreurs]}) · ${new Date().toLocaleString('fr-FR')}\n\n`
     + parties.join('\n\n') + '\n' };
 }
 function copierToutesLesErreurs(e) {

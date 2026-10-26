@@ -125,7 +125,7 @@ function viewAuthGate(){
       '<div id="au-in-msg" class="err-msg p20-14"></div>' +
     '</div>' +
     '<div id="auth-panneau-mdp-oublie" class="p20-9">' +
-      '<h2>Mot de passe oublié</h2><p class="sub">Indiquez votre e-mail — si un compte y est associé, un lien de réinitialisation vous sera envoyé.</p>' +
+      '<h2>Mot de passe oublié</h2><p class="sub">Indiquez votre e-mail, si un compte y est associé, un lien de réinitialisation vous sera envoyé.</p>' +
       field('E-mail','au-mo-email','',{type:'email'}) +
       '<div class="actions-row end"><button class="btn primary" id="au-mo-envoyer">Envoyer le lien</button></div>' +
       '<div id="au-mo-msg" class="err-msg p20-14"></div>' +
@@ -189,7 +189,7 @@ function bindAuthGate(){
       msg.textContent = '';
       await demarrerApresConnexion();
     } catch (e) {
-      msg.textContent = 'Erreur de connexion — réessayez.';
+      msg.textContent = 'Erreur de connexion, réessayez.';
     }
   });
 
@@ -213,11 +213,11 @@ function bindAuthGate(){
         else if (r.error === 'champs') msg.textContent = 'Merci de vérifier votre nom et votre adresse e-mail.';
         else if (r.error === 'mot_de_passe') msg.textContent = 'Ce mot de passe n’est pas accepté : choisissez-en un d’au moins 8 caractères, plus difficile à deviner.';
         else if (rep.status === 429 || rep.status === 401) msg.textContent = messageRefusCode(rep.status, r);
-        else msg.textContent = 'La création du compte a échoué — réessayez dans quelques instants.';
+        else msg.textContent = 'La création du compte a échoué, réessayez dans quelques instants.';
         return;
       }
     } catch (e) {
-      msg.textContent = 'Erreur de connexion — réessayez.';
+      msg.textContent = 'Erreur de connexion, réessayez.';
       return;
     }
 
@@ -537,7 +537,7 @@ const Store = {
       regime_allergies: fe.regime||null, tiktok: fe.tiktok||null, facebook: fe.facebook||null,
       droit_image: fe.droitImage, mis_a_jour: new Date().toISOString()
     }, { onConflict: 'model_id' });
-    if (error) { console.error(error); toast('Informations « événements » non enregistrées — réessayez', true); return false; }
+    if (error) { console.error(error); toast('Informations « événements » non enregistrées, réessayez', true); return false; }
     return true;
   },
 
@@ -674,7 +674,7 @@ const Store = {
     // L'ancienne photo de la case la quitte (js/app.js — sinon deux photos sur la même
     // case et la compcard téléchargée gardait l'ancienne, signalé le 06/10/2026).
     const error = await affecterCaseCompcard(currentUser.id, photoId, ordre);
-    if (error) { console.error(error); toast('Échec de la sélection compcard — réessayez', true); return false; }
+    if (error) { console.error(error); toast('Échec de la sélection compcard, réessayez', true); return false; }
     return true;
   },
 };
@@ -751,7 +751,7 @@ function viewWizard(){
   const pts = pointsARemplir();
   return header() +
   '<div class="greet"><h1>Bonjour ' + echapperHtml((state.identite.nomComplet||'').split(' ')[0]||'') + '</h1>' +
-  '<p>Complétez votre profil professionnel pour permettre à l’agence de créer votre dossier mannequin. Chaque étape s’enregistre au fur et à mesure — vous pouvez y revenir à tout moment avant l’envoi final.</p>' +
+  '<p>Complétez votre profil professionnel pour permettre à l’agence de créer votre dossier mannequin. Chaque étape s’enregistre au fur et à mesure, vous pouvez y revenir à tout moment avant l’envoi final.</p>' +
   '<div class="progress-row"><div class="progress-track"><div class="progress-fill" data-largeur="'+clamped+'"></div></div>' +
   '<div class="progress-pct">'+clamped+'%</div></div></div>' +
   '<div class="stepper">' + STEP_LABELS.map(function(l,i){
@@ -840,7 +840,7 @@ function stepIdentite(){
     '<div class="field"><label>Téléphone (usage interne agence)</label><div class="tel-row">' +
       '<select id="f-tel-indicatif"></select><input type="tel" id="f-tel-numero" placeholder="07 00 00 00 00" pattern="[0-9 ]{6,14}"></div></div>' +
     field('E-mail (usage interne agence)','f-email',d.email,{type:'email'}) + '</div>' +
-    '<p class="sub p20-21">🔒 Téléphone et e-mail ne sont jamais affichés publiquement — seul le contact officiel de l’agence apparaît sur votre fiche.</p>' +
+    '<p class="sub p20-21">🔒 Téléphone et e-mail ne sont jamais affichés publiquement, seul le contact officiel de l’agence apparaît sur votre fiche.</p>' +
     '<div id="f-bloc-parent"><h3 class="p20-17">Parent ou tuteur légal</h3>' +
       '<p class="sub">Vous avez moins de 18 ans : merci d’indiquer les contacts de votre parent ou tuteur. L’agence le contactera avant toute suite donnée.</p><div class="grid">' +
       field('Civilité du parent / tuteur','f-parent-civilite',state.parent.civilite,{tag:'select',req:true,options:[{value:'',label:'Sélectionner'},{value:'Madame',label:'Madame'},{value:'Monsieur',label:'Monsieur'},{value:'Mademoiselle',label:'Mademoiselle'}]}) +
@@ -939,7 +939,7 @@ function stepFormation(){
     field('Établissement','f-etab',d.etablissement,{placeholder:'Lycée / Université / Établissement'}) +
     field('Formation particulière','f-formPart',d.particuliere) + '</div>' +
     '<div class="field full p20-15"><label>Formation mannequin (facultatif)</label>' +
-    '<input type="text" id="f-formMannequin" value="'+echapperHtml(d.mannequin||'')+'" placeholder="ex : MA2M — Coaching &amp; Masterclass"></div>' +
+    '<input type="text" id="f-formMannequin" value="'+echapperHtml(d.mannequin||'')+'" placeholder="ex : MA2M · Coaching &amp; Masterclass"></div>' +
     '<div class="actions-row"><button class="btn ghost" data-goto="2">← Retour</button><button class="btn primary" id="save3">Enregistrer</button></div>';
 }
 
@@ -973,7 +973,7 @@ function doublonsExperiences(){ return state.experiences.filter(estDoublonAgence
 // l'agence qui les tient à jour ; ils apparaissent d'office sur la fiche et le CV.
 function blocExperiencesAgence(){
   if (!state.experiencesAgence.length) return '';
-  return '<div class="exp-agence"><p class="exp-agence-titre">Ajoutés automatiquement par l’agence — projets réalisés avec MA2M ('+state.experiencesAgence.length+')</p><ul>' +
+  return '<div class="exp-agence"><p class="exp-agence-titre">Ajoutés automatiquement par l’agence, projets réalisés avec MA2M ('+state.experiencesAgence.length+')</p><ul>' +
     state.experiencesAgence.map(function(e){
       return '<li><strong>'+echapperHtml(e.type)+'</strong> · '+echapperHtml(e.nom)+(e.lieu ? ' · '+echapperHtml(e.lieu) : '')+(e.annee ? ' · '+echapperHtml(e.annee) : '')+'</li>';
     }).join('') + '</ul></div>';
@@ -1013,7 +1013,7 @@ function stepExperience(){
     LANGUES_DISPONIBLES.map(function(l){ return '<label class="check-opt '+(pp.langues.indexOf(l)!==-1?'selected':'')+'"><input type="checkbox" data-langue="'+l+'" '+(pp.langues.indexOf(l)!==-1?'checked':'')+'> '+l+'</label>'; }).join('') +
     '</div></div>' +
     '<div class="actions-row p20-17"><button class="btn ghost small" id="saveProfilPro">Enregistrer</button></div>' +
-    '<p class="sub p20-20">Défilés, shootings, publicités, castings… Un seul projet suffit pour publier votre profil — vous pourrez toujours en ajouter d’autres plus tard. Remplissez seulement ce dont vous vous souvenez : aucune case n’est obligatoire.</p>' +
+    '<p class="sub p20-20">Défilés, shootings, publicités, castings… Un seul projet suffit pour publier votre profil, vous pourrez toujours en ajouter d’autres plus tard. Remplissez seulement ce dont vous vous souvenez : aucune case n’est obligatoire.</p>' +
     '<button class="btn ghost small p20-12" id="addExp">+ Ajouter une expérience</button>' +
     blocExperiencesAgence() +
     (nbDoublons ? '<div class="exp-doublon">'+nbDoublons+(nbDoublons>1 ? ' lignes que vous aviez écrites répètent' : ' ligne que vous aviez écrite répète')+' un projet ajouté par l’agence : '+(nbDoublons>1 ? 'elles sont masquées et n’apparaissent nulle part' : 'elle est masquée et n’apparaît nulle part')+' :<ul>' +
@@ -1035,7 +1035,7 @@ function stepPhotos(){
       '<div class="cc-slot-num">'+n+'</div><div class="cc-slot-content">' +
       (ph?'<img src="'+ph.url+'" alt="Photo compcard '+n+'">':'<span class="cc-slot-plus">＋</span>') +
       '<div class="cc-slot-label '+(ph?'cc-slot-assigned':'')+'">'+(ph?'Photo sélectionnée':'Aucune photo sélectionnée')+'</div>' +
-      '<small>'+rule+' — indication éditoriale, pas une contrainte</small>' +
+      '<small>'+rule+', indication éditoriale, pas une contrainte</small>' +
       '<div class="cc-source-actions">' +
         '<button type="button" class="cc-source-btn gold" data-cc-book="'+n+'">Choisir dans mon Book</button>' +
         '<label class="cc-upload-btn" data-cc-upload-label="'+n+'"><input class="hidden-input" type="file" accept="image/*" id="fCcSlot'+n+'">Téléverser une nouvelle photo</label>' +
@@ -1047,21 +1047,21 @@ function stepPhotos(){
     const v = state.competences[cle] || 3;
     return '<div class="field"><label>'+LIBELLES_COMPETENCES[cle]+'</label><input type="range" min="1" max="5" value="'+v+'" data-competence="'+cle+'"></div>';
   }).join('');
-  return '<h2>Photos &amp; compétences</h2><p class="sub">Vos 3 photos principales (CV, profil, plein pied) sont indépendantes de la compcard — une photo du Book choisie pour la compcard n’est jamais dupliquée, elle reçoit simplement son numéro d’emplacement.</p>' +
+  return '<h2>Photos &amp; compétences</h2><p class="sub">Vos 3 photos principales (CV, profil, plein pied) sont indépendantes de la compcard, une photo du Book choisie pour la compcard n’est jamais dupliquée, elle reçoit simplement son numéro d’emplacement.</p>' +
   '<section class="documents-section"><div class="section-title-row"><div><span class="editor-kicker">CV</span><h3>Compétences mannequin</h3><p>Évaluez-vous honnêtement sur chaque compétence (1 à 5).</p></div></div>' +
     '<div class="grid g3">'+competencesHtml+'</div></section>' +
   '<div class="photo-principals-grid">' +
-    '<div class="principal-photo-card '+(p.photoCv?'filled':'')+'" id="uPhotoCv">'+photoThumb(p.photoCv,'Photo CV')+'<div class="principal-photo-badge">PHOTO PRINCIPALE CV</div><div class="principal-photo-title">'+(p.photoCv?'Photo CV définie':'Choisir la photo du CV')+'</div><div class="principal-photo-hint">Portrait, buste ou 3/4 — la photo qui vous représente le mieux</div>' +
+    '<div class="principal-photo-card '+(p.photoCv?'filled':'')+'" id="uPhotoCv">'+photoThumb(p.photoCv,'Photo CV')+'<div class="principal-photo-badge">PHOTO PRINCIPALE CV</div><div class="principal-photo-title">'+(p.photoCv?'Photo CV définie':'Choisir la photo du CV')+'</div><div class="principal-photo-hint">Portrait, buste ou 3/4, la photo qui vous représente le mieux</div>' +
       '<label class="cc-upload-btn" data-cc-upload-label="photoCv"><input class="hidden-input" type="file" accept="image/*" id="fPhotoCv">Téléverser une nouvelle photo</label></div>' +
-    '<div class="principal-photo-card '+(p.principale?'filled':'')+'" id="uPrincipale">'+photoThumb(p.principale,'Photo de profil')+'<div class="principal-photo-badge profile">PHOTO PRINCIPALE PROFIL</div><div class="principal-photo-title">'+(p.principale?'Photo profil définie':'Choisir la photo de profil')+'</div><div class="principal-photo-hint">Portrait, buste ou 3/4 — affichée sur votre fiche publique et dans THE BOOK</div>' +
+    '<div class="principal-photo-card '+(p.principale?'filled':'')+'" id="uPrincipale">'+photoThumb(p.principale,'Photo de profil')+'<div class="principal-photo-badge profile">PHOTO PRINCIPALE PROFIL</div><div class="principal-photo-title">'+(p.principale?'Photo profil définie':'Choisir la photo de profil')+'</div><div class="principal-photo-hint">Portrait, buste ou 3/4, affichée sur votre fiche publique et dans THE BOOK</div>' +
       '<label class="cc-upload-btn" data-cc-upload-label="principale"><input class="hidden-input" type="file" accept="image/*" id="fPrincipale">Téléverser une nouvelle photo</label></div>' +
     '<div class="principal-photo-card '+(p.pleinPied?'filled':'')+'" id="uPleinPied">'+photoThumb(p.pleinPied,'Photo plein pied')+'<div class="principal-photo-badge fullbody">PHOTO PLEIN PIED</div><div class="principal-photo-title">'+(p.pleinPied?'Photo plein pied définie':'Choisir la photo plein pied')+'</div><div class="principal-photo-hint">Photo de référence plein pied</div>' +
       '<label class="cc-upload-btn" data-cc-upload-label="pleinPied"><input class="hidden-input" type="file" accept="image/*" id="fPleinPied">Téléverser une nouvelle photo</label></div>' +
-    '<div class="principal-photo-card '+(p.couverture?'filled':'')+'" id="uCouverture">'+(p.couverture?'<img data-couv-preview src="'+p.couverture.url+'" alt="Photo de couverture">':'')+'<div class="principal-photo-badge cover">PHOTO DE COUVERTURE</div><div class="principal-photo-title">'+(p.couverture?'Photo de couverture définie':'Choisir la photo de couverture')+'</div><div class="principal-photo-hint">Bandeau en haut de votre fiche publique — plutôt une photo large</div>' +
+    '<div class="principal-photo-card '+(p.couverture?'filled':'')+'" id="uCouverture">'+(p.couverture?'<img data-couv-preview src="'+p.couverture.url+'" alt="Photo de couverture">':'')+'<div class="principal-photo-badge cover">PHOTO DE COUVERTURE</div><div class="principal-photo-title">'+(p.couverture?'Photo de couverture définie':'Choisir la photo de couverture')+'</div><div class="principal-photo-hint">Bandeau en haut de votre fiche publique, plutôt une photo large</div>' +
     (p.couverture ? ('<div class="cc-couv-position"><button type="button" class="cc-couv-pos-btn '+(p.couverture.couverturePosition==='top'?'active':'')+'" data-couv-pos="top">Haut</button><button type="button" class="cc-couv-pos-btn '+((!p.couverture.couverturePosition||p.couverture.couverturePosition==='center')?'active':'')+'" data-couv-pos="center">Centre</button><button type="button" class="cc-couv-pos-btn '+(p.couverture.couverturePosition==='bottom'?'active':'')+'" data-couv-pos="bottom">Bas</button></div>') : '') +
       '<label class="cc-upload-btn" data-cc-upload-label="couverture"><input class="hidden-input" type="file" accept="image/*" id="fCouverture">Téléverser une nouvelle photo</label></div>' +
   '</div>' +
-  '<section class="book-section"><div class="section-title-row"><div><span class="editor-kicker">GALERIE</span><h3>Photos du Book</h3><p>Ajoutez vos photos ici — c’est parmi elles que vous choisirez ensuite vos photos principales et votre compcard.</p></div>' +
+  '<section class="book-section"><div class="section-title-row"><div><span class="editor-kicker">GALERIE</span><h3>Photos du Book</h3><p>Ajoutez vos photos ici, c’est parmi elles que vous choisirez ensuite vos photos principales et votre compcard.</p></div>' +
     '<label class="book-multi-upload" for="fBook">＋ Ajouter des photos<input class="hidden-input" type="file" accept="image/*" id="fBook" multiple></label></div>' +
     '<div class="book-grid">'+p.book.map(function(ph){
       // Numéro fixe de la photo (Extension 117) : l'agence s'y réfère dans ses messages.
@@ -1115,7 +1115,7 @@ function lireIdentiteFormulaire(){
 function blocFicheEvenement(){
   const f = state.ficheEvenement;
   return '<h3 class="p20-17">Informations pour les événements</h3>' +
-    '<p class="sub">🔒 Réservées à l’agence MA2M (défilés, castings) — jamais affichées sur votre fiche publique. Votre Instagram se renseigne à l’étape « Identité ».</p>' +
+    '<p class="sub">🔒 Réservées à l’agence MA2M (défilés, castings), jamais affichées sur votre fiche publique. Votre Instagram se renseigne à l’étape « Identité ».</p>' +
     '<div class="grid">' +
     field('Régime / allergies','f-regime',f.regime,{full:true,placeholder:'Ex. végétarien, allergie aux arachides… ou « aucune »'}) +
     field('TikTok (lien ou nom)','f-tiktok',f.tiktok,{placeholder:'@votre_compte ou lien'}) +
@@ -1417,7 +1417,7 @@ function bindPhotoHandlers(){
     const occupes = s.photos.book.map(function(ph){ return ph.compcardOrdre; }).filter(Boolean);
     let slotLibre = null;
     for (let n=1; n<=5; n++){ if (occupes.indexOf(n)===-1) { slotLibre = n; break; } }
-    if (!slotLibre) { toast('Compcard déjà complète (5/5) — retirez-en une avant d’en ajouter une autre', true); return; }
+    if (!slotLibre) { toast('Compcard déjà complète (5/5), retirez-en une avant d’en ajouter une autre', true); return; }
     if (await assignerCompcardSlot(photo, slotLibre)) { render(); reopenDashboardBlock('photos'); }
   }); });
 
@@ -1488,7 +1488,7 @@ function bindPhotoHandlers(){
     const photo = s.photos.book.find(function(ph){ return ph.compcardOrdre===slot; });
     if (!photo) return;
     const ok = await Store.setCompcardOrdre(photo.id, null);
-    if (ok) { retirerDeCompcardLocal(photo); render(); reopenDashboardBlock('photos'); toast('Emplacement '+slot+' libéré — la photo reste dans le Book'); }
+    if (ok) { retirerDeCompcardLocal(photo); render(); reopenDashboardBlock('photos'); toast('Emplacement '+slot+' libéré, la photo reste dans le Book'); }
   }); });
 
   // Téléversement direct par rôle : la photo est ajoutée au Book (comme toute
@@ -1662,7 +1662,7 @@ function editorPageBody(k){
   if (k==='identite') return stepIdentite().replace('<p class="sub">Étape 1 sur 6</p>','<p class="sub">Modifiez ici tous les éléments de votre identité.</p>').replace('<div class="actions-row end"><button class="btn primary" id="save1">Enregistrer</button></div>', editorAction('Enregistrer'));
   if (k==='physique') return stepPhysique().replace('<p class="sub">Étape 2 sur 6</p>','<p class="sub">Modifiez ici toutes vos mensurations.</p>').replace('<div class="actions-row"><button class="btn ghost" data-goto="1">← Retour</button><button class="btn primary" id="save2">Enregistrer</button></div>', editorAction('Enregistrer'));
   if (k==='formation') return stepFormation().replace('<p class="sub">Étape 3 sur 6</p>','<p class="sub">Modifiez ici votre formation et votre parcours mannequin.</p>').replace('<div class="actions-row"><button class="btn ghost" data-goto="2">← Retour</button><button class="btn primary" id="save3">Enregistrer</button></div>', editorAction('Enregistrer'));
-  if (k==='experiences') return stepExperience().replace('<p class="sub">Étape 4 sur 6</p>','<p class="sub">Modifiez ici votre profil professionnel et vos expériences — chaque ligne est enregistrée séparément.</p>').replace('<div class="actions-row"><button class="btn ghost" data-goto="3">← Retour</button><button class="btn primary" id="save4">Continuer</button></div>', editorAction('Enregistrer'));
+  if (k==='experiences') return stepExperience().replace('<p class="sub">Étape 4 sur 6</p>','<p class="sub">Modifiez ici votre profil professionnel et vos expériences, chaque ligne est enregistrée séparément.</p>').replace('<div class="actions-row"><button class="btn ghost" data-goto="3">← Retour</button><button class="btn primary" id="save4">Continuer</button></div>', editorAction('Enregistrer'));
   if (k==='photos') return stepPhotos().replace('<div class="actions-row"><button class="btn ghost" data-goto="4">← Retour</button><button class="btn primary" id="save5">Continuer</button></div>', editorAction('Enregistrer'));
   return '';
 }
@@ -1673,11 +1673,11 @@ function editorPageBody(k){
    avec repli sur le titre générique tant qu'elle ne l'a pas encore renseigné). */
 function messageBlocPersonnalise(k, prenom){
   const messages = {
-    identite: prenom+', vérifiez que vos informations d’identité sont exactes — c’est ce que les recruteurs verront en premier.',
+    identite: prenom+', vérifiez que vos informations d’identité sont exactes, c’est ce que les recruteurs verront en premier.',
     physique: prenom+', gardez vos mensurations à jour pour recevoir des propositions qui vous correspondent vraiment.',
-    formation: prenom+', votre formation valorise votre profil — complétez-la avec soin.',
+    formation: prenom+', votre formation valorise votre profil, complétez-la avec soin.',
     experiences: prenom+', chaque expérience ajoutée renforce votre parcours professionnel.',
-    photos: prenom+', vos photos sont votre vitrine — choisissez celles qui vous représentent le mieux.'
+    photos: prenom+', vos photos sont votre vitrine, choisissez celles qui vous représentent le mieux.'
   };
   return messages[k] || (prenom+', ce bloc s’enregistre indépendamment des autres.');
 }
@@ -1749,8 +1749,8 @@ function viewDashboard(){
   const pts = pointsARemplir();
   let bandeau = '';
   if (state.meta.statutAffichage === 'en_attente') bandeau = '<div class="online-banner p20-7"><span class="dot p20-4"></span> Modifications en cours de revalidation par l’agence</div>';
-  else if (state.meta.statutAffichage === 'refuse') bandeau = '<div class="online-banner p20-5"><span class="dot p20-2"></span> Correction demandée'+(state.meta.commentaireAdmin?' — « '+echapperHtml(state.meta.commentaireAdmin)+' »':'')+'</div>';
-  else bandeau = '<div class="online-banner"><span class="dot p20-3"></span> Profil en ligne — visible sur le site</div>';
+  else if (state.meta.statutAffichage === 'refuse') bandeau = '<div class="online-banner p20-5"><span class="dot p20-2"></span> Correction demandée'+(state.meta.commentaireAdmin?' · « '+echapperHtml(state.meta.commentaireAdmin)+' »':'')+'</div>';
+  else bandeau = '<div class="online-banner"><span class="dot p20-3"></span> Profil en ligne, visible sur le site</div>';
 
   // Rappel (non bloquant) des blocs encore incomplets — le profil reste en
   // ligne tel quel, mais un book/fiche plus complet est plus attrayant pour
@@ -1759,19 +1759,19 @@ function viewDashboard(){
   const blocsIncomplets = BLOCKS.filter(function(b, i){ return pts ? pts.nb[b.k] > 0 : !stepComplete(i + 1); });
   let alerteIncomplet = '';
   if (blocsIncomplets.length) {
-    alerteIncomplet = '<div class="alerte-incomplet">⚠ <strong>Votre profil n’est pas complet.</strong> Un profil complet est bien plus attrayant pour les recruteurs — complétez : ' +
+    alerteIncomplet = '<div class="alerte-incomplet">⚠ <strong>Votre profil n’est pas complet.</strong> Un profil complet est bien plus attrayant pour les recruteurs, complétez : ' +
       blocsIncomplets.map(function(b){ return '<button type="button" class="alerte-lien" data-alerte-goto="'+b.k+'">'+b.title+'</button>'; }).join(', ') +
       '.</div>';
   }
 
   return header('Espace validé') + '<div class="panel">' + bandeau + alerteIncomplet +
     '<h1 class="p20-10">Bonjour '+echapperHtml((d.nomComplet||'').split(' ')[0]||'')+'</h1>' +
-    '<p class="sub p20-13">Modifiez un bloc à la fois — chaque bloc s’enregistre indépendamment des autres.</p>' +
+    '<p class="sub p20-13">Modifiez un bloc à la fois, chaque bloc s’enregistre indépendamment des autres.</p>' +
     (typeof ma2mTailles === 'function' ? '<div class="tailles-calculees">' + htmlSyntheseTailles(taillesDepuisEtat(), true) + '</div>' : '') +
     '<div class="blocks-grid">' + BLOCKS.map(function(b){
       return '<div class="block-card" data-block="'+b.k+'">'+(pts ? pastilleRouge(pts.nb[b.k]) : '')+'<span class="ic">'+b.ic+'</span><h3>'+b.title+'</h3><p>'+b.desc+'</p><button class="btn ghost small block-btn" data-edit="'+b.k+'">Modifier</button></div>';
     }).join('') + '</div>' +
-    '<div class="cv-cta"><div class="txt"><h3>CV mannequin — privé</h3><p>Généré à partir de votre profil. Visible uniquement par vous et l’administrateur MA2M.</p></div>' +
+    '<div class="cv-cta"><div class="txt"><h3>CV mannequin, privé</h3><p>Généré à partir de votre profil. Visible uniquement par vous et l’administrateur MA2M.</p></div>' +
     '<button class="btn primary" id="openCv">Voir mon CV</button></div>' +
     '<div class="cv-cta p20-15"><div class="txt"><h3>Compcard</h3><p>Fiche publique à partir des 5 photos sélectionnées.</p></div>' +
     '<button class="btn ghost" id="openCc">Voir la compcard</button></div>' +
@@ -1871,7 +1871,7 @@ function openCompcard(){
         '<div><span>TOUR DE TAILLE</span><b>'+(masquer?'—':(p.tourTaille||'—')+' cm')+'</b></div><div><span>BASSIN</span><b>'+(masquer?'—':(p.hanches||p.entrejambe||'—')+' cm')+'</b></div><div><span>POINTURE</span><b>'+(p.pointure||'—')+'</b></div>' +
         '<div><span>CARNATION</span><b>'+echapperHtml(p.carnation||'—')+'</b></div><div><span>TAILLE VÊTEMENTS</span><b>'+echapperHtml(p.tailleVet||'—')+'</b></div><div><span>YEUX</span><b>'+echapperHtml(p.yeux||'—')+'</b></div><div><span>CHEVEUX</span><b>'+echapperHtml(p.cheveux||'—')+'</b></div>' +
       '</div></div>' +
-      '<div class="ccm-footer"><b>CONTACT OFFICIEL MA2M</b><div>'+MA2M_TELEPHONES.join(' · ')+'</div><div>'+MA2M_EMAIL+'</div><div>Instagram · Facebook · TikTok · YouTube  @maitreakessemodelmanagement</div><small>Document officiel généré depuis maitreakessemodelmanagement.com — toute demande de booking passe exclusivement par l’agence.</small></div>' +
+      '<div class="ccm-footer"><b>CONTACT OFFICIEL MA2M</b><div>'+MA2M_TELEPHONES.join(' · ')+'</div><div>'+MA2M_EMAIL+'</div><div>Instagram · Facebook · TikTok · YouTube  @maitreakessemodelmanagement</div><small>Document officiel généré depuis maitreakessemodelmanagement.com, toute demande de booking passe exclusivement par l’agence.</small></div>' +
     '</div>' +
     '<div class="cv-actions"><button class="btn ghost small" id="closeOv2">Fermer</button><button class="btn ghost small" id="p20BtnJpeg">Télécharger en JPEG</button><button class="btn primary small" id="p20BtnPdf">Télécharger en PDF</button></div>';
   showOverlay();
@@ -1903,7 +1903,7 @@ async function demarrerApresConnexion(){
 
 void (async function init(){
   if (!sb) {
-    document.getElementById('app').innerHTML = '<div class="auth-loading"><span>Connexion au service indisponible pour le moment — réessayez dans quelques instants.</span></div>';
+    document.getElementById('app').innerHTML = '<div class="auth-loading"><span>Connexion au service indisponible pour le moment, réessayez dans quelques instants.</span></div>';
     return;
   }
   if (recuperationMdpEnCours) return; // le gestionnaire PASSWORD_RECOVERY prend déjà le relais

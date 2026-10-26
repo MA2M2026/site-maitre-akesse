@@ -182,7 +182,7 @@
   P.actions['mois-fige-voir'] = async (el) => {
     const r = await P.bd(sb.from('recaps_mensuels').select('*').eq('mois', el.getAttribute('data-mois')));
     const l = (r[0] && r[0].donnees && r[0].donnees.lignes) || [];
-    P.fenetre('<h2>' + P.esc(P.mois(el.getAttribute('data-mois'))) + ' — figé</h2>' + P.tableau(['Mannequin', 'Statut', 'État du mois', 'Encaissé'], l.map((y) =>
+    P.fenetre('<h2>' + P.esc(P.mois(el.getAttribute('data-mois'))) + ', figé</h2>' + P.tableau(['Mannequin', 'Statut', 'État du mois', 'Encaissé'], l.map((y) =>
       '<tr><td>' + P.esc(y.nom) + '</td><td>' + P.esc(y.statut) + '</td><td>' + P.esc(ETATS_FIGES[y.etat] || y.etat || '—') + '</td><td class="nombre">' + P.fcfa(y.valide || 0) + '</td></tr>')) +
       '<div class="ligne" style="margin-top:12px"><button class="btn" type="button" data-action="fermer-fenetre">Fermer</button></div>');
   };

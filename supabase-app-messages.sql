@@ -127,6 +127,20 @@ returns text language sql immutable as $$
   select regexp_replace(coalesce(p, 0)::text, '(\d)(?=(\d{3})+$)', '\1 ', 'g') || ' FCFA';
 $$;
 
+-- dates et lieux d'un projet en une phrase (comme les messages WhatsApp : js/messages-convocations.js) :
+-- « le 14 novembre 2026 », « du 21 au 22 octobre 2026 » ; les lieux de chaque jour, sinon le lieu
+create or replace function app_periode(p_debut date, p_fin date)
+returns text language sql immutable as $$
+  select case when p_debut is null then null
+    when p_fin is null or p_fin <= p_debut then 'le ' || extract(day from p_debut)::int || ' ' || split_part(app_nom_mois(p_debut), ' ', 1) || ' ' || extract(year from p_debut)::int
+    when date_trunc('month', p_fin) = date_trunc('month', p_debut) then 'du ' || extract(day from p_debut)::int || ' au ' || extract(day from p_fin)::int || ' ' || app_nom_mois(p_fin)
+    else 'du ' || extract(day from p_debut)::int || ' ' || split_part(app_nom_mois(p_debut), ' ', 1) || ' au ' || extract(day from p_fin)::int || ' ' || app_nom_mois(p_fin) end;
+$$;
+create or replace function app_lieux(a agenda_projets)
+returns text language sql stable as $$
+  select coalesce(nullif((select string_agg(distinct s ->> 'lieu', ', ') from jsonb_array_elements(coalesce(a.seances, '[]'::jsonb)) s where coalesce(s ->> 'lieu', '') <> ''), ''), nullif(a.lieu, ''));
+$$;
+
 -- a) annonce de sélection, convocation, rappels : quand le message part (ou est à envoyer à la
 --    main) pour la mannequin elle-même (pas la ligne de son parent)
 create or replace function app_auto_convocation()
@@ -144,14 +158,15 @@ begin
   if not found or a.annule then return new; end if;
   u := coalesce((select id from auth.users where id = p.model_id),
                 (select r.user_id from contacts_externes c join agence_mannequins r on r.id = c.mannequin_id where c.id = p.contact_id));
-  quand := to_char(a.date_debut, 'DD/MM/YYYY') || coalesce(' · convocation à ' || nullif(a.heure_convocation, ''), '') ||
-           coalesce(' · ' || nullif(concat_ws(', ', nullif(a.lieu, ''), nullif(a.ville, '')), ''), '');
+  quand := 'Rendez-vous ' || coalesce(app_periode(a.date_debut, a.date_fin), 'bientôt') || coalesce(', ' || app_lieux(a), '') ||
+           coalesce(', convocation à ' || replace(nullif(a.heure_convocation, ''), ':', 'h'), '') || '.';
   perform app_message_auto(u, 'convocation:' || p.id || ':' || new.sorte,
     case new.sorte when 'selection' then 'selection' when 'convocation' then 'convocation' else 'rappel' end,
-    case new.sorte when 'selection' then '🎉 Vous êtes sélectionné(e) : ' || a.titre
-                   when 'convocation' then '📅 Convocation : ' || a.titre
-                   else '⏰ Rappel : ' || a.titre end,
-    quand || E'\nRépondez et retrouvez tous les détails dans l’onglet Événements.', '/app/#evenements');
+    case new.sorte when 'selection' then '🎉 Bonne nouvelle, vous êtes ' || case when p.nom ~ '^(Madame|Mademoiselle)' then 'sélectionnée' when p.nom ~ '^Monsieur' then 'sélectionné' else 'sélectionné(e)' end || ' pour ' || a.titre
+                   when 'convocation' then '💌 Votre convocation pour ' || a.titre
+                   else '⏰ Petit rappel pour ' || a.titre end,
+    case new.sorte when 'selection' then E'Toute l’équipe est fière de vous compter parmi nous ✨\n' else '' end ||
+    quand || E'\nConfirmez votre présence et retrouvez tous les détails dans l’onglet Événements.', '/app/#evenements');
   return new;
 end;
 $$;
@@ -169,8 +184,8 @@ begin
   select * into a from agenda_projets where id = new.projet_id;
   -- (profil du site, mannequin du registre ou personne du carnet rattachée au registre)
   perform app_message_auto(coalesce(app_compte_de('m:' || new.model_id), app_compte_de('r:' || new.mannequin_id), app_compte_de('c:' || new.contact_id)), 'places:' || new.id, 'places',
-    '🎟️ Places limitées : ' || coalesce(a.titre, 'nouveau projet'),
-    'Premières arrivées, premières servies : réservez votre place avec votre lien personnel.', '/places?c=' || new.jeton);
+    '🎟️ Places limitées pour ' || coalesce(a.titre, 'un nouveau projet'),
+    'Les places partent vite. Réservez la vôtre avec votre lien personnel, les premières arrivées sont les premières servies.', '/places?c=' || new.jeton);
   return new;
 end;
 $$;
@@ -188,14 +203,15 @@ begin
   select * into a from agence_mannequins where id = new.mannequin_id;
   if not found or a.user_id is null then return new; end if;
   if tg_op = 'INSERT' then
-    perform app_message_auto(a.user_id, 'mensualite:' || new.mois || ':' || a.id, 'mensualite', '💳 Mensualité de ' || app_nom_mois(new.mois),
-      app_montant(a.mensualite) || ' à régler avant le 5, avec Wave, dans l’onglet Paiements.', '/app/#paiements');
+    perform app_message_auto(a.user_id, 'mensualite:' || new.mois || ':' || a.id, 'mensualite', '💳 Votre mensualité de ' || app_nom_mois(new.mois),
+      'Le montant est de ' || app_montant(a.mensualite) || ', à régler avant le 5 avec Wave, depuis l’onglet Paiements. Merci 🤍', '/app/#paiements');
   else
     quoi := case when old.relance5_le is null and new.relance5_le is not null then 'r5' when old.relance3_le is null and new.relance3_le is not null then 'r3' end;
     if quoi is null then return new; end if;
     perform app_message_auto(a.user_id, 'mensualite:' || new.mois || ':' || a.id || ':' || quoi, 'mensualite',
-      case quoi when 'r5' then '⚠️ Dernier rappel : mensualité de ' else '🔔 Rappel : mensualité de ' end || app_nom_mois(new.mois),
-      app_montant(a.mensualite) || case quoi when 'r5' then ' : c’est aujourd’hui la date limite.' else ' à régler avant le 5.' end || ' Onglet Paiements.', '/app/#paiements');
+      case quoi when 'r5' then '⏳ Dernier jour pour votre mensualité de ' else '🔔 Petit rappel pour votre mensualité de ' end || app_nom_mois(new.mois),
+      case quoi when 'r5' then 'C’est aujourd’hui la date limite (' || app_montant(a.mensualite) || '). Vous pouvez régler depuis l’onglet Paiements.'
+        else app_montant(a.mensualite) || ' à régler avant le 5, depuis l’onglet Paiements. Merci 🤍' end, '/app/#paiements');
   end if;
   return new;
 end;
@@ -216,9 +232,9 @@ begin
   if not found or a.user_id is null then return new; end if;
   quoi := case when new.objet = 'inscription' then 'inscription' else 'mensualité de ' || app_nom_mois(new.mois) end;
   perform app_message_auto(a.user_id, 'paiement:' || new.id || ':' || new.statut, 'paiement',
-    case new.statut when 'valide' then '✅ Paiement confirmé : ' || quoi else '❌ Paiement non retrouvé : ' || quoi end,
-    case new.statut when 'valide' then coalesce(app_montant(new.montant) || ' reçus. ', '') || 'Merci ! Votre reçu est dans l’onglet Paiements.'
-      else coalesce(nullif(trim(new.motif), '') || ' ', '') || 'Contactez l’agence si vous avez bien payé.' end, '/app/#paiements');
+    case new.statut when 'valide' then '✅ Paiement bien reçu pour votre ' || quoi else '⚠️ Paiement non retrouvé pour votre ' || quoi end,
+    case new.statut when 'valide' then 'Merci 🤍 Nous avons bien reçu ' || coalesce(app_montant(new.montant), 'votre paiement') || '. Votre reçu vous attend dans l’onglet Paiements.'
+      else coalesce(nullif(trim(new.motif), '') || ' ', '') || 'Si vous avez bien payé, écrivez-nous et nous regarderons ensemble.' end, '/app/#paiements');
   return new;
 end;
 $$;
@@ -232,7 +248,7 @@ returns trigger language plpgsql security definer set search_path = public as $$
 begin
   if new.statut <> 'paye' or old.statut = 'paye' then return new; end if;
   perform app_message_auto((select user_id from agence_mannequins where id = new.agence_mannequin_id), 'cachet:' || new.id, 'cachet',
-    '💰 Cachet payé : ' || app_montant(new.montant), new.prestation || E'\nVotre reçu est dans l’onglet Paiements.', '/app/#paiements');
+    '💰 Votre cachet est payé', app_montant(new.montant) || ' pour ' || new.prestation || E'. Bravo et merci pour votre travail ✨\nVotre reçu est dans l’onglet Paiements.', '/app/#paiements');
   return new;
 end;
 $$;
@@ -306,6 +322,7 @@ create table if not exists infos_agence (
   cree_le timestamptz not null default now(),
   cree_par uuid references auth.users(id) default auth.uid()
 );
+alter table infos_agence add column if not exists date_fin date;  -- (projet sur plusieurs jours, 26/10/2026)
 create index if not exists infos_agence_recentes on infos_agence (cree_le desc);
 alter table infos_agence enable row level security;
 revoke all on infos_agence from anon;

@@ -103,8 +103,8 @@ async function chargerProfilInterne() {
   // et pour l'onglet du navigateur ; les aperçus de partage (WhatsApp/Facebook, qui
   // n'exécutent pas le JavaScript) restent sur les balises génériques ci-dessous.
   const urlActuelle = 'https://www.maitreakessemodelmanagement.com' + (EN ? '/en' : '') + (slug ? '/book/' + slug : '/mannequin?id=' + id);
-  const titrePage = (profil.full_name || T('Mannequin', 'Model')) + ' — Maître Akesse Model Management';
-  const descriptionPage = [profil.full_name, profil.city, profil.height_cm ? profil.height_cm + ' cm' : null].filter(Boolean).join(' · ') + T(' — Book complet sur le site de l\'agence Maître Akesse Model Management.', ' — Full book on the Maître Akesse Model Management agency website.');
+  const titrePage = (profil.full_name || T('Mannequin', 'Model')) + ' · Maître Akesse Model Management';
+  const descriptionPage = [profil.full_name, profil.city, profil.height_cm ? profil.height_cm + ' cm' : null].filter(Boolean).join(' · ') + T(' · Book complet sur le site de l\'agence Maître Akesse Model Management.', ' · Full book on the Maître Akesse Model Management agency website.');
   document.title = titrePage;
   let canonical = document.querySelector('link[rel="canonical"]');
   if (!canonical) { canonical = document.createElement('link'); canonical.rel = 'canonical'; document.head.appendChild(canonical); }

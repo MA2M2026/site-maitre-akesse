@@ -25,7 +25,7 @@
     if (c.reference_wave) { $('rc-ref').textContent = c.reference_wave; $('rc-ref-ligne').hidden = false; }
     $('rc-montant').textContent = K.fcfa(c.montant);
     ['rc-lignes', 'rc-montant-bloc', 'rc-merci', 'rc-actions'].forEach(function (id) { $(id).hidden = false; });
-    document.title = 'Reçu ' + (c.numero || '') + ' — Maître Akesse Model Management';
+    document.title = 'Reçu ' + (c.numero || '') + ' · Maître Akesse Model Management';
   }).catch(function () { $('rc-etat').textContent = 'Connexion impossible pour le moment. Réessayez dans un instant.'; });
   $('rc-imprimer').addEventListener('click', function () { window.print(); });
 })();

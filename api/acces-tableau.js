@@ -18,7 +18,7 @@ module.exports = async function handler(req, res) {
   if (!debut) return;
   try {
     const utilisateur = await verifierUtilisateur(debut.jeton);
-    if (!utilisateur) { res.status(401).json({ error: 'Session invalide ou expirée — reconnectez-vous.' }); return; }
+    if (!utilisateur) { res.status(401).json({ error: 'Session invalide ou expirée, reconnectez-vous.' }); return; }
     if (!(await estAdmin(utilisateur.id))) { res.status(403).json({ error: "Ce compte n'est pas administrateur." }); return; }
     // Double authentification de l'Administration (code de l'application, jeton « aal2 ») : elle
     // vaut le code de validation — l'ancien tableau de bord s'ouvre dans l'Administration (espace

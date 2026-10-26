@@ -417,6 +417,21 @@ qui s'ouvrent ensuite) et échoue si un nom de mannequin est sans photo.
   `initialesNom` (js/app.js, aussi pour l'Administration).
 - Étape suivante prévue : notifications sur le téléphone.
 
+## 📅 Projets sur plusieurs jours et textes sans « traces d'IA » (26/10/2026, demande de la propriétaire)
+- Agenda, « Horaires et lieux, jour par jour » : chaque jour a ses heures ET son lieu (plusieurs
+  lieux ou salles le même jour : séparés par une virgule), dans `agenda_projets.seances`
+  (`{ jour, debut, fin, lieu }`, sans changement de la base). Programmation défilé : le lieu du
+  jour à côté de chaque jour.
+- Une seule façon d'écrire dates et lieux d'un projet (js/messages-convocations.js, partagé avec
+  le serveur) : `periode` (« du mercredi 21 au jeudi 22 octobre 2026 »), `lieuxDuProjet`,
+  `auxLieux` (« au Parc des Expositions et à la Tribe »). Utilisée par Informations agence (le
+  projet entier : toutes ses dates, tous ses lieux), les convocations, relances, rappels et places
+  limitées ; en base, `app_periode` et `app_lieux` (messages automatiques de l'application).
+- Messages chaleureux (l'agence qui parle à ses mannequins), émojis choisis pour leur chaleur
+  (✨ 👠 🤍 💌…). Tous les textes visibles (messages, écrans, titres des pages) : plus de tiret long
+  « — » (outils de relecture : remplacé par une virgule, « · » entre deux éléments, « | » dans
+  les titres des pages ; le « — » seul qui signifie « vide » reste).
+
 ## ✉️ La « 3e voie » : tout arrive aussi dans l'application (26/10/2026, demande de la propriétaire)
 - Ce que l'Administration envoie aux mannequins par WhatsApp et e-mail arrive AUSSI dans leur
   application (onglet **Messages**, ex-« Alertes ») et, si elles l'acceptent, en **notification**

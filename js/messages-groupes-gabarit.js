@@ -4,7 +4,7 @@
 window.GABARIT_MESSAGES_GROUPES = `<h2 class="tdb-10">📣 Messages groupés</h2>
 <p class="tdb-9">Un seul message, envoyé à chaque personne <strong>séparément</strong> : personne ne voit les autres et aucun groupe n'est créé. Écrivez <strong>{prénom}</strong> ou <strong>{casting}</strong> dans le message : ils seront remplacés pour chaque personne.</p>
 <div class="mg-grille">
-<div class="form-champ"><label for="mg-source">Qui ?</label><select id="mg-source"><option value="agence">Candidatures — Intégrer l'agence</option><option value="casting">Candidatures — Un casting précis</option><option value="inscription">Inscriptions mannequins</option></select></div>
+<div class="form-champ"><label for="mg-source">Qui ?</label><select id="mg-source"><option value="agence">Candidatures : intégrer l'agence</option><option value="casting">Candidatures : un casting précis</option><option value="inscription">Inscriptions mannequins</option></select></div>
 <div class="form-champ"><label for="mg-statut">Statut</label><select id="mg-statut"></select></div>
 <div class="form-champ" id="mg-champ-casting"><label for="mg-casting">Quel casting ?</label><select id="mg-casting"><option value="">Chargement des castings…</option></select></div>
 <div class="form-champ" id="mg-champ-type"><label for="mg-type">Quel message ?</label><select id="mg-type"></select></div>

@@ -248,7 +248,7 @@
         const age = P.age(p.date_naissance), mes = (parId[p.id] || []).slice(0, 4);
         return '<article class="carte validation apparait" style="--i:' + i + '"><div class="validation-photos">' +
           (mes.length ? mes.map((u) => P.visage(u, p.full_name)).join('') : '<p class="doux">Aucune photo</p>') + '</div>' +
-          '<div class="validation-texte"><h2>' + P.esc(p.full_name || 'Sans nom') + (age !== null && age !== undefined && age < 18 ? ' ' + P.pastille((p.category === 'femme' ? 'Mineure' : 'Mineur') + ' — ' + age + ' ans', 'info') : '') + '</h2>' +
+          '<div class="validation-texte"><h2>' + P.esc(p.full_name || 'Sans nom') + (age !== null && age !== undefined && age < 18 ? ' ' + P.pastille((p.category === 'femme' ? 'Mineure' : 'Mineur') + ' · ' + age + ' ans', 'info') : '') + '</h2>' +
           '<p class="doux">' + P.esc([p.city, p.category].filter(Boolean).join(' · ')) + '</p><div class="ligne">' +
           '<button type="button" class="btn rouge" data-action="validation-publier" data-id="' + P.esc(p.id) + '">Valider et publier</button>' +
           '<button type="button" class="btn" data-action="validation-refuser" data-id="' + P.esc(p.id) + '" data-nom="' + P.esc(p.full_name || '') + '">Refuser</button></div></div></article>';

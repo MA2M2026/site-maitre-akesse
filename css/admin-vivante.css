@@ -1029,3 +1029,7 @@ a.podium-place:hover b, a.classement-ligne:hover .classement-nom { text-decorati
 .if-message { white-space: pre-wrap; font: inherit; background: var(--av-creux); padding: 12px; border-radius: 12px; }
 .if-liste { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .if-liste li { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+/* Agenda : horaires et lieu de chaque jour (js/agenda-admin.js, 26/10/2026) */
+.agenda-seance { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 6px 0; }
+.agenda-seance-jour { min-width: 9em; font-weight: 600; }
+.agenda-seance-lieu { flex: 1 1 220px; min-width: 0; }

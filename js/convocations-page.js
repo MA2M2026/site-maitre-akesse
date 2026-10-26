@@ -31,7 +31,7 @@ window.demarrerConvocationsPage = function (racine) {
     while (s.options.length > 1) s.remove(1);
     projets.filter(aVenir).forEach(function (p) {
       var o = document.createElement('option');
-      o.value = p.id; o.textContent = dateAgenda(p.date_debut, p.date_fin) + ' — ' + p.titre;
+      o.value = p.id; o.textContent = dateAgenda(p.date_debut, p.date_fin) + ' · ' + p.titre;
       s.appendChild(o);
     });
     s.value = choisi || '';
@@ -187,7 +187,7 @@ window.demarrerConvocationsPage = function (racine) {
       .sort(function (a, b) { return String(b.date_debut).localeCompare(String(a.date_debut)); })
       .forEach(function (p) {
         var o = document.createElement('option');
-        o.value = p.id; o.textContent = dateAgenda(p.date_debut, p.date_fin) + ' — ' + p.titre;
+        o.value = p.id; o.textContent = dateAgenda(p.date_debut, p.date_fin) + ' · ' + p.titre;
         s.appendChild(o);
       });
     s.value = avant;

@@ -37,7 +37,7 @@ document.getElementById('form-contact').addEventListener('submit', async functio
   }
 
   envoyerNotificationEmail({
-    name: nom + (typeContact ? ` (${typeContact})` : '') + (structure ? ' — ' + structure : ''),
+    name: nom + (typeContact ? ` (${typeContact})` : '') + (structure ? ' · ' + structure : ''),
     telephone: telephone,
     email: email,
     message: (ville ? `${T('Ville : ', 'City: ')}${ville}\n\n` : '') + message

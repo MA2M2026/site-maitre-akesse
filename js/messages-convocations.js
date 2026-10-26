@@ -92,6 +92,47 @@
     const jour = JOURS[d.getUTCDay()];
     return jour.charAt(0).toUpperCase() + jour.slice(1) + ' ' + (+m[3] === 1 ? '1er' : +m[3]) + ' ' + MOIS[+m[2] - 1] + ' ' + m[1];
   }
+  // Projet sur plusieurs jours (26/10/2026, demande de la propriétaire) : toutes ses dates et tous
+  // ses lieux d'un coup. periode → « le samedi 14 novembre 2026 », « du mercredi 21 au jeudi 22
+  // octobre 2026 », « du vendredi 30 octobre au dimanche 1er novembre 2026 ».
+  function periode(p) {
+    const debut = String((p && p.date_debut) || '').slice(0, 10), fin = String((p && p.date_fin) || '').slice(0, 10);
+    if (!debut) return '';
+    if (!fin || fin <= debut) return leJour(debut);
+    const d = dateLongue(debut).split(' '), f = dateLongue(fin).split(' ');  // [Jour, 21, octobre, 2026]
+    const jour = (x) => x[0].toLowerCase() + ' ' + x[1];
+    return 'du ' + jour(d) + (d[3] !== f[3] ? ' ' + d[2] + ' ' + d[3] : d[2] !== f[2] ? ' ' + d[2] : '') + ' au ' + jour(f) + ' ' + f[2] + ' ' + f[3];
+  }
+  // tous les lieux du projet : ceux de chaque jour (agenda, « Horaires, jour par jour »), sinon le
+  // lieu général ; sans doublon, dans l'ordre des jours
+  function lieuxDuProjet(p) {
+    const vus = new Set(), liste = [];
+    const ajouter = (l) => String(l || '').split(/\s*[,;\n]\s*|\s+et\s+/).map((x) => x.trim()).filter(Boolean).forEach((x) => { if (!vus.has(x.toLowerCase())) { vus.add(x.toLowerCase()); liste.push(x); } });
+    (Array.isArray(p && p.seances) ? p.seances : []).forEach((s) => ajouter(s && s.lieu));
+    if (!liste.length) ajouter(p && p.lieu);
+    return liste;
+  }
+  // « au Parc des Expositions », « à la Tribe », « à l’Hôtel Ivoire », « aux Jardins » (sinon « à »)
+  const MASCULINS = /^(parc|palais|sofitel|hôtel|hotel|stade|centre|studio|musée|jardin|restaurant|théâtre|theatre|plateau|siège|showroom|club|lounge|complexe|domaine|golf|port|marché|carrefour|cinéma|noom|radisson|pullman|azalaï|azalai|novotel|ivoire)\b/i;
+  const FEMININS = /^(salle|maison|tribe|place|galerie|plage|villa|résidence|terrasse|cité|fondation|boutique|rotonde|esplanade|agence)\b/i;
+  function aLieu(l) {
+    const t = String(l || '').trim();
+    if (/^le\s/i.test(t)) return 'au ' + t.slice(3);
+    if (/^les\s/i.test(t)) return 'aux ' + t.slice(4);
+    if (/^(la\s|l[’'])/i.test(t)) return 'à ' + t.charAt(0).toLowerCase() + t.slice(1);
+    if (MASCULINS.test(t)) return /^[aeiouéèêhâîôû]/i.test(t) ? 'à l’' + t : 'au ' + t;
+    if (FEMININS.test(t)) return /^[aeiouéèêhâîôû]/i.test(t) ? 'à l’' + t : 'à la ' + t;
+    return 'à ' + t;
+  }
+  // « au Parc des Expositions et à la Tribe »
+  function auxLieux(p) {
+    const l = lieuxDuProjet(p).map(aLieu);
+    return l.length > 1 ? l.slice(0, -1).join(', ') + ' et ' + l[l.length - 1] : (l[0] || '');
+  }
+  // la date d'un message (« Samedi 14 novembre 2026 », ou « Du mercredi 21 au jeudi 22 octobre 2026 »)
+  // et son lieu (tous les lieux des jours, puis la ville)
+  const dateProjet = (p) => { const t = p.date_fin && String(p.date_fin) > String(p.date_debut) ? periode(p) : dateLongue(p.date_debut); return t ? t.charAt(0).toUpperCase() + t.slice(1) : ''; };
+  const lieuProjet = (p) => [lieuxDuProjet(p).join(', '), p.ville].filter(Boolean).join(', ');
   // '15:00' → '15h00'
   const heureFr = (h) => /^\d{2}:\d{2}$/.test(h || '') ? h.replace(':', 'h') : '';
   // Accord selon la civilité : « attendue » pour Madame / Mademoiselle, « attendu » pour Monsieur,
@@ -148,9 +189,9 @@
       suite: (pourParent ? 'Sa convocation' : 'Votre convocation') + ', avec l’heure d’arrivée, le programme et tout ce qu’il faut prévoir, vous parviendra dans un second message.',
       fierte: 'Toute l’équipe est fière de ' + (pourParent ? 'compter ' + qui : 'vous compter') + ' parmi nous. ✨',
       projet: String(p.titre || '').trim(),
-      date: dateLongue(p.date_debut),
+      date: dateProjet(p),
       heure_evenement: heureEvenement,
-      lieu: [p.lieu, p.ville].filter(Boolean).join(', '),
+      lieu: lieuProjet(p),
       adresse: String(p.adresse || '').trim(),
       convocation: heureFr(p.heure_convocation)
         ? (pourParent ? qui + ' est ' : 'Vous êtes ') + attendu + ' à ' + heureFr(p.heure_convocation) + ' précises.'
@@ -160,7 +201,7 @@
         : 'Nous comptons sur votre ponctualité et votre professionnalisme : c’est l’image de l’agence que vous portez. 💫',
       programme: (Array.isArray(p.deroule) ? p.deroule : [])
         .filter((e) => e && (e.heure || e.activite))
-        .map((e) => '• ' + [heureFr(e.heure), String(e.activite || '').trim()].filter(Boolean).join(' — ')).join('\n'),
+        .map((e) => '• ' + [heureFr(e.heure), String(e.activite || '').trim()].filter(Boolean).join(' · ')).join('\n'),
       // lien personnel de confirmation (jeton du participant, Extension 141)
       confirmer: q.jeton ? LIEN_CONFIRMER + q.jeton : '',
       a_prevoir: String(p.a_prevoir || '').split('\n').map((l) => l.trim().replace(/^[-•*]\s*/, '')).filter(Boolean).map((l) => '• ' + l).join('\n')
@@ -190,16 +231,16 @@
   function messageRelance(projet, pers) {
     const p = projet || {}, q = pers || {}, qui = String(q.nom || '').trim(), pourParent = q.parent && qui;
     return ['Bonjour ' + salutation(q) + ',', '',
-      'Nous n’avons pas encore reçu ' + (pourParent ? 'la confirmation de ' + qui : 'votre confirmation') + ' ' + pourLeProjet(p) + (leJour(p.date_debut) ? ', ' + leJour(p.date_debut) : '') + '.', '',
+      'Nous n’avons pas encore reçu ' + (pourParent ? 'la confirmation de ' + qui : 'votre confirmation') + ' ' + pourLeProjet(p) + (periode(p) ? ', ' + periode(p) : '') + '.', '',
       '👉 *Un seul clic suffit :* ' + LIEN_CONFIRMER + (q.jeton || ''), '',
       'Merci beaucoup, et à très bientôt ! 🙏', '_L’équipe Maître Akesse Model Management_'].join('\n');
   }
   function messageRappel(projet, pers) {
     const p = projet || {}, q = pers || {}, qui = String(q.nom || '').trim(), pourParent = q.parent && qui;
-    const heure = heureFr(p.heure_convocation), lieu = [p.lieu, p.ville].filter(Boolean).join(', ');
+    const heure = heureFr(p.heure_convocation), lieu = lieuProjet(p);
     const attendu = accorde(qui, 'attendue', 'attendu', 'attendu(e)');
     return ['Bonjour ' + salutation(q) + ',', '',
-      '🔔 *Rappel :* nous vous confirmons ' + leProjet(p) + (leJour(p.date_debut) ? ', *' + leJour(p.date_debut) + '*' : '') + '.'
+      '🔔 *Rappel :* nous vous confirmons ' + leProjet(p) + (periode(p) ? ', *' + periode(p) + '*' : '') + '.'
         + (heure ? ' ' + (pourParent ? qui + ' est ' : 'Vous êtes ') + attendu + ' à *' + heure + ' précises*.' : '')
         + (lieu ? '\n📍 ' + lieu : ''), '',
       'Nous comptons sur ' + (pourParent ? 'sa présence' : 'votre présence') + '. À très bientôt ! ✨']
@@ -223,11 +264,11 @@
       '✨ *MAÎTRE AKESSE MODEL MANAGEMENT* ✨', '',
       'Bonjour ' + salutation(q) + ',', '',
       sorte === 'place_libre' ? '🔔 *Une place vient de se libérer* ' + au + ' !' : '🎬 *Places limitées* ' + au + ' !', '',
-      '📅 *' + dateLongue(p.date_debut) + '*'
+      '📅 *' + dateProjet(p) + '*'
     ];
     const heure = heureFr(p.heure_evenement);
     if (heure) lignes.push('🎬 Début : ' + heure);
-    const lieu = [p.lieu, p.ville].filter(Boolean).join(', ');
+    const lieu = lieuProjet(p);
     if (lieu) lignes.push('📍 ' + lieu);
     lignes.push('');
     if (sorte !== 'place_libre' && n) lignes.push('Seulement ' + n + ' place' + (n > 1 ? 's' : '') + ' pour les ' + (homme ? 'hommes' : 'femmes') + '. *Premier arrivé, premier servi !*');
@@ -245,7 +286,7 @@
       .replace(/(^|[\s(«])_([^_\n]+)_(?=$|[\s.,;:!?)»])/gm, '$1$2');
   }
 
-  const outils = { heureRappelAvant, messageConvocation, messageRelance, messageRappel, messagePlaces, LIEN_PLACES, sansMarquesWhatsApp, heureRappel, dateLongue, MODELE_CONVOCATION, MODELE_SELECTION, EMAIL_AGENCE, LIEN_CONFIRMER };
+  const outils = { periode, lieuxDuProjet, auxLieux, heureRappelAvant, messageConvocation, messageRelance, messageRappel, messagePlaces, LIEN_PLACES, sansMarquesWhatsApp, heureRappel, dateLongue, MODELE_CONVOCATION, MODELE_SELECTION, EMAIL_AGENCE, LIEN_CONFIRMER };
   if (typeof module !== 'undefined' && module.exports) module.exports = outils;
   else Object.assign(racine, outils);
 })(typeof window !== 'undefined' ? window : globalThis);

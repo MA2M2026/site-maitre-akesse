@@ -25,7 +25,7 @@ window.demarrerPhotosMisesDeCote = function () {
     var url = p.url_miniature || p.url;
     return '<div class="tri-vignette">' +
       '<a href="' + echapperHtml(p.url_moyenne || p.url) + '" target="_blank" rel="noopener"><img src="' + echapperHtml(url) + '" alt="Photo de ' + echapperHtml(nom) + '" loading="lazy"></a>' +
-      '<div class="tri-nom">' + echapperHtml(nom) + (p.numero ? ' — photo n° ' + Number(p.numero) : '') + '</div>' +
+      '<div class="tri-nom">' + echapperHtml(nom) + (p.numero ? ', photo n° ' + Number(p.numero) : '') + '</div>' +
       '<div class="tri-actions">' + boutons.map(function (b) {
         return '<button class="btn tri-btn" type="button" data-id="' + echapperHtml(p.id) + '" data-statut="' + b[0] + '">' + b[1] + '</button>';
       }).join('') + '</div></div>';
