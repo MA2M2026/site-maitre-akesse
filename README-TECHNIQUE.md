@@ -417,6 +417,17 @@ qui s'ouvrent ensuite) et échoue si un nom de mannequin est sans photo.
   `initialesNom` (js/app.js, aussi pour l'Administration).
 - Étape suivante prévue : notifications sur le téléphone.
 
+## 💳 Paiement à l'avance (26/10/2026, décision de la propriétaire)
+- Jusqu'à **3 mois à l'avance, au même prix** (pas de réduction). « Mes paiements »
+  (js/mes-paiements.js, aussi dans l'application : app/mes-paiements.html) : quand rien n'est à
+  payer, carte « Payer à l'avance » (`#avance`) : 1 à 3 mois, un seul paiement Wave du montant
+  total (lien des Paramètres pour ce montant via `lien_paiement`, sinon le lien de secours au bon
+  montant), puis « J'ai payé » déclare chaque mois avec le même numéro
+  (`mensualite_declarer_avec_numero`, qui accepte déjà jusqu'au mois en cours + 3). L'agence
+  voit un paiement orange par mois et les valide comme d'habitude.
+- Onglet Paiements de l'application : « Payer avec Wave » seulement s'il y a un mois à payer ;
+  à jour : « Rien à payer pour le moment », « Payer à l'avance » et « Mes mois et mes reçus ».
+
 ## ⬇️ Bande « Télécharger l'application » (25/10/2026, demande de la propriétaire)
 - Une seule bande, partagée par le **site**, l'**Administration** et l'**application MA2M
   Mannequin** : `bandeInstallation` (js/app.js) + css/installation.css (chargé par toutes les pages

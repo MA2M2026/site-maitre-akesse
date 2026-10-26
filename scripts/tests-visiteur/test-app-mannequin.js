@@ -167,8 +167,12 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
     d.rpc.mes_mensualites.mois = avantMois.map((x) => (x.etat === 'a_payer' ? Object.assign({}, x, { etat: 'paye' }) : x));
     await p.reload(); await p.waitForSelector('.ap-chiffre', { timeout: 15000 });
     const aJour = await p.textContent('#ap-ecran');
-    ok(/9\s*\/\s*24/.test(aJour) && /À jour/.test(aJour) && /Rien à payer pour le moment/.test(aJour) && !/Payer avec Wave/.test(aJour) && (await p.getAttribute('.ap-rien-a-payer + .ap-btns a', 'href')) === '/app/mes-paiements.html',
-      n + 'Mes paiements à jour : « Rien à payer pour le moment », pas de bouton Wave, « Mes mois et mes reçus »');
+    ok(/9\s*\/\s*24/.test(aJour) && /À jour/.test(aJour) && /Rien à payer pour le moment/.test(aJour) && !/Payer avec Wave/.test(aJour) && (await p.getAttribute('.ap-rien-a-payer + .ap-btns a.rouge', 'href')) === '/app/mes-paiements.html#avance' && /Mes mois et mes reçus/.test(aJour),
+      n + 'Mes paiements à jour : « Rien à payer pour le moment », pas de bouton Wave, « Payer à l’avance » et « Mes mois et mes reçus »');
+    await p.click('.ap-rien-a-payer + .ap-btns a.rouge'); await p.waitForSelector('#avance', { timeout: 15000 });
+    ok(/\/app\/mes-paiements\.html#avance$/.test(p.url()) && /Payer à l’avance/.test(await p.textContent('#avance')), n + '« Payer à l’avance » ouvre la carte du paiement à l’avance, dans l’application');
+    await capture('4c-paiement-avance');
+    await p.goto(BASE + '/app/#paiements'); await p.waitForSelector('.ap-chiffre', { timeout: 15000 });
     d.rpc.mes_mensualites.mois = avantMois;
     await p.reload(); await p.waitForSelector('.ap-chiffre', { timeout: 15000 });
     // 8. Alertes
