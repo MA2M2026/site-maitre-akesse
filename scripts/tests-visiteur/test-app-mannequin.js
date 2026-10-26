@@ -32,8 +32,8 @@ function donnees() {
       casting_projets: [{ nom: 'CASTING CACAO', actif: true, date_casting: jour(20), lieu: 'Studio MA2M', ordre_affichage: 0 }],
       // boîte de réception (supabase-app-messages.sql) : un message non lu de l'agence, un déjà lu
       app_messages: [
-        { id: 'msg1', sorte: 'casting', titre: '📣 Casting Kouroukan', texte: 'Information casting : Casting Kouroukan\n📅 Samedi\nVeuillez vous préparer.', image: '/scripts/tests-visiteur/medias/photo1.jpg', fiche: 'https://exemple.ci/fiche.pdf', lien: null, cree_le: new Date().toISOString(), lu_le: null },
-        { id: 'msg2', sorte: 'paiement', titre: '✅ Paiement confirmé : mensualité de septembre', texte: '10 000 FCFA reçus.', image: null, fiche: null, lien: '/app/#paiements', cree_le: '2026-10-01T10:00:00Z', lu_le: '2026-10-01T11:00:00Z' }]
+        { id: 'msg1', user_id: 'admin-1', sorte: 'casting', titre: '📣 Casting Kouroukan', texte: 'Information casting : Casting Kouroukan\n📅 Samedi\nVeuillez vous préparer.', image: '/scripts/tests-visiteur/medias/photo1.jpg', fiche: 'https://exemple.ci/fiche.pdf', lien: null, cree_le: new Date().toISOString(), lu_le: null },
+        { id: 'msg2', user_id: 'admin-1', sorte: 'paiement', titre: '✅ Paiement confirmé : mensualité de septembre', texte: '10 000 FCFA reçus.', image: null, fiche: null, lien: '/app/#paiements', cree_le: '2026-10-01T10:00:00Z', lu_le: '2026-10-01T11:00:00Z' }]
     },
     rpc: {
       app_mes_evenements: () => evenements,
