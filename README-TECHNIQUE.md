@@ -3683,3 +3683,9 @@ axe (accessibilité) sur les 28 pages publiques, SonarCloud. Chantiers menés :
   `<aside>` (css/style.css : `body:has(.whatsapp-flottant)`). Essai `test-accessibilite-axe.js`
   (axe, WCAG 2.2 AA + bonnes pratiques, 28 pages, téléphone).
 - Reste à faire par la propriétaire : inscription sur hstspreload.org (l'en-tête est déjà prêt).
+- **Inscription hstspreload.org (26/10/2026)** : l'adresse sans « www » doit répondre avec
+  `includeSubDomains; preload`. La redirection « domaine nu → www » de Vercel (réglage Domains)
+  n'envoie que `max-age` : elle est remplacée par la première règle de `redirects` de vercel.json
+  (hôte `maitreakessemodelmanagement.com` → `https://www.…/:chemin*`, permanente), qui reçoit
+  l'en-tête HSTS complet. Dans Vercel › Settings › Domains, le domaine nu doit être relié à
+  Production **sans** redirection.

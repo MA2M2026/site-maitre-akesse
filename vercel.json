@@ -12,6 +12,7 @@
     ]
   },
   "redirects": [
+    { "source": "/:chemin*", "has": [{ "type": "host", "value": "maitreakessemodelmanagement.com" }], "destination": "https://www.maitreakessemodelmanagement.com/:chemin*", "permanent": true },
     { "source": "/espace-mannequin", "destination": "https://mannequin.maitreakessemodelmanagement.com/app/espace-mannequin.html", "permanent": false },
     { "source": "/espace-mannequin.html", "destination": "https://mannequin.maitreakessemodelmanagement.com/app/espace-mannequin.html", "permanent": false },
     { "source": "/mes-paiements", "destination": "https://mannequin.maitreakessemodelmanagement.com/app/mes-paiements.html", "permanent": false },
