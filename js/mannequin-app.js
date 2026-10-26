@@ -1,6 +1,6 @@
 // Application MA2M Mannequin (/app/, 25/10/2026, maquette validée par la propriétaire) : l'espace
 // de chaque mannequin, installable sur le téléphone par un simple lien (sans Play Store ni App
-// Store). Cinq onglets en bas : Accueil, Mes événements, Mon profil, Mes paiements, Alertes.
+// Store). Cinq onglets en bas : Accueil, Mes événements, Mon profil, Mes paiements, Messages.
 // Étape 1 : installation (bande « Télécharger l'application », partagée : js/app.js), connexion (la même que l'Espace mannequin : connexionMannequin, js/app.js),
 // convocations envoyées par l'agence (app_mes_evenements, supabase-app-mannequin.sql) avec
 // « Je confirme » / « Je suis absente » (convocation_repondre) et passages du défilé
@@ -77,14 +77,15 @@
   }
   const donnees = (x) => (x.status === 'fulfilled' && x.value && !x.value.error ? x.value.data : null);
   async function charger(uid) {
-    const [profil, photos, projets, evenements, mensualites, cachets, castings] = await Promise.allSettled([
+    const [profil, photos, projets, evenements, mensualites, cachets, castings, messages] = await Promise.allSettled([
       lireProfil(uid).then((data) => ({ data })),
       sb.from('model_photos').select('id, url, url_miniature, url_petite, principale, photo_couverture, tri_statut, created_at').eq('model_id', uid),
       sb.from('model_projects').select('id').eq('model_id', uid),
       sb.rpc('app_mes_evenements'),
       sb.rpc('mes_mensualites'),
       sb.rpc('mes_cachets'),
-      sb.from('casting_projets').select('nom, date_casting, lieu').eq('actif', true).order('ordre_affichage', { ascending: true, nullsFirst: false }).limit(3)
+      sb.from('casting_projets').select('nom, date_casting, lieu').eq('actif', true).order('ordre_affichage', { ascending: true, nullsFirst: false }).limit(3),
+      lireMessages()
     ]);
     if (profil.status === 'rejected') throw profil.reason;  // (connexion coupée : « Réessayer »)
     const p = donnees(profil);
@@ -94,9 +95,14 @@
       uid, profil: p, photos: lesPhotos, nbProjets,
       analyse: p ? ma2mAnalyserProfil(p, lesPhotos, nbProjets, p.avecSupp) : null,  // (js/analyse-profil.js)
       evenements: donnees(evenements) || [], evenementsActifs: !!donnees(evenements),
-      mensualites: donnees(mensualites), cachets: donnees(cachets) || [], castings: donnees(castings) || []
+      mensualites: donnees(mensualites), cachets: donnees(cachets) || [], castings: donnees(castings) || [],
+      messages: donnees(messages) || []
     };
   }
+  // boîte de réception (3e voie, 26/10/2026 : tout ce que l'agence envoie par WhatsApp et e-mail
+  // arrive aussi ici ; supabase-app-messages.sql) : les 60 derniers messages
+  const lireMessages = () => sb.from('app_messages').select('id, sorte, titre, texte, image, fiche, lien, cree_le, lu_le').order('cree_le', { ascending: false }).limit(60);
+  const nonLus = () => etat.messages.filter((x) => !x.lu_le);
   const aVenir = () => etat.evenements.filter((e) => !e.passe);
   const aRepondre = () => aVenir().filter((e) => !e.reponse);
   const moisCourant = () => {
@@ -181,7 +187,9 @@
   function ecranAccueil() {
     const prochain = aVenir()[0];
     const m = etat.mensualites;
+    const nouveaux = nonLus();
     return '<h1>Bonjour <em>' + esc(prenomAffiche(etat.profil.full_name)) + '</em></h1>' +
+      (nouveaux.length ? '<a class="ap-carte ap-rappel ap-nouveau-message" href="#alertes">✉️ <span><b>' + (nouveaux.length > 1 ? nouveaux.length + ' nouveaux messages' : 'Nouveau message') + '</b> de l’agence : ' + esc(nouveaux[0].titre) + '</span> ›</a>' : '') +
       '<h2 class="ap-titre-sec">Prochain rendez-vous</h2>' +
       (prochain ? carteEvenement(prochain, 'sombre') : '<div class="ap-carte doux">Aucune convocation pour le moment. Dès que l’agence vous convoque, elle apparaît ici.</div>') +
       '<nav class="ap-raccourcis" aria-label="Raccourcis"><a href="#evenements" data-ma-carte><span>🎫</span>Ma carte</a><a href="/app/espace-mannequin.html"><span>🗂️</span>Ma compcard</a><a href="/app/espace-mannequin.html"><span>📄</span>Mon CV</a></nav>' +
@@ -251,25 +259,66 @@
         '<div class="ap-droite"><b>' + fcfa(c.montant) + '</b><br><span class="ap-pastille vert">Payé</span></div></div>').join('') + '</div>'
         : '<div class="ap-carte doux">Aucun cachet payé pour le moment.</div>');
   }
+  // un message de l'agence : titre, date, texte, photo, fiche jointe, page à ouvrir
+  const ICONES_MESSAGE = { casting: '📣', defile: '👠', remerciement: '🙏', selection: '🎉', convocation: '📅', rappel: '⏰', places: '🎟️', mensualite: '💳', paiement: '✅', cachet: '💰' };
+  const quandMessage = (d) => new Date(d).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Abidjan' });
+  function carteMessage(x) {
+    const ic = ICONES_MESSAGE[x.sorte] || '✉️';
+    return '<details class="ap-message-agence' + (x.nouveau ? ' nouveau' : '') + '"' + (x.nouveau ? ' open' : '') + '><summary><span class="ap-alerte-ic bleu" aria-hidden="true">' + ic + '</span>' +
+      '<span><b>' + esc(x.titre.replace(/^\p{Extended_Pictographic}\uFE0F?\s*/u, '')) + '</b><br><span class="doux">' + esc(quandMessage(x.cree_le)) + (x.nouveau ? ' · <em>nouveau</em>' : '') + '</span></span></summary>' +
+      (x.texte ? '<p class="ap-message-texte">' + esc(x.texte) + '</p>' : '') +
+      (x.image ? '<img class="ap-message-image" src="' + esc(x.image) + '" alt="" loading="lazy">' : '') +
+      (x.fiche || x.lien ? '<div class="ap-btns">' + (x.fiche ? '<a class="ap-btn" href="' + esc(x.fiche) + '" target="_blank" rel="noopener">📄 Voir la fiche</a>' : '') +
+        (x.lien ? '<a class="ap-btn rouge" href="' + esc(x.lien) + '">Ouvrir</a>' : '') + '</div>' : '') + '</details>';
+  }
+  // proposer les notifications sur ce téléphone (pas encore acceptées, et possibles ici)
+  const proposerNotifications = () => notificationsPossibles() && Notification.permission === 'default';  // (js/app.js)
   function ecranAlertes() {
     const l = alertes();
-    return l.length ? l.map((x) => '<' + (x.lien ? 'a href="' + x.lien + '"' : 'div') + ' class="ap-alerte"><span class="ap-alerte-ic ' + x.fond + '">' + x.ic + '</span><span><b>' + esc(x.titre) + '</b><br>' + esc(x.texte) + '</span></' + (x.lien ? 'a' : 'div') + '>').join('')
-      : '<div class="ap-carte doux">Rien de nouveau : tout est à jour. 👌</div>';
+    return (proposerNotifications() ? '<div class="ap-carte ap-notif"><b>🔔 Être prévenue sur mon téléphone</b><span class="doux">Recevez une notification à chaque message de l’agence, même application fermée.</span>' +
+        '<button type="button" class="ap-btn rouge" data-notifications>Activer les notifications</button></div>' : '') +
+      (l.length ? '<h2 class="ap-titre-sec">À faire</h2>' + l.map((x) => '<' + (x.lien ? 'a href="' + x.lien + '"' : 'div') + ' class="ap-alerte"><span class="ap-alerte-ic ' + x.fond + '">' + x.ic + '</span><span><b>' + esc(x.titre) + '</b><br>' + esc(x.texte) + '</span></' + (x.lien ? 'a' : 'div') + '>').join('') : '') +
+      '<h2 class="ap-titre-sec">Messages de l’agence</h2>' +
+      (etat.messages.length ? etat.messages.map(carteMessage).join('') : '<div class="ap-carte doux">Aucun message pour le moment. Les informations de l’agence arriveront ici.</div>');
+  }
+  // messages vus : marqués lus (ils gardent « nouveau » le temps de cette visite de l'onglet)
+  function marquerLus() {
+    const ids = nonLus().map((x) => x.id);
+    if (!ids.length) return;
+    nonLus().forEach((x) => { x.lu_le = new Date().toISOString(); x.nouveau = true; });
+    sb.rpc('app_messages_lus', { p_ids: ids }).then(() => null, () => null);
+  }
+  async function activerNotifications(bouton) {
+    bouton.disabled = true;
+    try {
+      const j = await abonnementPush(await navigator.serviceWorker.ready);  // (js/app.js)
+      const { error } = await sb.rpc('app_push_abonner', { p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth });
+      if (error) throw error;
+      message('C’est activé : vous serez prévenue à chaque message de l’agence.');
+    } catch (e) {
+      message(Notification.permission === 'denied' ? 'Notifications refusées : autorisez-les dans les réglages du téléphone.' : 'L’activation n’a pas abouti : réessayez.');
+    }
+    afficher();
   }
   const ECRANS = { accueil: ecranAccueil, evenements: ecranEvenements, profil: ecranProfil, paiements: ecranPaiements, alertes: ecranAlertes };
-  const TITRES = { evenements: 'Mes événements', profil: 'Mon profil', paiements: 'Mes paiements', alertes: 'Alertes' };
+  const TITRES = { evenements: 'Mes événements', profil: 'Mon profil', paiements: 'Mes paiements', alertes: 'Messages' };
 
   function afficher() {
     if (!etat) return;
-    const o = ongletCourant(), nbAlertes = alertes().length, nbRepondre = aRepondre().length;
+    const o = ongletCourant();
+    if (o === 'alertes') marquerLus();
+    else etat.messages.forEach((x) => { delete x.nouveau; });
+    const nbAlertes = alertes().length + nonLus().length, nbRepondre = aRepondre().length;
     const tete = o === 'accueil' ? '<img class="ap-logo" src="/assets/logo-header-clair.png" alt="Maître Akesse Model Management" width="150" height="45">' : '<h1 class="ap-h-onglet">' + TITRES[o] + '</h1>';
-    racine.innerHTML = '<header class="ap-tete">' + tete + (o === 'alertes' ? '' : '<a class="ap-cloche" href="#alertes" aria-label="Alertes (' + nbAlertes + ')">🔔' + (nbAlertes ? '<b>' + nbAlertes + '</b>' : '') + '</a>') + '</header>' +
+    racine.innerHTML = '<header class="ap-tete">' + tete + (o === 'alertes' ? '' : '<a class="ap-cloche" href="#alertes" aria-label="Messages et alertes (' + nbAlertes + ')">🔔' + (nbAlertes ? '<b>' + nbAlertes + '</b>' : '') + '</a>') + '</header>' +
       '<main class="ap-ecran" id="ap-ecran">' + ECRANS[o]() + '</main>' + window.MA2M_APP.nav(o, { evenements: nbRepondre, alertes: nbAlertes }, true);
     document.title = (o === 'accueil' ? '' : TITRES[o] + ' · ') + 'MA2M Mannequin';
   }
 
   // ---------- actions ----------
   racine.addEventListener('click', async (e) => {
+    const notif = e.target.closest('[data-notifications]');
+    if (notif) { activerNotifications(notif); return; }
     const rep = e.target.closest('[data-repondre]'), per = e.target.closest('[data-periode]'), pas = e.target.closest('[data-passages]'), tout = e.target.closest('[data-programme]');
     if (tout) { programmeOuvert[tout.dataset.programme] = !programmeOuvert[tout.dataset.programme]; afficher(); return; }
     if (per) { periode = per.dataset.periode; afficher(); return; }
@@ -302,6 +351,21 @@
     afficher();
   });
   addEventListener('hashchange', () => { afficher(); scrollTo(0, 0); });
+  // de retour dans l'application (notification touchée, autre application) : les nouveaux messages
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden || !etat) return;
+    lireMessages().then(({ data }) => {
+      if (!data || !etat) return;
+      const vus = new Set(etat.messages.filter((x) => x.nouveau).map((x) => x.id));
+      etat.messages = data.map((x) => (vus.has(x.id) ? Object.assign(x, { nouveau: true }) : x));
+      afficher();
+    }, () => null);
+  });
+  // notification touchée alors que l'application est déjà ouverte (service-worker.js) : sa page
+  if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message', (e) => {
+    const url = e.data && e.data.ma2mOuvrir;
+    if (typeof url === 'string' && url.indexOf('/app/') === 0) location.href = url;
+  });
 
   // ---------- démarrage ----------
   // (session illisible, ex. stockage du navigateur bloqué : l'écran de connexion)

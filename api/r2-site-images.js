@@ -22,7 +22,9 @@ const { debutR2, repondreR2, TYPES_IMAGES, traiterNoteIntegration } = require('.
 // déjà envoyées restent dans le stockage.)
 // 'couverture' : vidéo de couverture en haut de toutes les pages (04/10/2026).
 // 'video-accueil' : grand espace vidéo dans le corps de la page d'accueil (05/10/2026).
-const CATEGORIES_AUTORISEES = ['actualites', 'evenements', 'partenaires', 'responsable', 'couverture', 'video-accueil'];
+const CATEGORIES_AUTORISEES = ['actualites', 'evenements', 'partenaires', 'responsable', 'couverture', 'video-accueil', 'infos'];
+// « Informations agence » (26/10/2026) : la fiche jointe peut aussi être un PDF
+const CATEGORIES_PDF = ['infos'];
 const CATEGORIES_VIDEO = ['couverture', 'video-accueil'];
 
 // Formats d'image acceptés : TYPES_IMAGES (api/_r2.js).
@@ -71,7 +73,8 @@ module.exports = async function handler(req, res) {
   }
   const typeFichier = contentType || 'image/jpeg';
   const videoPermise = CATEGORIES_VIDEO.indexOf(categorie) !== -1 && typeof typeFichier === 'string' && TYPES_VIDEO.test(typeFichier);
-  if (typeof typeFichier !== 'string' || (!TYPES_IMAGES.test(typeFichier) && !videoPermise)) {
+  const pdfPermis = CATEGORIES_PDF.indexOf(categorie) !== -1 && typeFichier === 'application/pdf';
+  if (typeof typeFichier !== 'string' || (!TYPES_IMAGES.test(typeFichier) && !videoPermise && !pdfPermis)) {
     res.status(400).json({ error: CATEGORIES_VIDEO.indexOf(categorie) !== -1 ? 'Format non accepté (vidéo MP4 ou WebM, ou photo).' : 'Format de fichier non accepté (photos JPEG, PNG, WebP, GIF, HEIC uniquement).' });
     return;
   }

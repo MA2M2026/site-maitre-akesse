@@ -1,7 +1,8 @@
 // Service worker UNIQUE du site (scope « / »). Deux rôles :
 // 1) rendre le site installable sur l'écran d'accueil (exigence de
 //    Chrome/Android) — rien n'est mis en cache, le site reste toujours à jour ;
-// 2) recevoir et afficher les notifications push de l'espace admin (Grand 3).
+// 2) recevoir et afficher les notifications push de l'espace admin (Grand 3) et, depuis le
+//    26/10/2026, celles de l'application des mannequins (app/sw.js le charge aussi).
 // Il ne doit exister qu'UN service worker pour « / » : avant le 04/10/2026, un
 // second (sw-notifications.js) prenait la même place et les deux se
 // remplaçaient à chaque visite — les notifications arrivaient alors sur
@@ -21,7 +22,8 @@ self.addEventListener('push', (event) => {
   const titre = donnees.titre || 'Maître Akesse Model Management';
   const options = {
     body: donnees.texte || '',
-    icon: '/icons/icon-192.png',
+    // (icône de l'application concernée : Administration ou MA2M Mannequin)
+    icon: /^\/icons\/[a-z0-9-]+\.png$/.test(donnees.icone || '') ? donnees.icone : '/icons/icon-192.png',
     badge: '/icons/icon-192.png',
     vibrate: [200, 100, 200],
     tag: donnees.tag || undefined,
@@ -39,13 +41,16 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const url = (event.notification.data && event.notification.data.url) || '/admin/';
+  // (application des mannequins : sa fenêtre, sinon celle de l'Administration)
+  const dossier = url.indexOf('/app/') === 0 ? '/app/' : '/admin/';
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((listeClients) => {
       for (const client of listeClients) {
-        if (client.url.includes('/admin/') && 'focus' in client) {
+        if (client.url.includes(dossier) && 'focus' in client) {
           // (l'onglet de l'Administration dépend de son propre service de fond, /admin/sw.js : il ne
-          // peut pas être conduit d'ici ; on lui demande d'ouvrir la fiche — js/admin/notifications.js)
+          // peut pas être conduit d'ici ; on lui demande d'ouvrir la fiche — js/admin/notifications.js ;
+          // application des mannequins : js/mannequin-app.js)
           client.postMessage({ ma2mOuvrir: url });
           return client.focus();
         }

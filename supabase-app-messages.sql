@@ -12,6 +12,8 @@
 --      (places_invitations), appel et relances des mensualités (mensualites_appels), paiement
 --      confirmé ou non retrouvé (paiements_mannequins), cachet payé (cachets_mannequins).
 --      Une seule fois chacun (colonne « cle »), et jamais au point de gêner l'envoi d'origine.
+--   5) infos_agence : les « Informations agence » (casting, défilé, remerciement, information)
+--      écrites dans l'Administration, avec qui les reçoit et où en sont WhatsApp et e-mail.
 --   4) app_push_abonnements : les téléphones des mannequins qui acceptent les notifications ;
 --      chaque nouveau message déclenche la notification (même déclencheur que celles de
 --      l'Administration : notifier_push_notification, supabase-extension.sql, Extension 107).
@@ -66,7 +68,7 @@ begin
     select id into u from auth.users where lower(email) = lower(trim(v)) limit 1;
     return u;
   end if;
-  if v !~* '^[0-9a-f-]{36}$' then return null; end if;
+  if v is null or v !~* '^[0-9a-f-]{36}$' then return null; end if;
   if t = 'm' then select id into u from auth.users where id = v::uuid;
   elsif t = 'r' then select user_id into u from agence_mannequins where id = v::uuid;
   elsif t = 'c' then select a.user_id into u from contacts_externes c join agence_mannequins a on a.id = c.mannequin_id where c.id = v::uuid;
@@ -163,7 +165,8 @@ declare
 begin
   if new.statut = 'exclu' or not ((old.envoye_le is null and new.envoye_le is not null) or (old.parent_envoye_le is null and new.parent_envoye_le is not null)) then return new; end if;
   select * into a from agenda_projets where id = new.projet_id;
-  perform app_message_auto((select id from auth.users where id = new.model_id), 'places:' || new.id, 'places',
+  -- (profil du site, mannequin du registre ou personne du carnet rattachée au registre)
+  perform app_message_auto(coalesce(app_compte_de('m:' || new.model_id), app_compte_de('r:' || new.mannequin_id), app_compte_de('c:' || new.contact_id)), 'places:' || new.id, 'places',
     '🎟️ Places limitées : ' || coalesce(a.titre, 'nouveau projet'),
     'Premières arrivées, premières servies : réservez votre place avec votre lien personnel.', '/places?c=' || new.jeton);
   return new;
@@ -264,6 +267,34 @@ grant execute on function app_push_abonner(text, text, text) to authenticated;
 drop trigger if exists trg_notif_app_messages on app_messages;
 create trigger trg_notif_app_messages after insert on app_messages
   for each row execute function notifier_push_notification();
+
+-- ---------- 5) Informations agence (Administration › Projets et convocations) ----------
+create table if not exists infos_agence (
+  id uuid primary key default gen_random_uuid(),
+  sorte text not null check (sorte in ('casting', 'defile', 'remerciement', 'info')),
+  titre text not null check (length(trim(titre)) between 1 and 160),
+  date_info date,
+  heure text check (heure is null or length(heure) <= 20),
+  lieu text check (lieu is null or length(lieu) <= 200),
+  client text check (client is null or length(client) <= 160),
+  projet_id uuid references agenda_projets(id) on delete set null,
+  image text check (image is null or image ~ '^https://'),
+  fiche text check (fiche is null or fiche ~ '^https://'),
+  message text not null check (length(message) between 1 and 4000),          -- WhatsApp / e-mail, à la mannequin
+  message_parent text check (message_parent is null or length(message_parent) <= 4000),  -- … au parent d'une mineure
+  message_app text check (message_app is null or length(message_app) <= 4000),          -- dans l'application
+  destinataires text[] not null default '{}',   -- clés m:/r:/c: des écrans de l'Administration
+  faits_wa text[] not null default '{}',
+  faits_email text[] not null default '{}',
+  dans_app int not null default 0,
+  cree_le timestamptz not null default now(),
+  cree_par uuid references auth.users(id) default auth.uid()
+);
+create index if not exists infos_agence_recentes on infos_agence (cree_le desc);
+alter table infos_agence enable row level security;
+revoke all on infos_agence from anon;
+drop policy if exists "Informations agence : gestion du site" on infos_agence;
+create policy "Informations agence : gestion du site" on infos_agence for all using (portail_peut('site')) with check (portail_peut('site'));
 
 NOTIFY pgrst, 'reload schema';
 

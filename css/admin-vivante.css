@@ -1016,3 +1016,13 @@ a.podium-place:hover b, a.classement-ligne:hover .classement-nom { text-decorati
 .ca-photo input { position: absolute; inset: 0; opacity: 0; width: 100%; cursor: pointer; }
 .vis.df-vis { border-radius: 50%; }
 .df-synthese li.absente span { color: #b3261e; }
+
+/* ---------- Informations agence (js/admin/site-infos.js, 26/10/2026) ---------- */
+.if-sortes { display: flex; flex-wrap: wrap; gap: 8px; border: 0; padding: 0; margin: 0; }
+.if-sortes legend { font-weight: 600; margin-bottom: 6px; }
+.if-sorte { display: inline-flex; align-items: center; gap: 6px; padding: 10px 14px; border-radius: 14px; background: var(--av-creux); cursor: pointer; font-weight: 500; }
+.if-sorte:has(input:checked) { background: var(--av-encre); color: var(--av-papier); }
+.if-image { display: block; max-width: 280px; width: 100%; height: auto; border-radius: 14px; margin: 8px 0; }
+.if-message { white-space: pre-wrap; font: inherit; background: var(--av-creux); padding: 12px; border-radius: 12px; }
+.if-liste { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.if-liste li { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }

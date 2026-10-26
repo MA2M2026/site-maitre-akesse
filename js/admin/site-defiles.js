@@ -23,28 +23,9 @@
     return jours;
   }
   const jourLong = (j) => new Date(j + 'T12:00:00Z').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
-  // sexe d'un profil du site (même règle que places_sexe, supabase-places.sql)
-  const sexeProfil = (m) => m.category === 'homme' || (m.category !== 'femme' && m.civilite === 'Monsieur') ? 'homme' : 'femme';
   // personne du vivier : sa clé (profil du site, registre, carnet)
   const cleDe = (v) => v.model_id ? 'm:' + v.model_id : v.mannequin_id ? 'r:' + v.mannequin_id : 'c:' + v.contact_id;
   let ecran = null;  // { projet, passages, vivier, affectations, personnes: { cle: { nom, photo, sexe, origine } } }
-
-  // ---------- Toutes les personnes qu'on peut choisir ----------
-  async function personnesPossibles() {
-    const [profils, registre, carnet] = await Promise.all([
-      P.bd(sb.from('model_profiles').select('id, full_name, category, civilite').eq('published', true).order('full_name')),
-      P.bd(sb.from('agence_mannequins').select('id, full_name, genre, user_id').eq('statut', 'actif').order('full_name')).catch(() => []),
-      P.bd(sb.from('contacts_externes').select('id, civilite, nom, mannequin_id').order('nom')).catch(() => [])
-    ]);
-    const photos = await P.photosCouverture(profils.map((m) => m.id)).catch(() => ({}));
-    const liste = {};
-    profils.forEach((m) => { liste['m:' + m.id] = { cle: 'm:' + m.id, model_id: m.id, nom: m.full_name || '?', photo: photos[m.id] || '', sexe: sexeProfil(m), origine: 'agence' }; });
-    registre.filter((r) => !r.user_id).forEach((r) => { liste['r:' + r.id] = { cle: 'r:' + r.id, mannequin_id: r.id, nom: r.full_name || '?', photo: '', sexe: r.genre === 'homme' ? 'homme' : 'femme', origine: 'agence' }; });
-    liste.carnetRegistre = {};  // contact du carnet → mannequin du registre (réponses aux convocations)
-    carnet.filter((c) => c.mannequin_id).forEach((c) => { liste.carnetRegistre[c.id] = c.mannequin_id; });
-    carnet.filter((c) => !c.mannequin_id).forEach((c) => { liste['c:' + c.id] = { cle: 'c:' + c.id, contact_id: c.id, nom: [c.civilite, c.nom].filter(Boolean).join(' ') || '?', photo: '', sexe: c.civilite === 'Monsieur' ? 'homme' : 'femme', origine: 'exterieure' }; });
-    return liste;
-  }
 
   // ---------- Liste des défilés ----------
   async function liste() {
@@ -100,7 +81,7 @@
       P.bd(sb.from('defile_vivier').select('*').eq('projet_id', id))
     ]);
     const affectations = passages.length ? await P.parPaquets(passages.map((x) => x.id), 100, (l) => P.bd(sb.from('defile_affectations').select('*').in('passage_id', l))) : [];
-    const [personnes, reponses] = await Promise.all([personnesPossibles(),
+    const [personnes, reponses] = await Promise.all([P.personnesPossibles(),
       P.bd(sb.from('convocation_participants').select('model_id, contact_id, reponse').eq('projet_id', id)).catch(() => [])]);
     // qui a répondu « absente » à la convocation (à remplacer)
     const absentes = {};

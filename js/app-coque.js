@@ -5,7 +5,7 @@
 // ces pages, qui y affichent le même menu (<nav data-app-nav="profil">).
 (function () {
   'use strict';
-  const ONGLETS = [['accueil', 'Accueil', '🏠'], ['evenements', 'Événements', '📅'], ['profil', 'Profil', '👤'], ['paiements', 'Paiements', '💳'], ['alertes', 'Alertes', '🔔']];
+  const ONGLETS = [['accueil', 'Accueil', '🏠'], ['evenements', 'Événements', '📅'], ['profil', 'Profil', '👤'], ['paiements', 'Paiements', '💳'], ['alertes', 'Messages', '✉️']];
   // page du site → sa version dans l'application
   const DANS_APP = {
     '/': '/app/', '/index.html': '/app/', '/index': '/app/',

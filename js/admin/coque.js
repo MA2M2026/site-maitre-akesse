@@ -60,6 +60,29 @@
     lignes.forEach((p) => { parId[p.model_id] = urlGrille(p, true); });
     return parId;
   };
+  // ---------- Toutes les personnes qu'on peut choisir (Programmation défilé, Informations agence) ----------
+  // clé « m:<profil du site> », « r:<registre sans compte> », « c:<carnet> » → { nom, photo, sexe, origine } ;
+  // carnetRegistre : contact du carnet → mannequin du registre (réponses aux convocations).
+  // tousLesComptes : aussi les mannequins du registre dont le compte n'est pas (ou plus) publié.
+  // sexe d'un profil du site (même règle que places_sexe, supabase-places.sql)
+  const sexeProfil = (m) => m.category === 'homme' || (m.category !== 'femme' && m.civilite === 'Monsieur') ? 'homme' : 'femme';
+  P.personnesPossibles = async (tousLesComptes) => {
+    const [profils, registre, carnet] = await Promise.all([
+      P.bd(sb.from('model_profiles').select('id, full_name, category, civilite').eq('published', true).order('full_name')),
+      P.bd(sb.from('agence_mannequins').select('id, full_name, genre, user_id').eq('statut', 'actif').order('full_name')).catch(() => []),
+      P.bd(sb.from('contacts_externes').select('id, civilite, nom, mannequin_id').order('nom')).catch(() => [])
+    ]);
+    const photos = await P.photosCouverture(profils.map((m) => m.id)).catch(() => ({}));
+    const liste = {};
+    profils.forEach((m) => { liste['m:' + m.id] = { cle: 'm:' + m.id, model_id: m.id, nom: m.full_name || '?', photo: photos[m.id] || '', sexe: sexeProfil(m), origine: 'agence' }; });
+    registre.filter((r) => !r.user_id || (tousLesComptes && !liste['m:' + r.user_id])).forEach((r) => {
+      liste['r:' + r.id] = { cle: 'r:' + r.id, mannequin_id: r.id, nom: r.full_name || '?', photo: '', sexe: r.genre === 'homme' ? 'homme' : 'femme', origine: 'agence', compte: !!r.user_id };
+    });
+    liste.carnetRegistre = {};
+    carnet.filter((c) => c.mannequin_id).forEach((c) => { liste.carnetRegistre[c.id] = c.mannequin_id; });
+    carnet.filter((c) => !c.mannequin_id).forEach((c) => { liste['c:' + c.id] = { cle: 'c:' + c.id, contact_id: c.id, nom: [c.civilite, c.nom].filter(Boolean).join(' ') || '?', photo: '', sexe: c.civilite === 'Monsieur' ? 'homme' : 'femme', origine: 'exterieure' }; });
+    return liste;
+  };
   // Nombre qui défile jusqu'à sa valeur (attribut data-compte)
   P.animerChiffres = (racine) => {
     (racine || document).querySelectorAll('[data-compte]').forEach((el) => {

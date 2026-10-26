@@ -857,6 +857,20 @@ function chargerJsPdf() {
   return promesseJsPdf;
 }
 
+// Notifications sur le téléphone (Web Push) : abonnement de cet appareil, partagé par
+// l'Administration (js/admin/notifications.js) et l'application des mannequins
+// (js/mannequin-app.js, 26/10/2026). Clé publique : sans danger à montrer (le secret est sur
+// le serveur, Vercel : api/notifications-webhook.js).
+const MA2M_VAPID_PUBLIQUE = 'BIPDSRMEcSkhim6QoaWlJrY1bORghBeyRDw2x5q7LgjrhoenwLQ9zfk1I-ZR1HSv1QA4ebKNwR18npIqBcw33vc';
+const notificationsPossibles = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+// renvoie { endpoint, keys: { p256dh, auth } } (demande l'autorisation si besoin)
+async function abonnementPush(enregistrement) {
+  const brut = atob((MA2M_VAPID_PUBLIQUE + '='.repeat((4 - (MA2M_VAPID_PUBLIQUE.length % 4)) % 4)).replace(/-/g, '+').replace(/_/g, '/'));
+  const abonnement = (await enregistrement.pushManager.getSubscription()) ||
+    await enregistrement.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: Uint8Array.from(brut, (c) => c.codePointAt(0)) });
+  return abonnement.toJSON();
+}
+
 // Paiement à l'avance des mensualités (26/10/2026, décision de la propriétaire : jusqu'à 3 mois,
 // même prix) : les prochains mois « à venir », quand aucun mois n'est à payer. Partagé par Mes
 // paiements (js/mes-paiements.js) et l'onglet Paiements de l'application (js/mannequin-app.js) ;

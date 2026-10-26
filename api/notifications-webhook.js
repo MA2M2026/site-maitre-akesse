@@ -3,6 +3,9 @@
 // candidature casting, d'une demande d'intégration, d'une demande recruteur
 // ou d'un message visiteur, et envoie une vraie notification push aux
 // téléphones de l'administration abonnés (Grand 3, N-5 à N-14).
+// Depuis le 26/10/2026, aussi chaque nouveau message de l'application des mannequins
+// (app_messages, supabase-app-messages.sql) : notification aux SEULS téléphones de la
+// mannequin concernée (app_push_abonnements).
 //
 // Appelée par la BASE DE DONNÉES elle-même (pas par le navigateur du
 // visiteur, N-9) : la ligne est déjà enregistrée avant cet appel, donc un
@@ -63,6 +66,17 @@ function construireNotification(table, record) {
       url: '/admin/#/site/b2-contacts'
     };
   }
+  if (table === 'app_messages') {
+    const texte = String(record.texte || '').replace(/\s+/g, ' ').trim();
+    return {
+      cle: 'evenement_app_message',
+      titre: record.titre || 'Message de l’agence',
+      texte: texte.length > 140 ? texte.slice(0, 139) + '…' : texte,
+      url: /^\/app\/[^/]/.test(record.lien || '') || /^\/app\/$/.test(record.lien || '') ? record.lien : '/app/#alertes',
+      icone: '/icons/mannequin-192.png',
+      mannequin: record.user_id
+    };
+  }
   if (table === 'blocages_connexion') {
     const lieu = ({ admin: 'connexion admin', 'admin-code': 'code de validation admin', mannequin: 'connexion espace mannequin', 'inscription-code': "code d'inscription", 'portail-code': "code d'invitation mannequin" })[record.espace] || 'connexion';
     return {
@@ -73,6 +87,40 @@ function construireNotification(table, record) {
     };
   }
   return null;
+}
+
+// Envoi à une liste d'appareils (3 essais chacun) ; un abonnement expiré (404/410) est désactivé
+// dans sa table (push_abonnements : Administration ; app_push_abonnements : mannequins).
+async function envoyerAuxAppareils(abonnements, payload, tableAbonnements, enTetes) {
+  let reussites = 0, echecs = 0, derniereErreur = null;
+  for (const abo of abonnements) {
+    const sub = { endpoint: abo.endpoint, keys: { p256dh: abo.p256dh, auth: abo.auth } };
+    let envoye = false;
+    for (let essai = 0; essai < 3 && !envoye; essai++) {
+      try {
+        if (essai > 0) await new Promise((r) => setTimeout(r, 300 * essai));
+        // Priorité haute : Android délivre tout de suite, même téléphone en
+        // veille (sinon il peut retarder la notification de plusieurs minutes).
+        await webpush.sendNotification(sub, payload, { urgency: 'high', TTL: 3600 });
+        envoye = true;
+      } catch (err) {
+        derniereErreur = (err && (err.statusCode ? 'HTTP ' + err.statusCode + ' ' : '') + (err.body || err.message || '')) || 'inconnue';
+        // 404/410 : abonnement expiré ou révoqué côté navigateur — on le
+        // désactive pour ne plus perdre de temps dessus (pratique standard
+        // web-push, pas une tentative supplémentaire à faire).
+        if (err && (err.statusCode === 404 || err.statusCode === 410)) {
+          await fetch(SUPABASE_URL + '/rest/v1/' + tableAbonnements + '?id=eq.' + abo.id, {
+            method: 'PATCH',
+            headers: { ...enTetes, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+            body: JSON.stringify({ actif: false })
+          });
+          break;
+        }
+      }
+    }
+    if (envoye) reussites++; else echecs++;
+  }
+  return { reussites, echecs, derniereErreur };
 }
 
 module.exports = async function handler(req, res) {
@@ -117,68 +165,45 @@ module.exports = async function handler(req, res) {
 
     const enTetes = { apikey: cleSecrete, Authorization: 'Bearer ' + cleSecrete };
 
+    // Message de l'application des mannequins : seulement les téléphones de CETTE mannequin
+    // (pas les réglages de l'Administration, qui concernent ses propres notifications)
+    const pourMannequin = table === 'app_messages';
+    if (pourMannequin && !/^[0-9a-f-]{36}$/i.test(String(notif.mannequin || ''))) { res.status(400).json({ error: 'Payload invalide.' }); return; }
+
     // Réglages : l'événement et le canal push doivent être actifs (N-13).
-    const reponseReglages = await fetch(
-      SUPABASE_URL + '/rest/v1/notifications_reglages?cle=in.(' + notif.cle + ',canal_push)&select=cle,actif',
-      { headers: enTetes }
-    );
-    const reglages = reponseReglages.ok ? await reponseReglages.json() : [];
-    const actif = (cle) => {
-      const ligne = reglages.find((r) => r.cle === cle);
-      return !ligne || ligne.actif !== false; // actif par défaut si réglage absent
-    };
-    if (!actif(notif.cle) || !actif('canal_push')) {
-      await fetch(SUPABASE_URL + '/rest/v1/notifications_journal', {
-        method: 'POST',
-        headers: { ...enTetes, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-        body: JSON.stringify({ evenement: notif.cle, canal: 'push', statut: 'desactivee', cible_table: table, cible_id: record.id, resume: notif.texte })
-      });
-      res.status(200).json({ ok: true, desactivee: true });
-      return;
+    if (!pourMannequin) {
+      const reponseReglages = await fetch(
+        SUPABASE_URL + '/rest/v1/notifications_reglages?cle=in.(' + notif.cle + ',canal_push)&select=cle,actif',
+        { headers: enTetes }
+      );
+      const reglages = reponseReglages.ok ? await reponseReglages.json() : [];
+      const actif = (cle) => {
+        const ligne = reglages.find((r) => r.cle === cle);
+        return !ligne || ligne.actif !== false; // actif par défaut si réglage absent
+      };
+      if (!actif(notif.cle) || !actif('canal_push')) {
+        await fetch(SUPABASE_URL + '/rest/v1/notifications_journal', {
+          method: 'POST',
+          headers: { ...enTetes, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+          body: JSON.stringify({ evenement: notif.cle, canal: 'push', statut: 'desactivee', cible_table: table, cible_id: record.id, resume: notif.texte })
+        });
+        res.status(200).json({ ok: true, desactivee: true });
+        return;
+      }
     }
 
     // Appareils abonnés et actifs.
+    const tableAbonnements = pourMannequin ? 'app_push_abonnements' : 'push_abonnements';
     const reponseAbonnements = await fetch(
-      SUPABASE_URL + '/rest/v1/push_abonnements?actif=eq.true&select=id,endpoint,p256dh,auth',
+      SUPABASE_URL + '/rest/v1/' + tableAbonnements + '?actif=eq.true' + (pourMannequin ? '&user_id=eq.' + notif.mannequin : '') + '&select=id,endpoint,p256dh,auth',
       { headers: enTetes }
     );
     const abonnements = reponseAbonnements.ok ? await reponseAbonnements.json() : [];
 
-    let reussites = 0;
-    let echecs = 0;
-    let derniereErreur = null;
-
-    for (const abo of abonnements) {
-      const sub = { endpoint: abo.endpoint, keys: { p256dh: abo.p256dh, auth: abo.auth } };
-      // Étiquette propre à chaque événement : avec une étiquette commune, une
-      // nouvelle notification remplaçait en silence la précédente non lue.
-      const payload = JSON.stringify({ titre: notif.titre, texte: notif.texte, url: notif.url, tag: notif.cle + '-' + (record.id || Date.now()) });
-
-      let envoye = false;
-      for (let essai = 0; essai < 3 && !envoye; essai++) {
-        try {
-          if (essai > 0) await new Promise((r) => setTimeout(r, 300 * essai));
-          // Priorité haute : Android délivre tout de suite, même téléphone en
-          // veille (sinon il peut retarder la notification de plusieurs minutes).
-          await webpush.sendNotification(sub, payload, { urgency: 'high', TTL: 3600 });
-          envoye = true;
-        } catch (err) {
-          derniereErreur = (err && (err.statusCode ? 'HTTP ' + err.statusCode + ' ' : '') + (err.body || err.message || '')) || 'inconnue';
-          // 404/410 : abonnement expiré ou révoqué côté navigateur — on le
-          // désactive pour ne plus perdre de temps dessus (pratique standard
-          // web-push, pas une tentative supplémentaire à faire).
-          if (err && (err.statusCode === 404 || err.statusCode === 410)) {
-            await fetch(SUPABASE_URL + '/rest/v1/push_abonnements?id=eq.' + abo.id, {
-              method: 'PATCH',
-              headers: { ...enTetes, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-              body: JSON.stringify({ actif: false })
-            });
-            break;
-          }
-        }
-      }
-      if (envoye) reussites++; else echecs++;
-    }
+    // Étiquette propre à chaque événement : avec une étiquette commune, une
+    // nouvelle notification remplaçait en silence la précédente non lue.
+    const payload = JSON.stringify({ titre: notif.titre, texte: notif.texte, url: notif.url, icone: notif.icone, tag: notif.cle + '-' + (record.id || Date.now()) });
+    const { reussites, echecs, derniereErreur } = await envoyerAuxAppareils(abonnements, payload, tableAbonnements, enTetes);
 
     await fetch(SUPABASE_URL + '/rest/v1/notifications_journal', {
       method: 'POST',

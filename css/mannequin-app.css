@@ -220,3 +220,14 @@ body.ap-page-inscription .ap-intro { margin: 0; padding: 0 18px; max-width: 560p
 body.ap-page-inscription .inn { padding: 14px 0 0; }
 body.ap-page-inscription .inn-colonne { padding: 0 18px; }
 body.ap-page-inscription .inn-carte { background: var(--ap-carte); border: 0; border-radius: 18px; box-shadow: var(--ap-ombre); }
+
+/* Messages de l'agence (3e voie, 26/10/2026) : la boîte de réception de l'onglet Messages */
+.ap-message-agence { background: var(--ap-carte); border-radius: 16px; box-shadow: var(--ap-ombre); padding: 0 14px; font-size: 14px; }
+.ap-message-agence.nouveau { box-shadow: inset 4px 0 0 var(--ap-rouge), var(--ap-ombre); }
+.ap-message-agence summary { display: flex; gap: 12px; align-items: center; padding: 14px 0; cursor: pointer; list-style: none; }
+.ap-message-agence summary::-webkit-details-marker { display: none; }
+.ap-message-agence summary em { color: var(--ap-rouge-texte); font-style: normal; font-weight: 700; }
+.ap-message-texte { white-space: pre-wrap; margin: 0 0 12px; line-height: 1.5; }
+.ap-message-image { display: block; width: 100%; height: auto; border-radius: 12px; margin: 0 0 12px; }
+.ap-message-agence .ap-btns { padding-bottom: 14px; }
+.ap-notif { display: flex; flex-direction: column; gap: 8px; }

@@ -234,6 +234,8 @@ window.demarrerRapportProfils = function () {
       var id = suivant(); if (!id) return;
       var zoneTexte = details.querySelector('textarea[data-id="' + id + '"]');
       var texte = zoneTexte ? zoneTexte.value : '', numero = numeroWhatsApp(telephones[id]);
+      // 3e voie (26/10/2026) : le même rapport dans son application (js/messages-candidats.js)
+      void envoyerDansApplication(['m:' + id], 'message', '✨ Votre profil : ce qu’il reste à compléter', texteApplication(texte), null, null, '/app/#profil');
       if (parents[id]) {
         var mannequin = profils.find(function (x) { return x.id === id; }) || {};
         texte = 'Bonjour ' + salutationParent(parents[id].parent_nom) + ', voici un message de l’agence pour votre enfant ' + (mannequin.full_name || '') + ' :\n\n' + texte;

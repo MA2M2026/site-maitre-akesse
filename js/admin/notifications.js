@@ -13,24 +13,16 @@
   'use strict';
   const P = window.Portail;
   if (!P) return;
-  // clé publique VAPID : sans danger à montrer (le secret est sur le serveur, Vercel)
-  const VAPID_PUBLIQUE = 'BIPDSRMEcSkhim6QoaWlJrY1bORghBeyRDw2x5q7LgjrhoenwLQ9zfk1I-ZR1HSv1QA4ebKNwR18npIqBcw33vc';
   const CLE_VUE = 'ma2m_notif_banniere_vue';
-  const possible = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+  const possible = notificationsPossibles;  // (js/app.js)
   // les notifications parlent du site (candidatures, recruteurs…) : principal et gestion du site
   const concerne = () => P.moi && (P.moi.role === 'principal' || P.moi.espaces.site);
 
-  function octets(base64) {
-    const brut = atob((base64 + '='.repeat((4 - (base64.length % 4)) % 4)).replace(/-/g, '+').replace(/_/g, '/'));
-    return Uint8Array.from(brut, (c) => c.codePointAt(0));
-  }
   async function inscrireCetAppareil() {
     const enregistrement = await navigator.serviceWorker.register('/service-worker.js');
-    const abonnement = (await enregistrement.pushManager.getSubscription()) ||
-      await enregistrement.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: octets(VAPID_PUBLIQUE) });
+    const j = await abonnementPush(enregistrement);  // (js/app.js)
     const { data: { user } } = await sb.auth.getUser();
     if (!user) return;
-    const j = abonnement.toJSON();
     await P.bd(sb.from('push_abonnements').upsert({ user_id: user.id, endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth, appareil: navigator.userAgent, actif: true }, { onConflict: 'endpoint' }));
   }
 

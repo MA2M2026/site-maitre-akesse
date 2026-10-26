@@ -231,12 +231,24 @@ window.demarrerMessagesGroupes = function () {
     return true;
   }
 
+  // 3e voie (26/10/2026) : le même message dans l'application, pour les personnes qui y ont un
+  // compte (retrouvées par leur e-mail), une seule fois par message
+  async function versApplication() {
+    const faits = dejaFaits('app');
+    const titre = $('mg-source').value === 'inscription' ? '✉️ Message de l’agence' : '📣 Votre candidature casting';
+    for (const d of choisis().filter((x) => x.email && !faits.has(x.id))) {
+      await envoyerDansApplication(['e:' + d.email], 'message', titre, texteApplication(personnaliserMessage($('mg-message').value.trim(), d, rdv(), () => A_COMPLETER)));  // (js/messages-candidats.js)
+      noterFait('app', d.id);
+    }
+  }
+
   async function envoyerEmails() {
     if (resteACompleter()) return;
     const faits = dejaFaits('email');
     const liste = choisis().filter(d => contactsEnvoi(d).email && !faits.has(d.id));
     if (!liste.length) return;
     if (!confirm(`Envoyer ce message par e-mail à ${liste.length} personne(s) ?\n\nChacune le recevra séparément.`)) return;
+    await versApplication();
     const etat = $('mg-email-etat');
     $('mg-email').disabled = true;
     let ok = 0; const echecs = [];
@@ -266,6 +278,7 @@ window.demarrerMessagesGroupes = function () {
     const faits = dejaFaits('wa');
     const d = choisis().find(x => numeroWhatsApp(contactsEnvoi(x).phone) && !faits.has(x.id));
     if (!d || !t) return;
+    void versApplication();
     window.open('https://wa.me/' + numeroWhatsApp(contactsEnvoi(d).phone) + '?text=' + encodeURIComponent(personnaliser(d)), '_blank', 'noopener');
     noterFait('wa', d.id);
     afficherListe();
