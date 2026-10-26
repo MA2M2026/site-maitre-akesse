@@ -295,7 +295,9 @@
   addEventListener('hashchange', () => { afficher(); scrollTo(0, 0); });
 
   // ---------- démarrage ----------
-  async function demarrer() {
+  // (session illisible, ex. stockage du navigateur bloqué : l'écran de connexion)
+  function demarrer() { ouvrir().catch(() => ecranConnexion()); }
+  async function ouvrir() {
     const { data } = await sb.auth.getSession();
     if (!data || !data.session) { ecranConnexion(); return; }
     racine.innerHTML = '<div class="ap-chargement"><img src="/icons/mannequin-192.png" alt="" width="96" height="96"><span>Chargement de votre espace…</span></div>';
