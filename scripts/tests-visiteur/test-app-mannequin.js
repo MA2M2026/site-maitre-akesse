@@ -162,6 +162,15 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
     ok(/8\s*\/\s*24/.test(paiements) && /mois payés/.test(paiements) && /À payer avant le 5/.test(paiements) && /Border Forum/.test(paiements) && /25 000 F/.test(paiements) && (await p.getAttribute('a.ap-btn.rouge', 'href')) === '/app/mes-paiements.html',
       n + 'Mes paiements : 8 mois sur 24, cachet reçu, « Payer avec Wave »');
     await capture('4-paiements');
+    // à jour (rien à payer) : pas de « Payer avec Wave » qui mènerait à une page sans Wave (relevé par la propriétaire, 26/10/2026)
+    const avantMois = d.rpc.mes_mensualites.mois;
+    d.rpc.mes_mensualites.mois = avantMois.map((x) => (x.etat === 'a_payer' ? Object.assign({}, x, { etat: 'paye' }) : x));
+    await p.reload(); await p.waitForSelector('.ap-chiffre', { timeout: 15000 });
+    const aJour = await p.textContent('#ap-ecran');
+    ok(/9\s*\/\s*24/.test(aJour) && /À jour/.test(aJour) && /Rien à payer pour le moment/.test(aJour) && !/Payer avec Wave/.test(aJour) && (await p.getAttribute('.ap-rien-a-payer + .ap-btns a', 'href')) === '/app/mes-paiements.html',
+      n + 'Mes paiements à jour : « Rien à payer pour le moment », pas de bouton Wave, « Mes mois et mes reçus »');
+    d.rpc.mes_mensualites.mois = avantMois;
+    await p.reload(); await p.waitForSelector('.ap-chiffre', { timeout: 15000 });
     // 8. Alertes
     await p.click('.ap-nav a[href="#alertes"]'); await p.waitForSelector('.ap-alerte');
     const alertes = await p.textContent('#ap-ecran');

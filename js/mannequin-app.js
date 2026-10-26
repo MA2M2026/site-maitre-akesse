@@ -234,7 +234,13 @@
           : courant && courant.etat === 'a_payer' ? '<span class="ap-pastille orange">À payer avant le 5</span>' : '<span class="ap-pastille vert">À jour</span>') + '</div>' +
         '<div class="ap-jauge"><i style="width:' + Math.round(payes * 100 / total) + '%"></i></div>' +
         (prochain ? '<p class="ap-echeance"><b>Prochaine échéance</b><br><span class="doux">' + esc(MOIS[Number(String(prochain.mois).slice(5, 7)) - 1]) + ' · ' + fcfa(m.mensualite) + '</span></p>' : '') +
-        '<div class="ap-btns"><a class="ap-btn rouge" href="/app/mes-paiements.html">Payer avec Wave</a><a class="ap-btn" href="/app/mes-paiements.html">Mes reçus</a></div></div>';
+        // « Payer avec Wave » seulement s'il y a un mois à payer (la page Mes paiements ne propose Wave
+        // que dans ce cas : à jour, le bouton menait à la grille des mois sans rien à payer, 26/10/2026)
+        (mois.some((x) => x.etat === 'a_payer' || x.etat === 'non_paye')
+          ? '<div class="ap-btns"><a class="ap-btn rouge" href="/app/mes-paiements.html">Payer avec Wave</a><a class="ap-btn" href="/app/mes-paiements.html">Mes reçus</a></div></div>'
+          : '<p class="doux ap-rien-a-payer">' + (courant && courant.etat === 'attente' ? 'Votre paiement est en cours de vérification par l’agence.'
+            : 'Rien à payer pour le moment' + (prochain ? ' : le paiement de ' + esc(MOIS[Number(String(prochain.mois).slice(5, 7)) - 1]) + ' s’ouvrira au début du mois.' : '.')) + '</p>' +
+            '<div class="ap-btns"><a class="ap-btn" href="/app/mes-paiements.html">Mes mois et mes reçus</a></div></div>');
     }
     return '<h2 class="ap-titre-sec">Formation · mensualités</h2>' + haut +
       '<h2 class="ap-titre-sec">Mes cachets</h2>' + (etat.cachets.length ? '<div class="ap-carte ap-cachets">' + etat.cachets.map((c) =>
