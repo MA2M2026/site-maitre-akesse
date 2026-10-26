@@ -241,7 +241,7 @@
   // choisir le vivier : une case par visage, femmes puis hommes, agence puis extérieures
   P.actions['defile-vivier'] = () => {
     const dans = {}; ecran.vivier.forEach((v) => { dans[cleDe(v)] = true; });
-    const groupe = (titre, filtre) => P.casesVisages(titre, Object.values(ecran.personnes).filter(filtre), (x) => 'name="cle" value="' + P.esc(x.cle) + '"' + (dans[x.cle] ? ' checked' : ''));
+    const groupe = (titre, filtre) => P.casesVisages(titre, Object.values(ecran.personnes).filter((x) => filtre(x)), (x) => 'name="cle" value="' + P.esc(x.cle) + '"' + (dans[x.cle] ? ' checked' : ''));
     P.fenetre('<form class="grille df-fenetre" data-form="defile-vivier"><h2>Mannequins retenues pour le défilé</h2>' +
       groupe('Femmes de l’agence', (x) => x.sexe === 'femme' && x.origine === 'agence') + groupe('Femmes extérieures', (x) => x.sexe === 'femme' && x.origine === 'exterieure') +
       groupe('Hommes de l’agence', (x) => x.sexe === 'homme' && x.origine === 'agence') + groupe('Hommes extérieurs', (x) => x.sexe === 'homme' && x.origine === 'exterieure') +

@@ -87,7 +87,7 @@
     if (!b.retouche) b.message = messageMannequin(b);
     const projets = await P.bd(sb.from('agenda_projets').select('id, titre, type, date_debut').eq('annule', false).gte('date_debut', new Date(Date.now() - 120 * 86400000).toISOString().slice(0, 10)).order('date_debut', { ascending: false }).limit(60)).catch(() => []);
     const gens = Object.values(personnes).filter((x) => x && x.cle);
-    const groupe = (titre, filtre) => P.casesVisages(titre, gens.filter(filtre), (x) => 'data-change="infos-choix" value="' + P.esc(x.cle) + '"' + (b.choisis.has(x.cle) ? ' checked' : ''));
+    const groupe = (titre, filtre) => P.casesVisages(titre, gens.filter((x) => filtre(x)), (x) => 'data-change="infos-choix" value="' + P.esc(x.cle) + '"' + (b.choisis.has(x.cle) ? ' checked' : ''));
     const champ = (nom, libelle, type, extra) => '<label class="fl" for="if-' + nom + '">' + libelle + '<input id="if-' + nom + '" name="' + nom + '" type="' + (type || 'text') + '" value="' + P.esc(b[nom]) + '" data-change="infos-champ" data-direct' + (extra || '') + '></label>';
     return P.entete('Nouvelle information', '<a class="btn" href="#/site/' + PAGE + '">← Toutes les informations</a>') +
       '<form class="carte f" data-form="infos-envoyer">' +

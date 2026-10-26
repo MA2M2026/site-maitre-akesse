@@ -330,7 +330,7 @@
   // ---------- actions ----------
   racine.addEventListener('click', async (e) => {
     const notif = e.target.closest('[data-notifications]');
-    if (notif) { activerNotifications(notif); return; }
+    if (notif) { await activerNotifications(notif); return; }
     const rep = e.target.closest('[data-repondre]'), per = e.target.closest('[data-periode]'), pas = e.target.closest('[data-passages]'), tout = e.target.closest('[data-programme]');
     if (tout) { programmeOuvert[tout.dataset.programme] = !programmeOuvert[tout.dataset.programme]; afficher(); return; }
     if (per) { periode = per.dataset.periode; afficher(); return; }
