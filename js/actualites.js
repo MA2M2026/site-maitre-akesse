@@ -49,6 +49,7 @@ async function chargerActualites() {
   }
   const { data, error } = await sb.from('actualites').select('*').order('created_at', { ascending: false });
   if (error || !data || !data.length) { vide.style.display = 'block'; return; }
+  await versAnglais(data, ['titre', 'commentaire'], true);  // (page anglaise, js/app.js)
   window.actualitesData = data;
 
   const { data: toutesLesPhotos } = await sb.from('actualite_photos').select('actualite_id');

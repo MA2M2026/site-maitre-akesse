@@ -31,6 +31,7 @@ async function chargerEvenements() {
   }
   const { data, error } = await sb.from('evenements').select('*').order('date_evenement', { ascending: false, nullsFirst: false }).order('created_at', { ascending: false });
   if (error || !data || !data.length) { vide.style.display = 'block'; return; }
+  await versAnglais(data, ['titre', 'lieu', 'description'], true);  // (page anglaise, js/app.js)
   window.evenementsData = data;
 
   const { data: toutesLesPhotos } = await sb.from('evenement_photos').select('evenement_id');

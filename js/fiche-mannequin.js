@@ -126,6 +126,8 @@ async function chargerProfilInterne() {
   ]);
   // projets réalisés avec l'agence (agenda) inclus automatiquement (js/app.js)
   const projets = fusionnerExperiences(projetsAgence, projetsSaisis);
+  // page anglaise : présentation et types d'expérience en anglais (js/app.js)
+  await versAnglais([profil, ...projets], ['bio', 'type_projet']);
 
   const vues = photosAffichees(photos); // photo de profil et couverture affichées (js/app.js)
   const premierePhoto = vues.profil ? vues.profil.url : '/assets/logo-dark-bg.png';

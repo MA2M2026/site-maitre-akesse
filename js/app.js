@@ -606,6 +606,42 @@ const TRADUCTIONS_EN = { 'claire': 'Light', 'métisse claire': 'Light medium', '
   'marron': 'Brown', 'marron foncé': 'Dark brown', 'noir': 'Black', 'noire': 'Black', 'vert': 'Green', 'bleu': 'Blue', 'gris': 'Grey', 'noisette': 'Hazel',
   'brun': 'Brown', 'châtain': 'Chestnut', 'blond': 'Blonde', 'roux': 'Red', 'gris / blanc': 'Grey / White', 'la tête rasée': 'Shaved', 'rasé': 'Shaved', 'tête rasée': 'Shaved' };
 function enAnglais(v) { const k = String(v || '').trim().toLowerCase(); return TRADUCTIONS_EN[k] || v; }
+// Textes saisis dans l'Administration (actualités, événements, agenda, partenaires, mot du
+// fondateur, présentations…) : sur les pages anglaises, leur version anglaise (table traductions_en,
+// supabase-traductions.sql ; écrite dans Administration › Traductions anglaises). Elle est retrouvée
+// par l'empreinte du texte français (la même qu'en base : traduction_cle) ; sans traduction, le
+// français reste. versAnglais remplace les champs des lignes lues, avant leur affichage.
+async function empreinteTexte(t) {
+  const propre = String(t == null ? '' : t).replace(/^[ \t\r\n]+|[ \t\r\n]+$/g, '');
+  const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(propre));
+  return Array.from(new Uint8Array(h), (x) => x.toString(16).padStart(2, '0')).join('');
+}
+// textes → Map(texte français → anglais), pour ceux qui ont une traduction (lecture par paquets,
+// en même temps) ; aussi utilisé par l'Administration (js/admin/site-traductions.js)
+async function traductionsDe(textes) {
+  const uniques = [...new Set(textes.filter((t) => typeof t === 'string' && t.trim()))];
+  const cles = await Promise.all(uniques.map(empreinteTexte)), en = {}, paquets = [];
+  for (let i = 0; i < cles.length; i += 80) paquets.push(cles.slice(i, i + 80));
+  await Promise.all(paquets.map(async (p) => {
+    const { data, error } = await sb.from('traductions_en').select('cle, en').in('cle', p);
+    if (error) throw error;
+    (data || []).forEach((r) => { en[r.cle] = r.en; });
+  }));
+  return new Map(uniques.map((t, i) => [t, en[cles[i]]]).filter((x) => x[1]));
+}
+// garderPourAgence : pages où l'agence connectée modifie les publications (actualités,
+// événements, partenaires) ; elle y garde le français, qu'elle corrige
+async function versAnglais(lignes, champs, garderPourAgence) {
+  const liste = (Array.isArray(lignes) ? lignes : [lignes]).filter(Boolean);
+  if (!EN || !liste.length || typeof sb === 'undefined' || !sb || !(window.crypto && crypto.subtle)) return lignes;
+  try {
+    if (garderPourAgence && typeof sbAdmin !== 'undefined' && sbAdmin && (await sbAdmin.auth.getSession()).data.session) return lignes;
+    const parTexte = await traductionsDe(liste.flatMap((l) => champs.map((c) => l[c])));
+    liste.forEach((l) => champs.forEach((c) => { const v = parTexte.get(l[c]); if (v) l[c] = v; }));
+  } catch (e) { /* table pas encore créée, réseau… : le français reste */ }
+  return lignes;
+}
+window.empreinteTexte = empreinteTexte; window.traductionsDe = traductionsDe;
 function avecImperial(metrique, imperial) { return imperial ? metrique + ' · ' + imperial : metrique; }
 
 // Mensurations de la Compcard, libellées selon la langue (en anglais : valeurs impériales

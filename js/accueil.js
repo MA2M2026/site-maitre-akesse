@@ -262,6 +262,7 @@
       data = (await sb.from('mot_responsable').select('*').eq('id', 'principal').maybeSingle()).data;
     }
     if (!data || !data.message) return;
+    await versAnglais(data, ['titre', 'message']);  // (page anglaise, js/app.js)
     const rubrique = document.getElementById('edito-rubrique'), edito = document.getElementById('edito');
     rubrique.textContent = rubrique.dataset.mot;
     document.getElementById('edito-texte').textContent = data.message;

@@ -24,6 +24,7 @@ async function chargerPartenaires() {
     return;
   }
   vide.style.display = 'none';
+  await versAnglais(data, ['structure', 'evenement', 'role', 'description'], true);  // (page anglaise, js/app.js)
   window.partenairesData = data;
 
   grille.innerHTML = data.map((p, i) => `

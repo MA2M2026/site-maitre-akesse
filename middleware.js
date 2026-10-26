@@ -268,7 +268,22 @@ async function lireDonneesAccueil() {
   const donnees = { profils: profils.filter(p => photoDe[p.id]).map(p => Object.assign({ photo: photoDe[p.id].url, petite: photoDe[p.id].url_petite || null }, p)), nombre: profils.length };
   if (Array.isArray(mots)) donnees.mot = mots[0] || null;
   if (Array.isArray(castings)) donnees.castingOuvert = castings.length > 0;
+  // le mot en anglais pour l'accueil anglais (traductions_en, même empreinte que versAnglais, js/app.js)
+  if (donnees.mot) donnees.motEn = await motEnAnglais(donnees.mot).catch(() => null);
   return donnees;
+}
+async function empreinteTexte(t) {
+  const propre = String(t == null ? '' : t).replace(/^[ \t\r\n]+|[ \t\r\n]+$/g, '');
+  const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(propre));
+  return Array.from(new Uint8Array(h), (x) => x.toString(16).padStart(2, '0')).join('');
+}
+async function motEnAnglais(mot) {
+  const champs = ['titre', 'message'].filter((c) => mot[c]);
+  const cles = await Promise.all(champs.map((c) => empreinteTexte(mot[c])));
+  const lignes = await lireSupabase('traductions_en?select=cle,en&cle=in.(' + cles.join(',') + ')', null, 2000);
+  const en = {};
+  champs.forEach((c, i) => { const l = (lignes || []).find((x) => x.cle === cles[i]); if (l) en[c] = l.en; });
+  return Object.keys(en).length ? en : null;
 }
 // Texte d'un élément de la page (repéré par son id) ; brut : déjà écrit pour du HTML
 function texteElement(html, id, texte, brut) {
@@ -280,8 +295,8 @@ function attributElement(html, id, nom) {
   return m ? m[1] : null;
 }
 // Mot de Maître Akesse et casting ouvert : les mêmes textes que js/accueil.js, venus de la page
-function completerAccueil(html, donnees) {
-  const mot = donnees.mot;
+function completerAccueil(html, donnees, anglais) {
+  const mot = donnees.mot && anglais && donnees.motEn ? Object.assign({}, donnees.mot, donnees.motEn) : donnees.mot;
   if (mot && mot.message) {
     const rubrique = attributElement(html, 'edito-rubrique', 'mot');
     if (rubrique) html = texteElement(html, 'edito-rubrique', rubrique, true);
@@ -332,7 +347,7 @@ async function accueilRempli(requete, url) {
   const une = donnees.profils.find(p => p.featured) || donnees.profils[0];
   const autres = donnees.profils.filter(p => p.id !== une.id);
   const couv = autres.length ? autres[Math.floor(Math.random() * autres.length)] : une;
-  html = completerAccueil(html, donnees);
+  html = completerAccueil(html, donnees, /^\/en(\/|$)/.test(url.pathname));
   html = html.replace(marque, '<img id="couv-img" class="visible" src="' + echapper(photoLegere(couv.photo)) + '" alt="' + echapper(couv.full_name || '') + '" data-modele="' + echapper(couv.id) + '"')
     .replace('<main', '<script type="application/json" id="accueil-donnees">' + jsonSur(donnees) + '</script>\n<main');
   const entetes = new Headers(page.headers);

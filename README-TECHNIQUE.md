@@ -439,6 +439,22 @@ qui s'ouvrent ensuite) et échoue si un nom de mannequin est sans photo.
   « — » (outils de relecture : remplacé par une virgule, « · » entre deux éléments, « | » dans
   les titres des pages ; le « — » seul qui signifie « vide » reste).
 
+## 🌍 Textes de l'Administration en anglais (26/10/2026, demande de la propriétaire)
+- Base : **supabase-traductions.sql** (essais : essais-traductions.sql). `traductions_en`
+  (cle = empreinte SHA-256 du texte français, `traduction_cle`, posée par déclencheur ; fr ; en).
+  Lecture publique de `cle` et `en` seulement (le français stocké n'est jamais lisible) ; écriture
+  uniquement par `traduction_enregistrer(p_fr, p_en)` (équipe du site ; anglais vide = retrait).
+  Les 62 textes publiés au 26/10/2026 sont déjà traduits dans ce fichier.
+- Pages anglaises : `versAnglais(lignes, champs)` (js/app.js) remplace les champs par leur anglais
+  avant l'affichage (actualités, événements, agenda, partenaires, qui sommes-nous, mot du
+  fondateur, présentation et types d'expérience de la fiche mannequin) ; sans traduction, le
+  français reste ; l'agence connectée sur la page garde le français (elle modifie l'original).
+- Administration › Contenu du site › **Traductions anglaises** (js/admin/site-traductions.js) :
+  les textes à traduire d'abord, l'écran pour écrire ou corriger l'anglais (éditeur riche pour
+  les textes mis en forme : P.outilsRedaction, js/admin/site-contenu.js).
+- Un texte français modifié a une nouvelle empreinte : il redevient « à traduire ».
+- Test : test-traductions.js (pages anglaise et française, écran de l'Administration).
+
 ## 🧱 Démolition de l'ancien espace mannequin du site (26/10/2026, décision de la propriétaire)
 - Supprimés : espace-mannequin.html, mes-paiements.html, inscription-mannequin.html,
   en/inscription-mannequin.html, css/entete-site.css et leurs images d'aperçu, et les renvois de

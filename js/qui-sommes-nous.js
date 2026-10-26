@@ -62,7 +62,7 @@
     ]);
     if (ev.error) throw ev.error;
     if (ph.error) console.warn('Qui sommes-nous : photos d\'événements incomplètes', ph.error);
-    const evenements = ev.data || [];
+    const evenements = await versAnglais(ev.data || [], ['titre', 'lieu']);  // (page anglaise, js/app.js)
     const photos = ph.data || [];
     return evenements.map(e => {
       const urls = photos.filter(p => p.evenement_id === e.id).map(p => p.url);

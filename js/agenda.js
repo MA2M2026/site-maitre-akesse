@@ -490,6 +490,8 @@
     if (error) console.warn('Agenda non chargé', error);
     const enPanne = error && error.code !== 'PGRST202';
     let projets = data || [];
+    // (page anglaise : textes de l'agence en anglais, js/app.js)
+    await versAnglais(projets.concat((lectureEvenements && lectureEvenements.data) || []), ['titre', 'lieu', 'description']);
     if (!seulAccueil) projets = projets.concat(evenementsDuSite(lectureEvenements, projets));
     const { avenir, passes } = separerAgenda(projets);
     remplir(avenirBoite, avenir, enPanne ? T.erreur : T.vide, false, PAQUET);

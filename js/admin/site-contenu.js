@@ -31,6 +31,7 @@
     await P.chargerScript('/js/vendor/quill-2.0.3.js').catch(() => { /* l'éditeur simple prend le relais */ });
     await P.chargerScript('/js/vendor/dompurify-3.4.16.min.js').catch(() => { /* aperçu en texte simple */ });
   }
+  P.outilsRedaction = outilsRedaction;  // (aussi pour les Traductions anglaises, js/admin/site-traductions.js)
 
   // ---------- Galerie des publications ----------
   async function liste(type) {
