@@ -10,16 +10,20 @@
 // événement. Tailles selon la grille des mensurations MA2M ; équivalences étrangères
 // selon les correspondances standard du prêt-à-porter.
 (function () {
-  // Femmes — fourchettes de tour de poitrine (haut) et de hanches (bas), bornes incluses.
+  // Femmes : grille de l'agence (tableau de la propriétaire, 26/10/2026) pour XS, S, M et L ;
+  // une mesure pile sur la limite de deux tailles reste dans la plus petite (règle n° 1 de la
+  // propriétaire : on ne pousse jamais une mannequin vers une taille plus grande pour 1 cm).
+  // XXS, XL, XXL et XXXL prolongent la grille de 6 cm en 6 cm. Bornes incluses.
+  // (Mêmes bornes en base : mesures_incoherentes, supabase-tailles-agence.sql.)
   var FEMMES = [
-    { l: 'XXS', poitrine: [0, 77], taille: [0, 57], hanches: [0, 83], fr: 32, it: 36, uk: 4, us: 0, br: 34, jp: 3, kr: 33, cn: '150/76A' },
-    { l: 'XS', poitrine: [78, 83], taille: [58, 63], hanches: [84, 89], fr: 34, it: 38, uk: 6, us: 2, br: 36, jp: 5, kr: 44, cn: '155/80A' },
-    { l: 'S', poitrine: [84, 87], taille: [64, 67], hanches: [90, 93], fr: 36, it: 40, uk: 8, us: 4, br: 38, jp: 7, kr: 55, cn: '160/84A' },
-    { l: 'M', poitrine: [88, 93], taille: [68, 73], hanches: [94, 99], fr: 38, it: 42, uk: 10, us: 6, br: 40, jp: 9, kr: 66, cn: '165/88A' },
-    { l: 'L', poitrine: [94, 100], taille: [74, 80], hanches: [100, 106], fr: 40, it: 44, uk: 12, us: 8, br: 42, jp: 11, kr: 77, cn: '170/92A' },
-    { l: 'XL', poitrine: [101, 106], taille: [81, 86], hanches: [107, 112], fr: 42, it: 46, uk: 14, us: 10, br: 44, jp: 13, kr: 88, cn: '175/96A' },
-    { l: 'XXL', poitrine: [107, 112], taille: [87, 92], hanches: [113, 118], fr: 44, it: 48, uk: 16, us: 12, br: 46, jp: 15, kr: 99, cn: '180/100A' },
-    { l: 'XXXL', poitrine: [113, 999], taille: [93, 999], hanches: [119, 999], fr: 46, it: 50, uk: 18, us: 14, br: 48, jp: 17, kr: 110, cn: '185/104A' }
+    { l: 'XXS', poitrine: [0, 79], taille: [0, 59], hanches: [0, 87], fr: 32, it: 36, uk: 4, us: 0, br: 34, jp: 3, kr: 33, cn: '150/76A' },
+    { l: 'XS', poitrine: [80, 84], taille: [60, 65], hanches: [88, 92], fr: 34, it: 38, uk: 6, us: 2, br: 36, jp: 5, kr: 44, cn: '155/80A' },
+    { l: 'S', poitrine: [85, 89], taille: [66, 70], hanches: [93, 96], fr: 36, it: 40, uk: 8, us: 4, br: 38, jp: 7, kr: 55, cn: '160/84A' },
+    { l: 'M', poitrine: [90, 93], taille: [71, 74], hanches: [97, 101], fr: 38, it: 42, uk: 10, us: 6, br: 40, jp: 9, kr: 66, cn: '165/88A' },
+    { l: 'L', poitrine: [94, 99], taille: [75, 81], hanches: [102, 109], fr: 40, it: 44, uk: 12, us: 8, br: 42, jp: 11, kr: 77, cn: '170/92A' },
+    { l: 'XL', poitrine: [100, 105], taille: [82, 87], hanches: [110, 115], fr: 42, it: 46, uk: 14, us: 10, br: 44, jp: 13, kr: 88, cn: '175/96A' },
+    { l: 'XXL', poitrine: [106, 111], taille: [88, 93], hanches: [116, 121], fr: 44, it: 48, uk: 16, us: 12, br: 46, jp: 15, kr: 99, cn: '180/100A' },
+    { l: 'XXXL', poitrine: [112, 999], taille: [94, 999], hanches: [122, 999], fr: 46, it: 50, uk: 18, us: 14, br: 48, jp: 17, kr: 110, cn: '185/104A' }
   ];
   // Hommes — tour de poitrine, tour de taille, tour de bassin, bornes incluses.
   var HOMMES = [

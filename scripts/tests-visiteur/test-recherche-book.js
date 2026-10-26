@@ -55,9 +55,9 @@ const P = [['Awa Koné', 'femme', 176, 84, 62, 97, '39', 'Marron', 'Noir', 'Abid
     await saisir('f-pointure', 40); ok(await noms() === 'Fatou Bamba, Mariam Diallo', n + 'pointure 40 seule'); await effacer();
     await saisir('f-taille-min', 175); ok(await noms() === 'Awa Koné, Koffi Yao, Mariam Diallo, Mesures Cachees', n + 'taille min 175 (fiches sans taille écartées)'); await effacer();
     await saisir('f-bassin', 112); ok(await noms() === '', n + 'mesure cachée sur la fiche (« à reprendre ») : introuvable par la recherche'); await effacer();
-    await choisir('f-taille-haut', 'S'); ok(await noms() === 'Awa Koné, Mariam Diallo', n + 'taille haut S (poitrine 84-87)'); await effacer();
+    await choisir('f-taille-haut', 'S'); ok(await noms() === 'Fatou Bamba, Mariam Diallo', n + 'taille haut S (poitrine 85-89, grille de l’agence)'); await effacer();
     await choisir('f-taille-bas', 'M'); ok((await noms()).includes('Awa Koné') && !(await noms()).includes('Sans Mesures'), n + 'taille bas M'); await effacer();
-    await choisir('f-taille-complete', 'M'); ok((await noms()).includes('Fatou Bamba') && (await noms()).includes('Ancienne Fiche'), n + 'taille complète M, ancienne taille déclarée comprise (' + await noms() + ')'); await effacer();
+    await choisir('f-taille-complete', 'M'); ok((await noms()).includes('Mariam Diallo') && !(await noms()).includes('Fatou Bamba') && (await noms()).includes('Ancienne Fiche'), n + 'taille complète M, ancienne taille déclarée comprise (' + await noms() + ')'); await effacer();
     await p.click('.filtres-plus summary');
     await choisir('f-yeux', 'Noir'); ok(await noms() === 'Fatou Bamba', n + 'yeux noirs seuls'); await effacer();
     const cheveux = await p.$$eval('#f-cheveux option', l => l.map(o => o.textContent));

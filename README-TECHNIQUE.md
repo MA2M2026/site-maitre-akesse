@@ -439,6 +439,14 @@ qui s'ouvrent ensuite) et échoue si un nom de mannequin est sans photo.
   « — » (outils de relecture : remplacé par une virgule, « · » entre deux éléments, « | » dans
   les titres des pages ; le « — » seul qui signifie « vide » reste).
 
+## 📏 Grille de tailles de l'agence (26/10/2026, décision de la propriétaire)
+- Femmes (js/tailles.js, et en base `mesures_incoherentes` : supabase-tailles-agence.sql) :
+  XS poitrine 80-84 / taille 60-65 / bassin 88-92 · S 85-89 / 66-70 / 93-96 · M 90-93 / 71-74 /
+  97-101 · L 94-99 / 75-81 / 102-109 ; XXS, XL, XXL, XXXL prolongés de 6 cm par taille.
+- Règle n° 1 : une mesure pile sur la limite de deux tailles reste dans la plus petite.
+- Équivalences étrangères : la norme (M = FR 38, L = FR 40), choix de la propriétaire.
+- Essais : test-tailles.js, essais-tailles-agence.sql.
+
 ## 🧹 Grand nettoyage de l'Administration et de l'application (26/10/2026, demande de la propriétaire)
 - Code recopié regroupé en un seul endroit : `P.pasActivee(motif)` (partie pas encore activée
   dans Supabase), `P.bornesPeriode` et `P.choixPeriodes` (choix d'un mois ou d'une année),
