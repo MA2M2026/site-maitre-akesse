@@ -214,7 +214,8 @@ module.exports = async function handler(req, res) {
         statut: reussites > 0 ? 'envoyee' : (abonnements.length ? 'echouee' : 'aucun_appareil'),
         cible_table: table,
         cible_id: record.id,
-        resume: notif.texte,
+        // (message d'une mannequin : son titre seulement, pas son contenu privé)
+        resume: pourMannequin ? notif.titre : notif.texte,
         erreur: echecs ? echecs + ' appareil(s) en échec sur ' + abonnements.length + ' — ' + String(derniereErreur).slice(0, 200) : null
       })
     });

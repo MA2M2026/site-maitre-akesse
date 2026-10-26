@@ -128,8 +128,9 @@
     b.projet = el.value;
     if (b.projet) {
       const p = (await P.bd(sb.from('agenda_projets').select('*').eq('id', b.projet)))[0];
+      // (un casting ou un défilé donne son type, sauf pour un remerciement)
       if (p) Object.assign(b, { titre: p.titre || '', date: p.date_debut || '', heure: p.heure_evenement ? String(p.heure_evenement).replace(':', ' h ') : '', lieu: [p.lieu, p.ville].filter(Boolean).join(', '), client: p.client || '',
-        sorte: b.sorte === 'info' && ['casting', 'defile'].includes(p.type) ? p.type : b.sorte });
+        sorte: b.sorte !== 'remerciement' && ['casting', 'defile'].includes(p.type) ? p.type : b.sorte });
       // remerciement : les mannequins convoquées à ce projet sont cochées
       if (b.sorte === 'remerciement') await cocherDuProjet();
     }
@@ -170,6 +171,7 @@
     const b = brouillon;
     if (!String(b.titre).trim()) { P.message('Indiquez un titre.'); return; }
     if (!b.choisis.size) { P.message('Choisissez au moins une mannequin.'); return; }
+    if (b.choisis.size > 500) { P.message('500 mannequins au plus par information.'); return; }
     const message = String(b.message).trim();
     if (!message) { P.message('Le message est vide.'); return; }
     if (!confirm('Envoyer « ' + b.titre + ' » à ' + P.pluriel(b.choisis.size, 'mannequin', 'mannequins') + ' ?\n\nElles le reçoivent tout de suite dans l’application ; l’e-mail et WhatsApp se préparent ensuite.')) return;
@@ -178,7 +180,13 @@
       projet_id: b.projet || null, image: b.image || null, fiche: b.fiche || null, message, message_parent: messageParentDe(message), message_app: texteApplication(message), destinataires }).select('id'));
     const id = cree && cree[0] && cree[0].id;
     if (!id) { P.message('L’information n’a pas pu être enregistrée : reconnectez-vous puis réessayez.'); return; }
-    const n = await P.rpc('app_messages_envoyer', { p_cles: destinataires, p_sorte: b.sorte, p_titre: SORTES[b.sorte][0] + ' ' + String(b.titre).trim(), p_texte: texteApplication(message), p_image: b.image || null, p_fiche: b.fiche || null, p_lien: null });
+    let n;
+    try { n = await P.rpc('app_messages_envoyer', { p_cles: destinataires, p_sorte: b.sorte, p_titre: SORTES[b.sorte][0] + ' ' + String(b.titre).trim(), p_texte: texteApplication(message), p_image: b.image || null, p_fiche: b.fiche || null, p_lien: null }); }
+    catch (e) {
+      // rien n'est parti : l'information est retirée (un nouvel essai ne la crée pas deux fois)
+      await P.bd(sb.from('infos_agence').delete().eq('id', id).select('id')).catch(() => null);
+      throw e;
+    }
     await P.bd(sb.from('infos_agence').update({ dans_app: n || 0 }).eq('id', id).select('id'));
     brouillon = null;
     P.message('📱 Reçue dans l’application par ' + P.pluriel(n || 0, 'mannequin', 'mannequins') + '. Envoyez maintenant l’e-mail et WhatsApp.');

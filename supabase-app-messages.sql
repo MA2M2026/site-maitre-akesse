@@ -89,10 +89,12 @@ declare
 begin
   if not portail_peut('site') then raise exception 'Accès refusé.'; end if;
   if coalesce(array_length(p_cles, 1), 0) > 500 then raise exception 'Trop de destinataires d''un coup (500 au plus).'; end if;
+  -- (« {prénom} » écrit dans le message : le nom de chacune)
   insert into app_messages (user_id, sorte, titre, texte, image, fiche, lien, envoi)
-  select distinct u, p_sorte, left(trim(p_titre), 160), left(p_texte, 4000), nullif(trim(coalesce(p_image, '')), ''), nullif(trim(coalesce(p_fiche, '')), ''),
-         nullif(trim(coalesce(p_lien, '')), ''), v_envoi
-    from (select app_compte_de(c) u from unnest(p_cles) c) x where u is not null;
+  select u, p_sorte, left(trim(p_titre), 160),
+         left(regexp_replace(p_texte, '\{pr[ée]nom\}', coalesce((select full_name from model_profiles where id = u), (select full_name from agence_mannequins where user_id = u limit 1), ''), 'gi'), 4000),
+         nullif(trim(coalesce(p_image, '')), ''), nullif(trim(coalesce(p_fiche, '')), ''), nullif(trim(coalesce(p_lien, '')), ''), v_envoi
+    from (select distinct app_compte_de(c) u from unnest(p_cles) c) x where u is not null;
   get diagnostics n = row_count;
   perform journaliser('Message envoyé dans l''application', 'app_messages', v_envoi::text, null, json_build_object('sorte', p_sorte, 'nombre', n)::jsonb);
   return n;
@@ -261,12 +263,26 @@ end;
 $$;
 revoke all on function app_push_abonner(text, text, text) from public, anon;
 grant execute on function app_push_abonner(text, text, text) to authenticated;
+-- « Se déconnecter » : ce téléphone ne reçoit plus les notifications de ce compte
+create or replace function app_push_desabonner(p_endpoint text)
+returns void language sql security definer set search_path = public as $$
+  update app_push_abonnements set actif = false where endpoint = p_endpoint and user_id = auth.uid();
+$$;
+revoke all on function app_push_desabonner(text) from public, anon;
+grant execute on function app_push_desabonner(text) to authenticated;
+-- (le serveur des notifications n'est appelé que si la mannequin a un téléphone abonné : pas
+-- d'appel inutile, ni de ligne au journal, pour les autres)
+create or replace function app_a_un_telephone(p_user uuid)
+returns boolean language sql stable security definer set search_path = public as $$
+  select exists (select 1 from app_push_abonnements where user_id = p_user and actif);
+$$;
+revoke all on function app_a_un_telephone(uuid) from public, anon, authenticated;
 
 -- chaque nouveau message → notification (api/notifications-webhook.js l'envoie aux seuls
 -- téléphones de cette mannequin)
 drop trigger if exists trg_notif_app_messages on app_messages;
 create trigger trg_notif_app_messages after insert on app_messages
-  for each row execute function notifier_push_notification();
+  for each row when (app_a_un_telephone(new.user_id)) execute function notifier_push_notification();
 
 -- ---------- 5) Informations agence (Administration › Projets et convocations) ----------
 create table if not exists infos_agence (

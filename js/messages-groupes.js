@@ -233,13 +233,18 @@ window.demarrerMessagesGroupes = function () {
 
   // 3e voie (26/10/2026) : le même message dans l'application, pour les personnes qui y ont un
   // compte (retrouvées par leur e-mail), une seule fois par message
-  async function versApplication() {
-    const faits = dejaFaits('app');
-    const titre = $('mg-source').value === 'inscription' ? '✉️ Message de l’agence' : '📣 Votre candidature casting';
-    for (const d of choisis().filter((x) => x.email && !faits.has(x.id))) {
-      await envoyerDansApplication(['e:' + d.email], 'message', titre, texteApplication(personnaliserMessage($('mg-message').value.trim(), d, rdv(), () => A_COMPLETER)));  // (js/messages-candidats.js)
-      noterFait('app', d.id);
-    }
+  // (un seul envoi à la fois : deux appuis rapprochés ne l'envoient pas deux fois)
+  let versAppEnCours = null;
+  function versApplication() {
+    if (!versAppEnCours) versAppEnCours = (async () => {
+      const faits = dejaFaits('app');
+      const titre = $('mg-source').value === 'inscription' ? '✉️ Message de l’agence' : '📣 Votre candidature casting';
+      for (const d of choisis().filter((x) => x.email && !faits.has(x.id))) {
+        const n = await envoyerDansApplication(['e:' + d.email], 'message', titre, texteApplication(personnaliserMessage($('mg-message').value.trim(), d, rdv(), () => A_COMPLETER)));  // (js/messages-candidats.js)
+        if (n !== null) noterFait('app', d.id);  // (pas d'envoi possible : réessayé au prochain appui)
+      }
+    })().finally(() => { versAppEnCours = null; });
+    return versAppEnCours;
   }
 
   async function envoyerEmails() {

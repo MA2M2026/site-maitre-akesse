@@ -311,11 +311,11 @@ function coeurMessage(texte) {
 function texteApplication(texte) { return sansMarquesWhatsApp(coeurMessage(texte)); }  // (js/messages-convocations.js)
 // Dépose le message dans l'application des mannequins choisies (clés « m:<profil> »,
 // « r:<registre> », « c:<carnet> », « e:<e-mail> » ; seules celles qui ont un compte le reçoivent).
-// Renvoie le nombre de mannequins qui l'ont reçu ; 0 si la boîte n'est pas encore activée
-// (supabase-app-messages.sql) — l'envoi par WhatsApp ou e-mail n'est jamais bloqué.
+// Renvoie le nombre de mannequins qui l'ont reçu ; null si l'envoi n'a pas pu se faire (boîte pas
+// encore activée : supabase-app-messages.sql, réseau…) — l'envoi par WhatsApp ou e-mail n'est jamais bloqué.
 function envoyerDansApplication(cles, sorte, titre, texte, image, fiche, lien) {
   return sb.rpc('app_messages_envoyer', { p_cles: cles, p_sorte: sorte, p_titre: titre, p_texte: texte, p_image: image || null, p_fiche: fiche || null, p_lien: lien || null })
-    .then((r) => (r.error ? 0 : r.data || 0), () => 0);
+    .then((r) => (r.error ? null : r.data || 0), () => null);
 }
 
 // Code individuel d'inscription envoyé par WhatsApp (mineur : au parent, sur son numéro).

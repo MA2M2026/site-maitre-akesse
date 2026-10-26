@@ -12,6 +12,7 @@ select essai_qui('00000000-0000-0000-0000-0000000000a2');
 select essai(app_messages_envoyer(array['m:00000000-0000-0000-0000-0000000000b1', 'r:' || (select id from agence_mannequins where user_id = '00000000-0000-0000-0000-0000000000b1'),
     'm:00000000-0000-0000-0000-0000000000ff', 'e:ROXANE@test.ci', 'x:rien'], 'casting', 'Casting Kouroukan', 'Préparez-vous', 'https://exemple.ci/a.jpg', null, '/app/#messages') = 1,
   'agence : une mannequin choisie de plusieurs façons ne reçoit qu''UN message ; sans compte, rien');
+select essai(app_messages_envoyer(array['m:00000000-0000-0000-0000-0000000000b1'], 'info', 'Bonjour', 'Chère {prénom}, à bientôt.') = 1, 'agence : « {prénom} » écrit dans le message');
 select essai_refuse($$select app_messages_envoyer(array['m:00000000-0000-0000-0000-0000000000b1'], 'info', 'x', 'x', 'javascript:alert(1)')$$, 'image : seulement une adresse https');
 select essai_refuse($$select app_messages_envoyer(array['m:00000000-0000-0000-0000-0000000000b1'], 'info', 'x', 'x', null, null, '//pirate.ci')$$, 'lien : seulement une page du site');
 select essai_qui('00000000-0000-0000-0000-0000000000a4');
@@ -19,6 +20,7 @@ select essai_refuse($$select app_messages_envoyer(array['m:00000000-0000-0000-00
 -- la mannequin
 select essai_qui('00000000-0000-0000-0000-0000000000b1', 'aal1');
 select essai((select count(*) from app_messages where titre = 'Casting Kouroukan' and user_id = auth.uid()) = 1, 'mannequin : lit son message');
+select essai((select texte from app_messages where titre = 'Bonjour') = 'Chère ' || (select full_name from model_profiles where id = auth.uid()) || ', à bientôt.', 'mannequin : « {prénom} » remplacé par son nom');
 select essai_refuse($$insert into app_messages (user_id, sorte, titre) values (auth.uid(), 'info', 'faux')$$, 'mannequin : n''écrit pas de message');
 select essai_refuse($$update app_messages set titre = 'changé'$$, 'mannequin : ne change pas un message');
 select app_messages_lus(array(select id from app_messages where titre = 'Casting Kouroukan'));
@@ -36,6 +38,15 @@ select app_push_abonner('https://push.exemple/telephone-roxane', 'cle', 'secret'
 select essai_refuse($$select * from app_push_abonnements$$, 'mannequin : ne lit pas la liste des téléphones abonnés');
 reset role;
 select essai((select user_id from app_push_abonnements where endpoint = 'https://push.exemple/telephone-roxane') = '00000000-0000-0000-0000-0000000000b1', 'son téléphone est abonné aux notifications');
+select essai(app_a_un_telephone('00000000-0000-0000-0000-0000000000b1') and not app_a_un_telephone('00000000-0000-0000-0000-0000000000b9'), 'notification seulement pour qui a un téléphone abonné');
+-- le même téléphone passe à une autre mannequin, qui se déconnecte ensuite
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000b9', 'aal1');
+select app_push_abonner('https://push.exemple/telephone-roxane', 'cle2', 'secret2');
+select app_push_desabonner('https://push.exemple/telephone-roxane');
+reset role;
+select essai((select user_id = '00000000-0000-0000-0000-0000000000b9' and not actif from app_push_abonnements where endpoint = 'https://push.exemple/telephone-roxane'), 'téléphone passé à une autre mannequin, puis déconnexion : plus aucune notification sur ce téléphone');
+update app_push_abonnements set user_id = '00000000-0000-0000-0000-0000000000b1', actif = true where endpoint = 'https://push.exemple/telephone-roxane';
 
 -- envois automatiques
 -- a) convocation (par sa fiche de profil) : un seul message, même envoyé par WhatsApp ET e-mail ; rien pour la ligne du parent

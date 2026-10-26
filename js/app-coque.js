@@ -33,7 +33,15 @@
     if (u.origin === location.origin && DANS_APP[u.pathname]) a.setAttribute('href', DANS_APP[u.pathname] + u.search + u.hash);
   }
   ['click', 'auxclick', 'contextmenu'].forEach((sorte) => document.addEventListener(sorte, garderDansApp, true));
-  if ('serviceWorker' in navigator) addEventListener('load', () => { navigator.serviceWorker.register('/app/sw.js', { scope: '/app/' }).catch(() => { /* sans copie de secours */ }); });
+  if ('serviceWorker' in navigator) {
+    addEventListener('load', () => { navigator.serviceWorker.register('/app/sw.js', { scope: '/app/' }).catch(() => { /* sans copie de secours */ }); });
+    // notification touchée alors que l'application est déjà ouverte, sur n'importe laquelle de ses
+    // pages (service-worker.js) : la page du message
+    navigator.serviceWorker.addEventListener('message', (e) => {
+      const url = e.data && e.data.ma2mOuvrir;
+      if (typeof url === 'string' && /^\/app\/[^/]/.test(url)) location.href = url;
+    });
+  }
   document.querySelectorAll('[data-app-nav]').forEach((n) => { n.outerHTML = nav(n.getAttribute('data-app-nav')); });
   window.MA2M_APP = { ONGLETS, nav, DANS_APP };
 })();

@@ -234,19 +234,21 @@ window.demarrerRapportProfils = function () {
       var id = suivant(); if (!id) return;
       var zoneTexte = details.querySelector('textarea[data-id="' + id + '"]');
       var texte = zoneTexte ? zoneTexte.value : '', numero = numeroWhatsApp(telephones[id]);
-      // 3e voie (26/10/2026) : le même rapport dans son application (js/messages-candidats.js)
-      void envoyerDansApplication(['m:' + id], 'message', '✨ Votre profil : ce qu’il reste à compléter', texteApplication(texte), null, null, '/app/#profil');
+      // 3e voie (26/10/2026) : le même rapport dans son application (js/messages-candidats.js),
+      // quand le message est vraiment parti (WhatsApp ouvert ou message copié)
+      var texteApp = texteApplication(texte);
+      var versApplication = function () { void envoyerDansApplication(['m:' + id], 'message', '✨ Votre profil : ce qu’il reste à compléter', texteApp, null, null, '/app/#profil'); };
       if (parents[id]) {
         var mannequin = profils.find(function (x) { return x.id === id; }) || {};
         texte = 'Bonjour ' + salutationParent(parents[id].parent_nom) + ', voici un message de l’agence pour votre enfant ' + (mannequin.full_name || '') + ' :\n\n' + texte;
       }
-      if (numero) window.open('https://wa.me/' + numero + '?text=' + encodeURIComponent(texte), '_blank', 'noopener');
+      if (numero) { window.open('https://wa.me/' + numero + '?text=' + encodeURIComponent(texte), '_blank', 'noopener'); versApplication(); }
       else {
         // sans numéro : copie du message ; si la copie échoue, le message est montré
         // sélectionné (à copier à la main) et le profil n'est PAS noté comme prévenu
         var copie = navigator.clipboard ? navigator.clipboard.writeText(texte).then(function () { return true; }, function () { return false; }) : Promise.resolve(false);
         void copie.then(function (ok) {
-          if (ok) { marquerEnvoye(id, false); return; }
+          if (ok) { marquerEnvoye(id, false); versApplication(); return; }
           var det = zoneTexte && zoneTexte.closest('details'); if (det) det.open = true;
           if (zoneTexte) { zoneTexte.focus(); zoneTexte.select(); }
           alert('Copie impossible sur cet appareil : le message est sélectionné, copiez-le à la main.');

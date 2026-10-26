@@ -85,7 +85,7 @@
       sb.rpc('mes_mensualites'),
       sb.rpc('mes_cachets'),
       sb.from('casting_projets').select('nom, date_casting, lieu').eq('actif', true).order('ordre_affichage', { ascending: true, nullsFirst: false }).limit(3),
-      lireMessages()
+      lireMessages(uid)
     ]);
     if (profil.status === 'rejected') throw profil.reason;  // (connexion coupée : « Réessayer »)
     const p = donnees(profil);
@@ -101,7 +101,8 @@
   }
   // boîte de réception (3e voie, 26/10/2026 : tout ce que l'agence envoie par WhatsApp et e-mail
   // arrive aussi ici ; supabase-app-messages.sql) : les 60 derniers messages
-  const lireMessages = () => sb.from('app_messages').select('id, sorte, titre, texte, image, fiche, lien, cree_le, lu_le').order('cree_le', { ascending: false }).limit(60);
+  // (seulement les siens : un compte qui est aussi de l'agence peut lire ceux des autres)
+  const lireMessages = (uid) => sb.from('app_messages').select('id, sorte, titre, texte, image, fiche, lien, cree_le, lu_le').eq('user_id', uid).order('cree_le', { ascending: false }).limit(60);
   const nonLus = () => etat.messages.filter((x) => !x.lu_le);
   const aVenir = () => etat.evenements.filter((e) => !e.passe);
   const aRepondre = () => aVenir().filter((e) => !e.reponse);
@@ -288,17 +289,29 @@
     nonLus().forEach((x) => { x.lu_le = new Date().toISOString(); x.nouveau = true; });
     sb.rpc('app_messages_lus', { p_ids: ids }).then(() => null, () => null);
   }
+  // ce téléphone reçoit les notifications de CE compte (aussi relancé à chaque ouverture quand
+  // c'est déjà autorisé : téléphone passé d'une mannequin à une autre, abonnement renouvelé)
+  async function abonnerCeTelephone() {
+    const j = await abonnementPush(await navigator.serviceWorker.ready);  // (js/app.js)
+    const { error } = await sb.rpc('app_push_abonner', { p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth });
+    if (error) throw error;
+    return j.endpoint;
+  }
   async function activerNotifications(bouton) {
     bouton.disabled = true;
     try {
-      const j = await abonnementPush(await navigator.serviceWorker.ready);  // (js/app.js)
-      const { error } = await sb.rpc('app_push_abonner', { p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth });
-      if (error) throw error;
+      await abonnerCeTelephone();
       message('C’est activé : vous serez prévenue à chaque message de l’agence.');
     } catch (e) {
       message(Notification.permission === 'denied' ? 'Notifications refusées : autorisez-les dans les réglages du téléphone.' : 'L’activation n’a pas abouti : réessayez.');
     }
     afficher();
+  }
+  // « Se déconnecter » : ce téléphone ne reçoit plus les notifications de ce compte
+  async function desabonnerCeTelephone() {
+    if (!notificationsPossibles() || Notification.permission !== 'granted') return;
+    const reg = await navigator.serviceWorker.ready, abo = await reg.pushManager.getSubscription();
+    if (abo) await sb.rpc('app_push_desabonner', { p_endpoint: abo.endpoint });
   }
   const ECRANS = { accueil: ecranAccueil, evenements: ecranEvenements, profil: ecranProfil, paiements: ecranPaiements, alertes: ecranAlertes };
   const TITRES = { evenements: 'Mes événements', profil: 'Mon profil', paiements: 'Mes paiements', alertes: 'Messages' };
@@ -324,6 +337,7 @@
     if (per) { periode = per.dataset.periode; afficher(); return; }
     if (e.target.closest('[data-ma-carte]')) periode = 'avenir';
     if (e.target.closest('[data-deconnexion]')) {
+      await Promise.race([desabonnerCeTelephone().catch(() => null), new Promise((r) => setTimeout(r, 3000))]);
       await sb.auth.signOut({ scope: 'local' }).catch(() => null);  // cet appareil seulement
       etat = null; periode = 'avenir';
       [programmes, programmeOuvert].forEach((o) => Object.keys(o).forEach((k) => { delete o[k]; }));
@@ -354,18 +368,14 @@
   // de retour dans l'application (notification touchée, autre application) : les nouveaux messages
   document.addEventListener('visibilitychange', () => {
     if (document.hidden || !etat) return;
-    lireMessages().then(({ data }) => {
+    lireMessages(etat.uid).then(({ data }) => {
       if (!data || !etat) return;
       const vus = new Set(etat.messages.filter((x) => x.nouveau).map((x) => x.id));
       etat.messages = data.map((x) => (vus.has(x.id) ? Object.assign(x, { nouveau: true }) : x));
       afficher();
     }, () => null);
   });
-  // notification touchée alors que l'application est déjà ouverte (service-worker.js) : sa page
-  if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message', (e) => {
-    const url = e.data && e.data.ma2mOuvrir;
-    if (typeof url === 'string' && url.indexOf('/app/') === 0) location.href = url;
-  });
+
 
   // ---------- démarrage ----------
   // (session illisible, ex. stockage du navigateur bloqué : l'écran de connexion)
@@ -386,6 +396,7 @@
       return;
     }
     afficher();
+    if (notificationsPossibles() && Notification.permission === 'granted') abonnerCeTelephone().catch(() => null);
   }
   demarrer();
 })();
