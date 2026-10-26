@@ -36,4 +36,11 @@ logo = 'https://www.maitreakessemodelmanagement.com/book-photos/site/partenaires
 ok((await image(await robot('/en/partenaires?partenaire=' + ID))).includes('_vercel/image?url=' + encodeURIComponent(logo)), 'partenaire avec logo → son logo');
 ok((await robot('/partenaires')) === undefined && config.matcher.includes('/partenaires'), 'page Partenaires sans ?partenaire → balises de la page');
 ok((await robot('/actualites')) === undefined, 'page Actualités sans ?actu → balises de la page (image de la page)');
+// adresse sans « www » (26/10/2026, hstspreload.org) : renvoi vers www, avec l'en-tête HSTS complet
+for (const chemin of ['/', '/en/', '/book/awa-kone?x=1', '/actualites']) {
+  const r = await middleware(new Request('https://maitreakessemodelmanagement.com' + chemin, { headers: { 'user-agent': 'Mozilla/5.0' } }));
+  ok(r && r.status === 308 && r.headers.get('location') === 'https://www.maitreakessemodelmanagement.com' + chemin
+    && /includeSubDomains; preload/.test(r.headers.get('strict-transport-security') || ''), 'sans www ' + chemin + ' → www (308, HSTS complet)');
+}
+ok((await middleware(new Request('https://www.maitreakessemodelmanagement.com/actualites', { headers: { 'user-agent': 'Mozilla/5.0' } }))) === undefined, 'avec www : rien ne change');
 console.log(ko ? '❌ ' + ko + ' échec(s)' : 'Tout est bon.'); process.exit(ko ? 1 : 0);

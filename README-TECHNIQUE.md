@@ -3688,4 +3688,6 @@ axe (accessibilité) sur les 28 pages publiques, SonarCloud. Chantiers menés :
   n'envoie que `max-age` : elle est remplacée par la première règle de `redirects` de vercel.json
   (hôte `maitreakessemodelmanagement.com` → `https://www.…/:chemin*`, permanente), qui reçoit
   l'en-tête HSTS complet. Dans Vercel › Settings › Domains, le domaine nu doit être relié à
-  Production **sans** redirection.
+  Production **sans** redirection. Le middleware passe avant ces redirections : il renvoie lui-même
+  le domaine nu vers www (`versWww`, middleware.js), sinon l'accueil était servi sans www et ses styles
+  bloqués (incident du 26/10/2026, 19 h 50, réglage Vercel remis aussitôt).
