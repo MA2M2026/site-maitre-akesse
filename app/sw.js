@@ -3,7 +3,7 @@
 // une connexion coupée (js/sw-interface.js, partagé avec l'Administration). Notifications :
 // celles du service worker du site (service-worker.js), chargé ici.
 importScripts('/service-worker.js', '/js/sw-interface.js');
-const VERSION = 'mannequin-app-v4';
+const VERSION = 'mannequin-app-v5';
 const INTERFACE = ['/app/', '/app/manifest.webmanifest', '/css/polices.css', '/css/jetons.css', '/css/installation.css', '/css/mannequin-app.css', '/js/surveillance.js',
   '/js/vendor/supabase-js-2.110.6.js', '/js/supabase-config.js', '/js/photos.js', '/js/app.js', '/js/tailles.js',
   '/js/analyse-profil.js', '/js/session-requise.js', '/js/app-coque.js', '/js/mannequin-app.js', '/icons/mannequin-192.png', '/assets/logo-header-clair.png',

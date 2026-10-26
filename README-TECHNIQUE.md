@@ -417,6 +417,38 @@ qui s'ouvrent ensuite) et échoue si un nom de mannequin est sans photo.
   `initialesNom` (js/app.js, aussi pour l'Administration).
 - Étape suivante prévue : notifications sur le téléphone.
 
+## ✉️ La « 3e voie » : tout arrive aussi dans l'application (26/10/2026, demande de la propriétaire)
+- Ce que l'Administration envoie aux mannequins par WhatsApp et e-mail arrive AUSSI dans leur
+  application (onglet **Messages**, ex-« Alertes ») et, si elles l'acceptent, en **notification**
+  sur leur téléphone. Les parents (sans application) continuent de recevoir par WhatsApp/e-mail.
+- Base : **supabase-app-messages.sql** (essais : essais-app-messages.sql).
+  `app_messages` (la boîte : chacune ne lit que les siens ; l'agence relit), `app_messages_lus`,
+  `app_compte_de` (clé « m:/r:/c:/e: » → compte), `app_messages_envoyer` (envoi par l'agence,
+  gestion du site seulement), `app_push_abonnements` + `app_push_abonner` (téléphones),
+  `infos_agence` (écran « Informations agence »).
+- Envois AUTOMATIQUES par déclencheurs (une seule fois chacun, colonne `cle` ; jamais au point
+  de bloquer l'envoi d'origine, `app_message_auto`) : sélection / convocation / rappels
+  (`convocation_envois` passé à « envoyé » ou « à envoyer à la main », pas la ligne du parent),
+  places limitées (lien parti, `places_invitations`), appel du 1er et relances du 3 et du 5
+  (`mensualites_appels`), paiement confirmé ou non retrouvé (`paiements_mannequins`), cachet
+  payé (`cachets_mannequins`).
+- Envois par l'Administration (JS, `envoyerDansApplication` et `coeurMessage` / `texteApplication`
+  dans js/messages-candidats.js) : **Informations agence** (js/admin/site-infos.js : casting,
+  défilé, remerciement, information ; message rédigé tout seul, projet de l'agenda qui remplit
+  tout et coche les convoquées, photo et fiche (R2, dossier `site/infos/`, PDF accepté :
+  api/r2-site-images.js), puis e-mails et WhatsApp un par un avec suivi `faits_email`/`faits_wa`),
+  **Messages groupés** (candidates retrouvées par leur e-mail), **Rapport des profils**.
+- Notifications : chaque nouveau message déclenche `notifier_push_notification` (Extension 107,
+  même secret que l'Administration) → api/notifications-webhook.js, qui pour `app_messages`
+  n'écrit qu'aux téléphones de cette mannequin (icône MA2M Mannequin, page de l'application).
+  Abonnement : `abonnementPush` + `MA2M_VAPID_PUBLIQUE` (js/app.js, partagés avec
+  js/admin/notifications.js) ; bouton « Activer les notifications » dans l'onglet Messages.
+  Au toucher : service-worker.js ouvre la page dans l'application (ou l'Administration).
+- `P.personnesPossibles` (js/admin/coque.js) : les personnes à choisir avec leur visage, partagé
+  par la Programmation défilé et les Informations agence.
+- Essais : test-app-mannequin.js (onglet Messages, notifications), test-infos-agence.js,
+  test-notifications-app.js (serveur), essais-app-messages.sql.
+
 ## 💳 Paiement à l'avance (26/10/2026, décision de la propriétaire)
 - Jusqu'à **3 mois à l'avance, au même prix** (pas de réduction). « Mes paiements »
   (js/mes-paiements.js, aussi dans l'application : app/mes-paiements.html) : quand rien n'est à

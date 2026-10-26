@@ -65,7 +65,7 @@
     catch (e) { if (nonActive(e)) return P.entete('Informations agence') + PAS_ACTIVE; throw e; }
     const cartes = infos.map((x, i) => '<article class="projet-carte apparait" style="--i:' + Math.min(i, 10) + '"><div class="projet-tete"><h2>' + SORTES[x.sorte][0] + ' ' + P.esc(x.titre) + '</h2>' +
       P.pastille(SORTES[x.sorte][1], 'neutre') + '</div><p class="doux">Écrite le ' + P.esc(P.dateHeure(x.cree_le)) + (x.date_info ? ' · ' + P.esc(P.date(x.date_info)) : '') + '</p>' +
-      '<p>' + P.pluriel(x.destinataires.length, 'mannequin', 'mannequins') + ' · 📱 ' + x.dans_app + ' dans l’application · ✉️ ' + x.faits_email.length + ' e-mail(s) · 💬 ' + x.faits_wa.length + ' WhatsApp</p>' +
+      '<p>' + P.pluriel((x.destinataires || []).length, 'mannequin', 'mannequins') + ' · 📱 ' + (x.dans_app || 0) + ' dans l’application · ✉️ ' + (x.faits_email || []).length + ' e-mail(s) · 💬 ' + (x.faits_wa || []).length + ' WhatsApp</p>' +
       '<div class="ligne"><a class="btn rouge" href="#/site/' + PAGE + '/' + P.esc(x.id) + '">Ouvrir</a></div></article>').join('');
     return P.entete('Informations agence', '<a class="btn rouge" href="#/site/' + PAGE + '/nouvelle">＋ Nouvelle information</a>') +
       '<p class="doux">Un casting, un défilé, un remerciement ou une information à passer : le système rédige le message, vous choisissez les mannequins, et il part par les 3 voies (application, e-mail, WhatsApp).</p>' +
@@ -193,6 +193,7 @@
     if (!personnes) personnes = await P.personnesPossibles(true);
     const contacts = await coordonnees(info.destinataires);
     ouverte = { info, contacts };
+    info.faits_email = info.faits_email || []; info.faits_wa = info.faits_wa || [];
     const emailFaits = new Set(info.faits_email), waFaits = new Set(info.faits_wa);
     const avecEmail = info.destinataires.filter((c) => contacts[c] && contactsEnvoi(contacts[c]).email);
     const avecWa = info.destinataires.filter((c) => contacts[c] && numeroWhatsApp(contactsEnvoi(contacts[c]).phone));
