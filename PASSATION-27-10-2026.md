@@ -22,6 +22,10 @@ navigateurs et des anciens Android (pas seulement Chrome), et **tester en situat
 (elle a raison : nos robots = Chromium simulé, ils ne voient ni Safari iOS 26, ni Samsung Internet, ni Play
 Protect, ni la vraie 4G).
 
+**D'ICI LÀ (décision du 27/10) : rendre l'installation web actuelle fiable, EN PRIORITÉ SUR iPHONE —
+la plupart de ses mannequins ont un iPhone.** Commencer donc par l'aide iPhone (point A, partie iPhone),
+la tester en vrai sur iPhone récent (iOS 26) et plus ancien, puis Android.
+
 Plan validé dans son principe (une étape à la fois, lui écrire en français) :
 A. **Installation selon le navigateur** (js/app.js, bandeInstallation ; partagé site/Administration/app) :
    - Android : n'utiliser la fenêtre « Installer » QUE dans Chrome (UA Chrome sans SamsungBrowser/OPR/
@@ -54,8 +58,8 @@ E. **Installation encore plus facile (demande de la propriétaire, 27/10) — «
      affiche le site). **Il faut que la propriétaire crée ELLE-MÊME le compte développeur Google Play (~25 $,
      une fois ; compte entreprise = pas de test fermé obligatoire ; compte personnel = test fermé ~12 testeurs
      pendant 14 jours avant publication)** — ne jamais demander ni utiliser ses identifiants ; la clé de
-     signature reste chez elle (Play App Signing). QUESTION POSÉE le 27/10, réponse en attente : « voulez-vous
-     la version Google Play ? ». Ensuite, sur le site et dans l'app sur Android : bouton « Télécharger sur
+     signature reste chez elle (Play App Signing). RÉPONSE de la propriétaire (27/10) : OUI, mais le compte sera payé LE MOIS PROCHAIN (novembre 2026) ;
+     ne rien préparer côté Google Play avant qu'elle annonce que le compte est créé. Ensuite, sur le site et dans l'app sur Android : bouton « Télécharger sur
      Google Play » à la place des étapes.
    - **iPhone** : App Store = 99 $/an et refus fréquent des applis qui ne font qu'afficher un site
      (règle 4.2) → pas pour l'instant. L'app marche SANS installation dans Safari (l'installation n'apporte que
