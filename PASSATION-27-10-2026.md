@@ -65,6 +65,13 @@ E. **Installation encore plus facile (demande de la propriétaire, 27/10) — «
      (règle 4.2) → pas pour l'instant. L'app marche SANS installation dans Safari (l'installation n'apporte que
      l'icône et les notifications) : le dire clairement, et rendre l'aide iPhone très visuelle (grandes images,
      peu de texte).
+   - **QR code (proposition de la propriétaire, 27/10)** : lui expliquer (déjà fait) qu'un QR code ouvre seulement
+     le lien (pas d'installation automatique sans store). Mais le faire : QR vers
+     `https://mannequin.maitreakessemodelmanagement.com/app/?installer=1` (avec iPhone, l'appareil photo ouvre
+     Safari directement ; à l'arrivée, ouvrir AUTOMATIQUEMENT l'aide d'installation adaptée au téléphone si
+     l'app n'est pas déjà installée). Fournir une affiche/carte A5 rouge et blanche (logo, « Scanne pour
+     installer l'appli MA2M », pictogrammes iPhone/Android) à imprimer pour les castings ; plus tard
+     (Google Play), le même QR pourra mener à Google Play pour les Android.
    - **Pour celles qui lisent mal** : aide en images + message vocal court (français, autres langues si elle
      le souhaite) + la vidéo ; **QR code** affiché aux castings, avec quelqu'un de l'agence qui installe sur place.
 
