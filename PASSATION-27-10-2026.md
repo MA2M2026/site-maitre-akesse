@@ -45,6 +45,25 @@ C. **Essais RÉELS avant mise en ligne** : pousser sur une branche → Vercel cr
 D. **Vidéo** (`outils/video-installation/film3.html`) à refaire APRÈS C, d'après les captures réelles :
    nouveau chemin iPhone ; Android selon le navigateur. Fond rouge mat, même style (validé « top »).
 
+E. **Installation encore plus facile (demande de la propriétaire, 27/10) — « pour quelqu'un qui ne sait pas
+   lire ou écrire »** :
+   - **Android → Google Play via TWA** (Trusted Web Activity : Bubblewrap ou PWABuilder, paquet
+     `ci.maitreakessemodelmanagement.mannequin` ou équivalent ; `/.well-known/assetlinks.json` sur
+     mannequin.maitreakessemodelmanagement.com pour lier l'app au site ; icônes et manifeste existants dans
+     app/). Un seul bouton « Installer » sur Google Play, plus de Play Protect, mises à jour automatiques (l'app
+     affiche le site). **Il faut que la propriétaire crée ELLE-MÊME le compte développeur Google Play (~25 $,
+     une fois ; compte entreprise = pas de test fermé obligatoire ; compte personnel = test fermé ~12 testeurs
+     pendant 14 jours avant publication)** — ne jamais demander ni utiliser ses identifiants ; la clé de
+     signature reste chez elle (Play App Signing). QUESTION POSÉE le 27/10, réponse en attente : « voulez-vous
+     la version Google Play ? ». Ensuite, sur le site et dans l'app sur Android : bouton « Télécharger sur
+     Google Play » à la place des étapes.
+   - **iPhone** : App Store = 99 $/an et refus fréquent des applis qui ne font qu'afficher un site
+     (règle 4.2) → pas pour l'instant. L'app marche SANS installation dans Safari (l'installation n'apporte que
+     l'icône et les notifications) : le dire clairement, et rendre l'aide iPhone très visuelle (grandes images,
+     peu de texte).
+   - **Pour celles qui lisent mal** : aide en images + message vocal court (français, autres langues si elle
+     le souhaite) + la vidéo ; **QR code** affiché aux castings, avec quelqu'un de l'agence qui installe sur place.
+
 Ensuite seulement : le chantier du site (section suivante).
 
 ---
