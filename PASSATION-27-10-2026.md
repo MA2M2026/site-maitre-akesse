@@ -1,3 +1,51 @@
+# ➜ MISSION DE LA PROCHAINE CONVERSATION (à lire en premier) — chantier 3 : le site public
+
+État au 27/10/2026 (nuit) : la vidéo est validée (chantier 2 fini) ; l'Administration et l'application
+des mannequins sont EN LIGNE en rouge et blanc (chantier 1 fini, main c76a622). Reste le SITE PUBLIC.
+
+Décisions de la propriétaire (ne pas les rediscuter) :
+- **Uniquement deux couleurs de fond : rouge très mat #7C2128 et blanc.** Plus de beige, plus de noir.
+  Rouge profond #5A141B autorisé pour ce qui doit ressortir (bouton choisi, carte importante, messages).
+  L'écriture reste foncée (#1B1817) dans les blocs blancs et blanche sur le rouge (lisibilité).
+- **Pas de superposition** : à la fin, le noir et le beige doivent être SUPPRIMÉS DÉFINITIVEMENT du code,
+  pas cachés par une couche par-dessus.
+- **Ne rien casser, ne rien supprimer d'autre que ces deux couleurs** (aucune page, aucune fonction,
+  aucun texte, aucune photo, aucun réglage de sécurité).
+
+Étapes, UNE À LA FOIS, en écrivant en français à la propriétaire (CLAUDE.md) :
+1. **Ménage à la source** (sur une branche, rien en ligne) :
+   - `css/jetons.css` (partagé site + applications) : remplacer les valeurs beiges (papier #F1ECE5,
+     carte #F8F5F1, papier foncé #E6DFD6, lignes #D3C9BD, scène #CFC6BB, etc.) et noires (encre utilisée
+     comme FOND, #1B1817 / #141110 / dégradés sombres) par le rouge #7C2128 / rouge profond #5A141B /
+     blanc #FFFFFF / gris très clair #F2F2F2 ; garder l'encre #1B1817 seulement comme COULEUR D'ÉCRITURE.
+   - Puis `css/style.css`, `css/magazine.css`, `css/admin-vivante.css`, `css/mannequin-app.css` et les
+     autres feuilles (`grep -n "background" css/*.css`) : même règle pour chaque fond beige ou noir.
+   - Reprendre dans ces fichiers ce que fait `css/applis-rouge-mat.css` (écriture claire sur le rouge,
+     foncée dans les blocs blancs), puis **supprimer `css/applis-rouge-mat.css`**, ses `<link>` dans
+     admin/index.html et app/*.html et ses entrées dans admin/sw.js et app/sw.js (changer leurs VERSION).
+   - Garder les couleurs d'ÉTAT (vert « payé », orange « à payer », etc.) et les photos/vidéos telles quelles.
+2. **Test gardien** `scripts/tests-visiteur/test-couleurs-autorisees.js` (ajouté à lancer.sh ET
+   lancer-complet.sh, ce dernier est une copie locale ignorée par git) : parcourt les pages du site (FR+EN),
+   de l'Administration et de l'application, échoue si un fond visible n'est ni rouge, ni rouge profond,
+   ni blanc/gris très clair (exceptions : photos, vidéos, pastilles d'état, logos des partenaires).
+3. **Vérifier que rien n'est cassé** : `node --check` des JS touchés, `python3 scripts/versionner.py`,
+   `python3 scripts/verifier-csp.py`, `bash scripts/base-essai/lancer.sh`,
+   `bash scripts/tests-visiteur/lancer-complet.sh` (≈ 1 h ; doit finir à 0 échec ; test-visuel.js,
+   test-contraste-applis.js et test-app-mannequin.js contrôlent la lisibilité). Comparer avec avant :
+   même nombre de pages, de parcours et de vérifications (aujourd'hui : 70 parcours, 3 405 vérifications).
+   `git diff --stat` : seuls des fichiers CSS (+ liens/versions, tests, README) doivent changer.
+4. **Captures à la propriétaire** (accueil FR/EN, Book, fiche mannequin, actualités, formulaires,
+   Administration, application ; téléphone + ordinateur) et **attendre son accord**.
+5. Puis : /code-review, README-TECHNIQUE.md (section « Couleurs »), UNE mise en ligne (main), vérifier en
+   ligne, SonarCloud (notes au maximum), et mettre à jour CE fichier.
+
+Repères : la propriétaire n'est pas technique, une seule chose à la fois, jamais de mise en ligne sans
+son accord, jamais de suppression de photos de mannequins. Le site est sur Vercel (offre gratuite :
+peu de mises en ligne par jour). Une autre conversation peut aussi pousser sur main : toujours
+`git fetch origin main` et se mettre à jour avant d'envoyer.
+
+---
+
 # Passation du 27/10/2026 (session précédente bloquée jusqu'à dimanche)
 
 Lire d'abord CLAUDE.md (français, une chose à la fois, tests visiteur, relecture, pas de mise en
