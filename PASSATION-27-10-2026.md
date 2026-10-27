@@ -57,3 +57,9 @@ Demandes de la propriétaire pour la prochaine version :
 
 ## Journal de la reprise (à compléter au fur et à mesure)
 - 27/10 : passation écrite, branche poussée. Début de la vidéo v3 (fond rouge mat, départ WhatsApp).
+- 27/10 : **vidéo v3 écrite** : `outils/video-installation/film3.html` (68 s ; WhatsApp → barre rouge →
+  iPhone : aide « 3 touches » réelle (iphone-guide.png) puis Partager / Sur l'écran d'accueil / Ajouter ;
+  Android : captures RÉELLES de la propriétaire (android-*-reel*.png) ; Ensuite ; fin). Fabrication :
+  `IMAGES=<dossier> node outils/video-installation/rendu3.js` puis
+  `ffmpeg -framerate 30 -i <dossier>/f%05d.jpg -stream_loop 1 -i outils/video-installation/musique-32.wav -filter_complex "[0:v]scale=720:1280[v];[1:a]atrim=0:68,volume=0.4,afade=t=in:d=1,afade=t=out:st=65:d=3[a]" -map "[v]" -map "[a]" -c:v libx264 -pix_fmt yuv420p -crf 25 -preset slow -movflags +faststart -c:a aac -b:a 96k -shortest video.mp4`.
+  Les écrans de l'application y sont DÉJÀ en rouge mat (chantier 1) : le dire à la propriétaire.

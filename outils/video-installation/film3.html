@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<!-- Vidéo « Installer l'appli MA2M Mannequin » v3 (27/10/2026) : fond rouge mat, départ dans WhatsApp,
+     vrai parcours iPhone (barre rouge → aide « 3 touches » → Partager → Sur l'écran d'accueil → Ajouter)
+     et Android (captures réelles de la propriétaire : barre rouge → « Installer »). window.rendre(t) dessine
+     l'image au temps t (secondes) ; rendu3.js en fait les images, ffmpeg la vidéo. -->
+<style>
+@font-face { font-family: 'Cormorant'; src: url('../../assets/polices/cormorant-garamond-latin-500-normal.woff2'); }
+@font-face { font-family: 'Work'; font-weight: 400; src: url('../../assets/polices/work-sans-latin-400-normal.woff2'); }
+@font-face { font-family: 'Work'; font-weight: 600; src: url('../../assets/polices/work-sans-latin-600-normal.woff2'); }
+@font-face { font-family: 'Work'; font-weight: 700; src: url('../../assets/polices/work-sans-latin-700-normal.woff2'); }
+* { box-sizing: border-box; }
+html, body { margin: 0; width: 1080px; height: 1920px; overflow: hidden; background: #7C2128; }
+body { font-family: 'Work', 'Noto Color Emoji', sans-serif; color: #fff; position: relative; }
+.abs { position: absolute; }
+.emoji { font-family: 'Noto Color Emoji'; }
+/* fond rouge mat : uni, grain fin, vignette douce qui respire au rythme */
+#fond { inset: 0; background: #7C2128; }
+#grain { position: absolute; inset: 0; opacity: .25; mix-blend-mode: multiply; }
+#vignette { position: absolute; inset: 0; background: radial-gradient(80% 60% at 50% 45%, rgba(0,0,0,0) 40%, rgba(0,0,0,.45) 100%); }
+#eclair { position: absolute; inset: 0; background: #fff; opacity: 0; }
+/* en-tête de l'étape */
+#voile-haut { left: 0; right: 0; top: 0; height: 660px; z-index: 29; background: linear-gradient(#7C2128 0%, rgba(124,33,40,.95) 62%, rgba(124,33,40,0) 100%); }
+#tete { left: 60px; right: 60px; top: 70px; height: 480px; z-index: 30; }
+#badge { left: 0; top: 0; width: 170px; height: 170px; border-radius: 50%; background: #fff; color: #7C2128; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 110px; box-shadow: 0 18px 50px rgba(0,0,0,.35); }
+#titre { left: 200px; right: 0; top: 0; font-weight: 700; font-size: 70px; line-height: 1.05; }
+#titre.plein { left: 0; }
+#titre .mot { display: inline-block; margin-right: .22em; }
+#titre .em { color: #FFD24A; }
+#sous { left: 200px; right: 0; font-size: 40px; line-height: 1.3; color: #F3E3E5; }
+#sous.plein { left: 0; }
+#sous b { color: #FFD24A; }
+/* points d'avancement */
+#points { left: 0; right: 0; bottom: 46px; display: flex; justify-content: center; gap: 18px; z-index: 31; }
+#points i { width: 22px; height: 22px; border-radius: 50%; background: rgba(255,255,255,.3); display: block; }
+#points i.fait { background: #FFD24A; }
+#points i.ici { background: #fff; transform: scale(1.4); }
+/* plein cadre */
+.plein-cadre { inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; z-index: 40; }
+.gros { font-weight: 700; font-size: 120px; line-height: 1; }
+.moyen { font-size: 54px; font-weight: 600; line-height: 1.2; }
+.pilule { font-weight: 600; background: #fff; color: #141110; border-radius: 999px; padding: 26px 40px; box-shadow: 0 20px 60px rgba(0,0,0,.4); white-space: nowrap; font-size: 32px; }
+.icone-app { width: 300px; height: 300px; border-radius: 68px; background: url('../../icons/mannequin-apple-180.png') 0 0 / 100% 100%; box-shadow: 0 40px 100px rgba(0,0,0,.6); }
+#volet { inset: 0; z-index: 45; }
+/* téléphones */
+#scene { left: 0; top: 0; width: 1080px; height: 1920px; perspective: 2200px; z-index: 10; }
+#camera { left: 0; top: 0; width: 1080px; height: 1920px; transform-origin: 0 0; }
+.tel { position: absolute; left: 235px; top: 590px; width: 610px; height: 1279px; border-radius: 92px; background: #0b0a0a; box-shadow: 0 0 0 4px #3b3434, 0 50px 140px rgba(0,0,0,.6); transform-style: preserve-3d; }
+.tel.android { border-radius: 60px; }
+.ecran, .surcouche { position: absolute; left: 22px; top: 22px; width: 390px; height: 852px; transform-origin: 0 0; transform: scale(1.4513); }
+.ecran { border-radius: 50px; overflow: hidden; background: #fff; font-family: -apple-system, 'Inter', 'Noto Color Emoji', sans-serif; color: #000; }
+.android .ecran { border-radius: 30px; }
+.surcouche { pointer-events: none; }
+.ilot { position: absolute; left: 50%; top: 11px; width: 120px; height: 34px; margin-left: -60px; border-radius: 20px; background: #000; z-index: 50; }
+.etat { position: absolute; left: 0; right: 0; top: 0; height: 50px; z-index: 40; display: flex; justify-content: space-between; align-items: center; padding: 0 34px 0 40px; font-weight: 600; font-size: 16px; }
+.couche { position: absolute; inset: 0; }
+/* WhatsApp */
+.wa { background: #EFE7DE; }
+.wa-haut { position: absolute; left: 0; right: 0; top: 0; height: 104px; background: #F6F6F6; border-bottom: 1px solid #ddd; display: flex; align-items: flex-end; gap: 10px; padding: 0 14px 10px; }
+.wa-haut .retour { color: #0a7aff; font-size: 30px; line-height: 1; }
+.wa-avatar { width: 40px; height: 40px; border-radius: 50%; background: #7C2128; color: #fff; font-weight: 700; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+.wa-haut b { font-size: 16px; display: block; } .wa-haut small { font-size: 12px; color: #888; }
+.bulle-wa { position: absolute; left: 12px; width: 318px; background: #fff; border-radius: 0 14px 14px 14px; padding: 9px 12px 20px; font-size: 14.5px; line-height: 1.38; box-shadow: 0 1px 1px rgba(0,0,0,.12); }
+.bulle-wa .heure { position: absolute; right: 10px; bottom: 5px; font-size: 11px; color: #999; }
+.bulle-wa a { color: #027EB5; text-decoration: underline; word-break: break-all; }
+.bulle-wa .suite { color: #777; }
+.wa-saisie { position: absolute; left: 0; right: 0; bottom: 0; height: 82px; background: #F6F6F6; border-top: 1px solid #ddd; }
+.wa-saisie i { position: absolute; left: 50px; right: 60px; top: 12px; height: 36px; border-radius: 18px; background: #fff; border: 1px solid #ddd; }
+/* iPhone : Safari */
+.page { position: absolute; left: 0; top: 50px; width: 390px; height: 690px; background: url('iphone-page-barre.png') 0 0 / 390px 690px; }
+.guide { position: absolute; left: 0; top: 50px; width: 390px; height: 690px; background: url('iphone-guide.png') 0 0 / 390px 690px; }
+.bas-safari { position: absolute; left: 0; right: 0; bottom: 0; height: 112px; background: rgba(246,246,246,.97); border-top: 1px solid #d9d9d9; }
+.adresse { position: absolute; left: 14px; right: 14px; top: 8px; height: 40px; border-radius: 12px; background: #e6e6e8; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 13.5px; color: #111; white-space: nowrap; }
+.outils { position: absolute; left: 0; right: 0; top: 56px; height: 40px; display: flex; justify-content: space-around; align-items: center; color: #0a7aff; }
+.outils svg { width: 26px; height: 26px; }
+.voile { position: absolute; inset: 0; background: #000; }
+.feuille { position: absolute; left: 0; right: 0; bottom: 0; height: 470px; background: #f2f2f7; border-radius: 14px 14px 0 0; overflow: hidden; }
+.feuille .tete-f { display: flex; align-items: center; gap: 12px; padding: 16px 18px 12px; border-bottom: 1px solid #ddd; background: #f2f2f7; position: relative; z-index: 2; }
+.feuille .tete-f img, .ajout img { width: 44px; height: 44px; border-radius: 10px; }
+.feuille .tete-f b { font-size: 15px; display: block; } small.url { font-size: 12px; color: #888; display: block; max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.defile { position: absolute; left: 0; right: 0; top: 74px; }
+.applis { display: flex; gap: 16px; padding: 16px 18px; }
+.applis span { width: 62px; height: 62px; border-radius: 16px; background: #d1d1d6; display: block; }
+.applis span:nth-child(1) { background: #34C759; } .applis span:nth-child(2) { background: #25D366; } .applis span:nth-child(3) { background: #0a7aff; }
+.liste { margin: 6px 16px; background: #fff; border-radius: 12px; overflow: hidden; }
+.liste div { display: flex; justify-content: space-between; align-items: center; height: 50px; padding: 0 16px; font-size: 17px; border-bottom: 1px solid #e5e5ea; }
+.liste svg { width: 24px; height: 24px; }
+.allume { background: #ffe58a !important; }
+.ajout { position: absolute; left: 0; right: 0; bottom: 0; top: 60px; background: #f2f2f7; border-radius: 14px 14px 0 0; }
+.ajout .haut { display: flex; justify-content: space-between; align-items: center; gap: 10px; height: 56px; padding: 0 12px 0 16px; font-size: 16px; border-bottom: 1px solid #ddd; }
+.ajout .haut b { font-size: 14px; } .bleu { color: #0a7aff; }
+.ajout .haut .ajouter { font-weight: 700; padding: 6px 10px; border-radius: 8px; }
+.ajout .carte { margin: 26px 16px; background: #fff; border-radius: 12px; display: flex; gap: 14px; padding: 14px; align-items: center; }
+.ajout .carte img { width: 64px; height: 64px; border-radius: 14px; }
+.ajout .nom { font-size: 17px; border-bottom: 1px solid #e5e5ea; padding-bottom: 8px; margin-bottom: 8px; }
+/* écrans d'accueil */
+.fond-ios { background: linear-gradient(160deg, #6d4c8f 0%, #c0566e 55%, #f2a65a 100%); }
+.fond-android { background: linear-gradient(170deg, #12324a 0%, #1f6f6b 60%, #7fc79a 100%); }
+.grille { position: absolute; left: 26px; right: 26px; top: 80px; display: grid; grid-template-columns: repeat(4, 64px); justify-content: space-between; row-gap: 30px; }
+.android .grille { top: 70px; grid-template-columns: repeat(4, 58px); }
+.ic { width: 64px; height: 64px; border-radius: 15px; background: rgba(255,255,255,.33); position: relative; }
+.android .ic { width: 58px; height: 58px; border-radius: 50%; }
+.ic i { position: absolute; left: -10px; right: -10px; top: 70px; text-align: center; font-style: normal; font-size: 11px; color: #fff; white-space: nowrap; }
+.android .ic i { top: 64px; }
+.ic.ma2m { background: url('../../icons/mannequin-apple-180.png') 0 0 / 100% 100%; box-shadow: 0 6px 16px rgba(0,0,0,.35); }
+.dock { position: absolute; left: 14px; right: 14px; bottom: 16px; height: 92px; border-radius: 32px; background: rgba(255,255,255,.3); display: flex; justify-content: space-around; align-items: center; }
+.android .dock { background: none; bottom: 40px; }
+/* Android : captures réelles */
+.reel { position: absolute; inset: 0; background-size: 100% 100%; }
+/* application ouverte */
+.appli { position: absolute; inset: 0; background: url('ecran-appli.png') 0 0 / 390px 844px; }
+/* pointeurs */
+.main { position: absolute; font-family: 'Noto Color Emoji'; font-size: 64px; line-height: 1; margin: -6px 0 0 -26px; z-index: 70; filter: drop-shadow(0 6px 8px rgba(0,0,0,.45)); }
+.onde { position: absolute; width: 50px; height: 50px; margin: -25px 0 0 -25px; border-radius: 50%; border: 5px solid #FFD24A; z-index: 69; }
+.fleche { position: absolute; z-index: 68; color: #FFD24A; font-weight: 700; text-shadow: 0 4px 12px rgba(0,0,0,.6); margin: -45px 0 0 -30px; }
+.cercle { position: absolute; border: 5px solid #FFD24A; border-radius: 16px; z-index: 67; }
+.bulle { position: absolute; z-index: 71; background: #FFD24A; color: #141110; font-weight: 700; font-size: 17px; padding: 8px 12px; border-radius: 12px; white-space: nowrap; font-family: 'Work', 'Noto Color Emoji', sans-serif; box-shadow: 0 6px 16px rgba(0,0,0,.35); }
+.confetti { position: absolute; width: 14px; height: 24px; border-radius: 3px; }
+.tuile { position: absolute; width: 440px; height: 210px; border-radius: 34px; background: #fff; color: #141110; display: flex; flex-direction: column; justify-content: center; padding: 0 36px; box-shadow: 0 30px 80px rgba(0,0,0,.45); z-index: 41; }
+.tuile .emoji { font-size: 70px; line-height: 1; } .tuile b { font-size: 40px; margin-top: 12px; }
+</style></head>
+<body>
+<div id="fond" class="abs"><svg id="grain" width="1080" height="1920"><filter id="g"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .9 0"/></filter><rect width="100%" height="100%" filter="url(#g)"/></svg><div id="vignette"></div><div id="eclair"></div></div>
+
+<div id="scene" class="abs"><div id="camera" class="abs">
+  <div class="tel" id="tel-ios"><div class="ecran" id="ecran-ios">
+    <div class="ilot"></div>
+    <div class="etat" id="etat-ios"><span>18:05</span><span>▂▄▆ ᯤ ▮▮▮</span></div>
+    <div class="couche wa" id="ios-wa">
+      <div class="wa-haut"><span class="retour">‹</span><span class="wa-avatar">MA2M</span><span><b>Agence MA2M</b><small>en ligne</small></span></div>
+      <div class="bulle-wa" style="top:122px"><b>📲 MA2M Mannequin : installe l’appli en 1 minute</b><br><br>👉 Lien : <a id="wa-lien">https://mannequin.maitreakessemodelmanagement.com</a><br><br><span class="suite">🍏 <b>Tu as un iPhone</b><br>1. Ouvre le lien avec Safari…<br><br>🤖 <b>Tu as un Android</b><br>1. Ouvre le lien avec Chrome…</span><span class="heure">18:05</span></div>
+      <div class="wa-saisie"><i></i></div>
+    </div>
+    <div class="couche fond-ios" id="ios-accueil"><div class="grille" id="grille-ios"></div><div class="dock"><div class="ic"></div><div class="ic"></div><div class="ic"></div><div class="ic"></div></div></div>
+    <div class="couche" id="ios-safari">
+      <div class="page"></div>
+      <div class="guide" id="ios-guide"></div>
+      <div class="bas-safari">
+        <div class="adresse">🔒 mannequin.maitreakessemodelmanagement.com</div>
+        <div class="outils">
+          <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg viewBox="0 0 24 24" style="opacity:.35"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg viewBox="0 0 24 24" id="ic-partager"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M6 11H5v10h14V11h-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M4 5h6a2 2 0 0 1 2 2v12a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v12a2 2 0 0 1 2-2h6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+          <svg viewBox="0 0 24 24"><rect x="3" y="7" width="13" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 4h11a2 2 0 0 1 2 2v11" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+        </div>
+      </div>
+      <div class="voile" id="ios-voile"></div>
+      <div class="feuille" id="ios-feuille">
+        <div class="tete-f"><img src="../../icons/mannequin-apple-180.png" alt=""><span><b>MA2M Mannequin</b><small class="url">mannequin.maitreakessemodelmanagement.com</small></span></div>
+        <div class="defile" id="ios-defile">
+          <div class="applis"><span></span><span></span><span></span><span></span></div>
+          <div class="liste">
+            <div>Copier</div><div>Ajouter à la liste de lecture</div><div>Ajouter un signet</div><div>Ajouter aux favoris</div><div>Rechercher dans la page</div>
+            <div id="ios-cible">Sur l’écran d’accueil <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+            <div>Annoter</div><div>Imprimer</div>
+          </div>
+        </div>
+      </div>
+      <div class="ajout" id="ios-ajout">
+        <div class="haut"><span class="bleu">Annuler</span><b>Ajouter à l’écran d’accueil</b><span class="bleu ajouter" id="ios-btn-ajouter">Ajouter</span></div>
+        <div class="carte"><img src="../../icons/mannequin-apple-180.png" alt=""><div style="flex:1"><div class="nom">MA2M Mannequin</div><small class="url">mannequin.maitreakessemodelmanagement.com</small></div></div>
+      </div>
+    </div>
+    <div class="couche appli" id="ios-appli"></div>
+  </div><div class="surcouche" id="sur-ios"></div></div>
+
+  <div class="tel android" id="tel-and"><div class="ecran">
+    <div class="couche fond-android" id="and-accueil"><div class="etat" style="color:#fff;height:32px;font-size:13px;padding:0 22px"><span>18:06</span><span>LTE ▮▮▮</span></div><div class="grille" id="grille-and"></div><div class="dock"><div class="ic"></div><div class="ic"></div><div class="ic"></div><div class="ic"></div></div></div>
+    <div class="reel" id="and-page" style="background-image:url('android-page-reelle.png')"></div>
+    <div class="reel" id="and-dialogue" style="background-image:url('android-installer-reel.png')"></div>
+  </div><div class="surcouche" id="sur-and"></div></div>
+</div></div>
+
+<div id="voile-haut" class="abs"></div>
+<div id="tete" class="abs"><div id="badge" class="abs"></div><div id="titre" class="abs"></div><div id="sous" class="abs"></div></div>
+<div id="points" class="abs"></div>
+
+<div id="intro" class="abs plein-cadre">
+  <div class="emoji" id="intro-tel" style="font-size:150px">📲</div>
+  <div class="icone-app" id="intro-icone" style="margin:30px 0 50px"></div>
+  <div class="gros" id="intro-t1">MA2M Mannequin</div>
+  <div class="moyen" id="intro-t2" style="margin-top:30px;color:#FFD24A">Installe l’appli en 1 minute</div>
+</div>
+<div id="sec-ios" class="abs plein-cadre"><div class="emoji" style="font-size:220px" id="sec-ios-e">🍏</div><div class="gros" style="margin-top:40px">Tu as un<br>iPhone ?</div></div>
+<div id="sec-and" class="abs plein-cadre"><div class="emoji" style="font-size:220px" id="sec-and-e">🤖</div><div class="gros" style="margin-top:40px">Tu as un<br>Android ?</div></div>
+<div id="fait" class="abs plein-cadre"><div class="emoji" style="font-size:200px" id="fait-e">✅</div><div class="gros" id="fait-t" style="margin-top:40px"></div><div class="moyen" id="fait-s" style="margin-top:30px;color:#FFD24A"></div></div>
+<div id="tuiles" class="abs" style="inset:0;z-index:41"></div>
+<div id="fin" class="abs plein-cadre">
+  <div class="icone-app" id="fin-icone" style="width:220px;height:220px;border-radius:50px"></div>
+  <div class="gros" style="margin-top:60px;font-size:96px">Pas de panique</div>
+  <div class="moyen" style="margin-top:24px">suis les étapes et ça passe <span class="emoji">💪</span></div>
+  <div class="pilule" style="margin-top:70px">mannequin.maitreakessemodelmanagement.com</div>
+</div>
+<div id="volet" class="abs"></div>
+<div id="confettis" class="abs" style="inset:0;z-index:50;pointer-events:none"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const lisse = (x) => { x = clamp(x); return x * x * (3 - 2 * x); };
+const sortie = (x) => 1 - Math.pow(1 - clamp(x), 3);
+const rebond = (x) => { x = clamp(x); const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+const elast = (x) => { x = clamp(x); return x === 0 ? 0 : x === 1 ? 1 : Math.pow(2, -10 * x) * Math.sin((x * 10 - 0.75) * (2 * Math.PI) / 3) + 1; };
+const dans = (t, a, b) => t >= a && t < b;
+const fen = (t, a, b, f = 0.3) => Math.min(sortie((t - a) / f), clamp((b - t) / f));
+const TEMPO = 60 / 118;   // musique-32.wav
+window.DUREE = 68;
+
+$('grille-ios').innerHTML = ['Messages', 'Photos', 'Appareil', 'Météo', 'Horloge', 'Plans', 'Notes', 'Réglages', 'Musique', 'Calendrier', 'App Store'].map((n) => '<div class="ic"><i>' + n + '</i></div>').join('') + '<div class="ic ma2m" id="ios-ma2m"><i>MA2M Mannequin</i></div>';
+$('grille-and').innerHTML = ['Téléphone', 'Messages', 'Photos', 'Agenda', 'Horloge', 'Maps', 'Play Store', 'Paramètres', 'Musique', 'Notes', 'Météo'].map((n) => '<div class="ic"><i>' + n + '</i></div>').join('') + '<div class="ic ma2m" id="and-ma2m" style="border-radius:50%"><i>MA2M Mannequin</i></div>';
+for (const s of ['sur-ios', 'sur-and']) $(s).innerHTML = '<div class="cercle"></div><div class="fleche">⬇</div><div class="onde"></div><div class="main">👆</div><div class="bulle"></div>';
+// position du lien dans l'écran (mesurée une fois, avant toute animation)
+const r0 = $('ecran-ios').getBoundingClientRect(), rl = $('wa-lien').getBoundingClientRect(), K = 390 / r0.width;
+const LIEN = { x: (rl.left - r0.left) * K + 60, y: (rl.top - r0.top) * K + 10, l: rl.width * K, h: rl.height * K, x0: (rl.left - r0.left) * K, y0: (rl.top - r0.top) * K };
+// confettis
+const COUL = ['#FFD24A', '#ffffff', '#2FB35A', '#0a7aff', '#ff7aa2', '#141110'];
+const CONF = Array.from({ length: 80 }, (_, i) => { const d = document.createElement('div'); d.className = 'confetti'; d.style.background = COUL[i % COUL.length]; $('confettis').appendChild(d); return { d, a: (i * 137.5) % 360, v: 700 + (i * 53) % 700, r: (i * 97) % 720 }; });
+function confettis(t, t0) {
+  const k = t - t0;
+  CONF.forEach((c) => {
+    if (k < 0 || k > 2.2) { c.d.style.opacity = 0; return; }
+    const ang = c.a * Math.PI / 180, x = 540 + Math.cos(ang) * c.v * k, y = 1250 + Math.sin(ang) * c.v * k - 600 * k + 900 * k * k;
+    c.d.style.opacity = clamp(2.2 - k); c.d.style.transform = 'translate(' + x + 'px,' + y + 'px) rotate(' + (c.r * k) + 'deg)';
+  });
+}
+// en-tête : les mots claquent l'un après l'autre (grands et flous → nets)
+let titreCourant = '';
+function entete(t, a, b, badge, titre, sous) {
+  if (!dans(t, a, b)) return false;
+  const cle = badge + titre + sous;
+  if (cle !== titreCourant) {
+    titreCourant = cle;
+    $('badge').innerHTML = badge; $('badge').style.display = badge ? 'flex' : 'none';
+    $('titre').className = 'abs' + (badge ? '' : ' plein'); $('sous').className = 'abs' + (badge ? '' : ' plein');
+    const mots = []; titre.replace(/« /g, '« ').replace(/ »/g, ' »').replace(/\[([^\]]+)\]|([^\s\[]+)/g, (x, em, mot) => { if (em) em.split(' ').forEach((w) => mots.push('<span class="mot em">' + w + '</span>')); else mots.push('<span class="mot">' + mot + '</span>'); return x; });
+    $('titre').innerHTML = mots.join(''); $('sous').innerHTML = sous || '';
+  }
+  const k = t - a;
+  $('badge').style.transform = 'scale(' + elast(k / 0.7) + ') rotate(' + (-30 * (1 - sortie(k / 0.5))) + 'deg)';
+  [...$('titre').children].forEach((m, i) => { const x = clamp((k - 0.1 - i * 0.06) / 0.28); m.style.opacity = x; m.style.transform = 'scale(' + (1 + 0.8 * (1 - sortie(x))) + ')'; m.style.filter = 'blur(' + (12 * (1 - x)) + 'px)'; });
+  $('sous').style.top = ($('titre').offsetHeight + 24) + 'px';
+  $('sous').style.opacity = clamp((k - 0.55) / 0.35); $('sous').style.transform = 'translateY(' + (20 * (1 - sortie((k - 0.55) / 0.35))) + 'px)';
+  $('tete').style.opacity = clamp((b - t) / 0.2);
+  return true;
+}
+// caméra : [t, zoom, point visé x, y (écran), position sur la vidéo x, y] ; petit « coup » de zoom à chaque appui
+const S = 1.4513, BX = 257, BY = 612;
+const REPOS = (t) => [t, 1, 195, 426, 540, BY + 426 * S];
+let APPUIS = [];
+function camera(t, cles) {
+  let c = cles[0];
+  for (let i = 0; i < cles.length - 1; i++) {
+    const [a] = cles[i], [b] = cles[i + 1];
+    if (t >= b) c = cles[i + 1];
+    else if (t >= a) { const k = lisse((t - a) / (b - a)); c = cles[i].map((v, j) => v + (cles[i + 1][j] - v) * k); break; }
+  }
+  let [, z, fx, fy, cx, cy] = c;
+  const ap = APPUIS.find((x) => t >= x && t < x + 0.35); if (ap !== undefined) z *= 1 + 0.05 * Math.sin(Math.PI * (t - ap) / 0.35);
+  const px = BX + fx * S, py = BY + fy * S;
+  $('camera').style.transform = 'translate(' + (cx - z * px) + 'px,' + (cy - z * py) + 'px) scale(' + z + ')';
+}
+// entrée du téléphone : pivote en 3D et monte
+function entreeTel(id, t, a) { const k = sortie((t - a) / 0.6); $(id).style.transform = 'translateY(' + (700 * (1 - k)) + 'px) rotateY(' + (40 * (1 - k)) + 'deg) rotateZ(' + (-8 * (1 - k)) + 'deg)'; }
+function pointeurs(sur, t, gestes, fleche, cadre, bulle) {
+  const [cercle, fl, onde, main, bul] = $(sur).children;
+  const g = gestes.find((x) => t >= x.a && t < x.b);
+  if (g) {
+    const k = lisse((t - g.a) / Math.max(0.01, (g.appui || g.b) - g.a - 0.15));
+    main.style.left = (g.de[0] + (g.vers[0] - g.de[0]) * k) + 'px'; main.style.top = (g.de[1] + (g.vers[1] - g.de[1]) * k) + 'px';
+    main.style.opacity = Math.min(clamp((t - g.a) / 0.2), clamp((g.b - t) / 0.2));
+    main.style.transform = 'scale(' + (g.appui !== undefined && Math.abs(t - g.appui) < 0.12 ? 0.8 : 1) + ')';
+    if (g.appui !== undefined && t >= g.appui && t < g.appui + 0.6) { const q = (t - g.appui) / 0.6; onde.style.left = g.vers[0] + 'px'; onde.style.top = g.vers[1] + 'px'; onde.style.opacity = 1 - q; onde.style.transform = 'scale(' + (1 + 2.2 * q) + ')'; }
+    else onde.style.opacity = 0;
+  } else { main.style.opacity = 0; onde.style.opacity = 0; }
+  if (fleche) { const r = Math.abs(Math.sin((t - fleche.a) * 7)) * 16; fl.textContent = fleche.sens || '⬇'; fl.style.fontSize = (fleche.taille || 70) + 'px'; fl.style.left = fleche.x + 'px'; fl.style.top = (fleche.y + (fleche.sens === '⬆' ? r : -r)) + 'px'; fl.style.opacity = fen(t, fleche.a, fleche.b, 0.2); } else fl.style.opacity = 0;
+  if (cadre) { Object.assign(cercle.style, { left: cadre.x + 'px', top: cadre.y + 'px', width: cadre.l + 'px', height: cadre.h + 'px', opacity: fen(t, cadre.a, cadre.b, 0.2) }); cercle.style.transform = 'scale(' + (1 + 0.06 * Math.sin((t - cadre.a) * 9)) + ')'; } else cercle.style.opacity = 0;
+  if (bulle) { bul.textContent = bulle.texte; bul.style.left = bulle.x + 'px'; bul.style.top = bulle.y + 'px'; bul.style.opacity = fen(t, bulle.a, bulle.b, 0.25); bul.style.transform = 'scale(' + rebond((t - bulle.a) / 0.4) + ')'; } else bul.style.opacity = 0;
+}
+const trouve = (liste, t) => liste.find((f) => dans(t, f.a, f.b));
+function plein(id, t, a, b) { const v = dans(t, a - 0.01, b + 0.01) ? fen(t, a, b, 0.25) : 0; $(id).style.opacity = v; $(id).style.visibility = v > 0 ? 'visible' : 'hidden'; return t - a; }
+function points(t, n, i, a, b) {
+  if (!dans(t, a, b)) return false;
+  if ($('points').children.length !== n) $('points').innerHTML = '<i></i>'.repeat(n);
+  [...$('points').children].forEach((p, j) => { p.className = j < i ? 'fait' : j === i ? 'ici' : ''; });
+  $('points').style.opacity = fen(t, a, b, 0.3); return true;
+}
+
+// ---------- découpage (secondes) ----------
+// 0 intro · 3.6 WhatsApp · 9.6 « iPhone ? » · 11.4 barre rouge · 16.0 aide 3 touches · 20.6 Partager
+// 25.4 Sur l'écran d'accueil · 31.0 Ajouter · 35.6 ✅ · 39.4 « Android ? » · 41.2 barre rouge · 46.2 Installer
+// 50.8 ✅ · 54.6 Ensuite · 62.6 fin
+const IOS = [[3.6, 9.6], [11.2, 39.4], [54.6, 62.6]], AND = [[41.0, 54.0]];
+APPUIS = [8.3, 14.6, 19.6, 23.6, 29.9, 34.4, 44.8, 49.6, 56.4];
+window.rendre = function (t) {
+  // respiration du fond au rythme de la musique, éclair à chaque appui
+  const temps = (t % TEMPO) / TEMPO;
+  $('vignette').style.opacity = 0.75 + 0.25 * Math.cos(temps * Math.PI * 2);
+  $('grain').style.transform = 'translate(' + ((Math.floor(t * 12) * 37) % 50) + 'px,' + ((Math.floor(t * 12) * 53) % 50) + 'px)';
+  const ap = APPUIS.find((x) => t >= x && t < x + 0.25); $('eclair').style.opacity = ap !== undefined ? 0.1 * (1 - (t - ap) / 0.25) : 0;
+
+  // ---------- plein cadre ----------
+  let k = plein('intro', t, 0, 3.5);
+  $('intro-tel').style.transform = 'translateY(' + (-260 * (1 - rebond(k / 0.5))) + 'px) rotate(' + (14 * Math.sin(k * 7) * clamp(1 - k / 1.5)) + 'deg)';
+  $('intro-icone').style.transform = 'scale(' + elast((k - 0.2) / 0.8) + ') rotate(' + (-200 * (1 - sortie((k - 0.2) / 0.6))) + 'deg)';
+  $('intro-t1').style.transform = 'translateX(' + (-1200 * (1 - sortie((k - 0.6) / 0.4))) + 'px) skewX(' + (-20 * (1 - sortie((k - 0.6) / 0.5))) + 'deg)';
+  $('intro-t2').style.transform = 'translateX(' + (1200 * (1 - sortie((k - 0.9) / 0.4))) + 'px) skewX(' + (20 * (1 - sortie((k - 0.9) / 0.5))) + 'deg)';
+  k = plein('sec-ios', t, 9.6, 11.2); $('sec-ios-e').style.transform = 'scale(' + elast(k / 0.7) + ') rotate(' + (25 * Math.sin(k * 9) * clamp(1 - k)) + 'deg)';
+  k = plein('sec-and', t, 39.4, 41.0); $('sec-and-e').style.transform = 'scale(' + elast(k / 0.7) + ') rotate(' + (25 * Math.sin(k * 9) * clamp(1 - k)) + 'deg)';
+  if (dans(t, 37.4, 39.4)) { $('fait-t').textContent = 'L’icône MA2M'; $('fait-s').textContent = 'est sur ton écran d’accueil'; k = plein('fait', t, 37.4, 39.4); }
+  else if (dans(t, 52.4, 54.4)) { $('fait-t').textContent = 'C’est fait !'; $('fait-s').textContent = 'L’appli est sur ton téléphone'; k = plein('fait', t, 52.4, 54.4); }
+  else { plein('fait', t, -9, -8); k = 0; }
+  $('fait-e').style.transform = 'scale(' + elast(k / 0.7) + ')';
+  k = plein('fin', t, 62.6, 68.5); $('fin-icone').style.transform = 'scale(' + elast(k / 0.8) + ') rotate(' + (360 * (1 - sortie(k / 0.8))) + 'deg)';
+  const v = [[3.4, '#ffffff'], [9.4, '#141110'], [11.0, '#FFD24A'], [39.2, '#141110'], [40.8, '#3DDC84'], [54.4, '#FFD24A'], [62.4, '#ffffff']].find(([a]) => dans(t, a, a + 0.45));
+  if (v) { const q = (t - v[0]) / 0.45; $('volet').style.background = v[1]; $('volet').style.clipPath = 'polygon(' + (q * 150 - 50) + '% 0, ' + (q * 150) + '% 0, ' + (q * 150 - 25) + '% 100%, ' + (q * 150 - 75) + '% 100%)'; $('volet').style.opacity = 1; }
+  else $('volet').style.opacity = 0;
+
+  // ---------- téléphones ----------
+  const ios = IOS.some(([a, b]) => dans(t, a, b)), and = AND.some(([a, b]) => dans(t, a, b));
+  $('tel-ios').style.display = ios ? 'block' : 'none'; $('tel-and').style.display = and ? 'block' : 'none';
+  const debut = (IOS.concat(AND).find(([a, b]) => dans(t, a, b)) || [0, 0]);
+  $('camera').style.opacity = clamp((debut[1] - t) / 0.3);
+  if (ios) entreeTel('tel-ios', t, debut[0]); if (and) entreeTel('tel-and', t, debut[0]);
+  let tete = false; $('points').style.opacity = 0;
+
+  if (ios && t < 39.4) {
+    const wa = t < 9.6, accueil = dans(t, 34.6, 39.4);
+    $('ios-wa').style.opacity = wa ? 1 : 0;
+    $('ios-accueil').style.opacity = accueil ? 1 : 0;
+    $('ios-safari').style.opacity = !wa && !accueil ? 1 : 0;
+    $('ios-safari').style.transform = dans(t, 11.2, 12.0) ? 'translateY(' + (852 * (1 - sortie((t - 11.2) / 0.6))) + 'px)' : 'none';
+    $('ios-appli').style.opacity = 0;
+    $('ios-ma2m').style.transform = 'scale(' + (t < 35.2 ? 0 : elast((t - 35.2) / 0.9)) + ')';
+    // aide « 3 touches » : apparaît à 15.0, se ferme (✕) à 19.6
+    const gd = dans(t, 15.0, 19.8) ? rebond((t - 15.0) / 0.45) : 0;
+    $('ios-guide').style.opacity = clamp(gd); $('ios-guide').style.transform = 'scale(' + (0.6 + 0.4 * gd) + ')';
+    const fm = sortie((t - 24.0) / 0.45) * (t < 30.4 ? 1 : 0);
+    $('ios-feuille').style.transform = 'translateY(' + (490 * (1 - fm)) + 'px)';
+    $('ios-defile').style.transform = 'translateY(' + (-150 * lisse((t - 26.6) / 0.9)) + 'px)';
+    $('ios-cible').classList.toggle('allume', dans(t, 28.6, 30.4));
+    const am = sortie((t - 30.4) / 0.45) * (t < 34.6 ? 1 : 0);
+    $('ios-ajout').style.transform = 'translateY(' + (820 * (1 - am)) + 'px)';
+    $('ios-btn-ajouter').classList.toggle('allume', dans(t, 34.3, 34.6));
+    $('ios-voile').style.opacity = Math.max(fm, am) * 0.35;
+    $('etat-ios').style.color = accueil ? '#fff' : '#000';
+    $('ic-partager').style.transform = dans(t, 20.6, 23.6) ? 'scale(' + (1 + 0.3 * Math.abs(Math.sin(t * 6))) + ')' : 'none';
+    camera(t, [REPOS(3.6), REPOS(5.6), [6.6, 1.55, LIEN.x0 + 150, LIEN.y0 + 10, 540, 1200], [9.0, 1.55, LIEN.x0 + 150, LIEN.y0 + 10, 540, 1200],
+      REPOS(11.2), REPOS(12.4), [13.2, 1.7, 170, 675, 540, 1400], [15.0, 1.7, 170, 675, 540, 1400], [15.5, 1.15, 195, 420, 540, 1180], [18.8, 1.15, 195, 420, 540, 1180], [19.4, 1.5, 332, 253, 700, 1100],
+      [20.2, 1.5, 332, 253, 700, 1100], REPOS(20.8), [21.6, 2.0, 195, 818, 540, 1430], [23.8, 2.0, 195, 818, 540, 1430], REPOS(24.4), [25.6, 1.35, 195, 640, 540, 1250], [30.2, 1.35, 195, 640, 540, 1250],
+      [31.2, 2.0, 340, 90, 760, 1000], [34.4, 2.0, 340, 90, 760, 1000], REPOS(35.0), [36.2, 1.6, 332, 300, 540, 1250], [37.4, 1.6, 332, 300, 540, 1250]]);
+    pointeurs('sur-ios', t, [
+      { a: 6.8, b: 9.0, de: [250, 640], vers: [LIEN.x, LIEN.y], appui: 8.3 },
+      { a: 13.2, b: 15.0, de: [260, 520], vers: [170, 675], appui: 14.6 },
+      { a: 18.8, b: 20.2, de: [250, 420], vers: [332, 253], appui: 19.6 },
+      { a: 21.8, b: 24.0, de: [270, 650], vers: [195, 818], appui: 23.6 },
+      { a: 25.8, b: 27.6, de: [195, 760], vers: [195, 600] },
+      { a: 28.2, b: 30.4, de: [300, 500], vers: [160, 680], appui: 29.9 },
+      { a: 32.4, b: 34.6, de: [250, 400], vers: [352, 90], appui: 34.4 },
+      { a: 36.2, b: 37.4, de: [250, 520], vers: [332, 300] }],
+      trouve([{ a: 6.6, b: 8.1, x: LIEN.x, y: LIEN.y - 70 }, { a: 12.8, b: 14.4, x: 170, y: 605 }, { a: 21.4, b: 23.4, x: 195, y: 748 }, { a: 28.4, b: 29.8, x: 330, y: 680, sens: '⬅' }, { a: 31.4, b: 34.2, x: 330, y: 150, sens: '⬆' }], t),
+      trouve([{ a: 6.6, b: 8.6, x: LIEN.x0 - 6, y: LIEN.y0 - 4, l: LIEN.l + 12, h: LIEN.h + 8 }, { a: 12.8, b: 14.8, x: 10, y: 645, l: 370, h: 62 }, { a: 15.6, b: 18.6, x: 30, y: 300, l: 330, h: 270 }, { a: 21.4, b: 23.8, x: 175, y: 798, l: 40, h: 40 }, { a: 28.4, b: 30.4, x: 12, y: 655, l: 366, h: 52 }, { a: 31.4, b: 34.6, x: 306, y: 74, l: 76, h: 34 }, { a: 35.6, b: 37.4, x: 296, y: 264, l: 72, h: 72 }], t),
+      trouve([{ a: 7.0, b: 9.0, x: 60, y: LIEN.y0 + 40, texte: 'touche le lien 👆' }, { a: 13.0, b: 15.0, x: 80, y: 595, texte: 'la barre rouge en bas' }, { a: 15.6, b: 18.6, x: 90, y: 590, texte: 'suis ces 3 touches ⬇' }, { a: 22.0, b: 23.8, x: 70, y: 700, texte: 'le carré avec une flèche ↑' }, { a: 25.8, b: 27.8, x: 230, y: 560, texte: 'descends ⬇' }, { a: 35.6, b: 37.4, x: 220, y: 345, texte: 'la voilà ! 🎉' }], t));
+    tete = entete(t, 3.8, 9.6, '', 'Tu reçois le lien sur [WhatsApp]', 'Touche le lien bleu dans le message') ||
+      entete(t, 11.4, 15.0, '1', 'Touche la barre rouge [« Télécharger l’application »]', '') ||
+      entete(t, 15.0, 20.4, '2', 'Une aide s’ouvre : [3 touches]', 'lis-la, puis ferme-la avec ✕') ||
+      entete(t, 20.4, 24.8, '3', 'Appuie sur [Partager]', 'le carré avec une flèche <b>↑</b>, en bas de l’écran') ||
+      entete(t, 24.8, 30.6, '4', 'Descends et choisis [« Sur l’écran d’accueil »]', '') ||
+      entete(t, 30.6, 35.0, '5', 'Appuie sur [« Ajouter »]', 'en haut à droite') ||
+      entete(t, 35.0, 37.4, '<span class="emoji" style="font-size:90px">✅</span>', 'Ton icône [MA2M] est là', '');
+    points(t, 5, dans(t, 11.4, 15) ? 0 : dans(t, 15, 20.4) ? 1 : dans(t, 20.4, 24.8) ? 2 : dans(t, 24.8, 30.6) ? 3 : 4, 11.4, 35.0);
+  }
+  if (and) {
+    const accueil = t >= 50.0;
+    $('and-accueil').style.opacity = accueil ? 1 : 0;
+    $('and-page').style.opacity = !accueil && t < 45.4 ? 1 : 0;
+    $('and-page').style.transform = t < 41.8 ? 'translateY(' + (852 * (1 - sortie((t - 41.2) / 0.6))) + 'px)' : 'none';
+    const dm = dans(t, 45.0, 50.0) ? rebond((t - 45.0) / 0.4) : 0;
+    $('and-dialogue').style.opacity = dans(t, 45.0, 50.0) ? 1 : 0;
+    $('and-dialogue').style.transform = 'scale(' + (0.92 + 0.08 * dm) + ')';
+    $('and-ma2m').style.transform = 'scale(' + (t < 50.4 ? 0 : elast((t - 50.4) / 0.9)) + ')';
+    camera(t, [REPOS(41.0), REPOS(42.2), [43.0, 1.7, 169, 782, 540, 1430], [45.0, 1.7, 169, 782, 540, 1430], REPOS(45.5), [46.4, 1.6, 300, 527, 640, 1250], [49.8, 1.6, 300, 527, 640, 1250], REPOS(50.3), [51.2, 1.6, 335, 275, 540, 1250], [52.4, 1.6, 335, 275, 540, 1250]]);
+    pointeurs('sur-and', t, [{ a: 43.0, b: 45.0, de: [260, 600], vers: [169, 782], appui: 44.8 }, { a: 47.6, b: 49.9, de: [250, 680], vers: [323, 527], appui: 49.6 }],
+      trouve([{ a: 42.6, b: 44.6, x: 169, y: 715 }, { a: 46.8, b: 49.4, x: 323, y: 460 }], t),
+      trouve([{ a: 42.6, b: 45.0, x: 10, y: 750, l: 370, h: 64 }, { a: 46.8, b: 49.9, x: 285, y: 510, l: 76, h: 36 }, { a: 50.8, b: 52.4, x: 301, y: 241, l: 68, h: 68 }], t),
+      trouve([{ a: 42.8, b: 45.0, x: 80, y: 690, texte: 'la barre rouge en bas' }, { a: 50.8, b: 52.4, x: 220, y: 320, texte: 'la voilà ! 🎉' }], t));
+    tete = entete(t, 41.2, 45.0, '1', 'Touche la barre rouge [« Télécharger l’application »]', 'dans la page qui s’ouvre depuis WhatsApp') ||
+      entete(t, 45.0, 50.2, '2', 'Appuie sur [« Installer »]', 'sinon : menu <b>⋮</b> en haut à droite, puis <b>« Installer l’application »</b>') ||
+      entete(t, 50.2, 52.4, '<span class="emoji" style="font-size:90px">✅</span>', 'C’est installé', '');
+    points(t, 2, t < 45 ? 0 : 1, 41.2, 50.2);
+  }
+  if (dans(t, 35.4, 37.6)) confettis(t, 35.6); else if (dans(t, 50.6, 52.8)) confettis(t, 50.8); else confettis(t, -9);
+
+  // ---------- Ensuite ----------
+  if (dans(t, 54.6, 62.6)) {
+    $('ios-wa').style.opacity = 0; $('ios-safari').style.opacity = 0; $('ios-accueil').style.opacity = t < 56.6 ? 1 : 0;
+    $('ios-ma2m').style.transform = 'none';
+    const o = sortie((t - 56.4) / 0.5);
+    $('ios-appli').style.opacity = clamp((t - 56.4) / 0.2); $('ios-appli').style.transform = 'scale(' + (0.15 + 0.85 * o) + ')'; $('ios-appli').style.transformOrigin = '332px 300px';
+    $('etat-ios').style.color = t < 56.6 ? '#fff' : '#fff';
+    camera(t, [REPOS(54.6), [55.2, 1.5, 332, 300, 540, 1300], [56.4, 1.5, 332, 300, 540, 1300], REPOS(57.0), REPOS(58.4), [59.0, 0.6, 195, 426, 540, 1440], [62.6, 0.6, 195, 426, 540, 1440]]);
+    pointeurs('sur-ios', t, [{ a: 55.0, b: 56.5, de: [250, 600], vers: [332, 300], appui: 56.4 }, { a: 57.2, b: 58.4, de: [250, 700], vers: [195, 365], appui: 58.1 }], null,
+      dans(t, 57.0, 58.5) ? { a: 57.0, b: 58.5, x: 22, y: 325, l: 346, h: 160 } : null, dans(t, 57.0, 58.5) ? { a: 57.0, b: 58.5, x: 70, y: 285, texte: 'ton e-mail + ton mot de passe' } : null);
+    tete = entete(t, 54.8, 58.6, '', 'Ensuite : ouvre l’appli depuis l’icône et [connecte-toi]', '') || entete(t, 58.6, 62.4, '', 'Tu y retrouves…', '');
+    const T4 = [['📅', 'tes convocations'], ['🗓️', 'ton programme'], ['👤', 'ton profil'], ['💳', 'tes paiements']];
+    if (!$('tuiles').children.length) $('tuiles').innerHTML = T4.map(([e, n]) => '<div class="tuile"><span class="emoji">' + e + '</span><b>' + n + '</b></div>').join('');
+    [...$('tuiles').children].forEach((d, i) => {
+      const q = (t - 59.0 - i * 0.4) / 0.45, x = i % 2 ? 580 : 60, y = 330 + Math.floor(i / 2) * 250;
+      d.style.left = x + 'px'; d.style.top = y + 'px'; d.style.opacity = clamp(q * 2) * clamp((62.4 - t) / 0.3);
+      d.style.transform = 'translateY(' + (220 * (1 - rebond(q))) + 'px) rotate(' + ((i % 2 ? 8 : -8) * (1 - sortie(q))) + 'deg) scale(' + (0.8 + 0.2 * sortie(q)) + ')';
+    });
+  } else $('tuiles').innerHTML = '';
+  if (!tete) $('tete').style.opacity = 0;
+  $('voile-haut').style.opacity = $('tete').style.opacity;
+};
+window.rendre(0);
+</script>
+</body></html>
