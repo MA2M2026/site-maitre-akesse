@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<style>
+@font-face { font-family: 'Cormorant'; src: url('../../assets/polices/cormorant-garamond-latin-500-normal.woff2'); }
+@font-face { font-family: 'Work'; font-weight: 400; src: url('../../assets/polices/work-sans-latin-400-normal.woff2'); }
+@font-face { font-family: 'Work'; font-weight: 600; src: url('../../assets/polices/work-sans-latin-600-normal.woff2'); }
+@font-face { font-family: 'Work'; font-weight: 700; src: url('../../assets/polices/work-sans-latin-700-normal.woff2'); }
+* { box-sizing: border-box; }
+html, body { margin: 0; width: 1080px; height: 1920px; overflow: hidden; background: #141110; }
+body { font-family: 'Work', 'Noto Color Emoji', sans-serif; color: #fff; position: relative; }
+.abs { position: absolute; }
+/* fond animé */
+#fond { inset: 0; background: #141110; overflow: hidden; }
+.tache { position: absolute; width: 900px; height: 900px; border-radius: 50%; filter: blur(120px); opacity: .55; }
+#rayures { inset: -200px; background: repeating-linear-gradient(115deg, rgba(255,255,255,.035) 0 40px, transparent 40px 120px); }
+/* textes */
+#tete { left: 60px; right: 60px; top: 70px; height: 470px; z-index: 30; }
+#badge { left: 0; top: 0; width: 170px; height: 170px; border-radius: 50%; background: #C8102E; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 110px; box-shadow: 0 18px 50px rgba(200,16,46,.55); }
+#titre { left: 200px; right: 0; top: 0; font-weight: 700; font-size: 68px; line-height: 1.05; }
+#titre.plein { left: 0; }
+#titre .mot { display: inline-block; margin-right: .22em; }
+#titre .em { color: #FFD24A; }
+#sous { left: 200px; right: 0; font-size: 40px; line-height: 1.3; color: #F1ECE5; font-weight: 400; }
+#sous.plein { left: 0; }
+#sous b { color: #FFD24A; font-weight: 700; }
+/* gros écrans titres (plein cadre) */
+.plein-cadre { inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; z-index: 40; }
+.gros { font-weight: 700; font-size: 120px; line-height: 1; }
+.moyen { font-size: 54px; font-weight: 600; line-height: 1.2; }
+.emoji { font-family: 'Noto Color Emoji'; }
+.pilule { font-size: 40px; font-weight: 600; background: #fff; color: #141110; border-radius: 999px; padding: 26px 40px; box-shadow: 0 20px 60px rgba(0,0,0,.5); white-space: nowrap; }
+.pilule .curseur { display: inline-block; width: 4px; height: 44px; background: #C8102E; vertical-align: -6px; margin-left: 4px; }
+.icone-app { width: 300px; height: 300px; border-radius: 68px; background: url('../../icons/mannequin-apple-180.png') 0 0 / 100% 100%; box-shadow: 0 40px 100px rgba(0,0,0,.7); }
+.volet { inset: 0; z-index: 45; }
+/* trois navigateurs */
+#navs { left: 0; right: 0; top: 330px; display: flex; justify-content: center; gap: 70px; z-index: 31; }
+.nav { width: 150px; text-align: center; font-size: 30px; font-weight: 600; position: relative; }
+.nav .rond { width: 130px; height: 130px; border-radius: 34px; margin: 0 auto 12px; position: relative; }
+.nav .marque { position: absolute; right: -14px; top: -14px; width: 66px; height: 66px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 44px; font-weight: 700; border: 5px solid #141110; }
+.nav .non { background: #E0303F; } .nav .oui { background: #2FB35A; }
+/* téléphones */
+#camera { left: 0; top: 0; width: 1080px; height: 1920px; transform-origin: 0 0; z-index: 10; }
+.tel { position: absolute; left: 235px; top: 590px; width: 610px; height: 1279px; border-radius: 92px; background: #0b0a0a; box-shadow: 0 0 0 4px #3b3434, 0 50px 140px rgba(0,0,0,.75); }
+.tel.android { border-radius: 60px; }
+.ecran, .surcouche { position: absolute; left: 22px; top: 22px; width: 390px; height: 852px; transform-origin: 0 0; transform: scale(1.4513); }
+.ecran { border-radius: 50px; overflow: hidden; background: #F1ECE5; font-family: -apple-system, 'Inter', 'Noto Color Emoji', sans-serif; color: #000; }
+.android .ecran { border-radius: 30px; font-family: 'Roboto', 'Inter', 'Noto Color Emoji', sans-serif; }
+.surcouche { pointer-events: none; }
+.ilot { position: absolute; left: 50%; top: 11px; width: 120px; height: 34px; margin-left: -60px; border-radius: 20px; background: #000; z-index: 50; }
+.trou { position: absolute; left: 50%; top: 12px; width: 18px; height: 18px; margin-left: -9px; border-radius: 50%; background: #000; z-index: 50; }
+.etat { position: absolute; left: 0; right: 0; top: 0; height: 50px; z-index: 40; display: flex; justify-content: space-between; align-items: center; padding: 0 34px 0 40px; font-weight: 600; font-size: 16px; }
+.android .etat { height: 32px; padding: 0 22px; font-size: 13px; }
+.couche { position: absolute; inset: 0; }
+/* écran d'accueil iPhone */
+.fond-ios { background: linear-gradient(160deg, #6d4c8f 0%, #c0566e 55%, #f2a65a 100%); }
+.fond-android { background: linear-gradient(170deg, #12324a 0%, #1f6f6b 60%, #7fc79a 100%); }
+.grille { position: absolute; left: 26px; right: 26px; top: 80px; display: grid; grid-template-columns: repeat(4, 64px); justify-content: space-between; row-gap: 30px; }
+.android .grille { top: 70px; grid-template-columns: repeat(4, 58px); }
+.ic { width: 64px; height: 64px; border-radius: 15px; background: rgba(255,255,255,.33); position: relative; }
+.android .ic { width: 58px; height: 58px; border-radius: 50%; }
+.ic i { position: absolute; left: -10px; right: -10px; top: 70px; text-align: center; font-style: normal; font-size: 11px; color: #fff; white-space: nowrap; }
+.android .ic i { top: 64px; }
+.ic.ma2m { background: url('../../icons/mannequin-apple-180.png') 0 0 / 100% 100%; box-shadow: 0 6px 16px rgba(0,0,0,.35); }
+.dock { position: absolute; left: 14px; right: 14px; bottom: 16px; height: 92px; border-radius: 32px; background: rgba(255,255,255,.3); display: flex; justify-content: space-around; align-items: center; }
+.android .dock { background: none; bottom: 40px; }
+.dock .ic i { display: none; }
+.safari-ic { background: radial-gradient(circle, #fff 0 18%, transparent 19%), conic-gradient(from 45deg, #1e90ff, #36c5f0, #1e90ff, #36c5f0, #1e90ff) !important; }
+.safari-ic::after { content: ''; position: absolute; left: 50%; top: 14%; width: 6px; height: 72%; margin-left: -3px; background: linear-gradient(#ff3b30 50%, #fff 50%); transform: rotate(45deg); border-radius: 3px; }
+.chrome-ic { background: conic-gradient(#ea4335 0 120deg, #fbbc05 120deg 240deg, #34a853 240deg 360deg) !important; }
+.chrome-ic::after { content: ''; position: absolute; left: 30%; top: 30%; width: 40%; height: 40%; border-radius: 50%; background: #4285f4; box-shadow: 0 0 0 5px #fff; }
+.wa-ic { background: #25D366 !important; }
+.wa-ic::after { content: '✆'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 38px; }
+/* Safari */
+.page { position: absolute; left: 0; top: 50px; width: 390px; height: 690px; background: url('ecran-safari.png') 0 0 / 390px 690px; }
+.page-vide { position: absolute; left: 0; top: 50px; width: 390px; height: 690px; background: #fff; }
+.bas-safari { position: absolute; left: 0; right: 0; bottom: 0; height: 112px; background: rgba(246,246,246,.97); border-top: 1px solid #d9d9d9; }
+.adresse { position: absolute; left: 14px; right: 14px; top: 8px; height: 40px; border-radius: 12px; background: #e6e6e8; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 13.5px; color: #111; white-space: nowrap; }
+.outils { position: absolute; left: 0; right: 0; top: 56px; height: 40px; display: flex; justify-content: space-around; align-items: center; color: #0a7aff; }
+.outils svg { width: 26px; height: 26px; }
+.voile { position: absolute; inset: 0; background: #000; }
+.feuille { position: absolute; left: 0; right: 0; bottom: 0; height: 470px; background: #f2f2f7; border-radius: 14px 14px 0 0; overflow: hidden; }
+.feuille .tete-f { display: flex; align-items: center; gap: 12px; padding: 16px 18px 12px; border-bottom: 1px solid #ddd; background: #f2f2f7; position: relative; z-index: 2; }
+.feuille .tete-f img { width: 44px; height: 44px; border-radius: 10px; }
+.feuille .tete-f b { font-size: 15px; display: block; } .feuille small { font-size: 12px; color: #888; display: block; max-width: 290px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.defile { position: absolute; left: 0; right: 0; top: 74px; }
+.applis { display: flex; gap: 16px; padding: 16px 18px; }
+.applis span { width: 62px; height: 62px; border-radius: 16px; background: #d1d1d6; display: block; }
+.applis span:nth-child(1) { background: #34C759; } .applis span:nth-child(2) { background: #25D366; } .applis span:nth-child(3) { background: #0a7aff; }
+.liste { margin: 6px 16px; background: #fff; border-radius: 12px; overflow: hidden; }
+.liste div { display: flex; justify-content: space-between; align-items: center; height: 50px; padding: 0 16px; font-size: 17px; border-bottom: 1px solid #e5e5ea; }
+.liste div:last-child { border-bottom: 0; }
+.liste svg { width: 24px; height: 24px; }
+.allume { background: #ffe58a !important; }
+.bouton-and.allume { background: #0b57d0 !important; box-shadow: 0 0 0 4px #FFD24A; }
+.ajout { position: absolute; left: 0; right: 0; bottom: 0; top: 60px; background: #f2f2f7; border-radius: 14px 14px 0 0; }
+.ajout .haut { display: flex; justify-content: space-between; align-items: center; gap: 10px; height: 56px; padding: 0 12px 0 16px; font-size: 16px; border-bottom: 1px solid #ddd; }
+.ajout .haut b { font-size: 14px; } .bleu { color: #0a7aff; }
+.ajout .haut .ajouter { font-weight: 700; padding: 6px 10px; border-radius: 8px; }
+.ajout .carte { margin: 26px 16px; background: #fff; border-radius: 12px; display: flex; gap: 14px; padding: 14px; align-items: center; }
+.ajout .carte img { width: 64px; height: 64px; border-radius: 14px; }
+.ajout .nom { font-size: 17px; border-bottom: 1px solid #e5e5ea; padding-bottom: 8px; margin-bottom: 8px; }
+.ajout small { max-width: 250px; }
+/* Chrome Android */
+.barre-chrome { position: absolute; left: 0; right: 0; top: 32px; height: 60px; background: #fff; display: flex; align-items: center; gap: 10px; padding: 0 10px 0 14px; border-bottom: 1px solid #e0e0e0; }
+.barre-chrome .champ { flex: 1; height: 42px; border-radius: 21px; background: #eef1f4; display: flex; align-items: center; padding: 0 14px; font-size: 14px; color: #202124; white-space: nowrap; overflow: hidden; }
+.barre-chrome .onglets { width: 24px; height: 24px; border: 2px solid #444; border-radius: 5px; font-size: 12px; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+.barre-chrome .points { font-size: 26px; font-weight: 700; color: #444; width: 26px; text-align: center; line-height: 1; border-radius: 50%; }
+.page-and { position: absolute; left: 0; top: 92px; width: 390px; height: 760px; background: url('ecran-android.png') 0 0 / 390px 760px; }
+.bandeau-inst { position: absolute; left: 10px; right: 10px; bottom: 18px; height: 84px; border-radius: 18px; background: #fff; box-shadow: 0 8px 30px rgba(0,0,0,.3); display: flex; align-items: center; gap: 12px; padding: 0 14px; }
+.bandeau-inst img { width: 48px; height: 48px; border-radius: 50%; }
+.bandeau-inst b { font-size: 15px; display: block; } .bandeau-inst small { font-size: 12px; color: #666; display: block; max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bouton-and { margin-left: auto; background: #0b57d0; color: #fff; font-weight: 700; font-size: 15px; border-radius: 20px; padding: 10px 18px; }
+.menu-and { position: absolute; right: 8px; top: 40px; width: 250px; background: #fff; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.3); padding: 8px 0; transform-origin: 100% 0; }
+.menu-and div { height: 44px; display: flex; align-items: center; padding: 0 18px; font-size: 15px; color: #202124; }
+.dialogue-and { position: absolute; left: 30px; right: 30px; top: 300px; background: #fff; border-radius: 28px; padding: 24px; box-shadow: 0 20px 60px rgba(0,0,0,.4); }
+.dialogue-and h3 { margin: 0 0 18px; font-size: 21px; font-weight: 500; }
+.dialogue-and .ligne-app { display: flex; gap: 14px; align-items: center; margin-bottom: 24px; }
+.dialogue-and img { width: 54px; height: 54px; border-radius: 50%; }
+.dialogue-and .boutons { display: flex; justify-content: flex-end; gap: 22px; font-weight: 600; color: #0b57d0; font-size: 15px; align-items: center; }
+/* application ouverte */
+.appli { position: absolute; inset: 0; background: url('ecran-appli.png') 0 0 / 390px 844px; }
+/* pointeurs */
+.main { position: absolute; font-family: 'Noto Color Emoji'; font-size: 64px; line-height: 1; margin: -6px 0 0 -26px; z-index: 70; filter: drop-shadow(0 6px 8px rgba(0,0,0,.45)); }
+.onde { position: absolute; width: 50px; height: 50px; margin: -25px 0 0 -25px; border-radius: 50%; border: 5px solid #FFD24A; z-index: 69; }
+.fleche { position: absolute; z-index: 68; font-size: 90px; color: #FFD24A; font-weight: 700; text-shadow: 0 4px 12px rgba(0,0,0,.6); margin: -45px 0 0 -30px; }
+.cercle { position: absolute; border: 5px solid #FFD24A; border-radius: 16px; z-index: 67; box-shadow: 0 0 0 4000px rgba(0,0,0,.0); }
+.bulle { position: absolute; z-index: 71; background: #FFD24A; color: #141110; font-weight: 700; font-size: 17px; padding: 8px 12px; border-radius: 12px; white-space: nowrap; font-family: 'Work', 'Noto Color Emoji', sans-serif; box-shadow: 0 6px 16px rgba(0,0,0,.35); }
+/* confettis, cartes de fin */
+.confetti { position: absolute; width: 14px; height: 24px; border-radius: 3px; z-index: 50; }
+.tuile { position: absolute; width: 440px; height: 220px; border-radius: 34px; background: rgba(255,255,255,.96); color: #141110; display: flex; flex-direction: column; justify-content: center; padding: 0 36px; box-shadow: 0 30px 80px rgba(0,0,0,.6); z-index: 41; }
+.tuile .emoji { font-size: 74px; line-height: 1; }
+.tuile b { font-size: 40px; margin-top: 12px; }
+</style></head>
+<body>
+<div id="fond" class="abs"><div class="tache" id="t1"></div><div class="tache" id="t2"></div><div class="tache" id="t3"></div><div id="rayures" class="abs"></div></div>
+
+<!-- téléphones (sous la caméra) -->
+<div id="camera" class="abs">
+  <div class="tel iphone" id="tel-ios">
+    <div class="ecran">
+      <div class="ilot"></div>
+      <div class="etat" id="etat-ios"><span>9:41</span><span>▂▄▆ ᯤ ▮▮▮</span></div>
+      <div class="couche fond-ios" id="ios-accueil">
+        <div class="grille" id="grille-ios"></div>
+        <div class="dock"><div class="ic"></div><div class="ic wa-ic"></div><div class="ic safari-ic" id="ic-safari"></div><div class="ic"></div></div>
+      </div>
+      <div class="couche" id="ios-safari" style="background:#fff">
+        <div class="page-vide"></div><div class="page" id="ios-page"></div>
+        <div class="bas-safari">
+          <div class="adresse"><svg width="12" height="14" viewBox="0 0 12 14"><rect x="1" y="6" width="10" height="7" rx="1.5" fill="#555"/><path d="M3 6V4a3 3 0 0 1 6 0v2" fill="none" stroke="#555" stroke-width="1.6"/></svg><span id="ios-adr"></span></div>
+          <div class="outils">
+            <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg viewBox="0 0 24 24" style="opacity:.35"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg viewBox="0 0 24 24" id="ic-partager"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M6 11H5v10h14V11h-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg viewBox="0 0 24 24"><path d="M4 5h6a2 2 0 0 1 2 2v12a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v12a2 2 0 0 1 2-2h6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+            <svg viewBox="0 0 24 24"><rect x="3" y="7" width="13" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 4h11a2 2 0 0 1 2 2v11" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+          </div>
+        </div>
+        <div class="voile" id="ios-voile"></div>
+        <div class="feuille" id="ios-feuille">
+          <div class="tete-f"><img src="../wt11/icons/mannequin-apple-180.png" alt=""><span><b>MA2M Mannequin</b><small>mannequin.maitreakessemodelmanagement.com</small></span></div>
+          <div class="defile" id="ios-defile">
+            <div class="applis"><span></span><span></span><span></span><span></span></div>
+            <div class="liste">
+              <div>Copier <svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>
+              <div>Ajouter à la liste de lecture <svg viewBox="0 0 24 24"><circle cx="8" cy="12" r="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17" cy="12" r="5" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>
+              <div>Ajouter un signet <svg viewBox="0 0 24 24"><path d="M4 5h6a2 2 0 0 1 2 2v12a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v12a2 2 0 0 1 2-2h6z" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>
+              <div>Ajouter aux favoris <svg viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></div>
+              <div>Rechercher dans la page <svg viewBox="0 0 24 24"><circle cx="10" cy="10" r="6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15 15l5 5" stroke="currentColor" stroke-width="2"/></svg></div>
+              <div id="ios-cible">Sur l’écran d’accueil <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+              <div>Annoter <svg viewBox="0 0 24 24"><path d="M4 20l4-1 11-11-3-3L5 16z" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>
+              <div>Imprimer <svg viewBox="0 0 24 24"><rect x="5" y="9" width="14" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>
+            </div>
+          </div>
+        </div>
+        <div class="ajout" id="ios-ajout">
+          <div class="haut"><span class="bleu">Annuler</span><b>Ajouter à l’écran d’accueil</b><span class="bleu ajouter" id="ios-btn-ajouter">Ajouter</span></div>
+          <div class="carte"><img src="../wt11/icons/mannequin-apple-180.png" alt=""><div style="flex:1"><div class="nom">MA2M Mannequin</div><small>mannequin.maitreakessemodelmanagement.com</small></div></div>
+        </div>
+      </div>
+      <div class="couche appli" id="ios-appli"></div>
+    </div>
+    <div class="surcouche" id="sur-ios"></div>
+  </div>
+
+  <div class="tel android" id="tel-and">
+    <div class="ecran">
+      <div class="trou"></div>
+      <div class="etat" id="etat-and"><span>9:41</span><span>▂▄▆ ᯤ ▮▮▮</span></div>
+      <div class="couche fond-android" id="and-accueil">
+        <div class="grille" id="grille-and"></div>
+        <div class="dock"><div class="ic"></div><div class="ic wa-ic"></div><div class="ic chrome-ic" id="ic-chrome"></div><div class="ic"></div></div>
+      </div>
+      <div class="couche" id="and-chrome" style="background:#fff">
+        <div class="page-and" id="and-page"></div>
+        <div class="barre-chrome"><div class="champ" id="and-adr"></div><div class="onglets">1</div><div class="points" id="and-points">⋮</div></div>
+        <div class="bandeau-inst" id="and-bandeau"><img src="../wt11/icons/mannequin-192.png" alt=""><span><b>MA2M Mannequin</b><small>mannequin.maitreakessemodelmanagement.com</small></span><span class="bouton-and" id="and-btn-bandeau">Installer</span></div>
+        <div class="menu-and" id="and-menu"><div>Nouvel onglet</div><div>Historique</div><div>Téléchargements</div><div>Favoris</div><div>Onglets récents</div><div id="and-menu-cible">Installer l’application</div><div>Paramètres</div></div>
+        <div class="voile" id="and-voile"></div>
+        <div class="dialogue-and" id="and-dialogue"><h3>Installer l’application</h3><div class="ligne-app"><img src="../wt11/icons/mannequin-192.png" alt=""><div><b style="font-size:16px">MA2M Mannequin</b><small style="font-size:12px;color:#666;display:block">mannequin.maitreakessemodelmanagement.com</small></div></div><div class="boutons"><span>Annuler</span><span class="bouton-and" id="and-btn-dialogue">Installer</span></div></div>
+      </div>
+    </div>
+    <div class="surcouche" id="sur-and"></div>
+  </div>
+</div>
+
+<!-- en-tête de l'étape -->
+<div id="voile-haut" class="abs" style="left:0;right:0;top:0;height:640px;z-index:29;background:linear-gradient(#141110 0%, rgba(20,17,16,.92) 60%, rgba(20,17,16,0) 100%)"></div>
+<div id="tete" class="abs"><div id="badge" class="abs"></div><div id="titre" class="abs"></div><div id="sous" class="abs"></div></div>
+<div id="navs" class="abs"></div>
+
+<!-- écrans plein cadre -->
+<div id="intro" class="abs plein-cadre">
+  <div class="emoji" id="intro-tel" style="font-size:150px">📲</div>
+  <div class="icone-app" id="intro-icone" style="margin:30px 0 50px"></div>
+  <div class="gros" id="intro-t1">MA2M Mannequin</div>
+  <div class="moyen" id="intro-t2" style="margin-top:30px;color:#FFD24A">Installe l’appli en 1 minute</div>
+</div>
+<div id="lien" class="abs plein-cadre">
+  <div class="gros"><span class="emoji">👉</span> Le lien</div>
+  <div class="pilule" id="lien-pilule" style="margin-top:70px;font-size:31px"><span id="lien-texte"></span><span class="curseur" id="lien-curseur"></span></div>
+  <div class="moyen" id="lien-sous" style="margin-top:60px;color:#F1ECE5;font-weight:400;font-size:44px">Celui que l’agence t’envoie sur WhatsApp</div>
+</div>
+<div id="sec-ios" class="abs plein-cadre"><div class="emoji" style="font-size:220px" id="sec-ios-e">🍏</div><div class="gros" style="margin-top:40px">Tu as un<br>iPhone ?</div></div>
+<div id="sec-and" class="abs plein-cadre"><div class="emoji" style="font-size:220px" id="sec-and-e">🤖</div><div class="gros" style="margin-top:40px">Tu as un<br>Android ?</div></div>
+<div id="fait" class="abs plein-cadre"><div class="emoji" style="font-size:200px" id="fait-e">✅</div><div class="gros" id="fait-t" style="margin-top:40px"></div><div class="moyen" id="fait-s" style="margin-top:30px;color:#FFD24A"></div></div>
+<div id="tuiles" class="abs" style="inset:0;z-index:41"></div>
+<div id="fin" class="abs plein-cadre">
+  <div class="icone-app" id="fin-icone" style="width:220px;height:220px;border-radius:50px"></div>
+  <div class="gros" style="margin-top:60px;font-size:96px">Pas de panique</div>
+  <div class="moyen" style="margin-top:24px">suis les étapes et ça passe <span class="emoji">💪</span></div>
+  <div class="pilule" style="margin-top:70px;font-size:34px">mannequin.maitreakessemodelmanagement.com</div>
+</div>
+<div id="volet" class="abs volet"></div>
+<div id="confettis" class="abs" style="inset:0;z-index:50;pointer-events:none"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const lisse = (x) => { x = clamp(x); return x * x * (3 - 2 * x); };
+const sortie = (x) => 1 - Math.pow(1 - clamp(x), 3);
+const rebond = (x) => { x = clamp(x); const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+const elast = (x) => { x = clamp(x); return x === 0 ? 0 : x === 1 ? 1 : Math.pow(2, -10 * x) * Math.sin((x * 10 - 0.75) * (2 * Math.PI) / 3) + 1; };
+const dans = (t, a, b) => t >= a && t < b;
+const fen = (t, a, b, f = 0.35) => Math.min(sortie((t - a) / f), clamp((b - t) / f));   // apparaît à a, disparaît à b
+const URL_ = 'mannequin.maitreakessemodelmanagement.com';
+window.DUREE = 81;
+
+// --- grilles des écrans d'accueil
+const NOMS = ['Messages', 'Photos', 'Appareil', 'Météo', 'Horloge', 'Plans', 'Notes', 'Réglages', 'Musique', 'Calendrier', 'App Store'];
+$('grille-ios').innerHTML = NOMS.map((n) => '<div class="ic"><i>' + n + '</i></div>').join('') + '<div class="ic ma2m" id="ios-ma2m"><i>MA2M Mannequin</i></div>';
+$('grille-and').innerHTML = ['Téléphone', 'Messages', 'Photos', 'Agenda', 'Horloge', 'Maps', 'Play Store', 'Paramètres', 'Musique', 'Notes', 'Météo'].map((n) => '<div class="ic"><i>' + n + '</i></div>').join('') + '<div class="ic ma2m" id="and-ma2m" style="border-radius:50%"><i>MA2M Mannequin</i></div>';
+// --- trois navigateurs (étape 1)
+$('navs').innerHTML = [['wa-ic', 'WhatsApp', 'non', '✕'], ['chrome-ic', 'Chrome', 'non', '✕'], ['safari-ic', 'Safari', 'oui', '✓']].map(([c, n, m, s], i) =>
+  '<div class="nav" id="nav' + i + '"><div class="rond ic ' + c + '" style="width:130px;height:130px;border-radius:34px"><span class="marque ' + m + '" id="marque' + i + '">' + s + '</span></div>' + n + '</div>').join('');
+// --- surcouches : main, onde, flèche, cadre, bulle (dans chaque téléphone)
+for (const s of ['sur-ios', 'sur-and']) $(s).innerHTML = '<div class="cercle"></div><div class="fleche">⬇</div><div class="onde"></div><div class="main">👆</div><div class="bulle"></div>';
+// --- confettis
+const COUL = ['#C8102E', '#FFD24A', '#2FB35A', '#0a7aff', '#ffffff', '#ff7aa2'];
+const CONF = Array.from({ length: 70 }, (_, i) => { const d = document.createElement('div'); d.className = 'confetti'; d.style.background = COUL[i % COUL.length]; $('confettis').appendChild(d); return { d, a: (i * 137.5) % 360, v: 700 + (i * 53) % 700, r: (i * 97) % 720 }; });
+function confettis(t, t0, cx, cy) {
+  const k = t - t0;
+  CONF.forEach((c) => {
+    if (k < 0 || k > 2.2) { c.d.style.opacity = 0; return; }
+    const ang = c.a * Math.PI / 180, x = cx + Math.cos(ang) * c.v * k, y = cy + Math.sin(ang) * c.v * k - 600 * k + 900 * k * k;
+    c.d.style.opacity = clamp(2.2 - k); c.d.style.transform = 'translate(' + x + 'px,' + y + 'px) rotate(' + (c.r * k) + 'deg)';
+  });
+}
+// --- en-tête : titre animé mot par mot
+let titreCourant = '';
+function entete(t, a, b, badge, titre, sous, plein) {
+  if (!dans(t, a, b)) return false;
+  const cle = badge + titre + sous;
+  if (cle !== titreCourant) {
+    titreCourant = cle;
+    $('badge').innerHTML = badge; $('badge').style.display = badge ? 'flex' : 'none';
+    $('titre').className = 'abs' + (badge ? '' : ' plein'); $('sous').className = 'abs' + (badge ? '' : ' plein');
+    const mots = []; titre.replace(/« /g, '«\u00a0').replace(/ »/g, '\u00a0»').replace(/\[([^\]]+)\]|([^\s\[]+)/g, (x, em, mot) => { if (em) em.split(' ').forEach((w) => mots.push('<span class="mot em">' + w + '</span>')); else mots.push('<span class="mot">' + mot + '</span>'); return x; });
+    $('titre').innerHTML = mots.join('');
+    $('sous').innerHTML = sous || '';
+  }
+  const k = t - a;
+  $('badge').style.transform = 'scale(' + elast(k / 0.7) + ') rotate(' + (-25 * (1 - sortie(k / 0.5))) + 'deg)';
+  [...$('titre').children].forEach((m, i) => { const x = clamp((k - 0.12 - i * 0.07) / 0.35); m.style.opacity = x; m.style.transform = 'translateY(' + (60 * (1 - sortie(x))) + 'px)'; });
+  $('sous').style.top = ($('titre').offsetHeight + 24) + 'px';
+  $('sous').style.opacity = clamp((k - 0.5) / 0.4);
+  $('tete').style.opacity = clamp((b - t) / 0.25);
+  return true;
+}
+// --- caméra : [t, zoom, point visé x, y (écran), position voulue sur la vidéo x, y]
+const S = 1.4513, BASE = { ios: [235 + 22, 590 + 22], and: [235 + 22, 590 + 22] };
+function camera(t, cles) {
+  let c = cles[0];
+  for (let i = 0; i < cles.length - 1; i++) {
+    const [a] = cles[i], [b] = cles[i + 1];
+    if (t >= b) c = cles[i + 1];
+    else if (t >= a) { const k = lisse((t - a) / (b - a)); c = cles[i].map((v, j) => v + (cles[i + 1][j] - v) * k); break; }
+  }
+  const [, z, fx, fy, cx, cy] = c;
+  const px = BASE.ios[0] + fx * S, py = BASE.ios[1] + fy * S;
+  $('camera').style.transform = 'translate(' + (cx - z * px) + 'px,' + (cy - z * py) + 'px) scale(' + z + ')';
+}
+const CAM_REPOS = (t) => [t, 1, 195, 426, 540, 590 + 22 + 426 * S];
+// --- pointeurs dans le téléphone : main qui se déplace et appuie
+function pointeurs(sur, t, gestes, fleche, cadre, bulle) {
+  const el = $(sur).children, [cercle, fl, onde, main, bul] = el;
+  // gestes : [{a, b, de:[x,y], vers:[x,y], appui:temps}] (main visible de a à b)
+  const g = gestes.find((x) => t >= x.a && t < x.b);
+  if (g) {
+    const k = lisse((t - g.a) / Math.max(0.01, (g.appui || g.b) - g.a - 0.15));
+    const x = g.de[0] + (g.vers[0] - g.de[0]) * k, y = g.de[1] + (g.vers[1] - g.de[1]) * k;
+    main.style.left = x + 'px'; main.style.top = y + 'px';
+    main.style.opacity = Math.min(clamp((t - g.a) / 0.2), clamp((g.b - t) / 0.2));
+    const ap = g.appui !== undefined && t >= g.appui - 0.12 && t < g.appui + 0.12;
+    main.style.transform = 'scale(' + (ap ? 0.82 : 1) + ')';
+    if (g.appui !== undefined && t >= g.appui && t < g.appui + 0.6) { const q = (t - g.appui) / 0.6; onde.style.left = g.vers[0] + 'px'; onde.style.top = g.vers[1] + 'px'; onde.style.opacity = 1 - q; onde.style.transform = 'scale(' + (1 + 2 * q) + ')'; }
+    else onde.style.opacity = 0;
+  } else { main.style.opacity = 0; onde.style.opacity = 0; }
+  // flèche qui rebondit : {a, b, x, y, sens}
+  if (fleche && dans(t, fleche.a, fleche.b)) {
+    const r = Math.abs(Math.sin((t - fleche.a) * 7)) * 16;
+    fl.textContent = fleche.sens || '⬇';
+    const dy = fleche.sens === '⬆' ? r : -r;
+    fl.style.left = fleche.x + 'px'; fl.style.top = (fleche.y + dy) + 'px'; fl.style.fontSize = (fleche.taille || 70) + 'px';
+    fl.style.opacity = fen(t, fleche.a, fleche.b, 0.2);
+  } else fl.style.opacity = 0;
+  if (cadre && dans(t, cadre.a, cadre.b)) {
+    Object.assign(cercle.style, { left: cadre.x + 'px', top: cadre.y + 'px', width: cadre.l + 'px', height: cadre.h + 'px', opacity: fen(t, cadre.a, cadre.b, 0.2) });
+    cercle.style.transform = 'scale(' + (1 + 0.06 * Math.sin((t - cadre.a) * 9)) + ')';
+  } else cercle.style.opacity = 0;
+  if (bulle && dans(t, bulle.a, bulle.b)) {
+    bul.textContent = bulle.texte; bul.style.left = bulle.x + 'px'; bul.style.top = bulle.y + 'px';
+    const k = clamp((t - bulle.a) / 0.4); bul.style.opacity = fen(t, bulle.a, bulle.b, 0.25); bul.style.transform = 'scale(' + rebond(k) + ')';
+  } else bul.style.opacity = 0;
+}
+function plein(id, t, a, b) { const v = dans(t, a - 0.01, b + 0.01) ? fen(t, a, b, 0.3) : 0; $(id).style.opacity = v; $(id).style.visibility = v > 0 ? 'visible' : 'hidden'; return t - a; }
+function frappe(id, t, a, b, txt) { const n = Math.round(txt.length * clamp((t - a) / (b - a))); $(id).textContent = txt.slice(0, n); }
+
+window.rendre = function (t) {
+  // fond vivant : taches de couleur qui bougent (rouge pour iPhone, vert pour Android)
+  const vert = dans(t, 42.6, 67.6) ? 1 : 0;
+  const tc = [['t1', '#C8102E', '#1f8f55', 200, 300], ['t2', '#5b1f6e', '#0f5d73', 700, 1200], ['t3', '#b34700', '#3DDC84', 300, 1600]];
+  tc.forEach(([id, c1, c2, x, y], i) => { const e = $(id); e.style.background = vert ? c2 : c1; e.style.left = (x + 160 * Math.sin(t * 0.5 + i * 2) - 450) + 'px'; e.style.top = (y + 160 * Math.cos(t * 0.4 + i) - 450) + 'px'; });
+  $('rayures').style.transform = 'translateX(' + ((t * 60) % 160) + 'px)';
+
+  // ---------- plein cadre ----------
+  let k = plein('intro', t, 0, 4.4);
+  $('intro-tel').style.transform = 'translateY(' + (-200 * (1 - rebond(k / 0.6))) + 'px) rotate(' + (12 * Math.sin(k * 6) * clamp(1 - k / 2)) + 'deg)';
+  $('intro-icone').style.transform = 'scale(' + elast((k - 0.3) / 0.9) + ') rotate(' + (-180 * (1 - sortie((k - 0.3) / 0.7))) + 'deg)';
+  $('intro-t1').style.transform = 'translateX(' + (-1100 * (1 - sortie((k - 0.8) / 0.5))) + 'px)';
+  $('intro-t2').style.transform = 'translateX(' + (1100 * (1 - sortie((k - 1.2) / 0.5))) + 'px)';
+  k = plein('lien', t, 4.4, 8.4);
+  frappe('lien-texte', t, 5.0, 6.8, URL_);
+  $('lien-curseur').style.opacity = Math.floor(t * 3) % 2 ? 1 : 0;
+  $('lien-pilule').style.transform = 'scale(' + (rebond(k / 0.5) * (1 + (t > 6.8 && t < 7.4 ? 0.05 * Math.sin((t - 6.8) * 15) : 0))) + ')';
+  $('lien-sous').style.opacity = clamp((k - 2.4) / 0.4);
+  k = plein('sec-ios', t, 8.4, 10.2);
+  $('sec-ios-e').style.transform = 'scale(' + elast(k / 0.8) + ') rotate(' + (20 * Math.sin(k * 8) * clamp(1 - k)) + 'deg)';
+  k = plein('sec-and', t, 42.6, 44.4);
+  $('sec-and-e').style.transform = 'scale(' + elast(k / 0.8) + ') rotate(' + (20 * Math.sin(k * 8) * clamp(1 - k)) + 'deg)';
+  // « ✅ » : iPhone puis Android
+  const f1 = dans(t, 38.6, 42.6), f2 = dans(t, 64.6, 67.6);
+  if (f1) { $('fait-t').textContent = 'L’icône MA2M'; $('fait-s').textContent = 'apparaît sur ton écran d’accueil'; k = plein('fait', t, 40.8, 42.6); }
+  else if (f2) { $('fait-t').textContent = 'C’est fait'; $('fait-s').textContent = 'L’icône est sur ton téléphone'; k = plein('fait', t, 66, 67.6); }
+  else plein('fait', t, -9, -8);
+  if (f1 || f2) $('fait-e').style.transform = 'scale(' + elast(k / 0.8) + ')';
+  k = plein('fin', t, 76.2, 81.5);
+  $('fin-icone').style.transform = 'scale(' + elast(k / 0.9) + ') rotate(' + (360 * (1 - sortie(k / 0.9))) + 'deg)';
+  // volets de transition (balayage de couleur)
+  const v = [[4.2, '#C8102E'], [8.2, '#FFD24A'], [10.0, '#C8102E'], [42.4, '#3DDC84'], [44.2, '#3DDC84'], [67.4, '#FFD24A'], [76.0, '#C8102E']].find(([a]) => dans(t, a, a + 0.5));
+  if (v) { const q = (t - v[0]) / 0.5; $('volet').style.background = v[1]; $('volet').style.clipPath = 'polygon(' + (q * 140 - 40) + '% 0, ' + (q * 140) + '% 0, ' + (q * 140 - 20) + '% 100%, ' + (q * 140 - 60) + '% 100%)'; $('volet').style.opacity = 1; }
+  else $('volet').style.opacity = 0;
+
+  // ---------- téléphones ----------
+  const ios = dans(t, 10.2, 40.9) || dans(t, 67.6, 76.3), and = dans(t, 44.4, 66.1);
+  $('tel-ios').style.display = ios ? 'block' : 'none'; $('tel-and').style.display = and ? 'block' : 'none';
+  const entree = ios ? (dans(t, 67.6, 76.3) ? t - 67.6 : t - 10.2) : t - 44.4;
+  $('camera').style.opacity = clamp(entree / 0.3) * (ios && t > 40.5 && t < 41 ? clamp((40.9 - t) / 0.4) : 1) * (and ? clamp((66.1 - t) / 0.4) : 1) * (t > 75.9 && t < 76.3 ? clamp((76.3 - t) / 0.4) : 1);
+  $('navs').style.opacity = 0;
+  titreCourant = titreCourant;  // (inchangé)
+  let tete = false;
+
+  if (ios && t < 41) {
+    // couches de l'iPhone
+    const page = dans(t, 10.2, 38.5);
+    $('ios-accueil').style.opacity = (t < 13.3 || t >= 37.6) ? 1 : 0;
+    $('ios-safari').style.opacity = dans(t, 13.3, 37.6) ? 1 : 0;
+    $('ios-safari').style.transform = t < 13.9 ? 'scale(' + (0.15 + 0.85 * sortie((t - 13.3) / 0.6)) + ')' : 'none';
+    $('ios-safari').style.transformOrigin = '254px 800px';
+    $('ios-appli').style.opacity = 0;
+    $('ios-ma2m').style.transform = 'scale(' + (t < 38.2 ? 0 : elast((t - 38.2) / 0.9)) + ')';
+    frappe('ios-adr', t, 14.2, 16.4, URL_); if (t < 14.2) $('ios-adr').textContent = 'Rechercher ou saisir un site';
+    $('ios-page').style.opacity = clamp((t - 16.8) / 0.5);
+    // feuille Partager : monte à 23.6, défile à 27.6, part à 31.6
+    const fm = sortie((t - 23.4) / 0.5) * (t < 31.6 ? 1 : 0);
+    $('ios-feuille').style.transform = 'translateY(' + (490 * (1 - fm)) + 'px)';
+    $('ios-defile').style.transform = 'translateY(' + (-150 * lisse((t - 27.4) / 1.0)) + 'px)';
+    $('ios-cible').classList.toggle('allume', dans(t, 29.4, 31.7));
+    const am = sortie((t - 31.6) / 0.5) * (t < 37.6 ? 1 : 0);
+    $('ios-ajout').style.transform = 'translateY(' + (820 * (1 - am)) + 'px)';
+    $('ios-btn-ajouter').classList.toggle('allume', dans(t, 35.8, 37.6));
+    $('ios-voile').style.opacity = Math.max(fm, am) * 0.35;
+    $('etat-ios').style.color = $('ios-accueil').style.opacity === '1' ? '#fff' : '#000';
+    $('ic-partager').style.transform = dans(t, 20.4, 23.4) ? 'scale(' + (1 + 0.25 * Math.abs(Math.sin(t * 6))) + ')' : 'none';
+    // caméra
+    camera(t, [CAM_REPOS(10.2), CAM_REPOS(10.6), [11.0, 1.35, 254, 805, 540, 1450], [13.4, 1.35, 254, 805, 540, 1450], [14.2, 1.15, 195, 760, 540, 1500], [16.8, 1.15, 195, 760, 540, 1500], CAM_REPOS(17.6), CAM_REPOS(20.2),
+      [20.9, 2.0, 195, 818, 540, 1450], [23.3, 2.0, 195, 818, 540, 1450], CAM_REPOS(23.9), CAM_REPOS(26.6), [27.2, 1.35, 195, 640, 540, 1250], [31.5, 1.35, 195, 640, 540, 1250],
+      [32.4, 2.0, 340, 90, 760, 1000], [37.0, 2.0, 340, 90, 760, 1000], CAM_REPOS(37.8), CAM_REPOS(39.4), [40.4, 1.7, 332, 300, 540, 1300]]);
+    pointeurs('sur-ios', t, [
+      { a: 11.0, b: 13.4, de: [200, 600], vers: [254, 805], appui: 12.6 },
+      { a: 21.2, b: 23.5, de: [270, 650], vers: [195, 818], appui: 22.8 },
+      { a: 27.0, b: 28.6, de: [195, 760], vers: [195, 600] },
+      { a: 29.0, b: 31.6, de: [300, 500], vers: [160, 680], appui: 30.9 },
+      { a: 33.6, b: 36.4, de: [250, 400], vers: [352, 90], appui: 35.8 }],
+      [{ a: 11.0, b: 12.4, x: 254, y: 735 }, { a: 20.6, b: 22.6, x: 195, y: 748 }, { a: 29.1, b: 30.7, x: 330, y: 680, sens: '⬅' }, { a: 32.9, b: 35.6, x: 330, y: 150, sens: '⬆' }].find((f) => dans(t, f.a, f.b)),
+      [{ a: 20.6, b: 23.4, x: 175, y: 798, l: 40, h: 40 }, { a: 29.1, b: 31.7, x: 12, y: 655, l: 366, h: 52 }, { a: 32.9, b: 36.4, x: 306, y: 74, l: 76, h: 34 }, { a: 38.3, b: 40.5, x: 296, y: 264, l: 72, h: 72 }].find((f) => dans(t, f.a, f.b)),
+      [{ a: 21.0, b: 23.4, x: 70, y: 700, texte: 'le carré avec une flèche ↑' }, { a: 27.0, b: 28.8, x: 230, y: 560, texte: 'descends ⬇' }, { a: 38.4, b: 40.6, x: 220, y: 345, texte: 'la voilà ! 🎉' }].find((f) => dans(t, f.a, f.b)));
+    // en-têtes
+    tete = entete(t, 10.4, 20.2, '1', 'Ouvre le lien avec [Safari]', 'pas WhatsApp, pas Chrome') ||
+      entete(t, 20.2, 26.6, '2', 'Appuie sur [Partager]', 'le carré avec une flèche <b>↑</b>, en bas de l’écran') ||
+      entete(t, 26.6, 32.2, '3', 'Descends et choisis [« Sur l’écran d’accueil »]', '') ||
+      entete(t, 32.2, 37.8, '4', 'Appuie sur [« Ajouter »]', 'en haut à droite') ||
+      entete(t, 37.8, 40.8, '<span class="emoji" style="font-size:90px">✅</span>', 'L’icône MA2M apparaît', 'sur ton écran d’accueil');
+    // WhatsApp ✕ Chrome ✕ Safari ✓ au début de l'étape 1
+    if (dans(t, 10.6, 13.2)) {
+      $('navs').style.opacity = fen(t, 10.6, 13.2, 0.3); $('navs').style.top = '300px';
+      [0, 1, 2].forEach((i) => { $('nav' + i).style.transform = 'scale(' + rebond((t - 10.7 - i * 0.25) / 0.4) + ')'; $('marque' + i).style.transform = 'scale(' + elast((t - 11.4 - i * 0.35) / 0.6) + ')'; });
+      $('tete').querySelector('#sous').style.opacity = 0;
+    }
+  }
+
+  if (and) {
+    $('and-accueil').style.opacity = (t < 47.2 || t >= 63.4) ? 1 : 0;
+    $('and-chrome').style.opacity = dans(t, 47.2, 63.4) ? 1 : 0;
+    $('and-chrome').style.transform = t < 47.8 ? 'scale(' + (0.15 + 0.85 * sortie((t - 47.2) / 0.6)) + ')' : 'none';
+    $('and-chrome').style.transformOrigin = '254px 790px';
+    $('and-ma2m').style.transform = 'scale(' + (t < 63.8 ? 0 : elast((t - 63.8) / 0.9)) + ')';
+    frappe('and-adr', t, 48.0, 50.0, URL_); if (t < 48.0) $('and-adr').textContent = 'Rechercher ou saisir une adresse';
+    $('and-page').style.opacity = clamp((t - 50.3) / 0.4);
+    // bandeau « Installer » (52 → 55), puis « sinon » : menu ⋮ (55.4 → 59), puis fenêtre (59 → 63.4)
+    $('and-bandeau').style.transform = 'translateY(' + (140 * (1 - sortie((t - 51.6) / 0.4)) + (t > 55.2 ? 200 : 0)) + 'px)';
+    $('and-btn-bandeau').classList.toggle('allume', dans(t, 54.2, 55.2));
+    $('and-menu').style.transform = 'scale(' + (dans(t, 56.6, 59.0) ? sortie((t - 56.6) / 0.3) : 0) + ')';
+    $('and-menu-cible').classList.toggle('allume', dans(t, 57.6, 59.0));
+    $('and-points').classList.toggle('allume', dans(t, 55.6, 56.8));
+    const dm = dans(t, 59.6, 63.4) ? rebond((t - 59.6) / 0.4) : 0;
+    $('and-dialogue').style.transform = 'scale(' + dm + ')'; $('and-dialogue').style.opacity = dm > 0 ? 1 : 0;
+    $('and-btn-dialogue').classList.toggle('allume', dans(t, 62.4, 63.4));
+    $('and-voile').style.opacity = clamp(dm) * 0.4;
+    $('etat-and').style.color = $('and-accueil').style.opacity === '1' ? '#fff' : '#000';
+    camera(t, [CAM_REPOS(44.4), CAM_REPOS(44.8), [45.3, 1.35, 254, 790, 540, 1450], [47.3, 1.35, 254, 790, 540, 1450], [48.0, 1.2, 195, 62, 540, 900], [50.2, 1.2, 195, 62, 540, 900], CAM_REPOS(51.0),
+      [52.0, 1.6, 195, 790, 540, 1450], [55.0, 1.6, 195, 790, 540, 1450], [55.6, 1.9, 340, 62, 760, 900], [59.0, 1.9, 340, 62, 760, 900], CAM_REPOS(59.6), [60.2, 1.5, 195, 420, 540, 1250], [63.0, 1.5, 195, 420, 540, 1250], CAM_REPOS(63.6)]);
+    pointeurs('sur-and', t, [
+      { a: 45.4, b: 47.3, de: [200, 600], vers: [254, 790], appui: 46.8 },
+      { a: 52.8, b: 55.0, de: [250, 650], vers: [328, 790], appui: 54.2 },
+      { a: 55.8, b: 56.8, de: [280, 200], vers: [355, 62], appui: 56.4 },
+      { a: 57.0, b: 59.0, de: [300, 200], vers: [250, 290], appui: 58.4 },
+      { a: 61.0, b: 63.3, de: [250, 600], vers: [300, 464], appui: 62.6 }],
+      [{ a: 45.2, b: 46.6, x: 254, y: 720 }, { a: 52.4, b: 54.0, x: 328, y: 720 }, { a: 55.5, b: 56.4, x: 300, y: 62, sens: '➡' }, { a: 60.4, b: 62.4, x: 300, y: 410 }].find((f) => dans(t, f.a, f.b)),
+      [{ a: 52.2, b: 55.0, x: 282, y: 772, l: 94, h: 40 }, { a: 57.5, b: 59.0, x: 140, y: 268, l: 250, h: 44 }, { a: 60.4, b: 63.3, x: 250, y: 446, l: 98, h: 38 }, { a: 64.0, b: 66.0, x: 301, y: 241, l: 68, h: 68 }].find((f) => dans(t, f.a, f.b)),
+      [{ a: 64.0, b: 66.0, x: 220, y: 320, texte: 'la voilà ! 🎉' }].find((f) => dans(t, f.a, f.b)));
+    tete = entete(t, 44.6, 51.2, '1', 'Ouvre le lien avec [Chrome]', '') ||
+      entete(t, 51.2, 55.3, '2', 'Appuie sur [« Installer »]', 'si un message s’affiche') ||
+      entete(t, 55.3, 59.4, '2', 'Sinon : menu [⋮] en haut à droite', 'puis <b>« Installer l’application »</b>') ||
+      entete(t, 59.4, 63.6, '3', '[Confirme]', 'appuie sur <b>« Installer »</b>') ||
+      entete(t, 63.6, 66.0, '<span class="emoji" style="font-size:90px">✅</span>', 'C’est fait', '');
+    if (dans(t, 44.8, 47.2)) {
+      $('navs').style.opacity = fen(t, 44.8, 47.2, 0.3); $('navs').style.top = '300px';
+      [0, 1].forEach((i) => { $('nav' + i).style.display = 'none'; });
+      $('nav2').querySelector('.rond').className = 'rond ic chrome-ic'; $('nav2').lastChild.textContent = 'Chrome';
+      $('nav2').style.transform = 'scale(' + rebond((t - 44.9) / 0.4) + ')'; $('marque2').style.transform = 'scale(' + elast((t - 45.4) / 0.6) + ')';
+    }
+  } else if (t < 44) { [0, 1].forEach((i) => { $('nav' + i).style.display = ''; }); $('nav2').querySelector('.rond').className = 'rond ic safari-ic'; $('nav2').lastChild.textContent = 'Safari'; }
+
+  // ---------- Ensuite : ouvrir l'appli, se connecter, ce qu'on y trouve ----------
+  if (dans(t, 67.6, 76.3)) {
+    $('ios-safari').style.opacity = 0; $('ios-accueil').style.opacity = t < 69.6 ? 1 : 0;
+    $('ios-ma2m').style.transform = 'none';
+    const o = sortie((t - 69.4) / 0.6);
+    $('ios-appli').style.opacity = clamp((t - 69.4) / 0.25); $('ios-appli').style.transform = 'scale(' + (0.15 + 0.85 * o) + ')'; $('ios-appli').style.transformOrigin = '332px 300px';
+    $('etat-ios').style.color = t < 69.6 ? '#fff' : '#000';
+    camera(t, [CAM_REPOS(67.6), [68.2, 1.5, 332, 300, 540, 1300], [69.4, 1.5, 332, 300, 540, 1300], CAM_REPOS(70.2), CAM_REPOS(72.0), [72.6, 0.62, 195, 426, 540, 1400], [76.3, 0.62, 195, 426, 540, 1400]]);
+    pointeurs('sur-ios', t, [{ a: 68.0, b: 69.5, de: [250, 600], vers: [332, 300], appui: 69.2 }, { a: 70.6, b: 71.9, de: [250, 700], vers: [195, 365], appui: 71.6 }], null,
+      dans(t, 70.4, 71.9) ? { a: 70.4, b: 71.9, x: 22, y: 325, l: 346, h: 160 } : null, dans(t, 70.4, 71.9) ? { a: 70.4, b: 71.9, x: 70, y: 285, texte: 'ton e-mail + ton mot de passe' } : null);
+    tete = entete(t, 67.8, 72.2, '', 'Ensuite : ouvre l’appli depuis l’icône et [connecte-toi]', '') ||
+      entete(t, 72.2, 76.1, '', 'Tu y retrouves…', '');
+    // quatre tuiles
+    const T4 = [['📅', 'tes convocations'], ['🗓️', 'ton programme'], ['👤', 'ton profil'], ['💳', 'tes paiements']];
+    if (!$('tuiles').children.length) $('tuiles').innerHTML = T4.map(([e, n]) => '<div class="tuile"><span class="emoji">' + e + '</span><b>' + n + '</b></div>').join('');
+    [...$('tuiles').children].forEach((d, i) => {
+      const q = (t - 72.7 - i * 0.45) / 0.5, x = i % 2 ? 580 : 60, y = 330 + Math.floor(i / 2) * 260;
+      d.style.left = x + 'px'; d.style.top = y + 'px'; d.style.opacity = clamp(q * 2) * clamp((76.1 - t) / 0.3);
+      d.style.transform = 'translateY(' + (200 * (1 - rebond(q))) + 'px) rotate(' + ((i % 2 ? 6 : -6) * (1 - sortie(q))) + 'deg)';
+    });
+  } else $('tuiles').innerHTML = '';
+  if (dans(t, 38.3, 40.8)) confettis(t, 38.3, 540, 1300); else if (dans(t, 64.0, 66.2)) confettis(t, 64.0, 540, 1300); else confettis(t, -9, 0, 0);
+  if (!tete) $('tete').style.opacity = 0;
+  $('voile-haut').style.opacity = $('tete').style.opacity;
+};
+window.rendre(0);
+</script>
+</body></html>

@@ -1,0 +1,39 @@
+/* Couleurs des deux applications (27/10/2026, choix de la propriétaire) : fond rouge très mat
+   #7C2128, blocs blancs à écriture noire, écriture blanche quand elle est posée directement sur
+   le rouge. Chargé en dernier par l'Administration (admin/index.html) et l'application des
+   mannequins (app/*.html) ; le site public garde ses couleurs pour l'instant.
+   Principe : sur le rouge, les couleurs d'écriture (encre, gris, rouge) deviennent claires ; chaque
+   bloc blanc (liste BLOCS ci-dessous) les remet foncées. Vérifié page par page par un robot qui
+   mesure le contraste de chaque texte (scripts/tests-visiteur/test-contraste-applis.js). */
+:root { --rouge-mat: #7C2128; --av-carte: #FFFFFF; --mag-carte: #FFFFFF; --ap-carte: #FFFFFF; }
+html, body, .coque { background: var(--rouge-mat) !important; }
+/* sur le rouge : écriture claire */
+.haut, .lateral, .contenu, .ap-tete, .ap-ecran, .ap-connexion, .pied-portail, body.ap-page-site {
+  --av-encre: #FFFFFF; --av-gris: #F3E3E5; --av-rouge-texte: #FFD9DE; --ap-encre: #FFFFFF; --ap-gris: #F3E3E5; --ap-rouge-texte: #FFD9DE;
+  --mag-encre: #FFFFFF; --mag-gris: #F3E3E5; --encre: #FFFFFF; --encre-douce: #F3E3E5; --rouge-ma2m-texte: #FFD9DE; color: #FFFFFF; }
+/* BLOCS blancs : écriture foncée (tous les fonds blancs de css/admin-vivante.css et css/mannequin-app.css ;
+   « :where » : aucune priorité, chaque bouton rouge ou noir garde sa propre couleur d'écriture) */
+:where(.compartiment, .carte, .tableau, .btn, .btn-mini-admin, .qr, .tuile, .voile .boite, .bloc-accueil, .taches, .dossier-carte, .agenda-form, .convoc-voir-bloc, .convoc-panneau,
+  .mg-grille, .mg-liste, .mg-apercu, .projet-carte, .tri-grille, #rapport-profils-liste, #fiches-evenement-liste, .carte-pilotage, .chiffre, .podium-place, .publication-carte, .editeur-riche,
+  .ql-toolbar, .partenaire-carte, .ecran-agenda .agenda-ligne, .ecran-video .tdb-31, .ecran-video .form-champ, .journal-resume-case, .journal-connexion, .journal-filtre, .journal-carte,
+  .df-carte, .pastille, .neutre, .lateral .bloc.actif, input, select, textarea,
+  .ap-cloche, .ap-carte, .ap-raccourcis a, .ap-onglets [aria-selected="true"], .ap-alerte, .ap-nav, .ap-form, .step-tab, .panel, .block, .blocks-grid > *, .mp-carte, .mp-mois, .mp-num,
+  .inn-carte, .ap-message-agence, .ap-onglets, .ap-pastille, .ap-galerie, .ap-btn) {
+  --av-encre: #1B1817; --av-gris: #655D56; --av-rouge-texte: #A50D26; --ap-encre: #1B1817; --ap-gris: #655D56; --ap-rouge-texte: #A50D26;
+  --mag-encre: #1B1817; --mag-gris: #655D56; --encre: #1B1817; --encre-douce: #655D56; --rouge-ma2m-texte: #A50D26; color: #1B1817; }
+/* blocs qui sont aussi des liens (la règle « a { color: inherit } » passe sinon avant) */
+a:where(.bloc-accueil, .carte-pilotage, .podium-place, .projet-carte, .publication-carte, .partenaire-carte, .dossier-carte, .tuile, .carte, .ap-carte, .ap-raccourcis a, .ap-alerte, .ap-message-agence, .ap-cloche) { color: #1B1817; }
+.lateral .bloc.actif { color: #1B1817 !important; }
+.contenu a.podium-place:not(.place-1), .contenu a.projet-carte { color: #1B1817; }   /* (.ca-evenement : « color: inherit ») */
+.ap-carte.sombre { color: #F4EFE6; }
+/* en-têtes */
+.haut { background: rgba(124, 33, 40, .96) !important; border-color: rgba(255, 255, 255, .15) !important; }
+.ap-tete { background: color-mix(in srgb, var(--rouge-mat) 94%, transparent) !important; }
+.logo-portail, .ap-logo { filter: brightness(0) invert(1); }
+/* menu de l'Administration */
+.lateral { border-color: rgba(255, 255, 255, .15) !important; }
+.lateral .bloc:hover { background: rgba(255, 255, 255, .12); }
+.lateral .bloc.actif { background: #fff !important; }
+.lateral-pied .btn.clair { background: transparent; color: #FFFFFF; border-color: rgba(255, 255, 255, .45); }
+h1 em { color: #FFD9DE; }
+.ap-pastille.vert { color: #24603A; }   /* (contraste 4,4 → 5,9 sur son fond vert pâle) */
