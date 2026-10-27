@@ -37,3 +37,31 @@ a:where(.bloc-accueil, .carte-pilotage, .podium-place, .projet-carte, .publicati
 .lateral-pied .btn.clair { background: transparent; color: #FFFFFF; border-color: rgba(255, 255, 255, .45); }
 h1 em { color: #FFD9DE; }
 .ap-pastille.vert { color: #24603A; }   /* (contraste 4,4 → 5,9 sur son fond vert pâle) */
+
+/* ---------- Rouge et blanc UNIQUEMENT (27/10/2026, la propriétaire : « plus de beige, plus de noir ») ----------
+   Fonds beiges → blanc (ou gris très clair pour les survols et creux) ; fonds noirs → rouge profond
+   #5A141B (ce qui doit ressortir : carte du prochain rendez-vous, bouton choisi, messages passagers).
+   L'écriture des blocs blancs reste foncée (lisibilité). */
+:root { --rouge-profond: #5A141B; --av-papier: #FFFFFF; --mag-papier: #FFFFFF; --ap-papier: #FFFFFF;
+  --av-creux: #F2F2F2; --mag-papier-fonce: #F2F2F2; --ap-creux: #F2F2F2; --av-lignes: #E4E4E4; --mag-lignes: #E4E4E4; }
+/* fonds noirs de l'Administration */
+:root :is(.btn.noir, .segments .btn.actif, .statuts .btn.actif, .journal-filtre.actif, .if-sorte:has(input:checked), .nouveau-code, .bloc-accueil.noir, .podium-place.place-1,
+  .message-ephemere, .onglets-bas, .dossier-sigle, .couv-apercu) { background: var(--rouge-profond) !important; border-color: var(--rouge-profond) !important; color: #FFFFFF !important; }
+:root :is(.bloc-accueil.noir, .podium-place.place-1) * { color: inherit; }
+.barre .rempli, .colonnes > div { background: var(--rouge-mat); }
+.affiche { background: var(--rouge-profond) !important; }
+.affiche .fond::after { background: linear-gradient(180deg, rgba(90, 20, 27, 0) 20%, rgba(90, 20, 27, .92)) !important; }
+.voile, .menu-ouvert .voile-menu { background: rgba(90, 20, 27, .5) !important; }
+.lightbox-global { background: rgba(90, 20, 27, .96) !important; }
+.etiquette-photo { background: rgba(90, 20, 27, .85) !important; }
+/* écran de connexion de l'Administration : panneau rouge + panneau blanc */
+.connexion .g { background: var(--rouge-mat) !important; color: #FFFFFF !important; }
+.connexion .d { background: #FFFFFF !important; --av-encre: #1B1817; --av-gris: #655D56; color: #1B1817; }
+/* menu du téléphone (feuille qui monte du bas) : sur le rouge, ses blocs restent blancs */
+@media (max-width: 860px) { .lateral { background: var(--rouge-mat) !important; } }
+/* application : carte du prochain rendez-vous, bandeau du profil, messages passagers */
+.ap-carte.sombre, body.ap-page-profil .greet { background: linear-gradient(160deg, #6E1A22, var(--rouge-profond)) !important; color: #FFFFFF !important; }
+.ap-carte.sombre .doux, .ap-carte.sombre dt { color: #F3E3E5 !important; }
+.ap-message { background: var(--rouge-profond) !important; color: #FFFFFF !important; }
+.connexion .g::after { background: linear-gradient(180deg, rgba(124, 33, 40, .55), rgba(124, 33, 40, .85) 60%, rgba(124, 33, 40, .96)) !important; }
+.connexion .doux-sombre, .connexion .petit-texte .btn.clair { color: #F3E3E5 !important; border-color: rgba(255, 255, 255, .45) !important; background: transparent !important; }

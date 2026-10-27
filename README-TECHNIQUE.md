@@ -3720,3 +3720,16 @@ navigateur du visiteur, la page n'a aucun style en ligne).
 Mots du menu agrandis (17 px sur ordinateur, 18 px sur téléphone et tablette ; menu latéral élargi à
 300 px) et blocs (compartiments) bien détachés : carte claire, contour net, ombre légère, titre rouge
 séparé de ses lignes par un trait (`css/admin-vivante.css`, `.compartiment` et `.nav`).
+
+## Couleurs des applications : rouge très mat (27/10/2026, choix de la propriétaire)
+L'Administration et l'application des mannequins passent sur un fond **rouge très mat #7C2128** avec
+des **blocs blancs** (écriture noire dedans, blanche sur le rouge). Tout est dans un seul fichier,
+`css/applis-rouge-mat.css`, chargé en dernier par admin/index.html et app/*.html (et gardé hors
+connexion : admin/sw.js administration-v17, app/sw.js mannequin-app-v6). Principe : sur le rouge, les
+variables d'écriture (encre, gris, rouge) deviennent claires ; la liste des blocs blancs (`:where(...)`,
+sans priorité, pour que chaque bouton rouge ou noir garde sa couleur) les remet foncées. **Tout nouveau
+bloc à fond blanc doit être ajouté à cette liste**, sinon son texte devient blanc sur blanc : le test
+`scripts/tests-visiteur/test-contraste-applis.js` (67 pages, ordinateur + téléphone + menu) et le
+contrôle de lisibilité de chaque écran de `test-app-mannequin.js` le signalent. Le site public garde
+ses couleurs pour l'instant (prochaine étape, avec l'accord de la propriétaire). Sources de la vidéo
+d'installation : `outils/video-installation/` (non publiées).

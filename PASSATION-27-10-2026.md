@@ -64,3 +64,11 @@ Demandes de la propriétaire pour la prochaine version :
   `ffmpeg -framerate 30 -i <dossier>/f%05d.jpg -stream_loop 2 -i outils/video-installation/musique-32.wav -filter_complex "[0:v]scale=720:1280[v];[1:a]atrim=0:68,volume=0.4,afade=t=in:d=1,afade=t=out:st=65:d=3[a]" -map "[v]" -map "[a]" -c:v libx264 -pix_fmt yuv420p -crf 25 -preset slow -movflags +faststart -c:a aac -b:a 96k -shortest video.mp4`.
   Les écrans de l'application y sont DÉJÀ en rouge mat (chantier 1) : le dire à la propriétaire.
 - 27/10 : chantier 1, étapes 1 à 3 faites (tests de lisibilité dans la batterie, copies hors connexion). Prochaine étape : captures à la propriétaire.
+- 27/10 (soir) : la propriétaire a précisé : **UNIQUEMENT rouge et blanc** (plus de beige, plus de noir).
+  Fait dans css/applis-rouge-mat.css (fonds beiges → blanc / gris très clair #F2F2F2 ; fonds noirs → rouge
+  profond #5A141B ; écran de connexion de l'Administration rouge + blanc). L'écriture des blocs blancs reste
+  foncée (lisibilité). Contrôles de lisibilité : tout passe. Accord de mise en ligne donné → batterie complète,
+  puis mise en ligne (fusion de la branche sur main, sans PASSATION ni outils/ : exclus par .vercelignore).
+- Pour le SITE public (chantier 3, plus tard) : même règle rouge très mat #7C2128 + blanc, rouge profond
+  #5A141B pour ce qui ressort ; s'inspirer de css/applis-rouge-mat.css (variables) et vérifier avec
+  scripts/tests-visiteur/test-visuel.js (contraste de 34 pages) ; captures à la propriétaire AVANT toute mise en ligne.
