@@ -9,6 +9,7 @@ const { chromium } = require('playwright'); const { spawn } = require('child_pro
 const path = require('path');
 // règle de sécurité stricte, posée par le serveur comme en ligne (vercel.json : aucun programme écrit dans la page)
 const { REGLE_ADMIN } = require('./donnees-nouvelle-admin');
+const { lirePageEntiere } = require('./lisibilite');
 const PORT = String(9600 + Math.floor(Math.random() * 90));
 const BASE = 'http://127.0.0.1:' + PORT;
 let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m); if (!c) ko++; };
@@ -83,7 +84,12 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
     await p.route(/127\.0\.0\.1:\d+\/app\/([a-z-]+\.html)?(\?.*)?$/, async (r) => { const rep = await r.fetch(); r.fulfill({ response: rep, headers: Object.assign({}, rep.headers(), { 'content-security-policy': REGLE_ADMIN }) }); });
     const rpc = (nomRpc) => journal.filter((j) => j[0] === 'rpc' && j[1] === nomRpc).map((j) => JSON.parse(j[2] || '{}'));
     // CAPTURES=dossier : images des écrans (téléphone) pour les regarder
-    const capture = (nomCapture) => (process.env.CAPTURES && tel ? p.screenshot({ path: path.join(process.env.CAPTURES, nomCapture + '.png') }) : null);
+    // chaque écran capturé : tous les textes lisibles sur le fond rouge mat (27/10/2026, lisibilite.js)
+    const capture = async (nomCapture) => {
+      const pales = await lirePageEntiere(p);
+      ok(!pales.length, n + nomCapture + ' : textes lisibles' + (pales.length ? ' — trop pâles : ' + pales.slice(0, 6).map((x) => x.element + ' « ' + x.texte + ' » ' + x.contraste).join(' | ') : ''));
+      if (process.env.CAPTURES && tel) await p.screenshot({ path: path.join(process.env.CAPTURES, nomCapture + '.png') });
+    };
     const deborde = () => p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);
 
     // 1. Le lien reçu : la connexion tout de suite (l'installation : la bande en bas, test-installation.js)

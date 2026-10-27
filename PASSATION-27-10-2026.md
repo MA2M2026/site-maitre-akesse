@@ -18,11 +18,11 @@ Fait sur cette branche :
 - `scripts/tests-visiteur/test-contraste-applis.js` (nouveau) : 67 pages de l'Administration,
   ordinateur + téléphone + menu ouvert, tous les textes lisibles → **passe** (0 texte pâle).
 - Vérifié à part : l'application des mannequins, tous les écrans : 0 texte pâle.
-Reste à faire :
-1. Ajouter `test-contraste-applis.js` à la liste de `scripts/tests-visiteur/lancer.sh`.
-2. Dans `test-app-mannequin.js`, faire contrôler la lisibilité à chaque écran
+Reste à faire (1 à 3 FAITS le 27/10 au soir) :
+1. [FAIT] Ajouter `test-contraste-applis.js` à la liste de `scripts/tests-visiteur/lancer.sh`.
+2. [FAIT] Dans `test-app-mannequin.js`, faire contrôler la lisibilité à chaque écran
    (`lirePageEntiere` de `lisibilite.js`, dans la fonction `capture`).
-3. Ajouter `/css/applis-rouge-mat.css` à la liste INTERFACE de `app/sw.js` (hors connexion)
+3. [FAIT, versions administration-v17 et mannequin-app-v6] Ajouter `/css/applis-rouge-mat.css` à la liste INTERFACE de `app/sw.js` (hors connexion)
    et vérifier la liste équivalente de l'Administration (service worker admin).
 4. Logo : sur le rouge il est passé en blanc par filtre CSS (`.logo-portail, .ap-logo`) ;
    vérifier l'icône carrée de connexion (elle reste noire, c'est voulu).
@@ -57,9 +57,10 @@ Demandes de la propriétaire pour la prochaine version :
 
 ## Journal de la reprise (à compléter au fur et à mesure)
 - 27/10 : passation écrite, branche poussée. Début de la vidéo v3 (fond rouge mat, départ WhatsApp).
-- 27/10 : **vidéo v3 faite et envoyée à la propriétaire (68 s), en attente de son avis** : `outils/video-installation/film3.html` (68 s ; WhatsApp → barre rouge →
+- 27/10 : **vidéo v3 VALIDÉE par la propriétaire (« top, rien à dire »)**, fichier final : outils/video-installation/Installer-application-MA2M-v3.mp4 (à envoyer aux mannequins APRÈS la mise en ligne des couleurs rouge mat des applications). Chantier 2 TERMINÉ. : `outils/video-installation/film3.html` (68 s ; WhatsApp → barre rouge →
   iPhone : aide « 3 touches » réelle (iphone-guide.png) puis Partager / Sur l'écran d'accueil / Ajouter ;
   Android : captures RÉELLES de la propriétaire (android-*-reel*.png) ; Ensuite ; fin). Fabrication :
   `IMAGES=<dossier> node outils/video-installation/rendu3.js` puis
   `ffmpeg -framerate 30 -i <dossier>/f%05d.jpg -stream_loop 2 -i outils/video-installation/musique-32.wav -filter_complex "[0:v]scale=720:1280[v];[1:a]atrim=0:68,volume=0.4,afade=t=in:d=1,afade=t=out:st=65:d=3[a]" -map "[v]" -map "[a]" -c:v libx264 -pix_fmt yuv420p -crf 25 -preset slow -movflags +faststart -c:a aac -b:a 96k -shortest video.mp4`.
   Les écrans de l'application y sont DÉJÀ en rouge mat (chantier 1) : le dire à la propriétaire.
+- 27/10 : chantier 1, étapes 1 à 3 faites (tests de lisibilité dans la batterie, copies hors connexion). Prochaine étape : captures à la propriétaire.

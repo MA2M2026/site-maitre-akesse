@@ -28,7 +28,7 @@ a:where(.bloc-accueil, .carte-pilotage, .podium-place, .projet-carte, .publicati
 .ap-carte.sombre { color: #F4EFE6; }
 /* en-têtes */
 .haut { background: rgba(124, 33, 40, .96) !important; border-color: rgba(255, 255, 255, .15) !important; }
-.ap-tete { background: color-mix(in srgb, var(--rouge-mat) 94%, transparent) !important; }
+.ap-tete { background: rgba(124, 33, 40, .96) !important; }
 .logo-portail, .ap-logo { filter: brightness(0) invert(1); }
 /* menu de l'Administration */
 .lateral { border-color: rgba(255, 255, 255, .15) !important; }
